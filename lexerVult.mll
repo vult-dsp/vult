@@ -38,6 +38,13 @@ let getLocation lexbuf =
     end_pos   = lexbuf.lex_curr_p;
   }
 
+let updateLocation lexbuf line chars =
+  let pos = lexbuf.lex_curr_p in
+  lexbuf.lex_curr_p <- { pos with
+    pos_lnum = pos.pos_lnum + line;
+    pos_bol = pos.pos_cnum - chars;
+  }
+
 (* Tokens *)
 type token =
   | EOF
@@ -71,6 +78,8 @@ let getIdKeyword lexbuf =
 
 }
 
+let newline = ('\010' | '\013' | "\013\010")
+let blank = [' ' '\009' '\012']
 let lowercase = ['a'-'z']
 let uppercase = ['A'-'Z']
 let identchar = ['A'-'Z' 'a'-'z' '_']
@@ -82,6 +91,11 @@ let float =
 
 rule token =
   parse
+  | newline
+    { let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
+      token lexbuf
+    }
+  | blank +     { token lexbuf }
   | int         { INT(getInt lexbuf) }
   | float       { REAL(getString lexbuf)}
   | identchar + { getIdKeyword lexbuf }
