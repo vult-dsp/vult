@@ -76,6 +76,15 @@ let getIdKeyword lexbuf =
     (Hashtbl.find keyword_table s) loc
   else ID(s,loc)
 
+(* Functions for testing the tokenizer *)
+let tokenizeString tokenizer str =
+  let lexbuf = Lexing.from_string str in
+  let rec loop acc =
+    match tokenizer lexbuf with
+    | EOF -> List.rev acc
+    | t -> loop (t::acc)
+  in loop []
+
 }
 
 let newline = ('\010' | '\013' | "\013\010")
