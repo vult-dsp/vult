@@ -50,10 +50,18 @@ type token =
   | EOF
   | INT  of (int * location)
   | REAL of (string * location)
-  | ID  of (string * location)
+  | ID   of (string * location)
   | FUN  of location
   | MEM  of location
   | VAL  of location
+  | LBRAC  of location
+  | RBRAC  of location
+  | LPAREN of location
+  | RPAREN of location
+  | COLON  of location
+  | SEMI   of location
+  | COMMA  of location
+  | EQUAL  of location
 
 (* Keywords *)
 let keyword_table =
@@ -85,6 +93,31 @@ let tokenizeString tokenizer str =
     | t -> loop (t::acc)
   in loop []
 
+let tokenToString l =
+  match l with
+  | EOF -> "'eof' "
+  | INT(i,_) -> "'"^(string_of_int i)^"' "
+  | REAL(r,_)-> "'"^r^"' "
+  | ID(s,_)  -> "'"^s^"' "
+  | FUN(_)   -> "'fun' "
+  | MEM(_)   -> "'mem' "
+  | VAL(_)   -> "'val' "
+  | LBRAC(_) -> "'{' "
+  | RBRAC(_) -> "'}' "
+  | LPAREN(_)-> "'(' "
+  | RPAREN(_)-> "')' "
+  | COLON(_) -> "':' "
+  | SEMI(_)  -> "';' "
+  | COMMA(_) -> "',' "
+  | EQUAL(_) -> "'=' "
+
+let rec printTokenList l =
+  match l with
+  | [] -> ()
+  | h::t ->
+    let _ = print_string (tokenToString h) in
+    printTokenList t
+
 }
 
 let newline = ('\010' | '\013' | "\013\010")
@@ -105,6 +138,14 @@ rule token =
       token lexbuf
     }
   | blank +     { token lexbuf }
+  | '('         { LPAREN(getLocation lexbuf) }
+  | ')'         { RPAREN(getLocation lexbuf) }
+  | '{'         { LBRAC(getLocation lexbuf) }
+  | '}'         { RBRAC(getLocation lexbuf) }
+  | ':'         { COLON(getLocation lexbuf) }
+  | ';'         { SEMI(getLocation lexbuf) }
+  | ','         { COMMA(getLocation lexbuf) }
+  | '='         { EQUAL(getLocation lexbuf) }
   | int         { INT(getInt lexbuf) }
   | float       { REAL(getString lexbuf)}
   | identchar + { getIdKeyword lexbuf }
