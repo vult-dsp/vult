@@ -62,6 +62,13 @@ type token =
   | SEMI   of location
   | COMMA  of location
   | EQUAL  of location
+  | OPLOG0 of (string * location)
+  | OPLOG1 of (string * location)
+  | OPCOMP of (string * location)
+  | OPBIT0 of (string * location)
+  | OPBIT1 of (string * location)
+  | OPARIT0 of (string * location)
+  | OPARIT1 of (string * location)
 
 (* Keywords *)
 let keyword_table =
@@ -99,9 +106,9 @@ let tokenToString l =
   | INT(i,_) -> "'"^(string_of_int i)^"' "
   | REAL(r,_)-> "'"^r^"' "
   | ID(s,_)  -> "'"^s^"' "
-  | FUN(_)   -> "'fun' "
-  | MEM(_)   -> "'mem' "
-  | VAL(_)   -> "'val' "
+  | FUN(_)   -> "'$fun' "
+  | MEM(_)   -> "'$mem' "
+  | VAL(_)   -> "'$val' "
   | LBRAC(_) -> "'{' "
   | RBRAC(_) -> "'}' "
   | LPAREN(_)-> "'(' "
@@ -110,6 +117,13 @@ let tokenToString l =
   | SEMI(_)  -> "';' "
   | COMMA(_) -> "',' "
   | EQUAL(_) -> "'=' "
+  | OPLOG0(o,_) -> "'"^o^"' "
+  | OPLOG1(o,_) -> "'"^o^"' "
+  | OPCOMP(o,_) -> "'"^o^"' "
+  | OPBIT0(o,_) -> "'"^o^"' "
+  | OPBIT1(o,_) -> "'"^o^"' "
+  | OPARIT0(o,_) -> "'"^o^"' "
+  | OPARIT1(o,_) -> "'"^o^"' "
 
 let rec printTokenList l =
   match l with
@@ -124,7 +138,8 @@ let newline = ('\010' | '\013' | "\013\010")
 let blank = [' ' '\009' '\012']
 let lowercase = ['a'-'z']
 let uppercase = ['A'-'Z']
-let identchar = ['A'-'Z' 'a'-'z' '_']
+let startid = ['A'-'Z' 'a'-'z' '_']
+let idchar = ['A'-'Z' 'a'-'z' '_' '0'-'9']
 let int = ['0'-'9'] ['0'-'9' '_']*
 let float =
   ['0'-'9'] ['0'-'9' '_']*
@@ -146,7 +161,18 @@ rule token =
   | ';'         { SEMI(getLocation lexbuf) }
   | ','         { COMMA(getLocation lexbuf) }
   | '='         { EQUAL(getLocation lexbuf) }
+  | "||"        { OPLOG0(getString lexbuf) }
+  | "&&"        { OPLOG1(getString lexbuf) }
+  | "=="        { OPCOMP(getString lexbuf) }
+  | "<="        { OPCOMP(getString lexbuf) }
+  | ">="        { OPCOMP(getString lexbuf) }
+  | [ '<' '>' ] { OPCOMP(getString lexbuf) }
+  | '|'         { OPBIT1(getString lexbuf) }
+  | '&'         { OPBIT0(getString lexbuf) }
+  | [ '+' '-' ] { OPARIT1(getString lexbuf) }
+  | [ '*' '/' '%' ] { OPARIT0(getString lexbuf) }
   | int         { INT(getInt lexbuf) }
   | float       { REAL(getString lexbuf)}
-  | identchar + { getIdKeyword lexbuf }
+  | startid idchar *
+                { getIdKeyword lexbuf }
   | eof         { EOF }
