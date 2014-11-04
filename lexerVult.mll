@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 {
-
+(** Vult Lexer based on ocamllex *)
 open Lexing
 
 (** Location information *)
@@ -31,7 +31,8 @@ type location =
     start_pos : position;
     end_pos   : position;
   }
-(** Returns the current location (start and end)*)
+
+(** Returns the current location (start and end) *)
 let getLocation lexbuf =
   {
     start_pos = lexbuf.lex_start_p;
