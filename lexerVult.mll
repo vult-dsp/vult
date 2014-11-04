@@ -81,10 +81,20 @@ let keyword_table =
   let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
   table
 
+(* Stores the current line *)
+let current_line_buffer = Buffer.create 100
+
 (* Auxiliary functions for processing the lexeme buffer *)
 
-let getString lexbuf = (lexeme lexbuf, getLocation lexbuf)
-let getInt    lexbuf = (int_of_string (lexeme lexbuf), getLocation lexbuf)
+let clearLineBuffer () = Buffer.clear current_line_buffer
+let getLineBuffer () = Buffer.contents current_line_buffer
+
+let getLexeme lexbuf =
+  let s = lexeme lexbuf in
+  let _ = Buffer.add_string current_line_buffer s in
+  s
+let getString lexbuf = (getLexeme lexbuf, getLocation lexbuf)
+let getInt    lexbuf = (int_of_string (getLexeme lexbuf), getLocation lexbuf)
 let getIdKeyword lexbuf =
   let s,loc = getString lexbuf in
   if Hashtbl.mem keyword_table s then
@@ -150,9 +160,10 @@ rule token =
   parse
   | newline
     { let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
+      let _ = clearLineBuffer () in
       token lexbuf
     }
-  | blank +     { token lexbuf }
+  | blank +     { let _ = getLexeme lexbuf in token lexbuf }
   | '('         { LPAREN(getLocation lexbuf) }
   | ')'         { RPAREN(getLocation lexbuf) }
   | '{'         { LBRAC(getLocation lexbuf) }
