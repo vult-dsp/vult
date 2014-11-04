@@ -25,19 +25,19 @@ THE SOFTWARE.
 
 open Lexing
 
-(* Location information *)
+(** Location information *)
 type location =
   {
     start_pos : position;
     end_pos   : position;
   }
-
+(** Returns the current location (start and end)*)
 let getLocation lexbuf =
   {
     start_pos = lexbuf.lex_start_p;
     end_pos   = lexbuf.lex_curr_p;
   }
-
+(** Updates the location of the lexbuf*)
 let updateLocation lexbuf line chars =
   let pos = lexbuf.lex_curr_p in
   lexbuf.lex_curr_p <- { pos with
@@ -45,7 +45,7 @@ let updateLocation lexbuf line chars =
     pos_bol = pos.pos_cnum - chars;
   }
 
-(* Tokens *)
+(** Tokens *)
 type token =
   | EOF
   | INT  of (int * location)
@@ -70,7 +70,7 @@ type token =
   | OPARIT0 of (string * location)
   | OPARIT1 of (string * location)
 
-(* Keywords *)
+(** Hash table contaning the keywords. The values are a function to create the keyword token *)
 let keyword_table =
   let table = Hashtbl.create 50 in
   let keywords = [
@@ -81,25 +81,35 @@ let keyword_table =
   let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
   table
 
-(* Stores the current line *)
+(** Stores the current line *)
 let current_line_buffer = Buffer.create 100
 
 (* Auxiliary functions for processing the lexeme buffer *)
 
+(** Clears the contents of the line buffer *)
 let clearLineBuffer () = Buffer.clear current_line_buffer
-let getLineBuffer () = Buffer.contents current_line_buffer
+(** Returns the contents of the line buffer *)
+let getLineBuffer   () = Buffer.contents current_line_buffer
 
+(** Appends the current lexeme to the line buffer and returns it *)
 let getLexeme lexbuf =
   let s = lexeme lexbuf in
   let _ = Buffer.add_string current_line_buffer s in
   s
+(** Returns the current lexeme (as string) and it's position (uses getLexeme) *)
 let getString lexbuf = (getLexeme lexbuf, getLocation lexbuf)
+(** Returns the current lexeme (as integer) and it's position (uses getLexeme) *)
 let getInt    lexbuf = (int_of_string (getLexeme lexbuf), getLocation lexbuf)
+(** Returns the current lexeme (as id or as keyword) and it's position (uses getString) *)
 let getIdKeyword lexbuf =
   let s,loc = getString lexbuf in
   if Hashtbl.mem keyword_table s then
     (Hashtbl.find keyword_table s) loc
   else ID(s,loc)
+(** Appends the current lexeme to the line buffer and returns it's position *)
+let storeToken lexbuf =
+  let _ = getLexeme lexbuf in
+  getLocation lexbuf
 
 (* Functions for testing the tokenizer *)
 let tokenizeString tokenizer str =
@@ -110,6 +120,7 @@ let tokenizeString tokenizer str =
     | t -> loop (t::acc)
   in loop []
 
+(** Returns a string representation of the token *)
 let tokenToString l =
   match l with
   | EOF -> "'eof' "
@@ -134,7 +145,7 @@ let tokenToString l =
   | OPBIT1(o,_) -> "'"^o^"' "
   | OPARIT0(o,_) -> "'"^o^"' "
   | OPARIT1(o,_) -> "'"^o^"' "
-
+(** Prints the list of tokens*)
 let rec printTokenList l =
   match l with
   | [] -> ()
@@ -164,14 +175,14 @@ rule token =
       token lexbuf
     }
   | blank +     { let _ = getLexeme lexbuf in token lexbuf }
-  | '('         { LPAREN(getLocation lexbuf) }
-  | ')'         { RPAREN(getLocation lexbuf) }
-  | '{'         { LBRAC(getLocation lexbuf) }
-  | '}'         { RBRAC(getLocation lexbuf) }
-  | ':'         { COLON(getLocation lexbuf) }
-  | ';'         { SEMI(getLocation lexbuf) }
-  | ','         { COMMA(getLocation lexbuf) }
-  | '='         { EQUAL(getLocation lexbuf) }
+  | '('         { LPAREN(storeToken lexbuf) }
+  | ')'         { RPAREN(storeToken lexbuf) }
+  | '{'         { LBRAC(storeToken lexbuf) }
+  | '}'         { RBRAC(storeToken lexbuf) }
+  | ':'         { COLON(storeToken lexbuf) }
+  | ';'         { SEMI(storeToken lexbuf) }
+  | ','         { COMMA(storeToken lexbuf) }
+  | '='         { EQUAL(storeToken lexbuf) }
   | "||"        { OPLOG0(getString lexbuf) }
   | "&&"        { OPLOG1(getString lexbuf) }
   | "=="        { OPCOMP(getString lexbuf) }
