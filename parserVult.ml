@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
+(** Vult Parser *)
 open LexerVult
 
 
@@ -48,21 +49,33 @@ type vexp =
   | Int of int * location
   | Real of string * location
   | BinOp of string * vexp * vexp
+  | Call of string * vexp list * location
+
+let expectRPAREN buffer =
+  match peek buffer with
+  | RPAREN(_) ->
+    let _ = consume buffer in
+    ()
+  | _ -> failwith ("Report error in line "^(getLineBuffer ()))
 
 let rec factor buffer =
   match accept buffer with
-  | ID(id,loc) -> Id(id,loc)
+  | ID(id,loc) ->
+    begin
+      match peek buffer with
+      | LPAREN(_) ->
+        let _ = consume buffer in
+        let args = exp_list buffer [] in
+        let _ = expectRPAREN buffer in
+        Call(id,args,loc)
+      | _ -> Id(id,loc)
+    end
   | INT(i,loc) -> Int(i,loc)
   | REAL(r,loc)-> Real(r,loc)
   | LPAREN(_) ->
     let e1 = sum buffer in
-    begin
-      match peek buffer with
-      | RPAREN(_) ->
-        let _ = consume buffer in
-        e1
-      | _ -> failwith ("Report error in line "^(getLineBuffer ()))
-    end
+    let _ = expectRPAREN buffer in
+    e1
   | _ -> failwith ("Report error in line "^(getLineBuffer ()))
 
 and product buffer =
@@ -82,3 +95,13 @@ and sum buffer =
     let e2 = product buffer in
     BinOp(o,e1,e2)
   | _ -> e1
+(** Parses a list of comma separated expressions *)
+and exp_list buffer acc =
+  let e1 = exp buffer in
+  match peek buffer with
+  | COMMA(_) ->
+    let _ = consume buffer in
+    exp_list buffer (e1::acc)
+  | _ -> List.rev (e1::acc)
+(** Parses a single expression *)
+and exp buffer = sum buffer
