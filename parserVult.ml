@@ -24,6 +24,7 @@ THE SOFTWARE.
 (** Vult Parser *)
 open LexerVult
 
+open Types
 
 type lexer_stream =
   {
@@ -31,77 +32,80 @@ type lexer_stream =
     mutable peeked : token;
   }
 
-let consume buffer =
+let skip buffer =
   buffer.peeked <- token buffer.lexbuf
 
-let peek buffer = buffer.peeked
+let current buffer = buffer.peeked
 
-let accept buffer =
-  let t = buffer.peeked in
-  let _  = buffer.peeked <- token buffer.lexbuf in
-  t
 let bufferFromString str =
   let lexbuf = Lexing.from_string str in
   { lexbuf = lexbuf; peeked = token lexbuf }
 
-type vexp =
-  | Id of string * location
-  | Int of int * location
-  | Real of string * location
-  | BinOp of string * vexp * vexp
-  | Call of string * vexp list * location
+let getLbp token =
+  match token.kind,token.value with
+  | OP,"+" -> 50
+  | OP,"-" -> 50
+  | OP,"*" -> 60
+  | OP,"/" -> 60
+  | _      -> 0
 
-let expectRPAREN buffer =
-  match peek buffer with
-  | RPAREN(_) ->
-    let _ = consume buffer in
-    ()
-  | _ -> failwith ("Report error in line "^(getLineBuffer ()))
+let getContents token =
+  match token.kind with
+  | INT  -> PInt(token.value,token.loc)
+  | ID   -> PId(token.value,token.loc)
+  | REAL -> PReal(token.value,token.loc)
+  | _    -> token.contents
 
-let rec factor buffer =
-  match accept buffer with
-  | ID(id,loc) ->
-    begin
-      match peek buffer with
-      | LPAREN(_) ->
-        let _ = consume buffer in
-        let args = exp_list buffer [] in
-        let _ = expectRPAREN buffer in
-        Call(id,args,loc)
-      | _ -> Id(id,loc)
-    end
-  | INT(i,loc) -> Int(i,loc)
-  | REAL(r,loc)-> Real(r,loc)
-  | LPAREN(_) ->
-    let e1 = sum buffer in
-    let _ = expectRPAREN buffer in
-    e1
-  | _ -> failwith ("Report error in line "^(getLineBuffer ()))
+let rec expression rbp buffer =
+  let current_token = current buffer in
+  let _             = skip buffer in
+  let left          = nud buffer current_token in
+  let next_token    = current buffer in
+  let rec loop token left repeat =
+    if repeat then
+      let _         = skip buffer in
+      let new_left  = led buffer token left in
+      let new_token = current buffer in
+      loop new_token new_left (rbp < (getLbp new_token))
+    else
+      left
+  in loop next_token left (rbp < (getLbp next_token))
 
-and product buffer =
-  let e1 = factor buffer in
-  match peek buffer with
-  | OPARIT0(o,_) ->
-    let _ =  consume buffer in
-    let e2 = factor buffer in
-    BinOp(o,e1,e2)
-  | _ -> e1
+and nud buffer token =
+  match token.kind,token.value with
+  | OP,"-" -> (* Unary minus *)
+    unaryOp buffer token
+  | _ -> token
 
-and sum buffer =
-  let e1 = product buffer in
-  match peek buffer with
-  | OPARIT1(o,_) ->
-    let _ =  consume buffer in
-    let e2 = product buffer in
-    BinOp(o,e1,e2)
-  | _ -> e1
-(** Parses a list of comma separated expressions *)
-and exp_list buffer acc =
-  let e1 = exp buffer in
-  match peek buffer with
-  | COMMA(_) ->
-    let _ = consume buffer in
-    exp_list buffer (e1::acc)
-  | _ -> List.rev (e1::acc)
-(** Parses a single expression *)
-and exp buffer = sum buffer
+and led buffer token left =
+  match token.kind,token.value with
+  | OP,_ -> (* Binary operators *)
+    binaryOp buffer token left
+  | _ -> token
+
+and unaryOp buffer token =
+  let right = expression 70 buffer in
+  { token with contents = PUnOp("-",getContents right) }
+
+and binaryOp buffer token left =
+  let right = expression (getLbp token) buffer in
+  { token with contents = PBinOp(token.value,getContents left,getContents right) }
+
+
+let rec printParseExp exp =
+  match exp with
+  | PId(s,_)   -> print_string s
+  | PInt(s,_)  -> print_string s
+  | PReal(s,_) -> print_string s
+  | PBinOp(op,e1,e2) ->
+    print_string "(";
+    printParseExp e1;
+    print_string op;
+    printParseExp e2;
+    print_string ")"
+  | PUnOp(op,e) ->
+    print_string "(";
+    print_string op;
+    printParseExp e;
+    print_string ")"
+  | _ -> print_string "Empty"

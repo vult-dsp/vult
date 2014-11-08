@@ -23,4 +23,12 @@ THE SOFTWARE.
 *)
 open LexerVult
 open ParserVult
-
+open Types
+let main () =
+  let buffer = bufferFromString "-a+b*c+d" in
+  let result = expression 0 buffer in
+  let e = getContents result in
+  printParseExp e;
+  print_string "\n";
+;;
+main ();;

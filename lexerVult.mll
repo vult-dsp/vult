@@ -24,13 +24,7 @@ THE SOFTWARE.
 {
 (** Vult Lexer based on ocamllex *)
 open Lexing
-
-(** Location information *)
-type location =
-  {
-    start_pos : position;
-    end_pos   : position;
-  }
+open Types
 
 (** Returns the current location (start and end) *)
 let getLocation lexbuf =
@@ -46,38 +40,13 @@ let updateLocation lexbuf line chars =
     pos_bol = pos.pos_cnum - chars;
   }
 
-(** Tokens *)
-type token =
-  | EOF
-  | INT  of (int * location)
-  | REAL of (string * location)
-  | ID   of (string * location)
-  | FUN  of location
-  | MEM  of location
-  | VAL  of location
-  | LBRAC  of location
-  | RBRAC  of location
-  | LPAREN of location
-  | RPAREN of location
-  | COLON  of location
-  | SEMI   of location
-  | COMMA  of location
-  | EQUAL  of location
-  | OPLOG0 of (string * location)
-  | OPLOG1 of (string * location)
-  | OPCOMP of (string * location)
-  | OPBIT0 of (string * location)
-  | OPBIT1 of (string * location)
-  | OPARIT0 of (string * location)
-  | OPARIT1 of (string * location)
-
 (** Hash table contaning the keywords. The values are a function to create the keyword token *)
 let keyword_table =
   let table = Hashtbl.create 50 in
   let keywords = [
-      "fun",(fun loc -> FUN(loc));
-      "mem",(fun loc -> MEM(loc));
-      "val",(fun loc -> VAL(loc));
+      "fun",FUN;
+      "mem",MEM;
+      "val",VAL;
     ] in
   let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
   table
@@ -89,6 +58,7 @@ let current_line_buffer = Buffer.create 100
 
 (** Clears the contents of the line buffer *)
 let clearLineBuffer () = Buffer.clear current_line_buffer
+
 (** Returns the contents of the line buffer *)
 let getLineBuffer   () = Buffer.contents current_line_buffer
 
@@ -97,20 +67,20 @@ let getLexeme lexbuf =
   let s = lexeme lexbuf in
   let _ = Buffer.add_string current_line_buffer s in
   s
-(** Returns the current lexeme (as string) and it's position (uses getLexeme) *)
-let getString lexbuf = (getLexeme lexbuf, getLocation lexbuf)
-(** Returns the current lexeme (as integer) and it's position (uses getLexeme) *)
-let getInt    lexbuf = (int_of_string (getLexeme lexbuf), getLocation lexbuf)
-(** Returns the current lexeme (as id or as keyword) and it's position (uses getString) *)
-let getIdKeyword lexbuf =
-  let s,loc = getString lexbuf in
-  if Hashtbl.mem keyword_table s then
-    (Hashtbl.find keyword_table s) loc
-  else ID(s,loc)
-(** Appends the current lexeme to the line buffer and returns it's position *)
-let storeToken lexbuf =
-  let _ = getLexeme lexbuf in
-  getLocation lexbuf
+
+(** Returs the token given the current token kind *)
+let makeToken kind lexbuf =
+  { kind = kind; value = getLexeme lexbuf; loc = getLocation lexbuf; contents = PEmpty }
+
+(** Returs the a keyword token if that's the case otherwise and id token *)
+let makeIdToken lexbuf =
+  let s = getLexeme lexbuf in
+  let kind =
+    if Hashtbl.mem keyword_table s then
+      Hashtbl.find keyword_table s
+    else ID
+  in
+  { kind = kind; value = getLexeme lexbuf; loc = getLocation lexbuf; contents = PEmpty }
 
 (* Functions for testing the tokenizer *)
 let tokenizeString tokenizer str =
@@ -123,29 +93,24 @@ let tokenizeString tokenizer str =
 
 (** Returns a string representation of the token *)
 let tokenToString l =
-  match l with
-  | EOF -> "'eof' "
-  | INT(i,_) -> "'"^(string_of_int i)^"' "
-  | REAL(r,_)-> "'"^r^"' "
-  | ID(s,_)  -> "'"^s^"' "
-  | FUN(_)   -> "'$fun' "
-  | MEM(_)   -> "'$mem' "
-  | VAL(_)   -> "'$val' "
-  | LBRAC(_) -> "'{' "
-  | RBRAC(_) -> "'}' "
-  | LPAREN(_)-> "'(' "
-  | RPAREN(_)-> "')' "
-  | COLON(_) -> "':' "
-  | SEMI(_)  -> "';' "
-  | COMMA(_) -> "',' "
-  | EQUAL(_) -> "'=' "
-  | OPLOG0(o,_) -> "'"^o^"' "
-  | OPLOG1(o,_) -> "'"^o^"' "
-  | OPCOMP(o,_) -> "'"^o^"' "
-  | OPBIT0(o,_) -> "'"^o^"' "
-  | OPBIT1(o,_) -> "'"^o^"' "
-  | OPARIT0(o,_) -> "'"^o^"' "
-  | OPARIT1(o,_) -> "'"^o^"' "
+  match l.kind with
+  | EOF   -> "'eof' "
+  | INT   -> "'"^l.value^"' "
+  | REAL  -> "'"^l.value^"' "
+  | ID    -> "'"^l.value^"' "
+  | FUN   -> "'$fun' "
+  | MEM   -> "'$mem' "
+  | VAL   -> "'$val' "
+  | LBRAC -> "'{' "
+  | RBRAC -> "'}' "
+  | LPAREN-> "'(' "
+  | RPAREN-> "')' "
+  | COLON -> "':' "
+  | SEMI  -> "';' "
+  | COMMA -> "',' "
+  | EQUAL -> "'=' "
+  | OP    -> "'"^l.value^"' "
+
 (** Prints the list of tokens*)
 let rec printTokenList l =
   match l with
@@ -176,26 +141,26 @@ rule token =
       token lexbuf
     }
   | blank +     { let _ = getLexeme lexbuf in token lexbuf }
-  | '('         { LPAREN(storeToken lexbuf) }
-  | ')'         { RPAREN(storeToken lexbuf) }
-  | '{'         { LBRAC(storeToken lexbuf) }
-  | '}'         { RBRAC(storeToken lexbuf) }
-  | ':'         { COLON(storeToken lexbuf) }
-  | ';'         { SEMI(storeToken lexbuf) }
-  | ','         { COMMA(storeToken lexbuf) }
-  | '='         { EQUAL(storeToken lexbuf) }
-  | "||"        { OPLOG0(getString lexbuf) }
-  | "&&"        { OPLOG1(getString lexbuf) }
-  | "=="        { OPCOMP(getString lexbuf) }
-  | "<="        { OPCOMP(getString lexbuf) }
-  | ">="        { OPCOMP(getString lexbuf) }
-  | [ '<' '>' ] { OPCOMP(getString lexbuf) }
-  | '|'         { OPBIT1(getString lexbuf) }
-  | '&'         { OPBIT0(getString lexbuf) }
-  | [ '+' '-' ] { OPARIT1(getString lexbuf) }
-  | [ '*' '/' '%' ] { OPARIT0(getString lexbuf) }
-  | int         { INT(getInt lexbuf) }
-  | float       { REAL(getString lexbuf)}
+  | '('         { makeToken LPAREN lexbuf }
+  | ')'         { makeToken RPAREN lexbuf }
+  | '{'         { makeToken LBRAC lexbuf }
+  | '}'         { makeToken RBRAC lexbuf }
+  | ':'         { makeToken COLON lexbuf }
+  | ';'         { makeToken SEMI lexbuf }
+  | ','         { makeToken COMMA lexbuf }
+  | '='         { makeToken EQUAL lexbuf }
+  | "||"        { makeToken OP lexbuf }
+  | "&&"        { makeToken OP lexbuf }
+  | "=="        { makeToken OP lexbuf }
+  | "<="        { makeToken OP lexbuf }
+  | ">="        { makeToken OP lexbuf }
+  | [ '<' '>' ] { makeToken OP lexbuf }
+  | '|'         { makeToken OP lexbuf }
+  | '&'         { makeToken OP lexbuf }
+  | [ '+' '-' ] { makeToken OP lexbuf }
+  | [ '*' '/' '%' ] { makeToken OP lexbuf }
+  | int         { makeToken INT lexbuf }
+  | float       { makeToken REAL lexbuf }
   | startid idchar *
-                { getIdKeyword lexbuf }
-  | eof         { EOF }
+                { makeIdToken lexbuf }
+  | eof         { makeToken EOF lexbuf }
