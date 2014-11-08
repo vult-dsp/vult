@@ -25,7 +25,7 @@ open LexerVult
 open ParserVult
 open Types
 let main () =
-  let buffer = bufferFromString "-a+b*c+d" in
+  let buffer = bufferFromString "a(1,2)" in
   let result = expression 0 buffer in
   let e = getContents result in
   printParseExp e;

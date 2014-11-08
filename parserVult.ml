@@ -37,6 +37,13 @@ let skip buffer =
 
 let current buffer = buffer.peeked
 
+let consume buffer kind =
+  match buffer.peeked with
+  | t when t.kind=kind -> buffer.peeked <- token buffer.lexbuf
+  | _ -> failwith ""
+
+let peekKind buffer = (current buffer).kind
+
 let bufferFromString str =
   let lexbuf = Lexing.from_string str in
   { lexbuf = lexbuf; peeked = token lexbuf }
@@ -50,10 +57,10 @@ let getLbp token =
   | _      -> 0
 
 let getContents token =
-  match token.kind with
-  | INT  -> PInt(token.value,token.loc)
-  | ID   -> PId(token.value,token.loc)
-  | REAL -> PReal(token.value,token.loc)
+  match token.kind,token.contents with
+  | INT,PEmpty  -> PInt(token.value,token.loc)
+  | ID,PEmpty   -> PId(token.value,token.loc)
+  | REAL,PEmpty -> PReal(token.value,token.loc)
   | _    -> token.contents
 
 let rec expression rbp buffer =
@@ -75,6 +82,13 @@ and nud buffer token =
   match token.kind,token.value with
   | OP,"-" -> (* Unary minus *)
     unaryOp buffer token
+  | ID,_   -> (* Id or function call *)
+    begin
+      match peekKind buffer with
+      | LPAREN ->
+        functionCall buffer token
+      | _ -> token
+    end
   | _ -> token
 
 and led buffer token left =
@@ -82,6 +96,26 @@ and led buffer token left =
   | OP,_ -> (* Binary operators *)
     binaryOp buffer token left
   | _ -> token
+
+and functionCall buffer token =
+  let _ = skip buffer in
+  let args =
+    match peekKind buffer with
+    | RPAREN -> []
+    | _ -> expressionList buffer
+  in
+  let _ = consume buffer RPAREN in
+  { token with contents = PCall(token.value,args,token.loc) }
+
+and expressionList buffer =
+  let rec loop acc =
+    let e = getContents (expression 0 buffer) in
+    match peekKind buffer with
+    | COMMA ->
+      let _ = skip buffer in
+      loop (e::acc)
+    | _ -> List.rev (e::acc)
+  in loop []
 
 and unaryOp buffer token =
   let right = expression 70 buffer in
@@ -108,4 +142,14 @@ let rec printParseExp exp =
     print_string op;
     printParseExp e;
     print_string ")"
+  | PCall(id,args,_) ->
+    print_string id;
+    print_string "(";
+    printParseExpList args;
+    print_string ")"
   | _ -> print_string "Empty"
+and printParseExpList expl =
+  match expl with
+  | [] -> ()
+  | [h] -> printParseExp h
+  | h::t -> printParseExp h; print_string ", "; printParseExpList t
