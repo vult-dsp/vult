@@ -26,33 +26,41 @@ open LexerVult
 
 open Types
 
+(** Type containing the stream of tokens *)
 type lexer_stream =
   {
     lexbuf : Lexing.lexbuf;
     mutable peeked : token;
   }
 
+(** Skips one token *)
 let skip buffer =
   buffer.peeked <- token buffer.lexbuf
 
+(** Returns the current token in the buffer *)
 let current buffer = buffer.peeked
 
+(** Checks that the next token matches the given kind and skip it *)
 let consume buffer kind =
   match buffer.peeked with
   | t when t.kind=kind -> buffer.peeked <- token buffer.lexbuf
   | _ -> failwith ""
 
+(** Checks that the next token matches *)
 let expect buffer kind =
   match buffer.peeked with
   | t when t.kind=kind -> ()
   | _ -> failwith ""
 
+(** Returns the kind of the current token *)
 let peekKind buffer = (current buffer).kind
 
+(** Creates a token stream given a string *)
 let bufferFromString str =
   let lexbuf = Lexing.from_string str in
   { lexbuf = lexbuf; peeked = token lexbuf }
 
+(** Returns the left binding powers of the token *)
 let getLbp token =
   match token.kind,token.value with
   | OP,"||" -> 30
@@ -70,6 +78,7 @@ let getLbp token =
   | OP,"%"  -> 60
   | _       -> 0
 
+(** Get the contents (the expression) stored in the token *)
 let getContents token =
   match token.kind,token.contents with
   | INT,PEmpty  -> PInt(token.value,token.loc)
@@ -77,6 +86,7 @@ let getContents token =
   | REAL,PEmpty -> PReal(token.value,token.loc)
   | _    -> token.contents
 
+(** Parses an expression using a Pratt parser *)
 let rec expression rbp buffer =
   let current_token = current buffer in
   let _             = skip buffer in
@@ -92,6 +102,7 @@ let rec expression rbp buffer =
       left
   in loop next_token left (rbp < (getLbp next_token))
 
+(** Nud function for the Pratt parser *)
 and nud buffer token =
   match token.kind,token.value with
   | OP,"-" -> (* Unary minus *)
@@ -108,13 +119,14 @@ and nud buffer token =
     tuple buffer token
   | _ -> token
 
+(** Led function for the Pratt parser *)
 and led buffer token left =
   match token.kind,token.value with
   | OP,_ -> (* Binary operators *)
     binaryOp buffer token left
   | _ -> token
 
-(** tuple  (a,b) *)
+(** <tuple> := '(' <expression> [ ',' <expression> ] ')' *)
 and tuple buffer token =
   let elems =
     match peekKind buffer with
@@ -129,7 +141,7 @@ and tuple buffer token =
     | _   -> PTuple(elems)
   in { token with contents = result }
 
-(** foo(a,b,..,c) *)
+(** <functionCall> := <namedId> '(' <expressionList> ')' *)
 and functionCall buffer token id =
   let _ = skip buffer in
   let args =
@@ -140,15 +152,17 @@ and functionCall buffer token id =
   let _ = consume buffer RPAREN in
   { token with contents = PCall(id,args,token.loc) }
 
+(** <unaryOp> := OP <expression> *)
 and unaryOp buffer token =
   let right = expression 70 buffer in
   { token with contents = PUnOp("-",getContents right) }
 
+(** <binaryOp> := <expression> OP <expression> *)
 and binaryOp buffer token left =
   let right = expression (getLbp token) buffer in
   { token with contents = PBinOp(token.value,getContents left,getContents right) }
 
-(** a,b,c,..,n *)
+(** <expressionList> := <expression> [',' <expression> ] *)
 and expressionList buffer =
   let rec loop acc =
     let e = getContents (expression 0 buffer) in
@@ -158,6 +172,7 @@ and expressionList buffer =
       loop (e::acc)
     | _ -> List.rev (e::acc)
   in loop []
+
 (** namedId used when the first id token has been consumed *)
 and namedIdToken buffer token =
   match peekKind buffer with
@@ -170,14 +185,14 @@ and namedIdToken buffer token =
     NamedId(id1,id2)
   | _ -> SimpleId(token.value)
 
-(** namedId := <ID> [ ':' <ID>]?  *)
+(** namedId := <ID> [ ':' <ID>]  *)
 let namedId buffer =
   let _     = expect buffer ID in
   let token = current buffer in
   let _     = skip buffer in
   namedIdToken buffer token
 
-(** <valInit> := <namedId>[= <expression>] *)
+(** <valInit> := <namedId> [ '=' <expression>] *)
 let valInit buffer =
   let id    = namedId buffer in
   match peekKind buffer with
@@ -242,7 +257,7 @@ and stmt buffer =
   | MEM -> stmtMem     buffer
   | RET -> stmtReturn  buffer
   | IF  -> stmtIf      buffer
-  | FUN -> stmtFuntion buffer
+  | FUN -> stmtFunction buffer
   | _ -> failwith "stmt"
 
 (** <statementList> := '{' <statement> [<statement>] '}' *)
@@ -264,7 +279,8 @@ and stmtList buffer =
     let s = stmt buffer in
     [s]
 
-and stmtFuntion buffer =
+(** 'fun' <namedId> '(' <valInitList> ')' <stmtList> *)
+and stmtFunction buffer =
   let _    = consume buffer FUN in
   let name = namedId buffer in
   let _    = consume buffer LPAREN in
@@ -273,17 +289,19 @@ and stmtFuntion buffer =
   let body = stmtList buffer in
   StmtFun(name,args,body)
 
-
+(** Parses an expression given a string *)
 let parseExp s =
   let buffer = bufferFromString s in
   let result = expression 0 buffer in
   getContents result
 
+(** Parses an statement given a string *)
 let parseStmt s =
   let buffer = bufferFromString s in
   let result = stmt buffer in
   result
 
+(** Parses a list of statements given a string *)
 let parseStmtList s =
   let buffer = bufferFromString s in
   let result = stmtList buffer in
