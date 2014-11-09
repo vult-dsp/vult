@@ -55,12 +55,19 @@ let bufferFromString str =
 
 let getLbp token =
   match token.kind,token.value with
+  | OP,"||" -> 30
+  | OP,"&&" -> 30
+  | OP,"==" -> 40
+  | OP,"!=" -> 40
+  | OP,">"  -> 40
+  | OP,"<"  -> 40
+  | OP,">=" -> 40
+  | OP,"<=" -> 40
   | OP,"+"  -> 50
   | OP,"-"  -> 50
   | OP,"*"  -> 60
   | OP,"/"  -> 60
-  | OP,"||" -> 30
-  | OP,"&&" -> 30
+  | OP,"%"  -> 60
   | _       -> 0
 
 let getContents token =

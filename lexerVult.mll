@@ -158,6 +158,7 @@ rule token =
   | "||"        { makeToken OP lexbuf }
   | "&&"        { makeToken OP lexbuf }
   | "=="        { makeToken OP lexbuf }
+  | "!="        { makeToken OP lexbuf }
   | "<="        { makeToken OP lexbuf }
   | ">="        { makeToken OP lexbuf }
   | [ '<' '>' ] { makeToken OP lexbuf }

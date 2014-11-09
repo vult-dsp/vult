@@ -31,6 +31,7 @@ let main () =
   let _ = parsePrintExp "a:b()" in
   let _ = parsePrintExp "a:b(1,2)" in
   let _ = parsePrintExp "-a(1,2)+b*c+d/2" in
+  let _ = parsePrintExp "a+b>0&&a/b||a==b" in
   let _ = parsePrintExp "()" in
   let _ = parsePrintExp "(a)" in
   let _ = parsePrintExp "(a,b)" in
@@ -46,6 +47,7 @@ let main () =
   let _ = parsePrintStmtList "if(a) return 0;" in
   let _ = parsePrintStmtList "if(a) return false; else return true;" in
   let _ = parsePrintStmtList "fun add(a,b) return a+b;" in
+  let _ = parsePrintStmtList "fun add:int(a:int,b:int) return a+b;" in
   ()
 ;;
 main ();;
