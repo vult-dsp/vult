@@ -30,14 +30,18 @@ type location =
     end_pos   : position;
   }
 
+type named_id =
+  | SimpleId of string
+  | NamedId of string * string
+
 (** Parser syntax tree *)
 type parse_exp =
-  | PId    of string * location
+  | PId    of named_id * location
   | PInt   of string * location
   | PReal  of string * location
   | PBinOp of string * parse_exp * parse_exp
   | PUnOp  of string * parse_exp
-  | PCall  of string * parse_exp list * location
+  | PCall  of named_id * parse_exp list * location
   | PEmpty
 
 (** Tokens *)

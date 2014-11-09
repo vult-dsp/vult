@@ -25,10 +25,12 @@ open LexerVult
 open ParserVult
 open Types
 let main () =
-  let buffer = bufferFromString "a(1,2)" in
-  let result = expression 0 buffer in
-  let e = getContents result in
-  printParseExp e;
-  print_string "\n";
+  let _ = parsePrintExp "a" in
+  let _ = parsePrintExp "a:b" in
+  let _ = parsePrintExp "a(1,2)" in
+  let _ = parsePrintExp "a:b()" in
+  let _ = parsePrintExp "a:b(1,2)" in
+  let _ = parsePrintExp "-a(1,2)+b*c+d/2" in
+  ()
 ;;
 main ();;

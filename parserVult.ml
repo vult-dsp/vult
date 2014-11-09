@@ -42,6 +42,11 @@ let consume buffer kind =
   | t when t.kind=kind -> buffer.peeked <- token buffer.lexbuf
   | _ -> failwith ""
 
+let expect buffer kind =
+  match buffer.peeked with
+  | t when t.kind=kind -> ()
+  | _ -> failwith ""
+
 let peekKind buffer = (current buffer).kind
 
 let bufferFromString str =
@@ -59,7 +64,7 @@ let getLbp token =
 let getContents token =
   match token.kind,token.contents with
   | INT,PEmpty  -> PInt(token.value,token.loc)
-  | ID,PEmpty   -> PId(token.value,token.loc)
+  | ID,PEmpty   -> PId(SimpleId(token.value),token.loc)
   | REAL,PEmpty -> PReal(token.value,token.loc)
   | _    -> token.contents
 
@@ -83,11 +88,12 @@ and nud buffer token =
   | OP,"-" -> (* Unary minus *)
     unaryOp buffer token
   | ID,_   -> (* Id or function call *)
+    let id = namedId buffer token in
     begin
       match peekKind buffer with
       | LPAREN ->
-        functionCall buffer token
-      | _ -> token
+        functionCall buffer token id
+      | _ -> { token with contents = PId(id,token.loc)}
     end
   | _ -> token
 
@@ -97,7 +103,8 @@ and led buffer token left =
     binaryOp buffer token left
   | _ -> token
 
-and functionCall buffer token =
+(** foo(a,b,..,c) *)
+and functionCall buffer token id =
   let _ = skip buffer in
   let args =
     match peekKind buffer with
@@ -105,7 +112,18 @@ and functionCall buffer token =
     | _ -> expressionList buffer
   in
   let _ = consume buffer RPAREN in
-  { token with contents = PCall(token.value,args,token.loc) }
+  { token with contents = PCall(id,args,token.loc) }
+(** a:b *)
+and namedId buffer token =
+  match peekKind buffer with
+  | COLON ->
+    let _ = skip buffer in
+    let _ = expect buffer ID in
+    let id1 = token.value in
+    let id2 = (current buffer).value in
+    let _ = skip buffer in
+    NamedId(id1,id2)
+  | _ -> SimpleId(token.value)
 
 and expressionList buffer =
   let rec loop acc =
@@ -126,9 +144,17 @@ and binaryOp buffer token left =
   { token with contents = PBinOp(token.value,getContents left,getContents right) }
 
 
+let printNamedId id =
+  match id with
+  | SimpleId(id1) -> print_string id1
+  | NamedId(id1,id2) ->
+    print_string id1;
+    print_string ":";
+    print_string id2
+
 let rec printParseExp exp =
   match exp with
-  | PId(s,_)   -> print_string s
+  | PId(s,_)   -> printNamedId s
   | PInt(s,_)  -> print_string s
   | PReal(s,_) -> print_string s
   | PBinOp(op,e1,e2) ->
@@ -143,7 +169,7 @@ let rec printParseExp exp =
     printParseExp e;
     print_string ")"
   | PCall(id,args,_) ->
-    print_string id;
+    printNamedId id;
     print_string "(";
     printParseExpList args;
     print_string ")"
@@ -152,4 +178,11 @@ and printParseExpList expl =
   match expl with
   | [] -> ()
   | [h] -> printParseExp h
-  | h::t -> printParseExp h; print_string ", "; printParseExpList t
+  | h::t -> printParseExp h; print_string ","; printParseExpList t
+
+let parsePrintExp s =
+  let buffer = bufferFromString s in
+  let result = expression 0 buffer in
+  let e = getContents result in
+  printParseExp e;
+  print_string "\n"
