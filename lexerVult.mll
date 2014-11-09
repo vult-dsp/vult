@@ -47,6 +47,7 @@ let keyword_table =
       "fun",FUN;
       "mem",MEM;
       "val",VAL;
+      "return",RET;
     ] in
   let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
   table
@@ -101,6 +102,7 @@ let tokenToString l =
   | FUN   -> "'$fun' "
   | MEM   -> "'$mem' "
   | VAL   -> "'$val' "
+  | RET   -> "'$return' "
   | LBRAC -> "'{' "
   | RBRAC -> "'}' "
   | LPAREN-> "'(' "

@@ -131,17 +131,13 @@ and functionCall buffer token id =
   let _ = consume buffer RPAREN in
   { token with contents = PCall(id,args,token.loc) }
 
-(** a:b *)
-and namedId buffer token =
-  match peekKind buffer with
-  | COLON ->
-    let _ = skip buffer in
-    let _ = expect buffer ID in
-    let id1 = token.value in
-    let id2 = (current buffer).value in
-    let _ = skip buffer in
-    NamedId(id1,id2)
-  | _ -> SimpleId(token.value)
+and unaryOp buffer token =
+  let right = expression 70 buffer in
+  { token with contents = PUnOp("-",getContents right) }
+
+and binaryOp buffer token left =
+  let right = expression (getLbp token) buffer in
+  { token with contents = PBinOp(token.value,getContents left,getContents right) }
 
 (** a,b,c,..,n *)
 and expressionList buffer =
@@ -154,59 +150,90 @@ and expressionList buffer =
     | _ -> List.rev (e::acc)
   in loop []
 
-and unaryOp buffer token =
-  let right = expression 70 buffer in
-  { token with contents = PUnOp("-",getContents right) }
+(** namedId := <ID> [ ':' <ID>]?  *)
+and namedId buffer token =
+  match peekKind buffer with
+  | COLON ->
+    let _   = skip buffer in
+    let _   = expect buffer ID in
+    let id1 = token.value in
+    let id2 = (current buffer).value in
+    let _   = skip buffer in
+    NamedId(id1,id2)
+  | _ -> SimpleId(token.value)
 
-and binaryOp buffer token left =
-  let right = expression (getLbp token) buffer in
-  { token with contents = PBinOp(token.value,getContents left,getContents right) }
+(** <valInit> := <namedId>[= <expression>] *)
+let valInit buffer =
+  let token = current buffer in
+  let _     = skip buffer in
+  let id    = namedId buffer token in
+  match peekKind buffer with
+  | EQUAL ->
+    let _ = skip buffer in
+    let e = getContents (expression 0 buffer) in
+    ValInit(id,e)
+  | _ ->
+    ValNoInit(id)
 
+(** <valInitList> := <valInit> [ ',' <valInit>] *)
+let valInitList buffer =
+  let rec loop acc =
+    let e = valInit buffer in
+    match peekKind buffer with
+    | COMMA ->
+      let _ = skip buffer in
+      loop (e::acc)
+    | _ -> List.rev (e::acc)
+  in let _ = expect buffer ID in
+  loop []
 
-let printNamedId id =
-  match id with
-  | SimpleId(id1) -> print_string id1
-  | NamedId(id1,id2) ->
-    print_string id1;
-    print_string ":";
-    print_string id2
+(** <statement> := | 'val' <valInitList> *)
+let stmtVal buffer =
+  let _ = consume buffer VAL in
+  let vals = valInitList buffer in
+  StmtVal(vals)
 
-let rec printParseExp exp =
-  match exp with
-  | PId(s,_)   -> printNamedId s
-  | PInt(s,_)  -> print_string s
-  | PReal(s,_) -> print_string s
-  | PBinOp(op,e1,e2) ->
-    print_string "(";
-    printParseExp e1;
-    print_string op;
-    printParseExp e2;
-    print_string ")"
-  | PUnOp(op,e) ->
-    print_string "(";
-    print_string op;
-    printParseExp e;
-    print_string ")"
-  | PCall(id,args,_) ->
-    printNamedId id;
-    print_string "(";
-    printParseExpList args;
-    print_string ")"
-  | PUnit -> print_string "()"
-  | PTuple(elems) ->
-    print_string "(";
-    printParseExpList elems;
-    print_string ")"
-  | _ -> print_string "Empty"
-and printParseExpList expl =
-  match expl with
-  | [] -> ()
-  | [h] -> printParseExp h
-  | h::t -> printParseExp h; print_string ","; printParseExpList t
+(** <statement> := | 'mem' <valInitList> *)
+let stmtMem buffer =
+  let _ = consume buffer MEM in
+  let vals = valInitList buffer in
+  StmtMem(vals)
 
-let parsePrintExp s =
+(** <statement> := | 'return' <expression> *)
+let stmtReturn buffer =
+  let _ = consume buffer RET in
+  let e = expression 0 buffer in
+  StmtReturn(getContents e)
+
+let stmt buffer =
+  match peekKind buffer with
+  | VAL -> stmtVal buffer
+  | MEM -> stmtMem buffer
+  | RET -> stmtReturn buffer
+  | _ -> failwith "stmt"
+
+let parseExp s =
   let buffer = bufferFromString s in
   let result = expression 0 buffer in
-  let e = getContents result in
-  printParseExp e;
+  getContents result
+
+let parseStmt s =
+  let buffer = bufferFromString s in
+  let result = stmt buffer in
+  result
+
+let parsePrintExp s =
+  let e = parseExp s in
+  let print_buffer = PrintTypes.makePrintBuffer () in
+  PrintTypes.expressionStr print_buffer e;
+  let s = PrintTypes.contents print_buffer in
+  print_string s;
+  print_string "\n"
+
+let parsePrintStmt s =
+  let e = parseStmt s in
+  let print_buffer = PrintTypes.makePrintBuffer () in
+  PrintTypes.stmtStr print_buffer e;
+  let s = PrintTypes.contents print_buffer in
+  print_string s;
   print_string "\n"

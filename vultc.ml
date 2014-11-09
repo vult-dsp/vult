@@ -34,6 +34,12 @@ let main () =
   let _ = parsePrintExp "()" in
   let _ = parsePrintExp "(a)" in
   let _ = parsePrintExp "(a,b)" in
+  let _ = parsePrintStmt "val a" in
+  let _ = parsePrintStmt "mem a:num,b,c" in
+  let _ = parsePrintStmt "val a:num=0" in
+  let _ = parsePrintStmt "mem a=0,b:num=0" in
+  let _ = parsePrintStmt "return -a" in
+  let _ = parsePrintStmt "return (a,0)" in
   ()
 ;;
 main ();;

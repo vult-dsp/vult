@@ -46,6 +46,15 @@ type parse_exp =
   | PTuple of parse_exp list
   | PEmpty
 
+type val_init =
+  | ValInit of named_id * parse_exp
+  | ValNoInit of named_id
+
+type stmt =
+  | StmtVal of val_init list
+  | StmtMem of val_init list
+  | StmtReturn of parse_exp
+
 (** Tokens *)
 type token_enum =
   | EOF
@@ -55,6 +64,7 @@ type token_enum =
   | FUN
   | MEM
   | VAL
+  | RET
   | LBRAC
   | RBRAC
   | LPAREN
