@@ -31,6 +31,9 @@ let main () =
   let _ = parsePrintExp "a:b()" in
   let _ = parsePrintExp "a:b(1,2)" in
   let _ = parsePrintExp "-a(1,2)+b*c+d/2" in
+  let _ = parsePrintExp "()" in
+  let _ = parsePrintExp "(a)" in
+  let _ = parsePrintExp "(a,b)" in
   ()
 ;;
 main ();;

@@ -95,6 +95,8 @@ and nud buffer token =
         functionCall buffer token id
       | _ -> { token with contents = PId(id,token.loc)}
     end
+  | LPAREN,_ ->
+    tuple buffer token
   | _ -> token
 
 and led buffer token left =
@@ -102,6 +104,22 @@ and led buffer token left =
   | OP,_ -> (* Binary operators *)
     binaryOp buffer token left
   | _ -> token
+
+(** tuple  (a,b) *)
+and tuple buffer token =
+  let _ = skip buffer in
+  let elems =
+    match peekKind buffer with
+    | RPAREN -> []
+    | _ -> expressionList buffer
+  in
+  let _ = consume buffer RPAREN in
+  let result =
+    match elems with
+    | []  -> PUnit
+    | [h] -> h
+    | _   -> PTuple(elems)
+  in { token with contents = result }
 
 (** foo(a,b,..,c) *)
 and functionCall buffer token id =
@@ -172,6 +190,11 @@ let rec printParseExp exp =
     printNamedId id;
     print_string "(";
     printParseExpList args;
+    print_string ")"
+  | PUnit -> print_string "()"
+  | PTuple(elems) ->
+    print_string "(";
+    printParseExpList elems;
     print_string ")"
   | _ -> print_string "Empty"
 and printParseExpList expl =

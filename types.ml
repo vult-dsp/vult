@@ -42,6 +42,8 @@ type parse_exp =
   | PBinOp of string * parse_exp * parse_exp
   | PUnOp  of string * parse_exp
   | PCall  of named_id * parse_exp list * location
+  | PUnit
+  | PTuple of parse_exp list
   | PEmpty
 
 (** Tokens *)
