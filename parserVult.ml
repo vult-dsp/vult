@@ -107,7 +107,6 @@ and led buffer token left =
 
 (** tuple  (a,b) *)
 and tuple buffer token =
-  let _ = skip buffer in
   let elems =
     match peekKind buffer with
     | RPAREN -> []
@@ -131,6 +130,7 @@ and functionCall buffer token id =
   in
   let _ = consume buffer RPAREN in
   { token with contents = PCall(id,args,token.loc) }
+
 (** a:b *)
 and namedId buffer token =
   match peekKind buffer with
@@ -143,6 +143,7 @@ and namedId buffer token =
     NamedId(id1,id2)
   | _ -> SimpleId(token.value)
 
+(** a,b,c,..,n *)
 and expressionList buffer =
   let rec loop acc =
     let e = getContents (expression 0 buffer) in
