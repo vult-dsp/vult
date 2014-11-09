@@ -41,6 +41,11 @@ let main () =
   let _ = parsePrintStmtList "return -a;" in
   let _ = parsePrintStmtList "return (a,0);" in
   let _ = parsePrintStmtList "{ val a =0; return a; }" in
+  let _ = parsePrintStmtList "{ return a; }" in
+  let _ = parsePrintStmtList "if(a){ val a=0;return a;}" in
+  let _ = parsePrintStmtList "if(a) return 0;" in
+  let _ = parsePrintStmtList "if(a) return false; else return true;" in
+  let _ = parsePrintStmtList "fun add(a,b) return a+b;" in
   ()
 ;;
 main ();;

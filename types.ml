@@ -54,6 +54,8 @@ type stmt =
   | StmtVal of val_init list
   | StmtMem of val_init list
   | StmtReturn of parse_exp
+  | StmtIf  of parse_exp * stmt list * (stmt list) option
+  | StmtFun of named_id * val_init list * stmt list
 
 (** Tokens *)
 type token_enum =
@@ -65,6 +67,8 @@ type token_enum =
   | MEM
   | VAL
   | RET
+  | IF
+  | ELSE
   | LBRAC
   | RBRAC
   | LPAREN

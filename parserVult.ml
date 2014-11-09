@@ -90,7 +90,7 @@ and nud buffer token =
   | OP,"-" -> (* Unary minus *)
     unaryOp buffer token
   | ID,_   -> (* Id or function call *)
-    let id = namedId buffer token in
+    let id = namedIdToken buffer token in
     begin
       match peekKind buffer with
       | LPAREN ->
@@ -151,9 +151,8 @@ and expressionList buffer =
       loop (e::acc)
     | _ -> List.rev (e::acc)
   in loop []
-
-(** namedId := <ID> [ ':' <ID>]?  *)
-and namedId buffer token =
+(** namedId used when the first id token has been consumed *)
+and namedIdToken buffer token =
   match peekKind buffer with
   | COLON ->
     let _   = skip buffer in
@@ -164,11 +163,16 @@ and namedId buffer token =
     NamedId(id1,id2)
   | _ -> SimpleId(token.value)
 
-(** <valInit> := <namedId>[= <expression>] *)
-let valInit buffer =
+(** namedId := <ID> [ ':' <ID>]?  *)
+let namedId buffer =
+  let _     = expect buffer ID in
   let token = current buffer in
   let _     = skip buffer in
-  let id    = namedId buffer token in
+  namedIdToken buffer token
+
+(** <valInit> := <namedId>[= <expression>] *)
+let valInit buffer =
+  let id    = namedId buffer in
   match peekKind buffer with
   | EQUAL ->
     let _ = skip buffer in
@@ -210,16 +214,32 @@ let stmtReturn buffer =
   let _ = consume buffer SEMI in
   StmtReturn(getContents e)
 
-(** <statement> := ... *)
-let stmt buffer =
+(** <statement> := 'if' '(' <expression> ')' <statementList> ['else' <statementList> ]*)
+let rec stmtIf buffer =
+  let _    = consume buffer IF in
+  let _    = consume buffer LPAREN in
+  let cond = getContents (expression 0 buffer) in
+  let _    = consume buffer RPAREN in
+  let tstm = stmtList buffer in
   match peekKind buffer with
-  | VAL -> stmtVal buffer
-  | MEM -> stmtMem buffer
-  | RET -> stmtReturn buffer
+  | ELSE ->
+    let _ = consume buffer ELSE in
+    let fstm = stmtList buffer in
+    StmtIf(cond,tstm,Some(fstm))
+  | _ -> StmtIf(cond,tstm,None)
+
+(** <statement> := ... *)
+and stmt buffer =
+  match peekKind buffer with
+  | VAL -> stmtVal     buffer
+  | MEM -> stmtMem     buffer
+  | RET -> stmtReturn  buffer
+  | IF  -> stmtIf      buffer
+  | FUN -> stmtFuntion buffer
   | _ -> failwith "stmt"
 
 (** <statementList> := '{' <statement> [<statement>] '}' *)
-let stmtList buffer =
+and stmtList buffer =
   let rec loop acc =
     match peekKind buffer with
     | RBRAC ->
@@ -236,6 +256,16 @@ let stmtList buffer =
   | _ ->
     let s = stmt buffer in
     [s]
+
+and stmtFuntion buffer =
+  let _    = consume buffer FUN in
+  let name = namedId buffer in
+  let _    = consume buffer LPAREN in
+  let args = valInitList buffer in
+  let _    = consume buffer RPAREN in
+  let body = stmtList buffer in
+  StmtFun(name,args,body)
+
 
 let parseExp s =
   let buffer = bufferFromString s in

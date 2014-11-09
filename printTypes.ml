@@ -147,8 +147,30 @@ let rec stmtStr buffer stmt =
     append buffer "return ";
     expressionStr buffer e;
     append buffer ";"
+  | StmtIf(cond,true_stmt,None) ->
+    append buffer "if(";
+    expressionStr buffer cond;
+    append buffer ") ";
+    stmtListStr buffer true_stmt
+  | StmtIf(cond,true_stmt,Some(false_stmt)) ->
+    append buffer "if(";
+    expressionStr buffer cond;
+    append buffer ") ";
+    stmtListStr buffer true_stmt;
+    newline buffer;
+    append buffer "else ";
+    stmtListStr buffer false_stmt;
+  | StmtFun(name,args,body) ->
+    append buffer "fun ";
+    namedIdStr buffer name;
+    append buffer "(";
+    valInitStrList buffer args;
+    append buffer ") ";
+    stmtListStr buffer body
 
-let stmtListStr buffer l =
+
+
+and stmtListStr buffer l =
   match l with
   | [h] -> stmtStr buffer h
   | _ ->
