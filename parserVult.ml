@@ -55,11 +55,13 @@ let bufferFromString str =
 
 let getLbp token =
   match token.kind,token.value with
-  | OP,"+" -> 50
-  | OP,"-" -> 50
-  | OP,"*" -> 60
-  | OP,"/" -> 60
-  | _      -> 0
+  | OP,"+"  -> 50
+  | OP,"-"  -> 50
+  | OP,"*"  -> 60
+  | OP,"/"  -> 60
+  | OP,"||" -> 30
+  | OP,"&&" -> 30
+  | _       -> 0
 
 let getContents token =
   match token.kind,token.contents with
@@ -187,30 +189,53 @@ let valInitList buffer =
   in let _ = expect buffer ID in
   loop []
 
-(** <statement> := | 'val' <valInitList> *)
+(** <statement> := | 'val' <valInitList> ';' *)
 let stmtVal buffer =
   let _ = consume buffer VAL in
   let vals = valInitList buffer in
+  let _ = consume buffer SEMI in
   StmtVal(vals)
 
-(** <statement> := | 'mem' <valInitList> *)
+(** <statement> := | 'mem' <valInitList> ';' *)
 let stmtMem buffer =
   let _ = consume buffer MEM in
   let vals = valInitList buffer in
+  let _ = consume buffer SEMI in
   StmtMem(vals)
 
-(** <statement> := | 'return' <expression> *)
+(** <statement> := | 'return' <expression> ';' *)
 let stmtReturn buffer =
   let _ = consume buffer RET in
   let e = expression 0 buffer in
+  let _ = consume buffer SEMI in
   StmtReturn(getContents e)
 
+(** <statement> := ... *)
 let stmt buffer =
   match peekKind buffer with
   | VAL -> stmtVal buffer
   | MEM -> stmtMem buffer
   | RET -> stmtReturn buffer
   | _ -> failwith "stmt"
+
+(** <statementList> := '{' <statement> [<statement>] '}' *)
+let stmtList buffer =
+  let rec loop acc =
+    match peekKind buffer with
+    | RBRAC ->
+      let _ = skip buffer in
+      List.rev acc
+    | _ ->
+      let s = stmt buffer in
+      loop (s::acc)
+  in
+  match peekKind buffer with
+  | LBRAC ->
+    let _ = skip buffer in
+    loop []
+  | _ ->
+    let s = stmt buffer in
+    [s]
 
 let parseExp s =
   let buffer = bufferFromString s in
@@ -222,6 +247,11 @@ let parseStmt s =
   let result = stmt buffer in
   result
 
+let parseStmtList s =
+  let buffer = bufferFromString s in
+  let result = stmtList buffer in
+  result
+
 let parsePrintExp s =
   let e = parseExp s in
   let print_buffer = PrintTypes.makePrintBuffer () in
@@ -230,10 +260,10 @@ let parsePrintExp s =
   print_string s;
   print_string "\n"
 
-let parsePrintStmt s =
-  let e = parseStmt s in
+let parsePrintStmtList s =
+  let e = parseStmtList s in
   let print_buffer = PrintTypes.makePrintBuffer () in
-  PrintTypes.stmtStr print_buffer e;
+  PrintTypes.stmtListStr print_buffer e;
   let s = PrintTypes.contents print_buffer in
   print_string s;
   print_string "\n"

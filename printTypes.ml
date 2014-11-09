@@ -32,16 +32,17 @@ type print_buffer =
     buffer : Buffer.t;
     mutable indent : int;
     mutable space  : string;
+    mutable insert : bool;
   }
 
 (** Creates a print buffer *)
 let makePrintBuffer () =
-  { buffer = Buffer.create 100; indent = 0; space = "" }
+  { buffer = Buffer.create 100; indent = 0; space = ""; insert = false }
 
 (** Inserts a new line to the print buffer *)
 let newline buffer =
   Buffer.add_string buffer.buffer "\n";
-  Buffer.add_string buffer.buffer buffer.space
+  buffer.insert <- true
 
 (** Inserts a new line and indents all strings appended *)
 let indent buffer =
@@ -58,6 +59,11 @@ let outdent buffer =
 
 (** Inserts a string to the print buffer *)
 let append buffer s =
+  if buffer.insert then
+    begin
+      Buffer.add_string buffer.buffer buffer.space;
+      buffer.insert <- false
+    end;
   Buffer.add_string buffer.buffer s
 
 (** Returns the contents of the print buffer *)
@@ -131,10 +137,31 @@ let rec stmtStr buffer stmt =
   match stmt with
   | StmtVal(elems) ->
     append buffer "val ";
-    valInitStrList buffer elems
+    valInitStrList buffer elems;
+    append buffer ";"
   | StmtMem(elems) ->
     append buffer "mem ";
-    valInitStrList buffer elems
+    valInitStrList buffer elems;
+    append buffer ";"
   | StmtReturn(e) ->
     append buffer "return ";
-    expressionStr buffer e
+    expressionStr buffer e;
+    append buffer ";"
+
+let stmtListStr buffer l =
+  match l with
+  | [h] -> stmtStr buffer h
+  | _ ->
+    let rec loop l =
+      match l with
+      | [] -> ()
+      | h::t ->
+        stmtStr buffer h;
+        newline buffer;
+        loop t
+    in
+    append buffer "{";
+    indent buffer;
+    loop l;
+    outdent buffer;
+    append buffer "}";
