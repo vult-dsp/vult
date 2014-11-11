@@ -71,7 +71,7 @@ let contents buffer =
   Buffer.contents buffer.buffer
 
 (** Adds to the print buffer a namedId *)
-let namedIdStr buffer id =
+let namedIdBuff buffer id =
   match id with
   | SimpleId(id1) -> append buffer id1
   | NamedId(id1,id2) ->
@@ -90,94 +90,94 @@ let rec printList buffer f sep l =
     printList buffer f sep t
 
 (** Adds to the print buffer an expression *)
-let rec expressionStr buffer exp =
+let rec expressionBuff buffer exp =
   match exp with
-  | PId(s,_)   -> namedIdStr buffer s
+  | PId(s,_)   -> namedIdBuff buffer s
   | PInt(s,_)  -> append buffer s
   | PReal(s,_) -> append buffer s
   | PBinOp(op,e1,e2) ->
     append buffer "(";
-    expressionStr buffer e1;
+    expressionBuff buffer e1;
     append buffer op;
-    expressionStr buffer e2;
+    expressionBuff buffer e2;
     append buffer ")"
   | PUnOp(op,e) ->
     append buffer "(";
     append buffer op;
-    expressionStr buffer e;
+    expressionBuff buffer e;
     append buffer ")"
   | PCall(id,args,_) ->
-    namedIdStr buffer id;
+    namedIdBuff buffer id;
     append buffer "(";
-    expressionListStr buffer args;
+    expressionListBuff buffer args;
     append buffer ")"
   | PUnit -> append buffer "()"
   | PTuple(elems) ->
     append buffer "(";
-    expressionListStr buffer elems;
+    expressionListBuff buffer elems;
     append buffer ")"
   | _ -> append buffer "Empty"
 
 (** Adds to the print buffer an expression list *)
-and expressionListStr buffer expl =
-  printList buffer expressionStr "," expl
+and expressionListBuff buffer expl =
+  printList buffer expressionBuff "," expl
 
 
-let rec valInitStr buffer v =
+let rec valInitBuff buffer v =
   match v with
-  | ValNoInit(id) -> namedIdStr buffer id
+  | ValNoInit(id) -> namedIdBuff buffer id
   | ValInit(id,e) ->
-    namedIdStr buffer id;
+    namedIdBuff buffer id;
     append buffer "=";
-    expressionStr buffer e
-and valInitStrList buffer l =
-  printList buffer valInitStr "," l
+    expressionBuff buffer e
+and valInitBuffList buffer l =
+  printList buffer valInitBuff "," l
 
-let rec stmtStr buffer stmt =
+let rec stmtBuff buffer stmt =
   match stmt with
   | StmtVal(elems) ->
     append buffer "val ";
-    valInitStrList buffer elems;
+    valInitBuffList buffer elems;
     append buffer ";"
   | StmtMem(elems) ->
     append buffer "mem ";
-    valInitStrList buffer elems;
+    valInitBuffList buffer elems;
     append buffer ";"
   | StmtReturn(e) ->
     append buffer "return ";
-    expressionStr buffer e;
+    expressionBuff buffer e;
     append buffer ";"
   | StmtIf(cond,true_stmt,None) ->
     append buffer "if(";
-    expressionStr buffer cond;
+    expressionBuff buffer cond;
     append buffer ") ";
-    stmtListStr buffer true_stmt
+    stmtListBuff buffer true_stmt
   | StmtIf(cond,true_stmt,Some(false_stmt)) ->
     append buffer "if(";
-    expressionStr buffer cond;
+    expressionBuff buffer cond;
     append buffer ") ";
-    stmtListStr buffer true_stmt;
+    stmtListBuff buffer true_stmt;
     newline buffer;
     append buffer "else ";
-    stmtListStr buffer false_stmt;
+    stmtListBuff buffer false_stmt;
   | StmtFun(name,args,body) ->
     append buffer "fun ";
-    namedIdStr buffer name;
+    namedIdBuff buffer name;
     append buffer "(";
-    valInitStrList buffer args;
+    valInitBuffList buffer args;
     append buffer ") ";
-    stmtListStr buffer body
+    stmtListBuff buffer body
 
 
-and stmtListStr buffer l =
+and stmtListBuff buffer l =
   match l with
-  | [h] -> stmtStr buffer h
+  | [h] -> stmtBuff buffer h
   | _ ->
     let rec loop l =
       match l with
       | [] -> ()
       | h::t ->
-        stmtStr buffer h;
+        stmtBuff buffer h;
         newline buffer;
         loop t
     in
@@ -185,4 +185,14 @@ and stmtListStr buffer l =
     indent buffer;
     loop l;
     outdent buffer;
-    append buffer "}";
+    append buffer "}"
+
+let stmtListStr e =
+  let print_buffer = makePrintBuffer () in
+  stmtListBuff print_buffer e;
+  contents print_buffer
+
+let expressionStr e =
+  let print_buffer = makePrintBuffer () in
+  expressionBuff print_buffer e;
+  contents print_buffer

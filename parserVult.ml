@@ -60,6 +60,11 @@ let bufferFromString str =
   let lexbuf = Lexing.from_string str in
   { lexbuf = lexbuf; peeked = token lexbuf }
 
+(** Creates a token stream given a channel *)
+let bufferFromChannel chan =
+  let lexbuf = Lexing.from_channel chan in
+  { lexbuf = lexbuf; peeked = token lexbuf }
+
 (** Returns the left binding powers of the token *)
 let getLbp token =
   match token.kind,token.value with
@@ -309,12 +314,20 @@ let parseStmtList s =
 
 let parseDumpExp s =
   let e = parseExp s in
-  let print_buffer = PrintTypes.makePrintBuffer () in
-  PrintTypes.expressionStr print_buffer e;
-  PrintTypes.contents print_buffer
+  PrintTypes.expressionStr e
 
 let parseDumpStmtList s =
   let e = parseStmtList s in
-  let print_buffer = PrintTypes.makePrintBuffer () in
-  PrintTypes.stmtListStr print_buffer e;
-  PrintTypes.contents print_buffer
+  PrintTypes.stmtListStr e
+
+let parseFile filename =
+  let chan = open_in filename in
+  try
+    let result = bufferFromChannel chan |> stmtList in
+    let _ = close_in chan in
+    result
+  with
+  | _ ->
+    let _ = close_in chan in
+    failwith "Failed to parse the file"
+
