@@ -8,4 +8,41 @@ fun clip(low,high,value){
     return min(max(low,value),high);
 }
 
+fun biquad(x:num,b0,b1,b2,a1,a2){
+    mem w1,w2;
+    val w0 = x -a1*w1-a2*w2;
+    val y0 = b0*w0 + b1*w1 + b2*w2;
+    w2, w1 = w1, w0;
+    return y0;
+}
+
+fun lp6(x,fc) {
+    val fcc:num = max(fc,0);
+    fcc = min(fcc,samplerate);
+    val k = tan(pi*fcc/samplerate);
+    val b0 = k/(k+1);
+    val b1 = k/(k+1);
+    val a1 = (k-1)/(k+1);
+    return biquad(x,b0,b1,0,a1,0);
+}
+
+fun change:bool(x) { mem pre_x; val v = pre_x!=x; pre_x = x; return v; }
+
+fun lp12(x,fc,q) {
+    mem b0,b1,b2,a1,a2;
+    if (change(fc) || change(q)) {
+        val qc = max(sqrt(2),q+sqrt(2));
+        val fcc = clip(0,samplerate,fc);
+        val k = tan(pi*fcc/samplerate);
+        val den = k*k*qc+k+qc;
+        b0 = k*k*qc/den;
+        b1 = 2*b0;
+        b2 = b0;
+        a1 = 2*qc*(k*k-1)/den;
+        a2 = (k*k*qc-k+qc)/den;
+    }
+    return biquad(x,b0,b1,b2,a1,a2);
+}
+
+
 }

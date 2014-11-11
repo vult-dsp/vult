@@ -27,10 +27,10 @@ open LexerVult
 open Types
 
 (** Type containing the stream of tokens *)
-type lexer_stream =
+type 'a lexer_stream =
   {
     lexbuf : Lexing.lexbuf;
-    mutable peeked : token;
+    mutable peeked : 'a token;
   }
 
 (** Skips one token *)
@@ -68,6 +68,7 @@ let bufferFromChannel chan =
 (** Returns the left binding powers of the token *)
 let getLbp token =
   match token.kind,token.value with
+  | COMMA,_ -> 20
   | OP,"||" -> 30
   | OP,"&&" -> 30
   | OP,"==" -> 40
@@ -121,7 +122,16 @@ and nud buffer token =
       | _ -> { token with contents = PId(id,token.loc)}
     end
   | LPAREN,_ ->
-    tuple buffer token
+    begin
+      match peekKind buffer with
+      | RPAREN ->
+        let _ = skip buffer in
+        { token with contents = PUnit }
+      | _ ->
+        let e = getContents (expression 0 buffer) in
+        let _ = consume buffer RPAREN in
+        { token with contents = e }
+    end
   | _ -> token
 
 (** Led function for the Pratt parser *)
@@ -129,22 +139,14 @@ and led buffer token left =
   match token.kind,token.value with
   | OP,_ -> (* Binary operators *)
     binaryOp buffer token left
+  | COMMA,_ ->
+    pair buffer token left
   | _ -> token
 
-(** <tuple> := '(' <expression> [ ',' <expression> ] ')' *)
-and tuple buffer token =
-  let elems =
-    match peekKind buffer with
-    | RPAREN -> []
-    | _ -> expressionList buffer
-  in
-  let _ = consume buffer RPAREN in
-  let result =
-    match elems with
-    | []  -> PUnit
-    | [h] -> h
-    | _   -> PTuple(elems)
-  in { token with contents = result }
+(** <pair> :=  <expression> ',' <expression> *)
+and pair buffer token left  =
+  let right = expression (getLbp token) buffer in
+  { token with contents = PPair(getContents left,getContents right) }
 
 (** <functionCall> := <namedId> '(' <expressionList> ')' *)
 and functionCall buffer token id =
@@ -203,7 +205,7 @@ let valInit buffer =
   match peekKind buffer with
   | EQUAL ->
     let _ = skip buffer in
-    let e = getContents (expression 0 buffer) in
+    let e = getContents (expression 20 buffer) in
     ValInit(id,e)
   | _ ->
     ValNoInit(id)
@@ -241,6 +243,20 @@ let stmtReturn buffer =
   let _ = consume buffer SEMI in
   StmtReturn(getContents e)
 
+let stmtBind buffer =
+  let e1 = expression 0 buffer |> getContents in
+  match peekKind buffer with
+  | EQUAL ->
+    let _ = consume buffer EQUAL in
+    let e2 = expression 0 buffer |> getContents in
+    let _ = consume buffer SEMI in
+    StmtBind(e1,e2)
+  | SEMI ->
+    let _ = consume buffer SEMI in
+    StmtBind(PEmpty,e1)
+  | _ -> failwith ""
+
+
 (** <statement> := 'if' '(' <expression> ')' <statementList> ['else' <statementList> ]*)
 let rec stmtIf buffer =
   let _    = consume buffer IF in
@@ -263,7 +279,8 @@ and stmt buffer =
   | RET -> stmtReturn  buffer
   | IF  -> stmtIf      buffer
   | FUN -> stmtFunction buffer
-  | _ -> failwith "stmt"
+  | _   -> stmtBind buffer
+  (*| _ -> failwith "stmt" *)
 
 (** <statementList> := '{' <statement> [<statement>] '}' *)
 and stmtList buffer =

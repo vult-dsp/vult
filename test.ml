@@ -56,7 +56,7 @@ let parseExpTest8 test_ctxt = test_string   "()"
 let parseExpTest9 test_ctxt = test_string   "a"
                               (parseDumpExp "(a)")
 ;;
-let parseExpTest10 test_ctxt = test_string  "(a,b)"
+let parseExpTest10 test_ctxt = test_string  "a,b"
                               (parseDumpExp "(a,b)")
 ;;
 
@@ -76,7 +76,7 @@ let parseStmtTest4 test_ctxt = test_string       "mem a=0,b:num=0;"
 let parseStmtTest5 test_ctxt = test_string       "return (-a);"
                               (parseDumpStmtList "return -a;")
 ;;
-let parseStmtTest6 test_ctxt = test_string       "return (a,0);"
+let parseStmtTest6 test_ctxt = test_string       "return a,0;"
                               (parseDumpStmtList "return (a,0);")
 ;;
 let parseStmtTest7 test_ctxt = test_string       "{\n   val a=0;\n   return a;\n}"
