@@ -24,7 +24,33 @@ THE SOFTWARE.
 open LexerVult
 open ParserVult
 open Types
+
+(** Stores the options passed to the command line *)
+type arguments =
+{
+  files  : string list;
+  dparse : bool;
+}
+
+(** Returns a 'arguments' type containing the options passed in the command line *)
+let processArguments () =
+  let files  = ref [] in
+  let dparse = ref false in
+  let opts = [
+      "-dparse", (Arg.Unit   (fun () -> dparse:=true)), "Dumps the parse tree (default: off)";
+      ]
+  in
+  let _ = Arg.parse opts (fun a -> files:=a::(!files)) "Usage: vultc file.vlt\n" in
+  let _ = files := List.rev (!files) in (* Put the files in the correct order  *)
+  { files = !files ; dparse = !dparse }
+
 let main () =
+  let args = processArguments () in
+  let parsed_file = List.map parseFile args.files in
+  let _ = if args.dparse then
+    List.iter (fun a-> PrintTypes.stmtListStr a |> print_string ) parsed_file
+  in
+
   ()
 ;;
 main ();;
