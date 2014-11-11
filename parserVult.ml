@@ -307,18 +307,14 @@ let parseStmtList s =
   let result = stmtList buffer in
   result
 
-let parsePrintExp s =
+let parseDumpExp s =
   let e = parseExp s in
   let print_buffer = PrintTypes.makePrintBuffer () in
   PrintTypes.expressionStr print_buffer e;
-  let s = PrintTypes.contents print_buffer in
-  print_string s;
-  print_string "\n"
+  PrintTypes.contents print_buffer
 
-let parsePrintStmtList s =
+let parseDumpStmtList s =
   let e = parseStmtList s in
   let print_buffer = PrintTypes.makePrintBuffer () in
   PrintTypes.stmtListStr print_buffer e;
-  let s = PrintTypes.contents print_buffer in
-  print_string s;
-  print_string "\n"
+  PrintTypes.contents print_buffer
