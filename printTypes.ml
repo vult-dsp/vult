@@ -112,10 +112,10 @@ let rec expressionBuff buffer exp =
     expressionListBuff buffer args;
     append buffer ")"
   | PUnit -> append buffer "()"
-  | PTuple(elems) ->
-    append buffer "(";
-    expressionListBuff buffer elems;
-    append buffer ")"
+  | PPair(e1,e2) ->
+    expressionBuff buffer e1;
+    append buffer ",";
+    expressionBuff buffer e2
   | _ -> append buffer "Empty"
 
 (** Adds to the print buffer an expression list *)
@@ -167,6 +167,14 @@ let rec stmtBuff buffer stmt =
     valInitBuffList buffer args;
     append buffer ") ";
     stmtListBuff buffer body
+  | StmtBind(PEmpty,e) ->
+    expressionBuff buffer e;
+    append buffer ";"
+  | StmtBind(e1,e2) ->
+    expressionBuff buffer e1;
+    append buffer "=";
+    expressionBuff buffer e2;
+    append buffer ";"
 
 
 and stmtListBuff buffer l =

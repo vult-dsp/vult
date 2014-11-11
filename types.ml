@@ -30,33 +30,6 @@ type location =
     end_pos   : position;
   }
 
-type named_id =
-  | SimpleId of string
-  | NamedId of string * string
-
-(** Parser syntax tree *)
-type parse_exp =
-  | PId    of named_id * location
-  | PInt   of string * location
-  | PReal  of string * location
-  | PBinOp of string * parse_exp * parse_exp
-  | PUnOp  of string * parse_exp
-  | PCall  of named_id * parse_exp list * location
-  | PUnit
-  | PTuple of parse_exp list
-  | PEmpty
-
-type val_init =
-  | ValInit of named_id * parse_exp
-  | ValNoInit of named_id
-
-type stmt =
-  | StmtVal of val_init list
-  | StmtMem of val_init list
-  | StmtReturn of parse_exp
-  | StmtIf  of parse_exp * stmt list * (stmt list) option
-  | StmtFun of named_id * val_init list * stmt list
-
 (** Tokens *)
 type token_enum =
   | EOF
@@ -79,10 +52,39 @@ type token_enum =
   | EQUAL
   | OP
 
-type token =
+type 'a token =
   {
     kind     : token_enum;
     value    : string;
-    contents : parse_exp;
+    contents : 'a;
     loc      : location;
   }
+
+type named_id =
+  | SimpleId of string
+  | NamedId of string * string
+
+(** Parser syntax tree *)
+type parse_exp =
+  | PId    of named_id * location
+  | PInt   of string * location
+  | PReal  of string * location
+  | PBinOp of string * parse_exp * parse_exp
+  | PUnOp  of string * parse_exp
+  | PCall  of named_id * parse_exp list * location
+  | PUnit
+  | PPair of parse_exp * parse_exp
+  | PEmpty
+
+type val_init =
+  | ValInit of named_id * parse_exp
+  | ValNoInit of named_id
+
+type stmt =
+  | StmtVal of val_init list
+  | StmtMem of val_init list
+  | StmtReturn of parse_exp
+  | StmtIf  of parse_exp * stmt list * (stmt list) option
+  | StmtFun of named_id * val_init list * stmt list
+  | StmtBind of parse_exp * parse_exp
+
