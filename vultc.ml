@@ -25,29 +25,6 @@ open LexerVult
 open ParserVult
 open Types
 let main () =
-  let _ = parsePrintExp "a" in
-  let _ = parsePrintExp "a:b" in
-  let _ = parsePrintExp "a(1,2)" in
-  let _ = parsePrintExp "a:b()" in
-  let _ = parsePrintExp "a:b(1,2)" in
-  let _ = parsePrintExp "-a(1,2)+b*c+d/2" in
-  let _ = parsePrintExp "a+b>0&&a/b||a==b" in
-  let _ = parsePrintExp "()" in
-  let _ = parsePrintExp "(a)" in
-  let _ = parsePrintExp "(a,b)" in
-  let _ = parsePrintStmtList "val a;" in
-  let _ = parsePrintStmtList "mem a:num,b,c;" in
-  let _ = parsePrintStmtList "val a:num=0;" in
-  let _ = parsePrintStmtList "mem a=0,b:num=0;" in
-  let _ = parsePrintStmtList "return -a;" in
-  let _ = parsePrintStmtList "return (a,0);" in
-  let _ = parsePrintStmtList "{ val a =0; return a; }" in
-  let _ = parsePrintStmtList "{ return a; }" in
-  let _ = parsePrintStmtList "if(a){ val a=0;return a;}" in
-  let _ = parsePrintStmtList "if(a) return 0;" in
-  let _ = parsePrintStmtList "if(a) return false; else return true;" in
-  let _ = parsePrintStmtList "fun add(a,b) return a+b;" in
-  let _ = parsePrintStmtList "fun add:int(a:int,b:int) return a+b;" in
   ()
 ;;
 main ();;
