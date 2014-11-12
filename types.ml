@@ -73,7 +73,8 @@ type parse_exp =
   | PUnOp  of string * parse_exp
   | PCall  of named_id * parse_exp list * location
   | PUnit
-  | PPair of parse_exp * parse_exp
+  | PGroup of parse_exp
+  | PPair  of parse_exp * parse_exp
   | PEmpty
 
 type val_init =

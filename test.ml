@@ -53,11 +53,11 @@ let parseExpTest7 test_ctxt = test_string   "((((a+b)>0)&&(a/b))||(a==b))"
 let parseExpTest8 test_ctxt = test_string   "()"
                               (parseDumpExp "()")
 ;;
-let parseExpTest9 test_ctxt = test_string   "a"
+let parseExpTest9 test_ctxt = test_string   "(a)"
                               (parseDumpExp "(a)")
 ;;
 let parseExpTest10 test_ctxt = test_string  "a,b"
-                              (parseDumpExp "(a,b)")
+                              (parseDumpExp "a,b")
 ;;
 
 (** Statement parsing tests *)
@@ -77,7 +77,7 @@ let parseStmtTest5 test_ctxt = test_string       "return (-a);"
                               (parseDumpStmtList "return -a;")
 ;;
 let parseStmtTest6 test_ctxt = test_string       "return a,0;"
-                              (parseDumpStmtList "return (a,0);")
+                              (parseDumpStmtList "return a,0;")
 ;;
 let parseStmtTest7 test_ctxt = test_string       "{\n   val a=0;\n   return a;\n}"
                               (parseDumpStmtList "{ val a =0; return a; }")
