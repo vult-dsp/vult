@@ -100,6 +100,9 @@ let parseStmtTest12 test_ctxt = test_string      "fun add(a,b) return (a+b);"
 let parseStmtTest13 test_ctxt = test_string      "fun add:int(a:int,b:int) return (a+b);"
                               (parseDumpStmtList "fun add:int(a:int,b:int) return a+b;")
 ;;
+let parseStmtTest14 test_ctxt = test_string      "mem a(0),b(0)=a;"
+                              (parseDumpStmtList "mem a(0),b(0)=a;")
+;;
 
 (* Name the test cases and group them together *)
 let parser_test =
@@ -129,6 +132,7 @@ let parser_test =
   "parseStmtTest11" >:: parseStmtTest11 ;
   "parseStmtTest12" >:: parseStmtTest12 ;
   "parseStmtTest13" >:: parseStmtTest13 ;
+  "parseStmtTest14" >:: parseStmtTest14 ;
   ]
 ;;
 
