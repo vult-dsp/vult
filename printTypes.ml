@@ -116,6 +116,10 @@ let rec expressionBuff buffer exp =
     expressionBuff buffer e1;
     append buffer ",";
     expressionBuff buffer e2
+  | PGroup(e1) ->
+    append buffer "(";
+    expressionBuff buffer e1;
+    append buffer ")"
   | _ -> append buffer "Empty"
 
 (** Adds to the print buffer an expression list *)

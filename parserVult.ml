@@ -130,7 +130,7 @@ and nud buffer token =
       | _ ->
         let e = getContents (expression 0 buffer) in
         let _ = consume buffer RPAREN in
-        { token with contents = e }
+        { token with contents = PGroup(e) }
     end
   | _ -> token
 
@@ -205,7 +205,7 @@ let valInit buffer =
   match peekKind buffer with
   | EQUAL ->
     let _ = skip buffer in
-    let e = getContents (expression 20 buffer) in
+    let e = getContents (expression 20 (* 20 to avoid COMMA *) buffer) in
     ValInit(id,e)
   | _ ->
     ValNoInit(id)
