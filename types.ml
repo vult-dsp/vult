@@ -77,15 +77,15 @@ type parse_exp =
   | PPair  of parse_exp * parse_exp
   | PEmpty
 
-type val_init =
-  | ValInit of named_id * parse_exp
-  | ValNoInit of named_id
+type val_bind =
+  | ValBind   of named_id * parse_exp option * parse_exp
+  | ValNoBind of named_id * parse_exp option
 
 type stmt =
-  | StmtVal of val_init list
-  | StmtMem of val_init list
+  | StmtVal of val_bind list
+  | StmtMem of val_bind list
   | StmtReturn of parse_exp
   | StmtIf  of parse_exp * stmt list * (stmt list) option
-  | StmtFun of named_id * val_init list * stmt list
+  | StmtFun of named_id * val_bind list * stmt list
   | StmtBind of parse_exp * parse_exp
 

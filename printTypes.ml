@@ -129,9 +129,21 @@ and expressionListBuff buffer expl =
 
 let rec valInitBuff buffer v =
   match v with
-  | ValNoInit(id) -> namedIdBuff buffer id
-  | ValInit(id,e) ->
+  | ValNoBind(id,None) -> namedIdBuff buffer id
+  | ValNoBind(id,Some(init)) ->
     namedIdBuff buffer id;
+    append buffer "(";
+    expressionBuff buffer init;
+    append buffer ")";
+  | ValBind(id,None,e) ->
+    namedIdBuff buffer id;
+    append buffer "=";
+    expressionBuff buffer e
+  | ValBind(id,Some(init),e) ->
+    namedIdBuff buffer id;
+    append buffer "(";
+    expressionBuff buffer init;
+    append buffer ")";
     append buffer "=";
     expressionBuff buffer e
 and valInitBuffList buffer l =

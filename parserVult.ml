@@ -199,16 +199,27 @@ let namedId buffer =
   let _     = skip buffer in
   namedIdToken buffer token
 
-(** <valInit> := <namedId> [ '=' <expression>] *)
+(** <optStartValue> := '(' <expression> ')' *)
+let optStartValue buffer =
+  match peekKind buffer with
+  | LPAREN ->
+    let _ = consume buffer LPAREN in
+    let e = getContents (expression 0 buffer) in
+    let _ = consume buffer RPAREN in
+    Some(e)
+  | _ -> None
+
+(** <valInit> := <namedId> [<optStartValue>] [ '=' <expression>] *)
 let valInit buffer =
   let id    = namedId buffer in
+  let opt_init = optStartValue buffer in
   match peekKind buffer with
   | EQUAL ->
     let _ = skip buffer in
     let e = getContents (expression 20 (* 20 to avoid COMMA *) buffer) in
-    ValInit(id,e)
+    ValBind(id,opt_init,e)
   | _ ->
-    ValNoInit(id)
+    ValNoBind(id,opt_init)
 
 (** <valInitList> := <valInit> [ ',' <valInit>] *)
 let valInitList buffer =
