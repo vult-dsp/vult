@@ -146,7 +146,14 @@ and led buffer token left =
 (** <pair> :=  <expression> ',' <expression> *)
 and pair buffer token left  =
   let right = expression (getLbp token) buffer in
-  { token with contents = PPair(getContents left,getContents right) }
+  let getElems e =
+    match e with
+    | PTuple(elems) -> elems
+    | _ -> [e]
+  in
+  let elems1 = getContents left |> getElems in
+  let elems2 = getContents right |> getElems in
+  { token with contents = PTuple(elems1@elems2) }
 
 (** <functionCall> := <namedId> '(' <expressionList> ')' *)
 and functionCall buffer token id =

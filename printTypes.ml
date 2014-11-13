@@ -112,10 +112,8 @@ let rec expressionBuff buffer exp =
     expressionListBuff buffer args;
     append buffer ")"
   | PUnit -> append buffer "()"
-  | PPair(e1,e2) ->
-    expressionBuff buffer e1;
-    append buffer ",";
-    expressionBuff buffer e2
+  | PTuple(elems) ->
+    expressionListBuff buffer elems
   | PGroup(e1) ->
     append buffer "(";
     expressionBuff buffer e1;
