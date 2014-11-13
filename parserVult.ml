@@ -52,6 +52,12 @@ let getErrorForToken buffer message =
   let pointer = getErrorPointer (getLineBuffer ()) buffer.peeked.loc in
   file^pointer^message
 
+let getNotExpectedTokenError token =
+  let message = Printf.sprintf "Not expecting to find %s\n" (tokenToString token) in
+  let file = getFileLocation token.loc in
+  let pointer = getErrorPointer (getLineBuffer ()) token.loc in
+  file^pointer^message
+
 (** Skips one token *)
 let skip buffer =
   buffer.peeked <- token buffer.lexbuf
@@ -59,13 +65,16 @@ let skip buffer =
 (** Returns the current token in the buffer *)
 let current buffer = buffer.peeked
 
+(** Returns the kind of the current token *)
+let peekKind buffer = (current buffer).kind
+
 (** Checks that the next token matches the given kind and skip it *)
 let consume buffer kind =
   match buffer.peeked with
   | t when t.kind=kind -> buffer.peeked <- token buffer.lexbuf
-  | _ ->
-    let expected = kindToString EQUAL in
-    let got = kindToString kind in
+  | got_token ->
+    let expected = kindToString kind in
+    let got = kindToString got_token.kind in
     let message = Printf.sprintf "Expecting a %s but got %s\n" expected got in
     raise (ParserError(getErrorForToken buffer message))
 
@@ -78,9 +87,6 @@ let expect buffer kind =
     let got = kindToString kind in
     let message = Printf.sprintf "Expecting a %s but got %s\n" expected got in
     raise (ParserError(getErrorForToken buffer message))
-
-(** Returns the kind of the current token *)
-let peekKind buffer = (current buffer).kind
 
 (** Creates a token stream given a string *)
 let bufferFromString str =
@@ -160,7 +166,10 @@ and nud buffer token =
         let _ = consume buffer RPAREN in
         { token with contents = PGroup(e) }
     end
-  | _ -> token
+  | INT,_ | REAL,_ -> token
+  | _ ->
+    let message = getNotExpectedTokenError token in
+    raise (ParserError(message))
 
 (** Led function for the Pratt parser *)
 and led buffer token left =
