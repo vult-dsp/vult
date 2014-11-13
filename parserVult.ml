@@ -209,8 +209,8 @@ let optStartValue buffer =
     Some(e)
   | _ -> None
 
-(** <valInit> := <namedId> [<optStartValue>] [ '=' <expression>] *)
-let valInit buffer =
+(** <valBind> := <namedId> [<optStartValue>] [ '=' <expression>] *)
+let valBind buffer =
   let id    = namedId buffer in
   let opt_init = optStartValue buffer in
   match peekKind buffer with
@@ -221,10 +221,10 @@ let valInit buffer =
   | _ ->
     ValNoBind(id,opt_init)
 
-(** <valInitList> := <valInit> [ ',' <valInit>] *)
-let valInitList buffer =
+(** <valBindList> := <valBind> [ ',' <valBind>] *)
+let valBindList buffer =
   let rec loop acc =
-    let e = valInit buffer in
+    let e = valBind buffer in
     match peekKind buffer with
     | COMMA ->
       let _ = skip buffer in
@@ -233,17 +233,17 @@ let valInitList buffer =
   in let _ = expect buffer ID in
   loop []
 
-(** <statement> := | 'val' <valInitList> ';' *)
+(** <statement> := | 'val' <valBindList> ';' *)
 let stmtVal buffer =
   let _ = consume buffer VAL in
-  let vals = valInitList buffer in
+  let vals = valBindList buffer in
   let _ = consume buffer SEMI in
   StmtVal(vals)
 
-(** <statement> := | 'mem' <valInitList> ';' *)
+(** <statement> := | 'mem' <valBindList> ';' *)
 let stmtMem buffer =
   let _ = consume buffer MEM in
-  let vals = valInitList buffer in
+  let vals = valBindList buffer in
   let _ = consume buffer SEMI in
   StmtMem(vals)
 
@@ -312,12 +312,12 @@ and stmtList buffer =
     let s = stmt buffer in
     [s]
 
-(** 'fun' <namedId> '(' <valInitList> ')' <stmtList> *)
+(** 'fun' <namedId> '(' <valBindList> ')' <stmtList> *)
 and stmtFunction buffer =
   let _    = consume buffer FUN in
   let name = namedId buffer in
   let _    = consume buffer LPAREN in
-  let args = valInitList buffer in
+  let args = valBindList buffer in
   let _    = consume buffer RPAREN in
   let body = stmtList buffer in
   StmtFun(name,args,body)
