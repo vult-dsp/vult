@@ -60,6 +60,13 @@ type 'a token =
     loc      : location;
   }
 
+(** Type containing the stream of tokens *)
+type 'a lexer_stream =
+  {
+    lexbuf : Lexing.lexbuf;
+    mutable peeked : 'a token;
+  }
+
 type named_id =
   | SimpleId of string
   | NamedId of string * string
@@ -88,4 +95,5 @@ type stmt =
   | StmtIf  of parse_exp * stmt list * (stmt list) option
   | StmtFun of named_id * val_bind list * stmt list
   | StmtBind of parse_exp * parse_exp
+
 
