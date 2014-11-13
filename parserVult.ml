@@ -82,9 +82,9 @@ let consume buffer kind =
 let expect buffer kind =
   match buffer.peeked with
   | t when t.kind=kind -> ()
-  | _ ->
-    let expected = kindToString EQUAL in
-    let got = kindToString kind in
+  | got_token ->
+    let expected = kindToString kind in
+    let got = kindToString got_token.kind in
     let message = Printf.sprintf "Expecting a %s but got %s\n" expected got in
     raise (ParserError(getErrorForToken buffer message))
 
