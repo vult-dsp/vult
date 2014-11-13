@@ -83,7 +83,7 @@ let makeIdToken lexbuf =
       Hashtbl.find keyword_table s
     else ID
   in
-  { kind = kind; value = getLexeme lexbuf; loc = getLocation lexbuf; contents = PEmpty }
+  { kind = kind; value = s; loc = getLocation lexbuf; contents = PEmpty }
 
 (* Functions for testing the tokenizer *)
 let tokenizeString tokenizer str =
@@ -94,28 +94,37 @@ let tokenizeString tokenizer str =
     | t -> loop (t::acc)
   in loop []
 
+(** Returns a string representation of the kind *)
+let kindToString kind =
+  match kind with
+  | EOF   -> "'eof'"
+  | INT   -> "'int'"
+  | REAL  -> "'real'"
+  | ID    -> "'id'"
+  | FUN   -> "'fun'"
+  | MEM   -> "'mem'"
+  | VAL   -> "'val'"
+  | RET   -> "'return'"
+  | IF    -> "'if'"
+  | ELSE  -> "'else'"
+  | LBRAC -> "'{'"
+  | RBRAC -> "'}'"
+  | LPAREN-> "'('"
+  | RPAREN-> "')'"
+  | COLON -> "':'"
+  | SEMI  -> "';'"
+  | COMMA -> "','"
+  | EQUAL -> "'='"
+  | OP    -> "'operator'"
+
 (** Returns a string representation of the token *)
 let tokenToString l =
   match l.kind with
-  | EOF   -> "'eof' "
-  | INT   -> "'"^l.value^"' "
-  | REAL  -> "'"^l.value^"' "
-  | ID    -> "'"^l.value^"' "
-  | FUN   -> "'$fun' "
-  | MEM   -> "'$mem' "
-  | VAL   -> "'$val' "
-  | RET   -> "'$return' "
-  | IF    -> "'$if' "
-  | ELSE  -> "'$else' "
-  | LBRAC -> "'{' "
-  | RBRAC -> "'}' "
-  | LPAREN-> "'(' "
-  | RPAREN-> "')' "
-  | COLON -> "':' "
-  | SEMI  -> "';' "
-  | COMMA -> "',' "
-  | EQUAL -> "'=' "
-  | OP    -> "'"^l.value^"' "
+  | INT   -> "'"^l.value^"'"
+  | REAL  -> "'"^l.value^"'"
+  | ID    -> "'"^l.value^"'"
+  | OP    -> "'"^l.value^"'"
+  | k     -> kindToString k
 
 (** Prints the list of tokens*)
 let rec printTokenList l =

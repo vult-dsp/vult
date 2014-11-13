@@ -25,13 +25,32 @@ THE SOFTWARE.
 open LexerVult
 
 open Types
+open Lexing
 
-(** Type containing the stream of tokens *)
-type 'a lexer_stream =
-  {
-    lexbuf : Lexing.lexbuf;
-    mutable peeked : 'a token;
-  }
+(** Parsing exception *)
+exception ParserError of string
+
+let getFileLocation location =
+  let col_start = location.start_pos.pos_cnum - location.start_pos.pos_bol in
+  let col_end = location.end_pos.pos_cnum - location.start_pos.pos_bol in
+  Printf.sprintf "Error in file: %s: line %i col:%i-%i\n"
+    location.start_pos.pos_fname
+    location.start_pos.pos_lnum
+    col_start
+    col_end
+
+let getErrorPointer line location =
+  let col_start = location.start_pos.pos_cnum - location.start_pos.pos_bol in
+  let col_end = location.end_pos.pos_cnum - location.start_pos.pos_bol in
+  Printf.sprintf "%s\n%s%s\n"
+    line
+    (String.make col_start ' ')
+    (String.make (col_end - col_start) '^')
+
+let getErrorForToken buffer message =
+  let file = getFileLocation buffer.peeked.loc in
+  let pointer = getErrorPointer (getLineBuffer ()) buffer.peeked.loc in
+  file^pointer^message
 
 (** Skips one token *)
 let skip buffer =
@@ -44,13 +63,21 @@ let current buffer = buffer.peeked
 let consume buffer kind =
   match buffer.peeked with
   | t when t.kind=kind -> buffer.peeked <- token buffer.lexbuf
-  | _ -> failwith ""
+  | _ ->
+    let expected = kindToString EQUAL in
+    let got = kindToString kind in
+    let message = Printf.sprintf "Expecting a %s but got %s\n" expected got in
+    raise (ParserError(getErrorForToken buffer message))
 
 (** Checks that the next token matches *)
 let expect buffer kind =
   match buffer.peeked with
   | t when t.kind=kind -> ()
-  | _ -> failwith ""
+  | _ ->
+    let expected = kindToString EQUAL in
+    let got = kindToString kind in
+    let message = Printf.sprintf "Expecting a %s but got %s\n" expected got in
+    raise (ParserError(getErrorForToken buffer message))
 
 (** Returns the kind of the current token *)
 let peekKind buffer = (current buffer).kind
@@ -61,8 +88,9 @@ let bufferFromString str =
   { lexbuf = lexbuf; peeked = token lexbuf }
 
 (** Creates a token stream given a channel *)
-let bufferFromChannel chan =
+let bufferFromChannel chan file =
   let lexbuf = Lexing.from_channel chan in
+  lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = file };
   { lexbuf = lexbuf; peeked = token lexbuf }
 
 (** Returns the left binding powers of the token *)
@@ -143,7 +171,7 @@ and led buffer token left =
     pair buffer token left
   | _ -> token
 
-(** <pair> :=  <expression> ',' <expression> *)
+(** <pair> :=  <expression>  ',' <expression> [ ',' <expression> ] *)
 and pair buffer token left  =
   let right = expression (getLbp token) buffer in
   let getElems e =
@@ -272,7 +300,11 @@ let stmtBind buffer =
   | SEMI ->
     let _ = consume buffer SEMI in
     StmtBind(PEmpty,e1)
-  | _ -> failwith ""
+  | kind ->
+    let expected = kindToString EQUAL in
+    let got = kindToString kind in
+    let message = Printf.sprintf "Expecting a %s while trying to parse a binding but got %s\n" expected got in
+    raise (ParserError(getErrorForToken buffer message))
 
 
 (** <statement> := 'if' '(' <expression> ')' <statementList> ['else' <statementList> ]*)
@@ -298,7 +330,9 @@ and stmt buffer =
   | IF  -> stmtIf      buffer
   | FUN -> stmtFunction buffer
   | _   -> stmtBind buffer
-  (*| _ -> failwith "stmt" *)
+  | exception ParserError(message) ->
+    let _ = print_string message in
+    failwith "Parsing stopped"
 
 (** <statementList> := '{' <statement> [<statement>] '}' *)
 and stmtList buffer =
@@ -358,11 +392,16 @@ let parseDumpStmtList s =
 let parseFile filename =
   let chan = open_in filename in
   try
-    let result = bufferFromChannel chan |> stmtList in
+    let result = bufferFromChannel chan filename |> stmtList in
     let _ = close_in chan in
     result
   with
+  | ParserError(message) ->
+    let _ = print_string message in
+    let _ = close_in chan in
+    failwith "Failed to parse the file"
   | _ ->
     let _ = close_in chan in
     failwith "Failed to parse the file"
+
 
