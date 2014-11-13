@@ -48,6 +48,25 @@
 			<string>storage.type.source.Vult</string>
 		</dict>
 		<dict>
+			<key>captures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>storage.type.source.Vult</string>
+				</dict>
+				<key>2</key>
+				<dict>
+					<key>name</key>
+					<string>constant.language.source.Vult</string>
+				</dict>
+			</dict>
+			<key>match</key>
+			<string>\b([a-zA-Z_]\w*)\b(\()</string>
+			<key>name</key>
+			<string>storage.type.source.Vult</string>
+		</dict>
+		<dict>
 			<key>match</key>
 			<string>(//).*$\n?</string>
 			<key>name</key>
@@ -121,7 +140,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>(=|:|;|&lt;|&gt;|,)</string>
+			<string>(=|:|;|&lt;|&gt;|,|!=|\+|\*|/|-|\| |&amp; |\( |\))</string>
 			<key>name</key>
 			<string>constant.character.source.Vult</string>
 		</dict>

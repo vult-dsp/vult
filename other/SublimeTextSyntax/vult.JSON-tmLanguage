@@ -22,6 +22,14 @@
           "match":"\\b(int|real|num)\\b"
         },
         {
+          "name":"storage.type.source.Vult",
+          "match":"\\b([a-zA-Z_]\\w*)\\b(\\()",
+          "captures": {
+               "1": { "name": "storage.type.source.Vult" },
+               "2": { "name": "constant.language.source.Vult"}
+           }
+        },
+        {
           "name": "comment.line.double-slash.source.Vult",
           "match":"(//).*$\\n?"
         },
@@ -58,7 +66,7 @@
           ]
         },
         {  "name": "constant.character.source.Vult",
-           "match": "(=|:|;|<|>|,)"
+           "match": "(=|:|;|<|>|,|!=|\\+|\\*|/|-|\\| |& |\\( |\\))"
         },
         {  "name": "constant.language.source.Vult",
            "match": "(true|false)"
