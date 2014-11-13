@@ -1,0 +1,69 @@
+{ "name": "Vult",
+  "scopeName": "source.Vult",
+  "fileTypes": ["vlt"],
+  "patterns": [
+        {
+          "name": "meta.function.source.Vult",
+          "match": "(fun)\\s+([a-zA-Z_]\\w*)",
+           "captures": {
+               "1": { "name": "keyword.control.source.Vult" },
+               "2": { "name": "entity.name.function.source.Vult"}
+           }
+        },
+        { "name": "keyword.source.Vult",
+           "match": "\\b(fun|val|mem|return|if|else)\\b"
+        },
+        {
+          "name":"constant.numeric.source.Vult",
+          "match":"\\b((([0-9]+\\.?[0-9]*)|(\\.[0-9]+))((e|E)(\\+|-)?[0-9]+)?)\\b"
+        },
+        {
+          "name":"storage.type.source.Vult",
+          "match":"\\b(int|real|num)\\b"
+        },
+        {
+          "name": "comment.line.double-slash.source.Vult",
+          "match":"(//).*$\\n?"
+        },
+        { "name": "string.quoted.double.source.Vult",
+          "begin": "\"",
+          "beginCaptures": {
+              "0": { "name": "punctuation.definition.string.begin.source.Vult" }
+          },
+          "end": "\"",
+          "endCaptures": {
+              "0": { "name": "punctuation.definition.string.end.source.Vult" }
+          },
+          "patterns": [
+          {
+            "name": "constant.character.escape.source.Vult",
+            "match": "\\\\."
+          }
+          ]
+        },
+        { "name": "comment.block.source.Vult",
+          "begin": "/\\*",
+          "beginCaptures": {
+              "0": { "name": "comment.block.begin.source.Vult" }
+          },
+          "end": "\\*/",
+          "endCaptures": {
+              "0": { "name": "comment.block.end.source.Vult" }
+          },
+          "patterns": [
+          {
+            "name": "constant.character.escape.source.Vult",
+            "match": "\\\\."
+          }
+          ]
+        },
+        {  "name": "constant.character.source.Vult",
+           "match": "(=|:|;|<|>|,)"
+        },
+        {  "name": "constant.language.source.Vult",
+           "match": "(true|false)"
+        }
+
+  ],
+  "uuid": "42b15ba4-ffb5-4aad-9446-3885a88d8938"
+}
