@@ -74,7 +74,7 @@ type parse_exp =
   | PCall  of named_id * parse_exp list * location
   | PUnit
   | PGroup of parse_exp
-  | PPair  of parse_exp * parse_exp
+  | PTuple of parse_exp list
   | PEmpty
 
 type val_bind =
