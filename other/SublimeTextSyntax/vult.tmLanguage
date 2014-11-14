@@ -58,7 +58,7 @@
 				<key>2</key>
 				<dict>
 					<key>name</key>
-					<string>constant.language.source.Vult</string>
+					<string>constant.character.source.Vult</string>
 				</dict>
 			</dict>
 			<key>match</key>
@@ -140,7 +140,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>(=|:|;|&lt;|&gt;|,|!=|\+|\*|/|-|\| |&amp; |\( |\))</string>
+			<string>(=|:|;|&lt;|&gt;|,|!=|\+|\*|/|-|\||&amp;|\(|\)|{|})</string>
 			<key>name</key>
 			<string>constant.character.source.Vult</string>
 		</dict>

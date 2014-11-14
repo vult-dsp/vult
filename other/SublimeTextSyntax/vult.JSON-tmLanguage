@@ -26,7 +26,7 @@
           "match":"\\b([a-zA-Z_]\\w*)\\b(\\()",
           "captures": {
                "1": { "name": "storage.type.source.Vult" },
-               "2": { "name": "constant.language.source.Vult"}
+               "2": { "name": "constant.character.source.Vult"}
            }
         },
         {
@@ -66,7 +66,7 @@
           ]
         },
         {  "name": "constant.character.source.Vult",
-           "match": "(=|:|;|<|>|,|!=|\\+|\\*|/|-|\\| |& |\\( |\\))"
+           "match": "(=|:|;|<|>|,|!=|\\+|\\*|/|-|\\||&|\\(|\\)|{|})"
         },
         {  "name": "constant.language.source.Vult",
            "match": "(true|false)"
