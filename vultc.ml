@@ -48,7 +48,7 @@ let main () =
   let args = processArguments () in
   let parsed_file = List.map parseFile args.files in
   let _ = if args.dparse then
-    List.iter (fun a-> PrintTypes.stmtListStr a |> print_string ) parsed_file
+    List.iter (fun a-> match a with Some(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () ) parsed_file
   in
 
   ()

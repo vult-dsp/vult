@@ -64,6 +64,8 @@ type 'a token =
 type 'a lexer_stream =
   {
     lexbuf : Lexing.lexbuf;
+    mutable error : bool;
+    mutable error_msg : string list;
     mutable peeked : 'a token;
   }
 
@@ -95,5 +97,6 @@ type stmt =
   | StmtIf  of parse_exp * stmt list * (stmt list) option
   | StmtFun of named_id * val_bind list * stmt list
   | StmtBind of parse_exp * parse_exp
+  | StmtEmpty
 
 

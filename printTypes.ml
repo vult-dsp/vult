@@ -189,6 +189,7 @@ let rec stmtBuff buffer stmt =
     append buffer "=";
     expressionBuff buffer e2;
     append buffer ";"
+  | StmtEmpty -> ()
 
 
 and stmtListBuff buffer l =

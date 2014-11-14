@@ -68,6 +68,17 @@ let current buffer = buffer.peeked
 (** Returns the kind of the current token *)
 let peekKind buffer = (current buffer).kind
 
+let rec moveToNextStatement buffer =
+  match buffer.peeked.kind with
+  | SEMI -> skip buffer
+  | EOF -> ()
+  | FUN | VAL
+  | IF | RET -> ()
+  | RBRAC -> skip buffer
+  | _ ->
+    let _ = skip buffer in
+    moveToNextStatement buffer
+
 (** Checks that the next token matches the given kind and skip it *)
 let consume buffer kind =
   match buffer.peeked with
@@ -91,13 +102,13 @@ let expect buffer kind =
 (** Creates a token stream given a string *)
 let bufferFromString str =
   let lexbuf = Lexing.from_string str in
-  { lexbuf = lexbuf; peeked = token lexbuf }
+  { lexbuf = lexbuf; peeked = token lexbuf; error = false; error_msg = [] }
 
 (** Creates a token stream given a channel *)
 let bufferFromChannel chan file =
   let lexbuf = Lexing.from_channel chan in
   lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = file };
-  { lexbuf = lexbuf; peeked = token lexbuf }
+  { lexbuf = lexbuf; peeked = token lexbuf ; error = false; error_msg = [] }
 
 (** Returns the left binding powers of the token *)
 let getLbp token =
@@ -332,16 +343,20 @@ let rec stmtIf buffer =
 
 (** <statement> := ... *)
 and stmt buffer =
-  match peekKind buffer with
-  | VAL -> stmtVal     buffer
-  | MEM -> stmtMem     buffer
-  | RET -> stmtReturn  buffer
-  | IF  -> stmtIf      buffer
-  | FUN -> stmtFunction buffer
-  | _   -> stmtBind buffer
-  | exception ParserError(message) ->
+  try
+    match peekKind buffer with
+    | VAL -> stmtVal     buffer
+    | MEM -> stmtMem     buffer
+    | RET -> stmtReturn  buffer
+    | IF  -> stmtIf      buffer
+    | FUN -> stmtFunction buffer
+    | _   -> stmtBind buffer
+  with
+  | ParserError(message) ->
     let _ = print_string message in
-    failwith "Parsing stopped"
+    let _ = moveToNextStatement buffer in
+    let _ = buffer.error<-true in
+    StmtEmpty
 
 (** <statementList> := '{' <statement> [<statement>] '}' *)
 and stmtList buffer =
@@ -409,7 +424,10 @@ let parseFile filename =
     in
     let result = loop [] |> List.flatten in
     let _ = close_in chan in
-    result
+    if buffer.error then
+      None
+    else
+      Some(result)
   with
   | ParserError(message) ->
     let _ = print_string message in
