@@ -57,13 +57,22 @@ let keyword_table =
 (** Stores the current line *)
 let current_line_buffer = Buffer.create 100
 
+let current_lines = ref []
+
 (* Auxiliary functions for processing the lexeme buffer *)
 
-(** Clears the contents of the line buffer *)
-let clearLineBuffer () = Buffer.clear current_line_buffer
+(** Stores the current line and starts a new one *)
+let newLineInBuffer () =
+  let current = Buffer.contents current_line_buffer in
+  let _ = current_lines:= current::(!current_lines) in
+  Buffer.clear current_line_buffer
 
-(** Returns the contents of the line buffer *)
-let getLineBuffer   () = Buffer.contents current_line_buffer
+(** Returns the last two lines of the buffer *)
+let getLastLines   () =
+  let current = Buffer.contents current_line_buffer in
+  match !current_lines with
+  | [] -> current
+  | h::_ -> h^"\n"^current
 
 (** Appends the current lexeme to the line buffer and returns it *)
 let getLexeme lexbuf =
@@ -152,7 +161,7 @@ rule token =
   parse
   | newline
     { let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
-      let _ = clearLineBuffer () in
+      let _ = newLineInBuffer () in
       token lexbuf
     }
   | blank +     { let _ = getLexeme lexbuf in token lexbuf }

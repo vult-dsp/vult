@@ -49,13 +49,13 @@ let getErrorPointer line location =
 
 let getErrorForToken buffer message =
   let file = getFileLocation buffer.peeked.loc in
-  let pointer = getErrorPointer (getLineBuffer ()) buffer.peeked.loc in
+  let pointer = getErrorPointer (getLastLines ()) buffer.peeked.loc in
   file^pointer^message
 
 let getNotExpectedTokenError token =
   let message = Printf.sprintf "Not expecting to find %s\n" (tokenToString token) in
   let file = getFileLocation token.loc in
-  let pointer = getErrorPointer (getLineBuffer ()) token.loc in
+  let pointer = getErrorPointer (getLastLines ()) token.loc in
   file^pointer^message
 
 (** Skips one token *)
@@ -74,7 +74,7 @@ let consume buffer kind =
   | t when t.kind=kind -> buffer.peeked <- token buffer.lexbuf
   | got_token ->
     let expected = kindToString kind in
-    let got = kindToString got_token.kind in
+    let got = tokenToString got_token in
     let message = Printf.sprintf "Expecting a %s but got %s\n" expected got in
     raise (ParserError(getErrorForToken buffer message))
 
@@ -312,7 +312,7 @@ let stmtBind buffer =
   | kind ->
     let expected = kindToString EQUAL in
     let got = kindToString kind in
-    let message = Printf.sprintf "Expecting a %s while trying to parse a binding but got %s\n" expected got in
+    let message = Printf.sprintf "Expecting a %s while trying to parse a binding (%s = ...) but got %s\n" expected (PrintTypes.expressionStr e1) got in
     raise (ParserError(getErrorForToken buffer message))
 
 
@@ -401,7 +401,13 @@ let parseDumpStmtList s =
 let parseFile filename =
   let chan = open_in filename in
   try
-    let result = bufferFromChannel chan filename |> stmtList in
+    let buffer = bufferFromChannel chan filename in
+    let rec loop acc =
+      match peekKind buffer with
+      | EOF -> List.rev acc
+      | _ -> loop ((stmtList buffer)::acc)
+    in
+    let result = loop [] |> List.flatten in
     let _ = close_in chan in
     result
   with
