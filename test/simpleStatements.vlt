@@ -1,0 +1,5 @@
+mem w1 = 1.0, w2 = 2.0;
+val v1 = w1 + w2;
+w1 = v1 * v1;
+w2 = w2 + v1;
+return w3;
