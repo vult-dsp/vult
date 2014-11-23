@@ -34,11 +34,11 @@ let joinErrors : error -> error -> error = List.append
 
 let joinErrorOptions : error option -> error option -> error option =
     fun maybeErr1 maybeErr2 ->
-        match (maybeErr2,maybeErr2) with
-            | (None,None) -> None
-            | (Some _ as ret,None) -> ret
-            | (None,(Some _ as ret)) -> ret
-            | (Some err1,Some err2) -> Some (joinErrors err1 err2)
+        match (maybeErr1,maybeErr2) with
+            | (Some _ as ret, None) -> ret
+            | (None, (Some _ as ret)) -> ret
+            | (Some err1, Some err2) -> Some (joinErrors err1 err2)
+            | (None, None) -> None
 
 let joinErrorOptionsList : error option list -> error option = List.fold_left joinErrorOptions None
 
@@ -117,23 +117,8 @@ let bindFunction : functionBindings -> vultFunction -> (error,functionBindings) 
 let getFunction : environment -> string -> (error,vultFunction) either =
     fun {functions = binds;} fname ->
         match StringMap.get fname binds with
-            | None -> Left ["No function named " ^ fname ^ "exists."]
+            | None -> Left ["No function named " ^ fname ^ " exists."]
             | Some f -> Right f
-
-let insertIfFunction : functionBindings -> Types.stmt  -> (error,functionBindings) either =
-    fun funcs stmt ->
-        match stmt with
-            | StmtFun (namedid,inputs,body) ->
-                begin
-                    let funcname = getNameFromNamedId namedid in
-                    let functype = getTypeFromNamedId namedid in
-                    let vultfunc = { functionname = funcname; returntype = functype; inputs = inputs; body = body; } in
-                    bindFunction funcs vultfunc
-                end
-            | _ -> Right funcs
-
-let processFunctions : Types.stmt list -> (error,functionBindings) either =
-    fun stmts -> eitherFold_left insertIfFunction noFunctions stmts
 
 (* Processing of variables. *)
 (* For easy construction of updater function in bindVariable. *)
@@ -192,6 +177,13 @@ let checkNamedId : environment -> Types.named_id -> error option =
             | true -> None 
             | false -> Some ["No declaration of variable " ^ name ^ "."]
 
+let rec flattenExp : Types.parse_exp -> Types.parse_exp list =
+    fun groupExp ->
+        match groupExp with
+            | PGroup exp -> flattenExp exp
+            | PTuple es -> es
+            | e -> [e]
+
 let rec checkExp : environment -> Types.parse_exp -> error option =
     fun env exp ->
         let rec internalChecker : Types.parse_exp -> error option =
@@ -201,35 +193,33 @@ let rec checkExp : environment -> Types.parse_exp -> error option =
                 | PUnOp (_,e1) -> internalChecker e1
                 | PCall (fname,values,_) -> checkFunctionCall env fname values
                 | PGroup e1 -> internalChecker e1
-                | PTuple es -> List.fold_left joinErrorOptions None (List.map internalChecker es)
+                | PTuple es -> joinErrorOptionsList (List.map internalChecker es)
                 | _ -> None (* All others: Nothing to check. *)
         in
             internalChecker exp
 
+(* Checking of function calls: Here we just check that the call is correct, 
+    that the function executes is checked somewhere else.
+*)
 and checkFunctionCall : environment -> Types.named_id -> Types.parse_exp list -> error option =
-    fun env fId params ->
+    fun env fId paramsUnflattened ->
         let fname = getNameFromNamedId fId in
+        let params = List.flatten (List.map flattenExp paramsUnflattened) in
         match getFunction env fname with
             | Left errs -> Some (("Could not evaluate function call to " ^ fname ^ ".")::errs)
-            | Right { body = body; inputs = inputs; } ->
+            | Right { inputs = inputs; } ->
                 begin match joinErrorOptionsList (List.map (checkExp env) params) with
                     | Some errs -> Some (("Could not evaluate function call parameter in function call to " ^ fname ^ ".")::errs)
                     | None -> 
                         begin 
-                            let newenv = 
-                            {
-                                env with 
-                                memory = noBindings;
-                                temp = noBindings;
-                            }
-                            in match eitherFold_left checkRegularValBind newenv inputs with
-                                | Left errs -> Some (("In function call parameters to function " ^ fname ^ ".")::errs)
-                                | Right functionenv -> 
-                                    begin match eitherFold_left checkStmt functionenv body with
-                                        | Left errs -> Some (("In body of function " ^ fname ^ ".")::errs)
-                                        | Right _ -> None
-                                    end
-                        end 
+                            let paramlength = List.length params in
+                            let expectedlength = List.length inputs in
+                            if paramlength == expectedlength 
+                                then None 
+                                else Some ["Wrong number of arguments in call to function " ^ fname 
+                                            ^ "; expected " ^ (string_of_int expectedlength) ^ " but got "
+                                            ^ (string_of_int paramlength) ^ "."]
+                        end
                 end
 
 and checkRegularValBind : environment -> Types.val_bind -> (error,environment) either  =
@@ -300,6 +290,40 @@ let checkStmts : environment -> Types.stmt list -> error option =
         match eitherFold_left checkStmt env stmts with
             | Right _ -> None
             | Left errs -> Some errs
+
+let checkFunction : environment -> vultFunction -> error option =
+    fun env { functionname = fname;  inputs = inputs; body = stmts; } ->
+        match eitherFold_left checkRegularValBind emptyEnv inputs with
+            | Left errs -> Some (("In function input declarations of function " ^ fname ^ ".")::errs)
+            | Right env ->
+                begin match checkStmts env stmts with
+                    | Some errs -> Some (("In function " ^ fname ^ ".")::errs)
+                    | None -> None
+                end
+
+let insertIfFunction : functionBindings -> Types.stmt  -> (error,functionBindings) either =
+    fun funcs stmt ->
+        match stmt with
+            | StmtFun (namedid,inputs,body) ->
+                    let funcname = getNameFromNamedId namedid in
+                    let functype = getTypeFromNamedId namedid in
+                    let vultfunc = { functionname = funcname; returntype = functype; inputs = inputs; body = body; } in
+                    bindFunction funcs vultfunc
+            | _ -> Right funcs
+
+let processFunctions : Types.stmt list -> (error,functionBindings) either =
+    fun stmts -> 
+        (* First check in the function declarations. *)
+        match eitherFold_left insertIfFunction noFunctions stmts with
+            | Left errs -> Left ("When processing function declarations."::errs)
+            | Right fbinds -> (* Then check the function bodies. *)
+                begin
+                    let funclist = map snd (StringMap.to_list fbinds) in
+                    let env = { emptyEnv with functions = fbinds } in
+                    match joinErrorOptionsList (List.map (checkFunction env) funclist) with
+                        | Some errs -> Left errs
+                        | None -> Right fbinds
+                end
         
 let checkStmtsMain : Types.stmt list -> error option =
     fun stmts -> 
