@@ -29,6 +29,17 @@ open List
 open CCMap
 
 type error = string list
+
+let joinErrors : error -> error -> error = List.append
+
+let joinErrorOptions : error option -> error option -> error option =
+    fun maybeErr1 maybeErr2 ->
+        match (maybeErr2,maybeErr2) with
+            | (None,None) -> None
+            | (Some _ as ret,None) -> ret
+            | (None,(Some _ as ret)) -> ret
+            | (Some err1,Some err2) -> Some (joinErrors err1 err2)
+
 type ('a,'b) either =
     | Left of 'a
     | Right of 'b
@@ -89,22 +100,6 @@ let bindVariable : environment -> string -> literal  -> environment =
             temp = StringMap.update name updater tmp;
         }
 
-let createVariable : environment -> string -> literal option -> environment =
-    fun {memory = mem; temp = tmp; } name possibleValue ->
-        let updater = var_creator possibleValue in
-        {
-            memory = mem;
-            temp = StringMap.update name updater tmp;
-        }
-
-let createMemory : environment -> string -> literal option -> environment =
-    fun {memory = mem; temp = tmp; } name possibleValue ->
-        let updater = var_creator possibleValue in
-        {
-            memory = StringMap.update name updater mem;
-            temp = tmp;
-        }
-
 (* variableExists only checks if there is a variable with the given name. *)
 let variableExists : environment -> string -> bool =
     fun { memory = mem; temp = tmp; } name ->
@@ -114,6 +109,20 @@ let variableExists : environment -> string -> bool =
                 | Some _ -> true
                 | None -> false
 
+let createVariable : environment -> string -> literal option -> (error,environment) either =
+    fun ({temp = tmp; } as env) name possibleValue ->
+        match variableExists env name with
+            | true -> Left ["Redeclaration of variable " ^ name ^ "."]
+            | false -> let updater = var_creator possibleValue in
+                Right { env with temp = (StringMap.update name updater tmp); }
+
+let createMemory : environment -> string -> literal option -> (error,environment) either  =
+    fun ({memory = mem; } as env) name possibleValue ->
+        match variableExists env name with
+            | true -> Left ["Redeclaration of variable " ^ name ^ "."]
+            | false -> let updater = var_creator possibleValue in
+                Right { env with memory = (StringMap.update name updater mem); }
+
 (* Check family of functions. Checks that things are valid in the given environment. *)
 let getNameFromNamedId : Types.named_id -> string =
     fun namedId ->
@@ -121,33 +130,34 @@ let getNameFromNamedId : Types.named_id -> string =
             | SimpleId name -> name
             | NamedId (name,_) -> name          
 
-let checkNamedId : environment -> Types.named_id ->  bool =
+let checkNamedId : environment -> Types.named_id -> error option =
     fun env namedId ->
-        match namedId with
-            | SimpleId name -> variableExists env name
-            | NamedId (name,_) -> variableExists env name
+        let name = getNameFromNamedId namedId in
+        match variableExists env name with
+            | true -> None 
+            | false -> Some ["No declaration of variable " ^ name ^ "."]
 
-let checkExp : environment -> Types.parse_exp -> bool =
+let checkExp : environment -> Types.parse_exp -> error option =
     fun env exp ->
-        let rec internalChecker : Types.parse_exp -> bool =
+        let rec internalChecker : Types.parse_exp -> error option =
             fun exp -> match exp with
                 | PId (name,_) -> checkNamedId env name
-                | PBinOp (_,e1,e2) -> internalChecker e1 && internalChecker e2
+                | PBinOp (_,e1,e2) -> joinErrorOptions (internalChecker e1) (internalChecker e2)
                 | PUnOp (_,e1) -> internalChecker e1
-                | PCall _ -> true (* TODO: Function checks. *)
+                | PCall _ -> None (* TODO: Function checks. *)
                 | PGroup e1 -> internalChecker e1
-                | PTuple es -> List.for_all internalChecker es
-                | _ -> true (* All others: Nothing to check. *)
+                | PTuple es -> List.fold_left joinErrorOptions None (List.map internalChecker es)
+                | _ -> None (* All others: Nothing to check. *)
         in
             internalChecker exp
 
-let checkRegularValBind : environment -> Types.val_bind -> environment =
+let checkRegularValBind : environment -> Types.val_bind -> (error,environment) either  =
     fun env valbind ->
         match valbind with
             | ValBind (name,_,_) -> createVariable env (getNameFromNamedId name) None
             | ValNoBind (name,_) -> createVariable env (getNameFromNamedId name) None
 
-let checkMemValBind : environment -> Types.val_bind -> environment =
+let checkMemValBind : environment -> Types.val_bind -> (error,environment) either  =
     fun env valbind ->
         match valbind with
             | ValBind (name,_,_) -> createMemory env (getNameFromNamedId name) None
@@ -156,25 +166,25 @@ let checkMemValBind : environment -> Types.val_bind -> environment =
 let rec checkStmt : environment -> Types.stmt -> (error,environment) either =
     fun env stmt ->
         match stmt with
-            | StmtVal valbinds -> Right (List.fold_left checkRegularValBind env valbinds)
-            | StmtMem valbinds -> Right (List.fold_left checkMemValBind env valbinds)
+            | StmtVal valbinds -> eitherFold_left checkRegularValBind env valbinds
+            | StmtMem valbinds -> eitherFold_left checkMemValBind env valbinds
             | StmtReturn exp ->
                 begin match checkExp env exp with
-                    | true -> Right env
-                    | false -> Left ["Could not evaluate expression in return statement."]
+                    | None -> Right env
+                    | Some errs -> Left ("Could not evaluate expression in return statement."::errs)
                 end
             | StmtIf (cond,trueStmts,None) ->
                 begin match checkExp env cond with
-                    | false -> Left ["Could not evaluate condition expression in if statement."]
-                    | true -> begin match eitherFold_left checkStmt env trueStmts with
+                    | Some errs -> Left ("Could not evaluate condition expression in if statement."::errs)
+                    | None -> begin match eitherFold_left checkStmt env trueStmts with
                             | Right _ as success -> success
                             | Left errs -> Left ("In if body true-branch statements."::errs)
                         end
                 end
             | StmtIf (cond,trueStmts,Some falseStmts) ->
                 begin match checkExp env cond with
-                    | false -> Left ["Could not evaluate condition expression in if statement."]
-                    | true -> 
+                    | Some errs -> Left ("Could not evaluate condition expression in if statement."::errs)
+                    | None -> 
                         begin match eitherFold_left checkStmt env trueStmts with
                             | Left errs -> Left ("In if body true-branch statements."::errs)
                             | Right env2 ->
@@ -187,10 +197,10 @@ let rec checkStmt : environment -> Types.stmt -> (error,environment) either =
             | StmtFun _ -> Right env (* TODO: Function evaluation. *)
             | StmtBind (PId (name,_),rhs) ->
                 begin match checkNamedId env name with
-                    | false -> Left ["Variable has not been defined."]
-                    | true -> begin match checkExp env rhs with
-                        | false -> Left ["Could not evaluate right hand side of bind."]
-                        | true -> Right env
+                    | Some errs -> Left errs
+                    | None -> begin match checkExp env rhs with
+                        | Some errs -> Left ("Could not evaluate right hand side of bind."::errs)
+                        | None -> Right env
                     end
                 end
             | StmtBind _ -> Left ["Left hand side of bind is not a variable."]
@@ -215,9 +225,6 @@ let programState : Types.stmt list option -> unit =
                         List.iter (print_endline) errs;
                         ()
                 end
-
-
-
 
 
 
