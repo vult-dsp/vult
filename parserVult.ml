@@ -360,7 +360,7 @@ and stmt (buffer:parse_exp lexer_stream) : stmt =
     let _ = buffer.error<-true in
     StmtEmpty
 
-(** <statementList> := '{' <statement> [<statement>] '}' *)
+(** <statementList> := LBRACK <statement> [<statement>] RBRACK *)
 and stmtList (buffer:parse_exp lexer_stream) : stmt list =
   let rec loop acc =
     match peekKind buffer with

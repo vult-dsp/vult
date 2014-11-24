@@ -1,1 +1,1 @@
-ocamlbuild -use-ocamlfind -pkg containers vultc.native
+ocamlbuild -use-ocamlfind -pkg containers vultc.native vultc.d.byte
