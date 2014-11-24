@@ -38,7 +38,7 @@ with = 0
 #    | _ ->
 #    ^^^^bar
 # the default is 2, which aligns the pattern and the expression
-match_clause = 6 # this is non-default
+match_clause = 3 # this is non-default
 
 # When nesting expressions on the same line, their indentation are in
 # some cases stacked, so that it remains correct if you close them one
