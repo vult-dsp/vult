@@ -15,8 +15,7 @@ fun biquad(x:num,b0,b1,b2,a1,a2){
 }
 
 fun lp6(x,fc) {
-    val fc:num = max(fc,0);
-    fc = clip(fc,0,samplerate);
+    val fc:num = clip(fc,0,samplerate);
     val k = tan(pi*fc/samplerate);
     val b0 = k/(k+1);
     val b1 = k/(k+1);
@@ -46,7 +45,6 @@ fun lp12(x,fc,q) {
     }
     return biquad(x,b0,b1,b2,a1,a2);
 }
-
 fun hp6(x,fc){
     fc = clip(fc,0,samplerate);
     k = tan(pi*fc/samplerate);
