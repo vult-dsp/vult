@@ -28,35 +28,35 @@ open InterpreterVult
 
 (** Stores the options passed to the command line *)
 type arguments =
-{
-  files  : string list;
-  dparse : bool;
-  runCheck  : bool;
-}
+   {
+      files  : string list;
+      dparse : bool;
+      runCheck  : bool;
+   }
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () =
-  let files  = ref [] in
-  let dparse = ref false in
-  let runCheck = ref false in
-  let opts = [
+   let files  = ref [] in
+   let dparse = ref false in
+   let runCheck = ref false in
+   let opts = [
       "-dparse", (Arg.Unit   (fun () -> dparse:=true)), "Dumps the parse tree (default: off)";
       "-check", (Arg.Unit     (fun () -> runCheck:=true)), "Runs checker on program (default: off)";
-      ]
-  in
-  let _ = Arg.parse opts (fun a -> files:=a::(!files)) "Usage: vultc file.vlt\n" in
-  let _ = files := List.rev (!files) in (* Put the files in the correct order  *)
-  { files = !files ; dparse = !dparse; runCheck = !runCheck; }
+   ]
+   in
+   let _ = Arg.parse opts (fun a -> files:=a::(!files)) "Usage: vultc file.vlt\n" in
+   let _ = files := List.rev (!files) in (* Put the files in the correct order  *)
+   { files = !files ; dparse = !dparse; runCheck = !runCheck; }
 
 let main () =
-  let args = processArguments () in
-  let parsed_file = List.map parseFile args.files in
-  let _ = if args.dparse then
-    List.iter (fun a-> match a with Some(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () ) parsed_file in
-  let _ = if args.runCheck then
-    List.iter programState parsed_file
-  in
+   let args = processArguments () in
+   let parsed_file = List.map parseFile args.files in
+   let _ = if args.dparse then
+         List.iter (fun a-> match a with Some(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () ) parsed_file in
+   let _ = if args.runCheck then
+         List.iter programState parsed_file
+   in
 
-  ()
+   ()
 ;;
 main ();;

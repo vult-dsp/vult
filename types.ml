@@ -27,78 +27,78 @@ open Lexing
 
 (** Location information *)
 type location =
-  {
-    start_pos : position;
-    end_pos   : position;
-  }
+   {
+      start_pos : position;
+      end_pos   : position;
+   }
 
 (** Tokens *)
 type token_enum =
-  | EOF
-  | INT
-  | REAL
-  | ID
-  | FUN
-  | MEM
-  | VAL
-  | RET
-  | IF
-  | ELSE
-  | LBRAC
-  | RBRAC
-  | LPAREN
-  | RPAREN
-  | COLON
-  | SEMI
-  | COMMA
-  | EQUAL
-  | OP
+   | EOF
+   | INT
+   | REAL
+   | ID
+   | FUN
+   | MEM
+   | VAL
+   | RET
+   | IF
+   | ELSE
+   | LBRAC
+   | RBRAC
+   | LPAREN
+   | RPAREN
+   | COLON
+   | SEMI
+   | COMMA
+   | EQUAL
+   | OP
 
 type 'a token =
-  {
-    kind     : token_enum;
-    value    : string;
-    contents : 'a;
-    loc      : location;
-  }
+   {
+      kind     : token_enum;
+      value    : string;
+      contents : 'a;
+      loc      : location;
+   }
 
 (** Type containing the stream of tokens *)
 type 'a lexer_stream =
-  {
-    lexbuf : Lexing.lexbuf;
-    mutable error : bool;
-    mutable error_msg : string list;
-    mutable peeked : 'a token;
-  }
+   {
+      lexbuf : Lexing.lexbuf;
+      mutable error : bool;
+      mutable error_msg : string list;
+      mutable peeked : 'a token;
+   }
 
 type named_id =
-  | SimpleId of string
-  | NamedId of string * string
+   | SimpleId of string
+   | NamedId of string * string
 
 (** Parser syntax tree *)
 type parse_exp =
-  | PId    of named_id * location
-  | PInt   of string * location
-  | PReal  of string * location
-  | PBinOp of string * parse_exp * parse_exp
-  | PUnOp  of string * parse_exp
-  | PCall  of named_id * parse_exp list * location
-  | PUnit
-  | PGroup of parse_exp
-  | PTuple of parse_exp list
-  | PEmpty
+   | PId    of named_id * location
+   | PInt   of string * location
+   | PReal  of string * location
+   | PBinOp of string * parse_exp * parse_exp
+   | PUnOp  of string * parse_exp
+   | PCall  of named_id * parse_exp list * location
+   | PUnit
+   | PGroup of parse_exp
+   | PTuple of parse_exp list
+   | PEmpty
 
 type val_bind =
-  | ValBind   of named_id * parse_exp option * parse_exp
-  | ValNoBind of named_id * parse_exp option
+   | ValBind   of named_id * parse_exp option * parse_exp
+   | ValNoBind of named_id * parse_exp option
 
 type stmt =
-  | StmtVal of val_bind list
-  | StmtMem of val_bind list
-  | StmtReturn of parse_exp
-  | StmtIf  of parse_exp * stmt list * (stmt list) option
-  | StmtFun of named_id * val_bind list * stmt list
-  | StmtBind of parse_exp * parse_exp
-  | StmtEmpty
+   | StmtVal of val_bind list
+   | StmtMem of val_bind list
+   | StmtReturn of parse_exp
+   | StmtIf  of parse_exp * stmt list * (stmt list) option
+   | StmtFun of named_id * val_bind list * stmt list
+   | StmtBind of parse_exp * parse_exp
+   | StmtEmpty
 
 

@@ -22,37 +22,37 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 {
-(** Vult Lexer based on ocamllex *)
+   (** Vult Lexer based on ocamllex *)
 open Lexing
 open Types
 
 (** Returns the current location (start and end) *)
 let getLocation lexbuf =
-  {
-    start_pos = lexbuf.lex_start_p;
-    end_pos   = lexbuf.lex_curr_p;
-  }
+   {
+      start_pos = lexbuf.lex_start_p;
+      end_pos   = lexbuf.lex_curr_p;
+   }
 (** Updates the location of the lexbuf*)
 let updateLocation lexbuf line chars =
-  let pos = lexbuf.lex_curr_p in
-  lexbuf.lex_curr_p <- { pos with
-    pos_lnum = pos.pos_lnum + line;
-    pos_bol = pos.pos_cnum - chars;
-  }
+   let pos = lexbuf.lex_curr_p in
+   lexbuf.lex_curr_p <- { pos with
+                          pos_lnum = pos.pos_lnum + line;
+                          pos_bol = pos.pos_cnum - chars;
+                        }
 
 (** Hash table contaning the keywords. The values are a function to create the keyword token *)
 let keyword_table =
-  let table = Hashtbl.create 50 in
-  let keywords = [
+   let table = Hashtbl.create 50 in
+   let keywords = [
       "fun",FUN;
       "mem",MEM;
       "val",VAL;
       "if",IF;
       "else",ELSE;
       "return",RET;
-    ] in
-  let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
-  table
+   ] in
+   let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
+   table
 
 (** Stores the current line *)
 let current_line_buffer = Buffer.create 100
@@ -63,85 +63,85 @@ let current_lines = ref []
 
 (** Stores the current line and starts a new one *)
 let newLineInBuffer () =
-  let current = Buffer.contents current_line_buffer in
-  let _ = current_lines:= current::(!current_lines) in
-  Buffer.clear current_line_buffer
+   let current = Buffer.contents current_line_buffer in
+   let _ = current_lines:= current::(!current_lines) in
+   Buffer.clear current_line_buffer
 
 (** Returns the last two lines of the buffer *)
 let getLastLines   () =
-  let current = Buffer.contents current_line_buffer in
-  match !current_lines with
-  | [] -> current
-  | h::_ -> h^"\n"^current
+   let current = Buffer.contents current_line_buffer in
+   match !current_lines with
+   | [] -> current
+   | h::_ -> h^"\n"^current
 
 (** Appends the current lexeme to the line buffer and returns it *)
 let getLexeme lexbuf =
-  let s = lexeme lexbuf in
-  let _ = Buffer.add_string current_line_buffer s in
-  s
+   let s = lexeme lexbuf in
+   let _ = Buffer.add_string current_line_buffer s in
+   s
 
 (** Returs the token given the current token kind *)
 let makeToken kind lexbuf =
-  { kind = kind; value = getLexeme lexbuf; loc = getLocation lexbuf; contents = PEmpty }
+   { kind = kind; value = getLexeme lexbuf; loc = getLocation lexbuf; contents = PEmpty }
 
 (** Returs the a keyword token if that's the case otherwise and id token *)
 let makeIdToken lexbuf =
-  let s = getLexeme lexbuf in
-  let kind =
-    if Hashtbl.mem keyword_table s then
-      Hashtbl.find keyword_table s
-    else ID
-  in
-  { kind = kind; value = s; loc = getLocation lexbuf; contents = PEmpty }
+   let s = getLexeme lexbuf in
+   let kind =
+      if Hashtbl.mem keyword_table s then
+         Hashtbl.find keyword_table s
+      else ID
+   in
+   { kind = kind; value = s; loc = getLocation lexbuf; contents = PEmpty }
 
 (* Functions for testing the tokenizer *)
 let tokenizeString tokenizer str =
-  let lexbuf = Lexing.from_string str in
-  let rec loop acc =
-    match tokenizer lexbuf with
-    | EOF -> List.rev acc
-    | t -> loop (t::acc)
-  in loop []
+   let lexbuf = Lexing.from_string str in
+   let rec loop acc =
+      match tokenizer lexbuf with
+      | EOF -> List.rev acc
+      | t -> loop (t::acc)
+   in loop []
 
 (** Returns a string representation of the kind *)
 let kindToString kind =
-  match kind with
-  | EOF   -> "'eof'"
-  | INT   -> "'int'"
-  | REAL  -> "'real'"
-  | ID    -> "'id'"
-  | FUN   -> "'fun'"
-  | MEM   -> "'mem'"
-  | VAL   -> "'val'"
-  | RET   -> "'return'"
-  | IF    -> "'if'"
-  | ELSE  -> "'else'"
-  | LBRAC -> "'{'"
-  | RBRAC -> "'}'"
-  | LPAREN-> "'('"
-  | RPAREN-> "')'"
-  | COLON -> "':'"
-  | SEMI  -> "';'"
-  | COMMA -> "','"
-  | EQUAL -> "'='"
-  | OP    -> "'operator'"
+   match kind with
+   | EOF   -> "'eof'"
+   | INT   -> "'int'"
+   | REAL  -> "'real'"
+   | ID    -> "'id'"
+   | FUN   -> "'fun'"
+   | MEM   -> "'mem'"
+   | VAL   -> "'val'"
+   | RET   -> "'return'"
+   | IF    -> "'if'"
+   | ELSE  -> "'else'"
+   | LBRAC -> "'{'"
+   | RBRAC -> "'}'"
+   | LPAREN-> "'('"
+   | RPAREN-> "')'"
+   | COLON -> "':'"
+   | SEMI  -> "';'"
+   | COMMA -> "','"
+   | EQUAL -> "'='"
+   | OP    -> "'operator'"
 
 (** Returns a string representation of the token *)
 let tokenToString l =
-  match l.kind with
-  | INT   -> "'"^l.value^"'"
-  | REAL  -> "'"^l.value^"'"
-  | ID    -> "'"^l.value^"'"
-  | OP    -> "'"^l.value^"'"
-  | k     -> kindToString k
+   match l.kind with
+   | INT   -> "'"^l.value^"'"
+   | REAL  -> "'"^l.value^"'"
+   | ID    -> "'"^l.value^"'"
+   | OP    -> "'"^l.value^"'"
+   | k     -> kindToString k
 
 (** Prints the list of tokens*)
 let rec printTokenList l =
-  match l with
-  | [] -> ()
-  | h::t ->
-    let _ = print_string (tokenToString h) in
-    printTokenList t
+   match l with
+   | [] -> ()
+   | h::t ->
+      let _ = print_string (tokenToString h) in
+      printTokenList t
 
 }
 
