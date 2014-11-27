@@ -27,6 +27,7 @@ open Types
 open Lexing
 open List
 open CCMap
+open Either
 
 type error = string list
 
@@ -41,24 +42,6 @@ let joinErrorOptions : error option -> error option -> error option =
       | (None, None) -> None
 
 let joinErrorOptionsList : error option list -> error option = List.fold_left joinErrorOptions None
-
-type ('a,'b) either =
-   | Left of 'a
-   | Right of 'b
-
-(* eitherFold_left folds left over a list, and stops if it encounters Left. *)
-let eitherFold_left : ('a -> 'b -> ('c,'a) either) -> 'a -> 'b list -> ('c,'a) either =
-   fun f val1 yt1 ->
-      let rec go : 'a -> 'b list -> ('c,'a) either =
-         fun v yt -> match yt with
-            | (y::ys) ->
-               begin match f v y with
-                  | Left _ as failure -> failure
-                  | Right success -> go success ys
-               end
-            | [] -> Right v
-      in
-      go val1 yt1
 
 type literal =
    | LInt of int
