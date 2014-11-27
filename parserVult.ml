@@ -400,7 +400,7 @@ let parseDumpStmtList (s:string) : string =
    let e = parseStmtList s in
    PrintTypes.stmtListStr e
 
-let parseFile (filename:string) : (stmt list , error list) either * string array =
+let parseFile (filename:string) : parser_results =
    let chan = open_in filename in
    try
       let _ = initializeLineBuffer () in
@@ -414,14 +414,14 @@ let parseFile (filename:string) : (stmt list , error list) either * string array
       let _ = close_in chan in
       let all_lines = getFileLines () in
       if buffer.has_errors then
-         Right(List.rev buffer.errors),all_lines
+         { result = Right(List.rev buffer.errors); lines = all_lines }
       else
-         Left(result),all_lines
+         { result = Left(result); lines = all_lines }
    with
    | ParserError(error) ->
       let _ = close_in chan in
       let all_lines = getFileLines () in
-      Right([error]),all_lines
+      {result = Right([error]); lines = all_lines }
    | _ ->
       let _ = close_in chan in
       failwith "Failed to parse the file"

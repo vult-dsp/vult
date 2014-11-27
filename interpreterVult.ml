@@ -314,9 +314,9 @@ let checkStmtsMain : Types.stmt list -> error option =
       | Left errs -> Some errs
       | Right funcs -> checkStmts {emptyEnv with functions = funcs} stmts
 
-let programState : ((Types.stmt list,Types.error list) either * string array) -> unit =
-   fun (maybeStmts,_) ->
-      match maybeStmts with
+let programState : Types.parser_results -> unit =
+   fun results ->
+      match results.result with
       | Right(_) -> print_string "Parse unsuccessful; no checking possible.\n"
       | Left stmts -> begin match checkStmtsMain stmts with
             | None -> print_string "Program checked succesfully.\n"

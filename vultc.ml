@@ -51,9 +51,9 @@ let processArguments () =
 let main () =
    let args = processArguments () in
    let parser_results = List.map parseFile args.files in
-   let _ = List.iter (fun (a,b) -> Errors.reportErrors a b) parser_results in
+   let _ = List.iter (fun a -> Errors.reportErrors a.result a.lines ) parser_results in
    let _ = if args.dparse then
-         List.iter (fun (a,_) -> match a with Either.Left(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () ) parser_results in
+         List.iter (fun a -> match a.result with Either.Left(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () ) parser_results in
    let _ = if args.run_check then
          List.iter programState parser_results
    in

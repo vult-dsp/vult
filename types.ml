@@ -105,4 +105,8 @@ type stmt =
    | StmtBind of parse_exp * parse_exp
    | StmtEmpty
 
-
+type parser_results =
+   {
+      result : (stmt list,error list) Either.either;
+      lines : string array;
+   }
