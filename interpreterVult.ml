@@ -141,12 +141,12 @@ let createMemory : environment -> string -> literal option -> (errors,environmen
          Right { env with memory = (StringMap.update name updater mem); }
 
 (* Check family of functions. Checks that things are valid in the given environment. *)
-let checkNamedId : environment -> Types.named_id -> Types.errors option =
-   fun env namedId ->
+let checkNamedId : environment -> named_id -> location -> Types.errors option =
+   fun env namedId loc ->
       let name = getNameFromNamedId namedId in
       match variableExists env name with
       | true -> None
-      | false -> Some ([SimpleError("No declaration of variable " ^ name ^ ".")])
+      | false -> Some ([PointedError(loc,"No declaration of variable " ^ name ^ ".")])
 
 let rec flattenExp : Types.parse_exp -> Types.parse_exp list =
    fun groupExp ->
@@ -159,10 +159,10 @@ let rec checkExp : environment -> Types.parse_exp -> Types.errors option =
    fun env exp ->
       let rec internalChecker : Types.parse_exp -> Types.errors option =
          fun exp -> match exp with
-            | PId (name,_) -> checkNamedId env name
+            | PId (name,loc) -> checkNamedId env name loc
             | PBinOp (_,e1,e2) -> joinErrorOptions (internalChecker e1) (internalChecker e2)
             | PUnOp (_,e1) -> internalChecker e1
-            | PCall (fname,values,_) -> checkFunctionCall env fname values
+            | PCall (fname,values,loc) -> checkFunctionCall env fname values loc
             | PGroup e1 -> internalChecker e1
             | PTuple es -> joinErrorOptionsList (List.map internalChecker es)
             | _ -> None (* All others: Nothing to check. *)
@@ -172,15 +172,15 @@ let rec checkExp : environment -> Types.parse_exp -> Types.errors option =
 (* Checking of function calls: Here we just check that the call is correct,
     that the function executes is checked somewhere else.
 *)
-and checkFunctionCall : environment -> Types.named_id -> Types.parse_exp list -> errors option =
-   fun env fId paramsUnflattened ->
+and checkFunctionCall : environment -> Types.named_id -> Types.parse_exp list -> location -> errors option =
+   fun env fId paramsUnflattened loc ->
       let fname = getNameFromNamedId fId in
       let params = List.flatten (List.map flattenExp paramsUnflattened) in
       match getFunction env fname with
-      | Left errs -> Some (SimpleError("Could not evaluate function call to " ^ fname ^ ".")::errs)
+      | Left errs -> Some (PointedError(loc,"Could not evaluate function call to " ^ fname ^ ".\n")::errs)
       | Right { inputs = inputs; } ->
          begin match joinErrorOptionsList (List.map (checkExp env) params) with
-            | Some errs -> Some (SimpleError("Could not evaluate function call parameter in function call to " ^ fname ^ ".")::errs)
+            | Some errs -> Some (PointedError(loc,"Could not evaluate function call parameter in function call to " ^ fname ^ ".\n")::errs)
             | None ->
                begin
                   let paramlength = List.length params in
@@ -245,8 +245,8 @@ and checkStmt : environment -> Types.stmt -> (errors,environment) either =
                end
          end
       | StmtFun _ -> Right env (* Ignore function declarations, these should be stored in env. *)
-      | StmtBind (PId (name,_),rhs) ->
-         begin match checkNamedId env name with
+      | StmtBind (PId (name,loc),rhs) ->
+         begin match checkNamedId env name loc with
             | Some errs -> Left errs
             | None -> begin match checkExp env rhs with
                   | Some errs -> Left (SimpleError("Could not evaluate right hand side of bind.")::errs)
