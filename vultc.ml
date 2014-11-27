@@ -35,7 +35,7 @@ type arguments =
    }
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
-let processArguments () =
+let processArguments () : arguments =
    let files  = ref [] in
    let dparse = ref false in
    let run_check = ref false in
@@ -51,11 +51,13 @@ let processArguments () =
 let main () =
    let args = processArguments () in
    let parser_results = List.map parseFile args.files in
-   let _ = List.iter (fun a -> Errors.reportErrors a.result a.lines ) parser_results in
+   let _ = List.iter (fun a -> Errors.reportErrors a.presult a.lines ) parser_results in
    let _ = if args.dparse then
-         List.iter (fun a -> match a.result with Either.Left(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () ) parser_results in
-   let _ = if args.run_check then
-         List.iter programState parser_results
+         List.iter (fun a -> match a.presult with Either.Left(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () ) parser_results in
+   let _ =
+      if args.run_check then
+         let errors = List.map programState parser_results in
+         List.iter (fun a -> Errors.reportErrors a.iresult a.lines ) errors
    in
 
    ()

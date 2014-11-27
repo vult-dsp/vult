@@ -66,6 +66,8 @@ type error =
    | PointedError of location * string
    | SimpleError  of string
 
+type errors = error list
+
 (** Type containing the stream of tokens *)
 type 'a lexer_stream =
    {
@@ -107,6 +109,12 @@ type stmt =
 
 type parser_results =
    {
-      result : (stmt list,error list) Either.either;
+      presult : (stmt list,error list) Either.either;
+      lines : string array;
+   }
+
+type interpreter_results =
+   {
+      iresult : (unit,error list) Either.either;
       lines : string array;
    }

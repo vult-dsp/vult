@@ -51,7 +51,7 @@ let getErrorLines (location:location) (lines:string array) =
 
 let reportErrorString (lines:string array) (error:error) =
    match error with
-   | SimpleError(msg) -> print_string msg
+   | SimpleError(msg) -> print_string (msg^"\n")
    | PointedError(location,msg) ->
       let loc = errorLocationMessage location in
       let line = getErrorLines location lines in
@@ -59,8 +59,21 @@ let reportErrorString (lines:string array) (error:error) =
       print_string (loc^msg^indicator)
 
 
-let reportErrors (results:(stmt list , error list) either) (lines:string array) =
+let reportErrors (results:('a , error list) either) (lines:string array) =
    match results with
    | Left(_) -> ()
    | Right(errors) ->
       List.iter (reportErrorString lines) errors
+
+let joinErrors : errors -> errors -> errors = List.append
+
+let joinErrorOptions : errors option -> errors option -> errors option =
+   fun maybeErr1 maybeErr2 ->
+      match (maybeErr1,maybeErr2) with
+      | (Some _ as ret, None) -> ret
+      | (None, (Some _ as ret)) -> ret
+      | (Some err1, Some err2) -> Some (joinErrors err1 err2)
+      | (None, None) -> None
+
+let joinErrorOptionsList : errors option list -> errors option = List.fold_left joinErrorOptions None
+

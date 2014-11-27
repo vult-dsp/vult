@@ -28,20 +28,8 @@ open Lexing
 open List
 open CCMap
 open Either
+open Errors
 
-type error = string list
-
-let joinErrors : error -> error -> error = List.append
-
-let joinErrorOptions : error option -> error option -> error option =
-   fun maybeErr1 maybeErr2 ->
-      match (maybeErr1,maybeErr2) with
-      | (Some _ as ret, None) -> ret
-      | (None, (Some _ as ret)) -> ret
-      | (Some err1, Some err2) -> Some (joinErrors err1 err2)
-      | (None, None) -> None
-
-let joinErrorOptionsList : error option list -> error option = List.fold_left joinErrorOptions None
 
 type literal =
    | LInt of int
@@ -91,16 +79,16 @@ let isFunctionStmt : Types.stmt -> bool =
       | StmtFun _ -> true
       | _ -> false
 
-let bindFunction : functionBindings -> vultFunction -> (error,functionBindings) either =
+let bindFunction : functionBindings -> vultFunction -> (errors,functionBindings) either =
    fun binds ({functionname = funcname;} as f) ->
       match StringMap.get funcname binds with
       | None -> Right (StringMap.add funcname f binds)
-      | Some _ -> Left ["Redeclaration of function " ^ funcname ^ "."]
+      | Some _ -> Left ([SimpleError("Redeclaration of function " ^ funcname ^ ".")])
 
-let getFunction : environment -> string -> (error,vultFunction) either =
+let getFunction : environment -> string -> (errors,vultFunction) either =
    fun {functions = binds;} fname ->
       match StringMap.get fname binds with
-      | None -> Left ["No function named " ^ fname ^ " exists."]
+      | None -> Left ([SimpleError("No function named " ^ fname ^ " exists.")])
       | Some f -> Right f
 
 (* Processing of variables. *)
@@ -138,27 +126,27 @@ let variableExists : environment -> string -> bool =
          | Some _ -> true
          | None -> false
 
-let createVariable : environment -> string -> literal option -> (error,environment) either =
+let createVariable : environment -> string -> literal option -> (errors,environment) either =
    fun ({temp = tmp; } as env) name possibleValue ->
       match variableExists env name with
-      | true -> Left ["Redeclaration of variable " ^ name ^ "."]
+      | true -> Left([SimpleError("Redeclaration of variable " ^ name ^ ".")])
       | false -> let updater = varCreator possibleValue in
          Right { env with temp = (StringMap.update name updater tmp); }
 
-let createMemory : environment -> string -> literal option -> (error,environment) either  =
+let createMemory : environment -> string -> literal option -> (errors,environment) either  =
    fun ({memory = mem; } as env) name possibleValue ->
       match variableExists env name with
-      | true -> Left ["Redeclaration of variable " ^ name ^ "."]
+      | true -> Left([SimpleError("Redeclaration of variable " ^ name ^ ".")])
       | false -> let updater = varCreator possibleValue in
          Right { env with memory = (StringMap.update name updater mem); }
 
 (* Check family of functions. Checks that things are valid in the given environment. *)
-let checkNamedId : environment -> Types.named_id -> error option =
+let checkNamedId : environment -> Types.named_id -> Types.errors option =
    fun env namedId ->
       let name = getNameFromNamedId namedId in
       match variableExists env name with
       | true -> None
-      | false -> Some ["No declaration of variable " ^ name ^ "."]
+      | false -> Some ([SimpleError("No declaration of variable " ^ name ^ ".")])
 
 let rec flattenExp : Types.parse_exp -> Types.parse_exp list =
    fun groupExp ->
@@ -167,9 +155,9 @@ let rec flattenExp : Types.parse_exp -> Types.parse_exp list =
       | PTuple es -> es
       | e -> [e]
 
-let rec checkExp : environment -> Types.parse_exp -> error option =
+let rec checkExp : environment -> Types.parse_exp -> Types.errors option =
    fun env exp ->
-      let rec internalChecker : Types.parse_exp -> error option =
+      let rec internalChecker : Types.parse_exp -> Types.errors option =
          fun exp -> match exp with
             | PId (name,_) -> checkNamedId env name
             | PBinOp (_,e1,e2) -> joinErrorOptions (internalChecker e1) (internalChecker e2)
@@ -184,48 +172,48 @@ let rec checkExp : environment -> Types.parse_exp -> error option =
 (* Checking of function calls: Here we just check that the call is correct,
     that the function executes is checked somewhere else.
 *)
-and checkFunctionCall : environment -> Types.named_id -> Types.parse_exp list -> error option =
+and checkFunctionCall : environment -> Types.named_id -> Types.parse_exp list -> errors option =
    fun env fId paramsUnflattened ->
       let fname = getNameFromNamedId fId in
       let params = List.flatten (List.map flattenExp paramsUnflattened) in
       match getFunction env fname with
-      | Left errs -> Some (("Could not evaluate function call to " ^ fname ^ ".")::errs)
+      | Left errs -> Some (SimpleError("Could not evaluate function call to " ^ fname ^ ".")::errs)
       | Right { inputs = inputs; } ->
          begin match joinErrorOptionsList (List.map (checkExp env) params) with
-            | Some errs -> Some (("Could not evaluate function call parameter in function call to " ^ fname ^ ".")::errs)
+            | Some errs -> Some (SimpleError("Could not evaluate function call parameter in function call to " ^ fname ^ ".")::errs)
             | None ->
                begin
                   let paramlength = List.length params in
                   let expectedlength = List.length inputs in
                   if paramlength == expectedlength
                   then None
-                  else Some ["Wrong number of arguments in call to function " ^ fname
+                  else Some [SimpleError("Wrong number of arguments in call to function " ^ fname
                              ^ "; expected " ^ (string_of_int expectedlength) ^ " but got "
-                             ^ (string_of_int paramlength) ^ "."]
+                             ^ (string_of_int paramlength) ^ ".")]
                end
          end
 
-and checkRegularValBind : environment -> Types.val_bind -> (error,environment) either  =
+and checkRegularValBind : environment -> Types.val_bind -> (errors,environment) either  =
    fun env valbind ->
       match valbind with
       | ValNoBind (name,_) -> createVariable env (getNameFromNamedId name) None
       | ValBind (nameId,_,valBind) ->
          let name = getNameFromNamedId nameId in
          match checkExp env valBind with
-         | Some errs -> Left (("In binding of variable " ^ name ^ ".")::errs)
+         | Some errs -> Left (SimpleError("In binding of variable " ^ name ^ ".")::errs)
          | None -> createVariable env name None
 
-and checkMemValBind : environment -> Types.val_bind -> (error,environment) either  =
+and checkMemValBind : environment -> Types.val_bind -> (errors,environment) either  =
    fun env valbind ->
       match valbind with
       | ValNoBind (name,_) -> createMemory env (getNameFromNamedId name) None
       | ValBind (nameId,_,valBind) ->
          let name = getNameFromNamedId nameId in
          match checkExp env valBind with
-         | Some errs -> Left (("In binding of variable " ^ name ^ ".")::errs)
+         | Some errs -> Left (SimpleError("In binding of variable " ^ name ^ ".")::errs)
          | None -> createMemory env name None
 
-and checkStmt : environment -> Types.stmt -> (error,environment) either =
+and checkStmt : environment -> Types.stmt -> (errors,environment) either =
    fun env stmt ->
       match stmt with
       | StmtVal valbinds -> eitherFold_left checkRegularValBind env valbinds
@@ -233,25 +221,25 @@ and checkStmt : environment -> Types.stmt -> (error,environment) either =
       | StmtReturn exp ->
          begin match checkExp env exp with
             | None -> Right env
-            | Some errs -> Left ("Could not evaluate expression in return statement."::errs)
+            | Some errs -> Left (SimpleError("Could not evaluate expression in return statement.")::errs)
          end
       | StmtIf (cond,trueStmts,None) ->
          begin match checkExp env cond with
-            | Some errs -> Left ("Could not evaluate condition expression in if statement."::errs)
+            | Some errs -> Left (SimpleError("Could not evaluate condition expression in if statement.")::errs)
             | None -> begin match eitherFold_left checkStmt env trueStmts with
                   | Right _ as success -> success
-                  | Left errs -> Left ("In if body true-branch statements."::errs)
+                  | Left errs -> Left (SimpleError("In if body true-branch statements.")::errs)
                end
          end
       | StmtIf (cond,trueStmts,Some falseStmts) ->
          begin match checkExp env cond with
-            | Some errs -> Left ("Could not evaluate condition expression in if statement."::errs)
+            | Some errs -> Left (SimpleError("Could not evaluate condition expression in if statement.")::errs)
             | None ->
                begin match eitherFold_left checkStmt env trueStmts with
-                  | Left errs -> Left ("In if body true-branch statements."::errs)
+                  | Left errs -> Left (SimpleError("In if body true-branch statements.")::errs)
                   | Right env2 ->
                      begin match eitherFold_left checkStmt env2 falseStmts with
-                        | Left errs -> Left ("In if body false-branch statements"::errs)
+                        | Left errs -> Left (SimpleError("In if body false-branch statements")::errs)
                         | Right _ as success -> success
                      end
                end
@@ -261,30 +249,30 @@ and checkStmt : environment -> Types.stmt -> (error,environment) either =
          begin match checkNamedId env name with
             | Some errs -> Left errs
             | None -> begin match checkExp env rhs with
-                  | Some errs -> Left ("Could not evaluate right hand side of bind."::errs)
+                  | Some errs -> Left (SimpleError("Could not evaluate right hand side of bind.")::errs)
                   | None -> Right env
                end
          end
-      | StmtBind _ -> Left ["Left hand side of bind is not a variable."]
+      | StmtBind _ -> Left [SimpleError("Left hand side of bind is not a variable.")]
       | StmtEmpty -> Right env
 
-let checkStmts : environment -> Types.stmt list -> error option =
+let checkStmts : environment -> Types.stmt list -> errors option =
    fun env stmts ->
       match eitherFold_left checkStmt env stmts with
       | Right _ -> None
       | Left errs -> Some errs
 
-let checkFunction : environment -> vultFunction -> error option =
+let checkFunction : environment -> vultFunction -> errors option =
    fun env { functionname = fname;  inputs = inputs; body = stmts; } ->
       match eitherFold_left checkRegularValBind emptyEnv inputs with
-      | Left errs -> Some (("In function input declarations of function " ^ fname ^ ".")::errs)
+      | Left errs -> Some (SimpleError("In function input declarations of function " ^ fname ^ ".")::errs)
       | Right env ->
          begin match checkStmts env stmts with
-            | Some errs -> Some (("In function " ^ fname ^ ".")::errs)
+            | Some errs -> Some (SimpleError("In function " ^ fname ^ ".")::errs)
             | None -> None
          end
 
-let insertIfFunction : functionBindings -> Types.stmt  -> (error,functionBindings) either =
+let insertIfFunction : functionBindings -> Types.stmt  -> (errors,functionBindings) either =
    fun funcs stmt ->
       match stmt with
       | StmtFun (namedid,inputs,body) ->
@@ -294,11 +282,11 @@ let insertIfFunction : functionBindings -> Types.stmt  -> (error,functionBinding
          bindFunction funcs vultfunc
       | _ -> Right funcs
 
-let processFunctions : Types.stmt list -> (error,functionBindings) either =
+let processFunctions : Types.stmt list -> (errors,functionBindings) either =
    fun stmts ->
       (* First check in the function declarations. *)
       match eitherFold_left insertIfFunction noFunctions stmts with
-      | Left errs -> Left ("When processing function declarations."::errs)
+      | Left errs -> Left (SimpleError("When processing function declarations.")::errs)
       | Right fbinds -> (* Then check the function bodies. *)
          begin
             let funclist = map snd (StringMap.to_list fbinds) in
@@ -308,25 +296,24 @@ let processFunctions : Types.stmt list -> (error,functionBindings) either =
             | None -> Right fbinds
          end
 
-let checkStmtsMain : Types.stmt list -> error option =
+let checkStmtsMain : Types.stmt list -> errors option =
    fun stmts ->
       match processFunctions stmts with
       | Left errs -> Some errs
       | Right funcs -> checkStmts {emptyEnv with functions = funcs} stmts
 
-let programState : Types.parser_results -> unit =
+let programState : Types.parser_results -> interpreter_results =
    fun results ->
-      match results.result with
-      | Right(_) -> print_string "Parse unsuccessful; no checking possible.\n"
+      match results.presult with
+      | Right(_) ->
+         { iresult = Right([SimpleError("Parse unsuccessful; no checking possible.")]); lines=results.lines }
       | Left stmts -> begin match checkStmtsMain stmts with
-            | None -> print_string "Program checked succesfully.\n"
+            | None -> { iresult = Left(); lines = results.lines }
             | Some errsRev ->
                let
                   errs = List.rev errsRev
                in
-               print_string "Program checked unsuccessfully, errors:\n" ;
-               List.iter (print_endline) errs;
-               ()
+               { iresult = Right(errs); lines = results.lines }
          end
 
 
