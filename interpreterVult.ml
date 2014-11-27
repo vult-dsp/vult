@@ -105,14 +105,14 @@ let getFunction : environment -> string -> (error,vultFunction) either =
 
 (* Processing of variables. *)
 (* For easy construction of updater function in bindVariable. *)
-let var_binder : literal -> literal option -> literal option =
+let varBinder : literal -> literal option -> literal option =
    fun newval oldval ->
       match oldval with
       | Some _ -> Some newval
       | None -> None (* If the variable is not present, don't create it. *)
 
 (* For easy creation of creation function in createVariable. *)
-let var_creator : literal option -> literal option -> literal option =
+let varCreator : literal option -> literal option -> literal option =
    fun newval oldval ->
       match oldval,newval with
       | (Some x,_) -> Some x (* If the variable already exists, don't rebind it. *)
@@ -122,7 +122,7 @@ let var_creator : literal option -> literal option -> literal option =
 (* bindVariable expects there to be a binding already present. *)
 let bindVariable : environment -> string -> literal  -> environment =
    fun ({ memory = mem; temp = tmp; } as env) name value ->
-      let updater = var_binder value in
+      let updater = varBinder value in
       {
          env with
          memory = StringMap.update name updater mem;
@@ -142,14 +142,14 @@ let createVariable : environment -> string -> literal option -> (error,environme
    fun ({temp = tmp; } as env) name possibleValue ->
       match variableExists env name with
       | true -> Left ["Redeclaration of variable " ^ name ^ "."]
-      | false -> let updater = var_creator possibleValue in
+      | false -> let updater = varCreator possibleValue in
          Right { env with temp = (StringMap.update name updater tmp); }
 
 let createMemory : environment -> string -> literal option -> (error,environment) either  =
    fun ({memory = mem; } as env) name possibleValue ->
       match variableExists env name with
       | true -> Left ["Redeclaration of variable " ^ name ^ "."]
-      | false -> let updater = var_creator possibleValue in
+      | false -> let updater = varCreator possibleValue in
          Right { env with memory = (StringMap.update name updater mem); }
 
 (* Check family of functions. Checks that things are valid in the given environment. *)
@@ -314,11 +314,11 @@ let checkStmtsMain : Types.stmt list -> error option =
       | Left errs -> Some errs
       | Right funcs -> checkStmts {emptyEnv with functions = funcs} stmts
 
-let programState : Types.stmt list option -> unit =
-   fun maybeStmts ->
+let programState : ((Types.stmt list,Types.error list) either * string array) -> unit =
+   fun (maybeStmts,_) ->
       match maybeStmts with
-      | None -> print_string "Parse unsuccessful; no checking possible.\n"
-      | Some stmts -> begin match checkStmtsMain stmts with
+      | Right(_) -> print_string "Parse unsuccessful; no checking possible.\n"
+      | Left stmts -> begin match checkStmtsMain stmts with
             | None -> print_string "Program checked succesfully.\n"
             | Some errsRev ->
                let

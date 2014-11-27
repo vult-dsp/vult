@@ -62,12 +62,16 @@ type 'a token =
       loc      : location;
    }
 
+type error =
+   | PointedError of location * string
+   | SimpleError  of string
+
 (** Type containing the stream of tokens *)
 type 'a lexer_stream =
    {
       lexbuf : Lexing.lexbuf;
-      mutable error : bool;
-      mutable error_msg : string list;
+      mutable has_errors : bool;
+      mutable errors : error list;
       mutable peeked : 'a token;
    }
 

@@ -67,12 +67,15 @@ let newLineInBuffer () =
    let _ = current_lines:= current::(!current_lines) in
    Buffer.clear current_line_buffer
 
-(** Returns the last two lines of the buffer *)
-let getLastLines   () =
+(** Returns all the lines that have been tokenized *)
+let getFileLines () =
    let current = Buffer.contents current_line_buffer in
-   match !current_lines with
-   | [] -> current
-   | h::_ -> h^"\n"^current
+   Array.of_list (List.rev (current::(!current_lines)))
+
+(** Prepares the line buffer to start tokenizing *)
+let initializeLineBuffer () =
+  let _ = Buffer.clear current_line_buffer in
+  current_lines:=[]
 
 (** Appends the current lexeme to the line buffer and returns it *)
 let getLexeme lexbuf =
@@ -157,14 +160,14 @@ let float =
   ('.' ['0'-'9' '_']* )?
   (['e' 'E'] ['+' '-']? ['0'-'9'] ['0'-'9' '_']*)?
 
-rule token =
+rule next_token =
   parse
   | newline
     { let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
       let _ = newLineInBuffer () in
-      token lexbuf
+      next_token lexbuf
     }
-  | blank +     { let _ = getLexeme lexbuf in token lexbuf }
+  | blank +     { let _ = getLexeme lexbuf in next_token lexbuf }
   | '('         { makeToken LPAREN lexbuf }
   | ')'         { makeToken RPAREN lexbuf }
   | '{'         { makeToken LBRAC lexbuf }
