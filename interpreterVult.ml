@@ -88,7 +88,7 @@ let bindFunction : functionBindings -> vultFunction -> (errors,functionBindings)
 let getFunction : environment -> string -> (errors,vultFunction) either =
    fun {functions = binds;} fname ->
       match StringMap.get fname binds with
-      | None -> Left ([SimpleError("No function named " ^ fname ^ " exists.")])
+      | None ->  Left ([SimpleError("No function named " ^ fname ^ " exists.")])
       | Some f -> Right f
 
 (* Processing of variables. *)
@@ -263,19 +263,19 @@ let checkStmts : environment -> Types.stmt list -> errors option =
       | Left errs -> Some errs
 
 let checkFunction : environment -> vultFunction -> errors option =
-   fun env { functionname = fname;  inputs = inputs; body = stmts; } ->
-      match eitherFold_left checkRegularValBind emptyEnv inputs with
-      | Left errs -> Some (SimpleError("In function input declarations of function " ^ fname ^ ".")::errs)
+   fun env func ->
+      match eitherFold_left checkRegularValBind env func.inputs with
+      | Left errs -> Some (SimpleError("In function input declarations of function " ^ func.functionname ^ ".")::errs)
       | Right env ->
-         begin match checkStmts env stmts with
-            | Some errs -> Some (SimpleError("In function " ^ fname ^ ".")::errs)
+         begin match checkStmts env func.body with
+            | Some errs -> Some (SimpleError("In function " ^ func.functionname ^ ".")::errs)
             | None -> None
          end
 
 let insertIfFunction : functionBindings -> Types.stmt  -> (errors,functionBindings) either =
    fun funcs stmt ->
       match stmt with
-      | StmtFun (namedid,inputs,body) ->
+      | StmtFun (namedid,inputs,body) -> 
          let funcname = getNameFromNamedId namedid in
          let functype = getTypeFromNamedId namedid in
          let vultfunc = { functionname = funcname; returntype = functype; inputs = inputs; body = body; } in
@@ -300,7 +300,7 @@ let checkStmtsMain : Types.stmt list -> errors option =
    fun stmts ->
       match processFunctions stmts with
       | Left errs -> Some errs
-      | Right funcs -> checkStmts {emptyEnv with functions = funcs} stmts
+      | Right funcs ->  checkStmts {emptyEnv with functions = funcs} stmts
 
 let programState : Types.parser_results -> interpreter_results =
    fun results ->
