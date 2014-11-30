@@ -154,3 +154,35 @@ and traverseTopStmtList (f: 'a -> stmt -> 'a * stmt) (state:'a) (stmts:stmt list
             (state1,ne::acc) )
       (state,[]) stmts in
    state2,List.rev acc
+
+let rec expandStmt (f: 'a -> stmt -> 'a * stmt list) (state0:'a) (stmt:stmt) : 'a * stmt list =
+   let state,nstmt = f state0 stmt in
+   let inner_fold (state,acc) stmt =
+      match stmt with
+      | StmtVal(_)
+      | StmtMem(_)
+      | StmtReturn(_)
+      | StmtBind(_)
+      | StmtEmpty -> state,stmt::acc
+      | StmtFun(name,args,stmts) ->
+         let state1,nstmts = expandStmtList f state stmts in
+         state1,StmtFun(name,args,nstmts)::acc
+      | StmtIf(cond,then_stmts,None) ->
+         let state1,nthen_stmts = expandStmtList f state then_stmts in
+         state1,StmtIf(cond,nthen_stmts,None)::acc
+      | StmtIf(cond,then_stmts,Some(else_stmts)) ->
+         let state1,nthen_stmts = expandStmtList f state then_stmts in
+         let state2,nelse_stmts = expandStmtList f state1 else_stmts in
+         state2,StmtIf(cond,nthen_stmts,Some(nelse_stmts))::acc
+   in
+   let state1,acc = List.fold_left inner_fold (state,[]) nstmt in
+   state1,List.rev acc
+
+and expandStmtList (f: 'a -> stmt -> 'a * stmt list) (state:'a) (stmts:stmt list) : 'a * stmt list =
+   let state2,acc =
+      List.fold_left
+         (fun (state,acc) exp ->
+            let state1,ne = expandStmt f state exp in
+            (state1,(List.rev ne)::acc) )
+      (state,[]) stmts in
+   state2,List.rev (List.flatten acc)
