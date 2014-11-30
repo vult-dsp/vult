@@ -54,42 +54,31 @@ let keyword_table =
    let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
    table
 
-(** Stores the current line *)
-let current_line_buffer = Buffer.create 100
-
-let current_lines = ref []
-
-(* Auxiliary functions for processing the lexeme buffer *)
 
 (** Stores the current line and starts a new one *)
-let newLineInBuffer () =
-   let current = Buffer.contents current_line_buffer in
-   let _ = current_lines:= current::(!current_lines) in
-   Buffer.clear current_line_buffer
+let newLineInBuffer (lines:lexed_lines) =
+   let current = Buffer.contents lines.current_line in
+   let _ = lines.all_lines <- current::lines.all_lines in
+   Buffer.clear lines.current_line
 
 (** Returns all the lines that have been tokenized *)
-let getFileLines () =
-   let current = Buffer.contents current_line_buffer in
-   Array.of_list (List.rev (current::(!current_lines)))
-
-(** Prepares the line buffer to start tokenizing *)
-let initializeLineBuffer () =
-  let _ = Buffer.clear current_line_buffer in
-  current_lines:=[]
+let getFileLines (lines:lexed_lines) =
+   let current = Buffer.contents lines.current_line in
+   Array.of_list (List.rev (current::lines.all_lines))
 
 (** Appends the current lexeme to the line buffer and returns it *)
-let getLexeme lexbuf =
+let getLexeme lines lexbuf =
    let s = lexeme lexbuf in
-   let _ = Buffer.add_string current_line_buffer s in
+   let _ = Buffer.add_string lines.current_line s in
    s
 
 (** Returs the token given the current token kind *)
-let makeToken kind lexbuf =
-   { kind = kind; value = getLexeme lexbuf; loc = getLocation lexbuf; contents = PEmpty }
+let makeToken lines kind lexbuf =
+   { kind = kind; value = getLexeme lines lexbuf; loc = getLocation lexbuf; contents = PEmpty }
 
 (** Returs the a keyword token if that's the case otherwise and id token *)
-let makeIdToken lexbuf =
-   let s = getLexeme lexbuf in
+let makeIdToken lines lexbuf =
+   let s = getLexeme lines lexbuf in
    let kind =
       if Hashtbl.mem keyword_table s then
          Hashtbl.find keyword_table s
@@ -160,35 +149,35 @@ let float =
   ('.' ['0'-'9' '_']* )?
   (['e' 'E'] ['+' '-']? ['0'-'9'] ['0'-'9' '_']*)?
 
-rule next_token =
+rule next_token lines =
   parse
   | newline
     { let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
-      let _ = newLineInBuffer () in
-      next_token lexbuf
+      let _ = newLineInBuffer lines in
+      next_token lines lexbuf
     }
-  | blank +     { let _ = getLexeme lexbuf in next_token lexbuf }
-  | '('         { makeToken LPAREN lexbuf }
-  | ')'         { makeToken RPAREN lexbuf }
-  | '{'         { makeToken LBRAC lexbuf }
-  | '}'         { makeToken RBRAC lexbuf }
-  | ':'         { makeToken COLON lexbuf }
-  | ';'         { makeToken SEMI lexbuf }
-  | ','         { makeToken COMMA lexbuf }
-  | '='         { makeToken EQUAL lexbuf }
-  | "||"        { makeToken OP lexbuf }
-  | "&&"        { makeToken OP lexbuf }
-  | "=="        { makeToken OP lexbuf }
-  | "!="        { makeToken OP lexbuf }
-  | "<="        { makeToken OP lexbuf }
-  | ">="        { makeToken OP lexbuf }
-  | [ '<' '>' ] { makeToken OP lexbuf }
-  | '|'         { makeToken OP lexbuf }
-  | '&'         { makeToken OP lexbuf }
-  | [ '+' '-' ] { makeToken OP lexbuf }
-  | [ '*' '/' '%' ] { makeToken OP lexbuf }
-  | int         { makeToken INT lexbuf }
-  | float       { makeToken REAL lexbuf }
+  | blank +     { let _ = getLexeme lines lexbuf in next_token lines lexbuf }
+  | '('         { makeToken lines LPAREN lexbuf }
+  | ')'         { makeToken lines RPAREN lexbuf }
+  | '{'         { makeToken lines LBRAC lexbuf }
+  | '}'         { makeToken lines RBRAC lexbuf }
+  | ':'         { makeToken lines COLON lexbuf }
+  | ';'         { makeToken lines SEMI lexbuf }
+  | ','         { makeToken lines COMMA lexbuf }
+  | '='         { makeToken lines EQUAL lexbuf }
+  | "||"        { makeToken lines OP lexbuf }
+  | "&&"        { makeToken lines OP lexbuf }
+  | "=="        { makeToken lines OP lexbuf }
+  | "!="        { makeToken lines OP lexbuf }
+  | "<="        { makeToken lines OP lexbuf }
+  | ">="        { makeToken lines OP lexbuf }
+  | [ '<' '>' ] { makeToken lines OP lexbuf }
+  | '|'         { makeToken lines OP lexbuf }
+  | '&'         { makeToken lines OP lexbuf }
+  | [ '+' '-' ] { makeToken lines OP lexbuf }
+  | [ '*' '/' '%' ] { makeToken lines OP lexbuf }
+  | int         { makeToken lines INT lexbuf }
+  | float       { makeToken lines REAL lexbuf }
   | startid idchar *
-                { makeIdToken lexbuf }
-  | eof         { makeToken EOF lexbuf }
+                { makeIdToken lines lexbuf }
+  | eof         { makeToken lines EOF lexbuf }

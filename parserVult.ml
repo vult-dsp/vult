@@ -45,7 +45,7 @@ let appendError (buffer:'a lexer_stream) (error:error) =
 
 (** Skips one token *)
 let skip (buffer:'a lexer_stream) : unit =
-   buffer.peeked <- next_token buffer.lexbuf
+   buffer.peeked <- next_token buffer.lines buffer.lexbuf
 
 (** Returns the current token in the buffer *)
 let current (buffer:'a lexer_stream) : 'a token =
@@ -69,7 +69,7 @@ let rec moveToNextStatement (buffer:'a lexer_stream) : unit =
 (** Checks that the next token matches the given kind and skip it *)
 let consume (buffer:'a lexer_stream) (kind:token_enum) : unit =
    match buffer.peeked with
-   | t when t.kind=kind -> buffer.peeked <- next_token buffer.lexbuf
+   | t when t.kind=kind -> buffer.peeked <- next_token buffer.lines buffer.lexbuf
    | got_token ->
       let expected = kindToString kind in
       let got = tokenToString got_token in
@@ -86,16 +86,24 @@ let expect (buffer:'a lexer_stream) (kind:token_enum) : unit =
       let message = Printf.sprintf "Expecting a %s but got %s\n" expected got in
       raise (ParserError(getErrorForToken buffer message))
 
+let emptyLexedLines () =
+   {
+      current_line = Buffer.create 100;
+      all_lines    = [];
+   }
+
 (** Creates a token stream given a string *)
 let bufferFromString (str:string) : 'a lexer_stream =
    let lexbuf = Lexing.from_string str in
-   { lexbuf = lexbuf; peeked = next_token lexbuf; has_errors = false; errors= [] }
+   let lines = emptyLexedLines () in
+   { lexbuf = lexbuf; peeked = next_token lines lexbuf; has_errors = false; errors= []; lines = lines }
 
 (** Creates a token stream given a channel *)
 let bufferFromChannel (chan:in_channel) (file:string) : 'a lexer_stream =
    let lexbuf = Lexing.from_channel chan in
+   let lines = emptyLexedLines () in
    lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = file };
-   { lexbuf = lexbuf; peeked = next_token lexbuf ; has_errors = false; errors = [] }
+   { lexbuf = lexbuf; peeked = next_token lines lexbuf ; has_errors = false; errors = []; lines = lines }
 
 (** Returns the left binding powers of the token *)
 let getLbp (token:'a token) : int =
@@ -402,9 +410,8 @@ let parseDumpStmtList (s:string) : string =
 
 let parseFile (filename:string) : parser_results =
    let chan = open_in filename in
+   let buffer = bufferFromChannel chan filename in
    try
-      let _ = initializeLineBuffer () in
-      let buffer = bufferFromChannel chan filename in
       let rec loop acc =
          match peekKind buffer with
          | EOF -> List.rev acc
@@ -412,7 +419,7 @@ let parseFile (filename:string) : parser_results =
       in
       let result = loop [] |> List.flatten in
       let _ = close_in chan in
-      let all_lines = getFileLines () in
+      let all_lines = getFileLines buffer.lines in
       if buffer.has_errors then
          { presult = Left(List.rev buffer.errors); lines = all_lines }
       else
@@ -420,7 +427,7 @@ let parseFile (filename:string) : parser_results =
    with
    | ParserError(error) ->
       let _ = close_in chan in
-      let all_lines = getFileLines () in
+      let all_lines = getFileLines buffer.lines in
       {presult = Left([error]); lines = all_lines }
    | _ ->
       let _ = close_in chan in

@@ -32,6 +32,12 @@ type location =
       end_pos   : position;
    }
 
+type lexed_lines =
+   {
+      current_line      : Buffer.t;
+      mutable all_lines : string list;
+   }
+
 (** Tokens *)
 type token_enum =
    | EOF
@@ -75,6 +81,7 @@ type 'a lexer_stream =
       mutable has_errors : bool;
       mutable errors     : error list;
       mutable peeked     : 'a token;
+      lines              : lexed_lines;
    }
 
 type named_id =
