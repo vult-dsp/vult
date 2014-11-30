@@ -71,25 +71,25 @@ type errors = error list
 (** Type containing the stream of tokens *)
 type 'a lexer_stream =
    {
-      lexbuf : Lexing.lexbuf;
+      lexbuf             : Lexing.lexbuf;
       mutable has_errors : bool;
-      mutable errors : error list;
-      mutable peeked : 'a token;
+      mutable errors     : error list;
+      mutable peeked     : 'a token;
    }
 
 type named_id =
    | SimpleId of string
-   | NamedId of string * string
+   | NamedId  of string * string
 
 (** Parser syntax tree *)
 type parse_exp =
-   | PId    of named_id * location
-   | PInt   of string * location
-   | PReal  of string * location
-   | PBinOp of string * parse_exp * parse_exp
-   | PUnOp  of string * parse_exp
-   | PCall  of named_id * parse_exp list * location
    | PUnit
+   | PInt   of string   * location
+   | PReal  of string   * location
+   | PId    of named_id * location
+   | PUnOp  of string   * parse_exp
+   | PBinOp of string   * parse_exp      * parse_exp
+   | PCall  of named_id * parse_exp list * location
    | PGroup of parse_exp
    | PTuple of parse_exp list
    | PEmpty
@@ -99,22 +99,22 @@ type val_bind =
    | ValNoBind of named_id * parse_exp option
 
 type stmt =
-   | StmtVal of val_bind list
-   | StmtMem of val_bind list
+   | StmtVal    of val_bind list
+   | StmtMem    of val_bind list
    | StmtReturn of parse_exp
-   | StmtIf  of parse_exp * stmt list * (stmt list) option
-   | StmtFun of named_id * val_bind list * stmt list
-   | StmtBind of parse_exp * parse_exp
+   | StmtIf     of parse_exp * stmt list     * (stmt list) option
+   | StmtFun    of named_id  * val_bind list * stmt list
+   | StmtBind   of parse_exp * parse_exp
    | StmtEmpty
 
 type parser_results =
    {
       presult : (stmt list,error list) Either.either;
-      lines : string array;
+      lines   : string array;
    }
 
 type interpreter_results =
    {
       iresult : (unit,error list) Either.either;
-      lines : string array;
+      lines   : string array;
    }
