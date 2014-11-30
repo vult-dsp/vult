@@ -33,13 +33,13 @@ let rec traverseBottomExp (f: 'a -> parse_exp -> 'a * parse_exp) (state:'a) (exp
    | PInt(_,_)
    | PReal(_,_)
    | PId(_,_)   -> f state exp
-   | PUnOp(name,e) ->
+   | PUnOp(name,e,loc) ->
       let state1,ne = traverseBottomExp f state e in
-      f state1 (PUnOp(name,ne))
-   | PBinOp(name,e1,e2) ->
+      f state1 (PUnOp(name,ne,loc))
+   | PBinOp(name,e1,e2,loc) ->
       let state1,ne1 = traverseBottomExp f state e1 in
       let state2,ne2 = traverseBottomExp f state1 e2 in
-      f state2 (PBinOp(name,ne1,ne2))
+      f state2 (PBinOp(name,ne1,ne2,loc))
    | PGroup(e) ->
       let state1,ne = traverseBottomExp f state e in
       f state1 (PGroup(ne))
@@ -98,13 +98,13 @@ let rec traverseTopExp (f: 'a -> parse_exp -> 'a * parse_exp) (state0:'a) (exp:p
    | PInt(_,_)
    | PReal(_,_)
    | PId(_,_)   -> state,nexp
-   | PUnOp(name,e) ->
+   | PUnOp(name,e,loc) ->
       let state1,ne = traverseTopExp f state e in
-      state1,PUnOp(name,ne)
-   | PBinOp(name,e1,e2) ->
+      state1,PUnOp(name,ne,loc)
+   | PBinOp(name,e1,e2,loc) ->
       let state1,ne1 = traverseTopExp f state e1 in
       let state2,ne2 = traverseTopExp f state1 e2 in
-      state2,PBinOp(name,ne1,ne2)
+      state2,PBinOp(name,ne1,ne2,loc)
    | PGroup(e) ->
       let state1,ne = traverseTopExp f state e in
       state1,PGroup(ne)

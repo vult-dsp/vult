@@ -127,8 +127,8 @@ let getLbp (token:'a token) : int =
 (** Get the contents (the expression) stored in the token *)
 let getContents (token:parse_exp token) : parse_exp =
    match token.kind,token.contents with
-   | INT,PEmpty  -> PInt(token.value,token.loc)
-   | ID,PEmpty   -> PId(SimpleId(token.value),token.loc)
+   | INT ,PEmpty -> PInt(token.value,token.loc)
+   | ID  ,PEmpty -> PId(SimpleId(token.value),token.loc)
    | REAL,PEmpty -> PReal(token.value,token.loc)
    | _    -> token.contents
 
@@ -212,12 +212,12 @@ and functionCall (buffer:parse_exp lexer_stream) (token:parse_exp token) (id:nam
 (** <unaryOp> := OP <expression> *)
 and unaryOp (buffer:parse_exp lexer_stream) (token:parse_exp token) : parse_exp token =
    let right = expression 70 buffer in
-   { token with contents = PUnOp("-",getContents right) }
+   { token with contents = PUnOp(token.value,getContents right,token.loc) }
 
 (** <binaryOp> := <expression> OP <expression> *)
 and binaryOp (buffer:parse_exp lexer_stream) (token:parse_exp token) (left:parse_exp token) : parse_exp token =
    let right = expression (getLbp token) buffer in
-   { token with contents = PBinOp(token.value,getContents left,getContents right) }
+   { token with contents = PBinOp(token.value,getContents left,getContents right,token.loc) }
 
 (** <expressionList> := <expression> [',' <expression> ] *)
 and expressionList (buffer:parse_exp lexer_stream) : parse_exp list =

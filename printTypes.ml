@@ -95,13 +95,13 @@ let rec expressionBuff buffer exp =
    | PId(s,_)   -> namedIdBuff buffer s
    | PInt(s,_)  -> append buffer s
    | PReal(s,_) -> append buffer s
-   | PBinOp(op,e1,e2) ->
+   | PBinOp(op,e1,e2,_) ->
       append buffer "(";
       expressionBuff buffer e1;
       append buffer op;
       expressionBuff buffer e2;
       append buffer ")"
-   | PUnOp(op,e) ->
+   | PUnOp(op,e,_) ->
       append buffer "(";
       append buffer op;
       expressionBuff buffer e;

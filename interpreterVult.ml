@@ -160,8 +160,8 @@ let rec checkExp : environment -> Types.parse_exp -> Types.errors option =
       let rec internalChecker : Types.parse_exp -> Types.errors option =
          fun exp -> match exp with
             | PId (name,loc) -> checkNamedId env name loc
-            | PBinOp (_,e1,e2) -> joinErrorOptions (internalChecker e1) (internalChecker e2)
-            | PUnOp (_,e1) -> internalChecker e1
+            | PBinOp (_,e1,e2,_) -> joinErrorOptions (internalChecker e1) (internalChecker e2)
+            | PUnOp (_,e1,_) -> internalChecker e1
             | PCall (fname,values,loc) -> checkFunctionCall env fname values loc
             | PGroup e1 -> internalChecker e1
             | PTuple es -> joinErrorOptionsList (List.map internalChecker es)

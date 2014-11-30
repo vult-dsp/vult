@@ -94,8 +94,8 @@ type parse_exp =
    | PInt   of string   * location
    | PReal  of string   * location
    | PId    of named_id * location
-   | PUnOp  of string   * parse_exp
-   | PBinOp of string   * parse_exp      * parse_exp
+   | PUnOp  of string   * parse_exp      * location
+   | PBinOp of string   * parse_exp      * parse_exp * location
    | PCall  of named_id * parse_exp list * location
    | PGroup of parse_exp
    | PTuple of parse_exp list
