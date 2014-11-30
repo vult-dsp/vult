@@ -24,6 +24,7 @@ THE SOFTWARE.
 open LexerVult
 open ParserVult
 open Types
+open TypesUtil
 open InterpreterVult
 
 (** Stores the options passed to the command line *)

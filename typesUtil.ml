@@ -25,8 +25,8 @@ THE SOFTWARE.
 
 open Types
 
-
-let rec traverseExp (f: 'a -> parse_exp -> 'a * parse_exp) (state:'a) (exp:parse_exp) : 'a * parse_exp =
+(** Traverses expressions bottom-up *)
+let rec traverseBottomExp (f: 'a -> parse_exp -> 'a * parse_exp) (state:'a) (exp:parse_exp) : 'a * parse_exp =
    match exp with
    | PEmpty
    | PUnit
@@ -34,41 +34,57 @@ let rec traverseExp (f: 'a -> parse_exp -> 'a * parse_exp) (state:'a) (exp:parse
    | PReal(_,_)
    | PId(_,_)   -> f state exp
    | PUnOp(name,e) ->
-      let state1,ne = traverseExp f state e in
+      let state1,ne = traverseBottomExp f state e in
       f state1 (PUnOp(name,ne))
    | PBinOp(name,e1,e2) ->
-      let state1,ne1 = traverseExp f state e1 in
-      let state2,ne2 = traverseExp f state1 e2 in
+      let state1,ne1 = traverseBottomExp f state e1 in
+      let state2,ne2 = traverseBottomExp f state1 e2 in
       f state2 (PBinOp(name,ne1,ne2))
    | PGroup(e) ->
-      let state1,ne = traverseExp f state e in
+      let state1,ne = traverseBottomExp f state e in
       f state1 (PGroup(ne))
    | PTuple(expl) ->
-      let state1,nexpl = traverseExpList f state expl in
+      let state1,nexpl = traverseBottomExpList f state expl in
       f state1 (PTuple(nexpl))
    | PCall(name,expl,loc) ->
-      let state1,nexpl = traverseExpList f state expl in
+      let state1,nexpl = traverseBottomExpList f state expl in
       f state1 (PCall(name,nexpl,loc))
-
-and traverseExpList (f: 'a -> parse_exp -> 'a * parse_exp) (state:'a) (expl:parse_exp list) : 'a * parse_exp list =
+(** Traverses lists expressions bottom-up. The expressions are traversed right to left *)
+and traverseBottomExpList (f: 'a -> parse_exp -> 'a * parse_exp) (state:'a) (expl:parse_exp list) : 'a * parse_exp list =
    let state2,acc =
       List.fold_left
          (fun (state,acc) exp ->
-            let state1,ne = f state exp in
+            let state1,ne = traverseBottomExp f state exp in
             (state1,ne::acc) )
-      (state,[]) expl in
-   state2,List.rev acc
+      (state,[]) (List.rev expl) in
+   state2,acc
 
-let rec traverseStmt (f: 'a -> stmt -> 'a * stmt) (state:'a) (stmt:stmt) : 'a * stmt =
+(** Traverses statements bottom-up *)
+let rec traverseBottomStmt (f: 'a -> stmt -> 'a * stmt) (state:'a) (stmt:stmt) : 'a * stmt =
+   match stmt with
+   | StmtVal(_)
+   | StmtMem(_)
+   | StmtReturn(_)
+   | StmtBind(_)
+   | StmtEmpty ->
+      f state stmt
+   | StmtFun(name,args,stmts) ->
+      let state1,nstmts = traverseBottomStmtList f state stmts in
+      f state1 (StmtFun(name,args,nstmts))
+   | StmtIf(cond,then_stmts,None) ->
+      let state1,nthen_stmts = traverseBottomStmtList f state then_stmts in
+      f state1 (StmtIf(cond,nthen_stmts,None))
+   | StmtIf(cond,then_stmts,Some(else_stmts)) ->
+      let state1,nthen_stmts = traverseBottomStmtList f state then_stmts in
+      let state2,nelse_stmts = traverseBottomStmtList f state1 else_stmts in
+      f state2 (StmtIf(cond,nthen_stmts,Some(nelse_stmts)))
 
-
-(*
-   | StmtVal of val_bind list
-   | StmtMem of val_bind list
-   | StmtReturn of parse_exp
-   | StmtIf  of parse_exp * stmt list * (stmt list) option
-   | StmtFun of named_id * val_bind list * stmt list
-   | StmtBind of parse_exp * parse_exp
-   | StmtEmpty
-
-*)
+(** Traverses lists statements bottom-up. The statements are traversed right to left (last first) *)
+and traverseBottomStmtList (f: 'a -> stmt -> 'a * stmt) (state:'a) (stmts:stmt list) : 'a * stmt list = 
+   let state2,acc =
+      List.fold_left
+         (fun (state,acc) exp ->
+            let state1,ne = traverseBottomStmt f state exp in
+            (state1,ne::acc) )
+      (state,[]) (List.rev stmts) in
+   state2,acc
