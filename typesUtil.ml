@@ -88,3 +88,69 @@ and traverseBottomStmtList (f: 'a -> stmt -> 'a * stmt) (state:'a) (stmts:stmt l
             (state1,ne::acc) )
       (state,[]) (List.rev stmts) in
    state2,acc
+
+(** Traverses expressions top-down *)
+let rec traverseTopExp (f: 'a -> parse_exp -> 'a * parse_exp) (state0:'a) (exp:parse_exp) : 'a * parse_exp =
+   let state,nexp = f state0 exp in
+   match nexp with
+   | PEmpty
+   | PUnit
+   | PInt(_,_)
+   | PReal(_,_)
+   | PId(_,_)   -> state,nexp
+   | PUnOp(name,e) ->
+      let state1,ne = traverseTopExp f state e in
+      state1,PUnOp(name,ne)
+   | PBinOp(name,e1,e2) ->
+      let state1,ne1 = traverseTopExp f state e1 in
+      let state2,ne2 = traverseTopExp f state1 e2 in
+      state2,PBinOp(name,ne1,ne2)
+   | PGroup(e) ->
+      let state1,ne = traverseTopExp f state e in
+      state1,PGroup(ne)
+   | PTuple(expl) ->
+      let state1,nexpl = traverseTopExpList f state expl in
+      state1,PTuple(nexpl)
+   | PCall(name,expl,loc) ->
+      let state1,nexpl = traverseTopExpList f state expl in
+      state1,PCall(name,nexpl,loc)
+
+(** Traverses lists expressions top-down. The expressions are traversed left to right *)
+and traverseTopExpList (f: 'a -> parse_exp -> 'a * parse_exp) (state:'a) (expl:parse_exp list) : 'a * parse_exp list =
+   let state2,acc =
+      List.fold_left
+         (fun (state,acc) exp ->
+            let state1,ne = traverseTopExp f state exp in
+            (state1,ne::acc) )
+      (state,[]) expl in
+   state2,List.rev acc
+
+(** Traverses statements top-down *)
+let rec traverseTopStmt (f: 'a -> stmt -> 'a * stmt) (state0:'a) (stmt:stmt) : 'a * stmt =
+   let state,nstmt = f state0 stmt in
+   match nstmt with
+   | StmtVal(_)
+   | StmtMem(_)
+   | StmtReturn(_)
+   | StmtBind(_)
+   | StmtEmpty -> state,stmt
+   | StmtFun(name,args,stmts) ->
+      let state1,nstmts = traverseTopStmtList f state stmts in
+      state1,StmtFun(name,args,nstmts)
+   | StmtIf(cond,then_stmts,None) ->
+      let state1,nthen_stmts = traverseTopStmtList f state then_stmts in
+      state1,StmtIf(cond,nthen_stmts,None)
+   | StmtIf(cond,then_stmts,Some(else_stmts)) ->
+      let state1,nthen_stmts = traverseTopStmtList f state then_stmts in
+      let state2,nelse_stmts = traverseTopStmtList f state1 else_stmts in
+      state2,StmtIf(cond,nthen_stmts,Some(nelse_stmts))
+
+(** Traverses lists statements top-down. The statements are traversed right to left (last first) *)
+and traverseTopStmtList (f: 'a -> stmt -> 'a * stmt) (state:'a) (stmts:stmt list) : 'a * stmt list = 
+   let state2,acc =
+      List.fold_left
+         (fun (state,acc) exp ->
+            let state1,ne = traverseTopStmt f state exp in
+            (state1,ne::acc) )
+      (state,[]) stmts in
+   state2,List.rev acc
