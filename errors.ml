@@ -59,10 +59,10 @@ let reportErrorString (lines:string array) (error:error) =
       print_string (loc^msg^indicator)
 
 
-let reportErrors (results:('a , error list) either) (lines:string array) =
+let reportErrors (results:(error list,'a) either) (lines:string array) =
    match results with
-   | Left(_) -> ()
-   | Right(errors) ->
+   | Right(_) -> ()
+   | Left(errors) ->
       List.iter (reportErrorString lines) errors
 
 let joinErrors : errors -> errors -> errors = List.append

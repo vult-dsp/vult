@@ -414,14 +414,14 @@ let parseFile (filename:string) : parser_results =
       let _ = close_in chan in
       let all_lines = getFileLines () in
       if buffer.has_errors then
-         { presult = Right(List.rev buffer.errors); lines = all_lines }
+         { presult = Left(List.rev buffer.errors); lines = all_lines }
       else
-         { presult = Left(result); lines = all_lines }
+         { presult = Right(result); lines = all_lines }
    with
    | ParserError(error) ->
       let _ = close_in chan in
       let all_lines = getFileLines () in
-      {presult = Right([error]); lines = all_lines }
+      {presult = Left([error]); lines = all_lines }
    | _ ->
       let _ = close_in chan in
       failwith "Failed to parse the file"

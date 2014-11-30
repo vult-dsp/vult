@@ -109,12 +109,12 @@ type stmt =
 
 type parser_results =
    {
-      presult : (stmt list,error list) Either.either;
+      presult : (error list,stmt list) Either.either;
       lines : string array;
    }
 
 type interpreter_results =
    {
-      iresult : (unit,error list) Either.either;
+      iresult : (error list,unit) Either.either;
       lines : string array;
    }

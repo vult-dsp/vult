@@ -305,15 +305,15 @@ let checkStmtsMain : Types.stmt list -> errors option =
 let programState : Types.parser_results -> interpreter_results =
    fun results ->
       match results.presult with
-      | Right(_) ->
-         { iresult = Right([SimpleError("Parse unsuccessful; no checking possible.")]); lines=results.lines }
-      | Left stmts -> begin match checkStmtsMain stmts with
-            | None -> { iresult = Left(); lines = results.lines }
+      | Left(_) ->
+         { iresult = Left([SimpleError("Parse unsuccessful; no checking possible.")]); lines=results.lines }
+      | Right stmts -> begin match checkStmtsMain stmts with
+            | None -> { iresult = Right(); lines = results.lines }
             | Some errsRev ->
                let
                   errs = List.rev errsRev
                in
-               { iresult = Right(errs); lines = results.lines }
+               { iresult = Left(errs); lines = results.lines }
          end
 
 

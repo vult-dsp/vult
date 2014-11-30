@@ -53,7 +53,7 @@ let main () =
    let parser_results = List.map parseFile args.files in
    let _ = List.iter (fun a -> Errors.reportErrors a.presult a.lines ) parser_results in
    let _ = if args.dparse then
-         List.iter (fun a -> match a.presult with Either.Left(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () ) parser_results in
+         List.iter (fun a -> match a.presult with Either.Right(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () ) parser_results in
    let _ =
       if args.run_check then
          let errors = List.map programState parser_results in
