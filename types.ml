@@ -85,15 +85,15 @@ type 'a lexer_stream =
    }
 
 type named_id =
-   | SimpleId of string
-   | NamedId  of string * string
+   | SimpleId of string * location
+   | NamedId  of string * string * location * location
 
 (** Parser syntax tree *)
 type parse_exp =
    | PUnit
    | PInt   of string   * location
    | PReal  of string   * location
-   | PId    of named_id * location
+   | PId    of named_id
    | PUnOp  of string   * parse_exp      * location
    | PBinOp of string   * parse_exp      * parse_exp * location
    | PCall  of named_id * parse_exp list * location

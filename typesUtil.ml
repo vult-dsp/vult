@@ -32,7 +32,7 @@ let rec traverseBottomExp (f: 'a -> parse_exp -> 'a * parse_exp) (state:'a) (exp
    | PUnit
    | PInt(_,_)
    | PReal(_,_)
-   | PId(_,_)   -> f state exp
+   | PId(_)   -> f state exp
    | PUnOp(name,e,loc) ->
       let state1,ne = traverseBottomExp f state e in
       f state1 (PUnOp(name,ne,loc))
@@ -97,7 +97,7 @@ let rec traverseTopExp (f: 'a -> parse_exp -> 'a * parse_exp) (state0:'a) (exp:p
    | PUnit
    | PInt(_,_)
    | PReal(_,_)
-   | PId(_,_)   -> state,nexp
+   | PId(_)   -> state,nexp
    | PUnOp(name,e,loc) ->
       let state1,ne = traverseTopExp f state e in
       state1,PUnOp(name,ne,loc)
@@ -186,3 +186,44 @@ and expandStmtList (f: 'a -> stmt -> 'a * stmt list) (state:'a) (stmts:stmt list
             (state1,(List.rev ne)::acc) )
       (state,[]) stmts in
    state2,List.rev (List.flatten acc)
+
+(** Returns the minimal position of two given *)
+let getMinPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.position =
+   if pos1.Lexing.pos_lnum <> pos2.Lexing.pos_lnum then
+      if pos1.Lexing.pos_lnum < pos2.Lexing.pos_lnum then pos1 else pos2
+   else
+      if pos1.Lexing.pos_cnum < pos2.Lexing.pos_cnum then pos1 else pos2
+
+(** Returns the maximum position of two given *)
+let getMaxPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.position =
+   if pos1.Lexing.pos_lnum <> pos2.Lexing.pos_lnum then
+      if pos1.Lexing.pos_lnum < pos2.Lexing.pos_lnum then pos2 else pos1
+   else
+      if pos1.Lexing.pos_cnum < pos2.Lexing.pos_cnum then pos2 else pos1
+
+(** Retuns the minimum and maximum prositions from a given list *)
+let getMinMaxPositions (pos_list:Lexing.position list) =
+   match pos_list with
+   | []  -> failwith "getMinMaxPositions: No positions passed"
+   | [h] -> h,h
+   | h::_   -> List.fold_left (fun (min,max) a -> getMinPosition a min, getMaxPosition a max) (h,h) pos_list
+
+(** Returns a new location with the start and end positions updateds *)
+let mergeLocations (loc1:location) (loc2:location) : location =
+   let start_pos,end_pos = getMinMaxPositions [loc1.start_pos; loc2.start_pos; loc1.end_pos; loc2.end_pos] in
+   { start_pos = start_pos; end_pos = end_pos }
+
+let getNameFromNamedId (named_id:named_id) : string =
+    match named_id with
+   | SimpleId(name,_) -> name
+   | NamedId (name,_,_,_) -> name
+
+let getLocationFromNamedId (named_id:named_id) : location =
+   match named_id with
+   | SimpleId(_,loc) -> loc
+   | NamedId (_,_,loc1,loc2) -> mergeLocations loc1 loc2
+
+let getTypeFromNamedId (named_id:named_id) : string option =
+   match named_id with
+   | NamedId (_,nametype,_,_) -> Some nametype
+   | _ -> None

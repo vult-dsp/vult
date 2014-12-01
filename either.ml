@@ -43,3 +43,8 @@ let eitherFold_left : ('a -> 'b -> ('c,'a) either) -> 'a -> 'b list -> ('c,'a) e
             | [] -> Right v
       in
       go val1 yt1
+
+let mapRight (f:'a -> 'b) (value:('c,'b) either) =
+   match value with
+   | Left(v)  -> Left(v)
+   | Right(v) -> Right(f v)

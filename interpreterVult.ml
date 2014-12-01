@@ -29,7 +29,7 @@ open List
 open CCMap
 open Either
 open Errors
-
+open TypesUtil
 
 type literal =
    | LInt of int
@@ -59,18 +59,6 @@ type environment =
       functions : functionBindings;
    }
 let emptyEnv = { memory = noBindings; temp = noBindings; functions = noFunctions; }
-
-let getNameFromNamedId : Types.named_id -> string =
-   fun namedId ->
-      match namedId with
-      | SimpleId name -> name
-      | NamedId (name,_) -> name
-
-let getTypeFromNamedId : Types.named_id -> string option =
-   fun namedId ->
-      match namedId with
-      | NamedId (_,nametype) -> Some nametype
-      | _ -> None
 
 (* Processing of functions. *)
 let isFunctionStmt : Types.stmt -> bool =
@@ -141,12 +129,14 @@ let createMemory : environment -> string -> literal option -> (errors,environmen
          Right { env with memory = (StringMap.update name updater mem); }
 
 (* Check family of functions. Checks that things are valid in the given environment. *)
-let checkNamedId : environment -> named_id -> location -> Types.errors option =
-   fun env namedId loc ->
+let checkNamedId : environment -> named_id -> Types.errors option =
+   fun env namedId ->
       let name = getNameFromNamedId namedId in
       match variableExists env name with
       | true -> None
-      | false -> Some ([PointedError(loc,"No declaration of variable " ^ name ^ ".")])
+      | false ->
+         let loc = getLocationFromNamedId namedId in
+         Some ([PointedError(loc,"No declaration of variable " ^ name ^ ".")])
 
 let rec flattenExp : Types.parse_exp -> Types.parse_exp list =
    fun groupExp ->
@@ -159,7 +149,7 @@ let rec checkExp : environment -> Types.parse_exp -> Types.errors option =
    fun env exp ->
       let rec internalChecker : Types.parse_exp -> Types.errors option =
          fun exp -> match exp with
-            | PId (name,loc) -> checkNamedId env name loc
+            | PId (name) -> checkNamedId env name
             | PBinOp (_,e1,e2,_) -> joinErrorOptions (internalChecker e1) (internalChecker e2)
             | PUnOp (_,e1,_) -> internalChecker e1
             | PCall (fname,values,loc) -> checkFunctionCall env fname values loc
@@ -245,8 +235,8 @@ and checkStmt : environment -> Types.stmt -> (errors,environment) either =
                end
          end
       | StmtFun _ -> Right env (* Ignore function declarations, these should be stored in env. *)
-      | StmtBind (PId (name,loc),rhs) ->
-         begin match checkNamedId env name loc with
+      | StmtBind (PId (name),rhs) ->
+         begin match checkNamedId env name with
             | Some errs -> Left errs
             | None -> begin match checkExp env rhs with
                   | Some errs -> Left (SimpleError("Could not evaluate right hand side of bind.")::errs)

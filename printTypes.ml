@@ -73,8 +73,8 @@ let contents buffer =
 (** Adds to the print buffer a namedId *)
 let namedIdBuff buffer id =
    match id with
-   | SimpleId(id1) -> append buffer id1
-   | NamedId(id1,id2) ->
+   | SimpleId(id1,_) -> append buffer id1
+   | NamedId(id1,id2,_,_) ->
       append buffer id1;
       append buffer ":";
       append buffer id2
@@ -92,7 +92,7 @@ let rec printList buffer f sep l =
 (** Adds to the print buffer an expression *)
 let rec expressionBuff buffer exp =
    match exp with
-   | PId(s,_)   -> namedIdBuff buffer s
+   | PId(s)   -> namedIdBuff buffer s
    | PInt(s,_)  -> append buffer s
    | PReal(s,_) -> append buffer s
    | PBinOp(op,e1,e2,_) ->

@@ -26,6 +26,7 @@ open ParserVult
 open Types
 open TypesUtil
 open InterpreterVult
+open Passes
 
 (** Stores the options passed to the command line *)
 type arguments =
@@ -51,7 +52,7 @@ let processArguments () : arguments =
 
 let main () =
    let args = processArguments () in
-   let parser_results = List.map parseFile args.files in
+   let parser_results = List.map parseFile args.files |> List.map applyTransformations in
    let _ = List.iter (fun a -> Errors.reportErrors a.presult a.lines ) parser_results in
    let _ = if args.dparse then
          List.iter (fun a -> match a.presult with Either.Right(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () ) parser_results in

@@ -128,7 +128,7 @@ let getLbp (token:'a token) : int =
 let getContents (token:parse_exp token) : parse_exp =
    match token.kind,token.contents with
    | INT ,PEmpty -> PInt(token.value,token.loc)
-   | ID  ,PEmpty -> PId(SimpleId(token.value),token.loc)
+   | ID  ,PEmpty -> PId(SimpleId(token.value,token.loc))
    | REAL,PEmpty -> PReal(token.value,token.loc)
    | _    -> token.contents
 
@@ -159,7 +159,7 @@ and nud (buffer:parse_exp lexer_stream) (token:parse_exp token) : parse_exp toke
          match peekKind buffer with
          | LPAREN ->
             functionCall buffer token id
-         | _ -> { token with contents = PId(id,token.loc)}
+         | _ -> { token with contents = PId(id)}
       end
    | LPAREN,_ ->
       begin
@@ -237,10 +237,11 @@ and namedIdToken (buffer:parse_exp lexer_stream) (token:parse_exp token) : named
       let _   = skip buffer in
       let _   = expect buffer ID in
       let id1 = token.value in
-      let id2 = (current buffer).value in
+      let current = current buffer in
+      let id2 = current.value in
       let _   = skip buffer in
-      NamedId(id1,id2)
-   | _ -> SimpleId(token.value)
+      NamedId(id1,id2,token.loc,current.loc)
+   | _ -> SimpleId(token.value,token.loc)
 
 (** namedId := <ID> [ ':' <ID>]  *)
 let namedId (buffer:parse_exp lexer_stream) : named_id =
