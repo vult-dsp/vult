@@ -56,7 +56,7 @@ let reportErrorString (lines:string array) (error:error) =
       let loc = errorLocationMessage location in
       let line = getErrorLines location lines in
       let indicator = errorLocationIndicator line location in
-      print_string (loc^msg^indicator)
+      print_string (loc^msg^"\n"^indicator)
 
 
 let reportErrors (results:(error list,'a) either) (lines:string array) =

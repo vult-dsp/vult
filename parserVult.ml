@@ -37,7 +37,7 @@ let getErrorForToken (buffer:'a lexer_stream) (message:string) : error =
    PointedError(buffer.peeked.loc,message)
 
 let getNotExpectedTokenError (token:'a token) : error =
-   let message = Printf.sprintf "Not expecting to find %s\n" (tokenToString token) in
+   let message = Printf.sprintf "Not expecting to find %s" (tokenToString token) in
    PointedError(token.loc,message)
 
 let appendError (buffer:'a lexer_stream) (error:error) =
@@ -73,7 +73,7 @@ let consume (buffer:'a lexer_stream) (kind:token_enum) : unit =
    | got_token ->
       let expected = kindToString kind in
       let got = tokenToString got_token in
-      let message = Printf.sprintf "Expecting a %s but got %s\n" expected got in
+      let message = Printf.sprintf "Expecting a %s but got %s" expected got in
       raise (ParserError(getErrorForToken buffer message))
 
 (** Checks that the next token matches *)
@@ -83,7 +83,7 @@ let expect (buffer:'a lexer_stream) (kind:token_enum) : unit =
    | got_token ->
       let expected = kindToString kind in
       let got = kindToString got_token.kind in
-      let message = Printf.sprintf "Expecting a %s but got %s\n" expected got in
+      let message = Printf.sprintf "Expecting a %s but got %s" expected got in
       raise (ParserError(getErrorForToken buffer message))
 
 let emptyLexedLines () =
@@ -319,7 +319,7 @@ let stmtBind (buffer:parse_exp lexer_stream) : stmt =
    | kind ->
       let expected = kindToString EQUAL in
       let got = kindToString kind in
-      let message = Printf.sprintf "Expecting a %s while trying to parse a binding (%s = ...) but got %s\n" expected (PrintTypes.expressionStr e1) got in
+      let message = Printf.sprintf "Expecting a %s while trying to parse a binding (%s = ...) but got %s" expected (PrintTypes.expressionStr e1) got in
       raise (ParserError(getErrorForToken buffer message))
 
 

@@ -280,3 +280,8 @@ let getTypeFromNamedId (named_id:named_id) : string option =
    match named_id with
    | NamedId (_,nametype,_,_) -> Some nametype
    | _ -> None
+
+let getFunctionTypeAndName (names_id:named_id) : string * string =
+   match names_id with
+   | NamedId(name,ftype,_,_) -> name,ftype
+   | SimpleId(ftype,_) -> "_",ftype

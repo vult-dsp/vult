@@ -41,9 +41,9 @@ type literal =
 type vultFunction =
    {
       functionname : string;
-      returntype : string option;
-      inputs : Types.val_bind list;
-      body : Types.stmt list;
+      returntype   : string option;
+      inputs       : Types.val_bind list;
+      body         : Types.stmt list;
    }
 
 module StringMap = CCMap.Make(String)
@@ -164,7 +164,7 @@ let rec checkExp : environment -> Types.parse_exp -> Types.errors option =
 *)
 and checkFunctionCall : environment -> Types.named_id -> Types.parse_exp list -> location -> errors option =
    fun env fId paramsUnflattened loc ->
-      let fname = getNameFromNamedId fId in
+      let _,fname = getFunctionTypeAndName fId in
       let params = List.flatten (List.map flattenExp paramsUnflattened) in
       match getFunction env fname with
       | Left errs -> Some (PointedError(loc,"Could not evaluate function call to " ^ fname ^ ".\n")::errs)
@@ -265,7 +265,7 @@ let checkFunction : environment -> vultFunction -> errors option =
 let insertIfFunction : functionBindings -> Types.stmt  -> (errors,functionBindings) either =
    fun funcs stmt ->
       match stmt with
-      | StmtFun (namedid,inputs,body) -> 
+      | StmtFun (namedid,inputs,body) ->
          let funcname = getNameFromNamedId namedid in
          let functype = getTypeFromNamedId namedid in
          let vultfunc = { functionname = funcname; returntype = functype; inputs = inputs; body = body; } in
