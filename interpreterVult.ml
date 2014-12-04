@@ -167,10 +167,10 @@ and checkFunctionCall : environment -> Types.named_id -> Types.parse_exp list ->
       let _,fname = getFunctionTypeAndName fId in
       let params = List.flatten (List.map flattenExp paramsUnflattened) in
       match getFunction env fname with
-      | Left errs -> Some (PointedError(loc,"Could not evaluate function call to " ^ fname ^ ".\n")::errs)
+      | Left errs -> Some (PointedError(loc,"Could not evaluate function call to " ^ fname ^ ".")::errs)
       | Right { inputs = inputs; } ->
          begin match joinErrorOptionsList (List.map (checkExp env) params) with
-            | Some errs -> Some (PointedError(loc,"Could not evaluate function call parameter in function call to " ^ fname ^ ".\n")::errs)
+            | Some errs -> Some (PointedError(loc,"Could not evaluate function call parameter in function call to " ^ fname ^ ".")::errs)
             | None ->
                begin
                   let paramlength = List.length params in

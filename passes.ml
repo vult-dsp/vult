@@ -70,6 +70,18 @@ let separateBindAndDeclaration : ('a,stmt) expander =
       state,stmts
    | _ -> state,[stmt]
 
+(** Transforms val x,y; -> val x; val y; *)
+let makeSingleDeclaration : ('a,stmt) expander =
+   fun state stmt ->
+   match stmt with
+   | StmtVal(vlist) ->
+      let stmts = List.map (fun a -> StmtVal([a])) vlist in
+      state,stmts
+   | StmtMem(vlist) ->
+      let stmts = List.map (fun a -> StmtMem([a])) vlist in
+      state,stmts
+   | _ -> state,[stmt]
+
 (** Adds a default name to all function calls. e.g. foo(x) ->  _inst_0:foo(x) *)
 let nameFunctionCalls : ('a,parse_exp) transformation =
    fun state exp ->
@@ -85,6 +97,7 @@ let applyTransformations (results:parser_results) =
    let transform_function stmts =
       (initial_state,stmts)
       |+> (fun state stmts -> TypesUtil.expandStmtList separateBindAndDeclaration state stmts)
+      |+> (fun state stmts -> TypesUtil.expandStmtList makeSingleDeclaration state stmts)
       |+> (fun state stmts -> TypesUtil.traverseTopExpStmtList nameFunctionCalls state stmts)
       |> snd
    in
