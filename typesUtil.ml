@@ -73,6 +73,12 @@ let rec traverseBottomExp (f: ('a, parse_exp) traverser) (state:'a) (exp:parse_e
    | PCall(name,expl,loc) ->
       let state1,nexpl = traverseBottomExpList f state expl in
       f state1 (PCall(name,nexpl,loc))
+   | PIf(e1,e2,e3) ->
+      let state1,ne1 = traverseBottomExp f state e1 in
+      let state2,ne2 = traverseBottomExp f state1 e2 in
+      let state3,ne3 = traverseBottomExp f state2 e3 in
+      state3,PIf(ne1,ne2,ne3)
+
 (** Traverses lists expressions bottom-up. The expressions are traversed right to left *)
 and traverseBottomExpList (f: ('a, parse_exp) traverser) (state:'a) (expl:parse_exp list) : 'a * parse_exp list =
    foldTraverser_right traverseBottomExp f state expl
@@ -126,6 +132,11 @@ let rec traverseTopExp (f: ('a, parse_exp) traverser) (state0:'a) (exp:parse_exp
    | PCall(name,expl,loc) ->
       let state1,nexpl = traverseTopExpList f state expl in
       state1,PCall(name,nexpl,loc)
+   | PIf(e1,e2,e3) ->
+      let state1,ne1 = traverseTopExp f state e1 in
+      let state2,ne2 = traverseTopExp f state1 e2 in
+      let state3,ne3 = traverseTopExp f state2 e3 in
+      state3,PIf(ne1,ne2,ne3)
 
 (** Traverses lists expressions top-down. The expressions are traversed left to right *)
 and traverseTopExpList (f: ('a, parse_exp) traverser) (state:'a) (expl:parse_exp list) : 'a * parse_exp list =

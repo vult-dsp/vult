@@ -173,6 +173,13 @@ and nud (buffer:parse_exp lexer_stream) (token:parse_exp token) : parse_exp toke
             { token with contents = PGroup(e) }
       end
    | INT,_ | REAL,_ -> token
+   | IF,_ ->
+      let cond = getContents (expression 0 buffer) in
+      let _ = consume buffer THEN in
+      let then_exp = getContents (expression 0 buffer) in
+      let _ = consume buffer ELSE in
+      let else_exp = getContents (expression 0 buffer) in
+      { token with contents = PIf(cond,then_exp,else_exp) }
    | _ ->
       let message = getNotExpectedTokenError token in
       raise (ParserError(message))

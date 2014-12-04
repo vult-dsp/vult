@@ -49,6 +49,7 @@ type token_enum =
    | VAL
    | RET
    | IF
+   | THEN
    | ELSE
    | LBRAC
    | RBRAC
@@ -91,12 +92,13 @@ type named_id =
 (** Parser syntax tree *)
 type parse_exp =
    | PUnit
-   | PInt   of string   * location
-   | PReal  of string   * location
+   | PInt   of string    * location
+   | PReal  of string    * location
    | PId    of named_id
-   | PUnOp  of string   * parse_exp      * location
-   | PBinOp of string   * parse_exp      * parse_exp * location
-   | PCall  of named_id * parse_exp list * location
+   | PUnOp  of string    * parse_exp      * location
+   | PBinOp of string    * parse_exp      * parse_exp * location
+   | PCall  of named_id  * parse_exp list * location
+   | PIf    of parse_exp * parse_exp      * parse_exp
    | PGroup of parse_exp
    | PTuple of parse_exp list
    | PEmpty

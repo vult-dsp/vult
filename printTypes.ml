@@ -118,7 +118,14 @@ let rec expressionBuff buffer exp =
       append buffer "(";
       expressionBuff buffer e1;
       append buffer ")"
-   | _ -> append buffer "Empty"
+   | PIf(cond,then_exp,else_exp) ->
+      append buffer "if ";
+      expressionBuff buffer cond;
+      append buffer " then ";
+      expressionBuff buffer then_exp;
+      append buffer " else ";
+      expressionBuff buffer else_exp
+   | PEmpty -> append buffer "Empty"
 
 (** Adds to the print buffer an expression list *)
 and expressionListBuff buffer expl =

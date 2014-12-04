@@ -48,6 +48,7 @@ let keyword_table =
       "mem",MEM;
       "val",VAL;
       "if",IF;
+      "then",THEN;
       "else",ELSE;
       "return",RET;
    ] in
@@ -107,6 +108,7 @@ let kindToString kind =
    | VAL   -> "'val'"
    | RET   -> "'return'"
    | IF    -> "'if'"
+   | THEN  -> "'then'"
    | ELSE  -> "'else'"
    | LBRAC -> "'{'"
    | RBRAC -> "'}'"
