@@ -25,6 +25,31 @@ THE SOFTWARE.
 
 open Types
 
+(** Generic type of transformations *)
+type ('a,'b) transformation = 'a -> 'b -> 'a * 'b
+
+(** Generic type of expanders *)
+type ('a,'b) expander       = 'a -> 'b -> 'a * 'b list
+
+(** Makes a chain of transformations. E.g. foo |-> bar will apply first foo then bar. *)
+let (|->) : ('a,'b) transformation -> ('a,'b) transformation -> ('a,'b) transformation =
+   fun a b ->
+      fun state exp ->
+         let new_state,new_exp = a state exp in
+         b new_state new_exp
+
+(** Pipes a pair (state,value) into transformation functions *)
+let (|+>) : ('state * 'value) -> ('state, 'value) transformation -> ('state * 'value) =
+   fun (state,value) transformation ->
+      transformation state value
+
+(** Traversing state one *)
+type state_t1 =
+   {
+      dummy : int;
+      fcall_index : int;
+   }
+
 let returnBindsAndDecl ((decls:val_bind list),(binds: stmt list)) (bind:val_bind) =
    match bind with
    | ValBind(name,init,exp) ->
@@ -32,7 +57,8 @@ let returnBindsAndDecl ((decls:val_bind list),(binds: stmt list)) (bind:val_bind
    | ValNoBind(name,init) -> ValNoBind(name,init)::decls,binds
 
 (** Transforms val x=0; -> val x; x=0; *)
-let separateBindAndDeclaration (state:'a) (stmt:stmt) : 'a * stmt list =
+let separateBindAndDeclaration : ('a,stmt) expander =
+   fun state stmt ->
    match stmt with
    | StmtVal(vlist) ->
       let new_vlist,binds = List.fold_left returnBindsAndDecl ([],[]) vlist in
@@ -44,13 +70,25 @@ let separateBindAndDeclaration (state:'a) (stmt:stmt) : 'a * stmt list =
       state,stmts
    | _ -> state,[stmt]
 
-
-let transformations : 'a -> stmt -> 'a * stmt list =
-   separateBindAndDeclaration
+(** Adds a default name to all function calls. e.g. foo(x) ->  _inst_0:foo(x) *)
+let nameFunctionCalls : ('a,parse_exp) transformation =
+   fun state exp ->
+   match exp with
+   | PCall(SimpleId(name,loc),args,floc) ->
+      let inst = "_inst"^(string_of_int state.fcall_index) in
+      let new_state = {state with fcall_index = state.fcall_index+1} in
+      new_state,PCall(NamedId(inst,name,loc,loc),args,floc)
+   | _ -> state,exp
 
 let applyTransformations (results:parser_results) =
-   let transform_function stmts = TypesUtil.expandStmtList transformations () stmts |> snd in
+   let initial_state = { fcall_index = 0 ; dummy = 0 } in
+   let transform_function stmts =
+      (initial_state,stmts)
+      |+> (fun state stmts -> TypesUtil.expandStmtList separateBindAndDeclaration state stmts)
+      |+> (fun state stmts -> TypesUtil.traverseTopExpStmtList nameFunctionCalls state stmts)
+      |> snd
+   in
    let new_stmts = Either.mapRight transform_function results.presult in
-   {results with presult = new_stmts }
+   { results with presult = new_stmts }
 
 
