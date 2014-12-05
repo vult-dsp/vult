@@ -91,6 +91,16 @@ let nameFunctionCalls : ('a,parse_exp) transformation =
       let new_state = {state with fcall_index = state.fcall_index+1} in
       new_state,PCall(NamedId(inst,name,loc,loc),args,floc)
    | _ -> state,exp
+   
+(** Transforms all operators into function calls *)
+let operatorsToFunctionCalls : ('a,parse_exp) transformation =
+   fun state exp ->
+      match exp with
+      | PUnOp(op,e,loc) ->
+         state,PCall(NamedId("_",op,loc,loc),[e],loc)
+      | PBinOp(op,e1,e2,loc) ->
+         state,PCall(NamedId("_",op,loc,loc),[e1;e2],loc)
+      | _ -> state,exp
 
 let applyTransformations (results:parser_results) =
    let initial_state = { fcall_index = 0 ; dummy = 0 } in
@@ -98,7 +108,7 @@ let applyTransformations (results:parser_results) =
       (initial_state,stmts)
       |+> (fun state stmts -> TypesUtil.expandStmtList separateBindAndDeclaration state stmts)
       |+> (fun state stmts -> TypesUtil.expandStmtList makeSingleDeclaration state stmts)
-      |+> (fun state stmts -> TypesUtil.traverseTopExpStmtList nameFunctionCalls state stmts)
+      |+> (fun state stmts -> TypesUtil.traverseTopExpStmtList (nameFunctionCalls|->operatorsToFunctionCalls) state stmts)
       |> snd
    in
    let new_stmts = Either.mapRight transform_function results.presult in
