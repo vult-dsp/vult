@@ -25,7 +25,7 @@ open LexerVult
 open ParserVult
 open Types
 open TypesUtil
-open InterpreterVult
+open CheckerVult
 open Passes
 
 (** Stores the options passed to the command line *)
