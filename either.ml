@@ -23,6 +23,7 @@ THE SOFTWARE.
 *)
 
 (** Implementation of Either *)
+open List
 
 
 (** Type *)
@@ -43,6 +44,20 @@ let eitherFold_left : ('a -> 'b -> ('c,'a) either) -> 'a -> 'b list -> ('c,'a) e
             | [] -> Right v
       in
       go val1 yt1
+
+(** eitherTryMap maps to the end of the list or until a Left is returned.
+   If succesfull, returns Right [list], otherwise returns Left [first error].
+*)
+let eitherTryMap : ('a -> ('e,'r) either) -> 'a list -> ('e, 'r list) either =
+   fun f xs ->
+      let rec go xt acc = match xt with
+         | [] -> Right (List.rev acc)
+         | (x::xs) -> begin match (f x) with
+            | Right y -> go xs (y::acc)
+            | Left _ as err -> err
+         end
+   in
+      go xs []
 
 let mapRight (f:'a -> 'b) (value:('c,'b) either) =
    match value with

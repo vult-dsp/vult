@@ -24,10 +24,46 @@ THE SOFTWARE.
 
 
 open Types
+open Either
+
+(* -- OVERVIEW PLEASE FILL IN
+   Types:
+      traverser: Visitor function for simultaneous mapping and folding.
+      expander: Visitor function for simultaneous mapping and folding and insertion.
+      expressionfolder: A type for doing some kind of transition between
+         a deep and shallow embedding of Vult.
+
+   Higher-order functions:
+      
+
+   Utility functions:
+      getMinPosition: Get the min position from a list of positisons.
+      getMaxPositions: Get the max positison from a list of positions.
+      getMinMaxPositison: Get the max and min position from a list of positions.
+      mergeLocations: Given two locations, construct the interval location with the
+         given locations as endpoints.
+      getNameFromNamedId: Get the actual name from a named_id.
+      getLocationFromNamed: Get the source file location for a named_id, if any.
+      getTypeFromNamedId: Don't really know what this does.
+      getFunctionTypeName: Don't really know what this does.
+*)
 
 type ('a,'b) traverser = 'a -> 'b -> 'a * 'b
-
 type ('a,'b) expander = 'a -> 'b -> 'a * 'b list
+type ('a, 'e, 'r) expfold = (* a as in whatever, e as in error, r as in result *)
+   {
+      vUnit  : 'a -> ('e, 'r) either;
+      vInt   : 'a -> string -> location -> ('e, 'r) either;
+      vReal  : 'a -> string -> location -> ('e, 'r) either;
+      vId    : 'a -> named_id -> ('e, 'r) either;
+      vUnOp  : 'a -> string -> 'r -> location -> ('e, 'r) either;
+      vBinOp : 'a -> string -> 'r -> 'r -> location -> ('e, 'r) either;
+      vCall  : 'a -> named_id -> 'r list -> location -> ('e, 'r) either;
+      vIf    : 'a -> 'r -> 'r -> 'r -> ('e, 'r) either;
+      vGroup : 'a -> 'r -> ('e, 'r) either;
+      vTuple : 'a -> 'r list -> ('e, 'r) either;
+      vEmpty : 'a -> ('e, 'r) either;
+   }
 
 (** Folds the list (left-right) using the given traverser functions *)
 let foldTraverser_left traverser_function (traverser:('a,'b) traverser) (state:'c) (elems:'d list) =
@@ -41,13 +77,52 @@ let foldTraverser_left traverser_function (traverser:('a,'b) traverser) (state:'
 
 (** Folds the list (right-left) using the given traverser functions *)
 let foldTraverser_right traverser_function (traverser:('a,'b) traverser) (state:'c) (elems:'d list) =
-      let state2,acc =
+   let state2,acc =
       List.fold_left
          (fun (state,acc) elem ->
             let state1,ne = traverser_function traverser state elem in
             (state1,ne::acc) )
       (state,[]) (List.rev elems) in
    state2,acc
+
+let expressionFold : ('a, 'e, 'r) expfold -> 'a -> parse_exp -> ('e, 'r) either =
+   fun fold data exp ->
+      let rec go e = match e with
+         | PUnit -> fold.vUnit data
+         | PInt (s,l) -> fold.vInt data s l
+         | PReal (s,l) -> fold.vReal data s l
+         | PId n -> fold.vId data n
+         | PUnOp (s,e1,l) -> begin match go e1 with
+            | Right r1 -> fold.vUnOp data s r1 l
+            | Left _ as err -> err
+            end
+         | PBinOp (s,e1,e2,l) -> begin match (go e1, go e2) with
+            | (Right r1, Right r2) -> fold.vBinOp data s r1 r2 l
+            | (Left _ as err, _) -> err
+            | (_, (Left _ as err)) -> err
+            end
+         | PCall (n,es,l) -> begin match eitherTryMap go es with
+            | Right rs -> fold.vCall data n rs l
+            | Left _ as err -> err
+            end
+         | PIf (e1,e2,e3) -> begin match (go e1, go e2, go e3) with
+            | (Right r1, Right r2, Right r3) -> fold.vIf data r1 r2 r3
+            | (Left _ as err,_,_) -> err
+            | (_,(Left _ as err),_) -> err
+            | (_,_,(Left _ as err)) -> err
+            end
+         | PGroup e1 -> begin match go e1 with
+            | Right r1 -> fold.vGroup data r1
+            | Left _ as err -> err
+            end
+         | PTuple es -> begin match eitherTryMap go es with
+            | Right rs -> fold.vTuple data rs
+            | Left _ as err -> err
+            end
+         | PEmpty -> fold.vEmpty data
+   in
+      go exp
+
 
 (** Traverses expressions bottom-up *)
 let rec traverseBottomExp (f: ('a, parse_exp) traverser) (state:'a) (exp:parse_exp) : 'a * parse_exp =
@@ -280,7 +355,7 @@ let mergeLocations (loc1:location) (loc2:location) : location =
 let getNameFromNamedId (named_id:named_id) : string =
     match named_id with
    | SimpleId(name,_) -> name
-   | NamedId (name,_,_,_) -> name
+   | NamedId (_,name,_,_) -> name
 
 let getLocationFromNamedId (named_id:named_id) : location =
    match named_id with
