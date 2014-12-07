@@ -68,6 +68,10 @@ let separateBindAndDeclaration : ('data,stmt) expander =
       let new_vlist,binds = List.fold_left returnBindsAndDecl ([],[]) vlist in
       let stmts = StmtMem(List.rev new_vlist)::binds  in
       state,stmts
+   | StmtVal(vlist) ->
+      let new_vlist,binds = List.fold_left returnBindsAndDecl ([],[]) vlist in
+      let stmts = StmtVal(List.rev new_vlist)::binds  in
+      state,stmts
    | _ -> state,[stmt]
 
 (* ======================= *)
