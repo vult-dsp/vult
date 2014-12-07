@@ -49,12 +49,12 @@ type local_env =
 type function_body =
    | Builtin  of (value list -> value)
    | Declared of stmt
-   
+
 type global_env =
    {
       fun_decl : (string,function_body) Hashtbl.t;
    }
-   
+
 let newLocalEnv () =
    {
       val_binds = Hashtbl.create 10;
@@ -62,7 +62,7 @@ let newLocalEnv () =
       fun_bind  = Hashtbl.create 10;
       ret_val   = None;
    }
-   
+
 let newGlobalEnv () =
    {
       fun_decl = Hashtbl.create 10;
@@ -93,7 +93,7 @@ let localEnvStr (loc:local_env) : string =
    let fun_s = Hashtbl.fold (fun name value state -> name::state ) loc.fun_bind [] |> joinStrings "," in
    let ret_s = apply_default valueStr loc.ret_val "-" in
    Printf.sprintf "= val =\n%s= mem =\n%s= fun =\n%s\n= ret =\n%s\n" val_s mem_s fun_s ret_s
-   
+
 let getVarName (named_id:named_id) : string =
    match named_id with
    | SimpleId(name,_) -> name
@@ -103,7 +103,7 @@ let getExpName (exp:parse_exp) : string =
    match exp with
    | PId(name) -> getVarName name
    | _ -> failwith "This expression should be an id"
-   
+
 
 let getFunctionBody (glob:global_env) (name:string) : function_body =
    if Hashtbl.mem glob.fun_decl name then
@@ -128,7 +128,7 @@ let clearLocal (loc:local_env) =
    let _ = Hashtbl.clear loc.val_binds in
    loc.ret_val <- None
 
-let getExpValueFromEnv (loc:local_env) (name:string) : value = 
+let getExpValueFromEnv (loc:local_env) (name:string) : value =
    if Hashtbl.mem loc.val_binds name then
      Hashtbl.find loc.val_binds name
    else
@@ -137,7 +137,7 @@ let getExpValueFromEnv (loc:local_env) (name:string) : value =
       else
          failwith ("Undeclared variable "^name)
 
-let setValMem (loc:local_env) (name:string)  (value:value) : unit = 
+let setValMem (loc:local_env) (name:string)  (value:value) : unit =
    if Hashtbl.mem loc.val_binds name then
      Hashtbl.replace loc.val_binds name value
    else
@@ -145,13 +145,13 @@ let setValMem (loc:local_env) (name:string)  (value:value) : unit =
          Hashtbl.replace loc.mem_binds name value
       else
          failwith ("Undeclared variable "^name)
-         
+
 let setReturn (loc:local_env) (value:value) : unit =
    loc.ret_val <- Some(value)
 
 let declVal (loc:local_env) (name:string) (value:value) : unit =
    Hashtbl.replace loc.val_binds name value
-   
+
 let declMem (loc:local_env) (name:string) (init:value) : unit =
    if not (Hashtbl.mem loc.mem_binds name) then
       Hashtbl.add loc.mem_binds name init
@@ -263,11 +263,11 @@ and runStmt (glob:global_env) (loc:local_env) (stmt:stmt) : unit =
       else
          runStmtList glob loc else_stmts
    | StmtEmpty -> ()
-      
-      
+
+
 and runStmtList (glob:global_env) (loc:local_env) (stmts:stmt list) : unit =
    List.iter (runStmt glob loc) stmts
-      
+
 let opNumNumNum (op:float->float->float) (args:value list) =
    match args with
    | [VNum(v1); VNum(v2)] -> VNum(op v1 v2)
@@ -327,4 +327,3 @@ let interpret (results:parser_results) =
    let _ = Either.applyToRight (fun stmts -> runStmtList glob loc stmts;stmts) results.presult in
    (*let _ = print_string (localEnvStr loc) in*)
    apply_default (fun a -> a) loc.ret_val VUnit
-   
