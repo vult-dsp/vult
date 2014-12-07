@@ -119,8 +119,9 @@ let bindFunctionCallsInExp : (int * stmt list,parse_exp) transformation =
       | PCall(name,args,loc) ->
          let count,stmts = data in
          let tmp_var = SimpleId("_tmp"^(string_of_int count),default_loc) in
-         let decl = StmtVal([ValBind(tmp_var,None,exp)]) in
-         (count+1,decl::stmts),PId(tmp_var)
+         let decl = StmtVal([ValNoBind(tmp_var,None)]) in
+         let bind_stmt = StmtBind(PId(tmp_var),exp) in 
+         (count+1,[bind_stmt;decl]@stmts),PId(tmp_var)
       | _ -> data,exp
 
 (** Binds all function calls to a variable. e.g. foo(bar(x)) -> tmp1 = bar(x); tmp2 = foo(tmp1); tmp2; *)
