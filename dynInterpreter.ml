@@ -176,7 +176,7 @@ let rec evalFun (glob:global_env) (loc:local_env) (body:function_body) (args:val
       let inputs = getInputsNames arg_names in
       let _ = List.map2 (fun n v -> declVal loc n v) inputs args in
       let _ = runStmtList glob loc stmts in
-      apply_default (fun a -> a) loc.ret_val  VUnit
+      apply_default (fun a -> a) loc.ret_val VUnit
    | Builtin(f) ->
       f args
    | _ -> failwith "Invalid function body"
@@ -240,6 +240,9 @@ and runStmt (glob:global_env) (loc:local_env) (stmt:stmt) : unit =
             List.map2 (fun n v -> setValMem loc n v) vnames elems_val |> ignore
          | _ -> failwith "Not returning a tuple"
       end
+   | StmtBind(PEmpty,rhs) ->
+      let _ = runExp glob loc rhs in
+      ()
    | StmtBind(_,rhs) -> failwith "Invalid binding"
    | StmtReturn(e) ->
       let e_val = runExp glob loc e in
@@ -297,6 +300,8 @@ let addBuiltinFunctions (glob:global_env) : unit =
    let larger_equal = opNumNumBool (>=) in
    let or_op = opBoolBoolBool (||) in
    let and_op = opBoolBoolBool (&&) in
+   let print_fun args = List.map valueStr args |> joinStrings "," |> (fun a -> print_string a;VUnit) in
+   let println_fun args = List.map valueStr args |> joinStrings "," |> (fun a -> print_endline a;VUnit) in
    [
       "+",Builtin(plus);
       "-",Builtin(minus);
@@ -310,6 +315,8 @@ let addBuiltinFunctions (glob:global_env) : unit =
       ">=",Builtin(larger_equal);
       "||",Builtin(or_op);
       "&&",Builtin(and_op);
+      "print",Builtin(print_fun);
+      "println",Builtin(println_fun);
    ]
    |> List.iter (fun (a,b) -> Hashtbl.add glob.fun_decl a b)
 
@@ -318,5 +325,6 @@ let interpret (results:parser_results) =
    let _ = addBuiltinFunctions glob in
    let loc = newLocalEnv () in
    let _ = Either.applyToRight (fun stmts -> runStmtList glob loc stmts;stmts) results.presult in
-   print_string (localEnvStr loc)
+   (*let _ = print_string (localEnvStr loc) in*)
+   apply_default (fun a -> a) loc.ret_val VUnit
    

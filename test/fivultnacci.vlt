@@ -13,3 +13,5 @@ val f3 = x:fib();
 val f4 = x:fib();
 val f5 = x:fib();
 
+println(f5);
+
