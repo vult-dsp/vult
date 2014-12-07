@@ -35,7 +35,7 @@ open Either
          a deep and shallow embedding of Vult.
 
    Higher-order functions:
-      
+
 
    Utility functions:
       getMinPosition: Get the min position from a list of positisons.
@@ -76,9 +76,9 @@ let foldTraverser_left traverser_function (traverser:('data,'traversing_type) tr
    let state2,acc =
       List.fold_left
          (fun (state,acc) elem ->
-            let state1,ne = traverser_function traverser state elem in
-            (state1,ne::acc) )
-      (state,[]) elems in
+             let state1,ne = traverser_function traverser state elem in
+             (state1,ne::acc) )
+         (state,[]) elems in
    state2,List.rev acc
 
 (** Folds the list (right-left) using the given traverser functions *)
@@ -86,9 +86,9 @@ let foldTraverser_right traverser_function (traverser:('data,'traversing_type) t
    let state2,acc =
       List.fold_left
          (fun (state,acc) elem ->
-            let state1,ne = traverser_function traverser state elem in
-            (state1,ne::acc) )
-      (state,[]) (List.rev elems) in
+             let state1,ne = traverser_function traverser state elem in
+             (state1,ne::acc) )
+         (state,[]) (List.rev elems) in
    state2,acc
 
 (** Fold an expression with the 'expfold' type that contains the functions to apply  *)
@@ -100,34 +100,34 @@ let expressionFoldEither : ('data, 'error, 'result) expfold -> 'data -> parse_ex
          | PReal (s,l) -> fold.vReal data s l
          | PId n -> fold.vId data n
          | PUnOp (s,e1,l) -> begin match go e1 with
-            | Right r1 -> fold.vUnOp data s r1 l
-            | Left _ as err -> err
+               | Right r1 -> fold.vUnOp data s r1 l
+               | Left _ as err -> err
             end
          | PBinOp (s,e1,e2,l) -> begin match (go e1, go e2) with
-            | (Right r1, Right r2) -> fold.vBinOp data s r1 r2 l
-            | (Left _ as err, _) -> err
-            | (_, (Left _ as err)) -> err
+               | (Right r1, Right r2) -> fold.vBinOp data s r1 r2 l
+               | (Left _ as err, _) -> err
+               | (_, (Left _ as err)) -> err
             end
          | PCall (n,es,l) -> begin match eitherTryMap go es with
-            | Right rs -> fold.vCall data n rs l
-            | Left _ as err -> err
+               | Right rs -> fold.vCall data n rs l
+               | Left _ as err -> err
             end
          | PIf (e1,e2,e3) -> begin match (go e1, go e2, go e3) with
-            | (Right r1, Right r2, Right r3) -> fold.vIf data r1 r2 r3
-            | (Left _ as err,_,_) -> err
-            | (_,(Left _ as err),_) -> err
-            | (_,_,(Left _ as err)) -> err
+               | (Right r1, Right r2, Right r3) -> fold.vIf data r1 r2 r3
+               | (Left _ as err,_,_) -> err
+               | (_,(Left _ as err),_) -> err
+               | (_,_,(Left _ as err)) -> err
             end
          | PGroup e1 -> begin match go e1 with
-            | Right r1 -> fold.vGroup data r1
-            | Left _ as err -> err
+               | Right r1 -> fold.vGroup data r1
+               | Left _ as err -> err
             end
          | PTuple es -> begin match eitherTryMap go es with
-            | Right rs -> fold.vTuple data rs
-            | Left _ as err -> err
+               | Right rs -> fold.vTuple data rs
+               | Left _ as err -> err
             end
          | PEmpty -> fold.vEmpty data
-   in
+      in
       go exp
 
 
@@ -282,9 +282,9 @@ and expandStmtList (f: ('data, stmt) expander) (state:'data) (stmts:stmt list) :
    let state2,acc =
       List.fold_left
          (fun (state,acc) exp ->
-            let state1,ne = expandStmt f state exp in
-            (state1,(List.rev ne)::acc) )
-      (state,[]) stmts in
+             let state1,ne = expandStmt f state exp in
+             (state1,(List.rev ne)::acc) )
+         (state,[]) stmts in
    state2,List.rev (List.flatten acc)
 
 (** Applies a function to expressions in the bindings using a top-down traverser *)
@@ -338,14 +338,14 @@ let getMinPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.positi
    if pos1.Lexing.pos_lnum <> pos2.Lexing.pos_lnum then
       if pos1.Lexing.pos_lnum < pos2.Lexing.pos_lnum then pos1 else pos2
    else
-      if pos1.Lexing.pos_cnum < pos2.Lexing.pos_cnum then pos1 else pos2
+   if pos1.Lexing.pos_cnum < pos2.Lexing.pos_cnum then pos1 else pos2
 
 (** Returns the maximum position of two given *)
 let getMaxPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.position =
    if pos1.Lexing.pos_lnum <> pos2.Lexing.pos_lnum then
       if pos1.Lexing.pos_lnum < pos2.Lexing.pos_lnum then pos2 else pos1
    else
-      if pos1.Lexing.pos_cnum < pos2.Lexing.pos_cnum then pos2 else pos1
+   if pos1.Lexing.pos_cnum < pos2.Lexing.pos_cnum then pos2 else pos1
 
 (** Retuns the minimum and maximum prositions from a given list *)
 let getMinMaxPositions (pos_list:Lexing.position list) =
@@ -360,7 +360,7 @@ let mergeLocations (loc1:location) (loc2:location) : location =
    { start_pos = start_pos; end_pos = end_pos }
 
 let getNameFromNamedId (named_id:named_id) : string =
-    match named_id with
+   match named_id with
    | SimpleId(name,_) -> name
    | NamedId (_,name,_,_) -> name
 

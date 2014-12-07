@@ -83,8 +83,8 @@ let rec valueStr (value:value) : string =
    | VBool(false) -> "false"
    | VTuple(elems) ->
       let elems_s = elems
-         |> List.map valueStr
-         |> joinStrings ","
+                    |> List.map valueStr
+                    |> joinStrings ","
       in "("^elems_s^")"
 
 let localEnvStr (loc:local_env) : string =
@@ -130,21 +130,21 @@ let clearLocal (loc:local_env) =
 
 let getExpValueFromEnv (loc:local_env) (name:string) : value =
    if Hashtbl.mem loc.val_binds name then
-     Hashtbl.find loc.val_binds name
+      Hashtbl.find loc.val_binds name
    else
-      if Hashtbl.mem loc.mem_binds name then
-         Hashtbl.find loc.mem_binds name
-      else
-         failwith ("Undeclared variable "^name)
+   if Hashtbl.mem loc.mem_binds name then
+      Hashtbl.find loc.mem_binds name
+   else
+      failwith ("Undeclared variable "^name)
 
 let setValMem (loc:local_env) (name:string)  (value:value) : unit =
    if Hashtbl.mem loc.val_binds name then
-     Hashtbl.replace loc.val_binds name value
+      Hashtbl.replace loc.val_binds name value
    else
-      if Hashtbl.mem loc.mem_binds name then
-         Hashtbl.replace loc.mem_binds name value
-      else
-         failwith ("Undeclared variable "^name)
+   if Hashtbl.mem loc.mem_binds name then
+      Hashtbl.replace loc.mem_binds name value
+   else
+      failwith ("Undeclared variable "^name)
 
 let setReturn (loc:local_env) (value:value) : unit =
    loc.ret_val <- Some(value)
