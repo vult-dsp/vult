@@ -27,28 +27,29 @@ open Types
 open TypesUtil
 open CheckerVult
 open Passes
+open DynInterpreter
 
 (** Stores the options passed to the command line *)
 type arguments =
    {
-      files  : string list;
-      dparse : bool;
-      run_check  : bool;
+      mutable files  : string list;
+      mutable dparse : bool;
+      mutable rundyn : bool;
+      mutable run_check  : bool;
    }
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : arguments =
-   let files  = ref [] in
-   let dparse = ref false in
-   let run_check = ref false in
+   let result = { files = [] ; dparse = false; run_check = false; rundyn = false} in
    let opts = [
-      "-dparse", (Arg.Unit   (fun () -> dparse:=true)), "Dumps the parse tree (default: off)";
-      "-check", (Arg.Unit     (fun () -> run_check:=true)), "Runs checker on program (default: off)";
+      "-dparse", (Arg.Unit  (fun () -> result.dparse   <-true)), "Dumps the parse tree (default: off)";
+      "-check",  (Arg.Unit  (fun () -> result.run_check<-true)), "Runs checker on program (default: off)";
+      "-rundyn", (Arg.Unit  (fun () -> result.rundyn   <-true)), "Runs the dynamic interpreter (default: off)";
    ]
    in
-   let _ = Arg.parse opts (fun a -> files:=a::(!files)) "Usage: vultc file.vlt\n" in
-   let _ = files := List.rev (!files) in (* Put the files in the correct order  *)
-   { files = !files ; dparse = !dparse; run_check = !run_check; }
+   let _ = Arg.parse opts (fun a -> result.files <- a::result.files) "Usage: vultc file.vlt\n" in
+   let _ = result.files <- List.rev result.files in (* Put the files in the correct order  *)
+   result
 
 let main () =
    let args = processArguments () in
@@ -62,7 +63,14 @@ let main () =
    let _ = if args.dparse then
          parser_results
          |> List.map applyTransformations
-         |> List.iter (fun a -> match a.presult with Either.Right(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () ) in
+         |> List.iter (fun a -> match a.presult with Either.Right(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () )
+   in
+   (* Runs the dynamic interpreter if -rundyn was passed as argument *)
+   let _ = if args.rundyn then
+         parser_results
+         |> List.map applyTransformations
+         |> List.map interpret |> ignore 
+   in
    (* Runs the checker if -check was passed as argument *)
    let _ =
       if args.run_check then

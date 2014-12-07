@@ -231,7 +231,8 @@ and binaryOp (buffer:parse_exp lexer_stream) (token:parse_exp token) (left:parse
 (** <expressionList> := <expression> [',' <expression> ] *)
 and expressionList (buffer:parse_exp lexer_stream) : parse_exp list =
    let rec loop acc =
-      let e = getContents (expression 0 buffer) in
+      (* power of 20 avoids returning a tuple instead of a list*)
+      let e = getContents (expression 20 buffer) in
       match peekKind buffer with
       | COMMA ->
          let _ = skip buffer in
@@ -387,7 +388,11 @@ and stmtFunction (buffer:parse_exp lexer_stream) : stmt =
    let _    = consume buffer FUN in
    let name = namedId buffer in
    let _    = consume buffer LPAREN in
-   let args = valBindList buffer in
+   let args =
+      match peekKind buffer with
+      | RPAREN -> []
+      | _ -> valBindList buffer
+   in
    let _    = consume buffer RPAREN in
    let body = stmtList buffer in
    StmtFun(name,args,body)

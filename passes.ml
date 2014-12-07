@@ -107,11 +107,9 @@ let operatorsToFunctionCalls : ('data,parse_exp) transformation =
    fun state exp ->
       match exp with
       | PUnOp(op,e,loc) ->
-         let quoted_op = "'"^op^"'" in
-         state,PCall(NamedId("_",quoted_op,loc,loc),[e],loc)
+         state,PCall(NamedId("_",op,loc,loc),[e],loc)
       | PBinOp(op,e1,e2,loc) ->
-         let quoted_op = "'"^op^"'" in
-         state,PCall(NamedId("_",quoted_op,loc,loc),[e1;e2],loc)
+         state,PCall(NamedId("_",op,loc,loc),[e1;e2],loc)
       | _ -> state,exp
 
 (* ======================= *)
