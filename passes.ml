@@ -60,14 +60,10 @@ let returnBindsAndDecl ((decls:val_bind list),(binds: stmt list)) (bind:val_bind
       ValNoBind(name,init)::decls, StmtBind(PId(name),exp)::binds
    | ValNoBind(name,init) -> ValNoBind(name,init)::decls,binds
 
-(** Transforms val x=0; -> val x; x=0; *)
+(** Transforms mem x=0; -> mem x; x=0; *)
 let separateBindAndDeclaration : ('data,stmt) expander =
    fun state stmt ->
    match stmt with
-   | StmtVal(vlist) ->
-      let new_vlist,binds = List.fold_left returnBindsAndDecl ([],[]) vlist in
-      let stmts = StmtVal(List.rev new_vlist)::binds in
-      state,stmts
    | StmtMem(vlist) ->
       let new_vlist,binds = List.fold_left returnBindsAndDecl ([],[]) vlist in
       let stmts = StmtMem(List.rev new_vlist)::binds  in
@@ -107,9 +103,11 @@ let operatorsToFunctionCalls : ('data,parse_exp) transformation =
    fun state exp ->
       match exp with
       | PUnOp(op,e,loc) ->
-         state,PCall(NamedId("_","'"^op^"'",loc,loc),[e],loc)
+         let quoted_op = "'"^op^"'" in
+         state,PCall(NamedId("_",quoted_op,loc,loc),[e],loc)
       | PBinOp(op,e1,e2,loc) ->
-         state,PCall(NamedId("_","'"^op^"'",loc,loc),[e1;e2],loc)
+         let quoted_op = "'"^op^"'" in
+         state,PCall(NamedId("_",quoted_op,loc,loc),[e1;e2],loc)
       | _ -> state,exp
 
 (* ======================= *)
@@ -121,9 +119,8 @@ let bindFunctionCallsInExp : (int * stmt list,parse_exp) transformation =
       | PCall(name,args,loc) ->
          let count,stmts = data in
          let tmp_var = SimpleId("_tmp"^(string_of_int count),default_loc) in
-         let decl = StmtVal([ValNoBind(tmp_var,None)]) in
-         let bind_stmt = StmtBind(PId(tmp_var),exp) in 
-         (count+1,[bind_stmt;decl]@stmts),PId(tmp_var)
+         let decl = StmtVal([ValBind(tmp_var,None,exp)]) in
+         (count+1,decl::stmts),PId(tmp_var)
       | _ -> data,exp
 
 (** Binds all function calls to a variable. e.g. foo(bar(x)) -> tmp1 = bar(x); tmp2 = foo(tmp1); tmp2; *)
