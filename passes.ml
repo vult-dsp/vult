@@ -106,9 +106,9 @@ let applyTransformations (results:parser_results) =
    let initial_state = { fcall_index = 0 ; dummy = 0 } in
    let transform_function stmts =
       (initial_state,stmts)
-      |+> (fun state stmts -> TypesUtil.expandStmtList separateBindAndDeclaration state stmts)
-      |+> (fun state stmts -> TypesUtil.expandStmtList makeSingleDeclaration state stmts)
-      |+> (fun state stmts -> TypesUtil.traverseTopExpStmtList (nameFunctionCalls|->operatorsToFunctionCalls) state stmts)
+      |+> TypesUtil.expandStmtList separateBindAndDeclaration
+      |+> TypesUtil.expandStmtList makeSingleDeclaration
+      |+> TypesUtil.traverseTopExpStmtList (nameFunctionCalls|->operatorsToFunctionCalls)
       |> snd
    in
    let new_stmts = Either.mapRight transform_function results.presult in
