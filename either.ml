@@ -58,8 +58,8 @@ let eitherTryMap : ('a -> ('e,'r) either) -> 'a list -> ('e, 'r list) either =
          end
    in
       go xs []
-
-let mapRight (f:'a -> 'b) (value:('c,'b) either) =
+(** Applies the function 'f' to the either value if the value is Right  *)
+let applyToRight (f:'a -> 'b) (value:('c,'b) either) =
    match value with
    | Left(v)  -> Left(v)
    | Right(v) -> Right(f v)

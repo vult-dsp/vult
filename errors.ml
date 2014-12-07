@@ -22,11 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
+(** Functions for error reporting and handling *)
+
 open Types
 open Lexing
 open Either
 
-
+(** Takes a location and returns a string in the format "Error in file: file: line l col:c1-c2" *)
 let errorLocationMessage (location:location) : string =
    let col_start = location.start_pos.pos_cnum - location.start_pos.pos_bol in
    let col_end = location.end_pos.pos_cnum - location.start_pos.pos_bol in
@@ -36,6 +38,8 @@ let errorLocationMessage (location:location) : string =
       col_start
       col_end
 
+(** Takes the current line and a location returns a string pointing to the 
+location *)
 let errorLocationIndicator (line:string) (location:location) : string =
    let col_start = location.start_pos.pos_cnum - location.start_pos.pos_bol in
    let col_end = location.end_pos.pos_cnum - location.start_pos.pos_bol in
@@ -44,11 +48,13 @@ let errorLocationIndicator (line:string) (location:location) : string =
       (String.make col_start ' ')
       (String.make (col_end - col_start) '^')
 
+(** Returns the lines corresponding to the given location *)
 let getErrorLines (location:location) (lines:string array) =
    match location.start_pos.pos_lnum with
    | 0 | 1 -> Array.get lines 0
    | n -> (Array.get lines (n-2))^"\n"^(Array.get lines (n-1))
 
+(** Takes an error and the lines of the code and returns an error message *)
 let reportErrorString (lines:string array) (error:error) =
    match error with
    | SimpleError(msg) -> print_string (msg^"\n")
@@ -58,15 +64,17 @@ let reportErrorString (lines:string array) (error:error) =
       let indicator = errorLocationIndicator line location in
       print_string (loc^msg^"\n"^indicator)
 
-
+(** Takes an Either value containing a list of errors and reports the errors *)
 let reportErrors (results:(error list,'a) either) (lines:string array) =
    match results with
    | Right(_) -> ()
    | Left(errors) ->
       List.iter (reportErrorString lines) errors
 
+(** Joins two errors *)
 let joinErrors : errors -> errors -> errors = List.append
 
+(** Joins two optional errors *)
 let joinErrorOptions : errors option -> errors option -> errors option =
    fun maybeErr1 maybeErr2 ->
       match (maybeErr1,maybeErr2) with
@@ -75,5 +83,6 @@ let joinErrorOptions : errors option -> errors option -> errors option =
       | (Some err1, Some err2) -> Some (joinErrors err1 err2)
       | (None, None) -> None
 
+(** Joins a list of optional errors *)
 let joinErrorOptionsList : errors option list -> errors option = List.fold_left joinErrorOptions None
 

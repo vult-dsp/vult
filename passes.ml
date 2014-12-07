@@ -23,16 +23,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
+(** Transformations and optimizations of the syntax tree *)
+
 open Types
 
+
 (** Generic type of transformations *)
-type ('a,'b) transformation = 'a -> 'b -> 'a * 'b
+type ('data,'value) transformation = 'data -> 'value -> 'data * 'value
 
 (** Generic type of expanders *)
-type ('a,'b) expander       = 'a -> 'b -> 'a * 'b list
+type ('data,'value) expander = 'data -> 'value -> 'data * 'value list
 
 (** Makes a chain of transformations. E.g. foo |-> bar will apply first foo then bar. *)
-let (|->) : ('a,'b) transformation -> ('a,'b) transformation -> ('a,'b) transformation =
+let (|->) : ('data,'value) transformation -> ('data,'value) transformation -> ('data,'value) transformation =
    fun a b ->
       fun state exp ->
          let new_state,new_exp = a state exp in
@@ -57,7 +60,7 @@ let returnBindsAndDecl ((decls:val_bind list),(binds: stmt list)) (bind:val_bind
    | ValNoBind(name,init) -> ValNoBind(name,init)::decls,binds
 
 (** Transforms val x=0; -> val x; x=0; *)
-let separateBindAndDeclaration : ('a,stmt) expander =
+let separateBindAndDeclaration : ('data,stmt) expander =
    fun state stmt ->
    match stmt with
    | StmtVal(vlist) ->
@@ -71,7 +74,7 @@ let separateBindAndDeclaration : ('a,stmt) expander =
    | _ -> state,[stmt]
 
 (** Transforms val x,y; -> val x; val y; *)
-let makeSingleDeclaration : ('a,stmt) expander =
+let makeSingleDeclaration : ('data,stmt) expander =
    fun state stmt ->
    match stmt with
    | StmtVal(vlist) ->
@@ -83,7 +86,7 @@ let makeSingleDeclaration : ('a,stmt) expander =
    | _ -> state,[stmt]
 
 (** Adds a default name to all function calls. e.g. foo(x) ->  _inst_0:foo(x) *)
-let nameFunctionCalls : ('a,parse_exp) transformation =
+let nameFunctionCalls : ('data,parse_exp) transformation =
    fun state exp ->
    match exp with
    | PCall(SimpleId(name,loc),args,floc) ->
@@ -93,7 +96,7 @@ let nameFunctionCalls : ('a,parse_exp) transformation =
    | _ -> state,exp
    
 (** Transforms all operators into function calls *)
-let operatorsToFunctionCalls : ('a,parse_exp) transformation =
+let operatorsToFunctionCalls : ('data,parse_exp) transformation =
    fun state exp ->
       match exp with
       | PUnOp(op,e,loc) ->
@@ -111,7 +114,7 @@ let applyTransformations (results:parser_results) =
       |+> TypesUtil.traverseTopExpStmtList (nameFunctionCalls|->operatorsToFunctionCalls)
       |> snd
    in
-   let new_stmts = Either.mapRight transform_function results.presult in
+   let new_stmts = Either.applyToRight transform_function results.presult in
    { results with presult = new_stmts }
 
 

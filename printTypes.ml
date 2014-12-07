@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-(** Conver to string the types *)
+(** Printing of types *)
 
 open Types
 
@@ -131,7 +131,7 @@ let rec expressionBuff buffer exp =
 and expressionListBuff buffer expl =
    printList buffer expressionBuff "," expl
 
-
+(** Adds to the print buffer an val_init *)
 let rec valInitBuff buffer v =
    match v with
    | ValNoBind(id,None) -> namedIdBuff buffer id
@@ -151,9 +151,11 @@ let rec valInitBuff buffer v =
       append buffer ")";
       append buffer "=";
       expressionBuff buffer e
+(** Adds to the print buffer an val_init list *)
 and valInitBuffList buffer l =
    printList buffer valInitBuff "," l
 
+(** Adds to the print buffer s statememt *)
 let rec stmtBuff buffer stmt =
    match stmt with
    | StmtVal(elems) ->
@@ -198,7 +200,7 @@ let rec stmtBuff buffer stmt =
       append buffer ";"
    | StmtEmpty -> ()
 
-
+(** Adds to the print buffer a statememt list *)
 and stmtListBuff buffer l =
    match l with
    | [h] -> stmtBuff buffer h
@@ -217,11 +219,13 @@ and stmtListBuff buffer l =
       outdent buffer;
       append buffer "}"
 
+(** Converts to string a list of statememts *)
 let stmtListStr e =
    let print_buffer = makePrintBuffer () in
    stmtListBuff print_buffer e;
    contents print_buffer
 
+(** Converts to string an expression *)
 let expressionStr e =
    let print_buffer = makePrintBuffer () in
    expressionBuff print_buffer e;

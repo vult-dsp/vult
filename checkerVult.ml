@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-(** Vult abstract syntax interpreter **)
+(** Vult abstract syntax interpreter *)
 open Types
 open TypesUtil
 open Lexing
@@ -295,7 +295,7 @@ let checkFunctions : (environment, error, literal) TypesUtil.expfold =
    }
 
 let rec checkExp : environment -> Types.parse_exp -> Types.errors option =
-   fun env exp -> match TypesUtil.expressionFold checkFunctions env exp with
+   fun env exp -> match TypesUtil.expressionFoldEither checkFunctions env exp with
       | Left err -> Some [err]
       | Right _ -> None
 

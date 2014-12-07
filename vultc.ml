@@ -52,10 +52,17 @@ let processArguments () : arguments =
 
 let main () =
    let args = processArguments () in
-   let parser_results = List.map parseFile args.files |> List.map applyTransformations in
+   (* Parse the files *)
+   let parser_results =
+      List.map parseFile args.files
+      |> List.map applyTransformations
+   in
+   (* Reports error of parsing *)
    let _ = List.iter (fun a -> Errors.reportErrors a.presult a.lines ) parser_results in
+   (* Prints the parsed files if -dparse was passed as argument *)
    let _ = if args.dparse then
          List.iter (fun a -> match a.presult with Either.Right(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () ) parser_results in
+   (* Runs the checker if -check was passed as argument *)
    let _ =
       if args.run_check then
          let errors = List.map programState parser_results in

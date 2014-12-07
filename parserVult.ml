@@ -55,12 +55,13 @@ let current (buffer:'a lexer_stream) : 'a token =
 let peekKind (buffer:'a lexer_stream) : token_enum =
    (current buffer).kind
 
+(** Consumes tokens until it finds the begining of a new statememt or the end of the current *)
 let rec moveToNextStatement (buffer:'a lexer_stream) : unit =
    match buffer.peeked.kind with
    | SEMI -> skip buffer
    | EOF -> ()
    | FUN | VAL
-   | IF | RET -> ()
+   | IF  | RET -> ()
    | RBRAC -> skip buffer
    | _ ->
       let _ = skip buffer in
@@ -86,6 +87,7 @@ let expect (buffer:'a lexer_stream) (kind:token_enum) : unit =
       let message = Printf.sprintf "Expecting a %s but got %s" expected got in
       raise (ParserError(getErrorForToken buffer message))
 
+(** Returns an empty 'lexed_lines' type *)
 let emptyLexedLines () =
    {
       current_line = Buffer.create 100;
@@ -408,14 +410,17 @@ let parseStmtList (s:string) : stmt list =
    let result = stmtList buffer in
    result
 
+(** Parses the given expression and prints it *)
 let parseDumpExp (s:string) : string =
    let e = parseExp s in
    PrintTypes.expressionStr e
 
+(** Parses a list of statements and prints them *)
 let parseDumpStmtList (s:string) : string =
    let e = parseStmtList s in
    PrintTypes.stmtListStr e
 
+(** Parses a file containing a list of statements and returns the results *)
 let parseFile (filename:string) : parser_results =
    let chan = open_in filename in
    let buffer = bufferFromChannel chan filename in
