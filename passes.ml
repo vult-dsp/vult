@@ -52,6 +52,7 @@ type state_t1 =
       dummy : int;
       fcall_index : int;
    }
+(* ======================= *)
 
 let returnBindsAndDecl ((decls:val_bind list),(binds: stmt list)) (bind:val_bind) =
    match bind with
@@ -73,6 +74,8 @@ let separateBindAndDeclaration : ('data,stmt) expander =
       state,stmts
    | _ -> state,[stmt]
 
+(* ======================= *)
+
 (** Transforms val x,y; -> val x; val y; *)
 let makeSingleDeclaration : ('data,stmt) expander =
    fun state stmt ->
@@ -85,6 +88,8 @@ let makeSingleDeclaration : ('data,stmt) expander =
       state,stmts
    | _ -> state,[stmt]
 
+(* ======================= *)
+
 (** Adds a default name to all function calls. e.g. foo(x) ->  _inst_0:foo(x) *)
 let nameFunctionCalls : ('data,parse_exp) transformation =
    fun state exp ->
@@ -94,24 +99,63 @@ let nameFunctionCalls : ('data,parse_exp) transformation =
       let new_state = {state with fcall_index = state.fcall_index+1} in
       new_state,PCall(NamedId(inst,name,loc,loc),args,floc)
    | _ -> state,exp
+
+(* ======================= *)
    
 (** Transforms all operators into function calls *)
 let operatorsToFunctionCalls : ('data,parse_exp) transformation =
    fun state exp ->
       match exp with
       | PUnOp(op,e,loc) ->
-         state,PCall(NamedId("_",op,loc,loc),[e],loc)
+         state,PCall(NamedId("_","'"^op^"'",loc,loc),[e],loc)
       | PBinOp(op,e1,e2,loc) ->
-         state,PCall(NamedId("_",op,loc,loc),[e1;e2],loc)
+         state,PCall(NamedId("_","'"^op^"'",loc,loc),[e1;e2],loc)
       | _ -> state,exp
+
+(* ======================= *)
+
+(** Creates bindings for all function calls in an expression *)
+let bindFunctionCallsInExp : (int * stmt list,parse_exp) transformation =
+   fun data exp ->
+      match exp with
+      | PCall(name,args,loc) ->
+         let count,stmts = data in
+         let tmp_var = SimpleId("_tmp"^(string_of_int count),default_loc) in
+         let decl = StmtVal([ValNoBind(tmp_var,None)]) in
+         let bind_stmt = StmtBind(PId(tmp_var),exp) in 
+         (count+1,[bind_stmt;decl]@stmts),PId(tmp_var)
+      | _ -> data,exp
+
+(** Binds all function calls to a variable. e.g. foo(bar(x)) -> tmp1 = bar(x); tmp2 = foo(tmp1); tmp2; *)
+
+let bindFunctionCalls : ('data,stmt) expander  =
+   fun state stmt ->
+      match stmt with
+      | StmtBind(lhs,PCall(name,args,loc)) ->
+         let (count,stmts),new_args = TypesUtil.traverseBottomExpList bindFunctionCallsInExp (state.fcall_index,[]) args in
+         {state with fcall_index = count},(List.rev (StmtBind(lhs,PCall(name,new_args,loc))::stmts))
+      | StmtBind(lhs,rhs) ->
+         let (count,stmts),new_rhs = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.fcall_index,[]) rhs in
+         {state with fcall_index = count},(List.rev (StmtBind(lhs,new_rhs)::stmts))
+      | StmtReturn(e) ->
+         let (count,stmts),new_e = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.fcall_index,[]) e in
+         {state with fcall_index = count},(List.rev (StmtReturn(new_e)::stmts))
+      | StmtIf(cond,then_stmts,else_stmts) ->
+         let (count,stmts),new_cond = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.fcall_index,[]) cond in
+         {state with fcall_index = count},(List.rev (StmtIf(new_cond,then_stmts,else_stmts)::stmts))
+ 
+      | _ -> state,[stmt]
+         
+(* ======================= *)      
 
 let applyTransformations (results:parser_results) =
    let initial_state = { fcall_index = 0 ; dummy = 0 } in
    let transform_function stmts =
       (initial_state,stmts)
+      |+> TypesUtil.traverseTopExpStmtList (nameFunctionCalls|->operatorsToFunctionCalls)
       |+> TypesUtil.expandStmtList separateBindAndDeclaration
       |+> TypesUtil.expandStmtList makeSingleDeclaration
-      |+> TypesUtil.traverseTopExpStmtList (nameFunctionCalls|->operatorsToFunctionCalls)
+      |+> TypesUtil.expandStmtList bindFunctionCalls
       |> snd
    in
    let new_stmts = Either.applyToRight transform_function results.presult in

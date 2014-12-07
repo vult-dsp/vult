@@ -32,6 +32,8 @@ type location =
       end_pos   : position;
    }
 
+let default_loc = { start_pos = dummy_pos  ; end_pos = dummy_pos }
+
 type lexed_lines =
    {
       current_line      : Buffer.t;
