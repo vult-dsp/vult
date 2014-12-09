@@ -40,7 +40,7 @@ type value =
 
 type local_env =
    {
-      val_binds : (string,value) Hashtbl.t;
+      mutable val_binds : ((string,value) Hashtbl.t) list;
       mem_binds : (string,value) Hashtbl.t;
       fun_bind  : (string,local_env) Hashtbl.t;
       mutable ret_val   : value option;
@@ -57,7 +57,7 @@ type global_env =
 
 let newLocalEnv () =
    {
-      val_binds = Hashtbl.create 10;
+      val_binds = [ Hashtbl.create 10 ];
       mem_binds = Hashtbl.create 10;
       fun_bind  = Hashtbl.create 10;
       ret_val   = None;
@@ -88,8 +88,11 @@ let rec valueStr (value:value) : string =
       in "("^elems_s^")"
 
 let localEnvStr (loc:local_env) : string =
-   let val_s = Hashtbl.fold (fun name value state -> state^name^" = "^(valueStr value)^"\n" ) loc.val_binds "" in
-   let mem_s = Hashtbl.fold (fun name value state -> state^name^" = "^(valueStr value)^"\n" ) loc.mem_binds "" in
+   let dumpEnv env =
+      Hashtbl.fold (fun name value state -> state^name^" = "^(valueStr value)^"\n" ) env ""   
+   in
+   let val_s = List.map dumpEnv loc.val_binds |> joinStrings "\n" in
+   let mem_s = dumpEnv loc.mem_binds in
    let fun_s = Hashtbl.fold (fun name value state -> name::state ) loc.fun_bind [] |> joinStrings "," in
    let ret_s = apply_default valueStr loc.ret_val "-" in
    Printf.sprintf "= val =\n%s= mem =\n%s= fun =\n%s\n= ret =\n%s\n" val_s mem_s fun_s ret_s
@@ -103,7 +106,6 @@ let getExpName (exp:parse_exp) : string =
    match exp with
    | PId(name) -> getVarName name
    | _ -> failwith "This expression should be an id"
-
 
 let getFunctionBody (glob:global_env) (name:string) : function_body =
    if Hashtbl.mem glob.fun_decl name then
@@ -125,32 +127,46 @@ let getFunctionEnv (loc:local_env) (name:string) : local_env =
       env
 
 let clearLocal (loc:local_env) =
-   let _ = Hashtbl.clear loc.val_binds in
+   let _ = loc.val_binds <- [] in
    loc.ret_val <- None
 
-let getExpValueFromEnv (loc:local_env) (name:string) : value =
-   if Hashtbl.mem loc.val_binds name then
-     Hashtbl.find loc.val_binds name
-   else
-      if Hashtbl.mem loc.mem_binds name then
-         Hashtbl.find loc.mem_binds name
-      else
-         failwith ("Undeclared variable "^name)
+let pushLocal (loc:local_env) =
+   loc.val_binds <- (Hashtbl.create 10)::loc.val_binds 
 
+let popLocal (loc:local_env) =
+   match loc.val_binds with
+   | [] -> ()
+   | _::t -> loc.val_binds <- t 
+
+let findValMemTable (loc:local_env) (name:string) =
+   let rec loop locals =
+      match locals with
+      | [] ->
+         if Hashtbl.mem loc.mem_binds name then
+            loc.mem_binds
+         else
+            failwith ("Undeclared variable "^name)
+      | h::t ->
+         if Hashtbl.mem h name then
+            h
+         else loop t
+   in loop loc.val_binds
+
+let getExpValueFromEnv (loc:local_env) (name:string) : value =
+   let table = findValMemTable loc name in
+   Hashtbl.find table name
+      
 let setValMem (loc:local_env) (name:string)  (value:value) : unit =
-   if Hashtbl.mem loc.val_binds name then
-     Hashtbl.replace loc.val_binds name value
-   else
-      if Hashtbl.mem loc.mem_binds name then
-         Hashtbl.replace loc.mem_binds name value
-      else
-         failwith ("Undeclared variable "^name)
+   let table = findValMemTable loc name in
+   Hashtbl.replace table name value
 
 let setReturn (loc:local_env) (value:value) : unit =
    loc.ret_val <- Some(value)
 
 let declVal (loc:local_env) (name:string) (value:value) : unit =
-   Hashtbl.replace loc.val_binds name value
+   match loc.val_binds with
+   | h::_ -> Hashtbl.replace h name value
+   | _ -> failwith "The local environment is not correctly initialized"
 
 let declMem (loc:local_env) (name:string) (init:value) : unit =
    if not (Hashtbl.mem loc.mem_binds name) then
@@ -266,7 +282,9 @@ and runStmt (glob:global_env) (loc:local_env) (stmt:stmt) : unit =
 
 
 and runStmtList (glob:global_env) (loc:local_env) (stmts:stmt list) : unit =
-   List.iter (runStmt glob loc) stmts
+   let _ = pushLocal loc in
+   let _ = List.iter (runStmt glob loc) stmts in
+   popLocal loc
 
 let opNumNumNum (op:float->float->float) (args:value list) =
    match args with
