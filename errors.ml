@@ -39,7 +39,7 @@ let errorLocationMessage (location:location) : string =
       col_end
 
 (** Takes the current line and a location returns a string pointing to the 
-location *)
+    location *)
 let errorLocationIndicator (line:string) (location:location) : string =
    let col_start = location.start_pos.pos_cnum - location.start_pos.pos_bol in
    let col_end = location.end_pos.pos_cnum - location.start_pos.pos_bol in

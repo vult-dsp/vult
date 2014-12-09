@@ -211,13 +211,13 @@ let checkUnOp : 'a -> string -> literal -> location -> (Types.error, literal) ei
    fun _ op lit loc ->
       let
          minusCheck lit = match lit with
-            | LInt x -> Right (LInt (- x))
-            | LReal x -> Right (LReal (-. x))
-            | LUnbound -> Right (LUnbound)
-            | l -> Left (PointedError(loc,"Operation unary minus is not compatible with type " ^ (literalTypeString lit) ^ "."))
+         | LInt x -> Right (LInt (- x))
+         | LReal x -> Right (LReal (-. x))
+         | LUnbound -> Right (LUnbound)
+         | l -> Left (PointedError(loc,"Operation unary minus is not compatible with type " ^ (literalTypeString lit) ^ "."))
       in let   notCheck lit = match lit with
-            | LBool x -> Right (LBool (not x))
-            | l -> Left (PointedError(loc,"Operation boolean negation is not compation with type " ^ (literalTypeString lit) ^ "."))
+         | LBool x -> Right (LBool (not x))
+         | l -> Left (PointedError(loc,"Operation boolean negation is not compation with type " ^ (literalTypeString lit) ^ "."))
       in match op with
       | "-" -> minusCheck lit
       | "!" -> notCheck lit
@@ -226,11 +226,11 @@ let checkUnOp : 'a -> string -> literal -> location -> (Types.error, literal) ei
 let checkBinOp : 'a -> string -> literal -> literal -> location -> (Types.error, literal) either =
    fun _ op lit1 lit2 loc ->
       if not (literalTypeEqual lit1 lit2)
-         then Left (PointedError(loc,"Type missmatch for operator " ^ op ^ ", 
+      then Left (PointedError(loc,"Type missmatch for operator " ^ op ^ ", 
                   operand 1 is of type " ^ (literalTypeString lit1) ^ " and 
                   operand 2 is of type " ^ (literalTypeString lit2) ^ "."
-                  ))
-         else match op with (* Just some filler values for now *)
+                             ))
+      else match op with (* Just some filler values for now *)
          | "+" -> Right lit1
          | "-" -> Right lit1
          | "*" -> Right lit1
@@ -254,19 +254,19 @@ let checkCall : environment -> named_id -> literal list -> location -> (Types.er
          in if expectedlength == paramlength
          then Right LUnbound
          else Left (PointedError(loc,"Wrong number of arguments in call to function " ^ fname
-                             ^ "; expected " ^ (string_of_int expectedlength) ^ " but got "
-                             ^ (string_of_int paramlength) ^ "."))
+                                     ^ "; expected " ^ (string_of_int expectedlength) ^ " but got "
+                                     ^ (string_of_int paramlength) ^ "."))
 
 let checkIf : 'a -> literal -> literal -> literal -> (Types.error, literal) either =
    fun _ cond l1 l2 ->
       if not (literalTypeEqual l1 l2)
-         then Left (SimpleError("Type missmatch in if-expression, 
+      then Left (SimpleError("Type missmatch in if-expression, 
             the received types are " ^ (literalTypeString l1) ^ " and " ^ (literalTypeString l2) ^ "."))
-         else match cond with
-            | LBool true -> Right l1
-            | LBool false -> Right l2
-            | LUnbound -> Right l1
-            | _ -> Left (SimpleError("Condition in if-expression is not of type bool, but of type " ^ literalTypeString cond ^ "."))
+      else match cond with
+         | LBool true -> Right l1
+         | LBool false -> Right l2
+         | LUnbound -> Right l1
+         | _ -> Left (SimpleError("Condition in if-expression is not of type bool, but of type " ^ literalTypeString cond ^ "."))
 
 let checkGroup : 'a -> literal -> (Types.error, literal) either =
    fun _ lit -> Right lit

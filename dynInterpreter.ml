@@ -83,8 +83,8 @@ let rec valueStr (value:value) : string =
    | VBool(false) -> "false"
    | VTuple(elems) ->
       let elems_s = elems
-         |> List.map valueStr
-         |> joinStrings ","
+                    |> List.map valueStr
+                    |> joinStrings ","
       in "("^elems_s^")"
 
 let localEnvStr (loc:local_env) : string =
@@ -129,6 +129,7 @@ let getFunctionEnv (loc:local_env) (name:string) : local_env =
 let clearLocal (loc:local_env) =
    let _ = loc.val_binds <- [] in
    loc.ret_val <- None
+
 
 let pushLocal (loc:local_env) =
    loc.val_binds <- (Hashtbl.create 10)::loc.val_binds 
@@ -286,6 +287,11 @@ and runStmtList (glob:global_env) (loc:local_env) (stmts:stmt list) : unit =
    let _ = List.iter (runStmt glob loc) stmts in
    popLocal loc
 
+let opNumNum (op:float->float) (args:value list) =
+   match args with
+   | [VNum(v1)] -> VNum(op v1)
+   | _ -> failwith "Invalid arguments"
+
 let opNumNumNum (op:float->float->float) (args:value list) =
    match args with
    | [VNum(v1); VNum(v2)] -> VNum(op v1 v2)
@@ -320,13 +326,18 @@ let addBuiltinFunctions (glob:global_env) : unit =
    let and_op = opBoolBoolBool (&&) in
    let print_fun args = List.map valueStr args |> joinStrings "," |> (fun a -> print_string a;VUnit) in
    let println_fun args = List.map valueStr args |> joinStrings "," |> (fun a -> print_endline a;VUnit) in
+   let tanh_fun = opNumNum tanh in
+   let abs_fun = opNumNum abs_float in
+   let floor_fun = opNumNum floor in
+   let sin_fun = opNumNum sin in
+   let fixdenorm = opNumNum (fun a -> if (abs_float a)<1e-12 then 0.0 else a) in
    [
       "+",Builtin(plus);
       "-",Builtin(minus);
       "*",Builtin(mult);
       "/",Builtin(div);
       "==",Builtin(equal);
-      "<>",Builtin(unequal);
+      "!=",Builtin(unequal);
       "<",Builtin(smaller);
       ">",Builtin(larger);
       "<=",Builtin(smaller_equal);
@@ -335,6 +346,11 @@ let addBuiltinFunctions (glob:global_env) : unit =
       "&&",Builtin(and_op);
       "print",Builtin(print_fun);
       "println",Builtin(println_fun);
+      "tanh",Builtin(tanh_fun);
+      "abs",Builtin(abs_fun);
+      "floor",Builtin(floor_fun);
+      "sin",Builtin(sin_fun);
+      "fixdenorm",Builtin(fixdenorm);
    ]
    |> List.iter (fun (a,b) -> Hashtbl.add glob.fun_decl a b)
 

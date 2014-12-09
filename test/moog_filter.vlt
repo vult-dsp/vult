@@ -1,0 +1,45 @@
+
+fun change(x) {
+    mem pre_x;
+    val v = pre_x!=x;
+    pre_x = x;
+    return v;
+}
+
+fun moog(input,fc,res){
+  mem g,h0,h1;
+  mem wold1,wold2,wold3,wold4,wold5;
+  val Gcomp = 0.5;
+  val PI = 3.1416;
+
+  if(change(fc)){
+    g = 2*PI*fc/(2*44100);
+    h0 = g/1.3;
+    h1 = g*0.3/1.3;
+  }
+
+  val u = input - 4*res*(wold5 - Gcomp*input);
+  val w1 = tanh(u);
+  val w2 = h0*w1 + h1*wold1 + (1-g)*wold2;
+  val w3 = h0*w2 + h1*wold2 + (1-g)*wold3;
+  val w4 = h0*w3 + h1*wold3 + (1-g)*wold4;
+  val w5 = h0*w4 + h1*wold4 + (1-g)*wold5;
+  wold1 = w1;
+  wold2 = w2;
+  wold3 = w3;
+  wold4 = w4;
+  wold5 = w5;
+  return w5;
+}
+
+println(x:moog(1,2000,0.1));
+println(x:moog(1,2000,0.1));
+println(x:moog(1,2000,0.1));
+println(x:moog(1,2000,0.1));
+println(x:moog(1,2000,0.1));
+println(x:moog(1,2000,0.1));
+println(x:moog(1,2000,0.1));
+println(x:moog(1,2000,0.1));
+println(x:moog(1,2000,0.1));
+println(x:moog(1,2000,0.1));
+

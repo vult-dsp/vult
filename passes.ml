@@ -37,9 +37,9 @@ type ('data,'value) expander = 'data -> 'value -> 'data * 'value list
 (** Makes a chain of transformations. E.g. foo |-> bar will apply first foo then bar. *)
 let (|->) : ('data,'value) transformation -> ('data,'value) transformation -> ('data,'value) transformation =
    fun a b ->
-      fun state exp ->
-         let new_state,new_exp = a state exp in
-         b new_state new_exp
+   fun state exp ->
+      let new_state,new_exp = a state exp in
+      b new_state new_exp
 
 (** Pipes a pair (state,value) into transformation functions *)
 let (|+>) : ('state * 'value) -> ('state, 'value) transformation -> ('state * 'value) =
@@ -63,45 +63,45 @@ let returnBindsAndDecl ((decls:val_bind list),(binds: stmt list)) (bind:val_bind
 (** Transforms mem x=0; -> mem x; x=0; *)
 let separateBindAndDeclaration : ('data,stmt) expander =
    fun state stmt ->
-   match stmt with
-   | StmtMem(vlist) ->
-      let new_vlist,binds = List.fold_left returnBindsAndDecl ([],[]) vlist in
-      let stmts = StmtMem(List.rev new_vlist)::binds  in
-      state,stmts
-   | StmtVal(vlist) ->
-      let new_vlist,binds = List.fold_left returnBindsAndDecl ([],[]) vlist in
-      let stmts = StmtVal(List.rev new_vlist)::binds  in
-      state,stmts
-   | _ -> state,[stmt]
+      match stmt with
+      | StmtMem(vlist) ->
+         let new_vlist,binds = List.fold_left returnBindsAndDecl ([],[]) vlist in
+         let stmts = StmtMem(List.rev new_vlist)::binds  in
+         state,stmts
+      | StmtVal(vlist) ->
+         let new_vlist,binds = List.fold_left returnBindsAndDecl ([],[]) vlist in
+         let stmts = StmtVal(List.rev new_vlist)::binds  in
+         state,stmts
+      | _ -> state,[stmt]
 
 (* ======================= *)
 
 (** Transforms val x,y; -> val x; val y; *)
 let makeSingleDeclaration : ('data,stmt) expander =
    fun state stmt ->
-   match stmt with
-   | StmtVal(vlist) ->
-      let stmts = List.map (fun a -> StmtVal([a])) vlist in
-      state,stmts
-   | StmtMem(vlist) ->
-      let stmts = List.map (fun a -> StmtMem([a])) vlist in
-      state,stmts
-   | _ -> state,[stmt]
+      match stmt with
+      | StmtVal(vlist) ->
+         let stmts = List.map (fun a -> StmtVal([a])) vlist in
+         state,stmts
+      | StmtMem(vlist) ->
+         let stmts = List.map (fun a -> StmtMem([a])) vlist in
+         state,stmts
+      | _ -> state,[stmt]
 
 (* ======================= *)
 
 (** Adds a default name to all function calls. e.g. foo(x) ->  _inst_0:foo(x) *)
 let nameFunctionCalls : ('data,parse_exp) transformation =
    fun state exp ->
-   match exp with
-   | PCall(SimpleId(name,loc),args,floc) ->
-      let inst = "_inst"^(string_of_int state.fcall_index) in
-      let new_state = {state with fcall_index = state.fcall_index+1} in
-      new_state,PCall(NamedId(inst,name,loc,loc),args,floc)
-   | _ -> state,exp
+      match exp with
+      | PCall(SimpleId(name,loc),args,floc) ->
+         let inst = "_inst"^(string_of_int state.fcall_index) in
+         let new_state = {state with fcall_index = state.fcall_index+1} in
+         new_state,PCall(NamedId(inst,name,loc,loc),args,floc)
+      | _ -> state,exp
 
 (* ======================= *)
-   
+
 (** Transforms all operators into function calls *)
 let operatorsToFunctionCalls : ('data,parse_exp) transformation =
    fun state exp ->
@@ -143,9 +143,9 @@ let bindFunctionCalls : ('data,stmt) expander  =
       | StmtIf(cond,then_stmts,else_stmts) ->
          let (count,stmts),new_cond = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.fcall_index,[]) cond in
          {state with fcall_index = count},(List.rev (StmtIf(new_cond,then_stmts,else_stmts)::stmts))
- 
+
       | _ -> state,[stmt]
-         
+
 (* ======================= *)      
 
 let applyTransformations (results:parser_results) =

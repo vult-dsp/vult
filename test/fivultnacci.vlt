@@ -7,11 +7,12 @@ fun fib(){
    return n;
 }
 
-val f1 = x:fib();
-val f2 = x:fib();
-val f3 = x:fib();
-val f4 = x:fib();
-val f5 = x:fib();
-
-println(f5);
+println(x:fib());
+println(x:fib());
+println(x:fib());
+println(x:fib());
+println(x:fib());
+println(x:fib());
+println(x:fib());
+println(x:fib());
 
