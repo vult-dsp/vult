@@ -26,7 +26,7 @@ THE SOFTWARE.
 
 open Types
 open Lexing
-open Either
+open CCError
 
 (** Takes a location and returns a string in the format "Error in file: file: line l col:c1-c2" *)
 let errorLocationMessage (location:location) : string =
@@ -65,10 +65,10 @@ let reportErrorString (lines:string array) (error:error) =
       print_string (loc^msg^"\n"^indicator)
 
 (** Takes an Either value containing a list of errors and reports the errors *)
-let reportErrors (results:(error list,'a) either) (lines:string array) =
+let reportErrors (results:('a,error list) CCError.t) (lines:string array) =
    match results with
-   | Right(_) -> ()
-   | Left(errors) ->
+   | `Ok(_) -> ()
+   | `Error(errors) ->
       List.iter (reportErrorString lines) errors
 
 (** Joins two errors *)

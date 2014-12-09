@@ -120,12 +120,12 @@ type stmt =
 
 type parser_results =
    {
-      presult : (error list,stmt list) Either.either;
+      presult : (stmt list,error list) CCError.t;
       lines   : string array;
    }
 
 type interpreter_results =
    {
-      iresult : (error list,unit) Either.either;
+      iresult : (unit,error list) CCError.t;
       lines   : string array;
    }

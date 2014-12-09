@@ -28,7 +28,7 @@ open LexerVult
 open Errors
 open Types
 open Lexing
-open Either
+open CCError
 
 (** Parsing exception *)
 exception ParserError of error
@@ -439,14 +439,14 @@ let parseFile (filename:string) : parser_results =
       let _ = close_in chan in
       let all_lines = getFileLines buffer.lines in
       if buffer.has_errors then
-         { presult = Left(List.rev buffer.errors); lines = all_lines }
+         { presult = `Error(List.rev buffer.errors); lines = all_lines }
       else
-         { presult = Right(result); lines = all_lines }
+         { presult = `Ok(result); lines = all_lines }
    with
    | ParserError(error) ->
       let _ = close_in chan in
       let all_lines = getFileLines buffer.lines in
-      {presult = Left([error]); lines = all_lines }
+      {presult = `Error([error]); lines = all_lines }
    | _ ->
       let _ = close_in chan in
       failwith "Failed to parse the file"

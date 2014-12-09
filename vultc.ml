@@ -63,7 +63,7 @@ let main () =
    let _ = if args.dparse then
          parser_results
          |> List.map applyTransformations
-         |> List.iter (fun a -> match a.presult with Either.Right(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () )
+         |> List.iter (fun a -> match a.presult with `Ok(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () )
    in
    (* Runs the dynamic interpreter if -rundyn was passed as argument *)
    let _ = if args.rundyn then

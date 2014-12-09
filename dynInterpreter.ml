@@ -57,7 +57,7 @@ type global_env =
 
 let newLocalEnv () =
    {
-      val_binds = [ Hashtbl.create 10 ];
+      val_binds = [];
       mem_binds = Hashtbl.create 10;
       fun_bind  = Hashtbl.create 10;
       ret_val   = None;
@@ -284,7 +284,16 @@ and runStmt (glob:global_env) (loc:local_env) (stmt:stmt) : unit =
 
 and runStmtList (glob:global_env) (loc:local_env) (stmts:stmt list) : unit =
    let _ = pushLocal loc in
-   let _ = List.iter (runStmt glob loc) stmts in
+   let rec loop stmts =
+      if CCOpt.is_some loc.ret_val then ()
+      else
+         match stmts with
+         | [] -> ()
+         | h::t ->
+            let _ = runStmt glob loc h in
+            loop t
+   in
+   let _ = loop stmts in
    popLocal loc
 
 let opNumNum (op:float->float) (args:value list) =
@@ -358,6 +367,6 @@ let interpret (results:parser_results) =
    let glob = newGlobalEnv () in
    let _ = addBuiltinFunctions glob in
    let loc = newLocalEnv () in
-   let _ = Either.applyToRight (fun stmts -> runStmtList glob loc stmts;stmts) results.presult in
+   let _ = CCError.map (fun stmts -> runStmtList glob loc stmts;stmts) results.presult in
    (*let _ = print_string (localEnvStr loc) in*)
    apply_default (fun a -> a) loc.ret_val VUnit

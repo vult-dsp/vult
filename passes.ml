@@ -158,7 +158,7 @@ let applyTransformations (results:parser_results) =
       |+> TypesUtil.expandStmtList bindFunctionCalls
       |> snd
    in
-   let new_stmts = Either.applyToRight transform_function results.presult in
+   let new_stmts = CCError.map transform_function results.presult in
    { results with presult = new_stmts }
 
 
