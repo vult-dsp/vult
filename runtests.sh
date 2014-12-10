@@ -1,2 +1,2 @@
-ocamlbuild test.native -use-ocamlfind -pkg oUnit
+ocamlbuild test.native -use-ocamlfind -pkg oUnit -pkg containers
 ./test.native
