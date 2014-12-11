@@ -48,7 +48,7 @@ type local_env =
 
 type function_body =
    | Builtin  of (value list -> value)
-   | Declared of stmt
+   | Declared of parse_exp
 
 type global_env =
    {
@@ -89,7 +89,7 @@ let rec valueStr (value:value) : string =
 
 let localEnvStr (loc:local_env) : string =
    let dumpEnv env =
-      Hashtbl.fold (fun name value state -> state^name^" = "^(valueStr value)^"\n" ) env ""   
+      Hashtbl.fold (fun name value state -> state^name^" = "^(valueStr value)^"\n" ) env ""
    in
    let val_s = List.map dumpEnv loc.val_binds |> joinStrings "\n" in
    let mem_s = dumpEnv loc.mem_binds in
@@ -115,7 +115,7 @@ let getFunctionBody (glob:global_env) (name:string) : function_body =
 
 let default_env = newLocalEnv ()
 
-let declFunction (glob:global_env) (name:string) (body:stmt) : unit =
+let declFunction (glob:global_env) (name:string) (body:parse_exp) : unit =
    Hashtbl.replace glob.fun_decl name (Declared(body))
 
 let getFunctionEnv (loc:local_env) (name:string) : local_env =
@@ -132,12 +132,12 @@ let clearLocal (loc:local_env) =
 
 
 let pushLocal (loc:local_env) =
-   loc.val_binds <- (Hashtbl.create 10)::loc.val_binds 
+   loc.val_binds <- (Hashtbl.create 10)::loc.val_binds
 
 let popLocal (loc:local_env) =
    match loc.val_binds with
    | [] -> ()
-   | _::t -> loc.val_binds <- t 
+   | _::t -> loc.val_binds <- t
 
 let findValMemTable (loc:local_env) (name:string) =
    let rec loop locals =
@@ -156,7 +156,7 @@ let findValMemTable (loc:local_env) (name:string) =
 let getExpValueFromEnv (loc:local_env) (name:string) : value =
    let table = findValMemTable loc name in
    Hashtbl.find table name
-      
+
 let setValMem (loc:local_env) (name:string)  (value:value) : unit =
    let table = findValMemTable loc name in
    Hashtbl.replace table name value
@@ -232,7 +232,7 @@ and runExp (glob:global_env) (loc:local_env) (exp:parse_exp) : value =
    | PBinOp(_,_,_,_)
    | PUnOp(_,_,_) -> failwith "There should not be operators when calling the intepreter"
 
-and runStmt (glob:global_env) (loc:local_env) (stmt:stmt) : unit =
+and runStmt (glob:global_env) (loc:local_env) (stmt:parse_exp) : unit =
    match stmt with
    | StmtVal([ValNoBind(name,opt_init)]) ->
       let vname = getVarName name in
@@ -282,7 +282,7 @@ and runStmt (glob:global_env) (loc:local_env) (stmt:stmt) : unit =
    | StmtEmpty -> ()
 
 
-and runStmtList (glob:global_env) (loc:local_env) (stmts:stmt list) : unit =
+and runStmtList (glob:global_env) (loc:local_env) (stmts:parse_exp list) : unit =
    let _ = pushLocal loc in
    let rec loop stmts =
       if CCOpt.is_some loc.ret_val then ()

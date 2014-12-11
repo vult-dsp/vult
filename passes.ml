@@ -54,14 +54,14 @@ type state_t1 =
    }
 (* ======================= *)
 
-let returnBindsAndDecl ((decls:val_bind list),(binds: stmt list)) (bind:val_bind) =
+let returnBindsAndDecl ((decls:val_bind list),(binds: parse_exp list)) (bind:val_bind) =
    match bind with
    | ValBind(name,init,exp) ->
       ValNoBind(name,init)::decls, StmtBind(PId(name),exp)::binds
    | ValNoBind(name,init) -> ValNoBind(name,init)::decls,binds
 
 (** Transforms mem x=0; -> mem x; x=0; *)
-let separateBindAndDeclaration : ('data,stmt) expander =
+let separateBindAndDeclaration : ('data,parse_exp) expander =
    fun state stmt ->
       match stmt with
       | StmtMem(vlist) ->
@@ -77,7 +77,7 @@ let separateBindAndDeclaration : ('data,stmt) expander =
 (* ======================= *)
 
 (** Transforms val x,y; -> val x; val y; *)
-let makeSingleDeclaration : ('data,stmt) expander =
+let makeSingleDeclaration : ('data,parse_exp) expander =
    fun state stmt ->
       match stmt with
       | StmtVal(vlist) ->
@@ -115,20 +115,20 @@ let operatorsToFunctionCalls : ('data,parse_exp) transformation =
 (* ======================= *)
 
 (** Creates bindings for all function calls in an expression *)
-let bindFunctionCallsInExp : (int * stmt list,parse_exp) transformation =
+let bindFunctionCallsInExp : (int * parse_exp list,parse_exp) transformation =
    fun data exp ->
       match exp with
       | PCall(name,args,loc) ->
          let count,stmts = data in
          let tmp_var = SimpleId("_tmp"^(string_of_int count),default_loc) in
          let decl = StmtVal([ValNoBind(tmp_var,None)]) in
-         let bind_stmt = StmtBind(PId(tmp_var),exp) in 
+         let bind_stmt = StmtBind(PId(tmp_var),exp) in
          (count+1,[bind_stmt;decl]@stmts),PId(tmp_var)
       | _ -> data,exp
 
 (** Binds all function calls to a variable. e.g. foo(bar(x)) -> tmp1 = bar(x); tmp2 = foo(tmp1); tmp2; *)
 
-let bindFunctionCalls : ('data,stmt) expander  =
+let bindFunctionCalls : ('data,parse_exp) expander  =
    fun state stmt ->
       match stmt with
       | StmtBind(lhs,PCall(name,args,loc)) ->
@@ -146,13 +146,13 @@ let bindFunctionCalls : ('data,stmt) expander  =
 
       | _ -> state,[stmt]
 
-(* ======================= *)      
+(* ======================= *)
 
 let applyTransformations (results:parser_results) =
    let initial_state = { fcall_index = 0 ; dummy = 0 } in
    let transform_function stmts =
       (initial_state,stmts)
-      |+> TypesUtil.traverseTopExpStmtList (nameFunctionCalls|->operatorsToFunctionCalls)
+      |+> TypesUtil.traverseTopExpList (nameFunctionCalls|->operatorsToFunctionCalls)
       |+> TypesUtil.expandStmtList separateBindAndDeclaration
       |+> TypesUtil.expandStmtList makeSingleDeclaration
       |+> TypesUtil.expandStmtList bindFunctionCalls

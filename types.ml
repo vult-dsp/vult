@@ -105,22 +105,23 @@ type parse_exp =
    | PTuple of parse_exp list
    | PEmpty
 
-type val_bind =
-   | ValBind   of named_id * parse_exp option * parse_exp
-   | ValNoBind of named_id * parse_exp option
-
-type stmt =
    | StmtVal    of val_bind list
    | StmtMem    of val_bind list
    | StmtReturn of parse_exp
-   | StmtIf     of parse_exp * stmt list     * (stmt list) option
-   | StmtFun    of named_id  * val_bind list * stmt list
+   | StmtIf     of parse_exp * parse_exp list * (parse_exp list) option
+   | StmtFun    of named_id  * val_bind list * parse_exp list
    | StmtBind   of parse_exp * parse_exp
    | StmtEmpty
 
+and val_bind =
+   | ValBind   of named_id * parse_exp option * parse_exp
+   | ValNoBind of named_id * parse_exp option
+
+
+
 type parser_results =
    {
-      presult : (stmt list,error list) CCError.t;
+      presult : (parse_exp list,error list) CCError.t;
       lines   : string array;
    }
 

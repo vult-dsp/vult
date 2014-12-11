@@ -46,7 +46,7 @@ type vultFunction =
       functionname : string;
       returntype   : string option;
       inputs       : Types.val_bind list;
-      body         : Types.stmt list;
+      body         : parse_exp list;
    }
 
 module StringMap = CCMap.Make(String)
@@ -95,7 +95,7 @@ and literalTypeEqualList : literal list -> literal list -> bool =
 
 
 (* Processing of functions. *)
-let isFunctionStmt : Types.stmt -> bool =
+let isFunctionStmt : parse_exp -> bool =
    fun stmt ->
       match stmt with
       | StmtFun _ -> true
@@ -319,7 +319,7 @@ and checkMemValBind : environment -> Types.val_bind -> (errors,environment) eith
          | Some errs -> Left (SimpleError("In binding of variable " ^ name ^ ".")::errs)
          | None -> createMemory env name None
 
-and checkStmt : environment -> Types.stmt -> (errors,environment) either =
+and checkStmt : environment -> parse_exp -> (errors,environment) either =
    fun env stmt ->
       match stmt with
       | StmtVal valbinds -> eitherFold_left checkRegularValBind env valbinds
@@ -362,7 +362,7 @@ and checkStmt : environment -> Types.stmt -> (errors,environment) either =
       | StmtBind _ -> Left [SimpleError("Left hand side of bind is not a variable.")]
       | StmtEmpty -> Right env
 
-let checkStmts : environment -> Types.stmt list -> errors option =
+let checkStmts : environment -> parse_exp list -> errors option =
    fun env stmts ->
       match eitherFold_left checkStmt env stmts with
       | Right _ -> None
@@ -378,7 +378,7 @@ let checkFunction : environment -> vultFunction -> errors option =
             | None -> None
          end
 
-let insertIfFunction : functionBindings -> Types.stmt  -> (errors,functionBindings) either =
+let insertIfFunction : functionBindings -> parse_exp  -> (errors,functionBindings) either =
    fun funcs stmt ->
       match stmt with
       | StmtFun (namedid,inputs,body) ->
@@ -388,7 +388,7 @@ let insertIfFunction : functionBindings -> Types.stmt  -> (errors,functionBindin
          bindFunction funcs vultfunc
       | _ -> Right funcs
 
-let processFunctions : Types.stmt list -> (errors,functionBindings) either =
+let processFunctions : parse_exp list -> (errors,functionBindings) either =
    fun stmts ->
       (* First check in the function declarations. *)
       match eitherFold_left insertIfFunction noFunctions stmts with
@@ -402,7 +402,7 @@ let processFunctions : Types.stmt list -> (errors,functionBindings) either =
             | None -> Right fbinds
          end
 
-let checkStmtsMain : Types.stmt list -> errors option =
+let checkStmtsMain : parse_exp list -> errors option =
    fun stmts ->
       match processFunctions stmts with
       | Left errs -> Some errs

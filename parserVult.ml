@@ -295,27 +295,27 @@ let valBindList (buffer:parse_exp lexer_stream) : val_bind list =
    loop []
 
 (** <statement> := | 'val' <valBindList> ';' *)
-let stmtVal (buffer:parse_exp lexer_stream) : stmt =
+let stmtVal (buffer:parse_exp lexer_stream) : parse_exp =
    let _ = consume buffer VAL in
    let vals = valBindList buffer in
    let _ = consume buffer SEMI in
    StmtVal(vals)
 
 (** <statement> := | 'mem' <valBindList> ';' *)
-let stmtMem (buffer:parse_exp lexer_stream) : stmt =
+let stmtMem (buffer:parse_exp lexer_stream) : parse_exp =
    let _ = consume buffer MEM in
    let vals = valBindList buffer in
    let _ = consume buffer SEMI in
    StmtMem(vals)
 
 (** <statement> := | 'return' <expression> ';' *)
-let stmtReturn (buffer:parse_exp lexer_stream) : stmt =
+let stmtReturn (buffer:parse_exp lexer_stream) : parse_exp =
    let _ = consume buffer RET in
    let e = expression 0 buffer in
    let _ = consume buffer SEMI in
    StmtReturn(getContents e)
 
-let stmtBind (buffer:parse_exp lexer_stream) : stmt =
+let stmtBind (buffer:parse_exp lexer_stream) : parse_exp =
    let e1 = expression 0 buffer |> getContents in
    match peekKind buffer with
    | EQUAL ->
@@ -334,7 +334,7 @@ let stmtBind (buffer:parse_exp lexer_stream) : stmt =
 
 
 (** <statement> := 'if' '(' <expression> ')' <statementList> ['else' <statementList> ]*)
-let rec stmtIf (buffer:parse_exp lexer_stream) : stmt =
+let rec stmtIf (buffer:parse_exp lexer_stream) : parse_exp =
    let _    = consume buffer IF in
    let _    = consume buffer LPAREN in
    let cond = getContents (expression 0 buffer) in
@@ -348,7 +348,7 @@ let rec stmtIf (buffer:parse_exp lexer_stream) : stmt =
    | _ -> StmtIf(cond,tstm,None)
 
 (** <statement> := ... *)
-and stmt (buffer:parse_exp lexer_stream) : stmt =
+and stmt (buffer:parse_exp lexer_stream) : parse_exp =
    try
       match peekKind buffer with
       | VAL -> stmtVal     buffer
@@ -365,7 +365,7 @@ and stmt (buffer:parse_exp lexer_stream) : stmt =
       StmtEmpty
 
 (** <statementList> := LBRACK <statement> [<statement>] RBRACK *)
-and stmtList (buffer:parse_exp lexer_stream) : stmt list =
+and stmtList (buffer:parse_exp lexer_stream) : parse_exp list =
    let rec loop acc =
       match peekKind buffer with
       | RBRAC ->
@@ -384,7 +384,7 @@ and stmtList (buffer:parse_exp lexer_stream) : stmt list =
       [s]
 
 (** 'fun' <namedId> '(' <valBindList> ')' <stmtList> *)
-and stmtFunction (buffer:parse_exp lexer_stream) : stmt =
+and stmtFunction (buffer:parse_exp lexer_stream) : parse_exp =
    let _    = consume buffer FUN in
    let name = namedId buffer in
    let _    = consume buffer LPAREN in
@@ -404,13 +404,13 @@ let parseExp (s:string) : parse_exp =
    getContents result
 
 (** Parses an statement given a string *)
-let parseStmt (s:string) : stmt =
+let parseStmt (s:string) : parse_exp =
    let buffer = bufferFromString s in
    let result = stmt buffer in
    result
 
 (** Parses a list of statements given a string *)
-let parseStmtList (s:string) : stmt list =
+let parseStmtList (s:string) : parse_exp list =
    let buffer = bufferFromString s in
    let result = stmtList buffer in
    result
