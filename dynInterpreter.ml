@@ -166,8 +166,11 @@ let setReturn (loc:local_env) (value:value) : unit =
 
 let declVal (loc:local_env) (name:string) (value:value) : unit =
    match loc.val_binds with
+   | [] ->
+      let new_env = Hashtbl.create 100 in
+      let _ = Hashtbl.replace new_env name value in
+      loc.val_binds<-[new_env]
    | h::_ -> Hashtbl.replace h name value
-   | _ -> failwith "The local environment is not correctly initialized"
 
 let declMem (loc:local_env) (name:string) (init:value) : unit =
    if not (Hashtbl.mem loc.mem_binds name) then
