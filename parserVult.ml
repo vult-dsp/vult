@@ -371,6 +371,9 @@ and stmtList (buffer:parse_exp lexer_stream) : parse_exp list =
       | RBRAC ->
          let _ = skip buffer in
          List.rev acc
+      | EOF ->
+         let _ = expect buffer RBRAC in
+         []
       | _ ->
          let s = stmt buffer in
          loop (s::acc)
