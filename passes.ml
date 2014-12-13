@@ -26,6 +26,7 @@ THE SOFTWARE.
 (** Transformations and optimizations of the syntax tree *)
 
 open Types
+open CCList
 
 
 (** Generic type of transformations *)
@@ -50,7 +51,7 @@ let (|+>) : ('state * 'value) -> ('state, 'value) transformation -> ('state * 'v
 type state_t1 =
    {
       dummy : int;
-      fcall_index : int;
+      counter : int;
    }
 (* ======================= *)
 
@@ -95,8 +96,8 @@ let nameFunctionCalls : ('data,parse_exp) transformation =
    fun state exp ->
       match exp with
       | PCall(SimpleId(name,loc),args,floc) ->
-         let inst = "_inst"^(string_of_int state.fcall_index) in
-         let new_state = {state with fcall_index = state.fcall_index+1} in
+         let inst = "_inst"^(string_of_int state.counter) in
+         let new_state = {state with counter = state.counter+1} in
          new_state,PCall(NamedId(inst,name,loc,loc),args,floc)
       | _ -> state,exp
 
@@ -111,6 +112,28 @@ let operatorsToFunctionCalls : ('data,parse_exp) transformation =
       | PBinOp(op,e1,e2,loc) ->
          state,PCall(NamedId("_",op,loc,loc),[e1;e2],loc)
       | _ -> state,exp
+
+(* ======================= *)
+let simplifyTupleAssign : ('data,parse_exp) expander =
+   fun state exp ->
+      match exp with
+      | StmtBind(PTuple(lhs),PTuple(rhs)) ->
+         let lhs_id = TypesUtil.getIdsInExpList lhs in
+         let rhs_id = TypesUtil.getIdsInExpList rhs in
+         let common = Set.inter ~eq:TypesUtil.compareName lhs_id rhs_id in
+         begin
+            match common with
+            | [] -> state,List.map2 (fun a b -> StmtBind(a,b)) lhs rhs
+            | _  ->
+               let init = state.counter in
+               let tmp_vars = List.mapi (fun i _ -> PId(SimpleId("_tpl"^(string_of_int (i+init)),default_loc))) lhs in
+               let to_tmp   = List.map2 (fun a b -> StmtBind(a,b)) tmp_vars rhs in
+               let from_tmp = List.map2 (fun a b -> StmtBind(a,b)) lhs tmp_vars in
+               let new_state = { state with counter = init+(List.length lhs)} in
+               new_state,to_tmp@from_tmp
+         end
+      | _ -> state,[exp]
+
 
 (* ======================= *)
 
@@ -132,30 +155,31 @@ let bindFunctionCalls : ('data,parse_exp) expander  =
    fun state stmt ->
       match stmt with
       | StmtBind(lhs,PCall(name,args,loc)) ->
-         let (count,stmts),new_args = TypesUtil.traverseBottomExpList bindFunctionCallsInExp (state.fcall_index,[]) args in
-         {state with fcall_index = count},(List.rev (StmtBind(lhs,PCall(name,new_args,loc))::stmts))
+         let (count,stmts),new_args = TypesUtil.traverseBottomExpList bindFunctionCallsInExp (state.counter,[]) args in
+         {state with counter = count},(List.rev (StmtBind(lhs,PCall(name,new_args,loc))::stmts))
       | StmtBind(lhs,rhs) ->
-         let (count,stmts),new_rhs = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.fcall_index,[]) rhs in
-         {state with fcall_index = count},(List.rev (StmtBind(lhs,new_rhs)::stmts))
+         let (count,stmts),new_rhs = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.counter,[]) rhs in
+         {state with counter = count},(List.rev (StmtBind(lhs,new_rhs)::stmts))
       | StmtReturn(e) ->
-         let (count,stmts),new_e = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.fcall_index,[]) e in
-         {state with fcall_index = count},(List.rev (StmtReturn(new_e)::stmts))
+         let (count,stmts),new_e = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.counter,[]) e in
+         {state with counter = count},(List.rev (StmtReturn(new_e)::stmts))
       | StmtIf(cond,then_stmts,else_stmts) ->
-         let (count,stmts),new_cond = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.fcall_index,[]) cond in
-         {state with fcall_index = count},(List.rev (StmtIf(new_cond,then_stmts,else_stmts)::stmts))
+         let (count,stmts),new_cond = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.counter,[]) cond in
+         {state with counter = count},(List.rev (StmtIf(new_cond,then_stmts,else_stmts)::stmts))
 
       | _ -> state,[stmt]
 
 (* ======================= *)
 
 let applyTransformations (results:parser_results) =
-   let initial_state = { fcall_index = 0 ; dummy = 0 } in
+   let initial_state = { counter = 0 ; dummy = 0 } in
    let transform_function stmts =
       (initial_state,stmts)
       |+> TypesUtil.traverseTopExpList (nameFunctionCalls|->operatorsToFunctionCalls)
       |+> TypesUtil.expandStmtList separateBindAndDeclaration
       |+> TypesUtil.expandStmtList makeSingleDeclaration
       |+> TypesUtil.expandStmtList bindFunctionCalls
+      |+> TypesUtil.expandStmtList simplifyTupleAssign
       |> snd
    in
    let new_stmts = CCError.map transform_function results.presult in

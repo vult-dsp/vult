@@ -49,12 +49,14 @@ open Either
       getFunctionTypeName: Don't really know what this does.
 *)
 
-(** Type of all traversing functions functions *)
+(** Type of all traversing functions *)
 type ('data,'traversing_type) traverser = 'data -> 'traversing_type -> 'data * 'traversing_type
 
-(** Type of all expanding functions functions *)
+(** Type of all expanding functions *)
 type ('data,'expanding_type) expander = 'data -> 'expanding_type -> 'data * 'expanding_type list
 
+(** Type of folding functions *)
+type ('data,'traversing_type) folder = 'data -> 'traversing_type -> 'data
 
 type ('data, 'error, 'result) expfold =
    {
@@ -250,7 +252,7 @@ let rec traverseTopExp (f: ('data, parse_exp) traverser) (state0:'data) (exp:par
       state1,StmtMem(nbinds)
    | StmtReturn(e) ->
       let state1,ne = traverseTopExp f state e in
-      f state1 (StmtReturn(ne))
+      state1,StmtReturn(ne)
    | StmtBind(e1,e2) ->
       let state1,ne1 = traverseTopExp f state e1 in
       let state2,ne2 = traverseTopExp f state1 e2 in
@@ -293,6 +295,86 @@ and traverseTopOptExp (f: ('data, parse_exp) traverser) (state:'data) (exp_opt:p
       let new_state,new_exp = f state exp in
       new_state,Some(new_exp)
    | None -> state,None
+
+(** Folds expressions top-down *)
+let rec foldTopExp (f: ('data, parse_exp) folder) (state0:'data) (exp:parse_exp) : 'data =
+   let state = f state0 exp in
+   match exp with
+   | PEmpty
+   | PUnit
+   | PInt(_,_)
+   | PReal(_,_)
+   | PId(_)   -> state
+   | PUnOp(name,e,loc) ->
+      foldTopExp f state e
+   | PBinOp(name,e1,e2,loc) ->
+      let state1 = foldTopExp f state e1 in
+      let state2 = foldTopExp f state1 e2 in
+      state2
+   | PGroup(e) ->
+      let state1 = foldTopExp f state e in
+      state1
+   | PTuple(expl) ->
+      let state1 = foldTopExpList f state expl in
+      state1
+   | PCall(name,expl,loc) ->
+      let state1 = foldTopExpList f state expl in
+      state1
+   | PIf(e1,e2,e3) ->
+      let state1 = foldTopExp f state e1 in
+      let state2 = foldTopExp f state1 e2 in
+      let state3 = foldTopExp f state2 e3 in
+      state3
+   | StmtVal(binds) ->
+      let state1 = foldTopValBindExpList f state binds in
+      state1
+   | StmtMem(binds) ->
+      let state1 = foldTopValBindExpList f state binds in
+      state1
+   | StmtReturn(e) ->
+      let state1 = foldTopExp f state e in
+      state1
+   | StmtBind(e1,e2) ->
+      let state1 = foldTopExp f state e1 in
+      let state2 = foldTopExp f state1 e2 in
+      state2
+   | StmtEmpty -> state
+   | StmtFun(name,args,stmts) ->
+      let state1 = foldTopExpList f state stmts in
+      state1
+   | StmtIf(cond,then_stmts,None) ->
+      let state1 = foldTopExp f state cond in
+      let state2 = foldTopExpList f state1 then_stmts in
+      state1
+   | StmtIf(cond,then_stmts,Some(else_stmts)) ->
+      let state1 = foldTopExp f state cond in
+      let state2 = foldTopExpList f state1 then_stmts in
+      let state3 = foldTopExpList f state2 else_stmts in
+      state3
+
+and foldTopExpList f state expl =
+   List.fold_left
+      (fun state elem ->
+          let state1 = foldTopExp f state elem in
+          state1)
+      state expl
+
+and foldTopValBindExp (f: ('data, parse_exp) folder) (state:'data) (val_bind:val_bind) =
+   match val_bind with
+   | ValBind(name,init_opt,value) ->
+      let state1 = CCOpt.map (foldTopExp f state) init_opt in
+      let state2 = foldTopExp f state value in
+      state2
+   | ValNoBind(name,init_opt) ->
+      let state1 = CCOpt.map (foldTopExp f state) init_opt |> CCOpt.get state in
+      state1
+
+and foldTopValBindExpList f state expl =
+   List.fold_left
+      (fun state elem ->
+          let state1 = foldTopValBindExp f state elem in
+          state1)
+      state expl
 
 let rec expandStmt (f: ('data, parse_exp) expander) (state0:'data) (stmt:parse_exp) : 'data * parse_exp list =
    let state,nstmt = f state0 stmt in
@@ -371,3 +453,27 @@ let getFunctionTypeAndName (names_id:named_id) : string * string =
    match names_id with
    | NamedId(name,ftype,_,_) -> name,ftype
    | SimpleId(ftype,_) -> "_",ftype
+
+(** Used by getIdsInExp and getIdsInExpList to get the ids in expressions *)
+let getId : ('data,parse_exp) folder =
+   fun state exp ->
+      match exp with
+      | PId(name) -> name::state
+      | _ -> state
+
+(** Return the ids in an expression *)
+let getIdsInExp (exp:parse_exp) : named_id list =
+   foldTopExp getId [] exp
+
+(** Return the ids in an expression list *)
+let getIdsInExpList (expl:parse_exp list) : named_id list =
+   foldTopExpList getId [] expl
+
+(** Compares named_ids ignoring the locations *)
+let compareName (a:named_id) (b:named_id) : bool =
+   match a,b with
+   | SimpleId(name_a,_),SimpleId(name_b,_)
+   | NamedId(name_a,_,_,_),SimpleId(name_b,_)
+   | SimpleId(name_a,_),NamedId(name_b,_,_,_)
+   | NamedId(name_a,_,_,_),NamedId(name_b,_,_,_) when name_a = name_b -> true
+   | _ -> false
