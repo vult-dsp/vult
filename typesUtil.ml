@@ -345,7 +345,7 @@ let rec foldTopExp (f: ('data, parse_exp) folder) (state0:'data) (exp:parse_exp)
    | StmtIf(cond,then_stmts,None) ->
       let state1 = foldTopExp f state cond in
       let state2 = foldTopExpList f state1 then_stmts in
-      state1
+      state2
    | StmtIf(cond,then_stmts,Some(else_stmts)) ->
       let state1 = foldTopExp f state cond in
       let state2 = foldTopExpList f state1 then_stmts in
@@ -428,6 +428,11 @@ let getMinMaxPositions (pos_list:Lexing.position list) =
    | []  -> failwith "getMinMaxPositions: No positions passed"
    | [h] -> h,h
    | h::_   -> List.fold_left (fun (min,max) a -> getMinPosition a min, getMaxPosition a max) (h,h) pos_list
+
+(** Returns the location that follows the given location *)
+let getFollowingLocation (loc:location) : location =
+   let end_pos = { loc.end_pos with Lexing.pos_cnum = loc.end_pos.Lexing.pos_cnum } in
+   { start_pos = end_pos; end_pos = end_pos }
 
 (** Returns a new location with the start and end positions updateds *)
 let mergeLocations (loc1:location) (loc2:location) : location =

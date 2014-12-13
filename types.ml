@@ -84,6 +84,7 @@ type 'a lexer_stream =
       mutable has_errors : bool;
       mutable errors     : error list;
       mutable peeked     : 'a token;
+      mutable prev       : 'a token;
       lines              : lexed_lines;
    }
 

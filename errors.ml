@@ -43,10 +43,11 @@ let errorLocationMessage (location:location) : string =
 let errorLocationIndicator (line:string) (location:location) : string =
    let col_start = location.start_pos.pos_cnum - location.start_pos.pos_bol in
    let col_end = location.end_pos.pos_cnum - location.start_pos.pos_bol in
+   let pointer = if (col_end - col_start) <> 0 then (String.make (col_end - col_start) '^') else "^" in
    Printf.sprintf "%s\n%s%s\n"
       line
       (String.make col_start ' ')
-      (String.make (col_end - col_start) '^')
+      pointer
 
 (** Returns the lines corresponding to the given location *)
 let getErrorLines (location:location) (lines:string array) =

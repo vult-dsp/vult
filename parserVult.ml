@@ -29,22 +29,24 @@ open Errors
 open Types
 open Lexing
 open CCError
+open TypesUtil
 
 (** Parsing exception *)
 exception ParserError of error
 
 let getErrorForToken (buffer:'a lexer_stream) (message:string) : error =
-   PointedError(buffer.peeked.loc,message)
+   PointedError(getFollowingLocation buffer.prev.loc,message)
 
 let getNotExpectedTokenError (token:'a token) : error =
    let message = Printf.sprintf "Not expecting to find %s" (tokenToString token) in
-   PointedError(token.loc,message)
+   PointedError(getFollowingLocation token.loc,message)
 
 let appendError (buffer:'a lexer_stream) (error:error) =
    buffer.errors <- error::buffer.errors
 
 (** Skips one token *)
 let skip (buffer:'a lexer_stream) : unit =
+   let _ = buffer.prev <- buffer.peeked in
    buffer.peeked <- next_token buffer.lines buffer.lexbuf
 
 (** Returns the current token in the buffer *)
@@ -70,7 +72,9 @@ let rec moveToNextStatement (buffer:'a lexer_stream) : unit =
 (** Checks that the next token matches the given kind and skip it *)
 let consume (buffer:'a lexer_stream) (kind:token_enum) : unit =
    match buffer.peeked with
-   | t when t.kind=kind -> buffer.peeked <- next_token buffer.lines buffer.lexbuf
+   | t when t.kind=kind ->
+      let _ = buffer.prev <- buffer.peeked in
+      buffer.peeked <- next_token buffer.lines buffer.lexbuf
    | got_token ->
       let expected = kindToString kind in
       let got = tokenToString got_token in
@@ -98,14 +102,16 @@ let emptyLexedLines () =
 let bufferFromString (str:string) : 'a lexer_stream =
    let lexbuf = Lexing.from_string str in
    let lines = emptyLexedLines () in
-   { lexbuf = lexbuf; peeked = next_token lines lexbuf; has_errors = false; errors= []; lines = lines }
+   let first =  next_token lines lexbuf in
+   { lexbuf = lexbuf; peeked = first; prev = first ; has_errors = false; errors= []; lines = lines }
 
 (** Creates a token stream given a channel *)
 let bufferFromChannel (chan:in_channel) (file:string) : 'a lexer_stream =
    let lexbuf = Lexing.from_channel chan in
    let lines = emptyLexedLines () in
    lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = file };
-   { lexbuf = lexbuf; peeked = next_token lines lexbuf ; has_errors = false; errors = []; lines = lines }
+   let first =  next_token lines lexbuf in
+   { lexbuf = lexbuf; peeked = first; prev = first ; has_errors = false; errors = []; lines = lines }
 
 (** Returns the left binding powers of the token *)
 let getLbp (token:'a token) : int =
