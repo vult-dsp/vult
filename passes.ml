@@ -180,7 +180,7 @@ let applyTransformations (results:parser_results) =
       |+> TypesUtil.traverseTopExpList (nameFunctionCalls|->operatorsToFunctionCalls)
       |+> TypesUtil.expandStmtList separateBindAndDeclaration
       |+> TypesUtil.expandStmtList makeSingleDeclaration
-      |+> TypesUtil.expandStmtList bindFunctionCalls
+      (*|+> TypesUtil.expandStmtList bindFunctionCalls*)
       |+> TypesUtil.expandStmtList simplifyTupleAssign
       |> snd
    in
