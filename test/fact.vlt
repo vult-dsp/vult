@@ -1,0 +1,7 @@
+
+fun fact(n){
+	return if n==0 then 1 else n*fact(n-1);
+}
+
+val r = fact(10);
+return r;
