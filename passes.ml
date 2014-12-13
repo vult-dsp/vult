@@ -126,11 +126,13 @@ let simplifyTupleAssign : ('data,parse_exp) expander =
             | [] -> state,List.map2 (fun a b -> StmtBind(a,b)) lhs rhs
             | _  ->
                let init = state.counter in
-               let tmp_vars = List.mapi (fun i _ -> PId(SimpleId("_tpl"^(string_of_int (i+init)),default_loc))) lhs in
-               let to_tmp   = List.map2 (fun a b -> StmtBind(a,b)) tmp_vars rhs in
-               let from_tmp = List.map2 (fun a b -> StmtBind(a,b)) lhs tmp_vars in
+               let tmp_vars  = List.mapi (fun i _ -> SimpleId("_tpl"^(string_of_int (i+init)),default_loc)) lhs in
+               let tmp_e     = List.map (fun a -> PId(a)) tmp_vars in
+               let to_tmp    = List.map2 (fun a b -> StmtBind(a,b)) tmp_e rhs in
+               let from_tmp  = List.map2 (fun a b -> StmtBind(a,b)) lhs tmp_e in
+               let decl = List.map (fun a -> StmtVal([ValNoBind(a,None)])) tmp_vars in
                let new_state = { state with counter = init+(List.length lhs)} in
-               new_state,to_tmp@from_tmp
+               new_state,decl@to_tmp@from_tmp
          end
       | _ -> state,[exp]
 
