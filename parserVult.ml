@@ -425,10 +425,8 @@ let parseDumpStmtList (s:string) : string =
    let e = parseStmtList s in
    PrintTypes.stmtListStr e
 
-(** Parses a file containing a list of statements and returns the results *)
-let parseFile (filename:string) : parser_results =
-   let chan = open_in filename in
-   let buffer = bufferFromChannel chan filename in
+(** Parses a buffer containing a list of statements and returns the results *)
+let parseBuffer (buffer) : parser_results =
    try
       let rec loop acc =
          match peekKind buffer with
@@ -436,7 +434,6 @@ let parseFile (filename:string) : parser_results =
          | _ -> loop ((stmtList buffer)::acc)
       in
       let result = loop [] |> List.flatten in
-      let _ = close_in chan in
       let all_lines = getFileLines buffer.lines in
       if buffer.has_errors then
          { presult = `Error(List.rev buffer.errors); lines = all_lines }
@@ -444,11 +441,23 @@ let parseFile (filename:string) : parser_results =
          { presult = `Ok(result); lines = all_lines }
    with
    | ParserError(error) ->
-      let _ = close_in chan in
       let all_lines = getFileLines buffer.lines in
       {presult = `Error([error]); lines = all_lines }
    | _ ->
-      let _ = close_in chan in
-      failwith "Failed to parse the file"
+      let all_lines = getFileLines buffer.lines in
+      {presult = `Error([SimpleError("Failed to parse the file")]); lines = all_lines }
 
 
+(** Parses a file containing a list of statements and returns the results *)
+let parseFile (filename:string) : parser_results =
+   let chan = open_in filename in
+   let buffer = bufferFromChannel chan filename in
+   let result = parseBuffer buffer in
+   let _ = close_in chan in
+   result
+
+(** Parses a string containing a list of statements and returns the results *)
+let parseString (text:string) : parser_results =
+   let buffer = bufferFromString text in
+   let result = parseBuffer buffer in
+   result

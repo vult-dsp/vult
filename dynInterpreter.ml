@@ -366,10 +366,11 @@ let addBuiltinFunctions (glob:global_env) : unit =
    ]
    |> List.iter (fun (a,b) -> Hashtbl.add glob.fun_decl a b)
 
-let interpret (results:parser_results) =
+let interpret (results:parser_results) :string =
    let glob = newGlobalEnv () in
    let _ = addBuiltinFunctions glob in
    let loc = newLocalEnv () in
    let _ = CCError.map (fun stmts -> runStmtList glob loc stmts;stmts) results.presult in
    (*let _ = print_string (localEnvStr loc) in*)
    apply_default (fun a -> a) loc.ret_val VUnit
+   |> valueStr

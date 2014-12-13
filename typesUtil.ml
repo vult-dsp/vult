@@ -362,8 +362,8 @@ and foldTopExpList f state expl =
 and foldTopValBindExp (f: ('data, parse_exp) folder) (state:'data) (val_bind:val_bind) =
    match val_bind with
    | ValBind(name,init_opt,value) ->
-      let state1 = CCOpt.map (foldTopExp f state) init_opt in
-      let state2 = foldTopExp f state value in
+      let state1 = CCOpt.map (foldTopExp f state) init_opt |> CCOpt.get state in
+      let state2 = foldTopExp f state1 value in
       state2
    | ValNoBind(name,init_opt) ->
       let state1 = CCOpt.map (foldTopExp f state) init_opt |> CCOpt.get state in
