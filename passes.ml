@@ -173,11 +173,21 @@ let bindFunctionCalls : ('data,parse_exp) expander  =
 
 (* ======================= *)
 
+(** Wraps the values of an if expression into return statements *)
+let wrapIfExpValues : ('data,parse_exp) transformation =
+   fun state exp ->
+      match exp with
+      | PIf(cond,then_exp,else_exp) ->
+         state,PIf(cond,StmtReturn(then_exp),StmtReturn(else_exp))
+      | _ -> state,exp
+
+(* ======================= *)
+
 let applyTransformations (results:parser_results) =
    let initial_state = { counter = 0 ; dummy = 0 } in
    let transform_function stmts =
       (initial_state,stmts)
-      |+> TypesUtil.traverseTopExpList (nameFunctionCalls|->operatorsToFunctionCalls)
+      |+> TypesUtil.traverseTopExpList (nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)
       |+> TypesUtil.expandStmtList separateBindAndDeclaration
       |+> TypesUtil.expandStmtList makeSingleDeclaration
       (*|+> TypesUtil.expandStmtList bindFunctionCalls*)

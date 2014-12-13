@@ -211,8 +211,7 @@ let rec evalFun (glob:global_env) (loc:local_env) (body:function_body) (args:val
    | Declared(StmtFun(_,arg_names,stmts)) ->
       let inputs = getInputsNames arg_names in
       let loc = List.fold_left2 (fun s n v -> declVal s n v) loc inputs args in
-      let _ = runStmtList glob loc stmts in
-      apply_default (fun a -> a,loc) loc.ret_val (VUnit,loc)
+      runStmtList glob loc stmts
    | Builtin(f) ->
       f args,loc
    | _ -> failwith "Invalid function body"
@@ -247,54 +246,46 @@ and runExp (glob:global_env) (loc:local_env) (exp:parse_exp) : value * local_env
    | PEmpty -> failwith "There should not be Empty expressions when calling the intepreter"
    | PBinOp(_,_,_,_)
    | PUnOp(_,_,_) -> failwith "There should not be operators when calling the intepreter"
-   | _ -> failwith "Uncovered expression"
-
-and runExpList (glob:global_env) (loc:local_env) (expl:parse_exp list) : value list * local_env =
-   let loc,acc = List.fold_left (fun (s,acc) a -> let v,ns = runExp glob s a in ns,v::acc) (loc,[]) expl in
-   List.rev acc,loc
-
-and runStmt (glob:global_env) (loc:local_env) (stmt:parse_exp) : local_env =
-   match stmt with
-   | StmtVal([ValNoBind(name,opt_init)]) ->
+      | StmtVal([ValNoBind(name,opt_init)]) ->
       let vname = getVarName name in
       let init,loc = apply_default (runExp glob loc) opt_init (VNum(0.0),loc) in
-      declVal loc vname init
+      VUnit,declVal loc vname init
    | StmtMem([ValNoBind(name,opt_init)]) ->
       let vname = getVarName name in
       let init,loc = apply_default (runExp glob loc) opt_init (VNum(0.0),loc) in
-      declMem loc vname init
+      VUnit,declMem loc vname init
    | StmtVal(_)
    | StmtMem(_) -> failwith "Declarations with more that one element should have been removed by the transformations"
    | StmtBind(PId(name),rhs) ->
       let rhs_val,loc = runExp glob loc rhs in
       let vname = getVarName name in
-      setValMem loc vname rhs_val
+      VUnit,setValMem loc vname rhs_val
    | StmtBind(PTuple(elems),rhs) ->
       let vnames = List.map getExpName elems in
       let rhs_val,loc = runExp glob loc rhs in
       begin
          match rhs_val with
          | VTuple(elems_val) ->
-            List.fold_left2 (fun s n v -> setValMem s n v) loc vnames elems_val
+            VUnit,List.fold_left2 (fun s n v -> setValMem s n v) loc vnames elems_val
          | _ -> failwith "Not returning a tuple"
       end
    | StmtBind(PEmpty,rhs) ->
       let _,loc = runExp glob loc rhs in
-      loc
+      VUnit,loc
    | StmtBind(_,rhs) -> failwith "Invalid binding"
    | StmtReturn(e) ->
       let e_val,loc = runExp glob loc e in
-      setReturn loc e_val
+      e_val,setReturn loc e_val
    | StmtFun(name_id,_,_) ->
       let _,ftype = TypesUtil.getFunctionTypeAndName name_id in
-      let _ = declFunction glob ftype stmt in
-      loc
+      let _ = declFunction glob ftype exp in
+      VUnit,loc
    | StmtIf(cond,then_stmts,None) ->
       let cond_val,loc = runExp glob loc cond in
       if isTrue cond_val then
          (* This should create a sub-environment *)
          runStmtList glob loc then_stmts
-      else loc
+      else VUnit,loc
    | StmtIf(cond,then_stmts,Some(else_stmts)) ->
       let cond_val,loc = runExp glob loc cond in
       (* This should create a sub-environment *)
@@ -302,23 +293,27 @@ and runStmt (glob:global_env) (loc:local_env) (stmt:parse_exp) : local_env =
          runStmtList glob loc then_stmts
       else
          runStmtList glob loc else_stmts
-   | StmtEmpty -> loc
-   | _ -> failwith "Uncovered expression"
+   | StmtEmpty -> VUnit,loc
 
-
-and runStmtList (glob:global_env) (loc:local_env) (stmts:parse_exp list) : local_env =
+and runExpList (glob:global_env) (loc:local_env) (expl:parse_exp list) : value list * local_env =
+   let loc,acc = List.fold_left (fun (s,acc) a -> let v,ns = runExp glob s a in ns,v::acc) (loc,[]) expl in
+   List.rev acc,loc
+and runStmtList (glob:global_env) (loc:local_env) (expl:parse_exp list) : value * local_env =
    let loc = pushLocal loc in
    let rec loop loc stmts =
-      if CCOpt.is_some loc.ret_val then loc
-      else
-         match stmts with
-         | [] -> loc
-         | h::t ->
-            let loc = runStmt glob loc h in
-            loop loc t
+      match stmts with
+      | [] -> VUnit,loc
+      | h::t ->
+         let value,loc = runExp glob loc h in
+         begin
+            match value with
+            | VUnit -> loop loc t
+            | _ -> value,loc
+         end
    in
-   let loc = loop loc stmts in
-   popLocal loc
+   let ret,loc = loop loc expl in
+   let loc = popLocal loc in
+   ret,loc
 
 let opNumNum (op:float->float) (args:value list) =
    match args with
@@ -391,10 +386,9 @@ let interpret (results:parser_results) :string =
    let glob = newGlobalEnv () in
    let _ = addBuiltinFunctions glob in
    let loc = newLocalEnv () in
-   let result = CCError.map (fun stmts -> let loc = runStmtList glob loc stmts in stmts,loc) results.presult in
+   let result = CCError.map (fun stmts -> let ret,loc = runStmtList glob loc stmts in ret,loc) results.presult in
    match result with
-   | `Ok(stmts,loc) ->
+   | `Ok(ret,loc) ->
       (*let _ = print_string (localEnvStr loc) in*)
-      apply_default (fun a -> a) loc.ret_val VUnit
-      |> valueStr
+      valueStr ret
    | _ -> "Error when running the program"

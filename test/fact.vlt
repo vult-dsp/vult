@@ -4,4 +4,5 @@ fun fact(n){
 }
 
 val r = fact(10);
+println(r);
 return r;
