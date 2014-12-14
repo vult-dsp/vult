@@ -28,102 +28,110 @@ open Types
 
 let test_string reference current = assert_equal ~printer:(fun a->a) reference current ;;
 
+let run_program s =
+   let result = Driver.parseStringRun s in
+   match result.iresult with
+   | `Ok(s) -> s
+   | `Error(errors) ->
+      let error_strings = Errors.reportErrors result.iresult result.lines in
+      List.hd error_strings
+
 (** Expression parsing tests *)
-let parseExpTest1 test_ctxt =
+let parseExpTest1 context =
    test_string      "a"
       (parseDumpExp "a")
 ;;
-let parseExpTest2 test_ctxt =
+let parseExpTest2 context =
    test_string      "a:b"
       (parseDumpExp "a:b")
 ;;
-let parseExpTest3 test_ctxt =
+let parseExpTest3 context =
    test_string      "a(1,2)"
       (parseDumpExp "a(1,2)")
 ;;
-let parseExpTest4 test_ctxt =
+let parseExpTest4 context =
    test_string      "a:b()"
       (parseDumpExp "a:b()")
 ;;
-let parseExpTest5 test_ctxt =
+let parseExpTest5 context =
    test_string      "a:b(1,2)"
       (parseDumpExp "a:b(1,2)")
 ;;
-let parseExpTest6 test_ctxt =
+let parseExpTest6 context =
    test_string      "(((-a(1,2))+(b*c))+(d/2))"
       (parseDumpExp "-a(1,2)+b*c+d/2")
 ;;
-let parseExpTest7 test_ctxt =
+let parseExpTest7 context =
    test_string      "((((a+b)>0)&&(a/b))||(a==b))"
       (parseDumpExp "a+b>0&&a/b||a==b")
 ;;
-let parseExpTest8 test_ctxt =
+let parseExpTest8 context =
    test_string      "()"
       (parseDumpExp "()")
 ;;
-let parseExpTest9 test_ctxt =
+let parseExpTest9 context =
    test_string      "(a)"
       (parseDumpExp "(a)")
 ;;
-let parseExpTest10 test_ctxt =
+let parseExpTest10 context =
    test_string      "a,b"
       (parseDumpExp "a,b")
 ;;
 
 (** Statement parsing tests *)
-let parseStmtTest1 test_ctxt =
+let parseStmtTest1 context =
    test_string           "val a;"
       (parseDumpStmtList "val a;")
 ;;
-let parseStmtTest2 test_ctxt =
+let parseStmtTest2 context =
    test_string           "mem a:num,b,c;"
       (parseDumpStmtList "mem a:num,b,c;")
 ;;
-let parseStmtTest3 test_ctxt =
+let parseStmtTest3 context =
    test_string           "val a:num=0;"
       (parseDumpStmtList "val a:num=0;")
 ;;
-let parseStmtTest4 test_ctxt =
+let parseStmtTest4 context =
    test_string           "mem a=0,b:num=0;"
       (parseDumpStmtList "mem a=0,b:num=0;")
 ;;
-let parseStmtTest5 test_ctxt =
+let parseStmtTest5 context =
    test_string           "return (-a);"
       (parseDumpStmtList "return -a;")
 ;;
-let parseStmtTest6 test_ctxt =
+let parseStmtTest6 context =
    test_string           "return a,0;"
       (parseDumpStmtList "return a,0;")
 ;;
-let parseStmtTest7 test_ctxt =
+let parseStmtTest7 context =
    test_string           "{\n   val a=0;\n   return a;\n}"
       (parseDumpStmtList "{ val a =0; return a; }")
 ;;
-let parseStmtTest8 test_ctxt =
+let parseStmtTest8 context =
    test_string           "return a;"
       (parseDumpStmtList "{ return a; }")
 ;;
-let parseStmtTest9 test_ctxt =
+let parseStmtTest9 context =
    test_string           "if(a) {\n   val a=0;\n   return a;\n}"
       (parseDumpStmtList "if(a){ val a=0;return a;}")
 ;;
-let parseStmtTest10 test_ctxt =
+let parseStmtTest10 context =
    test_string           "if(a) return 0;"
       (parseDumpStmtList "if(a) return 0;")
 ;;
-let parseStmtTest11 test_ctxt =
+let parseStmtTest11 context =
    test_string           "if(a) return false;\nelse return true;"
       (parseDumpStmtList "if(a) return false; else return true;")
 ;;
-let parseStmtTest12 test_ctxt =
+let parseStmtTest12 context =
    test_string           "fun add(a,b) return (a+b);"
       (parseDumpStmtList "fun add(a,b) return a+b;")
 ;;
-let parseStmtTest13 test_ctxt =
+let parseStmtTest13 context =
    test_string           "fun add:int(a:int,b:int) return (a+b);"
       (parseDumpStmtList "fun add:int(a:int,b:int) return a+b;")
 ;;
-let parseStmtTest14 test_ctxt =
+let parseStmtTest14 context =
    test_string           "mem a(0),b(0)=a;"
       (parseDumpStmtList "mem a(0),b(0)=a;")
 ;;
@@ -160,6 +168,46 @@ let parser_test =
    ]
 ;;
 
+let runFactTest context =
+   test_string "120."
+   (run_program "fun fact(n){ return if n==0 then 1 else n*fact(n-1); } return fact(5);")
+;;
+
+let runSwapTest context =
+   test_string "(2.,1.)"
+   (run_program "val x=1; val y=2; x,y=y,x; return x,y;")
+;;
+
+let runMemTest context =
+   test_string "(1.,2.,1.,2.)"
+   (run_program "fun inc() { mem x; x = x+1; return x; }
+                 fun reset() { mem x; x = 0; }
+                 val a = i:inc();
+                 val b = i:inc();
+                 i:reset();
+                 val c = i:inc();
+                 val d = i:inc();
+                 return a,b,c,d;")
+
+(* Name the test cases and group them together *)
+let interpreter_test =
+   "interpreter">:::
+   [
+      "runFactTest" >:: runFactTest;
+      "runSwapTest" >:: runSwapTest;
+      "runMemTest"  >:: runMemTest;
+   ]
+;;
+
+let suite =
+   "suite">:::
+   [
+      parser_test;
+      interpreter_test;
+   ]
+
+
 let () =
-   run_test_tt_main parser_test
+   let _ = run_test_tt_main suite in
+   ()
 ;;

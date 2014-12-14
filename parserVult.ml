@@ -29,22 +29,24 @@ open Errors
 open Types
 open Lexing
 open CCError
+open TypesUtil
 
 (** Parsing exception *)
 exception ParserError of error
 
 let getErrorForToken (buffer:'a lexer_stream) (message:string) : error =
-   PointedError(buffer.peeked.loc,message)
+   PointedError(getFollowingLocation buffer.prev.loc,message)
 
 let getNotExpectedTokenError (token:'a token) : error =
    let message = Printf.sprintf "Not expecting to find %s" (tokenToString token) in
-   PointedError(token.loc,message)
+   PointedError(getFollowingLocation token.loc,message)
 
 let appendError (buffer:'a lexer_stream) (error:error) =
    buffer.errors <- error::buffer.errors
 
 (** Skips one token *)
 let skip (buffer:'a lexer_stream) : unit =
+   let _ = buffer.prev <- buffer.peeked in
    buffer.peeked <- next_token buffer.lines buffer.lexbuf
 
 (** Returns the current token in the buffer *)
@@ -70,7 +72,9 @@ let rec moveToNextStatement (buffer:'a lexer_stream) : unit =
 (** Checks that the next token matches the given kind and skip it *)
 let consume (buffer:'a lexer_stream) (kind:token_enum) : unit =
    match buffer.peeked with
-   | t when t.kind=kind -> buffer.peeked <- next_token buffer.lines buffer.lexbuf
+   | t when t.kind=kind ->
+      let _ = buffer.prev <- buffer.peeked in
+      buffer.peeked <- next_token buffer.lines buffer.lexbuf
    | got_token ->
       let expected = kindToString kind in
       let got = tokenToString got_token in
@@ -98,14 +102,16 @@ let emptyLexedLines () =
 let bufferFromString (str:string) : 'a lexer_stream =
    let lexbuf = Lexing.from_string str in
    let lines = emptyLexedLines () in
-   { lexbuf = lexbuf; peeked = next_token lines lexbuf; has_errors = false; errors= []; lines = lines }
+   let first =  next_token lines lexbuf in
+   { lexbuf = lexbuf; peeked = first; prev = first ; has_errors = false; errors= []; lines = lines }
 
 (** Creates a token stream given a channel *)
 let bufferFromChannel (chan:in_channel) (file:string) : 'a lexer_stream =
    let lexbuf = Lexing.from_channel chan in
    let lines = emptyLexedLines () in
    lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = file };
-   { lexbuf = lexbuf; peeked = next_token lines lexbuf ; has_errors = false; errors = []; lines = lines }
+   let first =  next_token lines lexbuf in
+   { lexbuf = lexbuf; peeked = first; prev = first ; has_errors = false; errors = []; lines = lines }
 
 (** Returns the left binding powers of the token *)
 let getLbp (token:'a token) : int =
@@ -295,27 +301,27 @@ let valBindList (buffer:parse_exp lexer_stream) : val_bind list =
    loop []
 
 (** <statement> := | 'val' <valBindList> ';' *)
-let stmtVal (buffer:parse_exp lexer_stream) : stmt =
+let stmtVal (buffer:parse_exp lexer_stream) : parse_exp =
    let _ = consume buffer VAL in
    let vals = valBindList buffer in
    let _ = consume buffer SEMI in
    StmtVal(vals)
 
 (** <statement> := | 'mem' <valBindList> ';' *)
-let stmtMem (buffer:parse_exp lexer_stream) : stmt =
+let stmtMem (buffer:parse_exp lexer_stream) : parse_exp =
    let _ = consume buffer MEM in
    let vals = valBindList buffer in
    let _ = consume buffer SEMI in
    StmtMem(vals)
 
 (** <statement> := | 'return' <expression> ';' *)
-let stmtReturn (buffer:parse_exp lexer_stream) : stmt =
+let stmtReturn (buffer:parse_exp lexer_stream) : parse_exp =
    let _ = consume buffer RET in
    let e = expression 0 buffer in
    let _ = consume buffer SEMI in
    StmtReturn(getContents e)
 
-let stmtBind (buffer:parse_exp lexer_stream) : stmt =
+let stmtBind (buffer:parse_exp lexer_stream) : parse_exp =
    let e1 = expression 0 buffer |> getContents in
    match peekKind buffer with
    | EQUAL ->
@@ -334,7 +340,7 @@ let stmtBind (buffer:parse_exp lexer_stream) : stmt =
 
 
 (** <statement> := 'if' '(' <expression> ')' <statementList> ['else' <statementList> ]*)
-let rec stmtIf (buffer:parse_exp lexer_stream) : stmt =
+let rec stmtIf (buffer:parse_exp lexer_stream) : parse_exp =
    let _    = consume buffer IF in
    let _    = consume buffer LPAREN in
    let cond = getContents (expression 0 buffer) in
@@ -348,7 +354,7 @@ let rec stmtIf (buffer:parse_exp lexer_stream) : stmt =
    | _ -> StmtIf(cond,tstm,None)
 
 (** <statement> := ... *)
-and stmt (buffer:parse_exp lexer_stream) : stmt =
+and stmt (buffer:parse_exp lexer_stream) : parse_exp =
    try
       match peekKind buffer with
       | VAL -> stmtVal     buffer
@@ -365,12 +371,15 @@ and stmt (buffer:parse_exp lexer_stream) : stmt =
       StmtEmpty
 
 (** <statementList> := LBRACK <statement> [<statement>] RBRACK *)
-and stmtList (buffer:parse_exp lexer_stream) : stmt list =
+and stmtList (buffer:parse_exp lexer_stream) : parse_exp list =
    let rec loop acc =
       match peekKind buffer with
       | RBRAC ->
          let _ = skip buffer in
          List.rev acc
+      | EOF ->
+         let _ = expect buffer RBRAC in
+         []
       | _ ->
          let s = stmt buffer in
          loop (s::acc)
@@ -384,7 +393,7 @@ and stmtList (buffer:parse_exp lexer_stream) : stmt list =
       [s]
 
 (** 'fun' <namedId> '(' <valBindList> ')' <stmtList> *)
-and stmtFunction (buffer:parse_exp lexer_stream) : stmt =
+and stmtFunction (buffer:parse_exp lexer_stream) : parse_exp =
    let _    = consume buffer FUN in
    let name = namedId buffer in
    let _    = consume buffer LPAREN in
@@ -404,13 +413,13 @@ let parseExp (s:string) : parse_exp =
    getContents result
 
 (** Parses an statement given a string *)
-let parseStmt (s:string) : stmt =
+let parseStmt (s:string) : parse_exp =
    let buffer = bufferFromString s in
    let result = stmt buffer in
    result
 
 (** Parses a list of statements given a string *)
-let parseStmtList (s:string) : stmt list =
+let parseStmtList (s:string) : parse_exp list =
    let buffer = bufferFromString s in
    let result = stmtList buffer in
    result
@@ -425,10 +434,8 @@ let parseDumpStmtList (s:string) : string =
    let e = parseStmtList s in
    PrintTypes.stmtListStr e
 
-(** Parses a file containing a list of statements and returns the results *)
-let parseFile (filename:string) : parser_results =
-   let chan = open_in filename in
-   let buffer = bufferFromChannel chan filename in
+(** Parses a buffer containing a list of statements and returns the results *)
+let parseBuffer (buffer) : parser_results =
    try
       let rec loop acc =
          match peekKind buffer with
@@ -436,7 +443,6 @@ let parseFile (filename:string) : parser_results =
          | _ -> loop ((stmtList buffer)::acc)
       in
       let result = loop [] |> List.flatten in
-      let _ = close_in chan in
       let all_lines = getFileLines buffer.lines in
       if buffer.has_errors then
          { presult = `Error(List.rev buffer.errors); lines = all_lines }
@@ -444,11 +450,23 @@ let parseFile (filename:string) : parser_results =
          { presult = `Ok(result); lines = all_lines }
    with
    | ParserError(error) ->
-      let _ = close_in chan in
       let all_lines = getFileLines buffer.lines in
       {presult = `Error([error]); lines = all_lines }
    | _ ->
-      let _ = close_in chan in
-      failwith "Failed to parse the file"
+      let all_lines = getFileLines buffer.lines in
+      {presult = `Error([SimpleError("Failed to parse the file")]); lines = all_lines }
 
 
+(** Parses a file containing a list of statements and returns the results *)
+let parseFile (filename:string) : parser_results =
+   let chan = open_in filename in
+   let buffer = bufferFromChannel chan filename in
+   let result = parseBuffer buffer in
+   let _ = close_in chan in
+   result
+
+(** Parses a string containing a list of statements and returns the results *)
+let parseString (text:string) : parser_results =
+   let buffer = bufferFromString text in
+   let result = parseBuffer buffer in
+   result

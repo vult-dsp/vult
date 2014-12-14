@@ -43,12 +43,11 @@ type local_env =
       mutable val_binds : ((string,value) Hashtbl.t) list;
       mem_binds : (string,value) Hashtbl.t;
       fun_bind  : (string,local_env) Hashtbl.t;
-      mutable ret_val   : value option;
    }
 
 type function_body =
    | Builtin  of (value list -> value)
-   | Declared of stmt
+   | Declared of parse_exp
 
 type global_env =
    {
@@ -60,7 +59,6 @@ let newLocalEnv () =
       val_binds = [];
       mem_binds = Hashtbl.create 10;
       fun_bind  = Hashtbl.create 10;
-      ret_val   = None;
    }
 
 let newGlobalEnv () =
@@ -89,13 +87,12 @@ let rec valueStr (value:value) : string =
 
 let localEnvStr (loc:local_env) : string =
    let dumpEnv env =
-      Hashtbl.fold (fun name value state -> state^name^" = "^(valueStr value)^"\n" ) env ""   
+      Hashtbl.fold (fun name value state -> state^name^" = "^(valueStr value)^"\n" ) env ""
    in
    let val_s = List.map dumpEnv loc.val_binds |> joinStrings "\n" in
    let mem_s = dumpEnv loc.mem_binds in
    let fun_s = Hashtbl.fold (fun name value state -> name::state ) loc.fun_bind [] |> joinStrings "," in
-   let ret_s = apply_default valueStr loc.ret_val "-" in
-   Printf.sprintf "= val =\n%s= mem =\n%s= fun =\n%s\n= ret =\n%s\n" val_s mem_s fun_s ret_s
+   Printf.sprintf "= val =\n%s= mem =\n%s= fun =\n%s\n" val_s mem_s fun_s
 
 let getVarName (named_id:named_id) : string =
    match named_id with
@@ -115,10 +112,11 @@ let getFunctionBody (glob:global_env) (name:string) : function_body =
 
 let default_env = newLocalEnv ()
 
-let declFunction (glob:global_env) (name:string) (body:stmt) : unit =
+let declFunction (glob:global_env) (name:string) (body:parse_exp) : unit =
    Hashtbl.replace glob.fun_decl name (Declared(body))
 
 let getFunctionEnv (loc:local_env) (name:string) : local_env =
+   if name = "_" then default_env else
    if Hashtbl.mem loc.fun_bind name then
       Hashtbl.find loc.fun_bind name
    else
@@ -126,18 +124,24 @@ let getFunctionEnv (loc:local_env) (name:string) : local_env =
       let _ = Hashtbl.add loc.fun_bind name env in
       env
 
+let setFunctionEnv (loc:local_env) (name:string) (floc:local_env) : local_env =
+   if name = "_" then loc else
+   let _ = Hashtbl.replace loc.fun_bind name floc in
+   loc
+
 let clearLocal (loc:local_env) =
    let _ = loc.val_binds <- [] in
-   loc.ret_val <- None
+   loc
 
 
 let pushLocal (loc:local_env) =
-   loc.val_binds <- (Hashtbl.create 10)::loc.val_binds 
+   let _ = loc.val_binds <- (Hashtbl.create 10)::loc.val_binds in
+   loc
 
 let popLocal (loc:local_env) =
    match loc.val_binds with
-   | [] -> ()
-   | _::t -> loc.val_binds <- t 
+   | [] -> loc
+   | _::t -> loc.val_binds <- t; loc
 
 let findValMemTable (loc:local_env) (name:string) =
    let rec loop locals =
@@ -146,6 +150,7 @@ let findValMemTable (loc:local_env) (name:string) =
          if Hashtbl.mem loc.mem_binds name then
             loc.mem_binds
          else
+            let _ = print_string (localEnvStr loc) in
             failwith ("Undeclared variable "^name)
       | h::t ->
          if Hashtbl.mem h name then
@@ -156,22 +161,28 @@ let findValMemTable (loc:local_env) (name:string) =
 let getExpValueFromEnv (loc:local_env) (name:string) : value =
    let table = findValMemTable loc name in
    Hashtbl.find table name
-      
-let setValMem (loc:local_env) (name:string)  (value:value) : unit =
+
+let setValMem (loc:local_env) (name:string)  (value:value) : local_env =
    let table = findValMemTable loc name in
-   Hashtbl.replace table name value
+   let _ = Hashtbl.replace table name value in
+   loc
 
-let setReturn (loc:local_env) (value:value) : unit =
-   loc.ret_val <- Some(value)
-
-let declVal (loc:local_env) (name:string) (value:value) : unit =
+let declVal (loc:local_env) (name:string) (value:value) : local_env =
    match loc.val_binds with
-   | h::_ -> Hashtbl.replace h name value
-   | _ -> failwith "The local environment is not correctly initialized"
+   | [] ->
+      let new_env = Hashtbl.create 100 in
+      let _ = Hashtbl.replace new_env name value in
+      let _ = loc.val_binds<-[new_env] in
+      loc
+   | h::_ ->
+      let _ = Hashtbl.replace h name value in
+      loc
 
-let declMem (loc:local_env) (name:string) (init:value) : unit =
+let declMem (loc:local_env) (name:string) (init:value) : local_env =
    if not (Hashtbl.mem loc.mem_binds name) then
-      Hashtbl.add loc.mem_binds name init
+      let _ = Hashtbl.add loc.mem_binds name init in
+      loc
+   else loc
 
 let isTrue (value:value) : bool =
    match value with
@@ -187,31 +198,30 @@ let rec getInputsNames (inputs:val_bind list) : string list =
       (getVarName name)::(getInputsNames t)
    | _ -> failwith "Invalid function declaration"
 
-let rec evalFun (glob:global_env) (loc:local_env) (body:function_body) (args:value list) : value =
+let rec evalFun (glob:global_env) (loc:local_env) (body:function_body) (args:value list) : value * local_env =
    match body with
    | Declared(StmtFun(_,arg_names,stmts)) ->
       let inputs = getInputsNames arg_names in
-      let _ = List.map2 (fun n v -> declVal loc n v) inputs args in
-      let _ = runStmtList glob loc stmts in
-      apply_default (fun a -> a) loc.ret_val VUnit
+      let loc = List.fold_left2 (fun s n v -> declVal s n v) loc inputs args in
+      runStmtList glob loc stmts
    | Builtin(f) ->
-      f args
+      f args,loc
    | _ -> failwith "Invalid function body"
 
-and runExp (glob:global_env) (loc:local_env) (exp:parse_exp) : value =
+and runExp (glob:global_env) (loc:local_env) (exp:parse_exp) : value * local_env =
    match exp with
-   | PUnit      -> VUnit
-   | PInt(v,_)  -> VNum(float_of_string v)
-   | PReal(v,_) -> VNum(float_of_string v)
+   | PUnit      -> VUnit,loc
+   | PInt(v,_)  -> VNum(float_of_string v),loc
+   | PReal(v,_) -> VNum(float_of_string v),loc
    | PId(name)  ->
       let vname  = getVarName name in
-      getExpValueFromEnv loc vname
+      getExpValueFromEnv loc vname,loc
    | PGroup(e)  -> runExp glob loc e
    | PTuple(elems) ->
-      let elems_val = List.map (runExp glob loc) elems in
-      VTuple(elems_val)
+      let elems_val,loc = runExpList glob loc elems in
+      VTuple(elems_val),loc
    | PIf(cond,then_exp,else_exp) ->
-      let cond_val = runExp glob loc cond in
+      let cond_val,loc = runExp glob loc cond in
       if isTrue cond_val then
          runExp glob loc then_exp
       else
@@ -219,82 +229,82 @@ and runExp (glob:global_env) (loc:local_env) (exp:parse_exp) : value =
    | PCall(name_id,args,_) ->
       let name,ftype = TypesUtil.getFunctionTypeAndName name_id in
       let body = getFunctionBody glob ftype in
-      let args_val = List.map (runExp glob loc) args in
-      let env =
-         if name="_" then
-            default_env
-         else
-            getFunctionEnv loc name
-      in
-      let _ = clearLocal env in
-      evalFun glob env body args_val
+      let args_val,loc = runExpList glob loc args in
+      let env = getFunctionEnv loc name in
+      let env = clearLocal env in
+      let result,env = evalFun glob env body args_val in
+      let loc = setFunctionEnv loc name env in
+      result,loc
    | PEmpty -> failwith "There should not be Empty expressions when calling the intepreter"
    | PBinOp(_,_,_,_)
    | PUnOp(_,_,_) -> failwith "There should not be operators when calling the intepreter"
-
-and runStmt (glob:global_env) (loc:local_env) (stmt:stmt) : unit =
-   match stmt with
-   | StmtVal([ValNoBind(name,opt_init)]) ->
+      | StmtVal([ValNoBind(name,opt_init)]) ->
       let vname = getVarName name in
-      let init = apply_default (runExp glob loc) opt_init (VNum(0.0)) in
-      declVal loc vname init
+      let init,loc = apply_default (runExp glob loc) opt_init (VNum(0.0),loc) in
+      VUnit,declVal loc vname init
    | StmtMem([ValNoBind(name,opt_init)]) ->
       let vname = getVarName name in
-      let init = apply_default (runExp glob loc) opt_init (VNum(0.0)) in
-      declMem loc vname init
+      let init,loc = apply_default (runExp glob loc) opt_init (VNum(0.0),loc) in
+      VUnit,declMem loc vname init
    | StmtVal(_)
    | StmtMem(_) -> failwith "Declarations with more that one element should have been removed by the transformations"
    | StmtBind(PId(name),rhs) ->
-      let rhs_val = runExp glob loc rhs in
+      let rhs_val,loc = runExp glob loc rhs in
       let vname = getVarName name in
-      setValMem loc vname rhs_val
+      VUnit,setValMem loc vname rhs_val
    | StmtBind(PTuple(elems),rhs) ->
       let vnames = List.map getExpName elems in
-      let rhs_val = runExp glob loc rhs in
+      let rhs_val,loc = runExp glob loc rhs in
       begin
          match rhs_val with
          | VTuple(elems_val) ->
-            List.map2 (fun n v -> setValMem loc n v) vnames elems_val |> ignore
+            VUnit,List.fold_left2 (fun s n v -> setValMem s n v) loc vnames elems_val
          | _ -> failwith "Not returning a tuple"
       end
    | StmtBind(PEmpty,rhs) ->
-      let _ = runExp glob loc rhs in
-      ()
+      let _,loc = runExp glob loc rhs in
+      VUnit,loc
    | StmtBind(_,rhs) -> failwith "Invalid binding"
    | StmtReturn(e) ->
-      let e_val = runExp glob loc e in
-      setReturn loc e_val
+      let e_val,loc = runExp glob loc e in
+      e_val,loc
    | StmtFun(name_id,_,_) ->
       let _,ftype = TypesUtil.getFunctionTypeAndName name_id in
-      declFunction glob ftype stmt
+      let _ = declFunction glob ftype exp in
+      VUnit,loc
    | StmtIf(cond,then_stmts,None) ->
-      let cond_val = runExp glob loc cond in
+      let cond_val,loc = runExp glob loc cond in
       if isTrue cond_val then
          (* This should create a sub-environment *)
          runStmtList glob loc then_stmts
+      else VUnit,loc
    | StmtIf(cond,then_stmts,Some(else_stmts)) ->
-      let cond_val = runExp glob loc cond in
-      (* This should create a sub-environment *)
+      let cond_val,loc = runExp glob loc cond in
       if isTrue cond_val then
          runStmtList glob loc then_stmts
       else
          runStmtList glob loc else_stmts
-   | StmtEmpty -> ()
+   | StmtEmpty -> VUnit,loc
 
-
-and runStmtList (glob:global_env) (loc:local_env) (stmts:stmt list) : unit =
-   let _ = pushLocal loc in
-   let rec loop stmts =
-      if CCOpt.is_some loc.ret_val then ()
-      else
-         match stmts with
-         | [] -> ()
-         | h::t ->
-            let _ = runStmt glob loc h in
-            loop t
+and runExpList (glob:global_env) (loc:local_env) (expl:parse_exp list) : value list * local_env =
+   let loc,acc = List.fold_left (fun (s,acc) a -> let v,ns = runExp glob s a in ns,v::acc) (loc,[]) expl in
+   List.rev acc,loc
+and runStmtList (glob:global_env) (loc:local_env) (expl:parse_exp list) : value * local_env =
+   let loc = pushLocal loc in
+   let rec loop loc stmts =
+      match stmts with
+      | [] -> VUnit,loc
+      | h::t ->
+         let value,loc = runExp glob loc h in
+         begin
+            match value with
+            | VUnit -> loop loc t
+            | _ -> value,loc
+         end
    in
-   let _ = loop stmts in
-   popLocal loc
+   let ret,loc = loop loc expl in
+   let loc = popLocal loc in
+   ret,loc
 
 let opNumNum (op:float->float) (args:value list) =
    match args with
@@ -363,10 +373,14 @@ let addBuiltinFunctions (glob:global_env) : unit =
    ]
    |> List.iter (fun (a,b) -> Hashtbl.add glob.fun_decl a b)
 
-let interpret (results:parser_results) =
+let interpret (results:parser_results) : interpreter_results =
    let glob = newGlobalEnv () in
    let _ = addBuiltinFunctions glob in
    let loc = newLocalEnv () in
-   let _ = CCError.map (fun stmts -> runStmtList glob loc stmts;stmts) results.presult in
-   (*let _ = print_string (localEnvStr loc) in*)
-   apply_default (fun a -> a) loc.ret_val VUnit
+   let result = CCError.map (fun stmts -> let ret,loc = runStmtList glob loc stmts in ret,loc) results.presult in
+   match result with
+   | `Ok(ret,loc) ->
+      (*let _ = print_string (localEnvStr loc) in*)
+      { iresult = `Ok(valueStr ret); lines = results.lines }
+   | `Error(error) ->
+      { iresult = `Error(error); lines = results.lines }

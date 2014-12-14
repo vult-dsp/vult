@@ -43,10 +43,11 @@ let errorLocationMessage (location:location) : string =
 let errorLocationIndicator (line:string) (location:location) : string =
    let col_start = location.start_pos.pos_cnum - location.start_pos.pos_bol in
    let col_end = location.end_pos.pos_cnum - location.start_pos.pos_bol in
+   let pointer = if (col_end - col_start) <> 0 then (String.make (col_end - col_start) '^') else "^" in
    Printf.sprintf "%s\n%s%s\n"
       line
       (String.make col_start ' ')
-      (String.make (col_end - col_start) '^')
+      pointer
 
 (** Returns the lines corresponding to the given location *)
 let getErrorLines (location:location) (lines:string array) =
@@ -55,21 +56,26 @@ let getErrorLines (location:location) (lines:string array) =
    | n -> (Array.get lines (n-2))^"\n"^(Array.get lines (n-1))
 
 (** Takes an error and the lines of the code and returns an error message *)
-let reportErrorString (lines:string array) (error:error) =
+let reportErrorString (lines:string array) (error:error) :string =
    match error with
-   | SimpleError(msg) -> print_string (msg^"\n")
+   | SimpleError(msg) -> msg^"\n"
    | PointedError(location,msg) ->
       let loc = errorLocationMessage location in
       let line = getErrorLines location lines in
       let indicator = errorLocationIndicator line location in
-      print_string (loc^msg^"\n"^indicator)
+      loc^msg^"\n"^indicator
 
-(** Takes an Either value containing a list of errors and reports the errors *)
-let reportErrors (results:('a,error list) CCError.t) (lines:string array) =
+(** Takes an Either value and returns the errors *)
+let reportErrors (results:('a,error list) CCError.t) (lines:string array) : string list =
    match results with
-   | `Ok(_) -> ()
+   | `Ok(_) -> []
    | `Error(errors) ->
-      List.iter (reportErrorString lines) errors
+      List.map (reportErrorString lines) errors
+
+(** Takes an Either value containing a list of errors and prints the errors *)
+let printErrors (results:('a,error list) CCError.t) (lines:string array) =
+   let errors = reportErrors results lines in
+   List.iter (fun (a:string) -> print_endline a) errors
 
 (** Joins two errors *)
 let joinErrors : errors -> errors -> errors = List.append
