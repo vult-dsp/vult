@@ -43,7 +43,6 @@ type local_env =
       mutable val_binds : ((string,value) Hashtbl.t) list;
       mem_binds : (string,value) Hashtbl.t;
       fun_bind  : (string,local_env) Hashtbl.t;
-      mutable ret_val   : value option;
    }
 
 type function_body =
@@ -60,7 +59,6 @@ let newLocalEnv () =
       val_binds = [];
       mem_binds = Hashtbl.create 10;
       fun_bind  = Hashtbl.create 10;
-      ret_val   = None;
    }
 
 let newGlobalEnv () =
@@ -94,8 +92,7 @@ let localEnvStr (loc:local_env) : string =
    let val_s = List.map dumpEnv loc.val_binds |> joinStrings "\n" in
    let mem_s = dumpEnv loc.mem_binds in
    let fun_s = Hashtbl.fold (fun name value state -> name::state ) loc.fun_bind [] |> joinStrings "," in
-   let ret_s = apply_default valueStr loc.ret_val "-" in
-   Printf.sprintf "= val =\n%s= mem =\n%s= fun =\n%s\n= ret =\n%s\n" val_s mem_s fun_s ret_s
+   Printf.sprintf "= val =\n%s= mem =\n%s= fun =\n%s\n" val_s mem_s fun_s
 
 let getVarName (named_id:named_id) : string =
    match named_id with
@@ -134,7 +131,6 @@ let setFunctionEnv (loc:local_env) (name:string) (floc:local_env) : local_env =
 
 let clearLocal (loc:local_env) =
    let _ = loc.val_binds <- [] in
-   let _ = loc.ret_val <- None in
    loc
 
 
@@ -169,10 +165,6 @@ let getExpValueFromEnv (loc:local_env) (name:string) : value =
 let setValMem (loc:local_env) (name:string)  (value:value) : local_env =
    let table = findValMemTable loc name in
    let _ = Hashtbl.replace table name value in
-   loc
-
-let setReturn (loc:local_env) (value:value) : local_env =
-   let _ = loc.ret_val <- Some(value) in
    loc
 
 let declVal (loc:local_env) (name:string) (value:value) : local_env =
@@ -275,7 +267,7 @@ and runExp (glob:global_env) (loc:local_env) (exp:parse_exp) : value * local_env
    | StmtBind(_,rhs) -> failwith "Invalid binding"
    | StmtReturn(e) ->
       let e_val,loc = runExp glob loc e in
-      e_val,setReturn loc e_val
+      e_val,loc
    | StmtFun(name_id,_,_) ->
       let _,ftype = TypesUtil.getFunctionTypeAndName name_id in
       let _ = declFunction glob ftype exp in
@@ -288,7 +280,6 @@ and runExp (glob:global_env) (loc:local_env) (exp:parse_exp) : value * local_env
       else VUnit,loc
    | StmtIf(cond,then_stmts,Some(else_stmts)) ->
       let cond_val,loc = runExp glob loc cond in
-      (* This should create a sub-environment *)
       if isTrue cond_val then
          runStmtList glob loc then_stmts
       else
