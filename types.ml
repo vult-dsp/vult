@@ -128,6 +128,6 @@ type parser_results =
 
 type interpreter_results =
    {
-      iresult : (unit,error list) CCError.t;
+      iresult : (string,error list) CCError.t;
       lines   : string array;
    }

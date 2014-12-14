@@ -373,7 +373,7 @@ let addBuiltinFunctions (glob:global_env) : unit =
    ]
    |> List.iter (fun (a,b) -> Hashtbl.add glob.fun_decl a b)
 
-let interpret (results:parser_results) :string =
+let interpret (results:parser_results) : interpreter_results =
    let glob = newGlobalEnv () in
    let _ = addBuiltinFunctions glob in
    let loc = newLocalEnv () in
@@ -381,5 +381,6 @@ let interpret (results:parser_results) :string =
    match result with
    | `Ok(ret,loc) ->
       (*let _ = print_string (localEnvStr loc) in*)
-      valueStr ret
-   | _ -> "Error when running the program"
+      { iresult = `Ok(valueStr ret); lines = results.lines }
+   | `Error(error) ->
+      { iresult = `Error(error); lines = results.lines }

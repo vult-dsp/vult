@@ -414,7 +414,7 @@ let programState : Types.parser_results -> interpreter_results =
       | `Error(_) ->
          { iresult = `Error([SimpleError("Parse unsuccessful; no checking possible.")]); lines=results.lines }
       | `Ok stmts -> begin match checkStmtsMain stmts with
-            | None -> { iresult = `Ok(); lines = results.lines }
+            | None -> { iresult = `Ok("()"); lines = results.lines }
             | Some errsRev ->
                let
                   errs = List.rev errsRev
