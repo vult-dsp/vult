@@ -1,0 +1,48 @@
+Some notes on the type system.
+
+Any type conversions must be explicit.
+
+To any type one can bind special functions, e.g. plus, compare, coercions, etc. To begin with, these will be totaly internal, but in the future a user should be able to define these with a special syntax:
+
+interface fun (+)(x::a, y::a);
+
+and, of course, one has to write instances for these
+
+instance fun (+)(x::int, y::int) {
+	return intAdd(x,y);
+}
+
+the syntax is not important, but the idea is.
+
+When doing type inference, we can then collect all interface functions needed for a variable in a function, e.g. in
+
+fun biquad(x,b0,b1,b2,a1,a2){
+    mem w1,w2;
+    val w0 = x -a1*w1-a2*w2;
+    val y0 = b0*w0 + b1*w1 + b2*w2;
+    w2, w1 = w1, w0;
+    return y0;
+}
+
+we see from the first non-declarative row, that w0, x, a1, w1, a2, w2 has to be the same type and this type has to have instances of (-) and (*). From the second row we see that y0, b0, w0, b1, w1, b2, w2 all have the same type, and have to have the instances of (+) (*). Finalizing the analysis we see that all variables must have the same type and have instances of (-), (+) and (*). Thus we can form a "type skeleton" for biquad as follows:
+
+type biquad(a,a,a,a,a,a):a where (+) ~ a, (-) ~ a and (*) ~ a holds.
+
+Then, for a special usage of biquad, we can try to instantiate biquad.
+	* We first check if the type corresponding to a has all required properties.
+		* This will work for a = int, but not for a = string.
+	* Then we replace all occurences of the general interface function with the specific instance function.
+
+In the end we have something like:
+
+fun biquad(x:Int,b0:Int,b1:Int,b2:Int,a1:Int,a2:Int){
+    mem w1,w2;
+    val w0 = 
+    	IntAdd(x,
+    		IntAdd(
+    			IntNegate(IntMul(a1,w1))
+    			IntNegate(IntMul(a2,w2))
+    		)
+    	)
+    ...
+}
