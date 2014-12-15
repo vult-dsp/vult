@@ -151,8 +151,7 @@ let float =
   ('.' ['0'-'9' '_']* )?
   (['e' 'E'] ['+' '-']? ['0'-'9'] ['0'-'9' '_']*)?
 
-rule next_token lines =
-  parse
+rule next_token lines = parse
   | newline
     { let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
       let _ = newLineInBuffer lines in
@@ -182,4 +181,15 @@ rule next_token lines =
   | float       { makeToken lines REAL lexbuf }
   | startid idchar *
                 { makeIdToken lines lexbuf }
+  | "//"        { line_comment lines lexbuf}
   | eof         { makeToken lines EOF lexbuf }
+
+and line_comment lines = parse
+   newline
+     {
+      let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
+      let _ = newLineInBuffer lines in
+      next_token lines lexbuf
+     }
+  | eof { makeToken lines EOF lexbuf }
+  | _   { line_comment lines lexbuf }
