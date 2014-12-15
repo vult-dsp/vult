@@ -109,11 +109,11 @@ let rec expressionBuff buffer exp =
    | PCall(id,args,_) ->
       namedIdBuff buffer id;
       append buffer "(";
-      expressionListBuff buffer args;
+      expressionListBuff buffer true args;
       append buffer ")"
    | PUnit -> append buffer "()"
    | PTuple(elems) ->
-      expressionListBuff buffer elems
+      expressionListBuff buffer true elems
    | PGroup(e1) ->
       append buffer "(";
       expressionBuff buffer e1;
@@ -127,12 +127,72 @@ let rec expressionBuff buffer exp =
       expressionBuff buffer else_exp
    | PEmpty -> append buffer "Empty"
 
+   | StmtVal(elems) ->
+      append buffer "val ";
+      valInitBuffList buffer elems;
+      append buffer ";"
+   | StmtMem(elems) ->
+      append buffer "mem ";
+      valInitBuffList buffer elems;
+      append buffer ";"
+   | StmtReturn(e) ->
+      append buffer "return ";
+      expressionBuff buffer e;
+      append buffer ";"
+   | StmtIf(cond,true_stmt,None) ->
+      append buffer "if(";
+      expressionBuff buffer cond;
+      append buffer ") ";
+      expressionListBuff buffer false true_stmt
+   | StmtIf(cond,true_stmt,Some(false_stmt)) ->
+      append buffer "if(";
+      expressionBuff buffer cond;
+      append buffer ") ";
+      expressionListBuff buffer false true_stmt;
+      newline buffer;
+      append buffer "else ";
+      expressionListBuff buffer false false_stmt;
+   | StmtFun(name,args,body) ->
+      append buffer "fun ";
+      namedIdBuff buffer name;
+      append buffer "(";
+      valInitBuffList buffer args;
+      append buffer ") ";
+      expressionListBuff buffer false body
+   | StmtBind(PEmpty,e) ->
+      expressionBuff buffer e;
+      append buffer ";"
+   | StmtBind(e1,e2) ->
+      expressionBuff buffer e1;
+      append buffer "=";
+      expressionBuff buffer e2;
+      append buffer ";"
+   | StmtEmpty -> ()
+
 (** Adds to the print buffer an expression list *)
-and expressionListBuff buffer expl =
-   printList buffer expressionBuff "," expl
+and expressionListBuff buffer exp_stmt expl =
+   if exp_stmt then
+      printList buffer expressionBuff "," expl
+   else
+      match expl with
+      | [h] -> expressionBuff buffer h
+      | _ ->
+         let rec loop l =
+            match l with
+            | [] -> ()
+            | h::t ->
+               expressionBuff buffer h;
+               newline buffer;
+               loop t
+         in
+         append buffer "{";
+         indent buffer;
+         loop expl;
+         outdent buffer;
+         append buffer "}"
 
 (** Adds to the print buffer an val_init *)
-let rec valInitBuff buffer v =
+and valInitBuff buffer v =
    match v with
    | ValNoBind(id,None) -> namedIdBuff buffer id
    | ValNoBind(id,Some(init)) ->
@@ -155,74 +215,10 @@ let rec valInitBuff buffer v =
 and valInitBuffList buffer l =
    printList buffer valInitBuff "," l
 
-(** Adds to the print buffer s statememt *)
-let rec stmtBuff buffer stmt =
-   match stmt with
-   | StmtVal(elems) ->
-      append buffer "val ";
-      valInitBuffList buffer elems;
-      append buffer ";"
-   | StmtMem(elems) ->
-      append buffer "mem ";
-      valInitBuffList buffer elems;
-      append buffer ";"
-   | StmtReturn(e) ->
-      append buffer "return ";
-      expressionBuff buffer e;
-      append buffer ";"
-   | StmtIf(cond,true_stmt,None) ->
-      append buffer "if(";
-      expressionBuff buffer cond;
-      append buffer ") ";
-      stmtListBuff buffer true_stmt
-   | StmtIf(cond,true_stmt,Some(false_stmt)) ->
-      append buffer "if(";
-      expressionBuff buffer cond;
-      append buffer ") ";
-      stmtListBuff buffer true_stmt;
-      newline buffer;
-      append buffer "else ";
-      stmtListBuff buffer false_stmt;
-   | StmtFun(name,args,body) ->
-      append buffer "fun ";
-      namedIdBuff buffer name;
-      append buffer "(";
-      valInitBuffList buffer args;
-      append buffer ") ";
-      stmtListBuff buffer body
-   | StmtBind(PEmpty,e) ->
-      expressionBuff buffer e;
-      append buffer ";"
-   | StmtBind(e1,e2) ->
-      expressionBuff buffer e1;
-      append buffer "=";
-      expressionBuff buffer e2;
-      append buffer ";"
-   | StmtEmpty -> ()
-
-(** Adds to the print buffer a statememt list *)
-and stmtListBuff buffer l =
-   match l with
-   | [h] -> stmtBuff buffer h
-   | _ ->
-      let rec loop l =
-         match l with
-         | [] -> ()
-         | h::t ->
-            stmtBuff buffer h;
-            newline buffer;
-            loop t
-      in
-      append buffer "{";
-      indent buffer;
-      loop l;
-      outdent buffer;
-      append buffer "}"
-
 (** Converts to string a list of statememts *)
 let stmtListStr e =
    let print_buffer = makePrintBuffer () in
-   stmtListBuff print_buffer e;
+   expressionListBuff print_buffer false e;
    contents print_buffer
 
 (** Converts to string an expression *)

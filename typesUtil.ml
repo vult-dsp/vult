@@ -49,12 +49,14 @@ open Either
       getFunctionTypeName: Don't really know what this does.
 *)
 
-(** Type of all traversing functions functions *)
+(** Type of all traversing functions *)
 type ('data,'traversing_type) traverser = 'data -> 'traversing_type -> 'data * 'traversing_type
 
-(** Type of all expanding functions functions *)
+(** Type of all expanding functions *)
 type ('data,'expanding_type) expander = 'data -> 'expanding_type -> 'data * 'expanding_type list
 
+(** Type of folding functions *)
+type ('data,'traversing_type) folder = 'data -> 'traversing_type -> 'data
 
 type ('data, 'error, 'result) expfold =
    {
@@ -130,7 +132,6 @@ let expressionFoldEither : ('data, 'error, 'result) expfold -> 'data -> parse_ex
       in
       go exp
 
-
 (** Traverses expressions bottom-up *)
 let rec traverseBottomExp (f: ('data, parse_exp) traverser) (state:'data) (exp:parse_exp) : 'data * parse_exp =
    match exp with
@@ -160,34 +161,58 @@ let rec traverseBottomExp (f: ('data, parse_exp) traverser) (state:'data) (exp:p
       let state2,ne2 = traverseBottomExp f state1 e2 in
       let state3,ne3 = traverseBottomExp f state2 e3 in
       state3,PIf(ne1,ne2,ne3)
+   | StmtVal(binds) ->
+      let state1,nbinds = traverseBottomValBindListExp f state binds in
+      state1,StmtVal(binds)
+   | StmtMem(binds) ->
+      let state1,nbinds = traverseBottomValBindListExp f state binds in
+      state1,StmtVal(binds)
+   | StmtReturn(e) ->
+      let state1,ne = traverseBottomExp f state e in
+      f state1 (StmtReturn(ne))
+   | StmtBind(e1,e2) ->
+      let state1,ne1 = traverseBottomExp f state e1 in
+      let state2,ne2 = traverseBottomExp f state1 e2 in
+      f state2 (StmtBind(ne1,ne2))
+   | StmtEmpty ->
+      f state exp
+   | StmtFun(name,args,stmts) ->
+      let state1,nstmts = traverseBottomExpList f state stmts in
+      f state1 (StmtFun(name,args,nstmts))
+   | StmtIf(cond,then_stmts,None) ->
+      let state1,ncond = traverseBottomExp f state cond in
+      let state2,nthen_stmts = traverseBottomExpList f state1 then_stmts in
+      f state2 (StmtIf(ncond,nthen_stmts,None))
+   | StmtIf(cond,then_stmts,Some(else_stmts)) ->
+      let state1,ncond = traverseBottomExp f state cond in
+      let state2,nthen_stmts = traverseBottomExpList f state1 then_stmts in
+      let state3,nelse_stmts = traverseBottomExpList f state2 else_stmts in
+      f state3 (StmtIf(ncond,nthen_stmts,Some(nelse_stmts)))
 
 (** Traverses lists expressions bottom-up. The expressions are traversed right to left *)
 and traverseBottomExpList (f: ('data, parse_exp) traverser) (state:'data) (expl:parse_exp list) : 'data * parse_exp list =
    foldTraverser_right traverseBottomExp f state expl
 
-(** Traverses statements bottom-up *)
-let rec traverseBottomStmt (f: ('data, stmt) traverser) (state:'data) (stmt:stmt) : 'data * stmt =
-   match stmt with
-   | StmtVal(_)
-   | StmtMem(_)
-   | StmtReturn(_)
-   | StmtBind(_)
-   | StmtEmpty ->
-      f state stmt
-   | StmtFun(name,args,stmts) ->
-      let state1,nstmts = traverseBottomStmtList f state stmts in
-      f state1 (StmtFun(name,args,nstmts))
-   | StmtIf(cond,then_stmts,None) ->
-      let state1,nthen_stmts = traverseBottomStmtList f state then_stmts in
-      f state1 (StmtIf(cond,nthen_stmts,None))
-   | StmtIf(cond,then_stmts,Some(else_stmts)) ->
-      let state1,nthen_stmts = traverseBottomStmtList f state then_stmts in
-      let state2,nelse_stmts = traverseBottomStmtList f state1 else_stmts in
-      f state2 (StmtIf(cond,nthen_stmts,Some(nelse_stmts)))
+(** Applies a function to expressions in the bindings using a top-down traverser *)
+and traverseBottomValBindExp (f: ('data, parse_exp) traverser) (state:'data) (val_bind:val_bind) =
+   match val_bind with
+   | ValBind(name,init_opt,value) ->
+      let state1,new_init_opt = traverseBottomOptExp f state init_opt in
+      let state2,new_value = traverseBottomExp f state value in
+      state2,ValBind(name,new_init_opt,new_value)
+   | ValNoBind(name,init_opt) ->
+      let state1,new_init_opt = traverseBottomOptExp f state init_opt in
+      state1,ValNoBind(name,new_init_opt)
 
-(** Traverses lists statements bottom-up. The statements are traversed right to left (last first) *)
-and traverseBottomStmtList (f: ('data, stmt) traverser) (state:'data) (stmts:stmt list) : 'data * stmt list = 
-   foldTraverser_right traverseBottomStmt f state stmts
+and traverseBottomValBindListExp (f: ('data, parse_exp) traverser) (state:'data) (val_binds:val_bind list) =
+   foldTraverser_right traverseBottomValBindExp f state val_binds
+
+and traverseBottomOptExp (f: ('data, parse_exp) traverser) (state:'data) (exp_opt:parse_exp option) =
+   match exp_opt with
+   | Some(exp) ->
+      let new_state,new_exp = f state exp in
+      new_state,Some(new_exp)
+   | None -> state,None
 
 (** Traverses expressions top-down *)
 let rec traverseTopExp (f: ('data, parse_exp) traverser) (state0:'data) (exp:parse_exp) : 'data * parse_exp =
@@ -219,43 +244,139 @@ let rec traverseTopExp (f: ('data, parse_exp) traverser) (state0:'data) (exp:par
       let state2,ne2 = traverseTopExp f state1 e2 in
       let state3,ne3 = traverseTopExp f state2 e3 in
       state3,PIf(ne1,ne2,ne3)
+   | StmtVal(binds) ->
+      let state1,nbinds = traverseTopValBindListExp f state binds in
+      state1,StmtVal(nbinds)
+   | StmtMem(binds) ->
+      let state1,nbinds = traverseTopValBindListExp f state binds in
+      state1,StmtMem(nbinds)
+   | StmtReturn(e) ->
+      let state1,ne = traverseTopExp f state e in
+      state1,StmtReturn(ne)
+   | StmtBind(e1,e2) ->
+      let state1,ne1 = traverseTopExp f state e1 in
+      let state2,ne2 = traverseTopExp f state1 e2 in
+      state2,StmtBind(ne1,ne2)
+   | StmtEmpty -> state,nexp
+   | StmtFun(name,args,stmts) ->
+      let state1,nstmts = traverseTopExpList f state stmts in
+      state1,StmtFun(name,args,nstmts)
+   | StmtIf(cond,then_stmts,None) ->
+      let state1,ncond = traverseTopExp f state cond in
+      let state2,nthen_stmts = traverseTopExpList f state1 then_stmts in
+      state1,StmtIf(ncond,nthen_stmts,None)
+   | StmtIf(cond,then_stmts,Some(else_stmts)) ->
+      let state1,ncond = traverseTopExp f state cond in
+      let state2,nthen_stmts = traverseTopExpList f state1 then_stmts in
+      let state3,nelse_stmts = traverseTopExpList f state2 else_stmts in
+      state3,StmtIf(ncond,nthen_stmts,Some(nelse_stmts))
 
 (** Traverses lists expressions top-down. The expressions are traversed left to right *)
 and traverseTopExpList (f: ('data, parse_exp) traverser) (state:'data) (expl:parse_exp list) : 'data * parse_exp list =
    foldTraverser_left traverseTopExp f state expl
 
-let traverseTopOptExp (f: ('data, parse_exp) traverser) (state:'data) (exp_opt:parse_exp option) =
+(** Applies a function to expressions in the bindings using a top-down traverser *)
+and traverseTopValBindExp (f: ('data, parse_exp) traverser) (state:'data) (val_bind:val_bind) =
+   match val_bind with
+   | ValBind(name,init_opt,value) ->
+      let state1,new_init_opt = traverseTopOptExp f state init_opt in
+      let state2,new_value = traverseTopExp f state value in
+      state2,ValBind(name,new_init_opt,new_value)
+   | ValNoBind(name,init_opt) ->
+      let state1,new_init_opt = traverseTopOptExp f state init_opt in
+      state1,ValNoBind(name,new_init_opt)
+
+and traverseTopValBindListExp (f: ('data, parse_exp) traverser) (state:'data) (val_binds:val_bind list) =
+   foldTraverser_left traverseTopValBindExp f state val_binds
+
+and traverseTopOptExp (f: ('data, parse_exp) traverser) (state:'data) (exp_opt:parse_exp option) =
    match exp_opt with
    | Some(exp) ->
       let new_state,new_exp = f state exp in
       new_state,Some(new_exp)
    | None -> state,None
 
-(** Traverses statements top-down *)
-let rec traverseTopStmt (f: ('data, stmt) traverser) (state0:'data) (stmt:stmt) : 'data * stmt =
-   let state,nstmt = f state0 stmt in
-   match nstmt with
-   | StmtVal(_)
-   | StmtMem(_)
-   | StmtReturn(_)
-   | StmtBind(_)
-   | StmtEmpty -> state,nstmt
+(** Folds expressions top-down *)
+let rec foldTopExp (f: ('data, parse_exp) folder) (state0:'data) (exp:parse_exp) : 'data =
+   let state = f state0 exp in
+   match exp with
+   | PEmpty
+   | PUnit
+   | PInt(_,_)
+   | PReal(_,_)
+   | PId(_)   -> state
+   | PUnOp(name,e,loc) ->
+      foldTopExp f state e
+   | PBinOp(name,e1,e2,loc) ->
+      let state1 = foldTopExp f state e1 in
+      let state2 = foldTopExp f state1 e2 in
+      state2
+   | PGroup(e) ->
+      let state1 = foldTopExp f state e in
+      state1
+   | PTuple(expl) ->
+      let state1 = foldTopExpList f state expl in
+      state1
+   | PCall(name,expl,loc) ->
+      let state1 = foldTopExpList f state expl in
+      state1
+   | PIf(e1,e2,e3) ->
+      let state1 = foldTopExp f state e1 in
+      let state2 = foldTopExp f state1 e2 in
+      let state3 = foldTopExp f state2 e3 in
+      state3
+   | StmtVal(binds) ->
+      let state1 = foldTopValBindExpList f state binds in
+      state1
+   | StmtMem(binds) ->
+      let state1 = foldTopValBindExpList f state binds in
+      state1
+   | StmtReturn(e) ->
+      let state1 = foldTopExp f state e in
+      state1
+   | StmtBind(e1,e2) ->
+      let state1 = foldTopExp f state e1 in
+      let state2 = foldTopExp f state1 e2 in
+      state2
+   | StmtEmpty -> state
    | StmtFun(name,args,stmts) ->
-      let state1,nstmts = traverseTopStmtList f state stmts in
-      state1,StmtFun(name,args,nstmts)
+      let state1 = foldTopExpList f state stmts in
+      state1
    | StmtIf(cond,then_stmts,None) ->
-      let state1,nthen_stmts = traverseTopStmtList f state then_stmts in
-      state1,StmtIf(cond,nthen_stmts,None)
+      let state1 = foldTopExp f state cond in
+      let state2 = foldTopExpList f state1 then_stmts in
+      state2
    | StmtIf(cond,then_stmts,Some(else_stmts)) ->
-      let state1,nthen_stmts = traverseTopStmtList f state then_stmts in
-      let state2,nelse_stmts = traverseTopStmtList f state1 else_stmts in
-      state2,StmtIf(cond,nthen_stmts,Some(nelse_stmts))
+      let state1 = foldTopExp f state cond in
+      let state2 = foldTopExpList f state1 then_stmts in
+      let state3 = foldTopExpList f state2 else_stmts in
+      state3
 
-(** Traverses lists statements top-down. The statements are traversed right to left (last first) *)
-and traverseTopStmtList (f: ('data, stmt) traverser) (state:'data) (stmts:stmt list) : 'data * stmt list = 
-   foldTraverser_left traverseTopStmt f state stmts
+and foldTopExpList f state expl =
+   List.fold_left
+      (fun state elem ->
+          let state1 = foldTopExp f state elem in
+          state1)
+      state expl
 
-let rec expandStmt (f: ('data, stmt) expander) (state0:'data) (stmt:stmt) : 'data * stmt list =
+and foldTopValBindExp (f: ('data, parse_exp) folder) (state:'data) (val_bind:val_bind) =
+   match val_bind with
+   | ValBind(name,init_opt,value) ->
+      let state1 = CCOpt.map (foldTopExp f state) init_opt |> CCOpt.get state in
+      let state2 = foldTopExp f state1 value in
+      state2
+   | ValNoBind(name,init_opt) ->
+      let state1 = CCOpt.map (foldTopExp f state) init_opt |> CCOpt.get state in
+      state1
+
+and foldTopValBindExpList f state expl =
+   List.fold_left
+      (fun state elem ->
+          let state1 = foldTopValBindExp f state elem in
+          state1)
+      state expl
+
+let rec expandStmt (f: ('data, parse_exp) expander) (state0:'data) (stmt:parse_exp) : 'data * parse_exp list =
    let state,nstmt = f state0 stmt in
    let inner_fold (state,acc) stmt =
       match stmt with
@@ -278,7 +399,7 @@ let rec expandStmt (f: ('data, stmt) expander) (state0:'data) (stmt:stmt) : 'dat
    let state1,acc = List.fold_left inner_fold (state,[]) nstmt in
    state1,List.rev acc
 
-and expandStmtList (f: ('data, stmt) expander) (state:'data) (stmts:stmt list) : 'data * stmt list =
+and expandStmtList (f: ('data, parse_exp) expander) (state:'data) (stmts:parse_exp list) : 'data * parse_exp list =
    let state2,acc =
       List.fold_left
          (fun (state,acc) exp ->
@@ -286,52 +407,6 @@ and expandStmtList (f: ('data, stmt) expander) (state:'data) (stmts:stmt list) :
              (state1,(List.rev ne)::acc) )
          (state,[]) stmts in
    state2,List.rev (List.flatten acc)
-
-(** Applies a function to expressions in the bindings using a top-down traverser *)
-let traverseTopValBindExp (f: ('data, parse_exp) traverser) (state:'data) (val_bind:val_bind) =
-   match val_bind with
-   | ValBind(name,init_opt,value) ->
-      let state1,new_init_opt = traverseTopOptExp f state init_opt in
-      let state2,new_value = traverseTopExp f state value in
-      state2,ValBind(name,new_init_opt,new_value)
-   | ValNoBind(name,init_opt) ->
-      let state1,new_init_opt = traverseTopOptExp f state init_opt in
-      state1,ValNoBind(name,new_init_opt)
-
-let traverseTopValBindListExp (f: ('data, parse_exp) traverser) (state:'data) (val_binds:val_bind list) =
-   foldTraverser_left traverseTopValBindExp f state val_binds
-
-(** Applies a traverser function to all the expressions in the current level of a statememt *)
-let traverseTopExpStmt_traverser (f: ('data, parse_exp) traverser) (state:'data) (stmt:stmt) =
-   match stmt with
-   | StmtVal(val_binds) ->
-      let state1,new_val_binds = traverseTopValBindListExp f state val_binds in
-      state1,StmtVal(new_val_binds)
-   | StmtMem(val_binds) ->
-      let state1,new_val_binds = traverseTopValBindListExp f state val_binds in
-      state1,StmtMem(new_val_binds)
-   | StmtReturn(exp) ->
-      let state1,new_exp = traverseTopExp f state exp in
-      state1,StmtReturn(new_exp)
-   | StmtBind(e1,e2) ->
-      let state1,new_e1 = traverseTopExp f state e1 in
-      let state2,new_e2 = traverseTopExp f state1 e2 in
-      state2,StmtBind(new_e1,new_e2)
-   | StmtEmpty -> state,stmt
-   | StmtFun(name,args,stmts) ->
-      let state1,new_args = traverseTopValBindListExp f state args in
-      state1,StmtFun(name,new_args,stmts)
-   | StmtIf(cond,then_stmts,opt_else) ->
-      let state1,new_cond = traverseTopExp f state cond in
-      state1,StmtIf(new_cond,then_stmts,opt_else)
-
-(** Applies a traverser to all the espressions in the statemet *)
-let traverseTopExpStmt (f: ('data, parse_exp) traverser) (state:'data) (stmt:stmt) =
-   traverseTopStmt (fun state exp -> traverseTopExpStmt_traverser f state exp) state stmt
-
-(** Applies a traverser to all the espressions in the statemet list *)
-let traverseTopExpStmtList (f: ('data, parse_exp) traverser) (state:'data) (stmts:stmt list) =
-   foldTraverser_left traverseTopExpStmt f state stmts
 
 (** Returns the minimal position of two given *)
 let getMinPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.position =
@@ -353,6 +428,11 @@ let getMinMaxPositions (pos_list:Lexing.position list) =
    | []  -> failwith "getMinMaxPositions: No positions passed"
    | [h] -> h,h
    | h::_   -> List.fold_left (fun (min,max) a -> getMinPosition a min, getMaxPosition a max) (h,h) pos_list
+
+(** Returns the location that follows the given location *)
+let getFollowingLocation (loc:location) : location =
+   let end_pos = { loc.end_pos with Lexing.pos_cnum = loc.end_pos.Lexing.pos_cnum } in
+   { start_pos = end_pos; end_pos = end_pos }
 
 (** Returns a new location with the start and end positions updateds *)
 let mergeLocations (loc1:location) (loc2:location) : location =
@@ -378,3 +458,27 @@ let getFunctionTypeAndName (names_id:named_id) : string * string =
    match names_id with
    | NamedId(name,ftype,_,_) -> name,ftype
    | SimpleId(ftype,_) -> "_",ftype
+
+(** Used by getIdsInExp and getIdsInExpList to get the ids in expressions *)
+let getId : ('data,parse_exp) folder =
+   fun state exp ->
+      match exp with
+      | PId(name) -> name::state
+      | _ -> state
+
+(** Return the ids in an expression *)
+let getIdsInExp (exp:parse_exp) : named_id list =
+   foldTopExp getId [] exp
+
+(** Return the ids in an expression list *)
+let getIdsInExpList (expl:parse_exp list) : named_id list =
+   foldTopExpList getId [] expl
+
+(** Compares named_ids ignoring the locations *)
+let compareName (a:named_id) (b:named_id) : bool =
+   match a,b with
+   | SimpleId(name_a,_),SimpleId(name_b,_)
+   | NamedId(name_a,_,_,_),SimpleId(name_b,_)
+   | SimpleId(name_a,_),NamedId(name_b,_,_,_)
+   | NamedId(name_a,_,_,_),NamedId(name_b,_,_,_) when name_a = name_b -> true
+   | _ -> false

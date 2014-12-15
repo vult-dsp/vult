@@ -84,6 +84,7 @@ type 'a lexer_stream =
       mutable has_errors : bool;
       mutable errors     : error list;
       mutable peeked     : 'a token;
+      mutable prev       : 'a token;
       lines              : lexed_lines;
    }
 
@@ -105,27 +106,28 @@ type parse_exp =
    | PTuple of parse_exp list
    | PEmpty
 
-type val_bind =
-   | ValBind   of named_id * parse_exp option * parse_exp
-   | ValNoBind of named_id * parse_exp option
-
-type stmt =
    | StmtVal    of val_bind list
    | StmtMem    of val_bind list
    | StmtReturn of parse_exp
-   | StmtIf     of parse_exp * stmt list     * (stmt list) option
-   | StmtFun    of named_id  * val_bind list * stmt list
+   | StmtIf     of parse_exp * parse_exp list * (parse_exp list) option
+   | StmtFun    of named_id  * val_bind list * parse_exp list
    | StmtBind   of parse_exp * parse_exp
    | StmtEmpty
 
+and val_bind =
+   | ValBind   of named_id * parse_exp option * parse_exp
+   | ValNoBind of named_id * parse_exp option
+
+
+
 type parser_results =
    {
-      presult : (stmt list,error list) CCError.t;
+      presult : (parse_exp list,error list) CCError.t;
       lines   : string array;
    }
 
 type interpreter_results =
    {
-      iresult : (unit,error list) CCError.t;
+      iresult : (string,error list) CCError.t;
       lines   : string array;
    }
