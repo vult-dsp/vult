@@ -377,10 +377,14 @@ let interpret (results:parser_results) : interpreter_results =
    let glob = newGlobalEnv () in
    let _ = addBuiltinFunctions glob in
    let loc = newLocalEnv () in
-   let result = CCError.map (fun stmts -> let ret,loc = runStmtList glob loc stmts in ret,loc) results.presult in
-   match result with
-   | `Ok(ret,loc) ->
-      (*let _ = print_string (localEnvStr loc) in*)
-      { iresult = `Ok(valueStr ret); lines = results.lines }
-   | `Error(error) ->
-      { iresult = `Error(error); lines = results.lines }
+   try
+
+      let result = CCError.map (fun stmts -> let ret,loc = runStmtList glob loc stmts in ret,loc) results.presult in
+      match result with
+      | `Ok(ret,loc) ->
+         (*let _ = print_string (localEnvStr loc) in*)
+         { iresult = `Ok(valueStr ret); lines = results.lines }
+      | `Error(error) ->
+         { iresult = `Error(error); lines = results.lines }
+   with
+   | Failure(msg) -> { iresult = `Error([SimpleError(msg)]); lines = results.lines }
