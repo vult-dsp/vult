@@ -182,6 +182,7 @@ rule next_token lines = parse
   | startid idchar *
                 { makeIdToken lines lexbuf }
   | "//"        { line_comment lines lexbuf}
+  | "/*"        { comment lines 0 lexbuf }
   | eof         { makeToken lines EOF lexbuf }
 
 and line_comment lines = parse
@@ -193,3 +194,24 @@ and line_comment lines = parse
      }
   | eof { makeToken lines EOF lexbuf }
   | _   { line_comment lines lexbuf }
+
+and comment lines level = parse
+  newline
+     {
+      let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
+      let _ = newLineInBuffer lines in
+      comment lines level lexbuf
+     }
+  | "/*"
+    {
+      comment lines (level+1) lexbuf
+    }
+  | "*/"
+    {
+      if level = 0 then
+        next_token lines lexbuf
+      else
+        comment lines (level-1) lexbuf
+    }
+  | _ { comment lines level lexbuf }
+  | eof { makeToken lines EOF lexbuf }
