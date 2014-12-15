@@ -3,3 +3,4 @@ _build/*
 *.native
 *.d.byte
 *.top
+.DS_Store
