@@ -27,31 +27,31 @@ open CCMap
 open Set
 
 module type S = sig
-	type unionfind
+	type t
 	type key
 	type binding
 	type bindings
 
-	val empty : unionfind
+	val empty : t
 
 	(** create adds a new key to the map. If the key is already in the map,
 		it is removed from its current set. *)
-	val create : key -> unionfind -> unionfind
+	val create : key -> t -> t
 
 	(** find finds the representative of a certain key, and an optimized structure . *)
-	val find : key -> unionfind -> key option * unionfind
+	val find : key -> t -> key option * t
 	
 	(** bindings returns the bindings of the set represented by key, if any. *)
-	val bindings : key -> unionfind -> bindings option
+	val bindings : key -> t -> bindings option
 
 	(** findBinding returns the representative, the bindings of the set and an optimized structure. *)
-	val findBindings : key -> unionfind -> key option * bindings option * unionfind
+	val findBindings : key -> t -> key option * bindings option * t
 
 	(** add_binding adds a binding to the set represented by key. *)
-	val addBinding : key -> binding -> unionfind -> unionfind
+	val addBinding : key -> binding -> t -> t
 
 	(** union unifies two keys. *)
-	val union : key -> key -> unionfind -> unionfind
+	val union : key -> key -> t -> t
 end
 
 module Make (O : Map.OrderedType)(D : Set.OrderedType) = struct
@@ -62,23 +62,23 @@ module Make (O : Map.OrderedType)(D : Set.OrderedType) = struct
 	type binding = D.t
 	type bindings = InfoSet.t
 	type info = (key, bindings) either
-	type unionfind = info MapS.t
+	type t = info MapS.t
 
-	let empty : unionfind = MapS.empty
+	let empty : t = MapS.empty
 
-	let create : key -> unionfind -> unionfind =
+	let create : key -> t -> t =
 		fun k map -> MapS.add k (Left k) map
 
-	let find : key -> unionfind -> key option * unionfind =
+	let find : key -> t -> key option * t =
 		fun key map ->
 			let updater : key -> info option -> info option =
 				fun parent _ -> Some (Left parent)
-			in let update_all : key list -> key -> unionfind =
+			in let update_all : key list -> key -> t =
 				fun children parent ->
 					List.fold_left 
 						(fun m c -> MapS.update c (updater parent) m)
 						map children
-			in let rec go : key -> key list -> key option * unionfind =
+			in let rec go : key -> key list -> key option * t =
 				fun key children -> match MapS.get key map with
 					| Some (Left n) ->
 						if key == n 
@@ -88,16 +88,16 @@ module Make (O : Map.OrderedType)(D : Set.OrderedType) = struct
 					| None -> (None,map)
 			in go key []
 
-	let findBindings : key -> unionfind -> key option * bindings option * unionfind = 
+	let findBindings : key -> t -> key option * bindings option * t = 
 		fun key map ->
 			let updater : key -> info option -> info option =
 				fun parent _ -> Some (Left parent)
-			in let update_all : key list -> key -> unionfind =
+			in let update_all : key list -> key -> t =
 				fun children parent ->
 					List.fold_left 
 						(fun m c -> MapS.update c (updater parent) m)
 						map children
-			in let rec go : key -> key list -> key option * bindings option * unionfind =
+			in let rec go : key -> key list -> key option * bindings option * t =
 				fun key children -> match MapS.get key map with
 					| Some (Left n) ->
 						if key == n 
@@ -107,13 +107,13 @@ module Make (O : Map.OrderedType)(D : Set.OrderedType) = struct
 					| None -> (Some key, None, map)
 			in go key []
 
-	let rec bindings : key -> unionfind -> bindings option =
+	let rec bindings : key -> t -> bindings option =
 		fun k map -> match MapS.get k map with
 			| Some (Left n) -> if k == n then None else bindings n map
 			| Some (Right b) -> Some b
 			| None -> None
 
-	let rec addBinding : key -> binding -> unionfind -> unionfind =
+	let rec addBinding : key -> binding -> t -> t =
 		fun key binding map -> match findBindings key map with
 			| (None, _, m) -> m
 			| (Some parent, None,  m) ->
@@ -128,7 +128,7 @@ module Make (O : Map.OrderedType)(D : Set.OrderedType) = struct
 			| (Some b1, None) -> Right b1
 			| _ -> Left key
 
-	let union : key -> key -> unionfind -> unionfind =
+	let union : key -> key -> t -> t =
 		fun k1 k2 map -> match findBindings k1 map with
 			| (None, _, m) -> m
 			| (Some k1head, mb1, map2) -> begin match findBindings k2 map2 with
