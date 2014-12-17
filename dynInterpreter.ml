@@ -38,11 +38,13 @@ type value =
    | VBool    of bool
    | VTuple   of value list
 
+module StringMap = Map.Make(String)
+
 type local_env =
    {
-      mutable val_binds : ((string,value) Hashtbl.t) list;
-      mem_binds : (string,value) Hashtbl.t;
-      fun_bind  : (string,local_env) Hashtbl.t;
+      val_binds : (value StringMap.t) list;
+      mem_binds : value StringMap.t;
+      fun_bind  : local_env StringMap.t;
    }
 
 type function_body =
@@ -57,8 +59,8 @@ type global_env =
 let newLocalEnv () =
    {
       val_binds = [];
-      mem_binds = Hashtbl.create 10;
-      fun_bind  = Hashtbl.create 10;
+      mem_binds = StringMap.empty;
+      fun_bind  = StringMap.empty;
    }
 
 let newGlobalEnv () =
@@ -86,12 +88,12 @@ let rec valueStr (value:value) : string =
       in "("^elems_s^")"
 
 let localEnvStr (loc:local_env) : string =
-   let dumpEnv env =
-      Hashtbl.fold (fun name value state -> state^name^" = "^(valueStr value)^"\n" ) env ""
+   let dumpStringMap env =
+      StringMap.fold (fun name value state -> state^name^" = "^(valueStr value)^"\n" ) env ""
    in
-   let val_s = List.map dumpEnv loc.val_binds |> joinStrings "\n" in
-   let mem_s = dumpEnv loc.mem_binds in
-   let fun_s = Hashtbl.fold (fun name value state -> name::state ) loc.fun_bind [] |> joinStrings "," in
+   let val_s = List.map dumpStringMap loc.val_binds |> joinStrings "\n" in
+   let mem_s = dumpStringMap loc.mem_binds in
+   let fun_s = StringMap.fold (fun name value state -> name::state ) loc.fun_bind [] |> joinStrings "," in
    Printf.sprintf "= val =\n%s= mem =\n%s= fun =\n%s\n" val_s mem_s fun_s
 
 let getVarName (named_id:named_id) : string =
@@ -117,71 +119,65 @@ let declFunction (glob:global_env) (name:string) (body:parse_exp) : unit =
 
 let getFunctionEnv (loc:local_env) (name:string) : local_env =
    if name = "_" then default_env else
-   if Hashtbl.mem loc.fun_bind name then
-      Hashtbl.find loc.fun_bind name
+   if StringMap.mem name loc.fun_bind then
+      StringMap.find name loc.fun_bind
    else
       let env = newLocalEnv () in
-      let _ = Hashtbl.add loc.fun_bind name env in
+      let _ = StringMap.add name env loc.fun_bind in
       env
 
 let setFunctionEnv (loc:local_env) (name:string) (floc:local_env) : local_env =
    if name = "_" then loc else
-   let _ = Hashtbl.replace loc.fun_bind name floc in
-   loc
+   { loc with fun_bind = StringMap.add name floc loc.fun_bind }
 
-let clearLocal (loc:local_env) =
-   let _ = loc.val_binds <- [] in
-   loc
+let clearLocal (loc:local_env) : local_env =
+   { loc with val_binds = [] }
 
 
-let pushLocal (loc:local_env) =
-   let _ = loc.val_binds <- (Hashtbl.create 10)::loc.val_binds in
-   loc
+let pushLocal (loc:local_env) : local_env =
+   { loc with val_binds = (StringMap.empty)::loc.val_binds }
 
-let popLocal (loc:local_env) =
+let popLocal (loc:local_env) : local_env =
    match loc.val_binds with
    | [] -> loc
-   | _::t -> loc.val_binds <- t; loc
+   | _::t -> { loc with val_binds = t }
 
 let findValMemTable (loc:local_env) (name:string) =
    let rec loop locals =
       match locals with
       | [] ->
-         if Hashtbl.mem loc.mem_binds name then
-            loc.mem_binds
+         if StringMap.mem name loc.mem_binds then
+            loc.mem_binds,`MemTable
          else
             let _ = print_string (localEnvStr loc) in
             failwith ("Undeclared variable "^name)
       | h::t ->
-         if Hashtbl.mem h name then
-            h
+         if StringMap.mem name h then
+            h,`ValTable
          else loop t
    in loop loc.val_binds
 
 let getExpValueFromEnv (loc:local_env) (name:string) : value =
-   let table = findValMemTable loc name in
-   Hashtbl.find table name
+   let table,_ = findValMemTable loc name in
+   StringMap.find name table
 
 let setValMem (loc:local_env) (name:string)  (value:value) : local_env =
-   let table = findValMemTable loc name in
-   let _ = Hashtbl.replace table name value in
-   loc
+   match findValMemTable loc name with
+   | table,`ValTable -> { loc with val_binds = (StringMap.add name value table)::(List.tl loc.val_binds) }
+   | table,`MemTable -> { loc with mem_binds = StringMap.add name value table }
 
 let declVal (loc:local_env) (name:string) (value:value) : local_env =
    match loc.val_binds with
    | [] ->
-      let new_env = Hashtbl.create 100 in
-      let _ = Hashtbl.replace new_env name value in
-      let _ = loc.val_binds<-[new_env] in
-      loc
-   | h::_ ->
-      let _ = Hashtbl.replace h name value in
-      loc
+      let new_env = StringMap.add name value (StringMap.empty) in
+      { loc with val_binds = [new_env] }
+   | h::t ->
+      let new_env = StringMap.add name value h in
+      { loc with val_binds = new_env::t }
 
 let declMem (loc:local_env) (name:string) (init:value) : local_env =
-   if not (Hashtbl.mem loc.mem_binds name) then
-      let _ = Hashtbl.add loc.mem_binds name init in
-      loc
+   if not (StringMap.mem name loc.mem_binds) then
+      { loc with mem_binds = StringMap.add name init loc.mem_binds }
    else loc
 
 let isTrue (value:value) : bool =
