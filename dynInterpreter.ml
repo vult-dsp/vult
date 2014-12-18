@@ -222,7 +222,7 @@ and runExp (glob:global_env) (loc:local_env) (exp:parse_exp) : value * local_env
          runExp glob loc then_exp
       else
          runExp glob loc else_exp
-   | PCall(name_id,args,_) ->
+   | PCall(name_id,args,_,_) ->
       let name,ftype = TypesUtil.getFunctionTypeAndName name_id in
       let body = getFunctionBody glob ftype in
       let args_val,loc = runExpList glob loc args in

@@ -92,6 +92,12 @@ type named_id =
    | SimpleId of string * location
    | NamedId  of string * string * location * location
 
+(** This type is used to attach more information to the function calls *)
+type call_attribute =
+   | SimpleBinding (* Used by Passes.bindFunctionCalls to mark the function calls that have been bound *)
+
+type call_attributes = call_attribute list
+
 (** Parser syntax tree *)
 type parse_exp =
    | PUnit
@@ -100,7 +106,7 @@ type parse_exp =
    | PId    of named_id
    | PUnOp  of string    * parse_exp      * location
    | PBinOp of string    * parse_exp      * parse_exp * location
-   | PCall  of named_id  * parse_exp list * location
+   | PCall  of named_id  * parse_exp list * location * call_attributes
    | PIf    of parse_exp * parse_exp      * parse_exp
    | PGroup of parse_exp
    | PTuple of parse_exp list

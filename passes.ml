@@ -95,10 +95,10 @@ let makeSingleDeclaration : ('data,parse_exp) expander =
 let nameFunctionCalls : ('data,parse_exp) transformation =
    fun state exp ->
       match exp with
-      | PCall(SimpleId(name,loc),args,floc) ->
+      | PCall(SimpleId(name,loc),args,floc,attr) ->
          let inst = "_inst"^(string_of_int state.counter) in
          let new_state = {state with counter = state.counter+1} in
-         new_state,PCall(NamedId(inst,name,loc,loc),args,floc)
+         new_state,PCall(NamedId(inst,name,loc,loc),args,floc,attr)
       | _ -> state,exp
 
 (* ======================= *)
@@ -108,9 +108,9 @@ let operatorsToFunctionCalls : ('data,parse_exp) transformation =
    fun state exp ->
       match exp with
       | PUnOp(op,e,loc) ->
-         state,PCall(NamedId("_",op,loc,loc),[e],loc)
+         state,PCall(NamedId("_",op,loc,loc),[e],loc,[])
       | PBinOp(op,e1,e2,loc) ->
-         state,PCall(NamedId("_",op,loc,loc),[e1;e2],loc)
+         state,PCall(NamedId("_",op,loc,loc),[e1;e2],loc,[])
       | _ -> state,exp
 
 (* ======================= *)
@@ -139,26 +139,28 @@ let simplifyTupleAssign : ('data,parse_exp) expander =
 
 (* ======================= *)
 
+(** True if the attributes contains SimpleBinding *)
+let isSimpleBinding attr = List.exists (fun a->a=SimpleBinding) attr
+
 (** Creates bindings for all function calls in an expression *)
 let bindFunctionCallsInExp : (int * parse_exp list,parse_exp) transformation =
    fun data exp ->
       match exp with
-      | PCall(name,args,loc) ->
+      | PCall(name,args,loc,attr) when not (isSimpleBinding attr) ->
          let count,stmts = data in
          let tmp_var = SimpleId("_tmp"^(string_of_int count),default_loc) in
          let decl = StmtVal([ValNoBind(tmp_var,None)]) in
-         let bind_stmt = StmtBind(PId(tmp_var),exp) in
+         let bind_stmt = StmtBind(PId(tmp_var),PCall(name,args,loc,SimpleBinding::attr)) in
          (count+1,[bind_stmt;decl]@stmts),PId(tmp_var)
       | _ -> data,exp
 
 (** Binds all function calls to a variable. e.g. foo(bar(x)) -> tmp1 = bar(x); tmp2 = foo(tmp1); tmp2; *)
-
 let bindFunctionCalls : ('data,parse_exp) expander  =
    fun state stmt ->
       match stmt with
-      | StmtBind(lhs,PCall(name,args,loc)) ->
+      | StmtBind(lhs,PCall(name,args,loc,attr)) ->
          let (count,stmts),new_args = TypesUtil.traverseBottomExpList bindFunctionCallsInExp (state.counter,[]) args in
-         {state with counter = count},(List.rev (StmtBind(lhs,PCall(name,new_args,loc))::stmts))
+         {state with counter = count},(List.rev (StmtBind(lhs,PCall(name,new_args,loc,attr))::stmts))
       | StmtBind(lhs,rhs) ->
          let (count,stmts),new_rhs = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.counter,[]) rhs in
          {state with counter = count},(List.rev (StmtBind(lhs,new_rhs)::stmts))
@@ -190,7 +192,7 @@ let applyTransformations (results:parser_results) =
       |+> TypesUtil.traverseTopExpList (nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)
       |+> TypesUtil.expandStmtList separateBindAndDeclaration
       |+> TypesUtil.expandStmtList makeSingleDeclaration
-      (*|+> TypesUtil.expandStmtList bindFunctionCalls*)
+      |+> TypesUtil.expandStmtList bindFunctionCalls
       |+> TypesUtil.expandStmtList simplifyTupleAssign
       |> snd
    in

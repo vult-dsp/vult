@@ -110,7 +110,7 @@ let expressionFoldEither : ('data, 'error, 'result) expfold -> 'data -> parse_ex
                | (Left _ as err, _) -> err
                | (_, (Left _ as err)) -> err
             end
-         | PCall (n,es,l) -> begin match eitherTryMap go es with
+         | PCall (n,es,l,_) -> begin match eitherTryMap go es with
                | Right rs -> fold.vCall data n rs l
                | Left _ as err -> err
             end
@@ -154,9 +154,9 @@ let rec traverseBottomExp (f: ('data, parse_exp) traverser) (state:'data) (exp:p
    | PTuple(expl) ->
       let state1,nexpl = traverseBottomExpList f state expl in
       f state1 (PTuple(nexpl))
-   | PCall(name,expl,loc) ->
+   | PCall(name,expl,loc,attr) ->
       let state1,nexpl = traverseBottomExpList f state expl in
-      f state1 (PCall(name,nexpl,loc))
+      f state1 (PCall(name,nexpl,loc,attr))
    | PIf(e1,e2,e3) ->
       let state1,ne1 = traverseBottomExp f state e1 in
       let state2,ne2 = traverseBottomExp f state1 e2 in
@@ -240,9 +240,9 @@ let rec traverseTopExp (f: ('data, parse_exp) traverser) (state0:'data) (exp:par
    | PTuple(expl) ->
       let state1,nexpl = traverseTopExpList f state expl in
       state1,PTuple(nexpl)
-   | PCall(name,expl,loc) ->
+   | PCall(name,expl,loc,attr) ->
       let state1,nexpl = traverseTopExpList f state expl in
-      state1,PCall(name,nexpl,loc)
+      state1,PCall(name,nexpl,loc,attr)
    | PIf(e1,e2,e3) ->
       let state1,ne1 = traverseTopExp f state e1 in
       let state2,ne2 = traverseTopExp f state1 e2 in
@@ -324,7 +324,7 @@ let rec foldTopExp (f: ('data, parse_exp) folder) (state0:'data) (exp:parse_exp)
    | PTuple(expl) ->
       let state1 = foldTopExpList f state expl in
       state1
-   | PCall(name,expl,loc) ->
+   | PCall(name,expl,_,_) ->
       let state1 = foldTopExpList f state expl in
       state1
    | PIf(e1,e2,e3) ->
@@ -424,9 +424,9 @@ let rec expandStmt (f: ('data, parse_exp) expander) (state:'data) (stmt:parse_ex
          let state1,ne1 = expandStmt f state e1 in
          let state2,ne2 = expandStmt f state1 e2 in
          f state2 (PBinOp(op,makeSingleStmt ne1,makeSingleStmt ne2,loc))
-      | PCall(name,args,loc) ->
+      | PCall(name,args,loc,attr) ->
          let state1,nargs = expandStmtList f state args in
-         f state1 (PCall(name,nargs,loc))
+         f state1 (PCall(name,nargs,loc,attr))
       | PIf(cond,then_exp,else_exp) ->
          let state1,ncond = expandStmt f state cond in
          let state2,nthen_exp = expandStmt f state1 then_exp in

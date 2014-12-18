@@ -222,7 +222,7 @@ and functionCall (buffer:parse_exp lexer_stream) (token:parse_exp token) (id:nam
       | _ -> expressionList buffer
    in
    let _ = consume buffer RPAREN in
-   { token with contents = PCall(id,args,token.loc) }
+   { token with contents = PCall(id,args,token.loc,[]) }
 
 (** <unaryOp> := OP <expression> *)
 and unaryOp (buffer:parse_exp lexer_stream) (token:parse_exp token) : parse_exp token =
