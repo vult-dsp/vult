@@ -387,57 +387,57 @@ and foldTopValBindExpList f state expl =
       state expl
 
 let rec expandStmt (f: ('data, parse_exp) expander) (state:'data) (stmt:parse_exp) : 'data * parse_exp list =
-      let makeSingleStmt l = match l with [] -> StmtEmpty | [h] -> h | _ -> StmtSequence(l) in
-      match stmt with
-      | StmtVal(_)
-      | StmtMem(_)
-      | StmtEmpty -> f state stmt
-      | StmtBind(e1,e2) ->
-         let state1,ne2 = expandStmt f state e2 in
-         f state1 (StmtBind(e1,makeSingleStmt ne2))
-      | StmtReturn(e) ->
-         let state1,ne = expandStmt f state e in
-         f state1 (StmtReturn(makeSingleStmt ne))
-      | StmtFun(name,args,stmts) ->
-         let state1,nstmts = expandStmtList f state stmts in
-         f state1 (StmtFun(name,args,nstmts))
-      | StmtIf(cond,then_stmts,None) ->
-         let state1,nthen_stmts = expandStmtList f state then_stmts in
-         f state1 (StmtIf(cond,nthen_stmts,None))
-      | StmtIf(cond,then_stmts,Some(else_stmts)) ->
-         let state1,nthen_stmts = expandStmtList f state then_stmts in
-         let state2,nelse_stmts = expandStmtList f state1 else_stmts in
-         f state2 (StmtIf(cond,nthen_stmts,Some(nelse_stmts)))
-      | StmtSequence(el) ->
-         let state1,nel = expandStmtList f state el in
-         f state1 (StmtSequence(nel))
+   let makeSingleStmt l = match l with [] -> StmtEmpty | [h] -> h | _ -> StmtSequence(l) in
+   match stmt with
+   | StmtVal(_)
+   | StmtMem(_)
+   | StmtEmpty -> f state stmt
+   | StmtBind(e1,e2) ->
+      let state1,ne2 = expandStmt f state e2 in
+      f state1 (StmtBind(e1,makeSingleStmt ne2))
+   | StmtReturn(e) ->
+      let state1,ne = expandStmt f state e in
+      f state1 (StmtReturn(makeSingleStmt ne))
+   | StmtFun(name,args,stmts) ->
+      let state1,nstmts = expandStmtList f state stmts in
+      f state1 (StmtFun(name,args,nstmts))
+   | StmtIf(cond,then_stmts,None) ->
+      let state1,nthen_stmts = expandStmtList f state then_stmts in
+      f state1 (StmtIf(cond,nthen_stmts,None))
+   | StmtIf(cond,then_stmts,Some(else_stmts)) ->
+      let state1,nthen_stmts = expandStmtList f state then_stmts in
+      let state2,nelse_stmts = expandStmtList f state1 else_stmts in
+      f state2 (StmtIf(cond,nthen_stmts,Some(nelse_stmts)))
+   | StmtSequence(el) ->
+      let state1,nel = expandStmtList f state el in
+      f state1 (StmtSequence(nel))
 
-      | PUnit
-      | PInt(_,_)
-      | PReal(_,_)
-      | PEmpty
-      | PId(_) -> f state stmt
-      | PUnOp(op,e,loc) ->
-         let state1,ne = expandStmt f state e in
-         f state1 (PUnOp(op,makeSingleStmt ne,loc))
-      | PBinOp(op,e1,e2,loc) ->
-         let state1,ne1 = expandStmt f state e1 in
-         let state2,ne2 = expandStmt f state1 e2 in
-         f state2 (PBinOp(op,makeSingleStmt ne1,makeSingleStmt ne2,loc))
-      | PCall(name,args,loc,attr) ->
-         let state1,nargs = expandStmtList f state args in
-         f state1 (PCall(name,nargs,loc,attr))
-      | PIf(cond,then_exp,else_exp) ->
-         let state1,ncond = expandStmt f state cond in
-         let state2,nthen_exp = expandStmt f state1 then_exp in
-         let state3,nelse_exp = expandStmt f state2 else_exp in
-         f state3 (PIf(makeSingleStmt ncond,makeSingleStmt nthen_exp, makeSingleStmt nelse_exp))
-      | PGroup(e) ->
-         let state1,ne = expandStmt f state e in
-         f state1 (PGroup(makeSingleStmt ne))
-      | PTuple(el) ->
-         let state1,nel = expandStmtList f state el in
-         f state1 (PTuple(nel))
+   | PUnit
+   | PInt(_,_)
+   | PReal(_,_)
+   | PEmpty
+   | PId(_) -> f state stmt
+   | PUnOp(op,e,loc) ->
+      let state1,ne = expandStmt f state e in
+      f state1 (PUnOp(op,makeSingleStmt ne,loc))
+   | PBinOp(op,e1,e2,loc) ->
+      let state1,ne1 = expandStmt f state e1 in
+      let state2,ne2 = expandStmt f state1 e2 in
+      f state2 (PBinOp(op,makeSingleStmt ne1,makeSingleStmt ne2,loc))
+   | PCall(name,args,loc,attr) ->
+      let state1,nargs = expandStmtList f state args in
+      f state1 (PCall(name,nargs,loc,attr))
+   | PIf(cond,then_exp,else_exp) ->
+      let state1,ncond = expandStmt f state cond in
+      let state2,nthen_exp = expandStmt f state1 then_exp in
+      let state3,nelse_exp = expandStmt f state2 else_exp in
+      f state3 (PIf(makeSingleStmt ncond,makeSingleStmt nthen_exp, makeSingleStmt nelse_exp))
+   | PGroup(e) ->
+      let state1,ne = expandStmt f state e in
+      f state1 (PGroup(makeSingleStmt ne))
+   | PTuple(el) ->
+      let state1,nel = expandStmtList f state el in
+      f state1 (PTuple(nel))
 
 and expandStmtList (f: ('data, parse_exp) expander) (state:'data) (stmts:parse_exp list) : 'data * parse_exp list =
    let state2,acc =

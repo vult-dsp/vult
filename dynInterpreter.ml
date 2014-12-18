@@ -128,7 +128,7 @@ let getFunctionEnv (loc:local_env) (name:string) : local_env =
 
 let setFunctionEnv (loc:local_env) (name:string) (floc:local_env) : local_env =
    if name = "_" then loc else
-   { loc with fun_bind = StringMap.add name floc loc.fun_bind }
+      { loc with fun_bind = StringMap.add name floc loc.fun_bind }
 
 let clearLocal (loc:local_env) : local_env =
    { loc with val_binds = [] }
@@ -234,7 +234,7 @@ and runExp (glob:global_env) (loc:local_env) (exp:parse_exp) : value * local_env
    | PEmpty -> failwith "There should not be Empty expressions when calling the intepreter"
    | PBinOp(_,_,_,_)
    | PUnOp(_,_,_) -> failwith "There should not be operators when calling the intepreter"
-      | StmtVal([ValNoBind(name,opt_init)]) ->
+   | StmtVal([ValNoBind(name,opt_init)]) ->
       let vname = getVarName name in
       let init,loc = apply_default (runExp glob loc) opt_init (VNum(0.0),loc) in
       VUnit,declVal loc vname init

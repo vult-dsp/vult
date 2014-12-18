@@ -26,14 +26,14 @@ open Types
 open ParserVult
 
 let parseText s =
-  let p = Driver.parseStringRun (Js.to_string s) in
-  match p.iresult with
-  | `Ok(result) ->
-  	"Results of running the program:\n"^result |> Js.string
-  | `Error(_) ->
-    let error_strings:string list = Errors.reportErrors p.iresult p.lines in
-    let result =List.fold_left (fun s a -> s^"\n"^a) "" error_strings in
-    "Errors in the program:\n"^result |> Js.string
+   let p = Driver.parseStringRun (Js.to_string s) in
+   match p.iresult with
+   | `Ok(result) ->
+      "Results of running the program:\n"^result |> Js.string
+   | `Error(_) ->
+      let error_strings:string list = Errors.reportErrors p.iresult p.lines in
+      let result =List.fold_left (fun s a -> s^"\n"^a) "" error_strings in
+      "Errors in the program:\n"^result |> Js.string
 
 ;;
 

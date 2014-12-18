@@ -170,17 +170,17 @@ let parser_test =
 
 let runFactTest context =
    test_string "120."
-   (run_program "fun fact(n){ return if n==0 then 1 else n*fact(n-1); } return fact(5);")
+      (run_program "fun fact(n){ return if n==0 then 1 else n*fact(n-1); } return fact(5);")
 ;;
 
 let runSwapTest context =
    test_string "(2.,1.)"
-   (run_program "val x=1; val y=2; x,y=y,x; return x,y;")
+      (run_program "val x=1; val y=2; x,y=y,x; return x,y;")
 ;;
 
 let runMemTest context =
    test_string "(1.,2.,1.,2.)"
-   (run_program "fun inc() { mem x; x = x+1; return x; }
+      (run_program "fun inc() { mem x; x = x+1; return x; }
                  fun reset() { mem x; x = 0; }
                  val a = i:inc();
                  val b = i:inc();
