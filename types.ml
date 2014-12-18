@@ -112,6 +112,7 @@ type parse_exp =
    | StmtIf     of parse_exp * parse_exp list * (parse_exp list) option
    | StmtFun    of named_id  * val_bind list * parse_exp list
    | StmtBind   of parse_exp * parse_exp
+   | StmtSequence of parse_exp list
    | StmtEmpty
 
 and val_bind =

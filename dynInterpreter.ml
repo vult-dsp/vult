@@ -281,6 +281,8 @@ and runExp (glob:global_env) (loc:local_env) (exp:parse_exp) : value * local_env
       else
          runStmtList glob loc else_stmts
    | StmtEmpty -> VUnit,loc
+   | StmtSequence(stmts) ->
+      runStmtList glob loc stmts
 
 and runExpList (glob:global_env) (loc:local_env) (expl:parse_exp list) : value list * local_env =
    let loc,acc = List.fold_left (fun (s,acc) a -> let v,ns = runExp glob s a in ns,v::acc) (loc,[]) expl in

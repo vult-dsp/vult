@@ -129,6 +129,7 @@ let expressionFoldEither : ('data, 'error, 'result) expfold -> 'data -> parse_ex
                | Left _ as err -> err
             end
          | PEmpty -> fold.vEmpty data
+         | _ -> failwith "expressionFoldEither: does not support statements yet"
       in
       go exp
 
@@ -188,6 +189,9 @@ let rec traverseBottomExp (f: ('data, parse_exp) traverser) (state:'data) (exp:p
       let state2,nthen_stmts = traverseBottomExpList f state1 then_stmts in
       let state3,nelse_stmts = traverseBottomExpList f state2 else_stmts in
       f state3 (StmtIf(ncond,nthen_stmts,Some(nelse_stmts)))
+   | StmtSequence(stmts) ->
+      let state1,nstmts = traverseBottomExpList f state stmts in
+      state1,StmtSequence(nstmts)
 
 (** Traverses lists expressions bottom-up. The expressions are traversed right to left *)
 and traverseBottomExpList (f: ('data, parse_exp) traverser) (state:'data) (expl:parse_exp list) : 'data * parse_exp list =
@@ -270,6 +274,9 @@ let rec traverseTopExp (f: ('data, parse_exp) traverser) (state0:'data) (exp:par
       let state2,nthen_stmts = traverseTopExpList f state1 then_stmts in
       let state3,nelse_stmts = traverseTopExpList f state2 else_stmts in
       state3,StmtIf(ncond,nthen_stmts,Some(nelse_stmts))
+   | StmtSequence(stmts) ->
+      let state1,nstmts = traverseTopExpList f state stmts in
+      state1,StmtSequence(nstmts)
 
 (** Traverses lists expressions top-down. The expressions are traversed left to right *)
 and traverseTopExpList (f: ('data, parse_exp) traverser) (state:'data) (expl:parse_exp list) : 'data * parse_exp list =
@@ -351,6 +358,9 @@ let rec foldTopExp (f: ('data, parse_exp) folder) (state0:'data) (exp:parse_exp)
       let state2 = foldTopExpList f state1 then_stmts in
       let state3 = foldTopExpList f state2 else_stmts in
       state3
+   | StmtSequence(stmts) ->
+      let state1 = foldTopExpList f state stmts in
+      state1
 
 and foldTopExpList f state expl =
    List.fold_left
@@ -376,28 +386,58 @@ and foldTopValBindExpList f state expl =
           state1)
       state expl
 
-let rec expandStmt (f: ('data, parse_exp) expander) (state0:'data) (stmt:parse_exp) : 'data * parse_exp list =
-   let state,nstmt = f state0 stmt in
-   let inner_fold (state,acc) stmt =
+let rec expandStmt (f: ('data, parse_exp) expander) (state:'data) (stmt:parse_exp) : 'data * parse_exp list =
+      let makeSingleStmt l = match l with [] -> StmtEmpty | [h] -> h | _ -> StmtSequence(l) in
       match stmt with
       | StmtVal(_)
       | StmtMem(_)
-      | StmtReturn(_)
-      | StmtBind(_)
-      | StmtEmpty -> state,stmt::acc
+      | StmtEmpty -> f state stmt
+      | StmtBind(e1,e2) ->
+         let state1,ne2 = expandStmt f state e2 in
+         f state1 (StmtBind(e1,makeSingleStmt ne2))
+      | StmtReturn(e) ->
+         let state1,ne = expandStmt f state e in
+         f state1 (StmtReturn(makeSingleStmt ne))
       | StmtFun(name,args,stmts) ->
          let state1,nstmts = expandStmtList f state stmts in
-         state1,StmtFun(name,args,nstmts)::acc
+         f state1 (StmtFun(name,args,nstmts))
       | StmtIf(cond,then_stmts,None) ->
          let state1,nthen_stmts = expandStmtList f state then_stmts in
-         state1,StmtIf(cond,nthen_stmts,None)::acc
+         f state1 (StmtIf(cond,nthen_stmts,None))
       | StmtIf(cond,then_stmts,Some(else_stmts)) ->
          let state1,nthen_stmts = expandStmtList f state then_stmts in
          let state2,nelse_stmts = expandStmtList f state1 else_stmts in
-         state2,StmtIf(cond,nthen_stmts,Some(nelse_stmts))::acc
-   in
-   let state1,acc = List.fold_left inner_fold (state,[]) nstmt in
-   state1,List.rev acc
+         f state2 (StmtIf(cond,nthen_stmts,Some(nelse_stmts)))
+      | StmtSequence(el) ->
+         let state1,nel = expandStmtList f state el in
+         f state1 (StmtSequence(nel))
+
+      | PUnit
+      | PInt(_,_)
+      | PReal(_,_)
+      | PEmpty
+      | PId(_) -> f state stmt
+      | PUnOp(op,e,loc) ->
+         let state1,ne = expandStmt f state e in
+         f state1 (PUnOp(op,makeSingleStmt ne,loc))
+      | PBinOp(op,e1,e2,loc) ->
+         let state1,ne1 = expandStmt f state e1 in
+         let state2,ne2 = expandStmt f state1 e2 in
+         f state2 (PBinOp(op,makeSingleStmt ne1,makeSingleStmt ne2,loc))
+      | PCall(name,args,loc) ->
+         let state1,nargs = expandStmtList f state args in
+         f state1 (PCall(name,nargs,loc))
+      | PIf(cond,then_exp,else_exp) ->
+         let state1,ncond = expandStmt f state cond in
+         let state2,nthen_exp = expandStmt f state1 then_exp in
+         let state3,nelse_exp = expandStmt f state2 else_exp in
+         f state3 (PIf(makeSingleStmt ncond,makeSingleStmt nthen_exp, makeSingleStmt nelse_exp))
+      | PGroup(e) ->
+         let state1,ne = expandStmt f state e in
+         f state1 (PGroup(makeSingleStmt ne))
+      | PTuple(el) ->
+         let state1,nel = expandStmtList f state el in
+         f state1 (PTuple(nel))
 
 and expandStmtList (f: ('data, parse_exp) expander) (state:'data) (stmts:parse_exp list) : 'data * parse_exp list =
    let state2,acc =

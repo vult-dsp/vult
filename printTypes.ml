@@ -168,6 +168,8 @@ let rec expressionBuff buffer exp =
       expressionBuff buffer e2;
       append buffer ";"
    | StmtEmpty -> ()
+   | StmtSequence(stmts) ->
+      expressionListBuff buffer false stmts
 
 (** Adds to the print buffer an expression list *)
 and expressionListBuff buffer exp_stmt expl =

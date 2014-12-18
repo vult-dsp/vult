@@ -361,6 +361,7 @@ and checkStmt : environment -> parse_exp -> (errors,environment) either =
          end
       | StmtBind _ -> Left [SimpleError("Left hand side of bind is not a variable.")]
       | StmtEmpty -> Right env
+      | _ -> failwith "There should not be expressions here"
 
 let checkStmts : environment -> parse_exp list -> errors option =
    fun env stmts ->
