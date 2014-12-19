@@ -31,6 +31,14 @@ let apply_default (f:'a -> 'b) (v:'a option) (def:'b) =
    | Some(x) -> f x
    | _ -> def
 
+(** Joins a list of strings *)
+let rec joinStrings sep elems =
+   match elems with
+   | [] -> ""
+   | [h] -> h
+   | h::t -> h^sep^(joinStrings sep t)
+
+(** Return values of the interpreter *)
 type value =
    | VUnit
    | VString  of string
@@ -40,18 +48,21 @@ type value =
 
 module StringMap = Map.Make(String)
 
+(** Used to define types of functions: builtin and declared by the user *)
 type function_body =
    | Builtin  of (value list -> value)
    | Declared of parse_exp
 
+(** Environment of the interpreter used to store all bindings and declarations *)
 type local_env =
    {
       val_binds : (value StringMap.t) list;
       mem_binds : value StringMap.t;
       fun_bind  : local_env StringMap.t;
-      fun_decl : function_body StringMap.t;
+      fun_decl  : function_body StringMap.t;
    }
 
+(** Creates an environment. It optionally receives the function declarations.  *)
 let newLocalEnv (fun_decl:(function_body StringMap.t) option) =
    let functions =
       match fun_decl with
@@ -65,12 +76,7 @@ let newLocalEnv (fun_decl:(function_body StringMap.t) option) =
       fun_decl  = functions;
    }
 
-let rec joinStrings sep elems =
-   match elems with
-   | [] -> ""
-   | [h] -> h
-   | h::t -> h^sep^(joinStrings sep t)
-
+(** Converts a value to string *)
 let rec valueStr (value:value) : string =
    match value with
    | VUnit      -> "()"
@@ -84,6 +90,7 @@ let rec valueStr (value:value) : string =
                     |> joinStrings ","
       in "("^elems_s^")"
 
+(** Prints the current state of the environment *)
 let localEnvStr (loc:local_env) : string =
    let dumpStringMap env =
       StringMap.fold (fun name value state -> state^name^" = "^(valueStr value)^"\n" ) env ""
@@ -93,25 +100,30 @@ let localEnvStr (loc:local_env) : string =
    let fun_s = StringMap.fold (fun name value state -> name::state ) loc.fun_bind [] |> joinStrings "," in
    Printf.sprintf "= val =\n%s= mem =\n%s= fun =\n%s\n" val_s mem_s fun_s
 
+(** Returns the name in a named_id *)
 let getVarName (named_id:named_id) : string =
    match named_id with
    | SimpleId(name,_) -> name
    | NamedId (name,_,_,_) -> name
 
+(** Returns the name in an id expression *)
 let getExpName (exp:parse_exp) : string =
    match exp with
    | PId(name) -> getVarName name
    | _ -> failwith "This expression should be an id"
 
+(** Returns the statements of a declared function *)
 let getFunctionBody (loc:local_env) (name:string) : function_body =
    if StringMap.mem name loc.fun_decl then
       StringMap.find name loc.fun_decl
    else
       failwith ("Unknown function "^name)
 
+(** Adds a declared function to the environment *)
 let declFunction (loc:local_env) (name:string) (body:function_body) : local_env =
    { loc with fun_decl = StringMap.add name body loc.fun_decl }
 
+(** Gets the local environment for a function call *)
 let getFunctionEnv (loc:local_env) (name:string) : local_env =
    if name = "_" then newLocalEnv (Some(loc.fun_decl)) else
    if StringMap.mem name loc.fun_bind then
@@ -121,22 +133,26 @@ let getFunctionEnv (loc:local_env) (name:string) : local_env =
       let _ = StringMap.add name env loc.fun_bind in
       env
 
+(** Adds a local environment for a function call *)
 let setFunctionEnv (loc:local_env) (name:string) (floc:local_env) : local_env =
    if name = "_" then loc else
       { loc with fun_bind = StringMap.add name floc loc.fun_bind }
 
+(** Clears a local environment *)
 let clearLocal (loc:local_env) : local_env =
    { loc with val_binds = [] }
 
-
+(** Pushes a new local variable environment *)
 let pushLocal (loc:local_env) : local_env =
    { loc with val_binds = (StringMap.empty)::loc.val_binds }
 
+(** Pops the local variable environment *)
 let popLocal (loc:local_env) : local_env =
    match loc.val_binds with
    | [] -> loc
    | _::t -> { loc with val_binds = t }
 
+(** Returns the table containing the given variable and also returns which kind of table contains it *)
 let findValMemTable (loc:local_env) (name:string) =
    let rec loop locals =
       match locals with
@@ -152,15 +168,18 @@ let findValMemTable (loc:local_env) (name:string) =
          else loop t
    in loop loc.val_binds
 
+(** Returns the value of a given variable *)
 let getExpValueFromEnv (loc:local_env) (name:string) : value =
    let table,_ = findValMemTable loc name in
    StringMap.find name table
 
+(** Sets the value of a given variable *)
 let setValMem (loc:local_env) (name:string)  (value:value) : local_env =
    match findValMemTable loc name with
    | table,`ValTable -> { loc with val_binds = (StringMap.add name value table)::(List.tl loc.val_binds) }
    | table,`MemTable -> { loc with mem_binds = StringMap.add name value table }
 
+(** Declares a variable name *)
 let declVal (loc:local_env) (name:string) (value:value) : local_env =
    match loc.val_binds with
    | [] ->
@@ -170,11 +189,13 @@ let declVal (loc:local_env) (name:string) (value:value) : local_env =
       let new_env = StringMap.add name value h in
       { loc with val_binds = new_env::t }
 
+(** Declares a memory name *)
 let declMem (loc:local_env) (name:string) (init:value) : local_env =
    if not (StringMap.mem name loc.mem_binds) then
       { loc with mem_binds = StringMap.add name init loc.mem_binds }
    else loc
 
+(** Returns true if the value is zero *)
 let isTrue (value:value) : bool =
    match value with
    | VNum(0.0) -> false
@@ -182,6 +203,7 @@ let isTrue (value:value) : bool =
    | VBool(v) -> v
    | _ -> true
 
+(** Returns all the input names from the function declaration *)
 let rec getInputsNames (inputs:val_bind list) : string list =
    match inputs with
    | [] -> []
@@ -189,6 +211,7 @@ let rec getInputsNames (inputs:val_bind list) : string list =
       (getVarName name)::(getInputsNames t)
    | _ -> failwith "Invalid function declaration"
 
+(** Evaluates a function call *)
 let rec evalFun (loc:local_env) (body:function_body) (args:value list) : value * local_env =
    match body with
    | Declared(StmtFun(_,arg_names,stmts)) ->
@@ -199,6 +222,7 @@ let rec evalFun (loc:local_env) (body:function_body) (args:value list) : value *
       f args,loc
    | _ -> failwith "Invalid function body"
 
+(** Evaluates an expression or statement *)
 and runExp (loc:local_env) (exp:parse_exp) : value * local_env =
    match exp with
    | PUnit      -> VUnit,loc
@@ -279,9 +303,12 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env =
    | StmtSequence(stmts) ->
       runStmtList loc stmts
 
+(** Evaluates a list of expressions *)
 and runExpList (loc:local_env) (expl:parse_exp list) : value list * local_env =
    let loc,acc = List.fold_left (fun (s,acc) a -> let v,ns = runExp s a in ns,v::acc) (loc,[]) expl in
    List.rev acc,loc
+
+(** Evaluates a list of statements *)
 and runStmtList (loc:local_env) (expl:parse_exp list) : value * local_env =
    let loc = pushLocal loc in
    let rec loop loc stmts =
@@ -299,26 +326,31 @@ and runStmtList (loc:local_env) (expl:parse_exp list) : value * local_env =
    let loc = popLocal loc in
    ret,loc
 
+(** Used to create functions that take one number and return one number *)
 let opNumNum (op:float->float) (args:value list) =
    match args with
    | [VNum(v1)] -> VNum(op v1)
    | _ -> failwith "Invalid arguments"
 
+(** Used to create functions that take two numbers and return one number *)
 let opNumNumNum (op:float->float->float) (args:value list) =
    match args with
    | [VNum(v1); VNum(v2)] -> VNum(op v1 v2)
    | _ -> failwith "Invalid arguments"
 
+(** Used to create functions that take two numbers and return one boolean *)
 let opNumNumBool (op:float->float->bool) (args:value list) =
    match args with
    | [VNum(v1); VNum(v2)] -> VBool(op v1 v2)
    | _ -> failwith "Invalid arguments"
 
+(** Used to create functions that take two booleans and return one boolean *)
 let opBoolBoolBool (op:bool->bool->bool) (args:value list) =
    match args with
    | [VBool(v1); VBool(v2)] -> VBool(op v1 v2)
    | _ -> failwith "Invalid arguments"
 
+(** Adds all the builtin functions to the environment *)
 let addBuiltinFunctions (loc:local_env) : local_env =
    let plus = opNumNumNum (+.) in
    let mult = opNumNumNum ( *. ) in
@@ -366,6 +398,7 @@ let addBuiltinFunctions (loc:local_env) : local_env =
    ]
    |> List.fold_left (fun env (a,b) -> declFunction env a b) loc
 
+(** Main function that takes a parse program and runs it*)
 let interpret (results:parser_results) : interpreter_results =
    let loc = newLocalEnv None |> addBuiltinFunctions in
    try
