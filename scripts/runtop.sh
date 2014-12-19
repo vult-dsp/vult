@@ -1,3 +1,4 @@
+#!/bin/bash
 ocamlbuild vultc.byte
 echo "\
 #load \"printTypes.cmo\";;\

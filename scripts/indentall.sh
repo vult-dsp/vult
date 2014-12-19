@@ -1,3 +1,4 @@
+#!/bin/bash
 for file in *.ml
 do
   ocp-indent $file > $file.out
