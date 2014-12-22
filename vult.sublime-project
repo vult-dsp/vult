@@ -1,0 +1,21 @@
+{
+	"folders":
+	[
+		{
+			"file_exclude_patterns":
+			[
+				"*.byte",
+				"*.native",
+				"_build/*",
+				"*.d.byte",
+				"*.top"
+			],
+			"folder_exclude_patterns":
+			[
+				"_build"
+			],
+			"follow_symlinks": true,
+			"path": "."
+		}
+	]
+}
