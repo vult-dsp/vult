@@ -8,3 +8,4 @@ node/node_modules/*
 node/public/javascripts/vult_node.js
 vult_node.js
 *.docdir
+/vult.sublime-workspace
