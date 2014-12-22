@@ -70,15 +70,6 @@ let append buffer s =
 let contents buffer =
    Buffer.contents buffer.buffer
 
-(** Adds to the print buffer a namedId *)
-let namedIdBuff buffer id =
-   match id with
-   | SimpleId(id1,_) -> append buffer id1
-   | NamedId(id1,id2,_,_) ->
-      append buffer id1;
-      append buffer ":";
-      append buffer id2
-
 (** Function for printing list of elements *)
 let rec printList buffer f sep l =
    match l with
@@ -88,6 +79,15 @@ let rec printList buffer f sep l =
       f buffer h;
       append buffer sep;
       printList buffer f sep t
+
+(** Adds to the print buffer a namedId *)
+let namedIdBuff buffer id =
+   match id with
+   | SimpleId(id1,_) -> append buffer id1
+   | NamedId(id1,id2,_,_) ->
+      append buffer id1;
+      append buffer ":";
+      append buffer id2
 
 (** Adds to the print buffer an expression *)
 let rec expressionBuff buffer exp =
@@ -156,7 +156,7 @@ let rec expressionBuff buffer exp =
       append buffer "fun ";
       namedIdBuff buffer name;
       append buffer "(";
-      valInitBuffList buffer args;
+      printList buffer namedIdBuff "," args;
       append buffer ") ";
       expressionListBuff buffer false body
    | StmtBind(PEmpty,e) ->

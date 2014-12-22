@@ -45,7 +45,7 @@ type vultFunction =
    {
       functionname : string;
       returntype   : string option;
-      inputs       : Types.val_bind list;
+      inputs       : named_id list;
       body         : parse_exp list;
    }
 
@@ -371,13 +371,10 @@ let checkStmts : environment -> parse_exp list -> errors option =
 
 let checkFunction : environment -> vultFunction -> errors option =
    fun env func ->
-      match eitherFold_left checkRegularValBind env func.inputs with
-      | Left errs -> Some (SimpleError("In function input declarations of function " ^ func.functionname ^ ".")::errs)
-      | Right env ->
-         begin match checkStmts env func.body with
-            | Some errs -> Some (SimpleError("In function " ^ func.functionname ^ ".")::errs)
-            | None -> None
-         end
+      match checkStmts env func.body with
+      | Some errs -> Some (SimpleError("In function " ^ func.functionname ^ ".")::errs)
+      | None -> None
+
 
 let insertIfFunction : functionBindings -> parse_exp  -> (errors,functionBindings) either =
    fun funcs stmt ->

@@ -203,19 +203,11 @@ let isTrue (value:value) : bool =
    | VBool(v) -> v
    | _ -> true
 
-(** Returns all the input names from the function declaration *)
-let rec getInputsNames (inputs:val_bind list) : string list =
-   match inputs with
-   | [] -> []
-   | ValNoBind(name,_)::t ->
-      (getVarName name)::(getInputsNames t)
-   | _ -> failwith "Invalid function declaration"
-
 (** Evaluates a function call *)
 let rec evalFun (loc:local_env) (body:function_body) (args:value list) : value * local_env =
    match body with
    | Declared(StmtFun(_,arg_names,stmts)) ->
-      let inputs = getInputsNames arg_names in
+      let inputs = List.map getVarName arg_names in
       let loc = List.fold_left2 (fun s n v -> declVal s n v) loc inputs args in
       runStmtList loc stmts
    | Builtin(f) ->

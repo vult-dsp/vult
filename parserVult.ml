@@ -266,6 +266,20 @@ let namedId (buffer:parse_exp lexer_stream) : named_id =
    let _     = skip buffer in
    namedIdToken buffer token
 
+(** namedIdList := namedId [',' namedId ] *)
+let rec namedIdList (buffer:parse_exp lexer_stream) : named_id list =
+   match peekKind buffer with
+   | ID ->
+      let first = namedId buffer in
+      begin
+         match peekKind buffer with
+         | COMMA ->
+            let _ = consume buffer COMMA in
+            first::(namedIdList buffer)
+         | _ -> [first]
+      end
+   | _ -> []
+
 (** <optStartValue> := '(' <expression> ')' *)
 let optStartValue (buffer:parse_exp lexer_stream) : parse_exp option =
    match peekKind buffer with
@@ -400,7 +414,7 @@ and stmtFunction (buffer:parse_exp lexer_stream) : parse_exp =
    let args =
       match peekKind buffer with
       | RPAREN -> []
-      | _ -> valBindList buffer
+      | _ -> namedIdList buffer
    in
    let _    = consume buffer RPAREN in
    let body = stmtList buffer in
