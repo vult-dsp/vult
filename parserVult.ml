@@ -345,7 +345,7 @@ let stmtBind (buffer:parse_exp lexer_stream) : parse_exp =
       StmtBind(e1,e2)
    | SEMI ->
       let _ = consume buffer SEMI in
-      StmtBind(PEmpty,e1)
+      StmtBind(PUnit,e1)
    | kind ->
       let expected = kindToString EQUAL in
       let got = kindToString kind in

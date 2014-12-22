@@ -159,7 +159,7 @@ let rec expressionBuff buffer exp =
       printList buffer namedIdBuff "," args;
       append buffer ") ";
       expressionListBuff buffer false body
-   | StmtBind(PEmpty,e) ->
+   | StmtBind(PUnit,e) ->
       expressionBuff buffer e;
       append buffer ";"
    | StmtBind(e1,e2) ->

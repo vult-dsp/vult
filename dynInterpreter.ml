@@ -268,7 +268,7 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env =
             VUnit,List.fold_left2 (fun s n v -> setValMem s n v) loc vnames elems_val
          | _ -> failwith "Not returning a tuple"
       end
-   | StmtBind(PEmpty,rhs) ->
+   | StmtBind(PUnit,rhs) ->
       let _,loc = runExp loc rhs in
       VUnit,loc
    | StmtBind(_,rhs) -> failwith "Invalid binding"
