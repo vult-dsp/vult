@@ -171,14 +171,15 @@ and nud (buffer:parse_exp lexer_stream) (token:parse_exp token) : parse_exp toke
       end
    | LPAREN,_ ->
       begin
+         let start_loc = token.loc in
          match peekKind buffer with
          | RPAREN ->
             let _ = skip buffer in
-            { token with contents = PUnit }
+            { token with contents = PUnit(start_loc) }
          | _ ->
             let e = getContents (expression 0 buffer) in
             let _ = consume buffer RPAREN in
-            { token with contents = PGroup(e) }
+            { token with contents = PGroup(e,start_loc) }
       end
    | INT,_ | REAL,_ -> token
    | IF,_ ->
@@ -187,7 +188,7 @@ and nud (buffer:parse_exp lexer_stream) (token:parse_exp token) : parse_exp toke
       let then_exp = getContents (expression 0 buffer) in
       let _ = consume buffer ELSE in
       let else_exp = getContents (expression 0 buffer) in
-      { token with contents = PIf(cond,then_exp,else_exp) }
+      { token with contents = PIf(cond,then_exp,else_exp,token.loc) }
    | _ ->
       let message = getNotExpectedTokenError token in
       raise (ParserError(message))
@@ -206,12 +207,13 @@ and pair (buffer:parse_exp lexer_stream) (token:parse_exp token) (left:parse_exp
    let right = expression (getLbp token) buffer in
    let getElems e =
       match e with
-      | PTuple(elems) -> elems
+      | PTuple(elems,_) -> elems
       | _ -> [e]
    in
    let elems1 = getContents left |> getElems in
    let elems2 = getContents right |> getElems in
-   { token with contents = PTuple(elems1@elems2) }
+   let start_loc = TypesUtil.getExpLocation (getContents left) in
+   { token with contents = PTuple(elems1@elems2,start_loc) }
 
 (** <functionCall> := <namedId> '(' <expressionList> ')' *)
 and functionCall (buffer:parse_exp lexer_stream) (token:parse_exp token) (id:named_id) : parse_exp token =
@@ -316,36 +318,40 @@ let valBindList (buffer:parse_exp lexer_stream) : val_bind list =
 
 (** <statement> := | 'val' <valBindList> ';' *)
 let stmtVal (buffer:parse_exp lexer_stream) : parse_exp =
+   let start_loc = buffer.peeked.loc in
    let _ = consume buffer VAL in
    let vals = valBindList buffer in
    let _ = consume buffer SEMI in
-   StmtVal(vals)
+   StmtVal(vals,start_loc)
 
 (** <statement> := | 'mem' <valBindList> ';' *)
 let stmtMem (buffer:parse_exp lexer_stream) : parse_exp =
+   let start_loc = buffer.peeked.loc in
    let _ = consume buffer MEM in
    let vals = valBindList buffer in
    let _ = consume buffer SEMI in
-   StmtMem(vals)
+   StmtMem(vals,start_loc)
 
 (** <statement> := | 'return' <expression> ';' *)
 let stmtReturn (buffer:parse_exp lexer_stream) : parse_exp =
+   let start_loc = buffer.peeked.loc in
    let _ = consume buffer RET in
    let e = expression 0 buffer in
    let _ = consume buffer SEMI in
-   StmtReturn(getContents e)
+   StmtReturn(getContents e,start_loc)
 
 let stmtBind (buffer:parse_exp lexer_stream) : parse_exp =
    let e1 = expression 0 buffer |> getContents in
+   let start_loc = TypesUtil.getExpLocation  e1 in
    match peekKind buffer with
    | EQUAL ->
       let _ = consume buffer EQUAL in
       let e2 = expression 0 buffer |> getContents in
       let _ = consume buffer SEMI in
-      StmtBind(e1,e2)
+      StmtBind(e1,e2,start_loc)
    | SEMI ->
       let _ = consume buffer SEMI in
-      StmtBind(PUnit,e1)
+      StmtBind(PUnit(start_loc),e1,start_loc)
    | kind ->
       let expected = kindToString EQUAL in
       let got = kindToString kind in
@@ -360,12 +366,13 @@ let rec stmtIf (buffer:parse_exp lexer_stream) : parse_exp =
    let cond = getContents (expression 0 buffer) in
    let _    = consume buffer RPAREN in
    let tstm = stmtList buffer in
+   let start_loc = TypesUtil.getExpLocation cond in
    match peekKind buffer with
    | ELSE ->
       let _ = consume buffer ELSE in
       let fstm = stmtList buffer in
-      StmtIf(cond,tstm,Some(fstm))
-   | _ -> StmtIf(cond,tstm,None)
+      StmtIf(cond,tstm,Some(fstm),start_loc)
+   | _ -> StmtIf(cond,tstm,None,start_loc)
 
 (** <statement> := ... *)
 and stmt (buffer:parse_exp lexer_stream) : parse_exp =
@@ -418,7 +425,8 @@ and stmtFunction (buffer:parse_exp lexer_stream) : parse_exp =
    in
    let _    = consume buffer RPAREN in
    let body = stmtList buffer in
-   StmtFun(name,args,body)
+   let start_loc = TypesUtil.getNamedIdLocation name in
+   StmtFun(name,args,body,start_loc)
 
 (** Parses an expression given a string *)
 let parseExp (s:string) : parse_exp =

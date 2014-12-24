@@ -206,7 +206,7 @@ let isTrue (value:value) : bool =
 (** Evaluates a function call *)
 let rec evalFun (loc:local_env) (body:function_body) (args:value list) : value * local_env =
    match body with
-   | Declared(StmtFun(_,arg_names,stmts)) ->
+   | Declared(StmtFun(_,arg_names,stmts,_)) ->
       let inputs = List.map getVarName arg_names in
       let loc = List.fold_left2 (fun s n v -> declVal s n v) loc inputs args in
       runStmtList loc stmts
@@ -217,17 +217,17 @@ let rec evalFun (loc:local_env) (body:function_body) (args:value list) : value *
 (** Evaluates an expression or statement *)
 and runExp (loc:local_env) (exp:parse_exp) : value * local_env =
    match exp with
-   | PUnit      -> VUnit,loc
+   | PUnit(_)    -> VUnit,loc
    | PInt(v,_)  -> VNum(float_of_string v),loc
    | PReal(v,_) -> VNum(float_of_string v),loc
    | PId(name)  ->
       let vname  = getVarName name in
       getExpValueFromEnv loc vname,loc
-   | PGroup(e)  -> runExp loc e
-   | PTuple(elems) ->
+   | PGroup(e,_)  -> runExp loc e
+   | PTuple(elems,_) ->
       let elems_val,loc = runExpList loc elems in
       VTuple(elems_val),loc
-   | PIf(cond,then_exp,else_exp) ->
+   | PIf(cond,then_exp,else_exp,_) ->
       let cond_val,loc = runExp loc cond in
       if isTrue cond_val then
          runExp loc then_exp
@@ -245,21 +245,21 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env =
    | PEmpty -> failwith "There should not be Empty expressions when calling the intepreter"
    | PBinOp(_,_,_,_)
    | PUnOp(_,_,_) -> failwith "There should not be operators when calling the intepreter"
-   | StmtVal([ValNoBind(name,opt_init)]) ->
+   | StmtVal([ValNoBind(name,opt_init)],_) ->
       let vname = getVarName name in
       let init,loc = apply_default (runExp loc) opt_init (VNum(0.0),loc) in
       VUnit,declVal loc vname init
-   | StmtMem([ValNoBind(name,opt_init)]) ->
+   | StmtMem([ValNoBind(name,opt_init)],_) ->
       let vname = getVarName name in
       let init,loc = apply_default (runExp loc) opt_init (VNum(0.0),loc) in
       VUnit,declMem loc vname init
    | StmtVal(_)
    | StmtMem(_) -> failwith "Declarations with more that one element should have been removed by the transformations"
-   | StmtBind(PId(name),rhs) ->
+   | StmtBind(PId(name),rhs,_) ->
       let rhs_val,loc = runExp loc rhs in
       let vname = getVarName name in
       VUnit,setValMem loc vname rhs_val
-   | StmtBind(PTuple(elems),rhs) ->
+   | StmtBind(PTuple(elems,_),rhs,_) ->
       let vnames = List.map getExpName elems in
       let rhs_val,loc = runExp loc rhs in
       begin
@@ -268,31 +268,31 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env =
             VUnit,List.fold_left2 (fun s n v -> setValMem s n v) loc vnames elems_val
          | _ -> failwith "Not returning a tuple"
       end
-   | StmtBind(PUnit,rhs) ->
+   | StmtBind(PUnit(_),rhs,_) ->
       let _,loc = runExp loc rhs in
       VUnit,loc
-   | StmtBind(_,rhs) -> failwith "Invalid binding"
-   | StmtReturn(e) ->
+   | StmtBind(_,rhs,_) -> failwith "Invalid binding"
+   | StmtReturn(e,_) ->
       let e_val,loc = runExp loc e in
       e_val,loc
-   | StmtFun(name_id,_,_) ->
+   | StmtFun(name_id,_,_,_) ->
       let _,ftype = TypesUtil.getFunctionTypeAndName name_id in
       let loc = declFunction loc ftype (Declared(exp)) in
       VUnit,loc
-   | StmtIf(cond,then_stmts,None) ->
+   | StmtIf(cond,then_stmts,None,_) ->
       let cond_val,loc = runExp loc cond in
       if isTrue cond_val then
          (* This should create a sub-environment *)
          runStmtList loc then_stmts
       else VUnit,loc
-   | StmtIf(cond,then_stmts,Some(else_stmts)) ->
+   | StmtIf(cond,then_stmts,Some(else_stmts),_) ->
       let cond_val,loc = runExp loc cond in
       if isTrue cond_val then
          runStmtList loc then_stmts
       else
          runStmtList loc else_stmts
    | StmtEmpty -> VUnit,loc
-   | StmtSequence(stmts) ->
+   | StmtSequence(stmts,_) ->
       runStmtList loc stmts
 
 (** Evaluates a list of expressions *)

@@ -111,14 +111,14 @@ let rec expressionBuff buffer exp =
       append buffer "(";
       expressionListBuff buffer true args;
       append buffer ")"
-   | PUnit -> append buffer "()"
-   | PTuple(elems) ->
+   | PUnit(_) -> append buffer "()"
+   | PTuple(elems,_) ->
       expressionListBuff buffer true elems
-   | PGroup(e1) ->
+   | PGroup(e1,_) ->
       append buffer "(";
       expressionBuff buffer e1;
       append buffer ")"
-   | PIf(cond,then_exp,else_exp) ->
+   | PIf(cond,then_exp,else_exp,_) ->
       append buffer "if ";
       expressionBuff buffer cond;
       append buffer " then ";
@@ -127,24 +127,24 @@ let rec expressionBuff buffer exp =
       expressionBuff buffer else_exp
    | PEmpty -> append buffer "Empty"
 
-   | StmtVal(elems) ->
+   | StmtVal(elems,_) ->
       append buffer "val ";
       valInitBuffList buffer elems;
       append buffer ";"
-   | StmtMem(elems) ->
+   | StmtMem(elems,_) ->
       append buffer "mem ";
       valInitBuffList buffer elems;
       append buffer ";"
-   | StmtReturn(e) ->
+   | StmtReturn(e,_) ->
       append buffer "return ";
       expressionBuff buffer e;
       append buffer ";"
-   | StmtIf(cond,true_stmt,None) ->
+   | StmtIf(cond,true_stmt,None,_) ->
       append buffer "if(";
       expressionBuff buffer cond;
       append buffer ") ";
       expressionListBuff buffer false true_stmt
-   | StmtIf(cond,true_stmt,Some(false_stmt)) ->
+   | StmtIf(cond,true_stmt,Some(false_stmt),_) ->
       append buffer "if(";
       expressionBuff buffer cond;
       append buffer ") ";
@@ -152,23 +152,23 @@ let rec expressionBuff buffer exp =
       newline buffer;
       append buffer "else ";
       expressionListBuff buffer false false_stmt;
-   | StmtFun(name,args,body) ->
+   | StmtFun(name,args,body,_) ->
       append buffer "fun ";
       namedIdBuff buffer name;
       append buffer "(";
       printList buffer namedIdBuff "," args;
       append buffer ") ";
       expressionListBuff buffer false body
-   | StmtBind(PUnit,e) ->
+   | StmtBind(PUnit(_),e,_) ->
       expressionBuff buffer e;
       append buffer ";"
-   | StmtBind(e1,e2) ->
+   | StmtBind(e1,e2,_) ->
       expressionBuff buffer e1;
       append buffer "=";
       expressionBuff buffer e2;
       append buffer ";"
    | StmtEmpty -> ()
-   | StmtSequence(stmts) ->
+   | StmtSequence(stmts,_) ->
       expressionListBuff buffer false stmts
 
 (** Adds to the print buffer an expression list *)

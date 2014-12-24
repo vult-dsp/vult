@@ -180,8 +180,8 @@ let checkNamedId : environment -> named_id -> Types.errors option =
 let rec flattenExp : Types.parse_exp -> Types.parse_exp list =
    fun groupExp ->
       match groupExp with
-      | PGroup exp -> flattenExp exp
-      | PTuple es -> es
+      | PGroup (exp,loc) -> flattenExp exp
+      | PTuple(es,_) -> es
       | e -> [e]
 
 
@@ -190,7 +190,7 @@ let checkUnit : environment -> (Types.error, literal) either =
 
 let checkInt : 'a -> string -> location -> (Types.error, literal) either =
    fun _ intstring loc ->
-      try 
+      try
          Right (LInt (int_of_string intstring))
       with Failure _ -> Left (PointedError(loc,"The literal " ^ intstring ^ " can not be interpreted as an integer."))
 
@@ -322,14 +322,14 @@ and checkMemValBind : environment -> Types.val_bind -> (errors,environment) eith
 and checkStmt : environment -> parse_exp -> (errors,environment) either =
    fun env stmt ->
       match stmt with
-      | StmtVal valbinds -> eitherFold_left checkRegularValBind env valbinds
-      | StmtMem valbinds -> eitherFold_left checkMemValBind env valbinds
-      | StmtReturn exp ->
+      | StmtVal (valbinds,loc) -> eitherFold_left checkRegularValBind env valbinds
+      | StmtMem (valbinds,loc) -> eitherFold_left checkMemValBind env valbinds
+      | StmtReturn (exp,loc) ->
          begin match checkExp env exp with
             | None -> Right env
             | Some errs -> Left (SimpleError("Could not evaluate expression in return statement.")::errs)
          end
-      | StmtIf (cond,trueStmts,None) ->
+      | StmtIf (cond,trueStmts,None,loc) ->
          begin match checkExp env cond with
             | Some errs -> Left (SimpleError("Could not evaluate condition expression in if statement.")::errs)
             | None -> begin match eitherFold_left checkStmt env trueStmts with
@@ -337,7 +337,7 @@ and checkStmt : environment -> parse_exp -> (errors,environment) either =
                   | Left errs -> Left (SimpleError("In if body true-branch statements.")::errs)
                end
          end
-      | StmtIf (cond,trueStmts,Some falseStmts) ->
+      | StmtIf (cond,trueStmts,Some falseStmts,loc) ->
          begin match checkExp env cond with
             | Some errs -> Left (SimpleError("Could not evaluate condition expression in if statement.")::errs)
             | None ->
@@ -351,7 +351,7 @@ and checkStmt : environment -> parse_exp -> (errors,environment) either =
                end
          end
       | StmtFun _ -> Right env (* Ignore function declarations, these should be stored in env. *)
-      | StmtBind (PId (name),rhs) ->
+      | StmtBind (PId (name),rhs,loc) ->
          begin match checkNamedId env name with
             | Some errs -> Left errs
             | None -> begin match checkExp env rhs with
@@ -379,7 +379,7 @@ let checkFunction : environment -> vultFunction -> errors option =
 let insertIfFunction : functionBindings -> parse_exp  -> (errors,functionBindings) either =
    fun funcs stmt ->
       match stmt with
-      | StmtFun (namedid,inputs,body) ->
+      | StmtFun (namedid,inputs,body,loc) ->
          let funcname = getNameFromNamedId namedid in
          let functype = getTypeFromNamedId namedid in
          let vultfunc = { functionname = funcname; returntype = functype; inputs = inputs; body = body; } in

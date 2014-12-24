@@ -100,25 +100,25 @@ type call_attributes = call_attribute list
 
 (** Parser syntax tree *)
 type parse_exp =
-   | PUnit
+   | PUnit  of location
    | PInt   of string    * location
    | PReal  of string    * location
    | PId    of named_id
    | PUnOp  of string    * parse_exp      * location
    | PBinOp of string    * parse_exp      * parse_exp * location
-   | PCall  of named_id  * parse_exp list * location * call_attributes
-   | PIf    of parse_exp * parse_exp      * parse_exp
-   | PGroup of parse_exp
-   | PTuple of parse_exp list
+   | PCall  of named_id  * parse_exp list * location  * call_attributes
+   | PIf    of parse_exp * parse_exp      * parse_exp * location
+   | PGroup of parse_exp * location
+   | PTuple of parse_exp list * location
    | PEmpty
 
-   | StmtVal    of val_bind list
-   | StmtMem    of val_bind list
-   | StmtReturn of parse_exp
-   | StmtIf     of parse_exp * parse_exp list * (parse_exp list) option
-   | StmtFun    of named_id  * named_id list * parse_exp list
-   | StmtBind   of parse_exp * parse_exp
-   | StmtSequence of parse_exp list
+   | StmtVal      of val_bind list  * location
+   | StmtMem      of val_bind list  * location
+   | StmtReturn   of parse_exp      * location
+   | StmtIf       of parse_exp      * parse_exp list * (parse_exp list) option * location
+   | StmtFun      of named_id       * named_id list  * parse_exp list * location
+   | StmtBind     of parse_exp      * parse_exp      * location
+   | StmtSequence of parse_exp list * location
    | StmtEmpty
 
 and val_bind =

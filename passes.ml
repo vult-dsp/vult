@@ -58,20 +58,21 @@ type state_t1 =
 let returnBindsAndDecl ((decls:val_bind list),(binds: parse_exp list)) (bind:val_bind) =
    match bind with
    | ValBind(name,init,exp) ->
-      ValNoBind(name,init)::decls, StmtBind(PId(name),exp)::binds
+      let loc = TypesUtil.getNamedIdLocation name in
+      ValNoBind(name,init)::decls, StmtBind(PId(name),exp,loc)::binds
    | ValNoBind(name,init) -> ValNoBind(name,init)::decls,binds
 
 (** Transforms mem x=0; -> mem x; x=0; *)
 let separateBindAndDeclaration : ('data,parse_exp) expander =
    fun state stmt ->
       match stmt with
-      | StmtMem(vlist) ->
+      | StmtMem(vlist,loc) ->
          let new_vlist,binds = List.fold_left returnBindsAndDecl ([],[]) vlist in
-         let stmts = StmtMem(List.rev new_vlist)::binds  in
+         let stmts = StmtMem(List.rev new_vlist,loc)::binds  in
          state,stmts
-      | StmtVal(vlist) ->
+      | StmtVal(vlist,loc) ->
          let new_vlist,binds = List.fold_left returnBindsAndDecl ([],[]) vlist in
-         let stmts = StmtVal(List.rev new_vlist)::binds  in
+         let stmts = StmtVal(List.rev new_vlist,loc)::binds  in
          state,stmts
       | _ -> state,[stmt]
 
@@ -81,11 +82,11 @@ let separateBindAndDeclaration : ('data,parse_exp) expander =
 let makeSingleDeclaration : ('data,parse_exp) expander =
    fun state stmt ->
       match stmt with
-      | StmtVal(vlist) ->
-         let stmts = List.map (fun a -> StmtVal([a])) vlist in
+      | StmtVal(vlist,loc) ->
+         let stmts = List.map (fun a -> StmtVal([a],loc)) vlist in
          state,stmts
-      | StmtMem(vlist) ->
-         let stmts = List.map (fun a -> StmtMem([a])) vlist in
+      | StmtMem(vlist,loc) ->
+         let stmts = List.map (fun a -> StmtMem([a],loc)) vlist in
          state,stmts
       | _ -> state,[stmt]
 
@@ -117,20 +118,20 @@ let operatorsToFunctionCalls : ('data,parse_exp) transformation =
 let simplifyTupleAssign : ('data,parse_exp) expander =
    fun state exp ->
       match exp with
-      | StmtBind(PTuple(lhs),PTuple(rhs)) ->
+      | StmtBind(PTuple(lhs,loc1),PTuple(rhs,loc2),loc) ->
          let lhs_id = TypesUtil.getIdsInExpList lhs in
          let rhs_id = TypesUtil.getIdsInExpList rhs in
          let common = Set.inter ~eq:TypesUtil.compareName lhs_id rhs_id in
          begin
             match common with
-            | [] -> state,List.map2 (fun a b -> StmtBind(a,b)) lhs rhs
+            | [] -> state,List.map2 (fun a b -> StmtBind(a,b,loc)) lhs rhs
             | _  ->
                let init = state.counter in
                let tmp_vars  = List.mapi (fun i _ -> SimpleId("_tpl"^(string_of_int (i+init)),default_loc)) lhs in
                let tmp_e     = List.map (fun a -> PId(a)) tmp_vars in
-               let to_tmp    = List.map2 (fun a b -> StmtBind(a,b)) tmp_e rhs in
-               let from_tmp  = List.map2 (fun a b -> StmtBind(a,b)) lhs tmp_e in
-               let decl = List.map (fun a -> StmtVal([ValNoBind(a,None)])) tmp_vars in
+               let to_tmp    = List.map2 (fun a b -> StmtBind(a,b,loc)) tmp_e rhs in
+               let from_tmp  = List.map2 (fun a b -> StmtBind(a,b,loc)) lhs tmp_e in
+               let decl = List.map (fun a -> StmtVal([ValNoBind(a,None)],loc)) tmp_vars in
                let new_state = { state with counter = init+(List.length lhs)} in
                new_state,decl@to_tmp@from_tmp
          end
@@ -149,8 +150,8 @@ let bindFunctionCallsInExp : (int * parse_exp list,parse_exp) transformation =
       | PCall(name,args,loc,attr) when not (isSimpleBinding attr) ->
          let count,stmts = data in
          let tmp_var = SimpleId("_tmp"^(string_of_int count),default_loc) in
-         let decl = StmtVal([ValNoBind(tmp_var,None)]) in
-         let bind_stmt = StmtBind(PId(tmp_var),PCall(name,args,loc,SimpleBinding::attr)) in
+         let decl = StmtVal([ValNoBind(tmp_var,None)],loc) in
+         let bind_stmt = StmtBind(PId(tmp_var),PCall(name,args,loc,SimpleBinding::attr),loc) in
          (count+1,[bind_stmt;decl]@stmts),PId(tmp_var)
       | _ -> data,exp
 
@@ -158,18 +159,18 @@ let bindFunctionCallsInExp : (int * parse_exp list,parse_exp) transformation =
 let bindFunctionCalls : ('data,parse_exp) expander  =
    fun state stmt ->
       match stmt with
-      | StmtBind(lhs,PCall(name,args,loc,attr)) ->
+      | StmtBind(lhs,PCall(name,args,loc1,attr),loc) ->
          let (count,stmts),new_args = TypesUtil.traverseBottomExpList bindFunctionCallsInExp (state.counter,[]) args in
-         {state with counter = count},(List.rev (StmtBind(lhs,PCall(name,new_args,loc,attr))::stmts))
-      | StmtBind(lhs,rhs) ->
+         {state with counter = count},(List.rev (StmtBind(lhs,PCall(name,new_args,loc,attr),loc)::stmts))
+      | StmtBind(lhs,rhs,loc) ->
          let (count,stmts),new_rhs = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.counter,[]) rhs in
-         {state with counter = count},(List.rev (StmtBind(lhs,new_rhs)::stmts))
-      | StmtReturn(e) ->
+         {state with counter = count},(List.rev (StmtBind(lhs,new_rhs,loc)::stmts))
+      | StmtReturn(e,loc) ->
          let (count,stmts),new_e = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.counter,[]) e in
-         {state with counter = count},(List.rev (StmtReturn(new_e)::stmts))
-      | StmtIf(cond,then_stmts,else_stmts) ->
+         {state with counter = count},(List.rev (StmtReturn(new_e,loc)::stmts))
+      | StmtIf(cond,then_stmts,else_stmts,loc) ->
          let (count,stmts),new_cond = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.counter,[]) cond in
-         {state with counter = count},(List.rev (StmtIf(new_cond,then_stmts,else_stmts)::stmts))
+         {state with counter = count},(List.rev (StmtIf(new_cond,then_stmts,else_stmts,loc)::stmts))
 
       | _ -> state,[stmt]
 
@@ -179,8 +180,8 @@ let bindFunctionCalls : ('data,parse_exp) expander  =
 let wrapIfExpValues : ('data,parse_exp) transformation =
    fun state exp ->
       match exp with
-      | PIf(cond,then_exp,else_exp) ->
-         state,PIf(cond,StmtReturn(then_exp),StmtReturn(else_exp))
+      | PIf(cond,then_exp,else_exp,loc) ->
+         state,PIf(cond,StmtReturn(then_exp,loc),StmtReturn(else_exp,loc),loc)
       | _ -> state,exp
 
 (* ======================= *)
