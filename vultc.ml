@@ -28,6 +28,7 @@ open TypesUtil
 open CheckerVult
 open Passes
 open DynInterpreter
+open Debugger
 
 (** Stores the options passed to the command line *)
 type arguments =

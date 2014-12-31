@@ -535,7 +535,7 @@ let getNamedIdLocation (id:named_id) : location =
    | NamedId(_,_,loc1,loc2) -> mergeLocations loc1 loc2
 
 (** Returns the location of an expression *)
-let getExpLocation e =
+let getExpLocation (e:parse_exp)  : location =
    match e with
    | PUnit(loc)
    | PInt(_,loc)
@@ -557,3 +557,12 @@ let getExpLocation e =
    | StmtBind(_,_,loc)
    | StmtSequence(_,loc) -> loc
    | StmtEmpty -> default_loc
+
+(** Returns the full location of an expression *)
+let getExpFullLocation (e:parse_exp) : location =
+   let f state e =
+      let current_loc = getExpLocation e in
+      mergeLocations state current_loc
+   in foldTopExp f default_loc e
+
+

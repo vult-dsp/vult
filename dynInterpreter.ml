@@ -79,11 +79,11 @@ let newLocalEnv (fun_decl:(function_body StringMap.t) option) =
 (** Converts a value to string *)
 let rec valueStr (value:value) : string =
    match value with
-   | VUnit      -> "()"
-   | VNum(v)    -> string_of_float v
-   | VString(s) -> "\""^s^"\""
-   | VBool(true) -> "true"
-   | VBool(false) -> "false"
+   | VUnit         -> "()"
+   | VNum(v)       -> string_of_float v
+   | VString(s)    -> "\""^s^"\""
+   | VBool(true)   -> "true"
+   | VBool(false)  -> "false"
    | VTuple(elems) ->
       let elems_s = elems
                     |> List.map valueStr
@@ -198,10 +198,10 @@ let declMem (loc:local_env) (name:string) (init:value) : local_env =
 (** Returns true if the value is zero *)
 let isTrue (value:value) : bool =
    match value with
-   | VNum(0.0) -> false
+   | VNum(0.0)   -> false
    | VString("") -> false
-   | VBool(v) -> v
-   | _ -> true
+   | VBool(v)    -> v
+   | _           -> true
 
 (** Evaluates a function call *)
 let rec evalFun (loc:local_env) (body:function_body) (args:value list) : value * local_env =
@@ -217,7 +217,7 @@ let rec evalFun (loc:local_env) (body:function_body) (args:value list) : value *
 (** Evaluates an expression or statement *)
 and runExp (loc:local_env) (exp:parse_exp) : value * local_env =
    match exp with
-   | PUnit(_)    -> VUnit,loc
+   | PUnit(_)   -> VUnit,loc
    | PInt(v,_)  -> VNum(float_of_string v),loc
    | PReal(v,_) -> VNum(float_of_string v),loc
    | PId(name)  ->
