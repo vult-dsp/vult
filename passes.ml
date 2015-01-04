@@ -27,6 +27,7 @@ THE SOFTWARE.
 
 open Types
 open CCList
+open TypesUtil
 
 
 (** Generic type of transformations *)
@@ -34,6 +35,10 @@ type ('data,'value) transformation = 'data -> 'value -> 'data * 'value
 
 (** Generic type of expanders *)
 type ('data,'value) expander = 'data -> 'value -> 'data * 'value list
+
+(** Generic type of folders *)
+type ('data,'value) folder = 'data -> 'value -> 'data
+
 
 (** Makes a chain of transformations. E.g. foo |-> bar will apply first foo then bar. *)
 let (|->) : ('data,'value) transformation -> ('data,'value) transformation -> ('data,'value) transformation =
@@ -47,11 +52,16 @@ let (|+>) : ('state * 'value) -> ('state, 'value) transformation -> ('state * 'v
    fun (state,value) transformation ->
       transformation state value
 
+(** Default inline weight *)
+let default_inline_weight = 100
+
 (** Traversing state one *)
 type state_t1 =
    {
-      dummy : int;
-      counter : int;
+      functions       : parse_exp NamedIdMap.t;
+      function_weight : int NamedIdMap.t;
+      counter         : int;
+      inline_weight   : int;
    }
 (* ======================= *)
 
@@ -184,20 +194,92 @@ let wrapIfExpValues : ('data,parse_exp) transformation =
          state,PIf(cond,StmtReturn(then_exp,loc),StmtReturn(else_exp,loc),loc)
       | _ -> state,exp
 
+
 (* ======================= *)
 
+(** Adds all function definitions to a map in the state and also the weight of the function *)
+let collectFunctionDefinitions : ('data,parse_exp) folder =
+   fun state exp ->
+      match exp with
+      | StmtFun(name,args,stmts,loc) ->
+         let simple_name = removeNamedIdType name in
+         let weight = getExpListWeight stmts in
+         (*let _ = Printf.printf "*** Adding function '%s' with weight %i\n" (namedIdStr simple_name) weight in*)
+         { state with
+           functions = NamedIdMap.add simple_name exp state.functions;
+           function_weight = NamedIdMap.add simple_name weight state.function_weight }
+      | _ -> state
+
+(* ======================= *)
+
+(** Changes appends the given prefix to all named_ids *)
+let prefixAllNamedIds : ('data,parse_exp) transformation =
+   fun prefix exp ->
+      match exp with
+      | PId(name) -> prefix,PId(prefixNamedId prefix name)
+      | _ -> prefix,exp
+
+let inlineFunctionCall (state:'data) (name:named_id) (args:parse_exp list) loc : parse_exp list =
+   let call_name,ftype = getFunctionTypeAndName name in
+   let fname = SimpleId(ftype,default_loc) in
+   let function_def = NamedIdMap.find fname state.functions in
+   match function_def with
+   | StmtFun(_,fargs,fbody,_) ->
+      let prefix = call_name^"_" in
+      let fargs_prefixed = List.map (prefixNamedId prefix) fargs in
+      let _,fbody_prefixed = TypesUtil.traverseBottomExpList prefixAllNamedIds prefix fbody in
+      let new_decl = List.map (fun a-> StmtVal([ValNoBind(a,None)],loc)) fargs_prefixed in
+      let new_assignments = List.map2 (fun a b -> StmtBind(PId(a),b,loc)) fargs_prefixed args in
+      new_decl@new_assignments@fbody_prefixed
+   | _ -> failwith "inlineFunctionCall: Invalid function declaration"
+
+let inline : ('data,parse_exp) expander =
+   fun state exp ->
+      match exp with
+      | PCall(fname_full,args,loc,_) ->
+         let name,ftype = getFunctionTypeAndName fname_full in
+         let fname = SimpleId(ftype,default_loc) in
+         if name = "_" || not (NamedIdMap.mem fname state.functions)  then
+            state,[exp]
+         else
+            let weight = NamedIdMap.find fname state.function_weight in
+            if weight > state.inline_weight then
+               state,[exp]
+            else begin
+               let new_stmts = inlineFunctionCall state fname_full args loc in
+               state,new_stmts
+            end
+      | _ -> state,[exp]
+
+(* ======================= *)
+
+(** Takes a fold function and wrap it as it was a transformation so it can be chained with |+> *)
+let foldAsTransformation (f:('data,parse_exp) folder) (state:'date) (exp_list:parse_exp list) : 'data * parse_exp list=
+   let new_state = TypesUtil.foldTopExpList f state exp_list in
+   new_state,exp_list
+
+
 let applyTransformations (results:parser_results) =
-   let initial_state = { counter = 0 ; dummy = 0 } in
-   let transform_function stmts =
+   let initial_state =
+      {
+         counter = 0;
+         functions = NamedIdMap.empty;
+         function_weight = NamedIdMap.empty;
+         inline_weight = default_inline_weight;
+      }
+   in
+   let passes stmts =
       (initial_state,stmts)
       |+> TypesUtil.traverseTopExpList (nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)
       |+> TypesUtil.expandStmtList separateBindAndDeclaration
       |+> TypesUtil.expandStmtList makeSingleDeclaration
       |+> TypesUtil.expandStmtList bindFunctionCalls
       |+> TypesUtil.expandStmtList simplifyTupleAssign
+      |+> foldAsTransformation collectFunctionDefinitions
+      |+> TypesUtil.expandStmtList inline
       |> snd
    in
-   let new_stmts = CCError.map transform_function results.presult in
+   let new_stmts = CCError.map passes results.presult in
    { results with presult = new_stmts }
 
 

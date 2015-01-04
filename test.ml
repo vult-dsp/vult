@@ -188,14 +188,24 @@ let runMemTest context =
                  val c = i:inc();
                  val d = i:inc();
                  return a,b,c,d;")
+let runInlineTest context =
+   test_string "(3.,0.5,4.)"
+      (run_program "fun trivial(a,b) return a+b;
+               val res1 = trivial(1,2);
+               fun with_val(a,b){ val x,y; x,y = b,a; return x/y;}
+               val res2 = with_val(2,1);
+               fun with_mem(a,b){ mem x; x=x+1; return a+b+x;}
+               val res3 = with_mem(1,2);
+               return res1,res2,res3;")
 
 (* Name the test cases and group them together *)
 let interpreter_test =
    "interpreter">:::
    [
-      "runFactTest" >:: runFactTest;
-      "runSwapTest" >:: runSwapTest;
-      "runMemTest"  >:: runMemTest;
+      "runFactTest"   >:: runFactTest;
+      "runSwapTest"   >:: runSwapTest;
+      "runMemTest"    >:: runMemTest;
+      "runInlineTest" >:: runInlineTest;
    ]
 ;;
 

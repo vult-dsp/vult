@@ -73,6 +73,7 @@ type ('data, 'error, 'result) expfold =
       vEmpty : 'data -> ('error, 'result) either;
    }
 
+
 (** Folds the list (left-right) using the given traverser functions *)
 let foldTraverser_left traverser_function (traverser:('data,'traversing_type) traverser) (state:'data) (elems:'elem list) =
    let state2,acc =
@@ -133,6 +134,13 @@ let expressionFoldEither : ('data, 'error, 'result) expfold -> 'data -> parse_ex
       in
       go exp
 
+(** Used to traverse a named_id 'name' as 'PId(name)' *)
+let traverseNamedIdAsExp (f: ('data, parse_exp) traverser) (state:'data) (name:named_id) : 'data * named_id =
+   let state1,new_name_exp = f state (PId(name)) in
+   match new_name_exp with
+   | PId(new_name) -> state1,new_name
+   | _ -> state1,name
+
 (** Traverses expressions bottom-up *)
 let rec traverseBottomExp (f: ('data, parse_exp) traverser) (state:'data) (exp:parse_exp) : 'data * parse_exp =
    match exp with
@@ -164,10 +172,10 @@ let rec traverseBottomExp (f: ('data, parse_exp) traverser) (state:'data) (exp:p
       state3,PIf(ne1,ne2,ne3,loc)
    | StmtVal(binds,loc) ->
       let state1,nbinds = traverseBottomValBindListExp f state binds in
-      state1,StmtVal(binds,loc)
+      state1,StmtVal(nbinds,loc)
    | StmtMem(binds,loc) ->
       let state1,nbinds = traverseBottomValBindListExp f state binds in
-      state1,StmtVal(binds,loc)
+      state1,StmtMem(nbinds,loc)
    | StmtReturn(e,loc) ->
       let state1,ne = traverseBottomExp f state e in
       f state1 (StmtReturn(ne,loc))
@@ -201,12 +209,14 @@ and traverseBottomExpList (f: ('data, parse_exp) traverser) (state:'data) (expl:
 and traverseBottomValBindExp (f: ('data, parse_exp) traverser) (state:'data) (val_bind:val_bind) =
    match val_bind with
    | ValBind(name,init_opt,value) ->
-      let state1,new_init_opt = traverseBottomOptExp f state init_opt in
-      let state2,new_value = traverseBottomExp f state value in
-      state2,ValBind(name,new_init_opt,new_value)
+      let state1,new_name = traverseNamedIdAsExp f state name in
+      let state2,new_init_opt = traverseBottomOptExp f state1 init_opt in
+      let state3,new_value = traverseBottomExp f state2 value in
+      state3,ValBind(new_name,new_init_opt,new_value)
    | ValNoBind(name,init_opt) ->
-      let state1,new_init_opt = traverseBottomOptExp f state init_opt in
-      state1,ValNoBind(name,new_init_opt)
+      let state1,new_name = traverseNamedIdAsExp f state name in
+      let state2,new_init_opt = traverseBottomOptExp f state1 init_opt in
+      state2,ValNoBind(new_name,new_init_opt)
 
 and traverseBottomValBindListExp (f: ('data, parse_exp) traverser) (state:'data) (val_binds:val_bind list) =
    foldTraverser_right traverseBottomValBindExp f state val_binds
@@ -286,12 +296,14 @@ and traverseTopExpList (f: ('data, parse_exp) traverser) (state:'data) (expl:par
 and traverseTopValBindExp (f: ('data, parse_exp) traverser) (state:'data) (val_bind:val_bind) =
    match val_bind with
    | ValBind(name,init_opt,value) ->
-      let state1,new_init_opt = traverseTopOptExp f state init_opt in
-      let state2,new_value = traverseTopExp f state value in
-      state2,ValBind(name,new_init_opt,new_value)
+      let state1,new_name = traverseNamedIdAsExp f state name in
+      let state2,new_init_opt = traverseTopOptExp f state1 init_opt in
+      let state3,new_value = traverseTopExp f state2 value in
+      state3,ValBind(name,new_init_opt,new_value)
    | ValNoBind(name,init_opt) ->
-      let state1,new_init_opt = traverseTopOptExp f state init_opt in
-      state1,ValNoBind(name,new_init_opt)
+      let state1,new_name = traverseNamedIdAsExp f state name in
+      let state2,new_init_opt = traverseTopOptExp f state1 init_opt in
+      state2,ValNoBind(new_name,new_init_opt)
 
 and traverseTopValBindListExp (f: ('data, parse_exp) traverser) (state:'data) (val_binds:val_bind list) =
    foldTraverser_left traverseTopValBindExp f state val_binds
@@ -528,6 +540,22 @@ let compareName (a:named_id) (b:named_id) : bool =
    | NamedId(name_a,_,_,_),NamedId(name_b,_,_,_) when name_a = name_b -> true
    | _ -> false
 
+(** Compares named_ids ignoring the locations and returning an integer*)
+let compareIntName (a:named_id) (b:named_id) : int =
+   match a,b with
+   | SimpleId(name_a,_),SimpleId(name_b,_)
+   | NamedId(name_a,_,_,_),SimpleId(name_b,_)
+   | SimpleId(name_a,_),NamedId(name_b,_,_,_)
+   | NamedId(name_a,_,_,_),NamedId(name_b,_,_,_) -> compare name_a name_b
+
+module NamedId =
+struct
+   type t = named_id
+   let compare = compareIntName
+end
+
+module NamedIdMap = Map.Make(NamedId)
+
 (** Returns the location of a named_id *)
 let getNamedIdLocation (id:named_id) : location =
    match id with
@@ -564,5 +592,29 @@ let getExpFullLocation (e:parse_exp) : location =
       let current_loc = getExpLocation e in
       mergeLocations state current_loc
    in foldTopExp f default_loc e
+
+(**  Counts the number of expressions and subexpressions a expression list has *)
+let getExpListWeight (e:parse_exp list) : int =
+   let count acc e =
+      acc+1
+   in foldTopExpList count 0 e
+
+(** Removes the type from a named_id *)
+let removeNamedIdType (name:named_id) : named_id =
+   match name with
+   | NamedId(n,_,loc,_) -> SimpleId(n,loc)
+   | _ -> name
+
+(** Converts a name_id to string. This function is used mainly for debugging since PrintTypes contains more powerful functions *)
+let namedIdStr (name:named_id) : string =
+   match name with
+   | NamedId(n,t,_,_) -> n^":"^t
+   | SimpleId(n,_) -> n
+
+(** Adds the give prefix to the named_id *)
+let prefixNamedId (prefix:string) (name:named_id) : named_id =
+   match name with
+   | SimpleId(name,loc)         -> SimpleId(prefix^name,loc)
+   | NamedId(name,tp,loc1,loc2) -> NamedId(prefix^name,tp,loc1,loc2)
 
 
