@@ -593,10 +593,12 @@ let getExpFullLocation (e:parse_exp) : location =
       mergeLocations state current_loc
    in foldTopExp f default_loc e
 
-(**  Counts the number of expressions and subexpressions a expression list has *)
+(**  Counts the number of function calls (operations) expression list has *)
 let getExpListWeight (e:parse_exp list) : int =
    let count acc e =
-      acc+1
+      match e with
+      | PCall(_) -> acc+1
+      | _ -> acc
    in foldTopExpList count 0 e
 
 (** Removes the type from a named_id *)

@@ -53,7 +53,7 @@ let (|+>) : ('state * 'value) -> ('state, 'value) transformation -> ('state * 'v
       transformation state value
 
 (** Default inline weight *)
-let default_inline_weight = 100
+let default_inline_weight = 10
 
 (** Traversing state one *)
 type state_t1 =
@@ -233,7 +233,7 @@ let inlineFunctionCall (state:'data) (name:named_id) (args:parse_exp list) loc :
       new_decl@new_assignments@fbody_prefixed
    | _ -> failwith "inlineFunctionCall: Invalid function declaration"
 
-let inline : ('data,parse_exp) expander =
+let inlineStmts : ('data,parse_exp) expander =
    fun state exp ->
       match exp with
       | PCall(fname_full,args,loc,_) ->
@@ -253,11 +253,76 @@ let inline : ('data,parse_exp) expander =
 
 (* ======================= *)
 
+(** Returns Some(e,stmts) if the sequence has a single return in the form 'stmts; return e;' *)
+let rec hasSingleReturnAtEnd (acc:parse_exp list) (stmts:parse_exp list) : (parse_exp * parse_exp list) option =
+   match stmts with
+   | [] -> None
+   | [StmtReturn(e,_)] -> Some(e,List.rev acc)
+   | StmtReturn(_,_)::_ -> None
+   | h::t -> hasSingleReturnAtEnd (h::acc) t
+
+(** Transforms x = {return y;}; -> x = y;  and _ = { stmts; } -> stmts *)
+let simplifySequenceBindings : ('data,parse_exp) expander =
+   fun state exp ->
+      match exp with
+      | StmtBind(lhs,StmtSequence(stmts,_),loc) ->
+         begin
+            match hasSingleReturnAtEnd [] stmts with
+            | Some(e,rem_stmts) -> state,rem_stmts@[StmtBind(lhs,e,loc)]
+            | None -> state,[exp]
+         end
+      | StmtSequence(stmts,_) ->
+         let contains_return = List.exists (fun a -> match a with StmtReturn(_,_) -> true | _ -> false) stmts in
+         if contains_return then
+            state,[exp]
+         else
+            state,stmts
+      | _ -> state,[exp]
+
+(* ======================= *)
+
+(** Takes a lis of statements and removes the duplicated mem declarations *)
+let rec removeDuplicateMem (declared:bool NamedIdMap.t) (acc:parse_exp list) (stmts:parse_exp list) : parse_exp list =
+   match stmts with
+   | [] -> List.rev acc
+   | StmtMem([ValNoBind(name,init)],_)::t when NamedIdMap.mem name declared ->
+      removeDuplicateMem declared acc t
+   | (StmtMem([ValNoBind(name,init)],_) as h)::t ->
+      removeDuplicateMem (NamedIdMap.add name true declared) (h::acc) t
+   | h::t -> removeDuplicateMem declared (h::acc) t
+
+(** Removes duplicated mem declarations  from StmtSequence *)
+let removeDuplicateMemStmts : ('data,parse_exp) traverser =
+   fun state exp ->
+      match exp with
+      | StmtSequence(stmts,loc) ->
+         let new_stmts = removeDuplicateMem NamedIdMap.empty [] stmts in
+         state,StmtSequence(new_stmts,loc)
+      | _ -> state,exp
+(* ======================= *)
+
 (** Takes a fold function and wrap it as it was a transformation so it can be chained with |+> *)
-let foldAsTransformation (f:('data,parse_exp) folder) (state:'date) (exp_list:parse_exp list) : 'data * parse_exp list=
+let foldAsTransformation (f:('data,parse_exp) folder) (state:'date) (exp_list:parse_exp list) : 'data * parse_exp list =
    let new_state = TypesUtil.foldTopExpList f state exp_list in
    new_state,exp_list
 
+(** Takes a list of statements and puts them into a StmtSequence *)
+let makeStmtSequence (state:'data) (stmts:parse_exp list) : 'data * parse_exp list =
+   match stmts with
+   | []  -> state,[]
+   | [_] -> state,stmts
+   | _   -> state,[StmtSequence(stmts,default_loc)]
+
+let inlineFunctionBodies (state:'data) (exp_list:parse_exp list) : 'data * parse_exp list =
+   let inlineFunctionBody name fun_decl table =
+      match fun_decl with
+      | StmtFun(fname,fargs,fbody,loc) ->
+         let _,new_fbody = TypesUtil.expandStmtList inlineStmts state fbody in
+         NamedIdMap.add name (StmtFun(fname,fargs,new_fbody,loc)) table
+      | _ -> table
+   in
+   let new_functions = NamedIdMap.fold inlineFunctionBody state.functions NamedIdMap.empty in
+   { state with functions = new_functions },exp_list
 
 let applyTransformations (results:parser_results) =
    let initial_state =
@@ -269,14 +334,20 @@ let applyTransformations (results:parser_results) =
       }
    in
    let passes stmts =
-      (initial_state,stmts)
+      (initial_state,[StmtSequence(stmts,default_loc)])
       |+> TypesUtil.traverseTopExpList (nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)
       |+> TypesUtil.expandStmtList separateBindAndDeclaration
       |+> TypesUtil.expandStmtList makeSingleDeclaration
       |+> TypesUtil.expandStmtList bindFunctionCalls
       |+> TypesUtil.expandStmtList simplifyTupleAssign
       |+> foldAsTransformation collectFunctionDefinitions
-      |+> TypesUtil.expandStmtList inline
+      |+> inlineFunctionBodies
+      |+> foldAsTransformation collectFunctionDefinitions
+      |+> TypesUtil.expandStmtList inlineStmts
+      |+> makeStmtSequence
+      |+> TypesUtil.expandStmtList simplifySequenceBindings
+      |+> makeStmtSequence
+      |+> TypesUtil.traverseTopExpList removeDuplicateMemStmts
       |> snd
    in
    let new_stmts = CCError.map passes results.presult in
