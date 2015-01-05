@@ -314,15 +314,18 @@ let makeStmtSequence (state:'data) (stmts:parse_exp list) : 'data * parse_exp li
    | _   -> state,[StmtSequence(stmts,default_loc)]
 
 let inlineFunctionBodies (state:'data) (exp_list:parse_exp list) : 'data * parse_exp list =
-   let inlineFunctionBody name fun_decl table =
+   let inlineFunctionBody name fun_decl (functions,weigths) =
       match fun_decl with
       | StmtFun(fname,fargs,fbody,loc) ->
          let _,new_fbody = TypesUtil.expandStmtList inlineStmts state fbody in
-         NamedIdMap.add name (StmtFun(fname,fargs,new_fbody,loc)) table
-      | _ -> table
+         let weight = getExpListWeight new_fbody in
+         let new_functions = NamedIdMap.add name (StmtFun(fname,fargs,new_fbody,loc)) functions in
+         let new_weigths = NamedIdMap.add name weight weigths in
+         new_functions,new_weigths
+      | _ -> functions,weigths
    in
-   let new_functions = NamedIdMap.fold inlineFunctionBody state.functions NamedIdMap.empty in
-   { state with functions = new_functions },exp_list
+   let new_functions,new_weigths = NamedIdMap.fold inlineFunctionBody state.functions (NamedIdMap.empty,NamedIdMap.empty) in
+   { state with functions = new_functions; function_weight = new_weigths; },exp_list
 
 let applyTransformations (results:parser_results) =
    let initial_state =
@@ -342,8 +345,8 @@ let applyTransformations (results:parser_results) =
       |+> TypesUtil.expandStmtList simplifyTupleAssign
       |+> foldAsTransformation collectFunctionDefinitions
       |+> inlineFunctionBodies
-      |+> foldAsTransformation collectFunctionDefinitions
       |+> TypesUtil.expandStmtList inlineStmts
+      |+> foldAsTransformation collectFunctionDefinitions
       |+> makeStmtSequence
       |+> TypesUtil.expandStmtList simplifySequenceBindings
       |+> makeStmtSequence
