@@ -65,38 +65,47 @@ type state_t1 =
    }
 (* ======================= *)
 
-let returnBindsAndDecl ((decls:val_bind list),(binds: parse_exp list)) (bind:val_bind) =
-   match bind with
-   | ValBind(name,init,exp) ->
-      let loc = TypesUtil.getNamedIdLocation name in
-      ValNoBind(name,init)::decls, StmtBind(PId(name),exp,loc)::binds
-   | ValNoBind(name,init) -> ValNoBind(name,init)::decls,binds
-
 (** Transforms mem x=0; -> mem x; x=0; *)
 let separateBindAndDeclaration : ('data,parse_exp) expander =
    fun state stmt ->
       match stmt with
-      | StmtMem(vlist,loc) ->
-         let new_vlist,binds = List.fold_left returnBindsAndDecl ([],[]) vlist in
-         let stmts = StmtMem(List.rev new_vlist,loc)::binds  in
+      | StmtMem(lhs,init,Some(rhs),loc) ->
+         let stmts = [StmtMem(lhs,init,None,loc); StmtBind(lhs,rhs,loc)]  in
          state,stmts
-      | StmtVal(vlist,loc) ->
-         let new_vlist,binds = List.fold_left returnBindsAndDecl ([],[]) vlist in
-         let stmts = StmtVal(List.rev new_vlist,loc)::binds  in
+      | StmtVal(lhs,Some(rhs),loc) ->
+         let stmts = [StmtVal(lhs,None,loc); StmtBind(lhs,rhs,loc)]  in
          state,stmts
       | _ -> state,[stmt]
 
 (* ======================= *)
 
+let rec map3 f a b c =
+   match a,c,b with
+   | [],[],[] -> []
+   | h1::t1,h2::t2,h3::t3 -> (f h1 h2 h3)::(map3 f t1 t2 t3)
+   | _ -> failwith "map3: Different number of elements in lists"
+
 (** Transforms val x,y; -> val x; val y; *)
 let makeSingleDeclaration : ('data,parse_exp) expander =
    fun state stmt ->
       match stmt with
-      | StmtVal(vlist,loc) ->
-         let stmts = List.map (fun a -> StmtVal([a],loc)) vlist in
+      | StmtVal(PTuple(elems,_),None,loc) ->
+         let stmts = List.map (fun a -> StmtVal(a,None,loc)) elems in
          state,stmts
-      | StmtMem(vlist,loc) ->
-         let stmts = List.map (fun a -> StmtMem([a],loc)) vlist in
+      | StmtVal(PTuple(elems,_),Some(PTuple(rhs,_)),loc) ->
+         let stmts = List.map2 (fun a b -> StmtVal(a,Some(b),loc)) elems rhs in
+         state,stmts
+      | StmtMem(PTuple(elems,_),None,None,loc) ->
+         let stmts = List.map (fun a -> StmtMem(a,None,None,loc)) elems in
+         state,stmts
+      | StmtMem(PTuple(elems,_),None,Some(PTuple(rhs,_)),loc) ->
+         let stmts = List.map2 (fun a b -> StmtMem(a,None,Some(b),loc)) elems rhs in
+         state,stmts
+      | StmtMem(PTuple(elems,_),Some(PTuple(init,_)),None,loc) ->
+         let stmts = List.map2 (fun a b -> StmtMem(a,Some(b),None,loc)) elems init in
+         state,stmts
+      | StmtMem(PTuple(elems,_),Some(PTuple(init,_)),Some(PTuple(rhs,_)),loc) ->
+         let stmts = map3 (fun a b c -> StmtMem(a,Some(b),Some(c),loc)) elems init rhs in
          state,stmts
       | _ -> state,[stmt]
 
@@ -141,7 +150,7 @@ let simplifyTupleAssign : ('data,parse_exp) expander =
                let tmp_e     = List.map (fun a -> PId(a)) tmp_vars in
                let to_tmp    = List.map2 (fun a b -> StmtBind(a,b,loc)) tmp_e rhs in
                let from_tmp  = List.map2 (fun a b -> StmtBind(a,b,loc)) lhs tmp_e in
-               let decl = List.map (fun a -> StmtVal([ValNoBind(a,None)],loc)) tmp_vars in
+               let decl = List.map (fun a -> StmtVal(PId(a),None,loc)) tmp_vars in
                let new_state = { state with counter = init+(List.length lhs)} in
                new_state,decl@to_tmp@from_tmp
          end
@@ -160,7 +169,7 @@ let bindFunctionCallsInExp : (int * parse_exp list,parse_exp) transformation =
       | PCall(name,args,loc,attr) when not (isSimpleBinding attr) ->
          let count,stmts = data in
          let tmp_var = SimpleId("_tmp"^(string_of_int count),default_loc) in
-         let decl = StmtVal([ValNoBind(tmp_var,None)],loc) in
+         let decl = StmtVal(PId(tmp_var),None,loc) in
          let bind_stmt = StmtBind(PId(tmp_var),PCall(name,args,loc,SimpleBinding::attr),loc) in
          (count+1,[bind_stmt;decl]@stmts),PId(tmp_var)
       | _ -> data,exp
@@ -228,7 +237,7 @@ let inlineFunctionCall (state:'data) (name:named_id) (args:parse_exp list) loc :
       let prefix = call_name^"_" in
       let fargs_prefixed = List.map (prefixNamedId prefix) fargs in
       let _,fbody_prefixed = TypesUtil.traverseBottomExpList prefixAllNamedIds prefix fbody in
-      let new_decl = List.map (fun a-> StmtVal([ValNoBind(a,None)],loc)) fargs_prefixed in
+      let new_decl = List.map (fun a-> StmtVal(PId(a),None,loc)) fargs_prefixed in
       let new_assignments = List.map2 (fun a b -> StmtBind(PId(a),b,loc)) fargs_prefixed args in
       new_decl@new_assignments@fbody_prefixed
    | _ -> failwith "inlineFunctionCall: Invalid function declaration"
@@ -285,9 +294,9 @@ let simplifySequenceBindings : ('data,parse_exp) expander =
 let rec removeDuplicateMem (declared:bool NamedIdMap.t) (acc:parse_exp list) (stmts:parse_exp list) : parse_exp list =
    match stmts with
    | [] -> List.rev acc
-   | StmtMem([ValNoBind(name,init)],_)::t when NamedIdMap.mem name declared ->
+   | StmtMem(PId(name),_,_,_)::t when NamedIdMap.mem name declared ->
       removeDuplicateMem declared acc t
-   | (StmtMem([ValNoBind(name,init)],_) as h)::t ->
+   | (StmtMem(PId(name),_,_,_) as h)::t ->
       removeDuplicateMem (NamedIdMap.add name true declared) (h::acc) t
    | h::t -> removeDuplicateMem declared (h::acc) t
 

@@ -299,6 +299,8 @@ let rec checkExp : environment -> Types.parse_exp -> Types.errors option =
       | Left err -> Some [err]
       | Right _ -> None
 
+(* Checker broken when removing val_bind*)
+(*
 and checkRegularValBind : environment -> Types.val_bind -> (errors,environment) either  =
    fun env valbind ->
       match valbind with
@@ -318,12 +320,16 @@ and checkMemValBind : environment -> Types.val_bind -> (errors,environment) eith
          match checkExp env valBind with
          | Some errs -> Left (SimpleError("In binding of variable " ^ name ^ ".")::errs)
          | None -> createMemory env name None
-
+*)
 and checkStmt : environment -> parse_exp -> (errors,environment) either =
    fun env stmt ->
       match stmt with
+      (*
       | StmtVal (valbinds,loc) -> eitherFold_left checkRegularValBind env valbinds
       | StmtMem (valbinds,loc) -> eitherFold_left checkMemValBind env valbinds
+      *)
+      | StmtVal (_,_,loc) -> Right env
+      | StmtMem (_,_,_,loc) -> Right env
       | StmtReturn (exp,loc) ->
          begin match checkExp env exp with
             | None -> Right env

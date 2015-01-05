@@ -291,7 +291,7 @@ let optStartValue (buffer:parse_exp lexer_stream) : parse_exp option =
       let _ = consume buffer RPAREN in
       Some(e)
    | _ -> None
-
+(*
 (** <valBind> := <namedId> [<optStartValue>] [ '=' <expression>] *)
 let valBind (buffer:parse_exp lexer_stream) : val_bind =
    let id       = namedId buffer in
@@ -315,22 +315,50 @@ let valBindList (buffer:parse_exp lexer_stream) : val_bind list =
       | _ -> List.rev (e::acc)
    in let _ = expect buffer ID in
    loop []
+*)
+
+(** initExpression := '(' expression ')'*)
+let initExpression (buffer:parse_exp lexer_stream) : parse_exp option =
+   match peekKind buffer with
+   | AT ->
+      let _ = skip buffer in
+      let e = getContents (expression 0 buffer) in
+      Some(e)
+   | _ -> None
 
 (** <statement> := | 'val' <valBindList> ';' *)
 let stmtVal (buffer:parse_exp lexer_stream) : parse_exp =
    let start_loc = buffer.peeked.loc in
    let _ = consume buffer VAL in
-   let vals = valBindList buffer in
-   let _ = consume buffer SEMI in
-   StmtVal(vals,start_loc)
+   let lhs = getContents (expression 0 buffer) in
+   (* TODO: Add check of lhs *)
+   match peekKind buffer with
+   | EQUAL ->
+      let _   = skip buffer in
+      let rhs = getContents (expression 0 buffer) in
+      let _   = consume buffer SEMI in
+      StmtVal(lhs,Some(rhs),start_loc)
+   | _ ->
+      let _ = consume buffer SEMI in
+      StmtVal(lhs,None,start_loc)
+
 
 (** <statement> := | 'mem' <valBindList> ';' *)
 let stmtMem (buffer:parse_exp lexer_stream) : parse_exp =
    let start_loc = buffer.peeked.loc in
    let _ = consume buffer MEM in
-   let vals = valBindList buffer in
-   let _ = consume buffer SEMI in
-   StmtMem(vals,start_loc)
+   let lhs = getContents (expression 0 buffer) in
+   let init = initExpression buffer in
+   (* TODO: Add check of lhs *)
+   match peekKind buffer with
+   | EQUAL ->
+      let _   = skip buffer in
+      let rhs = getContents (expression 0 buffer) in
+      let _   = consume buffer SEMI in
+      StmtMem(lhs,init,Some(rhs),start_loc)
+   | _ ->
+      let _ = consume buffer SEMI in
+      StmtMem(lhs,init,None,start_loc)
 
 (** <statement> := | 'return' <expression> ';' *)
 let stmtReturn (buffer:parse_exp lexer_stream) : parse_exp =

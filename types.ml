@@ -62,6 +62,7 @@ type token_enum =
    | COMMA
    | EQUAL
    | OP
+   | AT
 
 type 'a token =
    {
@@ -112,19 +113,14 @@ type parse_exp =
    | PTuple of parse_exp list * location
    | PEmpty
 
-   | StmtVal      of val_bind list  * location
-   | StmtMem      of val_bind list  * location
+   | StmtVal      of parse_exp * parse_exp option * location
+   | StmtMem      of parse_exp * parse_exp option * parse_exp option * location
    | StmtReturn   of parse_exp      * location
    | StmtIf       of parse_exp      * parse_exp list * (parse_exp list) option * location
    | StmtFun      of named_id       * named_id list  * parse_exp list * location
    | StmtBind     of parse_exp      * parse_exp      * location
    | StmtSequence of parse_exp list * location
    | StmtEmpty
-
-and val_bind =
-   | ValBind   of named_id * parse_exp option * parse_exp
-   | ValNoBind of named_id * parse_exp option
-
 
 
 type parser_results =

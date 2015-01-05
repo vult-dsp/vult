@@ -170,12 +170,15 @@ let rec traverseBottomExp (f: ('data, parse_exp) traverser) (state:'data) (exp:p
       let state2,ne2 = traverseBottomExp f state1 e2 in
       let state3,ne3 = traverseBottomExp f state2 e3 in
       state3,PIf(ne1,ne2,ne3,loc)
-   | StmtVal(binds,loc) ->
-      let state1,nbinds = traverseBottomValBindListExp f state binds in
-      state1,StmtVal(nbinds,loc)
-   | StmtMem(binds,loc) ->
-      let state1,nbinds = traverseBottomValBindListExp f state binds in
-      state1,StmtMem(nbinds,loc)
+   | StmtVal(e1,e2,loc) ->
+      let state1,ne1 = traverseBottomExp f state e1 in
+      let state2,ne2 = traverseBottomOptExp f state1 e2 in
+      state2,StmtVal(ne1,ne2,loc)
+   | StmtMem(e1,e2,e3,loc) ->
+      let state1,ne1 = traverseBottomExp f state e1 in
+      let state2,ne2 = traverseBottomOptExp f state1 e2 in
+      let state3,ne3 = traverseBottomOptExp f state2 e3 in
+      state3,StmtMem(ne1,ne2,ne3,loc)
    | StmtReturn(e,loc) ->
       let state1,ne = traverseBottomExp f state e in
       f state1 (StmtReturn(ne,loc))
@@ -204,22 +207,6 @@ let rec traverseBottomExp (f: ('data, parse_exp) traverser) (state:'data) (exp:p
 (** Traverses lists expressions bottom-up. The expressions are traversed right to left *)
 and traverseBottomExpList (f: ('data, parse_exp) traverser) (state:'data) (expl:parse_exp list) : 'data * parse_exp list =
    foldTraverser_right traverseBottomExp f state expl
-
-(** Applies a function to expressions in the bindings using a top-down traverser *)
-and traverseBottomValBindExp (f: ('data, parse_exp) traverser) (state:'data) (val_bind:val_bind) =
-   match val_bind with
-   | ValBind(name,init_opt,value) ->
-      let state1,new_name = traverseNamedIdAsExp f state name in
-      let state2,new_init_opt = traverseBottomOptExp f state1 init_opt in
-      let state3,new_value = traverseBottomExp f state2 value in
-      state3,ValBind(new_name,new_init_opt,new_value)
-   | ValNoBind(name,init_opt) ->
-      let state1,new_name = traverseNamedIdAsExp f state name in
-      let state2,new_init_opt = traverseBottomOptExp f state1 init_opt in
-      state2,ValNoBind(new_name,new_init_opt)
-
-and traverseBottomValBindListExp (f: ('data, parse_exp) traverser) (state:'data) (val_binds:val_bind list) =
-   foldTraverser_right traverseBottomValBindExp f state val_binds
 
 and traverseBottomOptExp (f: ('data, parse_exp) traverser) (state:'data) (exp_opt:parse_exp option) =
    match exp_opt with
@@ -258,12 +245,15 @@ let rec traverseTopExp (f: ('data, parse_exp) traverser) (state0:'data) (exp:par
       let state2,ne2 = traverseTopExp f state1 e2 in
       let state3,ne3 = traverseTopExp f state2 e3 in
       state3,PIf(ne1,ne2,ne3,loc)
-   | StmtVal(binds,loc) ->
-      let state1,nbinds = traverseTopValBindListExp f state binds in
-      state1,StmtVal(nbinds,loc)
-   | StmtMem(binds,loc) ->
-      let state1,nbinds = traverseTopValBindListExp f state binds in
-      state1,StmtMem(nbinds,loc)
+   | StmtVal(e1,e2,loc) ->
+      let state1,ne1 = traverseTopExp f state e1 in
+      let state2,ne2 = traverseTopOptExp f state1 e2 in
+      state2,StmtVal(ne1,ne2,loc)
+   | StmtMem(e1,e2,e3,loc) ->
+      let state1,ne1 = traverseTopExp f state e1 in
+      let state2,ne2 = traverseTopOptExp f state1 e2 in
+      let state3,ne3 = traverseTopOptExp f state2 e3 in
+      state3,StmtMem(ne1,ne2,ne3,loc)
    | StmtReturn(e,loc) ->
       let state1,ne = traverseTopExp f state e in
       state1,StmtReturn(ne,loc)
@@ -291,22 +281,6 @@ let rec traverseTopExp (f: ('data, parse_exp) traverser) (state0:'data) (exp:par
 (** Traverses lists expressions top-down. The expressions are traversed left to right *)
 and traverseTopExpList (f: ('data, parse_exp) traverser) (state:'data) (expl:parse_exp list) : 'data * parse_exp list =
    foldTraverser_left traverseTopExp f state expl
-
-(** Applies a function to expressions in the bindings using a top-down traverser *)
-and traverseTopValBindExp (f: ('data, parse_exp) traverser) (state:'data) (val_bind:val_bind) =
-   match val_bind with
-   | ValBind(name,init_opt,value) ->
-      let state1,new_name = traverseNamedIdAsExp f state name in
-      let state2,new_init_opt = traverseTopOptExp f state1 init_opt in
-      let state3,new_value = traverseTopExp f state2 value in
-      state3,ValBind(name,new_init_opt,new_value)
-   | ValNoBind(name,init_opt) ->
-      let state1,new_name = traverseNamedIdAsExp f state name in
-      let state2,new_init_opt = traverseTopOptExp f state1 init_opt in
-      state2,ValNoBind(new_name,new_init_opt)
-
-and traverseTopValBindListExp (f: ('data, parse_exp) traverser) (state:'data) (val_binds:val_bind list) =
-   foldTraverser_left traverseTopValBindExp f state val_binds
 
 and traverseTopOptExp (f: ('data, parse_exp) traverser) (state:'data) (exp_opt:parse_exp option) =
    match exp_opt with
@@ -344,12 +318,15 @@ let rec foldTopExp (f: ('data, parse_exp) folder) (state0:'data) (exp:parse_exp)
       let state2 = foldTopExp f state1 e2 in
       let state3 = foldTopExp f state2 e3 in
       state3
-   | StmtVal(binds,_) ->
-      let state1 = foldTopValBindExpList f state binds in
-      state1
-   | StmtMem(binds,_) ->
-      let state1 = foldTopValBindExpList f state binds in
-      state1
+   | StmtVal(e1,e2,_) ->
+      let state1 = foldTopExp f state e1 in
+      let state2 = foldTopOptExp f state1 e2 in
+      state2
+   | StmtMem(e1,e2,e3,_) ->
+      let state1 = foldTopExp f state e1 in
+      let state2 = foldTopOptExp f state1 e2 in
+      let state3 = foldTopOptExp f state2 e3 in
+      state3
    | StmtReturn(e,_) ->
       let state1 = foldTopExp f state e in
       state1
@@ -381,22 +358,11 @@ and foldTopExpList f state expl =
           state1)
       state expl
 
-and foldTopValBindExp (f: ('data, parse_exp) folder) (state:'data) (val_bind:val_bind) =
-   match val_bind with
-   | ValBind(name,init_opt,value) ->
-      let state1 = CCOpt.map (foldTopExp f state) init_opt |> CCOpt.get state in
-      let state2 = foldTopExp f state1 value in
-      state2
-   | ValNoBind(name,init_opt) ->
-      let state1 = CCOpt.map (foldTopExp f state) init_opt |> CCOpt.get state in
-      state1
-
-and foldTopValBindExpList f state expl =
-   List.fold_left
-      (fun state elem ->
-          let state1 = foldTopValBindExp f state elem in
-          state1)
-      state expl
+and foldTopOptExp (f: ('data, parse_exp) folder) (state:'data) (exp:parse_exp option) =
+   match exp with
+   | Some(e) ->
+      foldTopExp f state e
+   | _ -> state
 
 let rec expandStmt (f: ('data, parse_exp) expander) (state:'data) (stmt:parse_exp) : 'data * parse_exp list =
    let makeSingleStmt loc l = match l with [] -> StmtEmpty | [h] -> h | _ -> StmtSequence(l,loc) in
@@ -577,8 +543,8 @@ let getExpLocation (e:parse_exp)  : location =
    | PTuple(_,loc) -> loc
    | PEmpty -> default_loc
 
-   | StmtVal(_,loc)
-   | StmtMem(_,loc)
+   | StmtVal(_,_,loc)
+   | StmtMem(_,_,_,loc)
    | StmtReturn(_,loc)
    | StmtIf(_,_,_,loc)
    | StmtFun(_,_,_,loc)

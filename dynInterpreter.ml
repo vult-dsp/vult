@@ -245,11 +245,11 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env =
    | PEmpty -> failwith "There should not be Empty expressions when calling the intepreter"
    | PBinOp(_,_,_,_)
    | PUnOp(_,_,_) -> failwith "There should not be operators when calling the intepreter"
-   | StmtVal([ValNoBind(name,opt_init)],_) ->
+   | StmtVal(PId(name),opt_init,_) ->
       let vname = getVarName name in
       let init,loc = apply_default (runExp loc) opt_init (VNum(0.0),loc) in
       VUnit,declVal loc vname init
-   | StmtMem([ValNoBind(name,opt_init)],_) ->
+   | StmtMem(PId(name),opt_init,None,_) ->
       let vname = getVarName name in
       let init,loc = apply_default (runExp loc) opt_init (VNum(0.0),loc) in
       VUnit,declMem loc vname init

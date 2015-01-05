@@ -118,6 +118,7 @@ let kindToString kind =
    | SEMI  -> "';'"
    | COMMA -> "','"
    | EQUAL -> "'='"
+   | AT -> "'@'"
    | OP    -> "'operator'"
 
 (** Returns a string representation of the token *)
@@ -158,6 +159,7 @@ rule next_token lines = parse
       next_token lines lexbuf
     }
   | blank +     { let _ = getLexeme lines lexbuf in next_token lines lexbuf }
+  | '@'         { makeToken lines AT lexbuf }
   | '('         { makeToken lines LPAREN lexbuf }
   | ')'         { makeToken lines RPAREN lexbuf }
   | '{'         { makeToken lines LBRAC lexbuf }

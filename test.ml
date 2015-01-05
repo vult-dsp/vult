@@ -92,8 +92,8 @@ let parseStmtTest3 context =
       (parseDumpStmtList "val a:num=0;")
 ;;
 let parseStmtTest4 context =
-   test_string           "mem a=0,b:num=0;"
-      (parseDumpStmtList "mem a=0,b:num=0;")
+   test_string           "mem a,b:num=0,0;"
+      (parseDumpStmtList "mem a,b:num=0,0;")
 ;;
 let parseStmtTest5 context =
    test_string           "return (-a);"
@@ -132,8 +132,8 @@ let parseStmtTest13 context =
       (parseDumpStmtList "fun add:int(a:int,b:int) return a+b;")
 ;;
 let parseStmtTest14 context =
-   test_string           "mem a(0),b(0)=a;"
-      (parseDumpStmtList "mem a(0),b(0)=a;")
+   test_string           "mem a,b@0,0=x,y;"
+      (parseDumpStmtList "mem a,b@0,0=x,y;")
 ;;
 
 (* Name the test cases and group them together *)

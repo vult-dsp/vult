@@ -127,13 +127,25 @@ let rec expressionBuff buffer exp =
       expressionBuff buffer else_exp
    | PEmpty -> append buffer "Empty"
 
-   | StmtVal(elems,_) ->
+   | StmtVal(e1,Some(e2),_) ->
       append buffer "val ";
-      valInitBuffList buffer elems;
+      expressionBuff buffer e1;
+      append buffer "=";
+      expressionBuff buffer e2;
       append buffer ";"
-   | StmtMem(elems,_) ->
+   | StmtVal(e1,None,_) ->
+      append buffer "val ";
+      expressionBuff buffer e1;
+      append buffer ";"
+   | StmtMem(e1,e2,e3,_) ->
       append buffer "mem ";
-      valInitBuffList buffer elems;
+      expressionBuff buffer e1;
+      CCOpt.iter (fun a ->
+         append buffer "@";
+         expressionBuff buffer a) e2;
+      CCOpt.iter (fun a ->
+         append buffer "=";
+         expressionBuff buffer a) e3;
       append buffer ";"
    | StmtReturn(e,_) ->
       append buffer "return ";
@@ -192,30 +204,6 @@ and expressionListBuff buffer exp_stmt expl =
          loop expl;
          outdent buffer;
          append buffer "}"
-
-(** Adds to the print buffer an val_init *)
-and valInitBuff buffer v =
-   match v with
-   | ValNoBind(id,None) -> namedIdBuff buffer id
-   | ValNoBind(id,Some(init)) ->
-      namedIdBuff buffer id;
-      append buffer "(";
-      expressionBuff buffer init;
-      append buffer ")";
-   | ValBind(id,None,e) ->
-      namedIdBuff buffer id;
-      append buffer "=";
-      expressionBuff buffer e
-   | ValBind(id,Some(init),e) ->
-      namedIdBuff buffer id;
-      append buffer "(";
-      expressionBuff buffer init;
-      append buffer ")";
-      append buffer "=";
-      expressionBuff buffer e
-(** Adds to the print buffer an val_init list *)
-and valInitBuffList buffer l =
-   printList buffer valInitBuff "," l
 
 (** Converts to string a list of statememts *)
 let stmtListStr e =
