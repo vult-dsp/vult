@@ -356,7 +356,7 @@ let applyTransformations (results:parser_results) =
       |+> TypesUtil.expandStmtList inlineStmts
       |+> foldAsTransformation collectFunctionDefinitions
       |+> TypesUtil.traverseBottomExpList simplifySequenceBindings
-      |+> TypesUtil.traverseTopExpList removeDuplicateMemStmts
+      (*|+> TypesUtil.traverseTopExpList removeDuplicateMemStmts*)
       |> snd
    in
    let new_stmts = CCError.map passes results.presult in
