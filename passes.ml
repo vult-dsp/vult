@@ -268,6 +268,7 @@ let rec hasSingleReturnAtEnd (acc:parse_exp list) (stmts:parse_exp list) : (pars
    | [] -> None
    | [StmtReturn(e,_)] -> Some(e,List.rev acc)
    | StmtReturn(_,_)::_ -> None
+   | StmtIf(_,_,_,_)::_ -> None (* Avoids if-statememts since may have a return inside *)
    | h::t -> hasSingleReturnAtEnd (h::acc) t
 
 (** Transforms x = {return y;}; -> x = y;  and _ = { stmts; } -> stmts *)
@@ -280,12 +281,6 @@ let simplifySequenceBindings : ('data,parse_exp) traverser =
             | Some(e,rem_stmts) -> state,StmtSequence(rem_stmts@[StmtBind(lhs,e,loc)],loc_s)
             | None -> state,exp
          end
-      | StmtSequence(stmts,_) ->
-         let contains_return = List.exists (fun a -> match a with StmtReturn(_,_) -> true | _ -> false) stmts in
-         if contains_return then
-            state,exp
-         else
-            state,exp
       | _ -> state,exp
 
 (* ======================= *)
@@ -360,9 +355,7 @@ let applyTransformations (results:parser_results) =
       |+> inlineFunctionBodies
       |+> TypesUtil.expandStmtList inlineStmts
       |+> foldAsTransformation collectFunctionDefinitions
-      |+> makeStmtSequence
-      (*|+> TypesUtil.traverseBottomExpList simplifySequenceBindings*)
-      |+> makeStmtSequence
+      |+> TypesUtil.traverseBottomExpList simplifySequenceBindings
       |+> TypesUtil.traverseTopExpList removeDuplicateMemStmts
       |> snd
    in

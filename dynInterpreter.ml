@@ -152,32 +152,37 @@ let popLocal (loc:local_env) : local_env =
    | [] -> loc
    | _::t -> { loc with val_binds = t }
 
-(** Returns the table containing the given variable and also returns which kind of table contains it *)
-let findValMemTable (loc:local_env) (name:string) =
+(** Returns the value for the given variable *)
+let getExpValueFromEnv (loc:local_env) (name:string) : value =
    let rec loop locals =
       match locals with
       | [] ->
          if StringMap.mem name loc.mem_binds then
-            loc.mem_binds,`MemTable
+            StringMap.find name loc.mem_binds
          else
             let _ = print_string (localEnvStr loc) in
             failwith ("Undeclared variable "^name)
       | h::t ->
          if StringMap.mem name h then
-            h,`ValTable
+            StringMap.find name h
          else loop t
    in loop loc.val_binds
 
-(** Returns the value of a given variable *)
-let getExpValueFromEnv (loc:local_env) (name:string) : value =
-   let table,_ = findValMemTable loc name in
-   StringMap.find name table
-
 (** Sets the value of a given variable *)
-let setValMem (loc:local_env) (name:string)  (value:value) : local_env =
-   match findValMemTable loc name with
-   | table,`ValTable -> { loc with val_binds = (StringMap.add name value table)::(List.tl loc.val_binds) }
-   | table,`MemTable -> { loc with mem_binds = StringMap.add name value table }
+let setValMem (loc:local_env) (name:string) (value:value) : local_env =
+   let rec loop locals acc =
+      match locals with
+      | [] ->
+         if StringMap.mem name loc.mem_binds then
+            { loc with mem_binds = StringMap.add name value loc.mem_binds }
+         else
+            let _ = print_string (localEnvStr loc) in
+            failwith ("Undeclared variable "^name)
+      | h::t ->
+         if StringMap.mem name h then
+            { loc with val_binds = (List.rev acc)@[StringMap.add name value h]@t}
+         else loop t (h::acc)
+   in loop loc.val_binds []
 
 (** Declares a variable name *)
 let declVal (loc:local_env) (name:string) (value:value) : local_env =
