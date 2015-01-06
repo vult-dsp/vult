@@ -291,22 +291,22 @@ let simplifySequenceBindings : ('data,parse_exp) traverser =
 (* ======================= *)
 
 (** Takes a lis of statements and removes the duplicated mem declarations *)
-let rec removeDuplicateMem (declared:bool NamedIdMap.t) (acc:parse_exp list) (stmts:parse_exp list) : parse_exp list =
-   match stmts with
-   | [] -> List.rev acc
-   | StmtMem(PId(name),_,_,_)::t when NamedIdMap.mem name declared ->
-      removeDuplicateMem declared acc t
-   | (StmtMem(PId(name),_,_,_) as h)::t ->
-      removeDuplicateMem (NamedIdMap.add name true declared) (h::acc) t
-   | h::t -> removeDuplicateMem declared (h::acc) t
+let rec removeDuplicateMem : ('data,parse_exp) expander =
+   fun state exp ->
+      match exp with
+      | StmtMem(PId(name),_,_,_) when NamedIdMap.mem name state ->
+         state,[]
+      | StmtMem(PId(name),_,_,_)->
+         (NamedIdMap.add name true state),[exp]
+      | _ -> state,[exp]
 
 (** Removes duplicated mem declarations  from StmtSequence *)
 let removeDuplicateMemStmts : ('data,parse_exp) traverser =
    fun state exp ->
       match exp with
-      | StmtSequence(stmts,loc) ->
-         let new_stmts = removeDuplicateMem NamedIdMap.empty [] stmts in
-         state,StmtSequence(new_stmts,loc)
+      | StmtFun(name,args,body,loc) ->
+         let _,new_body = TypesUtil.expandStmtList removeDuplicateMem NamedIdMap.empty body in
+         state,StmtFun(name,args,new_body,loc)
       | _ -> state,exp
 (* ======================= *)
 
@@ -336,17 +336,21 @@ let inlineFunctionBodies (state:'data) (exp_list:parse_exp list) : 'data * parse
    let new_functions,new_weigths = NamedIdMap.fold inlineFunctionBody state.functions (NamedIdMap.empty,NamedIdMap.empty) in
    { state with functions = new_functions; function_weight = new_weigths; },exp_list
 
+let makeFunAndCall stmts =
+   let fcall = SimpleId("__main__",default_loc) in
+   [StmtFun(fcall,[],stmts,default_loc); StmtReturn(PCall(fcall,[],default_loc,[]),default_loc)]
+
 let applyTransformations (results:parser_results) =
    let initial_state =
       {
-         counter = 0;
-         functions = NamedIdMap.empty;
+         counter         = 0;
+         functions       = NamedIdMap.empty;
          function_weight = NamedIdMap.empty;
-         inline_weight = default_inline_weight;
+         inline_weight   = default_inline_weight;
       }
    in
    let passes stmts =
-      (initial_state,[StmtSequence(stmts,default_loc)])
+      (initial_state,makeFunAndCall stmts)
       |+> TypesUtil.traverseTopExpList (nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)
       |+> TypesUtil.expandStmtList separateBindAndDeclaration
       |+> TypesUtil.expandStmtList makeSingleDeclaration
@@ -357,7 +361,7 @@ let applyTransformations (results:parser_results) =
       |+> TypesUtil.expandStmtList inlineStmts
       |+> foldAsTransformation collectFunctionDefinitions
       |+> makeStmtSequence
-      |+> TypesUtil.traverseBottomExpList simplifySequenceBindings
+      (*|+> TypesUtil.traverseBottomExpList simplifySequenceBindings*)
       |+> makeStmtSequence
       |+> TypesUtil.traverseTopExpList removeDuplicateMemStmts
       |> snd
