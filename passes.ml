@@ -116,7 +116,7 @@ let nameFunctionCalls : ('data,parse_exp) transformation =
    fun state exp ->
       match exp with
       | PCall(SimpleId(name,loc),args,floc,attr) ->
-         let inst = "_inst"^(string_of_int state.counter) in
+         let inst = "_i"^(string_of_int state.counter) in
          let new_state = {state with counter = state.counter+1} in
          new_state,PCall(NamedId(inst,name,loc,loc),args,floc,attr)
       | _ -> state,exp
@@ -271,22 +271,22 @@ let rec hasSingleReturnAtEnd (acc:parse_exp list) (stmts:parse_exp list) : (pars
    | h::t -> hasSingleReturnAtEnd (h::acc) t
 
 (** Transforms x = {return y;}; -> x = y;  and _ = { stmts; } -> stmts *)
-let simplifySequenceBindings : ('data,parse_exp) expander =
+let simplifySequenceBindings : ('data,parse_exp) traverser =
    fun state exp ->
       match exp with
-      | StmtBind(lhs,StmtSequence(stmts,_),loc) ->
+      | StmtBind(lhs,StmtSequence(stmts,loc_s),loc) ->
          begin
             match hasSingleReturnAtEnd [] stmts with
-            | Some(e,rem_stmts) -> state,rem_stmts@[StmtBind(lhs,e,loc)]
-            | None -> state,[exp]
+            | Some(e,rem_stmts) -> state,StmtSequence(rem_stmts@[StmtBind(lhs,e,loc)],loc_s)
+            | None -> state,exp
          end
       | StmtSequence(stmts,_) ->
          let contains_return = List.exists (fun a -> match a with StmtReturn(_,_) -> true | _ -> false) stmts in
          if contains_return then
-            state,[exp]
+            state,exp
          else
-            state,stmts
-      | _ -> state,[exp]
+            state,exp
+      | _ -> state,exp
 
 (* ======================= *)
 
@@ -357,7 +357,7 @@ let applyTransformations (results:parser_results) =
       |+> TypesUtil.expandStmtList inlineStmts
       |+> foldAsTransformation collectFunctionDefinitions
       |+> makeStmtSequence
-      |+> TypesUtil.expandStmtList simplifySequenceBindings
+      |+> TypesUtil.traverseBottomExpList simplifySequenceBindings
       |+> makeStmtSequence
       |+> TypesUtil.traverseTopExpList removeDuplicateMemStmts
       |> snd
