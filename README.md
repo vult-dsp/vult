@@ -38,7 +38,7 @@ $ cd node
 $ npm install
 $ cd ..
 ```
-Then you can compile the Vult we interpreter:
+Then you can compile the Vult web interpreter:
 ```
 $ ocamlbuild -use-ocamlfind -pkg containers vult_node.byte -syntax camlp4o -pkg js_of_ocaml -pkg js_of_ocaml.syntax
 $ js_of_ocaml vult_node.byte
