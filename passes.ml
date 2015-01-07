@@ -179,16 +179,16 @@ let bindFunctionCalls : ('data,parse_exp) expander  =
    fun state stmt ->
       match stmt with
       | StmtBind(lhs,PCall(name,args,loc1,attr),loc) ->
-         let (count,stmts),new_args = TypesUtil.traverseBottomExpList bindFunctionCallsInExp (state.counter,[]) args in
+         let (count,stmts),new_args = TypesUtil.traverseBottomExpList None bindFunctionCallsInExp (state.counter,[]) args in
          {state with counter = count},(List.rev (StmtBind(lhs,PCall(name,new_args,loc,attr),loc)::stmts))
       | StmtBind(lhs,rhs,loc) ->
-         let (count,stmts),new_rhs = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.counter,[]) rhs in
+         let (count,stmts),new_rhs = TypesUtil.traverseBottomExp None bindFunctionCallsInExp (state.counter,[]) rhs in
          {state with counter = count},(List.rev (StmtBind(lhs,new_rhs,loc)::stmts))
       | StmtReturn(e,loc) ->
-         let (count,stmts),new_e = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.counter,[]) e in
+         let (count,stmts),new_e = TypesUtil.traverseBottomExp None bindFunctionCallsInExp (state.counter,[]) e in
          {state with counter = count},(List.rev (StmtReturn(new_e,loc)::stmts))
       | StmtIf(cond,then_stmts,else_stmts,loc) ->
-         let (count,stmts),new_cond = TypesUtil.traverseBottomExp bindFunctionCallsInExp (state.counter,[]) cond in
+         let (count,stmts),new_cond = TypesUtil.traverseBottomExp None bindFunctionCallsInExp (state.counter,[]) cond in
          {state with counter = count},(List.rev (StmtIf(new_cond,then_stmts,else_stmts,loc)::stmts))
 
       | _ -> state,[stmt]
@@ -236,7 +236,7 @@ let inlineFunctionCall (state:'data) (name:named_id) (args:parse_exp list) loc :
    | StmtFun(_,fargs,fbody,_) ->
       let prefix = call_name^"_" in
       let fargs_prefixed = List.map (prefixNamedId prefix) fargs in
-      let _,fbody_prefixed = TypesUtil.traverseBottomExpList prefixAllNamedIds prefix fbody in
+      let _,fbody_prefixed = TypesUtil.traverseBottomExpList None prefixAllNamedIds prefix fbody in
       let new_decl = List.map (fun a-> StmtVal(PId(a),None,loc)) fargs_prefixed in
       let new_assignments = List.map2 (fun a b -> StmtBind(PId(a),b,loc)) fargs_prefixed args in
       new_decl@new_assignments@fbody_prefixed
@@ -275,6 +275,8 @@ let rec hasSingleReturnAtEnd (acc:parse_exp list) (stmts:parse_exp list) : (pars
 let simplifySequenceBindings : ('data,parse_exp) traverser =
    fun state exp ->
       match exp with
+      | StmtBind(PUnit(uloc),PSeq(stmts,loc_s),loc) ->
+         state,StmtBind(PUnit(uloc),StmtBlock(stmts,loc_s),loc)
       | StmtBind(lhs,PSeq(stmts,loc_s),loc) ->
          begin
             match hasSingleReturnAtEnd [] stmts with
@@ -295,26 +297,31 @@ let rec removeDuplicateMem : ('data,parse_exp) expander =
          (NamedIdMap.add name true state),[exp]
       | _ -> state,[exp]
 
+let skipFun stmt =
+   match stmt with
+   | StmtFun(_,_,_,_) -> false
+   | _ -> true
+
 (** Removes duplicated mem declarations  from StmtSequence *)
 let removeDuplicateMemStmts : ('data,parse_exp) traverser =
    fun state exp ->
       match exp with
       | StmtFun(name,args,body,loc) ->
-         let _,new_body = TypesUtil.expandStmtList removeDuplicateMem NamedIdMap.empty body in
+         let _,new_body = TypesUtil.expandStmtList (Some(skipFun)) removeDuplicateMem NamedIdMap.empty body in
          state,StmtFun(name,args,new_body,loc)
       | _ -> state,exp
 (* ======================= *)
 
 (** Takes a fold function and wrap it as it was a transformation so it can be chained with |+> *)
 let foldAsTransformation (f:('data,parse_exp) folder) (state:'date) (exp_list:parse_exp list) : 'data * parse_exp list =
-   let new_state = TypesUtil.foldTopExpList f state exp_list in
+   let new_state = TypesUtil.foldTopExpList None f state exp_list in
    new_state,exp_list
 
 let inlineFunctionBodies (state:'data) (exp_list:parse_exp list) : 'data * parse_exp list =
    let inlineFunctionBody name fun_decl (functions,weigths) =
       match fun_decl with
       | StmtFun(fname,fargs,fbody,loc) ->
-         let _,new_fbody = TypesUtil.expandStmtList inlineStmts state fbody in
+         let _,new_fbody = TypesUtil.expandStmtList None inlineStmts state fbody in
          let weight = getExpListWeight new_fbody in
          let new_functions = NamedIdMap.add name (StmtFun(fname,fargs,new_fbody,loc)) functions in
          let new_weigths = NamedIdMap.add name weight weigths in
@@ -324,9 +331,9 @@ let inlineFunctionBodies (state:'data) (exp_list:parse_exp list) : 'data * parse
    let new_functions,new_weigths = NamedIdMap.fold inlineFunctionBody state.functions (NamedIdMap.empty,NamedIdMap.empty) in
    { state with functions = new_functions; function_weight = new_weigths; },exp_list
 
-let makeFunAndCall stmts =
+let makeFunAndCall state stmts =
    let fcall = SimpleId("__main__",default_loc) in
-   [StmtFun(fcall,[],stmts,default_loc); StmtReturn(PCall(fcall,[],default_loc,[]),default_loc)]
+   state,[StmtFun(fcall,[],stmts,default_loc); StmtReturn(PCall(fcall,[],default_loc,[]),default_loc)]
 
 let applyTransformations (results:parser_results) =
    let initial_state =
@@ -338,18 +345,19 @@ let applyTransformations (results:parser_results) =
       }
    in
    let passes stmts =
-      (initial_state,makeFunAndCall stmts)
-      |+> TypesUtil.traverseTopExpList (nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)
-      |+> TypesUtil.expandStmtList separateBindAndDeclaration
-      |+> TypesUtil.expandStmtList makeSingleDeclaration
-      |+> TypesUtil.expandStmtList bindFunctionCalls
-      |+> TypesUtil.expandStmtList simplifyTupleAssign
+      (initial_state,[StmtBlock(stmts,default_loc)])
+      |+> TypesUtil.traverseTopExpList None (nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)
+      |+> TypesUtil.expandStmtList None separateBindAndDeclaration
+      |+> TypesUtil.expandStmtList None makeSingleDeclaration
+      |+> TypesUtil.expandStmtList None bindFunctionCalls
+      |+> TypesUtil.expandStmtList None simplifyTupleAssign
       |+> foldAsTransformation collectFunctionDefinitions
       |+> inlineFunctionBodies
-      |+> TypesUtil.expandStmtList inlineStmts
+      |+> TypesUtil.expandStmtList (Some(skipFun)) inlineStmts
       |+> foldAsTransformation collectFunctionDefinitions
-      |+> TypesUtil.traverseBottomExpList simplifySequenceBindings
-      (*|+> TypesUtil.traverseTopExpList removeDuplicateMemStmts*)
+      |+> TypesUtil.traverseBottomExpList None simplifySequenceBindings
+      |+> makeFunAndCall
+      |+> TypesUtil.traverseTopExpList None removeDuplicateMemStmts
       |> snd
    in
    let new_stmts = CCError.map passes results.presult in
