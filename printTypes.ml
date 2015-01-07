@@ -143,11 +143,11 @@ let rec expressionBuff buffer exp =
       append buffer "mem ";
       expressionBuff buffer e1;
       CCOpt.iter (fun a ->
-         append buffer "@";
-         expressionBuff buffer a) e2;
+            append buffer "@";
+            expressionBuff buffer a) e2;
       CCOpt.iter (fun a ->
-         append buffer "=";
-         expressionBuff buffer a) e3;
+            append buffer "=";
+            expressionBuff buffer a) e3;
       append buffer ";"
    | StmtReturn(e,_) ->
       append buffer "return ";
@@ -191,38 +191,38 @@ and expressionListBuff buffer expl =
 
 (** Adds to the print buffer a statement in a block list *)
 and stmtListBuff buffer expl =
-      match expl with
-      | [h] -> expressionBuff buffer h
-      | _ ->
-         let rec loop l =
-            match l with
-            | [] -> ()
-            | h::t ->
-               expressionBuff buffer h;
-               newline buffer;
-               loop t
-         in
-         append buffer "{";
-         indent buffer;
-         loop expl;
-         outdent buffer;
-         append buffer "}"
+   match expl with
+   | [h] -> expressionBuff buffer h
+   | _ ->
+      let rec loop l =
+         match l with
+         | [] -> ()
+         | h::t ->
+            expressionBuff buffer h;
+            newline buffer;
+            loop t
+      in
+      append buffer "{";
+      indent buffer;
+      loop expl;
+      outdent buffer;
+      append buffer "}"
 
 (** Adds to the print buffer a statement in a block list *)
 and pseqListBuff buffer expl =
-         let rec loop l =
-            match l with
-            | [] -> ()
-            | h::t ->
-               expressionBuff buffer h;
-               newline buffer;
-               loop t
-         in
-         append buffer "{|";
-         indent buffer;
-         loop expl;
-         outdent buffer;
-         append buffer "|}"
+   let rec loop l =
+      match l with
+      | [] -> ()
+      | h::t ->
+         expressionBuff buffer h;
+         newline buffer;
+         loop t
+   in
+   append buffer "{|";
+   indent buffer;
+   loop expl;
+   outdent buffer;
+   append buffer "|}"
 
 (** Converts to string a list of statememts *)
 let stmtListStr e =

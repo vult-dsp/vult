@@ -419,7 +419,7 @@ and stmtList (buffer:parse_exp lexer_stream) : parse_exp list =
       [s]
 
 (** <statementList> :=  LSEQ <statement> [<statement>] RSEQ
-When called in nud function LSEQ is already consumed *)
+    When called in nud function LSEQ is already consumed *)
 and pseqList (buffer:parse_exp lexer_stream) : parse_exp list =
    let rec loop acc =
       match peekKind buffer with
