@@ -115,12 +115,12 @@ type _ parse_exp =
    | PGroup : exp_type parse_exp * location               -> exp_type parse_exp
    | PTuple : exp_type parse_exp list * location          -> exp_type parse_exp
    | PEmpty
-   | StmtReturn   : exp_type parse_exp * location           -> stmt_type parse_exp
-   | StmtSequence : stmt_type parse_exp list * location     -> stmt_type parse_exp
-   | StmtBind     : exp_type parse_exp * exp_type parse_exp * location -> stmt_type parse_exp
-   | StmtVal      : exp_type parse_exp * exp_type parse_exp option * location -> stmt_type parse_exp
-   | StmtMem      : exp_type parse_exp * exp_type parse_exp option * exp_type parse_exp option * location      -> stmt_type parse_exp
-   | StmtFun      : named_id  * named_id list  * stmt_type parse_exp list * location          -> stmt_type parse_exp
+   | StmtReturn   : exp_type parse_exp * location         -> stmt_type parse_exp
+   | StmtSequence : stmt_type parse_exp list * location   -> stmt_type parse_exp
+   | StmtBind     : exp_type parse_exp * exp_type parse_exp * location               -> stmt_type parse_exp
+   | StmtVal      : exp_type parse_exp * exp_type parse_exp option * location        -> stmt_type parse_exp
+   | StmtFun      : named_id  * named_id list  * stmt_type parse_exp list * location -> stmt_type parse_exp
+   | StmtMem      : exp_type parse_exp * exp_type parse_exp option * exp_type parse_exp option * location        -> stmt_type parse_exp
    | StmtIf       : exp_type parse_exp * stmt_type parse_exp list * (stmt_type parse_exp list) option * location -> stmt_type parse_exp
    | StmtEmpty
 
