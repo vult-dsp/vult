@@ -99,35 +99,33 @@ type call_attribute =
 
 type call_attributes = call_attribute list
 
-type exp_type  = unit
-type stmt_type = unit
-
 (** Parser syntax tree *)
-type _ parse_exp =
-   | PUnit  : location                                    -> exp_type parse_exp
-   | PInt   : string * location                           -> exp_type parse_exp
-   | PReal  : string * location                           -> exp_type parse_exp
-   | PId    : named_id                                    -> exp_type parse_exp
-   | PUnOp  : string * exp_type parse_exp * location      -> exp_type parse_exp
-   | PBinOp : string * exp_type parse_exp * exp_type parse_exp * location             -> exp_type parse_exp
-   | PCall  : named_id  * exp_type parse_exp list * location  * call_attributes       -> exp_type parse_exp
-   | PIf    : exp_type parse_exp * exp_type parse_exp * exp_type parse_exp * location -> exp_type parse_exp
-   | PGroup : exp_type parse_exp * location               -> exp_type parse_exp
-   | PTuple : exp_type parse_exp list * location          -> exp_type parse_exp
+type parse_exp =
+   | PUnit  of location
+   | PInt   of string    * location
+   | PReal  of string    * location
+   | PId    of named_id
+   | PUnOp  of string    * parse_exp      * location
+   | PBinOp of string    * parse_exp      * parse_exp * location
+   | PCall  of named_id  * parse_exp list * location  * call_attributes
+   | PIf    of parse_exp * parse_exp      * parse_exp * location
+   | PGroup of parse_exp * location
+   | PTuple of parse_exp list * location
    | PEmpty
-   | StmtReturn   : exp_type parse_exp * location           -> stmt_type parse_exp
-   | StmtSequence : stmt_type parse_exp list * location     -> stmt_type parse_exp
-   | StmtBind     : exp_type parse_exp * exp_type parse_exp * location -> stmt_type parse_exp
-   | StmtVal      : exp_type parse_exp * exp_type parse_exp option * location -> stmt_type parse_exp
-   | StmtMem      : exp_type parse_exp * exp_type parse_exp option * exp_type parse_exp option * location      -> stmt_type parse_exp
-   | StmtFun      : named_id  * named_id list  * stmt_type parse_exp list * location          -> stmt_type parse_exp
-   | StmtIf       : exp_type parse_exp * stmt_type parse_exp list * (stmt_type parse_exp list) option * location -> stmt_type parse_exp
+
+   | StmtVal      of parse_exp * parse_exp option * location
+   | StmtMem      of parse_exp * parse_exp option * parse_exp option * location
+   | StmtReturn   of parse_exp      * location
+   | StmtIf       of parse_exp      * parse_exp list * (parse_exp list) option * location
+   | StmtFun      of named_id       * named_id list  * parse_exp list * location
+   | StmtBind     of parse_exp      * parse_exp      * location
+   | StmtSequence of parse_exp list * location
    | StmtEmpty
 
 
 type parser_results =
    {
-      presult : (stmt_type parse_exp list,error list) CCError.t;
+      presult : (parse_exp list,error list) CCError.t;
       lines   : string array;
    }
 

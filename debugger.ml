@@ -38,7 +38,7 @@ module StringMap = Map.Make(String)
 (** Used to define types of functions: builtin and declared by the user *)
 type function_body =
    | Builtin  of (value list -> value)
-   | Declared of stmt_type parse_exp
+   | Declared of parse_exp
 
 (** Environment of the interpreter used to store all bindings and declarations *)
 type env =
@@ -51,7 +51,7 @@ type env =
 
 type debugger_state =
    {
-      code  : stmt_type parse_exp list list;
+      code  : parse_exp list list;
       stack : string list;
       pc    : int;
       env   : env;
