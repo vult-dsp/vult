@@ -291,6 +291,31 @@ let optStartValue (buffer:'a parse_exp lexer_stream) : 'a parse_exp option =
       let _ = consume buffer RPAREN in
       Some(e)
    | _ -> None
+(*
+(** <valBind> := <namedId> [<optStartValue>] [ '=' <expression>] *)
+let valBind (buffer:'a parse_exp lexer_stream) : val_bind =
+   let id       = namedId buffer in
+   let opt_init = optStartValue buffer in
+   match peekKind buffer with
+   | EQUAL ->
+      let _ = skip buffer in
+      let e = getContents (expression 20 (* 20 to avoid COMMA *) buffer) in
+      ValBind(id,opt_init,e)
+   | _ ->
+      ValNoBind(id,opt_init)
+
+(** <valBindList> := <valBind> [ ',' <valBind>] *)
+let valBindList (buffer:'a parse_exp lexer_stream) : val_bind list =
+   let rec loop acc =
+      let e = valBind buffer in
+      match peekKind buffer with
+      | COMMA ->
+         let _ = skip buffer in
+         loop (e::acc)
+      | _ -> List.rev (e::acc)
+   in let _ = expect buffer ID in
+   loop []
+*)
 
 (** initExpression := '(' expression ')'*)
 let initExpression (buffer:'a parse_exp lexer_stream) : 'a parse_exp option =
