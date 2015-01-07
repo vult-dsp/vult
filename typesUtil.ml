@@ -170,6 +170,9 @@ let rec traverseBottomExp (f: ('data, parse_exp) traverser) (state:'data) (exp:p
       let state2,ne2 = traverseBottomExp f state1 e2 in
       let state3,ne3 = traverseBottomExp f state2 e3 in
       state3,PIf(ne1,ne2,ne3,loc)
+   | PSeq(stmts,loc) ->
+      let state1,nstmts = traverseBottomExpList f state stmts in
+      state1,PSeq(nstmts,loc)
    | StmtVal(e1,e2,loc) ->
       let state1,ne1 = traverseBottomExp f state e1 in
       let state2,ne2 = traverseBottomOptExp f state1 e2 in
@@ -200,9 +203,9 @@ let rec traverseBottomExp (f: ('data, parse_exp) traverser) (state:'data) (exp:p
       let state2,nthen_stmts = traverseBottomExpList f state1 then_stmts in
       let state3,nelse_stmts = traverseBottomExpList f state2 else_stmts in
       f state3 (StmtIf(ncond,nthen_stmts,Some(nelse_stmts),loc))
-   | StmtSequence(stmts,loc) ->
+   | StmtBlock(stmts,loc) ->
       let state1,nstmts = traverseBottomExpList f state stmts in
-      state1,StmtSequence(nstmts,loc)
+      state1,StmtBlock(nstmts,loc)
 
 (** Traverses lists expressions bottom-up. The expressions are traversed right to left *)
 and traverseBottomExpList (f: ('data, parse_exp) traverser) (state:'data) (expl:parse_exp list) : 'data * parse_exp list =
@@ -245,6 +248,9 @@ let rec traverseTopExp (f: ('data, parse_exp) traverser) (state0:'data) (exp:par
       let state2,ne2 = traverseTopExp f state1 e2 in
       let state3,ne3 = traverseTopExp f state2 e3 in
       state3,PIf(ne1,ne2,ne3,loc)
+   | PSeq(stmts,loc) ->
+      let state1,nstmts = traverseTopExpList f state stmts in
+      state1,PSeq(nstmts,loc)
    | StmtVal(e1,e2,loc) ->
       let state1,ne1 = traverseTopExp f state e1 in
       let state2,ne2 = traverseTopOptExp f state1 e2 in
@@ -274,9 +280,10 @@ let rec traverseTopExp (f: ('data, parse_exp) traverser) (state0:'data) (exp:par
       let state2,nthen_stmts = traverseTopExpList f state1 then_stmts in
       let state3,nelse_stmts = traverseTopExpList f state2 else_stmts in
       state3,StmtIf(ncond,nthen_stmts,Some(nelse_stmts),loc)
-   | StmtSequence(stmts,loc) ->
+   | StmtBlock(stmts,loc) ->
       let state1,nstmts = traverseTopExpList f state stmts in
-      state1,StmtSequence(nstmts,loc)
+      state1,StmtBlock(nstmts,loc)
+
 
 (** Traverses lists expressions top-down. The expressions are traversed left to right *)
 and traverseTopExpList (f: ('data, parse_exp) traverser) (state:'data) (expl:parse_exp list) : 'data * parse_exp list =
@@ -318,6 +325,9 @@ let rec foldTopExp (f: ('data, parse_exp) folder) (state0:'data) (exp:parse_exp)
       let state2 = foldTopExp f state1 e2 in
       let state3 = foldTopExp f state2 e3 in
       state3
+   | PSeq(stmts,_) ->
+      let state1 = foldTopExpList f state stmts in
+      state1
    | StmtVal(e1,e2,_) ->
       let state1 = foldTopExp f state e1 in
       let state2 = foldTopOptExp f state1 e2 in
@@ -347,9 +357,10 @@ let rec foldTopExp (f: ('data, parse_exp) folder) (state0:'data) (exp:parse_exp)
       let state2 = foldTopExpList f state1 then_stmts in
       let state3 = foldTopExpList f state2 else_stmts in
       state3
-   | StmtSequence(stmts,_) ->
+   | StmtBlock(stmts,_) ->
       let state1 = foldTopExpList f state stmts in
       state1
+
 
 and foldTopExpList f state expl =
    List.fold_left
@@ -365,17 +376,17 @@ and foldTopOptExp (f: ('data, parse_exp) folder) (state:'data) (exp:parse_exp op
    | _ -> state
 
 let rec expandStmt (f: ('data, parse_exp) expander) (state:'data) (stmt:parse_exp) : 'data * parse_exp list =
-   let makeSingleStmt loc l = match l with [] -> StmtEmpty | [h] -> h | _ -> StmtSequence(l,loc) in
+   let makePSeq loc l = match l with [] -> PUnit(loc) | [h] -> h | _ -> PSeq(l,loc) in
    match stmt with
    | StmtVal(_)
    | StmtMem(_)
    | StmtEmpty -> f state stmt
    | StmtBind(e1,e2,loc) ->
       let state1,ne2 = expandStmt f state e2 in
-      f state1 (StmtBind(e1,makeSingleStmt loc ne2,loc))
+      f state1 (StmtBind(e1,makePSeq loc ne2,loc))
    | StmtReturn(e,loc) ->
       let state1,ne = expandStmt f state e in
-      f state1 (StmtReturn(makeSingleStmt loc ne,loc))
+      f state1 (StmtReturn(makePSeq loc ne,loc))
    | StmtFun(name,args,stmts,loc) ->
       let state1,nstmts = expandStmtList f state stmts in
       f state1 (StmtFun(name,args,nstmts,loc))
@@ -386,9 +397,9 @@ let rec expandStmt (f: ('data, parse_exp) expander) (state:'data) (stmt:parse_ex
       let state1,nthen_stmts = expandStmtList f state then_stmts in
       let state2,nelse_stmts = expandStmtList f state1 else_stmts in
       f state2 (StmtIf(cond,nthen_stmts,Some(nelse_stmts),loc))
-   | StmtSequence(el,loc) ->
+   | PSeq(el,loc) ->
       let state1,nel = expandStmtList f state el in
-      f state1 (StmtSequence(nel,loc))
+      f state1 (PSeq(nel,loc))
 
    | PUnit(_)
    | PInt(_,_)
@@ -397,11 +408,11 @@ let rec expandStmt (f: ('data, parse_exp) expander) (state:'data) (stmt:parse_ex
    | PId(_) -> f state stmt
    | PUnOp(op,e,loc) ->
       let state1,ne = expandStmt f state e in
-      f state1 (PUnOp(op,makeSingleStmt loc ne,loc))
+      f state1 (PUnOp(op,makePSeq loc ne,loc))
    | PBinOp(op,e1,e2,loc) ->
       let state1,ne1 = expandStmt f state e1 in
       let state2,ne2 = expandStmt f state1 e2 in
-      f state2 (PBinOp(op,makeSingleStmt loc ne1,makeSingleStmt loc ne2,loc))
+      f state2 (PBinOp(op,makePSeq loc ne1,makePSeq loc ne2,loc))
    | PCall(name,args,loc,attr) ->
       let state1,nargs = expandStmtList f state args in
       f state1 (PCall(name,nargs,loc,attr))
@@ -409,13 +420,16 @@ let rec expandStmt (f: ('data, parse_exp) expander) (state:'data) (stmt:parse_ex
       let state1,ncond = expandStmt f state cond in
       let state2,nthen_exp = expandStmt f state1 then_exp in
       let state3,nelse_exp = expandStmt f state2 else_exp in
-      f state3 (PIf(makeSingleStmt loc ncond,makeSingleStmt loc nthen_exp, makeSingleStmt loc nelse_exp,loc))
+      f state3 (PIf(makePSeq loc ncond,makePSeq loc nthen_exp, makePSeq loc nelse_exp,loc))
    | PGroup(e,loc) ->
       let state1,ne = expandStmt f state e in
-      f state1 (PGroup(makeSingleStmt loc ne,loc))
+      f state1 (PGroup(makePSeq loc ne,loc))
    | PTuple(el,loc) ->
       let state1,nel = expandStmtList f state el in
       f state1 (PTuple(nel,loc))
+   | StmtBlock(el,loc) ->
+      let state1,nel = expandStmtList f state el in
+      f state1 (PSeq(nel,loc))
 
 and expandStmtList (f: ('data, parse_exp) expander) (state:'data) (stmts:parse_exp list) : 'data * parse_exp list =
    let state2,acc =
@@ -542,15 +556,16 @@ let getExpLocation (e:parse_exp)  : location =
    | PGroup(_,loc)
    | PTuple(_,loc) -> loc
    | PEmpty -> default_loc
+   | PSeq(_,loc) -> loc
 
    | StmtVal(_,_,loc)
    | StmtMem(_,_,_,loc)
    | StmtReturn(_,loc)
    | StmtIf(_,_,_,loc)
    | StmtFun(_,_,_,loc)
-   | StmtBind(_,_,loc)
-   | StmtSequence(_,loc) -> loc
+   | StmtBind(_,_,loc) -> loc
    | StmtEmpty -> default_loc
+   | StmtBlock(_,loc) -> loc
 
 (** Returns the full location of an expression *)
 let getExpFullLocation (e:parse_exp) : location =

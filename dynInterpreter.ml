@@ -297,7 +297,9 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env =
       else
          runStmtList loc else_stmts
    | StmtEmpty -> VUnit,loc
-   | StmtSequence(stmts,_) ->
+   | PSeq(stmts,_) ->
+      runStmtList loc stmts
+   | StmtBlock(stmts,_) ->
       runStmtList loc stmts
 
 (** Evaluates a list of expressions *)

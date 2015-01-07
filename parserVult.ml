@@ -189,6 +189,9 @@ and nud (buffer:parse_exp lexer_stream) (token:parse_exp token) : parse_exp toke
       let _ = consume buffer ELSE in
       let else_exp = getContents (expression 0 buffer) in
       { token with contents = PIf(cond,then_exp,else_exp,token.loc) }
+   | LSEQ,_ ->
+      let stmts = pseqList buffer in
+      { token with contents = PSeq(stmts,token.loc) }
    | _ ->
       let message = getNotExpectedTokenError token in
       raise (ParserError(message))
@@ -262,14 +265,14 @@ and namedIdToken (buffer:parse_exp lexer_stream) (token:parse_exp token) : named
    | _ -> SimpleId(token.value,token.loc)
 
 (** namedId := <ID> [ ':' <ID>]  *)
-let namedId (buffer:parse_exp lexer_stream) : named_id =
+and namedId (buffer:parse_exp lexer_stream) : named_id =
    let _     = expect buffer ID in
    let token = current buffer in
    let _     = skip buffer in
    namedIdToken buffer token
 
 (** namedIdList := namedId [',' namedId ] *)
-let rec namedIdList (buffer:parse_exp lexer_stream) : named_id list =
+and namedIdList (buffer:parse_exp lexer_stream) : named_id list =
    match peekKind buffer with
    | ID ->
       let first = namedId buffer in
@@ -283,7 +286,7 @@ let rec namedIdList (buffer:parse_exp lexer_stream) : named_id list =
    | _ -> []
 
 (** <optStartValue> := '(' <expression> ')' *)
-let optStartValue (buffer:parse_exp lexer_stream) : parse_exp option =
+and optStartValue (buffer:parse_exp lexer_stream) : parse_exp option =
    match peekKind buffer with
    | LPAREN ->
       let _ = consume buffer LPAREN in
@@ -291,34 +294,9 @@ let optStartValue (buffer:parse_exp lexer_stream) : parse_exp option =
       let _ = consume buffer RPAREN in
       Some(e)
    | _ -> None
-(*
-(** <valBind> := <namedId> [<optStartValue>] [ '=' <expression>] *)
-let valBind (buffer:parse_exp lexer_stream) : val_bind =
-   let id       = namedId buffer in
-   let opt_init = optStartValue buffer in
-   match peekKind buffer with
-   | EQUAL ->
-      let _ = skip buffer in
-      let e = getContents (expression 20 (* 20 to avoid COMMA *) buffer) in
-      ValBind(id,opt_init,e)
-   | _ ->
-      ValNoBind(id,opt_init)
-
-(** <valBindList> := <valBind> [ ',' <valBind>] *)
-let valBindList (buffer:parse_exp lexer_stream) : val_bind list =
-   let rec loop acc =
-      let e = valBind buffer in
-      match peekKind buffer with
-      | COMMA ->
-         let _ = skip buffer in
-         loop (e::acc)
-      | _ -> List.rev (e::acc)
-   in let _ = expect buffer ID in
-   loop []
-*)
 
 (** initExpression := '(' expression ')'*)
-let initExpression (buffer:parse_exp lexer_stream) : parse_exp option =
+and initExpression (buffer:parse_exp lexer_stream) : parse_exp option =
    match peekKind buffer with
    | AT ->
       let _ = skip buffer in
@@ -327,7 +305,7 @@ let initExpression (buffer:parse_exp lexer_stream) : parse_exp option =
    | _ -> None
 
 (** <statement> := | 'val' <valBindList> ';' *)
-let stmtVal (buffer:parse_exp lexer_stream) : parse_exp =
+and stmtVal (buffer:parse_exp lexer_stream) : parse_exp =
    let start_loc = buffer.peeked.loc in
    let _ = consume buffer VAL in
    let lhs = getContents (expression 0 buffer) in
@@ -344,7 +322,7 @@ let stmtVal (buffer:parse_exp lexer_stream) : parse_exp =
 
 
 (** <statement> := | 'mem' <valBindList> ';' *)
-let stmtMem (buffer:parse_exp lexer_stream) : parse_exp =
+and stmtMem (buffer:parse_exp lexer_stream) : parse_exp =
    let start_loc = buffer.peeked.loc in
    let _ = consume buffer MEM in
    let lhs = getContents (expression 0 buffer) in
@@ -361,14 +339,14 @@ let stmtMem (buffer:parse_exp lexer_stream) : parse_exp =
       StmtMem(lhs,init,None,start_loc)
 
 (** <statement> := | 'return' <expression> ';' *)
-let stmtReturn (buffer:parse_exp lexer_stream) : parse_exp =
+and stmtReturn (buffer:parse_exp lexer_stream) : parse_exp =
    let start_loc = buffer.peeked.loc in
    let _ = consume buffer RET in
    let e = expression 0 buffer in
    let _ = consume buffer SEMI in
    StmtReturn(getContents e,start_loc)
 
-let stmtBind (buffer:parse_exp lexer_stream) : parse_exp =
+and stmtBind (buffer:parse_exp lexer_stream) : parse_exp =
    let e1 = expression 0 buffer |> getContents in
    let start_loc = TypesUtil.getExpLocation  e1 in
    match peekKind buffer with
@@ -386,9 +364,8 @@ let stmtBind (buffer:parse_exp lexer_stream) : parse_exp =
       let message = Printf.sprintf "Expecting a %s while trying to parse a binding (%s = ...) but got %s" expected (PrintTypes.expressionStr e1) got in
       raise (ParserError(getErrorForToken buffer message))
 
-
 (** <statement> := 'if' '(' <expression> ')' <statementList> ['else' <statementList> ]*)
-let rec stmtIf (buffer:parse_exp lexer_stream) : parse_exp =
+and stmtIf (buffer:parse_exp lexer_stream) : parse_exp =
    let _    = consume buffer IF in
    let _    = consume buffer LPAREN in
    let cond = getContents (expression 0 buffer) in
@@ -440,6 +417,22 @@ and stmtList (buffer:parse_exp lexer_stream) : parse_exp list =
    | _ ->
       let s = stmt buffer in
       [s]
+
+(** <statementList> :=  LSEQ <statement> [<statement>] RSEQ
+When called in nud function LSEQ is already consumed *)
+and pseqList (buffer:parse_exp lexer_stream) : parse_exp list =
+   let rec loop acc =
+      match peekKind buffer with
+      | RSEQ ->
+         let _ = skip buffer in
+         List.rev acc
+      | EOF ->
+         let _ = expect buffer RSEQ in
+         []
+      | _ ->
+         let s = stmt buffer in
+         loop (s::acc)
+   in loop []
 
 (** 'fun' <namedId> '(' <valBindList> ')' <stmtList> *)
 and stmtFunction (buffer:parse_exp lexer_stream) : parse_exp =

@@ -57,6 +57,8 @@ type token_enum =
    | RBRAC
    | LPAREN
    | RPAREN
+   | LSEQ
+   | RSEQ
    | COLON
    | SEMI
    | COMMA
@@ -111,6 +113,7 @@ type parse_exp =
    | PIf    of parse_exp * parse_exp      * parse_exp * location
    | PGroup of parse_exp * location
    | PTuple of parse_exp list * location
+   | PSeq   of parse_exp list * location
    | PEmpty
 
    | StmtVal      of parse_exp * parse_exp option * location
@@ -119,7 +122,7 @@ type parse_exp =
    | StmtIf       of parse_exp      * parse_exp list * (parse_exp list) option * location
    | StmtFun      of named_id       * named_id list  * parse_exp list * location
    | StmtBind     of parse_exp      * parse_exp      * location
-   | StmtSequence of parse_exp list * location
+   | StmtBlock    of parse_exp list * location
    | StmtEmpty
 
 

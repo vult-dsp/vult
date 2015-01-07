@@ -275,10 +275,10 @@ let rec hasSingleReturnAtEnd (acc:parse_exp list) (stmts:parse_exp list) : (pars
 let simplifySequenceBindings : ('data,parse_exp) traverser =
    fun state exp ->
       match exp with
-      | StmtBind(lhs,StmtSequence(stmts,loc_s),loc) ->
+      | StmtBind(lhs,PSeq(stmts,loc_s),loc) ->
          begin
             match hasSingleReturnAtEnd [] stmts with
-            | Some(e,rem_stmts) -> state,StmtSequence(rem_stmts@[StmtBind(lhs,e,loc)],loc_s)
+            | Some(e,rem_stmts) -> state,StmtBlock(rem_stmts@[StmtBind(lhs,e,loc)],loc_s)
             | None -> state,exp
          end
       | _ -> state,exp
@@ -309,13 +309,6 @@ let removeDuplicateMemStmts : ('data,parse_exp) traverser =
 let foldAsTransformation (f:('data,parse_exp) folder) (state:'date) (exp_list:parse_exp list) : 'data * parse_exp list =
    let new_state = TypesUtil.foldTopExpList f state exp_list in
    new_state,exp_list
-
-(** Takes a list of statements and puts them into a StmtSequence *)
-let makeStmtSequence (state:'data) (stmts:parse_exp list) : 'data * parse_exp list =
-   match stmts with
-   | []  -> state,[]
-   | [_] -> state,stmts
-   | _   -> state,[StmtSequence(stmts,default_loc)]
 
 let inlineFunctionBodies (state:'data) (exp_list:parse_exp list) : 'data * parse_exp list =
    let inlineFunctionBody name fun_decl (functions,weigths) =

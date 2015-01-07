@@ -110,6 +110,8 @@ let kindToString kind =
    | IF    -> "'if'"
    | THEN  -> "'then'"
    | ELSE  -> "'else'"
+   | LSEQ -> "'{|'"
+   | RSEQ -> "'|}'"
    | LBRAC -> "'{'"
    | RBRAC -> "'}'"
    | LPAREN-> "'('"
@@ -118,7 +120,7 @@ let kindToString kind =
    | SEMI  -> "';'"
    | COMMA -> "','"
    | EQUAL -> "'='"
-   | AT -> "'@'"
+   | AT    -> "'@'"
    | OP    -> "'operator'"
 
 (** Returns a string representation of the token *)
@@ -162,6 +164,8 @@ rule next_token lines = parse
   | '@'         { makeToken lines AT lexbuf }
   | '('         { makeToken lines LPAREN lexbuf }
   | ')'         { makeToken lines RPAREN lexbuf }
+  | "{|"        { makeToken lines LSEQ lexbuf }
+  | "|}"        { makeToken lines RSEQ lexbuf }
   | '{'         { makeToken lines LBRAC lexbuf }
   | '}'         { makeToken lines RBRAC lexbuf }
   | ':'         { makeToken lines COLON lexbuf }
