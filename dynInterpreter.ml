@@ -51,7 +51,7 @@ module StringMap = Map.Make(String)
 (** Used to define types of functions: builtin and declared by the user *)
 type function_body =
    | Builtin  of (value list -> value)
-   | Declared of parse_exp
+   | Declared of stmt_type parse_exp
 
 (** Environment of the interpreter used to store all bindings and declarations *)
 type local_env =
@@ -107,7 +107,7 @@ let getVarName (named_id:named_id) : string =
    | NamedId (name,_,_,_) -> name
 
 (** Returns the name in an id expression *)
-let getExpName (exp:parse_exp) : string =
+let getExpName (exp:'a parse_exp) : string =
    match exp with
    | PId(name) -> getVarName name
    | _ -> failwith "This expression should be an id"
@@ -220,7 +220,7 @@ let rec evalFun (loc:local_env) (body:function_body) (args:value list) : value *
    | _ -> failwith "Invalid function body"
 
 (** Evaluates an expression or statement *)
-and runExp (loc:local_env) (exp:parse_exp) : value * local_env =
+and runExp (loc:local_env) (exp:'a parse_exp) : value * local_env =
    match exp with
    | PUnit(_)   -> VUnit,loc
    | PInt(v,_)  -> VNum(float_of_string v),loc
@@ -301,12 +301,12 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env =
       runStmtList loc stmts
 
 (** Evaluates a list of expressions *)
-and runExpList (loc:local_env) (expl:parse_exp list) : value list * local_env =
+and runExpList (loc:local_env) (expl:'a parse_exp list) : value list * local_env =
    let loc,acc = List.fold_left (fun (s,acc) a -> let v,ns = runExp s a in ns,v::acc) (loc,[]) expl in
    List.rev acc,loc
 
 (** Evaluates a list of statements *)
-and runStmtList (loc:local_env) (expl:parse_exp list) : value * local_env =
+and runStmtList (loc:local_env) (expl:'a parse_exp list) : value * local_env =
    let loc = pushLocal loc in
    let rec loop loc stmts =
       match stmts with

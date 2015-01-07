@@ -95,7 +95,7 @@ let foldTraverser_right traverser_function (traverser:('data,'traversing_type) t
    state2,acc
 
 (** Fold an expression with the 'expfold' type that contains the functions to apply  *)
-let expressionFoldEither : ('data, 'error, 'result) expfold -> 'data -> parse_exp -> ('error, 'result) either =
+let expressionFoldEither : ('data, 'error, 'result) expfold -> 'data -> 'a parse_exp -> ('error, 'result) either =
    fun fold data exp ->
       let rec go e = match e with
          | PUnit(_) -> fold.vUnit data
@@ -135,14 +135,14 @@ let expressionFoldEither : ('data, 'error, 'result) expfold -> 'data -> parse_ex
       go exp
 
 (** Used to traverse a named_id 'name' as 'PId(name)' *)
-let traverseNamedIdAsExp (f: ('data, parse_exp) traverser) (state:'data) (name:named_id) : 'data * named_id =
+let traverseNamedIdAsExp (f: ('data, 'a parse_exp) traverser) (state:'data) (name:named_id) : 'data * named_id =
    let state1,new_name_exp = f state (PId(name)) in
    match new_name_exp with
    | PId(new_name) -> state1,new_name
    | _ -> state1,name
 
 (** Traverses expressions bottom-up *)
-let rec traverseBottomExp (f: ('data, parse_exp) traverser) (state:'data) (exp:parse_exp) : 'data * parse_exp =
+let rec traverseBottomExp (f: ('data, 'a parse_exp) traverser) (state:'data) (exp:'a parse_exp) : 'data * 'a parse_exp =
    match exp with
    | PEmpty
    | PUnit(_)
@@ -205,10 +205,10 @@ let rec traverseBottomExp (f: ('data, parse_exp) traverser) (state:'data) (exp:p
       state1,StmtSequence(nstmts,loc)
 
 (** Traverses lists expressions bottom-up. The expressions are traversed right to left *)
-and traverseBottomExpList (f: ('data, parse_exp) traverser) (state:'data) (expl:parse_exp list) : 'data * parse_exp list =
+and traverseBottomExpList (f: ('data, 'a parse_exp) traverser) (state:'data) (expl:'a parse_exp list) : 'data * 'a parse_exp list =
    foldTraverser_right traverseBottomExp f state expl
 
-and traverseBottomOptExp (f: ('data, parse_exp) traverser) (state:'data) (exp_opt:parse_exp option) =
+and traverseBottomOptExp (f: ('data, 'a parse_exp) traverser) (state:'data) (exp_opt:'a parse_exp option) =
    match exp_opt with
    | Some(exp) ->
       let new_state,new_exp = f state exp in
@@ -216,7 +216,7 @@ and traverseBottomOptExp (f: ('data, parse_exp) traverser) (state:'data) (exp_op
    | None -> state,None
 
 (** Traverses expressions top-down *)
-let rec traverseTopExp (f: ('data, parse_exp) traverser) (state0:'data) (exp:parse_exp) : 'data * parse_exp =
+let rec traverseTopExp (f: ('data, 'a parse_exp) traverser) (state0:'data) (exp:'a parse_exp) : 'data * 'a parse_exp =
    let state,nexp = f state0 exp in
    match nexp with
    | PEmpty
@@ -279,10 +279,10 @@ let rec traverseTopExp (f: ('data, parse_exp) traverser) (state0:'data) (exp:par
       state1,StmtSequence(nstmts,loc)
 
 (** Traverses lists expressions top-down. The expressions are traversed left to right *)
-and traverseTopExpList (f: ('data, parse_exp) traverser) (state:'data) (expl:parse_exp list) : 'data * parse_exp list =
+and traverseTopExpList (f: ('data, 'a parse_exp) traverser) (state:'data) (expl:'a parse_exp list) : 'data * 'a parse_exp list =
    foldTraverser_left traverseTopExp f state expl
 
-and traverseTopOptExp (f: ('data, parse_exp) traverser) (state:'data) (exp_opt:parse_exp option) =
+and traverseTopOptExp (f: ('data, 'a parse_exp) traverser) (state:'data) (exp_opt:'a parse_exp option) =
    match exp_opt with
    | Some(exp) ->
       let new_state,new_exp = f state exp in
@@ -290,7 +290,7 @@ and traverseTopOptExp (f: ('data, parse_exp) traverser) (state:'data) (exp_opt:p
    | None -> state,None
 
 (** Folds expressions top-down *)
-let rec foldTopExp (f: ('data, parse_exp) folder) (state0:'data) (exp:parse_exp) : 'data =
+let rec foldTopExp (f: ('data, 'a parse_exp) folder) (state0:'data) (exp:'a parse_exp) : 'data =
    let state = f state0 exp in
    match exp with
    | PEmpty
@@ -358,13 +358,13 @@ and foldTopExpList f state expl =
           state1)
       state expl
 
-and foldTopOptExp (f: ('data, parse_exp) folder) (state:'data) (exp:parse_exp option) =
+and foldTopOptExp (f: ('data, 'a parse_exp) folder) (state:'data) (exp:'a parse_exp option) =
    match exp with
    | Some(e) ->
       foldTopExp f state e
    | _ -> state
 
-let rec expandStmt (f: ('data, parse_exp) expander) (state:'data) (stmt:parse_exp) : 'data * parse_exp list =
+let rec expandStmt (f: ('data, 'a parse_exp) expander) (state:'data) (stmt:'a parse_exp) : 'data * 'a parse_exp list =
    let makeSingleStmt loc l = match l with [] -> StmtEmpty | [h] -> h | _ -> StmtSequence(l,loc) in
    match stmt with
    | StmtVal(_)
@@ -417,7 +417,7 @@ let rec expandStmt (f: ('data, parse_exp) expander) (state:'data) (stmt:parse_ex
       let state1,nel = expandStmtList f state el in
       f state1 (PTuple(nel,loc))
 
-and expandStmtList (f: ('data, parse_exp) expander) (state:'data) (stmts:parse_exp list) : 'data * parse_exp list =
+and expandStmtList (f: ('data, 'a parse_exp) expander) (state:'data) (stmts:'a parse_exp list) : 'data * 'a parse_exp list =
    let state2,acc =
       List.fold_left
          (fun (state,acc) exp ->
@@ -483,18 +483,18 @@ let getFunctionTypeAndName (names_id:named_id) : string * string =
    | SimpleId(ftype,_) -> "_",ftype
 
 (** Used by getIdsInExp and getIdsInExpList to get the ids in expressions *)
-let getId : ('data,parse_exp) folder =
+let getId : ('data,'a parse_exp) folder =
    fun state exp ->
       match exp with
       | PId(name) -> name::state
       | _ -> state
 
 (** Return the ids in an expression *)
-let getIdsInExp (exp:parse_exp) : named_id list =
+let getIdsInExp (exp:'a parse_exp) : named_id list =
    foldTopExp getId [] exp
 
 (** Return the ids in an expression list *)
-let getIdsInExpList (expl:parse_exp list) : named_id list =
+let getIdsInExpList (expl:'a parse_exp list) : named_id list =
    foldTopExpList getId [] expl
 
 (** Compares named_ids ignoring the locations *)
@@ -529,7 +529,7 @@ let getNamedIdLocation (id:named_id) : location =
    | NamedId(_,_,loc1,loc2) -> mergeLocations loc1 loc2
 
 (** Returns the location of an expression *)
-let getExpLocation (e:parse_exp)  : location =
+let getExpLocation (e:'a parse_exp)  : location =
    match e with
    | PUnit(loc)
    | PInt(_,loc)
@@ -553,14 +553,14 @@ let getExpLocation (e:parse_exp)  : location =
    | StmtEmpty -> default_loc
 
 (** Returns the full location of an expression *)
-let getExpFullLocation (e:parse_exp) : location =
+let getExpFullLocation (e:'a parse_exp) : location =
    let f state e =
       let current_loc = getExpLocation e in
       mergeLocations state current_loc
    in foldTopExp f default_loc e
 
 (**  Counts the number of function calls (operations) expression list has *)
-let getExpListWeight (e:parse_exp list) : int =
+let getExpListWeight (e:'a parse_exp list) : int =
    let count acc e =
       match e with
       | PCall(_) -> acc+1

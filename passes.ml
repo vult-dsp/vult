@@ -58,7 +58,7 @@ let default_inline_weight = 10
 (** Traversing state one *)
 type state_t1 =
    {
-      functions       : parse_exp NamedIdMap.t;
+      functions       : stmt_type parse_exp NamedIdMap.t;
       function_weight : int NamedIdMap.t;
       counter         : int;
       inline_weight   : int;
@@ -66,7 +66,7 @@ type state_t1 =
 (* ======================= *)
 
 (** Transforms mem x=0; -> mem x; x=0; *)
-let separateBindAndDeclaration : ('data,parse_exp) expander =
+let separateBindAndDeclaration : ('data,'a parse_exp) expander =
    fun state stmt ->
       match stmt with
       | StmtMem(lhs,init,Some(rhs),loc) ->
@@ -86,7 +86,7 @@ let rec map3 f a b c =
    | _ -> failwith "map3: Different number of elements in lists"
 
 (** Transforms val x,y; -> val x; val y; *)
-let makeSingleDeclaration : ('data,parse_exp) expander =
+let makeSingleDeclaration : ('data,'a parse_exp) expander =
    fun state stmt ->
       match stmt with
       | StmtVal(PTuple(elems,_),None,loc) ->
@@ -112,7 +112,7 @@ let makeSingleDeclaration : ('data,parse_exp) expander =
 (* ======================= *)
 
 (** Adds a default name to all function calls. e.g. foo(x) ->  _inst_0:foo(x) *)
-let nameFunctionCalls : ('data,parse_exp) transformation =
+let nameFunctionCalls : ('data,'a parse_exp) transformation =
    fun state exp ->
       match exp with
       | PCall(SimpleId(name,loc),args,floc,attr) ->
@@ -124,7 +124,7 @@ let nameFunctionCalls : ('data,parse_exp) transformation =
 (* ======================= *)
 
 (** Transforms all operators into function calls *)
-let operatorsToFunctionCalls : ('data,parse_exp) transformation =
+let operatorsToFunctionCalls : ('data,'a parse_exp) transformation =
    fun state exp ->
       match exp with
       | PUnOp(op,e,loc) ->
@@ -134,7 +134,7 @@ let operatorsToFunctionCalls : ('data,parse_exp) transformation =
       | _ -> state,exp
 
 (* ======================= *)
-let simplifyTupleAssign : ('data,parse_exp) expander =
+let simplifyTupleAssign : ('data,'a parse_exp) expander =
    fun state exp ->
       match exp with
       | StmtBind(PTuple(lhs,loc1),PTuple(rhs,loc2),loc) ->
@@ -163,7 +163,7 @@ let simplifyTupleAssign : ('data,parse_exp) expander =
 let isSimpleBinding attr = List.exists (fun a->a=SimpleBinding) attr
 
 (** Creates bindings for all function calls in an expression *)
-let bindFunctionCallsInExp : (int * parse_exp list,parse_exp) transformation =
+let bindFunctionCallsInExp : (int * 'a parse_exp list,'a parse_exp) transformation =
    fun data exp ->
       match exp with
       | PCall(name,args,loc,attr) when not (isSimpleBinding attr) ->
@@ -175,7 +175,7 @@ let bindFunctionCallsInExp : (int * parse_exp list,parse_exp) transformation =
       | _ -> data,exp
 
 (** Binds all function calls to a variable. e.g. foo(bar(x)) -> tmp1 = bar(x); tmp2 = foo(tmp1); tmp2; *)
-let bindFunctionCalls : ('data,parse_exp) expander  =
+let bindFunctionCalls : ('data,'a parse_exp) expander  =
    fun state stmt ->
       match stmt with
       | StmtBind(lhs,PCall(name,args,loc1,attr),loc) ->
@@ -196,7 +196,7 @@ let bindFunctionCalls : ('data,parse_exp) expander  =
 (* ======================= *)
 
 (** Wraps the values of an if expression into return statements *)
-let wrapIfExpValues : ('data,parse_exp) transformation =
+let wrapIfExpValues : ('data,'a parse_exp) transformation =
    fun state exp ->
       match exp with
       | PIf(cond,then_exp,else_exp,loc) ->
@@ -207,7 +207,7 @@ let wrapIfExpValues : ('data,parse_exp) transformation =
 (* ======================= *)
 
 (** Adds all function definitions to a map in the state and also the weight of the function *)
-let collectFunctionDefinitions : ('data,parse_exp) folder =
+let collectFunctionDefinitions : ('data,'a parse_exp) folder =
    fun state exp ->
       match exp with
       | StmtFun(name,args,stmts,loc) ->
@@ -222,13 +222,13 @@ let collectFunctionDefinitions : ('data,parse_exp) folder =
 (* ======================= *)
 
 (** Changes appends the given prefix to all named_ids *)
-let prefixAllNamedIds : ('data,parse_exp) transformation =
+let prefixAllNamedIds : ('data,'a parse_exp) transformation =
    fun prefix exp ->
       match exp with
       | PId(name) -> prefix,PId(prefixNamedId prefix name)
       | _ -> prefix,exp
 
-let inlineFunctionCall (state:'data) (name:named_id) (args:parse_exp list) loc : parse_exp list =
+let inlineFunctionCall (state:'data) (name:named_id) (args:'a parse_exp list) loc : 'a parse_exp list =
    let call_name,ftype = getFunctionTypeAndName name in
    let fname = SimpleId(ftype,default_loc) in
    let function_def = NamedIdMap.find fname state.functions in
@@ -242,7 +242,7 @@ let inlineFunctionCall (state:'data) (name:named_id) (args:parse_exp list) loc :
       new_decl@new_assignments@fbody_prefixed
    | _ -> failwith "inlineFunctionCall: Invalid function declaration"
 
-let inlineStmts : ('data,parse_exp) expander =
+let inlineStmts : ('data,'a parse_exp) expander =
    fun state exp ->
       match exp with
       | PCall(fname_full,args,loc,_) ->
@@ -263,7 +263,7 @@ let inlineStmts : ('data,parse_exp) expander =
 (* ======================= *)
 
 (** Returns Some(e,stmts) if the sequence has a single return in the form 'stmts; return e;' *)
-let rec hasSingleReturnAtEnd (acc:parse_exp list) (stmts:parse_exp list) : (parse_exp * parse_exp list) option =
+let rec hasSingleReturnAtEnd (acc:'a parse_exp list) (stmts:'a parse_exp list) : ('a parse_exp * 'a parse_exp list) option =
    match stmts with
    | [] -> None
    | [StmtReturn(e,_)] -> Some(e,List.rev acc)
@@ -272,7 +272,7 @@ let rec hasSingleReturnAtEnd (acc:parse_exp list) (stmts:parse_exp list) : (pars
    | h::t -> hasSingleReturnAtEnd (h::acc) t
 
 (** Transforms x = {return y;}; -> x = y;  and _ = { stmts; } -> stmts *)
-let simplifySequenceBindings : ('data,parse_exp) traverser =
+let simplifySequenceBindings : ('data,'a parse_exp) traverser =
    fun state exp ->
       match exp with
       | StmtBind(lhs,StmtSequence(stmts,loc_s),loc) ->
@@ -286,7 +286,7 @@ let simplifySequenceBindings : ('data,parse_exp) traverser =
 (* ======================= *)
 
 (** Takes a lis of statements and removes the duplicated mem declarations *)
-let rec removeDuplicateMem : ('data,parse_exp) expander =
+let rec removeDuplicateMem : ('data,'a parse_exp) expander =
    fun state exp ->
       match exp with
       | StmtMem(PId(name),_,_,_) when NamedIdMap.mem name state ->
@@ -296,7 +296,7 @@ let rec removeDuplicateMem : ('data,parse_exp) expander =
       | _ -> state,[exp]
 
 (** Removes duplicated mem declarations  from StmtSequence *)
-let removeDuplicateMemStmts : ('data,parse_exp) traverser =
+let removeDuplicateMemStmts : ('data,'a parse_exp) traverser =
    fun state exp ->
       match exp with
       | StmtFun(name,args,body,loc) ->
@@ -306,18 +306,18 @@ let removeDuplicateMemStmts : ('data,parse_exp) traverser =
 (* ======================= *)
 
 (** Takes a fold function and wrap it as it was a transformation so it can be chained with |+> *)
-let foldAsTransformation (f:('data,parse_exp) folder) (state:'date) (exp_list:parse_exp list) : 'data * parse_exp list =
+let foldAsTransformation (f:('data,'a parse_exp) folder) (state:'date) (exp_list:'a parse_exp list) : 'data * 'a parse_exp list =
    let new_state = TypesUtil.foldTopExpList f state exp_list in
    new_state,exp_list
 
 (** Takes a list of statements and puts them into a StmtSequence *)
-let makeStmtSequence (state:'data) (stmts:parse_exp list) : 'data * parse_exp list =
+let makeStmtSequence (state:'data) (stmts:'a parse_exp list) : 'data * 'a parse_exp list =
    match stmts with
    | []  -> state,[]
    | [_] -> state,stmts
    | _   -> state,[StmtSequence(stmts,default_loc)]
 
-let inlineFunctionBodies (state:'data) (exp_list:parse_exp list) : 'data * parse_exp list =
+let inlineFunctionBodies (state:'data) (exp_list:'a parse_exp list) : 'data * 'a parse_exp list =
    let inlineFunctionBody name fun_decl (functions,weigths) =
       match fun_decl with
       | StmtFun(fname,fargs,fbody,loc) ->
