@@ -278,14 +278,25 @@ let inlineStmts : ('data,parse_exp) expander =
 
 (* ======================= *)
 
-(** Returns Some(e,stmts) if the sequence has a single return in the form 'stmts; return e;' *)
-let rec hasSingleReturnAtEnd (acc:parse_exp list) (stmts:parse_exp list) : (parse_exp * parse_exp list) option =
+let hasReturn stmt =
+   let skipPSeq e =
+      match e with
+      | PSeq(_,_) -> false
+      | _ -> true
+   in
+   let isReturn state e =
+      match e with
+      | StmtReturn(_,_) -> true
+      | _ -> state
+   in foldTopExp (Some(skipPSeq)) isReturn false stmt
+
+(** Returns Some(e,stmts) if the sequence has a single path until it returns *)
+let rec isSinglePathStmtList (acc:parse_exp list) (stmts:parse_exp list) : (parse_exp * parse_exp list) option =
    match stmts with
    | [] -> None
    | [StmtReturn(e,_)] -> Some(e,List.rev acc)
-   | StmtReturn(_,_)::_ -> None
-   | StmtIf(_,_,_,_)::_ -> None (* Avoids if-statememts since may have a return inside *)
-   | h::t -> hasSingleReturnAtEnd (h::acc) t
+   | h::_ when hasReturn h -> None
+   | h::t -> isSinglePathStmtList (h::acc) t
 
 (** Transforms x = {return y;}; -> x = y;  and _ = { stmts; } -> stmts *)
 let simplifySequenceBindings : ('data,parse_exp) traverser =
@@ -293,7 +304,7 @@ let simplifySequenceBindings : ('data,parse_exp) traverser =
       match exp with
       | StmtBind(lhs,PSeq(stmts,loc_s),loc) ->
          begin
-            match hasSingleReturnAtEnd [] stmts with
+            match isSinglePathStmtList [] stmts with
             | Some(e,rem_stmts) -> state,StmtBlock(rem_stmts@[StmtBind(lhs,e,loc)],loc_s)
             | None -> state,exp
          end
@@ -369,17 +380,21 @@ let applyTransformations (results:parser_results) =
    in
    let passes stmts =
       (initial_state,[StmtBlock(stmts,default_loc)])
+      (* Basic transformations *)
       |+> TypesUtil.traverseTopExpList None (removeGroups|->nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)
       |+> TypesUtil.expandStmtList None separateBindAndDeclaration
       |+> TypesUtil.expandStmtList None makeSingleDeclaration
       |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
       |+> TypesUtil.expandStmtList None simplifyTupleAssign
-      |+> TypesUtil.traverseBottomExpList None makeIfStatement
+      (* Inlining *)
       |+> foldAsTransformation collectFunctionDefinitions
       |+> inlineFunctionBodies
       |+> TypesUtil.expandStmtList (Some(skipFun)) inlineStmts
       |+> foldAsTransformation collectFunctionDefinitions
+      (* Used for imperative transformation *)
+      |+> TypesUtil.traverseBottomExpList None makeIfStatement
       |+> TypesUtil.traverseBottomExpList None simplifySequenceBindings
+      (* Las preparations *)
       |+> makeFunAndCall
       |+> TypesUtil.traverseTopExpList None removeDuplicateMemStmts
       |> snd
