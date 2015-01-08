@@ -172,19 +172,19 @@ let rec traverseBottomExp (pred:(parse_exp -> bool) option) (f: ('data, parse_ex
          let state1,ne1 = traverseBottomExp pred f state e1 in
          let state2,ne2 = traverseBottomExp pred f state1 e2 in
          let state3,ne3 = traverseBottomExp pred f state2 e3 in
-         state3,PIf(ne1,ne2,ne3,loc)
+         f state3 (PIf(ne1,ne2,ne3,loc))
       | PSeq(stmts,loc) ->
          let state1,nstmts = traverseBottomExpList pred f state stmts in
-         state1,PSeq(nstmts,loc)
+         f state1 (PSeq(nstmts,loc))
       | StmtVal(e1,e2,loc) ->
          let state1,ne1 = traverseBottomExp pred f state e1 in
          let state2,ne2 = traverseBottomOptExp pred f state1 e2 in
-         state2,StmtVal(ne1,ne2,loc)
+         f state2 (StmtVal(ne1,ne2,loc))
       | StmtMem(e1,e2,e3,loc) ->
          let state1,ne1 = traverseBottomExp pred f state e1 in
          let state2,ne2 = traverseBottomOptExp pred f state1 e2 in
          let state3,ne3 = traverseBottomOptExp pred f state2 e3 in
-         state3,StmtMem(ne1,ne2,ne3,loc)
+         f state3 (StmtMem(ne1,ne2,ne3,loc))
       | StmtReturn(e,loc) ->
          let state1,ne = traverseBottomExp pred f state e in
          f state1 (StmtReturn(ne,loc))
@@ -208,7 +208,7 @@ let rec traverseBottomExp (pred:(parse_exp -> bool) option) (f: ('data, parse_ex
          f state3 (StmtIf(ncond,nthen_stmts,Some(nelse_stmts),loc))
       | StmtBlock(stmts,loc) ->
          let state1,nstmts = traverseBottomExpList pred f state stmts in
-         state1,StmtBlock(nstmts,loc)
+         f state1 (StmtBlock(nstmts,loc))
 
 (** Traverses lists expressions bottom-up. The expressions are traversed right to left *)
 and traverseBottomExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data) (expl:parse_exp list) : 'data * parse_exp list =
@@ -218,7 +218,7 @@ and traverseBottomOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp
    match exp_opt,pred with
    | Some(exp),Some(pred_f) when not (pred_f exp) -> state, exp_opt
    | Some(exp),_ ->
-      let new_state,new_exp = f state exp in
+      let new_state,new_exp = traverseBottomExp pred f state exp in
       new_state,Some(new_exp)
    | None,_ -> state,None
 
@@ -300,7 +300,7 @@ and traverseTopOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) t
    match exp_opt,pred with
    | Some(exp),Some(pred_f) when not (pred_f exp) -> state,exp_opt
    | Some(exp),_ ->
-      let new_state,new_exp = f state exp in
+      let new_state,new_exp = traverseTopExp pred f state exp in
       new_state,Some(new_exp)
    | None,_ -> state,None
 
@@ -397,8 +397,9 @@ let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
       | StmtMem(_)
       | StmtEmpty -> f state stmt
       | StmtBind(e1,e2,loc) ->
-         let state1,ne2 = expandStmt pred f state e2 in
-         f state1 (StmtBind(e1,makePSeq loc ne2,loc))
+         let state1,ne1 = expandStmt pred f state e1 in
+         let state2,ne2 = expandStmt pred f state1 e2 in
+         f state2 (StmtBind(makePSeq loc ne1,makePSeq loc ne2,loc))
       | StmtReturn(e,loc) ->
          let state1,ne = expandStmt pred f state e in
          f state1 (StmtReturn(makePSeq loc ne,loc))
