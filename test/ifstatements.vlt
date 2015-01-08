@@ -1,0 +1,5 @@
+
+val x = (if 0 then 0 else 0)+(if 1 then 1 else 1);
+
+y = {| if(1) return 0; else return 1; |};
+

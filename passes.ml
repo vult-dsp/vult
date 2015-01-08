@@ -123,6 +123,16 @@ let nameFunctionCalls : ('data,parse_exp) transformation =
 
 (* ======================= *)
 
+(** Changes (x) -> x *)
+let removeGroups : ('data,parse_exp) transformation =
+   fun state exp ->
+      match exp with
+      | PGroup(e,_) ->
+         state,e
+      | _ -> state,exp
+
+(* ======================= *)
+
 (** Transforms all operators into function calls *)
 let operatorsToFunctionCalls : ('data,parse_exp) transformation =
    fun state exp ->
@@ -163,9 +173,15 @@ let simplifyTupleAssign : ('data,parse_exp) expander =
 let isSimpleBinding attr = List.exists (fun a->a=SimpleBinding) attr
 
 (** Creates bindings for all function calls in an expression *)
-let bindFunctionCallsInExp : (int * parse_exp list,parse_exp) transformation =
+let bindFunctionAndIfExpCallsInExp : (int * parse_exp list,parse_exp) transformation =
    fun data exp ->
       match exp with
+      | PIf(_,_,_,loc) ->
+         let count,stmts = data in
+         let tmp_var = SimpleId("_tmp"^(string_of_int count),loc) in
+         let decl = StmtVal(PId(tmp_var),None,loc) in
+         let bind_stmt = StmtBind(PId(tmp_var),exp,loc) in
+         (count+1,[bind_stmt;decl]@stmts),PId(tmp_var)
       | PCall(name,args,loc,attr) when not (isSimpleBinding attr) ->
          let count,stmts = data in
          let tmp_var = SimpleId("_tmp"^(string_of_int count),default_loc) in
@@ -175,20 +191,20 @@ let bindFunctionCallsInExp : (int * parse_exp list,parse_exp) transformation =
       | _ -> data,exp
 
 (** Binds all function calls to a variable. e.g. foo(bar(x)) -> tmp1 = bar(x); tmp2 = foo(tmp1); tmp2; *)
-let bindFunctionCalls : ('data,parse_exp) expander  =
+let bindFunctionAndIfExpCalls : ('data,parse_exp) expander  =
    fun state stmt ->
       match stmt with
       | StmtBind(lhs,PCall(name,args,loc1,attr),loc) ->
-         let (count,stmts),new_args = TypesUtil.traverseBottomExpList None bindFunctionCallsInExp (state.counter,[]) args in
-         {state with counter = count},(List.rev (StmtBind(lhs,PCall(name,new_args,loc,attr),loc)::stmts))
+         let (count,stmts),new_args = TypesUtil.traverseBottomExpList None bindFunctionAndIfExpCallsInExp (state.counter,[]) args in
+         {state with counter = count},(List.rev (StmtBind(lhs,PCall(name,new_args,loc1,attr),loc)::stmts))
       | StmtBind(lhs,rhs,loc) ->
-         let (count,stmts),new_rhs = TypesUtil.traverseBottomExp None bindFunctionCallsInExp (state.counter,[]) rhs in
+         let (count,stmts),new_rhs = TypesUtil.traverseBottomExp None bindFunctionAndIfExpCallsInExp (state.counter,[]) rhs in
          {state with counter = count},(List.rev (StmtBind(lhs,new_rhs,loc)::stmts))
       | StmtReturn(e,loc) ->
-         let (count,stmts),new_e = TypesUtil.traverseBottomExp None bindFunctionCallsInExp (state.counter,[]) e in
+         let (count,stmts),new_e = TypesUtil.traverseBottomExp None bindFunctionAndIfExpCallsInExp (state.counter,[]) e in
          {state with counter = count},(List.rev (StmtReturn(new_e,loc)::stmts))
       | StmtIf(cond,then_stmts,else_stmts,loc) ->
-         let (count,stmts),new_cond = TypesUtil.traverseBottomExp None bindFunctionCallsInExp (state.counter,[]) cond in
+         let (count,stmts),new_cond = TypesUtil.traverseBottomExp None bindFunctionAndIfExpCallsInExp (state.counter,[]) cond in
          {state with counter = count},(List.rev (StmtIf(new_cond,then_stmts,else_stmts,loc)::stmts))
 
       | _ -> state,[stmt]
@@ -200,7 +216,7 @@ let wrapIfExpValues : ('data,parse_exp) transformation =
    fun state exp ->
       match exp with
       | PIf(cond,then_exp,else_exp,loc) ->
-         state,PIf(cond,StmtReturn(then_exp,loc),StmtReturn(else_exp,loc),loc)
+         state,PIf(cond,PSeq([StmtReturn(then_exp,loc)],loc),PSeq([StmtReturn(else_exp,loc)],loc),loc)
       | _ -> state,exp
 
 
@@ -256,7 +272,7 @@ let inlineStmts : ('data,parse_exp) expander =
                state,[exp]
             else begin
                let new_stmts = inlineFunctionCall state fname_full args loc in
-               state,new_stmts
+               state,[PSeq(new_stmts,loc)]
             end
       | _ -> state,[exp]
 
@@ -275,8 +291,6 @@ let rec hasSingleReturnAtEnd (acc:parse_exp list) (stmts:parse_exp list) : (pars
 let simplifySequenceBindings : ('data,parse_exp) traverser =
    fun state exp ->
       match exp with
-      | StmtBind(PUnit(uloc),PSeq(stmts,loc_s),loc) ->
-         state,StmtBind(PUnit(uloc),StmtBlock(stmts,loc_s),loc)
       | StmtBind(lhs,PSeq(stmts,loc_s),loc) ->
          begin
             match hasSingleReturnAtEnd [] stmts with
@@ -310,6 +324,15 @@ let removeDuplicateMemStmts : ('data,parse_exp) traverser =
          let _,new_body = TypesUtil.expandStmtList (Some(skipFun)) removeDuplicateMem NamedIdMap.empty body in
          state,StmtFun(name,args,new_body,loc)
       | _ -> state,exp
+(* ======================= *)
+
+let makeIfStatement : ('data,parse_exp) traverser =
+   fun state exp ->
+      match exp with
+      | StmtBind(lhs,PIf(cond,then_exp,else_exp,iloc),bloc) ->
+         state,StmtIf(cond,[StmtBind(lhs,then_exp,iloc)],Some([StmtBind(lhs,else_exp,bloc)]),iloc)
+      | _ -> state,exp
+
 (* ======================= *)
 
 (** Takes a fold function and wrap it as it was a transformation so it can be chained with |+> *)
@@ -346,11 +369,12 @@ let applyTransformations (results:parser_results) =
    in
    let passes stmts =
       (initial_state,[StmtBlock(stmts,default_loc)])
-      |+> TypesUtil.traverseTopExpList None (nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)
+      |+> TypesUtil.traverseTopExpList None (removeGroups|->nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)
       |+> TypesUtil.expandStmtList None separateBindAndDeclaration
       |+> TypesUtil.expandStmtList None makeSingleDeclaration
-      |+> TypesUtil.expandStmtList None bindFunctionCalls
+      |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
       |+> TypesUtil.expandStmtList None simplifyTupleAssign
+      |+> TypesUtil.traverseBottomExpList None makeIfStatement
       |+> foldAsTransformation collectFunctionDefinitions
       |+> inlineFunctionBodies
       |+> TypesUtil.expandStmtList (Some(skipFun)) inlineStmts
