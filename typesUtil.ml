@@ -616,4 +616,7 @@ let prefixNamedId (prefix:string) (name:named_id) : named_id =
    | SimpleId(name,loc)         -> SimpleId(prefix^name,loc)
    | NamedId(name,tp,loc1,loc2) -> NamedId(prefix^name,tp,loc1,loc2)
 
+(** Checks if the expression contains any node for which the function 'f' is true *)
+let exists f exp =
+   foldTopExp None (fun state a -> state || f a) false exp
 

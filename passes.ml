@@ -278,17 +278,24 @@ let inlineStmts : ('data,parse_exp) expander =
 
 (* ======================= *)
 
-let hasReturn stmt =
+let isReturn state e =
+   match e with
+   | StmtReturn(_,_) -> true
+   | _ -> state
+
+let hasReturn (stmt:parse_exp) : bool =
    let skipPSeq e =
       match e with
       | PSeq(_,_) -> false
       | _ -> true
-   in
-   let isReturn state e =
-      match e with
-      | StmtReturn(_,_) -> true
-      | _ -> state
    in foldTopExp (Some(skipPSeq)) isReturn false stmt
+
+let hasReturnList (stmts:parse_exp list) : bool =
+   let skipPSeq e =
+      match e with
+      | PSeq(_,_) -> false
+      | _ -> true
+   in foldTopExpList (Some(skipPSeq)) isReturn false stmts
 
 (** Returns Some(e,stmts) if the sequence has a single path until it returns *)
 let rec isSinglePathStmtList (acc:parse_exp list) (stmts:parse_exp list) : (parse_exp * parse_exp list) option =
@@ -346,6 +353,24 @@ let makeIfStatement : ('data,parse_exp) traverser =
 
 (* ======================= *)
 
+let notCondition exp = PCall(SimpleId("!",default_loc),[exp],default_loc,[])
+
+let splitIfWithTwoReturns : ('data,parse_exp) expander =
+   fun state exp ->
+      match exp with
+      | StmtIf(cond,then_exp,Some(else_exp),loc) ->
+         begin
+            match hasReturnList then_exp, hasReturnList else_exp with
+            | false,false -> state,[StmtIf(cond,then_exp,Some(else_exp),loc)]
+            | true,false  -> state,(StmtIf(cond,then_exp,None,loc)::else_exp)
+            | false,true  -> state,(StmtIf(notCondition cond,else_exp,None,loc)::then_exp)
+            | true,true   -> state,[StmtIf(cond,then_exp,None,loc);StmtIf(notCondition cond,else_exp,None,loc)]
+         end
+      | _ -> state,[exp]
+
+
+(* ======================= *)
+
 (** Takes a fold function and wrap it as it was a transformation so it can be chained with |+> *)
 let foldAsTransformation (f:('data,parse_exp) folder) (state:'date) (exp_list:parse_exp list) : 'data * parse_exp list =
    let new_state = TypesUtil.foldTopExpList None f state exp_list in
@@ -386,6 +411,7 @@ let applyTransformations (results:parser_results) =
       |+> TypesUtil.expandStmtList None makeSingleDeclaration
       |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
       |+> TypesUtil.expandStmtList None simplifyTupleAssign
+      |+> TypesUtil.expandStmtList None splitIfWithTwoReturns
       (* Inlining *)
       |+> foldAsTransformation collectFunctionDefinitions
       |+> inlineFunctionBodies
