@@ -348,7 +348,7 @@ and stmtReturn (buffer:parse_exp lexer_stream) : parse_exp =
 
 and stmtBind (buffer:parse_exp lexer_stream) : parse_exp =
    let e1 = expression 0 buffer |> getContents in
-   let start_loc = TypesUtil.getExpLocation  e1 in
+   let start_loc = TypesUtil.getExpLocation e1 in
    match peekKind buffer with
    | EQUAL ->
       let _ = consume buffer EQUAL in
@@ -397,15 +397,18 @@ and stmt (buffer:parse_exp lexer_stream) : parse_exp =
       StmtEmpty
 
 (** <statementList> := LBRACK <statement> [<statement>] RBRACK *)
-and stmtList (buffer:parse_exp lexer_stream) : parse_exp list =
+and stmtList (buffer:parse_exp lexer_stream) : parse_exp =
+   let start_loc = buffer.peeked.loc in
    let rec loop acc =
       match peekKind buffer with
       | RBRAC ->
+         let end_loc = buffer.peeked.loc in
+         let loc = mergeLocations start_loc end_loc in
          let _ = skip buffer in
-         List.rev acc
+         StmtBlock(List.rev acc,loc)
       | EOF ->
          let _ = expect buffer RBRAC in
-         []
+         StmtBlock([],start_loc)
       | _ ->
          let s = stmt buffer in
          loop (s::acc)
@@ -416,7 +419,8 @@ and stmtList (buffer:parse_exp lexer_stream) : parse_exp list =
       loop []
    | _ ->
       let s = stmt buffer in
-      [s]
+      let loc = TypesUtil.getExpLocation s in
+      StmtBlock([s],loc)
 
 (** <statementList> :=  LSEQ <statement> [<statement>] RSEQ
     When called in nud function LSEQ is already consumed *)
@@ -462,7 +466,7 @@ let parseStmt (s:string) : parse_exp =
    result
 
 (** Parses a list of statements given a string *)
-let parseStmtList (s:string) : parse_exp list =
+let parseStmtList (s:string) : parse_exp =
    let buffer = bufferFromString s in
    let result = stmtList buffer in
    result
@@ -475,7 +479,7 @@ let parseDumpExp (s:string) : string =
 (** Parses a list of statements and prints them *)
 let parseDumpStmtList (s:string) : string =
    let e = parseStmtList s in
-   PrintTypes.stmtListStr e
+   PrintTypes.expressionStr e
 
 (** Parses a buffer containing a list of statements and returns the results *)
 let parseBuffer (buffer) : parser_results =
@@ -485,7 +489,7 @@ let parseBuffer (buffer) : parser_results =
          | EOF -> List.rev acc
          | _ -> loop ((stmtList buffer)::acc)
       in
-      let result = loop [] |> List.flatten in
+      let result = loop [] in
       let all_lines = getFileLines buffer.lines in
       if buffer.has_errors then
          { presult = `Error(List.rev buffer.errors); lines = all_lines }

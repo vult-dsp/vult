@@ -74,6 +74,73 @@ type ('data, 'error, 'result) expfold =
    }
 
 
+(** Returns the minimal position of two given *)
+let getMinPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.position =
+   if pos1.Lexing.pos_lnum <> pos2.Lexing.pos_lnum then
+      if pos1.Lexing.pos_lnum < pos2.Lexing.pos_lnum then pos1 else pos2
+   else
+   if pos1.Lexing.pos_cnum < pos2.Lexing.pos_cnum then pos1 else pos2
+
+(** Returns the maximum position of two given *)
+let getMaxPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.position =
+   if pos1.Lexing.pos_lnum <> pos2.Lexing.pos_lnum then
+      if pos1.Lexing.pos_lnum < pos2.Lexing.pos_lnum then pos2 else pos1
+   else
+   if pos1.Lexing.pos_cnum < pos2.Lexing.pos_cnum then pos2 else pos1
+
+(** Retuns the minimum and maximum prositions from a given list *)
+let getMinMaxPositions (pos_list:Lexing.position list) =
+   match pos_list with
+   | []  -> failwith "getMinMaxPositions: No positions passed"
+   | [h] -> h,h
+   | h::_   -> List.fold_left (fun (min,max) a -> getMinPosition a min, getMaxPosition a max) (h,h) pos_list
+
+(** Returns the location that follows the given location *)
+let getFollowingLocation (loc:location) : location =
+   let end_pos = { loc.end_pos with Lexing.pos_cnum = loc.end_pos.Lexing.pos_cnum } in
+   { start_pos = end_pos; end_pos = end_pos }
+
+(** Returns a new location with the start and end positions updated *)
+let mergeLocations (loc1:location) (loc2:location) : location =
+   if loc1 = default_loc then
+      loc2
+   else if loc2 = default_loc then
+      loc1
+   else
+      let start_pos,end_pos = getMinMaxPositions [loc1.start_pos; loc2.start_pos; loc1.end_pos; loc2.end_pos] in
+      { start_pos = start_pos; end_pos = end_pos }
+
+(** Returns the location of a named_id *)
+let getNamedIdLocation (id:named_id) : location =
+   match id with
+   | SimpleId(_,loc)        -> loc
+   | NamedId(_,_,loc1,loc2) -> mergeLocations loc1 loc2
+
+(** Returns the location of an expression *)
+let getExpLocation (e:parse_exp)  : location =
+   match e with
+   | PUnit(loc)
+   | PInt(_,loc)
+   | PReal(_,loc) -> loc
+   | PId(id) -> getNamedIdLocation id
+   | PUnOp(_,_,loc)
+   | PBinOp(_,_,_,loc)
+   | PCall(_,_,loc,_)
+   | PIf(_,_,_,loc)
+   | PGroup(_,loc)
+   | PTuple(_,loc) -> loc
+   | PEmpty -> default_loc
+   | PSeq(_,loc) -> loc
+
+   | StmtVal(_,_,loc)
+   | StmtMem(_,_,_,loc)
+   | StmtReturn(_,loc)
+   | StmtIf(_,_,_,loc)
+   | StmtFun(_,_,_,loc)
+   | StmtBind(_,_,loc) -> loc
+   | StmtEmpty -> default_loc
+   | StmtBlock(_,loc) -> loc
+
 (** Folds the list (left-right) using the given traverser functions *)
 let foldTraverser_left traverser_function pred (traverser:('data,'traversing_type) traverser) (state:'data) (elems:'elem list) =
    let state2,acc =
@@ -195,16 +262,16 @@ let rec traverseBottomExp (pred:(parse_exp -> bool) option) (f: ('data, parse_ex
       | StmtEmpty ->
          f state exp
       | StmtFun(name,args,stmts,loc) ->
-         let state1,nstmts = traverseBottomExpList pred f state stmts in
+         let state1,nstmts = traverseBottomExp pred f state stmts in
          f state1 (StmtFun(name,args,nstmts,loc))
       | StmtIf(cond,then_stmts,None,loc) ->
          let state1,ncond = traverseBottomExp pred f state cond in
-         let state2,nthen_stmts = traverseBottomExpList pred f state1 then_stmts in
+         let state2,nthen_stmts = traverseBottomExp pred f state1 then_stmts in
          f state2 (StmtIf(ncond,nthen_stmts,None,loc))
       | StmtIf(cond,then_stmts,Some(else_stmts),loc) ->
          let state1,ncond = traverseBottomExp pred f state cond in
-         let state2,nthen_stmts = traverseBottomExpList pred f state1 then_stmts in
-         let state3,nelse_stmts = traverseBottomExpList pred f state2 else_stmts in
+         let state2,nthen_stmts = traverseBottomExp pred f state1 then_stmts in
+         let state3,nelse_stmts = traverseBottomExp pred f state2 else_stmts in
          f state3 (StmtIf(ncond,nthen_stmts,Some(nelse_stmts),loc))
       | StmtBlock(stmts,loc) ->
          let state1,nstmts = traverseBottomExpList pred f state stmts in
@@ -276,16 +343,16 @@ let rec traverseTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) 
          state2,StmtBind(ne1,ne2,loc)
       | StmtEmpty -> state,nexp
       | StmtFun(name,args,stmts,loc) ->
-         let state1,nstmts = traverseTopExpList pred f state stmts in
+         let state1,nstmts = traverseTopExp pred f state stmts in
          state1,StmtFun(name,args,nstmts,loc)
       | StmtIf(cond,then_stmts,None,loc) ->
          let state1,ncond = traverseTopExp pred f state cond in
-         let state2,nthen_stmts = traverseTopExpList pred f state1 then_stmts in
+         let state2,nthen_stmts = traverseTopExp pred f state1 then_stmts in
          state1,StmtIf(ncond,nthen_stmts,None,loc)
       | StmtIf(cond,then_stmts,Some(else_stmts),loc) ->
          let state1,ncond = traverseTopExp pred f state cond in
-         let state2,nthen_stmts = traverseTopExpList pred f state1 then_stmts in
-         let state3,nelse_stmts = traverseTopExpList pred f state2 else_stmts in
+         let state2,nthen_stmts = traverseTopExp pred f state1 then_stmts in
+         let state3,nelse_stmts = traverseTopExp pred f state2 else_stmts in
          state3,StmtIf(ncond,nthen_stmts,Some(nelse_stmts),loc)
       | StmtBlock(stmts,loc) ->
          let state1,nstmts = traverseTopExpList pred f state stmts in
@@ -357,16 +424,16 @@ let rec foldTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fold
          state2
       | StmtEmpty -> state
       | StmtFun(name,args,stmts,_) ->
-         let state1 = foldTopExpList pred f state stmts in
+         let state1 = foldTopExp pred f state stmts in
          state1
       | StmtIf(cond,then_stmts,None,_) ->
          let state1 = foldTopExp pred f state cond in
-         let state2 = foldTopExpList pred f state1 then_stmts in
+         let state2 = foldTopExp pred f state1 then_stmts in
          state2
       | StmtIf(cond,then_stmts,Some(else_stmts),_) ->
          let state1 = foldTopExp pred f state cond in
-         let state2 = foldTopExpList pred f state1 then_stmts in
-         let state3 = foldTopExpList pred f state2 else_stmts in
+         let state2 = foldTopExp pred f state1 then_stmts in
+         let state3 = foldTopExp pred f state2 else_stmts in
          state3
       | StmtBlock(stmts,_) ->
          let state1 = foldTopExpList pred f state stmts in
@@ -387,8 +454,45 @@ and foldTopOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folde
       foldTopExp pred f state e
    | _ -> state
 
+(** If the list of statements has more than one element return a PSeq instead *)
+let makePSeq (loc:location) (l:parse_exp list) : parse_exp =
+   match l with
+   | [] -> PUnit(loc)
+   | [h] -> h
+   | _ -> PSeq(l,loc)
+
+(** If the list of statements has more than one element return a StmtBlock instead *)
+let makeStmtBlock (loc:location) (l:parse_exp list) : parse_exp =
+   match l with
+   | [] -> StmtEmpty
+   | [h] -> h
+   | _ -> StmtBlock(l,loc)
+
+(** Appends the contents of a list of blocks *)
+let appendBlocksList (l:parse_exp list) =
+   let rec loop acc loc e =
+      match e with
+      | [] -> List.flatten (List.rev acc),loc
+      | StmtBlock(stmts,sloc)::t ->
+         let new_loc = mergeLocations loc sloc in
+         loop (stmts::acc) new_loc t
+      | h::t ->
+         let new_loc = mergeLocations loc (getExpLocation h) in
+         loop ([h]::acc) new_loc t
+   in
+      loop [] default_loc l
+
+(** Appends the contents of a list of blocks and returns a StmtBlock *)
+let appendBlocks (l:parse_exp list) =
+   let stmts,loc = appendBlocksList l in
+   makeStmtBlock loc stmts
+
+(** Appends the contents of a list of blocks and returns a PSeq *)
+let appendPseq (l:parse_exp list) =
+   let stmts,loc = appendBlocksList l in
+   makePSeq loc stmts
+
 let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expander) (state:'data) (stmt:parse_exp) : 'data * parse_exp list =
-   let makePSeq loc l = match l with [] -> PUnit(loc) | [h] -> h | _ -> PSeq(l,loc) in
    match pred with
    | Some(pred_f) when not (pred_f stmt)-> state,[stmt]
    | _ ->
@@ -399,20 +503,20 @@ let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
       | StmtBind(e1,e2,loc) ->
          let state1,ne1 = expandStmt pred f state e1 in
          let state2,ne2 = expandStmt pred f state1 e2 in
-         f state2 (StmtBind(makePSeq loc ne1,makePSeq loc ne2,loc))
+         f state2 (StmtBind(appendPseq ne1,appendPseq ne2,loc))
       | StmtReturn(e,loc) ->
          let state1,ne = expandStmt pred f state e in
-         f state1 (StmtReturn(makePSeq loc ne,loc))
+         f state1 (StmtReturn(appendPseq ne,loc))
       | StmtFun(name,args,stmts,loc) ->
-         let state1,nstmts = expandStmtList pred f state stmts in
-         f state1 (StmtFun(name,args,nstmts,loc))
+         let state1,nstmts = expandStmt pred f state stmts in
+         f state1 (StmtFun(name,args,appendBlocks nstmts,loc))
       | StmtIf(cond,then_stmts,None,loc) ->
-         let state1,nthen_stmts = expandStmtList pred f state then_stmts in
-         f state1 (StmtIf(cond,nthen_stmts,None,loc))
+         let state1,nthen_stmts = expandStmt pred f state then_stmts in
+         f state1 (StmtIf(cond,appendBlocks nthen_stmts,None,loc))
       | StmtIf(cond,then_stmts,Some(else_stmts),loc) ->
-         let state1,nthen_stmts = expandStmtList pred f state then_stmts in
-         let state2,nelse_stmts = expandStmtList pred f state1 else_stmts in
-         f state2 (StmtIf(cond,nthen_stmts,Some(nelse_stmts),loc))
+         let state1,nthen_stmts = expandStmt pred f state then_stmts in
+         let state2,nelse_stmts = expandStmt pred f state1 else_stmts in
+         f state2 (StmtIf(cond,appendBlocks nthen_stmts,Some(appendBlocks nelse_stmts),loc))
       | PSeq(el,loc) ->
          let state1,nel = expandStmtList pred f state el in
          f state1 (PSeq(nel,loc))
@@ -424,11 +528,11 @@ let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
       | PId(_) -> f state stmt
       | PUnOp(op,e,loc) ->
          let state1,ne = expandStmt pred f state e in
-         f state1 (PUnOp(op,makePSeq loc ne,loc))
+         f state1 (PUnOp(op,appendPseq ne,loc))
       | PBinOp(op,e1,e2,loc) ->
          let state1,ne1 = expandStmt pred f state e1 in
          let state2,ne2 = expandStmt pred f state1 e2 in
-         f state2 (PBinOp(op,makePSeq loc ne1,makePSeq loc ne2,loc))
+         f state2 (PBinOp(op,appendPseq ne1,appendPseq ne2,loc))
       | PCall(name,args,loc,attr) ->
          let state1,nargs = expandStmtList pred f state args in
          f state1 (PCall(name,nargs,loc,attr))
@@ -436,10 +540,10 @@ let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
          let state1,ncond = expandStmt pred f state cond in
          let state2,nthen_exp = expandStmt pred f state1 then_exp in
          let state3,nelse_exp = expandStmt pred f state2 else_exp in
-         f state3 (PIf(makePSeq loc ncond,makePSeq loc nthen_exp, makePSeq loc nelse_exp,loc))
+         f state3 (PIf(appendPseq ncond,appendPseq nthen_exp, appendPseq nelse_exp,loc))
       | PGroup(e,loc) ->
          let state1,ne = expandStmt pred f state e in
-         f state1 (PGroup(makePSeq loc ne,loc))
+         f state1 (PGroup(appendPseq ne,loc))
       | PTuple(el,loc) ->
          let state1,nel = expandStmtList pred f state el in
          f state1 (PTuple(nel,loc))
@@ -452,45 +556,9 @@ and expandStmtList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
       List.fold_left
          (fun (state,acc) exp ->
              let state1,ne = expandStmt pred f state exp in
-             (state1,(List.rev ne)::acc) )
-         (state,[]) stmts in
-   state2,List.rev (List.flatten acc)
-
-(** Returns the minimal position of two given *)
-let getMinPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.position =
-   if pos1.Lexing.pos_lnum <> pos2.Lexing.pos_lnum then
-      if pos1.Lexing.pos_lnum < pos2.Lexing.pos_lnum then pos1 else pos2
-   else
-   if pos1.Lexing.pos_cnum < pos2.Lexing.pos_cnum then pos1 else pos2
-
-(** Returns the maximum position of two given *)
-let getMaxPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.position =
-   if pos1.Lexing.pos_lnum <> pos2.Lexing.pos_lnum then
-      if pos1.Lexing.pos_lnum < pos2.Lexing.pos_lnum then pos2 else pos1
-   else
-   if pos1.Lexing.pos_cnum < pos2.Lexing.pos_cnum then pos2 else pos1
-
-(** Retuns the minimum and maximum prositions from a given list *)
-let getMinMaxPositions (pos_list:Lexing.position list) =
-   match pos_list with
-   | []  -> failwith "getMinMaxPositions: No positions passed"
-   | [h] -> h,h
-   | h::_   -> List.fold_left (fun (min,max) a -> getMinPosition a min, getMaxPosition a max) (h,h) pos_list
-
-(** Returns the location that follows the given location *)
-let getFollowingLocation (loc:location) : location =
-   let end_pos = { loc.end_pos with Lexing.pos_cnum = loc.end_pos.Lexing.pos_cnum } in
-   { start_pos = end_pos; end_pos = end_pos }
-
-(** Returns a new location with the start and end positions updated *)
-let mergeLocations (loc1:location) (loc2:location) : location =
-   if loc1 = default_loc then
-      loc2
-   else if loc2 = default_loc then
-      loc1
-   else
-      let start_pos,end_pos = getMinMaxPositions [loc1.start_pos; loc2.start_pos; loc1.end_pos; loc2.end_pos] in
-      { start_pos = start_pos; end_pos = end_pos }
+             (state1,ne::acc) )
+         (state,[]) (List.rev stmts) in
+   state2,acc |> List.flatten |> appendBlocksList |> fst
 
 let getNameFromNamedId (named_id:named_id) : string =
    match named_id with
@@ -552,37 +620,6 @@ end
 
 module NamedIdMap = Map.Make(NamedId)
 
-(** Returns the location of a named_id *)
-let getNamedIdLocation (id:named_id) : location =
-   match id with
-   | SimpleId(_,loc)        -> loc
-   | NamedId(_,_,loc1,loc2) -> mergeLocations loc1 loc2
-
-(** Returns the location of an expression *)
-let getExpLocation (e:parse_exp)  : location =
-   match e with
-   | PUnit(loc)
-   | PInt(_,loc)
-   | PReal(_,loc) -> loc
-   | PId(id) -> getNamedIdLocation id
-   | PUnOp(_,_,loc)
-   | PBinOp(_,_,_,loc)
-   | PCall(_,_,loc,_)
-   | PIf(_,_,_,loc)
-   | PGroup(_,loc)
-   | PTuple(_,loc) -> loc
-   | PEmpty -> default_loc
-   | PSeq(_,loc) -> loc
-
-   | StmtVal(_,_,loc)
-   | StmtMem(_,_,_,loc)
-   | StmtReturn(_,loc)
-   | StmtIf(_,_,_,loc)
-   | StmtFun(_,_,_,loc)
-   | StmtBind(_,_,loc) -> loc
-   | StmtEmpty -> default_loc
-   | StmtBlock(_,loc) -> loc
-
 (** Returns the full location of an expression *)
 let getExpFullLocation (e:parse_exp) : location =
    let f state e =
@@ -591,12 +628,12 @@ let getExpFullLocation (e:parse_exp) : location =
    in foldTopExp None f default_loc e
 
 (**  Counts the number of function calls (operations) expression list has *)
-let getExpListWeight (e:parse_exp list) : int =
+let getExpWeight (e:parse_exp) : int =
    let count acc e =
       match e with
       | PCall(_) -> acc+1
       | _ -> acc
-   in foldTopExpList None count 0 e
+   in foldTopExp None count 0 e
 
 (** Removes the type from a named_id *)
 let removeNamedIdType (name:named_id) : named_id =

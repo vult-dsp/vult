@@ -119,8 +119,8 @@ type parse_exp =
    | StmtVal      of parse_exp * parse_exp option * location
    | StmtMem      of parse_exp * parse_exp option * parse_exp option * location
    | StmtReturn   of parse_exp      * location
-   | StmtIf       of parse_exp      * parse_exp list * (parse_exp list) option * location
-   | StmtFun      of named_id       * named_id list  * parse_exp list * location
+   | StmtIf       of parse_exp      * parse_exp * parse_exp option * location
+   | StmtFun      of named_id       * named_id list  * parse_exp * location
    | StmtBind     of parse_exp      * parse_exp      * location
    | StmtBlock    of parse_exp list * location
    | StmtEmpty

@@ -84,13 +84,15 @@ let rec printList buffer f sep l =
 let namedIdBuff buffer id =
    match id with
    | SimpleId(id1,_) -> append buffer id1
+   | NamedId("_",id2,_,_) ->
+      append buffer id2
    | NamedId(id1,id2,_,_) ->
       append buffer id1;
       append buffer ":";
       append buffer id2
 
 (** Adds to the print buffer an expression *)
-let rec expressionBuff buffer exp =
+let rec expressionBuff buffer (exp:parse_exp) =
    match exp with
    | PId(s)   -> namedIdBuff buffer s
    | PInt(s,_)  -> append buffer s
@@ -157,22 +159,22 @@ let rec expressionBuff buffer exp =
       append buffer "if(";
       expressionBuff buffer cond;
       append buffer ") ";
-      stmtListBuff buffer true_stmt
+      expressionBuff buffer true_stmt
    | StmtIf(cond,true_stmt,Some(false_stmt),_) ->
       append buffer "if(";
       expressionBuff buffer cond;
       append buffer ") ";
-      stmtListBuff buffer true_stmt;
+      expressionBuff buffer true_stmt;
       newline buffer;
       append buffer "else ";
-      stmtListBuff buffer false_stmt;
+      expressionBuff buffer false_stmt;
    | StmtFun(name,args,body,_) ->
       append buffer "fun ";
       namedIdBuff buffer name;
       append buffer "(";
       printList buffer namedIdBuff "," args;
       append buffer ") ";
-      stmtListBuff buffer body
+      expressionBuff buffer body
    | StmtBind(PUnit(_),e,_) ->
       expressionBuff buffer e;
       append buffer ";"
@@ -190,7 +192,7 @@ and expressionListBuff buffer expl =
    printList buffer expressionBuff "," expl
 
 (** Adds to the print buffer a statement in a block list *)
-and stmtListBuff buffer expl =
+and stmtListBuff buffer (expl:parse_exp list) =
    match expl with
    | [h] -> expressionBuff buffer h
    | _ ->

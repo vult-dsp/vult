@@ -46,7 +46,7 @@ type vultFunction =
       functionname : string;
       returntype   : string option;
       inputs       : named_id list;
-      body         : parse_exp list;
+      body         : parse_exp;
    }
 
 module StringMap = CCMap.Make(String)
@@ -338,7 +338,7 @@ and checkStmt : environment -> parse_exp -> (errors,environment) either =
       | StmtIf (cond,trueStmts,None,loc) ->
          begin match checkExp env cond with
             | Some errs -> Left (SimpleError("Could not evaluate condition expression in if statement.")::errs)
-            | None -> begin match eitherFold_left checkStmt env trueStmts with
+            | None -> begin match checkStmt env trueStmts with
                   | Right _ as success -> success
                   | Left errs -> Left (SimpleError("In if body true-branch statements.")::errs)
                end
@@ -347,10 +347,10 @@ and checkStmt : environment -> parse_exp -> (errors,environment) either =
          begin match checkExp env cond with
             | Some errs -> Left (SimpleError("Could not evaluate condition expression in if statement.")::errs)
             | None ->
-               begin match eitherFold_left checkStmt env trueStmts with
+               begin match checkStmt env trueStmts with
                   | Left errs -> Left (SimpleError("In if body true-branch statements.")::errs)
                   | Right env2 ->
-                     begin match eitherFold_left checkStmt env2 falseStmts with
+                     begin match checkStmt env2 falseStmts with
                         | Left errs -> Left (SimpleError("In if body false-branch statements")::errs)
                         | Right _ as success -> success
                      end
@@ -377,7 +377,7 @@ let checkStmts : environment -> parse_exp list -> errors option =
 
 let checkFunction : environment -> vultFunction -> errors option =
    fun env func ->
-      match checkStmts env func.body with
+      match checkStmts env [func.body] with
       | Some errs -> Some (SimpleError("In function " ^ func.functionname ^ ".")::errs)
       | None -> None
 

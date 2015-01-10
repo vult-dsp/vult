@@ -92,20 +92,11 @@ let makeSingleDeclaration : ('data,parse_exp) expander =
       | StmtVal(PTuple(elems,_),None,loc) ->
          let stmts = List.map (fun a -> StmtVal(a,None,loc)) elems in
          state,stmts
-      | StmtVal(PTuple(elems,_),Some(PTuple(rhs,_)),loc) ->
-         let stmts = List.map2 (fun a b -> StmtVal(a,Some(b),loc)) elems rhs in
-         state,stmts
       | StmtMem(PTuple(elems,_),None,None,loc) ->
          let stmts = List.map (fun a -> StmtMem(a,None,None,loc)) elems in
          state,stmts
-      | StmtMem(PTuple(elems,_),None,Some(PTuple(rhs,_)),loc) ->
-         let stmts = List.map2 (fun a b -> StmtMem(a,None,Some(b),loc)) elems rhs in
-         state,stmts
       | StmtMem(PTuple(elems,_),Some(PTuple(init,_)),None,loc) ->
          let stmts = List.map2 (fun a b -> StmtMem(a,Some(b),None,loc)) elems init in
-         state,stmts
-      | StmtMem(PTuple(elems,_),Some(PTuple(init,_)),Some(PTuple(rhs,_)),loc) ->
-         let stmts = map3 (fun a b c -> StmtMem(a,Some(b),Some(c),loc)) elems init rhs in
          state,stmts
       | _ -> state,[stmt]
 
@@ -138,9 +129,9 @@ let operatorsToFunctionCalls : ('data,parse_exp) transformation =
    fun state exp ->
       match exp with
       | PUnOp(op,e,loc) ->
-         state,PCall(NamedId("_",op,loc,loc),[e],loc,[])
+         state,PCall(NamedId("_","'"^op^"'",loc,loc),[e],loc,[])
       | PBinOp(op,e1,e2,loc) ->
-         state,PCall(NamedId("_",op,loc,loc),[e1;e2],loc,[])
+         state,PCall(NamedId("_","'"^op^"'",loc,loc),[e1;e2],loc,[])
       | _ -> state,exp
 
 (* ======================= *)
@@ -228,7 +219,7 @@ let collectFunctionDefinitions : ('data,parse_exp) folder =
       match exp with
       | StmtFun(name,args,stmts,loc) ->
          let simple_name = removeNamedIdType name in
-         let weight = getExpListWeight stmts in
+         let weight = getExpWeight stmts in
          (*let _ = Printf.printf "*** Adding function '%s' with weight %i\n" (namedIdStr simple_name) weight in*)
          { state with
            functions = NamedIdMap.add simple_name exp state.functions;
@@ -252,10 +243,10 @@ let inlineFunctionCall (state:'data) (name:named_id) (args:parse_exp list) loc :
    | StmtFun(_,fargs,fbody,_) ->
       let prefix = call_name^"_" in
       let fargs_prefixed = List.map (prefixNamedId prefix) fargs in
-      let _,fbody_prefixed = TypesUtil.traverseBottomExpList None prefixAllNamedIds prefix fbody in
+      let _,fbody_prefixed = TypesUtil.traverseBottomExp None prefixAllNamedIds prefix fbody in
       let new_decl = List.map (fun a-> StmtVal(PId(a),None,loc)) fargs_prefixed in
       let new_assignments = List.map2 (fun a b -> StmtBind(PId(a),b,loc)) fargs_prefixed args in
-      new_decl@new_assignments@fbody_prefixed
+      [appendBlocks (new_decl@new_assignments@[fbody_prefixed])]
    | _ -> failwith "inlineFunctionCall: Invalid function declaration"
 
 let inlineStmts : ('data,parse_exp) expander =
@@ -309,6 +300,12 @@ let rec isSinglePathStmtList (acc:parse_exp list) (stmts:parse_exp list) : (pars
 let simplifySequenceBindings : ('data,parse_exp) traverser =
    fun state exp ->
       match exp with
+      | PSeq([PSeq(stmts,loc1)],loc2) ->
+         state,PSeq(stmts,mergeLocations loc1 loc2)
+      | PSeq([StmtBlock(stmts,loc1)],loc2) ->
+         state,PSeq(stmts,mergeLocations loc1 loc2)
+      | StmtBlock([StmtBlock(stmts,loc1)],loc2) ->
+         state,StmtBlock(stmts,mergeLocations loc1 loc2)
       | StmtBind(lhs,PSeq(stmts,loc_s),loc) ->
          begin
             match isSinglePathStmtList [] stmts with
@@ -339,8 +336,8 @@ let removeDuplicateMemStmts : ('data,parse_exp) traverser =
    fun state exp ->
       match exp with
       | StmtFun(name,args,body,loc) ->
-         let _,new_body = TypesUtil.expandStmtList (Some(skipFun)) removeDuplicateMem NamedIdMap.empty body in
-         state,StmtFun(name,args,new_body,loc)
+         let _,new_body = TypesUtil.expandStmt (Some(skipFun)) removeDuplicateMem NamedIdMap.empty body in
+         state,StmtFun(name,args,appendBlocks new_body,loc)
       | _ -> state,exp
 (* ======================= *)
 
@@ -348,7 +345,7 @@ let makeIfStatement : ('data,parse_exp) traverser =
    fun state exp ->
       match exp with
       | StmtBind(lhs,PIf(cond,then_exp,else_exp,iloc),bloc) ->
-         state,StmtIf(cond,[StmtBind(lhs,then_exp,iloc)],Some([StmtBind(lhs,else_exp,bloc)]),iloc)
+         state,StmtIf(cond,StmtBind(lhs,then_exp,iloc),Some(StmtBind(lhs,else_exp,bloc)),iloc)
       | _ -> state,exp
 
 (* ======================= *)
@@ -360,10 +357,10 @@ let splitIfWithTwoReturns : ('data,parse_exp) expander =
       match exp with
       | StmtIf(cond,then_exp,Some(else_exp),loc) ->
          begin
-            match hasReturnList then_exp, hasReturnList else_exp with
+            match hasReturn then_exp, hasReturn else_exp with
             | false,false -> state,[StmtIf(cond,then_exp,Some(else_exp),loc)]
-            | true,false  -> state,(StmtIf(cond,then_exp,None,loc)::else_exp)
-            | false,true  -> state,(StmtIf(notCondition cond,else_exp,None,loc)::then_exp)
+            | true,false  -> state,(StmtIf(cond,then_exp,None,loc)::[else_exp])
+            | false,true  -> state,(StmtIf(notCondition cond,else_exp,None,loc)::[then_exp])
             | true,true   -> state,[StmtIf(cond,then_exp,None,loc);StmtIf(notCondition cond,else_exp,None,loc)]
          end
       | _ -> state,[exp]
@@ -380,9 +377,10 @@ let inlineFunctionBodies (state:'data) (exp_list:parse_exp list) : 'data * parse
    let inlineFunctionBody name fun_decl (functions,weigths) =
       match fun_decl with
       | StmtFun(fname,fargs,fbody,loc) ->
-         let _,new_fbody = TypesUtil.expandStmtList None inlineStmts state fbody in
-         let weight = getExpListWeight new_fbody in
-         let new_functions = NamedIdMap.add name (StmtFun(fname,fargs,new_fbody,loc)) functions in
+         let _,new_fbody = expandStmt None inlineStmts state fbody in
+         let new_fbody_block = appendBlocks new_fbody in
+         let weight = getExpWeight new_fbody_block in
+         let new_functions = NamedIdMap.add name (StmtFun(fname,fargs,new_fbody_block,loc)) functions in
          let new_weigths = NamedIdMap.add name weight weigths in
          new_functions,new_weigths
       | _ -> functions,weigths
@@ -392,7 +390,7 @@ let inlineFunctionBodies (state:'data) (exp_list:parse_exp list) : 'data * parse
 
 let makeFunAndCall state stmts =
    let fcall = SimpleId("__main__",default_loc) in
-   state,[StmtFun(fcall,[],stmts,default_loc); StmtReturn(PCall(fcall,[],default_loc,[]),default_loc)]
+   state,[StmtFun(fcall,[],appendBlocks stmts,default_loc); StmtReturn(PCall(fcall,[],default_loc,[]),default_loc)]
 
 let applyTransformations (results:parser_results) =
    let initial_state =
@@ -421,8 +419,8 @@ let applyTransformations (results:parser_results) =
       |+> TypesUtil.traverseBottomExpList None makeIfStatement
       |+> TypesUtil.traverseBottomExpList None simplifySequenceBindings
       (* Las preparations *)
-      |+> makeFunAndCall
-      |+> TypesUtil.traverseTopExpList None removeDuplicateMemStmts
+      (*|+> makeFunAndCall
+      |+> TypesUtil.traverseTopExpList None removeDuplicateMemStmts*)
       |> snd
    in
    let new_stmts = CCError.map passes results.presult in

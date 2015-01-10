@@ -209,31 +209,31 @@ let isTrue (value:value) : bool =
    | _           -> true
 
 (** Evaluates a function call *)
-let rec evalFun (loc:local_env) (body:function_body) (args:value list) : value * local_env =
+let rec evalFun (loc:local_env) (body:function_body) (args:value list) : value * local_env * bool =
    match body with
    | Declared(StmtFun(_,arg_names,stmts,_)) ->
       let inputs = List.map getVarName arg_names in
       let loc = List.fold_left2 (fun s n v -> declVal s n v) loc inputs args in
-      runStmtList loc stmts
+      runStmtList loc [stmts]
    | Builtin(f) ->
-      f args,loc
+      f args,loc,false
    | _ -> failwith "Invalid function body"
 
 (** Evaluates an expression or statement *)
-and runExp (loc:local_env) (exp:parse_exp) : value * local_env =
+and runExp (loc:local_env) (exp:parse_exp) : value * local_env * bool =
    match exp with
-   | PUnit(_)   -> VUnit,loc
-   | PInt(v,_)  -> VNum(float_of_string v),loc
-   | PReal(v,_) -> VNum(float_of_string v),loc
+   | PUnit(_)   -> VUnit,loc,false
+   | PInt(v,_)  -> VNum(float_of_string v),loc,false
+   | PReal(v,_) -> VNum(float_of_string v),loc,false
    | PId(name)  ->
       let vname  = getVarName name in
-      getExpValueFromEnv loc vname,loc
+      getExpValueFromEnv loc vname,loc,false
    | PGroup(e,_)  -> runExp loc e
    | PTuple(elems,_) ->
       let elems_val,loc = runExpList loc elems in
-      VTuple(elems_val),loc
+      VTuple(elems_val),loc,false
    | PIf(cond,then_exp,else_exp,_) ->
-      let cond_val,loc = runExp loc cond in
+      let cond_val,loc,_ = runExp loc cond in
       if isTrue cond_val then
          runExp loc then_exp
       else
@@ -244,59 +244,58 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env =
       let args_val,loc = runExpList loc args in
       let env = getFunctionEnv loc name in
       let env = clearLocal env in
-      let result,env = evalFun env body args_val in
+      let result,env,_ = evalFun env body args_val in
       let loc = setFunctionEnv loc name env in
-      result,loc
+      result,loc,false
    | PEmpty -> failwith "There should not be Empty expressions when calling the intepreter"
    | PBinOp(_,_,_,_)
    | PUnOp(_,_,_) -> failwith "There should not be operators when calling the intepreter"
    | StmtVal(PId(name),opt_init,_) ->
       let vname = getVarName name in
-      let init,loc = apply_default (runExp loc) opt_init (VNum(0.0),loc) in
-      VUnit,declVal loc vname init
+      let init,loc,_ = apply_default (runExp loc) opt_init (VNum(0.0),loc,false) in
+      VUnit,declVal loc vname init,false
    | StmtMem(PId(name),opt_init,None,_) ->
       let vname = getVarName name in
-      let init,loc = apply_default (runExp loc) opt_init (VNum(0.0),loc) in
-      VUnit,declMem loc vname init
+      let init,loc,_ = apply_default (runExp loc) opt_init (VNum(0.0),loc,false) in
+      VUnit,declMem loc vname init,false
    | StmtVal(_)
    | StmtMem(_) -> failwith "Declarations with more that one element should have been removed by the transformations"
    | StmtBind(PId(name),rhs,_) ->
-      let rhs_val,loc = runExp loc rhs in
+      let rhs_val,loc,_ = runExp loc rhs in
       let vname = getVarName name in
-      VUnit,setValMem loc vname rhs_val
+      VUnit,setValMem loc vname rhs_val,false
    | StmtBind(PTuple(elems,_),rhs,_) ->
       let vnames = List.map getExpName elems in
-      let rhs_val,loc = runExp loc rhs in
+      let rhs_val,loc,_ = runExp loc rhs in
       begin
          match rhs_val with
          | VTuple(elems_val) ->
-            VUnit,List.fold_left2 (fun s n v -> setValMem s n v) loc vnames elems_val
+            VUnit,List.fold_left2 (fun s n v -> setValMem s n v) loc vnames elems_val,false
          | _ -> failwith "Not returning a tuple"
       end
    | StmtBind(PUnit(_),rhs,_) ->
-      let _,loc = runExp loc rhs in
-      VUnit,loc
+      let _,loc,_ = runExp loc rhs in
+      VUnit,loc,false
    | StmtBind(_,rhs,_) -> failwith "Invalid binding"
    | StmtReturn(e,_) ->
-      let e_val,loc = runExp loc e in
-      e_val,loc
+      let e_val,loc,_ = runExp loc e in
+      e_val,loc,true
    | StmtFun(name_id,_,_,_) ->
       let _,ftype = TypesUtil.getFunctionTypeAndName name_id in
       let loc = declFunction loc ftype (Declared(exp)) in
-      VUnit,loc
+      VUnit,loc,false
    | StmtIf(cond,then_stmts,None,_) ->
-      let cond_val,loc = runExp loc cond in
+      let cond_val,loc,_ = runExp loc cond in
       if isTrue cond_val then
-         (* This should create a sub-environment *)
-         runStmtList loc then_stmts
-      else VUnit,loc
+         runExp loc then_stmts
+      else VUnit,loc,false
    | StmtIf(cond,then_stmts,Some(else_stmts),_) ->
-      let cond_val,loc = runExp loc cond in
+      let cond_val,loc,_ = runExp loc cond in
       if isTrue cond_val then
-         runStmtList loc then_stmts
+         runExp loc then_stmts
       else
-         runStmtList loc else_stmts
-   | StmtEmpty -> VUnit,loc
+         runExp loc else_stmts
+   | StmtEmpty -> VUnit,loc,false
    | PSeq(stmts,_) ->
       runStmtList loc stmts
    | StmtBlock(stmts,_) ->
@@ -304,50 +303,48 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env =
 
 (** Evaluates a list of expressions *)
 and runExpList (loc:local_env) (expl:parse_exp list) : value list * local_env =
-   let loc,acc = List.fold_left (fun (s,acc) a -> let v,ns = runExp s a in ns,v::acc) (loc,[]) expl in
+   let loc,acc = List.fold_left (fun (s,acc) a -> let v,ns,_ = runExp s a in ns,v::acc) (loc,[]) expl in
    List.rev acc,loc
 
 (** Evaluates a list of statements *)
-and runStmtList (loc:local_env) (expl:parse_exp list) : value * local_env =
+and runStmtList (loc:local_env) (expl:parse_exp list) : value * local_env * bool =
    let loc = pushLocal loc in
    let rec loop loc stmts =
       match stmts with
-      | [] -> VUnit,loc
+      | [] -> VUnit,loc,false
       | h::t ->
-         let value,loc = runExp loc h in
-         begin
-            match value with
-            | VUnit -> loop loc t
-            | _ -> value,loc
-         end
+         let value,loc,is_ret = runExp loc h in
+         if is_ret then
+            value,loc,true
+         else loop loc t
    in
-   let ret,loc = loop loc expl in
+   let ret,loc,is_ret = loop loc expl in
    let loc = popLocal loc in
-   ret,loc
+   ret,loc,is_ret
 
 (** Used to create functions that take one number and return one number *)
 let opNumNum (op:float->float) (args:value list) =
    match args with
    | [VNum(v1)] -> VNum(op v1)
-   | _ -> failwith "Invalid arguments"
+   | _ -> failwith "opNumNum: Invalid arguments"
 
 (** Used to create functions that take two numbers and return one number *)
 let opNumNumNum (op:float->float->float) (args:value list) =
    match args with
    | [VNum(v1); VNum(v2)] -> VNum(op v1 v2)
-   | _ -> failwith "Invalid arguments"
+   | _ -> failwith "opNumNumNum: Invalid arguments"
 
 (** Used to create functions that take two numbers and return one boolean *)
 let opNumNumBool (op:float->float->bool) (args:value list) =
    match args with
    | [VNum(v1); VNum(v2)] -> VBool(op v1 v2)
-   | _ -> failwith "Invalid arguments"
+   | _ -> failwith "opNumNumBool: Invalid arguments"
 
 (** Used to create functions that take two booleans and return one boolean *)
 let opBoolBoolBool (op:bool->bool->bool) (args:value list) =
    match args with
    | [VBool(v1); VBool(v2)] -> VBool(op v1 v2)
-   | _ -> failwith "Invalid arguments"
+   | _ -> failwith "opBoolBoolBool: Invalid arguments"
 
 (** Adds all the builtin functions to the environment *)
 let addBuiltinFunctions (loc:local_env) : local_env =
@@ -375,18 +372,18 @@ let addBuiltinFunctions (loc:local_env) : local_env =
    let sin_fun = opNumNum sin in
    let fixdenorm = opNumNum (fun a -> if (abs_float a)<1e-12 then 0.0 else a) in
    [
-      "+",Builtin(plus);
-      "-",Builtin(minus);
-      "*",Builtin(mult);
-      "/",Builtin(div);
-      "==",Builtin(equal);
-      "!=",Builtin(unequal);
-      "<",Builtin(smaller);
-      ">",Builtin(larger);
-      "<=",Builtin(smaller_equal);
-      ">=",Builtin(larger_equal);
-      "||",Builtin(or_op);
-      "&&",Builtin(and_op);
+      "'+'",Builtin(plus);
+      "'-'",Builtin(minus);
+      "'*'",Builtin(mult);
+      "'/'",Builtin(div);
+      "'=='",Builtin(equal);
+      "'!='",Builtin(unequal);
+      "'<'",Builtin(smaller);
+      "'>'",Builtin(larger);
+      "'<='",Builtin(smaller_equal);
+      "'>='",Builtin(larger_equal);
+      "'||'",Builtin(or_op);
+      "'&&'",Builtin(and_op);
       "print",Builtin(print_fun);
       "println",Builtin(println_fun);
       "tanh",Builtin(tanh_fun);
@@ -402,7 +399,7 @@ let interpret (results:parser_results) : interpreter_results =
    let loc = newLocalEnv None |> addBuiltinFunctions in
    try
 
-      let result = CCError.map (fun stmts -> let ret,loc = runStmtList loc stmts in ret,loc) results.presult in
+      let result = CCError.map (fun stmts -> let ret,loc,_ = runStmtList loc stmts in ret,loc) results.presult in
       match result with
       | `Ok(ret,loc) ->
          (*let _ = print_string (localEnvStr loc) in*)
