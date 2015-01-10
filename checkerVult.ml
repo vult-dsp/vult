@@ -43,17 +43,16 @@ type literal =
 
 type vultFunction =
    {
-      functionname : string;
-      returntype   : string option;
+      functionname : identifier;
+      returntype   : identifier option;
       inputs       : named_id list;
       body         : parse_exp;
    }
 
-module StringMap = CCMap.Make(String)
-type bindings = literal StringMap.t
-type functionBindings = vultFunction StringMap.t
-let noBindings = StringMap.empty
-let noFunctions = StringMap.empty
+type bindings = literal IdentifierMap.t
+type functionBindings = vultFunction IdentifierMap.t
+let noBindings = IdentifierMap.empty
+let noFunctions = IdentifierMap.empty
 
 type environment =
    {
@@ -103,12 +102,12 @@ let isFunctionStmt : parse_exp -> bool =
 
 let bindFunction : functionBindings -> vultFunction -> (errors,functionBindings) either =
    fun binds ({functionname = funcname;} as f) ->
-      match StringMap.get funcname binds with
-      | None -> Right (StringMap.add funcname f binds)
-      | Some _ -> Left ([SimpleError("Redeclaration of function " ^ funcname ^ ".")])
+      match IdentifierMap.get funcname binds with
+      | None -> Right (IdentifierMap.add funcname f binds)
+      | Some _ -> Left ([SimpleError("Redeclaration of function " ^ (identifierStr funcname) ^ ".")])
 
-let getFunction : environment -> string -> vultFunction option =
-   fun {functions = binds;} fname -> StringMap.get fname binds
+let getFunction : environment -> identifier -> vultFunction option =
+   fun {functions = binds;} fname -> IdentifierMap.get fname binds
 
 (* Processing of variables. *)
 (* For easy construction of updater function in bindVariable. *)
@@ -127,45 +126,45 @@ let varCreator : literal option -> literal option -> literal option =
       | (None,None) -> Some LUnbound
 
 (* bindVariable expects there to be a binding already present. *)
-let bindVariable : environment -> string -> literal  -> environment =
+let bindVariable : environment -> identifier -> literal  -> environment =
    fun ({ memory = mem; temp = tmp; } as env) name value ->
       let updater = varBinder value in
       {
          env with
-         memory = StringMap.update name updater mem;
-         temp = StringMap.update name updater tmp;
+         memory = IdentifierMap.update name updater mem;
+         temp = IdentifierMap.update name updater tmp;
       }
 
-let variableBinding : environment -> string -> literal option =
+let variableBinding : environment -> identifier -> literal option =
    fun { memory = mem; temp = tmp; } name ->
-      match StringMap.get name tmp with
+      match IdentifierMap.get name tmp with
       | Some _ as ret -> ret
-      | None -> match StringMap.get name mem with
+      | None -> match IdentifierMap.get name mem with
          | Some _ as ret -> ret
          | None as ret -> ret
 
 (* variableExists only checks if there is a variable with the given name. *)
-let variableExists : environment -> string -> bool =
+let variableExists : environment -> identifier -> bool =
    fun { memory = mem; temp = tmp; } name ->
-      match StringMap.get name tmp with
+      match IdentifierMap.get name tmp with
       | Some _ -> true
-      | None -> match StringMap.get name mem with
+      | None -> match IdentifierMap.get name mem with
          | Some _ -> true
          | None -> false
 
-let createVariable : environment -> string -> literal option -> (errors,environment) either =
+let createVariable : environment -> identifier -> literal option -> (errors,environment) either =
    fun ({temp = tmp; } as env) name possibleValue ->
       match variableExists env name with
-      | true -> Left([SimpleError("Redeclaration of variable " ^ name ^ ".")])
+      | true -> Left([SimpleError("Redeclaration of variable " ^ (identifierStr name) ^ ".")])
       | false -> let updater = varCreator possibleValue in
-         Right { env with temp = (StringMap.update name updater tmp); }
+         Right { env with temp = (IdentifierMap.update name updater tmp); }
 
-let createMemory : environment -> string -> literal option -> (errors,environment) either  =
+let createMemory : environment -> identifier -> literal option -> (errors,environment) either  =
    fun ({memory = mem; } as env) name possibleValue ->
       match variableExists env name with
-      | true -> Left([SimpleError("Redeclaration of variable " ^ name ^ ".")])
+      | true -> Left([SimpleError("Redeclaration of variable " ^ (identifierStr name) ^ ".")])
       | false -> let updater = varCreator possibleValue in
-         Right { env with memory = (StringMap.update name updater mem); }
+         Right { env with memory = (IdentifierMap.update name updater mem); }
 
 (* Check family of functions. Checks that things are valid in the given environment. *)
 let checkNamedId : environment -> named_id -> Types.errors option =
@@ -175,7 +174,7 @@ let checkNamedId : environment -> named_id -> Types.errors option =
       | true -> None
       | false ->
          let loc = getLocationFromNamedId namedId in
-         Some ([PointedError(loc,"No declaration of variable " ^ name ^ ".")])
+         Some ([PointedError(loc,"No declaration of variable " ^ (identifierStr name) ^ ".")])
 
 let rec flattenExp : Types.parse_exp -> Types.parse_exp list =
    fun groupExp ->
@@ -205,7 +204,7 @@ let checkId : environment -> named_id -> (Types.error, literal) either =
       let vname = getNameFromNamedId namedid in
       match variableBinding env vname with
       | Some lit -> Right lit
-      | None -> Left (SimpleError ("The variable " ^ vname ^ " is used in an expression but has no value binding at this point."))
+      | None -> Left (SimpleError ("The variable " ^ (identifierStr vname) ^ " is used in an expression but has no value binding at this point."))
 
 let checkUnOp : 'a -> string -> literal -> location -> (Types.error, literal) either =
    fun _ op lit loc ->
@@ -247,13 +246,13 @@ let checkCall : environment -> named_id -> literal list -> location -> (Types.er
    fun env namedid args loc ->
       let fname = getNameFromNamedId namedid in
       match getFunction env fname with
-      | None -> Left (PointedError(loc,"Could not locate function " ^ fname ^ "."))
+      | None -> Left (PointedError(loc,"Could not locate function " ^ (identifierStr fname) ^ "."))
       | Some f ->
          let expectedlength = List.length f.inputs
          in let paramlength = List.length args
          in if expectedlength == paramlength
          then Right LUnbound
-         else Left (PointedError(loc,"Wrong number of arguments in call to function " ^ fname
+         else Left (PointedError(loc,"Wrong number of arguments in call to function " ^ (identifierStr fname)
                                      ^ "; expected " ^ (string_of_int expectedlength) ^ " but got "
                                      ^ (string_of_int paramlength) ^ "."))
 
@@ -378,7 +377,7 @@ let checkStmts : environment -> parse_exp list -> errors option =
 let checkFunction : environment -> vultFunction -> errors option =
    fun env func ->
       match checkStmts env [func.body] with
-      | Some errs -> Some (SimpleError("In function " ^ func.functionname ^ ".")::errs)
+      | Some errs -> Some (SimpleError("In function " ^ (identifierStr func.functionname) ^ ".")::errs)
       | None -> None
 
 
@@ -399,7 +398,7 @@ let processFunctions : parse_exp list -> (errors,functionBindings) either =
       | Left errs -> Left (SimpleError("When processing function declarations.")::errs)
       | Right fbinds -> (* Then check the function bodies. *)
          begin
-            let funclist = map snd (StringMap.to_list fbinds) in
+            let funclist = map snd (IdentifierMap.to_list fbinds) in
             let env = { emptyEnv with functions = fbinds } in
             match joinErrorOptionsList (List.map (checkFunction env) funclist) with
             | Some errs -> Left errs

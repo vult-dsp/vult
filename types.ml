@@ -65,6 +65,7 @@ type token_enum =
    | EQUAL
    | OP
    | AT
+   | DOT
 
 type 'a token =
    {
@@ -91,9 +92,11 @@ type 'a lexer_stream =
       lines              : lexed_lines;
    }
 
+type identifier = string list
+
 type named_id =
-   | SimpleId of string * location
-   | NamedId  of string * string * location * location
+   | SimpleId of identifier * location
+   | NamedId  of identifier * identifier * location * location
 
 (** This type is used to attach more information to the function calls *)
 type call_attribute =

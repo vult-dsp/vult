@@ -80,16 +80,20 @@ let rec printList buffer f sep l =
       append buffer sep;
       printList buffer f sep t
 
+(** Add an identifier to the print buffer *)
+let identifierBuff buffer id =
+   printList buffer append "." id
+
 (** Adds to the print buffer a namedId *)
 let namedIdBuff buffer id =
    match id with
-   | SimpleId(id1,_) -> append buffer id1
-   | NamedId("_",id2,_,_) ->
-      append buffer id2
+   | SimpleId(id1,_) -> identifierBuff buffer id1
+   | NamedId(["_"],id2,_,_) ->
+      identifierBuff buffer id2
    | NamedId(id1,id2,_,_) ->
-      append buffer id1;
+      identifierBuff buffer id1;
       append buffer ":";
-      append buffer id2
+      identifierBuff buffer id2
 
 (** Adds to the print buffer an expression *)
 let rec expressionBuff buffer (exp:parse_exp) =

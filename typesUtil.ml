@@ -73,6 +73,24 @@ type ('data, 'error, 'result) expfold =
       vEmpty : 'data -> ('error, 'result) either;
    }
 
+(** Internal function used by 'joinSep' *)
+let rec join_buff buff sep l =
+  match l with
+  | [] -> ()
+  | [h] -> Buffer.add_string buff h
+  | h::t ->
+    Buffer.add_string buff h;
+    Buffer.add_string buff sep;
+    join_buff  buff sep t
+
+(** Joins a list of strings using a separator 'sep' *)
+let joinSep sep l =
+  match l with
+  | [] -> ""
+  | _ ->
+    let buff = Buffer.create 128 in
+    join_buff buff sep l;
+    Buffer.contents buff
 
 (** Returns the minimal position of two given *)
 let getMinPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.position =
@@ -560,7 +578,7 @@ and expandStmtList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
          (state,[]) (List.rev stmts) in
    state2,acc |> List.flatten |> appendBlocksList |> fst
 
-let getNameFromNamedId (named_id:named_id) : string =
+let getNameFromNamedId (named_id:named_id) : identifier =
    match named_id with
    | SimpleId(name,_) -> name
    | NamedId (_,name,_,_) -> name
@@ -570,15 +588,15 @@ let getLocationFromNamedId (named_id:named_id) : location =
    | SimpleId(_,loc) -> loc
    | NamedId (_,_,loc1,loc2) -> mergeLocations loc1 loc2
 
-let getTypeFromNamedId (named_id:named_id) : string option =
+let getTypeFromNamedId (named_id:named_id) : identifier option =
    match named_id with
    | NamedId (_,nametype,_,_) -> Some nametype
    | _ -> None
 
-let getFunctionTypeAndName (names_id:named_id) : string * string =
+let getFunctionTypeAndName (names_id:named_id) : identifier * identifier =
    match names_id with
    | NamedId(name,ftype,_,_) -> name,ftype
-   | SimpleId(ftype,_) -> "_",ftype
+   | SimpleId(ftype,_) -> ["_"],ftype
 
 (** Used by getIdsInExp and getIdsInExpList to get the ids in expressions *)
 let getId : ('data,parse_exp) folder =
@@ -618,7 +636,14 @@ struct
    let compare = compareIntName
 end
 
+module Identifier =
+struct
+   type t = identifier
+   let compare = compare
+end
+
 module NamedIdMap = Map.Make(NamedId)
+module IdentifierMap = CCMap.Make(Identifier)
 
 (** Returns the full location of an expression *)
 let getExpFullLocation (e:parse_exp) : location =
@@ -641,17 +666,30 @@ let removeNamedIdType (name:named_id) : named_id =
    | NamedId(n,_,loc,_) -> SimpleId(n,loc)
    | _ -> name
 
+let identifierStr id = (joinSep "." id)
+
+let prefixId pre id =
+   match id with
+   | []   -> []
+   | h::t -> (pre^h)::t
+
+let rec postfixId id pos =
+   match id with
+   | []  -> []
+   | [h] -> [pos^h]
+   | h::t -> h::(postfixId t pos)
+
 (** Converts a name_id to string. This function is used mainly for debugging since PrintTypes contains more powerful functions *)
 let namedIdStr (name:named_id) : string =
    match name with
-   | NamedId(n,t,_,_) -> n^":"^t
-   | SimpleId(n,_) -> n
+   | NamedId(n,t,_,_) -> (identifierStr n)^":"^(identifierStr t)
+   | SimpleId(n,_) -> identifierStr n
 
 (** Adds the give prefix to the named_id *)
 let prefixNamedId (prefix:string) (name:named_id) : named_id =
    match name with
-   | SimpleId(name,loc)         -> SimpleId(prefix^name,loc)
-   | NamedId(name,tp,loc1,loc2) -> NamedId(prefix^name,tp,loc1,loc2)
+   | SimpleId(n,loc)         -> SimpleId((prefixId prefix n),loc)
+   | NamedId(n,tp,loc1,loc2) -> NamedId((prefixId prefix n),tp,loc1,loc2)
 
 (** Checks if the expression contains any node for which the function 'f' is true *)
 let exists f exp =

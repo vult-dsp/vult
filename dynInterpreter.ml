@@ -25,6 +25,7 @@ THE SOFTWARE.
 (** Dynamic-typing interpreter used as reference *)
 
 open Types
+open TypesUtil
 
 let apply_default (f:'a -> 'b) (v:'a option) (def:'b) =
    match v with
@@ -46,8 +47,6 @@ type value =
    | VBool    of bool
    | VTuple   of value list
 
-module StringMap = Map.Make(String)
-
 (** Used to define types of functions: builtin and declared by the user *)
 type function_body =
    | Builtin  of (value list -> value)
@@ -56,23 +55,23 @@ type function_body =
 (** Environment of the interpreter used to store all bindings and declarations *)
 type local_env =
    {
-      val_binds : (value StringMap.t) list;
-      mem_binds : value StringMap.t;
-      fun_bind  : local_env StringMap.t;
-      fun_decl  : function_body StringMap.t;
+      val_binds : (value IdentifierMap.t) list;
+      mem_binds : value IdentifierMap.t;
+      fun_bind  : local_env IdentifierMap.t;
+      fun_decl  : function_body IdentifierMap.t;
    }
 
 (** Creates an environment. It optionally receives the function declarations.  *)
-let newLocalEnv (fun_decl:(function_body StringMap.t) option) =
+let newLocalEnv (fun_decl:(function_body IdentifierMap.t) option) =
    let functions =
       match fun_decl with
       | Some(a) -> a
-      | _ -> StringMap.empty
+      | _ -> IdentifierMap.empty
    in
    {
       val_binds = [];
-      mem_binds = StringMap.empty;
-      fun_bind  = StringMap.empty;
+      mem_binds = IdentifierMap.empty;
+      fun_bind  = IdentifierMap.empty;
       fun_decl  = functions;
    }
 
@@ -92,51 +91,51 @@ let rec valueStr (value:value) : string =
 
 (** Prints the current state of the environment *)
 let localEnvStr (loc:local_env) : string =
-   let dumpStringMap env =
-      StringMap.fold (fun name value state -> state^name^" = "^(valueStr value)^"\n" ) env ""
+   let dumpIdentifierMap env =
+      IdentifierMap.fold (fun name value state -> state^(identifierStr name)^" = "^(valueStr value)^"\n" ) env ""
    in
-   let val_s = List.map dumpStringMap loc.val_binds |> joinStrings "\n" in
-   let mem_s = dumpStringMap loc.mem_binds in
-   let fun_s = StringMap.fold (fun name value state -> name::state ) loc.fun_bind [] |> joinStrings "," in
+   let val_s = List.map dumpIdentifierMap loc.val_binds |> joinStrings "\n" in
+   let mem_s = dumpIdentifierMap loc.mem_binds in
+   let fun_s = IdentifierMap.fold (fun name value state -> (identifierStr name)::state ) loc.fun_bind [] |> joinStrings "," in
    Printf.sprintf "= val =\n%s= mem =\n%s= fun =\n%s\n" val_s mem_s fun_s
 
 (** Returns the name in a named_id *)
-let getVarName (named_id:named_id) : string =
+let getVarName (named_id:named_id) : identifier =
    match named_id with
    | SimpleId(name,_) -> name
    | NamedId (name,_,_,_) -> name
 
 (** Returns the name in an id expression *)
-let getExpName (exp:parse_exp) : string =
+let getExpName (exp:parse_exp) : identifier =
    match exp with
    | PId(name) -> getVarName name
    | _ -> failwith "This expression should be an id"
 
 (** Returns the statements of a declared function *)
-let getFunctionBody (loc:local_env) (name:string) : function_body =
-   if StringMap.mem name loc.fun_decl then
-      StringMap.find name loc.fun_decl
+let getFunctionBody (loc:local_env) (name:identifier) : function_body =
+   if IdentifierMap.mem name loc.fun_decl then
+      IdentifierMap.find name loc.fun_decl
    else
-      failwith ("Unknown function "^name)
+      failwith ("Unknown function "^(identifierStr name))
 
 (** Adds a declared function to the environment *)
-let declFunction (loc:local_env) (name:string) (body:function_body) : local_env =
-   { loc with fun_decl = StringMap.add name body loc.fun_decl }
+let declFunction (loc:local_env) (name:identifier) (body:function_body) : local_env =
+   { loc with fun_decl = IdentifierMap.add name body loc.fun_decl }
 
 (** Gets the local environment for a function call *)
-let getFunctionEnv (loc:local_env) (name:string) : local_env =
-   if name = "_" then newLocalEnv (Some(loc.fun_decl)) else
-   if StringMap.mem name loc.fun_bind then
-      StringMap.find name loc.fun_bind
+let getFunctionEnv (loc:local_env) (name:identifier) : local_env =
+   if name = ["_"] then newLocalEnv (Some(loc.fun_decl)) else
+   if IdentifierMap.mem name loc.fun_bind then
+      IdentifierMap.find name loc.fun_bind
    else
       let env = newLocalEnv (Some(loc.fun_decl)) in
-      let _ = StringMap.add name env loc.fun_bind in
+      let _ = IdentifierMap.add name env loc.fun_bind in
       env
 
 (** Adds a local environment for a function call *)
-let setFunctionEnv (loc:local_env) (name:string) (floc:local_env) : local_env =
-   if name = "_" then loc else
-      { loc with fun_bind = StringMap.add name floc loc.fun_bind }
+let setFunctionEnv (loc:local_env) (name:identifier) (floc:local_env) : local_env =
+   if name = ["_"] then loc else
+      { loc with fun_bind = IdentifierMap.add name floc loc.fun_bind }
 
 (** Clears a local environment *)
 let clearLocal (loc:local_env) : local_env =
@@ -144,7 +143,7 @@ let clearLocal (loc:local_env) : local_env =
 
 (** Pushes a new local variable environment *)
 let pushLocal (loc:local_env) : local_env =
-   { loc with val_binds = (StringMap.empty)::loc.val_binds }
+   { loc with val_binds = (IdentifierMap.empty)::loc.val_binds }
 
 (** Pops the local variable environment *)
 let popLocal (loc:local_env) : local_env =
@@ -153,51 +152,51 @@ let popLocal (loc:local_env) : local_env =
    | _::t -> { loc with val_binds = t }
 
 (** Returns the value for the given variable *)
-let getExpValueFromEnv (loc:local_env) (name:string) : value =
+let getExpValueFromEnv (loc:local_env) (name:identifier) : value =
    let rec loop locals =
       match locals with
       | [] ->
-         if StringMap.mem name loc.mem_binds then
-            StringMap.find name loc.mem_binds
+         if IdentifierMap.mem name loc.mem_binds then
+            IdentifierMap.find name loc.mem_binds
          else
             let _ = print_string (localEnvStr loc) in
-            failwith ("Undeclared variable "^name)
+            failwith ("Undeclared variable "^(identifierStr name))
       | h::t ->
-         if StringMap.mem name h then
-            StringMap.find name h
+         if IdentifierMap.mem name h then
+            IdentifierMap.find name h
          else loop t
    in loop loc.val_binds
 
 (** Sets the value of a given variable *)
-let setValMem (loc:local_env) (name:string) (value:value) : local_env =
+let setValMem (loc:local_env) (name:identifier) (value:value) : local_env =
    let rec loop locals acc =
       match locals with
       | [] ->
-         if StringMap.mem name loc.mem_binds then
-            { loc with mem_binds = StringMap.add name value loc.mem_binds }
+         if IdentifierMap.mem name loc.mem_binds then
+            { loc with mem_binds = IdentifierMap.add name value loc.mem_binds }
          else
             let _ = print_string (localEnvStr loc) in
-            failwith ("Undeclared variable "^name)
+            failwith ("Undeclared variable "^(identifierStr name))
       | h::t ->
-         if StringMap.mem name h then
-            { loc with val_binds = (List.rev acc)@[StringMap.add name value h]@t}
+         if IdentifierMap.mem name h then
+            { loc with val_binds = (List.rev acc)@[IdentifierMap.add name value h]@t}
          else loop t (h::acc)
    in loop loc.val_binds []
 
 (** Declares a variable name *)
-let declVal (loc:local_env) (name:string) (value:value) : local_env =
+let declVal (loc:local_env) (name:identifier) (value:value) : local_env =
    match loc.val_binds with
    | [] ->
-      let new_env = StringMap.add name value (StringMap.empty) in
+      let new_env = IdentifierMap.add name value (IdentifierMap.empty) in
       { loc with val_binds = [new_env] }
    | h::t ->
-      let new_env = StringMap.add name value h in
+      let new_env = IdentifierMap.add name value h in
       { loc with val_binds = new_env::t }
 
 (** Declares a memory name *)
-let declMem (loc:local_env) (name:string) (init:value) : local_env =
-   if not (StringMap.mem name loc.mem_binds) then
-      { loc with mem_binds = StringMap.add name init loc.mem_binds }
+let declMem (loc:local_env) (name:identifier) (init:value) : local_env =
+   if not (IdentifierMap.mem name loc.mem_binds) then
+      { loc with mem_binds = IdentifierMap.add name init loc.mem_binds }
    else loc
 
 (** Returns true if the value is zero *)
@@ -372,25 +371,25 @@ let addBuiltinFunctions (loc:local_env) : local_env =
    let sin_fun = opNumNum sin in
    let fixdenorm = opNumNum (fun a -> if (abs_float a)<1e-12 then 0.0 else a) in
    [
-      "'+'",Builtin(plus);
-      "'-'",Builtin(minus);
-      "'*'",Builtin(mult);
-      "'/'",Builtin(div);
-      "'=='",Builtin(equal);
-      "'!='",Builtin(unequal);
-      "'<'",Builtin(smaller);
-      "'>'",Builtin(larger);
-      "'<='",Builtin(smaller_equal);
-      "'>='",Builtin(larger_equal);
-      "'||'",Builtin(or_op);
-      "'&&'",Builtin(and_op);
-      "print",Builtin(print_fun);
-      "println",Builtin(println_fun);
-      "tanh",Builtin(tanh_fun);
-      "abs",Builtin(abs_fun);
-      "floor",Builtin(floor_fun);
-      "sin",Builtin(sin_fun);
-      "fixdenorm",Builtin(fixdenorm);
+      ["'+'"],Builtin(plus);
+      ["'-'"],Builtin(minus);
+      ["'*'"],Builtin(mult);
+      ["'/'"],Builtin(div);
+      ["'=='"],Builtin(equal);
+      ["'!='"],Builtin(unequal);
+      ["'<'"],Builtin(smaller);
+      ["'>'"],Builtin(larger);
+      ["'<='"],Builtin(smaller_equal);
+      ["'>='"],Builtin(larger_equal);
+      ["'||'"],Builtin(or_op);
+      ["'&&'"],Builtin(and_op);
+      ["print"],Builtin(print_fun);
+      ["println"],Builtin(println_fun);
+      ["tanh"],Builtin(tanh_fun);
+      ["abs"],Builtin(abs_fun);
+      ["floor"],Builtin(floor_fun);
+      ["sin"],Builtin(sin_fun);
+      ["fixdenorm"],Builtin(fixdenorm);
    ]
    |> List.fold_left (fun env (a,b) -> declFunction env a b) loc
 

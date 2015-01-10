@@ -122,6 +122,7 @@ let kindToString kind =
    | EQUAL -> "'='"
    | AT    -> "'@'"
    | OP    -> "'operator'"
+   | DOT   -> "'.'"
 
 (** Returns a string representation of the token *)
 let tokenToString l =
@@ -147,7 +148,7 @@ let blank = [' ' '\009' '\012']
 let lowercase = ['a'-'z']
 let uppercase = ['A'-'Z']
 let startid = ['A'-'Z' 'a'-'z' '_']
-let idchar = ['A'-'Z' 'a'-'z' '_' '0'-'9']
+let idchar = ['A'-'Z' 'a'-'z' '_' '0'-'9' '.']
 let int = ['0'-'9'] ['0'-'9' '_']*
 let float =
   ['0'-'9'] ['0'-'9' '_']*
@@ -161,6 +162,7 @@ rule next_token lines = parse
       next_token lines lexbuf
     }
   | blank +     { let _ = getLexeme lines lexbuf in next_token lines lexbuf }
+  | '.'         { makeToken lines DOT lexbuf }
   | '@'         { makeToken lines AT lexbuf }
   | '('         { makeToken lines LPAREN lexbuf }
   | ')'         { makeToken lines RPAREN lexbuf }

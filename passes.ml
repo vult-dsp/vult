@@ -109,7 +109,7 @@ let nameFunctionCalls : ('data,parse_exp) transformation =
       | PCall(SimpleId(name,loc),args,floc,attr) ->
          let inst = "_i"^(string_of_int state.counter) in
          let new_state = {state with counter = state.counter+1} in
-         new_state,PCall(NamedId(inst,name,loc,loc),args,floc,attr)
+         new_state,PCall(NamedId([inst],name,loc,loc),args,floc,attr)
       | _ -> state,exp
 
 (* ======================= *)
@@ -129,9 +129,9 @@ let operatorsToFunctionCalls : ('data,parse_exp) transformation =
    fun state exp ->
       match exp with
       | PUnOp(op,e,loc) ->
-         state,PCall(NamedId("_","'"^op^"'",loc,loc),[e],loc,[])
+         state,PCall(NamedId(["_"],["'"^op^"'"],loc,loc),[e],loc,[])
       | PBinOp(op,e1,e2,loc) ->
-         state,PCall(NamedId("_","'"^op^"'",loc,loc),[e1;e2],loc,[])
+         state,PCall(NamedId(["_"],["'"^op^"'"],loc,loc),[e1;e2],loc,[])
       | _ -> state,exp
 
 (* ======================= *)
@@ -147,7 +147,7 @@ let simplifyTupleAssign : ('data,parse_exp) expander =
             | [] -> state,List.map2 (fun a b -> StmtBind(a,b,loc)) lhs rhs
             | _  ->
                let init = state.counter in
-               let tmp_vars  = List.mapi (fun i _ -> SimpleId("_tpl"^(string_of_int (i+init)),default_loc)) lhs in
+               let tmp_vars  = List.mapi (fun i _ -> SimpleId(["_tpl"^(string_of_int (i+init))],default_loc)) lhs in
                let tmp_e     = List.map (fun a -> PId(a)) tmp_vars in
                let to_tmp    = List.map2 (fun a b -> StmtBind(a,b,loc)) tmp_e rhs in
                let from_tmp  = List.map2 (fun a b -> StmtBind(a,b,loc)) lhs tmp_e in
@@ -169,13 +169,13 @@ let bindFunctionAndIfExpCallsInExp : (int * parse_exp list,parse_exp) transforma
       match exp with
       | PIf(_,_,_,loc) ->
          let count,stmts = data in
-         let tmp_var = SimpleId("_tmp"^(string_of_int count),loc) in
+         let tmp_var = SimpleId(["_tmp"^(string_of_int count)],loc) in
          let decl = StmtVal(PId(tmp_var),None,loc) in
          let bind_stmt = StmtBind(PId(tmp_var),exp,loc) in
          (count+1,[bind_stmt;decl]@stmts),PId(tmp_var)
       | PCall(name,args,loc,attr) when not (isSimpleBinding attr) ->
          let count,stmts = data in
-         let tmp_var = SimpleId("_tmp"^(string_of_int count),default_loc) in
+         let tmp_var = SimpleId(["_tmp"^(string_of_int count)],default_loc) in
          let decl = StmtVal(PId(tmp_var),None,loc) in
          let bind_stmt = StmtBind(PId(tmp_var),PCall(name,args,loc,SimpleBinding::attr),loc) in
          (count+1,[bind_stmt;decl]@stmts),PId(tmp_var)
@@ -241,7 +241,7 @@ let inlineFunctionCall (state:'data) (name:named_id) (args:parse_exp list) loc :
    let function_def = NamedIdMap.find fname state.functions in
    match function_def with
    | StmtFun(_,fargs,fbody,_) ->
-      let prefix = call_name^"_" in
+      let prefix = (joinSep "_" call_name)^"_" in
       let fargs_prefixed = List.map (prefixNamedId prefix) fargs in
       let _,fbody_prefixed = TypesUtil.traverseBottomExp None prefixAllNamedIds prefix fbody in
       let new_decl = List.map (fun a-> StmtVal(PId(a),None,loc)) fargs_prefixed in
@@ -255,7 +255,7 @@ let inlineStmts : ('data,parse_exp) expander =
       | PCall(fname_full,args,loc,_) ->
          let name,ftype = getFunctionTypeAndName fname_full in
          let fname = SimpleId(ftype,default_loc) in
-         if name = "_" || not (NamedIdMap.mem fname state.functions)  then
+         if name = ["_"] || not (NamedIdMap.mem fname state.functions)  then
             state,[exp]
          else
             let weight = NamedIdMap.find fname state.function_weight in
@@ -362,7 +362,7 @@ let makeIfStatement : ('data,parse_exp) traverser =
 
 (* ======================= *)
 
-let notCondition exp = PCall(SimpleId("!",default_loc),[exp],default_loc,[])
+let notCondition exp = PCall(SimpleId(["'!'"],default_loc),[exp],default_loc,[])
 
 let splitIfWithTwoReturns : ('data,parse_exp) expander =
    fun state exp ->
@@ -401,7 +401,7 @@ let inlineFunctionBodies (state:'data) (exp_list:parse_exp list) : 'data * parse
    { state with functions = new_functions; function_weight = new_weigths; },exp_list
 
 let makeFunAndCall state stmts =
-   let fcall = SimpleId("__main__",default_loc) in
+   let fcall = SimpleId(["__main__"],default_loc) in
    state,[StmtFun(fcall,[],appendBlocks stmts,default_loc); StmtReturn(PCall(fcall,[],default_loc,[]),default_loc)]
 
 let applyTransformations (results:parser_results) =

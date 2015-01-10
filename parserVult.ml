@@ -29,10 +29,13 @@ open Errors
 open Types
 open Lexing
 open CCError
+open CCString
 open TypesUtil
 
 (** Parsing exception *)
 exception ParserError of error
+
+let splitOnDot s = Split.list_cpy "." s
 
 let getErrorForToken (buffer:'a lexer_stream) (message:string) : error =
    PointedError(getFollowingLocation buffer.prev.loc,message)
@@ -136,7 +139,7 @@ let getLbp (token:'a token) : int =
 let getContents (token:parse_exp token) : parse_exp =
    match token.kind,token.contents with
    | INT ,PEmpty -> PInt(token.value,token.loc)
-   | ID  ,PEmpty -> PId(SimpleId(token.value,token.loc))
+   | ID  ,PEmpty -> PId(SimpleId(splitOnDot token.value,token.loc))
    | REAL,PEmpty -> PReal(token.value,token.loc)
    | _    -> token.contents
 
@@ -261,8 +264,8 @@ and namedIdToken (buffer:parse_exp lexer_stream) (token:parse_exp token) : named
       let current = current buffer in
       let id2 = current.value in
       let _   = skip buffer in
-      NamedId(id1,id2,token.loc,current.loc)
-   | _ -> SimpleId(token.value,token.loc)
+      NamedId(splitOnDot id1,splitOnDot id2,token.loc,current.loc)
+   | _ -> SimpleId(splitOnDot token.value,token.loc)
 
 (** namedId := <ID> [ ':' <ID>]  *)
 and namedId (buffer:parse_exp lexer_stream) : named_id =
