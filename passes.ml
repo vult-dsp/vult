@@ -316,14 +316,14 @@ let simplifySequenceBindings : ('data,parse_exp) traverser =
 
 (* ======================= *)
 
-(** Takes a lis of statements and removes the duplicated mem declarations *)
-let rec removeDuplicateMem : ('data,parse_exp) expander =
+(** Removes all the mem statememts *)
+let rec removeAllMem : ('data,parse_exp) expander =
    fun state exp ->
       match exp with
       | StmtMem(PId(name),_,_,_) when NamedIdMap.mem name state ->
          state,[]
       | StmtMem(PId(name),_,_,_)->
-         (NamedIdMap.add name true state),[exp]
+         state,[exp]
       | _ -> state,[exp]
 
 let skipFun stmt =
@@ -331,13 +331,25 @@ let skipFun stmt =
    | StmtFun(_,_,_,_) -> false
    | _ -> true
 
+(** collects all non repeated mem statements *)
+let collectMemDecl : ('data,parse_exp) folder =
+   fun state exp ->
+      match exp with
+      | StmtMem(PId(name),_,_,_) when NamedIdMap.mem name state ->
+         state
+      | StmtMem(PId(name),_,_,_)->
+         (NamedIdMap.add name exp state)
+      | _ -> state
+
 (** Removes duplicated mem declarations  from StmtSequence *)
 let removeDuplicateMemStmts : ('data,parse_exp) traverser =
    fun state exp ->
       match exp with
       | StmtFun(name,args,body,loc) ->
-         let _,new_body = TypesUtil.expandStmt (Some(skipFun)) removeDuplicateMem NamedIdMap.empty body in
-         state,StmtFun(name,args,appendBlocks new_body,loc)
+         let mem_decl_map = TypesUtil.foldTopExp (Some(skipFun)) collectMemDecl NamedIdMap.empty body in
+         let _,new_body = TypesUtil.expandStmt (Some(skipFun)) removeAllMem mem_decl_map body in
+         let mem_decl = NamedIdMap.fold (fun _ a acc -> a::acc) mem_decl_map [] in
+         state,StmtFun(name,args,appendBlocks (mem_decl@new_body),loc)
       | _ -> state,exp
 (* ======================= *)
 
@@ -419,8 +431,8 @@ let applyTransformations (results:parser_results) =
       |+> TypesUtil.traverseBottomExpList None makeIfStatement
       |+> TypesUtil.traverseBottomExpList None simplifySequenceBindings
       (* Las preparations *)
-      (*|+> makeFunAndCall
-      |+> TypesUtil.traverseTopExpList None removeDuplicateMemStmts*)
+      |+> makeFunAndCall
+      |+> TypesUtil.traverseTopExpList None removeDuplicateMemStmts
       |> snd
    in
    let new_stmts = CCError.map passes results.presult in
