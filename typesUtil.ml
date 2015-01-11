@@ -719,6 +719,16 @@ let compareIntName (a:named_id) (b:named_id) : int =
    | SimpleId(name_a,_),NamedId(name_b,_,_,_)
    | NamedId(name_a,_,_,_),NamedId(name_b,_,_,_) -> compare name_a name_b
 
+(** Compares a list of name_id ignoring the locations *)
+let rec compareNameList (a: named_id list) (b:named_id list) : int =
+   match a,b with
+   | [],[] -> 0
+   | h1::t1,h2::t2 ->
+      let ret = compareIntName h1 h2 in
+      if ret = 0 then compareNameList t1 t2
+      else ret
+   | _ -> compare a b
+
 module NamedId =
 struct
    type t = named_id
@@ -733,6 +743,89 @@ end
 
 module NamedIdMap = Map.Make(NamedId)
 module IdentifierMap = CCMap.Make(Identifier)
+
+(** Compares two expressions ignoring the locations *)
+let rec compareExp (a:parse_exp) (b:parse_exp) : int =
+   match a,b with
+   | PUnit(_),PUnit(_) -> 0
+   | PInt(v1,_),PInt(v2,_)   -> compare v1 v2
+   | PReal(v1,_),PReal(v2,_) -> compare v1 v2
+   | PId(v1),PId(v2)         -> compareIntName v1 v2
+   | PUnOp(o1,e1,_),PUnOp(o2,v1,_) when o1=o2 ->
+      compareExp e1 v1
+   | PBinOp(o1,e1,e2,_),PBinOp(o2,v1,v2,_) when o1=o2 ->
+      let ret = compareExp e1 v1 in
+      if ret=0 then compareExp e2 v2 else ret
+   | PCall(name1,args1,_,_),PCall(name2,args2,_,_) ->
+      let ret = compareIntName name1 name2 in
+      if ret = 0 then
+         compareExpList args1 args2
+      else ret
+   | PIf(cond1,then1,else1,_),PIf(cond2,then2,else2,_) ->
+      let ret1 = compareExp cond1 cond2 in
+      if ret1 = 0 then
+         let ret2 = compareExp then1 then2 in
+         if ret2 = 0 then
+            compareExp else1 else2
+         else ret2
+      else ret1
+   | PGroup(e1,_),PGroup(e2,_) -> compareExp e1 e2
+   | PTuple(e1,_),PTuple(e2,_) -> compareExpList e1 e2
+   | PSeq(e1,_),PSeq(e2,_) -> compareExpList e1 e2
+   | PEmpty,PEmpty -> 0
+   | StmtVal(e1,b1,_),StmtVal(e2,b2,_) ->
+      let ret = compareExp e1 e2 in
+      if ret = 0 then
+         compareOptExp b1 b2
+      else ret
+   | StmtMem(e1,b1,i1,_),StmtMem(e2,b2,i2,_) ->
+      let ret1 = compareExp e1 e2 in
+      if ret1 = 0 then
+         let ret2 = compareOptExp b1 b2 in
+         if ret2 = 0 then compareOptExp i1 i2
+         else ret2
+      else ret1
+   | StmtReturn(e1,_),StmtReturn(e2,_) -> compareExp e1 e2
+   | StmtIf(cond1,then1,else1,_),StmtIf(cond2,then2,else2,_) ->
+      let ret1 = compareExp cond1 cond2 in
+      if ret1 = 0 then
+         let ret2 = compareExp then1 then2 in
+         if ret2 = 0 then
+            compareOptExp else1 else2
+         else ret2
+      else ret1
+   | StmtFun(name1,args1,body1,_),StmtFun(name2,args2,body2,_) ->
+      let ret1 = compareIntName name1 name2 in
+      if ret1=0 then
+         let ret2 = compareNameList args1 args2 in
+         if ret2=0 then compareExp body1 body2
+         else ret2
+      else ret1
+   | StmtBind(e1,v1,_),StmtBind(e2,v2,_) ->
+      let ret = compareExp e1 e2 in
+      if ret=0 then compareExp v1 v2
+      else ret
+   | StmtBlock(e1,_),StmtBlock(e2,_) -> compareExpList e1 e2
+   | StmtEmpty,StmtEmpty -> 0
+   | _ -> compare a b
+
+(** Compares two expression lists ignoring the locations *)
+and compareExpList (a:parse_exp list) (b:parse_exp list) : int =
+   match a,b with
+   | [],[] -> 0
+   | h1::t1,h2::t2 ->
+      let ret = compareExp h1 h2 in
+      if ret = 0 then
+         compareExpList t1 t2
+      else ret
+   | _ -> compare a b
+
+(** Compares two option expressions ignoring the locations *)
+and compareOptExp (a:parse_exp option) (b:parse_exp option) : int =
+   match a,b with
+   | None,None         -> 0
+   | Some(e1),Some(e2) -> compareExp e1 e2
+   | _ -> compare a b
 
 (** Returns the full location of an expression *)
 let getExpFullLocation (e:parse_exp) : location =
@@ -755,14 +848,17 @@ let removeNamedIdType (name:named_id) : named_id =
    | NamedId(n,_,loc,_) -> SimpleId(n,loc)
    | _ -> name
 
-let identifierStr id = (joinSep "." id)
+(** Converts an indentifier in a string by separating the names with dot *)
+let identifierStr (id:identifier) = (joinSep "." id)
 
-let prefixId pre id =
+(** Prefixes an identifier with a string *)
+let prefixId (pre:string) (id:identifier) =
    match id with
    | []   -> []
    | h::t -> (pre^h)::t
 
-let rec postfixId id pos =
+(** Postfix the identifier with the given string *)
+let rec postfixId (id:identifier) (pos:string) =
    match id with
    | []  -> []
    | [h] -> [pos^h]
