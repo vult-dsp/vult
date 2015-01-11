@@ -345,6 +345,13 @@ let opBoolBoolBool (op:bool->bool->bool) (args:value list) =
    | [VBool(v1); VBool(v2)] -> VBool(op v1 v2)
    | _ -> failwith "opBoolBoolBool: Invalid arguments"
 
+(** Used to create functions that take one booleans and return one boolean *)
+let opBoolBool (op:bool->bool) (args:value list) =
+   match args with
+   | [VBool(v1)] -> VBool(op v1)
+   | [v] -> VBool(op (isTrue v))
+   | _ -> failwith "opBoolBool: Invalid arguments"
+
 (** Adds all the builtin functions to the environment *)
 let addBuiltinFunctions (loc:local_env) : local_env =
    let plus = opNumNumNum (+.) in
@@ -354,22 +361,23 @@ let addBuiltinFunctions (loc:local_env) : local_env =
       | [_] -> opNumNumNum (-.) (VNum(0.0)::args)
       | _ -> opNumNumNum (-.) args
    in
-   let div = opNumNumNum (/.) in
-   let equal = opNumNumBool (=) in
-   let unequal = opNumNumBool (<>) in
-   let smaller = opNumNumBool (<) in
-   let larger = opNumNumBool (>) in
+   let div           = opNumNumNum (/.) in
+   let equal         = opNumNumBool (=) in
+   let unequal       = opNumNumBool (<>) in
+   let smaller       = opNumNumBool (<) in
+   let larger        = opNumNumBool (>) in
    let smaller_equal = opNumNumBool (<=) in
-   let larger_equal = opNumNumBool (>=) in
-   let or_op = opBoolBoolBool (||) in
-   let and_op = opBoolBoolBool (&&) in
-   let print_fun args = List.map valueStr args |> joinStrings "," |> (fun a -> print_string a;VUnit) in
+   let larger_equal  = opNumNumBool (>=) in
+   let or_op         = opBoolBoolBool (||) in
+   let and_op        = opBoolBoolBool (&&) in
+   let not_op        = opBoolBool (not) in
+   let tanh_fun      = opNumNum tanh in
+   let abs_fun       = opNumNum abs_float in
+   let floor_fun     = opNumNum floor in
+   let sin_fun       = opNumNum sin in
+   let fixdenorm     = opNumNum (fun a -> if (abs_float a)<1e-12 then 0.0 else a) in
+   let print_fun args   = List.map valueStr args |> joinStrings "," |> (fun a -> print_string a;VUnit) in
    let println_fun args = List.map valueStr args |> joinStrings "," |> (fun a -> print_endline a;VUnit) in
-   let tanh_fun = opNumNum tanh in
-   let abs_fun = opNumNum abs_float in
-   let floor_fun = opNumNum floor in
-   let sin_fun = opNumNum sin in
-   let fixdenorm = opNumNum (fun a -> if (abs_float a)<1e-12 then 0.0 else a) in
    [
       ["'+'"],Builtin(plus);
       ["'-'"],Builtin(minus);
@@ -383,6 +391,7 @@ let addBuiltinFunctions (loc:local_env) : local_env =
       ["'>='"],Builtin(larger_equal);
       ["'||'"],Builtin(or_op);
       ["'&&'"],Builtin(and_op);
+      ["'!'"],Builtin(not_op);
       ["print"],Builtin(print_fun);
       ["println"],Builtin(println_fun);
       ["tanh"],Builtin(tanh_fun);
