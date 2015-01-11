@@ -472,6 +472,89 @@ and foldTopOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folde
       foldTopExp pred f state e
    | _ -> state
 
+(** Folds expressions bottom-up *)
+let rec foldDownExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data) (exp:parse_exp) : 'data =
+   match pred with
+   | Some(pred_f) when not (pred_f exp)-> state
+   | _ ->
+      match exp with
+      | PEmpty
+      | PUnit(_)
+      | PInt(_,_)
+      | PReal(_,_)
+      | PId(_)   -> f state exp
+      | PUnOp(name,e,loc) ->
+         let state1 = foldDownExp pred f state e in
+         f state1 exp
+      | PBinOp(name,e1,e2,loc) ->
+         let state1 = foldDownExp pred f state e1 in
+         let state2 = foldDownExp pred f state1 e2 in
+         f state2 exp
+      | PGroup(e,loc) ->
+         let state1 = foldDownExp pred f state e in
+         f state1 exp
+      | PTuple(expl,_) ->
+         let state1 = foldDownExpList pred f state expl in
+         f state1 exp
+      | PCall(name,expl,_,_) ->
+         let state1 = foldDownExpList pred f state expl in
+         f state1 exp
+      | PIf(e1,e2,e3,loc) ->
+         let state1 = foldDownExp pred f state e1 in
+         let state2 = foldDownExp pred f state1 e2 in
+         let state3 = foldDownExp pred f state2 e3 in
+         f state3 exp
+      | PSeq(stmts,_) ->
+         let state1 = foldDownExpList pred f state stmts in
+         f state1 exp
+      | StmtVal(e1,e2,_) ->
+         let state1 = foldDownExp pred f state e1 in
+         let state2 = foldDownOptExp pred f state1 e2 in
+         f state2 exp
+      | StmtMem(e1,e2,e3,_) ->
+         let state1 = foldDownExp pred f state e1 in
+         let state2 = foldDownOptExp pred f state1 e2 in
+         let state3 = foldDownOptExp pred f state2 e3 in
+         f state3 exp
+      | StmtReturn(e,_) ->
+         let state1 = foldDownExp pred f state e in
+         f state1 exp
+      | StmtBind(e1,e2,_) ->
+         let state1 = foldDownExp pred f state e1 in
+         let state2 = foldDownExp pred f state1 e2 in
+         f state2 exp
+      | StmtEmpty -> state
+      | StmtFun(name,args,stmts,_) ->
+         let state1 = foldDownExp pred f state stmts in
+         f state1 exp
+      | StmtIf(cond,then_stmts,None,_) ->
+         let state1 = foldDownExp pred f state cond in
+         let state2 = foldDownExp pred f state1 then_stmts in
+         f state2 exp
+      | StmtIf(cond,then_stmts,Some(else_stmts),_) ->
+         let state1 = foldDownExp pred f state cond in
+         let state2 = foldDownExp pred f state1 then_stmts in
+         let state3 = foldDownExp pred f state2 else_stmts in
+         f state3 exp
+      | StmtBlock(stmts,_) ->
+         let state1 = foldDownExpList pred f state stmts in
+         f state1 exp
+
+
+and foldDownExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data) (expl:parse_exp list) : 'data =
+   List.fold_left
+      (fun state elem ->
+          let state1 = foldDownExp pred f state elem in
+          state1)
+      state (List.rev expl)
+
+and foldDownOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data) (exp:parse_exp option) =
+   match exp,pred with
+   | Some(e),Some(pred_f) when not (pred_f e) -> state
+   | Some(e),_ ->
+      foldDownExp pred f state e
+   | _ -> state
+
 (** If the list of statements has more than one element return a PSeq instead *)
 let makePSeq (loc:location) (l:parse_exp list) : parse_exp =
    match l with
@@ -487,7 +570,7 @@ let makeStmtBlock (loc:location) (l:parse_exp list) : parse_exp =
    | _ -> StmtBlock(l,loc)
 
 (** Appends the contents of a list of blocks *)
-let appendBlocksList (l:parse_exp list) =
+let appendBlocksList (l:parse_exp list) : parse_exp list * location =
    let rec loop acc loc e =
       match e with
       | [] -> List.flatten (List.rev acc),loc
@@ -509,6 +592,12 @@ let appendBlocks (l:parse_exp list) =
 let appendPseq (l:parse_exp list) =
    let stmts,loc = appendBlocksList l in
    makePSeq loc stmts
+
+let expandBlockOrSeq (stmt:parse_exp) : parse_exp list =
+   match stmt with
+   | StmtBlock(stmts,_) -> stmts
+   | PSeq(stmts,_)      -> stmts
+   | _ -> [stmt]
 
 let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expander) (state:'data) (stmt:parse_exp) : 'data * parse_exp list =
    match pred with

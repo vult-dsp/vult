@@ -269,24 +269,41 @@ let inlineStmts : ('data,parse_exp) expander =
 
 (* ======================= *)
 
-let isReturn state e =
+let isReturn : ('data,parse_exp) folder =
+   fun state e ->
+      match e with
+      | StmtReturn(_,_) -> true
+      | _ -> state
+
+let isIfStmt : ('data,parse_exp) folder =
+   fun state e ->
+      match e with
+      | StmtIf(_,_,_,_) -> true
+      | _ -> state
+
+let skipPSeq (e:parse_exp) : bool =
    match e with
-   | StmtReturn(_,_) -> true
-   | _ -> state
+   | PSeq(_,_) -> false
+   | _ -> true
 
 let hasReturn (stmt:parse_exp) : bool =
-   let skipPSeq e =
-      match e with
-      | PSeq(_,_) -> false
-      | _ -> true
-   in foldTopExp (Some(skipPSeq)) isReturn false stmt
+   foldTopExp (Some(skipPSeq)) isReturn false stmt
 
 let hasReturnList (stmts:parse_exp list) : bool =
-   let skipPSeq e =
-      match e with
-      | PSeq(_,_) -> false
-      | _ -> true
-   in foldTopExpList (Some(skipPSeq)) isReturn false stmts
+   foldTopExpList (Some(skipPSeq)) isReturn false stmts
+
+let hasIfStmtList (stmts:parse_exp list) : bool =
+   foldTopExpList (Some(skipPSeq)) isIfStmt false stmts
+
+let hasIfStmtWithReturnList (stmts:parse_exp list) : bool =
+   let fold_function state stmt =
+      match stmt with
+      | StmtIf(_,then_exp,None,_)  ->
+         state || hasReturn then_exp
+      | StmtIf(_,then_exp,Some(else_exp),_)  ->
+         state || hasReturn then_exp || hasReturn else_exp
+      | _ -> state
+   in foldDownExpList (Some(skipPSeq)) fold_function false stmts
 
 (** Returns Some(e,stmts) if the sequence has a single path until it returns *)
 let rec isSinglePathStmtList (acc:parse_exp list) (stmts:parse_exp list) : (parse_exp * parse_exp list) option =
@@ -351,8 +368,9 @@ let removeDuplicateMemStmts : ('data,parse_exp) traverser =
          let mem_decl = NamedIdMap.fold (fun _ a acc -> a::acc) mem_decl_map [] in
          state,StmtFun(name,args,appendBlocks (mem_decl@new_body),loc)
       | _ -> state,exp
-(* ======================= *)
 
+(* ======================= *)
+(** Changes if(cond,e1,e2) -> if(cond,{|return e1|},{|return e2|})*)
 let makeIfStatement : ('data,parse_exp) traverser =
    fun state exp ->
       match exp with
@@ -362,7 +380,10 @@ let makeIfStatement : ('data,parse_exp) traverser =
 
 (* ======================= *)
 
-let notCondition exp = PCall(SimpleId(["'!'"],default_loc),[exp],default_loc,[])
+let notCondition exp =
+   match exp with
+   | PCall(SimpleId(["'!'"],_),[exp],_,_) -> exp
+   | _ -> PCall(SimpleId(["'!'"],default_loc),[exp],default_loc,[])
 
 let splitIfWithTwoReturns : ('data,parse_exp) expander =
    fun state exp ->
@@ -377,6 +398,48 @@ let splitIfWithTwoReturns : ('data,parse_exp) expander =
          end
       | _ -> state,[exp]
 
+(* ======================= *)
+
+let rec replaceReturn ret_var stmts =
+   let replace e = match e with | StmtReturn(e,loc) -> StmtBind(ret_var,e,loc) | _ -> e in
+   match stmts with
+   | StmtBlock(block_stmts,loc)  -> StmtBlock(List.map replace block_stmts,loc)
+   | _ -> replace stmts
+
+let rec simplifyReturnPaths ret_var stmts : parse_exp list =
+   match stmts with
+   | [] -> []
+   | StmtIf(cond,then_stmts,None,loc)::[] when hasReturn then_stmts ->
+      [StmtIf(cond,replaceReturn ret_var then_stmts,None,loc)]
+   | StmtIf(cond,then_stmts,None,loc)::t when hasReturn then_stmts ->
+      let new_t = simplifyReturnPaths ret_var t in
+      [StmtIf(notCondition cond,StmtBlock(new_t,loc),Some(replaceReturn ret_var then_stmts),loc)]
+   | h::t -> h::(simplifyReturnPaths ret_var t)
+
+let simplifyReturn : ('data,parse_exp) traverser =
+   fun var stmt ->
+      match stmt with
+      | StmtIf(cond,then_stmt,Some(else_stmt),loc) when hasReturn then_stmt || hasReturn else_stmt ->
+         let new_then = simplifyReturnPaths var (expandBlockOrSeq then_stmt) in
+         let new_else = simplifyReturnPaths var (expandBlockOrSeq else_stmt) in
+         var,StmtIf(cond,appendBlocks new_then,Some(appendBlocks new_else),loc)
+      | StmtIf(cond,then_stmt,None,loc) when hasReturn then_stmt ->
+         let new_then = simplifyReturnPaths var (expandBlockOrSeq then_stmt) in
+         var,StmtIf(cond,appendBlocks new_then,None,loc)
+      | _ -> var,stmt
+
+let simplifyReturnInPSeq : ('data,parse_exp) traverser =
+   fun state stmt ->
+      match stmt with
+      | PSeq(pseq_stmts,loc) when hasIfStmtWithReturnList pseq_stmts ->
+         let var  = PId(SimpleId(["_return_value"],loc)) in
+         let decl = StmtVal(var,None,loc) in
+         let _,simp_stmts = traverseBottomExpList None simplifyReturn var pseq_stmts in
+         let new_stmts = simplifyReturnPaths var simp_stmts in
+         let ret_stmt = StmtReturn(var,loc) in
+         let new_stmts,loc = appendBlocksList (decl::new_stmts@[ret_stmt]) in
+         state,PSeq(new_stmts,loc)
+      | _ -> state,stmt
 
 (* ======================= *)
 
@@ -422,6 +485,7 @@ let applyTransformations (results:parser_results) =
       |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
       |+> TypesUtil.expandStmtList None simplifyTupleAssign
       |+> TypesUtil.expandStmtList None splitIfWithTwoReturns
+      |+> TypesUtil.traverseBottomExpList None simplifyReturnInPSeq
       (* Inlining *)
       |+> foldAsTransformation collectFunctionDefinitions
       |+> inlineFunctionBodies
@@ -430,7 +494,7 @@ let applyTransformations (results:parser_results) =
       (* Used for imperative transformation *)
       |+> TypesUtil.traverseBottomExpList None makeIfStatement
       |+> TypesUtil.traverseBottomExpList None simplifySequenceBindings
-      (* Las preparations *)
+      (* Last preparations *)
       |+> makeFunAndCall
       |+> TypesUtil.traverseTopExpList None removeDuplicateMemStmts
       |> snd
