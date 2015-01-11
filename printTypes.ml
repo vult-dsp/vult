@@ -162,16 +162,22 @@ let rec expressionBuff buffer (exp:parse_exp) =
    | StmtIf(cond,true_stmt,None,_) ->
       append buffer "if(";
       expressionBuff buffer cond;
-      append buffer ") ";
-      expressionBuff buffer true_stmt
+      append buffer ")";
+      indent buffer;
+      expressionBuff buffer true_stmt;
+      outdent buffer
    | StmtIf(cond,true_stmt,Some(false_stmt),_) ->
       append buffer "if(";
       expressionBuff buffer cond;
-      append buffer ") ";
+      append buffer ")";
+      indent buffer;
       expressionBuff buffer true_stmt;
+      outdent buffer;
       newline buffer;
-      append buffer "else ";
+      append buffer "else";
+      indent buffer;
       expressionBuff buffer false_stmt;
+      outdent buffer
    | StmtFun(name,args,body,_) ->
       append buffer "fun ";
       namedIdBuff buffer name;

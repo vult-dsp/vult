@@ -112,15 +112,15 @@ let parseStmtTest8 context =
       (parseDumpStmtList "{ return a; }")
 ;;
 let parseStmtTest9 context =
-   test_string           "if(a) {\n   val a=0;\n   return a;\n}"
+   test_string           "if(a)\n   {\n      val a=0;\n      return a;\n   }"
       (parseDumpStmtList "if(a){ val a=0;return a;}")
 ;;
 let parseStmtTest10 context =
-   test_string           "if(a) return 0;"
+   test_string           "if(a)\n   return 0;"
       (parseDumpStmtList "if(a) return 0;")
 ;;
 let parseStmtTest11 context =
-   test_string           "if(a) return false;\nelse return true;"
+   test_string           "if(a)\n   return false;\nelse\n   return true;"
       (parseDumpStmtList "if(a) return false; else return true;")
 ;;
 let parseStmtTest12 context =
