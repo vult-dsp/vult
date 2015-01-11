@@ -343,9 +343,29 @@ let rec removeAllMem : ('data,parse_exp) expander =
          state,[exp]
       | _ -> state,[exp]
 
+(** Removes all the val statememts *)
+let rec removeAllVal : ('data,parse_exp) expander =
+   fun state exp ->
+      match exp with
+      | StmtVal(PId(name),_,_) when NamedIdMap.mem name state ->
+         state,[]
+      | StmtVal(PId(name),_,_)->
+         state,[exp]
+      | _ -> state,[exp]
+
 let skipFun stmt =
    match stmt with
    | StmtFun(_,_,_,_) -> false
+   | _ -> true
+
+let skipBlock stmt =
+   match stmt with
+   | StmtBlock(_,_) -> false
+   | _ -> true
+
+let skipPSeq stmt =
+   match stmt with
+   | PSeq(_,_) -> false
    | _ -> true
 
 (** collects all non repeated mem statements *)
@@ -358,15 +378,37 @@ let collectMemDecl : ('data,parse_exp) folder =
          (NamedIdMap.add name exp state)
       | _ -> state
 
-(** Removes duplicated mem declarations  from StmtSequence *)
-let removeDuplicateMemStmts : ('data,parse_exp) traverser =
+(** collects all val statements *)
+let collectValDecl : ('data,parse_exp) folder =
+   fun state exp ->
+      match exp with
+      | StmtVal(PId(name),_,_) when NamedIdMap.mem name state ->
+         state
+      | StmtVal(PId(name),_,_)->
+         (NamedIdMap.add name exp state)
+      | _ -> state
+
+(** Removes duplicated mem declarations from StmtSequence and moves to the top the val *)
+let relocateMemAndVal : ('data,parse_exp) traverser =
    fun state exp ->
       match exp with
       | StmtFun(name,args,body,loc) ->
          let mem_decl_map = TypesUtil.foldTopExp (Some(skipFun)) collectMemDecl NamedIdMap.empty body in
-         let _,new_body = TypesUtil.expandStmt (Some(skipFun)) removeAllMem mem_decl_map body in
-         let mem_decl = NamedIdMap.fold (fun _ a acc -> a::acc) mem_decl_map [] in
+         let _,new_body   = TypesUtil.expandStmt (Some(skipFun)) removeAllMem mem_decl_map body in
+         let mem_decl     = NamedIdMap.fold (fun _ a acc -> a::acc) mem_decl_map [] in
          state,StmtFun(name,args,appendBlocks (mem_decl@new_body),loc)
+      | StmtBlock(stmts,loc) ->
+         let skip a = skipPSeq a && skipBlock a in
+         let val_decl_map = TypesUtil.foldTopExpList (Some(skip)) collectValDecl NamedIdMap.empty stmts in
+         let _,new_stmts  = TypesUtil.expandStmtList (Some(skip)) removeAllVal val_decl_map stmts in
+         let val_decl     = NamedIdMap.fold (fun _ a acc -> a::acc) val_decl_map [] in
+         state,StmtBlock(val_decl@new_stmts,loc)
+      | PSeq(stmts,loc) ->
+         let skip a = skipPSeq a && skipBlock a in
+         let val_decl_map = TypesUtil.foldTopExpList (Some(skip)) collectValDecl NamedIdMap.empty stmts in
+         let _,new_stmts  = TypesUtil.expandStmtList (Some(skip)) removeAllVal val_decl_map stmts in
+         let val_decl     = NamedIdMap.fold (fun _ a acc -> a::acc) val_decl_map [] in
+         state,PSeq(val_decl@new_stmts,loc)
       | _ -> state,exp
 
 (* ======================= *)
@@ -543,7 +585,7 @@ let applyTransformations (results:parser_results) =
 
       (* Last preparations *)
       |+> makeFunAndCall
-      |+> TypesUtil.traverseTopExpList None removeDuplicateMemStmts
+      |+> TypesUtil.traverseTopExpList None relocateMemAndVal
       |> snd
    in
    let new_stmts = CCError.map passes results.presult in
