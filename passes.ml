@@ -406,7 +406,7 @@ let rec replaceReturn ret_var stmts =
    | StmtBlock(block_stmts,loc)  -> StmtBlock(List.map replace block_stmts,loc)
    | _ -> replace stmts
 
-let rec simplifyReturnPaths ret_var stmts : parse_exp list =
+let rec simplifyReturnPaths ret_var (stmts:parse_exp list) : parse_exp list =
    match stmts with
    | [] -> []
    | StmtIf(cond,then_stmts,None,loc)::[] when hasReturn then_stmts ->
@@ -416,15 +416,53 @@ let rec simplifyReturnPaths ret_var stmts : parse_exp list =
       [StmtIf(notCondition cond,StmtBlock(new_t,loc),Some(replaceReturn ret_var then_stmts),loc)]
    | h::t -> h::(simplifyReturnPaths ret_var t)
 
+(** Transforms if(a){} if(!a){} -> if(a) {} else {} *)
+let rec collapseUnnecessaryIf (stmts:parse_exp list) : parse_exp list =
+   match stmts with
+   | [] -> []
+   | StmtIf(cond1,StmtIf(cond2,then_stmt2,_,loc2),else_stmt,loc1)::t
+      when compareExp cond1 cond2 = 0 ->
+      collapseUnnecessaryIf (StmtIf(cond1,then_stmt2,else_stmt,loc1)::t)
+   | StmtIf(cond1,then_stmt1,None,loc1)::StmtIf(cond2,then_stmt2,None,loc2)::t
+      when compareExp (notCondition cond1) cond2 = 0 ->
+      collapseUnnecessaryIf (StmtIf(cond1,then_stmt1,Some(then_stmt2),loc1)::t)
+   | h::t -> h::(collapseUnnecessaryIf t)
+
+let removeUnnecessaryBlocks : ('data,parse_exp) traverser =
+   fun state stmt ->
+      match stmt with
+      | StmtBlock([h],_) -> state,h
+      | _ -> state,stmt
+
+let removeUnnecesaryIfConditions : ('data,parse_exp) traverser =
+   fun state stmt ->
+      match stmt with
+      | StmtIf(cond1,StmtIf(cond2,then_stmt2,None,loc2),else_stmt,loc1)
+         when compareExp cond1 cond2 = 0 ->
+         state,(StmtIf(cond1,then_stmt2,else_stmt,loc1))
+      | _ -> state,stmt
+
 let simplifyReturn : ('data,parse_exp) traverser =
    fun var stmt ->
       match stmt with
       | StmtIf(cond,then_stmt,Some(else_stmt),loc) when hasReturn then_stmt || hasReturn else_stmt ->
-         let new_then = simplifyReturnPaths var (expandBlockOrSeq then_stmt) in
-         let new_else = simplifyReturnPaths var (expandBlockOrSeq else_stmt) in
+         let new_then =
+            simplifyReturnPaths var (expandBlockOrSeq then_stmt)
+            |> appendBlocksList |> fst
+            |> collapseUnnecessaryIf
+         in
+         let new_else =
+            simplifyReturnPaths var (expandBlockOrSeq else_stmt)
+            |> appendBlocksList |> fst
+            |> collapseUnnecessaryIf
+         in
          var,StmtIf(cond,appendBlocks new_then,Some(appendBlocks new_else),loc)
       | StmtIf(cond,then_stmt,None,loc) when hasReturn then_stmt ->
-         let new_then = simplifyReturnPaths var (expandBlockOrSeq then_stmt) in
+         let new_then =
+            simplifyReturnPaths var (expandBlockOrSeq then_stmt)
+            |> appendBlocksList |> fst
+            |> collapseUnnecessaryIf
+         in
          var,StmtIf(cond,appendBlocks new_then,None,loc)
       | _ -> var,stmt
 
@@ -435,7 +473,11 @@ let simplifyReturnInPSeq : ('data,parse_exp) traverser =
          let var  = PId(SimpleId(["_return_value"],loc)) in
          let decl = StmtVal(var,None,loc) in
          let _,simp_stmts = traverseBottomExpList None simplifyReturn var pseq_stmts in
-         let new_stmts = simplifyReturnPaths var simp_stmts in
+         let new_stmts =
+            simplifyReturnPaths var simp_stmts
+            |> appendBlocksList |> fst
+            |> collapseUnnecessaryIf
+         in
          let ret_stmt = StmtReturn(var,loc) in
          let new_stmts,loc = appendBlocksList (decl::new_stmts@[ret_stmt]) in
          state,PSeq(new_stmts,loc)
@@ -484,16 +526,21 @@ let applyTransformations (results:parser_results) =
       |+> TypesUtil.expandStmtList None makeSingleDeclaration
       |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
       |+> TypesUtil.expandStmtList None simplifyTupleAssign
+      (* Return removal *)
       |+> TypesUtil.expandStmtList None splitIfWithTwoReturns
       |+> TypesUtil.traverseBottomExpList None simplifyReturnInPSeq
+      |+> TypesUtil.traverseBottomExpList None (removeUnnecessaryBlocks|->removeUnnecesaryIfConditions)
+
       (* Inlining *)
       |+> foldAsTransformation collectFunctionDefinitions
       |+> inlineFunctionBodies
       |+> TypesUtil.expandStmtList (Some(skipFun)) inlineStmts
       |+> foldAsTransformation collectFunctionDefinitions
+
       (* Used for imperative transformation *)
       |+> TypesUtil.traverseBottomExpList None makeIfStatement
       |+> TypesUtil.traverseBottomExpList None simplifySequenceBindings
+
       (* Last preparations *)
       |+> makeFunAndCall
       |+> TypesUtil.traverseTopExpList None removeDuplicateMemStmts
