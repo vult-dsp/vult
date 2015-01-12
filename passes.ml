@@ -368,6 +368,11 @@ let skipPSeq stmt =
    | PSeq(_,_) -> false
    | _ -> true
 
+let skipIfStmt stmt =
+   match stmt with
+   | StmtIf(_) -> false
+   | _ -> true
+
 (** collects all non repeated mem statements *)
 let collectMemDecl : ('data,parse_exp) folder =
    fun state exp ->
@@ -440,6 +445,12 @@ let splitIfWithTwoReturns : ('data,parse_exp) expander =
          end
       | _ -> state,[exp]
 
+let wrapSimpleReturn : ('data,parse_exp) traverser =
+   fun state stmt ->
+      match stmt with
+      | StmtReturn(e,loc) -> state,StmtIf(PBool(true,loc),StmtReturn(e,loc),None,loc)
+      | _ -> state,stmt
+
 (* ======================= *)
 
 let rec replaceReturn ret_var stmts =
@@ -476,12 +487,26 @@ let removeUnnecessaryBlocks : ('data,parse_exp) traverser =
       | StmtBlock([h],_) -> state,h
       | _ -> state,stmt
 
+let evaluateCertainConditions : ('data,parse_exp) traverser =
+   fun known_cond stmt ->
+      match stmt with
+      | StmtIf(cond,then_stmt,_,loc) when compareExp known_cond cond = 0 ->
+         known_cond,then_stmt
+      | StmtIf(cond,_,Some(else_stmt),loc) when compareExp known_cond (notCondition cond) = 0 ->
+         known_cond,else_stmt
+      | _ -> known_cond,stmt
+
 let removeUnnecesaryIfConditions : ('data,parse_exp) traverser =
    fun state stmt ->
       match stmt with
-      | StmtIf(cond1,StmtIf(cond2,then_stmt2,None,loc2),else_stmt,loc1)
-         when compareExp cond1 cond2 = 0 ->
-         state,(StmtIf(cond1,then_stmt2,else_stmt,loc1))
+      | StmtIf(PBool(true,_),then_stmt,_,loc) -> state,then_stmt
+      | StmtIf(cond,then_stmt,Some(else_stmt),loc) ->
+         let _,nthen_stmt= traverseBottomExp None evaluateCertainConditions cond then_stmt in
+         let _,nelse_stmt= traverseBottomExp None evaluateCertainConditions (notCondition cond) else_stmt in
+         state,StmtIf(cond,nthen_stmt,Some(nelse_stmt),loc)
+      | StmtIf(cond,then_stmt,None,loc) ->
+         let _,nthen_stmt= traverseBottomExp None evaluateCertainConditions cond then_stmt in
+         state,StmtIf(cond,nthen_stmt,None,loc)
       | _ -> state,stmt
 
 let removeSwapedIfCondition : ('data,parse_exp) traverser =
@@ -586,6 +611,7 @@ let applyTransformations (results:parser_results) =
       |+> TypesUtil.expandStmtList None simplifyTupleAssign
       (* Return removal *)
       |+> TypesUtil.expandStmtList None splitIfWithTwoReturns
+      |+> TypesUtil.traverseBottomExpList (Some(skipIfStmt)) wrapSimpleReturn
       |+> TypesUtil.traverseBottomExpList None simplifyReturnInPSeq
       |+> TypesUtil.traverseBottomExpList None
          (removeUnnecessaryBlocks

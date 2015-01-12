@@ -107,6 +107,7 @@ type call_attributes = call_attribute list
 (** Parser syntax tree *)
 type parse_exp =
    | PUnit  of location
+   | PBool  of bool      * location
    | PInt   of string    * location
    | PReal  of string    * location
    | PId    of named_id

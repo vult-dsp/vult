@@ -139,6 +139,7 @@ let getExpLocation (e:parse_exp)  : location =
    match e with
    | PUnit(loc)
    | PInt(_,loc)
+   | PBool(_,loc)
    | PReal(_,loc) -> loc
    | PId(id) -> getNamedIdLocation id
    | PUnOp(_,_,loc)
@@ -236,6 +237,7 @@ let rec traverseBottomExp (pred:(parse_exp -> bool) option) (f: ('data, parse_ex
       | PUnit(_)
       | PInt(_,_)
       | PReal(_,_)
+      | PBool(_,_)
       | PId(_)   -> f state exp
       | PUnOp(name,e,loc) ->
          let state1,ne = traverseBottomExp pred f state e in
@@ -318,6 +320,7 @@ let rec traverseTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) 
       | PUnit(_)
       | PInt(_,_)
       | PReal(_,_)
+      | PBool(_,_)
       | PId(_)   -> state,nexp
       | PUnOp(name,e,loc) ->
          let state1,ne = traverseTopExp pred f state e in
@@ -400,6 +403,7 @@ let rec foldTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fold
       | PUnit(_)
       | PInt(_,_)
       | PReal(_,_)
+      | PBool(_,_)
       | PId(_)   -> state
       | PUnOp(name,e,loc) ->
          foldTopExp pred f state e
@@ -482,6 +486,7 @@ let rec foldDownExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fol
       | PUnit(_)
       | PInt(_,_)
       | PReal(_,_)
+      | PBool(_,_)
       | PId(_)   -> f state exp
       | PUnOp(name,e,loc) ->
          let state1 = foldDownExp pred f state e in
@@ -639,6 +644,7 @@ let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
       | PInt(_,_)
       | PReal(_,_)
       | PEmpty
+      | PBool(_,_)
       | PId(_) -> f state stmt
       | PUnOp(op,e,loc) ->
          let state1,ne = expandStmt pred f state e in

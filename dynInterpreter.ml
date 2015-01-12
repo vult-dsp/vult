@@ -222,6 +222,7 @@ let rec evalFun (loc:local_env) (body:function_body) (args:value list) : value *
 and runExp (loc:local_env) (exp:parse_exp) : value * local_env * bool =
    match exp with
    | PUnit(_)   -> VUnit,loc,false
+   | PBool(v,_) -> VBool(v),loc,false
    | PInt(v,_)  -> VNum(float_of_string v),loc,false
    | PReal(v,_) -> VNum(float_of_string v),loc,false
    | PId(name)  ->

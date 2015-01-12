@@ -101,6 +101,8 @@ let rec expressionBuff buffer (exp:parse_exp) =
    | PId(s)   -> namedIdBuff buffer s
    | PInt(s,_)  -> append buffer s
    | PReal(s,_) -> append buffer s
+   | PBool(true,_)  -> append buffer "true"
+   | PBool(false,_) -> append buffer "false"
    | PBinOp(op,e1,e2,_) ->
       append buffer "(";
       expressionBuff buffer e1;
