@@ -604,7 +604,7 @@ let applyTransformations (results:parser_results) =
    let passes stmts =
       (initial_state,[StmtBlock(stmts,default_loc)])
       (* Basic transformations *)
-      (*|+> TypesUtil.traverseTopExpList None (removeGroups|->nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)*)
+      |+> TypesUtil.traverseTopExpList None (removeGroups|->nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)
       |+> TypesUtil.expandStmtList None separateBindAndDeclaration
       |+> TypesUtil.expandStmtList None makeSingleDeclaration
       |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
