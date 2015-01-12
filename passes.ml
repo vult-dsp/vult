@@ -135,6 +135,8 @@ let operatorsToFunctionCalls : ('data,parse_exp) transformation =
       | _ -> state,exp
 
 (* ======================= *)
+
+(** Changes (a,b) = (c,d) -> a=c; b=d. If not possible uses temporary variables like (a,b) =  (b,a) -> tmp1=a;tmp2=b; b=tmp1; a=tmp2 *)
 let simplifyTupleAssign : ('data,parse_exp) expander =
    fun state exp ->
       match exp with
@@ -235,6 +237,7 @@ let prefixAllNamedIds : ('data,parse_exp) transformation =
       | PId(name) -> prefix,PId(prefixNamedId prefix name)
       | _ -> prefix,exp
 
+(** inlines the given function call by preparing the assignments and replacing the statements *)
 let inlineFunctionCall (state:'data) (name:named_id) (args:parse_exp list) loc : parse_exp list =
    let call_name,ftype = getFunctionTypeAndName name in
    let fname = SimpleId(ftype,default_loc) in
@@ -249,6 +252,7 @@ let inlineFunctionCall (state:'data) (name:named_id) (args:parse_exp list) loc :
       [appendBlocks (new_decl@new_assignments@[fbody_prefixed])]
    | _ -> failwith "inlineFunctionCall: Invalid function declaration"
 
+(** Main traverser/expander to inline function calls *)
 let inlineStmts : ('data,parse_exp) expander =
    fun state exp ->
       match exp with
@@ -286,6 +290,26 @@ let skipPSeq (e:parse_exp) : bool =
    | PSeq(_,_) -> false
    | _ -> true
 
+let skipFun stmt =
+   match stmt with
+   | StmtFun(_,_,_,_) -> false
+   | _ -> true
+
+let skipBlock stmt =
+   match stmt with
+   | StmtBlock(_,_) -> false
+   | _ -> true
+
+let skipPSeq stmt =
+   match stmt with
+   | PSeq(_,_) -> false
+   | _ -> true
+
+let skipIfStmt stmt =
+   match stmt with
+   | StmtIf(_) -> false
+   | _ -> true
+
 let hasReturn (stmt:parse_exp) : bool =
    foldTopExp (Some(skipPSeq)) isReturn false stmt
 
@@ -295,6 +319,7 @@ let hasReturnList (stmts:parse_exp list) : bool =
 let hasIfStmtList (stmts:parse_exp list) : bool =
    foldTopExpList (Some(skipPSeq)) isIfStmt false stmts
 
+(** Returns true if there is a return statement inside an if expression *)
 let hasIfStmtWithReturnList (stmts:parse_exp list) : bool =
    let fold_function state stmt =
       match stmt with
@@ -353,26 +378,6 @@ let rec removeAllVal : ('data,parse_exp) expander =
          state,[exp]
       | _ -> state,[exp]
 
-let skipFun stmt =
-   match stmt with
-   | StmtFun(_,_,_,_) -> false
-   | _ -> true
-
-let skipBlock stmt =
-   match stmt with
-   | StmtBlock(_,_) -> false
-   | _ -> true
-
-let skipPSeq stmt =
-   match stmt with
-   | PSeq(_,_) -> false
-   | _ -> true
-
-let skipIfStmt stmt =
-   match stmt with
-   | StmtIf(_) -> false
-   | _ -> true
-
 (** collects all non repeated mem statements *)
 let collectMemDecl : ('data,parse_exp) folder =
    fun state exp ->
@@ -427,11 +432,13 @@ let makeIfStatement : ('data,parse_exp) traverser =
 
 (* ======================= *)
 
+(** Negates a condition*)
 let notCondition exp =
    match exp with
    | PCall(SimpleId(["'!'"],_),[exp],_,_) -> exp
    | _ -> PCall(SimpleId(["'!'"],default_loc),[exp],default_loc,[])
 
+(** Splits if statemtents containing else in order to apply simplifications. e.g. if(a) stmt1; else stmt2; -> if(a) stmt1; if(!a) stmt2; *)
 let splitIfWithTwoReturns : ('data,parse_exp) expander =
    fun state exp ->
       match exp with
@@ -445,20 +452,21 @@ let splitIfWithTwoReturns : ('data,parse_exp) expander =
          end
       | _ -> state,[exp]
 
+(** Wrapps changes return a; -> if(true) return a; This is useful to apply transforations *)
 let wrapSimpleReturn : ('data,parse_exp) traverser =
    fun state stmt ->
       match stmt with
       | StmtReturn(e,loc) -> state,StmtIf(PBool(true,loc),StmtReturn(e,loc),None,loc)
       | _ -> state,stmt
 
-(* ======================= *)
-
+(** Replaces the return statements by bindings to the return variable *)
 let rec replaceReturn ret_var stmts =
    let replace e = match e with | StmtReturn(e,loc) -> StmtBind(ret_var,e,loc) | _ -> e in
    match stmts with
    | StmtBlock(block_stmts,loc)  -> StmtBlock(List.map replace block_stmts,loc)
    | _ -> replace stmts
 
+(** Main transformation that eliminates the returns (assumes that return -> if(true) goto :end_of_function ) *)
 let rec simplifyReturnPaths ret_var (stmts:parse_exp list) : parse_exp list =
    match stmts with
    | [] -> []
@@ -481,12 +489,14 @@ let rec collapseUnnecessaryIf (stmts:parse_exp list) : parse_exp list =
       collapseUnnecessaryIf (StmtIf(cond1,then_stmt1,Some(then_stmt2),loc1)::t)
    | h::t -> h::(collapseUnnecessaryIf t)
 
+(** Removes nested block created by the transformations *)
 let removeUnnecessaryBlocks : ('data,parse_exp) traverser =
    fun state stmt ->
       match stmt with
       | StmtBlock([h],_) -> state,h
       | _ -> state,stmt
 
+(** Given a condition that we know is true, evaluates the if statements using that condition *)
 let evaluateCertainConditions : ('data,parse_exp) traverser =
    fun known_cond stmt ->
       match stmt with
@@ -496,6 +506,7 @@ let evaluateCertainConditions : ('data,parse_exp) traverser =
          known_cond,else_stmt
       | _ -> known_cond,stmt
 
+(** Simplifies dummy if statements created by the transfrmations. e.g. if(true) ... or if(a) { if(!a) ...}  *)
 let removeUnnecesaryIfConditions : ('data,parse_exp) traverser =
    fun state stmt ->
       match stmt with
@@ -509,6 +520,7 @@ let removeUnnecesaryIfConditions : ('data,parse_exp) traverser =
          state,StmtIf(cond,nthen_stmt,None,loc)
       | _ -> state,stmt
 
+(** Changes if(!a) stmt1 else stmt2 -> if(a) stmt2 else stmt1 *)
 let removeSwapedIfCondition : ('data,parse_exp) traverser =
    fun state stmt ->
       match stmt with
@@ -516,6 +528,7 @@ let removeSwapedIfCondition : ('data,parse_exp) traverser =
          state,StmtIf(exp,else_stmt,Some(then_stmt),loc)
       | _ -> state,stmt
 
+(** Removes if statements with empty blocks *)
 let removeEmptyIfConditions : ('data,parse_exp) traverser =
    fun state stmt ->
       match stmt with
@@ -525,6 +538,7 @@ let removeEmptyIfConditions : ('data,parse_exp) traverser =
          state,StmtIf(cond,then_stmt,None,loc)
       | _ -> state,stmt
 
+(** Applies the return elimination to each if statement *)
 let simplifyReturn : ('data,parse_exp) traverser =
    fun var stmt ->
       match stmt with
@@ -549,6 +563,7 @@ let simplifyReturn : ('data,parse_exp) traverser =
          var,StmtIf(cond,appendBlocks new_then,None,loc)
       | _ -> var,stmt
 
+(** Applies elimination of return statements to PSeq. Considers a return as a variable binding followed by a goto *)
 let simplifyReturnInPSeq : ('data,parse_exp) traverser =
    fun state stmt ->
       match stmt with
@@ -573,6 +588,7 @@ let foldAsTransformation (f:('data,parse_exp) folder) (state:'date) (exp_list:pa
    let new_state = TypesUtil.foldTopExpList None f state exp_list in
    new_state,exp_list
 
+(** Inlines functions into functions *)
 let inlineFunctionBodies (state:'data) (exp_list:parse_exp list) : 'data * parse_exp list =
    let inlineFunctionBody name fun_decl (functions,weigths) =
       match fun_decl with
@@ -588,6 +604,7 @@ let inlineFunctionBodies (state:'data) (exp_list:parse_exp list) : 'data * parse
    let new_functions,new_weigths = NamedIdMap.fold inlineFunctionBody state.functions (NamedIdMap.empty,NamedIdMap.empty) in
    { state with functions = new_functions; function_weight = new_weigths; },exp_list
 
+(** Wrapps all the statements into a function called __main__ and calls it *)
 let makeFunAndCall state stmts =
    let fcall = SimpleId(["__main__"],default_loc) in
    state,[StmtFun(fcall,[],appendBlocks stmts,default_loc); StmtReturn(PCall(fcall,[],default_loc,[]),default_loc)]
