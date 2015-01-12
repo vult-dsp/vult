@@ -484,6 +484,22 @@ let removeUnnecesaryIfConditions : ('data,parse_exp) traverser =
          state,(StmtIf(cond1,then_stmt2,else_stmt,loc1))
       | _ -> state,stmt
 
+let removeSwapedIfCondition : ('data,parse_exp) traverser =
+   fun state stmt ->
+      match stmt with
+      | StmtIf(PCall(SimpleId(["'!'"],_),[exp],_,_),then_stmt,Some(else_stmt),loc)->
+         state,StmtIf(exp,else_stmt,Some(then_stmt),loc)
+      | _ -> state,stmt
+
+let removeEmptyIfConditions : ('data,parse_exp) traverser =
+   fun state stmt ->
+      match stmt with
+      | StmtIf(cond,StmtBlock([],_),Some(else_stmt),loc) ->
+         state,StmtIf(notCondition cond,else_stmt,None,loc)
+      | StmtIf(cond,then_stmt,Some(StmtBlock([],_)),loc) ->
+         state,StmtIf(cond,then_stmt,None,loc)
+      | _ -> state,stmt
+
 let simplifyReturn : ('data,parse_exp) traverser =
    fun var stmt ->
       match stmt with
@@ -563,7 +579,7 @@ let applyTransformations (results:parser_results) =
    let passes stmts =
       (initial_state,[StmtBlock(stmts,default_loc)])
       (* Basic transformations *)
-      |+> TypesUtil.traverseTopExpList None (removeGroups|->nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)
+      (*|+> TypesUtil.traverseTopExpList None (removeGroups|->nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)*)
       |+> TypesUtil.expandStmtList None separateBindAndDeclaration
       |+> TypesUtil.expandStmtList None makeSingleDeclaration
       |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
@@ -571,8 +587,11 @@ let applyTransformations (results:parser_results) =
       (* Return removal *)
       |+> TypesUtil.expandStmtList None splitIfWithTwoReturns
       |+> TypesUtil.traverseBottomExpList None simplifyReturnInPSeq
-      |+> TypesUtil.traverseBottomExpList None (removeUnnecessaryBlocks|->removeUnnecesaryIfConditions)
-
+      |+> TypesUtil.traverseBottomExpList None
+         (removeUnnecessaryBlocks
+         |-> removeUnnecesaryIfConditions
+         |-> removeEmptyIfConditions
+         |-> removeSwapedIfCondition)
       (* Inlining *)
       |+> foldAsTransformation collectFunctionDefinitions
       |+> inlineFunctionBodies
@@ -585,7 +604,7 @@ let applyTransformations (results:parser_results) =
 
       (* Last preparations *)
       |+> makeFunAndCall
-      |+> TypesUtil.traverseTopExpList None relocateMemAndVal
+      |+> TypesUtil.traverseBottomExpList None relocateMemAndVal
       |> snd
    in
    let new_stmts = CCError.map passes results.presult in

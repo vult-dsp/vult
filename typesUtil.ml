@@ -565,7 +565,7 @@ let makePSeq (loc:location) (l:parse_exp list) : parse_exp =
 (** If the list of statements has more than one element return a StmtBlock instead *)
 let makeStmtBlock (loc:location) (l:parse_exp list) : parse_exp =
    match l with
-   | [] -> StmtEmpty
+   | [] -> StmtBlock([],loc)
    | [h] -> h
    | _ -> StmtBlock(l,loc)
 
@@ -604,9 +604,16 @@ let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
    | Some(pred_f) when not (pred_f stmt)-> state,[stmt]
    | _ ->
       match stmt with
-      | StmtVal(_)
-      | StmtMem(_)
       | StmtEmpty -> f state stmt
+      | StmtVal(e1,e2,loc) ->
+         let state1,ne1 = expandStmt pred f state e1 in
+         let state2,ne2 = expandOptStmt pred f state1 e2 in
+         f state2 (StmtVal(appendPseq ne1,ne2,loc))
+      | StmtMem(e1,e2,e3,loc) ->
+         let state1,ne1 = expandStmt pred f state e1 in
+         let state2,ne2 = expandOptStmt pred f state1 e2 in
+         let state3,ne3 = expandOptStmt pred f state2 e3 in
+         f state3 (StmtMem(appendPseq ne1,ne2,ne3,loc))
       | StmtBind(e1,e2,loc) ->
          let state1,ne1 = expandStmt pred f state e1 in
          let state2,ne2 = expandStmt pred f state1 e2 in
@@ -666,6 +673,13 @@ and expandStmtList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
              (state1,ne::acc) )
          (state,[]) (List.rev stmts) in
    state2,acc |> List.flatten |> appendBlocksList |> fst
+
+and expandOptStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expander) (state:'data) (stmt:parse_exp option) : 'data * parse_exp option =
+   match stmt with
+   | None -> state,None
+   | Some(e) ->
+      let state1,ne = expandStmt pred f state e in
+      state1,Some(appendPseq ne)
 
 let getNameFromNamedId (named_id:named_id) : identifier =
    match named_id with
