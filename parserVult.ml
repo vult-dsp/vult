@@ -386,12 +386,13 @@ and stmtIf (buffer:parse_exp lexer_stream) : parse_exp =
 and stmt (buffer:parse_exp lexer_stream) : parse_exp =
    try
       match peekKind buffer with
-      | VAL -> stmtVal     buffer
-      | MEM -> stmtMem     buffer
-      | RET -> stmtReturn  buffer
-      | IF  -> stmtIf      buffer
-      | FUN -> stmtFunction buffer
-      | _   -> stmtBind buffer
+      | VAL   -> stmtVal     buffer
+      | MEM   -> stmtMem     buffer
+      | RET   -> stmtReturn  buffer
+      | IF    -> stmtIf      buffer
+      | FUN   -> stmtFunction buffer
+      | WHILE -> stmtWhile buffer
+      | _     -> stmtBind buffer
    with
    | ParserError(error) ->
       let _ = appendError buffer error in
@@ -455,6 +456,16 @@ and stmtFunction (buffer:parse_exp lexer_stream) : parse_exp =
    let body = stmtList buffer in
    let start_loc = TypesUtil.getNamedIdLocation name in
    StmtFun(name,args,body,start_loc)
+
+(** 'while' (<expression>) <stmtList> *)
+and stmtWhile (buffer:parse_exp lexer_stream) : parse_exp =
+   let start_loc = buffer.peeked.loc in
+   let _ = consume buffer WHILE in
+   let _ = consume buffer LPAREN in
+   let cond = getContents (expression 0 buffer) in
+   let _    = consume buffer RPAREN in
+   let tstm = stmtList buffer in
+   StmtWhile(cond,tstm,start_loc)
 
 (** Parses an expression given a string *)
 let parseExp (s:string) : parse_exp =

@@ -159,6 +159,7 @@ let getExpLocation (e:parse_exp)  : location =
    | StmtBind(_,_,loc) -> loc
    | StmtEmpty -> default_loc
    | StmtBlock(_,loc) -> loc
+   | StmtWhile(_,_,loc) -> loc
 
 (** Folds the list (left-right) using the given traverser functions *)
 let foldTraverser_left traverser_function pred (traverser:('data,'traversing_type) traverser) (state:'data) (elems:'elem list) =
@@ -296,6 +297,10 @@ let rec traverseBottomExp (pred:(parse_exp -> bool) option) (f: ('data, parse_ex
       | StmtBlock(stmts,loc) ->
          let state1,nstmts = traverseBottomExpList pred f state stmts in
          f state1 (StmtBlock(nstmts,loc))
+      | StmtWhile(e1,e2,loc) ->
+         let state1,ne1 = traverseBottomExp pred f state e1 in
+         let state2,ne2 = traverseBottomExp pred f state1 e2 in
+         f state2 (StmtWhile(ne1,ne2,loc))
 
 (** Traverses lists expressions bottom-up. The expressions are traversed right to left *)
 and traverseBottomExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data) (expl:parse_exp list) : 'data * parse_exp list =
@@ -378,6 +383,10 @@ let rec traverseTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) 
       | StmtBlock(stmts,loc) ->
          let state1,nstmts = traverseTopExpList pred f state stmts in
          state1,StmtBlock(nstmts,loc)
+      | StmtWhile(e1,e2,loc) ->
+         let state1,ne1 = traverseTopExp pred f state e1 in
+         let state2,ne2 = traverseTopExp pred f state1 e2 in
+         state2,StmtWhile(ne1,ne2,loc)
 
 
 (** Traverses lists expressions top-down. The expressions are traversed left to right *)
@@ -460,6 +469,10 @@ let rec foldTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fold
       | StmtBlock(stmts,_) ->
          let state1 = foldTopExpList pred f state stmts in
          state1
+      | StmtWhile(e1,e2,_) ->
+         let state1 = foldTopExp pred f state e1 in
+         let state2 = foldTopExp pred f state1 e2 in
+         state2
 
 
 and foldTopExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data) (expl:parse_exp list) : 'data =
@@ -544,6 +557,10 @@ let rec foldDownExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fol
       | StmtBlock(stmts,_) ->
          let state1 = foldDownExpList pred f state stmts in
          f state1 exp
+      | StmtWhile(e1,e2,_) ->
+         let state1 = foldDownExp pred f state e1 in
+         let state2 = foldDownExp pred f state1 e2 in
+         f state2 exp
 
 
 and foldDownExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data) (expl:parse_exp list) : 'data =
@@ -670,6 +687,10 @@ let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
       | StmtBlock(el,loc) ->
          let state1,nel = expandStmtList pred f state el in
          f state1 (StmtBlock(nel,loc))
+      | StmtWhile(e1,e2,loc) ->
+         let state1,ne1 = expandStmt pred f state e1 in
+         let state2,ne2 = expandStmt pred f state1 e2 in
+         f state2 (StmtWhile(appendPseq ne1,appendPseq ne2,loc))
 
 and expandStmtList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expander) (state:'data) (stmts:parse_exp list) : 'data * parse_exp list =
    let state2,acc =

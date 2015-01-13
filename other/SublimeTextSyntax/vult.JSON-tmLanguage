@@ -11,7 +11,7 @@
            }
         },
         { "name": "keyword.source.Vult",
-           "match": "\\b(fun|val|mem|return|if|else)\\b"
+           "match": "\\b(fun|val|mem|return|if|else|while|then)\\b"
         },
         {
           "name":"constant.numeric.source.Vult",

@@ -300,6 +300,23 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env * bool =
       runStmtList loc stmts
    | StmtBlock(stmts,_) ->
       runStmtList loc stmts
+   | StmtWhile(cond,stmts,_) ->
+      let cond_val,loc,_ = runExp loc cond in
+      let rec loop cond_val loc n =
+         if isTrue cond_val then
+            let ret,loc,is_ret = runExp loc stmts in
+            if is_ret then
+               ret,loc,is_ret
+            else
+               let new_cond_val,loc,_ = runExp loc cond in
+               (* Hard coded maximum number of iterations *)
+               if n<1000000 then
+                  loop new_cond_val loc (n+1)
+               else
+                  VUnit,loc,true
+         else
+            VUnit,loc,false
+      in loop cond_val loc 0
 
 (** Evaluates a list of expressions *)
 and runExpList (loc:local_env) (expl:parse_exp list) : value list * local_env =

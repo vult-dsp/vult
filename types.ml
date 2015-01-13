@@ -66,6 +66,7 @@ type token_enum =
    | OP
    | AT
    | DOT
+   | WHILE
 
 type 'a token =
    {
@@ -122,6 +123,7 @@ type parse_exp =
 
    | StmtVal      of parse_exp * parse_exp option * location
    | StmtMem      of parse_exp * parse_exp option * parse_exp option * location
+   | StmtWhile    of parse_exp * parse_exp * location
    | StmtReturn   of parse_exp      * location
    | StmtIf       of parse_exp      * parse_exp * parse_exp option * location
    | StmtFun      of named_id       * named_id list  * parse_exp * location

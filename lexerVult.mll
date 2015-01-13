@@ -51,6 +51,7 @@ let keyword_table =
       "then",THEN;
       "else",ELSE;
       "return",RET;
+      "while",WHILE;
    ] in
    let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
    table
@@ -110,6 +111,7 @@ let kindToString kind =
    | IF    -> "'if'"
    | THEN  -> "'then'"
    | ELSE  -> "'else'"
+   | WHILE -> "'while'"
    | LSEQ -> "'{|'"
    | RSEQ -> "'|}'"
    | LBRAC -> "'{'"

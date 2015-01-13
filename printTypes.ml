@@ -197,6 +197,11 @@ let rec expressionBuff buffer (exp:parse_exp) =
       append buffer ";"
    | StmtBlock(stmts,_) ->
       stmtListBuff buffer stmts;
+   | StmtWhile(cond,stmts,_) ->
+      append buffer "while(";
+      expressionBuff buffer cond;
+      append buffer ")";
+      expressionBuff buffer stmts
    | StmtEmpty -> ()
 
 (** Adds to the print buffer an expression list *)
