@@ -10,12 +10,12 @@ block content
     div(id='editor_left')
     div(id='editor_right')
 
-  script(src='http://ajaxorg.github.io/ace-builds/src-noconflict/ace.js' type='text/javascript' charset='utf-8')
+  script(src='/javascripts/external/ace/ace.js' type='text/javascript' charset='utf-8')
   script(src='/javascripts/vult_node.js' type='text/javascript' charset='utf-8')
   script(type='text/javascript').
     editor_left = ace.edit("editor_left");
     editor_left.setTheme("ace/theme/monokai");
-    editor_left.getSession().setMode("ace/mode/text");
+    editor_left.getSession().setMode("ace/mode/vult");
     editor_right = ace.edit("editor_right");
     editor_right.setTheme("ace/theme/monokai");
     editor_right.setReadOnly(true);
