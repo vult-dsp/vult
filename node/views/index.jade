@@ -4,7 +4,7 @@ block content
   h1= pagedata.title
   style(type='text/css' media='screen') #editor_right { position: absolute; width: 45%; left: 46%; height: 100%;}
   style(type='text/css' media='screen') #editor_left { position: absolute; width: 45%; height: 100%;}
-  style(type='text/css' media='screen') #editors { position: absolute; width : 100%; height: 800px;}
+  style(type='text/css' media='screen') #editors { position: absolute; width : 100%; height: 500px;}
 
   div(id='editors')
     div(id='editor_left')
@@ -18,6 +18,7 @@ block content
     editor_left.getSession().setMode("ace/mode/vult");
     editor_right = ace.edit("editor_right");
     editor_right.setTheme("ace/theme/monokai");
+    editor_right.getSession().setMode("ace/mode/vult");
     editor_right.setReadOnly(true);
 
     document.getElementById('editor_left').style.fontSize='14px';
