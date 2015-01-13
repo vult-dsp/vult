@@ -28,5 +28,11 @@ THE SOFTWARE.
 (** Parses a string and runs it with the interpreter *)
 let parseStringRun s =
    ParserVult.parseString s
-   |> Passes.applyTransformations
+   |> Passes.applyTransformations Passes.opt_full_transform
+   |> DynInterpreter.interpret
+
+(** Parses a string and runs it with the interpreter *)
+let parseStringRunWithOptions options s =
+   ParserVult.parseString s
+   |> Passes.applyTransformations options
    |> DynInterpreter.interpret

@@ -52,16 +52,41 @@ let (|+>) : ('state * 'value) -> ('state, 'value) transformation -> ('state * 'v
    fun (state,value) transformation ->
       transformation state value
 
-(** Default inline weight *)
-let default_inline_weight = 10
+(** Options to control the transformations *)
+type options =
+   {
+      inline          : bool;
+      inline_weight   : int;
+      simplify_return : bool;
+      imperativize    : bool;
+      finalize        : bool;
+   }
+
+let opt_full_transform =
+   {
+      inline          = true;
+      inline_weight   = 10;
+      simplify_return = true;
+      imperativize    = true;
+      finalize        = true;
+   }
+
+let opt_simple_transform =
+   {
+      inline          = false;
+      inline_weight   = 10;
+      simplify_return = false;
+      imperativize    = false;
+      finalize        = false;
+   }
 
 (** Traversing state one *)
-type state_t1 =
+type traversing_state =
    {
       functions       : parse_exp NamedIdMap.t;
       function_weight : int NamedIdMap.t;
       counter         : int;
-      inline_weight   : int;
+      options         : options;
    }
 (* ======================= *)
 
@@ -263,7 +288,7 @@ let inlineStmts : ('data,parse_exp) expander =
             state,[exp]
          else
             let weight = NamedIdMap.find fname state.function_weight in
-            if weight > state.inline_weight then
+            if weight > state.options.inline_weight then
                state,[exp]
             else begin
                let new_stmts = inlineFunctionCall state fname_full args loc in
@@ -609,24 +634,38 @@ let makeFunAndCall state stmts =
    let fcall = SimpleId(["__main__"],default_loc) in
    state,[StmtFun(fcall,[],appendBlocks stmts,default_loc); StmtReturn(PCall(fcall,[],default_loc,[]),default_loc)]
 
-let applyTransformations (results:parser_results) =
+let applyOn cond f data =
+   if cond data then
+      f data
+   else
+      data
+
+let returnRemovalON (state,_) = state.options.simplify_return
+let inlineON        (state,_) = state.options.inline
+let imperativizeON  (state,_) = state.options.imperativize
+let finalizeON      (state,_) = state.options.finalize
+
+let applyTransformations (options:options) (results:parser_results) =
    let initial_state =
       {
          counter         = 0;
          functions       = NamedIdMap.empty;
          function_weight = NamedIdMap.empty;
-         inline_weight   = default_inline_weight;
+         options         = options;
       }
    in
-   let passes stmts =
-      (initial_state,[StmtBlock(stmts,default_loc)])
-      (* Basic transformations *)
+   (* Basic transformations *)
+   let basicPasses state =
+      state
       |+> TypesUtil.traverseTopExpList None (removeGroups|->nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)
       |+> TypesUtil.expandStmtList None separateBindAndDeclaration
       |+> TypesUtil.expandStmtList None makeSingleDeclaration
       |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
       |+> TypesUtil.expandStmtList None simplifyTupleAssign
-      (* Return removal *)
+   in
+   (* Return removal *)
+   let removalOfReturnPasses state =
+      state
       |+> TypesUtil.expandStmtList None splitIfWithTwoReturns
       |+> TypesUtil.traverseBottomExpList (Some(skipIfStmt)) wrapSimpleReturn
       |+> TypesUtil.traverseBottomExpList None simplifyReturnInPSeq
@@ -635,21 +674,37 @@ let applyTransformations (results:parser_results) =
          |-> removeUnnecesaryIfConditions
          |-> removeEmptyIfConditions
          |-> removeSwapedIfCondition)
-      (* Inlining *)
+   in
+   (* Inlining *)
+   let inliningPasses state =
+      state
       |+> foldAsTransformation collectFunctionDefinitions
       |+> inlineFunctionBodies
       |+> TypesUtil.expandStmtList (Some(skipFun)) inlineStmts
       |+> foldAsTransformation collectFunctionDefinitions
-
-      (* Used for imperative transformation *)
+   in
+   (* Used for imperative transformation *)
+   let imperativePasses state =
+      state
       |+> TypesUtil.traverseBottomExpList None makeIfStatement
+   in
+   (* Last preparations *)
+   let finalPasses state =
+      state
       |+> TypesUtil.traverseBottomExpList None simplifySequenceBindings
-
-      (* Last preparations *)
       |+> makeFunAndCall
       |+> TypesUtil.traverseBottomExpList None relocateMemAndVal
+   in
+   let passes stmts =
+      (initial_state,[StmtBlock(stmts,default_loc)])
+      |> basicPasses
+      |> applyOn returnRemovalON removalOfReturnPasses
+      |> applyOn inlineON        inliningPasses
+      |> applyOn imperativizeON  imperativePasses
+      |> applyOn finalizeON      finalPasses
       |> snd
    in
+
    let new_stmts = CCError.map passes results.presult in
    { results with presult = new_stmts }
 

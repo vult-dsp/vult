@@ -63,13 +63,13 @@ let main () =
    (* Prints the parsed files if -dparse was passed as argument *)
    let _ = if args.dparse then
          parser_results
-         |> List.map applyTransformations
+         |> List.map (applyTransformations opt_full_transform)
          |> List.iter (fun a -> match a.presult with `Ok(b) -> PrintTypes.stmtListStr b |> print_string | _ -> () )
    in
    (* Runs the dynamic interpreter if -rundyn was passed as argument *)
    let _ = if args.rundyn then
          parser_results
-         |> List.map applyTransformations
+         |> List.map (applyTransformations opt_full_transform)
          |> List.map interpret |> ignore
    in
    (* Runs the checker if -check was passed as argument *)

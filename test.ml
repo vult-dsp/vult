@@ -26,15 +26,22 @@ open OUnit2
 open ParserVult
 open Types
 
-let test_string reference current = assert_equal ~printer:(fun a->a) reference current ;;
+let test_string (reference:string) (current:string) = assert_equal ~printer:(fun a->a) reference current ;;
 
-let run_program s =
-   let result = Driver.parseStringRun s in
+let run_program_with_options options s =
+   let result = Driver.parseStringRunWithOptions options s in
    match result.iresult with
    | `Ok(s) -> s
    | `Error(errors) ->
       let error_strings = Errors.reportErrors result.iresult result.lines in
       List.hd error_strings
+
+let run_program (s:string) : string = run_program_with_options Passes.opt_full_transform s
+
+let compare_program_result s =
+   let result1 = run_program_with_options Passes.opt_simple_transform s in
+   let result2 = run_program_with_options Passes.opt_full_transform s in
+   test_string result1 result2
 
 (** Expression parsing tests *)
 let parseExpTest1 context =
@@ -198,14 +205,45 @@ let runInlineTest context =
                val res3 = with_mem(1,2);
                return res1,res2,res3;")
 
+let runIfRemovalTest context =
+   compare_program_result
+   "fun if_nested(a,b,c){
+   val ret = {|
+      if(a)
+         if(b)
+            return 1;
+         else
+            return 2;
+      else
+         if(c)
+            return 3;
+         else
+            return 4;
+      |};
+   return ret;
+   }
+   val case1 = if_nested(1,1,0);
+   val case2 = if_nested(1,0,0);
+   val case3 = if_nested(0,0,1);
+   val case4 = if_nested(0,0,0);
+   return (case1,case2,case3,case4);
+   "
+;;
+
+let runFactCompare context =
+   compare_program_result
+   "fun fact(n){ return if n==0 then 1 else n*fact(n-1); } return fact(5);"
+
 (* Name the test cases and group them together *)
 let interpreter_test =
    "interpreter">:::
    [
-      "runFactTest"   >:: runFactTest;
-      "runSwapTest"   >:: runSwapTest;
-      "runMemTest"    >:: runMemTest;
-      "runInlineTest" >:: runInlineTest;
+      "runFactTest"      >:: runFactTest;
+      "runSwapTest"      >:: runSwapTest;
+      "runMemTest"       >:: runMemTest;
+      "runInlineTest"    >:: runInlineTest;
+      "runIfRemovalTest" >:: runIfRemovalTest;
+      "runFactCompare"   >:: runFactCompare;
    ]
 ;;
 
