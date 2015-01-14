@@ -1,16 +1,22 @@
 
-fun change(x) {
-    mem pre_x;
-    val v = pre_x!=x;
+fun change:num(x) {
+    mem pre_x:num;
+    val v:bool = pre_x!=x;
     pre_x = x;
     return v;
 }
 
-fun moog(input,fc,res){
-  mem g,h0,h1;
-  mem wold1,wold2,wold3,wold4,wold5;
-  val Gcomp = 0.5;
-  val PI = 3.1416;
+fun moog:real(input:real, fc:real, res:real){
+  mem g:real;
+  mem h0:real;
+  mem h1:real;
+  mem wold1:real;
+  mem wold2:real;
+  mem wold3:real;
+  mem wold4:real;
+  mem wold5:real;
+  val Gcomp:real = 0.5;
+  val PI:real = 3.1416;
 
   if(change(fc)){
     g = 2*PI*fc/(2*44100);
@@ -18,12 +24,12 @@ fun moog(input,fc,res){
     h1 = g*0.3/1.3;
   }
 
-  val u = input - 4*res*(wold5 - Gcomp*input);
-  val w1 = tanh(u);
-  val w2 = h0*w1 + h1*wold1 + (1-g)*wold2;
-  val w3 = h0*w2 + h1*wold2 + (1-g)*wold3;
-  val w4 = h0*w3 + h1*wold3 + (1-g)*wold4;
-  val w5 = h0*w4 + h1*wold4 + (1-g)*wold5;
+  val u:real = input - 4*res*(wold5 - Gcomp*input);
+  val w1:real = tanh(u);
+  val w2:real = h0*w1 + h1*wold1 + (1-g)*wold2;
+  val w3:real = h0*w2 + h1*wold2 + (1-g)*wold3;
+  val w4:real = h0*w3 + h1*wold3 + (1-g)*wold4;
+  val w5:real = h0*w4 + h1*wold4 + (1-g)*wold5;
   wold1 = w1;
   wold2 = w2;
   wold3 = w3;
@@ -33,7 +39,7 @@ fun moog(input,fc,res){
 }
 
 
-val n = 0;
+val n:int = 0;
 while(n<44100){
   val kk = x:moog(1,2000,0.1);
   n=n+1;
