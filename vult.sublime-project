@@ -12,7 +12,9 @@
 			],
 			"folder_exclude_patterns":
 			[
-				"_build"
+				"_build",
+				"node/node_modules",
+				"node/public"
 			],
 			"follow_symlinks": true,
 			"path": "."
