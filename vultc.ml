@@ -36,16 +36,18 @@ type arguments =
       mutable files  : string list;
       mutable dparse : bool;
       mutable rundyn : bool;
+      mutable debug  : bool;
       mutable run_check  : bool;
    }
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : arguments =
-   let result = { files = [] ; dparse = false; run_check = false; rundyn = false} in
+   let result = { files = [] ; dparse = false; run_check = false; rundyn = false; debug = false } in
    let opts = [
       "-dparse", (Arg.Unit  (fun () -> result.dparse   <-true)), "Dumps the parse tree (default: off)";
       "-check",  (Arg.Unit  (fun () -> result.run_check<-true)), "Runs checker on program (default: off)";
       "-rundyn", (Arg.Unit  (fun () -> result.rundyn   <-true)), "Runs the dynamic interpreter (default: off)";
+      "-debug",  (Arg.Unit  (fun () -> result.debug   <-true)), "Runs the debugger (default: off)";
    ]
    in
    let _ = Arg.parse opts (fun a -> result.files <- a::result.files) "Usage: vultc file.vlt\n" in
@@ -79,6 +81,13 @@ let main () =
          List.iter (fun a -> Errors.printErrors a.iresult a.lines ) errors
    in
 
+   let _ =
+      if args.debug then
+         parser_results
+         |> List.map (applyTransformations opt_full_transform)
+         |> List.map Debugger.debug
+         |> ignore
+   in
    ()
 ;;
 main ();;
