@@ -191,7 +191,8 @@ let rec assemble (i0:instruction list) (exp:parse_exp) =
       let i1 = assemble [] body in
       Store::Reg(name)::Lambda(vars)::Lazy(i1)::i0
    | StmtWhile(cond,body,_) ->
-      let cond_i = assemble [] cond in
+      (* This needs to be reversed since is gonna be placed in a Lazy *)
+      let cond_i = assemble [] cond |> List.rev in
       let body_i = assemble [] body in
       Loop::Lazy(body_i)::Lazy(cond_i)::i0
    | PGroup(e,_) -> assemble i0 e
