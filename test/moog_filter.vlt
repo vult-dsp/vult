@@ -32,14 +32,12 @@ fun moog(input,fc,res){
   return w5;
 }
 
-println(x:moog(1,2000,0.1));
-println(x:moog(1,2000,0.1));
-println(x:moog(1,2000,0.1));
-println(x:moog(1,2000,0.1));
-println(x:moog(1,2000,0.1));
-println(x:moog(1,2000,0.1));
-println(x:moog(1,2000,0.1));
-println(x:moog(1,2000,0.1));
-println(x:moog(1,2000,0.1));
-println(x:moog(1,2000,0.1));
+
+val n = 0;
+while(n<44100){
+  val kk = x:moog(1,2000,0.1);
+  n=n+1;
+}
+
+
 
