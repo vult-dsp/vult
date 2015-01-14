@@ -80,11 +80,10 @@ let main () =
          let errors = List.map programState parser_results in
          List.iter (fun a -> Errors.printErrors a.iresult a.lines ) errors
    in
-
    let _ =
       if args.debug then
          parser_results
-         |> List.map (applyTransformations opt_full_transform)
+         |> List.map (applyTransformations opt_simple_transform)
          |> List.map Debugger.debug
          |> ignore
    in
