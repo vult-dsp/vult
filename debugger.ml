@@ -36,18 +36,18 @@ type value =
    | VTuple   of value list
 
 type instruction =
-   | Value  of value
-   | Reg    of named_id
-   | Lazy   of instruction list
-   | Call   of named_id
-   | Obj    of int
-   | Lambda of named_id list
-   | Store
-   | Read
-   | If
-   | Ret
-   | Drop
-   | Loop
+   | Value  of value            * int
+   | Reg    of identifier       * int
+   | Lazy   of instruction list * int
+   | Call   of identifier       * int
+   | Obj    of int              * int
+   | Lambda of identifier list  * int
+   | Store  of int
+   | Read   of int
+   | If     of int
+   | Ret    of int
+   | Drop   of int
+   | Loop   of int
 
 module StringMap = Map.Make(String)
 
@@ -100,25 +100,27 @@ let rec valueStr (value:value) : string =
                     |> joinStrings ","
       in "("^elems_s^")"
 
-let append_nl buff s =
+let append_nl buff line s =
+   let _ = append buff (string_of_int line) in
    let _ = append buff ": " in
    let _ = append buff s in
    newline buff
 
 let rec printIBuff buff i =
    match i with
-   | Value(v)  -> append_nl buff (valueStr v)
-   | Reg(name) -> append_nl buff ("$"^namedIdStr name)
-   | Store     -> append_nl buff "Store"
-   | Read      -> append_nl buff "Read"
-   | Call(name)-> append_nl buff ("Call("^(namedIdStr name)^")")
-   | Obj(n)    -> append_nl buff ("Obj("^(string_of_int n)^")")
-   | Ret       -> append_nl buff "Ret"
-   | If        -> append_nl buff "If"
-   | Drop      -> append_nl buff "Drop"
-   | Lambda(vars) -> append_nl buff ("Lambda("^(joinStrings "," (List.map namedIdStr vars))^")")
-   | Loop      -> append_nl buff "Loop"
-   | Lazy(il)  ->
+   | Value(v,line)   -> append_nl buff line (valueStr v)
+   | Reg(name,line)  -> append_nl buff line ("$"^identifierStr name)
+   | Store(line)     -> append_nl buff line "Store"
+   | Read(line)      -> append_nl buff line "Read"
+   | Call(name,line) -> append_nl buff line ("Call("^(identifierStr name)^")")
+   | Obj(n,line)     -> append_nl buff line ("Obj("^(string_of_int n)^")")
+   | Ret(line)       -> append_nl buff line "Ret"
+   | If(line)        -> append_nl buff line "If"
+   | Drop(line)      -> append_nl buff line "Drop"
+   | Lambda(vars,line) -> append_nl buff line ("Lambda("^(joinStrings "," (List.map identifierStr vars))^")")
+   | Loop(line)      -> append_nl buff line "Loop"
+   | Lazy(il,line)   ->
+      append buff (string_of_int line);
       append buff ": [";
       indent buff;
       printIBuffList buff il;
@@ -133,69 +135,127 @@ let printInstructions il =
    let _ = printIBuffList buffer il in
    print_string (contents buffer)
 
+
+let locationLine (loc:location) : int =
+   loc.start_pos.Lexing.pos_lnum
+   
+let getIdentifier (name:named_id) : identifier =
+   match name with
+   | SimpleId(id,_)    -> id
+   | NamedId(id,_,_,_) -> id
+
+let getNameLocation (name:named_id) : location =
+   match name with
+   | SimpleId(_,loc) -> loc
+   | NamedId(_,_,loc1,loc2) -> mergeLocations loc1 loc2
+
 let rec assemble (i0:instruction list) (exp:parse_exp) =
    match exp with
-   | PUnit(_)     -> Value(VUnit)::i0
-   | PBool(v,_)   -> Value(VBool(v))::i0
-   | PInt(v,_)    -> Value(VNum(float_of_string v))::i0
-   | PReal(v,_)   -> Value(VNum(float_of_string v))::i0
-   | PId(name)    -> Read::Reg(name)::i0
-   | PTuple(el,_) ->
+   | PUnit(loc)   ->
+      let line = locationLine loc in
+      Value(VUnit,line)::i0
+   | PBool(v,loc)   ->
+      let line = locationLine loc in
+      Value(VBool(v),line)::i0
+   | PInt(v,loc)    ->
+      let line = locationLine loc in
+      Value(VNum(float_of_string v),line)::i0
+   | PReal(v,loc)   ->
+      let line = locationLine loc in
+      Value(VNum(float_of_string v),line)::i0
+   | PId(name)    ->
+      let loc = getNameLocation name in
+      let id = getIdentifier name in
+      let line = locationLine loc in
+      Read(line)::Reg(id,line)::i0
+   | PTuple(el,loc) ->
+      let line = locationLine loc in
       let n = List.length el in
       let i1 = assembleListExp i0 el in
-      Obj(n)::i1
-   | PCall(fname,args,_,_) ->
+      Obj(n,line)::i1
+   | PCall(fname,args,loc,_) ->
+      let line = locationLine loc in
       let i1 = assembleListExp i0 args in
-      Call(fname)::i1
+      let id = getIdentifier fname in
+      Call(id,line)::i1
    | PSeq(el,_) -> assembleListStmt i0 el
-   | PIf(cond,then_,else_,_) ->
+   | PIf(cond,then_,else_,loc) ->
+      let line = locationLine loc in
       let i1 = assemble i0 cond in
-      let then_i = Lazy(assemble [] then_) in
-      let else_i = Lazy(assemble [] else_) in
-      If::else_i::then_i::i1
-   | StmtVal(PId(name),None,_) ->
-      Store::Reg(name)::Value(VNum(0.0))::i0
-   | StmtVal(PId(name),Some(init),_) ->
+      let then_line = getExpLocation then_ |> locationLine in
+      let else_line = getExpLocation else_ |> locationLine in
+      let then_i = Lazy(assemble [] then_,then_line) in
+      let else_i = Lazy(assemble [] else_,else_line) in
+      If(line)::else_i::then_i::i1
+   | StmtVal(PId(name),None,loc) ->
+      let line = locationLine loc in
+      let id = getIdentifier name in
+      Store(line)::Reg(id,line)::Value(VNum(0.0),line)::i0
+   | StmtVal(PId(name),Some(init),loc) ->
+      let line = locationLine loc in
       let i1 = assemble i0 init in
-      Store::Reg(name)::i1
-   | StmtMem(PId(name),None,None,_) ->
-      Store::Reg(name)::Value(VNum(0.0))::i0
-   | StmtMem(PId(name),Some(init),None,_) ->
+      let id = getIdentifier name in
+      Store(line)::Reg(id,line)::i1
+   | StmtMem(PId(name),None,None,loc) ->
+      let line = locationLine loc in
+      let id = getIdentifier name in
+      Store(line)::Reg(id,line)::Value(VNum(0.0),line)::i0
+   | StmtMem(PId(name),Some(init),None,loc) ->
+      let line = locationLine loc in
       let i1 = assemble i0 init in
-      Store::Reg(name)::i1
-   | StmtMem(PId(name),_,Some(init),_) ->
+      let id = getIdentifier name in
+      Store(line)::Reg(id,line)::i1
+   | StmtMem(PId(name),_,Some(init),loc) ->
+      let line = locationLine loc in
       let i1 = assemble i0 init in
-      Store::Reg(name)::i1
+      let id = getIdentifier name in
+      Store(line)::Reg(id,line)::i1
    | StmtVal(_,_,_) -> failwith "Complex bindings should be simplified"
    | StmtMem(_,_,_,_) -> failwith "Complex bindings should be simplified"
    | StmtBind(PId(name),e2,loc) ->
+      let line = locationLine loc in
       let i1 = assemble i0 e2 in
-      Store::Reg(name)::i1
+      let id = getIdentifier name in
+      Store(line)::Reg(id,line)::i1
    | StmtBind(PUnit(_),e2,loc) ->
       assemble i0 e2
    | StmtBind(_,_,_) -> failwith "Complex bindings should be simplified"
-   | StmtReturn(e,_) ->
+   | StmtReturn(e,loc) ->
+      let line = locationLine loc in
       let i1 = assemble i0 e in
-      Ret::i1
-   | StmtBlock(el,_) -> assembleListStmt i0 el
-   | StmtIf(cond,then_,Some(else_),_) ->
+      Ret(line)::i1
+   | StmtBlock(el,loc) ->
+      assembleListStmt i0 el
+   | StmtIf(cond,then_,Some(else_),loc) ->
+      let line = locationLine loc in
       let i1 = assemble i0 cond in
-      let then_i = Lazy(assemble [] then_) in
-      let else_i = Lazy(assemble [] else_) in
-      Drop::If::else_i::then_i::i1
-   | StmtIf(cond,then_,None,_) ->
+      let then_line = getExpLocation then_ |> locationLine in
+      let else_line = getExpLocation else_ |> locationLine in
+      let then_i = Lazy(assemble [] then_,then_line) in
+      let else_i = Lazy(assemble [] else_,else_line) in
+      Drop(line)::If(line)::else_i::then_i::i1
+   | StmtIf(cond,then_,None,loc) ->
+      let line = locationLine loc in
       let i1 = assemble i0 cond in
-      let then_i = Lazy(assemble [] then_) in
-      Drop::If::Value(VUnit)::then_i::i1
-   | StmtFun(name,vars,body,_) ->
+      let then_line = getExpLocation then_ |> locationLine in
+      let then_i = Lazy(assemble [] then_,then_line) in
+      Drop(line)::If(line)::Value(VUnit,line)::then_i::i1
+   | StmtFun(name,vars,body,loc) ->
+      let line = locationLine loc in
       let i1 = assemble [] body in
-      Store::Reg(name)::Lambda(vars)::Lazy(i1)::i0
-   | StmtWhile(cond,body,_) ->
+      let id = getIdentifier name in
+      let vars_id = List.map getIdentifier vars in
+      Store(line)::Reg(id,line)::Lambda(vars_id,line)::Lazy(i1,line)::i0
+   | StmtWhile(cond,body,loc) ->
+      let line = locationLine loc in
       (* This needs to be reversed since is gonna be placed in a Lazy *)
       let cond_i = assemble [] cond |> List.rev in
       let body_i = assemble [] body in
-      Loop::Lazy(body_i)::Lazy(cond_i)::i0
-   | PGroup(e,_) -> assemble i0 e
+      let cond_line = getExpLocation cond |> locationLine in
+      let body_line = getExpLocation body |> locationLine in
+      Loop(line)::Lazy(body_i,body_line)::Lazy(cond_i,cond_line)::i0
+   | PGroup(e,loc) ->
+      assemble i0 e
    | PUnOp(_,_,_)    -> failwith "No unary operations should remain"
    | PBinOp(_,_,_,_) -> failwith "No binary operations should remain"
    | PEmpty          -> failwith "No empty expressions should remain"

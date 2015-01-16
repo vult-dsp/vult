@@ -174,7 +174,7 @@ let simplifyTupleAssign : ('data,parse_exp) expander =
             | [] -> state,List.map2 (fun a b -> StmtBind(a,b,loc)) lhs rhs
             | _  ->
                let init = state.counter in
-               let tmp_vars  = List.mapi (fun i _ -> SimpleId(["_tpl"^(string_of_int (i+init))],default_loc)) lhs in
+               let tmp_vars  = List.mapi (fun i _ -> SimpleId(["_tpl"^(string_of_int (i+init))],loc)) lhs in
                let tmp_e     = List.map (fun a -> PId(a)) tmp_vars in
                let to_tmp    = List.map2 (fun a b -> StmtBind(a,b,loc)) tmp_e rhs in
                let from_tmp  = List.map2 (fun a b -> StmtBind(a,b,loc)) lhs tmp_e in
@@ -202,7 +202,7 @@ let bindFunctionAndIfExpCallsInExp : (int * parse_exp list,parse_exp) transforma
          (count+1,[bind_stmt;decl]@stmts),PId(tmp_var)
       | PCall(name,args,loc,attr) when not (isSimpleBinding attr) ->
          let count,stmts = data in
-         let tmp_var = SimpleId(["_tmp"^(string_of_int count)],default_loc) in
+         let tmp_var = SimpleId(["_tmp"^(string_of_int count)],loc) in
          let decl = StmtVal(PId(tmp_var),None,loc) in
          let bind_stmt = StmtBind(PId(tmp_var),PCall(name,args,loc,SimpleBinding::attr),loc) in
          (count+1,[bind_stmt;decl]@stmts),PId(tmp_var)
@@ -461,7 +461,9 @@ let makeIfStatement : ('data,parse_exp) traverser =
 let notCondition exp =
    match exp with
    | PCall(SimpleId(["'!'"],_),[exp],_,_) -> exp
-   | _ -> PCall(SimpleId(["'!'"],default_loc),[exp],default_loc,[])
+   | _ ->
+      let loc = getExpLocation exp in
+      PCall(SimpleId(["'!'"],loc),[exp],loc,[])
 
 (** Splits if statemtents containing else in order to apply simplifications. e.g. if(a) stmt1; else stmt2; -> if(a) stmt1; if(!a) stmt2; *)
 let splitIfWithTwoReturns : ('data,parse_exp) expander =
