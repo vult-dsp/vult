@@ -102,13 +102,50 @@ let separateBindAndDeclaration : ('data,parse_exp) expander =
          state,stmts
       | _ -> state,[stmt]
 
-(* ======================= *)
+let isReturn : ('data,parse_exp) folder =
+   fun state e ->
+      match e with
+      | StmtReturn(_,_) -> true
+      | _ -> state
+
+let isIfStmt : ('data,parse_exp) folder =
+   fun state e ->
+      match e with
+      | StmtIf(_,_,_,_) -> true
+      | _ -> state
+
+let skipPSeq (e:parse_exp) : bool =
+   match e with
+   | PSeq(_,_) -> false
+   | _ -> true
+
+let skipFun stmt =
+   match stmt with
+   | StmtFun(_,_,_,_) -> false
+   | _ -> true
+
+let skipBlock stmt =
+   match stmt with
+   | StmtBlock(_,_) -> false
+   | _ -> true
+
+let skipIfStmt stmt =
+   match stmt with
+   | StmtIf(_) -> false
+   | _ -> true
+
+let skipPIf stmt =
+   match stmt with
+   | PIf(_) -> false
+   | _ -> true
 
 let rec map3 f a b c =
    match a,c,b with
    | [],[],[] -> []
    | h1::t1,h2::t2,h3::t3 -> (f h1 h2 h3)::(map3 f t1 t2 t3)
    | _ -> failwith "map3: Different number of elements in lists"
+
+(* ======================= *)
 
 (** Transforms val x,y; -> val x; val y; *)
 let makeSingleDeclaration : ('data,parse_exp) expander =
@@ -225,18 +262,21 @@ let bindFunctionAndIfExpCalls : ('data,parse_exp) expander  =
          let (count,stmts),new_cond = TypesUtil.traverseBottomExp None bindFunctionAndIfExpCallsInExp (state.counter,[]) cond in
          {state with counter = count},(List.rev (StmtIf(new_cond,then_stmts,else_stmts,loc)::stmts))
 
+      | PIf(cond,then_,else_,loc) ->
+         let (count1,then_stmts),new_then_ = TypesUtil.traverseBottomExp None bindFunctionAndIfExpCallsInExp (state.counter,[]) then_ in
+         let (count2,else_stmts),new_else_ = TypesUtil.traverseBottomExp None bindFunctionAndIfExpCallsInExp (count1,[]) else_ in
+         let then_exp =
+            match then_stmts with
+            | [] -> new_then_
+            | _  -> PSeq(List.rev (StmtReturn(new_then_,loc)::then_stmts),loc)
+         in
+         let else_exp =
+            match else_stmts with
+            | [] -> new_else_
+            | _  -> PSeq(List.rev (StmtReturn(new_else_,loc)::else_stmts),loc)
+         in
+         {state with counter=count2},[PIf(cond,then_exp,else_exp,loc)]
       | _ -> state,[stmt]
-
-(* ======================= *)
-
-(** Wraps the values of an if expression into return statements *)
-let wrapIfExpValues : ('data,parse_exp) transformation =
-   fun state exp ->
-      match exp with
-      | PIf(cond,then_exp,else_exp,loc) ->
-         state,PIf(cond,PSeq([StmtReturn(then_exp,loc)],loc),PSeq([StmtReturn(else_exp,loc)],loc),loc)
-      | _ -> state,exp
-
 
 (* ======================= *)
 
@@ -297,43 +337,6 @@ let inlineStmts : ('data,parse_exp) expander =
       | _ -> state,[exp]
 
 (* ======================= *)
-
-let isReturn : ('data,parse_exp) folder =
-   fun state e ->
-      match e with
-      | StmtReturn(_,_) -> true
-      | _ -> state
-
-let isIfStmt : ('data,parse_exp) folder =
-   fun state e ->
-      match e with
-      | StmtIf(_,_,_,_) -> true
-      | _ -> state
-
-let skipPSeq (e:parse_exp) : bool =
-   match e with
-   | PSeq(_,_) -> false
-   | _ -> true
-
-let skipFun stmt =
-   match stmt with
-   | StmtFun(_,_,_,_) -> false
-   | _ -> true
-
-let skipBlock stmt =
-   match stmt with
-   | StmtBlock(_,_) -> false
-   | _ -> true
-
-let skipPSeq stmt =
-   match stmt with
-   | PSeq(_,_) -> false
-   | _ -> true
-
-let skipIfStmt stmt =
-   match stmt with
-   | StmtIf(_) -> false
-   | _ -> true
 
 let hasReturn (stmt:parse_exp) : bool =
    foldTopExp (Some(skipPSeq)) isReturn false stmt
@@ -659,7 +662,7 @@ let applyTransformations (options:options) (results:parser_results) =
    (* Basic transformations *)
    let basicPasses state =
       state
-      |+> TypesUtil.traverseTopExpList None (removeGroups|->nameFunctionCalls|->operatorsToFunctionCalls|->wrapIfExpValues)
+      |+> TypesUtil.traverseTopExpList None (removeGroups|->nameFunctionCalls|->operatorsToFunctionCalls)
       |+> TypesUtil.expandStmtList None separateBindAndDeclaration
       |+> TypesUtil.expandStmtList None makeSingleDeclaration
       |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
