@@ -41,7 +41,7 @@ and instruction =
    | Value  of value            * int
    | Reg    of identifier       * int
    | Lazy   of instruction list * int
-   | Call   of identifier * identifier * int
+   | Call   of identifier       * int
    | Obj    of int              * int
    | Lambda of identifier list  * int
    | Mem    of int
@@ -76,6 +76,7 @@ type debugger_state =
       env         : env;
       line        : int;
       return      : bool;
+      state_stack : debugger_state list;
    }
 
 type breakpoints =
@@ -120,7 +121,7 @@ let rec printIBuff buff i =
    | Val(line)       -> append_nl buff line "Val"
    | Store(line)     -> append_nl buff line "Store"
    | Read(line)      -> append_nl buff line "Read"
-   | Call(name,type_,line) -> append_nl buff line ("Call("^(identifierStr name)^":"^(identifierStr type_)^")")
+   | Call(name,line) -> append_nl buff line ("Call("^(identifierStr name)^")")
    | Obj(n,line)     -> append_nl buff line ("Obj("^(string_of_int n)^")")
    | Ret(line)       -> append_nl buff line "Ret"
    | If(line)        -> append_nl buff line "If"
@@ -150,17 +151,12 @@ let locationLine (loc:location) : int =
 let getIdentifier (name:named_id) : identifier =
    match name with
    | SimpleId(id,_)    -> id
-   | NamedId(id,_,_,_) -> id
-
-let getType (name:named_id) : identifier =
-   match name with
-   | SimpleId(id,_)    -> id
-   | NamedId(_,id,_,_) -> id
+   | NamedId(id,_,_) -> id
 
 let getNameLocation (name:named_id) : location =
    match name with
    | SimpleId(_,loc) -> loc
-   | NamedId(_,_,loc1,loc2) -> mergeLocations loc1 loc2
+   | NamedId(_,_,loc) -> loc
 
 let rec assemble (i0:instruction list) (exp:parse_exp) =
    match exp with
@@ -176,61 +172,52 @@ let rec assemble (i0:instruction list) (exp:parse_exp) =
    | PReal(v,loc)   ->
       let line = locationLine loc in
       Value(VNum(float_of_string v),line)::i0
-   | PId(name)    ->
-      let loc = getNameLocation name in
-      let id = getIdentifier name in
+   | PId(name,_,loc)    ->
       let line = locationLine loc in
-      Read(line)::Reg(id,line)::i0
+      Read(line)::Reg(name,line)::i0
+   | PTyped(e,_,_) -> assemble i0 e
    | PTuple(el,loc) ->
       let line = locationLine loc in
       let n = List.length el in
       let i1 = assembleListExp i0 el in
       Obj(n,line)::i1
-   | PCall(fname,args,loc,_) ->
+   | PCall(name,fname,args,loc,_) ->
       let line = locationLine loc in
       let i1 = assembleListExp i0 args in
-      let id = getIdentifier fname in
-      let type_ = getType fname in
-      Call(id,type_,line)::i1
+      Call(fname,line)::i1
    | PSeq(el,_) -> assembleListStmt i0 el
    | PIf(cond,then_,else_,loc) ->
       let line = locationLine loc in
-      let i1 = assemble i0 cond in
       let then_line = getExpLocation then_ |> locationLine in
       let else_line = getExpLocation else_ |> locationLine in
-      let then_i = Lazy(assemble [] then_,then_line) in
-      let else_i = Lazy(assemble [] else_,else_line) in
-      If(line)::else_i::then_i::i1
-   | StmtVal(PId(name),None,loc) ->
+      let then_i = Lazy(assembleRev then_,then_line) in
+      let else_i = Lazy(assembleRev else_,else_line) in
+      let i1 = assemble (then_i::else_i::i0) cond in
+      If(line)::i1
+   | StmtVal(PId(name,_,loc),None,_) ->
       let line = locationLine loc in
-      let id = getIdentifier name in
-      Val(line)::Reg(id,line)::Value(VNum(0.0),line)::i0
-   | StmtVal(PId(name),Some(init),loc) ->
-      let line = locationLine loc in
-      let i1 = assemble i0 init in
-      let id = getIdentifier name in
-      Val(line)::Reg(id,line)::i1
-   | StmtMem(PId(name),None,None,loc) ->
-      let line = locationLine loc in
-      let id = getIdentifier name in
-      Mem(line)::Reg(id,line)::Value(VNum(0.0),line)::i0
-   | StmtMem(PId(name),Some(init),None,loc) ->
+      Val(line)::Reg(name,line)::Value(VNum(0.0),line)::i0
+   | StmtVal(PId(name,_,loc),Some(init),_) ->
       let line = locationLine loc in
       let i1 = assemble i0 init in
-      let id = getIdentifier name in
-      Mem(line)::Reg(id,line)::i1
-   | StmtMem(PId(name),_,Some(init),loc) ->
+      Val(line)::Reg(name,line)::i1
+   | StmtMem(PId(name,_,loc),None,None,_) ->
+      let line = locationLine loc in
+      Mem(line)::Reg(name,line)::Value(VNum(0.0),line)::i0
+   | StmtMem(PId(name,_,loc),Some(init),None,_) ->
       let line = locationLine loc in
       let i1 = assemble i0 init in
-      let id = getIdentifier name in
-      Mem(line)::Reg(id,line)::i1
+      Mem(line)::Reg(name,line)::i1
+   | StmtMem(PId(name,_,loc),_,Some(init),_) ->
+      let line = locationLine loc in
+      let i1 = assemble i0 init in
+      Mem(line)::Reg(name,line)::i1
    | StmtVal(_,_,_) -> failwith "Complex bindings should be simplified"
    | StmtMem(_,_,_,_) -> failwith "Complex bindings should be simplified"
-   | StmtBind(PId(name),e2,loc) ->
+   | StmtBind(PId(name,_,loc),e2,_) ->
       let line = locationLine loc in
       let i1 = assemble i0 e2 in
-      let id = getIdentifier name in
-      Store(line)::Reg(id,line)::i1
+      Store(line)::Reg(name,line)::i1
    | StmtBind(PUnit(_),e2,loc) ->
       assemble i0 e2
    | StmtBind(_,_,_) -> failwith "Complex bindings should be simplified"
@@ -242,32 +229,32 @@ let rec assemble (i0:instruction list) (exp:parse_exp) =
       assembleListStmt i0 el
    | StmtIf(cond,then_,Some(else_),loc) ->
       let line = locationLine loc in
-      let i1 = assemble i0 cond in
       let then_line = getExpLocation then_ |> locationLine in
       let else_line = getExpLocation else_ |> locationLine in
-      let then_i = Lazy(assemble [] then_,then_line) in
-      let else_i = Lazy(assemble [] else_,else_line) in
-      Drop(line)::If(line)::else_i::then_i::i1
+      let then_i = Lazy(assembleRev then_,then_line) in
+      let else_i = Lazy(assembleRev else_,else_line) in
+      let i1 = assemble (then_i::else_i::i0) cond in
+      Drop(line)::If(line)::i1
    | StmtIf(cond,then_,None,loc) ->
       let line = locationLine loc in
-      let i1 = assemble i0 cond in
       let then_line = getExpLocation then_ |> locationLine in
-      let then_i = Lazy(assemble [] then_,then_line) in
-      Drop(line)::If(line)::Value(VUnit,line)::then_i::i1
-   | StmtFun(name,vars,body,loc) ->
+      let then_i = Lazy(assembleRev then_,then_line) in
+      let else_i = Lazy([],line) in
+      let i1 = assemble (then_i::else_i::i0) cond in
+      Drop(line)::If(line)::i1
+   | StmtFun(name,vars,body,type_exp,loc) ->
       let line = locationLine loc in
-      let i1 = assemble [] body in
-      let id = getIdentifier name in
+      let i1 = assembleRev body in
       let vars_id = List.map getIdentifier vars in
-      Store(line)::Reg(id,line)::Lambda(vars_id,line)::Lazy(i1,line)::i0
+      Store(line)::Reg(name,line)::Lambda(vars_id,line)::Lazy(i1,line)::i0
    | StmtWhile(cond,body,loc) ->
       let line = locationLine loc in
       (* This needs to be reversed since is gonna be placed in a Lazy *)
-      let cond_i = assemble [] cond |> List.rev in
-      let body_i = assemble [] body in
+      let cond_i = assembleRev cond in
+      let body_i = assembleRev body in
       let cond_line = getExpLocation cond |> locationLine in
       let body_line = getExpLocation body |> locationLine in
-      Loop(line)::Lazy(body_i,body_line)::Lazy(cond_i,cond_line)::i0
+      Loop(line)::Lazy(cond_i,cond_line)::Lazy(body_i,body_line)::i0
    | PGroup(e,loc) ->
       assemble i0 e
    | PUnOp(_,_,_)    -> failwith "No unary operations should remain"
@@ -280,6 +267,8 @@ and assembleListExp (i0:instruction list) (exp_list:parse_exp list) : instructio
 and assembleListStmt (i0:instruction list) (exp_list:parse_exp list) : instruction list =
    List.fold_left (fun i e -> assemble i e) i0 exp_list
    |> List.rev
+and assembleRev (exp:parse_exp) : instruction list =
+   assemble [] exp
 
 (** Returns the value for the given variable *)
 let getExpValueFromEnv (loc:env) (name:identifier) : value =
@@ -393,7 +382,7 @@ let step (state:debugger_state) =
             match id with
             | VId(name) ->
                let new_env = declMem state.env name value in
-               {state with code = t; line = line; value_stack = value::new_stack; env = new_env }
+               {state with code = t; line = line; value_stack = new_stack; env = new_env }
             | _ -> failwith (Printf.sprintf "Cannot store %s in %s" (valueStr value) (valueStr id))
          end
       | Val(line) ->
@@ -402,7 +391,7 @@ let step (state:debugger_state) =
             match id with
             | VId(name) ->
                let new_env = declVal state.env name value in
-               {state with code = t; line = line; value_stack = value::new_stack; env = new_env }
+               {state with code = t; line = line; value_stack = new_stack; env = new_env }
             | _ -> failwith (Printf.sprintf "Cannot store %s in %s" (valueStr value) (valueStr id))
          end
       | Store(line) ->
@@ -429,21 +418,32 @@ let step (state:debugger_state) =
             | _ -> failwith (Printf.sprintf "Cannot define function for %s" (valueStr id))
          end
       | If(line) ->
-         let cond,then_,else_,new_stack = take3 state.value_stack in
+         begin
+            match state.value_stack with
+            | VLazy(i)::_ -> { state with code = i@state.code }
+            | _ ->
+               let cond,then_,else_,new_stack = take3 state.value_stack in
+               if isTrue cond then
+                  begin
+                     match then_ with
+                     | VLazy(i) ->
+                        {state with code = i@t; line = line ; value_stack = new_stack }
+                     | _ -> failwith "Not a valid if condition"
+                  end
+               else
+                  begin
+                     match else_ with
+                     | VLazy(i) ->
+                        {state with code = i@t; line = line ; value_stack = new_stack }
+                     | _ -> failwith "Not a valid if condition"
+                  end
+         end
+      | Loop(line) ->
+         let cond,body,new_stack = take2 state.value_stack  in
          if isTrue cond then
-            begin
-               match then_ with
-               | VLazy(i) ->
-                  {state with code = i@t; line = line }
-               | _ -> failwith "Not a valid if condition"
-            end
+            { state with line = line; value_stack = new_stack }
          else
-            begin
-               match else_ with
-               | VLazy(i) ->
-                  {state with code = i@t; line = line }
-               | _ -> failwith "Not a valid if condition"
-            end
+            { state with code = t; line = line }
       | _ -> failwith "Unsupported instruction"
 
 
@@ -469,6 +469,7 @@ let initialState instructions =
       env         = initialEnv();
       line        = 0;
       return      = false;
+      state_stack = [];
    }
 
 

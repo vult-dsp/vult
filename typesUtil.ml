@@ -63,10 +63,10 @@ type ('data, 'error, 'result) expfold =
       vUnit  : 'data -> ('error, 'result) either;
       vInt   : 'data -> string -> location -> ('error, 'result) either;
       vReal  : 'data -> string -> location -> ('error, 'result) either;
-      vId    : 'data -> named_id -> ('error, 'result) either;
+      vId    : 'data -> identifier -> location -> ('error, 'result) either;
       vUnOp  : 'data -> string -> 'result -> location -> ('error, 'result) either;
       vBinOp : 'data -> string -> 'result -> 'result -> location -> ('error, 'result) either;
-      vCall  : 'data -> named_id -> 'result list -> location -> ('error, 'result) either;
+      vCall  : 'data -> identifier -> 'result list -> location -> ('error, 'result) either;
       vIf    : 'data -> 'result -> 'result -> 'result -> ('error, 'result) either;
       vGroup : 'data -> 'result -> ('error, 'result) either;
       vTuple : 'data -> 'result list -> ('error, 'result) either;
@@ -131,8 +131,8 @@ let mergeLocations (loc1:location) (loc2:location) : location =
 (** Returns the location of a named_id *)
 let getNamedIdLocation (id:named_id) : location =
    match id with
-   | SimpleId(_,loc)        -> loc
-   | NamedId(_,_,loc1,loc2) -> mergeLocations loc1 loc2
+   | SimpleId(_,loc)  -> loc
+   | NamedId(_,_,loc) -> loc
 
 (** Returns the location of an expression *)
 let getExpLocation (e:parse_exp)  : location =
@@ -141,21 +141,22 @@ let getExpLocation (e:parse_exp)  : location =
    | PInt(_,loc)
    | PBool(_,loc)
    | PReal(_,loc) -> loc
-   | PId(id) -> getNamedIdLocation id
+   | PId(_,_,loc) -> loc
    | PUnOp(_,_,loc)
    | PBinOp(_,_,_,loc)
-   | PCall(_,_,loc,_)
+   | PCall(_,_,_,loc,_)
    | PIf(_,_,_,loc)
    | PGroup(_,loc)
    | PTuple(_,loc) -> loc
    | PEmpty -> default_loc
    | PSeq(_,loc) -> loc
+   | PTyped(_,_,loc) -> loc
 
    | StmtVal(_,_,loc)
    | StmtMem(_,_,_,loc)
    | StmtReturn(_,loc)
    | StmtIf(_,_,_,loc)
-   | StmtFun(_,_,_,loc)
+   | StmtFun(_,_,_,_,loc)
    | StmtBind(_,_,loc) -> loc
    | StmtEmpty -> default_loc
    | StmtBlock(_,loc) -> loc
@@ -188,7 +189,7 @@ let expressionFoldEither : ('data, 'error, 'result) expfold -> 'data -> parse_ex
          | PUnit(_) -> fold.vUnit data
          | PInt (s,l) -> fold.vInt data s l
          | PReal (s,l) -> fold.vReal data s l
-         | PId n -> fold.vId data n
+         | PId(n,_,loc) -> fold.vId data n loc
          | PUnOp (s,e1,l) -> begin match go e1 with
                | Right r1 -> fold.vUnOp data s r1 l
                | Left _ as err -> err
@@ -198,7 +199,7 @@ let expressionFoldEither : ('data, 'error, 'result) expfold -> 'data -> parse_ex
                | (Left _ as err, _) -> err
                | (_, (Left _ as err)) -> err
             end
-         | PCall (n,es,l,_) -> begin match eitherTryMap go es with
+         | PCall (_,n,es,l,_) -> begin match eitherTryMap go es with
                | Right rs -> fold.vCall data n rs l
                | Left _ as err -> err
             end
@@ -221,11 +222,11 @@ let expressionFoldEither : ('data, 'error, 'result) expfold -> 'data -> parse_ex
       in
       go exp
 
-(** Used to traverse a named_id 'name' as 'PId(name)' *)
-let traverseNamedIdAsExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data) (name:named_id) : 'data * named_id =
-   let state1,new_name_exp = f state (PId(name)) in
+(** Used to traverse a identifier 'name' as 'PId(name)' *)
+let traverseNamedIdAsExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data) (name:identifier) : 'data * identifier =
+   let state1,new_name_exp = f state (PId(name,None,default_loc)) in
    match new_name_exp with
-   | PId(new_name) -> state1,new_name
+   | PId(new_name,_,_) -> state1,new_name
    | _ -> state1,name
 
 (** Traverses expressions bottom-up *)
@@ -243,6 +244,9 @@ let rec traverseBottomExp (pred:(parse_exp -> bool) option) (f: ('data, parse_ex
       | PUnOp(name,e,loc) ->
          let state1,ne = traverseBottomExp pred f state e in
          f state1 (PUnOp(name,ne,loc))
+      | PTyped(e,type_exp,loc) ->
+         let state1,ne = traverseBottomExp pred f state e in
+         f state1 (PTyped(ne,type_exp,loc))
       | PBinOp(name,e1,e2,loc) ->
          let state1,ne1 = traverseBottomExp pred f state e1 in
          let state2,ne2 = traverseBottomExp pred f state1 e2 in
@@ -253,9 +257,9 @@ let rec traverseBottomExp (pred:(parse_exp -> bool) option) (f: ('data, parse_ex
       | PTuple(expl,loc) ->
          let state1,nexpl = traverseBottomExpList pred f state expl in
          f state1 (PTuple(nexpl,loc))
-      | PCall(name,expl,loc,attr) ->
+      | PCall(name,fname,expl,loc,attr) ->
          let state1,nexpl = traverseBottomExpList pred f state expl in
-         f state1 (PCall(name,nexpl,loc,attr))
+         f state1 (PCall(name,fname,nexpl,loc,attr))
       | PIf(e1,e2,e3,loc) ->
          let state1,ne1 = traverseBottomExp pred f state e1 in
          let state2,ne2 = traverseBottomExp pred f state1 e2 in
@@ -282,9 +286,9 @@ let rec traverseBottomExp (pred:(parse_exp -> bool) option) (f: ('data, parse_ex
          f state2 (StmtBind(ne1,ne2,loc))
       | StmtEmpty ->
          f state exp
-      | StmtFun(name,args,stmts,loc) ->
+      | StmtFun(name,args,stmts,type_exp,loc) ->
          let state1,nstmts = traverseBottomExp pred f state stmts in
-         f state1 (StmtFun(name,args,nstmts,loc))
+         f state1 (StmtFun(name,args,nstmts,type_exp,loc))
       | StmtIf(cond,then_stmts,None,loc) ->
          let state1,ncond = traverseBottomExp pred f state cond in
          let state2,nthen_stmts = traverseBottomExp pred f state1 then_stmts in
@@ -330,6 +334,9 @@ let rec traverseTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) 
       | PUnOp(name,e,loc) ->
          let state1,ne = traverseTopExp pred f state e in
          state1,PUnOp(name,ne,loc)
+      | PTyped(e,type_exp,loc) ->
+         let state1,ne = traverseTopExp pred f state e in
+         state1,PTyped(ne,type_exp,loc)
       | PBinOp(name,e1,e2,loc) ->
          let state1,ne1 = traverseTopExp pred f state e1 in
          let state2,ne2 = traverseTopExp pred f state1 e2 in
@@ -340,9 +347,9 @@ let rec traverseTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) 
       | PTuple(expl,loc) ->
          let state1,nexpl = traverseTopExpList pred f state expl in
          state1,PTuple(nexpl,loc)
-      | PCall(name,expl,loc,attr) ->
+      | PCall(name,fname,expl,loc,attr) ->
          let state1,nexpl = traverseTopExpList pred f state expl in
-         state1,PCall(name,nexpl,loc,attr)
+         state1,PCall(name,fname,nexpl,loc,attr)
       | PIf(e1,e2,e3,loc) ->
          let state1,ne1 = traverseTopExp pred f state e1 in
          let state2,ne2 = traverseTopExp pred f state1 e2 in
@@ -368,9 +375,9 @@ let rec traverseTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) 
          let state2,ne2 = traverseTopExp pred f state1 e2 in
          state2,StmtBind(ne1,ne2,loc)
       | StmtEmpty -> state,nexp
-      | StmtFun(name,args,stmts,loc) ->
+      | StmtFun(name,args,stmts,type_exp,loc) ->
          let state1,nstmts = traverseTopExp pred f state stmts in
-         state1,StmtFun(name,args,nstmts,loc)
+         state1,StmtFun(name,args,nstmts,type_exp,loc)
       | StmtIf(cond,then_stmts,None,loc) ->
          let state1,ncond = traverseTopExp pred f state cond in
          let state2,nthen_stmts = traverseTopExp pred f state1 then_stmts in
@@ -416,6 +423,8 @@ let rec foldTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fold
       | PId(_)   -> state
       | PUnOp(name,e,loc) ->
          foldTopExp pred f state e
+      | PTyped(e,_,_) ->
+         foldTopExp pred f state e
       | PBinOp(name,e1,e2,loc) ->
          let state1 = foldTopExp pred f state e1 in
          let state2 = foldTopExp pred f state1 e2 in
@@ -426,7 +435,7 @@ let rec foldTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fold
       | PTuple(expl,_) ->
          let state1 = foldTopExpList pred f state expl in
          state1
-      | PCall(name,expl,_,_) ->
+      | PCall(name,fname,expl,_,_) ->
          let state1 = foldTopExpList pred f state expl in
          state1
       | PIf(e1,e2,e3,loc) ->
@@ -454,7 +463,7 @@ let rec foldTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fold
          let state2 = foldTopExp pred f state1 e2 in
          state2
       | StmtEmpty -> state
-      | StmtFun(name,args,stmts,_) ->
+      | StmtFun(name,args,stmts,type_exp,_) ->
          let state1 = foldTopExp pred f state stmts in
          state1
       | StmtIf(cond,then_stmts,None,_) ->
@@ -504,6 +513,9 @@ let rec foldDownExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fol
       | PUnOp(name,e,loc) ->
          let state1 = foldDownExp pred f state e in
          f state1 exp
+      | PTyped(e,_,_) ->
+         let state1 = foldDownExp pred f state e in
+         f state1 exp
       | PBinOp(name,e1,e2,loc) ->
          let state1 = foldDownExp pred f state e1 in
          let state2 = foldDownExp pred f state1 e2 in
@@ -514,7 +526,7 @@ let rec foldDownExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fol
       | PTuple(expl,_) ->
          let state1 = foldDownExpList pred f state expl in
          f state1 exp
-      | PCall(name,expl,_,_) ->
+      | PCall(name,_,expl,_,_) ->
          let state1 = foldDownExpList pred f state expl in
          f state1 exp
       | PIf(e1,e2,e3,loc) ->
@@ -542,7 +554,7 @@ let rec foldDownExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fol
          let state2 = foldDownExp pred f state1 e2 in
          f state2 exp
       | StmtEmpty -> state
-      | StmtFun(name,args,stmts,_) ->
+      | StmtFun(name,args,stmts,type_exp,_) ->
          let state1 = foldDownExp pred f state stmts in
          f state1 exp
       | StmtIf(cond,then_stmts,None,_) ->
@@ -643,9 +655,9 @@ let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
       | StmtReturn(e,loc) ->
          let state1,ne = expandStmt pred f state e in
          f state1 (StmtReturn(appendPseq ne,loc))
-      | StmtFun(name,args,stmts,loc) ->
+      | StmtFun(name,args,stmts,type_exp,loc) ->
          let state1,nstmts = expandStmt pred f state stmts in
-         f state1 (StmtFun(name,args,appendBlocks nstmts,loc))
+         f state1 (StmtFun(name,args,appendBlocks nstmts,type_exp,loc))
       | StmtIf(cond,then_stmts,None,loc) ->
          let state1,nthen_stmts = expandStmt pred f state then_stmts in
          f state1 (StmtIf(cond,appendBlocks nthen_stmts,None,loc))
@@ -663,6 +675,9 @@ let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
       | PEmpty
       | PBool(_,_)
       | PId(_) -> f state stmt
+      | PTyped(e,type_exp,loc) ->
+         let state1,ne = expandStmt pred f state e in
+         f state1 (PTyped(appendPseq ne,type_exp,loc))
       | PUnOp(op,e,loc) ->
          let state1,ne = expandStmt pred f state e in
          f state1 (PUnOp(op,appendPseq ne,loc))
@@ -670,9 +685,9 @@ let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
          let state1,ne1 = expandStmt pred f state e1 in
          let state2,ne2 = expandStmt pred f state1 e2 in
          f state2 (PBinOp(op,appendPseq ne1,appendPseq ne2,loc))
-      | PCall(name,args,loc,attr) ->
+      | PCall(name,fname,args,loc,attr) ->
          let state1,nargs = expandStmtList pred f state args in
-         f state1 (PCall(name,nargs,loc,attr))
+         f state1 (PCall(name,fname,nargs,loc,attr))
       | PIf(cond,then_exp,else_exp,loc) ->
          let state1,ncond = expandStmt pred f state cond in
          let state2,nthen_exp = expandStmt pred f state1 then_exp in
@@ -710,55 +725,55 @@ and expandOptStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expan
 
 let getNameFromNamedId (named_id:named_id) : identifier =
    match named_id with
-   | SimpleId(name,_) -> name
-   | NamedId (_,name,_,_) -> name
+   | SimpleId(name,_)   -> name
+   | NamedId (name,_,_) -> name
 
 let getLocationFromNamedId (named_id:named_id) : location =
    match named_id with
    | SimpleId(_,loc) -> loc
-   | NamedId (_,_,loc1,loc2) -> mergeLocations loc1 loc2
+   | NamedId (_,_,loc) -> loc
 
-let getTypeFromNamedId (named_id:named_id) : identifier option =
+let getTypeFromNamedId (named_id:named_id) : parse_exp option =
    match named_id with
-   | NamedId (_,nametype,_,_) -> Some nametype
+   | NamedId (_,nametype,_) -> Some nametype
    | _ -> None
 
-let getFunctionTypeAndName (names_id:named_id) : identifier * identifier =
+let getFunctionTypeAndName (names_id:named_id) : identifier * parse_exp =
    match names_id with
-   | NamedId(name,ftype,_,_) -> name,ftype
-   | SimpleId(ftype,_) -> ["_"],ftype
+   | NamedId(name,ftype,_) -> name,ftype
+   | SimpleId(ftype,loc) -> ["_"],PId(ftype,None,loc)
 
 (** Used by getIdsInExp and getIdsInExpList to get the ids in expressions *)
 let getId : ('data,parse_exp) folder =
    fun state exp ->
       match exp with
-      | PId(name) -> name::state
+      | PId(name,_,_) -> name::state
       | _ -> state
 
 (** Return the ids in an expression *)
-let getIdsInExp (exp:parse_exp) : named_id list =
+let getIdsInExp (exp:parse_exp) : identifier list =
    foldTopExp None getId [] exp
 
 (** Return the ids in an expression list *)
-let getIdsInExpList (expl:parse_exp list) : named_id list =
+let getIdsInExpList (expl:parse_exp list) : identifier list =
    foldTopExpList None getId [] expl
 
 (** Compares named_ids ignoring the locations *)
 let compareName (a:named_id) (b:named_id) : bool =
    match a,b with
    | SimpleId(name_a,_),SimpleId(name_b,_)
-   | NamedId(name_a,_,_,_),SimpleId(name_b,_)
-   | SimpleId(name_a,_),NamedId(name_b,_,_,_)
-   | NamedId(name_a,_,_,_),NamedId(name_b,_,_,_) when name_a = name_b -> true
+   | NamedId(name_a,_,_),SimpleId(name_b,_)
+   | SimpleId(name_a,_),NamedId(name_b,_,_)
+   | NamedId(name_a,_,_),NamedId(name_b,_,_) when name_a = name_b -> true
    | _ -> false
 
 (** Compares named_ids ignoring the locations and returning an integer*)
 let compareIntName (a:named_id) (b:named_id) : int =
    match a,b with
    | SimpleId(name_a,_),SimpleId(name_b,_)
-   | NamedId(name_a,_,_,_),SimpleId(name_b,_)
-   | SimpleId(name_a,_),NamedId(name_b,_,_,_)
-   | NamedId(name_a,_,_,_),NamedId(name_b,_,_,_) -> compare name_a name_b
+   | NamedId(name_a,_,_),SimpleId(name_b,_)
+   | SimpleId(name_a,_),NamedId(name_b,_,_)
+   | NamedId(name_a,_,_),NamedId(name_b,_,_) -> compare name_a name_b
 
 (** Compares a list of name_id ignoring the locations *)
 let rec compareNameList (a: named_id list) (b:named_id list) : int =
@@ -791,14 +806,14 @@ let rec compareExp (a:parse_exp) (b:parse_exp) : int =
    | PUnit(_),PUnit(_) -> 0
    | PInt(v1,_),PInt(v2,_)   -> compare v1 v2
    | PReal(v1,_),PReal(v2,_) -> compare v1 v2
-   | PId(v1),PId(v2)         -> compareIntName v1 v2
+   | PId(v1,_,_),PId(v2,_,_)         -> compare v1 v2
    | PUnOp(o1,e1,_),PUnOp(o2,v1,_) when o1=o2 ->
       compareExp e1 v1
    | PBinOp(o1,e1,e2,_),PBinOp(o2,v1,v2,_) when o1=o2 ->
       let ret = compareExp e1 v1 in
       if ret=0 then compareExp e2 v2 else ret
-   | PCall(name1,args1,_,_),PCall(name2,args2,_,_) ->
-      let ret = compareIntName name1 name2 in
+   | PCall(name1,_,args1,_,_),PCall(name2,_,args2,_,_) ->
+      let ret = compare name1 name2 in
       if ret = 0 then
          compareExpList args1 args2
       else ret
@@ -835,8 +850,8 @@ let rec compareExp (a:parse_exp) (b:parse_exp) : int =
             compareOptExp else1 else2
          else ret2
       else ret1
-   | StmtFun(name1,args1,body1,_),StmtFun(name2,args2,body2,_) ->
-      let ret1 = compareIntName name1 name2 in
+   | StmtFun(name1,args1,body1,_,_),StmtFun(name2,args2,body2,_,_) ->
+      let ret1 = compare name1 name2 in
       if ret1=0 then
          let ret2 = compareNameList args1 args2 in
          if ret2=0 then compareExp body1 body2
@@ -886,7 +901,7 @@ let getExpWeight (e:parse_exp) : int =
 (** Removes the type from a named_id *)
 let removeNamedIdType (name:named_id) : named_id =
    match name with
-   | NamedId(n,_,loc,_) -> SimpleId(n,loc)
+   | NamedId(n,_,loc) -> SimpleId(n,loc)
    | _ -> name
 
 (** Converts an indentifier in a string by separating the names with dot *)
@@ -908,14 +923,14 @@ let rec postfixId (id:identifier) (pos:string) =
 (** Converts a name_id to string. This function is used mainly for debugging since PrintTypes contains more powerful functions *)
 let namedIdStr (name:named_id) : string =
    match name with
-   | NamedId(n,t,_,_) -> (identifierStr n)^":"^(identifierStr t)
+   | NamedId(n,t,_) -> (identifierStr n)^":fix_this"(*^(identifierStr t)*)
    | SimpleId(n,_) -> identifierStr n
 
 (** Adds the give prefix to the named_id *)
 let prefixNamedId (prefix:string) (name:named_id) : named_id =
    match name with
-   | SimpleId(n,loc)         -> SimpleId((prefixId prefix n),loc)
-   | NamedId(n,tp,loc1,loc2) -> NamedId((prefixId prefix n),tp,loc1,loc2)
+   | SimpleId(n,loc)   -> SimpleId((prefixId prefix n),loc)
+   | NamedId(n,tp,loc) -> NamedId((prefixId prefix n),tp,loc)
 
 (** Checks if the expression contains any node for which the function 'f' is true *)
 let exists f exp =

@@ -44,7 +44,7 @@ type literal =
 type vultFunction =
    {
       functionname : identifier;
-      returntype   : identifier option;
+      returntype   : parse_exp option;
       inputs       : named_id list;
       body         : parse_exp;
    }
@@ -167,13 +167,11 @@ let createMemory : environment -> identifier -> literal option -> (errors,enviro
          Right { env with memory = (IdentifierMap.update name updater mem); }
 
 (* Check family of functions. Checks that things are valid in the given environment. *)
-let checkNamedId : environment -> named_id -> Types.errors option =
-   fun env namedId ->
-      let name = getNameFromNamedId namedId in
+let checkNamedId : environment -> identifier -> location -> Types.errors option =
+   fun env name loc ->
       match variableExists env name with
       | true -> None
       | false ->
-         let loc = getLocationFromNamedId namedId in
          Some ([PointedError(loc,"No declaration of variable " ^ (identifierStr name) ^ ".")])
 
 let rec flattenExp : Types.parse_exp -> Types.parse_exp list =
@@ -199,9 +197,8 @@ let checkReal : 'a -> string -> location -> (Types.error, literal) either =
          Right (LReal (float_of_string realstring))
       with Failure _ -> Left (PointedError(loc,"The literal " ^ realstring ^ " can not be interpreted as a real."))
 
-let checkId : environment -> named_id -> (Types.error, literal) either =
-   fun env namedid ->
-      let vname = getNameFromNamedId namedid in
+let checkId : environment -> identifier -> location -> (Types.error, literal) either =
+   fun env vname loc ->
       match variableBinding env vname with
       | Some lit -> Right lit
       | None -> Left (SimpleError ("The variable " ^ (identifierStr vname) ^ " is used in an expression but has no value binding at this point."))
@@ -242,9 +239,8 @@ let checkBinOp : 'a -> string -> literal -> literal -> location -> (Types.error,
          | "!=" -> Right (LBool true)
          | _ -> Left (PointedError(loc,"Unrecognized binary operator " ^ op ^ ".")) 
 
-let checkCall : environment -> named_id -> literal list -> location -> (Types.error, literal) either =
-   fun env namedid args loc ->
-      let fname = getNameFromNamedId namedid in
+let checkCall : environment -> identifier -> literal list -> location -> (Types.error, literal) either =
+   fun env fname args loc ->
       match getFunction env fname with
       | None -> Left (PointedError(loc,"Could not locate function " ^ (identifierStr fname) ^ "."))
       | Some f ->
@@ -356,8 +352,8 @@ and checkStmt : environment -> parse_exp -> (errors,environment) either =
                end
          end
       | StmtFun _ -> Right env (* Ignore function declarations, these should be stored in env. *)
-      | StmtBind (PId (name),rhs,loc) ->
-         begin match checkNamedId env name with
+      | StmtBind (PId (name,_,loc1),rhs,loc) ->
+         begin match checkNamedId env name loc1 with
             | Some errs -> Left errs
             | None -> begin match checkExp env rhs with
                   | Some errs -> Left (SimpleError("Could not evaluate right hand side of bind.")::errs)
@@ -384,10 +380,8 @@ let checkFunction : environment -> vultFunction -> errors option =
 let insertIfFunction : functionBindings -> parse_exp  -> (errors,functionBindings) either =
    fun funcs stmt ->
       match stmt with
-      | StmtFun (namedid,inputs,body,loc) ->
-         let funcname = getNameFromNamedId namedid in
-         let functype = getTypeFromNamedId namedid in
-         let vultfunc = { functionname = funcname; returntype = functype; inputs = inputs; body = body; } in
+      | StmtFun (funcname,inputs,body,type_exp,loc) ->
+         let vultfunc = { functionname = funcname; returntype = type_exp; inputs = inputs; body = body; } in
          bindFunction funcs vultfunc
       | _ -> Right funcs
 

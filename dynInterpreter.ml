@@ -103,12 +103,12 @@ let localEnvStr (loc:local_env) : string =
 let getVarName (named_id:named_id) : identifier =
    match named_id with
    | SimpleId(name,_) -> name
-   | NamedId (name,_,_,_) -> name
+   | NamedId (name,_,_) -> name
 
 (** Returns the name in an id expression *)
 let getExpName (exp:parse_exp) : identifier =
    match exp with
-   | PId(name) -> getVarName name
+   | PId(name,_,_) ->  name
    | _ -> failwith "This expression should be an id"
 
 (** Returns the statements of a declared function *)
@@ -123,19 +123,22 @@ let declFunction (loc:local_env) (name:identifier) (body:function_body) : local_
    { loc with fun_decl = IdentifierMap.add name body loc.fun_decl }
 
 (** Gets the local environment for a function call *)
-let getFunctionEnv (loc:local_env) (name:identifier) : local_env =
-   if name = ["_"] then newLocalEnv (Some(loc.fun_decl)) else
-   if IdentifierMap.mem name loc.fun_bind then
-      IdentifierMap.find name loc.fun_bind
-   else
-      let env = newLocalEnv (Some(loc.fun_decl)) in
-      let _ = IdentifierMap.add name env loc.fun_bind in
-      env
+let getFunctionEnv (loc:local_env) (optname:identifier option) : local_env =
+   match optname with
+   | None -> newLocalEnv (Some(loc.fun_decl))
+   | Some(name) ->
+      if IdentifierMap.mem name loc.fun_bind then
+         IdentifierMap.find name loc.fun_bind
+      else
+         let env = newLocalEnv (Some(loc.fun_decl)) in
+         let _ = IdentifierMap.add name env loc.fun_bind in
+         env
 
 (** Adds a local environment for a function call *)
-let setFunctionEnv (loc:local_env) (name:identifier) (floc:local_env) : local_env =
-   if name = ["_"] then loc else
-      { loc with fun_bind = IdentifierMap.add name floc loc.fun_bind }
+let setFunctionEnv (loc:local_env) (optname:identifier option) (floc:local_env) : local_env =
+   match optname with
+   | None -> loc
+   | Some(name) -> { loc with fun_bind = IdentifierMap.add name floc loc.fun_bind }
 
 (** Clears a local environment *)
 let clearLocal (loc:local_env) : local_env =
@@ -210,7 +213,7 @@ let isTrue (value:value) : bool =
 (** Evaluates a function call *)
 let rec evalFun (loc:local_env) (body:function_body) (args:value list) : value * local_env * bool =
    match body with
-   | Declared(StmtFun(_,arg_names,stmts,_)) ->
+   | Declared(StmtFun(_,arg_names,stmts,type_exp,_)) ->
       let inputs = List.map getVarName arg_names in
       let loc = List.fold_left2 (fun s n v -> declVal s n v) loc inputs args in
       runStmtList loc [stmts]
@@ -225,9 +228,9 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env * bool =
    | PBool(v,_) -> VBool(v),loc,false
    | PInt(v,_)  -> VNum(float_of_string v),loc,false
    | PReal(v,_) -> VNum(float_of_string v),loc,false
-   | PId(name)  ->
-      let vname  = getVarName name in
-      getExpValueFromEnv loc vname,loc,false
+   | PId(name,_,_)  ->
+      getExpValueFromEnv loc name,loc,false
+   | PTyped(e,_,_) -> runExp loc e
    | PGroup(e,_)  -> runExp loc e
    | PTuple(elems,_) ->
       let elems_val,loc = runExpList loc elems in
@@ -238,8 +241,7 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env * bool =
          runExp loc then_exp
       else
          runExp loc else_exp
-   | PCall(name_id,args,_,_) ->
-      let name,ftype = TypesUtil.getFunctionTypeAndName name_id in
+   | PCall(name,ftype,args,_,_) ->
       let body = getFunctionBody loc ftype in
       let args_val,loc = runExpList loc args in
       let env = getFunctionEnv loc name in
@@ -250,20 +252,17 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env * bool =
    | PEmpty -> failwith "There should not be Empty expressions when calling the intepreter"
    | PBinOp(_,_,_,_)
    | PUnOp(_,_,_) -> failwith "There should not be operators when calling the intepreter"
-   | StmtVal(PId(name),opt_init,_) ->
-      let vname = getVarName name in
+   | StmtVal(PId(name,_,_),opt_init,_) ->
       let init,loc,_ = apply_default (runExp loc) opt_init (VNum(0.0),loc,false) in
-      VUnit,declVal loc vname init,false
-   | StmtMem(PId(name),opt_init,None,_) ->
-      let vname = getVarName name in
+      VUnit,declVal loc name init,false
+   | StmtMem(PId(name,_,_),opt_init,None,_) ->
       let init,loc,_ = apply_default (runExp loc) opt_init (VNum(0.0),loc,false) in
-      VUnit,declMem loc vname init,false
+      VUnit,declMem loc name init,false
    | StmtVal(_)
    | StmtMem(_) -> failwith "Declarations with more that one element should have been removed by the transformations"
-   | StmtBind(PId(name),rhs,_) ->
+   | StmtBind(PId(name,_,_),rhs,_) ->
       let rhs_val,loc,_ = runExp loc rhs in
-      let vname = getVarName name in
-      VUnit,setValMem loc vname rhs_val,false
+      VUnit,setValMem loc name rhs_val,false
    | StmtBind(PTuple(elems,_),rhs,_) ->
       let vnames = List.map getExpName elems in
       let rhs_val,loc,_ = runExp loc rhs in
@@ -280,9 +279,8 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env * bool =
    | StmtReturn(e,_) ->
       let e_val,loc,_ = runExp loc e in
       e_val,loc,true
-   | StmtFun(name_id,_,_,_) ->
-      let _,ftype = TypesUtil.getFunctionTypeAndName name_id in
-      let loc = declFunction loc ftype (Declared(exp)) in
+   | StmtFun(name,_,_,_,_) ->
+      let loc = declFunction loc name (Declared(exp)) in
       VUnit,loc,false
    | StmtIf(cond,then_stmts,None,_) ->
       let cond_val,loc,_ = runExp loc cond in
@@ -434,3 +432,4 @@ let interpret (results:parser_results) : interpreter_results =
          { iresult = `Error(error); lines = results.lines }
    with
    | Failure(msg) -> { iresult = `Error([SimpleError(msg)]); lines = results.lines }
+

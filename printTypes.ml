@@ -85,24 +85,33 @@ let identifierBuff buffer id =
    printList buffer append "." id
 
 (** Adds to the print buffer a namedId *)
-let namedIdBuff buffer id =
+let rec namedIdBuff buffer id =
    match id with
    | SimpleId(id1,_) -> identifierBuff buffer id1
-   | NamedId(["_"],id2,_,_) ->
-      identifierBuff buffer id2
-   | NamedId(id1,id2,_,_) ->
+   | NamedId(["_"],id2,_) ->
+      expressionBuff buffer id2
+   | NamedId(id1,id2,_) ->
       identifierBuff buffer id1;
       append buffer ":";
-      identifierBuff buffer id2
+      expressionBuff buffer id2
 
 (** Adds to the print buffer an expression *)
-let rec expressionBuff buffer (exp:parse_exp) =
+and expressionBuff buffer (exp:parse_exp) =
    match exp with
-   | PId(s)   -> namedIdBuff buffer s
+   | PId(s,type_exp,_)   ->
+      identifierBuff buffer s;
+      CCOpt.iter (fun a ->
+            append buffer ":";
+            expressionBuff buffer a;
+         ) type_exp;
    | PInt(s,_)  -> append buffer s
    | PReal(s,_) -> append buffer s
    | PBool(true,_)  -> append buffer "true"
    | PBool(false,_) -> append buffer "false"
+   | PTyped(e1,e2,_) ->
+      expressionBuff buffer e1;
+      append buffer ":";
+      expressionBuff buffer e2;
    | PBinOp(op,e1,e2,_) ->
       append buffer "(";
       expressionBuff buffer e1;
@@ -114,8 +123,11 @@ let rec expressionBuff buffer (exp:parse_exp) =
       append buffer op;
       expressionBuff buffer e;
       append buffer ")"
-   | PCall(id,args,_,_) ->
-      namedIdBuff buffer id;
+   | PCall(id,fname,args,_,_) ->
+      CCOpt.iter (fun a ->
+         identifierBuff buffer a;
+         append buffer ":") id;
+      identifierBuff buffer fname;
       append buffer "(";
       expressionListBuff buffer args;
       append buffer ")"
@@ -180,12 +192,16 @@ let rec expressionBuff buffer (exp:parse_exp) =
       indent buffer;
       expressionBuff buffer false_stmt;
       outdent buffer
-   | StmtFun(name,args,body,_) ->
+   | StmtFun(name,args,body,type_exp,_) ->
       append buffer "fun ";
-      namedIdBuff buffer name;
+      identifierBuff buffer name;
       append buffer "(";
       printList buffer namedIdBuff "," args;
-      append buffer ") ";
+      append buffer ")";
+      CCOpt.iter(fun a ->
+         append buffer ":";
+         expressionBuff buffer a;
+         append buffer " ") type_exp;
       expressionBuff buffer body
    | StmtBind(PUnit(_),e,_) ->
       expressionBuff buffer e;

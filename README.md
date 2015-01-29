@@ -11,6 +11,7 @@ Vult is a high-level language well suited for DSP and controller development.
 #### Ocaml Libraries
 
 - ocaml-containers >= 0.6.1
+- ppx_deriving >= 2.0
 - [Optional] js_of_ocaml >= 2.5 (to run the web interpreter)
 - [Optional] oUnit >= 2.0 (to run the tests)
 
@@ -19,6 +20,7 @@ Vult is a high-level language well suited for DSP and controller development.
 ```
 $ opam switch 4.02.1
 $ opam install containers
+$ opam install ppx_deriving
 ```
 Optionally to run the tests and build the web interpreter:
 ```
