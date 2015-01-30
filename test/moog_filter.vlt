@@ -1,12 +1,12 @@
 
-fun change:num(x) {
+fun change(x):num {
     mem pre_x:num;
     val v:bool = pre_x!=x;
     pre_x = x;
     return v;
 }
 
-fun moog:real(input:real, fc:real, res:real){
+fun moog(input:real, fc:real, res:real):real{
   mem g:real;
   mem h0:real;
   mem h1:real;
