@@ -1,1 +1,2 @@
-<*.ml>: package(ppx_deriving.std)
+<types.ml>: package(ppx_deriving.std)
+<vult_node.ml>: syntax(camlp4o),package(js_of_ocaml.syntax)
