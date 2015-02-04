@@ -311,7 +311,7 @@ let collectFunctionDefinitions : ('data,parse_exp) folder =
       match exp with
       | StmtFun(name,args,stmts,type_exp,loc) ->
          let weight = getExpWeight stmts in
-         (*let _ = Printf.printf "*** Adding function '%s' with weight %i\n" (namedIdStr simple_name) weight in*)
+         (*let _ = Printf.printf "*** Adding function '%s' with weight %i\n" (identifierStr name) weight in*)
          { state with
            functions = IdentifierMap.add name exp state.functions;
            function_weight = IdentifierMap.add name weight state.function_weight }
