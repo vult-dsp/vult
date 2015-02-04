@@ -18,8 +18,11 @@ fun biquad(x:num,b0,b1,b2,a1,a2){
 }
 
 fun lp6(x,fc) {
-    val fc:num = clip(fc,0,samplerate);
-    val k = tan(pi*fc/samplerate);
+    mem fc,k;
+    if(change(fc)){
+        fc:num = clip(fc,0,samplerate);
+        k = tan(pi*fc/samplerate);
+    }
     val b0 = k/(k+1);
     val b1 = k/(k+1);
     val a1 = (k-1)/(k+1);
