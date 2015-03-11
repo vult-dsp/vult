@@ -1,0 +1,14 @@
+typ x : real;
+
+typ x : array(int,n);
+
+typ x {
+	val a : int;
+	val b : int;
+	val c : int;
+}
+
+typ v(x){
+	val a : x;
+	val b : x;
+}
