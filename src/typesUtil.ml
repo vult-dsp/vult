@@ -705,7 +705,7 @@ let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
       | StmtWhile(e1,e2,loc) ->
          let state1,ne1 = expandStmt pred f state e1 in
          let state2,ne2 = expandStmt pred f state1 e2 in
-         f state2 (StmtWhile(appendPseq ne1,appendPseq ne2,loc))
+         f state2 (StmtWhile(appendPseq ne1,appendBlocks ne2,loc))
 
 and expandStmtList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expander) (state:'data) (stmts:parse_exp list) : 'data * parse_exp list =
    let state2,acc =
