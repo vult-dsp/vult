@@ -161,6 +161,7 @@ let getExpLocation (e:parse_exp)  : location =
    | StmtEmpty -> default_loc
    | StmtBlock(_,loc) -> loc
    | StmtWhile(_,_,loc) -> loc
+   | StmtType(_,_,_,_,loc) -> loc
 
 (** Folds the list (left-right) using the given traverser functions *)
 let foldTraverser_left traverser_function pred (traverser:('data,'traversing_type) traverser) (state:'data) (elems:'elem list) =

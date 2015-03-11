@@ -94,6 +94,13 @@ let expect (buffer:'a lexer_stream) (kind:token_enum) : unit =
       let message = Printf.sprintf "Expecting a %s but got %s" expected got in
       raise (ParserError(getErrorForToken buffer message))
 
+(** Optionally consumes the given token *)
+let optConsume (buffer:'a lexer_stream) (kind:token_enum) : unit =
+   match buffer.peeked with
+   | t when t.kind=kind ->
+      skip buffer
+   | _ -> ()
+
 (** Returns an empty 'lexed_lines' type *)
 let emptyLexedLines () =
    {
@@ -394,7 +401,7 @@ and stmtIf (buffer:parse_exp lexer_stream) : parse_exp =
       StmtIf(cond,tstm,Some(fstm),start_loc)
    | _ -> StmtIf(cond,tstm,None,start_loc)
 
-(** 'fun' <identifier> '(' <valBindList> ')' <stmtList> *)
+(** 'fun' <identifier> '(' <namedIdList> ')' <stmtList> *)
 and stmtFunction (buffer:parse_exp lexer_stream) : parse_exp =
    let _     = consume buffer FUN in
    let name  = identifier buffer in
@@ -417,6 +424,58 @@ and stmtFunction (buffer:parse_exp lexer_stream) : parse_exp =
    let start_loc = token.loc in
    StmtFun(name,args,body,type_exp,start_loc)
 
+(** 'type' <identifier> '(' <namedIdList> ')' <valDeclList> *)
+and stmtType (buffer:parse_exp lexer_stream) : parse_exp =
+   let _     = consume buffer TYP in
+   let name  = identifier buffer in
+   let token = current buffer in
+   let start_loc = token.loc in
+   let args  =
+      match peekKind buffer with
+      | LPAREN ->
+         let _    = skip buffer in
+         let args = namedIdList buffer in
+         let _    = consume buffer RPAREN in
+         args
+      | _ -> []
+   in
+   match peekKind buffer with
+   | COLON ->
+      let _ = skip buffer in
+      let type_exp = getContents (expression 10 buffer) in
+      let _ = optConsume buffer SEMI in
+      StmtType(name,args,None,Some(type_exp),start_loc)
+   | LBRAC ->
+      let _        = skip buffer in
+      let val_decl = valDeclList buffer in
+      let _        = consume buffer RBRAC in
+      StmtType(name,args,Some(val_decl),None,start_loc)
+   | _ ->
+      let got = tokenToString buffer.peeked in
+      let message = Printf.sprintf "Expecting a list of value declarations '{ val x:... }' or a type alias ': type' but got %s" got  in
+      raise (ParserError(getErrorForToken buffer message))
+
+and valDeclList (buffer:parse_exp lexer_stream) : val_decl list =
+   let rec loop acc =
+      match peekKind buffer with
+      | VAL ->
+         let decl = valDecl buffer in
+         let _    = consume buffer SEMI in
+         loop (decl::acc)
+      | _ -> List.rev acc
+   in loop []
+
+and valDecl (buffer:parse_exp lexer_stream) : val_decl =
+   let _         = expect buffer VAL in
+   let token     = current buffer in
+   let start_loc = token.loc in
+   let _         = skip buffer in
+   let id        = identifier buffer in
+   let _         = consume buffer COLON in
+   let val_type  = getContents (expression 10 buffer) in
+   id,val_type,start_loc
+
+
 (** 'while' (<expression>) <stmtList> *)
 and stmtWhile (buffer:parse_exp lexer_stream) : parse_exp =
    let start_loc = buffer.peeked.loc in
@@ -436,8 +495,9 @@ and stmt (buffer:parse_exp lexer_stream) : parse_exp =
       | RET   -> stmtReturn  buffer
       | IF    -> stmtIf      buffer
       | FUN   -> stmtFunction buffer
-      | WHILE -> stmtWhile buffer
-      | _     -> stmtBind buffer
+      | WHILE -> stmtWhile    buffer
+      | TYP   -> stmtType     buffer
+      | _     -> stmtBind     buffer
    with
    | ParserError(error) ->
       let _ = appendError buffer error in

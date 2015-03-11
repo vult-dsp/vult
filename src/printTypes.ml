@@ -218,6 +218,29 @@ and expressionBuff buffer (exp:parse_exp) =
       expressionBuff buffer cond;
       append buffer ")";
       expressionBuff buffer stmts
+   | StmtType(id,args,decl_list,alias,_) ->
+      append buffer "typ ";
+      identifierBuff buffer id;
+      begin
+         match args with
+         | [] -> append buffer " "
+         | _  ->
+            append buffer "(";
+            printList buffer namedIdBuff "," args;
+            append buffer ")"
+      end;
+      CCOpt.iter(fun a ->
+         append buffer "{";
+         indent buffer;
+         List.iter (valDecl buffer) a;
+         outdent buffer;
+         append buffer "}"
+         ) decl_list;
+      CCOpt.iter(fun a ->
+         append buffer ":";
+         expressionBuff buffer a;
+         append buffer ";"
+         ) alias
    | StmtEmpty -> ()
 
 (** Adds to the print buffer an expression list *)
@@ -258,6 +281,16 @@ and pseqListBuff buffer expl =
    loop expl;
    outdent buffer;
    append buffer "|}"
+
+(** Adds a val declaration part of a type definition *)
+and valDecl buffer val_decl =
+   let id,e,_ = val_decl in
+   append buffer "val ";
+   identifierBuff buffer id;
+   append buffer " : ";
+   expressionBuff buffer e;
+   append buffer ";";
+   newline buffer
 
 (** Converts to string a list of statememts *)
 let stmtListStr e =

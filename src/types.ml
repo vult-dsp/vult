@@ -70,6 +70,7 @@ type token_enum =
    | AT
    | DOT
    | WHILE
+   | TYP
 
 type 'a token =
    {
@@ -137,8 +138,12 @@ and parse_exp =
    | StmtFun      of identifier     * named_id list  * parse_exp   * parse_exp option * location
    | StmtBind     of parse_exp      * parse_exp      * location
    | StmtBlock    of parse_exp list * location
+   | StmtType     of identifier     * named_id list  * val_decl list option * parse_exp option * location
    | StmtEmpty
    [@@deriving show,eq,ord]
+
+and val_decl =
+   identifier * parse_exp * location
 
 type parse_exp_list = parse_exp list
    [@@deriving show,eq,ord]
