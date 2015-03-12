@@ -306,6 +306,8 @@ let rec traverseBottomExp (pred:(parse_exp -> bool) option) (f: ('data, parse_ex
          let state1,ne1 = traverseBottomExp pred f state e1 in
          let state2,ne2 = traverseBottomExp pred f state1 e2 in
          f state2 (StmtWhile(ne1,ne2,loc))
+      | StmtType(_,_,_,_,_) -> (* Does not travers the internal expressions *)
+         f state exp
 
 (** Traverses lists expressions bottom-up. The expressions are traversed right to left *)
 and traverseBottomExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data) (expl:parse_exp list) : 'data * parse_exp list =
@@ -395,6 +397,8 @@ let rec traverseTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) 
          let state1,ne1 = traverseTopExp pred f state e1 in
          let state2,ne2 = traverseTopExp pred f state1 e2 in
          state2,StmtWhile(ne1,ne2,loc)
+      | StmtType(_,_,_,_,_) ->
+         state,nexp
 
 
 (** Traverses lists expressions top-down. The expressions are traversed left to right *)
@@ -483,6 +487,7 @@ let rec foldTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fold
          let state1 = foldTopExp pred f state e1 in
          let state2 = foldTopExp pred f state1 e2 in
          state2
+      | StmtType(_,_,_,_,_) -> state
 
 
 and foldTopExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data) (expl:parse_exp list) : 'data =
@@ -574,6 +579,8 @@ let rec foldDownExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fol
          let state1 = foldDownExp pred f state e1 in
          let state2 = foldDownExp pred f state1 e2 in
          f state2 exp
+      | StmtType(_,_,_,_,_) ->
+         f state exp
 
 
 and foldDownExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data) (expl:parse_exp list) : 'data =
@@ -707,6 +714,7 @@ let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
          let state1,ne1 = expandStmt pred f state e1 in
          let state2,ne2 = expandStmt pred f state1 e2 in
          f state2 (StmtWhile(appendPseq ne1,appendBlocks ne2,loc))
+      | StmtType(_,_,_,_,_) -> f state stmt
 
 and expandStmtList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expander) (state:'data) (stmts:parse_exp list) : 'data * parse_exp list =
    let state2,acc =

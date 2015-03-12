@@ -257,6 +257,7 @@ let rec assemble (i0:instruction list) (exp:parse_exp) =
       Loop(line)::Lazy(cond_i,cond_line)::Lazy(body_i,body_line)::i0
    | PGroup(e,loc) ->
       assemble i0 e
+   | StmtType(_,_,_,_,_) -> i0
    | PUnOp(_,_,_)    -> failwith "No unary operations should remain"
    | PBinOp(_,_,_,_) -> failwith "No binary operations should remain"
    | PEmpty          -> failwith "No empty expressions should remain"

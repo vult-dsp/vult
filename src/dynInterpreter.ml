@@ -252,6 +252,7 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env * bool =
    | PEmpty -> failwith "There should not be Empty expressions when calling the intepreter"
    | PBinOp(_,_,_,_)
    | PUnOp(_,_,_) -> failwith "There should not be operators when calling the intepreter"
+   | StmtType(_,_,_,_,_) -> VUnit,loc,false
    | StmtVal(PId(name,_,_),opt_init,_) ->
       let init,loc,_ = apply_default (runExp loc) opt_init (VNum(0.0),loc,false) in
       VUnit,declVal loc name init,false
