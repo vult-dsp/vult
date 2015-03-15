@@ -1,7 +1,7 @@
 {
     "name": "Vult", 
     "fileTypes": [
-        "vlt"
+        "vult"
     ], 
     "patterns": [
         {

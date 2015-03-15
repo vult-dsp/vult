@@ -51,7 +51,7 @@ let processArguments () : arguments =
       "-debug",  (Arg.Unit  (fun () -> result.debug   <-true)), "Runs the debugger (default: off)";
    ]
    in
-   let _ = Arg.parse opts (fun a -> result.files <- a::result.files) "Usage: vultc file.vlt\n" in
+   let _ = Arg.parse opts (fun a -> result.files <- a::result.files) "Usage: vultc file.vult\n" in
    let _ = result.files <- List.rev result.files in (* Put the files in the correct order  *)
    result
 
