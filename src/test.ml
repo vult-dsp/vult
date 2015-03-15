@@ -24,7 +24,7 @@ THE SOFTWARE.
 open OUnit2
 
 open ParserVult
-open Types
+open TypesVult
 
 let test_string (reference:string) (current:string) = assert_equal ~printer:(fun a->a) reference current ;;
 

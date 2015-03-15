@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 (** Transformations and optimizations of the syntax tree *)
 
-open Types
+open TypesVult
 open CCList
 open TypesUtil
 
@@ -143,22 +143,22 @@ let skipPSeq (e:parse_exp) : bool =
    | PSeq(_,_) -> false
    | _ -> true
 
-let skipFun stmt =
+let skipFun (stmt:parse_exp) : bool =
    match stmt with
    | StmtFun(_,_,_,_,_) -> false
    | _ -> true
 
-let skipBlock stmt =
+let skipBlock (stmt:parse_exp) : bool =
    match stmt with
    | StmtBlock(_,_) -> false
    | _ -> true
 
-let skipIfStmt stmt =
+let skipIfStmt (stmt:parse_exp) : bool =
    match stmt with
    | StmtIf(_) -> false
    | _ -> true
 
-let skipPIf stmt =
+let skipPIf (stmt:parse_exp) : bool =
    match stmt with
    | PIf(_) -> false
    | _ -> true
@@ -250,7 +250,8 @@ let simplifyTupleAssign : ('data,parse_exp) expander =
 (* ======================= *)
 
 (** True if the attributes contains SimpleBinding *)
-let isSimpleBinding attr = List.exists (fun a->a=SimpleBinding) attr
+let isSimpleBinding (attr:call_attributes) : bool =
+   List.exists (fun a->a=SimpleBinding) attr
 
 (** Creates bindings for all function calls in an expression *)
 let bindFunctionAndIfExpCallsInExp : (int * parse_exp list,parse_exp) transformation =
@@ -486,7 +487,7 @@ let makeIfStatement : ('data,parse_exp) traverser =
 (* ======================= *)
 
 (** Negates a condition*)
-let notCondition exp =
+let notCondition (exp:parse_exp) =
    match exp with
    | PCall(_,["'!'"],[exp],_,_) -> exp
    | _ ->
@@ -551,7 +552,7 @@ let removeUnnecessaryBlocks : ('data,parse_exp) traverser =
       | StmtBlock([h],_) -> state,h
       | _ -> state,stmt
 
-(** Given a condition that we know is true, evaluates the if statements using that condition *)
+(** Given a condition that we know is true, evaluates the if-statements using that condition *)
 let evaluateCertainConditions : ('data,parse_exp) traverser =
    fun known_cond stmt ->
       match stmt with
@@ -561,7 +562,7 @@ let evaluateCertainConditions : ('data,parse_exp) traverser =
          known_cond,else_stmt
       | _ -> known_cond,stmt
 
-(** Simplifies dummy if statements created by the transfrmations. e.g. if(true) ... or if(a) { if(!a) ...}  *)
+(** Simplifies dummy if-statements created by the transfrmations. e.g. if(true) ... or if(a) { if(!a) ...}  *)
 let removeUnnecesaryIfConditions : ('data,parse_exp) traverser =
    fun state stmt ->
       match stmt with
@@ -583,7 +584,7 @@ let removeSwapedIfCondition : ('data,parse_exp) traverser =
          state,StmtIf(exp,else_stmt,Some(then_stmt),loc)
       | _ -> state,stmt
 
-(** Removes if statements with empty blocks *)
+(** Removes if-statements with empty blocks *)
 let removeEmptyIfConditions : ('data,parse_exp) traverser =
    fun state stmt ->
       match stmt with
@@ -593,7 +594,7 @@ let removeEmptyIfConditions : ('data,parse_exp) traverser =
          state,StmtIf(cond,then_stmt,None,loc)
       | _ -> state,stmt
 
-(** Applies the return elimination to each if statement *)
+(** Applies the return elimination to each if-statement *)
 let simplifyReturn : ('data,parse_exp) traverser =
    fun var stmt ->
       match stmt with

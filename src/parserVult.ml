@@ -25,8 +25,8 @@ THE SOFTWARE.
 (** Vult Parser *)
 
 open LexerVult
-open Errors
-open Types
+open ErrorsVult
+open TypesVult
 open Lexing
 open CCError
 open CCString
@@ -426,7 +426,7 @@ and stmtFunction (buffer:parse_exp lexer_stream) : parse_exp =
 
 (** 'type' <identifier> '(' <namedIdList> ')' <valDeclList> *)
 and stmtType (buffer:parse_exp lexer_stream) : parse_exp =
-   let _     = consume buffer TYP in
+   let _     = consume buffer TYPE in
    let name  = identifier buffer in
    let token = current buffer in
    let start_loc = token.loc in
@@ -496,7 +496,7 @@ and stmt (buffer:parse_exp lexer_stream) : parse_exp =
       | IF    -> stmtIf      buffer
       | FUN   -> stmtFunction buffer
       | WHILE -> stmtWhile    buffer
-      | TYP   -> stmtType     buffer
+      | TYPE  -> stmtType     buffer
       | _     -> stmtBind     buffer
    with
    | ParserError(error) ->

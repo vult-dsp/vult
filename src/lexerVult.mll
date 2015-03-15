@@ -24,7 +24,7 @@ THE SOFTWARE.
 {
    (** Vult Lexer based on ocamllex *)
 open Lexing
-open Types
+open TypesVult
 
 (** Returns the current location (start and end) *)
 let getLocation lexbuf =
@@ -52,7 +52,7 @@ let keyword_table =
       "else",ELSE;
       "return",RET;
       "while",WHILE;
-      "typ",TYP;
+      "type",TYPE;
    ] in
    let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
    table
@@ -108,7 +108,7 @@ let kindToString kind =
    | FUN   -> "'fun'"
    | MEM   -> "'mem'"
    | VAL   -> "'val'"
-   | TYP   -> "'typ'"
+   | TYPE  -> "'type'"
    | RET   -> "'return'"
    | IF    -> "'if'"
    | THEN  -> "'then'"

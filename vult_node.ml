@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-open Types
+open TypesVult
 open ParserVult
 
 let parseText s =
@@ -31,7 +31,7 @@ let parseText s =
    | `Ok(result) ->
       "Results of running the program:\n"^result |> Js.string
    | `Error(_) ->
-      let error_strings:string list = Errors.reportErrors p.iresult p.lines in
+      let error_strings:string list = ErrorsVult.reportErrors p.iresult p.lines in
       let result =List.fold_left (fun s a -> s^"\n"^a) "" error_strings in
       "Errors in the program:\n"^result |> Js.string
 

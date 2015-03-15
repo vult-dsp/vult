@@ -1,14 +1,14 @@
-typ x : real;
+type x : real;
 
-typ x : array(int,n);
+type x : array(int,n);
 
-typ x {
+type x {
 	val a : int;
 	val b : int;
 	val c : int;
 }
 
-typ v(x){
+type v(x){
 	val a : x;
 	val b : x;
 }

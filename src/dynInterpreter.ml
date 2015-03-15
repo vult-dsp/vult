@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 (** Dynamic-typing interpreter used as reference *)
 
-open Types
+open TypesVult
 open TypesUtil
 
 let apply_default (f:'a -> 'b) (v:'a option) (def:'b) =

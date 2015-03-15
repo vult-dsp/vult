@@ -23,12 +23,13 @@ THE SOFTWARE.
 *)
 open LexerVult
 open ParserVult
-open Types
+open TypesVult
 open TypesUtil
 open CheckerVult
 open Passes
 open DynInterpreter
 open Debugger
+open ErrorsVult
 
 (** Stores the options passed to the command line *)
 type arguments =
@@ -61,7 +62,7 @@ let main () =
       List.map parseFile args.files
    in
    (* Reports error of parsing *)
-   let _ = List.iter (fun a -> Errors.printErrors a.presult a.lines ) parser_results in
+   let _ = List.iter (fun a -> ErrorsVult.printErrors a.presult a.lines ) parser_results in
    (* Prints the parsed files if -dparse was passed as argument *)
    let _ = if args.dparse then
          parser_results
@@ -79,7 +80,7 @@ let main () =
    let _ =
       if args.run_check then
          let errors = List.map programState parser_results in
-         List.iter (fun a -> Errors.printErrors a.iresult a.lines ) errors
+         List.iter (fun a -> ErrorsVult.printErrors a.iresult a.lines ) errors
    in
    let _ =
       if args.debug then

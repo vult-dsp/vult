@@ -70,7 +70,7 @@ type token_enum =
    | AT
    | DOT
    | WHILE
-   | TYP
+   | TYPE
 
 type 'a token =
    {

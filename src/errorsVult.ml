@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 (** Functions for error reporting and handling *)
 
-open Types
+open TypesVult
 open Lexing
 open CCError
 

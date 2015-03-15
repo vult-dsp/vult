@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 (** Printing of types *)
 
-open Types
+open TypesVult
 
 (** Type used to hold a print buffer *)
 type print_buffer =
@@ -219,7 +219,7 @@ and expressionBuff buffer (exp:parse_exp) =
       append buffer ")";
       expressionBuff buffer stmts
    | StmtType(id,args,decl_list,alias,_) ->
-      append buffer "typ ";
+      append buffer "type ";
       identifierBuff buffer id;
       begin
          match args with

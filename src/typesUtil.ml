@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 (** Utility functions for the types *)
 
-open Types
+open TypesVult
 open Either
 
 (* -- OVERVIEW PLEASE FILL IN

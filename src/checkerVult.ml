@@ -23,13 +23,13 @@ THE SOFTWARE.
 *)
 
 (** Vult abstract syntax interpreter *)
-open Types
+open TypesVult
 open TypesUtil
 open Lexing
 open List
 open CCMap
 open Either
-open Errors
+open ErrorsVult
 open TypesUtil
 
 type literal =
@@ -167,14 +167,14 @@ let createMemory : environment -> identifier -> literal option -> (errors,enviro
          Right { env with memory = (IdentifierMap.update name updater mem); }
 
 (* Check family of functions. Checks that things are valid in the given environment. *)
-let checkNamedId : environment -> identifier -> location -> Types.errors option =
+let checkNamedId : environment -> identifier -> location -> errors option =
    fun env name loc ->
       match variableExists env name with
       | true -> None
       | false ->
          Some ([PointedError(loc,"No declaration of variable " ^ (identifierStr name) ^ ".")])
 
-let rec flattenExp : Types.parse_exp -> Types.parse_exp list =
+let rec flattenExp : parse_exp -> parse_exp list =
    fun groupExp ->
       match groupExp with
       | PGroup (exp,loc) -> flattenExp exp
@@ -182,28 +182,28 @@ let rec flattenExp : Types.parse_exp -> Types.parse_exp list =
       | e -> [e]
 
 
-let checkUnit : environment -> (Types.error, literal) either =
+let checkUnit : environment -> (error, literal) either =
    fun _ -> Right LUnit
 
-let checkInt : 'a -> string -> location -> (Types.error, literal) either =
+let checkInt : 'a -> string -> location -> (error, literal) either =
    fun _ intstring loc ->
       try
          Right (LInt (int_of_string intstring))
       with Failure _ -> Left (PointedError(loc,"The literal " ^ intstring ^ " can not be interpreted as an integer."))
 
-let checkReal : 'a -> string -> location -> (Types.error, literal) either =
+let checkReal : 'a -> string -> location -> (error, literal) either =
    fun _ realstring loc ->
       try
          Right (LReal (float_of_string realstring))
       with Failure _ -> Left (PointedError(loc,"The literal " ^ realstring ^ " can not be interpreted as a real."))
 
-let checkId : environment -> identifier -> location -> (Types.error, literal) either =
+let checkId : environment -> identifier -> location -> (error, literal) either =
    fun env vname loc ->
       match variableBinding env vname with
       | Some lit -> Right lit
       | None -> Left (SimpleError ("The variable " ^ (identifierStr vname) ^ " is used in an expression but has no value binding at this point."))
 
-let checkUnOp : 'a -> string -> literal -> location -> (Types.error, literal) either =
+let checkUnOp : 'a -> string -> literal -> location -> (error, literal) either =
    fun _ op lit loc ->
       let
          minusCheck lit = match lit with
@@ -219,7 +219,7 @@ let checkUnOp : 'a -> string -> literal -> location -> (Types.error, literal) ei
       | "!" -> notCheck lit
       | _ -> Left (PointedError(loc,"Unary operator " ^ op ^ " not recognized."))
 
-let checkBinOp : 'a -> string -> literal -> literal -> location -> (Types.error, literal) either =
+let checkBinOp : 'a -> string -> literal -> literal -> location -> (error, literal) either =
    fun _ op lit1 lit2 loc ->
       if not (literalTypeEqual lit1 lit2)
       then Left (PointedError(loc,"Type missmatch for operator " ^ op ^ ", 
@@ -239,7 +239,7 @@ let checkBinOp : 'a -> string -> literal -> literal -> location -> (Types.error,
          | "!=" -> Right (LBool true)
          | _ -> Left (PointedError(loc,"Unrecognized binary operator " ^ op ^ ".")) 
 
-let checkCall : environment -> identifier -> literal list -> location -> (Types.error, literal) either =
+let checkCall : environment -> identifier -> literal list -> location -> (error, literal) either =
    fun env fname args loc ->
       match getFunction env fname with
       | None -> Left (PointedError(loc,"Could not locate function " ^ (identifierStr fname) ^ "."))
@@ -252,7 +252,7 @@ let checkCall : environment -> identifier -> literal list -> location -> (Types.
                                      ^ "; expected " ^ (string_of_int expectedlength) ^ " but got "
                                      ^ (string_of_int paramlength) ^ "."))
 
-let checkIf : 'a -> literal -> literal -> literal -> (Types.error, literal) either =
+let checkIf : 'a -> literal -> literal -> literal -> (error, literal) either =
    fun _ cond l1 l2 ->
       if not (literalTypeEqual l1 l2)
       then Left (SimpleError("Type missmatch in if-expression, 
@@ -263,15 +263,15 @@ let checkIf : 'a -> literal -> literal -> literal -> (Types.error, literal) eith
          | LUnbound -> Right l1
          | _ -> Left (SimpleError("Condition in if-expression is not of type bool, but of type " ^ literalTypeString cond ^ "."))
 
-let checkGroup : 'a -> literal -> (Types.error, literal) either =
+let checkGroup : 'a -> literal -> (error, literal) either =
    fun _ lit -> Right lit
 
-let checkTuple : 'a -> literal list -> (Types.error, literal) either =
+let checkTuple : 'a -> literal list -> (error, literal) either =
    fun _ lits -> match lits with
       | [] -> Right LUnit
       | xs -> Right (LTuple xs)
 
-let checkEmpty : 'a -> (Types.error, literal) either =
+let checkEmpty : 'a -> (error, literal) either =
    fun _ -> Right LUnit
 
 let checkFunctions : (environment, error, literal) TypesUtil.expfold =
@@ -289,14 +289,14 @@ let checkFunctions : (environment, error, literal) TypesUtil.expfold =
       vEmpty = checkEmpty;
    }
 
-let rec checkExp : environment -> Types.parse_exp -> Types.errors option =
+let rec checkExp : environment -> parse_exp -> errors option =
    fun env exp -> match TypesUtil.expressionFoldEither checkFunctions env exp with
       | Left err -> Some [err]
       | Right _ -> None
 
 (* Checker broken when removing val_bind*)
 (*
-and checkRegularValBind : environment -> Types.val_bind -> (errors,environment) either  =
+and checkRegularValBind : environment -> val_bind -> (errors,environment) either  =
    fun env valbind ->
       match valbind with
       | ValNoBind (name,_) -> createVariable env (getNameFromNamedId name) None
@@ -306,7 +306,7 @@ and checkRegularValBind : environment -> Types.val_bind -> (errors,environment) 
          | Some errs -> Left (SimpleError("In binding of variable " ^ name ^ ".")::errs)
          | None -> createVariable env name None
 
-and checkMemValBind : environment -> Types.val_bind -> (errors,environment) either  =
+and checkMemValBind : environment -> val_bind -> (errors,environment) either  =
    fun env valbind ->
       match valbind with
       | ValNoBind (name,_) -> createMemory env (getNameFromNamedId name) None
@@ -405,7 +405,7 @@ let checkStmtsMain : parse_exp list -> errors option =
       | Left errs -> Some errs
       | Right funcs ->  checkStmts {emptyEnv with functions = funcs} stmts
 
-let programState : Types.parser_results -> interpreter_results =
+let programState : parser_results -> interpreter_results =
    fun results ->
       match results.presult with
       | `Error(_) ->
