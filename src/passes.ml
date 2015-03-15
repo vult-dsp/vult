@@ -649,11 +649,11 @@ let inlineFunctionBodies (state:'data) (exp_list:parse_exp list) : 'data * parse
    let inlineFunctionBody name fun_decl (functions,weigths) =
       match fun_decl with
       | StmtFun(fname,fargs,fbody,type_exp,loc) ->
-         let _,new_fbody = expandStmt None inlineStmts state fbody in
+         let _,new_fbody     = expandStmt None inlineStmts state fbody in
          let new_fbody_block = appendBlocks new_fbody in
-         let weight = getExpWeight new_fbody_block in
-         let new_functions = IdentifierMap.add name (StmtFun(fname,fargs,new_fbody_block,type_exp,loc)) functions in
-         let new_weigths = IdentifierMap.add name weight weigths in
+         let weight          = getExpWeight new_fbody_block in
+         let new_functions   = IdentifierMap.add name (StmtFun(fname,fargs,new_fbody_block,type_exp,loc)) functions in
+         let new_weigths     = IdentifierMap.add name weight weigths in
          new_functions,new_weigths
       | _ -> functions,weigths
    in
