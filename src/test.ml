@@ -33,7 +33,7 @@ let run_program_with_options options s =
    match result.iresult with
    | `Ok(s) -> s
    | `Error(errors) ->
-      let error_strings = Errors.reportErrors result.iresult result.lines in
+      let error_strings = ErrorsVult.reportErrors result.iresult result.lines in
       List.hd error_strings
 
 let run_program (s:string) : string = run_program_with_options Passes.opt_full_transform s
