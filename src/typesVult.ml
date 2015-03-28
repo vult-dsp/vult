@@ -31,9 +31,9 @@ type location =
       start_pos : position;
       end_pos   : position;
    }
-   let pp_location = fun fmt _ -> Format.pp_print_string fmt "loc"
-   let equal_location _ _ = true
-   let compare_location _ _ = 0
+let pp_location = fun fmt _ -> Format.pp_print_string fmt "loc"
+let equal_location _ _ = true
+let compare_location _ _ = 0
 
 let default_loc = { start_pos = dummy_pos  ; end_pos = dummy_pos }
 
@@ -98,21 +98,21 @@ type 'a lexer_stream =
    }
 
 type identifier = string list
-   [@@deriving show,eq,ord]
+      [@@deriving show,eq,ord]
 
 (** This type is used to attach more information to the function calls *)
 type call_attribute =
    | SimpleBinding (* Used by Passes.bindFunctionCalls to mark the function calls that have been bound *)
    | DummtAttr
-   [@@deriving show,eq,ord]
+         [@@deriving show,eq,ord]
 
 type call_attributes = call_attribute list
-   [@@deriving show,eq,ord]
+      [@@deriving show,eq,ord]
 
 type named_id =
    | SimpleId of identifier * location
    | NamedId  of identifier * parse_exp * location
-   [@@deriving show,eq,ord]
+                    [@@deriving show,eq,ord]
 
 (** Parser syntax tree *)
 and parse_exp =
@@ -140,13 +140,13 @@ and parse_exp =
    | StmtBlock    of parse_exp list * location
    | StmtType     of identifier     * named_id list  * val_decl list option * parse_exp option * location
    | StmtEmpty
-   [@@deriving show,eq,ord]
+         [@@deriving show,eq,ord]
 
 and val_decl =
    identifier * parse_exp * location
 
 type parse_exp_list = parse_exp list
-   [@@deriving show,eq,ord]
+      [@@deriving show,eq,ord]
 
 type parser_results =
    {

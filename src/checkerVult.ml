@@ -211,7 +211,8 @@ let checkUnOp : 'a -> string -> literal -> location -> (error, literal) either =
          | LReal x -> Right (LReal (-. x))
          | LUnbound -> Right (LUnbound)
          | l -> Left (PointedError(loc,"Operation unary minus is not compatible with type " ^ (literalTypeString lit) ^ "."))
-      in let   notCheck lit = match lit with
+      in
+      let notCheck lit = match lit with
          | LBool x -> Right (LBool (not x))
          | l -> Left (PointedError(loc,"Operation boolean negation is not compation with type " ^ (literalTypeString lit) ^ "."))
       in match op with

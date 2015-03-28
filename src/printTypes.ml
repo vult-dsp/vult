@@ -125,8 +125,8 @@ and expressionBuff buffer (exp:parse_exp) =
       append buffer ")"
    | PCall(id,fname,args,_,_) ->
       CCOpt.iter (fun a ->
-         identifierBuff buffer a;
-         append buffer ":") id;
+            identifierBuff buffer a;
+            append buffer ":") id;
       identifierBuff buffer fname;
       append buffer "(";
       expressionListBuff buffer args;
@@ -199,9 +199,9 @@ and expressionBuff buffer (exp:parse_exp) =
       printList buffer namedIdBuff "," args;
       append buffer ")";
       CCOpt.iter(fun a ->
-         append buffer ":";
-         expressionBuff buffer a;
-         append buffer " ") type_exp;
+            append buffer ":";
+            expressionBuff buffer a;
+            append buffer " ") type_exp;
       expressionBuff buffer body
    | StmtBind(PUnit(_),e,_) ->
       expressionBuff buffer e;
@@ -230,16 +230,16 @@ and expressionBuff buffer (exp:parse_exp) =
             append buffer ")"
       end;
       CCOpt.iter(fun a ->
-         append buffer "{";
-         indent buffer;
-         List.iter (valDecl buffer) a;
-         outdent buffer;
-         append buffer "}"
+            append buffer "{";
+            indent buffer;
+            List.iter (valDecl buffer) a;
+            outdent buffer;
+            append buffer "}"
          ) decl_list;
       CCOpt.iter(fun a ->
-         append buffer ":";
-         expressionBuff buffer a;
-         append buffer ";"
+            append buffer ":";
+            expressionBuff buffer a;
+            append buffer ";"
          ) alias
    | StmtEmpty -> ()
 

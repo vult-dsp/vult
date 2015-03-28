@@ -478,7 +478,7 @@ let collectValDecl : ('data,parse_exp) folder =
       | StmtVal(PId(name,_,_),_,_) when IdentifierMap.mem name state.data ->
          state
       | StmtVal(PId(name,_,_),_,_)->
-      setState state (IdentifierMap.add name exp state.data)
+         setState state (IdentifierMap.add name exp state.data)
       | _ -> state
 
 (** Removes duplicated mem declarations from StmtSequence and moves to the top the val *)
@@ -708,8 +708,8 @@ let inlineFunctionBodies (state:'data tstate) (exp_list:parse_exp list) : 'data 
       IdentifierMap.fold inlineFunctionBody state.data.functions (IdentifierMap.empty,IdentifierMap.empty) in
    let new_state =
       { state.data with
-         functions = new_functions;
-         function_weight = new_weigths;
+        functions = new_functions;
+        function_weight = new_weigths;
       }
    in (setState state new_state),exp_list
 
@@ -756,9 +756,9 @@ let applyTransformations (options:options) (results:parser_results) =
       |+> TypesUtil.traverseBottomExpList None simplifyReturnInPSeq
       |+> TypesUtil.traverseBottomExpList None
          (removeUnnecessaryBlocks
-         |-> removeUnnecesaryIfConditions
-         |-> removeEmptyIfConditions
-         |-> removeSwapedIfCondition)
+          |-> removeUnnecesaryIfConditions
+          |-> removeEmptyIfConditions
+          |-> removeSwapedIfCondition)
    in
    (* Inlining *)
    let inliningPasses state =

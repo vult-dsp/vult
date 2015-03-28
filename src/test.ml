@@ -207,7 +207,7 @@ let runInlineTest context =
 
 let runIfRemovalTest context =
    compare_program_result
-   "fun if_nested(a,b,c){
+      "fun if_nested(a,b,c){
    val ret = {|
       if(a)
          if(b)
@@ -232,7 +232,7 @@ let runIfRemovalTest context =
 
 let runFactCompare context =
    compare_program_result
-   "fun fact(n){ return if n==0 then 1 else n*fact(n-1); } return fact(5);"
+      "fun fact(n){ return if n==0 then 1 else n*fact(n-1); } return fact(5);"
 
 (* Name the test cases and group them together *)
 let interpreter_test =

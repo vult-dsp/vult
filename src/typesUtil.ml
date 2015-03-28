@@ -98,22 +98,22 @@ let deriveState (s:'a tstate) (data:'b) : 'b tstate =
 
 (** Internal function used by 'joinSep' *)
 let rec join_buff buff sep l =
-  match l with
-  | [] -> ()
-  | [h] -> Buffer.add_string buff h
-  | h::t ->
-    Buffer.add_string buff h;
-    Buffer.add_string buff sep;
-    join_buff  buff sep t
+   match l with
+   | [] -> ()
+   | [h] -> Buffer.add_string buff h
+   | h::t ->
+      Buffer.add_string buff h;
+      Buffer.add_string buff sep;
+      join_buff  buff sep t
 
 (** Joins a list of strings using a separator 'sep' *)
 let joinSep sep l =
-  match l with
-  | [] -> ""
-  | _ ->
-    let buff = Buffer.create 128 in
-    join_buff buff sep l;
-    Buffer.contents buff
+   match l with
+   | [] -> ""
+   | _ ->
+      let buff = Buffer.create 128 in
+      join_buff buff sep l;
+      Buffer.contents buff
 
 (** Returns the minimal position of two given *)
 let getMinPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.position =
@@ -646,7 +646,7 @@ let appendBlocksList (l:parse_exp list) : parse_exp list * location =
          let new_loc = mergeLocations loc (getExpLocation h) in
          loop ([h]::acc) new_loc t
    in
-      loop [] default_loc l
+   loop [] default_loc l
 
 (** Appends the contents of a list of blocks and returns a StmtBlock *)
 let appendBlocks (l:parse_exp list) =

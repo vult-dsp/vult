@@ -340,7 +340,7 @@ let take3 (stack:value list) =
    match stack with
    | []        -> failwith "The stack is empty"
    | v1::v2::v3::t
-               -> v1,v2,v3,t
+      -> v1,v2,v3,t
    | _         -> failwith "The stack does not contain 3 elements"
 
 let rec takeN (stack:value list) n =
@@ -475,17 +475,17 @@ let initialState instructions =
 
 
 let debug (results:parser_results) : unit =
-      let result = CCError.map
+   let result = CCError.map
          (fun stmts ->
-            let instructions = assembleListStmt [] stmts in
-            let _ = printInstructions instructions in
-            loop (initialState instructions)
+             let instructions = assembleListStmt [] stmts in
+             let _ = printInstructions instructions in
+             loop (initialState instructions)
          )
          results.presult
-      in
-      match result with
-      | `Ok(ret) ->
-         ()
-      | `Error(error) ->
-         ()
+   in
+   match result with
+   | `Ok(ret) ->
+      ()
+   | `Error(error) ->
+      ()
 

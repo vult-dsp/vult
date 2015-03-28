@@ -1,5 +1,5 @@
 #!/bin/bash
-for file in *.ml
+for file in src/*.ml
 do
   ocp-indent $file > $file.out
   cp $file.out $file

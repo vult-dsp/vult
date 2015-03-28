@@ -73,12 +73,14 @@ module Make (O : Map.OrderedType)(D : Set.OrderedType) = struct
       fun key map ->
          let updater : key -> info option -> info option =
             fun parent _ -> Some (Left parent)
-         in let update_all : key list -> key -> t =
+         in
+         let update_all : key list -> key -> t =
             fun children parent ->
                List.fold_left 
                   (fun m c -> MapS.update c (updater parent) m)
                   map children
-         in let rec go : key -> key list -> key option * t =
+         in
+         let rec go : key -> key list -> key option * t =
             fun key children -> match MapS.get key map with
                | Some (Left n) ->
                   if key == n 
@@ -92,12 +94,14 @@ module Make (O : Map.OrderedType)(D : Set.OrderedType) = struct
       fun key map ->
          let updater : key -> info option -> info option =
             fun parent _ -> Some (Left parent)
-         in let update_all : key list -> key -> t =
+         in
+         let update_all : key list -> key -> t =
             fun children parent ->
                List.fold_left 
                   (fun m c -> MapS.update c (updater parent) m)
                   map children
-         in let rec go : key -> key list -> key option * bindings option * t =
+         in
+         let rec go : key -> key list -> key option * bindings option * t =
             fun key children -> match MapS.get key map with
                | Some (Left n) ->
                   if key == n 
