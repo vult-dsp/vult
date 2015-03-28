@@ -1,7 +1,7 @@
-S .
-S src
-B _build
-B _build/src
+S ./
+S ./src
+B ./_build
+B ./_build/src
 PKG oUnit
 PKG containers
 PKG ppx_deriving.std
