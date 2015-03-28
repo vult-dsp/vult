@@ -21,15 +21,15 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
+open ErrorsVult
 open LexerVult
 open ParserVult
 open TypesVult
+open Passes
 open TypesUtil
 open CheckerVult
-open Passes
 open DynInterpreter
 open Debugger
-open ErrorsVult
 
 (** Stores the options passed to the command line *)
 type arguments =
@@ -66,7 +66,7 @@ let main () =
    (* Prints the parsed files if -dparse was passed as argument *)
    let _ = if args.dparse then
          parser_results
-         |> List.map (applyTransformations { opt_no_transform with inline_weight = 100000})
+         |> List.map (applyTransformations { opt_full_transform with inline_weight = 100000})
          |> List.iter (fun a -> match a.presult with `Ok(b) -> Format.printf "tree: %a@." pp_parse_exp_list b; PrintTypes.stmtListStr b |> print_string | _ -> () )
    in
    (* Runs the dynamic interpreter if -rundyn was passed as argument *)

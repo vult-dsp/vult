@@ -52,7 +52,7 @@ open Either
 (** Used to track the scope in all traversers *)
 type 'a tstate =
    {
-      scope : named_id list;
+      scope : identifier list;
       data  : 'a
    }
 
@@ -80,22 +80,6 @@ type ('data, 'error, 'result) expfold =
       vEmpty : 'data -> ('error, 'result) either;
    }
 
-(** Returns a traversing state *)
-let createState (data:'a) : 'a tstate =
-   { scope = []; data = data }
-
-(** Sets the data for the traversing state *)
-let setState (s:'a tstate) (data:'a) : 'a tstate =
-   { s with data = data }
-
-(** Gets the data for the traversing state *)
-let getState (s:'a tstate) : 'a =
-   s.data
-
-(** Creates a new state keepin the internal data *)
-let deriveState (s:'a tstate) (data:'b) : 'b tstate =
-   { scope = s.scope; data = data}
-
 (** Internal function used by 'joinSep' *)
 let rec join_buff buff sep l =
    match l with
@@ -114,6 +98,35 @@ let joinSep sep l =
       let buff = Buffer.create 128 in
       join_buff buff sep l;
       Buffer.contents buff
+
+(** Returns a traversing state *)
+let createState (data:'a) : 'a tstate =
+   { scope = []; data = data }
+
+(** Sets the data for the traversing state *)
+let setState (s:'a tstate) (data:'a) : 'a tstate =
+   { s with data = data }
+
+(** Gets the data for the traversing state *)
+let getState (s:'a tstate) : 'a =
+   s.data
+
+(** Creates a new state keepin the internal data *)
+let deriveState (s:'a tstate) (data:'b) : 'b tstate =
+   { scope = s.scope; data = data}
+
+(** Adds a name to the scope *)
+let pushScope (s:'a tstate) (name:identifier) : 'a tstate =
+   (*Printf.printf " - Entering to scope '%s'\n" (joinSep "." name);*)
+   { s with scope = name::s.scope }
+
+(** Removes the last name from the scope *)
+let popScope (s:'a tstate) : 'a tstate =
+   match s.scope with
+   | [] ->
+      Printf.printf "Error: trying pop from an empty scope";
+      s
+   | _::t -> { s with scope = t }
 
 (** Returns the minimal position of two given *)
 let getMinPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.position =
@@ -311,8 +324,10 @@ let rec traverseBottomExp (pred:(parse_exp -> bool) option) (f: ('data, parse_ex
       | StmtEmpty ->
          f state exp
       | StmtFun(name,args,stmts,type_exp,loc) ->
-         let state1,nstmts = traverseBottomExp pred f state stmts in
-         f state1 (StmtFun(name,args,nstmts,type_exp,loc))
+         let state0 = pushScope state name in
+         let state1,nstmts = traverseBottomExp pred f state0 stmts in
+         let state2,fexp = f state1 (StmtFun(name,args,nstmts,type_exp,loc)) in
+         (popScope state2),fexp
       | StmtIf(cond,then_stmts,None,loc) ->
          let state1,ncond = traverseBottomExp pred f state cond in
          let state2,nthen_stmts = traverseBottomExp pred f state1 then_stmts in
@@ -402,8 +417,9 @@ let rec traverseTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) 
          state2,StmtBind(ne1,ne2,loc)
       | StmtEmpty -> state,nexp
       | StmtFun(name,args,stmts,type_exp,loc) ->
-         let state1,nstmts = traverseTopExp pred f state stmts in
-         state1,StmtFun(name,args,nstmts,type_exp,loc)
+         let state0 = pushScope state name in
+         let state1,nstmts = traverseTopExp pred f state0 stmts in
+         (popScope state1),StmtFun(name,args,nstmts,type_exp,loc)
       | StmtIf(cond,then_stmts,None,loc) ->
          let state1,ncond = traverseTopExp pred f state cond in
          let state2,nthen_stmts = traverseTopExp pred f state1 then_stmts in
@@ -492,8 +508,9 @@ let rec foldTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fold
          state2
       | StmtEmpty -> state
       | StmtFun(name,args,stmts,type_exp,_) ->
-         let state1 = foldTopExp pred f state stmts in
-         state1
+         let state0 = pushScope state name in
+         let state1 = foldTopExp pred f state0 stmts in
+         popScope state1
       | StmtIf(cond,then_stmts,None,_) ->
          let state1 = foldTopExp pred f state cond in
          let state2 = foldTopExp pred f state1 then_stmts in
@@ -584,8 +601,9 @@ let rec foldDownExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fol
          f state2 exp
       | StmtEmpty -> state
       | StmtFun(name,args,stmts,type_exp,_) ->
-         let state1 = foldDownExp pred f state stmts in
-         f state1 exp
+         let state0 = pushScope state name in
+         let state1 = foldDownExp pred f state0 stmts in
+         f state1 exp |> popScope
       | StmtIf(cond,then_stmts,None,_) ->
          let state1 = foldDownExp pred f state cond in
          let state2 = foldDownExp pred f state1 then_stmts in
@@ -687,8 +705,10 @@ let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
          let state1,ne = expandStmt pred f state e in
          f state1 (StmtReturn(appendPseq ne,loc))
       | StmtFun(name,args,stmts,type_exp,loc) ->
-         let state1,nstmts = expandStmt pred f state stmts in
-         f state1 (StmtFun(name,args,appendBlocks nstmts,type_exp,loc))
+         let state0 = pushScope state name in
+         let state1,nstmts = expandStmt pred f state0 stmts in
+         let state2,exp = f state1 (StmtFun(name,args,appendBlocks nstmts,type_exp,loc)) in
+         (popScope state2),exp
       | StmtIf(cond,then_stmts,None,loc) ->
          let state1,nthen_stmts = expandStmt pred f state then_stmts in
          f state1 (StmtIf(cond,appendBlocks nthen_stmts,None,loc))
