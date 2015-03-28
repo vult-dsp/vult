@@ -49,14 +49,21 @@ open Either
       getFunctionTypeName: Don't really know what this does.
 *)
 
+(** Used to track the scope in all traversers *)
+type 'a tstate =
+   {
+      scope : named_id list;
+      data  : 'a
+   }
+
 (** Type of all traversing functions *)
-type ('data,'traversing_type) traverser = 'data -> 'traversing_type -> 'data * 'traversing_type
+type ('data,'traversing_type) traverser = 'data tstate -> 'traversing_type -> 'data tstate * 'traversing_type
 
 (** Type of all expanding functions *)
-type ('data,'expanding_type) expander = 'data -> 'expanding_type -> 'data * 'expanding_type list
+type ('data,'expanding_type) expander = 'data tstate -> 'expanding_type -> 'data tstate * 'expanding_type list
 
 (** Type of folding functions *)
-type ('data,'traversing_type) folder = 'data -> 'traversing_type -> 'data
+type ('data,'traversing_type) folder = 'data tstate -> 'traversing_type -> 'data tstate
 
 type ('data, 'error, 'result) expfold =
    {
@@ -72,6 +79,22 @@ type ('data, 'error, 'result) expfold =
       vTuple : 'data -> 'result list -> ('error, 'result) either;
       vEmpty : 'data -> ('error, 'result) either;
    }
+
+(** Returns a traversing state *)
+let createState (data:'a) : 'a tstate =
+   { scope = []; data = data }
+
+(** Sets the data for the traversing state *)
+let setState (s:'a tstate) (data:'a) : 'a tstate =
+   { s with data = data }
+
+(** Gets the data for the traversing state *)
+let getState (s:'a tstate) : 'a =
+   s.data
+
+(** Creates a new state keepin the internal data *)
+let deriveState (s:'a tstate) (data:'b) : 'b tstate =
+   { scope = s.scope; data = data}
 
 (** Internal function used by 'joinSep' *)
 let rec join_buff buff sep l =
@@ -164,7 +187,7 @@ let getExpLocation (e:parse_exp)  : location =
    | StmtType(_,_,_,_,loc) -> loc
 
 (** Folds the list (left-right) using the given traverser functions *)
-let foldTraverser_left traverser_function pred (traverser:('data,'traversing_type) traverser) (state:'data) (elems:'elem list) =
+let foldTraverser_left traverser_function pred (traverser:('data,'traversing_type) traverser) (state:'data tstate) (elems:'elem list) =
    let state2,acc =
       List.fold_left
          (fun (state,acc) elem ->
@@ -174,7 +197,7 @@ let foldTraverser_left traverser_function pred (traverser:('data,'traversing_typ
    state2,List.rev acc
 
 (** Folds the list (right-left) using the given traverser functions *)
-let foldTraverser_right traverser_function pred (traverser:('data,'traversing_type) traverser) (state:'data) (elems:'elem list) =
+let foldTraverser_right traverser_function pred (traverser:('data,'traversing_type) traverser) (state:'data tstate) (elems:'elem list) =
    let state2,acc =
       List.fold_left
          (fun (state,acc) elem ->
@@ -224,14 +247,14 @@ let expressionFoldEither : ('data, 'error, 'result) expfold -> 'data -> parse_ex
       go exp
 
 (** Used to traverse a identifier 'name' as 'PId(name)' *)
-let traverseNamedIdAsExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data) (name:identifier) : 'data * identifier =
+let traverseNamedIdAsExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data tstate) (name:identifier) : 'data tstate * identifier =
    let state1,new_name_exp = f state (PId(name,None,default_loc)) in
    match new_name_exp with
    | PId(new_name,_,_) -> state1,new_name
    | _ -> state1,name
 
 (** Traverses expressions bottom-up *)
-let rec traverseBottomExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data) (exp:parse_exp) : 'data * parse_exp =
+let rec traverseBottomExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data tstate) (exp:parse_exp) : 'data tstate * parse_exp =
    match pred with
    | Some(pred_f) when not (pred_f exp)-> state,exp
    | _ ->
@@ -310,10 +333,10 @@ let rec traverseBottomExp (pred:(parse_exp -> bool) option) (f: ('data, parse_ex
          f state exp
 
 (** Traverses lists expressions bottom-up. The expressions are traversed right to left *)
-and traverseBottomExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data) (expl:parse_exp list) : 'data * parse_exp list =
+and traverseBottomExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data tstate) (expl:parse_exp list) : 'data tstate * parse_exp list =
    foldTraverser_right traverseBottomExp pred f state expl
 
-and traverseBottomOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data) (exp_opt:parse_exp option) =
+and traverseBottomOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data tstate) (exp_opt:parse_exp option) =
    match exp_opt,pred with
    | Some(exp),Some(pred_f) when not (pred_f exp) -> state, exp_opt
    | Some(exp),_ ->
@@ -322,7 +345,7 @@ and traverseBottomOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp
    | None,_ -> state,None
 
 (** Traverses expressions top-down *)
-let rec traverseTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state0:'data) (exp:parse_exp) : 'data * parse_exp =
+let rec traverseTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state0:'data tstate) (exp:parse_exp) : 'data tstate * parse_exp =
    match pred with
    | Some(pred_f) when not (pred_f exp)-> state0,exp
    | _ ->
@@ -402,10 +425,10 @@ let rec traverseTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) 
 
 
 (** Traverses lists expressions top-down. The expressions are traversed left to right *)
-and traverseTopExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data) (expl:parse_exp list) : 'data * parse_exp list =
+and traverseTopExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data tstate) (expl:parse_exp list) : 'data tstate * parse_exp list =
    foldTraverser_left traverseTopExp pred f state expl
 
-and traverseTopOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data) (exp_opt:parse_exp option) =
+and traverseTopOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) traverser) (state:'data tstate) (exp_opt:parse_exp option) =
    match exp_opt,pred with
    | Some(exp),Some(pred_f) when not (pred_f exp) -> state,exp_opt
    | Some(exp),_ ->
@@ -414,7 +437,7 @@ and traverseTopOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) t
    | None,_ -> state,None
 
 (** Folds expressions top-down *)
-let rec foldTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state0:'data) (exp:parse_exp) : 'data =
+let rec foldTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state0:'data tstate) (exp:parse_exp) : 'data tstate =
    match pred with
    | Some(pred_f) when not (pred_f exp)-> state0
    | _ ->
@@ -490,14 +513,14 @@ let rec foldTopExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fold
       | StmtType(_,_,_,_,_) -> state
 
 
-and foldTopExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data) (expl:parse_exp list) : 'data =
+and foldTopExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data tstate) (expl:parse_exp list) : 'data tstate =
    List.fold_left
       (fun state elem ->
           let state1 = foldTopExp pred f state elem in
           state1)
       state expl
 
-and foldTopOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data) (exp:parse_exp option) =
+and foldTopOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data tstate) (exp:parse_exp option) =
    match exp,pred with
    | Some(e),Some(pred_f) when not (pred_f e) -> state
    | Some(e),_ ->
@@ -505,7 +528,7 @@ and foldTopOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folde
    | _ -> state
 
 (** Folds expressions bottom-up *)
-let rec foldDownExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data) (exp:parse_exp) : 'data =
+let rec foldDownExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data tstate) (exp:parse_exp) : 'data tstate =
    match pred with
    | Some(pred_f) when not (pred_f exp)-> state
    | _ ->
@@ -583,14 +606,14 @@ let rec foldDownExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) fol
          f state exp
 
 
-and foldDownExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data) (expl:parse_exp list) : 'data =
+and foldDownExpList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data tstate) (expl:parse_exp list) : 'data tstate =
    List.fold_left
       (fun state elem ->
           let state1 = foldDownExp pred f state elem in
           state1)
       state (List.rev expl)
 
-and foldDownOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data) (exp:parse_exp option) =
+and foldDownOptExp (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) folder) (state:'data tstate) (exp:parse_exp option) =
    match exp,pred with
    | Some(e),Some(pred_f) when not (pred_f e) -> state
    | Some(e),_ ->
@@ -641,7 +664,7 @@ let expandBlockOrSeq (stmt:parse_exp) : parse_exp list =
    | PSeq(stmts,_)      -> stmts
    | _ -> [stmt]
 
-let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expander) (state:'data) (stmt:parse_exp) : 'data * parse_exp list =
+let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expander) (state:'data tstate) (stmt:parse_exp) : 'data tstate * parse_exp list =
    match pred with
    | Some(pred_f) when not (pred_f stmt)-> state,[stmt]
    | _ ->
@@ -716,7 +739,7 @@ let rec expandStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
          f state2 (StmtWhile(appendPseq ne1,appendBlocks ne2,loc))
       | StmtType(_,_,_,_,_) -> f state stmt
 
-and expandStmtList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expander) (state:'data) (stmts:parse_exp list) : 'data * parse_exp list =
+and expandStmtList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expander) (state:'data tstate) (stmts:parse_exp list) : 'data tstate * parse_exp list =
    let state2,acc =
       List.fold_left
          (fun (state,acc) exp ->
@@ -725,7 +748,7 @@ and expandStmtList (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expa
          (state,[]) (List.rev stmts) in
    state2,acc |> List.flatten |> appendBlocksList |> fst
 
-and expandOptStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expander) (state:'data) (stmt:parse_exp option) : 'data * parse_exp option =
+and expandOptStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expander) (state:'data tstate) (stmt:parse_exp option) : 'data tstate * parse_exp option =
    match stmt with
    | None -> state,None
    | Some(e) ->
@@ -756,16 +779,18 @@ let getFunctionTypeAndName (names_id:named_id) : identifier * parse_exp =
 let getId : ('data,parse_exp) folder =
    fun state exp ->
       match exp with
-      | PId(name,_,_) -> name::state
+      | PId(name,_,_) -> setState state (name::state.data)
       | _ -> state
 
 (** Return the ids in an expression *)
 let getIdsInExp (exp:parse_exp) : identifier list =
-   foldTopExp None getId [] exp
+   foldTopExp None getId (createState []) exp
+   |> getState
 
 (** Return the ids in an expression list *)
 let getIdsInExpList (expl:parse_exp list) : identifier list =
-   foldTopExpList None getId [] expl
+   foldTopExpList None getId (createState []) expl
+   |> getState
 
 module Identifier =
 struct
@@ -785,16 +810,21 @@ and compareExpList (a:parse_exp list) (b:parse_exp list) : int = compare_parse_e
 let getExpFullLocation (e:parse_exp) : location =
    let f state e =
       let current_loc = getExpLocation e in
-      mergeLocations state current_loc
-   in foldTopExp None f default_loc e
+      let new_state = mergeLocations state.data current_loc in
+      setState state new_state
+   in
+   foldTopExp None f (createState default_loc) e
+   |> getState
 
 (**  Counts the number of function calls (operations) expression list has *)
 let getExpWeight (e:parse_exp) : int =
    let count acc e =
       match e with
-      | PCall(_) -> acc+1
+      | PCall(_) -> setState acc (acc.data+1)
       | _ -> acc
-   in foldTopExp None count 0 e
+   in
+   foldTopExp None count (createState 0) e
+   |> getState
 
 (** Removes the type from a named_id *)
 let removeNamedIdType (name:named_id) : named_id =
@@ -831,6 +861,7 @@ let prefixNamedId (prefix:string) (name:named_id) : named_id =
    | NamedId(n,tp,loc) -> NamedId((prefixId prefix n),tp,loc)
 
 (** Checks if the expression contains any node for which the function 'f' is true *)
-let exists f exp =
-   foldTopExp None (fun state a -> state || f a) false exp
+let exists (f:parse_exp -> bool) (exp:parse_exp) : bool =
+   foldTopExp None (fun state a -> setState state (state.data || f a)) (createState false) exp
+   |> getState
 
