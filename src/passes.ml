@@ -47,6 +47,13 @@ let (|->) : ('data,'value) transformation -> ('data,'value) transformation -> ('
       let new_state,new_exp = a state exp in
       b new_state new_exp
 
+(** Makes a chain of fold functions. E.g. foo |*> bar will apply first foo then bar. *)
+let (|*>) : ('data,'value) folder -> ('data,'value) folder -> ('data,'value) folder =
+   fun a b ->
+   fun state exp ->
+      let new_state = a state exp in
+      b new_state exp
+
 (** Pipes a pair (state,value) into transformation functions *)
 let (|+>) : ('state tstate * 'value) -> ('state, 'value) transformation -> ('state tstate * 'value) =
    fun (state,value) transformation ->
@@ -94,13 +101,39 @@ let opt_no_transform =
    }
 
 (** Traversing state one *)
-type traversing_state =
+type pass_state =
    {
       functions       : parse_exp IdentifierMap.t;
       function_weight : int IdentifierMap.t;
       counter         : int;
       options         : options;
+      function_mem    : identifier list IdentifierMap.t;
+      instances       : (identifier list IdentifierMap.t) IdentifierMap.t;
    }
+
+
+(** Registers a mem declaration in the current scope *)
+let addMemToFunction (s:pass_state tstate) (names:identifier list) =
+   let scope = getScope s in
+   (*let _ = Printf.printf "Adding mem to function %s : %s\n" (identifierStr scope) (identifierStrList names) in*)
+   if IdentifierMap.mem scope s.data.function_mem then
+      let current = IdentifierMap.find scope s.data.function_mem in
+      let new_map = IdentifierMap.add scope (current@names) s.data.function_mem in
+      { s with data = { s.data with function_mem = new_map } }
+   else
+      let new_map = IdentifierMap.add scope names s.data.function_mem in
+      { s with data = { s.data with function_mem = new_map } }
+
+(** Registers an instance in the current scope *)
+let addInstanceToFunction (s:pass_state tstate) (name:identifier) (fname:identifier) =
+   let scope             = getScope s in
+   let _ = Printf.printf "Adding insance '%s' of funtcion '%s' to '%s'\n" (identifierStr name) (identifierStr fname) (identifierStr scope) in
+   let instances_for_fun = mapfindDefault scope s.data.instances IdentifierMap.empty in
+   let current_instance  = mapfindDefault name instances_for_fun [] in
+   let new_instances     = IdentifierMap.add name (fname::current_instance) instances_for_fun in
+   let new_inst_for_fun  = IdentifierMap.add scope new_instances s.data.instances in
+   { s with data = { s.data with instances = new_inst_for_fun } }
+
 (* ======================= *)
 
 (** Transforms x:foo() - PTyped(x,foo(),_) -> PCall(x,foo,...) *)
@@ -685,11 +718,29 @@ let simplifyReturnInPSeq : ('data,parse_exp) traverser =
       | _ -> state,stmt
 
 (* ======================= *)
+(** Returns the name of the type that is declared for a function *)
+let generateTypeName (id:identifier) : string =
+   "_type_"^(joinSep "_" id)
 
-(** Takes a fold function and wrap it as it was a transformation so it can be chained with |+> *)
-let foldAsTransformation (f:('data,parse_exp) folder) (state:'data tstate) (exp_list:parse_exp list) : 'data tstate * parse_exp list =
-   let new_state = TypesUtil.foldTopExpList None f state exp_list in
-   new_state,exp_list
+let collectMemInFunctions : ('data,'value) folder =
+   fun state exp ->
+      match exp with
+      | StmtMem(elems,_,_,_) ->
+         let names = getIdsInExp elems in
+         addMemToFunction state names
+      | _ -> state
+
+let collectFunctionInstances : ('data,'value) folder =
+   fun state exp ->
+      match exp with
+      | PCall(Some(iname),fname,_,_,_) ->
+         addInstanceToFunction state iname fname
+      | _ -> state
+
+(*let createTypeForFunction (state:pass_state) (fname:indentifier) =*)
+
+
+(* ======================= *)
 
 (** Inlines functions into functions *)
 let inlineFunctionBodies (state:'data tstate) (exp_list:parse_exp list) : 'data tstate * parse_exp list =
@@ -737,12 +788,21 @@ let applyTransformations (options:options) (results:parser_results) =
          functions       = IdentifierMap.empty;
          function_weight = IdentifierMap.empty;
          options         = options;
+         function_mem    = IdentifierMap.empty;
+         instances       = IdentifierMap.empty;
       } |> createState
    in
    (* Basic transformations *)
    let basicPasses state =
       state
-      |+> TypesUtil.traverseTopExpList None (removeGroups|->makeTypedIdNamedCall|->nameFunctionCalls|->operatorsToFunctionCalls)
+      |+> TypesUtil.traverseTopExpList None
+         (removeGroups
+         |->makeTypedIdNamedCall
+         |->nameFunctionCalls
+         |->operatorsToFunctionCalls)
+      |+> TypesUtil.foldAsTransformation
+         (collectMemInFunctions
+         |*> collectFunctionInstances)
       |+> TypesUtil.expandStmtList None separateBindAndDeclaration
       |+> TypesUtil.expandStmtList None makeSingleDeclaration
       |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
@@ -763,10 +823,10 @@ let applyTransformations (options:options) (results:parser_results) =
    (* Inlining *)
    let inliningPasses state =
       state
-      |+> foldAsTransformation collectFunctionDefinitions
+      |+> TypesUtil.foldAsTransformation collectFunctionDefinitions
       |+> inlineFunctionBodies
       |+> TypesUtil.expandStmtList (Some(skipFun)) inlineStmts
-      |+> foldAsTransformation collectFunctionDefinitions
+      |+> TypesUtil.foldAsTransformation collectFunctionDefinitions
    in
    (* Used for imperative transformation *)
    let imperativePasses state =
