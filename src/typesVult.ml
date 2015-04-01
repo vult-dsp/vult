@@ -98,55 +98,124 @@ type 'a lexer_stream =
    }
 
 type identifier = string list
-      [@@deriving show,eq,ord]
+   [@@deriving show,eq,ord]
 
 (** This type is used to attach more information to the function calls *)
 type call_attribute =
    | SimpleBinding (* Used by Passes.bindFunctionCalls to mark the function calls that have been bound *)
    | DummtAttr
-         [@@deriving show,eq,ord]
+   [@@deriving show,eq,ord]
 
 type call_attributes = call_attribute list
-      [@@deriving show,eq,ord]
+   [@@deriving show,eq,ord]
 
 type named_id =
    | SimpleId of identifier * location
    | NamedId  of identifier * parse_exp * location
-                    [@@deriving show,eq,ord]
+   [@@deriving show,eq,ord]
 
 (** Parser syntax tree *)
 and parse_exp =
-   | PUnit  of location
-   | PBool  of bool       * location
-   | PInt   of string     * location
-   | PReal  of string     * location
-   | PId    of identifier * parse_exp option * location
-   | PTyped of parse_exp  * parse_exp        * location
-   | PUnOp  of string     * parse_exp        * location
-   | PBinOp of string     * parse_exp        * parse_exp * location
-   | PCall  of identifier option  * identifier * parse_exp list   * location  * call_attributes
-   | PIf    of parse_exp  * parse_exp        * parse_exp * location
-   | PGroup of parse_exp  * location
-   | PTuple of parse_exp list * location
-   | PSeq   of parse_exp list * location
+   | PUnit
+      of location
+   | PBool
+      of bool
+      *  location
+   | PInt
+      of string
+      *  location
+   | PReal
+      of string
+      *  location
+   | PId
+      of identifier        (* name *)
+      *  parse_exp option  (* type *)
+      *  location
+   | PTyped
+      of parse_exp   (* expression *)
+      *  parse_exp   (* type *)
+      *  location
+   | PUnOp
+      of string      (* operator *)
+      *  parse_exp
+      *  location
+   | PBinOp
+      of string      (* operator *)
+      *  parse_exp
+      *  parse_exp
+      *  location
+   | PCall
+      of identifier option (* name/instance *)
+      *  identifier        (* type/function name *)
+      *  parse_exp list    (* arguments *)
+      *  location
+      *  call_attributes
+   | PIf
+      of parse_exp (* condition *)
+      *  parse_exp (* then *)
+      *  parse_exp (* else *)
+      *  location
+   | PGroup
+      of parse_exp
+      *  location
+   | PTuple
+      of parse_exp list
+      *  location
+   | PSeq
+      of parse_exp list
+      *  location
    | PEmpty
-   | StmtVal      of parse_exp * parse_exp option * location
-   | StmtMem      of parse_exp * parse_exp option * parse_exp option * location
-   | StmtWhile    of parse_exp * parse_exp * location
-   | StmtReturn   of parse_exp      * location
-   | StmtIf       of parse_exp      * parse_exp * parse_exp option * location
-   | StmtFun      of identifier     * named_id list  * parse_exp   * parse_exp option * location
-   | StmtBind     of parse_exp      * parse_exp      * location
-   | StmtBlock    of parse_exp list * location
-   | StmtType     of identifier     * named_id list  * val_decl list option * parse_exp option * location
+
+   | StmtVal
+      of parse_exp        (* names/lhs *)
+      *  parse_exp option (* rhs *)
+      *  location
+   | StmtMem
+      of parse_exp        (* names/lhs *)
+      *  parse_exp option (* initial value *)
+      *  parse_exp option (* rhs *)
+      *  location
+   | StmtWhile
+      of parse_exp (* condition*)
+      *  parse_exp (* statements *)
+      *  location
+   | StmtReturn
+      of parse_exp
+      *  location
+   | StmtIf
+      of parse_exp        (* condition *)
+      *  parse_exp        (* then *)
+      *  parse_exp option (* else *)
+      *  location
+   | StmtFun
+      of identifier       (* name *)
+      *  named_id list    (* arguments *)
+      *  parse_exp        (* body *)
+      *  parse_exp option (* return type *)
+      *  location
+   | StmtBind
+      of parse_exp (* lhs *)
+      *  parse_exp (* rhs *)
+      *  location
+   | StmtBlock
+      of parse_exp list
+      *  location
+   | StmtType
+      of identifier           (* name *)
+      *  named_id list        (* arguments *)
+      *  val_decl list option (* members *)
+      *  parse_exp option     (* alias type *)
+      *  location
    | StmtEmpty
-         [@@deriving show,eq,ord]
+   [@@deriving show,eq,ord]
 
 and val_decl =
-   identifier * parse_exp * location
+   identifier  (* name *)
+   * parse_exp (* type *)
+   * location
 
 type parse_exp_list = parse_exp list
-      [@@deriving show,eq,ord]
+   [@@deriving show,eq,ord]
 
 type parser_results =
    {
