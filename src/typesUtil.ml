@@ -128,6 +128,10 @@ let popScope (s:'a tstate) : 'a tstate =
       s
    | _::t -> { s with scope = t }
 
+(** Returns the current scope *)
+let getScope (s:'a tstate) : identifier =
+   s.scope |> List.flatten
+
 (** Returns the minimal position of two given *)
 let getMinPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.position =
    if pos1.Lexing.pos_lnum <> pos2.Lexing.pos_lnum then
@@ -775,6 +779,11 @@ and expandOptStmt (pred:(parse_exp -> bool) option) (f: ('data, parse_exp) expan
       let state1,ne = expandStmt pred f state e in
       state1,Some(appendPseq ne)
 
+(** Takes a fold function and wrap it as it was a transformation so it can be chained with |+> *)
+let foldAsTransformation (f:('data,parse_exp) folder) (state:'data tstate) (exp_list:parse_exp list) : 'data tstate * parse_exp list =
+   let new_state = foldTopExpList None f state exp_list in
+   new_state,exp_list
+
 let getNameFromNamedId (named_id:named_id) : identifier =
    match named_id with
    | SimpleId(name,_)   -> name
@@ -820,6 +829,11 @@ end
 
 module IdentifierMap = CCMap.Make(Identifier)
 
+let mapfindDefault key map default =
+   if IdentifierMap.mem key map then
+      IdentifierMap.find key map
+   else default
+
 (** Compares two expressions ignoring the locations *)
 let compareExp (a:parse_exp) (b:parse_exp) : int = compare_parse_exp a b
 
@@ -853,7 +867,11 @@ let removeNamedIdType (name:named_id) : named_id =
    | _ -> name
 
 (** Converts an indentifier in a string by separating the names with dot *)
-let identifierStr (id:identifier) = (joinSep "." id)
+let identifierStr (id:identifier) : string = joinSep "." id
+
+(** Converts a list of identifiers into a coma separated string *)
+let identifierStrList (ids:identifier list) : string =
+   List.map identifierStr ids |> joinSep ", "
 
 (** Prefixes an identifier with a string *)
 let prefixId (pre:string) (id:identifier) =
