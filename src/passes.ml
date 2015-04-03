@@ -107,15 +107,16 @@ type pass_state =
       function_weight : int IdentifierMap.t;
       counter         : int;
       options         : options;
-      function_mem    : identifier list IdentifierMap.t;
+      function_mem    : exp list IdentifierMap.t;
       instances       : (identifier list IdentifierMap.t) IdentifierMap.t;
    }
 
 
 (** Registers a mem declaration in the current scope *)
-let addMemToFunction (s:pass_state tstate) (names:identifier list) =
+let addMemToFunction (s:pass_state tstate) (names:exp list) =
    let scope = getScope s in
-   let _ = Printf.printf "Adding mem to function %s : %s\n" (identifierStr scope) (identifierStrList names) in
+   let names_string = List.map PrintTypes.expressionStr names in
+   let _ = Printf.printf "Adding mem %s to function %s\n" (joinSep ", " names_string) (identifierStr scope) in
    if IdentifierMap.mem scope s.data.function_mem then
       let current = IdentifierMap.find scope s.data.function_mem in
       let new_map = IdentifierMap.add scope (current@names) s.data.function_mem in
@@ -178,7 +179,7 @@ let collectMemInFunctions : ('data,'value) folder =
    fun state exp ->
       match exp with
       | StmtMem(elems,_,_,_) ->
-         let names = getIdsInExp elems in
+         let names = getIdAsExp elems in
          addMemToFunction state names
       | _ -> state
 

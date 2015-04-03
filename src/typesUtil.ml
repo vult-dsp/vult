@@ -816,6 +816,18 @@ let getIdsInExp (exp:exp) : identifier list =
    foldTopExp None getId (createState []) exp
    |> getState
 
+(** Used by getIdsInExp and getIdsInExpList to get the ids in expressions *)
+let getIdExp : ('data,exp) folder =
+   fun state exp ->
+      match exp with
+      | PId(_,_,_) -> setState state (exp::state.data)
+      | _ -> state
+
+(** Return the id expressions *)
+let getIdAsExp (exp:exp) : exp list =
+   foldTopExp None getIdExp (createState []) exp
+   |> getState
+
 (** Return the ids in an expression list *)
 let getIdsInExpList (expl:exp list) : identifier list =
    foldTopExpList None getId (createState []) expl
