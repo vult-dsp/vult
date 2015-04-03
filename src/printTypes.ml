@@ -96,7 +96,7 @@ let rec namedIdBuff buffer id =
       expressionBuff buffer id2
 
 (** Adds to the print buffer an expression *)
-and expressionBuff buffer (exp:parse_exp) =
+and expressionBuff buffer (exp:exp) =
    match exp with
    | PId(s,type_exp,_)   ->
       identifierBuff buffer s;
@@ -248,7 +248,7 @@ and expressionListBuff buffer expl =
    printList buffer expressionBuff "," expl
 
 (** Adds to the print buffer a statement in a block list *)
-and stmtListBuff buffer (expl:parse_exp list) =
+and stmtListBuff buffer (expl:exp list) =
    match expl with
    | [h] -> expressionBuff buffer h
    | _ ->

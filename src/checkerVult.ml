@@ -44,9 +44,9 @@ type literal =
 type vultFunction =
    {
       functionname : identifier;
-      returntype   : parse_exp option;
+      returntype   : exp option;
       inputs       : named_id list;
-      body         : parse_exp;
+      body         : exp;
    }
 
 type bindings = literal IdentifierMap.t
@@ -94,7 +94,7 @@ and literalTypeEqualList : literal list -> literal list -> bool =
 
 
 (* Processing of functions. *)
-let isFunctionStmt : parse_exp -> bool =
+let isFunctionStmt : exp -> bool =
    fun stmt ->
       match stmt with
       | StmtFun _ -> true
@@ -174,7 +174,7 @@ let checkNamedId : environment -> identifier -> location -> errors option =
       | false ->
          Some ([PointedError(loc,"No declaration of variable " ^ (identifierStr name) ^ ".")])
 
-let rec flattenExp : parse_exp -> parse_exp list =
+let rec flattenExp : exp -> exp list =
    fun groupExp ->
       match groupExp with
       | PGroup (exp,loc) -> flattenExp exp
@@ -290,7 +290,7 @@ let checkFunctions : (environment, error, literal) TypesUtil.expfold =
       vEmpty = checkEmpty;
    }
 
-let rec checkExp : environment -> parse_exp -> errors option =
+let rec checkExp : environment -> exp -> errors option =
    fun env exp -> match TypesUtil.expressionFoldEither checkFunctions env exp with
       | Left err -> Some [err]
       | Right _ -> None
@@ -317,7 +317,7 @@ and checkMemValBind : environment -> val_bind -> (errors,environment) either  =
          | Some errs -> Left (SimpleError("In binding of variable " ^ name ^ ".")::errs)
          | None -> createMemory env name None
 *)
-and checkStmt : environment -> parse_exp -> (errors,environment) either =
+and checkStmt : environment -> exp -> (errors,environment) either =
    fun env stmt ->
       match stmt with
       (*
@@ -365,7 +365,7 @@ and checkStmt : environment -> parse_exp -> (errors,environment) either =
       | StmtEmpty -> Right env
       | _ -> failwith "There should not be expressions here"
 
-let checkStmts : environment -> parse_exp list -> errors option =
+let checkStmts : environment -> exp list -> errors option =
    fun env stmts ->
       match eitherFold_left checkStmt env stmts with
       | Right _ -> None
@@ -378,7 +378,7 @@ let checkFunction : environment -> vultFunction -> errors option =
       | None -> None
 
 
-let insertIfFunction : functionBindings -> parse_exp  -> (errors,functionBindings) either =
+let insertIfFunction : functionBindings -> exp  -> (errors,functionBindings) either =
    fun funcs stmt ->
       match stmt with
       | StmtFun (funcname,inputs,body,type_exp,loc) ->
@@ -386,7 +386,7 @@ let insertIfFunction : functionBindings -> parse_exp  -> (errors,functionBinding
          bindFunction funcs vultfunc
       | _ -> Right funcs
 
-let processFunctions : parse_exp list -> (errors,functionBindings) either =
+let processFunctions : exp list -> (errors,functionBindings) either =
    fun stmts ->
       (* First check in the function declarations. *)
       match eitherFold_left insertIfFunction noFunctions stmts with
@@ -400,7 +400,7 @@ let processFunctions : parse_exp list -> (errors,functionBindings) either =
             | None -> Right fbinds
          end
 
-let checkStmtsMain : parse_exp list -> errors option =
+let checkStmtsMain : exp list -> errors option =
    fun stmts ->
       match processFunctions stmts with
       | Left errs -> Some errs

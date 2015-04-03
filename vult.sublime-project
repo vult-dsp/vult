@@ -16,7 +16,6 @@
 				"node/node_modules",
 				"node/public"
 			],
-			"follow_symlinks": true,
 			"path": "."
 		}
 	]

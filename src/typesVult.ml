@@ -111,11 +111,11 @@ type call_attributes = call_attribute list
 
 type named_id =
    | SimpleId of identifier * location
-   | NamedId  of identifier * parse_exp * location
+   | NamedId  of identifier * exp * location
    [@@deriving show,eq,ord]
 
 (** Parser syntax tree *)
-and parse_exp =
+and exp =
    | PUnit
       of location
    | PBool
@@ -128,98 +128,98 @@ and parse_exp =
       of string
       *  location
    | PId
-      of identifier        (* name *)
-      *  parse_exp option  (* type *)
+      of identifier  (* name *)
+      *  exp option  (* type *)
       *  location
    | PTyped
-      of parse_exp   (* expression *)
-      *  parse_exp   (* type *)
+      of exp   (* expression *)
+      *  exp   (* type *)
       *  location
    | PUnOp
       of string      (* operator *)
-      *  parse_exp
+      *  exp
       *  location
    | PBinOp
       of string      (* operator *)
-      *  parse_exp
-      *  parse_exp
+      *  exp
+      *  exp
       *  location
    | PCall
       of identifier option (* name/instance *)
       *  identifier        (* type/function name *)
-      *  parse_exp list    (* arguments *)
+      *  exp list          (* arguments *)
       *  location
       *  call_attributes
    | PIf
-      of parse_exp (* condition *)
-      *  parse_exp (* then *)
-      *  parse_exp (* else *)
+      of exp (* condition *)
+      *  exp (* then *)
+      *  exp (* else *)
       *  location
    | PGroup
-      of parse_exp
+      of exp
       *  location
    | PTuple
-      of parse_exp list
+      of exp list
       *  location
    | PSeq
-      of parse_exp list
+      of exp list
       *  location
    | PEmpty
 
    | StmtVal
-      of parse_exp        (* names/lhs *)
-      *  parse_exp option (* rhs *)
+      of exp        (* names/lhs *)
+      *  exp option (* rhs *)
       *  location
    | StmtMem
-      of parse_exp        (* names/lhs *)
-      *  parse_exp option (* initial value *)
-      *  parse_exp option (* rhs *)
+      of exp        (* names/lhs *)
+      *  exp option (* initial value *)
+      *  exp option (* rhs *)
       *  location
    | StmtWhile
-      of parse_exp (* condition*)
-      *  parse_exp (* statements *)
+      of exp         (* condition*)
+      *  exp         (* statements *)
       *  location
    | StmtReturn
-      of parse_exp
+      of exp
       *  location
    | StmtIf
-      of parse_exp        (* condition *)
-      *  parse_exp        (* then *)
-      *  parse_exp option (* else *)
+      of exp        (* condition *)
+      *  exp        (* then *)
+      *  exp option (* else *)
       *  location
    | StmtFun
       of identifier       (* name *)
       *  named_id list    (* arguments *)
-      *  parse_exp        (* body *)
-      *  parse_exp option (* return type *)
+      *  exp        (* body *)
+      *  exp option (* return type *)
       *  location
    | StmtBind
-      of parse_exp (* lhs *)
-      *  parse_exp (* rhs *)
+      of exp         (* lhs *)
+      *  exp         (* rhs *)
       *  location
    | StmtBlock
-      of parse_exp list
+      of exp list
       *  location
    | StmtType
       of identifier           (* name *)
       *  named_id list        (* arguments *)
       *  val_decl list option (* members *)
-      *  parse_exp option     (* alias type *)
+      *  exp option           (* alias type *)
       *  location
    | StmtEmpty
    [@@deriving show,eq,ord]
 
 and val_decl =
    identifier  (* name *)
-   * parse_exp (* type *)
+   * exp       (* type *)
    * location
 
-type parse_exp_list = parse_exp list
+type exp_list = exp list
    [@@deriving show,eq,ord]
 
 type parser_results =
    {
-      presult : (parse_exp list,error list) CCError.t;
+      presult : (exp list,error list) CCError.t;
       lines   : string array;
    }
 

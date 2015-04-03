@@ -50,7 +50,7 @@ type value =
 (** Used to define types of functions: builtin and declared by the user *)
 type function_body =
    | Builtin  of (value list -> value)
-   | Declared of parse_exp
+   | Declared of exp
 
 (** Environment of the interpreter used to store all bindings and declarations *)
 type local_env =
@@ -106,7 +106,7 @@ let getVarName (named_id:named_id) : identifier =
    | NamedId (name,_,_) -> name
 
 (** Returns the name in an id expression *)
-let getExpName (exp:parse_exp) : identifier =
+let getExpName (exp:exp) : identifier =
    match exp with
    | PId(name,_,_) ->  name
    | _ -> failwith "This expression should be an id"
@@ -222,7 +222,7 @@ let rec evalFun (loc:local_env) (body:function_body) (args:value list) : value *
    | _ -> failwith "Invalid function body"
 
 (** Evaluates an expression or statement *)
-and runExp (loc:local_env) (exp:parse_exp) : value * local_env * bool =
+and runExp (loc:local_env) (exp:exp) : value * local_env * bool =
    match exp with
    | PUnit(_)   -> VUnit,loc,false
    | PBool(v,_) -> VBool(v),loc,false
@@ -318,12 +318,12 @@ and runExp (loc:local_env) (exp:parse_exp) : value * local_env * bool =
       in loop cond_val loc 0
 
 (** Evaluates a list of expressions *)
-and runExpList (loc:local_env) (expl:parse_exp list) : value list * local_env =
+and runExpList (loc:local_env) (expl:exp list) : value list * local_env =
    let loc,acc = List.fold_left (fun (s,acc) a -> let v,ns,_ = runExp s a in ns,v::acc) (loc,[]) expl in
    List.rev acc,loc
 
 (** Evaluates a list of statements *)
-and runStmtList (loc:local_env) (expl:parse_exp list) : value * local_env * bool =
+and runStmtList (loc:local_env) (expl:exp list) : value * local_env * bool =
    let loc = pushLocal loc in
    let rec loop loc stmts =
       match stmts with

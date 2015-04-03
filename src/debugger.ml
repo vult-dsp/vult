@@ -158,7 +158,7 @@ let getNameLocation (name:named_id) : location =
    | SimpleId(_,loc) -> loc
    | NamedId(_,_,loc) -> loc
 
-let rec assemble (i0:instruction list) (exp:parse_exp) =
+let rec assemble (i0:instruction list) (exp:exp) =
    match exp with
    | PUnit(loc)   ->
       let line = locationLine loc in
@@ -263,12 +263,12 @@ let rec assemble (i0:instruction list) (exp:parse_exp) =
    | PEmpty          -> failwith "No empty expressions should remain"
    | StmtEmpty       -> failwith "No empty statements should remain"
 
-and assembleListExp (i0:instruction list) (exp_list:parse_exp list) : instruction list =
+and assembleListExp (i0:instruction list) (exp_list:exp list) : instruction list =
    List.fold_left (fun i e -> assemble i e) i0 exp_list
-and assembleListStmt (i0:instruction list) (exp_list:parse_exp list) : instruction list =
+and assembleListStmt (i0:instruction list) (exp_list:exp list) : instruction list =
    List.fold_left (fun i e -> assemble i e) i0 exp_list
    |> List.rev
-and assembleRev (exp:parse_exp) : instruction list =
+and assembleRev (exp:exp) : instruction list =
    assemble [] exp
 
 (** Returns the value for the given variable *)

@@ -103,7 +103,7 @@ let opt_no_transform =
 (** Traversing state one *)
 type pass_state =
    {
-      functions       : parse_exp IdentifierMap.t;
+      functions       : exp IdentifierMap.t;
       function_weight : int IdentifierMap.t;
       counter         : int;
       options         : options;
@@ -115,7 +115,7 @@ type pass_state =
 (** Registers a mem declaration in the current scope *)
 let addMemToFunction (s:pass_state tstate) (names:identifier list) =
    let scope = getScope s in
-   (*let _ = Printf.printf "Adding mem to function %s : %s\n" (identifierStr scope) (identifierStrList names) in*)
+   let _ = Printf.printf "Adding mem to function %s : %s\n" (identifierStr scope) (identifierStrList names) in
    if IdentifierMap.mem scope s.data.function_mem then
       let current = IdentifierMap.find scope s.data.function_mem in
       let new_map = IdentifierMap.add scope (current@names) s.data.function_mem in
@@ -136,8 +136,65 @@ let addInstanceToFunction (s:pass_state tstate) (name:identifier) (fname:identif
 
 (* ======================= *)
 
+(** Changes (x) -> x *)
+let removeGroups : ('data,exp) transformation =
+   fun state exp ->
+      match exp with
+      | PGroup(e,_) ->
+         state,e
+      | _ -> state,exp
+
+(* ======================= *)
+
+(** Adds a default name to all function calls. e.g. foo(x) ->  _inst_0:foo(x) *)
+let nameFunctionCalls : ('data,exp) transformation =
+   fun state exp ->
+      match exp with
+      | PCall(None,name,args,floc,attr) ->
+         let inst = "_i"^(string_of_int state.data.counter) in
+         let ret_state = { state.data with counter = state.data.counter+1} in
+         (setState state ret_state),PCall(Some([inst]),name,args,floc,attr)
+      | _ -> state,exp
+
+(* ======================= *)
+
+(** Transforms all operators into function calls *)
+let operatorsToFunctionCalls : ('data,exp) transformation =
+   fun state exp ->
+      match exp with
+      | PUnOp(op,e,loc) ->
+         state,PCall(None,["'"^op^"'"],[e],loc,[])
+      | PBinOp(op,e1,e2,loc) ->
+         state,PCall(None,["'"^op^"'"],[e1;e2],loc,[])
+      | _ -> state,exp
+
+(* ======================= *)
+
+(** Returns the name of the type that is declared for a function *)
+let generateTypeName (id:identifier) : string =
+   "_type_"^(joinSep "_" id)
+
+let collectMemInFunctions : ('data,'value) folder =
+   fun state exp ->
+      match exp with
+      | StmtMem(elems,_,_,_) ->
+         let names = getIdsInExp elems in
+         addMemToFunction state names
+      | _ -> state
+
+let collectFunctionInstances : ('data,'value) folder =
+   fun state exp ->
+      match exp with
+      | PCall(Some(iname),fname,_,_,_) ->
+         addInstanceToFunction state iname fname
+      | _ -> state
+
+(*let createTypeForFunction (state:pass_state) (fname:indentifier) =*)
+
+(* ======================= *)
+
 (** Transforms x:foo() - PTyped(x,foo(),_) -> PCall(x,foo,...) *)
-let makeTypedIdNamedCall : ('data,parse_exp) traverser =
+let makeTypedIdNamedCall : ('data,exp) traverser =
    fun state exp ->
       match exp with
       | PId(id,Some(PCall(None,fname,args,loc,attr)),_) ->
@@ -146,9 +203,8 @@ let makeTypedIdNamedCall : ('data,parse_exp) traverser =
          state,PCall(Some(id),fname,args,loc,attr)
       | _ -> state,exp
 
-
 (** Transforms mem x=0; -> mem x; x=0; *)
-let separateBindAndDeclaration : ('data,parse_exp) expander =
+let separateBindAndDeclaration : ('data,exp) expander =
    fun state stmt ->
       match stmt with
       | StmtMem(lhs,init,Some(rhs),loc) ->
@@ -159,53 +215,10 @@ let separateBindAndDeclaration : ('data,parse_exp) expander =
          state,stmts
       | _ -> state,[stmt]
 
-let isReturn : ('data,parse_exp) folder =
-   fun state e ->
-      match e with
-      | StmtReturn(_,_) -> setState state true
-      | _ -> state
-
-let isIfStmt : ('data,parse_exp) folder =
-   fun state e ->
-      match e with
-      | StmtIf(_,_,_,_) -> setState state true
-      | _ -> state
-
-let skipPSeq (e:parse_exp) : bool =
-   match e with
-   | PSeq(_,_) -> false
-   | _ -> true
-
-let skipFun (stmt:parse_exp) : bool =
-   match stmt with
-   | StmtFun(_,_,_,_,_) -> false
-   | _ -> true
-
-let skipBlock (stmt:parse_exp) : bool =
-   match stmt with
-   | StmtBlock(_,_) -> false
-   | _ -> true
-
-let skipIfStmt (stmt:parse_exp) : bool =
-   match stmt with
-   | StmtIf(_) -> false
-   | _ -> true
-
-let skipPIf (stmt:parse_exp) : bool =
-   match stmt with
-   | PIf(_) -> false
-   | _ -> true
-
-let rec map3 f a b c =
-   match a,c,b with
-   | [],[],[] -> []
-   | h1::t1,h2::t2,h3::t3 -> (f h1 h2 h3)::(map3 f t1 t2 t3)
-   | _ -> failwith "map3: Different number of elements in lists"
-
 (* ======================= *)
 
 (** Transforms val x,y; -> val x; val y; *)
-let makeSingleDeclaration : ('data,parse_exp) expander =
+let makeSingleDeclaration : ('data,exp) expander =
    fun state stmt ->
       match stmt with
       | StmtVal(PTuple(elems,_),None,loc) ->
@@ -222,72 +235,12 @@ let makeSingleDeclaration : ('data,parse_exp) expander =
 
 (* ======================= *)
 
-(** Adds a default name to all function calls. e.g. foo(x) ->  _inst_0:foo(x) *)
-let nameFunctionCalls : ('data,parse_exp) transformation =
-   fun state exp ->
-      match exp with
-      | PCall(None,name,args,floc,attr) ->
-         let inst = "_i"^(string_of_int state.data.counter) in
-         let ret_state = { state.data with counter = state.data.counter+1} in
-         (setState state ret_state),PCall(Some([inst]),name,args,floc,attr)
-      | _ -> state,exp
-
-(* ======================= *)
-
-(** Changes (x) -> x *)
-let removeGroups : ('data,parse_exp) transformation =
-   fun state exp ->
-      match exp with
-      | PGroup(e,_) ->
-         state,e
-      | _ -> state,exp
-
-(* ======================= *)
-
-(** Transforms all operators into function calls *)
-let operatorsToFunctionCalls : ('data,parse_exp) transformation =
-   fun state exp ->
-      match exp with
-      | PUnOp(op,e,loc) ->
-         state,PCall(None,["'"^op^"'"],[e],loc,[])
-      | PBinOp(op,e1,e2,loc) ->
-         state,PCall(None,["'"^op^"'"],[e1;e2],loc,[])
-      | _ -> state,exp
-
-(* ======================= *)
-
-(** Changes (a,b) = (c,d) -> a=c; b=d. If not possible uses temporary variables like (a,b) =  (b,a) -> tmp1=a;tmp2=b; b=tmp1; a=tmp2 *)
-let simplifyTupleAssign : ('data,parse_exp) expander =
-   fun state exp ->
-      match exp with
-      | StmtBind(PTuple(lhs,loc1),PTuple(rhs,loc2),loc) ->
-         let lhs_id = TypesUtil.getIdsInExpList lhs in
-         let rhs_id = TypesUtil.getIdsInExpList rhs in
-         let common = Set.inter lhs_id rhs_id in
-         begin
-            match common with
-            | [] -> state,List.map2 (fun a b -> StmtBind(a,b,loc)) lhs rhs
-            | _  ->
-               let init = state.data.counter in
-               let tmp_vars  = List.mapi (fun i _ -> ["_tpl"^(string_of_int (i+init))]) lhs in
-               let tmp_e     = List.map (fun a -> PId(a,None,loc)) tmp_vars in
-               let to_tmp    = List.map2 (fun a b -> StmtBind(a,b,loc)) tmp_e rhs in
-               let from_tmp  = List.map2 (fun a b -> StmtBind(a,b,loc)) lhs tmp_e in
-               let decl = List.map (fun a -> StmtVal(PId(a,None,loc),None,loc)) tmp_vars in
-               let ret_state = { state.data with counter = init+(List.length lhs)} in
-               (setState state ret_state),decl@to_tmp@from_tmp
-         end
-      | _ -> state,[exp]
-
-
-(* ======================= *)
-
 (** True if the attributes contains SimpleBinding *)
 let isSimpleBinding (attr:call_attributes) : bool =
    List.exists (fun a->a=SimpleBinding) attr
 
 (** Creates bindings for all function calls in an expression *)
-let bindFunctionAndIfExpCallsInExp : (int * parse_exp list,parse_exp) transformation =
+let bindFunctionAndIfExpCallsInExp : (int * exp list,exp) transformation =
    fun state exp ->
       match exp with
       | PIf(_,_,_,loc) ->
@@ -307,7 +260,7 @@ let bindFunctionAndIfExpCallsInExp : (int * parse_exp list,parse_exp) transforma
       | _ -> state,exp
 
 (** Binds all function calls to a variable. e.g. foo(bar(x)) -> tmp1 = bar(x); tmp2 = foo(tmp1); tmp2; *)
-let bindFunctionAndIfExpCalls : ('data,parse_exp) expander  =
+let bindFunctionAndIfExpCalls : ('data,exp) expander  =
    fun state stmt ->
       match stmt with
       | StmtBind(lhs,PCall(name,fname,args,loc1,attr),loc) ->
@@ -358,8 +311,89 @@ let bindFunctionAndIfExpCalls : ('data,parse_exp) expander  =
 
 (* ======================= *)
 
+(** Changes (a,b) = (c,d) -> a=c; b=d. If not possible uses temporary variables like (a,b) =  (b,a) -> tmp1=a;tmp2=b; b=tmp1; a=tmp2 *)
+let simplifyTupleAssign : ('data,exp) expander =
+   fun state exp ->
+      match exp with
+      | StmtBind(PTuple(lhs,loc1),PTuple(rhs,loc2),loc) ->
+         let lhs_id = TypesUtil.getIdsInExpList lhs in
+         let rhs_id = TypesUtil.getIdsInExpList rhs in
+         let common = Set.inter lhs_id rhs_id in
+         begin
+            match common with
+            | [] -> state,List.map2 (fun a b -> StmtBind(a,b,loc)) lhs rhs
+            | _  ->
+               let init = state.data.counter in
+               let tmp_vars  = List.mapi (fun i _ -> ["_tpl"^(string_of_int (i+init))]) lhs in
+               let tmp_e     = List.map (fun a -> PId(a,None,loc)) tmp_vars in
+               let to_tmp    = List.map2 (fun a b -> StmtBind(a,b,loc)) tmp_e rhs in
+               let from_tmp  = List.map2 (fun a b -> StmtBind(a,b,loc)) lhs tmp_e in
+               let decl = List.map (fun a -> StmtVal(PId(a,None,loc),None,loc)) tmp_vars in
+               let ret_state = { state.data with counter = init+(List.length lhs)} in
+               (setState state ret_state),decl@to_tmp@from_tmp
+         end
+      | _ -> state,[exp]
+
+
+let isReturn : ('data,exp) folder =
+   fun state e ->
+      match e with
+      | StmtReturn(_,_) -> setState state true
+      | _ -> state
+
+let isIfStmt : ('data,exp) folder =
+   fun state e ->
+      match e with
+      | StmtIf(_,_,_,_) -> setState state true
+      | _ -> state
+
+let skipPSeq (e:exp) : bool =
+   match e with
+   | PSeq(_,_) -> false
+   | _ -> true
+
+let skipFun (stmt:exp) : bool =
+   match stmt with
+   | StmtFun(_,_,_,_,_) -> false
+   | _ -> true
+
+let skipBlock (stmt:exp) : bool =
+   match stmt with
+   | StmtBlock(_,_) -> false
+   | _ -> true
+
+let skipIfStmt (stmt:exp) : bool =
+   match stmt with
+   | StmtIf(_) -> false
+   | _ -> true
+
+let skipPIf (stmt:exp) : bool =
+   match stmt with
+   | PIf(_) -> false
+   | _ -> true
+
+let rec map3 f a b c =
+   match a,c,b with
+   | [],[],[] -> []
+   | h1::t1,h2::t2,h3::t3 -> (f h1 h2 h3)::(map3 f t1 t2 t3)
+   | _ -> failwith "map3: Different number of elements in lists"
+
+let hasReturn (stmt:exp) : bool =
+   foldTopExp (Some(skipPSeq)) isReturn (createState false) stmt
+   |> getState
+
+let hasReturnList (stmts:exp list) : bool =
+   foldTopExpList (Some(skipPSeq)) isReturn (createState false) stmts
+   |> getState
+
+let hasIfStmtList (stmts:exp list) : bool =
+   foldTopExpList (Some(skipPSeq)) isIfStmt (createState false) stmts
+   |> getState
+
+(* ======================= *)
+
 (** Adds all function definitions to a map in the state and also the weight of the function *)
-let collectFunctionDefinitions : ('data,parse_exp) folder =
+let collectFunctionDefinitions : ('data,exp) folder =
    fun state exp ->
       match exp with
       | StmtFun(name,args,stmts,type_exp,loc) ->
@@ -377,14 +411,14 @@ let collectFunctionDefinitions : ('data,parse_exp) folder =
 (* ======================= *)
 
 (** Changes appends the given prefix to all named_ids *)
-let prefixAllNamedIds : ('data,parse_exp) transformation =
+let prefixAllNamedIds : ('data,exp) transformation =
    fun state exp ->
       match exp with
       | PId(name,type_exp,loc) -> state,PId(prefixId state.data name,type_exp,loc)
       | _ -> state,exp
 
 (** inlines the given function call by preparing the assignments and replacing the statements *)
-let inlineFunctionCall (state:'data tstate) (call_name:identifier) (ftype:identifier) (args:parse_exp list) loc : parse_exp list =
+let inlineFunctionCall (state:'data tstate) (call_name:identifier) (ftype:identifier) (args:exp list) loc : exp list =
    let function_def = IdentifierMap.find ftype state.data.functions in
    match function_def with
    | StmtFun(_,fargs,fbody,type_exp,_) ->
@@ -398,7 +432,7 @@ let inlineFunctionCall (state:'data tstate) (call_name:identifier) (ftype:identi
    | _ -> failwith "inlineFunctionCall: Invalid function declaration"
 
 (** Main traverser/expander to inline function calls *)
-let inlineStmts : ('data,parse_exp) expander =
+let inlineStmts : ('data,exp) expander =
    fun state exp ->
       match exp with
       | PCall(optname,fname,args,loc,_) ->
@@ -414,27 +448,17 @@ let inlineStmts : ('data,parse_exp) expander =
                   state,[exp]
                else begin
                   let new_stmts = inlineFunctionCall state name fname args loc in
-                  state,[PSeq(new_stmts,loc)]
+                  match new_stmts with
+                  | [] -> state,[]
+                  | _  -> state,[PSeq(new_stmts,loc)]
                end
          end
       | _ -> state,[exp]
 
 (* ======================= *)
 
-let hasReturn (stmt:parse_exp) : bool =
-   foldTopExp (Some(skipPSeq)) isReturn (createState false) stmt
-   |> getState
-
-let hasReturnList (stmts:parse_exp list) : bool =
-   foldTopExpList (Some(skipPSeq)) isReturn (createState false) stmts
-   |> getState
-
-let hasIfStmtList (stmts:parse_exp list) : bool =
-   foldTopExpList (Some(skipPSeq)) isIfStmt (createState false) stmts
-   |> getState
-
 (** Returns true if there is a return statement inside an if expression *)
-let hasIfStmtWithReturnList (stmts:parse_exp list) : bool =
+let hasIfStmtWithReturnList (stmts:exp list) : bool =
    let fold_function state stmt =
       match stmt with
       | StmtIf(_,then_exp,None,_)  ->
@@ -447,7 +471,7 @@ let hasIfStmtWithReturnList (stmts:parse_exp list) : bool =
    |> getState
 
 (** Returns Some(e,stmts) if the sequence has a single path until it returns *)
-let rec isSinglePathStmtList (acc:parse_exp list) (stmts:parse_exp list) : (parse_exp * parse_exp list) option =
+let rec isSinglePathStmtList (acc:exp list) (stmts:exp list) : (exp * exp list) option =
    match stmts with
    | [] -> None
    | [StmtReturn(e,_)] -> Some(e,List.rev acc)
@@ -455,7 +479,7 @@ let rec isSinglePathStmtList (acc:parse_exp list) (stmts:parse_exp list) : (pars
    | h::t -> isSinglePathStmtList (h::acc) t
 
 (** Transforms x = {return y;}; -> x = y;  and _ = { stmts; } -> stmts *)
-let simplifySequenceBindings : ('data,parse_exp) traverser =
+let simplifySequenceBindings : ('data,exp) traverser =
    fun state exp ->
       match exp with
       | PSeq([PSeq(stmts,loc1)],loc2) ->
@@ -475,7 +499,7 @@ let simplifySequenceBindings : ('data,parse_exp) traverser =
 (* ======================= *)
 
 (** Removes all the mem statememts *)
-let rec removeAllMem : ('data,parse_exp) expander =
+let rec removeAllMem : ('data,exp) expander =
    fun state exp ->
       match exp with
       | StmtMem(PId(name,_,_),_,_,_) when IdentifierMap.mem name state.data ->
@@ -485,7 +509,7 @@ let rec removeAllMem : ('data,parse_exp) expander =
       | _ -> state,[exp]
 
 (** Removes all the val statememts *)
-let rec removeAllVal : ('data,parse_exp) expander =
+let rec removeAllVal : ('data,exp) expander =
    fun state exp ->
       match exp with
       | StmtVal(PId(name,_,_),_,_) when IdentifierMap.mem name state.data ->
@@ -495,7 +519,7 @@ let rec removeAllVal : ('data,parse_exp) expander =
       | _ -> state,[exp]
 
 (** collects all non repeated mem statements *)
-let collectMemDecl : ('data,parse_exp) folder =
+let collectMemDecl : ('data,exp) folder =
    fun state exp ->
       match exp with
       | StmtMem(PId(name,_,_),_,_,_) when IdentifierMap.mem name state.data ->
@@ -505,7 +529,7 @@ let collectMemDecl : ('data,parse_exp) folder =
       | _ -> state
 
 (** collects all val statements *)
-let collectValDecl : ('data,parse_exp) folder =
+let collectValDecl : ('data,exp) folder =
    fun state exp ->
       match exp with
       | StmtVal(PId(name,_,_),_,_) when IdentifierMap.mem name state.data ->
@@ -515,7 +539,7 @@ let collectValDecl : ('data,parse_exp) folder =
       | _ -> state
 
 (** Removes duplicated mem declarations from StmtSequence and moves to the top the val *)
-let relocateMemAndVal : ('data,parse_exp) traverser =
+let relocateMemAndVal : ('data,exp) traverser =
    fun state exp ->
       match exp with
       | StmtFun(name,args,body,type_exp,loc) ->
@@ -549,7 +573,7 @@ let relocateMemAndVal : ('data,parse_exp) traverser =
 
 (* ======================= *)
 (** Changes if(cond,e1,e2) -> if(cond,{|return e1|},{|return e2|})*)
-let makeIfStatement : ('data,parse_exp) traverser =
+let makeIfStatement : ('data,exp) traverser =
    fun state exp ->
       match exp with
       | StmtBind(lhs,PIf(cond,then_exp,else_exp,iloc),bloc) ->
@@ -559,7 +583,7 @@ let makeIfStatement : ('data,parse_exp) traverser =
 (* ======================= *)
 
 (** Negates a condition*)
-let notCondition (exp:parse_exp) =
+let notCondition (exp:exp) =
    match exp with
    | PCall(_,["'!'"],[exp],_,_) -> exp
    | _ ->
@@ -567,7 +591,7 @@ let notCondition (exp:parse_exp) =
       PCall(None,["'!'"],[exp],loc,[])
 
 (** Splits if statemtents containing else in order to apply simplifications. e.g. if(a) stmt1; else stmt2; -> if(a) stmt1; if(!a) stmt2; *)
-let splitIfWithTwoReturns : ('data,parse_exp) expander =
+let splitIfWithTwoReturns : ('data,exp) expander =
    fun state exp ->
       match exp with
       | StmtIf(cond,then_exp,Some(else_exp),loc) ->
@@ -581,7 +605,7 @@ let splitIfWithTwoReturns : ('data,parse_exp) expander =
       | _ -> state,[exp]
 
 (** Wrapps changes return a; -> if(true) return a; This is useful to apply transforations *)
-let wrapSimpleReturn : ('data,parse_exp) traverser =
+let wrapSimpleReturn : ('data,exp) traverser =
    fun state stmt ->
       match stmt with
       | StmtReturn(e,loc) -> state,StmtIf(PBool(true,loc),StmtReturn(e,loc),None,loc)
@@ -595,7 +619,7 @@ let rec replaceReturn ret_var stmts =
    | _ -> replace stmts
 
 (** Main transformation that eliminates the returns (assumes that return -> if(true) goto :end_of_function ) *)
-let rec simplifyReturnPaths (ret_var:parse_exp) (stmts:parse_exp list) : parse_exp list =
+let rec simplifyReturnPaths (ret_var:exp) (stmts:exp list) : exp list =
    match stmts with
    | [] -> []
    | StmtIf(cond,then_stmts,None,loc)::[] when hasReturn then_stmts ->
@@ -606,7 +630,7 @@ let rec simplifyReturnPaths (ret_var:parse_exp) (stmts:parse_exp list) : parse_e
    | h::t -> h::(simplifyReturnPaths ret_var t)
 
 (** Transforms if(a){} if(!a){} -> if(a) {} else {} *)
-let rec collapseUnnecessaryIf (stmts:parse_exp list) : parse_exp list =
+let rec collapseUnnecessaryIf (stmts:exp list) : exp list =
    match stmts with
    | [] -> []
    | StmtIf(cond1,StmtIf(cond2,then_stmt2,_,loc2),else_stmt,loc1)::t
@@ -618,14 +642,14 @@ let rec collapseUnnecessaryIf (stmts:parse_exp list) : parse_exp list =
    | h::t -> h::(collapseUnnecessaryIf t)
 
 (** Removes nested block created by the transformations *)
-let removeUnnecessaryBlocks : ('data,parse_exp) traverser =
+let removeUnnecessaryBlocks : ('data,exp) traverser =
    fun state stmt ->
       match stmt with
       | StmtBlock([h],_) -> state,h
       | _ -> state,stmt
 
 (** Given a condition that we know is true, evaluates the if-statements using that condition *)
-let evaluateCertainConditions : ('data,parse_exp) traverser =
+let evaluateCertainConditions : ('data,exp) traverser =
    fun state stmt ->
       match stmt with
       | StmtIf(cond,then_stmt,_,loc) when compareExp state.data cond = 0 ->
@@ -635,7 +659,7 @@ let evaluateCertainConditions : ('data,parse_exp) traverser =
       | _ -> state,stmt
 
 (** Simplifies dummy if-statements created by the transfrmations. e.g. if(true) ... or if(a) { if(!a) ...}  *)
-let removeUnnecesaryIfConditions : ('data,parse_exp) traverser =
+let removeUnnecesaryIfConditions : ('data,exp) traverser =
    fun state stmt ->
       match stmt with
       | StmtIf(PBool(true,_),then_stmt,_,loc) -> state,then_stmt
@@ -655,7 +679,7 @@ let removeUnnecesaryIfConditions : ('data,parse_exp) traverser =
       | _ -> state,stmt
 
 (** Changes if(!a) stmt1 else stmt2 -> if(a) stmt2 else stmt1 *)
-let removeSwapedIfCondition : ('data,parse_exp) traverser =
+let removeSwapedIfCondition : ('data,exp) traverser =
    fun state stmt ->
       match stmt with
       | StmtIf(PCall(_,["'!'"],[exp],_,_),then_stmt,Some(else_stmt),loc)->
@@ -663,7 +687,7 @@ let removeSwapedIfCondition : ('data,parse_exp) traverser =
       | _ -> state,stmt
 
 (** Removes if-statements with empty blocks *)
-let removeEmptyIfConditions : ('data,parse_exp) traverser =
+let removeEmptyIfConditions : ('data,exp) traverser =
    fun state stmt ->
       match stmt with
       | StmtIf(cond,StmtBlock([],_),Some(else_stmt),loc) ->
@@ -673,7 +697,7 @@ let removeEmptyIfConditions : ('data,parse_exp) traverser =
       | _ -> state,stmt
 
 (** Applies the return elimination to each if-statement *)
-let simplifyReturn : ('data,parse_exp) traverser =
+let simplifyReturn : ('data,exp) traverser =
    fun state stmt ->
       match stmt with
       | StmtIf(cond,then_stmt,Some(else_stmt),loc)
@@ -699,7 +723,7 @@ let simplifyReturn : ('data,parse_exp) traverser =
       | _ -> state,stmt
 
 (** Applies elimination of return statements to PSeq. Considers a return as a variable binding followed by a goto *)
-let simplifyReturnInPSeq : ('data,parse_exp) traverser =
+let simplifyReturnInPSeq : ('data,exp) traverser =
    fun state stmt ->
       match stmt with
       | PSeq(pseq_stmts,loc) when hasIfStmtWithReturnList pseq_stmts ->
@@ -718,32 +742,9 @@ let simplifyReturnInPSeq : ('data,parse_exp) traverser =
       | _ -> state,stmt
 
 (* ======================= *)
-(** Returns the name of the type that is declared for a function *)
-let generateTypeName (id:identifier) : string =
-   "_type_"^(joinSep "_" id)
-
-let collectMemInFunctions : ('data,'value) folder =
-   fun state exp ->
-      match exp with
-      | StmtMem(elems,_,_,_) ->
-         let names = getIdsInExp elems in
-         addMemToFunction state names
-      | _ -> state
-
-let collectFunctionInstances : ('data,'value) folder =
-   fun state exp ->
-      match exp with
-      | PCall(Some(iname),fname,_,_,_) ->
-         addInstanceToFunction state iname fname
-      | _ -> state
-
-(*let createTypeForFunction (state:pass_state) (fname:indentifier) =*)
-
-
-(* ======================= *)
 
 (** Inlines functions into functions *)
-let inlineFunctionBodies (state:'data tstate) (exp_list:parse_exp list) : 'data tstate * parse_exp list =
+let inlineFunctionBodies (state:'data tstate) (exp_list:exp list) : 'data tstate * exp list =
    let inlineFunctionBody name fun_decl (functions,weigths) =
       match fun_decl with
       | StmtFun(fname,fargs,fbody,type_exp,loc) ->
@@ -797,9 +798,9 @@ let applyTransformations (options:options) (results:parser_results) =
       state
       |+> TypesUtil.traverseTopExpList None
          (removeGroups
-         |->makeTypedIdNamedCall
-         |->nameFunctionCalls
-         |->operatorsToFunctionCalls)
+         |-> makeTypedIdNamedCall
+         |-> nameFunctionCalls
+         |-> operatorsToFunctionCalls)
       |+> TypesUtil.foldAsTransformation
          (collectMemInFunctions
          |*> collectFunctionInstances)
