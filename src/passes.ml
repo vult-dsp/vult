@@ -26,7 +26,6 @@ THE SOFTWARE.
 (** Transformations and optimizations of the syntax tree *)
 
 open TypesVult
-open CCList
 open TypesUtil
 
 
@@ -172,8 +171,16 @@ let operatorsToFunctionCalls : ('data,exp) transformation =
 (* ======================= *)
 
 (** Returns the name of the type that is declared for a function *)
-let generateTypeName (id:identifier) : string =
-   "_type_"^(joinSep "_" id)
+let generateTypeName (id:identifier) : identifier =
+   ["_type_"^(joinSep "_" id)]
+
+let generateTypeNameForInstance (ids:identifier list) : identifier =
+   let s =
+      ids
+      |> List.map (joinSep "_")
+      |> List.sort compare
+      |> joinSep "_" in
+   ["_type_"^s]
 
 let collectMemInFunctions : ('data,'value) folder =
    fun state exp ->
@@ -190,7 +197,51 @@ let collectFunctionInstances : ('data,'value) folder =
          addInstanceToFunction state iname fname
       | _ -> state
 
-(*let createTypeForFunction (state:pass_state) (fname:indentifier) =*)
+let getIdAndType (e:exp) =
+   match e with
+   | PId(name,Some(tp),_) -> name,tp
+   | PId(name,None,loc) -> name,PId(["float"],None,loc)
+   | _ -> failwith "getIdAndType: not expected mem declaration"
+
+let mergeTypes (t1:exp) (t2:exp) : exp =
+   match t1,t2 with
+   | StmtType(name1,[],Some(members1),None,loc1),StmtType(name2,[],Some(members2),None,loc2) ->
+      let name = generateTypeNameForInstance [name1;name2] in
+      let member_cmp (a,_,_) (b,_,_) = compare a b in
+      (* TODO: Add check for equal types *)
+      let members = CCList.sort_uniq ~cmp:member_cmp (members1@members2) in
+      let loc = mergeLocations loc1 loc2 in
+      StmtType(name,[],Some(members),None,loc)
+   | _ -> failwith "mergeTypes: cannot merge these types"
+
+let rec createTypeForFunction (state:pass_state tstate) (fname:identifier) : exp list =
+   let instances = mapfindDefault fname state.data.instances IdentifierMap.empty in
+   let mems      = mapfindDefault fname state.data.function_mem [] in
+   let mem_pairs = List.map (fun a -> getIdAndType a) mems in
+   let inst_pais =
+      IdentifierMap.fold
+         (fun name types acc -> (name,PId(generateTypeNameForInstance types,None,default_loc))::acc)
+         instances []
+   in
+   let inst_types = IdentifierMap.fold
+         (fun name types acc -> (createTypeForFunction state name)@acc)
+         instances []
+   in
+   let merged_type =
+      match inst_types with
+      | [] -> []
+      | h::t -> [List.fold_left mergeTypes h t]
+   in
+   let members = List.map (fun (a,b)-> a,b,default_loc) (mem_pairs@inst_pais) in
+   StmtType(generateTypeName fname,[],Some(members),None,default_loc)::merged_type
+
+let createTypes : ('data,exp) expander =
+   fun state e ->
+      match e with
+      | StmtFun(name,_,_,_,_) ->
+         let type_decl = createTypeForFunction state name in
+         state,e::type_decl
+      | _ -> state,[e]
 
 (* ======================= *)
 
@@ -319,7 +370,7 @@ let simplifyTupleAssign : ('data,exp) expander =
       | StmtBind(PTuple(lhs,loc1),PTuple(rhs,loc2),loc) ->
          let lhs_id = TypesUtil.getIdsInExpList lhs in
          let rhs_id = TypesUtil.getIdsInExpList rhs in
-         let common = Set.inter lhs_id rhs_id in
+         let common = CCList.Set.inter lhs_id rhs_id in
          begin
             match common with
             | [] -> state,List.map2 (fun a b -> StmtBind(a,b,loc)) lhs rhs
@@ -802,9 +853,6 @@ let applyTransformations (options:options) (results:parser_results) =
          |-> makeTypedIdNamedCall
          |-> nameFunctionCalls
          |-> operatorsToFunctionCalls)
-      |+> TypesUtil.foldAsTransformation
-         (collectMemInFunctions
-         |*> collectFunctionInstances)
       |+> TypesUtil.expandStmtList None separateBindAndDeclaration
       |+> TypesUtil.expandStmtList None makeSingleDeclaration
       |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
@@ -841,6 +889,10 @@ let applyTransformations (options:options) (results:parser_results) =
       |+> TypesUtil.traverseBottomExpList None simplifySequenceBindings
       |+> makeFunAndCall
       |+> TypesUtil.traverseBottomExpList None relocateMemAndVal
+      |+> TypesUtil.foldAsTransformation
+         (collectMemInFunctions
+         |*> collectFunctionInstances)
+      |+> TypesUtil.expandStmtList None createTypes
    in
    let passes stmts =
       (initial_state,[StmtBlock(stmts,default_loc)])

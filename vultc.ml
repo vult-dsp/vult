@@ -66,7 +66,7 @@ let main () =
    (* Prints the parsed files if -dparse was passed as argument *)
    let _ = if args.dparse then
          parser_results
-         |> List.map (applyTransformations { opt_full_transform with inline_weight = 100000})
+         |> List.map (applyTransformations { opt_full_transform with inline = false ;inline_weight = 100000})
          |> List.iter (fun a -> match a.presult with `Ok(b) -> Format.printf "tree: %a@." pp_exp_list b; PrintTypes.stmtListStr b |> print_string | _ -> () )
    in
    (* Runs the dynamic interpreter if -rundyn was passed as argument *)
