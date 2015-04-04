@@ -148,10 +148,10 @@ let addInstanceToFunction (s:pass_state tstate) (name:identifier) (fname:identif
    let scope             = getScope s in
    let instances_for_fun = mapfindDefault scope s.data.instances IdentifierMap.empty in
    let current_instance  = mapfindDefault name instances_for_fun [] in
-   if List.exists (fun a->a=fname) current_instance then
+   if List.exists (fun a-> a = fname) current_instance then
       s
    else
-      let _ = Printf.printf "Adding insance '%s' of funtcion '%s' to '%s'\n" (identifierStr name) (identifierStr fname) (identifierStr scope) in
+      (*let _ = Printf.printf "Adding insance '%s' of funtcion '%s' to '%s'\n" (identifierStr name) (identifierStr fname) (identifierStr scope) in*)
       let new_instances     = IdentifierMap.add name (fname::current_instance) instances_for_fun in
       let new_inst_for_fun  = IdentifierMap.add scope new_instances s.data.instances in
       { s with data = { s.data with instances = new_inst_for_fun } }
@@ -211,7 +211,7 @@ let operatorsToFunctionCalls : ('data,exp) transformation =
 let generateTypeName (id:identifier) : identifier =
    ["_auto_"^(joinSep "_" id)]
 
-let generateTypeNameForInstance (ids:identifier list) : identifier option =
+let generateTypeNameForInstance (ids:identifier list) : exp option =
    match ids with
    | [] -> None
    | _ ->
@@ -219,8 +219,11 @@ let generateTypeNameForInstance (ids:identifier list) : identifier option =
          ids
          |> List.map (joinSep "_")
          |> List.sort compare
-         |> joinSep "_" in
-      Some(["_auto_"^s])
+         |> List.map (fun a->PId(["_auto_"^a],None,default_loc))
+      in
+      match s with
+      | [h] -> Some(h)
+      | _   -> Some(PTuple(s,default_loc))
 
 let collectMemInFunctions : ('data,'value) folder =
    fun state exp ->
@@ -243,7 +246,7 @@ let getIdAndType (e:exp) =
    | PId(name,Some(tp),_) -> name,tp
    | PId(name,None,loc) -> name,PId(["real"],None,loc)
    | _ -> failwith "getIdAndType: not expected mem declaration"
-
+(*
 (** Once we have created the types based on two function calls this function merges them*)
 let mergeTypes (t1:exp) (t2:exp) : exp =
    match t1,t2 with
@@ -255,6 +258,7 @@ let mergeTypes (t1:exp) (t2:exp) : exp =
       let loc = mergeLocations loc1 loc2 in
       StmtType(CCOpt.get_exn name,[],Some(members),None,loc)
    | _ -> failwith "mergeTypes: cannot merge these types"
+*)
 
 let rec createTypeForFunction (state:pass_state tstate) (fname:identifier) : exp list =
    if isActiveFunction state fname |> not then
@@ -269,20 +273,11 @@ let rec createTypeForFunction (state:pass_state tstate) (fname:identifier) : exp
                let non_static = List.filter (fun a -> isActiveFunction state a) types in
                match generateTypeNameForInstance non_static with
                | None -> acc
-               | Some(inst_type) -> (name,PId(inst_type,None,default_loc))::acc)
+               | Some(inst_type) -> (name,inst_type)::acc)
             instances []
-      in
-      let inst_types = IdentifierMap.fold
-            (fun name types acc -> (createTypeForFunction state name)@acc)
-            instances []
-      in
-      let merged_type =
-         match inst_types with
-         | [] -> []
-         | h::t -> [List.fold_left mergeTypes h t]
       in
       let members = List.map (fun (a,b)-> a,b,default_loc) (mem_pairs@inst_pais) in
-      StmtType(generateTypeName fname,[],Some(members),None,default_loc)::merged_type
+      [StmtType(generateTypeName fname,[],Some(members),None,default_loc)]
 
 let createTypes : ('data,exp) expander =
    fun state e ->
