@@ -110,6 +110,24 @@ type pass_state =
       instances       : (identifier list IdentifierMap.t) IdentifierMap.t;
    }
 
+(** Search a function in a table starting in the current scope and returns an Some if found *)
+let lookupFunction (table:'a IdentifierMap.t) (state:pass_state tstate) (fname:identifier) : 'a option =
+   let current_scope = state.scope |> List.flatten in
+   let rec loop rev_scope =
+      let full_name = (List.rev rev_scope)@fname in
+      if IdentifierMap.mem full_name table then
+         Some(IdentifierMap.find full_name table)
+      else
+         match rev_scope with
+         | []   -> None
+         | _::t -> loop t
+   in loop current_scope
+
+(** Search a function in a table starting in the current scope and returns the default value if not found *)
+let lookupFunctionDefault (table:'a IdentifierMap.t) (state:pass_state tstate) (fname:identifier) (default:'a) : 'a =
+   match lookupFunction table state fname with
+   | None    -> default
+   | Some(a) -> a
 
 (** Registers a mem declaration in the current scope *)
 let addMemToFunction (s:pass_state tstate) (names:exp list) =
@@ -133,6 +151,12 @@ let addInstanceToFunction (s:pass_state tstate) (name:identifier) (fname:identif
    let new_instances     = IdentifierMap.add name (fname::current_instance) instances_for_fun in
    let new_inst_for_fun  = IdentifierMap.add scope new_instances s.data.instances in
    { s with data = { s.data with instances = new_inst_for_fun } }
+
+let isStaticFunction (state: pass_state tstate) (name:identifier) : bool =
+   match lookupFunction state.data.function_mem state name with
+   | None     -> true
+   | Some([]) -> true
+   | _        -> false
 
 (* ======================= *)
 
@@ -172,15 +196,18 @@ let operatorsToFunctionCalls : ('data,exp) transformation =
 
 (** Returns the name of the type that is declared for a function *)
 let generateTypeName (id:identifier) : identifier =
-   ["_type_"^(joinSep "_" id)]
+   ["_auto_"^(joinSep "_" id)]
 
-let generateTypeNameForInstance (ids:identifier list) : identifier =
-   let s =
-      ids
-      |> List.map (joinSep "_")
-      |> List.sort compare
-      |> joinSep "_" in
-   ["_type_"^s]
+let generateTypeNameForInstance (ids:identifier list) : identifier option =
+   match ids with
+   | [] -> None
+   | _ ->
+      let s =
+         ids
+         |> List.map (joinSep "_")
+         |> List.sort compare
+         |> joinSep "_" in
+      Some(["_auto_"^s])
 
 let collectMemInFunctions : ('data,'value) folder =
    fun state exp ->
@@ -211,29 +238,36 @@ let mergeTypes (t1:exp) (t2:exp) : exp =
       (* TODO: Add check for equal types *)
       let members = CCList.sort_uniq ~cmp:member_cmp (members1@members2) in
       let loc = mergeLocations loc1 loc2 in
-      StmtType(name,[],Some(members),None,loc)
+      StmtType(CCOpt.get_exn name,[],Some(members),None,loc)
    | _ -> failwith "mergeTypes: cannot merge these types"
 
 let rec createTypeForFunction (state:pass_state tstate) (fname:identifier) : exp list =
-   let instances = mapfindDefault fname state.data.instances IdentifierMap.empty in
-   let mems      = mapfindDefault fname state.data.function_mem [] in
-   let mem_pairs = List.map (fun a -> getIdAndType a) mems in
-   let inst_pais =
-      IdentifierMap.fold
-         (fun name types acc -> (name,PId(generateTypeNameForInstance types,None,default_loc))::acc)
-         instances []
-   in
-   let inst_types = IdentifierMap.fold
-         (fun name types acc -> (createTypeForFunction state name)@acc)
-         instances []
-   in
-   let merged_type =
-      match inst_types with
-      | [] -> []
-      | h::t -> [List.fold_left mergeTypes h t]
-   in
-   let members = List.map (fun (a,b)-> a,b,default_loc) (mem_pairs@inst_pais) in
-   StmtType(generateTypeName fname,[],Some(members),None,default_loc)::merged_type
+   if isStaticFunction state fname then
+      []
+   else
+      let instances = lookupFunctionDefault state.data.instances    state fname IdentifierMap.empty in
+      let mems      = lookupFunctionDefault state.data.function_mem state fname [] in
+      let mem_pairs = List.map (fun a -> getIdAndType a) mems in
+      let inst_pais =
+         IdentifierMap.fold
+            (fun name types acc ->
+               let non_static = List.filter (fun a -> isStaticFunction state a|>not) types in
+               match generateTypeNameForInstance non_static with
+               | None -> acc
+               | Some(inst_type) -> (name,PId(inst_type,None,default_loc))::acc)
+            instances []
+      in
+      let inst_types = IdentifierMap.fold
+            (fun name types acc -> (createTypeForFunction state name)@acc)
+            instances []
+      in
+      let merged_type =
+         match inst_types with
+         | [] -> []
+         | h::t -> [List.fold_left mergeTypes h t]
+      in
+      let members = List.map (fun (a,b)-> a,b,default_loc) (mem_pairs@inst_pais) in
+      StmtType(generateTypeName fname,[],Some(members),None,default_loc)::merged_type
 
 let createTypes : ('data,exp) expander =
    fun state e ->

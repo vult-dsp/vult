@@ -130,7 +130,7 @@ let popScope (s:'a tstate) : 'a tstate =
 
 (** Returns the current scope *)
 let getScope (s:'a tstate) : identifier =
-   s.scope |> List.flatten
+   s.scope |> List.flatten |> List.rev
 
 (** Returns the minimal position of two given *)
 let getMinPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.position =
