@@ -109,6 +109,7 @@ type pass_state =
       function_mem    : exp list IdentifierMap.t;
       instances       : (identifier list IdentifierMap.t) IdentifierMap.t;
       active_function : bool IdentifierMap.t;
+      type_function   : exp IdentifierMap.t;
    }
 
 (** Search a function in a table starting in the current scope and returns an Some if found *)
@@ -130,11 +131,17 @@ let lookupFunctionDefault (table:'a IdentifierMap.t) (state:pass_state tstate) (
    | None    -> default
    | Some(a) -> a
 
+(** Adds a newly generated type to the table *)
+let addTypeOfFunction (state: pass_state tstate) (fname:identifier) (ftype:exp) =
+   let _ = Printf.printf "Adding type to function %s\n%s\n" (identifierStr fname) (PrintTypes.expressionStr ftype) in
+   let new_table = IdentifierMap.add fname ftype state.data.type_function in
+   { state with data = { state.data with type_function = new_table } }
+
 (** Registers a mem declaration in the current scope *)
 let addMemToFunction (s:pass_state tstate) (names:exp list) =
    let scope = getScope s in
-   (*let names_string = List.map PrintTypes.expressionStr names in
-   let _ = Printf.printf "Adding mem %s to function %s\n" (joinSep ", " names_string) (identifierStr scope) in*)
+   let names_string = List.map PrintTypes.expressionStr names in
+   let _ = Printf.printf "Adding mem %s to function %s\n" (joinSep ", " names_string) (identifierStr scope) in
    if IdentifierMap.mem scope s.data.function_mem then
       let current = IdentifierMap.find scope s.data.function_mem in
       let new_map = IdentifierMap.add scope (current@names) s.data.function_mem in
@@ -151,7 +158,7 @@ let addInstanceToFunction (s:pass_state tstate) (name:identifier) (fname:identif
    if List.exists (fun a-> a = fname) current_instance then
       s
    else
-      (*let _ = Printf.printf "Adding insance '%s' of funtcion '%s' to '%s'\n" (identifierStr name) (identifierStr fname) (identifierStr scope) in*)
+      let _ = Printf.printf "Adding insance '%s' of funtcion '%s' to '%s'\n" (identifierStr name) (identifierStr fname) (identifierStr scope) in
       let new_instances     = IdentifierMap.add name (fname::current_instance) instances_for_fun in
       let new_inst_for_fun  = IdentifierMap.add scope new_instances s.data.instances in
       { s with data = { s.data with instances = new_inst_for_fun } }
@@ -260,9 +267,9 @@ let mergeTypes (t1:exp) (t2:exp) : exp =
    | _ -> failwith "mergeTypes: cannot merge these types"
 *)
 
-let rec createTypeForFunction (state:pass_state tstate) (fname:identifier) : exp list =
+let rec createTypeForFunction (state:pass_state tstate) (fname:identifier) : exp option =
    if isActiveFunction state fname |> not then
-      []
+      None
    else
       let instances = lookupFunctionDefault state.data.instances    state fname IdentifierMap.empty in
       let mems      = lookupFunctionDefault state.data.function_mem state fname [] in
@@ -277,15 +284,20 @@ let rec createTypeForFunction (state:pass_state tstate) (fname:identifier) : exp
             instances []
       in
       let members = List.map (fun (a,b)-> a,b,default_loc) (mem_pairs@inst_pais) in
-      [StmtType(generateTypeName fname,[],Some(members),None,default_loc)]
+      Some(StmtType(generateTypeName fname,[],Some(members),None,default_loc))
 
-let createTypes : ('data,exp) expander =
+let createTypes : ('data,exp) folder =
    fun state e ->
       match e with
       | StmtFun(name,_,_,_,_) ->
-         let type_decl = createTypeForFunction state name in
-         state,e::type_decl
-      | _ -> state,[e]
+         let full_name = getScope state in
+         begin
+            match createTypeForFunction state name with
+            | None -> state
+            | Some(type_decl) ->
+               addTypeOfFunction state full_name type_decl
+         end
+      | _ -> state
 
 (* ======================= *)
 
@@ -888,6 +900,7 @@ let applyTransformations (options:options) (results:parser_results) =
          function_mem    = IdentifierMap.empty;
          instances       = IdentifierMap.empty;
          active_function = IdentifierMap.empty;
+         type_function   = IdentifierMap.empty;
       } |> createState
    in
    (* Basic transformations *)
@@ -937,7 +950,7 @@ let applyTransformations (options:options) (results:parser_results) =
       |+> TypesUtil.foldAsTransformation
          (collectMemInFunctions
          |*> collectFunctionInstances)
-      |+> TypesUtil.expandStmtList None createTypes
+      |+> TypesUtil.foldAsTransformation createTypes
    in
    let passes stmts =
       (initial_state,[StmtBlock(stmts,default_loc)])

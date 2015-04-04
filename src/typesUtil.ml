@@ -461,7 +461,15 @@ let rec foldTopExp (pred:(exp -> bool) option) (f: ('data, exp) folder) (state0:
    match pred with
    | Some(pred_f) when not (pred_f exp)-> state0
    | _ ->
-      let state = f state0 exp in
+      let state =
+         match exp with
+         | StmtFun(name,_,_,_,_) ->
+            (* If it's a function  enter to the scope before applying *)
+            let state1 = pushScope state0 name in
+            let state2 = f state1 exp in
+            popScope state2
+         | _ -> f state0 exp
+      in
       match exp with
       | PEmpty
       | PUnit(_)
