@@ -146,12 +146,12 @@ let addMemToFunction (s:pass_state tstate) (names:exp list) =
 (** Registers an instance in the current scope *)
 let addInstanceToFunction (s:pass_state tstate) (name:identifier) (fname:identifier) =
    let scope             = getScope s in
-   (*let _ = Printf.printf "Adding insance '%s' of funtcion '%s' to '%s'\n" (identifierStr name) (identifierStr fname) (identifierStr scope) in*)
    let instances_for_fun = mapfindDefault scope s.data.instances IdentifierMap.empty in
    let current_instance  = mapfindDefault name instances_for_fun [] in
-   if IdentifierMap.mem name instances_for_fun then
+   if List.exists (fun a->a=fname) current_instance then
       s
    else
+      let _ = Printf.printf "Adding insance '%s' of funtcion '%s' to '%s'\n" (identifierStr name) (identifierStr fname) (identifierStr scope) in
       let new_instances     = IdentifierMap.add name (fname::current_instance) instances_for_fun in
       let new_inst_for_fun  = IdentifierMap.add scope new_instances s.data.instances in
       { s with data = { s.data with instances = new_inst_for_fun } }
@@ -237,12 +237,14 @@ let collectFunctionInstances : ('data,'value) folder =
          addInstanceToFunction state iname fname
       | _ -> state
 
+(** Returs the name and type if an expression PId, fails on any other case *)
 let getIdAndType (e:exp) =
    match e with
    | PId(name,Some(tp),_) -> name,tp
    | PId(name,None,loc) -> name,PId(["real"],None,loc)
    | _ -> failwith "getIdAndType: not expected mem declaration"
 
+(** Once we have created the types based on two function calls this function merges them*)
 let mergeTypes (t1:exp) (t2:exp) : exp =
    match t1,t2 with
    | StmtType(name1,[],Some(members1),None,loc1),StmtType(name2,[],Some(members2),None,loc2) ->
