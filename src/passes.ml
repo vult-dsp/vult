@@ -108,6 +108,7 @@ type pass_state =
       options         : options;
       function_mem    : exp list IdentifierMap.t;
       instances       : (identifier list IdentifierMap.t) IdentifierMap.t;
+      active_function : bool IdentifierMap.t;
    }
 
 (** Search a function in a table starting in the current scope and returns an Some if found *)
@@ -152,11 +153,20 @@ let addInstanceToFunction (s:pass_state tstate) (name:identifier) (fname:identif
    let new_inst_for_fun  = IdentifierMap.add scope new_instances s.data.instances in
    { s with data = { s.data with instances = new_inst_for_fun } }
 
-let isStaticFunction (state: pass_state tstate) (name:identifier) : bool =
+let rec isActiveFunction (state: pass_state tstate) (name:identifier) : bool =
+   (* this function can be cached by adding a pass that calculats every function *)
+   (isMemFunction state name) || (isMemInstanceFunction state name)
+
+
+and isMemFunction (state: pass_state tstate) (name:identifier) : bool =
    match lookupFunction state.data.function_mem state name with
-   | None     -> true
-   | Some([]) -> true
-   | _        -> false
+   | None     -> false
+   | Some([]) -> false
+   | _        -> true
+
+and isMemInstanceFunction (state:pass_state tstate) (name:identifier) : bool =
+   let instances_for_fun = mapfindDefault name state.data.instances IdentifierMap.empty in
+   IdentifierMap.fold (fun key types acc -> List.exists (isActiveFunction state) types ) instances_for_fun false
 
 (* ======================= *)
 
@@ -242,7 +252,7 @@ let mergeTypes (t1:exp) (t2:exp) : exp =
    | _ -> failwith "mergeTypes: cannot merge these types"
 
 let rec createTypeForFunction (state:pass_state tstate) (fname:identifier) : exp list =
-   if isStaticFunction state fname then
+   if isActiveFunction state fname |> not then
       []
    else
       let instances = lookupFunctionDefault state.data.instances    state fname IdentifierMap.empty in
@@ -251,7 +261,7 @@ let rec createTypeForFunction (state:pass_state tstate) (fname:identifier) : exp
       let inst_pais =
          IdentifierMap.fold
             (fun name types acc ->
-               let non_static = List.filter (fun a -> isStaticFunction state a|>not) types in
+               let non_static = List.filter (fun a -> isActiveFunction state a) types in
                match generateTypeNameForInstance non_static with
                | None -> acc
                | Some(inst_type) -> (name,PId(inst_type,None,default_loc))::acc)
@@ -877,6 +887,7 @@ let applyTransformations (options:options) (results:parser_results) =
          options         = options;
          function_mem    = IdentifierMap.empty;
          instances       = IdentifierMap.empty;
+         active_function = IdentifierMap.empty;
       } |> createState
    in
    (* Basic transformations *)
