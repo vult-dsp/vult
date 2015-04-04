@@ -29,7 +29,7 @@ fun lp6(x,fc) {
     return biquad(x,b0,b1,0,a1,0);
 }
 
-fun change:bool(x) {
+fun change(x) : bool {
     mem pre_x;
     val v = pre_x!=x;
     pre_x = x;
