@@ -132,8 +132,8 @@ let lookupFunctionDefault (table:'a IdentifierMap.t) (state:pass_state tstate) (
 (** Registers a mem declaration in the current scope *)
 let addMemToFunction (s:pass_state tstate) (names:exp list) =
    let scope = getScope s in
-   let names_string = List.map PrintTypes.expressionStr names in
-   let _ = Printf.printf "Adding mem %s to function %s\n" (joinSep ", " names_string) (identifierStr scope) in
+   (*let names_string = List.map PrintTypes.expressionStr names in
+   let _ = Printf.printf "Adding mem %s to function %s\n" (joinSep ", " names_string) (identifierStr scope) in*)
    if IdentifierMap.mem scope s.data.function_mem then
       let current = IdentifierMap.find scope s.data.function_mem in
       let new_map = IdentifierMap.add scope (current@names) s.data.function_mem in
@@ -145,7 +145,7 @@ let addMemToFunction (s:pass_state tstate) (names:exp list) =
 (** Registers an instance in the current scope *)
 let addInstanceToFunction (s:pass_state tstate) (name:identifier) (fname:identifier) =
    let scope             = getScope s in
-   let _ = Printf.printf "Adding insance '%s' of funtcion '%s' to '%s'\n" (identifierStr name) (identifierStr fname) (identifierStr scope) in
+   (*let _ = Printf.printf "Adding insance '%s' of funtcion '%s' to '%s'\n" (identifierStr name) (identifierStr fname) (identifierStr scope) in*)
    let instances_for_fun = mapfindDefault scope s.data.instances IdentifierMap.empty in
    let current_instance  = mapfindDefault name instances_for_fun [] in
    let new_instances     = IdentifierMap.add name (fname::current_instance) instances_for_fun in
@@ -227,7 +227,7 @@ let collectFunctionInstances : ('data,'value) folder =
 let getIdAndType (e:exp) =
    match e with
    | PId(name,Some(tp),_) -> name,tp
-   | PId(name,None,loc) -> name,PId(["float"],None,loc)
+   | PId(name,None,loc) -> name,PId(["real"],None,loc)
    | _ -> failwith "getIdAndType: not expected mem declaration"
 
 let mergeTypes (t1:exp) (t2:exp) : exp =
