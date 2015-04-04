@@ -149,9 +149,12 @@ let addInstanceToFunction (s:pass_state tstate) (name:identifier) (fname:identif
    (*let _ = Printf.printf "Adding insance '%s' of funtcion '%s' to '%s'\n" (identifierStr name) (identifierStr fname) (identifierStr scope) in*)
    let instances_for_fun = mapfindDefault scope s.data.instances IdentifierMap.empty in
    let current_instance  = mapfindDefault name instances_for_fun [] in
-   let new_instances     = IdentifierMap.add name (fname::current_instance) instances_for_fun in
-   let new_inst_for_fun  = IdentifierMap.add scope new_instances s.data.instances in
-   { s with data = { s.data with instances = new_inst_for_fun } }
+   if IdentifierMap.mem name instances_for_fun then
+      s
+   else
+      let new_instances     = IdentifierMap.add name (fname::current_instance) instances_for_fun in
+      let new_inst_for_fun  = IdentifierMap.add scope new_instances s.data.instances in
+      { s with data = { s.data with instances = new_inst_for_fun } }
 
 let rec isActiveFunction (state: pass_state tstate) (name:identifier) : bool =
    (* this function can be cached by adding a pass that calculats every function *)
@@ -244,7 +247,7 @@ let mergeTypes (t1:exp) (t2:exp) : exp =
    match t1,t2 with
    | StmtType(name1,[],Some(members1),None,loc1),StmtType(name2,[],Some(members2),None,loc2) ->
       let name = generateTypeNameForInstance [name1;name2] in
-      let member_cmp (a,_,_) (b,_,_) = compare a b in
+      let member_cmp (_,a,_) (_,b,_) = compare a b in
       (* TODO: Add check for equal types *)
       let members = CCList.sort_uniq ~cmp:member_cmp (members1@members2) in
       let loc = mergeLocations loc1 loc2 in
