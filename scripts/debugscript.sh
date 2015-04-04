@@ -1,3 +1,3 @@
 #!/bin/bash
-cat debugscript.base > debugscript
-echo directory `ocamlfind query containers` >> debugscript
+cat ./scripts/debugscript.base > ./scripts/debugscript
+echo directory `ocamlfind query containers` >> ./scripts/debugscript
