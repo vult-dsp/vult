@@ -331,7 +331,7 @@ let rec replaceSimplifiedTypeInMember (mappings: identifier IdentifierMap.t) (me
          let found_elems = List.map (fun a -> mapfindOption a mappings) elem_ids in
          match checkAllSameTypes found_elems with
          | Some(new_name) ->  valname,PId(new_name,None,iloc),loc
-         | _ -> failwith "replaceSimplifiedTypeInMember: incorrect mix of types"
+         | _ -> failwith "replaceSimplifiedTypeInMember: incorrect mix of types (better error message needed)"
       end
    | _ -> failwith "replaceSimplifiedTypeInMember: invalid type"
 
@@ -717,7 +717,7 @@ let rec isSinglePathStmtList (acc:exp list) (stmts:exp list) : (exp * exp list) 
    | h::_ when hasReturn h -> None
    | h::t -> isSinglePathStmtList (h::acc) t
 
-(** Transforms x = {return y;}; -> x = y;  and _ = { stmts; } -> stmts *)
+(** Transforms x = {return y;}; -> x = y;  and _ = {stmts;} -> stmts *)
 let simplifySequenceBindings : ('data,exp) traverser =
    fun state exp ->
       match exp with
