@@ -47,10 +47,16 @@ type value =
    | VBool    of bool
    | VTuple   of value list
 
-(** Used to define types of functions: builtin and declared by the user *)
+(** Used to define the kind of a function: builtin and declared by the user.
+    The body of the function is stored in order to evaluate it. *)
 type function_body =
-   | Builtin  of (value list -> value)
-   | Declared of exp
+   | BuiltinF  of (value list -> value)
+   | DeclaredF of exp
+
+(** Used to store the type definitions *)
+type type_body =
+   | BuiltinT  of value
+   | DeclaredT of exp
 
 (** Environment of the interpreter used to store all bindings and declarations *)
 type local_env =
@@ -59,20 +65,22 @@ type local_env =
       mem_binds : value IdentifierMap.t;
       fun_bind  : local_env IdentifierMap.t;
       fun_decl  : function_body IdentifierMap.t;
+      type_decl : type_body IdentifierMap.t;
    }
 
 (** Creates an environment. It optionally receives the function declarations.  *)
-let newLocalEnv (fun_decl:(function_body IdentifierMap.t) option) =
-   let functions =
-      match fun_decl with
-      | Some(a) -> a
-      | _ -> IdentifierMap.empty
+let newLocalEnv (func_and_types:(function_body IdentifierMap.t * type_body IdentifierMap.t) option) =
+   let functions,types =
+      match func_and_types with
+      | Some(functions,types) -> functions,types
+      | _ -> IdentifierMap.empty,IdentifierMap.empty
    in
    {
       val_binds = [];
       mem_binds = IdentifierMap.empty;
       fun_bind  = IdentifierMap.empty;
       fun_decl  = functions;
+      type_decl = types;
    }
 
 (** Converts a value to string *)
@@ -122,15 +130,19 @@ let getFunctionBody (loc:local_env) (name:identifier) : function_body =
 let declFunction (loc:local_env) (name:identifier) (body:function_body) : local_env =
    { loc with fun_decl = IdentifierMap.add name body loc.fun_decl }
 
+(** Adds a declared function to the environment *)
+let declType (loc:local_env) (name:identifier) (body:type_body) : local_env =
+   { loc with type_decl = IdentifierMap.add name body loc.type_decl }
+
 (** Gets the local environment for a function call *)
 let getFunctionEnv (loc:local_env) (optname:identifier option) : local_env =
    match optname with
-   | None -> newLocalEnv (Some(loc.fun_decl))
+   | None -> newLocalEnv (Some(loc.fun_decl,loc.type_decl))
    | Some(name) ->
       if IdentifierMap.mem name loc.fun_bind then
          IdentifierMap.find name loc.fun_bind
       else
-         let env = newLocalEnv (Some(loc.fun_decl)) in
+         let env = newLocalEnv (Some(loc.fun_decl,loc.type_decl)) in
          let _ = IdentifierMap.add name env loc.fun_bind in
          env
 
@@ -213,11 +225,11 @@ let isTrue (value:value) : bool =
 (** Evaluates a function call *)
 let rec evalFun (loc:local_env) (body:function_body) (args:value list) : value * local_env * bool =
    match body with
-   | Declared(StmtFun(_,arg_names,stmts,type_exp,_)) ->
+   | DeclaredF(StmtFun(_,arg_names,stmts,type_exp,_)) ->
       let inputs = List.map getVarName arg_names in
       let loc = List.fold_left2 (fun s n v -> declVal s n v) loc inputs args in
       runStmtList loc [stmts]
-   | Builtin(f) ->
+   | BuiltinF(f) ->
       f args,loc,false
    | _ -> failwith "Invalid function body"
 
@@ -252,7 +264,6 @@ and runExp (loc:local_env) (exp:exp) : value * local_env * bool =
    | PEmpty -> failwith "There should not be Empty expressions when calling the intepreter"
    | PBinOp(_,_,_,_)
    | PUnOp(_,_,_) -> failwith "There should not be operators when calling the intepreter"
-   | StmtType(_,_,_,_,_) -> VUnit,loc,false
    | StmtVal(PId(name,_,_),opt_init,_) ->
       let init,loc,_ = apply_default (runExp loc) opt_init (VNum(0.0),loc,false) in
       VUnit,declVal loc name init,false
@@ -280,8 +291,11 @@ and runExp (loc:local_env) (exp:exp) : value * local_env * bool =
    | StmtReturn(e,_) ->
       let e_val,loc,_ = runExp loc e in
       e_val,loc,true
+   | StmtType(name,_,_,_,_) ->
+      let loc = declType loc name (DeclaredT(exp)) in
+      VUnit,loc,false
    | StmtFun(name,_,_,_,_) ->
-      let loc = declFunction loc name (Declared(exp)) in
+      let loc = declFunction loc name (DeclaredF(exp)) in
       VUnit,loc,false
    | StmtIf(cond,then_stmts,None,_) ->
       let cond_val,loc,_ = runExp loc cond in
@@ -396,26 +410,26 @@ let addBuiltinFunctions (loc:local_env) : local_env =
    let print_fun args   = List.map valueStr args |> joinStrings "," |> (fun a -> print_string a;VUnit) in
    let println_fun args = List.map valueStr args |> joinStrings "," |> (fun a -> print_endline a;VUnit) in
    [
-      ["'+'"],Builtin(plus);
-      ["'-'"],Builtin(minus);
-      ["'*'"],Builtin(mult);
-      ["'/'"],Builtin(div);
-      ["'=='"],Builtin(equal);
-      ["'!='"],Builtin(unequal);
-      ["'<'"],Builtin(smaller);
-      ["'>'"],Builtin(larger);
-      ["'<='"],Builtin(smaller_equal);
-      ["'>='"],Builtin(larger_equal);
-      ["'||'"],Builtin(or_op);
-      ["'&&'"],Builtin(and_op);
-      ["'!'"],Builtin(not_op);
-      ["print"],Builtin(print_fun);
-      ["println"],Builtin(println_fun);
-      ["tanh"],Builtin(tanh_fun);
-      ["abs"],Builtin(abs_fun);
-      ["floor"],Builtin(floor_fun);
-      ["sin"],Builtin(sin_fun);
-      ["fixdenorm"],Builtin(fixdenorm);
+      ["'+'"],BuiltinF(plus);
+      ["'-'"],BuiltinF(minus);
+      ["'*'"],BuiltinF(mult);
+      ["'/'"],BuiltinF(div);
+      ["'=='"],BuiltinF(equal);
+      ["'!='"],BuiltinF(unequal);
+      ["'<'"],BuiltinF(smaller);
+      ["'>'"],BuiltinF(larger);
+      ["'<='"],BuiltinF(smaller_equal);
+      ["'>='"],BuiltinF(larger_equal);
+      ["'||'"],BuiltinF(or_op);
+      ["'&&'"],BuiltinF(and_op);
+      ["'!'"],BuiltinF(not_op);
+      ["print"],BuiltinF(print_fun);
+      ["println"],BuiltinF(println_fun);
+      ["tanh"],BuiltinF(tanh_fun);
+      ["abs"],BuiltinF(abs_fun);
+      ["floor"],BuiltinF(floor_fun);
+      ["sin"],BuiltinF(sin_fun);
+      ["fixdenorm"],BuiltinF(fixdenorm);
    ]
    |> List.fold_left (fun env (a,b) -> declFunction env a b) loc
 
