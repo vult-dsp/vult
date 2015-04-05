@@ -788,8 +788,8 @@ and expandOptStmt (pred:(exp -> bool) option) (f: ('data, exp) expander) (state:
       state1,Some(appendPseq ne)
 
 (** Takes a fold function and wrap it as it was a transformation so it can be chained with |+> *)
-let foldAsTransformation (f:('data,exp) folder) (state:'data tstate) (exp_list:exp list) : 'data tstate * exp list =
-   let new_state = foldTopExpList None f state exp_list in
+let foldAsTransformation (pred:(exp -> bool) option) (f:('data,exp) folder) (state:'data tstate) (exp_list:exp list) : 'data tstate * exp list =
+   let new_state = foldTopExpList pred f state exp_list in
    new_state,exp_list
 
 let getNameFromNamedId (named_id:named_id) : identifier =
@@ -853,6 +853,11 @@ let mapfindDefault key map default =
    if IdentifierMap.mem key map then
       IdentifierMap.find key map
    else default
+
+let mapfindOption key map =
+   if IdentifierMap.mem key map then
+      Some(IdentifierMap.find key map)
+   else None
 
 (** Compares two expressions ignoring the locations *)
 let compareExp (a:exp) (b:exp) : int = compare_exp a b

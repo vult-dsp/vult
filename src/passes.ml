@@ -102,14 +102,14 @@ let opt_no_transform =
 (** Traversing state one *)
 type pass_state =
    {
-      functions       : exp IdentifierMap.t;
-      function_weight : int IdentifierMap.t;
-      counter         : int;
-      options         : options;
-      function_mem    : exp list IdentifierMap.t;
-      instances       : (identifier list IdentifierMap.t) IdentifierMap.t;
-      active_function : bool IdentifierMap.t;
-      type_function   : exp IdentifierMap.t;
+      functions       : exp IdentifierMap.t; (* Holds the body of the functions, used by inlining *)
+      function_weight : int IdentifierMap.t; (* Weight (complexity) of each function , used by inlining *)
+      counter         : int;                 (* Generic counter used to generate unique names *)
+      options         : options;             (* Used to enable/disable/configure the passes *)
+      function_mem    : exp list IdentifierMap.t;  (* Stores the mem declarations of each function*)
+      instances       : (identifier list IdentifierMap.t) IdentifierMap.t; (* Stores the instances of each function *)
+      type_function   : exp IdentifierMap.t; (* Stores for each function its corresponding non-simplified type *)
+      type_mapping    : identifier IdentifierMap.t; (* Stores the simplified type of each function *)
    }
 
 (** Search a function in a table starting in the current scope and returns an Some if found *)
@@ -133,15 +133,15 @@ let lookupFunctionDefault (table:'a IdentifierMap.t) (state:pass_state tstate) (
 
 (** Adds a newly generated type to the table *)
 let addTypeOfFunction (state: pass_state tstate) (fname:identifier) (ftype:exp) =
-   let _ = Printf.printf "Adding type to function %s\n%s\n" (identifierStr fname) (PrintTypes.expressionStr ftype) in
+   (*let _ = Printf.printf "Adding type to function %s\n%s\n" (identifierStr fname) (PrintTypes.expressionStr ftype) in*)
    let new_table = IdentifierMap.add fname ftype state.data.type_function in
    { state with data = { state.data with type_function = new_table } }
 
 (** Registers a mem declaration in the current scope *)
 let addMemToFunction (s:pass_state tstate) (names:exp list) =
    let scope = getScope s in
-   let names_string = List.map PrintTypes.expressionStr names in
-   let _ = Printf.printf "Adding mem %s to function %s\n" (joinSep ", " names_string) (identifierStr scope) in
+   (*let names_string = List.map PrintTypes.expressionStr names in
+   let _ = Printf.printf "Adding mem %s to function %s\n" (joinSep ", " names_string) (identifierStr scope) in*)
    if IdentifierMap.mem scope s.data.function_mem then
       let current = IdentifierMap.find scope s.data.function_mem in
       let new_map = IdentifierMap.add scope (current@names) s.data.function_mem in
@@ -158,7 +158,7 @@ let addInstanceToFunction (s:pass_state tstate) (name:identifier) (fname:identif
    if List.exists (fun a-> a = fname) current_instance then
       s
    else
-      let _ = Printf.printf "Adding insance '%s' of funtcion '%s' to '%s'\n" (identifierStr name) (identifierStr fname) (identifierStr scope) in
+      (*let _ = Printf.printf "Adding insance '%s' of funtcion '%s' to '%s'\n" (identifierStr name) (identifierStr fname) (identifierStr scope) in*)
       let new_instances     = IdentifierMap.add name (fname::current_instance) instances_for_fun in
       let new_inst_for_fun  = IdentifierMap.add scope new_instances s.data.instances in
       { s with data = { s.data with instances = new_inst_for_fun } }
@@ -214,6 +214,145 @@ let operatorsToFunctionCalls : ('data,exp) transformation =
 
 (* ======================= *)
 
+(** Used to sort the members of a type *)
+let compareMemberName (a,_,_) (b,_,_) = compare a b
+
+(** Returns Some if the type expression are the same or if they can be merged *)
+let mergeTypeExp (t1:exp) (t2:exp) : exp option =
+   match t1,t2 with
+   | PId(id1,None,_),PId(id2,None,_) when id1 = id2 -> Some(t1)
+   | PId(id1,None,_),PTuple(elem,_)
+      when List.exists (fun a -> compare_exp a t1 = 0) elem -> Some(t2)
+   | PTuple(elem,_),PId(id1,None,_)
+      when List.exists (fun a -> compare_exp a t2 = 0) elem -> Some(t1)
+   | _ -> None
+
+(** Merges a list of members (pre-sorted). If it was possible to merge them returns Some. *)
+let rec matchTypeMembers (members1:val_decl list) (members2:val_decl list) (acc:val_decl list) : val_decl list option =
+   match members1,members2 with
+   | [],[] -> Some(acc)
+   | (n1,t1,_)::r1,(n2,t2,_)::r2 when n1 = n2 ->
+      begin
+         match mergeTypeExp t1 t2 with
+         | Some(new_type) -> matchTypeMembers r1 r2 ((n1,new_type,default_loc)::acc)
+         | _ -> None
+      end
+   | _ -> None
+
+(** This function merges two types if they have the same members. This function will appropriately handle
+    instances with more than one type. It returns Some if the types could be merged. *)
+let mergeTypes (t1:exp) (t2:exp) : exp option =
+   match t1,t2 with
+   | StmtType(name1,[],Some(members1),None,loc1),StmtType(name2,[],Some(members2),None,loc2) ->
+      let members1_s = List.sort compareMemberName members1 in
+      let members2_s = List.sort compareMemberName members2 in
+      begin
+         match matchTypeMembers members1_s members2_s [] with
+         | Some(new_members) -> Some(StmtType(name1,[],Some(new_members),None,default_loc))
+         | _ -> None
+      end
+   | _ -> None
+
+let renameType (tp:exp) (name:identifier) =
+   match tp with
+   | StmtType(_,[],Some(members),None,loc) -> StmtType(name,[],Some(members),None,loc)
+   | _ -> failwith "renameType: invalid type"
+
+let getTypeName (tp:exp) : identifier =
+   match tp with
+   | StmtType(name,_,_,_,_) -> name
+   | _ -> failwith "getTypeName: invalid type"
+
+let addTypeMapping (current_name:identifier) (new_type_name:identifier) (mapping:identifier IdentifierMap.t) =
+   (*let _ = Printf.printf "Type %s maps to %s\n" (identifierStr current_name) (identifierStr new_type_name) in*)
+   IdentifierMap.add current_name new_type_name mapping
+
+(** Tries to merge the type with any of the types in the list.*)
+let rec pushMergeType (count:int) (mapping:identifier IdentifierMap.t) (tp:exp) (current_types: exp list) (acc: exp list) : int * exp list * (identifier IdentifierMap.t) =
+   match current_types with
+   | []   ->
+      let new_type_name = ["_auto_type"^(string_of_int count)] in
+      let current_name  = getTypeName tp in
+      let new_type      = renameType tp new_type_name in
+      let new_mapping   = addTypeMapping current_name new_type_name mapping in
+      (count+1),new_type::acc,new_mapping
+   | h::t ->
+      begin
+         match mergeTypes h tp with
+         | None           -> pushMergeType count mapping tp t (h::acc)
+         | Some(new_type) ->
+            let current_name  = getTypeName tp in
+            let new_type_name = getTypeName new_type in
+            let new_mapping   = addTypeMapping current_name new_type_name mapping in
+            count,new_type::t@acc,new_mapping
+      end
+
+(** Takes a list of option identifiers representing the types,returns some if all are the same *)
+let checkAllSameTypes (elems:identifier option list) : identifier option =
+   match elems with
+   | [Some(elem)] -> Some(elem)
+   | Some(h)::t ->
+      begin
+         let rec loop l first =
+            match l with
+            | [] -> Some(first)
+            | Some(hh)::tt when hh=first -> loop tt first
+            | _ -> None
+         in loop t h
+      end
+   | _ -> None
+
+let isBasicType (name:identifier) : bool =
+   match name with
+   | ["real"]
+   | ["bool"]
+   | ["int"] -> true
+   | _ -> false
+
+let rec replaceSimplifiedTypeInMember (mappings: identifier IdentifierMap.t) (member:val_decl) : val_decl =
+   let valname,tp,loc = member in
+   match tp with
+   | PId(name,_,_) when isBasicType name -> member
+   | PId(name,None,iloc) ->
+      begin
+         match mapfindOption name mappings with
+         | Some(new_name) -> valname,PId(new_name,None,iloc),loc
+         | _-> failwith ("replaceSimplifiedTypeInMember: unknown type mapping"^(identifierStr name))
+      end
+   | PTuple(elems,iloc) ->
+      begin
+         let elem_ids    =
+            List.map (fun a ->
+               match a with
+               | PId(name,_,_) -> name
+               | _ -> failwith "replaceSimplifiedTypeInMember: invalid type")
+            elems
+         in
+         let found_elems = List.map (fun a -> mapfindOption a mappings) elem_ids in
+         match checkAllSameTypes found_elems with
+         | Some(new_name) ->  valname,PId(new_name,None,iloc),loc
+         | _ -> failwith "replaceSimplifiedTypeInMember: incorrect mix of types"
+      end
+   | _ -> failwith "replaceSimplifiedTypeInMember: invalid type"
+
+
+(** Takes a type and the mapping of simplified types and replaces all occurrences *)
+let replaceSimplifiedTypes (mappings: identifier IdentifierMap.t) (tp:exp) : exp =
+   match tp with
+   | StmtType(name,[],Some(members),None,loc) ->
+      let new_members = List.map (replaceSimplifiedTypeInMember mappings) members in
+      StmtType(name,[],Some(new_members),None,loc)
+   | _ -> failwith "replaceSimplifiedTypes: Invalid type"
+
+let simplifyTypes (state:pass_state tstate) (exp_list:exp list) : pass_state tstate * exp list =
+   let _,simple_types,mapping = IdentifierMap.fold
+      (fun fname value (count,types,mapping) ->  pushMergeType count mapping value types []) state.data.type_function (0,[],IdentifierMap.empty)
+   in
+   let final_types = List.map (replaceSimplifiedTypes mapping) simple_types in
+   (*let _ = print_endline "Final types" in
+   let _ = List.iter (fun a -> print_endline (PrintTypes.expressionStr a)) final_types in*)
+   { state with data = { state.data with type_mapping = mapping } },final_types@exp_list
+
 (** Returns the name of the type that is declared for a function *)
 let generateTypeName (id:identifier) : identifier =
    ["_auto_"^(joinSep "_" id)]
@@ -253,19 +392,6 @@ let getIdAndType (e:exp) =
    | PId(name,Some(tp),_) -> name,tp
    | PId(name,None,loc) -> name,PId(["real"],None,loc)
    | _ -> failwith "getIdAndType: not expected mem declaration"
-(*
-(** Once we have created the types based on two function calls this function merges them*)
-let mergeTypes (t1:exp) (t2:exp) : exp =
-   match t1,t2 with
-   | StmtType(name1,[],Some(members1),None,loc1),StmtType(name2,[],Some(members2),None,loc2) ->
-      let name = generateTypeNameForInstance [name1;name2] in
-      let member_cmp (_,a,_) (_,b,_) = compare a b in
-      (* TODO: Add check for equal types *)
-      let members = CCList.sort_uniq ~cmp:member_cmp (members1@members2) in
-      let loc = mergeLocations loc1 loc2 in
-      StmtType(CCOpt.get_exn name,[],Some(members),None,loc)
-   | _ -> failwith "mergeTypes: cannot merge these types"
-*)
 
 let rec createTypeForFunction (state:pass_state tstate) (fname:identifier) : exp option =
    if isActiveFunction state fname |> not then
@@ -465,6 +591,11 @@ let skipFun (stmt:exp) : bool =
    | StmtFun(_,_,_,_,_) -> false
    | _ -> true
 
+let isFun (stmt:exp) : bool =
+   match stmt with
+   | StmtFun(_,_,_,_,_) -> true
+   | _ -> false
+
 let skipBlock (stmt:exp) : bool =
    match stmt with
    | StmtBlock(_,_) -> false
@@ -606,7 +737,7 @@ let simplifySequenceBindings : ('data,exp) traverser =
 
 (* ======================= *)
 
-(** Removes all the mem statememts *)
+(** Removes all the mem statements *)
 let rec removeAllMem : ('data,exp) expander =
    fun state exp ->
       match exp with
@@ -616,7 +747,7 @@ let rec removeAllMem : ('data,exp) expander =
          state,[exp]
       | _ -> state,[exp]
 
-(** Removes all the val statememts *)
+(** Removes all the val statements *)
 let rec removeAllVal : ('data,exp) expander =
    fun state exp ->
       match exp with
@@ -712,7 +843,7 @@ let splitIfWithTwoReturns : ('data,exp) expander =
          end
       | _ -> state,[exp]
 
-(** Wrapps changes return a; -> if(true) return a; This is useful to apply transforations *)
+(** Wrapps changes return a; -> if(true) return a; This is useful to apply transformations *)
 let wrapSimpleReturn : ('data,exp) traverser =
    fun state stmt ->
       match stmt with
@@ -766,7 +897,7 @@ let evaluateCertainConditions : ('data,exp) traverser =
          state,else_stmt
       | _ -> state,stmt
 
-(** Simplifies dummy if-statements created by the transfrmations. e.g. if(true) ... or if(a) { if(!a) ...}  *)
+(** Simplifies dummy if-statements created by the transformations. e.g. if(true) ... or if(a) { if(!a) ...}  *)
 let removeUnnecesaryIfConditions : ('data,exp) traverser =
    fun state stmt ->
       match stmt with
@@ -873,7 +1004,7 @@ let inlineFunctionBodies (state:'data tstate) (exp_list:exp list) : 'data tstate
       }
    in (setState state new_state),exp_list
 
-(** Wrapps all the statements into a function called __main__ and calls it *)
+(** Wraps all the statements into a function called __main__ and calls it *)
 let makeFunAndCall state stmts =
    let fcall = ["__main__"] in
    state,[StmtFun(fcall,[],appendBlocks stmts,None,default_loc); StmtReturn(PCall(None,fcall,[],default_loc,[]),default_loc)]
@@ -899,8 +1030,8 @@ let applyTransformations (options:options) (results:parser_results) =
          options         = options;
          function_mem    = IdentifierMap.empty;
          instances       = IdentifierMap.empty;
-         active_function = IdentifierMap.empty;
          type_function   = IdentifierMap.empty;
+         type_mapping    = IdentifierMap.empty;
       } |> createState
    in
    (* Basic transformations *)
@@ -931,10 +1062,10 @@ let applyTransformations (options:options) (results:parser_results) =
    (* Inlining *)
    let inliningPasses state =
       state
-      |+> TypesUtil.foldAsTransformation collectFunctionDefinitions
+      |+> TypesUtil.foldAsTransformation None collectFunctionDefinitions
       |+> inlineFunctionBodies
       |+> TypesUtil.expandStmtList (Some(skipFun)) inlineStmts
-      |+> TypesUtil.foldAsTransformation collectFunctionDefinitions
+      |+> TypesUtil.foldAsTransformation None collectFunctionDefinitions
    in
    (* Used for imperative transformation *)
    let imperativePasses state =
@@ -947,10 +1078,10 @@ let applyTransformations (options:options) (results:parser_results) =
       |+> TypesUtil.traverseBottomExpList None simplifySequenceBindings
       |+> makeFunAndCall
       |+> TypesUtil.traverseBottomExpList None relocateMemAndVal
-      |+> TypesUtil.foldAsTransformation
-         (collectMemInFunctions
-         |*> collectFunctionInstances)
-      |+> TypesUtil.foldAsTransformation createTypes
+      |+> TypesUtil.foldAsTransformation None
+         (collectMemInFunctions |*> collectFunctionInstances)
+      |+> TypesUtil.foldAsTransformation None createTypes
+      |+> simplifyTypes
    in
    let passes stmts =
       (initial_state,[StmtBlock(stmts,default_loc)])
