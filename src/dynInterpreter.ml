@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 open TypesVult
 open TypesUtil
+open Scope
 
 let apply_default (f:'a -> 'b) (v:'a option) (def:'b) =
    match v with
@@ -58,30 +59,11 @@ type type_body =
    | BuiltinT  of value
    | DeclaredT of exp
 
-(** Environment of the interpreter used to store all bindings and declarations *)
-type local_env =
-   {
-      val_binds : (value IdentifierMap.t) list;
-      mem_binds : value IdentifierMap.t;
-      fun_bind  : local_env IdentifierMap.t;
-      fun_decl  : function_body IdentifierMap.t;
-      type_decl : type_body IdentifierMap.t;
-   }
+type obj =
+   | Value    of value
+   | Function of function_body
+   | Type     of type_body
 
-(** Creates an environment. It optionally receives the function declarations.  *)
-let newLocalEnv (func_and_types:(function_body IdentifierMap.t * type_body IdentifierMap.t) option) =
-   let functions,types =
-      match func_and_types with
-      | Some(functions,types) -> functions,types
-      | _ -> IdentifierMap.empty,IdentifierMap.empty
-   in
-   {
-      val_binds = [];
-      mem_binds = IdentifierMap.empty;
-      fun_bind  = IdentifierMap.empty;
-      fun_decl  = functions;
-      type_decl = types;
-   }
 
 (** Converts a value to string *)
 let rec valueStr (value:value) : string =
@@ -97,15 +79,22 @@ let rec valueStr (value:value) : string =
                     |> joinStrings ","
       in "("^elems_s^")"
 
-(** Prints the current state of the environment *)
-let localEnvStr (loc:local_env) : string =
-   let dumpIdentifierMap env =
-      IdentifierMap.fold (fun name value state -> state^(identifierStr name)^" = "^(valueStr value)^"\n" ) env ""
-   in
-   let val_s = List.map dumpIdentifierMap loc.val_binds |> joinStrings "\n" in
-   let mem_s = dumpIdentifierMap loc.mem_binds in
-   let fun_s = IdentifierMap.fold (fun name value state -> (identifierStr name)::state ) loc.fun_bind [] |> joinStrings "," in
-   Printf.sprintf "= val =\n%s= mem =\n%s= fun =\n%s\n" val_s mem_s fun_s
+module IdObjSig =
+struct
+   type t = identifier
+   type v = obj
+   let compare  = compare
+   let string_t = identifierStr
+   let string_v o =
+      match o with
+      | Value(v)    -> valueStr v
+      | Function(_) -> "function"
+      | Type(_)     -> "type"
+end
+
+module IdScope = Scope(IdObjSig)
+(** Environment of the interpreter used to store all bindings and declarations *)
+type local_env = obj IdScope.t
 
 (** Returns the name in a named_id *)
 let getVarName (named_id:named_id) : identifier =
@@ -121,98 +110,78 @@ let getExpName (exp:exp) : identifier =
 
 (** Returns the statements of a declared function *)
 let getFunctionBody (loc:local_env) (name:identifier) : function_body =
-   if IdentifierMap.mem name loc.fun_decl then
-      IdentifierMap.find name loc.fun_decl
-   else
+   (*let _ = Printf.printf "Searching function body '%s'\n" (identifierStr name) in*)
+   match IdScope.lookup loc name with
+   | Some(Function(body)) ->
+      (*let _ = print_endline "Found" in*)
+      body
+   | _ ->
+      (*let _ = print_endline "Not found" in*)
       failwith ("Unknown function "^(identifierStr name))
 
 (** Adds a declared function to the environment *)
 let declFunction (loc:local_env) (name:identifier) (body:function_body) : local_env =
-   { loc with fun_decl = IdentifierMap.add name body loc.fun_decl }
+   (*let _ = Printf.printf "Declaring function body '%s'\n" (identifierStr name) in*)
+   IdScope.bind loc name (Function(body))
 
 (** Adds a declared function to the environment *)
 let declType (loc:local_env) (name:identifier) (body:type_body) : local_env =
-   { loc with type_decl = IdentifierMap.add name body loc.type_decl }
-
-(** Gets the local environment for a function call *)
-let getFunctionEnv (loc:local_env) (optname:identifier option) : local_env =
-   match optname with
-   | None -> newLocalEnv (Some(loc.fun_decl,loc.type_decl))
-   | Some(name) ->
-      if IdentifierMap.mem name loc.fun_bind then
-         IdentifierMap.find name loc.fun_bind
-      else
-         let env = newLocalEnv (Some(loc.fun_decl,loc.type_decl)) in
-         let _ = IdentifierMap.add name env loc.fun_bind in
-         env
-
-(** Adds a local environment for a function call *)
-let setFunctionEnv (loc:local_env) (optname:identifier option) (floc:local_env) : local_env =
-   match optname with
-   | None -> loc
-   | Some(name) -> { loc with fun_bind = IdentifierMap.add name floc loc.fun_bind }
+   (*let _ = Printf.printf "Declaring type body '%s'\n" (identifierStr name) in*)
+   IdScope.bind loc name (Type(body))
 
 (** Clears a local environment *)
 let clearLocal (loc:local_env) : local_env =
-   { loc with val_binds = [] }
+   loc
 
 (** Pushes a new local variable environment *)
-let pushLocal (loc:local_env) : local_env =
-   { loc with val_binds = (IdentifierMap.empty)::loc.val_binds }
+let pushLocal (loc:local_env) (optname:identifier option) : local_env =
+   match optname with
+   | Some(name) ->
+      (*let _ = Printf.printf "Opening scope %s\n" (identifierStr name) in*)
+      let loc = IdScope.enter loc name in
+      (*let _ = IdScope.printScope loc in*)
+      loc
+   | _ -> loc
 
 (** Pops the local variable environment *)
-let popLocal (loc:local_env) : local_env =
-   match loc.val_binds with
-   | [] -> loc
-   | _::t -> { loc with val_binds = t }
+let popLocal (loc:local_env) (optname:identifier option) : local_env =
+   match optname with
+   | Some(name) ->
+      (*let _ = Printf.printf "Closing scope %s\n" (identifierStr name) in*)
+      let loc = IdScope.exit loc in
+      (*let _ = IdScope.printScope loc in*)
+      loc
+   | _ -> loc
+
 
 (** Returns the value for the given variable *)
 let getExpValueFromEnv (loc:local_env) (name:identifier) : value =
-   let rec loop locals =
-      match locals with
-      | [] ->
-         if IdentifierMap.mem name loc.mem_binds then
-            IdentifierMap.find name loc.mem_binds
-         else
-            let _ = print_string (localEnvStr loc) in
-            failwith ("Undeclared variable "^(identifierStr name))
-      | h::t ->
-         if IdentifierMap.mem name h then
-            IdentifierMap.find name h
-         else loop t
-   in loop loc.val_binds
+   (*let _ = Printf.printf "Looking up for value '%s'\n" (identifierStr name) in*)
+   match IdScope.lookup loc name with
+   | Some(Value(v)) ->
+      (*let _ = Printf.printf "Got %s\n" (valueStr v) in*)
+      v
+   | Some(_)        -> failwith "getExpValueFromEnv: not a value"
+   | None           -> failwith ("getExpValueFromEnv: not found"^(identifierStr name))
 
 (** Sets the value of a given variable *)
 let setValMem (loc:local_env) (name:identifier) (value:value) : local_env =
-   let rec loop locals acc =
-      match locals with
-      | [] ->
-         if IdentifierMap.mem name loc.mem_binds then
-            { loc with mem_binds = IdentifierMap.add name value loc.mem_binds }
-         else
-            let _ = print_string (localEnvStr loc) in
-            failwith ("Undeclared variable "^(identifierStr name))
-      | h::t ->
-         if IdentifierMap.mem name h then
-            { loc with val_binds = (List.rev acc)@[IdentifierMap.add name value h]@t}
-         else loop t (h::acc)
-   in loop loc.val_binds []
+   (*let _ = Printf.printf "Updating value for '%s' to %s\n" (identifierStr name) (valueStr value) in*)
+   IdScope.rebind loc name (Value(value))
 
 (** Declares a variable name *)
 let declVal (loc:local_env) (name:identifier) (value:value) : local_env =
-   match loc.val_binds with
-   | [] ->
-      let new_env = IdentifierMap.add name value (IdentifierMap.empty) in
-      { loc with val_binds = [new_env] }
-   | h::t ->
-      let new_env = IdentifierMap.add name value h in
-      { loc with val_binds = new_env::t }
+   (*let _ = Printf.printf "Setting val value for '%s' to %s\n" (identifierStr name) (valueStr value) in*)
+   IdScope.bind loc name (Value(value))
 
 (** Declares a memory name *)
 let declMem (loc:local_env) (name:identifier) (init:value) : local_env =
-   if not (IdentifierMap.mem name loc.mem_binds) then
-      { loc with mem_binds = IdentifierMap.add name init loc.mem_binds }
-   else loc
+   match IdScope.lookup loc name with
+   | None ->
+      (*let _ = Printf.printf "Setting mem value for '%s' to %s\n" (identifierStr name) (valueStr init) in*)
+      let loc = IdScope.bind loc name (Value(init)) in
+      loc
+   | Some(_) -> loc
 
 (** Returns true if the value is zero *)
 let isTrue (value:value) : bool =
@@ -223,12 +192,12 @@ let isTrue (value:value) : bool =
    | _           -> true
 
 (** Evaluates a function call *)
-let rec evalFun (loc:local_env) (body:function_body) (args:value list) : value * local_env * bool =
+let rec evalFun (loc:local_env) (scope_name:identifier option) (body:function_body) (args:value list) : value * local_env * bool =
    match body with
    | DeclaredF(StmtFun(_,arg_names,stmts,type_exp,_)) ->
       let inputs = List.map getVarName arg_names in
       let loc = List.fold_left2 (fun s n v -> declVal s n v) loc inputs args in
-      runStmtList loc [stmts]
+      runStmtList loc scope_name [stmts]
    | BuiltinF(f) ->
       f args,loc,false
    | _ -> failwith "Invalid function body"
@@ -254,12 +223,11 @@ and runExp (loc:local_env) (exp:exp) : value * local_env * bool =
       else
          runExp loc else_exp
    | PCall(name,ftype,args,_,_) ->
-      let body = getFunctionBody loc ftype in
+      let loc          = pushLocal loc name in
+      let body         = getFunctionBody loc ftype in
       let args_val,loc = runExpList loc args in
-      let env = getFunctionEnv loc name in
-      let env = clearLocal env in
-      let result,env,_ = evalFun env body args_val in
-      let loc = setFunctionEnv loc name env in
+      let result,loc,_ = evalFun loc name body args_val in
+      let loc          = popLocal loc name in
       result,loc,false
    | PEmpty -> failwith "There should not be Empty expressions when calling the intepreter"
    | PBinOp(_,_,_,_)
@@ -309,10 +277,16 @@ and runExp (loc:local_env) (exp:exp) : value * local_env * bool =
       else
          runExp loc else_stmts
    | StmtEmpty -> VUnit,loc,false
-   | PSeq(stmts,_) ->
-      runStmtList loc stmts
-   | StmtBlock(stmts,_) ->
-      runStmtList loc stmts
+   | PSeq(name,stmts,_) ->
+      let loc          = pushLocal loc name in
+      let v,loc,is_ret = runStmtList loc name stmts in
+      let loc          = popLocal loc name in
+      v,loc,is_ret
+   | StmtBlock(name,stmts,_) ->
+      let loc          = pushLocal loc name in
+      let v,loc,is_ret = runStmtList loc name stmts in
+      let loc          = popLocal loc name in
+      v,loc,is_ret
    | StmtWhile(cond,stmts,_) ->
       let cond_val,loc,_ = runExp loc cond in
       let rec loop cond_val loc n =
@@ -337,8 +311,7 @@ and runExpList (loc:local_env) (expl:exp list) : value list * local_env =
    List.rev acc,loc
 
 (** Evaluates a list of statements *)
-and runStmtList (loc:local_env) (expl:exp list) : value * local_env * bool =
-   let loc = pushLocal loc in
+and runStmtList (loc:local_env) (name:identifier option) (expl:exp list) : value * local_env * bool =
    let rec loop loc stmts =
       match stmts with
       | [] -> VUnit,loc,false
@@ -349,7 +322,6 @@ and runStmtList (loc:local_env) (expl:exp list) : value * local_env * bool =
          else loop loc t
    in
    let ret,loc,is_ret = loop loc expl in
-   let loc = popLocal loc in
    ret,loc,is_ret
 
 (** Used to create functions that take one number and return one number *)
@@ -435,16 +407,17 @@ let addBuiltinFunctions (loc:local_env) : local_env =
 
 (** Main function that takes a parse program and runs it*)
 let interpret (results:parser_results) : interpreter_results =
-   let loc = newLocalEnv None |> addBuiltinFunctions in
+   let loc = IdScope.empty |> addBuiltinFunctions in
    try
 
-      let result = CCError.map (fun stmts -> let ret,loc,_ = runStmtList loc stmts in ret,loc) results.presult in
+      let result = CCError.map (fun stmts -> let ret,loc,_ = runStmtList loc None stmts in ret,loc) results.presult in
       match result with
       | `Ok(ret,loc) ->
-         (*let _ = print_string (localEnvStr loc) in*)
          { iresult = `Ok(valueStr ret); lines = results.lines }
       | `Error(error) ->
          { iresult = `Error(error); lines = results.lines }
    with
-   | Failure(msg) -> { iresult = `Error([SimpleError(msg)]); lines = results.lines }
+   | Failure(msg) ->
+      let _ = print_endline msg in
+      { iresult = `Error([SimpleError(msg)]); lines = results.lines }
 

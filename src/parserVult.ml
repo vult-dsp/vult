@@ -206,7 +206,7 @@ and exp_nud (buffer:exp lexer_stream) (token:exp token) : exp token =
       { token with contents = PIf(cond,then_exp,else_exp,token.loc) }
    | LSEQ,_ ->
       let stmts = pseqList buffer in
-      { token with contents = PSeq(stmts,token.loc) }
+      { token with contents = PSeq(None,stmts,token.loc) }
    | _ ->
       let message = getNotExpectedTokenError token in
       raise (ParserError(message))
@@ -514,10 +514,10 @@ and stmtList (buffer:exp lexer_stream) : exp =
          let end_loc = buffer.peeked.loc in
          let loc = mergeLocations start_loc end_loc in
          let _ = skip buffer in
-         StmtBlock(List.rev acc,loc)
+         StmtBlock(None,List.rev acc,loc)
       | EOF ->
          let _ = expect buffer RBRAC in
-         StmtBlock([],start_loc)
+         StmtBlock(None,[],start_loc)
       | _ ->
          let s = stmt buffer in
          loop (s::acc)
@@ -529,7 +529,7 @@ and stmtList (buffer:exp lexer_stream) : exp =
    | _ ->
       let s = stmt buffer in
       let loc = TypesUtil.getExpLocation s in
-      StmtBlock([s],loc)
+      StmtBlock(None,[s],loc)
 
 (** <statementList> :=  LSEQ <statement> [<statement>] RSEQ
     When called in exp_nud function LSEQ is already consumed *)

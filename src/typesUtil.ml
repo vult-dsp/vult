@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 open TypesVult
 open Either
+open Scope
 
 (* -- OVERVIEW PLEASE FILL IN
    Types:
@@ -189,7 +190,7 @@ let getExpLocation (e:exp)  : location =
    | PGroup(_,loc)
    | PTuple(_,loc) -> loc
    | PEmpty -> default_loc
-   | PSeq(_,loc) -> loc
+   | PSeq(_,_,loc) -> loc
    | PTyped(_,_,loc) -> loc
 
    | StmtVal(_,_,loc)
@@ -199,7 +200,7 @@ let getExpLocation (e:exp)  : location =
    | StmtFun(_,_,_,_,loc)
    | StmtBind(_,_,loc) -> loc
    | StmtEmpty -> default_loc
-   | StmtBlock(_,loc) -> loc
+   | StmtBlock(_,_,loc) -> loc
    | StmtWhile(_,_,loc) -> loc
    | StmtType(_,_,_,_,loc) -> loc
 
@@ -306,9 +307,9 @@ let rec traverseBottomExp (pred:(exp -> bool) option) (f: ('data, exp) traverser
          let state2,ne2 = traverseBottomExp pred f state1 e2 in
          let state3,ne3 = traverseBottomExp pred f state2 e3 in
          f state3 (PIf(ne1,ne2,ne3,loc))
-      | PSeq(stmts,loc) ->
+      | PSeq(name,stmts,loc) ->
          let state1,nstmts = traverseBottomExpList pred f state stmts in
-         f state1 (PSeq(nstmts,loc))
+         f state1 (PSeq(name,nstmts,loc))
       | StmtVal(e1,e2,loc) ->
          let state1,ne1 = traverseBottomExp pred f state e1 in
          let state2,ne2 = traverseBottomOptExp pred f state1 e2 in
@@ -341,9 +342,9 @@ let rec traverseBottomExp (pred:(exp -> bool) option) (f: ('data, exp) traverser
          let state2,nthen_stmts = traverseBottomExp pred f state1 then_stmts in
          let state3,nelse_stmts = traverseBottomExp pred f state2 else_stmts in
          f state3 (StmtIf(ncond,nthen_stmts,Some(nelse_stmts),loc))
-      | StmtBlock(stmts,loc) ->
+      | StmtBlock(name,stmts,loc) ->
          let state1,nstmts = traverseBottomExpList pred f state stmts in
-         f state1 (StmtBlock(nstmts,loc))
+         f state1 (StmtBlock(name,nstmts,loc))
       | StmtWhile(e1,e2,loc) ->
          let state1,ne1 = traverseBottomExp pred f state e1 in
          let state2,ne2 = traverseBottomExp pred f state1 e2 in
@@ -400,9 +401,9 @@ let rec traverseTopExp (pred:(exp -> bool) option) (f: ('data, exp) traverser) (
          let state2,ne2 = traverseTopExp pred f state1 e2 in
          let state3,ne3 = traverseTopExp pred f state2 e3 in
          state3,PIf(ne1,ne2,ne3,loc)
-      | PSeq(stmts,loc) ->
+      | PSeq(name,stmts,loc) ->
          let state1,nstmts = traverseTopExpList pred f state stmts in
-         state1,PSeq(nstmts,loc)
+         state1,PSeq(name,nstmts,loc)
       | StmtVal(e1,e2,loc) ->
          let state1,ne1 = traverseTopExp pred f state e1 in
          let state2,ne2 = traverseTopOptExp pred f state1 e2 in
@@ -433,9 +434,9 @@ let rec traverseTopExp (pred:(exp -> bool) option) (f: ('data, exp) traverser) (
          let state2,nthen_stmts = traverseTopExp pred f state1 then_stmts in
          let state3,nelse_stmts = traverseTopExp pred f state2 else_stmts in
          state3,StmtIf(ncond,nthen_stmts,Some(nelse_stmts),loc)
-      | StmtBlock(stmts,loc) ->
+      | StmtBlock(name,stmts,loc) ->
          let state1,nstmts = traverseTopExpList pred f state stmts in
-         state1,StmtBlock(nstmts,loc)
+         state1,StmtBlock(name,nstmts,loc)
       | StmtWhile(e1,e2,loc) ->
          let state1,ne1 = traverseTopExp pred f state e1 in
          let state2,ne2 = traverseTopExp pred f state1 e2 in
@@ -499,7 +500,7 @@ let rec foldTopExp (pred:(exp -> bool) option) (f: ('data, exp) folder) (state0:
          let state2 = foldTopExp pred f state1 e2 in
          let state3 = foldTopExp pred f state2 e3 in
          state3
-      | PSeq(stmts,_) ->
+      | PSeq(_,stmts,_) ->
          let state1 = foldTopExpList pred f state stmts in
          state1
       | StmtVal(e1,e2,_) ->
@@ -532,7 +533,7 @@ let rec foldTopExp (pred:(exp -> bool) option) (f: ('data, exp) folder) (state0:
          let state2 = foldTopExp pred f state1 then_stmts in
          let state3 = foldTopExp pred f state2 else_stmts in
          state3
-      | StmtBlock(stmts,_) ->
+      | StmtBlock(_,stmts,_) ->
          let state1 = foldTopExpList pred f state stmts in
          state1
       | StmtWhile(e1,e2,_) ->
@@ -592,7 +593,7 @@ let rec foldDownExp (pred:(exp -> bool) option) (f: ('data, exp) folder) (state:
          let state2 = foldDownExp pred f state1 e2 in
          let state3 = foldDownExp pred f state2 e3 in
          f state3 exp
-      | PSeq(stmts,_) ->
+      | PSeq(_,stmts,_) ->
          let state1 = foldDownExpList pred f state stmts in
          f state1 exp
       | StmtVal(e1,e2,_) ->
@@ -625,7 +626,7 @@ let rec foldDownExp (pred:(exp -> bool) option) (f: ('data, exp) folder) (state:
          let state2 = foldDownExp pred f state1 then_stmts in
          let state3 = foldDownExp pred f state2 else_stmts in
          f state3 exp
-      | StmtBlock(stmts,_) ->
+      | StmtBlock(_,stmts,_) ->
          let state1 = foldDownExpList pred f state stmts in
          f state1 exp
       | StmtWhile(e1,e2,_) ->
@@ -655,21 +656,21 @@ let makePSeq (loc:location) (l:exp list) : exp =
    match l with
    | [] -> PUnit(loc)
    | [h] -> h
-   | _ -> PSeq(l,loc)
+   | _ -> PSeq(None,l,loc)
 
 (** If the list of statements has more than one element return a StmtBlock instead *)
 let makeStmtBlock (loc:location) (l:exp list) : exp =
    match l with
-   | [] -> StmtBlock([],loc)
+   | [] -> StmtBlock(None,[],loc)
    | [h] -> h
-   | _ -> StmtBlock(l,loc)
+   | _ -> StmtBlock(None,l,loc)
 
 (** Appends the contents of a list of blocks *)
 let appendBlocksList (l:exp list) : exp list * location =
    let rec loop acc loc e =
       match e with
       | [] -> List.flatten (List.rev acc),loc
-      | StmtBlock(stmts,sloc)::t ->
+      | StmtBlock(_,stmts,sloc)::t ->
          let new_loc = mergeLocations loc sloc in
          loop (stmts::acc) new_loc t
       | h::t ->
@@ -690,8 +691,8 @@ let appendPseq (l:exp list) =
 
 let expandBlockOrSeq (stmt:exp) : exp list =
    match stmt with
-   | StmtBlock(stmts,_) -> stmts
-   | PSeq(stmts,_)      -> stmts
+   | StmtBlock(_,stmts,_) -> stmts
+   | PSeq(_,stmts,_)      -> stmts
    | _ -> [stmt]
 
 let rec expandStmt (pred:(exp -> bool) option) (f: ('data, exp) expander) (state:'data tstate) (stmt:exp) : 'data tstate * exp list =
@@ -728,9 +729,9 @@ let rec expandStmt (pred:(exp -> bool) option) (f: ('data, exp) expander) (state
          let state1,nthen_stmts = expandStmt pred f state then_stmts in
          let state2,nelse_stmts = expandStmt pred f state1 else_stmts in
          f state2 (StmtIf(cond,appendBlocks nthen_stmts,Some(appendBlocks nelse_stmts),loc))
-      | PSeq(el,loc) ->
+      | PSeq(name,el,loc) ->
          let state1,nel = expandStmtList pred f state el in
-         f state1 (PSeq(nel,loc))
+         f state1 (PSeq(name,nel,loc))
 
       | PUnit(_)
       | PInt(_,_)
@@ -762,9 +763,9 @@ let rec expandStmt (pred:(exp -> bool) option) (f: ('data, exp) expander) (state
       | PTuple(el,loc) ->
          let state1,nel = expandStmtList pred f state el in
          f state1 (PTuple(nel,loc))
-      | StmtBlock(el,loc) ->
+      | StmtBlock(name,el,loc) ->
          let state1,nel = expandStmtList pred f state el in
-         f state1 (StmtBlock(nel,loc))
+         f state1 (StmtBlock(name,nel,loc))
       | StmtWhile(e1,e2,loc) ->
          let state1,ne1 = expandStmt pred f state e1 in
          let state2,ne2 = expandStmt pred f state1 e2 in
@@ -848,6 +849,7 @@ struct
 end
 
 module IdentifierMap = CCMap.Make(Identifier)
+
 
 let mapfindDefault key map default =
    if IdentifierMap.mem key map then

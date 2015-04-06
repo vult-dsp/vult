@@ -185,7 +185,7 @@ let rec assemble (i0:instruction list) (exp:exp) =
       let line = locationLine loc in
       let i1 = assembleListExp i0 args in
       Call(fname,line)::i1
-   | PSeq(el,_) -> assembleListStmt i0 el
+   | PSeq(_,el,_) -> assembleListStmt i0 el
    | PIf(cond,then_,else_,loc) ->
       let line = locationLine loc in
       let then_line = getExpLocation then_ |> locationLine in
@@ -225,7 +225,7 @@ let rec assemble (i0:instruction list) (exp:exp) =
       let line = locationLine loc in
       let i1 = assemble i0 e in
       Ret(line)::i1
-   | StmtBlock(el,loc) ->
+   | StmtBlock(_,el,loc) ->
       assembleListStmt i0 el
    | StmtIf(cond,then_,Some(else_),loc) ->
       let line = locationLine loc in

@@ -72,7 +72,7 @@ let main () =
    (* Runs the dynamic interpreter if -rundyn was passed as argument *)
    let _ = if args.rundyn then
          parser_results
-         |> List.map (applyTransformations opt_full_transform)
+         |> List.map (applyTransformations { opt_full_transform with inline = false })
          |> List.map interpret
          |> ignore
    in

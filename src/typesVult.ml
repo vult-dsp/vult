@@ -162,7 +162,8 @@ and exp =
       of exp list
       *  location
    | PSeq
-      of exp list
+      of identifier option (* Scope name *)
+      *  exp list
       *  location
    | PEmpty
 
@@ -198,7 +199,8 @@ and exp =
       *  exp         (* rhs *)
       *  location
    | StmtBlock
-      of exp list
+      of identifier option (* scope name *)
+      *  exp list
       *  location
    | StmtType
       of identifier           (* name *)

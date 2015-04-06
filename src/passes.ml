@@ -112,6 +112,10 @@ type pass_state =
       type_mapping    : identifier IdentifierMap.t; (* Stores the simplified type of each function *)
    }
 
+(** Increases the counter of a traversing state *)
+let incState (state: pass_state tstate) : pass_state tstate =
+   setState state { state.data with counter = state.data.counter+1 }
+
 (** Search a function in a table starting in the current scope and returns an Some if found *)
 let lookupFunction (table:'a IdentifierMap.t) (state:pass_state tstate) (fname:identifier) : 'a option =
    let current_scope = state.scope |> List.flatten in
@@ -196,8 +200,7 @@ let nameFunctionCalls : ('data,exp) transformation =
       match exp with
       | PCall(None,name,args,floc,attr) ->
          let inst = "_i"^(string_of_int state.data.counter) in
-         let ret_state = { state.data with counter = state.data.counter+1} in
-         (setState state ret_state),PCall(Some([inst]),name,args,floc,attr)
+         (incState state),PCall(Some([inst]),name,args,floc,attr)
       | _ -> state,exp
 
 (* ======================= *)
@@ -532,12 +535,12 @@ let bindFunctionAndIfExpCalls : ('data,exp) expander  =
          let then_exp =
             match then_stmts with
             | [] -> new_then_
-            | _  -> PSeq(List.rev (StmtReturn(new_then_,loc)::then_stmts),loc)
+            | _  -> PSeq(None,List.rev (StmtReturn(new_then_,loc)::then_stmts),loc)
          in
          let else_exp =
             match else_stmts with
             | [] -> new_else_
-            | _  -> PSeq(List.rev (StmtReturn(new_else_,loc)::else_stmts),loc)
+            | _  -> PSeq(None,List.rev (StmtReturn(new_else_,loc)::else_stmts),loc)
          in
          let new_state = {state.data with counter = count2} in
          (setState state new_state),[PIf(cond,then_exp,else_exp,loc)]
@@ -583,7 +586,7 @@ let isIfStmt : ('data,exp) folder =
 
 let skipPSeq (e:exp) : bool =
    match e with
-   | PSeq(_,_) -> false
+   | PSeq(_,_,_) -> false
    | _ -> true
 
 let skipFun (stmt:exp) : bool =
@@ -598,7 +601,7 @@ let isFun (stmt:exp) : bool =
 
 let skipBlock (stmt:exp) : bool =
    match stmt with
-   | StmtBlock(_,_) -> false
+   | StmtBlock(_,_,_) -> false
    | _ -> true
 
 let skipIfStmt (stmt:exp) : bool =
@@ -689,7 +692,7 @@ let inlineStmts : ('data,exp) expander =
                   let new_stmts = inlineFunctionCall state name fname args loc in
                   match new_stmts with
                   | [] -> state,[]
-                  | _  -> state,[PSeq(new_stmts,loc)]
+                  | _  -> state,[PSeq(None,new_stmts,loc)]
                end
          end
       | _ -> state,[exp]
@@ -721,16 +724,16 @@ let rec isSinglePathStmtList (acc:exp list) (stmts:exp list) : (exp * exp list) 
 let simplifySequenceBindings : ('data,exp) traverser =
    fun state exp ->
       match exp with
-      | PSeq([PSeq(stmts,loc1)],loc2) ->
-         state,PSeq(stmts,mergeLocations loc1 loc2)
-      | PSeq([StmtBlock(stmts,loc1)],loc2) ->
-         state,PSeq(stmts,mergeLocations loc1 loc2)
-      | StmtBlock([StmtBlock(stmts,loc1)],loc2) ->
-         state,StmtBlock(stmts,mergeLocations loc1 loc2)
-      | StmtBind(lhs,PSeq(stmts,loc_s),loc) ->
+      | PSeq(name,[PSeq(_,stmts,loc1)],loc2) ->
+         state,PSeq(name,stmts,mergeLocations loc1 loc2)
+      | PSeq(name,[StmtBlock(_,stmts,loc1)],loc2) ->
+         state,PSeq(name,stmts,mergeLocations loc1 loc2)
+      | StmtBlock(name,[StmtBlock(_,stmts,loc1)],loc2) ->
+         state,StmtBlock(name,stmts,mergeLocations loc1 loc2)
+      | StmtBind(lhs,PSeq(name,stmts,loc_s),loc) ->
          begin
             match isSinglePathStmtList [] stmts with
-            | Some(e,rem_stmts) -> state,StmtBlock(rem_stmts@[StmtBind(lhs,e,loc)],loc_s)
+            | Some(e,rem_stmts) -> state,StmtBlock(name,rem_stmts@[StmtBind(lhs,e,loc)],loc_s)
             | None -> state,exp
          end
       | _ -> state,exp
@@ -790,7 +793,7 @@ let relocateMemAndVal : ('data,exp) traverser =
             TypesUtil.expandStmt (Some(skipFun)) removeAllMem mem_decl_map body in
          let mem_decl     = IdentifierMap.fold (fun _ a acc -> a::acc) mem_decl_map.data [] in
          state,StmtFun(name,args,appendBlocks (mem_decl@new_body),type_exp,loc)
-      | StmtBlock(stmts,loc) ->
+      | StmtBlock(name,stmts,loc) ->
          let skip a = skipPSeq a && skipBlock a in
          let inner_state  = deriveState state IdentifierMap.empty in
          let val_decl_map =
@@ -798,8 +801,8 @@ let relocateMemAndVal : ('data,exp) traverser =
          let _,new_stmts  =
             TypesUtil.expandStmtList (Some(skip)) removeAllVal val_decl_map stmts in
          let val_decl     = IdentifierMap.fold (fun _ a acc -> a::acc) val_decl_map.data [] in
-         state,StmtBlock(val_decl@new_stmts,loc)
-      | PSeq(stmts,loc) ->
+         state,StmtBlock(name,val_decl@new_stmts,loc)
+      | PSeq(name,stmts,loc) ->
          let skip a = skipPSeq a && skipBlock a in
          let inner_state  = deriveState state IdentifierMap.empty in
          let val_decl_map =
@@ -807,7 +810,7 @@ let relocateMemAndVal : ('data,exp) traverser =
          let _,new_stmts  =
             TypesUtil.expandStmtList (Some(skip)) removeAllVal val_decl_map stmts in
          let val_decl     = IdentifierMap.fold (fun _ a acc -> a::acc) val_decl_map.data [] in
-         state,PSeq(val_decl@new_stmts,loc)
+         state,PSeq(name,val_decl@new_stmts,loc)
       | _ -> state,exp
 
 (* ======================= *)
@@ -854,7 +857,7 @@ let wrapSimpleReturn : ('data,exp) traverser =
 let rec replaceReturn ret_var stmts =
    let replace e = match e with | StmtReturn(e,loc) -> StmtBind(ret_var,e,loc) | _ -> e in
    match stmts with
-   | StmtBlock(block_stmts,loc)  -> StmtBlock(List.map replace block_stmts,loc)
+   | StmtBlock(name,block_stmts,loc)  -> StmtBlock(name,List.map replace block_stmts,loc)
    | _ -> replace stmts
 
 (** Main transformation that eliminates the returns (assumes that return -> if(true) goto :end_of_function ) *)
@@ -865,7 +868,7 @@ let rec simplifyReturnPaths (ret_var:exp) (stmts:exp list) : exp list =
       [StmtIf(cond,replaceReturn ret_var then_stmts,None,loc)]
    | StmtIf(cond,then_stmts,None,loc)::t when hasReturn then_stmts ->
       let new_t = simplifyReturnPaths ret_var t in
-      [StmtIf(notCondition cond,StmtBlock(new_t,loc),Some(replaceReturn ret_var then_stmts),loc)]
+      [StmtIf(notCondition cond,StmtBlock(None,new_t,loc),Some(replaceReturn ret_var then_stmts),loc)]
    | h::t -> h::(simplifyReturnPaths ret_var t)
 
 (** Transforms if(a){} if(!a){} -> if(a) {} else {} *)
@@ -884,7 +887,7 @@ let rec collapseUnnecessaryIf (stmts:exp list) : exp list =
 let removeUnnecessaryBlocks : ('data,exp) traverser =
    fun state stmt ->
       match stmt with
-      | StmtBlock([h],_) -> state,h
+      | StmtBlock(_,[h],_) -> state,h
       | _ -> state,stmt
 
 (** Given a condition that we know is true, evaluates the if-statements using that condition *)
@@ -929,9 +932,9 @@ let removeSwapedIfCondition : ('data,exp) traverser =
 let removeEmptyIfConditions : ('data,exp) traverser =
    fun state stmt ->
       match stmt with
-      | StmtIf(cond,StmtBlock([],_),Some(else_stmt),loc) ->
+      | StmtIf(cond,StmtBlock(_,[],_),Some(else_stmt),loc) ->
          state,StmtIf(notCondition cond,else_stmt,None,loc)
-      | StmtIf(cond,then_stmt,Some(StmtBlock([],_)),loc) ->
+      | StmtIf(cond,then_stmt,Some(StmtBlock(_,[],_)),loc) ->
          state,StmtIf(cond,then_stmt,None,loc)
       | _ -> state,stmt
 
@@ -965,7 +968,7 @@ let simplifyReturn : ('data,exp) traverser =
 let simplifyReturnInPSeq : ('data,exp) traverser =
    fun state stmt ->
       match stmt with
-      | PSeq(pseq_stmts,loc) when hasIfStmtWithReturnList pseq_stmts ->
+      | PSeq(name,pseq_stmts,loc) when hasIfStmtWithReturnList pseq_stmts ->
          let var  = PId(["_return_value"],None,loc) in
          let decl = StmtVal(var,None,loc) in
          let inner_state = deriveState state var in
@@ -977,7 +980,7 @@ let simplifyReturnInPSeq : ('data,exp) traverser =
          in
          let ret_stmt = StmtReturn(var,loc) in
          let new_stmts,loc = appendBlocksList (decl::new_stmts@[ret_stmt]) in
-         state,PSeq(new_stmts,loc)
+         state,PSeq(name,new_stmts,loc)
       | _ -> state,stmt
 
 (* ======================= *)
@@ -1004,10 +1007,29 @@ let inlineFunctionBodies (state:'data tstate) (exp_list:exp list) : 'data tstate
       }
    in (setState state new_state),exp_list
 
+(* ======================= *)
+let nameLocalScopes : ('data,exp) traverser =
+   fun state exp ->
+      match exp with
+      | PSeq(None,stmts,loc) ->
+         let name = ["_scope_"^string_of_int(state.data.counter)] in
+         incState state,PSeq(Some(name),stmts,loc)
+      | StmtBlock(None,stmts,loc) ->
+         let name = ["_scope_"^string_of_int(state.data.counter)] in
+         incState state,StmtBlock(Some(name),stmts,loc)
+      | StmtFun(name,args,StmtBlock(Some(_),stmts,loc1),ret,loc) ->
+         state,StmtFun(name,args,StmtBlock(None,stmts,loc1),ret,loc)
+      | StmtFun(name,args,PSeq(Some(_),stmts,loc1),ret,loc) ->
+         state,StmtFun(name,args,PSeq(None,stmts,loc1),ret,loc)
+      | _ -> state,exp
+
+
+(* ======================= *)
+
 (** Wraps all the statements into a function called __main__ and calls it *)
 let makeFunAndCall state stmts =
    let fcall = ["__main__"] in
-   state,[StmtFun(fcall,[],appendBlocks stmts,None,default_loc); StmtReturn(PCall(None,fcall,[],default_loc,[]),default_loc)]
+   state,[StmtFun(fcall,[],appendBlocks stmts,None,default_loc); StmtReturn(PCall(Some(fcall),fcall,[],default_loc,[]),default_loc)]
 
 let applyOn cond f data =
    if cond data then
@@ -1082,9 +1104,10 @@ let applyTransformations (options:options) (results:parser_results) =
          (collectMemInFunctions |*> collectFunctionInstances)
       |+> TypesUtil.foldAsTransformation None createTypes
       |+> simplifyTypes
+      |+> TypesUtil.traverseBottomExpList None nameLocalScopes
    in
    let passes stmts =
-      (initial_state,[StmtBlock(stmts,default_loc)])
+      (initial_state,[StmtBlock(None,stmts,default_loc)])
       |> applyOn basicON         basicPasses
       |> applyOn returnRemovalON removalOfReturnPasses
       |> applyOn inlineON        inliningPasses

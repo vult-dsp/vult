@@ -84,6 +84,16 @@ let rec printList buffer f sep l =
 let identifierBuff buffer id =
    printList buffer append "." id
 
+let commentedId buffer id =
+   match id with
+   | Some(ids) ->
+      newline buffer;
+      append buffer "/*";
+      identifierBuff buffer ids;
+      append buffer "*/";
+      newline buffer
+   | _ -> ()
+
 (** Adds to the print buffer a namedId *)
 let rec namedIdBuff buffer id =
    match id with
@@ -145,7 +155,8 @@ and expressionBuff buffer (exp:exp) =
       expressionBuff buffer then_exp;
       append buffer " else ";
       expressionBuff buffer else_exp
-   | PSeq(stmts,_) ->
+   | PSeq(name,stmts,_) ->
+      commentedId buffer name;
       pseqListBuff buffer stmts;
    | PEmpty -> append buffer "Empty"
 
@@ -211,7 +222,8 @@ and expressionBuff buffer (exp:exp) =
       append buffer "=";
       expressionBuff buffer e2;
       append buffer ";"
-   | StmtBlock(stmts,_) ->
+   | StmtBlock(name,stmts,_) ->
+      commentedId buffer name;
       stmtListBuff buffer stmts;
    | StmtWhile(cond,stmts,_) ->
       append buffer "while(";
