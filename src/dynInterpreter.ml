@@ -83,7 +83,7 @@ module IdObjSig =
 struct
    type t = identifier
    type v = obj
-   let compare  = compare
+   let compare  = compare_identifier
    let string_t = identifierStr
    let string_v o =
       match o with
