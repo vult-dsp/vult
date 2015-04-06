@@ -24,25 +24,41 @@ THE SOFTWARE.
 
 (** Provides a simple way of handling scopes *)
 
-module Scope : functor (KeyType : Map.OrderedType) ->                                                                                                                                                             sig
-   module TypeMap : sig
-      type key = KeyType.t
-      type 'a t
-   end
-   type 'a t
-   (** Returns an empty scope *)
-   val empty : 'a t
-
-   (** Enters to a subscope, if it does not exists it creates it *)
-   val enter : 'a t -> TypeMap.key -> 'a t
-
-   (** Leaves the current scope and returns the parent *)
-   val exit  : 'a t -> 'a t
-
-   (** Search for a value in the current scope.
-       If it does not exists continues searching up. *)
-   val lookup : 'a t -> TypeMap.key -> 'a option
-
-   (** Binds the value to the given key in the current scope *)
-   val bind  : 'a t -> TypeMap.key -> 'a -> 'a t
+module type ScopeSig = sig
+  type t
+  type v
+  val compare : t -> t -> int
+  val string_t : t -> bytes
+  val string_v : v -> bytes
 end
+
+module Scope : functor (KeyType : ScopeSig) -> sig
+      module TypeMap :
+        sig
+          type key = KeyType.t
+        end
+
+      type 'a t
+
+      (** Returns an empty scope *)
+      val empty : 'a t
+
+      (** Enters to a subscope, if it does not exists it creates it *)
+      val enter : 'a t -> TypeMap.key -> 'a t
+      (** Leaves the current scope and returns the parent *)
+      val exit : 'a t -> 'a t
+      (** Search for a value in the current scope.
+       If it does not exists continues searching up. *)
+      val lookup : 'a t -> TypeMap.key -> 'a option
+      (** Binds the value to the given key in the current scope *)
+      val bind : 'a t -> TypeMap.key -> 'a -> 'a t
+
+      (** Lookup for a name in the current or parent scopes ad changes the value *)
+      val rebind : 'a t -> TypeMap.key -> 'a -> 'a t
+
+      (** Prints the top scope *)
+      val printFullScope : KeyType.v t -> unit
+
+      (** Prints the current scope *)
+      val printScope : KeyType.v t -> unit
+    end
