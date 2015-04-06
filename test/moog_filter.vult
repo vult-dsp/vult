@@ -1,6 +1,6 @@
 
-fun change(x):num {
-    mem pre_x:num;
+fun change(x):bool {
+    mem pre_x;
     val v:bool = pre_x!=x;
     pre_x = x;
     return v;
