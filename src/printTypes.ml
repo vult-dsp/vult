@@ -87,7 +87,6 @@ let identifierBuff buffer id =
 let commentedId buffer id =
    match id with
    | Some(ids) ->
-      newline buffer;
       append buffer "/*";
       identifierBuff buffer ids;
       append buffer "*/";
