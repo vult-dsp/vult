@@ -94,7 +94,7 @@ end
 
 module IdScope = Scope(IdObjSig)
 (** Environment of the interpreter used to store all bindings and declarations *)
-type local_env = obj IdScope.t
+type local_env = IdScope.t
 
 (** Returns the name in a named_id *)
 let getVarName (named_id:named_id) : identifier =

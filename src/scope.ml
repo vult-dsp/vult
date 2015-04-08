@@ -34,12 +34,12 @@ end
 
 module Scope (KeyType:ScopeSig) = struct
   module TypeMap = Map.Make(KeyType)
-  type 'a t =
+  type t =
     {
-      parent       : ('a t) option;
-      subscopes    : ('a t) TypeMap.t;
+      parent       : t option;
+      subscopes    : t TypeMap.t;
       current_name : TypeMap.key option;
-      values       : 'a TypeMap.t;
+      values       : KeyType.v TypeMap.t;
       isLocal      : bool; (* Local scopes are ignored for globla lookup *)
     }
 
@@ -52,7 +52,7 @@ module Scope (KeyType:ScopeSig) = struct
       isLocal      = true;
     }
 
-  let enterAny (scope:'a t) (name:TypeMap.key) (is_local:bool) : 'a t =
+  let enterAny (scope:t) (name:TypeMap.key) (is_local:bool) : t =
     if TypeMap.mem name scope.subscopes then
       { (TypeMap.find name scope.subscopes) with parent = Some(scope) }
     else
@@ -62,13 +62,13 @@ module Scope (KeyType:ScopeSig) = struct
         isLocal      = is_local;
       }
 
-  let enterLocal (scope:'a t) (name:TypeMap.key) : 'a t =
+  let enterLocal (scope:t) (name:TypeMap.key) : t =
     enterAny scope name true
 
-  let enter (scope:'a t) (name:TypeMap.key) : 'a t =
+  let enter (scope:t) (name:TypeMap.key) : t =
     enterAny scope name false
 
-  let exit (scope:'a t) : 'a t =
+  let exit (scope:t) : t =
     match scope.parent,scope.current_name with
     | None,_ -> failwith "Scope.exit: This is a top scope"
     | Some(parent),Some(name) ->
@@ -76,7 +76,7 @@ module Scope (KeyType:ScopeSig) = struct
         subscopes = TypeMap.add name scope parent.subscopes }
     | Some(parent),None -> failwith "Scope.exit: All scopes should have name"
 
-  let lookup (scope:'a t) (name:TypeMap.key) : 'a option =
+  let lookup (scope:t) (name:TypeMap.key) : 'a option =
     let rec lookup_loop = function
       | None    -> None
       | Some(s) ->
@@ -86,20 +86,28 @@ module Scope (KeyType:ScopeSig) = struct
           lookup_loop s.parent
     in lookup_loop (Some(scope))
 
-  let bind (scope:'a t) (name:TypeMap.key) (value:'a) : 'a t =
+  let bind (scope:t) (name:TypeMap.key) (value:'a) : t =
     { scope with values = TypeMap.add name value scope.values }
 
-  let rec enterPath (scope:'a t) (path:TypeMap.key list) : 'a t =
+  let rec enterPath (scope:t) (path:TypeMap.key list) : t =
     match path with
     | []   -> scope
     | h::t -> enter scope h
+
+  let getCurrentPath (scope:t) : KeyType.t list =
+    let rec getCurrentPath_loop s =
+      match s.current_name,s.parent with
+      | None,_ -> []
+      | Some(name), Some(parent) -> name :: getCurrentPath_loop parent
+      | Some(name), None -> [name]
+    in getCurrentPath_loop scope |> List.rev
 
   let getName o =
     match o with
     | Some(a) -> a
     | _ -> failwith "getName: cannot get the name"
 
-  let rebind (scope:'a t) (name:TypeMap.key) (value:'a) : 'a t =
+  let rebind (scope:t) (name:TypeMap.key) (value:'a) : t =
     let rec rebind_loop s acc =
       if TypeMap.mem name s.values then
         Some(bind s name value,acc)
@@ -112,7 +120,7 @@ module Scope (KeyType:ScopeSig) = struct
     | None -> failwith "rebind:Cannot rebind a not bound item"
     | Some(final_scope,poped_scopes) -> enterPath final_scope poped_scopes
 
-  let rec getTop (scope: 'a t) : 'a t =
+  let rec getTop (scope: t) : t =
     match scope.parent with
     | None    -> scope
     | Some(s) -> getTop s
@@ -121,13 +129,13 @@ module Scope (KeyType:ScopeSig) = struct
     | None   -> "-"
     | Some(name) -> KeyType.string_t name
 
-  let valuesStr (scope: 'a t) : string =
-    TypeMap.fold (fun key value acc ->
+  let valuesStr (scope: t) : string =
+    TypeMap.fold (fun (key:TypeMap.key) (value:KeyType.v) acc ->
       let key_s   = KeyType.string_t key in
       let value_s = KeyType.string_v value in
       (Printf.sprintf "- %s = %s\n" key_s value_s)^acc) scope.values ""
 
-  let rec scopeStr (scope: 'a t) : string =
+  let rec scopeStr (scope: t) : string =
     let name   = nameStr scope.current_name in
     let values = valuesStr scope in
     let subs   =
@@ -138,11 +146,11 @@ module Scope (KeyType:ScopeSig) = struct
     in
     Printf.sprintf "\nname:%s\n%s\nsubs:%s\n" name values subs
 
-  let rec printFullScope (scope: 'a t) : unit =
+  let rec printFullScope (scope: t) : unit =
     let top = getTop scope in
     print_endline (scopeStr top)
 
-  let rec printScope (scope: 'a t) : unit =
+  let rec printScope (scope: t) : unit =
     print_endline (scopeStr scope)
 
 end

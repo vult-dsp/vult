@@ -50,10 +50,52 @@ open Scope
       getFunctionTypeName: Don't really know what this does.
 *)
 
+
+(** Internal function used by 'joinSep' *)
+let rec join_buff buff sep l =
+   match l with
+   | [] -> ()
+   | [h] -> Buffer.add_string buff h
+   | h::t ->
+      Buffer.add_string buff h;
+      Buffer.add_string buff sep;
+      join_buff  buff sep t
+
+(** Joins a list of strings using a separator 'sep' *)
+let joinSep sep l =
+   match l with
+   | [] -> ""
+   | _ ->
+      let buff = Buffer.create 128 in
+      join_buff buff sep l;
+      Buffer.contents buff
+
+type binding_info =
+   | FunctionInfo
+   | TypeInfo
+   [@@deriving show,eq,ord]
+
+(** Converts an indentifier in a string by separating the names with dot *)
+let identifierStr (id:identifier) : string = joinSep "." id
+
+(** Converts a list of identifiers into a coma separated string *)
+let identifierStrList (ids:identifier list) : string =
+   List.map identifierStr ids |> joinSep ", "
+
+module BindingInfo =
+struct
+   type t = identifier
+   type v = binding_info
+   let compare  = compare_identifier
+   let string_t = identifierStr
+   let string_v _ = ""
+end
+
+module BindingsScope = Scope(BindingInfo)
 (** Used to track the scope in all traversers *)
 type 'a tstate =
    {
-      scope : identifier list;
+      scope : BindingsScope.t;
       data  : 'a
    }
 
@@ -81,28 +123,11 @@ type ('data, 'error, 'result) expfold =
       vEmpty : 'data -> ('error, 'result) either;
    }
 
-(** Internal function used by 'joinSep' *)
-let rec join_buff buff sep l =
-   match l with
-   | [] -> ()
-   | [h] -> Buffer.add_string buff h
-   | h::t ->
-      Buffer.add_string buff h;
-      Buffer.add_string buff sep;
-      join_buff  buff sep t
 
-(** Joins a list of strings using a separator 'sep' *)
-let joinSep sep l =
-   match l with
-   | [] -> ""
-   | _ ->
-      let buff = Buffer.create 128 in
-      join_buff buff sep l;
-      Buffer.contents buff
 
 (** Returns a traversing state *)
 let createState (data:'a) : 'a tstate =
-   { scope = []; data = data }
+   { scope = BindingsScope.empty; data = data }
 
 (** Sets the data for the traversing state *)
 let setState (s:'a tstate) (data:'a) : 'a tstate =
@@ -119,19 +144,15 @@ let deriveState (s:'a tstate) (data:'b) : 'b tstate =
 (** Adds a name to the scope *)
 let pushScope (s:'a tstate) (name:identifier) : 'a tstate =
    (*Printf.printf " - Entering to scope '%s'\n" (joinSep "." name);*)
-   { s with scope = name::s.scope }
+   { s with scope = BindingsScope.enter s.scope name }
 
 (** Removes the last name from the scope *)
 let popScope (s:'a tstate) : 'a tstate =
-   match s.scope with
-   | [] ->
-      Printf.printf "Error: trying pop from an empty scope";
-      s
-   | _::t -> { s with scope = t }
+   { s with scope = BindingsScope.exit s.scope }
 
 (** Returns the current scope *)
 let getScope (s:'a tstate) : identifier =
-   s.scope |> List.flatten |> List.rev
+   BindingsScope.getCurrentPath s.scope |> List.flatten
 
 (** Returns the minimal position of two given *)
 let getMinPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.position =
@@ -892,13 +913,6 @@ let removeNamedIdType (name:named_id) : named_id =
    match name with
    | NamedId(n,_,loc) -> SimpleId(n,loc)
    | _ -> name
-
-(** Converts an indentifier in a string by separating the names with dot *)
-let identifierStr (id:identifier) : string = joinSep "." id
-
-(** Converts a list of identifiers into a coma separated string *)
-let identifierStrList (ids:identifier list) : string =
-   List.map identifierStr ids |> joinSep ", "
 
 (** Prefixes an identifier with a string *)
 let prefixId (pre:string) (id:identifier) =

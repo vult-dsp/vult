@@ -38,27 +38,33 @@ module Scope : functor (KeyType : ScopeSig) -> sig
           type key = KeyType.t
         end
 
-      type 'a t
+      type t
 
       (** Returns an empty scope *)
-      val empty : 'a t
+      val empty : t
 
       (** Enters to a subscope, if it does not exists it creates it *)
-      val enter : 'a t -> TypeMap.key -> 'a t
+      val enter : t -> KeyType.t -> t
+
       (** Leaves the current scope and returns the parent *)
-      val exit : 'a t -> 'a t
+      val exit : t -> t
+
       (** Search for a value in the current scope.
        If it does not exists continues searching up. *)
-      val lookup : 'a t -> TypeMap.key -> 'a option
+      val lookup : t -> KeyType.t -> KeyType.v option
+
       (** Binds the value to the given key in the current scope *)
-      val bind : 'a t -> TypeMap.key -> 'a -> 'a t
+      val bind : t -> KeyType.t -> KeyType.v -> t
 
       (** Lookup for a name in the current or parent scopes ad changes the value *)
-      val rebind : 'a t -> TypeMap.key -> 'a -> 'a t
+      val rebind : t -> KeyType.t -> KeyType.v -> t
+
+      (** returns the path to the current scope *)
+      val getCurrentPath : t -> KeyType.t list
 
       (** Prints the top scope *)
-      val printFullScope : KeyType.v t -> unit
+      val printFullScope : t -> unit
 
       (** Prints the current scope *)
-      val printScope : KeyType.v t -> unit
+      val printScope : t -> unit
     end

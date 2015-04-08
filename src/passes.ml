@@ -118,7 +118,7 @@ let incState (state: pass_state tstate) : pass_state tstate =
 
 (** Search a function in a table starting in the current scope and returns an Some if found *)
 let lookupFunction (table:'a IdentifierMap.t) (state:pass_state tstate) (fname:identifier) : 'a option =
-   let current_scope = state.scope |> List.flatten in
+   let current_scope = getScope state |> List.rev in
    let rec loop rev_scope =
       let full_name = (List.rev rev_scope)@fname in
       if IdentifierMap.mem full_name table then
