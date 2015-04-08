@@ -814,6 +814,15 @@ let relocateMemAndVal : ('data,exp) traverser =
       | _ -> state,exp
 
 (* ======================= *)
+
+let removeNamesFromStaticFunctions : (pass_state,exp) traverser =
+   fun state exp ->
+      match exp with
+      | PCall(_,fname,args,loc,attr) when isActiveFunction state fname |> not ->
+         state,PCall(None,fname,args,loc,attr)
+      | _ -> state,exp
+
+(* ======================= *)
 (** Changes if(cond,e1,e2) -> if(cond,{|return e1|},{|return e2|})*)
 let makeIfStatement : ('data,exp) traverser =
    fun state exp ->
@@ -1104,7 +1113,7 @@ let applyTransformations (options:options) (results:parser_results) =
          (collectMemInFunctions |*> collectFunctionInstances)
       |+> TypesUtil.foldAsTransformation None createTypes
       |+> simplifyTypes
-      |+> TypesUtil.traverseBottomExpList None nameLocalScopes
+      |+> TypesUtil.traverseBottomExpList None (nameLocalScopes |-> removeNamesFromStaticFunctions)
    in
    let passes stmts =
       (initial_state,[StmtBlock(None,stmts,default_loc)])
