@@ -1113,7 +1113,7 @@ let applyTransformations (options:options) (results:parser_results) =
          (collectMemInFunctions |*> collectFunctionInstances)
       |+> TypesUtil.foldAsTransformation None createTypes
       |+> simplifyTypes
-      |+> TypesUtil.traverseBottomExpList None (nameLocalScopes |-> removeNamesFromStaticFunctions)
+      |+> TypesUtil.traverseBottomExpList None nameLocalScopes
    in
    let passes stmts =
       (initial_state,[StmtBlock(None,stmts,default_loc)])
