@@ -29,7 +29,7 @@ $ opam install ounit
 ```
 ### Compiling Vult
 ```
-$ ocamlbuild -use-ocamlfind -pkg containers vultc.native
+$ ocamlbuild -use-ocamlfind -pkg containers -pkg str vultc.native
 ```
 
 ### Compiling the web interpreter
