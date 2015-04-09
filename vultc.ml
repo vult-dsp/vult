@@ -30,6 +30,7 @@ open TypesUtil
 open CheckerVult
 open DynInterpreter
 open Debugger
+open ProtoGenC
 
 (** Stores the options passed to the command line *)
 type arguments =
@@ -38,17 +39,19 @@ type arguments =
       mutable dparse : bool;
       mutable rundyn : bool;
       mutable debug  : bool;
+      mutable ccode  : bool;
       mutable run_check  : bool;
    }
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : arguments =
-   let result = { files = [] ; dparse = false; run_check = false; rundyn = false; debug = false } in
+   let result = { files = [] ; dparse = false; run_check = false; rundyn = false; debug = false; ccode = false } in
    let opts = [
       "-dparse", (Arg.Unit  (fun () -> result.dparse   <-true)), "Dumps the parse tree (default: off)";
       "-check",  (Arg.Unit  (fun () -> result.run_check<-true)), "Runs checker on program (default: off)";
       "-rundyn", (Arg.Unit  (fun () -> result.rundyn   <-true)), "Runs the dynamic interpreter (default: off)";
-      "-debug",  (Arg.Unit  (fun () -> result.debug   <-true)), "Runs the debugger (default: off)";
+      "-debug",  (Arg.Unit  (fun () -> result.debug    <-true)), "Runs the debugger (default: off)";
+      "-ccode",  (Arg.Unit  (fun () -> result.ccode    <-true)), "Converts the code to c (default: off)";
    ]
    in
    let _ = Arg.parse opts (fun a -> result.files <- a::result.files) "Usage: vultc file.vult\n" in
@@ -67,7 +70,25 @@ let main () =
    let _ = if args.dparse then
          parser_results
          |> List.map (applyTransformations { opt_full_transform with inline = false })
-         |> List.iter (fun a -> match a.presult with `Ok(b) -> (*Format.printf "tree: %a@." pp_exp_list b;*) PrintTypes.stmtListStr b |> print_string | _ -> () )
+         |> List.iter (fun a -> match a.presult with
+            | `Ok(b) ->
+               (*Format.printf "tree: %a@." pp_exp_list b;*)
+               PrintTypes.stmtListStr b
+               |> print_string
+            | _ -> () )
+   in
+   (* Prints the parsed files if -dparse was passed as argument *)
+   let _ = if args.ccode then
+         parser_results
+         |> List.map (applyTransformations { opt_full_transform with inline = false; codegen = true })
+         |> List.iter (fun a -> match a.presult with
+            | `Ok(b) ->
+               let _ =
+                  ProtoGenC.convertStmtList b
+                  |> ProtoGenC.printStmListStr
+                  |> print_string
+               in ()
+            | _ -> () )
    in
    (* Runs the dynamic interpreter if -rundyn was passed as argument *)
    let _ = if args.rundyn then
