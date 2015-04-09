@@ -33,7 +33,7 @@ type cexp =
 
 type cstmt =
   | SDecl     of ctyp * ident
-  | SFunction of ident * (ctyp * ident) list * cstmt list
+  | SFunction of ident * (ctyp * ident) list * cstmt
   | SBind     of ident * cexp
   | SWhile    of cexp * cstmt
   | SReturn   of cexp
@@ -109,5 +109,7 @@ let rec convertStmt (e:exp) : cstmt =
       SIf(convertExp cond,convertStmt then_,Some(convertStmt else_))
    | StmtIf(cond,then_,None,_) ->
       SIf(convertExp cond,convertStmt then_,None)
+   | StmtFun(name,args,body,false,_) ->
+      SFunction(name,_,convertStmt body)
    | _ -> failwith "convertStmt: unsupported statement"
 

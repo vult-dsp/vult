@@ -202,7 +202,7 @@ and expressionBuff buffer (exp:exp) =
       indent buffer;
       expressionBuff buffer false_stmt;
       outdent buffer
-   | StmtFun(name,args,body,type_exp,_) ->
+   | StmtFun(name,args,body,type_exp,_,_) ->
       append buffer "fun ";
       identifierBuff buffer name;
       append buffer "(";

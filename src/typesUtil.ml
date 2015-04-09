@@ -218,7 +218,7 @@ let getExpLocation (e:exp)  : location =
    | StmtMem(_,_,_,loc)
    | StmtReturn(_,loc)
    | StmtIf(_,_,_,loc)
-   | StmtFun(_,_,_,_,loc)
+   | StmtFun(_,_,_,_,_,loc)
    | StmtBind(_,_,loc) -> loc
    | StmtEmpty -> default_loc
    | StmtBlock(_,_,loc) -> loc
@@ -349,10 +349,10 @@ let rec traverseBottomExp (pred:(exp -> bool) option) (f: ('data, exp) traverser
          f state2 (StmtBind(ne1,ne2,loc))
       | StmtEmpty ->
          f state exp
-      | StmtFun(name,args,stmts,type_exp,loc) ->
+      | StmtFun(name,args,stmts,type_exp,active,loc) ->
          let state0 = pushScope state name in
          let state1,nstmts = traverseBottomExp pred f state0 stmts in
-         let state2,fexp = f state1 (StmtFun(name,args,nstmts,type_exp,loc)) in
+         let state2,fexp = f state1 (StmtFun(name,args,nstmts,type_exp,active,loc)) in
          (popScope state2),fexp
       | StmtIf(cond,then_stmts,None,loc) ->
          let state1,ncond = traverseBottomExp pred f state cond in
@@ -390,7 +390,15 @@ let rec traverseTopExp (pred:(exp -> bool) option) (f: ('data, exp) traverser) (
    match pred with
    | Some(pred_f) when not (pred_f exp)-> state0,exp
    | _ ->
-      let state,nexp = f state0 exp in
+      let state,nexp =
+         match exp with
+         | StmtFun(name,_,_,_,_,_) ->
+            (* If it's a function  enter to the scope before applying *)
+            let state1 = pushScope state0 name in
+            let state2,nexp = f state1 exp in
+            popScope state2,nexp
+         | _ -> f state0 exp
+      in
       match nexp with
       | PEmpty
       | PUnit(_)
@@ -442,10 +450,10 @@ let rec traverseTopExp (pred:(exp -> bool) option) (f: ('data, exp) traverser) (
          let state2,ne2 = traverseTopExp pred f state1 e2 in
          state2,StmtBind(ne1,ne2,loc)
       | StmtEmpty -> state,nexp
-      | StmtFun(name,args,stmts,type_exp,loc) ->
+      | StmtFun(name,args,stmts,type_exp,active,loc) ->
          let state0 = pushScope state name in
          let state1,nstmts = traverseTopExp pred f state0 stmts in
-         (popScope state1),StmtFun(name,args,nstmts,type_exp,loc)
+         (popScope state1),StmtFun(name,args,nstmts,type_exp,active,loc)
       | StmtIf(cond,then_stmts,None,loc) ->
          let state1,ncond = traverseTopExp pred f state cond in
          let state2,nthen_stmts = traverseTopExp pred f state1 then_stmts in
@@ -485,7 +493,7 @@ let rec foldTopExp (pred:(exp -> bool) option) (f: ('data, exp) folder) (state0:
    | _ ->
       let state =
          match exp with
-         | StmtFun(name,_,_,_,_) ->
+         | StmtFun(name,_,_,_,_,_) ->
             (* If it's a function  enter to the scope before applying *)
             let state1 = pushScope state0 name in
             let state2 = f state1 exp in
@@ -541,7 +549,7 @@ let rec foldTopExp (pred:(exp -> bool) option) (f: ('data, exp) folder) (state0:
          let state2 = foldTopExp pred f state1 e2 in
          state2
       | StmtEmpty -> state
-      | StmtFun(name,args,stmts,type_exp,_) ->
+      | StmtFun(name,args,stmts,type_exp,_,_) ->
          let state0 = pushScope state name in
          let state1 = foldTopExp pred f state0 stmts in
          popScope state1
@@ -634,7 +642,7 @@ let rec foldDownExp (pred:(exp -> bool) option) (f: ('data, exp) folder) (state:
          let state2 = foldDownExp pred f state1 e2 in
          f state2 exp
       | StmtEmpty -> state
-      | StmtFun(name,args,stmts,type_exp,_) ->
+      | StmtFun(name,args,stmts,type_exp,_,_) ->
          let state0 = pushScope state name in
          let state1 = foldDownExp pred f state0 stmts in
          f state1 exp |> popScope
@@ -738,10 +746,10 @@ let rec expandStmt (pred:(exp -> bool) option) (f: ('data, exp) expander) (state
       | StmtReturn(e,loc) ->
          let state1,ne = expandStmt pred f state e in
          f state1 (StmtReturn(appendPseq ne,loc))
-      | StmtFun(name,args,stmts,type_exp,loc) ->
+      | StmtFun(name,args,stmts,type_exp,active,loc) ->
          let state0 = pushScope state name in
          let state1,nstmts = expandStmt pred f state0 stmts in
-         let state2,exp = f state1 (StmtFun(name,args,appendBlocks nstmts,type_exp,loc)) in
+         let state2,exp = f state1 (StmtFun(name,args,appendBlocks nstmts,type_exp,active,loc)) in
          (popScope state2),exp
       | StmtIf(cond,then_stmts,None,loc) ->
          let state1,nthen_stmts = expandStmt pred f state then_stmts in

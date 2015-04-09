@@ -194,7 +194,7 @@ let isTrue (value:value) : bool =
 (** Evaluates a function call *)
 let rec evalFun (loc:local_env) (scope_name:identifier option) (body:function_body) (args:value list) : value * local_env * bool =
    match body with
-   | DeclaredF(StmtFun(_,arg_names,stmts,type_exp,_)) ->
+   | DeclaredF(StmtFun(_,arg_names,stmts,type_exp,active,_)) ->
       let inputs = List.map getVarName arg_names in
       let loc = List.fold_left2 (fun s n v -> declVal s n v) loc inputs args in
       runStmtList loc scope_name [stmts]
@@ -262,7 +262,7 @@ and runExp (loc:local_env) (exp:exp) : value * local_env * bool =
    | StmtType(name,_,_,_,_) ->
       let loc = declType loc name (DeclaredT(exp)) in
       VUnit,loc,false
-   | StmtFun(name,_,_,_,_) ->
+   | StmtFun(name,_,_,_,_,_) ->
       let loc = declFunction loc name (DeclaredF(exp)) in
       VUnit,loc,false
    | StmtIf(cond,then_stmts,None,_) ->

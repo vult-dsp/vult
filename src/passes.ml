@@ -418,7 +418,7 @@ let rec createTypeForFunction (state:pass_state tstate) (fname:identifier) : exp
 let createTypes : ('data,exp) folder =
    fun state e ->
       match e with
-      | StmtFun(name,_,_,_,_) ->
+      | StmtFun(name,_,_,_,_,_) ->
          let full_name = getScope state in
          begin
             match createTypeForFunction state name with
@@ -591,12 +591,12 @@ let skipPSeq (e:exp) : bool =
 
 let skipFun (stmt:exp) : bool =
    match stmt with
-   | StmtFun(_,_,_,_,_) -> false
+   | StmtFun(_,_,_,_,_,_) -> false
    | _ -> true
 
 let isFun (stmt:exp) : bool =
    match stmt with
-   | StmtFun(_,_,_,_,_) -> true
+   | StmtFun(_,_,_,_,_,_) -> true
    | _ -> false
 
 let skipBlock (stmt:exp) : bool =
@@ -638,7 +638,7 @@ let hasIfStmtList (stmts:exp list) : bool =
 let collectFunctionDefinitions : ('data,exp) folder =
    fun state exp ->
       match exp with
-      | StmtFun(name,args,stmts,type_exp,loc) ->
+      | StmtFun(name,args,stmts,type_exp,active,loc) ->
          let weight = getExpWeight stmts in
          (*let _ = Printf.printf "*** Adding function '%s' with weight %i\n" (identifierStr name) weight in*)
          let ret_state =
@@ -663,7 +663,7 @@ let prefixAllNamedIds : ('data,exp) transformation =
 let inlineFunctionCall (state:'data tstate) (call_name:identifier) (ftype:identifier) (args:exp list) loc : exp list =
    let function_def = IdentifierMap.find ftype state.data.functions in
    match function_def with
-   | StmtFun(_,fargs,fbody,type_exp,_) ->
+   | StmtFun(_,fargs,fbody,type_exp,_,_) ->
       let prefix = (joinSep "_" call_name)^"_" in
       let fargs_prefixed = List.map (fun a -> a |> getNameFromNamedId |> prefixId prefix) fargs in
       let prefix_state = deriveState state prefix in
@@ -784,7 +784,7 @@ let collectValDecl : ('data,exp) folder =
 let relocateMemAndVal : ('data,exp) traverser =
    fun state exp ->
       match exp with
-      | StmtFun(name,args,body,type_exp,loc) ->
+      | StmtFun(name,args,body,type_exp,active,loc) ->
          let inner_state = deriveState state IdentifierMap.empty in
          let mem_decl_map =
             TypesUtil.foldTopExp (Some(skipFun)) collectMemDecl inner_state body
@@ -792,7 +792,7 @@ let relocateMemAndVal : ('data,exp) traverser =
          let _,new_body   =
             TypesUtil.expandStmt (Some(skipFun)) removeAllMem mem_decl_map body in
          let mem_decl     = IdentifierMap.fold (fun _ a acc -> a::acc) mem_decl_map.data [] in
-         state,StmtFun(name,args,appendBlocks (mem_decl@new_body),type_exp,loc)
+         state,StmtFun(name,args,appendBlocks (mem_decl@new_body),type_exp,active,loc)
       | StmtBlock(name,stmts,loc) ->
          let skip a = skipPSeq a && skipBlock a in
          let inner_state  = deriveState state IdentifierMap.empty in
@@ -998,11 +998,11 @@ let simplifyReturnInPSeq : ('data,exp) traverser =
 let inlineFunctionBodies (state:'data tstate) (exp_list:exp list) : 'data tstate * exp list =
    let inlineFunctionBody name fun_decl (functions,weigths) =
       match fun_decl with
-      | StmtFun(fname,fargs,fbody,type_exp,loc) ->
+      | StmtFun(fname,fargs,fbody,type_exp,active,loc) ->
          let _,new_fbody     = expandStmt None inlineStmts state fbody in
          let new_fbody_block = appendBlocks new_fbody in
          let weight          = getExpWeight new_fbody_block in
-         let new_functions   = IdentifierMap.add name (StmtFun(fname,fargs,new_fbody_block,type_exp,loc)) functions in
+         let new_functions   = IdentifierMap.add name (StmtFun(fname,fargs,new_fbody_block,type_exp,active,loc)) functions in
          let new_weigths     = IdentifierMap.add name weight weigths in
          new_functions,new_weigths
       | _ -> functions,weigths
@@ -1026,19 +1026,28 @@ let nameLocalScopes : ('data,exp) traverser =
       | StmtBlock(None,stmts,loc) ->
          let name = ["_scope_"^string_of_int(state.data.counter)] in
          incState state,StmtBlock(Some(name),stmts,loc)
-      | StmtFun(name,args,StmtBlock(Some(_),stmts,loc1),ret,loc) ->
-         state,StmtFun(name,args,StmtBlock(None,stmts,loc1),ret,loc)
-      | StmtFun(name,args,PSeq(Some(_),stmts,loc1),ret,loc) ->
-         state,StmtFun(name,args,PSeq(None,stmts,loc1),ret,loc)
+      | StmtFun(name,args,StmtBlock(Some(_),stmts,loc1),ret,active,loc) ->
+         state,StmtFun(name,args,StmtBlock(None,stmts,loc1),ret,active,loc)
+      | StmtFun(name,args,PSeq(Some(_),stmts,loc1),ret,active,loc) ->
+         state,StmtFun(name,args,PSeq(None,stmts,loc1),ret,active,loc)
       | _ -> state,exp
 
+(* ======================= *)
+let markActiveFunctions : ('data,exp) traverser =
+   fun state exp ->
+      match exp with
+      | StmtFun(name,args,body,ret,_,loc) when isActiveFunction state name ->
+         state,StmtFun(name,args,body,ret,true,loc)
+      | StmtFun(name,args,body,ret,_,loc) ->
+         state,StmtFun(name,args,body,ret,false,loc)
+      | _ -> state,exp
 
 (* ======================= *)
 
 (** Wraps all the statements into a function called __main__ and calls it *)
 let makeFunAndCall state stmts =
    let fcall = ["__main__"] in
-   state,[StmtFun(fcall,[],appendBlocks stmts,None,default_loc); StmtReturn(PCall(Some(fcall),fcall,[],default_loc,[]),default_loc)]
+   state,[StmtFun(fcall,[],appendBlocks stmts,None,false,default_loc); StmtReturn(PCall(Some(fcall),fcall,[],default_loc,[]),default_loc)]
 
 let applyOn cond f data =
    if cond data then
@@ -1113,7 +1122,7 @@ let applyTransformations (options:options) (results:parser_results) =
          (collectMemInFunctions |*> collectFunctionInstances)
       |+> TypesUtil.foldAsTransformation None createTypes
       |+> simplifyTypes
-      |+> TypesUtil.traverseBottomExpList None nameLocalScopes
+      |+> TypesUtil.traverseBottomExpList None (nameLocalScopes|->markActiveFunctions)
    in
    let passes stmts =
       (initial_state,[StmtBlock(None,stmts,default_loc)])

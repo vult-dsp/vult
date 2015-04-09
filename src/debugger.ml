@@ -242,7 +242,7 @@ let rec assemble (i0:instruction list) (exp:exp) =
       let else_i = Lazy([],line) in
       let i1 = assemble (then_i::else_i::i0) cond in
       Drop(line)::If(line)::i1
-   | StmtFun(name,vars,body,type_exp,loc) ->
+   | StmtFun(name,vars,body,type_exp,active,loc) ->
       let line = locationLine loc in
       let i1 = assembleRev body in
       let vars_id = List.map getIdentifier vars in

@@ -381,7 +381,7 @@ let checkFunction : environment -> vultFunction -> errors option =
 let insertIfFunction : functionBindings -> exp  -> (errors,functionBindings) either =
    fun funcs stmt ->
       match stmt with
-      | StmtFun (funcname,inputs,body,type_exp,loc) ->
+      | StmtFun (funcname,inputs,body,type_exp,active,loc) ->
          let vultfunc = { functionname = funcname; returntype = type_exp; inputs = inputs; body = body; } in
          bindFunction funcs vultfunc
       | _ -> Right funcs

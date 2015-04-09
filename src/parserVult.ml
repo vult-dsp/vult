@@ -422,7 +422,7 @@ and stmtFunction (buffer:exp lexer_stream) : exp =
    in
    let body = stmtList buffer in
    let start_loc = token.loc in
-   StmtFun(name,args,body,type_exp,start_loc)
+   StmtFun(name,args,body,type_exp,false,start_loc)
 
 (** 'type' <identifier> '(' <namedIdList> ')' <valDeclList> *)
 and stmtType (buffer:exp lexer_stream) : exp =

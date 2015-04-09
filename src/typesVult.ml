@@ -193,6 +193,7 @@ and exp =
       *  named_id list    (* arguments *)
       *  exp        (* body *)
       *  exp option (* return type *)
+      *  bool
       *  location
    | StmtBind
       of exp         (* lhs *)
