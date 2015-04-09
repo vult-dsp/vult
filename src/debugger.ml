@@ -26,6 +26,8 @@ open TypesVult
 open Lexing
 open TypesUtil
 open PrintTypes
+open PrintBuffer
+
 
 (** Return values of the interpreter *)
 type value =
