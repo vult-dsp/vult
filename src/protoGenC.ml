@@ -1,5 +1,7 @@
 
 open TypesVult
+open PrintBuffer
+
 
 type ident = string
 
@@ -47,19 +49,19 @@ type creal_type =
   | Double
 
 
-let convertOp (op:string) : op =
+let convertOp (op:string) : op option =
    match op with
-   | "+"  -> OPlus
-   | "*"  -> OTimes
-   | "/"  -> ODiv
-   | "-"  -> OMinus
-   | "<"  -> OLt
-   | ">"  -> OGt
-   | "==" -> OEq
-   | "!=" -> OUEq
-   | "&&" -> OAnd
-   | "||" -> OOr
-   | _    -> failwith ("Operator not implemented "^op)
+   | "'+'"  -> Some(OPlus)
+   | "'*'"  -> Some(OTimes)
+   | "'/'"  -> Some(ODiv)
+   | "'-'"  -> Some(OMinus)
+   | "'<'"  -> Some(OLt)
+   | "'>'"  -> Some(OGt)
+   | "'=='" -> Some(OEq)
+   | "'!='" -> Some(OUEq)
+   | "'&&'" -> Some(OAnd)
+   | "'||'" -> Some(OOr)
+   | _    -> None
 
 let rec convertExp (e:exp) : cexp =
    match e with
@@ -69,9 +71,11 @@ let rec convertExp (e:exp) : cexp =
    | PReal(v,_)  -> EReal(float_of_string v)
    | PId(id,_,_) -> EVar(id)
    | PUnOp(op,e1,_) ->
-      EUop(convertOp op,convertExp e1)
+      EUop(CCOpt.get_exn (convertOp op),convertExp e1)
    | PBinOp(op,e1,e2,_) ->
-      EOp(convertExp e1,convertOp op,convertExp e2)
+      EOp(convertExp e1,CCOpt.get_exn (convertOp op),convertExp e2)
+   | PCall(_,[op],[e1;e2],_,_) when CCOpt.is_some (convertOp op) ->
+      EOp(convertExp e1,CCOpt.get_exn (convertOp op),convertExp e2)
    | PCall(Some([inst]),[fname],args,_,_) ->
       ECall(fname,ERef(inst)::convertExpList args)
    | PCall(None,[fname],args,_,_) ->
@@ -80,7 +84,7 @@ let rec convertExp (e:exp) : cexp =
       EIf(convertExp cond,convertExp e1,convertExp e2)
    | PGroup(e1,_) ->
       convertExp e1
-   | PGroup(_,_) -> failwith "Tuples are not yet supported in expression context"
+   | PTuple(_,_) -> failwith "Tuples are not yet supported in expression context"
    | PSeq(_,_,_) -> failwith "Sequence expressions are not yet supported in expression context"
    | _ -> failwith "convertExp: not an expression"
 
@@ -95,7 +99,11 @@ let convertType (e:exp option) : ctyp =
    | Some(_) -> failwith "convertType: unsupported type"
    | None -> TReal
 
-
+let convertNamedId (name:named_id) : ctyp * ident =
+   match name with
+   | SimpleId([id],_) -> TReal,id
+   | NamedId([id],tp,_) -> (convertType (Some(tp))),id
+   | _ -> failwith "convertNamedId: invalid function argument"
 
 let rec convertStmt (e:exp) : cstmt =
    match e with
@@ -109,7 +117,200 @@ let rec convertStmt (e:exp) : cstmt =
       SIf(convertExp cond,convertStmt then_,Some(convertStmt else_))
    | StmtIf(cond,then_,None,_) ->
       SIf(convertExp cond,convertStmt then_,None)
-   | StmtFun(name,args,body,false,_) ->
-      SFunction(name,_,convertStmt body)
-   | _ -> failwith "convertStmt: unsupported statement"
+   | StmtFun([name],args,body,ret,false,_) ->
+      let cargs = List.map convertNamedId args in
+      SFunction(name,cargs,convertStmt body)
+   | StmtBind(PId([lhs],None,_),rhs,_) ->
+      SBind(lhs,convertExp rhs)
+   | StmtBind(PUnit(_),rhs,_) ->
+      SBind("",convertExp rhs)
+   | StmtBlock(_,stmts,_) ->
+      SBlock(convertStmtList stmts)
+   | StmtType([name],[],members,None,_) -> SEmpty
+
+   | _ ->
+      print_endline ("convertStmt: unsupported statement\n"^(show_exp e));
+      failwith ("convertStmt: unsupported statement ")
+
+and convertStmtList (l:exp list) : cstmt list =
+   List.map convertStmt l
+
+type print_options =
+  {
+    buffer     : print_buffer;
+    num_type   : creal_type;
+  }
+
+let fix_scale = 1 lsl 16 |> float_of_int
+
+let printTyp (o:print_options) t =
+  match t,o.num_type with
+  | TObj(id),_   -> append o.buffer (id^" ")
+  | TInt,_ -> append o.buffer "int32_t "
+  | TReal,Double -> append o.buffer "double "
+  | TReal,Float  -> append o.buffer "float "
+  | TReal,Fixed  -> append o.buffer "int32_t "
+
+let printOpNormal (o:print_options) op =
+  match op with
+  | OPlus  -> append o.buffer " + "
+  | OTimes -> append o.buffer " * "
+  | ODiv   -> append o.buffer " / "
+  | OMinus -> append o.buffer " - "
+  | OLt    -> append o.buffer " < "
+  | OGt    -> append o.buffer " > "
+  | OEq    -> append o.buffer " == "
+  | OUEq   -> append o.buffer " != "
+  | OAnd   -> append o.buffer " && "
+  | OOr    -> append o.buffer " || "
+
+let printOpFixed (o:print_options) op =
+  match op with
+  | OPlus  -> append o.buffer "add"
+  | OTimes -> append o.buffer "mul"
+  | ODiv   -> append o.buffer "div"
+  | OMinus -> append o.buffer "sub"
+  | OLt    -> append o.buffer "lt"
+  | OGt    -> append o.buffer "gt"
+  | OEq    -> append o.buffer "eq"
+  | OUEq   -> append o.buffer "noeq"
+  | OAnd   -> append o.buffer "and"
+  | OOr    -> append o.buffer "or"
+
+let printUOpFixed (o:print_options) op =
+  match op with
+  | OMinus -> append o.buffer "minus"
+  | _ -> failwith "Invalid unary operator"
+
+let rec printExp (o:print_options) (e:cexp) =
+  match e,o.num_type with
+  | EOp(e1,op,e2),Double
+  | EOp(e1,op,e2),Float ->
+    append o.buffer "(";
+    printExp o e1;
+    printOpNormal o op;
+    printExp o e2;
+    append o.buffer ")"
+  | EOp(e1,op,e2),Fixed ->
+    printOpFixed o op;
+    append o.buffer "(";
+    printExp o e1;
+    append o.buffer ",";
+    printExp o e2;
+    append o.buffer ")"
+  | ECall(name,args),_ ->
+    append o.buffer name;
+    append o.buffer "(";
+    printExpSep o ", " args;
+    append o.buffer ")"
+  | EVar(name),_ ->
+    printList o.buffer (fun b a-> append b a) "." name
+  | EString(s),_ ->
+    append o.buffer s
+  | EReal(f),Fixed ->
+    let v = fix_scale *. f |> int_of_float |> string_of_int in
+    append o.buffer v
+  | EReal(f),_ ->
+    append o.buffer (string_of_float f)
+  | EInt(i),_ ->
+    append o.buffer (string_of_int i)
+  | EUop(op,e1),Float
+  | EUop(op,e1),Double ->
+    append o.buffer "(";
+    printOpNormal o op;
+    printExp o e1;
+    append o.buffer ")"
+  | EUop(op,e1),Fixed ->
+    printUOpFixed o op;
+    append o.buffer "(";
+    printExp o e1;
+    append o.buffer ")"
+   | ERef(n),_ ->
+      append o.buffer "&";
+      append o.buffer n
+   | EIf(cond,e1,e2),_ ->
+      append o.buffer "(";
+      printExp o cond;
+      append o.buffer "?";
+      printExp o e1;
+      append o.buffer ":";
+      printExp o e2
+and printExpSep (o:print_options) sep el =
+  match el with
+  | []   -> ()
+  | [h]  -> printExp o h
+  | h::t -> printExp o h; append o.buffer sep; printExpSep o sep t
+
+let rec printStm (o:print_options) (s:cstmt) =
+  match s with
+  | SDecl(tp,name) ->
+    printTyp o tp;
+    append o.buffer name;
+    append o.buffer ";";
+    newline o.buffer
+  | SFunction(name,args,body) ->
+    append o.buffer name;
+    append o.buffer "(";
+    append o.buffer "){";
+    indent o.buffer;
+    printStm o body;
+    outdent o.buffer;
+    append o.buffer "}";
+    newline o.buffer
+  | SBind("",e1) ->
+    printExp o e1;
+    append o.buffer ";";
+    newline o.buffer
+   | SBind(name,e1) ->
+    append o.buffer name;
+    append o.buffer " = ";
+    printExp o e1;
+    append o.buffer ";";
+    newline o.buffer
+  | SWhile(cond,body) ->
+    append o.buffer "while(";
+    printExp o cond;
+    printStm o body;
+    newline o.buffer
+  | SReturn(exp) ->
+    append o.buffer "return ";
+    printExp o exp;
+    append o.buffer ";";
+    newline o.buffer
+  | SBlock(body) ->
+    append o.buffer "{";
+    indent o.buffer;
+    printStmList o body;
+    outdent o.buffer;
+    append o.buffer "}"
+  | SIf(cond,then_e,opt_else_e) ->
+    append o.buffer "if(";
+    printExp o cond;
+    append o.buffer ")";
+    printStm o then_e;
+    newline o.buffer;
+    if CCOpt.is_some opt_else_e then
+      begin
+        append o.buffer "else ";
+        printOptStm o opt_else_e;
+        newline o.buffer
+      end
+   | SEmpty -> ()
+
+and printStmList (o:print_options) (sl:cstmt list) =
+  match sl with
+  | [] -> ()
+  | h::t ->
+    printStm o h;
+    printStmList o t
+
+and printOptStm (o:print_options) stm =
+  match stm with
+  | None    -> ()
+  | Some(s) -> printStm o s
+
+let printStmListStr stms =
+  let options = { buffer = makePrintBuffer (); num_type = Float } in
+  printStmList options stms;
+  contents options.buffer
 
