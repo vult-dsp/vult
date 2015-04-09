@@ -67,6 +67,7 @@ type options =
       simplify_return : bool;
       imperativize    : bool;
       finalize        : bool;
+      codegen         : bool;
    }
 
 let opt_full_transform =
@@ -77,6 +78,7 @@ let opt_full_transform =
       simplify_return = true;
       imperativize    = true;
       finalize        = true;
+      codegen         = false;
    }
 
 let opt_simple_transform =
@@ -87,6 +89,7 @@ let opt_simple_transform =
       simplify_return = false;
       imperativize    = false;
       finalize        = false;
+      codegen         = false;
    }
 
 let opt_no_transform =
@@ -97,6 +100,7 @@ let opt_no_transform =
       simplify_return = false;
       imperativize    = false;
       finalize        = false;
+      codegen         = false;
    }
 
 (** Traversing state one *)
@@ -1060,6 +1064,7 @@ let inlineON        (state,_) = state.data.options.inline
 let imperativizeON  (state,_) = state.data.options.imperativize
 let finalizeON      (state,_) = state.data.options.finalize
 let basicON         (state,_) = state.data.options.basic
+let codegenOn       (state,_) = state.data.options.codegen
 
 let applyTransformations (options:options) (results:parser_results) =
    let initial_state =
@@ -1124,6 +1129,10 @@ let applyTransformations (options:options) (results:parser_results) =
       |+> simplifyTypes
       |+> TypesUtil.traverseBottomExpList None (nameLocalScopes|->markActiveFunctions)
    in
+   let codeGenPasses state =
+      state
+      |+> TypesUtil.traverseBottomExpList None removeNamesFromStaticFunctions
+   in
    let passes stmts =
       (initial_state,[StmtBlock(None,stmts,default_loc)])
       |> applyOn basicON         basicPasses
@@ -1131,6 +1140,7 @@ let applyTransformations (options:options) (results:parser_results) =
       |> applyOn inlineON        inliningPasses
       |> applyOn imperativizeON  imperativePasses
       |> applyOn finalizeON      finalPasses
+      |> applyOn codegenOn       codeGenPasses
       |> snd
    in
 
