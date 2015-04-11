@@ -191,9 +191,9 @@ and exp =
    | StmtFun
       of identifier       (* name *)
       *  named_id list    (* arguments *)
-      *  exp        (* body *)
-      *  exp option (* return type *)
-      *  bool
+      *  exp              (* body *)
+      *  exp option       (* return type *)
+      *  bool             (* is_active *)
       *  location
    | StmtBind
       of exp         (* lhs *)
