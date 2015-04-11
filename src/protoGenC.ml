@@ -4,6 +4,7 @@ open PrintBuffer
 
 
 type ident = string
+type member = ident list
 
 type ctyp =
   | TReal
@@ -21,6 +22,8 @@ type op =
   | OUEq
   | OAnd
   | OOr
+  | ORef
+  | ODeRef
 
 type cexp =
   | EOp     of cexp * op * cexp
@@ -35,8 +38,8 @@ type cexp =
 
 type cstmt =
   | SDecl     of ctyp * ident
-  | SFunction of ident * (ctyp * ident) list * cstmt
-  | SBind     of ident * cexp
+  | SFunction of ctyp * ident * (ctyp * ident) list * cstmt
+  | SBind     of member * cexp
   | SWhile    of cexp * cstmt
   | SReturn   of cexp
   | SBlock    of cstmt list
@@ -61,7 +64,11 @@ let convertOp (op:string) : op option =
    | "'!='" -> Some(OUEq)
    | "'&&'" -> Some(OAnd)
    | "'||'" -> Some(OOr)
-   | _    -> None
+   | "p&"   -> Some(ORef)
+   | "*&"   -> Some(ODeRef)
+   | _    ->
+      (*print_endline ("convertOp: Unsupported operator "^op);*)
+      None
 
 let rec convertExp (e:exp) : cexp =
    match e with
@@ -76,8 +83,8 @@ let rec convertExp (e:exp) : cexp =
       EOp(convertExp e1,CCOpt.get_exn (convertOp op),convertExp e2)
    | PCall(_,[op],[e1;e2],_,_) when CCOpt.is_some (convertOp op) ->
       EOp(convertExp e1,CCOpt.get_exn (convertOp op),convertExp e2)
-   | PCall(Some([inst]),[fname],args,_,_) ->
-      ECall(fname,ERef(inst)::convertExpList args)
+   | PCall(_,[op],[e1],_,_) when CCOpt.is_some (convertOp op) ->
+      EUop(CCOpt.get_exn (convertOp op),convertExp e1)
    | PCall(None,[fname],args,_,_) ->
       ECall(fname,convertExpList args)
    | PIf(cond,e1,e2,_) ->
@@ -117,13 +124,13 @@ let rec convertStmt (e:exp) : cstmt =
       SIf(convertExp cond,convertStmt then_,Some(convertStmt else_))
    | StmtIf(cond,then_,None,_) ->
       SIf(convertExp cond,convertStmt then_,None)
-   | StmtFun([name],args,body,ret,false,_) ->
+   | StmtFun([name],args,body,ret,_,_) ->
       let cargs = List.map convertNamedId args in
-      SFunction(name,cargs,convertStmt body)
-   | StmtBind(PId([lhs],None,_),rhs,_) ->
+      SFunction(convertType ret,name,cargs,convertStmt body)
+   | StmtBind(PId(lhs,_,_),rhs,_) ->
       SBind(lhs,convertExp rhs)
    | StmtBind(PUnit(_),rhs,_) ->
-      SBind("",convertExp rhs)
+      SBind([],convertExp rhs)
    | StmtBlock(_,stmts,_) ->
       SBlock(convertStmtList stmts)
    | StmtType([name],[],members,None,_) -> SEmpty
@@ -145,7 +152,7 @@ let fix_scale = 1 lsl 16 |> float_of_int
 
 let printTyp (o:print_options) t =
   match t,o.num_type with
-  | TObj(id),_   -> append o.buffer (id^" ")
+  | TObj(id),_   -> append o.buffer (id^"* ")
   | TInt,_ -> append o.buffer "int32_t "
   | TReal,Double -> append o.buffer "double "
   | TReal,Float  -> append o.buffer "float "
@@ -163,6 +170,8 @@ let printOpNormal (o:print_options) op =
   | OUEq   -> append o.buffer " != "
   | OAnd   -> append o.buffer " && "
   | OOr    -> append o.buffer " || "
+  | ORef   -> append o.buffer "&"
+  | ODeRef   -> append o.buffer "*"
 
 let printOpFixed (o:print_options) op =
   match op with
@@ -176,10 +185,19 @@ let printOpFixed (o:print_options) op =
   | OUEq   -> append o.buffer "noeq"
   | OAnd   -> append o.buffer "and"
   | OOr    -> append o.buffer "or"
+  | ORef   -> append o.buffer "&"
+  | ODeRef -> append o.buffer "*"
 
 let printUOpFixed (o:print_options) op =
   match op with
   | OMinus -> append o.buffer "minus"
+  | ORef -> append o.buffer "&"
+  | _ -> failwith "Invalid unary operator"
+
+let printUOpNormal (o:print_options) op =
+  match op with
+  | OMinus -> append o.buffer "-"
+  | ORef -> append o.buffer "&"
   | _ -> failwith "Invalid unary operator"
 
 let rec printExp (o:print_options) (e:cexp) =
@@ -195,7 +213,7 @@ let rec printExp (o:print_options) (e:cexp) =
     printOpFixed o op;
     append o.buffer "(";
     printExp o e1;
-    append o.buffer ",";
+    append o.buffer ", ";
     printExp o e2;
     append o.buffer ")"
   | ECall(name,args),_ ->
@@ -204,7 +222,7 @@ let rec printExp (o:print_options) (e:cexp) =
     printExpSep o ", " args;
     append o.buffer ")"
   | EVar(name),_ ->
-    printList o.buffer (fun b a-> append b a) "." name
+    printList o.buffer (fun b a-> append b a) "->" name
   | EString(s),_ ->
     append o.buffer s
   | EReal(f),Fixed ->
@@ -217,7 +235,7 @@ let rec printExp (o:print_options) (e:cexp) =
   | EUop(op,e1),Float
   | EUop(op,e1),Double ->
     append o.buffer "(";
-    printOpNormal o op;
+    printUOpNormal o op;
     printExp o e1;
     append o.buffer ")"
   | EUop(op,e1),Fixed ->
@@ -241,6 +259,19 @@ and printExpSep (o:print_options) sep el =
   | [h]  -> printExp o h
   | h::t -> printExp o h; append o.buffer sep; printExpSep o sep t
 
+let rec printArgs (o:print_options) (args:(ctyp * ident) list) =
+   match args with
+   | [] -> ()
+   | [tp,name] ->
+      printTyp o tp;
+      append o.buffer name
+   | (tp,name)::t ->
+      printTyp o tp;
+      append o.buffer name;
+      append o.buffer ", ";
+      printArgs o t
+
+
 let rec printStm (o:print_options) (s:cstmt) =
   match s with
   | SDecl(tp,name) ->
@@ -248,21 +279,22 @@ let rec printStm (o:print_options) (s:cstmt) =
     append o.buffer name;
     append o.buffer ";";
     newline o.buffer
-  | SFunction(name,args,body) ->
+  | SFunction(tp,name,args,body) ->
+    printTyp o tp;
     append o.buffer name;
     append o.buffer "(";
-    append o.buffer "){";
+    printArgs o args;
+    append o.buffer ")";
     indent o.buffer;
     printStm o body;
     outdent o.buffer;
-    append o.buffer "}";
     newline o.buffer
-  | SBind("",e1) ->
+  | SBind([],e1) ->
     printExp o e1;
     append o.buffer ";";
     newline o.buffer
    | SBind(name,e1) ->
-    append o.buffer name;
+    printList o.buffer (fun buffer a->append buffer a) "." name;
     append o.buffer " = ";
     printExp o e1;
     append o.buffer ";";

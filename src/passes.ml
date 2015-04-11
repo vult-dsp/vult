@@ -158,6 +158,30 @@ let addMemToFunction (s:pass_state tstate) (names:exp list) =
       let new_map = IdentifierMap.add scope names s.data.function_mem in
       { s with data = { s.data with function_mem = new_map } }
 
+(** Returns the mem variables in the function *)
+let getMemDeclarations (s:pass_state tstate) (name:identifier) : exp list =
+   if IdentifierMap.mem name s.data.function_mem then
+      IdentifierMap.find name s.data.function_mem
+   else
+      []
+
+(** Returns the instance names of a function *)
+let getInstanceNames (s:pass_state tstate) (name:identifier) : identifier list =
+   if IdentifierMap.mem name s.data.instances then
+      let instance_table = IdentifierMap.find name s.data.instances in
+      IdentifierMap.to_list instance_table |> List.map fst
+   else
+      []
+
+(** Returns the name of the type that is declared for a function *)
+let generateTypeName (id:identifier) : identifier =
+   ["_auto_"^(joinSep "_" id)]
+
+let getFinalType (s:pass_state tstate) (name:identifier) : identifier option =
+   match mapfindOption (generateTypeName name) s.data.type_mapping with
+   | Some(final_type) -> Some(final_type)
+   | _ -> None
+
 (** Registers an instance in the current scope *)
 let addInstanceToFunction (s:pass_state tstate) (name:identifier) (fname:identifier) =
    let scope             = getScope s in
@@ -166,13 +190,13 @@ let addInstanceToFunction (s:pass_state tstate) (name:identifier) (fname:identif
    if List.exists (fun a-> a = fname) current_instance then
       s
    else
-      (*let _ = Printf.printf "Adding insance '%s' of funtcion '%s' to '%s'\n" (identifierStr name) (identifierStr fname) (identifierStr scope) in*)
+      (*let _ = Printf.printf "Adding instance '%s' of function '%s' to '%s'\n" (identifierStr name) (identifierStr fname) (identifierStr scope) in*)
       let new_instances     = IdentifierMap.add name (fname::current_instance) instances_for_fun in
       let new_inst_for_fun  = IdentifierMap.add scope new_instances s.data.instances in
       { s with data = { s.data with instances = new_inst_for_fun } }
 
 let rec isActiveFunction (state: pass_state tstate) (name:identifier) : bool =
-   (* this function can be cached by adding a pass that calculats every function *)
+   (* this function can be cached by adding a pass that calculates every function *)
    (isMemFunction state name) || (isMemInstanceFunction state name)
 
 
@@ -183,8 +207,12 @@ and isMemFunction (state: pass_state tstate) (name:identifier) : bool =
    | _        -> true
 
 and isMemInstanceFunction (state:pass_state tstate) (name:identifier) : bool =
-   let instances_for_fun = mapfindDefault name state.data.instances IdentifierMap.empty in
-   IdentifierMap.fold (fun key types acc -> List.exists (isActiveFunction state) types ) instances_for_fun false
+   match lookupFunction state.data.instances state name with
+   | Some(instances_for_fun) ->
+      IdentifierMap.fold (fun key types acc ->
+         List.exists (isActiveFunction state) types )
+      instances_for_fun false
+   | None -> false
 
 (* ======================= *)
 
@@ -359,10 +387,6 @@ let simplifyTypes (state:pass_state tstate) (exp_list:exp list) : pass_state tst
    (*let _ = print_endline "Final types" in
    let _ = List.iter (fun a -> print_endline (PrintTypes.expressionStr a)) final_types in*)
    { state with data = { state.data with type_mapping = mapping } },final_types@exp_list
-
-(** Returns the name of the type that is declared for a function *)
-let generateTypeName (id:identifier) : identifier =
-   ["_auto_"^(joinSep "_" id)]
 
 let generateTypeNameForInstance (ids:identifier list) : exp option =
    match ids with
@@ -824,6 +848,55 @@ let removeNamesFromStaticFunctions : (pass_state,exp) traverser =
       match exp with
       | PCall(_,fname,args,loc,attr) when isActiveFunction state fname |> not ->
          state,PCall(None,fname,args,loc,attr)
+      | PCall(Some(id),fname,args,loc,attr) ->
+         state,PCall(None,fname,PUnOp("p&",PId(id,None,loc),loc)::args,loc,attr)
+      | _ -> state,exp
+
+
+let createStateReplacements (ids:identifier list) =
+   let fold s id =
+      let rep = "_st_"::id in
+      (*let _ = Printf.printf "Adding replacement %s -> %s\n" (identifierStr id) (identifierStr rep) in*)
+      IdentifierMap.add id rep s
+   in
+   List.fold_left (fun s a -> fold s a) IdentifierMap.empty ids
+
+let replaceIds (replacements:identifier IdentifierMap.t) : ('state,exp) traverser =
+   fun state exp ->
+      match exp with
+      | PId(id,tp,loc) when IdentifierMap.mem id replacements ->
+         let new_id = IdentifierMap.find id replacements in
+         state,PId(new_id,tp,loc)
+      | _ -> state,exp
+
+let replaceMemAccess : (pass_state,exp) traverser =
+   fun state exp ->
+      match exp with
+      | StmtFun(name,args,body,ret,_,loc) when isActiveFunction state name ->
+         let scope         = getScope state in
+         let mem_names     =
+            getMemDeclarations state scope
+            |> List.map (fun a -> getIdAndType a|>fst)
+         in
+         let instance_names = getInstanceNames state scope in
+         let replacements   = createStateReplacements (mem_names@instance_names) in
+         let _,new_body     = traverseBottomExp (Some(skipFun)) (replaceIds replacements) (createState ()) body in
+         state,StmtFun(name,args,new_body,ret,true,loc)
+      | _ -> state,exp
+
+let makeInstanceArgument : (pass_state,exp) traverser =
+   fun state exp ->
+      match exp with
+      | StmtFun(name,args,body,ret,true,loc) ->
+         begin
+            match getFinalType state name with
+            | Some(ftype) ->
+               let arg = NamedId(["_st_"],PId(ftype,None,loc),loc) in
+               state,StmtFun(name,arg::args,body,ret,true,loc)
+            | _ ->
+               let arg = SimpleId(["_st_"],loc) in
+               state,StmtFun(name,arg::args,body,ret,true,loc)
+         end
       | _ -> state,exp
 
 (* ======================= *)
@@ -1131,7 +1204,10 @@ let applyTransformations (options:options) (results:parser_results) =
    in
    let codeGenPasses state =
       state
-      |+> TypesUtil.traverseBottomExpList None removeNamesFromStaticFunctions
+      |+> TypesUtil.traverseBottomExpList None
+         (removeNamesFromStaticFunctions
+         |->replaceMemAccess
+         |->makeInstanceArgument)
    in
    let passes stmts =
       (initial_state,[StmtBlock(None,stmts,default_loc)])
