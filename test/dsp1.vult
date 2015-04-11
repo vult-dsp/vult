@@ -9,7 +9,7 @@ fun clip(low,high,value){
     return min(max(low,value),high);
 }
 
-fun biquad(x:num,b0,b1,b2,a1,a2){
+fun biquad(x:real,b0,b1,b2,a1,a2){
     mem w1,w2;
     val w0 = x -a1*w1-a2*w2;
     val y0 = b0*w0 + b1*w1 + b2*w2;
@@ -20,7 +20,7 @@ fun biquad(x:num,b0,b1,b2,a1,a2){
 fun lp6(x,fc) {
     mem fc,k;
     if(change(fc)){
-        fc:num = clip(fc,0,samplerate);
+        fc:real = clip(fc,0,samplerate);
         k = tan(pi*fc/samplerate);
     }
     val b0 = k/(k+1);
