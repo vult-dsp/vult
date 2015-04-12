@@ -133,6 +133,18 @@ let lookupFunction (table:'a IdentifierMap.t) (state:pass_state tstate) (fname:i
          | _::t -> loop t
    in loop current_scope
 
+let lookupFunctionName (state:pass_state tstate) (fname:identifier) : identifier option =
+   let current_scope = getScope state |> List.rev in
+   let rec loop rev_scope =
+      let full_name = (List.rev rev_scope)@fname in
+      if IdentifierMap.mem full_name state.data.functions then
+         Some(full_name)
+      else
+         match rev_scope with
+         | []   -> None
+         | _::t -> loop t
+   in loop current_scope
+
 (** Search a function in a table starting in the current scope and returns the default value if not found *)
 let lookupFunctionDefault (table:'a IdentifierMap.t) (state:pass_state tstate) (fname:identifier) (default:'a) : 'a =
    match lookupFunction table state fname with
@@ -670,12 +682,13 @@ let collectFunctionDefinitions : ('data,exp) folder =
       match exp with
       | StmtFun(name,args,stmts,type_exp,active,loc) ->
          let weight = getExpWeight stmts in
-         (*let _ = Printf.printf "*** Adding function '%s' with weight %i\n" (identifierStr name) weight in*)
+         let full_name = getScope state in
+         let _ = Printf.printf "*** Adding function '%s' with weight %i\n" (identifierStr full_name) weight in
          let ret_state =
             {
                state.data with
-               functions = IdentifierMap.add name exp state.data.functions;
-               function_weight = IdentifierMap.add name weight state.data.function_weight
+               functions = IdentifierMap.add full_name exp state.data.functions;
+               function_weight = IdentifierMap.add full_name weight state.data.function_weight
             }
          in setState state ret_state
       | _ -> state
@@ -709,17 +722,17 @@ let inlineStmts : ('data,exp) expander =
       match exp with
       | PCall(optname,fname,args,loc,_) ->
          begin
-            match optname,(IdentifierMap.mem fname state.data.functions) with
+            match optname,(lookupFunctionName state fname) with
             | None,_   ->
                state,[exp]
-            | _,false   ->
+            | _,None   ->
                state,[exp]
-            | Some(name),_ ->
-               let weight = IdentifierMap.find fname state.data.function_weight in
+            | Some(name),Some(full_name) ->
+               let weight = IdentifierMap.find full_name state.data.function_weight in
                if weight > state.data.options.inline_weight then
                   state,[exp]
                else begin
-                  let new_stmts = inlineFunctionCall state name fname args loc in
+                  let new_stmts = inlineFunctionCall state name full_name args loc in
                   match new_stmts with
                   | [] -> state,[]
                   | _  -> state,[PSeq(None,new_stmts,loc)]
@@ -898,6 +911,19 @@ let makeInstanceArgument : (pass_state,exp) traverser =
             | _ ->
                let arg = SimpleId(["_st_"],loc) in
                state,StmtFun(name,arg::args,body,ret,true,loc)
+         end
+      | _ -> state,exp
+
+let makeCallsFullName : (pass_state,exp) traverser =
+   fun state exp ->
+      match exp with
+      | PCall(name,fname,args,loc,attr) ->
+         begin
+            match lookupFunctionName state fname with
+            |  Some(full_name) ->
+               let flat_name = joinSep "_" full_name in
+               state,PCall(name,[flat_name],args,loc,attr)
+            | _ -> state,exp
          end
       | _ -> state,exp
 
@@ -1206,10 +1232,12 @@ let applyTransformations (options:options) (results:parser_results) =
    in
    let codeGenPasses state =
       state
+      |+> TypesUtil.foldAsTransformation None collectFunctionDefinitions
       |+> TypesUtil.traverseBottomExpList None
          (removeNamesFromStaticFunctions
          |->replaceMemAccess
-         |->makeInstanceArgument)
+         |->makeInstanceArgument
+         |->makeCallsFullName)
    in
    let passes stmts =
       (initial_state,[StmtBlock(None,stmts,default_loc)])
