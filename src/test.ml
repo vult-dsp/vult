@@ -36,11 +36,11 @@ let run_program_with_options options s =
       let error_strings = ErrorsVult.reportErrors result.iresult result.lines in
       List.hd error_strings
 
-let run_program (s:string) : string = run_program_with_options Passes.opt_full_transform s
+let run_program (s:string) : string = run_program_with_options PassesUtil.opt_full_transform s
 
 let compare_program_result s =
-   let result1 = run_program_with_options Passes.opt_simple_transform s in
-   let result2 = run_program_with_options Passes.opt_full_transform s in
+   let result1 = run_program_with_options PassesUtil.opt_simple_transform s in
+   let result2 = run_program_with_options PassesUtil.opt_full_transform s in
    test_string result1 result2
 
 (** Expression parsing tests *)

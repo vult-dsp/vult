@@ -2,6 +2,7 @@ S ./
 S ./src
 B ./_build
 B ./_build/src
+B ./_build/src/passes
 PKG oUnit
 PKG containers
 PKG ppx_deriving.std

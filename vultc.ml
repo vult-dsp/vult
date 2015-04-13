@@ -26,6 +26,7 @@ open LexerVult
 open ParserVult
 open TypesVult
 open Passes
+open PassesUtil
 open TypesUtil
 open CheckerVult
 open DynInterpreter
@@ -80,7 +81,7 @@ let main () =
    (* Prints the parsed files if -dparse was passed as argument *)
    let _ = if args.ccode then
          parser_results
-         |> List.map (applyTransformations { opt_full_transform with inline = false; codegen = true })
+         |> List.map (applyTransformations { opt_full_transform with inline = true; codegen = true })
          |> List.iter (fun a -> match a.presult with
             | `Ok(b) ->
                let _ =
