@@ -906,16 +906,6 @@ let getExpFullLocation (e:exp) : location =
    foldTopExp None f (createState default_loc) e
    |> getState
 
-(**  Counts the number of function calls (operations) expression list has *)
-let getExpWeight (e:exp) : int =
-   let count acc e =
-      match e with
-      | PCall(_) -> setState acc (acc.data+1)
-      | _ -> acc
-   in
-   foldTopExp None count (createState 0) e
-   |> getState
-
 (** Removes the type from a named_id *)
 let removeNamedIdType (name:named_id) : named_id =
    match name with

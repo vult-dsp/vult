@@ -26,6 +26,7 @@ open TypesVult
 open TypesUtil
 open PassesUtil
 
+(** Removes the instance name for every function call that is static *)
 let removeNamesFromStaticFunctions : (pass_state,exp) traverser =
    fun state exp ->
       match exp with
@@ -35,7 +36,7 @@ let removeNamesFromStaticFunctions : (pass_state,exp) traverser =
          state,PCall(None,fname,PUnOp("p&",PId(id,None,loc),loc)::args,loc,attr)
       | _ -> state,exp
 
-
+(** Creates a table of replacements from the given list of identifiers *)
 let createStateReplacements (ids:identifier list) =
    let fold s id =
       let rep = "_st_"::id in
@@ -44,6 +45,7 @@ let createStateReplacements (ids:identifier list) =
    in
    List.fold_left (fun s a -> fold s a) IdentifierMap.empty ids
 
+(** Replaces all identifiers using the given replacements table *)
 let replaceIds (replacements:identifier IdentifierMap.t) : ('state,exp) traverser =
    fun state exp ->
       match exp with
@@ -52,6 +54,7 @@ let replaceIds (replacements:identifier IdentifierMap.t) : ('state,exp) traverse
          state,PId(new_id,tp,loc)
       | _ -> state,exp
 
+(** Replaces all references to mem variables to members of the input state *)
 let replaceMemAccess : (pass_state,exp) traverser =
    fun state exp ->
       match exp with
@@ -67,6 +70,7 @@ let replaceMemAccess : (pass_state,exp) traverser =
          state,StmtFun(name,args,new_body,ret,true,loc)
       | _ -> state,exp
 
+(** Sets the instance name as argument to the function *)
 let makeInstanceArgument : (pass_state,exp) traverser =
    fun state exp ->
       match exp with
@@ -82,6 +86,7 @@ let makeInstanceArgument : (pass_state,exp) traverser =
          end
       | _ -> state,exp
 
+(** Changes all the function calls  their full name *)
 let makeCallsFullName : (pass_state,exp) traverser =
    fun state exp ->
       match exp with
@@ -95,6 +100,14 @@ let makeCallsFullName : (pass_state,exp) traverser =
          end
       | _ -> state,exp
 
+let makeFunDeclFullName : (pass_state,exp) traverser =
+   fun state exp ->
+      match exp with
+      | StmtFun(name,args,body,ret,active,loc) ->
+         let full_name = getScope state |> joinSep "_" in
+         state,StmtFun([full_name],args,body,ret,active,loc)
+      | _ -> state,exp
+
 (** Changes if(cond,e1,e2) -> if(cond,{|return e1|},{|return e2|})*)
 let makeIfStatement : ('data,exp) traverser =
    fun state exp ->
@@ -103,13 +116,41 @@ let makeIfStatement : ('data,exp) traverser =
          state,StmtIf(cond,StmtBind(lhs,then_exp,iloc),Some(StmtBind(lhs,else_exp,bloc)),iloc)
       | _ -> state,exp
 
+let removeSubFunctions_expander : (unit,exp) expander =
+   fun state exp ->
+      match exp with
+      | StmtFun(_,_,_,_,_,_) -> state,[]
+      | _ -> state,[exp]
+
+let removeSubFunctions state stmts =
+   let apply stmt =
+      match stmt with
+      | StmtFun(name,args,body,ret,active,loc) ->
+         let new_body = TypesUtil.expandStmt None removeSubFunctions_expander (createState ()) body |> snd in
+         StmtFun(name,args,makeStmtBlock loc new_body,ret,active,loc)
+      | _ -> stmt
+   in
+   state, List.map apply stmts
+
+let flattenFunctionDefinitions state stmts =
+   state,(IdentifierMap.to_list state.data.functions)|>List.map snd
+
+let clearFunctionDefinitions state stmts =
+   { state with data = { state.data with functions = IdentifierMap.empty; function_weight = IdentifierMap.empty } }, stmts
+
 let codeGenPasses state =
    state
    |+> TypesUtil.foldAsTransformation None collectFunctionDefinitions
    |+> TypesUtil.traverseBottomExpList None makeIfStatement
    |+> TypesUtil.traverseBottomExpList None
       (removeNamesFromStaticFunctions
-      |->replaceMemAccess
-      |->makeInstanceArgument
-      |->makeCallsFullName)
+      |-> replaceMemAccess
+      |-> makeInstanceArgument
+      |-> makeCallsFullName
+      |-> makeFunDeclFullName)
+   (* Collects again the functions calls in order to move them to the top scope *)
+   |+> clearFunctionDefinitions
+   |+> TypesUtil.foldAsTransformation None collectFunctionDefinitions
+   |+> flattenFunctionDefinitions
+   |+> removeSubFunctions
 

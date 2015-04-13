@@ -102,6 +102,7 @@ let convertType (e:exp option) : ctyp =
    match e with
    | Some(PId(["int"],None,_))  -> TInt
    | Some(PId(["real"],None,_)) -> TReal
+   | Some(PId(["bool"],None,_)) -> TReal
    | Some(PId([name],None,_))   -> TObj(name)
    | Some(_) -> failwith "convertType: unsupported type"
    | None -> TReal

@@ -220,23 +220,6 @@ and isMemInstanceFunction (state:pass_state tstate) (name:identifier) : bool =
       instances_for_fun false
    | None -> false
 
-(** Adds all function definitions to a map in the state and also the weight of the function *)
-let collectFunctionDefinitions : ('data,exp) folder =
-   fun state exp ->
-      match exp with
-      | StmtFun(name,args,stmts,type_exp,active,loc) ->
-         let weight = getExpWeight stmts in
-         let full_name = getScope state in
-         (*let _ = Printf.printf "*** Adding function '%s' with weight %i\n" (identifierStr full_name) weight in*)
-         let ret_state =
-            {
-               state.data with
-               functions = IdentifierMap.add full_name exp state.data.functions;
-               function_weight = IdentifierMap.add full_name weight state.data.function_weight
-            }
-         in setState state ret_state
-      | _ -> state
-
 (** Returs the name and type if an expression PId, fails on any other case *)
 let getIdAndType (e:exp) =
    match e with
@@ -289,3 +272,32 @@ let skipPIf (stmt:exp) : bool =
 let hasReturn (stmt:exp) : bool =
    foldTopExp (Some(skipPSeq)) isReturn (createState false) stmt
    |> getState
+
+(**  Counts the number of function calls (operations) expression list has *)
+let getExpWeight (e:exp) : int =
+   let count acc e =
+      match e with
+      | PCall(_) -> setState acc (acc.data+1)
+      | _ -> acc
+   in
+   foldTopExp (Some(skipFun)) count (createState 0) e
+   |> getState
+
+(** Adds all function definitions to a map in the state and also the weight of the function *)
+let collectFunctionDefinitions : ('data,exp) folder =
+   fun state exp ->
+      match exp with
+      | StmtFun(name,args,stmts,type_exp,active,loc) ->
+         let weight = getExpWeight stmts in
+         let full_name = getScope state in
+         (*let _ = Printf.printf "*** Adding function '%s' with weight %i\n" (identifierStr full_name) weight in*)
+         (*let _ = Printf.printf "%s\n" (PrintTypes.expressionStr exp) in*)
+         let ret_state =
+            {
+               state.data with
+               functions = IdentifierMap.add full_name exp state.data.functions;
+               function_weight = IdentifierMap.add full_name weight state.data.function_weight
+            }
+         in setState state ret_state
+      | _ -> state
+
