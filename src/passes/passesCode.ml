@@ -132,8 +132,16 @@ let removeSubFunctions state stmts =
    in
    state, List.map apply stmts
 
-let flattenFunctionDefinitions state stmts =
-   state,(IdentifierMap.to_list state.data.functions)|>List.map snd
+let flattenDefinitions state stmts =
+   let function_definitions =
+      IdentifierMap.to_list state.data.functions
+      |> List.map snd
+   in
+   let type_definitions =
+      IdentifierMap.to_list state.data.types
+      |> List.map snd
+   in
+   state,type_definitions@function_definitions
 
 let clearFunctionDefinitions state stmts =
    { state with data = { state.data with functions = IdentifierMap.empty; function_weight = IdentifierMap.empty } }, stmts
@@ -151,6 +159,7 @@ let codeGenPasses state =
    (* Collects again the functions calls in order to move them to the top scope *)
    |+> clearFunctionDefinitions
    |+> TypesUtil.foldAsTransformation None collectFunctionDefinitions
-   |+> flattenFunctionDefinitions
+   |+> TypesUtil.foldAsTransformation None collectTypeDefinitions
+   |+> flattenDefinitions
    |+> removeSubFunctions
 

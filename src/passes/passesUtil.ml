@@ -103,6 +103,7 @@ let opt_no_transform =
 type pass_state =
    {
       functions       : exp IdentifierMap.t; (* Holds the body of the functions, used by inlining *)
+      types           : exp IdentifierMap.t; (* Holds the body of the the types *)
       function_weight : int IdentifierMap.t; (* Weight (complexity) of each function , used by inlining *)
       counter         : int;                 (* Generic counter used to generate unique names *)
       options         : options;             (* Used to enable/disable/configure the passes *)
@@ -301,3 +302,18 @@ let collectFunctionDefinitions : ('data,exp) folder =
          in setState state ret_state
       | _ -> state
 
+(** Adds all type definitions to a map in the state *)
+let collectTypeDefinitions : ('data,exp) folder =
+   fun state exp ->
+      match exp with
+      | StmtType(name,_,_,_,_) ->
+         let full_name = (getScope state)@name in
+         (*let _ = Printf.printf "*** Adding type '%s'\n" (identifierStr full_name) in*)
+         (*let _ = Printf.printf "%s\n" (PrintTypes.expressionStr exp) in*)
+         let ret_state =
+            {
+               state.data with
+               types = IdentifierMap.add full_name exp state.data.types;
+            }
+         in setState state ret_state
+      | _ -> state

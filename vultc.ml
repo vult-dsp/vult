@@ -78,7 +78,7 @@ let main () =
                |> print_string
             | _ -> () )
    in
-   (* Prints the parsed files if -dparse was passed as argument *)
+   (* Generates the c code if -ccode was passed as argument *)
    let _ = if args.ccode then
          parser_results
          |> List.map (applyTransformations { opt_full_transform with inline = true; codegen = true })

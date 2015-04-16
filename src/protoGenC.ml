@@ -25,6 +25,12 @@ type op =
   | ORef
   | ODeRef
 
+type ctyp_def =
+  {
+    name    : ident;
+    members : (ident * ctyp) list;
+  }
+
 type cexp =
   | EOp     of cexp * op * cexp
   | ECall   of ident * cexp list
@@ -44,6 +50,7 @@ type cstmt =
   | SReturn   of cexp
   | SBlock    of cstmt list
   | SIf       of cexp * cstmt * cstmt option
+  | SStruct   of ctyp_def
   | SEmpty
 
 type creal_type =
@@ -113,6 +120,11 @@ let convertNamedId (name:named_id) : ctyp * ident =
    | NamedId([id],tp,_) -> (convertType (Some(tp))),id
    | _ -> failwith "convertNamedId: invalid function argument"
 
+let convertMember (member:val_decl) : ident * ctyp =
+   match member with
+   | [name],e,_ -> name,convertType (Some(e))
+   | _ -> failwith "convertMember: cannot convert member"
+
 let rec convertStmt (e:exp) : cstmt =
    match e with
    | StmtVal(PId([name],tp,_),None,_) -> SDecl(convertType tp,name)
@@ -134,8 +146,8 @@ let rec convertStmt (e:exp) : cstmt =
       SBind([],convertExp rhs)
    | StmtBlock(_,stmts,_) ->
       SBlock(convertStmtList stmts)
-   | StmtType([name],[],members,None,_) -> SEmpty
-
+   | StmtType([name],[],Some(members),None,_) ->
+      SStruct({ name = name; members = List.map convertMember members })
    | _ ->
       print_endline ("convertStmt: unsupported statement\n"^(show_exp e));
       failwith ("convertStmt: unsupported statement ")
@@ -146,6 +158,7 @@ and convertStmtList (l:exp list) : cstmt list =
 type print_options =
   {
     buffer     : print_buffer;
+    header     : bool;
     num_type   : creal_type;
   }
 
@@ -280,7 +293,7 @@ let rec printStm (o:print_options) (s:cstmt) =
     append o.buffer name;
     append o.buffer ";";
     newline o.buffer
-  | SFunction(tp,name,args,body) ->
+  | SFunction(tp,name,args,body) when o.header = false ->
     printTyp o tp;
     append o.buffer name;
     append o.buffer "(";
@@ -290,12 +303,19 @@ let rec printStm (o:print_options) (s:cstmt) =
     printStm o body;
     outdent o.buffer;
     newline o.buffer
+  | SFunction(tp,name,args,body) ->
+    printTyp o tp;
+    append o.buffer name;
+    append o.buffer "(";
+    printArgs o args;
+    append o.buffer ");";
+    newline o.buffer
   | SBind([],e1) ->
     printExp o e1;
     append o.buffer ";";
     newline o.buffer
    | SBind(name,e1) ->
-    printList o.buffer (fun buffer a->append buffer a) "." name;
+    printList o.buffer (fun buffer a->append buffer a) "->" name;
     append o.buffer " = ";
     printExp o e1;
     append o.buffer ";";
@@ -328,6 +348,17 @@ let rec printStm (o:print_options) (s:cstmt) =
         printOptStm o opt_else_e;
         newline o.buffer
       end
+   | SStruct(s) ->
+      append o.buffer "typedef struct _";
+      append o.buffer s.name;
+      append o.buffer "{";
+      indent o.buffer;
+      outdent o.buffer;
+      append o.buffer "} ";
+      append o.buffer s.name;
+      append o.buffer ";";
+      newline o.buffer
+
    | SEmpty -> ()
 
 and printStmList (o:print_options) (sl:cstmt list) =
@@ -343,7 +374,7 @@ and printOptStm (o:print_options) stm =
   | Some(s) -> printStm o s
 
 let printStmListStr stms =
-  let options = { buffer = makePrintBuffer (); num_type = Float } in
+  let options = { buffer = makePrintBuffer (); num_type = Float; header = false } in
   printStmList options stms;
   contents options.buffer
 
