@@ -28,7 +28,7 @@ type op =
 type ctyp_def =
   {
     name    : ident;
-    members : (ident * ctyp) list;
+    members : (ctyp * ident) list;
   }
 
 type cexp =
@@ -120,9 +120,9 @@ let convertNamedId (name:named_id) : ctyp * ident =
    | NamedId([id],tp,_) -> (convertType (Some(tp))),id
    | _ -> failwith "convertNamedId: invalid function argument"
 
-let convertMember (member:val_decl) : ident * ctyp =
+let convertMember (member:val_decl) : ctyp * ident =
    match member with
-   | [name],e,_ -> name,convertType (Some(e))
+   | [name],e,_ -> convertType (Some(e)),name
    | _ -> failwith "convertMember: cannot convert member"
 
 let rec convertStmt (e:exp) : cstmt =
@@ -273,18 +273,16 @@ and printExpSep (o:print_options) sep el =
   | [h]  -> printExp o h
   | h::t -> printExp o h; append o.buffer sep; printExpSep o sep t
 
-let rec printArgs (o:print_options) (args:(ctyp * ident) list) =
-   match args with
-   | [] -> ()
-   | [tp,name] ->
-      printTyp o tp;
-      append o.buffer name
-   | (tp,name)::t ->
-      printTyp o tp;
-      append o.buffer name;
-      append o.buffer ", ";
-      printArgs o t
 
+let printVarDecl (o:print_options) ((tp,name):ctyp * ident) =
+   printTyp o tp;
+   append o.buffer name
+
+let rec printArgs (o:print_options) (args:(ctyp * ident) list) =
+   printListSep o printVarDecl (fun o -> append o.buffer ", ") args
+
+let printMembers (o:print_options) (members:(ctyp * ident) list) =
+   printListSepLast o printVarDecl (fun o -> append o.buffer ";"; newline o.buffer) members
 
 let rec printStm (o:print_options) (s:cstmt) =
   match s with
@@ -299,9 +297,8 @@ let rec printStm (o:print_options) (s:cstmt) =
     append o.buffer "(";
     printArgs o args;
     append o.buffer ")";
-    indent o.buffer;
     printStm o body;
-    outdent o.buffer;
+    newline o.buffer;
     newline o.buffer
   | SFunction(tp,name,args,body) ->
     printTyp o tp;
@@ -351,12 +348,14 @@ let rec printStm (o:print_options) (s:cstmt) =
    | SStruct(s) ->
       append o.buffer "typedef struct _";
       append o.buffer s.name;
-      append o.buffer "{";
+      append o.buffer " {";
       indent o.buffer;
+      printMembers o s.members;
       outdent o.buffer;
       append o.buffer "} ";
       append o.buffer s.name;
       append o.buffer ";";
+      newline o.buffer;
       newline o.buffer
 
    | SEmpty -> ()

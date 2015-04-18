@@ -51,3 +51,26 @@ let rec printList buffer f sep l =
       f buffer h;
       append buffer sep;
       printList buffer f sep t
+
+(** Function for printing list of elements *)
+let rec printListSepLast buffer f sep l =
+   match l with
+   | []   -> ()
+   | [h]  ->
+      f buffer h;
+      sep buffer
+   | h::t ->
+      f buffer h;
+      sep buffer;
+      printListSepLast buffer f sep t
+
+(** Function for printing list of elements *)
+let rec printListSep buffer f sep l =
+   match l with
+   | []   -> ()
+   | [h]  ->
+      f buffer h
+   | h::t ->
+      f buffer h;
+      sep buffer;
+      printListSepLast buffer f sep t
