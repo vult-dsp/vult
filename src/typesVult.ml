@@ -223,6 +223,7 @@ type exp_list = exp list
 type parser_results =
    {
       presult : (exp list,error list) CCError.t;
+      file    : string;
       lines   : string array;
    }
 
@@ -230,4 +231,16 @@ type interpreter_results =
    {
       iresult : (string,error list) CCError.t;
       lines   : string array;
+   }
+
+(** Stores the options passed to the command line *)
+type arguments =
+   {
+      mutable files  : string list;
+      mutable dparse : bool;
+      mutable rundyn : bool;
+      mutable debug  : bool;
+      mutable ccode  : bool;
+      mutable run_check  : bool;
+      mutable output : string;
    }

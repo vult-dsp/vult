@@ -45,6 +45,7 @@ let basicON         (state,_) = state.data.options.basic
 let codegenOn       (state,_) = state.data.options.codegen
 
 let applyTransformations (options:options) (results:parser_results) =
+   let module_name = Filename.basename results.file |> Filename.chop_extension in
    let initial_state =
       {
          counter         = 0;
@@ -64,7 +65,7 @@ let applyTransformations (options:options) (results:parser_results) =
       |> applyOn basicON         basicPasses
       |> applyOn returnRemovalON removalOfSequencesPasses
       |> applyOn inlineON        inliningPasses
-      |> applyOn finalizeON      finalPasses
+      |> applyOn finalizeON      (finalPasses module_name)
       |> applyOn codegenOn       codeGenPasses
       |> snd
    in

@@ -109,7 +109,7 @@ let convertType (e:exp option) : ctyp =
    match e with
    | Some(PId(["int"],None,_))  -> TInt
    | Some(PId(["real"],None,_)) -> TReal
-   | Some(PId(["bool"],None,_)) -> TReal
+   | Some(PId(["bool"],None,_)) -> TInt
    | Some(PId([name],None,_))   -> TObj(name)
    | Some(_) -> failwith "convertType: unsupported type"
    | None -> TReal
@@ -373,8 +373,15 @@ and printOptStm (o:print_options) stm =
   | None    -> ()
   | Some(s) -> printStm o s
 
-let printStmListStr stms =
+let printStmListStr args stms =
   let options = { buffer = makePrintBuffer (); num_type = Float; header = false } in
   printStmList options stms;
   contents options.buffer
+
+let generateHeaderAndImpl (args:arguments) (stmts:exp_list) : string * string =
+  let c_options = { buffer = makePrintBuffer (); num_type = Float; header = false } in
+  let h_options = { buffer = makePrintBuffer (); num_type = Float; header = true } in
+  stmts |> convertStmtList |> printStmList c_options;
+  stmts |> convertStmtList |> printStmList h_options;
+  (contents c_options.buffer, contents h_options.buffer)
 

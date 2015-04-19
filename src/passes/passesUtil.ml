@@ -221,6 +221,13 @@ and isMemInstanceFunction (state:pass_state tstate) (name:identifier) : bool =
       instances_for_fun false
    | None -> false
 
+(** Returns the output type of a function (currently only supports builtin functions) *)
+let getFunctionType (state:'a tstate) (name:identifier) : exp option =
+   match name with
+   | ["tan"] | ["sin"] | ["cos"] | ["tanh"] -> Some(PId(["real"],None,default_loc))
+   | ["'=='"] | ["'!='"] | ["'>'"] | ["'<'"] | ["'>='"] | ["'<='"] -> Some(PId(["bool"],None,default_loc))
+   | _ -> None
+
 (** Returs the name and type if an expression PId, fails on any other case *)
 let getIdAndType (e:exp) =
    match e with

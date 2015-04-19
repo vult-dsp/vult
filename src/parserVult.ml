@@ -576,7 +576,7 @@ let parseDumpStmtList (s:string) : string =
    PrintTypes.expressionStr e
 
 (** Parses a buffer containing a list of statements and returns the results *)
-let parseBuffer (buffer) : parser_results =
+let parseBuffer (file:string) (buffer) : parser_results =
    try
       let rec loop acc =
          match peekKind buffer with
@@ -586,28 +586,44 @@ let parseBuffer (buffer) : parser_results =
       let result = loop [] in
       let all_lines = getFileLines buffer.lines in
       if buffer.has_errors then
-         { presult = `Error(List.rev buffer.errors); lines = all_lines }
+         {
+            presult = `Error(List.rev buffer.errors);
+            lines = all_lines;
+            file = file;
+         }
       else
-         { presult = `Ok(result); lines = all_lines }
+         {
+            presult = `Ok(result);
+            lines = all_lines;
+            file = file;
+         }
    with
    | ParserError(error) ->
       let all_lines = getFileLines buffer.lines in
-      {presult = `Error([error]); lines = all_lines }
+      {
+         presult = `Error([error]);
+         lines = all_lines;
+         file = file;
+      }
    | _ ->
       let all_lines = getFileLines buffer.lines in
-      {presult = `Error([SimpleError("Failed to parse the file")]); lines = all_lines }
+      {
+         presult = `Error([SimpleError("Failed to parse the file")]);
+         lines = all_lines;
+         file = file;
+      }
 
 
 (** Parses a file containing a list of statements and returns the results *)
 let parseFile (filename:string) : parser_results =
    let chan = open_in filename in
    let buffer = bufferFromChannel chan filename in
-   let result = parseBuffer buffer in
+   let result = parseBuffer filename buffer in
    let _ = close_in chan in
    result
 
 (** Parses a string containing a list of statements and returns the results *)
 let parseString (text:string) : parser_results =
    let buffer = bufferFromString text in
-   let result = parseBuffer buffer in
+   let result = parseBuffer "" buffer in
    result

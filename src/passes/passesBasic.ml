@@ -103,17 +103,18 @@ let bindFunctionAndIfExpCallsInExp : (int * exp list,exp) transformation =
       match exp with
       | PIf(_,_,_,loc) ->
          let count,stmts = getState state in
-         let tmp_var = ["_tmp"^(string_of_int count)] in
-         let decl = StmtVal(PId(tmp_var,None,loc),None,loc) in
-         let bind_stmt = StmtBind(PId(tmp_var,None,loc),exp,loc) in
-         let new_data = count+1,[bind_stmt;decl]@stmts in
+         let tmp_var     = ["_tmp"^(string_of_int count)] in
+         let decl        = StmtVal(PId(tmp_var,None,loc),None,loc) in
+         let bind_stmt   = StmtBind(PId(tmp_var,None,loc),exp,loc) in
+         let new_data    = count+1,[bind_stmt;decl]@stmts in
          (setState state new_data),PId(tmp_var,None,loc)
       | PCall(name,fname,args,loc,attr) when not (isSimpleBinding attr) ->
          let count,stmts = getState state in
-         let tmp_var = ["_tmp"^(string_of_int count)] in
-         let decl = StmtVal(PId(tmp_var,None,loc),None,loc) in
-         let bind_stmt = StmtBind(PId(tmp_var,None,loc),PCall(name,fname,args,loc,SimpleBinding::attr),loc) in
-         let new_data = count+1,[bind_stmt;decl]@stmts in
+         let var_type    = getFunctionType state fname in
+         let tmp_var     = ["_tmp"^(string_of_int count)] in
+         let decl        = StmtVal(PId(tmp_var,var_type,loc),None,loc) in
+         let bind_stmt   = StmtBind(PId(tmp_var,var_type,loc),PCall(name,fname,args,loc,SimpleBinding::attr),loc) in
+         let new_data    = count+1,[bind_stmt;decl]@stmts in
          (setState state new_data),PId(tmp_var,None,loc)
       | _ -> state,exp
 
@@ -513,8 +514,8 @@ let markActiveFunctions : ('data,exp) traverser =
       | _ -> state,exp
 
 (** Wraps all the statements into a function called __main__ and calls it *)
-let makeFunAndCall state stmts =
-   let fcall = ["__main__"] in
+let makeFunAndCall name state stmts =
+   let fcall = ["__"^name^"__"] in
    state,[StmtFun(fcall,[],appendBlocks stmts,None,false,default_loc); StmtReturn(PCall(Some(fcall),fcall,[],default_loc,[]),default_loc)]
 
 
@@ -532,10 +533,10 @@ let basicPasses state =
    |+> TypesUtil.expandStmtList None simplifyTupleAssign
 
 (* Last preparations *)
-let finalPasses state =
+let finalPasses module_name state =
    state
    |+> TypesUtil.traverseBottomExpList None simplifySequenceBindings
-   |+> makeFunAndCall
+   |+> makeFunAndCall module_name
    |+> TypesUtil.traverseBottomExpList None relocateMemAndVal
    |+> TypesUtil.foldAsTransformation None
       (collectMemInFunctions |*> collectFunctionInstances)

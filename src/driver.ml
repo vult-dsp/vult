@@ -24,6 +24,9 @@ THE SOFTWARE.
 
 (** Contains top level functions to perform common tasks *)
 
+open TypesVult
+open PassesUtil
+
 
 (** Parses a string and runs it with the interpreter *)
 let parseStringRun s =
@@ -36,3 +39,21 @@ let parseStringRunWithOptions options s =
    ParserVult.parseString s
    |> Passes.applyTransformations options
    |> DynInterpreter.interpret
+
+(** Generates the .c and .h file contents for the given parsed files *)
+let generateCode (args:arguments) (parser_results:parser_results list) =
+   let file = if args.output<>"" then args.output else "code" in
+   let file_up = String.uppercase file in
+   let stmts =
+      parser_results
+      |> List.map (Passes.applyTransformations { opt_full_transform with inline = true; codegen = true })
+      |> List.map (
+         fun a -> match a.presult with
+         | `Ok(b) -> b
+         | _ -> [] )
+      |> List.flatten
+   in
+
+   let c_text,h_text = ProtoGenC.generateHeaderAndImpl args stmts in
+   (Printf.sprintf "#include \"%s.h\"\n\n%s\n" file c_text),
+   (Printf.sprintf "#ifndef _%s_\n#define _%s_\n\n#include \"math.h\"\n\n%s\n#endif\n" file_up file_up h_text)

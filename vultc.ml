@@ -31,50 +31,35 @@ open TypesUtil
 open CheckerVult
 open DynInterpreter
 open Debugger
-open ProtoGenC
-
-(** Stores the options passed to the command line *)
-type arguments =
-   {
-      mutable files  : string list;
-      mutable dparse : bool;
-      mutable rundyn : bool;
-      mutable debug  : bool;
-      mutable ccode  : bool;
-      mutable run_check  : bool;
-   }
+open Driver
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : arguments =
-   let result = { files = [] ; dparse = false; run_check = false; rundyn = false; debug = false; ccode = false } in
+   let result =
+      {
+         files     = [];
+         dparse    = false;
+         run_check = false;
+         rundyn    = false;
+         debug     = false;
+         ccode     = false;
+         output    = "";
+      } in
    let opts = [
-      "-dparse", (Arg.Unit  (fun () -> result.dparse   <-true)), "Dumps the parse tree (default: off)";
-      "-check",  (Arg.Unit  (fun () -> result.run_check<-true)), "Runs checker on program (default: off)";
-      "-rundyn", (Arg.Unit  (fun () -> result.rundyn   <-true)), "Runs the dynamic interpreter (default: off)";
-      "-debug",  (Arg.Unit  (fun () -> result.debug    <-true)), "Runs the debugger (default: off)";
-      "-ccode",  (Arg.Unit  (fun () -> result.ccode    <-true)), "Converts the code to c (default: off)";
+      "-dparse", (Arg.Unit   (fun () -> result.dparse   <-true)), "Dumps the parse tree (default: off)";
+      "-check",  (Arg.Unit   (fun () -> result.run_check<-true)), "Runs checker on program (default: off)";
+      "-rundyn", (Arg.Unit   (fun () -> result.rundyn   <-true)), "Runs the dynamic interpreter (default: off)";
+      "-debug",  (Arg.Unit   (fun () -> result.debug    <-true)), "Runs the debugger (default: off)";
+      "-ccode",  (Arg.Unit   (fun () -> result.ccode    <-true)), "Converts the code to c (default: off)";
+      "-o",      (Arg.String (fun output -> result.output<-output)), "Defines the prefix of the output files";
    ]
    in
    let _ = Arg.parse opts (fun a -> result.files <- a::result.files) "Usage: vultc file.vult\n" in
    let _ = result.files <- List.rev result.files in (* Put the files in the correct order  *)
    result
 
-(** Generates the c code if -ccode was passed as argument *)
-let generateCode parser_results =
-   parser_results
-   |> List.map (applyTransformations { opt_full_transform with inline = true; codegen = true })
-   |> List.iter (
-      fun a -> match a.presult with
-         | `Ok(b) ->
-            let _ =
-               ProtoGenC.convertStmtList b
-               |> ProtoGenC.printStmListStr
-               |> print_string
-            in ()
-         | _ -> () )
-
 (** Prints the parsed files if -dparse was passed as argument *)
-let dumpParsedFiles parser_results =
+let dumpParsedFiles (parser_results:parser_results list) =
    parser_results
    |> List.map (applyTransformations { opt_full_transform with inline = false })
    |> List.iter (
@@ -86,14 +71,14 @@ let dumpParsedFiles parser_results =
          | _ -> () )
 
 (** Runs the dynamic interpreter if -rundyn was passed as argument *)
-let runInterpreter parser_results =
+let runInterpreter (parser_results:parser_results list) =
    parser_results
    |> List.map (applyTransformations { opt_full_transform with inline = false })
    |> List.map interpret
    |> ignore
 
 (* Runs the checker if -check was passed as argument *)
-let runChecker parser_results =
+let runChecker (parser_results:parser_results list) =
    let errors = List.map programState parser_results in
    List.iter (fun a -> ErrorsVult.printErrors a.iresult a.lines ) errors
 
@@ -108,7 +93,26 @@ let main () =
    (* Prints the parsed files if -dparse was passed as argument *)
    let _ = if args.dparse then dumpParsedFiles parser_results in
    (* Generates the c code if -ccode was passed as argument *)
-   let _ = if args.ccode then generateCode parser_results in
+   let _ =
+      if args.ccode then
+         begin
+            let c_text,h_text = generateCode args parser_results in
+            if args.output<>"" then
+               begin
+                  let oc = open_out (args.output^".c") in
+                  Printf.fprintf oc "%s\n" c_text;
+                  close_out oc;
+                  let oh = open_out (args.output^".h") in
+                  Printf.fprintf oh "%s\n" h_text;
+                  close_out oh
+               end
+            else
+               begin
+                  print_endline h_text;
+                  print_endline c_text;
+               end
+         end
+   in
    (* Runs the dynamic interpreter if -rundyn was passed as argument *)
    let _ = if args.rundyn then runInterpreter parser_results in
    (* Runs the checker if -check was passed as argument *)
