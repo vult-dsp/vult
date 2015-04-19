@@ -27,6 +27,7 @@ THE SOFTWARE.
 open TypesVult
 open TypesUtil
 open PassesUtil
+open Graphs
 
 (** Changes (x) -> x *)
 let removeGroups : ('data,exp) transformation =
