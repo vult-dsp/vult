@@ -73,4 +73,4 @@ let rec printListSep buffer f sep l =
    | h::t ->
       f buffer h;
       sep buffer;
-      printListSepLast buffer f sep t
+      printListSep buffer f sep t
