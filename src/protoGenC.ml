@@ -168,10 +168,10 @@ let printTyp (o:print_options) pointers t =
   match t,o.num_type with
   | TObj(id),_ when pointers  -> append o.buffer (id^"* ")
   | TObj(id),_   -> append o.buffer (id^" ")
-  | TInt,_ -> append o.buffer "int32_t "
+  | TInt,_ -> append o.buffer "int "
   | TReal,Double -> append o.buffer "double "
   | TReal,Float  -> append o.buffer "float "
-  | TReal,Fixed  -> append o.buffer "int32_t "
+  | TReal,Fixed  -> append o.buffer "int "
 
 let printOpNormal (o:print_options) op =
   match op with
@@ -319,7 +319,7 @@ let rec printStm (o:print_options) (s:cstmt) =
     append o.buffer ";";
     newline o.buffer
   | SWhile(cond,body) ->
-    append o.buffer "while(";
+    append o.buffer "while";
     printExp o cond;
     printStm o body;
     newline o.buffer
@@ -346,7 +346,7 @@ let rec printStm (o:print_options) (s:cstmt) =
         printOptStm o opt_else_e;
         newline o.buffer
       end
-   | SStruct(s) ->
+   | SStruct(s)  when o.header = true ->
       append o.buffer "typedef struct _";
       append o.buffer s.name;
       append o.buffer " {";
@@ -358,7 +358,7 @@ let rec printStm (o:print_options) (s:cstmt) =
       append o.buffer ";";
       newline o.buffer;
       newline o.buffer
-
+   | SStruct(s) -> ()
    | SEmpty -> ()
 
 and printStmList (o:print_options) (sl:cstmt list) =
