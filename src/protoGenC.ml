@@ -164,9 +164,10 @@ type print_options =
 
 let fix_scale = 1 lsl 16 |> float_of_int
 
-let printTyp (o:print_options) t =
+let printTyp (o:print_options) pointers t =
   match t,o.num_type with
-  | TObj(id),_   -> append o.buffer (id^"* ")
+  | TObj(id),_ when pointers  -> append o.buffer (id^"* ")
+  | TObj(id),_   -> append o.buffer (id^" ")
   | TInt,_ -> append o.buffer "int32_t "
   | TReal,Double -> append o.buffer "double "
   | TReal,Float  -> append o.buffer "float "
@@ -274,25 +275,25 @@ and printExpSep (o:print_options) sep el =
   | h::t -> printExp o h; append o.buffer sep; printExpSep o sep t
 
 
-let printVarDecl (o:print_options) ((tp,name):ctyp * ident) =
-   printTyp o tp;
+let printVarDecl pointers (o:print_options) ((tp,name):ctyp * ident) =
+   printTyp o pointers tp;
    append o.buffer name
 
 let rec printArgs (o:print_options) (args:(ctyp * ident) list) =
-   printListSep o printVarDecl (fun o -> append o.buffer ", ") args
+   printListSep o (printVarDecl true) (fun o -> append o.buffer ", ") args
 
 let printMembers (o:print_options) (members:(ctyp * ident) list) =
-   printListSepLast o printVarDecl (fun o -> append o.buffer ";"; newline o.buffer) members
+   printListSepLast o (printVarDecl false) (fun o -> append o.buffer ";"; newline o.buffer) members
 
 let rec printStm (o:print_options) (s:cstmt) =
   match s with
   | SDecl(tp,name) ->
-    printTyp o tp;
+    printTyp o true tp;
     append o.buffer name;
     append o.buffer ";";
     newline o.buffer
   | SFunction(tp,name,args,body) when o.header = false ->
-    printTyp o tp;
+    printTyp o true tp;
     append o.buffer name;
     append o.buffer "(";
     printArgs o args;
@@ -301,7 +302,7 @@ let rec printStm (o:print_options) (s:cstmt) =
     newline o.buffer;
     newline o.buffer
   | SFunction(tp,name,args,body) ->
-    printTyp o tp;
+    printTyp o true tp;
     append o.buffer name;
     append o.buffer "(";
     printArgs o args;
