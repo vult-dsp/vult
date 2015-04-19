@@ -444,12 +444,12 @@ and stmtType (buffer:exp lexer_stream) : exp =
       let _ = skip buffer in
       let type_exp = getContents (expression 10 buffer) in
       let _ = optConsume buffer SEMI in
-      StmtType(name,args,None,Some(type_exp),start_loc)
+      StmtAliasType(name,args,type_exp,start_loc)
    | LBRAC ->
       let _        = skip buffer in
       let val_decl = valDeclList buffer in
       let _        = consume buffer RBRAC in
-      StmtType(name,args,Some(val_decl),None,start_loc)
+      StmtType(name,args,val_decl,start_loc)
    | _ ->
       let got = tokenToString buffer.peeked in
       let message = Printf.sprintf "Expecting a list of value declarations '{ val x:... }' or a type alias ': type' but got %s" got  in

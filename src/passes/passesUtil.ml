@@ -313,7 +313,8 @@ let collectFunctionDefinitions : ('data,exp) folder =
 let collectTypeDefinitions : ('data,exp) folder =
    fun state exp ->
       match exp with
-      | StmtType(name,_,_,_,_) ->
+      | StmtAliasType(name,_,_,_)
+      | StmtType(name,_,_,_) ->
          let full_name = (getScope state)@name in
          (*let _ = Printf.printf "*** Adding type '%s'\n" (identifierStr full_name) in*)
          (*let _ = Printf.printf "%s\n" (PrintTypes.expressionStr exp) in*)

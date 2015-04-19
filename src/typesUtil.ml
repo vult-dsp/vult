@@ -223,7 +223,8 @@ let getExpLocation (e:exp)  : location =
    | StmtEmpty -> default_loc
    | StmtBlock(_,_,loc) -> loc
    | StmtWhile(_,_,loc) -> loc
-   | StmtType(_,_,_,_,loc) -> loc
+   | StmtType(_,_,_,loc) -> loc
+   | StmtAliasType(_,_,_,loc) -> loc
 
 (** Folds the list (left-right) using the given traverser functions *)
 let foldTraverser_left traverser_function pred (traverser:('data,'traversing_type) traverser) (state:'data tstate) (elems:'elem list) =
@@ -370,7 +371,9 @@ let rec traverseBottomExp (pred:(exp -> bool) option) (f: ('data, exp) traverser
          let state1,ne1 = traverseBottomExp pred f state e1 in
          let state2,ne2 = traverseBottomExp pred f state1 e2 in
          f state2 (StmtWhile(ne1,ne2,loc))
-      | StmtType(_,_,_,_,_) -> (* Does not travers the internal expressions *)
+      | StmtType(_,_,_,_) -> (* Does not travers the internal expressions *)
+         f state exp
+      | StmtAliasType(_,_,_,_) -> (* Does not travers the internal expressions *)
          f state exp
 
 (** Traverses lists expressions bottom-up. The expressions are traversed right to left *)
@@ -470,7 +473,9 @@ let rec traverseTopExp (pred:(exp -> bool) option) (f: ('data, exp) traverser) (
          let state1,ne1 = traverseTopExp pred f state e1 in
          let state2,ne2 = traverseTopExp pred f state1 e2 in
          state2,StmtWhile(ne1,ne2,loc)
-      | StmtType(_,_,_,_,_) ->
+      | StmtType(_,_,_,_) ->
+         state,nexp
+      | StmtAliasType(_,_,_,_) ->
          state,nexp
 
 
@@ -569,7 +574,8 @@ let rec foldTopExp (pred:(exp -> bool) option) (f: ('data, exp) folder) (state0:
          let state1 = foldTopExp pred f state e1 in
          let state2 = foldTopExp pred f state1 e2 in
          state2
-      | StmtType(_,_,_,_,_) -> state
+      | StmtType(_,_,_,_) -> state
+      | StmtAliasType(_,_,_,_) -> state
 
 
 and foldTopExpList (pred:(exp -> bool) option) (f: ('data, exp) folder) (state:'data tstate) (expl:exp list) : 'data tstate =
@@ -662,7 +668,9 @@ let rec foldDownExp (pred:(exp -> bool) option) (f: ('data, exp) folder) (state:
          let state1 = foldDownExp pred f state e1 in
          let state2 = foldDownExp pred f state1 e2 in
          f state2 exp
-      | StmtType(_,_,_,_,_) ->
+      | StmtType(_,_,_,_) ->
+         f state exp
+      | StmtAliasType(_,_,_,_) ->
          f state exp
 
 
@@ -799,7 +807,8 @@ let rec expandStmt (pred:(exp -> bool) option) (f: ('data, exp) expander) (state
          let state1,ne1 = expandStmt pred f state e1 in
          let state2,ne2 = expandStmt pred f state1 e2 in
          f state2 (StmtWhile(appendPseq ne1,appendBlocks ne2,loc))
-      | StmtType(_,_,_,_,_) -> f state stmt
+      | StmtType(_,_,_,_) -> f state stmt
+      | StmtAliasType(_,_,_,_) -> f state stmt
 
 and expandStmtList (pred:(exp -> bool) option) (f: ('data, exp) expander) (state:'data tstate) (stmts:exp list) : 'data tstate * exp list =
    let state2,acc =

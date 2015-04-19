@@ -146,7 +146,7 @@ let rec convertStmt (e:exp) : cstmt =
       SBind([],convertExp rhs)
    | StmtBlock(_,stmts,_) ->
       SBlock(convertStmtList stmts)
-   | StmtType([name],[],Some(members),None,_) ->
+   | StmtType([name],[],members,_) ->
       SStruct({ name = name; members = List.map convertMember members })
    | _ ->
       print_endline ("convertStmt: unsupported statement\n"^(show_exp e));

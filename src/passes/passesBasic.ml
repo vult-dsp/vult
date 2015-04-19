@@ -324,9 +324,9 @@ let rec replaceSimplifiedTypeInMember (mappings: identifier IdentifierMap.t) (me
 (** Takes a type and the mapping of simplified types and replaces all occurrences *)
 let replaceSimplifiedTypes (mappings: identifier IdentifierMap.t) (tp:exp) : exp =
    match tp with
-   | StmtType(name,[],Some(members),None,loc) ->
+   | StmtType(name,[],members,loc) ->
       let new_members = List.map (replaceSimplifiedTypeInMember mappings) members in
-      StmtType(name,[],Some(new_members),None,loc)
+      StmtType(name,[],new_members,loc)
    | _ -> failwith "replaceSimplifiedTypes: Invalid type"
 
 let generateTypeNameForInstance (ids:identifier list) : exp option =
@@ -360,7 +360,7 @@ let rec createTypeForFunction (state:pass_state tstate) (fname:identifier) : exp
             instances []
       in
       let members = List.map (fun (a,b)-> a,b,default_loc) (mem_pairs@inst_pais) in
-      Some(StmtType(generateTypeName fname,[],Some(members),None,default_loc))
+      Some(StmtType(generateTypeName fname,[],members,default_loc))
 
 let createTypes : ('data,exp) folder =
    fun state e ->
@@ -410,12 +410,14 @@ let relocateMemAndVal : ('data,exp) traverser =
 
 let getTypeName (tp:exp) : identifier =
    match tp with
-   | StmtType(name,_,_,_,_) -> name
+   | StmtType(name,_,_,_) -> name
+   | StmtAliasType(name,_,_,_) -> name
    | _ -> failwith "getTypeName: invalid type"
 
 let renameType (tp:exp) (name:identifier) =
    match tp with
-   | StmtType(_,[],Some(members),None,loc) -> StmtType(name,[],Some(members),None,loc)
+   | StmtType(_,[],members,loc) -> StmtType(name,[],members,loc)
+   | StmtAliasType(_,[],alias,loc) -> StmtAliasType(name,[],alias,loc)
    | _ -> failwith "renameType: invalid type"
 
 let addTypeMapping (current_name:identifier) (new_type_name:identifier) (mapping:identifier IdentifierMap.t) =
@@ -423,7 +425,7 @@ let addTypeMapping (current_name:identifier) (new_type_name:identifier) (mapping
    IdentifierMap.add current_name new_type_name mapping
 
 (** Used to sort the members of a type *)
-let compareMemberName (a,_,_) (b,_,_) = compare a b
+let compareMemberName (a,_,_) (b,_,_) : int = compare a b
 
 (** Returns Some if the type expression are the same or if they can be merged *)
 let mergeTypeExp (t1:exp) (t2:exp) : exp option =
@@ -451,12 +453,12 @@ let rec matchTypeMembers (members1:val_decl list) (members2:val_decl list) (acc:
     instances with more than one type. It returns Some if the types could be merged. *)
 let mergeTypes (t1:exp) (t2:exp) : exp option =
    match t1,t2 with
-   | StmtType(name1,[],Some(members1),None,loc1),StmtType(name2,[],Some(members2),None,loc2) ->
+   | StmtType(name1,[],members1,loc1),StmtType(name2,[],members2,loc2) ->
       let members1_s = List.sort compareMemberName members1 in
       let members2_s = List.sort compareMemberName members2 in
       begin
          match matchTypeMembers members1_s members2_s [] with
-         | Some(new_members) -> Some(StmtType(name1,[],Some(new_members),None,default_loc))
+         | Some(new_members) -> Some(StmtType(name1,[],new_members,default_loc))
          | _ -> None
       end
    | _ -> None
@@ -481,6 +483,8 @@ let rec pushMergeType (count:int) (mapping:identifier IdentifierMap.t) (tp:exp) 
             count,new_type::t@acc,new_mapping
       end
 
+
+(** Takes all the types for each function and creates new simplified type *)
 let simplifyTypes (state:pass_state tstate) (exp_list:exp list) : pass_state tstate * exp list =
    let _,simple_types,mapping = IdentifierMap.fold
       (fun fname value (count,types,mapping) ->  pushMergeType count mapping value types []) state.data.type_function (0,[],IdentifierMap.empty)

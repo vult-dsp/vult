@@ -176,7 +176,7 @@ and expressionBuff buffer (exp:exp) =
       expressionBuff buffer cond;
       append buffer ")";
       expressionBuff buffer stmts
-   | StmtType(id,args,decl_list,alias,_) ->
+   | StmtAliasType(id,args,alias,_) ->
       append buffer "type ";
       identifierBuff buffer id;
       begin
@@ -187,18 +187,25 @@ and expressionBuff buffer (exp:exp) =
             printList buffer namedIdBuff "," args;
             append buffer ")"
       end;
-      CCOpt.iter(fun a ->
-            append buffer "{";
-            indent buffer;
-            List.iter (valDecl buffer) a;
-            outdent buffer;
-            append buffer "}"
-         ) decl_list;
-      CCOpt.iter(fun a ->
-            append buffer ":";
-            expressionBuff buffer a;
-            append buffer ";"
-         ) alias
+      append buffer ":";
+      expressionBuff buffer alias;
+      append buffer ";"
+   | StmtType(id,args,decl_list,_) ->
+      append buffer "type ";
+      identifierBuff buffer id;
+      begin
+         match args with
+         | [] -> append buffer " "
+         | _  ->
+            append buffer "(";
+            printList buffer namedIdBuff "," args;
+            append buffer ")"
+      end;
+      append buffer "{";
+      indent buffer;
+      List.iter (valDecl buffer) decl_list;
+      outdent buffer;
+      append buffer "}"
    | StmtEmpty -> ()
 
 (** Adds to the print buffer an expression list *)

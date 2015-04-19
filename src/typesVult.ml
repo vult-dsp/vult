@@ -206,8 +206,12 @@ and exp =
    | StmtType
       of identifier           (* name *)
       *  named_id list        (* arguments *)
-      *  val_decl list option (* members *)
-      *  exp option           (* alias type *)
+      *  val_decl list        (* members *)
+      *  location
+   | StmtAliasType
+      of identifier           (* name *)
+      *  named_id list        (* arguments *)
+      *  exp                  (* alias type *)
       *  location
    | StmtEmpty
    [@@deriving show,eq,ord]

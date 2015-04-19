@@ -259,7 +259,10 @@ and runExp (loc:local_env) (exp:exp) : value * local_env * bool =
    | StmtReturn(e,_) ->
       let e_val,loc,_ = runExp loc e in
       e_val,loc,true
-   | StmtType(name,_,_,_,_) ->
+   | StmtType(name,_,_,_) ->
+      let loc = declType loc name (DeclaredT(exp)) in
+      VUnit,loc,false
+   | StmtAliasType(name,_,_,_) ->
       let loc = declType loc name (DeclaredT(exp)) in
       VUnit,loc,false
    | StmtFun(name,_,_,_,_,_) ->
