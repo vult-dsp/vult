@@ -59,6 +59,44 @@ let processArguments () : arguments =
    let _ = result.files <- List.rev result.files in (* Put the files in the correct order  *)
    result
 
+(** Generates the c code if -ccode was passed as argument *)
+let generateCode parser_results =
+   parser_results
+   |> List.map (applyTransformations { opt_full_transform with inline = true; codegen = true })
+   |> List.iter (
+      fun a -> match a.presult with
+         | `Ok(b) ->
+            let _ =
+               ProtoGenC.convertStmtList b
+               |> ProtoGenC.printStmListStr
+               |> print_string
+            in ()
+         | _ -> () )
+
+(** Prints the parsed files if -dparse was passed as argument *)
+let dumpParsedFiles parser_results =
+   parser_results
+   |> List.map (applyTransformations { opt_full_transform with inline = false })
+   |> List.iter (
+      fun a -> match a.presult with
+         | `Ok(b) ->
+            (*Format.printf "tree: %a@." pp_exp_list b;*)
+            PrintTypes.stmtListStr b
+            |> print_string
+         | _ -> () )
+
+(** Runs the dynamic interpreter if -rundyn was passed as argument *)
+let runInterpreter parser_results =
+   parser_results
+   |> List.map (applyTransformations { opt_full_transform with inline = false })
+   |> List.map interpret
+   |> ignore
+
+(* Runs the checker if -check was passed as argument *)
+let runChecker parser_results =
+   let errors = List.map programState parser_results in
+   List.iter (fun a -> ErrorsVult.printErrors a.iresult a.lines ) errors
+
 let main () =
    let args = processArguments () in
    (* Parse the files *)
@@ -68,49 +106,13 @@ let main () =
    (* Reports error of parsing *)
    let _ = List.iter (fun a -> ErrorsVult.printErrors a.presult a.lines ) parser_results in
    (* Prints the parsed files if -dparse was passed as argument *)
-   let _ = if args.dparse then
-         parser_results
-         |> List.map (applyTransformations { opt_full_transform with inline = false })
-         |> List.iter (fun a -> match a.presult with
-            | `Ok(b) ->
-               (*Format.printf "tree: %a@." pp_exp_list b;*)
-               PrintTypes.stmtListStr b
-               |> print_string
-            | _ -> () )
-   in
+   let _ = if args.dparse then dumpParsedFiles parser_results in
    (* Generates the c code if -ccode was passed as argument *)
-   let _ = if args.ccode then
-         parser_results
-         |> List.map (applyTransformations { opt_full_transform with inline = true; codegen = true })
-         |> List.iter (fun a -> match a.presult with
-            | `Ok(b) ->
-               let _ =
-                  ProtoGenC.convertStmtList b
-                  |> ProtoGenC.printStmListStr
-                  |> print_string
-               in ()
-            | _ -> () )
-   in
+   let _ = if args.ccode then generateCode parser_results in
    (* Runs the dynamic interpreter if -rundyn was passed as argument *)
-   let _ = if args.rundyn then
-         parser_results
-         |> List.map (applyTransformations { opt_full_transform with inline = false })
-         |> List.map interpret
-         |> ignore
-   in
+   let _ = if args.rundyn then runInterpreter parser_results in
    (* Runs the checker if -check was passed as argument *)
-   let _ =
-      if args.run_check then
-         let errors = List.map programState parser_results in
-         List.iter (fun a -> ErrorsVult.printErrors a.iresult a.lines ) errors
-   in
-   let _ =
-      if args.debug then
-         parser_results
-         (*|> List.map (applyTransformations opt_simple_transform)
-         |> List.map Debugger.debug*)
-         |> ignore
-   in
+   let _ = if args.run_check then runChecker parser_results in
    ()
 ;;
 main ();;
