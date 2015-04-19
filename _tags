@@ -2,3 +2,4 @@
 <vult_node.ml>: syntax(camlp4o),package(js_of_ocaml.syntax)
 <src>:include
 <src/passes>:include
+<src/util>:include
