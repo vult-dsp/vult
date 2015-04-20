@@ -292,13 +292,25 @@ let rec printStm (o:print_options) (s:cstmt) =
     append o.buffer name;
     append o.buffer ";";
     newline o.buffer
-  | SFunction(tp,name,args,body) when o.header = false ->
+  | SFunction(tp,name,args,(SBlock(_) as body)) when o.header = false ->
     printTyp o true tp;
     append o.buffer name;
     append o.buffer "(";
     printArgs o args;
     append o.buffer ")";
     printStm o body;
+    newline o.buffer;
+    newline o.buffer
+  | SFunction(tp,name,args,body) when o.header = false ->
+    printTyp o true tp;
+    append o.buffer name;
+    append o.buffer "(";
+    printArgs o args;
+    append o.buffer ") {";
+    indent o.buffer;
+    printStm o body;
+    outdent o.buffer;
+    append o.buffer "}";
     newline o.buffer;
     newline o.buffer
   | SFunction(tp,name,args,body) ->
