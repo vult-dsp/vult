@@ -215,9 +215,11 @@ and isMemInstanceFunction (state:pass_state tstate) (name:identifier) : bool =
    match lookupFunction state.data.instances state name with
    | Some(instances_for_fun) ->
       IdentifierMap.fold (fun key types acc ->
-         types
-         |> List.filter (fun a -> a <> name)
-         |> List.exists (isActiveFunction state))
+         let current =
+            types
+            |> List.filter (fun a -> a <> name)
+            |> List.exists (isActiveFunction state)
+         in current || acc)
       instances_for_fun false
    | None -> false
 
