@@ -34,7 +34,7 @@ open G
 module C = Components.Make(G)
 
 (** Creates a graph given a list of vertex and a hash table defining the edges *)
-let createGraph (vertex:'a list) (edges:('a,'a list) Hashtbl.t) =
+let createGraph (vertex:'a list) (edges:('a,'a list) Hashtbl.t) : G.t =
   let g = create () in
   let vertexTable = Hashtbl.create 50 in
   List.iter (fun a -> Hashtbl.add vertexTable  a (G.V.create(a))) vertex;

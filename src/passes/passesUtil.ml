@@ -229,7 +229,7 @@ let getFunctionType (state:'a tstate) (name:identifier) : exp option =
    | _ -> None
 
 (** Returs the name and type if an expression PId, fails on any other case *)
-let getIdAndType (e:exp) =
+let getIdAndType (e:exp) : identifier * exp =
    match e with
    | PId(name,Some(tp),_) -> name,tp
    | PId(name,None,loc) -> name,PId(["real"],None,loc)
@@ -325,3 +325,10 @@ let collectTypeDefinitions : ('data,exp) folder =
             }
          in setState state ret_state
       | _ -> state
+
+let getTypeName (tp:exp) : identifier =
+   match tp with
+   | StmtType(name,_,_,_) -> name
+   | StmtAliasType(name,_,_,_) -> name
+   | _ -> failwith "getTypeName: invalid type"
+

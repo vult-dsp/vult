@@ -27,7 +27,6 @@ THE SOFTWARE.
 open TypesVult
 open TypesUtil
 open PassesUtil
-open Graphs
 
 (** Changes (x) -> x *)
 let removeGroups : ('data,exp) transformation =
@@ -408,12 +407,6 @@ let relocateMemAndVal : ('data,exp) traverser =
          state,PSeq(name,val_decl@new_stmts,loc)
       | _ -> state,exp
 
-let getTypeName (tp:exp) : identifier =
-   match tp with
-   | StmtType(name,_,_,_) -> name
-   | StmtAliasType(name,_,_,_) -> name
-   | _ -> failwith "getTypeName: invalid type"
-
 let renameType (tp:exp) (name:identifier) =
    match tp with
    | StmtType(_,[],members,loc) -> StmtType(name,[],members,loc)
@@ -483,7 +476,6 @@ let rec pushMergeType (count:int) (mapping:identifier IdentifierMap.t) (tp:exp) 
             count,new_type::t@acc,new_mapping
       end
 
-
 (** Takes all the types for each function and creates new simplified type *)
 let simplifyTypes (state:pass_state tstate) (exp_list:exp list) : pass_state tstate * exp list =
    let _,simple_types,mapping = IdentifierMap.fold
@@ -522,7 +514,6 @@ let markActiveFunctions : ('data,exp) traverser =
 let makeFunAndCall name state stmts =
    let fcall = ["__"^name^"__"] in
    state,[StmtFun(fcall,[],appendBlocks stmts,None,false,default_loc); StmtReturn(PCall(Some(fcall),fcall,[],default_loc,[]),default_loc)]
-
 
 (* Basic transformations *)
 let basicPasses state =

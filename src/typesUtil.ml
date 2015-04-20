@@ -951,3 +951,9 @@ let exists (f:exp -> bool) (exp:exp) : bool =
    foldTopExp None (fun state a -> setState state (state.data || f a)) (createState false) exp
    |> getState
 
+(** Returns true if the name is a builtin type *)
+let isBuiltinType (name:identifier) : bool =
+   match name with
+   | ["real"] | ["int"] | ["bool"] -> true
+   | _ -> false
+

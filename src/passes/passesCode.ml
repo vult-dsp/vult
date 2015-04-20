@@ -25,6 +25,7 @@ THE SOFTWARE.
 open TypesVult
 open TypesUtil
 open PassesUtil
+open Graphs
 
 (** Removes the instance name for every function call that is static *)
 let removeNamesFromStaticFunctions : (pass_state,exp) traverser =
@@ -116,6 +117,31 @@ let makeIfStatement : ('data,exp) traverser =
          state,StmtIf(cond,StmtBind(lhs,then_exp,iloc),Some(StmtBind(lhs,else_exp,bloc)),iloc)
       | _ -> state,exp
 
+(** Returns the dependencies of a type declaration *)
+let returnTypeDependencies (tp:exp) : identifier list =
+   match tp with
+   | StmtType(_,_,members,_) ->
+      List.map (fun (_,t,_) -> getIdAndType t |> fst) members
+   | _ -> []
+
+(** Takes a list of type declarations and returns it sorted based on their dependencies *)
+let sortTypes (types:exp list) : exp list =
+   let vertex,edges,decls = List.fold_left (fun (vertex,edges,decls) (a:exp) ->
+      let name = getTypeName a in
+      let dependencies =
+         returnTypeDependencies a
+         |> List.filter (fun a -> isBuiltinType a |> not)
+      in
+      let _ = Hashtbl.add edges name dependencies in
+      let _ = Hashtbl.add decls name a in
+      (name::vertex),edges,decls
+      ) ([],Hashtbl.create 100,Hashtbl.create 100) types
+   in
+   let g = Graphs.createGraph vertex edges in
+   let components = calculateComponents g in
+   let sorted_names = List.flatten components in
+   List.map (fun name -> Hashtbl.find decls name) sorted_names
+
 let removeSubFunctions_expander : (unit,exp) expander =
    fun state exp ->
       match exp with
@@ -140,6 +166,7 @@ let flattenDefinitions state stmts =
    let type_definitions =
       IdentifierMap.to_list state.data.types
       |> List.map snd
+      |> sortTypes
    in
    state,type_definitions@function_definitions
 
