@@ -957,3 +957,8 @@ let isBuiltinType (name:identifier) : bool =
    | ["real"] | ["int"] | ["bool"] -> true
    | _ -> false
 
+let isUnit (e:exp) : bool =
+   match e with
+   | PUnit(_) -> true
+   | _ -> false
+

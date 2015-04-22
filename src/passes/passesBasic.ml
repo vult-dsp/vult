@@ -194,7 +194,7 @@ let simplifyTupleAssign : ('data,exp) expander =
 (** Returns Some(e,stmts) if the sequence has a single path until it returns *)
 let rec isSinglePathStmtList (acc:exp list) (stmts:exp list) : (exp * exp list) option =
    match stmts with
-   | [] -> None
+   | [] -> Some(PUnit(default_loc),List.rev acc)
    | [StmtReturn(e,_)] -> Some(e,List.rev acc)
    | h::_ when hasReturn h -> None
    | h::t -> isSinglePathStmtList (h::acc) t
@@ -212,7 +212,11 @@ let simplifySequenceBindings : ('data,exp) traverser =
       | StmtBind(lhs,PSeq(name,stmts,loc_s),loc) ->
          begin
             match isSinglePathStmtList [] stmts with
-            | Some(e,rem_stmts) -> state,StmtBlock(name,rem_stmts@[StmtBind(lhs,e,loc)],loc_s)
+            | Some(e,rem_stmts) ->
+               if isUnit e && isUnit lhs then
+                  state,StmtBlock(name,rem_stmts,loc_s)
+               else
+                  state,StmtBlock(name,rem_stmts@[StmtBind(lhs,e,loc)],loc_s)
             | None -> state,exp
          end
       | _ -> state,exp
@@ -510,6 +514,14 @@ let markActiveFunctions : ('data,exp) traverser =
          state,StmtFun(name,args,body,ret,false,loc)
       | _ -> state,exp
 
+(** Changes if(cond,e1,e2) -> if(cond,{|return e1|},{|return e2|})*)
+let makeIfStatement : ('data,exp) traverser =
+   fun state exp ->
+      match exp with
+      | StmtBind(lhs,PIf(cond,then_exp,else_exp,iloc),bloc) ->
+         state,StmtIf(cond,StmtBind(lhs,then_exp,iloc),Some(StmtBind(lhs,else_exp,bloc)),iloc)
+      | _ -> state,exp
+
 (** Wraps all the statements into a function called __main__ and calls it *)
 let makeFunAndCall name state stmts =
    let fcall = ["__"^name^"__"] in
@@ -527,6 +539,7 @@ let basicPasses state =
    |+> TypesUtil.expandStmtList None makeSingleDeclaration
    |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
    |+> TypesUtil.expandStmtList None simplifyTupleAssign
+   |+> TypesUtil.traverseBottomExpList None makeIfStatement
 
 (* Last preparations *)
 let finalPasses module_name state =

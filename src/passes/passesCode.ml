@@ -109,14 +109,6 @@ let makeFunDeclFullName : (pass_state,exp) traverser =
          state,StmtFun([full_name],args,body,ret,active,loc)
       | _ -> state,exp
 
-(** Changes if(cond,e1,e2) -> if(cond,{|return e1|},{|return e2|})*)
-let makeIfStatement : ('data,exp) traverser =
-   fun state exp ->
-      match exp with
-      | StmtBind(lhs,PIf(cond,then_exp,else_exp,iloc),bloc) ->
-         state,StmtIf(cond,StmtBind(lhs,then_exp,iloc),Some(StmtBind(lhs,else_exp,bloc)),iloc)
-      | _ -> state,exp
-
 (** Returns the dependencies of a type declaration *)
 let returnTypeDependencies (tp:exp) : identifier list =
    match tp with
@@ -176,7 +168,6 @@ let clearFunctionDefinitions state stmts =
 let codeGenPasses state =
    state
    |+> TypesUtil.foldAsTransformation None collectFunctionDefinitions
-   |+> TypesUtil.traverseBottomExpList None makeIfStatement
    |+> TypesUtil.traverseBottomExpList None
       (removeNamesFromStaticFunctions
       |-> replaceMemAccess

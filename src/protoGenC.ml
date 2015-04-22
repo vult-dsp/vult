@@ -292,15 +292,6 @@ let rec printStm (o:print_options) (s:cstmt) =
     append o.buffer name;
     append o.buffer ";";
     newline o.buffer
-  | SFunction(tp,name,args,(SBlock(_) as body)) when o.header = false ->
-    printTyp o true tp;
-    append o.buffer name;
-    append o.buffer "(";
-    printArgs o args;
-    append o.buffer ")";
-    printStm o body;
-    newline o.buffer;
-    newline o.buffer
   | SFunction(tp,name,args,body) when o.header = false ->
     printTyp o true tp;
     append o.buffer name;
@@ -308,7 +299,7 @@ let rec printStm (o:print_options) (s:cstmt) =
     printArgs o args;
     append o.buffer ") {";
     indent o.buffer;
-    printStm o body;
+    printBlock o body;
     outdent o.buffer;
     append o.buffer "}";
     newline o.buffer;
@@ -350,12 +341,11 @@ let rec printStm (o:print_options) (s:cstmt) =
     append o.buffer "if(";
     printExp o cond;
     append o.buffer ")";
-    printStm o then_e;
-    newline o.buffer;
+    printBlock o then_e;
     if CCOpt.is_some opt_else_e then
       begin
         append o.buffer "else ";
-        printOptStm o opt_else_e;
+        printBlock o (CCOpt.get SEmpty opt_else_e);
         newline o.buffer
       end
    | SStruct(s)  when o.header = true ->
@@ -372,6 +362,17 @@ let rec printStm (o:print_options) (s:cstmt) =
       newline o.buffer
    | SStruct(s) -> ()
    | SEmpty -> ()
+
+and printBlock (o:print_options) (stmt:cstmt) =
+  match stmt with
+  | SBlock(_) -> printStm o stmt
+  | _ ->
+    append o.buffer "{";
+    indent o.buffer;
+    printStm o stmt;
+    outdent o.buffer;
+    append o.buffer "}";
+    newline o.buffer
 
 and printStmList (o:print_options) (sl:cstmt list) =
   match sl with
