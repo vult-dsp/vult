@@ -13,6 +13,13 @@ fun near_zero(x) : bool return abs(x)<1e-12;
 fun samplerate() return 44100;
 fun PI() return 3.141592653589793;
 
+fun dcblock(x0){
+  mem x1,y1;
+  val y0 = x0-x1+y1*0.995;
+  x1,y1 = x0,y0;
+  return y0;
+}
+
 // Initialization function
 fun init(){
   mem m:int = 0;
@@ -26,6 +33,7 @@ fun init(){
   mem triang = 0;
   mem pre_wave:int = 0;
   mem output = 0;
+  dc:dcblock(0);
 }
 
 // Main process function
@@ -105,9 +113,9 @@ fun process(freq,pw,wave:int){
     output = state_saw;
   }
   else if(pre_wave == 2) {
-    output = state_triang;
+    output = 2*state_triang;
   }
-  return output;
+  return dc:dcblock(output);
 }
 
 
