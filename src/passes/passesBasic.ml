@@ -340,7 +340,7 @@ let generateTypeNameForInstance (ids:identifier list) : exp option =
          ids
          |> List.map (joinSep "_")
          |> List.sort compare
-         |> List.map (fun a->PId(["_auto_"^a],None,default_loc))
+         |> List.map (fun a->PId(["_type_"^a],None,default_loc))
       in
       match s with
       | [h] -> Some(h)
@@ -464,7 +464,7 @@ let mergeTypes (t1:exp) (t2:exp) : exp option =
 let rec pushMergeType (count:int) (mapping:identifier IdentifierMap.t) (tp:exp) (current_types: exp list) (acc: exp list) : int * exp list * (identifier IdentifierMap.t) =
    match current_types with
    | []   ->
-      let new_type_name = ["_auto_type"^(string_of_int count)] in
+      let new_type_name = ["_type_merged_"^(string_of_int count)] in
       let current_name  = getTypeName tp in
       let new_type      = renameType tp new_type_name in
       let new_mapping   = addTypeMapping current_name new_type_name mapping in
@@ -483,12 +483,18 @@ let rec pushMergeType (count:int) (mapping:identifier IdentifierMap.t) (tp:exp) 
 (** Takes all the types for each function and creates new simplified type *)
 let simplifyTypes (state:pass_state tstate) (exp_list:exp list) : pass_state tstate * exp list =
    let _,simple_types,mapping = IdentifierMap.fold
-      (fun fname value (count,types,mapping) ->  pushMergeType count mapping value types []) state.data.type_function (0,[],IdentifierMap.empty)
+      (fun fname value (count,types,mapping) ->
+         pushMergeType count mapping value types [])
+      state.data.type_function (0,[],IdentifierMap.empty)
    in
    let final_types = List.map (replaceSimplifiedTypes mapping) simple_types in
+   let alias_types =
+      IdentifierMap.fold
+         (fun orig_type alias s -> StmtAliasType(orig_type,[],PId(alias,None,default_loc),default_loc) :: s)
+         mapping [] in
    (*let _ = print_endline "Final types" in
    let _ = List.iter (fun a -> print_endline (PrintTypes.expressionStr a)) final_types in*)
-   { state with data = { state.data with type_mapping = mapping } },final_types@exp_list
+   { state with data = { state.data with type_mapping = mapping } },final_types@alias_types@exp_list
 
 let nameLocalScopes : ('data,exp) traverser =
    fun state exp ->

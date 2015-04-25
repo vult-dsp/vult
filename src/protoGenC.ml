@@ -51,6 +51,7 @@ type cstmt =
   | SBlock    of cstmt list
   | SIf       of cexp * cstmt * cstmt option
   | SStruct   of ctyp_def
+  | STypeDef  of ident * ident
   | SEmpty
 
 type creal_type =
@@ -148,6 +149,8 @@ let rec convertStmt (e:exp) : cstmt =
       SBlock(convertStmtList stmts)
    | StmtType([name],[],members,_) ->
       SStruct({ name = name; members = List.map convertMember members })
+   | StmtAliasType([name],[],PId([alias],_,_),_) ->
+      STypeDef(alias,name)
    | _ ->
       print_endline ("convertStmt: unsupported statement\n"^(show_exp e));
       failwith ("convertStmt: unsupported statement ")
@@ -303,13 +306,13 @@ let rec printStm (o:print_options) (s:cstmt) =
     outdent o.buffer;
     append o.buffer "}";
     newline o.buffer;
-    newline o.buffer
   | SFunction(tp,name,args,body) ->
     printTyp o true tp;
     append o.buffer name;
     append o.buffer "(";
     printArgs o args;
     append o.buffer ");";
+    newline o.buffer;
     newline o.buffer
   | SBind([],e1) ->
     printExp o e1;
@@ -348,7 +351,7 @@ let rec printStm (o:print_options) (s:cstmt) =
         printBlock o (CCOpt.get SEmpty opt_else_e);
         newline o.buffer
       end
-   | SStruct(s)  when o.header = true ->
+   | SStruct(s)  when o.header ->
       append o.buffer "typedef struct _";
       append o.buffer s.name;
       append o.buffer " {";
@@ -361,6 +364,15 @@ let rec printStm (o:print_options) (s:cstmt) =
       newline o.buffer;
       newline o.buffer
    | SStruct(s) -> ()
+   | STypeDef(alias,name) when o.header ->
+      append o.buffer "typedef struct _";
+      append o.buffer alias;
+      append o.buffer " ";
+      append o.buffer name;
+      append o.buffer ";";
+      newline o.buffer;
+      newline o.buffer
+   | STypeDef(alias,name) -> ()
    | SEmpty -> ()
 
 and printBlock (o:print_options) (stmt:cstmt) =

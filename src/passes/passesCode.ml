@@ -114,6 +114,7 @@ let returnTypeDependencies (tp:exp) : identifier list =
    match tp with
    | StmtType(_,_,members,_) ->
       List.map (fun (_,t,_) -> getIdAndType t |> fst) members
+   | StmtAliasType(_,_,t,_) -> [getIdAndType t |> fst]
    | _ -> []
 
 (** Takes a list of type declarations and returns it sorted based on their dependencies *)

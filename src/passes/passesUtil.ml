@@ -180,7 +180,7 @@ let getInstanceNames (s:pass_state tstate) (name:identifier) : identifier list =
 
 (** Returns the name of the type that is declared for a function *)
 let generateTypeName (id:identifier) : identifier =
-   ["_auto_"^(joinSep "_" id)]
+   ["_type_"^(joinSep "_" id)]
 
 let getFinalType (s:pass_state tstate) (name:identifier) : identifier option =
    match mapfindOption (generateTypeName name) s.data.type_mapping with
