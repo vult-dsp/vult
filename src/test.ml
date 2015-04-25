@@ -25,11 +25,12 @@ open OUnit2
 
 open ParserVult
 open TypesVult
+open PassesUtil
 
 let test_string (reference:string) (current:string) = assert_equal ~printer:(fun a->a) reference current ;;
 
 let run_program_with_options options s =
-   let result = Driver.parseStringRunWithOptions options s in
+   let result = Driver.parseStringRunWithOptions { options with interpreter = true } s in
    match result.iresult with
    | `Ok(s) -> s
    | `Error(errors) ->
@@ -39,8 +40,8 @@ let run_program_with_options options s =
 let run_program (s:string) : string = run_program_with_options PassesUtil.opt_full_transform s
 
 let compare_program_result s =
-   let result1 = run_program_with_options PassesUtil.opt_simple_transform s in
-   let result2 = run_program_with_options PassesUtil.opt_full_transform s in
+   let result1 = run_program_with_options { PassesUtil.opt_simple_transform with interpreter = true } s in
+   let result2 = run_program_with_options { PassesUtil.opt_full_transform with interpreter = true } s in
    test_string result1 result2
 
 (** Expression parsing tests *)

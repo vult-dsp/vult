@@ -62,16 +62,16 @@ type creal_type =
 
 let convertOp (op:string) : op option =
    match op with
-   | "'+'"  -> Some(OPlus)
-   | "'*'"  -> Some(OTimes)
-   | "'/'"  -> Some(ODiv)
-   | "'-'"  -> Some(OMinus)
-   | "'<'"  -> Some(OLt)
-   | "'>'"  -> Some(OGt)
-   | "'=='" -> Some(OEq)
-   | "'!='" -> Some(OUEq)
-   | "'&&'" -> Some(OAnd)
-   | "'||'" -> Some(OOr)
+   | "+"  -> Some(OPlus)
+   | "*"  -> Some(OTimes)
+   | "/"  -> Some(ODiv)
+   | "-"  -> Some(OMinus)
+   | "<"  -> Some(OLt)
+   | ">"  -> Some(OGt)
+   | "==" -> Some(OEq)
+   | "!=" -> Some(OUEq)
+   | "&&" -> Some(OAnd)
+   | "||" -> Some(OOr)
    | "p&"   -> Some(ORef)
    | "*&"   -> Some(ODeRef)
    | _    ->
@@ -272,7 +272,8 @@ let rec printExp (o:print_options) (e:cexp) =
       append o.buffer "?";
       printExp o e1;
       append o.buffer ":";
-      printExp o e2
+      printExp o e2;
+      append o.buffer ")"
 and printExpSep (o:print_options) sep el =
    match el with
    | []   -> ()
@@ -302,11 +303,10 @@ let rec printStm (o:print_options) (s:cstmt) =
       append o.buffer name;
       append o.buffer "(";
       printArgs o args;
-      append o.buffer ") {";
+      append o.buffer ")";
       indent o.buffer;
       printBlock o body;
       outdent o.buffer;
-      append o.buffer "}";
       newline o.buffer;
    | SFunction(tp,name,args,body) ->
       printTyp o true tp;
@@ -352,8 +352,7 @@ let rec printStm (o:print_options) (s:cstmt) =
             append o.buffer "else ";
             printBlock o (CCOpt.get SEmpty opt_else_e);
             newline o.buffer
-         end;
-      newline o.buffer
+         end
    | SStruct(s)  when o.header ->
       append o.buffer "typedef struct _";
       append o.buffer s.name;

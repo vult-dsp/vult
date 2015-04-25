@@ -67,6 +67,7 @@ type options =
       simplify_return : bool;
       finalize        : bool;
       codegen         : bool;
+      interpreter     : bool;
    }
 
 let opt_full_transform =
@@ -77,6 +78,7 @@ let opt_full_transform =
       simplify_return = true;
       finalize        = true;
       codegen         = false;
+      interpreter     = false;
    }
 
 let opt_simple_transform =
@@ -87,6 +89,7 @@ let opt_simple_transform =
       simplify_return = false;
       finalize        = false;
       codegen         = false;
+      interpreter     = false;
    }
 
 let opt_no_transform =
@@ -97,6 +100,7 @@ let opt_no_transform =
       simplify_return = false;
       finalize        = false;
       codegen         = false;
+      interpreter     = false;
    }
 
 (** Traversing state one *)

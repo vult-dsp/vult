@@ -73,7 +73,7 @@ let dumpParsedFiles (parser_results:parser_results list) =
 (** Runs the dynamic interpreter if -rundyn was passed as argument *)
 let runInterpreter (parser_results:parser_results list) =
    parser_results
-   |> List.map (applyTransformations { opt_full_transform with inline = false })
+   |> List.map (applyTransformations { opt_full_transform with interpreter = true })
    |> List.map interpret
    |> ignore
 

@@ -43,6 +43,7 @@ let inlineON        (state,_) = state.data.options.inline
 let finalizeON      (state,_) = state.data.options.finalize
 let basicON         (state,_) = state.data.options.basic
 let codegenOn       (state,_) = state.data.options.codegen
+let interpreterOn   (state,_) = state.data.options.interpreter
 
 let applyTransformations (options:options) (results:parser_results) =
    let module_name = Filename.basename results.file |> Filename.chop_extension in
@@ -67,6 +68,7 @@ let applyTransformations (options:options) (results:parser_results) =
       |> applyOn inlineON        inliningPasses
       |> applyOn finalizeON      (finalPasses module_name)
       |> applyOn codegenOn       codeGenPasses
+      |> applyOn interpreterOn   interpreterPasses
       |> snd
    in
 

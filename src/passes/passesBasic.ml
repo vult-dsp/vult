@@ -532,13 +532,12 @@ let basicPasses state =
    |+> TypesUtil.traverseTopExpList None
       (removeGroups
        |-> makeTypedIdNamedCall
-       |-> nameFunctionCalls
-       |-> operatorsToFunctionCalls)
+       |-> nameFunctionCalls)
    |+> TypesUtil.expandStmtList None separateBindAndDeclaration
    |+> TypesUtil.expandStmtList None makeSingleDeclaration
    |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
    |+> TypesUtil.expandStmtList None simplifyTupleAssign
-   |+> TypesUtil.traverseBottomExpList None makeIfStatement
+(*|+> TypesUtil.traverseBottomExpList None makeIfStatement*)
 
 (* Last preparations *)
 let finalPasses module_name state =
@@ -550,4 +549,11 @@ let finalPasses module_name state =
       (collectMemInFunctions |*> collectFunctionInstances)
    |+> TypesUtil.foldAsTransformation None createTypes
    |+> simplifyTypes
-   |+> TypesUtil.traverseBottomExpList None (nameLocalScopes|->markActiveFunctions)
+   |+> TypesUtil.traverseBottomExpList None markActiveFunctions
+
+(* Basic transformations *)
+let interpreterPasses state =
+   state
+   |+> TypesUtil.traverseTopExpList None operatorsToFunctionCalls
+   |+> TypesUtil.traverseBottomExpList None nameLocalScopes
+
