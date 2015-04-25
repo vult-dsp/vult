@@ -347,6 +347,7 @@ let rec printStm (o:print_options) (s:cstmt) =
       printExp o cond;
       append o.buffer ")";
       printBlock o then_e;
+      newline o.buffer;
       if CCOpt.is_some opt_else_e then
          begin
             append o.buffer "else ";
