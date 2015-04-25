@@ -120,14 +120,14 @@ let returnTypeDependencies (tp:exp) : identifier list =
 (** Takes a list of type declarations and returns it sorted based on their dependencies *)
 let sortTypes (types:exp list) : exp list =
    let vertex,edges,decls = List.fold_left (fun (vertex,edges,decls) (a:exp) ->
-      let name = getTypeName a in
-      let dependencies =
-         returnTypeDependencies a
-         |> List.filter (fun a -> isBuiltinType a |> not)
-      in
-      let _ = Hashtbl.add edges name dependencies in
-      let _ = Hashtbl.add decls name a in
-      (name::vertex),edges,decls
+         let name = getTypeName a in
+         let dependencies =
+            returnTypeDependencies a
+            |> List.filter (fun a -> isBuiltinType a |> not)
+         in
+         let _ = Hashtbl.add edges name dependencies in
+         let _ = Hashtbl.add decls name a in
+         (name::vertex),edges,decls
       ) ([],Hashtbl.create 100,Hashtbl.create 100) types
    in
    let g = Graphs.createGraph vertex edges in
@@ -171,10 +171,10 @@ let codeGenPasses state =
    |+> TypesUtil.foldAsTransformation None collectFunctionDefinitions
    |+> TypesUtil.traverseBottomExpList None
       (removeNamesFromStaticFunctions
-      |-> replaceMemAccess
-      |-> makeInstanceArgument
-      |-> makeCallsFullName
-      |-> makeFunDeclFullName)
+       |-> replaceMemAccess
+       |-> makeInstanceArgument
+       |-> makeCallsFullName
+       |-> makeFunDeclFullName)
    (* Collects again the functions calls in order to move them to the top scope *)
    |+> clearFunctionDefinitions
    |+> TypesUtil.foldAsTransformation None collectFunctionDefinitions

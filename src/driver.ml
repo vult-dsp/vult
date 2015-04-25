@@ -49,8 +49,8 @@ let generateCode (args:arguments) (parser_results:parser_results list) =
       |> List.map (Passes.applyTransformations { opt_full_transform with inline = true; codegen = true })
       |> List.map (
          fun a -> match a.presult with
-         | `Ok(b) -> b
-         | _ -> [] )
+            | `Ok(b) -> b
+            | _ -> [] )
       |> List.flatten
    in
 

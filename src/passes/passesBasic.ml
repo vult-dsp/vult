@@ -312,10 +312,10 @@ let rec replaceSimplifiedTypeInMember (mappings: identifier IdentifierMap.t) (me
       begin
          let elem_ids    =
             List.map (fun a ->
-               match a with
-               | PId(name,_,_) -> name
-               | _ -> failwith "replaceSimplifiedTypeInMember: invalid type")
-            elems
+                  match a with
+                  | PId(name,_,_) -> name
+                  | _ -> failwith "replaceSimplifiedTypeInMember: invalid type")
+               elems
          in
          let found_elems = List.map (fun a -> mapfindOption a mappings) elem_ids in
          match checkAllSameTypes found_elems with
@@ -356,10 +356,10 @@ let rec createTypeForFunction (state:pass_state tstate) (fname:identifier) : exp
       let inst_pais =
          IdentifierMap.fold
             (fun name types acc ->
-               let non_static = List.filter (fun a -> isActiveFunction state a) types in
-               match generateTypeNameForInstance non_static with
-               | None -> acc
-               | Some(inst_type) -> (name,inst_type)::acc)
+                let non_static = List.filter (fun a -> isActiveFunction state a) types in
+                match generateTypeNameForInstance non_static with
+                | None -> acc
+                | Some(inst_type) -> (name,inst_type)::acc)
             instances []
       in
       let members = List.map (fun (a,b)-> a,b,default_loc) (mem_pairs@inst_pais) in
@@ -483,9 +483,9 @@ let rec pushMergeType (count:int) (mapping:identifier IdentifierMap.t) (tp:exp) 
 (** Takes all the types for each function and creates new simplified type *)
 let simplifyTypes (state:pass_state tstate) (exp_list:exp list) : pass_state tstate * exp list =
    let _,simple_types,mapping = IdentifierMap.fold
-      (fun fname value (count,types,mapping) ->
-         pushMergeType count mapping value types [])
-      state.data.type_function (0,[],IdentifierMap.empty)
+         (fun fname value (count,types,mapping) ->
+             pushMergeType count mapping value types [])
+         state.data.type_function (0,[],IdentifierMap.empty)
    in
    let final_types = List.map (replaceSimplifiedTypes mapping) simple_types in
    let alias_types =
@@ -493,7 +493,7 @@ let simplifyTypes (state:pass_state tstate) (exp_list:exp list) : pass_state tst
          (fun orig_type alias s -> StmtAliasType(orig_type,[],PId(alias,None,default_loc),default_loc) :: s)
          mapping [] in
    (*let _ = print_endline "Final types" in
-   let _ = List.iter (fun a -> print_endline (PrintTypes.expressionStr a)) final_types in*)
+     let _ = List.iter (fun a -> print_endline (PrintTypes.expressionStr a)) final_types in*)
    { state with data = { state.data with type_mapping = mapping } },final_types@alias_types@exp_list
 
 let nameLocalScopes : ('data,exp) traverser =
@@ -538,9 +538,9 @@ let basicPasses state =
    state
    |+> TypesUtil.traverseTopExpList None
       (removeGroups
-      |-> makeTypedIdNamedCall
-      |-> nameFunctionCalls
-      |-> operatorsToFunctionCalls)
+       |-> makeTypedIdNamedCall
+       |-> nameFunctionCalls
+       |-> operatorsToFunctionCalls)
    |+> TypesUtil.expandStmtList None separateBindAndDeclaration
    |+> TypesUtil.expandStmtList None makeSingleDeclaration
    |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls

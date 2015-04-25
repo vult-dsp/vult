@@ -35,25 +35,25 @@ module C = Components.Make(G)
 
 (** Creates a graph given a list of vertex and a hash table defining the edges *)
 let createGraph (vertex:'a list) (edges:('a,'a list) Hashtbl.t) : G.t =
-  let g = create () in
-  let vertexTable = Hashtbl.create 50 in
-  List.iter (fun a -> Hashtbl.add vertexTable  a (G.V.create(a))) vertex;
-  List.iter (fun a -> G.add_vertex g (Hashtbl.find vertexTable a);
-            ) vertex;
-  List.iter (fun a ->
-      let dependencies =
-         if Hashtbl.mem edges a then
-            Hashtbl.find edges a
-         else []
-      in
-      List.iter (fun b ->
-        let g1 = Hashtbl.find vertexTable a in
-        let g2 = Hashtbl.find vertexTable b in
-        G.add_edge g g1 g2) dependencies
-    ) vertex;
-  g
+   let g = create () in
+   let vertexTable = Hashtbl.create 50 in
+   List.iter (fun a -> Hashtbl.add vertexTable  a (G.V.create(a))) vertex;
+   List.iter (fun a -> G.add_vertex g (Hashtbl.find vertexTable a);
+             ) vertex;
+   List.iter (fun a ->
+         let dependencies =
+            if Hashtbl.mem edges a then
+               Hashtbl.find edges a
+            else []
+         in
+         List.iter (fun b ->
+               let g1 = Hashtbl.find vertexTable a in
+               let g2 = Hashtbl.find vertexTable b in
+               G.add_edge g g1 g2) dependencies
+      ) vertex;
+   g
 
 (** Returns the cycles in the graph in order *)
 let calculateComponents g =
-  let comps = C.scc_array g in
-  comps |> Array.map (fun a-> List.map V.label a ) |> Array.to_list
+   let comps = C.scc_array g in
+   comps |> Array.map (fun a-> List.map V.label a ) |> Array.to_list

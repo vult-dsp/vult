@@ -207,8 +207,8 @@ let removalOfSequencesPasses state =
    |+> TypesUtil.traverseBottomExpList None simplifyReturnInPSeq
    |+> TypesUtil.traverseBottomExpList None
       (removeUnnecessaryBlocks
-      |-> removeUnnecesaryIfConditions
-      |-> removeEmptyIfConditions
-      |-> removeSwapedIfCondition)
+       |-> removeUnnecesaryIfConditions
+       |-> removeEmptyIfConditions
+       |-> removeSwapedIfCondition)
 
 

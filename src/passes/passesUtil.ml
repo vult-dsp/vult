@@ -134,7 +134,7 @@ let lookupFunctionName (table:'a IdentifierMap.t) (state:pass_state tstate) (fna
 let lookupFunction (table:'a IdentifierMap.t) (state:pass_state tstate) (fname:identifier) : 'a option =
    match lookupFunctionName table state fname with
    | Some(full_name) ->
-         Some(IdentifierMap.find full_name table)
+      Some(IdentifierMap.find full_name table)
    | _ -> None
 
 
@@ -154,7 +154,7 @@ let addTypeOfFunction (state: pass_state tstate) (fname:identifier) (ftype:exp) 
 let addMemToFunction (s:pass_state tstate) (names:exp list) =
    let scope = getScope s in
    (*let names_string = List.map PrintTypes.expressionStr names in
-   let _ = Printf.printf "Adding mem %s to function %s\n" (joinSep ", " names_string) (identifierStr scope) in*)
+     let _ = Printf.printf "Adding mem %s to function %s\n" (joinSep ", " names_string) (identifierStr scope) in*)
    if IdentifierMap.mem scope s.data.function_mem then
       let current = IdentifierMap.find scope s.data.function_mem in
       let new_map = IdentifierMap.add scope (current@names) s.data.function_mem in
@@ -215,12 +215,12 @@ and isMemInstanceFunction (state:pass_state tstate) (name:identifier) : bool =
    match lookupFunction state.data.instances state name with
    | Some(instances_for_fun) ->
       IdentifierMap.fold (fun key types acc ->
-         let current =
-            types
-            |> List.filter (fun a -> a <> name)
-            |> List.exists (isActiveFunction state)
-         in current || acc)
-      instances_for_fun false
+            let current =
+               types
+               |> List.filter (fun a -> a <> name)
+               |> List.exists (isActiveFunction state)
+            in current || acc)
+         instances_for_fun false
    | None -> false
 
 (** Returns the output type of a function (currently only supports builtin functions) *)
