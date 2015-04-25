@@ -931,7 +931,7 @@ let prefixId (pre:string) (id:identifier) =
 let rec postfixId (id:identifier) (pos:string) =
    match id with
    | []  -> []
-   | [h] -> [pos^h]
+   | [h] -> [h^pos]
    | h::t -> h::(postfixId t pos)
 
 (** Converts a name_id to string. This function is used mainly for debugging since PrintTypes contains more powerful functions *)
