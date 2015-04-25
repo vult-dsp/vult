@@ -14,8 +14,9 @@ fun clip(value,low,high){
 }
 
 fun samplerate() return 44100;
-fun thermal() return 1/1.22070313;
 fun PI() return 3.141592653589793;
+
+fun thermal() return 1/1.22070313;
 
 fun moog_step(input, resFixed, tune,output):real {
     mem tw0,tw1,tw2;

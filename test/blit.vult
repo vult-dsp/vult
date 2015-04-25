@@ -20,22 +20,6 @@ fun dcblock(x0){
   return y0;
 }
 
-// Initialization function
-fun init(){
-  mem m:int = 0;
-  mem rate = 0;
-  mem phase = 0;
-  mem p = 0;
-  mem frequency = 0;
-  mem state_triang = 0;
-  mem state_pulse = 0;
-  mem state_saw = 0;
-  mem triang = 0;
-  mem pre_wave:int = 0;
-  mem output = 0;
-  dc:dcblock(0);
-}
-
 // Main process function
 fun process(freq,pw,wave:int){
   mem m:int;
@@ -54,11 +38,11 @@ fun process(freq,pw,wave:int){
   if(wave != pre_wave && abs(output) < 0.05) {
     pre_wave = wave;
   }
-  if(pre_wave == 0 || pre_wave == 2) {
+  if(pre_wave == 0 || pre_wave == 1) {
     fixed_frequency = freq;
   }
   else {
-    fixed_frequency = freq / 2;
+    fixed_frequency = freq * 2;
   }
   // Updates the parameters if the frequency changed
   if(frequency != fixed_frequency) {

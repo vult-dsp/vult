@@ -102,11 +102,11 @@ fun process(freq,pw,wave:int,cut,res){
   if(wave != pre_wave && abs(output) < 0.05) {
     pre_wave = wave;
   }
-  if(pre_wave == 0 || pre_wave == 2) {
+  if(pre_wave == 0 || pre_wave == 1) {
     fixed_frequency = freq;
   }
   else {
-    fixed_frequency = freq / 2;
+    fixed_frequency = freq * 2;
   }
   // Updates the parameters if the frequency changed
   if(frequency != fixed_frequency) {
@@ -163,7 +163,7 @@ fun process(freq,pw,wave:int,cut,res){
   else if(pre_wave == 2) {
     output = 2*state_triang;
   }
-  return dcblock(moog(output,cut,res));
+  return dcblock(moog(dcblock(output),cut,res));
 }
 
 
