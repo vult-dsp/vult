@@ -84,8 +84,21 @@ fun moog(input:real, cut:real, res:real):real{
     return (x0+x1)/2;
 }
 
+fun pulse_train(m,phase){
+  val denominator1 = sin(phase);
+  val tmp1 = 0;
+  if(near_zero(denominator1)) {
+    tmp1 = 1;
+  }
+  else {
+    tmp1 = sin(m * phase);
+    tmp1 =  tmp1 / (m * denominator1);
+  }
+  return tmp1;
+}
+
 // Main process function
-fun process(freq,pw,wave:int,cut,res){
+fun osc(freq,pw,wave:int){
   mem m:int;
   mem rate;
   mem phase;
@@ -123,25 +136,9 @@ fun process(freq,pw,wave:int,cut,res){
     shift = shift - PI();
   }
   // Generates the first pulse train
-  val denominator1 = sin(phase);
-  val tmp1 = 0;
-  if(near_zero(denominator1)) {
-    tmp1 = 1;
-  }
-  else {
-    tmp1 = sin(m * phase);
-    tmp1 =  tmp1 / (m * denominator1);
-  }
+  val tmp1 = pulse_train(m,phase);
   // Generates the second pulse train
-  val denominator2 = sin(shift);
-  val tmp2 = 0;
-  if(near_zero(denominator2)) {
-    tmp2 = 1;
-  }
-  else {
-    tmp2 = sin(m * shift);
-    tmp2 = tmp2 / (m * denominator2);
-  }
+  val tmp2 = pulse_train(m,shift);
   // Updates the phase
   phase = phase + rate;
   if(phase > PI()) {
@@ -149,9 +146,9 @@ fun process(freq,pw,wave:int,cut,res){
   }
 
   // Calculates the waveforms based on the pulse trains
-  state_pulse = clip(state_pulse * 0.9999 + tmp1 - tmp2, -1, 1);
-  state_saw = clip(state_saw * 0.9999 + (tmp1 + tmp2  - 2 / p)/shift05/2,-1,1);
-  state_triang = clip(state_triang * 0.9999 + 2 * state_pulse/p,-1,1);
+  state_pulse = clip(state_pulse * 0.995 + tmp1 - tmp2, -1, 1);
+  state_saw = clip(state_saw * 0.995 + (tmp1 + tmp2  - 2 / p)/shift05/2,-1,1);
+  state_triang = clip(state_triang * 0.995 + 2 * state_pulse/p,-1,1);
 
   // Select the wave to output
   if(pre_wave == 0) {
@@ -163,9 +160,15 @@ fun process(freq,pw,wave:int,cut,res){
   else if(pre_wave == 2) {
     output = 2*state_triang;
   }
-  return dcblock(moog(dcblock(output),cut,res));
+  return dcblock(output);
 }
 
+
+fun process(pitch,pw,wave:int,cut,res){
+  val osc = osc(pitch,pw,wave);
+  val filter = moog(osc,cut,res);
+  return filter;
+}
 
 mem pitch = 400;
 mem pw = 0.3;
