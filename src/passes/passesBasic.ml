@@ -276,13 +276,6 @@ let rec removeAllVal : ('data,exp) expander =
          state,[exp]
       | _ -> state,[exp]
 
-let isBasicType (name:identifier) : bool =
-   match name with
-   | ["real"]
-   | ["bool"]
-   | ["int"] -> true
-   | _ -> false
-
 (** Takes a list of option identifiers representing the types,returns some if all are the same *)
 let checkAllSameTypes (elems:identifier option list) : identifier option =
    match elems with
@@ -301,7 +294,7 @@ let checkAllSameTypes (elems:identifier option list) : identifier option =
 let rec replaceSimplifiedTypeInMember (mappings: identifier IdentifierMap.t) (member:val_decl) : val_decl =
    let valname,tp,loc = member in
    match tp with
-   | PId(name,_,_) when isBasicType name -> member
+   | PId(name,_,_) when isBuiltinType name -> member
    | PId(name,None,iloc) ->
       begin
          match mapfindOption name mappings with
