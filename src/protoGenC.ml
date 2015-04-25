@@ -101,7 +101,9 @@ let rec convertExp (e:exp) : cexp =
       convertExp e1
    | PTuple(_,_) -> failwith "Tuples are not yet supported in expression context"
    | PSeq(_,_,_) -> failwith "Sequence expressions are not yet supported in expression context"
-   | _ -> failwith "convertExp: not an expression"
+   | _ ->
+      print_endline ("convertExp: unsupported expression\n"^(show_exp e));
+      failwith "convertExp: not an expression"
 
 and convertExpList (e:exp list) : cexp list =
    List.map convertExp e
@@ -404,10 +406,48 @@ let printStmListStr args stms =
    printStmList options stms;
    contents options.buffer
 
+(** Returns the corresponding default value for the type *)
+let getDefaultValue (id:ident) (tp:ctyp) : cexp =
+   match tp with
+   | TReal       -> EReal(0.0)
+   | TInt        -> EInt(0)
+   | TObj(name)  -> ECall(name^"_init",[EUop(ORef,EVar(["st";id]))])
+
+(** Returns a mem declaration or a function call to initialize the member of a type *)
+let generateInitialization (id:ident) (tp:ctyp) : cstmt list =
+   match tp with
+   | TReal | TInt ->
+      [ SBind(["st";id],getDefaultValue id tp);]
+   | TObj(tpname) ->
+      [ SBind([],getDefaultValue id tp) ]
+
+(** Generates a function to initialize the types *)
+let generateTypeInitializer (tp:cstmt) : cstmt list =
+   match tp with
+   | SStruct({ name = name ; members = members }) ->
+      let finit_name   = name^"_init" in
+      let body =
+         members
+         |> List.map (fun (tp,id) -> generateInitialization id tp)
+         |> List.flatten
+         |> fun a -> a@[SReturn(EInt(0))]
+      in
+      [tp;SFunction(TInt,finit_name,[TObj(name),"st"],SBlock(body))]
+   | STypeDef(base,name) ->
+      let finit_name   = name^"_init" in
+      let body = [SBind([],ECall(base^"_init",[EVar(["st"])]));SReturn(EInt(0))] in
+      [tp;SFunction(TInt,finit_name,[TObj(name),"st"],SBlock(body))]
+   | _ -> [tp]
+
 let generateHeaderAndImpl (args:arguments) (stmts:exp_list) : string * string =
    let c_options = { buffer = makePrintBuffer (); num_type = Float; header = false } in
    let h_options = { buffer = makePrintBuffer (); num_type = Float; header = true } in
-   stmts |> convertStmtList |> printStmList c_options;
-   stmts |> convertStmtList |> printStmList h_options;
+   let converted_code =
+      convertStmtList stmts
+      |> List.map generateTypeInitializer
+      |> List.flatten
+   in
+   converted_code |> printStmList c_options;
+   converted_code |> printStmList h_options;
    (contents c_options.buffer, contents h_options.buffer)
 
