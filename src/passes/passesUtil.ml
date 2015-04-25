@@ -74,7 +74,7 @@ let opt_full_transform =
    {
       basic           = true;
       inline          = true;
-      inline_weight   = 20;
+      inline_weight   = 10;
       simplify_return = true;
       finalize        = true;
       codegen         = false;
@@ -291,7 +291,9 @@ let hasReturn (stmt:exp) : bool =
 let getExpWeight (e:exp) : int =
    let count acc e =
       match e with
-      | PCall(_) -> setState acc (acc.data+1)
+      | PBinOp(_,_,_,_)
+      | PUnOp(_,_,_)
+      | PCall(_)       -> setState acc (acc.data+1)
       | _ -> acc
    in
    foldTopExp (Some(skipFun)) count (createState 0) e
