@@ -382,6 +382,7 @@ let addBuiltinFunctions (loc:local_env) : local_env =
    let floor_fun     = opNumNum floor in
    let sin_fun       = opNumNum sin in
    let fixdenorm     = opNumNum (fun a -> if (abs_float a)<1e-12 then 0.0 else a) in
+   let fexp          = opNumNum (fun a -> exp a) in
    let print_fun args   = List.map valueStr args |> joinStrings "," |> (fun a -> print_string a;VUnit) in
    let println_fun args = List.map valueStr args |> joinStrings "," |> (fun a -> print_endline a;VUnit) in
    [
@@ -405,6 +406,7 @@ let addBuiltinFunctions (loc:local_env) : local_env =
       ["floor"],BuiltinF(floor_fun);
       ["sin"],BuiltinF(sin_fun);
       ["fixdenorm"],BuiltinF(fixdenorm);
+      ["exp"],BuiltinF(fexp);
    ]
    |> List.fold_left (fun env (a,b) -> declFunction env a b) loc
 
