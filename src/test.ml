@@ -30,17 +30,17 @@ open PassesUtil
 let test_string (reference:string) (current:string) = assert_equal ~printer:(fun a->a) reference current ;;
 
 let run_program_with_options options s =
-   let result = Driver.parseStringRunWithOptions { options with interpreter = true } s in
+   let result = Driver.parseStringRunWithOptions options s in
    match result.iresult with
    | `Ok(s) -> s
    | `Error(errors) ->
       let error_strings = ErrorsVult.reportErrors result.iresult result.lines in
       List.hd error_strings
 
-let run_program (s:string) : string = run_program_with_options PassesUtil.opt_full_transform s
+let run_program (s:string) : string = run_program_with_options { PassesUtil.opt_full_transform with interpreter = true } s
 
 let compare_program_result s =
-   let result1 = run_program_with_options { PassesUtil.opt_simple_transform with interpreter = true } s in
+   let result1 = run_program_with_options PassesUtil.opt_interpret s in
    let result2 = run_program_with_options { PassesUtil.opt_full_transform with interpreter = true } s in
    test_string result1 result2
 

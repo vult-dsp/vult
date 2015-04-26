@@ -61,7 +61,7 @@ let processArguments () : arguments =
 (** Prints the parsed files if -dparse was passed as argument *)
 let dumpParsedFiles (parser_results:parser_results list) =
    parser_results
-   |> List.map (applyTransformations { opt_full_transform with inline = false })
+   |> List.map (applyTransformations opt_interpret)
    |> List.iter (
       fun a -> match a.presult with
          | `Ok(b) ->
@@ -73,7 +73,7 @@ let dumpParsedFiles (parser_results:parser_results list) =
 (** Runs the dynamic interpreter if -rundyn was passed as argument *)
 let runInterpreter (parser_results:parser_results list) =
    parser_results
-   |> List.map (applyTransformations { opt_full_transform with interpreter = true })
+   |> List.map (applyTransformations opt_interpret)
    |> List.map interpret
    |> ignore
 

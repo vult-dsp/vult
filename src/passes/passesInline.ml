@@ -99,6 +99,6 @@ let inliningPasses state =
    state
    |+> TypesUtil.foldAsTransformation None collectFunctionDefinitions
    |+> inlineFunctionBodies
-   |+> TypesUtil.expandStmtList (Some(skipFun)) inlineStmts
+   |+> TypesUtil.expandStmtList None inlineStmts
    |+> TypesUtil.foldAsTransformation None collectFunctionDefinitions
 

@@ -101,6 +101,7 @@ let isSimpleBinding (attr:call_attributes) : bool =
 let bindFunctionAndIfExpCallsInExp : (int * exp list,exp) transformation =
    fun state exp ->
       match exp with
+      (*
       | PIf(_,_,_,loc) ->
          let count,stmts = getState state in
          let tmp_var     = ["_tmp"^(string_of_int count)] in
@@ -108,6 +109,7 @@ let bindFunctionAndIfExpCallsInExp : (int * exp list,exp) transformation =
          let bind_stmt   = StmtBind(PId(tmp_var,None,loc),exp,loc) in
          let new_data    = count+1,[bind_stmt;decl]@stmts in
          (setState state new_data),PId(tmp_var,None,loc)
+      *)
       | PCall(name,fname,args,loc,attr) when not (isSimpleBinding attr) ->
          let count,stmts = getState state in
          let var_type    = getFunctionType state fname in
@@ -140,13 +142,13 @@ let bindFunctionAndIfExpCalls : ('data,exp) expander  =
          let count,stmts = getState ret_state in
          let new_state = {state.data with counter = count} in
          (setState state new_state),(List.rev (StmtReturn(new_e,loc)::stmts))
-      | StmtIf(cond,then_stmts,else_stmts,loc) ->
+      (*| StmtIf(cond,then_stmts,else_stmts,loc) ->
          let inner_state = deriveState state (state.data.counter,[]) in
          let ret_state,new_cond = TypesUtil.traverseBottomExp None bindFunctionAndIfExpCallsInExp inner_state cond in
          let count,stmts = getState ret_state in
          let new_state = {state.data with counter = count} in
          (setState state new_state),(List.rev (StmtIf(new_cond,then_stmts,else_stmts,loc)::stmts))
-
+   *)
       | PIf(cond,then_,else_,loc) ->
          let inner_state1 = deriveState state (state.data.counter,[]) in
          let ret_state1,new_then_ = TypesUtil.traverseBottomExp None bindFunctionAndIfExpCallsInExp inner_state1 then_ in
@@ -167,6 +169,20 @@ let bindFunctionAndIfExpCalls : ('data,exp) expander  =
          let new_state = {state.data with counter = count2} in
          (setState state new_state),[PIf(cond,then_exp,else_exp,loc)]
       | _ -> state,[stmt]
+
+let bindIfCondition : ('data,exp) expander =
+   fun state exp ->
+      match exp with
+      | StmtIf(cond,then_,else_,loc) ->
+         let data        = getState state in
+         let var_type    = Some(PId(["bool"],None,default_loc)) in
+         let tmp_var     = ["_tmp"^(string_of_int data.counter)] in
+         let tmp_var_id  = PId(tmp_var,var_type,loc) in
+         let decl        = StmtVal(tmp_var_id,None,loc) in
+         let bind_stmt   = StmtBind(tmp_var_id,cond,loc) in
+         let new_data    = { data with counter = data.counter+1 } in
+         setState state new_data,[decl;bind_stmt;StmtIf(tmp_var_id,then_,else_,loc)]
+      | _ -> state,[exp]
 
 (** Changes (a,b) = (c,d) -> a=c; b=d. If not possible uses temporary variables like (a,b) =  (b,a) -> tmp1=a;tmp2=b; b=tmp1; a=tmp2 *)
 let simplifyTupleAssign : ('data,exp) expander =
@@ -207,6 +223,7 @@ let simplifySequenceBindings : ('data,exp) traverser =
          state,PSeq(name,stmts,mergeLocations loc1 loc2)
       | PSeq(name,[StmtBlock(_,stmts,loc1)],loc2) ->
          state,PSeq(name,stmts,mergeLocations loc1 loc2)
+      | PSeq(name,[StmtReturn(e,loc)],_) -> state,e
       | StmtBlock(name,[StmtBlock(_,stmts,loc1)],loc2) ->
          state,StmtBlock(name,stmts,mergeLocations loc1 loc2)
       | StmtBind(lhs,PSeq(name,stmts,loc_s),loc) ->
@@ -535,9 +552,10 @@ let basicPasses state =
        |-> nameFunctionCalls)
    |+> TypesUtil.expandStmtList None separateBindAndDeclaration
    |+> TypesUtil.expandStmtList None makeSingleDeclaration
+   |+> TypesUtil.expandStmtList None bindIfCondition
    |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
    |+> TypesUtil.expandStmtList None simplifyTupleAssign
-(*|+> TypesUtil.traverseBottomExpList None makeIfStatement*)
+   |+> TypesUtil.traverseBottomExpList None makeIfStatement
 
 (* Last preparations *)
 let finalPasses module_name state =

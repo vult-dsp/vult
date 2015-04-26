@@ -74,7 +74,7 @@ let opt_full_transform =
    {
       basic           = true;
       inline          = true;
-      inline_weight   = 10;
+      inline_weight   = 1;
       simplify_return = true;
       finalize        = true;
       codegen         = false;
@@ -85,18 +85,29 @@ let opt_simple_transform =
    {
       basic           = true;
       inline          = false;
-      inline_weight   = 10;
+      inline_weight   = 1;
       simplify_return = false;
       finalize        = false;
       codegen         = false;
       interpreter     = false;
    }
 
+let opt_interpret =
+   {
+      basic           = true;
+      inline          = false;
+      inline_weight   = 1;
+      simplify_return = false;
+      finalize        = false;
+      codegen         = false;
+      interpreter     = true;
+   }
+
 let opt_no_transform =
    {
       basic           = false;
       inline          = false;
-      inline_weight   = 10;
+      inline_weight   = 1;
       simplify_return = false;
       finalize        = false;
       codegen         = false;
