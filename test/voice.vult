@@ -126,7 +126,7 @@ fun osc(freq,pw,wave:int){
     frequency = fixed_frequency;
     p = samplerate() / frequency;
     rate = PI() / p;
-    val maxHarmonics = floor(0.5 * p);
+    val maxHarmonics = floor(0.5 * p)/2;
     m = 2 * maxHarmonics + 1;
   }
   // Generates a shifted version of the phase
@@ -146,9 +146,9 @@ fun osc(freq,pw,wave:int){
   }
 
   // Calculates the waveforms based on the pulse trains
-  state_pulse = clip(state_pulse * 0.995 + tmp1 - tmp2, -1, 1);
-  state_saw = clip(state_saw * 0.995 + (tmp1 + tmp2  - 2 / p)/shift05/2,-1,1);
-  state_triang = clip(state_triang * 0.995 + 2 * state_pulse/p,-1,1);
+  state_pulse = clip(state_pulse * 0.9995 + tmp1 - tmp2, -1, 1);
+  state_saw = clip(state_saw * 0.9995 + (tmp1 + tmp2  - 2 / p)/shift05/2,-1,1);
+  state_triang = clip(state_triang * 0.9995 + 2 * state_pulse/p,-1,1);
 
   // Select the wave to output
   if(pre_wave == 0) {
@@ -160,13 +160,45 @@ fun osc(freq,pw,wave:int){
   else if(pre_wave == 2) {
     output = 2*state_triang;
   }
-  return dcblock(output);
+  output = dcblock(output);
+  return output;
 }
 
+fun svf_step(input,g,q,sel) : real {
+   val low = dlow + g * dband;
+   val high = input - low - q*dband;
+   val band = g * high + dband;
+   val notch = high + low;
+
+   mem dband = clip(band,-1,1);
+   mem dlow  = clip(low,-1,1);
+   val output =
+      if sel == 0 then low
+      else if sel == 1 then high
+      else if sel == 2 then band
+      else notch;
+   return output;
+}
+
+fun svf(input,fc,q,sel){
+   mem g;
+   fc = clip(fc,0,1);
+   q  = clip(q,0,1);
+   val fix_q = 2*(1-q);
+
+   if(change(fc)){
+      g = fc/2;
+   }
+
+   val x1 = step:svf_step(input,g,fix_q,sel);
+   val x2 = step:svf_step(input,g,fix_q,sel);
+
+   return (x1+x2)/2;
+}
 
 fun process(pitch,pw,wave:int,cut,res){
   val osc = osc(pitch,pw,wave);
-  val filter = moog(osc,cut,res);
+  val filter = svf(osc,cut,res,0);
   return filter;
 }
 
