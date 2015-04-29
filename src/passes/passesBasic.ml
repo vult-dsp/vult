@@ -97,6 +97,18 @@ let makeSingleDeclaration : ('data,exp) expander =
 let isSimpleBinding (attr:call_attributes) : bool =
    List.exists (fun a->a=SimpleBinding) attr
 
+let bindToTemporary state loc exp tp =
+   match exp with
+   | PId(_,_,_) | PReal(_,_) | PInt(_,_) | PUnit(_) -> state,[],exp
+   | _ ->
+      let data        = getState state in
+      let tmp_var     = ["_tmp"^(string_of_int data.counter)] in
+      let tmp_var_id  = PId(tmp_var,tp,loc) in
+      let decl        = StmtVal(tmp_var_id,None,loc) in
+      let bind_stmt   = StmtBind(tmp_var_id,exp,loc) in
+      let new_data    = { data with counter = data.counter+1 } in
+      setState state new_data,[decl;bind_stmt],tmp_var_id
+
 (** Creates bindings for all function calls in an expression *)
 let bindFunctionAndIfExpCallsInExp : (int * exp list,exp) transformation =
    fun state exp ->
@@ -174,15 +186,17 @@ let bindIfCondition : ('data,exp) expander =
    fun state exp ->
       match exp with
       | StmtIf(cond,then_,else_,loc) ->
-         let data        = getState state in
          let var_type    = Some(PId(["bool"],None,default_loc)) in
-         let tmp_var     = ["_tmp"^(string_of_int data.counter)] in
-         let tmp_var_id  = PId(tmp_var,var_type,loc) in
-         let decl        = StmtVal(tmp_var_id,None,loc) in
-         let bind_stmt   = StmtBind(tmp_var_id,cond,loc) in
-         let new_data    = { data with counter = data.counter+1 } in
-         setState state new_data,[decl;bind_stmt;StmtIf(tmp_var_id,then_,else_,loc)]
+         let new_state,stmts,var = bindToTemporary state loc cond var_type in
+         new_state,stmts@[StmtIf(var,then_,else_,loc)]
       | _ -> state,[exp]
+
+let trivial : ('data,exp) traverser =
+   fun state exp ->
+      match exp with
+      | PUnOp("-",PInt(n,loc),_) -> state,PInt(-n,loc)
+      | PUnOp("-",PReal(v,loc),_) -> state,PReal(string_of_float (-. (float_of_string v)),loc)
+      | _ -> state, exp
 
 (** Changes (a,b) = (c,d) -> a=c; b=d. If not possible uses temporary variables like (a,b) =  (b,a) -> tmp1=a;tmp2=b; b=tmp1; a=tmp2 *)
 let simplifyTupleAssign : ('data,exp) expander =
@@ -342,7 +356,7 @@ let replaceSimplifiedTypes (mappings: identifier IdentifierMap.t) (tp:exp) : exp
       StmtType(name,[],new_members,loc)
    | _ -> failwith "replaceSimplifiedTypes: Invalid type"
 
-let generateTypeNameForInstance (ids:identifier list) : exp option =
+let generateTypeNameForInstance (module_name:string) (ids:identifier list) : exp option =
    match ids with
    | [] -> None
    | _ ->
@@ -350,13 +364,13 @@ let generateTypeNameForInstance (ids:identifier list) : exp option =
          ids
          |> List.map (joinSep "_")
          |> List.sort compare
-         |> List.map (fun a->PId(["_type_"^a],None,default_loc))
+         |> List.map (fun a->PId(["_"^module_name^"_struct_"^a],None,default_loc))
       in
       match s with
       | [h] -> Some(h)
       | _   -> Some(PTuple(s,default_loc))
 
-let rec createTypeForFunction (state:pass_state tstate) (fname:identifier) : exp option =
+let rec createTypeForFunction (module_name:string) (state:pass_state tstate) (fname:identifier) : exp option =
    if isActiveFunction state fname |> not then
       None
    else
@@ -367,21 +381,21 @@ let rec createTypeForFunction (state:pass_state tstate) (fname:identifier) : exp
          IdentifierMap.fold
             (fun name types acc ->
                 let non_static = List.filter (fun a -> isActiveFunction state a) types in
-                match generateTypeNameForInstance non_static with
+                match generateTypeNameForInstance module_name non_static with
                 | None -> acc
                 | Some(inst_type) -> (name,inst_type)::acc)
             instances []
       in
       let members = List.map (fun (a,b)-> a,b,default_loc) (mem_pairs@inst_pais) in
-      Some(StmtType(generateTypeName fname,[],members,default_loc))
+      Some(StmtType(generateTypeName module_name fname,[],members,default_loc))
 
-let createTypes : ('data,exp) folder =
+let createTypes (module_name:string) : ('data,exp) folder =
    fun state e ->
       match e with
       | StmtFun(name,_,_,_,_,_) ->
          let full_name = getScope state in
          begin
-            match createTypeForFunction state name with
+            match createTypeForFunction module_name state name with
             | None -> state
             | Some(type_decl) ->
                addTypeOfFunction state full_name type_decl
@@ -471,10 +485,10 @@ let mergeTypes (t1:exp) (t2:exp) : exp option =
    | _ -> None
 
 (** Tries to merge the type with any of the types in the list.*)
-let rec pushMergeType (count:int) (mapping:identifier IdentifierMap.t) (tp:exp) (current_types: exp list) (acc: exp list) : int * exp list * (identifier IdentifierMap.t) =
+let rec pushMergeType (module_name:string) (count:int) (mapping:identifier IdentifierMap.t) (tp:exp) (current_types: exp list) (acc: exp list) : int * exp list * (identifier IdentifierMap.t) =
    match current_types with
    | []   ->
-      let new_type_name = ["_type_merged_"^(string_of_int count)] in
+      let new_type_name = ["_"^module_name^"_struct_"^(string_of_int count)] in
       let current_name  = getTypeName tp in
       let new_type      = renameType tp new_type_name in
       let new_mapping   = addTypeMapping current_name new_type_name mapping in
@@ -482,7 +496,7 @@ let rec pushMergeType (count:int) (mapping:identifier IdentifierMap.t) (tp:exp) 
    | h::t ->
       begin
          match mergeTypes h tp with
-         | None           -> pushMergeType count mapping tp t (h::acc)
+         | None           -> pushMergeType module_name count mapping tp t (h::acc)
          | Some(new_type) ->
             let current_name  = getTypeName tp in
             let new_type_name = getTypeName new_type in
@@ -491,10 +505,10 @@ let rec pushMergeType (count:int) (mapping:identifier IdentifierMap.t) (tp:exp) 
       end
 
 (** Takes all the types for each function and creates new simplified type *)
-let simplifyTypes (state:pass_state tstate) (exp_list:exp list) : pass_state tstate * exp list =
+let simplifyTypes (module_name:string) (state:pass_state tstate) (exp_list:exp list) : pass_state tstate * exp list =
    let _,simple_types,mapping = IdentifierMap.fold
          (fun fname value (count,types,mapping) ->
-             pushMergeType count mapping value types [])
+             pushMergeType module_name count mapping value types [])
          state.data.type_function (0,[],IdentifierMap.empty)
    in
    let final_types = List.map (replaceSimplifiedTypes mapping) simple_types in
@@ -538,9 +552,18 @@ let makeIfStatement : ('data,exp) traverser =
          state,StmtIf(cond,StmtBind(lhs,then_exp,iloc),Some(StmtBind(lhs,else_exp,bloc)),iloc)
       | _ -> state,exp
 
-(** Wraps all the statements into a function called __main__ and calls it *)
+(* Binds a the value in the calls to return *)
+let bindReturn : ('data,exp) expander =
+   fun state exp ->
+      match exp with
+      | StmtReturn(e,loc) ->
+         let new_state,stmts,var = bindToTemporary state loc e None in
+         new_state,stmts@[StmtReturn(var,loc)]
+      | _ -> state,[exp]
+
+(** Wraps all the statements into a function called _main_ and calls it *)
 let makeFunAndCall name state stmts =
-   let fcall = ["__"^name^"__"] in
+   let fcall = ["_"^name^"_"] in
    state,[StmtFun(fcall,[],appendBlocks stmts,None,false,default_loc); StmtReturn(PCall(Some(fcall),fcall,[],default_loc,[]),default_loc)]
 
 (* Basic transformations *)
@@ -549,9 +572,11 @@ let basicPasses state =
    |+> TypesUtil.traverseTopExpList None
       (removeGroups
        |-> makeTypedIdNamedCall
-       |-> nameFunctionCalls)
+       |-> nameFunctionCalls
+       |-> trivial)
    |+> TypesUtil.expandStmtList None separateBindAndDeclaration
    |+> TypesUtil.expandStmtList None makeSingleDeclaration
+   |+> TypesUtil.expandStmtList None bindReturn
    |+> TypesUtil.expandStmtList None bindIfCondition
    |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
    |+> TypesUtil.expandStmtList None simplifyTupleAssign
@@ -565,8 +590,8 @@ let finalPasses module_name state =
    |+> TypesUtil.traverseBottomExpList None relocateMemAndVal
    |+> TypesUtil.foldAsTransformation None
       (collectMemInFunctions |*> collectFunctionInstances)
-   |+> TypesUtil.foldAsTransformation None createTypes
-   |+> simplifyTypes
+   |+> TypesUtil.foldAsTransformation None (createTypes module_name)
+   |+> simplifyTypes module_name
    |+> TypesUtil.traverseBottomExpList None markActiveFunctions
 
 (* Basic transformations *)

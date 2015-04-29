@@ -82,7 +82,7 @@ let rec convertExp (e:exp) : cexp =
    match e with
    | PUnit(_)    -> EInt(0)
    | PBool(v,_)  -> if v then EInt(1) else EInt(0)
-   | PInt(v,_)   -> EInt(int_of_string v)
+   | PInt(v,_)   -> EInt(v)
    | PReal(v,_)  -> EReal(float_of_string v)
    | PId(id,_,_) -> EVar(id)
    | PUnOp(op,e1,_) ->
@@ -173,10 +173,11 @@ let printTyp (o:print_options) pointers t =
    match t,o.num_type with
    | TObj(id),_ when pointers  -> append o.buffer (id^"* ")
    | TObj(id),_   -> append o.buffer (id^" ")
+   | TInt,Fixed -> append o.buffer "fix16_t "
    | TInt,_ -> append o.buffer "int "
    | TReal,Double -> append o.buffer "double "
    | TReal,Float  -> append o.buffer "float "
-   | TReal,Fixed  -> append o.buffer "int "
+   | TReal,Fixed  -> append o.buffer "int32_t "
 
 let printOpNormal (o:print_options) op =
    match op with
@@ -195,22 +196,22 @@ let printOpNormal (o:print_options) op =
 
 let printOpFixed (o:print_options) op =
    match op with
-   | OPlus  -> append o.buffer "add"
-   | OTimes -> append o.buffer "mul"
-   | ODiv   -> append o.buffer "div"
-   | OMinus -> append o.buffer "sub"
-   | OLt    -> append o.buffer "lt"
-   | OGt    -> append o.buffer "gt"
-   | OEq    -> append o.buffer "eq"
-   | OUEq   -> append o.buffer "noeq"
-   | OAnd   -> append o.buffer "and"
-   | OOr    -> append o.buffer "or"
+   | OPlus  -> append o.buffer "fix16_add"
+   | OTimes -> append o.buffer "fix16_mul"
+   | ODiv   -> append o.buffer "fix16_div"
+   | OMinus -> append o.buffer "fix16_sub"
+   | OLt    -> append o.buffer "fix16_lt"
+   | OGt    -> append o.buffer "fix16_gt"
+   | OEq    -> append o.buffer "fix16_eq"
+   | OUEq   -> append o.buffer "fix16_noeq"
+   | OAnd   -> append o.buffer "fix16_and"
+   | OOr    -> append o.buffer "fix16_or"
    | ORef   -> append o.buffer "&"
    | ODeRef -> append o.buffer "*"
 
 let printUOpFixed (o:print_options) op =
    match op with
-   | OMinus -> append o.buffer "minus"
+   | OMinus -> append o.buffer "fix_minus"
    | ORef -> append o.buffer "&"
    | _ -> failwith "Invalid unary operator"
 
@@ -230,11 +231,13 @@ let rec printExp (o:print_options) (e:cexp) =
       printExp o e2;
       append o.buffer ")"
    | EOp(e1,op,e2),Fixed ->
+      append o.buffer "(";
       printOpFixed o op;
       append o.buffer "(";
       printExp o e1;
       append o.buffer ", ";
       printExp o e2;
+      append o.buffer ")";
       append o.buffer ")"
    | ECall(name,args),_ ->
       append o.buffer name;
@@ -248,6 +251,9 @@ let rec printExp (o:print_options) (e:cexp) =
    | EReal(f),Fixed ->
       let v = fix_scale *. f |> int_of_float |> string_of_int in
       append o.buffer v
+   | EInt(i),Fixed ->
+      let v = fix_scale *. (float_of_int i) |> int_of_float |> string_of_int in
+      append o.buffer v
    | EReal(f),_ ->
       append o.buffer (string_of_float f)
    | EInt(i),_ ->
@@ -259,9 +265,11 @@ let rec printExp (o:print_options) (e:cexp) =
       printExp o e1;
       append o.buffer ")"
    | EUop(op,e1),Fixed ->
+      append o.buffer "(";
       printUOpFixed o op;
       append o.buffer "(";
       printExp o e1;
+      append o.buffer ")";
       append o.buffer ")"
    | ERef(n),_ ->
       append o.buffer "&";
@@ -439,9 +447,19 @@ let generateTypeInitializer (tp:cstmt) : cstmt list =
       [tp;SFunction(TInt,finit_name,[TObj(name),"st"],SBlock(body))]
    | _ -> [tp]
 
+let getRealType (real:string) : creal_type =
+   match real with
+   | "float"  -> Float
+   | "fixed"  -> Fixed
+   | "double" -> Double
+   | _ ->
+      failwith (Printf.sprintf "Invalid real number type %s. Valid types are: fixed, float and double." real)
+
+
 let generateHeaderAndImpl (args:arguments) (stmts:exp_list) : string * string =
-   let c_options = { buffer = makePrintBuffer (); num_type = Float; header = false } in
-   let h_options = { buffer = makePrintBuffer (); num_type = Float; header = true } in
+   let creal = getRealType args.real in
+   let c_options = { buffer = makePrintBuffer (); num_type = creal; header = false } in
+   let h_options = { buffer = makePrintBuffer (); num_type = creal; header = true } in
    let converted_code =
       convertStmtList stmts
       |> List.map generateTypeInitializer

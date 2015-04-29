@@ -72,12 +72,12 @@ let replaceMemAccess : (pass_state,exp) traverser =
       | _ -> state,exp
 
 (** Sets the instance name as argument to the function *)
-let makeInstanceArgument : (pass_state,exp) traverser =
+let makeInstanceArgument (module_name:string) : (pass_state,exp) traverser =
    fun state exp ->
       match exp with
       | StmtFun(name,args,body,ret,true,loc) ->
          begin
-            match getFinalType state name with
+            match getFinalType module_name state name with
             | Some(ftype) ->
                let arg = NamedId(["_st_"],PId(ftype,None,loc),loc) in
                state,StmtFun(name,arg::args,body,ret,true,loc)
@@ -166,13 +166,13 @@ let flattenDefinitions state stmts =
 let clearFunctionDefinitions state stmts =
    { state with data = { state.data with functions = IdentifierMap.empty; function_weight = IdentifierMap.empty } }, stmts
 
-let codeGenPasses state =
+let codeGenPasses module_name state =
    state
    |+> TypesUtil.foldAsTransformation None collectFunctionDefinitions
    |+> TypesUtil.traverseBottomExpList None
       (removeNamesFromStaticFunctions
        |-> replaceMemAccess
-       |-> makeInstanceArgument
+       |-> makeInstanceArgument module_name
        |-> makeCallsFullName
        |-> makeFunDeclFullName)
    (* Collects again the functions calls in order to move them to the top scope *)

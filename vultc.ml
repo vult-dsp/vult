@@ -44,6 +44,7 @@ let processArguments () : arguments =
          debug     = false;
          ccode     = false;
          output    = "";
+         real      = "float"
       } in
    let opts = [
       "-dparse", (Arg.Unit   (fun () -> result.dparse   <-true)), "Dumps the parse tree (default: off)";
@@ -52,6 +53,7 @@ let processArguments () : arguments =
       "-debug",  (Arg.Unit   (fun () -> result.debug    <-true)), "Runs the debugger (default: off)";
       "-ccode",  (Arg.Unit   (fun () -> result.ccode    <-true)), "Converts the code to c (default: off)";
       "-o",      (Arg.String (fun output -> result.output<-output)), "Defines the prefix of the output files";
+      "-real",   (Arg.String (fun real -> result.real<-real)), "Defines the numeric type for the generated code (float,double,fixed)";
    ]
    in
    let _ = Arg.parse opts (fun a -> result.files <- a::result.files) "Usage: vultc file.vult\n" in
@@ -61,7 +63,7 @@ let processArguments () : arguments =
 (** Prints the parsed files if -dparse was passed as argument *)
 let dumpParsedFiles (parser_results:parser_results list) =
    parser_results
-   |> List.map (applyTransformations opt_interpret)
+   |> List.map (applyTransformations opt_full_transform)
    |> List.iter (
       fun a -> match a.presult with
          | `Ok(b) ->

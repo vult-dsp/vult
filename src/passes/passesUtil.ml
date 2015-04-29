@@ -73,7 +73,7 @@ type options =
 let opt_full_transform =
    {
       basic           = true;
-      inline          = true;
+      inline          = false;
       inline_weight   = 1;
       simplify_return = true;
       finalize        = true;
@@ -194,11 +194,11 @@ let getInstanceNames (s:pass_state tstate) (name:identifier) : identifier list =
       []
 
 (** Returns the name of the type that is declared for a function *)
-let generateTypeName (id:identifier) : identifier =
-   ["_type_"^(joinSep "_" id)]
+let generateTypeName (module_name:string) (id:identifier) : identifier =
+   ["_"^module_name^"_struct_"^(joinSep "_" id)]
 
-let getFinalType (s:pass_state tstate) (name:identifier) : identifier option =
-   match mapfindOption (generateTypeName name) s.data.type_mapping with
+let getFinalType (module_name:string) (s:pass_state tstate) (name:identifier) : identifier option =
+   match mapfindOption (generateTypeName module_name name) s.data.type_mapping with
    | Some(final_type) -> Some(final_type)
    | _ -> None
 

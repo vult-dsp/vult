@@ -56,4 +56,4 @@ let generateCode (args:arguments) (parser_results:parser_results list) =
 
    let c_text,h_text = ProtoGenC.generateHeaderAndImpl args stmts in
    (Printf.sprintf "#include \"%s.h\"\n\n%s\n" file c_text),
-   (Printf.sprintf "#ifndef _%s_\n#define _%s_\n\n#include \"math.h\"\n\n%s\n#endif\n" file_up file_up h_text)
+   (Printf.sprintf "#ifndef _%s_\n#define _%s_\n\n#include <math.h>\n#include <stdint.h>\n#include \"fix.h\"\n\n%s\n#endif\n" file_up file_up h_text)

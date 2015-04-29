@@ -111,7 +111,7 @@ type ('data,'traversing_type) folder = 'data tstate -> 'traversing_type -> 'data
 type ('data, 'error, 'result) expfold =
    {
       vUnit  : 'data -> ('error, 'result) either;
-      vInt   : 'data -> string -> location -> ('error, 'result) either;
+      vInt   : 'data -> int -> location -> ('error, 'result) either;
       vReal  : 'data -> string -> location -> ('error, 'result) either;
       vId    : 'data -> identifier -> location -> ('error, 'result) either;
       vUnOp  : 'data -> string -> 'result -> location -> ('error, 'result) either;

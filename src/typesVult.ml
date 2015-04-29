@@ -122,7 +122,7 @@ and exp =
       of bool
       *  location
    | PInt
-      of string
+      of int
       *  location
    | PReal
       of string
@@ -247,4 +247,5 @@ type arguments =
       mutable ccode  : bool;
       mutable run_check  : bool;
       mutable output : string;
+      mutable real   : string;
    }

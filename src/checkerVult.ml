@@ -185,11 +185,11 @@ let rec flattenExp : exp -> exp list =
 let checkUnit : environment -> (error, literal) either =
    fun _ -> Right LUnit
 
-let checkInt : 'a -> string -> location -> (error, literal) either =
+let checkInt : 'a -> int -> location -> (error, literal) either =
    fun _ intstring loc ->
       try
-         Right (LInt (int_of_string intstring))
-      with Failure _ -> Left (PointedError(loc,"The literal " ^ intstring ^ " can not be interpreted as an integer."))
+         Right (LInt (intstring))
+      with Failure _ -> Left (PointedError(loc,"The literal " ^ (string_of_int intstring) ^ " can not be interpreted as an integer."))
 
 let checkReal : 'a -> string -> location -> (error, literal) either =
    fun _ realstring loc ->

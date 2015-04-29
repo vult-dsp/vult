@@ -153,7 +153,7 @@ let lowercase = ['a'-'z']
 let uppercase = ['A'-'Z']
 let startid = ['A'-'Z' 'a'-'z' '_']
 let idchar = ['A'-'Z' 'a'-'z' '_' '0'-'9' '.']
-let int = ['0'-'9'] ['0'-'9' '_']*
+let int = ['0'-'9']+
 let float =
   ['0'-'9'] ['0'-'9' '_']*
   ('.' ['0'-'9' '_']* )?

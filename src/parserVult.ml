@@ -146,7 +146,7 @@ let getLbp (token:'a token) : int =
 (** Get the contents (the expression) stored in the token *)
 let getContents (token:exp token) : exp =
    match token.kind,token.contents with
-   | INT ,PEmpty -> PInt(token.value,token.loc)
+   | INT ,PEmpty -> PInt(int_of_string token.value,token.loc)
    | ID  ,PEmpty -> PId(splitOnDot token.value,None,token.loc)
    | REAL,PEmpty -> PReal(token.value,token.loc)
    | _    -> token.contents

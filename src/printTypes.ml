@@ -60,7 +60,7 @@ and expressionBuff buffer (exp:exp) =
             append buffer ":";
             expressionBuff buffer a;
          ) type_exp;
-   | PInt(s,_)  -> append buffer s
+   | PInt(s,_)  -> append buffer (string_of_int s)
    | PReal(s,_) -> append buffer s
    | PBool(true,_)  -> append buffer "true"
    | PBool(false,_) -> append buffer "false"

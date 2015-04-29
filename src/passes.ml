@@ -67,7 +67,7 @@ let applyTransformations (options:options) (results:parser_results) =
       |> applyOn returnRemovalON removalOfSequencesPasses
       |> applyOn inlineON        inliningPasses
       |> applyOn finalizeON      (finalPasses module_name)
-      |> applyOn codegenOn       codeGenPasses
+      |> applyOn codegenOn       (codeGenPasses module_name)
       |> applyOn interpreterOn   interpreterPasses
       |> snd
    in
