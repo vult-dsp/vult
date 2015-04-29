@@ -84,26 +84,29 @@ fun moog(input:real, cut:real, res:real):real{
     return (x0+x1)/2;
 }
 
+fun pitchToRate(d) return 8.1758*exp(0.0577623*d)/samplerate();
+
 fun pulse_train(m,phase){
-  val denominator1 = sin(phase);
+  val pi_phase = phase * PI();
+  val denominator1 = sin(pi_phase);
   val tmp1 = 0;
   if(near_zero(denominator1)) {
     tmp1 = 1;
   }
   else {
-    tmp1 = sin(m * phase);
+    tmp1 = sin(m * pi_phase);
     tmp1 =  tmp1 / (m * denominator1);
   }
   return tmp1;
 }
 
 // Main process function
-fun osc(freq,pw,wave:int){
+fun osc(pitch,pw,wave:int){
   mem m:int;
   mem rate;
   mem phase;
   mem p;
-  mem frequency;
+  mem pre_pitch;
   mem state_triang;
   mem state_pulse;
   mem state_saw;
@@ -111,29 +114,29 @@ fun osc(freq,pw,wave:int){
   mem pre_wave:int;
   mem output;
 
-  val fixed_frequency = 0;
+  val fixed_pitch = 0;
   if(wave != pre_wave && abs(output) < 0.05) {
     pre_wave = wave;
   }
   if(pre_wave == 0 || pre_wave == 1) {
-    fixed_frequency = freq;
+    fixed_pitch = pitch;
   }
   else {
-    fixed_frequency = freq * 2;
+    fixed_pitch = pitch + 12;
   }
-  // Updates the parameters if the frequency changed
-  if(frequency != fixed_frequency) {
-    frequency = fixed_frequency;
-    p = samplerate() / frequency;
-    rate = PI() / p;
-    val maxHarmonics = floor(0.5 * p)/2;
+  // Updates the parameters if the pre_pitch changed
+  if(pre_pitch != fixed_pitch) {
+    pre_pitch = fixed_pitch;
+    rate = pitchToRate(pitch);
+    p = 1/rate;
+    val maxHarmonics = floor(p/4);
     m = 2 * maxHarmonics + 1;
   }
   // Generates a shifted version of the phase
   val shift05 = 0.5 + pw * 0.49;
-  val shift = phase + shift05 * PI();
-  if(shift > PI()) {
-    shift = shift - PI();
+  val shift = phase + shift05;
+  if(shift > 1) {
+    shift = shift - 1;
   }
   // Generates the first pulse train
   val tmp1 = pulse_train(m,phase);
@@ -141,8 +144,8 @@ fun osc(freq,pw,wave:int){
   val tmp2 = pulse_train(m,shift);
   // Updates the phase
   phase = phase + rate;
-  if(phase > PI()) {
-    phase = phase - PI();
+  if(phase > 1) {
+    phase = phase - 1;
   }
 
   // Calculates the waveforms based on the pulse trains
