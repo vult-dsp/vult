@@ -83,7 +83,7 @@ let rec convertExp (e:exp) : cexp =
    | PUnit(_)    -> EInt(0)
    | PBool(v,_)  -> if v then EInt(1) else EInt(0)
    | PInt(v,_)   -> EInt(v)
-   | PReal(v,_)  -> EReal(float_of_string v)
+   | PReal(v,_)  -> EReal(v)
    | PId(id,_,_) -> EVar(id)
    | PUnOp(op,e1,_) ->
       EUop(CCOpt.get_exn (convertOp op),convertExp e1)

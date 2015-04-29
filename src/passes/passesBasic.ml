@@ -195,7 +195,7 @@ let trivial : ('data,exp) traverser =
    fun state exp ->
       match exp with
       | PUnOp("-",PInt(n,loc),_) -> state,PInt(-n,loc)
-      | PUnOp("-",PReal(v,loc),_) -> state,PReal(string_of_float (-. (float_of_string v)),loc)
+      | PUnOp("-",PReal(v,loc),_) -> state,PReal(-. v,loc)
       | _ -> state, exp
 
 (** Changes (a,b) = (c,d) -> a=c; b=d. If not possible uses temporary variables like (a,b) =  (b,a) -> tmp1=a;tmp2=b; b=tmp1; a=tmp2 *)

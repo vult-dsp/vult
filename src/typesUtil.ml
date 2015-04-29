@@ -112,7 +112,7 @@ type ('data, 'error, 'result) expfold =
    {
       vUnit  : 'data -> ('error, 'result) either;
       vInt   : 'data -> int -> location -> ('error, 'result) either;
-      vReal  : 'data -> string -> location -> ('error, 'result) either;
+      vReal  : 'data -> float -> location -> ('error, 'result) either;
       vId    : 'data -> identifier -> location -> ('error, 'result) either;
       vUnOp  : 'data -> string -> 'result -> location -> ('error, 'result) either;
       vBinOp : 'data -> string -> 'result -> 'result -> location -> ('error, 'result) either;

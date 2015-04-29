@@ -208,7 +208,7 @@ and runExp (loc:local_env) (exp:exp) : value * local_env * bool =
    | PUnit(_)   -> VUnit,loc,false
    | PBool(v,_) -> VBool(v),loc,false
    | PInt(v,_)  -> VNum(float_of_int v),loc,false
-   | PReal(v,_) -> VNum(float_of_string v),loc,false
+   | PReal(v,_) -> VNum(v),loc,false
    | PId(name,_,_)  ->
       getExpValueFromEnv loc name,loc,false
    | PTyped(e,_,_) -> runExp loc e

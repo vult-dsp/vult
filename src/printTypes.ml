@@ -61,7 +61,7 @@ and expressionBuff buffer (exp:exp) =
             expressionBuff buffer a;
          ) type_exp;
    | PInt(s,_)  -> append buffer (string_of_int s)
-   | PReal(s,_) -> append buffer s
+   | PReal(s,_) -> append buffer (string_of_float s)
    | PBool(true,_)  -> append buffer "true"
    | PBool(false,_) -> append buffer "false"
    | PTyped(e1,e2,_) ->

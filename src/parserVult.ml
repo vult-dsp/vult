@@ -148,7 +148,7 @@ let getContents (token:exp token) : exp =
    match token.kind,token.contents with
    | INT ,PEmpty -> PInt(int_of_string token.value,token.loc)
    | ID  ,PEmpty -> PId(splitOnDot token.value,None,token.loc)
-   | REAL,PEmpty -> PReal(token.value,token.loc)
+   | REAL,PEmpty -> PReal(float_of_string token.value,token.loc)
    | _    -> token.contents
 
 (** Parses an expression using a Pratt parser *)

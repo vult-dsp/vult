@@ -191,11 +191,11 @@ let checkInt : 'a -> int -> location -> (error, literal) either =
          Right (LInt (intstring))
       with Failure _ -> Left (PointedError(loc,"The literal " ^ (string_of_int intstring) ^ " can not be interpreted as an integer."))
 
-let checkReal : 'a -> string -> location -> (error, literal) either =
+let checkReal : 'a -> float -> location -> (error, literal) either =
    fun _ realstring loc ->
       try
-         Right (LReal (float_of_string realstring))
-      with Failure _ -> Left (PointedError(loc,"The literal " ^ realstring ^ " can not be interpreted as a real."))
+         Right (LReal (realstring))
+      with Failure _ -> Left (PointedError(loc,"The literal " ^ (string_of_float realstring) ^ " can not be interpreted as a real."))
 
 let checkId : environment -> identifier -> location -> (error, literal) either =
    fun env vname loc ->

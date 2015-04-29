@@ -125,7 +125,7 @@ and exp =
       of int
       *  location
    | PReal
-      of string
+      of float
       *  location
    | PId
       of identifier  (* name *)

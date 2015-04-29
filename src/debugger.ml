@@ -173,7 +173,7 @@ let rec assemble (i0:instruction list) (exp:exp) =
       Value(VNum(float_of_int v),line)::i0
    | PReal(v,loc)   ->
       let line = locationLine loc in
-      Value(VNum(float_of_string v),line)::i0
+      Value(VNum(v),line)::i0
    | PId(name,_,loc)    ->
       let line = locationLine loc in
       Read(line)::Reg(name,line)::i0
