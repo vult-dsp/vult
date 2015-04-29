@@ -194,8 +194,10 @@ let bindIfCondition : ('data,exp) expander =
 let trivial : ('data,exp) traverser =
    fun state exp ->
       match exp with
-      | PUnOp("-",PInt(n,loc),_) -> state,PInt(-n,loc)
-      | PUnOp("-",PReal(v,loc),_) -> state,PReal(-. v,loc)
+      | PUnOp("-",PInt(n,loc),_)   -> state,PInt(-n,loc)
+      | PUnOp("-",PReal(v,loc),_)  -> state,PReal(-. v,loc)
+      | PBinOp("/",e1,PReal(v,loc),loc1)-> state,PBinOp("*",e1,PReal(1.0 /. v,loc),loc1)
+      | PBinOp("/",e1,PInt(v,loc),loc1)-> state,PBinOp("*",e1,PReal(1.0 /. (float_of_int v),loc),loc1)
       | _ -> state, exp
 
 (** Changes (a,b) = (c,d) -> a=c; b=d. If not possible uses temporary variables like (a,b) =  (b,a) -> tmp1=a;tmp2=b; b=tmp1; a=tmp2 *)

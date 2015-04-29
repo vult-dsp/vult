@@ -209,9 +209,18 @@ let printOpFixed (o:print_options) op =
    | ORef   -> append o.buffer "&"
    | ODeRef -> append o.buffer "*"
 
+let funNameFixed (f:string) =
+   match f with
+   | "sin" -> "fix16_sin"
+   | "cos" -> "fix16_cos"
+   | "tan" -> "fix16_tah"
+   | "exp" -> "fix16_exp"
+   | "floor" -> "fix16_floor"
+   | _ -> f
+
 let printUOpFixed (o:print_options) op =
    match op with
-   | OMinus -> append o.buffer "fix_minus"
+   | OMinus -> append o.buffer "fix16_minus"
    | ORef -> append o.buffer "&"
    | _ -> failwith "Invalid unary operator"
 
@@ -239,8 +248,13 @@ let rec printExp (o:print_options) (e:cexp) =
       printExp o e2;
       append o.buffer ")";
       append o.buffer ")"
+   | ECall(name,args),Fixed ->
+      append o.buffer (funNameFixed name);
+      append o.buffer "(";
+      printExpSep o ", " args;
+      append o.buffer ")"
    | ECall(name,args),_ ->
-      append o.buffer name;
+      append o.buffer (funNameFixed name);
       append o.buffer "(";
       printExpSep o ", " args;
       append o.buffer ")"
