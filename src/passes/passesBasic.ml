@@ -191,6 +191,18 @@ let bindIfCondition : ('data,exp) expander =
          new_state,stmts@[StmtIf(var,then_,else_,loc)]
       | _ -> state,[exp]
 
+let asReal (e:exp) : float =
+   match e with
+   | PInt(n,_)  -> float_of_int n
+   | PReal(v,_) -> v
+   | _ -> failwith "asReal: not a number"
+
+let isNumber (e:exp) : bool =
+   match e with
+   | PInt(n,_)  -> true
+   | PReal(v,_) -> true
+   | _ -> false
+
 let trivial : ('data,exp) traverser =
    fun state exp ->
       match exp with
@@ -198,6 +210,10 @@ let trivial : ('data,exp) traverser =
       | PUnOp("-",PReal(v,loc),_)  -> state,PReal(-. v,loc)
       | PBinOp("/",e1,PReal(v,loc),loc1)-> state,PBinOp("*",e1,PReal(1.0 /. v,loc),loc1)
       | PBinOp("/",e1,PInt(v,loc),loc1)-> state,PBinOp("*",e1,PReal(1.0 /. (float_of_int v),loc),loc1)
+      | PBinOp("*",PBinOp("*",e1,e2,loc),e3,loc1) when isNumber e1 && isNumber e3 ->
+         state,PBinOp("*",PReal((asReal e1) *. (asReal e3),loc),e2,loc1)
+      | PBinOp("*",PBinOp("*",e1,e2,loc),e3,loc1) when isNumber e2 && isNumber e3 ->
+         state,PBinOp("*",PReal((asReal e2) *. (asReal e3),loc),e1,loc1)
       | _ -> state, exp
 
 (** Changes (a,b) = (c,d) -> a=c; b=d. If not possible uses temporary variables like (a,b) =  (b,a) -> tmp1=a;tmp2=b; b=tmp1; a=tmp2 *)
@@ -575,7 +591,9 @@ let basicPasses state =
       (removeGroups
        |-> makeTypedIdNamedCall
        |-> nameFunctionCalls
-       |-> trivial)
+       |-> trivial
+       |-> trivial
+         )
    |+> TypesUtil.expandStmtList None separateBindAndDeclaration
    |+> TypesUtil.expandStmtList None makeSingleDeclaration
    |+> TypesUtil.expandStmtList None bindReturn
