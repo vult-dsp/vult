@@ -53,6 +53,7 @@ let keyword_table =
       "return",RET;
       "while",WHILE;
       "type",TYPE;
+      "tab",TAB;
    ] in
    let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
    table
@@ -127,6 +128,9 @@ let kindToString kind =
    | AT    -> "'@'"
    | OP    -> "'operator'"
    | DOT   -> "'.'"
+   | TAB   -> "'tab'"
+   | LARR  -> "'[|"
+   | RARR  -> "'|]"
 
 (** Returns a string representation of the token *)
 let tokenToString l =
@@ -172,6 +176,8 @@ rule next_token lines = parse
   | ')'         { makeToken lines RPAREN lexbuf }
   | "{|"        { makeToken lines LSEQ lexbuf }
   | "|}"        { makeToken lines RSEQ lexbuf }
+  | "[|"        { makeToken lines LARR lexbuf }
+  | "|]"        { makeToken lines RARR lexbuf }
   | '{'         { makeToken lines LBRAC lexbuf }
   | '}'         { makeToken lines RBRAC lexbuf }
   | ':'         { makeToken lines COLON lexbuf }

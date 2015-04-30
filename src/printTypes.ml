@@ -126,6 +126,12 @@ and expressionBuff buffer (exp:exp) =
             append buffer "=";
             expressionBuff buffer a) e3;
       append buffer ";"
+   | StmtTab(id,elems,_) ->
+      append buffer "tab ";
+      identifierBuff buffer id;
+      append buffer " = [|";
+      expressionListBuff buffer elems;
+      append buffer "|];"
    | StmtReturn(e,_) ->
       append buffer "return ";
       expressionBuff buffer e;

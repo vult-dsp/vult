@@ -216,6 +216,7 @@ let getExpLocation (e:exp)  : location =
 
    | StmtVal(_,_,loc)
    | StmtMem(_,_,_,loc)
+   | StmtTab(_,_,loc)
    | StmtReturn(_,loc)
    | StmtIf(_,_,_,loc)
    | StmtFun(_,_,_,_,_,loc)
@@ -341,6 +342,9 @@ let rec traverseBottomExp (pred:(exp -> bool) option) (f: ('data, exp) traverser
          let state2,ne2 = traverseBottomOptExp pred f state1 e2 in
          let state3,ne3 = traverseBottomOptExp pred f state2 e3 in
          f state3 (StmtMem(ne1,ne2,ne3,loc))
+      | StmtTab(id,el,loc) ->
+         let state1,nel = traverseBottomExpList pred f state el in
+         f state1 (StmtTab(id,nel,loc))
       | StmtReturn(e,loc) ->
          let state1,ne = traverseBottomExp pred f state e in
          f state1 (StmtReturn(ne,loc))
@@ -445,6 +449,9 @@ let rec traverseTopExp (pred:(exp -> bool) option) (f: ('data, exp) traverser) (
          let state2,ne2 = traverseTopOptExp pred f state1 e2 in
          let state3,ne3 = traverseTopOptExp pred f state2 e3 in
          state3,StmtMem(ne1,ne2,ne3,loc)
+      | StmtTab(id,el,loc) ->
+         let state1,nel = traverseTopExpList pred f state el in
+         state1,StmtTab(id,nel,loc)
       | StmtReturn(e,loc) ->
          let state1,ne = traverseTopExp pred f state e in
          state1,StmtReturn(ne,loc)
@@ -546,6 +553,9 @@ let rec foldTopExp (pred:(exp -> bool) option) (f: ('data, exp) folder) (state0:
          let state2 = foldTopOptExp pred f state1 e2 in
          let state3 = foldTopOptExp pred f state2 e3 in
          state3
+      | StmtTab(id,el,loc) ->
+         let state1 = foldTopExpList pred f state el in
+         state1
       | StmtReturn(e,_) ->
          let state1 = foldTopExp pred f state e in
          state1
@@ -640,6 +650,9 @@ let rec foldDownExp (pred:(exp -> bool) option) (f: ('data, exp) folder) (state:
          let state2 = foldDownOptExp pred f state1 e2 in
          let state3 = foldDownOptExp pred f state2 e3 in
          f state3 exp
+      | StmtTab(_,el,_) ->
+         let state1 = foldDownExpList pred f state el in
+         f state1 exp
       | StmtReturn(e,_) ->
          let state1 = foldDownExp pred f state e in
          f state1 exp
@@ -747,6 +760,9 @@ let rec expandStmt (pred:(exp -> bool) option) (f: ('data, exp) expander) (state
          let state2,ne2 = expandOptStmt pred f state1 e2 in
          let state3,ne3 = expandOptStmt pred f state2 e3 in
          f state3 (StmtMem(appendPseq ne1,ne2,ne3,loc))
+      | StmtTab(id,el,loc) ->
+         let state1,nel = expandStmtList pred f state el in
+         f state1 (StmtTab(id,nel,loc))
       | StmtBind(e1,e2,loc) ->
          let state1,ne1 = expandStmt pred f state e1 in
          let state2,ne2 = expandStmt pred f state1 e2 in

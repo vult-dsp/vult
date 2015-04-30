@@ -71,6 +71,9 @@ type token_enum =
    | DOT
    | WHILE
    | TYPE
+   | TAB
+   | LARR
+   | RARR
 
 type 'a token =
    {
@@ -175,6 +178,10 @@ and exp =
       of exp        (* names/lhs *)
       *  exp option (* initial value *)
       *  exp option (* rhs *)
+      *  location
+   | StmtTab
+      of identifier (* name *)
+      *  exp list   (* data *)
       *  location
    | StmtWhile
       of exp         (* condition*)

@@ -31,7 +31,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b(fun|val|mem|return|if|else|while|then|type)\b</string>
+			<string>\b(fun|val|mem|return|if|else|while|then|type|tab)\b</string>
 			<key>name</key>
 			<string>keyword.source.Vult</string>
 		</dict>
@@ -43,7 +43,7 @@
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b(int|real|num)\b</string>
+			<string>\b(int|real|num|bool)\b</string>
 			<key>name</key>
 			<string>storage.type.source.Vult</string>
 		</dict>

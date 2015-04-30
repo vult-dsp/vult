@@ -47,6 +47,7 @@ type value =
    | VNum     of float
    | VBool    of bool
    | VTuple   of value list
+   | VArray   of value list
 
 (** Used to define the kind of a function: builtin and declared by the user.
     The body of the function is stored in order to evaluate it. *)
@@ -78,6 +79,11 @@ let rec valueStr (value:value) : string =
                     |> List.map valueStr
                     |> joinStrings ","
       in "("^elems_s^")"
+   | VArray(elems) ->
+      let elems_s = elems
+                    |> List.map valueStr
+                    |> joinStrings ","
+      in "[|"^elems_s^"|]"
 
 module IdObjSig =
 struct
@@ -240,6 +246,9 @@ and runExp (loc:local_env) (exp:exp) : value * local_env * bool =
       VUnit,declMem loc name init,false
    | StmtVal(_)
    | StmtMem(_) -> failwith "Declarations with more that one element should have been removed by the transformations"
+   | StmtTab(id,elems,_) ->
+      let elems_val,loc = runExpList loc elems in
+      VUnit,declVal loc id (VArray(elems_val)),false
    | StmtBind(PId(name,_,_),rhs,_) ->
       let rhs_val,loc,_ = runExp loc rhs in
       VUnit,setValMem loc name rhs_val,false

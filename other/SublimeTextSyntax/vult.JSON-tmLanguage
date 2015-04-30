@@ -1,100 +1,100 @@
 {
-    "name": "Vult", 
+    "name": "Vult",
     "fileTypes": [
         "vult"
-    ], 
+    ],
     "patterns": [
         {
-            "name": "meta.function.source.Vult", 
-            "match": "(fun)\\s+([a-zA-Z_]\\w*)", 
+            "name": "meta.function.source.Vult",
+            "match": "(fun)\\s+([a-zA-Z_]\\w*)",
             "captures": {
                 "1": {
                     "name": "keyword.control.source.Vult"
-                }, 
+                },
                 "2": {
                     "name": "entity.name.function.source.Vult"
                 }
             }
-        }, 
+        },
         {
-            "name": "keyword.source.Vult", 
-            "match": "\\b(fun|val|mem|return|if|else|while|then|type)\\b"
-        }, 
+            "name": "keyword.source.Vult",
+            "match": "\\b(fun|val|mem|return|if|else|while|then|type|tab)\\b"
+        },
         {
-            "name": "constant.numeric.source.Vult", 
+            "name": "constant.numeric.source.Vult",
             "match": "\\b((([0-9]+\\.?[0-9]*)|(\\.[0-9]+))((e|E)(\\+|-)?[0-9]+)?)\\b"
-        }, 
+        },
         {
-            "name": "storage.type.source.Vult", 
-            "match": "\\b(int|real|num)\\b"
-        }, 
+            "name": "storage.type.source.Vult",
+            "match": "\\b(int|real|num|bool)\\b"
+        },
         {
-            "name": "storage.type.source.Vult", 
-            "match": "\\b([a-zA-Z_]\\w*)\\b(\\()", 
+            "name": "storage.type.source.Vult",
+            "match": "\\b([a-zA-Z_]\\w*)\\b(\\()",
             "captures": {
                 "1": {
                     "name": "storage.type.source.Vult"
-                }, 
+                },
                 "2": {
                     "name": "constant.character.source.Vult"
                 }
             }
-        }, 
+        },
         {
-            "name": "comment.line.double-slash.source.Vult", 
+            "name": "comment.line.double-slash.source.Vult",
             "match": "(//).*$\\n?"
-        }, 
+        },
         {
-            "name": "string.quoted.double.source.Vult", 
+            "name": "string.quoted.double.source.Vult",
             "patterns": [
                 {
-                    "name": "constant.character.escape.source.Vult", 
+                    "name": "constant.character.escape.source.Vult",
                     "match": "\\\\."
                 }
-            ], 
+            ],
             "beginCaptures": {
                 "0": {
                     "name": "punctuation.definition.string.begin.source.Vult"
                 }
-            }, 
-            "begin": "\"", 
+            },
+            "begin": "\"",
             "endCaptures": {
                 "0": {
                     "name": "punctuation.definition.string.end.source.Vult"
                 }
-            }, 
+            },
             "end": "\""
-        }, 
+        },
         {
-            "name": "comment.block.source.Vult", 
+            "name": "comment.block.source.Vult",
             "patterns": [
                 {
-                    "name": "constant.character.escape.source.Vult", 
+                    "name": "constant.character.escape.source.Vult",
                     "match": "\\\\."
                 }
-            ], 
+            ],
             "beginCaptures": {
                 "0": {
                     "name": "comment.block.begin.source.Vult"
                 }
-            }, 
-            "begin": "/\\*", 
+            },
+            "begin": "/\\*",
             "endCaptures": {
                 "0": {
                     "name": "comment.block.end.source.Vult"
                 }
-            }, 
+            },
             "end": "\\*/"
-        }, 
+        },
         {
-            "name": "constant.character.source.Vult", 
+            "name": "constant.character.source.Vult",
             "match": "(=|:|;|<|>|,|!=|\\+|\\*|/|-|\\||&|\\(|\\)|{|})"
-        }, 
+        },
         {
-            "name": "constant.language.source.Vult", 
+            "name": "constant.language.source.Vult",
             "match": "(true|false)"
         }
-    ], 
-    "uuid": "42b15ba4-ffb5-4aad-9446-3885a88d8938", 
+    ],
+    "uuid": "42b15ba4-ffb5-4aad-9446-3885a88d8938",
     "scopeName": "source.Vult"
 }
