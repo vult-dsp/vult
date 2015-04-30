@@ -264,10 +264,16 @@ let rec printExp (o:print_options) (e:cexp) =
       append o.buffer s
    | EReal(f),Fixed ->
       let v = fix_scale *. f |> int_of_float |> string_of_int in
-      append o.buffer v
+      append o.buffer v;
+      append o.buffer " /* ";
+      append o.buffer (string_of_float f);
+      append o.buffer " */ "
    | EInt(i),Fixed ->
       let v = fix_scale *. (float_of_int i) |> int_of_float |> string_of_int in
-      append o.buffer v
+      append o.buffer v;
+      append o.buffer " /* ";
+      append o.buffer (string_of_int i);
+      append o.buffer " */ "
    | EReal(f),_ ->
       append o.buffer (string_of_float f)
    | EInt(i),_ ->
