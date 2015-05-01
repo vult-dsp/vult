@@ -1,17 +1,6 @@
 
-fun min(a,b) return if a<b then a else b;
-fun max(a,b) return if a>b then a else b;
-
-fun clip(value,low,high){
-    return min(max(low,value),high);
-}
-
-fun abs(x) return if x<0 then -x else x;
 
 fun near_zero(x) : bool return abs(x)<1e-2;
-
-fun samplerate() return 44100;
-fun PI() return 3.141592653589793;
 
 fun dcblock(x0){
   mem x1,y1;
@@ -85,9 +74,9 @@ fun osc(pitch,pw,wave:int){
   }
 
   // Calculates the waveforms based on the pulse trains
-  state_pulse = clip(state_pulse * 0.9995 + tmp1 - tmp2, -1, 1);
-  state_saw = clip(state_saw * 0.9995 + (tmp1 + tmp2  - 2 / p)/shift05/2,-1,1);
-  state_triang = clip(state_triang * 0.9995 + 2 * state_pulse/p,-1,1);
+  state_pulse  = clip(state_pulse  * 0.9995 + tmp1 - tmp2, -1, 1);
+  state_saw    = clip(state_saw    * 0.9995 + (tmp1 + tmp2  - 2 / p)/shift05/2, -1,1);
+  state_triang = clip(state_triang * 0.9995 + 2 * state_pulse/p, -1,1);
 
   // Select the wave to output
   if(pre_wave == 0) {
