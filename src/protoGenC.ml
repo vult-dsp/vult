@@ -19,11 +19,14 @@ type op =
    | OLt
    | OGt
    | OEq
+   | OGtEq
+   | OLtEq
    | OUEq
    | OAnd
    | OOr
    | ORef
    | ODeRef
+   | OMod
 
 type ctyp_def =
    {
@@ -69,12 +72,15 @@ let convertOp (op:string) : op option =
    | "-"  -> Some(OMinus)
    | "<"  -> Some(OLt)
    | ">"  -> Some(OGt)
+   | "%"  -> Some(OMod)
    | "==" -> Some(OEq)
    | "!=" -> Some(OUEq)
    | "&&" -> Some(OAnd)
    | "||" -> Some(OOr)
-   | "p&"   -> Some(ORef)
-   | "*&"   -> Some(ODeRef)
+   | "p&" -> Some(ORef)
+   | "*&" -> Some(ODeRef)
+   | "<=" -> Some(OLtEq)
+   | ">=" -> Some(OGtEq)
    | _    ->
       (*print_endline ("convertOp: Unsupported operator "^op);*)
       None
@@ -194,8 +200,11 @@ let printOpNormal (o:print_options) op =
    | OUEq   -> append o.buffer " != "
    | OAnd   -> append o.buffer " && "
    | OOr    -> append o.buffer " || "
+   | OMod   -> append o.buffer " % "
+   | OLtEq  -> append o.buffer " <= "
+   | OGtEq  -> append o.buffer " >= "
    | ORef   -> append o.buffer "&"
-   | ODeRef   -> append o.buffer "*"
+   | ODeRef -> append o.buffer "*"
 
 let funNameFixed (f:string) =
    match f with
@@ -272,14 +281,16 @@ let rec printExp (o:print_options) (e:cexp) =
    | EString(s),_ ->
       append o.buffer s
    | EReal(f),Fixed ->
-      let v = fix_scale *. f |> int_of_float |> string_of_int in
-      append o.buffer v;
+      let v = fix_scale *. f |> int_of_float in
+      let vs = Printf.sprintf "0x%x" v in
+      append o.buffer vs;
       append o.buffer " /* ";
       append o.buffer (string_of_float f);
       append o.buffer " */ "
    | EInt(i),Fixed ->
-      let v = fix_scale *. (float_of_int i) |> int_of_float |> string_of_int in
-      append o.buffer v;
+      let v = fix_scale *. (float_of_int i) |> int_of_float in
+      let vs = Printf.sprintf "0x%x" v in
+      append o.buffer vs;
       append o.buffer " /* ";
       append o.buffer (string_of_int i);
       append o.buffer " */ "
@@ -379,18 +390,17 @@ let rec printStm (o:print_options) (s:cstmt) =
       indent o.buffer;
       printStmList o body;
       outdent o.buffer;
-      append o.buffer "}"
+      append o.buffer "}";
+      newline o.buffer
    | SIf(cond,then_e,opt_else_e) ->
       append o.buffer "if(";
       printExp o cond;
       append o.buffer ")";
       printBlock o then_e;
-      newline o.buffer;
       if CCOpt.is_some opt_else_e then
          begin
             append o.buffer "else ";
-            printBlock o (CCOpt.get SEmpty opt_else_e);
-            newline o.buffer
+            printBlock o (CCOpt.get SEmpty opt_else_e)
          end
    | SStruct(s)  when o.header ->
       append o.buffer "typedef struct _";
