@@ -345,6 +345,23 @@ let collectTypeDefinitions : ('data,exp) folder =
          in setState state ret_state
       | _ -> state
 
+(** Adds all table definitions to a map in the state *)
+let collectTableDefinitions : ('data,exp) folder =
+   fun state exp ->
+      match exp with
+      | StmtAliasType(name,_,_,_)
+      | StmtType(name,_,_,_) ->
+         let full_name = (getScope state)@name in
+         (*let _ = Printf.printf "*** Adding type '%s'\n" (identifierStr full_name) in*)
+         (*let _ = Printf.printf "%s\n" (PrintTypes.expressionStr exp) in*)
+         let ret_state =
+            {
+               state.data with
+               types = IdentifierMap.add full_name exp state.data.types;
+            }
+         in setState state ret_state
+      | _ -> state
+
 let getTypeName (tp:exp) : identifier =
    match tp with
    | StmtType(name,_,_,_) -> name

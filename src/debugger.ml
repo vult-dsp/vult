@@ -216,7 +216,7 @@ let rec assemble (i0:instruction list) (exp:exp) =
       Mem(line)::Reg(name,line)::i1
    | StmtVal(_,_,_) -> failwith "Complex bindings should be simplified"
    | StmtMem(_,_,_,_) -> failwith "Complex bindings should be simplified"
-   | StmtTab(_,_,_) -> failwith "Tab are not supported"
+   | StmtTable(_,_,_) -> failwith "Tab are not supported"
    | StmtBind(PId(name,_,loc),e2,_) ->
       let line = locationLine loc in
       let i1 = assemble i0 e2 in

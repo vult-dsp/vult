@@ -53,7 +53,7 @@ let keyword_table =
       "return",RET;
       "while",WHILE;
       "type",TYPE;
-      "tab",TAB;
+      "table",TABLE;
    ] in
    let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
    table
@@ -128,7 +128,7 @@ let kindToString kind =
    | AT    -> "'@'"
    | OP    -> "'operator'"
    | DOT   -> "'.'"
-   | TAB   -> "'tab'"
+   | TABLE -> "'tab'"
    | LARR  -> "'[|"
    | RARR  -> "'|]"
 

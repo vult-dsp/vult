@@ -126,7 +126,7 @@ and expressionBuff buffer (exp:exp) =
             append buffer "=";
             expressionBuff buffer a) e3;
       append buffer ";"
-   | StmtTab(id,elems,_) ->
+   | StmtTable(id,elems,_) ->
       append buffer "tab ";
       identifierBuff buffer id;
       append buffer " = [|";
@@ -160,7 +160,7 @@ and expressionBuff buffer (exp:exp) =
       identifierBuff buffer name;
       append buffer "(";
       printList buffer namedIdBuff "," args;
-      append buffer ")";
+      append buffer ") ";
       CCOpt.iter(fun a ->
             append buffer ":";
             expressionBuff buffer a;

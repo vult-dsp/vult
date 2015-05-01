@@ -246,7 +246,7 @@ and runExp (loc:local_env) (exp:exp) : value * local_env * bool =
       VUnit,declMem loc name init,false
    | StmtVal(_)
    | StmtMem(_) -> failwith "Declarations with more that one element should have been removed by the transformations"
-   | StmtTab(id,elems,_) ->
+   | StmtTable(id,elems,_) ->
       let elems_val,loc = runExpList loc elems in
       VUnit,declVal loc id (VArray(elems_val)),false
    | StmtBind(PId(name,_,_),rhs,_) ->

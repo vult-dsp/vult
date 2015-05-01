@@ -71,7 +71,7 @@ type token_enum =
    | DOT
    | WHILE
    | TYPE
-   | TAB
+   | TABLE
    | LARR
    | RARR
 
@@ -179,7 +179,7 @@ and exp =
       *  exp option (* initial value *)
       *  exp option (* rhs *)
       *  location
-   | StmtTab
+   | StmtTable
       of identifier (* name *)
       *  exp list   (* data *)
       *  location

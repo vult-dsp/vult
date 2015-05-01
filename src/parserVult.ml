@@ -362,14 +362,14 @@ and stmtMem (buffer:exp lexer_stream) : exp =
 
 and stmtTab (buffer: exp lexer_stream) : exp =
    let start_loc = buffer.peeked.loc in
-   let _     = consume buffer TAB in
+   let _     = consume buffer TABLE in
    let name  = identifier buffer in
    let _     = consume buffer EQUAL in
    let _     = consume buffer LARR in
    let elems = expressionList buffer in
    let _     = consume buffer RARR in
    let _ = consume buffer SEMI in
-   StmtTab(name,elems,start_loc)
+   StmtTable(name,elems,start_loc)
 
 (** <statement> := | 'return' <expression> ';' *)
 and stmtReturn (buffer:exp lexer_stream) : exp =
@@ -507,7 +507,7 @@ and stmt (buffer:exp lexer_stream) : exp =
       | FUN   -> stmtFunction buffer
       | WHILE -> stmtWhile    buffer
       | TYPE  -> stmtType     buffer
-      | TAB   -> stmtTab      buffer
+      | TABLE -> stmtTab      buffer
       | _     -> stmtBind     buffer
    with
    | ParserError(error) ->
