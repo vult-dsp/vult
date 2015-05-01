@@ -394,6 +394,10 @@ let addBuiltinFunctions (loc:local_env) : local_env =
    let fexp          = opNumNum (fun a -> exp a) in
    let print_fun args   = List.map valueStr args |> joinStrings "," |> (fun a -> print_string a;VUnit) in
    let println_fun args = List.map valueStr args |> joinStrings "," |> (fun a -> print_endline a;VUnit) in
+   let readTable args = match args with [VArray(elems);VNum(n)] -> List.nth elems (int_of_float n) | _ -> failwith "readTable: invalid arguments" in
+   let clip args = match args with [VNum(v);VNum(min);VNum(max)] -> if v>max then VNum(max) else if v<min then VNum(min) else VNum(v) | _ -> failwith "clip: invalid arguments" in
+   let min args = match args with [VNum(a);VNum(b)] -> VNum(min a b) | _ -> failwith "min: invalid arguments" in
+   let max args = match args with [VNum(a);VNum(b)] -> VNum(max a b) | _ -> failwith "max: invalid arguments" in
    [
       ["'+'"],BuiltinF(plus);
       ["'-'"],BuiltinF(minus);
@@ -416,6 +420,10 @@ let addBuiltinFunctions (loc:local_env) : local_env =
       ["sin"],BuiltinF(sin_fun);
       ["fixdenorm"],BuiltinF(fixdenorm);
       ["exp"],BuiltinF(fexp);
+      ["readTable"],BuiltinF(readTable);
+      ["clip"],BuiltinF(clip);
+      ["max"],BuiltinF(max);
+      ["min"],BuiltinF(min);
    ]
    |> List.fold_left (fun env (a,b) -> declFunction env a b) loc
 
