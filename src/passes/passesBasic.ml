@@ -208,8 +208,12 @@ let trivial : ('data,exp) traverser =
       match exp with
       | PUnOp("-",PInt(n,loc),_)   -> state,PInt(-n,loc)
       | PUnOp("-",PReal(v,loc),_)  -> state,PReal(-. v,loc)
-      | PBinOp("/",e1,PReal(v,loc),loc1)-> state,PBinOp("*",e1,PReal(1.0 /. v,loc),loc1)
-      | PBinOp("/",e1,PInt(v,loc),loc1)-> state,PBinOp("*",e1,PReal(1.0 /. (float_of_int v),loc),loc1)
+      | PBinOp("/",e1,e2,loc1) when isNumber e1 && isNumber e2 ->
+         state,PReal((asReal e1) /. (asReal e2),loc1)
+      | PBinOp("/",e1,PReal(v,loc),loc1)->
+         state,PBinOp("*",e1,PReal(1.0 /. v,loc),loc1)
+      | PBinOp("/",e1,PInt(v,loc),loc1)->
+         state,PBinOp("*",e1,PReal(1.0 /. (float_of_int v),loc),loc1)
       | PBinOp("*",PBinOp("*",e1,e2,loc),e3,loc1) when isNumber e1 && isNumber e3 ->
          state,PBinOp("*",PReal((asReal e1) *. (asReal e3),loc),e2,loc1)
       | PBinOp("*",PBinOp("*",e1,e2,loc),e3,loc1) when isNumber e2 && isNumber e3 ->
@@ -592,8 +596,7 @@ let basicPasses state =
        |-> makeTypedIdNamedCall
        |-> nameFunctionCalls
        |-> trivial
-       |-> trivial
-         )
+       |-> trivial)
    |+> TypesUtil.expandStmtList None separateBindAndDeclaration
    |+> TypesUtil.expandStmtList None makeSingleDeclaration
    |+> TypesUtil.expandStmtList None bindReturn
