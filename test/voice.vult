@@ -1,10 +1,4 @@
 
-fun min(a,b) return if a<b then a else b;
-fun max(a,b) return if a>b then a else b;
-
-fun clip(value,low,high){
-    return min(max(low,value),high);
-}
 
 fun change(x):bool {
     mem pre_x;
@@ -12,8 +6,6 @@ fun change(x):bool {
     pre_x = x;
     return v;
 }
-
-fun abs(x) return if x<0 then -x else x;
 
 fun near_zero(x) : bool return abs(x)<1e-12;
 
