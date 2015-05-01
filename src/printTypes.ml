@@ -127,7 +127,7 @@ and expressionBuff buffer (exp:exp) =
             expressionBuff buffer a) e3;
       append buffer ";"
    | StmtTable(id,elems,_) ->
-      append buffer "tab ";
+      append buffer "table ";
       identifierBuff buffer id;
       append buffer " = [|";
       expressionListBuff buffer elems;

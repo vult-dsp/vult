@@ -52,6 +52,7 @@ type cstmt =
    | SIf       of cexp * cstmt * cstmt option
    | SStruct   of ctyp_def
    | STypeDef  of ident * ident
+   | SArray    of ident * cexp list
    | SEmpty
 
 type creal_type =
@@ -133,6 +134,8 @@ let rec convertStmt (e:exp) : cstmt =
    | StmtVal(PId([name],tp,_),None,_) -> SDecl(convertType tp,name)
    | StmtVal(_,_,_)   -> failwith "convertStmt: unsupported val declaration"
    | StmtMem(_,_,_,_) -> SEmpty
+   | StmtTable([name],elems,_) ->
+      SArray(name,convertExpList elems)
    | StmtWhile(cond,stmts,_) ->
       SWhile(convertExp cond,convertStmt stmts)
    | StmtReturn(v,_) -> SReturn(convertExp v)
@@ -173,7 +176,7 @@ let printTyp (o:print_options) pointers t =
    match t,o.num_type with
    | TObj(id),_ when pointers  -> append o.buffer (id^"* ")
    | TObj(id),_   -> append o.buffer (id^" ")
-   | TInt,Fixed -> append o.buffer "fix16_t "
+   | TInt,Fixed -> append o.buffer "int32_t "
    | TInt,_ -> append o.buffer "int "
    | TReal,Double -> append o.buffer "double "
    | TReal,Float  -> append o.buffer "float "
@@ -194,33 +197,38 @@ let printOpNormal (o:print_options) op =
    | ORef   -> append o.buffer "&"
    | ODeRef   -> append o.buffer "*"
 
-let printOpFixed (o:print_options) op =
-   match op with
-   | OPlus  -> append o.buffer "fix16_add"
-   | OTimes -> append o.buffer "fix16_mul"
-   | ODiv   -> append o.buffer "fix16_div"
-   | OMinus -> append o.buffer "fix16_sub"
-   | OLt    -> append o.buffer "fix16_lt"
-   | OGt    -> append o.buffer "fix16_gt"
-   | OEq    -> append o.buffer "fix16_eq"
-   | OUEq   -> append o.buffer "fix16_noeq"
-   | OAnd   -> append o.buffer "fix16_and"
-   | OOr    -> append o.buffer "fix16_or"
-   | ORef   -> append o.buffer "&"
-   | ODeRef -> append o.buffer "*"
-
 let funNameFixed (f:string) =
    match f with
-   | "sin" -> "fix16_sin"
-   | "cos" -> "fix16_cos"
-   | "tan" -> "fix16_tah"
-   | "exp" -> "fix16_exp"
-   | "floor" -> "fix16_floor"
+   | "sin" -> "fix_sin"
+   | "cos" -> "fix_cos"
+   | "tan" -> "fix_tah"
+   | "exp" -> "fix_exp"
+   | "floor" -> "fix_floor"
+   | "clip"  -> "fix_clip"
+   | "min"   -> "fix_min"
+   | "max"   -> "fix_max"
+   | "abs"   -> "fix_abs"
    | _ -> f
+
+let opIsFunction op =
+   match op with
+   | OPlus  -> true
+   | OTimes -> true
+   | ODiv   -> true
+   | OMinus -> true
+   | _ -> false
+
+let printOpFixed (o:print_options) op =
+   match op with
+   | OPlus  -> append o.buffer "fix_add"
+   | OTimes -> append o.buffer "fix_mul"
+   | ODiv   -> append o.buffer "fix_div"
+   | OMinus -> append o.buffer "fix_sub"
+   | _ -> failwith "printOpFixed: unknown operator"
 
 let printUOpFixed (o:print_options) op =
    match op with
-   | OMinus -> append o.buffer "fix16_minus"
+   | OMinus -> append o.buffer "fix_minus"
    | ORef -> append o.buffer "&"
    | _ -> failwith "Invalid unary operator"
 
@@ -232,14 +240,7 @@ let printUOpNormal (o:print_options) op =
 
 let rec printExp (o:print_options) (e:cexp) =
    match e,o.num_type with
-   | EOp(e1,op,e2),Double
-   | EOp(e1,op,e2),Float ->
-      append o.buffer "(";
-      printExp o e1;
-      printOpNormal o op;
-      printExp o e2;
-      append o.buffer ")"
-   | EOp(e1,op,e2),Fixed ->
+   | EOp(e1,op,e2),Fixed when opIsFunction op ->
       append o.buffer "(";
       printOpFixed o op;
       append o.buffer "(";
@@ -248,6 +249,13 @@ let rec printExp (o:print_options) (e:cexp) =
       printExp o e2;
       append o.buffer ")";
       append o.buffer ")"
+   | EOp(e1,op,e2),_ ->
+      append o.buffer "(";
+      printExp o e1;
+      printOpNormal o op;
+      printExp o e2;
+      append o.buffer ")"
+
    | ECall(name,args),Fixed ->
       append o.buffer (funNameFixed name);
       append o.buffer "(";
@@ -258,6 +266,7 @@ let rec printExp (o:print_options) (e:cexp) =
       append o.buffer "(";
       printExpSep o ", " args;
       append o.buffer ")"
+
    | EVar(name),_ ->
       printList o.buffer (fun b a-> append b a) "->" name
    | EString(s),_ ->
@@ -278,19 +287,20 @@ let rec printExp (o:print_options) (e:cexp) =
       append o.buffer (string_of_float f)
    | EInt(i),_ ->
       append o.buffer (string_of_int i)
-   | EUop(op,e1),Float
-   | EUop(op,e1),Double ->
-      append o.buffer "(";
-      printUOpNormal o op;
-      printExp o e1;
-      append o.buffer ")"
-   | EUop(op,e1),Fixed ->
+
+   | EUop(op,e1),Fixed when opIsFunction op ->
       append o.buffer "(";
       printUOpFixed o op;
       append o.buffer "(";
       printExp o e1;
       append o.buffer ")";
       append o.buffer ")"
+   | EUop(op,e1),_ ->
+      append o.buffer "(";
+      printUOpNormal o op;
+      printExp o e1;
+      append o.buffer ")"
+
    | ERef(n),_ ->
       append o.buffer "&";
       append o.buffer n
@@ -404,6 +414,15 @@ let rec printStm (o:print_options) (s:cstmt) =
       newline o.buffer;
       newline o.buffer
    | STypeDef(alias,name) -> ()
+   | SArray(name,elems) ->
+      append o.buffer "static const ";
+      printTyp o false (convertType None);
+      append o.buffer name;
+      append o.buffer "[] = { ";
+      printExpSep o ", " elems;
+      append o.buffer " };";
+      newline o.buffer;
+      newline o.buffer
    | SEmpty -> ()
 
 and printBlock (o:print_options) (stmt:cstmt) =

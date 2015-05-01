@@ -119,6 +119,7 @@ type pass_state =
    {
       functions       : exp IdentifierMap.t; (* Holds the body of the functions, used by inlining *)
       types           : exp IdentifierMap.t; (* Holds the body of the the types *)
+      tables          : exp IdentifierMap.t; (* Holds the body of the the types *)
       function_weight : int IdentifierMap.t; (* Weight (complexity) of each function , used by inlining *)
       counter         : int;                 (* Generic counter used to generate unique names *)
       options         : options;             (* Used to enable/disable/configure the passes *)
@@ -349,15 +350,14 @@ let collectTypeDefinitions : ('data,exp) folder =
 let collectTableDefinitions : ('data,exp) folder =
    fun state exp ->
       match exp with
-      | StmtAliasType(name,_,_,_)
-      | StmtType(name,_,_,_) ->
+      | StmtTable(name,_,_) ->
          let full_name = (getScope state)@name in
-         (*let _ = Printf.printf "*** Adding type '%s'\n" (identifierStr full_name) in*)
+         (*let _ = Printf.printf "*** Adding table '%s'\n" (identifierStr full_name) in*)
          (*let _ = Printf.printf "%s\n" (PrintTypes.expressionStr exp) in*)
          let ret_state =
             {
                state.data with
-               types = IdentifierMap.add full_name exp state.data.types;
+               tables = IdentifierMap.add full_name exp state.data.tables;
             }
          in setState state ret_state
       | _ -> state

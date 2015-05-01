@@ -128,7 +128,7 @@ let kindToString kind =
    | AT    -> "'@'"
    | OP    -> "'operator'"
    | DOT   -> "'.'"
-   | TABLE -> "'tab'"
+   | TABLE -> "'table'"
    | LARR  -> "'[|"
    | RARR  -> "'|]"
 

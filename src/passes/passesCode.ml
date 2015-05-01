@@ -177,8 +177,10 @@ let codeGenPasses module_name state =
        |-> makeFunDeclFullName)
    (* Collects again the functions calls in order to move them to the top scope *)
    |+> clearFunctionDefinitions
-   |+> TypesUtil.foldAsTransformation None collectFunctionDefinitions
-   |+> TypesUtil.foldAsTransformation None collectTypeDefinitions
+   |+> TypesUtil.foldAsTransformation None
+      (collectFunctionDefinitions
+      |*> collectTypeDefinitions
+      |*> collectTableDefinitions)
    |+> flattenDefinitions
    |+> removeSubFunctions
 

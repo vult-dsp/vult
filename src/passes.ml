@@ -52,6 +52,7 @@ let applyTransformations (options:options) (results:parser_results) =
          counter         = 0;
          functions       = IdentifierMap.empty;
          types           = IdentifierMap.empty;
+         tables          = IdentifierMap.empty;
          function_weight = IdentifierMap.empty;
          options         = options;
          function_mem    = IdentifierMap.empty;
