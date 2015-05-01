@@ -217,6 +217,7 @@ let funNameFixed (f:string) =
    | "min"   -> "fix_min"
    | "max"   -> "fix_max"
    | "abs"   -> "fix_abs"
+   | "not"   -> "fix_not"
    | _ -> f
 
 let opIsFunction op =
@@ -258,6 +259,10 @@ let rec printExp (o:print_options) (e:cexp) =
       printExp o e2;
       append o.buffer ")";
       append o.buffer ")"
+   | EOp(e1,OEq,e2),_ ->
+      printExp o e1;
+      printOpNormal o OEq;
+      printExp o e2
    | EOp(e1,op,e2),_ ->
       append o.buffer "(";
       printExp o e1;
@@ -282,14 +287,14 @@ let rec printExp (o:print_options) (e:cexp) =
       append o.buffer s
    | EReal(f),Fixed ->
       let v = fix_scale *. f |> int_of_float in
-      let vs = Printf.sprintf "0x%x" v in
+      let vs = Printf.sprintf "%i" v in
       append o.buffer vs;
       append o.buffer " /* ";
       append o.buffer (string_of_float f);
       append o.buffer " */ "
    | EInt(i),Fixed ->
       let v = fix_scale *. (float_of_int i) |> int_of_float in
-      let vs = Printf.sprintf "0x%x" v in
+      let vs = Printf.sprintf "%i" v in
       append o.buffer vs;
       append o.buffer " /* ";
       append o.buffer (string_of_int i);
@@ -353,9 +358,7 @@ let rec printStm (o:print_options) (s:cstmt) =
       append o.buffer "(";
       printArgs o args;
       append o.buffer ")";
-      indent o.buffer;
       printBlock o body;
-      outdent o.buffer;
       newline o.buffer;
    | SFunction(tp,name,args,body) ->
       printTyp o true tp;
