@@ -132,11 +132,11 @@ let parseStmtTest11 context =
       (parseDumpStmtList "if(a) return false; else return true;")
 ;;
 let parseStmtTest12 context =
-   test_string           "fun add(a,b)return (a+b);"
+   test_string           "fun add(a,b) return (a+b);"
       (parseDumpStmtList "fun add(a,b) return a+b;")
 ;;
 let parseStmtTest13 context =
-   test_string           "fun add(a:int,b:int):int return (a+b);"
+   test_string           "fun add(a:int,b:int) :int return (a+b);"
       (parseDumpStmtList "fun add(a:int,b:int):int return a+b;")
 ;;
 let parseStmtTest14 context =
