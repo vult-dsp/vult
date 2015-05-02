@@ -60,9 +60,9 @@ let operatorsToFunctionCalls : ('data,exp) transformation =
    fun state exp ->
       match exp with
       | PUnOp(op,e,loc) ->
-         state,PCall(None,["'"^op^"'"],[e],loc,[])
+         state,PCall(None,[op],[e],loc,[])
       | PBinOp(op,e1,e2,loc) ->
-         state,PCall(None,["'"^op^"'"],[e1;e2],loc,[])
+         state,PCall(None,[op],[e1;e2],loc,[])
       | _ -> state,exp
 
 (** Transforms mem x=0; -> mem x; x=0; *)
@@ -620,6 +620,6 @@ let finalPasses module_name state =
 (* Basic transformations *)
 let interpreterPasses state =
    state
-   |+> TypesUtil.traverseTopExpList None operatorsToFunctionCalls
+   (*|+> TypesUtil.traverseTopExpList None operatorsToFunctionCalls*)
    |+> TypesUtil.traverseBottomExpList None nameLocalScopes
 

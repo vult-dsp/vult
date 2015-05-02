@@ -30,10 +30,10 @@ open PassesUtil
 (** Negates a condition*)
 let notCondition (exp:exp) =
    match exp with
-   | PCall(_,["'!'"],[exp],_,_) -> exp
+   | PCall(_,["not"],[exp],_,_) -> exp
    | _ ->
       let loc = getExpLocation exp in
-      PCall(None,["'!'"],[exp],loc,[])
+      PCall(None,["not"],[exp],loc,[])
 
 (** Splits if statemtents containing else in order to apply simplifications. e.g. if(a) stmt1; else stmt2; -> if(a) stmt1; if(!a) stmt2; *)
 let splitIfWithTwoReturns : ('data,exp) expander =
@@ -175,7 +175,7 @@ let removeEmptyIfConditions : ('data,exp) traverser =
 let removeSwapedIfCondition : ('data,exp) traverser =
    fun state stmt ->
       match stmt with
-      | StmtIf(PCall(_,["'!'"],[exp],_,_),then_stmt,Some(else_stmt),loc)->
+      | StmtIf(PCall(_,["not"],[exp],_,_),then_stmt,Some(else_stmt),loc)->
          state,StmtIf(exp,else_stmt,Some(then_stmt),loc)
       | _ -> state,stmt
 

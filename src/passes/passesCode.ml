@@ -109,6 +109,15 @@ let makeFunDeclFullName : (pass_state,exp) traverser =
          state,StmtFun([full_name],args,body,ret,active,loc)
       | _ -> state,exp
 
+
+let addReturn : (pass_state,exp) traverser =
+   fun state exp ->
+      match exp with
+      | StmtFun(name,args,body,ret,act,loc) when hasReturn body |> not ->
+         let new_body = makeStmtBlock loc [body;StmtReturn(PInt(0,loc),loc)] in
+         state,StmtFun(name,args,new_body,ret,act,loc)
+      | _ -> state,exp
+
 (** Returns the dependencies of a type declaration *)
 let returnTypeDependencies (tp:exp) : identifier list =
    match tp with
@@ -171,6 +180,7 @@ let codeGenPasses module_name state =
    |+> TypesUtil.foldAsTransformation None collectFunctionDefinitions
    |+> TypesUtil.traverseBottomExpList None
       (removeNamesFromStaticFunctions
+       |-> addReturn
        |-> replaceMemAccess
        |-> makeInstanceArgument module_name
        |-> makeCallsFullName

@@ -31,7 +31,7 @@ open PassesUtil
 (** Parses a string and runs it with the interpreter *)
 let parseStringRun s =
    ParserVult.parseString s
-   |> Passes.applyTransformations PassesUtil.opt_full_transform
+   |> Passes.applyTransformations { PassesUtil.opt_full_transform with interpreter = true }
    |> DynInterpreter.interpret
 
 (** Parses a string and runs it with the interpreter *)

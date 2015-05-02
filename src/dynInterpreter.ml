@@ -168,7 +168,7 @@ let getExpValueFromEnv (loc:local_env) (name:identifier) : value =
       (*let _ = Printf.printf "Got %s\n" (valueStr v) in*)
       v
    | Some(_)        -> failwith "getExpValueFromEnv: not a value"
-   | None           -> failwith ("getExpValueFromEnv: not found"^(identifierStr name))
+   | None           -> failwith ("getExpValueFromEnv: not found '"^(identifierStr name)^"'")
 
 (** Sets the value of a given variable *)
 let setValMem (loc:local_env) (name:identifier) (value:value) : local_env =
@@ -236,8 +236,15 @@ and runExp (loc:local_env) (exp:exp) : value * local_env * bool =
       let loc          = popLocal loc name in
       result,loc,false
    | PEmpty -> failwith "There should not be Empty expressions when calling the intepreter"
-   | PBinOp(_,_,_,_)
-   | PUnOp(_,_,_) -> failwith "There should not be operators when calling the intepreter"
+   | PBinOp(op,e1,e2,_) ->
+      let body      = getFunctionBody loc [op] in
+      let ee1,loc,_ = runExp loc e1 in
+      let ee2,loc,_ = runExp loc e2 in
+      evalFun loc None body [ee1;ee2]
+   | PUnOp(op,e1,_) ->
+      let body      = getFunctionBody loc [op] in
+      let ee1,loc,_ = runExp loc e1 in
+      evalFun loc None body [ee1]
    | StmtVal(PId(name,_,_),opt_init,_) ->
       let init,loc,_ = apply_default (runExp loc) opt_init (VNum(0.0),loc,false) in
       VUnit,declVal loc name init,false
@@ -399,31 +406,32 @@ let addBuiltinFunctions (loc:local_env) : local_env =
    let min args = match args with [VNum(a);VNum(b)] -> VNum(min a b) | _ -> failwith "min: invalid arguments" in
    let max args = match args with [VNum(a);VNum(b)] -> VNum(max a b) | _ -> failwith "max: invalid arguments" in
    [
-      ["'+'"],BuiltinF(plus);
-      ["'-'"],BuiltinF(minus);
-      ["'*'"],BuiltinF(mult);
-      ["'/'"],BuiltinF(div);
-      ["'=='"],BuiltinF(equal);
-      ["'!='"],BuiltinF(unequal);
-      ["'<'"],BuiltinF(smaller);
-      ["'>'"],BuiltinF(larger);
-      ["'<='"],BuiltinF(smaller_equal);
-      ["'>='"],BuiltinF(larger_equal);
-      ["'||'"],BuiltinF(or_op);
-      ["'&&'"],BuiltinF(and_op);
-      ["'!'"],BuiltinF(not_op);
+      ["+"],    BuiltinF(plus);
+      ["-"],    BuiltinF(minus);
+      ["*"],    BuiltinF(mult);
+      ["/"],    BuiltinF(div);
+      ["=="],   BuiltinF(equal);
+      ["!="],   BuiltinF(unequal);
+      ["<"],    BuiltinF(smaller);
+      [">"],    BuiltinF(larger);
+      ["<="],   BuiltinF(smaller_equal);
+      [">="],   BuiltinF(larger_equal);
+      ["||"],   BuiltinF(or_op);
+      ["&&"],   BuiltinF(and_op);
+      ["!"],    BuiltinF(not_op);
+      ["not"],  BuiltinF(not_op);
       ["print"],BuiltinF(print_fun);
       ["println"],BuiltinF(println_fun);
-      ["tanh"],BuiltinF(tanh_fun);
-      ["abs"],BuiltinF(abs_fun);
+      ["tanh"], BuiltinF(tanh_fun);
+      ["abs"],  BuiltinF(abs_fun);
       ["floor"],BuiltinF(floor_fun);
-      ["sin"],BuiltinF(sin_fun);
+      ["sin"],  BuiltinF(sin_fun);
       ["fixdenorm"],BuiltinF(fixdenorm);
-      ["exp"],BuiltinF(fexp);
+      ["exp"],  BuiltinF(fexp);
       ["readTable"],BuiltinF(readTable);
-      ["clip"],BuiltinF(clip);
-      ["max"],BuiltinF(max);
-      ["min"],BuiltinF(min);
+      ["clip"], BuiltinF(clip);
+      ["max"],  BuiltinF(max);
+      ["min"],  BuiltinF(min);
    ]
    |> List.fold_left (fun env (a,b) -> declFunction env a b) loc
 

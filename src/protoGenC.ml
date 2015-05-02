@@ -27,6 +27,7 @@ type op =
    | ORef
    | ODeRef
    | OMod
+   | ONot
 
 type ctyp_def =
    {
@@ -77,6 +78,7 @@ let convertOp (op:string) : op option =
    | "!=" -> Some(OUEq)
    | "&&" -> Some(OAnd)
    | "||" -> Some(OOr)
+   | "!"  -> Some(ONot)
    | "p&" -> Some(ORef)
    | "*&" -> Some(ODeRef)
    | "<=" -> Some(OLtEq)
@@ -205,13 +207,14 @@ let printOpNormal (o:print_options) op =
    | OGtEq  -> append o.buffer " >= "
    | ORef   -> append o.buffer "&"
    | ODeRef -> append o.buffer "*"
+   | ONot   -> append o.buffer "!"
 
 let funNameFixed (f:string) =
    match f with
-   | "sin" -> "fix_sin"
-   | "cos" -> "fix_cos"
-   | "tan" -> "fix_tah"
-   | "exp" -> "fix_exp"
+   | "sin"   -> "fix_sin"
+   | "cos"   -> "fix_cos"
+   | "tan"   -> "fix_tah"
+   | "exp"   -> "fix_exp"
    | "floor" -> "fix_floor"
    | "clip"  -> "fix_clip"
    | "min"   -> "fix_min"

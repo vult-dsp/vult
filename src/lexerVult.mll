@@ -54,6 +54,8 @@ let keyword_table =
       "while",WHILE;
       "type",TYPE;
       "table",TABLE;
+      "true",TRUE;
+      "false",FALSE;
    ] in
    let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
    table
@@ -129,8 +131,10 @@ let kindToString kind =
    | OP    -> "'operator'"
    | DOT   -> "'.'"
    | TABLE -> "'table'"
-   | LARR  -> "'[|"
-   | RARR  -> "'|]"
+   | LARR  -> "'[|'"
+   | RARR  -> "'|]'"
+   | TRUE  -> "'true'"
+   | FALSE  -> "'false'"
 
 (** Returns a string representation of the token *)
 let tokenToString l =

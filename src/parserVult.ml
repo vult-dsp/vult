@@ -75,19 +75,27 @@ let rec moveToNextStatement (buffer:'a lexer_stream) : unit =
 (** Checks that the next token matches the given kind and skip it *)
 let consume (buffer:'a lexer_stream) (kind:token_enum) : unit =
    match buffer.peeked with
-   | t when t.kind=kind ->
+   | t when t.kind = kind ->
       let _ = buffer.prev <- buffer.peeked in
       buffer.peeked <- next_token buffer.lines buffer.lexbuf
+   | t when t.kind = EOF ->
+      let expected = kindToString kind in
+      let message = Printf.sprintf "Expecting a %s but the file ended" expected in
+      raise (ParserError(getErrorForToken buffer message))
    | got_token ->
       let expected = kindToString kind in
       let got = tokenToString got_token in
-      let message = Printf.sprintf "Expecting a %s but got %s" expected got in
+      let message =  Printf.sprintf "Expecting a %s but got %s" expected got in
       raise (ParserError(getErrorForToken buffer message))
 
 (** Checks that the next token matches *)
 let expect (buffer:'a lexer_stream) (kind:token_enum) : unit =
    match buffer.peeked with
    | t when t.kind=kind -> ()
+   | t when t.kind = EOF ->
+      let expected = kindToString kind in
+      let message = Printf.sprintf "Expecting a %s but the file ended" expected in
+      raise (ParserError(getErrorForToken buffer message))
    | got_token ->
       let expected = kindToString kind in
       let got = kindToString got_token.kind in
@@ -149,6 +157,8 @@ let getContents (token:exp token) : exp =
    | INT ,PEmpty -> PInt(int_of_string token.value,token.loc)
    | ID  ,PEmpty -> PId(splitOnDot token.value,None,token.loc)
    | REAL,PEmpty -> PReal(float_of_string token.value,token.loc)
+   | TRUE,PEmpty -> PBool(true,token.loc)
+   | FALSE,PEmpty -> PBool(false,token.loc)
    | _    -> token.contents
 
 (** Parses an expression using a Pratt parser *)
@@ -196,7 +206,7 @@ and exp_nud (buffer:exp lexer_stream) (token:exp token) : exp token =
             let _ = consume buffer RPAREN in
             { token with contents = PGroup(e,start_loc) }
       end
-   | INT,_ | REAL,_ -> token
+   | INT,_ | REAL,_ | TRUE,_ | FALSE,_ -> token
    | IF,_ ->
       let cond = getContents (expression 0 buffer) in
       let _ = consume buffer THEN in

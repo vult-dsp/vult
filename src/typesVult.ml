@@ -74,6 +74,8 @@ type token_enum =
    | TABLE
    | LARR
    | RARR
+   | TRUE
+   | FALSE
 
 type 'a token =
    {
