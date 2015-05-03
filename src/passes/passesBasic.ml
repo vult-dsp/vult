@@ -210,6 +210,8 @@ let trivial : ('data,exp) traverser =
       | PUnOp("-",PReal(v,loc),_)  -> state,PReal(-. v,loc)
       | PBinOp("/",e1,e2,loc1) when isNumber e1 && isNumber e2 ->
          state,PReal((asReal e1) /. (asReal e2),loc1)
+      | PBinOp("*",e1,e2,loc1) when isNumber e1 && isNumber e2 ->
+         state,PReal((asReal e1) *. (asReal e2),loc1)
       | PBinOp("/",e1,PReal(v,loc),loc1)->
          state,PBinOp("*",e1,PReal(1.0 /. v,loc),loc1)
       | PBinOp("/",e1,PInt(v,loc),loc1)->
