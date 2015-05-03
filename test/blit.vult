@@ -1,6 +1,13 @@
 
 
-fun near_zero(x) : bool return abs(x)<1e-2;
+fun near_zero(x) : bool return abs(x)<2e-2;
+
+fun change(x):bool {
+    mem pre_x;
+    val v:bool = pre_x!=x;
+    pre_x = x;
+    return v;
+}
 
 fun dcblock(x0){
   mem x1,y1;
@@ -30,7 +37,6 @@ fun osc(pitch,pw,wave){
   mem m:int;
   mem rate;
   mem phase;
-  mem p;
   mem pre_pitch;
   mem state_triang;
   mem state_pulse;
@@ -50,11 +56,10 @@ fun osc(pitch,pw,wave){
     fixed_pitch = pitch + 12;
   }
   // Updates the parameters if the pre_pitch changed
-  if(pre_pitch != fixed_pitch) {
-    pre_pitch = fixed_pitch;
-    rate = pitchToRate(pitch);
-    p = 1/rate;
-    val maxHarmonics = floor(p/4);
+  if(change(fixed_pitch)) {
+    rate = pitchToRate(fixed_pitch);
+    val p = 1/rate;
+    val maxHarmonics = floor(p/2);
     m = 2 * maxHarmonics + 1;
   }
   // Generates a shifted version of the phase
@@ -75,8 +80,8 @@ fun osc(pitch,pw,wave){
 
   // Calculates the waveforms based on the pulse trains
   state_pulse  = clip(state_pulse  * 0.9995 + tmp1 - tmp2, -1, 1);
-  state_saw    = clip(state_saw    * 0.9995 + (tmp1 + tmp2  - 2 / p)/shift05/2, -1,1);
-  state_triang = clip(state_triang * 0.9995 + 2 * state_pulse/p, -1,1);
+  state_saw    = clip(state_saw    * 0.9995 + (tmp1 + tmp2  - 2*rate)/shift05/2, -1,1);
+  state_triang = clip(state_triang * 0.9995 + 2 * state_pulse*rate, -1,1);
 
   // Select the wave to output
   if(pre_wave < 1/3) {
@@ -90,6 +95,6 @@ fun osc(pitch,pw,wave){
   }
 
   output = dcblock(output);
-  return output/4;
+  return clip(output/4,-1,1);
 }
 
