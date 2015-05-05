@@ -279,7 +279,7 @@ let rec printExp (o:print_options) (e:cexp) =
       printExpSep o ", " args;
       append o.buffer ")"
    | ECall(name,args),_ ->
-      append o.buffer (funNameFixed name);
+      append o.buffer name;
       append o.buffer "(";
       printExpSep o ", " args;
       append o.buffer ")"
