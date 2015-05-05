@@ -41,7 +41,7 @@ Vult has if-statements but also if-expressions.
 ```
 val a = 0;
 if(square(-1)> 0){
-	a = 1;
+    a = 1;
 }
 
 val b = if square(-1) > 0 then -1 else 0;
@@ -53,21 +53,21 @@ Vult has while-loops...
 
 ```
 fun fact(x){
-	val i = x;
-	val acc = 1;
-	while(i>0){
-		acc = acc * i;
-		i = i-1;
-	}
-	return acc;
+    val i = x;
+    val acc = 1;
+    while(i>0){
+        acc = acc * i;
+        i = i-1;
+    }
+    return acc;
 }
 ```
 
 ... but often is easier to write loops as recursive functions.
 ```
 fun fact(x)
-	if(x==0) return 1;
-	else return x * fact(x-1);
+    if(x==0) return 1;
+    else return x * fact(x-1);
 ```
 So far, there's nothing special. Now lets make something more interesting.
 
@@ -79,9 +79,9 @@ Lets say that we want to write in Vult a function that will be called in the mai
 
 ```
 void loop(){
-	int x = analogRead(0);
-	int result = processValue(x); // something like this
-	analogWrite(result);
+    int x = analogRead(0);
+    int result = processValue(x); // something like this
+    analogWrite(result);
 }
 ```
 
@@ -97,15 +97,15 @@ Now we are gonna declare two memory variables with the keyword `mem`.
 
 ```
 fun process(x){
-	mem pre_x;  // we will use it to keep the previous input
-	mem result; // we will use it to keep the previous result
+    mem pre_x;  // we will use it to keep the previous input
+    mem result; // we will use it to keep the previous result
 
-	if(x != pre_x)           // if the previous input is different from the current
-		result = 1/(x*x);    // recompute
+    if(x != pre_x)           // if the previous input is different from the current
+        result = 1/(x*x);    // recompute
 
-	pre_x = x;               // updates the previous input and result
+    pre_x = x;               // updates the previous input and result
 
-	return result;
+    return result;
 }
 ```
 
@@ -125,10 +125,10 @@ We can simplify the above code by declaring the function `change` as follows:
 ```
 // This function returns true when the input value changes
 fun change(x){
-	mem pre_x;               // remembers the previous value
-	val result = pre_x != x; // checks if the value is different
-	pre_x = x;               // updates the previous value
-	return result;
+    mem pre_x;               // remembers the previous value
+    val result = pre_x != x; // checks if the value is different
+    pre_x = x;               // updates the previous value
+    return result;
 }
 ```
 
@@ -136,33 +136,33 @@ Now we can simplify our `process` function as follows:
 
 ```
 fun process(x){
-	mem result; // we will use it to keep the previous result
+    mem result; // we will use it to keep the previous result
 
-	if(change(x))            // if the previous input is different from the current
-		result = 1/(x*x);    // recompute
+    if(change(x))            // if the previous input is different from the current
+        result = 1/(x*x);    // recompute
 
-	return result;
+    return result;
 }
 ```
 In a similar way we can create a set of very handy functions. For example:
 ```
 // This function returns true when the input value changes from zero to anything
 fun edge(x){
-	mem pre_x;
-	// checks if the value is different and the previous was zero
-	val result = pre_x != x && pre_x == 0;
-	pre_x = x;
-	return result;
+    mem pre_x;
+    // checks if the value is different and the previous was zero
+    val result = pre_x != x && pre_x == 0;
+    pre_x = x;
+    return result;
 }
 ```
 
 ```
 // This function returns true every 'n' calls
 fun every(n){
-	mem count;
-	val result = count == 0;
-	count = (count+1)%n;
-	return result;
+    mem count;
+    val result = count == 0;
+    count = (count+1)%n;
+    return result;
 }
 ```
 
@@ -170,12 +170,12 @@ The function every can be used as follows in order to reduce the number of times
 
 ```
 fun process(x){
-	mem result; // we will use it to keep the previous result
+    mem result; // we will use it to keep the previous result
 
-	if(every(4))           // the value is calculated every 4 calls
-		result = 1/(x*x);  // recompute
+    if(every(4))           // the value is calculated every 4 calls
+        result = 1/(x*x);  // recompute
 
-	return result;
+    return result;
 }
 ```
 
@@ -187,9 +187,9 @@ Take a look at the function `count` defined below.
 
 ```
 fun count(){
-	mem counter;
-	counter = counter + 1;
-	return counter;
+    mem counter;
+    counter = counter + 1;
+    return counter;
 }
 ```
 
@@ -220,8 +220,8 @@ In the above code we have two contexts `x` and `y` for the calls to the `count` 
 
 ```
 fun reset(){
-	mem counter;
-	counter = 0;
+    mem counter;
+    counter = 0;
 }
 ```
 Now we can reset the counter by using the same context.
@@ -259,9 +259,9 @@ fun lp6(x,fc) {
     // we calculate the coefficients only when the 'fc' changes
     if(change(fc)){
         val k = tan(3.1415*fc/44100); // 44100 is the sample rate
-    	val b0 = k/(k+1);
-    	val b1 = k/(k+1);
-    	val a1 = (k-1)/(k+1);
+        b0 = k/(k+1);
+        b1 = k/(k+1);
+        a1 = (k-1)/(k+1);
     }
     return biquad(x,b0,b1,0,a1,0);
 }
@@ -275,6 +275,147 @@ Let's say that we want to filter two signals (`signal1` and `signal2`) with our 
 val filtered1 = lp6(signal1,1000);
 val filtered2 = lp6(signal2,1000);
 ```
+
+### Generating C Code
+
+Vult is distributed as a single executable `vultc` that can be integrated with a traditional build system (make or cmake). In this example we are gonna use it directly in the command line. First copy the full code of the filter to a file and call it `filter.vult`.
+
+```
+/// File: filter.vult
+
+fun change(x){
+    mem pre_x;               // remembers the previous value
+    val result = pre_x != x; // checks if the value is different
+    pre_x = x;               // updates the previous value
+    return result;
+}
+
+fun biquad(x,b0,b1,b2,a1,a2){
+    mem w1,w2;
+    val w0 = x -a1*w1-a2*w2;
+    val y0 = b0*w0 + b1*w1 + b2*w2;
+    w2, w1 = w1, w0;
+    return y0;
+}
+
+fun lp6(x,fc) {
+    mem b0,b1,a1;
+    // we calculate the coefficients only when the 'fc' changes
+    if(change(fc)){
+        val k = tan(3.1415*fc/44100); // 44100 is the sample rate
+        b0 = k/(k+1);
+        b1 = k/(k+1);
+        a1 = (k-1)/(k+1);
+    }
+    return biquad(x,b0,b1,0,a1,0);
+}
+```
+
+Now you can run the Vult compiler on this file as follows:
+
+```
+$ vultc -ccode filter.vult -o filter
+```
+
+The flag `-ccode` indicates that we want to generate C code. The flag `-o` specifies the name of the `.c` and `.h` we want to generate; in this case `filter.c` and `filter.h`.
+
+This is the content of the `filter.h` file:
+
+```
+#ifndef _CODE_
+#define _CODE_
+
+#include <math.h>
+#include <stdint.h>
+#include "vultin.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+typedef struct __filter_struct_0 {
+   float w2;
+   float w1;
+} _filter_struct_0;
+
+int _filter_struct_0_init(_filter_struct_0* st);
+
+typedef struct __filter_struct_1 {
+   float pre_x;
+} _filter_struct_1;
+
+int _filter_struct_1_init(_filter_struct_1* st);
+
+typedef struct __filter_struct_2 {
+   float b1;
+   float b0;
+   float a1;
+   float _i0_pre_x;
+   _filter_struct_0 _i1;
+} _filter_struct_2;
+
+int _filter_struct_2_init(_filter_struct_2* st);
+
+typedef struct __filter_struct_0 _filter_struct_biquad;
+
+int _filter_struct_biquad_init(_filter_struct_biquad* st);
+
+typedef struct __filter_struct_1 _filter_struct_change;
+
+int _filter_struct_change_init(_filter_struct_change* st);
+
+typedef struct __filter_struct_2 _filter_struct_lp6;
+
+int _filter_struct_lp6_init(_filter_struct_lp6* st);
+
+float _filter__lp6(_filter_struct_2* _st_, float x, float fc);
+
+float _filter__change(_filter_struct_1* _st_, float x);
+
+float _filter__biquad(_filter_struct_0* _st_, float x, float b0, float b1, float b2, float a1, float a2);
+
+float _filter_();
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+```
+
+For each function, Vult generates a type, a type initialization and the actual function code. The naming of these types and functions follows this name convention: a function `foo` in a file `filename.vult` generates
+- A type `_<filename>_struct_<foo>`
+- A function initializer `_<filename>_struct_<foo>_init`
+- The function body `_<filename>_<foo>`
+
+In order to use the generated code from a C/C++ program you need to declare a type `_<filename>_struct_<foo>` then initialize it and call your function passing a pointer to the variable. Here is an example:
+
+```
+#include "filter.h"
+
+void main(void){
+    _filter_struct_biquad my_filter;        // declare a variable (struct) 'my_filter'
+    _filter_struct_biquad_init(&my_filter); // initializes the structure
+
+    // Performs one step of the filter with input 0 and frequency 1000 hertz
+    float result = _filter_biquad(&my_filter,0,1000);
+}
+
+```
+
+In order to compile the code you need include the files `vultin.c` and `vultin.h` found in the `runtime` folder.
+
+Vult generates by default floating-point code. If you want to generate code to run in a microcontroller it's better to generate fixed-point code. You can read more about fixed-point arithmetic here: http://en.wikipedia.org/wiki/Fixed-point_arithmetic
+
+In order to generate fixed-point code you need to pass the flag `-real` as follows:
+
+```
+$ vultc -ccode -real fixed filter.vult -o filter
+```
+
+The resulting code will use 32 bit integers to represent all numeric values. This code runs much more efficiently in Arduinos or Teensy boards.
+
+In order to convert back and forth fixed-point values, integers and floats you can use the functions included in `vultin.h` `fix_to_float`, `fix_from_float`, etc.
 
 ### Planned Features
 
