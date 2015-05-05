@@ -1,4 +1,4 @@
-![Vult](/other/Images/Vult-Small.png?raw=true "Vult")
+![Vult](/other/Images/Vult.png?raw=true "Vult")
 
 Vult is a simple and powerful language to program high-performance algorithms that may run in small microprocessors or microcontrollers. Vult is specially useful when programming  Digital Signal Processing (DSP) algorithms like audio effects or synthesizers.
 
