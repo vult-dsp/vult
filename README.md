@@ -18,6 +18,11 @@ Future features:
 - More target languages: Vult will generate Javascript, C++ and Ocaml.
 - More language commodities: See the planed language features section.
 
+## Credits
+
+Logo design by:
+- John Klimt https://www.facebook.com/JohnKlimt
+
 ## Using Vult
 
 ### Vult Basics
