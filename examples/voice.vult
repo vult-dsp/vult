@@ -293,7 +293,42 @@ fun isGateOn(){
    return if count>0 then 1 else 0;
 }
 
+fun process(i){
+  mem param1; // pitch
+  mem param2; // pw
+  mem param3; // wave
+  mem param4; // osc amt
+  mem param5; // rate
+  mem param6; // cut
+  mem param7; // res
+  mem param8; // flt amt
 
+  mem param9;  // amp_a
+  mem param10; // amp_d
+  mem param11; // amp_s
+  mem param12; // amp_r
 
+  mem param13; // env_a
+  mem param14; // env_d
+  mem param15; // env_s
+  mem param16; // env_r
+
+  val gate    = monoin:isGateOn();
+  val lfo     = lfo(param5,gate,param4);
+  val x       = osc(param1,param2+lfo,param3);
+  val amp_env = adsr(gate,param9,param10,param11,param12);
+  val flt_env = adsr(gate,param13,param14,param15,param16);
+  val cut_mod = param6 + param8 * flt_env;
+  val output  = svf(x,cut_mod,param7,0);
+  return output/2;
+}
+
+fun process_noteOn(n){
+  monoin:noteOn(n);
+}
+
+fun process_noteOff(n){
+  monoin:noteOff(n);
+}
 
 

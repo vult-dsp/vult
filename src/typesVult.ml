@@ -254,6 +254,7 @@ type arguments =
       mutable rundyn : bool;
       mutable debug  : bool;
       mutable ccode  : bool;
+      mutable jscode : bool;
       mutable run_check  : bool;
       mutable output : string;
       mutable real   : string;

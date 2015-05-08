@@ -43,6 +43,7 @@ let processArguments () : arguments =
          rundyn    = false;
          debug     = false;
          ccode     = false;
+         jscode    = false;
          output    = "";
          real      = "float"
       } in
@@ -52,6 +53,7 @@ let processArguments () : arguments =
       "-rundyn", (Arg.Unit   (fun () -> result.rundyn   <-true)), "Runs the dynamic interpreter (default: off)";
       "-debug",  (Arg.Unit   (fun () -> result.debug    <-true)), "Runs the debugger (default: off)";
       "-ccode",  (Arg.Unit   (fun () -> result.ccode    <-true)), "Converts the code to c (default: off)";
+      "-jscode", (Arg.Unit   (fun () -> result.jscode   <-true)), "Converts the code to javascript (default: off)";
       "-o",      (Arg.String (fun output -> result.output<-output)), "Defines the prefix of the output files";
       "-real",   (Arg.String (fun real -> result.real<-real)), "Defines the numeric type for the generated code (float,double,fixed)";
    ]
@@ -96,24 +98,8 @@ let main () =
    let _ = if args.dparse then dumpParsedFiles parser_results in
    (* Generates the c code if -ccode was passed as argument *)
    let _ =
-      if args.ccode then
-         begin
-            let c_text,h_text = generateCode args parser_results in
-            if args.output<>"" then
-               begin
-                  let oc = open_out (args.output^".c") in
-                  Printf.fprintf oc "%s\n" c_text;
-                  close_out oc;
-                  let oh = open_out (args.output^".h") in
-                  Printf.fprintf oh "%s\n" h_text;
-                  close_out oh
-               end
-            else
-               begin
-                  print_endline h_text;
-                  print_endline c_text;
-               end
-         end
+      if args.ccode || args.jscode then
+         generateCode args parser_results
    in
    (* Runs the dynamic interpreter if -rundyn was passed as argument *)
    let _ = if args.rundyn then runInterpreter parser_results in
