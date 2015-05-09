@@ -259,3 +259,16 @@ type arguments =
       mutable output : string;
       mutable real   : string;
    }
+
+let default_arguments =
+   {
+      files = ["live.vult"];
+      dparse = false;
+      rundyn = false;
+      debug = false;
+      ccode = false;
+      jscode = true;
+      run_check = false;
+      output = "live";
+      real = "float";
+   }

@@ -646,5 +646,5 @@ let parseFile (filename:string) : parser_results =
 (** Parses a string containing a list of statements and returns the results *)
 let parseString (text:string) : parser_results =
    let buffer = bufferFromString text in
-   let result = parseBuffer "" buffer in
+   let result = parseBuffer "live.vult" buffer in
    result

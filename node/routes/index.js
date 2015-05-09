@@ -15,3 +15,16 @@ exports.index = function(req, res){
   //});
 
 };
+
+exports.live = function(req, res){
+  //fs = require('fs')
+  //fs.readFile('/home/leonardo/Development/simple/Main.mo', 'utf8', function (err,data) {
+  //  if (err) {
+  //    return console.log(err);
+  //  }
+    var myJSONString = JSON.stringify("");
+	  var myEscapedJSONString = myJSONString;
+    res.render('live', { pagedata : {title: 'Vult interpreter', text: myEscapedJSONString}});
+  //});
+
+};

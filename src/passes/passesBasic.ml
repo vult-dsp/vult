@@ -587,7 +587,7 @@ let bindReturn : ('data,exp) expander =
 
 (** Wraps all the statements into a function called _main_ and calls it *)
 let makeFunAndCall name state stmts =
-   let fcall = ["_"^name^"_"] in
+   let fcall = [name^"_"] in
    state,[StmtFun(fcall,[],appendBlocks stmts,None,false,default_loc); StmtReturn(PCall(Some(fcall),fcall,[],default_loc,[]),default_loc)]
 
 (* Basic transformations *)

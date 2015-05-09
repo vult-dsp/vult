@@ -41,7 +41,7 @@ let parseStringRunWithOptions options s =
    |> DynInterpreter.interpret
 
 (** Generates the .c and .h file contents for the given parsed files *)
-let generateCCode (args:arguments) (parser_results:parser_results list) : unit =
+let generateCCode (args:arguments) (parser_results:parser_results list) : string =
    let file = if args.output<>"" then args.output else "code" in
    let file_up = String.uppercase file in
    let stmts =
@@ -91,10 +91,10 @@ extern \"C\"
          print_endline h_final;
          print_endline c_final;
       end
-   in ()
+   in h_final^c_final
 
 (** Generates the .c and .h file contents for the given parsed files *)
-let generateJSCode (args:arguments) (parser_results:parser_results list) : unit =
+let generateJSCode (args:arguments) (parser_results:parser_results list) : string =
    let stmts =
       parser_results
       |> List.map (Passes.applyTransformations { opt_full_transform with inline = false; codegen = true })
@@ -108,28 +108,37 @@ let generateJSCode (args:arguments) (parser_results:parser_results list) : unit 
    let js_text = ProtoGenJS.generateModule args stmts in
    let js_final =
       Printf.sprintf
-"function clip(x,low,high) { return x<low?low:(x>high?high:x); }
-function not(x) { x==0?1:0; }
-%s"
+"function Process(){
+ this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
+ this.not  = function(x) { x==0?1:0; };
+ %s
+}
+new Process()"
    js_text
    in
-   let _ =
    if args.output<>"" then
       begin
          let oc = open_out (args.output^".js") in
          Printf.fprintf oc "%s\n" js_final;
-         close_out oc
+         close_out oc;
+         js_final
       end
    else
       begin
-         print_endline js_final
+         print_endline js_final;
+         js_final
       end
-   in ()
 
-let generateCode (args:arguments) (parser_results:parser_results list) : unit =
+let generateCode (args:arguments) (parser_results:parser_results list) : string =
    if args.ccode then
-      generateCCode args parser_results;
+      generateCCode args parser_results
+   else
    if args.jscode then
       generateJSCode args parser_results
+   else ""
 
+
+let parseStringGenerateCode s =
+   ParserVult.parseString s
+   |> fun a -> generateCode default_arguments [a]
 

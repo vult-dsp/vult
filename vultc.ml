@@ -99,7 +99,7 @@ let main () =
    (* Generates the c code if -ccode was passed as argument *)
    let _ =
       if args.ccode || args.jscode then
-         generateCode args parser_results
+         let _ = generateCode args parser_results in ()
    in
    (* Runs the dynamic interpreter if -rundyn was passed as argument *)
    let _ = if args.rundyn then runInterpreter parser_results in

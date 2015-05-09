@@ -37,5 +37,10 @@ let parseText s =
 
 ;;
 
+let generateJSCode s =
+	Driver.parseStringGenerateCode (Js.to_string s) |> Js.string
+;;
+
 (*let _ = Js.Unsafe.set (Js.Unsafe.variable "cover_functions") (Js.string "parseText") (Js.wrap_callback parseText)*)
-Js.Unsafe.global##plop <- (Js.wrap_callback parseText)
+Js.Unsafe.global##plop <- (Js.wrap_callback parseText) ;;
+Js.Unsafe.global##jscode <- (Js.wrap_callback generateJSCode) ;;

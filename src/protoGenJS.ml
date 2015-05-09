@@ -1,7 +1,7 @@
 
 open TypesVult
 open PrintBuffer
-
+open TypesUtil
 
 type ident = string
 type member = ident list
@@ -136,7 +136,7 @@ let convertNamedId (name:named_id) : ctyp * ident =
 let convertMember (member:val_decl) : ctyp * ident =
    match member with
    | [name],e,_ -> convertType (Some(e)),name
-   | _ -> failwith "convertMember: cannot convert member"
+   | name,e,_ -> failwith ("convertMember: cannot convert member "^(identifierStr name))
 
 let rec convertStmt (e:exp) : cstmt =
    match e with
@@ -220,7 +220,7 @@ let funNameJs (f:string) =
    | "min"   -> "Math.min"
    | "max"   -> "Math.max"
    | "abs"   -> "Math.abs"
-   | _ -> f
+   | _ -> "this."^f
 
 let opIsFunction op =
    match op with
@@ -272,8 +272,10 @@ let rec printExp (o:print_options) (e:cexp) =
       printList o.buffer (fun b a-> append b a) "." name
    | EString(s),_ ->
       append o.buffer s
+   | EReal(0.0),_ ->
+      append o.buffer "0.0"
    | EReal(f),_ ->
-      append o.buffer (string_of_float f)
+      append o.buffer (Printf.sprintf "%f" f)
    | EInt(i),_ ->
       append o.buffer (string_of_int i)
    | EUop(ORef,e1),_ ->
@@ -295,7 +297,7 @@ let rec printExp (o:print_options) (e:cexp) =
       append o.buffer ":";
       printExp o e2;
       append o.buffer ")"
-   | ENewObj,_ -> append o.buffer "new Object()"
+   | ENewObj,_ -> append o.buffer "{}"
 and printExpSep (o:print_options) sep el =
    match el with
    | []   -> ()
@@ -321,8 +323,9 @@ let rec printStm (o:print_options) (s:cstmt) =
       append o.buffer ";";
       newline o.buffer
    | SFunction(tp,name,args,body) ->
-      append o.buffer "function ";
+      append o.buffer "this.";
       append o.buffer name;
+      append o.buffer " = function ";
       append o.buffer "(";
       printArgs o args;
       append o.buffer ")";
