@@ -112,6 +112,44 @@ let generateJSCode (args:arguments) (parser_results:parser_results list) : strin
  this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
  this.not  = function(x) { x==0?1:0; };
  %s
+ this.context = {};
+ this._live_struct_process_init(this.context);
+ this.live__default(this.context);
+ this.context.param1_in = 0.0;
+ this.context.param2_in = 0.0;
+ this.context.param3_in = 0.5;
+ this.context.param4_in = 0.054;
+ this.context.param5_in = 0.157;
+ this.context.param6_in = 1;
+ this.context.param7_in = 0.43;
+ this.context.param8_in = 0;
+ this.context.param9_in = 0;
+ this.context.param10_in = 0;
+ this.context.param11_in = 1;
+ this.context.param12_in = 0;
+ this.context.param13_in = 0.1;
+ this.context.param14_in = 0;
+ this.context.param15_in = 0;
+ this.context.param16_in = 0;
+ this.go = function(i){
+   this.context.param1 =this.context.param1+ (this.context.param1_in-this.context.param1)*0.01;
+   this.context.param2 =this.context.param2+ (this.context.param2_in-this.context.param2)*0.01;
+   this.context.param3 =this.context.param3+ (this.context.param3_in-this.context.param3)*0.01;
+   this.context.param4 =this.context.param4+ (this.context.param4_in-this.context.param4)*0.01;
+   this.context.param5 =this.context.param5+ (this.context.param5_in-this.context.param5)*0.01;
+   this.context.param6 =this.context.param6+ (this.context.param6_in-this.context.param6)*0.01;
+   this.context.param7 =this.context.param7+ (this.context.param7_in-this.context.param7)*0.01;
+   this.context.param8 =this.context.param8+ (this.context.param8_in-this.context.param8)*0.01;
+   this.context.param9 =this.context.param9+ (this.context.param9_in-this.context.param9)*0.01;
+   this.context.param10=this.context.param10+(this.context.param10_in-this.context.param10)*0.01;
+   this.context.param11=this.context.param11+(this.context.param11_in-this.context.param11)*0.01;
+   this.context.param12=this.context.param12+(this.context.param12_in-this.context.param12)*0.01;
+   this.context.param13=this.context.param13+(this.context.param13_in-this.context.param13)*0.01;
+   this.context.param14=this.context.param14+(this.context.param14_in-this.context.param14)*0.01;
+   this.context.param15=this.context.param15+(this.context.param15_in-this.context.param15)*0.01;
+   this.context.param16=this.context.param16+(this.context.param16_in-this.context.param16)*0.01;
+   return this.live__process(this.context,i);
+ }
 }
 new Process()"
    js_text

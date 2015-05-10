@@ -272,12 +272,12 @@ let rec printExp (o:print_options) (e:cexp) =
       printList o.buffer (fun b a-> append b a) "." name
    | EString(s),_ ->
       append o.buffer s
-   | EReal(0.0),_ ->
+   | EReal(0.0),_ | EInt(0),_->
       append o.buffer "0.0"
    | EReal(f),_ ->
-      append o.buffer (Printf.sprintf "%f" f)
+      append o.buffer (string_of_float f)
    | EInt(i),_ ->
-      append o.buffer (string_of_int i)
+      append o.buffer (string_of_float (float_of_int i))
    | EUop(ORef,e1),_ ->
       printExp o e1;
 

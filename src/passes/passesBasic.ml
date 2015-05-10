@@ -188,7 +188,7 @@ let bindIfCondition : ('data,exp) expander =
       | StmtIf(cond,then_,else_,loc) ->
          let var_type    = Some(PId(["bool"],None,default_loc)) in
          let new_state,stmts,var = bindToTemporary state loc cond var_type in
-         new_state,stmts@[StmtIf(var,then_,else_,loc)]
+         new_state,stmts@[StmtIf(PBinOp("!=",var,PBool(false,loc),loc),then_,else_,loc)]
       | _ -> state,[exp]
 
 let asReal (e:exp) : float =
