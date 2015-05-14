@@ -16,15 +16,24 @@
   <body>
     <div id="container">
       <div class="inner">
-
         <header>
           <p align="middle"><img src="images/Vult.png" alt="Vult" title="Vult" align="middle"></p>
           <h2>Vult is a transcompiler well suited to write high-performance DSP code</h2>
+        <hr>
+        <div class="menu" align="middle">
+            <ul>
+              <li><a href="http://modlfo.github.io/vult/">Home</a></li>
+              <li><a href="http://modlfo.github.io/vult/tutorial.html">Tutorial</a></li>
+              <li><a href="https://github.com/modlfo/vult">Source</a></li>
+            </ul>
+        </div>
+        <hr>
         </header>
 
-        <hr>
 
-        <section id="main_content">
+<section id="main_content">
+
+
 
 <p>Vult is a simple and powerful language to program high-performance algorithms that may run in small microprocessors or microcontrollers. Vult is specially useful when programming  Digital Signal Processing (DSP) algorithms like audio effects or synthesizers.</p>
 
@@ -40,7 +49,10 @@
 
 <p>These key features enable you to write clear and simple code without sacrificing performance.</p>
 
-<h3>Status</h3>
+<h2>
+<a id="credits" class="anchor" href="#credits" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+Status
+</h2>
 <p>Vult is still in an alpha stage and is not recommended to use for serious projects.</p>
 
 <h3>Future features</h3>
@@ -48,417 +60,21 @@
 <ul>
 <li>A powerful type system: Type systems make your code safer and allow making analysis to check that the code is correct. Vult will have type inference and dependent types.</li>
 <li>More target languages: Vult will generate Javascript, C++ and Ocaml.</li>
-<li>More language commodities: See the planed language features section.</li>
+<li>Function specialization.</li>
+<li>JIT compilation.</li>
+<li>VST plugin.</li>
+
 </ul>
 
 <h2>
-<a id="credits" class="anchor" href="#credits" aria-hidden="true"><span class="octicon octicon-link"></span></a>Credits</h2>
+<a id="credits" class="anchor" href="#credits" aria-hidden="true"><span class="octicon octicon-link"></span></a>
+Credits
+</h2>
 
 <p>Logo design by: <b>John Klimt</b> <a href="https://www.facebook.com/JohnKlimt">https://www.facebook.com/JohnKlimt</a></p>
 
 
-<h2>
-<a id="using-vult" class="anchor" href="#using-vult" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using Vult</h2>
-<h3>
-<a id="vult-basics" class="anchor" href="#vult-basics" aria-hidden="true"><span class="octicon octicon-link"></span></a>Vult Basics</h3>
-
-<p>Functions are declared with the keyword <code>fun</code>.</p>
-
-<div class="vult_code" id="basic0">fun square(x) return x * x;
-</div>
-
-<p>In this case the argument the function takes an argument <code>x</code> and returns the square of the value.</p>
-
-<p>Intermediate results can be stored in variables with the keyword <code>val</code>.</p>
-
-<div class="vult_code" id="basic1">val a = square(2);
-val b = square(-1);
-</div>
-
-<p>Vult has if-statements but also if-expressions.</p>
-
-<div class="vult_code" id="basic2">val a = 0;
-if(square(-1)&gt; 0){
-    a = 1;
-}
-
-val b = if square(-1) &gt; 0 then -1 else 0;
-</div>
-
-<p>The only restriction is that if-expressions must have a <code>else</code>.</p>
-
-<p>Vult has while-loops...</p>
-
-<div class="vult_code" id="basic3">fun fact(x){
-    val i = x;
-    val acc = 1;
-    while(i&gt;0){
-        acc = acc * i;
-        i = i-1;
-    }
-    return acc;
-}
-</div>
-
-<p>... but often is easier to write loops as recursive functions.</p>
-
-<div class="vult_code" id="basic4">fun fact(x)
-    if(x==0) return 1;
-    else return x * fact(x-1);
-</div>
-
-<p>So far, there's nothing special. Now lets make something more interesting.</p>
-
-<h3>
-<a id="active-functions-functions-with-context" class="anchor" href="#active-functions-functions-with-context" aria-hidden="true"><span class="octicon octicon-link"></span></a>Active Functions (functions with context)
-</h3>
-
-<p>One of the key features of Vult are the "active functions" which are functions that can have a persistent context. The simplest way of understanding them is by making a few examples.</p>
-
-<p>Lets say that we want to write in Vult a function that will be called in the main loop of an Arduino program.</p>
-
-<div class="c_code" id="active1">void loop(){
-    int x = analogRead(0);
-    int result = processValue(x); // something like this
-    analogWrite(result);
-}
-</div>
-
-<p>We want to replace the code of the function <code>processValue</code> with some Vult code that calculates, something more complex. We can start with something like this:</p>
-
-<div class="vult_code" id="active2">fun process(x) return 1/(x*x);
-</div>
-
-<p>The first this that we can notice is that every time the function is called the operation <code>1/(x*x)</code> is performed. In this case the operation is not that expensive, but let's assume that it is and we want to calculate it only when is necessary. In order to do that, we need to remember which was the previous value we computed; if the value is the same we return the previously calculated result, if it's different we recalculate.</p>
-
-<p>Now we are gonna declare two memory variables with the keyword <code>mem</code>.</p>
-
-<div class="vult_code" id="active3">fun process(x){
-    mem pre_x;  // we will use it to keep the previous input
-    mem result; // we will use it to keep the previous result
-
-    if(x != pre_x)           // if the previous input is different from the current
-        result = 1/(x*x);    // recompute
-
-    pre_x = x;               // updates the previous input and result
-
-    return result;
-}
-</div>
-
-<p>This function is longer than the original but only recalculates when necessary.</p>
-
-<p>One important thing to have in mind is that if we call more than once the same function in a program each call has it's own context. For example:</p>
-
-<div class="vult_code" id="active4">val result_signal1 = process(signal1);
-val result_signal2 = process(signal2);
-</div>
-
-<p>Each call to <code>process</code> has independent <code>pre_x</code> and <code>pre_result</code> memory places. So the values that the variable <code>signal1</code> has do no affect the results produced by <code>signal2</code>.</p>
-
-<p>We can simplify the above code by declaring the function <code>change</code> as follows:</p>
-
-<div class="vult_code" id="active5">// This function returns true when the input value changes
-fun change(x){
-    mem pre_x;               // remembers the previous value
-    val result = pre_x != x; // checks if the value is different
-    pre_x = x;               // updates the previous value
-    return result;
-}
-</div>
-
-<p>Now we can simplify our <code>process</code> function as follows:</p>
-
-<div class="vult_code" id="active6">fun process(x){
-    mem result; // we will use it to keep the previous result
-
-    if(change(x))            // if the previous input is different from the current
-        result = 1/(x*x);    // recompute
-
-    return result;
-}
-</div>
-
-<p>In a similar way we can create a set of very handy functions. For example:</p>
-
-<div class="vult_code" id="active7">// This function returns true when the input value changes from zero to anything
-fun edge(x){
-    mem pre_x;
-    // checks if the value is different and the previous was zero
-    val result = pre_x != x &amp;&amp; pre_x == 0;
-    pre_x = x;
-    return result;
-}
-
-// This function returns true every 'n' calls
-fun every(n){
-    mem count;
-    val result = count == 0;
-    count = (count+1)%n;
-    return result;
-}
-</div>
-
-<p>The function every can be used as follows in order to reduce the number of times the result is recalculated.</p>
-
-<div class="vult_code" id="active9">fun process(x){
-    mem result; // we will use it to keep the previous result
-
-    if(every(4))           // the value is calculated every 4 calls
-        result = 1/(x*x);  // recompute
-
-    return result;
-}
-</div>
-
-<h3>
-<a id="sharing-and-reusing-contexts" class="anchor" href="#sharing-and-reusing-contexts" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sharing and Reusing Contexts</h3>
-
-<p>As mentioned before every call to an active function creates it's own context. But what if we want to use the same context more than once?</p>
-
-<p>Take a look at the function <code>count</code> defined below.</p>
-
-<div class="vult_code" id="context1">fun count(){
-    mem counter;
-    counter = counter + 1;
-    return counter;
-}
-</div>
-
-<p>When this function is called increments it's internal counter and returns the value. But this function is useless because every time we call it, we will have a result of <code>1</code>.</p>
-
-<div class="vult_code" id="context2">val a = count(); // a = 1
-val b = count(); // b = 1
-val c = count(); // c = 1
-val d = count(); // d = 1
-val e = count(); // e = 1
-val f = count(); // f = 1
-</div>
-
-<p>In order to reuse contexts we need to give them a name using a colon <code>:</code>. For example:</p>
-
-<div class="vult_code" id="context3">val a = x:count(); // a = 1
-val b = x:count(); // b = 2
-val c = x:count(); // c = 3
-
-val d = y:count(); // d = 1
-val e = y:count(); // e = 2
-val f = y:count(); // f = 3
-</div>
-
-<p>In the above code we have two contexts <code>x</code> and <code>y</code> for the calls to the <code>count</code> function. Every time we call <code>x:count()</code> we access to the same internal <code>counter</code> memory. Now that our counter is useful one thing that we may want to do is reseting the counter. In order to access the the context of a function we need to create a new function that declares the same memory variables. For example the function <code>reset</code>.</p>
-
-<div class="vult_code" id="context4">fun reset(){
-    mem counter;
-    counter = 0;
-}
-</div>
-
-<p>Now we can reset the counter by using the same context.</p>
-
-<div class="vult_code" id="context5">val a = x:count(); // a = 1
-val b = x:count(); // b = 2
-val c = x:count(); // c = 3
-        x:reset();
-val d = x:count(); // d = 1
-val e = x:count(); // e = 2
-</div>
-
-<p>Note: currently you can share context among functions that declare the same <code>mem</code> and sub-contexts (that have the same named function calls). A future feature is to explicitly merge types.</p>
-
-<h3>
-<a id="a-few-real-examples" class="anchor" href="#a-few-real-examples" aria-hidden="true"><span class="octicon octicon-link"></span></a>A Few Real Examples</h3>
-
-<p>Now we are gonna write some real code. We are gonna write code for a digital filter. We start by writing code for a generic biquad filter <a href="http://en.wikipedia.org/wiki/Digital_biquad_filter">http://en.wikipedia.org/wiki/Digital_biquad_filter</a> in direct for II.</p>
-
-<div class="vult_code" id="context6">fun biquad(x,b0,b1,b2,a1,a2){
-    mem w1,w2;
-    val w0 = x -a1*w1-a2*w2;
-    val y0 = b0*w0 + b1*w1 + b2*w2;
-    w2, w1 = w1, w0;
-    return y0;
-}
-</div>
-
-<p>This function takes the input signal <code>x</code> and the filter coefficients. In the "DAFX: Digital Audio Effects" book we can find a table with all the coefficients for different filters. For example, for the low pass filter we can write:</p>
-
-<div class="vult_code" id="context7">fun lp6(x,fc) {
-    mem b0,b1,a1;
-    // we calculate the coefficients only when the 'fc' changes
-    if(change(fc)){
-        val k = tan(3.1415*fc/44100); // 44100 is the sample rate
-        b0 = k/(k+1);
-        b1 = k/(k+1);
-        a1 = (k-1)/(k+1);
-    }
-    return biquad(x,b0,b1,0,a1,0);
-}
-</div>
-
-<p>This function takes the cut frequency value <code>fc</code> and uses the previously defined function <code>change</code> to trigger the recalculation of the biquad coefficients only when needed.</p>
-
-<p>Let's say that we want to filter two signals (<code>signal1</code> and <code>signal2</code>) with our new filter and remove all frequencies above 1000 hertz.</p>
-
-<div class="vult_code" id="context8">val filtered1 = lp6(signal1,1000);
-val filtered2 = lp6(signal2,1000);
-</div>
-
-<h3>
-<a id="generating-c-code" class="anchor" href="#generating-c-code" aria-hidden="true"><span class="octicon octicon-link"></span></a>Generating C Code</h3>
-
-<p>Vult is distributed as a single executable <code>vultc</code> that can be integrated with a traditional build system (make or cmake). In this example we are gonna use it directly in the command line. First copy the full code of the filter to a file and call it <code>filter.vult</code>.</p>
-
-<div class="vult_code" id="context9">/// File: filter.vult
-
-fun change(x){
-    mem pre_x;               // remembers the previous value
-    val result = pre_x != x; // checks if the value is different
-    pre_x = x;               // updates the previous value
-    return result;
-}
-
-fun biquad(x,b0,b1,b2,a1,a2){
-    mem w1,w2;
-    val w0 = x -a1*w1-a2*w2;
-    val y0 = b0*w0 + b1*w1 + b2*w2;
-    w2, w1 = w1, w0;
-    return y0;
-}
-
-fun lp6(x,fc) {
-    mem b0,b1,a1;
-    // we calculate the coefficients only when the 'fc' changes
-    if(change(fc)){
-        val k = tan(3.1415*fc/44100); // 44100 is the sample rate
-        b0 = k/(k+1);
-        b1 = k/(k+1);
-        a1 = (k-1)/(k+1);
-    }
-    return biquad(x,b0,b1,0,a1,0);
-}
-</div>
-
-<p>Now you can run the Vult compiler on this file as follows:</p>
-
-<code>
-$ vultc -ccode filter.vult -o filter
-</code>
-
-<p>The flag <code>-ccode</code> indicates that we want to generate C code. The flag <code>-o</code> specifies the name of the <code>.c</code> and <code>.h</code> we want to generate; in this case <code>filter.c</code> and <code>filter.h</code>.</p>
-
-<p>This is the content of the <code>filter.h</code> file:</p>
-
-<div class="c_code" id="gen1">#ifndef _CODE_
-#define _CODE_
-
-#include &lt;math.h&gt;
-#include &lt;stdint.h&gt;
-#include "vultin.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-typedef struct __filter_struct_0 {
-   float w2;
-   float w1;
-} _filter_struct_0;
-
-int _filter_struct_0_init(_filter_struct_0* st);
-
-typedef struct __filter_struct_1 {
-   float pre_x;
-} _filter_struct_1;
-
-int _filter_struct_1_init(_filter_struct_1* st);
-
-typedef struct __filter_struct_2 {
-   float b1;
-   float b0;
-   float a1;
-   float _i0_pre_x;
-   _filter_struct_0 _i1;
-} _filter_struct_2;
-
-int _filter_struct_2_init(_filter_struct_2* st);
-
-typedef struct __filter_struct_0 _filter_struct_biquad;
-
-int _filter_struct_biquad_init(_filter_struct_biquad* st);
-
-typedef struct __filter_struct_1 _filter_struct_change;
-
-int _filter_struct_change_init(_filter_struct_change* st);
-
-typedef struct __filter_struct_2 _filter_struct_lp6;
-
-int _filter_struct_lp6_init(_filter_struct_lp6* st);
-
-float _filter__lp6(_filter_struct_2* _st_, float x, float fc);
-
-float _filter__change(_filter_struct_1* _st_, float x);
-
-float _filter__biquad(_filter_struct_0* _st_, float x, float b0, float b1, float b2, float a1, float a2);
-
-float _filter_();
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-</div>
-
-<p>For each function, Vult generates a type, a type initialization and the actual function code. The naming of these types and functions follows this name convention: a function <code>foo</code> in a file <code>filename.vult</code> generates</p>
-
-<ul>
-<li>A type <code>_&lt;filename&gt;_struct_&lt;foo&gt;</code>
-</li>
-<li>A function initializer <code>_&lt;filename&gt;_struct_&lt;foo&gt;_init</code>
-</li>
-<li>The function body <code>_&lt;filename&gt;_&lt;foo&gt;</code>
-</li>
-</ul>
-
-<p>In order to use the generated code from a C/C++ program you need to declare a type <code>_&lt;filename&gt;_struct_&lt;foo&gt;</code> then initialize it and call your function passing a pointer to the variable. Here is an example:</p>
-
-<div class="c_code" id="gen2">#include "filter.h"
-
-void main(void){
-    _filter_struct_biquad my_filter;        // declare a variable (struct) 'my_filter'
-    _filter_struct_biquad_init(&amp;my_filter); // initializes the structure
-
-    // Performs one step of the filter with input 0 and frequency 1000 hertz
-    float result = _filter_biquad(&amp;my_filter,0,1000);
-}
-</div>
-
-<p>In order to compile the code you need include the files <code>vultin.c</code> and <code>vultin.h</code> found in the <code>runtime</code> folder.</p>
-
-<p>Vult generates by default floating-point code. If you want to generate code to run in a microcontroller it's better to generate fixed-point code. You can read more about fixed-point arithmetic here: <a href="http://en.wikipedia.org/wiki/Fixed-point_arithmetic">http://en.wikipedia.org/wiki/Fixed-point_arithmetic</a></p>
-
-<p>In order to generate fixed-point code you need to pass the flag <code>-real</code> as follows:</p>
-
-<code>$ vultc -ccode -real fixed filter.vult -o filter
-</code>
-
-<p>The resulting code will use 32 bit integers to represent all numeric values. This code runs much more efficiently in Arduinos or Teensy boards.</p>
-
-<p>In order to convert back and forth fixed-point values, integers and floats you can use the functions included in <code>vultin.h</code> <code>fix_to_float</code>, <code>fix_from_float</code>, etc.</p>
-
-<h3>
-<a id="planned-features" class="anchor" href="#planned-features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Planned Features</h3>
-
-<ul>
-<li>Function Specialization</li>
-<li>Automatic Creation of Lookup Tables</li>
-<li>VST Plugin Templates</li>
-<li>VST with JIT Compilation</li>
-<li>Type Inference</li>
-<li>Type Merging</li>
-<li>Dependent Types</li>
-</ul>
-        </section>
+</section>
 
         <footer>
           Vult is maintained by <a href="https://github.com/modlfo">modlfo (Leonardo Laguna Ruiz)</a><br>
@@ -467,6 +83,4 @@ void main(void){
       </div>
     </div>
   </body>
-  <script type="text/javascript" src="javascripts/external/ace/ace.js"></script>
-  <script type="text/javascript" src="javascripts/main.js"></script>
 </html>

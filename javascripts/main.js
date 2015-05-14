@@ -15,10 +15,10 @@ function makeEditor(name,width,mode){
 
 var all_vult_editors = document.getElementsByClassName("vult_code");
 for(var i=0;i<all_vult_editors.length;i=i+1){
-   makeEditor(all_vult_editors[i].id,"700px","ace/mode/vult");
+   makeEditor(all_vult_editors[i].id,"650px","ace/mode/vult");
 }
 
 var all_c_editors = document.getElementsByClassName("c_code");
 for(var i=0;i<all_c_editors.length;i=i+1){
-   makeEditor(all_c_editors[i].id,"700px","ace/mode/c_cpp");
+   makeEditor(all_c_editors[i].id,"650px","ace/mode/c_cpp");
 }
