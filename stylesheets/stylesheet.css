@@ -180,7 +180,6 @@ pre {
   padding: 20px;
   overflow: auto;
   color: #f2f2f2;
-  text-shadow: none;
   background: #303030;
 }
 pre code {
@@ -311,6 +310,46 @@ div.menu a {
   width: 130px;
   display: inline-block;
   text-align: center;
+}
+
+div.minimenu {
+  background: #272727;
+  width: 650px;
+  height: 33px;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+div.minimenu ul {
+    list-style-type: none;
+    margin: 3px;
+    padding: 0;
+}
+
+div.minimenu li {
+    display: inline;
+    border-style: solid;
+    border-width: 2px;
+    border-color: #474747;
+    background: #373737;
+    padding: 1px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+div.minimenu a {
+  width: 80px;
+  display: inline-block;
+  text-align: center;
+  font-size: 14px;
+}
+
+.status {
+  height: 33px;
+  font-size: 14px;
+  vertical-align: middle;
+  margin-top: 7px;
+  color:#878787;
 }
 
 ul li {
