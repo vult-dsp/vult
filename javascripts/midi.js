@@ -16,10 +16,9 @@ function midiMessageReceived( ev ) {
 
   if ( cmd==8 || ((cmd==9)&&(velocity==0)) ) {
     // Note on
-    sendNoteOn(noteNumber,velocity);
-  } else if (cmd == 9) {
     sendNoteOff(noteNumber);
-
+  } else if (cmd == 9) {
+    sendNoteOn(noteNumber,velocity);
   } else if (cmd == 11) {
     sendControlChange(noteNumber,velocity);
   } else if (cmd == 14) {

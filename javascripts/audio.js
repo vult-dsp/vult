@@ -123,8 +123,11 @@ function setAudioOff(){
     }
 }
 
-var template = "/* You can use a this template to start a program */\n\n// Main processing function\n// 'input' is by default a sine wave at 440 Hz\nfun process(input){\n   return input;\n}\n\n// Called when a note On is received\nfun noteOn(note,velocity){\n}\n\n// Called when a note Off is received\nfun noteOff(note){\n}\n\n// Called when a control changes\nfun controlChange(control,value){\n}\n\n// Called on initialization to define initial values\nfun default(){\n}\n";
-var volume1 = "/* A simple volume control */\n\n// Used to soften the transitions of controls\nfun smooth(input){\n   mem x;\n   x = x+(input-x)*0.005;\n   return x;\n}\n// Main processing function\n// 'input' is by default a sine wave at 440 Hz\nfun process(input){\n   mem volume; // the value is set in 'controlChange'\n   return input*smooth(volume);\n}\n\n// Called when a note On is received\nfun noteOn(note,velocity){\n}\n\n// Called when a note Off is received\nfun noteOff(note){\n}\n\n// Called when a control changes\nfun controlChange(control,value){\n   mem volume;\n   // Control 30 defines the volume\n   if(control==30) volume = value/127;\n}\n\n// Called on initialization to define initial values\nfun default(){\n mem volume = 0;\n}\n";
+// All the presets
+var template  = "/* You can use a this template to start a program */\n\n// Main processing function\n// 'input' is by default a sine wave at 440 Hz\nfun process(input){\n   return input;\n}\n\n// Called when a note On is received\nfun noteOn(note,velocity){\n}\n\n// Called when a note Off is received\nfun noteOff(note){\n}\n\n// Called when a control changes\nfun controlChange(control,value){\n}\n\n// Called on initialization to define initial values\nfun default(){\n}\n";
+var volume1   = "/* A simple volume control */\n\n// Used to soften the transitions of controls\nfun smooth(input){\n   mem x;\n   x = x+(input-x)*0.005;\n   return x;\n}\n// Main processing function\n// 'input' is by default a sine wave at 440 Hz\nfun process(input){\n   mem volume; // the value is set in 'controlChange'\n   return input*smooth(volume);\n}\n\n// Called when a note On is received\nfun noteOn(note,velocity){\n}\n\n// Called when a note Off is received\nfun noteOff(note){\n}\n\n// Called when a control changes\nfun controlChange(control,value){\n   mem volume;\n   // Control 30 defines the volume\n   if(control==30) volume = value/127;\n}\n\n// Called on initialization to define initial values\nfun default(){\n mem volume = 0;\n}\n";
+var phasedist = "/* Phase distortion oscillator */\n\n// Used to soften the transitions of controls\nfun smooth(input){\n   mem x;\n   x = x+(input-x)*0.005;\n   return x;\n}\n\n// Returns true every time the input value changes\nfun change(x):bool {\n    mem pre_x;\n    val v:bool = pre_x!=x;\n    pre_x = x;\n    return v;\n}\n\n// Converts the MIDI note to increment rate at a 44100 sample rate\nfun pitchToRate(d) return 8.1758*exp(0.0577623*d)/44100;\n\nfun phasor(pitch,reset){\n    mem rate,phase;\n    if(change(pitch))\n        rate = pitchToRate(pitch);\n    phase = if reset then 0 else (phase + rate) % 1;\n    return phase;\n}\n\n// Main processing function\nfun process(input){\n   mem volume,detune; // values set in 'controlChange'\n   mem pitch;\n   mem pre_phase1;\n   // Implements the resonant filter simulation as shown in\n   // http://en.wikipedia.org/wiki/Phase_distortion_synthesis\n   val phase1 = phasor(pitch,false);\n   val comp   = 1 - phase1;\n   val reset  = (pre_phase1 - phase1) > 0.5;\n   pre_phase1 = phase1;\n   val phase2 = phasor(pitch+smooth(detune)*32,reset);\n   val sine  = sin(2*3.14159265359*phase2);\n   return smooth(volume)*(sine*comp);\n}\n\n// Called when a note On is received\nfun noteOn(note,velocity){\n    mem pitch = note;\n}\n\n// Called when a note Off is received\nfun noteOff(note){\n}\n\n// Called when a control changes\nfun controlChange(control,value){\n   mem volume;\n   mem detune;\n   // Control 30 defines the volume\n   if(control==30) volume = value/127;\n   if(control==31) detune = value/127;\n}\n\n// Called on initialization to define initial values\nfun default(){\n   mem volume = 0;\n   mem pitch = 45;\n   mem detune = 0;\n}\n";
+
 function loadPreset(n){
     console.log("Loading "+n)
     var code;
@@ -134,6 +137,9 @@ function loadPreset(n){
             break;
         case 1:
             code = volume1;
+            break;
+        case 2:
+            code = phasedist;
             break;
         default:
             code = template;
