@@ -50,33 +50,33 @@
 
             <p>Intermediate results can be stored in variables with the keyword <code>val</code>.</p>
 
-            <div class="vult_code" id="basic1">val a = square(2);
-                val b = square(-1);
-            </div>
+<div class="vult_code" id="basic1">val a = square(2);
+val b = square(-1);
+</div>
 
-            <p>Vult has if-statements but also if-expressions.</p>
+<p>Vult has if-statements but also if-expressions.</p>
 
-            <div class="vult_code" id="basic2">val a = 0;
-                if(square(-1)&gt; 0){
-                a = 1;
-            }
+<div class="vult_code" id="basic2">val a = 0;
+if(square(-1)&gt; 0){
+    a = 1;
+}
 
-            val b = if square(-1) &gt; 0 then -1 else 0;
-        </div>
+val b = if square(-1) &gt; 0 then -1 else 0;
+</div>
 
         <p>The only restriction is that if-expressions must have an <code>else</code> branch.</p>
 
         <p>Vult has while-loops...</p>
 
-        <div class="vult_code" id="basic3">fun fact(x){
-            val i = x;
-            val acc = 1;
-            while(i&gt;0){
-            acc = acc * i;
-            i = i-1;
-        }
-        return acc;
+<div class="vult_code" id="basic3">fun fact(x){
+    val i = x;
+    val acc = 1;
+    while(i&gt;0){
+        acc = acc * i;
+        i = i-1;
     }
+    return acc;
+}
 </div>
 
 <p>... but you can also express loops as recursive functions.</p>
@@ -131,7 +131,7 @@
 <p>One important thing to have in mind is that if we call more than once the same function in a program each call has it's own context. For example:</p>
 
 <div class="vult_code" id="active4">val result_signal1 = process(signal1);
-    val result_signal2 = process(signal2);
+val result_signal2 = process(signal2);
 </div>
 
 <p>Each call to <code>process</code> has independent <code>pre_x</code> and <code>pre_result</code> memory places. So the values that the variable <code>signal1</code> has do no affect the results produced by <code>signal2</code>.</p>
@@ -139,7 +139,7 @@
 <p>We can simplify the above code by declaring the function <code>change</code> as follows:</p>
 
 <div class="vult_code" id="active5">// This function returns true when the input value changes
-    fun change(x){
+fun change(x){
     mem pre_x;               // remembers the previous value
     val result = pre_x != x; // checks if the value is different
     pre_x = x;               // updates the previous value
@@ -162,8 +162,8 @@
 <p>In a similar way we can create a set of very handy functions. For example:</p>
 
 <div class="vult_code" id="active7">// This function returns true when the input value
-    // changes from zero to anything
-    fun edge(x){
+// changes from zero to anything
+fun edge(x){
     mem pre_x;
     // checks if the value is different and the previous was zero
     val result = pre_x != x &amp;&amp; pre_x == 0;
@@ -173,10 +173,10 @@
 
 // This function returns true every 'n' calls
 fun every(n){
-mem count;
-val result = count == 0;
-count = (count+1)%n;
-return result;
+    mem count;
+    val result = count == 0;
+    count = (count+1)%n;
+    return result;
 }
 </div>
 
@@ -199,32 +199,32 @@ return result;
 
     <p>Take a look at the function <code>count</code> defined below.</p>
 
-    <div class="vult_code" id="context1">fun count(){
-        mem counter;
-        counter = counter + 1;
-        return counter;
-    }
+<div class="vult_code" id="context1">fun count(){
+    mem counter;
+    counter = counter + 1;
+    return counter;
+}
 </div>
 
 <p>When this function is called increments it's internal counter and returns the value. But this function is useless because every time we call it, we will have a result of <code>1</code>.</p>
 
 <div class="vult_code" id="context2">val a = count(); // a = 1
-    val b = count(); // b = 1
-    val c = count(); // c = 1
-    val d = count(); // d = 1
-    val e = count(); // e = 1
-    val f = count(); // f = 1
+val b = count(); // b = 1
+val c = count(); // c = 1
+val d = count(); // d = 1
+val e = count(); // e = 1
+val f = count(); // f = 1
 </div>
 
 <p>In order to reuse contexts we need to give them a name using a colon <code>:</code>. For example:</p>
 
 <div class="vult_code" id="context3">val a = x:count(); // a = 1
-    val b = x:count(); // b = 2
-    val c = x:count(); // c = 3
+val b = x:count(); // b = 2
+val c = x:count(); // c = 3
 
-    val d = y:count(); // d = 1
-    val e = y:count(); // e = 2
-    val f = y:count(); // f = 3
+val d = y:count(); // d = 1
+val e = y:count(); // e = 2
+val f = y:count(); // f = 3
 </div>
 
 <p>In the above code we have two contexts <code>x</code> and <code>y</code> for the calls to the <code>count</code> function. Every time we call <code>x:count()</code> we access to the same internal <code>counter</code> memory. Now that our counter is useful one thing that we may want to do is reseting the counter. In order to access the the context of a function we need to create a new function that declares the same memory variables. For example the function <code>reset</code>.</p>
@@ -238,11 +238,11 @@ return result;
 <p>Now we can reset the counter by using the same context.</p>
 
 <div class="vult_code" id="context5">val a = x:count(); // a = 1
-    val b = x:count(); // b = 2
-    val c = x:count(); // c = 3
-    x:reset();
-    val d = x:count(); // d = 1
-    val e = x:count(); // e = 2
+val b = x:count(); // b = 2
+val c = x:count(); // c = 3
+        x:reset();
+val d = x:count(); // d = 1
+val e = x:count(); // e = 2
 </div>
 
 <p>Note: currently you can share context among functions that declare the same <code>mem</code> and sub-contexts (that have the same named function calls). A future feature is to explicitly merge types.</p>
@@ -252,13 +252,13 @@ return result;
 
     <p>Now we are gonna write some real code. We are gonna write code for a digital filter. We start by writing code for a generic biquad filter <a href="http://en.wikipedia.org/wiki/Digital_biquad_filter">http://en.wikipedia.org/wiki/Digital_biquad_filter</a> in direct for II.</p>
 
-    <div class="vult_code" id="context6">fun biquad(x,b0,b1,b2,a1,a2){
-        mem w1,w2;
-        val w0 = x -a1*w1-a2*w2;
-        val y0 = b0*w0 + b1*w1 + b2*w2;
-        w2, w1 = w1, w0;
-        return y0;
-    }
+<div class="vult_code" id="context6">fun biquad(x,b0,b1,b2,a1,a2){
+    mem w1,w2;
+    val w0 = x -a1*w1-a2*w2;
+    val y0 = b0*w0 + b1*w1 + b2*w2;
+    w2, w1 = w1, w0;
+    return y0;
+}
 </div>
 
 <p>This function takes the input signal <code>x</code> and the filter coefficients. In the "DAFX: Digital Audio Effects" book we can find a table with all the coefficients for different filters. For example, for the low pass filter we can write:</p>
@@ -267,12 +267,12 @@ return result;
     mem b0,b1,a1;
     // we calculate the coefficients only when the 'fc' changes
     if(change(fc)){
-    val k = tan(3.1415*fc/44100); // 44100 is the sample rate
-    b0 = k/(k+1);
-    b1 = k/(k+1);
-    a1 = (k-1)/(k+1);
-}
-return biquad(x,b0,b1,0,a1,0);
+        val k = tan(3.1415*fc/44100); // 44100 is the sample rate
+        b0 = k/(k+1);
+        b1 = k/(k+1);
+        a1 = (k-1)/(k+1);
+    }
+    return biquad(x,b0,b1,0,a1,0);
 }
 </div>
 
@@ -281,7 +281,7 @@ return biquad(x,b0,b1,0,a1,0);
 <p>Let's say that we want to filter two signals (<code>signal1</code> and <code>signal2</code>) with our new filter and remove all frequencies above 1000 hertz.</p>
 
 <div class="vult_code" id="context8">val filtered1 = lp6(signal1,1000);
-    val filtered2 = lp6(signal2,1000);
+val filtered2 = lp6(signal2,1000);
 </div>
 
 <h3>
@@ -291,14 +291,14 @@ return biquad(x,b0,b1,0,a1,0);
 
     <div class="vult_code" id="context9">/// File: filter.vult
 
-        fun change(x){
-        mem pre_x;               // remembers the previous value
-        val result = pre_x != x; // checks if the value is different
-        pre_x = x;               // updates the previous value
-        return result;
-    }
+fun change(x){
+    mem pre_x;               // remembers the previous value
+    val result = pre_x != x; // checks if the value is different
+    pre_x = x;               // updates the previous value
+    return result;
+}
 
-    fun biquad(x,b0,b1,b2,a1,a2){
+fun biquad(x,b0,b1,b2,a1,a2){
     mem w1,w2;
     val w0 = x -a1*w1-a2*w2;
     val y0 = b0*w0 + b1*w1 + b2*w2;
@@ -307,15 +307,15 @@ return biquad(x,b0,b1,0,a1,0);
 }
 
 fun lp6(x,fc) {
-mem b0,b1,a1;
-// we calculate the coefficients only when the 'fc' changes
-if(change(fc)){
-val k = tan(3.1415*fc/44100); // 44100 is the sample rate
-b0 = k/(k+1);
-b1 = k/(k+1);
-a1 = (k-1)/(k+1);
-}
-return biquad(x,b0,b1,0,a1,0);
+    mem b0,b1,a1;
+    // we calculate the coefficients only when the 'fc' changes
+    if(change(fc)){
+        val k = tan(3.1415*fc/44100); // 44100 is the sample rate
+        b0 = k/(k+1);
+        b1 = k/(k+1);
+        a1 = (k-1)/(k+1);
+    }
+    return biquad(x,b0,b1,0,a1,0);
 }
 </div>
 
@@ -330,18 +330,18 @@ return biquad(x,b0,b1,0,a1,0);
 <p>This is the content of the <code>filter.h</code> file:</p>
 
 <div class="c_code" id="gen1">#ifndef _CODE_
-    #define _CODE_
+#define _CODE_
 
-    #include &lt;math.h&gt;
-    #include &lt;stdint.h&gt;
-    #include "vultin.h"
+#include &lt;math.h&gt;
+#include &lt;stdint.h&gt;
+#include "vultin.h"
 
-    #ifdef __cplusplus
-    extern "C"
-    {
-    #endif
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-    typedef struct __filter_struct_0 {
+typedef struct __filter_struct_0 {
     float w2;
     float w1;
 } _filter_struct_0;
@@ -349,17 +349,17 @@ return biquad(x,b0,b1,0,a1,0);
 int _filter_struct_0_init(_filter_struct_0* st);
 
 typedef struct __filter_struct_1 {
-float pre_x;
+    float pre_x;
 } _filter_struct_1;
 
 int _filter_struct_1_init(_filter_struct_1* st);
 
 typedef struct __filter_struct_2 {
-float b1;
-float b0;
-float a1;
-float _i0_pre_x;
-_filter_struct_0 _i1;
+    float b1;
+    float b0;
+    float a1;
+    float _i0_pre_x;
+    _filter_struct_0 _i1;
 } _filter_struct_2;
 
 int _filter_struct_2_init(_filter_struct_2* st);
@@ -405,7 +405,7 @@ float _filter_();
 
 <div class="c_code" id="gen2">#include "filter.h"
 
-    void main(void){
+void main(void){
     _filter_struct_biquad my_filter;        // declare a variable (struct) 'my_filter'
     _filter_struct_biquad_init(&amp;my_filter); // initializes the structure
 
