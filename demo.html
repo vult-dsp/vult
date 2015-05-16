@@ -54,15 +54,14 @@
          </div>
       </div>
 
-      <h2>
-         <a class="anchor" href="#credits" aria-hidden="true"><span class="octicon octicon-link"></span></a>
-         Requirements
-      </h2>
+      <h2>Instructions</h2>
+
       <p> These demos use the Web Audio and MIDI API. In order to use the MIDI you need to enable it in Chrome by typing the following address <a href="chrome://flags/#enable-web-midi">chrome://flags/#enable-web-midi</a>.
          You can learm more about the Web Audio and MIDI API <a href="http://webaudiodemos.appspot.com/slides/index.html">Here</a>.
       </p>
 
-      <p>For some of the demos you will need to have a MIDI keyboard/controller connected. By default this page opens all the availables MIDI ports. You may have problems if other software is using the MIDI ports.</p>
+      <p>Connect you MIDI keyboard/controller and open this page. By default, this page opens all the available MIDI inputs. Load one of the demos and click 'Update' to run it. Modify the function <code>controlChange</code> to respond to the MIDI messages you want. Modify the code and click 'Update' to recompile it.</p>
+
 
       <footer>
          Vult is maintained by <a href="https://github.com/modlfo">modlfo (Leonardo Laguna Ruiz)</a><br>
@@ -79,6 +78,7 @@
 <script type="text/javascript" src="javascripts/vult.js"></script>
 <script type="text/javascript">
   makeEditorBox("editor","650px","450px");
+  loadPreset(0);
 </script>
 
 </html>
