@@ -576,6 +576,19 @@ let makeIfStatement : ('data,exp) traverser =
          state,StmtIf(cond,StmtBind(lhs,then_exp,iloc),Some(StmtBind(lhs,else_exp,bloc)),iloc)
       | _ -> state,exp
 
+(* Special hack to make the js code generator work until there
+   are unified type functions *)
+let addDummyToDefault : ('data,exp) traverser =
+   fun state exp ->
+      match exp with
+      | StmtFun([name],arg,StmtBlock(bname,elems,loc2),ret,act,loc)
+         when name="default" || name="noteOn" || name="noteOff" || name="process" || name="controlChange" ->
+         state,StmtFun([name],arg,StmtBlock(bname,StmtMem(PId(["dummy"],None,loc2),None,None,loc2)::elems,loc2),ret,act,loc)
+      | StmtFun([name],arg,elem,ret,act,loc)
+         when name="default" || name="noteOn" || name="noteOff" || name="process" || name="controlChange" ->
+         state,StmtFun([name],arg,makeStmtBlock loc (StmtMem(PId(["dummy"],None,loc),None,None,loc)::[elem]),ret,act,loc)
+      | _ -> state,exp
+
 (* Binds a the value in the calls to return *)
 let bindReturn : ('data,exp) expander =
    fun state exp ->
@@ -606,6 +619,7 @@ let basicPasses state =
    |+> TypesUtil.expandStmtList None bindFunctionAndIfExpCalls
    |+> TypesUtil.expandStmtList None simplifyTupleAssign
    |+> TypesUtil.traverseBottomExpList None makeIfStatement
+   |+> TypesUtil.traverseBottomExpList None addDummyToDefault
 
 (* Last preparations *)
 let finalPasses module_name state =

@@ -107,65 +107,38 @@ let generateJSCode (args:arguments) (parser_results:parser_results list) : strin
 
    let js_text = ProtoGenJS.generateModule args stmts in
    let js_final =
-      Printf.sprintf
+      if List.length stmts = 0 then "null"
+      else
+         Printf.sprintf
 "function Process(){
  this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
- this.not  = function(x) { x==0?1:0; };
+ this.not  = function(x)          { x==0?1:0; };
  %s
  this.context = {};
- this._live_struct_process_init(this.context);
- this.live__default(this.context);
- this.context.param1_in = 0.0;
- this.context.param2_in = 0.0;
- this.context.param3_in = 0.5;
- this.context.param4_in = 0.054;
- this.context.param5_in = 0.157;
- this.context.param6_in = 1;
- this.context.param7_in = 0.43;
- this.context.param8_in = 0;
- this.context.param9_in = 0;
- this.context.param10_in = 0;
- this.context.param11_in = 1;
- this.context.param12_in = 0;
- this.context.param13_in = 0.1;
- this.context.param14_in = 0;
- this.context.param15_in = 0;
- this.context.param16_in = 0;
- this.go = function(i){
-   this.context.param1 =this.context.param1+ (this.context.param1_in-this.context.param1)*0.01;
-   this.context.param2 =this.context.param2+ (this.context.param2_in-this.context.param2)*0.01;
-   this.context.param3 =this.context.param3+ (this.context.param3_in-this.context.param3)*0.01;
-   this.context.param4 =this.context.param4+ (this.context.param4_in-this.context.param4)*0.01;
-   this.context.param5 =this.context.param5+ (this.context.param5_in-this.context.param5)*0.01;
-   this.context.param6 =this.context.param6+ (this.context.param6_in-this.context.param6)*0.01;
-   this.context.param7 =this.context.param7+ (this.context.param7_in-this.context.param7)*0.01;
-   this.context.param8 =this.context.param8+ (this.context.param8_in-this.context.param8)*0.01;
-   this.context.param9 =this.context.param9+ (this.context.param9_in-this.context.param9)*0.01;
-   this.context.param10=this.context.param10+(this.context.param10_in-this.context.param10)*0.01;
-   this.context.param11=this.context.param11+(this.context.param11_in-this.context.param11)*0.01;
-   this.context.param12=this.context.param12+(this.context.param12_in-this.context.param12)*0.01;
-   this.context.param13=this.context.param13+(this.context.param13_in-this.context.param13)*0.01;
-   this.context.param14=this.context.param14+(this.context.param14_in-this.context.param14)*0.01;
-   this.context.param15=this.context.param15+(this.context.param15_in-this.context.param15)*0.01;
-   this.context.param16=this.context.param16+(this.context.param16_in-this.context.param16)*0.01;
-   return this.live__process(this.context,i);
- }
+ if(this._live_struct_process_init) this._live_struct_process_init(this.context);
+ if(this.live__default)             this.live__default(this.context);
+ if(this.live__process)             this.live__process(this.context,i);
+ this.noteOn        = function(note,velocity) { if(this.live__noteOn)        this.live__noteOn(this.context,note,velocity); };
+ this.noteOff       = function(note,velocity) { if(this.live__noteOff)       this.live__noteOff(this.context,note,velocity); };
+ this.controlChange = function(note,velocity) { if(this.live__controlChange) this.live__controlChange(this.context,note,velocity); };
+ this.process       = function(input)         { if(this.live__process)       return this.live__process(this.context,input); else return 0; };
+ this.default       = function()              { if(this.live__default)       return this.live__default(this.context); };
 }
 new Process()"
-   js_text
-   in
-   if args.output<>"" then
-      begin
-         let oc = open_out (args.output^".js") in
-         Printf.fprintf oc "%s\n" js_final;
-         close_out oc;
-         js_final
-      end
-   else
-      begin
-         print_endline js_final;
-         js_final
-      end
+      js_text
+      in
+      if args.output<>"" then
+         begin
+            let oc = open_out (args.output^".js") in
+            Printf.fprintf oc "%s\n" js_final;
+            close_out oc;
+            js_final
+         end
+      else
+         begin
+            print_endline js_final;
+            js_final
+         end
 
 let generateCode (args:arguments) (parser_results:parser_results list) : string =
    if args.ccode then
