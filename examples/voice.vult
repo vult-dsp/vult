@@ -182,15 +182,10 @@ fun adsr(input,attack,decay,sustain,release){
 
    // Calculates the rate every 32 samples
    if(each(32)){
-      attackRate =
-         if attack == 0 then 0.00287982 // magic number of the maximum increase
-         else (1/44100) * (1/attack);
-      decayRate =
-         if decay == 0  then 0.00287982
-         else (1/44100) * ((1 - sustain)/decay);
-      releaseRate =
-         if release == 0 || sustain == 0 then 0.00287982
-         else (1/44100) * (sustain/release);
+      attackRate      = (1/44100) * (1/(attack+0.1));
+      val inv_sustain = 1 - sustain;
+      decayRate       = (inv_sustain/44100) * (inv_sustain/(decay+0.1));
+      releaseRate     = (0.5/44100) * (0.5/(release+0.1));
    }
    sustainLevel = sustain;
 

@@ -27,16 +27,12 @@ fun adsr(input,attack,decay,sustain,release){
    val SUSTAIN = 3;
    val RELEASE = 4;
 
+   // Calculates the rate every 32 samples
    if(each(32)){
-      attackRate =
-         if attack == 0 then 0.5
-         else (1/44100) * (1/attack);
-      decayRate =
-         if decay == 0  then 0.5
-         else (1/44100) * ((1 - sustain)/decay);
-      releaseRate =
-         if release == 0 || sustain == 0 then 0.5
-         else (1/44100) * (sustain/release);
+      attackRate      = (1/44100) * (1/(attack+0.1));
+      val inv_sustain = 1 - sustain;
+      decayRate       = (inv_sustain/44100) * (inv_sustain/(decay+0.1));
+      releaseRate     = (0.5/44100) * (0.5/(release+0.1));
    }
    sustainLevel = sustain;
 
@@ -52,43 +48,28 @@ fun adsr(input,attack,decay,sustain,release){
    val up   = edge && gate;
    val down = edge && not(gate);
 
+   // State machine of the ADSR
    if(state == IDLE){
-      if(up){
-         state = ATTACK;
-      }
+      if(up) state = ATTACK;
    }
    else if(state == ATTACK){
-      if(value >= 1) {
-         state = DECAY;
-      }
-      if(down){
-         state = RELEASE;
-      }
+      if(value >= 1) state = DECAY;
+      if(down)       state = RELEASE;
       rate = attackRate;
    }
    else if(state == DECAY){
-      if(value <= sustainLevel){
-         state = SUSTAIN;
-      }
-      if(down){
-         state = RELEASE;
-      }
+      if(value <= sustainLevel) state = SUSTAIN;
+      if(down)                  state = RELEASE;
       rate = -decayRate;
    }
    else if(state == SUSTAIN){
-      if(down){
-         state = RELEASE;
-      }
-      rate = 0;
+      if(down) state = RELEASE;
+      rate  = 0;
       value = sustainLevel;
    }
    else if(state == RELEASE){
-      if(value <= 0){
-         state = IDLE;
-      }
-      if(up){
-         state = ATTACK;
-      }
+      if(value <= 0) state = IDLE;
+      if(up)         state = ATTACK;
       rate = -releaseRate;
    }
 
