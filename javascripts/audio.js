@@ -64,6 +64,7 @@ function updateProgram(){
     }
     if(new_vult_object){
         vult_object = new_vult_object;
+        restoreControls();
         setCodeStatus("Ok");
     }
     else setCodeStatus("Error when compiling");
