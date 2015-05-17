@@ -1,8 +1,8 @@
 ![Vult](/other/Images/Vult.png?raw=true "Vult")
 
-Vult is a simple and powerful language to program high-performance algorithms that may run in small microprocessors or microcontrollers. Vult is specially useful when programming  Digital Signal Processing (DSP) algorithms like audio effects or synthesizers.
+Vult is a simple and powerful language to program high-performance algorithms that may run in small microprocessors or microcontrollers. Vult is specially useful when programming Digital Signal Processing (DSP) algorithms like audio effects or synthesizers.
 
-The Vult compiler is actually a transcompiler which takes Vult code and produces plain C code that can be compiled in any platform with a C/C++ compiler, for example: Arduino or Teensy boards. Javascript support is coming soon. Code written in Vult has freedom.
+The Vult compiler is a transcompiler, which takes Vult code and produces plain C code that can be compiled in any platform with a C/C++ compiler, for example: Arduino or Teensy boards. Javascript support is coming soon. Code written in Vult has freedom.
 
 Check the documentation and tutorial in http://modlfo.github.io/vult/
 
@@ -27,7 +27,7 @@ Logo design by:
 - [Optional] oUnit >= 2.0 (to run the tests)
 
 ### Installing the tools
- The simplest way to instal the requirements is with Opam (https://opam.ocaml.org/)
+ The simplest way to instal the requirements is with OPAM (https://opam.ocaml.org/)
 ```
 $ opam switch 4.02.1
 $ opam install containers
