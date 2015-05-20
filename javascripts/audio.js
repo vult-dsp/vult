@@ -74,13 +74,14 @@ function getGeneratedProgram(){
     return generated_code;
 }
 
+var effect = null;
 function setAudioOn(){
 
     if(audioContext==null && audioStatus==false){
         audioContext = new AudioContext();
         source = audioContext.createBufferSource();
 
-        var effect = (function() {
+        effect = (function() {
             var node = audioContext.createScriptProcessor(0, 1, 1);
             node.onaudioprocess = function(e) {
                 var input = e.inputBuffer.getChannelData(0);
@@ -117,7 +118,9 @@ function setAudioOn(){
 
 function setAudioOff(){
     if(audioContext){
-        audioContext.close();
+        effect.disconnect();
+        if(audioContext.close)
+            audioContext.close();
         audioContext = null;
         setAudioStatus("Off");
         audioStatus=false;
