@@ -8,7 +8,8 @@ Check the documentation and tutorial in http://modlfo.github.io/vult/
 
 ## Credits
 
-Vult is maintained by @modlfo with the help of @Callejn and @johanrhodin
+Vult is maintained by: Leonardo Laguna Ruiz with the help of Carl Jönsson and Johan Rhodin
+
 Logo design by: John Klimt https://www.facebook.com/JohnKlimt
 
 ## Installing
