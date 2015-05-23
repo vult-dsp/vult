@@ -43,6 +43,8 @@ In platforms without bash you can build with the following command:
 ```
 $ ocamlbuild -use-ocamlfind -pkg containers -pkg str -pkg ocamlgraph vultc.native
 ```
+### Contact
 
+If you want to receive notifications for future development of this project you can join to the google group http://groups.google.com/d/forum/vult
 
 
