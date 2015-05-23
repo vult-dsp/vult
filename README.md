@@ -39,5 +39,10 @@ $ opam install ounit
 ```
 $ ./scripts/build.sh
 ```
+In platforms without bash you can build with the following command:
+```
+$ ocamlbuild -use-ocamlfind -pkg containers -pkg str -pkg ocamlgraph vultc.native
+```
+
 
 
