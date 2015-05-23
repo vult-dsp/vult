@@ -209,34 +209,37 @@ let printOpNormal (o:print_options) op =
    | ODeRef -> append o.buffer "*"
    | ONot   -> append o.buffer "!"
 
-let funNameFixed (f:string) =
-   match f with
-   | "sin"   -> "fix_sin"
-   | "cos"   -> "fix_cos"
-   | "tan"   -> "fix_tah"
-   | "exp"   -> "fix_exp"
-   | "floor" -> "fix_floor"
-   | "clip"  -> "fix_clip"
-   | "min"   -> "fix_min"
-   | "max"   -> "fix_max"
-   | "abs"   -> "fix_abs"
-   | "not"   -> "fix_not"
+let funNameFixed (f:string) num_type =
+   match f,num_type with
+   | "sin",Fixed   -> "fix_sin"
+   | "cos",Fixed   -> "fix_cos"
+   | "tan",Fixed   -> "fix_tah"
+   | "exp",Fixed   -> "fix_exp"
+   | "floor",Fixed -> "fix_floor"
+   | "clip",Fixed  -> "fix_clip"
+   | "min",Fixed   -> "fix_min"
+   | "max",Fixed   -> "fix_max"
+   | "abs",Fixed   -> "fix_abs"
+   | "not",Fixed   -> "fix_not"
+   | "abs",Float   -> "fabs"
    | _ -> f
 
-let opIsFunction op =
-   match op with
-   | OPlus  -> true
-   | OTimes -> true
-   | ODiv   -> true
-   | OMinus -> true
+let opIsFunction op num_type =
+   match op,num_type with
+   | OPlus,Fixed  -> true
+   | OTimes,Fixed -> true
+   | ODiv,Fixed   -> true
+   | OMinus,Fixed -> true
+   | OMod,Float   -> true
    | _ -> false
 
-let printOpFixed (o:print_options) op =
-   match op with
-   | OPlus  -> append o.buffer "fix_add"
-   | OTimes -> append o.buffer "fix_mul"
-   | ODiv   -> append o.buffer "fix_div"
-   | OMinus -> append o.buffer "fix_sub"
+let printOpFixed (o:print_options) op num_type =
+   match op,num_type with
+   | OPlus,Fixed  -> append o.buffer "fix_add"
+   | OTimes,Fixed -> append o.buffer "fix_mul"
+   | ODiv,Fixed   -> append o.buffer "fix_div"
+   | OMinus,Fixed -> append o.buffer "fix_sub"
+   | OMod,Float   -> append o.buffer "fmod"
    | _ -> failwith "printOpFixed: unknown operator"
 
 let printUOpFixed (o:print_options) op =
@@ -253,9 +256,9 @@ let printUOpNormal (o:print_options) op =
 
 let rec printExp (o:print_options) (e:cexp) =
    match e,o.num_type with
-   | EOp(e1,op,e2),Fixed when opIsFunction op ->
+   | EOp(e1,op,e2),_ when opIsFunction op o.num_type ->
       append o.buffer "(";
-      printOpFixed o op;
+      printOpFixed o op o.num_type;
       append o.buffer "(";
       printExp o e1;
       append o.buffer ", ";
@@ -273,13 +276,8 @@ let rec printExp (o:print_options) (e:cexp) =
       printExp o e2;
       append o.buffer ")"
 
-   | ECall(name,args),Fixed ->
-      append o.buffer (funNameFixed name);
-      append o.buffer "(";
-      printExpSep o ", " args;
-      append o.buffer ")"
    | ECall(name,args),_ ->
-      append o.buffer name;
+      append o.buffer (funNameFixed name o.num_type);
       append o.buffer "(";
       printExpSep o ", " args;
       append o.buffer ")"
@@ -307,7 +305,7 @@ let rec printExp (o:print_options) (e:cexp) =
    | EInt(i),_ ->
       append o.buffer (string_of_int i)
 
-   | EUop(op,e1),Fixed when opIsFunction op ->
+   | EUop(op,e1),_ when opIsFunction op o.num_type ->
       append o.buffer "(";
       printUOpFixed o op;
       append o.buffer "(";
