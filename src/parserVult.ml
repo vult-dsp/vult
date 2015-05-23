@@ -424,11 +424,11 @@ and stmtIf (buffer:exp lexer_stream) : exp =
 
 (** 'fun' <identifier> '(' <namedIdList> ')' <stmtList> *)
 and stmtFunction (buffer:exp lexer_stream) : exp =
-   let _     = consume buffer FUN in
-   let name  = identifier buffer in
-   let token = current buffer in
-   let _     = consume buffer LPAREN in
-   let args  =
+   let isjoin = match peekKind buffer with | AND -> true | _ -> false in
+   let name   = identifier buffer in
+   let token  = current buffer in
+   let _      = consume buffer LPAREN in
+   let args   =
       match peekKind buffer with
       | RPAREN -> []
       | _ -> namedIdList buffer
@@ -443,7 +443,8 @@ and stmtFunction (buffer:exp lexer_stream) : exp =
    in
    let body = stmtList buffer in
    let start_loc = token.loc in
-   StmtFun(name,args,body,type_exp,false,start_loc)
+   let attr = if isjoin then [JoinFunction] else [] in
+   StmtFun(name,args,body,type_exp,attr,start_loc)
 
 (** 'type' <identifier> '(' <namedIdList> ')' <valDeclList> *)
 and stmtType (buffer:exp lexer_stream) : exp =
@@ -515,6 +516,7 @@ and stmt (buffer:exp lexer_stream) : exp =
       | RET   -> stmtReturn  buffer
       | IF    -> stmtIf      buffer
       | FUN   -> stmtFunction buffer
+      | AND   -> stmtFunction buffer
       | WHILE -> stmtWhile    buffer
       | TYPE  -> stmtType     buffer
       | TABLE -> stmtTab      buffer

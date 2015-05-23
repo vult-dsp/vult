@@ -562,10 +562,11 @@ let nameLocalScopes : ('data,exp) traverser =
 let markActiveFunctions : ('data,exp) traverser =
    fun state exp ->
       match exp with
-      | StmtFun(name,args,body,ret,_,loc) when isActiveFunction state name ->
-         state,StmtFun(name,args,body,ret,true,loc)
-      | StmtFun(name,args,body,ret,_,loc) ->
-         state,StmtFun(name,args,body,ret,false,loc)
+      | StmtFun(name,args,body,ret,attr,loc) when isActiveFunction state name ->
+         let new_attr = makeActiveFunction attr in
+         state,StmtFun(name,args,body,ret,new_attr,loc)
+      | StmtFun(name,args,body,ret,attr,loc) ->
+         state,StmtFun(name,args,body,ret,attr,loc)
       | _ -> state,exp
 
 (** Changes if(cond,e1,e2) -> if(cond,{|return e1|},{|return e2|})*)
@@ -601,7 +602,7 @@ let bindReturn : ('data,exp) expander =
 (** Wraps all the statements into a function called _main_ and calls it *)
 let makeFunAndCall name state stmts =
    let fcall = [name^"_"] in
-   state,[StmtFun(fcall,[],appendBlocks stmts,None,false,default_loc); StmtReturn(PCall(Some(fcall),fcall,[],default_loc,[]),default_loc)]
+   state,[StmtFun(fcall,[],appendBlocks stmts,None,[],default_loc); StmtReturn(PCall(Some(fcall),fcall,[],default_loc,[]),default_loc)]
 
 (* Basic transformations *)
 let basicPasses state =

@@ -56,6 +56,7 @@ let keyword_table =
       "table",TABLE;
       "true",TRUE;
       "false",FALSE;
+      "and",AND;
    ] in
    let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
    table
@@ -134,7 +135,8 @@ let kindToString kind =
    | LARR  -> "'[|'"
    | RARR  -> "'|]'"
    | TRUE  -> "'true'"
-   | FALSE  -> "'false'"
+   | FALSE -> "'false'"
+   | AND   -> "'and'"
 
 (** Returns a string representation of the token *)
 let tokenToString l =

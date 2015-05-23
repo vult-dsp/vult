@@ -978,3 +978,12 @@ let isUnit (e:exp) : bool =
    | PUnit(_) -> true
    | _ -> false
 
+let makeActiveFunction (attr:fun_attributes) =
+   if List.exists (fun a -> a=ActiveFunction) attr then
+      attr
+   else
+      ActiveFunction::attr
+
+let hasActiveAttr (attr:fun_attributes) =
+   List.exists (fun a -> a=ActiveFunction) attr
+

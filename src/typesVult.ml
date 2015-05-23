@@ -76,6 +76,7 @@ type token_enum =
    | RARR
    | TRUE
    | FALSE
+   | AND
 
 type 'a token =
    {
@@ -112,6 +113,14 @@ type call_attribute =
    [@@deriving show,eq,ord]
 
 type call_attributes = call_attribute list
+   [@@deriving show,eq,ord]
+
+type fun_attribute =
+   | ActiveFunction
+   | JoinFunction
+   [@@deriving show,eq,ord]
+
+type fun_attributes = fun_attribute list
    [@@deriving show,eq,ord]
 
 type named_id =
@@ -202,7 +211,7 @@ and exp =
       *  named_id list    (* arguments *)
       *  exp              (* body *)
       *  exp option       (* return type *)
-      *  bool             (* is_active *)
+      *  fun_attributes   (* attributes *)
       *  location
    | StmtBind
       of exp         (* lhs *)

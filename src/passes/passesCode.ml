@@ -59,7 +59,7 @@ let replaceIds (replacements:identifier IdentifierMap.t) : ('state,exp) traverse
 let replaceMemAccess : (pass_state,exp) traverser =
    fun state exp ->
       match exp with
-      | StmtFun(name,args,body,ret,_,loc) when isActiveFunction state name ->
+      | StmtFun(name,args,body,ret,attr,loc) when isActiveFunction state name ->
          let scope         = getScope state in
          let mem_names     =
             getMemDeclarations state scope
@@ -68,22 +68,23 @@ let replaceMemAccess : (pass_state,exp) traverser =
          let instance_names = getInstanceNames state scope in
          let replacements   = createStateReplacements (mem_names@instance_names) in
          let _,new_body     = traverseBottomExp (Some(skipFun)) (replaceIds replacements) (createState ()) body in
-         state,StmtFun(name,args,new_body,ret,true,loc)
+         let new_attr       = makeActiveFunction attr in
+         state,StmtFun(name,args,new_body,ret,new_attr,loc)
       | _ -> state,exp
 
 (** Sets the instance name as argument to the function *)
 let makeInstanceArgument (module_name:string) : (pass_state,exp) traverser =
    fun state exp ->
       match exp with
-      | StmtFun(name,args,body,ret,true,loc) ->
+      | StmtFun(name,args,body,ret,attr,loc) when hasActiveAttr attr ->
          begin
             match getFinalType module_name state name with
             | Some(ftype) ->
                let arg = NamedId(["_st_"],PId(ftype,None,loc),loc) in
-               state,StmtFun(name,arg::args,body,ret,true,loc)
+               state,StmtFun(name,arg::args,body,ret,attr,loc)
             | _ ->
                let arg = SimpleId(["_st_"],loc) in
-               state,StmtFun(name,arg::args,body,ret,true,loc)
+               state,StmtFun(name,arg::args,body,ret,attr,loc)
          end
       | _ -> state,exp
 
