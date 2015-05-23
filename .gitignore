@@ -10,3 +10,7 @@ vult_node.js
 *.docdir
 /vult.sublime-workspace
 /_build/
+/vultc
+/oqamldebug
+/npm-debug.log
+/debugscript
