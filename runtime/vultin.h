@@ -99,6 +99,17 @@ int32_t fix_exp(int32_t inValue);
 
 int32_t fix_sin(int32_t inAngle);
 
+
+/* Floating point operations */
+
+static inline float clip(float value, float low, float high){
+    return value<low?low:(value>high?high:value);
+}
+
+static inline float not(float value){
+    return value!=0.0?1.0:0.0;
+}
+
 #ifdef __cplusplus
 }
 #endif
