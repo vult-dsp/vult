@@ -3,3 +3,4 @@
 <src>:include
 <src/passes>:include
 <src/util>:include
+<src/parser>:include

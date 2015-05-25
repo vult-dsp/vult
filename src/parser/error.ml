@@ -22,41 +22,39 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-(** Functions for error reporting and handling *)
-
-open TypesVult
-open Lexing
-open CCError
+type t =
+   | PointedError of Location.t * string
+   | SimpleError  of string
 
 (** Takes a location and returns a string in the format "Error in file: file: line l col:c1-c2" *)
-let errorLocationMessage (location:location) : string =
-   let col_start = location.start_pos.pos_cnum - location.start_pos.pos_bol in
-   let col_end = location.end_pos.pos_cnum - location.start_pos.pos_bol in
+let errorLocationMessage (location:Location.t) : string =
+   let col_start = Location.startColumn location in
+   let col_end   = Location.endColumn location in
    Printf.sprintf "Error in file: %s: line %i col:%i-%i\n"
-      location.start_pos.pos_fname
-      location.start_pos.pos_lnum
+      (Location.file location)
+      (Location.line location)
       col_start
       col_end
 
-(** Takes the current line and a location returns a string pointing to the 
+(** Takes the current line and a location returns a string pointing to the
     location *)
-let errorLocationIndicator (line:string) (location:location) : string =
-   let col_start = location.start_pos.pos_cnum - location.start_pos.pos_bol in
-   let col_end = location.end_pos.pos_cnum - location.start_pos.pos_bol in
-   let pointer = if (col_end - col_start) <> 0 then (String.make (col_end - col_start) '^') else "^" in
+let errorLocationIndicator (line:string) (location:Location.t) : string =
+   let col_start = Location.startColumn location in
+   let col_end   = Location.endColumn location in
+   let pointer   = if (col_end - col_start) <> 0 then (String.make (col_end - col_start) '^') else "^" in
    Printf.sprintf "%s\n%s%s\n"
       line
       (String.make col_start ' ')
       pointer
 
 (** Returns the lines corresponding to the given location *)
-let getErrorLines (location:location) (lines:string array) =
-   match location.start_pos.pos_lnum with
+let getErrorLines (location:Location.t) (lines:string array) =
+   match Location.line location with
    | 0 | 1 -> Array.get lines 0
    | n -> (Array.get lines (n-2))^"\n"^(Array.get lines (n-1))
 
 (** Takes an error and the lines of the code and returns an error message *)
-let reportErrorString (lines:string array) (error:error) :string =
+let reportErrorString (lines:string array) (error:t) :string =
    match error with
    | SimpleError(msg) -> msg^"\n"
    | PointedError(location,msg) ->
@@ -66,22 +64,22 @@ let reportErrorString (lines:string array) (error:error) :string =
       loc^msg^"\n"^indicator
 
 (** Takes an Either value and returns the errors *)
-let reportErrors (results:('a,error list) CCError.t) (lines:string array) : string list =
+let reportErrors (results:('a,t list) CCError.t) (lines:string array) : string list =
    match results with
    | `Ok(_) -> []
    | `Error(errors) ->
       List.map (reportErrorString lines) errors
 
 (** Takes an Either value containing a list of errors and prints the errors *)
-let printErrors (results:('a,error list) CCError.t) (lines:string array) =
+let printErrors (results:('a,t list) CCError.t) (lines:string array) =
    let errors = reportErrors results lines in
    List.iter (fun (a:string) -> print_endline a) errors
 
 (** Joins two errors *)
-let joinErrors : errors -> errors -> errors = List.append
+let joinErrors : t list -> t list -> t list = List.append
 
 (** Joins two optional errors *)
-let joinErrorOptions : errors option -> errors option -> errors option =
+let joinErrorOptions : t list option -> t list option -> t list option =
    fun maybeErr1 maybeErr2 ->
       match (maybeErr1,maybeErr2) with
       | (Some _ as ret, None) -> ret
@@ -90,5 +88,4 @@ let joinErrorOptions : errors option -> errors option -> errors option =
       | (None, None) -> None
 
 (** Joins a list of optional errors *)
-let joinErrorOptionsList : errors option list -> errors option = List.fold_left joinErrorOptions None
-
+let joinErrorOptionsList : t list option list -> t list option = List.fold_left joinErrorOptions None

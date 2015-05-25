@@ -28,18 +28,6 @@ open TypesVult
 open PassesUtil
 
 
-(** Parses a string and runs it with the interpreter *)
-let parseStringRun s =
-   ParserVult.parseString s
-   |> Passes.applyTransformations { PassesUtil.opt_full_transform with interpreter = true }
-   |> DynInterpreter.interpret
-
-(** Parses a string and runs it with the interpreter *)
-let parseStringRunWithOptions options s =
-   ParserVult.parseString s
-   |> Passes.applyTransformations options
-   |> DynInterpreter.interpret
-
 (** Generates the .c and .h file contents for the given parsed files *)
 let generateCCode (args:arguments) (parser_results:parser_results list) : string =
    let file = if args.output<>"" then args.output else "code" in

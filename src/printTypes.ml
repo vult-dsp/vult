@@ -27,6 +27,9 @@ THE SOFTWARE.
 open TypesVult
 open PrintBuffer
 
+let isJoint (attr:fun_attributes) : bool =
+   List.exists (fun a ->a = JoinFunction) attr
+
 (** Add an identifier to the print buffer *)
 let identifierBuff buffer id =
    printList buffer append "." id
@@ -106,6 +109,8 @@ and expressionBuff buffer (exp:exp) =
       pseqListBuff buffer stmts;
    | PEmpty -> append buffer "Empty"
 
+and stmtBuff buffer (s:stmt) =
+   match s with
    | StmtVal(e1,Some(e2),_) ->
       append buffer "val ";
       expressionBuff buffer e1;
@@ -141,22 +146,22 @@ and expressionBuff buffer (exp:exp) =
       expressionBuff buffer cond;
       append buffer ")";
       indent buffer;
-      expressionBuff buffer true_stmt;
+      stmtBuff buffer true_stmt;
       outdent buffer
    | StmtIf(cond,true_stmt,Some(false_stmt),_) ->
       append buffer "if(";
       expressionBuff buffer cond;
       append buffer ")";
       indent buffer;
-      expressionBuff buffer true_stmt;
+      stmtBuff buffer true_stmt;
       outdent buffer;
       newline buffer;
       append buffer "else";
       indent buffer;
-      expressionBuff buffer false_stmt;
+      stmtBuff buffer false_stmt;
       outdent buffer
-   | StmtFun(name,args,body,type_exp,_,_) ->
-      append buffer "fun ";
+   | StmtFun(name,args,body,type_exp,attr,_) ->
+      append buffer (if isJoint attr then "and " else "fun ");
       identifierBuff buffer name;
       append buffer "(";
       printList buffer namedIdBuff "," args;
@@ -165,7 +170,7 @@ and expressionBuff buffer (exp:exp) =
             append buffer ":";
             expressionBuff buffer a;
             append buffer " ") type_exp;
-      expressionBuff buffer body
+      stmtBuff buffer body
    | StmtBind(PUnit(_),e,_) ->
       expressionBuff buffer e;
       append buffer ";"
@@ -181,7 +186,7 @@ and expressionBuff buffer (exp:exp) =
       append buffer "while(";
       expressionBuff buffer cond;
       append buffer ")";
-      expressionBuff buffer stmts
+      stmtBuff buffer stmts
    | StmtAliasType(id,args,alias,_) ->
       append buffer "type ";
       identifierBuff buffer id;
@@ -219,15 +224,15 @@ and expressionListBuff buffer expl =
    printList buffer expressionBuff "," expl
 
 (** Adds to the print buffer a statement in a block list *)
-and stmtListBuff buffer (expl:exp list) =
+and stmtListBuff buffer (expl:stmt list) =
    match expl with
-   | [h] -> expressionBuff buffer h
+   | [h] -> stmtBuff buffer h
    | _ ->
       let rec loop l =
          match l with
          | [] -> ()
          | h::t ->
-            expressionBuff buffer h;
+            stmtBuff buffer h;
             newline buffer;
             loop t
       in
@@ -243,7 +248,7 @@ and pseqListBuff buffer expl =
       match l with
       | [] -> ()
       | h::t ->
-         expressionBuff buffer h;
+         stmtBuff buffer h;
          newline buffer;
          loop t
    in
@@ -267,6 +272,12 @@ and valDecl buffer val_decl =
 let stmtListStr e =
    let print_buffer = makePrintBuffer () in
    stmtListBuff print_buffer e;
+   contents print_buffer
+
+(** Converts to string a statememt *)
+let stmtStr e =
+   let print_buffer = makePrintBuffer () in
+   stmtBuff print_buffer e;
    contents print_buffer
 
 (** Converts to string an expression *)

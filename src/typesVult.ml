@@ -22,87 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-open Lexing
-(** Module containing the types *)
-
-(** Location information *)
-type location =
-   {
-      start_pos : position;
-      end_pos   : position;
-   }
-let pp_location = fun fmt _ -> Format.pp_print_string fmt "loc"
-let equal_location _ _ = true
-let compare_location _ _ = 0
-
-let default_loc = { start_pos = dummy_pos  ; end_pos = dummy_pos }
-
-type lexed_lines =
-   {
-      current_line      : Buffer.t;
-      mutable all_lines : string list;
-   }
-
-(** Tokens *)
-type token_enum =
-   | EOF
-   | INT
-   | REAL
-   | ID
-   | FUN
-   | MEM
-   | VAL
-   | RET
-   | IF
-   | THEN
-   | ELSE
-   | LBRAC
-   | RBRAC
-   | LPAREN
-   | RPAREN
-   | LSEQ
-   | RSEQ
-   | COLON
-   | SEMI
-   | COMMA
-   | EQUAL
-   | OP
-   | AT
-   | DOT
-   | WHILE
-   | TYPE
-   | TABLE
-   | LARR
-   | RARR
-   | TRUE
-   | FALSE
-   | AND
-
-type 'a token =
-   {
-      kind     : token_enum;
-      value    : string;
-      contents : 'a;
-      loc      : location;
-   }
-
-type error =
-   | PointedError of location * string
-   | SimpleError  of string
-
-type errors = error list
-
-(** Type containing the stream of tokens *)
-type 'a lexer_stream =
-   {
-      lexbuf             : Lexing.lexbuf;
-      mutable has_errors : bool;
-      mutable errors     : error list;
-      mutable peeked     : 'a token;
-      mutable prev       : 'a token;
-      lines              : lexed_lines;
-   }
-
 type identifier = string list
    [@@deriving show,eq,ord]
 
@@ -124,134 +43,135 @@ type fun_attributes = fun_attribute list
    [@@deriving show,eq,ord]
 
 type named_id =
-   | SimpleId of identifier * location
-   | NamedId  of identifier * exp * location
+   | SimpleId of identifier * Location.t
+   | NamedId  of identifier * exp * Location.t
    [@@deriving show,eq,ord]
 
 (** Parser syntax tree *)
 and exp =
    | PUnit
-      of location
+      of Location.t
    | PBool
       of bool
-      *  location
+      *  Location.t
    | PInt
       of int
-      *  location
+      *  Location.t
    | PReal
       of float
-      *  location
+      *  Location.t
    | PId
       of identifier  (* name *)
       *  exp option  (* type *)
-      *  location
+      *  Location.t
    | PTyped
       of exp   (* expression *)
       *  exp   (* type *)
-      *  location
+      *  Location.t
    | PUnOp
       of string      (* operator *)
       *  exp
-      *  location
+      *  Location.t
    | PBinOp
       of string      (* operator *)
       *  exp
       *  exp
-      *  location
+      *  Location.t
    | PCall
       of identifier option (* name/instance *)
       *  identifier        (* type/function name *)
       *  exp list          (* arguments *)
-      *  location
+      *  Location.t
       *  call_attributes
    | PIf
       of exp (* condition *)
       *  exp (* then *)
       *  exp (* else *)
-      *  location
+      *  Location.t
    | PGroup
       of exp
-      *  location
+      *  Location.t
    | PTuple
       of exp list
-      *  location
+      *  Location.t
    | PSeq
       of identifier option (* Scope name *)
-      *  exp list
-      *  location
+      *  stmt list
+      *  Location.t
    | PEmpty
 
+and stmt =
    | StmtVal
       of exp        (* names/lhs *)
       *  exp option (* rhs *)
-      *  location
+      *  Location.t
    | StmtMem
       of exp        (* names/lhs *)
       *  exp option (* initial value *)
       *  exp option (* rhs *)
-      *  location
+      *  Location.t
    | StmtTable
       of identifier (* name *)
       *  exp list   (* data *)
-      *  location
+      *  Location.t
    | StmtWhile
       of exp         (* condition*)
-      *  exp         (* statements *)
-      *  location
+      *  stmt        (* statements *)
+      *  Location.t
    | StmtReturn
       of exp
-      *  location
+      *  Location.t
    | StmtIf
-      of exp        (* condition *)
-      *  exp        (* then *)
-      *  exp option (* else *)
-      *  location
+      of exp         (* condition *)
+      *  stmt        (* then *)
+      *  stmt option (* else *)
+      *  Location.t
    | StmtFun
       of identifier       (* name *)
       *  named_id list    (* arguments *)
-      *  exp              (* body *)
+      *  stmt             (* body *)
       *  exp option       (* return type *)
       *  fun_attributes   (* attributes *)
-      *  location
+      *  Location.t
    | StmtBind
       of exp         (* lhs *)
       *  exp         (* rhs *)
-      *  location
+      *  Location.t
    | StmtBlock
       of identifier option (* scope name *)
-      *  exp list
-      *  location
+      *  stmt list
+      *  Location.t
    | StmtType
       of identifier           (* name *)
       *  named_id list        (* arguments *)
       *  val_decl list        (* members *)
-      *  location
+      *  Location.t
    | StmtAliasType
       of identifier           (* name *)
       *  named_id list        (* arguments *)
       *  exp                  (* alias type *)
-      *  location
+      *  Location.t
    | StmtEmpty
    [@@deriving show,eq,ord]
 
 and val_decl =
    identifier  (* name *)
    * exp       (* type *)
-   * location
+   * Location.t
 
 type exp_list = exp list
    [@@deriving show,eq,ord]
 
 type parser_results =
    {
-      presult : (exp list,error list) CCError.t;
+      presult : (stmt list,Error.t list) CCError.t;
       file    : string;
       lines   : string array;
    }
 
 type interpreter_results =
    {
-      iresult : (string,error list) CCError.t;
+      iresult : (string,Error.t list) CCError.t;
       lines   : string array;
    }
 

@@ -6,7 +6,7 @@
     "patterns": [
         {
             "name": "meta.function.source.Vult",
-            "match": "(fun)\\s+([a-zA-Z_]\\w*)",
+            "match": "(fun|and)\\s+([a-zA-Z_]\\w*)",
             "captures": {
                 "1": {
                     "name": "keyword.control.source.Vult"

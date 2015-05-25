@@ -25,7 +25,7 @@
 				</dict>
 			</dict>
 			<key>match</key>
-			<string>(fun)\s+([a-zA-Z_]\w*)</string>
+			<string>(fun|and)\s+([a-zA-Z_]\w*)</string>
 			<key>name</key>
 			<string>meta.function.source.Vult</string>
 		</dict>

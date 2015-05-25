@@ -21,17 +21,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
-open ErrorsVult
 open LexerVult
 open ParserVult
 open TypesVult
-open Passes
-open PassesUtil
 open TypesUtil
-open CheckerVult
-open DynInterpreter
-open Debugger
-open Driver
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : arguments =
@@ -65,7 +58,6 @@ let processArguments () : arguments =
 (** Prints the parsed files if -dparse was passed as argument *)
 let dumpParsedFiles (parser_results:parser_results list) =
    parser_results
-   |> List.map (applyTransformations opt_full_transform)
    |> List.iter (
       fun a -> match a.presult with
          | `Ok(b) ->
@@ -74,18 +66,6 @@ let dumpParsedFiles (parser_results:parser_results list) =
             |> print_string
          | _ -> () )
 
-(** Runs the dynamic interpreter if -rundyn was passed as argument *)
-let runInterpreter (parser_results:parser_results list) =
-   parser_results
-   |> List.map (applyTransformations opt_interpret)
-   |> List.map interpret
-   |> ignore
-
-(* Runs the checker if -check was passed as argument *)
-let runChecker (parser_results:parser_results list) =
-   let errors = List.map programState parser_results in
-   List.iter (fun a -> ErrorsVult.printErrors a.iresult a.lines ) errors
-
 let main () =
    let args = processArguments () in
    (* Parse the files *)
@@ -93,18 +73,9 @@ let main () =
       List.map parseFile args.files
    in
    (* Reports error of parsing *)
-   let _ = List.iter (fun a -> ErrorsVult.printErrors a.presult a.lines ) parser_results in
+   let _ = List.iter (fun a -> Error.printErrors a.presult a.lines ) parser_results in
    (* Prints the parsed files if -dparse was passed as argument *)
    let _ = if args.dparse then dumpParsedFiles parser_results in
-   (* Generates the c code if -ccode was passed as argument *)
-   let _ =
-      if args.ccode || args.jscode then
-         let _ = generateCode args parser_results in ()
-   in
-   (* Runs the dynamic interpreter if -rundyn was passed as argument *)
-   let _ = if args.rundyn then runInterpreter parser_results in
-   (* Runs the checker if -check was passed as argument *)
-   let _ = if args.run_check then runChecker parser_results in
    ()
 ;;
 main ();;

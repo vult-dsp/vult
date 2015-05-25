@@ -318,11 +318,11 @@ fun process(i){
   return output/2;
 }
 
-fun process_noteOn(n){
+and process_noteOn(n){
   monoin:noteOn(n);
 }
 
-fun process_noteOff(n){
+and process_noteOff(n){
   monoin:noteOff(n);
 }
 

@@ -25,13 +25,8 @@ THE SOFTWARE.
    (** Vult Lexer based on ocamllex *)
 open Lexing
 open TypesVult
+open ParserTypes
 
-(** Returns the current location (start and end) *)
-let getLocation lexbuf =
-   {
-      start_pos = lexbuf.lex_start_p;
-      end_pos   = lexbuf.lex_curr_p;
-   }
 (** Updates the location of the lexbuf*)
 let updateLocation lexbuf line chars =
    let pos = lexbuf.lex_curr_p in
@@ -81,7 +76,7 @@ let getLexeme lines lexbuf =
 
 (** Returs the token given the current token kind *)
 let makeToken lines kind lexbuf =
-   { kind = kind; value = getLexeme lines lexbuf; loc = getLocation lexbuf; contents = PEmpty }
+   { kind = kind; value = getLexeme lines lexbuf; loc = Location.getLocation lexbuf; contents = PEmpty }
 
 (** Returs the a keyword token if that's the case otherwise and id token *)
 let makeIdToken lines lexbuf =
@@ -91,7 +86,7 @@ let makeIdToken lines lexbuf =
          Hashtbl.find keyword_table s
       else ID
    in
-   { kind = kind; value = s; loc = getLocation lexbuf; contents = PEmpty }
+   { kind = kind; value = s; loc = Location.getLocation lexbuf; contents = PEmpty }
 
 (* Functions for testing the tokenizer *)
 let tokenizeString tokenizer str =
