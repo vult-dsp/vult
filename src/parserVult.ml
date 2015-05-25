@@ -425,6 +425,7 @@ and stmtIf (buffer:exp lexer_stream) : exp =
 (** 'fun' <identifier> '(' <namedIdList> ')' <stmtList> *)
 and stmtFunction (buffer:exp lexer_stream) : exp =
    let isjoin = match peekKind buffer with | AND -> true | _ -> false in
+   let _      = skip buffer in
    let name   = identifier buffer in
    let token  = current buffer in
    let _      = consume buffer LPAREN in
