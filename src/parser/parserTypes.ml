@@ -63,21 +63,20 @@ type token_enum =
    | FALSE
    | AND
 
-type 'a token =
+type 'kind token =
    {
-      kind     : token_enum;
+      kind     : 'kind;
       value    : string;
-      contents : 'a;
       loc      : Location.t;
    }
 
 (** Type containing the stream of tokens *)
-type 'a lexer_stream =
+type 'kind stream =
    {
       lexbuf             : Lexing.lexbuf;
       mutable has_errors : bool;
       mutable errors     : Error.t list;
-      mutable peeked     : 'a token;
-      mutable prev       : 'a token;
+      mutable peeked     : 'kind token;
+      mutable prev       : 'kind token;
       lines              : lexed_lines;
    }

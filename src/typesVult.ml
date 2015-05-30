@@ -81,8 +81,8 @@ and exp =
       of identifier option (* name/instance *)
       *  identifier        (* type/function name *)
       *  exp list          (* arguments *)
-      *  Location.t
       *  call_attributes
+      *  Location.t
    | PIf
       of exp (* condition *)
       *  exp (* then *)
@@ -102,17 +102,17 @@ and exp =
 
 and stmt =
    | StmtVal
-      of exp        (* names/lhs *)
-      *  exp option (* rhs *)
+      of exp         (* names/lhs *)
+      *  exp option  (* rhs *)
       *  Location.t
    | StmtMem
-      of exp        (* names/lhs *)
-      *  exp option (* initial value *)
-      *  exp option (* rhs *)
+      of exp         (* names/lhs *)
+      *  exp option  (* initial value *)
+      *  exp option  (* rhs *)
       *  Location.t
    | StmtTable
-      of identifier (* name *)
-      *  exp list   (* data *)
+      of identifier  (* name *)
+      *  exp list    (* data *)
       *  Location.t
    | StmtWhile
       of exp         (* condition*)

@@ -97,8 +97,9 @@ module BindingsScope = Scope(BindingInfo)
 (** Used to track the scope in all traversers *)
 type 'a tstate =
    {
-      scope : BindingsScope.t;
-      data  : 'a
+      scope   : BindingsScope.t;
+      data    : 'a;
+      revisit : bool;
    }
 
 (** Type of all traversing functions *)
@@ -112,7 +113,7 @@ type ('data,'traversing_type) folder = 'data tstate -> 'traversing_type -> 'data
 
 (** Returns a traversing state *)
 let createState (data:'a) : 'a tstate =
-   { scope = BindingsScope.empty; data = data }
+   { scope = BindingsScope.empty; data = data; revisit = false }
 
 (** Sets the data for the traversing state *)
 let setState (s:'a tstate) (data:'a) : 'a tstate =
@@ -124,7 +125,7 @@ let getState (s:'a tstate) : 'a =
 
 (** Creates a new state keepin the internal data *)
 let deriveState (s:'a tstate) (data:'b) : 'b tstate =
-   { scope = s.scope; data = data}
+   { scope = s.scope; data = data; revisit = false }
 
 (** Adds a name to the scope *)
 let pushScope (s:'a tstate) (name:identifier) : 'a tstate =
@@ -157,4 +158,96 @@ let mapfindOption key map =
       Some(IdentifierMap.find key map)
    else None
 
+(** Traverses the statements in a top-down fashion following the execution order *)
+let rec traverseStmt (pred:(stmt->bool) option) (f: 'a tstate -> stmt -> 'a tstate * stmt) (state:'a tstate) (stmt:stmt) : 'a tstate * stmt =
+   match pred with
+   | Some(pred_f) when not (pred_f stmt) ->
+      state,stmt
+   | _ ->
+      let state1,nstmt = f state stmt in
+      match nstmt with
+      | StmtVal(_,_,_)
+      | StmtMem(_,_,_,_)
+      | StmtTable(_,_,_)
+      | StmtReturn(_,_)
+      | StmtBind(_,_,_)
+      | StmtType(_,_,_,_)
+      | StmtAliasType(_,_,_,_)
+      | StmtEmpty
+         -> revisitStmt pred f state nstmt
+      | StmtWhile(cond,stmts,loc) ->
+         let state1,nstmts = traverseStmt pred f state stmts in
+         revisitStmt pred f  state1 (StmtWhile(cond,nstmts,loc))
+      | StmtIf(cond,then_,Some(else_),loc) ->
+         let state1,nthen_ = traverseStmt pred f state then_ in
+         let state2,nelse_ = traverseStmt pred f state1 else_ in
+         revisitStmt pred f state2 (StmtIf(cond,nthen_,Some(nelse_),loc))
+      | StmtIf(cond,then_,None,loc) ->
+         let state1,nthen_ = traverseStmt pred f state then_ in
+         revisitStmt pred f  state1 (StmtIf(cond,nthen_,None,loc))
+      | StmtFun(name,args,body,ret,attr,loc) ->
+         let state1,nbody = traverseStmt pred f state body in
+         revisitStmt pred f state1 (StmtFun(name,args,nbody,ret,attr,loc))
+      | StmtBlock(name,stmts,loc) ->
+         let state1,nstmts = traverseStmtList pred f state stmts in
+         revisitStmt pred f state (StmtBlock(name,nstmts,loc))
+
+and traverseStmtList (pred:(stmt->bool) option) (f: 'a tstate -> stmt -> 'a tstate * stmt) (state:'a tstate) (stmts:stmt list) : 'a tstate * stmt list =
+   let ns,acc = List.fold_left (fun (s,acc) a -> let ns,na = traverseStmt pred f state a in ns,a::acc) (state,[]) stmts in
+   ns,List.rev acc
+
+and revisitStmt (pred:(stmt->bool) option) (f: 'a tstate -> stmt -> 'a tstate * stmt) (state:'a tstate) (stmt:stmt) : 'a tstate * stmt =
+   if state.revisit then
+      traverseStmt pred f ({ state with revisit = false }) stmt
+   else
+      state,stmt
+
+(** Traverses the expression in a bottom-up fashion *)
+let rec traverseExp (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate * exp) (state:'a tstate) (exp:exp) : 'a tstate * exp =
+   match pred with
+   | Some(pred_f) when not (pred_f exp) ->
+      state,exp
+   | _ ->
+      match exp with
+      | PUnit(_)
+      | PBool(_,_)
+      | PInt(_,_)
+      | PReal(_,_)
+      | PId(_,_,_)
+      | PSeq(_,_,_)
+      | PEmpty -> f state exp
+      | PTyped(e,tp,loc) ->
+         let state1,ne = traverseExp pred f state e in
+         revisitExp pred f (f state1 (PTyped(ne,tp,loc)))
+      | PUnOp(op,e,loc) ->
+         let state1,ne = traverseExp pred f state e in
+         revisitExp pred f (f state1 (PUnOp(op,ne,loc)))
+      | PBinOp(op,e1,e2,loc) ->
+         let state1,ne1 = traverseExp pred f state e1 in
+         let state2,ne2 = traverseExp pred f state1 e2 in
+         revisitExp pred f (f state2 (PBinOp(op,ne1,ne2,loc)))
+      | PCall(inst,name,args,attr,loc) ->
+         let state1,nargs = traverseExpList pred f state args in
+         revisitExp pred f (f state1 (PCall(inst,name,nargs,attr,loc)))
+      | PIf(cond,then_,else_,loc) ->
+         let state1,ncond  = traverseExp pred f state cond in
+         let state2,nthen_ = traverseExp pred f state1 then_ in
+         let state3,nelse_ = traverseExp pred f state2 else_ in
+         revisitExp pred f (f state3 (PIf(ncond,nthen_,nelse_,loc)))
+      | PGroup(e,loc) ->
+         let state1,ne = traverseExp pred f state e in
+         revisitExp pred f (f state1 (PGroup(ne,loc)))
+      | PTuple(el,loc) ->
+         let state1,nel = traverseExpList pred f state el in
+         revisitExp pred f (f state1 (PTuple(nel,loc)))
+
+and traverseExpList (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate * exp) (state:'a tstate) (exps:exp list) : 'a tstate * exp list =
+   let ns,acc = List.fold_left (fun (s,acc) a -> let ns,na = traverseExp pred f state a in ns,a::acc) (state,[]) exps in
+   ns,List.rev acc
+
+and revisitExp (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate * exp) ((state,exp):'a tstate * exp) : 'a tstate * exp =
+   if state.revisit then
+      traverseExp pred f ({ state with revisit = false }) exp
+   else
+      state,exp
 
