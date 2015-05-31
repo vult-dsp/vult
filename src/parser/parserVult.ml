@@ -52,99 +52,17 @@ module Stream = TokenStream(ExpTokenKind)
 
 let splitOnDot s = CCString.Split.list_cpy "." s
 
-let getErrorForToken (buffer:'kind stream) (message:string) : Error.t =
-   Error.PointedError(Location.getNext buffer.prev.loc,message)
-
-let getNotExpectedTokenError (token:'kind token) : Error.t =
-   let message = Printf.sprintf "Not expecting to find %s" (tokenToString token) in
-   Error.PointedError(Location.getNext token.loc,message)
-
-let appendError (buffer:'kind stream) (error:Error.t) =
-   buffer.errors <- error::buffer.errors
-
-(** Skips one token *)
-let skip (buffer:'kind stream) : unit =
-   let _ = buffer.prev <- buffer.peeked in
-   buffer.peeked <- next_token buffer.lines buffer.lexbuf
-
-(** Returns the current token in the buffer *)
-let current (buffer:'kind stream) : 'kind token =
-   buffer.peeked
-
-(** Returns the kind of the current token *)
-let peekKind (buffer:'kind stream) : token_enum =
-   (current buffer).kind
-
 (** Consumes tokens until it finds the begining of a new statememt or the end of the current *)
-let rec moveToNextStatement (buffer:'kind stream) : unit =
-   match buffer.peeked.kind with
-   | SEMI -> skip buffer
+let rec moveToNextStatement (buffer:Stream.stream) : unit =
+   match Stream.peek buffer with
+   | SEMI -> Stream.skip buffer
    | EOF -> ()
    | FUN | VAL
    | IF  | RET -> ()
-   | RBRAC -> skip buffer
+   | RBRAC -> Stream.skip buffer
    | _ ->
-      let _ = skip buffer in
+      let _ = Stream.skip buffer in
       moveToNextStatement buffer
-
-(** Checks that the next token matches the given kind and skip it *)
-let consume (buffer:'kind stream) (kind:token_enum) : unit =
-   match buffer.peeked with
-   | t when t.kind = kind ->
-      let _ = buffer.prev <- buffer.peeked in
-      buffer.peeked <- next_token buffer.lines buffer.lexbuf
-   | t when t.kind = EOF ->
-      let expected = kindToString kind in
-      let message = Printf.sprintf "Expecting a %s but the file ended" expected in
-      raise (ParserError(getErrorForToken buffer message))
-   | got_token ->
-      let expected = kindToString kind in
-      let got = tokenToString got_token in
-      let message =  Printf.sprintf "Expecting a %s but got %s" expected got in
-      raise (ParserError(getErrorForToken buffer message))
-
-(** Checks that the next token matches *)
-let expect (buffer:'kind stream) (kind:token_enum) : unit =
-   match buffer.peeked with
-   | t when t.kind=kind -> ()
-   | t when t.kind = EOF ->
-      let expected = kindToString kind in
-      let message = Printf.sprintf "Expecting a %s but the file ended" expected in
-      raise (ParserError(getErrorForToken buffer message))
-   | got_token ->
-      let expected = kindToString kind in
-      let got = kindToString got_token.kind in
-      let message = Printf.sprintf "Expecting a %s but got %s" expected got in
-      raise (ParserError(getErrorForToken buffer message))
-
-(** Optionally consumes the given token *)
-let optConsume (buffer:'kind stream) (kind:token_enum) : unit =
-   match buffer.peeked with
-   | t when t.kind=kind ->
-      skip buffer
-   | _ -> ()
-
-(** Returns an empty 'lexed_lines' type *)
-let emptyLexedLines () =
-   {
-      current_line = Buffer.create 100;
-      all_lines    = [];
-   }
-
-(** Creates a token stream given a string *)
-let bufferFromString (str:string) : 'kind stream =
-   let lexbuf = Lexing.from_string str in
-   let lines = emptyLexedLines () in
-   let first =  next_token lines lexbuf in
-   { lexbuf = lexbuf; peeked = first; prev = first ; has_errors = false; errors= []; lines = lines }
-
-(** Creates a token stream given a channel *)
-let bufferFromChannel (chan:in_channel) (file:string) : 'kind stream =
-   let lexbuf = Lexing.from_channel chan in
-   let lines = emptyLexedLines () in
-   lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = file };
-   let first =  next_token lines lexbuf in
-   { lexbuf = lexbuf; peeked = first; prev = first ; has_errors = false; errors = []; lines = lines }
 
 (** Returns the location of an expression *)
 let getExpLocation (e:exp) : Location.t =
@@ -201,34 +119,34 @@ let getLbp (token:'kind token) : int =
    | _       -> 0
 
 (** Parses an expression using a Pratt parser *)
-let rec expression (rbp:int) (buffer:'kind stream) : exp =
-   let current_token = current buffer in
-   let _             = skip buffer in
+let rec expression (rbp:int) (buffer:Stream.stream) : exp =
+   let current_token = Stream.current buffer in
+   let _             = Stream.skip buffer in
    let left          = exp_nud buffer current_token in
-   let next_token    = current buffer in
+   let next_token    = Stream.current buffer in
    let rec loop token left repeat =
       if repeat then
-         let _         = skip buffer in
+         let _         = Stream.skip buffer in
          let new_left  = exp_led buffer token left in
-         let new_token = current buffer in
+         let new_token = Stream.current buffer in
          loop new_token new_left (rbp < (getLbp new_token))
       else
          left
    in loop next_token left (rbp < (getLbp next_token))
 
 (** Nud function for the Pratt parser *)
-and exp_nud (buffer:'kind stream) (token:'kind token) : exp =
+and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
    match token.kind,token.value with
    | OP,"-" -> (* Unary minus *)
       unaryOp buffer token
    | ID,_   -> (* Id or function call *)
       let id = identifierToken buffer token in
       begin
-         match peekKind buffer with
+         match Stream.peek buffer with
          | LPAREN ->
             functionCall buffer token id
          | COLON ->
-            let _ = skip buffer in
+            let _ = Stream.skip buffer in
             let type_exp = expression 20 buffer in
             PId(id,Some(type_exp),token.loc)
          | _ -> PId(id,None,token.loc)
@@ -236,13 +154,13 @@ and exp_nud (buffer:'kind stream) (token:'kind token) : exp =
    | LPAREN,_ ->
       begin
          let start_loc = token.loc in
-         match peekKind buffer with
+         match Stream.peek buffer with
          | RPAREN ->
-            let _ = skip buffer in
+            let _ = Stream.skip buffer in
             PUnit(start_loc)
          | _ ->
             let e = expression 0 buffer in
-            let _ = consume buffer RPAREN in
+            let _ = Stream.consume buffer RPAREN in
             PGroup(e,start_loc)
       end
    | INT,_   -> PInt(int_of_string token.value,token.loc)
@@ -251,20 +169,20 @@ and exp_nud (buffer:'kind stream) (token:'kind token) : exp =
    | FALSE,_ -> PBool(false,token.loc)
    | IF,_ ->
       let cond = expression 0 buffer in
-      let _ = consume buffer THEN in
+      let _ = Stream.consume buffer THEN in
       let then_exp = expression 0 buffer in
-      let _ = consume buffer ELSE in
+      let _ = Stream.consume buffer ELSE in
       let else_exp = expression 0 buffer in
       PIf(cond,then_exp,else_exp,token.loc)
    | LSEQ,_ ->
       let stmts = pseqList buffer in
       PSeq(None,stmts,token.loc)
    | _ ->
-      let message = getNotExpectedTokenError token in
+      let message = Stream.notExpectedError token in
       raise (ParserError(message))
 
 (** Led function for the Pratt parser *)
-and exp_led (buffer:'kind stream) (token:'kind token) (left:exp) : exp =
+and exp_led (buffer:Stream.stream) (token:'kind token) (left:exp) : exp =
    match token.kind,token.value with
    | OP,_ -> (* Binary operators *)
       binaryOp buffer token left
@@ -272,10 +190,11 @@ and exp_led (buffer:'kind stream) (token:'kind token) (left:exp) : exp =
       pair buffer token left
    | COLON,_ ->
       typedId buffer token left
+   | _ -> failwith "exp_led"
    (*| _ -> token*)
 
 (** <pair> :=  <expression>  ',' <expression> [ ',' <expression> ] *)
-and pair (buffer:'kind stream) (token:'kind token) (left:exp) : exp =
+and pair (buffer:Stream.stream) (token:'kind token) (left:exp) : exp =
    let right = expression (getLbp token) buffer in
    let getElems e =
       match e with
@@ -288,199 +207,199 @@ and pair (buffer:'kind stream) (token:'kind token) (left:exp) : exp =
    PTuple(elems1@elems2,start_loc)
 
 (** <typedId> := <expression> : <expression> *)
-and typedId (buffer:'kind stream) (token:'kind token) (left:exp) : exp =
+and typedId (buffer:Stream.stream) (token:'kind token) (left:exp) : exp =
    let right = expression 20 buffer in
    PTyped(left,right,token.loc)
 
 (** <functionCall> := <identifier> '(' <expressionList> ')' *)
-and functionCall (buffer:'kind stream) (token:'kind token) (id:identifier) : exp =
-   let _ = skip buffer in
+and functionCall (buffer:Stream.stream) (token:'kind token) (id:identifier) : exp =
+   let _ = Stream.skip buffer in
    let args =
-      match peekKind buffer with
+      match Stream.peek buffer with
       | RPAREN -> []
       | _ -> expressionList buffer
    in
-   let _ = consume buffer RPAREN in
+   let _ = Stream.consume buffer RPAREN in
    PCall(None,id,args,[],token.loc)
 
 (** <unaryOp> := OP <expression> *)
-and unaryOp (buffer:'kind stream) (token:'kind token) : exp =
+and unaryOp (buffer:Stream.stream) (token:'kind token) : exp =
    let right = expression 70 buffer in
    PUnOp(token.value,right,token.loc)
 
 (** <binaryOp> := <expression> OP <expression> *)
-and binaryOp (buffer:'kind stream) (token:'kind token) (left:exp) : exp =
+and binaryOp (buffer:Stream.stream) (token:'kind token) (left:exp) : exp =
    let right = expression (getLbp token) buffer in
    PBinOp(token.value,left,right,token.loc)
 
 (** <expressionList> := <expression> [',' <expression> ] *)
-and expressionList (buffer:'kind stream) : exp list =
+and expressionList (buffer:Stream.stream) : exp list =
    let rec loop acc =
       (* power of 20 avoids returning a tuple instead of a list*)
       let e = expression 20 buffer in
-      match peekKind buffer with
+      match Stream.peek buffer with
       | COMMA ->
-         let _ = skip buffer in
+         let _ = Stream.skip buffer in
          loop (e::acc)
       | _ -> List.rev (e::acc)
    in loop []
 
 (** namedId := <ID> [ ':' <ID>]  *)
-and namedId (buffer:'kind stream) : named_id =
-   let _     = expect buffer ID in
-   let token = current buffer in
-   let _     = skip buffer in
-   match peekKind buffer with
+and namedId (buffer:Stream.stream) : named_id =
+   let _     = Stream.expect buffer ID in
+   let token = Stream.current buffer in
+   let _     = Stream.skip buffer in
+   match Stream.peek buffer with
    | COLON ->
-      let _     = skip buffer in
+      let _ = Stream.skip buffer in
       let e = expression 20 buffer in
       NamedId(splitOnDot token.value,e,token.loc)
    | _ -> SimpleId(splitOnDot token.value,token.loc)
 
-and identifierToken (buffer:'kind stream) (token:'kind token) : identifier =
+and identifierToken (buffer:Stream.stream) (token:'kind token) : identifier =
    splitOnDot token.value
 
-and identifier (buffer:'kind stream) : identifier =
-   let _     = expect buffer ID in
-   let token = current buffer in
-   let _     = skip buffer in
+and identifier (buffer:Stream.stream) : identifier =
+   let _     = Stream.expect buffer ID in
+   let token = Stream.current buffer in
+   let _     = Stream.skip buffer in
    identifierToken buffer token
 
 (** namedIdList := namedId [',' namedId ] *)
-and namedIdList (buffer:'kind stream) : named_id list =
-   match peekKind buffer with
+and namedIdList (buffer:Stream.stream) : named_id list =
+   match Stream.peek buffer with
    | ID ->
       let first = namedId buffer in
       begin
-         match peekKind buffer with
+         match Stream.peek buffer with
          | COMMA ->
-            let _ = consume buffer COMMA in
+            let _ = Stream.consume buffer COMMA in
             first::(namedIdList buffer)
          | _ -> [first]
       end
    | _ -> []
 
 (** <optStartValue> := '(' <expression> ')' *)
-and optStartValue (buffer:'kind stream) : exp option =
-   match peekKind buffer with
+and optStartValue (buffer:Stream.stream) : exp option =
+   match Stream.peek buffer with
    | LPAREN ->
-      let _ = consume buffer LPAREN in
+      let _ = Stream.consume buffer LPAREN in
       let e = expression 0 buffer in
-      let _ = consume buffer RPAREN in
+      let _ = Stream.consume buffer RPAREN in
       Some(e)
    | _ -> None
 
 (** initExpression := '(' expression ')'*)
-and initExpression (buffer:'kind stream) : exp option =
-   match peekKind buffer with
+and initExpression (buffer:Stream.stream) : exp option =
+   match Stream.peek buffer with
    | AT ->
-      let _ = skip buffer in
+      let _ = Stream.skip buffer in
       let e = expression 0 buffer in
       Some(e)
    | _ -> None
 
 (** <statement> := | 'val' <valBindList> ';' *)
-and stmtVal (buffer:'kind stream) : stmt =
-   let start_loc = buffer.peeked.loc in
-   let _ = consume buffer VAL in
+and stmtVal (buffer:Stream.stream) : stmt =
+   let start_loc = Stream.location buffer in
+   let _ = Stream.consume buffer VAL in
    let lhs = expression 0 buffer in
    (* TODO: Add check of lhs *)
-   match peekKind buffer with
+   match Stream.peek buffer with
    | EQUAL ->
-      let _   = skip buffer in
+      let _   = Stream.skip buffer in
       let rhs = expression 0 buffer in
-      let _   = consume buffer SEMI in
+      let _   = Stream.consume buffer SEMI in
       StmtVal(lhs,Some(rhs),start_loc)
    | _ ->
-      let _ = consume buffer SEMI in
+      let _ = Stream.consume buffer SEMI in
       StmtVal(lhs,None,start_loc)
 
 (** <statement> := | 'mem' <valBindList> ';' *)
-and stmtMem (buffer:'kind stream) : stmt =
-   let start_loc = buffer.peeked.loc in
-   let _    = consume buffer MEM in
+and stmtMem (buffer:Stream.stream) : stmt =
+   let start_loc = Stream.location buffer in
+   let _    = Stream.consume buffer MEM in
    let lhs  = expression 0 buffer in
    let init = initExpression buffer in
    (* TODO: Add check of lhs *)
-   match peekKind buffer with
+   match Stream.peek buffer with
    | EQUAL ->
-      let _   = skip buffer in
+      let _   = Stream.skip buffer in
       let rhs = expression 0 buffer in
-      let _   = consume buffer SEMI in
+      let _   = Stream.consume buffer SEMI in
       StmtMem(lhs,init,Some(rhs),start_loc)
    | _ ->
-      let _ = consume buffer SEMI in
+      let _ = Stream.consume buffer SEMI in
       StmtMem(lhs,init,None,start_loc)
 
-and stmtTab (buffer: 'kind stream) : stmt =
-   let start_loc = buffer.peeked.loc in
-   let _     = consume buffer TABLE in
+and stmtTab (buffer: Stream.stream) : stmt =
+   let start_loc = Stream.location buffer in
+   let _     = Stream.consume buffer TABLE in
    let name  = identifier buffer in
-   let _     = consume buffer EQUAL in
-   let _     = consume buffer LARR in
+   let _     = Stream.consume buffer EQUAL in
+   let _     = Stream.consume buffer LARR in
    let elems = expressionList buffer in
-   let _     = consume buffer RARR in
-   let _ = consume buffer SEMI in
+   let _     = Stream.consume buffer RARR in
+   let _     = Stream.consume buffer SEMI in
    StmtTable(name,elems,start_loc)
 
 (** <statement> := | 'return' <expression> ';' *)
-and stmtReturn (buffer:'kind stream) : stmt =
-   let start_loc = buffer.peeked.loc in
-   let _ = consume buffer RET in
+and stmtReturn (buffer:Stream.stream) : stmt =
+   let start_loc = Stream.location buffer in
+   let _ = Stream.consume buffer RET in
    let e = expression 0 buffer in
-   let _ = consume buffer SEMI in
+   let _ = Stream.consume buffer SEMI in
    StmtReturn(e,start_loc)
 
-and stmtBind (buffer:'kind stream) : stmt =
+and stmtBind (buffer:Stream.stream) : stmt =
    let e1 = expression 0 buffer in
    let start_loc = getExpLocation e1 in
-   match peekKind buffer with
+   match Stream.peek buffer with
    | EQUAL ->
-      let _ = consume buffer EQUAL in
+      let _  = Stream.consume buffer EQUAL in
       let e2 = expression 0 buffer in
-      let _ = consume buffer SEMI in
+      let _  = Stream.consume buffer SEMI in
       StmtBind(e1,e2,start_loc)
    | SEMI ->
-      let _ = consume buffer SEMI in
+      let _  = Stream.consume buffer SEMI in
       StmtBind(PUnit(start_loc),e1,start_loc)
    | kind ->
       let expected = kindToString EQUAL in
       let got = kindToString kind in
       let message = Printf.sprintf "Expecting a %s while trying to parse a binding (%s = ...) but got %s" expected (PrintTypes.expressionStr e1) got in
-      raise (ParserError(getErrorForToken buffer message))
+      raise (ParserError(Stream.makeError buffer message))
 
 (** <statement> := 'if' '(' <expression> ')' <statementList> ['else' <statementList> ]*)
-and stmtIf (buffer:'kind stream) : stmt =
-   let _    = consume buffer IF in
-   let _    = consume buffer LPAREN in
+and stmtIf (buffer:Stream.stream) : stmt =
+   let _    = Stream.consume buffer IF in
+   let _    = Stream.consume buffer LPAREN in
    let cond = expression 0 buffer in
-   let _    = consume buffer RPAREN in
+   let _    = Stream.consume buffer RPAREN in
    let tstm = stmtList buffer in
    let start_loc = getExpLocation cond in
-   match peekKind buffer with
+   match Stream.peek buffer with
    | ELSE ->
-      let _ = consume buffer ELSE in
+      let _    = Stream.consume buffer ELSE in
       let fstm = stmtList buffer in
       StmtIf(cond,tstm,Some(fstm),start_loc)
    | _ -> StmtIf(cond,tstm,None,start_loc)
 
 (** 'fun' <identifier> '(' <namedIdList> ')' <stmtList> *)
-and stmtFunction (buffer:'kind stream) : stmt =
-   let isjoin = match peekKind buffer with | AND -> true | _ -> false in
-   let _      = skip buffer in
+and stmtFunction (buffer:Stream.stream) : stmt =
+   let isjoin = match Stream.peek buffer with | AND -> true | _ -> false in
+   let _      = Stream.skip buffer in
    let name   = identifier buffer in
-   let token  = current buffer in
-   let _      = consume buffer LPAREN in
+   let token  = Stream.current buffer in
+   let _      = Stream.consume buffer LPAREN in
    let args   =
-      match peekKind buffer with
+      match Stream.peek buffer with
       | RPAREN -> []
       | _ -> namedIdList buffer
    in
-   let _    = consume buffer RPAREN in
+   let _        = Stream.consume buffer RPAREN in
    let type_exp =
-      match peekKind buffer with
+      match Stream.peek buffer with
       | COLON ->
-         let _ = skip buffer in
+         let _ = Stream.skip buffer in
          Some(expression 0 buffer)
       | _ -> None
    in
@@ -490,70 +409,70 @@ and stmtFunction (buffer:'kind stream) : stmt =
    StmtFun(name,args,body,type_exp,attr,start_loc)
 
 (** 'type' <identifier> '(' <namedIdList> ')' <valDeclList> *)
-and stmtType (buffer:'kind stream) : stmt =
-   let _     = consume buffer TYPE in
+and stmtType (buffer:Stream.stream) : stmt =
+   let _     = Stream.consume buffer TYPE in
    let name  = identifier buffer in
-   let token = current buffer in
+   let token = Stream.current buffer in
    let start_loc = token.loc in
    let args  =
-      match peekKind buffer with
+      match Stream.peek buffer with
       | LPAREN ->
-         let _    = skip buffer in
+         let _    = Stream.skip buffer in
          let args = namedIdList buffer in
-         let _    = consume buffer RPAREN in
+         let _    = Stream.consume buffer RPAREN in
          args
       | _ -> []
    in
-   match peekKind buffer with
+   match Stream.peek buffer with
    | COLON ->
-      let _ = skip buffer in
+      let _        = Stream.skip buffer in
       let type_exp = expression 10 buffer in
-      let _ = optConsume buffer SEMI in
+      let _        = Stream.optConsume buffer SEMI in
       StmtAliasType(name,args,type_exp,start_loc)
    | LBRAC ->
-      let _        = skip buffer in
+      let _        = Stream.skip buffer in
       let val_decl = valDeclList buffer in
-      let _        = consume buffer RBRAC in
+      let _        = Stream.consume buffer RBRAC in
       StmtType(name,args,val_decl,start_loc)
    | _ ->
-      let got = tokenToString buffer.peeked in
+      let got = tokenToString (Stream.current buffer) in
       let message = Printf.sprintf "Expecting a list of value declarations '{ val x:... }' or a type alias ': type' but got %s" got  in
-      raise (ParserError(getErrorForToken buffer message))
+      raise (ParserError(Stream.makeError buffer message))
 
-and valDeclList (buffer:'kind stream) : val_decl list =
+and valDeclList (buffer:Stream.stream) : val_decl list =
    let rec loop acc =
-      match peekKind buffer with
+      match Stream.peek buffer with
       | VAL ->
          let decl = valDecl buffer in
-         let _    = consume buffer SEMI in
+         let _    = Stream.consume buffer SEMI in
          loop (decl::acc)
       | _ -> List.rev acc
    in loop []
 
-and valDecl (buffer:'kind stream) : val_decl =
-   let _         = expect buffer VAL in
-   let token     = current buffer in
+and valDecl (buffer:Stream.stream) : val_decl =
+   let _         = Stream.expect buffer VAL in
+   let token     = Stream.current buffer in
    let start_loc = token.loc in
-   let _         = skip buffer in
+   let _         = Stream.skip buffer in
    let id        = identifier buffer in
-   let _         = consume buffer COLON in
+   let _         = Stream.consume buffer COLON in
    let val_type  = expression 10 buffer in
    id,val_type,start_loc
 
 (** 'while' (<expression>) <stmtList> *)
-and stmtWhile (buffer:'kind stream) : stmt =
-   let start_loc = buffer.peeked.loc in
-   let _ = consume buffer WHILE in
-   let _ = consume buffer LPAREN in
+and stmtWhile (buffer:Stream.stream) : stmt =
+   let start_loc = Stream.location buffer in
+   let _    = Stream.consume buffer WHILE in
+   let _    = Stream.consume buffer LPAREN in
    let cond = expression 0 buffer in
-   let _    = consume buffer RPAREN in
+   let _    = Stream.consume buffer RPAREN in
    let tstm = stmtList buffer in
    StmtWhile(cond,tstm,start_loc)
 
 (** <statement> := ... *)
-and stmt (buffer:'kind stream) : stmt =
+and stmt (buffer:Stream.stream) : stmt =
    try
-      match peekKind buffer with
+      match Stream.peek buffer with
       | VAL   -> stmtVal     buffer
       | MEM   -> stmtMem     buffer
       | RET   -> stmtReturn  buffer
@@ -566,31 +485,31 @@ and stmt (buffer:'kind stream) : stmt =
       | _     -> stmtBind     buffer
    with
    | ParserError(error) ->
-      let _ = appendError buffer error in
+      let _ = Stream.appendError buffer error in
       let _ = moveToNextStatement buffer in
-      let _ = buffer.has_errors<-true in
+      let _ = Stream.setErrors buffer true in
       StmtEmpty
 
 (** <statementList> := LBRACK <statement> [<statement>] RBRACK *)
-and stmtList (buffer:'kind stream) : stmt =
-   let start_loc = buffer.peeked.loc in
+and stmtList (buffer:Stream.stream) : stmt =
+   let start_loc = Stream.location buffer in
    let rec loop acc =
-      match peekKind buffer with
+      match Stream.peek buffer with
       | RBRAC ->
-         let end_loc = buffer.peeked.loc in
-         let loc = Location.merge start_loc end_loc in
-         let _ = skip buffer in
+         let end_loc = Stream.location buffer in
+         let loc     = Location.merge start_loc end_loc in
+         let _       = Stream.skip buffer in
          StmtBlock(None,List.rev acc,loc)
       | EOF ->
-         let _ = expect buffer RBRAC in
+         let _ = Stream.expect buffer RBRAC in
          StmtBlock(None,[],start_loc)
       | _ ->
          let s = stmt buffer in
          loop (s::acc)
    in
-   match peekKind buffer with
+   match Stream.peek buffer with
    | LBRAC ->
-      let _ = skip buffer in
+      let _ = Stream.skip buffer in
       loop []
    | _ ->
       let s = stmt buffer in
@@ -599,14 +518,14 @@ and stmtList (buffer:'kind stream) : stmt =
 
 (** <statementList> :=  LSEQ <statement> [<statement>] RSEQ
     When called in exp_nud function LSEQ is already consumed *)
-and pseqList (buffer:'kind stream) : stmt list =
+and pseqList (buffer:Stream.stream) : stmt list =
    let rec loop acc =
-      match peekKind buffer with
+      match Stream.peek buffer with
       | RSEQ ->
-         let _ = skip buffer in
+         let _ = Stream.skip buffer in
          List.rev acc
       | EOF ->
-         let _ = expect buffer RSEQ in
+         let _ = Stream.expect buffer RSEQ in
          []
       | _ ->
          let s = stmt buffer in
@@ -615,18 +534,18 @@ and pseqList (buffer:'kind stream) : stmt list =
 
 (** Parses an expression given a string *)
 let parseExp (s:string) : exp =
-   let buffer = bufferFromString s in
+   let buffer = Stream.fromString s in
    expression 0 buffer
 
 (** Parses an statement given a string *)
 let parseStmt (s:string) : stmt =
-   let buffer = bufferFromString s in
+   let buffer = Stream.fromString s in
    let result = stmt buffer in
    result
 
 (** Parses a list of statements given a string *)
 let parseStmtList (s:string) : stmt =
-   let buffer = bufferFromString s in
+   let buffer = Stream.fromString s in
    let result = stmtList buffer in
    result
 
@@ -644,15 +563,15 @@ let parseDumpStmtList (s:string) : string =
 let parseBuffer (file:string) (buffer) : parser_results =
    try
       let rec loop acc =
-         match peekKind buffer with
+         match Stream.peek buffer with
          | EOF -> List.rev acc
          | _ -> loop ((stmtList buffer)::acc)
       in
       let result = loop [] in
-      let all_lines = getFileLines buffer.lines in
-      if buffer.has_errors then
+      let all_lines = getFileLines (Stream.lines buffer) in
+      if Stream.hasErrors buffer then
          {
-            presult = `Error(List.rev buffer.errors);
+            presult = `Error(List.rev (Stream.getErrors buffer));
             lines = all_lines;
             file = file;
          }
@@ -664,14 +583,14 @@ let parseBuffer (file:string) (buffer) : parser_results =
          }
    with
    | ParserError(error) ->
-      let all_lines = getFileLines buffer.lines in
+      let all_lines = getFileLines (Stream.lines buffer) in
       {
          presult = `Error([error]);
          lines = all_lines;
          file = file;
       }
    | _ ->
-      let all_lines = getFileLines buffer.lines in
+      let all_lines = getFileLines (Stream.lines buffer) in
       {
          presult = `Error([Error.SimpleError("Failed to parse the file")]);
          lines = all_lines;
@@ -681,13 +600,13 @@ let parseBuffer (file:string) (buffer) : parser_results =
 (** Parses a file containing a list of statements and returns the results *)
 let parseFile (filename:string) : parser_results =
    let chan = open_in filename in
-   let buffer = bufferFromChannel chan filename in
+   let buffer = Stream.fromChannel chan filename in
    let result = parseBuffer filename buffer in
    let _ = close_in chan in
    result
 
 (** Parses a string containing a list of statements and returns the results *)
 let parseString (text:string) : parser_results =
-   let buffer = bufferFromString text in
+   let buffer = Stream.fromString text in
    let result = parseBuffer "live.vult" buffer in
    result
