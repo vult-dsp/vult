@@ -47,7 +47,8 @@ fun lpfilter(x){
 // ==== OSCILLATOR =====
 
 // Converts the MIDI note to increment rate at a 44100 sample rate
-fun pitchToRate(d) return 8.1758*exp(0.0577623*d)/44100;
+fun pitchToRate(d) : real
+  return 8.1758*exp(0.0577623*d)/44100;
 
 // Generates a BW-limited pulse train given the phase and the number of harmonics
 fun pulse_train(m,phase){
@@ -319,11 +320,11 @@ fun process(i){
 }
 
 and process_noteOn(n){
-  monoin:noteOn(n);
+  _ = monoin:noteOn(n);
 }
 
 and process_noteOff(n){
-  monoin:noteOff(n);
+  _ = monoin:noteOff(n);
 }
 
 

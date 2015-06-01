@@ -43,16 +43,51 @@ let commentedId buffer id =
       newline buffer
    | _ -> ()
 
+let rec typeExpressionBuff buffer (tp:type_exp) =
+   match tp with
+   | TUnit(_) ->
+      append buffer "unit"
+   | TId(id,_) ->
+      identifierBuff buffer id
+   | TTuple(elems,_) ->
+      append buffer "(";
+      typeExpressionListBuff buffer elems;
+      append buffer ")"
+   | TComposed(id,args,_) ->
+      identifierBuff buffer id;
+      append buffer "(";
+      typeExpressionListBuff buffer args;
+      append buffer ")"
+and typeExpressionListBuff buffer expl =
+   printList buffer typeExpressionBuff "," expl
+
+let rec lhsExpressionBuff buffer (lhs:lhs_exp) =
+   match lhs with
+   | LWild(_) ->
+      append buffer "_"
+   | LId(id,_) ->
+      identifierBuff buffer id
+   | LTuple(elems,_) ->
+      append buffer "(";
+      lhsExpressionListBuff buffer elems;
+      append buffer ")"
+   | LTyped(e,tp,_) ->
+      lhsExpressionBuff buffer e;
+      append buffer "(";
+      typeExpressionBuff buffer tp
+and lhsExpressionListBuff buffer expl =
+   printList buffer lhsExpressionBuff "," expl
+
 (** Adds to the print buffer a namedId *)
-let rec namedIdBuff buffer id =
+let rec typedArgBuff buffer id =
    match id with
    | SimpleId(id1,_) -> identifierBuff buffer id1
-   | NamedId(["_"],id2,_) ->
-      expressionBuff buffer id2
-   | NamedId(id1,id2,_) ->
+   | TypedId(["_"],id_type,_) ->
+      typeExpressionBuff buffer id_type
+   | TypedId(id1,id_type,_) ->
       identifierBuff buffer id1;
       append buffer ":";
-      expressionBuff buffer id2
+      typeExpressionBuff buffer id_type
 
 (** Adds to the print buffer an expression *)
 and expressionBuff buffer (exp:exp) =
@@ -67,10 +102,6 @@ and expressionBuff buffer (exp:exp) =
    | PReal(s,_) -> append buffer (string_of_float s)
    | PBool(true,_)  -> append buffer "true"
    | PBool(false,_) -> append buffer "false"
-   | PTyped(e1,e2,_) ->
-      expressionBuff buffer e1;
-      append buffer ":";
-      expressionBuff buffer e2;
    | PBinOp(op,e1,e2,_) ->
       append buffer "(";
       expressionBuff buffer e1;
@@ -113,22 +144,22 @@ and stmtBuff buffer (s:stmt) =
    match s with
    | StmtVal(e1,Some(e2),_) ->
       append buffer "val ";
-      expressionBuff buffer e1;
-      append buffer "=";
+      lhsExpressionBuff buffer e1;
+      append buffer " = ";
       expressionBuff buffer e2;
       append buffer ";"
    | StmtVal(e1,None,_) ->
       append buffer "val ";
-      expressionBuff buffer e1;
+      lhsExpressionBuff buffer e1;
       append buffer ";"
    | StmtMem(e1,e2,e3,_) ->
       append buffer "mem ";
-      expressionBuff buffer e1;
+      lhsExpressionBuff buffer e1;
       CCOpt.iter (fun a ->
             append buffer "@";
             expressionBuff buffer a) e2;
       CCOpt.iter (fun a ->
-            append buffer "=";
+            append buffer " = ";
             expressionBuff buffer a) e3;
       append buffer ";"
    | StmtTable(id,elems,_) ->
@@ -164,19 +195,16 @@ and stmtBuff buffer (s:stmt) =
       append buffer (if isJoint attr then "and " else "fun ");
       identifierBuff buffer name;
       append buffer "(";
-      printList buffer namedIdBuff "," args;
+      printList buffer typedArgBuff "," args;
       append buffer ") ";
       CCOpt.iter(fun a ->
-            append buffer ":";
-            expressionBuff buffer a;
+            append buffer ": ";
+            typeExpressionBuff buffer a;
             append buffer " ") type_exp;
       stmtBuff buffer body
-   | StmtBind(PUnit(_),e,_) ->
-      expressionBuff buffer e;
-      append buffer ";"
    | StmtBind(e1,e2,_) ->
-      expressionBuff buffer e1;
-      append buffer "=";
+      lhsExpressionBuff buffer e1;
+      append buffer " = ";
       expressionBuff buffer e2;
       append buffer ";"
    | StmtBlock(name,stmts,_) ->
@@ -195,11 +223,11 @@ and stmtBuff buffer (s:stmt) =
          | [] -> append buffer " "
          | _  ->
             append buffer "(";
-            printList buffer namedIdBuff "," args;
+            printList buffer typedArgBuff "," args;
             append buffer ")"
       end;
       append buffer ":";
-      expressionBuff buffer alias;
+      typeExpressionBuff buffer alias;
       append buffer ";"
    | StmtType(id,args,decl_list,_) ->
       append buffer "type ";
@@ -209,7 +237,7 @@ and stmtBuff buffer (s:stmt) =
          | [] -> append buffer " "
          | _  ->
             append buffer "(";
-            printList buffer namedIdBuff "," args;
+            printList buffer typedArgBuff "," args;
             append buffer ")"
       end;
       append buffer "{";
@@ -264,7 +292,7 @@ and valDecl buffer val_decl =
    append buffer "val ";
    identifierBuff buffer id;
    append buffer " : ";
-   expressionBuff buffer e;
+   typeExpressionBuff buffer e;
    append buffer ";";
    newline buffer
 
@@ -278,6 +306,12 @@ let stmtListStr e =
 let stmtStr e =
    let print_buffer = makePrintBuffer () in
    stmtBuff print_buffer e;
+   contents print_buffer
+
+(** Converts to string an lhs expression *)
+let lhsExpressionStr e =
+   let print_buffer = makePrintBuffer () in
+   lhsExpressionBuff print_buffer e;
    contents print_buffer
 
 (** Converts to string an expression *)

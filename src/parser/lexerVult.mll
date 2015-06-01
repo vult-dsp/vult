@@ -132,6 +132,7 @@ let kindToString kind =
    | TRUE  -> "'true'"
    | FALSE -> "'false'"
    | AND   -> "'and'"
+   | WILD  -> "'_'"
 
 (** Returns a string representation of the token *)
 let tokenToString l =
@@ -173,6 +174,7 @@ rule next_token lines = parse
   | blank +     { let _ = getLexeme lines lexbuf in next_token lines lexbuf }
   | '.'         { makeToken lines DOT lexbuf }
   | '@'         { makeToken lines AT lexbuf }
+  | '_'         { makeToken lines WILD lexbuf }
   | '('         { makeToken lines LPAREN lexbuf }
   | ')'         { makeToken lines RPAREN lexbuf }
   | "{|"        { makeToken lines LSEQ lexbuf }

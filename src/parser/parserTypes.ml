@@ -62,6 +62,7 @@ type token_enum =
    | TRUE
    | FALSE
    | AND
+   | WILD
 
 type 'kind token =
    {

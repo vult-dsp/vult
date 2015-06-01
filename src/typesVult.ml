@@ -42,13 +42,27 @@ type fun_attribute =
 type fun_attributes = fun_attribute list
    [@@deriving show,eq,ord]
 
-type named_id =
+type type_exp =
+   | TUnit     of Location.t
+   | TId       of identifier    * Location.t
+   | TTuple    of type_exp list * Location.t
+   | TComposed of identifier    * type_exp list * Location.t
+   [@@deriving show,eq,ord]
+
+type typed_id =
    | SimpleId of identifier * Location.t
-   | NamedId  of identifier * exp * Location.t
+   | TypedId  of identifier * type_exp * Location.t
+   [@@deriving show,eq,ord]
+
+type lhs_exp =
+   | LWild  of Location.t
+   | LId    of identifier   * Location.t
+   | LTuple of lhs_exp list * Location.t
+   | LTyped of lhs_exp * type_exp * Location.t
    [@@deriving show,eq,ord]
 
 (** Parser syntax tree *)
-and exp =
+type exp =
    | PUnit
       of Location.t
    | PBool
@@ -63,10 +77,6 @@ and exp =
    | PId
       of identifier  (* name *)
       *  exp option  (* type *)
-      *  Location.t
-   | PTyped
-      of exp   (* expression *)
-      *  exp   (* type *)
       *  Location.t
    | PUnOp
       of string      (* operator *)
@@ -102,11 +112,11 @@ and exp =
 
 and stmt =
    | StmtVal
-      of exp         (* names/lhs *)
+      of lhs_exp     (* names/lhs *)
       *  exp option  (* rhs *)
       *  Location.t
    | StmtMem
-      of exp         (* names/lhs *)
+      of lhs_exp     (* names/lhs *)
       *  exp option  (* initial value *)
       *  exp option  (* rhs *)
       *  Location.t
@@ -128,13 +138,13 @@ and stmt =
       *  Location.t
    | StmtFun
       of identifier       (* name *)
-      *  named_id list    (* arguments *)
+      *  typed_id list    (* arguments *)
       *  stmt             (* body *)
-      *  exp option       (* return type *)
+      *  type_exp option  (* return type *)
       *  fun_attributes   (* attributes *)
       *  Location.t
    | StmtBind
-      of exp         (* lhs *)
+      of lhs_exp     (* lhs *)
       *  exp         (* rhs *)
       *  Location.t
    | StmtBlock
@@ -143,20 +153,20 @@ and stmt =
       *  Location.t
    | StmtType
       of identifier           (* name *)
-      *  named_id list        (* arguments *)
+      *  typed_id list        (* arguments *)
       *  val_decl list        (* members *)
       *  Location.t
    | StmtAliasType
       of identifier           (* name *)
-      *  named_id list        (* arguments *)
-      *  exp                  (* alias type *)
+      *  typed_id list        (* arguments *)
+      *  type_exp             (* alias type *)
       *  Location.t
    | StmtEmpty
    [@@deriving show,eq,ord]
 
 and val_decl =
    identifier  (* name *)
-   * exp       (* type *)
+   * type_exp  (* type *)
    * Location.t
 
 type exp_list = exp list

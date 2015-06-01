@@ -216,9 +216,6 @@ let rec traverseExp (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate 
       | PId(_,_,_)
       | PSeq(_,_,_)
       | PEmpty -> f state exp
-      | PTyped(e,tp,loc) ->
-         let state1,ne = traverseExp pred f state e in
-         revisitExp pred f (f state1 (PTyped(ne,tp,loc)))
       | PUnOp(op,e,loc) ->
          let state1,ne = traverseExp pred f state e in
          revisitExp pred f (f state1 (PUnOp(op,ne,loc)))
