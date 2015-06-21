@@ -135,4 +135,4 @@ fun allp12(x,fc,q){
     return biquad(x,b0,b1,b2,a1,a2);
 }
 
-allp12(0,100,0.5);
+_ = allp12(0,100,0.5);
