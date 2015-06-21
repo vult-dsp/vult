@@ -58,6 +58,8 @@ let rec typeExpressionBuff buffer (tp:type_exp) =
       append buffer "(";
       typeExpressionListBuff buffer args;
       append buffer ")"
+   | TSignature(elems,_) ->
+      printList buffer typeExpressionBuff " -> " elems
 and typeExpressionListBuff buffer expl =
    printList buffer typeExpressionBuff "," expl
 
@@ -92,12 +94,8 @@ let rec typedArgBuff buffer id =
 (** Adds to the print buffer an expression *)
 and expressionBuff buffer (exp:exp) =
    match exp with
-   | PId(s,type_exp,_)   ->
-      identifierBuff buffer s;
-      CCOpt.iter (fun a ->
-            append buffer ":";
-            expressionBuff buffer a;
-         ) type_exp;
+   | PId(s,_)   ->
+      identifierBuff buffer s
    | PInt(s,_)  -> append buffer (string_of_int s)
    | PReal(s,_) -> append buffer (string_of_float s)
    | PBool(true,_)  -> append buffer "true"

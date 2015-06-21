@@ -43,10 +43,11 @@ type fun_attributes = fun_attribute list
    [@@deriving show,eq,ord]
 
 type type_exp =
-   | TUnit     of Location.t
-   | TId       of identifier    * Location.t
-   | TTuple    of type_exp list * Location.t
-   | TComposed of identifier    * type_exp list * Location.t
+   | TUnit      of Location.t
+   | TId        of identifier    * Location.t
+   | TTuple     of type_exp list * Location.t
+   | TComposed  of identifier    * type_exp list * Location.t
+   | TSignature of type_exp list * Location.t
    [@@deriving show,eq,ord]
 
 type typed_id =
@@ -76,7 +77,6 @@ type exp =
       *  Location.t
    | PId
       of identifier  (* name *)
-      *  exp option  (* type *)
       *  Location.t
    | PUnOp
       of string      (* operator *)
@@ -171,6 +171,10 @@ and val_decl =
 
 type exp_list = exp list
    [@@deriving show,eq,ord]
+
+type scope_kind =
+   | FuncScope
+   | LocalScope
 
 type parser_results =
    {

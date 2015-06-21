@@ -89,3 +89,6 @@ let joinErrorOptions : t list option -> t list option -> t list option =
 
 (** Joins a list of optional errors *)
 let joinErrorOptionsList : t list option list -> t list option = List.fold_left joinErrorOptions None
+
+let makeError (msg:string) (loc:Location.t) =
+   PointedError(loc,msg)

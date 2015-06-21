@@ -63,7 +63,7 @@ let getExpLocation (e:exp) : Location.t =
    | PInt(_,loc)
    | PBool(_,loc)
    | PReal(_,loc) -> loc
-   | PId(_,_,loc) -> loc
+   | PId(_,loc) -> loc
    | PUnOp(_,_,loc)
    | PBinOp(_,_,_,loc)
    | PCall(_,_,_,_,loc)
@@ -263,9 +263,17 @@ and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
             functionCall buffer token id
          | COLON ->
             let _ = Stream.skip buffer in
-            let type_exp = expression 20 buffer in
-            PId(id,Some(type_exp),token.loc)
-         | _ -> PId(id,None,token.loc)
+            let exp_call = expression 20 buffer in
+            begin
+               match exp_call with
+               | PCall(None,fname,args,attr,loc) ->
+                  PCall(Some(id),fname,args,attr,loc)
+               | _ ->
+                  let loc   = getExpLocation exp_call in
+                  let error = Error.PointedError(Location.getNext loc,"After ':' you can only have a function call") in
+                  raise (ParserError(error))
+            end
+         | _ -> PId(id,token.loc)
       end
    | LPAREN,_ ->
       begin

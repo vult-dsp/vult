@@ -86,11 +86,14 @@ let identifierStrList (ids:identifier list) : string =
 
 module BindingInfo =
 struct
-   type t = identifier
-   type v = binding_info
-   let compare  = compare_identifier
-   let string_t = identifierStr
-   let string_v _ = ""
+   type t    = identifier
+   type v    = binding_info
+   type kind = scope_kind
+   let compare     = compare_identifier
+   let string_t    = identifierStr
+   let string_v _  = ""
+   let lookup_cond = (* Only scapes local scopes *)
+      function | Some(LocalScope) -> true | _ -> false
 end
 
 module BindingsScope = Scope(BindingInfo)
@@ -128,9 +131,9 @@ let deriveState (s:'a tstate) (data:'b) : 'b tstate =
    { scope = s.scope; data = data; revisit = false }
 
 (** Adds a name to the scope *)
-let pushScope (s:'a tstate) (name:identifier) : 'a tstate =
+let pushScope (s:'a tstate) (name:identifier) (kind:scope_kind) : 'a tstate =
    (*Printf.printf " - Entering to scope '%s'\n" (joinSep "." name);*)
-   { s with scope = BindingsScope.enter s.scope name }
+   { s with scope = BindingsScope.enter s.scope name (Some(kind)) }
 
 (** Removes the last name from the scope *)
 let popScope (s:'a tstate) : 'a tstate =
@@ -213,7 +216,7 @@ let rec traverseExp (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate 
       | PBool(_,_)
       | PInt(_,_)
       | PReal(_,_)
-      | PId(_,_,_)
+      | PId(_,_)
       | PSeq(_,_,_)
       | PEmpty -> f state exp
       | PUnOp(op,e,loc) ->

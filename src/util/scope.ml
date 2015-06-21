@@ -27,9 +27,11 @@ THE SOFTWARE.
 module type ScopeSig = sig
    type t
    type v
-   val compare : t -> t -> int
-   val string_t: t -> string
-   val string_v: v -> string
+   type kind
+   val compare :    t -> t -> int
+   val string_t:    t -> string
+   val string_v:    v -> string
+   val lookup_cond: kind option -> bool
 end
 
 module Scope (KeyType:ScopeSig) = struct
@@ -40,7 +42,7 @@ module Scope (KeyType:ScopeSig) = struct
          subscopes    : t TypeMap.t;
          current_name : TypeMap.key option;
          values       : KeyType.v TypeMap.t;
-         isLocal      : bool; (* Local scopes are ignored for globla lookup *)
+         kind         : KeyType.kind option;
       }
 
    let empty =
@@ -49,24 +51,21 @@ module Scope (KeyType:ScopeSig) = struct
          subscopes    = TypeMap.empty;
          current_name = None;
          values       = TypeMap.empty;
-         isLocal      = true;
+         kind         = None;
       }
 
-   let enterAny (scope:t) (name:TypeMap.key) (is_local:bool) : t =
+   let enterAny (scope:t) (name:TypeMap.key) (kind:KeyType.kind option) : t =
       if TypeMap.mem name scope.subscopes then
          { (TypeMap.find name scope.subscopes) with parent = Some(scope) }
       else
          { empty with
            parent       = Some(scope);
            current_name = Some(name);
-           isLocal      = is_local;
+           kind         = kind;
          }
 
-   let enterLocal (scope:t) (name:TypeMap.key) : t =
-      enterAny scope name true
-
-   let enter (scope:t) (name:TypeMap.key) : t =
-      enterAny scope name false
+   let enter (scope:t) (name:TypeMap.key) (kind:KeyType.kind option) : t =
+      enterAny scope name kind
 
    let exit (scope:t) : t =
       match scope.parent,scope.current_name with
@@ -83,7 +82,10 @@ module Scope (KeyType:ScopeSig) = struct
             if TypeMap.mem name s.values then
                Some(TypeMap.find name s.values)
             else
-               lookup_loop s.parent
+               if KeyType.lookup_cond scope.kind then
+                  lookup_loop s.parent
+               else
+                  None
       in lookup_loop (Some(scope))
 
    let bind (scope:t) (name:TypeMap.key) (value:'a) : t =
@@ -92,7 +94,7 @@ module Scope (KeyType:ScopeSig) = struct
    let rec enterPath (scope:t) (path:TypeMap.key list) : t =
       match path with
       | []   -> scope
-      | h::t -> enter scope h
+      | h::t -> enter scope h None
 
    let getCurrentPath (scope:t) : KeyType.t list =
       let rec getCurrentPath_loop s =

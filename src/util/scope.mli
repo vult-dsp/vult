@@ -27,9 +27,11 @@ THE SOFTWARE.
 module type ScopeSig = sig
   type t
   type v
-  val compare : t -> t -> int
-  val string_t : t -> bytes
-  val string_v : v -> bytes
+  type kind
+  val compare    : t -> t -> int
+  val string_t   : t -> bytes
+  val string_v   : v -> bytes
+  val lookup_cond: kind option -> bool
 end
 
 module Scope : functor (KeyType : ScopeSig) -> sig
@@ -44,7 +46,7 @@ module Scope : functor (KeyType : ScopeSig) -> sig
       val empty : t
 
       (** Enters to a subscope, if it does not exists it creates it *)
-      val enter : t -> KeyType.t -> t
+      val enter : t -> KeyType.t -> KeyType.kind option -> t
 
       (** Leaves the current scope and returns the parent *)
       val exit : t -> t
