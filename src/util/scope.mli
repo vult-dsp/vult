@@ -31,7 +31,6 @@ module type ScopeSig = sig
   val compare    : t -> t -> int
   val string_t   : t -> bytes
   val string_v   : v -> bytes
-  val lookup_cond: kind option -> bool
 end
 
 module Scope : functor (KeyType : ScopeSig) -> sig

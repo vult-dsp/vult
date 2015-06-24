@@ -251,3 +251,48 @@ and revisitExp (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate * exp
    else
       state,exp
 
+(** Returns the full location (start and end) of an expression *)
+let rec getFullExpLocation (e:exp) : Location.t =
+   match e with
+   | PUnit(loc)
+   | PInt(_,loc)
+   | PBool(_,loc)
+   | PReal(_,loc)
+   | PId(_,loc) -> loc
+   | PUnOp(_,e1,loc) -> Location.merge loc (getFullExpLocation e1)
+   | PBinOp(_,e1,e2,loc) ->
+      let loc1 = getFullExpLocation e1 in
+      let loc2 = getFullExpLocation e2 in
+      Location.merge loc (Location.merge loc1 loc2)
+   | PCall(_,_,args,_,loc) ->
+      getFullExpListLocation loc args
+   | PIf(e1,e2,e3,loc) ->
+      let loc1 = getFullExpLocation e1 in
+      let loc2 = getFullExpLocation e2 in
+      let loc3 = getFullExpLocation e3 in
+      Location.merge loc (Location.merge loc1 (Location.merge loc2 loc3))
+   | PGroup(e1,loc) ->
+      let loc1 = getFullExpLocation e1 in
+      Location.merge loc loc1
+   | PTuple(el,loc) ->
+      getFullExpListLocation loc el
+   | PSeq(_,_,loc) -> loc
+   | PEmpty -> Location.default
+
+and getFullExpListLocation (loc:Location.t) (el:exp list) : Location.t =
+   List.fold_left (fun s a -> Location.merge s (getFullExpLocation a)) loc el
+
+let rec getFullTypeLocation (exp:type_exp) : Location.t =
+   match exp with
+   | TUnit(loc) -> loc
+   | TId(_,loc) -> loc
+   | TTuple(el,loc) ->
+      getFullTypeListLocation loc el
+   | TComposed(_,el,loc) ->
+      getFullTypeListLocation loc el
+   | TSignature(el,loc) ->
+      getFullTypeListLocation loc el
+
+and getFullTypeListLocation (loc:Location.t) (el:type_exp list) : Location.t =
+   List.fold_left (fun s a -> Location.merge s (getFullTypeLocation a)) loc el
+

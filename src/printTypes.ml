@@ -317,3 +317,9 @@ let expressionStr e =
    let print_buffer = makePrintBuffer () in
    expressionBuff print_buffer e;
    contents print_buffer
+
+(** Converts to string an type expression *)
+let typeStr e =
+   let print_buffer = makePrintBuffer () in
+   typeExpressionBuff print_buffer e;
+   contents print_buffer

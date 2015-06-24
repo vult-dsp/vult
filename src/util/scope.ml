@@ -31,7 +31,6 @@ module type ScopeSig = sig
    val compare :    t -> t -> int
    val string_t:    t -> string
    val string_v:    v -> string
-   val lookup_cond: kind option -> bool
 end
 
 module Scope (KeyType:ScopeSig) = struct
@@ -82,10 +81,7 @@ module Scope (KeyType:ScopeSig) = struct
             if TypeMap.mem name s.values then
                Some(TypeMap.find name s.values)
             else
-               if KeyType.lookup_cond scope.kind then
-                  lookup_loop s.parent
-               else
-                  None
+               lookup_loop s.parent
       in lookup_loop (Some(scope))
 
    let bind (scope:t) (name:TypeMap.key) (value:'a) : t =

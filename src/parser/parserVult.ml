@@ -62,14 +62,14 @@ let getExpLocation (e:exp) : Location.t =
    | PUnit(loc)
    | PInt(_,loc)
    | PBool(_,loc)
-   | PReal(_,loc) -> loc
-   | PId(_,loc) -> loc
+   | PReal(_,loc)
+   | PId(_,loc)
    | PUnOp(_,_,loc)
    | PBinOp(_,_,_,loc)
    | PCall(_,_,_,_,loc)
    | PIf(_,_,_,loc)
    | PGroup(_,loc)
-   | PTuple(_,loc) -> loc
+   | PTuple(_,loc)
    | PSeq(_,_,loc) -> loc
    | PEmpty -> Location.default
 
