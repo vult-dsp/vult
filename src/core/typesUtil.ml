@@ -25,7 +25,6 @@ THE SOFTWARE.
 (** Utility functions for the types *)
 
 open TypesVult
-open ParserTypes
 open Either
 open Scope
 

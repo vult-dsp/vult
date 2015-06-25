@@ -1,1 +1,4 @@
-#load "printTypes.cmo";;#load "lexerVult.cmo";;#load "parserVult.cmo";;#load "interpreterVult.cmo";;
+#use "topfind";;
+#require "containers";;
+#require "str";;
+#require "ocamlgraph";;

@@ -109,7 +109,7 @@ type exp =
       *  stmt list
       *  Loc.t
    | PEmpty
-
+   [@@deriving show,eq,ord]
 and stmt =
    | StmtVal
       of lhs_exp     (* names/lhs *)
@@ -168,6 +168,7 @@ and val_decl =
    identifier  (* name *)
    * type_exp  (* type *)
    * Loc.t
+   [@@deriving show,eq,ord]
 
 type exp_list = exp list
    [@@deriving show,eq,ord]

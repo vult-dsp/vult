@@ -1,14 +1,17 @@
 S ./
 S ./src
+S ./src/core
 S ./src/passes
 S ./src/util
 S ./src/parser
 B ./_build
 B ./_build/src
+B ./_build/src/core
 B ./_build/src/passes
 B ./_build/src/util
 B ./_build/src/parser
 PKG oUnit
 PKG containers
 PKG ppx_deriving.std
+PKG ppx_deriving
 PKG ocamlgraph

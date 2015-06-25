@@ -26,9 +26,8 @@ THE SOFTWARE.
 
 open Graph
 open CCHashtbl
-open TypesVult
 
-module G = Imperative.Digraph.Abstract(struct type t = identifier end)
+module G = Imperative.Digraph.Abstract(struct type t = TypesVult.identifier end)
 open G
 
 module C = Components.Make(G)
