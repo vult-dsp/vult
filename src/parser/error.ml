@@ -23,24 +23,24 @@ THE SOFTWARE.
 *)
 
 type t =
-   | PointedError of Location.t * string
+   | PointedError of Loc.t * string
    | SimpleError  of string
 
 (** Takes a location and returns a string in the format "Error in file: file: line l col:c1-c2" *)
-let errorLocationMessage (location:Location.t) : string =
-   let col_start = Location.startColumn location in
-   let col_end   = Location.endColumn location in
+let errorLocationMessage (location:Loc.t) : string =
+   let col_start = Loc.startColumn location in
+   let col_end   = Loc.endColumn location in
    Printf.sprintf "Error in file: %s: line %i col:%i-%i\n"
-      (Location.file location)
-      (Location.line location)
+      (Loc.file location)
+      (Loc.line location)
       col_start
       col_end
 
 (** Takes the current line and a location returns a string pointing to the
     location *)
-let errorLocationIndicator (line:string) (location:Location.t) : string =
-   let col_start = Location.startColumn location in
-   let col_end   = Location.endColumn location in
+let errorLocationIndicator (line:string) (location:Loc.t) : string =
+   let col_start = Loc.startColumn location in
+   let col_end   = Loc.endColumn location in
    let pointer   = if (col_end - col_start) <> 0 then (String.make (col_end - col_start) '^') else "^" in
    Printf.sprintf "%s\n%s%s\n"
       line
@@ -48,8 +48,8 @@ let errorLocationIndicator (line:string) (location:Location.t) : string =
       pointer
 
 (** Returns the lines corresponding to the given location *)
-let getErrorLines (location:Location.t) (lines:string array) =
-   match Location.line location with
+let getErrorLines (location:Loc.t) (lines:string array) =
+   match Loc.line location with
    | 0 | 1 -> Array.get lines 0
    | n -> (Array.get lines (n-2))^"\n"^(Array.get lines (n-1))
 
@@ -90,5 +90,5 @@ let joinErrorOptions : t list option -> t list option -> t list option =
 (** Joins a list of optional errors *)
 let joinErrorOptionsList : t list option list -> t list option = List.fold_left joinErrorOptions None
 
-let makeError (msg:string) (loc:Location.t) =
+let makeError (msg:string) (loc:Loc.t) =
    PointedError(loc,msg)

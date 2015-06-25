@@ -76,7 +76,7 @@ let getLexeme lines lexbuf =
 
 (** Returs the token given the current token kind *)
 let makeToken lines kind lexbuf =
-   { kind = kind; value = getLexeme lines lexbuf; loc = Location.getLocation lexbuf; }
+   { kind = kind; value = getLexeme lines lexbuf; loc = Loc.getLocation lexbuf; }
 
 (** Returs the a keyword token if that's the case otherwise and id token *)
 let makeIdToken lines lexbuf =
@@ -86,7 +86,7 @@ let makeIdToken lines lexbuf =
          Hashtbl.find keyword_table s
       else ID
    in
-   { kind = kind; value = s; loc = Location.getLocation lexbuf; }
+   { kind = kind; value = s; loc = Loc.getLocation lexbuf; }
 
 (* Functions for testing the tokenizer *)
 let tokenizeString tokenizer str =

@@ -57,7 +57,7 @@ let rec moveToNextStatement (buffer:Stream.stream) : unit =
       moveToNextStatement buffer
 
 (** Returns the location of an expression *)
-let getExpLocation (e:exp) : Location.t =
+let getExpLocation (e:exp) : Loc.t =
    match e with
    | PUnit(loc)
    | PInt(_,loc)
@@ -71,9 +71,9 @@ let getExpLocation (e:exp) : Location.t =
    | PGroup(_,loc)
    | PTuple(_,loc)
    | PSeq(_,_,loc) -> loc
-   | PEmpty -> Location.default
+   | PEmpty -> Loc.default
 
-let getLhsExpLocation (e:lhs_exp) : Location.t =
+let getLhsExpLocation (e:lhs_exp) : Loc.t =
    match e with
    | LWild(loc)
    | LId(_,loc)
@@ -81,7 +81,7 @@ let getLhsExpLocation (e:lhs_exp) : Location.t =
    | LTyped(_,_,loc) -> loc
 
 (** Returns the location of an statement *)
-let getStmtLocation (s:stmt)  : Location.t =
+let getStmtLocation (s:stmt)  : Loc.t =
    match s with
    | StmtVal(_,_,loc)
    | StmtMem(_,_,_,loc)
@@ -90,7 +90,7 @@ let getStmtLocation (s:stmt)  : Location.t =
    | StmtIf(_,_,_,loc)
    | StmtFun(_,_,_,_,_,loc)
    | StmtBind(_,_,loc) -> loc
-   | StmtEmpty -> Location.default
+   | StmtEmpty -> Loc.default
    | StmtBlock(_,_,loc) -> loc
    | StmtWhile(_,_,loc) -> loc
    | StmtType(_,_,_,loc) -> loc
@@ -270,7 +270,7 @@ and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
                   PCall(Some(id),fname,args,attr,loc)
                | _ ->
                   let loc   = getExpLocation exp_call in
-                  let error = Error.PointedError(Location.getNext loc,"After ':' you can only have a function call") in
+                  let error = Error.PointedError(Loc.getNext loc,"After ':' you can only have a function call") in
                   raise (ParserError(error))
             end
          | _ -> PId(id,token.loc)
@@ -613,7 +613,7 @@ and stmtList (buffer:Stream.stream) : stmt =
       match Stream.peek buffer with
       | RBRAC ->
          let end_loc = Stream.location buffer in
-         let loc     = Location.merge start_loc end_loc in
+         let loc     = Loc.merge start_loc end_loc in
          let _       = Stream.skip buffer in
          StmtBlock(None,List.rev acc,loc)
       | EOF ->

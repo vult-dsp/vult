@@ -28,7 +28,6 @@ open TypesVult
 open ParserTypes
 open Either
 open Scope
-open Location
 
 (* -- OVERVIEW PLEASE FILL IN
    Types:
@@ -252,37 +251,37 @@ and revisitExp (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate * exp
       state,exp
 
 (** Returns the full location (start and end) of an expression *)
-let rec getFullExpLocation (e:exp) : Location.t =
+let rec getFullExpLocation (e:exp) : Loc.t =
    match e with
    | PUnit(loc)
    | PInt(_,loc)
    | PBool(_,loc)
    | PReal(_,loc)
    | PId(_,loc) -> loc
-   | PUnOp(_,e1,loc) -> Location.merge loc (getFullExpLocation e1)
+   | PUnOp(_,e1,loc) -> Loc.merge loc (getFullExpLocation e1)
    | PBinOp(_,e1,e2,loc) ->
       let loc1 = getFullExpLocation e1 in
       let loc2 = getFullExpLocation e2 in
-      Location.merge loc (Location.merge loc1 loc2)
+      Loc.merge loc (Loc.merge loc1 loc2)
    | PCall(_,_,args,_,loc) ->
       getFullExpListLocation loc args
    | PIf(e1,e2,e3,loc) ->
       let loc1 = getFullExpLocation e1 in
       let loc2 = getFullExpLocation e2 in
       let loc3 = getFullExpLocation e3 in
-      Location.merge loc (Location.merge loc1 (Location.merge loc2 loc3))
+      Loc.merge loc (Loc.merge loc1 (Loc.merge loc2 loc3))
    | PGroup(e1,loc) ->
       let loc1 = getFullExpLocation e1 in
-      Location.merge loc loc1
+      Loc.merge loc loc1
    | PTuple(el,loc) ->
       getFullExpListLocation loc el
    | PSeq(_,_,loc) -> loc
-   | PEmpty -> Location.default
+   | PEmpty -> Loc.default
 
-and getFullExpListLocation (loc:Location.t) (el:exp list) : Location.t =
-   List.fold_left (fun s a -> Location.merge s (getFullExpLocation a)) loc el
+and getFullExpListLocation (loc:Loc.t) (el:exp list) : Loc.t =
+   List.fold_left (fun s a -> Loc.merge s (getFullExpLocation a)) loc el
 
-let rec getFullTypeLocation (exp:type_exp) : Location.t =
+let rec getFullTypeLocation (exp:type_exp) : Loc.t =
    match exp with
    | TUnit(loc) -> loc
    | TId(_,loc) -> loc
@@ -293,6 +292,6 @@ let rec getFullTypeLocation (exp:type_exp) : Location.t =
    | TSignature(el,loc) ->
       getFullTypeListLocation loc el
 
-and getFullTypeListLocation (loc:Location.t) (el:type_exp list) : Location.t =
-   List.fold_left (fun s a -> Location.merge s (getFullTypeLocation a)) loc el
+and getFullTypeListLocation (loc:Loc.t) (el:type_exp list) : Loc.t =
+   List.fold_left (fun s a -> Loc.merge s (getFullTypeLocation a)) loc el
 

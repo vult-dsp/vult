@@ -68,7 +68,7 @@ type 'kind token =
    {
       kind     : 'kind;
       value    : string;
-      loc      : Location.t;
+      loc      : Loc.t;
    }
 
 (** Type containing the stream of tokens *)

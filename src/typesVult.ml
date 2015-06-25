@@ -43,131 +43,131 @@ type fun_attributes = fun_attribute list
    [@@deriving show,eq,ord]
 
 type type_exp =
-   | TUnit      of Location.t
-   | TId        of identifier    * Location.t
-   | TTuple     of type_exp list * Location.t
-   | TComposed  of identifier    * type_exp list * Location.t
-   | TSignature of type_exp list * Location.t
+   | TUnit      of Loc.t
+   | TId        of identifier    * Loc.t
+   | TTuple     of type_exp list * Loc.t
+   | TComposed  of identifier    * type_exp list * Loc.t
+   | TSignature of type_exp list * Loc.t
    [@@deriving show,eq,ord]
 
 type typed_id =
-   | SimpleId of identifier * Location.t
-   | TypedId  of identifier * type_exp * Location.t
+   | SimpleId of identifier * Loc.t
+   | TypedId  of identifier * type_exp * Loc.t
    [@@deriving show,eq,ord]
 
 type lhs_exp =
-   | LWild  of Location.t
-   | LId    of identifier   * Location.t
-   | LTuple of lhs_exp list * Location.t
-   | LTyped of lhs_exp * type_exp * Location.t
+   | LWild  of Loc.t
+   | LId    of identifier   * Loc.t
+   | LTuple of lhs_exp list * Loc.t
+   | LTyped of lhs_exp * type_exp * Loc.t
    [@@deriving show,eq,ord]
 
 (** Parser syntax tree *)
 type exp =
    | PUnit
-      of Location.t
+      of Loc.t
    | PBool
       of bool
-      *  Location.t
+      *  Loc.t
    | PInt
       of int
-      *  Location.t
+      *  Loc.t
    | PReal
       of float
-      *  Location.t
+      *  Loc.t
    | PId
       of identifier  (* name *)
-      *  Location.t
+      *  Loc.t
    | PUnOp
       of string      (* operator *)
       *  exp
-      *  Location.t
+      *  Loc.t
    | PBinOp
       of string      (* operator *)
       *  exp
       *  exp
-      *  Location.t
+      *  Loc.t
    | PCall
       of identifier option (* name/instance *)
       *  identifier        (* type/function name *)
       *  exp list          (* arguments *)
       *  call_attributes
-      *  Location.t
+      *  Loc.t
    | PIf
       of exp (* condition *)
       *  exp (* then *)
       *  exp (* else *)
-      *  Location.t
+      *  Loc.t
    | PGroup
       of exp
-      *  Location.t
+      *  Loc.t
    | PTuple
       of exp list
-      *  Location.t
+      *  Loc.t
    | PSeq
       of identifier option (* Scope name *)
       *  stmt list
-      *  Location.t
+      *  Loc.t
    | PEmpty
 
 and stmt =
    | StmtVal
       of lhs_exp     (* names/lhs *)
       *  exp option  (* rhs *)
-      *  Location.t
+      *  Loc.t
    | StmtMem
       of lhs_exp     (* names/lhs *)
       *  exp option  (* initial value *)
       *  exp option  (* rhs *)
-      *  Location.t
+      *  Loc.t
    | StmtTable
       of identifier  (* name *)
       *  exp list    (* data *)
-      *  Location.t
+      *  Loc.t
    | StmtWhile
       of exp         (* condition*)
       *  stmt        (* statements *)
-      *  Location.t
+      *  Loc.t
    | StmtReturn
       of exp
-      *  Location.t
+      *  Loc.t
    | StmtIf
       of exp         (* condition *)
       *  stmt        (* then *)
       *  stmt option (* else *)
-      *  Location.t
+      *  Loc.t
    | StmtFun
       of identifier       (* name *)
       *  typed_id list    (* arguments *)
       *  stmt             (* body *)
       *  type_exp option  (* return type *)
       *  fun_attributes   (* attributes *)
-      *  Location.t
+      *  Loc.t
    | StmtBind
       of lhs_exp     (* lhs *)
       *  exp         (* rhs *)
-      *  Location.t
+      *  Loc.t
    | StmtBlock
       of identifier option (* scope name *)
       *  stmt list
-      *  Location.t
+      *  Loc.t
    | StmtType
       of identifier           (* name *)
       *  typed_id list        (* arguments *)
       *  val_decl list        (* members *)
-      *  Location.t
+      *  Loc.t
    | StmtAliasType
       of identifier           (* name *)
       *  typed_id list        (* arguments *)
       *  type_exp             (* alias type *)
-      *  Location.t
+      *  Loc.t
    | StmtEmpty
    [@@deriving show,eq,ord]
 
 and val_decl =
    identifier  (* name *)
    * type_exp  (* type *)
-   * Location.t
+   * Loc.t
 
 type exp_list = exp list
    [@@deriving show,eq,ord]

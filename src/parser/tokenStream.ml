@@ -59,7 +59,7 @@ module TokenStream(S:TokenKindSig) = struct
       buffer.peeked
 
    (** Returns the current location of the buffer *)
-   let location (buffer:stream) : Location.t =
+   let location (buffer:stream) : Loc.t =
       buffer.peeked.loc
 
    (** Returns the kind of the current token *)
@@ -70,7 +70,7 @@ module TokenStream(S:TokenKindSig) = struct
       buffer.lines
 
    let makeError (buffer:stream) (message:string) : Error.t =
-      Error.PointedError(Location.getNext buffer.prev.loc,message)
+      Error.PointedError(Loc.getNext buffer.prev.loc,message)
 
    let setErrors (buffer:stream) (value:bool) : unit =
       buffer.has_errors<-true
@@ -83,7 +83,7 @@ module TokenStream(S:TokenKindSig) = struct
 
    let notExpectedError (token:S.kind token) : Error.t =
       let message = Printf.sprintf "Not expecting to find %s" (S.kindStr token.kind) in
-      Error.PointedError(Location.getNext token.loc,message)
+      Error.PointedError(Loc.getNext token.loc,message)
 
    let appendError (buffer:stream) (error:Error.t) =
       buffer.errors <- error::buffer.errors
