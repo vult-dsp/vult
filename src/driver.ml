@@ -25,9 +25,9 @@ THE SOFTWARE.
 (** Contains top level functions to perform common tasks *)
 
 open TypesVult
-open PassesUtil
+(*open PassesUtil*)
 
-
+(*
 (** Generates the .c and .h file contents for the given parsed files *)
 let generateCCode (args:arguments) (parser_results:parser_results list) : string =
    let file = if args.output<>"" then args.output else "code" in
@@ -140,4 +140,14 @@ let generateCode (args:arguments) (parser_results:parser_results list) : string 
 let parseStringGenerateCode s =
    ParserVult.parseString s
    |> fun a -> generateCode default_arguments [a]
+*)
 
+let parsePrintCode s =
+   let result = ParserVult.parseString s in
+   match result.presult with
+   | `Ok(b) ->
+      PrintTypes.stmtListStr b
+   | `Error(msg) ->
+      let error_strings:string list = Error.reportErrors result.presult result.lines in
+      let result =List.fold_left (fun s a -> s^"\n"^a) "" error_strings in
+      "Errors in the program:\n"^result

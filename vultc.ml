@@ -25,6 +25,7 @@ open LexerVult
 open ParserVult
 open TypesVult
 open TypesUtil
+open Driver
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : arguments =

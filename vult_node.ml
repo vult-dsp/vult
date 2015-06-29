@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 open TypesVult
 open ParserVult
-
+(*
 let parseText s =
    let p = Driver.parseStringRun (Js.to_string s) in
    match p.iresult with
@@ -44,3 +44,12 @@ let generateJSCode s =
 (*let _ = Js.Unsafe.set (Js.Unsafe.variable "cover_functions") (Js.string "parseText") (Js.wrap_callback parseText)*)
 Js.Unsafe.global##plop <- (Js.wrap_callback parseText) ;;
 Js.Unsafe.global##jscode <- (Js.wrap_callback generateJSCode) ;;
+
+*)
+
+let parsePrint s =
+	Driver.parsePrintCode (Js.to_string s) |> Js.string
+;;
+
+Js.Unsafe.global##plop <- (Js.wrap_callback parsePrint) ;;
+
