@@ -58,6 +58,14 @@ let file (location:t) : string =
 let line (location:t) : int =
    location.start_pos.pos_lnum
 
+(** Returns a simple string representation of the location *)
+let to_string (location:t) : string =
+   Printf.sprintf "%s:%i:%i%i"
+      location.start_pos.pos_fname
+      location.start_pos.pos_lnum
+      (location.start_pos.pos_cnum - location.start_pos.pos_bol)
+      (location.end_pos.pos_cnum - location.start_pos.pos_bol)
+
 (** Returns the location that follows the given location *)
 let getNext (loc:t) : t =
    let end_pos = { loc.end_pos with Lexing.pos_cnum = loc.end_pos.Lexing.pos_cnum } in
@@ -94,3 +102,6 @@ let merge (loc1:t) (loc2:t) : t =
    else
       let start_pos,end_pos = getMinMaxPositions [loc1.start_pos; loc2.start_pos; loc1.end_pos; loc2.end_pos] in
       { start_pos = start_pos; end_pos = end_pos }
+
+let merge3 (loc1:t) (loc2:t) (loc3:t) : t =
+   merge (merge loc1 loc2) loc3
