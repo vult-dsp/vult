@@ -87,6 +87,7 @@ let arithmeticFunction (t1:type_exp) (t2:type_exp) : type_exp =
       let error = Error.makeError msg loc in
       raise (CheckerError(error))
 
+(** Succeeds if both types are the same *)
 let sameType (t1:type_exp) (t2:type_exp) : type_exp =
    if compare_type_exp t1 t2 = 0 then
       t1
@@ -95,6 +96,13 @@ let sameType (t1:type_exp) (t2:type_exp) : type_exp =
       let error = Error.makeError msg (getFullTypeLocation t2) in
       raise (CheckerError(error))
 
+let comparisonFunction (t1:type_exp) (t2:type_exp) : type_exp =
+   if compare_type_exp t1 t2 = 0 then
+      TId(["bool"],Loc.default)
+   else
+      let msg   = Printf.sprintf "Cannot compare an expression of type '%s' with an expression of type '%s'" (PrintTypes.typeStr t1) (PrintTypes.typeStr t2) in
+      let error = Error.makeError msg (getFullTypeLocation t2) in
+      raise (CheckerError(error))
 
 let unop_table =
    [
@@ -109,6 +117,12 @@ let binop_table =
       "-",arithmeticFunction;
       "/",arithmeticFunction;
       "*",arithmeticFunction;
+      "==",comparisonFunction;
+      "!=",comparisonFunction;
+      "<",comparisonFunction;
+      ">",comparisonFunction;
+      "<=",comparisonFunction;
+      ">=",comparisonFunction;
    ]
    |> List.fold_left (fun s (op,f) -> StringMap.add op f s) StringMap.empty
 
