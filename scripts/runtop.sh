@@ -1,9 +1,3 @@
 #!/bin/bash
-ocamlbuild vultc.byte
-echo "\
-#load \"printTypes.cmo\";;\
-#load \"lexerVult.cmo\";;\
-#load \"parserVult.cmo\";;\
-#load \"interpreterVult.cmo\";;\
-" > toplevel.init
-ocaml -I _build -init toplevel.init
+./scripts/build.sh
+utop -init toplevel.init -I _build/src -I _build/src/util -I _build/src/core -I _build/src/parser -I _build/src/passes

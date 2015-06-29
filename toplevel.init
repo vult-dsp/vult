@@ -2,3 +2,15 @@
 #require "containers";;
 #require "str";;
 #require "ocamlgraph";;
+#load "loc.cmo";;
+#load "error.cmo";;
+#load "scope.d.cmo";;
+#load "printBuffer.cmo";;
+#load "typesVult.cmo";;
+#load "printTypes.cmo";;
+#load "parserTypes.cmo";;
+#load "tokenStream.cmo";;
+#load "lexerVult.cmo";;
+#load "parserVult.cmo";;
+#load "typesUtil.cmo";;
+#use "src/checker.ml";;
