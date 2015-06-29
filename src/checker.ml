@@ -1,0 +1,162 @@
+(*
+The MIT License (MIT)
+
+Copyright (c) 2014 Leonardo Laguna Ruiz, Carl Jönsson
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*)
+
+
+open TypesVult
+open Scope
+open TypesUtil
+
+exception CheckerError of Error.t
+
+module ScopeInfo =
+struct
+   type t    = identifier
+   type v    = type_exp
+   type kind = scope_kind
+   let compare     = compare_identifier
+   let string_t _  = ""
+   let string_v _  = ""
+end
+
+module CheckerScope = Scope(ScopeInfo)
+module StringMap    = Map.Make(String)
+
+(** Checks that the type is a numeric, otherwise raises CheckerError *)
+let expectNumeric (t:type_exp) : type_exp =
+   match t with
+   | TId(["int"],_)  -> t
+   | TId(["real"],_) -> t
+   | _ ->
+      let msg   = Printf.sprintf "Expecting a numeric (int, real) expression but got '%s'" (PrintTypes.typeStr t) in
+      let error = Error.makeError msg (getFullTypeLocation t) in
+      raise (CheckerError(error))
+
+(** Checks that the type is a bool, otherwise raises CheckerError *)
+let expectBoolean (t:type_exp) : type_exp =
+   match t with
+   | TId(["bool"],_) -> t
+   | _ ->
+      let msg   = Printf.sprintf "Expecting a 'bool' expression but got '%s'" (PrintTypes.typeStr t) in
+      let error = Error.makeError msg (getFullTypeLocation t) in
+      raise (CheckerError(error))
+
+(*let expectBooleanPair ((state:CheckerScope.t),(t:type_exp)) : CheckerScope.t *  type_exp * Loc.t =
+   expectBoolean state t*)
+
+(** Checks that both types are numeric, otherwise raises CheckerError *)
+let arithmeticFunction (t1:type_exp) (t2:type_exp) : type_exp =
+   match t1,t2 with
+   | TId(["int"],_),TId(["int"],_)   -> t1
+   | TId(["real"],_),TId(["int"],_)  -> t1
+   | TId(["int"],_),TId(["real"],_)  -> t2
+   | TId(["real"],_),TId(["real"],_) -> t1
+   | TId(["int"],_),_
+   | TId(["real"],_),_ ->
+      let msg   = Printf.sprintf "Expecting a numeric (int, real) expression but got '%s'" (PrintTypes.typeStr t2) in
+      let error = Error.makeError msg (getFullTypeLocation t2) in
+      raise (CheckerError(error))
+   | _,TId(["int"],_)
+   | _,TId(["real"],_) ->
+      let msg   = Printf.sprintf "Expecting a numeric (int, real) expression but got '%s'" (PrintTypes.typeStr t1) in
+      let error = Error.makeError msg (getFullTypeLocation t1) in
+      raise (CheckerError(error))
+   | _ ->
+      let msg   = Printf.sprintf "Arithmetic operations cannot be applied to types '%s' and '%s" (PrintTypes.typeStr t1) (PrintTypes.typeStr t2) in
+      let loc   = Loc.merge (getFullTypeLocation t1) (getFullTypeLocation t2) in
+      let error = Error.makeError msg loc in
+      raise (CheckerError(error))
+
+let sameType (t1:type_exp) (t2:type_exp) : type_exp =
+   if compare_type_exp t1 t2 = 0 then
+      t1
+   else
+      let msg   = Printf.sprintf "Expecting a type '%s' expression but got '%s'" (PrintTypes.typeStr t1) (PrintTypes.typeStr t2) in
+      let error = Error.makeError msg (getFullTypeLocation t2) in
+      raise (CheckerError(error))
+
+
+let unop_table =
+   [
+      "-",expectNumeric;
+      "!",expectBoolean;
+   ]
+   |> List.fold_left (fun s (op,f) -> StringMap.add op f s) StringMap.empty
+
+let binop_table =
+   [
+      "+",arithmeticFunction;
+      "-",arithmeticFunction;
+      "/",arithmeticFunction;
+      "*",arithmeticFunction;
+   ]
+   |> List.fold_left (fun s (op,f) -> StringMap.add op f s) StringMap.empty
+
+let rec checkExp (state:CheckerScope.t) (exp:exp) : CheckerScope.t *  type_exp * Loc.t =
+   match exp with
+   | PUnit(loc)   -> state,TUnit(loc),loc
+   | PBool(_,loc) -> state,TId(["bool"],loc),loc
+   | PInt(_,loc)  -> state,TId(["int"],loc),loc
+   | PReal(_,loc) -> state,TId(["real"],loc),loc
+   | PId(id,loc)  ->
+      begin
+         match CheckerScope.lookup state id with
+         | Some(id_type) -> state,id_type,loc
+         | _ ->
+            let msg   = Printf.sprintf "The identifier '%s' is not declared" (identifierStr id) in
+            let error = Error.makeError msg loc in
+            raise (CheckerError(error))
+      end
+   | PUnOp(op,e1,loc) when StringMap.mem op unop_table ->
+      let new_state,e1_type,loc1 = checkExp state e1 in
+      let op_f    = StringMap.find op unop_table in
+      let nt = op_f e1_type in
+      new_state,nt,(Loc.merge loc loc1)
+   | PBinOp(op,e1,e2,loc) when StringMap.mem op binop_table ->
+      let new_state1,e1_type,loc1 = checkExp state e1 in
+      let new_state2,e2_type,loc2 = checkExp new_state1 e2 in
+      let op_f    = StringMap.find op binop_table in
+      let nt = op_f e1_type e2_type in
+      new_state2,nt,(Loc.merge3 loc loc1 loc2)
+   (*| PIf(cond,e1,e2,loc) ->
+      let new_state,cond_type = checkExp state cond |> expectBooleanPair in
+      let new_state1,e1_type = checkExp new_state e1 in
+      let new_state2,e2_type = checkExp new_state1 e2 in*)
+   (*   if typed_id_compare e1_type e2_type = 0 then
+
+      else*)
+   | _ -> failwith ""
+
+and checkExpList (state:CheckerScope.t) (el:exp list) : CheckerScope.t *  type_exp list * Loc.t =
+   let new_state,acc,loc =
+      List.fold_left (fun (s,acc,loc) e -> let ns,t,nloc = checkExp state e in ns,t::acc,(Loc.merge loc nloc)) (state,[],Loc.default) el in
+   new_state,List.rev acc,loc
+
+
+let empty = CheckerScope.empty
+
+let parseCheck s =
+   let e = ParserVult.parseExp s in
+   let _ ,t,loc = checkExp empty e in
+   (PrintTypes.typeStr t),(Loc.to_string loc)
+
