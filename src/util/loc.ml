@@ -60,7 +60,7 @@ let line (location:t) : int =
 
 (** Returns a simple string representation of the location *)
 let to_string (location:t) : string =
-   Printf.sprintf "%s:%i:%i%i"
+   Printf.sprintf "%s:%i:%i-%i"
       location.start_pos.pos_fname
       location.start_pos.pos_lnum
       (location.start_pos.pos_cnum - location.start_pos.pos_bol)
