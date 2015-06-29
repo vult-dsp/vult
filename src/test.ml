@@ -25,10 +25,10 @@ open OUnit2
 
 open ParserVult
 open TypesVult
-open PassesUtil
+(*open PassesUtil*)
 
 let test_string (reference:string) (current:string) = assert_equal ~printer:(fun a->a) reference current ;;
-
+(*
 let run_program_with_options options s =
    let result = Driver.parseStringRunWithOptions options s in
    match result.iresult with
@@ -43,15 +43,15 @@ let compare_program_result s =
    let result1 = run_program_with_options PassesUtil.opt_interpret s in
    let result2 = run_program_with_options { PassesUtil.opt_full_transform with interpreter = true } s in
    test_string result1 result2
-
+*)
 (** Expression parsing tests *)
 let parseExpTest1 context =
    test_string      "a"
       (parseDumpExp "a")
 ;;
 let parseExpTest2 context =
-   test_string      "a:b"
-      (parseDumpExp "a:b")
+   test_string      "a:b()"
+      (parseDumpExp "a:b()")
 ;;
 let parseExpTest3 context =
    test_string      "a(1,2)"
@@ -92,16 +92,16 @@ let parseStmtTest1 context =
       (parseDumpStmtList "val a;")
 ;;
 let parseStmtTest2 context =
-   test_string           "mem a:num,b,c;"
-      (parseDumpStmtList "mem a:num,b,c;")
+   test_string           "mem ((a:num),b,c);"
+      (parseDumpStmtList "mem (a:num),b,c;")
 ;;
 let parseStmtTest3 context =
-   test_string           "val a:num=0;"
+   test_string           "val (a:num) = 0;"
       (parseDumpStmtList "val a:num=0;")
 ;;
 let parseStmtTest4 context =
-   test_string           "mem a,b:num=0,0;"
-      (parseDumpStmtList "mem a,b:num=0,0;")
+   test_string           "mem (a,(b:num)) = 0,0;"
+      (parseDumpStmtList "mem a,(b:num)=0,0;")
 ;;
 let parseStmtTest5 context =
    test_string           "return (-a);"
@@ -112,15 +112,15 @@ let parseStmtTest6 context =
       (parseDumpStmtList "return a,0;")
 ;;
 let parseStmtTest7 context =
-   test_string           "{\n   val a=0;\n   return a;\n}"
-      (parseDumpStmtList "{ val a =0; return a; }")
+   test_string           "{\n   val a = 0;\n   return a;\n}"
+      (parseDumpStmtList "{ val a=0; return a; }")
 ;;
 let parseStmtTest8 context =
    test_string           "return a;"
       (parseDumpStmtList "{ return a; }")
 ;;
 let parseStmtTest9 context =
-   test_string           "if(a)\n   {\n      val a=0;\n      return a;\n   }"
+   test_string           "if(a)\n   {\n      val a = 0;\n      return a;\n   }"
       (parseDumpStmtList "if(a){ val a=0;return a;}")
 ;;
 let parseStmtTest10 context =
@@ -136,11 +136,11 @@ let parseStmtTest12 context =
       (parseDumpStmtList "fun add(a,b) return a+b;")
 ;;
 let parseStmtTest13 context =
-   test_string           "fun add(a:int,b:int) :int return (a+b);"
+   test_string           "fun add(a:int,b:int) : int return (a+b);"
       (parseDumpStmtList "fun add(a:int,b:int):int return a+b;")
 ;;
 let parseStmtTest14 context =
-   test_string           "mem a,b@0,0=x,y;"
+   test_string           "mem (a,b)@0,0 = x,y;"
       (parseDumpStmtList "mem a,b@0,0=x,y;")
 ;;
 
@@ -175,7 +175,7 @@ let parser_test =
       "parseStmtTest14" >:: parseStmtTest14 ;
    ]
 ;;
-
+(*
 let runFactTest context =
    test_string "120."
       (run_program "fun fact(n){ return if n==0 then 1 else n*fact(n-1); } return fact(5);")
@@ -247,12 +247,12 @@ let interpreter_test =
       "runFactCompare"   >:: runFactCompare;
    ]
 ;;
-
+*)
 let suite =
    "suite">:::
    [
       parser_test;
-      interpreter_test;
+      (*interpreter_test;*)
    ]
 
 
