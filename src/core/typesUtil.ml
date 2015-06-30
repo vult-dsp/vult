@@ -176,22 +176,22 @@ let rec traverseStmt (pred:(stmt->bool) option) (f: 'a tstate -> stmt -> 'a tsta
       | StmtAliasType(_,_,_,_)
       | StmtEmpty
          -> revisitStmt pred f state nstmt
-      | StmtWhile(cond,stmts,loc) ->
+      | StmtWhile(cond,stmts,attr) ->
          let state1,nstmts = traverseStmt pred f state stmts in
-         revisitStmt pred f  state1 (StmtWhile(cond,nstmts,loc))
-      | StmtIf(cond,then_,Some(else_),loc) ->
+         revisitStmt pred f  state1 (StmtWhile(cond,nstmts,attr))
+      | StmtIf(cond,then_,Some(else_),attr) ->
          let state1,nthen_ = traverseStmt pred f state then_ in
          let state2,nelse_ = traverseStmt pred f state1 else_ in
-         revisitStmt pred f state2 (StmtIf(cond,nthen_,Some(nelse_),loc))
-      | StmtIf(cond,then_,None,loc) ->
+         revisitStmt pred f state2 (StmtIf(cond,nthen_,Some(nelse_),attr))
+      | StmtIf(cond,then_,None,attr) ->
          let state1,nthen_ = traverseStmt pred f state then_ in
-         revisitStmt pred f  state1 (StmtIf(cond,nthen_,None,loc))
-      | StmtFun(name,args,body,ret,attr,loc) ->
+         revisitStmt pred f  state1 (StmtIf(cond,nthen_,None,attr))
+      | StmtFun(name,args,body,ret,attr) ->
          let state1,nbody = traverseStmt pred f state body in
-         revisitStmt pred f state1 (StmtFun(name,args,nbody,ret,attr,loc))
-      | StmtBlock(name,stmts,loc) ->
+         revisitStmt pred f state1 (StmtFun(name,args,nbody,ret,attr))
+      | StmtBlock(name,stmts,attr) ->
          let state1,nstmts = traverseStmtList pred f state stmts in
-         revisitStmt pred f state (StmtBlock(name,nstmts,loc))
+         revisitStmt pred f state (StmtBlock(name,nstmts,attr))
 
 and traverseStmtList (pred:(stmt->bool) option) (f: 'a tstate -> stmt -> 'a tstate * stmt) (state:'a tstate) (stmts:stmt list) : 'a tstate * stmt list =
    let ns,acc = List.fold_left (fun (s,acc) a -> let ns,na = traverseStmt pred f state a in ns,a::acc) (state,[]) stmts in
@@ -224,20 +224,20 @@ let rec traverseExp (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate 
          let state1,ne1 = traverseExp pred f state e1 in
          let state2,ne2 = traverseExp pred f state1 e2 in
          revisitExp pred f (f state2 (PBinOp(op,ne1,ne2,loc)))
-      | PCall(inst,name,args,attr,loc) ->
+      | PCall(inst,name,args,attr) ->
          let state1,nargs = traverseExpList pred f state args in
-         revisitExp pred f (f state1 (PCall(inst,name,nargs,attr,loc)))
-      | PIf(cond,then_,else_,loc) ->
+         revisitExp pred f (f state1 (PCall(inst,name,nargs,attr)))
+      | PIf(cond,then_,else_,attr) ->
          let state1,ncond  = traverseExp pred f state cond in
          let state2,nthen_ = traverseExp pred f state1 then_ in
          let state3,nelse_ = traverseExp pred f state2 else_ in
-         revisitExp pred f (f state3 (PIf(ncond,nthen_,nelse_,loc)))
-      | PGroup(e,loc) ->
+         revisitExp pred f (f state3 (PIf(ncond,nthen_,nelse_,attr)))
+      | PGroup(e,attr) ->
          let state1,ne = traverseExp pred f state e in
-         revisitExp pred f (f state1 (PGroup(ne,loc)))
-      | PTuple(el,loc) ->
+         revisitExp pred f (f state1 (PGroup(ne,attr)))
+      | PTuple(el,attr) ->
          let state1,nel = traverseExpList pred f state el in
-         revisitExp pred f (f state1 (PTuple(nel,loc)))
+         revisitExp pred f (f state1 (PTuple(nel,attr)))
 
 and traverseExpList (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate * exp) (state:'a tstate) (exps:exp list) : 'a tstate * exp list =
    let ns,acc = List.fold_left (fun (s,acc) a -> let ns,na = traverseExp pred f state a in ns,a::acc) (state,[]) exps in
@@ -252,29 +252,29 @@ and revisitExp (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate * exp
 (** Returns the full location (start and end) of an expression *)
 let rec getFullExpLocation (e:exp) : Loc.t =
    match e with
-   | PUnit(loc)
-   | PInt(_,loc)
-   | PBool(_,loc)
-   | PReal(_,loc)
-   | PId(_,loc) -> loc
-   | PUnOp(_,e1,loc) -> Loc.merge loc (getFullExpLocation e1)
-   | PBinOp(_,e1,e2,loc) ->
+   | PUnit(attr)
+   | PInt(_,attr)
+   | PBool(_,attr)
+   | PReal(_,attr)
+   | PId(_,attr) -> attr.loc
+   | PUnOp(_,e1,attr) -> Loc.merge attr.loc (getFullExpLocation e1)
+   | PBinOp(_,e1,e2,attr) ->
       let loc1 = getFullExpLocation e1 in
       let loc2 = getFullExpLocation e2 in
-      Loc.merge loc (Loc.merge loc1 loc2)
-   | PCall(_,_,args,_,loc) ->
-      getFullExpListLocation loc args
-   | PIf(e1,e2,e3,loc) ->
+      Loc.merge attr.loc (Loc.merge loc1 loc2)
+   | PCall(_,_,args,attr) ->
+      getFullExpListLocation attr.loc args
+   | PIf(e1,e2,e3,attr) ->
       let loc1 = getFullExpLocation e1 in
       let loc2 = getFullExpLocation e2 in
       let loc3 = getFullExpLocation e3 in
-      Loc.merge loc (Loc.merge loc1 (Loc.merge loc2 loc3))
-   | PGroup(e1,loc) ->
+      Loc.merge attr.loc (Loc.merge loc1 (Loc.merge loc2 loc3))
+   | PGroup(e1,attr) ->
       let loc1 = getFullExpLocation e1 in
-      Loc.merge loc loc1
-   | PTuple(el,loc) ->
-      getFullExpListLocation loc el
-   | PSeq(_,_,loc) -> loc
+      Loc.merge attr.loc loc1
+   | PTuple(el,attr) ->
+      getFullExpListLocation attr.loc el
+   | PSeq(_,_,attr) -> attr.loc
    | PEmpty -> Loc.default
 
 and getFullExpListLocation (loc:Loc.t) (el:exp list) : Loc.t =
@@ -282,14 +282,14 @@ and getFullExpListLocation (loc:Loc.t) (el:exp list) : Loc.t =
 
 let rec getFullTypeLocation (exp:type_exp) : Loc.t =
    match exp with
-   | TUnit(loc) -> loc
-   | TId(_,loc) -> loc
-   | TTuple(el,loc) ->
-      getFullTypeListLocation loc el
-   | TComposed(_,el,loc) ->
-      getFullTypeListLocation loc el
-   | TSignature(el,loc) ->
-      getFullTypeListLocation loc el
+   | TUnit(attr) -> attr.loc
+   | TId(_,attr) -> attr.loc
+   | TTuple(el,attr) ->
+      getFullTypeListLocation attr.loc el
+   | TComposed(_,el,attr) ->
+      getFullTypeListLocation attr.loc el
+   | TSignature(el,attr) ->
+      getFullTypeListLocation attr.loc el
 
 and getFullTypeListLocation (loc:Loc.t) (el:type_exp list) : Loc.t =
    List.fold_left (fun s a -> Loc.merge s (getFullTypeLocation a)) loc el

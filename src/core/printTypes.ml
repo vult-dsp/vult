@@ -27,8 +27,8 @@ THE SOFTWARE.
 open TypesVult
 open PrintBuffer
 
-let isJoint (attr:fun_attributes) : bool =
-   List.exists (fun a ->a = JoinFunction) attr
+let isJoint (attr:attr) : bool =
+   List.exists (fun a ->a = JoinFunction) attr.props
 
 (** Add an identifier to the print buffer *)
 let identifierBuff buffer id =
@@ -113,7 +113,7 @@ and expressionBuff buffer (exp:exp) =
       append buffer op;
       expressionBuff buffer e;
       append buffer ")"
-   | PCall(id,fname,args,_,_) ->
+   | PCall(id,fname,args,_) ->
       CCOpt.iter (fun a ->
             identifierBuff buffer a;
             append buffer ":") id;
@@ -191,7 +191,7 @@ and stmtBuff buffer (s:stmt) =
       indent buffer;
       stmtBuff buffer false_stmt;
       outdent buffer
-   | StmtFun(name,args,body,type_exp,attr,_) ->
+   | StmtFun(name,args,body,type_exp,attr) ->
       append buffer (if isJoint attr then "and " else "fun ");
       identifierBuff buffer name;
       append buffer "(";

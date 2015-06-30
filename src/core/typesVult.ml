@@ -25,149 +25,146 @@ THE SOFTWARE.
 type identifier = string list
    [@@deriving show,eq,ord]
 
-(** This type is used to attach more information to the function calls *)
-type call_attribute =
+type property =
    | SimpleBinding (* Used by Passes.bindFunctionCalls to mark the function calls that have been bound *)
-   | DummtAttr
-   [@@deriving show,eq,ord]
-
-type call_attributes = call_attribute list
-   [@@deriving show,eq,ord]
-
-type fun_attribute =
    | ActiveFunction
    | JoinFunction
    [@@deriving show,eq,ord]
 
-type fun_attributes = fun_attribute list
+type properties = property list
+   [@@deriving show,eq,ord]
+
+type attr =
+   {
+      loc   : Loc.t;
+      props : properties;
+   }
    [@@deriving show,eq,ord]
 
 type type_exp =
-   | TUnit      of Loc.t
-   | TId        of identifier    * Loc.t
-   | TTuple     of type_exp list * Loc.t
-   | TComposed  of identifier    * type_exp list * Loc.t
-   | TSignature of type_exp list * Loc.t
+   | TUnit      of attr
+   | TId        of identifier    * attr
+   | TTuple     of type_exp list * attr
+   | TComposed  of identifier    * type_exp list * attr
+   | TSignature of type_exp list * attr
    [@@deriving show,eq,ord]
 
 type typed_id =
-   | SimpleId of identifier * Loc.t
-   | TypedId  of identifier * type_exp * Loc.t
+   | SimpleId of identifier * attr
+   | TypedId  of identifier * type_exp * attr
    [@@deriving show,eq,ord]
 
 type lhs_exp =
-   | LWild  of Loc.t
-   | LId    of identifier   * Loc.t
-   | LTuple of lhs_exp list * Loc.t
-   | LTyped of lhs_exp * type_exp * Loc.t
+   | LWild  of attr
+   | LId    of identifier   * attr
+   | LTuple of lhs_exp list * attr
+   | LTyped of lhs_exp * type_exp * attr
    [@@deriving show,eq,ord]
 
 (** Parser syntax tree *)
 type exp =
    | PUnit
-      of Loc.t
+      of attr
    | PBool
       of bool
-      *  Loc.t
+      *  attr
    | PInt
       of int
-      *  Loc.t
+      *  attr
    | PReal
       of float
-      *  Loc.t
+      *  attr
    | PId
       of identifier  (* name *)
-      *  Loc.t
+      *  attr
    | PUnOp
       of string      (* operator *)
       *  exp
-      *  Loc.t
+      *  attr
    | PBinOp
       of string      (* operator *)
       *  exp
       *  exp
-      *  Loc.t
+      *  attr
    | PCall
       of identifier option (* name/instance *)
       *  identifier        (* type/function name *)
       *  exp list          (* arguments *)
-      *  call_attributes
-      *  Loc.t
+      *  attr
    | PIf
       of exp (* condition *)
       *  exp (* then *)
       *  exp (* else *)
-      *  Loc.t
+      *  attr
    | PGroup
       of exp
-      *  Loc.t
+      *  attr
    | PTuple
       of exp list
-      *  Loc.t
+      *  attr
    | PSeq
       of identifier option (* Scope name *)
       *  stmt list
-      *  Loc.t
+      *  attr
    | PEmpty
    [@@deriving show,eq,ord]
 and stmt =
    | StmtVal
       of lhs_exp     (* names/lhs *)
       *  exp option  (* rhs *)
-      *  Loc.t
+      *  attr
    | StmtMem
       of lhs_exp     (* names/lhs *)
       *  exp option  (* initial value *)
       *  exp option  (* rhs *)
-      *  Loc.t
+      *  attr
    | StmtTable
       of identifier  (* name *)
       *  exp list    (* data *)
-      *  Loc.t
+      *  attr
    | StmtWhile
       of exp         (* condition*)
       *  stmt        (* statements *)
-      *  Loc.t
+      *  attr
    | StmtReturn
       of exp
-      *  Loc.t
+      *  attr
    | StmtIf
       of exp         (* condition *)
       *  stmt        (* then *)
       *  stmt option (* else *)
-      *  Loc.t
+      *  attr
    | StmtFun
       of identifier       (* name *)
       *  typed_id list    (* arguments *)
       *  stmt             (* body *)
       *  type_exp option  (* return type *)
-      *  fun_attributes   (* attributes *)
-      *  Loc.t
+      *  attr
    | StmtBind
       of lhs_exp     (* lhs *)
       *  exp         (* rhs *)
-      *  Loc.t
+      *  attr
    | StmtBlock
       of identifier option (* scope name *)
       *  stmt list
-      *  Loc.t
+      *  attr
    | StmtType
       of identifier           (* name *)
       *  typed_id list        (* arguments *)
       *  val_decl list        (* members *)
-      *  Loc.t
+      *  attr
    | StmtAliasType
       of identifier           (* name *)
       *  typed_id list        (* arguments *)
       *  type_exp             (* alias type *)
-      *  Loc.t
+      *  attr
    | StmtEmpty
    [@@deriving show,eq,ord]
 
 and val_decl =
    identifier  (* name *)
    * type_exp  (* type *)
-   * Loc.t
+   * attr
    [@@deriving show,eq,ord]
 
 type exp_list = exp list
@@ -216,3 +213,6 @@ let default_arguments =
       output = "live";
       real = "float";
    }
+
+let makeAttr (loc:Loc.t) : attr =
+   { loc = loc; props = [] }

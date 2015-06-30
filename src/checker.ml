@@ -98,7 +98,7 @@ let sameType (t1:type_exp) (t2:type_exp) : type_exp =
 
 let comparisonFunction (t1:type_exp) (t2:type_exp) : type_exp =
    if compare_type_exp t1 t2 = 0 then
-      TId(["bool"],Loc.default)
+      TId(["bool"],makeAttr Loc.default)
    else
       let msg   = Printf.sprintf "Cannot compare an expression of type '%s' with an expression of type '%s'" (PrintTypes.typeStr t1) (PrintTypes.typeStr t2) in
       let error = Error.makeError msg (getFullTypeLocation t2) in
@@ -128,30 +128,30 @@ let binop_table =
 
 let rec checkExp (state:CheckerScope.t) (exp:exp) : CheckerScope.t *  type_exp * Loc.t =
    match exp with
-   | PUnit(loc)   -> state,TUnit(loc),loc
-   | PBool(_,loc) -> state,TId(["bool"],loc),loc
-   | PInt(_,loc)  -> state,TId(["int"],loc),loc
-   | PReal(_,loc) -> state,TId(["real"],loc),loc
-   | PId(id,loc)  ->
+   | PUnit(attr)   -> state,TUnit(attr),       attr.loc
+   | PBool(_,attr) -> state,TId(["bool"],attr),attr.loc
+   | PInt(_,attr)  -> state,TId(["int"],attr), attr.loc
+   | PReal(_,attr) -> state,TId(["real"],attr),attr.loc
+   | PId(id,attr)  ->
       begin
          match CheckerScope.lookup state id with
-         | Some(id_type) -> state,id_type,loc
+         | Some(id_type) -> state,id_type,attr.loc
          | _ ->
             let msg   = Printf.sprintf "The identifier '%s' is not declared" (identifierStr id) in
-            let error = Error.makeError msg loc in
+            let error = Error.makeError msg attr.loc in
             raise (CheckerError(error))
       end
-   | PUnOp(op,e1,loc) when StringMap.mem op unop_table ->
+   | PUnOp(op,e1,attr) when StringMap.mem op unop_table ->
       let new_state,e1_type,loc1 = checkExp state e1 in
       let op_f    = StringMap.find op unop_table in
       let nt = op_f e1_type in
-      new_state,nt,(Loc.merge loc loc1)
-   | PBinOp(op,e1,e2,loc) when StringMap.mem op binop_table ->
+      new_state,nt,(Loc.merge attr.loc loc1)
+   | PBinOp(op,e1,e2,attr) when StringMap.mem op binop_table ->
       let new_state1,e1_type,loc1 = checkExp state e1 in
       let new_state2,e2_type,loc2 = checkExp new_state1 e2 in
       let op_f    = StringMap.find op binop_table in
       let nt = op_f e1_type e2_type in
-      new_state2,nt,(Loc.merge3 loc loc1 loc2)
+      new_state2,nt,(Loc.merge3 attr.loc loc1 loc2)
    (*| PIf(cond,e1,e2,loc) ->
       let new_state,cond_type = checkExp state cond |> expectBooleanPair in
       let new_state1,e1_type = checkExp new_state e1 in
