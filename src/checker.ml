@@ -92,7 +92,7 @@ let sameType (t1:type_exp) (t2:type_exp) : type_exp =
    if compare_type_exp t1 t2 = 0 then
       t1
    else
-      let msg   = Printf.sprintf "Expecting a type '%s' expression but got '%s'" (PrintTypes.typeStr t1) (PrintTypes.typeStr t2) in
+      let msg   = Printf.sprintf "Expecting a expression of type '%s' but got '%s'" (PrintTypes.typeStr t1) (PrintTypes.typeStr t2) in
       let error = Error.makeError msg (getFullTypeLocation t2) in
       raise (CheckerError(error))
 
@@ -143,23 +143,42 @@ let rec checkExp (state:CheckerScope.t) (exp:exp) : CheckerScope.t *  type_exp *
       end
    | PUnOp(op,e1,attr) when StringMap.mem op unop_table ->
       let new_state,e1_type,loc1 = checkExp state e1 in
-      let op_f    = StringMap.find op unop_table in
-      let nt = op_f e1_type in
+      let op_f = StringMap.find op unop_table in
+      let nt   = op_f e1_type in
       new_state,nt,(Loc.merge attr.loc loc1)
+   | PUnOp(op,_,attr) ->
+      let msg   = Printf.sprintf "Unknown operator '%s'" op in
+      let error = Error.makeError msg attr.loc in
+      raise (CheckerError(error))
    | PBinOp(op,e1,e2,attr) when StringMap.mem op binop_table ->
       let new_state1,e1_type,loc1 = checkExp state e1 in
       let new_state2,e2_type,loc2 = checkExp new_state1 e2 in
-      let op_f    = StringMap.find op binop_table in
-      let nt = op_f e1_type e2_type in
+      let op_f = StringMap.find op binop_table in
+      let nt   = op_f e1_type e2_type in
       new_state2,nt,(Loc.merge3 attr.loc loc1 loc2)
-   (*| PIf(cond,e1,e2,loc) ->
-      let new_state,cond_type = checkExp state cond |> expectBooleanPair in
-      let new_state1,e1_type = checkExp new_state e1 in
-      let new_state2,e2_type = checkExp new_state1 e2 in*)
-   (*   if typed_id_compare e1_type e2_type = 0 then
-
-      else*)
-   | _ -> failwith ""
+   | PBinOp(op,_,_,attr) ->
+      let msg   = Printf.sprintf "Unknown operator '%s'" op in
+      let error = Error.makeError msg attr.loc in
+      raise (CheckerError(error))
+   | PIf(cond,e1,e2,attr) ->
+      let new_state,cond_type,loc1 = checkExp state cond in
+      let _ = expectBoolean cond_type in
+      let new_state1,e1_type,loc2 = checkExp new_state e1 in
+      let new_state2,e2_type,loc3 = checkExp new_state1 e2 in
+      let loc = Loc.merge (Loc.merge3 loc1 loc2 loc3) attr.loc in
+      let nt  = sameType e1_type e2_type in
+      new_state2,nt,loc
+   | PGroup(e1,attr) ->
+      let new_state,e1_type,loc1 = checkExp state e1 in
+      new_state,e1_type,Loc.merge attr.loc loc1
+   | PTuple(elems,attr) ->
+      let new_state,elems_type,loc1 = checkExpList state elems in
+      let loc = Loc.merge loc1 attr.loc in
+      let t = TTuple(elems_type,makeAttr loc) in
+      new_state,t,loc
+   | PSeq(_,_,_) -> failwith "Cannot check PSeq yet."
+   | PCall(_,_,_,_) -> failwith "Cannot check PCall yet."
+   | PEmpty -> state,TUnit(makeAttr Loc.default),Loc.default
 
 and checkExpList (state:CheckerScope.t) (el:exp list) : CheckerScope.t *  type_exp list * Loc.t =
    let new_state,acc,loc =
@@ -170,7 +189,11 @@ and checkExpList (state:CheckerScope.t) (el:exp list) : CheckerScope.t *  type_e
 let empty = CheckerScope.empty
 
 let parseCheck s =
-   let e = ParserVult.parseExp s in
-   let _ ,t,loc = checkExp empty e in
-   (PrintTypes.typeStr t),(Loc.to_string loc)
+   try
+      let e = ParserVult.parseExp s in
+      let _ ,t,loc = checkExp empty e in
+      (PrintTypes.typeStr t),(Loc.to_string loc)
+   with
+   | CheckerError(error) ->
+      "-",Error.reportErrorString [|s|] error
 
