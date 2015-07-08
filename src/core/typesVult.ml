@@ -43,6 +43,7 @@ type attr =
 
 type type_exp =
    | TUnit      of attr
+   | TWild      of attr
    | TId        of identifier    * attr
    | TTuple     of type_exp list * attr
    | TComposed  of identifier    * type_exp list * attr

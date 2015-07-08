@@ -283,6 +283,7 @@ and getFullExpListLocation (loc:Loc.t) (el:exp list) : Loc.t =
 let rec getFullTypeLocation (exp:type_exp) : Loc.t =
    match exp with
    | TUnit(attr) -> attr.loc
+   | TWild(attr) -> attr.loc
    | TId(_,attr) -> attr.loc
    | TTuple(el,attr) ->
       getFullTypeListLocation attr.loc el

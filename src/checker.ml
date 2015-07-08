@@ -126,6 +126,28 @@ let binop_table =
    ]
    |> List.fold_left (fun s (op,f) -> StringMap.add op f s) StringMap.empty
 
+let matchTypes (t1:type_exp) (t2:type_exp) : type_exp =
+   match t1,t2 with
+   | TWild(_),TWild(_) -> t1
+   | TWild(_),_        -> t2
+   | _,TWild(_)        -> t1
+   | TUnit(_),TUnit(_) -> t1
+   | TId(id1,_),TId(id2,_) when id1 = id2 ->
+      t1
+
+let rec checkLhsExp (exp:lhs_exp) : type_exp =
+   match exp with
+   | LWild(attr) -> TWild(attr)
+   | LId(_,attr) -> TWild(attr)
+   | LTuple(elems,attr) ->
+      let tl = List.map checkLhsExp elems in
+      TTuple(tl,attr)
+   | LTyped(e1,t,attr) ->
+      let e1t = checkLhsExp e1 in
+      (* match the types*)
+      t
+
+
 let rec checkExp (state:CheckerScope.t) (exp:exp) : CheckerScope.t *  type_exp * Loc.t =
    match exp with
    | PUnit(attr)   -> state,TUnit(attr),       attr.loc

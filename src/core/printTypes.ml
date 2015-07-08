@@ -60,6 +60,7 @@ let rec typeExpressionBuff buffer (tp:type_exp) =
       append buffer ")"
    | TSignature(elems,_) ->
       printList buffer typeExpressionBuff " -> " elems
+   | TWild(_) -> append buffer "_";
 and typeExpressionListBuff buffer expl =
    printList buffer typeExpressionBuff "," expl
 
