@@ -101,6 +101,7 @@ type 'a tstate =
       scope   : BindingsScope.t;
       data    : 'a;
       revisit : bool;
+      counter : int;
    }
 
 (** Type of all traversing functions *)
@@ -114,7 +115,7 @@ type ('data,'traversing_type) folder = 'data tstate -> 'traversing_type -> 'data
 
 (** Returns a traversing state *)
 let createState (data:'a) : 'a tstate =
-   { scope = BindingsScope.empty; data = data; revisit = false }
+   { scope = BindingsScope.empty; data = data; revisit = false; counter = 0 }
 
 (** Sets the data for the traversing state *)
 let setState (s:'a tstate) (data:'a) : 'a tstate =
@@ -126,7 +127,7 @@ let getState (s:'a tstate) : 'a =
 
 (** Creates a new state keepin the internal data *)
 let deriveState (s:'a tstate) (data:'b) : 'b tstate =
-   { scope = s.scope; data = data; revisit = false }
+   { scope = s.scope; data = data; revisit = false; counter = 0 }
 
 (** Adds a name to the scope *)
 let pushScope (s:'a tstate) (name:identifier) (kind:scope_kind) : 'a tstate =
@@ -249,6 +250,13 @@ and revisitExp (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate * exp
    else
       state,exp
 
+let traverseExpOpt (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate * exp) (state:'a tstate) (exp:exp option) : 'a tstate * exp option =
+   match exp with
+   | None -> state,None
+   | Some(e) ->
+      let s,ne = traverseExp pred f state e in
+      s,Some(ne)
+
 (** Returns the full location (start and end) of an expression *)
 let rec getFullExpLocation (e:exp) : Loc.t =
    match e with
@@ -294,4 +302,39 @@ let rec getFullTypeLocation (exp:type_exp) : Loc.t =
 
 and getFullTypeListLocation (loc:Loc.t) (el:type_exp list) : Loc.t =
    List.fold_left (fun s a -> Loc.merge s (getFullTypeLocation a)) loc el
+
+let traverseExpInStmts (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate * exp) (state:'a tstate) (stmt:stmt) : 'a tstate * stmt =
+   match stmt with
+   | StmtVal(el,er,attr) ->
+      let s,ner = traverseExpOpt pred f state er in
+      s,StmtVal(el,ner,attr)
+   | StmtMem(el,ie,er,attr) ->
+      let s1,nie = traverseExpOpt pred f state ie in
+      let s2,ner = traverseExpOpt pred f s1 er in
+      s2,StmtMem(el,nie,ner,attr)
+   | StmtTable(id,el,attr) ->
+      let s,nel = traverseExpList pred f state el in
+      s,StmtTable(id,nel,attr)
+   | StmtWhile(cond,stmts,attr) ->
+      let s,ncond = traverseExp pred f state cond in
+      s,StmtWhile(ncond,stmts,attr)
+   | StmtReturn(e,attr) ->
+      let s,ne = traverseExp pred f state e in
+      s,StmtReturn(ne,attr)
+   | StmtIf(cond,then_,else_,attr) ->
+      let s,ncond = traverseExp pred f state cond in
+      s,StmtIf(ncond,then_,else_,attr)
+   | StmtBind(el,er,attr) ->
+      let s,ner = traverseExp pred f state er in
+      s,StmtBind(el,ner,attr)
+   | StmtFun _
+   | StmtBlock _
+   | StmtType _
+   | StmtAliasType _
+   | StmtEmpty ->
+      state,stmt
+
+
+
+
 

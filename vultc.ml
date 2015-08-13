@@ -26,7 +26,6 @@ open ParserVult
 open TypesVult
 open TypesUtil
 open Driver
-open Checker
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : arguments =
