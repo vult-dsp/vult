@@ -26,53 +26,82 @@ THE SOFTWARE.
 
 open TypesVult
 open TypesUtil
-open PassesUtil
-open PassesCode
-open PassesBasic
-open PassesInline
-open PassesSequence
 
-let applyOn cond f data =
-   if cond data then
-      f data
-   else
-      data
+(** Generic type of transformations *)
+type ('data,'value) transformation = 'data tstate -> 'value -> 'data tstate * 'value
 
-let returnRemovalON (state,_) = state.data.options.simplify_return
-let inlineON        (state,_) = state.data.options.inline
-let finalizeON      (state,_) = state.data.options.finalize
-let basicON         (state,_) = state.data.options.basic
-let codegenOn       (state,_) = state.data.options.codegen
-let interpreterOn   (state,_) = state.data.options.interpreter
+(** Generic type of expanders *)
+type ('data,'value) expander = 'data tstate -> 'value -> 'data tstate * 'value list
 
-let applyTransformations (options:options) (results:parser_results) =
-   let module_name = Filename.basename results.file |> Filename.chop_extension in
-   let initial_state =
-      {
-         counter         = 0;
-         functions       = IdentifierMap.empty;
-         types           = IdentifierMap.empty;
-         tables          = IdentifierMap.empty;
-         function_weight = IdentifierMap.empty;
-         options         = options;
-         function_mem    = IdentifierMap.empty;
-         instances       = IdentifierMap.empty;
-         type_function   = IdentifierMap.empty;
-         type_mapping    = IdentifierMap.empty;
-      } |> createState
-   in
+(** Generic type of folders *)
+type ('data,'value) folder = 'data tstate -> 'value -> 'data tstate
+
+
+(** Makes a chain of transformations. E.g. foo |-> bar will apply first foo then bar. *)
+let (|->) : ('data,'value) transformation -> ('data,'value) transformation -> ('data,'value) transformation =
+   fun a b ->
+   fun state exp ->
+      let new_state,new_exp = a state exp in
+      b new_state new_exp
+
+(** Makes a chain of fold functions. E.g. foo |*> bar will apply first foo then bar. *)
+let (|*>) : ('data,'value) folder -> ('data,'value) folder -> ('data,'value) folder =
+   fun a b ->
+   fun state exp ->
+      let new_state = a state exp in
+      b new_state exp
+
+(** Pipes a pair (state,value) into transformation functions *)
+let (|+>) : ('state tstate * 'value) -> ('state, 'value) transformation -> ('state tstate * 'value) =
+   fun (state,value) transformation ->
+      transformation state value
+
+
+let biOpReal (op:string) : float -> float -> float =
+   match op with
+   | "+" -> ( +. )
+   | "-" -> ( -. )
+   | "*" -> ( *. )
+   | "/" -> ( /. )
+   | _ -> failwith (Printf.sprintf "biOpReal: Unknown operator %s" op)
+
+let biOpInt (op:string) : int -> int -> int =
+   match op with
+   | "+" -> ( + )
+   | "-" -> ( - )
+   | "*" -> ( * )
+   | "/" -> ( / )
+   | _ -> failwith (Printf.sprintf "biOpReal: Unknown operator %s" op)
+
+let basicConstantSimplification : (unit,exp) transformation =
+   fun state e ->
+      match e with
+      | PBinOp(op,PInt(v1,_),PInt(v2,_),attr) ->
+         let f = biOpInt op in
+         state,PInt(f v1 v2,attr)
+      | PBinOp(op,PInt(v1,_),PReal(v2,_),attr) ->
+         let f = biOpReal op in
+         state,PReal(f (float_of_int v1) v2,attr)
+      | PBinOp(op,PReal(v1,_),PInt(v2,_),attr) ->
+         let f = biOpReal op in
+         state,PReal(f v1 (float_of_int v2),attr)
+      | PBinOp(op,PReal(v1,_),PReal(v2,_),attr) ->
+         let f = biOpReal op in
+         state,PReal(f v1 v2,attr)
+      | _ -> state,e
+
+(* Basic transformations *)
+let basicPasses (state,stmts) =
+   TypesUtil.traverseExpInStmtList basicConstantSimplification state stmts
+
+let applyTransformations (results:parser_results) =
+   let initial_state = () |> createState in
 
    let passes stmts =
-      (initial_state,[StmtBlock(None,stmts,default_loc)])
-      |> applyOn basicON         basicPasses
-      |> applyOn returnRemovalON removalOfSequencesPasses
-      |> applyOn inlineON        inliningPasses
-      |> applyOn finalizeON      (finalPasses module_name)
-      |> applyOn codegenOn       (codeGenPasses module_name)
-      |> applyOn interpreterOn   interpreterPasses
+      (initial_state,[StmtBlock(None,stmts,{ loc = Loc.default; props = []})])
+      |> basicPasses
       |> snd
    in
 
    let new_stmts = CCError.map passes results.presult in
    { results with presult = new_stmts }
-

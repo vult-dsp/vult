@@ -161,100 +161,92 @@ let mapfindOption key map =
    else None
 
 (** Traverses the statements in a top-down fashion following the execution order *)
-let rec traverseStmt (pred:(stmt->bool) option) (f: 'a tstate -> stmt -> 'a tstate * stmt) (state:'a tstate) (stmt:stmt) : 'a tstate * stmt =
-   match pred with
-   | Some(pred_f) when not (pred_f stmt) ->
-      state,stmt
-   | _ ->
-      let state1,nstmt = f state stmt in
-      match nstmt with
-      | StmtVal(_,_,_)
-      | StmtMem(_,_,_,_)
-      | StmtTable(_,_,_)
-      | StmtReturn(_,_)
-      | StmtBind(_,_,_)
-      | StmtType(_,_,_,_)
-      | StmtAliasType(_,_,_,_)
-      | StmtEmpty
-         -> revisitStmt pred f state nstmt
-      | StmtWhile(cond,stmts,attr) ->
-         let state1,nstmts = traverseStmt pred f state stmts in
-         revisitStmt pred f  state1 (StmtWhile(cond,nstmts,attr))
-      | StmtIf(cond,then_,Some(else_),attr) ->
-         let state1,nthen_ = traverseStmt pred f state then_ in
-         let state2,nelse_ = traverseStmt pred f state1 else_ in
-         revisitStmt pred f state2 (StmtIf(cond,nthen_,Some(nelse_),attr))
-      | StmtIf(cond,then_,None,attr) ->
-         let state1,nthen_ = traverseStmt pred f state then_ in
-         revisitStmt pred f  state1 (StmtIf(cond,nthen_,None,attr))
-      | StmtFun(name,args,body,ret,attr) ->
-         let state1,nbody = traverseStmt pred f state body in
-         revisitStmt pred f state1 (StmtFun(name,args,nbody,ret,attr))
-      | StmtBlock(name,stmts,attr) ->
-         let state1,nstmts = traverseStmtList pred f state stmts in
-         revisitStmt pred f state (StmtBlock(name,nstmts,attr))
+let rec traverseStmt (f: 'a tstate -> stmt -> 'a tstate * stmt) (state:'a tstate) (stmt:stmt) : 'a tstate * stmt =
+   let state1,nstmt = f state stmt in
+   match nstmt with
+   | StmtVal(_,_,_)
+   | StmtMem(_,_,_,_)
+   | StmtTable(_,_,_)
+   | StmtReturn(_,_)
+   | StmtBind(_,_,_)
+   | StmtType(_,_,_,_)
+   | StmtAliasType(_,_,_,_)
+   | StmtEmpty
+      -> revisitStmt f state nstmt
+   | StmtWhile(cond,stmts,attr) ->
+      let state1,nstmts = traverseStmt f state stmts in
+      revisitStmt f  state1 (StmtWhile(cond,nstmts,attr))
+   | StmtIf(cond,then_,Some(else_),attr) ->
+      let state1,nthen_ = traverseStmt f state then_ in
+      let state2,nelse_ = traverseStmt f state1 else_ in
+      revisitStmt f state2 (StmtIf(cond,nthen_,Some(nelse_),attr))
+   | StmtIf(cond,then_,None,attr) ->
+      let state1,nthen_ = traverseStmt f state then_ in
+      revisitStmt f  state1 (StmtIf(cond,nthen_,None,attr))
+   | StmtFun(name,args,body,ret,attr) ->
+      let state1,nbody = traverseStmt f state body in
+      revisitStmt f state1 (StmtFun(name,args,nbody,ret,attr))
+   | StmtBlock(name,stmts,attr) ->
+      let state1,nstmts = traverseStmtList f state stmts in
+      revisitStmt f state (StmtBlock(name,nstmts,attr))
 
-and traverseStmtList (pred:(stmt->bool) option) (f: 'a tstate -> stmt -> 'a tstate * stmt) (state:'a tstate) (stmts:stmt list) : 'a tstate * stmt list =
-   let ns,acc = List.fold_left (fun (s,acc) a -> let ns,na = traverseStmt pred f state a in ns,a::acc) (state,[]) stmts in
+and traverseStmtList (f: 'a tstate -> stmt -> 'a tstate * stmt) (state:'a tstate) (stmts:stmt list) : 'a tstate * stmt list =
+   let ns,acc = List.fold_left (fun (s,acc) a -> let ns,na = traverseStmt f state a in ns,na::acc) (state,[]) stmts in
    ns,List.rev acc
 
-and revisitStmt (pred:(stmt->bool) option) (f: 'a tstate -> stmt -> 'a tstate * stmt) (state:'a tstate) (stmt:stmt) : 'a tstate * stmt =
+and revisitStmt (f: 'a tstate -> stmt -> 'a tstate * stmt) (state:'a tstate) (stmt:stmt) : 'a tstate * stmt =
    if state.revisit then
-      traverseStmt pred f ({ state with revisit = false }) stmt
+      traverseStmt f ({ state with revisit = false }) stmt
    else
       state,stmt
 
 (** Traverses the expression in a bottom-up fashion *)
-let rec traverseExp (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate * exp) (state:'a tstate) (exp:exp) : 'a tstate * exp =
-   match pred with
-   | Some(pred_f) when not (pred_f exp) ->
-      state,exp
-   | _ ->
-      match exp with
-      | PUnit(_)
-      | PBool(_,_)
-      | PInt(_,_)
-      | PReal(_,_)
-      | PId(_,_)
-      | PSeq(_,_,_)
-      | PEmpty -> f state exp
-      | PUnOp(op,e,loc) ->
-         let state1,ne = traverseExp pred f state e in
-         revisitExp pred f (f state1 (PUnOp(op,ne,loc)))
-      | PBinOp(op,e1,e2,loc) ->
-         let state1,ne1 = traverseExp pred f state e1 in
-         let state2,ne2 = traverseExp pred f state1 e2 in
-         revisitExp pred f (f state2 (PBinOp(op,ne1,ne2,loc)))
-      | PCall(inst,name,args,attr) ->
-         let state1,nargs = traverseExpList pred f state args in
-         revisitExp pred f (f state1 (PCall(inst,name,nargs,attr)))
-      | PIf(cond,then_,else_,attr) ->
-         let state1,ncond  = traverseExp pred f state cond in
-         let state2,nthen_ = traverseExp pred f state1 then_ in
-         let state3,nelse_ = traverseExp pred f state2 else_ in
-         revisitExp pred f (f state3 (PIf(ncond,nthen_,nelse_,attr)))
-      | PGroup(e,attr) ->
-         let state1,ne = traverseExp pred f state e in
-         revisitExp pred f (f state1 (PGroup(ne,attr)))
-      | PTuple(el,attr) ->
-         let state1,nel = traverseExpList pred f state el in
-         revisitExp pred f (f state1 (PTuple(nel,attr)))
+let rec traverseExp (f: 'a tstate -> exp -> 'a tstate * exp) (state:'a tstate) (exp:exp) : 'a tstate * exp =
+   match exp with
+   | PUnit(_)
+   | PBool(_,_)
+   | PInt(_,_)
+   | PReal(_,_)
+   | PId(_,_)
+   | PSeq(_,_,_)
+   | PEmpty -> f state exp
+   | PUnOp(op,e,loc) ->
+      let state1,ne = traverseExp f state e in
+      revisitExp f (f state1 (PUnOp(op,ne,loc)))
+   | PBinOp(op,e1,e2,loc) ->
+      let state1,ne1 = traverseExp f state e1 in
+      let state2,ne2 = traverseExp f state1 e2 in
+      revisitExp f (f state2 (PBinOp(op,ne1,ne2,loc)))
+   | PCall(inst,name,args,attr) ->
+      let state1,nargs = traverseExpList f state args in
+      revisitExp f (f state1 (PCall(inst,name,nargs,attr)))
+   | PIf(cond,then_,else_,attr) ->
+      let state1,ncond  = traverseExp f state cond in
+      let state2,nthen_ = traverseExp f state1 then_ in
+      let state3,nelse_ = traverseExp f state2 else_ in
+      revisitExp f (f state3 (PIf(ncond,nthen_,nelse_,attr)))
+   | PGroup(e,attr) ->
+      let state1,ne = traverseExp f state e in
+      revisitExp f (f state1 (PGroup(ne,attr)))
+   | PTuple(el,attr) ->
+      let state1,nel = traverseExpList f state el in
+      revisitExp f (f state1 (PTuple(nel,attr)))
 
-and traverseExpList (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate * exp) (state:'a tstate) (exps:exp list) : 'a tstate * exp list =
-   let ns,acc = List.fold_left (fun (s,acc) a -> let ns,na = traverseExp pred f state a in ns,a::acc) (state,[]) exps in
+and traverseExpList (f: 'a tstate -> exp -> 'a tstate * exp) (state:'a tstate) (exps:exp list) : 'a tstate * exp list =
+   let ns,acc = List.fold_left (fun (s,acc) a -> let ns,na = traverseExp f state a in ns,a::acc) (state,[]) exps in
    ns,List.rev acc
 
-and revisitExp (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate * exp) ((state,exp):'a tstate * exp) : 'a tstate * exp =
+and revisitExp (f: 'a tstate -> exp -> 'a tstate * exp) ((state,exp):'a tstate * exp) : 'a tstate * exp =
    if state.revisit then
-      traverseExp pred f ({ state with revisit = false }) exp
+      traverseExp f ({ state with revisit = false }) exp
    else
       state,exp
 
-let traverseExpOpt (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate * exp) (state:'a tstate) (exp:exp option) : 'a tstate * exp option =
+let traverseExpOpt (f: 'a tstate -> exp -> 'a tstate * exp) (state:'a tstate) (exp:exp option) : 'a tstate * exp option =
    match exp with
    | None -> state,None
    | Some(e) ->
-      let s,ne = traverseExp pred f state e in
+      let s,ne = traverseExp f state e in
       s,Some(ne)
 
 (** Returns the full location (start and end) of an expression *)
@@ -303,29 +295,30 @@ let rec getFullTypeLocation (exp:type_exp) : Loc.t =
 and getFullTypeListLocation (loc:Loc.t) (el:type_exp list) : Loc.t =
    List.fold_left (fun s a -> Loc.merge s (getFullTypeLocation a)) loc el
 
-let traverseExpInStmts (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tstate * exp) (state:'a tstate) (stmt:stmt) : 'a tstate * stmt =
+let expInStmts_traverser (f: 'a tstate -> exp -> 'a tstate * exp) =
+   fun state stmt ->
    match stmt with
    | StmtVal(el,er,attr) ->
-      let s,ner = traverseExpOpt pred f state er in
+      let s,ner = traverseExpOpt f state er in
       s,StmtVal(el,ner,attr)
    | StmtMem(el,ie,er,attr) ->
-      let s1,nie = traverseExpOpt pred f state ie in
-      let s2,ner = traverseExpOpt pred f s1 er in
+      let s1,nie = traverseExpOpt f state ie in
+      let s2,ner = traverseExpOpt f s1 er in
       s2,StmtMem(el,nie,ner,attr)
    | StmtTable(id,el,attr) ->
-      let s,nel = traverseExpList pred f state el in
+      let s,nel = traverseExpList f state el in
       s,StmtTable(id,nel,attr)
    | StmtWhile(cond,stmts,attr) ->
-      let s,ncond = traverseExp pred f state cond in
+      let s,ncond = traverseExp f state cond in
       s,StmtWhile(ncond,stmts,attr)
    | StmtReturn(e,attr) ->
-      let s,ne = traverseExp pred f state e in
+      let s,ne = traverseExp f state e in
       s,StmtReturn(ne,attr)
    | StmtIf(cond,then_,else_,attr) ->
-      let s,ncond = traverseExp pred f state cond in
+      let s,ncond = traverseExp f state cond in
       s,StmtIf(ncond,then_,else_,attr)
    | StmtBind(el,er,attr) ->
-      let s,ner = traverseExp pred f state er in
+      let s,ner = traverseExp f state er in
       s,StmtBind(el,ner,attr)
    | StmtFun _
    | StmtBlock _
@@ -334,7 +327,8 @@ let traverseExpInStmts (pred:(exp->bool) option) (f: 'a tstate -> exp -> 'a tsta
    | StmtEmpty ->
       state,stmt
 
-
+let traverseExpInStmtList (f: 'a tstate -> exp -> 'a tstate * exp) (state:'a tstate) (stmts:stmt list) : 'a tstate * stmt list =
+   traverseStmtList (expInStmts_traverser f) state stmts
 
 
 

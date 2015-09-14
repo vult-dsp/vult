@@ -26,6 +26,7 @@ open ParserVult
 open TypesVult
 open TypesUtil
 open Driver
+open Passes
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : arguments =
@@ -76,7 +77,8 @@ let main () =
    (* Reports error of parsing *)
    let _ = List.iter (fun a -> Error.printErrors a.presult a.lines ) parser_results in
    (* Prints the parsed files if -dparse was passed as argument *)
-   let _ = if args.dparse then dumpParsedFiles parser_results in
+   let _ = if args.dparse then
+      dumpParsedFiles (List.map applyTransformations parser_results) in
    ()
 ;;
 main ();;
