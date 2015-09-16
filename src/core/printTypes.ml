@@ -273,6 +273,11 @@ and stmtListBuff buffer (expl:stmt list) =
 
 (** Adds to the print buffer a statement in a block list *)
 and pseqListBuff buffer expl =
+   let stmtList stmt =
+      match stmt with
+      | StmtBlock(_,stmts,_) -> stmts
+      | _ -> [stmt]
+   in
    let rec loop l =
       match l with
       | [] -> ()
@@ -283,7 +288,7 @@ and pseqListBuff buffer expl =
    in
    append buffer "{|";
    indent buffer;
-   loop expl;
+   loop (stmtList expl);
    outdent buffer;
    append buffer "|}"
 

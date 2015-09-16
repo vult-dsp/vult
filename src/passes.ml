@@ -27,36 +27,6 @@ THE SOFTWARE.
 open TypesVult
 open TypesUtil
 
-(** Generic type of transformations *)
-type ('data,'value) transformation = 'data tstate -> 'value -> 'data tstate * 'value
-
-(** Generic type of expanders *)
-type ('data,'value) expander = 'data tstate -> 'value -> 'data tstate * 'value list
-
-(** Generic type of folders *)
-type ('data,'value) folder = 'data tstate -> 'value -> 'data tstate
-
-
-(** Makes a chain of transformations. E.g. foo |-> bar will apply first foo then bar. *)
-let (|->) : ('data,'value) transformation -> ('data,'value) transformation -> ('data,'value) transformation =
-   fun a b ->
-   fun state exp ->
-      let new_state,new_exp = a state exp in
-      b new_state new_exp
-
-(** Makes a chain of fold functions. E.g. foo |*> bar will apply first foo then bar. *)
-let (|*>) : ('data,'value) folder -> ('data,'value) folder -> ('data,'value) folder =
-   fun a b ->
-   fun state exp ->
-      let new_state = a state exp in
-      b new_state exp
-
-(** Pipes a pair (state,value) into transformation functions *)
-let (|+>) : ('state tstate * 'value) -> ('state, 'value) transformation -> ('state tstate * 'value) =
-   fun (state,value) transformation ->
-      transformation state value
-
-
 let biOpReal (op:string) : float -> float -> float =
    match op with
    | "+" -> ( +. )
@@ -73,7 +43,7 @@ let biOpInt (op:string) : int -> int -> int =
    | "/" -> ( / )
    | _ -> failwith (Printf.sprintf "biOpReal: Unknown operator %s" op)
 
-let basicConstantSimplification : (unit,exp) transformation =
+let basicConstantSimplification : (unit Mapper.State.t,exp) Mapper.mapper_func =
    fun state e ->
       match e with
       | PBinOp(op,PInt(v1,_),PInt(v2,_),attr) ->
@@ -92,10 +62,13 @@ let basicConstantSimplification : (unit,exp) transformation =
 
 (* Basic transformations *)
 let basicPasses (state,stmts) =
-   TypesUtil.traverseExpInStmtList basicConstantSimplification state stmts
+   let basic_mapper =
+      { Mapper.default_mapper with Mapper.exp = basicConstantSimplification }
+   in
+   Mapper.map_stmt_list basic_mapper state stmts
 
 let applyTransformations (results:parser_results) =
-   let initial_state = () |> createState in
+   let initial_state = () |> Mapper.State.createState in
 
    let passes stmts =
       (initial_state,[StmtBlock(None,stmts,{ loc = Loc.default; props = []})])

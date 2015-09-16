@@ -105,7 +105,7 @@ type exp =
       *  attr
    | PSeq
       of identifier option (* Scope name *)
-      *  stmt list
+      *  stmt
       *  attr
    | PEmpty
    [@@deriving show,eq,ord]

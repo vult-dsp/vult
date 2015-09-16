@@ -311,7 +311,7 @@ and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
    | LSEQ,_ ->
       let stmts = pseqList buffer in
       let attr  = makeAttr token.loc in
-      PSeq(None,stmts,attr)
+      PSeq(None,StmtBlock(None,stmts,attr),attr)
    | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
