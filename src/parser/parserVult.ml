@@ -135,7 +135,7 @@ let prattParser (rbp:int) (buffer:Stream.stream)
          left
    in loop next_token left (rbp < (lbp next_token))
 
-let identifierToken (buffer:Stream.stream) (token:'kind token) : identifier =
+let identifierToken (buffer:Stream.stream) (token:'kind token) : id =
    splitOnDot token.value
 
 (** Parses a type expression using a Pratt parser *)
@@ -178,7 +178,7 @@ and type_led (buffer:Stream.stream) (token:'kind token) (left:type_exp) : type_e
    let message = Stream.notExpectedError token in
    raise (ParserError(message))
 
-and composedType (buffer:Stream.stream) (token:'kind token) (id:identifier) : type_exp =
+and composedType (buffer:Stream.stream) (token:'kind token) (id:id) : type_exp =
    let _ = Stream.skip buffer in
    let args =
       match Stream.peek buffer with
@@ -340,8 +340,8 @@ and pair (buffer:Stream.stream) (token:'kind token) (left:exp) : exp =
    let attr      = makeAttr start_loc in
    PTuple(elems1@elems2,attr)
 
-(** <functionCall> := <identifier> '(' <expressionList> ')' *)
-and functionCall (buffer:Stream.stream) (token:'kind token) (id:identifier) : exp =
+(** <functionCall> := <id> '(' <expressionList> ')' *)
+and functionCall (buffer:Stream.stream) (token:'kind token) (id:id) : exp =
    let _    = Stream.skip buffer in
    let args =
       match Stream.peek buffer with
@@ -391,7 +391,7 @@ and typedArg (buffer:Stream.stream) : typed_id =
       let attr = makeAttr token.loc in
       SimpleId(splitOnDot token.value,attr)
 
-and identifier (buffer:Stream.stream) : identifier =
+and id (buffer:Stream.stream) : id =
    let _     = Stream.expect buffer ID in
    let token = Stream.current buffer in
    let _     = Stream.skip buffer in
@@ -470,7 +470,7 @@ and stmtMem (buffer:Stream.stream) : stmt =
 and stmtTab (buffer: Stream.stream) : stmt =
    let start_loc = Stream.location buffer in
    let _     = Stream.consume buffer TABLE in
-   let name  = identifier buffer in
+   let name  = id buffer in
    let _     = Stream.consume buffer EQUAL in
    let _     = Stream.consume buffer LARR in
    let elems = expressionList buffer in
@@ -521,11 +521,11 @@ and stmtIf (buffer:Stream.stream) : stmt =
       StmtIf(cond,tstm,Some(fstm),makeAttr start_loc)
    | _ -> StmtIf(cond,tstm,None,makeAttr start_loc)
 
-(** 'fun' <identifier> '(' <typedArgList> ')' <stmtList> *)
+(** 'fun' <id> '(' <typedArgList> ')' <stmtList> *)
 and stmtFunction (buffer:Stream.stream) : stmt =
    let isjoin = match Stream.peek buffer with | AND -> true | _ -> false in
    let _      = Stream.skip buffer in
-   let name   = identifier buffer in
+   let name   = id buffer in
    let token  = Stream.current buffer in
    let _      = Stream.consume buffer LPAREN in
    let args   =
@@ -546,10 +546,10 @@ and stmtFunction (buffer:Stream.stream) : stmt =
    let props     = if isjoin then [JoinFunction] else [] in
    StmtFun(name,args,body,type_exp,{ loc = start_loc; props = props })
 
-(** 'type' <identifier> '(' <typedArgList> ')' <valDeclList> *)
+(** 'type' <id> '(' <typedArgList> ')' <valDeclList> *)
 and stmtType (buffer:Stream.stream) : stmt =
    let _         = Stream.consume buffer TYPE in
-   let name      = identifier buffer in
+   let name      = id buffer in
    let token     = Stream.current buffer in
    let start_loc = token.loc in
    let args      =
@@ -592,7 +592,7 @@ and valDecl (buffer:Stream.stream) : val_decl =
    let token     = Stream.current buffer in
    let start_loc = token.loc in
    let _         = Stream.skip buffer in
-   let id        = identifier buffer in
+   let id        = id buffer in
    let _         = Stream.consume buffer COLON in
    let val_type  = typeExpression 10 buffer in
    id,val_type,makeAttr start_loc

@@ -302,6 +302,11 @@ and valDecl buffer val_decl =
    append buffer ";";
    newline buffer
 
+let identifierBuff id =
+   let print_buffer = makePrintBuffer () in
+   identifierBuff print_buffer id;
+   contents print_buffer
+
 (** Converts to string a list of statememts *)
 let stmtListStr e =
    let print_buffer = makePrintBuffer () in

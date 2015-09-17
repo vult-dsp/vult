@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-type identifier = string list
+type id = string list
    [@@deriving show,eq,ord]
 
 type property =
@@ -44,20 +44,20 @@ type attr =
 type type_exp =
    | TUnit      of attr
    | TWild      of attr
-   | TId        of identifier    * attr
+   | TId        of id * attr
    | TTuple     of type_exp list * attr
-   | TComposed  of identifier    * type_exp list * attr
+   | TComposed  of id * type_exp list * attr
    | TSignature of type_exp list * attr
    [@@deriving show,eq,ord]
 
 type typed_id =
-   | SimpleId of identifier * attr
-   | TypedId  of identifier * type_exp * attr
+   | SimpleId of id * attr
+   | TypedId  of id * type_exp * attr
    [@@deriving show,eq,ord]
 
 type lhs_exp =
    | LWild  of attr
-   | LId    of identifier   * attr
+   | LId    of id * attr
    | LTuple of lhs_exp list * attr
    | LTyped of lhs_exp * type_exp * attr
    [@@deriving show,eq,ord]
@@ -76,7 +76,7 @@ type exp =
       of float
       *  attr
    | PId
-      of identifier  (* name *)
+      of id    (* name *)
       *  attr
    | PUnOp
       of string      (* operator *)
@@ -88,9 +88,9 @@ type exp =
       *  exp
       *  attr
    | PCall
-      of identifier option (* name/instance *)
-      *  identifier        (* type/function name *)
-      *  exp list          (* arguments *)
+      of id option (* name/instance *)
+      *  id        (* type/function name *)
+      *  exp list  (* arguments *)
       *  attr
    | PIf
       of exp (* condition *)
@@ -104,7 +104,7 @@ type exp =
       of exp list
       *  attr
    | PSeq
-      of identifier option (* Scope name *)
+      of id option (* Scope name *)
       *  stmt
       *  attr
    | PEmpty
@@ -121,8 +121,8 @@ and stmt =
       *  exp option  (* rhs *)
       *  attr
    | StmtTable
-      of identifier  (* name *)
-      *  exp list    (* data *)
+      of id       (* name *)
+      *  exp list (* data *)
       *  attr
    | StmtWhile
       of exp         (* condition*)
@@ -137,34 +137,34 @@ and stmt =
       *  stmt option (* else *)
       *  attr
    | StmtFun
-      of identifier       (* name *)
-      *  typed_id list    (* arguments *)
-      *  stmt             (* body *)
-      *  type_exp option  (* return type *)
+      of id              (* name *)
+      *  typed_id list   (* arguments *)
+      *  stmt            (* body *)
+      *  type_exp option (* return type *)
       *  attr
    | StmtBind
       of lhs_exp     (* lhs *)
       *  exp         (* rhs *)
       *  attr
    | StmtBlock
-      of identifier option (* scope name *)
+      of id option (* scope name *)
       *  stmt list
       *  attr
    | StmtType
-      of identifier           (* name *)
-      *  typed_id list        (* arguments *)
-      *  val_decl list        (* members *)
+      of id            (* name *)
+      *  typed_id list (* arguments *)
+      *  val_decl list (* members *)
       *  attr
    | StmtAliasType
-      of identifier           (* name *)
-      *  typed_id list        (* arguments *)
-      *  type_exp             (* alias type *)
+      of id            (* name *)
+      *  typed_id list (* arguments *)
+      *  type_exp      (* alias type *)
       *  attr
    | StmtEmpty
    [@@deriving show,eq,ord]
 
 and val_decl =
-   identifier  (* name *)
+   id          (* name *)
    * type_exp  (* type *)
    * attr
    [@@deriving show,eq,ord]

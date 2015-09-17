@@ -24,7 +24,6 @@ THE SOFTWARE.
 open LexerVult
 open ParserVult
 open TypesVult
-open TypesUtil
 open Driver
 open Passes
 

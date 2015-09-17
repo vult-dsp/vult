@@ -25,7 +25,6 @@ THE SOFTWARE.
 (** Transformations and optimizations of the syntax tree *)
 
 open TypesVult
-open TypesUtil
 
 module ConstantSimplification = struct
    let biOpReal (op:string) : float -> float -> float =
@@ -44,7 +43,7 @@ module ConstantSimplification = struct
       | "/" -> ( / )
       | _ -> failwith (Printf.sprintf "biOpReal: Unknown operator %s" op)
 
-   let apply : (unit,exp) Mapper.mapper_func =
+   let apply : ('a,exp) Mapper.mapper_func =
       fun state e ->
          match e with
          | PBinOp(op,PInt(v1,_),PInt(v2,_),attr) ->
