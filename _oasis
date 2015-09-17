@@ -1,0 +1,85 @@
+Name: Vult
+Version: 0.2
+Synopsis: Vult is a transcompiler well suited to write high-performance DSP code.
+Authors: Leonardo Laguna Ruiz <modlfo@gmail.com>
+License: MIT
+
+Description: Vult is a simple and powerful language to program high-performance algorithms that may run in small microprocessors or microcontrollers. Vult is specially useful when programming Digital Signal Processing (DSP) algorithms like audio effects or synthesizers.
+Homepage: http://modlfo.github.io/vult/
+
+OASISFormat: 0.4
+BuildTools: ocamlbuild
+Plugins: META (0.4), DevFiles (0.4)
+
+Flag "js"
+  Description: Build the code to convert to js
+  Default: false
+
+Library "vult_util"
+  Path: src/util
+  Modules:
+    Error,
+    GraphWrapper,
+    Loc,
+    PrintBuffer,
+    Scope,
+    Either,
+    UnionFind
+  BuildDepends:
+    containers,
+    ocamlgraph
+
+Library "vult_core"
+  Path: src/core
+  Modules:
+    Mapper,
+    PrintTypes,
+    TypesVult
+  BuildDepends:
+    vult_util,
+    ppx_deriving.std
+
+Library "vult_parser"
+  Path: src/parser
+  Modules:
+    LexerVult,
+    ParserTypes,
+    ParserVult,
+    TokenStream
+  BuildDepends:
+    vult_core
+
+Library "vult"
+  Path: src
+  Modules:
+    Driver
+  BuildDepends:
+    vult_core,
+    vult_parser
+
+Executable "vultc"
+  Path: .
+  MainIs: vultc.ml
+  CompiledObject: best
+  BuildDepends:
+    vult
+
+Executable "vult_node"
+  Path: .
+  MainIs: vult_node.ml
+  Build$: flag(js)
+  BuildDepends:
+    vult,
+    js_of_ocaml.syntax,
+    js_of_ocaml
+
+Executable "test_vult"
+  Path: src
+  MainIs: test.ml
+  Build$: flag(tests)
+  CompiledObject: best
+  Install: false
+  BuildDepends:
+    vult_core,
+    vult_parser,
+    oUnit
