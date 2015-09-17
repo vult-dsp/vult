@@ -27,48 +27,52 @@ THE SOFTWARE.
 open TypesVult
 open TypesUtil
 
-let biOpReal (op:string) : float -> float -> float =
-   match op with
-   | "+" -> ( +. )
-   | "-" -> ( -. )
-   | "*" -> ( *. )
-   | "/" -> ( /. )
-   | _ -> failwith (Printf.sprintf "biOpReal: Unknown operator %s" op)
+module ConstantSimplification = struct
+   let biOpReal (op:string) : float -> float -> float =
+      match op with
+      | "+" -> ( +. )
+      | "-" -> ( -. )
+      | "*" -> ( *. )
+      | "/" -> ( /. )
+      | _ -> failwith (Printf.sprintf "biOpReal: Unknown operator %s" op)
 
-let biOpInt (op:string) : int -> int -> int =
-   match op with
-   | "+" -> ( + )
-   | "-" -> ( - )
-   | "*" -> ( * )
-   | "/" -> ( / )
-   | _ -> failwith (Printf.sprintf "biOpReal: Unknown operator %s" op)
+   let biOpInt (op:string) : int -> int -> int =
+      match op with
+      | "+" -> ( + )
+      | "-" -> ( - )
+      | "*" -> ( * )
+      | "/" -> ( / )
+      | _ -> failwith (Printf.sprintf "biOpReal: Unknown operator %s" op)
 
-let basicConstantSimplification : (unit Mapper.State.t,exp) Mapper.mapper_func =
-   fun state e ->
-      match e with
-      | PBinOp(op,PInt(v1,_),PInt(v2,_),attr) ->
-         let f = biOpInt op in
-         state,PInt(f v1 v2,attr)
-      | PBinOp(op,PInt(v1,_),PReal(v2,_),attr) ->
-         let f = biOpReal op in
-         state,PReal(f (float_of_int v1) v2,attr)
-      | PBinOp(op,PReal(v1,_),PInt(v2,_),attr) ->
-         let f = biOpReal op in
-         state,PReal(f v1 (float_of_int v2),attr)
-      | PBinOp(op,PReal(v1,_),PReal(v2,_),attr) ->
-         let f = biOpReal op in
-         state,PReal(f v1 v2,attr)
-      | _ -> state,e
+   let apply : (unit,exp) Mapper.mapper_func =
+      fun state e ->
+         match e with
+         | PBinOp(op,PInt(v1,_),PInt(v2,_),attr) ->
+            let f = biOpInt op in
+            state,PInt(f v1 v2,attr)
+         | PBinOp(op,PInt(v1,_),PReal(v2,_),attr) ->
+            let f = biOpReal op in
+            state,PReal(f (float_of_int v1) v2,attr)
+         | PBinOp(op,PReal(v1,_),PInt(v2,_),attr) ->
+            let f = biOpReal op in
+            state,PReal(f v1 (float_of_int v2),attr)
+         | PBinOp(op,PReal(v1,_),PReal(v2,_),attr) ->
+            let f = biOpReal op in
+            state,PReal(f v1 v2,attr)
+         | _ -> state,e
+end
+
+
 
 (* Basic transformations *)
 let basicPasses (state,stmts) =
    let basic_mapper =
-      { Mapper.default_mapper with Mapper.exp = basicConstantSimplification }
+      { Mapper.default_mapper with Mapper.exp = ConstantSimplification.apply }
    in
    Mapper.map_stmt_list basic_mapper state stmts
 
 let applyTransformations (results:parser_results) =
-   let initial_state = () |> Mapper.State.createState in
+   let initial_state = () in
 
    let passes stmts =
       (initial_state,[StmtBlock(None,stmts,{ loc = Loc.default; props = []})])
