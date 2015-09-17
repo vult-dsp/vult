@@ -1,0 +1,7 @@
+<src/core/typesVult.ml>: package(ppx_deriving.std)
+<vult_node.ml>: syntax(camlp4o),package(js_of_ocaml.syntax)
+<src>:include
+<src/passes>:include
+<src/util>:include
+<src/parser>:include
+<src/core>:include
