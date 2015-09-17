@@ -1,0 +1,13 @@
+# OASIS_START
+# DO NOT EDIT (digest: c7944af8f40a9643aef994fb45c18102)
+version = "0.2"
+description =
+"Vult is a transcompiler well suited to write high-performance DSP code."
+requires = "vult_core vult_parser"
+archive(byte) = "vult.cma"
+archive(byte, plugin) = "vult.cma"
+archive(native) = "vult.cmxa"
+archive(native, plugin) = "vult.cmxs"
+exists_if = "vult.cma"
+# OASIS_STOP
+
