@@ -23,66 +23,6 @@ THE SOFTWARE.
 *)
 
 open TypesVult
-open Scope
-
-type binding_info =
-   | FunctionInfo
-   | TypeInfo
-         [@@deriving show,eq,ord]
-
-module BindingInfo =
-struct
-   type t    = identifier
-   type v    = binding_info
-   type kind = scope_kind
-   let compare     = compare_identifier
-   let string_t _  = ""
-   let string_v _  = ""
-   let lookup_cond = (* Only scapes local scopes *)
-      function | Some(LocalScope) -> true | _ -> false
-end
-
-module BindingsScope = Scope(BindingInfo)
-
-(** Used to track the scope in all traversers *)
-module State = struct
-   type 'a t =
-      {
-         scope   : BindingsScope.t;
-         data    : 'a;
-         revisit : bool;
-         counter : int;
-      }
-
-   (** Returns a traversing state *)
-   let createState (data:'a) : 'a t =
-      { scope = BindingsScope.empty; data = data; revisit = false; counter = 0 }
-
-   (** Sets the data for the traversing state *)
-   let setState (s:'a t) (data:'a) : 'a t =
-      { s with data = data }
-
-   (** Gets the data for the traversing state *)
-   let getState (s:'a t) : 'a =
-      s.data
-
-   (** Creates a new state keepin the internal data *)
-   let deriveState (s:'a t) (data:'b) : 'b t =
-      { scope = s.scope; data = data; revisit = false; counter = 0 }
-
-   (** Adds a name to the scope *)
-   let pushScope (s:'a t) (name:identifier) (kind:scope_kind) : 'a t =
-      (*Printf.printf " - Entering to scope '%s'\n" (joinSep "." name);*)
-      { s with scope = BindingsScope.enter s.scope name (Some(kind)) }
-
-   (** Removes the last name from the scope *)
-   let popScope (s:'a t) : 'a t =
-      { s with scope = BindingsScope.exit s.scope }
-
-   (** Returns the current scope *)
-   let getScope (s:'a t) : identifier =
-      BindingsScope.getCurrentPath s.scope |> List.flatten
-end
 
 type ('data,'kind) mapper_func = 'data -> 'kind -> 'data * 'kind
 
