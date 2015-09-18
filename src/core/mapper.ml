@@ -193,8 +193,9 @@ let rec map_exp (mapper:'state mapper) (state:'state) (exp:exp) : 'state * exp =
       |> reapply mapper
    | PEmpty -> mapper.exp state exp
    | PUnOp(op,e,attr) ->
-      let state',ne = map_exp mapper state e in
-      mapper.exp state' (PUnOp(op,ne,attr))
+      let state',e' = map_exp mapper state e in
+      let state',attr' = map_attr mapper state' attr in
+      mapper.exp state' (PUnOp(op,e',attr'))
       |> reapply mapper
    | PBinOp(op,e1,e2,attr) ->
       let state',e1'   = map_exp mapper state e1 in
