@@ -261,7 +261,7 @@ fun noteOn(n){
 }
 
 // Deactivates a note and returns the following note value;
-fun noteOff(n){
+and noteOff(n){
    mem n1,n2,n3,n4;
    mem count,pre;
    val found = false;
@@ -283,7 +283,7 @@ fun noteOff(n){
 }
 
 // Returns 1 if any note is active
-fun isGateOn(){
+and isGateOn(){
    mem n1,n2,n3,n4;
    mem count,pre;
    return if count>0 then 1 else 0;
