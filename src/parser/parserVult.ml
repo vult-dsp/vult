@@ -245,7 +245,7 @@ and lhs_pair (buffer:Stream.stream) (token:'kind token) (left:lhs_exp) : lhs_exp
    let elems1 = left |> getElems in
    let elems2 = right |> getElems in
    let loc    = getLhsExpLocation left in
-   LTuple(elems1@elems2,{ loc = loc; props = [] })
+   LTuple(elems1@elems2,makeAttr loc)
 
 (** Parses an expression using a Pratt parser *)
 let rec expression (rbp:int) (buffer:Stream.stream) : exp =
@@ -543,8 +543,9 @@ and stmtFunction (buffer:Stream.stream) : stmt =
    in
    let body      = stmtList buffer in
    let start_loc = token.loc in
-   let props     = if isjoin then [JoinFunction] else [] in
-   StmtFun(name,args,body,type_exp,{ loc = start_loc; props = props })
+   let attr      = makeAttr start_loc in
+   let attr      = if isjoin then { attr with fun_and = true } else attr in
+   StmtFun(name,args,body,type_exp,attr)
 
 (** 'type' <id> '(' <typedArgList> ')' <valDeclList> *)
 and stmtType (buffer:Stream.stream) : stmt =

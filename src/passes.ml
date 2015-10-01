@@ -25,6 +25,7 @@ THE SOFTWARE.
 (** Transformations and optimizations of the syntax tree *)
 
 open TypesVult
+open Env
 
 module ConstantSimplification = struct
    let biOpReal (op:string) : float -> float -> float =
@@ -43,7 +44,7 @@ module ConstantSimplification = struct
       | "/" -> ( / )
       | _ -> failwith (Printf.sprintf "biOpReal: Unknown operator %s" op)
 
-   let apply : ('a,exp) Mapper.mapper_func =
+   let exp : ('a,exp) Mapper.mapper_func =
       fun state e ->
          match e with
          | PBinOp(op,PInt(v1,_),PInt(v2,_),attr) ->
@@ -59,22 +60,53 @@ module ConstantSimplification = struct
             let f = biOpReal op in
             state,PReal(f v1 v2,attr)
          | _ -> state,e
+
+   let mapper =
+      { Mapper.default_mapper with Mapper.exp = exp }
 end
 
+
+module CollectContext = struct
+
+   let stmt : (env,stmt) Mapper.mapper_func =
+      fun state stmt ->
+         match stmt with
+         | StmtFun(name,_,_,_,attr) when attr.fun_and ->
+            let env =
+               {
+                  state with
+                  context = FunctionContex.addToCurrent state.context name
+               }
+            in
+            env,stmt
+         | StmtFun(name,_,_,_,attr) ->
+            let env =
+               {
+                  state with
+                  context = FunctionContex.addToNew state.context name
+               }
+            in
+            env,stmt
+         | _ -> state,stmt
+
+   let mapper =
+      { Mapper.default_mapper with Mapper.stmt = stmt }
+
+end
 
 
 (* Basic transformations *)
 let basicPasses (state,stmts) =
    let basic_mapper =
-      { Mapper.default_mapper with Mapper.exp = ConstantSimplification.apply }
+      Mapper.seq CollectContext.mapper ConstantSimplification.mapper
    in
    Mapper.map_stmt_list basic_mapper state stmts
 
 let applyTransformations (results:parser_results) =
-   let initial_state = () in
+   let initial_state = Env.empty in
 
    let passes stmts =
-      (initial_state,[StmtBlock(None,stmts,{ loc = Loc.default; props = []})])
+      (initial_state,[StmtBlock(None,stmts,makeAttr Loc.default)])
       |> basicPasses
       |> snd
    in

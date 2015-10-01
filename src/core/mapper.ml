@@ -58,6 +58,28 @@ let default_mapper =
       id       = (fun state e -> state,e);
       revisit  = (fun state -> state,false);
    }
+
+(** Merge two mapper functions. This is a little bit weird but it will be
+    improved when mapper functions are optional. *)
+let seqMapperFunc default a b =
+   if a == default then b else
+   if b == default then a
+   else a |-> b
+
+(** Merges two mappers *)
+let seq (a:'a mapper) (b:'a mapper) : 'a mapper =
+   {
+      a with
+      type_exp = seqMapperFunc default_mapper.type_exp   a.type_exp b.type_exp;
+      typed_id = seqMapperFunc default_mapper.typed_id   a.typed_id b.typed_id;
+      exp      = seqMapperFunc default_mapper.exp        a.exp      b.exp;
+      lhs_exp  = seqMapperFunc default_mapper.lhs_exp    a.lhs_exp  b.lhs_exp;
+      val_decl = seqMapperFunc default_mapper.val_decl   a.val_decl b.val_decl;
+      stmt     = seqMapperFunc default_mapper.stmt       a.stmt     b.stmt;
+      attr     = seqMapperFunc default_mapper.attr       a.attr     b.attr;
+      id       = seqMapperFunc default_mapper.id         a.id       b.id;
+   }
+
 (** Applies any mapper to a list *)
 let mapper_list mapper_app =
    fun mapper state el ->
@@ -236,7 +258,7 @@ let rec map_exp (mapper:'state mapper) (state:'state) (exp:exp) : 'state * exp =
 
 and map_exp_list mapper = fun state exp -> (mapper_list map_exp) mapper state exp
 
-and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt  =
+and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
    let reapply       = mapper_reapply map_stmt in
    match stmt with
    | StmtVal(lhs,rhs,attr) ->
@@ -288,41 +310,71 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt  
       |> reapply mapper
    | StmtWhile(cond,stmts,attr) ->
       let state',cond'  = map_exp mapper state cond in
-      let state',stmts' = map_stmt mapper state' stmts in
       let state',attr'  = map_attr mapper state' attr in
-      (state',(StmtWhile(cond',stmts',attr')))
+      mapper.stmt state' (StmtWhile(cond',stmts,attr'))
+      |> map_stmt_subs mapper
       |> reapply mapper
    | StmtIf(cond,then_,Some(else_),attr) ->
       let state',cond'  = map_exp mapper state cond in
-      let state',then_' = map_stmt mapper state' then_ in
-      let state',else_' = map_stmt mapper state' else_ in
       let state',attr'  = map_attr mapper state' attr in
-      (state',(StmtIf(cond',then_',Some(else_'),attr')))
+      mapper.stmt state' (StmtIf(cond',then_,Some(else_),attr'))
+      |> map_stmt_subs mapper
       |> reapply mapper
    | StmtIf(cond,then_,None,attr) ->
       let state',cond'  = map_exp mapper state cond in
-      let state',then_' = map_stmt mapper state' then_ in
       let state',attr'  = map_attr mapper state' attr in
-      (state',(StmtIf(cond',then_',None,attr')))
+      mapper.stmt state' (StmtIf(cond',then_,None,attr'))
+      |> map_stmt_subs mapper
       |> reapply mapper
    | StmtFun(name,args,body,ret,attr) ->
       let state',name' = map_id mapper state name in
       let state',args' = (mapper_list map_typed_id) mapper state' args in
-      let state',body' = map_stmt mapper state' body in
       let state',ret'  = (mapper_opt map_type_exp) mapper state' ret in
       let state',attr' = map_attr mapper state' attr in
-      (state',(StmtFun(name',args',body',ret',attr')))
+      mapper.stmt state' (StmtFun(name',args',body,ret',attr'))
+      |> map_stmt_subs mapper
       |> reapply mapper
    | StmtBlock(name,stmts,attr) ->
       let state',name'  = (mapper_opt map_id) mapper state name in
-      let state',stmts' = map_stmt_list mapper state' stmts in
       let state',attr'  = map_attr mapper state' attr in
-      (state',(StmtBlock(name',stmts',attr')))
+      mapper.stmt state' (StmtBlock(name',stmts,attr'))
+      |> map_stmt_subs mapper
       |> reapply mapper
 
 and map_stmt_list mapper = fun state stmt -> (mapper_list map_stmt) mapper state stmt
 
-
+and map_stmt_subs (mapper:'state mapper) (state,stmt:('state * stmt)) : 'state * stmt =
+   let reapply = mapper_reapply map_stmt in
+   match stmt with
+   | StmtVal(_,_,_)
+   | StmtMem(_,_,_,_)
+   | StmtTable(_,_,_)
+   | StmtReturn(_,_)
+   | StmtBind(_,_,_)
+   | StmtType(_,_,_,_)
+   | StmtAliasType(_,_,_,_)
+   | StmtEmpty -> state, stmt
+   | StmtWhile(cond,stmts,attr) ->
+      let state',stmts' = map_stmt mapper state stmts in
+      (state',(StmtWhile(cond,stmts',attr)))
+      |> reapply mapper
+   | StmtIf(cond,then_,Some(else_),attr) ->
+      let state',then_' = map_stmt mapper state then_ in
+      let state',else_' = map_stmt mapper state' else_ in
+      (state',(StmtIf(cond,then_',Some(else_'),attr)))
+      |> reapply mapper
+   | StmtIf(cond,then_,None,attr) ->
+      let state',then_' = map_stmt mapper state then_ in
+      (state',(StmtIf(cond,then_',None,attr)))
+      |> reapply mapper
+   | StmtFun(name,args,body,ret,attr) ->
+      let state',body' = map_stmt mapper state body in
+      (state',(StmtFun(name,args,body',ret,attr)))
+      |> reapply mapper
+   | StmtBlock(name,stmts,attr) ->
+      let state',stmts' = map_stmt_list mapper state stmts in
+      (state',(StmtBlock(name,stmts',attr)))
+      |> reapply mapper
 
 
 

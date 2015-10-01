@@ -27,9 +27,6 @@ THE SOFTWARE.
 open TypesVult
 open PrintBuffer
 
-let isJoint (attr:attr) : bool =
-   List.exists (fun a ->a = JoinFunction) attr.props
-
 (** Add an identifier to the print buffer *)
 let identifierBuff buffer id =
    printList buffer append "." id
@@ -193,7 +190,7 @@ and stmtBuff buffer (s:stmt) =
       stmtBuff buffer false_stmt;
       outdent buffer
    | StmtFun(name,args,body,type_exp,attr) ->
-      append buffer (if isJoint attr then "and " else "fun ");
+      append buffer (if attr.fun_and then "and " else "fun ");
       identifierBuff buffer name;
       append buffer "(";
       printList buffer typedArgBuff "," args;
@@ -302,7 +299,7 @@ and valDecl buffer val_decl =
    append buffer ";";
    newline buffer
 
-let identifierBuff id =
+let identifierStr id =
    let print_buffer = makePrintBuffer () in
    identifierBuff print_buffer id;
    contents print_buffer

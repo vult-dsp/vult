@@ -25,19 +25,12 @@ THE SOFTWARE.
 type id = string list
    [@@deriving show,eq,ord]
 
-type property =
-   | SimpleBinding (* Used by Passes.bindFunctionCalls to mark the function calls that have been bound *)
-   | ActiveFunction
-   | JoinFunction
-   [@@deriving show,eq,ord]
-
-type properties = property list
-   [@@deriving show,eq,ord]
-
 type attr =
    {
-      loc   : Loc.t;
-      props : properties;
+      loc     : Loc.t;
+      fun_and : bool;
+      active  : bool;
+      bound   : bool;
    }
    [@@deriving show,eq,ord]
 
@@ -217,4 +210,6 @@ let default_arguments =
    }
 
 let makeAttr (loc:Loc.t) : attr =
-   { loc = loc; props = [] }
+   { loc = loc; fun_and = false; active = false; bound = false }
+
+module IdMap = Map.Make(struct type t = id let compare = compare end)
