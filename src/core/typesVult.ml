@@ -213,3 +213,5 @@ let makeAttr (loc:Loc.t) : attr =
    { loc = loc; fun_and = false; active = false; bound = false }
 
 module IdMap = Map.Make(struct type t = id let compare = compare end)
+
+module IdSet = Set.Make(struct type t = id let compare = compare end)

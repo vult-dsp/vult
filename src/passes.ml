@@ -68,24 +68,28 @@ end
 
 module CollectContext = struct
 
-   let stmt : (env,stmt) Mapper.mapper_func =
+   let lhs_exp : (Env.t,lhs_exp) Mapper.mapper_func =
+      fun state exp ->
+         match exp with
+         | LId(id,_) ->
+            let env = Env.addMemToContext state id in
+            env,exp
+         | _ -> state,exp
+
+   let reg_mem_mapper =
+      { Mapper.default_mapper with Mapper.lhs_exp = lhs_exp }
+
+   let stmt : (Env.t,stmt) Mapper.mapper_func =
       fun state stmt ->
          match stmt with
          | StmtFun(name,_,_,_,attr) when attr.fun_and ->
-            let env =
-               {
-                  state with
-                  context = FunctionContex.addToCurrent state.context name
-               }
-            in
+            let env = Env.addToContext state name in
             env,stmt
          | StmtFun(name,_,_,_,attr) ->
-            let env =
-               {
-                  state with
-                  context = FunctionContex.addToNew state.context name
-               }
-            in
+            let env = Env.makeNewContext state name in
+            env,stmt
+         | StmtMem(lhs,init,rhs,attr) ->
+            let env,_ = Mapper.map_lhs_exp reg_mem_mapper state lhs in
             env,stmt
          | _ -> state,stmt
 
@@ -94,11 +98,27 @@ module CollectContext = struct
 
 end
 
+(** Removes type information until type inference is in place *)
+module Untype = struct
+
+   let lhs_exp : (Env.t,lhs_exp) Mapper.mapper_func =
+      fun state exp ->
+         match exp with
+         | LTyped(e,_,_) -> state,e
+         | _ -> state,exp
+
+   let mapper =
+      { Mapper.default_mapper with Mapper.lhs_exp = lhs_exp }
+
+end
+
 
 (* Basic transformations *)
 let basicPasses (state,stmts) =
    let basic_mapper =
-      Mapper.seq CollectContext.mapper ConstantSimplification.mapper
+      ConstantSimplification.mapper
+      |> Mapper.seq Untype.mapper
+      |> Mapper.seq CollectContext.mapper
    in
    Mapper.map_stmt_list basic_mapper state stmts
 
