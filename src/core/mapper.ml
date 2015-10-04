@@ -289,7 +289,8 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       let state',args' = (mapper_list map_typed_id) mapper state' args in
       let state',ret'  = (mapper_opt map_type_exp) mapper state' ret in
       let state',attr' = map_attr mapper state' attr in
-      let state',stmt' = mapper.stmt state' (StmtFun(name',args',body,ret',attr'))
+      let state',stmt' =
+         mapper.stmt state' (StmtFun(name',args',body,ret',attr'))
          |> map_stmt_subs mapper
       in
       let state'       = Env.exit state' in

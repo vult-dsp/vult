@@ -42,7 +42,7 @@ module FunctionContex = struct
 
    let findContext (context:t) (func:id) : id =
       try IdMap.find func context.forward with
-      | Not_found -> failwith (Printf.sprintf "The function %s is unknown" (PrintTypes.identifierStr func))
+      | Not_found -> failwith (Printf.sprintf "The function '%s' is unknown" (PrintTypes.identifierStr func))
 
    let addTo (context:t) (func:id) : t =
       let current_in_ctx =

@@ -123,7 +123,18 @@ let basicPasses (state,stmts) =
    Mapper.map_stmt_list basic_mapper state stmts
 
 let applyTransformations (results:parser_results) =
-   let initial_state = Env.empty () in
+   let module_name =
+      results.file
+      |> Filename.basename
+      |> Filename.chop_extension
+      |> String.capitalize
+      |> fun a -> [a]
+   in
+   let initial_state =
+      Env.empty ()
+      |> fun s -> Env.makeNewContext s module_name
+      |> fun s -> Env.enter s module_name
+   in
 
    let passes stmts =
       (initial_state,[StmtBlock(None,stmts,makeAttr Loc.default)])
