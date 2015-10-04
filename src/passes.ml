@@ -68,7 +68,7 @@ end
 
 module CollectContext = struct
 
-   let lhs_exp : (Env.t,lhs_exp) Mapper.mapper_func =
+   let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
       fun state exp ->
          match exp with
          | LId(id,_) ->
@@ -79,7 +79,7 @@ module CollectContext = struct
    let reg_mem_mapper =
       { Mapper.default_mapper with Mapper.lhs_exp = lhs_exp }
 
-   let stmt : (Env.t,stmt) Mapper.mapper_func =
+   let stmt : ('a Env.t,stmt) Mapper.mapper_func =
       fun state stmt ->
          match stmt with
          | StmtFun(name,_,_,_,attr) when attr.fun_and ->
@@ -101,7 +101,7 @@ end
 (** Removes type information until type inference is in place *)
 module Untype = struct
 
-   let lhs_exp : (Env.t,lhs_exp) Mapper.mapper_func =
+   let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
       fun state exp ->
          match exp with
          | LTyped(e,_,_) -> state,e
@@ -123,7 +123,7 @@ let basicPasses (state,stmts) =
    Mapper.map_stmt_list basic_mapper state stmts
 
 let applyTransformations (results:parser_results) =
-   let initial_state = Env.empty in
+   let initial_state = Env.empty () in
 
    let passes stmts =
       (initial_state,[StmtBlock(None,stmts,makeAttr Loc.default)])

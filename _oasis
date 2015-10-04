@@ -34,7 +34,8 @@ Library "vult_core"
   Modules:
     Mapper,
     PrintTypes,
-    TypesVult
+    TypesVult,
+    Env
   BuildDepends:
     vult_util,
     ppx_deriving.std
