@@ -113,7 +113,7 @@ module CollectContext = struct
       fun state exp ->
          match exp with
          | PCall(Some(id),name,body,attr) ->
-            let env = Env.addMemToContext state id in
+            let env = Env.addInstanceToContext state id in
             env,exp
          | _ -> state,exp
 

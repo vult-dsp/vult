@@ -27,6 +27,7 @@ module FunctionContex = struct
          forward  : id IdMap.t;
          backward : id list IdMap.t;
          mem      : IdSet.t IdMap.t;
+         instance : IdSet.t IdMap.t;
          count    : int;
          current  : id;
       }
@@ -36,6 +37,7 @@ module FunctionContex = struct
          forward  = IdMap.empty;
          backward = IdMap.empty;
          mem      = IdMap.empty;
+         instance = IdMap.empty;
          count    = 0;
          current  = [];
       }
@@ -80,12 +82,27 @@ module FunctionContex = struct
          | Not_found -> IdSet.empty
       in
       Printf.printf
-         " '%s' added to '%s'\n"
+         " mem '%s' added to '%s'\n"
          (PrintTypes.identifierStr name)
          (PrintTypes.identifierStr func);
       {
          context with
          mem = IdMap.add func (IdSet.add name mem_for_context) context.mem;
+      }
+
+   let addInstance (context:t) (func:id) (name:id) : t =
+      let context_for_func = findContext context func in
+      let instance_for_context  =
+         try IdMap.find context_for_func context.instance with
+         | Not_found -> IdSet.empty
+      in
+      Printf.printf
+         " instance'%s' added to '%s'\n"
+         (PrintTypes.identifierStr name)
+         (PrintTypes.identifierStr func);
+      {
+         context with
+         instance = IdMap.add func (IdSet.add name instance_for_context) context.instance;
       }
 end
 
@@ -126,6 +143,12 @@ module Env = struct
       {
          state with
          context = FunctionContex.addMem state.context (Scope.get state.scope) name
+      }
+
+   let addInstanceToContext (state:'a t) (name:id) : 'a t  =
+      {
+         state with
+         context = FunctionContex.addInstance state.context (Scope.get state.scope) name
       }
 
    let enter (state:'a t) (func:id) : 'a t  =
