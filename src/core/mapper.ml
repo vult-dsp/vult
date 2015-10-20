@@ -66,7 +66,7 @@ let seqMapperFunc default a b =
    else a |-> b
 
 (** Merges two mappers *)
-let seq (a:'a mapper) (b:'a mapper) : 'a mapper =
+let seq (b:'a mapper) (a:'a mapper) : 'a mapper =
    {
       type_exp = seqMapperFunc default_mapper.type_exp   a.type_exp b.type_exp;
       typed_id = seqMapperFunc default_mapper.typed_id   a.typed_id b.typed_id;

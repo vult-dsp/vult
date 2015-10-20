@@ -65,6 +65,22 @@ module ConstantSimplification = struct
       { Mapper.default_mapper with Mapper.exp = exp }
 end
 
+module NameCalls = struct
+
+   let exp : ('a Env.t,exp) Mapper.mapper_func =
+      fun state exp ->
+         match exp with
+         | PCall(None,name,body,attr) ->
+            let tick,state' = Env.tick state in
+            let id = ["_fun_"^(string_of_int tick)] in
+            state',PCall(Some(id),name,body,attr)
+         | _ -> state,exp
+
+   let mapper =
+      { Mapper.default_mapper with Mapper.exp = exp }
+
+end
+
 
 module CollectContext = struct
 
@@ -82,19 +98,27 @@ module CollectContext = struct
    let stmt : ('a Env.t,stmt) Mapper.mapper_func =
       fun state stmt ->
          match stmt with
-         | StmtFun(name,_,_,_,attr) when attr.fun_and ->
-            let env = Env.addToContext state name in
+         | StmtFun(_,_,_,_,attr) when attr.fun_and ->
+            let env = Env.addToContext state in
             env,stmt
-         | StmtFun(name,_,_,_,attr) ->
-            let env = Env.makeNewContext state name in
+         | StmtFun(_,_,_,_,attr) ->
+            let env = Env.makeNewContext state in
             env,stmt
          | StmtMem(lhs,init,rhs,attr) ->
             let env,_ = Mapper.map_lhs_exp reg_mem_mapper state lhs in
             env,stmt
          | _ -> state,stmt
 
+   let exp : ('a Env.t,exp) Mapper.mapper_func =
+      fun state exp ->
+         match exp with
+         | PCall(Some(id),name,body,attr) ->
+            let env = Env.addMemToContext state id in
+            env,exp
+         | _ -> state,exp
+
    let mapper =
-      { Mapper.default_mapper with Mapper.stmt = stmt }
+      { Mapper.default_mapper with Mapper.stmt = stmt; Mapper.exp = exp  }
 
 end
 
@@ -116,7 +140,8 @@ end
 (* Basic transformations *)
 let basicPasses (state,stmts) =
    let basic_mapper =
-      ConstantSimplification.mapper
+      NameCalls.mapper
+      |> Mapper.seq ConstantSimplification.mapper
       |> Mapper.seq Untype.mapper
       |> Mapper.seq CollectContext.mapper
    in
@@ -131,9 +156,8 @@ let applyTransformations (results:parser_results) =
       |> fun a -> [a]
    in
    let initial_state =
-      Env.empty ()
-      |> fun s -> Env.makeNewContext s module_name
-      |> fun s -> Env.enter s module_name
+      Env.empty module_name ()
+      |> Env.makeNewContext
    in
 
    let passes stmts =

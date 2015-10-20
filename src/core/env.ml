@@ -99,39 +99,42 @@ module Env = struct
          tick    : int;
       }
 
-   let empty data =
+   let tick (state:'a t) : int * 'a t =
+      state.tick,{ state with tick = state.tick+1 }
+
+   let empty (init:id) data : 'a t =
       {
          data    = data;
          context = FunctionContex.empty;
          tick    = 0;
-         scope   = Scope.empty;
+         scope   = Scope.enter Scope.empty init;
       }
 
-   let addToContext (state:'a t) (name:id) =
+   let addToContext (state:'a t) : 'a t  =
       {
          state with
-         context = FunctionContex.addTo state.context name
+         context = FunctionContex.addTo state.context (Scope.get state.scope)
       }
 
-   let makeNewContext (state:'a t) (name:id) =
+   let makeNewContext (state:'a t) : 'a t  =
       {
          state with
-         context = FunctionContex.makeNew state.context name
+         context = FunctionContex.makeNew state.context (Scope.get state.scope)
       }
 
-   let addMemToContext (state:'a t) (name:id) =
+   let addMemToContext (state:'a t) (name:id) : 'a t  =
       {
          state with
          context = FunctionContex.addMem state.context (Scope.get state.scope) name
       }
 
-   let enter (state:'a t) (func:id) =
+   let enter (state:'a t) (func:id) : 'a t  =
       {
          state with
          scope = Scope.enter state.scope func;
       }
 
-   let exit (state:'a t) =
+   let exit (state:'a t) : 'a t  =
       {
          state with
          scope = Scope.exit state.scope;
