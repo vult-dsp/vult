@@ -41,7 +41,7 @@ $ ./scripts/build.sh
 ```
 In platforms without bash you can build with the following command:
 ```
-$ ocamlbuild -use-ocamlfind -pkg containers -pkg str -pkg ocamlgraph vultc.native
+$ ocamlbuild -use-ocamlfind -pkg containers -pkg str -pkg ocamlgraph -pkg ppx_deriving vultc.native
 ```
 ### Roadmap
 
