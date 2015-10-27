@@ -45,7 +45,7 @@ $ ocamlbuild -use-ocamlfind -pkg containers -pkg str -pkg ocamlgraph -pkg ppx_de
 ```
 ### Roadmap
 
-#### v0.2
+#### v0.2 (branch exp_stmt)
 - Better syntax checking
 - External functions
 - Constant arrays
