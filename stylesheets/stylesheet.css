@@ -312,6 +312,15 @@ div.menu a {
   text-align: center;
 }
 
+
+div.controlsmenu {
+  background: #272727;
+  width: 642px;
+  height: 75px;
+  border-radius: 10px;
+  padding:4px;
+}
+
 div.minimenu {
   background: #272727;
   width: 650px;
@@ -350,6 +359,14 @@ div.minimenu a {
   vertical-align: middle;
   margin-top: 7px;
   color:#878787;
+}
+
+div.knoblabel {
+  width: 50px;
+  font-family: 'Helvetica Neue', Helvetica, Arial, serif;
+  font-size: 12px;
+  float: left;
+  padding-left: 3px;
 }
 
 ul li {

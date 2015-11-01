@@ -43,21 +43,76 @@
       <div id="editor">
 
       </div>
-      <div class="minimenu" align="left" style="border-bottom-right-radius: 10px;border-bottom-left-radius: 10px;">
-         <ul style="float:left;width:200px">
-            <li><a onclick="setAudioOn()" onmouseover="">Update</a></li>
-            <li><a onclick="setAudioOff()" onmouseover="">Stop</a></li>
-         </ul>
-         <div class="status">
-            <div id="audio_status" style="float:left;width:100px">Audio: Off</div>
-            <div id="midi_status"  style="float:left;width:160px">MIDI: Off</div>
-            <div id="code_status">Code: -</div>
+      <div>
+         <div class="minimenu" align="left" style="border-bottom-right-radius: 10px;border-bottom-left-radius: 10px;">
+            <ul style="float:left;width:200px">
+               <li><a onclick="setAudioOn()" onmouseover="">Update</a></li>
+               <li><a onclick="setAudioOff()" onmouseover="">Stop</a></li>
+            </ul>
+            <div class="status">
+               <div id="audio_status" style="float:left;width:100px">Audio: Off</div>
+               <div id="midi_status"  style="float:left;width:160px">MIDI: Off</div>
+               <div id="code_status">Code: -</div>
+            </div>
+         </div>
+         <div class="controlsmenu">
+            <div class="knoblabel" >
+               <canvas nx="dial" id="CC30" height="50" width="50"></canvas>
+               <div style="padding:5px">CC 30</div>
+            </div>
+            <div class="knoblabel">
+               <canvas nx="dial" id="CC31" height="50" width="50"></canvas>
+               <div style="padding:5px">CC 31</div>
+            </div>
+            <div class="knoblabel">
+               <canvas nx="dial" id="CC32" height="50" width="50"></canvas>
+               <div style="padding:5px">CC 32</div>
+            </div>
+            <div class="knoblabel">
+               <canvas nx="dial" id="CC33" height="50" width="50"></canvas>
+               <div style="padding:5px">CC 33</div>
+            </div>
+            <div class="knoblabel">
+               <canvas nx="dial" id="CC34" height="50" width="50"></canvas>
+               <div style="padding:5px">CC 34</div>
+            </div>
+            <div class="knoblabel">
+               <canvas nx="dial" id="CC35" height="50" width="50"></canvas>
+               <div style="padding:5px">CC 35</div>
+            </div>
+            <div class="knoblabel">
+               <canvas nx="dial" id="CC36" height="50" width="50"></canvas>
+               <div style="padding:5px">CC 36</div>
+            </div>
+            <div class="knoblabel">
+               <canvas nx="dial" id="CC37" height="50" width="50"></canvas>
+               <div style="padding:5px">CC 37</div>
+            </div>
+            <div class="knoblabel">
+               <canvas nx="dial" id="CC38" height="50" width="50"></canvas>
+               <div style="padding:5px">CC 38</div>
+            </div>
+            <div class="knoblabel">
+               <canvas nx="dial" id="CC39" height="50" width="50"></canvas>
+               <div style="padding:5px">CC 39</div>
+            </div>
+            <div class="knoblabel">
+               <canvas nx="dial" id="CC40" height="50" width="50"></canvas>
+               <div style="padding:5px">CC 40</div>
+            </div>
+            <div class="knoblabel">
+               <canvas nx="dial" id="CC41" height="50" width="50"></canvas>
+               <div style="padding:5px">CC 41</div>
+            </div>
+         </div>
+         <div class="controlsmenu">
+            <canvas nx="keyboard" id="keyboard_input" width="620px" height="70px" style="padding-left:8px"></canvas>
          </div>
       </div>
 
       <h2>Instructions</h2>
 
-      <p> These demos use the Web Audio and MIDI API which seems to be available only in Chrome. In order to use the MIDI you need to enable it in Chrome by typing the following address <a href="chrome://flags/#enable-web-midi">chrome://flags/#enable-web-midi</a>.
+      <p> These demos use the Web Audio and MIDI API which is available in Chrome.
          You can learm more about the Web Audio and MIDI API <a href="http://webaudiodemos.appspot.com/slides/index.html">Here</a>.
       </p>
 
@@ -75,14 +130,15 @@
 </body>
 
 <script type="text/javascript" src="javascripts/external/ace/ace.js"></script>
+<script type="text/javascript" src="javascripts/nexusUI.js"></script>
 <script type="text/javascript" src="javascripts/main.js"></script>
 <script type="text/javascript" src="javascripts/audio.js"></script>
 <script type="text/javascript" src="javascripts/midi.js"></script>
 <script type="text/javascript" src="javascripts/vult.js"></script>
 <script type="text/javascript">
-  makeEditorBox("editor","650px","450px");
-  loadPreset(0);
-  window.onbeforeunload = function() {
+   makeEditorBox("editor","650px","450px");
+   loadPreset(0);
+   window.onbeforeunload = function() {
       return "Are you sure you want to navigate away? Any changes to the code will be lost.";
    }
 </script>

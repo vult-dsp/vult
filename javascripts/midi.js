@@ -6,6 +6,7 @@ function setMidiStatus(msg){
 }
 
 var midiCount = 0;
+var updateCC = null;
 
 function midiMessageReceived( ev ) {
   var cmd = ev.data[0] >> 4;
@@ -21,6 +22,9 @@ function midiMessageReceived( ev ) {
     sendNoteOn(noteNumber,velocity);
   } else if (cmd == 11) {
     sendControlChange(noteNumber,velocity);
+    if(updateCC!=null){
+      updateCC(noteNumber,velocity);
+    }
   } else if (cmd == 14) {
     // Pitch weel
   } else if ( cmd == 10 ) {
@@ -53,3 +57,58 @@ window.addEventListener('load', function() {
     navigator.requestMIDIAccess().then( onMIDIInit, onMIDISystemError );
 
 });
+
+
+// UI elements
+nx.onload = function() {
+  nx.colorize("#FF3C3C"); // sets accent (default)
+  nx.colorize("border", "#222222");
+  nx.colorize("fill", "#474747");
+  keyboard_input.octaves = 5;
+  keyboard_input.init();
+
+  CC30.on('*',function(data){ sendControlChange(30,Math.floor(127*data.value))});
+  CC31.on('*',function(data){ sendControlChange(31,Math.floor(127*data.value))});
+  CC32.on('*',function(data){ sendControlChange(32,Math.floor(127*data.value))});
+  CC33.on('*',function(data){ sendControlChange(33,Math.floor(127*data.value))});
+  CC34.on('*',function(data){ sendControlChange(34,Math.floor(127*data.value))});
+  CC35.on('*',function(data){ sendControlChange(35,Math.floor(127*data.value))});
+  CC36.on('*',function(data){ sendControlChange(36,Math.floor(127*data.value))});
+  CC37.on('*',function(data){ sendControlChange(37,Math.floor(127*data.value))});
+  CC38.on('*',function(data){ sendControlChange(38,Math.floor(127*data.value))});
+  CC39.on('*',function(data){ sendControlChange(39,Math.floor(127*data.value))});
+  CC40.on('*',function(data){ sendControlChange(40,Math.floor(127*data.value))});
+  CC41.on('*',function(data){ sendControlChange(41,Math.floor(127*data.value))});
+
+  keyboard_input.on('*',function(data){
+    if(data.on != 0){
+      sendNoteOn(data.note-24,100);
+    }
+    else
+    {
+      sendNoteOff(data.note-24);
+    }
+  });
+
+  updateCC = function(ctrl,value){
+    var fixed = value /127;
+    switch(ctrl){
+      case 30: CC30.set({ value:fixed }); break;
+      case 31: CC31.set({ value:fixed }); break;
+      case 32: CC32.set({ value:fixed }); break;
+      case 33: CC33.set({ value:fixed }); break;
+      case 34: CC34.set({ value:fixed }); break;
+      case 35: CC35.set({ value:fixed }); break;
+      case 36: CC36.set({ value:fixed }); break;
+      case 37: CC37.set({ value:fixed }); break;
+      case 38: CC38.set({ value:fixed }); break;
+      case 39: CC39.set({ value:fixed }); break;
+      case 40: CC40.set({ value:fixed }); break;
+      case 41: CC41.set({ value:fixed }); break;
+      default: break;
+    }
+  }
+
+}
+
+
