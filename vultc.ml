@@ -21,10 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
-open LexerVult
 open ParserVult
 open TypesVult
-open Driver
 open Passes
 
 (** Returns a 'arguments' type containing the options passed in the command line *)

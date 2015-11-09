@@ -101,10 +101,10 @@ module CollectContext = struct
          | StmtFun(_,_,_,_,attr) when attr.fun_and ->
             let env = Env.addToContext state in
             env,stmt
-         | StmtFun(_,_,_,_,attr) ->
+         | StmtFun(_,_,_,_,_) ->
             let env = Env.makeNewContext state in
             env,stmt
-         | StmtMem(lhs,init,rhs,attr) ->
+         | StmtMem(lhs,_,_,_) ->
             let env,_ = Mapper.map_lhs_exp reg_mem_mapper state lhs in
             env,stmt
          | _ -> state,stmt
@@ -112,7 +112,7 @@ module CollectContext = struct
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       fun state exp ->
          match exp with
-         | PCall(Some(id),name,body,attr) ->
+         | PCall(Some(id),_,_,_) ->
             let env = Env.addInstanceToContext state id in
             env,exp
          | _ -> state,exp

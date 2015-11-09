@@ -26,7 +26,6 @@ THE SOFTWARE.
 
 open LexerVult
 open TypesVult
-open Lexing
 open ParserTypes
 open TokenStream
 
@@ -135,7 +134,7 @@ let prattParser (rbp:int) (buffer:Stream.stream)
          left
    in loop next_token left (rbp < (lbp next_token))
 
-let identifierToken (buffer:Stream.stream) (token:'kind token) : id =
+let identifierToken (token:'kind token) : id =
    splitOnDot token.value
 
 (** Parses a type expression using a Pratt parser *)
@@ -145,7 +144,7 @@ let rec typeExpression (rbp:int) (buffer:Stream.stream) : type_exp =
 and type_nud (buffer:Stream.stream) (token:'kind token) : type_exp =
    match token.kind with
    | ID ->
-      let id = identifierToken buffer token in
+      let id = identifierToken token in
       begin
          match Stream.peek buffer with
          | LPAREN ->
@@ -174,7 +173,7 @@ and type_nud (buffer:Stream.stream) (token:'kind token) : type_exp =
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
 
-and type_led (buffer:Stream.stream) (token:'kind token) (left:type_exp) : type_exp =
+and type_led (_:Stream.stream) (token:'kind token) (_:type_exp) : type_exp =
    let message = Stream.notExpectedError token in
    raise (ParserError(message))
 
@@ -208,7 +207,7 @@ and lhs_nud (buffer:Stream.stream) (token:'kind token) : lhs_exp =
    match token.kind with
    | WILD -> LWild(makeAttr token.loc)
    | ID   ->
-      let id = identifierToken buffer token in
+      let id = identifierToken token in
       LId(id,makeAttr token.loc)
    | LPAREN ->
       begin
@@ -257,7 +256,7 @@ and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
    | OP,"-" -> (* Unary minus *)
       unaryOp buffer token
    | ID,_   -> (* Id or function call *)
-      let id = identifierToken buffer token in
+      let id = identifierToken token in
       begin
          match Stream.peek buffer with
          | LPAREN ->
@@ -395,7 +394,7 @@ and id (buffer:Stream.stream) : id =
    let _     = Stream.expect buffer ID in
    let token = Stream.current buffer in
    let _     = Stream.skip buffer in
-   identifierToken buffer token
+   identifierToken token
 
 (** typedArgList := typedArg [',' typedArg ] *)
 and typedArgList (buffer:Stream.stream) : typed_id list =

@@ -48,7 +48,8 @@ Library "vult_parser"
     ParserVult,
     TokenStream
   BuildDepends:
-    vult_core
+    vult_core,
+    vult_util
 
 Library "vult"
   Path: src
@@ -56,14 +57,18 @@ Library "vult"
     Driver
   BuildDepends:
     vult_core,
-    vult_parser
+    vult_parser,
+    vult_util
 
 Executable "vultc"
   Path: .
   MainIs: vultc.ml
   CompiledObject: best
   BuildDepends:
-    vult
+    vult,
+    vult_parser,
+    vult_util,
+    vult_core
 
 Executable "vult_node"
   Path: .

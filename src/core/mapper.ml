@@ -116,7 +116,7 @@ let rec map_type_exp (mapper:'a mapper) (state:'a) (te:type_exp) : 'a * type_exp
    | TId(id,attr) ->
       let state',id'   = map_id mapper state id in
       let state',attr' = map_attr mapper state' attr in
-      mapper.type_exp state (TId(id',attr'))
+      mapper.type_exp state' (TId(id',attr'))
    | TTuple(el,attr) ->
       let state',el'   = map_type_exp_list mapper state el in
       let state',attr' = map_attr mapper state' attr in
@@ -136,7 +136,7 @@ let rec map_typed_id (mapper:'a mapper) (state:'a) (t:typed_id) : 'a * typed_id 
    | SimpleId(id,attr) ->
       let state',id'   = map_id mapper state id in
       let state',attr' = map_attr mapper state' attr in
-      mapper.typed_id state (SimpleId(id',attr'))
+      mapper.typed_id state' (SimpleId(id',attr'))
    | TypedId(id,tp,attr) ->
       let state',id'   = map_id mapper state id in
       let state',tp'   = map_type_exp mapper state' tp in
@@ -262,7 +262,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       mapper.stmt state' (StmtType(name',args',members',attr'))
    | StmtAliasType(name,args,tp,attr) ->
       let state',name' = map_id mapper state name in
-      let state',args' = (mapper_list map_typed_id) mapper state args in
+      let state',args' = (mapper_list map_typed_id) mapper state' args in
       let state',tp'   = map_type_exp mapper state' tp in
       let state',attr' = map_attr mapper state' attr in
       mapper.stmt state' (StmtAliasType(name',args',tp',attr'))

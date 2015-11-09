@@ -23,7 +23,6 @@ THE SOFTWARE.
 *)
 
 (** Implementation of Either *)
-open List
 
 
 (** Type *)

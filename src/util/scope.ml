@@ -72,7 +72,7 @@ module Scope (KeyType:ScopeSig) = struct
       | Some(parent),Some(name) ->
          { parent with
            subscopes = TypeMap.add name scope parent.subscopes }
-      | Some(parent),None -> failwith "Scope.exit: All scopes should have name"
+      | Some(_),None -> failwith "Scope.exit: All scopes should have name"
 
    let lookup (scope:t) (name:TypeMap.key) : 'a option =
       let rec lookup_loop = function
@@ -90,7 +90,7 @@ module Scope (KeyType:ScopeSig) = struct
    let rec enterPath (scope:t) (path:TypeMap.key list) : t =
       match path with
       | []   -> scope
-      | h::t -> enter scope h None
+      | h::_ -> enter scope h None
 
    let getCurrentPath (scope:t) : KeyType.t list =
       let rec getCurrentPath_loop s =
@@ -137,7 +137,7 @@ module Scope (KeyType:ScopeSig) = struct
       let name   = nameStr scope.current_name in
       let values = valuesStr scope in
       let subs   =
-         TypeMap.fold (fun key value acc ->
+         TypeMap.fold (fun _ value acc ->
                (scopeStr value)^acc
             ) scope.subscopes ""
          |> Str.global_replace (Str.regexp_string "\n") "\n\t"

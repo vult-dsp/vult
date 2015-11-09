@@ -147,7 +147,7 @@ let parsePrintCode s =
    match result.presult with
    | `Ok(b) ->
       PrintTypes.stmtListStr b
-   | `Error(msg) ->
+   | `Error(_) ->
       let error_strings:string list = Error.reportErrors result.presult result.lines in
       let result =List.fold_left (fun s a -> s^"\n"^a) "" error_strings in
       "Errors in the program:\n"^result

@@ -73,7 +73,7 @@ module TokenStream(S:TokenKindSig) = struct
       Error.PointedError(Loc.getNext buffer.prev.loc,message)
 
    let setErrors (buffer:stream) (value:bool) : unit =
-      buffer.has_errors<-true
+      buffer.has_errors<-value
 
    let hasErrors (buffer:stream) : bool =
       buffer.has_errors

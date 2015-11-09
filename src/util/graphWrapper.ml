@@ -31,7 +31,6 @@ end
 module GraphWrapper (T:GraphType) = struct
 
    open Graph
-   open CCHashtbl
 
    module G = Imperative.Digraph.Abstract(T)
    open G

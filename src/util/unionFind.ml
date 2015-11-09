@@ -23,8 +23,6 @@ THE SOFTWARE.
 *)
 
 open Either
-open CCMap
-open Set
 
 module type S = sig
    type t
