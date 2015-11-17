@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-(** Functions to create graphs and analye them *)
+(** Functions to create graphs and analyze them *)
 
 module type GraphType = sig
    type t

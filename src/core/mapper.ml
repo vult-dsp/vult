@@ -284,7 +284,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       mapper.stmt state' (StmtIf(cond',then_,None,attr'))
       |> map_stmt_subs mapper
    | StmtFun(name,args,body,ret,attr) ->
-      let state'       = Env.enter state name in
+      let state'       = Env.enterFunction state name in
       let state',name' = map_id mapper state' name in
       let state',args' = (mapper_list map_typed_id) mapper state' args in
       let state',ret'  = (mapper_opt map_type_exp) mapper state' ret in

@@ -74,36 +74,36 @@ module Make (O : Map.OrderedType)(D : Set.OrderedType) = struct
          in
          let update_all : key list -> key -> t =
             fun children parent ->
-               List.fold_left 
+               List.fold_left
                   (fun m c -> MapS.update c (updater parent) m)
                   map children
          in
          let rec go : key -> key list -> key option * t =
             fun key children -> match MapS.get key map with
                | Some (Left n) ->
-                  if key == n 
-                  then (Some n, update_all children n) 
+                  if key == n
+                  then (Some n, update_all children n)
                   else go n (key::children)
                | Some (Right _) -> (Some key, update_all children key)
                | None -> (None,map)
          in go key []
 
-   let findBindings : key -> t -> key option * bindings option * t = 
+   let findBindings : key -> t -> key option * bindings option * t =
       fun key map ->
          let updater : key -> info option -> info option =
             fun parent _ -> Some (Left parent)
          in
          let update_all : key list -> key -> t =
             fun children parent ->
-               List.fold_left 
+               List.fold_left
                   (fun m c -> MapS.update c (updater parent) m)
                   map children
          in
          let rec go : key -> key list -> key option * bindings option * t =
             fun key children -> match MapS.get key map with
                | Some (Left n) ->
-                  if key == n 
-                  then (Some n, None, update_all children n) 
+                  if key == n
+                  then (Some n, None, update_all children n)
                   else go n (key::children)
                | Some (Right b) -> (Some key, Some b, update_all children key)
                | None -> (Some key, None, map)
@@ -135,7 +135,7 @@ module Make (O : Map.OrderedType)(D : Set.OrderedType) = struct
          | (None, _, m) -> m
          | (Some k1head, mb1, map2) -> begin match findBindings k2 map2 with
                | (None, _, m2) -> m2
-               | (Some k2head, mb2, map3) -> 
+               | (Some k2head, mb2, map3) ->
                   if k1head != k2head
                   then let map4 = MapS.update k1head (fun _ -> Some (Left k2head)) map3
                      in MapS.update k2head (fun _ -> Some (maybeUnion k2head mb1 mb2)) map4

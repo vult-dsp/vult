@@ -1,4 +1,4 @@
-(** Type used to hold a print buffer *)
+(** String buffer with a few useful functions *)
 type print_buffer =
    {
       buffer : Buffer.t;

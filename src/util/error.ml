@@ -22,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
+(** Represents the different types of errors *)
+
 type t =
    | PointedError of Loc.t * string
    | SimpleError  of string
