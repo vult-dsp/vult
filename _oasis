@@ -89,3 +89,20 @@ Executable "test_vult"
     vult_core,
     vult_parser,
     oUnit
+
+AlphaFeatures: ocamlbuild_more_args
+Document "foobar_api"
+  Type: ocamlbuild (0.4)
+  BuildTools: ocamldoc
+
+  Title: API reference for FooBar
+  XOCamlbuildPath: .
+  XOCamlbuildExtraArgs:
+    "-docflags '-colorize-code -short-functors -charset utf-8'"
+  XOCamlbuildLibraries: vult_util, vult_core, vult_parser, vult
+
+SourceRepository master
+  Type: git
+  Location: https://github.com/modlfo/vult.git
+  Branch: master
+  Browser: https://github.com/modlfo/vult
