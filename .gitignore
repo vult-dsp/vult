@@ -14,3 +14,6 @@ vult_node.js
 /oqamldebug
 /npm-debug.log
 /debugscript
+.gitignore
+setup.data
+setup.log
