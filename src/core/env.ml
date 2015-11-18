@@ -15,10 +15,15 @@ let builtin_functions =
       ["tanh"];
    ] |> IdSet.of_list
 
-type bind_type =
-   | MemBind
-   | ModuleBind
-   | FunctionBind
+type symbol_type =
+   | LocalSymbol
+   | FunctionSymbol
+   | ModuleSymbol
+
+let kindStr = function
+   | LocalSymbol -> "local"
+   | FunctionSymbol -> "function"
+   | ModuleSymbol -> "module"
 
 (** Used to track the location while traversing and also to lookup function, mem, and module *)
 module Scope = struct
@@ -28,7 +33,7 @@ module Scope = struct
          name   : id;
          parent : t option;
          sub    : t IdMap.t;
-         kind   : bind_type;
+         kind   : symbol_type;
       }
 
    let empty : t =
@@ -36,10 +41,18 @@ module Scope = struct
          name    = [];
          parent  = None;
          sub     = IdMap.empty;
-         kind    = ModuleBind;
+         kind    = ModuleSymbol;
       }
 
-   let enter (t:t) (name:id) (kind:bind_type) : t =
+   let rec dump (t:t) (level:int) : unit =
+      Printf.printf "%s'%s' = %s\n" (String.make level ' ') (idStr t.name) (kindStr t.kind);
+      IdMap.iter (fun _ sub -> dump sub (level+3)) t.sub
+
+   let addLocal (t:t) (name:id) : t =
+      let local_symbol = { empty with name = name; kind = LocalSymbol } in
+      { t with sub = IdMap.add name local_symbol t.sub }
+
+   let enter (t:t) (name:id) (kind:symbol_type) : t =
       match IdMap.find name t.sub with
       | sub ->
          { sub with parent = Some(t) }
@@ -47,7 +60,7 @@ module Scope = struct
          { empty with parent = Some(t); name = name; kind = kind }
 
    let enterFunction (t:t) (name:id) : t =
-      enter t name FunctionBind
+      enter t name FunctionSymbol
 
    let exit (t:t) : t =
       match t.parent with
@@ -104,6 +117,10 @@ module Scope = struct
       | Some(t) -> Some(Path(getPath t))
       | _ -> None
 
+   let isLocal (t:t) (name:id) : bool =
+      match find t name with
+      | Some({ kind = LocalSymbol }) -> true
+      | _  -> false
 
 end
 
@@ -231,7 +248,9 @@ module Env = struct
 
    (** Prints all the information of the current environment *)
    let dump (state:'a t) =
-      FunctionContex.dump state.context
+      FunctionContex.dump state.context;
+      print_endline "Scope";
+      Scope.dump state.scope 3
 
    (** Gets a new tick (integer value) and updates the state *)
    let tick (state:'a t) : int * 'a t =
@@ -255,7 +274,8 @@ module Env = struct
    let addMemToContext (state:'a t) (name:id) : 'a t  =
       {
          state with
-         context = FunctionContex.addMem state.context (Scope.current state.scope) name
+         context = FunctionContex.addMem state.context (Scope.current state.scope) name;
+         scope = Scope.addLocal state.scope name;
       }
 
    (** Returns the full path of a function. Raises an error if it cannot be found *)
@@ -274,6 +294,10 @@ module Env = struct
       let path = lookup state name in
       FunctionContex.isActive state.context path
 
+   (** Returns true if the id is a mem or an instance *)
+   let isLocalInstanceOrMem (state:'a t) (name:id) : bool =
+      Scope.isLocal state.scope name
+
    (** Generates a new name for an instance based on the tick *)
    let generateInstanceName (state:'a t) (name_opt:id option) : 'a t * id =
       match name_opt with
@@ -289,7 +313,8 @@ module Env = struct
          let state', name' = generateInstanceName state name_opt in
          {
             state' with
-            context = FunctionContex.addInstance state'.context (Scope.current state.scope) name'
+            context = FunctionContex.addInstance state'.context (Scope.current state.scope) name';
+            scope = Scope.addLocal state.scope name';
          }, Some(name')
       else
          state, None
@@ -319,7 +344,7 @@ module Env = struct
          data    = data;
          context = FunctionContex.empty;
          tick    = 0;
-         scope   = Scope.enter (Scope.empty |> addBuiltin) init ModuleBind;
+         scope   = Scope.enter (Scope.empty |> addBuiltin) init ModuleSymbol;
       }
 
 end

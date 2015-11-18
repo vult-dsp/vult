@@ -119,8 +119,24 @@ module InsertContext = struct
                state, stmt
          | _ -> state, stmt
 
+   let exp : ('a Env.t,exp) Mapper.mapper_func =
+      fun state exp ->
+         match exp with
+         | PCall(Some(id),kind,args,attr) ->
+            state,PCall(None,kind,PId(id,attr)::args,attr)
+         | PId(id,attr) when Env.isLocalInstanceOrMem state id ->
+            state, PId("$ctx"::id,attr)
+         | _ -> state,exp
+
+   let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
+      fun state exp ->
+         match exp with
+         | LId(id,attr) when Env.isLocalInstanceOrMem state id ->
+            state, LId("$ctx"::id,attr)
+         | _ -> state,exp
+
    let mapper =
-      { Mapper.default_mapper with Mapper.stmt = stmt }
+      { Mapper.default_mapper with Mapper.stmt = stmt; Mapper.exp = exp; Mapper.lhs_exp = lhs_exp }
 end
 
 (** Removes type information until type inference is in place *)
