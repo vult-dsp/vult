@@ -25,6 +25,10 @@ THE SOFTWARE.
 type id = string list
    [@@deriving show,eq,ord]
 
+(** This path is used to differentiate simple identifiers from full paths *)
+type path =
+   | Path of id
+
 type attr =
    {
       loc     : Loc.t;
@@ -214,4 +218,10 @@ let makeAttr (loc:Loc.t) : attr =
 
 module IdMap = Map.Make(struct type t = id let compare = compare end)
 
+module PathMap = Map.Make(struct type t = path let compare = compare end)
+
 module IdSet = Set.Make(struct type t = id let compare = compare end)
+
+let pathId (path:path) : id =
+   match path with
+   | Path(id) -> id

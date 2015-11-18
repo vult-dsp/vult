@@ -105,6 +105,24 @@ module CollectContext = struct
 
 end
 
+module InsertContext = struct
+
+   let stmt : ('a Env.t,stmt) Mapper.mapper_func =
+      fun state stmt ->
+         match stmt with
+         | StmtFun(name,args,body,rettype,attr) ->
+            if Env.isActive state name then
+               let context = Env.getContext state name in
+               let arg0 = TypedId(["$ctx"],TId(context,attr),attr) in
+               state,StmtFun(name,arg0::args,body,rettype,attr)
+            else
+               state, stmt
+         | _ -> state, stmt
+
+   let mapper =
+      { Mapper.default_mapper with Mapper.stmt = stmt }
+end
+
 (** Removes type information until type inference is in place *)
 module Untype = struct
 
@@ -121,13 +139,24 @@ end
 
 
 (* Basic transformations *)
-let basicPasses (state,stmts) =
-   let basic_mapper =
+let pass1 (state,stmts) =
+   let mapper =
       ConstantSimplification.mapper
       |> Mapper.seq Untype.mapper
       |> Mapper.seq CollectContext.mapper
+      |> Mapper.seq InsertContext.mapper
    in
-   Mapper.map_stmt_list basic_mapper state stmts
+   Mapper.map_stmt_list mapper state stmts
+
+let pass2 (state,stmts) =
+   let mapper =
+      InsertContext.mapper
+   in
+   Mapper.map_stmt_list mapper state stmts
+
+let dump (state,stmts) =
+   Env.dump state;
+   state,stmts
 
 let applyTransformations (results:parser_results) =
    let module_name =
@@ -144,8 +173,11 @@ let applyTransformations (results:parser_results) =
 
    let passes stmts =
       (initial_state,[StmtBlock(None,stmts,makeAttr Loc.default)])
-      |> basicPasses
-      |> (fun (state,results) -> Env.dump state; results)
+      |> pass1
+      |> dump
+      |> pass2
+      |> dump
+      |> snd
    in
 
    let new_stmts = CCError.map passes results.presult in

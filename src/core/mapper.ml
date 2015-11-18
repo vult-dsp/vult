@@ -81,13 +81,13 @@ let seq (b:'a mapper) (a:'a mapper) : 'a mapper =
 (** Applies any mapper to a list *)
 let mapper_list mapper_app =
    fun mapper state el ->
-      let state,rev_el =
+      let state',rev_el =
          List.fold_left
             (fun (s,acc) e ->
                 let s',e' = mapper_app mapper s e in
                 s',e'::acc)
             (state,[]) el
-      in state, (List.rev rev_el)
+      in state', (List.rev rev_el)
 
 (** Applies any mapper to an option value *)
 let mapper_opt mapper_app =
@@ -315,20 +315,20 @@ and map_stmt_subs (mapper:'state mapper) (state,stmt:('state * stmt)) : 'state *
    | StmtEmpty -> state, stmt
    | StmtWhile(cond,stmts,attr) ->
       let state',stmts' = map_stmt mapper state stmts in
-      (state',(StmtWhile(cond,stmts',attr)))
+      state',(StmtWhile(cond,stmts',attr))
    | StmtIf(cond,then_,Some(else_),attr) ->
       let state',then_' = map_stmt mapper state then_ in
       let state',else_' = map_stmt mapper state' else_ in
-      (state',(StmtIf(cond,then_',Some(else_'),attr)))
+      state',(StmtIf(cond,then_',Some(else_'),attr))
    | StmtIf(cond,then_,None,attr) ->
       let state',then_' = map_stmt mapper state then_ in
-      (state',(StmtIf(cond,then_',None,attr)))
+      state',(StmtIf(cond,then_',None,attr))
    | StmtFun(name,args,body,ret,attr) ->
       let state',body' = map_stmt mapper state body in
-      (state',(StmtFun(name,args,body',ret,attr)))
+      state',(StmtFun(name,args,body',ret,attr))
    | StmtBlock(name,stmts,attr) ->
       let state',stmts' = map_stmt_list mapper state stmts in
-      (state',(StmtBlock(name,stmts',attr)))
+      state',(StmtBlock(name,stmts',attr))
 
 
 

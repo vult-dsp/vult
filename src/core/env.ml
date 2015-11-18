@@ -2,6 +2,8 @@ open TypesVult
 
 let idStr = PrintTypes.identifierStr
 
+let pathStr path = path |> pathId |> PrintTypes.identifierStr
+
 let builtin_functions =
    [
       ["abs"];
@@ -59,7 +61,7 @@ module Scope = struct
       | Some(parent) ->
          Some({ parent with sub = IdMap.add t.name t parent.sub })
 
-   let current (t:t) : id =
+   let current (t:t) : path =
       let rec parentName parent =
          match parent with
          | None -> []
@@ -67,7 +69,7 @@ module Scope = struct
             parent_t.name :: parentName parent_t.parent
       in
       t.name :: parentName t.parent
-      |> List.rev |> List.flatten
+      |> List.rev |> List.flatten |> fun a -> Path(a)
 
    let rec find (t:t) (name:id) : t option =
       match name with
@@ -97,9 +99,9 @@ module Scope = struct
       t.name @ (parentPath t.parent)
       |> List.rev
 
-   let lookupFunction (t:t) (name:id) =
+   let lookupFunction (t:t) (name:id) : path option =
       match lookupAny t name with
-      | Some(t) -> Some(getPath t)
+      | Some(t) -> Some(Path(getPath t))
       | _ -> None
 
 
@@ -110,44 +112,28 @@ module FunctionContex = struct
 
    type t =
       {
-         forward   : id IdMap.t;
-         backward  : id list IdMap.t;
+         forward   : id PathMap.t;
+         backward  : path list IdMap.t;
          mem       : IdSet.t IdMap.t;
          instance  : IdSet.t IdMap.t;
          count     : int;
          current   : id;
-         activefun : bool IdMap.t;
       }
 
    let empty =
       {
-         forward   = IdMap.empty;
+         forward   = PathMap.empty;
          backward  = IdMap.empty;
          mem       = IdMap.empty;
          instance  = IdMap.empty;
          count     = 0;
          current   = [];
-         activefun = IdMap.empty;
       }
 
-   let dump (context:t) : unit =
-      Printf.printf "Current = '%s'\n" (idStr context.current);
-      print_endline "Forward";
-      IdMap.iter (fun key value -> Printf.printf "   '%s' -> '%s'\n" (idStr key) (idStr value)) context.forward;
-      print_endline "Backward";
-      IdMap.iter (fun key value -> Printf.printf "   '%s' <- " (idStr key); List.iter (fun v -> Printf.printf "'%s' " (idStr v)) value; print_newline ()) context.backward;
-      print_endline "Mem";
-      IdMap.iter (fun key value -> Printf.printf "   '%s' = " (idStr key); IdSet.iter (fun v -> Printf.printf "'%s' " (idStr v)) value; print_newline ()) context.mem;
-      print_endline "Instance";
-      IdMap.iter (fun key value -> Printf.printf "   '%s' = " (idStr key); IdSet.iter (fun v -> Printf.printf "'%s' " (idStr v)) value; print_newline ()) context.instance;
-      print_endline "Active";
-      IdMap.iter (fun key value -> Printf.printf "   '%s' active = %s\n" (idStr key) (if value then "true" else "false") ) context.activefun
-
-
    (** Returns the context type of a given function *)
-   let findContext (context:t) (func:id) : id =
-      try IdMap.find func context.forward with
-      | Not_found -> failwith (Printf.sprintf "Cannot find context for function '%s'" (idStr func))
+   let findContext (context:t) (func:path) : id =
+      try PathMap.find func context.forward with
+      | Not_found -> failwith (Printf.sprintf "Cannot find context for function '%s'" (pathStr func))
 
    (** Returns the instances for the given context *)
    let getInstancesForContext (context:t) (name:id) : IdSet.t =
@@ -160,28 +146,28 @@ module FunctionContex = struct
       | Not_found ->
          IdSet.empty
 
-   let addTo (context:t) (func:id) : t =
+   let addTo (context:t) (func:path) : t =
       let current_in_ctx =
          try IdMap.find context.current context.backward with
          | Not_found -> []
       in
       {
          context with
-         forward  = IdMap.add func context.current context.forward;
+         forward  = PathMap.add func context.current context.forward;
          backward = IdMap.add context.current (func::current_in_ctx) context.backward;
       }
 
-   let makeNew (context:t) (func:id) : t =
+   let makeNew (context:t) (func:path) : t =
       let context_name = ["ctx_"^(string_of_int context.count)] in
       {
          context with
          count    = context.count+1;
          current  = context_name;
-         forward  = IdMap.add func context_name context.forward;
+         forward  = PathMap.add func context_name context.forward;
          backward = IdMap.add context_name [func] context.backward;
       }
 
-   let addMem (context:t) (func:id) (name:id) : t =
+   let addMem (context:t) (func:path) (name:id) : t =
       let context_for_func = findContext context func in
       let mem_for_context  =
          try IdMap.find context_for_func context.mem with
@@ -192,7 +178,7 @@ module FunctionContex = struct
          mem = IdMap.add context_for_func (IdSet.add name mem_for_context) context.mem;
       }
 
-   let addInstance (context:t) (func:id) (name:id) : t =
+   let addInstance (context:t) (func:path) (name:id) : t =
       let context_for_func = findContext context func in
       let instance_for_context  =
          try IdMap.find context_for_func context.instance with
@@ -203,18 +189,32 @@ module FunctionContex = struct
          instance = IdMap.add context_for_func (IdSet.add name instance_for_context) context.instance;
       }
 
-   let isActive (context:t) (name:id) : t * bool =
-      try context,IdMap.find name context.activefun with
-      | Not_found ->
-         if IdSet.mem name builtin_functions then
-            context, false
-         else
-            let fun_context = findContext context name in
-            let is_active   = not (
-               IdSet.is_empty (getInstancesForContext context fun_context) &&
-                  IdSet.is_empty (getMemForContext context fun_context))
-            in
-            { context with activefun = IdMap.add name is_active context.activefun }, is_active
+   let isBuiltinPath (name:path) : bool =
+      IdSet.mem (pathId name) builtin_functions
+
+   let isActive (context:t) (name:path) : bool =
+      if isBuiltinPath name then
+         false
+      else
+         let fun_context = findContext context name in
+         let is_active   = not (
+            IdSet.is_empty (getInstancesForContext context fun_context) &&
+               IdSet.is_empty (getMemForContext context fun_context))
+         in
+         is_active
+
+   let dump (context:t) : unit =
+      Printf.printf "Current = '%s'\n" (idStr context.current);
+      print_endline "Forward";
+      PathMap.iter (fun key value -> Printf.printf "   '%s' -> '%s'\n" (pathStr key) (idStr value)) context.forward;
+      print_endline "Backward";
+      IdMap.iter (fun key value -> Printf.printf "   '%s' <- " (idStr key); List.iter (fun v -> Printf.printf "'%s' " (pathStr v)) value; print_newline ()) context.backward;
+      print_endline "Mem";
+      IdMap.iter (fun key value -> Printf.printf "   '%s' = " (idStr key); IdSet.iter (fun v -> Printf.printf "'%s' " (idStr v)) value; print_newline ()) context.mem;
+      print_endline "Instance";
+      IdMap.iter (fun key value -> Printf.printf "   '%s' = " (idStr key); IdSet.iter (fun v -> Printf.printf "'%s' " (idStr v)) value; print_newline ()) context.instance;
+      print_endline "Active";
+      PathMap.iter (fun key _ -> Printf.printf "   '%s' active = %s\n" (pathStr key) (if isActive context key then "true" else "false") ) context.forward
 
 
 end
@@ -229,39 +229,52 @@ module Env = struct
          tick    : int;
       }
 
+   (** Prints all the information of the current environment *)
    let dump (state:'a t) =
       FunctionContex.dump state.context
 
+   (** Gets a new tick (integer value) and updates the state *)
    let tick (state:'a t) : int * 'a t =
       state.tick,{ state with tick = state.tick+1 }
 
-   let includeFunctionInContext (state:'a t) : 'a t  =
-      {
-         state with
-         context = FunctionContex.addTo state.context (Scope.current state.scope)
-      }
-
+   (** Creates a new context to store functions and mem definitions *)
    let makeNewContext (state:'a t) : 'a t  =
       {
          state with
          context = FunctionContex.makeNew state.context (Scope.current state.scope)
       }
 
+   (** Adds a function definition to the current context *)
+   let includeFunctionInContext (state:'a t) : 'a t  =
+      {
+         state with
+         context = FunctionContex.addTo state.context (Scope.current state.scope)
+      }
+
+   (** Adds a mem variable to the current context *)
    let addMemToContext (state:'a t) (name:id) : 'a t  =
       {
          state with
          context = FunctionContex.addMem state.context (Scope.current state.scope) name
       }
 
-   let isActive (state:'a t) (name:id) : 'a t * bool =
-      let full_name =
-         match Scope.lookupFunction state.scope name with
-         | None -> failwith (Printf.sprintf "Cannot find function '%s'" (idStr name))
-         | Some(full_name) -> full_name
-      in
-      let context', is_active = FunctionContex.isActive state.context full_name in
-      { state with context = context' }, is_active
+   (** Returns the full path of a function. Raises an error if it cannot be found *)
+   let lookup (state:'a t) (name:id) : path =
+      match Scope.lookupFunction state.scope name with
+      | None -> failwith (Printf.sprintf "Cannot find function '%s'" (idStr name))
+      | Some(path) -> path
 
+   (** Returns the generated context name for the given function *)
+   let getContext (state:'a t) (name:id) : id =
+      let path = lookup state name in
+      FunctionContex.findContext state.context path
+
+   (** Returns true if the function is active *)
+   let isActive (state:'a t) (name:id) : bool =
+      let path = lookup state name in
+      FunctionContex.isActive state.context path
+
+   (** Generates a new name for an instance based on the tick *)
    let generateInstanceName (state:'a t) (name_opt:id option) : 'a t * id =
       match name_opt with
       | Some(name) -> state,name
@@ -270,17 +283,18 @@ module Env = struct
          let id = ["_fun_"^(string_of_int tick)] in
          state', id
 
+   (** Adds a new instance to the context if the function is active *)
    let addInstanceToContext (state:'a t) (name_opt:id option) (kind:id) : 'a t * id option  =
-      let state', is_active = isActive state kind in
-      if is_active then
-         let state', name' = generateInstanceName state' name_opt in
+      if isActive state kind then
+         let state', name' = generateInstanceName state name_opt in
          {
             state' with
             context = FunctionContex.addInstance state'.context (Scope.current state.scope) name'
          }, Some(name')
       else
-         state', None
+         state, None
 
+   (** Enters to the context of the given function *)
    let enterFunction (state:'a t) (func:id) : 'a t  =
       {
          state with
@@ -288,15 +302,18 @@ module Env = struct
          tick  = 0;
       }
 
+   (** Closes the current context *)
    let exit (state:'a t) : 'a t  =
       {
          state with
          scope = Scope.exit state.scope;
       }
 
+   (** Adds the builtin functions to the given context *)
    let addBuiltin (s:Scope.t) : Scope.t =
       IdSet.fold (fun a s -> Scope.enterFunction s a |> Scope.exit ) builtin_functions s
 
+   (** Creates an empty module context *)
    let empty (init:id) data : 'a t =
       {
          data    = data;
