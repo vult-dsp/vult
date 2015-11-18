@@ -65,31 +65,14 @@ module ConstantSimplification = struct
       { Mapper.default_mapper with Mapper.exp = exp }
 end
 
-module NameCalls = struct
-
-   let exp : ('a Env.t,exp) Mapper.mapper_func =
-      fun state exp ->
-         match exp with
-         | PCall(None,name,body,attr) ->
-            let tick,state' = Env.tick state in
-            let id = ["_fun_"^(string_of_int tick)] in
-            state',PCall(Some(id),name,body,attr)
-         | _ -> state,exp
-
-   let mapper =
-      { Mapper.default_mapper with Mapper.exp = exp }
-
-end
-
-
 module CollectContext = struct
 
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
       fun state exp ->
          match exp with
          | LId(id,_) ->
-            let env = Env.addMemToContext state id in
-            env,exp
+            let state' = Env.addMemToContext state id in
+            state',exp
          | _ -> state,exp
 
    let reg_mem_mapper =
@@ -99,22 +82,22 @@ module CollectContext = struct
       fun state stmt ->
          match stmt with
          | StmtFun(_,_,_,_,attr) when attr.fun_and ->
-            let env = Env.includeFunctionInContext state in
-            env,stmt
+            let state' = Env.includeFunctionInContext state in
+            state',stmt
          | StmtFun(_,_,_,_,_) ->
-            let env = Env.makeNewContext state in
-            env,stmt
+            let state' = Env.makeNewContext state in
+            state',stmt
          | StmtMem(lhs,_,_,_) ->
-            let env,_ = Mapper.map_lhs_exp reg_mem_mapper state lhs in
-            env,stmt
+            let state',_ = Mapper.map_lhs_exp reg_mem_mapper state lhs in
+            state',stmt
          | _ -> state,stmt
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       fun state exp ->
          match exp with
-         | PCall(Some(id),kind,_,_) ->
-            let env = Env.addInstanceToContext state id kind in
-            env,exp
+         | PCall(id,kind,args,attr) ->
+            let state',id' = Env.addInstanceToContext state id kind in
+            state',PCall(id',kind,args,attr)
          | _ -> state,exp
 
    let mapper =
@@ -140,8 +123,7 @@ end
 (* Basic transformations *)
 let basicPasses (state,stmts) =
    let basic_mapper =
-      NameCalls.mapper
-      |> Mapper.seq ConstantSimplification.mapper
+      ConstantSimplification.mapper
       |> Mapper.seq Untype.mapper
       |> Mapper.seq CollectContext.mapper
    in
@@ -163,7 +145,7 @@ let applyTransformations (results:parser_results) =
    let passes stmts =
       (initial_state,[StmtBlock(None,stmts,makeAttr Loc.default)])
       |> basicPasses
-      |> snd
+      |> (fun (state,results) -> Env.dump state; results)
    in
 
    let new_stmts = CCError.map passes results.presult in
