@@ -1,5 +1,15 @@
 open TypesVult
 
+let builtin_functions =
+   [
+      ["abs"];
+      ["exp"];
+      ["sin"];
+      ["floor"];
+      ["clip"];
+      ["not"];
+   ] |> IdSet.of_list
+
 type bind_type =
    | MemBind
    | ModuleBind
@@ -16,12 +26,12 @@ module Scope = struct
          kind   : bind_type;
       }
 
-   let empty (name:id) (kind:bind_type) : t =
+   let empty : t =
       {
-         name    = name;
+         name    = [];
          parent  = None;
          sub     = IdMap.empty;
-         kind    = kind;
+         kind    = ModuleBind;
       }
 
    let enter (t:t) (name:id) (kind:bind_type) : t =
@@ -29,7 +39,7 @@ module Scope = struct
       | sub ->
          { sub with parent = Some(t) }
       | exception Not_found ->
-         { (empty name kind) with parent = Some(t) }
+         { empty with parent = Some(t); name = name; kind = kind }
 
    let enterFunction (t:t) (name:id) : t =
       enter t name FunctionBind
@@ -195,12 +205,15 @@ module FunctionContex = struct
    let isActive (context:t) (name:id) : t * bool =
       try context,IdMap.find name context.activefun with
       | Not_found ->
-         let fun_context = findContext context name in
-         let is_active   = not @@
-            IdSet.is_empty (getInstancesForContext context fun_context) &&
-               IdSet.is_empty (getMemForContext context fun_context)
-         in
-         { context with activefun = IdMap.add name is_active context.activefun }, is_active
+         if IdSet.mem name builtin_functions then
+            context, false
+         else
+            let fun_context = findContext context name in
+            let is_active   = not @@
+               IdSet.is_empty (getInstancesForContext context fun_context) &&
+                  IdSet.is_empty (getMemForContext context fun_context)
+            in
+            { context with activefun = IdMap.add name is_active context.activefun }, is_active
 
 
 end
@@ -264,17 +277,15 @@ module Env = struct
          scope = Scope.exit state.scope;
       }
 
-   let addBuiltin (state:'a t) : 'a t =
-      [["abs"];["exp"]]
-      |> List.fold_left (fun s a -> enterFunction s a |> exit ) state
+   let addBuiltin (s:Scope.t) : Scope.t =
+      IdSet.fold (fun a s -> Scope.enterFunction s a |> Scope.exit ) builtin_functions s
 
    let empty (init:id) data : 'a t =
       {
          data    = data;
          context = FunctionContex.empty;
          tick    = 0;
-         scope   = Scope.empty init ModuleBind;
+         scope   = Scope.enter (Scope.empty |> addBuiltin) init ModuleBind;
       }
-      |> addBuiltin
 
 end
