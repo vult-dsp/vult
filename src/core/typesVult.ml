@@ -221,6 +221,8 @@ module PathMap = Map.Make(struct type t = path let compare = compare end)
 
 module IdSet = Set.Make(struct type t = id let compare = compare end)
 
+module IdPathSet = Set.Make(struct type t = id * path let compare = compare end)
+
 let pathId (path:path) : id =
    match path with
    | Path(id) -> id

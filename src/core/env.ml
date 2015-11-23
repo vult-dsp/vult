@@ -132,7 +132,7 @@ module FunctionContex = struct
          forward   : id PathMap.t;
          backward  : path list IdMap.t;
          mem       : IdSet.t IdMap.t;
-         instance  : IdSet.t IdMap.t;
+         instance  : IdPathSet.t IdMap.t;
          count     : int;
          current   : id;
       }
@@ -153,9 +153,9 @@ module FunctionContex = struct
       | Not_found -> failwith (Printf.sprintf "Cannot find context for function '%s'" (pathStr func))
 
    (** Returns the instances for the given context *)
-   let getInstancesForContext (context:t) (name:id) : IdSet.t =
+   let getInstancesForContext (context:t) (name:id) : IdPathSet.t =
       try IdMap.find name context.instance with
-      | Not_found -> IdSet.empty
+      | Not_found -> IdPathSet.empty
 
    (** Returns the mem for the given context *)
    let getMemForContext (context:t) (name:id) : IdSet.t =
@@ -199,11 +199,11 @@ module FunctionContex = struct
       let context_for_func = findContext context func in
       let instance_for_context  =
          try IdMap.find context_for_func context.instance with
-         | Not_found -> IdSet.empty
+         | Not_found -> IdPathSet.empty
       in
       {
          context with
-         instance = IdMap.add context_for_func (IdSet.add name instance_for_context) context.instance;
+         instance = IdMap.add context_for_func (IdPathSet.add (name,func) instance_for_context) context.instance;
       }
 
    let isBuiltinPath (name:path) : bool =
@@ -215,7 +215,7 @@ module FunctionContex = struct
       else
          let fun_context = findContext context name in
          let is_active   = not (
-            IdSet.is_empty (getInstancesForContext context fun_context) &&
+            IdPathSet.is_empty (getInstancesForContext context fun_context) &&
                IdSet.is_empty (getMemForContext context fun_context))
          in
          is_active
@@ -223,15 +223,33 @@ module FunctionContex = struct
    let dump (context:t) : unit =
       Printf.printf "Current = '%s'\n" (idStr context.current);
       print_endline "Forward";
-      PathMap.iter (fun key value -> Printf.printf "   '%s' -> '%s'\n" (pathStr key) (idStr value)) context.forward;
+      PathMap.iter
+         (fun key value -> Printf.printf "   '%s' -> '%s'\n" (pathStr key) (idStr value))
+         context.forward;
       print_endline "Backward";
-      IdMap.iter (fun key value -> Printf.printf "   '%s' <- " (idStr key); List.iter (fun v -> Printf.printf "'%s' " (pathStr v)) value; print_newline ()) context.backward;
+      IdMap.iter
+         (fun key value ->
+            Printf.printf "   '%s' <- " (idStr key);
+            List.iter (fun v -> Printf.printf "'%s' " (pathStr v)) value;
+            print_newline ())
+         context.backward;
       print_endline "Mem";
-      IdMap.iter (fun key value -> Printf.printf "   '%s' = " (idStr key); IdSet.iter (fun v -> Printf.printf "'%s' " (idStr v)) value; print_newline ()) context.mem;
+      IdMap.iter
+         (fun key value ->
+            Printf.printf "   '%s' = " (idStr key);
+            IdSet.iter (fun v -> Printf.printf "'%s' " (idStr v)) value;
+            print_newline ())
+         context.mem;
       print_endline "Instance";
-      IdMap.iter (fun key value -> Printf.printf "   '%s' = " (idStr key); IdSet.iter (fun v -> Printf.printf "'%s' " (idStr v)) value; print_newline ()) context.instance;
+      IdMap.iter
+         (fun key value -> Printf.printf "   '%s' = " (idStr key);
+            IdPathSet.iter (fun (name,kind) -> Printf.printf "'%s:%s' " (idStr name) (pathStr kind)) value;
+            print_newline ())
+         context.instance;
       print_endline "Active";
-      PathMap.iter (fun key _ -> Printf.printf "   '%s' active = %s\n" (pathStr key) (if isActive context key then "true" else "false") ) context.forward
+      PathMap.iter
+         (fun key _ -> Printf.printf "   '%s' active = %s\n" (pathStr key) (if isActive context key then "true" else "false") )
+         context.forward
 
 
 end
@@ -304,7 +322,7 @@ module Env = struct
       | Some(name) -> state,name
       | None ->
          let tick, state' = tick state in
-         let id = ["_fun_"^(string_of_int tick)] in
+         let id = ["$fun_"^(string_of_int tick)] in
          state', id
 
    (** Adds a new instance to the context if the function is active *)
