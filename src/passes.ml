@@ -153,11 +153,27 @@ module Untype = struct
 
 end
 
+(** Splits mem declarations with binding to two statements *)
+module SplitMem = struct
+
+   let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
+      Mapper.makeExpander @@ fun state stmt ->
+         match stmt with
+         | StmtMem(lhs,init,Some(rhs),attr) ->
+            state, [ StmtMem(lhs,init,None,attr); StmtBind(lhs,rhs,attr) ]
+         | _ -> state, [stmt]
+
+   let mapper =
+      { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
+
+end
+
 
 (* Basic transformations *)
 let pass1 (state,stmts) =
    let mapper =
       Untype.mapper
+      |> Mapper.seq SplitMem.mapper
       |> Mapper.seq CollectContext.mapper
       |> Mapper.seq InsertContext.mapper
    in

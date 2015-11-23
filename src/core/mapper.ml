@@ -27,12 +27,31 @@ open Env
 
 type ('data,'kind) mapper_func = ('data -> 'kind -> 'data * 'kind) option
 
+type ('data,'kind) expand_func = ('data -> 'kind -> 'data * 'kind list) option
+
 let apply (mapper:('data,'kind) mapper_func) (data:'data) (kind:'kind) : 'data * 'kind =
    match mapper with
    | Some(f) -> f data kind
-   | None    -> data,kind
+   | None    -> data, kind
+
+let applyExpander (mapper:('data,'kind) expand_func) (data:'data) (kind:'kind) : 'data * 'kind list =
+   match mapper with
+   | Some(f) -> f data kind
+   | None    -> data, [kind]
+
+let applyExpanderList (mapper:('data,'kind) expand_func) (data:'data) (kind_list:'kind list) =
+   let state', rev_exp_list =
+      List.fold_left
+         (fun (s,acc) k ->
+            let s', kl = applyExpander mapper s k in
+            (s', kl::acc)
+         ) (data,[]) kind_list
+   in state', rev_exp_list |> List.rev |> List.flatten
 
 let make (mapper:'data -> 'kind -> 'data * 'kind) : ('data,'kind) mapper_func =
+   Some(mapper)
+
+let makeExpander (mapper:'data -> 'kind -> 'data * 'kind list) : ('data,'kind) expand_func =
    Some(mapper)
 
 (** Makes a chain of mappers. E.g. foo |-> bar will apply first foo then bar. *)
@@ -40,8 +59,17 @@ let (|->) : ('data,'value) mapper_func -> ('data,'value) mapper_func -> ('data,'
    fun mapper1 mapper2 ->
       let mapper3 =
          fun state exp ->
-         let state',exp' = apply mapper1 state exp in
-         apply mapper2 state' exp'
+            let state', exp' = apply mapper1 state exp in
+            apply mapper2 state' exp'
+      in Some(mapper3)
+
+let (|*>) : ('data,'value) expand_func -> ('data,'value) expand_func -> ('data,'value) expand_func =
+   fun mapper1 mapper2 ->
+      let mapper3 =
+         fun state exp ->
+            let state', exp_list  = applyExpander mapper1 state exp in
+            let state', exp_list' = applyExpanderList mapper2 state' exp_list in
+            state', exp_list'
       in Some(mapper3)
 
 type 'a mapper =
@@ -54,6 +82,8 @@ type 'a mapper =
       stmt     : ('a, stmt)       mapper_func;
       attr     : ('a, attr)       mapper_func;
       id       : ('a, id)         mapper_func;
+
+      stmt_x   : ('a, stmt)      expand_func;
    }
 
 let default_mapper =
@@ -66,6 +96,8 @@ let default_mapper =
       stmt     = None;
       attr     = None;
       id       = None;
+
+      stmt_x   = None;
    }
 
 (** Merge two mapper functions. This is a little bit weird but it will be
@@ -74,6 +106,11 @@ let seqMapperFunc a b =
    if a = None then b else
    if b = None then a
    else a |-> b
+
+let seqExpandFunc a b =
+   if a = None then b else
+   if b = None then a
+   else a |*> b
 
 (** Merges two mappers *)
 let seq (b:'a mapper) (a:'a mapper) : 'a mapper =
@@ -86,6 +123,9 @@ let seq (b:'a mapper) (a:'a mapper) : 'a mapper =
       stmt     = seqMapperFunc a.stmt     b.stmt;
       attr     = seqMapperFunc a.attr     b.attr;
       id       = seqMapperFunc a.id       b.id;
+
+      stmt_x   = seqExpandFunc a.stmt_x   b.stmt_x;
+
    }
 
 (** Applies any mapper to a list *)
@@ -310,7 +350,10 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       apply mapper.stmt state' (StmtBlock(name',stmts,attr'))
       |> map_stmt_subs mapper
 
-and map_stmt_list mapper = fun state stmt -> (mapper_list map_stmt) mapper state stmt
+and map_stmt_list mapper = fun state stmts ->
+   let state', stmts' = (mapper_list map_stmt) mapper state stmts in
+   let state', stmts' = applyExpanderList mapper.stmt_x state' stmts' in
+   state', stmts'
 
 and map_stmt_subs (mapper:'state mapper) (state,stmt:('state * stmt)) : 'state * stmt =
    match stmt with
