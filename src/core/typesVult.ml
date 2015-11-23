@@ -79,10 +79,9 @@ type exp =
       of string      (* operator *)
       *  exp
       *  attr
-   | PBinOp
+   | POp
       of string      (* operator *)
-      *  exp
-      *  exp
+      *  exp list
       *  attr
    | PCall
       of id option (* name/instance *)

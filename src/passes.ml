@@ -26,7 +26,7 @@ THE SOFTWARE.
 
 open TypesVult
 open Env
-
+(*
 module ConstantSimplification = struct
    let biOpReal (op:string) : float -> float -> float =
       match op with
@@ -45,18 +45,18 @@ module ConstantSimplification = struct
       | _ -> failwith (Printf.sprintf "biOpReal: Unknown operator %s" op)
 
    let exp : ('a,exp) Mapper.mapper_func =
-      fun state e ->
+      Mapper.make @@ fun state e ->
          match e with
-         | PBinOp(op,PInt(v1,_),PInt(v2,_),attr) ->
+         | POp(op,[PInt(v1,_);PInt(v2,_)],attr) ->
             let f = biOpInt op in
             state,PInt(f v1 v2,attr)
-         | PBinOp(op,PInt(v1,_),PReal(v2,_),attr) ->
+         | POp(op,[PInt(v1,_);PReal(v2,_)],attr) ->
             let f = biOpReal op in
             state,PReal(f (float_of_int v1) v2,attr)
-         | PBinOp(op,PReal(v1,_),PInt(v2,_),attr) ->
+         | POp(op,[PReal(v1,_);PInt(v2,_)],attr) ->
             let f = biOpReal op in
             state,PReal(f v1 (float_of_int v2),attr)
-         | PBinOp(op,PReal(v1,_),PReal(v2,_),attr) ->
+         | POp(op,[PReal(v1,_);PReal(v2,_)],attr) ->
             let f = biOpReal op in
             state,PReal(f v1 v2,attr)
          | _ -> state,e
@@ -64,11 +64,11 @@ module ConstantSimplification = struct
    let mapper =
       { Mapper.default_mapper with Mapper.exp = exp }
 end
-
+*)
 module CollectContext = struct
 
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
-      fun state exp ->
+      Mapper.make @@ fun state exp ->
          match exp with
          | LId(id,_) ->
             let state' = Env.addMemToContext state id in
@@ -79,7 +79,7 @@ module CollectContext = struct
       { Mapper.default_mapper with Mapper.lhs_exp = lhs_exp }
 
    let stmt : ('a Env.t,stmt) Mapper.mapper_func =
-      fun state stmt ->
+      Mapper.make @@ fun state stmt ->
          match stmt with
          | StmtFun(_,_,_,_,attr) when attr.fun_and ->
             let state' = Env.includeFunctionInContext state in
@@ -93,7 +93,7 @@ module CollectContext = struct
          | _ -> state,stmt
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
-      fun state exp ->
+      Mapper.make @@ fun state exp ->
          match exp with
          | PCall(id,kind,args,attr) ->
             let state',id' = Env.addInstanceToContext state id kind in
@@ -108,7 +108,7 @@ end
 module InsertContext = struct
 
    let stmt : ('a Env.t,stmt) Mapper.mapper_func =
-      fun state stmt ->
+      Mapper.make @@ fun state stmt ->
          match stmt with
          | StmtFun(name,args,body,rettype,attr) ->
             if Env.isActive state name then
@@ -120,7 +120,7 @@ module InsertContext = struct
          | _ -> state, stmt
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
-      fun state exp ->
+      Mapper.make @@ fun state exp ->
          match exp with
          | PCall(Some(id),kind,args,attr) ->
             state,PCall(None,kind,PId(id,attr)::args,attr)
@@ -129,7 +129,7 @@ module InsertContext = struct
          | _ -> state,exp
 
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
-      fun state exp ->
+      Mapper.make @@ fun state exp ->
          match exp with
          | LId(id,attr) when Env.isLocalInstanceOrMem state id ->
             state, LId("$ctx"::id,attr)
@@ -143,7 +143,7 @@ end
 module Untype = struct
 
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
-      fun state exp ->
+      Mapper.make @@ fun state exp ->
          match exp with
          | LTyped(e,_,_) -> state,e
          | _ -> state,exp
@@ -157,8 +157,7 @@ end
 (* Basic transformations *)
 let pass1 (state,stmts) =
    let mapper =
-      ConstantSimplification.mapper
-      |> Mapper.seq Untype.mapper
+      Untype.mapper
       |> Mapper.seq CollectContext.mapper
       |> Mapper.seq InsertContext.mapper
    in

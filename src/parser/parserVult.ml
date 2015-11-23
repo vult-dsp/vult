@@ -64,7 +64,7 @@ let getExpLocation (e:exp) : Loc.t =
    | PReal(_,attr)
    | PId(_,attr)
    | PUnOp(_,_,attr)
-   | PBinOp(_,_,_,attr)
+   | POp(_,_,attr)
    | PCall(_,_,_,attr)
    | PIf(_,_,_,attr)
    | PGroup(_,attr)
@@ -361,7 +361,7 @@ and unaryOp (buffer:Stream.stream) (token:'kind token) : exp =
 and binaryOp (buffer:Stream.stream) (token:'kind token) (left:exp) : exp =
    let right = expression (getLbp token) buffer in
    let attr  = makeAttr token.loc in
-   PBinOp(token.value,left,right,attr)
+   POp(token.value,[left;right],attr)
 
 (** <expressionList> := <expression> [',' <expression> ] *)
 and expressionList (buffer:Stream.stream) : exp list =

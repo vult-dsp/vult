@@ -100,11 +100,9 @@ and expressionBuff buffer (exp:exp) =
    | PReal(s,_) -> append buffer (string_of_float s)
    | PBool(true,_)  -> append buffer "true"
    | PBool(false,_) -> append buffer "false"
-   | PBinOp(op,e1,e2,_) ->
+   | POp(op,args,_) ->
       append buffer "(";
-      expressionBuff buffer e1;
-      append buffer op;
-      expressionBuff buffer e2;
+      printList buffer expressionBuff (" "^op^" ") args;
       append buffer ")"
    | PUnOp(op,e,_) ->
       append buffer "(";
