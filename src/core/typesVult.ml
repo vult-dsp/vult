@@ -215,14 +215,21 @@ let default_arguments =
 let makeAttr (loc:Loc.t) : attr =
    { loc = loc; fun_and = false; active = false; bound = false }
 
+let emptyAttr =
+   { loc = Loc.default; fun_and = false; active = false; bound = false }
+
 module IdMap = Map.Make(struct type t = id let compare = compare end)
 
 module PathMap = Map.Make(struct type t = path let compare = compare end)
 
 module IdSet = Set.Make(struct type t = id let compare = compare end)
 
-module IdPathSet = Set.Make(struct type t = id * path let compare = compare end)
+module IdTypeSet = Set.Make(struct type t = id * type_exp let compare = compare end)
 
 let pathId (path:path) : id =
-   match path with
-   | Path(id) -> id
+   let Path(id) = path in
+   id
+
+let pathAppend (path:path) (id:id) : path =
+   let Path(p) = path in
+   Path(p@id)

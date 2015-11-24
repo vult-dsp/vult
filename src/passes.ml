@@ -26,6 +26,26 @@ THE SOFTWARE.
 
 open TypesVult
 open Env
+
+module PassData = struct
+
+   type t =
+      {
+         gen_init_ctx : IdSet.t; (** Context for which a init function has been generated *)
+      }
+
+   let hasInitFunction (t:t) (id:id) : bool =
+      IdSet.mem id t.gen_init_ctx
+
+   let markInitFunction (t:t) (id:id) : t =
+      { gen_init_ctx = IdSet.add id t.gen_init_ctx }
+
+   let empty = { gen_init_ctx = IdSet.empty }
+
+end
+
+
+
 (*
 module ConstantSimplification = struct
    let biOpReal (op:string) : float -> float -> float =
@@ -71,8 +91,14 @@ module CollectContext = struct
       Mapper.make @@ fun state exp ->
          match exp with
          | LId(id,_) ->
+            let tp = TId(["real"],emptyAttr) in
+            let state' = Env.addMemToContext state id tp in
+            state',exp
+         (*
+         | LTyped(LId(id,_),tp,_) -> (** Currently the id's are untyped *)
             let state' = Env.addMemToContext state id in
             state',exp
+         *)
          | _ -> state,exp
 
    let reg_mem_mapper =
@@ -168,6 +194,45 @@ module SplitMem = struct
 
 end
 
+module CreateInitFunction = struct
+
+   let rec getInitFunctioName (id:id) : id =
+      match id with
+      | [] -> failwith "getInitFunctioName: empty id"
+      | [last] -> [ last^"_init" ]
+      | h::t -> h :: (getInitFunctioName t)
+
+   let getInitValue (tp:type_exp) : exp =
+      match tp with
+      | TId(["real"],_) -> PReal(0.0,emptyAttr)
+      | TId(["int"],_) -> PInt(0,emptyAttr)
+      | _ -> PReal(0.0,emptyAttr)
+
+
+   let generateInitFunction state name =
+      let mem_vars, instances = Env.getMemAndInstances state name in
+      ()
+
+   let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
+      Mapper.makeExpander @@ fun state stmt ->
+         match stmt with
+         | StmtFun(name,_,_,_,_) ->
+            if Env.isActive state name then
+               let data = Env.get state in
+               if PassData.hasInitFunction data name then
+                  state, [stmt]
+               else
+                  state, [stmt]
+            else
+               state, [stmt]
+
+         | _ -> state, [stmt]
+
+   let mapper =
+      { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
+
+end
+
 
 (* Basic transformations *)
 let pass1 (state,stmts) =
@@ -182,6 +247,7 @@ let pass1 (state,stmts) =
 let pass2 (state,stmts) =
    let mapper =
       InsertContext.mapper
+      |> Mapper.seq CreateInitFunction.mapper
    in
    Mapper.map_stmt_list mapper state stmts
 
@@ -198,7 +264,7 @@ let applyTransformations (results:parser_results) =
       |> fun a -> [a]
    in
    let initial_state =
-      Env.empty module_name ()
+      Env.empty module_name PassData.empty
       |> Env.makeNewContext
    in
 

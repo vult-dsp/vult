@@ -131,8 +131,8 @@ module FunctionContex = struct
       {
          forward   : id PathMap.t;
          backward  : path list IdMap.t;
-         mem       : IdSet.t IdMap.t;
-         instance  : IdPathSet.t IdMap.t;
+         mem       : IdTypeSet.t IdMap.t;
+         instance  : IdTypeSet.t IdMap.t;
          count     : int;
          current   : id;
       }
@@ -153,15 +153,15 @@ module FunctionContex = struct
       | Not_found -> failwith (Printf.sprintf "Cannot find context for function '%s'" (pathStr func))
 
    (** Returns the instances for the given context *)
-   let getInstancesForContext (context:t) (name:id) : IdPathSet.t =
+   let getInstancesForContext (context:t) (name:id) : IdTypeSet.t =
       try IdMap.find name context.instance with
-      | Not_found -> IdPathSet.empty
+      | Not_found -> IdTypeSet.empty
 
    (** Returns the mem for the given context *)
-   let getMemForContext (context:t) (name:id) : IdSet.t =
+   let getMemForContext (context:t) (name:id) : IdTypeSet.t =
       try IdMap.find name context.mem with
       | Not_found ->
-         IdSet.empty
+         IdTypeSet.empty
 
    let addTo (context:t) (func:path) : t =
       let current_in_ctx =
@@ -184,26 +184,26 @@ module FunctionContex = struct
          backward = IdMap.add context_name [func] context.backward;
       }
 
-   let addMem (context:t) (func:path) (name:id) : t =
+   let addMem (context:t) (func:path) (name:id) (tp:type_exp) : t =
       let context_for_func = findContext context func in
       let mem_for_context  =
          try IdMap.find context_for_func context.mem with
-         | Not_found -> IdSet.empty
+         | Not_found -> IdTypeSet.empty
       in
       {
          context with
-         mem = IdMap.add context_for_func (IdSet.add name mem_for_context) context.mem;
+         mem = IdMap.add context_for_func (IdTypeSet.add (name,tp) mem_for_context) context.mem;
       }
 
    let addInstance (context:t) (func:path) (name:id) : t =
       let context_for_func = findContext context func in
       let instance_for_context  =
          try IdMap.find context_for_func context.instance with
-         | Not_found -> IdPathSet.empty
+         | Not_found -> IdTypeSet.empty
       in
       {
          context with
-         instance = IdMap.add context_for_func (IdPathSet.add (name,func) instance_for_context) context.instance;
+         instance = IdMap.add context_for_func (IdTypeSet.add (name,TId(pathId func,emptyAttr)) instance_for_context) context.instance;
       }
 
    let isBuiltinPath (name:path) : bool =
@@ -215,8 +215,8 @@ module FunctionContex = struct
       else
          let fun_context = findContext context name in
          let is_active   = not (
-            IdPathSet.is_empty (getInstancesForContext context fun_context) &&
-               IdSet.is_empty (getMemForContext context fun_context))
+            IdTypeSet.is_empty (getInstancesForContext context fun_context) &&
+               IdTypeSet.is_empty (getMemForContext context fun_context))
          in
          is_active
 
@@ -237,13 +237,13 @@ module FunctionContex = struct
       IdMap.iter
          (fun key value ->
             Printf.printf "   '%s' = " (idStr key);
-            IdSet.iter (fun v -> Printf.printf "'%s' " (idStr v)) value;
+            IdTypeSet.iter (fun (v,tp) -> Printf.printf "'%s:%s' " (idStr v) (PrintTypes.typeStr tp)) value;
             print_newline ())
          context.mem;
       print_endline "Instance";
       IdMap.iter
          (fun key value -> Printf.printf "   '%s' = " (idStr key);
-            IdPathSet.iter (fun (name,kind) -> Printf.printf "'%s:%s' " (idStr name) (pathStr kind)) value;
+            IdTypeSet.iter (fun (name,kind) -> Printf.printf "'%s:%s' " (idStr name) (PrintTypes.typeStr kind)) value;
             print_newline ())
          context.instance;
       print_endline "Active";
@@ -262,6 +262,7 @@ module Env = struct
          context : FunctionContex.t;
          scope   : Scope.t;
          tick    : int;
+
       }
 
    (** Prints all the information of the current environment *)
@@ -289,11 +290,11 @@ module Env = struct
       }
 
    (** Adds a mem variable to the current context *)
-   let addMemToContext (state:'a t) (name:id) : 'a t  =
+   let addMemToContext (state:'a t) (name:id) (tp:type_exp) : 'a t  =
       {
          state with
-         context = FunctionContex.addMem state.context (Scope.current state.scope) name;
-         scope = Scope.addLocal state.scope name;
+         context = FunctionContex.addMem state.context (Scope.current state.scope) name tp;
+         scope   = Scope.addLocal state.scope name;
       }
 
    (** Returns the full path of a function. Raises an error if it cannot be found *)
@@ -301,6 +302,14 @@ module Env = struct
       match Scope.lookupFunction state.scope name with
       | None -> failwith (Printf.sprintf "Cannot find function '%s'" (idStr name))
       | Some(path) -> path
+
+      (** Returns the mem and instances for a function *)
+   let getMemAndInstances (state:'a t) (name:id) : IdTypeSet.t * IdTypeSet.t =
+      let path     = lookup state name in
+      let ctx      = FunctionContex.findContext state.context path in
+      let mem      = FunctionContex.getMemForContext state.context ctx in
+      let instance = FunctionContex.getInstancesForContext state.context ctx in
+      mem, instance
 
    (** Returns the generated context name for the given function *)
    let getContext (state:'a t) (name:id) : id =
@@ -337,6 +346,10 @@ module Env = struct
       else
          state, None
 
+   (** Returns the current location *)
+   let currentScope (state:'a t) : path =
+      Scope.current state.scope
+
    (** Enters to the context of the given function *)
    let enterFunction (state:'a t) (func:id) : 'a t  =
       {
@@ -364,5 +377,11 @@ module Env = struct
          tick    = 0;
          scope   = Scope.enter (Scope.empty |> addBuiltin) init ModuleSymbol;
       }
+
+   let get (state:'a t) : 'a =
+      state.data
+
+   let set (state:'a t) (data:'a) : 'a t =
+      { state with data = data }
 
 end
