@@ -195,7 +195,7 @@ module FunctionContex = struct
          mem = IdMap.add context_for_func (IdTypeSet.add (name,tp) mem_for_context) context.mem;
       }
 
-   let addInstance (context:t) (func:path) (name:id) : t =
+   let addInstance (context:t) (func:path) (name:id) (kind:path) : t =
       let context_for_func = findContext context func in
       let instance_for_context  =
          try IdMap.find context_for_func context.instance with
@@ -203,7 +203,7 @@ module FunctionContex = struct
       in
       {
          context with
-         instance = IdMap.add context_for_func (IdTypeSet.add (name,TId(pathId func,emptyAttr)) instance_for_context) context.instance;
+         instance = IdMap.add context_for_func (IdTypeSet.add (name,TId(pathId kind,emptyAttr)) instance_for_context) context.instance;
       }
 
    let isBuiltinPath (name:path) : bool =
@@ -336,11 +336,17 @@ module Env = struct
 
    (** Adds a new instance to the context if the function is active *)
    let addInstanceToContext (state:'a t) (name_opt:id option) (kind:id) : 'a t * id option  =
+      let kind_path_opt = Scope.lookupFunction state.scope kind in
+      let kind_path =
+         match kind_path_opt with
+         | Some(path) -> path
+         | None -> failwith "Cannot find function"
+      in
       if isActive state kind then
          let state', name' = generateInstanceName state name_opt in
          {
             state' with
-            context = FunctionContex.addInstance state'.context (Scope.current state.scope) name';
+            context = FunctionContex.addInstance state'.context (Scope.current state.scope) name' kind_path;
             scope = Scope.addLocal state.scope name';
          }, Some(name')
       else

@@ -196,6 +196,8 @@ end
 
 module CreateInitFunction = struct
 
+   module StmtSet = Set.Make(struct type t = stmt let compare = compare_stmt end)
+
    let rec getInitFunctioName (id:id) : id =
       match id with
       | [] -> failwith "getInitFunctioName: empty id"
@@ -208,10 +210,33 @@ module CreateInitFunction = struct
       | TId(["int"],_) -> PInt(0,emptyAttr)
       | _ -> PReal(0.0,emptyAttr)
 
+   let callInitFunction state (inst:id) (tp:type_exp) : exp =
+      match tp with
+      | TId(name,_) ->
+         let fun_ctx = Env.getContext state name in
+         PCall(None,getInitFunctioName fun_ctx,[PId(inst,emptyAttr)],emptyAttr)
+      | _ -> failwith "CreateInitFunction.callInitFunction: cannot initialize this yet"
 
-   let generateInitFunction state name =
+   let generateInitFunction (state:'a Env.t) (name:id) : stmt =
       let mem_vars, instances = Env.getMemAndInstances state name in
-      ()
+      let ctx = Env.getContext state name in
+      let ctx_name = ["$ctx"] in
+      let new_stmts_set =
+         IdTypeSet.fold
+            (fun (name,tp) acc ->
+               let new_stmt = StmtBind(LId(ctx_name @ name,emptyAttr), getInitValue tp, emptyAttr) in
+               StmtSet.add new_stmt acc)
+            mem_vars StmtSet.empty
+      in
+      let new_stmts_set' =
+         IdTypeSet.fold
+            (fun (name,tp) acc ->
+               let new_stmt = StmtBind(LWild(emptyAttr), callInitFunction state (ctx_name @ name) tp, emptyAttr) in
+               StmtSet.add new_stmt acc)
+            instances new_stmts_set
+      in
+      let stmts = StmtSet.fold (fun a acc -> a::acc) new_stmts_set' [] in
+      StmtFun(getInitFunctioName ctx, [TypedId(ctx_name,TId(ctx,emptyAttr),emptyAttr)], StmtBlock(None, stmts, emptyAttr), None, andAttr)
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander @@ fun state stmt ->
@@ -219,10 +244,13 @@ module CreateInitFunction = struct
          | StmtFun(name,_,_,_,_) ->
             if Env.isActive state name then
                let data = Env.get state in
-               if PassData.hasInitFunction data name then
+               let ctx = Env.getContext state name in
+               if PassData.hasInitFunction data ctx then
                   state, [stmt]
                else
-                  state, [stmt]
+                  let init_funct = generateInitFunction state name in
+                  let data' = PassData.markInitFunction data ctx in
+                  Env.set state data', [stmt; init_funct]
             else
                state, [stmt]
 
@@ -269,7 +297,7 @@ let applyTransformations (results:parser_results) =
    in
 
    let passes stmts =
-      (initial_state,[StmtBlock(None,stmts,makeAttr Loc.default)])
+      (initial_state,stmts)
       |> pass1
       |> dump
       |> pass2
