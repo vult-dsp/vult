@@ -703,7 +703,7 @@ let parseBuffer (file:string) (buffer) : parser_results =
       let rec loop acc =
          match Stream.peek buffer with
          | EOF -> List.rev acc
-         | _ -> loop ((stmtList buffer)::acc)
+         | _ -> loop ((stmt buffer)::acc)
       in
       let result    = loop [] in
       let all_lines = getFileLines (Stream.lines buffer) in
