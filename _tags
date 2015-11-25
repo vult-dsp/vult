@@ -76,3 +76,4 @@ true: annot, bin_annot
 <src/*.ml{,i,y}>: use_vult_parser
 <src/*.ml{,i,y}>: use_vult_util
 # OASIS_STOP
+true: debug
