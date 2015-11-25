@@ -36,7 +36,10 @@ type attr =
       active  : bool;
       bound   : bool;
    }
-   [@@deriving show,eq,ord]
+
+let pp_attr = fun fmt _ -> Format.pp_print_string fmt "attr"
+let equal_attr _ _ = true
+let compare_attr _ _ = 0
 
 type type_exp =
    | TUnit      of attr
@@ -217,6 +220,9 @@ let makeAttr (loc:Loc.t) : attr =
 
 let emptyAttr =
    { loc = Loc.default; fun_and = false; active = false; bound = false }
+
+let andAttr =
+   { loc = Loc.default; fun_and = true; active = false; bound = false }
 
 module IdMap = Map.Make(struct type t = id let compare = compare end)
 
