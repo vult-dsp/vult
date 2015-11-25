@@ -60,9 +60,9 @@ let dumpParsedFiles (parser_results:parser_results list) =
    |> List.iter (
       fun a -> match a.presult with
          | `Ok(b) ->
-            (*Format.printf "tree: %a@." pp_exp_list b;*)
             PrintTypes.stmtListStr b
-            |> print_string
+            |> print_string;
+            (*List.iter (fun stmt -> print_endline (show_stmt stmt)) b;*)
          | _ -> () )
 
 let main () =
