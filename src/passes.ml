@@ -161,8 +161,14 @@ module InsertContext = struct
             state, LId("$ctx"::id,attr)
          | _ -> state,exp
 
+   let stmt_x : ('a Env.t, stmt) Mapper.expand_func =
+      Mapper.makeExpander @@ fun state stmt ->
+         match stmt with
+         | StmtMem _ -> state, []
+         | _ -> state, [stmt]
+
    let mapper =
-      { Mapper.default_mapper with Mapper.stmt = stmt; Mapper.exp = exp; Mapper.lhs_exp = lhs_exp }
+      { Mapper.default_mapper with Mapper.stmt = stmt; Mapper.exp = exp; Mapper.lhs_exp = lhs_exp; Mapper.stmt_x = stmt_x }
 end
 
 (** Removes type information until type inference is in place *)
@@ -236,7 +242,28 @@ module CreateInitFunction = struct
             instances new_stmts_set
       in
       let stmts = StmtSet.fold (fun a acc -> a::acc) new_stmts_set' [] in
-      StmtFun(getInitFunctioName ctx, [TypedId(ctx_name,TId(ctx,emptyAttr),emptyAttr)], StmtBlock(None, stmts, emptyAttr), None, andAttr)
+      StmtFun(getInitFunctioName ctx, [TypedId(ctx_name,TId(ctx,emptyAttr),emptyAttr)], StmtBlock(None, stmts, emptyAttr), None, emptyAttr)
+
+   let generateContextType (state:'a Env.t) (name:id) : stmt =
+      let mem_vars, instances = Env.getMemAndInstances state name in
+      let ctx = Env.getContext state name in
+      let members =
+         IdTypeSet.fold
+            (fun (name,tp) acc ->
+               let member = name, tp, emptyAttr in
+               member :: acc)
+            (IdTypeSet.union mem_vars instances) []
+      in
+      StmtType(ctx,[],members,emptyAttr)
+
+   let generateInitFunctionWrapper (state:'a Env.t) (name:id) : stmt =
+      let ctx = Env.getContext state name in
+      let ctx_name = ["$ctx"] in
+      StmtFun(getInitFunctioName name,
+         [TypedId(ctx_name,TId(ctx,emptyAttr),emptyAttr)],
+         StmtBind(LWild(emptyAttr),PCall(None,getInitFunctioName ctx,[PId(ctx_name,emptyAttr)],emptyAttr),emptyAttr),
+         None, emptyAttr)
+
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander @@ fun state stmt ->
@@ -245,12 +272,14 @@ module CreateInitFunction = struct
             if Env.isActive state name then
                let data = Env.get state in
                let ctx = Env.getContext state name in
+               let init_fn = generateInitFunctionWrapper state name in
                if PassData.hasInitFunction data ctx then
-                  state, [stmt]
+                  state, [stmt; init_fn]
                else
                   let init_funct = generateInitFunction state name in
-                  let data' = PassData.markInitFunction data ctx in
-                  Env.set state data', [stmt; init_funct]
+                  let type_def   = generateContextType state name in
+                  let data'      = PassData.markInitFunction data ctx in
+                  Env.set state data', [type_def; stmt; init_funct; init_fn]
             else
                state, [stmt]
 
