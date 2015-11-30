@@ -197,7 +197,8 @@ and stmtBuff buffer (s:stmt) =
             append buffer ": ";
             typeExpressionBuff buffer a;
             append buffer " ") type_exp;
-      stmtBuff buffer body
+      stmtBuff buffer body;
+      newline buffer
    | StmtBind(e1,e2,_) ->
       lhsExpressionBuff buffer e1;
       append buffer " = ";
@@ -240,7 +241,8 @@ and stmtBuff buffer (s:stmt) =
       indent buffer;
       List.iter (valDecl buffer) decl_list;
       outdent buffer;
-      append buffer "}"
+      append buffer "}";
+      newline buffer
    | StmtEmpty -> ()
 
 (** Adds to the print buffer an expression list *)
