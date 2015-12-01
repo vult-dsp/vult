@@ -85,6 +85,46 @@ module ConstantSimplification = struct
       { Mapper.default_mapper with Mapper.exp = exp }
 end
 *)
+
+module GetIdentifiers = struct
+
+   let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
+      Mapper.make @@ fun state exp ->
+         match exp with
+         | LId(id,_) ->
+            Env.set state (IdSet.add id (Env.get state)), exp
+         | _ -> state, exp
+
+   let exp : ('a Env.t,exp) Mapper.mapper_func =
+      Mapper.make @@ fun state exp ->
+         match exp with
+         | PId(id,_) ->
+            Env.set state (IdSet.add id (Env.get state)), exp
+         | _ -> state, exp
+
+   let mapper = { Mapper.default_mapper with Mapper.exp = exp; Mapper.lhs_exp = lhs_exp }
+
+   let dummy_env = Env.empty [""] IdSet.empty
+
+   let fromExp (exp:exp) : IdSet.t =
+      let s, _ = Mapper.map_exp mapper dummy_env exp in
+      Env.get s
+
+   let fromExpList (exp:exp list) : IdSet.t =
+      let s, _ = Mapper.map_exp_list mapper dummy_env exp in
+      Env.get s
+
+   let fromLhsExp (exp:lhs_exp) : IdSet.t =
+      let s, _ = Mapper.map_lhs_exp mapper dummy_env exp in
+      Env.get s
+
+   let fromLhsExpList (exp:lhs_exp list) : IdSet.t =
+      let s, _ = Mapper.map_lhs_exp_list mapper dummy_env exp in
+      Env.get s
+
+end
+
+
 module CollectContext = struct
 
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
@@ -213,14 +253,14 @@ module CreateInitFunction = struct
    let getInitValue (tp:type_exp) : exp =
       match tp with
       | TId(["real"],_) -> PReal(0.0,emptyAttr)
-      | TId(["int"],_) -> PInt(0,emptyAttr)
+      | TId(["int"],_)  -> PInt(0,emptyAttr)
       | _ -> PReal(0.0,emptyAttr)
 
-   let callInitFunction state (inst:id) (tp:type_exp) : exp =
+   let callInitFunction state (tp:type_exp) : exp =
       match tp with
       | TId(name,_) ->
          let fun_ctx = Env.getContext state name in
-         PCall(None,getInitFunctioName fun_ctx,[PId(inst,emptyAttr)],emptyAttr)
+         PCall(None,getInitFunctioName fun_ctx,[],emptyAttr)
       | _ -> failwith "CreateInitFunction.callInitFunction: cannot initialize this yet"
 
    let generateInitFunction (state:'a Env.t) (name:id) : stmt =
@@ -237,12 +277,14 @@ module CreateInitFunction = struct
       let new_stmts_set' =
          IdTypeSet.fold
             (fun (name,tp) acc ->
-               let new_stmt = StmtBind(LWild(emptyAttr), callInitFunction state (ctx_name @ name) tp, emptyAttr) in
+               let new_stmt = StmtBind(LId(ctx_name @ name, emptyAttr), callInitFunction state tp, emptyAttr) in
                StmtSet.add new_stmt acc)
             instances new_stmts_set
       in
-      let stmts = StmtSet.fold (fun a acc -> a::acc) new_stmts_set' [] in
-      StmtFun(getInitFunctioName ctx, [TypedId(ctx_name,TId(ctx,emptyAttr),emptyAttr)], StmtBlock(None, stmts, emptyAttr), None, emptyAttr)
+      let return_stmt = StmtReturn(PId(ctx_name,emptyAttr),emptyAttr) in
+      let ctx_decl = StmtVal(LTyped(LId(ctx_name,emptyAttr),TId(ctx,emptyAttr),emptyAttr),None,emptyAttr) in
+      let stmts = StmtSet.fold (fun a acc -> a::acc) new_stmts_set' [return_stmt] in
+      StmtFun(getInitFunctioName ctx, [], StmtBlock(None, ctx_decl::stmts, emptyAttr), None, emptyAttr)
 
    let generateContextType (state:'a Env.t) (name:id) : stmt =
       let mem_vars, instances = Env.getMemAndInstances state name in
@@ -258,10 +300,9 @@ module CreateInitFunction = struct
 
    let generateInitFunctionWrapper (state:'a Env.t) (name:id) : stmt =
       let ctx = Env.getContext state name in
-      let ctx_name = ["$ctx"] in
       StmtFun(getInitFunctioName name,
-         [TypedId(ctx_name,TId(ctx,emptyAttr),emptyAttr)],
-         StmtBind(LWild(emptyAttr),PCall(None,getInitFunctioName ctx,[PId(ctx_name,emptyAttr)],emptyAttr),emptyAttr),
+         [],
+         StmtReturn(PCall(None,getInitFunctioName ctx,[],emptyAttr),emptyAttr),
          None, emptyAttr)
 
 
@@ -290,6 +331,49 @@ module CreateInitFunction = struct
 
 end
 
+module SimplifyTupleAssign = struct
+
+   let makeTmp i = ["$tmp_" ^ (string_of_int i)]
+
+   let makeValBind lhs rhs = StmtVal(lhs,Some(rhs),emptyAttr)
+
+   let makeBind lhs rhs = StmtBind(lhs,rhs,emptyAttr)
+
+   let createAssignments kind lhs rhs =
+      let lhs_id = GetIdentifiers.fromLhsExpList lhs in
+      let rhs_id = GetIdentifiers.fromExpList rhs in
+      if IdSet.is_empty (IdSet.inter lhs_id rhs_id) then
+         List.map2 (fun a b -> kind a b) lhs rhs
+      else
+         let stmts1 = List.mapi (fun i a -> kind (LId(makeTmp i,emptyAttr)) a) rhs in
+         let stmts2 = List.mapi (fun i a -> kind a (PId(makeTmp i,emptyAttr))) lhs in
+         stmts1 @ stmts2
+
+   let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
+      Mapper.makeExpander @@ fun state stmt ->
+         match stmt with
+         | StmtVal(LTuple(lhs,_),None,attr) ->
+            let stmts = List.map (fun a -> StmtVal(a,None,attr)) lhs in
+            state, stmts
+
+         | StmtVal(LTuple(lhs,_),Some(PTuple(rhs,_)),_) when List.length lhs = List.length rhs ->
+            let stmts = createAssignments makeValBind lhs rhs in
+            state, stmts
+
+         | StmtBind(LTuple(lhs,_),PTuple(rhs,_),_) when List.length lhs = List.length rhs ->
+            let stmts = createAssignments makeBind lhs rhs in
+            state, stmts
+
+         | StmtBind(LTuple(_,_),PTuple(_,_),_) ->
+            failwith "SimplifyTupleAssign.stmt_x: this error should be catched by the type checker"
+
+         | _ -> state, [stmt]
+
+   let mapper =
+      { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
+
+end
+
 
 (* Basic transformations *)
 let pass1 (state,stmts) =
@@ -298,6 +382,7 @@ let pass1 (state,stmts) =
       |> Mapper.seq SplitMem.mapper
       |> Mapper.seq CollectContext.mapper
       |> Mapper.seq InsertContext.mapper
+      |> Mapper.seq SimplifyTupleAssign.mapper
    in
    Mapper.map_stmt_list mapper state stmts
 

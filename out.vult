@@ -1,0 +1,737 @@
+Current = 'ctx_8'
+Forward
+   'Current' -> 'ctx_0'
+   'Current.change' -> 'ctx_2'
+   'Current.controlChange' -> 'ctx_8'
+   'Current.default' -> 'ctx_8'
+   'Current.each' -> 'ctx_4'
+   'Current.edge' -> 'ctx_3'
+   'Current.lfo' -> 'ctx_7'
+   'Current.noteOff' -> 'ctx_8'
+   'Current.noteOn' -> 'ctx_8'
+   'Current.phasor' -> 'ctx_6'
+   'Current.pitchToRate' -> 'ctx_5'
+   'Current.process' -> 'ctx_8'
+   'Current.smooth' -> 'ctx_1'
+Backward
+   'ctx_0' <- 'Current' 
+   'ctx_1' <- 'Current.smooth' 
+   'ctx_2' <- 'Current.change' 
+   'ctx_3' <- 'Current.edge' 
+   'ctx_4' <- 'Current.each' 
+   'ctx_5' <- 'Current.pitchToRate' 
+   'ctx_6' <- 'Current.phasor' 
+   'ctx_7' <- 'Current.lfo' 
+   'ctx_8' <- 'Current.default' 'Current.controlChange' 'Current.noteOff' 'Current.noteOn' 'Current.process' 
+Mem
+   'ctx_1' = 'x:real' 
+   'ctx_2' = 'pre_x:real' 
+   'ctx_3' = 'pre_x:real' 
+   'ctx_4' = 'count:real' 
+   'ctx_6' = 'phase:real' 'rate:real' 
+   'ctx_7' = 'phase:real' 
+   'ctx_8' = 'count:real' 'detune:real' 'gate:real' 'lfo_amt:real' 'lfo_rate:real' 'n1:real' 'n2:real' 'n3:real' 'n4:real' 'pitch:real' 'pre_phase1:real' 'volume:real' 
+Instance
+   'ctx_6' = '$fun_0:Current.change' 
+   'ctx_7' = '$fun_0:Current.edge' 
+   'ctx_8' = '$fun_0:Current.lfo' '$fun_1:Current.phasor' '$fun_2:Current.smooth' '$fun_3:Current.phasor' '$fun_4:Current.smooth' '$fun_5:Current.smooth' 
+Active
+   'Current' active = false
+   'Current.change' active = true
+   'Current.controlChange' active = true
+   'Current.default' active = true
+   'Current.each' active = true
+   'Current.edge' active = true
+   'Current.lfo' active = true
+   'Current.noteOff' active = true
+   'Current.noteOn' active = true
+   'Current.phasor' active = true
+   'Current.pitchToRate' active = false
+   'Current.process' active = true
+   'Current.smooth' active = true
+Scope
+   'Current' = module
+      'change' = function
+         'pre_x' = local
+      'controlChange' = function
+         'detune' = local
+         'lfo_amt' = local
+         'lfo_rate' = local
+         'volume' = local
+      'default' = function
+         'detune' = local
+         'lfo_amt' = local
+         'lfo_rate' = local
+         'pitch' = local
+         'volume' = local
+      'each' = function
+         'count' = local
+      'edge' = function
+         'pre_x' = local
+      'lfo' = function
+         '$fun_0' = local
+         'phase' = local
+      'noteOff' = function
+         'count' = local
+         'gate' = local
+         'n1' = local
+         'n2' = local
+         'n3' = local
+         'n4' = local
+         'pitch' = local
+      'noteOn' = function
+         'count' = local
+         'gate' = local
+         'n1' = local
+         'n2' = local
+         'n3' = local
+         'n4' = local
+         'pitch' = local
+      'phasor' = function
+         '$fun_0' = local
+         'phase' = local
+         'rate' = local
+      'pitchToRate' = function
+      'process' = function
+         '$fun_0' = local
+         '$fun_1' = local
+         '$fun_2' = local
+         '$fun_3' = local
+         '$fun_4' = local
+         '$fun_5' = local
+         'count' = local
+         'detune' = local
+         'gate' = local
+         'lfo_amt' = local
+         'lfo_rate' = local
+         'n1' = local
+         'n2' = local
+         'n3' = local
+         'n4' = local
+         'pitch' = local
+         'pre_phase1' = local
+         'volume' = local
+      'smooth' = function
+         'x' = local
+Current = 'ctx_8'
+Forward
+   'Current' -> 'ctx_0'
+   'Current.change' -> 'ctx_2'
+   'Current.controlChange' -> 'ctx_8'
+   'Current.default' -> 'ctx_8'
+   'Current.each' -> 'ctx_4'
+   'Current.edge' -> 'ctx_3'
+   'Current.lfo' -> 'ctx_7'
+   'Current.noteOff' -> 'ctx_8'
+   'Current.noteOn' -> 'ctx_8'
+   'Current.phasor' -> 'ctx_6'
+   'Current.pitchToRate' -> 'ctx_5'
+   'Current.process' -> 'ctx_8'
+   'Current.smooth' -> 'ctx_1'
+Backward
+   'ctx_0' <- 'Current' 
+   'ctx_1' <- 'Current.smooth' 
+   'ctx_2' <- 'Current.change' 
+   'ctx_3' <- 'Current.edge' 
+   'ctx_4' <- 'Current.each' 
+   'ctx_5' <- 'Current.pitchToRate' 
+   'ctx_6' <- 'Current.phasor' 
+   'ctx_7' <- 'Current.lfo' 
+   'ctx_8' <- 'Current.default' 'Current.controlChange' 'Current.noteOff' 'Current.noteOn' 'Current.process' 
+Mem
+   'ctx_1' = 'x:real' 
+   'ctx_2' = 'pre_x:real' 
+   'ctx_3' = 'pre_x:real' 
+   'ctx_4' = 'count:real' 
+   'ctx_6' = 'phase:real' 'rate:real' 
+   'ctx_7' = 'phase:real' 
+   'ctx_8' = 'count:real' 'detune:real' 'gate:real' 'lfo_amt:real' 'lfo_rate:real' 'n1:real' 'n2:real' 'n3:real' 'n4:real' 'pitch:real' 'pre_phase1:real' 'volume:real' 
+Instance
+   'ctx_6' = '$fun_0:Current.change' 
+   'ctx_7' = '$fun_0:Current.edge' 
+   'ctx_8' = '$fun_0:Current.lfo' '$fun_1:Current.phasor' '$fun_2:Current.smooth' '$fun_3:Current.phasor' '$fun_4:Current.smooth' '$fun_5:Current.smooth' 
+Active
+   'Current' active = false
+   'Current.change' active = true
+   'Current.controlChange' active = true
+   'Current.default' active = true
+   'Current.each' active = true
+   'Current.edge' active = true
+   'Current.lfo' active = true
+   'Current.noteOff' active = true
+   'Current.noteOn' active = true
+   'Current.phasor' active = true
+   'Current.pitchToRate' active = false
+   'Current.process' active = true
+   'Current.smooth' active = true
+Scope
+   'Current' = module
+      'change' = function
+         'pre_x' = local
+      'controlChange' = function
+         'detune' = local
+         'lfo_amt' = local
+         'lfo_rate' = local
+         'volume' = local
+      'default' = function
+         'detune' = local
+         'lfo_amt' = local
+         'lfo_rate' = local
+         'pitch' = local
+         'volume' = local
+      'each' = function
+         'count' = local
+      'edge' = function
+         'pre_x' = local
+      'lfo' = function
+         '$fun_0' = local
+         'phase' = local
+      'noteOff' = function
+         'count' = local
+         'gate' = local
+         'n1' = local
+         'n2' = local
+         'n3' = local
+         'n4' = local
+         'pitch' = local
+      'noteOn' = function
+         'count' = local
+         'gate' = local
+         'n1' = local
+         'n2' = local
+         'n3' = local
+         'n4' = local
+         'pitch' = local
+      'phasor' = function
+         '$fun_0' = local
+         'phase' = local
+         'rate' = local
+      'pitchToRate' = function
+      'process' = function
+         '$fun_0' = local
+         '$fun_1' = local
+         '$fun_2' = local
+         '$fun_3' = local
+         '$fun_4' = local
+         '$fun_5' = local
+         'count' = local
+         'detune' = local
+         'gate' = local
+         'lfo_amt' = local
+         'lfo_rate' = local
+         'n1' = local
+         'n2' = local
+         'n3' = local
+         'n4' = local
+         'pitch' = local
+         'pre_phase1' = local
+         'volume' = local
+      'smooth' = function
+         'x' = local
+
+= Transformed Code =
+{
+   type ctx_1 {
+      val x : real;
+   }
+
+   fun smooth($ctx:ctx_1,input) {
+      $ctx.x = ($ctx.x + (((input - $ctx.x)) * 0.005));
+      return $ctx.x;
+   }
+
+   fun ctx_1_init() {
+      val ($ctx:ctx_1);
+      $ctx.x = 0.;
+      return $ctx;
+   }
+
+   fun smooth_init() return ctx_1_init();
+
+   type ctx_2 {
+      val pre_x : real;
+   }
+
+   fun change($ctx:ctx_2,x) : bool {
+      val v = ($ctx.pre_x != x);
+      $ctx.pre_x = x;
+      return v;
+   }
+
+   fun ctx_2_init() {
+      val ($ctx:ctx_2);
+      $ctx.pre_x = 0.;
+      return $ctx;
+   }
+
+   fun change_init() return ctx_2_init();
+
+   type ctx_3 {
+      val pre_x : real;
+   }
+
+   fun edge($ctx:ctx_3,x) : bool {
+      val v = ((($ctx.pre_x != x)) && (($ctx.pre_x == 0)));
+      $ctx.pre_x = x;
+      return v;
+   }
+
+   fun ctx_3_init() {
+      val ($ctx:ctx_3);
+      $ctx.pre_x = 0.;
+      return $ctx;
+   }
+
+   fun edge_init() return ctx_3_init();
+
+   type ctx_4 {
+      val count : real;
+   }
+
+   fun each($ctx:ctx_4,n) {
+      val ret = (($ctx.count == 0));
+      $ctx.count = ((($ctx.count + 1)) % n);
+      return ret;
+   }
+
+   fun ctx_4_init() {
+      val ($ctx:ctx_4);
+      $ctx.count = 0.;
+      return $ctx;
+   }
+
+   fun each_init() return ctx_4_init();
+
+   fun pitchToRate(d) return ((8.1758 * exp((0.0577623 * d))) / 44100);
+
+   type ctx_6 {
+      val rate : real;
+      val phase : real;
+      val $fun_0 : Current.change;
+   }
+
+   fun phasor($ctx:ctx_6,pitch,reset) {
+      if(change($ctx.$fun_0,pitch))
+         $ctx.rate = pitchToRate(pitch);
+      $ctx.phase = if reset then 0 else ((($ctx.phase + $ctx.rate)) % 1);
+      return $ctx.phase;
+   }
+
+   fun ctx_6_init() {
+      val ($ctx:ctx_6);
+      $ctx.rate = 0.;
+      $ctx.phase = 0.;
+      $ctx.$fun_0 = ctx_2_init();
+      return $ctx;
+   }
+
+   fun phasor_init() return ctx_6_init();
+
+   type ctx_7 {
+      val phase : real;
+      val $fun_0 : Current.edge;
+   }
+
+   fun lfo($ctx:ctx_7,f,gate) {
+      val rate = ((f * 10) / 44100);
+      if(edge($ctx.$fun_0,gate))
+         $ctx.phase = 0;
+      $ctx.phase = ($ctx.phase + rate);
+      if(($ctx.phase > 1))
+         $ctx.phase = ($ctx.phase - 1);
+      return (sin((($ctx.phase * 2) * 3.14159265359)) - 0.5);
+   }
+
+   fun ctx_7_init() {
+      val ($ctx:ctx_7);
+      $ctx.phase = 0.;
+      $ctx.$fun_0 = ctx_3_init();
+      return $ctx;
+   }
+
+   fun lfo_init() return ctx_7_init();
+
+   type ctx_8 {
+      val volume : real;
+      val pre_phase1 : real;
+      val pitch : real;
+      val n4 : real;
+      val n3 : real;
+      val n2 : real;
+      val n1 : real;
+      val lfo_rate : real;
+      val lfo_amt : real;
+      val gate : real;
+      val detune : real;
+      val count : real;
+      val $fun_5 : Current.smooth;
+      val $fun_4 : Current.smooth;
+      val $fun_3 : Current.phasor;
+      val $fun_2 : Current.smooth;
+      val $fun_1 : Current.phasor;
+      val $fun_0 : Current.lfo;
+   }
+
+   fun process($ctx:ctx_8,input) {
+      val lfo_val = (lfo($ctx.$fun_0,$ctx.lfo_rate,$ctx.gate) * $ctx.lfo_amt);
+      val phase1 = phasor($ctx.$fun_1,$ctx.pitch,false);
+      val comp = (1 - phase1);
+      val reset = ((($ctx.pre_phase1 - phase1)) > 0.5);
+      $ctx.pre_phase1 = phase1;
+      val phase2 = phasor($ctx.$fun_3,($ctx.pitch + (smooth($ctx.$fun_2,($ctx.detune + lfo_val)) * 32)),reset);
+      val sine = sin(((2 * 3.14159265359) * phase2));
+      return ((smooth($ctx.$fun_4,$ctx.volume) * ((sine * comp))) * smooth($ctx.$fun_5,$ctx.gate));
+   }
+
+   fun ctx_8_init() {
+      val ($ctx:ctx_8);
+      $ctx.volume = 0.;
+      $ctx.pre_phase1 = 0.;
+      $ctx.pitch = 0.;
+      $ctx.n4 = 0.;
+      $ctx.n3 = 0.;
+      $ctx.n2 = 0.;
+      $ctx.n1 = 0.;
+      $ctx.lfo_rate = 0.;
+      $ctx.lfo_amt = 0.;
+      $ctx.gate = 0.;
+      $ctx.detune = 0.;
+      $ctx.count = 0.;
+      $ctx.$fun_5 = ctx_1_init();
+      $ctx.$fun_4 = ctx_1_init();
+      $ctx.$fun_3 = ctx_6_init();
+      $ctx.$fun_2 = ctx_1_init();
+      $ctx.$fun_1 = ctx_6_init();
+      $ctx.$fun_0 = ctx_7_init();
+      return $ctx;
+   }
+
+   fun process_init() return ctx_8_init();
+
+   and noteOn($ctx:ctx_8,$ctx:ctx_8,note,velocity) {
+      if(($ctx.count == 0))
+         {
+            $ctx.n1 = note;
+            $ctx.pitch = note;
+         }
+      else
+         if(($ctx.count == 1))
+            {
+               $ctx.n2 = note;
+               $ctx.pitch = note;
+            }
+         else
+            if(($ctx.count == 2))
+               {
+                  $ctx.n3 = note;
+                  $ctx.pitch = note;
+               }
+            else
+               if(($ctx.count == 3))
+                  {
+                     $ctx.n4 = note;
+                     $ctx.pitch = note;
+                  }
+      if(($ctx.count <= 4))
+         $ctx.count = ($ctx.count + 1);
+      $ctx.gate = if ($ctx.count > 0) then 1 else 0;
+   }
+
+   fun noteOn_init() return ctx_8_init();
+
+   and noteOff($ctx:ctx_8,$ctx:ctx_8,note) {
+      val found = false;
+      if((note == $ctx.n1))
+         {
+            $tmp_0 = $ctx.n2;
+            $tmp_1 = $ctx.n3;
+            $tmp_2 = $ctx.n4;
+            $ctx.n1 = $tmp_0;
+            $ctx.n2 = $tmp_1;
+            $ctx.n3 = $tmp_2;
+            found = true;
+         }
+      else
+         if((note == $ctx.n2))
+            {
+               $tmp_0 = $ctx.n3;
+               $tmp_1 = $ctx.n4;
+               $ctx.n2 = $tmp_0;
+               $ctx.n3 = $tmp_1;
+               found = true;
+            }
+         else
+            if((note == $ctx.n3))
+               {
+                  $ctx.n3 = $ctx.n4;
+                  found = true;
+               }
+            else
+               if((note == $ctx.n4))
+                  found = true;
+      if((found && ($ctx.count > 0)))
+         $ctx.count = ($ctx.count - 1);
+      $ctx.gate = if ($ctx.count > 0) then 1 else 0;
+      if(($ctx.count == 1))
+         $ctx.pitch = $ctx.n1;
+      if(($ctx.count == 2))
+         $ctx.pitch = $ctx.n2;
+      if(($ctx.count == 3))
+         $ctx.pitch = $ctx.n3;
+      if(($ctx.count == 4))
+         $ctx.pitch = $ctx.n4;
+   }
+
+   fun noteOff_init() return ctx_8_init();
+
+   and controlChange($ctx:ctx_8,$ctx:ctx_8,control,value) {
+      if((control == 30))
+         $ctx.volume = (value / 127);
+      if((control == 31))
+         $ctx.detune = (value / 127);
+      if((control == 32))
+         $ctx.lfo_rate = (value / 127);
+      if((control == 33))
+         $ctx.lfo_amt = (2 * ((((value / 127)) - 0.5)));
+   }
+
+   fun controlChange_init() return ctx_8_init();
+
+   and default($ctx:ctx_8,$ctx:ctx_8) {
+      $ctx.volume = 0;
+      $ctx.pitch = 45;
+      $ctx.detune = 0.8;
+      $ctx.lfo_rate = 0.07;
+      $ctx.lfo_amt = (-0.8);
+   }
+
+   fun default_init() return ctx_8_init();
+
+}
+= JS Code =
+
+function smooth($ctx,input){
+   $ctx.x = ($ctx.x + ((input - $ctx.x) * 0.005));
+   return $ctx.x;
+}
+function ctx_1_init(){
+   var $ctx = {};
+   $ctx.x = 0.;
+   return $ctx;
+}
+function smooth_init() { return ctx_1_init();}
+
+function change($ctx,x){
+   var v = ($ctx.pre_x != x);
+   $ctx.pre_x = x;
+   return v;
+}
+function ctx_2_init(){
+   var $ctx = {};
+   $ctx.pre_x = 0.;
+   return $ctx;
+}
+function change_init() { return ctx_2_init();}
+
+function edge($ctx,x){
+   var v = (($ctx.pre_x != x) && ($ctx.pre_x == 0.));
+   $ctx.pre_x = x;
+   return v;
+}
+function ctx_3_init(){
+   var $ctx = {};
+   $ctx.pre_x = 0.;
+   return $ctx;
+}
+function edge_init() { return ctx_3_init();}
+
+function each($ctx,n){
+   var ret = ($ctx.count == 0.);
+   $ctx.count = (($ctx.count + 1.) % n);
+   return ret;
+}
+function ctx_4_init(){
+   var $ctx = {};
+   $ctx.count = 0.;
+   return $ctx;
+}
+function each_init() { return ctx_4_init();}
+function pitchToRate(d){
+   return ((8.1758 * exp((0.0577623 * d))) / 44100.);
+}
+
+function phasor($ctx,pitch,reset){
+   if(change($ctx.$fun_0,pitch)){
+      $ctx.rate = pitchToRate(pitch);
+   }
+   $ctx.phase = (reset?0.:(($ctx.phase + $ctx.rate) % 1.));
+   return $ctx.phase;
+}
+function ctx_6_init(){
+   var $ctx = {};
+   $ctx.rate = 0.;
+   $ctx.phase = 0.;
+   $ctx.$fun_0 = ctx_2_init();
+   return $ctx;
+}
+function phasor_init() { return ctx_6_init();}
+
+function lfo($ctx,f,gate){
+   var rate = ((f * 10.) / 44100.);
+   if(edge($ctx.$fun_0,gate)){
+      $ctx.phase = 0.;
+   }
+   $ctx.phase = ($ctx.phase + rate);
+   if(($ctx.phase > 1.)){
+      $ctx.phase = ($ctx.phase - 1.);
+   }
+   return (sin((($ctx.phase * 2.) * 3.14159265359)) - 0.5);
+}
+function ctx_7_init(){
+   var $ctx = {};
+   $ctx.phase = 0.;
+   $ctx.$fun_0 = ctx_3_init();
+   return $ctx;
+}
+function lfo_init() { return ctx_7_init();}
+
+function process($ctx,input){
+   var lfo_val = (lfo($ctx.$fun_0,$ctx.lfo_rate,$ctx.gate) * $ctx.lfo_amt);
+   var phase1 = phasor($ctx.$fun_1,$ctx.pitch,false);
+   var comp = (1. - phase1);
+   var reset = (($ctx.pre_phase1 - phase1) > 0.5);
+   $ctx.pre_phase1 = phase1;
+   var phase2 = phasor($ctx.$fun_3,($ctx.pitch + (smooth($ctx.$fun_2,($ctx.detune + lfo_val)) * 32.)),reset);
+   var sine = sin(((2. * 3.14159265359) * phase2));
+   return ((smooth($ctx.$fun_4,$ctx.volume) * (sine * comp)) * smooth($ctx.$fun_5,$ctx.gate));
+}
+function ctx_8_init(){
+   var $ctx = {};
+   $ctx.volume = 0.;
+   $ctx.pre_phase1 = 0.;
+   $ctx.pitch = 0.;
+   $ctx.n4 = 0.;
+   $ctx.n3 = 0.;
+   $ctx.n2 = 0.;
+   $ctx.n1 = 0.;
+   $ctx.lfo_rate = 0.;
+   $ctx.lfo_amt = 0.;
+   $ctx.gate = 0.;
+   $ctx.detune = 0.;
+   $ctx.count = 0.;
+   $ctx.$fun_5 = ctx_1_init();
+   $ctx.$fun_4 = ctx_1_init();
+   $ctx.$fun_3 = ctx_6_init();
+   $ctx.$fun_2 = ctx_1_init();
+   $ctx.$fun_1 = ctx_6_init();
+   $ctx.$fun_0 = ctx_7_init();
+   return $ctx;
+}
+function process_init() { return ctx_8_init();}
+function noteOn($ctx,$ctx,note,velocity){
+   if(($ctx.count == 0.)){
+      $ctx.n1 = note;
+      $ctx.pitch = note;
+   }
+   else
+   {
+      if(($ctx.count == 1.)){
+         $ctx.n2 = note;
+         $ctx.pitch = note;
+      }
+      else
+      {
+         if(($ctx.count == 2.)){
+            $ctx.n3 = note;
+            $ctx.pitch = note;
+         }
+         else
+         {
+            if(($ctx.count == 3.)){
+               $ctx.n4 = note;
+               $ctx.pitch = note;
+            }
+         }
+      }
+   }
+   if(($ctx.count <= 4.)){
+      $ctx.count = ($ctx.count + 1.);
+   }
+   $ctx.gate = (($ctx.count > 0.)?1.:0.);
+}
+function noteOn_init() { return ctx_8_init();}
+function noteOff($ctx,$ctx,note){
+   var found = false;
+   if((note == $ctx.n1)){
+      $tmp_0 = $ctx.n2;
+      $tmp_1 = $ctx.n3;
+      $tmp_2 = $ctx.n4;
+      $ctx.n1 = $tmp_0;
+      $ctx.n2 = $tmp_1;
+      $ctx.n3 = $tmp_2;
+      found = true;
+   }
+   else
+   {
+      if((note == $ctx.n2)){
+         $tmp_0 = $ctx.n3;
+         $tmp_1 = $ctx.n4;
+         $ctx.n2 = $tmp_0;
+         $ctx.n3 = $tmp_1;
+         found = true;
+      }
+      else
+      {
+         if((note == $ctx.n3)){
+            $ctx.n3 = $ctx.n4;
+            found = true;
+         }
+         else
+         {
+            if((note == $ctx.n4)){
+               found = true;
+            }
+         }
+      }
+   }
+   if((found && ($ctx.count > 0.))){
+      $ctx.count = ($ctx.count - 1.);
+   }
+   $ctx.gate = (($ctx.count > 0.)?1.:0.);
+   if(($ctx.count == 1.)){
+      $ctx.pitch = $ctx.n1;
+   }
+   if(($ctx.count == 2.)){
+      $ctx.pitch = $ctx.n2;
+   }
+   if(($ctx.count == 3.)){
+      $ctx.pitch = $ctx.n3;
+   }
+   if(($ctx.count == 4.)){
+      $ctx.pitch = $ctx.n4;
+   }
+}
+function noteOff_init() { return ctx_8_init();}
+function controlChange($ctx,$ctx,control,value){
+   if((control == 30.)){
+      $ctx.volume = (value / 127.);
+   }
+   if((control == 31.)){
+      $ctx.detune = (value / 127.);
+   }
+   if((control == 32.)){
+      $ctx.lfo_rate = (value / 127.);
+   }
+   if((control == 33.)){
+      $ctx.lfo_amt = (2. * ((value / 127.) - 0.5));
+   }
+}
+function controlChange_init() { return ctx_8_init();}
+function default($ctx,$ctx){
+   $ctx.volume = 0.;
+   $ctx.pitch = 45.;
+   $ctx.detune = 0.8;
+   $ctx.lfo_rate = 0.07;
+   $ctx.lfo_amt = (- 0.8);
+}
+function default_init() { return ctx_8_init();}

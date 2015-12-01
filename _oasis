@@ -51,6 +51,15 @@ Library "vult_parser"
     vult_core,
     vult_util
 
+Library "vult_generators"
+  Path: src/generators
+  Modules:
+    VultJs
+  BuildDepends:
+    vult_core,
+    vult_util
+
+
 Library "vult"
   Path: src
   Modules:
@@ -58,7 +67,8 @@ Library "vult"
   BuildDepends:
     vult_core,
     vult_parser,
-    vult_util
+    vult_util,
+    vult_generators
 
 Executable "vultc"
   Path: .
@@ -67,7 +77,8 @@ Executable "vultc"
     vult,
     vult_parser,
     vult_util,
-    vult_core
+    vult_core,
+    vult_generators
 
 Executable "vult_node"
   Path: .

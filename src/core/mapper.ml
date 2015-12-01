@@ -213,6 +213,8 @@ let rec map_lhs_exp (mapper:'state mapper) (state:'state) (exp:lhs_exp) : 'state
       let state',attr'  = map_attr mapper state' attr in
       apply mapper.lhs_exp state' (LTuple(elems',attr'))
 
+and map_lhs_exp_list mapper = fun state exp -> (mapper_list map_lhs_exp) mapper state exp
+
 let map_val_decl (mapper:'state mapper) (state:'state) (v:val_decl) : 'state * val_decl =
    let id,tp,attr   = v in
    let state',id'   = map_id mapper state id in
