@@ -1,3 +1,27 @@
+(*
+The MIT License (MIT)
+
+Copyright (c) 2014 Leonardo Laguna Ruiz, Carl Jönsson
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*)
+
 open TypesVult
 
 let idStr = PrintTypes.identifierStr
@@ -15,45 +39,53 @@ let builtin_functions =
       ["tanh"];
    ] |> IdSet.of_list
 
-type symbol_type =
-   | LocalSymbol
+type symbol_kind =
+   | MemSymbol
+   | InstanceSymbol
    | FunctionSymbol
    | ModuleSymbol
 
 let kindStr = function
-   | LocalSymbol -> "local"
+   | MemSymbol      -> "mem"
+   | InstanceSymbol -> "instance"
    | FunctionSymbol -> "function"
-   | ModuleSymbol -> "module"
+   | ModuleSymbol   -> "module"
 
 (** Used to track the location while traversing and also to lookup function, mem, and module *)
 module Scope = struct
 
    type t =
       {
-         name   : id;
-         parent : t option;
-         sub    : t IdMap.t;
-         kind   : symbol_type;
+         name    : id;             (** Name of the current scope *)
+         kind    : symbol_kind;    (** Type of the current scope *)
+         parent  : t option;       (** Pointer to it's parent *)
+         keep    : t IdMap.t;      (** Persistent symbols (keeps mem and functions) *)
+         locals  : t IdMap.t list; (** Temprary symbols (variables in subscopes) *)
       }
 
    let empty : t =
       {
          name    = [];
-         parent  = None;
-         sub     = IdMap.empty;
          kind    = ModuleSymbol;
+         parent  = None;
+         keep    = IdMap.empty;
+         locals  = [ IdMap.empty ];
       }
 
    let rec dump (t:t) (level:int) : unit =
       Printf.printf "%s'%s' = %s\n" (String.make level ' ') (idStr t.name) (kindStr t.kind);
-      IdMap.iter (fun _ sub -> dump sub (level+3)) t.sub
+      IdMap.iter (fun _ sub -> dump sub (level+3)) t.keep
 
-   let addLocal (t:t) (name:id) : t =
-      let local_symbol = { empty with name = name; kind = LocalSymbol } in
-      { t with sub = IdMap.add name local_symbol t.sub }
+   let addMem (t:t) (name:id) : t =
+      let local_symbol = { empty with name = name; kind = MemSymbol } in
+      { t with keep = IdMap.add name local_symbol t.keep }
 
-   let enter (t:t) (name:id) (kind:symbol_type) : t =
-      match IdMap.find name t.sub with
+   let addInstance (t:t) (name:id) : t =
+      let local_symbol = { empty with name = name; kind = InstanceSymbol } in
+      { t with keep = IdMap.add name local_symbol t.keep }
+
+   let enter (t:t) (name:id) (kind:symbol_kind) : t =
+      match IdMap.find name t.keep with
       | sub ->
          { sub with parent = Some(t) }
       | exception Not_found ->
@@ -66,13 +98,13 @@ module Scope = struct
       match t.parent with
       | None -> failwith "Scope.exit: Cannot exit more scopes"
       | Some(parent) ->
-         { parent with sub = IdMap.add t.name t parent.sub }
+         { parent with keep = IdMap.add t.name t parent.keep }
 
    let getParent (t:t) : t option =
       match t.parent with
       | None -> None
       | Some(parent) ->
-         Some({ parent with sub = IdMap.add t.name t parent.sub })
+         Some({ parent with keep = IdMap.add t.name t parent.keep })
 
    let current (t:t) : path =
       let rec parentName parent =
@@ -88,7 +120,7 @@ module Scope = struct
       match name with
       | [] -> Some(t)
       | h::rest ->
-         match IdMap.find [h] t.sub with
+         match IdMap.find [h] t.keep with
          | found ->
             find found rest
          | exception Not_found ->
@@ -117,9 +149,10 @@ module Scope = struct
       | Some(t) -> Some(Path(getPath t))
       | _ -> None
 
-   let isLocal (t:t) (name:id) : bool =
+   let isMemOrInstance (t:t) (name:id) : bool =
       match find t name with
-      | Some({ kind = LocalSymbol }) -> true
+      | Some({ kind = MemSymbol }) -> true
+      | Some({ kind = InstanceSymbol }) -> true
       | _  -> false
 
 end
@@ -294,7 +327,7 @@ module Env = struct
       {
          state with
          context = FunctionContex.addMem state.context (Scope.current state.scope) name tp;
-         scope   = Scope.addLocal state.scope name;
+         scope   = Scope.addMem state.scope name;
       }
 
    (** Returns the full path of a function. Raises an error if it cannot be found *)
@@ -323,7 +356,7 @@ module Env = struct
 
    (** Returns true if the id is a mem or an instance *)
    let isLocalInstanceOrMem (state:'a t) (name:id) : bool =
-      Scope.isLocal state.scope name
+      Scope.isMemOrInstance state.scope name
 
    (** Generates a new name for an instance based on the tick *)
    let generateInstanceName (state:'a t) (name_opt:id option) : 'a t * id =
@@ -347,7 +380,7 @@ module Env = struct
          {
             state' with
             context = FunctionContex.addInstance state'.context (Scope.current state.scope) name' kind_path;
-            scope = Scope.addLocal state.scope name';
+            scope = Scope.addInstance state.scope name';
          }, Some(name')
       else
          state, None
