@@ -23,7 +23,7 @@ THE SOFTWARE.
 *)
 
 open TypesVult
-open Env
+open VEnv
 
 type ('data,'kind) mapper_func = ('data -> 'kind -> 'data * 'kind) option
 

@@ -35,7 +35,8 @@ Library "vult_core"
     Mapper,
     PrintTypes,
     TypesVult,
-    Env
+    Inference,
+    VEnv
   BuildDepends:
     vult_util,
     ppx_deriving.std

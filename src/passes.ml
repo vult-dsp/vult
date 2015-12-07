@@ -25,7 +25,7 @@ THE SOFTWARE.
 (** Transformations and optimizations of the syntax tree *)
 
 open TypesVult
-open Env
+open VEnv
 
 module PassData = struct
 
