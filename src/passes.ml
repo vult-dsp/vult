@@ -91,7 +91,7 @@ module GetIdentifiers = struct
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
       Mapper.make @@ fun state exp ->
          match exp with
-         | LId(id,_) ->
+         | LId(id,_,_) ->
             Env.set state (IdSet.add id (Env.get state)), exp
          | _ -> state, exp
 
@@ -124,14 +124,32 @@ module GetIdentifiers = struct
 
 end
 
+module GetAttr = struct
+
+   let fromExp (e:exp) : attr =
+      match e with
+      | PUnit(attr)
+      | PBool(_,attr)
+      | PInt(_,attr)
+      | PReal(_,attr)
+      | PId(_,attr)
+      | PUnOp(_,_,attr)
+      | POp(_,_,attr)
+      | PCall(_,_,_,attr)
+      | PIf(_,_,_,attr)
+      | PGroup(_,attr)
+      | PTuple(_,attr)
+      | PSeq(_,_,attr) -> attr
+      | PEmpty -> emptyAttr
+end
 
 module CollectContext = struct
 
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
       Mapper.make @@ fun state exp ->
          match exp with
-         | LId(id,_) ->
-            let tp = TId(["real"],emptyAttr) in
+         | LId(id,_,_) ->
+            let tp =  TId(["real"],None) in
             let state' = Env.addMemToContext state id tp in
             state',exp
          (*
@@ -179,7 +197,7 @@ module InsertContext = struct
          | StmtFun(name,args,body,rettype,attr) ->
             if Env.isActive state name then
                let context = Env.getContext state name in
-               let arg0 = TypedId(["$ctx"],TId(context,attr),attr) in
+               let arg0 = TypedId(["$ctx"],ref (TId(context,None)),attr) in
                state,StmtFun(name,arg0::args,body,rettype,attr)
             else
                state, stmt
@@ -197,8 +215,8 @@ module InsertContext = struct
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
       Mapper.make @@ fun state exp ->
          match exp with
-         | LId(id,attr) when Env.isLocalInstanceOrMem state id ->
-            state, LId("$ctx"::id,attr)
+         | LId(id,tp,attr) when Env.isLocalInstanceOrMem state id ->
+            state, LId("$ctx"::id,tp,attr)
          | _ -> state,exp
 
    let stmt_x : ('a Env.t, stmt) Mapper.expand_func =
@@ -253,7 +271,7 @@ module CreateInitFunction = struct
    let getInitValue (tp:type_exp) : exp =
       match tp with
       | TId(["real"],_) -> PReal(0.0,emptyAttr)
-      | TId(["int"],_)  -> PInt(0,emptyAttr)
+      | TId(["int"],_) -> PInt(0,emptyAttr)
       | _ -> PReal(0.0,emptyAttr)
 
    let callInitFunction state (tp:type_exp) : exp =
@@ -270,19 +288,19 @@ module CreateInitFunction = struct
       let new_stmts_set =
          IdTypeSet.fold
             (fun (name,tp) acc ->
-               let new_stmt = StmtBind(LId(ctx_name @ name,emptyAttr), getInitValue tp, emptyAttr) in
+               let new_stmt = StmtBind(LId(ctx_name @ name,Some(ref tp),emptyAttr), getInitValue tp, emptyAttr) in
                StmtSet.add new_stmt acc)
             mem_vars StmtSet.empty
       in
       let new_stmts_set' =
          IdTypeSet.fold
             (fun (name,tp) acc ->
-               let new_stmt = StmtBind(LId(ctx_name @ name, emptyAttr), callInitFunction state tp, emptyAttr) in
+               let new_stmt = StmtBind(LId(ctx_name @ name, Some(ref tp), emptyAttr), callInitFunction state tp, emptyAttr) in
                StmtSet.add new_stmt acc)
             instances new_stmts_set
       in
       let return_stmt = StmtReturn(PId(ctx_name,emptyAttr),emptyAttr) in
-      let ctx_decl = StmtVal(LTyped(LId(ctx_name,emptyAttr),TId(ctx,emptyAttr),emptyAttr),None,emptyAttr) in
+      let ctx_decl = StmtVal(LId(ctx_name,Some(ref (TId(ctx,None))),emptyAttr),None,emptyAttr) in
       let stmts = StmtSet.fold (fun a acc -> a::acc) new_stmts_set' [return_stmt] in
       StmtFun(getInitFunctioName ctx, [], StmtBlock(None, ctx_decl::stmts, emptyAttr), None, emptyAttr)
 
@@ -345,7 +363,13 @@ module SimplifyTupleAssign = struct
       if IdSet.is_empty (IdSet.inter lhs_id rhs_id) then
          List.map2 (fun a b -> kind a b) lhs rhs
       else
-         let stmts1 = List.mapi (fun i a -> kind (LId(makeTmp i,emptyAttr)) a) rhs in
+         let stmts1 =
+            List.mapi
+               (fun i a ->
+                  let attr = GetAttr.fromExp a in
+                  kind (LId(makeTmp i, attr.typ, emptyAttr)) a)
+               rhs
+         in
          let stmts2 = List.mapi (fun i a -> kind a (PId(makeTmp i,emptyAttr))) lhs in
          stmts1 @ stmts2
 
@@ -373,7 +397,6 @@ module SimplifyTupleAssign = struct
       { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
 
 end
-
 
 (* Basic transformations *)
 let pass1 (state,stmts) =

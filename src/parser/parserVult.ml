@@ -75,7 +75,7 @@ let getExpLocation (e:exp) : Loc.t =
 let getLhsExpLocation (e:lhs_exp) : Loc.t =
    match e with
    | LWild(attr)
-   | LId(_,attr)
+   | LId(_,_,attr)
    | LTuple(_,attr)
    | LTyped(_,_,attr) -> attr.loc
 
@@ -149,24 +149,25 @@ and type_nud (buffer:Stream.stream) (token:'kind token) : type_exp =
          match Stream.peek buffer with
          | LPAREN ->
             composedType buffer token id
-         | _ -> TId(id,makeAttr token.loc)
+         | _ -> TId(id, Some(token.loc))
       end
+   | WILD -> TUnbound("",1000000,None)
    | LPAREN ->
       begin
          let start_loc = token.loc in
          match Stream.peek buffer with
          | RPAREN ->
             let _ = Stream.skip buffer in
-            TUnit(makeAttr start_loc)
+            TId(["unit"], Some(start_loc))
          | _ ->
             let el = typeArgList buffer in
             begin
                match el with
-               | []   -> TUnit(makeAttr start_loc)
-               | [tp] -> tp
+               | []   -> TId(["unit"], Some(start_loc))
+               | [tp] -> !tp
                | _ ->
                   let _ = Stream.consume buffer RPAREN in
-                  TTuple(el,makeAttr start_loc)
+                  TComposed(["tuple"],el, Some(start_loc))
             end
       end
    | _ ->
@@ -185,12 +186,12 @@ and composedType (buffer:Stream.stream) (token:'kind token) (id:id) : type_exp =
       | _ -> typeArgList buffer
    in
    let _ = Stream.consume buffer RPAREN in
-   TComposed(id,args,makeAttr token.loc)
+   TComposed(id,args, Some(token.loc))
 
-and typeArgList (buffer:Stream.stream) : type_exp list =
+and typeArgList (buffer:Stream.stream) : type_ref list =
    let rec loop acc =
       (* power of 20 avoids returning a tuple instead of a list*)
-      let e = typeExpression 20 buffer in
+      let e = ref (typeExpression 20 buffer) in
       match Stream.peek buffer with
       | COMMA ->
          let _ = Stream.skip buffer in
@@ -208,7 +209,7 @@ and lhs_nud (buffer:Stream.stream) (token:'kind token) : lhs_exp =
    | WILD -> LWild(makeAttr token.loc)
    | ID   ->
       let id = identifierToken token in
-      LId(id,makeAttr token.loc)
+      LId(id,None,makeAttr token.loc)
    | LPAREN ->
       begin
          match Stream.peek buffer with
@@ -228,7 +229,7 @@ and lhs_led (buffer:Stream.stream) (token:'kind token) (left:lhs_exp) : lhs_exp 
    match token.kind with
    | COLON ->
       let type_exp = typeExpression 0 buffer in
-      LTyped(left,type_exp,makeAttr token.loc)
+      LTyped(left,ref type_exp,makeAttr token.loc)
    | COMMA ->
       lhs_pair buffer token left
    | _ -> failwith "lhs_led"
@@ -385,7 +386,7 @@ and typedArg (buffer:Stream.stream) : typed_id =
       let _    = Stream.skip buffer in
       let e    = typeExpression 20 buffer in
       let attr = makeAttr token.loc in
-      TypedId(splitOnDot token.value,e,attr)
+      TypedId(splitOnDot token.value,ref e,attr)
    | _ ->
       let attr = makeAttr token.loc in
       SimpleId(splitOnDot token.value,attr)
@@ -537,7 +538,7 @@ and stmtFunction (buffer:Stream.stream) : stmt =
       match Stream.peek buffer with
       | COLON ->
          let _ = Stream.skip buffer in
-         Some(typeExpression 0 buffer)
+         Some(ref (typeExpression 0 buffer))
       | _ -> None
    in
    let body      = stmtList buffer in
@@ -669,6 +670,11 @@ and pseqList (buffer:Stream.stream) : stmt list =
          let s = stmt buffer in
          loop (s::acc)
    in loop []
+
+(** Parses an lhs-expression given a string *)
+let parseLhsExp (s:string) : lhs_exp =
+   let buffer = Stream.fromString s in
+   lhs_expression 0 buffer
 
 (** Parses an expression given a string *)
 let parseExp (s:string) : exp =

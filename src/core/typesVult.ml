@@ -29,37 +29,41 @@ type id = string list
 type path =
    | Path of id
 
+
+type type_exp =
+   | TUnbound   of string * int * Loc.t option
+   | TId        of id * Loc.t option
+   | TComposed  of id * type_exp ref list * Loc.t option
+   | TArrow     of type_exp * type_exp * Loc.t option
+   | TLink      of type_exp ref
+   [@@deriving show,eq,ord]
+
+type type_ref = type_exp ref
+   [@@deriving show,eq,ord]
+
 type attr =
    {
       loc     : Loc.t;
       fun_and : bool;
       active  : bool;
       bound   : bool;
+      typ     : type_ref option;
    }
 
 let pp_attr = fun fmt _ -> Format.pp_print_string fmt "attr"
 let equal_attr _ _ = true
 let compare_attr _ _ = 0
 
-type type_exp =
-   | TUnit      of attr
-   | TWild      of attr
-   | TId        of id * attr
-   | TTuple     of type_exp list * attr
-   | TComposed  of id * type_exp list * attr
-   | TSignature of type_exp list * attr
-   [@@deriving show,eq,ord]
-
 type typed_id =
    | SimpleId of id * attr
-   | TypedId  of id * type_exp * attr
+   | TypedId  of id * type_ref * attr
    [@@deriving show,eq,ord]
 
 type lhs_exp =
    | LWild  of attr
-   | LId    of id * attr
+   | LId    of id * type_ref option * attr
    | LTuple of lhs_exp list * attr
-   | LTyped of lhs_exp * type_exp * attr
+   | LTyped of lhs_exp * type_ref * attr
    [@@deriving show,eq,ord]
 
 (** Parser syntax tree *)
@@ -139,7 +143,7 @@ and stmt =
       of id              (* name *)
       *  typed_id list   (* arguments *)
       *  stmt            (* body *)
-      *  type_exp option (* return type *)
+      *  type_ref option (* return type *)
       *  attr
    | StmtBind
       of lhs_exp     (* lhs *)
@@ -216,13 +220,10 @@ let default_arguments =
    }
 
 let makeAttr (loc:Loc.t) : attr =
-   { loc = loc; fun_and = false; active = false; bound = false }
+   { loc = loc; fun_and = false; active = false; bound = false; typ = None }
 
 let emptyAttr =
-   { loc = Loc.default; fun_and = false; active = false; bound = false }
-
-let andAttr =
-   { loc = Loc.default; fun_and = true; active = false; bound = false }
+   { loc = Loc.default; fun_and = false; active = false; bound = false; typ = None }
 
 module IdMap = Map.Make(struct type t = id let compare = compare end)
 

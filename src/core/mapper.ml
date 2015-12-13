@@ -155,31 +155,29 @@ let map_attr (mapper:'a mapper) (state:'a) (attr:attr) : 'a * attr =
    apply mapper.attr state attr
 
 let rec map_type_exp (mapper:'a mapper) (state:'a) (te:type_exp) : 'a * type_exp =
-   let map_type_exp_list = mapper_list map_type_exp in
+   let map_type_ref_list = mapper_list map_type_ref in
    match te with
-   | TUnit(attr) ->
-      let state',attr' = map_attr mapper state attr in
-      state',TUnit(attr')
-   | TWild(attr) ->
-      let state',attr' = map_attr mapper state attr in
-      state',TWild(attr')
-   | TId(id,attr) ->
+   | TUnbound(name,level,loc) ->
+      state,TUnbound(name,level,loc)
+   | TId(id,loc) ->
       let state',id'   = map_id mapper state id in
-      let state',attr' = map_attr mapper state' attr in
-      apply mapper.type_exp state' (TId(id',attr'))
-   | TTuple(el,attr) ->
-      let state',el'   = map_type_exp_list mapper state el in
-      let state',attr' = map_attr mapper state' attr in
-      apply mapper.type_exp state' (TTuple(el',attr'))
-   | TComposed(id,el,attr) ->
+      apply mapper.type_exp state' (TId(id',loc))
+   | TComposed(id,el,loc) ->
       let state',id'   = map_id mapper state id in
-      let state',el'   = map_type_exp_list mapper state' el in
-      let state',attr' = map_attr mapper state' attr in
-      apply mapper.type_exp state' (TComposed(id',el',attr'))
-   | TSignature(el,attr) ->
-      let state',el'   = map_type_exp_list mapper state el in
-      let state',attr' = map_attr mapper state' attr in
-      apply mapper.type_exp state' (TSignature(el',attr'))
+      let state',el'   = map_type_ref_list mapper state' el in
+      apply mapper.type_exp state' (TComposed(id',el',loc))
+   | TArrow(e1,e2,loc) ->
+      let state',e1'   = map_type_exp mapper state e1 in
+      let state',e2'   = map_type_exp mapper state' e2 in
+      apply mapper.type_exp state' (TArrow(e1',e2',loc))
+   | TLink(tp) ->
+      let state',tp'   = map_type_ref mapper state tp in
+      apply mapper.type_exp state' (TLink(tp'))
+
+and map_type_ref (mapper:'a mapper) (state:'a) (te:type_exp ref) : 'a * type_exp ref =
+   let state',tp = map_type_exp mapper state !te in
+   te := tp;
+   state', te
 
 let rec map_typed_id (mapper:'a mapper) (state:'a) (t:typed_id) : 'a * typed_id =
    match t with
@@ -189,7 +187,7 @@ let rec map_typed_id (mapper:'a mapper) (state:'a) (t:typed_id) : 'a * typed_id 
       apply mapper.typed_id state' (SimpleId(id',attr'))
    | TypedId(id,tp,attr) ->
       let state',id'   = map_id mapper state id in
-      let state',tp'   = map_type_exp mapper state' tp in
+      let state',tp'   = map_type_ref mapper state' tp in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.typed_id state' (TypedId(id',tp',attr'))
 
@@ -199,13 +197,14 @@ let rec map_lhs_exp (mapper:'state mapper) (state:'state) (exp:lhs_exp) : 'state
    | LWild(attr) ->
       let state',attr' = map_attr mapper state attr in
       apply mapper.lhs_exp state' (LWild(attr'))
-   | LId(id,attr) ->
+   | LId(id,tp,attr) ->
       let state',id'   = map_id mapper state id in
+      let state',tp'   = (mapper_opt map_type_ref) mapper state' tp in
       let state',attr' = map_attr mapper state' attr in
-      apply mapper.lhs_exp state' (LId(id',attr'))
+      apply mapper.lhs_exp state' (LId(id',tp',attr'))
    | LTyped(e,tp,attr) ->
       let state',e'    = map_lhs_exp  mapper state e in
-      let state',tp'   = map_type_exp mapper state' tp in
+      let state',tp'   = map_type_ref mapper state' tp in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.lhs_exp state' (LTyped(e',tp',attr'))
    | LTuple(elems,attr) ->
@@ -338,7 +337,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       let state'       = Env.enterFunction state name in
       let state',name' = map_id mapper state' name in
       let state',args' = (mapper_list map_typed_id) mapper state' args in
-      let state',ret'  = (mapper_opt map_type_exp) mapper state' ret in
+      let state',ret'  = (mapper_opt map_type_ref) mapper state' ret in
       let state',attr' = map_attr mapper state' attr in
       let state',stmt' =
          apply mapper.stmt state' (StmtFun(name',args',body,ret',attr'))

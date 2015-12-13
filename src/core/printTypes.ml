@@ -42,22 +42,20 @@ let commentedId buffer id =
 
 let rec typeExpressionBuff buffer (tp:type_exp) =
    match tp with
-   | TUnit(_) ->
-      append buffer "unit"
    | TId(id,_) ->
       identifierBuff buffer id
-   | TTuple(elems,_) ->
-      append buffer "(";
-      typeExpressionListBuff buffer elems;
-      append buffer ")"
    | TComposed(id,args,_) ->
       identifierBuff buffer id;
       append buffer "(";
+      let args = List.map (fun a -> !a) args in
       typeExpressionListBuff buffer args;
       append buffer ")"
-   | TSignature(elems,_) ->
-      printList buffer typeExpressionBuff " -> " elems
-   | TWild(_) -> append buffer "_";
+   | TArrow(t1,t2,_) ->
+      typeExpressionBuff buffer t1;
+      append buffer " -> ";
+      typeExpressionBuff buffer t2
+   | TUnbound _ -> append buffer "_";
+   | TLink(tp) -> typeExpressionBuff buffer !tp
 and typeExpressionListBuff buffer expl =
    printList buffer typeExpressionBuff "," expl
 
@@ -65,8 +63,14 @@ let rec lhsExpressionBuff buffer (lhs:lhs_exp) =
    match lhs with
    | LWild(_) ->
       append buffer "_"
-   | LId(id,_) ->
+   | LId(id,None,_) ->
       identifierBuff buffer id
+   | LId(id,Some(tp),_) ->
+      append buffer "(";
+      identifierBuff buffer id;
+      append buffer ":";
+      typeExpressionBuff buffer !tp;
+      append buffer ")"
    | LTuple(elems,_) ->
       append buffer "(";
       lhsExpressionListBuff buffer elems;
@@ -75,7 +79,7 @@ let rec lhsExpressionBuff buffer (lhs:lhs_exp) =
       append buffer "(";
       lhsExpressionBuff buffer e;
       append buffer ":";
-      typeExpressionBuff buffer tp;
+      typeExpressionBuff buffer !tp;
       append buffer ")"
 and lhsExpressionListBuff buffer expl =
    printList buffer lhsExpressionBuff "," expl
@@ -85,11 +89,11 @@ let rec typedArgBuff buffer id =
    match id with
    | SimpleId(id1,_) -> identifierBuff buffer id1
    | TypedId(["_"],id_type,_) ->
-      typeExpressionBuff buffer id_type
+      typeExpressionBuff buffer !id_type
    | TypedId(id1,id_type,_) ->
       identifierBuff buffer id1;
       append buffer ":";
-      typeExpressionBuff buffer id_type
+      typeExpressionBuff buffer !id_type
 
 (** Adds to the print buffer an expression *)
 and expressionBuff buffer (exp:exp) =
@@ -195,7 +199,7 @@ and stmtBuff buffer (s:stmt) =
       append buffer ") ";
       CCOpt.iter(fun a ->
             append buffer ": ";
-            typeExpressionBuff buffer a;
+            typeExpressionBuff buffer !a;
             append buffer " ") type_exp;
       stmtBuff buffer body;
       newline buffer

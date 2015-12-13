@@ -55,7 +55,7 @@ and convertExpList (e:exp list) : jsexp list =
 
 let rec convertLhsExp (e:lhs_exp) : string =
    match e with
-   | LId(id,_)      -> convertId id
+   | LId(id,_,_)    -> convertId id
    | LTyped(e1,_,_) -> convertLhsExp e1
    | LTuple _       -> failwith "VultJs.convertLhsExp: Tuples are not supported in js"
    | LWild _        -> "_"

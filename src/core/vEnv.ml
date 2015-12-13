@@ -236,7 +236,7 @@ module FunctionContex = struct
       in
       {
          context with
-         instance = IdMap.add context_for_func (IdTypeSet.add (name,TId(pathId kind,emptyAttr)) instance_for_context) context.instance;
+         instance = IdMap.add context_for_func (IdTypeSet.add (name,TId(pathId kind,None)) instance_for_context) context.instance;
       }
 
    let isBuiltinPath (name:path) : bool =
