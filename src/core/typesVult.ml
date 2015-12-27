@@ -33,12 +33,12 @@ type path =
 type type_exp =
    | TUnbound   of string * int * Loc.t option
    | TId        of id * Loc.t option
-   | TComposed  of id * type_exp ref list * Loc.t option
-   | TArrow     of type_exp * type_exp * Loc.t option
+   | TComposed  of id * type_ref list * Loc.t option
+   | TArrow     of type_ref * type_ref * Loc.t option
    | TLink      of type_exp ref
    [@@deriving show,eq,ord]
 
-type type_ref = type_exp ref
+and type_ref = type_exp ref
    [@@deriving show,eq,ord]
 
 type attr =

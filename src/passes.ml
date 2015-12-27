@@ -434,6 +434,7 @@ let applyTransformations (results:parser_results) =
    in
 
    let passes stmts =
+      let stmts,_,_ = Inference.inferStmtList [] None stmts in
       (initial_state,stmts)
       |> pass1
       |> dump

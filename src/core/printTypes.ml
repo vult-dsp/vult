@@ -51,9 +51,9 @@ let rec typeExpressionBuff buffer (tp:type_exp) =
       typeExpressionListBuff buffer args;
       append buffer ")"
    | TArrow(t1,t2,_) ->
-      typeExpressionBuff buffer t1;
+      typeExpressionBuff buffer !t1;
       append buffer " -> ";
-      typeExpressionBuff buffer t2
+      typeExpressionBuff buffer !t2
    | TUnbound _ -> append buffer "_";
    | TLink(tp) -> typeExpressionBuff buffer !tp
 and typeExpressionListBuff buffer expl =

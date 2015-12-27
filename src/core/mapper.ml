@@ -167,8 +167,8 @@ let rec map_type_exp (mapper:'a mapper) (state:'a) (te:type_exp) : 'a * type_exp
       let state',el'   = map_type_ref_list mapper state' el in
       apply mapper.type_exp state' (TComposed(id',el',loc))
    | TArrow(e1,e2,loc) ->
-      let state',e1'   = map_type_exp mapper state e1 in
-      let state',e2'   = map_type_exp mapper state' e2 in
+      let state',e1'   = map_type_ref mapper state e1 in
+      let state',e2'   = map_type_ref mapper state' e2 in
       apply mapper.type_exp state' (TArrow(e1',e2',loc))
    | TLink(tp) ->
       let state',tp'   = map_type_ref mapper state tp in
