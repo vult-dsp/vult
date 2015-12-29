@@ -41,12 +41,14 @@ let builtin_functions =
 
 type symbol_kind =
    | MemSymbol
+   | VarSymbol
    | InstanceSymbol
    | FunctionSymbol
    | ModuleSymbol
 
 let kindStr = function
    | MemSymbol      -> "mem"
+   | VarSymbol      -> "var"
    | InstanceSymbol -> "instance"
    | FunctionSymbol -> "function"
    | ModuleSymbol   -> "module"
@@ -60,7 +62,8 @@ module Scope = struct
          kind    : symbol_kind;    (** Type of the current scope *)
          parent  : t option;       (** Pointer to it's parent *)
          keep    : t IdMap.t;      (** Persistent symbols (keeps mem and functions) *)
-         locals  : t IdMap.t list; (** Temprary symbols (variables in subscopes) *)
+         locals  : t IdMap.t list; (** Temporary symbols (variables in subscopes) *)
+         typ     : type_ref;       (** Type of the symbol *)
       }
 
    let empty : t =
@@ -70,19 +73,29 @@ module Scope = struct
          parent  = None;
          keep    = IdMap.empty;
          locals  = [ IdMap.empty ];
+         typ     = ref (TId([""],None));
       }
 
    let rec dump (t:t) (level:int) : unit =
       Printf.printf "%s'%s' = %s\n" (String.make level ' ') (idStr t.name) (kindStr t.kind);
       IdMap.iter (fun _ sub -> dump sub (level+3)) t.keep
 
-   let addMem (t:t) (name:id) : t =
-      let local_symbol = { empty with name = name; kind = MemSymbol } in
-      { t with keep = IdMap.add name local_symbol t.keep }
+   let addMem (t:t) (name:id) (typ:type_ref) : t =
+      let new_symbol = { empty with name = name; kind = MemSymbol; typ = typ } in
+      { t with keep = IdMap.add name new_symbol t.keep }
 
    let addInstance (t:t) (name:id) : t =
-      let local_symbol = { empty with name = name; kind = InstanceSymbol } in
-      { t with keep = IdMap.add name local_symbol t.keep }
+      let new_symbol = { empty with name = name; kind = InstanceSymbol } in
+      { t with keep = IdMap.add name new_symbol t.keep }
+
+   let addVar (t:t) (name:id) (typ:type_ref) : t =
+      let new_symbol = { empty with name = name; kind = VarSymbol; typ = typ  } in
+      let first,rest =
+         match t.locals with
+         | [] -> IdMap.empty,[]
+         | h::t -> h,t
+      in
+      { t with locals = (IdMap.add name new_symbol first) :: rest }
 
    let enter (t:t) (name:id) (kind:symbol_kind) : t =
       match IdMap.find name t.keep with
@@ -91,14 +104,23 @@ module Scope = struct
       | exception Not_found ->
          { empty with parent = Some(t); name = name; kind = kind }
 
-   let enterFunction (t:t) (name:id) : t =
-      enter t name FunctionSymbol
-
    let exit (t:t) : t =
       match t.parent with
       | None -> failwith "Scope.exit: Cannot exit more scopes"
       | Some(parent) ->
          { parent with keep = IdMap.add t.name t parent.keep }
+
+   let enterBlock (t:t) : t =
+      { t with locals = IdMap.empty :: t.locals }
+
+   let exitBlock (t:t) : t =
+      { t with locals = List.tl t.locals }
+
+   let enterFunction (t:t) (name:id) : t =
+      enter t name FunctionSymbol
+
+   let enterModule (t:t) (name:id) : t =
+      enter t name ModuleSymbol
 
    let getParent (t:t) : t option =
       match t.parent with
@@ -124,7 +146,12 @@ module Scope = struct
          | found ->
             find found rest
          | exception Not_found ->
-            None
+            let locals = List.hd t.locals in
+            match IdMap.find [h] locals with
+            | found ->
+               find found rest
+            | exception Not_found ->
+               None
 
    let rec lookupAny (t:t) (name:id) : t option =
       match find t name with
@@ -144,9 +171,9 @@ module Scope = struct
       t.name @ (parentPath t.parent)
       |> List.rev
 
-   let lookupFunction (t:t) (name:id) : path option =
+   let lookup (t:t) (name:id) : (path * type_ref) option =
       match lookupAny t name with
-      | Some(t) -> Some(Path(getPath t))
+      | Some(t) -> Some(Path(getPath t), t.typ)
       | _ -> None
 
    let isMemOrInstance (t:t) (name:id) : bool =
@@ -217,7 +244,7 @@ module FunctionContex = struct
          backward = IdMap.add context_name [func] context.backward;
       }
 
-   let addMem (context:t) (func:path) (name:id) (tp:type_exp) : t =
+   let addMem (context:t) (func:path) (name:id) (typ:type_ref) : t =
       let context_for_func = findContext context func in
       let mem_for_context  =
          try IdMap.find context_for_func context.mem with
@@ -225,7 +252,7 @@ module FunctionContex = struct
       in
       {
          context with
-         mem = IdMap.add context_for_func (IdTypeSet.add (name,tp) mem_for_context) context.mem;
+         mem = IdMap.add context_for_func (IdTypeSet.add (name,typ) mem_for_context) context.mem;
       }
 
    let addInstance (context:t) (func:path) (name:id) (kind:path) : t =
@@ -234,9 +261,10 @@ module FunctionContex = struct
          try IdMap.find context_for_func context.instance with
          | Not_found -> IdTypeSet.empty
       in
+      let instance_type = ref (TId(pathId kind,None)) in
       {
          context with
-         instance = IdMap.add context_for_func (IdTypeSet.add (name,TId(pathId kind,None)) instance_for_context) context.instance;
+         instance = IdMap.add context_for_func (IdTypeSet.add (name,instance_type) instance_for_context) context.instance;
       }
 
    let isBuiltinPath (name:path) : bool =
@@ -270,13 +298,13 @@ module FunctionContex = struct
       IdMap.iter
          (fun key value ->
             Printf.printf "   '%s' = " (idStr key);
-            IdTypeSet.iter (fun (v,tp) -> Printf.printf "'%s:%s' " (idStr v) (PrintTypes.typeStr tp)) value;
+            IdTypeSet.iter (fun (v,tp) -> Printf.printf "'%s:%s' " (idStr v) (PrintTypes.typeStr !tp)) value;
             print_newline ())
          context.mem;
       print_endline "Instance";
       IdMap.iter
          (fun key value -> Printf.printf "   '%s' = " (idStr key);
-            IdTypeSet.iter (fun (name,kind) -> Printf.printf "'%s:%s' " (idStr name) (PrintTypes.typeStr kind)) value;
+            IdTypeSet.iter (fun (name,kind) -> Printf.printf "'%s:%s' " (idStr name) (PrintTypes.typeStr !kind)) value;
             print_newline ())
          context.instance;
       print_endline "Active";
@@ -323,22 +351,29 @@ module Env = struct
       }
 
    (** Adds a mem variable to the current context *)
-   let addMemToContext (state:'a t) (name:id) (tp:type_exp) : 'a t  =
+   let addMem (state:'a t) (name:id) (typ:type_ref) : 'a t  =
       {
          state with
-         context = FunctionContex.addMem state.context (Scope.current state.scope) name tp;
-         scope   = Scope.addMem state.scope name;
+         context = FunctionContex.addMem state.context (Scope.current state.scope) name typ;
+         scope   = Scope.addMem state.scope name typ;
+      }
+
+   (** Adds a variable to the current block *)
+   let addVar (state:'a t) (name:id) (typ:type_ref) : 'a t  =
+      {
+         state with
+         scope   = Scope.addVar state.scope name typ;
       }
 
    (** Returns the full path of a function. Raises an error if it cannot be found *)
-   let lookup (state:'a t) (name:id) : path =
-      match Scope.lookupFunction state.scope name with
-      | None -> failwith (Printf.sprintf "Cannot find function '%s'" (idStr name))
+   let lookup (state:'a t) (name:id) : path * type_ref =
+      match Scope.lookup state.scope name with
+      | None -> failwith (Printf.sprintf "Cannot find symbol '%s'" (idStr name))
       | Some(path) -> path
 
       (** Returns the mem and instances for a function *)
    let getMemAndInstances (state:'a t) (name:id) : IdTypeSet.t * IdTypeSet.t =
-      let path     = lookup state name in
+      let path,_   = lookup state name in
       let ctx      = FunctionContex.findContext state.context path in
       let mem      = FunctionContex.getMemForContext state.context ctx in
       let instance = FunctionContex.getInstancesForContext state.context ctx in
@@ -346,12 +381,12 @@ module Env = struct
 
    (** Returns the generated context name for the given function *)
    let getContext (state:'a t) (name:id) : id =
-      let path = lookup state name in
+      let path,_ = lookup state name in
       FunctionContex.findContext state.context path
 
    (** Returns true if the function is active *)
    let isActive (state:'a t) (name:id) : bool =
-      let path = lookup state name in
+      let path,_ = lookup state name in
       FunctionContex.isActive state.context path
 
    (** Returns true if the id is a mem or an instance *)
@@ -369,8 +404,8 @@ module Env = struct
 
    (** Adds a new instance to the context if the function is active *)
    let addInstanceToContext (state:'a t) (name_opt:id option) (kind:id) : 'a t * id option  =
-      let kind_path_opt = Scope.lookupFunction state.scope kind in
-      let kind_path =
+      let kind_path_opt = Scope.lookup state.scope kind in
+      let kind_path,_ =
          match kind_path_opt with
          | Some(path) -> path
          | None -> failwith "Cannot find function"
@@ -404,6 +439,20 @@ module Env = struct
          scope = Scope.exit state.scope;
       }
 
+   (** Enters to a block of statements *)
+   let enterBlock (state:'a t) : 'a t  =
+      {
+         state with
+         scope = Scope.enterBlock state.scope ;
+      }
+
+   (** Exits to a block of statements *)
+   let exitBlock (state:'a t) : 'a t  =
+      {
+         state with
+         scope = Scope.exitBlock state.scope ;
+      }
+
    (** Adds the builtin functions to the given context *)
    let addBuiltin (s:Scope.t) : Scope.t =
       IdSet.fold (fun a s -> Scope.enterFunction s a |> Scope.exit ) builtin_functions s
@@ -414,7 +463,7 @@ module Env = struct
          data    = data;
          context = FunctionContex.empty;
          tick    = 0;
-         scope   = Scope.enter (Scope.empty |> addBuiltin) init ModuleSymbol;
+         scope   = Scope.enterModule (Scope.empty |> addBuiltin) init;
       }
 
    let get (state:'a t) : 'a =

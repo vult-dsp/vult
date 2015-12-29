@@ -595,7 +595,7 @@ and valDecl (buffer:Stream.stream) : val_decl =
    let _         = Stream.skip buffer in
    let id        = id buffer in
    let _         = Stream.consume buffer COLON in
-   let val_type  = typeExpression 10 buffer in
+   let val_type  = ref (typeExpression 10 buffer) in
    id,val_type,makeAttr start_loc
 
 (** 'while' (<expression>) <stmtList> *)

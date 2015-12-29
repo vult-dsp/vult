@@ -168,7 +168,7 @@ and stmt =
 
 and val_decl =
    id          (* name *)
-   * type_exp  (* type *)
+   * type_ref  (* type *)
    * attr
    [@@deriving show,eq,ord]
 
@@ -231,7 +231,7 @@ module PathMap = Map.Make(struct type t = path let compare = compare end)
 
 module IdSet = Set.Make(struct type t = id let compare = compare end)
 
-module IdTypeSet = Set.Make(struct type t = id * type_exp let compare = compare end)
+module IdTypeSet = Set.Make(struct type t = id * type_ref let compare = compare end)
 
 let pathId (path:path) : id =
    let Path(id) = path in

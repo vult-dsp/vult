@@ -149,14 +149,9 @@ module CollectContext = struct
       Mapper.make @@ fun state exp ->
          match exp with
          | LId(id,_,_) ->
-            let tp =  TId(["real"],None) in
-            let state' = Env.addMemToContext state id tp in
+            let tp =  ref (TId(["real"],None)) in
+            let state' = Env.addMem state id tp in
             state',exp
-         (*
-         | LTyped(LId(id,_),tp,_) -> (** Currently the id's are untyped *)
-            let state' = Env.addMemToContext state id in
-            state',exp
-         *)
          | _ -> state,exp
 
    let reg_mem_mapper =
@@ -229,19 +224,6 @@ module InsertContext = struct
       { Mapper.default_mapper with Mapper.stmt = stmt; Mapper.exp = exp; Mapper.lhs_exp = lhs_exp; Mapper.stmt_x = stmt_x }
 end
 
-(** Removes type information until type inference is in place *)
-module Untype = struct
-
-   let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
-         match exp with
-         | LTyped(e,_,_) -> state,e
-         | _ -> state,exp
-
-   let mapper =
-      { Mapper.default_mapper with Mapper.lhs_exp = lhs_exp }
-
-end
 
 (** Splits mem declarations with binding to two statements *)
 module SplitMem = struct
@@ -268,15 +250,15 @@ module CreateInitFunction = struct
       | [last] -> [ last^"_init" ]
       | h::t -> h :: (getInitFunctioName t)
 
-   let getInitValue (tp:type_exp) : exp =
+   let getInitValue (tp:type_ref) : exp =
       match tp with
-      | TId(["real"],_) -> PReal(0.0,emptyAttr)
-      | TId(["int"],_) -> PInt(0,emptyAttr)
+      | { contents = TId(["real"],_) } -> PReal(0.0,emptyAttr)
+      | { contents = TId(["int"],_) } -> PInt(0,emptyAttr)
       | _ -> PReal(0.0,emptyAttr)
 
-   let callInitFunction state (tp:type_exp) : exp =
+   let callInitFunction state (tp:type_ref) : exp =
       match tp with
-      | TId(name,_) ->
+      | { contents = TId(name,_) } ->
          let fun_ctx = Env.getContext state name in
          PCall(None,getInitFunctioName fun_ctx,[],emptyAttr)
       | _ -> failwith "CreateInitFunction.callInitFunction: cannot initialize this yet"
@@ -288,14 +270,14 @@ module CreateInitFunction = struct
       let new_stmts_set =
          IdTypeSet.fold
             (fun (name,tp) acc ->
-               let new_stmt = StmtBind(LId(ctx_name @ name,Some(ref tp),emptyAttr), getInitValue tp, emptyAttr) in
+               let new_stmt = StmtBind(LId(ctx_name @ name,Some(tp),emptyAttr), getInitValue tp, emptyAttr) in
                StmtSet.add new_stmt acc)
             mem_vars StmtSet.empty
       in
       let new_stmts_set' =
          IdTypeSet.fold
             (fun (name,tp) acc ->
-               let new_stmt = StmtBind(LId(ctx_name @ name, Some(ref tp), emptyAttr), callInitFunction state tp, emptyAttr) in
+               let new_stmt = StmtBind(LId(ctx_name @ name, Some(tp), emptyAttr), callInitFunction state tp, emptyAttr) in
                StmtSet.add new_stmt acc)
             instances new_stmts_set
       in
@@ -401,8 +383,7 @@ end
 (* Basic transformations *)
 let pass1 (state,stmts) =
    let mapper =
-      Untype.mapper
-      |> Mapper.seq SplitMem.mapper
+      SplitMem.mapper
       |> Mapper.seq CollectContext.mapper
       |> Mapper.seq InsertContext.mapper
       |> Mapper.seq SimplifyTupleAssign.mapper
@@ -434,13 +415,14 @@ let applyTransformations (results:parser_results) =
    in
 
    let passes stmts =
-      let stmts,_,_ = Inference.inferStmtList [] None stmts in
-      (initial_state,stmts)
+      let stmts,_,_ = Inference.inferStmtList initial_state None stmts in
+      (*(initial_state,stmts)
       |> pass1
       |> dump
       |> pass2
       |> dump
-      |> snd
+      |> snd*)
+      stmts
    in
 
    let new_stmts = CCError.map passes results.presult in
