@@ -122,6 +122,9 @@ module Scope = struct
    let enterModule (t:t) (name:id) : t =
       enter t name ModuleSymbol
 
+   let setCurrentType (t:t) (typ:type_ref) : t =
+      { t with typ = typ }
+
    let getParent (t:t) : t option =
       match t.parent with
       | None -> None
@@ -423,6 +426,12 @@ module Env = struct
    (** Returns the current location *)
    let currentScope (state:'a t) : path =
       Scope.current state.scope
+
+   let setCurrentType (state:'a t) (typ:type_ref) : 'a t =
+      {
+         state with
+         scope = Scope.setCurrentType state.scope typ;
+      }
 
    (** Enters to the context of the given function *)
    let enterFunction (state:'a t) (func:id) : 'a t  =
