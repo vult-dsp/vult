@@ -1,0 +1,18 @@
+(* Added by OPAM. *)
+let () =
+  try Topdirs.dir_directory (Sys.getenv "OCAML_TOPLEVEL_PATH")
+  with Not_found -> ()
+;;
+#use "topfind";;
+#require "str";;
+#require "unix";;
+#require "ocamlgraph";;
+#require "ppx_deriving";;
+#require "containers";;
+#require "vult_util";;
+#require "vult_core";;
+#require "vult_parser";;
+#install_printer TypesVult.pp_type_ref;;
+#install_printer TypesVult.pp_exp;;
+#install_printer TypesVult.pp_lhs_exp;;
+#install_printer TypesVult.pp_stmt;;
