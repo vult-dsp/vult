@@ -72,7 +72,7 @@ module Scope = struct
          kind    = ModuleSymbol;
          parent  = None;
          keep    = IdMap.empty;
-         locals  = [ IdMap.empty ];
+         locals  = [];
          typ     = ref (TId([""],None));
       }
 
@@ -149,12 +149,16 @@ module Scope = struct
          | found ->
             find found rest
          | exception Not_found ->
-            let locals = List.hd t.locals in
-            match IdMap.find [h] locals with
-            | found ->
-               find found rest
-            | exception Not_found ->
-               None
+            let rec findLocals l =
+               match l with
+               | []   -> None
+               | local::locals ->
+                  match IdMap.find [h] local with
+                  | found ->
+                     find found rest
+                  | exception Not_found ->
+                     findLocals locals
+            in findLocals t.locals
 
    let rec lookupAny (t:t) (name:id) : t option =
       match find t name with

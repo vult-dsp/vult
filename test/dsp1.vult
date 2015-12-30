@@ -11,7 +11,7 @@ fun clip(low,high,value){
 
 fun biquad(x:real,b0,b1,b2,a1,a2){
     mem w1,w2;
-    val w0 = x -a1*w1-a2*w2;
+    val w0 = x - a1*w1 - a2*w2;
     val y0 = b0*w0 + b1*w1 + b2*w2;
     w2, w1 = w1, w0;
     return y0;

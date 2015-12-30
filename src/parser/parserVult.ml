@@ -92,6 +92,7 @@ let getStmtLocation (s:stmt)  : Loc.t =
    | StmtBlock(_,_,attr)
    | StmtWhile(_,_,attr)
    | StmtType(_,_,_,attr)
+   | StmtExternal(_,_,_,attr)
    | StmtAliasType(_,_,_,attr) -> attr.loc
    | StmtEmpty -> Loc.default
 
@@ -377,7 +378,7 @@ and expressionList (buffer:Stream.stream) : exp list =
    in loop []
 
 (** typedArg := <ID> [ ':' <ID>]  *)
-and typedArg (buffer:Stream.stream) : typed_id =
+and typedArgOpt (buffer:Stream.stream) : typed_id =
    let _     = Stream.expect buffer ID in
    let token = Stream.current buffer in
    let _     = Stream.skip buffer in
@@ -391,6 +392,16 @@ and typedArg (buffer:Stream.stream) : typed_id =
       let attr = makeAttr token.loc in
       SimpleId(splitOnDot token.value,attr)
 
+(** typedArg := <ID> [ ':' <ID>]  *)
+and typedArg (buffer:Stream.stream) : typed_id =
+   let _     = Stream.expect buffer ID in
+   let token = Stream.current buffer in
+   let _     = Stream.skip buffer in
+   let _     = Stream.consume buffer COLON in
+   let e     = ref (typeExpression 20 buffer) in
+   let attr  = makeAttr token.loc in
+   TypedId(splitOnDot token.value,e,attr)
+
 and id (buffer:Stream.stream) : id =
    let _     = Stream.expect buffer ID in
    let token = Stream.current buffer in
@@ -398,15 +409,16 @@ and id (buffer:Stream.stream) : id =
    identifierToken token
 
 (** typedArgList := typedArg [',' typedArg ] *)
-and typedArgList (buffer:Stream.stream) : typed_id list =
+and typedArgList (optional_type:bool) (buffer:Stream.stream) : typed_id list =
    match Stream.peek buffer with
    | ID ->
-      let first = typedArg buffer in
+      let fn = if optional_type then typedArgOpt else typedArg in
+      let first = fn buffer in
       begin
          match Stream.peek buffer with
          | COMMA ->
             let _ = Stream.consume buffer COMMA in
-            first::(typedArgList buffer)
+            first::(typedArgList optional_type buffer)
          | _ -> [first]
       end
    | _ -> []
@@ -521,7 +533,25 @@ and stmtIf (buffer:Stream.stream) : stmt =
       StmtIf(cond,tstm,Some(fstm),makeAttr start_loc)
    | _ -> StmtIf(cond,tstm,None,makeAttr start_loc)
 
-(** 'fun' <id> '(' <typedArgList> ')' <stmtList> *)
+(** 'external' <id> '(' <typedArgList> ')' ':' type *)
+and stmtExternal (buffer:Stream.stream) : stmt =
+   let _      = Stream.skip buffer in
+   let name   = id buffer in
+   let token  = Stream.current buffer in
+   let _      = Stream.consume buffer LPAREN in
+   let args   =
+      match Stream.peek buffer with
+      | RPAREN -> []
+      | _ -> typedArgList false buffer
+   in
+   let _      = Stream.consume buffer RPAREN in
+   let _      = Stream.consume buffer COLON in
+   let type_exp = ref (typeExpression 0 buffer) in
+   let _      = Stream.consume buffer SEMI in
+   let start_loc = token.loc in
+   let attr      = makeAttr start_loc in
+   StmtExternal(name,args,type_exp,attr)
+(** 'fun' <id> '(' <typedArgList> ')' [ ':' type ] <stmtList> *)
 and stmtFunction (buffer:Stream.stream) : stmt =
    let isjoin = match Stream.peek buffer with | AND -> true | _ -> false in
    let _      = Stream.skip buffer in
@@ -531,7 +561,7 @@ and stmtFunction (buffer:Stream.stream) : stmt =
    let args   =
       match Stream.peek buffer with
       | RPAREN -> []
-      | _ -> typedArgList buffer
+      | _ -> typedArgList true buffer
    in
    let _        = Stream.consume buffer RPAREN in
    let type_exp =
@@ -557,7 +587,7 @@ and stmtType (buffer:Stream.stream) : stmt =
       match Stream.peek buffer with
       | LPAREN ->
          let _    = Stream.skip buffer in
-         let args = typedArgList buffer in
+         let args = typedArgList true buffer in
          let _    = Stream.consume buffer RPAREN in
          args
       | _ -> []
@@ -612,16 +642,17 @@ and stmtWhile (buffer:Stream.stream) : stmt =
 and stmt (buffer:Stream.stream) : stmt =
    try
       match Stream.peek buffer with
-      | VAL   -> stmtVal     buffer
-      | MEM   -> stmtMem     buffer
-      | RET   -> stmtReturn  buffer
-      | IF    -> stmtIf      buffer
-      | FUN   -> stmtFunction buffer
-      | AND   -> stmtFunction buffer
-      | WHILE -> stmtWhile    buffer
-      | TYPE  -> stmtType     buffer
-      | TABLE -> stmtTab      buffer
-      | _     -> stmtBind     buffer
+      | VAL   ->    stmtVal      buffer
+      | MEM   ->    stmtMem      buffer
+      | RET   ->    stmtReturn   buffer
+      | IF    ->    stmtIf       buffer
+      | FUN   ->    stmtFunction buffer
+      | AND   ->    stmtFunction buffer
+      | WHILE ->    stmtWhile    buffer
+      | TYPE  ->    stmtType     buffer
+      | TABLE ->    stmtTab      buffer
+      | EXTERNAL -> stmtExternal buffer
+      | _        -> stmtBind     buffer
    with
    | ParserError(error) ->
       let _ = Stream.appendError buffer error in

@@ -345,6 +345,18 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       in
       let state'       = Env.exit state' in
       state', stmt'
+   | StmtExternal(name,args,ret,attr) ->
+      let state'       = Env.enterFunction state name in
+      let state',name' = map_id mapper state' name in
+      let state',args' = (mapper_list map_typed_id) mapper state' args in
+      let state',ret'  = map_type_ref mapper state' ret in
+      let state',attr' = map_attr mapper state' attr in
+      let state',stmt' =
+         apply mapper.stmt state' (StmtExternal(name',args',ret',attr'))
+         |> map_stmt_subs mapper
+      in
+      let state'       = Env.exit state' in
+      state', stmt'
    | StmtBlock(name,stmts,attr) ->
       let state',name' = (mapper_opt map_id) mapper state name in
       let state',attr' = map_attr mapper state' attr in
@@ -365,6 +377,7 @@ and map_stmt_subs (mapper:'state mapper) (state,stmt:('state * stmt)) : 'state *
    | StmtBind(_,_,_)
    | StmtType(_,_,_,_)
    | StmtAliasType(_,_,_,_)
+   | StmtExternal(_,_,_,_)
    | StmtEmpty -> state, stmt
    | StmtWhile(cond,stmts,attr) ->
       let state',stmts' = map_stmt mapper state stmts in

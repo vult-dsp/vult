@@ -83,6 +83,7 @@ let rec convertStmt (s:stmt) : jsstmt =
    | StmtType _             -> JSEmpty
    | StmtAliasType _        -> JSEmpty
    | StmtEmpty              -> JSEmpty
+   | StmtExternal _         -> JSEmpty
 
 and convertStmtList (stmts:stmt list) : jsstmt list =
    List.map convertStmt stmts

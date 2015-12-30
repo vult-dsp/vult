@@ -203,6 +203,14 @@ and stmtBuff buffer (s:stmt) =
             append buffer " ") type_exp;
       stmtBuff buffer body;
       newline buffer
+   | StmtExternal(name,args,type_exp,_) ->
+      append buffer "external ";
+      identifierBuff buffer name;
+      append buffer "(";
+      printList buffer typedArgBuff "," args;
+      append buffer ") : ";
+      typeExpressionBuff buffer !type_exp;
+      append buffer ";"
    | StmtBind(e1,e2,_) ->
       lhsExpressionBuff buffer e1;
       append buffer " = ";

@@ -6,7 +6,7 @@
     "patterns": [
         {
             "name": "meta.function.source.Vult",
-            "match": "(fun|and)\\s+([a-zA-Z_]\\w*)",
+            "match": "(fun|and|external)\\s+([a-zA-Z_]\\w*)",
             "captures": {
                 "1": {
                     "name": "keyword.control.source.Vult"
@@ -18,7 +18,7 @@
         },
         {
             "name": "keyword.source.Vult",
-            "match": "\\b(fun|val|mem|return|if|else|while|then|type|table)\\b"
+            "match": "\\b(fun|val|mem|return|if|else|while|then|type|table|external)\\b"
         },
         {
             "name": "constant.numeric.source.Vult",

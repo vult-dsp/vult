@@ -25,13 +25,13 @@
 				</dict>
 			</dict>
 			<key>match</key>
-			<string>(fun|and)\s+([a-zA-Z_]\w*)</string>
+			<string>(fun|and|external)\s+([a-zA-Z_]\w*)</string>
 			<key>name</key>
 			<string>meta.function.source.Vult</string>
 		</dict>
 		<dict>
 			<key>match</key>
-			<string>\b(fun|val|mem|return|if|else|while|then|type|table)\b</string>
+			<string>\b(fun|val|mem|return|if|else|while|then|type|table|external)\b</string>
 			<key>name</key>
 			<string>keyword.source.Vult</string>
 		</dict>

@@ -86,7 +86,6 @@ let rec makeArrowType (last:type_ref) (types:type_ref list) : type_ref =
    | [] -> last
    | (h:type_ref)::t -> ref (TArrow(h,makeArrowType last t,None))
 
-
 let rec unify (t1:type_ref) (t2:type_ref) : unit =
    if t1 == t2 then () else
    match t1,t2 with
@@ -106,6 +105,22 @@ let rec unify (t1:type_ref) (t2:type_ref) : unit =
    | { contents = tp1 }, { contents = tp2 } when equal_type_exp tp1 tp2 -> ()
 
    | _ -> failwith "type error"
+
+
+let rec unifyOperator (fn_type:type_ref) (types:type_ref list) : type_ref =
+   match types with
+   | [] -> failwith "unifyOperator: the number of operands is no more than two"
+   | [e1; e2] ->
+      let ret_type = newvar () in
+      let op_type  = makeArrowType ret_type [e1; e2] in
+      unify fn_type op_type;
+      ret_type
+   | h::t ->
+      let inner_typ = unifyOperator fn_type t in
+      let ret_type  = newvar () in
+      let op_type   = makeArrowType ret_type [h; inner_typ] in
+      unify fn_type op_type;
+      ret_type
 
 
 let rec inferLhsExp (e:lhs_exp) : lhs_exp * type_ref =
@@ -168,17 +183,25 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * type_ref =
       let _, fn_type  = Env.lookup env fname in
       unify fn_type call_type;
       PCall(name,fname,args',{ attr with typ = Some(ret_type) }), ret_type
+   | POp(op,[e1;e2],attr) ->
+      let e1',e1_typ  = inferExp env e1 in
+      let e2',e2_typ  = inferExp env e2 in
+      let ret_type    = newvar () in
+      let _, fn_type  = Env.lookup env ["b$"^op] in
+      let op_type     = makeArrowType ret_type [e1_typ; e2_typ] in
+      unify fn_type op_type;
+      POp(op,[e1';e2'],{ attr with typ = Some(ret_type) }), ret_type
    | POp(op,args,attr) ->
       let args',types = inferExpList env args in
-      let ret_type    = newvar () in
-      let fn_type     = makeArrowType ret_type types in
-      (* unify with operator type *)
+      let _, fn_type  = Env.lookup env ["b$"^op] in
+      let ret_type    = unifyOperator fn_type types in
       POp(op,args',{ attr with typ = Some(ret_type) }), ret_type
    | PUnOp(op,arg,attr) ->
       let arg',arg_type = inferExp env arg in
       let ret_type      = newvar () in
-      let fn_type       = ref (TArrow(arg_type,ret_type,None)) in
-      (* unify with operator type *)
+      let op_type       = ref (TArrow(arg_type,ret_type,None)) in
+      let _, fn_type    = Env.lookup env ["u$"^op] in
+      unify fn_type op_type;
       PUnOp(op,arg',{ attr with typ = Some(ret_type) }), ret_type
    | PEmpty -> PEmpty, unit_type
 
@@ -255,8 +278,7 @@ let rec inferStmt (env:'a Env.t) (ret_type:type_ref option) (stmt:stmt) : stmt *
       StmtMem(lhs', init', rhs', attr), env', None
    | StmtTable(id,elems,attr) ->
       let elems',types = inferExpList env elems in
-      (* TODO: unify all types *)
-      let typ = newvar () in
+      let typ = List.fold_left (fun typ a -> unify typ a; typ) (newvar ()) types in
       let env' = Env.addVar env id typ in
       StmtTable(id,elems',attr), env', None
    | StmtReturn(e,attr) ->
@@ -297,6 +319,8 @@ let rec inferStmt (env:'a Env.t) (ret_type:type_ref option) (stmt:stmt) : stmt *
       StmtType(name,args,members,attr), env, ret_type
    | StmtAliasType (name, args, alias, attr) ->
       StmtAliasType (name, args, alias, attr), env, ret_type
+   | StmtExternal(name,args,fun_ret_type,attr) ->
+      StmtExternal(name,args,fun_ret_type,attr), env, ret_type
    | StmtEmpty -> StmtEmpty, env, ret_type
 
 

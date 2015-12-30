@@ -145,6 +145,11 @@ and stmt =
       *  stmt            (* body *)
       *  type_ref option (* return type *)
       *  attr
+   | StmtExternal
+      of id             (* name *)
+      *  typed_id list  (* arguments *)
+      *  type_ref       (* return type *)
+      *  attr
    | StmtBind
       of lhs_exp     (* lhs *)
       *  exp         (* rhs *)
