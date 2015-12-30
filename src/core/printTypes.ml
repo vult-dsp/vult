@@ -40,22 +40,21 @@ let commentedId buffer id =
       newline buffer
    | _ -> ()
 
-let rec typeExpressionBuff buffer (tp:type_exp) =
-   match tp with
+let rec typeExpressionBuff buffer (tp:type_ref) =
+   match !tp with
    | TId(id,_) ->
       identifierBuff buffer id
    | TComposed(id,args,_) ->
       identifierBuff buffer id;
       append buffer "(";
-      let args = List.map (fun a -> !a) args in
       typeExpressionListBuff buffer args;
       append buffer ")"
    | TArrow(t1,t2,_) ->
-      typeExpressionBuff buffer !t1;
+      typeExpressionBuff buffer t1;
       append buffer " -> ";
-      typeExpressionBuff buffer !t2
+      typeExpressionBuff buffer t2
    | TUnbound _ -> append buffer "_";
-   | TLink(tp) -> typeExpressionBuff buffer !tp
+   | TLink(tp) -> typeExpressionBuff buffer tp
 and typeExpressionListBuff buffer expl =
    printList buffer typeExpressionBuff "," expl
 
@@ -69,7 +68,7 @@ let rec lhsExpressionBuff buffer (lhs:lhs_exp) =
       append buffer "(";
       identifierBuff buffer id;
       append buffer ":";
-      typeExpressionBuff buffer !tp;
+      typeExpressionBuff buffer tp;
       append buffer ")"
    | LTuple(elems,_) ->
       append buffer "(";
@@ -79,7 +78,7 @@ let rec lhsExpressionBuff buffer (lhs:lhs_exp) =
       append buffer "(";
       lhsExpressionBuff buffer e;
       append buffer ":";
-      typeExpressionBuff buffer !tp;
+      typeExpressionBuff buffer tp;
       append buffer ")"
 and lhsExpressionListBuff buffer expl =
    printList buffer lhsExpressionBuff "," expl
@@ -89,11 +88,11 @@ let rec typedArgBuff buffer id =
    match id with
    | SimpleId(id1,_) -> identifierBuff buffer id1
    | TypedId(["_"],id_type,_) ->
-      typeExpressionBuff buffer !id_type
+      typeExpressionBuff buffer id_type
    | TypedId(id1,id_type,_) ->
       identifierBuff buffer id1;
       append buffer ":";
-      typeExpressionBuff buffer !id_type
+      typeExpressionBuff buffer id_type
 
 (** Adds to the print buffer an expression *)
 and expressionBuff buffer (exp:exp) =
@@ -199,7 +198,7 @@ and stmtBuff buffer (s:stmt) =
       append buffer ") ";
       CCOpt.iter(fun a ->
             append buffer ": ";
-            typeExpressionBuff buffer !a;
+            typeExpressionBuff buffer a;
             append buffer " ") type_exp;
       stmtBuff buffer body;
       newline buffer
@@ -209,7 +208,7 @@ and stmtBuff buffer (s:stmt) =
       append buffer "(";
       printList buffer typedArgBuff "," args;
       append buffer ") : ";
-      typeExpressionBuff buffer !type_exp;
+      typeExpressionBuff buffer type_exp;
       append buffer ";"
    | StmtBind(e1,e2,_) ->
       lhsExpressionBuff buffer e1;
@@ -236,7 +235,7 @@ and stmtBuff buffer (s:stmt) =
             append buffer ")"
       end;
       append buffer ":";
-      typeExpressionBuff buffer alias;
+      typeExpressionBuff buffer (ref alias);
       append buffer ";"
    | StmtType(id,args,decl_list,_) ->
       append buffer "type ";
@@ -307,7 +306,7 @@ and valDecl buffer val_decl =
    append buffer "val ";
    identifierBuff buffer id;
    append buffer " : ";
-   typeExpressionBuff buffer !e;
+   typeExpressionBuff buffer e;
    append buffer ";";
    newline buffer
 
@@ -341,7 +340,7 @@ let expressionStr e =
    contents print_buffer
 
 (** Converts to string an type expression *)
-let typeStr e =
+let typeStr (e:type_ref) =
    let print_buffer = makePrintBuffer () in
    typeExpressionBuff print_buffer e;
    contents print_buffer

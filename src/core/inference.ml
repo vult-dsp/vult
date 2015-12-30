@@ -102,9 +102,13 @@ let rec unify (t1:type_ref) (t2:type_ref) : unit =
       tu := TLink(t)
    | { contents = TComposed(n1,elems1,_) }, { contents = TComposed(n2,elems2,_) } when n1 = n2 ->
       List.iter2 unify elems1 elems2
+   | { contents = TArrow(a1,a2,_) }, { contents = TArrow(b1,b2,_) } ->
+      unify a1 b1;
+      unify a2 b2;
+   | { contents = TId(id1,_) }, { contents = TId(id2,_) } when id1 = id2 -> ()
    | { contents = tp1 }, { contents = tp2 } when equal_type_exp tp1 tp2 -> ()
 
-   | _ -> failwith "type error"
+   | _ -> failwith ("Type mismatch:\n"^(PrintTypes.typeStr t1)^"\n"^(PrintTypes.typeStr t2)^"\n")
 
 
 let rec unifyOperator (fn_type:type_ref) (types:type_ref list) : type_ref =
@@ -320,7 +324,12 @@ let rec inferStmt (env:'a Env.t) (ret_type:type_ref option) (stmt:stmt) : stmt *
    | StmtAliasType (name, args, alias, attr) ->
       StmtAliasType (name, args, alias, attr), env, ret_type
    | StmtExternal(name,args,fun_ret_type,attr) ->
-      StmtExternal(name,args,fun_ret_type,attr), env, ret_type
+      let env' = Env.enterFunction env name in
+      let types, env' = addArgsToEnv env' args in
+      let typ  = makeArrowType fun_ret_type types in
+      let env' = Env.setCurrentType env' typ in
+      let env' = Env.exit env' in
+      StmtExternal(name,args,fun_ret_type,attr), env', ret_type
    | StmtEmpty -> StmtEmpty, env, ret_type
 
 

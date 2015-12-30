@@ -305,13 +305,13 @@ module FunctionContex = struct
       IdMap.iter
          (fun key value ->
             Printf.printf "   '%s' = " (idStr key);
-            IdTypeSet.iter (fun (v,tp) -> Printf.printf "'%s:%s' " (idStr v) (PrintTypes.typeStr !tp)) value;
+            IdTypeSet.iter (fun (v,tp) -> Printf.printf "'%s:%s' " (idStr v) (PrintTypes.typeStr tp)) value;
             print_newline ())
          context.mem;
       print_endline "Instance";
       IdMap.iter
          (fun key value -> Printf.printf "   '%s' = " (idStr key);
-            IdTypeSet.iter (fun (name,kind) -> Printf.printf "'%s:%s' " (idStr name) (PrintTypes.typeStr !kind)) value;
+            IdTypeSet.iter (fun (name,kind) -> Printf.printf "'%s:%s' " (idStr name) (PrintTypes.typeStr kind)) value;
             print_newline ())
          context.instance;
       print_endline "Active";
