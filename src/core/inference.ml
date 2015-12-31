@@ -161,6 +161,44 @@ let rec inferLhsExp (e:lhs_exp) : lhs_exp * vtype =
       unify typ tpi;
       e',tpi
 
+let rec addLhsToEnv mem_var (env:'a Env.t) (lhs:lhs_exp) : 'a Env.t =
+   match lhs with
+   | LWild _ -> env
+   | LId(id,Some(typ),_) ->
+      if mem_var = `Mem then Env.addMem env id typ else Env.addVar env id typ
+   | LId(_,None,_) -> env
+   | LTuple(elems,_) ->
+      List.fold_left (fun e a -> addLhsToEnv mem_var e a) env elems
+   | LTyped(e,_,_) ->
+      addLhsToEnv mem_var env e
+
+let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : vtype list * 'a Env.t =
+   match args with
+   | [] -> [], env
+   | SimpleId(id,_)::t ->
+      let typ = newvar () in
+      let inner_typ, env' = addArgsToEnv env t in
+      typ :: inner_typ, Env.addVar env' id typ
+   | TypedId(id,typ,_)::t ->
+      let inner_typ, env' = addArgsToEnv env t in
+      typ :: inner_typ, Env.addVar env' id typ
+
+
+let unifyOpt (typ1:vtype option) (typ2:vtype option) : vtype option =
+   match typ1,typ2 with
+   | None, None    -> None
+   | Some(_), None -> typ1
+   | None, Some(_) -> typ2
+   | Some(t1), Some(t2) ->
+      unify t1 t2;
+      typ1
+
+let getOptType (typ:vtype option) : vtype =
+   match typ with
+   | None    -> newvar ()
+   | Some(t) -> t
+
+
 let rec inferExp (env:'a Env.t) (e:exp) : exp * vtype =
    match e with
    | PUnit(attr) ->
@@ -199,25 +237,27 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * vtype =
       let e1',e1_typ  = inferExp env e1 in
       let e2',e2_typ  = inferExp env e2 in
       let ret_type    = newvar () in
-      let _, fn_type  = Env.lookup env ["b$"^op] in
+      let _, fn_type  = Env.lookup env [op] in
       let op_type     = makeArrowType ret_type [e1_typ; e2_typ] in
       unify fn_type op_type;
       POp(op,[e1';e2'],{ attr with typ = Some(ret_type) }), ret_type
    | POp(op,args,attr) ->
       let args',types = inferExpList env args in
-      let _, fn_type  = Env.lookup env ["b$"^op] in
+      let _, fn_type  = Env.lookup env [op] in
       let ret_type    = unifyOperator fn_type types in
       POp(op,args',{ attr with typ = Some(ret_type) }), ret_type
    | PUnOp(op,arg,attr) ->
       let arg',arg_type = inferExp env arg in
       let ret_type      = newvar () in
       let op_type       = ref (TArrow(arg_type,ret_type,None)) in
-      let _, fn_type    = Env.lookup env ["u$"^op] in
+      let _, fn_type    = Env.lookup env [op] in
       unify fn_type op_type;
       PUnOp(op,arg',{ attr with typ = Some(ret_type) }), ret_type
+   | PSeq(name,stmt,attr) ->
+      let stmt', _, ret_type = inferStmt env None stmt in
+      let typ = getOptType ret_type in
+      PSeq(name,stmt',{ attr with typ = Some(typ)}), typ
    | PEmpty -> PEmpty, unit_type
-
-   | PSeq(_,_,_) -> failwith "PSeq: todo"
 
 and inferExpList (env:'a Env.t) (elems:exp list) : exp list * vtype list =
    let elems',types =
@@ -228,51 +268,14 @@ and inferExpList (env:'a Env.t) (elems:exp list) : exp list * vtype list =
       elems
    in List.rev elems', List.rev types
 
-let inferOptExp (env:'a Env.t) (e:exp option) : exp option * vtype =
+and inferOptExp (env:'a Env.t) (e:exp option) : exp option * vtype =
    match e with
    | None    -> None, newvar ()
    | Some(e) ->
       let e',typ = inferExp env e in
       Some(e'), typ
 
-let rec addLhsToEnv mem_var (env:'a Env.t) (lhs:lhs_exp) : 'a Env.t =
-   match lhs with
-   | LWild _ -> env
-   | LId(id,Some(typ),_) ->
-      if mem_var = `Mem then Env.addMem env id typ else Env.addVar env id typ
-   | LId(_,None,_) -> env
-   | LTuple(elems,_) ->
-      List.fold_left (fun e a -> addLhsToEnv mem_var e a) env elems
-   | LTyped(e,_,_) ->
-      addLhsToEnv mem_var env e
-
-let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : vtype list * 'a Env.t =
-   match args with
-   | [] -> [], env
-   | SimpleId(id,_)::t ->
-      let typ = newvar () in
-      let inner_typ, env' = addArgsToEnv env t in
-      typ :: inner_typ, Env.addVar env' id typ
-   | TypedId(id,typ,_)::t ->
-      let inner_typ, env' = addArgsToEnv env t in
-      typ :: inner_typ, Env.addVar env' id typ
-
-
-let unifyOpt (typ1:vtype option) (typ2:vtype option) : vtype option =
-   match typ1,typ2 with
-   | None, None    -> None
-   | Some(_), None -> typ1
-   | None, Some(_) -> typ2
-   | Some(t1), Some(t2) ->
-      unify t1 t2;
-      typ1
-
-let getOptType (typ:vtype option) : vtype =
-   match typ with
-   | None    -> newvar ()
-   | Some(t) -> t
-
-let rec inferStmt (env:'a Env.t) (ret_type:vtype option) (stmt:stmt) : stmt * 'a Env.t * vtype option =
+and inferStmt (env:'a Env.t) (ret_type:vtype option) (stmt:stmt) : stmt * 'a Env.t * vtype option =
    match stmt with
    | StmtVal(lhs,rhs,attr) ->
       let lhs', lhs_typ = inferLhsExp lhs in
