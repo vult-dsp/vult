@@ -40,7 +40,7 @@ let commentedId buffer id =
       newline buffer
    | _ -> ()
 
-let rec typeExpressionBuff buffer (tp:type_ref) =
+let rec typeExpressionBuff buffer (tp:vtype) =
    match !tp with
    | TId(id,_) ->
       identifierBuff buffer id
@@ -55,6 +55,10 @@ let rec typeExpressionBuff buffer (tp:type_ref) =
       typeExpressionBuff buffer t2
    | TUnbound _ -> append buffer "_";
    | TLink(tp) -> typeExpressionBuff buffer tp
+   | TExpAlt(expl) ->
+      append buffer "(";
+      printList buffer typeExpressionBuff " | " expl;
+      append buffer ")"
 and typeExpressionListBuff buffer expl =
    printList buffer typeExpressionBuff "," expl
 
@@ -190,7 +194,7 @@ and stmtBuff buffer (s:stmt) =
       indent buffer;
       stmtBuff buffer false_stmt;
       outdent buffer
-   | StmtFun(name,args,body,type_exp,attr) ->
+   | StmtFun(name,args,body,vtype,attr) ->
       append buffer (if attr.fun_and then "and " else "fun ");
       identifierBuff buffer name;
       append buffer "(";
@@ -199,16 +203,16 @@ and stmtBuff buffer (s:stmt) =
       CCOpt.iter(fun a ->
             append buffer ": ";
             typeExpressionBuff buffer a;
-            append buffer " ") type_exp;
+            append buffer " ") vtype;
       stmtBuff buffer body;
       newline buffer
-   | StmtExternal(name,args,type_exp,_) ->
+   | StmtExternal(name,args,vtype,_) ->
       append buffer "external ";
       identifierBuff buffer name;
       append buffer "(";
       printList buffer typedArgBuff "," args;
       append buffer ") : ";
-      typeExpressionBuff buffer type_exp;
+      typeExpressionBuff buffer vtype;
       append buffer ";"
    | StmtBind(e1,e2,_) ->
       lhsExpressionBuff buffer e1;
@@ -340,7 +344,7 @@ let expressionStr e =
    contents print_buffer
 
 (** Converts to string an type expression *)
-let typeStr (e:type_ref) =
+let typeStr (e:vtype) =
    let print_buffer = makePrintBuffer () in
    typeExpressionBuff print_buffer e;
    contents print_buffer

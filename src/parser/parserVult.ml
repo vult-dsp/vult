@@ -139,10 +139,10 @@ let identifierToken (token:'kind token) : id =
    splitOnDot token.value
 
 (** Parses a type expression using a Pratt parser *)
-let rec typeExpression (rbp:int) (buffer:Stream.stream) : type_exp =
+let rec typeExpression (rbp:int) (buffer:Stream.stream) : vtype_c =
    prattParser rbp buffer getLbp type_nud type_led
 
-and type_nud (buffer:Stream.stream) (token:'kind token) : type_exp =
+and type_nud (buffer:Stream.stream) (token:'kind token) : vtype_c =
    match token.kind with
    | ID ->
       let id = identifierToken token in
@@ -175,11 +175,11 @@ and type_nud (buffer:Stream.stream) (token:'kind token) : type_exp =
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
 
-and type_led (_:Stream.stream) (token:'kind token) (_:type_exp) : type_exp =
+and type_led (_:Stream.stream) (token:'kind token) (_:vtype_c) : vtype_c =
    let message = Stream.notExpectedError token in
    raise (ParserError(message))
 
-and composedType (buffer:Stream.stream) (token:'kind token) (id:id) : type_exp =
+and composedType (buffer:Stream.stream) (token:'kind token) (id:id) : vtype_c =
    let _ = Stream.skip buffer in
    let args =
       match Stream.peek buffer with
@@ -189,7 +189,7 @@ and composedType (buffer:Stream.stream) (token:'kind token) (id:id) : type_exp =
    let _ = Stream.consume buffer RPAREN in
    TComposed(id,args, Some(token.loc))
 
-and typeArgList (buffer:Stream.stream) : type_ref list =
+and typeArgList (buffer:Stream.stream) : vtype list =
    let rec loop acc =
       (* power of 20 avoids returning a tuple instead of a list*)
       let e = ref (typeExpression 20 buffer) in
@@ -229,8 +229,8 @@ and lhs_nud (buffer:Stream.stream) (token:'kind token) : lhs_exp =
 and lhs_led (buffer:Stream.stream) (token:'kind token) (left:lhs_exp) : lhs_exp =
    match token.kind with
    | COLON ->
-      let type_exp = typeExpression 0 buffer in
-      LTyped(left,ref type_exp,makeAttr token.loc)
+      let vtype = typeExpression 0 buffer in
+      LTyped(left,ref vtype,makeAttr token.loc)
    | COMMA ->
       lhs_pair buffer token left
    | _ -> failwith "lhs_led"
@@ -546,11 +546,11 @@ and stmtExternal (buffer:Stream.stream) : stmt =
    in
    let _      = Stream.consume buffer RPAREN in
    let _      = Stream.consume buffer COLON in
-   let type_exp = ref (typeExpression 0 buffer) in
+   let vtype  = ref (typeExpression 0 buffer) in
    let _      = Stream.consume buffer SEMI in
    let start_loc = token.loc in
    let attr      = makeAttr start_loc in
-   StmtExternal(name,args,type_exp,attr)
+   StmtExternal(name,args,vtype,attr)
 (** 'fun' <id> '(' <typedArgList> ')' [ ':' type ] <stmtList> *)
 and stmtFunction (buffer:Stream.stream) : stmt =
    let isjoin = match Stream.peek buffer with | AND -> true | _ -> false in
@@ -564,7 +564,7 @@ and stmtFunction (buffer:Stream.stream) : stmt =
       | _ -> typedArgList true buffer
    in
    let _        = Stream.consume buffer RPAREN in
-   let type_exp =
+   let vtype =
       match Stream.peek buffer with
       | COLON ->
          let _ = Stream.skip buffer in
@@ -575,7 +575,7 @@ and stmtFunction (buffer:Stream.stream) : stmt =
    let start_loc = token.loc in
    let attr      = makeAttr start_loc in
    let attr      = if isjoin then { attr with fun_and = true } else attr in
-   StmtFun(name,args,body,type_exp,attr)
+   StmtFun(name,args,body,vtype,attr)
 
 (** 'type' <id> '(' <typedArgList> ')' <valDeclList> *)
 and stmtType (buffer:Stream.stream) : stmt =
@@ -595,9 +595,9 @@ and stmtType (buffer:Stream.stream) : stmt =
    match Stream.peek buffer with
    | COLON ->
       let _        = Stream.skip buffer in
-      let type_exp = typeExpression 10 buffer in
+      let vtype    = typeExpression 10 buffer in
       let _        = Stream.optConsume buffer SEMI in
-      StmtAliasType(name,args,type_exp,makeAttr start_loc)
+      StmtAliasType(name,args,vtype,makeAttr start_loc)
    | LBRAC ->
       let _        = Stream.skip buffer in
       let val_decl = valDeclList buffer in

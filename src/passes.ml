@@ -250,13 +250,13 @@ module CreateInitFunction = struct
       | [last] -> [ last^"_init" ]
       | h::t -> h :: (getInitFunctioName t)
 
-   let getInitValue (tp:type_ref) : exp =
+   let getInitValue (tp:vtype) : exp =
       match tp with
       | { contents = TId(["real"],_) } -> PReal(0.0,emptyAttr)
       | { contents = TId(["int"],_) } -> PInt(0,emptyAttr)
       | _ -> PReal(0.0,emptyAttr)
 
-   let callInitFunction state (tp:type_ref) : exp =
+   let callInitFunction state (tp:vtype) : exp =
       match tp with
       | { contents = TId(name,_) } ->
          let fun_ctx = Env.getContext state name in

@@ -30,15 +30,17 @@ type path =
    | Path of id
 
 
-type type_exp =
-   | TUnbound   of string * int * Loc.t option
-   | TId        of id * Loc.t option
-   | TComposed  of id * type_ref list * Loc.t option
-   | TArrow     of type_ref * type_ref * Loc.t option
-   | TLink      of type_exp ref
+type vtype_c =
+   | TUnbound  of string * int * Loc.t option
+   | TId       of id * Loc.t option
+   | TComposed of id * vtype list * Loc.t option
+   | TArrow    of vtype * vtype * Loc.t option
+   | TLink     of vtype
+   | TExpAlt   of vtype list
    [@@deriving show,eq,ord]
 
-and type_ref = type_exp ref
+
+and vtype = vtype_c ref
    [@@deriving show,eq,ord]
 
 type attr =
@@ -47,7 +49,7 @@ type attr =
       fun_and : bool;
       active  : bool;
       bound   : bool;
-      typ     : type_ref option;
+      typ     : vtype option;
    }
 
 let pp_attr = fun fmt _ -> Format.pp_print_string fmt "attr"
@@ -56,14 +58,14 @@ let compare_attr _ _ = 0
 
 type typed_id =
    | SimpleId of id * attr
-   | TypedId  of id * type_ref * attr
+   | TypedId  of id * vtype * attr
    [@@deriving show,eq,ord]
 
 type lhs_exp =
    | LWild  of attr
-   | LId    of id * type_ref option * attr
+   | LId    of id * vtype option * attr
    | LTuple of lhs_exp list * attr
-   | LTyped of lhs_exp * type_ref * attr
+   | LTyped of lhs_exp * vtype * attr
    [@@deriving show,eq,ord]
 
 (** Parser syntax tree *)
@@ -143,12 +145,12 @@ and stmt =
       of id              (* name *)
       *  typed_id list   (* arguments *)
       *  stmt            (* body *)
-      *  type_ref option (* return type *)
+      *  vtype option (* return type *)
       *  attr
    | StmtExternal
       of id             (* name *)
       *  typed_id list  (* arguments *)
-      *  type_ref       (* return type *)
+      *  vtype       (* return type *)
       *  attr
    | StmtBind
       of lhs_exp     (* lhs *)
@@ -166,14 +168,14 @@ and stmt =
    | StmtAliasType
       of id            (* name *)
       *  typed_id list (* arguments *)
-      *  type_exp      (* alias type *)
+      *  vtype_c       (* alias type *)
       *  attr
    | StmtEmpty
    [@@deriving show,eq,ord]
 
 and val_decl =
    id          (* name *)
-   * type_ref  (* type *)
+   * vtype  (* type *)
    * attr
    [@@deriving show,eq,ord]
 
@@ -236,7 +238,7 @@ module PathMap = Map.Make(struct type t = path let compare = compare end)
 
 module IdSet = Set.Make(struct type t = id let compare = compare end)
 
-module IdTypeSet = Set.Make(struct type t = id * type_ref let compare = compare end)
+module IdTypeSet = Set.Make(struct type t = id * vtype let compare = compare end)
 
 let pathId (path:path) : id =
    let Path(id) = path in

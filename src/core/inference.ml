@@ -68,7 +68,7 @@ let leave_level () =
 
 
 (* Make a fresh type variable *)
-let newvar : unit -> type_ref =
+let newvar : unit -> vtype =
    fun () -> (ref (TUnbound (gensym (),!current_level,None)))
 
 
@@ -81,12 +81,12 @@ let pickLoc (loc1:Loc.t option) (loc2:Loc.t option) : Loc.t option =
    | _ -> loc1
 
 
-let rec makeArrowType (last:type_ref) (types:type_ref list) : type_ref =
+let rec makeArrowType (last:vtype) (types:vtype list) : vtype =
    match types with
    | [] -> last
-   | (h:type_ref)::t -> ref (TArrow(h,makeArrowType last t,None))
+   | (h:vtype)::t -> ref (TArrow(h,makeArrowType last t,None))
 
-let rec unify (t1:type_ref) (t2:type_ref) : unit =
+let rec unify (t1:vtype) (t2:vtype) : unit =
    if t1 == t2 then () else
    match t1,t2 with
    | { contents = TUnbound(n1,l1,loc1)}, { contents = TUnbound(_,l2,loc2) } ->
@@ -106,12 +106,12 @@ let rec unify (t1:type_ref) (t2:type_ref) : unit =
       unify a1 b1;
       unify a2 b2;
    | { contents = TId(id1,_) }, { contents = TId(id2,_) } when id1 = id2 -> ()
-   | { contents = tp1 }, { contents = tp2 } when equal_type_exp tp1 tp2 -> ()
+   | { contents = tp1 }, { contents = tp2 } when equal_vtype_c tp1 tp2 -> ()
 
    | _ -> failwith ("Type mismatch:\n"^(PrintTypes.typeStr t1)^"\n"^(PrintTypes.typeStr t2)^"\n")
 
 
-let rec unifyOperator (fn_type:type_ref) (types:type_ref list) : type_ref =
+let rec unifyOperator (fn_type:vtype) (types:vtype list) : vtype =
    match types with
    | [] -> failwith "unifyOperator: the number of operands is no more than two"
    | [e1; e2] ->
@@ -127,7 +127,7 @@ let rec unifyOperator (fn_type:type_ref) (types:type_ref list) : type_ref =
       ret_type
 
 
-let rec inferLhsExp (e:lhs_exp) : lhs_exp * type_ref =
+let rec inferLhsExp (e:lhs_exp) : lhs_exp * vtype =
    match e with
    | LWild(attr) ->
       let typ = newvar () in
@@ -152,7 +152,7 @@ let rec inferLhsExp (e:lhs_exp) : lhs_exp * type_ref =
       unify typ tpi;
       e',tpi
 
-let rec inferExp (env:'a Env.t) (e:exp) : exp * type_ref =
+let rec inferExp (env:'a Env.t) (e:exp) : exp * vtype =
    match e with
    | PUnit(attr) ->
       PUnit({ attr with typ = Some(unit_type) }), unit_type
@@ -211,7 +211,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * type_ref =
 
    | PSeq(_,_,_) -> failwith "PSeq: todo"
 
-and inferExpList (env:'a Env.t) (elems:exp list) : exp list * type_ref list =
+and inferExpList (env:'a Env.t) (elems:exp list) : exp list * vtype list =
    let elems',types =
       List.fold_left (fun (elems,types) a ->
          let a',typ = inferExp env a in
@@ -220,7 +220,7 @@ and inferExpList (env:'a Env.t) (elems:exp list) : exp list * type_ref list =
       elems
    in List.rev elems', List.rev types
 
-let inferOptExp (env:'a Env.t) (e:exp option) : exp option * type_ref =
+let inferOptExp (env:'a Env.t) (e:exp option) : exp option * vtype =
    match e with
    | None    -> None, newvar ()
    | Some(e) ->
@@ -238,7 +238,7 @@ let rec addLhsToEnv mem_var (env:'a Env.t) (lhs:lhs_exp) : 'a Env.t =
    | LTyped(e,_,_) ->
       addLhsToEnv mem_var env e
 
-let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : type_ref list * 'a Env.t =
+let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : vtype list * 'a Env.t =
    match args with
    | [] -> [], env
    | SimpleId(id,_)::t ->
@@ -250,7 +250,7 @@ let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : type_ref list * 'a En
       typ :: inner_typ, Env.addVar env' id typ
 
 
-let unifyOpt (typ1:type_ref option) (typ2:type_ref option) : type_ref option =
+let unifyOpt (typ1:vtype option) (typ2:vtype option) : vtype option =
    match typ1,typ2 with
    | None, None    -> None
    | Some(_), None -> typ1
@@ -259,12 +259,12 @@ let unifyOpt (typ1:type_ref option) (typ2:type_ref option) : type_ref option =
       unify t1 t2;
       typ1
 
-let getOptType (typ:type_ref option) : type_ref =
+let getOptType (typ:vtype option) : vtype =
    match typ with
    | None    -> newvar ()
    | Some(t) -> t
 
-let rec inferStmt (env:'a Env.t) (ret_type:type_ref option) (stmt:stmt) : stmt * 'a Env.t * type_ref option =
+let rec inferStmt (env:'a Env.t) (ret_type:vtype option) (stmt:stmt) : stmt * 'a Env.t * vtype option =
    match stmt with
    | StmtVal(lhs,rhs,attr) ->
       let lhs', lhs_typ = inferLhsExp lhs in
@@ -333,7 +333,7 @@ let rec inferStmt (env:'a Env.t) (ret_type:type_ref option) (stmt:stmt) : stmt *
    | StmtEmpty -> StmtEmpty, env, ret_type
 
 
-and inferStmtList (env:'a Env.t) (ret_type:type_ref option) (stmts:stmt list) : stmt list * 'a Env.t * type_ref option =
+and inferStmtList (env:'a Env.t) (ret_type:vtype option) (stmts:stmt list) : stmt list * 'a Env.t * vtype option =
    let stmts', env', ret_type' =
       List.fold_left
          (fun (stmts,env,ret_type) stmt ->
@@ -343,7 +343,7 @@ and inferStmtList (env:'a Env.t) (ret_type:type_ref option) (stmts:stmt list) : 
          stmts
    in (List.rev stmts'), env', ret_type'
 
-and inferOptStmt (env:'a Env.t) (ret_type:type_ref option) (stmt:stmt option) : stmt option * 'a Env.t * type_ref option =
+and inferOptStmt (env:'a Env.t) (ret_type:vtype option) (stmt:stmt option) : stmt option * 'a Env.t * vtype option =
    match stmt with
    | None -> None, env, ret_type
    | Some(s) ->

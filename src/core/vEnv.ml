@@ -63,7 +63,7 @@ module Scope = struct
          parent  : t option;       (** Pointer to it's parent *)
          keep    : t IdMap.t;      (** Persistent symbols (keeps mem and functions) *)
          locals  : t IdMap.t list; (** Temporary symbols (variables in subscopes) *)
-         typ     : type_ref;       (** Type of the symbol *)
+         typ     : vtype;       (** Type of the symbol *)
       }
 
    let empty : t =
@@ -80,7 +80,7 @@ module Scope = struct
       Printf.printf "%s'%s' = %s\n" (String.make level ' ') (idStr t.name) (kindStr t.kind);
       IdMap.iter (fun _ sub -> dump sub (level+3)) t.keep
 
-   let addMem (t:t) (name:id) (typ:type_ref) : t =
+   let addMem (t:t) (name:id) (typ:vtype) : t =
       let new_symbol = { empty with name = name; kind = MemSymbol; typ = typ } in
       { t with keep = IdMap.add name new_symbol t.keep }
 
@@ -88,7 +88,7 @@ module Scope = struct
       let new_symbol = { empty with name = name; kind = InstanceSymbol } in
       { t with keep = IdMap.add name new_symbol t.keep }
 
-   let addVar (t:t) (name:id) (typ:type_ref) : t =
+   let addVar (t:t) (name:id) (typ:vtype) : t =
       let new_symbol = { empty with name = name; kind = VarSymbol; typ = typ  } in
       let first,rest =
          match t.locals with
@@ -122,7 +122,7 @@ module Scope = struct
    let enterModule (t:t) (name:id) : t =
       enter t name ModuleSymbol
 
-   let setCurrentType (t:t) (typ:type_ref) : t =
+   let setCurrentType (t:t) (typ:vtype) : t =
       { t with typ = typ }
 
    let getParent (t:t) : t option =
@@ -178,7 +178,7 @@ module Scope = struct
       t.name @ (parentPath t.parent)
       |> List.rev
 
-   let lookup (t:t) (name:id) : (path * type_ref) option =
+   let lookup (t:t) (name:id) : (path * vtype) option =
       match lookupAny t name with
       | Some(t) -> Some(Path(getPath t), t.typ)
       | _ -> None
@@ -251,7 +251,7 @@ module FunctionContex = struct
          backward = IdMap.add context_name [func] context.backward;
       }
 
-   let addMem (context:t) (func:path) (name:id) (typ:type_ref) : t =
+   let addMem (context:t) (func:path) (name:id) (typ:vtype) : t =
       let context_for_func = findContext context func in
       let mem_for_context  =
          try IdMap.find context_for_func context.mem with
@@ -358,7 +358,7 @@ module Env = struct
       }
 
    (** Adds a mem variable to the current context *)
-   let addMem (state:'a t) (name:id) (typ:type_ref) : 'a t  =
+   let addMem (state:'a t) (name:id) (typ:vtype) : 'a t  =
       {
          state with
          context = FunctionContex.addMem state.context (Scope.current state.scope) name typ;
@@ -366,14 +366,14 @@ module Env = struct
       }
 
    (** Adds a variable to the current block *)
-   let addVar (state:'a t) (name:id) (typ:type_ref) : 'a t  =
+   let addVar (state:'a t) (name:id) (typ:vtype) : 'a t  =
       {
          state with
          scope   = Scope.addVar state.scope name typ;
       }
 
    (** Returns the full path of a function. Raises an error if it cannot be found *)
-   let lookup (state:'a t) (name:id) : path * type_ref =
+   let lookup (state:'a t) (name:id) : path * vtype =
       match Scope.lookup state.scope name with
       | None -> failwith (Printf.sprintf "Cannot find symbol '%s'" (idStr name))
       | Some(path) -> path
@@ -431,7 +431,7 @@ module Env = struct
    let currentScope (state:'a t) : path =
       Scope.current state.scope
 
-   let setCurrentType (state:'a t) (typ:type_ref) : 'a t =
+   let setCurrentType (state:'a t) (typ:vtype) : 'a t =
       {
          state with
          scope = Scope.setCurrentType state.scope typ;
