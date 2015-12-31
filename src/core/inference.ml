@@ -106,6 +106,15 @@ let rec unify (t1:vtype) (t2:vtype) : unit =
       unify a1 b1;
       unify a2 b2;
    | { contents = TId(id1,_) }, { contents = TId(id2,_) } when id1 = id2 -> ()
+
+   | { contents = TExpAlt(first_alt :: alt_rest) }, t
+   | t, { contents = TExpAlt(first_alt :: alt_rest) } ->
+      begin
+         try
+            unify first_alt t
+         with
+         | _ -> unify (ref(TExpAlt(alt_rest))) t
+      end
    | { contents = tp1 }, { contents = tp2 } when equal_vtype_c tp1 tp2 -> ()
 
    | _ -> failwith ("Type mismatch:\n"^(PrintTypes.typeStr t1)^"\n"^(PrintTypes.typeStr t2)^"\n")
@@ -159,11 +168,10 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * vtype =
    | PBool(v,attr) ->
       PBool(v,{ attr with typ = Some(bool_type) }), bool_type
    | PInt(v,attr) ->
-      let typ = ref (TId(["int"],None)) in
+      let typ = ref (TExpAlt([int_type; real_type])) in
       PInt(v,{ attr with typ = Some(typ) }), typ
    | PReal(v,attr) ->
-      let typ = ref (TId(["real"],None)) in
-      PReal(v,{ attr with typ = Some(typ) }), typ
+      PReal(v,{ attr with typ = Some(real_type) }), real_type
    | PId(id,attr) ->
       let typ = try Env.lookup env id |> snd with | _ -> failwith ("Undefined symbol '" ^ (PrintTypes.identifierStr id)^"'") in
       PId(id, { attr with typ = Some(typ) }), typ
