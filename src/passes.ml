@@ -107,52 +107,9 @@ module GetAttr = struct
       | PEmpty -> emptyAttr
 end
 
-(*
-module CollectContext = struct
-
-   let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
-         match exp with
-         | LId(id,_,_) ->
-            let tp =  ref (TId(["real"],None)) in
-            let state' = Env.addMem state id tp in
-            state',exp
-         | _ -> state,exp
-
-   let reg_mem_mapper =
-      { Mapper.default_mapper with Mapper.lhs_exp = lhs_exp }
-
-   let stmt : ('a Env.t,stmt) Mapper.mapper_func =
-      Mapper.make @@ fun state stmt ->
-         match stmt with
-         | StmtFun(_,_,_,_,attr) when attr.fun_and ->
-            let state' = Env.includeFunctionInContext state in
-            state',stmt
-         | StmtFun(_,_,_,_,_) ->
-            let state' = Env.makeNewContext state in
-            state',stmt
-         | StmtMem(lhs,_,_,_) ->
-            let state',_ = Mapper.map_lhs_exp reg_mem_mapper state lhs in
-            state',stmt
-         | _ -> state,stmt
-
-   let exp : ('a Env.t,exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
-         match exp with
-         | PCall(id,kind,args,attr) ->
-            let state',id' = Env.addInstanceToContext state id kind in
-            state',PCall(id',kind,args,attr)
-         | _ -> state,exp
-
-   let mapper =
-      { Mapper.default_mapper with Mapper.stmt = stmt; Mapper.exp = exp  }
-
-end
-*)
-
 module InsertContext = struct
 
-   let stmt : ('a Env.t,stmt) Mapper.mapper_func =
+   let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
       Mapper.make @@ fun state stmt ->
          match stmt with
          | StmtFun(name,args,body,rettype,attr) ->
@@ -386,10 +343,10 @@ let applyTransformations (results:parser_results) =
    let passes stmts =
       (initial_state,stmts)
       |> inferPass
-      |> pass1
+      (*|> pass1
       |> dump
       |> pass2
-      |> dump
+      |> dump*)
       |> snd
    in
 
