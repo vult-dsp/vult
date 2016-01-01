@@ -9,6 +9,14 @@ fun clip(low,high,value){
     return min(max(low,value),high);
 }
 
+// Returns true every time the input value changes
+fun change(x):bool {
+    mem pre_x;
+    val v:bool = pre_x<>x;
+    pre_x = x;
+    return v;
+}
+
 fun biquad(x:real,b0,b1,b2,a1,a2){
     mem w1,w2;
     val w0 = x - a1*w1 - a2*w2;
@@ -31,7 +39,7 @@ fun lp6(x,fc) {
 
 fun change(x) : bool {
     mem pre_x;
-    val v = pre_x!=x;
+    val v = pre_x<>x;
     pre_x = x;
     return v;
 }

@@ -136,7 +136,7 @@ module Make (O : Map.OrderedType)(D : Set.OrderedType) = struct
          | (Some k1head, mb1, map2) -> begin match findBindings k2 map2 with
                | (None, _, m2) -> m2
                | (Some k2head, mb2, map3) ->
-                  if k1head != k2head
+                  if k1head <> k2head
                   then let map4 = MapS.update k1head (fun _ -> Some (Left k2head)) map3
                      in MapS.update k2head (fun _ -> Some (maybeUnion k2head mb1 mb2)) map4
                   else map3

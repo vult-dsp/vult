@@ -215,15 +215,15 @@ type arguments =
 
 let default_arguments =
    {
-      files = ["live.vult"];
+      files  = ["live.vult"];
       dparse = false;
       rundyn = false;
-      debug = false;
-      ccode = false;
-      jscode = true;
+      debug  = false;
+      ccode  = false;
+      jscode = false;
       run_check = false;
       output = "live";
-      real = "float";
+      real   = "float";
    }
 
 let makeAttr (loc:Loc.t) : attr =

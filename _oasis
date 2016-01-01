@@ -36,7 +36,9 @@ Library "vult_core"
     PrintTypes,
     TypesVult,
     Inference,
-    VEnv
+    VEnv,
+    Constants,
+    Common
   BuildDepends:
     vult_util,
     ppx_deriving.std

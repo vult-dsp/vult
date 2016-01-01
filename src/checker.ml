@@ -118,7 +118,7 @@ let binop_table =
       "/",arithmeticFunction;
       "*",arithmeticFunction;
       "==",comparisonFunction;
-      "!=",comparisonFunction;
+      "<>",comparisonFunction;
       "<",comparisonFunction;
       ">",comparisonFunction;
       "<=",comparisonFunction;

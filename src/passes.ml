@@ -26,6 +26,7 @@ THE SOFTWARE.
 
 open TypesVult
 open VEnv
+open Common
 
 module PassData = struct
 
@@ -86,43 +87,6 @@ module ConstantSimplification = struct
 end
 *)
 
-module GetIdentifiers = struct
-
-   let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
-         match exp with
-         | LId(id,_,_) ->
-            Env.set state (IdSet.add id (Env.get state)), exp
-         | _ -> state, exp
-
-   let exp : ('a Env.t,exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
-         match exp with
-         | PId(id,_) ->
-            Env.set state (IdSet.add id (Env.get state)), exp
-         | _ -> state, exp
-
-   let mapper = { Mapper.default_mapper with Mapper.exp = exp; Mapper.lhs_exp = lhs_exp }
-
-   let dummy_env = Env.empty [""] IdSet.empty
-
-   let fromExp (exp:exp) : IdSet.t =
-      let s, _ = Mapper.map_exp mapper dummy_env exp in
-      Env.get s
-
-   let fromExpList (exp:exp list) : IdSet.t =
-      let s, _ = Mapper.map_exp_list mapper dummy_env exp in
-      Env.get s
-
-   let fromLhsExp (exp:lhs_exp) : IdSet.t =
-      let s, _ = Mapper.map_lhs_exp mapper dummy_env exp in
-      Env.get s
-
-   let fromLhsExpList (exp:lhs_exp list) : IdSet.t =
-      let s, _ = Mapper.map_lhs_exp_list mapper dummy_env exp in
-      Env.get s
-
-end
 
 module GetAttr = struct
 
@@ -143,6 +107,7 @@ module GetAttr = struct
       | PEmpty -> emptyAttr
 end
 
+(*
 module CollectContext = struct
 
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
@@ -183,6 +148,7 @@ module CollectContext = struct
       { Mapper.default_mapper with Mapper.stmt = stmt; Mapper.exp = exp  }
 
 end
+*)
 
 module InsertContext = struct
 
@@ -381,10 +347,14 @@ module SimplifyTupleAssign = struct
 end
 
 (* Basic transformations *)
+let inferPass (state,stmts) =
+   let stmts,state,_ = Inference.inferStmtList state None stmts in
+   state,stmts
+
 let pass1 (state,stmts) =
    let mapper =
       SplitMem.mapper
-      |> Mapper.seq CollectContext.mapper
+      (*|> Mapper.seq CollectContext.mapper*)
       |> Mapper.seq InsertContext.mapper
       |> Mapper.seq SimplifyTupleAssign.mapper
    in
@@ -392,8 +362,7 @@ let pass1 (state,stmts) =
 
 let pass2 (state,stmts) =
    let mapper =
-      InsertContext.mapper
-      |> Mapper.seq CreateInitFunction.mapper
+      CreateInitFunction.mapper
    in
    Mapper.map_stmt_list mapper state stmts
 
@@ -415,15 +384,19 @@ let applyTransformations (results:parser_results) =
    in
 
    let passes stmts =
-      let stmts,_,_ = Inference.inferStmtList initial_state None stmts in
-      (*(initial_state,stmts)
+      (initial_state,stmts)
+      |> inferPass
       |> pass1
       |> dump
       |> pass2
       |> dump
-      |> snd*)
-      stmts
+      |> snd
    in
 
-   let new_stmts = CCError.map passes results.presult in
+   let new_stmts =
+      try
+         CCError.map passes results.presult
+      with
+      | Error.VError(e) -> `Error([e])
+   in
    { results with presult = new_stmts }

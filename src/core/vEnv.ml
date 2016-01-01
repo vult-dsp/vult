@@ -28,16 +28,36 @@ let idStr = PrintTypes.identifierStr
 
 let pathStr path = path |> pathId |> PrintTypes.identifierStr
 
-let builtin_functions =
+let builtin_table =
    [
-      ["abs"];
-      ["exp"];
-      ["sin"];
-      ["floor"];
-      ["clip"];
-      ["not"];
-      ["tanh"];
-   ] |> IdSet.of_list
+      ["abs"]  , Constants.num_num ();
+      ["exp"]  , Constants.num_num ();
+      ["sin"]  , Constants.num_num ();
+      ["cos"]  , Constants.num_num ();
+      ["floor"], Constants.num_num ();
+      ["clip"] , Constants.num_num_num_num ();
+      ["not"]  , Constants.bool_bool ();
+      ["tanh"] , Constants.num_num ();
+      ["tan"]  , Constants.num_num ();
+      ["sqrt"]  , Constants.num_num ();
+
+      ["|+|"]  , Constants.num_num_num ();
+      ["|-|"]  , Constants.num_num_num ();
+      ["|*|"]  , Constants.num_num_num ();
+      ["|/|"]  , Constants.num_num_num ();
+
+      ["|>|"]  , Constants.num_num_bool ();
+      ["|<|"]  , Constants.num_num_bool ();
+      ["|==|"]  , Constants.num_num_bool ();
+      ["|<>|"]  , Constants.num_num_bool ();
+      ["|>=|"]  , Constants.num_num_bool ();
+      ["|<=|"]  , Constants.num_num_bool ();
+
+      ["||||"]  , Constants.bool_bool_bool ();
+      ["|&&|"]  , Constants.bool_bool_bool ();
+   ]
+
+let builtin_functions = List.map fst builtin_table |> IdSet.of_list
 
 type symbol_kind =
    | MemSymbol
@@ -357,6 +377,13 @@ module Env = struct
          context = FunctionContex.addTo state.context (Scope.current state.scope)
       }
 
+   (** Creates a new context if the fun_and attribute is true, otherwise adds to the current *)
+   let prepareContext (fun_and:bool) (state:'a t) : 'a t =
+      if fun_and then
+         includeFunctionInContext state
+      else
+         makeNewContext state
+
    (** Adds a mem variable to the current context *)
    let addMem (state:'a t) (name:id) (typ:vtype) : 'a t  =
       {
@@ -445,6 +472,13 @@ module Env = struct
          tick  = 0;
       }
 
+   (** Enters to a module *)
+   let enterModule (state:'a t) (func:id) : 'a t  =
+      {
+         state with
+         scope = Scope.enterModule state.scope func;
+      }
+
    (** Closes the current context *)
    let exit (state:'a t) : 'a t  =
       {
@@ -466,9 +500,15 @@ module Env = struct
          scope = Scope.exitBlock state.scope ;
       }
 
+   let addBuiltinFunction (state:'a t) (name,typ) : 'a t =
+      let state' = enterFunction state name in
+      let state' = setCurrentType state' typ in
+      let state' = exit state' in
+      state'
+
    (** Adds the builtin functions to the given context *)
-   let addBuiltin (s:Scope.t) : Scope.t =
-      IdSet.fold (fun a s -> Scope.enterFunction s a |> Scope.exit ) builtin_functions s
+   let initialize (s:'a t) : 'a t =
+      List.fold_left (fun s a -> addBuiltinFunction s a) s builtin_table
 
    (** Creates an empty module context *)
    let empty (init:id) data : 'a t =
@@ -476,8 +516,10 @@ module Env = struct
          data    = data;
          context = FunctionContex.empty;
          tick    = 0;
-         scope   = Scope.enterModule (Scope.empty |> addBuiltin) init;
+         scope   = Scope.empty;
       }
+      |> initialize
+      |> fun s -> enterModule s init
 
    let get (state:'a t) : 'a =
       state.data

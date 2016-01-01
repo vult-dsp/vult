@@ -28,6 +28,8 @@ type t =
    | PointedError of Loc.t * string
    | SimpleError  of string
 
+exception VError of t
+
 (** Takes a location and returns a string in the format "Error in file: file: line l col:c1-c2" *)
 let errorLocationMessage (location:Loc.t) : string =
    let col_start = Loc.startColumn location in
@@ -94,3 +96,6 @@ let joinErrorOptionsList : t list option list -> t list option = List.fold_left 
 
 let makeError (msg:string) (loc:Loc.t) =
    PointedError(loc,msg)
+
+let raiseError (msg:string) (loc:Loc.t) =
+   raise (VError(makeError msg loc))

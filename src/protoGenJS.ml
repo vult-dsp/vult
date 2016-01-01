@@ -76,7 +76,7 @@ let convertOp (op:string) : op option =
    | ">"  -> Some(OGt)
    | "%"  -> Some(OMod)
    | "==" -> Some(OEq)
-   | "!=" -> Some(OUEq)
+   | "<>" -> Some(OUEq)
    | "&&" -> Some(OAnd)
    | "||" -> Some(OOr)
    | "!"  -> Some(ONot)
@@ -200,7 +200,7 @@ let printOpNormal (o:print_options) op =
    | OLt    -> append o.buffer " < "
    | OGt    -> append o.buffer " > "
    | OEq    -> append o.buffer " == "
-   | OUEq   -> append o.buffer " != "
+   | OUEq   -> append o.buffer " <> "
    | OAnd   -> append o.buffer " && "
    | OOr    -> append o.buffer " || "
    | OMod   -> append o.buffer " % "

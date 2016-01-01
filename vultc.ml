@@ -66,7 +66,7 @@ let dumpParsedFiles (parser_results:parser_results list) =
             let _ = VultJs.generateJsCode b |> print_string in
             ()
             (*List.iter (fun stmt -> print_endline (show_stmt stmt)) b;*)
-         | _ -> () )
+         | `Error(_) -> Error.printErrors a.presult a.lines  )
 
 let main () =
    let args = processArguments () in

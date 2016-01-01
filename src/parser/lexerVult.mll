@@ -191,7 +191,7 @@ rule next_token lines = parse
   | "||"        { makeToken lines OP lexbuf }
   | "&&"        { makeToken lines OP lexbuf }
   | "=="        { makeToken lines OP lexbuf }
-  | "!="        { makeToken lines OP lexbuf }
+  | "<>"        { makeToken lines OP lexbuf }
   | "<="        { makeToken lines OP lexbuf }
   | ">="        { makeToken lines OP lexbuf }
   | [ '<' '>' ] { makeToken lines OP lexbuf }
