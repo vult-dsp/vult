@@ -62,8 +62,8 @@ let dumpParsedFiles (parser_results:parser_results list) =
          | `Ok(b) ->
             let _ = print_endline "\n= Transformed Code =" in
             let _ = PrintTypes.stmtListStr b |> print_string in
-            let _ = print_endline "\n= JS Code =" in
-            let _ = VultJs.generateJsCode b |> print_string in
+            (*let _ = print_endline "\n= JS Code =" in
+            let _ = VultJs.generateJsCode b |> print_string in*)
             ()
             (*List.iter (fun stmt -> print_endline (show_stmt stmt)) b;*)
          | `Error(_) -> Error.printErrors a.presult a.lines  )
