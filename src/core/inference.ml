@@ -216,6 +216,26 @@ let getOptType (typ:vtype option) : vtype =
    | Some(t) -> t
 
 
+let inferApplyArgCount (loc:Loc.t Lazy.t) (args_typ:vtype list) (fn_args:vtype list) : unit =
+   let n_args    = List.length args_typ in
+   let n_fn_args = List.length fn_args in
+   if  n_args <> n_fn_args then
+      Error.raiseError (Printf.sprintf "This function takes %i arguments but %i are passed" n_fn_args n_args) (Lazy.force loc)
+
+let rec inferApplyArg (args:exp list) (args_typ:vtype list) (fn_args:vtype list) : unit =
+   match args, args_typ, fn_args with
+   | [], [], [] -> ()
+   | arg::args, arg_typ::args_typ, fn_arg::fn_args ->
+      unifyRaise (expLoc arg) fn_arg arg_typ;
+      inferApplyArg args args_typ fn_args
+   | _ -> failwith "Inference.inferApplyArg: invalid input"
+
+let inferApply (loc:Loc.t Lazy.t) (args:exp list) (args_typ:vtype list) (ret_type:vtype) (fn_args:vtype list) (fn_ret_type:vtype) =
+   inferApplyArgCount loc args_typ fn_args;
+   inferApplyArg args args_typ fn_args;
+   unifyRaise loc fn_ret_type ret_type
+
+
 let rec inferExp (env:'a Env.t) (e:exp) : exp * vtype =
    match e with
    | PUnit(attr) ->
@@ -248,6 +268,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * vtype =
       let ret_type    = newvar () in
       let _, fn_type  = Env.lookup env fname in
       let fn_args,fn_ret = stripArrow fn_type in
+      inferApply (expLoc e) args' types ret_type fn_args fn_ret;
       PCall(name,fname,args',{ attr with typ = Some(ret_type) }), ret_type
    | POp(op,[e1;e2],attr) ->
       let e1',e1_typ  = inferExp env e1 in
