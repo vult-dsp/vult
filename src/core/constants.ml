@@ -53,3 +53,9 @@ let bool_bool () = ref (TArrow(bool_type(),bool_type(),None))
 
 let bool_bool_bool () =
    ref (TArrow(bool_type(),ref (TArrow(bool_type(),bool_type (),None)),None))
+
+let num_int () =
+   ref (TArrow(num_type (),int_type (),None))
+
+let num_real () =
+   ref (TArrow(num_type (),real_type (),None))

@@ -39,12 +39,16 @@ let builtin_table =
       ["not"]  , Constants.bool_bool ();
       ["tanh"] , Constants.num_num ();
       ["tan"]  , Constants.num_num ();
-      ["sqrt"]  , Constants.num_num ();
+      ["sqrt"] , Constants.num_num ();
+
+      ["int"]  , Constants.num_int ();
+      ["real"] , Constants.num_real ();
 
       ["|+|"]  , Constants.num_num_num ();
       ["|-|"]  , Constants.num_num_num ();
       ["|*|"]  , Constants.num_num_num ();
       ["|/|"]  , Constants.num_num_num ();
+      ["|%|"]  , Constants.num_num_num ();
 
       ["|>|"]  , Constants.num_num_bool ();
       ["|<|"]  , Constants.num_num_bool ();
