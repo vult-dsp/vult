@@ -4,7 +4,7 @@ fun minFixed() return 0.0000152588;
 // Returns true every time the input value changes
 fun change(x):bool {
     mem pre_x;
-    val v:bool = pre_x!=x;
+    val v:bool = pre_x<>x;
     pre_x = x;
     return v;
 }
@@ -12,7 +12,7 @@ fun change(x):bool {
 // Returns true if the value changes from 0 to anything
 fun edge(x):bool {
     mem pre_x;
-    val v:bool = (pre_x!=x) && (pre_x==0);
+    val v:bool = (pre_x<>x) && (pre_x==0);
     pre_x = x;
     return v;
 }
@@ -51,7 +51,7 @@ fun pitchToRate(d) : real
   return 8.1758*exp(0.0577623*d)/44100;
 
 // Generates a BW-limited pulse train given the phase and the number of harmonics
-fun pulse_train(m,phase){
+fun pulse_train(m:int,phase){
   val pi_phase = phase * 3.141592653589793;
   val denominator1 = sin(pi_phase);
   val tmp1 = 0;
@@ -90,7 +90,7 @@ fun osc(pitch,pw,wave){
     rate = pitchToRate(fixed_pitch);
     val p = 1/rate;
     val maxHarmonics = floor(p/2);
-    m = 2 * maxHarmonics + 1;
+    m = int(2 * maxHarmonics + 1);
   }
   // Generates a shifted version of the phase
   val shift05 = 0.5 + pw * 0.49;
