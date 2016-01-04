@@ -31,7 +31,7 @@ let int_type    () = ref (TId(["int"],None))
 let real_type   () = ref (TId(["real"],None))
 let string_type () = ref (TId(["string"],None))
 
-let num_type    () = ref (TExpAlt([real_type(); int_type()]))
+let num_type    () = ref (TExpAlt([real_type(); int_type(); bool_type ()]))
 
 let num_num () =
    let num = num_type () in

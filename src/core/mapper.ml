@@ -337,7 +337,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       apply mapper.stmt state' (StmtIf(cond',then_,None,attr'))
       |> map_stmt_subs mapper
    | StmtFun(name,args,body,ret,attr) ->
-      let state'       = Env.enterFunction state name in
+      let state'       = Env.enter `Function state name in
       let state',name' = map_id mapper state' name in
       let state',args' = (mapper_list map_typed_id) mapper state' args in
       let state',ret'  = (mapper_opt map_vtype) mapper state' ret in
@@ -346,10 +346,10 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
          apply mapper.stmt state' (StmtFun(name',args',body,ret',attr'))
          |> map_stmt_subs mapper
       in
-      let state'       = Env.exit state' in
+      let state'       = Env.exit `Function state' in
       state', stmt'
    | StmtExternal(name,args,ret,attr) ->
-      let state'       = Env.enterFunction state name in
+      let state'       = Env.enter `Function state name in
       let state',name' = map_id mapper state' name in
       let state',args' = (mapper_list map_typed_id) mapper state' args in
       let state',ret'  = map_vtype mapper state' ret in
@@ -358,7 +358,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
          apply mapper.stmt state' (StmtExternal(name',args',ret',attr'))
          |> map_stmt_subs mapper
       in
-      let state'       = Env.exit state' in
+      let state'       = Env.exit `Function state' in
       state', stmt'
    | StmtBlock(name,stmts,attr) ->
       let state',name' = (mapper_opt map_id) mapper state name in

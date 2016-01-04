@@ -30,38 +30,80 @@ let pathStr path = path |> pathId |> PrintTypes.identifierStr
 
 let builtin_table =
    [
-      ["abs"]  , Constants.num_num ();
-      ["exp"]  , Constants.num_num ();
-      ["sin"]  , Constants.num_num ();
-      ["cos"]  , Constants.num_num ();
-      ["floor"], Constants.num_num ();
-      ["clip"] , Constants.num_num_num_num ();
-      ["not"]  , Constants.bool_bool ();
-      ["tanh"] , Constants.num_num ();
-      ["tan"]  , Constants.num_num ();
-      ["sqrt"] , Constants.num_num ();
+      ["abs"]  , `Function, Constants.num_num ();
+      ["exp"]  , `Function, Constants.num_num ();
+      ["sin"]  , `Function, Constants.num_num ();
+      ["cos"]  , `Function, Constants.num_num ();
+      ["floor"], `Function, Constants.num_num ();
+      ["clip"] , `Function, Constants.num_num_num_num ();
+      ["not"]  , `Function, Constants.bool_bool ();
+      ["tanh"] , `Function, Constants.num_num ();
+      ["tan"]  , `Function, Constants.num_num ();
+      ["sqrt"] , `Function, Constants.num_num ();
 
-      ["int"]  , Constants.num_int ();
-      ["real"] , Constants.num_real ();
+      ["int"]  , `Function, Constants.num_int ();
+      ["real"] , `Function, Constants.num_real ();
 
-      ["|+|"]  , Constants.num_num_num ();
-      ["|-|"]  , Constants.num_num_num ();
-      ["|*|"]  , Constants.num_num_num ();
-      ["|/|"]  , Constants.num_num_num ();
-      ["|%|"]  , Constants.num_num_num ();
+      ["|-|"] , `Operator, Constants.num_num ();
+      ["+"]  , `Operator, Constants.num_num_num ();
+      ["-"]  , `Operator, Constants.num_num_num ();
+      ["*"]  , `Operator, Constants.num_num_num ();
+      ["/"]  , `Operator, Constants.num_num_num ();
+      ["%"]  , `Operator, Constants.num_num_num ();
 
-      ["|>|"]  , Constants.num_num_bool ();
-      ["|<|"]  , Constants.num_num_bool ();
-      ["|==|"]  , Constants.num_num_bool ();
-      ["|<>|"]  , Constants.num_num_bool ();
-      ["|>=|"]  , Constants.num_num_bool ();
-      ["|<=|"]  , Constants.num_num_bool ();
+      [">"]   , `Operator, Constants.num_num_bool ();
+      ["<"]   , `Operator, Constants.num_num_bool ();
+      ["=="]  , `Operator, Constants.num_num_bool ();
+      ["<>"]  , `Operator, Constants.num_num_bool ();
+      [">="]  , `Operator, Constants.num_num_bool ();
+      ["<="]  , `Operator, Constants.num_num_bool ();
 
-      ["||||"]  , Constants.bool_bool_bool ();
-      ["|&&|"]  , Constants.bool_bool_bool ();
+      ["||"]  , `Operator, Constants.bool_bool_bool ();
+      ["&&"]  , `Operator, Constants.bool_bool_bool ();
    ]
 
-let builtin_functions = List.map fst builtin_table |> IdSet.of_list
+let builtin_functions = List.map (fun (a,_,_)->a) builtin_table |> IdSet.of_list
+
+(** Maps which function belongs to which context *)
+module Context = struct
+
+   type t =
+      {
+         forward   : id IdMap.t;
+         backward  : id list IdMap.t;
+         count     : int;
+         current   : id;
+      }
+
+   let empty =
+      {
+         forward   = IdMap.empty;
+         backward  = IdMap.empty;
+         count     = 0;
+         current   = [];
+      }
+
+   let addTo (context:t) (func:id) : t =
+      let current_in_ctx =
+         try IdMap.find context.current context.backward with
+         | Not_found -> []
+      in
+      {
+         context with
+         forward  = IdMap.add func context.current context.forward;
+         backward = IdMap.add context.current (func::current_in_ctx) context.backward;
+      }
+
+   let makeNew (context:t) (func:id) : t =
+      let context_name = ["ctx_"^(string_of_int context.count)] in
+      {
+         count    = context.count+1;
+         current  = context_name;
+         forward  = IdMap.add func context_name context.forward;
+         backward = IdMap.add context_name [func] context.backward;
+      }
+
+end
 
 type symbol_kind =
    | MemSymbol
@@ -82,35 +124,79 @@ module Scope = struct
 
    type t =
       {
-         name    : id;             (** Name of the current scope *)
-         kind    : symbol_kind;    (** Type of the current scope *)
-         parent  : t option;       (** Pointer to it's parent *)
-         keep    : t IdMap.t;      (** Persistent symbols (keeps mem and functions) *)
-         locals  : t IdMap.t list; (** Temporary symbols (variables in subscopes) *)
-         typ     : vtype;       (** Type of the symbol *)
+         name      : id;             (** Name of the current scope *)
+         kind      : symbol_kind;    (** Type of the current scope *)
+         parent    : t option;       (** Pointer to it's parent *)
+         typ       : vtype;          (** Type of the symbol *)
+
+         operators : t IdMap.t;      (** Operators *)
+         modules   : t IdMap.t;      (** Modules or namespaces *)
+         types     : t IdMap.t;      (** Types *)
+         func      : t IdMap.t;      (** Functions *)
+         mem_inst  : t IdMap.t;      (** Mem and instances *)
+         locals    : t IdMap.t list; (** Variables and subscopes *)
+
+         ctx       : Context.t;
+
       }
 
    let empty : t =
       {
-         name    = [];
-         kind    = ModuleSymbol;
-         parent  = None;
-         keep    = IdMap.empty;
-         locals  = [];
-         typ     = ref (TId([""],None));
+         name      = [];
+         kind      = ModuleSymbol;
+         parent    = None;
+         operators = IdMap.empty;
+         modules   = IdMap.empty;
+         types     = IdMap.empty;
+         func      = IdMap.empty;
+         mem_inst  = IdMap.empty;
+         locals    = [];
+         typ       = ref (TId([""],None));
+         ctx       = Context.empty;
+
       }
 
-   let rec dump (t:t) (level:int) : unit =
+   let getFunction (t:t) : t IdMap.t =
+      t.func
+
+   let primExitFunction (parent:t) (t:t) : t =
+      { parent with func = IdMap.add t.name t parent.func }
+
+   let getModule (t:t) : t IdMap.t =
+      t.modules
+
+   let primExitModule (parent:t) (t:t) : t =
+      { parent with modules = IdMap.add t.name t parent.modules }
+
+   let getMemInst (t:t) : t IdMap.t =
+      t.mem_inst
+
+   let primExitMemInst (parent:t) (t:t) : t =
+      { parent with mem_inst = IdMap.add t.name t parent.mem_inst }
+
+   let getTypes (t:t) : t IdMap.t =
+      t.types
+
+   let primExitTypes (parent:t) (t:t) : t =
+      { parent with types = IdMap.add t.name t parent.types }
+
+   let getOperators (t:t) : t IdMap.t =
+      t.operators
+
+   let primExitOperators (parent:t) (t:t) : t =
+      { parent with operators = IdMap.add t.name t parent.operators }
+
+   (*let rec dump (t:t) (level:int) : unit =
       Printf.printf "%s'%s' = %s\n" (String.make level ' ') (idStr t.name) (kindStr t.kind);
-      IdMap.iter (fun _ sub -> dump sub (level+3)) t.keep
+      IdMap.iter (fun _ sub -> dump sub (level+3)) t.keep*)
 
    let addMem (t:t) (name:id) (typ:vtype) : t =
       let new_symbol = { empty with name = name; kind = MemSymbol; typ = typ } in
-      { t with keep = IdMap.add name new_symbol t.keep }
+      { t with mem_inst = IdMap.add name new_symbol t.mem_inst }
 
-   let addInstance (t:t) (name:id) : t =
-      let new_symbol = { empty with name = name; kind = InstanceSymbol } in
-      { t with keep = IdMap.add name new_symbol t.keep }
+   let addInstance (t:t) (name:id) (typ:vtype) : t =
+      let new_symbol = { empty with name = name; kind = InstanceSymbol; typ = typ } in
+      { t with mem_inst = IdMap.add name new_symbol t.mem_inst }
 
    let addVar (t:t) (name:id) (typ:vtype) : t =
       let new_symbol = { empty with name = name; kind = VarSymbol; typ = typ  } in
@@ -121,30 +207,45 @@ module Scope = struct
       in
       { t with locals = (IdMap.add name new_symbol first) :: rest }
 
-   let enter (t:t) (name:id) (kind:symbol_kind) : t =
-      match IdMap.find name t.keep with
+   let enterAny (get:t -> t IdMap.t) (t:t) (name:id) : t =
+      match IdMap.find name (get t) with
       | sub ->
          { sub with parent = Some(t) }
       | exception Not_found ->
-         { empty with parent = Some(t); name = name; kind = kind }
+         { empty with parent = Some(t); name = name; }
 
-   let exit (t:t) : t =
+   let exitAny (exit:t -> t -> t) (t:t) : t =
       match t.parent with
       | None -> failwith "Scope.exit: Cannot exit more scopes"
       | Some(parent) ->
-         { parent with keep = IdMap.add t.name t parent.keep }
+         exit parent t
 
-   let enterBlock (t:t) : t =
-      { t with locals = IdMap.empty :: t.locals }
+   let newContext (t:t) (name:id) : t =
+      { t with ctx = Context.makeNew t.ctx name }
 
-   let exitBlock (t:t) : t =
-      { t with locals = List.tl t.locals }
+   let addToContext (t:t) (name:id) : t =
+      { t with ctx = Context.makeNew t.ctx name }
 
-   let enterFunction (t:t) (name:id) : t =
-      enter t name FunctionSymbol
+   let enter kind ?(sharectx=false) (t:t) (name:id) : t =
+      match kind with
+      | `Function ->
+         let t' = enterAny getFunction t name in
+         if sharectx then
+            addToContext t' name
+         else
+            newContext t' name
+      | `Module   -> enterAny getModule t name
+      | `Operator -> enterAny getOperators t name
+      | `Block    -> { t with locals = IdMap.empty :: t.locals }
+      | _ -> raise (Invalid_argument "Scope.enter")
 
-   let enterModule (t:t) (name:id) : t =
-      enter t name ModuleSymbol
+   let exit kind (t:t) : t =
+      match kind with
+      | `Function -> exitAny primExitFunction t
+      | `Module   -> exitAny primExitModule t
+      | `Operator -> exitAny primExitOperators t
+      | `Block    -> { t with locals = List.tl t.locals }
+      | _ -> raise (Invalid_argument "Scope.exit")
 
    let setCurrentType (t:t) (typ:vtype) : t =
       { t with typ = typ }
@@ -153,7 +254,14 @@ module Scope = struct
       match t.parent with
       | None -> None
       | Some(parent) ->
-         Some({ parent with keep = IdMap.add t.name t parent.keep })
+         match t.kind with
+         | ModuleSymbol ->
+            Some(primExitModule parent t)
+         | FunctionSymbol ->
+            Some(primExitFunction parent t)
+         | MemSymbol | InstanceSymbol ->
+            Some(primExitMemInst parent t)
+         | VarSymbol -> Some(parent)
 
    let current (t:t) : path =
       let rec parentName parent =
@@ -165,34 +273,6 @@ module Scope = struct
       t.name :: parentName t.parent
       |> List.rev |> List.flatten |> fun a -> Path(a)
 
-   let rec find (t:t) (name:id) : t option =
-      match name with
-      | [] -> Some(t)
-      | h::rest ->
-         match IdMap.find [h] t.keep with
-         | found ->
-            find found rest
-         | exception Not_found ->
-            let rec findLocals l =
-               match l with
-               | []   -> None
-               | local::locals ->
-                  match IdMap.find [h] local with
-                  | found ->
-                     find found rest
-                  | exception Not_found ->
-                     findLocals locals
-            in findLocals t.locals
-
-   let rec lookupAny (t:t) (name:id) : t option =
-      match find t name with
-      | Some(value) -> Some(value)
-      | None ->
-         match getParent t with
-         | Some(parent) ->
-            lookupAny parent name
-         | None -> None
-
    let getPath (t:t) : id =
       let rec parentPath (parent:t option) : id =
          match parent with
@@ -202,16 +282,53 @@ module Scope = struct
       t.name @ (parentPath t.parent)
       |> List.rev
 
-   let lookup (t:t) (name:id) : (path * vtype) option =
-      match lookupAny t name with
-      | Some(t) -> Some(Path(getPath t), t.typ)
-      | _ -> None
+   let rec findAny (find_up:bool) (get:t -> t IdMap.t) (t:t) (name:id) : (path * vtype) option =
+      match name with
+      | [] -> Some(Path(getPath t), t.typ)
+      | h::rest ->
+         match IdMap.find [h] (get t) with
+         | found ->
+            findAny find_up get found rest
+         | exception Not_found ->
+            if find_up then
+               match getParent t with
+               | Some(parent) ->
+                  findAny find_up get parent name
+               | None -> None
+            else None
+
+   let rec lookupVal (t:t) (name:id) : (path * vtype) option =
+      match name with
+      | [] -> Some(Path(getPath t), t.typ)
+      | h::rest ->
+         let rec inner_loop l =
+            match l with
+            | []   -> None
+            | local::locals ->
+               match IdMap.find [h] local with
+               | found ->
+                  lookupVal found rest
+               | exception Not_found ->
+                  inner_loop locals
+         in inner_loop t.locals
+
+   let lookupVariable (t:t) (name:id) : (path * vtype) option =
+      match findAny false getMemInst t name with
+      | Some(_) as a -> a
+      | None -> lookupVal t name
+
+   let lookup kind (t:t) (name:id) : (path * vtype) option =
+      match kind with
+      | `Function -> findAny true getFunction t name
+      | `Module   -> findAny true getModule t name
+      | `Operator -> findAny true getOperators t name
+      | `Type     -> findAny true getTypes t name
+      | `Variable -> lookupVariable t name
 
    let isMemOrInstance (t:t) (name:id) : bool =
-      match find t name with
-      | Some({ kind = MemSymbol }) -> true
-      | Some({ kind = InstanceSymbol }) -> true
-      | _  -> false
+      match findAny false getMemInst t name with
+      | Some(_) -> true
+      | None    -> false
 
 end
 
@@ -360,8 +477,8 @@ module Env = struct
    (** Prints all the information of the current environment *)
    let dump (state:'a t) =
       FunctionContex.dump state.context;
-      print_endline "Scope";
-      Scope.dump state.scope 3
+      print_endline "Scope"
+      (*Scope.dump state.scope 3*)
 
    (** Gets a new tick (integer value) and updates the state *)
    let tick (state:'a t) : int * 'a t =
@@ -404,14 +521,15 @@ module Env = struct
       }
 
    (** Returns the full path of a function. Raises an error if it cannot be found *)
-   let lookup (state:'a t) (name:id) : path * vtype =
-      match Scope.lookup state.scope name with
+   let lookup kind (state:'a t) (name:id) : path * vtype =
+      match Scope.lookup kind state.scope name with
       | None -> failwith (Printf.sprintf "Cannot find symbol '%s'" (idStr name))
       | Some(path) -> path
 
+
       (** Returns the mem and instances for a function *)
    let getMemAndInstances (state:'a t) (name:id) : IdTypeSet.t * IdTypeSet.t =
-      let path,_   = lookup state name in
+      let path,_   = lookup `Function state name in
       let ctx      = FunctionContex.findContext state.context path in
       let mem      = FunctionContex.getMemForContext state.context ctx in
       let instance = FunctionContex.getInstancesForContext state.context ctx in
@@ -419,12 +537,12 @@ module Env = struct
 
    (** Returns the generated context name for the given function *)
    let getContext (state:'a t) (name:id) : id =
-      let path,_ = lookup state name in
+      let path,_ = lookup `Function state name in
       FunctionContex.findContext state.context path
 
    (** Returns true if the function is active *)
    let isActive (state:'a t) (name:id) : bool =
-      let path,_ = lookup state name in
+      let path,_ = lookup `Function state name in
       FunctionContex.isActive state.context path
 
    (** Returns true if the id is a mem or an instance *)
@@ -442,18 +560,22 @@ module Env = struct
 
    (** Adds a new instance to the context if the function is active *)
    let addInstanceToContext (state:'a t) (name_opt:id option) (kind:id) : 'a t * id option  =
-      let kind_path_opt = Scope.lookup state.scope kind in
+      let kind_path_opt = Scope.lookup `Function state.scope kind in
       let kind_path,_ =
          match kind_path_opt with
          | Some(path) -> path
          | None -> failwith "Cannot find function"
+      in
+      let kind_type =
+         match kind_path with
+         | Path(p) -> ref (TId(p,None))
       in
       if isActive state kind then
          let state', name' = generateInstanceName state name_opt in
          {
             state' with
             context = FunctionContex.addInstance state'.context (Scope.current state.scope) name' kind_path;
-            scope = Scope.addInstance state.scope name';
+            scope   = Scope.addInstance state.scope name' kind_type;
          }, Some(name')
       else
          state, None
@@ -468,46 +590,24 @@ module Env = struct
          scope = Scope.setCurrentType state.scope typ;
       }
 
-   (** Enters to the context of the given function *)
-   let enterFunction (state:'a t) (func:id) : 'a t  =
+   let enter kind (state:'a t) (func:id) : 'a t =
       {
          state with
-         scope = Scope.enterFunction state.scope func;
+         scope = Scope.enter kind state.scope func;
          tick  = 0;
       }
 
-   (** Enters to a module *)
-   let enterModule (state:'a t) (func:id) : 'a t  =
-      {
-         state with
-         scope = Scope.enterModule state.scope func;
-      }
-
    (** Closes the current context *)
-   let exit (state:'a t) : 'a t  =
+   let exit kind (state:'a t) : 'a t  =
       {
          state with
-         scope = Scope.exit state.scope;
+         scope = Scope.exit kind state.scope;
       }
 
-   (** Enters to a block of statements *)
-   let enterBlock (state:'a t) : 'a t  =
-      {
-         state with
-         scope = Scope.enterBlock state.scope ;
-      }
-
-   (** Exits to a block of statements *)
-   let exitBlock (state:'a t) : 'a t  =
-      {
-         state with
-         scope = Scope.exitBlock state.scope ;
-      }
-
-   let addBuiltinFunction (state:'a t) (name,typ) : 'a t =
-      let state' = enterFunction state name in
+   let addBuiltinFunction (state:'a t) (name,kind,typ) : 'a t =
+      let state' = enter kind state name in
       let state' = setCurrentType state' typ in
-      let state' = exit state' in
+      let state' = exit kind state' in
       state'
 
    (** Adds the builtin functions to the given context *)
@@ -523,7 +623,7 @@ module Env = struct
          scope   = Scope.empty;
       }
       |> initialize
-      |> fun s -> enterModule s init
+      |> fun s -> enter `Module s init
 
    let get (state:'a t) : 'a =
       state.data
