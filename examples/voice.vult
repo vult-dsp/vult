@@ -51,7 +51,7 @@ fun pitchToRate(d) : real
   return 8.1758*exp(0.0577623*d)/44100;
 
 // Generates a BW-limited pulse train given the phase and the number of harmonics
-fun pulse_train(m:int,phase){
+fun pulse_train(m,phase){
   val pi_phase = phase * 3.141592653589793;
   val denominator1 = sin(pi_phase);
   val tmp1 = 0;
@@ -68,7 +68,7 @@ fun pulse_train(m:int,phase){
 // Generates BW-limited waveforms using the blit algorithm.
 // It can generate PWM puses, saws and triangles.
 fun osc(pitch,pw,wave){
-  mem m:int;
+  mem m;
   mem rate;
   mem phase;
   mem pre_pitch;
@@ -90,7 +90,7 @@ fun osc(pitch,pw,wave){
     rate = pitchToRate(fixed_pitch);
     val p = 1/rate;
     val maxHarmonics = floor(p/2);
-    m = int(2 * maxHarmonics + 1);
+    m = 2 * maxHarmonics + 1;
   }
   // Generates a shifted version of the phase
   val shift05 = 0.5 + pw * 0.49;
@@ -110,8 +110,8 @@ fun osc(pitch,pw,wave){
 
   // Calculates the waveforms based on the pulse trains
   state_pulse  = clip(state_pulse  * 0.9995 + tmp1 - tmp2, -1, 1);
-  state_saw    = clip(state_saw    * 0.9995 + (tmp1 + tmp2  - 2*rate)/shift05/2, -1,1);
-  state_triang = clip(state_triang * 0.9995 + 2 * state_pulse*rate, -1,1);
+  state_saw    = clip(state_saw    * 0.9995 + (tmp1 + tmp2  - 2 * rate)/shift05/2, -1,1);
+  state_triang = clip(state_triang * 0.9995 + 2 * state_pulse * rate, -1,1);
 
   // Select the wave to output
   if(wave < 1/3) {
@@ -133,13 +133,14 @@ fun osc(pitch,pw,wave){
 
 // Calculates one step of the state-variable filter
 fun svf_step(input,g,q,sel) : real {
+   mem dlow, dband;
    val low = dlow + g * dband;
    val high = input - low - q*dband;
    val band = g * high + dband;
    val notch = high + low;
 
-   mem dband = clip(band,-1,1);
-   mem dlow  = clip(low,-1,1);
+   dband = clip(band,-1,1);
+   dlow  = clip(low,-1,1);
    val output =
       if sel == 0 then low else
       if sel == 1 then high else
@@ -191,16 +192,16 @@ fun adsr(input,attack,decay,sustain,release){
    sustainLevel = sustain;
 
    val current = input > 0.5;
-   val edge = 0;
+   val trig = false;
    val rate = 0;
 
    if(change(current)){
-      gate = if current then 1 else 0;
-      edge = 1;
+      gate = current;
+      trig = true;
    }
 
-   val up   = edge && gate;
-   val down = edge && not(gate);
+   val up   = trig && gate;
+   val down = trig && not(gate);
 
    // State machine of the ADSR
    if(state == IDLE){
