@@ -2,7 +2,15 @@
 fun minFixed() return 0.0000152588;
 
 // Returns true every time the input value changes
-fun change(x):bool {
+fun change(x:real):bool {
+    mem pre_x;
+    val v:bool = pre_x<>x;
+    pre_x = x;
+    return v;
+}
+
+// Returns true every time the input value changes
+fun bchange(x:bool):bool {
     mem pre_x;
     val v:bool = pre_x<>x;
     pre_x = x;
@@ -12,7 +20,7 @@ fun change(x):bool {
 // Returns true if the value changes from 0 to anything
 fun edge(x):bool {
     mem pre_x;
-    val v:bool = (pre_x<>x) && (pre_x==0);
+    val v:bool = (pre_x<>x) && (pre_x==true);
     pre_x = x;
     return v;
 }
@@ -54,7 +62,7 @@ fun pitchToRate(d) : real
 fun pulse_train(m,phase){
   val pi_phase = phase * 3.141592653589793;
   val denominator1 = sin(pi_phase);
-  val tmp1 = 0;
+  val tmp1 = 0.;
   if(near_zero(denominator1)) {
     tmp1 = 1;
   }
@@ -169,7 +177,7 @@ fun svf(input,fc,q,sel){
 
 // ==== ENVELOPE =====
 
-fun adsr(input,attack,decay,sustain,release){
+fun adsr(gate,attack,decay,sustain,release){
    mem state,value,gate;
    mem attackRate;
    mem decayRate;
@@ -191,14 +199,10 @@ fun adsr(input,attack,decay,sustain,release){
    }
    sustainLevel = sustain;
 
-   val current = input > 0.5;
    val trig = false;
    val rate = 0;
 
-   if(change(current)){
-      gate = current;
-      trig = true;
-   }
+   trig = bchange(gate);
 
    val up   = trig && gate;
    val down = trig && not(gate);
@@ -251,7 +255,7 @@ fun lfo(f,gate){
 // Activates a note and returns the current note value
 fun noteOn(n){
    mem n1,n2,n3,n4;
-   mem count,pre;
+   mem (count:int),pre;
    // written this way because Vult does not have array support yet.
    if(count == 0) { n1 = n; pre = n; } else
    if(count == 1) { n2 = n; pre = n; } else
@@ -287,7 +291,7 @@ and noteOff(n){
 and isGateOn(){
    mem n1,n2,n3,n4;
    mem count,pre;
-   return if count>0 then 1 else 0;
+   return count>0;
 }
 
 fun process(i){
@@ -320,11 +324,11 @@ fun process(i){
   return output/2;
 }
 
-and process_noteOn(n){
+and process_noteOn(n:int){
   _ = monoin:noteOn(n);
 }
 
-and process_noteOff(n){
+and process_noteOff(n:int){
   _ = monoin:noteOff(n);
 }
 
