@@ -115,22 +115,34 @@ let rec unify (t1:vtype) (t2:vtype) : bool =
       unify a1 b1 && unify a2 b2
    | { contents = TId(id1,_) }, { contents = TId(id2,_) } when id1 = id2 -> true
 
-   | { contents = TExpAlt(first_alt :: alt_rest) }, t
-   | t, { contents = TExpAlt(first_alt :: alt_rest) } ->
-      if unify first_alt t then
-         begin
-            (*t1 := !first_alt;*)
-            true
-         end
-      else
-         unify (ref(TExpAlt(alt_rest))) t
-   | { contents = tp1 }, { contents = tp2 } when equal_vtype_c tp1 tp2 -> true
+   | { contents = (TExpAlt(_) as tp1) },{ contents = (TExpAlt(_) as tp2) } when equal_vtype_c tp1 tp2 ->
+      t2 := TLink(t1);
+      true
+
+   (* TODO: unify types with different alternatives *)
+
+   | ({ contents = TExpAlt(alt) } as tu), t
+   | t, ({ contents = TExpAlt(alt) } as tu) ->
+      let rec loop alt =
+         match alt with
+         | [] -> false
+         | first_alt :: alt_rest ->
+            if unify t first_alt then
+               begin
+               tu := TLink(first_alt);
+               true
+            end
+         else
+            loop alt_rest
+      in loop alt
+   | { contents = tp1 }, { contents = tp2 } when equal_vtype_c tp1 tp2 ->
+      true
 
    | _ -> false
 
 
 let unifyRaise (loc:Loc.t Lazy.t) (t1:vtype) (t2:vtype) : unit =
-   let raise = false in
+   let raise = true in
    if not (unify t1 t2) then
       let msg = Printf.sprintf "This expression has type '%s' but '%s' was expected" (PrintTypes.typeStr t2) (PrintTypes.typeStr t1) in
       if raise then
@@ -364,7 +376,7 @@ and inferStmt (env:'a Env.t) (ret_type:vtype option) (stmt:stmt) : stmt * 'a Env
       let body',env',body_ret = inferStmt env' ret_type body in
       let last_type = getOptType body_ret in
       let typ  = makeArrowType last_type types in
-      let env' = Env.setCurrentType env' typ in
+      let env' = Env.setCurrentType env' typ true in
       let env' = Env.exit `Function env' in
       StmtFun(name,args',body',body_ret,attr), env', None
    | StmtIf(cond,then_,else_,attr) ->
@@ -386,7 +398,7 @@ and inferStmt (env:'a Env.t) (ret_type:vtype option) (stmt:stmt) : stmt * 'a Env
       let env' = Env.enter `Function env name in
       let args',types, env' = addArgsToEnv env' args in
       let typ  = makeArrowType fun_ret_type types in
-      let env' = Env.setCurrentType env' typ in
+      let env' = Env.setCurrentType env' typ true in
       let env' = Env.exit `Function env' in
       StmtExternal(name,args',fun_ret_type,attr), env', ret_type
    | StmtEmpty -> StmtEmpty, env, ret_type

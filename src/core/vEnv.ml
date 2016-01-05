@@ -30,39 +30,76 @@ let pathStr path = path |> pathId |> PrintTypes.identifierStr
 
 let builtin_table =
    [
-      ["abs"]  , `Function, Constants.num_num ();
-      ["exp"]  , `Function, Constants.num_num ();
-      ["sin"]  , `Function, Constants.num_num ();
-      ["cos"]  , `Function, Constants.num_num ();
-      ["floor"], `Function, Constants.num_num ();
-      ["clip"] , `Function, Constants.num_num_num_num ();
-      ["not"]  , `Function, Constants.bool_bool ();
-      ["tanh"] , `Function, Constants.num_num ();
-      ["tan"]  , `Function, Constants.num_num ();
-      ["sqrt"] , `Function, Constants.num_num ();
+      ["abs"]  , `Function, Constants.num_num (), false;
+      ["exp"]  , `Function, Constants.num_num (), false;
+      ["sin"]  , `Function, Constants.num_num (), false;
+      ["cos"]  , `Function, Constants.num_num (), false;
+      ["floor"], `Function, Constants.num_num (), false;
+      ["clip"] , `Function, Constants.num_num_num_num (), false;
+      ["not"]  , `Function, Constants.bool_bool (), false;
+      ["tanh"] , `Function, Constants.num_num (), false;
+      ["tan"]  , `Function, Constants.num_num (), false;
+      ["sqrt"] , `Function, Constants.num_num (), false;
 
-      ["int"]  , `Function, Constants.num_int ();
-      ["real"] , `Function, Constants.num_real ();
+      ["int"]  , `Function, Constants.num_int (), false;
+      ["real"] , `Function, Constants.num_real (), false;
 
-      ["|-|"] , `Operator, Constants.num_num ();
-      ["+"]  , `Operator, Constants.num_num_num ();
-      ["-"]  , `Operator, Constants.num_num_num ();
-      ["*"]  , `Operator, Constants.num_num_num ();
-      ["/"]  , `Operator, Constants.num_num_num ();
-      ["%"]  , `Operator, Constants.num_num_num ();
+      ["|-|"] , `Operator, Constants.num_num (), false;
+      ["+"]  , `Operator, Constants.num_num_num (), false;
+      ["-"]  , `Operator, Constants.num_num_num (), false;
+      ["*"]  , `Operator, Constants.num_num_num (), false;
+      ["/"]  , `Operator, Constants.num_num_num (), false;
+      ["%"]  , `Operator, Constants.num_num_num (), false;
 
-      [">"]   , `Operator, Constants.num_num_bool ();
-      ["<"]   , `Operator, Constants.num_num_bool ();
-      ["=="]  , `Operator, Constants.num_num_bool ();
-      ["<>"]  , `Operator, Constants.num_num_bool ();
-      [">="]  , `Operator, Constants.num_num_bool ();
-      ["<="]  , `Operator, Constants.num_num_bool ();
+      [">"]   , `Operator, Constants.num_num_bool (), false;
+      ["<"]   , `Operator, Constants.num_num_bool (), false;
+      ["=="]  , `Operator, Constants.num_num_bool (), false;
+      ["<>"]  , `Operator, Constants.num_num_bool (), false;
+      [">="]  , `Operator, Constants.num_num_bool (), false;
+      ["<="]  , `Operator, Constants.num_num_bool (), false;
 
-      ["||"]  , `Operator, Constants.bool_bool_bool ();
-      ["&&"]  , `Operator, Constants.bool_bool_bool ();
+      ["||"]  , `Operator, Constants.bool_bool_bool (), false;
+      ["&&"]  , `Operator, Constants.bool_bool_bool (), false;
    ]
 
-let builtin_functions = List.map (fun (a,_,_)->a) builtin_table |> IdSet.of_list
+let builtin_functions = List.map (fun (a,_,_,_)->a) builtin_table |> IdSet.of_list
+
+(** Makes a copy of a type (a new instance) *)
+let newinstance (t:vtype) : vtype =
+   let rec copy table t =
+      try (List.find (fun (key,_) -> key == t) table |> snd),table with | Not_found ->
+         match !t with
+         | TUnbound(s,level,loc) ->
+            let o = ref (TUnbound(s,level,loc)) in
+            o, ((t,o) :: table)
+         | TId(id,loc) ->
+            let o = ref (TId(id,loc)) in
+            o, (t,o) :: table
+         | TComposed(id,elems,loc) ->
+            let elems', table' = copyList table elems in
+            let o = ref (TComposed(id,elems',loc)) in
+            o, (t,o) :: table'
+         | TArrow(t1,t2,loc) ->
+            let t1', table' = copy table t1 in
+            let t2', table' = copy table' t2 in
+            let o = ref (TArrow(t1',t2',loc)) in
+            o, (t,o) :: table'
+         | TLink(link) ->
+            let link', table' = copy table link in
+            let o = ref (TLink(link')) in
+            o, (t,o) :: table'
+         | TExpAlt(elems) ->
+            let elems', table' = copyList table elems in
+            let o = ref (TExpAlt(elems')) in
+            o, (t,o) :: table'
+   and copyList table l =
+      let l',table' =
+         List.fold_left
+            (fun (ol,table) t -> let o, table' = copy table t in o :: ol,table')
+            ([],table) l
+      in
+      List.rev l', table'
+   in copy [] t |> fst
 
 (** Maps which function belongs to which context *)
 module Context = struct
@@ -138,6 +175,8 @@ module Scope = struct
 
          ctx       : Context.t;
 
+         single    : bool;           (** true if every function call does not create a new instance *)
+
       }
 
    let empty : t =
@@ -153,6 +192,7 @@ module Scope = struct
          locals    = [];
          typ       = ref (TId([""],None));
          ctx       = Context.empty;
+         single    = true;
 
       }
 
@@ -247,8 +287,8 @@ module Scope = struct
       | `Block    -> { t with locals = List.tl t.locals }
       | _ -> raise (Invalid_argument "Scope.exit")
 
-   let setCurrentType (t:t) (typ:vtype) : t =
-      { t with typ = typ }
+   let setCurrentType (t:t) (typ:vtype) (single:bool) : t =
+      { t with typ = typ; single = single }
 
    let getParent (t:t) : t option =
       match t.parent with
@@ -284,7 +324,9 @@ module Scope = struct
 
    let rec findAny (find_up:bool) (get:t -> t IdMap.t) (t:t) (name:id) : (path * vtype) option =
       match name with
-      | [] -> Some(Path(getPath t), t.typ)
+      | [] ->
+         let typ = if t.single then t.typ else newinstance t.typ in
+         Some(Path(getPath t), typ)
       | h::rest ->
          match IdMap.find [h] (get t) with
          | found ->
@@ -584,10 +626,10 @@ module Env = struct
    let currentScope (state:'a t) : path =
       Scope.current state.scope
 
-   let setCurrentType (state:'a t) (typ:vtype) : 'a t =
+   let setCurrentType (state:'a t) (typ:vtype) (single:bool) : 'a t =
       {
          state with
-         scope = Scope.setCurrentType state.scope typ;
+         scope = Scope.setCurrentType state.scope typ single;
       }
 
    let enter kind (state:'a t) (func:id) : 'a t =
@@ -604,9 +646,9 @@ module Env = struct
          scope = Scope.exit kind state.scope;
       }
 
-   let addBuiltinFunction (state:'a t) (name,kind,typ) : 'a t =
+   let addBuiltinFunction (state:'a t) (name,kind,typ,single) : 'a t =
       let state' = enter kind state name in
-      let state' = setCurrentType state' typ in
+      let state' = setCurrentType state' typ single in
       let state' = exit kind state' in
       state'
 
