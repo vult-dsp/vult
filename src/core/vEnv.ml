@@ -69,8 +69,8 @@ let newinstance (t:vtype) : vtype =
    let rec copy table t =
       try (List.find (fun (key,_) -> key == t) table |> snd),table with | Not_found ->
          match !t with
-         | TUnbound(s,level,loc) ->
-            let o = ref (TUnbound(s,level,loc)) in
+         | TUnbound(s,loc) ->
+            let o = ref (TUnbound(s,loc)) in
             o, ((t,o) :: table)
          | TId(id,loc) ->
             let o = ref (TId(id,loc)) in

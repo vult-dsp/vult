@@ -144,6 +144,22 @@ let rec typeExpression (rbp:int) (buffer:Stream.stream) : vtype_c =
 
 and type_nud (buffer:Stream.stream) (token:'kind token) : vtype_c =
    match token.kind with
+   | TICK ->
+      begin
+         match Stream.peek buffer with
+         | ID ->
+            let token = Stream.current buffer in
+            let _     = Stream.skip buffer in
+            begin match identifierToken token with
+            | [id] -> TUnbound(id,Some(token.loc))
+            | _    ->
+               let message =  Error.makeError "invalid name for generic type" token.loc in
+               raise (ParserError(message))
+            end
+         | _ ->
+            let message = Stream.notExpectedError token in
+            raise (ParserError(message))
+      end
    | ID ->
       let id = identifierToken token in
       begin
@@ -152,7 +168,7 @@ and type_nud (buffer:Stream.stream) (token:'kind token) : vtype_c =
             composedType buffer token id
          | _ -> TId(id, Some(token.loc))
       end
-   | WILD -> TUnbound("",1000000,None)
+   | WILD -> TUnbound("",Some(token.loc))
    | LPAREN ->
       begin
          let start_loc = token.loc in

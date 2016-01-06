@@ -157,8 +157,8 @@ let map_attr (mapper:'a mapper) (state:'a) (attr:attr) : 'a * attr =
 let rec map_vtype_c (mapper:'a mapper) (state:'a) (te:vtype_c) : 'a * vtype_c =
    let map_vtype_list = mapper_list map_vtype in
    match te with
-   | TUnbound(name,level,loc) ->
-      state,TUnbound(name,level,loc)
+   | TUnbound(name,loc) ->
+      state,TUnbound(name,loc)
    | TId(id,loc) ->
       let state',id'   = map_id mapper state id in
       apply mapper.vtype_c state' (TId(id',loc))

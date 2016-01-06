@@ -64,6 +64,7 @@ type token_enum =
    | AND
    | WILD
    | EXTERNAL
+   | TICK
 
 type 'kind token =
    {

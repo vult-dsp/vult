@@ -31,7 +31,7 @@ type path =
 
 
 type vtype_c =
-   | TUnbound  of string * int * Loc.t option
+   | TUnbound  of string * Loc.t option
    | TId       of id * Loc.t option
    | TComposed of id * vtype list * Loc.t option
    | TArrow    of vtype * vtype * Loc.t option

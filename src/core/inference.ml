@@ -37,8 +37,7 @@ let reset_gensym : unit -> unit =
 let gensym : unit -> string = fun () ->
    let n = !gensym_counter in
    let () = incr gensym_counter in
-   if n < 26 then String.make 1 (Char.chr (Char.code 'a' + n))
-   else "t" ^ string_of_int n
+   string_of_int n
 
 
 (* Determining the |let|-nesting level during the type-checking,
@@ -46,24 +45,13 @@ let gensym : unit -> string = fun () ->
    Each top-level expression to type-check is implicitly wrapped into a let.
    So, the numbering starts with 1.
 *)
-let current_level = ref 1
-let reset_level () = current_level := 1
 
 let reset_type_variables () =       (* name from OCaml's typing/typetext.ml *)
-   reset_gensym ();
-   reset_level ()
-
-(* Increase level *)
-let enter_level () =
-   incr current_level
-(* Restore level *)
-let leave_level () =
-   decr current_level
-
+   reset_gensym ()
 
 (* Make a fresh type variable *)
 let newvar : unit -> vtype =
-   fun () -> (ref (TUnbound (gensym (),!current_level,None)))
+   fun () -> (ref (TUnbound (gensym (),None)))
 
 let pickLoc (loc1:Loc.t option) (loc2:Loc.t option) : Loc.t option =
    match loc1, loc2 with
@@ -96,11 +84,10 @@ let rec stripArrow (typ:vtype) : vtype list * vtype =
 let rec unify (t1:vtype) (t2:vtype) : bool =
    if t1 == t2 then true else
    match t1,t2 with
-   | { contents = TUnbound(n1,l1,loc1)}, { contents = TUnbound(_,l2,loc2) } ->
+   | { contents = TUnbound(n1,loc1)}, { contents = TUnbound(_,loc2) } ->
       let loc = pickLoc loc1 loc2 in
-      let level = min l1 l2 in
       let n = if n1 = "" then gensym () else n1 in
-      let t = TUnbound(n,level,loc) in
+      let t = TUnbound(n,loc) in
       t1 := t;
       t2 := TLink(t1);
       true
@@ -152,8 +139,6 @@ let unifyRaise (loc:Loc.t Lazy.t) (t1:vtype) (t2:vtype) : unit =
             print_endline (Loc.to_string (Lazy.force loc));
             print_endline msg
          end
-
-
 
 let rec unifyListSameType (args:exp list) (types:vtype list) (common_type:vtype) =
    match args, types with
