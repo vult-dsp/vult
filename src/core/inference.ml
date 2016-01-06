@@ -155,20 +155,13 @@ let unifyRaise (loc:Loc.t Lazy.t) (t1:vtype) (t2:vtype) : unit =
 
 
 
-let rec unifyOperator (fn_type:vtype) (types:vtype list) : vtype =
-   match types with
-   | [] -> failwith "unifyOperator: the number of operands is no more than two"
-   | [e1; e2] ->
-      let ret_type = newvar () in
-      let op_type  = makeArrowType ret_type [e1; e2] in
-      unify fn_type op_type;
-      ret_type
-   | h::t ->
-      let inner_typ = unifyOperator fn_type t in
-      let ret_type  = newvar () in
-      let op_type   = makeArrowType ret_type [h; inner_typ] in
-      unify fn_type op_type;
-      ret_type
+let rec unifyListSameType (args:exp list) (types:vtype list) (common_type:vtype) =
+   match args, types with
+   | [],[] -> common_type
+   | arg::args, typ::types ->
+      unifyRaise (expLoc arg) typ common_type;
+      unifyListSameType args types common_type
+   | _ -> raise (Invalid_argument "unifyListSameType")
 
 
 let rec inferLhsExp (env:'a Env.t) (e:lhs_exp) : lhs_exp * vtype =
@@ -263,7 +256,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * vtype =
    | PBool(v,attr) ->
       PBool(v,{ attr with typ = Some(Constants.bool_type()) }), Constants.bool_type()
    | PInt(v,attr) ->
-      let typ = ref (TExpAlt([Constants.int_type(); Constants.real_type()])) in
+      let typ = Constants.int_type() in
       PInt(v,{ attr with typ = Some(typ) }), typ
    | PReal(v,attr) ->
       PReal(v,{ attr with typ = Some(Constants.real_type()) }), Constants.real_type()
@@ -301,7 +294,16 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * vtype =
    | POp(op,args,attr) ->
       let args',types = inferExpList env args in
       let _, fn_type  = Env.lookup `Operator env [op] in
-      let ret_type    = unifyOperator fn_type types in
+      let common_type =
+         match stripArrow fn_type with
+         | [arg1;arg2], ret ->
+            if unify arg1 arg2 && unify arg2 ret then
+               ret
+            else
+               failwith "The operator cannot be used with multiple arguments"
+         | _ -> failwith "The operator cannot be used with multiple arguments"
+      in
+      let ret_type = unifyListSameType args' types common_type in
       POp(op,args',{ attr with typ = Some(ret_type) }), ret_type
    | PUnOp(op,arg,attr) ->
       let arg',arg_type = inferExp env arg in
@@ -350,7 +352,7 @@ and inferStmt (env:'a Env.t) (ret_type:vtype option) (stmt:stmt) : stmt * 'a Env
       StmtMem(lhs', init', rhs', attr), env', None
    | StmtTable(id,elems,attr) ->
       let elems',types = inferExpList env elems in
-      let typ  = List.fold_left (fun typ a -> unify typ a; typ) (newvar ()) types in
+      let typ = unifyListSameType elems' types (newvar ()) in
       let env' = Env.addVar env id typ in
       StmtTable(id,elems',attr), env', None
    | StmtReturn(e,attr) ->
