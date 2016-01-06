@@ -47,7 +47,7 @@ fun dcblock(x0){
 // Average two samples
 fun lpfilter(x){
    mem pre_x;
-   val ret = (x+pre_x)/2;
+   val ret = (x+pre_x)/2.;
    pre_x = x;
    return ret;
 }
@@ -56,7 +56,7 @@ fun lpfilter(x){
 
 // Converts the MIDI note to increment rate at a 44100 sample rate
 fun pitchToRate(d) : real
-  return 8.1758*exp(0.0577623*d)/44100;
+  return 8.1758*exp(0.0577623*d)/44100.0;
 
 // Generates a BW-limited pulse train given the phase and the number of harmonics
 fun pulse_train(m,phase){
@@ -64,7 +64,7 @@ fun pulse_train(m,phase){
   val denominator1 = sin(pi_phase);
   val tmp1 = 0.;
   if(near_zero(denominator1)) {
-    tmp1 = 1;
+    tmp1 = 1.;
   }
   else {
     tmp1 = sin(m * pi_phase);
@@ -86,25 +86,25 @@ fun osc(pitch,pw,wave){
   mem triang;
   mem output;
 
-  val fixed_pitch = 0;
-  if(wave<2/3) {
+  val fixed_pitch = 0.;
+  if(wave < 2. / 3.) {
     fixed_pitch = pitch;
   }
   else {
-    fixed_pitch = pitch + 12;
+    fixed_pitch = pitch + 12.;
   }
   // Updates the parameters if the pre_pitch changed
   if(change(fixed_pitch)) {
     rate = pitchToRate(fixed_pitch);
-    val p = 1/rate;
-    val maxHarmonics = floor(p/2);
-    m = 2 * maxHarmonics + 1;
+    val p = 1. / rate;
+    val maxHarmonics = floor(p/2.);
+    m = 2. * maxHarmonics + 1.;
   }
   // Generates a shifted version of the phase
   val shift05 = 0.5 + pw * 0.49;
   val shift = phase + shift05;
-  if(shift > 1) {
-    shift = shift - 1;
+  if(shift > 1.) {
+    shift = shift - 1.;
   }
   // Generates the first pulse train
   val tmp1 = pulse_train(m,phase);
@@ -112,28 +112,28 @@ fun osc(pitch,pw,wave){
   val tmp2 = pulse_train(m,shift);
   // Updates the phase
   phase = phase + rate;
-  if(phase > 1) {
-    phase = phase - 1;
+  if(phase > 1.) {
+    phase = phase - 1.;
   }
 
   // Calculates the waveforms based on the pulse trains
-  state_pulse  = clip(state_pulse  * 0.9995 + tmp1 - tmp2, -1, 1);
-  state_saw    = clip(state_saw    * 0.9995 + (tmp1 + tmp2  - 2 * rate)/shift05/2, -1,1);
-  state_triang = clip(state_triang * 0.9995 + 2 * state_pulse * rate, -1,1);
+  state_pulse  = clip(state_pulse  * 0.9995 + tmp1 - tmp2, -1., 1.);
+  state_saw    = clip(state_saw    * 0.9995 + (tmp1 + tmp2  - 2. * rate)/shift05/2., -1.,1.);
+  state_triang = clip(state_triang * 0.9995 + 2. * state_pulse * rate, -1.,1.);
 
   // Select the wave to output
-  if(wave < 1/3) {
+  if(wave < 1. / 3.) {
     output = state_pulse;
   }
-  else if(wave < 2/3) {
-    output = 2*state_saw;
+  else if(wave < 2. / 3.) {
+    output = 2. * state_saw;
   }
   else {
-    output = 2*state_triang*(1+pw);
+    output = 2. * state_triang*(1. + pw);
   }
 
   output = dcblock(output);
-  return clip(output/4,-1,1);
+  return clip(output/4.,-1.,1.);
 }
 
 
@@ -147,8 +147,8 @@ fun svf_step(input,g,q,sel) : real {
    val band = g * high + dband;
    val notch = high + low;
 
-   dband = clip(band,-1,1);
-   dlow  = clip(low,-1,1);
+   dband = clip(band,-1.,1.);
+   dlow  = clip(low,-1.,1.);
    val output =
       if sel == 0 then low else
       if sel == 1 then high else
@@ -160,19 +160,19 @@ fun svf_step(input,g,q,sel) : real {
 // Main function for the state-variable filter with 2x of oversampling
 fun svf(input,fc,q,sel){
    mem g;
-   fc = clip(fc,0,1);
-   q  = clip(q,0,1);
-   val fix_q = 2*(1-q);
+   fc = clip(fc, 0., 1.);
+   q  = clip(q, 0., 1.);
+   val fix_q = 2. * (1. - q);
 
    if(change(fc)){
-      g = fc/2;
+      g = fc/2.;
    }
 
    // In Vult oversamplig in very easy!
    val x1 = step:svf_step(input,g,fix_q,sel);
    val x2 = step:svf_step(input,g,fix_q,sel);
 
-   return (x1+x2)/2;
+   return (x1+x2)/2.;
 }
 
 // ==== ENVELOPE =====
@@ -192,15 +192,15 @@ fun adsr(gate,attack,decay,sustain,release){
 
    // Calculates the rate every 32 samples
    if(each(32)){
-      attackRate      = (1/44100) * (1/(attack+0.1));
-      val inv_sustain = 1 - sustain;
-      decayRate       = (inv_sustain/44100) * (inv_sustain/(decay+0.1));
-      releaseRate     = (0.5/44100) * (0.5/(release+0.1));
+      attackRate      = (1./44100.) * (1./(attack+0.1));
+      val inv_sustain = 1. - sustain;
+      decayRate       = (inv_sustain/44100.) * (inv_sustain/(decay+0.1));
+      releaseRate     = (0.5/44100.) * (0.5/(release+0.1));
    }
    sustainLevel = sustain;
 
    val trig = false;
-   val rate = 0;
+   val rate = 0.;
 
    trig = bchange(gate);
 
@@ -212,7 +212,7 @@ fun adsr(gate,attack,decay,sustain,release){
       if(up) state = ATTACK;
    }
    else if(state == ATTACK){
-      if(value >= 1) state = DECAY;
+      if(value >= 1.) state = DECAY;
       if(down)       state = RELEASE;
       rate = attackRate;
    }
@@ -223,28 +223,28 @@ fun adsr(gate,attack,decay,sustain,release){
    }
    else if(state == SUSTAIN){
       if(down) state = RELEASE;
-      rate  = 0;
+      rate  = 0.;
       value = sustainLevel;
    }
    else if(state == RELEASE){
-      if(value <= 0) state = IDLE;
+      if(value <= 0.) state = IDLE;
       if(up)         state = ATTACK;
       rate = -releaseRate;
    }
 
-   value = clip(lpfilter(rate) + value,0,1);
+   value = clip(lpfilter(rate) + value,0.,1.);
    return value;
 }
 
 // ======= LFO ======
 fun lfo(f,gate){
    mem phase;
-   val rate = f * 100 * minFixed() + minFixed();
-   if(edge(gate)) phase = 0;
+   val rate = f * 100. * minFixed() + minFixed();
+   if(edge(gate)) phase = 0.;
    if(each(4))
       phase = phase + rate;
-   if(phase>1) phase = phase-1;
-   return sin(phase*2*3.141592653589793)+0.5;
+   if(phase>1.) phase = phase-1.;
+   return sin(phase * 2. * 3.141592653589793)+0.5;
 }
 
 // ==== MONOPHONIC VOICE =====
@@ -321,7 +321,7 @@ fun process(i){
   val flt_env = adsr(gate,param13,param14,param15,param16);
   val cut_mod = param6 + param8 * flt_env;
   val output  = svf(x,cut_mod,param7,0);
-  return output/2;
+  return output/2.;
 }
 
 and process_noteOn(n:int){
