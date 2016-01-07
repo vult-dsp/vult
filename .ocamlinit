@@ -12,7 +12,7 @@ let () =
 #require "vult_util";;
 #require "vult_core";;
 #require "vult_parser";;
-#install_printer TypesVult.pp_type_ref;;
+#install_printer VType.pp;;
 #install_printer TypesVult.pp_exp;;
 #install_printer TypesVult.pp_lhs_exp;;
 #install_printer TypesVult.pp_stmt;;
