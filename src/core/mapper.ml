@@ -74,7 +74,7 @@ let (|*>) : ('data,'value) expand_func -> ('data,'value) expand_func -> ('data,'
 
 type 'a mapper =
    {
-      vtype_c  : ('a, vtype_c)    mapper_func;
+      vtype_c  : ('a, VType.vtype) mapper_func;
       typed_id : ('a, typed_id)   mapper_func;
       exp      : ('a, exp)        mapper_func;
       lhs_exp  : ('a, lhs_exp)    mapper_func;
@@ -115,7 +115,7 @@ let seqExpandFunc a b =
 (** Merges two mappers *)
 let seq (b:'a mapper) (a:'a mapper) : 'a mapper =
    {
-      vtype_c  = seqMapperFunc a.vtype_c b.vtype_c;
+      vtype_c  = seqMapperFunc a.vtype_c  b.vtype_c;
       typed_id = seqMapperFunc a.typed_id b.typed_id;
       exp      = seqMapperFunc a.exp      b.exp;
       lhs_exp  = seqMapperFunc a.lhs_exp  b.lhs_exp;
@@ -154,30 +154,30 @@ let map_id (mapper:'a mapper) (state:'a) (id:id) : 'a * id =
 let map_attr (mapper:'a mapper) (state:'a) (attr:attr) : 'a * attr =
    apply mapper.attr state attr
 
-let rec map_vtype_c (mapper:'a mapper) (state:'a) (te:vtype_c) : 'a * vtype_c =
+let rec map_vtype_c (mapper:'a mapper) (state:'a) (te:VType.vtype) : 'a * VType.vtype =
    let map_vtype_list = mapper_list map_vtype in
    match te with
-   | TUnbound(name,loc) ->
-      state,TUnbound(name,loc)
-   | TId(id,loc) ->
+   | VType.TUnbound(_,_,_) ->
+      state,te
+   | VType.TId(id,loc) ->
       let state',id'   = map_id mapper state id in
-      apply mapper.vtype_c state' (TId(id',loc))
-   | TComposed(id,el,loc) ->
+      apply mapper.vtype_c state' (VType.TId(id',loc))
+   | VType.TComposed(id,el,loc) ->
       let state',id'   = map_id mapper state id in
       let state',el'   = map_vtype_list mapper state' el in
-      apply mapper.vtype_c state' (TComposed(id',el',loc))
-   | TArrow(e1,e2,loc) ->
+      apply mapper.vtype_c state' (VType.TComposed(id',el',loc))
+   | VType.TArrow(e1,e2,loc) ->
       let state',e1'   = map_vtype mapper state e1 in
       let state',e2'   = map_vtype mapper state' e2 in
-      apply mapper.vtype_c state' (TArrow(e1',e2',loc))
-   | TLink(tp) ->
+      apply mapper.vtype_c state' (VType.TArrow(e1',e2',loc))
+   | VType.TLink(tp) ->
       let state',tp'   = map_vtype mapper state tp in
-      apply mapper.vtype_c state' (TLink(tp'))
-   | TExpAlt(elems) ->
+      apply mapper.vtype_c state' (VType.TLink(tp'))
+   | VType.TExpAlt(elems) ->
       let state', elems' = mapper_list map_vtype mapper state elems in
-      apply mapper.vtype_c state' (TExpAlt(elems'))
+      apply mapper.vtype_c state' (VType.TExpAlt(elems'))
 
-and map_vtype (mapper:'a mapper) (state:'a) (te:vtype_c ref) : 'a * vtype_c ref =
+and map_vtype (mapper:'a mapper) (state:'a) (te:VType.vtype ref) : 'a * VType.vtype ref =
    let state',tp = map_vtype_c mapper state !te in
    te := tp;
    state', te
@@ -316,7 +316,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
    | StmtAliasType(name,args,tp,attr) ->
       let state',name' = map_id mapper state name in
       let state',args' = (mapper_list map_typed_id) mapper state' args in
-      let state',tp'   = map_vtype_c mapper state' tp in
+      let state',tp'   = map_vtype mapper state' tp in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.stmt state' (StmtAliasType(name',args',tp',attr'))
    | StmtEmpty ->

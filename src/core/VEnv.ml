@@ -30,76 +30,39 @@ let pathStr path = path |> pathId |> PrintTypes.identifierStr
 
 let builtin_table =
    [
-      ["abs"]  , `Function, Constants.num_num (), false;
-      ["exp"]  , `Function, Constants.num_num (), false;
-      ["sin"]  , `Function, Constants.num_num (), false;
-      ["cos"]  , `Function, Constants.num_num (), false;
-      ["floor"], `Function, Constants.num_num (), false;
-      ["clip"] , `Function, Constants.num_num_num_num (), false;
-      ["not"]  , `Function, Constants.bool_bool (), false;
-      ["tanh"] , `Function, Constants.num_num (), false;
-      ["tan"]  , `Function, Constants.num_num (), false;
-      ["sqrt"] , `Function, Constants.num_num (), false;
+      ["abs"]  , `Function, VType.Constants.num_num (), false;
+      ["exp"]  , `Function, VType.Constants.num_num (), false;
+      ["sin"]  , `Function, VType.Constants.num_num (), false;
+      ["cos"]  , `Function, VType.Constants.num_num (), false;
+      ["floor"], `Function, VType.Constants.num_num (), false;
+      ["clip"] , `Function, VType.Constants.num_num_num_num (), false;
+      ["not"]  , `Function, VType.Constants.bool_bool (), false;
+      ["tanh"] , `Function, VType.Constants.num_num (), false;
+      ["tan"]  , `Function, VType.Constants.num_num (), false;
+      ["sqrt"] , `Function, VType.Constants.num_num (), false;
 
-      ["int"]  , `Function, Constants.num_int (), false;
-      ["real"] , `Function, Constants.num_real (), false;
+      ["int"]  , `Function, VType.Constants.num_int (), false;
+      ["real"] , `Function, VType.Constants.num_real (), false;
 
-      ["|-|"] , `Operator, Constants.num_num (), false;
-      ["+"]  , `Operator, Constants.num_num_num (), false;
-      ["-"]  , `Operator, Constants.num_num_num (), false;
-      ["*"]  , `Operator, Constants.num_num_num (), false;
-      ["/"]  , `Operator, Constants.num_num_num (), false;
-      ["%"]  , `Operator, Constants.num_num_num (), false;
+      ["|-|"] , `Operator, VType.Constants.num_num (), false;
+      ["+"]  , `Operator, VType.Constants.num_num_num (), false;
+      ["-"]  , `Operator, VType.Constants.num_num_num (), false;
+      ["*"]  , `Operator, VType.Constants.num_num_num (), false;
+      ["/"]  , `Operator, VType.Constants.num_num_num (), false;
+      ["%"]  , `Operator, VType.Constants.num_num_num (), false;
 
-      [">"]   , `Operator, Constants.num_num_bool (), false;
-      ["<"]   , `Operator, Constants.num_num_bool (), false;
-      ["=="]  , `Operator, Constants.num_num_bool (), false;
-      ["<>"]  , `Operator, Constants.num_num_bool (), false;
-      [">="]  , `Operator, Constants.num_num_bool (), false;
-      ["<="]  , `Operator, Constants.num_num_bool (), false;
+      [">"]   , `Operator, VType.Constants.num_num_bool (), false;
+      ["<"]   , `Operator, VType.Constants.num_num_bool (), false;
+      ["=="]  , `Operator, VType.Constants.num_num_bool (), false;
+      ["<>"]  , `Operator, VType.Constants.num_num_bool (), false;
+      [">="]  , `Operator, VType.Constants.num_num_bool (), false;
+      ["<="]  , `Operator, VType.Constants.num_num_bool (), false;
 
-      ["||"]  , `Operator, Constants.bool_bool_bool (), false;
-      ["&&"]  , `Operator, Constants.bool_bool_bool (), false;
+      ["||"]  , `Operator, VType.Constants.bool_bool_bool (), false;
+      ["&&"]  , `Operator, VType.Constants.bool_bool_bool (), false;
    ]
 
 let builtin_functions = List.map (fun (a,_,_,_)->a) builtin_table |> IdSet.of_list
-
-(** Makes a copy of a type (a new instance) *)
-let newinstance (t:vtype) : vtype =
-   let rec copy table t =
-      try (List.find (fun (key,_) -> key == t) table |> snd),table with | Not_found ->
-         match !t with
-         | TUnbound(s,loc) ->
-            let o = ref (TUnbound(s,loc)) in
-            o, ((t,o) :: table)
-         | TId(id,loc) ->
-            let o = ref (TId(id,loc)) in
-            o, (t,o) :: table
-         | TComposed(id,elems,loc) ->
-            let elems', table' = copyList table elems in
-            let o = ref (TComposed(id,elems',loc)) in
-            o, (t,o) :: table'
-         | TArrow(t1,t2,loc) ->
-            let t1', table' = copy table t1 in
-            let t2', table' = copy table' t2 in
-            let o = ref (TArrow(t1',t2',loc)) in
-            o, (t,o) :: table'
-         | TLink(link) ->
-            let link', table' = copy table link in
-            let o = ref (TLink(link')) in
-            o, (t,o) :: table'
-         | TExpAlt(elems) ->
-            let elems', table' = copyList table elems in
-            let o = ref (TExpAlt(elems')) in
-            o, (t,o) :: table'
-   and copyList table l =
-      let l',table' =
-         List.fold_left
-            (fun (ol,table) t -> let o, table' = copy table t in o :: ol,table')
-            ([],table) l
-      in
-      List.rev l', table'
-   in copy [] t |> fst
 
 (** Maps which function belongs to which context *)
 module Context = struct
@@ -164,7 +127,7 @@ module Scope = struct
          name      : id;             (** Name of the current scope *)
          kind      : symbol_kind;    (** Type of the current scope *)
          parent    : t option;       (** Pointer to it's parent *)
-         typ       : vtype;          (** Type of the symbol *)
+         typ       : VType.t;        (** Type of the symbol *)
 
          operators : t IdMap.t;      (** Operators *)
          modules   : t IdMap.t;      (** Modules or namespaces *)
@@ -190,7 +153,7 @@ module Scope = struct
          func      = IdMap.empty;
          mem_inst  = IdMap.empty;
          locals    = [];
-         typ       = ref (TId([""],None));
+         typ       = ref (VType.TId([""],None));
          ctx       = Context.empty;
          single    = true;
 
@@ -230,15 +193,15 @@ module Scope = struct
       Printf.printf "%s'%s' = %s\n" (String.make level ' ') (idStr t.name) (kindStr t.kind);
       IdMap.iter (fun _ sub -> dump sub (level+3)) t.keep*)
 
-   let addMem (t:t) (name:id) (typ:vtype) : t =
+   let addMem (t:t) (name:id) (typ:VType.t) : t =
       let new_symbol = { empty with name = name; kind = MemSymbol; typ = typ } in
       { t with mem_inst = IdMap.add name new_symbol t.mem_inst }
 
-   let addInstance (t:t) (name:id) (typ:vtype) : t =
+   let addInstance (t:t) (name:id) (typ:VType.t) : t =
       let new_symbol = { empty with name = name; kind = InstanceSymbol; typ = typ } in
       { t with mem_inst = IdMap.add name new_symbol t.mem_inst }
 
-   let addVar (t:t) (name:id) (typ:vtype) : t =
+   let addVar (t:t) (name:id) (typ:VType.t) : t =
       let new_symbol = { empty with name = name; kind = VarSymbol; typ = typ  } in
       let first,rest =
          match t.locals with
@@ -287,7 +250,7 @@ module Scope = struct
       | `Block    -> { t with locals = List.tl t.locals }
       | _ -> raise (Invalid_argument "Scope.exit")
 
-   let setCurrentType (t:t) (typ:vtype) (single:bool) : t =
+   let setCurrentType (t:t) (typ:VType.t) (single:bool) : t =
       { t with typ = typ; single = single }
 
    let getParent (t:t) : t option =
@@ -322,10 +285,10 @@ module Scope = struct
       t.name @ (parentPath t.parent)
       |> List.rev
 
-   let rec findAny (find_up:bool) (get:t -> t IdMap.t) (t:t) (name:id) : (path * vtype) option =
+   let rec findAny (find_up:bool) (get:t -> t IdMap.t) (t:t) (name:id) : (path * VType.t) option =
       match name with
       | [] ->
-         let typ = if t.single then t.typ else newinstance t.typ in
+         let typ = if t.single then t.typ else VType.newinst t.typ in
          Some(Path(getPath t), typ)
       | h::rest ->
          match IdMap.find [h] (get t) with
@@ -339,7 +302,7 @@ module Scope = struct
                | None -> None
             else None
 
-   let rec lookupVal (t:t) (name:id) : (path * vtype) option =
+   let rec lookupVal (t:t) (name:id) : (path * VType.t) option =
       match name with
       | [] -> Some(Path(getPath t), t.typ)
       | h::rest ->
@@ -354,12 +317,12 @@ module Scope = struct
                   inner_loop locals
          in inner_loop t.locals
 
-   let lookupVariable (t:t) (name:id) : (path * vtype) option =
+   let lookupVariable (t:t) (name:id) : (path * VType.t) option =
       match findAny false getMemInst t name with
       | Some(_) as a -> a
       | None -> lookupVal t name
 
-   let lookup kind (t:t) (name:id) : (path * vtype) option =
+   let lookup kind (t:t) (name:id) : (path * VType.t) option =
       match kind with
       | `Function -> findAny true getFunction t name
       | `Module   -> findAny true getModule t name
@@ -434,7 +397,7 @@ module FunctionContex = struct
          backward = IdMap.add context_name [func] context.backward;
       }
 
-   let addMem (context:t) (func:path) (name:id) (typ:vtype) : t =
+   let addMem (context:t) (func:path) (name:id) (typ:VType.t) : t =
       let context_for_func = findContext context func in
       let mem_for_context  =
          try IdMap.find context_for_func context.mem with
@@ -451,7 +414,7 @@ module FunctionContex = struct
          try IdMap.find context_for_func context.instance with
          | Not_found -> IdTypeSet.empty
       in
-      let instance_type = ref (TId(pathId kind,None)) in
+      let instance_type = ref (VType.TId(pathId kind,None)) in
       {
          context with
          instance = IdMap.add context_for_func (IdTypeSet.add (name,instance_type) instance_for_context) context.instance;
@@ -548,7 +511,7 @@ module Env = struct
          makeNewContext state
 
    (** Adds a mem variable to the current context *)
-   let addMem (state:'a t) (name:id) (typ:vtype) : 'a t  =
+   let addMem (state:'a t) (name:id) (typ:VType.t) : 'a t  =
       {
          state with
          context = FunctionContex.addMem state.context (Scope.current state.scope) name typ;
@@ -556,14 +519,14 @@ module Env = struct
       }
 
    (** Adds a variable to the current block *)
-   let addVar (state:'a t) (name:id) (typ:vtype) : 'a t  =
+   let addVar (state:'a t) (name:id) (typ:VType.t) : 'a t  =
       {
          state with
          scope   = Scope.addVar state.scope name typ;
       }
 
    (** Returns the full path of a function. Raises an error if it cannot be found *)
-   let lookup kind (state:'a t) (name:id) : path * vtype =
+   let lookup kind (state:'a t) (name:id) : path * VType.t =
       match Scope.lookup kind state.scope name with
       | None -> failwith (Printf.sprintf "Cannot find symbol '%s'" (idStr name))
       | Some(path) -> path
@@ -610,7 +573,7 @@ module Env = struct
       in
       let kind_type =
          match kind_path with
-         | Path(p) -> ref (TId(p,None))
+         | Path(p) -> ref (VType.TId(p,None))
       in
       if isActive state kind then
          let state', name' = generateInstanceName state name_opt in
@@ -626,7 +589,7 @@ module Env = struct
    let currentScope (state:'a t) : path =
       Scope.current state.scope
 
-   let setCurrentType (state:'a t) (typ:vtype) (single:bool) : 'a t =
+   let setCurrentType (state:'a t) (typ:VType.t) (single:bool) : 'a t =
       {
          state with
          scope = Scope.setCurrentType state.scope typ single;

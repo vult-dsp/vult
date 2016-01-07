@@ -115,7 +115,7 @@ module InsertContext = struct
          | StmtFun(name,args,body,rettype,attr) ->
             if Env.isActive state name then
                let context = Env.getContext state name in
-               let arg0 = TypedId(["$ctx"],ref (TId(context,None)),attr) in
+               let arg0 = TypedId(["$ctx"],ref (VType.TId(context,None)),attr) in
                state,StmtFun(name,arg0::args,body,rettype,attr)
             else
                state, stmt
@@ -173,15 +173,15 @@ module CreateInitFunction = struct
       | [last] -> [ last^"_init" ]
       | h::t -> h :: (getInitFunctioName t)
 
-   let getInitValue (tp:vtype) : exp =
+   let getInitValue (tp:VType.t) : exp =
       match tp with
-      | { contents = TId(["real"],_) } -> PReal(0.0,emptyAttr)
-      | { contents = TId(["int"],_) } -> PInt(0,emptyAttr)
+      | { contents = VType.TId(["real"],_) } -> PReal(0.0,emptyAttr)
+      | { contents = VType.TId(["int"],_) } -> PInt(0,emptyAttr)
       | _ -> PReal(0.0,emptyAttr)
 
-   let callInitFunction state (tp:vtype) : exp =
+   let callInitFunction state (tp:VType.t) : exp =
       match tp with
-      | { contents = TId(name,_) } ->
+      | { contents = VType.TId(name,_) } ->
          let fun_ctx = Env.getContext state name in
          PCall(None,getInitFunctioName fun_ctx,[],emptyAttr)
       | _ -> failwith "CreateInitFunction.callInitFunction: cannot initialize this yet"
@@ -205,7 +205,7 @@ module CreateInitFunction = struct
             instances new_stmts_set
       in
       let return_stmt = StmtReturn(PId(ctx_name,emptyAttr),emptyAttr) in
-      let ctx_decl = StmtVal(LId(ctx_name,Some(ref (TId(ctx,None))),emptyAttr),None,emptyAttr) in
+      let ctx_decl = StmtVal(LId(ctx_name,Some(ref (VType.TId(ctx,None))),emptyAttr),None,emptyAttr) in
       let stmts = StmtSet.fold (fun a acc -> a::acc) new_stmts_set' [return_stmt] in
       StmtFun(getInitFunctioName ctx, [], StmtBlock(None, ctx_decl::stmts, emptyAttr), None, emptyAttr)
 

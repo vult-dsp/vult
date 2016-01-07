@@ -139,10 +139,10 @@ let identifierToken (token:'kind token) : id =
    splitOnDot token.value
 
 (** Parses a type expression using a Pratt parser *)
-let rec typeExpression (rbp:int) (buffer:Stream.stream) : vtype_c =
+let rec typeExpression (rbp:int) (buffer:Stream.stream) : VType.t =
    prattParser rbp buffer getLbp type_nud type_led
 
-and type_nud (buffer:Stream.stream) (token:'kind token) : vtype_c =
+and type_nud (buffer:Stream.stream) (token:'kind token) : VType.t =
    match token.kind with
    | TICK ->
       begin
@@ -151,7 +151,7 @@ and type_nud (buffer:Stream.stream) (token:'kind token) : vtype_c =
             let token = Stream.current buffer in
             let _     = Stream.skip buffer in
             begin match identifierToken token with
-            | [id] -> TUnbound(id,Some(token.loc))
+            | [id] -> ref (VType.TUnbound(id,None,Some(token.loc)))
             | _    ->
                let message =  Error.makeError "invalid name for generic type" token.loc in
                raise (ParserError(message))
@@ -166,36 +166,36 @@ and type_nud (buffer:Stream.stream) (token:'kind token) : vtype_c =
          match Stream.peek buffer with
          | LPAREN ->
             composedType buffer token id
-         | _ -> TId(id, Some(token.loc))
+         | _ -> ref (VType.TId(id, Some(token.loc)))
       end
-   | WILD -> TUnbound("",Some(token.loc))
+   | WILD -> ref (VType.TUnbound("",None,Some(token.loc)))
    | LPAREN ->
       begin
          let start_loc = token.loc in
          match Stream.peek buffer with
          | RPAREN ->
             let _ = Stream.skip buffer in
-            TId(["unit"], Some(start_loc))
+            ref (VType.TId(["unit"], Some(start_loc)))
          | _ ->
             let el = typeArgList buffer in
             begin
                match el with
-               | []   -> TId(["unit"], Some(start_loc))
-               | [tp] -> !tp
+               | []   -> ref (VType.TId(["unit"], Some(start_loc)))
+               | [tp] -> tp
                | _ ->
                   let _ = Stream.consume buffer RPAREN in
-                  TComposed(["tuple"],el, Some(start_loc))
+                  ref (VType.TComposed(["tuple"],el, Some(start_loc)))
             end
       end
    | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
 
-and type_led (_:Stream.stream) (token:'kind token) (_:vtype_c) : vtype_c =
+and type_led (_:Stream.stream) (token:'kind token) (_:VType.t) : VType.t =
    let message = Stream.notExpectedError token in
    raise (ParserError(message))
 
-and composedType (buffer:Stream.stream) (token:'kind token) (id:id) : vtype_c =
+and composedType (buffer:Stream.stream) (token:'kind token) (id:id) : VType.t =
    let _ = Stream.skip buffer in
    let args =
       match Stream.peek buffer with
@@ -203,12 +203,12 @@ and composedType (buffer:Stream.stream) (token:'kind token) (id:id) : vtype_c =
       | _ -> typeArgList buffer
    in
    let _ = Stream.consume buffer RPAREN in
-   TComposed(id,args, Some(token.loc))
+   ref (VType.TComposed(id,args, Some(token.loc)))
 
-and typeArgList (buffer:Stream.stream) : vtype list =
+and typeArgList (buffer:Stream.stream) : VType.t list =
    let rec loop acc =
       (* power of 20 avoids returning a tuple instead of a list*)
-      let e = ref (typeExpression 20 buffer) in
+      let e =  typeExpression 20 buffer in
       match Stream.peek buffer with
       | COMMA ->
          let _ = Stream.skip buffer in
@@ -246,7 +246,7 @@ and lhs_led (buffer:Stream.stream) (token:'kind token) (left:lhs_exp) : lhs_exp 
    match token.kind with
    | COLON ->
       let vtype = typeExpression 0 buffer in
-      LTyped(left,ref vtype,makeAttr token.loc)
+      LTyped(left,vtype,makeAttr token.loc)
    | COMMA ->
       lhs_pair buffer token left
    | _ -> failwith "lhs_led"
@@ -403,7 +403,7 @@ and typedArgOpt (buffer:Stream.stream) : typed_id =
       let _    = Stream.skip buffer in
       let e    = typeExpression 20 buffer in
       let attr = makeAttr token.loc in
-      TypedId(splitOnDot token.value,ref e,attr)
+      TypedId(splitOnDot token.value,e,attr)
    | _ ->
       let attr = makeAttr token.loc in
       SimpleId(splitOnDot token.value,attr)
@@ -414,7 +414,7 @@ and typedArg (buffer:Stream.stream) : typed_id =
    let token = Stream.current buffer in
    let _     = Stream.skip buffer in
    let _     = Stream.consume buffer COLON in
-   let e     = ref (typeExpression 20 buffer) in
+   let e     = typeExpression 20 buffer in
    let attr  = makeAttr token.loc in
    TypedId(splitOnDot token.value,e,attr)
 
@@ -562,7 +562,7 @@ and stmtExternal (buffer:Stream.stream) : stmt =
    in
    let _      = Stream.consume buffer RPAREN in
    let _      = Stream.consume buffer COLON in
-   let vtype  = ref (typeExpression 0 buffer) in
+   let vtype  = typeExpression 0 buffer in
    let _      = Stream.consume buffer SEMI in
    let start_loc = token.loc in
    let attr      = makeAttr start_loc in
@@ -584,7 +584,7 @@ and stmtFunction (buffer:Stream.stream) : stmt =
       match Stream.peek buffer with
       | COLON ->
          let _ = Stream.skip buffer in
-         Some(ref (typeExpression 0 buffer))
+         Some(typeExpression 0 buffer)
       | _ -> None
    in
    let body      = stmtList buffer in
@@ -641,7 +641,7 @@ and valDecl (buffer:Stream.stream) : val_decl =
    let _         = Stream.skip buffer in
    let id        = id buffer in
    let _         = Stream.consume buffer COLON in
-   let val_type  = ref (typeExpression 10 buffer) in
+   let val_type  = typeExpression 10 buffer in
    id,val_type,makeAttr start_loc
 
 (** 'while' (<expression>) <stmtList> *)

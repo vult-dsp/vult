@@ -29,27 +29,13 @@ type id = string list
 type path =
    | Path of id
 
-
-type vtype_c =
-   | TUnbound  of string * Loc.t option
-   | TId       of id * Loc.t option
-   | TComposed of id * vtype list * Loc.t option
-   | TArrow    of vtype * vtype * Loc.t option
-   | TLink     of vtype
-   | TExpAlt   of vtype list
-   [@@deriving show,eq,ord]
-
-
-and vtype = vtype_c ref
-   [@@deriving show,eq,ord]
-
 type attr =
    {
       loc     : Loc.t;
       fun_and : bool;
       active  : bool;
       bound   : bool;
-      typ     : vtype option;
+      typ     : VType.t option;
    }
 
 let pp_attr = fun fmt _ -> Format.pp_print_string fmt "attr"
@@ -58,14 +44,14 @@ let compare_attr _ _ = 0
 
 type typed_id =
    | SimpleId of id * attr
-   | TypedId  of id * vtype * attr
+   | TypedId  of id * VType.t * attr
    [@@deriving show,eq,ord]
 
 type lhs_exp =
    | LWild  of attr
-   | LId    of id * vtype option * attr
+   | LId    of id * VType.t option * attr
    | LTuple of lhs_exp list * attr
-   | LTyped of lhs_exp * vtype * attr
+   | LTyped of lhs_exp * VType.t * attr
    [@@deriving show,eq,ord]
 
 (** Parser syntax tree *)
@@ -145,12 +131,12 @@ and stmt =
       of id              (* name *)
       *  typed_id list   (* arguments *)
       *  stmt            (* body *)
-      *  vtype option (* return type *)
+      *  VType.t option  (* return type *)
       *  attr
    | StmtExternal
       of id             (* name *)
       *  typed_id list  (* arguments *)
-      *  vtype       (* return type *)
+      *  VType.t        (* return type *)
       *  attr
    | StmtBind
       of lhs_exp     (* lhs *)
@@ -168,14 +154,14 @@ and stmt =
    | StmtAliasType
       of id            (* name *)
       *  typed_id list (* arguments *)
-      *  vtype_c       (* alias type *)
+      *  VType.t       (* alias type *)
       *  attr
    | StmtEmpty
    [@@deriving show,eq,ord]
 
 and val_decl =
    id          (* name *)
-   * vtype  (* type *)
+   * VType.t  (* type *)
    * attr
    [@@deriving show,eq,ord]
 
@@ -238,7 +224,7 @@ module PathMap = Map.Make(struct type t = path let compare = compare end)
 
 module IdSet = Set.Make(struct type t = id let compare = compare end)
 
-module IdTypeSet = Set.Make(struct type t = id * vtype let compare = compare end)
+module IdTypeSet = Set.Make(struct type t = id * VType.t let compare = compare end)
 
 let pathId (path:path) : id =
    let Path(id) = path in

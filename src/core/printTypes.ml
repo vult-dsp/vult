@@ -40,22 +40,22 @@ let commentedId buffer id =
       newline buffer
    | _ -> ()
 
-let rec typeExpressionBuff buffer (tp:vtype) =
+let rec typeExpressionBuff buffer (tp:VType.t) =
    match !tp with
-   | TId(id,_) ->
+   | VType.TId(id,_) ->
       identifierBuff buffer id
-   | TComposed(id,args,_) ->
+   | VType.TComposed(id,args,_) ->
       identifierBuff buffer id;
       append buffer "(";
       typeExpressionListBuff buffer args;
       append buffer ")"
-   | TArrow(t1,t2,_) ->
+   | VType.TArrow(t1,t2,_) ->
       typeExpressionBuff buffer t1;
       append buffer " -> ";
       typeExpressionBuff buffer t2
-   | TUnbound _ -> append buffer "_";
-   | TLink(tp) -> typeExpressionBuff buffer tp
-   | TExpAlt(expl) ->
+   | VType.TUnbound _ -> append buffer "_";
+   | VType.TLink(tp) -> typeExpressionBuff buffer tp
+   | VType.TExpAlt(expl) ->
       append buffer "(";
       printList buffer typeExpressionBuff " | " expl;
       append buffer ")"
@@ -239,7 +239,7 @@ and stmtBuff buffer (s:stmt) =
             append buffer ")"
       end;
       append buffer ":";
-      typeExpressionBuff buffer (ref alias);
+      typeExpressionBuff buffer alias;
       append buffer ";"
    | StmtType(id,args,decl_list,_) ->
       append buffer "type ";
@@ -344,7 +344,7 @@ let expressionStr e =
    contents print_buffer
 
 (** Converts to string an type expression *)
-let typeStr (e:vtype) =
+let typeStr (e:VType.t) =
    let print_buffer = makePrintBuffer () in
    typeExpressionBuff print_buffer e;
    contents print_buffer
