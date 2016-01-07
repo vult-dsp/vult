@@ -728,6 +728,11 @@ let parseExp (s:string) : exp =
    let buffer = Stream.fromString s in
    expression 0 buffer
 
+(** Parses an type given a string *)
+let parseType (s:string) : VType.t =
+   let buffer = Stream.fromString s in
+   typeExpression 0 buffer
+
 (** Parses an statement given a string *)
 let parseStmt (s:string) : stmt =
    let buffer = Stream.fromString s in

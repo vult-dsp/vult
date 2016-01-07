@@ -126,6 +126,43 @@ let newinst (t:t) : t =
       List.rev l', table'
    in copy [] t |> fst
 
+let rec fixType table t =
+   try
+      List.find (fun key -> equal key t) table, table
+      with
+   | _ ->
+      match t with
+      | { contents = TUnbound(_,_,_) } -> t, t :: table
+      | { contents = TComposed(id,elems,loc) } ->
+         let elems', table' = fixTypeList table elems in
+         ref (TComposed(id,elems',loc)), table'
+      | { contents = TArrow(t1,t2,loc) } ->
+         let t1', table' = fixType table t1 in
+         let t2', table' = fixType table' t2 in
+         ref (TArrow(t1',t2',loc)), table'
+      | { contents = TLink(link) } ->
+         let link', table' = fixType table link in
+         ref (TLink(link')), table'
+      | { contents = TExpAlt(elems) } ->
+         let elems', table' = fixTypeList table elems in
+         ref (TExpAlt(elems')), table'
+      | _ -> t, table
+
+and fixTypeList table tl =
+   let tl', table' =
+      List.fold_left
+         (fun (ol,table) t -> let o, table' = fixType table t in o :: ol,table')
+         ([],table) tl
+   in List.rev tl', table'
+
+let fixOptType table ot =
+   match ot with
+   | None -> None, table
+   | Some(t) ->
+      let t', table' = fixType table t in
+      Some(t'), table'
+
+
 let getLevel = function
    | None -> current_level ()
    | Some(n) -> n
@@ -188,39 +225,39 @@ let rec unify (t1:t) (t2:t) : bool =
 
 (** Constant types *)
 module Constants = struct
-	let unit_type   = ref (TId(["unit"],None))
-	let bool_type   = ref (TId(["bool"],None))
-	let int_type    = ref (TId(["int"],None))
-	let real_type   = ref (TId(["real"],None))
-	let string_type = ref (TId(["string"],None))
+   let unit_type   = ref (TId(["unit"],None))
+   let bool_type   = ref (TId(["bool"],None))
+   let int_type    = ref (TId(["int"],None))
+   let real_type   = ref (TId(["real"],None))
+   let string_type = ref (TId(["string"],None))
 
-	let num_type    () = ref (TExpAlt([real_type; int_type; bool_type]))
+   let num_type    () = ref (TExpAlt([real_type; int_type; bool_type]))
 
-	let num_num () =
-	   let num = num_type () in
-	   ref (TArrow(num,num,None))
+   let num_num () =
+      let num = num_type () in
+      ref (TArrow(num,num,None))
 
-	let num_num_num () =
-	   let num = num_type () in
-	   ref (TArrow(num,ref (TArrow(num,num,None)),None))
+   let num_num_num () =
+      let num = num_type () in
+      ref (TArrow(num,ref (TArrow(num,num,None)),None))
 
-	let num_num_bool () =
-	   let num = num_type () in
-	   ref (TArrow(num,ref (TArrow(num,bool_type,None)),None))
+   let num_num_bool () =
+      let num = num_type () in
+      ref (TArrow(num,ref (TArrow(num,bool_type,None)),None))
 
-	let num_num_num_num () =
-	   let num = num_type () in
-	   ref (TArrow(num,ref (TArrow(num,ref (TArrow(num,num,None)),None)),None))
+   let num_num_num_num () =
+      let num = num_type () in
+      ref (TArrow(num,ref (TArrow(num,ref (TArrow(num,num,None)),None)),None))
 
-	let bool_bool () = ref (TArrow(bool_type,bool_type,None))
+   let bool_bool () = ref (TArrow(bool_type,bool_type,None))
 
-	let bool_bool_bool () =
-	   ref (TArrow(bool_type,ref (TArrow(bool_type,bool_type,None)),None))
+   let bool_bool_bool () =
+      ref (TArrow(bool_type,ref (TArrow(bool_type,bool_type,None)),None))
 
-	let num_int () =
-	   ref (TArrow(num_type (),int_type,None))
+   let num_int () =
+      ref (TArrow(num_type (),int_type,None))
 
-	let num_real () =
-	   ref (TArrow(num_type (),real_type,None))
+   let num_real () =
+      ref (TArrow(num_type (),real_type,None))
 
 end

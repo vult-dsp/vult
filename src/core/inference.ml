@@ -238,7 +238,7 @@ and inferStmt (env:'a Env.t) (ret_type:VType.t option) (stmt:stmt) : stmt * 'a E
       let rhs', rhs_typ = inferOptExp env rhs in
       unifyRaise (expOptLoc rhs) lhs_typ rhs_typ;
       let env' = addLhsToEnv `Var env lhs' in
-      StmtVal(lhs', rhs', attr), env', None
+      StmtVal(lhs', rhs', attr), env', ret_type
    | StmtMem(lhs,init,rhs,attr) ->
       let lhs', lhs_typ   = inferLhsExp env lhs in
       let env'            = addLhsToEnv `Mem env lhs' in
@@ -246,12 +246,12 @@ and inferStmt (env:'a Env.t) (ret_type:VType.t option) (stmt:stmt) : stmt * 'a E
       let rhs', rhs_typ   = inferOptExp env' rhs in
       unifyRaise (expOptLoc init') lhs_typ init_typ;
       unifyRaise (expOptLoc rhs') lhs_typ rhs_typ;
-      StmtMem(lhs', init', rhs', attr), env', None
+      StmtMem(lhs', init', rhs', attr), env', ret_type
    | StmtTable(id,elems,attr) ->
       let elems',types = inferExpList env elems in
       let typ = unifyListSameType elems' types (VType.newvar ()) in
       let env' = Env.addVar env id typ in
-      StmtTable(id,elems',attr), env', None
+      StmtTable(id,elems',attr), env', ret_type
    | StmtReturn(e,attr) ->
       let e', typ   = inferExp env e in
       let ret_type' = unifyOpt (expLoc e) ret_type (Some(typ)) in
@@ -273,9 +273,11 @@ and inferStmt (env:'a Env.t) (ret_type:VType.t option) (stmt:stmt) : stmt * 'a E
          |> Env.prepareContext attr.fun_and
       in
       let args', types, env'  = addArgsToEnv env' args in
-      let body',env',body_ret = inferStmt env' ret_type body in
+      let types',table = VType.fixTypeList [] types in
+      let ret_type',_ = VType.fixOptType table ret_type in
+      let body',env',body_ret = inferStmt env' ret_type' body in
       let last_type = getOptType body_ret in
-      let typ  = VType.makeArrowType last_type types in
+      let typ  = VType.makeArrowType last_type types' in
       let env' = Env.setCurrentType env' typ true in
       let env' = Env.exit `Function env' in
       VType.leaveLevel ();
