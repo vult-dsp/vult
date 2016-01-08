@@ -83,8 +83,11 @@ let rec inferLhsExp (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
       LTuple(List.rev elems',attr),typ
    | LTyped(e,typ,_) ->
       let e',tpi = inferLhsExp env e in
-      unifyRaise (lhsLoc e) typ tpi;
-      e',tpi
+      if not (VType.unify typ tpi) then
+         let msg = Printf.sprintf "This declaration has type '%s' but it has beed defined before as '%s'" (PrintTypes.typeStr typ) (PrintTypes.typeStr tpi) in
+         Error.raiseError msg (GetLocation.fromLhsExp e)
+      else
+         e',tpi
 
 let rec addLhsToEnv mem_var (env:'a Env.t) (lhs:lhs_exp) : 'a Env.t =
    match lhs with
@@ -122,7 +125,7 @@ let unifyOpt (loc:Loc.t Lazy.t) (typ1:VType.t option) (typ2:VType.t option) : VT
 
 let getOptType (typ:VType.t option) : VType.t =
    match typ with
-   | None    -> VType.newvar ()
+   | None    -> VType.Constants.unit_type
    | Some(t) -> t
 
 
@@ -281,7 +284,7 @@ and inferStmt (env:'a Env.t) (ret_type:VType.t option) (stmt:stmt) : stmt * 'a E
       let env' = Env.setCurrentType env' typ true in
       let env' = Env.exit `Function env' in
       VType.leaveLevel ();
-      StmtFun(name,args',body',body_ret,attr), env', None
+      StmtFun(name,args',body',Some(last_type),attr), env', None
    | StmtIf(cond,then_,else_,attr) ->
       let cond', cond_type  = inferExp env cond in
       unifyRaise (expLoc cond') (VType.Constants.bool_type) cond_type;
