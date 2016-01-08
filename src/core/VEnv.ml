@@ -70,7 +70,7 @@ module Context = struct
    type t =
       {
          forward   : id IdMap.t;
-         backward  : id list IdMap.t;
+         backward  : IdSet.t IdMap.t;
          count     : int;
          current   : id;
       }
@@ -86,12 +86,12 @@ module Context = struct
    let addTo (context:t) (func:id) : t =
       let current_in_ctx =
          try IdMap.find context.current context.backward with
-         | Not_found -> []
+         | Not_found -> IdSet.empty
       in
       {
          context with
          forward  = IdMap.add func context.current context.forward;
-         backward = IdMap.add context.current (func::current_in_ctx) context.backward;
+         backward = IdMap.add context.current (IdSet.add func current_in_ctx) context.backward;
       }
 
    let makeNew (context:t) (func:id) : t =
@@ -100,8 +100,16 @@ module Context = struct
          count    = context.count+1;
          current  = context_name;
          forward  = IdMap.add func context_name context.forward;
-         backward = IdMap.add context_name [func] context.backward;
+         backward = IdMap.add context_name (IdSet.of_list [func]) context.backward;
       }
+
+   let getAllWithContext (context:t) (func:id) : id list =
+      try
+         let ctx = IdMap.find func context.forward in
+         let all = IdMap.find ctx context.backward in
+         IdSet.fold (fun a s -> a :: s) all []
+      with
+      | Not_found -> []
 
 end
 
@@ -224,12 +232,18 @@ module Scope = struct
          exit parent t
 
    let newContext (t:t) (name:id) : t =
-      { t with ctx = Context.makeNew t.ctx name }
+      match t.parent with
+      | None -> t
+      | Some(parent) ->
+         { t with parent = Some({ parent with ctx = Context.makeNew parent.ctx name }) }
 
    let addToContext (t:t) (name:id) : t =
-      { t with ctx = Context.makeNew t.ctx name }
+      match t.parent with
+      | None -> t
+      | Some(parent) ->
+         { t with parent = Some({ parent with ctx = Context.addTo parent.ctx name }) }
 
-   let enter kind ?(sharectx=false) (t:t) (name:id) : t =
+   let enter kind sharectx (t:t) (name:id) : t =
       match kind with
       | `Function ->
          let t' = enterAny getFunction t name in
@@ -317,8 +331,29 @@ module Scope = struct
                   inner_loop locals
          in inner_loop t.locals
 
+   let lookupMemInAllContext (t:t) (name:id) : (path * VType.t) option =
+      let contexts =
+         match t.parent with
+         | None -> []
+         | Some(parent) -> Context.getAllWithContext parent.ctx t.name
+      in
+      let tables =
+         match t.parent with
+         | Some(parent) ->
+            List.fold_left (fun s a -> try (IdMap.find a parent.func) :: s with | _ -> s) [] contexts
+         | _ -> []
+      in
+      let rec loop ctx =
+         match ctx with
+         | [] -> None
+         | h::tt ->
+            match findAny false getMemInst h name with
+            | Some(_) as a -> a
+            | None -> loop tt
+      in loop (t::tables)
+
    let lookupVariable (t:t) (name:id) : (path * VType.t) option =
-      match findAny false getMemInst t name with
+      match lookupMemInAllContext t name with
       | Some(_) as a -> a
       | None -> lookupVal t name
 
@@ -595,10 +630,10 @@ module Env = struct
          scope = Scope.setCurrentType state.scope typ single;
       }
 
-   let enter kind (state:'a t) (func:id) : 'a t =
+   let enter kind ?(sharectx=false) (state:'a t) (func:id) : 'a t =
       {
          state with
-         scope = Scope.enter kind state.scope func;
+         scope = Scope.enter kind sharectx state.scope func;
          tick  = 0;
       }
 

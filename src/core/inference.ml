@@ -269,7 +269,7 @@ and inferStmt (env:'a Env.t) (ret_type:VType.t option) (stmt:stmt) : stmt * 'a E
    | StmtFun(name,args,body,ret_type,attr) ->
       VType.enterLevel ();
       let env' =
-         Env.enter `Function env name
+         Env.enter ~sharectx:(attr.fun_and) `Function env name
          |> Env.prepareContext attr.fun_and
       in
       let args', types, env'  = addArgsToEnv env' args in
