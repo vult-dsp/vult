@@ -190,6 +190,7 @@ rule next_token lines = parse
   | ','         { makeToken lines COMMA lexbuf }
   | '='         { makeToken lines EQUAL lexbuf }
   | '''         { makeToken lines TICK lexbuf }
+  | "->"        { makeToken lines ARROW lexbuf }
   | "||"        { makeToken lines OP lexbuf }
   | "&&"        { makeToken lines OP lexbuf }
   | "=="        { makeToken lines OP lexbuf }

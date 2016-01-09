@@ -99,6 +99,7 @@ let getStmtLocation (s:stmt)  : Loc.t =
 (** Returns the left binding powers of the token *)
 let getLbp (token:'kind token) : int =
    match token.kind,token.value with
+   | ARROW,_ -> 10
    | COLON,_ -> 10
    | COMMA,_ -> 20
    | OP,"||" -> 30
@@ -191,9 +192,16 @@ and type_nud (buffer:Stream.stream) (token:'kind token) : VType.t =
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
 
-and type_led (_:Stream.stream) (token:'kind token) (_:VType.t) : VType.t =
-   let message = Stream.notExpectedError token in
-   raise (ParserError(message))
+and type_led (buffer:Stream.stream) (token:'kind token) (left:VType.t) : VType.t =
+   match token.kind with
+   | ARROW ->
+      let right = typeExpression 0 buffer in
+      let typ = ref (VType.TArrow(left,right,Some(token.loc))) in
+      let typ',_ = VType.fixType [] typ in
+      typ'
+   | _ ->
+      let message = Stream.notExpectedError token in
+      raise (ParserError(message))
 
 and composedType (buffer:Stream.stream) (token:'kind token) (id:id) : VType.t =
    let _ = Stream.skip buffer in

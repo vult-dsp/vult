@@ -30,34 +30,34 @@ let pathStr path = path |> pathId |> PrintTypes.identifierStr
 
 let builtin_table =
    [
-      ["abs"]  , `Function, VType.Constants.num_num (), false;
-      ["exp"]  , `Function, VType.Constants.num_num (), false;
-      ["sin"]  , `Function, VType.Constants.num_num (), false;
-      ["cos"]  , `Function, VType.Constants.num_num (), false;
-      ["floor"], `Function, VType.Constants.num_num (), false;
-      ["clip"] , `Function, VType.Constants.num_num_num_num (), false;
-      ["not"]  , `Function, VType.Constants.bool_bool (), false;
-      ["tanh"] , `Function, VType.Constants.num_num (), false;
-      ["tan"]  , `Function, VType.Constants.num_num (), false;
-      ["sqrt"] , `Function, VType.Constants.num_num (), false;
+      ["abs"]  , `Function, VType.Constants.real_real (), false;
+      ["exp"]  , `Function, VType.Constants.real_real (), false;
+      ["sin"]  , `Function, VType.Constants.real_real (), false;
+      ["cos"]  , `Function, VType.Constants.real_real (), false;
+      ["floor"], `Function, VType.Constants.real_real (), false;
+      ["tanh"] , `Function, VType.Constants.real_real (), false;
+      ["tan"]  , `Function, VType.Constants.real_real (), false;
+      ["sqrt"] , `Function, VType.Constants.real_real (), false;
+      ["clip"] , `Function, VType.Constants.a_a_a_a (), false;
 
       ["int"]  , `Function, VType.Constants.num_int (), false;
       ["real"] , `Function, VType.Constants.num_real (), false;
 
       ["|-|"] , `Operator, VType.Constants.num_num (), false;
-      ["+"]  , `Operator, VType.Constants.num_num_num (), false;
-      ["-"]  , `Operator, VType.Constants.num_num_num (), false;
-      ["*"]  , `Operator, VType.Constants.num_num_num (), false;
-      ["/"]  , `Operator, VType.Constants.num_num_num (), false;
-      ["%"]  , `Operator, VType.Constants.num_num_num (), false;
+      ["+"]  , `Operator, VType.Constants.a_a_a (), false;
+      ["-"]  , `Operator, VType.Constants.a_a_a (), false;
+      ["*"]  , `Operator, VType.Constants.a_a_a (), false;
+      ["/"]  , `Operator, VType.Constants.a_a_a (), false;
+      ["%"]  , `Operator, VType.Constants.int_int_int (), false;
 
-      [">"]   , `Operator, VType.Constants.num_num_bool (), false;
-      ["<"]   , `Operator, VType.Constants.num_num_bool (), false;
-      ["=="]  , `Operator, VType.Constants.num_num_bool (), false;
-      ["<>"]  , `Operator, VType.Constants.num_num_bool (), false;
-      [">="]  , `Operator, VType.Constants.num_num_bool (), false;
-      ["<="]  , `Operator, VType.Constants.num_num_bool (), false;
+      [">"]   , `Operator, VType.Constants.a_a_bool (), false;
+      ["<"]   , `Operator, VType.Constants.a_a_bool (), false;
+      ["=="]  , `Operator, VType.Constants.a_a_bool (), false;
+      ["<>"]  , `Operator, VType.Constants.a_a_bool (), false;
+      [">="]  , `Operator, VType.Constants.a_a_bool (), false;
+      ["<="]  , `Operator, VType.Constants.a_a_bool (), false;
 
+      ["not"]  , `Function, VType.Constants.bool_bool (), false;
       ["||"]  , `Operator, VType.Constants.bool_bool_bool (), false;
       ["&&"]  , `Operator, VType.Constants.bool_bool_bool (), false;
    ]

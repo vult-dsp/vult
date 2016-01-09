@@ -233,21 +233,35 @@ module Constants = struct
 
    let num_type    () = ref (TExpAlt([real_type; int_type; bool_type]))
 
+   let real_real () =
+      ref (TArrow(real_type,real_type,None))
+
+   let a_a_a () =
+      let a = ref (TUnbound("'a",None,None)) in
+      ref (TArrow(a,ref (TArrow(a,a,None)),None))
+
    let num_num () =
       let num = num_type () in
       ref (TArrow(num,num,None))
-
-   let num_num_num () =
-      let num = num_type () in
-      ref (TArrow(num,ref (TArrow(num,num,None)),None))
 
    let num_num_bool () =
       let num = num_type () in
       ref (TArrow(num,ref (TArrow(num,bool_type,None)),None))
 
+   let a_a_bool () =
+      let a = ref (TUnbound("'a",None,None)) in
+      ref (TArrow(a,ref (TArrow(a,bool_type,None)),None))
+
+   let int_int_int () =
+      ref (TArrow(int_type,ref (TArrow(int_type,int_type,None)),None))
+
    let num_num_num_num () =
       let num = num_type () in
       ref (TArrow(num,ref (TArrow(num,ref (TArrow(num,num,None)),None)),None))
+
+   let a_a_a_a () =
+      let a = ref (TUnbound("'a",None,None)) in
+      ref (TArrow(a,ref (TArrow(a,ref (TArrow(a,a,None)),None)),None))
 
    let bool_bool () = ref (TArrow(bool_type,bool_type,None))
 
