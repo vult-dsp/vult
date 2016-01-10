@@ -83,7 +83,7 @@ module InsertContext = struct
       Mapper.make @@ fun state exp ->
          match exp with
          | PCall(Some(id),kind,args,attr) ->
-            state,PCall(None,kind,PId(id,attr)::args,attr)
+            state,PCall(None,kind,PId("$ctx"::id,attr)::args,attr)
          | PId(id,attr) when Env.isLocalInstanceOrMem state id ->
             state, PId("$ctx"::id,attr)
          | _ -> state,exp
@@ -120,7 +120,7 @@ module SplitMem = struct
       { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
 
 end
-(*
+
 module CreateInitFunction = struct
 
    module StmtSet = Set.Make(struct type t = stmt let compare = compare_stmt end)
@@ -137,11 +137,13 @@ module CreateInitFunction = struct
       | { contents = VType.TId(["int"],_) } -> PInt(0,emptyAttr)
       | _ -> PReal(0.0,emptyAttr)
 
-   let callInitFunction state (tp:VType.t) : exp =
+   let rec callInitFunction state (tp:VType.t) : exp =
       match tp with
       | { contents = VType.TId(name,_) } ->
          let fun_ctx = Env.getContext state name in
          PCall(None,getInitFunctioName fun_ctx,[],emptyAttr)
+      | { contents = VType.TLink(tp) } ->
+         callInitFunction state tp
       | _ -> failwith "CreateInitFunction.callInitFunction: cannot initialize this yet"
 
    let generateInitFunction (state:'a Env.t) (name:id) : stmt =
@@ -192,8 +194,8 @@ module CreateInitFunction = struct
          match stmt with
          | StmtFun(name,_,_,_,_) ->
             if Env.isActive state name then
-               let data = Env.get state in
-               let ctx = Env.getContext state name in
+               let data    = Env.get state in
+               let ctx     = Env.getContext state name in
                let init_fn = generateInitFunctionWrapper state name in
                if PassData.hasInitFunction data ctx then
                   state, [stmt; init_fn]
@@ -211,7 +213,7 @@ module CreateInitFunction = struct
       { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
 
 end
-*)
+
 module SimplifyTupleAssign = struct
 
    let makeTmp i = ["$tmp_" ^ (string_of_int i)]
@@ -275,12 +277,12 @@ let pass1 (state,stmts) =
    in
    Mapper.map_stmt_list mapper state stmts
 
-(*let pass2 (state,stmts) =
+let pass2 (state,stmts) =
    let mapper =
       CreateInitFunction.mapper
    in
    Mapper.map_stmt_list mapper state stmts
-*)
+
 let dump (state,stmts) =
    Env.dump state;
    state,stmts
@@ -302,8 +304,8 @@ let applyTransformations (results:parser_results) =
       |> inferPass
       |> pass1
       |> dump
-      (*|> pass2
-      |> dump*)
+      |> pass2
+      |> dump
       |> snd
    in
 

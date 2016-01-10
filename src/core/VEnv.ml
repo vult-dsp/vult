@@ -95,13 +95,16 @@ module Context = struct
       }
 
    let makeNew (context:t) (func:id) : t =
-      let context_name = ["ctx_"^(string_of_int context.count)] in
-      {
-         count    = context.count+1;
-         current  = context_name;
-         forward  = IdMap.add func context_name context.forward;
-         backward = IdMap.add context_name (IdSet.of_list [func]) context.backward;
-      }
+      if IdMap.mem func context.forward then
+         context
+      else
+         let context_name = ["ctx_"^(string_of_int context.count)] in
+         {
+            count    = context.count+1;
+            current  = context_name;
+            forward  = IdMap.add func context_name context.forward;
+            backward = IdMap.add context_name (IdSet.of_list [func]) context.backward;
+         }
 
    let getAllWithContext (context:t) (func:id) : id list =
       try
