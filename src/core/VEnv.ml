@@ -435,6 +435,13 @@ module Env = struct
          scope   = Scope.addVar state.scope name typ;
       }
 
+   (** Adds an instance to the current block *)
+   let addInstance (state:'a t) (name:id) (typ:VType.t) : 'a t  =
+      {
+         state with
+         scope   = Scope.addInstance state.scope name typ;
+      }
+
    (** Returns the full path of a function. Raises an error if it cannot be found *)
    let lookup kind (state:'a t) (name:id) : path * VType.t * Scope.t =
       match Scope.lookup kind state.scope name with

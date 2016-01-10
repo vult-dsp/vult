@@ -148,52 +148,67 @@ let inferApply (loc:Loc.t Lazy.t) (args:exp list) (args_typ:VType.t list) (ret_t
    inferApplyArg args args_typ fn_args;
    unifyRaise loc fn_ret_type ret_type
 
+let addInstance (env:'a Env.t) (isactive:bool) (name:id option) (typ:VType.t) : 'a Env.t * id option =
+   if isactive then
+      match name with
+      | Some(n) ->
+         let env' = Env.addInstance env n typ in
+         env', name
+      | None ->
+         let n,env' = Env.tick env in
+         let n      = [("_inst"^(string_of_int n))] in
+         let env' = Env.addInstance env' n typ in
+         env', Some(n)
+   else
+      env, None
 
-let rec inferExp (env:'a Env.t) (e:exp) : exp * VType.t =
+let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
    match e with
    | PUnit(attr) ->
-      PUnit({ attr with typ = Some(VType.Constants.unit_type) }), VType.Constants.unit_type
+      PUnit({ attr with typ = Some(VType.Constants.unit_type) }), env, VType.Constants.unit_type
    | PBool(v,attr) ->
-      PBool(v,{ attr with typ = Some(VType.Constants.bool_type) }), VType.Constants.bool_type
+      PBool(v,{ attr with typ = Some(VType.Constants.bool_type) }), env, VType.Constants.bool_type
    | PInt(v,attr) ->
       let typ = VType.Constants.int_type in
-      PInt(v,{ attr with typ = Some(typ) }), typ
+      PInt(v,{ attr with typ = Some(typ) }), env, typ
    | PReal(v,attr) ->
-      PReal(v,{ attr with typ = Some(VType.Constants.real_type) }), VType.Constants.real_type
+      PReal(v,{ attr with typ = Some(VType.Constants.real_type) }), env, VType.Constants.real_type
    | PId(id,attr) ->
       let typ = try let _,typ,_ = Env.lookup `Variable env id in typ with | _ -> failwith ("Undefined symbol '" ^ (PrintTypes.identifierStr id)^"'") in
-      PId(id, { attr with typ = Some(typ) }), typ
+      PId(id, { attr with typ = Some(typ) }), env, typ
    | PGroup(e,_) ->
       inferExp env e
    | PTuple(elems,attr) ->
-      let elems', types = inferExpList env elems in
-      let typ           = ref (VType.TComposed(["tuple"],types,None)) in
-      PTuple(elems',{ attr with typ = Some(typ) }), typ
+      let elems',env', types = inferExpList env elems in
+      let typ = ref (VType.TComposed(["tuple"],types,None)) in
+      PTuple(elems',{ attr with typ = Some(typ) }), env', typ
    | PIf(cond,then_,else_,attr) ->
-      let cond',cond_type  = inferExp env cond in
-      let then_',then_type = inferExp env then_ in
-      let else_',else_type = inferExp env else_ in
+      let cond', env', cond_type = inferExp env cond in
+      let then_',env', then_type = inferExp env' then_ in
+      let else_',env', else_type = inferExp env' else_ in
       unifyRaise (expLoc cond') (VType.Constants.bool_type) cond_type;
       unifyRaise (expLoc else_') then_type else_type;
-      PIf(cond',then_',else_',{ attr with typ = Some(then_type) }), then_type
+      PIf(cond',then_',else_',{ attr with typ = Some(then_type) }), env', then_type
    | PCall(name,fname,args,attr) ->
-      let args',types = inferExpList env args in
-      let ret_type    = VType.newvar () in
-      let _,fn_type,_ = Env.lookup `Function env fname in
+      let args',env',types = inferExpList env args in
+      let ret_type       = VType.newvar () in
+      let _,fn_type,ft   = Env.lookup `Function env' fname in
       let fn_args,fn_ret = VType.stripArrow fn_type in
+      let active         = Scope.isActive ft in
+      let env',name'     = addInstance env active name fn_type in
       inferApply (expLoc e) args' types ret_type fn_args fn_ret;
-      PCall(name,fname,args',{ attr with typ = Some(ret_type) }), ret_type
+      PCall(name',fname,args',{ attr with typ = Some(ret_type) }), env', ret_type
    | POp(op,[e1;e2],attr) ->
-      let e1',e1_typ  = inferExp env e1 in
-      let e2',e2_typ  = inferExp env e2 in
-      let ret_type    = VType.newvar () in
-      let _,fn_type,_ = Env.lookup `Operator env [op] in
+      let e1',env',e1_typ  = inferExp env e1 in
+      let e2',env',e2_typ  = inferExp env' e2 in
+      let ret_type         = VType.newvar () in
+      let _,fn_type,_      = Env.lookup `Operator env [op] in
       let fn_args,fn_ret = VType.stripArrow fn_type in
       inferApply (expLoc e) [e1'; e2'] [e1_typ; e2_typ] ret_type fn_args fn_ret;
-      POp(op,[e1';e2'],{ attr with typ = Some(ret_type) }), ret_type
+      POp(op,[e1';e2'],{ attr with typ = Some(ret_type) }), env', ret_type
    | POp(op,args,attr) ->
-      let args',types = inferExpList env args in
-      let _,fn_type,_ = Env.lookup `Operator env [op] in
+      let args',env',types = inferExpList env args in
+      let _,fn_type,_ = Env.lookup `Operator env' [op] in
       let common_type =
          match VType.stripArrow fn_type with
          | [arg1;arg2], ret ->
@@ -204,66 +219,66 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * VType.t =
          | _ -> failwith "The operator cannot be used with multiple arguments"
       in
       let ret_type = unifyListSameType args' types common_type in
-      POp(op,args',{ attr with typ = Some(ret_type) }), ret_type
+      POp(op,args',{ attr with typ = Some(ret_type) }), env', ret_type
    | PUnOp(op,arg,attr) ->
-      let arg',arg_type = inferExp env arg in
-      let ret_type      = VType.newvar () in
-      let _,fn_type,_   = Env.lookup `Operator env ["|"^op^"|"] in
-      let fn_args,fn_ret = VType.stripArrow fn_type in
+      let arg',env',arg_type = inferExp env arg in
+      let ret_type           = VType.newvar () in
+      let _,fn_type,_        = Env.lookup `Operator env ["|"^op^"|"] in
+      let fn_args,fn_ret     = VType.stripArrow fn_type in
       inferApply (expLoc e) [arg'] [arg_type] ret_type fn_args fn_ret;
-      PUnOp(op,arg',{ attr with typ = Some(ret_type) }), ret_type
+      PUnOp(op,arg',{ attr with typ = Some(ret_type) }), env', ret_type
    | PSeq(name,stmt,attr) ->
       let stmt', _, ret_type = inferStmt env None stmt in
       let typ = getOptType ret_type in
-      PSeq(name,stmt',{ attr with typ = Some(typ)}), typ
-   | PEmpty -> PEmpty, VType.Constants.unit_type
+      PSeq(name,stmt',{ attr with typ = Some(typ)}), env, typ
+   | PEmpty -> PEmpty, env, VType.Constants.unit_type
 
-and inferExpList (env:'a Env.t) (elems:exp list) : exp list * VType.t list =
-   let elems',types =
-      List.fold_left (fun (elems,types) a ->
-         let a',typ = inferExp env a in
-         a' :: elems, typ :: types )
-      ([],[])
+and inferExpList (env:'a Env.t) (elems:exp list) : exp list * 'a Env.t * VType.t list =
+   let elems',env',types =
+      List.fold_left (fun (elems,env,types) a ->
+         let a',env',typ = inferExp env a in
+         a' :: elems,env', typ :: types )
+      ([],env,[])
       elems
-   in List.rev elems', List.rev types
+   in List.rev elems', env', List.rev types
 
-and inferOptExp (env:'a Env.t) (e:exp option) : exp option * VType.t =
+and inferOptExp (env:'a Env.t) (e:exp option) : exp option * 'a Env.t * VType.t =
    match e with
-   | None    -> None, VType.newvar ()
+   | None    -> None, env, VType.newvar ()
    | Some(e) ->
-      let e',typ = inferExp env e in
-      Some(e'), typ
+      let e',env',typ = inferExp env e in
+      Some(e'), env', typ
 
 and inferStmt (env:'a Env.t) (ret_type:VType.t option) (stmt:stmt) : stmt * 'a Env.t * VType.t option =
    match stmt with
    | StmtVal(lhs,rhs,attr) ->
       let lhs', lhs_typ = inferLhsExp env lhs in
-      let rhs', rhs_typ = inferOptExp env rhs in
+      let rhs', env', rhs_typ = inferOptExp env rhs in
       unifyRaise (expOptLoc rhs) lhs_typ rhs_typ;
-      let env' = addLhsToEnv `Var env lhs' in
+      let env' = addLhsToEnv `Var env' lhs' in
       StmtVal(lhs', rhs', attr), env', ret_type
    | StmtMem(lhs,init,rhs,attr) ->
       let lhs', lhs_typ   = inferLhsExp env lhs in
       let env'            = addLhsToEnv `Mem env lhs' in
-      let init', init_typ = inferOptExp env' init in
-      let rhs', rhs_typ   = inferOptExp env' rhs in
+      let init',env', init_typ = inferOptExp env' init in
+      let rhs',env', rhs_typ   = inferOptExp env' rhs in
       unifyRaise (expOptLoc init') lhs_typ init_typ;
       unifyRaise (expOptLoc rhs') lhs_typ rhs_typ;
       StmtMem(lhs', init', rhs', attr), env', ret_type
    | StmtTable(id,elems,attr) ->
-      let elems',types = inferExpList env elems in
-      let typ = unifyListSameType elems' types (VType.newvar ()) in
-      let env' = Env.addVar env id typ in
+      let elems',env',types = inferExpList env elems in
+      let typ  = unifyListSameType elems' types (VType.newvar ()) in
+      let env' = Env.addVar env' id typ in
       StmtTable(id,elems',attr), env', ret_type
    | StmtReturn(e,attr) ->
-      let e', typ   = inferExp env e in
+      let e',env', typ   = inferExp env e in
       let ret_type' = unifyOpt (expLoc e) ret_type (Some(typ)) in
-      StmtReturn(e',attr), env, ret_type'
+      StmtReturn(e',attr), env', ret_type'
    | StmtBind(lhs,rhs,attr) ->
-      let lhs', lhs_typ = inferLhsExp env lhs in
-      let rhs', rhs_typ = inferExp env rhs in
+      let lhs', lhs_typ      = inferLhsExp env lhs in
+      let rhs',env', rhs_typ = inferExp env rhs in
       unifyRaise (expLoc rhs') lhs_typ rhs_typ;
-      StmtBind(lhs',rhs',attr), env, ret_type
+      StmtBind(lhs',rhs',attr), env', ret_type
    | StmtBlock(name,stmts,attr) ->
       let env' = Env.enter `Block env [] in
       let stmts', env', stmt_ret_type = inferStmtList env' ret_type stmts in
@@ -283,15 +298,15 @@ and inferStmt (env:'a Env.t) (ret_type:VType.t option) (stmt:stmt) : stmt * 'a E
       VType.leaveLevel ();
       StmtFun(name,args',body',Some(last_type),attr), env', None
    | StmtIf(cond,then_,else_,attr) ->
-      let cond', cond_type  = inferExp env cond in
+      let cond',env', cond_type  = inferExp env cond in
       unifyRaise (expLoc cond') (VType.Constants.bool_type) cond_type;
-      let then_', env', ret_type' = inferStmt env ret_type then_ in
+      let then_', env', ret_type' = inferStmt env' ret_type then_ in
       let else_', env', ret_type' = inferOptStmt env' ret_type' else_ in
       StmtIf(cond',then_',else_',attr), env', ret_type'
    | StmtWhile(cond,body,attr) ->
-      let cond', cond_type  = inferExp env cond in
+      let cond',env', cond_type  = inferExp env cond in
       unifyRaise (expLoc cond') (VType.Constants.bool_type) cond_type;
-      let body', env', ret_type' = inferStmt env ret_type body in
+      let body', env', ret_type' = inferStmt env' ret_type body in
       StmtWhile(cond',body',attr), env', ret_type'
    | StmtType(name,args,members,attr) ->
       StmtType(name,args,members,attr), env, ret_type
