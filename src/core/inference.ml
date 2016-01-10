@@ -67,7 +67,7 @@ let rec inferLhsExp (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
       let typ = VType.newvar () in
       LWild( { attr with typ = Some(typ) }), typ
    | LId(id,None,attr) ->
-      let typ = try Env.lookup `Variable env id |> snd with | _ -> VType.newvar () in
+      let typ = try let _,typ,_ = Env.lookup `Variable env id in typ with | _ -> VType.newvar () in
       LId(id,Some(typ),{ attr with typ = Some(typ) }), typ
    | LId(id,Some(typ),attr) ->
       LId(id,Some(typ),{ attr with typ = Some(typ) }), typ
@@ -161,7 +161,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * VType.t =
    | PReal(v,attr) ->
       PReal(v,{ attr with typ = Some(VType.Constants.real_type) }), VType.Constants.real_type
    | PId(id,attr) ->
-      let typ = try Env.lookup `Variable env id |> snd with | _ -> failwith ("Undefined symbol '" ^ (PrintTypes.identifierStr id)^"'") in
+      let typ = try let _,typ,_ = Env.lookup `Variable env id in typ with | _ -> failwith ("Undefined symbol '" ^ (PrintTypes.identifierStr id)^"'") in
       PId(id, { attr with typ = Some(typ) }), typ
    | PGroup(e,_) ->
       inferExp env e
@@ -179,7 +179,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * VType.t =
    | PCall(name,fname,args,attr) ->
       let args',types = inferExpList env args in
       let ret_type    = VType.newvar () in
-      let _, fn_type  = Env.lookup `Function env fname in
+      let _,fn_type,_ = Env.lookup `Function env fname in
       let fn_args,fn_ret = VType.stripArrow fn_type in
       inferApply (expLoc e) args' types ret_type fn_args fn_ret;
       PCall(name,fname,args',{ attr with typ = Some(ret_type) }), ret_type
@@ -187,13 +187,13 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * VType.t =
       let e1',e1_typ  = inferExp env e1 in
       let e2',e2_typ  = inferExp env e2 in
       let ret_type    = VType.newvar () in
-      let _, fn_type  = Env.lookup `Operator env [op] in
+      let _,fn_type,_ = Env.lookup `Operator env [op] in
       let fn_args,fn_ret = VType.stripArrow fn_type in
       inferApply (expLoc e) [e1'; e2'] [e1_typ; e2_typ] ret_type fn_args fn_ret;
       POp(op,[e1';e2'],{ attr with typ = Some(ret_type) }), ret_type
    | POp(op,args,attr) ->
       let args',types = inferExpList env args in
-      let _, fn_type  = Env.lookup `Operator env [op] in
+      let _,fn_type,_ = Env.lookup `Operator env [op] in
       let common_type =
          match VType.stripArrow fn_type with
          | [arg1;arg2], ret ->
@@ -208,7 +208,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * VType.t =
    | PUnOp(op,arg,attr) ->
       let arg',arg_type = inferExp env arg in
       let ret_type      = VType.newvar () in
-      let _, fn_type    = Env.lookup `Operator env ["|"^op^"|"] in
+      let _,fn_type,_   = Env.lookup `Operator env ["|"^op^"|"] in
       let fn_args,fn_ret = VType.stripArrow fn_type in
       inferApply (expLoc e) [arg'] [arg_type] ret_type fn_args fn_ret;
       PUnOp(op,arg',{ attr with typ = Some(ret_type) }), ret_type
@@ -271,10 +271,7 @@ and inferStmt (env:'a Env.t) (ret_type:VType.t option) (stmt:stmt) : stmt * 'a E
       StmtBlock(name,stmts',attr), env', stmt_ret_type
    | StmtFun(name,args,body,ret_type,attr) ->
       VType.enterLevel ();
-      let env' =
-         Env.enter ~sharectx:(attr.fun_and) `Function env name
-         |> Env.prepareContext attr.fun_and
-      in
+      let env' = Env.enter ~sharectx:(attr.fun_and) `Function env name in
       let args', types, env'  = addArgsToEnv env' args in
       let types',table = VType.fixTypeList [] types in
       let ret_type',_ = VType.fixOptType table ret_type in

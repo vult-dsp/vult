@@ -218,13 +218,13 @@ let makeAttr (loc:Loc.t) : attr =
 let emptyAttr =
    { loc = Loc.default; fun_and = false; active = false; bound = false; typ = None }
 
-module IdMap = Map.Make(struct type t = id let compare = compare end)
+module IdMap = CCMap.Make(struct type t = id let compare = compare end)
 
-module PathMap = Map.Make(struct type t = path let compare = compare end)
+module PathMap = CCMap.Make(struct type t = path let compare = compare end)
 
-module IdSet = Set.Make(struct type t = id let compare = compare end)
+module IdSet = CCSet.Make(struct type t = id let compare = compare end)
 
-module IdTypeSet = Set.Make(struct type t = id * VType.t let compare = compare end)
+module IdTypeSet = CCSet.Make(struct type t = id * VType.t let compare = compare end)
 
 let pathId (path:path) : id =
    let Path(id) = path in
@@ -233,3 +233,12 @@ let pathId (path:path) : id =
 let pathAppend (path:path) (id:id) : path =
    let Path(p) = path in
    Path(p@id)
+
+let pathLast (path:path) : id =
+   let rec last = function
+      | []  -> failwith "Invalid path"
+      | [h] -> h
+      | _::t -> last t
+   in
+   match path with
+   | Path(p) -> [ last p ]

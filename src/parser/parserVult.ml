@@ -152,7 +152,7 @@ and type_nud (buffer:Stream.stream) (token:'kind token) : VType.t =
             let token = Stream.current buffer in
             let _     = Stream.skip buffer in
             begin match identifierToken token with
-            | [id] -> ref (VType.TUnbound(id,None,Some(token.loc)))
+            | [id] -> ref (VType.TUnbound("'"^id,None,Some(token.loc)))
             | _    ->
                let message =  Error.makeError "invalid name for generic type" token.loc in
                raise (ParserError(message))

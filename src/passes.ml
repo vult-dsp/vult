@@ -46,48 +46,6 @@ module PassData = struct
 end
 
 
-
-(*
-module ConstantSimplification = struct
-   let biOpReal (op:string) : float -> float -> float =
-      match op with
-      | "+" -> ( +. )
-      | "-" -> ( -. )
-      | "*" -> ( *. )
-      | "/" -> ( /. )
-      | _ -> failwith (Printf.sprintf "biOpReal: Unknown operator %s" op)
-
-   let biOpInt (op:string) : int -> int -> int =
-      match op with
-      | "+" -> ( + )
-      | "-" -> ( - )
-      | "*" -> ( * )
-      | "/" -> ( / )
-      | _ -> failwith (Printf.sprintf "biOpReal: Unknown operator %s" op)
-
-   let exp : ('a,exp) Mapper.mapper_func =
-      Mapper.make @@ fun state e ->
-         match e with
-         | POp(op,[PInt(v1,_);PInt(v2,_)],attr) ->
-            let f = biOpInt op in
-            state,PInt(f v1 v2,attr)
-         | POp(op,[PInt(v1,_);PReal(v2,_)],attr) ->
-            let f = biOpReal op in
-            state,PReal(f (float_of_int v1) v2,attr)
-         | POp(op,[PReal(v1,_);PInt(v2,_)],attr) ->
-            let f = biOpReal op in
-            state,PReal(f v1 (float_of_int v2),attr)
-         | POp(op,[PReal(v1,_);PReal(v2,_)],attr) ->
-            let f = biOpReal op in
-            state,PReal(f v1 v2,attr)
-         | _ -> state,e
-
-   let mapper =
-      { Mapper.default_mapper with Mapper.exp = exp }
-end
-*)
-
-
 module GetAttr = struct
 
    let fromExp (e:exp) : attr =
@@ -162,7 +120,7 @@ module SplitMem = struct
       { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
 
 end
-
+(*
 module CreateInitFunction = struct
 
    module StmtSet = Set.Make(struct type t = stmt let compare = compare_stmt end)
@@ -253,7 +211,7 @@ module CreateInitFunction = struct
       { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
 
 end
-
+*)
 module SimplifyTupleAssign = struct
 
    let makeTmp i = ["$tmp_" ^ (string_of_int i)]
@@ -317,12 +275,12 @@ let pass1 (state,stmts) =
    in
    Mapper.map_stmt_list mapper state stmts
 
-let pass2 (state,stmts) =
+(*let pass2 (state,stmts) =
    let mapper =
       CreateInitFunction.mapper
    in
    Mapper.map_stmt_list mapper state stmts
-
+*)
 let dump (state,stmts) =
    Env.dump state;
    state,stmts
@@ -337,15 +295,14 @@ let applyTransformations (results:parser_results) =
    in
    let initial_state =
       Env.empty module_name PassData.empty
-      |> Env.makeNewContext
    in
 
    let passes stmts =
       (initial_state,stmts)
       |> inferPass
-      (*|> pass1
+      |> pass1
       |> dump
-      |> pass2
+      (*|> pass2
       |> dump*)
       |> snd
    in
