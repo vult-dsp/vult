@@ -77,6 +77,11 @@ module GetLocation = struct
       let s, _ = Mapper.map_exp mapper dummy_env e in
       Env.get s
 
+   let fromStmt (stmt:stmt) : Loc.t =
+      let dummy_env = Env.empty [""] Loc.default in
+      let s, _ = Mapper.map_stmt mapper dummy_env stmt in
+      Env.get s
+
    let fromLhsExp (e:lhs_exp) : Loc.t =
       let dummy_env = Env.empty [""] Loc.default in
       let s, _ = Mapper.map_lhs_exp mapper dummy_env e in

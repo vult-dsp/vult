@@ -137,14 +137,14 @@ module CreateInitFunction = struct
       | { contents = VType.TId(["int"],_) } -> PInt(0,emptyAttr)
       | _ -> PReal(0.0,emptyAttr)
 
-   let rec callInitFunction state (tp:VType.t) : exp =
+   let rec callInitFunction state (name:id) (tp:VType.t) : exp =
       match tp with
       | { contents = VType.TId(name,_) } ->
          let fun_ctx = Env.getContext state name in
          PCall(None,getInitFunctioName fun_ctx,[],emptyAttr)
       | { contents = VType.TLink(tp) } ->
-         callInitFunction state tp
-      | _ -> failwith "CreateInitFunction.callInitFunction: cannot initialize this yet"
+         callInitFunction state name tp
+      | _ -> failwith (Printf.sprintf "CreateInitFunction.callInitFunction: cannot initialize %s with type %s" (PrintTypes.identifierStr name) (PrintTypes.typeStr tp))
 
    let generateInitFunction (state:'a Env.t) (name:id) : stmt =
       let mem_vars, instances = Env.getMemAndInstances state name in
@@ -160,7 +160,7 @@ module CreateInitFunction = struct
       let new_stmts_set' =
          IdTypeSet.fold
             (fun (name,tp) acc ->
-               let new_stmt = StmtBind(LId(ctx_name @ name, Some(tp), emptyAttr), callInitFunction state tp, emptyAttr) in
+               let new_stmt = StmtBind(LId(ctx_name @ name, Some(tp), emptyAttr), callInitFunction state name tp, emptyAttr) in
                StmtSet.add new_stmt acc)
             instances new_stmts_set
       in
@@ -263,15 +263,35 @@ module SimplifyTupleAssign = struct
 
 end
 
+module ReportUnboundType = struct
+
+   let reportError (attr:attr) =
+      let msg = "The type of this expression cannot be infered. Add a type annotation." in
+      Error.raiseError msg attr.loc
+
+   let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
+      Mapper.make @@ fun state exp ->
+         match exp with
+         | LId(_,None,attr) ->
+            reportError attr
+         | LId(_,Some(t),attr) when VType.isUnbound t ->
+            reportError attr
+         | LTyped(_,typ,attr) when VType.isUnbound typ ->
+            reportError attr
+         | _ -> state, exp
+
+   let mapper = { Mapper.default_mapper with Mapper.lhs_exp = lhs_exp }
+
+end
+
 (* Basic transformations *)
 let inferPass (state,stmts) =
-   let stmts,state,_ = Inference.inferStmtList state None stmts in
+   let stmts,state,_ = Inference.inferStmtList state Inference.NoType stmts in
    state,stmts
 
 let pass1 (state,stmts) =
    let mapper =
       SplitMem.mapper
-      (*|> Mapper.seq CollectContext.mapper*)
       |> Mapper.seq InsertContext.mapper
       |> Mapper.seq SimplifyTupleAssign.mapper
    in
@@ -280,11 +300,11 @@ let pass1 (state,stmts) =
 let pass2 (state,stmts) =
    let mapper =
       CreateInitFunction.mapper
+      |> Mapper.seq ReportUnboundType.mapper
    in
    Mapper.map_stmt_list mapper state stmts
 
 let dump (state,stmts) =
-   Env.dump state;
    state,stmts
 
 let applyTransformations (results:parser_results) =

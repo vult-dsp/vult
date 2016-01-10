@@ -162,6 +162,15 @@ let fixOptType table ot =
       let t', table' = fixType table t in
       Some(t'), table'
 
+let rec isUnbound (t:t) =
+   match t with
+   | { contents = TUnbound(_,_,_) } -> true
+   | { contents = TId(_,_) } -> false
+   | { contents = TComposed(_,elems,_) } -> List.exists isUnbound elems
+   | { contents = TArrow(t1,t2,_) } ->
+      isUnbound t1 || isUnbound t2
+   | { contents = TLink(t) } -> isUnbound t
+   | { contents = TExpAlt(_) } -> true
 
 let getLevel = function
    | None -> current_level ()

@@ -30,9 +30,14 @@ open TypesVult
 open VEnv
 open Common
 
+type return_type =
+   | GivenType of VType.t
+   | ReturnType of VType.t
+   | NoType
 
-let expLoc e = lazy (GetLocation.fromExp e)
-let lhsLoc e = lazy (GetLocation.fromLhsExp e)
+let expLoc e  = lazy (GetLocation.fromExp e)
+let lhsLoc e  = lazy (GetLocation.fromLhsExp e)
+let stmtLoc e = lazy (GetLocation.fromStmt e)
 let expOptLoc e =
    lazy (
    match e with
@@ -123,11 +128,40 @@ let unifyOpt (loc:Loc.t Lazy.t) (typ1:VType.t option) (typ2:VType.t option) : VT
       unifyRaise loc t1 t2;
       typ1
 
-let getOptType (typ:VType.t option) : VType.t =
-   match typ with
-   | None    -> VType.Constants.unit_type
-   | Some(t) -> t
+let unifyReturn (loc:Loc.t Lazy.t) (typ1:return_type) (typ2:return_type) : return_type =
+   match typ1,typ2 with
+   | NoType, NoType -> NoType
+   | _, NoType        -> typ1
+   | NoType, _        -> typ1
+   | GivenType(gt), ReturnType(rt)
+   | ReturnType(rt), GivenType(gt) ->
+      unifyRaise loc gt rt;
+      ReturnType(rt)
+   | ReturnType(rt), ReturnType(gt) ->
+      unifyRaise loc gt rt;
+      ReturnType(rt)
+   | GivenType(rt), GivenType(gt) ->
+      unifyRaise loc gt rt;
+      GivenType(rt)
 
+let getReturnType (typ:return_type) : VType.t =
+   match typ with
+   | NoType        -> VType.Constants.unit_type
+   | GivenType(t)  -> t
+   | ReturnType(t) -> t
+
+let makeReturnType (v:VType.t option) : return_type =
+   match v with
+   | None    -> NoType
+   | Some(s) -> GivenType(s)
+
+let raiseReturnError (loc:Loc.t Lazy.t) (given:VType.t option) (typ:return_type) =
+   match given,typ with
+   | None,_ -> ()
+   | Some(gt), GivenType(_) ->
+      let msg = Printf.sprintf "This function is expected to have type '%s' but nothing was returned" (PrintTypes.typeStr gt) in
+      Error.raiseError msg (Lazy.force loc)
+   | _ -> ()
 
 let inferApplyArgCount (loc:Loc.t Lazy.t) (args_typ:VType.t list) (fn_args:VType.t list) : unit =
    let n_args    = List.length args_typ in
@@ -195,7 +229,8 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
       let _,fn_type,ft   = Env.lookup `Function env' fname in
       let fn_args,fn_ret = VType.stripArrow fn_type in
       let active         = Scope.isActive ft in
-      let env',name'     = addInstance env active name fn_type in
+      let fname_typ      = ref (VType.TId(fname,None)) in
+      let env',name'     = addInstance env active name fname_typ in
       inferApply (expLoc e) args' types ret_type fn_args fn_ret;
       PCall(name',fname,args',{ attr with typ = Some(ret_type) }), env', ret_type
    | POp(op,[e1;e2],attr) ->
@@ -228,8 +263,8 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
       inferApply (expLoc e) [arg'] [arg_type] ret_type fn_args fn_ret;
       PUnOp(op,arg',{ attr with typ = Some(ret_type) }), env', ret_type
    | PSeq(name,stmt,attr) ->
-      let stmt', _, ret_type = inferStmt env None stmt in
-      let typ = getOptType ret_type in
+      let stmt', _, ret_type = inferStmt env NoType stmt in
+      let typ = getReturnType ret_type in
       PSeq(name,stmt',{ attr with typ = Some(typ)}), env, typ
    | PEmpty -> PEmpty, env, VType.Constants.unit_type
 
@@ -249,7 +284,7 @@ and inferOptExp (env:'a Env.t) (e:exp option) : exp option * 'a Env.t * VType.t 
       let e',env',typ = inferExp env e in
       Some(e'), env', typ
 
-and inferStmt (env:'a Env.t) (ret_type:VType.t option) (stmt:stmt) : stmt * 'a Env.t * VType.t option =
+and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.t * return_type =
    match stmt with
    | StmtVal(lhs,rhs,attr) ->
       let lhs', lhs_typ = inferLhsExp env lhs in
@@ -271,8 +306,8 @@ and inferStmt (env:'a Env.t) (ret_type:VType.t option) (stmt:stmt) : stmt * 'a E
       let env' = Env.addVar env' id typ in
       StmtTable(id,elems',attr), env', ret_type
    | StmtReturn(e,attr) ->
-      let e',env', typ   = inferExp env e in
-      let ret_type' = unifyOpt (expLoc e) ret_type (Some(typ)) in
+      let e',env', typ = inferExp env e in
+      let ret_type'    = unifyReturn (expLoc e) ret_type (ReturnType(typ)) in
       StmtReturn(e',attr), env', ret_type'
    | StmtBind(lhs,rhs,attr) ->
       let lhs', lhs_typ      = inferLhsExp env lhs in
@@ -286,17 +321,18 @@ and inferStmt (env:'a Env.t) (ret_type:VType.t option) (stmt:stmt) : stmt * 'a E
       StmtBlock(name,stmts',attr), env', stmt_ret_type
    | StmtFun(name,args,body,ret_type,attr) ->
       VType.enterLevel ();
-      let env' = Env.enter ~sharectx:(attr.fun_and) `Function env name in
+      let env'                = Env.enter ~sharectx:(attr.fun_and) `Function env name in
       let args', types, env'  = addArgsToEnv env' args in
-      let types',table = VType.fixTypeList [] types in
-      let ret_type',_ = VType.fixOptType table ret_type in
-      let body',env',body_ret = inferStmt env' ret_type' body in
-      let last_type = getOptType body_ret in
+      let types',table        = VType.fixTypeList [] types in
+      let ret_type',_         = VType.fixOptType table ret_type in
+      let body',env',body_ret = inferStmt env' (makeReturnType ret_type') body in
+      let last_type           = getReturnType body_ret in
       let typ  = VType.makeArrowType last_type types' in
       let env' = Env.setCurrentType env' typ true in
       let env' = Env.exit `Function env' in
+      let  _   = raiseReturnError (stmtLoc stmt) ret_type body_ret in
       VType.leaveLevel ();
-      StmtFun(name,args',body',Some(last_type),attr), env', None
+      StmtFun(name,args',body',Some(last_type),attr), env', NoType
    | StmtIf(cond,then_,else_,attr) ->
       let cond',env', cond_type  = inferExp env cond in
       unifyRaise (expLoc cond') (VType.Constants.bool_type) cond_type;
@@ -322,7 +358,7 @@ and inferStmt (env:'a Env.t) (ret_type:VType.t option) (stmt:stmt) : stmt * 'a E
    | StmtEmpty -> StmtEmpty, env, ret_type
 
 
-and inferStmtList (env:'a Env.t) (ret_type_in:VType.t option) (stmts:stmt list) : stmt list * 'a Env.t * VType.t option =
+and inferStmtList (env:'a Env.t) (ret_type_in:return_type) (stmts:stmt list) : stmt list * 'a Env.t * return_type =
    let stmts', env', ret_type' =
       List.fold_left
          (fun (stmts,env,ret_type) stmt ->
@@ -332,7 +368,7 @@ and inferStmtList (env:'a Env.t) (ret_type_in:VType.t option) (stmts:stmt list) 
          stmts
    in (List.rev stmts'), env', ret_type'
 
-and inferOptStmt (env:'a Env.t) (ret_type:VType.t option) (stmt:stmt option) : stmt option * 'a Env.t * VType.t option =
+and inferOptStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt option) : stmt option * 'a Env.t * return_type =
    match stmt with
    | None -> None, env, ret_type
    | Some(s) ->
