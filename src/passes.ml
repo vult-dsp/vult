@@ -269,6 +269,11 @@ module ReportUnboundType = struct
       let msg = "The type of this expression cannot be infered. Add a type annotation." in
       Error.raiseError msg attr.loc
 
+   let isUnbound attr =
+      match attr.typ with
+      | None -> false
+      | Some(typ) -> VType.isUnbound  typ
+
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
       Mapper.make @@ fun state exp ->
          match exp with
@@ -280,7 +285,21 @@ module ReportUnboundType = struct
             reportError attr
          | _ -> state, exp
 
-   let mapper = { Mapper.default_mapper with Mapper.lhs_exp = lhs_exp }
+   let exp : ('a Env.t,exp) Mapper.mapper_func =
+      Mapper.make @@ fun state exp ->
+         match exp with
+         | PId(_,attr) when isUnbound attr ->
+            reportError attr
+         | _ -> state, exp
+
+   let typed_id : ('a Env.t,typed_id) Mapper.mapper_func =
+      Mapper.make @@ fun state t ->
+         match t with
+         | TypedId(_,typ,attr) when VType.isUnbound typ ->
+            reportError attr
+         | _ -> state, t
+
+   let mapper = { Mapper.default_mapper with Mapper.lhs_exp = lhs_exp; exp = exp; typed_id = typed_id; }
 
 end
 

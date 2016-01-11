@@ -294,7 +294,7 @@ and isGateOn(){
    return count>0;
 }
 
-fun process(i){
+fun process(i:real){
   mem param1; // pitch
   mem param2; // pw
   mem param3; // wave
