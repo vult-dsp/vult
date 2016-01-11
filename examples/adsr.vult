@@ -7,14 +7,22 @@ fun each(n){
    return ret;
 }
 
-fun change(x):bool {
+fun bchange(x) {
     mem pre_x;
-    val v:bool = pre_x!=x;
+    val v:bool = pre_x <> x;
     pre_x = x;
     return v;
 }
 
-fun adsr(input,attack,decay,sustain,release){
+// Average two samples
+fun lpfilter(x){
+   mem pre_x;
+   val ret = (x+pre_x)/2.;
+   pre_x = x;
+   return ret;
+}
+
+fun adsr(gate,attack,decay,sustain,release){
    mem state,value,gate;
    mem attackRate;
    mem decayRate;
@@ -29,31 +37,27 @@ fun adsr(input,attack,decay,sustain,release){
 
    // Calculates the rate every 32 samples
    if(each(32)){
-      attackRate      = (1/44100) * (1/(attack+0.1));
-      val inv_sustain = 1 - sustain;
-      decayRate       = (inv_sustain/44100) * (inv_sustain/(decay+0.1));
-      releaseRate     = (0.5/44100) * (0.5/(release+0.1));
+      attackRate      = (1./44100.) * (1./(attack+0.1));
+      val inv_sustain = 1. - sustain;
+      decayRate       = (inv_sustain/44100.) * (inv_sustain/(decay+0.1));
+      releaseRate     = (0.5/44100.) * (0.5/(release+0.1));
    }
    sustainLevel = sustain;
 
-   val current = input > 0.5;
-   val edge = 0;
-   val rate = 0;
+   val trig = false;
+   val rate = 0.;
 
-   if(change(current)){
-      gate = if current then 1 else 0;
-      edge = 1;
-   }
+   trig = bchange(gate);
 
-   val up   = edge && gate;
-   val down = edge && not(gate);
+   val up   = trig && gate;
+   val down = trig && not(gate);
 
    // State machine of the ADSR
    if(state == IDLE){
       if(up) state = ATTACK;
    }
    else if(state == ATTACK){
-      if(value >= 1) state = DECAY;
+      if(value >= 1.) state = DECAY;
       if(down)       state = RELEASE;
       rate = attackRate;
    }
@@ -64,15 +68,15 @@ fun adsr(input,attack,decay,sustain,release){
    }
    else if(state == SUSTAIN){
       if(down) state = RELEASE;
-      rate  = 0;
+      rate  = 0.;
       value = sustainLevel;
    }
    else if(state == RELEASE){
-      if(value <= 0) state = IDLE;
+      if(value <= 0.) state = IDLE;
       if(up)         state = ATTACK;
       rate = -releaseRate;
    }
 
-   value = clip(rate + value,0,1);
+   value = clip(lpfilter(rate) + value,0.,1.);
    return value;
 }

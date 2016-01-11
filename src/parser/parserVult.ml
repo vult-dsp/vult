@@ -795,8 +795,9 @@ let parseBuffer (file:string) (buffer) : parser_results =
       }
    | _ ->
       let all_lines = getFileLines (Stream.lines buffer) in
+      let loc = (Stream.current buffer).loc in
       {
-         presult = `Error([Error.SimpleError("Failed to parse the file")]);
+         presult = `Error([Error.PointedError(loc,"Failed to parse the file after the following token")]);
          lines   = all_lines;
          file    = file;
       }

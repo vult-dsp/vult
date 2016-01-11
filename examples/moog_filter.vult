@@ -1,7 +1,7 @@
 
 fun change(x):bool {
     mem pre_x;
-    val v:bool = pre_x!=x;
+    val v:bool = pre_x <> x;
     pre_x = x;
     return v;
 }
@@ -13,10 +13,10 @@ fun clip(value,low,high){
     return min(max(low,value),high);
 }
 
-fun samplerate() return 44100;
+fun samplerate() return 44100.;
 fun PI() return 3.141592653589793;
 
-fun thermal() return 1/1.22070313;
+fun thermal() return 1./1.22070313;
 
 fun moog_step(input, resFixed, tune,output):real {
     mem tw0,tw1,tw2;
@@ -43,15 +43,15 @@ fun moog_step(input, resFixed, tune,output):real {
 
 fun moog(input:real, cut:real, res:real):real{
     mem resFixed;
-    mem tune;
+    mem tune,dx1;
 
     if(change(cut) || change(res)){
         // clips the inputs to the valid range
-        res = clip(res,0,1);
-        cut = clip(cut,1,samplerate());
+        res = clip(res,0.0,1.0);
+        cut = clip(cut,1.0,samplerate());
 
         val fc = cut/samplerate();
-        val x_2 = fc/2;
+        val x_2 = fc/2.;
         val x2 = fc*fc;
         val x3 = fc*x2;
         // Frequency & amplitude correction
@@ -61,21 +61,21 @@ fun moog(input:real, cut:real, res:real):real{
         val acr = -3.9364 * x2 + 1.8409 * fc + 0.9968;
 
         // Normal scaled impulse invariant transformed one-pole filter; exp() models resonance
-        tune = (1.0 - exp(-((2*PI())*x_2*fcr))) / thermal();
+        tune = (1.0 - exp(-((2.0*PI())*x_2*fcr))) / thermal();
 
-        resFixed = 4*res*acr;
+        resFixed = 4.0*res*acr;
     }
 
     // 2x oversampling
     val x0 = filter:moog_step(input, resFixed, tune,dx1);
     val x1 = filter:moog_step(input, resFixed, tune,x0);
-    mem dx1 = x1;
-    return (x0+x1)/2;
+    dx1 = x1;
+    return (x0+x1)/2.0;
 }
 
 val n:int = 0;
 while(n<44100){
-  val kk = x:moog(1,2000,0.1);
+  val kk = x:moog(1.0,2000.0,0.1);
   n=n+1;
 }
 

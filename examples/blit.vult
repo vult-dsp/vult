@@ -1,10 +1,11 @@
 
 
+// Returns true if the input value is near zero (< 1e-2)
 fun near_zero(x) : bool return abs(x)<2e-2;
 
 fun change(x):bool {
     mem pre_x;
-    val v:bool = pre_x!=x;
+    val v:bool = pre_x <> x;
     pre_x = x;
     return v;
 }
@@ -16,14 +17,17 @@ fun dcblock(x0){
   return y0;
 }
 
-fun pitchToRate(d) return 8.1758*exp(0.0577623*d)/44100;
+// Converts the MIDI note to increment rate at a 44100 sample rate
+fun pitchToRate(d) : real
+  return 8.1758*exp(0.0577623*d)/44100.0;
 
+// Generates a BW-limited pulse train given the phase and the number of harmonics
 fun pulse_train(m,phase){
   val pi_phase = phase * 3.141592653589793;
   val denominator1 = sin(pi_phase);
-  val tmp1 = 0;
+  val tmp1 = 0.;
   if(near_zero(denominator1)) {
-    tmp1 = 1;
+    tmp1 = 1.;
   }
   else {
     tmp1 = sin(m * pi_phase);
@@ -32,9 +36,10 @@ fun pulse_train(m,phase){
   return tmp1;
 }
 
-// Main process function
+// Generates BW-limited waveforms using the blit algorithm.
+// It can generate PWM puses, saws and triangles.
 fun osc(pitch,pw,wave){
-  mem m:int;
+  mem m;
   mem rate;
   mem phase;
   mem pre_pitch;
@@ -42,31 +47,27 @@ fun osc(pitch,pw,wave){
   mem state_pulse;
   mem state_saw;
   mem triang;
-  mem pre_wave:int;
   mem output;
 
-  val fixed_pitch = 0;
-  if(wave != pre_wave && abs(output) < 0.05) {
-    pre_wave = wave;
-  }
-  if(pre_wave == 0 || pre_wave == 1) {
+  val fixed_pitch = 0.;
+  if(wave < 2. / 3.) {
     fixed_pitch = pitch;
   }
   else {
-    fixed_pitch = pitch + 12;
+    fixed_pitch = pitch + 12.;
   }
   // Updates the parameters if the pre_pitch changed
   if(change(fixed_pitch)) {
     rate = pitchToRate(fixed_pitch);
-    val p = 1/rate;
-    val maxHarmonics = floor(p/2);
-    m = 2 * maxHarmonics + 1;
+    val p = 1. / rate;
+    val maxHarmonics = floor(p/2.);
+    m = 2. * maxHarmonics + 1.;
   }
   // Generates a shifted version of the phase
   val shift05 = 0.5 + pw * 0.49;
   val shift = phase + shift05;
-  if(shift > 1) {
-    shift = shift - 1;
+  if(shift > 1.) {
+    shift = shift - 1.;
   }
   // Generates the first pulse train
   val tmp1 = pulse_train(m,phase);
@@ -74,27 +75,26 @@ fun osc(pitch,pw,wave){
   val tmp2 = pulse_train(m,shift);
   // Updates the phase
   phase = phase + rate;
-  if(phase > 1) {
-    phase = phase - 1;
+  if(phase > 1.) {
+    phase = phase - 1.;
   }
 
   // Calculates the waveforms based on the pulse trains
-  state_pulse  = clip(state_pulse  * 0.9995 + tmp1 - tmp2, -1, 1);
-  state_saw    = clip(state_saw    * 0.9995 + (tmp1 + tmp2  - 2*rate)/shift05/2, -1,1);
-  state_triang = clip(state_triang * 0.9995 + 2 * state_pulse*rate, -1,1);
+  state_pulse  = clip(state_pulse  * 0.9995 + tmp1 - tmp2, -1., 1.);
+  state_saw    = clip(state_saw    * 0.9995 + (tmp1 + tmp2  - 2. * rate)/shift05/2., -1.,1.);
+  state_triang = clip(state_triang * 0.9995 + 2. * state_pulse * rate, -1.,1.);
 
   // Select the wave to output
-  if(pre_wave < 1/3) {
+  if(wave < 1. / 3.) {
     output = state_pulse;
   }
-  else if(pre_wave < 2/3) {
-    output = state_saw;
+  else if(wave < 2. / 3.) {
+    output = 2. * state_saw;
   }
   else {
-    output = 2*state_triang;
+    output = 2. * state_triang*(1. + pw);
   }
 
   output = dcblock(output);
-  return clip(output/4,-1,1);
+  return clip(output/4.,-1.,1.);
 }
-

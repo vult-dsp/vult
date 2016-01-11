@@ -310,7 +310,8 @@ let inferPass (state,stmts) =
 
 let pass1 (state,stmts) =
    let mapper =
-      SplitMem.mapper
+      ReportUnboundType.mapper
+      |> Mapper.seq SplitMem.mapper
       |> Mapper.seq InsertContext.mapper
       |> Mapper.seq SimplifyTupleAssign.mapper
    in
@@ -319,7 +320,6 @@ let pass1 (state,stmts) =
 let pass2 (state,stmts) =
    let mapper =
       CreateInitFunction.mapper
-      |> Mapper.seq ReportUnboundType.mapper
    in
    Mapper.map_stmt_list mapper state stmts
 

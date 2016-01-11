@@ -3,29 +3,31 @@
  * like a monophonic sinthesizer that can hold 4 notes */
 
 // Activates a note and returns the current note value
-fun noteOn(n){
+fun noteOn(n:int){
    mem n1,n2,n3,n4;
-   mem count,pre;
+   mem (count:int),pre;
    // written this way because Vult does not have array support yet.
    if(count == 0) { n1 = n; pre = n; } else
-   if(count == 1) { n2 = n; pre = n; }else
-   if(count == 2) { n3 = n; pre = n; }else
+   if(count == 1) { n2 = n; pre = n; } else
+   if(count == 2) { n3 = n; pre = n; } else
    if(count == 3) { n4 = n; pre = n; }
    if(count <= 4) count = count + 1;
    return pre;
 }
 
 // Deactivates a note and returns the following note value;
-fun noteOff(n){
+and noteOff(n:int){
    mem n1,n2,n3,n4;
    mem count,pre;
    val found = false;
 
+   // finds the voice and removes it
    if(n == n1) { n1,n2,n3 = n2,n3,n4; found = true; } else
    if(n == n2) { n2,n3    = n3,n4;    found = true; } else
    if(n == n3) { n3       = n4;       found = true; } else
    if(n == n4) {                      found = true; }
 
+   // If found, decrease the number of active notes
    if(found && count>0) count = count - 1;
 
    if(count == 1) pre = n1;
@@ -35,9 +37,9 @@ fun noteOff(n){
    return pre;
 }
 
-// Returns true if any note is active
-fun isGateOn(){
+// Returns 1 if any note is active
+and isGateOn(){
    mem n1,n2,n3,n4;
    mem count,pre;
-   return if count>0 then 1 else 0;
+   return count>0;
 }

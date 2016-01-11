@@ -2,7 +2,6 @@
 fun trivial(a,b)
 	return a+b;
 val res1 = trivial(1,2);
-println(res1);
 
 fun with_val(a,b) {
 	val x,y;

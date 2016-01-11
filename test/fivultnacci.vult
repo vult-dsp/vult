@@ -13,21 +13,3 @@ fun fib(){
    return n;
 }
 
-println(x:fib());
-println(x:fib());
-println(x:fib());
-println(x:fib());
-println(x:fib());
-println(x:fib());
-println(x:fib());
-println(x:fib());
-x:clear();
-println(x:fib());
-println(x:fib());
-println(x:fib());
-println(x:fib());
-println(x:fib());
-println(x:fib());
-println(x:fib());
-println(x:fib());
-

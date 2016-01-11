@@ -1,19 +1,21 @@
 
 fun change(x):bool {
     mem pre_x;
-    val v:bool = pre_x!=x;
+    val v:bool = pre_x <> x;
     pre_x = x;
     return v;
 }
 
+// Calculates one step of the state-variable filter
 fun svf_step(input,g,q,sel) : real {
+   mem dlow, dband;
    val low = dlow + g * dband;
    val high = input - low - q*dband;
    val band = g * high + dband;
    val notch = high + low;
 
-   mem dband = clip(band,-1,1);
-   mem dlow  = clip(low,-1,1);
+   dband = clip(band,-1.,1.);
+   dlow  = clip(low,-1.,1.);
    val output =
       if sel == 0 then low else
       if sel == 1 then high else
@@ -22,18 +24,20 @@ fun svf_step(input,g,q,sel) : real {
    return output;
 }
 
+// Main function for the state-variable filter with 2x of oversampling
 fun svf(input,fc,q,sel){
    mem g;
-   fc = clip(fc,0,1);
-   q  = clip(q,0,1);
-   val fix_q = 2*(1-q);
+   fc = clip(fc, 0., 1.);
+   q  = clip(q, 0., 1.);
+   val fix_q = 2. * (1. - q);
 
    if(change(fc)){
-      g = fc/2;
+      g = fc/2.;
    }
 
+   // In Vult oversamplig in very easy!
    val x1 = step:svf_step(input,g,fix_q,sel);
    val x2 = step:svf_step(input,g,fix_q,sel);
 
-   return (x1+x2)/2;
+   return (x1+x2)/2.;
 }
