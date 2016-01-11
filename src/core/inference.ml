@@ -132,7 +132,7 @@ let unifyReturn (loc:Loc.t Lazy.t) (typ1:return_type) (typ2:return_type) : retur
    match typ1,typ2 with
    | NoType, NoType -> NoType
    | _, NoType        -> typ1
-   | NoType, _        -> typ1
+   | NoType, _        -> typ2
    | GivenType(gt), ReturnType(rt)
    | ReturnType(rt), GivenType(gt) ->
       unifyRaise loc gt rt;
