@@ -79,11 +79,9 @@ fun osc(pitch,pw,wave){
   mem m;
   mem rate;
   mem phase;
-  mem pre_pitch;
   mem state_triang;
   mem state_pulse;
   mem state_saw;
-  mem triang;
   mem output;
 
   val fixed_pitch = 0.;
@@ -93,7 +91,7 @@ fun osc(pitch,pw,wave){
   else {
     fixed_pitch = pitch + 12.;
   }
-  // Updates the parameters if the pre_pitch changed
+  // Updates the parameters if the pitch changed
   if(change(fixed_pitch)) {
     rate = pitchToRate(fixed_pitch);
     val p = 1. / rate;
