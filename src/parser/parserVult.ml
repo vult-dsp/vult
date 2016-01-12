@@ -531,15 +531,11 @@ and stmtBind (buffer:Stream.stream) : stmt =
       let e2 = expression 0 buffer in
       let _  = Stream.consume buffer SEMI in
       StmtBind(e1,e2,makeAttr start_loc)
-   (*
-   | SEMI ->
-      let _  = Stream.consume buffer SEMI in
-      StmtBind(PUnit(start_loc),e1,start_loc)
-   *)
-   | kind ->
-      let expected = kindToString EQUAL in
+   | _ ->
+      (*let expected = kindToString EQUAL in
       let got      = kindToString kind in
-      let message  = Printf.sprintf "Expecting a %s while trying to parse a binding (%s = ...) but got %s" expected (PrintTypes.lhsExpressionStr e1) got in
+      let message  = Printf.sprintf "Expecting a %s while trying to parse a binding (%s = ...) but got %s" expected (PrintTypes.lhsExpressionStr e1) got in*)
+      let message  = Printf.sprintf "This is not a valid statement in the form a = b;" in
       raise (ParserError(Stream.makeError buffer message))
 
 (** <statement> := 'if' '(' <expression> ')' <statementList> ['else' <statementList> ]*)

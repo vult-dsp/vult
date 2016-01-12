@@ -73,7 +73,7 @@ module InsertContext = struct
          | StmtFun(name,args,body,rettype,attr) ->
             if Env.isActive state name then
                let context = Env.getContext state name in
-               let arg0 = TypedId(["$ctx"],ref (VType.TId(context,None)),attr) in
+               let arg0 = TypedId(["_ctx"],ref (VType.TId(context,None)),attr) in
                state,StmtFun(name,arg0::args,body,rettype,attr)
             else
                state, stmt
@@ -83,16 +83,16 @@ module InsertContext = struct
       Mapper.make @@ fun state exp ->
          match exp with
          | PCall(Some(id),kind,args,attr) ->
-            state,PCall(None,kind,PId("$ctx"::id,attr)::args,attr)
+            state,PCall(None,kind,PId("_ctx"::id,attr)::args,attr)
          | PId(id,attr) when Env.isLocalInstanceOrMem state id ->
-            state, PId("$ctx"::id,attr)
+            state, PId("_ctx"::id,attr)
          | _ -> state,exp
 
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
       Mapper.make @@ fun state exp ->
          match exp with
          | LId(id,tp,attr) when Env.isLocalInstanceOrMem state id ->
-            state, LId("$ctx"::id,tp,attr)
+            state, LId("ctx_"::id,tp,attr)
          | _ -> state,exp
 
    let stmt_x : ('a Env.t, stmt) Mapper.expand_func =
@@ -147,7 +147,7 @@ module CreateInitFunction = struct
       | _ -> tp
 
    let generateInitFunction (ctx:id) (member_set:IdTypeSet.t) : stmt =
-      let ctx_name = ["$ctx"] in
+      let ctx_name = ["_ctx"] in
       let new_stmts_set =
          IdTypeSet.fold
             (fun (name,tp) acc ->

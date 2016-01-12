@@ -143,7 +143,7 @@ let parseStringGenerateCode s =
 *)
 
 let parsePrintCode s =
-   let result = ParserVult.parseString s in
+   let result = ParserVult.parseString s |> Passes.applyTransformations in
    match result.presult with
    | `Ok(b) ->
       PrintTypes.stmtListStr b

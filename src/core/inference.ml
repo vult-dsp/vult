@@ -208,7 +208,9 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
    | PReal(v,attr) ->
       PReal(v,{ attr with typ = Some(VType.Constants.real_type) }), env, VType.Constants.real_type
    | PId(id,attr) ->
-      let typ = try let _,typ,_ = Env.lookup `Variable env id in typ with | _ -> failwith ("Undefined symbol '" ^ (PrintTypes.identifierStr id)^"'") in
+      let typ =
+         try let _,typ,_ = Env.lookup `Variable env id in typ
+         with | _ -> Error.raiseError ("Undefined symbol '" ^ (PrintTypes.identifierStr id)^"'") attr.loc in
       PId(id, { attr with typ = Some(typ) }), env, typ
    | PGroup(e,_) ->
       inferExp env e
@@ -226,7 +228,10 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
    | PCall(name,fname,args,attr) ->
       let args',env',types = inferExpList env args in
       let ret_type       = VType.newvar () in
-      let _,fn_type,ft   = Env.lookup `Function env' fname in
+      let _,fn_type,ft   =
+         try Env.lookup `Function env' fname with
+         | _ -> Error.raiseError (Printf.sprintf "Unknown function '%s'" (idStr fname)) attr.loc
+      in
       let fn_args,fn_ret = VType.stripArrow fn_type in
       let active         = Scope.isActive ft in
       let fname_typ      = ref (VType.TId(fname,None)) in

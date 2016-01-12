@@ -98,7 +98,7 @@ module Context = struct
       if IdMap.mem func context.forward then
          context
       else
-         let context_name = ["ctx_"^(string_of_int context.count)] in
+         let context_name = ["_ctx_type_"^(string_of_int context.count)] in
          {
             count    = context.count+1;
             current  = context_name;

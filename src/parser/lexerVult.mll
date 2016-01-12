@@ -134,7 +134,8 @@ let kindToString kind =
    | AND   -> "'and'"
    | WILD  -> "'_'"
    | EXTERNAL -> "'external'"
-   | TICK -> "'''"
+   | TICK  -> "'''"
+   | ARROW -> "'->'"
 
 (** Returns a string representation of the token *)
 let tokenToString l =
