@@ -25,7 +25,6 @@ THE SOFTWARE.
 type id = string list
    [@@deriving show,eq,ord]
 
-
 type vtype =
    | TUnbound  of string * int option * Loc.t option
    | TId       of id * Loc.t option
@@ -35,10 +34,24 @@ type vtype =
    | TExpAlt   of t list
    [@@deriving show,eq,ord]
 
-
 and t = vtype ref
    [@@deriving show,eq,ord]
 
+let rec unlink t =
+   match t with
+   | { contents = TLink(e) } -> unlink e
+   | { contents = TComposed(id,elems,_) } ->
+      { contents = TComposed(id,List.map unlink elems,None) }
+   | { contents = TArrow(t1,t2,_) } ->
+      { contents = TArrow(unlink t1,unlink t2,None) }
+   | { contents = TExpAlt(elems) } ->
+      { contents = TExpAlt(List.map unlink elems) }
+   | { contents = TId(id,_) } ->
+      { contents = TId(id,None) }
+   | { contents = TUnbound(name,level,_) } ->
+      { contents = TUnbound(name,level,None) }
+
+let compare a b = compare (unlink a) (unlink b)
 
 let gensym_counter = ref 0
 let reset_gensym : unit -> unit =

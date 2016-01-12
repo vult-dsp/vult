@@ -224,7 +224,11 @@ module PathMap = CCMap.Make(struct type t = path let compare = compare end)
 
 module IdSet = CCSet.Make(struct type t = id let compare = compare end)
 
-module IdTypeSet = CCSet.Make(struct type t = id * VType.t let compare = compare end)
+type id_type = id * VType.t
+   [@@deriving show,eq,ord]
+
+
+module IdTypeSet = CCSet.Make(struct type t = id_type let compare = compare_id_type end)
 
 let pathId (path:path) : id =
    let Path(id) = path in
