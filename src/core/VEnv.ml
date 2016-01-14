@@ -48,7 +48,7 @@ let builtin_table =
       ["-"]  , `Operator, VType.Constants.a_a_a (), false;
       ["*"]  , `Operator, VType.Constants.a_a_a (), false;
       ["/"]  , `Operator, VType.Constants.a_a_a (), false;
-      ["%"]  , `Operator, VType.Constants.int_int_int (), false;
+      ["%"]  , `Operator, VType.Constants.a_a_a (), false;
 
       [">"]   , `Operator, VType.Constants.a_a_bool (), false;
       ["<"]   , `Operator, VType.Constants.a_a_bool (), false;
