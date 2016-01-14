@@ -1,7 +1,1 @@
-define("ace/snippets/vult",["require","exports","module"], function(require, exports, module) {
-"use strict";
-
-exports.snippetText =undefined;
-exports.scope = "";
-
-});
+define("ace/snippets/vult",["require","exports","module"],function(e,t,n){"use strict";t.snippetText=undefined,t.scope=""})
