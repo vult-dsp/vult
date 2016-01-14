@@ -1,0 +1,68 @@
+/* Phase distortion oscillator */
+
+// Used to soften the transitions of controls
+fun smooth(input){
+   mem x;
+   x = x+(input-x)*0.005;
+   return x;
+}
+
+// Returns true every time the input value changes
+fun change(x):bool {
+    mem pre_x;
+    val v:bool = pre_x<>x;
+    pre_x = x;
+    return v;
+}
+
+// Converts the MIDI note to increment rate at a 44100 sample rate
+fun pitchToRate(d) return 8.1758*exp(0.0577623*d)/44100.0;
+
+fun phasor(pitch,reset){
+    mem rate,phase;
+    if(change(pitch))
+        rate = pitchToRate(pitch);
+    phase = if reset then 0.0 else (phase + rate) % 1.0;
+    return phase;
+}
+
+// Main processing function
+fun process(input:real){
+   mem volume,detune; // values set in 'controlChange'
+   mem pitch;
+   mem pre_phase1;
+   // Implements the resonant filter simulation as shown in
+   // http://en.wikipedia.org/wiki/Phase_distortion_synthesis
+   val phase1 = phasor(pitch,false);
+   val comp   = 1.0 - phase1;
+   val reset  = (pre_phase1 - phase1) > 0.5;
+   pre_phase1 = phase1;
+   val phase2 = phasor(pitch+smooth(detune)*32.0,reset);
+   val sine  = sin(2.0*3.14159265359*phase2);
+   return smooth(volume)*(sine*comp);
+}
+
+// Called when a note On is received
+and noteOn(note:int,velocity:int){
+    mem pitch = real(note);
+}
+
+// Called when a note Off is received
+and noteOff(note:int){
+}
+
+// Called when a control changes
+and controlChange(control:int,value:int){
+   mem volume;
+   mem detune;
+   // Control 30 defines the volume
+   if(control==30) volume = real(value)/127.0;
+   if(control==31) detune = real(value)/127.0;
+}
+
+// Called on initialization to define initial values
+and default(){
+   mem volume = 0.0;
+   mem pitch = 45.0;
+   mem detune = 0.0;
+}

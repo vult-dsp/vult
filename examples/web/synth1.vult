@@ -1,0 +1,130 @@
+/* A simple synthesizer with one LFO */
+
+// Used to soften the transitions of controls
+fun smooth(input){
+   mem x;
+   x = x+(input-x)*0.005;
+   return x;
+}
+
+// Returns true every time the input value changes
+fun change(x):bool {
+    mem pre_x;
+    val v:bool = pre_x<>x;
+    pre_x = x;
+    return v;
+}
+
+// Returns true if the value changes from 0 to anything
+fun edge(x):bool {
+    mem pre_x;
+    val v:bool = (pre_x<>x) && (pre_x==0);
+    pre_x = x;
+    return v;
+}
+
+// Returns true every 'n' calls
+fun each(n){
+   mem count;
+   val ret = (count == 0);
+   count = (count + 1) % n;
+   return ret;
+}
+
+// Converts the MIDI note to increment rate at a 44100 sample rate
+fun pitchToRate(d) return 8.1758*exp(0.0577623*d)/44100.0;
+
+fun phasor(pitch,reset){
+    mem rate,phase;
+    if(change(pitch))
+        rate = pitchToRate(pitch);
+    phase = if reset then 0.0 else (phase + rate) % 1.0;
+    return phase;
+}
+
+fun lfo(f,gate){
+    mem phase;
+    val rate = f * 10.0/44100.0;
+    if(edge(gate)) phase = 0.0;
+    phase = phase + rate;
+    if(phase>1.0) phase = phase-1.0;
+    return sin(phase*2.0*3.141592653589793)-0.5;
+}
+
+// Main processing function
+fun process(input:real){
+   mem volume,detune; // values set in 'controlChange'
+   mem n1,n2,n3,n4; // used to handle the notes
+   mem count,pitch,gate;
+   mem pre_phase1;
+   mem lfo_rate,lfo_amt;
+   val lfo_val = lfo(lfo_rate,gate)*lfo_amt;
+   // Implements the resonant filter simulation as shown in
+   // http://en.wikipedia.org/wiki/Phase_distortion_synthesis
+   val phase1 = phasor(pitch,false);
+   val comp   = 1.0 - phase1;
+   val reset  = (pre_phase1 - phase1) > 0.5;
+   pre_phase1 = phase1;
+   val phase2 = phasor(pitch+smooth(detune+lfo_val)*32.0,reset);
+   val sine  = sin(2.0*3.14159265359*phase2);
+   val gate_value = if gate > 0 then 1.0 else 0.0;
+   return smooth(volume)*(sine*comp)*smooth(gate_value);
+}
+
+// Called when a note On is received
+and noteOn(note,velocity:int){
+   mem n1,n2,n3,n4;
+   mem count,pitch,gate;
+   // written this way because Vult does not have array support yet.
+   if(count == 0) { n1 = note; pitch = note; } else
+   if(count == 1) { n2 = note; pitch = note; } else
+   if(count == 2) { n3 = note; pitch = note; } else
+   if(count == 3) { n4 = note; pitch = note; }
+   if(count <= 4) count = count + 1;
+   gate = if count>0 then 1 else 0;
+}
+
+// Called when a note Off is received
+and noteOff(note){
+    mem n1,n2,n3,n4;
+    mem count,pitch,gate;
+    val found = false;
+
+    // finds the voice and removes it
+    if(note == n1) { n1,n2,n3 = n2,n3,n4; found = true; } else
+    if(note == n2) { n2,n3    = n3,n4;    found = true; } else
+    if(note == n3) { n3       = n4;       found = true; } else
+    if(note == n4) {                      found = true; }
+
+    // If found, decrease the number of active notes
+    if(found && count>0) count = count - 1;
+
+    gate = if count>0 then 1 else 0;
+
+    if(count == 1) pitch = n1;
+    if(count == 2) pitch = n2;
+    if(count == 3) pitch = n3;
+    if(count == 4) pitch = n4;
+}
+
+// Called when a control changes
+and controlChange(control,value){
+   mem volume;
+   mem detune;
+   mem lfo_rate;
+   mem lfo_amt;
+   // Control 30 defines the volume
+   if(control==30) volume = value/127.0;
+   if(control==31) detune = value/127.0;
+   if(control==32) lfo_rate = value/127.0;
+   if(control==33) lfo_amt = 2.0*((real(value)/127.)-0.5);
+}
+
+// Called on initialization to define initial values
+and default(){
+   mem volume = 0.0;
+   mem pitch = 45.0;
+   mem detune = 0.8;
+   mem lfo_rate = 0.07;
+   mem lfo_amt = -0.8;
+}

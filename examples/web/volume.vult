@@ -1,0 +1,34 @@
+/* A simple volume control */
+
+// Used to soften the transitions of controls
+fun smooth(input){
+   mem x;
+   x = x+(input-x)*0.005;
+   return x;
+}
+// Main processing function
+// 'input' is by default a sine wave at 440 Hz
+fun process(input:real){
+   mem volume; // the value is set in 'controlChange'
+   return input*smooth(volume);
+}
+
+// Called when a note On is received
+and noteOn(note:int,velocity:int){
+}
+
+// Called when a note Off is received
+and noteOff(note:int){
+}
+
+// Called when a control changes
+and controlChange(control:int,value:int){
+   mem volume;
+   // Control 30 defines the volume
+   if(control==30) volume = real(value)/127.0;
+}
+
+// Called on initialization to define initial values
+and default(){
+ mem volume = 0.0;
+}
