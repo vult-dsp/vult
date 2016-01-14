@@ -575,8 +575,8 @@ and stmtExternal (buffer:Stream.stream) : stmt =
 and stmtFunction (buffer:Stream.stream) : stmt =
    let isjoin = match Stream.peek buffer with | AND -> true | _ -> false in
    let _      = Stream.skip buffer in
+   let start_loc = (Stream.current buffer).loc in
    let name   = id buffer in
-   let token  = Stream.current buffer in
    let _      = Stream.consume buffer LPAREN in
    let args   =
       match Stream.peek buffer with
@@ -592,7 +592,6 @@ and stmtFunction (buffer:Stream.stream) : stmt =
       | _ -> None
    in
    let body      = stmtList buffer in
-   let start_loc = token.loc in
    let attr      = makeAttr start_loc in
    let attr      = if isjoin then { attr with fun_and = true } else attr in
    StmtFun(name,args,body,vtype,attr)
