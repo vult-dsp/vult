@@ -151,3 +151,10 @@ let parsePrintCode s =
       let error_strings:string list = Error.reportErrors result.presult result.lines in
       let result =List.fold_left (fun s a -> s^"\n"^a) "" error_strings in
       "Errors in the program:\n"^result
+
+let checkCode s =
+   let result = ParserVult.parseString s |> Passes.applyTransformations in
+   match result.presult with
+   | `Ok(_) -> []
+   | `Error(errors) -> List.map Error.simpleMessate errors
+

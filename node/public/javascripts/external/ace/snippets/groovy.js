@@ -1,1 +1,7 @@
-define("ace/snippets/groovy",["require","exports","module"],function(e,t,n){"use strict";t.snippetText=undefined,t.scope="groovy"})
+define("ace/snippets/groovy",["require","exports","module"], function(require, exports, module) {
+"use strict";
+
+exports.snippetText =undefined;
+exports.scope = "groovy";
+
+});

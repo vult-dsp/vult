@@ -51,5 +51,20 @@ let parsePrint s =
 	Driver.parsePrintCode (Js.to_string s) |> Js.string
 ;;
 
+let checkCode s =
+   Driver.checkCode (Js.to_string s)
+   |> List.map
+      (fun (msg,_,line,col) ->
+         Js.Unsafe.obj
+            [| ("text",Js.Unsafe.inject (Js.string msg));
+               ("row",Js.Unsafe.inject (Js.string (string_of_int (line - 1))));
+               ("column",Js.Unsafe.inject (Js.string (string_of_int (col - 1))));
+               ("type",Js.Unsafe.inject (Js.string "error"));
+               ("raw",Js.Unsafe.inject (Js.string msg));
+             |])
+   |> Array.of_list |> Js.array
+;;
+
 Js.Unsafe.global##plop <- (Js.wrap_callback parsePrint) ;;
+Js.Unsafe.global##checkCode <- (Js.wrap_callback checkCode) ;;
 

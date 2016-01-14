@@ -40,6 +40,15 @@ let errorLocationMessage (location:Loc.t) : string =
       col_start
       col_end
 
+(** Returns a tuple with the basic information of the error *)
+let simpleMessate (error:t) : string * string * int * int =
+   match error with
+   | PointedError(location,msg) ->
+      let col_start = Loc.startColumn location in
+      msg, (Loc.file location), (Loc.line location), col_start
+   | SimpleError(msg) ->
+      msg, "-", 0, 0
+
 (** Takes the current line and a location returns a string pointing to the
     location *)
 let errorLocationIndicator (line:string) (location:Loc.t) : string =
