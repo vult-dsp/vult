@@ -57,6 +57,16 @@ let unifyRaise (loc:Loc.t Lazy.t) (t1:VType.t) (t2:VType.t) : unit =
             print_endline msg
          end
 
+let checkType (loc:Loc.t Lazy.t) (env:'a Env.t) (typ:VType.t) : unit =
+   match typ with
+   | { contents = VType.TId(name,_) } ->
+      let _ =
+         try Env.lookup `Type env name with | _ ->
+         let msg = Printf.sprintf "The type '%s' of this variable is unknown" (idStr name) in
+         Error.raiseError msg (Lazy.force loc)
+      in ()
+   | _ -> ()
+
 let rec unifyListSameType (args:exp list) (types:VType.t list) (common_type:VType.t) =
    match args, types with
    | [],[] -> common_type
@@ -87,6 +97,7 @@ let rec inferLhsExp (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
       let typ = ref (VType.TComposed(["tuple"],List.rev tpl,None)) in
       LTuple(List.rev elems',attr),typ
    | LTyped(e,typ,_) ->
+      checkType (lhsLoc e) env typ;
       let e',tpi = inferLhsExp env e in
       if not (VType.unify typ tpi) then
          let msg = Printf.sprintf "This declaration has type '%s' but it has beed defined before as '%s'" (PrintTypes.typeStr typ) (PrintTypes.typeStr tpi) in

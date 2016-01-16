@@ -23,7 +23,6 @@ THE SOFTWARE.
 *)
 open ParserVult
 open TypesVult
-open Passes
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : arguments =
@@ -31,7 +30,6 @@ let processArguments () : arguments =
       {
          files     = [];
          dparse    = false;
-         run_check = false;
          rundyn    = false;
          debug     = false;
          ccode     = false;
@@ -41,7 +39,6 @@ let processArguments () : arguments =
       } in
    let opts = [
       "-dparse", (Arg.Unit   (fun () -> result.dparse   <-true)), "Dumps the parse tree (default: off)";
-      "-check",  (Arg.Unit   (fun () -> result.run_check<-true)), "Runs checker on program (default: off)";
       "-rundyn", (Arg.Unit   (fun () -> result.rundyn   <-true)), "Runs the dynamic interpreter (default: off)";
       "-debug",  (Arg.Unit   (fun () -> result.debug    <-true)), "Runs the debugger (default: off)";
       "-ccode",  (Arg.Unit   (fun () -> result.ccode    <-true)), "Converts the code to c (default: off)";
@@ -54,33 +51,25 @@ let processArguments () : arguments =
    let _ = result.files <- List.rev result.files in (* Put the files in the correct order  *)
    result
 
-(** Prints the parsed files if -dparse was passed as argument *)
-let dumpParsedFiles (parser_results:parser_results list) =
-   parser_results
-   |> List.iter (
-      fun a -> match a.presult with
-         | `Ok(b) ->
-            let _ = print_endline "\n= Transformed Code =" in
-            let _ = PrintTypes.stmtListStr b |> print_string in
-            (*let _ = print_endline "\n= JS Code =" in
-            let _ = VultJs.generateJsCode b |> print_string in*)
-            ()
-            (*List.iter (fun stmt -> print_endline (show_stmt stmt)) b;*)
-         | `Error(_) -> Error.printErrors a.presult a.lines  )
+let hasError results =
+   List.exists (fun a -> match a.presult with `Error(_) -> true | _ -> false ) results
 
 let main () =
    let args = processArguments () in
    (* Parse the files *)
-   let parser_results =
-      List.map parseFile args.files
-   in
+   let parser_results = List.map parseFile args.files in
    (* Reports error of parsing *)
    let _ = List.iter (fun a -> Error.printErrors a.presult a.lines ) parser_results in
-   (* Prints the parsed files if -dparse was passed as argument *)
-   let _ = if args.dparse then
-      dumpParsedFiles (List.map applyTransformations parser_results) in
+   (* Applies all transformations *)
+   let parser_results = List.map Passes.applyTransformations parser_results in
+   (* Reports error of transformations *)
+   let _ = List.iter (fun a -> Error.printErrors a.presult a.lines ) parser_results in
+   if not (hasError parser_results) then
+      begin
+         (* Prints the parsed files if -dparse was passed as argument *)
+         Driver.dumpParsedFiles args parser_results;
+         Driver.generateCode args parser_results |> ignore
+      end
 
-   let _ = Driver.generateCode args parser_results in
-   ()
 ;;
 main ();;

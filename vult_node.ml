@@ -27,14 +27,10 @@ open ParserVult
 
 
 let generateJSCode s =
-	Driver.parseStringGenerateCode (Js.to_string s) |> Js.string
-;;
-
-
+	Driver.parseStringGenerateCode ({ default_arguments with jscode = true}) (Js.to_string s) |> Js.string
 
 let parsePrint s =
 	Driver.parsePrintCode (Js.to_string s) |> Js.string
-;;
 
 let checkCode s =
    Driver.checkCode (Js.to_string s)
@@ -50,7 +46,7 @@ let checkCode s =
    |> Array.of_list |> Js.array
 ;;
 
-Js.Unsafe.global##plop <- (Js.wrap_callback parsePrint) ;;
-Js.Unsafe.global##jscode <- (Js.wrap_callback generateJSCode) ;;
+Js.Unsafe.global##plop      <- (Js.wrap_callback parsePrint) ;;
+Js.Unsafe.global##jscode    <- (Js.wrap_callback generateJSCode) ;;
 Js.Unsafe.global##checkCode <- (Js.wrap_callback checkCode) ;;
 

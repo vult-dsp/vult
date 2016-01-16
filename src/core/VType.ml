@@ -247,6 +247,7 @@ let rec unify (t1:t) (t2:t) : bool =
 
 (** Constant types *)
 module Constants = struct
+   let type_type   = ref (TId(["type"],None))
    let unit_type   = ref (TId(["unit"],None))
    let bool_type   = ref (TId(["bool"],None))
    let int_type    = ref (TId(["int"],None))

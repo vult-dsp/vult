@@ -194,7 +194,6 @@ type arguments =
       mutable debug  : bool;
       mutable ccode  : bool;
       mutable jscode : bool;
-      mutable run_check  : bool;
       mutable output : string;
       mutable real   : string;
    }
@@ -206,8 +205,7 @@ let default_arguments =
       rundyn = false;
       debug  = false;
       ccode  = false;
-      jscode = true;
-      run_check = false;
+      jscode = false;
       output = "live";
       real   = "float";
    }

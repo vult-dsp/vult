@@ -135,6 +135,7 @@ module CreateInitFunction = struct
       match tp with
       | { contents = VType.TId(["real"],_) } -> PReal(0.0,emptyAttr)
       | { contents = VType.TId(["int"],_) } -> PInt(0,emptyAttr)
+      | { contents = VType.TId(["bool"],_) } -> PBool(false,emptyAttr)
       | { contents = VType.TId(name,_) } ->
          PCall(None,getInitFunctioName name,[],emptyAttr)
       | { contents = VType.TLink(tp) } ->

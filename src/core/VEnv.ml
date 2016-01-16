@@ -30,6 +30,10 @@ let pathStr path = path |> pathId |> PrintTypes.identifierStr
 
 let builtin_table =
    [
+      ["int"]  , `Type, VType.Constants.type_type, true;
+      ["real"] , `Type, VType.Constants.type_type, true;
+      ["bool"] , `Type, VType.Constants.type_type, true;
+
       ["abs"]  , `Function, VType.Constants.real_real (), false;
       ["exp"]  , `Function, VType.Constants.real_real (), false;
       ["sin"]  , `Function, VType.Constants.real_real (), false;
@@ -268,6 +272,7 @@ module Scope = struct
             newContext t' name
       | `Module   -> enterAny getModule t name
       | `Operator -> enterAny getOperators t name
+      | `Type     -> enterAny getTypes t name
       | `Block    -> { t with locals = IdMap.empty :: t.locals }
       | _ -> raise (Invalid_argument "Scope.enter")
 
@@ -276,6 +281,7 @@ module Scope = struct
       | `Function -> exitAny primExitFunction t
       | `Module   -> exitAny primExitModule t
       | `Operator -> exitAny primExitOperators t
+      | `Type     -> exitAny primExitTypes t
       | `Block    -> { t with locals = List.tl t.locals }
       | _ -> raise (Invalid_argument "Scope.exit")
 

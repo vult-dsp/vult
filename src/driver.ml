@@ -81,79 +81,38 @@ extern \"C\"
       end
    in h_final^c_final
 *)
-(** Generates the .c and .h file contents for the given parsed files *)
-let generateJSCode (args:arguments) (parser_results:parser_results list) : string =
-   let stmts =
-      parser_results
-      |> List.map Passes.applyTransformations
-      |> List.map (
-         fun a -> match a.presult with
-            | `Ok(b) -> b
-            | _ -> [] )
-      |> List.flatten
-   in
-
-   let js_text = VultJs.generateJsCode stmts in
-   let js_final =
-      if List.length stmts = 0 then "null"
-      else
-         Printf.sprintf
-"function Process(){
- this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
- this.not  = function(x)          { return x==0?1:0; };
- this.real = function(x)          { return x; };
- this.int  = function(x)          { return x; };
- this.sin  = function(x)          { return Math.sin(x); };
- this.cos  = function(x)          { return Math.cos(x); };
- this.abs  = function(x)          { return Math.abs(x); };
- this.exp  = function(x)          { return Math.exp(x); };
- this.floor= function(x)          { return Math.floor(x); };
- this.tan  = function(x)          { return Math.tan(x); };
- this.tanh = function(x)          { return Math.tanh(x); };
- this.sqrt = function(x)          { return x; };
- this.process_init = null;
- this.default_ = null;
- %s
- if(this.process_init)  this.context =  this.process_init(); else this.context = {};
- if(this.default_)      this.default_(this.context);
- this.liveNoteOn        = function(note,velocity) { if(this.noteOn)        this.noteOn(this.context,note,velocity); };
- this.liveNoteOff       = function(note,velocity) { if(this.noteOff)       this.noteOff(this.context,note,velocity); };
- this.liveControlChange = function(note,velocity) { if(this.controlChange) this.controlChange(this.context,note,velocity); };
- this.liveProcess       = function(input)         { if(this.process)       return this.process(this.context,input); else return 0; };
- this.liveDefault       = function()              { if(this.default_)      return this.default_(this.context); };
-}
-new Process()"
-      js_text
-      in
-      if args.output<>"" then
-         begin
-            let oc = open_out (args.output^".js") in
-            Printf.fprintf oc "%s\n" js_final;
-            close_out oc;
-            js_final
-         end
-      else
-         begin
-            print_endline js_final;
-            js_final
-         end
 
 let generateCode (args:arguments) (parser_results:parser_results list) : string =
    (*if args.ccode then
       generateCCode args parser_results
    else*)
    if args.jscode then
-      generateJSCode args parser_results
+      VultJs.generateJSCode args parser_results
    else ""
 
 
-let parseStringGenerateCode s =
-   ParserVult.parseString s
-   |> fun a -> generateCode default_arguments [a]
+(** Prints the parsed files if -dparse was passed as argument *)
+let dumpParsedFiles (args:arguments) (parser_results:parser_results list) : unit =
+   if args.dparse then
+      parser_results
+      |> List.map Passes.applyTransformations
+      |> List.iter (
+         fun a -> match a.presult with
+            | `Ok(b) ->
+               let _ = PrintTypes.stmtListStr b |> print_string in
+               ()
+            | `Error(_) -> Error.printErrors a.presult a.lines  )
+
+(** Parses the code and and generates the target *)
+let parseStringGenerateCode (args:arguments) (code:string) : string =
+   ParserVult.parseString code
+   |> Passes.applyTransformations
+   |> fun a -> generateCode args [a]
 
 
-let parsePrintCode s =
-   let result = ParserVult.parseString s |> Passes.applyTransformations in
+(** Parses the code and returns either the transformed code or the error message *)
+let parsePrintCode (code:string) : string =
+   let result = ParserVult.parseString code |> Passes.applyTransformations in
    match result.presult with
    | `Ok(b) ->
       PrintTypes.stmtListStr b
@@ -162,8 +121,9 @@ let parsePrintCode s =
       let result =List.fold_left (fun s a -> s^"\n"^a) "" error_strings in
       "Errors in the program:\n"^result
 
-let checkCode s =
-   let result = ParserVult.parseString s |> Passes.applyTransformations in
+(** Checks the code and returns a list with the errors *)
+let checkCode (code:string) : (string * string * int * int) list =
+   let result = ParserVult.parseString code |> Passes.applyTransformations in
    match result.presult with
    | `Ok(_) -> []
    | `Error(errors) -> List.map (Error.reportErrorStringNoLoc result.lines) errors
