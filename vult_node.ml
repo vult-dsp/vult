@@ -24,28 +24,13 @@ THE SOFTWARE.
 
 open TypesVult
 open ParserVult
-(*
-let parseText s =
-   let p = Driver.parseStringRun (Js.to_string s) in
-   match p.iresult with
-   | `Ok(result) ->
-      "Results of running the program:\n"^result |> Js.string
-   | `Error(_) ->
-      let error_strings:string list = ErrorsVult.reportErrors p.iresult p.lines in
-      let result =List.fold_left (fun s a -> s^"\n"^a) "" error_strings in
-      "Errors in the program:\n"^result |> Js.string
 
-;;
 
 let generateJSCode s =
 	Driver.parseStringGenerateCode (Js.to_string s) |> Js.string
 ;;
 
-(*let _ = Js.Unsafe.set (Js.Unsafe.variable "cover_functions") (Js.string "parseText") (Js.wrap_callback parseText)*)
-Js.Unsafe.global##plop <- (Js.wrap_callback parseText) ;;
-Js.Unsafe.global##jscode <- (Js.wrap_callback generateJSCode) ;;
 
-*)
 
 let parsePrint s =
 	Driver.parsePrintCode (Js.to_string s) |> Js.string
@@ -66,5 +51,6 @@ let checkCode s =
 ;;
 
 Js.Unsafe.global##plop <- (Js.wrap_callback parsePrint) ;;
+Js.Unsafe.global##jscode <- (Js.wrap_callback generateJSCode) ;;
 Js.Unsafe.global##checkCode <- (Js.wrap_callback checkCode) ;;
 

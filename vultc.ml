@@ -79,6 +79,8 @@ let main () =
    (* Prints the parsed files if -dparse was passed as argument *)
    let _ = if args.dparse then
       dumpParsedFiles (List.map applyTransformations parser_results) in
+
+   let _ = Driver.generateCode args parser_results in
    ()
 ;;
 main ();;

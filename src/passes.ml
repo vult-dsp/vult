@@ -92,7 +92,7 @@ module InsertContext = struct
       Mapper.make @@ fun state exp ->
          match exp with
          | LId(id,tp,attr) when Env.isLocalInstanceOrMem state id ->
-            state, LId("ctx_"::id,tp,attr)
+            state, LId("_ctx"::id,tp,attr)
          | _ -> state,exp
 
    let stmt_x : ('a Env.t, stmt) Mapper.expand_func =

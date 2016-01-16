@@ -22,11 +22,21 @@ type jsstmt =
    | JSIf       of jsexp * jsstmt * jsstmt option
    | JSEmpty
 
+let fixOp op =
+   match op with
+   | "<>" -> "!="
+   | _ -> op
+
+let fixKeyword key =
+   match key with
+   | "default" -> "default_"
+   | _ -> key
+
 let rec join (sep:string) (id:string list) : string =
    match id with
    | [] -> ""
-   | [ name ] -> name
-   | h :: t -> h ^ sep ^ (join sep t)
+   | [ name ] -> fixKeyword name
+   | h :: t -> (fixKeyword h) ^ sep ^ (join sep t)
 
 let rec convertId (id:id) : string =
    join "." id
@@ -38,8 +48,9 @@ let rec convertExp (e:exp) : jsexp =
    | PInt(n,_)       -> JENumber(float_of_int n)
    | PReal(v,_)      -> JENumber(v)
    | PId(id,_)       -> JEVar(convertId id)
+   | PUnOp("|-|",e1,_)-> JEUnOp("-", convertExp e1)
    | PUnOp(op,e1,_)  -> JEUnOp(op, convertExp e1)
-   | POp(op,elems,_) -> JEOp(op, convertExpList elems )
+   | POp(op,elems,_) -> JEOp(fixOp op, convertExpList elems )
    | PCall(_,name,args,_)    -> JECall(convertId name, convertExpList args)
    | PIf(cond,then_,else_,_) -> JEIf(convertExp cond, convertExp then_, convertExp else_)
    | PGroup(e1,_)    -> convertExp e1
@@ -94,6 +105,7 @@ let rec printExp buffer (e:jsexp) : unit =
    | JEBool(v)   -> append buffer (if v then "true" else "false")
    | JEString(s) -> append buffer ("\"" ^ s ^ "\"")
    | JECall(name,args) ->
+      append buffer "this.";
       append buffer name;
       append buffer "(";
       printExpList buffer "," args;
@@ -106,7 +118,7 @@ let rec printExp buffer (e:jsexp) : unit =
       append buffer ")"
    | JEOp(op,elems) ->
       append buffer "(";
-      printExpList buffer (" "^op^" ") elems;
+      printExpList buffer (" "^(op)^" ") elems;
       append buffer ")";
    | JEVar(name) ->
       append buffer name
@@ -129,6 +141,23 @@ and printExpList buffer (sep:string) (e:jsexp list) : unit =
       append buffer sep;
       printExpList buffer sep t
 
+let fixContext is_special args =
+   if is_special then
+      match args with
+      | [] -> ["_ctx"]
+      | "_ctx"::_ -> args
+      | t -> "_ctx"::t
+   else args
+
+let isSpecial name =
+   match name with
+   | "process" -> true
+   | "noteOn" -> true
+   | "noteOff" -> true
+   | "controlChange" -> true
+   | "default" -> true
+   | _ -> false
+
 let rec printStmt buffer (stmt:jsstmt) : unit =
    match stmt with
    | JSVarDecl(name,value) ->
@@ -146,17 +175,19 @@ let rec printStmt buffer (stmt:jsstmt) : unit =
       printExp buffer value;
       append buffer ";";
    | JSFunction(name,args,(JSBlock(_) as body)) ->
-      append buffer "function ";
+      append buffer "this.";
       append buffer name;
-      append buffer "(";
-      append buffer (join "," args);
+      append buffer " = function(";
+      let args' = fixContext (isSpecial name) args in
+      append buffer (join "," args');
       append buffer ")";
       printStmt buffer body;
    | JSFunction(name,args,body) ->
-      append buffer "function ";
+      append buffer "this. ";
       append buffer name;
-      append buffer "(";
-      append buffer (join "," args);
+      append buffer " = function(";
+      let args' = fixContext (isSpecial name) args in
+      append buffer (join "," args');
       append buffer ") { ";
       printStmt buffer body;
       append buffer "}";

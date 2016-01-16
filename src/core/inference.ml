@@ -190,9 +190,9 @@ let addInstance (env:'a Env.t) (isactive:bool) (name:id option) (typ:VType.t) : 
          env', name
       | None ->
          let n,env' = Env.tick env in
-         let n      = [("_inst"^(string_of_int n))] in
-         let env' = Env.addInstance env' n typ in
-         env', Some(n)
+         let inst_name = [("_inst"^(string_of_int n))] in
+         let env' = Env.addInstance env' inst_name typ in
+         env', Some(inst_name)
    else
       env, None
 
@@ -235,7 +235,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
       let fn_args,fn_ret = VType.stripArrow fn_type in
       let active         = Scope.isActive ft in
       let fname_typ      = ref (VType.TId(fname,None)) in
-      let env',name'     = addInstance env active name fname_typ in
+      let env',name'     = addInstance env' active name fname_typ in
       inferApply (expLoc e) args' types ret_type fn_args fn_ret;
       PCall(name',fname,args',{ attr with typ = Some(ret_type) }), env', ret_type
    | POp(op,[e1;e2],attr) ->
