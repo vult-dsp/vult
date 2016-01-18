@@ -169,7 +169,7 @@ let makeReturnType (v:VType.t option) : return_type =
 let raiseReturnError (loc:Loc.t Lazy.t) (given:VType.t option) (typ:return_type) =
    match given,typ with
    | None,_ -> ()
-   | Some(gt), GivenType(_) ->
+   | Some(gt), GivenType(rt) when VType.compare gt rt <> 0 ->
       let msg = Printf.sprintf "This function is expected to have type '%s' but nothing was returned" (PrintTypes.typeStr gt) in
       Error.raiseError msg (Lazy.force loc)
    | _ -> ()
@@ -346,7 +346,7 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       let typ  = VType.makeArrowType last_type types' in
       let env' = Env.setCurrentType env' typ true in
       let env' = Env.exit `Function env' in
-      let  _   = raiseReturnError (stmtLoc stmt) ret_type body_ret in
+      let  _   = raiseReturnError (stmtLoc stmt) ret_type' body_ret in
       VType.leaveLevel ();
       StmtFun(name,args',body',Some(last_type),attr), env', NoType
    | StmtIf(cond,then_,else_,attr) ->
