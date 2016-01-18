@@ -95,7 +95,7 @@ let rec inferLhsExp (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
          elems
       in
       let typ = ref (VType.TComposed(["tuple"],List.rev tpl,None)) in
-      LTuple(List.rev elems',attr),typ
+      LTuple(List.rev elems',{ attr with typ = Some(typ) }),typ
    | LTyped(e,typ,_) ->
       checkType (lhsLoc e) env typ;
       let e',tpi = inferLhsExp env e in
@@ -104,6 +104,11 @@ let rec inferLhsExp (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
          Error.raiseError msg (GetLocation.fromLhsExp e)
       else
          e',tpi
+   | LGroup(eg,_) ->
+      inferLhsExp env eg
+
+
+
 
 let rec addLhsToEnv mem_var (env:'a Env.t) (lhs:lhs_exp) : 'a Env.t =
    match lhs with
@@ -114,6 +119,8 @@ let rec addLhsToEnv mem_var (env:'a Env.t) (lhs:lhs_exp) : 'a Env.t =
    | LTuple(elems,_) ->
       List.fold_left (fun e a -> addLhsToEnv mem_var e a) env elems
    | LTyped(e,_,_) ->
+      addLhsToEnv mem_var env e
+   | LGroup(e,_) ->
       addLhsToEnv mem_var env e
 
 let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : typed_id list * VType.t list * 'a Env.t =

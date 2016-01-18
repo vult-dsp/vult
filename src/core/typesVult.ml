@@ -52,6 +52,7 @@ type lhs_exp =
    | LId    of id * VType.t option * attr
    | LTuple of lhs_exp list * attr
    | LTyped of lhs_exp * VType.t * attr
+   | LGroup of lhs_exp * attr
    [@@deriving show,eq,ord]
 
 (** Parser syntax tree *)

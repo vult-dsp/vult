@@ -70,6 +70,7 @@ let rec convertLhsExp (e:lhs_exp) : string =
    | LTyped(e1,_,_) -> convertLhsExp e1
    | LTuple _       -> failwith "VultJs.convertLhsExp: Tuples are not supported in js"
    | LWild _        -> "_"
+   | LGroup(e,_)    -> convertLhsExp e
 
 let convertTypedId (e:typed_id) : string =
    match e with

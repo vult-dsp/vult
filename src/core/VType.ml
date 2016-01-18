@@ -213,7 +213,7 @@ let rec unify (t1:t) (t2:t) : bool =
    | ({ contents = TUnbound _ } as tu), t | t, ({ contents = TUnbound _ } as tu) ->
       tu := TLink(t);
       true
-   | { contents = TComposed(n1,elems1,_) }, { contents = TComposed(n2,elems2,_) } when n1 = n2 ->
+   | { contents = TComposed(n1,elems1,_) }, { contents = TComposed(n2,elems2,_) } when n1 = n2 && (List.length elems1) = (List.length elems2) ->
       List.for_all2 unify elems1 elems2
    | { contents = TArrow(a1,a2,_) }, { contents = TArrow(b1,b2,_) } ->
       unify a1 b1 && unify a2 b2

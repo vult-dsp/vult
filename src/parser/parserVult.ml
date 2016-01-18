@@ -77,7 +77,8 @@ let getLhsExpLocation (e:lhs_exp) : Loc.t =
    | LWild(attr)
    | LId(_,_,attr)
    | LTuple(_,attr)
-   | LTyped(_,_,attr) -> attr.loc
+   | LTyped(_,_,attr)
+   | LGroup(_,attr) -> attr.loc
 
 (** Returns the location of an statement *)
 let getStmtLocation (s:stmt)  : Loc.t =
@@ -244,7 +245,8 @@ and lhs_nud (buffer:Stream.stream) (token:'kind token) : lhs_exp =
          | _ ->
             let e = lhs_expression 0 buffer in
             let _ = Stream.consume buffer RPAREN in
-            e
+            let attr  = makeAttr token.loc in
+            LGroup(e,attr)
       end
    | _ ->
       let message = Stream.notExpectedError token in

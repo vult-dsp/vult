@@ -84,6 +84,10 @@ let rec lhsExpressionBuff buffer (lhs:lhs_exp) =
       append buffer ":";
       typeExpressionBuff buffer tp;
       append buffer ")"
+   | LGroup(elems,_) ->
+      append buffer "(";
+      lhsExpressionBuff buffer elems;
+      append buffer ")"
 and lhsExpressionListBuff buffer expl =
    printList buffer lhsExpressionBuff "," expl
 

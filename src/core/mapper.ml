@@ -214,6 +214,10 @@ let rec map_lhs_exp (mapper:'state mapper) (state:'state) (exp:lhs_exp) : 'state
       let state',elems' = map_lhs_exp_list mapper state elems in
       let state',attr'  = map_attr mapper state' attr in
       apply mapper.lhs_exp state' (LTuple(elems',attr'))
+   | LGroup(e,attr) ->
+      let state',attr'  = map_attr mapper state attr in
+      let state',e' = map_lhs_exp mapper state' e in
+      apply mapper.lhs_exp state' (LGroup(e',attr'))
 
 and map_lhs_exp_list mapper = fun state exp -> (mapper_list map_lhs_exp) mapper state exp
 
