@@ -100,7 +100,7 @@ let rec inferLhsExp (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
       checkType (lhsLoc e) env typ;
       let e',tpi = inferLhsExp env e in
       if not (VType.unify typ tpi) then
-         let msg = Printf.sprintf "This declaration has type '%s' but it has beed defined before as '%s'" (PrintTypes.typeStr typ) (PrintTypes.typeStr tpi) in
+         let msg = Printf.sprintf "This declaration has type '%s' but it has been defined before as '%s'" (PrintTypes.typeStr typ) (PrintTypes.typeStr tpi) in
          Error.raiseError msg (GetLocation.fromLhsExp e)
       else
          e',tpi
