@@ -48,6 +48,14 @@ let applyExpanderList (mapper:('data,'kind) expand_func) (data:'data) (kind_list
          ) (data,[]) kind_list
    in state', rev_exp_list |> List.rev |> List.flatten
 
+let rec applyExpanderListIter (mapper:('data,'kind) expand_func) (data:'data) (kind_list:'kind list) : 'data * 'kind list =
+   let data',kind_list' = applyExpanderList mapper data kind_list in
+   (* A little bit inefficient and dangerous but good for now *)
+   if List.length kind_list' <> List.length kind_list then
+      applyExpanderListIter mapper data' kind_list'
+   else
+      data',kind_list'
+
 let make (mapper:'data -> 'kind -> 'data * 'kind) : ('data,'kind) mapper_func =
    Some(mapper)
 
@@ -68,7 +76,7 @@ let (|*>) : ('data,'value) expand_func -> ('data,'value) expand_func -> ('data,'
       let mapper3 =
          fun state exp ->
             let state', exp_list  = applyExpander mapper1 state exp in
-            let state', exp_list' = applyExpanderList mapper2 state' exp_list in
+            let state', exp_list' = applyExpanderListIter mapper2 state' exp_list in
             state', exp_list'
       in Some(mapper3)
 
@@ -372,7 +380,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
 
 and map_stmt_list mapper = fun state stmts ->
    let state', stmts' = (mapper_list map_stmt) mapper state stmts in
-   let state', stmts' = applyExpanderList mapper.stmt_x state' stmts' in
+   let state', stmts' = applyExpanderListIter mapper.stmt_x state' stmts' in
    state', stmts'
 
 and map_stmt_subs (mapper:'state mapper) (state,stmt:('state * stmt)) : 'state * stmt =

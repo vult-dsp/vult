@@ -182,8 +182,8 @@ module CreateInitFunction = struct
       Mapper.makeExpander @@ fun state stmt ->
          match stmt with
          | StmtFun(name,_,_,_,_) ->
-            if Env.isActive state name then
-               let data    = Env.get state in
+            let data = Env.get state in
+            if Env.isActive state name && PassData.hasInitFunction data name then
                let ctx     = Env.getContext state name in
                let init_fn = generateInitFunctionWrapper state name in
                if PassData.hasInitFunction data ctx then
@@ -201,6 +201,7 @@ module CreateInitFunction = struct
                   let init_funct = generateInitFunction ctx member_set in
                   let type_def   = generateContextType ctx member_set in
                   let data'      = PassData.markInitFunction data ctx in
+                  let data'      = PassData.markInitFunction data' name in
                   Env.set state data', [type_def; stmt; init_funct; init_fn]
             else
                state, [stmt]
