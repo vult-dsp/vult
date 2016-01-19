@@ -10,11 +10,17 @@ type jsexp =
    | JEOp     of string * jsexp list
    | JEVar    of string
    | JEIf     of jsexp * jsexp * jsexp
+   | JETuple  of (string * jsexp) list
    | JENewObj
 
+type jslhsexp =
+   | JLWild
+   | JLId    of string
+   | JLTuple of jslhsexp list
+
 type jsstmt =
-   | JSVarDecl  of string * jsexp
-   | JSBind     of string * jsexp
+   | JSVarDecl  of jslhsexp * jsexp
+   | JSBind     of jslhsexp * jsexp
    | JSFunction of string * string list * jsstmt
    | JSReturn   of jsexp
    | JSWhile    of jsexp * jsstmt
@@ -55,21 +61,21 @@ let rec convertExp (e:exp) : jsexp =
    | PIf(cond,then_,else_,_) -> JEIf(convertExp cond, convertExp then_, convertExp else_)
    | PGroup(e1,_)    -> convertExp e1
    | PTuple([e1],_)  -> convertExp e1
-   | PTuple _        ->
-      let e_str = PrintTypes.expressionStr e in
-      failwith ("VultJs.convertExp: Tuples are not supported in js: " ^ e_str)
+   | PTuple(elems,_)   ->
+      let jselems = List.mapi (fun i a -> "field_"^(string_of_int i), convertExp a ) elems in
+      JETuple(jselems)
    | PSeq _          -> failwith "VultJs.convertExp: Sequences are not yet supported for js"
    | PEmpty          -> failwith "VultJs.convertExp: Empty expressions are not allowed"
 
 and convertExpList (e:exp list) : jsexp list =
    List.map convertExp e
 
-let rec convertLhsExp (e:lhs_exp) : string =
+let rec convertLhsExp (e:lhs_exp) : jslhsexp =
    match e with
-   | LId(id,_,_)    -> convertId id
-   | LTyped(e1,_,_) -> convertLhsExp e1
-   | LTuple _       -> failwith "VultJs.convertLhsExp: Tuples are not supported in js"
-   | LWild _        -> "_"
+   | LId(id,_,_)     -> JLId(convertId id)
+   | LTyped(e1,_,_)  -> convertLhsExp e1
+   | LTuple(elems,_) -> JLTuple(List.map convertLhsExp elems)
+   | LWild _         -> JLWild
    | LGroup(e,_)    -> convertLhsExp e
 
 let convertTypedId (e:typed_id) : string =
@@ -132,6 +138,15 @@ let rec printExp buffer (e:jsexp) : unit =
       printExp buffer else_;
       append buffer ")"
    | JENewObj -> append buffer "{}"
+   | JETuple(elems) ->
+      append buffer "{ ";
+      printList buffer printJsField ", " elems;
+      append buffer " }"
+
+and printJsField buffer (name,value) =
+   append buffer name;
+   append buffer " : ";
+   printExp buffer value
 
 and printExpList buffer (sep:string) (e:jsexp list) : unit =
    match e with
@@ -159,18 +174,40 @@ let isSpecial name =
    | "default" -> true
    | _ -> false
 
+let printLhsExpTuple buffer (var:string) (is_var:bool) (i:int) (e:jslhsexp) : unit =
+   match e with
+   | JLId(name) ->
+      if is_var then append buffer "var ";
+      append buffer name;
+      append buffer " = ";
+      append buffer var;
+      append buffer (".field_"^(string_of_int i));
+      append buffer "; ";
+   | JLWild -> ()
+
+   | _ -> failwith "printLhsExp: All other cases should be already covered"
+
 let rec printStmt buffer (stmt:jsstmt) : unit =
    match stmt with
-   | JSVarDecl(name,value) ->
+   | JSVarDecl(JLWild,value) ->
+      printExp buffer value;
+      append buffer ";";
+   | JSVarDecl(JLId(name),value) ->
       append buffer "var ";
       append buffer name;
       append buffer " = ";
       printExp buffer value;
       append buffer ";";
-   | JSBind("_",value) ->
+   | JSVarDecl(JLTuple(elems),JEVar(name)) ->
+      List.iteri (printLhsExpTuple buffer name true) elems;
+   | JSVarDecl(JLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
+   | JSBind(JLWild,value) ->
       printExp buffer value;
       append buffer ";";
-   | JSBind(name,value) ->
+   | JSBind(JLTuple(elems),JEVar(name)) ->
+      List.iteri (printLhsExpTuple buffer name false) elems;
+   | JSBind(JLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
+   | JSBind(JLId(name),value) ->
       append buffer name;
       append buffer " = ";
       printExp buffer value;

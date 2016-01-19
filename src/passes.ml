@@ -215,7 +215,7 @@ end
 
 module SimplifyTupleAssign = struct
 
-   let makeTmp i = ["$tmp_" ^ (string_of_int i)]
+   let makeTmp i = ["_tmp_" ^ (string_of_int i)]
 
    let makeValBind lhs rhs = StmtVal(lhs,Some(rhs),emptyAttr)
 
@@ -255,6 +255,34 @@ module SimplifyTupleAssign = struct
          | StmtBind(LTuple(_,_),PTuple(_,_),_) ->
             failwith "SimplifyTupleAssign.stmt_x: this error should be catched by the type checker"
 
+         | _ -> state, [stmt]
+
+   let mapper =
+      { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
+
+end
+
+module LHSTupleBinding = struct
+
+   let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
+      Mapper.makeExpander @@ fun state stmt ->
+         match stmt with
+         | StmtVal(LTuple(_,_),Some(PId(_,_)),_) -> state, [stmt]
+         | StmtBind(LTuple(_,_),PId(_,_),_) -> state, [stmt]
+         | StmtBind((LTuple(_,_) as lhs),rhs,attr) ->
+            let tick, state' = Env.tick state in
+            let tmp_name = ["_tmp_"^(string_of_int tick)] in
+            let tmp = PId(tmp_name,attr) in
+            let typ = (GetAttr.fromExp rhs).typ in
+            let ltmp = LId(tmp_name,typ,attr) in
+            state', [StmtVal(ltmp,Some(rhs),attr); StmtBind(lhs,tmp,attr)]
+         | StmtVal((LTuple(_,_) as lhs),Some(rhs),attr) ->
+            let tick, state' = Env.tick state in
+            let tmp_name = ["_tmp_"^(string_of_int tick)] in
+            let tmp = PId(tmp_name,attr) in
+            let typ = (GetAttr.fromExp rhs).typ in
+            let ltmp = LId(tmp_name,typ,attr) in
+            state', [StmtVal(ltmp,Some(rhs),attr); StmtVal(lhs,Some(tmp),attr)]
          | _ -> state, [stmt]
 
    let mapper =
@@ -311,6 +339,7 @@ let pass1 (state,stmts) =
       |> Mapper.seq SplitMem.mapper
       |> Mapper.seq InsertContext.mapper
       |> Mapper.seq SimplifyTupleAssign.mapper
+      |> Mapper.seq LHSTupleBinding.mapper
    in
    Mapper.map_stmt_list mapper state stmts
 

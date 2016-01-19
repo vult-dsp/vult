@@ -43,8 +43,8 @@ let errorLocationMessage (location:Loc.t) : string =
 (** Takes the current line and a location returns a string pointing to the
     location *)
 let errorLocationIndicator (line:string) (location:Loc.t) : string =
-   let col_start = Loc.startColumn location in
-   let col_end   = Loc.endColumn location in
+   let col_start = max (Loc.startColumn location) 0 in
+   let col_end   = max (Loc.endColumn location) 0 in
    let pointer   = if (col_end - col_start) <> 0 then (String.make (col_end - col_start) '^') else "^" in
    Printf.sprintf "%s\n%s%s\n"
       line
