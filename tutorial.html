@@ -43,30 +43,32 @@
 
             <p>Functions are declared with the keyword <code>fun</code>.</p>
 
-            <div class="vult_code" id="basic0">fun square(x) return x * x;
+            <div class="vult_code" id="basic0">fun square(x:real) return x * x;
             </div>
 
-            <p>In this case the argument the function takes an argument <code>x</code> and returns the square of the value.</p>
+            <p>In this case the argument the function takes an argument <code>x</code> and returns the square of the value. Notice that the colon <code>:</code> is used to specify the type of the argument.</p>
 
             <p>Intermediate results can be stored in variables with the keyword <code>val</code>.</p>
 
-<div class="vult_code" id="basic1">val a = square(2);
-val b = square(-1);
+<div class="vult_code" id="basic1">val a = square(2.0);
+val b = square(-1.0);
 </div>
 
 <p>Vult has if-statements but also if-expressions.</p>
 
 <div class="vult_code" id="basic2">val a = 0;
-if(square(-1)&gt; 0){
+if(square(-1.0)&gt; 0.0){
     a = 1;
 }
 
-val b = if square(-1) &gt; 0 then -1 else 0;
+val b = if square(-1.0) &gt; 0.0 then -1 else 0;
 </div>
 
-        <p>The only restriction is that if-expressions must have an <code>else</code> branch.</p>
+<p>The only restriction is that if-expressions must have an <code>else</code> branch.</p>
 
-        <p>Vult has while-loops...</p>
+<p> One important thing to consider is that the number <code>1</code> has a type <code>int</code> while the number <code>1.0</code> has a type <code>real</code>. Vult's type checker will not let you mix the types. </p>
+
+<p>Vult has while-loops...</p>
 
 <div class="vult_code" id="basic3">fun fact(x){
     val i = x;
@@ -77,13 +79,6 @@ val b = if square(-1) &gt; 0 then -1 else 0;
     }
     return acc;
 }
-</div>
-
-<p>... but you can also express loops as recursive functions.</p>
-
-<div class="vult_code" id="basic4">fun fact(x)
-    if(x==0) return 1;
-    else return x * fact(x-1);
 </div>
 
 <p>So far, there's nothing special. Now lets make something more interesting.</p>
@@ -106,10 +101,12 @@ val b = if square(-1) &gt; 0 then -1 else 0;
 
 <p>We want to replace the code of the function <code>processValue</code> with some Vult code that calculates, something more complex. We can start with something like this:</p>
 
-<div class="vult_code" id="active2">fun process(x) return 1/(x*x);
+<div class="vult_code" id="active2">fun process(x) return 1.0/(x*x);
 </div>
 
-<p>The first thing that we can notice is that every time the function is called the operation <code>1/(x*x)</code> is performed. In this case the operation is not that expensive, but let's assume that it is and we want to calculate it only when is necessary. In order to do that, we need to remember which was the previous value we computed; if the value is the same we return the previously calculated result, if it's different we recalculate.</p>
+<p>The type of variable <code>x</code> is <code>real</code>. This is automatically inferred from the expression <code>1.0/(x*x)</code> since <code>1.0</code> has a type real. </p>
+
+<p>We can notice that every time the function is called, the operation <code>1.0/(x*x)</code> is performed. In this case the operation is not that expensive, but let's assume that it is and we want to calculate it only when is necessary. In order to do that, we need to remember which was the previous value we computed; if the value is the same we return the previously calculated result, if it's different we recalculate.</p>
 
 <p>Now we are gonna declare two memory variables with the keyword <code>mem</code>.</p>
 
@@ -117,8 +114,8 @@ val b = if square(-1) &gt; 0 then -1 else 0;
     mem pre_x;  // we will use it to keep the previous input
     mem result; // we will use it to keep the previous result
 
-    if(x != pre_x)        // if the previous input is different
-    result = 1/(x*x); // recompute
+    if(x <> pre_x)        // if the previous input is different
+       result = 1.0/(x*x);  // recompute
 
     pre_x = x;            // updates the previous input
 
@@ -139,9 +136,9 @@ val result_signal2 = process(signal2);
 <p>We can simplify the above code by declaring the function <code>change</code> as follows:</p>
 
 <div class="vult_code" id="active5">// This function returns true when the input value changes
-fun change(x){
+fun change(x:real){
     mem pre_x;               // remembers the previous value
-    val result = pre_x != x; // checks if the value is different
+    val result = pre_x <> x; // checks if the value is different
     pre_x = x;               // updates the previous value
     return result;
 }
@@ -153,7 +150,7 @@ fun change(x){
     mem result; // we will use it to keep the previous result
 
     if(change(x))         // if the previous input is different
-    result = 1/(x*x); // recompute
+       result = 1.0/(x*x);  // recompute
 
     return result;
 }
@@ -162,17 +159,17 @@ fun change(x){
 <p>In a similar way we can create a set of very handy functions. For example:</p>
 
 <div class="vult_code" id="active7">// This function returns true when the input value
-// changes from zero to anything
+// changes from false to true
 fun edge(x){
     mem pre_x;
     // checks if the value is different and the previous was zero
-    val result = pre_x != x &amp;&amp; pre_x == 0;
+    val result = pre_x <> x && pre_x == false;
     pre_x = x;
     return result;
 }
 
 // This function returns true every 'n' calls
-fun every(n){
+fun every(n:int){
     mem count;
     val result = count == 0;
     count = (count+1)%n;
@@ -186,7 +183,7 @@ fun every(n){
     mem result; // we will use it to keep the previous result
 
     if(every(4))           // the value is calculated every 4 calls
-    result = 1/(x*x);  // recompute
+    result = 1.0/(x*x);  // recompute
 
     return result;
 }
@@ -229,7 +226,12 @@ val f = y:count(); // f = 3
 
 <p>In the above code we have two contexts <code>x</code> and <code>y</code> for the calls to the <code>count</code> function. Every time we call <code>x:count()</code> we access to the same internal <code>counter</code> memory. Now that our counter is useful one thing that we may want to do is reseting the counter. In order to access the the context of a function we need to create a new function that declares the same memory variables. For example the function <code>reset</code>.</p>
 
-<div class="vult_code" id="context4">fun reset(){
+<div class="vult_code" id="context4">fun count(){
+    mem counter;
+    counter = counter + 1;
+    return counter;
+}
+and reset(){
     mem counter;
     counter = 0;
 }
@@ -252,7 +254,7 @@ val e = x:count(); // e = 2
 
     <p>Now we are gonna write some real code. We are gonna write code for a digital filter. We start by writing code for a generic biquad filter <a href="http://en.wikipedia.org/wiki/Digital_biquad_filter">http://en.wikipedia.org/wiki/Digital_biquad_filter</a> in direct for II.</p>
 
-<div class="vult_code" id="context6">fun biquad(x,b0,b1,b2,a1,a2){
+<div class="vult_code" id="context6">fun biquad(x:real,b0,b1,b2,a1,a2) : real {
     mem w1,w2;
     val w0 = x -a1*w1-a2*w2;
     val y0 = b0*w0 + b1*w1 + b2*w2;
@@ -267,12 +269,12 @@ val e = x:count(); // e = 2
     mem b0,b1,a1;
     // we calculate the coefficients only when the 'fc' changes
     if(change(fc)){
-        val k = tan(3.1415*fc/44100); // 44100 is the sample rate
-        b0 = k/(k+1);
-        b1 = k/(k+1);
-        a1 = (k-1)/(k+1);
+        val k = tan(3.1415*fc/44100.0); // 44100 is the sample rate
+        b0 = k/(k+1.0);
+        b1 = k/(k+1.0);
+        a1 = (k-1.0)/(k+1.0);
     }
-    return biquad(x,b0,b1,0,a1,0);
+    return biquad(x,b0,b1,0.0,a1,0.0);
 }
 </div>
 
@@ -280,8 +282,8 @@ val e = x:count(); // e = 2
 
 <p>Let's say that we want to filter two signals (<code>signal1</code> and <code>signal2</code>) with our new filter and remove all frequencies above 1000 hertz.</p>
 
-<div class="vult_code" id="context8">val filtered1 = lp6(signal1,1000);
-val filtered2 = lp6(signal2,1000);
+<div class="vult_code" id="context8">val filtered1 = lp6(signal1,1000.0);
+val filtered2 = lp6(signal2,1000.0);
 </div>
 
 <h3>
@@ -293,7 +295,7 @@ val filtered2 = lp6(signal2,1000);
 
 fun change(x){
     mem pre_x;               // remembers the previous value
-    val result = pre_x != x; // checks if the value is different
+    val result = pre_x <> x; // checks if the value is different
     pre_x = x;               // updates the previous value
     return result;
 }
@@ -310,12 +312,12 @@ fun lp6(x,fc) {
     mem b0,b1,a1;
     // we calculate the coefficients only when the 'fc' changes
     if(change(fc)){
-        val k = tan(3.1415*fc/44100); // 44100 is the sample rate
-        b0 = k/(k+1);
-        b1 = k/(k+1);
-        a1 = (k-1)/(k+1);
+        val k = tan(3.1415*fc/44100.0); // 44100 is the sample rate
+        b0 = k/(k+1.0);
+        b1 = k/(k+1.0);
+        a1 = (k-1.0)/(k+1.0);
     }
-    return biquad(x,b0,b1,0,a1,0);
+    return biquad(x,b0,b1,0.0,a1,0.0);
 }
 </div>
 
