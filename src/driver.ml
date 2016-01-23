@@ -83,9 +83,9 @@ extern \"C\"
 *)
 
 let generateCode (args:arguments) (parser_results:parser_results list) : string =
-   (*if args.ccode then
-      generateCCode args parser_results
-   else*)
+   if args.ccode then
+      VultCh.generateChCode args parser_results
+   else
    if args.jscode then
       VultJs.generateJSCode args parser_results
    else ""
@@ -95,7 +95,6 @@ let generateCode (args:arguments) (parser_results:parser_results list) : string 
 let dumpParsedFiles (args:arguments) (parser_results:parser_results list) : unit =
    if args.dparse then
       parser_results
-      |> List.map Passes.applyTransformations
       |> List.iter (
          fun a -> match a.presult with
             | `Ok(b) ->

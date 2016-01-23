@@ -57,7 +57,8 @@ Library "vult_parser"
 Library "vult_generators"
   Path: src/generators
   Modules:
-    VultJs
+    VultJs,
+    VultCh
   BuildDepends:
     vult_core,
     vult_util
