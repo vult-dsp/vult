@@ -149,6 +149,7 @@ module CreateInitFunction = struct
 
    let generateInitFunction (ctx:id) (member_set:IdTypeSet.t) : stmt =
       let ctx_name = ["_ctx"] in
+      let typ = ref (VType.TId(ctx,None)) in
       let new_stmts_set =
          IdTypeSet.fold
             (fun (name,tp) acc ->
@@ -159,7 +160,7 @@ module CreateInitFunction = struct
       let return_stmt = StmtReturn(PId(ctx_name,emptyAttr),emptyAttr) in
       let ctx_decl = StmtVal(LId(ctx_name,Some(ref (VType.TId(ctx,None))),emptyAttr),None,emptyAttr) in
       let stmts = StmtSet.fold (fun a acc -> a::acc) new_stmts_set [return_stmt] in
-      StmtFun(getInitFunctioName ctx, [], StmtBlock(None, ctx_decl::stmts, emptyAttr), None, emptyAttr)
+      StmtFun(getInitFunctioName ctx, [], StmtBlock(None, ctx_decl::stmts, emptyAttr), Some(typ), emptyAttr)
 
    let generateContextType (ctx:id) (member_set:IdTypeSet.t) : stmt =
       let members =
@@ -172,10 +173,11 @@ module CreateInitFunction = struct
 
    let generateInitFunctionWrapper (state:'a Env.t) (name:id) : stmt =
       let ctx = Env.getContext state name in
+      let typ = ref (VType.TId(ctx,None)) in
       StmtFun(getInitFunctioName name,
          [],
          StmtReturn(PCall(None,getInitFunctioName ctx,[],emptyAttr),emptyAttr),
-         None, emptyAttr)
+         Some(typ), emptyAttr)
 
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
@@ -183,11 +185,12 @@ module CreateInitFunction = struct
          match stmt with
          | StmtFun(name,_,_,_,_) ->
             let data = Env.get state in
-            if Env.isActive state name && PassData.hasInitFunction data name then
+            if Env.isActive state name && not (PassData.hasInitFunction data name) then
                let ctx     = Env.getContext state name in
                let init_fn = generateInitFunctionWrapper state name in
                if PassData.hasInitFunction data ctx then
-                  state, [stmt; init_fn]
+                  let data'   = PassData.markInitFunction data name in
+                  Env.set state data', [stmt; init_fn]
                else
                   let mem_vars, instances = Env.getMemAndInstances state name in
                   let member_set =
