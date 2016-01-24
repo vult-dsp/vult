@@ -83,7 +83,9 @@ module InsertContext = struct
       Mapper.make @@ fun state exp ->
          match exp with
          | PCall(Some(id),kind,args,attr) ->
-            state,PCall(None,kind,PId("_ctx"::id,attr)::args,attr)
+            let context = Env.getContext state kind in
+            let typ = ref (VType.TId(context,None)) in
+            state,PCall(None,kind,PId("_ctx"::id,{ attr with typ = Some(typ) })::args,attr)
          | PId(id,attr) when Env.isLocalInstanceOrMem state id ->
             state, PId("_ctx"::id,attr)
          | _ -> state,exp
@@ -133,14 +135,14 @@ module CreateInitFunction = struct
 
    let rec getInitValue (tp:VType.t) : exp =
       match tp with
-      | { contents = VType.TId(["real"],_) } -> PReal(0.0,emptyAttr)
-      | { contents = VType.TId(["int"],_) } -> PInt(0,emptyAttr)
-      | { contents = VType.TId(["bool"],_) } -> PBool(false,emptyAttr)
+      | { contents = VType.TId(["real"],_) } -> PReal(0.0,{ emptyAttr with typ = Some(tp)})
+      | { contents = VType.TId(["int"],_) } -> PInt(0,{ emptyAttr with typ = Some(tp)})
+      | { contents = VType.TId(["bool"],_) } -> PBool(false,{ emptyAttr with typ = Some(tp)})
       | { contents = VType.TId(name,_) } ->
-         PCall(None,getInitFunctioName name,[],emptyAttr)
+         PCall(None,getInitFunctioName name,[],{ emptyAttr with typ = Some(tp)})
       | { contents = VType.TLink(tp) } ->
          getInitValue tp
-      | _ -> PReal(0.0,emptyAttr)
+      | _ -> failwith "getInitValue"
 
    let getContextIfPossible state tp =
       match tp with
@@ -153,12 +155,13 @@ module CreateInitFunction = struct
       let new_stmts_set =
          IdTypeSet.fold
             (fun (name,tp) acc ->
-               let new_stmt = StmtBind(LId(ctx_name @ name,Some(tp),emptyAttr), getInitValue tp, emptyAttr) in
+               let new_stmt = StmtBind(LId(ctx_name @ name,Some(tp),{ emptyAttr with typ = Some(tp) }), getInitValue tp, emptyAttr) in
                StmtSet.add new_stmt acc)
             member_set StmtSet.empty
       in
-      let return_stmt = StmtReturn(PId(ctx_name,emptyAttr),emptyAttr) in
-      let ctx_decl = StmtVal(LId(ctx_name,Some(ref (VType.TId(ctx,None))),emptyAttr),None,emptyAttr) in
+      let attr = { emptyAttr with typ = Some(typ) } in
+      let return_stmt = StmtReturn(PId(ctx_name,attr),emptyAttr) in
+      let ctx_decl = StmtVal(LId(ctx_name,Some(typ),attr),None,emptyAttr) in
       let stmts = StmtSet.fold (fun a acc -> a::acc) new_stmts_set [return_stmt] in
       StmtFun(getInitFunctioName ctx, [], StmtBlock(None, ctx_decl::stmts, emptyAttr), Some(typ), emptyAttr)
 
@@ -169,14 +172,15 @@ module CreateInitFunction = struct
                (name, tp, emptyAttr) :: acc
             ) member_set []
       in
-      StmtType(ctx,[],members,emptyAttr)
+      StmtType(ref (VType.TId(ctx,None)),members,emptyAttr)
 
    let generateInitFunctionWrapper (state:'a Env.t) (name:id) : stmt =
       let ctx = Env.getContext state name in
       let typ = ref (VType.TId(ctx,None)) in
+      let attr = { emptyAttr with typ = Some(typ) } in
       StmtFun(getInitFunctioName name,
          [],
-         StmtReturn(PCall(None,getInitFunctioName ctx,[],emptyAttr),emptyAttr),
+         StmtReturn(PCall(None,getInitFunctioName ctx,[],attr),emptyAttr),
          Some(typ), emptyAttr)
 
 

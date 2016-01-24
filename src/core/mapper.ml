@@ -319,18 +319,16 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       let state',rhs'  = map_exp mapper state' rhs in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.stmt state' (StmtBind(lhs',rhs',attr'))
-   | StmtType(name,args,members,attr) ->
-      let state',name'    = map_id mapper state name in
-      let state',args'    = (mapper_list map_typed_id) mapper state' args in
+   | StmtType(name,members,attr) ->
+      let state',name' = map_vtype mapper state name in
       let state',members' = (mapper_list map_val_decl) mapper state' members in
       let state',attr'    = map_attr mapper state' attr in
-      apply mapper.stmt state' (StmtType(name',args',members',attr'))
-   | StmtAliasType(name,args,tp,attr) ->
-      let state',name' = map_id mapper state name in
-      let state',args' = (mapper_list map_typed_id) mapper state' args in
+      apply mapper.stmt state' (StmtType(name',members',attr'))
+   | StmtAliasType(name,tp,attr) ->
+      let state',name' = map_vtype mapper state name in
       let state',tp'   = map_vtype mapper state' tp in
       let state',attr' = map_attr mapper state' attr in
-      apply mapper.stmt state' (StmtAliasType(name',args',tp',attr'))
+      apply mapper.stmt state' (StmtAliasType(name',tp',attr'))
    | StmtEmpty ->
       apply mapper.stmt state StmtEmpty
    | StmtWhile(cond,stmts,attr) ->
@@ -385,14 +383,14 @@ and map_stmt_list mapper = fun state stmts ->
 
 and map_stmt_subs (mapper:'state mapper) (state,stmt:('state * stmt)) : 'state * stmt =
    match stmt with
-   | StmtVal(_,_,_)
-   | StmtMem(_,_,_,_)
-   | StmtTable(_,_,_)
-   | StmtReturn(_,_)
-   | StmtBind(_,_,_)
-   | StmtType(_,_,_,_)
-   | StmtAliasType(_,_,_,_)
-   | StmtExternal(_,_,_,_)
+   | StmtVal _
+   | StmtMem _
+   | StmtTable _
+   | StmtReturn _
+   | StmtBind _
+   | StmtType _
+   | StmtAliasType _
+   | StmtExternal _
    | StmtEmpty -> state, stmt
    | StmtWhile(cond,stmts,attr) ->
       let state',stmts' = map_stmt mapper state stmts in

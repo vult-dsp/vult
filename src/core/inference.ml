@@ -367,10 +367,10 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       unifyRaise (expLoc cond') (VType.Constants.bool_type) cond_type;
       let body', env', ret_type' = inferStmt env' ret_type body in
       StmtWhile(cond',body',attr), env', ret_type'
-   | StmtType(name,args,members,attr) ->
-      StmtType(name,args,members,attr), env, ret_type
-   | StmtAliasType (name, args, alias, attr) ->
-      StmtAliasType (name, args, alias, attr), env, ret_type
+   | StmtType(name,members,attr) ->
+      StmtType(name,members,attr), env, ret_type
+   | StmtAliasType (name, alias, attr) ->
+      StmtAliasType (name, alias, attr), env, ret_type
    | StmtExternal(name,args,fun_ret_type,attr) ->
       let env' = Env.enter `Function env name in
       let args',types, env' = addArgsToEnv env' args in

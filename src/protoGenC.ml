@@ -137,7 +137,7 @@ let convertMember (member:val_decl) : ctyp * ident =
    | [name],e,_ -> convertType (Some(e)),name
    | _ -> failwith "convertMember: cannot convert member"
 
-let rec convertStmt (e:exp) : cstmt =
+let rec convertStmt params (e:exp) : cstmt =
    match e with
    | StmtVal(PId([name],tp,_),None,_) -> SDecl(convertType tp,name)
    | StmtVal(_,_,_)   -> failwith "convertStmt: unsupported val declaration"
@@ -145,21 +145,21 @@ let rec convertStmt (e:exp) : cstmt =
    | StmtTable([name],elems,_) ->
       SArray(name,convertExpList elems)
    | StmtWhile(cond,stmts,_) ->
-      SWhile(convertExp cond,convertStmt stmts)
+      SWhile(convertExp cond,convertStmt params stmts)
    | StmtReturn(v,_) -> SReturn(convertExp v)
    | StmtIf(cond,then_,Some(else_),_) ->
-      SIf(convertExp cond,convertStmt then_,Some(convertStmt else_))
+      SIf(convertExp cond,convertStmt params then_,Some(convertStmt params else_))
    | StmtIf(cond,then_,None,_) ->
-      SIf(convertExp cond,convertStmt then_,None)
+      SIf(convertExp cond,convertStmt params then_,None)
    | StmtFun([name],args,body,ret,_,_) ->
       let cargs = List.map convertNamedId args in
-      SFunction(convertType ret,name,cargs,convertStmt body)
+      SFunction(convertType ret,name,cargs,convertStmt params body)
    | StmtBind(PId(lhs,_,_),rhs,_) ->
       SBind(lhs,convertExp rhs)
    | StmtBind(PUnit(_),rhs,_) ->
       SBind([],convertExp rhs)
    | StmtBlock(_,stmts,_) ->
-      SBlock(convertStmtList stmts)
+      SBlock(convertStmtList params stmts)
    | StmtType([name],[],members,_) ->
       SStruct({ name = name; members = List.map convertMember members })
    | StmtAliasType([name],[],PId([alias],_,_),_) ->
@@ -168,8 +168,8 @@ let rec convertStmt (e:exp) : cstmt =
       print_endline ("convertStmt: unsupported statement\n"^(show_exp e));
       failwith ("convertStmt: unsupported statement ")
 
-and convertStmtList (l:exp list) : cstmt list =
-   List.map convertStmt l
+and convertStmtList params (l:exp list) : cstmt list =
+   List.map (convertStmt params) l
 
 type print_options =
    {

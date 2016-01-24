@@ -1,17 +1,26 @@
 open TypesVult
 open PrintBuffer
 
+type arg_type =
+   | Ref of string
+   | Var of string
+
 type cexp =
    | CENumber of float
    | CEBool   of bool
    | CEString of string
-   | CECall   of string * cexp list
+   | CECall   of string * cexp_type list
    | CEUnOp   of string * cexp
    | CEOp     of string * cexp list
    | CEVar    of string
    | CEIf     of cexp * cexp * cexp
    | CETuple  of (string * cexp) list
+   | CECast   of string * cexp
    | CENewObj
+
+and cexp_type =
+   | CRef of cexp
+   | CVar of cexp
 
 type clhsexp =
    | CLWild
@@ -21,12 +30,23 @@ type clhsexp =
 type cstmt =
    | CSVarDecl  of clhsexp * cexp option
    | CSBind     of clhsexp * cexp
-   | CSFunction of string * string * (string * string) list * cstmt
+   | CSFunction of string * string * (arg_type * string) list * cstmt
    | CSReturn   of cexp
    | CSWhile    of cexp * cstmt
    | CSBlock    of cstmt list
    | CSIf       of cexp * cstmt * cstmt option
+   | CSType     of string * (string * string) list
    | CSEmpty
+
+type real_type =
+   | Float
+   | Fixed
+
+type parameters =
+   {
+      real : real_type;
+      env  : string list list;
+   }
 
 let fixOp op =
    match op with
@@ -44,89 +64,210 @@ let rec join (sep:string) (id:string list) : string =
    | [ name ] -> fixKeyword name
    | h :: t -> (fixKeyword h) ^ sep ^ (join sep t)
 
-let rec convertId (id:id) : string =
-   join "->" id
+let look env name =
+   match env with
+   | [] -> false
+   | h::_ -> List.exists (fun a -> a = name) h
 
-let convertType (typ:VType.t) : string =
-   match VType.unlink typ with
-   | { contents = VType.TId(name,_) } -> convertId name
-   | _ -> failwith "VType.convertType: invalid type"
+let newEnv params =
+   { params with env = []::params.env }
 
-let convertTypedId (e:typed_id) : string * string =
+let add params name =
+   let current, rest =
+      match params.env with
+      | []   -> [],[]
+      | h::t -> h, t
+   in
+   { params with env = (name::current)::rest }
+
+let convertId params (id:id) : string =
+   match id with
+   | [a]   -> fixKeyword a
+   | [a;b] when look params.env a -> (fixKeyword a)^"."^(fixKeyword b)
+   | [a;b] -> (fixKeyword a)^"->"^(fixKeyword b)
+   | _ -> failwith ("VType.convertId: invalid identifier " ^ PrintTypes.identifierStr id)
+
+let underscoreId (id:id) : string =
+   join "_" id
+
+let rec convertType params (tp:VType.t) : string =
+   match !tp with
+   | VType.TId(["real"],_) when params.real = Float -> "float"
+   | VType.TId(["real"],_) when params.real = Fixed -> "fixed"
+   | VType.TId(["bool"],_) -> "uint8_t"
+   | VType.TId(["unit"],_) -> "void"
+   | VType.TId(id,_) -> underscoreId id
+   | VType.TComposed(_,_,_) ->
+      failwith ("VultCh.convertType: unsupported type in c code generation" ^ PrintTypes.typeStr tp)
+   | VType.TLink(tp) -> convertType params tp
+   | VType.TArrow _
+   | VType.TUnbound _
+   | VType.TExpAlt _ ->
+      failwith ("VultCh.convertType: unsupported type in c code generation" ^ PrintTypes.typeStr tp)
+
+let getCast params (name:id) : string =
+   convertType params (ref (VType.TId(name,None)))
+
+let isValue (typ:VType.t) : bool =
+   let typ' = VType.unlink typ in
+   match !typ' with
+   | VType.TId(name,_) when name=["int"] || name=["real"] || name=["bool"] || name=["void"] ->
+      true
+   | _ -> false
+
+let attrType (attr:attr) : VType.t =
+   match attr.typ with
+   | Some(t) -> t
+   | _ -> failwith "VultCh.attrType: everything should have types"
+
+let convertTypedId params (e:typed_id) : arg_type * string =
    match e with
    | SimpleId(_,_)  -> failwith "VultCh.convertTypedId: everything should have types"
-   | TypedId(id,typ,_) -> convertId id, convertType typ
+   | TypedId(id,typ,_) ->
+       let typ_c = convertType params typ in
+       let typ_ref = if isValue typ then Var(typ_c) else Ref(typ_c) in
+      typ_ref, convertId params id
 
-let rec convertExp (e:exp) : cexp =
+let rec convertExp params (e:exp) : VType.t * cexp =
    match e with
-   | PUnit(_)          -> CENumber(0.0)
-   | PBool(v,_)        -> CEBool(v)
-   | PInt(n,_)         -> CENumber(float_of_int n)
-   | PReal(v,_)        -> CENumber(v)
-   | PId(id,_)         -> CEVar(convertId id)
-   | PUnOp("|-|",e1,_) -> CEUnOp("-", convertExp e1)
-   | PUnOp(op,e1,_)    -> CEUnOp(op, convertExp e1)
-   | POp(op,elems,_)   -> CEOp(fixOp op, convertExpList elems )
-   | PCall(_,name,args,_)    -> CECall(convertId name, convertExpList args)
-   | PIf(cond,then_,else_,_) -> CEIf(convertExp cond, convertExp then_, convertExp else_)
-   | PGroup(e1,_)      -> convertExp e1
-   | PTuple([e1],_)    -> convertExp e1
-   | PTuple(elems,_)   ->
-      let jselems = List.mapi (fun i a -> "field_"^(string_of_int i), convertExp a ) elems in
-      CETuple(jselems)
+   | PUnit(attr)       -> attrType attr, CENumber(0.0)
+   | PBool(v,attr)     -> attrType attr, CEBool(v)
+   | PInt(n,attr)      -> attrType attr, CENumber(float_of_int n)
+   | PReal(v,attr)     -> attrType attr, CENumber(v)
+   | PId(id,attr)      -> attrType attr, CEVar(convertId params id)
+   | PUnOp("|-|",e1,attr) ->
+      let _, e1' = convertExp params e1 in
+      attrType attr, CEUnOp("-",e1')
+   | PUnOp(op,e1,attr) ->
+      let _, e1' = convertExp params e1 in
+      attrType attr, CEUnOp(op,e1')
+   | POp(op,elems,attr) ->
+      let _, elems' = convertExpList params elems in
+      attrType attr, CEOp(fixOp op, elems')
+   | PCall(_,[name],[arg],attr) when name="real" || name="int" || name="bool" ->
+      let _, arg' = convertExp params arg in
+      attrType attr, CECast(getCast params [name], arg')
+   | PCall(_,name,args,attr) ->
+      let args' = List.map (convertArgument params) args in
+      attrType attr, CECall(convertId params name, args')
+   | PIf(cond,then_,else_,attr) ->
+      let _, cond'  = convertExp params cond in
+      let _, then_' = convertExp params then_ in
+      let _, else_' = convertExp params else_ in
+      attrType attr, CEIf(cond', then_', else_')
+   | PGroup(e1,_)      -> convertExp params e1
+   | PTuple([e1],_)    -> convertExp params e1
+   | PTuple(elems,attr)   ->
+      let elems' =
+         List.mapi
+            (fun i a ->
+               let _,a' = convertExp params a in
+               "field_"^(string_of_int i), a')
+            elems
+      in
+      attrType attr, CETuple(elems')
    | PSeq _            -> failwith "VultCh.convertExp: Sequences are not yet supported for js"
    | PEmpty            -> failwith "VultCh.convertExp: Empty expressions are not allowed"
 
-and convertExpList (e:exp list) : cexp list =
-   List.map convertExp e
+and convertExpList params (e:exp list) : VType.t list * cexp list =
+   List.map (convertExp params) e |> List.split
 
-let rec convertLhsExp (e:lhs_exp) : clhsexp =
+and convertArgument params (e:exp) : cexp_type =
+   let typ, e' = convertExp params e in
+   let arg = if isValue typ then CVar(e') else CRef(e') in
+   let () = Printf.printf "- %s -> %s \n" (PrintTypes.expressionStr e) (PrintTypes.typeStr typ) in
+   arg
+
+let rec convertLhsExp is_val params (e:lhs_exp) : parameters * clhsexp =
    match e with
-   | LId(id,Some(typ),_) -> CLId(convertType typ, convertId id)
+   | LId(id,Some(typ),_) ->
+      let new_id = convertId params id in
+      let params' = if is_val then add params new_id else params in
+      params', CLId(convertType params typ, new_id)
    | LId(_,None,_)   -> failwith "VultCh.convertLhsExp: everything should have types"
-   | LTyped(e1,_,_)  -> convertLhsExp e1
-   | LTuple(elems,_) -> CLTuple(List.map convertLhsExp elems)
-   | LWild _         -> CLWild
-   | LGroup(e,_)    -> convertLhsExp e
+   | LTyped(e1,_,_)  -> convertLhsExp is_val params e1
+   | LTuple(elems,_) ->
+      let params', elems' = convertLhsExpList is_val params elems in
+      params', CLTuple(elems')
+   | LWild _ -> params, CLWild
+   | LGroup(e,_) -> convertLhsExp is_val params e
 
-let attrType (attr:attr) : string =
-   match attr.typ with
-   | Some(t) -> convertType t
-   | _ -> failwith "VultCh.attrType: everything should have types"
+and convertLhsExpList is_val params (lhsl:lhs_exp list) : parameters * clhsexp list =
+   let params', lhsl_rev =
+      List.fold_left
+         (fun (params,acc) lhs ->
+            let params',lhs' = convertLhsExp is_val params lhs in
+            params', lhs'::acc)
+         (params,[]) lhsl
+   in
+   params', List.rev lhsl_rev
 
-let rec convertStmt (s:stmt) : cstmt =
+let rec convertStmt params (s:stmt) : parameters * cstmt =
    match s with
-   | StmtVal(lhs,None,_)    -> CSVarDecl(convertLhsExp lhs,None)
-   | StmtVal(lhs,Some(rhs),_) -> CSVarDecl(convertLhsExp lhs,Some(convertExp rhs))
-   | StmtMem _              -> CSEmpty
-   | StmtTable _            -> failwith "VultCh.convertStmt: tables not implemented yet"
-   | StmtWhile(cond,stmt,_) -> CSWhile(convertExp cond, convertStmt stmt)
-   | StmtReturn(e1,_)       -> CSReturn(convertExp e1)
-   | StmtIf(cond,then_,None,_) -> CSIf(convertExp cond, convertStmt then_, None)
-   | StmtIf(cond,then_,Some(else_),_) -> CSIf(convertExp cond, convertStmt then_, Some(convertStmt else_))
+   | StmtVal(lhs,None,_) ->
+      let params', lhs' = convertLhsExp true params lhs in
+      params', CSVarDecl(lhs',None)
+   | StmtVal(lhs,Some(rhs),_) ->
+      let params', lhs' = convertLhsExp true params lhs in
+      let _, rhs' = convertExp params rhs in
+      params', CSVarDecl(lhs',Some(rhs'))
+   | StmtMem _                -> params, CSEmpty
+   | StmtTable _              -> failwith "VultCh.convertStmt: tables not implemented yet"
+   | StmtWhile(cond,stmt,_) ->
+      let _, cond' = convertExp params cond in
+      let _, stmt' = convertStmt params stmt in (* the env is ignored *)
+      params, CSWhile(cond', stmt')
+   | StmtReturn(e1,_) ->
+      let _,e1' = convertExp params e1 in
+      params, CSReturn(e1')
+   | StmtIf(cond,then_,None,_) ->
+      let _, cond' = convertExp params cond in
+      let _, then_' = convertStmt params then_ in
+      params, CSIf(cond',then_', None)
+   | StmtIf(cond,then_,Some(else_),_) ->
+      let _, cond' = convertExp params cond in
+      let _, then_' = convertStmt params then_ in
+      let _, else_' = convertStmt params else_ in
+      params, CSIf(cond', then_', Some(else_'))
    | StmtFun(_,_,_,None,_) -> failwith "VultCh.convertStmt: everything should have types"
    | StmtFun(name,args,body,Some(ret),_) ->
-      let arg_names = List.map convertTypedId args in
-      CSFunction(convertType ret, convertId name,arg_names,convertStmt body)
-   | StmtBind(lhs,rhs,_)    -> CSBind(convertLhsExp lhs, convertExp rhs)
-   | StmtBlock(_,stmts,_)   -> CSBlock(convertStmtList stmts)
-   | StmtType _             -> CSEmpty
-   | StmtAliasType _        -> CSEmpty
-   | StmtEmpty              -> CSEmpty
-   | StmtExternal _         -> CSEmpty
+      let arg_names = List.map (convertTypedId params) args in
+      let _, body'  = convertStmt (newEnv params) body in
+      params, CSFunction(convertType params ret, convertId params name,arg_names,body')
+   | StmtBind(lhs,rhs,_) ->
+      let params', lhs' = convertLhsExp false params lhs in
+      let _, rhs' = convertExp params rhs in
+      params', CSBind(lhs', rhs')
+   | StmtBlock(_,stmts,_) ->
+      let params', stmts' = convertStmtList params stmts in
+      params', CSBlock(stmts')
+   | StmtType(name,members,_) ->
+      let type_name    = convertType params name in
+      let member_pairs = List.map (fun (id,typ,_) -> convertType params typ, convertId params id) members in
+      params, CSType(type_name,member_pairs)
+   | StmtAliasType _ -> params, CSEmpty
+   | StmtEmpty       -> params, CSEmpty
+   | StmtExternal _  -> params, CSEmpty
 
-and convertStmtList (stmts:stmt list) : cstmt list =
-   List.map convertStmt stmts
+and convertStmtList params (stmts:stmt list) : parameters * cstmt list =
+   let params', stmts_rev =
+      List.fold_left
+         (fun (params,acc) stmt ->
+            let params',stmt' = convertStmt params stmt in
+            params', stmt'::acc)
+         (params,[]) stmts
+   in
+   params', List.rev stmts_rev
 
 let rec printExp buffer (e:cexp) : unit =
    match e with
    | CENumber(n) -> append buffer (string_of_float n)
-   | CEBool(v)   -> append buffer (if v then "true" else "false")
+   | CEBool(v)   -> append buffer (if v then "1" else "0")
    | CEString(s) -> append buffer ("\"" ^ s ^ "\"")
    | CECall(name,args) ->
       append buffer name;
       append buffer "(";
-      printExpList buffer "," args;
+      printList buffer printArgument "," args;
       append buffer ")"
    | CEUnOp(op,e) ->
       append buffer "(";
@@ -151,13 +292,27 @@ let rec printExp buffer (e:cexp) : unit =
    | CENewObj -> append buffer "{}"
    | CETuple(elems) ->
       append buffer "{ ";
-      printList buffer printJsField ", " elems;
+      printList buffer printChField ", " elems;
       append buffer " }"
+   | CECast(typ,exp) ->
+      append buffer "((";
+      append buffer typ;
+      append buffer ")";
+      printExp buffer exp;
+      append buffer ")"
 
-and printJsField buffer (name,value) =
+and printChField buffer (name,value) =
    append buffer name;
    append buffer " : ";
    printExp buffer value
+
+and printArgument buffer (arg:cexp_type) =
+   match arg with
+   | CVar(v) -> printExp buffer v
+   | CRef(v) ->
+      append buffer "&(";
+      printExp buffer v;
+      append buffer ")"
 
 and printExpList buffer (sep:string) (e:cexp list) : unit =
    match e with
@@ -191,9 +346,15 @@ let printLhsExpTuple buffer (var:string) (is_var:bool) (i:int) (e:clhsexp) : uni
    | _ -> failwith "printLhsExp: All other cases should be already covered"
 
 let printFunArg buffer (ntype,name) =
-   append buffer ntype;
-   append buffer " ";
-   append buffer name
+   match ntype with
+   | Var(typ) ->
+      append buffer typ;
+      append buffer " ";
+      append buffer name
+   | Ref(typ) ->
+      append buffer typ;
+      append buffer " *";
+      append buffer name
 
 let rec printStmt buffer (stmt:cstmt) : unit =
    match stmt with
@@ -273,6 +434,23 @@ let rec printStmt buffer (stmt:cstmt) : unit =
       append buffer "else";
       newline buffer;
       printStmt buffer else_;
+   | CSType(name,members) ->
+      append buffer "typedef struct ";
+      append buffer name;
+      append buffer " {";
+      indent buffer;
+      List.iter
+         (fun (typ, name) ->
+            append buffer typ;
+            append buffer " ";
+            append buffer name;
+            append buffer ";";
+            newline buffer;
+         ) members;
+      outdent buffer;
+      append buffer "} ";
+      append buffer name;
+      append buffer ";";
    | CSEmpty -> ()
 
 and printStmtList buffer (stmts:cstmt list) : unit =
@@ -284,14 +462,22 @@ and printStmtList buffer (stmts:cstmt list) : unit =
       printStmtList buffer t
 
 let template code =
-   ""^code^""
+   "
+#include \"stdint.h\"
+#include \"math.h\"
 
-let printChCode (stmts:stmt list) : string =
+"^code^""
+
+let printChCode (params:parameters) (stmts:stmt list) : string =
    let buffer = makePrintBuffer () in
-   let js = convertStmtList stmts in
-   let _ = printStmtList buffer js in
-   let code = contents buffer in
+   let _, js  = convertStmtList params stmts in
+   let _      = printStmtList buffer js in
+   let code   = contents buffer in
    template code
+
+let createParameters (args:arguments) : parameters =
+   let real = match args.real with | "fixed" -> Fixed | _ -> Float in
+   { real = real; env = [] }
 
 (** Generates the .c and .h file contents for the given parsed files *)
 let generateChCode (args:arguments) (parser_results:parser_results list) : string =
@@ -303,17 +489,18 @@ let generateChCode (args:arguments) (parser_results:parser_results list) : strin
             | _ -> [] )
       |> List.flatten
    in
-   let js_text = printChCode stmts in
+   let params = createParameters args in
+   let c_text = printChCode params stmts in
    if args.output<>"" then
       begin
          let oc = open_out (args.output^".js") in
-         Printf.fprintf oc "%s\n" js_text;
+         Printf.fprintf oc "%s\n" c_text;
          close_out oc;
-         js_text
+         c_text
       end
    else
       begin
-         print_endline js_text;
-         js_text
+         print_endline c_text;
+         c_text
       end
 

@@ -231,32 +231,16 @@ and stmtBuff buffer (s:stmt) =
       expressionBuff buffer cond;
       append buffer ")";
       stmtBuff buffer stmts
-   | StmtAliasType(id,args,alias,_) ->
+   | StmtAliasType(type_name,alias,_) ->
       append buffer "type ";
-      identifierBuff buffer id;
-      begin
-         match args with
-         | [] -> append buffer " "
-         | _  ->
-            append buffer "(";
-            printList buffer typedArgBuff "," args;
-            append buffer ")"
-      end;
-      append buffer ":";
+      typeExpressionBuff buffer type_name;
+      append buffer " : ";
       typeExpressionBuff buffer alias;
       append buffer ";"
-   | StmtType(id,args,decl_list,_) ->
+   | StmtType(type_name,decl_list,_) ->
       append buffer "type ";
-      identifierBuff buffer id;
-      begin
-         match args with
-         | [] -> append buffer " "
-         | _  ->
-            append buffer "(";
-            printList buffer typedArgBuff "," args;
-            append buffer ")"
-      end;
-      append buffer "{";
+      typeExpressionBuff buffer type_name;
+      append buffer " {";
       indent buffer;
       List.iter (valDecl buffer) decl_list;
       outdent buffer;

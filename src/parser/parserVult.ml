@@ -92,9 +92,9 @@ let getStmtLocation (s:stmt)  : Loc.t =
    | StmtBind(_,_,attr)
    | StmtBlock(_,_,attr)
    | StmtWhile(_,_,attr)
-   | StmtType(_,_,_,attr)
+   | StmtType(_,_,attr)
    | StmtExternal(_,_,_,attr)
-   | StmtAliasType(_,_,_,attr) -> attr.loc
+   | StmtAliasType(_,_,attr) -> attr.loc
    | StmtEmpty -> Loc.default
 
 (** Returns the left binding powers of the token *)
@@ -601,29 +601,20 @@ and stmtFunction (buffer:Stream.stream) : stmt =
 (** 'type' <id> '(' <typedArgList> ')' <valDeclList> *)
 and stmtType (buffer:Stream.stream) : stmt =
    let _         = Stream.consume buffer TYPE in
-   let name      = id buffer in
    let token     = Stream.current buffer in
    let start_loc = token.loc in
-   let args      =
-      match Stream.peek buffer with
-      | LPAREN ->
-         let _    = Stream.skip buffer in
-         let args = typedArgList true buffer in
-         let _    = Stream.consume buffer RPAREN in
-         args
-      | _ -> []
-   in
+   let type_name = typeExpression 10 buffer in
    match Stream.peek buffer with
    | COLON ->
       let _        = Stream.skip buffer in
       let vtype    = typeExpression 10 buffer in
       let _        = Stream.optConsume buffer SEMI in
-      StmtAliasType(name,args,vtype,makeAttr start_loc)
+      StmtAliasType(type_name,vtype,makeAttr start_loc)
    | LBRAC ->
       let _        = Stream.skip buffer in
       let val_decl = valDeclList buffer in
       let _        = Stream.consume buffer RBRAC in
-      StmtType(name,args,val_decl,makeAttr start_loc)
+      StmtType(type_name,val_decl,makeAttr start_loc)
    | _ ->
       let got     = tokenToString (Stream.current buffer) in
       let message = Printf.sprintf "Expecting a list of value declarations '{ val x:... }' or a type alias ': type' but got %s" got  in

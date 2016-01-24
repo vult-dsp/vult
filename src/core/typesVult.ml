@@ -148,13 +148,11 @@ and stmt =
       *  stmt list
       *  attr
    | StmtType
-      of id            (* name *)
-      *  typed_id list (* arguments *)
+      of VType.t       (* name *)
       *  val_decl list (* members *)
       *  attr
    | StmtAliasType
-      of id            (* name *)
-      *  typed_id list (* arguments *)
+      of VType.t       (* name *)
       *  VType.t       (* alias type *)
       *  attr
    | StmtEmpty
