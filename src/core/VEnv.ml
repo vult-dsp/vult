@@ -506,7 +506,7 @@ module Env = struct
       {
          state with
          scope = Scope.enter kind sharectx state.scope func;
-         tick  = 0;
+         tick  = if (kind = `Function && sharectx = false) then 0 else state.tick;
       }
 
    (** Closes the current context *)
