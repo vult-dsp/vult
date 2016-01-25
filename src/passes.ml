@@ -375,9 +375,7 @@ let applyTransformations (results:parser_results) =
       (initial_state,stmts)
       |> inferPass
       |> pass1
-      |> dump
       |> pass2
-      |> dump
       |> snd
    in
 
