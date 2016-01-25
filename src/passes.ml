@@ -63,6 +63,14 @@ module GetAttr = struct
       | PTuple(_,attr)
       | PSeq(_,_,attr) -> attr
       | PEmpty -> emptyAttr
+
+   let fromLhsExp (e:lhs_exp) : attr =
+      match e with
+      | LWild(attr)
+      | LId(_,_,attr)
+      | LTuple(_,attr)
+      | LTyped(_,_,attr)
+      | LGroup(_,attr) -> attr
 end
 
 module InsertContext = struct
@@ -235,13 +243,17 @@ module SimplifyTupleAssign = struct
          List.map2 (fun a b -> kind a b) lhs rhs
       else
          let stmts1 =
-            List.mapi
-               (fun i a ->
-                  let attr = GetAttr.fromExp a in
-                  kind (LId(makeTmp i, attr.typ, emptyAttr)) a)
-               rhs
+            List.mapi (fun i a ->
+               let attr = GetAttr.fromExp a in
+               makeValBind (LId(makeTmp i, attr.typ, attr)) a)
+            rhs
          in
-         let stmts2 = List.mapi (fun i a -> kind a (PId(makeTmp i,emptyAttr))) lhs in
+         let stmts2 =
+            List.mapi (fun i a ->
+               let attr = GetAttr.fromLhsExp a in
+               kind a (PId(makeTmp i,attr)))
+            lhs
+         in
          stmts1 @ stmts2
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
