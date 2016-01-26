@@ -33,6 +33,8 @@ let writeOutput (args:arguments) (code:string) (ext:string) =
          Printf.fprintf oc "%s\n" code;
          close_out oc;
       end
+   else
+      print_endline code
 
 
 let generateCode (args:arguments) (parser_results:parser_results list) : string =
