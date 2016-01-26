@@ -359,6 +359,19 @@ module ReportUnboundType = struct
 
 end
 
+module ReplaceMacros = struct
+
+   let exp : ('a Env.t,exp) Mapper.mapper_func =
+      Mapper.make @@ fun state exp ->
+         match exp with
+         | PCall(None,["clip"],[x;min;max],attr) ->
+            state,PCall(None,["min"],[PCall(None,["max"],[x;min],attr);max],attr)
+         | _ -> state, exp
+
+   let mapper = { Mapper.default_mapper with Mapper.exp = exp }
+
+end
+
 (* Basic transformations *)
 let inferPass (state,stmts) =
    let stmts,state,_ = Inference.inferStmtList state Inference.NoType stmts in
@@ -371,6 +384,7 @@ let pass1 (state,stmts) =
       |> Mapper.seq InsertContext.mapper
       |> Mapper.seq SimplifyTupleAssign.mapper
       |> Mapper.seq LHSTupleBinding.mapper
+      |> Mapper.seq ReplaceMacros.mapper
       |> Mapper.seq CreateInitFunction.mapper
    in
    Mapper.map_stmt_list mapper state stmts
