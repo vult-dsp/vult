@@ -150,7 +150,7 @@ let convertOperator params (op:string) (typ:VType.t) (elems:cexp list) (elem_typ
    let is_builtin = is_float || is_int || is_bool in
    match op with
    | "<>" when is_builtin -> typ, CEOp("!=",elems)
-   | "%"  when is_float   -> typ, CECall("fmod",wrapArguments elem_types elems)
+   | "%"  when is_float   -> typ, CECall("fmodf",wrapArguments elem_types elems)
 
    | _ -> typ, CEOp(op,elems)
 
@@ -160,6 +160,7 @@ let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) (elem_types:V
    let fixed_fn =
       match fn with
       | ["abs"]   when is_float -> `FunctionName(["fabsf"])
+      | ["exp"]   when is_float -> `FunctionName(["expf"])
       | ["floor"] when is_float -> `FunctionName(["floorf"])
       | ["max"]   when is_float -> `FunctionName(["fmax"])
       | ["min"]   when is_float -> `FunctionName(["fmin"])
@@ -329,7 +330,7 @@ module PrintC = struct
 
    let rec printExp buffer (e:cexp) : unit =
       match e with
-      | CEFloat(n)  -> append buffer (string_of_float n)
+      | CEFloat(n)  -> append buffer ((string_of_float n)^"f")
       | CEInt(n)    -> append buffer (string_of_int n)
       | CEBool(v)   -> append buffer (if v then "1" else "0")
       | CEString(s) -> append buffer ("\"" ^ s ^ "\"")
