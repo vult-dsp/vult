@@ -37,6 +37,7 @@ type cstmt =
    | CSBlock    of cstmt list
    | CSIf       of cexp * cstmt * cstmt option
    | CSType     of string * (string * string) list
+   | CSAlias    of string * string
    | CSEmpty
 
 type real_type =
@@ -155,6 +156,7 @@ let convertOperator params (op:string) (typ:VType.t) (elems:cexp list) (elem_typ
 
 let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) (elem_types:VType.t list) : VType.t * cexp =
    let is_float = (params.real = Float) && (isReal typ) in
+   let is_int   = (isInt typ) in
    let fixed_fn =
       match fn with
       | ["abs"]   when is_float -> `FunctionName(["fabsf"])
@@ -165,6 +167,8 @@ let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) (elem_types:V
       | ["cos"]   when is_float -> `FunctionName(["cosf"])
       | ["tan"]   when is_float -> `FunctionName(["tanf"])
       | ["tanh"]  when is_float -> `FunctionName(["tanhf"])
+      | ["clip"]  when is_float -> `FunctionName(["clip_float"])
+      | ["clip"]  when is_int   -> `FunctionName(["clip_int"])
       | ["not"] -> `UnOperatorName("!")
       | _ -> `FunctionName(fn)
    in
@@ -291,7 +295,10 @@ let rec convertStmt params (s:stmt) : parameters * cstmt =
       let type_name    = convertType params name in
       let member_pairs = List.map (fun (id,typ,_) -> convertType params typ, convertId params id) members in
       params, CSType(type_name,member_pairs)
-   | StmtAliasType _ -> params, CSEmpty
+   | StmtAliasType(t1,t2,_) ->
+      let t1_name    = convertType params t1 in
+      let t2_name    = convertType params t2 in
+      params, CSAlias(t2_name,t1_name)
    | StmtEmpty       -> params, CSEmpty
    | StmtExternal _  -> params, CSEmpty
 
@@ -458,6 +465,7 @@ module PrintC = struct
          printList buffer printFunArg ", " args;
          append buffer ")";
          printStmt buffer body;
+         newline buffer;
       | CSFunction(ntype,name,args,body) ->
          append buffer ntype;
          append buffer " ";
@@ -467,6 +475,7 @@ module PrintC = struct
          append buffer ") { ";
          printStmt buffer body;
          append buffer "}";
+         newline buffer;
       | CSReturn(e1) ->
          append buffer "return ";
          printExp buffer e1;
@@ -515,6 +524,14 @@ module PrintC = struct
          append buffer "} ";
          append buffer name;
          append buffer ";";
+         newline buffer;
+      | CSAlias(t1,t2) ->
+         append buffer "typedef ";
+         append buffer t1;
+         append buffer " ";
+         append buffer t2;
+         append buffer ";";
+         newline buffer;
       | CSEmpty -> ()
 
    and printStmtList buffer (stmts:cstmt list) : unit =
@@ -556,17 +573,4 @@ let generateChCode (args:arguments) (parser_results:parser_results list) : strin
       |> List.flatten
    in
    let params = createParameters args in
-   let c_text = PrintC.printChCode params stmts in
-   if args.output<>"" then
-      begin
-         let oc = open_out (args.output^".js") in
-         Printf.fprintf oc "%s\n" c_text;
-         close_out oc;
-         c_text
-      end
-   else
-      begin
-         print_endline c_text;
-         c_text
-      end
-
+   PrintC.printChCode params stmts

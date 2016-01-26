@@ -303,7 +303,7 @@ let printJsCode (stmts:stmt list) : string =
    template code
 
 (** Generates the .c and .h file contents for the given parsed files *)
-let generateJSCode (args:arguments) (parser_results:parser_results list) : string =
+let generateJSCode (_:arguments) (parser_results:parser_results list) : string =
    let stmts =
       parser_results
       |> List.map (
@@ -313,16 +313,5 @@ let generateJSCode (args:arguments) (parser_results:parser_results list) : strin
       |> List.flatten
    in
    let js_text = printJsCode stmts in
-   if args.output<>"" then
-      begin
-         let oc = open_out (args.output^".js") in
-         Printf.fprintf oc "%s\n" js_text;
-         close_out oc;
-         js_text
-      end
-   else
-      begin
-         print_endline js_text;
-         js_text
-      end
+   js_text
 

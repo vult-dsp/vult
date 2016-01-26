@@ -25,69 +25,26 @@ THE SOFTWARE.
 (** Contains top level functions to perform common tasks *)
 
 open TypesVult
-(*open PassesUtil*)
 
-(*
-(** Generates the .c and .h file contents for the given parsed files *)
-let generateCCode (args:arguments) (parser_results:parser_results list) : string =
-   let file = if args.output<>"" then args.output else "code" in
-   let file_up = String.uppercase file in
-   let stmts =
-      parser_results
-      |> List.map (Passes.applyTransformations { opt_full_transform with inline = true; codegen = true })
-      |> List.map (
-         fun a -> match a.presult with
-            | `Ok(b) -> b
-            | _ -> [] )
-      |> List.flatten
-   in
-
-   let c_text,h_text = ProtoGenC.generateHeaderAndImpl args stmts in
-   let c_final = Printf.sprintf "#include \"%s.h\"\n\n%s\n" file c_text in
-   let h_final = Printf.sprintf
-"#ifndef _%s_
-#define _%s_
-
-#include <math.h>
-#include <stdint.h>
-#include \"vultin.h\"
-
-#ifdef __cplusplus
-extern \"C\"
-{
-#endif
-
-%s
-
-#ifdef __cplusplus
-}
-#endif
-#endif" file_up file_up h_text
-   in
-   let _ =
+let writeOutput (args:arguments) (code:string) (ext:string) =
    if args.output<>"" then
       begin
-         let oc = open_out (args.output^".c") in
-         Printf.fprintf oc "%s\n" c_final;
+         let oc = open_out (args.output^ext) in
+         Printf.fprintf oc "%s\n" code;
          close_out oc;
-         let oh = open_out (args.output^".h") in
-         Printf.fprintf oh "%s\n" h_final;
-         close_out oh
       end
-   else
-      begin
-         print_endline h_final;
-         print_endline c_final;
-      end
-   in h_final^c_final
-*)
+
 
 let generateCode (args:arguments) (parser_results:parser_results list) : string =
    if args.ccode then
-      VultCh.generateChCode args parser_results
+      let code = VultCh.generateChCode args parser_results in
+      let ()   = writeOutput args code ".c" in
+      code
    else
    if args.jscode then
-      VultJs.generateJSCode args parser_results
+      let code = VultJs.generateJSCode args parser_results in
+      let ()   = writeOutput args code ".js" in
+      code
    else ""
 
 

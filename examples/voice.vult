@@ -313,8 +313,8 @@ fun process(i:real){
   mem param16; // env_r
 
   val gate    = monoin:isGateOn();
-  val lfo     = lfo(param5,gate)*param4;
-  val x       = osc(param1,param2+lfo,param3);
+  val lfo1    = lfo(param5,gate)*param4;
+  val x       = osc(param1,param2+lfo1,param3);
   val amp_env = adsr(gate,param9,param10,param11,param12);
   val flt_env = adsr(gate,param13,param14,param15,param16);
   val cut_mod = param6 + param8 * flt_env;

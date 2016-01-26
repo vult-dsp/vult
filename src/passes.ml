@@ -141,6 +141,12 @@ module CreateInitFunction = struct
       | [last] -> [ last^"_init" ]
       | h::t -> h :: (getInitFunctioName t)
 
+   let rec getFunctioTypeName (id:id) : id =
+      match id with
+      | [] -> failwith "getFunctioTypeName: empty id"
+      | [last] -> [ last^"_type" ]
+      | h::t -> h :: (getFunctioTypeName t)
+
    let rec getInitValue (tp:VType.t) : exp =
       match tp with
       | { contents = VType.TId(["real"],_) } -> PReal(0.0,{ emptyAttr with typ = Some(tp)})
@@ -191,6 +197,11 @@ module CreateInitFunction = struct
          StmtReturn(PCall(None,getInitFunctioName ctx,[],attr),emptyAttr),
          Some(typ), emptyAttr)
 
+   let generateTypeAlias (state:'a Env.t) (name:id) : stmt =
+      let ctx  = Env.getContext state name in
+      let typ  = ref (VType.TId(ctx,None)) in
+      let name_type = ref (VType.TId(getFunctioTypeName name,None)) in
+      StmtAliasType(name_type,typ,emptyAttr)
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander @@ fun state stmt ->
@@ -200,9 +211,10 @@ module CreateInitFunction = struct
             if Env.isActive state name && not (PassData.hasInitFunction data name) then
                let ctx     = Env.getContext state name in
                let init_fn = generateInitFunctionWrapper state name in
+               let type_fn = generateTypeAlias state name in
                if PassData.hasInitFunction data ctx then
                   let data'   = PassData.markInitFunction data name in
-                  Env.set state data', [stmt; init_fn]
+                  Env.set state data', [type_fn; init_fn; stmt]
                else
                   let mem_vars, instances = Env.getMemAndInstances state name in
                   let member_set =
@@ -217,7 +229,7 @@ module CreateInitFunction = struct
                   let type_def   = generateContextType ctx member_set in
                   let data'      = PassData.markInitFunction data ctx in
                   let data'      = PassData.markInitFunction data' name in
-                  Env.set state data', [type_def; stmt; init_funct; init_fn]
+                  Env.set state data', [type_def; type_fn; init_funct; init_fn; stmt]
             else
                state, [stmt]
 
@@ -359,17 +371,9 @@ let pass1 (state,stmts) =
       |> Mapper.seq InsertContext.mapper
       |> Mapper.seq SimplifyTupleAssign.mapper
       |> Mapper.seq LHSTupleBinding.mapper
+      |> Mapper.seq CreateInitFunction.mapper
    in
    Mapper.map_stmt_list mapper state stmts
-
-let pass2 (state,stmts) =
-   let mapper =
-      CreateInitFunction.mapper
-   in
-   Mapper.map_stmt_list mapper state stmts
-
-let dump (state,stmts) =
-   state,stmts
 
 let applyTransformations (results:parser_results) =
    let module_name =
@@ -387,7 +391,6 @@ let applyTransformations (results:parser_results) =
       (initial_state,stmts)
       |> inferPass
       |> pass1
-      |> pass2
       |> snd
    in
 
