@@ -402,7 +402,7 @@ module Scope = struct
       | `Variable -> lookupVariable t name
 
    let isMemOrInstance (t:t) (name:id) : bool =
-      match findAny false getMemInst t name with
+      match lookupMemInAllContext t name with
       | Some(_) -> true
       | None    -> false
 

@@ -33,18 +33,38 @@ module PassData = struct
    type t =
       {
          gen_init_ctx : IdSet.t; (** Context for which a init function has been generated *)
+         repeat       : bool;
       }
 
    let hasInitFunction (t:t) (id:id) : bool =
       IdSet.mem id t.gen_init_ctx
 
    let markInitFunction (t:t) (id:id) : t =
-      { gen_init_ctx = IdSet.add id t.gen_init_ctx }
+      { t with gen_init_ctx = IdSet.add id t.gen_init_ctx }
 
-   let empty = { gen_init_ctx = IdSet.empty }
+   let reapply (t:t) : t =
+      { t with repeat = true }
+
+   let reset (t:t) : t =
+      { t with repeat = false }
+
+   let shouldReapply (t:t) : bool =
+      t.repeat
+
+   let empty = { gen_init_ctx = IdSet.empty; repeat = false }
 
 end
 
+let reapply (state:PassData.t Env.t) : PassData.t Env.t =
+   let data = Env.get state in
+   Env.set state (PassData.reapply data)
+
+let reset (state:PassData.t Env.t) : PassData.t Env.t =
+   let data = Env.get state in
+   Env.set state (PassData.reset data)
+
+let shouldReapply (state:PassData.t Env.t) : bool =
+   PassData.shouldReapply (Env.get state)
 
 module GetAttr = struct
 
@@ -123,7 +143,7 @@ module SplitMem = struct
       Mapper.makeExpander @@ fun state stmt ->
          match stmt with
          | StmtMem(lhs,init,Some(rhs),attr) ->
-            state, [ StmtMem(lhs,init,None,attr); StmtBind(lhs,rhs,attr) ]
+            reapply state, [ StmtMem(lhs,init,None,attr); StmtBind(lhs,rhs,attr) ]
          | _ -> state, [stmt]
 
    let mapper =
@@ -273,15 +293,15 @@ module SimplifyTupleAssign = struct
          match stmt with
          | StmtVal(LTuple(lhs,_),None,attr) ->
             let stmts = List.map (fun a -> StmtVal(a,None,attr)) lhs in
-            state, stmts
+            reapply state, stmts
 
          | StmtVal(LTuple(lhs,_),Some(PTuple(rhs,_)),_) when List.length lhs = List.length rhs ->
             let stmts = createAssignments makeValBind lhs rhs in
-            state, stmts
+            reapply state, stmts
 
          | StmtBind(LTuple(lhs,_),PTuple(rhs,_),_) when List.length lhs = List.length rhs ->
             let stmts = createAssignments makeBind lhs rhs in
-            state, stmts
+            reapply state, stmts
 
          | StmtBind(LTuple(_,_),PTuple(_,_),_) ->
             failwith "SimplifyTupleAssign.stmt_x: this error should be catched by the type checker"
@@ -299,21 +319,23 @@ module LHSTupleBinding = struct
       Mapper.makeExpander @@ fun state stmt ->
          match stmt with
          | StmtVal(LTuple(_,_),Some(PId(_,_)),_) -> state, [stmt]
+         | StmtVal(LTuple(_,_),Some(PTuple(_,_)),_) -> state, [stmt]
          | StmtBind(LTuple(_,_),PId(_,_),_) -> state, [stmt]
+         | StmtBind(LTuple(_,_),PTuple(_,_),_) -> state, [stmt]
          | StmtBind((LTuple(_,_) as lhs),rhs,attr) ->
             let tick, state' = Env.tick state in
             let tmp_name = ["_tmp_"^(string_of_int tick)] in
             let tmp = PId(tmp_name,attr) in
             let typ = (GetAttr.fromExp rhs).typ in
             let ltmp = LId(tmp_name,typ,attr) in
-            state', [StmtVal(ltmp,Some(rhs),attr); StmtBind(lhs,tmp,attr)]
+            reapply state', [StmtVal(ltmp,Some(rhs),attr); StmtBind(lhs,tmp,attr)]
          | StmtVal((LTuple(_,_) as lhs),Some(rhs),attr) ->
             let tick, state' = Env.tick state in
             let tmp_name = ["_tmp_"^(string_of_int tick)] in
             let tmp = PId(tmp_name,attr) in
             let typ = (GetAttr.fromExp rhs).typ in
             let ltmp = LId(tmp_name,typ,attr) in
-            state', [StmtVal(ltmp,Some(rhs),attr); StmtVal(lhs,Some(tmp),attr)]
+            reapply state', [StmtVal(ltmp,Some(rhs),attr); StmtVal(lhs,Some(tmp),attr)]
          | _ -> state, [stmt]
 
    let mapper =
@@ -359,35 +381,27 @@ module ReportUnboundType = struct
 
 end
 
-module ReplaceMacros = struct
-
-   let exp : ('a Env.t,exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
-         match exp with
-         | PCall(None,["clip"],[x;min;max],attr) ->
-            state,PCall(None,["min"],[PCall(None,["max"],[x;min],attr);max],attr)
-         | _ -> state, exp
-
-   let mapper = { Mapper.default_mapper with Mapper.exp = exp }
-
-end
 
 (* Basic transformations *)
 let inferPass (state,stmts) =
    let stmts,state,_ = Inference.inferStmtList state Inference.NoType stmts in
    state,stmts
 
-let pass1 (state,stmts) =
-   let mapper =
-      ReportUnboundType.mapper
-      |> Mapper.seq SplitMem.mapper
-      |> Mapper.seq InsertContext.mapper
-      |> Mapper.seq SimplifyTupleAssign.mapper
-      |> Mapper.seq LHSTupleBinding.mapper
-      |> Mapper.seq ReplaceMacros.mapper
-      |> Mapper.seq CreateInitFunction.mapper
-   in
-   Mapper.map_stmt_list mapper state stmts
+let pass1_mapper =
+   ReportUnboundType.mapper
+   |> Mapper.seq SplitMem.mapper
+   |> Mapper.seq InsertContext.mapper
+   |> Mapper.seq SimplifyTupleAssign.mapper
+   |> Mapper.seq LHSTupleBinding.mapper
+   |> Mapper.seq CreateInitFunction.mapper
+
+let rec pass1 (state,stmts) =
+   let state',stmts' = Mapper.map_stmt_list pass1_mapper state stmts in
+   if shouldReapply state' then
+      let _ = print_endline "Reapplying mapper" in
+      pass1 (reset state',stmts')
+   else
+      state',stmts'
 
 let applyTransformations (results:parser_results) =
    let module_name =
