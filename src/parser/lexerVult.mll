@@ -47,7 +47,6 @@ let keyword_table =
       "return",RET;
       "while",WHILE;
       "type",TYPE;
-      "table",TABLE;
       "true",TRUE;
       "false",FALSE;
       "and",AND;
@@ -126,7 +125,6 @@ let kindToString kind =
    | AT    -> "'@'"
    | OP    -> "'operator'"
    | DOT   -> "'.'"
-   | TABLE -> "'table'"
    | LARR  -> "'[|'"
    | RARR  -> "'|]'"
    | TRUE  -> "'true'"

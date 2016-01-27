@@ -297,11 +297,6 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       let state',rhs'  = (mapper_opt map_exp) mapper state' rhs in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.stmt state' (StmtMem(lhs',init',rhs',attr'))
-   | StmtTable(id,elems,attr) ->
-      let state',id'    = map_id mapper state id in
-      let state',elems' = (mapper_list map_exp) mapper state' elems in
-      let state',attr'  = map_attr mapper state' attr in
-      apply mapper.stmt state' (StmtTable(id',elems',attr'))
    | StmtReturn(e,attr) ->
       let state',e'    = map_exp mapper state e in
       let state',attr' = map_attr mapper state' attr in
@@ -377,7 +372,6 @@ and map_stmt_subs (mapper:'state mapper) (state,stmt:('state * stmt)) : 'state *
    match stmt with
    | StmtVal _
    | StmtMem _
-   | StmtTable _
    | StmtReturn _
    | StmtBind _
    | StmtType _

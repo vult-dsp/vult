@@ -85,7 +85,6 @@ let getStmtLocation (s:stmt)  : Loc.t =
    match s with
    | StmtVal(_,_,attr)
    | StmtMem(_,_,_,attr)
-   | StmtTable(_,_,attr)
    | StmtReturn(_,attr)
    | StmtIf(_,_,_,attr)
    | StmtFun(_,_,_,_,attr)
@@ -505,17 +504,6 @@ and stmtMem (buffer:Stream.stream) : stmt =
       let attr = makeAttr start_loc in
       StmtMem(lhs,init,None,attr)
 
-and stmtTab (buffer: Stream.stream) : stmt =
-   let start_loc = Stream.location buffer in
-   let _     = Stream.consume buffer TABLE in
-   let name  = id buffer in
-   let _     = Stream.consume buffer EQUAL in
-   let _     = Stream.consume buffer LARR in
-   let elems = expressionList buffer in
-   let _     = Stream.consume buffer RARR in
-   let _     = Stream.consume buffer SEMI in
-   StmtTable(name,elems,makeAttr start_loc)
-
 (** <statement> := | 'return' <expression> ';' *)
 and stmtReturn (buffer:Stream.stream) : stmt =
    let start_loc = Stream.location buffer in
@@ -662,7 +650,6 @@ and stmt (buffer:Stream.stream) : stmt =
       | AND   ->    stmtFunction buffer
       | WHILE ->    stmtWhile    buffer
       | TYPE  ->    stmtType     buffer
-      | TABLE ->    stmtTab      buffer
       | EXTERNAL -> stmtExternal buffer
       | _        -> stmtBind     buffer
    with

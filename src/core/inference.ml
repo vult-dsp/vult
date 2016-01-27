@@ -323,11 +323,6 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       unifyRaise (expOptLoc init') lhs_typ init_typ;
       unifyRaise (expOptLoc rhs') lhs_typ rhs_typ;
       StmtMem(lhs', init', rhs', attr), env', ret_type
-   | StmtTable(id,elems,attr) ->
-      let elems',env',types = inferExpList env elems in
-      let typ  = unifyListSameType elems' types (VType.newvar ()) in
-      let env' = Env.addVar env' id typ in
-      StmtTable(id,elems',attr), env', ret_type
    | StmtReturn(e,attr) ->
       let e',env', typ = inferExp env e in
       let ret_type'    = unifyReturn (expLoc e) ret_type (ReturnType(typ)) in

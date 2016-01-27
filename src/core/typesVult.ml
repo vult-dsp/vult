@@ -112,10 +112,6 @@ and stmt =
       *  exp option  (* initial value *)
       *  exp option  (* rhs *)
       *  attr
-   | StmtTable
-      of id       (* name *)
-      *  exp list (* data *)
-      *  attr
    | StmtWhile
       of exp         (* condition*)
       *  stmt        (* statements *)

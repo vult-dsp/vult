@@ -263,7 +263,6 @@ let rec convertStmt params (s:stmt) : parameters * cstmt =
       let _, rhs' = convertExp params rhs in
       params', CSVarDecl(lhs',Some(rhs'))
    | StmtMem _                -> params, CSEmpty
-   | StmtTable _              -> failwith "VultCh.convertStmt: tables not implemented yet"
    | StmtWhile(cond,stmt,_) ->
       let _, cond' = convertExp params cond in
       let _, stmt' = convertStmt params stmt in (* the env is ignored *)

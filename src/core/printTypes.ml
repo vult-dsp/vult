@@ -169,12 +169,6 @@ and stmtBuff buffer (s:stmt) =
             append buffer " = ";
             expressionBuff buffer a) e3;
       append buffer ";"
-   | StmtTable(id,elems,_) ->
-      append buffer "table ";
-      identifierBuff buffer id;
-      append buffer " = [|";
-      expressionListBuff buffer elems;
-      append buffer "|];"
    | StmtReturn(e,_) ->
       append buffer "return ";
       expressionBuff buffer e;

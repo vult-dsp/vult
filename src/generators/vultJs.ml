@@ -88,7 +88,6 @@ let rec convertStmt (s:stmt) : jsstmt =
    | StmtVal(lhs,None,_)    -> JSVarDecl(convertLhsExp lhs,JENewObj)
    | StmtVal(lhs,Some(rhs),_) -> JSVarDecl(convertLhsExp lhs,convertExp rhs)
    | StmtMem _              -> JSEmpty
-   | StmtTable _            -> failwith "VultJs.convertStmt: tables not implemented yet"
    | StmtWhile(cond,stmt,_) -> JSWhile(convertExp cond, convertStmt stmt)
    | StmtReturn(e1,_)       -> JSReturn(convertExp e1)
    | StmtIf(cond,then_,None,_) -> JSIf(convertExp cond, convertStmt then_, None)
