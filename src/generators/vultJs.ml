@@ -1,8 +1,10 @@
 open TypesVult
 open PrintBuffer
+open Common
 
 type jsexp =
-   | JENumber of float
+   | JEInteger of int
+   | JEFloat  of float
    | JEBool   of bool
    | JEString of string
    | JECall   of string * jsexp list
@@ -20,7 +22,7 @@ type jslhsexp =
 
 type jsstmt =
    | JSVarDecl  of jslhsexp * jsexp
-   | JSBind     of jslhsexp * jsexp
+   | JSBind     of jslhsexp * jsexp * bool
    | JSFunction of string * string list * jsstmt
    | JSReturn   of jsexp
    | JSWhile    of jsexp * jsstmt
@@ -38,6 +40,14 @@ let fixKeyword key =
    | "default" -> "default_"
    | _ -> key
 
+let isIntType (opt_typ:VType.t option) : bool =
+   match opt_typ with
+   | None -> false
+   | Some(typ) ->
+      match !(VType.unlink typ) with
+      | VType.TId(name,_) when name=["int"] -> true
+      | _ -> false
+
 let rec join (sep:string) (id:string list) : string =
    match id with
    | [] -> ""
@@ -49,10 +59,10 @@ let rec convertId (id:id) : string =
 
 let rec convertExp (e:exp) : jsexp =
    match e with
-   | PUnit(_)        -> JENumber(0.0)
+   | PUnit(_)        -> JEInteger(0)
    | PBool(v,_)      -> JEBool(v)
-   | PInt(n,_)       -> JENumber(float_of_int n)
-   | PReal(v,_)      -> JENumber(v)
+   | PInt(n,_)       -> JEInteger(n)
+   | PReal(v,_)      -> JEFloat(v)
    | PId(id,_)       -> JEVar(convertId id)
    | PUnOp("|-|",e1,_)-> JEUnOp("-", convertExp e1)
    | PUnOp(op,e1,_)  -> JEUnOp(op, convertExp e1)
@@ -95,7 +105,9 @@ let rec convertStmt (s:stmt) : jsstmt =
    | StmtFun(name,args,body,_,_) ->
       let arg_names = List.map convertTypedId args in
       JSFunction(convertId name,arg_names,convertStmt body)
-   | StmtBind(lhs,rhs,_)    -> JSBind(convertLhsExp lhs, convertExp rhs)
+   | StmtBind(lhs,rhs,_)    ->
+      let is_int = isIntType ((GetAttr.fromExp rhs).typ) in
+      JSBind(convertLhsExp lhs, convertExp rhs,is_int)
    | StmtBlock(_,stmts,_)   -> JSBlock(convertStmtList stmts)
    | StmtType _             -> JSEmpty
    | StmtAliasType _        -> JSEmpty
@@ -107,7 +119,11 @@ and convertStmtList (stmts:stmt list) : jsstmt list =
 
 let rec printExp buffer (e:jsexp) : unit =
    match e with
-   | JENumber(n) -> append buffer (string_of_float n)
+   | JEInteger(n) ->
+      append buffer "(";
+      append buffer (string_of_int n);
+      append buffer "|0)";
+   | JEFloat(n) -> append buffer (string_of_float n)
    | JEBool(v)   -> append buffer (if v then "true" else "false")
    | JEString(s) -> append buffer ("\"" ^ s ^ "\"")
    | JECall(name,args) ->
@@ -200,16 +216,18 @@ let rec printStmt buffer (stmt:jsstmt) : unit =
    | JSVarDecl(JLTuple(elems),JEVar(name)) ->
       List.iteri (printLhsExpTuple buffer name true) elems;
    | JSVarDecl(JLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
-   | JSBind(JLWild,value) ->
+   | JSBind(JLWild,value,_) ->
       printExp buffer value;
       append buffer ";";
-   | JSBind(JLTuple(elems),JEVar(name)) ->
+   | JSBind(JLTuple(elems),JEVar(name),_) ->
       List.iteri (printLhsExpTuple buffer name false) elems;
-   | JSBind(JLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
-   | JSBind(JLId(name),value) ->
+   | JSBind(JLTuple(_),_,_) -> failwith "printStmt: invalid tuple assign"
+   | JSBind(JLId(name),value,is_int) ->
       append buffer name;
       append buffer " = ";
+      if is_int then append buffer "(";
       printExp buffer value;
+      if is_int then append buffer "|0)";
       append buffer ";";
    | JSFunction(name,args,(JSBlock(_) as body)) ->
       append buffer "this.";
