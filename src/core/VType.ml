@@ -175,7 +175,7 @@ let fixOptType table ot =
       let t', table' = fixType table t in
       Some(t'), table'
 
-let rec isUnbound (t:t) =
+let rec isUnbound (t:t) : bool =
    match t with
    | { contents = TUnbound(_,_,_) } -> true
    | { contents = TId(_,_) } -> false
@@ -184,6 +184,19 @@ let rec isUnbound (t:t) =
       isUnbound t1 || isUnbound t2
    | { contents = TLink(t) } -> isUnbound t
    | { contents = TExpAlt(_) } -> true
+
+let rec location (t:t) =
+   match t with
+   | { contents = TUnbound(_,_,Some(loc)) } -> loc
+   | { contents = TId(_,Some(loc)) } -> loc
+   | { contents = TComposed(_,elems,Some(loc)) } ->
+      List.fold_left (fun s a -> Loc.merge s (location a)) loc elems
+   | { contents = TArrow(t1,t2,Some(loc)) } ->
+      loc |> Loc.merge (location t1) |> Loc.merge (location t2)
+   | { contents = TLink(t) } -> location t
+   | { contents = TExpAlt(elems) } ->
+      List.fold_left (fun s a -> Loc.merge s (location a)) Loc.default elems
+   | _ -> Loc.default
 
 let getLevel = function
    | None -> current_level ()
