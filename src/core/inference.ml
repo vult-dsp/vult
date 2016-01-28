@@ -38,6 +38,7 @@ type return_type =
 let expLoc e  = lazy (GetLocation.fromExp e)
 let lhsLoc e  = lazy (GetLocation.fromLhsExp e)
 let stmtLoc e = lazy (GetLocation.fromStmt e)
+let typLoc t  = lazy (GetLocation.fromType t)
 let expOptLoc e =
    lazy (
    match e with
@@ -132,6 +133,7 @@ let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : typed_id list * VType
       let inner_args, inner_typ, env' = addArgsToEnv env' t in
       TypedId(id,typ,attr) :: inner_args, typ :: inner_typ, env'
    | TypedId(id,typ,attr)::t ->
+      checkType (typLoc typ) env typ;
       let env' = Env.addVar env id typ in
       let inner_args, inner_typ, env' = addArgsToEnv env' t in
       TypedId(id,typ,attr) :: inner_args, typ :: inner_typ, env'
