@@ -21,7 +21,7 @@ type jslhsexp =
    | JLTuple of jslhsexp list
 
 type jsstmt =
-   | JSVarDecl  of jslhsexp * jsexp
+   | JSVarDecl  of jslhsexp * jsexp * bool
    | JSBind     of jslhsexp * jsexp * bool
    | JSFunction of string * string list * jsstmt
    | JSReturn   of jsexp
@@ -95,8 +95,10 @@ let convertTypedId (e:typed_id) : string =
 
 let rec convertStmt (s:stmt) : jsstmt =
    match s with
-   | StmtVal(lhs,None,_)    -> JSVarDecl(convertLhsExp lhs,JENewObj)
-   | StmtVal(lhs,Some(rhs),_) -> JSVarDecl(convertLhsExp lhs,convertExp rhs)
+   | StmtVal(lhs,None,_)    -> JSVarDecl(convertLhsExp lhs,JENewObj,false)
+   | StmtVal(lhs,Some(rhs),_) ->
+      let is_int = isIntType ((GetAttr.fromExp rhs).typ) in
+      JSVarDecl(convertLhsExp lhs,convertExp rhs,is_int)
    | StmtMem _              -> JSEmpty
    | StmtWhile(cond,stmt,_) -> JSWhile(convertExp cond, convertStmt stmt)
    | StmtReturn(e1,_)       -> JSReturn(convertExp e1)
@@ -204,18 +206,20 @@ let printLhsExpTuple buffer (var:string) (is_var:bool) (i:int) (e:jslhsexp) : un
 
 let rec printStmt buffer (stmt:jsstmt) : unit =
    match stmt with
-   | JSVarDecl(JLWild,value) ->
+   | JSVarDecl(JLWild,value,_) ->
       printExp buffer value;
       append buffer ";";
-   | JSVarDecl(JLId(name),value) ->
+   | JSVarDecl(JLId(name),value,is_int) ->
       append buffer "var ";
       append buffer name;
       append buffer " = ";
+      if is_int then append buffer "(";
       printExp buffer value;
+      if is_int then append buffer "|0)";
       append buffer ";";
-   | JSVarDecl(JLTuple(elems),JEVar(name)) ->
+   | JSVarDecl(JLTuple(elems),JEVar(name),_) ->
       List.iteri (printLhsExpTuple buffer name true) elems;
-   | JSVarDecl(JLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
+   | JSVarDecl(JLTuple(_),_,_) -> failwith "printStmt: invalid tuple assign"
    | JSBind(JLWild,value,_) ->
       printExp buffer value;
       append buffer ";";
@@ -290,7 +294,7 @@ let template code =
     this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
     this.not  = function(x)          { return x==0?1:0; };
     this.real = function(x)          { return x; };
-    this.int  = function(x)          { return x; };
+    this.int  = function(x)          { return x|0; };
     this.sin  = function(x)          { return Math.sin(x); };
     this.cos  = function(x)          { return Math.cos(x); };
     this.abs  = function(x)          { return Math.abs(x); };
