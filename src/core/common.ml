@@ -87,4 +87,33 @@ module GetLocation = struct
       let s, _ = Mapper.map_lhs_exp mapper dummy_env e in
       Env.get s
 
+   let fromType (e:VType.t) : Loc.t = VType.location e
+
+end
+
+module GetAttr = struct
+
+   let fromExp (e:exp) : attr =
+      match e with
+      | PUnit(attr)
+      | PBool(_,attr)
+      | PInt(_,attr)
+      | PReal(_,attr)
+      | PId(_,attr)
+      | PUnOp(_,_,attr)
+      | POp(_,_,attr)
+      | PCall(_,_,_,attr)
+      | PIf(_,_,_,attr)
+      | PGroup(_,attr)
+      | PTuple(_,attr)
+      | PSeq(_,_,attr) -> attr
+      | PEmpty -> emptyAttr
+
+   let fromLhsExp (e:lhs_exp) : attr =
+      match e with
+      | LWild(attr)
+      | LId(_,_,attr)
+      | LTuple(_,attr)
+      | LTyped(_,_,attr)
+      | LGroup(_,attr) -> attr
 end

@@ -33,14 +33,21 @@ module PassData = struct
    type t =
       {
          gen_init_ctx : IdSet.t; (** Context for which a init function has been generated *)
+         add_ctx      : IdSet.t;
          repeat       : bool;
       }
 
    let hasInitFunction (t:t) (id:id) : bool =
       IdSet.mem id t.gen_init_ctx
 
+   let hasContextArgument (t:t) (id:id) : bool =
+      IdSet.mem id t.add_ctx
+
    let markInitFunction (t:t) (id:id) : t =
       { t with gen_init_ctx = IdSet.add id t.gen_init_ctx }
+
+   let markContextArgument (t:t) (id:id) : t =
+      { t with add_ctx = IdSet.add id t.add_ctx }
 
    let reapply (t:t) : t =
       { t with repeat = true }
@@ -51,7 +58,7 @@ module PassData = struct
    let shouldReapply (t:t) : bool =
       t.repeat
 
-   let empty = { gen_init_ctx = IdSet.empty; repeat = false }
+   let empty = { gen_init_ctx = IdSet.empty; repeat = false; add_ctx = IdSet.empty }
 
 end
 
@@ -66,43 +73,18 @@ let reset (state:PassData.t Env.t) : PassData.t Env.t =
 let shouldReapply (state:PassData.t Env.t) : bool =
    PassData.shouldReapply (Env.get state)
 
-module GetAttr = struct
-
-   let fromExp (e:exp) : attr =
-      match e with
-      | PUnit(attr)
-      | PBool(_,attr)
-      | PInt(_,attr)
-      | PReal(_,attr)
-      | PId(_,attr)
-      | PUnOp(_,_,attr)
-      | POp(_,_,attr)
-      | PCall(_,_,_,attr)
-      | PIf(_,_,_,attr)
-      | PGroup(_,attr)
-      | PTuple(_,attr)
-      | PSeq(_,_,attr) -> attr
-      | PEmpty -> emptyAttr
-
-   let fromLhsExp (e:lhs_exp) : attr =
-      match e with
-      | LWild(attr)
-      | LId(_,_,attr)
-      | LTuple(_,attr)
-      | LTyped(_,_,attr)
-      | LGroup(_,attr) -> attr
-end
-
 module InsertContext = struct
 
    let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
       Mapper.make @@ fun state stmt ->
          match stmt with
          | StmtFun(name,args,body,rettype,attr) ->
-            if Env.isActive state name then
+            let data = Env.get state in
+            if Env.isActive state name && not (PassData.hasContextArgument data name) then
                let context = Env.getContext state name in
                let arg0 = TypedId(["_ctx"],ref (VType.TId(context,None)),attr) in
-               state,StmtFun(name,arg0::args,body,rettype,attr)
+               let data' = PassData.markContextArgument data name in
+               Env.set state data', StmtFun(name,arg0::args,body,rettype,attr)
             else
                state, stmt
          | _ -> state, stmt
