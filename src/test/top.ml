@@ -80,7 +80,8 @@ module ParserTest = struct
    let get =
       let files =
          [
-            "val_mem.vult"
+            "stmt_val_mem.vult";
+            "stmt_functions.vult";
          ]
       in
       "parser">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)

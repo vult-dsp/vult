@@ -1,0 +1,20 @@
+{
+   fun foo() return 0;
+
+   fun foo() return 0;
+
+   and bar() return 0;
+
+   fun foo() : int return 0;
+
+   fun foo() : int return 0;
+
+   and bar() : int return 0;
+
+   fun foo(x:int) : int return 0;
+
+   fun foo(x:real) : int return 0;
+
+   and bar(x:int) : int return 0;
+
+}
