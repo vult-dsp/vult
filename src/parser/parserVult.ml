@@ -103,7 +103,7 @@ let getLbp (token:'kind token) : int =
    | COLON,_ -> 10
    | COMMA,_ -> 20
    | OP,"||" -> 30
-   | OP,"&&" -> 30
+   | OP,"&&" -> 35
    | OP,"==" -> 40
    | OP,"<>" -> 40
    | OP,">"  -> 40
@@ -282,6 +282,8 @@ and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
    match token.kind,token.value with
    | OP,"-" -> (* Unary minus *)
       unaryOp buffer token
+   | OP,"!" -> (* Unary not *)
+      unaryOp buffer token
    | ID,_   -> (* Id or function call *)
       let id = identifierToken token in
       begin
@@ -290,7 +292,7 @@ and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
             functionCall buffer token id
          | COLON ->
             let _        = Stream.skip buffer in
-            let exp_call = expression 20 buffer in
+            let exp_call = expression 100 buffer in
             begin
                match exp_call with
                | PCall(None,fname,args,attr) ->

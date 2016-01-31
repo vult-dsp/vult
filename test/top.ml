@@ -25,7 +25,7 @@ open OUnit2
 
 open TypesVult
 
-
+(** Flags that defines if a baseline should be created for tests *)
 let writeOutput = Conf.make_bool "writeout" false "Creates a file with the current results"
 
 (** Returns the contents of the reference file for the given vult file *)
@@ -48,26 +48,30 @@ let readReference (create:bool) (contents:string) (file:string) : string =
       else
          assert_failure (Printf.sprintf "The file '%s' has no reference data" file)
 
+(** Writes the contents of the baseline to the given file *)
 let writeBase (file:string) (contents:string) : unit =
    let out_file = (Filename.chop_extension file)^".base" in
    let oc = open_out out_file in
    Printf.fprintf oc "%s" contents;
    close_out oc
 
+(** Asserts if the file does not exists *)
 let checkFile (filename:string) : string =
    if Sys.file_exists filename then filename
    else
       assert_failure (Printf.sprintf "The file '%s' does not exits" filename)
 
+(** Parses a file and returns the statements *)
 let parseFile (file:string) : TypesVult.stmt list =
    let result = ParserVult.parseFile file in
    match result.presult with
    | `Ok(b) -> b
    | `Error(_) ->
-      let error_strings:string list = Error.reportErrors result.presult result.lines in
-      let result =List.fold_left (fun s a -> s^"\n"^a) "" error_strings in
+      let error_strings = Error.reportErrors result.presult result.lines in
+      let result = List.fold_left (fun s a -> s^"\n"^a) "" error_strings in
       assert_failure ("Errors in the program:\n"^result)
 
+(** Module to perform parsing tests *)
 module ParserTest = struct
 
    let process (fullfile:string) : string =
@@ -80,7 +84,8 @@ module ParserTest = struct
       let reference = readReference (writeOutput context) current fullfile in
       assert_equal
          ~msg:("Parsing file "^fullfile)
-         ~printer:(fun a->a) reference current
+         ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
+         reference current
 
    let get =
       let files =
@@ -90,6 +95,10 @@ module ParserTest = struct
             "stmt_types.vult";
             "stmt_external.vult";
             "stmt_misc.vult";
+            "exp_basic.vult";
+            "exp_misc.vult";
+            "exp_precedence.vult";
+            "exp_tuples.vult";
          ]
       in
       "parser">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)

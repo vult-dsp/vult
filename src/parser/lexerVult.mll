@@ -134,6 +134,7 @@ let kindToString kind =
    | EXTERNAL -> "'external'"
    | TICK  -> "'''"
    | ARROW -> "'->'"
+   | BANG  -> "'!'"
 
 (** Returns a string representation of the token *)
 let tokenToString l =
@@ -191,6 +192,7 @@ rule next_token lines = parse
   | '''         { makeToken lines TICK lexbuf }
   | "->"        { makeToken lines ARROW lexbuf }
   | "||"        { makeToken lines OP lexbuf }
+  | "!"         { makeToken lines OP lexbuf }
   | "&&"        { makeToken lines OP lexbuf }
   | "=="        { makeToken lines OP lexbuf }
   | "<>"        { makeToken lines OP lexbuf }

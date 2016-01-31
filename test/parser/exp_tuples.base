@@ -1,0 +1,6 @@
+fun tuples() {
+   val x = 0,1;
+   val x = (0,1);
+   val x = (0),(1);
+   val x = (0,(1,2));
+}

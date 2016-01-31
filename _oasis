@@ -111,7 +111,8 @@ Executable "vult_tests"
     vult_parser,
     vult_core,
     vult_util,
-    oUnit
+    oUnit,
+    str
 
 Test "vult_tests"
   Run$: flag(tests)
