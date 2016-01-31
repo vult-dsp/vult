@@ -1,8 +1,0 @@
-fun f(x,fc,q){
-	mem t = 4;
-	val qprime = t*fc;
-	t = x + qprime;
-	return q + t;
-}
-
-val fval = f(1,2,3);
