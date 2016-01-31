@@ -22,14 +22,13 @@ Logo design by: John Klimt https://www.facebook.com/JohnKlimt
 
 - ocaml-containers >= 0.6.1
 - ppx_deriving >= 2.0
-- ocamlgraph >= 1.8.6
 - [Optional] oUnit >= 2.0 (to run the tests)
 
 ### Installing the tools
  The simplest way to instal the requirements is with OPAM (https://opam.ocaml.org/)
 ```
 $ opam switch 4.02.1
-$ opam install containers ppx_deriving ocamlgraph
+$ opam install containers ppx_deriving
 ```
 Optionally to run the tests:
 ```
@@ -41,7 +40,7 @@ $ ./scripts/build.sh
 ```
 In platforms without bash you can build with the following command:
 ```
-$ ocamlbuild -use-ocamlfind -pkg containers -pkg str -pkg ocamlgraph vultc.native
+$ ocamlbuild -use-ocamlfind -pkg containers -pkg str vultc.native
 ```
 ### Contact
 

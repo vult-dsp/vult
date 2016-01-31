@@ -6,7 +6,6 @@ let () =
 #use "topfind";;
 #require "str";;
 #require "unix";;
-#require "ocamlgraph";;
 #require "ppx_deriving";;
 #require "containers";;
 #require "vult_util";;

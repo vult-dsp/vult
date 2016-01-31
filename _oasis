@@ -19,15 +19,13 @@ Library "vult_util"
   Path: src/util
   Modules:
     Error,
-    GraphWrapper,
     Loc,
     PrintBuffer,
     Scope,
     Either,
     UnionFind
   BuildDepends:
-    containers,
-    ocamlgraph
+    containers
 
 Library "vult_core"
   Path: src/core

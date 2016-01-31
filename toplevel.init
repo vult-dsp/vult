@@ -1,7 +1,6 @@
 #use "topfind";;
 #require "containers";;
 #require "str";;
-#require "ocamlgraph";;
 #load "loc.cmo";;
 #load "error.cmo";;
 #load "scope.d.cmo";;

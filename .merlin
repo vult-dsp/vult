@@ -16,5 +16,4 @@ PKG oUnit
 PKG containers
 PKG ppx_deriving.std
 PKG ppx_deriving
-PKG ocamlgraph
 FLG -w +27+33
