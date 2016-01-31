@@ -30,8 +30,6 @@ let processArguments () : arguments =
       {
          files     = [];
          dparse    = false;
-         rundyn    = false;
-         debug     = false;
          ccode     = false;
          jscode    = false;
          output    = "";
@@ -39,8 +37,6 @@ let processArguments () : arguments =
       } in
    let opts = [
       "-dparse", (Arg.Unit   (fun () -> result.dparse   <-true)), "Dumps the parse tree (default: off)";
-      "-rundyn", (Arg.Unit   (fun () -> result.rundyn   <-true)), "Runs the dynamic interpreter (default: off)";
-      "-debug",  (Arg.Unit   (fun () -> result.debug    <-true)), "Runs the debugger (default: off)";
       "-ccode",  (Arg.Unit   (fun () -> result.ccode    <-true)), "Converts the code to c (default: off)";
       "-jscode", (Arg.Unit   (fun () -> result.jscode   <-true)), "Converts the code to javascript (default: off)";
       "-o",      (Arg.String (fun output -> result.output<-output)), "Defines the prefix of the output files";

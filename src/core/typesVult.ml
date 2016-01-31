@@ -185,8 +185,6 @@ type arguments =
    {
       mutable files  : string list;
       mutable dparse : bool;
-      mutable rundyn : bool;
-      mutable debug  : bool;
       mutable ccode  : bool;
       mutable jscode : bool;
       mutable output : string;
@@ -197,8 +195,6 @@ let default_arguments =
    {
       files  = ["live.vult"];
       dparse = false;
-      rundyn = false;
-      debug  = false;
       ccode  = false;
       jscode = false;
       output = "live";
