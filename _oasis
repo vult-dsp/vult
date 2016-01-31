@@ -105,7 +105,6 @@ Executable "vult_tests"
   Path: test
   MainIs: top.ml
   Build$: flag(tests)
-  CompiledObject: best
   Install: false
   BuildDepends:
     vult,
@@ -113,6 +112,12 @@ Executable "vult_tests"
     vult_core,
     vult_util,
     oUnit
+
+Test "vult_tests"
+  Run$: flag(tests)
+  TestTools: vult_tests
+  Command: $vult_tests -testdata-dir ./test
+  WorkingDirectory: .
 
 AlphaFeatures: ocamlbuild_more_args
 Document "foobar_api"
