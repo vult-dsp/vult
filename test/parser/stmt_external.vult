@@ -1,0 +1,2 @@
+external foo() : int;
+external foo(x:int) : int;

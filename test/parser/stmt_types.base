@@ -1,0 +1,12 @@
+{
+   type t : int;
+   type t : tuple(int,int);
+   type t {
+      val x : int;
+      val x : real;
+   }
+
+   type empty {
+   }
+
+}

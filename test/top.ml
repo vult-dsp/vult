@@ -54,6 +54,11 @@ let writeBase (file:string) (contents:string) : unit =
    Printf.fprintf oc "%s" contents;
    close_out oc
 
+let checkFile (filename:string) : string =
+   if Sys.file_exists filename then filename
+   else
+      assert_failure (Printf.sprintf "The file '%s' does not exits" filename)
+
 let parseFile (file:string) : TypesVult.stmt list =
    let result = ParserVult.parseFile file in
    match result.presult with
@@ -70,7 +75,7 @@ module ParserTest = struct
       |> PrintTypes.stmtListStr
 
    let run (file:string) context =
-      let fullfile  = in_testdata_dir context ["parser";file] in
+      let fullfile  = checkFile (in_testdata_dir context ["parser";file]) in
       let current   = process fullfile in
       let reference = readReference (writeOutput context) current fullfile in
       assert_equal
@@ -82,6 +87,9 @@ module ParserTest = struct
          [
             "stmt_val_mem.vult";
             "stmt_functions.vult";
+            "stmt_types.vult";
+            "stmt_external.vult";
+            "stmt_misc.vult";
          ]
       in
       "parser">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)
