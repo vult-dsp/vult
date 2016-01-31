@@ -28,6 +28,19 @@ open TypesVult
 open VEnv
 open Common
 
+type pass_options =
+   {
+      pass1 : bool;
+      pass2 : bool;
+   }
+
+let default_options =
+   {
+      pass1 = true;
+      pass2 = true;
+   }
+
+
 module PassData = struct
 
    type t =
@@ -369,23 +382,27 @@ let inferPass (state,stmts) =
    let stmts,state,_ = Inference.inferStmtList state Inference.NoType stmts in
    state,stmts
 
-let pass1_mapper =
+let pass1 =
    ReportUnboundType.mapper
    |> Mapper.seq SplitMem.mapper
-   |> Mapper.seq InsertContext.mapper
    |> Mapper.seq SimplifyTupleAssign.mapper
    |> Mapper.seq LHSTupleBinding.mapper
+
+let pass2 =
+   InsertContext.mapper
    |> Mapper.seq CreateInitFunction.mapper
 
-let rec pass1 (state,stmts) =
-   let state',stmts' = Mapper.map_stmt_list pass1_mapper state stmts in
-   if shouldReapply state' then
-      let _ = print_endline "Reapplying mapper" in
-      pass1 (reset state',stmts')
+let rec applyPass apply pass (state,stmts) =
+   if apply then
+      let state',stmts' = Mapper.map_stmt_list pass state stmts in
+      if shouldReapply state' then
+         applyPass apply pass (reset state',stmts')
+      else
+         state',stmts'
    else
-      state',stmts'
+      state,stmts
 
-let applyTransformations (results:parser_results) =
+let applyTransformations ?(options=default_options) (results:parser_results) =
    let module_name =
       results.file
       |> Filename.basename
@@ -400,7 +417,8 @@ let applyTransformations (results:parser_results) =
    let passes stmts =
       (initial_state,stmts)
       |> inferPass
-      |> pass1
+      |> applyPass options.pass1 pass1
+      |> applyPass options.pass2 pass1
       |> snd
    in
 

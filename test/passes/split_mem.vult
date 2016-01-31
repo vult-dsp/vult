@@ -1,0 +1,6 @@
+fun foo(){
+	mem x = 0;
+	mem y = y + 1;
+	mem (a,b) = (1,2);
+	mem (z:int),h = h,z;
+}

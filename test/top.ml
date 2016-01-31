@@ -22,8 +22,31 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 open OUnit2
-
 open TypesVult
+
+
+let parser_files =
+   [
+      "stmt_val_mem.vult";
+      "stmt_functions.vult";
+      "stmt_types.vult";
+      "stmt_external.vult";
+      "stmt_misc.vult";
+      "exp_basic.vult";
+      "exp_misc.vult";
+      "exp_precedence.vult";
+      "exp_tuples.vult";
+      "types_basic.vult";
+   ]
+
+let pass1_options = { Passes.default_options with Passes.pass2 = false }
+
+let pass1_files =
+   [
+      "split_mem.vult", pass1_options;
+      "tuple_assign.vult", pass1_options;
+   ]
+
 
 (** Flags that defines if a baseline should be created for tests *)
 let writeOutput = Conf.make_bool "writeout" false "Creates a file with the current results"
@@ -61,11 +84,9 @@ let checkFile (filename:string) : string =
    else
       assert_failure (Printf.sprintf "The file '%s' does not exits" filename)
 
-(** Parses a file and returns the statements *)
-let parseFile (file:string) : TypesVult.stmt list =
-   let result = ParserVult.parseFile file in
+let showResults result : string =
    match result.presult with
-   | `Ok(b) -> b
+   | `Ok(b) -> PrintTypes.stmtListStr b
    | `Error(_) ->
       let error_strings = Error.reportErrors result.presult result.lines in
       let result = List.fold_left (fun s a -> s^"\n"^a) "" error_strings in
@@ -75,8 +96,8 @@ let parseFile (file:string) : TypesVult.stmt list =
 module ParserTest = struct
 
    let process (fullfile:string) : string =
-      parseFile fullfile
-      |> PrintTypes.stmtListStr
+      ParserVult.parseFile fullfile
+      |> showResults
 
    let run (file:string) context =
       let fullfile  = checkFile (in_testdata_dir context ["parser";file]) in
@@ -87,30 +108,37 @@ module ParserTest = struct
          ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
          reference current
 
-   let get =
-      let files =
-         [
-            "stmt_val_mem.vult";
-            "stmt_functions.vult";
-            "stmt_types.vult";
-            "stmt_external.vult";
-            "stmt_misc.vult";
-            "exp_basic.vult";
-            "exp_misc.vult";
-            "exp_precedence.vult";
-            "exp_tuples.vult";
-            "types_basic.vult";
-         ]
-      in
-      "parser">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)
+   let get files = "parser">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)
 
 end
 
 
+(** Module to perform transformation tests *)
+module Pass1Test = struct
+
+   let process options (fullfile:string) : string =
+      ParserVult.parseFile fullfile
+      |> Passes.applyTransformations ~options:options
+      |> showResults
+
+   let run options (file:string) context =
+      let fullfile  = checkFile (in_testdata_dir context ["passes";file]) in
+      let current   = process options fullfile in
+      let reference = readReference (writeOutput context) current fullfile in
+      assert_equal
+         ~msg:("Transforming file "^fullfile)
+         ~pp_diff:(fun fmt (a,b) -> Format.fprintf fmt "\n%s" (Diff.lineDiff a b) )
+         reference current
+
+   let get files = "passes">::: (List.map (fun (file,options) -> (Filename.basename file) >:: run options file) files)
+
+end
+
 let suite =
    "vult">:::
    [
-      ParserTest.get;
+      ParserTest.get parser_files;
+      Pass1Test.get  pass1_files;
    ]
 
 

@@ -1,0 +1,14 @@
+fun foo() : unit {
+   mem (x:int);
+   (x:int) = 0;
+   mem (y:int);
+   (y:int) = (y + 1);
+   mem ((a:int),(b:int));
+   (a:int) = 1;
+   (b:int) = 2;
+   mem ((z:int),(h:int));
+   val (_tmp_0:int) = h;
+   val (_tmp_1:int) = z;
+   (z:int) = _tmp_0;
+   (h:int) = _tmp_1;
+}
