@@ -5,6 +5,7 @@ S ./src/passes
 S ./src/util
 S ./src/parser
 S ./src/generators
+S ./test
 B ./_build
 B ./_build/src
 B ./_build/src/core
@@ -12,6 +13,7 @@ B ./_build/src/passes
 B ./_build/src/util
 B ./_build/src/parser
 B ./_build/src/generators
+B ./_build/test
 PKG oUnit
 PKG containers
 PKG ppx_deriving.std
