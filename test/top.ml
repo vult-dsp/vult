@@ -41,10 +41,12 @@ let parser_files =
 
 let pass1_options = { Passes.default_options with Passes.pass2 = false }
 
-let pass1_files =
+let passes_files =
    [
       "split_mem.vult", pass1_options;
       "tuple_assign.vult", pass1_options;
+      "context_simple.vult", Passes.default_options;
+      "context_nested.vult", Passes.default_options;
    ]
 
 
@@ -114,7 +116,7 @@ end
 
 
 (** Module to perform transformation tests *)
-module Pass1Test = struct
+module PassesTest = struct
 
    let process options (fullfile:string) : string =
       ParserVult.parseFile fullfile
@@ -137,8 +139,8 @@ end
 let suite =
    "vult">:::
    [
-      ParserTest.get parser_files;
-      Pass1Test.get  pass1_files;
+      ParserTest.get  parser_files;
+      PassesTest.get  passes_files;
    ]
 
 

@@ -418,7 +418,7 @@ let applyTransformations ?(options=default_options) (results:parser_results) =
       (initial_state,stmts)
       |> inferPass
       |> applyPass options.pass1 pass1
-      |> applyPass options.pass2 pass1
+      |> applyPass options.pass2 pass2
       |> snd
    in
 

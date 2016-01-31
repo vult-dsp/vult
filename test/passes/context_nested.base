@@ -1,0 +1,68 @@
+{
+   type _ctx_type_0 {
+      val pre : real;
+   }
+
+   type change_a_type : _ctx_type_0;
+   fun _ctx_type_0_init() : _ctx_type_0 {
+      val (_ctx:_ctx_type_0);
+      (_ctx.pre:real) = 0.;
+      return _ctx;
+   }
+
+   fun change_a_init() : _ctx_type_0 return _ctx_type_0_init();
+
+   fun change_a(_ctx:_ctx_type_0,x:real) : bool {
+      val (ret:bool) = (x <> _ctx.pre);
+      (_ctx.pre:real) = x;
+      return ret;
+   }
+
+   type _ctx_type_1 {
+      val pre : real;
+   }
+
+   type change_b_type : _ctx_type_1;
+   fun _ctx_type_1_init() : _ctx_type_1 {
+      val (_ctx:_ctx_type_1);
+      (_ctx.pre:real) = 0.;
+      return _ctx;
+   }
+
+   fun change_b_init() : _ctx_type_1 return _ctx_type_1_init();
+
+   fun change_b(_ctx:_ctx_type_1,x:real) : bool {
+      val (ret:bool) = (x <> _ctx.pre);
+      (_ctx.pre:real) = x;
+      return ret;
+   }
+
+   type _ctx_type_2 {
+      val y : _ctx_type_1;
+      val x : _ctx_type_0;
+      val _inst1 : _ctx_type_1;
+      val _inst0 : _ctx_type_0;
+   }
+
+   type foo_type : _ctx_type_2;
+   fun _ctx_type_2_init() : _ctx_type_2 {
+      val (_ctx:_ctx_type_2);
+      (_ctx.y:_ctx_type_1) = _ctx_type_1_init();
+      (_ctx.x:_ctx_type_0) = _ctx_type_0_init();
+      (_ctx._inst1:_ctx_type_1) = _ctx_type_1_init();
+      (_ctx._inst0:_ctx_type_0) = _ctx_type_0_init();
+      return _ctx;
+   }
+
+   fun foo_init() : _ctx_type_2 return _ctx_type_2_init();
+
+   fun foo(_ctx:_ctx_type_2) : unit {
+      val (ret1:bool) = change_a(_ctx._inst0,0.);
+      val (ret2:bool) = change_b(_ctx._inst1,0.);
+      val (ret3:bool) = change_a(_ctx.x,0.);
+      val (ret4:bool) = change_a(_ctx.x,0.);
+      val (ret5:bool) = change_b(_ctx.y,0.);
+      val (ret6:bool) = change_b(_ctx.y,0.);
+   }
+
+}

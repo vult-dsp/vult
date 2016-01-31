@@ -1,0 +1,22 @@
+fun change_a(x:real) : bool {
+	mem pre;
+	val ret = x<>pre;
+	pre = x;
+	return ret;
+}
+
+fun change_b(x:real) : bool {
+	mem pre;
+	val ret = x<>pre;
+	pre = x;
+	return ret;
+}
+
+fun foo(){
+	val ret1 = change_a(0.0);
+	val ret2 = change_b(0.0);
+	val ret3 = x:change_a(0.0);
+	val ret4 = x:change_a(0.0);
+	val ret5 = y:change_b(0.0);
+	val ret6 = y:change_b(0.0);
+}

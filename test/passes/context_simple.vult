@@ -1,0 +1,20 @@
+fun change(x:real) : bool {
+	mem pre;
+	val ret = x<>pre;
+	pre = x;
+	return ret;
+}
+and reset(){
+	mem pre = 0.;
+}
+and set(x:real){
+	pre = x;
+}
+
+fun foo(x){
+	val v1 = change(x);
+	val v2 = change(x);
+	val v3 = c:change(x);
+	_ = c:reset();
+	_ = c:set(0.0);
+}
