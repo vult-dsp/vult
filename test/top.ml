@@ -99,6 +99,7 @@ module ParserTest = struct
             "exp_misc.vult";
             "exp_precedence.vult";
             "exp_tuples.vult";
+            "types_basic.vult";
          ]
       in
       "parser">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)

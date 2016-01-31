@@ -53,7 +53,7 @@ let rec typeExpressionBuff buffer (tp:VType.t) =
       typeExpressionBuff buffer t1;
       append buffer " -> ";
       typeExpressionBuff buffer t2
-   | VType.TUnbound _ -> append buffer "_";
+   | VType.TUnbound(name,_,_) -> append buffer name;
    | VType.TLink(tp) -> typeExpressionBuff buffer tp
    | VType.TExpAlt(expl) ->
       append buffer "(";
