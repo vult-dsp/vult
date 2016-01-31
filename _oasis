@@ -88,6 +88,7 @@ Executable "vultc"
     vult_parser,
     vult_util,
     vult_core,
+    vult_passes,
     vult_generators
 
 Executable "vult_node"
@@ -107,6 +108,7 @@ Executable "vult_tests"
   BuildDepends:
     vult,
     vult_parser,
+    vult_passes,
     vult_core,
     vult_util,
     oUnit,
