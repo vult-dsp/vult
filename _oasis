@@ -102,7 +102,7 @@ Executable "vult_node"
 
 Executable "vult_tests"
   Path: test
-  MainIs: top.ml
+  MainIs: test.ml
   Build$: flag(tests)
   Install: false
   BuildDepends:
