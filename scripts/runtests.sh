@@ -1,3 +1,4 @@
 #!/bin/bash
-ocamlbuild test.native -use-ocamlfind -pkg ocamlgraph -pkg oUnit -pkg containers -pkg str
-./test.native
+./configure --enable-tests
+make
+_build/src/test/top.native -testdata-dir `pwd`/src/test/

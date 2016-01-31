@@ -1,0 +1,9 @@
+{
+   val x;
+   val x = 0;
+   mem y;
+   mem y = 0;
+   val _ = 0;
+   mem (x,y) = 0,0;
+   val (x,((y,z))) = 0,(0,0);
+}

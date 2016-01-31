@@ -63,6 +63,13 @@ Library "vult_generators"
     vult_core,
     vult_util
 
+Library "vult_passes"
+  Path: src/passes
+  Modules:
+    Passes
+  BuildDepends:
+    vult_core,
+    vult_util
 
 Library "vult"
   Path: src
@@ -72,10 +79,11 @@ Library "vult"
     vult_core,
     vult_parser,
     vult_util,
-    vult_generators
+    vult_generators,
+    vult_passes
 
 Executable "vultc"
-  Path: .
+  Path: src
   MainIs: vultc.ml
   BuildDepends:
     vult,
@@ -85,7 +93,7 @@ Executable "vultc"
     vult_generators
 
 Executable "vult_node"
-  Path: .
+  Path: src
   MainIs: vult_node.ml
   Build$: flag(js)
   BuildDepends:
@@ -93,15 +101,17 @@ Executable "vult_node"
     js_of_ocaml.syntax,
     js_of_ocaml
 
-Executable "test_vult"
-  Path: src
-  MainIs: test.ml
+Executable "vult_tests"
+  Path: src/test
+  MainIs: top.ml
   Build$: flag(tests)
   CompiledObject: best
   Install: false
   BuildDepends:
-    vult_core,
+    vult,
     vult_parser,
+    vult_core,
+    vult_util,
     oUnit
 
 AlphaFeatures: ocamlbuild_more_args
