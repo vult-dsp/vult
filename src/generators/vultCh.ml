@@ -44,10 +44,41 @@ type real_type =
    | Float
    | Fixed
 
+
+module Templates = struct
+
+   type t =
+      | None
+      | Default
+
+   let get template =
+      match template with
+      | "none"   -> None
+      | "default" -> Default
+      | t -> failwith (Printf.sprintf "The template '%s' is not available for this generator" t)
+
+   let none code = code
+
+   let default code =
+      "
+#include \"stdint.h\"
+#include \"math.h\"
+
+"^code^""
+
+   let apply template code =
+      match template with
+      | None -> none code
+      | Default -> default code
+
+end
+
+
 type parameters =
    {
       real : real_type;
       env  : string list list;
+      template : Templates.t;
    }
 
 let fixKeyword key =
@@ -542,25 +573,19 @@ module PrintC = struct
          newline buffer;
          printStmtList buffer t
 
-   let template code =
-      "
-#include \"stdint.h\"
-#include \"math.h\"
-
-"^code^""
-
    let printChCode (params:parameters) (stmts:stmt list) : string =
       let buffer = makePrintBuffer () in
       let _, js  = convertStmtList params stmts in
       let _      = printStmtList buffer js in
       let code   = contents buffer in
-      template code
+      Templates.apply params.template code
 
 end
 
 let createParameters (args:arguments) : parameters =
-   let real = match args.real with | "fixed" -> Fixed | _ -> Float in
-   { real = real; env = [] }
+   let real     = match args.real with | "fixed" -> Fixed | _ -> Float in
+   let template = Templates.get args.template in
+   { real = real; env = []; template = template }
 
 (** Generates the .c and .h file contents for the given parsed files *)
 let generateChCode (args:arguments) (parser_results:parser_results list) : string =

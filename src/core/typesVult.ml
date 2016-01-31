@@ -183,22 +183,24 @@ type interpreter_results =
 (** Stores the options passed to the command line *)
 type arguments =
    {
-      mutable files  : string list;
-      mutable dparse : bool;
-      mutable ccode  : bool;
-      mutable jscode : bool;
-      mutable output : string;
-      mutable real   : string;
+      mutable files    : string list;
+      mutable dparse   : bool;
+      mutable ccode    : bool;
+      mutable jscode   : bool;
+      mutable output   : string;
+      mutable real     : string;
+      mutable template : string;
    }
 
 let default_arguments =
    {
-      files  = ["live.vult"];
+      files  = [];
       dparse = false;
       ccode  = false;
       jscode = false;
-      output = "live";
+      output = "";
       real   = "float";
+      template = "none";
    }
 
 let makeAttr (loc:Loc.t) : attr =
