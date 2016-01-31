@@ -102,7 +102,7 @@ Executable "vult_node"
     js_of_ocaml
 
 Executable "vult_tests"
-  Path: src/test
+  Path: test
   MainIs: top.ml
   Build$: flag(tests)
   CompiledObject: best
