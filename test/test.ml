@@ -47,6 +47,7 @@ let passes_files =
       "tuple_assign.vult", pass1_options;
       "context_simple.vult", Passes.default_options;
       "context_nested.vult", Passes.default_options;
+      "tuple_to_types.vult", Passes.default_options;
    ]
 
 

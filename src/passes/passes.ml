@@ -47,6 +47,7 @@ module PassData = struct
       {
          gen_init_ctx : IdSet.t; (** Context for which a init function has been generated *)
          add_ctx      : IdSet.t;
+         used_tuples  : TypeSet.t;
          repeat       : bool;
       }
 
@@ -71,7 +72,19 @@ module PassData = struct
    let shouldReapply (t:t) : bool =
       t.repeat
 
-   let empty = { gen_init_ctx = IdSet.empty; repeat = false; add_ctx = IdSet.empty }
+   let addTuples (t:t) (tup:TypeSet.t) : t =
+      { t with used_tuples = TypeSet.union tup t.used_tuples }
+
+   let getTuples (t:t) : TypeSet.t =
+      t.used_tuples
+
+   let empty =
+      {
+         gen_init_ctx = IdSet.empty;
+         repeat       = false;
+         add_ctx      = IdSet.empty;
+         used_tuples  = TypeSet.empty;
+      }
 
 end
 
@@ -376,6 +389,54 @@ module ReportUnboundType = struct
 
 end
 
+module CreateTypesForTuples = struct
+
+   let vtype_c : (TypeSet.t Env.t, VType.vtype) Mapper.mapper_func =
+      Mapper.make @@ fun state t ->
+         match t with
+         | VType.TComposed(["tuple"],_,_) ->
+            let tupl = Env.get state in
+            Env.set state (TypeSet.add (ref t) tupl), t
+         | _ -> state, t
+
+   let getTuples_mapper = { Mapper.default_mapper with Mapper.vtype_c = vtype_c }
+
+   let makeTypeDeclaration state (t:VType.t) : 'a Env.t * stmt =
+      match !t with
+      | VType.TComposed(["tuple"],types,_) ->
+         let elems = List.mapi (fun i a -> ["field_"^(string_of_int i)],a,emptyAttr) types in
+         let tick,state' = Env.tick state in
+         let name = VType.TId(["_tuple_"^(string_of_int tick)],None) in
+         state', StmtType(ref name,elems,emptyAttr)
+      | _ -> failwith "CreateTypesForTuples.makeTypeDeclaration: there should be only tuples here"
+
+   let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
+      Mapper.makeExpander @@ fun state stmt ->
+         match stmt with
+         | StmtFun(_,_,_,_,_) ->
+            let data_env,_ = Mapper.map_stmt getTuples_mapper (Env.empty [] TypeSet.empty) stmt in
+            let new_tuples = Env.get data_env in
+            let data       = Env.get state in
+            let current    = PassData.getTuples data in
+            let not_in_set = TypeSet.diff new_tuples current in
+            if not (TypeSet.is_empty not_in_set) then
+               let state',decl =
+                  TypeSet.fold
+                     (fun a (s,acc) ->
+                        let s',type_decl = makeTypeDeclaration s a in
+                        s',(type_decl::acc))
+                  not_in_set
+                  (state,[])
+               in
+               let data' = PassData.addTuples data not_in_set in
+               Env.set state' data', decl@[stmt]
+            else
+               state, [stmt]
+         | _ -> state, [stmt]
+
+   let mapper = { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
+
+end
 
 (* Basic transformations *)
 let inferPass (state,stmts) =
@@ -391,6 +452,7 @@ let pass1 =
 let pass2 =
    InsertContext.mapper
    |> Mapper.seq CreateInitFunction.mapper
+   |> Mapper.seq CreateTypesForTuples.mapper
 
 let rec applyPass apply pass (state,stmts) =
    if apply then

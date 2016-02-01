@@ -1,0 +1,18 @@
+{
+   type _tuple_0 {
+      val field_0 : int;
+      val field_1 : int;
+      val field_2 : int;
+   }
+
+   fun foo() : tuple(int,int,int) return 1,2,3;
+
+   type _tuple_1 {
+      val field_0 : real;
+      val field_1 : int;
+      val field_2 : bool;
+   }
+
+   fun bar() : tuple(real,int,bool) return 1.,2,false;
+
+}

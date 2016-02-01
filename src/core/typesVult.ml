@@ -221,6 +221,9 @@ type id_type = id * VType.t
 
 module IdTypeSet = CCSet.Make(struct type t = id_type let compare = compare_id_type end)
 
+
+module TypeSet = CCSet.Make(struct type t = VType.t let compare = VType.compare end)
+
 let pathId (path:path) : id =
    let Path(id) = path in
    id

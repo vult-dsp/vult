@@ -1,0 +1,8 @@
+fun foo(){
+	return 1,2,3;
+}
+
+
+fun bar(){
+	return 1.,2,false;
+}
