@@ -330,20 +330,29 @@ module LHSTupleBinding = struct
          | StmtVal(LTuple(_,_),Some(PTuple(_,_)),_) -> state, [stmt]
          | StmtBind(LTuple(_,_),PId(_,_),_) -> state, [stmt]
          | StmtBind(LTuple(_,_),PTuple(_,_),_) -> state, [stmt]
-         | StmtBind((LTuple(_,_) as lhs),rhs,attr) ->
+         | StmtBind((LTuple(_,lhs_attr) as lhs),rhs,attr) ->
             let tick, state' = Env.tick state in
-            let tmp_name = ["_tmp_"^(string_of_int tick)] in
-            let tmp = PId(tmp_name,attr) in
-            let typ = (GetAttr.fromExp rhs).typ in
-            let ltmp = LId(tmp_name,typ,attr) in
+            let tmp_name = ["_tplbind_"^(string_of_int tick)] in
+            let rhs_attr = GetAttr.fromExp rhs in
+            let tmp = PId(tmp_name,rhs_attr) in
+            let typ = rhs_attr.typ in
+            let ltmp = LId(tmp_name,typ,lhs_attr) in
             reapply state', [StmtVal(ltmp,Some(rhs),attr); StmtBind(lhs,tmp,attr)]
-         | StmtVal((LTuple(_,_) as lhs),Some(rhs),attr) ->
+         | StmtVal((LTuple(_,lhs_attr) as lhs),Some(rhs),attr) ->
             let tick, state' = Env.tick state in
-            let tmp_name = ["_tmp_"^(string_of_int tick)] in
-            let tmp = PId(tmp_name,attr) in
-            let typ = (GetAttr.fromExp rhs).typ in
-            let ltmp = LId(tmp_name,typ,attr) in
+            let tmp_name = ["_tplbind_"^(string_of_int tick)] in
+            let rhs_attr = GetAttr.fromExp rhs in
+            let tmp = PId(tmp_name,rhs_attr) in
+            let typ = rhs_attr.typ in
+            let ltmp = LId(tmp_name,typ,lhs_attr) in
             reapply state', [StmtVal(ltmp,Some(rhs),attr); StmtVal(lhs,Some(tmp),attr)]
+         | StmtReturn((PTuple(_,rhs_attr) as rhs),attr) ->
+            let tick, state' = Env.tick state in
+            let tmp_name = ["_tplbind_"^(string_of_int tick)] in
+            let tmp = PId(tmp_name,rhs_attr) in
+            let typ = rhs_attr.typ in
+            let ltmp = LId(tmp_name,typ,rhs_attr) in
+            reapply state', [StmtVal(ltmp,Some(rhs),attr);StmtReturn(tmp,attr)]
          | _ -> state, [stmt]
 
    let mapper =
@@ -389,24 +398,7 @@ module ReportUnboundType = struct
 
 end
 
-(** Put this function somewhere *)
-let rec join (sep:string) (id:string list) : string =
-   match id with
-   | [] -> ""
-   | [ name ] -> name
-   | h :: t -> h ^ sep ^ (join sep t)
-
 module CreateTypesForTuples = struct
-
-   let rec getTupleName (typ:VType.t) : string =
-      match !typ with
-      | VType.TId(id,_) -> PrintTypes.identifierStr id
-      | VType.TComposed(id,elems,_) ->
-         (PrintTypes.identifierStr id)::(List.map getTupleName elems)
-         |> join "_"
-      | VType.TLink(e) -> getTupleName e
-      | VType.TArrow(e1,e2,_) -> (getTupleName e1)^"__"^(getTupleName e2)
-      | _ -> failwith "There should be no other types here"
 
    let vtype_c : (TypeSet.t Env.t, VType.vtype) Mapper.mapper_func =
       Mapper.make @@ fun state t ->
@@ -422,7 +414,7 @@ module CreateTypesForTuples = struct
       match !t with
       | VType.TComposed(["tuple"],types,_) ->
          let elems = List.mapi (fun i a -> ["field_"^(string_of_int i)],a,emptyAttr) types in
-         let name_str = "_" ^ getTupleName t in
+         let name_str = VType.getTupleName t in
          let name = VType.TId([name_str],None) in
          StmtType(ref name,elems,emptyAttr)
       | _ -> failwith "CreateTypesForTuples.makeTypeDeclaration: there should be only tuples here"

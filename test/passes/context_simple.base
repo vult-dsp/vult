@@ -49,8 +49,8 @@
       val (v1:bool) = change(_ctx._inst0,x);
       val (v2:bool) = change(_ctx._inst1,x);
       val (v3:bool) = change(_ctx.c,x);
-      _ = reset(_ctx.c);
-      _ = set(_ctx.c,0.);
+      (_:unit) = reset(_ctx.c);
+      (_:unit) = set(_ctx.c,0.);
    }
 
 }

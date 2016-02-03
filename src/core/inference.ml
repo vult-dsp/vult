@@ -77,20 +77,30 @@ let rec unifyListSameType (args:exp list) (types:VType.t list) (common_type:VTyp
    | _ -> raise (Invalid_argument "unifyListSameType")
 
 
-let rec inferLhsExp (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
+let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
    match e with
    | LWild(attr) ->
       let typ = VType.newvar () in
       LWild( { attr with typ = Some(typ) }), typ
    | LId(id,None,attr) ->
-      let typ = try let _,typ,_ = Env.lookup `Variable env id in typ with | _ -> VType.newvar () in
+      let typ =
+         try
+            let _,typ,_ = Env.lookup `Variable env id in typ
+         with
+         | _ ->
+            if mem_var = `Mem || mem_var = `Var then
+               VType.newvar ()
+            else
+               let msg = Printf.sprintf "The symbol '%s' is not defined" (idStr id) in
+               Error.raiseError msg attr.loc
+      in
       LId(id,Some(typ),{ attr with typ = Some(typ) }), typ
    | LId(id,Some(typ),attr) ->
       LId(id,Some(typ),{ attr with typ = Some(typ) }), typ
    | LTuple(elems,attr) ->
       let elems',tpl =
          List.fold_left (fun (elems,tpl) a ->
-            let a',typ = inferLhsExp env a in
+            let a',typ = inferLhsExp mem_var env a in
             a' :: elems, typ :: tpl )
          ([],[])
          elems
@@ -99,14 +109,14 @@ let rec inferLhsExp (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
       LTuple(List.rev elems',{ attr with typ = Some(typ) }),typ
    | LTyped(e,typ,_) ->
       checkType (lhsLoc e) env typ;
-      let e',tpi = inferLhsExp env e in
+      let e',tpi = inferLhsExp mem_var env e in
       if not (VType.unify typ tpi) then
          let msg = Printf.sprintf "This declaration has type '%s' but it has been defined before as '%s'" (PrintTypes.typeStr typ) (PrintTypes.typeStr tpi) in
          Error.raiseError msg (GetLocation.fromLhsExp e)
       else
          e',tpi
    | LGroup(eg,_) ->
-      inferLhsExp env eg
+      inferLhsExp mem_var env eg
 
 
 
@@ -312,13 +322,13 @@ and inferOptExp (env:'a Env.t) (e:exp option) : exp option * 'a Env.t * VType.t 
 and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.t * return_type =
    match stmt with
    | StmtVal(lhs,rhs,attr) ->
-      let lhs', lhs_typ = inferLhsExp env lhs in
+      let lhs', lhs_typ = inferLhsExp `Var env lhs in
       let rhs', env', rhs_typ = inferOptExp env rhs in
       unifyRaise (expOptLoc rhs) lhs_typ rhs_typ;
       let env' = addLhsToEnv `Var env' lhs' in
       StmtVal(lhs', rhs', attr), env', ret_type
    | StmtMem(lhs,init,rhs,attr) ->
-      let lhs', lhs_typ   = inferLhsExp env lhs in
+      let lhs', lhs_typ   = inferLhsExp `Mem env lhs in
       let env'            = addLhsToEnv `Mem env lhs' in
       let init',env', init_typ = inferOptExp env' init in
       let rhs',env', rhs_typ   = inferOptExp env' rhs in
@@ -330,7 +340,7 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       let ret_type'    = unifyReturn (expLoc e) ret_type (ReturnType(typ)) in
       StmtReturn(e',attr), env', ret_type'
    | StmtBind(lhs,rhs,attr) ->
-      let lhs', lhs_typ      = inferLhsExp env lhs in
+      let lhs', lhs_typ      = inferLhsExp `None env lhs in
       let rhs',env', rhs_typ = inferExp env rhs in
       unifyRaise (expLoc rhs') lhs_typ rhs_typ;
       StmtBind(lhs',rhs',attr), env', ret_type

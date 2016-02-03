@@ -258,6 +258,26 @@ let rec unify (t1:t) (t2:t) : bool =
    | _ -> false
 
 
+(** Put this function somewhere else *)
+let rec join (sep:string) (id:string list) : string =
+   match id with
+   | [] -> ""
+   | [ name ] -> name
+   | h :: t -> h ^ sep ^ (join sep t)
+
+(** Returns a simplified name for the tuples *)
+let rec getTupleName (typ:t) : string =
+   match !typ with
+   | TId(id,_) -> join "_" id
+   | TComposed(id,elems,_) ->
+      (join "_" id)::(List.map getTupleName elems)
+      |> join "_"
+   | TLink(e) -> getTupleName e
+   | TArrow(e1,e2,_) -> (getTupleName e1)^"__"^(getTupleName e2)
+   | _ -> failwith "There should be no other types here"
+let getTupleName (typ:t) : string = "_" ^ (getTupleName typ)
+
+
 (** Constant types *)
 module Constants = struct
    let type_type   = ref (TId(["type"],None))

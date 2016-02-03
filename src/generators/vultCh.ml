@@ -120,6 +120,7 @@ let rec convertType params (tp:VType.t) : string =
    | VType.TId(["bool"],_) -> "uint8_t"
    | VType.TId(["unit"],_) -> "void"
    | VType.TId(id,_) -> underscoreId id
+   | VType.TComposed(["tuple"],_,_) -> VType.getTupleName tp
    | VType.TComposed(_,_,_) ->
       failwith ("VultCh.convertType: unsupported type in c code generation" ^ PrintTypes.typeStr tp)
    | VType.TLink(tp) -> convertType params tp
@@ -387,8 +388,9 @@ module PrintC = struct
          append buffer ")"
 
    and printChField buffer (name,value) =
+      append buffer ".";
       append buffer name;
-      append buffer " : ";
+      append buffer " = ";
       printExp buffer value
 
    and printExpList buffer (sep:string) (e:cexp list) : unit =
@@ -411,8 +413,8 @@ module PrintC = struct
 
    let printLhsExpTuple buffer (var:string) (is_var:bool) (i:int) (e:clhsexp) : unit =
       match e with
-      | CLId(_,name) ->
-         if is_var then append buffer "var ";
+      | CLId(typ,name) ->
+         if is_var then (append buffer typ; append buffer " ");
          append buffer name;
          append buffer " = ";
          append buffer var;

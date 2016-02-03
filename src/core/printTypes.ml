@@ -64,6 +64,10 @@ and typeExpressionListBuff buffer expl =
 
 let rec lhsExpressionBuff buffer (lhs:lhs_exp) =
    match lhs with
+   | LWild({typ=Some(tp)}) ->
+      append buffer "(_:";
+      typeExpressionBuff buffer tp;
+      append buffer ")";
    | LWild(_) ->
       append buffer "_"
    | LId(id,None,_) ->

@@ -8,5 +8,5 @@ fun bar(){
 	val a,(b,(c,d)) = 0,(1,(2,3));
 
 	val r,t = 0,1;
-	r,t,u = t,r,0;
+	r,t,_ = t,r,0;
 }
