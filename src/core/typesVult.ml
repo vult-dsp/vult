@@ -200,7 +200,7 @@ let default_arguments =
       jscode = false;
       output = "";
       real   = "float";
-      template = "none";
+      template = "default";
    }
 
 let makeAttr (loc:Loc.t) : attr =
