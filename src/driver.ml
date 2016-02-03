@@ -40,7 +40,7 @@ let writeOutput (args:arguments) (code:string) (ext:string) =
 let generateCode (args:arguments) (parser_results:parser_results list) : string =
    if args.ccode then
       let code = VultCh.generateChCode args parser_results in
-      let ()   = writeOutput args code ".c" in
+      let ()   = writeOutput args code ".cpp" in
       code
    else
    if args.jscode then

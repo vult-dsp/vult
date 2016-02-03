@@ -10,7 +10,7 @@ type cexp =
    | CEFloat  of float
    | CEBool   of bool
    | CEString of string
-   | CECall   of string * cexp_type list
+   | CECall   of string * cexp list
    | CEUnOp   of string * cexp
    | CEOp     of string * cexp list
    | CEVar    of string
@@ -18,10 +18,6 @@ type cexp =
    | CETuple  of (string * cexp) list
    | CECast   of string * cexp
    | CENewObj
-
-and cexp_type =
-   | CRef of cexp
-   | CVar of cexp
 
 type clhsexp =
    | CLWild
@@ -61,8 +57,8 @@ module Templates = struct
 
    let default code =
       "
-#include \"stdint.h\"
-#include \"math.h\"
+#include <stdint.h>
+#include <math.h>
 
 "^code^""
 
@@ -108,11 +104,10 @@ let add params name =
    in
    { params with env = (name::current)::rest }
 
-let convertId params (id:id) : string =
+let convertId (id:id) : string =
    match id with
    | [a]   -> fixKeyword a
-   | [a;b] when look params.env a -> (fixKeyword a)^"."^(fixKeyword b)
-   | [a;b] -> (fixKeyword a)^"->"^(fixKeyword b)
+   | [a;b] -> (fixKeyword a)^"."^(fixKeyword b)
    | _ -> failwith ("VType.convertId: invalid identifier " ^ PrintTypes.identifierStr id)
 
 let underscoreId (id:id) : string =
@@ -157,10 +152,6 @@ let isBool (typ:VType.t) : bool =
    | VType.TId(name,_) when name=["bool"] -> true
    | _ -> false
 
-let wrapArgument (typ:VType.t) (e:cexp) =
-   if isValue typ then CVar(e) else CRef(e)
-let wrapArguments = List.map2 wrapArgument
-
 let attrType (attr:attr) : VType.t =
    match attr.typ with
    | Some(t) -> t
@@ -172,16 +163,16 @@ let convertTypedId params (e:typed_id) : arg_type * string =
    | TypedId(id,typ,_) ->
       let typ_c = convertType params typ in
       let typ_ref = if isValue typ then Var(typ_c) else Ref(typ_c) in
-      typ_ref, convertId params id
+      typ_ref, convertId id
 
-let convertOperator params (op:string) (typ:VType.t) (elems:cexp list) (elem_types:VType.t list) : VType.t * cexp =
+let convertOperator params (op:string) (typ:VType.t) (elems:cexp list) : VType.t * cexp =
    let is_float = (params.real = Float) && (isReal typ) in
    let is_int   = (isInt typ) in
    let is_bool  = (isBool typ) in
    let is_builtin = is_float || is_int || is_bool in
    match op with
    | "<>" when is_builtin -> typ, CEOp("!=",elems)
-   | "%"  when is_float   -> typ, CECall("fmodf",wrapArguments elem_types elems)
+   | "%"  when is_float   -> typ, CECall("fmodf",elems)
 
    | _ -> typ, CEOp(op,elems)
 
@@ -205,7 +196,7 @@ let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) (elem_types:V
       | _ -> `FunctionName(fn)
    in
    match fixed_fn with
-   | `FunctionName(fn)   -> typ, CECall(convertId params fn,wrapArguments elem_types elems)
+   | `FunctionName(fn)   -> typ, CECall(convertId fn, elems)
    | `UnOperatorName(op) -> typ, CEUnOp(op,List.hd elems)
 
 let rec convertExp params (e:exp) : VType.t * cexp =
@@ -214,7 +205,7 @@ let rec convertExp params (e:exp) : VType.t * cexp =
    | PBool(v,attr)     -> attrType attr, CEBool(v)
    | PInt(n,attr)      -> attrType attr, CEInt(n)
    | PReal(v,attr)     -> attrType attr, CEFloat(v)
-   | PId(id,attr)      -> attrType attr, CEVar(convertId params id)
+   | PId(id,attr)      -> attrType attr, CEVar(convertId id)
    | PUnOp("|-|",e1,attr) ->
       let _, e1' = convertExp params e1 in
       attrType attr, CEUnOp("-",e1')
@@ -222,9 +213,9 @@ let rec convertExp params (e:exp) : VType.t * cexp =
       let _, e1' = convertExp params e1 in
       attrType attr, CEUnOp(op,e1')
    | POp(op,elems,attr) ->
-      let elem_typ, elems' = convertExpList params elems in
+      let _, elems' = convertExpList params elems in
       let typ = attrType attr in
-      convertOperator params op typ elems' elem_typ
+      convertOperator params op typ elems'
    | PCall(_,[name],[arg],attr) when name="real" || name="int" || name="bool" ->
       let _, arg' = convertExp params arg in
       attrType attr, CECast(getCast params [name], arg')
@@ -254,16 +245,10 @@ let rec convertExp params (e:exp) : VType.t * cexp =
 and convertExpList params (e:exp list) : VType.t list * cexp list =
    List.map (convertExp params) e |> List.split
 
-and convertArgument params (e:exp) : cexp_type =
-   let typ, e' = convertExp params e in
-   let arg = wrapArgument typ e' in
-   let () = Printf.printf "- %s -> %s \n" (PrintTypes.expressionStr e) (PrintTypes.typeStr typ) in
-   arg
-
 let rec convertLhsExp is_val params (e:lhs_exp) : parameters * clhsexp =
    match e with
    | LId(id,Some(typ),_) ->
-      let new_id = convertId params id in
+      let new_id = convertId id in
       let params' = if is_val then add params new_id else params in
       params', CLId(convertType params typ, new_id)
    | LId(_,None,_)   -> failwith "VultCh.convertLhsExp: everything should have types"
@@ -314,7 +299,7 @@ let rec convertStmt params (s:stmt) : parameters * cstmt =
    | StmtFun(name,args,body,Some(ret),_) ->
       let arg_names = List.map (convertTypedId params) args in
       let _, body'  = convertStmt (newEnv params) body in
-      params, CSFunction(convertType params ret, convertId params name,arg_names,body')
+      params, CSFunction(convertType params ret, convertId name,arg_names,body')
    | StmtBind(lhs,rhs,_) ->
       let params', lhs' = convertLhsExp false params lhs in
       let _, rhs' = convertExp params rhs in
@@ -324,7 +309,7 @@ let rec convertStmt params (s:stmt) : parameters * cstmt =
       params', CSBlock(stmts')
    | StmtType(name,members,_) ->
       let type_name    = convertType params name in
-      let member_pairs = List.map (fun (id,typ,_) -> convertType params typ, convertId params id) members in
+      let member_pairs = List.map (fun (id,typ,_) -> convertType params typ, convertId id) members in
       params, CSType(type_name,member_pairs)
    | StmtAliasType(t1,t2,_) ->
       let t1_name    = convertType params t1 in
@@ -367,7 +352,7 @@ module PrintC = struct
       | CECall(name,args) ->
          append buffer name;
          append buffer "(";
-         printList buffer printArgument "," args;
+         printList buffer printExp "," args;
          append buffer ")"
       | CEUnOp(op,e) ->
          append buffer "(";
@@ -405,14 +390,6 @@ module PrintC = struct
       append buffer name;
       append buffer " : ";
       printExp buffer value
-
-   and printArgument buffer (arg:cexp_type) =
-      match arg with
-      | CVar(v) -> printExp buffer v
-      | CRef(v) ->
-         append buffer "&(";
-         printExp buffer v;
-         append buffer ")"
 
    and printExpList buffer (sep:string) (e:cexp list) : unit =
       match e with
@@ -453,7 +430,7 @@ module PrintC = struct
          append buffer name
       | Ref(typ) ->
          append buffer typ;
-         append buffer " *";
+         append buffer " &";
          append buffer name
 
    let rec printStmt buffer (stmt:cstmt) : unit =
