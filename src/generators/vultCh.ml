@@ -176,7 +176,7 @@ let convertOperator params (op:string) (typ:VType.t) (elems:cexp list) : VType.t
 
    | _ -> typ, CEOp(op,elems)
 
-let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) (elem_types:VType.t list) : VType.t * cexp =
+let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) : VType.t * cexp =
    let is_float = (params.real = Float) && (isReal typ) in
    let is_int   = (isInt typ) in
    let fixed_fn =
@@ -220,9 +220,9 @@ let rec convertExp params (e:exp) : VType.t * cexp =
       let _, arg' = convertExp params arg in
       attrType attr, CECast(getCast params [name], arg')
    | PCall(_,name,elems,attr) ->
-      let elem_typ, elems' = convertExpList params elems in
+      let _, elems' = convertExpList params elems in
       let typ = attrType attr in
-      convertFunction params name typ elems' elem_typ
+      convertFunction params name typ elems'
    | PIf(cond,then_,else_,attr) ->
       let _, cond'  = convertExp params cond in
       let _, then_' = convertExp params then_ in
