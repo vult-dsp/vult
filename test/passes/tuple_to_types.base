@@ -1,5 +1,5 @@
 {
-   type _tuple_0 {
+   type _tuple_int_int_int {
       val field_0 : int;
       val field_1 : int;
       val field_2 : int;
@@ -7,7 +7,7 @@
 
    fun foo() : tuple(int,int,int) return 1,2,3;
 
-   type _tuple_1 {
+   type _tuple_real_int_bool {
       val field_0 : real;
       val field_1 : int;
       val field_2 : bool;

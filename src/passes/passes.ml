@@ -389,7 +389,24 @@ module ReportUnboundType = struct
 
 end
 
+(** Put this function somewhere *)
+let rec join (sep:string) (id:string list) : string =
+   match id with
+   | [] -> ""
+   | [ name ] -> name
+   | h :: t -> h ^ sep ^ (join sep t)
+
 module CreateTypesForTuples = struct
+
+   let rec getTupleName (typ:VType.t) : string =
+      match !typ with
+      | VType.TId(id,_) -> PrintTypes.identifierStr id
+      | VType.TComposed(id,elems,_) ->
+         (PrintTypes.identifierStr id)::(List.map getTupleName elems)
+         |> join "_"
+      | VType.TLink(e) -> getTupleName e
+      | VType.TArrow(e1,e2,_) -> (getTupleName e1)^"__"^(getTupleName e2)
+      | _ -> failwith "There should be no other types here"
 
    let vtype_c : (TypeSet.t Env.t, VType.vtype) Mapper.mapper_func =
       Mapper.make @@ fun state t ->
@@ -401,13 +418,13 @@ module CreateTypesForTuples = struct
 
    let getTuples_mapper = { Mapper.default_mapper with Mapper.vtype_c = vtype_c }
 
-   let makeTypeDeclaration state (t:VType.t) : 'a Env.t * stmt =
+   let makeTypeDeclaration (t:VType.t) : stmt =
       match !t with
       | VType.TComposed(["tuple"],types,_) ->
          let elems = List.mapi (fun i a -> ["field_"^(string_of_int i)],a,emptyAttr) types in
-         let tick,state' = Env.tick state in
-         let name = VType.TId(["_tuple_"^(string_of_int tick)],None) in
-         state', StmtType(ref name,elems,emptyAttr)
+         let name_str = "_" ^ getTupleName t in
+         let name = VType.TId([name_str],None) in
+         StmtType(ref name,elems,emptyAttr)
       | _ -> failwith "CreateTypesForTuples.makeTypeDeclaration: there should be only tuples here"
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
@@ -420,16 +437,16 @@ module CreateTypesForTuples = struct
             let current    = PassData.getTuples data in
             let not_in_set = TypeSet.diff new_tuples current in
             if not (TypeSet.is_empty not_in_set) then
-               let state',decl =
+               let decl =
                   TypeSet.fold
-                     (fun a (s,acc) ->
-                        let s',type_decl = makeTypeDeclaration s a in
-                        s',(type_decl::acc))
+                     (fun a acc ->
+                        let type_decl = makeTypeDeclaration a in
+                        type_decl::acc)
                   not_in_set
-                  (state,[])
+                  []
                in
                let data' = PassData.addTuples data not_in_set in
-               Env.set state' data', decl@[stmt]
+               Env.set state data', decl@[stmt]
             else
                state, [stmt]
          | _ -> state, [stmt]
