@@ -262,11 +262,11 @@ module Scope = struct
       | Some(parent) ->
          Context.getContext parent.ctx t.name
 
-   let enter kind sharectx (t:t) (name:id) : t =
+   let enter kind (attr:attr) (t:t) (name:id) : t =
       match kind with
       | `Function ->
          let t' = enterAny getFunction t name in
-         if sharectx then
+         if attr.fun_and then
             addToContext t' name
          else
             newContext t' name
@@ -502,11 +502,11 @@ module Env = struct
          scope = Scope.setCurrentType state.scope typ single;
       }
 
-   let enter kind ?(sharectx=false) (state:'a t) (func:id) : 'a t =
+   let enter kind ?(attr=emptyAttr) (state:'a t) (func:id) : 'a t =
       {
          state with
-         scope = Scope.enter kind sharectx state.scope func;
-         tick  = if (kind = `Function && sharectx = false) then 0 else state.tick;
+         scope = Scope.enter kind attr state.scope func;
+         tick  = if (kind = `Function && attr.fun_and = false) then 0 else state.tick;
       }
 
    (** Closes the current context *)
