@@ -20,6 +20,10 @@
       (r:int) = _tmp_0;
       (t:int) = _tmp_1;
       (_:int) = _tmp_2;
+      val (t1:int);
+      val (t2:int);
+      (t1:int) = 3;
+      (t2:int) = 6;
    }
 
 }

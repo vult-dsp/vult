@@ -9,4 +9,6 @@ fun bar(){
 
 	val r,t = 0,1;
 	r,t,_ = t,r,0;
+	val t1,t2;
+	t1,t2 = 3,6;
 }
