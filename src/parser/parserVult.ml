@@ -50,7 +50,7 @@ let rec moveToNextStatement (buffer:Stream.stream) : unit =
    | EOF -> ()
    | FUN | VAL
    | IF  | RET -> ()
-   | RBRAC -> Stream.skip buffer
+   | RBRACE -> Stream.skip buffer
    | _ ->
       let _ = Stream.skip buffer in
       moveToNextStatement buffer
@@ -138,6 +138,41 @@ let prattParser (rbp:int) (buffer:Stream.stream)
 
 let identifierToken (token:'kind token) : id =
    splitOnDot token.value
+
+(** Parses attribute expressions *)
+let rec attrExpression (rbp:int) (buffer:Stream.stream) : attr =
+   prattParser rbp buffer getLbp attr_nud attr_led
+
+and attr_nud (buffer:Stream.stream) (token:'kind token) : attr =
+   match token.kind with
+   | ID ->
+      let id = identifierToken token in
+      begin
+         match id with
+         | ["init"] -> { emptyAttr with init = true }
+         | _ ->
+            let message = Stream.makeError buffer "Unknown attribute" in
+            raise (ParserError(message))
+      end
+   | _ ->
+      let message = Stream.notExpectedError token in
+      raise (ParserError(message))
+
+and attr_led (_:Stream.stream) (token:'kind token) (_:attr) : attr =
+   match token.kind with
+   | _ ->
+      let message = Stream.notExpectedError token in
+      raise (ParserError(message))
+
+let optAttrExpression (rbp:int) (buffer:Stream.stream) : attr =
+   match Stream.peek buffer with
+   | AT ->
+      let _ = Stream.consume buffer AT in
+      let _ = Stream.consume buffer LBRACK in
+      let attr = attrExpression rbp buffer in
+      let _ = Stream.consume buffer RBRACK in
+      attr
+   | _ -> emptyAttr
 
 (** Parses a type expression using a Pratt parser *)
 let rec typeExpression (rbp:int) (buffer:Stream.stream) : VType.t =
@@ -583,8 +618,9 @@ and stmtFunction (buffer:Stream.stream) : stmt =
          Some(typeExpression 0 buffer)
       | _ -> None
    in
+   let attr      = optAttrExpression 0 buffer in
    let body      = stmtList buffer in
-   let attr      = makeAttr start_loc in
+   let attr      = { attr with loc = start_loc } in
    let attr      = if isjoin then { attr with fun_and = true } else attr in
    StmtFun(name,args,body,vtype,attr)
 
@@ -600,10 +636,10 @@ and stmtType (buffer:Stream.stream) : stmt =
       let vtype    = typeExpression 10 buffer in
       let _        = Stream.optConsume buffer SEMI in
       StmtAliasType(type_name,vtype,makeAttr start_loc)
-   | LBRAC ->
+   | LBRACE ->
       let _        = Stream.skip buffer in
       let val_decl = valDeclList buffer in
-      let _        = Stream.consume buffer RBRAC in
+      let _        = Stream.consume buffer RBRACE in
       StmtType(type_name,val_decl,makeAttr start_loc)
    | _ ->
       let got     = tokenToString (Stream.current buffer) in
@@ -661,25 +697,25 @@ and stmt (buffer:Stream.stream) : stmt =
       let _ = Stream.setErrors buffer true in
       StmtEmpty
 
-(** <statementList> := LBRACK <statement> [<statement>] RBRACK *)
+(** <statementList> := LBRAC <statement> [<statement>] RBRAC *)
 and stmtList (buffer:Stream.stream) : stmt =
    let start_loc = Stream.location buffer in
    let rec loop acc =
       match Stream.peek buffer with
-      | RBRAC ->
+      | RBRACE ->
          let end_loc = Stream.location buffer in
          let loc     = Loc.merge start_loc end_loc in
          let _       = Stream.skip buffer in
          StmtBlock(None,List.rev acc,makeAttr loc)
       | EOF ->
-         let _ = Stream.expect buffer RBRAC in
+         let _ = Stream.expect buffer RBRACE in
          StmtBlock(None,[],makeAttr start_loc)
       | _ ->
          let s = stmt buffer in
          loop (s::acc)
    in
    match Stream.peek buffer with
-   | LBRAC ->
+   | LBRACE ->
       let _ = Stream.skip buffer in
       loop []
    | _ ->

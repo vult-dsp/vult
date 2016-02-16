@@ -114,8 +114,10 @@ let kindToString kind =
    | WHILE -> "'while'"
    | LSEQ -> "'{|'"
    | RSEQ -> "'|}'"
-   | LBRAC -> "'{'"
-   | RBRAC -> "'}'"
+   | LBRACE -> "'{'"
+   | RBRACE -> "'}'"
+   | LBRACK -> "'['"
+   | RBRACK -> "']'"
    | LPAREN-> "'('"
    | RPAREN-> "')'"
    | COLON -> "':'"
@@ -179,12 +181,14 @@ rule next_token lines = parse
   | '_'         { makeToken lines WILD lexbuf }
   | '('         { makeToken lines LPAREN lexbuf }
   | ')'         { makeToken lines RPAREN lexbuf }
+  | '{'         { makeToken lines LBRACE lexbuf }
+  | '['         { makeToken lines LBRACK lexbuf }
+  | '}'         { makeToken lines RBRACE lexbuf }
+  | ']'         { makeToken lines RBRACK lexbuf }
   | "{|"        { makeToken lines LSEQ lexbuf }
   | "|}"        { makeToken lines RSEQ lexbuf }
   | "[|"        { makeToken lines LARR lexbuf }
   | "|]"        { makeToken lines RARR lexbuf }
-  | '{'         { makeToken lines LBRAC lexbuf }
-  | '}'         { makeToken lines RBRAC lexbuf }
   | ':'         { makeToken lines COLON lexbuf }
   | ';'         { makeToken lines SEMI lexbuf }
   | ','         { makeToken lines COMMA lexbuf }

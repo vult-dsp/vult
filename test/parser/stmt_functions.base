@@ -17,4 +17,6 @@
 
    and bar(x:int) : int return 0;
 
+   fun foo(x:int) : int return 0;
+
 }

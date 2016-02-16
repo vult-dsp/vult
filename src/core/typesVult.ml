@@ -35,6 +35,7 @@ type attr =
       fun_and : bool;
       active  : bool;
       bound   : bool;
+      init    : bool;
       typ     : VType.t option;
    }
 
@@ -204,10 +205,10 @@ let default_arguments =
    }
 
 let makeAttr (loc:Loc.t) : attr =
-   { loc = loc; fun_and = false; active = false; bound = false; typ = None }
+   { loc = loc; fun_and = false; active = false; bound = false; typ = None; init = false }
 
 let emptyAttr =
-   { loc = Loc.default; fun_and = false; active = false; bound = false; typ = None }
+   { loc = Loc.default; fun_and = false; active = false; bound = false; typ = None; init = false }
 
 module IdMap = CCMap.Make(struct type t = id let compare = compare end)
 

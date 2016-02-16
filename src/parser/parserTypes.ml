@@ -41,8 +41,10 @@ type token_enum =
    | IF
    | THEN
    | ELSE
-   | LBRAC
-   | RBRAC
+   | LBRACE
+   | RBRACE
+   | LBRACK
+   | RBRACK
    | LPAREN
    | RPAREN
    | LSEQ
