@@ -20,10 +20,7 @@ Library "vult_util"
   Modules:
     Error,
     Loc,
-    PrintBuffer,
-    Scope,
-    Either,
-    UnionFind
+    PrintBuffer
   BuildDepends:
     containers
 
