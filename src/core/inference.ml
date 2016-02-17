@@ -39,6 +39,7 @@ let expLoc e  = lazy (GetLocation.fromExp e)
 let lhsLoc e  = lazy (GetLocation.fromLhsExp e)
 let stmtLoc e = lazy (GetLocation.fromStmt e)
 let typLoc t  = lazy (GetLocation.fromType t)
+let attrLoc attr = lazy (attr.loc)
 let expOptLoc e =
    lazy (
    match e with
@@ -360,7 +361,7 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       let typ  = VType.makeArrowType last_type types' in
       let env' = Env.setCurrentType env' typ true in
       let env' = Env.exit `Function env' in
-      let  _   = raiseReturnError (stmtLoc stmt) ret_type' body_ret in
+      let  _   = raiseReturnError (attrLoc attr) ret_type' body_ret in
       VType.leaveLevel ();
       StmtFun(name,args',body',Some(last_type),attr), env', NoType
    | StmtIf(cond,then_,else_,attr) ->
