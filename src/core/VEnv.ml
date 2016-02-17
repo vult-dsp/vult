@@ -75,6 +75,7 @@ module Context = struct
       {
          forward   : id IdMap.t;
          backward  : IdSet.t IdMap.t;
+         init_fun  : id IdMap.t;
          count     : int;
          current   : id;
       }
@@ -83,11 +84,12 @@ module Context = struct
       {
          forward   = IdMap.empty;
          backward  = IdMap.empty;
+         init_fun  = IdMap.empty;
          count     = 0;
          current   = [];
       }
 
-   let addTo (context:t) (func:id) : t =
+   let addTo (context:t) (func:id) (is_init:bool) : t =
       let current_in_ctx =
          try IdMap.find context.current context.backward with
          | Not_found -> IdSet.empty
@@ -96,9 +98,10 @@ module Context = struct
          context with
          forward  = IdMap.add func context.current context.forward;
          backward = IdMap.add context.current (IdSet.add func current_in_ctx) context.backward;
+         init_fun = if is_init then IdMap.add context.current func context.init_fun else context.init_fun;
       }
 
-   let makeNew (context:t) (func:id) : t =
+   let makeNew (context:t) (func:id) (is_init:bool) : t =
       if IdMap.mem func context.forward then
          context
       else
@@ -108,6 +111,7 @@ module Context = struct
             current  = context_name;
             forward  = IdMap.add func context_name context.forward;
             backward = IdMap.add context_name (IdSet.of_list [func]) context.backward;
+            init_fun = if is_init then IdMap.add context_name func context.init_fun else context.init_fun;
          }
 
    let getAllWithContext (context:t) (func:id) : id list =
@@ -120,6 +124,12 @@ module Context = struct
 
    let getContext (context:t) (func:id) : id =
       IdMap.find func context.forward
+
+   let getInitFunction (context:t) (name:id) : id option =
+      let ctx = IdMap.find name context.forward in
+      match IdMap.find ctx context.init_fun with
+      | init_fun -> Some(init_fun)
+      | exception Not_found -> None
 
 end
 
@@ -210,10 +220,6 @@ module Scope = struct
    let primExitOperators (parent:t) (t:t) : t =
       { parent with operators = IdMap.add t.name t parent.operators }
 
-   (*let rec dump (t:t) (level:int) : unit =
-      Printf.printf "%s'%s' = %s\n" (String.make level ' ') (idStr t.name) (kindStr t.kind);
-      IdMap.iter (fun _ sub -> dump sub (level+3)) t.keep*)
-
    let addMem (t:t) (name:id) (typ:VType.t) : t =
       let new_symbol = { empty with name = name; kind = MemSymbol; typ = typ } in
       { t with mem_inst = IdMap.add name new_symbol t.mem_inst; active = true }
@@ -244,17 +250,17 @@ module Scope = struct
       | Some(parent) ->
          exit parent t
 
-   let newContext (t:t) (name:id) : t =
+   let newContext (t:t) (name:id) (is_init:bool) : t =
       match t.parent with
       | None -> t
       | Some(parent) ->
-         { t with parent = Some({ parent with ctx = Context.makeNew parent.ctx name }) }
+         { t with parent = Some({ parent with ctx = Context.makeNew parent.ctx name is_init }) }
 
-   let addToContext (t:t) (name:id) : t =
+   let addToContext (t:t) (name:id) (is_init:bool) : t =
       match t.parent with
       | None -> t
       | Some(parent) ->
-         { t with parent = Some({ parent with ctx = Context.addTo parent.ctx name }) }
+         { t with parent = Some({ parent with ctx = Context.addTo parent.ctx name is_init }) }
 
    let getContext (t:t) : id =
       match t.parent with
@@ -262,14 +268,20 @@ module Scope = struct
       | Some(parent) ->
          Context.getContext parent.ctx t.name
 
+   let getInitFunction (t:t) (name:id) : id option =
+      match t.parent with
+      | None -> raise (Invalid_argument "Scope.getContext")
+      | Some(parent) ->
+         Context.getInitFunction parent.ctx name
+
    let enter kind (attr:attr) (t:t) (name:id) : t =
       match kind with
       | `Function ->
          let t' = enterAny getFunction t name in
          if attr.fun_and then
-            addToContext t' name
+            addToContext t' name attr.init
          else
-            newContext t' name
+            newContext t' name attr.init
       | `Module   -> enterAny getModule t name
       | `Operator -> enterAny getOperators t name
       | `Type     -> enterAny getTypes t name
@@ -376,7 +388,6 @@ module Scope = struct
       let mem, inst = List.partition (fun a -> a.kind = MemSymbol) mem_inst in
       List.map getPathAndType mem, List.map getPathAndType inst
 
-
    let lookupMemInAllContext (t:t) (name:id) : t option =
       let tables = getAllWithSameContext t in
       let rec loop ctx =
@@ -471,6 +482,12 @@ module Env = struct
       match Scope.lookup `Function state.scope name with
       | None -> failwith "Function not found"
       | Some(t) -> Scope.getContext t
+
+   (** Returns the initialization function if it has beed defines with the attribute *)
+   let getInitFunction (state:'a t) (name:id) : id option =
+      match Scope.lookup `Function state.scope name with
+      | None -> failwith "Function not found"
+      | Some(t) -> Scope.getInitFunction t name
 
    (** Returns true if the function is active *)
    let isActive (state:'a t) (name:id) : bool =

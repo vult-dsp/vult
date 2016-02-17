@@ -188,7 +188,7 @@ let makeReturnType (v:VType.t option) : return_type =
 let raiseReturnError (loc:Loc.t Lazy.t) (given:VType.t option) (typ:return_type) =
    match given,typ with
    | None,_ -> ()
-   | Some(gt), GivenType(rt) when VType.compare gt rt <> 0 ->
+   | Some(gt), GivenType(rt) when VType.compare gt rt == 0 ->
       let msg = Printf.sprintf "This function is expected to have type '%s' but nothing was returned" (PrintTypes.typeStr gt) in
       Error.raiseError msg (Lazy.force loc)
    | _ -> ()

@@ -191,9 +191,11 @@ module CreateInitFunction = struct
       | { contents = VType.TId(tp_name,_) } -> (try ref (VType.TId(Env.getContext state tp_name,None)) with | _ -> tp )
       | _ -> tp
 
-   let generateInitFunction (ctx:id) (member_set:IdTypeSet.t) : stmt =
+   let generateInitFunction (ctx:id) (init_fun:id option) (member_set:IdTypeSet.t) : stmt =
       let ctx_name = ["_ctx"] in
       let typ = ref (VType.TId(ctx,None)) in
+      let ctx_lid = PId(ctx_name,{ emptyAttr with typ = Some(typ)}) in
+      (* Generates bindings for all members *)
       let new_stmts_set =
          IdTypeSet.fold
             (fun (name,tp) acc ->
@@ -202,9 +204,15 @@ module CreateInitFunction = struct
             member_set StmtSet.empty
       in
       let attr = { emptyAttr with typ = Some(typ) } in
+      (* Generates a call to the initialization function if there's one*)
+      let init_fun_call =
+         match init_fun with
+         | Some(init_fun_name) -> [StmtBind(LWild(emptyAttr),PCall(None,init_fun_name,[ctx_lid],emptyAttr),emptyAttr)]
+         | None -> []
+      in
       let return_stmt = StmtReturn(PId(ctx_name,attr),emptyAttr) in
       let ctx_decl = StmtVal(LId(ctx_name,Some(typ),attr),None,emptyAttr) in
-      let stmts = StmtSet.fold (fun a acc -> a::acc) new_stmts_set [return_stmt] in
+      let stmts = StmtSet.fold (fun a acc -> a::acc) new_stmts_set (init_fun_call@[return_stmt]) in
       StmtFun(getInitFunctioName ctx, [], StmtBlock(None, ctx_decl::stmts, emptyAttr), Some(typ), emptyAttr)
 
    let generateContextType (ctx:id) (member_set:IdTypeSet.t) : stmt =
@@ -253,7 +261,8 @@ module CreateInitFunction = struct
                            IdTypeSet.add member acc)
                         (IdTypeSet.union mem_vars instances) IdTypeSet.empty
                   in
-                  let init_funct = generateInitFunction ctx member_set in
+                  let init_fun   = Env.getInitFunction state name in
+                  let init_funct = generateInitFunction ctx init_fun member_set in
                   let type_def   = generateContextType ctx member_set in
                   let data'      = PassData.markInitFunction data ctx in
                   let data'      = PassData.markInitFunction data' name in
