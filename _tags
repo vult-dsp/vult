@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 2dce79f73817d19fd83ef12fa1786b4c)
+# DO NOT EDIT (digest: 17905543fa47d88d03d33678ebb75f56)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -17,63 +17,81 @@ true: annot, bin_annot
 # Library vult_util
 "src/util/vult_util.cmxs": use_vult_util
 <src/util/*.ml{,i,y}>: pkg_containers
-<src/util/*.ml{,i,y}>: pkg_ocamlgraph
 # Library vult_core
 "src/core/vult_core.cmxs": use_vult_core
 <src/core/*.ml{,i,y}>: pkg_containers
-<src/core/*.ml{,i,y}>: pkg_ocamlgraph
 <src/core/*.ml{,i,y}>: pkg_ppx_deriving.std
 <src/core/*.ml{,i,y}>: use_vult_util
 # Library vult_parser
 "src/parser/vult_parser.cmxs": use_vult_parser
 <src/parser/*.ml{,i,y}>: pkg_containers
-<src/parser/*.ml{,i,y}>: pkg_ocamlgraph
 <src/parser/*.ml{,i,y}>: pkg_ppx_deriving.std
 <src/parser/*.ml{,i,y}>: use_vult_core
 <src/parser/*.ml{,i,y}>: use_vult_util
+# Library vult_generators
+"src/generators/vult_generators.cmxs": use_vult_generators
+<src/generators/*.ml{,i,y}>: pkg_containers
+<src/generators/*.ml{,i,y}>: pkg_ppx_deriving.std
+<src/generators/*.ml{,i,y}>: use_vult_core
+<src/generators/*.ml{,i,y}>: use_vult_util
+# Library vult_passes
+"src/passes/vult_passes.cmxs": use_vult_passes
+<src/passes/*.ml{,i,y}>: pkg_containers
+<src/passes/*.ml{,i,y}>: pkg_ppx_deriving.std
+<src/passes/*.ml{,i,y}>: use_vult_core
+<src/passes/*.ml{,i,y}>: use_vult_util
 # Library vult
 "src/vult.cmxs": use_vult
 # Executable vultc
-<vultc.{native,byte}>: pkg_containers
-<vultc.{native,byte}>: pkg_ocamlgraph
-<vultc.{native,byte}>: pkg_ppx_deriving.std
-<vultc.{native,byte}>: use_vult
-<vultc.{native,byte}>: use_vult_core
-<vultc.{native,byte}>: use_vult_parser
-<vultc.{native,byte}>: use_vult_util
+"src/vultc.byte": pkg_containers
+"src/vultc.byte": pkg_ppx_deriving.std
+"src/vultc.byte": use_vult
+"src/vultc.byte": use_vult_core
+"src/vultc.byte": use_vult_generators
+"src/vultc.byte": use_vult_parser
+"src/vultc.byte": use_vult_passes
+"src/vultc.byte": use_vult_util
 # Executable vult_node
-"vult_node.byte": pkg_containers
-"vult_node.byte": pkg_js_of_ocaml
-"vult_node.byte": pkg_js_of_ocaml.syntax
-"vult_node.byte": pkg_ocamlgraph
-"vult_node.byte": pkg_ppx_deriving.std
-"vult_node.byte": use_vult
-"vult_node.byte": use_vult_core
-"vult_node.byte": use_vult_parser
-"vult_node.byte": use_vult_util
-<*.ml{,i,y}>: pkg_containers
-<*.ml{,i,y}>: pkg_js_of_ocaml
-<*.ml{,i,y}>: pkg_js_of_ocaml.syntax
-<*.ml{,i,y}>: pkg_ocamlgraph
-<*.ml{,i,y}>: pkg_ppx_deriving.std
-<*.ml{,i,y}>: use_vult
-<*.ml{,i,y}>: use_vult_core
-<*.ml{,i,y}>: use_vult_parser
-<*.ml{,i,y}>: use_vult_util
-# Executable test_vult
-<src/test.{native,byte}>: pkg_containers
-<src/test.{native,byte}>: pkg_oUnit
-<src/test.{native,byte}>: pkg_ocamlgraph
-<src/test.{native,byte}>: pkg_ppx_deriving.std
-<src/test.{native,byte}>: use_vult_core
-<src/test.{native,byte}>: use_vult_parser
-<src/test.{native,byte}>: use_vult_util
+"src/vult_node.byte": pkg_containers
+"src/vult_node.byte": pkg_js_of_ocaml
+"src/vult_node.byte": pkg_js_of_ocaml.syntax
+"src/vult_node.byte": pkg_ppx_deriving.std
+"src/vult_node.byte": use_vult
+"src/vult_node.byte": use_vult_core
+"src/vult_node.byte": use_vult_generators
+"src/vult_node.byte": use_vult_parser
+"src/vult_node.byte": use_vult_passes
+"src/vult_node.byte": use_vult_util
 <src/*.ml{,i,y}>: pkg_containers
-<src/*.ml{,i,y}>: pkg_oUnit
-<src/*.ml{,i,y}>: pkg_ocamlgraph
+<src/*.ml{,i,y}>: pkg_js_of_ocaml
+<src/*.ml{,i,y}>: pkg_js_of_ocaml.syntax
 <src/*.ml{,i,y}>: pkg_ppx_deriving.std
+<src/*.ml{,i,y}>: use_vult
 <src/*.ml{,i,y}>: use_vult_core
+<src/*.ml{,i,y}>: use_vult_generators
 <src/*.ml{,i,y}>: use_vult_parser
+<src/*.ml{,i,y}>: use_vult_passes
 <src/*.ml{,i,y}>: use_vult_util
+# Executable vult_tests
+"test/test.byte": pkg_containers
+"test/test.byte": pkg_oUnit
+"test/test.byte": pkg_ppx_deriving.std
+"test/test.byte": pkg_str
+"test/test.byte": use_vult
+"test/test.byte": use_vult_core
+"test/test.byte": use_vult_generators
+"test/test.byte": use_vult_parser
+"test/test.byte": use_vult_passes
+"test/test.byte": use_vult_util
+<test/*.ml{,i,y}>: pkg_containers
+<test/*.ml{,i,y}>: pkg_oUnit
+<test/*.ml{,i,y}>: pkg_ppx_deriving.std
+<test/*.ml{,i,y}>: pkg_str
+<test/*.ml{,i,y}>: use_vult
+<test/*.ml{,i,y}>: use_vult_core
+<test/*.ml{,i,y}>: use_vult_generators
+<test/*.ml{,i,y}>: use_vult_parser
+<test/*.ml{,i,y}>: use_vult_passes
+<test/*.ml{,i,y}>: use_vult_util
 # OASIS_STOP
 true: debug

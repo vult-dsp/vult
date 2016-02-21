@@ -1,7 +1,10 @@
 # OASIS_START
-# DO NOT EDIT (digest: 5d5e5ac613db3535e9a428efe2828c69)
+# DO NOT EDIT (digest: e1ea3340fe906c8d744c8db8402ba185)
 Mapper
 PrintTypes
 TypesVult
-Env
+Inference
+VEnv
+Common
+VType
 # OASIS_STOP

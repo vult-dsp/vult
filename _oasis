@@ -118,11 +118,11 @@ Test "vult_tests"
   WorkingDirectory: .
 
 AlphaFeatures: ocamlbuild_more_args
-Document "foobar_api"
+Document "vult_api"
   Type: ocamlbuild (0.4)
   BuildTools: ocamldoc
 
-  Title: API reference for FooBar
+  Title: API reference for Vult
   XOCamlbuildPath: .
   XOCamlbuildExtraArgs:
     "-docflags '-colorize-code -short-functors -charset utf-8'"
