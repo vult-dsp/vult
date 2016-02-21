@@ -147,7 +147,7 @@ module CodeGenerationTest = struct
       let references =
          List.map
             (fun (code,ext) ->
-               readReference (writeOutput context) ("base."^ext) code fullfile (in_testdata_dir context [folder]))
+               readReference (writeOutput context) (ext^".base") code fullfile (in_testdata_dir context [folder]))
             currents
       in
       List.iter2
