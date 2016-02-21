@@ -42,11 +42,9 @@ fun osc(pitch,pw,wave){
   mem m;
   mem rate;
   mem phase;
-  mem pre_pitch;
   mem state_triang;
   mem state_pulse;
   mem state_saw;
-  mem triang;
   mem output;
 
   val fixed_pitch = 0.;
