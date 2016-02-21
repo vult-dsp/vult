@@ -567,7 +567,7 @@ let createParameters (args:arguments) : parameters =
    { real = real; env = []; template = template }
 
 (** Generates the .c and .h file contents for the given parsed files *)
-let generateChCode (args:arguments) (parser_results:parser_results list) : string =
+let generateChCode (args:arguments) (parser_results:parser_results list) : (string * string) list =
    let stmts =
       parser_results
       |> List.map (
@@ -577,4 +577,5 @@ let generateChCode (args:arguments) (parser_results:parser_results list) : strin
       |> List.flatten
    in
    let params = createParameters args in
-   PrintC.printChCode params stmts
+   let cpp = PrintC.printChCode params stmts in
+   [cpp,"cpp"]

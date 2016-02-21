@@ -356,7 +356,7 @@ let createParameters (args:arguments) : parameters =
    { template = template }
 
 (** Generates the .c and .h file contents for the given parsed files *)
-let generateJSCode (args:arguments) (parser_results:parser_results list) : string =
+let generateJSCode (args:arguments) (parser_results:parser_results list) : (string * string) list =
    let params = createParameters args in
    let stmts =
       parser_results
@@ -367,5 +367,5 @@ let generateJSCode (args:arguments) (parser_results:parser_results list) : strin
       |> List.flatten
    in
    let js_text = printJsCode params stmts in
-   js_text
+   [js_text, "js"]
 

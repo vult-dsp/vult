@@ -26,27 +26,31 @@ THE SOFTWARE.
 
 open TypesVult
 
-let writeOutput (args:arguments) (code:string) (ext:string) =
-   if args.output<>"" then
-      begin
-         let oc = open_out (args.output^ext) in
-         Printf.fprintf oc "%s\n" code;
-         close_out oc;
-      end
-   else
-      print_endline code
+let writeFile (code:string) (file:string) : unit =
+   let oc = open_out file in
+   Printf.fprintf oc "%s\n" code;
+   close_out oc
+
+let writeOutput (args:arguments) (files:(string * string) list) : string =
+   let write_files = args.output<>"" in
+   let txt = List.fold_left
+      (fun s (code,ext) ->
+         let () = if write_files then writeFile code (args.output^"."^ext) in
+         s^"\n"^code)
+      "" files
+   in
+   if not write_files then print_endline txt;
+   txt
 
 
 let generateCode (args:arguments) (parser_results:parser_results list) : string =
    if args.ccode then
-      let code = VultCh.generateChCode args parser_results in
-      let ()   = writeOutput args code ".cpp" in
-      code
+      let files = VultCh.generateChCode args parser_results in
+      writeOutput args files
    else
    if args.jscode then
-      let code = VultJs.generateJSCode args parser_results in
-      let ()   = writeOutput args code ".js" in
-      code
+      let files = VultJs.generateJSCode args parser_results in
+      writeOutput args files
    else ""
 
 
