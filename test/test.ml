@@ -24,6 +24,15 @@ THE SOFTWARE.
 open OUnit2
 open TypesVult
 
+let initial_dir = Sys.getcwd ()
+
+let test_directory = Filename.concat initial_dir "test"
+
+let in_test_directory path = Filename.concat test_directory path
+
+let tmp_dir = Filename.get_temp_dir_name ()
+
+let in_tmp_dir path = Filename.concat tmp_dir path
 
 let parser_files =
    [
@@ -112,9 +121,9 @@ module ParserTest = struct
 
    let run (file:string) context =
       let folder = "parser" in
-      let fullfile  = checkFile (in_testdata_dir context [folder;file]) in
+      let fullfile  = checkFile (in_test_directory (folder^"/"^file)) in
       let current   = process fullfile in
-      let reference = readReference (writeOutput context) "base" current fullfile (in_testdata_dir context [folder]) in
+      let reference = readReference (writeOutput context) "base" current fullfile (in_test_directory folder) in
       assert_equal
          ~msg:("Parsing file "^fullfile)
          ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
@@ -139,15 +148,14 @@ module CodeGenerationTest = struct
       let js = VultJs.generateJSCode args [stmts] in
       js @ cpp
 
-
    let run (file:string) context : unit =
-      let fullfile  = checkFile (in_testdata_dir context ["../examples";file]) in
+      let fullfile  = checkFile (in_test_directory ("../examples/"^file)) in
       let currents  = process fullfile in
       let folder = "code" in
       let references =
          List.map
             (fun (code,ext) ->
-               readReference (writeOutput context) (ext^".base") code fullfile (in_testdata_dir context [folder]))
+               readReference (writeOutput context) (ext^".base") code fullfile (in_test_directory folder))
             currents
       in
       List.iter2
@@ -173,9 +181,9 @@ module PassesTest = struct
 
    let run options (file:string) context =
       let folder = "passes" in
-      let fullfile  = checkFile (in_testdata_dir context [folder;file]) in
+      let fullfile  = checkFile (in_test_directory (folder^"/"^file)) in
       let current   = process options fullfile in
-      let reference = readReference (writeOutput context) "base" current fullfile (in_testdata_dir context [folder]) in
+      let reference = readReference (writeOutput context) "base" current fullfile (in_test_directory folder) in
       assert_equal
          ~msg:("Transforming file "^fullfile)
          ~pp_diff:(fun fmt (a,b) -> Format.fprintf fmt "\n%s" (Diff.lineDiff a b) )
@@ -185,12 +193,42 @@ module PassesTest = struct
 
 end
 
+(** Tries to compile all the examples *)
+module CompileTest = struct
+
+   let compileFile (file:string) =
+      let basename = Filename.chop_extension (Filename.basename file) in
+      let cmd = Printf.sprintf "gcc -I%s -c %s -o %s" (in_test_directory "../runtime") file basename in
+      if Sys.command cmd <> 0 then
+         assert_failure ("Failed to compile")
+
+   let generateCPP (filename:string) (output:string) : unit =
+      let parser_results =
+         ParserVult.parseFile filename
+         |> Passes.applyTransformations in
+      let args = { default_arguments with  files = [filename]; ccode = true; output = output } in
+      Driver.generateCode args [parser_results] |> ignore
+
+
+   let run (file:string) _ =
+      let fullfile = checkFile (in_test_directory ("../examples/"^file)) in
+      let output   = Filename.chop_extension (Filename.basename fullfile) in
+      Sys.chdir tmp_dir;
+      generateCPP fullfile output;
+      compileFile (output^".cpp");
+      Sys.chdir initial_dir
+
+   let get files = "compile">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)
+
+end
+
 let suite =
    "vult">:::
    [
       ParserTest.get  parser_files;
       PassesTest.get  passes_files;
       CodeGenerationTest.get code_files;
+      CompileTest.get code_files;
    ]
 
 

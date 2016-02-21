@@ -2,6 +2,7 @@
 #define BLIT_H
 #include <stdint.h>
 #include <math.h>
+#include "vultin.h"
 
 uint8_t near_zero(float x);
 

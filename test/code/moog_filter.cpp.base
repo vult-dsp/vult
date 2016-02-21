@@ -100,10 +100,4 @@ float moog(_ctx_type_8 &_ctx, float input, float cut, float res){
    return ((x0 + x1) / 2.f);
 }
 
-int n = 0;
-while((n < 44100)){
-   float kk = moog(_ctx.x,1.f,2000.f,0.1f);
-   n = (n + 1);
-}
-return 0;
 

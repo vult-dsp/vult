@@ -257,7 +257,6 @@ this.allp12 = function(_ctx,x,fc,q){
    }
    return this.biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
-this.allp12(_ctx._inst3,0.,100.,0.5);
 
     if(this.process_init)  this.context =  this.process_init(); else this.context = {};
     if(this.default_)      this.default_(this.context);

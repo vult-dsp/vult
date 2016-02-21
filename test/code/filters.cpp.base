@@ -259,5 +259,4 @@ float allp12(_ctx_type_14 &_ctx, float x, float fc, float q){
    return biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
-allp12(_ctx._inst3,0.f,100.f,0.5f);
 

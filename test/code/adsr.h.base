@@ -2,6 +2,7 @@
 #define ADSR_H
 #include <stdint.h>
 #include <math.h>
+#include "vultin.h"
 
 typedef struct _ctx_type_0 {
    int count;

@@ -63,6 +63,7 @@ Printf.sprintf
 #define %s_H
 #include <stdint.h>
 #include <math.h>
+#include \"vultin.h\"
 
 %s
 

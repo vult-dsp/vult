@@ -104,12 +104,6 @@ this.moog = function(_ctx,input,cut,res){
    _ctx.dx1 = x1;
    return ((x0 + x1) / 2.);
 }
-var n = ((0|0)|0);
-while((n < (44100|0))){
-   var kk = this.moog(_ctx.x,1.,2000.,0.1);
-   n = ((n + (1|0))|0);
-}
-return (0|0);
 
     if(this.process_init)  this.context =  this.process_init(); else this.context = {};
     if(this.default_)      this.default_(this.context);
