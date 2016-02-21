@@ -45,27 +45,44 @@ module Templates = struct
 
    type t =
       | None
-      | Default
+      | Header
+      | Implementation
 
    let get template =
       match template with
       | "none"   -> None
-      | "default" -> Default
+      | "default" -> None
       | t -> failwith (Printf.sprintf "The template '%s' is not available for this generator" t)
 
    let none code = code
 
-   let default code =
-      "
+   let header (name:string) (code:string) : string =
+      let file = String.uppercase name in
+Printf.sprintf
+"#ifndef %s_H
+#define %s_H
 #include <stdint.h>
 #include <math.h>
 
-"^code^""
+%s
 
-   let apply template code =
+#endif // %s_H
+"
+file file code file
+
+   let implementation (file:string) (code:string) : string =
+Printf.sprintf
+"#include \"%s.h\"
+
+%s
+"
+file code
+
+   let apply template file code =
       match template with
       | None -> none code
-      | Default -> default code
+      | Header -> header file code
+      | Implementation -> implementation file code
 
 end
 
@@ -73,8 +90,9 @@ end
 type parameters =
    {
       real : real_type;
-      env  : string list list;
       template : Templates.t;
+      is_header : bool;
+      output : string;
    }
 
 let fixKeyword key =
@@ -87,22 +105,6 @@ let rec join (sep:string) (id:string list) : string =
    | [] -> ""
    | [ name ] -> fixKeyword name
    | h :: t -> (fixKeyword h) ^ sep ^ (join sep t)
-
-let look env name =
-   match env with
-   | [] -> false
-   | h::_ -> List.exists (fun a -> a = name) h
-
-let newEnv params =
-   { params with env = []::params.env }
-
-let add params name =
-   let current, rest =
-      match params.env with
-      | []   -> [],[]
-      | h::t -> h, t
-   in
-   { params with env = (name::current)::rest }
 
 let convertId (id:id) : string =
    match id with
@@ -246,88 +248,85 @@ let rec convertExp params (e:exp) : VType.t * cexp =
 and convertExpList params (e:exp list) : VType.t list * cexp list =
    List.map (convertExp params) e |> List.split
 
-let rec convertLhsExp is_val params (e:lhs_exp) : parameters * clhsexp =
+let rec convertLhsExp is_val params (e:lhs_exp) : clhsexp =
    match e with
    | LId(id,Some(typ),_) ->
       let new_id = convertId id in
-      let params' = if is_val then add params new_id else params in
-      params', CLId(convertType params typ, new_id)
+      CLId(convertType params typ, new_id)
    | LId(_,None,_)   -> failwith "VultCh.convertLhsExp: everything should have types"
    | LTyped(e1,_,_)  -> convertLhsExp is_val params e1
    | LTuple(elems,_) ->
-      let params', elems' = convertLhsExpList is_val params elems in
-      params', CLTuple(elems')
-   | LWild _ -> params, CLWild
+      let elems' = convertLhsExpList is_val params elems in
+      CLTuple(elems')
+   | LWild _ -> CLWild
    | LGroup(e,_) -> convertLhsExp is_val params e
 
-and convertLhsExpList is_val params (lhsl:lhs_exp list) : parameters * clhsexp list =
-   let params', lhsl_rev =
+and convertLhsExpList is_val params (lhsl:lhs_exp list) : clhsexp list =
+   let lhsl_rev =
       List.fold_left
-         (fun (params,acc) lhs ->
-             let params',lhs' = convertLhsExp is_val params lhs in
-             params', lhs'::acc)
-         (params,[]) lhsl
+         (fun acc lhs ->
+             (convertLhsExp is_val params lhs) :: acc)
+         [] lhsl
    in
-   params', List.rev lhsl_rev
+   List.rev lhsl_rev
 
-let rec convertStmt params (s:stmt) : parameters * cstmt =
+let rec convertStmt params (s:stmt) : cstmt =
    match s with
    | StmtVal(lhs,None,_) ->
-      let params', lhs' = convertLhsExp true params lhs in
-      params', CSVarDecl(lhs',None)
+      let lhs' = convertLhsExp true params lhs in
+      CSVarDecl(lhs',None)
    | StmtVal(lhs,Some(rhs),_) ->
-      let params', lhs' = convertLhsExp true params lhs in
+      let lhs' = convertLhsExp true params lhs in
       let _, rhs' = convertExp params rhs in
-      params', CSVarDecl(lhs',Some(rhs'))
-   | StmtMem _                -> params, CSEmpty
+      CSVarDecl(lhs',Some(rhs'))
+   | StmtMem _                -> CSEmpty
    | StmtWhile(cond,stmt,_) ->
       let _, cond' = convertExp params cond in
-      let _, stmt' = convertStmt params stmt in (* the env is ignored *)
-      params, CSWhile(cond', stmt')
+      let stmt' = convertStmt params stmt in (* the env is ignored *)
+      CSWhile(cond', stmt')
    | StmtReturn(e1,_) ->
       let _,e1' = convertExp params e1 in
-      params, CSReturn(e1')
+      CSReturn(e1')
    | StmtIf(cond,then_,None,_) ->
       let _, cond' = convertExp params cond in
-      let _, then_' = convertStmt params then_ in
-      params, CSIf(cond',then_', None)
+      let then_' = convertStmt params then_ in
+      CSIf(cond',then_', None)
    | StmtIf(cond,then_,Some(else_),_) ->
       let _, cond' = convertExp params cond in
-      let _, then_' = convertStmt params then_ in
-      let _, else_' = convertStmt params else_ in
-      params, CSIf(cond', then_', Some(else_'))
+      let then_' = convertStmt params then_ in
+      let else_' = convertStmt params else_ in
+      CSIf(cond', then_', Some(else_'))
    | StmtFun(_,_,_,None,_) -> failwith "VultCh.convertStmt: everything should have types"
    | StmtFun(name,args,body,Some(ret),_) ->
       let arg_names = List.map (convertTypedId params) args in
-      let _, body'  = convertStmt (newEnv params) body in
-      params, CSFunction(convertType params ret, convertId name,arg_names,body')
+      let body'  = convertStmt params body in
+      CSFunction(convertType params ret, convertId name,arg_names,body')
    | StmtBind(lhs,rhs,_) ->
-      let params', lhs' = convertLhsExp false params lhs in
+      let lhs' = convertLhsExp false params lhs in
       let _, rhs' = convertExp params rhs in
-      params', CSBind(lhs', rhs')
+      CSBind(lhs', rhs')
    | StmtBlock(_,stmts,_) ->
-      let params', stmts' = convertStmtList params stmts in
-      params', CSBlock(stmts')
+      let stmts' = convertStmtList params stmts in
+      CSBlock(stmts')
    | StmtType(name,members,_) ->
       let type_name    = convertType params name in
       let member_pairs = List.map (fun (id,typ,_) -> convertType params typ, convertId id) members in
-      params, CSType(type_name,member_pairs)
+      CSType(type_name,member_pairs)
    | StmtAliasType(t1,t2,_) ->
       let t1_name    = convertType params t1 in
       let t2_name    = convertType params t2 in
-      params, CSAlias(t2_name,t1_name)
-   | StmtEmpty       -> params, CSEmpty
-   | StmtExternal _  -> params, CSEmpty
+      CSAlias(t2_name,t1_name)
+   | StmtEmpty       -> CSEmpty
+   | StmtExternal _  -> CSEmpty
 
-and convertStmtList params (stmts:stmt list) : parameters * cstmt list =
-   let params', stmts_rev =
+and convertStmtList params (stmts:stmt list) : cstmt list =
+   let stmts_rev =
       List.fold_left
-         (fun (params,acc) stmt ->
-             let params',stmt' = convertStmt params stmt in
-             params', stmt'::acc)
-         (params,[]) stmts
+         (fun acc stmt ->
+             convertStmt params stmt :: acc)
+         [] stmts
    in
-   params', List.rev stmts_rev
+   List.rev stmts_rev
 
 
 (** Prints the C code *)
@@ -435,12 +434,13 @@ module PrintC = struct
          append buffer " &";
          append buffer name
 
-   let rec printStmt buffer (stmt:cstmt) : unit =
+   let rec printStmt buffer (params:parameters) (stmt:cstmt) : bool =
       match stmt with
-      | CSVarDecl(CLWild,None) -> ()
+      | CSVarDecl(CLWild,None) -> false
       | CSVarDecl(CLWild,Some(value)) ->
          printExp buffer value;
          append buffer ";";
+         true
       | CSVarDecl(CLId(ntype,name),Some(value)) ->
          append buffer ntype;
          append buffer " ";
@@ -448,25 +448,31 @@ module PrintC = struct
          append buffer " = ";
          printExp buffer value;
          append buffer ";";
+         true
       | CSVarDecl(CLId(ntype,name),None) ->
          append buffer ntype;
          append buffer " ";
          append buffer name;
          append buffer ";";
+         true
       | CSVarDecl(CLTuple(elems),Some(CEVar(name))) ->
          List.iteri (printLhsExpTuple buffer name true) elems;
+         true
       | CSVarDecl(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
       | CSBind(CLWild,value) ->
          printExp buffer value;
          append buffer ";";
+         true
       | CSBind(CLTuple(elems),CEVar(name)) ->
          List.iteri (printLhsExpTuple buffer name false) elems;
+         true
       | CSBind(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
       | CSBind(CLId(_,name),value) ->
          append buffer name;
          append buffer " = ";
          printExp buffer value;
          append buffer ";";
+         true
       | CSFunction(ntype,name,args,(CSBlock(_) as body)) ->
          append buffer ntype;
          append buffer " ";
@@ -474,50 +480,64 @@ module PrintC = struct
          append buffer "(";
          printList buffer printFunArg ", " args;
          append buffer ")";
-         printStmt buffer body;
+         if params.is_header then
+            append buffer ";"
+         else
+            printStmt buffer params body |> ignore;
          newline buffer;
+         true
       | CSFunction(ntype,name,args,body) ->
          append buffer ntype;
          append buffer " ";
          append buffer name;
          append buffer "(";
          printList buffer printFunArg ", " args;
-         append buffer ") { ";
-         printStmt buffer body;
-         append buffer "}";
+         append buffer ")";
+         if params.is_header then
+            append buffer ";"
+         else
+            begin
+               append buffer "{ ";
+               printStmt buffer params body |> ignore;
+               append buffer "}";
+            end;
          newline buffer;
+         true
       | CSReturn(e1) ->
          append buffer "return ";
          printExp buffer e1;
          append buffer ";";
+         true
       | CSWhile(cond,body) ->
          append buffer "while(";
          printExp buffer cond;
          append buffer ")";
-         printStmt buffer body;
+         printStmt buffer params body;
       | CSBlock(elems) ->
          append buffer "{";
          indent buffer;
-         printStmtList buffer elems;
+         printStmtList buffer params elems;
          outdent buffer;
          append buffer "}";
+         true
       | CSIf(cond,then_,None) ->
          append buffer "if";
          if isSimple cond then append buffer "(";
          printExp buffer cond;
          if isSimple cond then append buffer ")";
-         printStmt buffer then_;
+         printStmt buffer params then_;
       | CSIf(cond,then_,Some(else_)) ->
          append buffer "if";
          if isSimple cond then append buffer "(";
          printExp buffer cond;
          if isSimple cond then append buffer ")";
-         printStmt buffer then_;
+         printStmt buffer params then_ |> ignore;
          newline buffer;
          append buffer "else";
          newline buffer;
-         printStmt buffer else_;
-      | CSType(name,members) ->
+         printStmt buffer params else_ |> ignore;
+         true
+      | CSType(name,members) when params.is_header ->
          append buffer "typedef struct ";
          append buffer name;
          append buffer " {";
@@ -535,36 +555,40 @@ module PrintC = struct
          append buffer name;
          append buffer ";";
          newline buffer;
-      | CSAlias(t1,t2) ->
+         true
+      | CSType(_,_) -> false
+      | CSAlias(t1,t2) when params.is_header ->
          append buffer "typedef ";
          append buffer t1;
          append buffer " ";
          append buffer t2;
          append buffer ";";
          newline buffer;
-      | CSEmpty -> ()
+         true
+      | CSAlias(_,_) -> false
+      | CSEmpty -> false
 
-   and printStmtList buffer (stmts:cstmt list) : unit =
+   and printStmtList buffer (params:parameters) (stmts:cstmt list) : unit =
       match stmts with
       | [] -> ()
       | h :: t ->
-         printStmt buffer h;
-         newline buffer;
-         printStmtList buffer t
+         let insert_new_line = printStmt buffer params h in
+         if insert_new_line then newline buffer;
+         printStmtList buffer params t
 
-   let printChCode (params:parameters) (stmts:stmt list) : string =
+   let printChCode (params:parameters) (stmts:cstmt list) : string =
       let buffer = makePrintBuffer () in
-      let _, js  = convertStmtList params stmts in
-      let _      = printStmtList buffer js in
+      let _      = printStmtList buffer params stmts in
       let code   = contents buffer in
-      Templates.apply params.template code
+      Templates.apply params.template params.output code
 
 end
 
 let createParameters (args:arguments) : parameters =
    let real     = match args.real with | "fixed" -> Fixed | _ -> Float in
    let template = Templates.get args.template in
-   { real = real; env = []; template = template }
+   let output = Filename.basename args.output in
+   { real = real; template = template; is_header = false; output = output; }
 
 (** Generates the .c and .h file contents for the given parsed files *)
 let generateChCode (args:arguments) (parser_results:parser_results list) : (string * string) list =
@@ -577,5 +601,7 @@ let generateChCode (args:arguments) (parser_results:parser_results list) : (stri
       |> List.flatten
    in
    let params = createParameters args in
-   let cpp = PrintC.printChCode params stmts in
-   [cpp,"cpp"]
+   let js_stmts  = convertStmtList params stmts in
+   let h   = PrintC.printChCode { params with is_header = true; template = Templates.Header } js_stmts in
+   let cpp = PrintC.printChCode { params with is_header = false; template = Templates.Implementation } js_stmts in
+   [h,"h"; cpp,"cpp"]
