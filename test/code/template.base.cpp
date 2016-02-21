@@ -1,4 +1,4 @@
-#include "..h"
+#include "template.h"
 
 float process(float input){
    return input;

@@ -1,5 +1,5 @@
-#ifndef ._H
-#define ._H
+#ifndef ADSR_H
+#define ADSR_H
 #include <stdint.h>
 #include <math.h>
 
@@ -62,4 +62,4 @@ float adsr(_ctx_type_3 &_ctx, uint8_t gate, float attack, float decay, float sus
 
 
 
-#endif // ._H
+#endif // ADSR_H

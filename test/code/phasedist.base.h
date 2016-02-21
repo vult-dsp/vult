@@ -1,5 +1,5 @@
-#ifndef ._H
-#define ._H
+#ifndef PHASEDIST_H
+#define PHASEDIST_H
 #include <stdint.h>
 #include <math.h>
 
@@ -88,4 +88,4 @@ void default_(_ctx_type_4 &_ctx);
 
 
 
-#endif // ._H
+#endif // PHASEDIST_H

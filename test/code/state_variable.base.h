@@ -1,5 +1,5 @@
-#ifndef ._H
-#define ._H
+#ifndef STATE_VARIABLE_H
+#define STATE_VARIABLE_H
 #include <stdint.h>
 #include <math.h>
 
@@ -44,4 +44,4 @@ float svf(_ctx_type_2 &_ctx, float input, float fc, float q, int sel);
 
 
 
-#endif // ._H
+#endif // STATE_VARIABLE_H

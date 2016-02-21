@@ -1,5 +1,5 @@
-#ifndef ._H
-#define ._H
+#ifndef VOICE_H
+#define VOICE_H
 #include <stdint.h>
 #include <math.h>
 
@@ -242,4 +242,4 @@ void process_noteOff(_ctx_type_16 &_ctx, int n);
 
 
 
-#endif // ._H
+#endif // VOICE_H

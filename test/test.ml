@@ -128,13 +128,15 @@ end
 module CodeGenerationTest = struct
 
    let process (fullfile:string) : (string * string) list =
+      let basefile = Filename.chop_extension (Filename.basename fullfile) in
+      let args = { default_arguments with output = basefile } in
       let stmts =
          ParserVult.parseFile fullfile
          |> Passes.applyTransformations
       in
       let () = showResults stmts |> ignore in
-      let cpp = VultCh.generateChCode default_arguments [stmts] in
-      let js = VultJs.generateJSCode default_arguments [stmts] in
+      let cpp = VultCh.generateChCode args [stmts] in
+      let js = VultJs.generateJSCode args [stmts] in
       js @ cpp
 
 

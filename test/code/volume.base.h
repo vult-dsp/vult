@@ -1,5 +1,5 @@
-#ifndef ._H
-#define ._H
+#ifndef VOLUME_H
+#define VOLUME_H
 #include <stdint.h>
 #include <math.h>
 
@@ -54,4 +54,4 @@ void default_(_ctx_type_1 &_ctx);
 
 
 
-#endif // ._H
+#endif // VOLUME_H

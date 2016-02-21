@@ -1,4 +1,4 @@
-#include "..h"
+#include "synth1.h"
 
 _ctx_type_0 _ctx_type_0_init(){
    _ctx_type_0 _ctx;

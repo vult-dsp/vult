@@ -1,5 +1,5 @@
-#ifndef ._H
-#define ._H
+#ifndef TEMPLATE_H
+#define TEMPLATE_H
 #include <stdint.h>
 #include <math.h>
 
@@ -15,4 +15,4 @@ void default_();
 
 
 
-#endif // ._H
+#endif // TEMPLATE_H

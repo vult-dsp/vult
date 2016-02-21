@@ -1,5 +1,5 @@
-#ifndef ._H
-#define ._H
+#ifndef MONOIN_H
+#define MONOIN_H
 #include <stdint.h>
 #include <math.h>
 
@@ -34,4 +34,4 @@ uint8_t isGateOn(_ctx_type_0 &_ctx);
 
 
 
-#endif // ._H
+#endif // MONOIN_H

@@ -1,5 +1,5 @@
-#ifndef ._H
-#define ._H
+#ifndef FILTERS_H
+#define FILTERS_H
 #include <stdint.h>
 #include <math.h>
 
@@ -175,4 +175,4 @@ float allp12(_ctx_type_14 &_ctx, float x, float fc, float q);
 allp12(_ctx._inst3,0.f,100.f,0.5f);
 
 
-#endif // ._H
+#endif // FILTERS_H

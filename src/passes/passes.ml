@@ -207,7 +207,7 @@ module CreateInitFunction = struct
       (* Generates a call to the initialization function if there's one*)
       let init_fun_call =
          match init_fun with
-         | Some(init_fun_name) -> [StmtBind(LWild(emptyAttr),PCall(None,init_fun_name,[ctx_lid],emptyAttr),emptyAttr)]
+         | Some(init_fun_name) -> [StmtBind(LWild(emptyAttr),PCall(None,init_fun_name,[ctx_lid],{emptyAttr with typ=Some(VType.Constants.unit_type)}),emptyAttr)]
          | None -> []
       in
       let return_stmt = StmtReturn(PId(ctx_name,attr),emptyAttr) in
@@ -230,7 +230,7 @@ module CreateInitFunction = struct
       let attr = { emptyAttr with typ = Some(typ) } in
       StmtFun(getInitFunctioName name,
          [],
-         StmtReturn(PCall(None,getInitFunctioName ctx,[],attr),emptyAttr),
+         StmtReturn(PCall(None,getInitFunctioName ctx,[],attr),attr),
          Some(typ), emptyAttr)
 
    let generateTypeAlias (state:'a Env.t) (name:id) : stmt =

@@ -1,5 +1,5 @@
-#ifndef ._H
-#define ._H
+#ifndef SYNTH1_H
+#define SYNTH1_H
 #include <stdint.h>
 #include <math.h>
 
@@ -135,4 +135,4 @@ void default_(_ctx_type_7 &_ctx);
 
 
 
-#endif // ._H
+#endif // SYNTH1_H

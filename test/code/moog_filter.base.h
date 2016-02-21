@@ -1,5 +1,5 @@
-#ifndef ._H
-#define ._H
+#ifndef MOOG_FILTER_H
+#define MOOG_FILTER_H
 #include <stdint.h>
 #include <math.h>
 
@@ -70,4 +70,4 @@ while((n < 44100)){
 return 0;
 
 
-#endif // ._H
+#endif // MOOG_FILTER_H

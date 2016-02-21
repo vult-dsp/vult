@@ -1,5 +1,5 @@
-#ifndef ._H
-#define ._H
+#ifndef BLIT_H
+#define BLIT_H
 #include <stdint.h>
 #include <math.h>
 
@@ -56,4 +56,4 @@ float osc(_ctx_type_5 &_ctx, float pitch, float pw, float wave);
 
 
 
-#endif // ._H
+#endif // BLIT_H
