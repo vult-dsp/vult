@@ -80,7 +80,7 @@ let parsePrintCode (code:string) : string =
       PrintTypes.stmtListStr b
    | `Error(_) ->
       let error_strings:string list = Error.reportErrors result.presult result.lines in
-      let result =List.fold_left (fun s a -> s^"\n"^a) "" error_strings in
+      let result = List.fold_left (fun s a -> s^"\n"^a) "" error_strings in
       "Errors in the program:\n"^result
 
 (** Checks the code and returns a list with the errors *)

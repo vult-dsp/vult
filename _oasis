@@ -103,11 +103,12 @@ Executable "vult_tests"
   Build$: flag(tests)
   Install: false
   BuildDepends:
+    vult_util,
+    vult_core,
     vult,
     vult_parser,
     vult_passes,
-    vult_core,
-    vult_util,
+    vult_generators,
     oUnit,
     str
 

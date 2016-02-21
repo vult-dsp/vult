@@ -51,12 +51,28 @@ let passes_files =
    ]
 
 
+let code_files =
+   [
+      "adsr.vult";
+      "blit.vult";
+      "filters.vult";
+      "monoin.vult";
+      "moog_filter.vult";
+      "state_variable.vult";
+      "voice.vult";
+      "web/phasedist.vult";
+      "web/synth1.vult";
+      "web/template.vult";
+      "web/volume.vult";
+   ]
+
 (** Flags that defines if a baseline should be created for tests *)
 let writeOutput = Conf.make_bool "writeout" false "Creates a file with the current results"
 
 (** Returns the contents of the reference file for the given vult file *)
-let readReference (create:bool) (contents:string) (file:string) : string =
-   let ref_file = (Filename.chop_extension file)^".base" in
+let readReference (create:bool) (ext:string) (contents:string) (file:string) (outdir:string) : string =
+   let basefile = Filename.chop_extension (Filename.basename file) in
+   let ref_file = Filename.concat outdir (basefile^"."^ext) in
    if Sys.file_exists ref_file then
       let ic = open_in ref_file in
       let n = in_channel_length ic in
@@ -66,20 +82,12 @@ let readReference (create:bool) (contents:string) (file:string) : string =
       s
    else
       if create then
-         let out_file = (Filename.chop_extension file)^".base" in
-         let oc = open_out out_file in
+         let oc = open_out ref_file in
          Printf.fprintf oc "%s" contents;
          close_out oc;
          contents
       else
          assert_failure (Printf.sprintf "The file '%s' has no reference data" file)
-
-(** Writes the contents of the baseline to the given file *)
-let writeBase (file:string) (contents:string) : unit =
-   let out_file = (Filename.chop_extension file)^".base" in
-   let oc = open_out out_file in
-   Printf.fprintf oc "%s" contents;
-   close_out oc
 
 (** Asserts if the file does not exists *)
 let checkFile (filename:string) : string =
@@ -103,9 +111,10 @@ module ParserTest = struct
       |> showResults
 
    let run (file:string) context =
-      let fullfile  = checkFile (in_testdata_dir context ["parser";file]) in
+      let folder = "parser" in
+      let fullfile  = checkFile (in_testdata_dir context [folder;file]) in
       let current   = process fullfile in
-      let reference = readReference (writeOutput context) current fullfile in
+      let reference = readReference (writeOutput context) "base" current fullfile (in_testdata_dir context [folder]) in
       assert_equal
          ~msg:("Parsing file "^fullfile)
          ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
@@ -115,6 +124,42 @@ module ParserTest = struct
 
 end
 
+(** Module to perform code generation tests *)
+module CodeGenerationTest = struct
+
+   let process (fullfile:string) : (string * string) list =
+      let stmts =
+         ParserVult.parseFile fullfile
+         |> Passes.applyTransformations
+      in
+      let () = showResults stmts |> ignore in
+      let cpp = VultCh.generateChCode default_arguments [stmts] in
+      let js = VultJs.generateJSCode default_arguments [stmts] in
+      js @ cpp
+
+
+   let run (file:string) context : unit =
+      let fullfile  = checkFile (in_testdata_dir context ["../examples";file]) in
+      let currents  = process fullfile in
+      let folder = "code" in
+      let references =
+         List.map
+            (fun (code,ext) ->
+               readReference (writeOutput context) ("base."^ext) code fullfile (in_testdata_dir context [folder]))
+            currents
+      in
+      List.iter2
+         (fun (current,ext) reference ->
+            assert_equal
+               ~msg:("Generating "^ext^" for file "^fullfile)
+               ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
+               reference current
+            )
+         currents references
+
+   let get files = "code">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)
+
+end
 
 (** Module to perform transformation tests *)
 module PassesTest = struct
@@ -125,9 +170,10 @@ module PassesTest = struct
       |> showResults
 
    let run options (file:string) context =
-      let fullfile  = checkFile (in_testdata_dir context ["passes";file]) in
+      let folder = "passes" in
+      let fullfile  = checkFile (in_testdata_dir context [folder;file]) in
       let current   = process options fullfile in
-      let reference = readReference (writeOutput context) current fullfile in
+      let reference = readReference (writeOutput context) "base" current fullfile (in_testdata_dir context [folder]) in
       assert_equal
          ~msg:("Transforming file "^fullfile)
          ~pp_diff:(fun fmt (a,b) -> Format.fprintf fmt "\n%s" (Diff.lineDiff a b) )
@@ -142,6 +188,7 @@ let suite =
    [
       ParserTest.get  parser_files;
       PassesTest.get  passes_files;
+      CodeGenerationTest.get code_files;
    ]
 
 
