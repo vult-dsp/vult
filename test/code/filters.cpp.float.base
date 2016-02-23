@@ -66,7 +66,7 @@ _ctx_type_7 lp6_init(){ return _ctx_type_7_init();}
 
 float lp6(_ctx_type_7 &_ctx, float x, float fc){
    if(change(_ctx._inst0,_ctx.fc)){
-      _ctx.fc = clip_float(_ctx.fc,0.f,samplerate());
+      _ctx.fc = float_clip(_ctx.fc,0.f,samplerate());
       _ctx.k = tanf(((pi() * _ctx.fc) / samplerate()));
    }
    float b0 = (_ctx.k / (_ctx.k + 1.f));
@@ -93,7 +93,7 @@ _ctx_type_8 lp12_init(){ return _ctx_type_8_init();}
 float lp12(_ctx_type_8 &_ctx, float x, float fc, float q){
    if(change(_ctx._inst0,fc) || change(_ctx._inst1,q)){
       float qc = fmax(sqrt(2.f),(q + sqrt(2.f)));
-      fc = clip_float(fc,0.f,samplerate());
+      fc = float_clip(fc,0.f,samplerate());
       float k = tanf(((pi() * fc) / samplerate()));
       float den = ((((k * k) * qc) + k) + qc);
       _ctx.b0 = (((k * k) * qc) / den);
@@ -114,7 +114,7 @@ _ctx_type_9 _ctx_type_9_init(){
 _ctx_type_9 hp6_init(){ return _ctx_type_9_init();}
 
 float hp6(_ctx_type_9 &_ctx, float x, float fc){
-   fc = clip_float(fc,0.f,samplerate());
+   fc = float_clip(fc,0.f,samplerate());
    float k = tanf(((pi() * fc) / samplerate()));
    float b0 = (1.f / (k + 1.f));
    float b1 = ((- 1.f) / (k + 1.f));
@@ -131,7 +131,7 @@ _ctx_type_10 _ctx_type_10_init(){
 _ctx_type_10 allp6_init(){ return _ctx_type_10_init();}
 
 float allp6(_ctx_type_10 &_ctx, float x, float fc){
-   fc = clip_float(fc,0.f,samplerate());
+   fc = float_clip(fc,0.f,samplerate());
    float k = tanf(((pi() * fc) / samplerate()));
    float b0 = ((k - 1.f) / (k + 1.f));
    float b1 = 1.f;
@@ -157,7 +157,7 @@ _ctx_type_11 hp12_init(){ return _ctx_type_11_init();}
 float hp12(_ctx_type_11 &_ctx, float x, float fc, float q){
    if(change(_ctx._inst0,fc) || change(_ctx._inst1,q)){
       float qc = fmax(sqrt(2.f),(q + sqrt(2.f)));
-      fc = clip_float(fc,0.f,samplerate());
+      fc = float_clip(fc,0.f,samplerate());
       float k = tanf(((pi() * fc) / samplerate()));
       float den = ((((k * k) * qc) + k) + qc);
       _ctx.b0 = (qc / den);
@@ -187,7 +187,7 @@ _ctx_type_12 bp12_init(){ return _ctx_type_12_init();}
 float bp12(_ctx_type_12 &_ctx, float x, float fc, float q){
    if(change(_ctx._inst0,fc) || change(_ctx._inst1,q)){
       float qc = fmax(sqrt(2.f),(q + sqrt(2.f)));
-      fc = clip_float(fc,0.f,samplerate());
+      fc = float_clip(fc,0.f,samplerate());
       float k = tanf(((pi() * fc) / samplerate()));
       float den = ((((k * k) * qc) + k) + qc);
       _ctx.b0 = (k / den);
@@ -217,7 +217,7 @@ _ctx_type_13 notch12_init(){ return _ctx_type_13_init();}
 float notch12(_ctx_type_13 &_ctx, float x, float fc, float q){
    if(change(_ctx._inst0,fc) || change(_ctx._inst1,q)){
       float qc = fmax(sqrt(2.f),(q + sqrt(2.f)));
-      fc = clip_float(fc,0.f,samplerate());
+      fc = float_clip(fc,0.f,samplerate());
       float k = tanf(((pi() * fc) / samplerate()));
       float den = ((((k * k) * qc) + k) + qc);
       _ctx.b0 = ((qc * (1.f + (k * k))) / den);
@@ -247,7 +247,7 @@ _ctx_type_14 allp12_init(){ return _ctx_type_14_init();}
 float allp12(_ctx_type_14 &_ctx, float x, float fc, float q){
    if(change(_ctx._inst0,fc) || change(_ctx._inst1,q)){
       float qc = fmax(sqrt(2.f),(q + sqrt(2.f)));
-      fc = clip_float(fc,0.f,samplerate());
+      fc = float_clip(fc,0.f,samplerate());
       float k = tanf(((pi() * fc) / samplerate()));
       float den = ((((k * k) * qc) + k) + qc);
       _ctx.b0 = (((((k * k) * qc) - k) + qc) / den);

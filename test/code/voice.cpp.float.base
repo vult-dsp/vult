@@ -155,9 +155,9 @@ float osc(_ctx_type_10 &_ctx, float pitch, float pw, float wave){
    if(_ctx.phase > 1.f){
       _ctx.phase = (_ctx.phase - 1.f);
    }
-   _ctx.state_pulse = clip_float((((_ctx.state_pulse * 0.9995f) + tmp1) - tmp2),(- 1.f),1.f);
-   _ctx.state_saw = clip_float(((_ctx.state_saw * 0.9995f) + ((((tmp1 + tmp2) - (2.f * _ctx.rate)) / shift05) / 2.f)),(- 1.f),1.f);
-   _ctx.state_triang = clip_float(((_ctx.state_triang * 0.9995f) + ((2.f * _ctx.state_pulse) * _ctx.rate)),(- 1.f),1.f);
+   _ctx.state_pulse = float_clip((((_ctx.state_pulse * 0.9995f) + tmp1) - tmp2),(- 1.f),1.f);
+   _ctx.state_saw = float_clip(((_ctx.state_saw * 0.9995f) + ((((tmp1 + tmp2) - (2.f * _ctx.rate)) / shift05) / 2.f)),(- 1.f),1.f);
+   _ctx.state_triang = float_clip(((_ctx.state_triang * 0.9995f) + ((2.f * _ctx.state_pulse) * _ctx.rate)),(- 1.f),1.f);
    if(wave < (1.f / 3.f)){
       _ctx.output = _ctx.state_pulse;
    }
@@ -172,7 +172,7 @@ float osc(_ctx_type_10 &_ctx, float pitch, float pw, float wave){
       }
    }
    _ctx.output = dcblock(_ctx._inst1,_ctx.output);
-   return clip_float((_ctx.output / 4.f),(- 1.f),1.f);
+   return float_clip((_ctx.output / 4.f),(- 1.f),1.f);
 }
 
 _ctx_type_11 _ctx_type_11_init(){
@@ -189,8 +189,8 @@ float svf_step(_ctx_type_11 &_ctx, float input, float g, float q, int sel){
    float high = ((input - low) - (q * _ctx.dband));
    float band = ((g * high) + _ctx.dband);
    float notch = (high + low);
-   _ctx.dband = clip_float(band,(- 1.f),1.f);
-   _ctx.dlow = clip_float(low,(- 1.f),1.f);
+   _ctx.dband = float_clip(band,(- 1.f),1.f);
+   _ctx.dlow = float_clip(low,(- 1.f),1.f);
    float output = ((sel == 0)?low:((sel == 1)?high:((sel == 2)?band:notch)));
    return output;
 }
@@ -206,8 +206,8 @@ _ctx_type_12 _ctx_type_12_init(){
 _ctx_type_12 svf_init(){ return _ctx_type_12_init();}
 
 float svf(_ctx_type_12 &_ctx, float input, float fc, float q, int sel){
-   fc = clip_float(fc,0.f,1.f);
-   q = clip_float(q,0.f,1.f);
+   fc = float_clip(fc,0.f,1.f);
+   q = float_clip(q,0.f,1.f);
    float fix_q = (2.f * (1.f - q));
    if(change(_ctx._inst0,fc)){
       _ctx.g = (fc / 2.f);
@@ -303,7 +303,7 @@ float adsr(_ctx_type_13 &_ctx, uint8_t gate, float attack, float decay, float su
          }
       }
    }
-   _ctx.value = clip_float((lpfilter(_ctx._inst2,rate) + _ctx.value),0.f,1.f);
+   _ctx.value = float_clip((lpfilter(_ctx._inst2,rate) + _ctx.value),0.f,1.f);
    return _ctx.value;
 }
 

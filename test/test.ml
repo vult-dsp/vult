@@ -211,23 +211,23 @@ module CompileTest = struct
       if Sys.command cmd <> 0 then
          assert_failure ("Failed to compile "^file)
 
-   let generateCPP (filename:string) (output:string) : unit =
+   let generateCPP (filename:string) (output:string) (real_type:string) : unit =
       let parser_results =
          ParserVult.parseFile filename
          |> Passes.applyTransformations in
-      let args = { default_arguments with  files = [filename]; ccode = true; output = output } in
+      let args = { default_arguments with  files = [filename]; ccode = true; output = output; real = real_type } in
       Driver.generateCode args [parser_results] |> ignore
 
-   let run (file:string) _ =
+   let run (real_type:string) (file:string) _ =
       let fullfile = checkFile (in_test_directory ("../examples/"^file)) in
       let output   = Filename.chop_extension (Filename.basename fullfile) in
       Sys.chdir tmp_dir;
-      generateCPP fullfile output;
+      generateCPP fullfile output real_type;
       compileFile (output^".cpp");
       compileFile (in_test_directory "../runtime/vultin.c");
       Sys.chdir initial_dir
 
-   let get files = "compile">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)
+   let get files real_type = "compile">::: (List.map (fun file -> (Filename.basename file) ^"."^ real_type >:: run real_type file) files)
 
 end
 
@@ -237,8 +237,10 @@ let suite =
       ParserTest.get  parser_files;
       PassesTest.get  passes_files;
       CodeGenerationTest.get code_files "float";
+      CodeGenerationTest.get code_files "fixed";
       CodeGenerationTest.get code_files "js";
-      CompileTest.get code_files;
+      CompileTest.get code_files "float";
+      CompileTest.get code_files "fixed";
    ]
 
 

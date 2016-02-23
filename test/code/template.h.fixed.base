@@ -1,0 +1,19 @@
+#ifndef TEMPLATE_H
+#define TEMPLATE_H
+#include <stdint.h>
+#include <math.h>
+#include "vultin.h"
+
+int32_t process(int32_t input);
+
+void noteOn(int note, int velocity);
+
+void noteOff(int note);
+
+void controlChange(int control, int value);
+
+void default_();
+
+
+
+#endif // TEMPLATE_H

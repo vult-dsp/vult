@@ -112,7 +112,7 @@ int32_t fix_tanh(int32_t inAngle);
 
 /* Floating point operations */
 
-static inline float clip_float(float value, float low, float high){
+static inline float float_clip(float value, float low, float high){
     return value<low?low:(value>high?high:value);
 }
 

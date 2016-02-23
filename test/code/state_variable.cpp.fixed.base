@@ -1,0 +1,59 @@
+#include "state_variable.h"
+
+_ctx_type_0 _ctx_type_0_init(){
+   _ctx_type_0 _ctx;
+   _ctx.pre_x = 0x0 /* 0.000000 */;
+   return _ctx;
+}
+
+_ctx_type_0 change_init(){ return _ctx_type_0_init();}
+
+uint8_t change(_ctx_type_0 &_ctx, int32_t x){
+   uint8_t v = (_ctx.pre_x != x);
+   _ctx.pre_x = x;
+   return v;
+}
+
+_ctx_type_1 _ctx_type_1_init(){
+   _ctx_type_1 _ctx;
+   _ctx.dlow = 0x0 /* 0.000000 */;
+   _ctx.dband = 0x0 /* 0.000000 */;
+   return _ctx;
+}
+
+_ctx_type_1 svf_step_init(){ return _ctx_type_1_init();}
+
+int32_t svf_step(_ctx_type_1 &_ctx, int32_t input, int32_t g, int32_t q, int sel){
+   int32_t low = fix_add(_ctx.dlow,fix_mul(g,_ctx.dband));
+   int32_t high = fix_sub(fix_sub(input,low),fix_mul(q,_ctx.dband));
+   int32_t band = fix_add(fix_mul(g,high),_ctx.dband);
+   int32_t notch = fix_add(high,low);
+   _ctx.dband = fix_clip(band,(- 0x10000 /* 1.000000 */),0x10000 /* 1.000000 */);
+   _ctx.dlow = fix_clip(low,(- 0x10000 /* 1.000000 */),0x10000 /* 1.000000 */);
+   int32_t output = ((sel == 0)?low:((sel == 1)?high:((sel == 2)?band:notch)));
+   return output;
+}
+
+_ctx_type_2 _ctx_type_2_init(){
+   _ctx_type_2 _ctx;
+   _ctx.step = _ctx_type_1_init();
+   _ctx.g = 0x0 /* 0.000000 */;
+   _ctx._inst0 = _ctx_type_0_init();
+   return _ctx;
+}
+
+_ctx_type_2 svf_init(){ return _ctx_type_2_init();}
+
+int32_t svf(_ctx_type_2 &_ctx, int32_t input, int32_t fc, int32_t q, int sel){
+   fc = fix_clip(fc,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
+   q = fix_clip(q,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
+   int32_t fix_q = fix_mul(0x20000 /* 2.000000 */,fix_sub(0x10000 /* 1.000000 */,q));
+   if(change(_ctx._inst0,fc)){
+      _ctx.g = fix_div(fc,0x20000 /* 2.000000 */);
+   }
+   int32_t x1 = svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
+   int32_t x2 = svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
+   return fix_div(fix_add(x1,x2),0x20000 /* 2.000000 */);
+}
+
+

@@ -1,0 +1,246 @@
+#ifndef VOICE_H
+#define VOICE_H
+#include <stdint.h>
+#include <math.h>
+#include "vultin.h"
+
+int32_t minFixed();
+
+typedef struct _ctx_type_1 {
+   int32_t pre_x;
+} _ctx_type_1;
+
+typedef _ctx_type_1 change_type;
+
+_ctx_type_1 _ctx_type_1_init();
+
+_ctx_type_1 change_init();
+
+uint8_t change(_ctx_type_1 &_ctx, int32_t x);
+
+typedef struct _ctx_type_2 {
+   uint8_t pre_x;
+} _ctx_type_2;
+
+typedef _ctx_type_2 bchange_type;
+
+_ctx_type_2 _ctx_type_2_init();
+
+_ctx_type_2 bchange_init();
+
+uint8_t bchange(_ctx_type_2 &_ctx, uint8_t x);
+
+typedef struct _ctx_type_3 {
+   uint8_t pre_x;
+} _ctx_type_3;
+
+typedef _ctx_type_3 edge_type;
+
+_ctx_type_3 _ctx_type_3_init();
+
+_ctx_type_3 edge_init();
+
+uint8_t edge(_ctx_type_3 &_ctx, uint8_t x);
+
+typedef struct _ctx_type_4 {
+   int count;
+} _ctx_type_4;
+
+typedef _ctx_type_4 each_type;
+
+_ctx_type_4 _ctx_type_4_init();
+
+_ctx_type_4 each_init();
+
+uint8_t each(_ctx_type_4 &_ctx, int n);
+
+uint8_t near_zero(int32_t x);
+
+typedef struct _ctx_type_6 {
+   int32_t y1;
+   int32_t x1;
+} _ctx_type_6;
+
+typedef _ctx_type_6 dcblock_type;
+
+_ctx_type_6 _ctx_type_6_init();
+
+_ctx_type_6 dcblock_init();
+
+int32_t dcblock(_ctx_type_6 &_ctx, int32_t x0);
+
+typedef struct _ctx_type_7 {
+   int32_t pre_x;
+} _ctx_type_7;
+
+typedef _ctx_type_7 lpfilter_type;
+
+_ctx_type_7 _ctx_type_7_init();
+
+_ctx_type_7 lpfilter_init();
+
+int32_t lpfilter(_ctx_type_7 &_ctx, int32_t x);
+
+int32_t pitchToRate(int32_t d);
+
+int32_t pulse_train(int32_t m, int32_t phase);
+
+typedef struct _ctx_type_10 {
+   int32_t state_triang;
+   int32_t state_saw;
+   int32_t state_pulse;
+   int32_t rate;
+   int32_t phase;
+   int32_t output;
+   int32_t m;
+   _ctx_type_6 _inst1;
+   _ctx_type_1 _inst0;
+} _ctx_type_10;
+
+typedef _ctx_type_10 osc_type;
+
+_ctx_type_10 _ctx_type_10_init();
+
+_ctx_type_10 osc_init();
+
+int32_t osc(_ctx_type_10 &_ctx, int32_t pitch, int32_t pw, int32_t wave);
+
+typedef struct _ctx_type_11 {
+   int32_t dlow;
+   int32_t dband;
+} _ctx_type_11;
+
+typedef _ctx_type_11 svf_step_type;
+
+_ctx_type_11 _ctx_type_11_init();
+
+_ctx_type_11 svf_step_init();
+
+int32_t svf_step(_ctx_type_11 &_ctx, int32_t input, int32_t g, int32_t q, int sel);
+
+typedef struct _ctx_type_12 {
+   _ctx_type_11 step;
+   int32_t g;
+   _ctx_type_1 _inst0;
+} _ctx_type_12;
+
+typedef _ctx_type_12 svf_type;
+
+_ctx_type_12 _ctx_type_12_init();
+
+_ctx_type_12 svf_init();
+
+int32_t svf(_ctx_type_12 &_ctx, int32_t input, int32_t fc, int32_t q, int sel);
+
+typedef struct _ctx_type_13 {
+   int32_t value;
+   int32_t sustainLevel;
+   int state;
+   int32_t releaseRate;
+   uint8_t gate;
+   int32_t decayRate;
+   int32_t attackRate;
+   _ctx_type_7 _inst2;
+   _ctx_type_2 _inst1;
+   _ctx_type_4 _inst0;
+} _ctx_type_13;
+
+typedef _ctx_type_13 adsr_type;
+
+_ctx_type_13 _ctx_type_13_init();
+
+_ctx_type_13 adsr_init();
+
+int32_t adsr(_ctx_type_13 &_ctx, uint8_t gate, int32_t attack, int32_t decay, int32_t sustain, int32_t release);
+
+typedef struct _ctx_type_14 {
+   int32_t phase;
+   _ctx_type_4 _inst1;
+   _ctx_type_3 _inst0;
+} _ctx_type_14;
+
+typedef _ctx_type_14 lfo_type;
+
+_ctx_type_14 _ctx_type_14_init();
+
+_ctx_type_14 lfo_init();
+
+int32_t lfo(_ctx_type_14 &_ctx, int32_t f, uint8_t gate);
+
+typedef struct _ctx_type_15 {
+   int pre;
+   int n4;
+   int n3;
+   int n2;
+   int n1;
+   int count;
+} _ctx_type_15;
+
+typedef _ctx_type_15 noteOn_type;
+
+_ctx_type_15 _ctx_type_15_init();
+
+_ctx_type_15 noteOn_init();
+
+int noteOn(_ctx_type_15 &_ctx, int n);
+
+typedef _ctx_type_15 noteOff_type;
+
+_ctx_type_15 noteOff_init();
+
+int noteOff(_ctx_type_15 &_ctx, int n);
+
+typedef _ctx_type_15 isGateOn_type;
+
+_ctx_type_15 isGateOn_init();
+
+uint8_t isGateOn(_ctx_type_15 &_ctx);
+
+typedef struct _ctx_type_16 {
+   int32_t param9;
+   int32_t param8;
+   int32_t param7;
+   int32_t param6;
+   int32_t param5;
+   int32_t param4;
+   int32_t param3;
+   int32_t param2;
+   int32_t param16;
+   int32_t param15;
+   int32_t param14;
+   int32_t param13;
+   int32_t param12;
+   int32_t param11;
+   int32_t param10;
+   int32_t param1;
+   _ctx_type_15 monoin;
+   _ctx_type_12 _inst4;
+   _ctx_type_13 _inst3;
+   _ctx_type_13 _inst2;
+   _ctx_type_10 _inst1;
+   _ctx_type_14 _inst0;
+} _ctx_type_16;
+
+typedef _ctx_type_16 process_type;
+
+_ctx_type_16 _ctx_type_16_init();
+
+_ctx_type_16 process_init();
+
+int32_t process(_ctx_type_16 &_ctx, int32_t i);
+
+typedef _ctx_type_16 process_noteOn_type;
+
+_ctx_type_16 process_noteOn_init();
+
+void process_noteOn(_ctx_type_16 &_ctx, int n);
+
+typedef _ctx_type_16 process_noteOff_type;
+
+_ctx_type_16 process_noteOff_init();
+
+void process_noteOff(_ctx_type_16 &_ctx, int n);
+
+
+
+#endif // VOICE_H

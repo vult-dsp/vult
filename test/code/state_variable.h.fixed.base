@@ -1,0 +1,48 @@
+#ifndef STATE_VARIABLE_H
+#define STATE_VARIABLE_H
+#include <stdint.h>
+#include <math.h>
+#include "vultin.h"
+
+typedef struct _ctx_type_0 {
+   int32_t pre_x;
+} _ctx_type_0;
+
+typedef _ctx_type_0 change_type;
+
+_ctx_type_0 _ctx_type_0_init();
+
+_ctx_type_0 change_init();
+
+uint8_t change(_ctx_type_0 &_ctx, int32_t x);
+
+typedef struct _ctx_type_1 {
+   int32_t dlow;
+   int32_t dband;
+} _ctx_type_1;
+
+typedef _ctx_type_1 svf_step_type;
+
+_ctx_type_1 _ctx_type_1_init();
+
+_ctx_type_1 svf_step_init();
+
+int32_t svf_step(_ctx_type_1 &_ctx, int32_t input, int32_t g, int32_t q, int sel);
+
+typedef struct _ctx_type_2 {
+   _ctx_type_1 step;
+   int32_t g;
+   _ctx_type_0 _inst0;
+} _ctx_type_2;
+
+typedef _ctx_type_2 svf_type;
+
+_ctx_type_2 _ctx_type_2_init();
+
+_ctx_type_2 svf_init();
+
+int32_t svf(_ctx_type_2 &_ctx, int32_t input, int32_t fc, int32_t q, int sel);
+
+
+
+#endif // STATE_VARIABLE_H

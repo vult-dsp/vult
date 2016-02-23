@@ -1,0 +1,88 @@
+#include "sin.h"
+
+_ctx_type_0 _ctx_type_0_init(){
+   _ctx_type_0 _ctx;
+   _ctx.pre_x = 0x0 /* 0.000000 */;
+   return _ctx;
+}
+
+_ctx_type_0 change_init(){ return _ctx_type_0_init();}
+
+uint8_t change(_ctx_type_0 &_ctx, int32_t x){
+   uint8_t v = (_ctx.pre_x != x);
+   _ctx.pre_x = x;
+   return v;
+}
+
+_ctx_type_1 _ctx_type_1_init(){
+   _ctx_type_1 _ctx;
+   _ctx.y2 = 0x0 /* 0.000000 */;
+   _ctx.y1 = 0x0 /* 0.000000 */;
+   _ctx.w = 0x0 /* 0.000000 */;
+   _ctx.cos_w = 0x0 /* 0.000000 */;
+   _ctx._inst0 = _ctx_type_0_init();
+   sc_osc_start(_ctx);
+   return _ctx;
+}
+
+_ctx_type_1 sc_osc_init(){ return _ctx_type_1_init();}
+
+int32_t sc_osc(_ctx_type_1 &_ctx, int32_t pitch){
+   int32_t g = 0x10000 /* 1.000000 */;
+   if(change(_ctx._inst0,pitch)){
+      int32_t pre_w = _ctx.w;
+      _ctx.w = fix_mul(0x4c /* 0.001165 */,fix_exp(fix_mul(0xec9 /* 0.057762 */,pitch)));
+      g = fix_div(fix_tan(fix_div(_ctx.w,0x20000 /* 2.000000 */)),fix_tan(fix_div(pre_w,0x20000 /* 2.000000 */)));
+      _ctx.cos_w = fix_cos(_ctx.w);
+   }
+   int32_t y1_next = fix_add(fix_mul(_ctx.cos_w,_ctx.y1),fix_mul(fix_mul(fix_add(_ctx.cos_w,0x10000 /* 1.000000 */),g),_ctx.y2));
+   int32_t y2_next = fix_add(fix_mul(fix_sub(_ctx.cos_w,0x10000 /* 1.000000 */),_ctx.y1),fix_mul(fix_mul(_ctx.cos_w,g),_ctx.y2));
+   _ctx.y1 = fix_clip(y1_next,(- 0x10000 /* 1.000000 */),0x10000 /* 1.000000 */);
+   _ctx.y2 = fix_clip(y2_next,(- 0x10000 /* 1.000000 */),0x10000 /* 1.000000 */);
+   return _ctx.y1;
+}
+
+_ctx_type_1 sc_osc_start_init(){ return _ctx_type_1_init();}
+
+void sc_osc_start(_ctx_type_1 &_ctx){
+   _ctx.y1 = 0x10000 /* 1.000000 */;
+   _ctx.y2 = fix_div((- _ctx.y1),0x20000 /* 2.000000 */);
+}
+
+_ctx_type_2 _ctx_type_2_init(){
+   _ctx_type_2 _ctx;
+   _ctx.pitch = 0x0 /* 0.000000 */;
+   _ctx._inst0 = _ctx_type_1_init();
+   default_(_ctx);
+   return _ctx;
+}
+
+_ctx_type_2 process_init(){ return _ctx_type_2_init();}
+
+int32_t process(_ctx_type_2 &_ctx, int32_t input){
+   return sc_osc(_ctx._inst0,_ctx.pitch);
+}
+
+_ctx_type_2 noteOn_init(){ return _ctx_type_2_init();}
+
+void noteOn(_ctx_type_2 &_ctx, int note, int velocity){
+   _ctx.pitch = ((int32_t)note);
+}
+
+_ctx_type_2 noteOff_init(){ return _ctx_type_2_init();}
+
+void noteOff(_ctx_type_2 &_ctx, int note){
+}
+
+_ctx_type_2 controlChange_init(){ return _ctx_type_2_init();}
+
+void controlChange(_ctx_type_2 &_ctx, int control, int value){
+}
+
+_ctx_type_2 default_init(){ return _ctx_type_2_init();}
+
+void default_(_ctx_type_2 &_ctx){
+   _ctx.pitch = 0x450000 /* 69.000000 */;
+}
+
+

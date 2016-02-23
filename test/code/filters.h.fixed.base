@@ -1,0 +1,178 @@
+#ifndef FILTERS_H
+#define FILTERS_H
+#include <stdint.h>
+#include <math.h>
+#include "vultin.h"
+
+int32_t samplerate();
+
+int32_t pi();
+
+int32_t min(int32_t a, int32_t b);
+
+int32_t max(int32_t a, int32_t b);
+
+int32_t clip(int32_t low, int32_t high, int32_t value);
+
+typedef struct _ctx_type_5 {
+   int32_t pre_x;
+} _ctx_type_5;
+
+typedef _ctx_type_5 change_type;
+
+_ctx_type_5 _ctx_type_5_init();
+
+_ctx_type_5 change_init();
+
+uint8_t change(_ctx_type_5 &_ctx, int32_t x);
+
+typedef struct _ctx_type_6 {
+   int32_t w2;
+   int32_t w1;
+} _ctx_type_6;
+
+typedef _ctx_type_6 biquad_type;
+
+_ctx_type_6 _ctx_type_6_init();
+
+_ctx_type_6 biquad_init();
+
+int32_t biquad(_ctx_type_6 &_ctx, int32_t x, int32_t b0, int32_t b1, int32_t b2, int32_t a1, int32_t a2);
+
+typedef struct _ctx_type_7 {
+   int32_t k;
+   int32_t fc;
+   _ctx_type_6 _inst1;
+   _ctx_type_5 _inst0;
+} _ctx_type_7;
+
+typedef _ctx_type_7 lp6_type;
+
+_ctx_type_7 _ctx_type_7_init();
+
+_ctx_type_7 lp6_init();
+
+int32_t lp6(_ctx_type_7 &_ctx, int32_t x, int32_t fc);
+
+typedef struct _ctx_type_8 {
+   int32_t b2;
+   int32_t b1;
+   int32_t b0;
+   int32_t a2;
+   int32_t a1;
+   _ctx_type_6 _inst2;
+   _ctx_type_5 _inst1;
+   _ctx_type_5 _inst0;
+} _ctx_type_8;
+
+typedef _ctx_type_8 lp12_type;
+
+_ctx_type_8 _ctx_type_8_init();
+
+_ctx_type_8 lp12_init();
+
+int32_t lp12(_ctx_type_8 &_ctx, int32_t x, int32_t fc, int32_t q);
+
+typedef struct _ctx_type_9 {
+   _ctx_type_6 _inst0;
+} _ctx_type_9;
+
+typedef _ctx_type_9 hp6_type;
+
+_ctx_type_9 _ctx_type_9_init();
+
+_ctx_type_9 hp6_init();
+
+int32_t hp6(_ctx_type_9 &_ctx, int32_t x, int32_t fc);
+
+typedef struct _ctx_type_10 {
+   _ctx_type_6 _inst0;
+} _ctx_type_10;
+
+typedef _ctx_type_10 allp6_type;
+
+_ctx_type_10 _ctx_type_10_init();
+
+_ctx_type_10 allp6_init();
+
+int32_t allp6(_ctx_type_10 &_ctx, int32_t x, int32_t fc);
+
+typedef struct _ctx_type_11 {
+   int32_t b2;
+   int32_t b1;
+   int32_t b0;
+   int32_t a2;
+   int32_t a1;
+   _ctx_type_6 _inst2;
+   _ctx_type_5 _inst1;
+   _ctx_type_5 _inst0;
+} _ctx_type_11;
+
+typedef _ctx_type_11 hp12_type;
+
+_ctx_type_11 _ctx_type_11_init();
+
+_ctx_type_11 hp12_init();
+
+int32_t hp12(_ctx_type_11 &_ctx, int32_t x, int32_t fc, int32_t q);
+
+typedef struct _ctx_type_12 {
+   int32_t b2;
+   int32_t b1;
+   int32_t b0;
+   int32_t a2;
+   int32_t a1;
+   _ctx_type_6 _inst2;
+   _ctx_type_5 _inst1;
+   _ctx_type_5 _inst0;
+} _ctx_type_12;
+
+typedef _ctx_type_12 bp12_type;
+
+_ctx_type_12 _ctx_type_12_init();
+
+_ctx_type_12 bp12_init();
+
+int32_t bp12(_ctx_type_12 &_ctx, int32_t x, int32_t fc, int32_t q);
+
+typedef struct _ctx_type_13 {
+   int32_t b2;
+   int32_t b1;
+   int32_t b0;
+   int32_t a2;
+   int32_t a1;
+   _ctx_type_6 _inst2;
+   _ctx_type_5 _inst1;
+   _ctx_type_5 _inst0;
+} _ctx_type_13;
+
+typedef _ctx_type_13 notch12_type;
+
+_ctx_type_13 _ctx_type_13_init();
+
+_ctx_type_13 notch12_init();
+
+int32_t notch12(_ctx_type_13 &_ctx, int32_t x, int32_t fc, int32_t q);
+
+typedef struct _ctx_type_14 {
+   int32_t b2;
+   int32_t b1;
+   int32_t b0;
+   int32_t a2;
+   int32_t a1;
+   _ctx_type_6 _inst2;
+   _ctx_type_5 _inst1;
+   _ctx_type_5 _inst0;
+} _ctx_type_14;
+
+typedef _ctx_type_14 allp12_type;
+
+_ctx_type_14 _ctx_type_14_init();
+
+_ctx_type_14 allp12_init();
+
+int32_t allp12(_ctx_type_14 &_ctx, int32_t x, int32_t fc, int32_t q);
+
+
+
+#endif // FILTERS_H

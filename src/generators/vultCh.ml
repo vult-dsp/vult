@@ -119,7 +119,7 @@ let underscoreId (id:id) : string =
 let rec convertType params (tp:VType.t) : string =
    match !tp with
    | VType.TId(["real"],_) when params.real = Float -> "float"
-   | VType.TId(["real"],_) when params.real = Fixed -> "fixed"
+   | VType.TId(["real"],_) when params.real = Fixed -> "int32_t"
    | VType.TId(["bool"],_) -> "uint8_t"
    | VType.TId(["unit"],_) -> "void"
    | VType.TId(id,_) -> underscoreId id
@@ -174,14 +174,21 @@ let convertOperator params (op:string) (typ:VType.t) (elems:cexp list) : VType.t
    let is_int   = (isInt typ) in
    let is_bool  = (isBool typ) in
    let is_builtin = is_float || is_int || is_bool in
+   let is_fixed = (params.real = Fixed) && (isReal typ) in
    match op with
    | "<>" when is_builtin -> typ, CEOp("!=",elems)
    | "%"  when is_float   -> typ, CECall("fmodf",elems)
+
+   | "+"  when is_fixed   -> typ, CECall("fix_add",elems)
+   | "-"  when is_fixed   -> typ, CECall("fix_sub",elems)
+   | "*"  when is_fixed   -> typ, CECall("fix_mul",elems)
+   | "/"  when is_fixed   -> typ, CECall("fix_div",elems)
 
    | _ -> typ, CEOp(op,elems)
 
 let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) : VType.t * cexp =
    let is_float = (params.real = Float) && (isReal typ) in
+   let is_fixed = (params.real = Fixed) && (isReal typ) in
    let is_int   = (isInt typ) in
    let fixed_fn =
       match fn with
@@ -194,8 +201,20 @@ let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) : VType.t * c
       | ["cos"]   when is_float -> `FunctionName(["cosf"])
       | ["tan"]   when is_float -> `FunctionName(["tanf"])
       | ["tanh"]  when is_float -> `FunctionName(["tanhf"])
-      | ["clip"]  when is_float -> `FunctionName(["clip_float"])
-      | ["clip"]  when is_int   -> `FunctionName(["clip_int"])
+      | ["clip"]  when is_float -> `FunctionName(["float_clip"])
+
+      | ["abs"]   when is_fixed -> `FunctionName(["fix_abs"])
+      | ["exp"]   when is_fixed -> `FunctionName(["fix_exp"])
+      | ["floor"] when is_fixed -> `FunctionName(["fix_floor"])
+      | ["max"]   when is_fixed -> `FunctionName(["fix_max"])
+      | ["min"]   when is_fixed -> `FunctionName(["fix_min"])
+      | ["sin"]   when is_fixed -> `FunctionName(["fix_sin"])
+      | ["cos"]   when is_fixed -> `FunctionName(["fix_cos"])
+      | ["tan"]   when is_fixed -> `FunctionName(["fix_tan"])
+      | ["tanh"]  when is_fixed -> `FunctionName(["fix_tanh"])
+      | ["clip"]  when is_fixed -> `FunctionName(["fix_clip"])
+
+      | ["clip"]  when is_int   -> `FunctionName(["int_clip"])
       | ["not"] -> `UnOperatorName("!")
       | _ -> `FunctionName(fn)
    in
@@ -344,8 +363,17 @@ module PrintC = struct
       | CENewObj -> true
       | _ -> false
 
-   let rec printExp buffer (e:cexp) : unit =
+   let toFixed (n:float) : string =
+      let value =
+         if n < 0.0 then
+            int_of_float ((-. n) *. (float_of_int 0x10000)) + 1
+         else
+            int_of_float (n *. (float_of_int 0x10000))
+      in Printf.sprintf "0x%x /* %f */" value n
+
+   let rec printExp (params:parameters) buffer (e:cexp) : unit =
       match e with
+      | CEFloat(n) when params.real = Fixed -> append buffer (toFixed n)
       | CEFloat(n)  -> append buffer ((string_of_float n)^"f")
       | CEInt(n)    -> append buffer (string_of_int n)
       | CEBool(v)   -> append buffer (if v then "1" else "0")
@@ -353,54 +381,45 @@ module PrintC = struct
       | CECall(name,args) ->
          append buffer name;
          append buffer "(";
-         printList buffer printExp "," args;
+         printList buffer (printExp params) "," args;
          append buffer ")"
       | CEUnOp(op,e) ->
          append buffer "(";
          append buffer op;
          append buffer " ";
-         printExp buffer e;
+         printExp params buffer e;
          append buffer ")"
       | CEOp(op,elems) ->
          append buffer "(";
-         printExpList buffer (" "^(op)^" ") elems;
+         printList buffer (printExp params) (" "^(op)^" ") elems;
          append buffer ")";
       | CEVar(name) ->
          append buffer name
       | CEIf(cond,then_,else_) ->
          append buffer "(";
-         printExp buffer cond;
+         printExp params buffer cond;
          append buffer "?";
-         printExp buffer then_;
+         printExp params buffer then_;
          append buffer ":";
-         printExp buffer else_;
+         printExp params buffer else_;
          append buffer ")"
       | CENewObj -> append buffer "{}"
       | CETuple(elems) ->
          append buffer "{ ";
-         printList buffer printChField ", " elems;
+         printList buffer (printChField params) ", " elems;
          append buffer " }"
       | CECast(typ,exp) ->
          append buffer "((";
          append buffer typ;
          append buffer ")";
-         printExp buffer exp;
+         printExp params buffer exp;
          append buffer ")"
 
-   and printChField buffer (name,value) =
+   and printChField params buffer (name,value) =
       append buffer ".";
       append buffer name;
       append buffer " = ";
-      printExp buffer value
-
-   and printExpList buffer (sep:string) (e:cexp list) : unit =
-      match e with
-      | []     -> ()
-      | [ h ]  -> printExp buffer h
-      | h :: t ->
-         printExp buffer h;
-         append buffer sep;
-         printExpList buffer sep t
+      printExp params buffer value
 
    let isSpecial name =
       match name with
@@ -435,11 +454,11 @@ module PrintC = struct
          append buffer " &";
          append buffer name
 
-   let rec printStmt buffer (params:parameters) (stmt:cstmt) : bool =
+   let rec printStmt (params:parameters) buffer (stmt:cstmt) : bool =
       match stmt with
       | CSVarDecl(CLWild,None) -> false
       | CSVarDecl(CLWild,Some(value)) ->
-         printExp buffer value;
+         printExp params buffer value;
          append buffer ";";
          true
       | CSVarDecl(CLId(ntype,name),Some(value)) ->
@@ -447,7 +466,7 @@ module PrintC = struct
          append buffer " ";
          append buffer name;
          append buffer " = ";
-         printExp buffer value;
+         printExp params buffer value;
          append buffer ";";
          true
       | CSVarDecl(CLId(ntype,name),None) ->
@@ -461,7 +480,7 @@ module PrintC = struct
          true
       | CSVarDecl(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
       | CSBind(CLWild,value) ->
-         printExp buffer value;
+         printExp params buffer value;
          append buffer ";";
          true
       | CSBind(CLTuple(elems),CEVar(name)) ->
@@ -471,7 +490,7 @@ module PrintC = struct
       | CSBind(CLId(_,name),value) ->
          append buffer name;
          append buffer " = ";
-         printExp buffer value;
+         printExp params buffer value;
          append buffer ";";
          true
       | CSFunction(ntype,name,args,(CSBlock(_) as body)) ->
@@ -484,7 +503,7 @@ module PrintC = struct
          if params.is_header then
             append buffer ";"
          else
-            printStmt buffer params body |> ignore;
+            printStmt params buffer body |> ignore;
          newline buffer;
          true
       | CSFunction(ntype,name,args,body) ->
@@ -499,21 +518,21 @@ module PrintC = struct
          else
             begin
                append buffer "{ ";
-               printStmt buffer params body |> ignore;
+               printStmt params buffer body |> ignore;
                append buffer "}";
             end;
          newline buffer;
          true
       | CSReturn(e1) ->
          append buffer "return ";
-         printExp buffer e1;
+         printExp params buffer e1;
          append buffer ";";
          true
       | CSWhile(cond,body) ->
          append buffer "while(";
-         printExp buffer cond;
+         printExp params buffer cond;
          append buffer ")";
-         printStmt buffer params body;
+         printStmt params buffer body;
       | CSBlock(elems) ->
          append buffer "{";
          indent buffer;
@@ -524,19 +543,19 @@ module PrintC = struct
       | CSIf(cond,then_,None) ->
          append buffer "if";
          if isSimple cond then append buffer "(";
-         printExp buffer cond;
+         printExp params buffer cond;
          if isSimple cond then append buffer ")";
-         printStmt buffer params then_;
+         printStmt params buffer then_;
       | CSIf(cond,then_,Some(else_)) ->
          append buffer "if";
          if isSimple cond then append buffer "(";
-         printExp buffer cond;
+         printExp params buffer cond;
          if isSimple cond then append buffer ")";
-         printStmt buffer params then_ |> ignore;
+         printStmt params buffer then_ |> ignore;
          newline buffer;
          append buffer "else";
          newline buffer;
-         printStmt buffer params else_ |> ignore;
+         printStmt params buffer else_ |> ignore;
          true
       | CSType(name,members) when params.is_header ->
          append buffer "typedef struct ";
@@ -573,7 +592,7 @@ module PrintC = struct
       match stmts with
       | [] -> ()
       | h :: t ->
-         let insert_new_line = printStmt buffer params h in
+         let insert_new_line = printStmt params buffer h in
          if insert_new_line then newline buffer;
          printStmtList buffer params t
 

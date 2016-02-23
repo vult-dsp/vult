@@ -83,8 +83,8 @@ _ctx_type_8 moog_init(){ return _ctx_type_8_init();}
 
 float moog(_ctx_type_8 &_ctx, float input, float cut, float res){
    if(change(_ctx._inst0,cut) || change(_ctx._inst1,res)){
-      res = clip_float(res,0.f,1.f);
-      cut = clip_float(cut,1.f,samplerate());
+      res = float_clip(res,0.f,1.f);
+      cut = float_clip(cut,1.f,samplerate());
       float fc = (cut / samplerate());
       float x_2 = (fc / 2.f);
       float x2 = (fc * fc);

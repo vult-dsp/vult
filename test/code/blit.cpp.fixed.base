@@ -1,0 +1,118 @@
+#include "blit.h"
+
+uint8_t near_zero(int32_t x){
+   return (fix_abs(x) < 0x51e /* 0.020000 */);
+}
+
+_ctx_type_1 _ctx_type_1_init(){
+   _ctx_type_1 _ctx;
+   _ctx.pre_x = 0x0 /* 0.000000 */;
+   return _ctx;
+}
+
+_ctx_type_1 change_init(){ return _ctx_type_1_init();}
+
+uint8_t change(_ctx_type_1 &_ctx, int32_t x){
+   uint8_t v = (_ctx.pre_x != x);
+   _ctx.pre_x = x;
+   return v;
+}
+
+_ctx_type_2 _ctx_type_2_init(){
+   _ctx_type_2 _ctx;
+   _ctx.y1 = 0x0 /* 0.000000 */;
+   _ctx.x1 = 0x0 /* 0.000000 */;
+   return _ctx;
+}
+
+_ctx_type_2 dcblock_init(){ return _ctx_type_2_init();}
+
+int32_t dcblock(_ctx_type_2 &_ctx, int32_t x0){
+   int32_t y0 = fix_add(fix_sub(x0,_ctx.x1),fix_mul(_ctx.y1,0xfeb8 /* 0.995000 */));
+   _ctx.x1 = x0;
+   _ctx.y1 = y0;
+   return y0;
+}
+
+int32_t pitchToRate(int32_t d){
+   return fix_div(fix_mul(0x82d01 /* 8.175800 */,fix_exp(fix_mul(0xec9 /* 0.057762 */,d))),0xac440000 /* 44100.000000 */);
+}
+
+int32_t pulse_train(int32_t m, int32_t phase){
+   int32_t pi_phase = fix_mul(phase,0x3243f /* 3.141593 */);
+   int32_t denominator1 = fix_sin(pi_phase);
+   int32_t tmp1 = 0x0 /* 0.000000 */;
+   if(near_zero(denominator1)){
+      tmp1 = 0x10000 /* 1.000000 */;
+   }
+   else
+   {
+      tmp1 = fix_sin(fix_mul(m,pi_phase));
+      tmp1 = fix_div(tmp1,fix_mul(m,denominator1));
+   }
+   return tmp1;
+}
+
+_ctx_type_5 _ctx_type_5_init(){
+   _ctx_type_5 _ctx;
+   _ctx.state_triang = 0x0 /* 0.000000 */;
+   _ctx.state_saw = 0x0 /* 0.000000 */;
+   _ctx.state_pulse = 0x0 /* 0.000000 */;
+   _ctx.rate = 0x0 /* 0.000000 */;
+   _ctx.phase = 0x0 /* 0.000000 */;
+   _ctx.output = 0x0 /* 0.000000 */;
+   _ctx.m = 0x0 /* 0.000000 */;
+   _ctx._inst1 = _ctx_type_2_init();
+   _ctx._inst0 = _ctx_type_1_init();
+   return _ctx;
+}
+
+_ctx_type_5 osc_init(){ return _ctx_type_5_init();}
+
+int32_t osc(_ctx_type_5 &_ctx, int32_t pitch, int32_t pw, int32_t wave){
+   int32_t fixed_pitch = 0x0 /* 0.000000 */;
+   if(wave < fix_div(0x20000 /* 2.000000 */,0x30000 /* 3.000000 */)){
+      fixed_pitch = pitch;
+   }
+   else
+   {
+      fixed_pitch = fix_add(pitch,0xc0000 /* 12.000000 */);
+   }
+   if(change(_ctx._inst0,fixed_pitch)){
+      _ctx.rate = pitchToRate(fixed_pitch);
+      int32_t p = fix_div(0x10000 /* 1.000000 */,_ctx.rate);
+      int32_t maxHarmonics = fix_floor(fix_div(p,0x20000 /* 2.000000 */));
+      _ctx.m = fix_add(fix_mul(0x20000 /* 2.000000 */,maxHarmonics),0x10000 /* 1.000000 */);
+   }
+   int32_t shift05 = fix_add(0x8000 /* 0.500000 */,fix_mul(pw,0x7d70 /* 0.490000 */));
+   int32_t shift = fix_add(_ctx.phase,shift05);
+   if(shift > 0x10000 /* 1.000000 */){
+      shift = fix_sub(shift,0x10000 /* 1.000000 */);
+   }
+   int32_t tmp1 = pulse_train(_ctx.m,_ctx.phase);
+   int32_t tmp2 = pulse_train(_ctx.m,shift);
+   _ctx.phase = fix_add(_ctx.phase,_ctx.rate);
+   if(_ctx.phase > 0x10000 /* 1.000000 */){
+      _ctx.phase = fix_sub(_ctx.phase,0x10000 /* 1.000000 */);
+   }
+   _ctx.state_pulse = fix_clip(fix_sub(fix_add(fix_mul(_ctx.state_pulse,0xffdf /* 0.999500 */),tmp1),tmp2),(- 0x10000 /* 1.000000 */),0x10000 /* 1.000000 */);
+   _ctx.state_saw = fix_clip(fix_add(fix_mul(_ctx.state_saw,0xffdf /* 0.999500 */),fix_div(fix_div(fix_sub(fix_add(tmp1,tmp2),fix_mul(0x20000 /* 2.000000 */,_ctx.rate)),shift05),0x20000 /* 2.000000 */)),(- 0x10000 /* 1.000000 */),0x10000 /* 1.000000 */);
+   _ctx.state_triang = fix_clip(fix_add(fix_mul(_ctx.state_triang,0xffdf /* 0.999500 */),fix_mul(fix_mul(0x20000 /* 2.000000 */,_ctx.state_pulse),_ctx.rate)),(- 0x10000 /* 1.000000 */),0x10000 /* 1.000000 */);
+   if(wave < fix_div(0x10000 /* 1.000000 */,0x30000 /* 3.000000 */)){
+      _ctx.output = _ctx.state_pulse;
+   }
+   else
+   {
+      if(wave < fix_div(0x20000 /* 2.000000 */,0x30000 /* 3.000000 */)){
+         _ctx.output = fix_mul(0x20000 /* 2.000000 */,_ctx.state_saw);
+      }
+      else
+      {
+         _ctx.output = fix_mul(fix_mul(0x20000 /* 2.000000 */,_ctx.state_triang),fix_add(0x10000 /* 1.000000 */,pw));
+      }
+   }
+   _ctx.output = dcblock(_ctx._inst1,_ctx.output);
+   return fix_clip(fix_div(_ctx.output,0x40000 /* 4.000000 */),(- 0x10000 /* 1.000000 */),0x10000 /* 1.000000 */);
+}
+
+
