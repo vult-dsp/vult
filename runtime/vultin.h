@@ -28,8 +28,8 @@ NOTE: The code for the fixed-point operations is based on the project:
 
 */
 
-#ifndef _VULTIN_
-#define _VULTIN_
+#ifndef VULTIN_H
+#define VULTIN_H
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -62,7 +62,7 @@ static inline int32_t fix_sub(int32_t x, int32_t y){
 
 static inline int32_t fix_mul(int32_t x, int32_t y){
     int64_t res = (int64_t) x * y;
-    return res >> 16;
+    return (int32_t) (res >> 16);
 }
 
 static inline int32_t fix_minus(int32_t x){
@@ -88,7 +88,7 @@ static inline int32_t fix_clip(int32_t v,int32_t minv, int32_t maxv){
 }
 
 static inline int32_t fix_floor(int32_t x){
-    return (x & 0xFFFF0000UL);
+    return (x & 0xFFFF0000);
 }
 
 static inline int32_t fix_not(int32_t x){
@@ -120,4 +120,4 @@ static inline float float_clip(float value, float low, float high){
 }
 #endif
 
-#endif
+#endif // VULTIN_H
