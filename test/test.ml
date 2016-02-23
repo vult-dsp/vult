@@ -69,6 +69,7 @@ let code_files =
       "moog_filter.vult";
       "state_variable.vult";
       "voice.vult";
+      "sin.vult";
       "web/phasedist.vult";
       "web/synth1.vult";
       "web/template.vult";

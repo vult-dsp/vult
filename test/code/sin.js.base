@@ -1,0 +1,101 @@
+function vultProcess(){
+    this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
+    this.not  = function(x)          { return x==0?1:0; };
+    this.real = function(x)          { return x; };
+    this.int  = function(x)          { return x|0; };
+    this.sin  = function(x)          { return Math.sin(x); };
+    this.cos  = function(x)          { return Math.cos(x); };
+    this.abs  = function(x)          { return Math.abs(x); };
+    this.exp  = function(x)          { return Math.exp(x); };
+    this.floor= function(x)          { return Math.floor(x); };
+    this.tan  = function(x)          { return Math.tan(x); };
+    this.tanh = function(x)          { return Math.tanh(x); };
+    this.sqrt = function(x)          { return x; };
+    this.process_init = null;
+    this.default_ = null;
+
+
+this._ctx_type_0_init = function(){
+   var _ctx = {};
+   _ctx.pre_x = 0.;
+   return _ctx;
+}
+this. change_init = function() { return this._ctx_type_0_init();}
+this.change = function(_ctx,x){
+   var v = (_ctx.pre_x != x);
+   _ctx.pre_x = x;
+   return v;
+}
+
+
+this._ctx_type_1_init = function(){
+   var _ctx = {};
+   _ctx.y2 = 0.;
+   _ctx.y1 = 0.;
+   _ctx.w = 0.;
+   _ctx.cos_w = 0.;
+   _ctx._inst0 = this._ctx_type_0_init();
+   this.sc_osc_start(_ctx);
+   return _ctx;
+}
+this. sc_osc_init = function() { return this._ctx_type_1_init();}
+this.sc_osc = function(_ctx,pitch){
+   var g = 1.;
+   if(this.change(_ctx._inst0,pitch)){
+      var pre_w = _ctx.w;
+      _ctx.w = (0.00116485 * this.exp((0.0577623 * pitch)));
+      g = (this.tan((_ctx.w / 2.)) / this.tan((pre_w / 2.)));
+      _ctx.cos_w = this.cos(_ctx.w);
+   }
+   var y1_next = ((_ctx.cos_w * _ctx.y1) + (((_ctx.cos_w + 1.) * g) * _ctx.y2));
+   var y2_next = (((_ctx.cos_w - 1.) * _ctx.y1) + ((_ctx.cos_w * g) * _ctx.y2));
+   _ctx.y1 = this.clip(y1_next,(- 1.),1.);
+   _ctx.y2 = this.clip(y2_next,(- 1.),1.);
+   return _ctx.y1;
+}
+
+this. sc_osc_start_init = function() { return this._ctx_type_1_init();}
+this.sc_osc_start = function(_ctx){
+   _ctx.y1 = 1.;
+   _ctx.y2 = ((- _ctx.y1) / 2.);
+}
+
+
+this._ctx_type_2_init = function(){
+   var _ctx = {};
+   _ctx.pitch = 0.;
+   _ctx._inst0 = this._ctx_type_1_init();
+   this.default_(_ctx);
+   return _ctx;
+}
+this. process_init = function() { return this._ctx_type_2_init();}
+this.process = function(_ctx,input){
+   return this.sc_osc(_ctx._inst0,_ctx.pitch);
+}
+
+this. noteOn_init = function() { return this._ctx_type_2_init();}
+this.noteOn = function(_ctx,note,velocity){
+   _ctx.pitch = this.real(note);
+}
+
+this. noteOff_init = function() { return this._ctx_type_2_init();}
+this.noteOff = function(_ctx,note){
+}
+
+this. controlChange_init = function() { return this._ctx_type_2_init();}
+this.controlChange = function(_ctx,control,value){
+}
+
+this. default_init = function() { return this._ctx_type_2_init();}
+this.default_ = function(_ctx){
+   _ctx.pitch = 69.;
+}
+
+    if(this.process_init)  this.context =  this.process_init(); else this.context = {};
+    if(this.default_)      this.default_(this.context);
+    this.liveNoteOn        = function(note,velocity) { if(this.noteOn)        this.noteOn(this.context,note,velocity); };
+    this.liveNoteOff       = function(note,velocity) { if(this.noteOff)       this.noteOff(this.context,note,velocity); };
+    this.liveControlChange = function(note,velocity) { if(this.controlChange) this.controlChange(this.context,note,velocity); };
+    this.liveProcess       = function(input)         { if(this.process)       return this.process(this.context,input); else return 0; };
+    this.liveDefault       = function()              { if(this.default_)      return this.default_(this.context); };
+}
