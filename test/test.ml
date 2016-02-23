@@ -137,26 +137,33 @@ end
 (** Module to perform code generation tests *)
 module CodeGenerationTest = struct
 
-   let process (fullfile:string) : (string * string) list =
+   let process (fullfile:string) (real_type:string) : (string * string) list =
       let basefile = Filename.chop_extension (Filename.basename fullfile) in
-      let args = { default_arguments with output = basefile } in
       let stmts =
          ParserVult.parseFile fullfile
          |> Passes.applyTransformations
       in
       let () = showResults stmts |> ignore in
-      let cpp = VultCh.generateChCode args [stmts] in
-      let js = VultJs.generateJSCode args [stmts] in
-      js @ cpp
+      if real_type = "js" then
+         VultJs.generateJSCode  { default_arguments with output = basefile } [stmts]
+      else
+         VultCh.generateChCode { default_arguments with output = basefile; real = real_type } [stmts]
 
-   let run (file:string) context : unit =
-      let fullfile  = checkFile (in_test_directory ("../examples/"^file)) in
-      let currents  = process fullfile in
+
+   let run (file:string) real_type context : unit =
+      let fullfile = checkFile (in_test_directory ("../examples/"^file)) in
+      let currents = process fullfile real_type in
       let folder = "code" in
+      let base_ext ext =
+         if real_type = "js" then
+            ext^".base"
+         else
+            ext^"."^real_type^".base"
+      in
       let references =
          List.map
             (fun (code,ext) ->
-               readReference (writeOutput context) (ext^".base") code fullfile (in_test_directory folder))
+               readReference (writeOutput context) (base_ext ext) code fullfile (in_test_directory folder))
             currents
       in
       List.iter2
@@ -168,7 +175,8 @@ module CodeGenerationTest = struct
             )
          currents references
 
-   let get files = "code">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)
+   let get files real_type =
+      "code">::: (List.map (fun file -> (Filename.basename file) ^ "."^ real_type >:: run file real_type) files)
 
 end
 
@@ -201,7 +209,7 @@ module CompileTest = struct
       let basename = Filename.chop_extension (Filename.basename file) in
       let cmd = Printf.sprintf "gcc -I%s -c %s -o %s" (in_test_directory "../runtime") file basename in
       if Sys.command cmd <> 0 then
-         assert_failure ("Failed to compile")
+         assert_failure ("Failed to compile "^file)
 
    let generateCPP (filename:string) (output:string) : unit =
       let parser_results =
@@ -210,13 +218,13 @@ module CompileTest = struct
       let args = { default_arguments with  files = [filename]; ccode = true; output = output } in
       Driver.generateCode args [parser_results] |> ignore
 
-
    let run (file:string) _ =
       let fullfile = checkFile (in_test_directory ("../examples/"^file)) in
       let output   = Filename.chop_extension (Filename.basename fullfile) in
       Sys.chdir tmp_dir;
       generateCPP fullfile output;
       compileFile (output^".cpp");
+      compileFile (in_test_directory "../runtime/vultin.c");
       Sys.chdir initial_dir
 
    let get files = "compile">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)
@@ -228,7 +236,8 @@ let suite =
    [
       ParserTest.get  parser_files;
       PassesTest.get  passes_files;
-      CodeGenerationTest.get code_files;
+      CodeGenerationTest.get code_files "float";
+      CodeGenerationTest.get code_files "js";
       CompileTest.get code_files;
    ]
 
