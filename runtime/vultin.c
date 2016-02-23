@@ -116,3 +116,30 @@ int32_t fix_sin(int32_t inAngle)
 
     return tempOut;
 }
+
+int32_t fix_cos(int32_t inAngle)
+{
+    return fix_sin(inAngle + (fix_pi >> 1));
+}
+
+int32_t fix_tan(int32_t inAngle)
+{
+    return fix_div(fix_sin(inAngle), fix_cos(inAngle));
+}
+
+int32_t fix_sinh(int32_t inAngle)
+{
+    return fix_div(fix_exp(inAngle)-fix_exp(-inAngle),0x20000);
+}
+
+int32_t fix_cosh(int32_t inAngle)
+{
+    return fix_div(fix_exp(inAngle)+fix_exp(-inAngle),0x20000);
+}
+
+int32_t fix_tanh(int32_t inAngle)
+{
+    int32_t e_x = fix_exp(inAngle);
+    int32_t m_e_x = fix_exp(-inAngle);
+    return fix_div(e_x-m_e_x,e_x+m_e_x);
+}

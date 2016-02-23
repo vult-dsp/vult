@@ -99,6 +99,16 @@ int32_t fix_exp(int32_t inValue);
 
 int32_t fix_sin(int32_t inAngle);
 
+int32_t fix_cos(int32_t inAngle);
+
+int32_t fix_tan(int32_t inAngle);
+
+int32_t fix_sinh(int32_t inAngle);
+
+int32_t fix_cosh(int32_t inAngle);
+
+int32_t fix_tanh(int32_t inAngle);
+
 
 /* Floating point operations */
 
