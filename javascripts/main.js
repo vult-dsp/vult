@@ -17,6 +17,7 @@ function makeCodeBox(name,width,mode){
    editor.getSession().setMode(mode);
    editor.setReadOnly(true);
    editor.setHighlightActiveLine(false);
+   editor.session.setOption("useWorker", false);
    var height_px = editor.session.getLength()*20;
    editor_div.style.height = height_px+"px";
    editor_div.style.width = width;
