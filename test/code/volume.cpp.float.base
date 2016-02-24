@@ -9,7 +9,7 @@ _ctx_type_0 _ctx_type_0_init(){
 _ctx_type_0 smooth_init(){ return _ctx_type_0_init();}
 
 float smooth(_ctx_type_0 &_ctx, float input){
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005f));
+   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005f));
    return _ctx.x;
 }
 

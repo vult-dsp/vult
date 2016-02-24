@@ -66,10 +66,10 @@ float adsr(_ctx_type_3 &_ctx, uint8_t gate, float attack, float decay, float sus
    int SUSTAIN = 3;
    int RELEASE = 4;
    if(each(_ctx._inst0,32)){
-      _ctx.attackRate = (1.f * 2.26757369615e-05f * (1.f / (attack + 0.1f)));
-      float inv_sustain = (1.f - sustain);
+      _ctx.attackRate = (2.26757369615e-05f * (1.f / (attack + 0.1f)));
+      float inv_sustain = (1.f + (- sustain));
       _ctx.decayRate = (inv_sustain * 2.26757369615e-05f * (inv_sustain / (decay + 0.1f)));
-      _ctx.releaseRate = (0.5f * 2.26757369615e-05f * (0.5f / (release + 0.1f)));
+      _ctx.releaseRate = (1.13378684807e-05f * (0.5f / (release + 0.1f)));
    }
    _ctx.sustainLevel = sustain;
    uint8_t trig = 0;

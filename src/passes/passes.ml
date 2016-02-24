@@ -476,12 +476,49 @@ module Simplify = struct
       | PReal _ -> true
       | _ -> false
 
+   let isZero (e:exp) : bool =
+      match e with
+      | PInt(0,_)
+      | PReal(0.0,_) -> true
+      | _ -> false
+
+   let isOne (e:exp) : bool =
+      match e with
+      | PInt(1,_)
+      | PReal(1.0,_) -> true
+      | _ -> false
+
+   let minusOne attr (typ:VType.t) : exp =
+      match !(VType.unlink typ) with
+      | VType.TId(["int"],_) -> PInt(-1,attr)
+      | VType.TId(["real"],_) -> PReal(-1.0,attr)
+      | _ -> failwith "Simplify.minusOne: invalid numeric value"
+
+   let applyOp (op:string) (e1:exp) (e2:exp) : exp =
+      match op,e1,e2 with
+      | "+",PInt(n1,attr),PInt(n2,_) -> PInt(n1+n2,attr)
+      | "*",PInt(n1,attr),PInt(n2,_) -> PInt(n1*n2,attr)
+      | "+",PReal(n1,attr),PReal(n2,_) -> PReal(n1+.n2,attr)
+      | "*",PReal(n1,attr),PReal(n2,_) -> PReal(n1*.n2,attr)
+      | _ -> failwith "Simplify.applyOp: invalid operation"
+
+   let rec simplifyElems op (elems: exp list) : bool  * exp list =
+      let constants,other = List.partition isNum elems in
+      match constants with
+      | []  -> false, elems
+      | [c] when isZero c && op = "*" -> false, [c]
+      | [c] when isOne c && op = "*" -> false, other
+      | [c] when isZero c && op = "+" -> false, other
+      | [_] -> false, elems
+      | h :: t ->
+         let c = List.fold_left (applyOp op) h t in
+         true, c :: other
+
    let negNum (e:exp) : exp =
       match e with
       | PInt(value,attr) -> PInt(-value,attr)
       | PReal(value,attr) -> PReal(-.value,attr)
       | _ -> failwith "Simplify.negNum: not a number"
-
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make @@ fun state exp ->
@@ -490,10 +527,19 @@ module Simplify = struct
             reapply state, POp("*",[e1;PReal(1.0 /. value,attr)],attr2)
          | POp("-",[e1;e2],attr) when isNum e2 ->
             reapply state, POp("+",[e1;negNum e2],attr)
+         | POp("-",[e1;(PUnOp("-",e2,_))],attr) ->
+            reapply state, POp("+",[e1;e2],attr)
+         | POp("-",[e1;e2],attr) ->
+            reapply state, POp("+",[e1;PUnOp("-",e2,attr)],attr)
+         | PUnOp("-",POp("*",elems,({typ = Some(t)} as attr)),_) when List.exists isNum elems ->
+            let minus = minusOne attr t in
+            reapply state, POp("*",minus::elems,attr)
+
          (* Collapses trees of sums and multiplications *)
          | POp(op,elems,attr) when op = "+" || op = "*" ->
             let found, elems' = getOpElements op elems in
-            let state' = if found then reapply state else state in
+            let simpl, elems' = simplifyElems op elems' in
+            let state' = if found || simpl then reapply state else state in
             state', POp(op,elems',attr)
          (* Simplifies unary minus *)
          | PUnOp("-",e1,_) when isNum e1 ->

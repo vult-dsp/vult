@@ -35,7 +35,7 @@ int32_t PI(){
 }
 
 int32_t thermal(){
-   return fix_mul(0x10000 /* 1.000000 */,0xd1b7 /* 0.819200 */);
+   return 0xd1b7 /* 0.819200 */;
 }
 
 _ctx_type_7 _ctx_type_7_init(){
@@ -53,14 +53,14 @@ _ctx_type_7 _ctx_type_7_init(){
 _ctx_type_7 moog_step_init(){ return _ctx_type_7_init();}
 
 int32_t moog_step(_ctx_type_7 &_ctx, int32_t input, int32_t resFixed, int32_t tune, int32_t output){
-   int32_t i0 = fix_sub(input,fix_mul(resFixed,output));
-   int32_t w0 = fix_add(_ctx.dw0,fix_mul(tune,fix_sub(fix_tanh(fix_mul(i0,thermal())),_ctx.tw0)));
+   int32_t i0 = fix_add(input,(- fix_mul(resFixed,output)));
+   int32_t w0 = fix_add(_ctx.dw0,fix_mul(tune,fix_add(fix_tanh(fix_mul(i0,thermal())),(- _ctx.tw0))));
    _ctx.tw0 = fix_tanh(fix_mul(w0,thermal()));
-   int32_t w1 = fix_sub(fix_add(_ctx.dw1,fix_mul(tune,_ctx.tw0)),_ctx.tw1);
+   int32_t w1 = fix_add(fix_add(_ctx.dw1,fix_mul(tune,_ctx.tw0)),(- _ctx.tw1));
    _ctx.tw1 = fix_tanh(fix_mul(w1,thermal()));
-   int32_t w2 = fix_sub(fix_add(_ctx.dw2,fix_mul(tune,_ctx.tw1)),_ctx.tw2);
+   int32_t w2 = fix_add(fix_add(_ctx.dw2,fix_mul(tune,_ctx.tw1)),(- _ctx.tw2));
    _ctx.tw2 = fix_tanh(fix_mul(w2,thermal()));
-   int32_t w3 = fix_sub(fix_add(_ctx.dw3,fix_mul(tune,_ctx.tw2)),fix_tanh(fix_mul(_ctx.dw3,thermal())));
+   int32_t w3 = fix_add(fix_add(_ctx.dw3,fix_mul(tune,_ctx.tw2)),(- fix_tanh(fix_mul(_ctx.dw3,thermal()))));
    _ctx.dw0 = w0;
    _ctx.dw1 = w1;
    _ctx.dw2 = w2;
@@ -89,9 +89,9 @@ int32_t moog(_ctx_type_8 &_ctx, int32_t input, int32_t cut, int32_t res){
       int32_t x_2 = fix_mul(fc,0x8000 /* 0.500000 */);
       int32_t x2 = fix_mul(fc,fc);
       int32_t x3 = fix_mul(fc,x2);
-      int32_t fcr = fix_add(fix_sub(fix_add(fix_mul(0x1df7c /* 1.873000 */,x3),fix_mul(0x7ed9 /* 0.495500 */,x2)),fix_mul(0xa624 /* 0.649000 */,fc)),0xffb1 /* 0.998800 */);
+      int32_t fcr = fix_add(fix_add(fix_add(fix_mul(0x1df7c /* 1.873000 */,x3),fix_mul(0x7ed9 /* 0.495500 */,x2)),fix_mul((0xffff59dc /* -0.649000 */),fc)),0xffb1 /* 0.998800 */);
       int32_t acr = fix_add(fix_add(fix_mul((0xfffc1049 /* -3.936400 */),x2),fix_mul(0x1d745 /* 1.840900 */,fc)),0xff2e /* 0.996800 */);
-      _ctx.tune = fix_div(fix_sub(0x10000 /* 1.000000 */,fix_exp((- fix_mul(fix_mul(fix_mul(0x20000 /* 2.000000 */,PI()),x_2),fcr)))),thermal());
+      _ctx.tune = fix_div(fix_add(0x10000 /* 1.000000 */,(- fix_exp(fix_mul(fix_mul(fix_mul((0xfffe0000 /* -2.000000 */),PI()),x_2),fcr)))),thermal());
       _ctx.resFixed = fix_mul(fix_mul(0x40000 /* 4.000000 */,res),acr);
    }
    int32_t x0 = moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,_ctx.dx1);

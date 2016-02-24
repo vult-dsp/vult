@@ -25,7 +25,7 @@ _ctx_type_1 svf_step_init(){ return _ctx_type_1_init();}
 
 int32_t svf_step(_ctx_type_1 &_ctx, int32_t input, int32_t g, int32_t q, int sel){
    int32_t low = fix_add(_ctx.dlow,fix_mul(g,_ctx.dband));
-   int32_t high = fix_sub(fix_sub(input,low),fix_mul(q,_ctx.dband));
+   int32_t high = fix_add(fix_add(input,(- low)),(- fix_mul(q,_ctx.dband)));
    int32_t band = fix_add(fix_mul(g,high),_ctx.dband);
    int32_t notch = fix_add(high,low);
    _ctx.dband = fix_clip(band,(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
@@ -47,7 +47,7 @@ _ctx_type_2 svf_init(){ return _ctx_type_2_init();}
 int32_t svf(_ctx_type_2 &_ctx, int32_t input, int32_t fc, int32_t q, int sel){
    fc = fix_clip(fc,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
    q = fix_clip(q,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
-   int32_t fix_q = fix_mul(0x20000 /* 2.000000 */,fix_sub(0x10000 /* 1.000000 */,q));
+   int32_t fix_q = fix_mul(0x20000 /* 2.000000 */,fix_add(0x10000 /* 1.000000 */,(- q)));
    if(change(_ctx._inst0,fc)){
       _ctx.g = fix_mul(fc,0x8000 /* 0.500000 */);
    }

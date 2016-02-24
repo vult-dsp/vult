@@ -42,7 +42,7 @@ this.PI = function(){
    return 3.14159265359;
 }
 this.thermal = function(){
-   return (1. * 0.819199996645);
+   return (0.819199996645);
 }
 
 
@@ -59,14 +59,14 @@ this._ctx_type_7_init = function(){
 }
 this. moog_step_init = function() { return this._ctx_type_7_init();}
 this.moog_step = function(_ctx,input,resFixed,tune,output){
-   var i0 = (input - (resFixed * output));
-   var w0 = (_ctx.dw0 + (tune * (this.tanh((i0 * this.thermal())) - _ctx.tw0)));
+   var i0 = (input + (- (resFixed * output)));
+   var w0 = (_ctx.dw0 + (tune * (this.tanh((i0 * this.thermal())) + (- _ctx.tw0))));
    _ctx.tw0 = this.tanh((w0 * this.thermal()));
-   var w1 = ((_ctx.dw1 + (tune * _ctx.tw0)) - _ctx.tw1);
+   var w1 = (_ctx.dw1 + (tune * _ctx.tw0) + (- _ctx.tw1));
    _ctx.tw1 = this.tanh((w1 * this.thermal()));
-   var w2 = ((_ctx.dw2 + (tune * _ctx.tw1)) - _ctx.tw2);
+   var w2 = (_ctx.dw2 + (tune * _ctx.tw1) + (- _ctx.tw2));
    _ctx.tw2 = this.tanh((w2 * this.thermal()));
-   var w3 = ((_ctx.dw3 + (tune * _ctx.tw2)) - this.tanh((_ctx.dw3 * this.thermal())));
+   var w3 = (_ctx.dw3 + (tune * _ctx.tw2) + (- this.tanh((_ctx.dw3 * this.thermal()))));
    _ctx.dw0 = w0;
    _ctx.dw1 = w1;
    _ctx.dw2 = w2;
@@ -94,9 +94,9 @@ this.moog = function(_ctx,input,cut,res){
       var x_2 = (fc * 0.5);
       var x2 = (fc * fc);
       var x3 = (fc * x2);
-      var fcr = ((((1.873 * x3) + (0.4955 * x2)) - (0.649 * fc)) + 0.9988);
+      var fcr = ((1.873 * x3) + (0.4955 * x2) + ((-0.649) * fc) + 0.9988);
       var acr = (((-3.9364) * x2) + (1.8409 * fc) + 0.9968);
-      _ctx.tune = ((1. - this.exp((- (2. * this.PI() * x_2 * fcr)))) / this.thermal());
+      _ctx.tune = ((1. + (- this.exp(((-2.) * this.PI() * x_2 * fcr)))) / this.thermal());
       _ctx.resFixed = (4. * res * acr);
    }
    var x0 = this.moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,_ctx.dx1);

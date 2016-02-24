@@ -28,14 +28,14 @@ _ctx_type_2 _ctx_type_2_init(){
 _ctx_type_2 dcblock_init(){ return _ctx_type_2_init();}
 
 int32_t dcblock(_ctx_type_2 &_ctx, int32_t x0){
-   int32_t y0 = fix_add(fix_sub(x0,_ctx.x1),fix_mul(_ctx.y1,0xfeb8 /* 0.995000 */));
+   int32_t y0 = fix_add(fix_add(x0,(- _ctx.x1)),fix_mul(_ctx.y1,0xfeb8 /* 0.995000 */));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
 }
 
 int32_t pitchToRate(int32_t d){
-   return fix_mul(fix_mul(0x82d01 /* 8.175800 */,fix_exp(fix_mul(0xec9 /* 0.057762 */,d))),0x1 /* 0.000023 */);
+   return fix_mul(0xc /* 0.000185 */,fix_exp(fix_mul(0xec9 /* 0.057762 */,d)));
 }
 
 int32_t pulse_train(int32_t m, int32_t phase){
@@ -71,7 +71,7 @@ _ctx_type_5 osc_init(){ return _ctx_type_5_init();}
 
 int32_t osc(_ctx_type_5 &_ctx, int32_t pitch, int32_t pw, int32_t wave){
    int32_t fixed_pitch = 0x0 /* 0.000000 */;
-   if(wave < fix_mul(0x20000 /* 2.000000 */,0x5555 /* 0.333333 */)){
+   if(wave < 0xaaaa /* 0.666667 */){
       fixed_pitch = pitch;
    }
    else
@@ -95,15 +95,15 @@ int32_t osc(_ctx_type_5 &_ctx, int32_t pitch, int32_t pw, int32_t wave){
    if(_ctx.phase > 0x10000 /* 1.000000 */){
       _ctx.phase = fix_add(_ctx.phase,(0xffff0000 /* -1.000000 */));
    }
-   _ctx.state_pulse = fix_clip(fix_sub(fix_add(fix_mul(_ctx.state_pulse,0xffdf /* 0.999500 */),tmp1),tmp2),(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
-   _ctx.state_saw = fix_clip(fix_add(fix_mul(_ctx.state_saw,0xffdf /* 0.999500 */),fix_mul(fix_div(fix_sub(fix_add(tmp1,tmp2),fix_mul(0x20000 /* 2.000000 */,_ctx.rate)),shift05),0x8000 /* 0.500000 */)),(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
+   _ctx.state_pulse = fix_clip(fix_add(fix_add(fix_mul(_ctx.state_pulse,0xffdf /* 0.999500 */),tmp1),(- tmp2)),(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
+   _ctx.state_saw = fix_clip(fix_add(fix_mul(_ctx.state_saw,0xffdf /* 0.999500 */),fix_mul(fix_div(fix_add(fix_add(tmp1,tmp2),fix_mul((0xfffe0000 /* -2.000000 */),_ctx.rate)),shift05),0x8000 /* 0.500000 */)),(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
    _ctx.state_triang = fix_clip(fix_add(fix_mul(_ctx.state_triang,0xffdf /* 0.999500 */),fix_mul(fix_mul(0x20000 /* 2.000000 */,_ctx.state_pulse),_ctx.rate)),(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
-   if(wave < fix_mul(0x10000 /* 1.000000 */,0x5555 /* 0.333333 */)){
+   if(wave < 0x5555 /* 0.333333 */){
       _ctx.output = _ctx.state_pulse;
    }
    else
    {
-      if(wave < fix_mul(0x20000 /* 2.000000 */,0x5555 /* 0.333333 */)){
+      if(wave < 0xaaaa /* 0.666667 */){
          _ctx.output = fix_mul(0x20000 /* 2.000000 */,_ctx.state_saw);
       }
       else

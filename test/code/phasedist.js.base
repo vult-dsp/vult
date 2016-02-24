@@ -22,7 +22,7 @@ this._ctx_type_0_init = function(){
 }
 this. smooth_init = function() { return this._ctx_type_0_init();}
 this.smooth = function(_ctx,input){
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005));
+   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005));
    return _ctx.x;
 }
 
@@ -39,7 +39,7 @@ this.change = function(_ctx,x){
    return v;
 }
 this.pitchToRate = function(d){
-   return (8.1758 * this.exp((0.0577623 * d)) * 2.26757369615e-05);
+   return (0.000185392290249 * this.exp((0.0577623 * d)));
 }
 
 
@@ -75,11 +75,11 @@ this._ctx_type_4_init = function(){
 this. process_init = function() { return this._ctx_type_4_init();}
 this.process = function(_ctx,input){
    var phase1 = this.phasor(_ctx._inst0,_ctx.pitch,false);
-   var comp = (1. - phase1);
-   var reset = ((_ctx.pre_phase1 - phase1) > 0.5);
+   var comp = (1. + (- phase1));
+   var reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5);
    _ctx.pre_phase1 = phase1;
    var phase2 = this.phasor(_ctx._inst2,(_ctx.pitch + (this.smooth(_ctx._inst1,_ctx.detune) * 32.)),reset);
-   var sine = this.sin((2. * 3.14159265359 * phase2));
+   var sine = this.sin((6.28318530718 * phase2));
    return (this.smooth(_ctx._inst3,_ctx.volume) * sine * comp);
 }
 

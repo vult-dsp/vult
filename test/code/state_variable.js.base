@@ -37,7 +37,7 @@ this._ctx_type_1_init = function(){
 this. svf_step_init = function() { return this._ctx_type_1_init();}
 this.svf_step = function(_ctx,input,g,q,sel){
    var low = (_ctx.dlow + (g * _ctx.dband));
-   var high = ((input - low) - (q * _ctx.dband));
+   var high = (input + (- low) + (- (q * _ctx.dband)));
    var band = ((g * high) + _ctx.dband);
    var notch = (high + low);
    _ctx.dband = this.clip(band,(-1.),1.);
@@ -58,7 +58,7 @@ this. svf_init = function() { return this._ctx_type_2_init();}
 this.svf = function(_ctx,input,fc,q,sel){
    fc = this.clip(fc,0.,1.);
    q = this.clip(q,0.,1.);
-   var fix_q = (2. * (1. - q));
+   var fix_q = (2. * (1. + (- q)));
    if(this.change(_ctx._inst0,fc)){
       _ctx.g = (fc * 0.5);
    }

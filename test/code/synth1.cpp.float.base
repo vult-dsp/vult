@@ -9,7 +9,7 @@ _ctx_type_0 _ctx_type_0_init(){
 _ctx_type_0 smooth_init(){ return _ctx_type_0_init();}
 
 float smooth(_ctx_type_0 &_ctx, float input){
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005f));
+   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005f));
    return _ctx.x;
 }
 
@@ -56,7 +56,7 @@ uint8_t each(_ctx_type_3 &_ctx, int n){
 }
 
 float pitchToRate(float d){
-   return (8.1758f * expf((0.0577623f * d)) * 2.26757369615e-05f);
+   return (0.000185392290249f * expf((0.0577623f * d)));
 }
 
 _ctx_type_5 _ctx_type_5_init(){
@@ -87,7 +87,7 @@ _ctx_type_6 _ctx_type_6_init(){
 _ctx_type_6 lfo_init(){ return _ctx_type_6_init();}
 
 float lfo(_ctx_type_6 &_ctx, float f, int gate){
-   float rate = (f * 10.f * 2.26757369615e-05f);
+   float rate = (0.000226757369615f * f);
    if(edge(_ctx._inst0,gate)){
       _ctx.phase = 0.f;
    }
@@ -95,7 +95,7 @@ float lfo(_ctx_type_6 &_ctx, float f, int gate){
    if(_ctx.phase > 1.f){
       _ctx.phase = (_ctx.phase + (-1.f));
    }
-   return (sinf((_ctx.phase * 2.f * 3.14159265359f)) + (-0.5f));
+   return (sinf((6.28318530718f * _ctx.phase)) + (-0.5f));
 }
 
 _ctx_type_7 _ctx_type_7_init(){
@@ -126,11 +126,11 @@ _ctx_type_7 process_init(){ return _ctx_type_7_init();}
 float process(_ctx_type_7 &_ctx, float input){
    float lfo_val = (lfo(_ctx._inst0,_ctx.lfo_rate,_ctx.gate) * _ctx.lfo_amt);
    float phase1 = phasor(_ctx._inst1,_ctx.pitch,0);
-   float comp = (1.f - phase1);
-   uint8_t reset = ((_ctx.pre_phase1 - phase1) > 0.5f);
+   float comp = (1.f + (- phase1));
+   uint8_t reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5f);
    _ctx.pre_phase1 = phase1;
    float phase2 = phasor(_ctx._inst3,(_ctx.pitch + (smooth(_ctx._inst2,(_ctx.detune + lfo_val)) * 32.f)),reset);
-   float sine = sinf((2.f * 3.14159265359f * phase2));
+   float sine = sinf((6.28318530718f * phase2));
    float gate_value = ((_ctx.gate > 0)?1.f:0.f);
    return (smooth(_ctx._inst4,_ctx.volume) * sine * comp * smooth(_ctx._inst5,gate_value));
 }

@@ -76,10 +76,10 @@ this.adsr = function(_ctx,gate,attack,decay,sustain,release){
    var SUSTAIN = ((3|0)|0);
    var RELEASE = ((4|0)|0);
    if(this.each(_ctx._inst0,(32|0))){
-      _ctx.attackRate = (1. * 2.26757369615e-05 * (1. / (attack + 0.1)));
-      var inv_sustain = (1. - sustain);
+      _ctx.attackRate = (2.26757369615e-05 * (1. / (attack + 0.1)));
+      var inv_sustain = (1. + (- sustain));
       _ctx.decayRate = (inv_sustain * 2.26757369615e-05 * (inv_sustain / (decay + 0.1)));
-      _ctx.releaseRate = (0.5 * 2.26757369615e-05 * (0.5 / (release + 0.1)));
+      _ctx.releaseRate = (1.13378684807e-05 * (0.5 / (release + 0.1)));
    }
    _ctx.sustainLevel = sustain;
    var trig = false;

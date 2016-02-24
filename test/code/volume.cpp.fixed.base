@@ -9,7 +9,7 @@ _ctx_type_0 _ctx_type_0_init(){
 _ctx_type_0 smooth_init(){ return _ctx_type_0_init();}
 
 int32_t smooth(_ctx_type_0 &_ctx, int32_t input){
-   _ctx.x = fix_add(_ctx.x,fix_mul(fix_sub(input,_ctx.x),0x147 /* 0.005000 */));
+   _ctx.x = fix_add(_ctx.x,fix_mul(fix_add(input,(- _ctx.x)),0x147 /* 0.005000 */));
    return _ctx.x;
 }
 

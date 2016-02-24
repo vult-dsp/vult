@@ -81,7 +81,7 @@ this._ctx_type_6_init = function(){
 }
 this. dcblock_init = function() { return this._ctx_type_6_init();}
 this.dcblock = function(_ctx,x0){
-   var y0 = ((x0 - _ctx.x1) + (_ctx.y1 * 0.995));
+   var y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
@@ -100,7 +100,7 @@ this.lpfilter = function(_ctx,x){
    return ret;
 }
 this.pitchToRate = function(d){
-   return (8.1758 * this.exp((0.0577623 * d)) * 2.26757369615e-05);
+   return (0.000185392290249 * this.exp((0.0577623 * d)));
 }
 this.pulse_train = function(m,phase){
    var pi_phase = (phase * 3.14159265359);
@@ -134,7 +134,7 @@ this._ctx_type_10_init = function(){
 this. osc_init = function() { return this._ctx_type_10_init();}
 this.osc = function(_ctx,pitch,pw,wave){
    var fixed_pitch = 0.;
-   if((wave < (2. * 0.333333333333))){
+   if((wave < (0.666666666667))){
       fixed_pitch = pitch;
    }
    else
@@ -158,15 +158,15 @@ this.osc = function(_ctx,pitch,pw,wave){
    if((_ctx.phase > 1.)){
       _ctx.phase = (_ctx.phase + (-1.));
    }
-   _ctx.state_pulse = this.clip((((_ctx.state_pulse * 0.9995) + tmp1) - tmp2),(-1.),1.);
-   _ctx.state_saw = this.clip(((_ctx.state_saw * 0.9995) + ((((tmp1 + tmp2) - (2. * _ctx.rate)) / shift05) * 0.5)),(-1.),1.);
+   _ctx.state_pulse = this.clip(((_ctx.state_pulse * 0.9995) + tmp1 + (- tmp2)),(-1.),1.);
+   _ctx.state_saw = this.clip(((_ctx.state_saw * 0.9995) + (((tmp1 + tmp2 + ((-2.) * _ctx.rate)) / shift05) * 0.5)),(-1.),1.);
    _ctx.state_triang = this.clip(((_ctx.state_triang * 0.9995) + (2. * _ctx.state_pulse * _ctx.rate)),(-1.),1.);
-   if((wave < (1. * 0.333333333333))){
+   if((wave < (0.333333333333))){
       _ctx.output = _ctx.state_pulse;
    }
    else
    {
-      if((wave < (2. * 0.333333333333))){
+      if((wave < (0.666666666667))){
          _ctx.output = (2. * _ctx.state_saw);
       }
       else
@@ -188,7 +188,7 @@ this._ctx_type_11_init = function(){
 this. svf_step_init = function() { return this._ctx_type_11_init();}
 this.svf_step = function(_ctx,input,g,q,sel){
    var low = (_ctx.dlow + (g * _ctx.dband));
-   var high = ((input - low) - (q * _ctx.dband));
+   var high = (input + (- low) + (- (q * _ctx.dband)));
    var band = ((g * high) + _ctx.dband);
    var notch = (high + low);
    _ctx.dband = this.clip(band,(-1.),1.);
@@ -209,7 +209,7 @@ this. svf_init = function() { return this._ctx_type_12_init();}
 this.svf = function(_ctx,input,fc,q,sel){
    fc = this.clip(fc,0.,1.);
    q = this.clip(q,0.,1.);
-   var fix_q = (2. * (1. - q));
+   var fix_q = (2. * (1. + (- q)));
    if(this.change(_ctx._inst0,fc)){
       _ctx.g = (fc * 0.5);
    }
@@ -241,10 +241,10 @@ this.adsr = function(_ctx,gate,attack,decay,sustain,release){
    var SUSTAIN = ((3|0)|0);
    var RELEASE = ((4|0)|0);
    if(this.each(_ctx._inst0,(32|0))){
-      _ctx.attackRate = (1. * 2.26757369615e-05 * (1. / (attack + 0.1)));
-      var inv_sustain = (1. - sustain);
+      _ctx.attackRate = (2.26757369615e-05 * (1. / (attack + 0.1)));
+      var inv_sustain = (1. + (- sustain));
       _ctx.decayRate = (inv_sustain * 2.26757369615e-05 * (inv_sustain / (decay + 0.1)));
-      _ctx.releaseRate = (0.5 * 2.26757369615e-05 * (0.5 / (release + 0.1)));
+      _ctx.releaseRate = (1.13378684807e-05 * (0.5 / (release + 0.1)));
    }
    _ctx.sustainLevel = sustain;
    var trig = false;
@@ -327,7 +327,7 @@ this.lfo = function(_ctx,f,gate){
    if((_ctx.phase > 1.)){
       _ctx.phase = (_ctx.phase + (-1.));
    }
-   return (this.sin((_ctx.phase * 2. * 3.14159265359)) + 0.5);
+   return (this.sin((6.28318530718 * _ctx.phase)) + 0.5);
 }
 
 

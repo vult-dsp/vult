@@ -44,7 +44,7 @@ _ctx_type_6 _ctx_type_6_init(){
 _ctx_type_6 biquad_init(){ return _ctx_type_6_init();}
 
 float biquad(_ctx_type_6 &_ctx, float x, float b0, float b1, float b2, float a1, float a2){
-   float w0 = ((x - (a1 * _ctx.w1)) - (a2 * _ctx.w2));
+   float w0 = (x + (- (a1 * _ctx.w1)) + (- (a2 * _ctx.w2)));
    float y0 = ((b0 * w0) + (b1 * _ctx.w1) + (b2 * _ctx.w2));
    float _tmp_0 = _ctx.w1;
    float _tmp_1 = w0;
@@ -100,7 +100,7 @@ float lp12(_ctx_type_8 &_ctx, float x, float fc, float q){
       _ctx.b1 = (2.f * _ctx.b0);
       _ctx.b2 = _ctx.b0;
       _ctx.a1 = ((2.f * qc * ((k * k) + (-1.f))) / den);
-      _ctx.a2 = ((((k * k * qc) - k) + qc) / den);
+      _ctx.a2 = (((k * k * qc) + (- k) + qc) / den);
    }
    return biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
@@ -164,7 +164,7 @@ float hp12(_ctx_type_11 &_ctx, float x, float fc, float q){
       _ctx.b1 = (((-2.f) * qc) / den);
       _ctx.b2 = (qc / den);
       _ctx.a1 = ((2.f * qc * ((k * k) + (-1.f))) / den);
-      _ctx.a2 = ((((k * k * qc) - k) + qc) / den);
+      _ctx.a2 = (((k * k * qc) + (- k) + qc) / den);
    }
    return biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
@@ -194,7 +194,7 @@ float bp12(_ctx_type_12 &_ctx, float x, float fc, float q){
       _ctx.b1 = 0.f;
       _ctx.b2 = ((- k) / den);
       _ctx.a1 = ((2.f * qc * ((k * k) + (-1.f))) / den);
-      _ctx.a2 = ((((k * k * qc) - k) + qc) / den);
+      _ctx.a2 = (((k * k * qc) + (- k) + qc) / den);
    }
    return biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
@@ -224,7 +224,7 @@ float notch12(_ctx_type_13 &_ctx, float x, float fc, float q){
       _ctx.b1 = ((2.f * qc * ((k * k) + (-1.f))) / den);
       _ctx.b2 = _ctx.b0;
       _ctx.a1 = ((2.f * qc * ((k * k) + (-1.f))) / den);
-      _ctx.a2 = ((((k * k * qc) - k) + qc) / den);
+      _ctx.a2 = (((k * k * qc) + (- k) + qc) / den);
    }
    return biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
@@ -250,11 +250,11 @@ float allp12(_ctx_type_14 &_ctx, float x, float fc, float q){
       fc = float_clip(fc,0.f,samplerate());
       float k = tanf(((pi() * fc) / samplerate()));
       float den = ((k * k * qc) + k + qc);
-      _ctx.b0 = ((((k * k * qc) - k) + qc) / den);
+      _ctx.b0 = (((k * k * qc) + (- k) + qc) / den);
       _ctx.b1 = ((2.f * qc * ((k * k) + (-1.f))) / den);
       _ctx.b2 = 1.f;
       _ctx.a1 = ((2.f * qc * ((k * k) + (-1.f))) / den);
-      _ctx.a2 = ((((k * k * qc) - k) + qc) / den);
+      _ctx.a2 = (((k * k * qc) + (- k) + qc) / den);
    }
    return biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }

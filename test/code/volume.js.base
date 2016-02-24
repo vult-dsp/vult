@@ -22,7 +22,7 @@ this._ctx_type_0_init = function(){
 }
 this. smooth_init = function() { return this._ctx_type_0_init();}
 this.smooth = function(_ctx,input){
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005));
+   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005));
    return _ctx.x;
 }
 
