@@ -28,8 +28,8 @@ float svf_step(_ctx_type_1 &_ctx, float input, float g, float q, int sel){
    float high = ((input - low) - (q * _ctx.dband));
    float band = ((g * high) + _ctx.dband);
    float notch = (high + low);
-   _ctx.dband = float_clip(band,-1.f,1.f);
-   _ctx.dlow = float_clip(low,-1.f,1.f);
+   _ctx.dband = float_clip(band,(-1.f),1.f);
+   _ctx.dlow = float_clip(low,(-1.f),1.f);
    float output = ((sel == 0)?low:((sel == 1)?high:((sel == 2)?band:notch)));
    return output;
 }

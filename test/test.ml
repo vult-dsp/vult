@@ -48,7 +48,7 @@ let parser_files =
       "types_basic.vult";
    ]
 
-let pass1_options = { Passes.default_options with Passes.pass2 = false }
+let pass1_options = { Passes.default_options with Passes.pass3 = false }
 
 let passes_files =
    [
@@ -57,6 +57,7 @@ let passes_files =
       "context_simple.vult", Passes.default_options;
       "context_nested.vult", Passes.default_options;
       "tuple_to_types.vult", Passes.default_options;
+      "simplify.vult", Passes.default_options;
    ]
 
 

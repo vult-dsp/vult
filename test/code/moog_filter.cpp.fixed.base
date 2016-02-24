@@ -90,7 +90,7 @@ int32_t moog(_ctx_type_8 &_ctx, int32_t input, int32_t cut, int32_t res){
       int32_t x2 = fix_mul(fc,fc);
       int32_t x3 = fix_mul(fc,x2);
       int32_t fcr = fix_add(fix_sub(fix_add(fix_mul(0x1df7c /* 1.873000 */,x3),fix_mul(0x7ed9 /* 0.495500 */,x2)),fix_mul(0xa624 /* 0.649000 */,fc)),0xffb1 /* 0.998800 */);
-      int32_t acr = fix_add(fix_add(fix_mul(0x3efb8 /* -3.936400 */,x2),fix_mul(0x1d745 /* 1.840900 */,fc)),0xff2e /* 0.996800 */);
+      int32_t acr = fix_add(fix_add(fix_mul((0xfffc1049 /* -3.936400 */),x2),fix_mul(0x1d745 /* 1.840900 */,fc)),0xff2e /* 0.996800 */);
       _ctx.tune = fix_div(fix_sub(0x10000 /* 1.000000 */,fix_exp((- fix_mul(fix_mul(fix_mul(0x20000 /* 2.000000 */,PI()),x_2),fcr)))),thermal());
       _ctx.resFixed = fix_mul(fix_mul(0x40000 /* 4.000000 */,res),acr);
    }

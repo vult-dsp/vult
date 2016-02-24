@@ -48,9 +48,9 @@ this.sc_osc = function(_ctx,pitch){
       _ctx.cos_w = this.cos(_ctx.w);
    }
    var y1_next = ((_ctx.cos_w * _ctx.y1) + ((_ctx.cos_w + 1.) * g * _ctx.y2));
-   var y2_next = (((_ctx.cos_w - 1.) * _ctx.y1) + (_ctx.cos_w * g * _ctx.y2));
-   _ctx.y1 = this.clip(y1_next,-1.,1.);
-   _ctx.y2 = this.clip(y2_next,-1.,1.);
+   var y2_next = (((_ctx.cos_w + (-1.)) * _ctx.y1) + (_ctx.cos_w * g * _ctx.y2));
+   _ctx.y1 = this.clip(y1_next,(-1.),1.);
+   _ctx.y2 = this.clip(y2_next,(-1.),1.);
    return _ctx.y1;
 }
 

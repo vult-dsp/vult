@@ -147,17 +147,17 @@ float osc(_ctx_type_10 &_ctx, float pitch, float pw, float wave){
    float shift05 = (0.5f + (pw * 0.49f));
    float shift = (_ctx.phase + shift05);
    if(shift > 1.f){
-      shift = (shift - 1.f);
+      shift = (shift + (-1.f));
    }
    float tmp1 = pulse_train(_ctx.m,_ctx.phase);
    float tmp2 = pulse_train(_ctx.m,shift);
    _ctx.phase = (_ctx.phase + _ctx.rate);
    if(_ctx.phase > 1.f){
-      _ctx.phase = (_ctx.phase - 1.f);
+      _ctx.phase = (_ctx.phase + (-1.f));
    }
-   _ctx.state_pulse = float_clip((((_ctx.state_pulse * 0.9995f) + tmp1) - tmp2),-1.f,1.f);
-   _ctx.state_saw = float_clip(((_ctx.state_saw * 0.9995f) + ((((tmp1 + tmp2) - (2.f * _ctx.rate)) / shift05) / 2.f)),-1.f,1.f);
-   _ctx.state_triang = float_clip(((_ctx.state_triang * 0.9995f) + (2.f * _ctx.state_pulse * _ctx.rate)),-1.f,1.f);
+   _ctx.state_pulse = float_clip((((_ctx.state_pulse * 0.9995f) + tmp1) - tmp2),(-1.f),1.f);
+   _ctx.state_saw = float_clip(((_ctx.state_saw * 0.9995f) + ((((tmp1 + tmp2) - (2.f * _ctx.rate)) / shift05) / 2.f)),(-1.f),1.f);
+   _ctx.state_triang = float_clip(((_ctx.state_triang * 0.9995f) + (2.f * _ctx.state_pulse * _ctx.rate)),(-1.f),1.f);
    if(wave < (1.f / 3.f)){
       _ctx.output = _ctx.state_pulse;
    }
@@ -172,7 +172,7 @@ float osc(_ctx_type_10 &_ctx, float pitch, float pw, float wave){
       }
    }
    _ctx.output = dcblock(_ctx._inst1,_ctx.output);
-   return float_clip((_ctx.output / 4.f),-1.f,1.f);
+   return float_clip((_ctx.output / 4.f),(-1.f),1.f);
 }
 
 _ctx_type_11 _ctx_type_11_init(){
@@ -189,8 +189,8 @@ float svf_step(_ctx_type_11 &_ctx, float input, float g, float q, int sel){
    float high = ((input - low) - (q * _ctx.dband));
    float band = ((g * high) + _ctx.dband);
    float notch = (high + low);
-   _ctx.dband = float_clip(band,-1.f,1.f);
-   _ctx.dlow = float_clip(low,-1.f,1.f);
+   _ctx.dband = float_clip(band,(-1.f),1.f);
+   _ctx.dlow = float_clip(low,(-1.f),1.f);
    float output = ((sel == 0)?low:((sel == 1)?high:((sel == 2)?band:notch)));
    return output;
 }
@@ -326,7 +326,7 @@ float lfo(_ctx_type_14 &_ctx, float f, uint8_t gate){
       _ctx.phase = (_ctx.phase + rate);
    }
    if(_ctx.phase > 1.f){
-      _ctx.phase = (_ctx.phase - 1.f);
+      _ctx.phase = (_ctx.phase + (-1.f));
    }
    return (sinf((_ctx.phase * 2.f * 3.14159265359f)) + 0.5f);
 }
@@ -413,7 +413,7 @@ int noteOff(_ctx_type_15 &_ctx, int n){
       }
    }
    if(found && (_ctx.count > 0)){
-      _ctx.count = (_ctx.count - 1);
+      _ctx.count = (_ctx.count + (-1));
    }
    if(_ctx.count == 1){
       _ctx.pre = _ctx.n1;

@@ -179,7 +179,10 @@ let rec printExp buffer (e:jsexp) : unit =
       append buffer "(";
       append buffer (string_of_int n);
       append buffer "|0)";
-   | JEFloat(n) -> append buffer (string_of_float n)
+   | JEFloat(n) ->
+      if n < 0.0 then append buffer "(";
+      append buffer (string_of_float n);
+      if n < 0.0 then append buffer ")"
    | JEBool(v)   -> append buffer (if v then "true" else "false")
    | JEString(s) -> append buffer ("\"" ^ s ^ "\"")
    | JECall(name,args) ->

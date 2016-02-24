@@ -36,9 +36,9 @@ int32_t sc_osc(_ctx_type_1 &_ctx, int32_t pitch){
       _ctx.cos_w = fix_cos(_ctx.w);
    }
    int32_t y1_next = fix_add(fix_mul(_ctx.cos_w,_ctx.y1),fix_mul(fix_mul(fix_add(_ctx.cos_w,0x10000 /* 1.000000 */),g),_ctx.y2));
-   int32_t y2_next = fix_add(fix_mul(fix_sub(_ctx.cos_w,0x10000 /* 1.000000 */),_ctx.y1),fix_mul(fix_mul(_ctx.cos_w,g),_ctx.y2));
-   _ctx.y1 = fix_clip(y1_next,0x10001 /* -1.000000 */,0x10000 /* 1.000000 */);
-   _ctx.y2 = fix_clip(y2_next,0x10001 /* -1.000000 */,0x10000 /* 1.000000 */);
+   int32_t y2_next = fix_add(fix_mul(fix_add(_ctx.cos_w,(0xffff0000 /* -1.000000 */)),_ctx.y1),fix_mul(fix_mul(_ctx.cos_w,g),_ctx.y2));
+   _ctx.y1 = fix_clip(y1_next,(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
+   _ctx.y2 = fix_clip(y2_next,(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
    return _ctx.y1;
 }
 

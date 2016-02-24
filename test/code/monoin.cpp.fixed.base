@@ -82,7 +82,7 @@ int noteOff(_ctx_type_0 &_ctx, int n){
       }
    }
    if(found && (_ctx.count > 0)){
-      _ctx.count = (_ctx.count - 1);
+      _ctx.count = (_ctx.count + (-1));
    }
    if(_ctx.count == 1){
       _ctx.pre = _ctx.n1;

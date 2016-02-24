@@ -71,7 +71,7 @@ int32_t lp6(_ctx_type_7 &_ctx, int32_t x, int32_t fc){
    }
    int32_t b0 = fix_div(_ctx.k,fix_add(_ctx.k,0x10000 /* 1.000000 */));
    int32_t b1 = fix_div(_ctx.k,fix_add(_ctx.k,0x10000 /* 1.000000 */));
-   int32_t a1 = fix_div(fix_sub(_ctx.k,0x10000 /* 1.000000 */),fix_add(_ctx.k,0x10000 /* 1.000000 */));
+   int32_t a1 = fix_div(fix_add(_ctx.k,(0xffff0000 /* -1.000000 */)),fix_add(_ctx.k,0x10000 /* 1.000000 */));
    return biquad(_ctx._inst1,x,b0,b1,0x0 /* 0.000000 */,a1,0x0 /* 0.000000 */);
 }
 
@@ -99,7 +99,7 @@ int32_t lp12(_ctx_type_8 &_ctx, int32_t x, int32_t fc, int32_t q){
       _ctx.b0 = fix_div(fix_mul(fix_mul(k,k),qc),den);
       _ctx.b1 = fix_mul(0x20000 /* 2.000000 */,_ctx.b0);
       _ctx.b2 = _ctx.b0;
-      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_sub(fix_mul(k,k),0x10000 /* 1.000000 */)),den);
+      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(0xffff0000 /* -1.000000 */))),den);
       _ctx.a2 = fix_div(fix_add(fix_sub(fix_mul(fix_mul(k,k),qc),k),qc),den);
    }
    return biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
@@ -117,8 +117,8 @@ int32_t hp6(_ctx_type_9 &_ctx, int32_t x, int32_t fc){
    fc = fix_clip(fc,0x0 /* 0.000000 */,samplerate());
    int32_t k = fix_tan(fix_div(fix_mul(pi(),fc),samplerate()));
    int32_t b0 = fix_div(0x10000 /* 1.000000 */,fix_add(k,0x10000 /* 1.000000 */));
-   int32_t b1 = fix_div(0x10001 /* -1.000000 */,fix_add(k,0x10000 /* 1.000000 */));
-   int32_t a1 = fix_div(fix_sub(k,0x10000 /* 1.000000 */),fix_add(k,0x10000 /* 1.000000 */));
+   int32_t b1 = fix_div((0xffff0000 /* -1.000000 */),fix_add(k,0x10000 /* 1.000000 */));
+   int32_t a1 = fix_div(fix_add(k,(0xffff0000 /* -1.000000 */)),fix_add(k,0x10000 /* 1.000000 */));
    return biquad(_ctx._inst0,x,b0,b1,0x0 /* 0.000000 */,a1,0x0 /* 0.000000 */);
 }
 
@@ -133,9 +133,9 @@ _ctx_type_10 allp6_init(){ return _ctx_type_10_init();}
 int32_t allp6(_ctx_type_10 &_ctx, int32_t x, int32_t fc){
    fc = fix_clip(fc,0x0 /* 0.000000 */,samplerate());
    int32_t k = fix_tan(fix_div(fix_mul(pi(),fc),samplerate()));
-   int32_t b0 = fix_div(fix_sub(k,0x10000 /* 1.000000 */),fix_add(k,0x10000 /* 1.000000 */));
+   int32_t b0 = fix_div(fix_add(k,(0xffff0000 /* -1.000000 */)),fix_add(k,0x10000 /* 1.000000 */));
    int32_t b1 = 0x10000 /* 1.000000 */;
-   int32_t a1 = fix_div(fix_sub(k,0x10000 /* 1.000000 */),fix_add(k,0x10000 /* 1.000000 */));
+   int32_t a1 = fix_div(fix_add(k,(0xffff0000 /* -1.000000 */)),fix_add(k,0x10000 /* 1.000000 */));
    return biquad(_ctx._inst0,x,b0,b1,0x0 /* 0.000000 */,a1,0x0 /* 0.000000 */);
 }
 
@@ -161,9 +161,9 @@ int32_t hp12(_ctx_type_11 &_ctx, int32_t x, int32_t fc, int32_t q){
       int32_t k = fix_tan(fix_div(fix_mul(pi(),fc),samplerate()));
       int32_t den = fix_add(fix_add(fix_mul(fix_mul(k,k),qc),k),qc);
       _ctx.b0 = fix_div(qc,den);
-      _ctx.b1 = fix_div(fix_mul(0x20001 /* -2.000000 */,qc),den);
+      _ctx.b1 = fix_div(fix_mul((0xfffe0000 /* -2.000000 */),qc),den);
       _ctx.b2 = fix_div(qc,den);
-      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_sub(fix_mul(k,k),0x10000 /* 1.000000 */)),den);
+      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(0xffff0000 /* -1.000000 */))),den);
       _ctx.a2 = fix_div(fix_add(fix_sub(fix_mul(fix_mul(k,k),qc),k),qc),den);
    }
    return biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
@@ -193,7 +193,7 @@ int32_t bp12(_ctx_type_12 &_ctx, int32_t x, int32_t fc, int32_t q){
       _ctx.b0 = fix_div(k,den);
       _ctx.b1 = 0x0 /* 0.000000 */;
       _ctx.b2 = fix_div((- k),den);
-      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_sub(fix_mul(k,k),0x10000 /* 1.000000 */)),den);
+      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(0xffff0000 /* -1.000000 */))),den);
       _ctx.a2 = fix_div(fix_add(fix_sub(fix_mul(fix_mul(k,k),qc),k),qc),den);
    }
    return biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
@@ -221,9 +221,9 @@ int32_t notch12(_ctx_type_13 &_ctx, int32_t x, int32_t fc, int32_t q){
       int32_t k = fix_tan(fix_div(fix_mul(pi(),fc),samplerate()));
       int32_t den = fix_add(fix_add(fix_mul(fix_mul(k,k),qc),k),qc);
       _ctx.b0 = fix_div(fix_mul(qc,fix_add(0x10000 /* 1.000000 */,fix_mul(k,k))),den);
-      _ctx.b1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_sub(fix_mul(k,k),0x10000 /* 1.000000 */)),den);
+      _ctx.b1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(0xffff0000 /* -1.000000 */))),den);
       _ctx.b2 = _ctx.b0;
-      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_sub(fix_mul(k,k),0x10000 /* 1.000000 */)),den);
+      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(0xffff0000 /* -1.000000 */))),den);
       _ctx.a2 = fix_div(fix_add(fix_sub(fix_mul(fix_mul(k,k),qc),k),qc),den);
    }
    return biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
@@ -251,9 +251,9 @@ int32_t allp12(_ctx_type_14 &_ctx, int32_t x, int32_t fc, int32_t q){
       int32_t k = fix_tan(fix_div(fix_mul(pi(),fc),samplerate()));
       int32_t den = fix_add(fix_add(fix_mul(fix_mul(k,k),qc),k),qc);
       _ctx.b0 = fix_div(fix_add(fix_sub(fix_mul(fix_mul(k,k),qc),k),qc),den);
-      _ctx.b1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_sub(fix_mul(k,k),0x10000 /* 1.000000 */)),den);
+      _ctx.b1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(0xffff0000 /* -1.000000 */))),den);
       _ctx.b2 = 0x10000 /* 1.000000 */;
-      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_sub(fix_mul(k,k),0x10000 /* 1.000000 */)),den);
+      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(0xffff0000 /* -1.000000 */))),den);
       _ctx.a2 = fix_div(fix_add(fix_sub(fix_mul(fix_mul(k,k),qc),k),qc),den);
    }
    return biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);

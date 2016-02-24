@@ -93,9 +93,9 @@ int32_t lfo(_ctx_type_6 &_ctx, int32_t f, int gate){
    }
    _ctx.phase = fix_add(_ctx.phase,rate);
    if(_ctx.phase > 0x10000 /* 1.000000 */){
-      _ctx.phase = fix_sub(_ctx.phase,0x10000 /* 1.000000 */);
+      _ctx.phase = fix_add(_ctx.phase,(0xffff0000 /* -1.000000 */));
    }
-   return fix_sub(fix_sin(fix_mul(fix_mul(_ctx.phase,0x20000 /* 2.000000 */),0x3243f /* 3.141593 */)),0x8000 /* 0.500000 */);
+   return fix_add(fix_sin(fix_mul(fix_mul(_ctx.phase,0x20000 /* 2.000000 */),0x3243f /* 3.141593 */)),(0xffff8000 /* -0.500000 */));
 }
 
 _ctx_type_7 _ctx_type_7_init(){
@@ -206,7 +206,7 @@ void noteOff(_ctx_type_7 &_ctx, int32_t note){
       }
    }
    if(found && (_ctx.count > 0)){
-      _ctx.count = (_ctx.count - 1);
+      _ctx.count = (_ctx.count + (-1));
    }
    _ctx.gate = ((_ctx.count > 0)?1:0);
    if(_ctx.count == 1){
@@ -236,7 +236,7 @@ void controlChange(_ctx_type_7 &_ctx, int control, int32_t value){
       _ctx.lfo_rate = fix_div(value,0x7f0000 /* 127.000000 */);
    }
    if(control == 33){
-      _ctx.lfo_amt = fix_mul(0x20000 /* 2.000000 */,fix_sub(fix_div(((int32_t)value),0x7f0000 /* 127.000000 */),0x8000 /* 0.500000 */));
+      _ctx.lfo_amt = fix_mul(0x20000 /* 2.000000 */,fix_add(fix_div(((int32_t)value),0x7f0000 /* 127.000000 */),(0xffff8000 /* -0.500000 */)));
    }
 }
 
@@ -247,7 +247,7 @@ void default_(_ctx_type_7 &_ctx){
    _ctx.pitch = 0x2d0000 /* 45.000000 */;
    _ctx.detune = 0xcccc /* 0.800000 */;
    _ctx.lfo_rate = 0x11eb /* 0.070000 */;
-   _ctx.lfo_amt = 0xcccd /* -0.800000 */;
+   _ctx.lfo_amt = (0xffff3334 /* -0.800000 */);
 }
 
 

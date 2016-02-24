@@ -94,7 +94,7 @@ this.noteOff = function(_ctx,n){
       }
    }
    if((found && (_ctx.count > (0|0)))){
-      _ctx.count = ((_ctx.count - (1|0))|0);
+      _ctx.count = ((_ctx.count + (-1|0))|0);
    }
    if((_ctx.count == (1|0))){
       _ctx.pre = (_ctx.n1|0);

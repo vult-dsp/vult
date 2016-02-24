@@ -100,9 +100,9 @@ this.lfo = function(_ctx,f,gate){
    }
    _ctx.phase = (_ctx.phase + rate);
    if((_ctx.phase > 1.)){
-      _ctx.phase = (_ctx.phase - 1.);
+      _ctx.phase = (_ctx.phase + (-1.));
    }
-   return (this.sin((_ctx.phase * 2. * 3.14159265359)) - 0.5);
+   return (this.sin((_ctx.phase * 2. * 3.14159265359)) + (-0.5));
 }
 
 
@@ -210,7 +210,7 @@ this.noteOff = function(_ctx,note){
       }
    }
    if((found && (_ctx.count > (0|0)))){
-      _ctx.count = ((_ctx.count - (1|0))|0);
+      _ctx.count = ((_ctx.count + (-1|0))|0);
    }
    _ctx.gate = (((_ctx.count > (0|0))?(1|0):(0|0))|0);
    if((_ctx.count == (1|0))){
@@ -239,7 +239,7 @@ this.controlChange = function(_ctx,control,value){
       _ctx.lfo_rate = (value / 127.);
    }
    if((control == (33|0))){
-      _ctx.lfo_amt = (2. * ((this.real(value) / 127.) - 0.5));
+      _ctx.lfo_amt = (2. * ((this.real(value) / 127.) + (-0.5)));
    }
 }
 
@@ -249,7 +249,7 @@ this.default_ = function(_ctx){
    _ctx.pitch = 45.;
    _ctx.detune = 0.8;
    _ctx.lfo_rate = 0.07;
-   _ctx.lfo_amt = -0.8;
+   _ctx.lfo_amt = (-0.8);
 }
 
     if(this.process_init)  this.context =  this.process_init(); else this.context = {};

@@ -1,0 +1,7 @@
+fun foo(a,b,c,d){
+	return - 1 + a + b + c + d;
+}
+
+fun bar(){
+	return - 1 + 2 - 3;
+}

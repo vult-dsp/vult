@@ -377,16 +377,25 @@ module PrintC = struct
    let toFixed (n:float) : string =
       let value =
          if n < 0.0 then
-            int_of_float ((-. n) *. (float_of_int 0x10000)) + 1
+            (lnot (int_of_float ((-. n) *. (float_of_int 0x10000))) + 1) land 0xFFFFFFFF
          else
             int_of_float (n *. (float_of_int 0x10000))
       in Printf.sprintf "0x%x /* %f */" value n
 
    let rec printExp (params:parameters) buffer (e:cexp) : unit =
       match e with
-      | CEFloat(n) when params.real = Fixed -> append buffer (toFixed n)
-      | CEFloat(n)  -> append buffer ((string_of_float n)^"f")
-      | CEInt(n)    -> append buffer (string_of_int n)
+      | CEFloat(n) when params.real = Fixed ->
+         if n < 0.0 then append buffer "(";
+         append buffer (toFixed n);
+         if n < 0.0 then append buffer ")"
+      | CEFloat(n)  ->
+         if n < 0.0 then append buffer "(";
+         append buffer ((string_of_float n)^"f");
+         if n < 0.0 then append buffer ")";
+      | CEInt(n)    ->
+         if n < 0 then append buffer "(";
+         append buffer (string_of_int n);
+         if n < 0 then append buffer ")"
       | CEBool(v)   -> append buffer (if v then "1" else "0")
       | CEString(s) -> append buffer ("\"" ^ s ^ "\"")
       | CECall(name,args) ->

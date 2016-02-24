@@ -77,7 +77,7 @@ this.lp6 = function(_ctx,x,fc){
    }
    var b0 = (_ctx.k / (_ctx.k + 1.));
    var b1 = (_ctx.k / (_ctx.k + 1.));
-   var a1 = ((_ctx.k - 1.) / (_ctx.k + 1.));
+   var a1 = ((_ctx.k + (-1.)) / (_ctx.k + 1.));
    return this.biquad(_ctx._inst1,x,b0,b1,0.,a1,0.);
 }
 
@@ -104,7 +104,7 @@ this.lp12 = function(_ctx,x,fc,q){
       _ctx.b0 = ((k * k * qc) / den);
       _ctx.b1 = (2. * _ctx.b0);
       _ctx.b2 = _ctx.b0;
-      _ctx.a1 = ((2. * qc * ((k * k) - 1.)) / den);
+      _ctx.a1 = ((2. * qc * ((k * k) + (-1.))) / den);
       _ctx.a2 = ((((k * k * qc) - k) + qc) / den);
    }
    return this.biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
@@ -121,8 +121,8 @@ this.hp6 = function(_ctx,x,fc){
    fc = this.clip(fc,0.,this.samplerate());
    var k = this.tan(((this.pi() * fc) / this.samplerate()));
    var b0 = (1. / (k + 1.));
-   var b1 = (-1. / (k + 1.));
-   var a1 = ((k - 1.) / (k + 1.));
+   var b1 = ((-1.) / (k + 1.));
+   var a1 = ((k + (-1.)) / (k + 1.));
    return this.biquad(_ctx._inst0,x,b0,b1,0.,a1,0.);
 }
 
@@ -136,9 +136,9 @@ this. allp6_init = function() { return this._ctx_type_10_init();}
 this.allp6 = function(_ctx,x,fc){
    fc = this.clip(fc,0.,this.samplerate());
    var k = this.tan(((this.pi() * fc) / this.samplerate()));
-   var b0 = ((k - 1.) / (k + 1.));
+   var b0 = ((k + (-1.)) / (k + 1.));
    var b1 = 1.;
-   var a1 = ((k - 1.) / (k + 1.));
+   var a1 = ((k + (-1.)) / (k + 1.));
    return this.biquad(_ctx._inst0,x,b0,b1,0.,a1,0.);
 }
 
@@ -163,9 +163,9 @@ this.hp12 = function(_ctx,x,fc,q){
       var k = this.tan(((this.pi() * fc) / this.samplerate()));
       var den = ((k * k * qc) + k + qc);
       _ctx.b0 = (qc / den);
-      _ctx.b1 = ((-2. * qc) / den);
+      _ctx.b1 = (((-2.) * qc) / den);
       _ctx.b2 = (qc / den);
-      _ctx.a1 = ((2. * qc * ((k * k) - 1.)) / den);
+      _ctx.a1 = ((2. * qc * ((k * k) + (-1.))) / den);
       _ctx.a2 = ((((k * k * qc) - k) + qc) / den);
    }
    return this.biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
@@ -194,7 +194,7 @@ this.bp12 = function(_ctx,x,fc,q){
       _ctx.b0 = (k / den);
       _ctx.b1 = 0.;
       _ctx.b2 = ((- k) / den);
-      _ctx.a1 = ((2. * qc * ((k * k) - 1.)) / den);
+      _ctx.a1 = ((2. * qc * ((k * k) + (-1.))) / den);
       _ctx.a2 = ((((k * k * qc) - k) + qc) / den);
    }
    return this.biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
@@ -221,9 +221,9 @@ this.notch12 = function(_ctx,x,fc,q){
       var k = this.tan(((this.pi() * fc) / this.samplerate()));
       var den = ((k * k * qc) + k + qc);
       _ctx.b0 = ((qc * (1. + (k * k))) / den);
-      _ctx.b1 = ((2. * qc * ((k * k) - 1.)) / den);
+      _ctx.b1 = ((2. * qc * ((k * k) + (-1.))) / den);
       _ctx.b2 = _ctx.b0;
-      _ctx.a1 = ((2. * qc * ((k * k) - 1.)) / den);
+      _ctx.a1 = ((2. * qc * ((k * k) + (-1.))) / den);
       _ctx.a2 = ((((k * k * qc) - k) + qc) / den);
    }
    return this.biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
@@ -250,9 +250,9 @@ this.allp12 = function(_ctx,x,fc,q){
       var k = this.tan(((this.pi() * fc) / this.samplerate()));
       var den = ((k * k * qc) + k + qc);
       _ctx.b0 = ((((k * k * qc) - k) + qc) / den);
-      _ctx.b1 = ((2. * qc * ((k * k) - 1.)) / den);
+      _ctx.b1 = ((2. * qc * ((k * k) + (-1.))) / den);
       _ctx.b2 = 1.;
-      _ctx.a1 = ((2. * qc * ((k * k) - 1.)) / den);
+      _ctx.a1 = ((2. * qc * ((k * k) + (-1.))) / den);
       _ctx.a2 = ((((k * k * qc) - k) + qc) / den);
    }
    return this.biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);

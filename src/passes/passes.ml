@@ -32,12 +32,14 @@ type pass_options =
    {
       pass1 : bool;
       pass2 : bool;
+      pass3 : bool;
    }
 
 let default_options =
    {
       pass1 = true;
       pass2 = true;
+      pass3 = true;
    }
 
 
@@ -468,19 +470,31 @@ module Simplify = struct
          let found, t' = getOpElements op t in
          found, h :: t'
 
+   let isNum (e:exp) : bool =
+      match e with
+      | PInt _
+      | PReal _ -> true
+      | _ -> false
+
+   let negNum (e:exp) : exp =
+      match e with
+      | PInt(value,attr) -> PInt(-value,attr)
+      | PReal(value,attr) -> PReal(-.value,attr)
+      | _ -> failwith "Simplify.negNum: not a number"
+
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make @@ fun state exp ->
          match exp with
+         | POp("-",[e1;e2],attr) when isNum e2 ->
+            reapply state, POp("+",[e1;negNum e2],attr)
          (* Collapses trees of sums and multiplications *)
          | POp(op,elems,attr) when op = "+" || op = "*" ->
             let found, elems' = getOpElements op elems in
             let state' = if found then reapply state else state in
             state', POp(op,elems',attr)
          (* Simplifies unary minus *)
-         | PUnOp("-",PInt(value,attr),_) ->
-            state, PInt(-value,attr)
-         | PUnOp("-",PReal(value,attr),_) ->
-            state, PReal(-.value,attr)
+         | PUnOp("-",e1,_) when isNum e1 ->
+            reapply state, negNum e1
 
          | _ -> state, exp
 
@@ -501,7 +515,9 @@ let pass1 =
 
 let pass2 =
    Simplify.mapper
-   |> Mapper.seq InsertContext.mapper
+
+let pass3 =
+   InsertContext.mapper
    |> Mapper.seq CreateInitFunction.mapper
    |> Mapper.seq CreateTypesForTuples.mapper
 
@@ -532,6 +548,7 @@ let applyTransformations ?(options=default_options) (results:parser_results) =
       |> inferPass
       |> applyPass options.pass1 pass1
       |> applyPass options.pass2 pass2
+      |> applyPass options.pass3 pass3
       |> snd
    in
 
