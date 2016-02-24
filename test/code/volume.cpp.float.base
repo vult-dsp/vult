@@ -40,7 +40,7 @@ _ctx_type_1 controlChange_init(){ return _ctx_type_1_init();}
 
 void controlChange(_ctx_type_1 &_ctx, int control, int value){
    if(control == 30){
-      _ctx.volume = (((float)value) / 127.f);
+      _ctx.volume = (((float)value) * 0.00787401574803f);
    }
 }
 

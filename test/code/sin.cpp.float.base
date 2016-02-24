@@ -32,7 +32,7 @@ float sc_osc(_ctx_type_1 &_ctx, float pitch){
    if(change(_ctx._inst0,pitch)){
       float pre_w = _ctx.w;
       _ctx.w = (0.00116485f * expf((0.0577623f * pitch)));
-      g = (tanf((_ctx.w / 2.f)) / tanf((pre_w / 2.f)));
+      g = (tanf((_ctx.w * 0.5f)) / tanf((pre_w * 0.5f)));
       _ctx.cos_w = cosf(_ctx.w);
    }
    float y1_next = ((_ctx.cos_w * _ctx.y1) + ((_ctx.cos_w + 1.f) * g * _ctx.y2));
@@ -46,7 +46,7 @@ _ctx_type_1 sc_osc_start_init(){ return _ctx_type_1_init();}
 
 void sc_osc_start(_ctx_type_1 &_ctx){
    _ctx.y1 = 1.f;
-   _ctx.y2 = ((- _ctx.y1) / 2.f);
+   _ctx.y2 = ((- _ctx.y1) * 0.5f);
 }
 
 _ctx_type_2 _ctx_type_2_init(){

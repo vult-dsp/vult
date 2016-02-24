@@ -56,7 +56,7 @@ uint8_t each(_ctx_type_3 &_ctx, int n){
 }
 
 float pitchToRate(float d){
-   return ((8.1758f * expf((0.0577623f * d))) / 44100.f);
+   return (8.1758f * expf((0.0577623f * d)) * 2.26757369615e-05f);
 }
 
 _ctx_type_5 _ctx_type_5_init(){
@@ -87,7 +87,7 @@ _ctx_type_6 _ctx_type_6_init(){
 _ctx_type_6 lfo_init(){ return _ctx_type_6_init();}
 
 float lfo(_ctx_type_6 &_ctx, float f, int gate){
-   float rate = ((f * 10.f) / 44100.f);
+   float rate = (f * 10.f * 2.26757369615e-05f);
    if(edge(_ctx._inst0,gate)){
       _ctx.phase = 0.f;
    }
@@ -227,16 +227,16 @@ _ctx_type_7 controlChange_init(){ return _ctx_type_7_init();}
 
 void controlChange(_ctx_type_7 &_ctx, int control, float value){
    if(control == 30){
-      _ctx.volume = (value / 127.f);
+      _ctx.volume = (value * 0.00787401574803f);
    }
    if(control == 31){
-      _ctx.detune = (value / 127.f);
+      _ctx.detune = (value * 0.00787401574803f);
    }
    if(control == 32){
-      _ctx.lfo_rate = (value / 127.f);
+      _ctx.lfo_rate = (value * 0.00787401574803f);
    }
    if(control == 33){
-      _ctx.lfo_amt = (2.f * ((((float)value) / 127.f) + (-0.5f)));
+      _ctx.lfo_amt = (2.f * ((((float)value) * 0.00787401574803f) + (-0.5f)));
    }
 }
 

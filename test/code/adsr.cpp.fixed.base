@@ -37,7 +37,7 @@ _ctx_type_2 _ctx_type_2_init(){
 _ctx_type_2 lpfilter_init(){ return _ctx_type_2_init();}
 
 int32_t lpfilter(_ctx_type_2 &_ctx, int32_t x){
-   int32_t ret = fix_div(fix_add(x,_ctx.pre_x),0x20000 /* 2.000000 */);
+   int32_t ret = fix_mul(fix_add(x,_ctx.pre_x),0x8000 /* 0.500000 */);
    _ctx.pre_x = x;
    return ret;
 }
@@ -66,10 +66,10 @@ int32_t adsr(_ctx_type_3 &_ctx, uint8_t gate, int32_t attack, int32_t decay, int
    int SUSTAIN = 3;
    int RELEASE = 4;
    if(each(_ctx._inst0,32)){
-      _ctx.attackRate = fix_mul(fix_div(0x10000 /* 1.000000 */,0xac440000 /* 44100.000000 */),fix_div(0x10000 /* 1.000000 */,fix_add(attack,0x1999 /* 0.100000 */)));
+      _ctx.attackRate = fix_mul(fix_mul(0x10000 /* 1.000000 */,0x1 /* 0.000023 */),fix_div(0x10000 /* 1.000000 */,fix_add(attack,0x1999 /* 0.100000 */)));
       int32_t inv_sustain = fix_sub(0x10000 /* 1.000000 */,sustain);
-      _ctx.decayRate = fix_mul(fix_div(inv_sustain,0xac440000 /* 44100.000000 */),fix_div(inv_sustain,fix_add(decay,0x1999 /* 0.100000 */)));
-      _ctx.releaseRate = fix_mul(fix_div(0x8000 /* 0.500000 */,0xac440000 /* 44100.000000 */),fix_div(0x8000 /* 0.500000 */,fix_add(release,0x1999 /* 0.100000 */)));
+      _ctx.decayRate = fix_mul(fix_mul(inv_sustain,0x1 /* 0.000023 */),fix_div(inv_sustain,fix_add(decay,0x1999 /* 0.100000 */)));
+      _ctx.releaseRate = fix_mul(fix_mul(0x8000 /* 0.500000 */,0x1 /* 0.000023 */),fix_div(0x8000 /* 0.500000 */,fix_add(release,0x1999 /* 0.100000 */)));
    }
    _ctx.sustainLevel = sustain;
    uint8_t trig = 0;

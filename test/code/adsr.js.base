@@ -48,7 +48,7 @@ this._ctx_type_2_init = function(){
 }
 this. lpfilter_init = function() { return this._ctx_type_2_init();}
 this.lpfilter = function(_ctx,x){
-   var ret = ((x + _ctx.pre_x) / 2.);
+   var ret = ((x + _ctx.pre_x) * 0.5);
    _ctx.pre_x = x;
    return ret;
 }
@@ -76,10 +76,10 @@ this.adsr = function(_ctx,gate,attack,decay,sustain,release){
    var SUSTAIN = ((3|0)|0);
    var RELEASE = ((4|0)|0);
    if(this.each(_ctx._inst0,(32|0))){
-      _ctx.attackRate = ((1. / 44100.) * (1. / (attack + 0.1)));
+      _ctx.attackRate = (1. * 2.26757369615e-05 * (1. / (attack + 0.1)));
       var inv_sustain = (1. - sustain);
-      _ctx.decayRate = ((inv_sustain / 44100.) * (inv_sustain / (decay + 0.1)));
-      _ctx.releaseRate = ((0.5 / 44100.) * (0.5 / (release + 0.1)));
+      _ctx.decayRate = (inv_sustain * 2.26757369615e-05 * (inv_sustain / (decay + 0.1)));
+      _ctx.releaseRate = (0.5 * 2.26757369615e-05 * (0.5 / (release + 0.1)));
    }
    _ctx.sustainLevel = sustain;
    var trig = false;

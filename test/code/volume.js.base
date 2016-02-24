@@ -49,7 +49,7 @@ this.noteOff = function(_ctx,note){
 this. controlChange_init = function() { return this._ctx_type_1_init();}
 this.controlChange = function(_ctx,control,value){
    if((control == (30|0))){
-      _ctx.volume = (this.real(value) / 127.);
+      _ctx.volume = (this.real(value) * 0.00787401574803);
    }
 }
 

@@ -49,11 +49,11 @@ float svf(_ctx_type_2 &_ctx, float input, float fc, float q, int sel){
    q = float_clip(q,0.f,1.f);
    float fix_q = (2.f * (1.f - q));
    if(change(_ctx._inst0,fc)){
-      _ctx.g = (fc / 2.f);
+      _ctx.g = (fc * 0.5f);
    }
    float x1 = svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
    float x2 = svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
-   return ((x1 + x2) / 2.f);
+   return ((x1 + x2) * 0.5f);
 }
 
 

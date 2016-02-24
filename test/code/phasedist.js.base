@@ -39,7 +39,7 @@ this.change = function(_ctx,x){
    return v;
 }
 this.pitchToRate = function(d){
-   return ((8.1758 * this.exp((0.0577623 * d))) / 44100.);
+   return (8.1758 * this.exp((0.0577623 * d)) * 2.26757369615e-05);
 }
 
 
@@ -95,10 +95,10 @@ this.noteOff = function(_ctx,note){
 this. controlChange_init = function() { return this._ctx_type_4_init();}
 this.controlChange = function(_ctx,control,value){
    if((control == (30|0))){
-      _ctx.volume = (this.real(value) / 127.);
+      _ctx.volume = (this.real(value) * 0.00787401574803);
    }
    if((control == (31|0))){
-      _ctx.detune = (this.real(value) / 127.);
+      _ctx.detune = (this.real(value) * 0.00787401574803);
    }
 }
 

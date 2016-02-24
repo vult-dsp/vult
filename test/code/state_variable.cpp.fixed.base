@@ -49,11 +49,11 @@ int32_t svf(_ctx_type_2 &_ctx, int32_t input, int32_t fc, int32_t q, int sel){
    q = fix_clip(q,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
    int32_t fix_q = fix_mul(0x20000 /* 2.000000 */,fix_sub(0x10000 /* 1.000000 */,q));
    if(change(_ctx._inst0,fc)){
-      _ctx.g = fix_div(fc,0x20000 /* 2.000000 */);
+      _ctx.g = fix_mul(fc,0x8000 /* 0.500000 */);
    }
    int32_t x1 = svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
    int32_t x2 = svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
-   return fix_div(fix_add(x1,x2),0x20000 /* 2.000000 */);
+   return fix_mul(fix_add(x1,x2),0x8000 /* 0.500000 */);
 }
 
 

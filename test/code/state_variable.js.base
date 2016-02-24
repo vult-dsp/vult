@@ -60,11 +60,11 @@ this.svf = function(_ctx,input,fc,q,sel){
    q = this.clip(q,0.,1.);
    var fix_q = (2. * (1. - q));
    if(this.change(_ctx._inst0,fc)){
-      _ctx.g = (fc / 2.);
+      _ctx.g = (fc * 0.5);
    }
    var x1 = this.svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
    var x2 = this.svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
-   return ((x1 + x2) / 2.);
+   return ((x1 + x2) * 0.5);
 }
 
     if(this.process_init)  this.context =  this.process_init(); else this.context = {};

@@ -42,7 +42,7 @@ this.PI = function(){
    return 3.14159265359;
 }
 this.thermal = function(){
-   return (1. / 1.22070313);
+   return (1. * 0.819199996645);
 }
 
 
@@ -91,7 +91,7 @@ this.moog = function(_ctx,input,cut,res){
       res = this.clip(res,0.,1.);
       cut = this.clip(cut,1.,this.samplerate());
       var fc = (cut / this.samplerate());
-      var x_2 = (fc / 2.);
+      var x_2 = (fc * 0.5);
       var x2 = (fc * fc);
       var x3 = (fc * x2);
       var fcr = ((((1.873 * x3) + (0.4955 * x2)) - (0.649 * fc)) + 0.9988);
@@ -102,7 +102,7 @@ this.moog = function(_ctx,input,cut,res){
    var x0 = this.moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,_ctx.dx1);
    var x1 = this.moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,x0);
    _ctx.dx1 = x1;
-   return ((x0 + x1) / 2.);
+   return ((x0 + x1) * 0.5);
 }
 
     if(this.process_init)  this.context =  this.process_init(); else this.context = {};

@@ -32,7 +32,7 @@ int32_t sc_osc(_ctx_type_1 &_ctx, int32_t pitch){
    if(change(_ctx._inst0,pitch)){
       int32_t pre_w = _ctx.w;
       _ctx.w = fix_mul(0x4c /* 0.001165 */,fix_exp(fix_mul(0xec9 /* 0.057762 */,pitch)));
-      g = fix_div(fix_tan(fix_div(_ctx.w,0x20000 /* 2.000000 */)),fix_tan(fix_div(pre_w,0x20000 /* 2.000000 */)));
+      g = fix_div(fix_tan(fix_mul(_ctx.w,0x8000 /* 0.500000 */)),fix_tan(fix_mul(pre_w,0x8000 /* 0.500000 */)));
       _ctx.cos_w = fix_cos(_ctx.w);
    }
    int32_t y1_next = fix_add(fix_mul(_ctx.cos_w,_ctx.y1),fix_mul(fix_mul(fix_add(_ctx.cos_w,0x10000 /* 1.000000 */),g),_ctx.y2));
@@ -46,7 +46,7 @@ _ctx_type_1 sc_osc_start_init(){ return _ctx_type_1_init();}
 
 void sc_osc_start(_ctx_type_1 &_ctx){
    _ctx.y1 = 0x10000 /* 1.000000 */;
-   _ctx.y2 = fix_div((- _ctx.y1),0x20000 /* 2.000000 */);
+   _ctx.y2 = fix_mul((- _ctx.y1),0x8000 /* 0.500000 */);
 }
 
 _ctx_type_2 _ctx_type_2_init(){

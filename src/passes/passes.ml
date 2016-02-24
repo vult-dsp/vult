@@ -482,9 +482,12 @@ module Simplify = struct
       | PReal(value,attr) -> PReal(-.value,attr)
       | _ -> failwith "Simplify.negNum: not a number"
 
+
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make @@ fun state exp ->
          match exp with
+         | POp("/",[e1;PReal(value,attr)],attr2) ->
+            reapply state, POp("*",[e1;PReal(1.0 /. value,attr)],attr2)
          | POp("-",[e1;e2],attr) when isNum e2 ->
             reapply state, POp("+",[e1;negNum e2],attr)
          (* Collapses trees of sums and multiplications *)

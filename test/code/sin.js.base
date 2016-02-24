@@ -44,7 +44,7 @@ this.sc_osc = function(_ctx,pitch){
    if(this.change(_ctx._inst0,pitch)){
       var pre_w = _ctx.w;
       _ctx.w = (0.00116485 * this.exp((0.0577623 * pitch)));
-      g = (this.tan((_ctx.w / 2.)) / this.tan((pre_w / 2.)));
+      g = (this.tan((_ctx.w * 0.5)) / this.tan((pre_w * 0.5)));
       _ctx.cos_w = this.cos(_ctx.w);
    }
    var y1_next = ((_ctx.cos_w * _ctx.y1) + ((_ctx.cos_w + 1.) * g * _ctx.y2));
@@ -57,7 +57,7 @@ this.sc_osc = function(_ctx,pitch){
 this. sc_osc_start_init = function() { return this._ctx_type_1_init();}
 this.sc_osc_start = function(_ctx){
    _ctx.y1 = 1.;
-   _ctx.y2 = ((- _ctx.y1) / 2.);
+   _ctx.y2 = ((- _ctx.y1) * 0.5);
 }
 
 

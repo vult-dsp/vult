@@ -28,7 +28,7 @@ uint8_t change(_ctx_type_1 &_ctx, int32_t x){
 }
 
 int32_t pitchToRate(int32_t d){
-   return fix_div(fix_mul(0x82d01 /* 8.175800 */,fix_exp(fix_mul(0xec9 /* 0.057762 */,d))),0xac440000 /* 44100.000000 */);
+   return fix_mul(fix_mul(0x82d01 /* 8.175800 */,fix_exp(fix_mul(0xec9 /* 0.057762 */,d))),0x1 /* 0.000023 */);
 }
 
 _ctx_type_3 _ctx_type_3_init(){
@@ -89,10 +89,10 @@ _ctx_type_4 controlChange_init(){ return _ctx_type_4_init();}
 
 void controlChange(_ctx_type_4 &_ctx, int control, int value){
    if(control == 30){
-      _ctx.volume = fix_div(((int32_t)value),0x7f0000 /* 127.000000 */);
+      _ctx.volume = fix_mul(((int32_t)value),0x204 /* 0.007874 */);
    }
    if(control == 31){
-      _ctx.detune = fix_div(((int32_t)value),0x7f0000 /* 127.000000 */);
+      _ctx.detune = fix_mul(((int32_t)value),0x204 /* 0.007874 */);
    }
 }
 
