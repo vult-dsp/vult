@@ -458,19 +458,24 @@ end
 
 module Simplify = struct
 
-   let rec getOpElements (op:string) (elems: exp list) : exp list =
+   let rec getOpElements (op:string) (elems: exp list) : bool * exp list =
       match elems with
-      | [] -> []
-      | POp(op',sub,_) :: t when op' = op -> sub @ getOpElements op t
-      | h :: t -> h :: getOpElements op t
+      | [] -> false,[]
+      | POp(op',sub,_) :: t when op' = op ->
+         let _, t' = getOpElements op t in
+         true, sub @ t'
+      | h :: t ->
+         let found, t' = getOpElements op t in
+         found, h :: t'
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make @@ fun state exp ->
          match exp with
          (* Collapses trees of sums and multiplications *)
          | POp(op,elems,attr) when op = "+" || op = "*" ->
-            let elems' = getOpElements op elems in
-            state, POp(op,elems',attr)
+            let found, elems' = getOpElements op elems in
+            let state' = if found then reapply state else state in
+            state', POp(op,elems',attr)
          (* Simplifies unary minus *)
          | PUnOp("-",PInt(value,attr),_) ->
             state, PInt(-value,attr)
