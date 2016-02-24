@@ -129,12 +129,12 @@ int32_t fix_tan(int32_t inAngle)
 
 int32_t fix_sinh(int32_t inAngle)
 {
-    return fix_div(fix_exp(inAngle)-fix_exp(-inAngle),0x20000);
+    return fix_mul(fix_exp(inAngle)-fix_exp(-inAngle),0x8000);
 }
 
 int32_t fix_cosh(int32_t inAngle)
 {
-    return fix_div(fix_exp(inAngle)+fix_exp(-inAngle),0x20000);
+    return fix_mul(fix_exp(inAngle)+fix_exp(-inAngle),0x8000);
 }
 
 int32_t fix_tanh(int32_t inAngle)
