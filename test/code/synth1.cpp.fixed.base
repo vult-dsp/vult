@@ -132,7 +132,7 @@ int32_t process(_ctx_type_7 &_ctx, int32_t input){
    int32_t phase2 = phasor(_ctx._inst3,fix_add(_ctx.pitch,fix_mul(smooth(_ctx._inst2,fix_add(_ctx.detune,lfo_val)),0x200000 /* 32.000000 */)),reset);
    int32_t sine = fix_sin(fix_mul(fix_mul(0x20000 /* 2.000000 */,0x3243f /* 3.141593 */),phase2));
    int32_t gate_value = ((_ctx.gate > 0)?0x10000 /* 1.000000 */:0x0 /* 0.000000 */);
-   return fix_mul(fix_mul(smooth(_ctx._inst4,_ctx.volume),fix_mul(sine,comp)),smooth(_ctx._inst5,gate_value));
+   return fix_mul(fix_mul(fix_mul(smooth(_ctx._inst4,_ctx.volume),sine),comp),smooth(_ctx._inst5,gate_value));
 }
 
 _ctx_type_7 noteOn_init(){ return _ctx_type_7_init();}

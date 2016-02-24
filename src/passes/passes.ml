@@ -456,6 +456,26 @@ module CreateTypesForTuples = struct
 
 end
 
+module Simplify = struct
+
+   let rec getOpElements (op:string) (elems: exp list) : exp list =
+      match elems with
+      | [] -> []
+      | POp(op',sub,attr) :: t when op' = op -> sub @ getOpElements op t
+      | h :: t -> h :: getOpElements op t
+
+   let exp : ('a Env.t,exp) Mapper.mapper_func =
+      Mapper.make @@ fun state exp ->
+         match exp with
+         | POp(op,elems,attr) when op = "+" || op = "*" ->
+            let elems' = getOpElements op elems in
+            state, POp(op,elems',attr)
+         | _ -> state, exp
+
+   let mapper = { Mapper.default_mapper with Mapper.exp = exp }
+
+end
+
 (* Basic transformations *)
 let inferPass (state,stmts) =
    let stmts,state,_ = Inference.inferStmtList state Inference.NoType stmts in
@@ -466,6 +486,7 @@ let pass1 =
    |> Mapper.seq SplitMem.mapper
    |> Mapper.seq SimplifyTupleAssign.mapper
    |> Mapper.seq LHSTupleBinding.mapper
+   |> Mapper.seq Simplify.mapper
 
 let pass2 =
    InsertContext.mapper

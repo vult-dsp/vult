@@ -169,6 +169,18 @@ let convertTypedId params (e:typed_id) : arg_type * string =
       let typ_ref = if isValue typ then Var(typ_c) else Ref(typ_c) in
       typ_ref, convertId id
 
+let makeNestedCall (name:string) (args:cexp list) : cexp =
+   let rec loop args acc =
+      match args with
+      | [] -> acc
+      | h :: t -> loop t (CECall(name,[acc;h]))
+   in
+   match args with
+   | [_;_] -> CECall(name,args)
+   | [] -> failwith "VultCh.makeNestedCall: invalid number of arguments"
+   | h :: t -> loop t h
+
+
 let convertOperator params (op:string) (typ:VType.t) (elems:cexp list) : VType.t * cexp =
    let is_float = (params.real = Float) && (isReal typ) in
    let is_int   = (isInt typ) in
@@ -179,9 +191,9 @@ let convertOperator params (op:string) (typ:VType.t) (elems:cexp list) : VType.t
    | "<>" when is_builtin -> typ, CEOp("!=",elems)
    | "%"  when is_float   -> typ, CECall("fmodf",elems)
 
-   | "+"  when is_fixed   -> typ, CECall("fix_add",elems)
+   | "+"  when is_fixed   -> typ, makeNestedCall "fix_add" elems
    | "-"  when is_fixed   -> typ, CECall("fix_sub",elems)
-   | "*"  when is_fixed   -> typ, CECall("fix_mul",elems)
+   | "*"  when is_fixed   -> typ, makeNestedCall  "fix_mul" elems
    | "/"  when is_fixed   -> typ, CECall("fix_div",elems)
 
    | _ -> typ, CEOp(op,elems)

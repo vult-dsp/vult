@@ -35,8 +35,8 @@ float sc_osc(_ctx_type_1 &_ctx, float pitch){
       g = (tanf((_ctx.w / 2.f)) / tanf((pre_w / 2.f)));
       _ctx.cos_w = cosf(_ctx.w);
    }
-   float y1_next = ((_ctx.cos_w * _ctx.y1) + (((_ctx.cos_w + 1.f) * g) * _ctx.y2));
-   float y2_next = (((_ctx.cos_w - 1.f) * _ctx.y1) + ((_ctx.cos_w * g) * _ctx.y2));
+   float y1_next = ((_ctx.cos_w * _ctx.y1) + ((_ctx.cos_w + 1.f) * g * _ctx.y2));
+   float y2_next = (((_ctx.cos_w - 1.f) * _ctx.y1) + (_ctx.cos_w * g * _ctx.y2));
    _ctx.y1 = float_clip(y1_next,(- 1.f),1.f);
    _ctx.y2 = float_clip(y2_next,(- 1.f),1.f);
    return _ctx.y1;

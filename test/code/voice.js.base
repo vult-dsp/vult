@@ -160,7 +160,7 @@ this.osc = function(_ctx,pitch,pw,wave){
    }
    _ctx.state_pulse = this.clip((((_ctx.state_pulse * 0.9995) + tmp1) - tmp2),(- 1.),1.);
    _ctx.state_saw = this.clip(((_ctx.state_saw * 0.9995) + ((((tmp1 + tmp2) - (2. * _ctx.rate)) / shift05) / 2.)),(- 1.),1.);
-   _ctx.state_triang = this.clip(((_ctx.state_triang * 0.9995) + ((2. * _ctx.state_pulse) * _ctx.rate)),(- 1.),1.);
+   _ctx.state_triang = this.clip(((_ctx.state_triang * 0.9995) + (2. * _ctx.state_pulse * _ctx.rate)),(- 1.),1.);
    if((wave < (1. / 3.))){
       _ctx.output = _ctx.state_pulse;
    }
@@ -171,7 +171,7 @@ this.osc = function(_ctx,pitch,pw,wave){
       }
       else
       {
-         _ctx.output = ((2. * _ctx.state_triang) * (1. + pw));
+         _ctx.output = (2. * _ctx.state_triang * (1. + pw));
       }
    }
    _ctx.output = this.dcblock(_ctx._inst1,_ctx.output);
@@ -317,7 +317,7 @@ this._ctx_type_14_init = function(){
 }
 this. lfo_init = function() { return this._ctx_type_14_init();}
 this.lfo = function(_ctx,f,gate){
-   var rate = (((f * 100.) * this.minFixed()) + this.minFixed());
+   var rate = ((f * 100. * this.minFixed()) + this.minFixed());
    if(this.edge(_ctx._inst0,gate)){
       _ctx.phase = 0.;
    }
@@ -327,7 +327,7 @@ this.lfo = function(_ctx,f,gate){
    if((_ctx.phase > 1.)){
       _ctx.phase = (_ctx.phase - 1.);
    }
-   return (this.sin(((_ctx.phase * 2.) * 3.14159265359)) + 0.5);
+   return (this.sin((_ctx.phase * 2. * 3.14159265359)) + 0.5);
 }
 
 

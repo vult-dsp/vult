@@ -95,7 +95,7 @@ float lfo(_ctx_type_6 &_ctx, float f, int gate){
    if(_ctx.phase > 1.f){
       _ctx.phase = (_ctx.phase - 1.f);
    }
-   return (sinf(((_ctx.phase * 2.f) * 3.14159265359f)) - 0.5f);
+   return (sinf((_ctx.phase * 2.f * 3.14159265359f)) - 0.5f);
 }
 
 _ctx_type_7 _ctx_type_7_init(){
@@ -130,9 +130,9 @@ float process(_ctx_type_7 &_ctx, float input){
    uint8_t reset = ((_ctx.pre_phase1 - phase1) > 0.5f);
    _ctx.pre_phase1 = phase1;
    float phase2 = phasor(_ctx._inst3,(_ctx.pitch + (smooth(_ctx._inst2,(_ctx.detune + lfo_val)) * 32.f)),reset);
-   float sine = sinf(((2.f * 3.14159265359f) * phase2));
+   float sine = sinf((2.f * 3.14159265359f * phase2));
    float gate_value = ((_ctx.gate > 0)?1.f:0.f);
-   return ((smooth(_ctx._inst4,_ctx.volume) * (sine * comp)) * smooth(_ctx._inst5,gate_value));
+   return (smooth(_ctx._inst4,_ctx.volume) * sine * comp * smooth(_ctx._inst5,gate_value));
 }
 
 _ctx_type_7 noteOn_init(){ return _ctx_type_7_init();}

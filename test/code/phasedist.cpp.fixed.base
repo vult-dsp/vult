@@ -71,7 +71,7 @@ int32_t process(_ctx_type_4 &_ctx, int32_t input){
    _ctx.pre_phase1 = phase1;
    int32_t phase2 = phasor(_ctx._inst2,fix_add(_ctx.pitch,fix_mul(smooth(_ctx._inst1,_ctx.detune),0x200000 /* 32.000000 */)),reset);
    int32_t sine = fix_sin(fix_mul(fix_mul(0x20000 /* 2.000000 */,0x3243f /* 3.141593 */),phase2));
-   return fix_mul(smooth(_ctx._inst3,_ctx.volume),fix_mul(sine,comp));
+   return fix_mul(fix_mul(smooth(_ctx._inst3,_ctx.volume),sine),comp);
 }
 
 _ctx_type_4 noteOn_init(){ return _ctx_type_4_init();}

@@ -52,7 +52,7 @@ this._ctx_type_6_init = function(){
 this. biquad_init = function() { return this._ctx_type_6_init();}
 this.biquad = function(_ctx,x,b0,b1,b2,a1,a2){
    var w0 = ((x - (a1 * _ctx.w1)) - (a2 * _ctx.w2));
-   var y0 = (((b0 * w0) + (b1 * _ctx.w1)) + (b2 * _ctx.w2));
+   var y0 = ((b0 * w0) + (b1 * _ctx.w1) + (b2 * _ctx.w2));
    var _tmp_0 = _ctx.w1;
    var _tmp_1 = w0;
    _ctx.w2 = _tmp_0;
@@ -100,12 +100,12 @@ this.lp12 = function(_ctx,x,fc,q){
       var qc = this.max(this.sqrt(2.),(q + this.sqrt(2.)));
       fc = this.clip(fc,0.,this.samplerate());
       var k = this.tan(((this.pi() * fc) / this.samplerate()));
-      var den = ((((k * k) * qc) + k) + qc);
-      _ctx.b0 = (((k * k) * qc) / den);
+      var den = ((k * k * qc) + k + qc);
+      _ctx.b0 = ((k * k * qc) / den);
       _ctx.b1 = (2. * _ctx.b0);
       _ctx.b2 = _ctx.b0;
-      _ctx.a1 = (((2. * qc) * ((k * k) - 1.)) / den);
-      _ctx.a2 = (((((k * k) * qc) - k) + qc) / den);
+      _ctx.a1 = ((2. * qc * ((k * k) - 1.)) / den);
+      _ctx.a2 = ((((k * k * qc) - k) + qc) / den);
    }
    return this.biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
@@ -161,12 +161,12 @@ this.hp12 = function(_ctx,x,fc,q){
       var qc = this.max(this.sqrt(2.),(q + this.sqrt(2.)));
       fc = this.clip(fc,0.,this.samplerate());
       var k = this.tan(((this.pi() * fc) / this.samplerate()));
-      var den = ((((k * k) * qc) + k) + qc);
+      var den = ((k * k * qc) + k + qc);
       _ctx.b0 = (qc / den);
       _ctx.b1 = (((- 2.) * qc) / den);
       _ctx.b2 = (qc / den);
-      _ctx.a1 = (((2. * qc) * ((k * k) - 1.)) / den);
-      _ctx.a2 = (((((k * k) * qc) - k) + qc) / den);
+      _ctx.a1 = ((2. * qc * ((k * k) - 1.)) / den);
+      _ctx.a2 = ((((k * k * qc) - k) + qc) / den);
    }
    return this.biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
@@ -190,12 +190,12 @@ this.bp12 = function(_ctx,x,fc,q){
       var qc = this.max(this.sqrt(2.),(q + this.sqrt(2.)));
       fc = this.clip(fc,0.,this.samplerate());
       var k = this.tan(((this.pi() * fc) / this.samplerate()));
-      var den = ((((k * k) * qc) + k) + qc);
+      var den = ((k * k * qc) + k + qc);
       _ctx.b0 = (k / den);
       _ctx.b1 = 0.;
       _ctx.b2 = ((- k) / den);
-      _ctx.a1 = (((2. * qc) * ((k * k) - 1.)) / den);
-      _ctx.a2 = (((((k * k) * qc) - k) + qc) / den);
+      _ctx.a1 = ((2. * qc * ((k * k) - 1.)) / den);
+      _ctx.a2 = ((((k * k * qc) - k) + qc) / den);
    }
    return this.biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
@@ -219,12 +219,12 @@ this.notch12 = function(_ctx,x,fc,q){
       var qc = this.max(this.sqrt(2.),(q + this.sqrt(2.)));
       fc = this.clip(fc,0.,this.samplerate());
       var k = this.tan(((this.pi() * fc) / this.samplerate()));
-      var den = ((((k * k) * qc) + k) + qc);
+      var den = ((k * k * qc) + k + qc);
       _ctx.b0 = ((qc * (1. + (k * k))) / den);
-      _ctx.b1 = (((2. * qc) * ((k * k) - 1.)) / den);
+      _ctx.b1 = ((2. * qc * ((k * k) - 1.)) / den);
       _ctx.b2 = _ctx.b0;
-      _ctx.a1 = (((2. * qc) * ((k * k) - 1.)) / den);
-      _ctx.a2 = (((((k * k) * qc) - k) + qc) / den);
+      _ctx.a1 = ((2. * qc * ((k * k) - 1.)) / den);
+      _ctx.a2 = ((((k * k * qc) - k) + qc) / den);
    }
    return this.biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
@@ -248,12 +248,12 @@ this.allp12 = function(_ctx,x,fc,q){
       var qc = this.max(this.sqrt(2.),(q + this.sqrt(2.)));
       fc = this.clip(fc,0.,this.samplerate());
       var k = this.tan(((this.pi() * fc) / this.samplerate()));
-      var den = ((((k * k) * qc) + k) + qc);
-      _ctx.b0 = (((((k * k) * qc) - k) + qc) / den);
-      _ctx.b1 = (((2. * qc) * ((k * k) - 1.)) / den);
+      var den = ((k * k * qc) + k + qc);
+      _ctx.b0 = ((((k * k * qc) - k) + qc) / den);
+      _ctx.b1 = ((2. * qc * ((k * k) - 1.)) / den);
       _ctx.b2 = 1.;
-      _ctx.a1 = (((2. * qc) * ((k * k) - 1.)) / den);
-      _ctx.a2 = (((((k * k) * qc) - k) + qc) / den);
+      _ctx.a1 = ((2. * qc * ((k * k) - 1.)) / den);
+      _ctx.a2 = ((((k * k * qc) - k) + qc) / den);
    }
    return this.biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }

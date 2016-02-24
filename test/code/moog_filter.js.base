@@ -95,9 +95,9 @@ this.moog = function(_ctx,input,cut,res){
       var x2 = (fc * fc);
       var x3 = (fc * x2);
       var fcr = ((((1.873 * x3) + (0.4955 * x2)) - (0.649 * fc)) + 0.9988);
-      var acr = ((((- 3.9364) * x2) + (1.8409 * fc)) + 0.9968);
-      _ctx.tune = ((1. - this.exp((- (((2. * this.PI()) * x_2) * fcr)))) / this.thermal());
-      _ctx.resFixed = ((4. * res) * acr);
+      var acr = (((- 3.9364) * x2) + (1.8409 * fc) + 0.9968);
+      _ctx.tune = ((1. - this.exp((- (2. * this.PI() * x_2 * fcr)))) / this.thermal());
+      _ctx.resFixed = (4. * res * acr);
    }
    var x0 = this.moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,_ctx.dx1);
    var x1 = this.moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,x0);

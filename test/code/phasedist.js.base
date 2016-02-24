@@ -79,8 +79,8 @@ this.process = function(_ctx,input){
    var reset = ((_ctx.pre_phase1 - phase1) > 0.5);
    _ctx.pre_phase1 = phase1;
    var phase2 = this.phasor(_ctx._inst2,(_ctx.pitch + (this.smooth(_ctx._inst1,_ctx.detune) * 32.)),reset);
-   var sine = this.sin(((2. * 3.14159265359) * phase2));
-   return (this.smooth(_ctx._inst3,_ctx.volume) * (sine * comp));
+   var sine = this.sin((2. * 3.14159265359 * phase2));
+   return (this.smooth(_ctx._inst3,_ctx.volume) * sine * comp);
 }
 
 this. noteOn_init = function() { return this._ctx_type_4_init();}

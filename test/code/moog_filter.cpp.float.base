@@ -90,9 +90,9 @@ float moog(_ctx_type_8 &_ctx, float input, float cut, float res){
       float x2 = (fc * fc);
       float x3 = (fc * x2);
       float fcr = ((((1.873f * x3) + (0.4955f * x2)) - (0.649f * fc)) + 0.9988f);
-      float acr = ((((- 3.9364f) * x2) + (1.8409f * fc)) + 0.9968f);
-      _ctx.tune = ((1.f - expf((- (((2.f * PI()) * x_2) * fcr)))) / thermal());
-      _ctx.resFixed = ((4.f * res) * acr);
+      float acr = (((- 3.9364f) * x2) + (1.8409f * fc) + 0.9968f);
+      _ctx.tune = ((1.f - expf((- (2.f * PI() * x_2 * fcr)))) / thermal());
+      _ctx.resFixed = (4.f * res * acr);
    }
    float x0 = moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,_ctx.dx1);
    float x1 = moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,x0);

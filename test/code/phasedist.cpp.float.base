@@ -70,8 +70,8 @@ float process(_ctx_type_4 &_ctx, float input){
    uint8_t reset = ((_ctx.pre_phase1 - phase1) > 0.5f);
    _ctx.pre_phase1 = phase1;
    float phase2 = phasor(_ctx._inst2,(_ctx.pitch + (smooth(_ctx._inst1,_ctx.detune) * 32.f)),reset);
-   float sine = sinf(((2.f * 3.14159265359f) * phase2));
-   return (smooth(_ctx._inst3,_ctx.volume) * (sine * comp));
+   float sine = sinf((2.f * 3.14159265359f * phase2));
+   return (smooth(_ctx._inst3,_ctx.volume) * sine * comp);
 }
 
 _ctx_type_4 noteOn_init(){ return _ctx_type_4_init();}

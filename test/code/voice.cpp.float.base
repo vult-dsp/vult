@@ -157,7 +157,7 @@ float osc(_ctx_type_10 &_ctx, float pitch, float pw, float wave){
    }
    _ctx.state_pulse = float_clip((((_ctx.state_pulse * 0.9995f) + tmp1) - tmp2),(- 1.f),1.f);
    _ctx.state_saw = float_clip(((_ctx.state_saw * 0.9995f) + ((((tmp1 + tmp2) - (2.f * _ctx.rate)) / shift05) / 2.f)),(- 1.f),1.f);
-   _ctx.state_triang = float_clip(((_ctx.state_triang * 0.9995f) + ((2.f * _ctx.state_pulse) * _ctx.rate)),(- 1.f),1.f);
+   _ctx.state_triang = float_clip(((_ctx.state_triang * 0.9995f) + (2.f * _ctx.state_pulse * _ctx.rate)),(- 1.f),1.f);
    if(wave < (1.f / 3.f)){
       _ctx.output = _ctx.state_pulse;
    }
@@ -168,7 +168,7 @@ float osc(_ctx_type_10 &_ctx, float pitch, float pw, float wave){
       }
       else
       {
-         _ctx.output = ((2.f * _ctx.state_triang) * (1.f + pw));
+         _ctx.output = (2.f * _ctx.state_triang * (1.f + pw));
       }
    }
    _ctx.output = dcblock(_ctx._inst1,_ctx.output);
@@ -318,7 +318,7 @@ _ctx_type_14 _ctx_type_14_init(){
 _ctx_type_14 lfo_init(){ return _ctx_type_14_init();}
 
 float lfo(_ctx_type_14 &_ctx, float f, uint8_t gate){
-   float rate = (((f * 100.f) * minFixed()) + minFixed());
+   float rate = ((f * 100.f * minFixed()) + minFixed());
    if(edge(_ctx._inst0,gate)){
       _ctx.phase = 0.f;
    }
@@ -328,7 +328,7 @@ float lfo(_ctx_type_14 &_ctx, float f, uint8_t gate){
    if(_ctx.phase > 1.f){
       _ctx.phase = (_ctx.phase - 1.f);
    }
-   return (sinf(((_ctx.phase * 2.f) * 3.14159265359f)) + 0.5f);
+   return (sinf((_ctx.phase * 2.f * 3.14159265359f)) + 0.5f);
 }
 
 _ctx_type_15 _ctx_type_15_init(){
