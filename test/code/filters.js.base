@@ -121,7 +121,7 @@ this.hp6 = function(_ctx,x,fc){
    fc = this.clip(fc,0.,this.samplerate());
    var k = this.tan(((this.pi() * fc) / this.samplerate()));
    var b0 = (1. / (k + 1.));
-   var b1 = ((- 1.) / (k + 1.));
+   var b1 = (-1. / (k + 1.));
    var a1 = ((k - 1.) / (k + 1.));
    return this.biquad(_ctx._inst0,x,b0,b1,0.,a1,0.);
 }
@@ -163,7 +163,7 @@ this.hp12 = function(_ctx,x,fc,q){
       var k = this.tan(((this.pi() * fc) / this.samplerate()));
       var den = ((k * k * qc) + k + qc);
       _ctx.b0 = (qc / den);
-      _ctx.b1 = (((- 2.) * qc) / den);
+      _ctx.b1 = ((-2. * qc) / den);
       _ctx.b2 = (qc / den);
       _ctx.a1 = ((2. * qc * ((k * k) - 1.)) / den);
       _ctx.a2 = ((((k * k * qc) - k) + qc) / den);

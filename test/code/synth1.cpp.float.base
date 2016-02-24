@@ -247,7 +247,7 @@ void default_(_ctx_type_7 &_ctx){
    _ctx.pitch = 45.f;
    _ctx.detune = 0.8f;
    _ctx.lfo_rate = 0.07f;
-   _ctx.lfo_amt = (- 0.8f);
+   _ctx.lfo_amt = -0.8f;
 }
 
 

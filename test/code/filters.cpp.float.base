@@ -117,7 +117,7 @@ float hp6(_ctx_type_9 &_ctx, float x, float fc){
    fc = float_clip(fc,0.f,samplerate());
    float k = tanf(((pi() * fc) / samplerate()));
    float b0 = (1.f / (k + 1.f));
-   float b1 = ((- 1.f) / (k + 1.f));
+   float b1 = (-1.f / (k + 1.f));
    float a1 = ((k - 1.f) / (k + 1.f));
    return biquad(_ctx._inst0,x,b0,b1,0.f,a1,0.f);
 }
@@ -161,7 +161,7 @@ float hp12(_ctx_type_11 &_ctx, float x, float fc, float q){
       float k = tanf(((pi() * fc) / samplerate()));
       float den = ((k * k * qc) + k + qc);
       _ctx.b0 = (qc / den);
-      _ctx.b1 = (((- 2.f) * qc) / den);
+      _ctx.b1 = ((-2.f * qc) / den);
       _ctx.b2 = (qc / den);
       _ctx.a1 = ((2.f * qc * ((k * k) - 1.f)) / den);
       _ctx.a2 = ((((k * k * qc) - k) + qc) / den);

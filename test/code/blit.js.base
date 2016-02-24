@@ -103,9 +103,9 @@ this.osc = function(_ctx,pitch,pw,wave){
    if((_ctx.phase > 1.)){
       _ctx.phase = (_ctx.phase - 1.);
    }
-   _ctx.state_pulse = this.clip((((_ctx.state_pulse * 0.9995) + tmp1) - tmp2),(- 1.),1.);
-   _ctx.state_saw = this.clip(((_ctx.state_saw * 0.9995) + ((((tmp1 + tmp2) - (2. * _ctx.rate)) / shift05) / 2.)),(- 1.),1.);
-   _ctx.state_triang = this.clip(((_ctx.state_triang * 0.9995) + (2. * _ctx.state_pulse * _ctx.rate)),(- 1.),1.);
+   _ctx.state_pulse = this.clip((((_ctx.state_pulse * 0.9995) + tmp1) - tmp2),-1.,1.);
+   _ctx.state_saw = this.clip(((_ctx.state_saw * 0.9995) + ((((tmp1 + tmp2) - (2. * _ctx.rate)) / shift05) / 2.)),-1.,1.);
+   _ctx.state_triang = this.clip(((_ctx.state_triang * 0.9995) + (2. * _ctx.state_pulse * _ctx.rate)),-1.,1.);
    if((wave < (1. / 3.))){
       _ctx.output = _ctx.state_pulse;
    }
@@ -120,7 +120,7 @@ this.osc = function(_ctx,pitch,pw,wave){
       }
    }
    _ctx.output = this.dcblock(_ctx._inst1,_ctx.output);
-   return this.clip((_ctx.output / 4.),(- 1.),1.);
+   return this.clip((_ctx.output / 4.),-1.,1.);
 }
 
     if(this.process_init)  this.context =  this.process_init(); else this.context = {};

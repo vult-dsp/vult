@@ -461,15 +461,22 @@ module Simplify = struct
    let rec getOpElements (op:string) (elems: exp list) : exp list =
       match elems with
       | [] -> []
-      | POp(op',sub,attr) :: t when op' = op -> sub @ getOpElements op t
+      | POp(op',sub,_) :: t when op' = op -> sub @ getOpElements op t
       | h :: t -> h :: getOpElements op t
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make @@ fun state exp ->
          match exp with
+         (* Collapses trees of sums and multiplications *)
          | POp(op,elems,attr) when op = "+" || op = "*" ->
             let elems' = getOpElements op elems in
             state, POp(op,elems',attr)
+         (* Simplifies unary minus *)
+         | PUnOp("-",PInt(value,attr),_) ->
+            state, PInt(-value,attr)
+         | PUnOp("-",PReal(value,attr),_) ->
+            state, PReal(-.value,attr)
+
          | _ -> state, exp
 
    let mapper = { Mapper.default_mapper with Mapper.exp = exp }
@@ -486,10 +493,10 @@ let pass1 =
    |> Mapper.seq SplitMem.mapper
    |> Mapper.seq SimplifyTupleAssign.mapper
    |> Mapper.seq LHSTupleBinding.mapper
-   |> Mapper.seq Simplify.mapper
 
 let pass2 =
-   InsertContext.mapper
+   Simplify.mapper
+   |> Mapper.seq InsertContext.mapper
    |> Mapper.seq CreateInitFunction.mapper
    |> Mapper.seq CreateTypesForTuples.mapper
 

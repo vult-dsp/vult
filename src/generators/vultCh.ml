@@ -180,7 +180,6 @@ let makeNestedCall (name:string) (args:cexp list) : cexp =
    | [] -> failwith "VultCh.makeNestedCall: invalid number of arguments"
    | h :: t -> loop t h
 
-
 let convertOperator params (op:string) (typ:VType.t) (elems:cexp list) : VType.t * cexp =
    let is_float = (params.real = Float) && (isReal typ) in
    let is_int   = (isInt typ) in

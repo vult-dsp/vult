@@ -155,9 +155,9 @@ int32_t osc(_ctx_type_10 &_ctx, int32_t pitch, int32_t pw, int32_t wave){
    if(_ctx.phase > 0x10000 /* 1.000000 */){
       _ctx.phase = fix_sub(_ctx.phase,0x10000 /* 1.000000 */);
    }
-   _ctx.state_pulse = fix_clip(fix_sub(fix_add(fix_mul(_ctx.state_pulse,0xffdf /* 0.999500 */),tmp1),tmp2),(- 0x10000 /* 1.000000 */),0x10000 /* 1.000000 */);
-   _ctx.state_saw = fix_clip(fix_add(fix_mul(_ctx.state_saw,0xffdf /* 0.999500 */),fix_div(fix_div(fix_sub(fix_add(tmp1,tmp2),fix_mul(0x20000 /* 2.000000 */,_ctx.rate)),shift05),0x20000 /* 2.000000 */)),(- 0x10000 /* 1.000000 */),0x10000 /* 1.000000 */);
-   _ctx.state_triang = fix_clip(fix_add(fix_mul(_ctx.state_triang,0xffdf /* 0.999500 */),fix_mul(fix_mul(0x20000 /* 2.000000 */,_ctx.state_pulse),_ctx.rate)),(- 0x10000 /* 1.000000 */),0x10000 /* 1.000000 */);
+   _ctx.state_pulse = fix_clip(fix_sub(fix_add(fix_mul(_ctx.state_pulse,0xffdf /* 0.999500 */),tmp1),tmp2),0x10001 /* -1.000000 */,0x10000 /* 1.000000 */);
+   _ctx.state_saw = fix_clip(fix_add(fix_mul(_ctx.state_saw,0xffdf /* 0.999500 */),fix_div(fix_div(fix_sub(fix_add(tmp1,tmp2),fix_mul(0x20000 /* 2.000000 */,_ctx.rate)),shift05),0x20000 /* 2.000000 */)),0x10001 /* -1.000000 */,0x10000 /* 1.000000 */);
+   _ctx.state_triang = fix_clip(fix_add(fix_mul(_ctx.state_triang,0xffdf /* 0.999500 */),fix_mul(fix_mul(0x20000 /* 2.000000 */,_ctx.state_pulse),_ctx.rate)),0x10001 /* -1.000000 */,0x10000 /* 1.000000 */);
    if(wave < fix_div(0x10000 /* 1.000000 */,0x30000 /* 3.000000 */)){
       _ctx.output = _ctx.state_pulse;
    }
@@ -172,7 +172,7 @@ int32_t osc(_ctx_type_10 &_ctx, int32_t pitch, int32_t pw, int32_t wave){
       }
    }
    _ctx.output = dcblock(_ctx._inst1,_ctx.output);
-   return fix_clip(fix_div(_ctx.output,0x40000 /* 4.000000 */),(- 0x10000 /* 1.000000 */),0x10000 /* 1.000000 */);
+   return fix_clip(fix_div(_ctx.output,0x40000 /* 4.000000 */),0x10001 /* -1.000000 */,0x10000 /* 1.000000 */);
 }
 
 _ctx_type_11 _ctx_type_11_init(){
@@ -189,8 +189,8 @@ int32_t svf_step(_ctx_type_11 &_ctx, int32_t input, int32_t g, int32_t q, int se
    int32_t high = fix_sub(fix_sub(input,low),fix_mul(q,_ctx.dband));
    int32_t band = fix_add(fix_mul(g,high),_ctx.dband);
    int32_t notch = fix_add(high,low);
-   _ctx.dband = fix_clip(band,(- 0x10000 /* 1.000000 */),0x10000 /* 1.000000 */);
-   _ctx.dlow = fix_clip(low,(- 0x10000 /* 1.000000 */),0x10000 /* 1.000000 */);
+   _ctx.dband = fix_clip(band,0x10001 /* -1.000000 */,0x10000 /* 1.000000 */);
+   _ctx.dlow = fix_clip(low,0x10001 /* -1.000000 */,0x10000 /* 1.000000 */);
    int32_t output = ((sel == 0)?low:((sel == 1)?high:((sel == 2)?band:notch)));
    return output;
 }

@@ -40,8 +40,8 @@ this.svf_step = function(_ctx,input,g,q,sel){
    var high = ((input - low) - (q * _ctx.dband));
    var band = ((g * high) + _ctx.dband);
    var notch = (high + low);
-   _ctx.dband = this.clip(band,(- 1.),1.);
-   _ctx.dlow = this.clip(low,(- 1.),1.);
+   _ctx.dband = this.clip(band,-1.,1.);
+   _ctx.dlow = this.clip(low,-1.,1.);
    var output = ((sel == (0|0))?low:((sel == (1|0))?high:((sel == (2|0))?band:notch)));
    return output;
 }

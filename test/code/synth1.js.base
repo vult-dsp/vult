@@ -249,7 +249,7 @@ this.default_ = function(_ctx){
    _ctx.pitch = 45.;
    _ctx.detune = 0.8;
    _ctx.lfo_rate = 0.07;
-   _ctx.lfo_amt = (- 0.8);
+   _ctx.lfo_amt = -0.8;
 }
 
     if(this.process_init)  this.context =  this.process_init(); else this.context = {};
