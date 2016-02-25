@@ -44,6 +44,19 @@ In platforms without bash you can build with the following command:
 ```
 $ ocamlbuild -use-ocamlfind -pkg containers -pkg str vultc.native
 ```
+### Roadmap
+
+#### v0.2 (branch exp_stmt)
+- Better syntax checking
+- External functions
+- Constant arrays
+- More powerful shared context
+
+#### v0.1 (Completed)
+- Proof of concept
+- C code generation
+- Javascript generation
+
 ### Contact
 
 If you want to receive notifications for future development of this project you can join to the google group http://groups.google.com/d/forum/vult
