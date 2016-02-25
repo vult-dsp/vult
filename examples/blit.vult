@@ -54,7 +54,7 @@ fun osc(pitch,pw,wave){
   else {
     fixed_pitch = pitch + 12.;
   }
-  // Updates the parameters if the pre_pitch changed
+  // Updates the parameters if the pitch changed
   if(change(fixed_pitch)) {
     rate = pitchToRate(fixed_pitch);
     val p = 1. / rate;

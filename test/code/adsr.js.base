@@ -60,7 +60,6 @@ this._ctx_type_3_init = function(){
    _ctx.sustainLevel = 0.;
    _ctx.state = ((0|0)|0);
    _ctx.releaseRate = 0.;
-   _ctx.gate = false;
    _ctx.decayRate = 0.;
    _ctx.attackRate = 0.;
    _ctx._inst2 = this._ctx_type_2_init();
@@ -82,11 +81,10 @@ this.adsr = function(_ctx,gate,attack,decay,sustain,release){
       _ctx.releaseRate = (1.13378684807e-05 * (0.5 / (release + 0.1)));
    }
    _ctx.sustainLevel = sustain;
-   var trig = false;
    var rate = 0.;
-   trig = this.bchange(_ctx._inst1,_ctx.gate);
-   var up = (trig && _ctx.gate);
-   var down = (trig && this.not(_ctx.gate));
+   var trig = this.bchange(_ctx._inst1,gate);
+   var up = (trig && gate);
+   var down = (trig && this.not(gate));
    if((_ctx.state == IDLE)){
       if(up){
          _ctx.state = (ATTACK|0);

@@ -23,7 +23,7 @@ fun lpfilter(x){
 }
 
 fun adsr(gate,attack,decay,sustain,release){
-   mem state,value,gate;
+   mem state,value;
    mem attackRate;
    mem decayRate;
    mem releaseRate;
@@ -44,10 +44,9 @@ fun adsr(gate,attack,decay,sustain,release){
    }
    sustainLevel = sustain;
 
-   val trig = false;
-   val rate = 0.;
+   val rate = 0.0;
 
-   trig = bchange(gate);
+   val trig = bchange(gate);
 
    val up   = trig && gate;
    val down = trig && not(gate);

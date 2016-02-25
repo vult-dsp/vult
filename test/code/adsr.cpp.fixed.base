@@ -48,7 +48,6 @@ _ctx_type_3 _ctx_type_3_init(){
    _ctx.sustainLevel = 0x0 /* 0.000000 */;
    _ctx.state = 0;
    _ctx.releaseRate = 0x0 /* 0.000000 */;
-   _ctx.gate = 0;
    _ctx.decayRate = 0x0 /* 0.000000 */;
    _ctx.attackRate = 0x0 /* 0.000000 */;
    _ctx._inst2 = _ctx_type_2_init();
@@ -72,11 +71,10 @@ int32_t adsr(_ctx_type_3 &_ctx, uint8_t gate, int32_t attack, int32_t decay, int
       _ctx.releaseRate = fix_mul(0x0 /* 0.000011 */,fix_div(0x8000 /* 0.500000 */,fix_add(release,0x1999 /* 0.100000 */)));
    }
    _ctx.sustainLevel = sustain;
-   uint8_t trig = 0;
    int32_t rate = 0x0 /* 0.000000 */;
-   trig = bchange(_ctx._inst1,_ctx.gate);
-   uint8_t up = (trig && _ctx.gate);
-   uint8_t down = (trig && (! _ctx.gate));
+   uint8_t trig = bchange(_ctx._inst1,gate);
+   uint8_t up = (trig && gate);
+   uint8_t down = (trig && (! gate));
    if(_ctx.state == IDLE){
       if(up){
          _ctx.state = ATTACK;

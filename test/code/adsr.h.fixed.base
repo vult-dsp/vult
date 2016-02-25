@@ -45,7 +45,6 @@ typedef struct _ctx_type_3 {
    int32_t sustainLevel;
    int state;
    int32_t releaseRate;
-   uint8_t gate;
    int32_t decayRate;
    int32_t attackRate;
    _ctx_type_2 _inst2;
