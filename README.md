@@ -24,29 +24,31 @@ Logo design by: John Klimt https://www.facebook.com/JohnKlimt
 
 - ocaml-containers >= 0.6.1
 - ppx_deriving >= 2.0
-- [Optional] oUnit >= 2.0 (to run the tests)
+- [Optional] ounit >= 2.0 (to run the tests)
+- [Optional] js_of_ocaml >= 2.6 (to run build the web functions)
 
 ### Installing the tools
  The simplest way to instal the requirements is with OPAM (https://opam.ocaml.org/)
 ```
-$ opam switch 4.02.1
+$ opam switch 4.02.3
 $ opam install containers ppx_deriving
 ```
-Optionally to run the tests:
+Optionally to run the tests and building the web functions:
 ```
-$ opam install ounit
+$ opam install ounit js_of_ocaml
 ```
 ### Compiling Vult
 ```
-$ ./scripts/build.sh
+$ ./configure
+$ make
 ```
-In platforms without bash you can build with the following command:
+In platforms without make you can build with the following command:
 ```
-$ ocamlbuild -use-ocamlfind -pkg containers -pkg str vultc.native
+$ ocaml setup.ml -build
 ```
 ### Roadmap
 
-#### v0.2 (branch exp_stmt)
+#### v0.2 (ongoing)
 - Better syntax checking
 - External functions
 - Constant arrays
