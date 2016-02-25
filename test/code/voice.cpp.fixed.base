@@ -525,16 +525,16 @@ void controlChange(_ctx_type_16 &_ctx, int control, int value){
    if(control == 40){
       _ctx.flt_atm = value_m1_1;
    }
-   if(control == 34){
+   if(control == 41){
       _ctx.env_a = value_0_1;
    }
-   if(control == 35){
+   if(control == 42){
       _ctx.env_d = value_0_1;
    }
-   if(control == 36){
+   if(control == 43){
       _ctx.env_s = value_0_1;
    }
-   if(control == 37){
+   if(control == 44){
       _ctx.env_r = value_0_1;
    }
 }

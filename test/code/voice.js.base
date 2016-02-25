@@ -517,16 +517,16 @@ this.controlChange = function(_ctx,control,value){
    if((control == (40|0))){
       _ctx.flt_atm = value_m1_1;
    }
-   if((control == (34|0))){
+   if((control == (41|0))){
       _ctx.env_a = value_0_1;
    }
-   if((control == (35|0))){
+   if((control == (42|0))){
       _ctx.env_d = value_0_1;
    }
-   if((control == (36|0))){
+   if((control == (43|0))){
       _ctx.env_s = value_0_1;
    }
-   if((control == (37|0))){
+   if((control == (44|0))){
       _ctx.env_r = value_0_1;
    }
 }

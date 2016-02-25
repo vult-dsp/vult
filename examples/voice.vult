@@ -362,10 +362,10 @@ and controlChange(control:int,value:int){
   if(control == 38) cut = value_0_1;
   if(control == 39) res = value_0_1;
   if(control == 40) flt_atm = value_m1_1;
-  if(control == 34) env_a = value_0_1;
-  if(control == 35) env_d = value_0_1;
-  if(control == 36) env_s = value_0_1;
-  if(control == 37) env_r = value_0_1;
+  if(control == 41) env_a = value_0_1;
+  if(control == 42) env_d = value_0_1;
+  if(control == 43) env_s = value_0_1;
+  if(control == 44) env_r = value_0_1;
 }
 
 // Called on initialization to define initial values
