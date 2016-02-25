@@ -46,6 +46,17 @@ In platforms without make you can build with the following command:
 ```
 $ ocaml setup.ml -build
 ```
+Running tests:
+```
+$ ./configure --enable-tests
+$ make test
+```
+Building the web functions:
+```
+$ ./configure --enable-js
+$ make
+$ js_of_ocaml vult_node.byte
+```
 ### Roadmap
 
 #### v0.2 (ongoing)
