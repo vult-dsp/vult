@@ -66,7 +66,7 @@ float process(_ctx_type_2 &_ctx, float input){
 _ctx_type_2 noteOn_init(){ return _ctx_type_2_init();}
 
 void noteOn(_ctx_type_2 &_ctx, int note, int velocity){
-   _ctx.pitch = ((float)note);
+   _ctx.pitch = int_to_float(note);
 }
 
 _ctx_type_2 noteOff_init(){ return _ctx_type_2_init();}

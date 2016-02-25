@@ -66,7 +66,7 @@ int32_t process(_ctx_type_2 &_ctx, int32_t input){
 _ctx_type_2 noteOn_init(){ return _ctx_type_2_init();}
 
 void noteOn(_ctx_type_2 &_ctx, int note, int velocity){
-   _ctx.pitch = ((int32_t)note);
+   _ctx.pitch = int_to_fix(note);
 }
 
 _ctx_type_2 noteOff_init(){ return _ctx_type_2_init();}

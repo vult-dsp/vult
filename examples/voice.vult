@@ -315,8 +315,8 @@ fun process(i:real){
   val amp_env = adsr(gate,amp_a,amp_d,amp_s,amp_r);
   val flt_env = adsr(gate,env_a,env_d,env_s,end_r);
   val cut_mod = cut + flt_atm * flt_env;
-  val output  = svf(x,cut_mod,res,0);
-  return amp_env * output/2.;
+  val output  = amp_env * svf(x,cut_mod,res,0);
+  return output;
 }
 
 and noteOn(note:int,velocity:int){
@@ -369,6 +369,12 @@ and controlChange(control:int,value:int){
 }
 
 // Called on initialization to define initial values
-and default(){
+and default() @[init] {
+    mem pw = 0.0;
     mem pitch = 42.0;
+    mem cut = 1.0;
+    mem res = 0.0;
+    mem amp_s = 1.0;
+    mem lfo_amt = 0.5;
+    mem lfo_rate = 0.0;
 }

@@ -77,7 +77,7 @@ int32_t process(_ctx_type_4 &_ctx, int32_t input){
 _ctx_type_4 noteOn_init(){ return _ctx_type_4_init();}
 
 void noteOn(_ctx_type_4 &_ctx, int note, int velocity){
-   _ctx.pitch = ((int32_t)note);
+   _ctx.pitch = int_to_fix(note);
 }
 
 _ctx_type_4 noteOff_init(){ return _ctx_type_4_init();}
@@ -89,10 +89,10 @@ _ctx_type_4 controlChange_init(){ return _ctx_type_4_init();}
 
 void controlChange(_ctx_type_4 &_ctx, int control, int value){
    if(control == 30){
-      _ctx.volume = fix_mul(((int32_t)value),0x204 /* 0.007874 */);
+      _ctx.volume = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    }
    if(control == 31){
-      _ctx.detune = fix_mul(((int32_t)value),0x204 /* 0.007874 */);
+      _ctx.detune = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    }
 }
 

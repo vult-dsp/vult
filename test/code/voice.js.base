@@ -456,6 +456,7 @@ this._ctx_type_16_init = function(){
    _ctx._inst2 = this._ctx_type_13_init();
    _ctx._inst1 = this._ctx_type_10_init();
    _ctx._inst0 = this._ctx_type_14_init();
+   this.default_(_ctx);
    return _ctx;
 }
 this. process_init = function() { return this._ctx_type_16_init();}
@@ -466,8 +467,8 @@ this.process = function(_ctx,i){
    var amp_env = this.adsr(_ctx._inst2,gate,_ctx.amp_a,_ctx.amp_d,_ctx.amp_s,_ctx.amp_r);
    var flt_env = this.adsr(_ctx._inst3,gate,_ctx.env_a,_ctx.env_d,_ctx.env_s,_ctx.end_r);
    var cut_mod = (_ctx.cut + (_ctx.flt_atm * flt_env));
-   var output = this.svf(_ctx._inst4,x,cut_mod,_ctx.res,(0|0));
-   return (amp_env * output * 0.5);
+   var output = (amp_env * this.svf(_ctx._inst4,x,cut_mod,_ctx.res,(0|0)));
+   return output;
 }
 
 this. noteOn_init = function() { return this._ctx_type_16_init();}
@@ -533,7 +534,13 @@ this.controlChange = function(_ctx,control,value){
 
 this. default_init = function() { return this._ctx_type_16_init();}
 this.default_ = function(_ctx){
+   _ctx.pw = 0.;
    _ctx.pitch = 42.;
+   _ctx.cut = 1.;
+   _ctx.res = 0.;
+   _ctx.amp_s = 1.;
+   _ctx.lfo_amt = 0.5;
+   _ctx.lfo_rate = 0.;
 }
 
     if(this.process_init)  this.context =  this.process_init(); else this.context = {};

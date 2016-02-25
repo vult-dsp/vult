@@ -43,12 +43,26 @@ static const int32_t fix_pi  = 205887;
 static inline float  fix_to_float(int32_t a) {
     return (float)a / 0x00010000;
 }
-static inline int32_t fix_from_float(float a){
+static inline int32_t float_to_fix(float a){
     float temp = a * 0x00010000;
     return (int32_t)temp;
 }
-static inline int32_t fix_from_int(int a) {
+
+static inline float int_to_float(int a) {
+    return (float)a;
+}
+
+static inline int float_to_int(float a){
+    return (int)a;
+}
+
+static inline int32_t int_to_fix(int a) {
     return a * 0x00010000;
+}
+
+static inline int fix_to_int(int32_t a)
+{
+    return (a >> 16);
 }
 
 // Basic operations for fixed point numbers

@@ -16,7 +16,6 @@ type cexp =
    | CEVar    of string
    | CEIf     of cexp * cexp * cexp
    | CETuple  of (string * cexp) list
-   | CECast   of string * cexp
    | CENewObj
 
 type clhsexp =
@@ -132,8 +131,18 @@ let rec convertType params (tp:VType.t) : string =
    | VType.TExpAlt _ ->
       failwith ("VultCh.convertType: unsupported type in c code generation" ^ PrintTypes.typeStr tp)
 
-let getCast params (name:id) : string =
-   convertType params (ref (VType.TId(name,None)))
+let getCast params (from_typ:VType.t) (to_typ:VType.t) : string =
+   match !(VType.unlink from_typ), !(VType.unlink to_typ) with
+   | VType.TId(["real"],_),VType.TId(["int"],_) when params.real = Fixed ->
+      "fix_to_int"
+   | VType.TId(["real"],_),VType.TId(["int"],_) ->
+      "float_to_int"
+   | VType.TId(["int"],_),VType.TId(["real"],_) when params.real = Fixed ->
+      "int_to_fix"
+   | VType.TId(["int"],_),VType.TId(["real"],_) ->
+      "int_to_float"
+   | _ ->
+      failwith ("VultCh.getCast: invalid casting of types " ^ PrintTypes.typeStr from_typ ^ " -> " ^ PrintTypes.typeStr to_typ)
 
 let isValue (typ:VType.t) : bool =
    match !(VType.unlink typ) with
@@ -251,8 +260,12 @@ let rec convertExp params (e:exp) : VType.t * cexp =
       let typ = attrType attr in
       convertOperator params op typ elems'
    | PCall(_,[name],[arg],attr) when name="real" || name="int" || name="bool" ->
-      let _, arg' = convertExp params arg in
-      attrType attr, CECast(getCast params [name], arg')
+      let from_typ, arg' = convertExp params arg in
+      let to_typ = attrType attr in
+      if VType.compare from_typ to_typ <> 0 then
+         to_typ, CECall(getCast params from_typ to_typ, [arg'])
+      else
+         to_typ, arg'
    | PCall(_,name,elems,attr) ->
       let _, elems' = convertExpList params elems in
       let typ = attrType attr in
@@ -428,12 +441,6 @@ module PrintC = struct
          append buffer "{ ";
          printList buffer (printChField params) ", " elems;
          append buffer " }"
-      | CECast(typ,exp) ->
-         append buffer "((";
-         append buffer typ;
-         append buffer ")";
-         printExp params buffer exp;
-         append buffer ")"
 
    and printChField params buffer (name,value) =
       append buffer ".";

@@ -459,6 +459,7 @@ _ctx_type_16 _ctx_type_16_init(){
    _ctx._inst2 = _ctx_type_13_init();
    _ctx._inst1 = _ctx_type_10_init();
    _ctx._inst0 = _ctx_type_14_init();
+   default_(_ctx);
    return _ctx;
 }
 
@@ -471,26 +472,26 @@ float process(_ctx_type_16 &_ctx, float i){
    float amp_env = adsr(_ctx._inst2,gate,_ctx.amp_a,_ctx.amp_d,_ctx.amp_s,_ctx.amp_r);
    float flt_env = adsr(_ctx._inst3,gate,_ctx.env_a,_ctx.env_d,_ctx.env_s,_ctx.end_r);
    float cut_mod = (_ctx.cut + (_ctx.flt_atm * flt_env));
-   float output = svf(_ctx._inst4,x,cut_mod,_ctx.res,0);
-   return (amp_env * output * 0.5f);
+   float output = (amp_env * svf(_ctx._inst4,x,cut_mod,_ctx.res,0));
+   return output;
 }
 
 _ctx_type_16 noteOn_init(){ return _ctx_type_16_init();}
 
 void noteOn(_ctx_type_16 &_ctx, int note, int velocity){
-   _ctx.pitch = ((float)mono_noteOn(_ctx.monoin,note));
+   _ctx.pitch = int_to_float(mono_noteOn(_ctx.monoin,note));
 }
 
 _ctx_type_16 noteOff_init(){ return _ctx_type_16_init();}
 
 void noteOff(_ctx_type_16 &_ctx, int note){
-   _ctx.pitch = ((float)mono_noteOff(_ctx.monoin,note));
+   _ctx.pitch = int_to_float(mono_noteOff(_ctx.monoin,note));
 }
 
 _ctx_type_16 controlChange_init(){ return _ctx_type_16_init();}
 
 void controlChange(_ctx_type_16 &_ctx, int control, int value){
-   float value_0_1 = (((float)value) * 0.00787401574803f);
+   float value_0_1 = (int_to_float(value) * 0.00787401574803f);
    float value_m1_1 = ((value_0_1 * 2.f) + (-1.f));
    if(control == 30){
       _ctx.wave = value_0_1;
@@ -542,7 +543,13 @@ void controlChange(_ctx_type_16 &_ctx, int control, int value){
 _ctx_type_16 default_init(){ return _ctx_type_16_init();}
 
 void default_(_ctx_type_16 &_ctx){
+   _ctx.pw = 0.f;
    _ctx.pitch = 42.f;
+   _ctx.cut = 1.f;
+   _ctx.res = 0.f;
+   _ctx.amp_s = 1.f;
+   _ctx.lfo_amt = 0.5f;
+   _ctx.lfo_rate = 0.f;
 }
 
 

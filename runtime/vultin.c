@@ -89,7 +89,7 @@ int32_t fix_exp(int32_t inValue) {
     int32_t term = inValue;
     uint_fast8_t i;
     for (i = 2; i < 30; i++) {
-        term = fix_mul(term, fix_div(inValue, fix_from_int(i)));
+        term = fix_mul(term, fix_div(inValue, int_to_fix(i)));
         result += term;
         if ((term < 500) && ((i > 15) || (term < 20))) break;
     }

@@ -236,7 +236,7 @@ void controlChange(_ctx_type_7 &_ctx, int control, float value){
       _ctx.lfo_rate = (value * 0.00787401574803f);
    }
    if(control == 33){
-      _ctx.lfo_amt = (2.f * ((((float)value) * 0.00787401574803f) + (-0.5f)));
+      _ctx.lfo_amt = (2.f * ((value * 0.00787401574803f) + (-0.5f)));
    }
 }
 
