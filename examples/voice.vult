@@ -176,7 +176,7 @@ fun svf(input,fc,q,sel){
 // ==== ENVELOPE =====
 
 fun adsr(gate,attack,decay,sustain,release){
-   mem state,value,gate;
+   mem state,value;
    mem attackRate;
    mem decayRate;
    mem releaseRate;
@@ -190,17 +190,16 @@ fun adsr(gate,attack,decay,sustain,release){
 
    // Calculates the rate every 32 samples
    if(each(32)){
-      attackRate      = (1./44100.) * (1./(attack+0.1));
-      val inv_sustain = 1. - sustain;
-      decayRate       = (inv_sustain/44100.) * (inv_sustain/(decay+0.1));
-      releaseRate     = (0.5/44100.) * (0.5/(release+0.1));
+        attackRate      = (1./44100.) * (1./(attack+0.1));
+        val inv_sustain = 1. - sustain;
+        decayRate       = (inv_sustain/44100.) * (inv_sustain/(decay+0.1));
+        releaseRate     = (0.5/44100.) * (0.5/(release+0.1));
    }
    sustainLevel = sustain;
 
-   val trig = false;
-   val rate = 0.;
+   val rate = 0.0;
 
-   trig = bchange(gate);
+   val trig = bchange(gate);
 
    val up   = trig && gate;
    val down = trig && not(gate);
@@ -251,20 +250,20 @@ fun lfo(f,gate){
  * like a monophonic sinthesizer that can hold 4 notes */
 
 // Activates a note and returns the current note value
-fun noteOn(n){
+fun mono_noteOn(n){
    mem n1,n2,n3,n4;
-   mem (count:int),pre;
+   mem count,pre;
    // written this way because Vult does not have array support yet.
    if(count == 0) { n1 = n; pre = n; } else
    if(count == 1) { n2 = n; pre = n; } else
    if(count == 2) { n3 = n; pre = n; } else
-   if(count == 3) { n4 = n; pre = n; }
+   if(count == 3) n4 = n; pre = n;
    if(count <= 4) count = count + 1;
    return pre;
 }
 
 // Deactivates a note and returns the following note value;
-and noteOff(n){
+and mono_noteOff(n){
    mem n1,n2,n3,n4;
    mem count,pre;
    val found = false;
@@ -286,48 +285,90 @@ and noteOff(n){
 }
 
 // Returns 1 if any note is active
-and isGateOn(){
-   mem n1,n2,n3,n4;
-   mem count,pre;
+and mono_isGateOn(){
    return count>0;
 }
 
 fun process(i:real){
-  mem param1; // pitch
-  mem param2; // pw
-  mem param3; // wave
-  mem param4; // osc amt
-  mem param5; // rate
-  mem param6; // cut
-  mem param7; // res
-  mem param8; // flt amt
+  mem pitch;
+  mem pw;
+  mem wave;
+  mem lfo_amt;
+  mem lfo_rate;
+  mem cut;
+  mem res;
+  mem flt_atm;
 
-  mem param9;  // amp_a
-  mem param10; // amp_d
-  mem param11; // amp_s
-  mem param12; // amp_r
+  mem amp_a;
+  mem amp_d;
+  mem amp_s;
+  mem amp_r;
 
-  mem param13; // env_a
-  mem param14; // env_d
-  mem param15; // env_s
-  mem param16; // env_r
+  mem env_a;
+  mem env_d;
+  mem env_s;
+  mem end_r;
 
-  val gate    = monoin:isGateOn();
-  val lfo1    = lfo(param5,gate)*param4;
-  val x       = osc(param1,param2+lfo1,param3);
-  val amp_env = adsr(gate,param9,param10,param11,param12);
-  val flt_env = adsr(gate,param13,param14,param15,param16);
-  val cut_mod = param6 + param8 * flt_env;
-  val output  = svf(x,cut_mod,param7,0);
-  return output/2.;
+  val gate    = monoin:mono_isGateOn();
+  val lfo1    = lfo(lfo_rate,gate)*lfo_amt;
+  val x       = osc(pitch,pw+lfo1,wave);
+  val amp_env = adsr(gate,amp_a,amp_d,amp_s,amp_r);
+  val flt_env = adsr(gate,env_a,env_d,env_s,end_r);
+  val cut_mod = cut + flt_atm * flt_env;
+  val output  = svf(x,cut_mod,res,0);
+  return amp_env * output/2.;
 }
 
-and process_noteOn(n:int){
-  _ = monoin:noteOn(n);
+and noteOn(note:int,velocity:int){
+  mem pitch = real(monoin:mono_noteOn(note));
 }
 
-and process_noteOff(n:int){
-  _ = monoin:noteOff(n);
+and noteOff(note:int){
+  mem pitch = real(monoin:mono_noteOff(note));
 }
 
+// Called when a control changes
+and controlChange(control:int,value:int){
+  mem pitch;
+  mem pw;
+  mem wave;
+  mem lfo_amt;
+  mem lfo_rate;
+  mem cut;
+  mem res;
+  mem flt_atm;
 
+  mem amp_a;
+  mem amp_d;
+  mem amp_s;
+  mem amp_r;
+
+  mem env_a;
+  mem env_d;
+  mem env_s;
+  mem env_r;
+
+  val value_0_1 = real(value) / 127.0;
+  val value_m1_1 = value_0_1 * 2.0 - 1.0;
+
+  if(control == 30) wave = value_0_1;
+  if(control == 31) pw = value_0_1;
+  if(control == 32) lfo_amt = value_m1_1;
+  if(control == 33) lfo_rate = value_0_1;
+  if(control == 34) amp_a = value_0_1;
+  if(control == 35) amp_d = value_0_1;
+  if(control == 36) amp_s = value_0_1;
+  if(control == 37) amp_r = value_0_1;
+  if(control == 38) cut = value_0_1;
+  if(control == 39) res = value_0_1;
+  if(control == 40) flt_atm = value_m1_1;
+  if(control == 34) env_a = value_0_1;
+  if(control == 35) env_d = value_0_1;
+  if(control == 36) env_s = value_0_1;
+  if(control == 37) env_r = value_0_1;
+}
+
+// Called on initialization to define initial values
+and default(){
+    mem pitch = 42.0;
+}

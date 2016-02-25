@@ -137,7 +137,6 @@ typedef struct _ctx_type_13 {
    float sustainLevel;
    int state;
    float releaseRate;
-   uint8_t gate;
    float decayRate;
    float attackRate;
    _ctx_type_7 _inst2;
@@ -176,44 +175,45 @@ typedef struct _ctx_type_15 {
    int count;
 } _ctx_type_15;
 
-typedef _ctx_type_15 noteOn_type;
+typedef _ctx_type_15 mono_noteOn_type;
 
 _ctx_type_15 _ctx_type_15_init();
 
-_ctx_type_15 noteOn_init();
+_ctx_type_15 mono_noteOn_init();
 
-int noteOn(_ctx_type_15 &_ctx, int n);
+int mono_noteOn(_ctx_type_15 &_ctx, int n);
 
-typedef _ctx_type_15 noteOff_type;
+typedef _ctx_type_15 mono_noteOff_type;
 
-_ctx_type_15 noteOff_init();
+_ctx_type_15 mono_noteOff_init();
 
-int noteOff(_ctx_type_15 &_ctx, int n);
+int mono_noteOff(_ctx_type_15 &_ctx, int n);
 
-typedef _ctx_type_15 isGateOn_type;
+typedef _ctx_type_15 mono_isGateOn_type;
 
-_ctx_type_15 isGateOn_init();
+_ctx_type_15 mono_isGateOn_init();
 
-uint8_t isGateOn(_ctx_type_15 &_ctx);
+uint8_t mono_isGateOn(_ctx_type_15 &_ctx);
 
 typedef struct _ctx_type_16 {
-   float param9;
-   float param8;
-   float param7;
-   float param6;
-   float param5;
-   float param4;
-   float param3;
-   float param2;
-   float param16;
-   float param15;
-   float param14;
-   float param13;
-   float param12;
-   float param11;
-   float param10;
-   float param1;
+   float wave;
+   float res;
+   float pw;
+   float pitch;
    _ctx_type_15 monoin;
+   float lfo_rate;
+   float lfo_amt;
+   float flt_atm;
+   float env_s;
+   float env_r;
+   float env_d;
+   float env_a;
+   float end_r;
+   float cut;
+   float amp_s;
+   float amp_r;
+   float amp_d;
+   float amp_a;
    _ctx_type_12 _inst4;
    _ctx_type_13 _inst3;
    _ctx_type_13 _inst2;
@@ -229,17 +229,29 @@ _ctx_type_16 process_init();
 
 float process(_ctx_type_16 &_ctx, float i);
 
-typedef _ctx_type_16 process_noteOn_type;
+typedef _ctx_type_16 noteOn_type;
 
-_ctx_type_16 process_noteOn_init();
+_ctx_type_16 noteOn_init();
 
-void process_noteOn(_ctx_type_16 &_ctx, int n);
+void noteOn(_ctx_type_16 &_ctx, int note, int velocity);
 
-typedef _ctx_type_16 process_noteOff_type;
+typedef _ctx_type_16 noteOff_type;
 
-_ctx_type_16 process_noteOff_init();
+_ctx_type_16 noteOff_init();
 
-void process_noteOff(_ctx_type_16 &_ctx, int n);
+void noteOff(_ctx_type_16 &_ctx, int note);
+
+typedef _ctx_type_16 controlChange_type;
+
+_ctx_type_16 controlChange_init();
+
+void controlChange(_ctx_type_16 &_ctx, int control, int value);
+
+typedef _ctx_type_16 default_type;
+
+_ctx_type_16 default_init();
+
+void default_(_ctx_type_16 &_ctx);
 
 
 
