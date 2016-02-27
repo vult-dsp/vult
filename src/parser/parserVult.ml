@@ -320,8 +320,6 @@ and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
    match token.kind,token.value with
    | OP,"-" -> (* Unary minus *)
       unaryOp buffer token
-   | OP,"!" -> (* Unary not *)
-      unaryOp buffer token
    | ID,_   -> (* Id or function call *)
       let id = identifierToken token in
       begin

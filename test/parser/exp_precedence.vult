@@ -10,6 +10,6 @@ fun precedence(){
 	val x = -1+2/3*4 < x || x > y;
 	val x = -1+2/3*4 < x || x > y && z > 0;
 	val x = 1 < x || x > y && z > 0;
-	val x = !x || x > y && z > 0;
-	val x = !x && x > y || z > 0;
+	val x = not(x) || x > y && z > 0;
+	val x = not(x) && x > y || z > 0;
 }
