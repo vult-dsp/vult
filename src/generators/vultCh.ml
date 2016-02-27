@@ -432,22 +432,23 @@ module PrintC = struct
       | _ -> false
 
    let toFixed (n:float) : string =
-      (*let value =
+      let value =
          if n < 0.0 then
             Int32.of_float ((-. n) *. (float_of_int 0x10000))
             |> Int32.lognot
             |> Int32.add Int32.one
          else
             Int32.of_float (n *. (float_of_int 0x10000))
-      in Printf.sprintf "0x%lx /* %f */" value n*)
-      let value =
+      in Printf.sprintf "0x%lx /* %f */" value n
+      (*let value =
          if n < 0.0 then
             int_of_float ((-. n) *. (float_of_int 0x10000))
             |> lnot
             |> (+) 1
+            |> (land) 0xFFFFFFFF
          else
             int_of_float (n *. (float_of_int 0x10000))
-      in Printf.sprintf "0x%x /* %f */" value n
+      in Printf.sprintf "0x%x /* %f */" value n*)
 
    let rec printExp (params:parameters) buffer (e:cexp) : unit =
       match e with
