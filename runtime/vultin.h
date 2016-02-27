@@ -130,6 +130,16 @@ static inline float float_clip(float value, float low, float high){
     return value<low?low:(value>high?high:value);
 }
 
+/* Array get and set */
+static inline void    float_set(float a[], int i, float value)   { a[i] = value; }
+static inline float   float_get(float a[], int i)                { return a[i]; }
+static inline void    fix_set(int32_t a[], int i, int32_t value) { a[i] = value; }
+static inline int32_t fix_get(int32_t a[], int i)                { return a[i]; }
+static inline void    int_set(int a[], int i, int value)         { a[i] = value; }
+static inline int     int_get(int a[], int i)                    { return a[i]; }
+static inline void    bool_set(int8_t a[], int i, int8_t value)  { a[i] = value; }
+static inline int8_t  bool_get(int8_t a[], int i)                { return a[i]; }
+
 #ifdef __cplusplus
 }
 #endif

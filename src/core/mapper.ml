@@ -157,6 +157,7 @@ let map_attr (mapper:'a mapper) (state:'a) (attr:attr) : 'a * attr =
 let rec map_vtype_c (mapper:'a mapper) (state:'a) (te:VType.vtype) : 'a * VType.vtype =
    let map_vtype_list = mapper_list map_vtype in
    match te with
+   | VType.TInt(_,_)
    | VType.TUnbound(_,_,_) ->
       state,te
    | VType.TId(id,loc) ->
@@ -247,6 +248,10 @@ let rec map_exp (mapper:'state mapper) (state:'state) (exp:exp) : 'state * exp =
       let state',id'   = map_id mapper state id in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.exp state' (PId(id',attr'))
+   | PArray(elems,attr) ->
+      let state',elems'= map_exp_list mapper state elems in
+      let state',attr' = map_attr mapper state' attr in
+      apply mapper.exp state' (PArray(elems',attr'))
    | PEmpty -> apply mapper.exp state exp
    | PUnOp(op,e,attr) ->
       let state',e' = map_exp mapper state e in

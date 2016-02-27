@@ -34,6 +34,9 @@ let builtin_table =
       ["real"] , `Type, VType.Constants.type_type, true;
       ["bool"] , `Type, VType.Constants.type_type, true;
 
+      ["set"] , `Function, VType.Constants.array_set (), false;
+      ["get"] , `Function, VType.Constants.array_get (), false;
+
       ["abs"]  , `Function, VType.Constants.real_real (), false;
       ["exp"]  , `Function, VType.Constants.real_real (), false;
       ["sin"]  , `Function, VType.Constants.real_real (), false;

@@ -44,6 +44,8 @@ let rec typeExpressionBuff buffer (tp:VType.t) =
    match !tp with
    | VType.TId(id,_) ->
       identifierBuff buffer id
+   | VType.TInt(n,_) ->
+      append buffer (string_of_int n)
    | VType.TComposed(id,args,_) ->
       identifierBuff buffer id;
       append buffer "(";
@@ -115,6 +117,10 @@ and expressionBuff buffer (exp:exp) =
    | PReal(s,_) -> append buffer (string_of_float s)
    | PBool(true,_)  -> append buffer "true"
    | PBool(false,_) -> append buffer "false"
+   | PArray(elems,_) ->
+      append buffer "[";
+      printList buffer expressionBuff ", " elems;
+      append buffer "]"
    | POp(op,args,_) ->
       append buffer "(";
       printList buffer expressionBuff (" "^op^" ") args;

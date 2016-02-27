@@ -44,6 +44,7 @@ let parser_files =
       "exp_basic.vult";
       "exp_misc.vult";
       "exp_precedence.vult";
+      "exp_array.vult";
       "exp_tuples.vult";
       "types_basic.vult";
    ]

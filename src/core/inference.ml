@@ -59,15 +59,36 @@ let unifyRaise (loc:Loc.t Lazy.t) (t1:VType.t) (t2:VType.t) : unit =
             print_endline msg
          end
 
-let checkType (loc:Loc.t Lazy.t) (env:'a Env.t) (typ:VType.t) : unit =
-   match typ with
-   | { contents = VType.TId(name,_) } ->
+let rec checkType (loc:Loc.t Lazy.t) (env:'a Env.t) (typ:VType.t) : unit =
+   match !typ with
+   | VType.TId(name,_) ->
       let _ =
          try Env.lookup `Type env name with | _ ->
          let msg = Printf.sprintf "The type '%s' of this variable is unknown" (idStr name) in
          Error.raiseError msg (Lazy.force loc)
       in ()
-   | _ -> ()
+   | VType.TComposed(["array"],[kind;{contents = VType.TInt(_,_)}],_) ->
+      checkType loc env kind
+
+   | VType.TComposed(["array"],_,_)  ->
+      let msg = Printf.sprintf "This array type is invalid '%s'. Arrays are described as array(kind,size)." (PrintTypes.typeStr typ) in
+      Error.raiseError msg (Lazy.force loc)
+
+   | VType.TComposed(name,_,_)  ->
+      let msg = Printf.sprintf "Unknow composed type '%s'." (idStr name) in
+      Error.raiseError msg (Lazy.force loc)
+
+   | VType.TArrow(t1,t2,_) ->
+      checkType loc env t1;
+      checkType loc env t2;
+
+   | VType.TLink(t) -> checkType loc env t
+
+   | VType.TExpAlt(elems) ->
+      List.iter (checkType loc env) elems
+
+   | VType.TInt(_,_) -> ()
+   | VType.TUnbound(_,_,_) -> ()
 
 let rec unifyListSameType (args:exp list) (types:VType.t list) (common_type:VType.t) =
    match args, types with
@@ -118,9 +139,6 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
          e',tpi
    | LGroup(eg,_) ->
       inferLhsExp mem_var env eg
-
-
-
 
 let rec addLhsToEnv mem_var (env:'a Env.t) (lhs:lhs_exp) : 'a Env.t =
    match lhs with
@@ -174,6 +192,11 @@ let unifyReturn (loc:Loc.t Lazy.t) (typ1:return_type) (typ2:return_type) : retur
    | GivenType(rt), GivenType(gt) ->
       unifyRaise loc gt rt;
       GivenType(rt)
+
+let unifyArrayElem (loc:Loc.t Lazy.t) (t1:VType.t) (t2:VType.t) =
+   if not (VType.unify t1 t2) then
+   let msg = Printf.sprintf "This expression has type '%s' but the previous members of the array have type '%s'" (PrintTypes.typeStr t2) (PrintTypes.typeStr t1) in
+   Error.raiseError msg (Lazy.force loc)
 
 let getReturnType (typ:return_type) : VType.t =
    match typ with
@@ -243,6 +266,10 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
          try let _,typ,_ = Env.lookup `Variable env id in typ
          with | _ -> Error.raiseError ("Undefined symbol '" ^ (PrintTypes.identifierStr id)^"'") attr.loc in
       PId(id, { attr with typ = Some(typ) }), env, typ
+   | PArray(elems,attr) ->
+      let elems',env', atype, n = inferArrayElems env elems in
+      let typ = ref (VType.TComposed(["array"],[atype;ref (VType.TInt(n,None))],None)) in
+      PArray(elems',{ attr with typ = Some(typ) }), env', typ
    | PGroup(e,_) ->
       inferExp env e
    | PTuple(elems,attr) ->
@@ -312,6 +339,18 @@ and inferExpList (env:'a Env.t) (elems:exp list) : exp list * 'a Env.t * VType.t
       ([],env,[])
       elems
    in List.rev elems', env', List.rev types
+
+and inferArrayElems (env:'a Env.t) (elems:exp list) : exp list * 'a Env.t * VType.t * int =
+   let atype = VType.newvar() in
+   let elems',env',count =
+      List.fold_left (fun (elems,env,count) a ->
+         let a',env',typ = inferExp env a in
+         unifyArrayElem (expLoc a') atype typ;
+         a' :: elems,env',count+1)
+      ([],env,0)
+      elems
+   in
+   List.rev elems', env', atype, count
 
 and inferOptExp (env:'a Env.t) (e:exp option) : exp option * 'a Env.t * VType.t =
    match e with

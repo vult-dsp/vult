@@ -11,6 +11,8 @@ function vultProcess(){
     this.tan  = function(x)          { return Math.tan(x); };
     this.tanh = function(x)          { return Math.tanh(x); };
     this.sqrt = function(x)          { return x; };
+    this.set  = function(a,i,v)      { a[i]=v; };
+    this.get  = function(a,i)        { return a[i]; };
     this.process_init = null;
     this.default_ = null;
 

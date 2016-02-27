@@ -1,15 +1,20 @@
 open TypesVult
 open PrintBuffer
 
+type type_descr =
+   | CTSimple of string
+   | CTArray  of type_descr * int
+
 type arg_type =
-   | Ref of string
-   | Var of string
+   | Ref of type_descr
+   | Var of type_descr
 
 type cexp =
    | CEInt    of int
    | CEFloat  of float
    | CEBool   of bool
    | CEString of string
+   | CEArray  of cexp list
    | CECall   of string * cexp list
    | CEUnOp   of string * cexp
    | CEOp     of string * cexp list
@@ -20,19 +25,19 @@ type cexp =
 
 type clhsexp =
    | CLWild
-   | CLId    of string * string
+   | CLId    of type_descr * string
    | CLTuple of clhsexp list
 
 type cstmt =
    | CSVarDecl  of clhsexp * cexp option
    | CSBind     of clhsexp * cexp
-   | CSFunction of string * string * (arg_type * string) list * cstmt
+   | CSFunction of type_descr * string * (arg_type * string) list * cstmt
    | CSReturn   of cexp
    | CSWhile    of cexp * cstmt
    | CSBlock    of cstmt list
    | CSIf       of cexp * cstmt * cstmt option
-   | CSType     of string * (string * string) list
-   | CSAlias    of string * string
+   | CSType     of string * (type_descr * string) list
+   | CSAlias    of string * type_descr
    | CSEmpty
 
 type real_type =
@@ -115,17 +120,21 @@ let convertId (id:id) : string =
 let underscoreId (id:id) : string =
    join "_" id
 
-let rec convertType params (tp:VType.t) : string =
+let rec convertType params (tp:VType.t) : type_descr =
    match !tp with
-   | VType.TId(["real"],_) when params.real = Float -> "float"
-   | VType.TId(["real"],_) when params.real = Fixed -> "int32_t"
-   | VType.TId(["bool"],_) -> "uint8_t"
-   | VType.TId(["unit"],_) -> "void"
-   | VType.TId(id,_) -> underscoreId id
-   | VType.TComposed(["tuple"],_,_) -> VType.getTupleName tp
+   | VType.TId(["real"],_) when params.real = Float -> CTSimple("float")
+   | VType.TId(["real"],_) when params.real = Fixed -> CTSimple("int32_t")
+   | VType.TId(["bool"],_) -> CTSimple("uint8_t")
+   | VType.TId(["unit"],_) -> CTSimple("void")
+   | VType.TId(id,_) -> CTSimple(underscoreId id)
+   | VType.TComposed(["tuple"],_,_) -> CTSimple(VType.getTupleName tp)
+   | VType.TComposed(["array"],[kind;{ contents = VType.TInt(n,_)}],_) ->
+      let sub = convertType params kind in
+      CTArray(sub,n)
    | VType.TComposed(_,_,_) ->
       failwith ("VultCh.convertType: unsupported type in c code generation" ^ PrintTypes.typeStr tp)
    | VType.TLink(tp) -> convertType params tp
+   | VType.TInt _
    | VType.TArrow _
    | VType.TUnbound _
    | VType.TExpAlt _ ->
@@ -206,10 +215,16 @@ let convertOperator params (op:string) (typ:VType.t) (elems:cexp list) : VType.t
 
    | _ -> typ, CEOp(op,elems)
 
-let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) : VType.t * cexp =
+let getFunctionSetType (elem_typs:VType.t list) : VType.t =
+   match elem_typs with
+   | [_;_;v] -> v
+   | _ -> failwith "VultCh.getFunctionSetType: this is not a call to 'set'"
+
+let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) (elem_typs:VType.t list): VType.t * cexp =
    let is_float = (params.real = Float) && (isReal typ) in
    let is_fixed = (params.real = Fixed) && (isReal typ) in
    let is_int   = (isInt typ) in
+   let is_bool  = (isBool typ) in
    let fixed_fn =
       match fn with
       | ["abs"]   when is_float -> `FunctionName(["fabsf"])
@@ -233,8 +248,25 @@ let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) : VType.t * c
       | ["tan"]   when is_fixed -> `FunctionName(["fix_tan"])
       | ["tanh"]  when is_fixed -> `FunctionName(["fix_tanh"])
       | ["clip"]  when is_fixed -> `FunctionName(["fix_clip"])
+      | ["set"]   when is_fixed -> `FunctionName(["fix_set"])
 
       | ["clip"]  when is_int   -> `FunctionName(["int_clip"])
+
+      | ["get"]   when is_float -> `FunctionName(["float_get"])
+      | ["get"]   when is_fixed -> `FunctionName(["fix_get"])
+      | ["get"]   when is_int   -> `FunctionName(["int_get"])
+      | ["get"]   when is_bool  -> `FunctionName(["bool_get"])
+
+      | ["set"] ->
+         begin
+            match getFunctionSetType elem_typs with
+            | t when isReal t && params.real = Float ->`FunctionName(["float_set"])
+            | t when isReal t && params.real = Fixed ->`FunctionName(["fix_set"])
+            | t when isInt t ->`FunctionName(["int_set"])
+            | t when isBool t ->`FunctionName(["bool_set"])
+            | _ -> failwith "Invalid type of array"
+         end
+
       | ["not"] -> `UnOperatorName("!")
       | _ -> `FunctionName(fn)
    in
@@ -249,6 +281,9 @@ let rec convertExp params (e:exp) : VType.t * cexp =
    | PInt(n,attr)      -> attrType attr, CEInt(n)
    | PReal(v,attr)     -> attrType attr, CEFloat(v)
    | PId(id,attr)      -> attrType attr, CEVar(convertId id)
+   | PArray(elems,attr) ->
+      let _, elems' = convertExpList params elems in
+      attrType attr, CEArray(elems')
    | PUnOp("|-|",e1,attr) ->
       let _, e1' = convertExp params e1 in
       attrType attr, CEUnOp("-",e1')
@@ -267,9 +302,9 @@ let rec convertExp params (e:exp) : VType.t * cexp =
       else
          to_typ, arg'
    | PCall(_,name,elems,attr) ->
-      let _, elems' = convertExpList params elems in
+      let elem_typ, elems' = convertExpList params elems in
       let typ = attrType attr in
-      convertFunction params name typ elems'
+      convertFunction params name typ elems' elem_typ
    | PIf(cond,then_,else_,attr) ->
       let _, cond'  = convertExp params cond in
       let _, then_' = convertExp params then_ in
@@ -353,13 +388,21 @@ let rec convertStmt params (s:stmt) : cstmt =
       let stmts' = convertStmtList params stmts in
       CSBlock(stmts')
    | StmtType(name,members,_) ->
-      let type_name    = convertType params name in
+      let type_name =
+         match convertType params name with
+         | CTSimple(t) -> t
+         | _ -> failwith "VultCh.convertStmt: invalid alias type"
+      in
       let member_pairs = List.map (fun (id,typ,_) -> convertType params typ, convertId id) members in
       CSType(type_name,member_pairs)
    | StmtAliasType(t1,t2,_) ->
       let t1_name    = convertType params t1 in
-      let t2_name    = convertType params t2 in
-      CSAlias(t2_name,t1_name)
+      let type_name =
+         match convertType params t2 with
+         | CTSimple(t) -> t
+         | _ -> failwith "VultCh.convertStmt: invalid alias type"
+      in
+      CSAlias(type_name,t1_name)
    | StmtEmpty       -> CSEmpty
    | StmtExternal _  -> CSEmpty
 
@@ -411,6 +454,10 @@ module PrintC = struct
          if n < 0 then append buffer ")"
       | CEBool(v)   -> append buffer (if v then "1" else "0")
       | CEString(s) -> append buffer ("\"" ^ s ^ "\"")
+      | CEArray(elems) ->
+         append buffer "{";
+         printList buffer (printExp params) "," elems;
+         append buffer "}"
       | CECall(name,args) ->
          append buffer name;
          append buffer "(";
@@ -457,15 +504,73 @@ module PrintC = struct
       | "default" -> true
       | _ -> false
 
+   let rec simplifyArray (typ:type_descr) : string * string list =
+      match typ with
+      | CTSimple(name) -> name, []
+      | CTArray(sub,size) ->
+         let name,sub_size = simplifyArray sub in
+         name, sub_size @ [string_of_int size]
+
+   let printTypeDescr buffer (typ:type_descr) =
+      let kind, sizes = simplifyArray typ in
+      match sizes with
+      | [] ->
+         append buffer kind
+      | _ ->
+         append buffer kind;
+         append buffer "[";
+         printList buffer append ", " sizes;
+         append buffer "]"
+
    let printLhsExpTuple buffer (var:string) (is_var:bool) (i:int) (e:clhsexp) : unit =
       match e with
-      | CLId(typ,name) ->
+      | CLId(CTSimple(typ),name) ->
          if is_var then (append buffer typ; append buffer " ");
          append buffer name;
          append buffer " = ";
          append buffer var;
          append buffer (".field_"^(string_of_int i));
-         append buffer "; ";
+         append buffer "; "
+      | CLId(typ,name) ->
+         let kind, sizes = simplifyArray typ in
+         if is_var then (append buffer kind; append buffer " ");
+         append buffer name;
+         if is_var then begin
+            append buffer "[";
+            printList buffer append ", " sizes;
+            append buffer "]"
+         end;
+         append buffer " = ";
+         append buffer var;
+         append buffer (".field_"^(string_of_int i));
+         append buffer "; "
+      | CLWild -> ()
+
+      | _ -> failwith "printLhsExpTuple: All other cases should be already covered"
+
+   let printArrayBinding params buffer (var:string) (i:int) (e:cexp) : unit =
+      append buffer var;
+      append buffer "[";
+      append buffer (string_of_int i);
+      append buffer "] = ";
+      printExp params buffer e;
+      append buffer "; "
+
+
+   let printLhsExp buffer (is_var:bool) (e:clhsexp) : unit =
+      match e with
+      | CLId(CTSimple(typ),name) ->
+         if is_var then (append buffer typ; append buffer " ");
+         append buffer name;
+      | CLId(typ,name) ->
+         let kind, sizes = simplifyArray typ in
+         if is_var then (append buffer kind; append buffer " ");
+         append buffer name;
+         if is_var then begin
+            append buffer "[";
+            printList buffer append ", " sizes;
+            append buffer "]"
+         end;
       | CLWild -> ()
 
       | _ -> failwith "printLhsExp: All other cases should be already covered"
@@ -473,11 +578,11 @@ module PrintC = struct
    let printFunArg buffer (ntype,name) =
       match ntype with
       | Var(typ) ->
-         append buffer typ;
+         printTypeDescr buffer typ;
          append buffer " ";
          append buffer name
       | Ref(typ) ->
-         append buffer typ;
+         printTypeDescr buffer typ;
          append buffer " &";
          append buffer name
 
@@ -488,18 +593,14 @@ module PrintC = struct
          printExp params buffer value;
          append buffer ";";
          true
-      | CSVarDecl(CLId(ntype,name),Some(value)) ->
-         append buffer ntype;
-         append buffer " ";
-         append buffer name;
+      | CSVarDecl((CLId(_,_) as lhs),Some(value)) ->
+         printLhsExp buffer true lhs;
          append buffer " = ";
          printExp params buffer value;
          append buffer ";";
          true
-      | CSVarDecl(CLId(ntype,name),None) ->
-         append buffer ntype;
-         append buffer " ";
-         append buffer name;
+      | CSVarDecl((CLId(_,_) as lhs),None) ->
+         printLhsExp buffer true lhs;
          append buffer ";";
          true
       | CSVarDecl(CLTuple(elems),Some(CEVar(name))) ->
@@ -514,6 +615,9 @@ module PrintC = struct
          List.iteri (printLhsExpTuple buffer name false) elems;
          true
       | CSBind(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
+      | CSBind(CLId(_,name),CEArray(elems)) ->
+         List.iteri (printArrayBinding params buffer name) elems;
+         true
       | CSBind(CLId(_,name),value) ->
          append buffer name;
          append buffer " = ";
@@ -521,7 +625,7 @@ module PrintC = struct
          append buffer ";";
          true
       | CSFunction(ntype,name,args,(CSBlock(_) as body)) ->
-         append buffer ntype;
+         printTypeDescr buffer ntype;
          append buffer " ";
          append buffer name;
          append buffer "(";
@@ -534,7 +638,7 @@ module PrintC = struct
          newline buffer;
          true
       | CSFunction(ntype,name,args,body) ->
-         append buffer ntype;
+         printTypeDescr buffer ntype;
          append buffer " ";
          append buffer name;
          append buffer "(";
@@ -591,7 +695,7 @@ module PrintC = struct
          indent buffer;
          List.iter
             (fun (typ, name) ->
-                append buffer typ;
+                printTypeDescr buffer typ;
                 append buffer " ";
                 append buffer name;
                 append buffer ";";
@@ -608,7 +712,7 @@ module PrintC = struct
          append buffer "typedef ";
          append buffer t1;
          append buffer " ";
-         append buffer t2;
+         printTypeDescr buffer t2;
          append buffer ";";
          newline buffer;
          true

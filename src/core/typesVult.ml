@@ -72,6 +72,9 @@ type exp =
    | PId
       of id    (* name *)
       *  attr
+   | PArray
+      of exp list
+      * attr
    | PUnOp
       of string      (* operator *)
       *  exp

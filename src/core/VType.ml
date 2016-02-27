@@ -32,6 +32,7 @@ type vtype =
    | TArrow    of t * t * Loc.t option
    | TLink     of t
    | TExpAlt   of t list
+   | TInt      of int * Loc.t option
    [@@deriving show,eq,ord]
 
 and t = vtype ref
@@ -48,6 +49,8 @@ let rec unlink t =
       { contents = TExpAlt(List.map unlink elems) }
    | { contents = TId(id,_) } ->
       { contents = TId(id,None) }
+   | { contents = TInt(n,_) } ->
+      { contents = TInt(n,None) }
    | { contents = TUnbound(name,level,_) } ->
       { contents = TUnbound(name,level,None) }
 
@@ -112,6 +115,9 @@ let newinst (t:t) : t =
             o, ((t,o) :: table)
          | TId(id,loc) ->
             let o = ref (TId(id,loc)) in
+            o, (t,o) :: table
+         | TInt(n,loc) ->
+            let o = ref (TInt(n,loc)) in
             o, (t,o) :: table
          | TComposed(id,elems,loc) ->
             let elems', table' = copyList table elems in
@@ -179,6 +185,7 @@ let rec isUnbound (t:t) : bool =
    match t with
    | { contents = TUnbound(_,_,_) } -> true
    | { contents = TId(_,_) } -> false
+   | { contents = TInt(_,_) } -> false
    | { contents = TComposed(_,elems,_) } -> List.exists isUnbound elems
    | { contents = TArrow(t1,t2,_) } ->
       isUnbound t1 || isUnbound t2
@@ -196,7 +203,13 @@ let rec location (t:t) =
    | { contents = TLink(t) } -> location t
    | { contents = TExpAlt(elems) } ->
       List.fold_left (fun s a -> Loc.merge s (location a)) Loc.default elems
-   | _ -> Loc.default
+   | { contents = TInt(_,Some(loc)) } -> loc
+
+   | { contents = TUnbound(_,_,None) }
+   | { contents = TId(_,None) }
+   | { contents = TComposed(_,_,None) }
+   | { contents = TArrow(_,_,None) }
+   | { contents = TInt(_,None) } -> Loc.default
 
 let getLevel = function
    | None -> current_level ()
@@ -213,6 +226,7 @@ let pickLoc (loc1:Loc.t option) (loc2:Loc.t option) : Loc.t option =
 let rec unify (t1:t) (t2:t) : bool =
    if t1 == t2 then true else
    match t1,t2 with
+   | { contents = TInt(n1,_)}, { contents = TInt(n2,_) } when n1 = n2 -> true
    | { contents = TUnbound(n1,level1,loc1)}, { contents = TUnbound(_,level2,loc2) } ->
       let loc = pickLoc loc1 loc2 in
       let level = min (getLevel level1) (getLevel level2) in
@@ -329,5 +343,18 @@ module Constants = struct
 
    let num_real () =
       ref (TArrow(num_type (),real_type,None))
+
+   let array_get () =
+      let a = ref (TUnbound("'a",None,None)) in
+      let size = ref (TUnbound("'size",None,None)) in
+      let array_type = ref (TComposed(["array"],[a;size],None)) in
+      ref (TArrow(array_type,ref (TArrow(int_type,a,None)), None))
+
+   let array_set () =
+      let a = ref (TUnbound("'a",None,None)) in
+      let size = ref (TUnbound("'size",None,None)) in
+      let array_type = ref (TComposed(["array"],[a;size],None)) in
+      ref(TArrow(array_type,ref (TArrow(int_type,ref (TArrow(a,unit_type,None)), None)),None))
+
 
 end

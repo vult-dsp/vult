@@ -7,6 +7,7 @@ type jsexp =
    | JEFloat  of float
    | JEBool   of bool
    | JEString of string
+   | JEArray  of jsexp list
    | JECall   of string * jsexp list
    | JEUnOp   of string * jsexp
    | JEOp     of string * jsexp list
@@ -59,6 +60,8 @@ module Templates = struct
     this.tan  = function(x)          { return Math.tan(x); };
     this.tanh = function(x)          { return Math.tanh(x); };
     this.sqrt = function(x)          { return x; };
+    this.set  = function(a,i,v)      { a[i]=v; };
+    this.get  = function(a,i)        { return a[i]; };
     this.process_init = null;
     this.default_ = null;
 "^code^"
@@ -118,9 +121,10 @@ let rec convertExp (e:exp) : jsexp =
    | PInt(n,_)       -> JEInteger(n)
    | PReal(v,_)      -> JEFloat(v)
    | PId(id,_)       -> JEVar(convertId id)
+   | PArray(elems,_) -> JEArray(convertExpList elems)
    | PUnOp("|-|",e1,_)-> JEUnOp("-", convertExp e1)
    | PUnOp(op,e1,_)  -> JEUnOp(op, convertExp e1)
-   | POp(op,elems,_) -> JEOp(fixOp op, convertExpList elems )
+   | POp(op,elems,_) -> JEOp(fixOp op, convertExpList elems)
    | PCall(_,name,args,_)    -> JECall(convertId name, convertExpList args)
    | PIf(cond,then_,else_,_) -> JEIf(convertExp cond, convertExp then_, convertExp else_)
    | PGroup(e1,_)    -> convertExp e1
@@ -185,6 +189,10 @@ let rec printExp buffer (e:jsexp) : unit =
       if n < 0.0 then append buffer ")"
    | JEBool(v)   -> append buffer (if v then "true" else "false")
    | JEString(s) -> append buffer ("\"" ^ s ^ "\"")
+   | JEArray(elems) ->
+      append buffer "[";
+      printExpList buffer "," elems;
+      append buffer "]"
    | JECall(name,args) ->
       append buffer "this.";
       append buffer name;

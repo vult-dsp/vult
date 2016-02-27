@@ -178,13 +178,17 @@ module CreateInitFunction = struct
       | h::t -> h :: (getFunctioTypeName t)
 
    let rec getInitValue (tp:VType.t) : exp =
-      match tp with
-      | { contents = VType.TId(["real"],_) } -> PReal(0.0,{ emptyAttr with typ = Some(tp)})
-      | { contents = VType.TId(["int"],_) } -> PInt(0,{ emptyAttr with typ = Some(tp)})
-      | { contents = VType.TId(["bool"],_) } -> PBool(false,{ emptyAttr with typ = Some(tp)})
-      | { contents = VType.TId(name,_) } ->
+      match !tp with
+      | VType.TId(["real"],_) -> PReal(0.0,{ emptyAttr with typ = Some(tp)})
+      | VType.TId(["int"],_)  -> PInt(0,{ emptyAttr with typ = Some(tp)})
+      | VType.TId(["bool"],_) -> PBool(false,{ emptyAttr with typ = Some(tp)})
+      | VType.TId(name,_) ->
          PCall(None,getInitFunctioName name,[],{ emptyAttr with typ = Some(tp)})
-      | { contents = VType.TLink(tp) } ->
+      | VType.TComposed(["array"],[sub;{ contents = VType.TInt(size,_) }],_) ->
+         let sub_init = getInitValue sub in
+         let elems = CCList.init size (fun _ -> sub_init) in
+         PArray(elems,{ emptyAttr with typ = Some(tp)})
+      | VType.TLink(tp) ->
          getInitValue tp
       | _ -> failwith "getInitValue"
 

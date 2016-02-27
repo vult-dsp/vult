@@ -69,6 +69,7 @@ let getExpLocation (e:exp) : Loc.t =
    | PIf(_,_,_,attr)
    | PGroup(_,attr)
    | PTuple(_,attr)
+   | PArray(_,attr)
    | PSeq(_,_,attr) -> attr.loc
    | PEmpty -> Loc.default
 
@@ -223,6 +224,8 @@ and type_nud (buffer:Stream.stream) (token:'kind token) : VType.t =
                   ref (VType.TComposed(["tuple"],el, Some(start_loc)))
             end
       end
+   | INT ->
+      ref (VType.TInt(int_of_string token.value, Some(token.loc)))
    | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
@@ -375,6 +378,21 @@ and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
       let stmts = pseqList buffer in
       let attr  = makeAttr token.loc in
       PSeq(None,StmtBlock(None,stmts,attr),attr)
+   | LBRACK,_ ->
+      begin
+         let start_loc = token.loc in
+         match Stream.peek buffer with
+         | RBRACK ->
+            let attr  = makeAttr start_loc in
+            let _     = Stream.consume buffer RBRACK in
+            PArray([],attr)
+         | _ ->
+            let start_loc = token.loc in
+            let elems = expressionList buffer in
+            let _     = Stream.consume buffer RBRACK in
+            let attr  = makeAttr start_loc in
+            PArray(elems,attr)
+      end
    | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
