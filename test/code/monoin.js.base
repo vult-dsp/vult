@@ -20,101 +20,53 @@ function vultProcess(){
 this._ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.pre = ((0|0)|0);
-   _ctx.n4 = ((0|0)|0);
-   _ctx.n3 = ((0|0)|0);
-   _ctx.n2 = ((0|0)|0);
-   _ctx.n1 = ((0|0)|0);
+   _ctx.notes = [(0|0),(0|0),(0|0),(0|0)];
    _ctx.count = ((0|0)|0);
    return _ctx;
 }
-this. noteOn_init = function() { return this._ctx_type_0_init();}
-this.noteOn = function(_ctx,n){
-   if((_ctx.count == (0|0))){
-      _ctx.n1 = (n|0);
+this. mono_noteOn_init = function() { return this._ctx_type_0_init();}
+this.mono_noteOn = function(_ctx,n){
+   if((_ctx.count < (4|0))){
+      this.set(_ctx.notes,_ctx.count,n);
       _ctx.pre = (n|0);
-   }
-   else
-   {
-      if((_ctx.count == (1|0))){
-         _ctx.n2 = (n|0);
-         _ctx.pre = (n|0);
+      if((_ctx.count < (4|0))){
+         _ctx.count = ((_ctx.count + (1|0))|0);
       }
-      else
-      {
-         if((_ctx.count == (2|0))){
-            _ctx.n3 = (n|0);
-            _ctx.pre = (n|0);
-         }
-         else
-         {
-            if((_ctx.count == (3|0))){
-               _ctx.n4 = (n|0);
-               _ctx.pre = (n|0);
-            }
-         }
-      }
-   }
-   if((_ctx.count <= (4|0))){
-      _ctx.count = ((_ctx.count + (1|0))|0);
    }
    return _ctx.pre;
 }
 
-this. noteOff_init = function() { return this._ctx_type_0_init();}
-this.noteOff = function(_ctx,n){
+this. mono_noteOff_init = function() { return this._ctx_type_0_init();}
+this.mono_noteOff = function(_ctx,n){
    var found = false;
-   if((n == _ctx.n1)){
-      var _tmp_0 = (_ctx.n2|0);
-      var _tmp_1 = (_ctx.n3|0);
-      var _tmp_2 = (_ctx.n4|0);
-      _ctx.n1 = (_tmp_0|0);
-      _ctx.n2 = (_tmp_1|0);
-      _ctx.n3 = (_tmp_2|0);
-      found = true;
+   var pos = {};
+   var i = ((0|0)|0);
+   if((_ctx.count == (0|0))){
+      return _ctx.pre;
    }
-   else
-   {
-      if((n == _ctx.n2)){
-         var _tmp_0 = (_ctx.n3|0);
-         var _tmp_1 = (_ctx.n4|0);
-         _ctx.n2 = (_tmp_0|0);
-         _ctx.n3 = (_tmp_1|0);
+   while((i < (4|0))){
+      if(((this.get(_ctx.notes,i) == n) && this.not(found))){
+         pos = (i|0);
          found = true;
       }
-      else
-      {
-         if((n == _ctx.n3)){
-            _ctx.n3 = (_ctx.n4|0);
-            found = true;
-         }
-         else
-         {
-            if((n == _ctx.n4)){
-               found = true;
-            }
-         }
+      i = ((i + (1|0))|0);
+   }
+   if(found){
+      var k = ((pos + (1|0))|0);
+      while((k < (4|0))){
+         this.set(_ctx.notes,(k + (-1|0)),this.get(_ctx.notes,k));
+         k = ((k + (1|0))|0);
       }
-   }
-   if((found && (_ctx.count > (0|0)))){
-      _ctx.count = ((_ctx.count + (-1|0))|0);
-   }
-   if((_ctx.count == (1|0))){
-      _ctx.pre = (_ctx.n1|0);
-   }
-   if((_ctx.count == (2|0))){
-      _ctx.pre = (_ctx.n2|0);
-   }
-   if((_ctx.count == (3|0))){
-      _ctx.pre = (_ctx.n3|0);
-   }
-   if((_ctx.count == (4|0))){
-      _ctx.pre = (_ctx.n4|0);
+      if((found && (_ctx.count > (0|0)))){
+         _ctx.count = ((_ctx.count + (-1|0))|0);
+         _ctx.pre = (this.get(_ctx.notes,(_ctx.count + (-1|0)))|0);
+      }
    }
    return _ctx.pre;
 }
 
-this. isGateOn_init = function() { return this._ctx_type_0_init();}
-this.isGateOn = function(_ctx){
+this. mono_isGateOn_init = function() { return this._ctx_type_0_init();}
+this.mono_isGateOn = function(_ctx){
    return (_ctx.count > (0|0));
 }
 

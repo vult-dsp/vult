@@ -6,32 +6,29 @@
 
 typedef struct _ctx_type_0 {
    int pre;
-   int n4;
-   int n3;
-   int n2;
-   int n1;
+   int notes[4];
    int count;
 } _ctx_type_0;
 
-typedef _ctx_type_0 noteOn_type;
+typedef _ctx_type_0 mono_noteOn_type;
 
 _ctx_type_0 _ctx_type_0_init();
 
-_ctx_type_0 noteOn_init();
+_ctx_type_0 mono_noteOn_init();
 
-int noteOn(_ctx_type_0 &_ctx, int n);
+int mono_noteOn(_ctx_type_0 &_ctx, int n);
 
-typedef _ctx_type_0 noteOff_type;
+typedef _ctx_type_0 mono_noteOff_type;
 
-_ctx_type_0 noteOff_init();
+_ctx_type_0 mono_noteOff_init();
 
-int noteOff(_ctx_type_0 &_ctx, int n);
+int mono_noteOff(_ctx_type_0 &_ctx, int n);
 
-typedef _ctx_type_0 isGateOn_type;
+typedef _ctx_type_0 mono_isGateOn_type;
 
-_ctx_type_0 isGateOn_init();
+_ctx_type_0 mono_isGateOn_init();
 
-uint8_t isGateOn(_ctx_type_0 &_ctx);
+uint8_t mono_isGateOn(_ctx_type_0 &_ctx);
 
 
 

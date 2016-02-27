@@ -3,43 +3,54 @@
  * like a monophonic sinthesizer that can hold 4 notes */
 
 // Activates a note and returns the current note value
-fun noteOn(n:int){
-   mem n1,n2,n3,n4;
-   mem (count:int),pre;
-   // written this way because Vult does not have array support yet.
-   if(count == 0) { n1 = n; pre = n; } else
-   if(count == 1) { n2 = n; pre = n; } else
-   if(count == 2) { n3 = n; pre = n; } else
-   if(count == 3) { n4 = n; pre = n; }
-   if(count <= 4) count = count + 1;
+fun mono_noteOn(n:int){
+   mem count,pre;
+   mem notes : array(int,4);
+   // Do not add more that the size of array
+   if(count < 4) {
+     _ = set(notes,count,n);
+     pre = n;
+     if(count < 4) count = count + 1;
+   }
    return pre;
 }
 
 // Deactivates a note and returns the following note value;
-and noteOff(n:int){
-   mem n1,n2,n3,n4;
+and mono_noteOff(n:int){
    mem count,pre;
+   mem notes : array(int,4);
    val found = false;
-
-   // finds the voice and removes it
-   if(n == n1) { n1,n2,n3 = n2,n3,n4; found = true; } else
-   if(n == n2) { n2,n3    = n3,n4;    found = true; } else
-   if(n == n3) { n3       = n4;       found = true; } else
-   if(n == n4) {                      found = true; }
-
-   // If found, decrease the number of active notes
-   if(found && count>0) count = count - 1;
-
-   if(count == 1) pre = n1;
-   if(count == 2) pre = n2;
-   if(count == 3) pre = n3;
-   if(count == 4) pre = n4;
+   val pos;
+   val i = 0;
+   // if there are no notes, no dot do anything
+   if(count == 0)
+      return pre;
+   // Finds the location of the note
+   while(i < 4){
+      if(get(notes,i) == n && not(found)) {
+         pos = i;
+         found = true;
+      }
+      i = i + 1;
+   }
+   // if the note was found moves all the notes one location
+   if(found) {
+      val k = pos + 1;
+      while(k < 4) {
+         _ = set(notes,k-1,get(notes,k));
+         k = k + 1;
+      }
+      // If found, decrease the number of active notes
+      if(found && count>0) {
+         count = count - 1;
+         pre = get(notes,count - 1);
+      }
+   }
    return pre;
 }
 
 // Returns 1 if any note is active
-and isGateOn(){
-   mem n1,n2,n3,n4;
-   mem count,pre;
-   return count>0;
+and mono_isGateOn() {
+   mem count;
+   return count > 0;
 }
