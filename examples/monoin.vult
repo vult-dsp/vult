@@ -7,10 +7,10 @@ fun mono_noteOn(n:int){
    mem count,pre;
    mem notes : array(int,4);
    // Do not add more that the size of array
-   if(count < 4) {
+   if(count < size(notes)) {
      _ = set(notes,count,n);
      pre = n;
-     if(count < 4) count = count + 1;
+     if(count < size(notes)) count = count + 1;
    }
    return pre;
 }
@@ -26,7 +26,7 @@ and mono_noteOff(n:int){
    if(count == 0)
       return pre;
    // Finds the location of the note
-   while(i < 4){
+   while(i < size(notes)){
       if(get(notes,i) == n && not(found)) {
          pos = i;
          found = true;
@@ -36,7 +36,7 @@ and mono_noteOff(n:int){
    // if the note was found moves all the notes one location
    if(found) {
       val k = pos + 1;
-      while(k < 4) {
+      while(k < size(notes)) {
          _ = set(notes,k-1,get(notes,k));
          k = k + 1;
       }

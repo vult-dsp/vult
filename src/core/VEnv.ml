@@ -36,6 +36,7 @@ let builtin_table =
 
       ["set"] , `Function, VType.Constants.array_set (), false;
       ["get"] , `Function, VType.Constants.array_get (), false;
+      ["size"] , `Function, VType.Constants.array_size (), false;
 
       ["abs"]  , `Function, VType.Constants.real_real (), false;
       ["exp"]  , `Function, VType.Constants.real_real (), false;

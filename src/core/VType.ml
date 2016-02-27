@@ -344,6 +344,12 @@ module Constants = struct
    let num_real () =
       ref (TArrow(num_type (),real_type,None))
 
+   let array_size () =
+      let a = ref (TUnbound("'a",None,None)) in
+      let size = ref (TUnbound("'size",None,None)) in
+      let array_type = ref (TComposed(["array"],[a;size],None)) in
+      ref (TArrow(array_type,int_type,None))
+
    let array_get () =
       let a = ref (TUnbound("'a",None,None)) in
       let size = ref (TUnbound("'size",None,None)) in

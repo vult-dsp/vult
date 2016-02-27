@@ -555,6 +555,31 @@ module Simplify = struct
 
 end
 
+module ProcessArrays = struct
+
+   let getArraySize (typ_opt:VType.t option) : int =
+      match typ_opt with
+      | Some(typ) ->
+         begin match VType.unlink typ with
+         | { contents = VType.TComposed(["array"],[_;{ contents = VType.TInt(n,_)}],_)} -> n
+         | _ -> failwith "ProcessArrays.getArraySize: the argument is not an array"
+         end
+      | _ -> failwith "ProcessArrays.getArraySize: type inference should have put a type here"
+
+   let exp : ('a Env.t,exp) Mapper.mapper_func =
+      Mapper.make @@ fun state exp ->
+         match exp with
+         | PCall(None,["size"],[arr],attr) ->
+            let arr_attr = GetAttr.fromExp arr in
+            let size = getArraySize arr_attr.typ in
+            state, PInt(size,attr)
+         | _ ->
+            state, exp
+
+   let mapper = { Mapper.default_mapper with Mapper.exp = exp }
+
+end
+
 (* Basic transformations *)
 let inferPass (state,stmts) =
    let stmts,state,_ = Inference.inferStmtList state Inference.NoType stmts in
@@ -568,6 +593,7 @@ let pass1 =
 
 let pass2 =
    Simplify.mapper
+   |> Mapper.seq ProcessArrays.mapper
 
 let pass3 =
    InsertContext.mapper
