@@ -522,6 +522,20 @@ module PrintC = struct
          printList buffer append ", " sizes;
          append buffer "]"
 
+   let printTypeAndName (is_decl:bool) buffer (typ:type_descr) (name:string) =
+      let kind, sizes = simplifyArray typ in
+      if is_decl then (append buffer kind; append buffer " ");
+      match sizes with
+      | [] ->
+         append buffer name
+      | _ ->
+         append buffer name;
+         if is_decl then begin
+            append buffer "[";
+            printList buffer append ", " sizes;
+            append buffer "]"
+         end
+
    let printLhsExpTuple buffer (var:string) (is_var:bool) (i:int) (e:clhsexp) : unit =
       match e with
       | CLId(CTSimple(typ),name) ->
@@ -532,14 +546,7 @@ module PrintC = struct
          append buffer (".field_"^(string_of_int i));
          append buffer "; "
       | CLId(typ,name) ->
-         let kind, sizes = simplifyArray typ in
-         if is_var then (append buffer kind; append buffer " ");
-         append buffer name;
-         if is_var then begin
-            append buffer "[";
-            printList buffer append ", " sizes;
-            append buffer "]"
-         end;
+         printTypeAndName is_var buffer typ name;
          append buffer " = ";
          append buffer var;
          append buffer (".field_"^(string_of_int i));
@@ -556,21 +563,13 @@ module PrintC = struct
       printExp params buffer e;
       append buffer "; "
 
-
    let printLhsExp buffer (is_var:bool) (e:clhsexp) : unit =
       match e with
       | CLId(CTSimple(typ),name) ->
          if is_var then (append buffer typ; append buffer " ");
          append buffer name;
       | CLId(typ,name) ->
-         let kind, sizes = simplifyArray typ in
-         if is_var then (append buffer kind; append buffer " ");
-         append buffer name;
-         if is_var then begin
-            append buffer "[";
-            printList buffer append ", " sizes;
-            append buffer "]"
-         end;
+         printTypeAndName is_var buffer typ name
       | CLWild -> ()
 
       | _ -> failwith "printLhsExp: All other cases should be already covered"
@@ -695,9 +694,7 @@ module PrintC = struct
          indent buffer;
          List.iter
             (fun (typ, name) ->
-                printTypeDescr buffer typ;
-                append buffer " ";
-                append buffer name;
+                printTypeAndName true buffer typ name;
                 append buffer ";";
                 newline buffer;
             ) members;
