@@ -68,13 +68,13 @@ let dumpParsedFiles (args:arguments) (parser_results:parser_results list) : unit
 (** Parses the code and and generates the target *)
 let parseStringGenerateCode (args:arguments) (code:string) : string =
    ParserVult.parseString code
-   |> Passes.applyTransformations
+   |> Passes.applyTransformations args
    |> fun a -> generateCode args [a]
 
 
 (** Parses the code and returns either the transformed code or the error message *)
 let parsePrintCode (code:string) : string =
-   let result = ParserVult.parseString code |> Passes.applyTransformations in
+   let result = ParserVult.parseString code |> Passes.applyTransformations default_arguments in
    match result.presult with
    | `Ok(b) ->
       PrintTypes.stmtListStr b
@@ -85,7 +85,7 @@ let parsePrintCode (code:string) : string =
 
 (** Checks the code and returns a list with the errors *)
 let checkCode (code:string) : (string * string * int * int) list =
-   let result = ParserVult.parseString code |> Passes.applyTransformations in
+   let result = ParserVult.parseString code |> Passes.applyTransformations default_arguments in
    match result.presult with
    | `Ok(_) -> []
    | `Error(errors) -> List.map (Error.reportErrorStringNoLoc result.lines) errors

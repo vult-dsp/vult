@@ -13,7 +13,6 @@ fun clip(value,low,high){
     return min(max(low,value),high);
 }
 
-fun samplerate() return 44100.;
 fun PI() return 3.141592653589793;
 
 fun thermal() return 1./1.22070313;
@@ -48,9 +47,9 @@ fun moog(input:real, cut:real, res:real):real{
     if(change(cut) || change(res)){
         // clips the inputs to the valid range
         res = clip(res,0.0,1.0);
-        cut = clip(cut,1.0,samplerate());
+        cut = clip(cut,1.0,44100.0/2.0);
 
-        val fc = cut/samplerate();
+        val fc = cut/44100.0;
         val x_2 = fc/2.;
         val x2 = fc*fc;
         val x3 = fc*x2;

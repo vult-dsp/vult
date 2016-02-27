@@ -22,13 +22,11 @@ int32_t max(int32_t a, int32_t b);
 
 int32_t clip(int32_t value, int32_t low, int32_t high);
 
-int32_t samplerate();
-
 int32_t PI();
 
 int32_t thermal();
 
-typedef struct _ctx_type_7 {
+typedef struct _ctx_type_6 {
    int32_t tw2;
    int32_t tw1;
    int32_t tw0;
@@ -36,32 +34,32 @@ typedef struct _ctx_type_7 {
    int32_t dw2;
    int32_t dw1;
    int32_t dw0;
-} _ctx_type_7;
+} _ctx_type_6;
 
-typedef _ctx_type_7 moog_step_type;
+typedef _ctx_type_6 moog_step_type;
 
-_ctx_type_7 _ctx_type_7_init();
+_ctx_type_6 _ctx_type_6_init();
 
-_ctx_type_7 moog_step_init();
+_ctx_type_6 moog_step_init();
 
-int32_t moog_step(_ctx_type_7 &_ctx, int32_t input, int32_t resFixed, int32_t tune, int32_t output);
+int32_t moog_step(_ctx_type_6 &_ctx, int32_t input, int32_t resFixed, int32_t tune, int32_t output);
 
-typedef struct _ctx_type_8 {
+typedef struct _ctx_type_7 {
    int32_t tune;
    int32_t resFixed;
-   _ctx_type_7 filter;
+   _ctx_type_6 filter;
    int32_t dx1;
    _ctx_type_0 _inst1;
    _ctx_type_0 _inst0;
-} _ctx_type_8;
+} _ctx_type_7;
 
-typedef _ctx_type_8 moog_type;
+typedef _ctx_type_7 moog_type;
 
-_ctx_type_8 _ctx_type_8_init();
+_ctx_type_7 _ctx_type_7_init();
 
-_ctx_type_8 moog_init();
+_ctx_type_7 moog_init();
 
-int32_t moog(_ctx_type_8 &_ctx, int32_t input, int32_t cut, int32_t res);
+int32_t moog(_ctx_type_7 &_ctx, int32_t input, int32_t cut, int32_t res);
 
 
 

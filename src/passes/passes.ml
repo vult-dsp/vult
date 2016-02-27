@@ -42,7 +42,6 @@ let default_options =
       pass3 = true;
    }
 
-
 module PassData = struct
 
    type t =
@@ -51,6 +50,7 @@ module PassData = struct
          add_ctx      : IdSet.t;
          used_tuples  : TypeSet.t;
          repeat       : bool;
+         args         : arguments;
       }
 
    let hasInitFunction (t:t) (id:id) : bool =
@@ -80,12 +80,13 @@ module PassData = struct
    let getTuples (t:t) : TypeSet.t =
       t.used_tuples
 
-   let empty =
+   let empty args =
       {
          gen_init_ctx = IdSet.empty;
          repeat       = false;
          add_ctx      = IdSet.empty;
          used_tuples  = TypeSet.empty;
+         args         = args;
       }
 
 end
@@ -555,6 +556,25 @@ module Simplify = struct
 
 end
 
+module OtherErrors = struct
+
+   let exp : ('a Env.t,exp) Mapper.mapper_func =
+      Mapper.make @@ fun state exp ->
+         match exp with
+         | PReal(v,attr) ->
+            let () =
+               let data = Env.get state in
+               if (v > 32767.0 || v < -32768.0) && data.PassData.args.real = "fixed" then
+               let msg = Printf.sprintf "This value '%f' cannot be represented with fixed-point numbers" v in
+               Error.raiseError msg (attr.loc)
+            in
+            state,PReal(v,attr)
+         | _ -> state, exp
+
+   let mapper = { Mapper.default_mapper with Mapper.exp = exp }
+
+end
+
 module ProcessArrays = struct
 
    let getArraySize (typ_opt:VType.t option) : int =
@@ -599,6 +619,7 @@ let pass3 =
    InsertContext.mapper
    |> Mapper.seq CreateInitFunction.mapper
    |> Mapper.seq CreateTypesForTuples.mapper
+   |> Mapper.seq OtherErrors.mapper
 
 let rec applyPass apply pass (state,stmts) =
    if apply then
@@ -610,7 +631,7 @@ let rec applyPass apply pass (state,stmts) =
    else
       state,stmts
 
-let applyTransformations ?(options=default_options) (results:parser_results) =
+let applyTransformations args ?(options=default_options) (results:parser_results) =
    let module_name =
       results.file
       |> Filename.basename
@@ -619,7 +640,7 @@ let applyTransformations ?(options=default_options) (results:parser_results) =
       |> fun a -> [a]
    in
    let initial_state =
-      Env.empty module_name PassData.empty
+      Env.empty module_name (PassData.empty args)
    in
 
    let passes stmts =

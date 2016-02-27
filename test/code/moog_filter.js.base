@@ -37,9 +37,6 @@ this.max = function(a,b){
 this.clip = function(value,low,high){
    return this.min(this.max(low,value),high);
 }
-this.samplerate = function(){
-   return 44100.;
-}
 this.PI = function(){
    return 3.14159265359;
 }
@@ -48,7 +45,7 @@ this.thermal = function(){
 }
 
 
-this._ctx_type_7_init = function(){
+this._ctx_type_6_init = function(){
    var _ctx = {};
    _ctx.tw2 = 0.;
    _ctx.tw1 = 0.;
@@ -59,7 +56,7 @@ this._ctx_type_7_init = function(){
    _ctx.dw0 = 0.;
    return _ctx;
 }
-this. moog_step_init = function() { return this._ctx_type_7_init();}
+this. moog_step_init = function() { return this._ctx_type_6_init();}
 this.moog_step = function(_ctx,input,resFixed,tune,output){
    var i0 = (input + (- (resFixed * output)));
    var w0 = (_ctx.dw0 + (tune * (this.tanh((i0 * this.thermal())) + (- _ctx.tw0))));
@@ -77,22 +74,22 @@ this.moog_step = function(_ctx,input,resFixed,tune,output){
 }
 
 
-this._ctx_type_8_init = function(){
+this._ctx_type_7_init = function(){
    var _ctx = {};
    _ctx.tune = 0.;
    _ctx.resFixed = 0.;
-   _ctx.filter = this._ctx_type_7_init();
+   _ctx.filter = this._ctx_type_6_init();
    _ctx.dx1 = 0.;
    _ctx._inst1 = this._ctx_type_0_init();
    _ctx._inst0 = this._ctx_type_0_init();
    return _ctx;
 }
-this. moog_init = function() { return this._ctx_type_8_init();}
+this. moog_init = function() { return this._ctx_type_7_init();}
 this.moog = function(_ctx,input,cut,res){
    if((this.change(_ctx._inst0,cut) || this.change(_ctx._inst1,res))){
       res = this.clip(res,0.,1.);
-      cut = this.clip(cut,1.,this.samplerate());
-      var fc = (cut / this.samplerate());
+      cut = this.clip(cut,1.,(22050.));
+      var fc = (cut * 2.26757369615e-05);
       var x_2 = (fc * 0.5);
       var x2 = (fc * fc);
       var x3 = (fc * x2);

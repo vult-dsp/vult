@@ -22,13 +22,11 @@ float max(float a, float b);
 
 float clip(float value, float low, float high);
 
-float samplerate();
-
 float PI();
 
 float thermal();
 
-typedef struct _ctx_type_7 {
+typedef struct _ctx_type_6 {
    float tw2;
    float tw1;
    float tw0;
@@ -36,32 +34,32 @@ typedef struct _ctx_type_7 {
    float dw2;
    float dw1;
    float dw0;
-} _ctx_type_7;
+} _ctx_type_6;
 
-typedef _ctx_type_7 moog_step_type;
+typedef _ctx_type_6 moog_step_type;
 
-_ctx_type_7 _ctx_type_7_init();
+_ctx_type_6 _ctx_type_6_init();
 
-_ctx_type_7 moog_step_init();
+_ctx_type_6 moog_step_init();
 
-float moog_step(_ctx_type_7 &_ctx, float input, float resFixed, float tune, float output);
+float moog_step(_ctx_type_6 &_ctx, float input, float resFixed, float tune, float output);
 
-typedef struct _ctx_type_8 {
+typedef struct _ctx_type_7 {
    float tune;
    float resFixed;
-   _ctx_type_7 filter;
+   _ctx_type_6 filter;
    float dx1;
    _ctx_type_0 _inst1;
    _ctx_type_0 _inst0;
-} _ctx_type_8;
+} _ctx_type_7;
 
-typedef _ctx_type_8 moog_type;
+typedef _ctx_type_7 moog_type;
 
-_ctx_type_8 _ctx_type_8_init();
+_ctx_type_7 _ctx_type_7_init();
 
-_ctx_type_8 moog_init();
+_ctx_type_7 moog_init();
 
-float moog(_ctx_type_8 &_ctx, float input, float cut, float res);
+float moog(_ctx_type_7 &_ctx, float input, float cut, float res);
 
 
 

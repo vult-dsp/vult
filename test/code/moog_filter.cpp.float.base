@@ -26,10 +26,6 @@ float clip(float value, float low, float high){
    return fmin(fmax(low,value),high);
 }
 
-float samplerate(){
-   return 44100.f;
-}
-
 float PI(){
    return 3.14159265359f;
 }
@@ -38,8 +34,8 @@ float thermal(){
    return (0.819199996645f);
 }
 
-_ctx_type_7 _ctx_type_7_init(){
-   _ctx_type_7 _ctx;
+_ctx_type_6 _ctx_type_6_init(){
+   _ctx_type_6 _ctx;
    _ctx.tw2 = 0.f;
    _ctx.tw1 = 0.f;
    _ctx.tw0 = 0.f;
@@ -50,9 +46,9 @@ _ctx_type_7 _ctx_type_7_init(){
    return _ctx;
 }
 
-_ctx_type_7 moog_step_init(){ return _ctx_type_7_init();}
+_ctx_type_6 moog_step_init(){ return _ctx_type_6_init();}
 
-float moog_step(_ctx_type_7 &_ctx, float input, float resFixed, float tune, float output){
+float moog_step(_ctx_type_6 &_ctx, float input, float resFixed, float tune, float output){
    float i0 = (input + (- (resFixed * output)));
    float w0 = (_ctx.dw0 + (tune * (tanhf((i0 * thermal())) + (- _ctx.tw0))));
    _ctx.tw0 = tanhf((w0 * thermal()));
@@ -68,24 +64,24 @@ float moog_step(_ctx_type_7 &_ctx, float input, float resFixed, float tune, floa
    return w3;
 }
 
-_ctx_type_8 _ctx_type_8_init(){
-   _ctx_type_8 _ctx;
+_ctx_type_7 _ctx_type_7_init(){
+   _ctx_type_7 _ctx;
    _ctx.tune = 0.f;
    _ctx.resFixed = 0.f;
-   _ctx.filter = _ctx_type_7_init();
+   _ctx.filter = _ctx_type_6_init();
    _ctx.dx1 = 0.f;
    _ctx._inst1 = _ctx_type_0_init();
    _ctx._inst0 = _ctx_type_0_init();
    return _ctx;
 }
 
-_ctx_type_8 moog_init(){ return _ctx_type_8_init();}
+_ctx_type_7 moog_init(){ return _ctx_type_7_init();}
 
-float moog(_ctx_type_8 &_ctx, float input, float cut, float res){
+float moog(_ctx_type_7 &_ctx, float input, float cut, float res){
    if(change(_ctx._inst0,cut) || change(_ctx._inst1,res)){
       res = float_clip(res,0.f,1.f);
-      cut = float_clip(cut,1.f,samplerate());
-      float fc = (cut / samplerate());
+      cut = float_clip(cut,1.f,(22050.f));
+      float fc = (cut * 2.26757369615e-05f);
       float x_2 = (fc * 0.5f);
       float x2 = (fc * fc);
       float x3 = (fc * x2);

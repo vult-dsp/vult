@@ -1,5 +1,4 @@
 
-fun samplerate() return 44100.0;
 fun pi() return 3.1416;
 
 fun min(a,b) return if a<b then a else b;
@@ -28,8 +27,8 @@ fun biquad(x:real,b0:real,b1:real,b2:real,a1:real,a2:real){
 fun lp6(x,fc) {
     mem fc,k;
     if(change(fc)){
-        fc = clip(fc,0.0,samplerate());
-        k = tan(pi()*fc/samplerate());
+        fc = clip(fc,0.0,44100.0/2.0);
+        k = tan(pi()*fc/44100.0);
     }
     val b0 = k/(k+1.0);
     val b1 = k/(k+1.0);
@@ -41,8 +40,8 @@ fun lp12(x,fc,q) {
     mem b0,b1,b2,a1,a2;
     if (change(fc) || change(q)) {
         val qc = max(sqrt(2.0),q+sqrt(2.0));
-        fc = clip(fc,0.0,samplerate());
-        val k = tan(pi()*fc/samplerate());
+        fc = clip(fc,0.0,44100.0/2.0);
+        val k = tan(pi()*fc/44100.0);
         val den = k*k*qc+k+qc;
         b0 = k*k*qc/den;
         b1 = 2.0*b0;
@@ -53,8 +52,8 @@ fun lp12(x,fc,q) {
     return biquad(x,b0,b1,b2,a1,a2);
 }
 fun hp6(x,fc){
-    fc = clip(fc,0.0,samplerate());
-    val k = tan(pi()*fc/samplerate());
+    fc = clip(fc,0.0,44100.0/2.0);
+    val k = tan(pi()*fc/44100.0);
     val b0 = 1.0/(k+1.0);
     val b1 = -1.0/(k+1.0);
     val a1 = (k-1.0)/(k+1.0);
@@ -62,8 +61,8 @@ fun hp6(x,fc){
 }
 
 fun allp6(x,fc){
-    fc = clip(fc,0.0,samplerate());
-    val k = tan(pi()*fc/samplerate());
+    fc = clip(fc,0.0,44100.0/2.0);
+    val k = tan(pi()*fc/44100.0);
     val b0 = (k-1.0)/(k+1.0);
     val b1 = 1.0;
     val a1 = (k-1.0)/(k+1.0);
@@ -74,8 +73,8 @@ fun hp12(x,fc,q){
     mem b0,b1,b2,a1,a2;
     if(change(fc) || change(q)){
         val qc = max(sqrt(2.0),q+sqrt(2.0));
-        fc = clip(fc,0.0,samplerate());
-        val k = tan(pi()*fc/samplerate());
+        fc = clip(fc,0.0,44100.0/2.0);
+        val k = tan(pi()*fc/44100.0);
         val den = k*k*qc+k+qc;
         b0 = qc/den;
         b1 = -2.0*qc/den;
@@ -91,8 +90,8 @@ fun bp12(x,fc,q){
     mem b0,b1,b2,a1,a2;
     if(change(fc) || change(q)){
         val qc = max(sqrt(2.0),q+sqrt(2.0));
-        fc = clip(fc,0.0,samplerate());
-        val k = tan(pi()*fc/samplerate());
+        fc = clip(fc,0.0,44100.0/2.0);
+        val k = tan(pi()*fc/44100.0);
         val den = k*k*qc+k+qc;
         b0 = k/den;
         b1 = 0.0;
@@ -108,8 +107,8 @@ fun notch12(x,fc,q){
     mem b0,b1,b2,a1,a2;
     if(change(fc) || change(q)){
         val qc = max(sqrt(2.0),q+sqrt(2.0));
-        fc = clip(fc,0.0,samplerate());
-        val k = tan(pi()*fc/samplerate());
+        fc = clip(fc,0.0,44100.0/2.0);
+        val k = tan(pi()*fc/44100.0);
         val den = k*k*qc+k+qc;
         b0 = qc*(1.0+k*k)/den;
         b1 = 2.0*qc*(k*k-1.0)/den;
@@ -124,8 +123,8 @@ fun allp12(x,fc,q){
     mem b0,b1,b2,a1,a2;
     if(change(fc) || change(q)){
         val qc = max(sqrt(2.0),q+sqrt(2.0));
-        fc = clip(fc,0.0,samplerate());
-        val k = tan(pi()*fc/samplerate());
+        fc = clip(fc,0.0,44100.0/2.0);
+        val k = tan(pi()*fc/44100.0);
         val den = k*k*qc+k+qc;
         b0 = (k*k*qc-k+qc)/den;
         b1 = 2.0*qc*(k*k-1.0)/den;

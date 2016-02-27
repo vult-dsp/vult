@@ -141,15 +141,21 @@ module CodeGenerationTest = struct
 
    let process (fullfile:string) (real_type:string) : (string * string) list =
       let basefile = Filename.chop_extension (Filename.basename fullfile) in
+      let args =
+         if real_type = "js" then
+            { default_arguments with output = basefile }
+         else
+            { default_arguments with output = basefile; real = real_type }
+      in
       let stmts =
          ParserVult.parseFile fullfile
-         |> Passes.applyTransformations
+         |> Passes.applyTransformations args
       in
       let () = showResults stmts |> ignore in
       if real_type = "js" then
-         VultJs.generateJSCode  { default_arguments with output = basefile } [stmts]
+         VultJs.generateJSCode  args [stmts]
       else
-         VultCh.generateChCode { default_arguments with output = basefile; real = real_type } [stmts]
+         VultCh.generateChCode args [stmts]
 
 
    let run (file:string) real_type context : unit =
@@ -187,7 +193,7 @@ module PassesTest = struct
 
    let process options (fullfile:string) : string =
       ParserVult.parseFile fullfile
-      |> Passes.applyTransformations ~options:options
+      |> Passes.applyTransformations default_arguments ~options:options
       |> showResults
 
    let run options (file:string) context =
@@ -214,10 +220,10 @@ module CompileTest = struct
          assert_failure ("Failed to compile "^file)
 
    let generateCPP (filename:string) (output:string) (real_type:string) : unit =
+      let args = { default_arguments with  files = [filename]; ccode = true; output = output; real = real_type } in
       let parser_results =
          ParserVult.parseFile filename
-         |> Passes.applyTransformations in
-      let args = { default_arguments with  files = [filename]; ccode = true; output = output; real = real_type } in
+         |> Passes.applyTransformations args in
       Driver.generateCode args [parser_results] |> ignore
 
    let run (real_type:string) (file:string) _ =

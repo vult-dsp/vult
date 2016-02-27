@@ -26,10 +26,6 @@ int32_t clip(int32_t value, int32_t low, int32_t high){
    return fix_min(fix_max(low,value),high);
 }
 
-int32_t samplerate(){
-   return 0xac440000 /* 44100.000000 */;
-}
-
 int32_t PI(){
    return 0x3243f /* 3.141593 */;
 }
@@ -38,8 +34,8 @@ int32_t thermal(){
    return 0xd1b7 /* 0.819200 */;
 }
 
-_ctx_type_7 _ctx_type_7_init(){
-   _ctx_type_7 _ctx;
+_ctx_type_6 _ctx_type_6_init(){
+   _ctx_type_6 _ctx;
    _ctx.tw2 = 0x0 /* 0.000000 */;
    _ctx.tw1 = 0x0 /* 0.000000 */;
    _ctx.tw0 = 0x0 /* 0.000000 */;
@@ -50,9 +46,9 @@ _ctx_type_7 _ctx_type_7_init(){
    return _ctx;
 }
 
-_ctx_type_7 moog_step_init(){ return _ctx_type_7_init();}
+_ctx_type_6 moog_step_init(){ return _ctx_type_6_init();}
 
-int32_t moog_step(_ctx_type_7 &_ctx, int32_t input, int32_t resFixed, int32_t tune, int32_t output){
+int32_t moog_step(_ctx_type_6 &_ctx, int32_t input, int32_t resFixed, int32_t tune, int32_t output){
    int32_t i0 = fix_add(input,(- fix_mul(resFixed,output)));
    int32_t w0 = fix_add(_ctx.dw0,fix_mul(tune,fix_add(fix_tanh(fix_mul(i0,thermal())),(- _ctx.tw0))));
    _ctx.tw0 = fix_tanh(fix_mul(w0,thermal()));
@@ -68,24 +64,24 @@ int32_t moog_step(_ctx_type_7 &_ctx, int32_t input, int32_t resFixed, int32_t tu
    return w3;
 }
 
-_ctx_type_8 _ctx_type_8_init(){
-   _ctx_type_8 _ctx;
+_ctx_type_7 _ctx_type_7_init(){
+   _ctx_type_7 _ctx;
    _ctx.tune = 0x0 /* 0.000000 */;
    _ctx.resFixed = 0x0 /* 0.000000 */;
-   _ctx.filter = _ctx_type_7_init();
+   _ctx.filter = _ctx_type_6_init();
    _ctx.dx1 = 0x0 /* 0.000000 */;
    _ctx._inst1 = _ctx_type_0_init();
    _ctx._inst0 = _ctx_type_0_init();
    return _ctx;
 }
 
-_ctx_type_8 moog_init(){ return _ctx_type_8_init();}
+_ctx_type_7 moog_init(){ return _ctx_type_7_init();}
 
-int32_t moog(_ctx_type_8 &_ctx, int32_t input, int32_t cut, int32_t res){
+int32_t moog(_ctx_type_7 &_ctx, int32_t input, int32_t cut, int32_t res){
    if(change(_ctx._inst0,cut) || change(_ctx._inst1,res)){
       res = fix_clip(res,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
-      cut = fix_clip(cut,0x10000 /* 1.000000 */,samplerate());
-      int32_t fc = fix_div(cut,samplerate());
+      cut = fix_clip(cut,0x10000 /* 1.000000 */,0x56220000 /* 22050.000000 */);
+      int32_t fc = fix_mul(cut,0x1 /* 0.000023 */);
       int32_t x_2 = fix_mul(fc,0x8000 /* 0.500000 */);
       int32_t x2 = fix_mul(fc,fc);
       int32_t x3 = fix_mul(fc,x2);

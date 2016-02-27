@@ -15,9 +15,6 @@ function vultProcess(){
     this.get  = function(a,i)        { return a[i]; };
     this.process_init = null;
     this.default_ = null;
-this.samplerate = function(){
-   return 44100.;
-}
 this.pi = function(){
    return 3.1416;
 }
@@ -32,12 +29,12 @@ this.clip = function(low,high,value){
 }
 
 
-this._ctx_type_5_init = function(){
+this._ctx_type_4_init = function(){
    var _ctx = {};
    _ctx.pre_x = 0.;
    return _ctx;
 }
-this. change_init = function() { return this._ctx_type_5_init();}
+this. change_init = function() { return this._ctx_type_4_init();}
 this.change = function(_ctx,x){
    var v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
@@ -45,13 +42,13 @@ this.change = function(_ctx,x){
 }
 
 
-this._ctx_type_6_init = function(){
+this._ctx_type_5_init = function(){
    var _ctx = {};
    _ctx.w2 = 0.;
    _ctx.w1 = 0.;
    return _ctx;
 }
-this. biquad_init = function() { return this._ctx_type_6_init();}
+this. biquad_init = function() { return this._ctx_type_5_init();}
 this.biquad = function(_ctx,x,b0,b1,b2,a1,a2){
    var w0 = (x + (- (a1 * _ctx.w1)) + (- (a2 * _ctx.w2)));
    var y0 = ((b0 * w0) + (b1 * _ctx.w1) + (b2 * _ctx.w2));
@@ -63,19 +60,19 @@ this.biquad = function(_ctx,x,b0,b1,b2,a1,a2){
 }
 
 
-this._ctx_type_7_init = function(){
+this._ctx_type_6_init = function(){
    var _ctx = {};
    _ctx.k = 0.;
    _ctx.fc = 0.;
-   _ctx._inst1 = this._ctx_type_6_init();
-   _ctx._inst0 = this._ctx_type_5_init();
+   _ctx._inst1 = this._ctx_type_5_init();
+   _ctx._inst0 = this._ctx_type_4_init();
    return _ctx;
 }
-this. lp6_init = function() { return this._ctx_type_7_init();}
+this. lp6_init = function() { return this._ctx_type_6_init();}
 this.lp6 = function(_ctx,x,fc){
    if(this.change(_ctx._inst0,_ctx.fc)){
-      _ctx.fc = this.clip(_ctx.fc,0.,this.samplerate());
-      _ctx.k = this.tan(((this.pi() * _ctx.fc) / this.samplerate()));
+      _ctx.fc = this.clip(_ctx.fc,0.,(22050.));
+      _ctx.k = this.tan((this.pi() * _ctx.fc * 2.26757369615e-05));
    }
    var b0 = (_ctx.k / (_ctx.k + 1.));
    var b1 = (_ctx.k / (_ctx.k + 1.));
@@ -84,24 +81,24 @@ this.lp6 = function(_ctx,x,fc){
 }
 
 
-this._ctx_type_8_init = function(){
+this._ctx_type_7_init = function(){
    var _ctx = {};
    _ctx.b2 = 0.;
    _ctx.b1 = 0.;
    _ctx.b0 = 0.;
    _ctx.a2 = 0.;
    _ctx.a1 = 0.;
-   _ctx._inst2 = this._ctx_type_6_init();
-   _ctx._inst1 = this._ctx_type_5_init();
-   _ctx._inst0 = this._ctx_type_5_init();
+   _ctx._inst2 = this._ctx_type_5_init();
+   _ctx._inst1 = this._ctx_type_4_init();
+   _ctx._inst0 = this._ctx_type_4_init();
    return _ctx;
 }
-this. lp12_init = function() { return this._ctx_type_8_init();}
+this. lp12_init = function() { return this._ctx_type_7_init();}
 this.lp12 = function(_ctx,x,fc,q){
    if((this.change(_ctx._inst0,fc) || this.change(_ctx._inst1,q))){
       var qc = this.max(this.sqrt(2.),(q + this.sqrt(2.)));
-      fc = this.clip(fc,0.,this.samplerate());
-      var k = this.tan(((this.pi() * fc) / this.samplerate()));
+      fc = this.clip(fc,0.,(22050.));
+      var k = this.tan((this.pi() * fc * 2.26757369615e-05));
       var den = ((k * k * qc) + k + qc);
       _ctx.b0 = ((k * k * qc) / den);
       _ctx.b1 = (2. * _ctx.b0);
@@ -113,15 +110,15 @@ this.lp12 = function(_ctx,x,fc,q){
 }
 
 
-this._ctx_type_9_init = function(){
+this._ctx_type_8_init = function(){
    var _ctx = {};
-   _ctx._inst0 = this._ctx_type_6_init();
+   _ctx._inst0 = this._ctx_type_5_init();
    return _ctx;
 }
-this. hp6_init = function() { return this._ctx_type_9_init();}
+this. hp6_init = function() { return this._ctx_type_8_init();}
 this.hp6 = function(_ctx,x,fc){
-   fc = this.clip(fc,0.,this.samplerate());
-   var k = this.tan(((this.pi() * fc) / this.samplerate()));
+   fc = this.clip(fc,0.,(22050.));
+   var k = this.tan((this.pi() * fc * 2.26757369615e-05));
    var b0 = (1. / (k + 1.));
    var b1 = ((-1.) / (k + 1.));
    var a1 = ((k + (-1.)) / (k + 1.));
@@ -129,19 +126,48 @@ this.hp6 = function(_ctx,x,fc){
 }
 
 
-this._ctx_type_10_init = function(){
+this._ctx_type_9_init = function(){
    var _ctx = {};
-   _ctx._inst0 = this._ctx_type_6_init();
+   _ctx._inst0 = this._ctx_type_5_init();
    return _ctx;
 }
-this. allp6_init = function() { return this._ctx_type_10_init();}
+this. allp6_init = function() { return this._ctx_type_9_init();}
 this.allp6 = function(_ctx,x,fc){
-   fc = this.clip(fc,0.,this.samplerate());
-   var k = this.tan(((this.pi() * fc) / this.samplerate()));
+   fc = this.clip(fc,0.,(22050.));
+   var k = this.tan((this.pi() * fc * 2.26757369615e-05));
    var b0 = ((k + (-1.)) / (k + 1.));
    var b1 = 1.;
    var a1 = ((k + (-1.)) / (k + 1.));
    return this.biquad(_ctx._inst0,x,b0,b1,0.,a1,0.);
+}
+
+
+this._ctx_type_10_init = function(){
+   var _ctx = {};
+   _ctx.b2 = 0.;
+   _ctx.b1 = 0.;
+   _ctx.b0 = 0.;
+   _ctx.a2 = 0.;
+   _ctx.a1 = 0.;
+   _ctx._inst2 = this._ctx_type_5_init();
+   _ctx._inst1 = this._ctx_type_4_init();
+   _ctx._inst0 = this._ctx_type_4_init();
+   return _ctx;
+}
+this. hp12_init = function() { return this._ctx_type_10_init();}
+this.hp12 = function(_ctx,x,fc,q){
+   if((this.change(_ctx._inst0,fc) || this.change(_ctx._inst1,q))){
+      var qc = this.max(this.sqrt(2.),(q + this.sqrt(2.)));
+      fc = this.clip(fc,0.,(22050.));
+      var k = this.tan((this.pi() * fc * 2.26757369615e-05));
+      var den = ((k * k * qc) + k + qc);
+      _ctx.b0 = (qc / den);
+      _ctx.b1 = (((-2.) * qc) / den);
+      _ctx.b2 = (qc / den);
+      _ctx.a1 = ((2. * qc * ((k * k) + (-1.))) / den);
+      _ctx.a2 = (((k * k * qc) + (- k) + qc) / den);
+   }
+   return this.biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
 
@@ -152,21 +178,21 @@ this._ctx_type_11_init = function(){
    _ctx.b0 = 0.;
    _ctx.a2 = 0.;
    _ctx.a1 = 0.;
-   _ctx._inst2 = this._ctx_type_6_init();
-   _ctx._inst1 = this._ctx_type_5_init();
-   _ctx._inst0 = this._ctx_type_5_init();
+   _ctx._inst2 = this._ctx_type_5_init();
+   _ctx._inst1 = this._ctx_type_4_init();
+   _ctx._inst0 = this._ctx_type_4_init();
    return _ctx;
 }
-this. hp12_init = function() { return this._ctx_type_11_init();}
-this.hp12 = function(_ctx,x,fc,q){
+this. bp12_init = function() { return this._ctx_type_11_init();}
+this.bp12 = function(_ctx,x,fc,q){
    if((this.change(_ctx._inst0,fc) || this.change(_ctx._inst1,q))){
       var qc = this.max(this.sqrt(2.),(q + this.sqrt(2.)));
-      fc = this.clip(fc,0.,this.samplerate());
-      var k = this.tan(((this.pi() * fc) / this.samplerate()));
+      fc = this.clip(fc,0.,(22050.));
+      var k = this.tan((this.pi() * fc * 2.26757369615e-05));
       var den = ((k * k * qc) + k + qc);
-      _ctx.b0 = (qc / den);
-      _ctx.b1 = (((-2.) * qc) / den);
-      _ctx.b2 = (qc / den);
+      _ctx.b0 = (k / den);
+      _ctx.b1 = 0.;
+      _ctx.b2 = ((- k) / den);
       _ctx.a1 = ((2. * qc * ((k * k) + (-1.))) / den);
       _ctx.a2 = (((k * k * qc) + (- k) + qc) / den);
    }
@@ -181,21 +207,21 @@ this._ctx_type_12_init = function(){
    _ctx.b0 = 0.;
    _ctx.a2 = 0.;
    _ctx.a1 = 0.;
-   _ctx._inst2 = this._ctx_type_6_init();
-   _ctx._inst1 = this._ctx_type_5_init();
-   _ctx._inst0 = this._ctx_type_5_init();
+   _ctx._inst2 = this._ctx_type_5_init();
+   _ctx._inst1 = this._ctx_type_4_init();
+   _ctx._inst0 = this._ctx_type_4_init();
    return _ctx;
 }
-this. bp12_init = function() { return this._ctx_type_12_init();}
-this.bp12 = function(_ctx,x,fc,q){
+this. notch12_init = function() { return this._ctx_type_12_init();}
+this.notch12 = function(_ctx,x,fc,q){
    if((this.change(_ctx._inst0,fc) || this.change(_ctx._inst1,q))){
       var qc = this.max(this.sqrt(2.),(q + this.sqrt(2.)));
-      fc = this.clip(fc,0.,this.samplerate());
-      var k = this.tan(((this.pi() * fc) / this.samplerate()));
+      fc = this.clip(fc,0.,(22050.));
+      var k = this.tan((this.pi() * fc * 2.26757369615e-05));
       var den = ((k * k * qc) + k + qc);
-      _ctx.b0 = (k / den);
-      _ctx.b1 = 0.;
-      _ctx.b2 = ((- k) / den);
+      _ctx.b0 = ((qc * (1. + (k * k))) / den);
+      _ctx.b1 = ((2. * qc * ((k * k) + (-1.))) / den);
+      _ctx.b2 = _ctx.b0;
       _ctx.a1 = ((2. * qc * ((k * k) + (-1.))) / den);
       _ctx.a2 = (((k * k * qc) + (- k) + qc) / den);
    }
@@ -210,46 +236,17 @@ this._ctx_type_13_init = function(){
    _ctx.b0 = 0.;
    _ctx.a2 = 0.;
    _ctx.a1 = 0.;
-   _ctx._inst2 = this._ctx_type_6_init();
-   _ctx._inst1 = this._ctx_type_5_init();
-   _ctx._inst0 = this._ctx_type_5_init();
+   _ctx._inst2 = this._ctx_type_5_init();
+   _ctx._inst1 = this._ctx_type_4_init();
+   _ctx._inst0 = this._ctx_type_4_init();
    return _ctx;
 }
-this. notch12_init = function() { return this._ctx_type_13_init();}
-this.notch12 = function(_ctx,x,fc,q){
-   if((this.change(_ctx._inst0,fc) || this.change(_ctx._inst1,q))){
-      var qc = this.max(this.sqrt(2.),(q + this.sqrt(2.)));
-      fc = this.clip(fc,0.,this.samplerate());
-      var k = this.tan(((this.pi() * fc) / this.samplerate()));
-      var den = ((k * k * qc) + k + qc);
-      _ctx.b0 = ((qc * (1. + (k * k))) / den);
-      _ctx.b1 = ((2. * qc * ((k * k) + (-1.))) / den);
-      _ctx.b2 = _ctx.b0;
-      _ctx.a1 = ((2. * qc * ((k * k) + (-1.))) / den);
-      _ctx.a2 = (((k * k * qc) + (- k) + qc) / den);
-   }
-   return this.biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
-}
-
-
-this._ctx_type_14_init = function(){
-   var _ctx = {};
-   _ctx.b2 = 0.;
-   _ctx.b1 = 0.;
-   _ctx.b0 = 0.;
-   _ctx.a2 = 0.;
-   _ctx.a1 = 0.;
-   _ctx._inst2 = this._ctx_type_6_init();
-   _ctx._inst1 = this._ctx_type_5_init();
-   _ctx._inst0 = this._ctx_type_5_init();
-   return _ctx;
-}
-this. allp12_init = function() { return this._ctx_type_14_init();}
+this. allp12_init = function() { return this._ctx_type_13_init();}
 this.allp12 = function(_ctx,x,fc,q){
    if((this.change(_ctx._inst0,fc) || this.change(_ctx._inst1,q))){
       var qc = this.max(this.sqrt(2.),(q + this.sqrt(2.)));
-      fc = this.clip(fc,0.,this.samplerate());
-      var k = this.tan(((this.pi() * fc) / this.samplerate()));
+      fc = this.clip(fc,0.,(22050.));
+      var k = this.tan((this.pi() * fc * 2.26757369615e-05));
       var den = ((k * k * qc) + k + qc);
       _ctx.b0 = (((k * k * qc) + (- k) + qc) / den);
       _ctx.b1 = ((2. * qc * ((k * k) + (-1.))) / den);
