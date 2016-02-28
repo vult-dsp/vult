@@ -22,7 +22,7 @@ Logo design by: John Klimt https://www.facebook.com/JohnKlimt
 
 #### Ocaml Libraries
 
-- ocaml-containers >= 0.6.1
+- ocaml-containers >= 0.15
 - ppx_deriving >= 2.0
 - [Optional] ounit >= 2.0 (to run the tests)
 - [Optional] js_of_ocaml >= 2.6 (to run build the web functions)
