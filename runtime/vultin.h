@@ -140,6 +140,12 @@ static inline int     int_get(int a[], int i)                    { return a[i]; 
 static inline void    bool_set(int8_t a[], int i, int8_t value)  { a[i] = value; }
 static inline int8_t  bool_get(int8_t a[], int i)                { return a[i]; }
 
+/* Array initialization */
+void float_init_array(float *data,int size, float value);
+void int_init_array  (int *data,int size, int value);
+void bool_init_array (int8_t *data,int size, int8_t value);
+void fix_init_array  (int32_t *data,int size, int32_t value);
+
 #ifdef __cplusplus
 }
 #endif

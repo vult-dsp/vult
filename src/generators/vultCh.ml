@@ -1,5 +1,6 @@
 open TypesVult
 open PrintBuffer
+open Common
 
 type type_descr =
    | CTSimple of string
@@ -221,6 +222,14 @@ let getFunctionSetType (elem_typs:VType.t list) : VType.t =
    | [_;_;v] -> v
    | _ -> failwith "VultCh.getFunctionSetType: this is not a call to 'set'"
 
+let getInitArrayFunction params (typ:VType.t) : string =
+   match () with
+   | _ when (params.real = Float) && (isReal typ) -> "float_init_rray"
+   | _ when (params.real = Fixed) && (isReal typ) -> "fix_init_array"
+   | _ when (isInt typ) -> "int_init_array"
+   | _ when (isBool typ) -> "bool_init_array"
+   | _ ->failwith ("Invalid array type "^ (PrintTypes.typeStr typ))
+
 let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) (elem_typs:VType.t list): VType.t * cexp =
    let is_float = (params.real = Float) && (isReal typ) in
    let is_fixed = (params.real = Fixed) && (isReal typ) in
@@ -382,6 +391,13 @@ let rec convertStmt params (s:stmt) : cstmt =
       let arg_names = List.map (convertTypedId params) args in
       let body'  = convertStmt params body in
       CSFunction(convertType params ret, convertId name,arg_names,body')
+   (* Special case for initializing arrays*)
+   | StmtBind(LId(name,_,_),PCall(None,["makeArray"],[size;init],_),_) ->
+      let _, init' = convertExp params init in
+      let _, size' = convertExp params size in
+      let init_typ = GetAttr.fromExp init |> attrType in
+      let init_func = getInitArrayFunction params init_typ in
+      CSBind(CLWild,CECall(init_func,[CEVar(convertId name);size';init']))
    | StmtBind(lhs,rhs,_) ->
       let lhs' = convertLhsExp false params lhs in
       let _, rhs' = convertExp params rhs in
@@ -645,12 +661,16 @@ module PrintC = struct
          append buffer "(";
          printList buffer printFunArg ", " args;
          append buffer ")";
-         if params.is_header then
-            append buffer ";"
-         else
+         if params.is_header then begin
+            append buffer ";";
+            newline buffer;
+            true
+         end
+         else begin
             printStmt params buffer body |> ignore;
-         newline buffer;
-         true
+            newline buffer;
+            true
+         end
       | CSFunction(ntype,name,args,body) ->
          printTypeDescr buffer ntype;
          append buffer " ";
@@ -658,16 +678,18 @@ module PrintC = struct
          append buffer "(";
          printList buffer printFunArg ", " args;
          append buffer ")";
-         if params.is_header then
-            append buffer ";"
-         else
-            begin
-               append buffer "{ ";
-               printStmt params buffer body |> ignore;
-               append buffer "}";
-            end;
-         newline buffer;
-         true
+         if params.is_header then begin
+            append buffer ";";
+            newline buffer;
+            true
+         end
+         else begin
+            append buffer "{ ";
+            printStmt params buffer body |> ignore;
+            append buffer "}";
+            newline buffer;
+            true
+         end
       | CSReturn(e1) ->
          append buffer "return ";
          printExp params buffer e1;

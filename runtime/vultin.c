@@ -143,3 +143,24 @@ int32_t fix_tanh(int32_t inAngle)
     int32_t m_e_x = fix_exp(-inAngle);
     return fix_div(e_x-m_e_x,e_x+m_e_x);
 }
+
+/* Array initialization */
+void float_init_array(float *data,int size, float value) {
+    for(int i=0;i<size;i++)
+        data[i] = value;
+}
+
+void int_init_array  (int *data,int size, int value) {
+    for(int i=0;i<size;i++)
+        data[i] = value;
+}
+
+void bool_init_array (int8_t *data,int size, int8_t value) {
+    for(int i=0;i<size;i++)
+        data[i] = value;
+}
+
+void fix_init_array  (int32_t *data,int size, int32_t value) {
+    for(int i=0;i<size;i++)
+        data[i] = value;
+}

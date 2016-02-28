@@ -187,10 +187,8 @@ module CreateInitFunction = struct
          PCall(None,getInitFunctioName name,[],{ emptyAttr with typ = Some(tp)})
       | VType.TComposed(["array"],[sub;{ contents = VType.TInt(size,_) }],_) ->
          let sub_init = getInitValue sub in
-         let elems = CCList.init size (fun _ -> sub_init) in
-         PArray(elems,{ emptyAttr with typ = Some(tp)})
-      | VType.TLink(tp) ->
-         getInitValue tp
+         PCall(None,["makeArray"],[PInt(size,{emptyAttr with typ = Some(VType.Constants.int_type)});sub_init],{ emptyAttr with typ = Some(tp)})
+      | VType.TLink(tp) -> getInitValue tp
       | _ -> failwith "getInitValue"
 
    let getContextIfPossible state tp =
