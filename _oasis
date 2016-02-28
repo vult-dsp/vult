@@ -48,7 +48,8 @@ Library "vult_parser"
     TokenStream
   BuildDepends:
     vult_core,
-    vult_util
+    vult_util,
+    containers
 
 Library "vult_generators"
   Path: src/generators
@@ -65,7 +66,8 @@ Library "vult_passes"
     Passes
   BuildDepends:
     vult_core,
-    vult_util
+    vult_util,
+    containers
 
 Library "vult"
   Path: src
@@ -76,7 +78,8 @@ Library "vult"
     vult_parser,
     vult_util,
     vult_generators,
-    vult_passes
+    vult_passes,
+    containers
 
 Executable "vultc"
   Path: src
@@ -88,7 +91,8 @@ Executable "vultc"
     vult_util,
     vult_core,
     vult_passes,
-    vult_generators
+    vult_generators,
+    containers
 
 Executable "vultdebug"
   Path: src
@@ -102,7 +106,8 @@ Executable "vultdebug"
     vult_util,
     vult_core,
     vult_passes,
-    vult_generators
+    vult_generators,
+    containers
 
 Executable "vult_node"
   Path: src
@@ -111,7 +116,8 @@ Executable "vult_node"
   BuildDepends:
     vult,
     js_of_ocaml.syntax,
-    js_of_ocaml
+    js_of_ocaml,
+    containers
 
 Executable "vult_tests"
   Path: test
@@ -127,6 +133,7 @@ Executable "vult_tests"
     vult_passes,
     vult_generators,
     oUnit,
+    containers,
     str
 
 Test "vult_tests"
