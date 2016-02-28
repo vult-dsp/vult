@@ -36,7 +36,8 @@ Library "vult_core"
     VType
   BuildDepends:
     vult_util,
-    ppx_deriving.std
+    ppx_deriving.std,
+    containers
 
 Library "vult_parser"
   Path: src/parser
