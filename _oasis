@@ -80,6 +80,21 @@ Library "vult"
 Executable "vultc"
   Path: src
   MainIs: vultc.ml
+  CompiledObject: native
+  BuildDepends:
+    vult,
+    vult_parser,
+    vult_util,
+    vult_core,
+    vult_passes,
+    vult_generators
+
+Executable "vultdebug"
+  Path: src
+  MainIs: vultc.ml
+  CompiledObject: byte
+  ByteOpt: -custom
+  Install: false
   BuildDepends:
     vult,
     vult_parser,
@@ -101,6 +116,7 @@ Executable "vult_tests"
   Path: test
   MainIs: test.ml
   Build$: flag(tests)
+  CompiledObject: best
   Install: false
   BuildDepends:
     vult_util,

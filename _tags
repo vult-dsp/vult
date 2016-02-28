@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 17905543fa47d88d03d33678ebb75f56)
+# DO NOT EDIT (digest: ffc6a1fb531241faf924349090216b94)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -43,6 +43,17 @@ true: annot, bin_annot
 # Library vult
 "src/vult.cmxs": use_vult
 # Executable vultc
+"src/vultc.native": pkg_containers
+"src/vultc.native": pkg_ppx_deriving.std
+"src/vultc.native": use_vult
+"src/vultc.native": use_vult_core
+"src/vultc.native": use_vult_generators
+"src/vultc.native": use_vult_parser
+"src/vultc.native": use_vult_passes
+"src/vultc.native": use_vult_util
+# Executable vultdebug
+"src/vultc.byte": oasis_executable_vultdebug_byte
+<src/*.ml{,i,y}>: oasis_executable_vultdebug_byte
 "src/vultc.byte": pkg_containers
 "src/vultc.byte": pkg_ppx_deriving.std
 "src/vultc.byte": use_vult
@@ -73,16 +84,16 @@ true: annot, bin_annot
 <src/*.ml{,i,y}>: use_vult_passes
 <src/*.ml{,i,y}>: use_vult_util
 # Executable vult_tests
-"test/test.byte": pkg_containers
-"test/test.byte": pkg_oUnit
-"test/test.byte": pkg_ppx_deriving.std
-"test/test.byte": pkg_str
-"test/test.byte": use_vult
-"test/test.byte": use_vult_core
-"test/test.byte": use_vult_generators
-"test/test.byte": use_vult_parser
-"test/test.byte": use_vult_passes
-"test/test.byte": use_vult_util
+<test/test.{native,byte}>: pkg_containers
+<test/test.{native,byte}>: pkg_oUnit
+<test/test.{native,byte}>: pkg_ppx_deriving.std
+<test/test.{native,byte}>: pkg_str
+<test/test.{native,byte}>: use_vult
+<test/test.{native,byte}>: use_vult_core
+<test/test.{native,byte}>: use_vult_generators
+<test/test.{native,byte}>: use_vult_parser
+<test/test.{native,byte}>: use_vult_passes
+<test/test.{native,byte}>: use_vult_util
 <test/*.ml{,i,y}>: pkg_containers
 <test/*.ml{,i,y}>: pkg_oUnit
 <test/*.ml{,i,y}>: pkg_ppx_deriving.std
