@@ -93,7 +93,7 @@ let getStmtLocation (s:stmt)  : Loc.t =
    | StmtBlock(_,_,attr)
    | StmtWhile(_,_,attr)
    | StmtType(_,_,attr)
-   | StmtExternal(_,_,_,attr)
+   | StmtExternal(_,_,_,_,attr)
    | StmtAliasType(_,_,attr) -> attr.loc
    | StmtEmpty -> Loc.default
 
@@ -117,6 +117,17 @@ let getLbp (token:'kind token) : int =
    | OP,"/"  -> 60
    | OP,"%"  -> 60
    | _       -> 0
+
+let string (buffer:Stream.stream) : string =
+   let _     = Stream.expect buffer STRING in
+   let token = Stream.current buffer in
+   let _     = Stream.skip buffer in
+   token.value
+
+let optString (buffer:Stream.stream) : string option=
+   match Stream.peek buffer with
+   | STRING -> Some(string buffer)
+   | _ -> None
 
 (** Creates Pratt parser functions *)
 let prattParser (rbp:int) (buffer:Stream.stream)
@@ -610,10 +621,11 @@ and stmtExternal (buffer:Stream.stream) : stmt =
    let _      = Stream.consume buffer RPAREN in
    let _      = Stream.consume buffer COLON in
    let vtype  = typeExpression 0 buffer in
+   let link_name = string buffer in
    let _      = Stream.consume buffer SEMI in
    let start_loc = token.loc in
    let attr      = makeAttr start_loc in
-   StmtExternal(name,args,vtype,attr)
+   StmtExternal(name,args,vtype,link_name,attr)
 (** 'fun' <id> '(' <typedArgList> ')' [ ':' type ] <stmtList> *)
 and stmtFunction (buffer:Stream.stream) : stmt =
    let isjoin = match Stream.peek buffer with | AND -> true | _ -> false in

@@ -418,13 +418,13 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       StmtType(name,members,attr), env, ret_type
    | StmtAliasType (name, alias, attr) ->
       StmtAliasType (name, alias, attr), env, ret_type
-   | StmtExternal(name,args,fun_ret_type,attr) ->
+   | StmtExternal(name,args,fun_ret_type,linkname,attr) ->
       let env' = Env.enter `Function env name in
       let args',types, env' = addArgsToEnv env' args in
       let typ  = VType.makeArrowType fun_ret_type types in
       let env' = Env.setCurrentType env' typ true in
       let env' = Env.exit `Function env' in
-      StmtExternal(name,args',fun_ret_type,attr), env', ret_type
+      StmtExternal(name,args',fun_ret_type,linkname,attr), env', ret_type
    | StmtEmpty -> StmtEmpty, env, ret_type
 
 

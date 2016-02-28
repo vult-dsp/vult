@@ -38,6 +38,7 @@ type cstmt =
    | CSIf       of cexp * cstmt * cstmt option
    | CSType     of string * (type_descr * string) list
    | CSAlias    of string * type_descr
+   | CSExtFunc  of type_descr * string * (arg_type * string) list
    | CSEmpty
 
 type real_type =
@@ -404,8 +405,10 @@ let rec convertStmt params (s:stmt) : cstmt =
          | _ -> failwith "VultCh.convertStmt: invalid alias type"
       in
       CSAlias(type_name,t1_name)
+   | StmtExternal(_,args,ret,name,_) ->
+      let arg_names = List.map (convertTypedId params) args in
+      CSExtFunc(convertType params ret,name,arg_names)
    | StmtEmpty       -> CSEmpty
-   | StmtExternal _  -> CSEmpty
 
 and convertStmtList params (stmts:stmt list) : cstmt list =
    let stmts_rev =
@@ -726,6 +729,17 @@ module PrintC = struct
          newline buffer;
          true
       | CSAlias(_,_) -> false
+      | CSExtFunc(ntype,name,args) when params.is_header ->
+         printTypeDescr buffer ntype;
+         append buffer " ";
+         append buffer name;
+         append buffer "(";
+         printList buffer printFunArg ", " args;
+         append buffer ")";
+         append buffer ";";
+         newline buffer;
+         true
+      | CSExtFunc _ -> false
       | CSEmpty -> false
 
    and printStmtList buffer (params:parameters) (stmts:cstmt list) : unit =

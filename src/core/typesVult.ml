@@ -138,6 +138,7 @@ and stmt =
       of id             (* name *)
       *  typed_id list  (* arguments *)
       *  VType.t        (* return type *)
+      *  string         (* linking name *)
       *  attr
    | StmtBind
       of lhs_exp     (* lhs *)

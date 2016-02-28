@@ -27,7 +27,7 @@ open Lexing
 open ParserTypes
 
 (** Updates the location of the lexbuf*)
-let updateLocation lexbuf line chars =
+let updateLocation lexbuf (line:int) (chars:int) : unit =
    let pos = lexbuf.lex_curr_p in
    lexbuf.lex_curr_p <- { pos with
                           pos_lnum = pos.pos_lnum + line;
@@ -57,7 +57,7 @@ let keyword_table =
 
 
 (** Stores the current line and starts a new one *)
-let newLineInBuffer (lines:lexed_lines) =
+let newLineInBuffer (lines:lexed_lines) : unit =
    let current = Buffer.contents lines.current_line in
    let _ = lines.all_lines <- current::lines.all_lines in
    Buffer.clear lines.current_line
@@ -67,14 +67,18 @@ let getFileLines (lines:lexed_lines) =
    let current = Buffer.contents lines.current_line in
    Array.of_list (List.rev (current::lines.all_lines))
 
-(** Appends the current lexeme to the line buffer and returns it *)
-let getLexeme lines lexbuf =
+(**
+  Appends the current lexeme to the line buffer and returns it.
+  NOTE: Use this function every time you want to get the lexeme so it
+  updates the lines.
+ *)
+let getLexeme (lines:lexed_lines) lexbuf =
    let s = lexeme lexbuf in
    let _ = Buffer.add_string lines.current_line s in
    s
 
 (** Returs the token given the current token kind *)
-let makeToken lines kind lexbuf =
+let makeToken (lines:lexed_lines) kind lexbuf =
    { kind = kind; value = getLexeme lines lexbuf; loc = Loc.getLocation lexbuf; }
 
 (** Returs the a keyword token if that's the case otherwise and id token *)
@@ -103,6 +107,7 @@ let kindToString kind =
    | INT   -> "'int'"
    | REAL  -> "'real'"
    | ID    -> "'id'"
+   | STRING-> "'string'"
    | FUN   -> "'fun'"
    | MEM   -> "'mem'"
    | VAL   -> "'val'"
@@ -211,6 +216,16 @@ rule next_token lines = parse
   | float       { makeToken lines REAL lexbuf }
   | startid idchar *
                 { makeIdToken lines lexbuf }
+  |  '"'        {
+                  let start_loc = Loc.getLocation lexbuf in
+                  let buffer    = Buffer.create 0 in
+                  let ()        = string buffer lines lexbuf in
+                  let end_loc   = Loc.getLocation lexbuf in
+                  let str       = Buffer.contents buffer in
+                  let loc       = Loc.merge start_loc end_loc in
+                  { kind = STRING; value = str; loc = loc; }
+
+                }
   | "//"        { line_comment lines lexbuf}
   | "/*"        { comment lines 0 lexbuf }
   | eof         { makeToken lines EOF lexbuf }
@@ -245,3 +260,30 @@ and comment lines level = parse
     }
   | _ { comment lines level lexbuf }
   | eof { makeToken lines EOF lexbuf }
+
+and string buffer lines = parse
+  |  '"' { () }
+  | '\\' newline ([' ' '\t'] * as space)
+      {
+        let _ = updateLocation lexbuf 1 (String.length space) in
+        let _ = newLineInBuffer lines in
+        let s = getLexeme lines lexbuf in
+        let () = Buffer.add_string buffer s in
+        string buffer lines lexbuf
+      }
+  | newline
+      {
+        let _ = updateLocation lexbuf 1 0 in
+        let _ = newLineInBuffer lines in
+        let s = getLexeme lines lexbuf in
+        let () = Buffer.add_string buffer s in
+        string buffer lines lexbuf
+      }
+  | eof
+      { Error.raiseError "Unterminated string" (Loc.getLocation lexbuf) }
+  | _
+      {
+        let s = getLexeme lines lexbuf in
+        let () = Buffer.add_string buffer s in
+        string buffer lines lexbuf
+      }

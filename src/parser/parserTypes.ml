@@ -34,6 +34,7 @@ type token_enum =
    | INT
    | REAL
    | ID
+   | STRING
    | FUN
    | MEM
    | VAL

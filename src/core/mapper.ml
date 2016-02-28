@@ -350,14 +350,14 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       in
       let state'       = Env.exit `Function state' in
       state', stmt'
-   | StmtExternal(name,args,ret,attr) ->
+   | StmtExternal(name,args,ret,linkname,attr) ->
       let state'       = Env.enter `Function state name in
       let state',name' = map_id mapper state' name in
       let state',args' = (mapper_list map_typed_id) mapper state' args in
       let state',ret'  = map_vtype mapper state' ret in
       let state',attr' = map_attr mapper state' attr in
       let state',stmt' =
-         apply mapper.stmt state' (StmtExternal(name',args',ret',attr'))
+         apply mapper.stmt state' (StmtExternal(name',args',ret',linkname,attr'))
          |> map_stmt_subs mapper
       in
       let state'       = Env.exit `Function state' in
