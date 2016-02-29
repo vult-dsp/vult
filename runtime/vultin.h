@@ -123,6 +123,8 @@ int32_t fix_cosh(int32_t inAngle);
 
 int32_t fix_tanh(int32_t inAngle);
 
+int32_t fix_sqrt(int32_t inValue);
+
 
 /* Floating point operations */
 
