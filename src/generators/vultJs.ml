@@ -63,16 +63,16 @@ module Templates = struct
     this.set  = function(a,i,v)      { a[i]=v; };
     this.get  = function(a,i)        { return a[i]; };
     this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.process_init = null;
-    this.default_ = null;
+    this.Live_process_init = null;
+    this.Live_default_ = null;
 "^code^"
-    if(this.process_init)  this.context =  this.process_init(); else this.context = {};
-    if(this.default_)      this.default_(this.context);
-    this.liveNoteOn        = function(note,velocity) { if(this.noteOn)        this.noteOn(this.context,note,velocity); };
-    this.liveNoteOff       = function(note,velocity) { if(this.noteOff)       this.noteOff(this.context,note,velocity); };
-    this.liveControlChange = function(note,velocity) { if(this.controlChange) this.controlChange(this.context,note,velocity); };
-    this.liveProcess       = function(input)         { if(this.process)       return this.process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.default_)      return this.default_(this.context); };
+    if(this.Live_process_init)  this.context =  this.Live_process_init(); else this.context = {};
+    if(this.Live_default_)      this.Live_default_(this.context);
+    this.liveNoteOn        = function(note,velocity) { if(this.Live_noteOn)        this.Live_noteOn(this.context,note,velocity); };
+    this.liveNoteOff       = function(note,velocity) { if(this.Live_noteOff)       this.Live_noteOff(this.context,note,velocity); };
+    this.liveControlChange = function(note,velocity) { if(this.Live_controlChange) this.Live_controlChange(this.context,note,velocity); };
+    this.liveProcess       = function(input)         { if(this.Live_process)       return this.Live_process(this.context,input); else return 0; };
+    this.liveDefault       = function()              { if(this.Live_default_)      return this.Live_default_(this.context); };
 }
 "
 
@@ -98,6 +98,23 @@ let fixKeyword key =
    | "default" -> "default_"
    | _ -> key
 
+let isSpecial name =
+   match name with
+   | [_;"process"] -> true
+   | [_;"noteOn"] -> true
+   | [_;"noteOff"] -> true
+   | [_;"controlChange"] -> true
+   | [_;"default"] -> true
+   | _ -> false
+
+let fixContext is_special args =
+   if is_special then
+      match args with
+      | [] -> ["_ctx"]
+      | "_ctx"::_ -> args
+      | t -> "_ctx"::t
+   else args
+
 let isIntType (opt_typ:VType.t option) : bool =
    match opt_typ with
    | None -> false
@@ -115,6 +132,9 @@ let rec join (sep:string) (id:string list) : string =
 let rec convertId (id:id) : string =
    join "." id
 
+let rec convertFunctionId (id:id) : string =
+   join "_" id
+
 let rec convertExp (e:exp) : jsexp =
    match e with
    | PUnit(_)        -> JEInteger(0)
@@ -126,7 +146,7 @@ let rec convertExp (e:exp) : jsexp =
    | PUnOp("|-|",e1,_)-> JEUnOp("-", convertExp e1)
    | PUnOp(op,e1,_)  -> JEUnOp(op, convertExp e1)
    | POp(op,elems,_) -> JEOp(fixOp op, convertExpList elems)
-   | PCall(_,name,args,_)    -> JECall(convertId name, convertExpList args)
+   | PCall(_,name,args,_)    -> JECall(convertFunctionId name, convertExpList args)
    | PIf(cond,then_,else_,_) -> JEIf(convertExp cond, convertExp then_, convertExp else_)
    | PGroup(e1,_)    -> convertExp e1
    | PTuple([e1],_)  -> convertExp e1
@@ -165,7 +185,8 @@ let rec convertStmt (s:stmt) : jsstmt =
    | StmtIf(cond,then_,Some(else_),_) -> JSIf(convertExp cond, convertStmt then_, Some(convertStmt else_))
    | StmtFun(name,args,body,_,_) ->
       let arg_names = List.map convertTypedId args in
-      JSFunction(convertId name,arg_names,convertStmt body)
+      let args' = fixContext (isSpecial name) arg_names in
+      JSFunction(convertFunctionId name,args',convertStmt body)
    | StmtBind(lhs,rhs,_)    ->
       let is_int = isIntType ((GetAttr.fromExp rhs).typ) in
       JSBind(convertLhsExp lhs, convertExp rhs,is_int)
@@ -240,23 +261,6 @@ and printExpList buffer (sep:string) (e:jsexp list) : unit =
       append buffer sep;
       printExpList buffer sep t
 
-let fixContext is_special args =
-   if is_special then
-      match args with
-      | [] -> ["_ctx"]
-      | "_ctx"::_ -> args
-      | t -> "_ctx"::t
-   else args
-
-let isSpecial name =
-   match name with
-   | "process" -> true
-   | "noteOn" -> true
-   | "noteOff" -> true
-   | "controlChange" -> true
-   | "default" -> true
-   | _ -> false
-
 let printLhsExpTuple buffer (var:string) (is_var:bool) (i:int) (e:jslhsexp) : unit =
    match e with
    | JLId(name) ->
@@ -303,16 +307,14 @@ let rec printStmt buffer (stmt:jsstmt) : unit =
       append buffer "this.";
       append buffer name;
       append buffer " = function(";
-      let args' = fixContext (isSpecial name) args in
-      append buffer (join "," args');
+      append buffer (join "," args);
       append buffer ")";
       printStmt buffer body;
    | JSFunction(name,args,body) ->
       append buffer "this. ";
       append buffer name;
       append buffer " = function(";
-      let args' = fixContext (isSpecial name) args in
-      append buffer (join "," args');
+      append buffer (join "," args);
       append buffer ") { ";
       printStmt buffer body;
       append buffer "}";

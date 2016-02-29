@@ -4,15 +4,15 @@
 #include <math.h>
 #include "vultin.h"
 
-int32_t process(int32_t input);
+int32_t _Template_process(int32_t input);
 
-void noteOn(int note, int velocity);
+void _Template_noteOn(int note, int velocity);
 
-void noteOff(int note);
+void _Template_noteOff(int note);
 
-void controlChange(int control, int value);
+void _Template_controlChange(int control, int value);
 
-void default_();
+void _Template_default_();
 
 
 

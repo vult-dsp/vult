@@ -33,6 +33,7 @@ type pass_options =
       pass1 : bool;
       pass2 : bool;
       pass3 : bool;
+      pass4 : bool;
    }
 
 let default_options =
@@ -40,6 +41,7 @@ let default_options =
       pass1 = true;
       pass2 = true;
       pass3 = true;
+      pass4 = true;
    }
 
 module PassData = struct
@@ -598,6 +600,34 @@ module ProcessArrays = struct
 
 end
 
+module ReplaceFunctionNames = struct
+
+   let exp : ('a Env.t,exp) Mapper.mapper_func =
+      Mapper.make @@ fun state exp ->
+         match exp with
+         | PCall(name,fname,args,attr) ->
+            let Path(path),_,t = Env.lookup `Function state fname in
+            let final_name =
+               match t.Scope.ext_fn with
+               | Some(n) -> [n]
+               | None -> path
+            in
+            state, PCall(name,final_name,args,attr)
+         | _ -> state,exp
+
+   let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
+      Mapper.make @@ fun state stmt ->
+         match stmt with
+         | StmtFun(_,args,body,rettype,attr) ->
+            let Path(path) = Env.currentScope state in
+            state, StmtFun(path,args,body,rettype,attr)
+         | _ ->
+            state, stmt
+
+   let mapper = { Mapper.default_mapper with Mapper.exp = exp; Mapper.stmt = stmt }
+
+end
+
 (* Basic transformations *)
 let inferPass (state,stmts) =
    let stmts,state,_ = Inference.inferStmtList state Inference.NoType stmts in
@@ -618,6 +648,9 @@ let pass3 =
    |> Mapper.seq CreateInitFunction.mapper
    |> Mapper.seq CreateTypesForTuples.mapper
    |> Mapper.seq OtherErrors.mapper
+
+let pass4 =
+   ReplaceFunctionNames.mapper
 
 let rec applyPass apply pass (state,stmts) =
    if apply then
@@ -647,6 +680,7 @@ let applyTransformations args ?(options=default_options) (results:parser_results
       |> applyPass options.pass1 pass1
       |> applyPass options.pass2 pass2
       |> applyPass options.pass3 pass3
+      |> applyPass options.pass4 pass4
       |> snd
    in
 

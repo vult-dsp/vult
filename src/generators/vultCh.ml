@@ -122,6 +122,9 @@ let convertId (id:id) : string =
 let underscoreId (id:id) : string =
    join "_" id
 
+let makeFunctionName (id:id) : string list =
+   ["_" ^ (join "_" id)]
+
 let rec convertType params (tp:VType.t) : type_descr =
    match !tp with
    | VType.TId(["real"],_) when params.real = Float -> CTSimple("float")
@@ -230,13 +233,13 @@ let getInitArrayFunction params (typ:VType.t) : string =
    | _ when (isBool typ) -> "bool_init_array"
    | _ ->failwith ("Invalid array type "^ (PrintTypes.typeStr typ))
 
-let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) (elem_typs:VType.t list): VType.t * cexp =
+let convertFunction params (name:id) (typ:VType.t) (elems:cexp list) (elem_typs:VType.t list): VType.t * cexp =
    let is_float = (params.real = Float) && (isReal typ) in
    let is_fixed = (params.real = Fixed) && (isReal typ) in
    let is_int   = (isInt typ) in
    let is_bool  = (isBool typ) in
-   let fixed_fn =
-      match fn with
+   let fixed_name =
+      match name with
       | ["abs"]   when is_float -> `FunctionName(["fabsf"])
       | ["exp"]   when is_float -> `FunctionName(["expf"])
       | ["floor"] when is_float -> `FunctionName(["floorf"])
@@ -246,6 +249,7 @@ let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) (elem_typs:VT
       | ["cos"]   when is_float -> `FunctionName(["cosf"])
       | ["tan"]   when is_float -> `FunctionName(["tanf"])
       | ["tanh"]  when is_float -> `FunctionName(["tanhf"])
+      | ["sqrt"]  when is_float -> `FunctionName(["sqrtf"])
       | ["clip"]  when is_float -> `FunctionName(["float_clip"])
 
       | ["abs"]   when is_fixed -> `FunctionName(["fix_abs"])
@@ -257,8 +261,8 @@ let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) (elem_typs:VT
       | ["cos"]   when is_fixed -> `FunctionName(["fix_cos"])
       | ["tan"]   when is_fixed -> `FunctionName(["fix_tan"])
       | ["tanh"]  when is_fixed -> `FunctionName(["fix_tanh"])
+      | ["sqrt"]  when is_fixed -> `FunctionName(["fix_sqrt"])
       | ["clip"]  when is_fixed -> `FunctionName(["fix_clip"])
-      | ["set"]   when is_fixed -> `FunctionName(["fix_set"])
 
       | ["clip"]  when is_int   -> `FunctionName(["int_clip"])
 
@@ -278,9 +282,9 @@ let convertFunction params (fn:id) (typ:VType.t) (elems:cexp list) (elem_typs:VT
          end
 
       | ["not"] -> `UnOperatorName("!")
-      | _ -> `FunctionName(fn)
+      | _ -> `FunctionName(makeFunctionName name)
    in
-   match fixed_fn with
+   match fixed_name with
    | `FunctionName(fn)   -> typ, CECall(convertId fn, elems)
    | `UnOperatorName(op) -> typ, CEUnOp(op,List.hd elems)
 
@@ -390,7 +394,8 @@ let rec convertStmt params (s:stmt) : cstmt =
    | StmtFun(name,args,body,Some(ret),_) ->
       let arg_names = List.map (convertTypedId params) args in
       let body'  = convertStmt params body in
-      CSFunction(convertType params ret, convertId name,arg_names,body')
+      let fname = convertId (makeFunctionName name) in
+      CSFunction(convertType params ret, fname,arg_names,body')
    (* Special case for initializing arrays*)
    | StmtBind(LId(name,_,_),PCall(None,["makeArray"],[size;init],_),_) ->
       let _, init' = convertExp params init in

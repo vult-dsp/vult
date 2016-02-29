@@ -624,7 +624,7 @@ and stmtExternal (buffer:Stream.stream) : stmt =
    let link_name = string buffer in
    let _      = Stream.consume buffer SEMI in
    let start_loc = token.loc in
-   let attr      = makeAttr start_loc in
+   let attr      = { (makeAttr start_loc) with ext_fn = Some(link_name) } in
    StmtExternal(name,args,vtype,link_name,attr)
 (** 'fun' <id> '(' <typedArgList> ')' [ ':' type ] <stmtList> *)
 and stmtFunction (buffer:Stream.stream) : stmt =

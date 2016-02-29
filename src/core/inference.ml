@@ -391,7 +391,7 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       StmtBlock(name,stmts',attr), env', stmt_ret_type
    | StmtFun(name,args,body,ret_type,attr) ->
       VType.enterLevel ();
-      let env'                = Env.enter ~attr:(attr) `Function env name in
+      let env'                = Env.enter ~attr:attr `Function env name in
       let args', types, env'  = addArgsToEnv env' args in
       let types',table        = VType.fixTypeList [] types in
       let ret_type',_         = VType.fixOptType table ret_type in
@@ -419,7 +419,7 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
    | StmtAliasType (name, alias, attr) ->
       StmtAliasType (name, alias, attr), env, ret_type
    | StmtExternal(name,args,fun_ret_type,linkname,attr) ->
-      let env' = Env.enter `Function env name in
+      let env' = Env.enter ~attr:attr `Function env name in
       let args',types, env' = addArgsToEnv env' args in
       let typ  = VType.makeArrowType fun_ret_type types in
       let env' = Env.setCurrentType env' typ true in

@@ -14,89 +14,89 @@ function vultProcess(){
     this.set  = function(a,i,v)      { a[i]=v; };
     this.get  = function(a,i)        { return a[i]; };
     this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.process_init = null;
-    this.default_ = null;
+    this.Live_process_init = null;
+    this.Live_default_ = null;
 
 
-this._ctx_type_0_init = function(){
+this.Phasedist__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.x = 0.;
    return _ctx;
 }
-this. smooth_init = function() { return this._ctx_type_0_init();}
-this.smooth = function(_ctx,input){
+this. Phasedist_smooth_init = function() { return this.Phasedist__ctx_type_0_init();}
+this.Phasedist_smooth = function(_ctx,input){
    _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005));
    return _ctx.x;
 }
 
 
-this._ctx_type_1_init = function(){
+this.Phasedist__ctx_type_1_init = function(){
    var _ctx = {};
    _ctx.pre_x = 0.;
    return _ctx;
 }
-this. change_init = function() { return this._ctx_type_1_init();}
-this.change = function(_ctx,x){
+this. Phasedist_change_init = function() { return this.Phasedist__ctx_type_1_init();}
+this.Phasedist_change = function(_ctx,x){
    var v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
-this.pitchToRate = function(d){
+this.Phasedist_pitchToRate = function(d){
    return (0.000185392290249 * this.exp((0.0577623 * d)));
 }
 
 
-this._ctx_type_3_init = function(){
+this.Phasedist__ctx_type_3_init = function(){
    var _ctx = {};
    _ctx.rate = 0.;
    _ctx.phase = 0.;
-   _ctx._inst0 = this._ctx_type_1_init();
+   _ctx._inst0 = this.Phasedist__ctx_type_1_init();
    return _ctx;
 }
-this. phasor_init = function() { return this._ctx_type_3_init();}
-this.phasor = function(_ctx,pitch,reset){
-   if(this.change(_ctx._inst0,pitch)){
-      _ctx.rate = this.pitchToRate(pitch);
+this. Phasedist_phasor_init = function() { return this.Phasedist__ctx_type_3_init();}
+this.Phasedist_phasor = function(_ctx,pitch,reset){
+   if(this.Phasedist_change(_ctx._inst0,pitch)){
+      _ctx.rate = this.Phasedist_pitchToRate(pitch);
    }
    _ctx.phase = (reset?0.:((_ctx.phase + _ctx.rate) % 1.));
    return _ctx.phase;
 }
 
 
-this._ctx_type_4_init = function(){
+this.Phasedist__ctx_type_4_init = function(){
    var _ctx = {};
    _ctx.volume = 0.;
    _ctx.pre_phase1 = 0.;
    _ctx.pitch = 0.;
    _ctx.detune = 0.;
-   _ctx._inst3 = this._ctx_type_0_init();
-   _ctx._inst2 = this._ctx_type_3_init();
-   _ctx._inst1 = this._ctx_type_0_init();
-   _ctx._inst0 = this._ctx_type_3_init();
+   _ctx._inst3 = this.Phasedist__ctx_type_0_init();
+   _ctx._inst2 = this.Phasedist__ctx_type_3_init();
+   _ctx._inst1 = this.Phasedist__ctx_type_0_init();
+   _ctx._inst0 = this.Phasedist__ctx_type_3_init();
    return _ctx;
 }
-this. process_init = function() { return this._ctx_type_4_init();}
-this.process = function(_ctx,input){
-   var phase1 = this.phasor(_ctx._inst0,_ctx.pitch,false);
+this. Phasedist_process_init = function() { return this.Phasedist__ctx_type_4_init();}
+this.Phasedist_process = function(_ctx,input){
+   var phase1 = this.Phasedist_phasor(_ctx._inst0,_ctx.pitch,false);
    var comp = (1. + (- phase1));
    var reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5);
    _ctx.pre_phase1 = phase1;
-   var phase2 = this.phasor(_ctx._inst2,(_ctx.pitch + (this.smooth(_ctx._inst1,_ctx.detune) * 32.)),reset);
+   var phase2 = this.Phasedist_phasor(_ctx._inst2,(_ctx.pitch + (this.Phasedist_smooth(_ctx._inst1,_ctx.detune) * 32.)),reset);
    var sine = this.sin((6.28318530718 * phase2));
-   return (this.smooth(_ctx._inst3,_ctx.volume) * sine * comp);
+   return (this.Phasedist_smooth(_ctx._inst3,_ctx.volume) * sine * comp);
 }
 
-this. noteOn_init = function() { return this._ctx_type_4_init();}
-this.noteOn = function(_ctx,note,velocity){
+this. Phasedist_noteOn_init = function() { return this.Phasedist__ctx_type_4_init();}
+this.Phasedist_noteOn = function(_ctx,note,velocity){
    _ctx.pitch = this.real(note);
 }
 
-this. noteOff_init = function() { return this._ctx_type_4_init();}
-this.noteOff = function(_ctx,note){
+this. Phasedist_noteOff_init = function() { return this.Phasedist__ctx_type_4_init();}
+this.Phasedist_noteOff = function(_ctx,note){
 }
 
-this. controlChange_init = function() { return this._ctx_type_4_init();}
-this.controlChange = function(_ctx,control,value){
+this. Phasedist_controlChange_init = function() { return this.Phasedist__ctx_type_4_init();}
+this.Phasedist_controlChange = function(_ctx,control,value){
    if((control == (30|0))){
       _ctx.volume = (this.real(value) * 0.00787401574803);
    }
@@ -105,18 +105,18 @@ this.controlChange = function(_ctx,control,value){
    }
 }
 
-this. default_init = function() { return this._ctx_type_4_init();}
-this.default_ = function(_ctx){
+this. Phasedist_default_init = function() { return this.Phasedist__ctx_type_4_init();}
+this.Phasedist_default_ = function(_ctx){
    _ctx.volume = 0.;
    _ctx.pitch = 45.;
    _ctx.detune = 0.;
 }
 
-    if(this.process_init)  this.context =  this.process_init(); else this.context = {};
-    if(this.default_)      this.default_(this.context);
-    this.liveNoteOn        = function(note,velocity) { if(this.noteOn)        this.noteOn(this.context,note,velocity); };
-    this.liveNoteOff       = function(note,velocity) { if(this.noteOff)       this.noteOff(this.context,note,velocity); };
-    this.liveControlChange = function(note,velocity) { if(this.controlChange) this.controlChange(this.context,note,velocity); };
-    this.liveProcess       = function(input)         { if(this.process)       return this.process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.default_)      return this.default_(this.context); };
+    if(this.Live_process_init)  this.context =  this.Live_process_init(); else this.context = {};
+    if(this.Live_default_)      this.Live_default_(this.context);
+    this.liveNoteOn        = function(note,velocity) { if(this.Live_noteOn)        this.Live_noteOn(this.context,note,velocity); };
+    this.liveNoteOff       = function(note,velocity) { if(this.Live_noteOff)       this.Live_noteOff(this.context,note,velocity); };
+    this.liveControlChange = function(note,velocity) { if(this.Live_controlChange) this.Live_controlChange(this.context,note,velocity); };
+    this.liveProcess       = function(input)         { if(this.Live_process)       return this.Live_process(this.context,input); else return 0; };
+    this.liveDefault       = function()              { if(this.Live_default_)      return this.Live_default_(this.context); };
 }

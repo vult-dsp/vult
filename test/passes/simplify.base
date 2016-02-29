@@ -1,6 +1,6 @@
 {
-   fun foo(a:int,b:int,c:int,d:int) : int return (-1 + a + b + c + d);
+   fun Simplify.foo(a:int,b:int,c:int,d:int) : int return (-1 + a + b + c + d);
 
-   fun bar() : int return (-2);
+   fun Simplify.bar() : int return (-2);
 
 }

@@ -4,29 +4,29 @@
    }
 
    type change_type : _ctx_type_0;
-   fun _ctx_type_0_init() : _ctx_type_0 {
+   fun Context_simple._ctx_type_0_init() : _ctx_type_0 {
       val (_ctx:_ctx_type_0);
       (_ctx.pre:real) = 0.;
       return _ctx;
    }
 
-   fun change_init() : _ctx_type_0 return _ctx_type_0_init();
+   fun Context_simple.change_init() : _ctx_type_0 return Context_simple._ctx_type_0_init();
 
-   fun change(_ctx:_ctx_type_0,x:real) : bool {
+   fun Context_simple.change(_ctx:_ctx_type_0,x:real) : bool {
       val (ret:bool) = (x <> _ctx.pre);
       (_ctx.pre:real) = x;
       return ret;
    }
 
    type reset_type : _ctx_type_0;
-   fun reset_init() : _ctx_type_0 return _ctx_type_0_init();
+   fun Context_simple.reset_init() : _ctx_type_0 return Context_simple._ctx_type_0_init();
 
-   and reset(_ctx:_ctx_type_0) : unit (_ctx.pre:real) = 0.;
+   and Context_simple.reset(_ctx:_ctx_type_0) : unit (_ctx.pre:real) = 0.;
 
    type set_type : _ctx_type_0;
-   fun set_init() : _ctx_type_0 return _ctx_type_0_init();
+   fun Context_simple.set_init() : _ctx_type_0 return Context_simple._ctx_type_0_init();
 
-   and set(_ctx:_ctx_type_0,x:real) : unit (_ctx.pre:real) = x;
+   and Context_simple.set(_ctx:_ctx_type_0,x:real) : unit (_ctx.pre:real) = x;
 
    type _ctx_type_1 {
       val c : _ctx_type_0;
@@ -35,22 +35,22 @@
    }
 
    type foo_type : _ctx_type_1;
-   fun _ctx_type_1_init() : _ctx_type_1 {
+   fun Context_simple._ctx_type_1_init() : _ctx_type_1 {
       val (_ctx:_ctx_type_1);
-      (_ctx.c:_ctx_type_0) = _ctx_type_0_init();
-      (_ctx._inst1:_ctx_type_0) = _ctx_type_0_init();
-      (_ctx._inst0:_ctx_type_0) = _ctx_type_0_init();
+      (_ctx.c:_ctx_type_0) = Context_simple._ctx_type_0_init();
+      (_ctx._inst1:_ctx_type_0) = Context_simple._ctx_type_0_init();
+      (_ctx._inst0:_ctx_type_0) = Context_simple._ctx_type_0_init();
       return _ctx;
    }
 
-   fun foo_init() : _ctx_type_1 return _ctx_type_1_init();
+   fun Context_simple.foo_init() : _ctx_type_1 return Context_simple._ctx_type_1_init();
 
-   fun foo(_ctx:_ctx_type_1,x:real) : unit {
-      val (v1:bool) = change(_ctx._inst0,x);
-      val (v2:bool) = change(_ctx._inst1,x);
-      val (v3:bool) = change(_ctx.c,x);
-      (_:unit) = reset(_ctx.c);
-      (_:unit) = set(_ctx.c,0.);
+   fun Context_simple.foo(_ctx:_ctx_type_1,x:real) : unit {
+      val (v1:bool) = Context_simple.change(_ctx._inst0,x);
+      val (v2:bool) = Context_simple.change(_ctx._inst1,x);
+      val (v3:bool) = Context_simple.change(_ctx.c,x);
+      (_:unit) = Context_simple.reset(_ctx.c);
+      (_:unit) = Context_simple.set(_ctx.c,0.);
    }
 
 }

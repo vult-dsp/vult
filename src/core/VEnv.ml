@@ -37,6 +37,7 @@ let builtin_table =
       ["set"] , `Function, VType.Constants.array_set (), false;
       ["get"] , `Function, VType.Constants.array_get (), false;
       ["size"] , `Function, VType.Constants.array_size (), false;
+      ["makeArray"], `Function, VType.Constants.array_make (), false;
 
       ["abs"]  , `Function, VType.Constants.real_real (), false;
       ["exp"]  , `Function, VType.Constants.real_real (), false;
@@ -174,6 +175,8 @@ module Scope = struct
 
          active    : bool;           (** true if the fuction contains a mem or an instance *)
 
+         ext_fn    : string option;  (** contains the replacement name if it's an external function *)
+
       }
 
    let empty : t =
@@ -191,6 +194,7 @@ module Scope = struct
          ctx       = Context.empty;
          single    = true;
          active    = false;
+         ext_fn    = None;
 
       }
 
@@ -282,6 +286,7 @@ module Scope = struct
       match kind with
       | `Function ->
          let t' = enterAny getFunction t name in
+         let t' = { t' with ext_fn = attr.ext_fn } in
          if attr.fun_and then
             addToContext t' name attr.init
          else

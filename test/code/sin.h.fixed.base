@@ -10,11 +10,11 @@ typedef struct _ctx_type_0 {
 
 typedef _ctx_type_0 change_type;
 
-_ctx_type_0 _ctx_type_0_init();
+_ctx_type_0 _Sin__ctx_type_0_init();
 
-_ctx_type_0 change_init();
+_ctx_type_0 _Sin_change_init();
 
-uint8_t change(_ctx_type_0 &_ctx, int32_t x);
+uint8_t _Sin_change(_ctx_type_0 &_ctx, int32_t x);
 
 typedef struct _ctx_type_1 {
    int32_t y2;
@@ -26,17 +26,17 @@ typedef struct _ctx_type_1 {
 
 typedef _ctx_type_1 sc_osc_type;
 
-_ctx_type_1 _ctx_type_1_init();
+_ctx_type_1 _Sin__ctx_type_1_init();
 
-_ctx_type_1 sc_osc_init();
+_ctx_type_1 _Sin_sc_osc_init();
 
-int32_t sc_osc(_ctx_type_1 &_ctx, int32_t pitch);
+int32_t _Sin_sc_osc(_ctx_type_1 &_ctx, int32_t pitch);
 
 typedef _ctx_type_1 sc_osc_start_type;
 
-_ctx_type_1 sc_osc_start_init();
+_ctx_type_1 _Sin_sc_osc_start_init();
 
-void sc_osc_start(_ctx_type_1 &_ctx);
+void _Sin_sc_osc_start(_ctx_type_1 &_ctx);
 
 typedef struct _ctx_type_2 {
    int32_t pitch;
@@ -45,35 +45,35 @@ typedef struct _ctx_type_2 {
 
 typedef _ctx_type_2 process_type;
 
-_ctx_type_2 _ctx_type_2_init();
+_ctx_type_2 _Sin__ctx_type_2_init();
 
-_ctx_type_2 process_init();
+_ctx_type_2 _Sin_process_init();
 
-int32_t process(_ctx_type_2 &_ctx, int32_t input);
+int32_t _Sin_process(_ctx_type_2 &_ctx, int32_t input);
 
 typedef _ctx_type_2 noteOn_type;
 
-_ctx_type_2 noteOn_init();
+_ctx_type_2 _Sin_noteOn_init();
 
-void noteOn(_ctx_type_2 &_ctx, int note, int velocity);
+void _Sin_noteOn(_ctx_type_2 &_ctx, int note, int velocity);
 
 typedef _ctx_type_2 noteOff_type;
 
-_ctx_type_2 noteOff_init();
+_ctx_type_2 _Sin_noteOff_init();
 
-void noteOff(_ctx_type_2 &_ctx, int note);
+void _Sin_noteOff(_ctx_type_2 &_ctx, int note);
 
 typedef _ctx_type_2 controlChange_type;
 
-_ctx_type_2 controlChange_init();
+_ctx_type_2 _Sin_controlChange_init();
 
-void controlChange(_ctx_type_2 &_ctx, int control, int value);
+void _Sin_controlChange(_ctx_type_2 &_ctx, int control, int value);
 
 typedef _ctx_type_2 default_type;
 
-_ctx_type_2 default_init();
+_ctx_type_2 _Sin_default_init();
 
-void default_(_ctx_type_2 &_ctx);
+void _Sin_default_(_ctx_type_2 &_ctx);
 
 
 

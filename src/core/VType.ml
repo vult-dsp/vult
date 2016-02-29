@@ -362,5 +362,10 @@ module Constants = struct
       let array_type = ref (TComposed(["array"],[a;size],None)) in
       ref(TArrow(array_type,ref (TArrow(int_type,ref (TArrow(a,unit_type,None)), None)),None))
 
+   let array_make () =
+      let a = ref (TUnbound("'a",None,None)) in
+      let size = ref (TUnbound("'size",None,None)) in
+      let array_type = ref (TComposed(["array"],[a;size],None)) in
+      ref (TArrow(int_type,ref (TArrow(a,array_type,None)),None))
 
 end

@@ -1,35 +1,35 @@
 #include "sin.h"
 
-_ctx_type_0 _ctx_type_0_init(){
+_ctx_type_0 _Sin__ctx_type_0_init(){
    _ctx_type_0 _ctx;
    _ctx.pre_x = 0.f;
    return _ctx;
 }
 
-_ctx_type_0 change_init(){ return _ctx_type_0_init();}
+_ctx_type_0 _Sin_change_init(){ return _Sin__ctx_type_0_init();}
 
-uint8_t change(_ctx_type_0 &_ctx, float x){
+uint8_t _Sin_change(_ctx_type_0 &_ctx, float x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
 
-_ctx_type_1 _ctx_type_1_init(){
+_ctx_type_1 _Sin__ctx_type_1_init(){
    _ctx_type_1 _ctx;
    _ctx.y2 = 0.f;
    _ctx.y1 = 0.f;
    _ctx.w = 0.f;
    _ctx.cos_w = 0.f;
-   _ctx._inst0 = _ctx_type_0_init();
-   sc_osc_start(_ctx);
+   _ctx._inst0 = _Sin__ctx_type_0_init();
+   _Sin_sc_osc_start(_ctx);
    return _ctx;
 }
 
-_ctx_type_1 sc_osc_init(){ return _ctx_type_1_init();}
+_ctx_type_1 _Sin_sc_osc_init(){ return _Sin__ctx_type_1_init();}
 
-float sc_osc(_ctx_type_1 &_ctx, float pitch){
+float _Sin_sc_osc(_ctx_type_1 &_ctx, float pitch){
    float g = 1.f;
-   if(change(_ctx._inst0,pitch)){
+   if(_Sin_change(_ctx._inst0,pitch)){
       float pre_w = _ctx.w;
       _ctx.w = (0.00116485f * expf((0.0577623f * pitch)));
       g = (tanf((_ctx.w * 0.5f)) / tanf((pre_w * 0.5f)));
@@ -42,46 +42,46 @@ float sc_osc(_ctx_type_1 &_ctx, float pitch){
    return _ctx.y1;
 }
 
-_ctx_type_1 sc_osc_start_init(){ return _ctx_type_1_init();}
+_ctx_type_1 _Sin_sc_osc_start_init(){ return _Sin__ctx_type_1_init();}
 
-void sc_osc_start(_ctx_type_1 &_ctx){
+void _Sin_sc_osc_start(_ctx_type_1 &_ctx){
    _ctx.y1 = 1.f;
    _ctx.y2 = ((- _ctx.y1) * 0.5f);
 }
 
-_ctx_type_2 _ctx_type_2_init(){
+_ctx_type_2 _Sin__ctx_type_2_init(){
    _ctx_type_2 _ctx;
    _ctx.pitch = 0.f;
-   _ctx._inst0 = _ctx_type_1_init();
-   default_(_ctx);
+   _ctx._inst0 = _Sin__ctx_type_1_init();
+   _Sin_default_(_ctx);
    return _ctx;
 }
 
-_ctx_type_2 process_init(){ return _ctx_type_2_init();}
+_ctx_type_2 _Sin_process_init(){ return _Sin__ctx_type_2_init();}
 
-float process(_ctx_type_2 &_ctx, float input){
-   return sc_osc(_ctx._inst0,_ctx.pitch);
+float _Sin_process(_ctx_type_2 &_ctx, float input){
+   return _Sin_sc_osc(_ctx._inst0,_ctx.pitch);
 }
 
-_ctx_type_2 noteOn_init(){ return _ctx_type_2_init();}
+_ctx_type_2 _Sin_noteOn_init(){ return _Sin__ctx_type_2_init();}
 
-void noteOn(_ctx_type_2 &_ctx, int note, int velocity){
+void _Sin_noteOn(_ctx_type_2 &_ctx, int note, int velocity){
    _ctx.pitch = int_to_float(note);
 }
 
-_ctx_type_2 noteOff_init(){ return _ctx_type_2_init();}
+_ctx_type_2 _Sin_noteOff_init(){ return _Sin__ctx_type_2_init();}
 
-void noteOff(_ctx_type_2 &_ctx, int note){
+void _Sin_noteOff(_ctx_type_2 &_ctx, int note){
 }
 
-_ctx_type_2 controlChange_init(){ return _ctx_type_2_init();}
+_ctx_type_2 _Sin_controlChange_init(){ return _Sin__ctx_type_2_init();}
 
-void controlChange(_ctx_type_2 &_ctx, int control, int value){
+void _Sin_controlChange(_ctx_type_2 &_ctx, int control, int value){
 }
 
-_ctx_type_2 default_init(){ return _ctx_type_2_init();}
+_ctx_type_2 _Sin_default_init(){ return _Sin__ctx_type_2_init();}
 
-void default_(_ctx_type_2 &_ctx){
+void _Sin_default_(_ctx_type_2 &_ctx){
    _ctx.pitch = 69.f;
 }
 

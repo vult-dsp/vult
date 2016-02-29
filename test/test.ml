@@ -49,7 +49,7 @@ let parser_files =
       "types_basic.vult";
    ]
 
-let pass1_options = { Passes.default_options with Passes.pass3 = false }
+let pass1_options = Passes.{ Passes.default_options with pass3 = false; pass4 = false }
 
 let passes_files =
    [
