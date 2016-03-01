@@ -59,16 +59,7 @@ $ js_of_ocaml vult_node.byte
 ```
 ### Roadmap
 
-#### v0.2 (ongoing)
-- Better syntax checking
-- External functions
-- Constant arrays
-- More powerful shared context
-
-#### v0.1 (Completed)
-- Proof of concept
-- C code generation
-- Javascript generation
+You can see what we are working on and what's planned for Vult in the waffle.io board https://waffle.io/modlfo/vult 
 
 ### Contact
 
