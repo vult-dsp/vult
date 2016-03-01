@@ -247,8 +247,6 @@ val d = x:count(); // d = 1
 val e = x:count(); // e = 2
 </div>
 
-<p>Note: currently you can share context among functions that declare the same <code>mem</code> and sub-contexts (that have the same named function calls). A future feature is to explicitly merge types.</p>
-
 <h3>
     <a id="a-few-real-examples" class="anchor" href="#a-few-real-examples" aria-hidden="true"><span class="octicon octicon-link"></span></a>A Small Example</h3>
 
@@ -332,87 +330,79 @@ fun lp6(x,fc) {
 <p>This is the content of the <code>filter.h</code> file:</p>
 
 <div class="c_code" id="gen1">#ifndef _CODE_
-#define _CODE_
-
-#include &lt;math.h&gt;
+#ifndef FILTER_H
+#define FILTER_H
 #include &lt;stdint.h&gt;
+#include &lt;math.h&gt;
 #include "vultin.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+typedef struct _ctx_type_0 {
+   float pre_x;
+} _ctx_type_0;
 
-typedef struct __filter_struct_0 {
-    float w2;
-    float w1;
-} _filter_struct_0;
+typedef _ctx_type_0 change_type;
 
-int _filter_struct_0_init(_filter_struct_0* st);
+_ctx_type_0 Filter__ctx_type_0_init();
 
-typedef struct __filter_struct_1 {
-    float pre_x;
-} _filter_struct_1;
+_ctx_type_0 Filter_change_init();
 
-int _filter_struct_1_init(_filter_struct_1* st);
+uint8_t Filter_change(_ctx_type_0 &_ctx, float x);
 
-typedef struct __filter_struct_2 {
-    float b1;
-    float b0;
-    float a1;
-    float _i0_pre_x;
-    _filter_struct_0 _i1;
-} _filter_struct_2;
+typedef struct _ctx_type_1 {
+   float w2;
+   float w1;
+} _ctx_type_1;
 
-int _filter_struct_2_init(_filter_struct_2* st);
+typedef _ctx_type_1 biquad_type;
 
-typedef struct __filter_struct_0 _filter_struct_biquad;
+_ctx_type_1 Filter__ctx_type_1_init();
 
-int _filter_struct_biquad_init(_filter_struct_biquad* st);
+_ctx_type_1 Filter_biquad_init();
 
-typedef struct __filter_struct_1 _filter_struct_change;
+float Filter_biquad(_ctx_type_1 &_ctx, float x, float b0, float b1, float b2, float a1, float a2);
 
-int _filter_struct_change_init(_filter_struct_change* st);
+typedef struct _ctx_type_2 {
+   float b1;
+   float b0;
+   float a1;
+   _ctx_type_1 _inst1;
+   _ctx_type_0 _inst0;
+} _ctx_type_2;
 
-typedef struct __filter_struct_2 _filter_struct_lp6;
+typedef _ctx_type_2 lp6_type;
 
-int _filter_struct_lp6_init(_filter_struct_lp6* st);
+_ctx_type_2 Filter__ctx_type_2_init();
 
-float _filter__lp6(_filter_struct_2* _st_, float x, float fc);
+_ctx_type_2 Filter_lp6_init();
 
-float _filter__change(_filter_struct_1* _st_, float x);
+float Filter_lp6(_ctx_type_2 &_ctx, float x, float fc);
 
-float _filter__biquad(_filter_struct_0* _st_, float x, float b0, float b1, float b2, float a1, float a2);
+#endif // FILTER_H
 
-float _filter_();
 
-#ifdef __cplusplus
-}
-#endif
-#endif
 </div>
 
 <p>For each function, Vult generates a type, a type initialization and the actual function code. The naming of these types and functions follows this name convention: a function <code>foo</code> in a file <code>filename.vult</code> generates</p>
 
 <ul>
-    <li>A type <code>_&lt;filename&gt;_struct_&lt;foo&gt;</code>
+    <li>A type <code>&lt;foo&gt;_type;</code>
     </li>
-    <li>A function initializer <code>_&lt;filename&gt;_struct_&lt;foo&gt;_init</code>
+    <li>A function initializer <code>_&lt;Filename&gt;_&lt;foo&gt;_init</code>
     </li>
-    <li>The function body <code>_&lt;filename&gt;_&lt;foo&gt;</code>
+    <li>The function body <code>_&lt;Filename&gt;_&lt;foo&gt;</code>
     </li>
 </ul>
 
-<p>In order to use the generated code from a C/C++ program you need to declare a type <code>_&lt;filename&gt;_struct_&lt;foo&gt;</code> then initialize it and call your function passing a pointer to the variable. Here is an example:</p>
+<p>In order to use the generated code from a C/C++ program you need to declare a type <code>&lt;foo&gt;_type</code> then initialize it and call your function passing a pointer to the variable. Here is an example:</p>
 
 <div class="c_code" id="gen2">#include "filter.h"
 
 void main(void){
-    _filter_struct_biquad my_filter;        // declare a variable (struct) 'my_filter'
-    _filter_struct_biquad_init(&amp;my_filter); // initializes the structure
+    // declare a variable 'my_filter' and initialize it
+    lp6_type my_filter = Filter_lp6_init();
 
     // Performs one step of the filter with input 0 and frequency 1000 hertz
-    float result = _filter_biquad(&amp;my_filter,0,1000);
+    float result = Filter_lp6(my_filter,0,1000);
 }
 </div>
 
@@ -427,7 +417,17 @@ void main(void){
 
 <p>The resulting code will use 32 bit integers to represent all numeric values. This code runs much more efficiently in Arduinos or Teensy boards.</p>
 
-<p>In order to convert back and forth fixed-point values, integers and floats you can use the functions included in <code>vultin.h</code> <code>fix_to_float</code>, <code>fix_from_float</code>, etc.</p>
+<p> Here you can see the generated code for the filter <code>Filter_lp6</code> in fixed-point arithmetic. </p>
+<div class="c_code" id="gen3">
+int32_t Filter_lp6(_ctx_type_2 &_ctx, int32_t x, int32_t fc){
+   if(Filter_change(_ctx._inst0,fc)){
+      int32_t k = fix_tan(fix_mul(0x4 /* 0.000071 */,fc));
+      _ctx.b0 = fix_div(k,fix_add(k,0x10000 /* 1.000000 */));
+      _ctx.b1 = fix_div(k,fix_add(k,0x10000 /* 1.000000 */));
+      _ctx.a1 = fix_div(fix_add(k,(0xffff0000 /* -1.000000 */)),fix_add(k,0x10000 /* 1.000000 */));
+   }
+   return Filter_biquad(_ctx._inst1,x,_ctx.b0,_ctx.b1,0x0 /* 0.000000 */,_ctx.a1,0x0 /* 0.000000 */);
+}</div>
 
 <p>If you want to receive notifications for future development of this project you can join to the google group <a href="http://groups.google.com/d/forum/vult">Vult Group</a>. </p>
 
