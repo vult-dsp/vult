@@ -136,6 +136,7 @@ var volume1   = "";
 var phasedist = "";
 var synt1     = "";
 var synt2     = "";
+var delay     = "";
 
 
 function loadPreset(n){
@@ -156,6 +157,9 @@ function loadPreset(n){
             break;
         case 4:
             code = synt2;
+            break;
+        case 5:
+            code = delay;
             break;
         default:
             code = template;
@@ -180,6 +184,7 @@ request.onreadystatechange = function() {
   phasedist = example_files.files['phasedist.vult'].content;
   synt1 = example_files.files['synth1.vult'].content;
   synt2 = example_files.files['synth2.vult'].content;
+  delay = example_files.files['delay.vult'].content;
   loadPreset(0);
 }
 request.open('GET', 'https://api.github.com/gists/77bc427f231a1d5b7d8a', true);
