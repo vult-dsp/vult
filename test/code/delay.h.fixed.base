@@ -1,0 +1,189 @@
+#ifndef DELAY_H
+#define DELAY_H
+#include <stdint.h>
+#include <math.h>
+#include "vultin.h"
+
+typedef struct _ctx_type_0 {
+   int32_t x;
+} _ctx_type_0;
+
+typedef _ctx_type_0 smooth_type;
+
+_ctx_type_0 Delay__ctx_type_0_init();
+
+_ctx_type_0 Delay_smooth_init();
+
+int32_t Delay_smooth(_ctx_type_0 &_ctx, int32_t input);
+
+typedef struct _ctx_type_1 {
+   int32_t pre_x;
+} _ctx_type_1;
+
+typedef _ctx_type_1 change_type;
+
+_ctx_type_1 Delay__ctx_type_1_init();
+
+_ctx_type_1 Delay_change_init();
+
+uint8_t Delay_change(_ctx_type_1 &_ctx, int32_t x);
+
+typedef struct _ctx_type_2 {
+   uint8_t pre_x;
+} _ctx_type_2;
+
+typedef _ctx_type_2 edge_type;
+
+_ctx_type_2 Delay__ctx_type_2_init();
+
+_ctx_type_2 Delay_edge_init();
+
+uint8_t Delay_edge(_ctx_type_2 &_ctx, uint8_t x);
+
+typedef struct _ctx_type_3 {
+   int count;
+} _ctx_type_3;
+
+typedef _ctx_type_3 each_type;
+
+_ctx_type_3 Delay__ctx_type_3_init();
+
+_ctx_type_3 Delay_each_init();
+
+uint8_t Delay_each(_ctx_type_3 &_ctx, int n);
+
+int32_t Delay_pitchToRate(int32_t d);
+
+typedef struct _ctx_type_5 {
+   int32_t rate;
+   int32_t phase;
+   _ctx_type_1 _inst0;
+} _ctx_type_5;
+
+typedef _ctx_type_5 phasor_type;
+
+_ctx_type_5 Delay__ctx_type_5_init();
+
+_ctx_type_5 Delay_phasor_init();
+
+int32_t Delay_phasor(_ctx_type_5 &_ctx, int32_t pitch, uint8_t reset);
+
+typedef struct _ctx_type_6 {
+   int32_t phase;
+   _ctx_type_2 _inst0;
+} _ctx_type_6;
+
+typedef _ctx_type_6 lfo_type;
+
+_ctx_type_6 Delay__ctx_type_6_init();
+
+_ctx_type_6 Delay_lfo_init();
+
+int32_t Delay_lfo(_ctx_type_6 &_ctx, int32_t f, uint8_t gate);
+
+typedef struct _ctx_type_7 {
+   int32_t pre_phase1;
+   _ctx_type_5 _inst2;
+   _ctx_type_0 _inst1;
+   _ctx_type_5 _inst0;
+} _ctx_type_7;
+
+typedef _ctx_type_7 phd_osc_type;
+
+_ctx_type_7 Delay__ctx_type_7_init();
+
+_ctx_type_7 Delay_phd_osc_init();
+
+int32_t Delay_phd_osc(_ctx_type_7 &_ctx, int32_t pitch, int32_t detune);
+
+typedef struct _ctx_type_8 {
+   int write_pos;
+   int32_t buffer[44100];
+} _ctx_type_8;
+
+typedef _ctx_type_8 delay_type;
+
+_ctx_type_8 Delay__ctx_type_8_init();
+
+_ctx_type_8 Delay_delay_init();
+
+int32_t Delay_delay(_ctx_type_8 &_ctx, int32_t x, int32_t time, int32_t feedback);
+
+typedef struct _ctx_type_9 {
+   int pre;
+   int notes[4];
+   int count;
+} _ctx_type_9;
+
+typedef _ctx_type_9 mono_noteOn_type;
+
+_ctx_type_9 Delay__ctx_type_9_init();
+
+_ctx_type_9 Delay_mono_noteOn_init();
+
+int Delay_mono_noteOn(_ctx_type_9 &_ctx, int n);
+
+typedef _ctx_type_9 mono_noteOff_type;
+
+_ctx_type_9 Delay_mono_noteOff_init();
+
+int Delay_mono_noteOff(_ctx_type_9 &_ctx, int n);
+
+typedef _ctx_type_9 mono_isGateOn_type;
+
+_ctx_type_9 Delay_mono_isGateOn_init();
+
+uint8_t Delay_mono_isGateOn(_ctx_type_9 &_ctx);
+
+typedef struct _ctx_type_10 {
+   int32_t volume;
+   int32_t time;
+   int32_t pitch;
+   _ctx_type_9 notes;
+   int32_t lfo_rate;
+   int32_t lfo_amt;
+   int32_t feedback;
+   int32_t detune;
+   _ctx_type_8 _inst5;
+   _ctx_type_0 _inst4;
+   _ctx_type_0 _inst3;
+   _ctx_type_0 _inst2;
+   _ctx_type_7 _inst1;
+   _ctx_type_6 _inst0;
+} _ctx_type_10;
+
+typedef _ctx_type_10 process_type;
+
+_ctx_type_10 Delay__ctx_type_10_init();
+
+_ctx_type_10 Delay_process_init();
+
+int32_t Delay_process(_ctx_type_10 &_ctx, int32_t input);
+
+typedef _ctx_type_10 noteOn_type;
+
+_ctx_type_10 Delay_noteOn_init();
+
+void Delay_noteOn(_ctx_type_10 &_ctx, int note, int velocity);
+
+typedef _ctx_type_10 noteOff_type;
+
+_ctx_type_10 Delay_noteOff_init();
+
+void Delay_noteOff(_ctx_type_10 &_ctx, int note);
+
+typedef _ctx_type_10 controlChange_type;
+
+_ctx_type_10 Delay_controlChange_init();
+
+void Delay_controlChange(_ctx_type_10 &_ctx, int control, int32_t value);
+
+typedef _ctx_type_10 default_type;
+
+_ctx_type_10 Delay_default_init();
+
+void Delay_default_(_ctx_type_10 &_ctx);
+
+
+
+#endif // DELAY_H

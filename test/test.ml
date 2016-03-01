@@ -78,6 +78,7 @@ let code_files =
       "web/synth2.vult";
       "web/template.vult";
       "web/volume.vult";
+      "web/delay.vult";
    ]
 
 (** Flags that defines if a baseline should be created for tests *)

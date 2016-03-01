@@ -1,6 +1,6 @@
 /*
    = A synthesizer with a bandwidth-limited multi-oscillator
-     and a state variable filter     
+     and a state variable filter
    CC30 - Volume
    CC31 - Wave selector (pulse,saw,triangle)
    CC32 - Pulse width

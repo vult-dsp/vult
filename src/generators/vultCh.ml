@@ -227,7 +227,7 @@ let getFunctionSetType (elem_typs:VType.t list) : VType.t =
 
 let getInitArrayFunction params (typ:VType.t) : string =
    match () with
-   | _ when (params.real = Float) && (isReal typ) -> "float_init_rray"
+   | _ when (params.real = Float) && (isReal typ) -> "float_init_array"
    | _ when (params.real = Fixed) && (isReal typ) -> "fix_init_array"
    | _ when (isInt typ) -> "int_init_array"
    | _ when (isBool typ) -> "bool_init_array"

@@ -1,0 +1,282 @@
+#include "delay.h"
+
+_ctx_type_0 Delay__ctx_type_0_init(){
+   _ctx_type_0 _ctx;
+   _ctx.x = 0x0 /* 0.000000 */;
+   return _ctx;
+}
+
+_ctx_type_0 Delay_smooth_init(){ return Delay__ctx_type_0_init();}
+
+int32_t Delay_smooth(_ctx_type_0 &_ctx, int32_t input){
+   _ctx.x = fix_add(_ctx.x,fix_mul(fix_add(input,(- _ctx.x)),0x147 /* 0.005000 */));
+   return _ctx.x;
+}
+
+_ctx_type_1 Delay__ctx_type_1_init(){
+   _ctx_type_1 _ctx;
+   _ctx.pre_x = 0x0 /* 0.000000 */;
+   return _ctx;
+}
+
+_ctx_type_1 Delay_change_init(){ return Delay__ctx_type_1_init();}
+
+uint8_t Delay_change(_ctx_type_1 &_ctx, int32_t x){
+   uint8_t v = (_ctx.pre_x != x);
+   _ctx.pre_x = x;
+   return v;
+}
+
+_ctx_type_2 Delay__ctx_type_2_init(){
+   _ctx_type_2 _ctx;
+   _ctx.pre_x = 0;
+   return _ctx;
+}
+
+_ctx_type_2 Delay_edge_init(){ return Delay__ctx_type_2_init();}
+
+uint8_t Delay_edge(_ctx_type_2 &_ctx, uint8_t x){
+   uint8_t v = ((_ctx.pre_x != x) && (_ctx.pre_x == 0));
+   _ctx.pre_x = x;
+   return v;
+}
+
+_ctx_type_3 Delay__ctx_type_3_init(){
+   _ctx_type_3 _ctx;
+   _ctx.count = 0;
+   return _ctx;
+}
+
+_ctx_type_3 Delay_each_init(){ return Delay__ctx_type_3_init();}
+
+uint8_t Delay_each(_ctx_type_3 &_ctx, int n){
+   uint8_t ret = (_ctx.count == 0);
+   _ctx.count = ((_ctx.count + 1) % n);
+   return ret;
+}
+
+int32_t Delay_pitchToRate(int32_t d){
+   return fix_mul(0xc /* 0.000185 */,fix_exp(fix_mul(0xec9 /* 0.057762 */,d)));
+}
+
+_ctx_type_5 Delay__ctx_type_5_init(){
+   _ctx_type_5 _ctx;
+   _ctx.rate = 0x0 /* 0.000000 */;
+   _ctx.phase = 0x0 /* 0.000000 */;
+   _ctx._inst0 = Delay__ctx_type_1_init();
+   return _ctx;
+}
+
+_ctx_type_5 Delay_phasor_init(){ return Delay__ctx_type_5_init();}
+
+int32_t Delay_phasor(_ctx_type_5 &_ctx, int32_t pitch, uint8_t reset){
+   if(Delay_change(_ctx._inst0,pitch)){
+      _ctx.rate = Delay_pitchToRate(pitch);
+   }
+   _ctx.phase = (reset?0x0 /* 0.000000 */:(fix_add(_ctx.phase,_ctx.rate) % 0x10000 /* 1.000000 */));
+   return _ctx.phase;
+}
+
+_ctx_type_6 Delay__ctx_type_6_init(){
+   _ctx_type_6 _ctx;
+   _ctx.phase = 0x0 /* 0.000000 */;
+   _ctx._inst0 = Delay__ctx_type_2_init();
+   return _ctx;
+}
+
+_ctx_type_6 Delay_lfo_init(){ return Delay__ctx_type_6_init();}
+
+int32_t Delay_lfo(_ctx_type_6 &_ctx, int32_t f, uint8_t gate){
+   int32_t rate = fix_mul(0xe /* 0.000227 */,f);
+   if(Delay_edge(_ctx._inst0,gate)){
+      _ctx.phase = 0x0 /* 0.000000 */;
+   }
+   _ctx.phase = fix_add(_ctx.phase,rate);
+   if(_ctx.phase > 0x10000 /* 1.000000 */){
+      _ctx.phase = fix_add(_ctx.phase,(0xffff0000 /* -1.000000 */));
+   }
+   return fix_add(fix_sin(fix_mul(0x6487e /* 6.283185 */,_ctx.phase)),(0xffff8000 /* -0.500000 */));
+}
+
+_ctx_type_7 Delay__ctx_type_7_init(){
+   _ctx_type_7 _ctx;
+   _ctx.pre_phase1 = 0x0 /* 0.000000 */;
+   _ctx._inst2 = Delay__ctx_type_5_init();
+   _ctx._inst1 = Delay__ctx_type_0_init();
+   _ctx._inst0 = Delay__ctx_type_5_init();
+   return _ctx;
+}
+
+_ctx_type_7 Delay_phd_osc_init(){ return Delay__ctx_type_7_init();}
+
+int32_t Delay_phd_osc(_ctx_type_7 &_ctx, int32_t pitch, int32_t detune){
+   int32_t phase1 = Delay_phasor(_ctx._inst0,pitch,0);
+   int32_t comp = fix_add(0x10000 /* 1.000000 */,(- phase1));
+   uint8_t reset = (fix_add(_ctx.pre_phase1,(- phase1)) > 0x8000 /* 0.500000 */);
+   _ctx.pre_phase1 = phase1;
+   int32_t phase2 = Delay_phasor(_ctx._inst2,fix_add(pitch,fix_mul(Delay_smooth(_ctx._inst1,detune),0x200000 /* 32.000000 */)),reset);
+   int32_t sine = fix_sin(fix_mul(0x6487e /* 6.283185 */,phase2));
+   return fix_mul(sine,comp);
+}
+
+_ctx_type_8 Delay__ctx_type_8_init(){
+   _ctx_type_8 _ctx;
+   _ctx.write_pos = 0;
+   fix_init_array(_ctx.buffer,44100,0x0 /* 0.000000 */);
+   return _ctx;
+}
+
+_ctx_type_8 Delay_delay_init(){ return Delay__ctx_type_8_init();}
+
+int32_t Delay_delay(_ctx_type_8 &_ctx, int32_t x, int32_t time, int32_t feedback){
+   time = fix_clip(time,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
+   feedback = fix_clip(feedback,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
+   int32_t index_r = fix_mul(int_to_fix(44100),time);
+   int index_i = fix_to_int(fix_floor(index_r));
+   int delta = (_ctx.write_pos + (- index_i));
+   int read_pos = ((delta < 0)?(44100 + delta):delta);
+   int32_t decimal = fix_add(index_r,(- int_to_fix(index_i)));
+   int32_t x1 = fix_get(_ctx.buffer,read_pos);
+   int32_t x2 = fix_get(_ctx.buffer,((read_pos + 1) % 44100));
+   int32_t ret = fix_add(fix_mul(fix_add(x2,(- x1)),decimal),x1);
+   _ctx.write_pos = ((_ctx.write_pos + 1) % 44100);
+   fix_set(_ctx.buffer,_ctx.write_pos,fix_clip(fix_add(x,fix_mul(feedback,ret)),(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */));
+   return ret;
+}
+
+_ctx_type_9 Delay__ctx_type_9_init(){
+   _ctx_type_9 _ctx;
+   _ctx.pre = 0;
+   int_init_array(_ctx.notes,4,0);
+   _ctx.count = 0;
+   return _ctx;
+}
+
+_ctx_type_9 Delay_mono_noteOn_init(){ return Delay__ctx_type_9_init();}
+
+int Delay_mono_noteOn(_ctx_type_9 &_ctx, int n){
+   if(_ctx.count < 4){
+      int_set(_ctx.notes,_ctx.count,n);
+      _ctx.pre = n;
+      if(_ctx.count < 4){
+         _ctx.count = (_ctx.count + 1);
+      }
+   }
+   return _ctx.pre;
+}
+
+_ctx_type_9 Delay_mono_noteOff_init(){ return Delay__ctx_type_9_init();}
+
+int Delay_mono_noteOff(_ctx_type_9 &_ctx, int n){
+   uint8_t found = 0;
+   int pos;
+   int i = 0;
+   if(_ctx.count == 0){
+      return _ctx.pre;
+   }
+   while(((i < 4) && (! found))){
+      if(int_get(_ctx.notes,i) == n){
+         pos = i;
+         found = 1;
+      }
+      i = (i + 1);
+   }
+   if(found){
+      int k = (pos + 1);
+      while((k < 4)){
+         int_set(_ctx.notes,(k + (-1)),int_get(_ctx.notes,k));
+         k = (k + 1);
+      }
+      if(found && (_ctx.count > 0)){
+         _ctx.count = (_ctx.count + (-1));
+         _ctx.pre = int_get(_ctx.notes,(_ctx.count + (-1)));
+      }
+   }
+   return _ctx.pre;
+}
+
+_ctx_type_9 Delay_mono_isGateOn_init(){ return Delay__ctx_type_9_init();}
+
+uint8_t Delay_mono_isGateOn(_ctx_type_9 &_ctx){
+   return (_ctx.count > 0);
+}
+
+_ctx_type_10 Delay__ctx_type_10_init(){
+   _ctx_type_10 _ctx;
+   _ctx.volume = 0x0 /* 0.000000 */;
+   _ctx.time = 0x0 /* 0.000000 */;
+   _ctx.pitch = 0x0 /* 0.000000 */;
+   _ctx.notes = Delay__ctx_type_9_init();
+   _ctx.lfo_rate = 0x0 /* 0.000000 */;
+   _ctx.lfo_amt = 0x0 /* 0.000000 */;
+   _ctx.feedback = 0x0 /* 0.000000 */;
+   _ctx.detune = 0x0 /* 0.000000 */;
+   _ctx._inst5 = Delay__ctx_type_8_init();
+   _ctx._inst4 = Delay__ctx_type_0_init();
+   _ctx._inst3 = Delay__ctx_type_0_init();
+   _ctx._inst2 = Delay__ctx_type_0_init();
+   _ctx._inst1 = Delay__ctx_type_7_init();
+   _ctx._inst0 = Delay__ctx_type_6_init();
+   return _ctx;
+}
+
+_ctx_type_10 Delay_process_init(){ return Delay__ctx_type_10_init();}
+
+int32_t Delay_process(_ctx_type_10 &_ctx, int32_t input){
+   uint8_t gate = Delay_mono_isGateOn(_ctx.notes);
+   int32_t lfo_val = fix_mul(Delay_lfo(_ctx._inst0,_ctx.lfo_rate,gate),_ctx.lfo_amt);
+   int32_t o1 = Delay_phd_osc(_ctx._inst1,_ctx.pitch,fix_add(_ctx.detune,lfo_val));
+   int32_t amp = Delay_smooth(_ctx._inst2,(gate?0x10000 /* 1.000000 */:0x0 /* 0.000000 */));
+   int32_t osc_out = fix_mul(o1,amp);
+   int32_t delay_out = Delay_delay(_ctx._inst5,osc_out,Delay_smooth(_ctx._inst3,_ctx.time),Delay_smooth(_ctx._inst4,_ctx.feedback));
+   return fix_mul(fix_mul(_ctx.volume,fix_add(osc_out,delay_out)),0x8000 /* 0.500000 */);
+}
+
+_ctx_type_10 Delay_noteOn_init(){ return Delay__ctx_type_10_init();}
+
+void Delay_noteOn(_ctx_type_10 &_ctx, int note, int velocity){
+   _ctx.pitch = int_to_fix(Delay_mono_noteOn(_ctx.notes,note));
+}
+
+_ctx_type_10 Delay_noteOff_init(){ return Delay__ctx_type_10_init();}
+
+void Delay_noteOff(_ctx_type_10 &_ctx, int note){
+   _ctx.pitch = int_to_fix(Delay_mono_noteOff(_ctx.notes,note));
+}
+
+_ctx_type_10 Delay_controlChange_init(){ return Delay__ctx_type_10_init();}
+
+void Delay_controlChange(_ctx_type_10 &_ctx, int control, int32_t value){
+   if(control == 30){
+      _ctx.volume = fix_mul(value,0x204 /* 0.007874 */);
+   }
+   if(control == 31){
+      _ctx.detune = fix_mul(value,0x204 /* 0.007874 */);
+   }
+   if(control == 32){
+      _ctx.lfo_rate = fix_mul(value,0x204 /* 0.007874 */);
+   }
+   if(control == 33){
+      _ctx.lfo_amt = fix_mul(0x20000 /* 2.000000 */,fix_add(fix_mul(value,0x204 /* 0.007874 */),(0xffff8000 /* -0.500000 */)));
+   }
+   if(control == 34){
+      _ctx.time = fix_mul(value,0x204 /* 0.007874 */);
+   }
+   if(control == 35){
+      _ctx.feedback = fix_mul(value,0x204 /* 0.007874 */);
+   }
+}
+
+_ctx_type_10 Delay_default_init(){ return Delay__ctx_type_10_init();}
+
+void Delay_default_(_ctx_type_10 &_ctx){
+   _ctx.volume = 0x0 /* 0.000000 */;
+   _ctx.pitch = 0x2d0000 /* 45.000000 */;
+   _ctx.detune = 0xcccc /* 0.800000 */;
+   _ctx.lfo_rate = 0x11eb /* 0.070000 */;
+   _ctx.lfo_amt = (0xffff3334 /* -0.800000 */);
+   _ctx.time = 0x8000 /* 0.500000 */;
+   _ctx.feedback = 0x8000 /* 0.500000 */;
+}
+
+
