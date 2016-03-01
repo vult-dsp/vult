@@ -10,11 +10,11 @@ typedef struct _ctx_type_0 {
 
 typedef _ctx_type_0 each_type;
 
-_ctx_type_0 _Adsr__ctx_type_0_init();
+_ctx_type_0 Adsr__ctx_type_0_init();
 
-_ctx_type_0 _Adsr_each_init();
+_ctx_type_0 Adsr_each_init();
 
-uint8_t _Adsr_each(_ctx_type_0 &_ctx, int n);
+uint8_t Adsr_each(_ctx_type_0 &_ctx, int n);
 
 typedef struct _ctx_type_1 {
    uint8_t pre_x;
@@ -22,11 +22,11 @@ typedef struct _ctx_type_1 {
 
 typedef _ctx_type_1 bchange_type;
 
-_ctx_type_1 _Adsr__ctx_type_1_init();
+_ctx_type_1 Adsr__ctx_type_1_init();
 
-_ctx_type_1 _Adsr_bchange_init();
+_ctx_type_1 Adsr_bchange_init();
 
-uint8_t _Adsr_bchange(_ctx_type_1 &_ctx, uint8_t x);
+uint8_t Adsr_bchange(_ctx_type_1 &_ctx, uint8_t x);
 
 typedef struct _ctx_type_2 {
    float pre_x;
@@ -34,11 +34,11 @@ typedef struct _ctx_type_2 {
 
 typedef _ctx_type_2 lpfilter_type;
 
-_ctx_type_2 _Adsr__ctx_type_2_init();
+_ctx_type_2 Adsr__ctx_type_2_init();
 
-_ctx_type_2 _Adsr_lpfilter_init();
+_ctx_type_2 Adsr_lpfilter_init();
 
-float _Adsr_lpfilter(_ctx_type_2 &_ctx, float x);
+float Adsr_lpfilter(_ctx_type_2 &_ctx, float x);
 
 typedef struct _ctx_type_3 {
    float value;
@@ -54,11 +54,11 @@ typedef struct _ctx_type_3 {
 
 typedef _ctx_type_3 adsr_type;
 
-_ctx_type_3 _Adsr__ctx_type_3_init();
+_ctx_type_3 Adsr__ctx_type_3_init();
 
-_ctx_type_3 _Adsr_adsr_init();
+_ctx_type_3 Adsr_adsr_init();
 
-float _Adsr_adsr(_ctx_type_3 &_ctx, uint8_t gate, float attack, float decay, float sustain, float release);
+float Adsr_adsr(_ctx_type_3 &_ctx, uint8_t gate, float attack, float decay, float sustain, float release);
 
 
 

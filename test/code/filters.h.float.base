@@ -4,13 +4,13 @@
 #include <math.h>
 #include "vultin.h"
 
-float _Filters_pi();
+float Filters_pi();
 
-float _Filters_min(float a, float b);
+float Filters_min(float a, float b);
 
-float _Filters_max(float a, float b);
+float Filters_max(float a, float b);
 
-float _Filters_clip(float low, float high, float value);
+float Filters_clip(float low, float high, float value);
 
 typedef struct _ctx_type_4 {
    float pre_x;
@@ -18,11 +18,11 @@ typedef struct _ctx_type_4 {
 
 typedef _ctx_type_4 change_type;
 
-_ctx_type_4 _Filters__ctx_type_4_init();
+_ctx_type_4 Filters__ctx_type_4_init();
 
-_ctx_type_4 _Filters_change_init();
+_ctx_type_4 Filters_change_init();
 
-uint8_t _Filters_change(_ctx_type_4 &_ctx, float x);
+uint8_t Filters_change(_ctx_type_4 &_ctx, float x);
 
 typedef struct _ctx_type_5 {
    float w2;
@@ -31,11 +31,11 @@ typedef struct _ctx_type_5 {
 
 typedef _ctx_type_5 biquad_type;
 
-_ctx_type_5 _Filters__ctx_type_5_init();
+_ctx_type_5 Filters__ctx_type_5_init();
 
-_ctx_type_5 _Filters_biquad_init();
+_ctx_type_5 Filters_biquad_init();
 
-float _Filters_biquad(_ctx_type_5 &_ctx, float x, float b0, float b1, float b2, float a1, float a2);
+float Filters_biquad(_ctx_type_5 &_ctx, float x, float b0, float b1, float b2, float a1, float a2);
 
 typedef struct _ctx_type_6 {
    float k;
@@ -46,11 +46,11 @@ typedef struct _ctx_type_6 {
 
 typedef _ctx_type_6 lp6_type;
 
-_ctx_type_6 _Filters__ctx_type_6_init();
+_ctx_type_6 Filters__ctx_type_6_init();
 
-_ctx_type_6 _Filters_lp6_init();
+_ctx_type_6 Filters_lp6_init();
 
-float _Filters_lp6(_ctx_type_6 &_ctx, float x, float fc);
+float Filters_lp6(_ctx_type_6 &_ctx, float x, float fc);
 
 typedef struct _ctx_type_7 {
    float b2;
@@ -65,11 +65,11 @@ typedef struct _ctx_type_7 {
 
 typedef _ctx_type_7 lp12_type;
 
-_ctx_type_7 _Filters__ctx_type_7_init();
+_ctx_type_7 Filters__ctx_type_7_init();
 
-_ctx_type_7 _Filters_lp12_init();
+_ctx_type_7 Filters_lp12_init();
 
-float _Filters_lp12(_ctx_type_7 &_ctx, float x, float fc, float q);
+float Filters_lp12(_ctx_type_7 &_ctx, float x, float fc, float q);
 
 typedef struct _ctx_type_8 {
    _ctx_type_5 _inst0;
@@ -77,11 +77,11 @@ typedef struct _ctx_type_8 {
 
 typedef _ctx_type_8 hp6_type;
 
-_ctx_type_8 _Filters__ctx_type_8_init();
+_ctx_type_8 Filters__ctx_type_8_init();
 
-_ctx_type_8 _Filters_hp6_init();
+_ctx_type_8 Filters_hp6_init();
 
-float _Filters_hp6(_ctx_type_8 &_ctx, float x, float fc);
+float Filters_hp6(_ctx_type_8 &_ctx, float x, float fc);
 
 typedef struct _ctx_type_9 {
    _ctx_type_5 _inst0;
@@ -89,11 +89,11 @@ typedef struct _ctx_type_9 {
 
 typedef _ctx_type_9 allp6_type;
 
-_ctx_type_9 _Filters__ctx_type_9_init();
+_ctx_type_9 Filters__ctx_type_9_init();
 
-_ctx_type_9 _Filters_allp6_init();
+_ctx_type_9 Filters_allp6_init();
 
-float _Filters_allp6(_ctx_type_9 &_ctx, float x, float fc);
+float Filters_allp6(_ctx_type_9 &_ctx, float x, float fc);
 
 typedef struct _ctx_type_10 {
    float b2;
@@ -108,11 +108,11 @@ typedef struct _ctx_type_10 {
 
 typedef _ctx_type_10 hp12_type;
 
-_ctx_type_10 _Filters__ctx_type_10_init();
+_ctx_type_10 Filters__ctx_type_10_init();
 
-_ctx_type_10 _Filters_hp12_init();
+_ctx_type_10 Filters_hp12_init();
 
-float _Filters_hp12(_ctx_type_10 &_ctx, float x, float fc, float q);
+float Filters_hp12(_ctx_type_10 &_ctx, float x, float fc, float q);
 
 typedef struct _ctx_type_11 {
    float b2;
@@ -127,11 +127,11 @@ typedef struct _ctx_type_11 {
 
 typedef _ctx_type_11 bp12_type;
 
-_ctx_type_11 _Filters__ctx_type_11_init();
+_ctx_type_11 Filters__ctx_type_11_init();
 
-_ctx_type_11 _Filters_bp12_init();
+_ctx_type_11 Filters_bp12_init();
 
-float _Filters_bp12(_ctx_type_11 &_ctx, float x, float fc, float q);
+float Filters_bp12(_ctx_type_11 &_ctx, float x, float fc, float q);
 
 typedef struct _ctx_type_12 {
    float b2;
@@ -146,11 +146,11 @@ typedef struct _ctx_type_12 {
 
 typedef _ctx_type_12 notch12_type;
 
-_ctx_type_12 _Filters__ctx_type_12_init();
+_ctx_type_12 Filters__ctx_type_12_init();
 
-_ctx_type_12 _Filters_notch12_init();
+_ctx_type_12 Filters_notch12_init();
 
-float _Filters_notch12(_ctx_type_12 &_ctx, float x, float fc, float q);
+float Filters_notch12(_ctx_type_12 &_ctx, float x, float fc, float q);
 
 typedef struct _ctx_type_13 {
    float b2;
@@ -165,11 +165,11 @@ typedef struct _ctx_type_13 {
 
 typedef _ctx_type_13 allp12_type;
 
-_ctx_type_13 _Filters__ctx_type_13_init();
+_ctx_type_13 Filters__ctx_type_13_init();
 
-_ctx_type_13 _Filters_allp12_init();
+_ctx_type_13 Filters_allp12_init();
 
-float _Filters_allp12(_ctx_type_13 &_ctx, float x, float fc, float q);
+float Filters_allp12(_ctx_type_13 &_ctx, float x, float fc, float q);
 
 
 

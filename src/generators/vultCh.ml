@@ -123,7 +123,7 @@ let underscoreId (id:id) : string =
    join "_" id
 
 let makeFunctionName (id:id) : string list =
-   ["_" ^ (join "_" id)]
+   [join "_" id]
 
 let rec convertType params (tp:VType.t) : type_descr =
    match !tp with

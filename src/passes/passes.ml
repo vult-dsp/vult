@@ -631,6 +631,7 @@ end
 (* Basic transformations *)
 let inferPass (state,stmts) =
    let stmts,state,_ = Inference.inferStmtList state Inference.NoType stmts in
+   (*Scope.show (state.scope) |> print_endline;*)
    state,stmts
 
 let pass1 =
@@ -655,6 +656,7 @@ let pass4 =
 let rec applyPass apply pass (state,stmts) =
    if apply then
       let state',stmts' = Mapper.map_stmt_list pass state stmts in
+      (*Scope.show (state'.scope) |> print_endline;*)
       if shouldReapply state' then
          applyPass apply pass (reset state',stmts')
       else

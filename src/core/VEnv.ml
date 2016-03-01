@@ -23,6 +23,7 @@ THE SOFTWARE.
 *)
 
 open TypesVult
+open CCOpt
 
 let idStr = PrintTypes.identifierStr
 
@@ -144,6 +145,7 @@ type symbol_kind =
    | InstanceSymbol
    | FunctionSymbol
    | ModuleSymbol
+   [@@deriving show]
 
 let kindStr = function
    | MemSymbol      -> "mem"
@@ -178,6 +180,45 @@ module Scope = struct
          ext_fn    : string option;  (** contains the replacement name if it's an external function *)
 
       }
+
+   type t_simple =
+      {
+         sname      : id;
+         skind      : symbol_kind;
+         styp       : VType.t;
+
+         soperators : (id * t_simple) list;
+         smodules   : (id * t_simple) list;
+         stypes     : (id * t_simple) list;
+         sfunc      : (id * t_simple) list;
+         smem_inst  : (id * t_simple) list;
+         slocals    : (id * t_simple) list list;
+
+         ssingle    : bool;
+         sactive    : bool;
+         sext_fn    : string option;
+
+      }
+      [@@deriving show]
+
+   let rec simple (t:t) : t_simple =
+      let simple_pair (k,v) = (k,simple v) in
+      let f = List.map simple_pair in
+      {  sname = t.name;
+         skind =t.kind;
+         styp = t.typ;
+         soperators = IdMap.to_list t.operators |> f;
+         smodules = IdMap.to_list t.modules |> f;
+         stypes = IdMap.to_list t.types |> f;
+         sfunc = IdMap.to_list t.func |> f;
+         smem_inst = IdMap.to_list t.mem_inst |> f;
+         slocals = List.map IdMap.to_list t.locals |> List.map f;
+         ssingle = t.single;
+         sactive = t.active;
+         sext_fn = t.ext_fn;
+      }
+
+   let show t = simple t |> show_t_simple
 
    let empty : t =
       {
@@ -286,7 +327,7 @@ module Scope = struct
       match kind with
       | `Function ->
          let t' = enterAny getFunction t name in
-         let t' = { t' with ext_fn = attr.ext_fn } in
+         let t' = { t' with ext_fn = t'.ext_fn <+> attr.ext_fn } in
          if attr.fun_and then
             addToContext t' name attr.init
          else

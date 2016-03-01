@@ -59,6 +59,7 @@ let passes_files =
       "context_nested.vult", Passes.default_options;
       "tuple_to_types.vult", Passes.default_options;
       "simplify.vult", Passes.default_options;
+      "external_calls.vult", Passes.default_options;
    ]
 
 

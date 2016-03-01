@@ -1,48 +1,48 @@
 #include "blit.h"
 
-uint8_t _Blit_near_zero(int32_t x){
+uint8_t Blit_near_zero(int32_t x){
    return (fix_abs(x) < 0x51e /* 0.020000 */);
 }
 
-_ctx_type_1 _Blit__ctx_type_1_init(){
+_ctx_type_1 Blit__ctx_type_1_init(){
    _ctx_type_1 _ctx;
    _ctx.pre_x = 0x0 /* 0.000000 */;
    return _ctx;
 }
 
-_ctx_type_1 _Blit_change_init(){ return _Blit__ctx_type_1_init();}
+_ctx_type_1 Blit_change_init(){ return Blit__ctx_type_1_init();}
 
-uint8_t _Blit_change(_ctx_type_1 &_ctx, int32_t x){
+uint8_t Blit_change(_ctx_type_1 &_ctx, int32_t x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
 
-_ctx_type_2 _Blit__ctx_type_2_init(){
+_ctx_type_2 Blit__ctx_type_2_init(){
    _ctx_type_2 _ctx;
    _ctx.y1 = 0x0 /* 0.000000 */;
    _ctx.x1 = 0x0 /* 0.000000 */;
    return _ctx;
 }
 
-_ctx_type_2 _Blit_dcblock_init(){ return _Blit__ctx_type_2_init();}
+_ctx_type_2 Blit_dcblock_init(){ return Blit__ctx_type_2_init();}
 
-int32_t _Blit_dcblock(_ctx_type_2 &_ctx, int32_t x0){
+int32_t Blit_dcblock(_ctx_type_2 &_ctx, int32_t x0){
    int32_t y0 = fix_add(fix_add(x0,(- _ctx.x1)),fix_mul(_ctx.y1,0xfeb8 /* 0.995000 */));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
 }
 
-int32_t _Blit_pitchToRate(int32_t d){
+int32_t Blit_pitchToRate(int32_t d){
    return fix_mul(0xc /* 0.000185 */,fix_exp(fix_mul(0xec9 /* 0.057762 */,d)));
 }
 
-int32_t _Blit_pulse_train(int32_t m, int32_t phase){
+int32_t Blit_pulse_train(int32_t m, int32_t phase){
    int32_t pi_phase = fix_mul(phase,0x3243f /* 3.141593 */);
    int32_t denominator1 = fix_sin(pi_phase);
    int32_t tmp1 = 0x0 /* 0.000000 */;
-   if(_Blit_near_zero(denominator1)){
+   if(Blit_near_zero(denominator1)){
       tmp1 = 0x10000 /* 1.000000 */;
    }
    else
@@ -53,7 +53,7 @@ int32_t _Blit_pulse_train(int32_t m, int32_t phase){
    return tmp1;
 }
 
-_ctx_type_5 _Blit__ctx_type_5_init(){
+_ctx_type_5 Blit__ctx_type_5_init(){
    _ctx_type_5 _ctx;
    _ctx.state_triang = 0x0 /* 0.000000 */;
    _ctx.state_saw = 0x0 /* 0.000000 */;
@@ -62,14 +62,14 @@ _ctx_type_5 _Blit__ctx_type_5_init(){
    _ctx.phase = 0x0 /* 0.000000 */;
    _ctx.output = 0x0 /* 0.000000 */;
    _ctx.m = 0x0 /* 0.000000 */;
-   _ctx._inst1 = _Blit__ctx_type_2_init();
-   _ctx._inst0 = _Blit__ctx_type_1_init();
+   _ctx._inst1 = Blit__ctx_type_2_init();
+   _ctx._inst0 = Blit__ctx_type_1_init();
    return _ctx;
 }
 
-_ctx_type_5 _Blit_osc_init(){ return _Blit__ctx_type_5_init();}
+_ctx_type_5 Blit_osc_init(){ return Blit__ctx_type_5_init();}
 
-int32_t _Blit_osc(_ctx_type_5 &_ctx, int32_t pitch, int32_t pw, int32_t wave){
+int32_t Blit_osc(_ctx_type_5 &_ctx, int32_t pitch, int32_t pw, int32_t wave){
    int32_t fixed_pitch = 0x0 /* 0.000000 */;
    if(wave < 0xaaaa /* 0.666667 */){
       fixed_pitch = pitch;
@@ -78,8 +78,8 @@ int32_t _Blit_osc(_ctx_type_5 &_ctx, int32_t pitch, int32_t pw, int32_t wave){
    {
       fixed_pitch = fix_add(pitch,0xc0000 /* 12.000000 */);
    }
-   if(_Blit_change(_ctx._inst0,fixed_pitch)){
-      _ctx.rate = _Blit_pitchToRate(fixed_pitch);
+   if(Blit_change(_ctx._inst0,fixed_pitch)){
+      _ctx.rate = Blit_pitchToRate(fixed_pitch);
       int32_t p = fix_div(0x10000 /* 1.000000 */,_ctx.rate);
       int32_t maxHarmonics = fix_floor(fix_mul(p,0x8000 /* 0.500000 */));
       _ctx.m = fix_add(fix_mul(0x20000 /* 2.000000 */,maxHarmonics),0x10000 /* 1.000000 */);
@@ -89,8 +89,8 @@ int32_t _Blit_osc(_ctx_type_5 &_ctx, int32_t pitch, int32_t pw, int32_t wave){
    if(shift > 0x10000 /* 1.000000 */){
       shift = fix_add(shift,(0xffff0000 /* -1.000000 */));
    }
-   int32_t tmp1 = _Blit_pulse_train(_ctx.m,_ctx.phase);
-   int32_t tmp2 = _Blit_pulse_train(_ctx.m,shift);
+   int32_t tmp1 = Blit_pulse_train(_ctx.m,_ctx.phase);
+   int32_t tmp2 = Blit_pulse_train(_ctx.m,shift);
    _ctx.phase = fix_add(_ctx.phase,_ctx.rate);
    if(_ctx.phase > 0x10000 /* 1.000000 */){
       _ctx.phase = fix_add(_ctx.phase,(0xffff0000 /* -1.000000 */));
@@ -111,7 +111,7 @@ int32_t _Blit_osc(_ctx_type_5 &_ctx, int32_t pitch, int32_t pw, int32_t wave){
          _ctx.output = fix_mul(fix_mul(0x20000 /* 2.000000 */,_ctx.state_triang),fix_add(0x10000 /* 1.000000 */,pw));
       }
    }
-   _ctx.output = _Blit_dcblock(_ctx._inst1,_ctx.output);
+   _ctx.output = Blit_dcblock(_ctx._inst1,_ctx.output);
    return fix_clip(fix_mul(_ctx.output,0x4000 /* 0.250000 */),(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
 }
 

@@ -10,11 +10,11 @@ typedef struct _ctx_type_0 {
 
 typedef _ctx_type_0 smooth_type;
 
-_ctx_type_0 _Phasedist__ctx_type_0_init();
+_ctx_type_0 Phasedist__ctx_type_0_init();
 
-_ctx_type_0 _Phasedist_smooth_init();
+_ctx_type_0 Phasedist_smooth_init();
 
-int32_t _Phasedist_smooth(_ctx_type_0 &_ctx, int32_t input);
+int32_t Phasedist_smooth(_ctx_type_0 &_ctx, int32_t input);
 
 typedef struct _ctx_type_1 {
    int32_t pre_x;
@@ -22,13 +22,13 @@ typedef struct _ctx_type_1 {
 
 typedef _ctx_type_1 change_type;
 
-_ctx_type_1 _Phasedist__ctx_type_1_init();
+_ctx_type_1 Phasedist__ctx_type_1_init();
 
-_ctx_type_1 _Phasedist_change_init();
+_ctx_type_1 Phasedist_change_init();
 
-uint8_t _Phasedist_change(_ctx_type_1 &_ctx, int32_t x);
+uint8_t Phasedist_change(_ctx_type_1 &_ctx, int32_t x);
 
-int32_t _Phasedist_pitchToRate(int32_t d);
+int32_t Phasedist_pitchToRate(int32_t d);
 
 typedef struct _ctx_type_3 {
    int32_t rate;
@@ -38,11 +38,11 @@ typedef struct _ctx_type_3 {
 
 typedef _ctx_type_3 phasor_type;
 
-_ctx_type_3 _Phasedist__ctx_type_3_init();
+_ctx_type_3 Phasedist__ctx_type_3_init();
 
-_ctx_type_3 _Phasedist_phasor_init();
+_ctx_type_3 Phasedist_phasor_init();
 
-int32_t _Phasedist_phasor(_ctx_type_3 &_ctx, int32_t pitch, uint8_t reset);
+int32_t Phasedist_phasor(_ctx_type_3 &_ctx, int32_t pitch, uint8_t reset);
 
 typedef struct _ctx_type_4 {
    int32_t volume;
@@ -57,35 +57,35 @@ typedef struct _ctx_type_4 {
 
 typedef _ctx_type_4 process_type;
 
-_ctx_type_4 _Phasedist__ctx_type_4_init();
+_ctx_type_4 Phasedist__ctx_type_4_init();
 
-_ctx_type_4 _Phasedist_process_init();
+_ctx_type_4 Phasedist_process_init();
 
-int32_t _Phasedist_process(_ctx_type_4 &_ctx, int32_t input);
+int32_t Phasedist_process(_ctx_type_4 &_ctx, int32_t input);
 
 typedef _ctx_type_4 noteOn_type;
 
-_ctx_type_4 _Phasedist_noteOn_init();
+_ctx_type_4 Phasedist_noteOn_init();
 
-void _Phasedist_noteOn(_ctx_type_4 &_ctx, int note, int velocity);
+void Phasedist_noteOn(_ctx_type_4 &_ctx, int note, int velocity);
 
 typedef _ctx_type_4 noteOff_type;
 
-_ctx_type_4 _Phasedist_noteOff_init();
+_ctx_type_4 Phasedist_noteOff_init();
 
-void _Phasedist_noteOff(_ctx_type_4 &_ctx, int note);
+void Phasedist_noteOff(_ctx_type_4 &_ctx, int note);
 
 typedef _ctx_type_4 controlChange_type;
 
-_ctx_type_4 _Phasedist_controlChange_init();
+_ctx_type_4 Phasedist_controlChange_init();
 
-void _Phasedist_controlChange(_ctx_type_4 &_ctx, int control, int value);
+void Phasedist_controlChange(_ctx_type_4 &_ctx, int control, int value);
 
 typedef _ctx_type_4 default_type;
 
-_ctx_type_4 _Phasedist_default_init();
+_ctx_type_4 Phasedist_default_init();
 
-void _Phasedist_default_(_ctx_type_4 &_ctx);
+void Phasedist_default_(_ctx_type_4 &_ctx);
 
 
 

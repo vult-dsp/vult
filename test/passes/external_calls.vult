@@ -1,0 +1,7 @@
+external foo(x:int) : int "actual_foo";
+
+fun bar(){
+    val x = foo(0);
+    return x;
+}
+

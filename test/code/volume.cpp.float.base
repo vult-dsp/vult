@@ -1,52 +1,52 @@
 #include "volume.h"
 
-_ctx_type_0 _Volume__ctx_type_0_init(){
+_ctx_type_0 Volume__ctx_type_0_init(){
    _ctx_type_0 _ctx;
    _ctx.x = 0.f;
    return _ctx;
 }
 
-_ctx_type_0 _Volume_smooth_init(){ return _Volume__ctx_type_0_init();}
+_ctx_type_0 Volume_smooth_init(){ return Volume__ctx_type_0_init();}
 
-float _Volume_smooth(_ctx_type_0 &_ctx, float input){
+float Volume_smooth(_ctx_type_0 &_ctx, float input){
    _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005f));
    return _ctx.x;
 }
 
-_ctx_type_1 _Volume__ctx_type_1_init(){
+_ctx_type_1 Volume__ctx_type_1_init(){
    _ctx_type_1 _ctx;
    _ctx.volume = 0.f;
-   _ctx._inst0 = _Volume__ctx_type_0_init();
+   _ctx._inst0 = Volume__ctx_type_0_init();
    return _ctx;
 }
 
-_ctx_type_1 _Volume_process_init(){ return _Volume__ctx_type_1_init();}
+_ctx_type_1 Volume_process_init(){ return Volume__ctx_type_1_init();}
 
-float _Volume_process(_ctx_type_1 &_ctx, float input){
-   return (input * _Volume_smooth(_ctx._inst0,_ctx.volume));
+float Volume_process(_ctx_type_1 &_ctx, float input){
+   return (input * Volume_smooth(_ctx._inst0,_ctx.volume));
 }
 
-_ctx_type_1 _Volume_noteOn_init(){ return _Volume__ctx_type_1_init();}
+_ctx_type_1 Volume_noteOn_init(){ return Volume__ctx_type_1_init();}
 
-void _Volume_noteOn(_ctx_type_1 &_ctx, int note, int velocity){
+void Volume_noteOn(_ctx_type_1 &_ctx, int note, int velocity){
 }
 
-_ctx_type_1 _Volume_noteOff_init(){ return _Volume__ctx_type_1_init();}
+_ctx_type_1 Volume_noteOff_init(){ return Volume__ctx_type_1_init();}
 
-void _Volume_noteOff(_ctx_type_1 &_ctx, int note){
+void Volume_noteOff(_ctx_type_1 &_ctx, int note){
 }
 
-_ctx_type_1 _Volume_controlChange_init(){ return _Volume__ctx_type_1_init();}
+_ctx_type_1 Volume_controlChange_init(){ return Volume__ctx_type_1_init();}
 
-void _Volume_controlChange(_ctx_type_1 &_ctx, int control, int value){
+void Volume_controlChange(_ctx_type_1 &_ctx, int control, int value){
    if(control == 30){
       _ctx.volume = (int_to_float(value) * 0.00787401574803f);
    }
 }
 
-_ctx_type_1 _Volume_default_init(){ return _Volume__ctx_type_1_init();}
+_ctx_type_1 Volume_default_init(){ return Volume__ctx_type_1_init();}
 
-void _Volume_default_(_ctx_type_1 &_ctx){
+void Volume_default_(_ctx_type_1 &_ctx){
    _ctx.volume = 0.f;
 }
 

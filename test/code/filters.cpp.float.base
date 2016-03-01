@@ -1,45 +1,45 @@
 #include "filters.h"
 
-float _Filters_pi(){
+float Filters_pi(){
    return 3.1416f;
 }
 
-float _Filters_min(float a, float b){
+float Filters_min(float a, float b){
    return ((a < b)?a:b);
 }
 
-float _Filters_max(float a, float b){
+float Filters_max(float a, float b){
    return ((a > b)?a:b);
 }
 
-float _Filters_clip(float low, float high, float value){
-   return _Filters_min(_Filters_max(low,value),high);
+float Filters_clip(float low, float high, float value){
+   return Filters_min(Filters_max(low,value),high);
 }
 
-_ctx_type_4 _Filters__ctx_type_4_init(){
+_ctx_type_4 Filters__ctx_type_4_init(){
    _ctx_type_4 _ctx;
    _ctx.pre_x = 0.f;
    return _ctx;
 }
 
-_ctx_type_4 _Filters_change_init(){ return _Filters__ctx_type_4_init();}
+_ctx_type_4 Filters_change_init(){ return Filters__ctx_type_4_init();}
 
-uint8_t _Filters_change(_ctx_type_4 &_ctx, float x){
+uint8_t Filters_change(_ctx_type_4 &_ctx, float x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
 
-_ctx_type_5 _Filters__ctx_type_5_init(){
+_ctx_type_5 Filters__ctx_type_5_init(){
    _ctx_type_5 _ctx;
    _ctx.w2 = 0.f;
    _ctx.w1 = 0.f;
    return _ctx;
 }
 
-_ctx_type_5 _Filters_biquad_init(){ return _Filters__ctx_type_5_init();}
+_ctx_type_5 Filters_biquad_init(){ return Filters__ctx_type_5_init();}
 
-float _Filters_biquad(_ctx_type_5 &_ctx, float x, float b0, float b1, float b2, float a1, float a2){
+float Filters_biquad(_ctx_type_5 &_ctx, float x, float b0, float b1, float b2, float a1, float a2){
    float w0 = (x + (- (a1 * _ctx.w1)) + (- (a2 * _ctx.w2)));
    float y0 = ((b0 * w0) + (b1 * _ctx.w1) + (b2 * _ctx.w2));
    float _tmp_0 = _ctx.w1;
@@ -49,48 +49,48 @@ float _Filters_biquad(_ctx_type_5 &_ctx, float x, float b0, float b1, float b2, 
    return y0;
 }
 
-_ctx_type_6 _Filters__ctx_type_6_init(){
+_ctx_type_6 Filters__ctx_type_6_init(){
    _ctx_type_6 _ctx;
    _ctx.k = 0.f;
    _ctx.fc = 0.f;
-   _ctx._inst1 = _Filters__ctx_type_5_init();
-   _ctx._inst0 = _Filters__ctx_type_4_init();
+   _ctx._inst1 = Filters__ctx_type_5_init();
+   _ctx._inst0 = Filters__ctx_type_4_init();
    return _ctx;
 }
 
-_ctx_type_6 _Filters_lp6_init(){ return _Filters__ctx_type_6_init();}
+_ctx_type_6 Filters_lp6_init(){ return Filters__ctx_type_6_init();}
 
-float _Filters_lp6(_ctx_type_6 &_ctx, float x, float fc){
-   if(_Filters_change(_ctx._inst0,_ctx.fc)){
-      _ctx.fc = _Filters_clip(_ctx.fc,0.f,(22050.f));
-      _ctx.k = tanf((_Filters_pi() * _ctx.fc * 2.26757369615e-05f));
+float Filters_lp6(_ctx_type_6 &_ctx, float x, float fc){
+   if(Filters_change(_ctx._inst0,_ctx.fc)){
+      _ctx.fc = Filters_clip(_ctx.fc,0.f,(22050.f));
+      _ctx.k = tanf((Filters_pi() * _ctx.fc * 2.26757369615e-05f));
    }
    float b0 = (_ctx.k / (_ctx.k + 1.f));
    float b1 = (_ctx.k / (_ctx.k + 1.f));
    float a1 = ((_ctx.k + (-1.f)) / (_ctx.k + 1.f));
-   return _Filters_biquad(_ctx._inst1,x,b0,b1,0.f,a1,0.f);
+   return Filters_biquad(_ctx._inst1,x,b0,b1,0.f,a1,0.f);
 }
 
-_ctx_type_7 _Filters__ctx_type_7_init(){
+_ctx_type_7 Filters__ctx_type_7_init(){
    _ctx_type_7 _ctx;
    _ctx.b2 = 0.f;
    _ctx.b1 = 0.f;
    _ctx.b0 = 0.f;
    _ctx.a2 = 0.f;
    _ctx.a1 = 0.f;
-   _ctx._inst2 = _Filters__ctx_type_5_init();
-   _ctx._inst1 = _Filters__ctx_type_4_init();
-   _ctx._inst0 = _Filters__ctx_type_4_init();
+   _ctx._inst2 = Filters__ctx_type_5_init();
+   _ctx._inst1 = Filters__ctx_type_4_init();
+   _ctx._inst0 = Filters__ctx_type_4_init();
    return _ctx;
 }
 
-_ctx_type_7 _Filters_lp12_init(){ return _Filters__ctx_type_7_init();}
+_ctx_type_7 Filters_lp12_init(){ return Filters__ctx_type_7_init();}
 
-float _Filters_lp12(_ctx_type_7 &_ctx, float x, float fc, float q){
-   if(_Filters_change(_ctx._inst0,fc) || _Filters_change(_ctx._inst1,q)){
-      float qc = _Filters_max(sqrtf(2.f),(q + sqrtf(2.f)));
-      fc = _Filters_clip(fc,0.f,(22050.f));
-      float k = tanf((_Filters_pi() * fc * 2.26757369615e-05f));
+float Filters_lp12(_ctx_type_7 &_ctx, float x, float fc, float q){
+   if(Filters_change(_ctx._inst0,fc) || Filters_change(_ctx._inst1,q)){
+      float qc = Filters_max(sqrtf(2.f),(q + sqrtf(2.f)));
+      fc = Filters_clip(fc,0.f,(22050.f));
+      float k = tanf((Filters_pi() * fc * 2.26757369615e-05f));
       float den = ((k * k * qc) + k + qc);
       _ctx.b0 = ((k * k * qc) / den);
       _ctx.b1 = (2.f * _ctx.b0);
@@ -98,63 +98,63 @@ float _Filters_lp12(_ctx_type_7 &_ctx, float x, float fc, float q){
       _ctx.a1 = ((2.f * qc * ((k * k) + (-1.f))) / den);
       _ctx.a2 = (((k * k * qc) + (- k) + qc) / den);
    }
-   return _Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
+   return Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
-_ctx_type_8 _Filters__ctx_type_8_init(){
+_ctx_type_8 Filters__ctx_type_8_init(){
    _ctx_type_8 _ctx;
-   _ctx._inst0 = _Filters__ctx_type_5_init();
+   _ctx._inst0 = Filters__ctx_type_5_init();
    return _ctx;
 }
 
-_ctx_type_8 _Filters_hp6_init(){ return _Filters__ctx_type_8_init();}
+_ctx_type_8 Filters_hp6_init(){ return Filters__ctx_type_8_init();}
 
-float _Filters_hp6(_ctx_type_8 &_ctx, float x, float fc){
-   fc = _Filters_clip(fc,0.f,(22050.f));
-   float k = tanf((_Filters_pi() * fc * 2.26757369615e-05f));
+float Filters_hp6(_ctx_type_8 &_ctx, float x, float fc){
+   fc = Filters_clip(fc,0.f,(22050.f));
+   float k = tanf((Filters_pi() * fc * 2.26757369615e-05f));
    float b0 = (1.f / (k + 1.f));
    float b1 = ((-1.f) / (k + 1.f));
    float a1 = ((k + (-1.f)) / (k + 1.f));
-   return _Filters_biquad(_ctx._inst0,x,b0,b1,0.f,a1,0.f);
+   return Filters_biquad(_ctx._inst0,x,b0,b1,0.f,a1,0.f);
 }
 
-_ctx_type_9 _Filters__ctx_type_9_init(){
+_ctx_type_9 Filters__ctx_type_9_init(){
    _ctx_type_9 _ctx;
-   _ctx._inst0 = _Filters__ctx_type_5_init();
+   _ctx._inst0 = Filters__ctx_type_5_init();
    return _ctx;
 }
 
-_ctx_type_9 _Filters_allp6_init(){ return _Filters__ctx_type_9_init();}
+_ctx_type_9 Filters_allp6_init(){ return Filters__ctx_type_9_init();}
 
-float _Filters_allp6(_ctx_type_9 &_ctx, float x, float fc){
-   fc = _Filters_clip(fc,0.f,(22050.f));
-   float k = tanf((_Filters_pi() * fc * 2.26757369615e-05f));
+float Filters_allp6(_ctx_type_9 &_ctx, float x, float fc){
+   fc = Filters_clip(fc,0.f,(22050.f));
+   float k = tanf((Filters_pi() * fc * 2.26757369615e-05f));
    float b0 = ((k + (-1.f)) / (k + 1.f));
    float b1 = 1.f;
    float a1 = ((k + (-1.f)) / (k + 1.f));
-   return _Filters_biquad(_ctx._inst0,x,b0,b1,0.f,a1,0.f);
+   return Filters_biquad(_ctx._inst0,x,b0,b1,0.f,a1,0.f);
 }
 
-_ctx_type_10 _Filters__ctx_type_10_init(){
+_ctx_type_10 Filters__ctx_type_10_init(){
    _ctx_type_10 _ctx;
    _ctx.b2 = 0.f;
    _ctx.b1 = 0.f;
    _ctx.b0 = 0.f;
    _ctx.a2 = 0.f;
    _ctx.a1 = 0.f;
-   _ctx._inst2 = _Filters__ctx_type_5_init();
-   _ctx._inst1 = _Filters__ctx_type_4_init();
-   _ctx._inst0 = _Filters__ctx_type_4_init();
+   _ctx._inst2 = Filters__ctx_type_5_init();
+   _ctx._inst1 = Filters__ctx_type_4_init();
+   _ctx._inst0 = Filters__ctx_type_4_init();
    return _ctx;
 }
 
-_ctx_type_10 _Filters_hp12_init(){ return _Filters__ctx_type_10_init();}
+_ctx_type_10 Filters_hp12_init(){ return Filters__ctx_type_10_init();}
 
-float _Filters_hp12(_ctx_type_10 &_ctx, float x, float fc, float q){
-   if(_Filters_change(_ctx._inst0,fc) || _Filters_change(_ctx._inst1,q)){
-      float qc = _Filters_max(sqrtf(2.f),(q + sqrtf(2.f)));
-      fc = _Filters_clip(fc,0.f,(22050.f));
-      float k = tanf((_Filters_pi() * fc * 2.26757369615e-05f));
+float Filters_hp12(_ctx_type_10 &_ctx, float x, float fc, float q){
+   if(Filters_change(_ctx._inst0,fc) || Filters_change(_ctx._inst1,q)){
+      float qc = Filters_max(sqrtf(2.f),(q + sqrtf(2.f)));
+      fc = Filters_clip(fc,0.f,(22050.f));
+      float k = tanf((Filters_pi() * fc * 2.26757369615e-05f));
       float den = ((k * k * qc) + k + qc);
       _ctx.b0 = (qc / den);
       _ctx.b1 = (((-2.f) * qc) / den);
@@ -162,29 +162,29 @@ float _Filters_hp12(_ctx_type_10 &_ctx, float x, float fc, float q){
       _ctx.a1 = ((2.f * qc * ((k * k) + (-1.f))) / den);
       _ctx.a2 = (((k * k * qc) + (- k) + qc) / den);
    }
-   return _Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
+   return Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
-_ctx_type_11 _Filters__ctx_type_11_init(){
+_ctx_type_11 Filters__ctx_type_11_init(){
    _ctx_type_11 _ctx;
    _ctx.b2 = 0.f;
    _ctx.b1 = 0.f;
    _ctx.b0 = 0.f;
    _ctx.a2 = 0.f;
    _ctx.a1 = 0.f;
-   _ctx._inst2 = _Filters__ctx_type_5_init();
-   _ctx._inst1 = _Filters__ctx_type_4_init();
-   _ctx._inst0 = _Filters__ctx_type_4_init();
+   _ctx._inst2 = Filters__ctx_type_5_init();
+   _ctx._inst1 = Filters__ctx_type_4_init();
+   _ctx._inst0 = Filters__ctx_type_4_init();
    return _ctx;
 }
 
-_ctx_type_11 _Filters_bp12_init(){ return _Filters__ctx_type_11_init();}
+_ctx_type_11 Filters_bp12_init(){ return Filters__ctx_type_11_init();}
 
-float _Filters_bp12(_ctx_type_11 &_ctx, float x, float fc, float q){
-   if(_Filters_change(_ctx._inst0,fc) || _Filters_change(_ctx._inst1,q)){
-      float qc = _Filters_max(sqrtf(2.f),(q + sqrtf(2.f)));
-      fc = _Filters_clip(fc,0.f,(22050.f));
-      float k = tanf((_Filters_pi() * fc * 2.26757369615e-05f));
+float Filters_bp12(_ctx_type_11 &_ctx, float x, float fc, float q){
+   if(Filters_change(_ctx._inst0,fc) || Filters_change(_ctx._inst1,q)){
+      float qc = Filters_max(sqrtf(2.f),(q + sqrtf(2.f)));
+      fc = Filters_clip(fc,0.f,(22050.f));
+      float k = tanf((Filters_pi() * fc * 2.26757369615e-05f));
       float den = ((k * k * qc) + k + qc);
       _ctx.b0 = (k / den);
       _ctx.b1 = 0.f;
@@ -192,29 +192,29 @@ float _Filters_bp12(_ctx_type_11 &_ctx, float x, float fc, float q){
       _ctx.a1 = ((2.f * qc * ((k * k) + (-1.f))) / den);
       _ctx.a2 = (((k * k * qc) + (- k) + qc) / den);
    }
-   return _Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
+   return Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
-_ctx_type_12 _Filters__ctx_type_12_init(){
+_ctx_type_12 Filters__ctx_type_12_init(){
    _ctx_type_12 _ctx;
    _ctx.b2 = 0.f;
    _ctx.b1 = 0.f;
    _ctx.b0 = 0.f;
    _ctx.a2 = 0.f;
    _ctx.a1 = 0.f;
-   _ctx._inst2 = _Filters__ctx_type_5_init();
-   _ctx._inst1 = _Filters__ctx_type_4_init();
-   _ctx._inst0 = _Filters__ctx_type_4_init();
+   _ctx._inst2 = Filters__ctx_type_5_init();
+   _ctx._inst1 = Filters__ctx_type_4_init();
+   _ctx._inst0 = Filters__ctx_type_4_init();
    return _ctx;
 }
 
-_ctx_type_12 _Filters_notch12_init(){ return _Filters__ctx_type_12_init();}
+_ctx_type_12 Filters_notch12_init(){ return Filters__ctx_type_12_init();}
 
-float _Filters_notch12(_ctx_type_12 &_ctx, float x, float fc, float q){
-   if(_Filters_change(_ctx._inst0,fc) || _Filters_change(_ctx._inst1,q)){
-      float qc = _Filters_max(sqrtf(2.f),(q + sqrtf(2.f)));
-      fc = _Filters_clip(fc,0.f,(22050.f));
-      float k = tanf((_Filters_pi() * fc * 2.26757369615e-05f));
+float Filters_notch12(_ctx_type_12 &_ctx, float x, float fc, float q){
+   if(Filters_change(_ctx._inst0,fc) || Filters_change(_ctx._inst1,q)){
+      float qc = Filters_max(sqrtf(2.f),(q + sqrtf(2.f)));
+      fc = Filters_clip(fc,0.f,(22050.f));
+      float k = tanf((Filters_pi() * fc * 2.26757369615e-05f));
       float den = ((k * k * qc) + k + qc);
       _ctx.b0 = ((qc * (1.f + (k * k))) / den);
       _ctx.b1 = ((2.f * qc * ((k * k) + (-1.f))) / den);
@@ -222,29 +222,29 @@ float _Filters_notch12(_ctx_type_12 &_ctx, float x, float fc, float q){
       _ctx.a1 = ((2.f * qc * ((k * k) + (-1.f))) / den);
       _ctx.a2 = (((k * k * qc) + (- k) + qc) / den);
    }
-   return _Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
+   return Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
-_ctx_type_13 _Filters__ctx_type_13_init(){
+_ctx_type_13 Filters__ctx_type_13_init(){
    _ctx_type_13 _ctx;
    _ctx.b2 = 0.f;
    _ctx.b1 = 0.f;
    _ctx.b0 = 0.f;
    _ctx.a2 = 0.f;
    _ctx.a1 = 0.f;
-   _ctx._inst2 = _Filters__ctx_type_5_init();
-   _ctx._inst1 = _Filters__ctx_type_4_init();
-   _ctx._inst0 = _Filters__ctx_type_4_init();
+   _ctx._inst2 = Filters__ctx_type_5_init();
+   _ctx._inst1 = Filters__ctx_type_4_init();
+   _ctx._inst0 = Filters__ctx_type_4_init();
    return _ctx;
 }
 
-_ctx_type_13 _Filters_allp12_init(){ return _Filters__ctx_type_13_init();}
+_ctx_type_13 Filters_allp12_init(){ return Filters__ctx_type_13_init();}
 
-float _Filters_allp12(_ctx_type_13 &_ctx, float x, float fc, float q){
-   if(_Filters_change(_ctx._inst0,fc) || _Filters_change(_ctx._inst1,q)){
-      float qc = _Filters_max(sqrtf(2.f),(q + sqrtf(2.f)));
-      fc = _Filters_clip(fc,0.f,(22050.f));
-      float k = tanf((_Filters_pi() * fc * 2.26757369615e-05f));
+float Filters_allp12(_ctx_type_13 &_ctx, float x, float fc, float q){
+   if(Filters_change(_ctx._inst0,fc) || Filters_change(_ctx._inst1,q)){
+      float qc = Filters_max(sqrtf(2.f),(q + sqrtf(2.f)));
+      fc = Filters_clip(fc,0.f,(22050.f));
+      float k = tanf((Filters_pi() * fc * 2.26757369615e-05f));
       float den = ((k * k * qc) + k + qc);
       _ctx.b0 = (((k * k * qc) + (- k) + qc) / den);
       _ctx.b1 = ((2.f * qc * ((k * k) + (-1.f))) / den);
@@ -252,7 +252,7 @@ float _Filters_allp12(_ctx_type_13 &_ctx, float x, float fc, float q){
       _ctx.a1 = ((2.f * qc * ((k * k) + (-1.f))) / den);
       _ctx.a2 = (((k * k * qc) + (- k) + qc) / den);
    }
-   return _Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
+   return Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
 

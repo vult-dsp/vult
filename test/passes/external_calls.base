@@ -1,0 +1,8 @@
+{
+   external foo(x:int) : int "actual_foo";
+   fun External_calls.bar() : int {
+      val (x:int) = actual_foo(0);
+      return x;
+   }
+
+}

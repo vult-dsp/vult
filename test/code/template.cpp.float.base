@@ -1,19 +1,19 @@
 #include "template.h"
 
-float _Template_process(float input){
+float Template_process(float input){
    return input;
 }
 
-void _Template_noteOn(int note, int velocity){
+void Template_noteOn(int note, int velocity){
 }
 
-void _Template_noteOff(int note){
+void Template_noteOff(int note){
 }
 
-void _Template_controlChange(int control, int value){
+void Template_controlChange(int control, int value){
 }
 
-void _Template_default_(){
+void Template_default_(){
 }
 
 
