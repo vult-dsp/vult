@@ -75,6 +75,7 @@ let code_files =
       "sin.vult";
       "web/phasedist.vult";
       "web/synth1.vult";
+      "web/synth2.vult";
       "web/template.vult";
       "web/volume.vult";
    ]

@@ -30,8 +30,8 @@ int Monoin_mono_noteOff(_ctx_type_0 &_ctx, int n){
    if(_ctx.count == 0){
       return _ctx.pre;
    }
-   while((i < 4)){
-      if((int_get(_ctx.notes,i) == n) && (! found)){
+   while(((i < 4) && (! found))){
+      if(int_get(_ctx.notes,i) == n){
          pos = i;
          found = 1;
       }

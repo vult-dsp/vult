@@ -1,4 +1,16 @@
+/*
+   = A synthesizer with a bandwidth-limited multi-oscillator
+     and a state variable filter     
+   CC30 - Volume
+   CC31 - Wave selector (pulse,saw,triangle)
+   CC32 - Pulse width
+   CC33 - LFO rate
+   CC34 - LFO amount (bipolar, connected to PW)
+   CC35 - Filter cut
+   CC36 - Filter resonance
+*/
 
+// Minimum value represented with fixed-point q16
 fun minFixed() return 0.0000152588;
 
 // Returns true every time the input value changes
@@ -42,6 +54,13 @@ fun dcblock(x0:real) : real {
   val y0 = x0-x1+y1*0.995;
   x1,y1 = x0,y0;
   return y0;
+}
+
+// Used to soften the transitions of controls
+fun smooth(input:real) : real {
+   mem x;
+   x = x+(input-x)*0.005;
+   return x;
 }
 
 // Average two samples
@@ -134,10 +153,9 @@ fun osc(pitch:real,pw:real,wave:real) : real {
   return clip(output/4.,-1.,1.);
 }
 
-
 // ==== FILTER =====
 
-// Calculates one step of the state-variable filter
+// Calculates one step of the oversampled state-variable filter
 fun svf_step(input:real,g:real,q:real,sel:int) : real {
    mem dlow, dband;
    val low = dlow + g * dband;
@@ -173,66 +191,6 @@ fun svf(input,fc,q,sel){
    return (x1+x2)/2.;
 }
 
-// ==== ENVELOPE =====
-
-fun adsr(gate,attack,decay,sustain,release){
-   mem state,value;
-   mem attackRate;
-   mem decayRate;
-   mem releaseRate;
-   mem sustainLevel;
-
-   val IDLE    = 0;
-   val ATTACK  = 1;
-   val DECAY   = 2;
-   val SUSTAIN = 3;
-   val RELEASE = 4;
-
-   // Calculates the rate every 32 samples
-   if(each(32)){
-        attackRate      = (1./44100.) * (1./(attack+0.1));
-        val inv_sustain = 1. - sustain;
-        decayRate       = (inv_sustain/44100.) * (inv_sustain/(decay+0.1));
-        releaseRate     = (0.5/44100.) * (0.5/(release+0.1));
-   }
-   sustainLevel = sustain;
-
-   val rate = 0.0;
-
-   val trig = bchange(gate);
-
-   val up   = trig && gate;
-   val down = trig && not(gate);
-
-   // State machine of the ADSR
-   if(state == IDLE){
-      if(up) state = ATTACK;
-   }
-   else if(state == ATTACK){
-      if(value >= 1.) state = DECAY;
-      if(down)       state = RELEASE;
-      rate = attackRate;
-   }
-   else if(state == DECAY){
-      if(value <= sustainLevel) state = SUSTAIN;
-      if(down)                  state = RELEASE;
-      rate = -decayRate;
-   }
-   else if(state == SUSTAIN){
-      if(down) state = RELEASE;
-      rate  = 0.;
-      value = sustainLevel;
-   }
-   else if(state == RELEASE){
-      if(value <= 0.) state = IDLE;
-      if(up)         state = ATTACK;
-      rate = -releaseRate;
-   }
-
-   value = clip(lpfilter(rate) + value,0.,1.);
-   return value;
-}
-
 // ======= LFO ======
 fun lfo(f,gate){
    mem phase;
@@ -246,77 +204,79 @@ fun lfo(f,gate){
 
 // ==== MONOPHONIC VOICE =====
 
-/* These two functions handle midi on/off events in order to behave
+/* These three functions handle midi on/off events in order to behave
  * like a monophonic sinthesizer that can hold 4 notes */
 
 // Activates a note and returns the current note value
-fun mono_noteOn(n){
-   mem n1,n2,n3,n4;
+fun mono_noteOn(n:int){
    mem count,pre;
-   // written this way because Vult does not have array support yet.
-   if(count == 0) { n1 = n; pre = n; } else
-   if(count == 1) { n2 = n; pre = n; } else
-   if(count == 2) { n3 = n; pre = n; } else
-   if(count == 3) n4 = n; pre = n;
-   if(count <= 4) count = count + 1;
+   mem notes : array(int,4);
+   // Do not add more that the size of array
+   if(count < size(notes)) {
+     _ = set(notes,count,n);
+     pre = n;
+     if(count < size(notes)) count = count + 1;
+   }
    return pre;
 }
 
 // Deactivates a note and returns the following note value;
-and mono_noteOff(n){
-   mem n1,n2,n3,n4;
+and mono_noteOff(n:int){
    mem count,pre;
+   mem notes : array(int,4);
    val found = false;
-
-   // finds the voice and removes it
-   if(n == n1) { n1,n2,n3 = n2,n3,n4; found = true; } else
-   if(n == n2) { n2,n3    = n3,n4;    found = true; } else
-   if(n == n3) { n3       = n4;       found = true; } else
-   if(n == n4) {                      found = true; }
-
-   // If found, decrease the number of active notes
-   if(found && count>0) count = count - 1;
-
-   if(count == 1) pre = n1;
-   if(count == 2) pre = n2;
-   if(count == 3) pre = n3;
-   if(count == 4) pre = n4;
+   val pos;
+   val i = 0;
+   // if there are no notes, no dot do anything
+   if(count == 0)
+      return pre;
+   // Finds the location of the note
+   while(i < size(notes) && not(found)){
+      if(get(notes,i) == n) {
+         pos = i;
+         found = true;
+      }
+      i = i + 1;
+   }
+   // if the note was found moves all the notes one location
+   if(found) {
+      val k = pos + 1;
+      while(k < size(notes)) {
+         _ = set(notes,k-1,get(notes,k));
+         k = k + 1;
+      }
+      // If found, decrease the number of active notes
+      if(found && count>0) {
+         count = count - 1;
+         pre = get(notes,count - 1);
+      }
+   }
    return pre;
 }
 
 // Returns 1 if any note is active
-and mono_isGateOn(){
-   return count>0;
+and mono_isGateOn() {
+   mem count;
+   return count > 0;
 }
 
+// Main process function
 fun process(i:real){
-  mem pitch;
-  mem pw;
-  mem wave;
-  mem lfo_amt;
-  mem lfo_rate;
-  mem cut;
-  mem res;
-  mem flt_atm;
-
-  mem amp_a;
-  mem amp_d;
-  mem amp_s;
-  mem amp_r;
-
-  mem env_a;
-  mem env_d;
-  mem env_s;
-  mem end_r;
+  mem volume;
+  mem pitch, pw, wave;  // oscillator parameters
+  mem lfo_rate,lfo_amt; // LFO parameter
+  mem cut, res;         // Filter parameters
 
   val gate    = monoin:mono_isGateOn();
+  // Creates one LFO
   val lfo1    = lfo(lfo_rate,gate)*lfo_amt;
-  val x       = osc(pitch,pw+lfo1,wave);
-  val amp_env = adsr(gate,amp_a,amp_d,amp_s,amp_r);
-  val flt_env = adsr(gate,env_a,env_d,env_s,end_r);
-  val cut_mod = cut + flt_atm * flt_env;
-  val output  = amp_env * svf(x,cut_mod,res,0);
-  return output;
+  // Creates one oscillator
+  val o1       = osc(pitch,pw+lfo1,wave);
+  // gets the amplification by using a low-pass on the gate
+  val amp_env = smooth(if gate then 1.0 else 0.0);
+  // creates one state-variable filter
+  val output  = amp_env * svf(o1,cut,res,0);
+  return volume * output;
 }
 
 and noteOn(note:int,velocity:int){
@@ -329,43 +289,21 @@ and noteOff(note:int){
 
 // Called when a control changes
 and controlChange(control:int,value:int){
-  mem pitch;
-  mem pw;
-  mem wave;
-  mem lfo_amt;
-  mem lfo_rate;
-  mem cut;
-  mem res;
-  mem flt_atm;
-
-  mem amp_a;
-  mem amp_d;
-  mem amp_s;
-  mem amp_r;
-
-  mem env_a;
-  mem env_d;
-  mem env_s;
-  mem env_r;
+  mem volume;
+  mem pitch, pw, wave;  // oscillator parameters
+  mem lfo_rate,lfo_amt; // LFO parameter
+  mem cut, res;         // Filter parameters
 
   val value_0_1 = real(value) / 127.0;
   val value_m1_1 = value_0_1 * 2.0 - 1.0;
 
-  if(control == 30) wave = value_0_1;
-  if(control == 31) pw = value_0_1;
-  if(control == 32) lfo_amt = value_m1_1;
+  if(control == 30) volume = value_0_1;
+  if(control == 31) wave   = value_0_1;
+  if(control == 32) pw     = value_0_1;
   if(control == 33) lfo_rate = value_0_1;
-  if(control == 34) amp_a = value_0_1;
-  if(control == 35) amp_d = value_0_1;
-  if(control == 36) amp_s = value_0_1;
-  if(control == 37) amp_r = value_0_1;
-  if(control == 38) cut = value_0_1;
-  if(control == 39) res = value_0_1;
-  if(control == 40) flt_atm = value_m1_1;
-  if(control == 41) env_a = value_0_1;
-  if(control == 42) env_d = value_0_1;
-  if(control == 43) env_s = value_0_1;
-  if(control == 44) env_r = value_0_1;
+  if(control == 34) lfo_amt = value_m1_1;
+  if(control == 35) cut = value_0_1;
+  if(control == 36) res = value_0_1;
 }
 
 // Called on initialization to define initial values
