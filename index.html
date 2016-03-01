@@ -38,14 +38,14 @@
 
           <p>Vult is a simple and powerful language to program high-performance algorithms that may run in small microprocessors or microcontrollers. Vult is specially useful when programming  Digital Signal Processing (DSP) algorithms like audio effects or synthesizers.</p>
 
-          <p>The Vult compiler is actually a transcompiler which takes Vult code and produces plain C code that can be compiled in any platform with a C/C++ compiler, for example: Arduino or Teensy boards. Javascript support is coming soon. Code written in Vult has freedom.</p>
+          <p>The Vult compiler is actually a transcompiler which takes Vult code and produces plain C/C++ code that can be compiled in any platform with a C/C++ compiler, for example: Arduino or Teensy boards. Vult also generates Javascript that can be run directly in the browser. Code written in Vult has freedom.</p>
 
           <p>Some of the key feature of Vult are:</p>
 
           <ul>
-            <li>Fixed-Point type: The same code can be generated using float or fixed-point arithmetic. This makes it possible to run efficiently in small processors (or super-fast in big ones).</li>
+            <li>Fixed-Point type: The same code can be generated using float or fixed-point arithmetic. This makes it possible to run efficiently in small processors.</li>
             <li>Functions with context: Functions in Vult can have local memory and each call automatically creates a new environment. Contexts can be shared among functions.</li>
-            <li>Powerful inlining: Vult automatically inlines simple functions but can also inline complex functions if you want.</li>
+            <li>Type inference and type checking: the type system makes your code safer and will catch many of the errors made when writing code.</li>
           </ul>
 
           <p>These key features enable you to write clear and simple code without sacrificing performance.</p>
@@ -54,18 +54,11 @@
             <a id="credits" class="anchor" href="#credits" aria-hidden="true"><span class="octicon octicon-link"></span></a>
             Status
           </h2>
-          <p>Vult is still in an alpha stage and is not recommended to use for serious projects.</p>
+          <p>Vult is on continuous development and is not recommended for developing critical systems.</p>
 
-          <h3>Future features</h3>
+          <h3>Roadmap</h3>
 
-          <ul>
-            <li>A powerful type system: Type systems make your code safer and allow making analysis to check that the code is correct. Vult will have type inference and dependent types.</li>
-            <li>More target languages: Vult will generate Javascript, C++ and Ocaml.</li>
-            <li>Function specialization.</li>
-            <li>JIT compilation.</li>
-            <li>VST plugin.</li>
-
-          </ul>
+          <p>You can see what we are working on and what's planned for Vult in the <a href="https://waffle.io/modlfo/vult">waffle.io</a> board.</p>
 
           <p>If you want to receive notifications for future development of this project you can join to the google group <a href="http://groups.google.com/d/forum/vult">Vult Group</a>. </p>
 
