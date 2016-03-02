@@ -57,9 +57,27 @@ $ ./configure --enable-js
 $ make
 $ js_of_ocaml vult_node.byte
 ```
+### Basics
+
+To generate C/C++ code you with floating point arithmetics you have execute vult as follows:
+
+```
+$ ./vultc -ccode infile.vult -o outfile
+```
+
+This will produce the files `outfile.h` and `outfile.cpp`. In order to compile and link these files you need to include in your project the files `runtime/vultin.h` and `runtime/vultin.c`.
+
+To generate code with fixed point arithmetics you need to execute:
+```
+$ ./vult -ccode -real fixed infile.vult -o outfile
+```
+
+Fixed point arithmetics are performed in q16 format; 16 bits for the integer part and 16 for the decimal.
+
+
 ### Roadmap
 
-You can see what we are working on and what's planned for Vult in the waffle.io board https://waffle.io/modlfo/vult 
+You can see what we are working on and what's planned for Vult in the waffle.io board https://waffle.io/modlfo/vult
 
 ### Contact
 
