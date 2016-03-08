@@ -48,24 +48,24 @@ module PassData = struct
 
    type t =
       {
-         gen_init_ctx : IdSet.t; (** Context for which a init function has been generated *)
-         add_ctx      : IdSet.t;
+         gen_init_ctx : PathSet.t; (** Context for which a init function has been generated *)
+         add_ctx      : PathSet.t;
          used_tuples  : TypeSet.t;
          repeat       : bool;
          args         : arguments;
       }
 
-   let hasInitFunction (t:t) (id:id) : bool =
-      IdSet.mem id t.gen_init_ctx
+   let hasInitFunction (t:t) (path:path) : bool =
+      PathSet.mem path t.gen_init_ctx
 
-   let hasContextArgument (t:t) (id:id) : bool =
-      IdSet.mem id t.add_ctx
+   let hasContextArgument (t:t) (path:path) : bool =
+      PathSet.mem path t.add_ctx
 
-   let markInitFunction (t:t) (id:id) : t =
-      { t with gen_init_ctx = IdSet.add id t.gen_init_ctx }
+   let markInitFunction (t:t) (path:path) : t =
+      { t with gen_init_ctx = PathSet.add path t.gen_init_ctx }
 
-   let markContextArgument (t:t) (id:id) : t =
-      { t with add_ctx = IdSet.add id t.add_ctx }
+   let markContextArgument (t:t) (path:path) : t =
+      { t with add_ctx = PathSet.add path t.add_ctx }
 
    let reapply (t:t) : t =
       { t with repeat = true }
@@ -84,9 +84,9 @@ module PassData = struct
 
    let empty args =
       {
-         gen_init_ctx = IdSet.empty;
+         gen_init_ctx = PathSet.empty;
          repeat       = false;
-         add_ctx      = IdSet.empty;
+         add_ctx      = PathSet.empty;
          used_tuples  = TypeSet.empty;
          args         = args;
       }
@@ -111,10 +111,12 @@ module InsertContext = struct
          match stmt with
          | StmtFun(name,args,body,rettype,attr) ->
             let data = Env.get state in
-            if Env.isActive state name && not (PassData.hasContextArgument data name) then
-               let context = Env.getContext state name in
-               let arg0 = TypedId(["_ctx"],ref (VType.TId(context,None)),attr) in
-               let data' = PassData.markContextArgument data name in
+            let path,_,_ = Env.lookup `Function state  name in
+            if Env.isActive state name && not (PassData.hasContextArgument data path) then
+               let ctx_full = Env.getContext state name in
+               let ctx      = Env.pathFromCurrent state ctx_full in
+               let arg0     = TypedId(["_ctx"],ref (VType.TId(ctx,None)),attr) in
+               let data'    = PassData.markContextArgument data path in
                Env.set state data', StmtFun(name,arg0::args,body,rettype,attr)
             else
                state, stmt
@@ -124,7 +126,7 @@ module InsertContext = struct
       Mapper.make @@ fun state exp ->
          match exp with
          | PCall(Some(id),kind,args,attr) ->
-            let context = Env.getContext state kind in
+            let Path(context) = Env.getContext state kind in
             let typ = ref (VType.TId(context,None)) in
             state,PCall(None,kind,PId("_ctx"::id,{ attr with typ = Some(typ) })::args,attr)
          | PId(id,attr) when Env.isLocalInstanceOrMem state id ->
@@ -195,7 +197,14 @@ module CreateInitFunction = struct
 
    let getContextIfPossible state tp =
       match tp with
-      | { contents = VType.TId(tp_name,_) } -> (try ref (VType.TId(Env.getContext state tp_name,None)) with | _ -> tp )
+      | { contents = VType.TId(tp_name,_) } ->
+         begin
+            try
+               let context_path = Env.getContext state tp_name in
+               let context = Env.pathFromCurrent state context_path in
+               ref (VType.TId(context,None))
+            with | _ -> tp
+         end
       | _ -> tp
 
    let generateInitFunction (ctx:id) (init_fun:id option) (member_set:IdTypeSet.t) : stmt =
@@ -232,7 +241,8 @@ module CreateInitFunction = struct
       StmtType(ref (VType.TId(ctx,None)),members,emptyAttr)
 
    let generateInitFunctionWrapper (state:'a Env.t) (name:id) : stmt =
-      let ctx = Env.getContext state name in
+      let ctx_path = Env.getContext state name in
+      let ctx = Env.pathFromCurrent state ctx_path in
       let typ = ref (VType.TId(ctx,None)) in
       let attr = { emptyAttr with typ = Some(typ) } in
       StmtFun(getInitFunctioName name,
@@ -241,8 +251,9 @@ module CreateInitFunction = struct
          Some(typ), emptyAttr)
 
    let generateTypeAlias (state:'a Env.t) (name:id) : stmt =
-      let ctx  = Env.getContext state name in
-      let typ  = ref (VType.TId(ctx,None)) in
+      let ctx_path  = Env.getContext state name in
+      let ctx       = Env.pathFromCurrent state ctx_path in
+      let typ       = ref (VType.TId(ctx,None)) in
       let name_type = ref (VType.TId(getFunctioTypeName name,None)) in
       StmtAliasType(name_type,typ,emptyAttr)
 
@@ -251,12 +262,14 @@ module CreateInitFunction = struct
          match stmt with
          | StmtFun(name,_,_,_,_) ->
             let data = Env.get state in
-            if Env.isActive state name && not (PassData.hasInitFunction data name) then
-               let ctx     = Env.getContext state name in
+            let path,_,_ = Env.lookup `Function state name in
+            if Env.isActive state name && not (PassData.hasInitFunction data path) then
+               let ctx_path = Env.getContext state name in
+               let ctx     = Env.pathFromCurrent state ctx_path in
                let init_fn = generateInitFunctionWrapper state name in
                let type_fn = generateTypeAlias state name in
-               if PassData.hasInitFunction data ctx then
-                  let data'   = PassData.markInitFunction data name in
+               if PassData.hasInitFunction data ctx_path then
+                  let data'   = PassData.markInitFunction data path in
                   Env.set state data', [type_fn; init_fn; stmt]
                else
                   let mem_vars, instances = Env.getMemAndInstances state name in
@@ -271,8 +284,8 @@ module CreateInitFunction = struct
                   let init_fun   = Env.getInitFunction state name in
                   let init_funct = generateInitFunction ctx init_fun member_set in
                   let type_def   = generateContextType ctx member_set in
-                  let data'      = PassData.markInitFunction data ctx in
-                  let data'      = PassData.markInitFunction data' name in
+                  let data'      = PassData.markInitFunction data ctx_path in
+                  let data'      = PassData.markInitFunction data' path in
                   Env.set state data', [type_def; type_fn; init_funct; init_fn; stmt]
             else
                state, [stmt]
@@ -439,7 +452,7 @@ module CreateTypesForTuples = struct
       Mapper.makeExpander @@ fun state stmt ->
          match stmt with
          | StmtFun(_,_,_,_,_) ->
-            let data_env,_ = Mapper.map_stmt getTuples_mapper (Env.empty [] TypeSet.empty) stmt in
+            let data_env,_ = Mapper.map_stmt getTuples_mapper (Env.empty TypeSet.empty) stmt in
             let new_tuples = Env.get data_env in
             let data       = Env.get state in
             let current    = PassData.getTuples data in
@@ -664,7 +677,17 @@ let rec applyPass apply pass (state,stmts) =
    else
       state,stmts
 
-let applyTransformations args ?(options=default_options) (results:parser_results) =
+let passes (name:id) (options:pass_options) (env,stmts) =
+   let env' = Env.enter `Module env name in
+   (env',stmts)
+   |> inferPass
+   |> applyPass options.pass1 pass1
+   |> applyPass options.pass2 pass2
+   |> applyPass options.pass3 pass3
+   |> applyPass options.pass4 pass4
+   |> fun (env',stmts) -> Env.exit `Module env', stmts
+
+let apply env options (results:parser_results) =
    let module_name =
       results.file
       |> Filename.basename
@@ -672,24 +695,32 @@ let applyTransformations args ?(options=default_options) (results:parser_results
       |> String.capitalize
       |> fun a -> [a]
    in
-   let initial_state =
-      Env.empty module_name (PassData.empty args)
-   in
+   match CCError.map (fun a-> passes module_name options (env,a)) results.presult with
+   | `Ok(new_env,new_stmts) ->
+      new_env, { results with presult = `Ok(new_stmts) }
+   | `Error(error) ->
+      env, { results with presult = `Error(error) }
+   | exception Error.VError(e) ->
+      env, { results with presult = `Error([e]) }
 
-   let passes stmts =
-      (initial_state,stmts)
-      |> inferPass
-      |> applyPass options.pass1 pass1
-      |> applyPass options.pass2 pass2
-      |> applyPass options.pass3 pass3
-      |> applyPass options.pass4 pass4
-      |> snd
-   in
 
-   let new_stmts =
-      try
-         CCError.map passes results.presult
-      with
-      | Error.VError(e) -> `Error([e])
+let applyTransformations args ?(options=default_options) (results:parser_results list) =
+   let env = Env.empty (PassData.empty args) in
+   let _,stmts_list =
+      List.fold_left
+         (fun (env,acc) stmts ->
+            let env',stmts' = apply env options stmts in
+            (*print_endline "-------------";
+            print_endline (Env.show env');
+            print_endline "-------------";*)
+            env', stmts'::acc
+         )
+         (env,[])
+         results
    in
-   { results with presult = new_stmts }
+   List.rev stmts_list
+
+let applyTransformationsSingle args ?(options=default_options) (results:parser_results) =
+   let env = Env.empty (PassData.empty args) in
+   let _,stmts' = apply env options results in
+   stmts'

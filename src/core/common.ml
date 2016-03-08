@@ -43,7 +43,7 @@ module GetIdentifiers = struct
 
    let mapper = { Mapper.default_mapper with Mapper.exp = exp; Mapper.lhs_exp = lhs_exp }
 
-   let dummy_env = Env.empty [""] IdSet.empty
+   let dummy_env = Env.empty IdSet.empty
 
    let fromExp (exp:exp) : IdSet.t =
       let s, _ = Mapper.map_exp mapper dummy_env exp in
@@ -73,17 +73,17 @@ module GetLocation = struct
    let mapper = { Mapper.default_mapper with Mapper.attr = attr }
 
    let fromExp (e:exp) : Loc.t =
-      let dummy_env = Env.empty [""] Loc.default in
+      let dummy_env = Env.empty Loc.default in
       let s, _ = Mapper.map_exp mapper dummy_env e in
       Env.get s
 
    let fromStmt (stmt:stmt) : Loc.t =
-      let dummy_env = Env.empty [""] Loc.default in
+      let dummy_env = Env.empty Loc.default in
       let s, _ = Mapper.map_stmt mapper dummy_env stmt in
       Env.get s
 
    let fromLhsExp (e:lhs_exp) : Loc.t =
-      let dummy_env = Env.empty [""] Loc.default in
+      let dummy_env = Env.empty Loc.default in
       let s, _ = Mapper.map_lhs_exp mapper dummy_env e in
       Env.get s
 

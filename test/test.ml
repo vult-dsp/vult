@@ -152,7 +152,7 @@ module CodeGenerationTest = struct
       in
       let stmts =
          ParserVult.parseFile fullfile
-         |> Passes.applyTransformations args
+         |> Passes.applyTransformationsSingle args
       in
       let () = showResults stmts |> ignore in
       if real_type = "js" then
@@ -196,7 +196,7 @@ module PassesTest = struct
 
    let process options (fullfile:string) : string =
       ParserVult.parseFile fullfile
-      |> Passes.applyTransformations default_arguments ~options:options
+      |> Passes.applyTransformationsSingle default_arguments ~options:options
       |> showResults
 
    let run options (file:string) context =
@@ -226,7 +226,7 @@ module CompileTest = struct
       let args = { default_arguments with  files = [filename]; ccode = true; output = output; real = real_type } in
       let parser_results =
          ParserVult.parseFile filename
-         |> Passes.applyTransformations args in
+         |> Passes.applyTransformationsSingle args in
       Driver.generateCode args [parser_results] |> ignore
 
    let run (real_type:string) (file:string) _ =

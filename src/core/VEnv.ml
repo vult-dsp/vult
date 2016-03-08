@@ -220,6 +220,13 @@ module Scope = struct
 
    let show t = simple t |> show_t_simple
 
+   let show_full t =
+      let rec up t =
+         match t.parent with
+         | Some(p) -> up p
+         | _ -> t
+      in show (up t)
+
    let empty : t =
       {
          name      = [];
@@ -242,11 +249,21 @@ module Scope = struct
    let getFunction (t:t) : t IdMap.t =
       t.func
 
+   let findFunction (t:t) (name:id) : t option =
+      try Some(IdMap.find name t.func) with
+      | _ ->
+         try Some(IdMap.find name t.modules) with
+         | _ -> None
+
    let primExitFunction (parent:t) (t:t) : t =
       { parent with func = IdMap.add t.name t parent.func }
 
    let getModule (t:t) : t IdMap.t =
       t.modules
+
+   let findModule (t:t) (name:id) : t option =
+      try Some(IdMap.find name t.modules) with
+      | _ -> None
 
    let primExitModule (parent:t) (t:t) : t =
       { parent with modules = IdMap.add t.name t parent.modules }
@@ -254,17 +271,29 @@ module Scope = struct
    let getMemInst (t:t) : t IdMap.t =
       t.mem_inst
 
+   let findMemInst (t:t) (name:id) : t option =
+      try Some(IdMap.find name t.mem_inst) with
+      | _ -> None
+
    let primExitMemInst (parent:t) (t:t) : t =
       { parent with mem_inst = IdMap.add t.name t parent.mem_inst }
 
    let getTypes (t:t) : t IdMap.t =
       t.types
 
+   let findType (t:t) (name:id) : t option =
+      try Some(IdMap.find name t.types) with
+      | _ -> None
+
    let primExitTypes (parent:t) (t:t) : t =
       { parent with types = IdMap.add t.name t parent.types }
 
    let getOperators (t:t) : t IdMap.t =
       t.operators
+
+   let findOperator (t:t) (name:id) : t option =
+      try Some(IdMap.find name t.operators) with
+      | _ -> None
 
    let primExitOperators (parent:t) (t:t) : t =
       { parent with operators = IdMap.add t.name t parent.operators }
@@ -299,6 +328,16 @@ module Scope = struct
       | Some(parent) ->
          exit parent t
 
+   let current (t:t) : path =
+      let rec parentName parent =
+         match parent with
+         | None -> []
+         | Some(parent_t) ->
+            parent_t.name :: parentName parent_t.parent
+      in
+      t.name :: parentName t.parent
+      |> List.rev |> List.flatten |> fun a -> Path(a)
+
    let newContext (t:t) (name:id) (is_init:bool) : t =
       match t.parent with
       | None -> t
@@ -311,11 +350,13 @@ module Scope = struct
       | Some(parent) ->
          { t with parent = Some({ parent with ctx = Context.addTo parent.ctx name is_init }) }
 
-   let getContext (t:t) : id =
+   let getContext (t:t) : path =
       match t.parent with
       | None -> raise (Invalid_argument "Scope.getContext")
       | Some(parent) ->
-         Context.getContext parent.ctx t.name
+         let Path(parent_path) = current parent in
+         let ctx = Context.getContext parent.ctx t.name in
+         Path(parent_path@ctx)
 
    let getInitFunction (t:t) (name:id) : id option =
       match t.parent with
@@ -363,16 +404,6 @@ module Scope = struct
             Some(primExitMemInst parent t)
          | VarSymbol -> Some(parent)
 
-   let current (t:t) : path =
-      let rec parentName parent =
-         match parent with
-         | None -> []
-         | Some(parent_t) ->
-            parent_t.name :: parentName parent_t.parent
-      in
-      t.name :: parentName t.parent
-      |> List.rev |> List.flatten |> fun a -> Path(a)
-
    let getPath (t:t) : id =
       let rec parentPath (parent:t option) : id =
          match parent with
@@ -386,18 +417,18 @@ module Scope = struct
       let typ = if t.single then t.typ else VType.newinst t.typ in
       Path(getPath t), typ, t
 
-   let rec findAny (find_up:bool) (get:t -> t IdMap.t) (t:t) (name:id) : t option =
+   let rec findAny (find_up:bool) (find:t -> id -> t option) (t:t) (name:id) : t option =
       match name with
       | [] -> Some(t)
       | h::rest ->
-         match IdMap.find [h] (get t) with
-         | found ->
-            findAny find_up get found rest
-         | exception Not_found ->
+         match find t [h] with
+         | Some(found) ->
+            findAny find_up find found rest
+         | None ->
             if find_up then
                match getParent t with
                | Some(parent) ->
-                  findAny find_up get parent name
+                  findAny find_up find parent name
                | None -> None
             else None
 
@@ -430,7 +461,7 @@ module Scope = struct
    let getFunctionMemInst (t:t) : (path * VType.t * t) list * (path * VType.t * t) list =
       let tables = getAllWithSameContext t in
       let mem_inst =
-         List.map getMemInst tables
+         List.map (fun t -> t.mem_inst) tables
          |> List.map IdMap.to_list
          |> List.flatten
          |> List.map snd
@@ -444,7 +475,7 @@ module Scope = struct
          match ctx with
          | [] -> None
          | h::tt ->
-            match findAny false getMemInst h name with
+            match findAny false findMemInst h name with
             | Some(_) as a -> a
             | None -> loop tt
       in loop tables
@@ -456,10 +487,10 @@ module Scope = struct
 
    let lookup kind (t:t) (name:id) : t option =
       match kind with
-      | `Function -> findAny true getFunction t name
-      | `Module   -> findAny true getModule t name
-      | `Operator -> findAny true getOperators t name
-      | `Type     -> findAny true getTypes t name
+      | `Function -> findAny true findFunction t name
+      | `Module   -> findAny true findModule t name
+      | `Operator -> findAny true findOperator t name
+      | `Type     -> findAny true findType t name
       | `Variable -> lookupVariable t name
 
    let isMemOrInstance (t:t) (name:id) : bool =
@@ -484,8 +515,11 @@ module Env = struct
       }
 
    (** Prints all the information of the current environment *)
-   let dump (_:'a t) = ()
-      (*Scope.dump state.scope 3*)
+   let show (state:'a t) : string=
+      Scope.show state.scope
+
+   let show_full (state:'a t) : string =
+      Scope.show_full state.scope
 
    (** Gets a new tick (integer value) and updates the state *)
    let tick (state:'a t) : int * 'a t =
@@ -515,7 +549,8 @@ module Env = struct
    (** Returns the full path of a function. Raises an error if it cannot be found *)
    let lookup kind (state:'a t) (name:id) : path * VType.t * Scope.t =
       match Scope.lookup kind state.scope name with
-      | None -> failwith (Printf.sprintf "Cannot find symbol '%s'" (idStr name))
+      | None ->
+         failwith (Printf.sprintf "Cannot find symbol '%s'" (idStr name))
       | Some(t) -> Scope.getPathAndType t
 
       (** Returns the mem and instances for a function *)
@@ -528,7 +563,7 @@ module Env = struct
          f mem, f inst
 
    (** Returns the generated context name for the given function *)
-   let getContext (state:'a t) (name:id) : id =
+   let getContext (state:'a t) (name:id) : path =
       match Scope.lookup `Function state.scope name with
       | None -> failwith "Function not found"
       | Some(t) -> Scope.getContext t
@@ -594,19 +629,27 @@ module Env = struct
       List.fold_left (fun s a -> addBuiltinFunction s a) s builtin_table
 
    (** Creates an empty module context *)
-   let empty (init:id) data : 'a t =
+   let empty data : 'a t =
       {
          data    = data;
          tick    = 0;
          scope   = Scope.empty;
       }
       |> initialize
-      |> fun s -> enter `Module s init
 
    let get (state:'a t) : 'a =
       state.data
 
    let set (state:'a t) (data:'a) : 'a t =
       { state with data = data }
+
+   let pathFromCurrent (state:'a t) (path:path) =
+      let Path(current) = currentScope state in
+      let Path(id) = path in
+      let rec loop p1 p2 =
+         match p1,p2 with
+         | h1::t1, h2::t2 when h1 = h2 -> loop t1 t2
+         | _,_ -> p2
+      in loop current id
 
 end

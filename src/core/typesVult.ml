@@ -235,6 +235,8 @@ module IdMap = CCMap.Make(struct type t = id let compare = compare end)
 
 module PathMap = CCMap.Make(struct type t = path let compare = compare end)
 
+module PathSet = CCSet.Make(struct type t = path let compare = compare end)
+
 module IdSet = CCSet.Make(struct type t = id let compare = compare end)
 
 type id_type = id * VType.t
@@ -242,7 +244,6 @@ type id_type = id * VType.t
 
 
 module IdTypeSet = CCSet.Make(struct type t = id_type let compare = compare_id_type end)
-
 
 module TypeSet = CCSet.Make(struct type t = VType.t let compare = VType.compare end)
 
