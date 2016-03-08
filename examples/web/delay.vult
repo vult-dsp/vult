@@ -160,7 +160,7 @@ fun process(input:real){
    mem pitch;
    mem lfo_rate,lfo_amt;
    mem time, feedback;
-   
+
    val gate = notes:mono_isGateOn();
    // creates one LFO
    val lfo_val = lfo(lfo_rate,gate)*lfo_amt;
