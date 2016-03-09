@@ -4,57 +4,57 @@ int32_t Synth2_minFixed(){
    return 0x1 /* 0.000015 */;
 }
 
-_ctx_type_1 Synth2__ctx_type_1_init(){
-   _ctx_type_1 _ctx;
+Synth2__ctx_type_1 Synth2__ctx_type_1_init(){
+   Synth2__ctx_type_1 _ctx;
    _ctx.pre_x = 0x0 /* 0.000000 */;
    return _ctx;
 }
 
-_ctx_type_1 Synth2_change_init(){ return Synth2__ctx_type_1_init();}
+Synth2__ctx_type_1 Synth2_change_init(){ return Synth2__ctx_type_1_init();}
 
-uint8_t Synth2_change(_ctx_type_1 &_ctx, int32_t x){
+uint8_t Synth2_change(Synth2__ctx_type_1 &_ctx, int32_t x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
 
-_ctx_type_2 Synth2__ctx_type_2_init(){
-   _ctx_type_2 _ctx;
+Synth2__ctx_type_2 Synth2__ctx_type_2_init(){
+   Synth2__ctx_type_2 _ctx;
    _ctx.pre_x = 0;
    return _ctx;
 }
 
-_ctx_type_2 Synth2_bchange_init(){ return Synth2__ctx_type_2_init();}
+Synth2__ctx_type_2 Synth2_bchange_init(){ return Synth2__ctx_type_2_init();}
 
-uint8_t Synth2_bchange(_ctx_type_2 &_ctx, uint8_t x){
+uint8_t Synth2_bchange(Synth2__ctx_type_2 &_ctx, uint8_t x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
 
-_ctx_type_3 Synth2__ctx_type_3_init(){
-   _ctx_type_3 _ctx;
+Synth2__ctx_type_3 Synth2__ctx_type_3_init(){
+   Synth2__ctx_type_3 _ctx;
    _ctx.pre_x = 0;
    return _ctx;
 }
 
-_ctx_type_3 Synth2_edge_init(){ return Synth2__ctx_type_3_init();}
+Synth2__ctx_type_3 Synth2_edge_init(){ return Synth2__ctx_type_3_init();}
 
-uint8_t Synth2_edge(_ctx_type_3 &_ctx, uint8_t x){
+uint8_t Synth2_edge(Synth2__ctx_type_3 &_ctx, uint8_t x){
    uint8_t v = ((_ctx.pre_x != x) && (_ctx.pre_x == 1));
    _ctx.pre_x = x;
    return v;
 }
 
-_ctx_type_4 Synth2__ctx_type_4_init(){
-   _ctx_type_4 _ctx;
+Synth2__ctx_type_4 Synth2__ctx_type_4_init(){
+   Synth2__ctx_type_4 _ctx;
    _ctx.count = 0;
    return _ctx;
 }
 
-_ctx_type_4 Synth2_each_init(){ return Synth2__ctx_type_4_init();}
+Synth2__ctx_type_4 Synth2_each_init(){ return Synth2__ctx_type_4_init();}
 
-uint8_t Synth2_each(_ctx_type_4 &_ctx, int n){
+uint8_t Synth2_each(Synth2__ctx_type_4 &_ctx, int n){
    uint8_t ret = (_ctx.count == 0);
    _ctx.count = ((_ctx.count + 1) % n);
    return ret;
@@ -64,44 +64,44 @@ uint8_t Synth2_near_zero(int32_t x){
    return (fix_abs(x) < 0x51e /* 0.020000 */);
 }
 
-_ctx_type_6 Synth2__ctx_type_6_init(){
-   _ctx_type_6 _ctx;
+Synth2__ctx_type_6 Synth2__ctx_type_6_init(){
+   Synth2__ctx_type_6 _ctx;
    _ctx.y1 = 0x0 /* 0.000000 */;
    _ctx.x1 = 0x0 /* 0.000000 */;
    return _ctx;
 }
 
-_ctx_type_6 Synth2_dcblock_init(){ return Synth2__ctx_type_6_init();}
+Synth2__ctx_type_6 Synth2_dcblock_init(){ return Synth2__ctx_type_6_init();}
 
-int32_t Synth2_dcblock(_ctx_type_6 &_ctx, int32_t x0){
+int32_t Synth2_dcblock(Synth2__ctx_type_6 &_ctx, int32_t x0){
    int32_t y0 = fix_add(fix_add(x0,(- _ctx.x1)),fix_mul(_ctx.y1,0xfeb8 /* 0.995000 */));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
 }
 
-_ctx_type_7 Synth2__ctx_type_7_init(){
-   _ctx_type_7 _ctx;
+Synth2__ctx_type_7 Synth2__ctx_type_7_init(){
+   Synth2__ctx_type_7 _ctx;
    _ctx.x = 0x0 /* 0.000000 */;
    return _ctx;
 }
 
-_ctx_type_7 Synth2_smooth_init(){ return Synth2__ctx_type_7_init();}
+Synth2__ctx_type_7 Synth2_smooth_init(){ return Synth2__ctx_type_7_init();}
 
-int32_t Synth2_smooth(_ctx_type_7 &_ctx, int32_t input){
+int32_t Synth2_smooth(Synth2__ctx_type_7 &_ctx, int32_t input){
    _ctx.x = fix_add(_ctx.x,fix_mul(fix_add(input,(- _ctx.x)),0x147 /* 0.005000 */));
    return _ctx.x;
 }
 
-_ctx_type_8 Synth2__ctx_type_8_init(){
-   _ctx_type_8 _ctx;
+Synth2__ctx_type_8 Synth2__ctx_type_8_init(){
+   Synth2__ctx_type_8 _ctx;
    _ctx.pre_x = 0x0 /* 0.000000 */;
    return _ctx;
 }
 
-_ctx_type_8 Synth2_lpfilter_init(){ return Synth2__ctx_type_8_init();}
+Synth2__ctx_type_8 Synth2_lpfilter_init(){ return Synth2__ctx_type_8_init();}
 
-int32_t Synth2_lpfilter(_ctx_type_8 &_ctx, int32_t x){
+int32_t Synth2_lpfilter(Synth2__ctx_type_8 &_ctx, int32_t x){
    int32_t ret = fix_mul(fix_add(x,_ctx.pre_x),0x8000 /* 0.500000 */);
    _ctx.pre_x = x;
    return ret;
@@ -126,8 +126,8 @@ int32_t Synth2_pulse_train(int32_t m, int32_t phase){
    return tmp1;
 }
 
-_ctx_type_11 Synth2__ctx_type_11_init(){
-   _ctx_type_11 _ctx;
+Synth2__ctx_type_11 Synth2__ctx_type_11_init(){
+   Synth2__ctx_type_11 _ctx;
    _ctx.state_triang = 0x0 /* 0.000000 */;
    _ctx.state_saw = 0x0 /* 0.000000 */;
    _ctx.state_pulse = 0x0 /* 0.000000 */;
@@ -140,9 +140,9 @@ _ctx_type_11 Synth2__ctx_type_11_init(){
    return _ctx;
 }
 
-_ctx_type_11 Synth2_osc_init(){ return Synth2__ctx_type_11_init();}
+Synth2__ctx_type_11 Synth2_osc_init(){ return Synth2__ctx_type_11_init();}
 
-int32_t Synth2_osc(_ctx_type_11 &_ctx, int32_t pitch, int32_t pw, int32_t wave){
+int32_t Synth2_osc(Synth2__ctx_type_11 &_ctx, int32_t pitch, int32_t pw, int32_t wave){
    int32_t fixed_pitch = 0x0 /* 0.000000 */;
    if(wave < 0xaaaa /* 0.666667 */){
       fixed_pitch = pitch;
@@ -188,16 +188,16 @@ int32_t Synth2_osc(_ctx_type_11 &_ctx, int32_t pitch, int32_t pw, int32_t wave){
    return fix_clip(fix_mul(_ctx.output,0x4000 /* 0.250000 */),(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
 }
 
-_ctx_type_12 Synth2__ctx_type_12_init(){
-   _ctx_type_12 _ctx;
+Synth2__ctx_type_12 Synth2__ctx_type_12_init(){
+   Synth2__ctx_type_12 _ctx;
    _ctx.dlow = 0x0 /* 0.000000 */;
    _ctx.dband = 0x0 /* 0.000000 */;
    return _ctx;
 }
 
-_ctx_type_12 Synth2_svf_step_init(){ return Synth2__ctx_type_12_init();}
+Synth2__ctx_type_12 Synth2_svf_step_init(){ return Synth2__ctx_type_12_init();}
 
-int32_t Synth2_svf_step(_ctx_type_12 &_ctx, int32_t input, int32_t g, int32_t q, int sel){
+int32_t Synth2_svf_step(Synth2__ctx_type_12 &_ctx, int32_t input, int32_t g, int32_t q, int sel){
    int32_t low = fix_add(_ctx.dlow,fix_mul(g,_ctx.dband));
    int32_t high = fix_add(fix_add(input,(- low)),(- fix_mul(q,_ctx.dband)));
    int32_t band = fix_add(fix_mul(g,high),_ctx.dband);
@@ -208,17 +208,17 @@ int32_t Synth2_svf_step(_ctx_type_12 &_ctx, int32_t input, int32_t g, int32_t q,
    return output;
 }
 
-_ctx_type_13 Synth2__ctx_type_13_init(){
-   _ctx_type_13 _ctx;
+Synth2__ctx_type_13 Synth2__ctx_type_13_init(){
+   Synth2__ctx_type_13 _ctx;
    _ctx.step = Synth2__ctx_type_12_init();
    _ctx.g = 0x0 /* 0.000000 */;
    _ctx._inst0 = Synth2__ctx_type_1_init();
    return _ctx;
 }
 
-_ctx_type_13 Synth2_svf_init(){ return Synth2__ctx_type_13_init();}
+Synth2__ctx_type_13 Synth2_svf_init(){ return Synth2__ctx_type_13_init();}
 
-int32_t Synth2_svf(_ctx_type_13 &_ctx, int32_t input, int32_t fc, int32_t q, int sel){
+int32_t Synth2_svf(Synth2__ctx_type_13 &_ctx, int32_t input, int32_t fc, int32_t q, int sel){
    fc = fix_clip(fc,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
    q = fix_clip(q,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
    int32_t fix_q = fix_mul(0x20000 /* 2.000000 */,fix_add(0x10000 /* 1.000000 */,(- q)));
@@ -230,17 +230,17 @@ int32_t Synth2_svf(_ctx_type_13 &_ctx, int32_t input, int32_t fc, int32_t q, int
    return fix_mul(fix_add(x1,x2),0x8000 /* 0.500000 */);
 }
 
-_ctx_type_14 Synth2__ctx_type_14_init(){
-   _ctx_type_14 _ctx;
+Synth2__ctx_type_14 Synth2__ctx_type_14_init(){
+   Synth2__ctx_type_14 _ctx;
    _ctx.phase = 0x0 /* 0.000000 */;
    _ctx._inst1 = Synth2__ctx_type_4_init();
    _ctx._inst0 = Synth2__ctx_type_3_init();
    return _ctx;
 }
 
-_ctx_type_14 Synth2_lfo_init(){ return Synth2__ctx_type_14_init();}
+Synth2__ctx_type_14 Synth2_lfo_init(){ return Synth2__ctx_type_14_init();}
 
-int32_t Synth2_lfo(_ctx_type_14 &_ctx, int32_t f, uint8_t gate){
+int32_t Synth2_lfo(Synth2__ctx_type_14 &_ctx, int32_t f, uint8_t gate){
    int32_t rate = fix_add(fix_mul(fix_mul(f,0x640000 /* 100.000000 */),Synth2_minFixed()),Synth2_minFixed());
    if(Synth2_edge(_ctx._inst0,gate)){
       _ctx.phase = 0x0 /* 0.000000 */;
@@ -254,17 +254,17 @@ int32_t Synth2_lfo(_ctx_type_14 &_ctx, int32_t f, uint8_t gate){
    return fix_add(fix_sin(fix_mul(0x6487e /* 6.283185 */,_ctx.phase)),0x8000 /* 0.500000 */);
 }
 
-_ctx_type_15 Synth2__ctx_type_15_init(){
-   _ctx_type_15 _ctx;
+Synth2__ctx_type_15 Synth2__ctx_type_15_init(){
+   Synth2__ctx_type_15 _ctx;
    _ctx.pre = 0;
    int_init_array(_ctx.notes,4,0);
    _ctx.count = 0;
    return _ctx;
 }
 
-_ctx_type_15 Synth2_mono_noteOn_init(){ return Synth2__ctx_type_15_init();}
+Synth2__ctx_type_15 Synth2_mono_noteOn_init(){ return Synth2__ctx_type_15_init();}
 
-int Synth2_mono_noteOn(_ctx_type_15 &_ctx, int n){
+int Synth2_mono_noteOn(Synth2__ctx_type_15 &_ctx, int n){
    if(_ctx.count < 4){
       int_set(_ctx.notes,_ctx.count,n);
       _ctx.pre = n;
@@ -275,9 +275,9 @@ int Synth2_mono_noteOn(_ctx_type_15 &_ctx, int n){
    return _ctx.pre;
 }
 
-_ctx_type_15 Synth2_mono_noteOff_init(){ return Synth2__ctx_type_15_init();}
+Synth2__ctx_type_15 Synth2_mono_noteOff_init(){ return Synth2__ctx_type_15_init();}
 
-int Synth2_mono_noteOff(_ctx_type_15 &_ctx, int n){
+int Synth2_mono_noteOff(Synth2__ctx_type_15 &_ctx, int n){
    uint8_t found = 0;
    int pos;
    int i = 0;
@@ -305,14 +305,14 @@ int Synth2_mono_noteOff(_ctx_type_15 &_ctx, int n){
    return _ctx.pre;
 }
 
-_ctx_type_15 Synth2_mono_isGateOn_init(){ return Synth2__ctx_type_15_init();}
+Synth2__ctx_type_15 Synth2_mono_isGateOn_init(){ return Synth2__ctx_type_15_init();}
 
-uint8_t Synth2_mono_isGateOn(_ctx_type_15 &_ctx){
+uint8_t Synth2_mono_isGateOn(Synth2__ctx_type_15 &_ctx){
    return (_ctx.count > 0);
 }
 
-_ctx_type_16 Synth2__ctx_type_16_init(){
-   _ctx_type_16 _ctx;
+Synth2__ctx_type_16 Synth2__ctx_type_16_init(){
+   Synth2__ctx_type_16 _ctx;
    _ctx.wave = 0x0 /* 0.000000 */;
    _ctx.volume = 0x0 /* 0.000000 */;
    _ctx.res = 0x0 /* 0.000000 */;
@@ -331,9 +331,9 @@ _ctx_type_16 Synth2__ctx_type_16_init(){
    return _ctx;
 }
 
-_ctx_type_16 Synth2_process_init(){ return Synth2__ctx_type_16_init();}
+Synth2__ctx_type_16 Synth2_process_init(){ return Synth2__ctx_type_16_init();}
 
-int32_t Synth2_process(_ctx_type_16 &_ctx, int32_t i){
+int32_t Synth2_process(Synth2__ctx_type_16 &_ctx, int32_t i){
    uint8_t gate = Synth2_mono_isGateOn(_ctx.monoin);
    int32_t lfo1 = fix_mul(Synth2_lfo(_ctx._inst0,_ctx.lfo_rate,gate),_ctx.lfo_amt);
    int32_t o1 = Synth2_osc(_ctx._inst1,_ctx.pitch,fix_add(_ctx.pw,lfo1),_ctx.wave);
@@ -342,21 +342,21 @@ int32_t Synth2_process(_ctx_type_16 &_ctx, int32_t i){
    return fix_mul(_ctx.volume,output);
 }
 
-_ctx_type_16 Synth2_noteOn_init(){ return Synth2__ctx_type_16_init();}
+Synth2__ctx_type_16 Synth2_noteOn_init(){ return Synth2__ctx_type_16_init();}
 
-void Synth2_noteOn(_ctx_type_16 &_ctx, int note, int velocity){
+void Synth2_noteOn(Synth2__ctx_type_16 &_ctx, int note, int velocity){
    _ctx.pitch = int_to_fix(Synth2_mono_noteOn(_ctx.monoin,note));
 }
 
-_ctx_type_16 Synth2_noteOff_init(){ return Synth2__ctx_type_16_init();}
+Synth2__ctx_type_16 Synth2_noteOff_init(){ return Synth2__ctx_type_16_init();}
 
-void Synth2_noteOff(_ctx_type_16 &_ctx, int note){
+void Synth2_noteOff(Synth2__ctx_type_16 &_ctx, int note){
    _ctx.pitch = int_to_fix(Synth2_mono_noteOff(_ctx.monoin,note));
 }
 
-_ctx_type_16 Synth2_controlChange_init(){ return Synth2__ctx_type_16_init();}
+Synth2__ctx_type_16 Synth2_controlChange_init(){ return Synth2__ctx_type_16_init();}
 
-void Synth2_controlChange(_ctx_type_16 &_ctx, int control, int value){
+void Synth2_controlChange(Synth2__ctx_type_16 &_ctx, int control, int value){
    int32_t value_0_1 = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    int32_t value_m1_1 = fix_add(fix_mul(value_0_1,0x20000 /* 2.000000 */),(0xffff0000 /* -1.000000 */));
    if(control == 30){
@@ -382,9 +382,9 @@ void Synth2_controlChange(_ctx_type_16 &_ctx, int control, int value){
    }
 }
 
-_ctx_type_16 Synth2_default_init(){ return Synth2__ctx_type_16_init();}
+Synth2__ctx_type_16 Synth2_default_init(){ return Synth2__ctx_type_16_init();}
 
-void Synth2_default_(_ctx_type_16 &_ctx){
+void Synth2_default_(Synth2__ctx_type_16 &_ctx){
    _ctx.pw = 0x0 /* 0.000000 */;
    _ctx.pitch = 0x2a0000 /* 42.000000 */;
    _ctx.cut = 0x10000 /* 1.000000 */;

@@ -1,14 +1,14 @@
 #include "moog_filter.h"
 
-_ctx_type_0 Moog_filter__ctx_type_0_init(){
-   _ctx_type_0 _ctx;
+Moog_filter__ctx_type_0 Moog_filter__ctx_type_0_init(){
+   Moog_filter__ctx_type_0 _ctx;
    _ctx.pre_x = 0x0 /* 0.000000 */;
    return _ctx;
 }
 
-_ctx_type_0 Moog_filter_change_init(){ return Moog_filter__ctx_type_0_init();}
+Moog_filter__ctx_type_0 Moog_filter_change_init(){ return Moog_filter__ctx_type_0_init();}
 
-uint8_t Moog_filter_change(_ctx_type_0 &_ctx, int32_t x){
+uint8_t Moog_filter_change(Moog_filter__ctx_type_0 &_ctx, int32_t x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
@@ -34,8 +34,8 @@ int32_t Moog_filter_thermal(){
    return 0xd1b7 /* 0.819200 */;
 }
 
-_ctx_type_6 Moog_filter__ctx_type_6_init(){
-   _ctx_type_6 _ctx;
+Moog_filter__ctx_type_6 Moog_filter__ctx_type_6_init(){
+   Moog_filter__ctx_type_6 _ctx;
    _ctx.tw2 = 0x0 /* 0.000000 */;
    _ctx.tw1 = 0x0 /* 0.000000 */;
    _ctx.tw0 = 0x0 /* 0.000000 */;
@@ -46,9 +46,9 @@ _ctx_type_6 Moog_filter__ctx_type_6_init(){
    return _ctx;
 }
 
-_ctx_type_6 Moog_filter_moog_step_init(){ return Moog_filter__ctx_type_6_init();}
+Moog_filter__ctx_type_6 Moog_filter_moog_step_init(){ return Moog_filter__ctx_type_6_init();}
 
-int32_t Moog_filter_moog_step(_ctx_type_6 &_ctx, int32_t input, int32_t resFixed, int32_t tune, int32_t output){
+int32_t Moog_filter_moog_step(Moog_filter__ctx_type_6 &_ctx, int32_t input, int32_t resFixed, int32_t tune, int32_t output){
    int32_t i0 = fix_add(input,(- fix_mul(resFixed,output)));
    int32_t w0 = fix_add(_ctx.dw0,fix_mul(tune,fix_add(fix_tanh(fix_mul(i0,Moog_filter_thermal())),(- _ctx.tw0))));
    _ctx.tw0 = fix_tanh(fix_mul(w0,Moog_filter_thermal()));
@@ -64,8 +64,8 @@ int32_t Moog_filter_moog_step(_ctx_type_6 &_ctx, int32_t input, int32_t resFixed
    return w3;
 }
 
-_ctx_type_7 Moog_filter__ctx_type_7_init(){
-   _ctx_type_7 _ctx;
+Moog_filter__ctx_type_7 Moog_filter__ctx_type_7_init(){
+   Moog_filter__ctx_type_7 _ctx;
    _ctx.tune = 0x0 /* 0.000000 */;
    _ctx.resFixed = 0x0 /* 0.000000 */;
    _ctx.filter = Moog_filter__ctx_type_6_init();
@@ -75,9 +75,9 @@ _ctx_type_7 Moog_filter__ctx_type_7_init(){
    return _ctx;
 }
 
-_ctx_type_7 Moog_filter_moog_init(){ return Moog_filter__ctx_type_7_init();}
+Moog_filter__ctx_type_7 Moog_filter_moog_init(){ return Moog_filter__ctx_type_7_init();}
 
-int32_t Moog_filter_moog(_ctx_type_7 &_ctx, int32_t input, int32_t cut, int32_t res){
+int32_t Moog_filter_moog(Moog_filter__ctx_type_7 &_ctx, int32_t input, int32_t cut, int32_t res){
    if(Moog_filter_change(_ctx._inst0,cut) || Moog_filter_change(_ctx._inst1,res)){
       res = Moog_filter_clip(res,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
       cut = Moog_filter_clip(cut,0x10000 /* 1.000000 */,0x56220000 /* 22050.000000 */);

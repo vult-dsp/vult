@@ -6,36 +6,36 @@
 
 uint8_t Blit_near_zero(float x);
 
-typedef struct _ctx_type_1 {
+typedef struct Blit__ctx_type_1 {
    float pre_x;
-} _ctx_type_1;
+} Blit__ctx_type_1;
 
-typedef _ctx_type_1 change_type;
+typedef Blit__ctx_type_1 Blit_change_type;
 
-_ctx_type_1 Blit__ctx_type_1_init();
+Blit__ctx_type_1 Blit__ctx_type_1_init();
 
-_ctx_type_1 Blit_change_init();
+Blit__ctx_type_1 Blit_change_init();
 
-uint8_t Blit_change(_ctx_type_1 &_ctx, float x);
+uint8_t Blit_change(Blit__ctx_type_1 &_ctx, float x);
 
-typedef struct _ctx_type_2 {
+typedef struct Blit__ctx_type_2 {
    float y1;
    float x1;
-} _ctx_type_2;
+} Blit__ctx_type_2;
 
-typedef _ctx_type_2 dcblock_type;
+typedef Blit__ctx_type_2 Blit_dcblock_type;
 
-_ctx_type_2 Blit__ctx_type_2_init();
+Blit__ctx_type_2 Blit__ctx_type_2_init();
 
-_ctx_type_2 Blit_dcblock_init();
+Blit__ctx_type_2 Blit_dcblock_init();
 
-float Blit_dcblock(_ctx_type_2 &_ctx, float x0);
+float Blit_dcblock(Blit__ctx_type_2 &_ctx, float x0);
 
 float Blit_pitchToRate(float d);
 
 float Blit_pulse_train(float m, float phase);
 
-typedef struct _ctx_type_5 {
+typedef struct Blit__ctx_type_5 {
    float state_triang;
    float state_saw;
    float state_pulse;
@@ -43,17 +43,17 @@ typedef struct _ctx_type_5 {
    float phase;
    float output;
    float m;
-   _ctx_type_2 _inst1;
-   _ctx_type_1 _inst0;
-} _ctx_type_5;
+   Blit__ctx_type_2 _inst1;
+   Blit__ctx_type_1 _inst0;
+} Blit__ctx_type_5;
 
-typedef _ctx_type_5 osc_type;
+typedef Blit__ctx_type_5 Blit_osc_type;
 
-_ctx_type_5 Blit__ctx_type_5_init();
+Blit__ctx_type_5 Blit__ctx_type_5_init();
 
-_ctx_type_5 Blit_osc_init();
+Blit__ctx_type_5 Blit_osc_init();
 
-float Blit_osc(_ctx_type_5 &_ctx, float pitch, float pw, float wave);
+float Blit_osc(Blit__ctx_type_5 &_ctx, float pitch, float pw, float wave);
 
 
 

@@ -103,7 +103,13 @@ let rec stripArrow (typ:t) : t list * t =
 (* Make a fresh type variable *)
 let newvar : unit -> t =
    fun () -> (ref (TUnbound (gensym (),Some(current_level()),None)))
-(* Make a fresh type variable *)
+
+let base (t:t) : id =
+   match !t with
+   | TId(id,_) -> id
+   | TComposed(id,_,_) -> id
+   | _ -> failwith "VType.base: this type does not have a base type"
+
 
 (** Makes a copy of a type (a new instance) *)
 let newinst (t:t) : t =

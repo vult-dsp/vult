@@ -4,17 +4,17 @@
 #include <math.h>
 #include "vultin.h"
 
-typedef struct _ctx_type_0 {
+typedef struct Moog_filter__ctx_type_0 {
    int32_t pre_x;
-} _ctx_type_0;
+} Moog_filter__ctx_type_0;
 
-typedef _ctx_type_0 change_type;
+typedef Moog_filter__ctx_type_0 Moog_filter_change_type;
 
-_ctx_type_0 Moog_filter__ctx_type_0_init();
+Moog_filter__ctx_type_0 Moog_filter__ctx_type_0_init();
 
-_ctx_type_0 Moog_filter_change_init();
+Moog_filter__ctx_type_0 Moog_filter_change_init();
 
-uint8_t Moog_filter_change(_ctx_type_0 &_ctx, int32_t x);
+uint8_t Moog_filter_change(Moog_filter__ctx_type_0 &_ctx, int32_t x);
 
 int32_t Moog_filter_min(int32_t a, int32_t b);
 
@@ -26,7 +26,7 @@ int32_t Moog_filter_PI();
 
 int32_t Moog_filter_thermal();
 
-typedef struct _ctx_type_6 {
+typedef struct Moog_filter__ctx_type_6 {
    int32_t tw2;
    int32_t tw1;
    int32_t tw0;
@@ -34,32 +34,32 @@ typedef struct _ctx_type_6 {
    int32_t dw2;
    int32_t dw1;
    int32_t dw0;
-} _ctx_type_6;
+} Moog_filter__ctx_type_6;
 
-typedef _ctx_type_6 moog_step_type;
+typedef Moog_filter__ctx_type_6 Moog_filter_moog_step_type;
 
-_ctx_type_6 Moog_filter__ctx_type_6_init();
+Moog_filter__ctx_type_6 Moog_filter__ctx_type_6_init();
 
-_ctx_type_6 Moog_filter_moog_step_init();
+Moog_filter__ctx_type_6 Moog_filter_moog_step_init();
 
-int32_t Moog_filter_moog_step(_ctx_type_6 &_ctx, int32_t input, int32_t resFixed, int32_t tune, int32_t output);
+int32_t Moog_filter_moog_step(Moog_filter__ctx_type_6 &_ctx, int32_t input, int32_t resFixed, int32_t tune, int32_t output);
 
-typedef struct _ctx_type_7 {
+typedef struct Moog_filter__ctx_type_7 {
    int32_t tune;
    int32_t resFixed;
-   _ctx_type_6 filter;
+   Moog_filter__ctx_type_6 filter;
    int32_t dx1;
-   _ctx_type_0 _inst1;
-   _ctx_type_0 _inst0;
-} _ctx_type_7;
+   Moog_filter__ctx_type_0 _inst1;
+   Moog_filter__ctx_type_0 _inst0;
+} Moog_filter__ctx_type_7;
 
-typedef _ctx_type_7 moog_type;
+typedef Moog_filter__ctx_type_7 Moog_filter_moog_type;
 
-_ctx_type_7 Moog_filter__ctx_type_7_init();
+Moog_filter__ctx_type_7 Moog_filter__ctx_type_7_init();
 
-_ctx_type_7 Moog_filter_moog_init();
+Moog_filter__ctx_type_7 Moog_filter_moog_init();
 
-int32_t Moog_filter_moog(_ctx_type_7 &_ctx, int32_t input, int32_t cut, int32_t res);
+int32_t Moog_filter_moog(Moog_filter__ctx_type_7 &_ctx, int32_t input, int32_t cut, int32_t res);
 
 
 

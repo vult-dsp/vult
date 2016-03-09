@@ -49,16 +49,17 @@ let parser_files =
       "types_basic.vult";
    ]
 
-let pass1_options = Passes.{ Passes.default_options with pass3 = false; pass4 = false }
+let pass2_options = Passes.{ Passes.default_options with pass3 = false; pass4 = false }
+let pass3_options = Passes.{ Passes.default_options with pass4 = false }
 
 let passes_files =
    [
-      "split_mem.vult", pass1_options;
-      "tuple_assign.vult", pass1_options;
-      "context_simple.vult", Passes.default_options;
-      "context_nested.vult", Passes.default_options;
-      "tuple_to_types.vult", Passes.default_options;
-      "simplify.vult", Passes.default_options;
+      "split_mem.vult", pass2_options;
+      "tuple_assign.vult", pass2_options;
+      "context_simple.vult", pass3_options;
+      "context_nested.vult", pass3_options;
+      "tuple_to_types.vult", pass3_options;
+      "simplify.vult", pass3_options;
       "external_calls.vult", Passes.default_options;
    ]
 

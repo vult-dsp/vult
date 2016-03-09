@@ -12,164 +12,164 @@ int32_t Filters_max(int32_t a, int32_t b);
 
 int32_t Filters_clip(int32_t low, int32_t high, int32_t value);
 
-typedef struct _ctx_type_4 {
+typedef struct Filters__ctx_type_4 {
    int32_t pre_x;
-} _ctx_type_4;
+} Filters__ctx_type_4;
 
-typedef _ctx_type_4 change_type;
+typedef Filters__ctx_type_4 Filters_change_type;
 
-_ctx_type_4 Filters__ctx_type_4_init();
+Filters__ctx_type_4 Filters__ctx_type_4_init();
 
-_ctx_type_4 Filters_change_init();
+Filters__ctx_type_4 Filters_change_init();
 
-uint8_t Filters_change(_ctx_type_4 &_ctx, int32_t x);
+uint8_t Filters_change(Filters__ctx_type_4 &_ctx, int32_t x);
 
-typedef struct _ctx_type_5 {
+typedef struct Filters__ctx_type_5 {
    int32_t w2;
    int32_t w1;
-} _ctx_type_5;
+} Filters__ctx_type_5;
 
-typedef _ctx_type_5 biquad_type;
+typedef Filters__ctx_type_5 Filters_biquad_type;
 
-_ctx_type_5 Filters__ctx_type_5_init();
+Filters__ctx_type_5 Filters__ctx_type_5_init();
 
-_ctx_type_5 Filters_biquad_init();
+Filters__ctx_type_5 Filters_biquad_init();
 
-int32_t Filters_biquad(_ctx_type_5 &_ctx, int32_t x, int32_t b0, int32_t b1, int32_t b2, int32_t a1, int32_t a2);
+int32_t Filters_biquad(Filters__ctx_type_5 &_ctx, int32_t x, int32_t b0, int32_t b1, int32_t b2, int32_t a1, int32_t a2);
 
-typedef struct _ctx_type_6 {
+typedef struct Filters__ctx_type_6 {
    int32_t k;
    int32_t fc;
-   _ctx_type_5 _inst1;
-   _ctx_type_4 _inst0;
-} _ctx_type_6;
+   Filters__ctx_type_5 _inst1;
+   Filters__ctx_type_4 _inst0;
+} Filters__ctx_type_6;
 
-typedef _ctx_type_6 lp6_type;
+typedef Filters__ctx_type_6 Filters_lp6_type;
 
-_ctx_type_6 Filters__ctx_type_6_init();
+Filters__ctx_type_6 Filters__ctx_type_6_init();
 
-_ctx_type_6 Filters_lp6_init();
+Filters__ctx_type_6 Filters_lp6_init();
 
-int32_t Filters_lp6(_ctx_type_6 &_ctx, int32_t x, int32_t fc);
+int32_t Filters_lp6(Filters__ctx_type_6 &_ctx, int32_t x, int32_t fc);
 
-typedef struct _ctx_type_7 {
+typedef struct Filters__ctx_type_7 {
    int32_t b2;
    int32_t b1;
    int32_t b0;
    int32_t a2;
    int32_t a1;
-   _ctx_type_5 _inst2;
-   _ctx_type_4 _inst1;
-   _ctx_type_4 _inst0;
-} _ctx_type_7;
+   Filters__ctx_type_5 _inst2;
+   Filters__ctx_type_4 _inst1;
+   Filters__ctx_type_4 _inst0;
+} Filters__ctx_type_7;
 
-typedef _ctx_type_7 lp12_type;
+typedef Filters__ctx_type_7 Filters_lp12_type;
 
-_ctx_type_7 Filters__ctx_type_7_init();
+Filters__ctx_type_7 Filters__ctx_type_7_init();
 
-_ctx_type_7 Filters_lp12_init();
+Filters__ctx_type_7 Filters_lp12_init();
 
-int32_t Filters_lp12(_ctx_type_7 &_ctx, int32_t x, int32_t fc, int32_t q);
+int32_t Filters_lp12(Filters__ctx_type_7 &_ctx, int32_t x, int32_t fc, int32_t q);
 
-typedef struct _ctx_type_8 {
-   _ctx_type_5 _inst0;
-} _ctx_type_8;
+typedef struct Filters__ctx_type_8 {
+   Filters__ctx_type_5 _inst0;
+} Filters__ctx_type_8;
 
-typedef _ctx_type_8 hp6_type;
+typedef Filters__ctx_type_8 Filters_hp6_type;
 
-_ctx_type_8 Filters__ctx_type_8_init();
+Filters__ctx_type_8 Filters__ctx_type_8_init();
 
-_ctx_type_8 Filters_hp6_init();
+Filters__ctx_type_8 Filters_hp6_init();
 
-int32_t Filters_hp6(_ctx_type_8 &_ctx, int32_t x, int32_t fc);
+int32_t Filters_hp6(Filters__ctx_type_8 &_ctx, int32_t x, int32_t fc);
 
-typedef struct _ctx_type_9 {
-   _ctx_type_5 _inst0;
-} _ctx_type_9;
+typedef struct Filters__ctx_type_9 {
+   Filters__ctx_type_5 _inst0;
+} Filters__ctx_type_9;
 
-typedef _ctx_type_9 allp6_type;
+typedef Filters__ctx_type_9 Filters_allp6_type;
 
-_ctx_type_9 Filters__ctx_type_9_init();
+Filters__ctx_type_9 Filters__ctx_type_9_init();
 
-_ctx_type_9 Filters_allp6_init();
+Filters__ctx_type_9 Filters_allp6_init();
 
-int32_t Filters_allp6(_ctx_type_9 &_ctx, int32_t x, int32_t fc);
+int32_t Filters_allp6(Filters__ctx_type_9 &_ctx, int32_t x, int32_t fc);
 
-typedef struct _ctx_type_10 {
+typedef struct Filters__ctx_type_10 {
    int32_t b2;
    int32_t b1;
    int32_t b0;
    int32_t a2;
    int32_t a1;
-   _ctx_type_5 _inst2;
-   _ctx_type_4 _inst1;
-   _ctx_type_4 _inst0;
-} _ctx_type_10;
+   Filters__ctx_type_5 _inst2;
+   Filters__ctx_type_4 _inst1;
+   Filters__ctx_type_4 _inst0;
+} Filters__ctx_type_10;
 
-typedef _ctx_type_10 hp12_type;
+typedef Filters__ctx_type_10 Filters_hp12_type;
 
-_ctx_type_10 Filters__ctx_type_10_init();
+Filters__ctx_type_10 Filters__ctx_type_10_init();
 
-_ctx_type_10 Filters_hp12_init();
+Filters__ctx_type_10 Filters_hp12_init();
 
-int32_t Filters_hp12(_ctx_type_10 &_ctx, int32_t x, int32_t fc, int32_t q);
+int32_t Filters_hp12(Filters__ctx_type_10 &_ctx, int32_t x, int32_t fc, int32_t q);
 
-typedef struct _ctx_type_11 {
+typedef struct Filters__ctx_type_11 {
    int32_t b2;
    int32_t b1;
    int32_t b0;
    int32_t a2;
    int32_t a1;
-   _ctx_type_5 _inst2;
-   _ctx_type_4 _inst1;
-   _ctx_type_4 _inst0;
-} _ctx_type_11;
+   Filters__ctx_type_5 _inst2;
+   Filters__ctx_type_4 _inst1;
+   Filters__ctx_type_4 _inst0;
+} Filters__ctx_type_11;
 
-typedef _ctx_type_11 bp12_type;
+typedef Filters__ctx_type_11 Filters_bp12_type;
 
-_ctx_type_11 Filters__ctx_type_11_init();
+Filters__ctx_type_11 Filters__ctx_type_11_init();
 
-_ctx_type_11 Filters_bp12_init();
+Filters__ctx_type_11 Filters_bp12_init();
 
-int32_t Filters_bp12(_ctx_type_11 &_ctx, int32_t x, int32_t fc, int32_t q);
+int32_t Filters_bp12(Filters__ctx_type_11 &_ctx, int32_t x, int32_t fc, int32_t q);
 
-typedef struct _ctx_type_12 {
+typedef struct Filters__ctx_type_12 {
    int32_t b2;
    int32_t b1;
    int32_t b0;
    int32_t a2;
    int32_t a1;
-   _ctx_type_5 _inst2;
-   _ctx_type_4 _inst1;
-   _ctx_type_4 _inst0;
-} _ctx_type_12;
+   Filters__ctx_type_5 _inst2;
+   Filters__ctx_type_4 _inst1;
+   Filters__ctx_type_4 _inst0;
+} Filters__ctx_type_12;
 
-typedef _ctx_type_12 notch12_type;
+typedef Filters__ctx_type_12 Filters_notch12_type;
 
-_ctx_type_12 Filters__ctx_type_12_init();
+Filters__ctx_type_12 Filters__ctx_type_12_init();
 
-_ctx_type_12 Filters_notch12_init();
+Filters__ctx_type_12 Filters_notch12_init();
 
-int32_t Filters_notch12(_ctx_type_12 &_ctx, int32_t x, int32_t fc, int32_t q);
+int32_t Filters_notch12(Filters__ctx_type_12 &_ctx, int32_t x, int32_t fc, int32_t q);
 
-typedef struct _ctx_type_13 {
+typedef struct Filters__ctx_type_13 {
    int32_t b2;
    int32_t b1;
    int32_t b0;
    int32_t a2;
    int32_t a1;
-   _ctx_type_5 _inst2;
-   _ctx_type_4 _inst1;
-   _ctx_type_4 _inst0;
-} _ctx_type_13;
+   Filters__ctx_type_5 _inst2;
+   Filters__ctx_type_4 _inst1;
+   Filters__ctx_type_4 _inst0;
+} Filters__ctx_type_13;
 
-typedef _ctx_type_13 allp12_type;
+typedef Filters__ctx_type_13 Filters_allp12_type;
 
-_ctx_type_13 Filters__ctx_type_13_init();
+Filters__ctx_type_13 Filters__ctx_type_13_init();
 
-_ctx_type_13 Filters_allp12_init();
+Filters__ctx_type_13 Filters_allp12_init();
 
-int32_t Filters_allp12(_ctx_type_13 &_ctx, int32_t x, int32_t fc, int32_t q);
+int32_t Filters_allp12(Filters__ctx_type_13 &_ctx, int32_t x, int32_t fc, int32_t q);
 
 
 

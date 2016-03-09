@@ -1,27 +1,27 @@
 #include "phasedist.h"
 
-_ctx_type_0 Phasedist__ctx_type_0_init(){
-   _ctx_type_0 _ctx;
+Phasedist__ctx_type_0 Phasedist__ctx_type_0_init(){
+   Phasedist__ctx_type_0 _ctx;
    _ctx.x = 0x0 /* 0.000000 */;
    return _ctx;
 }
 
-_ctx_type_0 Phasedist_smooth_init(){ return Phasedist__ctx_type_0_init();}
+Phasedist__ctx_type_0 Phasedist_smooth_init(){ return Phasedist__ctx_type_0_init();}
 
-int32_t Phasedist_smooth(_ctx_type_0 &_ctx, int32_t input){
+int32_t Phasedist_smooth(Phasedist__ctx_type_0 &_ctx, int32_t input){
    _ctx.x = fix_add(_ctx.x,fix_mul(fix_add(input,(- _ctx.x)),0x147 /* 0.005000 */));
    return _ctx.x;
 }
 
-_ctx_type_1 Phasedist__ctx_type_1_init(){
-   _ctx_type_1 _ctx;
+Phasedist__ctx_type_1 Phasedist__ctx_type_1_init(){
+   Phasedist__ctx_type_1 _ctx;
    _ctx.pre_x = 0x0 /* 0.000000 */;
    return _ctx;
 }
 
-_ctx_type_1 Phasedist_change_init(){ return Phasedist__ctx_type_1_init();}
+Phasedist__ctx_type_1 Phasedist_change_init(){ return Phasedist__ctx_type_1_init();}
 
-uint8_t Phasedist_change(_ctx_type_1 &_ctx, int32_t x){
+uint8_t Phasedist_change(Phasedist__ctx_type_1 &_ctx, int32_t x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
@@ -31,17 +31,17 @@ int32_t Phasedist_pitchToRate(int32_t d){
    return fix_mul(0xc /* 0.000185 */,fix_exp(fix_mul(0xec9 /* 0.057762 */,d)));
 }
 
-_ctx_type_3 Phasedist__ctx_type_3_init(){
-   _ctx_type_3 _ctx;
+Phasedist__ctx_type_3 Phasedist__ctx_type_3_init(){
+   Phasedist__ctx_type_3 _ctx;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
    _ctx._inst0 = Phasedist__ctx_type_1_init();
    return _ctx;
 }
 
-_ctx_type_3 Phasedist_phasor_init(){ return Phasedist__ctx_type_3_init();}
+Phasedist__ctx_type_3 Phasedist_phasor_init(){ return Phasedist__ctx_type_3_init();}
 
-int32_t Phasedist_phasor(_ctx_type_3 &_ctx, int32_t pitch, uint8_t reset){
+int32_t Phasedist_phasor(Phasedist__ctx_type_3 &_ctx, int32_t pitch, uint8_t reset){
    if(Phasedist_change(_ctx._inst0,pitch)){
       _ctx.rate = Phasedist_pitchToRate(pitch);
    }
@@ -49,8 +49,8 @@ int32_t Phasedist_phasor(_ctx_type_3 &_ctx, int32_t pitch, uint8_t reset){
    return _ctx.phase;
 }
 
-_ctx_type_4 Phasedist__ctx_type_4_init(){
-   _ctx_type_4 _ctx;
+Phasedist__ctx_type_4 Phasedist__ctx_type_4_init(){
+   Phasedist__ctx_type_4 _ctx;
    _ctx.volume = 0x0 /* 0.000000 */;
    _ctx.pre_phase1 = 0x0 /* 0.000000 */;
    _ctx.pitch = 0x0 /* 0.000000 */;
@@ -62,9 +62,9 @@ _ctx_type_4 Phasedist__ctx_type_4_init(){
    return _ctx;
 }
 
-_ctx_type_4 Phasedist_process_init(){ return Phasedist__ctx_type_4_init();}
+Phasedist__ctx_type_4 Phasedist_process_init(){ return Phasedist__ctx_type_4_init();}
 
-int32_t Phasedist_process(_ctx_type_4 &_ctx, int32_t input){
+int32_t Phasedist_process(Phasedist__ctx_type_4 &_ctx, int32_t input){
    int32_t phase1 = Phasedist_phasor(_ctx._inst0,_ctx.pitch,0);
    int32_t comp = fix_add(0x10000 /* 1.000000 */,(- phase1));
    uint8_t reset = (fix_add(_ctx.pre_phase1,(- phase1)) > 0x8000 /* 0.500000 */);
@@ -74,20 +74,20 @@ int32_t Phasedist_process(_ctx_type_4 &_ctx, int32_t input){
    return fix_mul(fix_mul(Phasedist_smooth(_ctx._inst3,_ctx.volume),sine),comp);
 }
 
-_ctx_type_4 Phasedist_noteOn_init(){ return Phasedist__ctx_type_4_init();}
+Phasedist__ctx_type_4 Phasedist_noteOn_init(){ return Phasedist__ctx_type_4_init();}
 
-void Phasedist_noteOn(_ctx_type_4 &_ctx, int note, int velocity){
+void Phasedist_noteOn(Phasedist__ctx_type_4 &_ctx, int note, int velocity){
    _ctx.pitch = int_to_fix(note);
 }
 
-_ctx_type_4 Phasedist_noteOff_init(){ return Phasedist__ctx_type_4_init();}
+Phasedist__ctx_type_4 Phasedist_noteOff_init(){ return Phasedist__ctx_type_4_init();}
 
-void Phasedist_noteOff(_ctx_type_4 &_ctx, int note){
+void Phasedist_noteOff(Phasedist__ctx_type_4 &_ctx, int note){
 }
 
-_ctx_type_4 Phasedist_controlChange_init(){ return Phasedist__ctx_type_4_init();}
+Phasedist__ctx_type_4 Phasedist_controlChange_init(){ return Phasedist__ctx_type_4_init();}
 
-void Phasedist_controlChange(_ctx_type_4 &_ctx, int control, int value){
+void Phasedist_controlChange(Phasedist__ctx_type_4 &_ctx, int control, int value){
    if(control == 30){
       _ctx.volume = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    }
@@ -96,9 +96,9 @@ void Phasedist_controlChange(_ctx_type_4 &_ctx, int control, int value){
    }
 }
 
-_ctx_type_4 Phasedist_default_init(){ return Phasedist__ctx_type_4_init();}
+Phasedist__ctx_type_4 Phasedist_default_init(){ return Phasedist__ctx_type_4_init();}
 
-void Phasedist_default_(_ctx_type_4 &_ctx){
+void Phasedist_default_(Phasedist__ctx_type_4 &_ctx){
    _ctx.volume = 0x0 /* 0.000000 */;
    _ctx.pitch = 0x2d0000 /* 45.000000 */;
    _ctx.detune = 0x0 /* 0.000000 */;

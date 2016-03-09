@@ -4,30 +4,30 @@ uint8_t Blit_near_zero(float x){
    return (fabsf(x) < 0.02f);
 }
 
-_ctx_type_1 Blit__ctx_type_1_init(){
-   _ctx_type_1 _ctx;
+Blit__ctx_type_1 Blit__ctx_type_1_init(){
+   Blit__ctx_type_1 _ctx;
    _ctx.pre_x = 0.f;
    return _ctx;
 }
 
-_ctx_type_1 Blit_change_init(){ return Blit__ctx_type_1_init();}
+Blit__ctx_type_1 Blit_change_init(){ return Blit__ctx_type_1_init();}
 
-uint8_t Blit_change(_ctx_type_1 &_ctx, float x){
+uint8_t Blit_change(Blit__ctx_type_1 &_ctx, float x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
 
-_ctx_type_2 Blit__ctx_type_2_init(){
-   _ctx_type_2 _ctx;
+Blit__ctx_type_2 Blit__ctx_type_2_init(){
+   Blit__ctx_type_2 _ctx;
    _ctx.y1 = 0.f;
    _ctx.x1 = 0.f;
    return _ctx;
 }
 
-_ctx_type_2 Blit_dcblock_init(){ return Blit__ctx_type_2_init();}
+Blit__ctx_type_2 Blit_dcblock_init(){ return Blit__ctx_type_2_init();}
 
-float Blit_dcblock(_ctx_type_2 &_ctx, float x0){
+float Blit_dcblock(Blit__ctx_type_2 &_ctx, float x0){
    float y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995f));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
@@ -53,8 +53,8 @@ float Blit_pulse_train(float m, float phase){
    return tmp1;
 }
 
-_ctx_type_5 Blit__ctx_type_5_init(){
-   _ctx_type_5 _ctx;
+Blit__ctx_type_5 Blit__ctx_type_5_init(){
+   Blit__ctx_type_5 _ctx;
    _ctx.state_triang = 0.f;
    _ctx.state_saw = 0.f;
    _ctx.state_pulse = 0.f;
@@ -67,9 +67,9 @@ _ctx_type_5 Blit__ctx_type_5_init(){
    return _ctx;
 }
 
-_ctx_type_5 Blit_osc_init(){ return Blit__ctx_type_5_init();}
+Blit__ctx_type_5 Blit_osc_init(){ return Blit__ctx_type_5_init();}
 
-float Blit_osc(_ctx_type_5 &_ctx, float pitch, float pw, float wave){
+float Blit_osc(Blit__ctx_type_5 &_ctx, float pitch, float pw, float wave){
    float fixed_pitch = 0.f;
    if(wave < (0.666666666667f)){
       fixed_pitch = pitch;

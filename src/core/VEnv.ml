@@ -34,6 +34,7 @@ let builtin_table =
       ["int"]  , `Type, VType.Constants.type_type, true;
       ["real"] , `Type, VType.Constants.type_type, true;
       ["bool"] , `Type, VType.Constants.type_type, true;
+      ["unit"] , `Type, VType.Constants.type_type, true;
 
       ["set"] , `Function, VType.Constants.array_set (), false;
       ["get"] , `Function, VType.Constants.array_get (), false;
@@ -145,14 +146,10 @@ type symbol_kind =
    | InstanceSymbol
    | FunctionSymbol
    | ModuleSymbol
+   | OperatorSymbol
+   | TypeSymbol
+   | UndefSymbol
    [@@deriving show]
-
-let kindStr = function
-   | MemSymbol      -> "mem"
-   | VarSymbol      -> "var"
-   | InstanceSymbol -> "instance"
-   | FunctionSymbol -> "function"
-   | ModuleSymbol   -> "module"
 
 (** Used to track the location while traversing and also to lookup function, mem, and module *)
 module Scope = struct
@@ -187,8 +184,8 @@ module Scope = struct
          skind      : symbol_kind;
          styp       : VType.t;
 
-         soperators : (id * t_simple) list;
          smodules   : (id * t_simple) list;
+         soperators : (id * t_simple) list;
          stypes     : (id * t_simple) list;
          sfunc      : (id * t_simple) list;
          smem_inst  : (id * t_simple) list;
@@ -230,7 +227,7 @@ module Scope = struct
    let empty : t =
       {
          name      = [];
-         kind      = ModuleSymbol;
+         kind      = UndefSymbol;
          parent    = None;
          operators = IdMap.empty;
          modules   = IdMap.empty;
@@ -283,7 +280,9 @@ module Scope = struct
 
    let findType (t:t) (name:id) : t option =
       try Some(IdMap.find name t.types) with
-      | _ -> None
+      | _ ->
+         try Some(IdMap.find name t.modules) with
+         | _ -> None
 
    let primExitTypes (parent:t) (t:t) : t =
       { parent with types = IdMap.add t.name t parent.types }
@@ -315,12 +314,12 @@ module Scope = struct
       in
       { t with locals = (IdMap.add name new_symbol first) :: rest }
 
-   let enterAny (get:t -> t IdMap.t) (t:t) (name:id) : t =
+   let enterAny kind (get:t -> t IdMap.t) (t:t) (name:id) : t =
       match IdMap.find name (get t) with
       | sub ->
          { sub with parent = Some(t) }
       | exception Not_found ->
-         { empty with parent = Some(t); name = name; }
+         { empty with parent = Some(t); name = name; kind = kind }
 
    let exitAny (exit:t -> t -> t) (t:t) : t =
       match t.parent with
@@ -367,15 +366,15 @@ module Scope = struct
    let enter kind (attr:attr) (t:t) (name:id) : t =
       match kind with
       | `Function ->
-         let t' = enterAny getFunction t name in
+         let t' = enterAny FunctionSymbol getFunction t name in
          let t' = { t' with ext_fn = t'.ext_fn <+> attr.ext_fn } in
          if attr.fun_and then
             addToContext t' name attr.init
          else
             newContext t' name attr.init
-      | `Module   -> enterAny getModule t name
-      | `Operator -> enterAny getOperators t name
-      | `Type     -> enterAny getTypes t name
+      | `Module   -> enterAny ModuleSymbol getModule t name
+      | `Operator -> enterAny OperatorSymbol getOperators t name
+      | `Type     -> enterAny TypeSymbol getTypes t name
       | `Block    -> { t with locals = IdMap.empty :: t.locals }
       | _ -> raise (Invalid_argument "Scope.enter")
 
@@ -403,6 +402,11 @@ module Scope = struct
          | MemSymbol | InstanceSymbol ->
             Some(primExitMemInst parent t)
          | VarSymbol -> Some(parent)
+         | OperatorSymbol ->
+            Some(primExitOperators parent t)
+         | TypeSymbol ->
+            Some(primExitTypes parent t)
+         | _ -> failwith "The type is undefined"
 
    let getPath (t:t) : id =
       let rec parentPath (parent:t option) : id =

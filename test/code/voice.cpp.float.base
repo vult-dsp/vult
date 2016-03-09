@@ -4,57 +4,57 @@ float Voice_minFixed(){
    return 1.52588e-05f;
 }
 
-_ctx_type_1 Voice__ctx_type_1_init(){
-   _ctx_type_1 _ctx;
+Voice__ctx_type_1 Voice__ctx_type_1_init(){
+   Voice__ctx_type_1 _ctx;
    _ctx.pre_x = 0.f;
    return _ctx;
 }
 
-_ctx_type_1 Voice_change_init(){ return Voice__ctx_type_1_init();}
+Voice__ctx_type_1 Voice_change_init(){ return Voice__ctx_type_1_init();}
 
-uint8_t Voice_change(_ctx_type_1 &_ctx, float x){
+uint8_t Voice_change(Voice__ctx_type_1 &_ctx, float x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
 
-_ctx_type_2 Voice__ctx_type_2_init(){
-   _ctx_type_2 _ctx;
+Voice__ctx_type_2 Voice__ctx_type_2_init(){
+   Voice__ctx_type_2 _ctx;
    _ctx.pre_x = 0;
    return _ctx;
 }
 
-_ctx_type_2 Voice_bchange_init(){ return Voice__ctx_type_2_init();}
+Voice__ctx_type_2 Voice_bchange_init(){ return Voice__ctx_type_2_init();}
 
-uint8_t Voice_bchange(_ctx_type_2 &_ctx, uint8_t x){
+uint8_t Voice_bchange(Voice__ctx_type_2 &_ctx, uint8_t x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
 
-_ctx_type_3 Voice__ctx_type_3_init(){
-   _ctx_type_3 _ctx;
+Voice__ctx_type_3 Voice__ctx_type_3_init(){
+   Voice__ctx_type_3 _ctx;
    _ctx.pre_x = 0;
    return _ctx;
 }
 
-_ctx_type_3 Voice_edge_init(){ return Voice__ctx_type_3_init();}
+Voice__ctx_type_3 Voice_edge_init(){ return Voice__ctx_type_3_init();}
 
-uint8_t Voice_edge(_ctx_type_3 &_ctx, uint8_t x){
+uint8_t Voice_edge(Voice__ctx_type_3 &_ctx, uint8_t x){
    uint8_t v = ((_ctx.pre_x != x) && (_ctx.pre_x == 1));
    _ctx.pre_x = x;
    return v;
 }
 
-_ctx_type_4 Voice__ctx_type_4_init(){
-   _ctx_type_4 _ctx;
+Voice__ctx_type_4 Voice__ctx_type_4_init(){
+   Voice__ctx_type_4 _ctx;
    _ctx.count = 0;
    return _ctx;
 }
 
-_ctx_type_4 Voice_each_init(){ return Voice__ctx_type_4_init();}
+Voice__ctx_type_4 Voice_each_init(){ return Voice__ctx_type_4_init();}
 
-uint8_t Voice_each(_ctx_type_4 &_ctx, int n){
+uint8_t Voice_each(Voice__ctx_type_4 &_ctx, int n){
    uint8_t ret = (_ctx.count == 0);
    _ctx.count = ((_ctx.count + 1) % n);
    return ret;
@@ -64,31 +64,31 @@ uint8_t Voice_near_zero(float x){
    return (fabsf(x) < 0.02f);
 }
 
-_ctx_type_6 Voice__ctx_type_6_init(){
-   _ctx_type_6 _ctx;
+Voice__ctx_type_6 Voice__ctx_type_6_init(){
+   Voice__ctx_type_6 _ctx;
    _ctx.y1 = 0.f;
    _ctx.x1 = 0.f;
    return _ctx;
 }
 
-_ctx_type_6 Voice_dcblock_init(){ return Voice__ctx_type_6_init();}
+Voice__ctx_type_6 Voice_dcblock_init(){ return Voice__ctx_type_6_init();}
 
-float Voice_dcblock(_ctx_type_6 &_ctx, float x0){
+float Voice_dcblock(Voice__ctx_type_6 &_ctx, float x0){
    float y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995f));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
 }
 
-_ctx_type_7 Voice__ctx_type_7_init(){
-   _ctx_type_7 _ctx;
+Voice__ctx_type_7 Voice__ctx_type_7_init(){
+   Voice__ctx_type_7 _ctx;
    _ctx.pre_x = 0.f;
    return _ctx;
 }
 
-_ctx_type_7 Voice_lpfilter_init(){ return Voice__ctx_type_7_init();}
+Voice__ctx_type_7 Voice_lpfilter_init(){ return Voice__ctx_type_7_init();}
 
-float Voice_lpfilter(_ctx_type_7 &_ctx, float x){
+float Voice_lpfilter(Voice__ctx_type_7 &_ctx, float x){
    float ret = ((x + _ctx.pre_x) * 0.5f);
    _ctx.pre_x = x;
    return ret;
@@ -113,8 +113,8 @@ float Voice_pulse_train(float m, float phase){
    return tmp1;
 }
 
-_ctx_type_10 Voice__ctx_type_10_init(){
-   _ctx_type_10 _ctx;
+Voice__ctx_type_10 Voice__ctx_type_10_init(){
+   Voice__ctx_type_10 _ctx;
    _ctx.state_triang = 0.f;
    _ctx.state_saw = 0.f;
    _ctx.state_pulse = 0.f;
@@ -127,9 +127,9 @@ _ctx_type_10 Voice__ctx_type_10_init(){
    return _ctx;
 }
 
-_ctx_type_10 Voice_osc_init(){ return Voice__ctx_type_10_init();}
+Voice__ctx_type_10 Voice_osc_init(){ return Voice__ctx_type_10_init();}
 
-float Voice_osc(_ctx_type_10 &_ctx, float pitch, float pw, float wave){
+float Voice_osc(Voice__ctx_type_10 &_ctx, float pitch, float pw, float wave){
    float fixed_pitch = 0.f;
    if(wave < (0.666666666667f)){
       fixed_pitch = pitch;
@@ -175,16 +175,16 @@ float Voice_osc(_ctx_type_10 &_ctx, float pitch, float pw, float wave){
    return float_clip((_ctx.output * 0.25f),(-1.f),1.f);
 }
 
-_ctx_type_11 Voice__ctx_type_11_init(){
-   _ctx_type_11 _ctx;
+Voice__ctx_type_11 Voice__ctx_type_11_init(){
+   Voice__ctx_type_11 _ctx;
    _ctx.dlow = 0.f;
    _ctx.dband = 0.f;
    return _ctx;
 }
 
-_ctx_type_11 Voice_svf_step_init(){ return Voice__ctx_type_11_init();}
+Voice__ctx_type_11 Voice_svf_step_init(){ return Voice__ctx_type_11_init();}
 
-float Voice_svf_step(_ctx_type_11 &_ctx, float input, float g, float q, int sel){
+float Voice_svf_step(Voice__ctx_type_11 &_ctx, float input, float g, float q, int sel){
    float low = (_ctx.dlow + (g * _ctx.dband));
    float high = (input + (- low) + (- (q * _ctx.dband)));
    float band = ((g * high) + _ctx.dband);
@@ -195,17 +195,17 @@ float Voice_svf_step(_ctx_type_11 &_ctx, float input, float g, float q, int sel)
    return output;
 }
 
-_ctx_type_12 Voice__ctx_type_12_init(){
-   _ctx_type_12 _ctx;
+Voice__ctx_type_12 Voice__ctx_type_12_init(){
+   Voice__ctx_type_12 _ctx;
    _ctx.step = Voice__ctx_type_11_init();
    _ctx.g = 0.f;
    _ctx._inst0 = Voice__ctx_type_1_init();
    return _ctx;
 }
 
-_ctx_type_12 Voice_svf_init(){ return Voice__ctx_type_12_init();}
+Voice__ctx_type_12 Voice_svf_init(){ return Voice__ctx_type_12_init();}
 
-float Voice_svf(_ctx_type_12 &_ctx, float input, float fc, float q, int sel){
+float Voice_svf(Voice__ctx_type_12 &_ctx, float input, float fc, float q, int sel){
    fc = float_clip(fc,0.f,1.f);
    q = float_clip(q,0.f,1.f);
    float fix_q = (2.f * (1.f + (- q)));
@@ -217,8 +217,8 @@ float Voice_svf(_ctx_type_12 &_ctx, float input, float fc, float q, int sel){
    return ((x1 + x2) * 0.5f);
 }
 
-_ctx_type_13 Voice__ctx_type_13_init(){
-   _ctx_type_13 _ctx;
+Voice__ctx_type_13 Voice__ctx_type_13_init(){
+   Voice__ctx_type_13 _ctx;
    _ctx.value = 0.f;
    _ctx.sustainLevel = 0.f;
    _ctx.state = 0;
@@ -231,9 +231,9 @@ _ctx_type_13 Voice__ctx_type_13_init(){
    return _ctx;
 }
 
-_ctx_type_13 Voice_adsr_init(){ return Voice__ctx_type_13_init();}
+Voice__ctx_type_13 Voice_adsr_init(){ return Voice__ctx_type_13_init();}
 
-float Voice_adsr(_ctx_type_13 &_ctx, uint8_t gate, float attack, float decay, float sustain, float release){
+float Voice_adsr(Voice__ctx_type_13 &_ctx, uint8_t gate, float attack, float decay, float sustain, float release){
    int IDLE = 0;
    int ATTACK = 1;
    int DECAY = 2;
@@ -305,17 +305,17 @@ float Voice_adsr(_ctx_type_13 &_ctx, uint8_t gate, float attack, float decay, fl
    return _ctx.value;
 }
 
-_ctx_type_14 Voice__ctx_type_14_init(){
-   _ctx_type_14 _ctx;
+Voice__ctx_type_14 Voice__ctx_type_14_init(){
+   Voice__ctx_type_14 _ctx;
    _ctx.phase = 0.f;
    _ctx._inst1 = Voice__ctx_type_4_init();
    _ctx._inst0 = Voice__ctx_type_3_init();
    return _ctx;
 }
 
-_ctx_type_14 Voice_lfo_init(){ return Voice__ctx_type_14_init();}
+Voice__ctx_type_14 Voice_lfo_init(){ return Voice__ctx_type_14_init();}
 
-float Voice_lfo(_ctx_type_14 &_ctx, float f, uint8_t gate){
+float Voice_lfo(Voice__ctx_type_14 &_ctx, float f, uint8_t gate){
    float rate = ((f * 100.f * Voice_minFixed()) + Voice_minFixed());
    if(Voice_edge(_ctx._inst0,gate)){
       _ctx.phase = 0.f;
@@ -329,8 +329,8 @@ float Voice_lfo(_ctx_type_14 &_ctx, float f, uint8_t gate){
    return (sinf((6.28318530718f * _ctx.phase)) + 0.5f);
 }
 
-_ctx_type_15 Voice__ctx_type_15_init(){
-   _ctx_type_15 _ctx;
+Voice__ctx_type_15 Voice__ctx_type_15_init(){
+   Voice__ctx_type_15 _ctx;
    _ctx.pre = 0;
    _ctx.n4 = 0;
    _ctx.n3 = 0;
@@ -340,9 +340,9 @@ _ctx_type_15 Voice__ctx_type_15_init(){
    return _ctx;
 }
 
-_ctx_type_15 Voice_mono_noteOn_init(){ return Voice__ctx_type_15_init();}
+Voice__ctx_type_15 Voice_mono_noteOn_init(){ return Voice__ctx_type_15_init();}
 
-int Voice_mono_noteOn(_ctx_type_15 &_ctx, int n){
+int Voice_mono_noteOn(Voice__ctx_type_15 &_ctx, int n){
    if(_ctx.count == 0){
       _ctx.n1 = n;
       _ctx.pre = n;
@@ -374,9 +374,9 @@ int Voice_mono_noteOn(_ctx_type_15 &_ctx, int n){
    return _ctx.pre;
 }
 
-_ctx_type_15 Voice_mono_noteOff_init(){ return Voice__ctx_type_15_init();}
+Voice__ctx_type_15 Voice_mono_noteOff_init(){ return Voice__ctx_type_15_init();}
 
-int Voice_mono_noteOff(_ctx_type_15 &_ctx, int n){
+int Voice_mono_noteOff(Voice__ctx_type_15 &_ctx, int n){
    uint8_t found = 0;
    if(n == _ctx.n1){
       int _tmp_0 = _ctx.n2;
@@ -428,14 +428,14 @@ int Voice_mono_noteOff(_ctx_type_15 &_ctx, int n){
    return _ctx.pre;
 }
 
-_ctx_type_15 Voice_mono_isGateOn_init(){ return Voice__ctx_type_15_init();}
+Voice__ctx_type_15 Voice_mono_isGateOn_init(){ return Voice__ctx_type_15_init();}
 
-uint8_t Voice_mono_isGateOn(_ctx_type_15 &_ctx){
+uint8_t Voice_mono_isGateOn(Voice__ctx_type_15 &_ctx){
    return (_ctx.count > 0);
 }
 
-_ctx_type_16 Voice__ctx_type_16_init(){
-   _ctx_type_16 _ctx;
+Voice__ctx_type_16 Voice__ctx_type_16_init(){
+   Voice__ctx_type_16 _ctx;
    _ctx.wave = 0.f;
    _ctx.res = 0.f;
    _ctx.pw = 0.f;
@@ -463,9 +463,9 @@ _ctx_type_16 Voice__ctx_type_16_init(){
    return _ctx;
 }
 
-_ctx_type_16 Voice_process_init(){ return Voice__ctx_type_16_init();}
+Voice__ctx_type_16 Voice_process_init(){ return Voice__ctx_type_16_init();}
 
-float Voice_process(_ctx_type_16 &_ctx, float i){
+float Voice_process(Voice__ctx_type_16 &_ctx, float i){
    uint8_t gate = Voice_mono_isGateOn(_ctx.monoin);
    float lfo1 = (Voice_lfo(_ctx._inst0,_ctx.lfo_rate,gate) * _ctx.lfo_amt);
    float x = Voice_osc(_ctx._inst1,_ctx.pitch,(_ctx.pw + lfo1),_ctx.wave);
@@ -476,21 +476,21 @@ float Voice_process(_ctx_type_16 &_ctx, float i){
    return output;
 }
 
-_ctx_type_16 Voice_noteOn_init(){ return Voice__ctx_type_16_init();}
+Voice__ctx_type_16 Voice_noteOn_init(){ return Voice__ctx_type_16_init();}
 
-void Voice_noteOn(_ctx_type_16 &_ctx, int note, int velocity){
+void Voice_noteOn(Voice__ctx_type_16 &_ctx, int note, int velocity){
    _ctx.pitch = int_to_float(Voice_mono_noteOn(_ctx.monoin,note));
 }
 
-_ctx_type_16 Voice_noteOff_init(){ return Voice__ctx_type_16_init();}
+Voice__ctx_type_16 Voice_noteOff_init(){ return Voice__ctx_type_16_init();}
 
-void Voice_noteOff(_ctx_type_16 &_ctx, int note){
+void Voice_noteOff(Voice__ctx_type_16 &_ctx, int note){
    _ctx.pitch = int_to_float(Voice_mono_noteOff(_ctx.monoin,note));
 }
 
-_ctx_type_16 Voice_controlChange_init(){ return Voice__ctx_type_16_init();}
+Voice__ctx_type_16 Voice_controlChange_init(){ return Voice__ctx_type_16_init();}
 
-void Voice_controlChange(_ctx_type_16 &_ctx, int control, int value){
+void Voice_controlChange(Voice__ctx_type_16 &_ctx, int control, int value){
    float value_0_1 = (int_to_float(value) * 0.00787401574803f);
    float value_m1_1 = ((value_0_1 * 2.f) + (-1.f));
    if(control == 30){
@@ -540,9 +540,9 @@ void Voice_controlChange(_ctx_type_16 &_ctx, int control, int value){
    }
 }
 
-_ctx_type_16 Voice_default_init(){ return Voice__ctx_type_16_init();}
+Voice__ctx_type_16 Voice_default_init(){ return Voice__ctx_type_16_init();}
 
-void Voice_default_(_ctx_type_16 &_ctx){
+void Voice_default_(Voice__ctx_type_16 &_ctx){
    _ctx.pw = 0.f;
    _ctx.pitch = 42.f;
    _ctx.cut = 1.f;

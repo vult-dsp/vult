@@ -4,44 +4,44 @@
 #include <math.h>
 #include "vultin.h"
 
-typedef struct _ctx_type_0 {
+typedef struct State_variable__ctx_type_0 {
    int32_t pre_x;
-} _ctx_type_0;
+} State_variable__ctx_type_0;
 
-typedef _ctx_type_0 change_type;
+typedef State_variable__ctx_type_0 State_variable_change_type;
 
-_ctx_type_0 State_variable__ctx_type_0_init();
+State_variable__ctx_type_0 State_variable__ctx_type_0_init();
 
-_ctx_type_0 State_variable_change_init();
+State_variable__ctx_type_0 State_variable_change_init();
 
-uint8_t State_variable_change(_ctx_type_0 &_ctx, int32_t x);
+uint8_t State_variable_change(State_variable__ctx_type_0 &_ctx, int32_t x);
 
-typedef struct _ctx_type_1 {
+typedef struct State_variable__ctx_type_1 {
    int32_t dlow;
    int32_t dband;
-} _ctx_type_1;
+} State_variable__ctx_type_1;
 
-typedef _ctx_type_1 svf_step_type;
+typedef State_variable__ctx_type_1 State_variable_svf_step_type;
 
-_ctx_type_1 State_variable__ctx_type_1_init();
+State_variable__ctx_type_1 State_variable__ctx_type_1_init();
 
-_ctx_type_1 State_variable_svf_step_init();
+State_variable__ctx_type_1 State_variable_svf_step_init();
 
-int32_t State_variable_svf_step(_ctx_type_1 &_ctx, int32_t input, int32_t g, int32_t q, int sel);
+int32_t State_variable_svf_step(State_variable__ctx_type_1 &_ctx, int32_t input, int32_t g, int32_t q, int sel);
 
-typedef struct _ctx_type_2 {
-   _ctx_type_1 step;
+typedef struct State_variable__ctx_type_2 {
+   State_variable__ctx_type_1 step;
    int32_t g;
-   _ctx_type_0 _inst0;
-} _ctx_type_2;
+   State_variable__ctx_type_0 _inst0;
+} State_variable__ctx_type_2;
 
-typedef _ctx_type_2 svf_type;
+typedef State_variable__ctx_type_2 State_variable_svf_type;
 
-_ctx_type_2 State_variable__ctx_type_2_init();
+State_variable__ctx_type_2 State_variable__ctx_type_2_init();
 
-_ctx_type_2 State_variable_svf_init();
+State_variable__ctx_type_2 State_variable_svf_init();
 
-int32_t State_variable_svf(_ctx_type_2 &_ctx, int32_t input, int32_t fc, int32_t q, int sel);
+int32_t State_variable_svf(State_variable__ctx_type_2 &_ctx, int32_t input, int32_t fc, int32_t q, int sel);
 
 
 

@@ -110,7 +110,7 @@ module InsertContext = struct
       Mapper.make @@ fun state stmt ->
          match stmt with
          | StmtFun(name,args,body,rettype,attr) ->
-            let data = Env.get state in
+            let data     = Env.get state in
             let path,_,_ = Env.lookup `Function state  name in
             if Env.isActive state name && not (PassData.hasContextArgument data path) then
                let ctx_full = Env.getContext state name in
@@ -637,15 +637,24 @@ module ReplaceFunctionNames = struct
          | _ ->
             state, stmt
 
-   let mapper = { Mapper.default_mapper with Mapper.exp = exp; Mapper.stmt = stmt }
+   let vtype_c : (PassData.t Env.t,VType.vtype) Mapper.mapper_func =
+      Mapper.make @@ fun state typ ->
+         match typ with
+         | VType.TId(id,loc) ->
+            let Path(type_path),_,_ = Env.lookup `Type state id in
+            state, VType.TId(type_path,loc)
+         | _ -> state, typ
+
+   let mapper = { Mapper.default_mapper with Mapper.exp = exp; Mapper.stmt = stmt; Mapper.vtype_c = vtype_c }
 
 end
 
 (* Basic transformations *)
-let inferPass (state,stmts) =
-   let stmts,state,_ = Inference.inferStmtList state Inference.NoType stmts in
-   (*Scope.show (state.scope) |> print_endline;*)
-   state,stmts
+let inferPass name (state,stmts) =
+   let state' = Env.enter `Module state name in
+   let stmts,state',_ = Inference.inferStmtList state' Inference.NoType stmts in
+   let state' = Env.exit `Module state' in
+   state',stmts
 
 let pass1 =
    ReportUnboundType.mapper
@@ -666,26 +675,33 @@ let pass3 =
 let pass4 =
    ReplaceFunctionNames.mapper
 
-let rec applyPass apply pass (state,stmts) =
+
+let rec applyPassRepeat name apply pass (state,stmts) =
    if apply then
       let state',stmts' = Mapper.map_stmt_list pass state stmts in
-      (*Scope.show (state'.scope) |> print_endline;*)
       if shouldReapply state' then
-         applyPass apply pass (reset state',stmts')
+         applyPassRepeat name apply pass (reset state',stmts')
       else
          state',stmts'
    else
       state,stmts
 
+let applyPass name apply pass (state,stmts) =
+   let state' = Env.enter `Module state name in
+   let state', stmts' = applyPassRepeat name apply pass (state',stmts) in
+   let state' = Env.exit `Module state' in
+   (*print_endline (Env.show_full state');*)
+   state',stmts'
+
+
+
 let passes (name:id) (options:pass_options) (env,stmts) =
-   let env' = Env.enter `Module env name in
-   (env',stmts)
-   |> inferPass
-   |> applyPass options.pass1 pass1
-   |> applyPass options.pass2 pass2
-   |> applyPass options.pass3 pass3
-   |> applyPass options.pass4 pass4
-   |> fun (env',stmts) -> Env.exit `Module env', stmts
+   (env,stmts)
+   |> inferPass name
+   |> applyPass name options.pass1 pass1
+   |> applyPass name options.pass2 pass2
+   |> applyPass name options.pass3 pass3
+   |> applyPass name options.pass4 pass4
 
 let apply env options (results:parser_results) =
    let module_name =

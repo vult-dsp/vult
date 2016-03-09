@@ -16,30 +16,30 @@ int32_t Filters_clip(int32_t low, int32_t high, int32_t value){
    return Filters_min(Filters_max(low,value),high);
 }
 
-_ctx_type_4 Filters__ctx_type_4_init(){
-   _ctx_type_4 _ctx;
+Filters__ctx_type_4 Filters__ctx_type_4_init(){
+   Filters__ctx_type_4 _ctx;
    _ctx.pre_x = 0x0 /* 0.000000 */;
    return _ctx;
 }
 
-_ctx_type_4 Filters_change_init(){ return Filters__ctx_type_4_init();}
+Filters__ctx_type_4 Filters_change_init(){ return Filters__ctx_type_4_init();}
 
-uint8_t Filters_change(_ctx_type_4 &_ctx, int32_t x){
+uint8_t Filters_change(Filters__ctx_type_4 &_ctx, int32_t x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
 
-_ctx_type_5 Filters__ctx_type_5_init(){
-   _ctx_type_5 _ctx;
+Filters__ctx_type_5 Filters__ctx_type_5_init(){
+   Filters__ctx_type_5 _ctx;
    _ctx.w2 = 0x0 /* 0.000000 */;
    _ctx.w1 = 0x0 /* 0.000000 */;
    return _ctx;
 }
 
-_ctx_type_5 Filters_biquad_init(){ return Filters__ctx_type_5_init();}
+Filters__ctx_type_5 Filters_biquad_init(){ return Filters__ctx_type_5_init();}
 
-int32_t Filters_biquad(_ctx_type_5 &_ctx, int32_t x, int32_t b0, int32_t b1, int32_t b2, int32_t a1, int32_t a2){
+int32_t Filters_biquad(Filters__ctx_type_5 &_ctx, int32_t x, int32_t b0, int32_t b1, int32_t b2, int32_t a1, int32_t a2){
    int32_t w0 = fix_add(fix_add(x,(- fix_mul(a1,_ctx.w1))),(- fix_mul(a2,_ctx.w2)));
    int32_t y0 = fix_add(fix_add(fix_mul(b0,w0),fix_mul(b1,_ctx.w1)),fix_mul(b2,_ctx.w2));
    int32_t _tmp_0 = _ctx.w1;
@@ -49,8 +49,8 @@ int32_t Filters_biquad(_ctx_type_5 &_ctx, int32_t x, int32_t b0, int32_t b1, int
    return y0;
 }
 
-_ctx_type_6 Filters__ctx_type_6_init(){
-   _ctx_type_6 _ctx;
+Filters__ctx_type_6 Filters__ctx_type_6_init(){
+   Filters__ctx_type_6 _ctx;
    _ctx.k = 0x0 /* 0.000000 */;
    _ctx.fc = 0x0 /* 0.000000 */;
    _ctx._inst1 = Filters__ctx_type_5_init();
@@ -58,9 +58,9 @@ _ctx_type_6 Filters__ctx_type_6_init(){
    return _ctx;
 }
 
-_ctx_type_6 Filters_lp6_init(){ return Filters__ctx_type_6_init();}
+Filters__ctx_type_6 Filters_lp6_init(){ return Filters__ctx_type_6_init();}
 
-int32_t Filters_lp6(_ctx_type_6 &_ctx, int32_t x, int32_t fc){
+int32_t Filters_lp6(Filters__ctx_type_6 &_ctx, int32_t x, int32_t fc){
    if(Filters_change(_ctx._inst0,_ctx.fc)){
       _ctx.fc = Filters_clip(_ctx.fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
       _ctx.k = fix_tan(fix_mul(fix_mul(Filters_pi(),_ctx.fc),0x1 /* 0.000023 */));
@@ -71,8 +71,8 @@ int32_t Filters_lp6(_ctx_type_6 &_ctx, int32_t x, int32_t fc){
    return Filters_biquad(_ctx._inst1,x,b0,b1,0x0 /* 0.000000 */,a1,0x0 /* 0.000000 */);
 }
 
-_ctx_type_7 Filters__ctx_type_7_init(){
-   _ctx_type_7 _ctx;
+Filters__ctx_type_7 Filters__ctx_type_7_init(){
+   Filters__ctx_type_7 _ctx;
    _ctx.b2 = 0x0 /* 0.000000 */;
    _ctx.b1 = 0x0 /* 0.000000 */;
    _ctx.b0 = 0x0 /* 0.000000 */;
@@ -84,9 +84,9 @@ _ctx_type_7 Filters__ctx_type_7_init(){
    return _ctx;
 }
 
-_ctx_type_7 Filters_lp12_init(){ return Filters__ctx_type_7_init();}
+Filters__ctx_type_7 Filters_lp12_init(){ return Filters__ctx_type_7_init();}
 
-int32_t Filters_lp12(_ctx_type_7 &_ctx, int32_t x, int32_t fc, int32_t q){
+int32_t Filters_lp12(Filters__ctx_type_7 &_ctx, int32_t x, int32_t fc, int32_t q){
    if(Filters_change(_ctx._inst0,fc) || Filters_change(_ctx._inst1,q)){
       int32_t qc = Filters_max(fix_sqrt(0x20000 /* 2.000000 */),fix_add(q,fix_sqrt(0x20000 /* 2.000000 */)));
       fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
@@ -101,15 +101,15 @@ int32_t Filters_lp12(_ctx_type_7 &_ctx, int32_t x, int32_t fc, int32_t q){
    return Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
-_ctx_type_8 Filters__ctx_type_8_init(){
-   _ctx_type_8 _ctx;
+Filters__ctx_type_8 Filters__ctx_type_8_init(){
+   Filters__ctx_type_8 _ctx;
    _ctx._inst0 = Filters__ctx_type_5_init();
    return _ctx;
 }
 
-_ctx_type_8 Filters_hp6_init(){ return Filters__ctx_type_8_init();}
+Filters__ctx_type_8 Filters_hp6_init(){ return Filters__ctx_type_8_init();}
 
-int32_t Filters_hp6(_ctx_type_8 &_ctx, int32_t x, int32_t fc){
+int32_t Filters_hp6(Filters__ctx_type_8 &_ctx, int32_t x, int32_t fc){
    fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
    int32_t k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
    int32_t b0 = fix_div(0x10000 /* 1.000000 */,fix_add(k,0x10000 /* 1.000000 */));
@@ -118,15 +118,15 @@ int32_t Filters_hp6(_ctx_type_8 &_ctx, int32_t x, int32_t fc){
    return Filters_biquad(_ctx._inst0,x,b0,b1,0x0 /* 0.000000 */,a1,0x0 /* 0.000000 */);
 }
 
-_ctx_type_9 Filters__ctx_type_9_init(){
-   _ctx_type_9 _ctx;
+Filters__ctx_type_9 Filters__ctx_type_9_init(){
+   Filters__ctx_type_9 _ctx;
    _ctx._inst0 = Filters__ctx_type_5_init();
    return _ctx;
 }
 
-_ctx_type_9 Filters_allp6_init(){ return Filters__ctx_type_9_init();}
+Filters__ctx_type_9 Filters_allp6_init(){ return Filters__ctx_type_9_init();}
 
-int32_t Filters_allp6(_ctx_type_9 &_ctx, int32_t x, int32_t fc){
+int32_t Filters_allp6(Filters__ctx_type_9 &_ctx, int32_t x, int32_t fc){
    fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
    int32_t k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
    int32_t b0 = fix_div(fix_add(k,(0xffff0000 /* -1.000000 */)),fix_add(k,0x10000 /* 1.000000 */));
@@ -135,8 +135,8 @@ int32_t Filters_allp6(_ctx_type_9 &_ctx, int32_t x, int32_t fc){
    return Filters_biquad(_ctx._inst0,x,b0,b1,0x0 /* 0.000000 */,a1,0x0 /* 0.000000 */);
 }
 
-_ctx_type_10 Filters__ctx_type_10_init(){
-   _ctx_type_10 _ctx;
+Filters__ctx_type_10 Filters__ctx_type_10_init(){
+   Filters__ctx_type_10 _ctx;
    _ctx.b2 = 0x0 /* 0.000000 */;
    _ctx.b1 = 0x0 /* 0.000000 */;
    _ctx.b0 = 0x0 /* 0.000000 */;
@@ -148,9 +148,9 @@ _ctx_type_10 Filters__ctx_type_10_init(){
    return _ctx;
 }
 
-_ctx_type_10 Filters_hp12_init(){ return Filters__ctx_type_10_init();}
+Filters__ctx_type_10 Filters_hp12_init(){ return Filters__ctx_type_10_init();}
 
-int32_t Filters_hp12(_ctx_type_10 &_ctx, int32_t x, int32_t fc, int32_t q){
+int32_t Filters_hp12(Filters__ctx_type_10 &_ctx, int32_t x, int32_t fc, int32_t q){
    if(Filters_change(_ctx._inst0,fc) || Filters_change(_ctx._inst1,q)){
       int32_t qc = Filters_max(fix_sqrt(0x20000 /* 2.000000 */),fix_add(q,fix_sqrt(0x20000 /* 2.000000 */)));
       fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
@@ -165,8 +165,8 @@ int32_t Filters_hp12(_ctx_type_10 &_ctx, int32_t x, int32_t fc, int32_t q){
    return Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
-_ctx_type_11 Filters__ctx_type_11_init(){
-   _ctx_type_11 _ctx;
+Filters__ctx_type_11 Filters__ctx_type_11_init(){
+   Filters__ctx_type_11 _ctx;
    _ctx.b2 = 0x0 /* 0.000000 */;
    _ctx.b1 = 0x0 /* 0.000000 */;
    _ctx.b0 = 0x0 /* 0.000000 */;
@@ -178,9 +178,9 @@ _ctx_type_11 Filters__ctx_type_11_init(){
    return _ctx;
 }
 
-_ctx_type_11 Filters_bp12_init(){ return Filters__ctx_type_11_init();}
+Filters__ctx_type_11 Filters_bp12_init(){ return Filters__ctx_type_11_init();}
 
-int32_t Filters_bp12(_ctx_type_11 &_ctx, int32_t x, int32_t fc, int32_t q){
+int32_t Filters_bp12(Filters__ctx_type_11 &_ctx, int32_t x, int32_t fc, int32_t q){
    if(Filters_change(_ctx._inst0,fc) || Filters_change(_ctx._inst1,q)){
       int32_t qc = Filters_max(fix_sqrt(0x20000 /* 2.000000 */),fix_add(q,fix_sqrt(0x20000 /* 2.000000 */)));
       fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
@@ -195,8 +195,8 @@ int32_t Filters_bp12(_ctx_type_11 &_ctx, int32_t x, int32_t fc, int32_t q){
    return Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
-_ctx_type_12 Filters__ctx_type_12_init(){
-   _ctx_type_12 _ctx;
+Filters__ctx_type_12 Filters__ctx_type_12_init(){
+   Filters__ctx_type_12 _ctx;
    _ctx.b2 = 0x0 /* 0.000000 */;
    _ctx.b1 = 0x0 /* 0.000000 */;
    _ctx.b0 = 0x0 /* 0.000000 */;
@@ -208,9 +208,9 @@ _ctx_type_12 Filters__ctx_type_12_init(){
    return _ctx;
 }
 
-_ctx_type_12 Filters_notch12_init(){ return Filters__ctx_type_12_init();}
+Filters__ctx_type_12 Filters_notch12_init(){ return Filters__ctx_type_12_init();}
 
-int32_t Filters_notch12(_ctx_type_12 &_ctx, int32_t x, int32_t fc, int32_t q){
+int32_t Filters_notch12(Filters__ctx_type_12 &_ctx, int32_t x, int32_t fc, int32_t q){
    if(Filters_change(_ctx._inst0,fc) || Filters_change(_ctx._inst1,q)){
       int32_t qc = Filters_max(fix_sqrt(0x20000 /* 2.000000 */),fix_add(q,fix_sqrt(0x20000 /* 2.000000 */)));
       fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
@@ -225,8 +225,8 @@ int32_t Filters_notch12(_ctx_type_12 &_ctx, int32_t x, int32_t fc, int32_t q){
    return Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
-_ctx_type_13 Filters__ctx_type_13_init(){
-   _ctx_type_13 _ctx;
+Filters__ctx_type_13 Filters__ctx_type_13_init(){
+   Filters__ctx_type_13 _ctx;
    _ctx.b2 = 0x0 /* 0.000000 */;
    _ctx.b1 = 0x0 /* 0.000000 */;
    _ctx.b0 = 0x0 /* 0.000000 */;
@@ -238,9 +238,9 @@ _ctx_type_13 Filters__ctx_type_13_init(){
    return _ctx;
 }
 
-_ctx_type_13 Filters_allp12_init(){ return Filters__ctx_type_13_init();}
+Filters__ctx_type_13 Filters_allp12_init(){ return Filters__ctx_type_13_init();}
 
-int32_t Filters_allp12(_ctx_type_13 &_ctx, int32_t x, int32_t fc, int32_t q){
+int32_t Filters_allp12(Filters__ctx_type_13 &_ctx, int32_t x, int32_t fc, int32_t q){
    if(Filters_change(_ctx._inst0,fc) || Filters_change(_ctx._inst1,q)){
       int32_t qc = Filters_max(fix_sqrt(0x20000 /* 2.000000 */),fix_add(q,fix_sqrt(0x20000 /* 2.000000 */)));
       fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);

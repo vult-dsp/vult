@@ -4,31 +4,31 @@
 #include <math.h>
 #include "vultin.h"
 
-typedef struct _ctx_type_0 {
+typedef struct Monoin__ctx_type_0 {
    int pre;
    int notes[4];
    int count;
-} _ctx_type_0;
+} Monoin__ctx_type_0;
 
-typedef _ctx_type_0 mono_noteOn_type;
+typedef Monoin__ctx_type_0 Monoin_mono_noteOn_type;
 
-_ctx_type_0 Monoin__ctx_type_0_init();
+Monoin__ctx_type_0 Monoin__ctx_type_0_init();
 
-_ctx_type_0 Monoin_mono_noteOn_init();
+Monoin__ctx_type_0 Monoin_mono_noteOn_init();
 
-int Monoin_mono_noteOn(_ctx_type_0 &_ctx, int n);
+int Monoin_mono_noteOn(Monoin__ctx_type_0 &_ctx, int n);
 
-typedef _ctx_type_0 mono_noteOff_type;
+typedef Monoin__ctx_type_0 Monoin_mono_noteOff_type;
 
-_ctx_type_0 Monoin_mono_noteOff_init();
+Monoin__ctx_type_0 Monoin_mono_noteOff_init();
 
-int Monoin_mono_noteOff(_ctx_type_0 &_ctx, int n);
+int Monoin_mono_noteOff(Monoin__ctx_type_0 &_ctx, int n);
 
-typedef _ctx_type_0 mono_isGateOn_type;
+typedef Monoin__ctx_type_0 Monoin_mono_isGateOn_type;
 
-_ctx_type_0 Monoin_mono_isGateOn_init();
+Monoin__ctx_type_0 Monoin_mono_isGateOn_init();
 
-uint8_t Monoin_mono_isGateOn(_ctx_type_0 &_ctx);
+uint8_t Monoin_mono_isGateOn(Monoin__ctx_type_0 &_ctx);
 
 
 

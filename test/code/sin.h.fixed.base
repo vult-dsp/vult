@@ -4,76 +4,76 @@
 #include <math.h>
 #include "vultin.h"
 
-typedef struct _ctx_type_0 {
+typedef struct Sin__ctx_type_0 {
    int32_t pre_x;
-} _ctx_type_0;
+} Sin__ctx_type_0;
 
-typedef _ctx_type_0 change_type;
+typedef Sin__ctx_type_0 Sin_change_type;
 
-_ctx_type_0 Sin__ctx_type_0_init();
+Sin__ctx_type_0 Sin__ctx_type_0_init();
 
-_ctx_type_0 Sin_change_init();
+Sin__ctx_type_0 Sin_change_init();
 
-uint8_t Sin_change(_ctx_type_0 &_ctx, int32_t x);
+uint8_t Sin_change(Sin__ctx_type_0 &_ctx, int32_t x);
 
-typedef struct _ctx_type_1 {
+typedef struct Sin__ctx_type_1 {
    int32_t y2;
    int32_t y1;
    int32_t w;
    int32_t cos_w;
-   _ctx_type_0 _inst0;
-} _ctx_type_1;
+   Sin__ctx_type_0 _inst0;
+} Sin__ctx_type_1;
 
-typedef _ctx_type_1 sc_osc_type;
+typedef Sin__ctx_type_1 Sin_sc_osc_type;
 
-_ctx_type_1 Sin__ctx_type_1_init();
+Sin__ctx_type_1 Sin__ctx_type_1_init();
 
-_ctx_type_1 Sin_sc_osc_init();
+Sin__ctx_type_1 Sin_sc_osc_init();
 
-int32_t Sin_sc_osc(_ctx_type_1 &_ctx, int32_t pitch);
+int32_t Sin_sc_osc(Sin__ctx_type_1 &_ctx, int32_t pitch);
 
-typedef _ctx_type_1 sc_osc_start_type;
+typedef Sin__ctx_type_1 Sin_sc_osc_start_type;
 
-_ctx_type_1 Sin_sc_osc_start_init();
+Sin__ctx_type_1 Sin_sc_osc_start_init();
 
-void Sin_sc_osc_start(_ctx_type_1 &_ctx);
+void Sin_sc_osc_start(Sin__ctx_type_1 &_ctx);
 
-typedef struct _ctx_type_2 {
+typedef struct Sin__ctx_type_2 {
    int32_t pitch;
-   _ctx_type_1 _inst0;
-} _ctx_type_2;
+   Sin__ctx_type_1 _inst0;
+} Sin__ctx_type_2;
 
-typedef _ctx_type_2 process_type;
+typedef Sin__ctx_type_2 Sin_process_type;
 
-_ctx_type_2 Sin__ctx_type_2_init();
+Sin__ctx_type_2 Sin__ctx_type_2_init();
 
-_ctx_type_2 Sin_process_init();
+Sin__ctx_type_2 Sin_process_init();
 
-int32_t Sin_process(_ctx_type_2 &_ctx, int32_t input);
+int32_t Sin_process(Sin__ctx_type_2 &_ctx, int32_t input);
 
-typedef _ctx_type_2 noteOn_type;
+typedef Sin__ctx_type_2 Sin_noteOn_type;
 
-_ctx_type_2 Sin_noteOn_init();
+Sin__ctx_type_2 Sin_noteOn_init();
 
-void Sin_noteOn(_ctx_type_2 &_ctx, int note, int velocity);
+void Sin_noteOn(Sin__ctx_type_2 &_ctx, int note, int velocity);
 
-typedef _ctx_type_2 noteOff_type;
+typedef Sin__ctx_type_2 Sin_noteOff_type;
 
-_ctx_type_2 Sin_noteOff_init();
+Sin__ctx_type_2 Sin_noteOff_init();
 
-void Sin_noteOff(_ctx_type_2 &_ctx, int note);
+void Sin_noteOff(Sin__ctx_type_2 &_ctx, int note);
 
-typedef _ctx_type_2 controlChange_type;
+typedef Sin__ctx_type_2 Sin_controlChange_type;
 
-_ctx_type_2 Sin_controlChange_init();
+Sin__ctx_type_2 Sin_controlChange_init();
 
-void Sin_controlChange(_ctx_type_2 &_ctx, int control, int value);
+void Sin_controlChange(Sin__ctx_type_2 &_ctx, int control, int value);
 
-typedef _ctx_type_2 default_type;
+typedef Sin__ctx_type_2 Sin_default_type;
 
-_ctx_type_2 Sin_default_init();
+Sin__ctx_type_2 Sin_default_init();
 
-void Sin_default_(_ctx_type_2 &_ctx);
+void Sin_default_(Sin__ctx_type_2 &_ctx);
 
 
 

@@ -151,10 +151,11 @@ let mapper_opt mapper_app =
 let map_id (mapper:'a mapper) (state:'a) (id:id) : 'a * id =
    apply mapper.id state id
 
-let map_attr (mapper:'a mapper) (state:'a) (attr:attr) : 'a * attr =
-   apply mapper.attr state attr
+let rec map_attr (mapper:'a mapper) (state:'a) (attr:attr) : 'a * attr =
+   let state',tp'   = (mapper_opt map_vtype) mapper state attr.typ in
+   apply mapper.attr state' { attr with typ = tp' }
 
-let rec map_vtype_c (mapper:'a mapper) (state:'a) (te:VType.vtype) : 'a * VType.vtype =
+and map_vtype_c (mapper:'a mapper) (state:'a) (te:VType.vtype) : 'a * VType.vtype =
    let map_vtype_list = mapper_list map_vtype in
    match te with
    | VType.TInt(_,_)
@@ -312,15 +313,23 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       let state',attr' = map_attr mapper state' attr in
       apply mapper.stmt state' (StmtBind(lhs',rhs',attr'))
    | StmtType(name,members,attr) ->
-      let state',name' = map_vtype mapper state name in
+      let base_name    = VType.base name in
+      let state'       = Env.enter `Type state base_name in
+      let state',name' = map_vtype mapper state' name in
       let state',members' = (mapper_list map_val_decl) mapper state' members in
       let state',attr'    = map_attr mapper state' attr in
-      apply mapper.stmt state' (StmtType(name',members',attr'))
+      let state',stmt' = apply mapper.stmt state' (StmtType(name',members',attr')) in
+      let state'       = Env.exit `Type state' in
+      state',stmt'
    | StmtAliasType(name,tp,attr) ->
-      let state',name' = map_vtype mapper state name in
+      let base_name    = VType.base name in
+      let state'       = Env.enter `Type state base_name in
+      let state',name' = map_vtype mapper state' name in
       let state',tp'   = map_vtype mapper state' tp in
       let state',attr' = map_attr mapper state' attr in
-      apply mapper.stmt state' (StmtAliasType(name',tp',attr'))
+      let state',stmt' = apply mapper.stmt state' (StmtAliasType(name',tp',attr')) in
+      let state'       = Env.exit `Type state' in
+      state',stmt'
    | StmtEmpty ->
       apply mapper.stmt state StmtEmpty
    | StmtWhile(cond,stmts,attr) ->

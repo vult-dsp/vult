@@ -6,98 +6,98 @@
 
 float Synth2_minFixed();
 
-typedef struct _ctx_type_1 {
+typedef struct Synth2__ctx_type_1 {
    float pre_x;
-} _ctx_type_1;
+} Synth2__ctx_type_1;
 
-typedef _ctx_type_1 change_type;
+typedef Synth2__ctx_type_1 Synth2_change_type;
 
-_ctx_type_1 Synth2__ctx_type_1_init();
+Synth2__ctx_type_1 Synth2__ctx_type_1_init();
 
-_ctx_type_1 Synth2_change_init();
+Synth2__ctx_type_1 Synth2_change_init();
 
-uint8_t Synth2_change(_ctx_type_1 &_ctx, float x);
+uint8_t Synth2_change(Synth2__ctx_type_1 &_ctx, float x);
 
-typedef struct _ctx_type_2 {
+typedef struct Synth2__ctx_type_2 {
    uint8_t pre_x;
-} _ctx_type_2;
+} Synth2__ctx_type_2;
 
-typedef _ctx_type_2 bchange_type;
+typedef Synth2__ctx_type_2 Synth2_bchange_type;
 
-_ctx_type_2 Synth2__ctx_type_2_init();
+Synth2__ctx_type_2 Synth2__ctx_type_2_init();
 
-_ctx_type_2 Synth2_bchange_init();
+Synth2__ctx_type_2 Synth2_bchange_init();
 
-uint8_t Synth2_bchange(_ctx_type_2 &_ctx, uint8_t x);
+uint8_t Synth2_bchange(Synth2__ctx_type_2 &_ctx, uint8_t x);
 
-typedef struct _ctx_type_3 {
+typedef struct Synth2__ctx_type_3 {
    uint8_t pre_x;
-} _ctx_type_3;
+} Synth2__ctx_type_3;
 
-typedef _ctx_type_3 edge_type;
+typedef Synth2__ctx_type_3 Synth2_edge_type;
 
-_ctx_type_3 Synth2__ctx_type_3_init();
+Synth2__ctx_type_3 Synth2__ctx_type_3_init();
 
-_ctx_type_3 Synth2_edge_init();
+Synth2__ctx_type_3 Synth2_edge_init();
 
-uint8_t Synth2_edge(_ctx_type_3 &_ctx, uint8_t x);
+uint8_t Synth2_edge(Synth2__ctx_type_3 &_ctx, uint8_t x);
 
-typedef struct _ctx_type_4 {
+typedef struct Synth2__ctx_type_4 {
    int count;
-} _ctx_type_4;
+} Synth2__ctx_type_4;
 
-typedef _ctx_type_4 each_type;
+typedef Synth2__ctx_type_4 Synth2_each_type;
 
-_ctx_type_4 Synth2__ctx_type_4_init();
+Synth2__ctx_type_4 Synth2__ctx_type_4_init();
 
-_ctx_type_4 Synth2_each_init();
+Synth2__ctx_type_4 Synth2_each_init();
 
-uint8_t Synth2_each(_ctx_type_4 &_ctx, int n);
+uint8_t Synth2_each(Synth2__ctx_type_4 &_ctx, int n);
 
 uint8_t Synth2_near_zero(float x);
 
-typedef struct _ctx_type_6 {
+typedef struct Synth2__ctx_type_6 {
    float y1;
    float x1;
-} _ctx_type_6;
+} Synth2__ctx_type_6;
 
-typedef _ctx_type_6 dcblock_type;
+typedef Synth2__ctx_type_6 Synth2_dcblock_type;
 
-_ctx_type_6 Synth2__ctx_type_6_init();
+Synth2__ctx_type_6 Synth2__ctx_type_6_init();
 
-_ctx_type_6 Synth2_dcblock_init();
+Synth2__ctx_type_6 Synth2_dcblock_init();
 
-float Synth2_dcblock(_ctx_type_6 &_ctx, float x0);
+float Synth2_dcblock(Synth2__ctx_type_6 &_ctx, float x0);
 
-typedef struct _ctx_type_7 {
+typedef struct Synth2__ctx_type_7 {
    float x;
-} _ctx_type_7;
+} Synth2__ctx_type_7;
 
-typedef _ctx_type_7 smooth_type;
+typedef Synth2__ctx_type_7 Synth2_smooth_type;
 
-_ctx_type_7 Synth2__ctx_type_7_init();
+Synth2__ctx_type_7 Synth2__ctx_type_7_init();
 
-_ctx_type_7 Synth2_smooth_init();
+Synth2__ctx_type_7 Synth2_smooth_init();
 
-float Synth2_smooth(_ctx_type_7 &_ctx, float input);
+float Synth2_smooth(Synth2__ctx_type_7 &_ctx, float input);
 
-typedef struct _ctx_type_8 {
+typedef struct Synth2__ctx_type_8 {
    float pre_x;
-} _ctx_type_8;
+} Synth2__ctx_type_8;
 
-typedef _ctx_type_8 lpfilter_type;
+typedef Synth2__ctx_type_8 Synth2_lpfilter_type;
 
-_ctx_type_8 Synth2__ctx_type_8_init();
+Synth2__ctx_type_8 Synth2__ctx_type_8_init();
 
-_ctx_type_8 Synth2_lpfilter_init();
+Synth2__ctx_type_8 Synth2_lpfilter_init();
 
-float Synth2_lpfilter(_ctx_type_8 &_ctx, float x);
+float Synth2_lpfilter(Synth2__ctx_type_8 &_ctx, float x);
 
 float Synth2_pitchToRate(float d);
 
 float Synth2_pulse_train(float m, float phase);
 
-typedef struct _ctx_type_11 {
+typedef struct Synth2__ctx_type_11 {
    float state_triang;
    float state_saw;
    float state_pulse;
@@ -105,133 +105,133 @@ typedef struct _ctx_type_11 {
    float phase;
    float output;
    float m;
-   _ctx_type_6 _inst1;
-   _ctx_type_1 _inst0;
-} _ctx_type_11;
+   Synth2__ctx_type_6 _inst1;
+   Synth2__ctx_type_1 _inst0;
+} Synth2__ctx_type_11;
 
-typedef _ctx_type_11 osc_type;
+typedef Synth2__ctx_type_11 Synth2_osc_type;
 
-_ctx_type_11 Synth2__ctx_type_11_init();
+Synth2__ctx_type_11 Synth2__ctx_type_11_init();
 
-_ctx_type_11 Synth2_osc_init();
+Synth2__ctx_type_11 Synth2_osc_init();
 
-float Synth2_osc(_ctx_type_11 &_ctx, float pitch, float pw, float wave);
+float Synth2_osc(Synth2__ctx_type_11 &_ctx, float pitch, float pw, float wave);
 
-typedef struct _ctx_type_12 {
+typedef struct Synth2__ctx_type_12 {
    float dlow;
    float dband;
-} _ctx_type_12;
+} Synth2__ctx_type_12;
 
-typedef _ctx_type_12 svf_step_type;
+typedef Synth2__ctx_type_12 Synth2_svf_step_type;
 
-_ctx_type_12 Synth2__ctx_type_12_init();
+Synth2__ctx_type_12 Synth2__ctx_type_12_init();
 
-_ctx_type_12 Synth2_svf_step_init();
+Synth2__ctx_type_12 Synth2_svf_step_init();
 
-float Synth2_svf_step(_ctx_type_12 &_ctx, float input, float g, float q, int sel);
+float Synth2_svf_step(Synth2__ctx_type_12 &_ctx, float input, float g, float q, int sel);
 
-typedef struct _ctx_type_13 {
-   _ctx_type_12 step;
+typedef struct Synth2__ctx_type_13 {
+   Synth2__ctx_type_12 step;
    float g;
-   _ctx_type_1 _inst0;
-} _ctx_type_13;
+   Synth2__ctx_type_1 _inst0;
+} Synth2__ctx_type_13;
 
-typedef _ctx_type_13 svf_type;
+typedef Synth2__ctx_type_13 Synth2_svf_type;
 
-_ctx_type_13 Synth2__ctx_type_13_init();
+Synth2__ctx_type_13 Synth2__ctx_type_13_init();
 
-_ctx_type_13 Synth2_svf_init();
+Synth2__ctx_type_13 Synth2_svf_init();
 
-float Synth2_svf(_ctx_type_13 &_ctx, float input, float fc, float q, int sel);
+float Synth2_svf(Synth2__ctx_type_13 &_ctx, float input, float fc, float q, int sel);
 
-typedef struct _ctx_type_14 {
+typedef struct Synth2__ctx_type_14 {
    float phase;
-   _ctx_type_4 _inst1;
-   _ctx_type_3 _inst0;
-} _ctx_type_14;
+   Synth2__ctx_type_4 _inst1;
+   Synth2__ctx_type_3 _inst0;
+} Synth2__ctx_type_14;
 
-typedef _ctx_type_14 lfo_type;
+typedef Synth2__ctx_type_14 Synth2_lfo_type;
 
-_ctx_type_14 Synth2__ctx_type_14_init();
+Synth2__ctx_type_14 Synth2__ctx_type_14_init();
 
-_ctx_type_14 Synth2_lfo_init();
+Synth2__ctx_type_14 Synth2_lfo_init();
 
-float Synth2_lfo(_ctx_type_14 &_ctx, float f, uint8_t gate);
+float Synth2_lfo(Synth2__ctx_type_14 &_ctx, float f, uint8_t gate);
 
-typedef struct _ctx_type_15 {
+typedef struct Synth2__ctx_type_15 {
    int pre;
    int notes[4];
    int count;
-} _ctx_type_15;
+} Synth2__ctx_type_15;
 
-typedef _ctx_type_15 mono_noteOn_type;
+typedef Synth2__ctx_type_15 Synth2_mono_noteOn_type;
 
-_ctx_type_15 Synth2__ctx_type_15_init();
+Synth2__ctx_type_15 Synth2__ctx_type_15_init();
 
-_ctx_type_15 Synth2_mono_noteOn_init();
+Synth2__ctx_type_15 Synth2_mono_noteOn_init();
 
-int Synth2_mono_noteOn(_ctx_type_15 &_ctx, int n);
+int Synth2_mono_noteOn(Synth2__ctx_type_15 &_ctx, int n);
 
-typedef _ctx_type_15 mono_noteOff_type;
+typedef Synth2__ctx_type_15 Synth2_mono_noteOff_type;
 
-_ctx_type_15 Synth2_mono_noteOff_init();
+Synth2__ctx_type_15 Synth2_mono_noteOff_init();
 
-int Synth2_mono_noteOff(_ctx_type_15 &_ctx, int n);
+int Synth2_mono_noteOff(Synth2__ctx_type_15 &_ctx, int n);
 
-typedef _ctx_type_15 mono_isGateOn_type;
+typedef Synth2__ctx_type_15 Synth2_mono_isGateOn_type;
 
-_ctx_type_15 Synth2_mono_isGateOn_init();
+Synth2__ctx_type_15 Synth2_mono_isGateOn_init();
 
-uint8_t Synth2_mono_isGateOn(_ctx_type_15 &_ctx);
+uint8_t Synth2_mono_isGateOn(Synth2__ctx_type_15 &_ctx);
 
-typedef struct _ctx_type_16 {
+typedef struct Synth2__ctx_type_16 {
    float wave;
    float volume;
    float res;
    float pw;
    float pitch;
-   _ctx_type_15 monoin;
+   Synth2__ctx_type_15 monoin;
    float lfo_rate;
    float lfo_amt;
    float cut;
    float amp_s;
-   _ctx_type_13 _inst3;
-   _ctx_type_7 _inst2;
-   _ctx_type_11 _inst1;
-   _ctx_type_14 _inst0;
-} _ctx_type_16;
+   Synth2__ctx_type_13 _inst3;
+   Synth2__ctx_type_7 _inst2;
+   Synth2__ctx_type_11 _inst1;
+   Synth2__ctx_type_14 _inst0;
+} Synth2__ctx_type_16;
 
-typedef _ctx_type_16 process_type;
+typedef Synth2__ctx_type_16 Synth2_process_type;
 
-_ctx_type_16 Synth2__ctx_type_16_init();
+Synth2__ctx_type_16 Synth2__ctx_type_16_init();
 
-_ctx_type_16 Synth2_process_init();
+Synth2__ctx_type_16 Synth2_process_init();
 
-float Synth2_process(_ctx_type_16 &_ctx, float i);
+float Synth2_process(Synth2__ctx_type_16 &_ctx, float i);
 
-typedef _ctx_type_16 noteOn_type;
+typedef Synth2__ctx_type_16 Synth2_noteOn_type;
 
-_ctx_type_16 Synth2_noteOn_init();
+Synth2__ctx_type_16 Synth2_noteOn_init();
 
-void Synth2_noteOn(_ctx_type_16 &_ctx, int note, int velocity);
+void Synth2_noteOn(Synth2__ctx_type_16 &_ctx, int note, int velocity);
 
-typedef _ctx_type_16 noteOff_type;
+typedef Synth2__ctx_type_16 Synth2_noteOff_type;
 
-_ctx_type_16 Synth2_noteOff_init();
+Synth2__ctx_type_16 Synth2_noteOff_init();
 
-void Synth2_noteOff(_ctx_type_16 &_ctx, int note);
+void Synth2_noteOff(Synth2__ctx_type_16 &_ctx, int note);
 
-typedef _ctx_type_16 controlChange_type;
+typedef Synth2__ctx_type_16 Synth2_controlChange_type;
 
-_ctx_type_16 Synth2_controlChange_init();
+Synth2__ctx_type_16 Synth2_controlChange_init();
 
-void Synth2_controlChange(_ctx_type_16 &_ctx, int control, int value);
+void Synth2_controlChange(Synth2__ctx_type_16 &_ctx, int control, int value);
 
-typedef _ctx_type_16 default_type;
+typedef Synth2__ctx_type_16 Synth2_default_type;
 
-_ctx_type_16 Synth2_default_init();
+Synth2__ctx_type_16 Synth2_default_init();
 
-void Synth2_default_(_ctx_type_16 &_ctx);
+void Synth2_default_(Synth2__ctx_type_16 &_ctx);
 
 
 

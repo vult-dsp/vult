@@ -1,16 +1,16 @@
 #include "monoin.h"
 
-_ctx_type_0 Monoin__ctx_type_0_init(){
-   _ctx_type_0 _ctx;
+Monoin__ctx_type_0 Monoin__ctx_type_0_init(){
+   Monoin__ctx_type_0 _ctx;
    _ctx.pre = 0;
    int_init_array(_ctx.notes,4,0);
    _ctx.count = 0;
    return _ctx;
 }
 
-_ctx_type_0 Monoin_mono_noteOn_init(){ return Monoin__ctx_type_0_init();}
+Monoin__ctx_type_0 Monoin_mono_noteOn_init(){ return Monoin__ctx_type_0_init();}
 
-int Monoin_mono_noteOn(_ctx_type_0 &_ctx, int n){
+int Monoin_mono_noteOn(Monoin__ctx_type_0 &_ctx, int n){
    if(_ctx.count < 4){
       int_set(_ctx.notes,_ctx.count,n);
       _ctx.pre = n;
@@ -21,9 +21,9 @@ int Monoin_mono_noteOn(_ctx_type_0 &_ctx, int n){
    return _ctx.pre;
 }
 
-_ctx_type_0 Monoin_mono_noteOff_init(){ return Monoin__ctx_type_0_init();}
+Monoin__ctx_type_0 Monoin_mono_noteOff_init(){ return Monoin__ctx_type_0_init();}
 
-int Monoin_mono_noteOff(_ctx_type_0 &_ctx, int n){
+int Monoin_mono_noteOff(Monoin__ctx_type_0 &_ctx, int n){
    uint8_t found = 0;
    int pos;
    int i = 0;
@@ -51,9 +51,9 @@ int Monoin_mono_noteOff(_ctx_type_0 &_ctx, int n){
    return _ctx.pre;
 }
 
-_ctx_type_0 Monoin_mono_isGateOn_init(){ return Monoin__ctx_type_0_init();}
+Monoin__ctx_type_0 Monoin_mono_isGateOn_init(){ return Monoin__ctx_type_0_init();}
 
-uint8_t Monoin_mono_isGateOn(_ctx_type_0 &_ctx){
+uint8_t Monoin_mono_isGateOn(Monoin__ctx_type_0 &_ctx){
    return (_ctx.count > 0);
 }
 

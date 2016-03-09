@@ -4,61 +4,61 @@
 #include <math.h>
 #include "vultin.h"
 
-typedef struct _ctx_type_0 {
+typedef struct Adsr__ctx_type_0 {
    int count;
-} _ctx_type_0;
+} Adsr__ctx_type_0;
 
-typedef _ctx_type_0 each_type;
+typedef Adsr__ctx_type_0 Adsr_each_type;
 
-_ctx_type_0 Adsr__ctx_type_0_init();
+Adsr__ctx_type_0 Adsr__ctx_type_0_init();
 
-_ctx_type_0 Adsr_each_init();
+Adsr__ctx_type_0 Adsr_each_init();
 
-uint8_t Adsr_each(_ctx_type_0 &_ctx, int n);
+uint8_t Adsr_each(Adsr__ctx_type_0 &_ctx, int n);
 
-typedef struct _ctx_type_1 {
+typedef struct Adsr__ctx_type_1 {
    uint8_t pre_x;
-} _ctx_type_1;
+} Adsr__ctx_type_1;
 
-typedef _ctx_type_1 bchange_type;
+typedef Adsr__ctx_type_1 Adsr_bchange_type;
 
-_ctx_type_1 Adsr__ctx_type_1_init();
+Adsr__ctx_type_1 Adsr__ctx_type_1_init();
 
-_ctx_type_1 Adsr_bchange_init();
+Adsr__ctx_type_1 Adsr_bchange_init();
 
-uint8_t Adsr_bchange(_ctx_type_1 &_ctx, uint8_t x);
+uint8_t Adsr_bchange(Adsr__ctx_type_1 &_ctx, uint8_t x);
 
-typedef struct _ctx_type_2 {
+typedef struct Adsr__ctx_type_2 {
    float pre_x;
-} _ctx_type_2;
+} Adsr__ctx_type_2;
 
-typedef _ctx_type_2 lpfilter_type;
+typedef Adsr__ctx_type_2 Adsr_lpfilter_type;
 
-_ctx_type_2 Adsr__ctx_type_2_init();
+Adsr__ctx_type_2 Adsr__ctx_type_2_init();
 
-_ctx_type_2 Adsr_lpfilter_init();
+Adsr__ctx_type_2 Adsr_lpfilter_init();
 
-float Adsr_lpfilter(_ctx_type_2 &_ctx, float x);
+float Adsr_lpfilter(Adsr__ctx_type_2 &_ctx, float x);
 
-typedef struct _ctx_type_3 {
+typedef struct Adsr__ctx_type_3 {
    float value;
    float sustainLevel;
    int state;
    float releaseRate;
    float decayRate;
    float attackRate;
-   _ctx_type_2 _inst2;
-   _ctx_type_1 _inst1;
-   _ctx_type_0 _inst0;
-} _ctx_type_3;
+   Adsr__ctx_type_2 _inst2;
+   Adsr__ctx_type_1 _inst1;
+   Adsr__ctx_type_0 _inst0;
+} Adsr__ctx_type_3;
 
-typedef _ctx_type_3 adsr_type;
+typedef Adsr__ctx_type_3 Adsr_adsr_type;
 
-_ctx_type_3 Adsr__ctx_type_3_init();
+Adsr__ctx_type_3 Adsr__ctx_type_3_init();
 
-_ctx_type_3 Adsr_adsr_init();
+Adsr__ctx_type_3 Adsr_adsr_init();
 
-float Adsr_adsr(_ctx_type_3 &_ctx, uint8_t gate, float attack, float decay, float sustain, float release);
+float Adsr_adsr(Adsr__ctx_type_3 &_ctx, uint8_t gate, float attack, float decay, float sustain, float release);
 
 
 

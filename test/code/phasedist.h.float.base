@@ -4,88 +4,88 @@
 #include <math.h>
 #include "vultin.h"
 
-typedef struct _ctx_type_0 {
+typedef struct Phasedist__ctx_type_0 {
    float x;
-} _ctx_type_0;
+} Phasedist__ctx_type_0;
 
-typedef _ctx_type_0 smooth_type;
+typedef Phasedist__ctx_type_0 Phasedist_smooth_type;
 
-_ctx_type_0 Phasedist__ctx_type_0_init();
+Phasedist__ctx_type_0 Phasedist__ctx_type_0_init();
 
-_ctx_type_0 Phasedist_smooth_init();
+Phasedist__ctx_type_0 Phasedist_smooth_init();
 
-float Phasedist_smooth(_ctx_type_0 &_ctx, float input);
+float Phasedist_smooth(Phasedist__ctx_type_0 &_ctx, float input);
 
-typedef struct _ctx_type_1 {
+typedef struct Phasedist__ctx_type_1 {
    float pre_x;
-} _ctx_type_1;
+} Phasedist__ctx_type_1;
 
-typedef _ctx_type_1 change_type;
+typedef Phasedist__ctx_type_1 Phasedist_change_type;
 
-_ctx_type_1 Phasedist__ctx_type_1_init();
+Phasedist__ctx_type_1 Phasedist__ctx_type_1_init();
 
-_ctx_type_1 Phasedist_change_init();
+Phasedist__ctx_type_1 Phasedist_change_init();
 
-uint8_t Phasedist_change(_ctx_type_1 &_ctx, float x);
+uint8_t Phasedist_change(Phasedist__ctx_type_1 &_ctx, float x);
 
 float Phasedist_pitchToRate(float d);
 
-typedef struct _ctx_type_3 {
+typedef struct Phasedist__ctx_type_3 {
    float rate;
    float phase;
-   _ctx_type_1 _inst0;
-} _ctx_type_3;
+   Phasedist__ctx_type_1 _inst0;
+} Phasedist__ctx_type_3;
 
-typedef _ctx_type_3 phasor_type;
+typedef Phasedist__ctx_type_3 Phasedist_phasor_type;
 
-_ctx_type_3 Phasedist__ctx_type_3_init();
+Phasedist__ctx_type_3 Phasedist__ctx_type_3_init();
 
-_ctx_type_3 Phasedist_phasor_init();
+Phasedist__ctx_type_3 Phasedist_phasor_init();
 
-float Phasedist_phasor(_ctx_type_3 &_ctx, float pitch, uint8_t reset);
+float Phasedist_phasor(Phasedist__ctx_type_3 &_ctx, float pitch, uint8_t reset);
 
-typedef struct _ctx_type_4 {
+typedef struct Phasedist__ctx_type_4 {
    float volume;
    float pre_phase1;
    float pitch;
    float detune;
-   _ctx_type_0 _inst3;
-   _ctx_type_3 _inst2;
-   _ctx_type_0 _inst1;
-   _ctx_type_3 _inst0;
-} _ctx_type_4;
+   Phasedist__ctx_type_0 _inst3;
+   Phasedist__ctx_type_3 _inst2;
+   Phasedist__ctx_type_0 _inst1;
+   Phasedist__ctx_type_3 _inst0;
+} Phasedist__ctx_type_4;
 
-typedef _ctx_type_4 process_type;
+typedef Phasedist__ctx_type_4 Phasedist_process_type;
 
-_ctx_type_4 Phasedist__ctx_type_4_init();
+Phasedist__ctx_type_4 Phasedist__ctx_type_4_init();
 
-_ctx_type_4 Phasedist_process_init();
+Phasedist__ctx_type_4 Phasedist_process_init();
 
-float Phasedist_process(_ctx_type_4 &_ctx, float input);
+float Phasedist_process(Phasedist__ctx_type_4 &_ctx, float input);
 
-typedef _ctx_type_4 noteOn_type;
+typedef Phasedist__ctx_type_4 Phasedist_noteOn_type;
 
-_ctx_type_4 Phasedist_noteOn_init();
+Phasedist__ctx_type_4 Phasedist_noteOn_init();
 
-void Phasedist_noteOn(_ctx_type_4 &_ctx, int note, int velocity);
+void Phasedist_noteOn(Phasedist__ctx_type_4 &_ctx, int note, int velocity);
 
-typedef _ctx_type_4 noteOff_type;
+typedef Phasedist__ctx_type_4 Phasedist_noteOff_type;
 
-_ctx_type_4 Phasedist_noteOff_init();
+Phasedist__ctx_type_4 Phasedist_noteOff_init();
 
-void Phasedist_noteOff(_ctx_type_4 &_ctx, int note);
+void Phasedist_noteOff(Phasedist__ctx_type_4 &_ctx, int note);
 
-typedef _ctx_type_4 controlChange_type;
+typedef Phasedist__ctx_type_4 Phasedist_controlChange_type;
 
-_ctx_type_4 Phasedist_controlChange_init();
+Phasedist__ctx_type_4 Phasedist_controlChange_init();
 
-void Phasedist_controlChange(_ctx_type_4 &_ctx, int control, int value);
+void Phasedist_controlChange(Phasedist__ctx_type_4 &_ctx, int control, int value);
 
-typedef _ctx_type_4 default_type;
+typedef Phasedist__ctx_type_4 Phasedist_default_type;
 
-_ctx_type_4 Phasedist_default_init();
+Phasedist__ctx_type_4 Phasedist_default_init();
 
-void Phasedist_default_(_ctx_type_4 &_ctx);
+void Phasedist_default_(Phasedist__ctx_type_4 &_ctx);
 
 
 

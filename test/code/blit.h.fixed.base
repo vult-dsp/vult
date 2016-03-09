@@ -6,36 +6,36 @@
 
 uint8_t Blit_near_zero(int32_t x);
 
-typedef struct _ctx_type_1 {
+typedef struct Blit__ctx_type_1 {
    int32_t pre_x;
-} _ctx_type_1;
+} Blit__ctx_type_1;
 
-typedef _ctx_type_1 change_type;
+typedef Blit__ctx_type_1 Blit_change_type;
 
-_ctx_type_1 Blit__ctx_type_1_init();
+Blit__ctx_type_1 Blit__ctx_type_1_init();
 
-_ctx_type_1 Blit_change_init();
+Blit__ctx_type_1 Blit_change_init();
 
-uint8_t Blit_change(_ctx_type_1 &_ctx, int32_t x);
+uint8_t Blit_change(Blit__ctx_type_1 &_ctx, int32_t x);
 
-typedef struct _ctx_type_2 {
+typedef struct Blit__ctx_type_2 {
    int32_t y1;
    int32_t x1;
-} _ctx_type_2;
+} Blit__ctx_type_2;
 
-typedef _ctx_type_2 dcblock_type;
+typedef Blit__ctx_type_2 Blit_dcblock_type;
 
-_ctx_type_2 Blit__ctx_type_2_init();
+Blit__ctx_type_2 Blit__ctx_type_2_init();
 
-_ctx_type_2 Blit_dcblock_init();
+Blit__ctx_type_2 Blit_dcblock_init();
 
-int32_t Blit_dcblock(_ctx_type_2 &_ctx, int32_t x0);
+int32_t Blit_dcblock(Blit__ctx_type_2 &_ctx, int32_t x0);
 
 int32_t Blit_pitchToRate(int32_t d);
 
 int32_t Blit_pulse_train(int32_t m, int32_t phase);
 
-typedef struct _ctx_type_5 {
+typedef struct Blit__ctx_type_5 {
    int32_t state_triang;
    int32_t state_saw;
    int32_t state_pulse;
@@ -43,17 +43,17 @@ typedef struct _ctx_type_5 {
    int32_t phase;
    int32_t output;
    int32_t m;
-   _ctx_type_2 _inst1;
-   _ctx_type_1 _inst0;
-} _ctx_type_5;
+   Blit__ctx_type_2 _inst1;
+   Blit__ctx_type_1 _inst0;
+} Blit__ctx_type_5;
 
-typedef _ctx_type_5 osc_type;
+typedef Blit__ctx_type_5 Blit_osc_type;
 
-_ctx_type_5 Blit__ctx_type_5_init();
+Blit__ctx_type_5 Blit__ctx_type_5_init();
 
-_ctx_type_5 Blit_osc_init();
+Blit__ctx_type_5 Blit_osc_init();
 
-int32_t Blit_osc(_ctx_type_5 &_ctx, int32_t pitch, int32_t pw, int32_t wave);
+int32_t Blit_osc(Blit__ctx_type_5 &_ctx, int32_t pitch, int32_t pw, int32_t wave);
 
 
 

@@ -6,86 +6,86 @@
 
 int32_t Voice_minFixed();
 
-typedef struct _ctx_type_1 {
+typedef struct Voice__ctx_type_1 {
    int32_t pre_x;
-} _ctx_type_1;
+} Voice__ctx_type_1;
 
-typedef _ctx_type_1 change_type;
+typedef Voice__ctx_type_1 Voice_change_type;
 
-_ctx_type_1 Voice__ctx_type_1_init();
+Voice__ctx_type_1 Voice__ctx_type_1_init();
 
-_ctx_type_1 Voice_change_init();
+Voice__ctx_type_1 Voice_change_init();
 
-uint8_t Voice_change(_ctx_type_1 &_ctx, int32_t x);
+uint8_t Voice_change(Voice__ctx_type_1 &_ctx, int32_t x);
 
-typedef struct _ctx_type_2 {
+typedef struct Voice__ctx_type_2 {
    uint8_t pre_x;
-} _ctx_type_2;
+} Voice__ctx_type_2;
 
-typedef _ctx_type_2 bchange_type;
+typedef Voice__ctx_type_2 Voice_bchange_type;
 
-_ctx_type_2 Voice__ctx_type_2_init();
+Voice__ctx_type_2 Voice__ctx_type_2_init();
 
-_ctx_type_2 Voice_bchange_init();
+Voice__ctx_type_2 Voice_bchange_init();
 
-uint8_t Voice_bchange(_ctx_type_2 &_ctx, uint8_t x);
+uint8_t Voice_bchange(Voice__ctx_type_2 &_ctx, uint8_t x);
 
-typedef struct _ctx_type_3 {
+typedef struct Voice__ctx_type_3 {
    uint8_t pre_x;
-} _ctx_type_3;
+} Voice__ctx_type_3;
 
-typedef _ctx_type_3 edge_type;
+typedef Voice__ctx_type_3 Voice_edge_type;
 
-_ctx_type_3 Voice__ctx_type_3_init();
+Voice__ctx_type_3 Voice__ctx_type_3_init();
 
-_ctx_type_3 Voice_edge_init();
+Voice__ctx_type_3 Voice_edge_init();
 
-uint8_t Voice_edge(_ctx_type_3 &_ctx, uint8_t x);
+uint8_t Voice_edge(Voice__ctx_type_3 &_ctx, uint8_t x);
 
-typedef struct _ctx_type_4 {
+typedef struct Voice__ctx_type_4 {
    int count;
-} _ctx_type_4;
+} Voice__ctx_type_4;
 
-typedef _ctx_type_4 each_type;
+typedef Voice__ctx_type_4 Voice_each_type;
 
-_ctx_type_4 Voice__ctx_type_4_init();
+Voice__ctx_type_4 Voice__ctx_type_4_init();
 
-_ctx_type_4 Voice_each_init();
+Voice__ctx_type_4 Voice_each_init();
 
-uint8_t Voice_each(_ctx_type_4 &_ctx, int n);
+uint8_t Voice_each(Voice__ctx_type_4 &_ctx, int n);
 
 uint8_t Voice_near_zero(int32_t x);
 
-typedef struct _ctx_type_6 {
+typedef struct Voice__ctx_type_6 {
    int32_t y1;
    int32_t x1;
-} _ctx_type_6;
+} Voice__ctx_type_6;
 
-typedef _ctx_type_6 dcblock_type;
+typedef Voice__ctx_type_6 Voice_dcblock_type;
 
-_ctx_type_6 Voice__ctx_type_6_init();
+Voice__ctx_type_6 Voice__ctx_type_6_init();
 
-_ctx_type_6 Voice_dcblock_init();
+Voice__ctx_type_6 Voice_dcblock_init();
 
-int32_t Voice_dcblock(_ctx_type_6 &_ctx, int32_t x0);
+int32_t Voice_dcblock(Voice__ctx_type_6 &_ctx, int32_t x0);
 
-typedef struct _ctx_type_7 {
+typedef struct Voice__ctx_type_7 {
    int32_t pre_x;
-} _ctx_type_7;
+} Voice__ctx_type_7;
 
-typedef _ctx_type_7 lpfilter_type;
+typedef Voice__ctx_type_7 Voice_lpfilter_type;
 
-_ctx_type_7 Voice__ctx_type_7_init();
+Voice__ctx_type_7 Voice__ctx_type_7_init();
 
-_ctx_type_7 Voice_lpfilter_init();
+Voice__ctx_type_7 Voice_lpfilter_init();
 
-int32_t Voice_lpfilter(_ctx_type_7 &_ctx, int32_t x);
+int32_t Voice_lpfilter(Voice__ctx_type_7 &_ctx, int32_t x);
 
 int32_t Voice_pitchToRate(int32_t d);
 
 int32_t Voice_pulse_train(int32_t m, int32_t phase);
 
-typedef struct _ctx_type_10 {
+typedef struct Voice__ctx_type_10 {
    int32_t state_triang;
    int32_t state_saw;
    int32_t state_pulse;
@@ -93,114 +93,114 @@ typedef struct _ctx_type_10 {
    int32_t phase;
    int32_t output;
    int32_t m;
-   _ctx_type_6 _inst1;
-   _ctx_type_1 _inst0;
-} _ctx_type_10;
+   Voice__ctx_type_6 _inst1;
+   Voice__ctx_type_1 _inst0;
+} Voice__ctx_type_10;
 
-typedef _ctx_type_10 osc_type;
+typedef Voice__ctx_type_10 Voice_osc_type;
 
-_ctx_type_10 Voice__ctx_type_10_init();
+Voice__ctx_type_10 Voice__ctx_type_10_init();
 
-_ctx_type_10 Voice_osc_init();
+Voice__ctx_type_10 Voice_osc_init();
 
-int32_t Voice_osc(_ctx_type_10 &_ctx, int32_t pitch, int32_t pw, int32_t wave);
+int32_t Voice_osc(Voice__ctx_type_10 &_ctx, int32_t pitch, int32_t pw, int32_t wave);
 
-typedef struct _ctx_type_11 {
+typedef struct Voice__ctx_type_11 {
    int32_t dlow;
    int32_t dband;
-} _ctx_type_11;
+} Voice__ctx_type_11;
 
-typedef _ctx_type_11 svf_step_type;
+typedef Voice__ctx_type_11 Voice_svf_step_type;
 
-_ctx_type_11 Voice__ctx_type_11_init();
+Voice__ctx_type_11 Voice__ctx_type_11_init();
 
-_ctx_type_11 Voice_svf_step_init();
+Voice__ctx_type_11 Voice_svf_step_init();
 
-int32_t Voice_svf_step(_ctx_type_11 &_ctx, int32_t input, int32_t g, int32_t q, int sel);
+int32_t Voice_svf_step(Voice__ctx_type_11 &_ctx, int32_t input, int32_t g, int32_t q, int sel);
 
-typedef struct _ctx_type_12 {
-   _ctx_type_11 step;
+typedef struct Voice__ctx_type_12 {
+   Voice__ctx_type_11 step;
    int32_t g;
-   _ctx_type_1 _inst0;
-} _ctx_type_12;
+   Voice__ctx_type_1 _inst0;
+} Voice__ctx_type_12;
 
-typedef _ctx_type_12 svf_type;
+typedef Voice__ctx_type_12 Voice_svf_type;
 
-_ctx_type_12 Voice__ctx_type_12_init();
+Voice__ctx_type_12 Voice__ctx_type_12_init();
 
-_ctx_type_12 Voice_svf_init();
+Voice__ctx_type_12 Voice_svf_init();
 
-int32_t Voice_svf(_ctx_type_12 &_ctx, int32_t input, int32_t fc, int32_t q, int sel);
+int32_t Voice_svf(Voice__ctx_type_12 &_ctx, int32_t input, int32_t fc, int32_t q, int sel);
 
-typedef struct _ctx_type_13 {
+typedef struct Voice__ctx_type_13 {
    int32_t value;
    int32_t sustainLevel;
    int state;
    int32_t releaseRate;
    int32_t decayRate;
    int32_t attackRate;
-   _ctx_type_7 _inst2;
-   _ctx_type_2 _inst1;
-   _ctx_type_4 _inst0;
-} _ctx_type_13;
+   Voice__ctx_type_7 _inst2;
+   Voice__ctx_type_2 _inst1;
+   Voice__ctx_type_4 _inst0;
+} Voice__ctx_type_13;
 
-typedef _ctx_type_13 adsr_type;
+typedef Voice__ctx_type_13 Voice_adsr_type;
 
-_ctx_type_13 Voice__ctx_type_13_init();
+Voice__ctx_type_13 Voice__ctx_type_13_init();
 
-_ctx_type_13 Voice_adsr_init();
+Voice__ctx_type_13 Voice_adsr_init();
 
-int32_t Voice_adsr(_ctx_type_13 &_ctx, uint8_t gate, int32_t attack, int32_t decay, int32_t sustain, int32_t release);
+int32_t Voice_adsr(Voice__ctx_type_13 &_ctx, uint8_t gate, int32_t attack, int32_t decay, int32_t sustain, int32_t release);
 
-typedef struct _ctx_type_14 {
+typedef struct Voice__ctx_type_14 {
    int32_t phase;
-   _ctx_type_4 _inst1;
-   _ctx_type_3 _inst0;
-} _ctx_type_14;
+   Voice__ctx_type_4 _inst1;
+   Voice__ctx_type_3 _inst0;
+} Voice__ctx_type_14;
 
-typedef _ctx_type_14 lfo_type;
+typedef Voice__ctx_type_14 Voice_lfo_type;
 
-_ctx_type_14 Voice__ctx_type_14_init();
+Voice__ctx_type_14 Voice__ctx_type_14_init();
 
-_ctx_type_14 Voice_lfo_init();
+Voice__ctx_type_14 Voice_lfo_init();
 
-int32_t Voice_lfo(_ctx_type_14 &_ctx, int32_t f, uint8_t gate);
+int32_t Voice_lfo(Voice__ctx_type_14 &_ctx, int32_t f, uint8_t gate);
 
-typedef struct _ctx_type_15 {
+typedef struct Voice__ctx_type_15 {
    int pre;
    int n4;
    int n3;
    int n2;
    int n1;
    int count;
-} _ctx_type_15;
+} Voice__ctx_type_15;
 
-typedef _ctx_type_15 mono_noteOn_type;
+typedef Voice__ctx_type_15 Voice_mono_noteOn_type;
 
-_ctx_type_15 Voice__ctx_type_15_init();
+Voice__ctx_type_15 Voice__ctx_type_15_init();
 
-_ctx_type_15 Voice_mono_noteOn_init();
+Voice__ctx_type_15 Voice_mono_noteOn_init();
 
-int Voice_mono_noteOn(_ctx_type_15 &_ctx, int n);
+int Voice_mono_noteOn(Voice__ctx_type_15 &_ctx, int n);
 
-typedef _ctx_type_15 mono_noteOff_type;
+typedef Voice__ctx_type_15 Voice_mono_noteOff_type;
 
-_ctx_type_15 Voice_mono_noteOff_init();
+Voice__ctx_type_15 Voice_mono_noteOff_init();
 
-int Voice_mono_noteOff(_ctx_type_15 &_ctx, int n);
+int Voice_mono_noteOff(Voice__ctx_type_15 &_ctx, int n);
 
-typedef _ctx_type_15 mono_isGateOn_type;
+typedef Voice__ctx_type_15 Voice_mono_isGateOn_type;
 
-_ctx_type_15 Voice_mono_isGateOn_init();
+Voice__ctx_type_15 Voice_mono_isGateOn_init();
 
-uint8_t Voice_mono_isGateOn(_ctx_type_15 &_ctx);
+uint8_t Voice_mono_isGateOn(Voice__ctx_type_15 &_ctx);
 
-typedef struct _ctx_type_16 {
+typedef struct Voice__ctx_type_16 {
    int32_t wave;
    int32_t res;
    int32_t pw;
    int32_t pitch;
-   _ctx_type_15 monoin;
+   Voice__ctx_type_15 monoin;
    int32_t lfo_rate;
    int32_t lfo_amt;
    int32_t flt_atm;
@@ -214,44 +214,44 @@ typedef struct _ctx_type_16 {
    int32_t amp_r;
    int32_t amp_d;
    int32_t amp_a;
-   _ctx_type_12 _inst4;
-   _ctx_type_13 _inst3;
-   _ctx_type_13 _inst2;
-   _ctx_type_10 _inst1;
-   _ctx_type_14 _inst0;
-} _ctx_type_16;
+   Voice__ctx_type_12 _inst4;
+   Voice__ctx_type_13 _inst3;
+   Voice__ctx_type_13 _inst2;
+   Voice__ctx_type_10 _inst1;
+   Voice__ctx_type_14 _inst0;
+} Voice__ctx_type_16;
 
-typedef _ctx_type_16 process_type;
+typedef Voice__ctx_type_16 Voice_process_type;
 
-_ctx_type_16 Voice__ctx_type_16_init();
+Voice__ctx_type_16 Voice__ctx_type_16_init();
 
-_ctx_type_16 Voice_process_init();
+Voice__ctx_type_16 Voice_process_init();
 
-int32_t Voice_process(_ctx_type_16 &_ctx, int32_t i);
+int32_t Voice_process(Voice__ctx_type_16 &_ctx, int32_t i);
 
-typedef _ctx_type_16 noteOn_type;
+typedef Voice__ctx_type_16 Voice_noteOn_type;
 
-_ctx_type_16 Voice_noteOn_init();
+Voice__ctx_type_16 Voice_noteOn_init();
 
-void Voice_noteOn(_ctx_type_16 &_ctx, int note, int velocity);
+void Voice_noteOn(Voice__ctx_type_16 &_ctx, int note, int velocity);
 
-typedef _ctx_type_16 noteOff_type;
+typedef Voice__ctx_type_16 Voice_noteOff_type;
 
-_ctx_type_16 Voice_noteOff_init();
+Voice__ctx_type_16 Voice_noteOff_init();
 
-void Voice_noteOff(_ctx_type_16 &_ctx, int note);
+void Voice_noteOff(Voice__ctx_type_16 &_ctx, int note);
 
-typedef _ctx_type_16 controlChange_type;
+typedef Voice__ctx_type_16 Voice_controlChange_type;
 
-_ctx_type_16 Voice_controlChange_init();
+Voice__ctx_type_16 Voice_controlChange_init();
 
-void Voice_controlChange(_ctx_type_16 &_ctx, int control, int value);
+void Voice_controlChange(Voice__ctx_type_16 &_ctx, int control, int value);
 
-typedef _ctx_type_16 default_type;
+typedef Voice__ctx_type_16 Voice_default_type;
 
-_ctx_type_16 Voice_default_init();
+Voice__ctx_type_16 Voice_default_init();
 
-void Voice_default_(_ctx_type_16 &_ctx);
+void Voice_default_(Voice__ctx_type_16 &_ctx);
 
 
 

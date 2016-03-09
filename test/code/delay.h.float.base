@@ -4,185 +4,185 @@
 #include <math.h>
 #include "vultin.h"
 
-typedef struct _ctx_type_0 {
+typedef struct Delay__ctx_type_0 {
    float x;
-} _ctx_type_0;
+} Delay__ctx_type_0;
 
-typedef _ctx_type_0 smooth_type;
+typedef Delay__ctx_type_0 Delay_smooth_type;
 
-_ctx_type_0 Delay__ctx_type_0_init();
+Delay__ctx_type_0 Delay__ctx_type_0_init();
 
-_ctx_type_0 Delay_smooth_init();
+Delay__ctx_type_0 Delay_smooth_init();
 
-float Delay_smooth(_ctx_type_0 &_ctx, float input);
+float Delay_smooth(Delay__ctx_type_0 &_ctx, float input);
 
-typedef struct _ctx_type_1 {
+typedef struct Delay__ctx_type_1 {
    float pre_x;
-} _ctx_type_1;
+} Delay__ctx_type_1;
 
-typedef _ctx_type_1 change_type;
+typedef Delay__ctx_type_1 Delay_change_type;
 
-_ctx_type_1 Delay__ctx_type_1_init();
+Delay__ctx_type_1 Delay__ctx_type_1_init();
 
-_ctx_type_1 Delay_change_init();
+Delay__ctx_type_1 Delay_change_init();
 
-uint8_t Delay_change(_ctx_type_1 &_ctx, float x);
+uint8_t Delay_change(Delay__ctx_type_1 &_ctx, float x);
 
-typedef struct _ctx_type_2 {
+typedef struct Delay__ctx_type_2 {
    uint8_t pre_x;
-} _ctx_type_2;
+} Delay__ctx_type_2;
 
-typedef _ctx_type_2 edge_type;
+typedef Delay__ctx_type_2 Delay_edge_type;
 
-_ctx_type_2 Delay__ctx_type_2_init();
+Delay__ctx_type_2 Delay__ctx_type_2_init();
 
-_ctx_type_2 Delay_edge_init();
+Delay__ctx_type_2 Delay_edge_init();
 
-uint8_t Delay_edge(_ctx_type_2 &_ctx, uint8_t x);
+uint8_t Delay_edge(Delay__ctx_type_2 &_ctx, uint8_t x);
 
-typedef struct _ctx_type_3 {
+typedef struct Delay__ctx_type_3 {
    int count;
-} _ctx_type_3;
+} Delay__ctx_type_3;
 
-typedef _ctx_type_3 each_type;
+typedef Delay__ctx_type_3 Delay_each_type;
 
-_ctx_type_3 Delay__ctx_type_3_init();
+Delay__ctx_type_3 Delay__ctx_type_3_init();
 
-_ctx_type_3 Delay_each_init();
+Delay__ctx_type_3 Delay_each_init();
 
-uint8_t Delay_each(_ctx_type_3 &_ctx, int n);
+uint8_t Delay_each(Delay__ctx_type_3 &_ctx, int n);
 
 float Delay_pitchToRate(float d);
 
-typedef struct _ctx_type_5 {
+typedef struct Delay__ctx_type_5 {
    float rate;
    float phase;
-   _ctx_type_1 _inst0;
-} _ctx_type_5;
+   Delay__ctx_type_1 _inst0;
+} Delay__ctx_type_5;
 
-typedef _ctx_type_5 phasor_type;
+typedef Delay__ctx_type_5 Delay_phasor_type;
 
-_ctx_type_5 Delay__ctx_type_5_init();
+Delay__ctx_type_5 Delay__ctx_type_5_init();
 
-_ctx_type_5 Delay_phasor_init();
+Delay__ctx_type_5 Delay_phasor_init();
 
-float Delay_phasor(_ctx_type_5 &_ctx, float pitch, uint8_t reset);
+float Delay_phasor(Delay__ctx_type_5 &_ctx, float pitch, uint8_t reset);
 
-typedef struct _ctx_type_6 {
+typedef struct Delay__ctx_type_6 {
    float phase;
-   _ctx_type_2 _inst0;
-} _ctx_type_6;
+   Delay__ctx_type_2 _inst0;
+} Delay__ctx_type_6;
 
-typedef _ctx_type_6 lfo_type;
+typedef Delay__ctx_type_6 Delay_lfo_type;
 
-_ctx_type_6 Delay__ctx_type_6_init();
+Delay__ctx_type_6 Delay__ctx_type_6_init();
 
-_ctx_type_6 Delay_lfo_init();
+Delay__ctx_type_6 Delay_lfo_init();
 
-float Delay_lfo(_ctx_type_6 &_ctx, float f, uint8_t gate);
+float Delay_lfo(Delay__ctx_type_6 &_ctx, float f, uint8_t gate);
 
-typedef struct _ctx_type_7 {
+typedef struct Delay__ctx_type_7 {
    float pre_phase1;
-   _ctx_type_5 _inst2;
-   _ctx_type_0 _inst1;
-   _ctx_type_5 _inst0;
-} _ctx_type_7;
+   Delay__ctx_type_5 _inst2;
+   Delay__ctx_type_0 _inst1;
+   Delay__ctx_type_5 _inst0;
+} Delay__ctx_type_7;
 
-typedef _ctx_type_7 phd_osc_type;
+typedef Delay__ctx_type_7 Delay_phd_osc_type;
 
-_ctx_type_7 Delay__ctx_type_7_init();
+Delay__ctx_type_7 Delay__ctx_type_7_init();
 
-_ctx_type_7 Delay_phd_osc_init();
+Delay__ctx_type_7 Delay_phd_osc_init();
 
-float Delay_phd_osc(_ctx_type_7 &_ctx, float pitch, float detune);
+float Delay_phd_osc(Delay__ctx_type_7 &_ctx, float pitch, float detune);
 
-typedef struct _ctx_type_8 {
+typedef struct Delay__ctx_type_8 {
    int write_pos;
    float buffer[44100];
-} _ctx_type_8;
+} Delay__ctx_type_8;
 
-typedef _ctx_type_8 delay_type;
+typedef Delay__ctx_type_8 Delay_delay_type;
 
-_ctx_type_8 Delay__ctx_type_8_init();
+Delay__ctx_type_8 Delay__ctx_type_8_init();
 
-_ctx_type_8 Delay_delay_init();
+Delay__ctx_type_8 Delay_delay_init();
 
-float Delay_delay(_ctx_type_8 &_ctx, float x, float time, float feedback);
+float Delay_delay(Delay__ctx_type_8 &_ctx, float x, float time, float feedback);
 
-typedef struct _ctx_type_9 {
+typedef struct Delay__ctx_type_9 {
    int pre;
    int notes[4];
    int count;
-} _ctx_type_9;
+} Delay__ctx_type_9;
 
-typedef _ctx_type_9 mono_noteOn_type;
+typedef Delay__ctx_type_9 Delay_mono_noteOn_type;
 
-_ctx_type_9 Delay__ctx_type_9_init();
+Delay__ctx_type_9 Delay__ctx_type_9_init();
 
-_ctx_type_9 Delay_mono_noteOn_init();
+Delay__ctx_type_9 Delay_mono_noteOn_init();
 
-int Delay_mono_noteOn(_ctx_type_9 &_ctx, int n);
+int Delay_mono_noteOn(Delay__ctx_type_9 &_ctx, int n);
 
-typedef _ctx_type_9 mono_noteOff_type;
+typedef Delay__ctx_type_9 Delay_mono_noteOff_type;
 
-_ctx_type_9 Delay_mono_noteOff_init();
+Delay__ctx_type_9 Delay_mono_noteOff_init();
 
-int Delay_mono_noteOff(_ctx_type_9 &_ctx, int n);
+int Delay_mono_noteOff(Delay__ctx_type_9 &_ctx, int n);
 
-typedef _ctx_type_9 mono_isGateOn_type;
+typedef Delay__ctx_type_9 Delay_mono_isGateOn_type;
 
-_ctx_type_9 Delay_mono_isGateOn_init();
+Delay__ctx_type_9 Delay_mono_isGateOn_init();
 
-uint8_t Delay_mono_isGateOn(_ctx_type_9 &_ctx);
+uint8_t Delay_mono_isGateOn(Delay__ctx_type_9 &_ctx);
 
-typedef struct _ctx_type_10 {
+typedef struct Delay__ctx_type_10 {
    float volume;
    float time;
    float pitch;
-   _ctx_type_9 notes;
+   Delay__ctx_type_9 notes;
    float lfo_rate;
    float lfo_amt;
    float feedback;
    float detune;
-   _ctx_type_8 _inst5;
-   _ctx_type_0 _inst4;
-   _ctx_type_0 _inst3;
-   _ctx_type_0 _inst2;
-   _ctx_type_7 _inst1;
-   _ctx_type_6 _inst0;
-} _ctx_type_10;
+   Delay__ctx_type_8 _inst5;
+   Delay__ctx_type_0 _inst4;
+   Delay__ctx_type_0 _inst3;
+   Delay__ctx_type_0 _inst2;
+   Delay__ctx_type_7 _inst1;
+   Delay__ctx_type_6 _inst0;
+} Delay__ctx_type_10;
 
-typedef _ctx_type_10 process_type;
+typedef Delay__ctx_type_10 Delay_process_type;
 
-_ctx_type_10 Delay__ctx_type_10_init();
+Delay__ctx_type_10 Delay__ctx_type_10_init();
 
-_ctx_type_10 Delay_process_init();
+Delay__ctx_type_10 Delay_process_init();
 
-float Delay_process(_ctx_type_10 &_ctx, float input);
+float Delay_process(Delay__ctx_type_10 &_ctx, float input);
 
-typedef _ctx_type_10 noteOn_type;
+typedef Delay__ctx_type_10 Delay_noteOn_type;
 
-_ctx_type_10 Delay_noteOn_init();
+Delay__ctx_type_10 Delay_noteOn_init();
 
-void Delay_noteOn(_ctx_type_10 &_ctx, int note, int velocity);
+void Delay_noteOn(Delay__ctx_type_10 &_ctx, int note, int velocity);
 
-typedef _ctx_type_10 noteOff_type;
+typedef Delay__ctx_type_10 Delay_noteOff_type;
 
-_ctx_type_10 Delay_noteOff_init();
+Delay__ctx_type_10 Delay_noteOff_init();
 
-void Delay_noteOff(_ctx_type_10 &_ctx, int note);
+void Delay_noteOff(Delay__ctx_type_10 &_ctx, int note);
 
-typedef _ctx_type_10 controlChange_type;
+typedef Delay__ctx_type_10 Delay_controlChange_type;
 
-_ctx_type_10 Delay_controlChange_init();
+Delay__ctx_type_10 Delay_controlChange_init();
 
-void Delay_controlChange(_ctx_type_10 &_ctx, int control, float value);
+void Delay_controlChange(Delay__ctx_type_10 &_ctx, int control, float value);
 
-typedef _ctx_type_10 default_type;
+typedef Delay__ctx_type_10 Delay_default_type;
 
-_ctx_type_10 Delay_default_init();
+Delay__ctx_type_10 Delay_default_init();
 
-void Delay_default_(_ctx_type_10 &_ctx);
+void Delay_default_(Delay__ctx_type_10 &_ctx);
 
 
 

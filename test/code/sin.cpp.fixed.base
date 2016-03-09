@@ -1,21 +1,21 @@
 #include "sin.h"
 
-_ctx_type_0 Sin__ctx_type_0_init(){
-   _ctx_type_0 _ctx;
+Sin__ctx_type_0 Sin__ctx_type_0_init(){
+   Sin__ctx_type_0 _ctx;
    _ctx.pre_x = 0x0 /* 0.000000 */;
    return _ctx;
 }
 
-_ctx_type_0 Sin_change_init(){ return Sin__ctx_type_0_init();}
+Sin__ctx_type_0 Sin_change_init(){ return Sin__ctx_type_0_init();}
 
-uint8_t Sin_change(_ctx_type_0 &_ctx, int32_t x){
+uint8_t Sin_change(Sin__ctx_type_0 &_ctx, int32_t x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
 
-_ctx_type_1 Sin__ctx_type_1_init(){
-   _ctx_type_1 _ctx;
+Sin__ctx_type_1 Sin__ctx_type_1_init(){
+   Sin__ctx_type_1 _ctx;
    _ctx.y2 = 0x0 /* 0.000000 */;
    _ctx.y1 = 0x0 /* 0.000000 */;
    _ctx.w = 0x0 /* 0.000000 */;
@@ -25,9 +25,9 @@ _ctx_type_1 Sin__ctx_type_1_init(){
    return _ctx;
 }
 
-_ctx_type_1 Sin_sc_osc_init(){ return Sin__ctx_type_1_init();}
+Sin__ctx_type_1 Sin_sc_osc_init(){ return Sin__ctx_type_1_init();}
 
-int32_t Sin_sc_osc(_ctx_type_1 &_ctx, int32_t pitch){
+int32_t Sin_sc_osc(Sin__ctx_type_1 &_ctx, int32_t pitch){
    int32_t g = 0x10000 /* 1.000000 */;
    if(Sin_change(_ctx._inst0,pitch)){
       int32_t pre_w = _ctx.w;
@@ -42,46 +42,46 @@ int32_t Sin_sc_osc(_ctx_type_1 &_ctx, int32_t pitch){
    return _ctx.y1;
 }
 
-_ctx_type_1 Sin_sc_osc_start_init(){ return Sin__ctx_type_1_init();}
+Sin__ctx_type_1 Sin_sc_osc_start_init(){ return Sin__ctx_type_1_init();}
 
-void Sin_sc_osc_start(_ctx_type_1 &_ctx){
+void Sin_sc_osc_start(Sin__ctx_type_1 &_ctx){
    _ctx.y1 = 0x10000 /* 1.000000 */;
    _ctx.y2 = fix_mul((- _ctx.y1),0x8000 /* 0.500000 */);
 }
 
-_ctx_type_2 Sin__ctx_type_2_init(){
-   _ctx_type_2 _ctx;
+Sin__ctx_type_2 Sin__ctx_type_2_init(){
+   Sin__ctx_type_2 _ctx;
    _ctx.pitch = 0x0 /* 0.000000 */;
    _ctx._inst0 = Sin__ctx_type_1_init();
    Sin_default_(_ctx);
    return _ctx;
 }
 
-_ctx_type_2 Sin_process_init(){ return Sin__ctx_type_2_init();}
+Sin__ctx_type_2 Sin_process_init(){ return Sin__ctx_type_2_init();}
 
-int32_t Sin_process(_ctx_type_2 &_ctx, int32_t input){
+int32_t Sin_process(Sin__ctx_type_2 &_ctx, int32_t input){
    return Sin_sc_osc(_ctx._inst0,_ctx.pitch);
 }
 
-_ctx_type_2 Sin_noteOn_init(){ return Sin__ctx_type_2_init();}
+Sin__ctx_type_2 Sin_noteOn_init(){ return Sin__ctx_type_2_init();}
 
-void Sin_noteOn(_ctx_type_2 &_ctx, int note, int velocity){
+void Sin_noteOn(Sin__ctx_type_2 &_ctx, int note, int velocity){
    _ctx.pitch = int_to_fix(note);
 }
 
-_ctx_type_2 Sin_noteOff_init(){ return Sin__ctx_type_2_init();}
+Sin__ctx_type_2 Sin_noteOff_init(){ return Sin__ctx_type_2_init();}
 
-void Sin_noteOff(_ctx_type_2 &_ctx, int note){
+void Sin_noteOff(Sin__ctx_type_2 &_ctx, int note){
 }
 
-_ctx_type_2 Sin_controlChange_init(){ return Sin__ctx_type_2_init();}
+Sin__ctx_type_2 Sin_controlChange_init(){ return Sin__ctx_type_2_init();}
 
-void Sin_controlChange(_ctx_type_2 &_ctx, int control, int value){
+void Sin_controlChange(Sin__ctx_type_2 &_ctx, int control, int value){
 }
 
-_ctx_type_2 Sin_default_init(){ return Sin__ctx_type_2_init();}
+Sin__ctx_type_2 Sin_default_init(){ return Sin__ctx_type_2_init();}
 
-void Sin_default_(_ctx_type_2 &_ctx){
+void Sin_default_(Sin__ctx_type_2 &_ctx){
    _ctx.pitch = 0x450000 /* 69.000000 */;
 }
 

@@ -1,49 +1,49 @@
 #include "adsr.h"
 
-_ctx_type_0 Adsr__ctx_type_0_init(){
-   _ctx_type_0 _ctx;
+Adsr__ctx_type_0 Adsr__ctx_type_0_init(){
+   Adsr__ctx_type_0 _ctx;
    _ctx.count = 0;
    return _ctx;
 }
 
-_ctx_type_0 Adsr_each_init(){ return Adsr__ctx_type_0_init();}
+Adsr__ctx_type_0 Adsr_each_init(){ return Adsr__ctx_type_0_init();}
 
-uint8_t Adsr_each(_ctx_type_0 &_ctx, int n){
+uint8_t Adsr_each(Adsr__ctx_type_0 &_ctx, int n){
    uint8_t ret = (_ctx.count == 0);
    _ctx.count = ((_ctx.count + 1) % n);
    return ret;
 }
 
-_ctx_type_1 Adsr__ctx_type_1_init(){
-   _ctx_type_1 _ctx;
+Adsr__ctx_type_1 Adsr__ctx_type_1_init(){
+   Adsr__ctx_type_1 _ctx;
    _ctx.pre_x = 0;
    return _ctx;
 }
 
-_ctx_type_1 Adsr_bchange_init(){ return Adsr__ctx_type_1_init();}
+Adsr__ctx_type_1 Adsr_bchange_init(){ return Adsr__ctx_type_1_init();}
 
-uint8_t Adsr_bchange(_ctx_type_1 &_ctx, uint8_t x){
+uint8_t Adsr_bchange(Adsr__ctx_type_1 &_ctx, uint8_t x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
 
-_ctx_type_2 Adsr__ctx_type_2_init(){
-   _ctx_type_2 _ctx;
+Adsr__ctx_type_2 Adsr__ctx_type_2_init(){
+   Adsr__ctx_type_2 _ctx;
    _ctx.pre_x = 0x0 /* 0.000000 */;
    return _ctx;
 }
 
-_ctx_type_2 Adsr_lpfilter_init(){ return Adsr__ctx_type_2_init();}
+Adsr__ctx_type_2 Adsr_lpfilter_init(){ return Adsr__ctx_type_2_init();}
 
-int32_t Adsr_lpfilter(_ctx_type_2 &_ctx, int32_t x){
+int32_t Adsr_lpfilter(Adsr__ctx_type_2 &_ctx, int32_t x){
    int32_t ret = fix_mul(fix_add(x,_ctx.pre_x),0x8000 /* 0.500000 */);
    _ctx.pre_x = x;
    return ret;
 }
 
-_ctx_type_3 Adsr__ctx_type_3_init(){
-   _ctx_type_3 _ctx;
+Adsr__ctx_type_3 Adsr__ctx_type_3_init(){
+   Adsr__ctx_type_3 _ctx;
    _ctx.value = 0x0 /* 0.000000 */;
    _ctx.sustainLevel = 0x0 /* 0.000000 */;
    _ctx.state = 0;
@@ -56,9 +56,9 @@ _ctx_type_3 Adsr__ctx_type_3_init(){
    return _ctx;
 }
 
-_ctx_type_3 Adsr_adsr_init(){ return Adsr__ctx_type_3_init();}
+Adsr__ctx_type_3 Adsr_adsr_init(){ return Adsr__ctx_type_3_init();}
 
-int32_t Adsr_adsr(_ctx_type_3 &_ctx, uint8_t gate, int32_t attack, int32_t decay, int32_t sustain, int32_t release){
+int32_t Adsr_adsr(Adsr__ctx_type_3 &_ctx, uint8_t gate, int32_t attack, int32_t decay, int32_t sustain, int32_t release){
    int IDLE = 0;
    int ATTACK = 1;
    int DECAY = 2;
