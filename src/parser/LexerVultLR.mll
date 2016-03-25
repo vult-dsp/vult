@@ -71,14 +71,7 @@ let makeIdToken lexbuf =
       Hashtbl.find keyword_table s
    else Ident(s)
 
-(* Functions for testing the tokenizer *)
-let tokenizeString tokenizer str =
-   let lexbuf = Lexing.from_string str in
-   let rec loop acc =
-      match tokenizer lexbuf with
-      | EOF -> List.rev acc
-      | t -> loop (t::acc)
-   in loop []
+
 }
 
 let newline = ('\010' | '\013' | "\013\010")
@@ -198,3 +191,23 @@ and string buffer = parse
         let () = Buffer.add_string buffer s in
         string buffer lexbuf
       }
+{
+
+  (* Functions for testing the tokenizer *)
+  let tokenizeString str =
+    let lexbuf = Lexing.from_string str in
+    let rec loop acc =
+      match next_token lexbuf with
+      | EOF -> List.rev acc
+      | t -> loop (t::acc)
+    in loop []
+
+  (* Functions for testing the parser *)
+  let parseProgString str =
+    ParserVultLR.prog next_token (Lexing.from_string str)
+
+  (* Functions for testing the expression parser *)
+  let parseExpString str =
+    ParserVultLR.expression next_token (Lexing.from_string str)
+
+}

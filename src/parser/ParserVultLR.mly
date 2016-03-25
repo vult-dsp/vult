@@ -70,6 +70,8 @@ type ('a,'sep) sepseq = ('a,'sep) nsepseq option
 
 %start prog
 %type <unit> prog
+%start expression
+%type <unit> expression
 
 %%
 
