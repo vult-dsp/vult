@@ -142,6 +142,16 @@ end
 (** Module to perform parsing tests using the Menhir parser *)
 module MenhirParserTest = struct
 
+   let tokenizeFile (filename:string) : unit =
+      let chan   = open_in filename in
+      let lexbuf = Lexing.from_channel chan in
+      let rec loop acc =
+         match LexerVultLR.next_token lexbuf with
+         | ParserVultLR.EOF -> List.rev acc
+         | t -> loop (t::acc)
+      in loop [] |> ignore;
+      close_in chan
+
    let parseFile (filename:string) : unit =
       let chan   = open_in filename in
       let lexbuf = Lexing.from_channel chan in
@@ -149,10 +159,13 @@ module MenhirParserTest = struct
       close_in chan
 
    let process (fullfile:string) : string =
-      try
-         parseFile fullfile;
-         "ok"
-      with | ParserVultLR.Error -> "fail"
+      match tokenizeFile fullfile with
+      | exception _ -> "tokenizing"
+      | _ ->
+         begin match parseFile fullfile with
+         | exception _ -> "parsing"
+         | _ -> "ok"
+         end
 
    let run (file:string) _ =
       let folder = "parser" in
@@ -160,7 +173,7 @@ module MenhirParserTest = struct
       let current   = process fullfile in
       assert_equal
          ~msg:("Parsing file "^fullfile)
-         ~pp_diff:(fun ff (_,_) -> Format.fprintf ff "\nFailed to parse file '%s'" fullfile )
+         ~pp_diff:(fun ff (_,b) -> Format.fprintf ff "\nFailed to while %s file '%s'" b fullfile )
          "ok" current
 
    let get files = "menhir">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)
