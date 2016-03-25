@@ -47,7 +47,6 @@ Library "vult_parser"
     ParserTypes,
     ParserVult,
     ParserVultLR,
-    TokensLR,
     TokenStream
   BuildDepends:
     vult_core,

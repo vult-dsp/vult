@@ -30,6 +30,7 @@ type 'a nseq = 'a * 'a list
 type ('a,'sep) nsepseq = 'a * ('a,'sep) seq
 type ('a,'sep) sepseq = ('a,'sep) nsepseq option
 
+
 (* END HEADER *)
 %}
 
@@ -42,11 +43,20 @@ type ('a,'sep) sepseq = ('a,'sep) nsepseq option
 
 (* Symbols *)
 
-%token LPAR RPAR LBRACE RBRACE LBRACKET RBRACKET LSEQ RSEQ
-%token ATTR COLON SEMI COMMA EQUAL WILD MINUS DOT
+%token LPAR RPAR LBRACE RBRACE LBRACKET RBRACKET LSEQ RSEQ LARR RARR
+%token ATTR COLON SEMI COMMA EQUAL WILD MINUS DOT ARROW
+%token EOF
 
 (* Operators *)
-%token PLUS
+%token <string> OP_SUM
+%token <string> OP_PROD
+%token <string> OP_LOGIC
+%token <string> OP_REL
+
+%left OP_LOGIC
+%left OP_REL
+%left OP_SUM
+%left OP_PROD
 
 (* Literals *)
 
@@ -54,7 +64,7 @@ type ('a,'sep) sepseq = ('a,'sep) nsepseq option
 %token <string> String
 %token <string> Tick
 %token <string> Int
-%token <string> Float
+%token <string> Real
 
 (* ENTRY *)
 
@@ -124,7 +134,11 @@ attribute:
 (* Type definitions *)
 
 type_definition:
-  TYPE Ident
+  TYPE Ident RBRACKET nsepseq(type_member,SEMI) LBRACKET
+  {}
+
+type_member:
+  Ident type_annotation
   {}
 
 
@@ -254,7 +268,7 @@ if_expression:
 literal:
   Int
   {}
-| Float
+| Real
   {}
 | TRUE
   {}
@@ -266,5 +280,8 @@ sequence:
   {}
 
 (* Operators *)
-bin_op:
-   PLUS {}
+%inline bin_op:
+  | OP_SUM   {}
+  | OP_PROD  {}
+  | OP_LOGIC {}
+  | OP_REL   {}

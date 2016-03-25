@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 (** Vult Lexer based on ocamllex *)
 open Lexing
-open TokensLR
+open ParserVultLR
 
 (** Updates the location of the lexbuf*)
 let updateLocation lexbuf (line:int) (chars:int) : unit =
@@ -45,7 +45,7 @@ let keyword_table =
       "if",      IF;
       "then",    THEN;
       "else",    ELSE;
-      "return",  RET;
+      "return",  RETURN;
       "while",   WHILE;
       "type",    TYPE;
       "true",    TRUE;
@@ -69,7 +69,7 @@ let makeIdToken lexbuf =
    let s = getLexeme lexbuf in
    if Hashtbl.mem keyword_table s then
       Hashtbl.find keyword_table s
-   else ID(s)
+   else Ident(s)
 
 (* Functions for testing the tokenizer *)
 let tokenizeString tokenizer str =
@@ -79,7 +79,6 @@ let tokenizeString tokenizer str =
       | EOF -> List.rev acc
       | t -> loop (t::acc)
    in loop []
-   |> TokensLR.show_tokens
 }
 
 let newline = ('\010' | '\013' | "\013\010")
@@ -101,14 +100,14 @@ rule next_token = parse
     }
   | blank +     { let _ = getLexeme lexbuf in next_token lexbuf }
   | '.'         { DOT      }
-  | '@'         { AT       }
+  | "@["        { ATTR     }
   | '_'         { WILD     }
-  | '('         { LPAREN   }
-  | ')'         { RPAREN   }
+  | '('         { LPAR     }
+  | ')'         { RPAR     }
   | '{'         { LBRACE   }
-  | '['         { LBRACK   }
+  | '['         { LBRACKET }
   | '}'         { RBRACE   }
-  | ']'         { RBRACK   }
+  | ']'         { RBRACKET }
   | "{|"        { LSEQ     }
   | "|}"        { RSEQ     }
   | "[|"        { LARR     }
@@ -117,7 +116,6 @@ rule next_token = parse
   | ';'         { SEMI     }
   | ','         { COMMA    }
   | '='         { EQUAL    }
-  | '''         { TICK     }
   | "->"        { ARROW    }
   | "||"        { OP_LOGIC (getLexeme lexbuf) }
   | "!"         { OP_LOGIC (getLexeme lexbuf) }
@@ -130,15 +128,17 @@ rule next_token = parse
   | [ '+' '-' ] { OP_SUM   (getLexeme lexbuf) }
   | [ '*' '/' ] { OP_PROD  (getLexeme lexbuf) }
   | '%'         { OP_PROD  (getLexeme lexbuf) }
-  | int         { INT  (getLexeme lexbuf) }
-  | float       { REAL (getLexeme lexbuf) }
+  | int         { Int  (getLexeme lexbuf) }
+  | float       { Real (getLexeme lexbuf) }
+  | ''' idchar +
+                { Tick (getLexeme lexbuf) }
   | startid idchar *
                 { makeIdToken lexbuf }
   |  '"'        {
                   let buffer    = Buffer.create 0 in
                   let ()        = string buffer lexbuf in
                   let str       = Buffer.contents buffer in
-                  STRING str
+                  String(str)
 
                 }
   | "//"        { line_comment lexbuf}
