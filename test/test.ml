@@ -139,6 +139,34 @@ module ParserTest = struct
 
 end
 
+(** Module to perform parsing tests using the Menhir parser *)
+module MenhirParserTest = struct
+
+   let parseFile (filename:string) : unit =
+      let chan   = open_in filename in
+      let lexbuf = Lexing.from_channel chan in
+      let () = ParserVultLR.prog LexerVultLR.next_token lexbuf in
+      close_in chan
+
+   let process (fullfile:string) : string =
+      try
+         parseFile fullfile;
+         "ok"
+      with | ParserVultLR.Error -> "fail"
+
+   let run (file:string) _ =
+      let folder = "parser" in
+      let fullfile  = checkFile (in_test_directory (folder^"/"^file)) in
+      let current   = process fullfile in
+      assert_equal
+         ~msg:("Parsing file "^fullfile)
+         ~pp_diff:(fun ff (_,_) -> Format.fprintf ff "\nFailed to parse file '%s'" fullfile )
+         "ok" current
+
+   let get files = "menhir">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)
+
+end
+
 (** Module to perform code generation tests *)
 module CodeGenerationTest = struct
 
@@ -252,6 +280,7 @@ let suite =
       CodeGenerationTest.get code_files "js";
       CompileTest.get code_files "float";
       CompileTest.get code_files "fixed";
+      MenhirParserTest.get parser_files;
    ]
 
 
