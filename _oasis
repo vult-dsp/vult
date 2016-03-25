@@ -43,8 +43,10 @@ Library "vult_parser"
   Path: src/parser
   Modules:
     LexerVult,
+    LexerVultLR,
     ParserTypes,
     ParserVult,
+    ParserVultLR,
     TokenStream
   BuildDepends:
     vult_core,

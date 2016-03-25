@@ -106,3 +106,4 @@ true: annot, bin_annot
 <test/*.ml{,i,y}>: use_vult_util
 # OASIS_STOP
 true: debug
+true: use_menhir

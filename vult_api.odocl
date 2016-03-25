@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 7d30b233d59fd1385570e5f52ad1f5f3)
+# DO NOT EDIT (digest: 1859516783eab04a3270faf167685739)
 src/util/Error
 src/util/Loc
 src/util/PrintBuffer
@@ -11,8 +11,10 @@ src/core/VEnv
 src/core/Common
 src/core/VType
 src/parser/LexerVult
+src/parser/LexerVultLR
 src/parser/ParserTypes
 src/parser/ParserVult
+src/parser/ParserVultLR
 src/parser/TokenStream
 src/Driver
 # OASIS_STOP

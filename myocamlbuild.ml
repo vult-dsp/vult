@@ -664,6 +664,7 @@ Ocamlbuild_plugin.dispatch (MyOCamlbuildBase.dispatch_combine [
       | After_rules ->
           flag ["compile"; "ocaml"; "native"]
             (S[A"-w"; A "+27+33"]);
+          mark_tag_used "tests";
 
       | _ -> ()
     );

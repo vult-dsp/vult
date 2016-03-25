@@ -29,7 +29,6 @@ open TypesVult
 open ParserTypes
 open TokenStream
 
-
 module TokenKind = struct
    type kind    = token_enum
    let next     = next_token
