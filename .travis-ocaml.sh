@@ -29,6 +29,9 @@ UPDATE_GCC_BINUTILS=${UPDATE_GCC_BINUTILS:-"0"}
 # Install Trusty remotes
 UBUNTU_TRUSTY=${UBUNTU_TRUSTY:-"0"}
 
+# Install XQuartz on OSX
+INSTALL_XQUARTZ=${INSTALL_XQUARTZ:-"true"}
+
 case "$OCAML_VERSION" in
     latest) OCAML_VERSION=4.02;;
 esac
@@ -43,7 +46,7 @@ install_on_linux () {
     4.02,1.2.1) OPAM_SWITCH=4.02.3; ppa=avsm/ocaml42+opam121 ;;
     4.02,1.2.2) ppa=avsm/ocaml42+opam12 ;;
     4.03,1.2.2)
-       OCAML_VERSION=4.02; OPAM_SWITCH="4.03.0+trunk";
+       OCAML_VERSION=4.02; OPAM_SWITCH="4.03.0";
        ppa=avsm/ocaml42+opam12 ;;
     *) echo "Unknown OCAML_VERSION=$OCAML_VERSION OPAM_VERSION=$OPAM_VERSION"
        exit 1 ;;
@@ -72,8 +75,6 @@ install_on_linux () {
     sudo apt-get -qq update
     sudo apt-get install -y gcc-4.8
     sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 90
-    wget http://mirrors.kernel.org/ubuntu/pool/main/b/binutils/binutils_2.24-5ubuntu3.1_amd64.deb
-    sudo dpkg -i binutils_2.24-5ubuntu3.1_amd64.deb
     sudo add-apt-repository -r "${TRUSTY}"
   fi
 
@@ -86,16 +87,20 @@ install_on_linux () {
 }
 
 install_on_osx () {
-  curl -OL "http://xquartz.macosforge.org/downloads/SL/XQuartz-2.7.6.dmg"
-  sudo hdiutil attach XQuartz-2.7.6.dmg
-  sudo installer -verbose -pkg /Volumes/XQuartz-2.7.6/XQuartz.pkg -target /
+  case $INSTALL_XQUARTZ in
+      true)
+        curl -OL "http://xquartz.macosforge.org/downloads/SL/XQuartz-2.7.6.dmg"
+        sudo hdiutil attach XQuartz-2.7.6.dmg
+        sudo installer -verbose -pkg /Volumes/XQuartz-2.7.6/XQuartz.pkg -target /
+        ;;
+  esac
   brew update &> /dev/null
   case "$OCAML_VERSION,$OPAM_VERSION" in
     3.12,1.2.2) OPAM_SWITCH=3.12.1; brew install opam ;;
     4.00,1.2.2) OPAM_SWITCH=4.00.1; brew install opam ;;
     4.01,1.2.2) OPAM_SWITCH=4.01.0; brew install opam ;;
-    4.02,1.2.2) brew install ocaml; brew install opam ;;
-    4.02,1.3.0) brew install ocaml; brew install opam --HEAD ;;
+    4.02,1.2.2) OPAM_SWITCH=4.02.3; brew install opam ;;
+    4.02,1.3.0) OPAM_SWITCH=4.02.3; brew install opam --HEAD ;;
     4.03,1.2.2) brew install ocaml --HEAD; brew install opam ;;
     *) echo "Unknown OCAML_VERSION=$OCAML_VERSION OPAM_VERSION=$OPAM_VERSION"
        exit 1 ;;
