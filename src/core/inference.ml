@@ -143,8 +143,8 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
 let rec addLhsToEnv mem_var (env:'a Env.t) (lhs:lhs_exp) : 'a Env.t =
    match lhs with
    | LWild _ -> env
-   | LId(id,Some(typ),_) ->
-      if mem_var = `Mem then Env.addMem env id typ else Env.addVar env id typ
+   | LId(id,Some(typ),attr) ->
+      if mem_var = `Mem then Env.addMem env id typ attr else Env.addVar env id typ attr
    | LId(_,None,_) -> env
    | LTuple(elems,_) ->
       List.fold_left (fun e a -> addLhsToEnv mem_var e a) env elems
@@ -158,12 +158,12 @@ let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : typed_id list * VType
    | [] -> [], [], env
    | SimpleId(id,attr)::t ->
       let typ  = VType.newvar () in
-      let env' = Env.addVar env id typ in
+      let env' = Env.addVar env id typ attr in
       let inner_args, inner_typ, env' = addArgsToEnv env' t in
       TypedId(id,typ,attr) :: inner_args, typ :: inner_typ, env'
    | TypedId(id,typ,attr)::t ->
       checkType (typLoc typ) env typ;
-      let env' = Env.addVar env id typ in
+      let env' = Env.addVar env id typ attr in
       let inner_args, inner_typ, env' = addArgsToEnv env' t in
       TypedId(id,typ,attr) :: inner_args, typ :: inner_typ, env'
 
@@ -236,16 +236,16 @@ let inferApply (loc:Loc.t Lazy.t) (args:exp list) (args_typ:VType.t list) (ret_t
    inferApplyArg args args_typ fn_args;
    unifyRaise loc fn_ret_type ret_type
 
-let addInstance (env:'a Env.t) (isactive:bool) (name:id option) (typ:VType.t) : 'a Env.t * id option =
+let addInstance (env:'a Env.t) (isactive:bool) (name:id option) (typ:VType.t) (attr:attr) : 'a Env.t * id option =
    if isactive then
       match name with
       | Some(n) ->
-         let env' = Env.addInstance env n typ in
+         let env' = Env.addInstance env n typ attr in
          env', name
       | None ->
          let n,env' = Env.tick env in
          let inst_name = [("_inst"^(string_of_int n))] in
-         let env' = Env.addInstance env' inst_name typ in
+         let env' = Env.addInstance env' inst_name typ attr in
          env', Some(inst_name)
    else
       env, None
@@ -293,7 +293,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
       let fn_args,fn_ret = VType.stripArrow fn_type in
       let active         = Scope.isActive ft in
       let fname_typ      = ref (VType.TId(fname,None)) in
-      let env',name'     = addInstance env' active name fname_typ in
+      let env',name'     = addInstance env' active name fname_typ attr in
       inferApply (expLoc e) args' types ret_type fn_args fn_ret;
       PCall(name',fname,args',{ attr with typ = Some(ret_type) }), env', ret_type
    | POp(op,[e1;e2],attr) ->
@@ -385,12 +385,12 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       unifyRaise (expLoc rhs') lhs_typ rhs_typ;
       StmtBind(lhs',rhs',attr), env', ret_type
    | StmtBlock(name,stmts,attr) ->
-      let env' = Env.enter `Block env [] in
+      let env' = Env.enter `Block env [] attr in
       let stmts', env', stmt_ret_type = inferStmtList env' ret_type stmts in
       let env' = Env.exit `Block env' in
       StmtBlock(name,stmts',attr), env', stmt_ret_type
    | StmtFun(name,args,body,ret_type,attr) ->
-      let env'                = Env.enter ~attr:attr `Function env name in
+      let env'                = Env.enter `Function env name attr in
       let args', types, env'  = addArgsToEnv env' args in
       let types',table        = VType.fixTypeList [] types in
       let ret_type',_         = VType.fixOptType table ret_type in
@@ -417,7 +417,7 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
    | StmtAliasType (name, alias, attr) ->
       StmtAliasType (name, alias, attr), env, ret_type
    | StmtExternal(name,args,fun_ret_type,linkname,attr) ->
-      let env' = Env.enter ~attr:attr `Function env name in
+      let env' = Env.enter `Function env name attr in
       let args',types, env' = addArgsToEnv env' args in
       let typ  = VType.makeArrowType fun_ret_type types in
       let env' = Env.setCurrentType env' typ true in

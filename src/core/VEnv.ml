@@ -176,6 +176,8 @@ module Scope = struct
 
          ext_fn    : string option;  (** contains the replacement name if it's an external function *)
 
+         loc       : Loc.t;
+
       }
 
    type t_simple =
@@ -240,6 +242,7 @@ module Scope = struct
          single    = true;
          active    = false;
          ext_fn    = None;
+         loc       = Loc.default;
 
       }
 
@@ -297,16 +300,16 @@ module Scope = struct
    let primExitOperators (parent:t) (t:t) : t =
       { parent with operators = IdMap.add t.name t parent.operators }
 
-   let addMem (t:t) (name:id) (typ:VType.t) : t =
-      let new_symbol = { empty with name = name; kind = MemSymbol; typ = typ } in
+   let addMem (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
+      let new_symbol = { empty with name = name; kind = MemSymbol; typ = typ; loc = loc; } in
       { t with mem_inst = IdMap.add name new_symbol t.mem_inst; active = true }
 
-   let addInstance (t:t) (name:id) (typ:VType.t) : t =
-      let new_symbol = { empty with name = name; kind = InstanceSymbol; typ = typ } in
+   let addInstance (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
+      let new_symbol = { empty with name = name; kind = InstanceSymbol; typ = typ; loc = loc; } in
       { t with mem_inst = IdMap.add name new_symbol t.mem_inst; active = true }
 
-   let addVar (t:t) (name:id) (typ:VType.t) : t =
-      let new_symbol = { empty with name = name; kind = VarSymbol; typ = typ  } in
+   let addVar (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
+      let new_symbol = { empty with name = name; kind = VarSymbol; typ = typ; loc = loc;  } in
       let first,rest =
          match t.locals with
          | [] -> IdMap.empty,[]
@@ -314,12 +317,12 @@ module Scope = struct
       in
       { t with locals = (IdMap.add name new_symbol first) :: rest }
 
-   let enterAny kind (get:t -> t IdMap.t) (t:t) (name:id) : t =
+   let enterAny kind (get:t -> t IdMap.t) (t:t) (name:id) (loc:Loc.t) : t =
       match IdMap.find name (get t) with
       | sub ->
          { sub with parent = Some(t) }
       | exception Not_found ->
-         { empty with parent = Some(t); name = name; kind = kind }
+         { empty with parent = Some(t); name = name; kind = kind; loc = loc }
 
    let exitAny (exit:t -> t -> t) (t:t) : t =
       match t.parent with
@@ -363,18 +366,18 @@ module Scope = struct
       | Some(parent) ->
          Context.getInitFunction parent.ctx name
 
-   let enter kind (attr:attr) (t:t) (name:id) : t =
+   let enter kind (t:t) (name:id) (attr:attr) : t =
       match kind with
       | `Function ->
-         let t' = enterAny FunctionSymbol getFunction t name in
+         let t' = enterAny FunctionSymbol getFunction t name attr.loc in
          let t' = { t' with ext_fn = t'.ext_fn <+> attr.ext_fn } in
          if attr.fun_and then
             addToContext t' name attr.init
          else
             newContext t' name attr.init
-      | `Module   -> enterAny ModuleSymbol getModule t name
-      | `Operator -> enterAny OperatorSymbol getOperators t name
-      | `Type     -> enterAny TypeSymbol getTypes t name
+      | `Module   -> enterAny ModuleSymbol getModule t name attr.loc
+      | `Operator -> enterAny OperatorSymbol getOperators t name attr.loc
+      | `Type     -> enterAny TypeSymbol getTypes t name attr.loc
       | `Block    -> { t with locals = IdMap.empty :: t.locals }
       | _ -> raise (Invalid_argument "Scope.enter")
 
@@ -530,24 +533,24 @@ module Env = struct
       state.tick,{ state with tick = state.tick+1 }
 
    (** Adds a mem variable to the current context *)
-   let addMem (state:'a t) (name:id) (typ:VType.t) : 'a t  =
+   let addMem (state:'a t) (name:id) (typ:VType.t) (attr:attr) : 'a t  =
       {
          state with
-         scope   = Scope.addMem state.scope name typ;
+         scope   = Scope.addMem state.scope name typ attr.loc;
       }
 
    (** Adds a variable to the current block *)
-   let addVar (state:'a t) (name:id) (typ:VType.t) : 'a t  =
+   let addVar (state:'a t) (name:id) (typ:VType.t) (attr:attr) : 'a t  =
       {
          state with
-         scope   = Scope.addVar state.scope name typ;
+         scope   = Scope.addVar state.scope name typ attr.loc;
       }
 
    (** Adds an instance to the current block *)
-   let addInstance (state:'a t) (name:id) (typ:VType.t) : 'a t  =
+   let addInstance (state:'a t) (name:id) (typ:VType.t) (attr:attr) : 'a t  =
       {
          state with
-         scope   = Scope.addInstance state.scope name typ;
+         scope   = Scope.addInstance state.scope name typ attr.loc;
       }
 
    (** Returns the full path of a function. Raises an error if it cannot be found *)
@@ -608,10 +611,10 @@ module Env = struct
          scope = Scope.setCurrentType state.scope typ single;
       }
 
-   let enter kind ?(attr=emptyAttr) (state:'a t) (func:id) : 'a t =
+   let enter kind (state:'a t) (func:id) attr : 'a t =
       {
          state with
-         scope = Scope.enter kind attr state.scope func;
+         scope = Scope.enter kind state.scope func attr;
          tick  = if (kind = `Function && attr.fun_and = false) then 0 else state.tick;
       }
 
@@ -623,7 +626,7 @@ module Env = struct
       }
 
    let addBuiltinFunction (state:'a t) (name,kind,typ,single) : 'a t =
-      let state' = enter kind state name in
+      let state' = enter kind state name emptyAttr in
       let state' = setCurrentType state' typ single in
       let state' = exit kind state' in
       state'

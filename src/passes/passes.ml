@@ -651,7 +651,7 @@ end
 
 (* Basic transformations *)
 let inferPass name (state,stmts) =
-   let state' = Env.enter `Module state name in
+   let state' = Env.enter `Module state name emptyAttr in
    let stmts,state',_ = Inference.inferStmtList state' Inference.NoType stmts in
    let state' = Env.exit `Module state' in
    state',stmts
@@ -687,7 +687,7 @@ let rec applyPassRepeat name apply pass (state,stmts) =
       state,stmts
 
 let applyPass name apply pass (state,stmts) =
-   let state' = Env.enter `Module state name in
+   let state' = Env.enter `Module state name emptyAttr in
    let state', stmts' = applyPassRepeat name apply pass (state',stmts) in
    let state' = Env.exit `Module state' in
    (*print_endline (Env.show_full state');*)

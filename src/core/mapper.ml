@@ -314,7 +314,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       apply mapper.stmt state' (StmtBind(lhs',rhs',attr'))
    | StmtType(name,members,attr) ->
       let base_name    = VType.base name in
-      let state'       = Env.enter `Type state base_name in
+      let state'       = Env.enter `Type state base_name emptyAttr in
       let state',name' = map_vtype mapper state' name in
       let state',members' = (mapper_list map_val_decl) mapper state' members in
       let state',attr'    = map_attr mapper state' attr in
@@ -323,7 +323,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       state',stmt'
    | StmtAliasType(name,tp,attr) ->
       let base_name    = VType.base name in
-      let state'       = Env.enter `Type state base_name in
+      let state'       = Env.enter `Type state base_name emptyAttr in
       let state',name' = map_vtype mapper state' name in
       let state',tp'   = map_vtype mapper state' tp in
       let state',attr' = map_attr mapper state' attr in
@@ -348,7 +348,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       apply mapper.stmt state' (StmtIf(cond',then_,None,attr'))
       |> map_stmt_subs mapper
    | StmtFun(name,args,body,ret,attr) ->
-      let state'       = Env.enter `Function state name in
+      let state'       = Env.enter `Function state name emptyAttr in
       let state',name' = map_id mapper state' name in
       let state',args' = (mapper_list map_typed_id) mapper state' args in
       let state',ret'  = (mapper_opt map_vtype) mapper state' ret in
@@ -360,7 +360,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       let state'       = Env.exit `Function state' in
       state', stmt'
    | StmtExternal(name,args,ret,linkname,attr) ->
-      let state'       = Env.enter `Function state name in
+      let state'       = Env.enter `Function state name emptyAttr in
       let state',name' = map_id mapper state' name in
       let state',args' = (mapper_list map_typed_id) mapper state' args in
       let state',ret'  = map_vtype mapper state' ret in
