@@ -106,9 +106,8 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
       LWild( { attr with typ = Some(typ) }), typ
    | LId(id,None,attr) ->
       let typ =
-         try
-            let _,typ,_ = Env.lookup `Variable env id in typ
-         with
+         match Env.lookup `Variable env id with
+         | Some(_,typ,_) -> typ
          | _ ->
             if mem_var = `Mem || mem_var = `Var then
                VType.newvar ()
@@ -262,9 +261,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
    | PReal(v,attr) ->
       PReal(v,{ attr with typ = Some(VType.Constants.real_type) }), env, VType.Constants.real_type
    | PId(id,attr) ->
-      let typ =
-         try let _,typ,_ = Env.lookup `Variable env id in typ
-         with | _ -> Error.raiseError ("Undefined symbol '" ^ (PrintTypes.identifierStr id)^"'") attr.loc in
+      let _,typ,_ = Env.lookupRaise `Variable env id attr.loc in
       PId(id, { attr with typ = Some(typ) }), env, typ
    | PArray(elems,attr) ->
       let elems',env', atype, n = inferArrayElems env elems in
@@ -286,10 +283,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
    | PCall(name,fname,args,attr) ->
       let args',env',types = inferExpList env args in
       let ret_type       = VType.newvar () in
-      let _,fn_type,ft   =
-         try Env.lookup `Function env' fname with
-         | _ -> Error.raiseError (Printf.sprintf "Unknown function '%s'" (idStr fname)) attr.loc
-      in
+      let _,fn_type,ft   = Env.lookupRaise `Function env' fname attr.loc in
       let fn_args,fn_ret = VType.stripArrow fn_type in
       let active         = Scope.isActive ft in
       let fname_typ      = ref (VType.TId(fname,None)) in
@@ -300,13 +294,13 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
       let e1',env',e1_typ  = inferExp env e1 in
       let e2',env',e2_typ  = inferExp env' e2 in
       let ret_type         = VType.newvar () in
-      let _,fn_type,_      = Env.lookup `Operator env [op] in
-      let fn_args,fn_ret = VType.stripArrow fn_type in
+      let _,fn_type,_      = Env.lookupRaise `Operator env [op] attr.loc in
+      let fn_args,fn_ret   = VType.stripArrow fn_type in
       inferApply (expLoc e) [e1'; e2'] [e1_typ; e2_typ] ret_type fn_args fn_ret;
       POp(op,[e1';e2'],{ attr with typ = Some(ret_type) }), env', ret_type
    | POp(op,args,attr) ->
       let args',env',types = inferExpList env args in
-      let _,fn_type,_ = Env.lookup `Operator env' [op] in
+      let _,fn_type,_   = Env.lookupRaise `Operator env [op] attr.loc in
       let common_type =
          match VType.stripArrow fn_type with
          | [arg1;arg2], ret ->
@@ -321,7 +315,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
    | PUnOp(op,arg,attr) ->
       let arg',env',arg_type = inferExp env arg in
       let ret_type           = VType.newvar () in
-      let _,fn_type,_        = Env.lookup `Operator env ["|"^op^"|"] in
+      let _,fn_type,_        = Env.lookupRaise `Operator env ["|"^op^"|"] attr.loc in
       let fn_args,fn_ret     = VType.stripArrow fn_type in
       inferApply (expLoc e) [arg'] [arg_type] ret_type fn_args fn_ret;
       PUnOp(op,arg',{ attr with typ = Some(ret_type) }), env', ret_type

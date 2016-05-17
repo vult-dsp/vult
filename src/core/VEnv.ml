@@ -151,6 +151,16 @@ type symbol_kind =
    | UndefSymbol
    [@@deriving show]
 
+
+let kindStr kind : string =
+   match kind with
+   | `Function -> "function"
+   | `Module   -> "module"
+   | `Operator -> "operator"
+   | `Type     -> "type"
+   | `Variable -> "variable"
+   | _ -> "symbol"
+
 (** Used to track the location while traversing and also to lookup function, mem, and module *)
 module Scope = struct
 
@@ -177,6 +187,8 @@ module Scope = struct
          ext_fn    : string option;  (** contains the replacement name if it's an external function *)
 
          loc       : Loc.t;
+
+         tick      : int;
 
       }
 
@@ -243,8 +255,12 @@ module Scope = struct
          active    = false;
          ext_fn    = None;
          loc       = Loc.default;
+         tick      = 0;
 
       }
+
+   let tick (t:t) : int * t =
+      t.tick, { t with tick = t.tick + 1 }
 
    let getFunction (t:t) : t IdMap.t =
       t.func
@@ -465,7 +481,7 @@ module Scope = struct
          List.fold_left (fun s a -> try (IdMap.find a parent.func) :: s with | _ -> s) [t] contexts
       | _ -> [t]
 
-   let getFunctionMemInst (t:t) : (path * VType.t * t) list * (path * VType.t * t) list =
+   let getFunctionMemInst (t:t) : (path * VType.t * t) list =
       let tables = getAllWithSameContext t in
       let mem_inst =
          List.map (fun t -> t.mem_inst) tables
@@ -473,8 +489,7 @@ module Scope = struct
          |> List.flatten
          |> List.map snd
       in
-      let mem, inst = List.partition (fun a -> a.kind = MemSymbol) mem_inst in
-      List.map getPathAndType mem, List.map getPathAndType inst
+      List.map getPathAndType mem_inst
 
    let lookupMemInAllContext (t:t) (name:id) : t option =
       let tables = getAllWithSameContext t in
@@ -492,13 +507,23 @@ module Scope = struct
       | Some(_) as a -> a
       | None -> lookupVal t name
 
-   let lookup kind (t:t) (name:id) : t option =
+   let lookupScope kind (t:t) (name:id) : t option =
       match kind with
       | `Function -> findAny true findFunction t name
       | `Module   -> findAny true findModule t name
       | `Operator -> findAny true findOperator t name
       | `Type     -> findAny true findType t name
       | `Variable -> lookupVariable t name
+
+   let lookup kind (t:t) (name:id) : (path * VType.t * t) option =
+      match lookupScope kind t name with
+      | Some(lt) -> Some(getPathAndType lt)
+      | None -> None
+
+   let lookupRaise kind (t:t) (name:id) (loc:Loc.t) : path * VType.t * t =
+      match lookup kind t name with
+      | Some(a) -> a
+      | None -> Error.raiseError (Printf.sprintf "Unknown %s '%s'" (kindStr kind) (idStr name)) loc
 
    let isMemOrInstance (t:t) (name:id) : bool =
       match lookupMemInAllContext t name with
@@ -517,8 +542,6 @@ module Env = struct
       {
          data    : 'a;
          scope   : Scope.t;
-         tick    : int;
-
       }
 
    (** Prints all the information of the current environment *)
@@ -530,7 +553,8 @@ module Env = struct
 
    (** Gets a new tick (integer value) and updates the state *)
    let tick (state:'a t) : int * 'a t =
-      state.tick,{ state with tick = state.tick+1 }
+      let tick, scope = Scope.tick state.scope in
+      tick, { state with scope = scope }
 
    (** Adds a mem variable to the current context *)
    let addMem (state:'a t) (name:id) (typ:VType.t) (attr:attr) : 'a t  =
@@ -553,39 +577,42 @@ module Env = struct
          scope   = Scope.addInstance state.scope name typ attr.loc;
       }
 
+   (** Returns the full path of a function. *)
+   let lookup kind (state:'a t) (name:id) : (path * VType.t * Scope.t) option =
+      Scope.lookup kind state.scope name
+
    (** Returns the full path of a function. Raises an error if it cannot be found *)
-   let lookup kind (state:'a t) (name:id) : path * VType.t * Scope.t =
-      match Scope.lookup kind state.scope name with
-      | None ->
-         failwith (Printf.sprintf "Cannot find symbol '%s'" (idStr name))
-      | Some(t) -> Scope.getPathAndType t
+   let lookupRaise kind (state:'a t) (name:id) (loc:Loc.t) : path * VType.t * Scope.t =
+      match lookup kind state name with
+      | Some(a) -> a
+      | None -> Error.raiseError (Printf.sprintf "Unknown %s '%s'" (kindStr kind) (idStr name)) loc
 
       (** Returns the mem and instances for a function *)
-   let getMemAndInstances (state:'a t) (name:id) : IdTypeSet.t * IdTypeSet.t =
+   let getMemAndInstances (state:'a t) (name:id) : IdTypeSet.t =
       match Scope.lookup `Function state.scope name with
-      | None -> IdTypeSet.empty, IdTypeSet.empty
-      | Some(t) ->
-         let mem, inst = Scope.getFunctionMemInst t in
-         let f s = List.map (fun (k,v,_) -> pathLast k, v) s |> IdTypeSet.of_list in
-         f mem, f inst
+      | None -> IdTypeSet.empty
+      | Some(_,_,t) ->
+         Scope.getFunctionMemInst t
+         |> List.map (fun (k,v,_) -> pathLast k, v)
+         |> IdTypeSet.of_list
 
    (** Returns the generated context name for the given function *)
    let getContext (state:'a t) (name:id) : path =
       match Scope.lookup `Function state.scope name with
       | None -> failwith "Function not found"
-      | Some(t) -> Scope.getContext t
+      | Some(_,_,t) -> Scope.getContext t
 
    (** Returns the initialization function if it has beed defines with the attribute *)
    let getInitFunction (state:'a t) (name:id) : id option =
       match Scope.lookup `Function state.scope name with
       | None -> failwith "Function not found"
-      | Some(t) -> Scope.getInitFunction t name
+      | Some(_,_,t) -> Scope.getInitFunction t name
 
    (** Returns true if the function is active *)
    let isActive (state:'a t) (name:id) : bool =
       match Scope.lookup `Function state.scope name with
       | None -> false
-      | Some(t) ->
+      | Some(_,_,t) ->
          Scope.isActive t
 
    (** Returns true if the id is a mem or an instance *)
@@ -615,7 +642,6 @@ module Env = struct
       {
          state with
          scope = Scope.enter kind state.scope func attr;
-         tick  = if (kind = `Function && attr.fun_and = false) then 0 else state.tick;
       }
 
    (** Closes the current context *)
@@ -639,7 +665,6 @@ module Env = struct
    let empty data : 'a t =
       {
          data    = data;
-         tick    = 0;
          scope   = Scope.empty;
       }
       |> initialize

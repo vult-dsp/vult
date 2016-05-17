@@ -111,7 +111,7 @@ module InsertContext = struct
          match stmt with
          | StmtFun(name,args,body,rettype,attr) ->
             let data     = Env.get state in
-            let path,_,_ = Env.lookup `Function state  name in
+            let path,_,_ = Env.lookupRaise `Function state name attr.loc in
             if Env.isActive state name && not (PassData.hasContextArgument data path) then
                let ctx_full = Env.getContext state name in
                let ctx      = Env.pathFromCurrent state ctx_full in
@@ -260,9 +260,9 @@ module CreateInitFunction = struct
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander @@ fun state stmt ->
          match stmt with
-         | StmtFun(name,_,_,_,_) ->
+         | StmtFun(name,_,_,_,attr) ->
             let data = Env.get state in
-            let path,_,_ = Env.lookup `Function state name in
+            let path,_,_ = Env.lookupRaise `Function state name attr.loc in
             if Env.isActive state name && not (PassData.hasInitFunction data path) then
                let ctx_path = Env.getContext state name in
                let ctx     = Env.pathFromCurrent state ctx_path in
@@ -272,14 +272,14 @@ module CreateInitFunction = struct
                   let data'   = PassData.markInitFunction data path in
                   Env.set state data', [type_fn; init_fn; stmt]
                else
-                  let mem_vars, instances = Env.getMemAndInstances state name in
+                  let mem_inst = Env.getMemAndInstances state name in
                   let member_set =
                      IdTypeSet.fold
                         (fun (name,tp) acc ->
                            let context = getContextIfPossible state tp in
                            let member = name, context in
                            IdTypeSet.add member acc)
-                        (IdTypeSet.union mem_vars instances) IdTypeSet.empty
+                        mem_inst IdTypeSet.empty
                   in
                   let init_fun   = Env.getInitFunction state name in
                   let init_funct = generateInitFunction ctx init_fun member_set in
@@ -619,7 +619,7 @@ module ReplaceFunctionNames = struct
       Mapper.make @@ fun state exp ->
          match exp with
          | PCall(name,fname,args,attr) ->
-            let Path(path),_,t = Env.lookup `Function state fname in
+            let Path(path),_,t = Env.lookupRaise `Function state fname attr.loc in
             let final_name =
                match t.Scope.ext_fn with
                | Some(n) -> [n]
@@ -640,9 +640,14 @@ module ReplaceFunctionNames = struct
    let vtype_c : (PassData.t Env.t,VType.vtype) Mapper.mapper_func =
       Mapper.make @@ fun state typ ->
          match typ with
-         | VType.TId(id,loc) ->
-            let Path(type_path),_,_ = Env.lookup `Type state id in
-            state, VType.TId(type_path,loc)
+         | VType.TId(id,optloc) ->
+            let loc =
+               match optloc with
+               | Some(loc) -> loc
+               | None -> Loc.default
+            in
+            let Path(type_path),_,_ = Env.lookupRaise `Type state id loc in
+            state, VType.TId(type_path,optloc)
          | _ -> state, typ
 
    let mapper = { Mapper.default_mapper with Mapper.exp = exp; Mapper.stmt = stmt; Mapper.vtype_c = vtype_c }
