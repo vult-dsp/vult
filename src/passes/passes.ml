@@ -658,7 +658,7 @@ end
 let inferPass name (state,stmts) =
    let state' = Env.enter Scope.Module state name emptyAttr in
    let stmts,state',_ = Inference.inferStmtList state' Inference.NoType stmts in
-   let state' = Env.exit Scope.Module state' in
+   let state' = Env.exit state' in
    state',stmts
 
 let pass1 =
@@ -694,7 +694,7 @@ let rec applyPassRepeat name apply pass (state,stmts) =
 let applyPass name apply pass (state,stmts) =
    let state' = Env.enter Scope.Module state name emptyAttr in
    let state', stmts' = applyPassRepeat name apply pass (state',stmts) in
-   let state' = Env.exit Scope.Module state' in
+   let state' = Env.exit state' in
    (*print_endline (Env.show_full state');*)
    state',stmts'
 

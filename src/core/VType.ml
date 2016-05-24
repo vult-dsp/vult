@@ -300,6 +300,9 @@ let getTupleName (typ:t) : string = "_" ^ (getTupleName typ)
 
 (** Constant types *)
 module Constants = struct
+
+   let empty       = ref (TId([""],None))
+
    let type_type   = ref (TId(["type"],None))
    let unit_type   = ref (TId(["unit"],None))
    let bool_type   = ref (TId(["bool"],None))

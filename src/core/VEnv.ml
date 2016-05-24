@@ -101,13 +101,12 @@ module Scope = struct
 
    type kind =
       | Mem
-      | Var
       | Instance
       | Function
       | Module
       | Operator
       | Type
-      | Block
+      | Var
       [@@deriving show]
 
    type t =
@@ -190,10 +189,9 @@ module Scope = struct
       | Module   -> "module"
       | Operator -> "operator"
       | Type     -> "type"
-      | Var      -> "variable"
       | Instance -> "instance"
       | Mem      -> "mem"
-      | _ -> "symbol"
+      | Var      -> "variable"
 
    let create (kind:kind) : t =
       {
@@ -206,7 +204,7 @@ module Scope = struct
          func      = IdMap.empty;
          mem_inst  = IdMap.empty;
          locals    = [];
-         typ       = ref (VType.TId([""],None));
+         typ       = VType.Constants.empty;
          ctx       = Context.empty;
          single    = true;
          active    = false;
@@ -219,40 +217,19 @@ module Scope = struct
    let tick (t:t) : int * t =
       t.tick, { t with tick = t.tick + 1 }
 
-   let getFunction (t:t) : t IdMap.t =
-      t.func
-
    let findFunction (t:t) (name:id) : t option =
       try Some(IdMap.find name t.func) with
       | _ ->
          try Some(IdMap.find name t.modules) with
          | _ -> None
 
-   let primExitFunction (parent:t) (t:t) : t =
-      { parent with func = IdMap.add t.name t parent.func }
-
-   let getModule (t:t) : t IdMap.t =
-      t.modules
-
    let findModule (t:t) (name:id) : t option =
       try Some(IdMap.find name t.modules) with
       | _ -> None
 
-   let primExitModule (parent:t) (t:t) : t =
-      { parent with modules = IdMap.add t.name t parent.modules }
-
-   let getMemInst (t:t) : t IdMap.t =
-      t.mem_inst
-
    let findMemInst (t:t) (name:id) : t option =
       try Some(IdMap.find name t.mem_inst) with
       | _ -> None
-
-   let primExitMemInst (parent:t) (t:t) : t =
-      { parent with mem_inst = IdMap.add t.name t parent.mem_inst }
-
-   let getTypes (t:t) : t IdMap.t =
-      t.types
 
    let findType (t:t) (name:id) : t option =
       try Some(IdMap.find name t.types) with
@@ -260,18 +237,54 @@ module Scope = struct
          try Some(IdMap.find name t.modules) with
          | _ -> None
 
-   let primExitTypes (parent:t) (t:t) : t =
-      { parent with types = IdMap.add t.name t parent.types }
-
-   let getOperators (t:t) : t IdMap.t =
-      t.operators
-
    let findOperator (t:t) (name:id) : t option =
       try Some(IdMap.find name t.operators) with
       | _ -> None
 
-   let primExitOperators (parent:t) (t:t) : t =
-      { parent with operators = IdMap.add t.name t parent.operators }
+   let getTable (t:t) (kind:kind) : t IdMap.t =
+      match kind with
+      | Mem | Instance -> t.mem_inst
+      | Function -> t.func
+      | Module   -> t.modules
+      | Operator -> t.operators
+      | Type     -> t.types
+      | Var      -> List.hd t.locals
+
+   let setOptLoc (opt_loc:Loc.t option) (t:t) : t =
+      match opt_loc with
+      | Some(loc) -> { t with loc = loc }
+      | None -> t
+
+   let setOptType (opt_typ:VType.t option) (t:t) : t =
+      match opt_typ with
+      | Some(typ) -> { t with typ = typ }
+      | None -> t
+
+   let findOrCreate (t:t) (typ:VType.t option) (loc:Loc.t option) (kind:kind) (name:id) =
+      match IdMap.find name (getTable t kind) with
+      | found -> found
+      | exception Not_found ->
+         { (create kind) with name = name } |> setOptLoc loc |> setOptType typ
+
+   let enterBlock (t:t) : t =
+      { t with locals = IdMap.empty :: t.locals }
+
+   let enterKind (t:t) ?(typ:VType.t option) ?(loc:Loc.t option) (kind:kind) (name:id) =
+      let sub = findOrCreate t typ loc kind name in
+      { sub with parent = Some(t) }
+
+   let exitKind (t:t) : t =
+      match t.parent with
+      | None -> failwith "Scope.exit: cannot exit the top scope"
+      | Some(parent) ->
+         match t.kind with
+         | Mem
+         | Instance -> { parent with mem_inst  = IdMap.add t.name t parent.mem_inst }
+         | Function -> { parent with func      = IdMap.add t.name t parent.func }
+         | Module   -> { parent with modules   = IdMap.add t.name t parent.modules }
+         | Operator -> { parent with operators = IdMap.add t.name t parent.operators }
+         | Type     -> { parent with types     = IdMap.add t.name t parent.types }
+         | Var      -> failwith "exitKind: you should never enter the local variables"
 
    let addMem (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
       let new_symbol = { (create Mem) with name = name; typ = typ; loc = loc; } in
@@ -289,19 +302,6 @@ module Scope = struct
          | h::t -> h,t
       in
       { t with locals = (IdMap.add name new_symbol first) :: rest }
-
-   let enterAny (kind:kind) (get:t -> t IdMap.t) (t:t) (name:id) (loc:Loc.t) : t =
-      match IdMap.find name (get t) with
-      | sub ->
-         { sub with parent = Some(t) }
-      | exception Not_found ->
-         { (create kind) with parent = Some(t); name = name; kind = kind; loc = loc }
-
-   let exitAny (exit:t -> t -> t) (t:t) : t =
-      match t.parent with
-      | None -> failwith "Scope.exit: Cannot exit more scopes"
-      | Some(parent) ->
-         exit parent t
 
    let current (t:t) : path =
       let rec parentName parent =
@@ -342,26 +342,22 @@ module Scope = struct
    let enter (kind:kind) (t:t) (name:id) (attr:attr) : t =
       match kind with
       | Function ->
-         let t' = enterAny Function getFunction t name attr.loc in
+         let t' = enterKind t ~loc:attr.loc Function name  in
          let t' = { t' with ext_fn = t'.ext_fn <+> attr.ext_fn } in
          if attr.fun_and then
             addToContext t' name attr.init
          else
             newContext t' name attr.init
-      | Module   -> enterAny Module getModule t name attr.loc
-      | Operator -> enterAny Operator getOperators t name attr.loc
-      | Type     -> enterAny Type getTypes t name attr.loc
-      | Block    -> { t with locals = IdMap.empty :: t.locals }
+      | Module   -> enterKind t ~loc:attr.loc Module name
+      | Operator -> enterKind t ~loc:attr.loc Operator name
+      | Type     -> enterKind t ~loc:attr.loc Type name
       | _ -> raise (Invalid_argument "Scope.enter")
 
-   let exit (kind:kind) (t:t) : t =
-      match kind with
-      | Function -> exitAny primExitFunction t
-      | Module   -> exitAny primExitModule t
-      | Operator -> exitAny primExitOperators t
-      | Type     -> exitAny primExitTypes t
-      | Block    -> { t with locals = List.tl t.locals }
-      | _ -> raise (Invalid_argument "Scope.exit")
+   let exit (t:t) : t =
+      exitKind t
+
+   let exitBlock (t:t) : t =
+      { t with locals = List.tl t.locals }
 
    let setCurrentType (t:t) (typ:VType.t) (single:bool) : t =
       { t with typ = typ; single = single }
@@ -369,20 +365,8 @@ module Scope = struct
    let getParent (t:t) : t option =
       match t.parent with
       | None -> None
-      | Some(parent) ->
-         match t.kind with
-         | Module ->
-            Some(primExitModule parent t)
-         | Function ->
-            Some(primExitFunction parent t)
-         | Mem | Instance ->
-            Some(primExitMemInst parent t)
-         | Var -> Some(parent)
-         | Operator ->
-            Some(primExitOperators parent t)
-         | Type ->
-            Some(primExitTypes parent t)
-         | _ -> failwith "The type is undefined"
+      | Some(_) ->
+         Some(exitKind t)
 
    let getPath (t:t) : id =
       let rec parentPath (parent:t option) : id =
@@ -472,7 +456,6 @@ module Scope = struct
       | Type     -> findAny true findType t name
       | Mem | Instance -> findAny true findMemInst t name
       | Var      -> lookupVariable t name
-      | Block -> failwith "Blocks cannot be lookup"
 
    let lookup kind (t:t) (name:id) : (path * VType.t * t) option =
       match lookupScope kind t name with
@@ -651,16 +634,28 @@ module Env = struct
       }
 
    (** Closes the current context *)
-   let exit kind (state:'a t) : 'a t  =
+   let exit (state:'a t) : 'a t  =
       {
          state with
-         scope = Scope.exit kind state.scope;
+         scope = Scope.exit state.scope;
+      }
+
+   let enterBlock (state:'a t) : 'a t =
+      {
+         state with
+         scope = Scope.enterBlock state.scope;
+      }
+
+   let exitBlock (state:'a t) : 'a t  =
+      {
+         state with
+         scope = Scope.exitBlock state.scope;
       }
 
    let addBuiltinFunction (state:'a t) (name,kind,typ,single) : 'a t =
       let state' = enter kind state name emptyAttr in
       let state' = setCurrentType state' typ single in
-      let state' = exit kind state' in
+      let state' = exit state' in
       state'
 
    (** Adds the builtin functions to the given context *)

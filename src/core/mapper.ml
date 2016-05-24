@@ -319,7 +319,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       let state',members' = (mapper_list map_val_decl) mapper state' members in
       let state',attr'    = map_attr mapper state' attr in
       let state',stmt' = apply mapper.stmt state' (StmtType(name',members',attr')) in
-      let state'       = Env.exit Scope.Type state' in
+      let state'       = Env.exit state' in
       state',stmt'
    | StmtAliasType(name,tp,attr) ->
       let base_name    = VType.base name in
@@ -328,7 +328,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       let state',tp'   = map_vtype mapper state' tp in
       let state',attr' = map_attr mapper state' attr in
       let state',stmt' = apply mapper.stmt state' (StmtAliasType(name',tp',attr')) in
-      let state'       = Env.exit Scope.Type state' in
+      let state'       = Env.exit state' in
       state',stmt'
    | StmtEmpty ->
       apply mapper.stmt state StmtEmpty
@@ -357,7 +357,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
          apply mapper.stmt state' (StmtFun(name',args',body,ret',attr'))
          |> map_stmt_subs mapper
       in
-      let state'       = Env.exit Scope.Function state' in
+      let state'       = Env.exit state' in
       state', stmt'
    | StmtExternal(name,args,ret,linkname,attr) ->
       let state'       = Env.enter Scope.Function state name emptyAttr in
@@ -369,7 +369,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
          apply mapper.stmt state' (StmtExternal(name',args',ret',linkname,attr'))
          |> map_stmt_subs mapper
       in
-      let state'       = Env.exit Scope.Function state' in
+      let state'       = Env.exit state' in
       state', stmt'
    | StmtBlock(name,stmts,attr) ->
       let state',name' = (mapper_opt map_id) mapper state name in

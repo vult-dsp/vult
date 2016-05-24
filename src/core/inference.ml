@@ -379,9 +379,9 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       unifyRaise (expLoc rhs') lhs_typ rhs_typ;
       StmtBind(lhs',rhs',attr), env', ret_type
    | StmtBlock(name,stmts,attr) ->
-      let env' = Env.enter Scope.Block env [] attr in
+      let env' = Env.enterBlock env in
       let stmts', env', stmt_ret_type = inferStmtList env' ret_type stmts in
-      let env' = Env.exit Scope.Block env' in
+      let env' = Env.exitBlock env' in
       StmtBlock(name,stmts',attr), env', stmt_ret_type
    | StmtFun(name,args,body,ret_type,attr) ->
       let env'                = Env.enter Scope.Function env name attr in
@@ -392,7 +392,7 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       let last_type           = getReturnType body_ret in
       let typ  = VType.makeArrowType last_type types' in
       let env' = Env.setCurrentType env' typ true in
-      let env' = Env.exit Scope.Function env' in
+      let env' = Env.exit env' in
       let  _   = raiseReturnError (attrLoc attr) ret_type' body_ret in
       StmtFun(name,args',body',Some(last_type),attr), env', NoType
    | StmtIf(cond,then_,else_,attr) ->
@@ -415,7 +415,7 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       let args',types, env' = addArgsToEnv env' args in
       let typ  = VType.makeArrowType fun_ret_type types in
       let env' = Env.setCurrentType env' typ true in
-      let env' = Env.exit Scope.Function env' in
+      let env' = Env.exit env' in
       StmtExternal(name,args',fun_ret_type,linkname,attr), env', ret_type
    | StmtEmpty -> StmtEmpty, env, ret_type
 
