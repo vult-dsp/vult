@@ -111,7 +111,7 @@ module InsertContext = struct
          match stmt with
          | StmtFun(name,args,body,rettype,attr) ->
             let data     = Env.get state in
-            let path,_,_ = Env.lookupRaise `Function state name attr.loc in
+            let path,_,_ = Env.lookupRaise Scope.Function state name attr.loc in
             if Env.isActive state name && not (PassData.hasContextArgument data path) then
                let ctx_full = Env.getContext state name in
                let ctx      = Env.pathFromCurrent state ctx_full in
@@ -262,7 +262,7 @@ module CreateInitFunction = struct
          match stmt with
          | StmtFun(name,_,_,_,attr) ->
             let data = Env.get state in
-            let path,_,_ = Env.lookupRaise `Function state name attr.loc in
+            let path,_,_ = Env.lookupRaise Scope.Function state name attr.loc in
             if Env.isActive state name && not (PassData.hasInitFunction data path) then
                let ctx_path = Env.getContext state name in
                let ctx     = Env.pathFromCurrent state ctx_path in
@@ -619,7 +619,7 @@ module ReplaceFunctionNames = struct
       Mapper.make @@ fun state exp ->
          match exp with
          | PCall(name,fname,args,attr) ->
-            let Path(path),_,t = Env.lookupRaise `Function state fname attr.loc in
+            let Path(path),_,t = Env.lookupRaise Scope.Function state fname attr.loc in
             let final_name =
                match t.Scope.ext_fn with
                | Some(n) -> [n]
@@ -646,7 +646,7 @@ module ReplaceFunctionNames = struct
                | Some(loc) -> loc
                | None -> Loc.default
             in
-            let Path(type_path),_,_ = Env.lookupRaise `Type state id loc in
+            let Path(type_path),_,_ = Env.lookupRaise Scope.Type state id loc in
             state, VType.TId(type_path,optloc)
          | _ -> state, typ
 
@@ -656,9 +656,9 @@ end
 
 (* Basic transformations *)
 let inferPass name (state,stmts) =
-   let state' = Env.enter `Module state name emptyAttr in
+   let state' = Env.enter Scope.Module state name emptyAttr in
    let stmts,state',_ = Inference.inferStmtList state' Inference.NoType stmts in
-   let state' = Env.exit `Module state' in
+   let state' = Env.exit Scope.Module state' in
    state',stmts
 
 let pass1 =
@@ -692,9 +692,9 @@ let rec applyPassRepeat name apply pass (state,stmts) =
       state,stmts
 
 let applyPass name apply pass (state,stmts) =
-   let state' = Env.enter `Module state name emptyAttr in
+   let state' = Env.enter Scope.Module state name emptyAttr in
    let state', stmts' = applyPassRepeat name apply pass (state',stmts) in
-   let state' = Env.exit `Module state' in
+   let state' = Env.exit Scope.Module state' in
    (*print_endline (Env.show_full state');*)
    state',stmts'
 

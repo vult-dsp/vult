@@ -63,7 +63,7 @@ let rec checkType (loc:Loc.t Lazy.t) (env:'a Env.t) (typ:VType.t) : unit =
    match !typ with
    | VType.TId(name,_) ->
       let _ =
-         try Env.lookup `Type env name with | _ ->
+         try Env.lookup Scope.Type env name with | _ ->
          let msg = Printf.sprintf "The type '%s' of this variable is unknown" (idStr name) in
          Error.raiseError msg (Lazy.force loc)
       in ()
@@ -106,7 +106,7 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
       LWild( { attr with typ = Some(typ) }), typ
    | LId(id,None,attr) ->
       let typ =
-         match Env.lookup `Variable env id with
+         match Env.lookup Scope.Var env id with
          | Some(_,typ,_) -> typ
          | _ ->
             if mem_var = `Mem || mem_var = `Var then
@@ -261,7 +261,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
    | PReal(v,attr) ->
       PReal(v,{ attr with typ = Some(VType.Constants.real_type) }), env, VType.Constants.real_type
    | PId(id,attr) ->
-      let _,typ,_ = Env.lookupRaise `Variable env id attr.loc in
+      let _,typ,_ = Env.lookupRaise Scope.Var env id attr.loc in
       PId(id, { attr with typ = Some(typ) }), env, typ
    | PArray(elems,attr) ->
       let elems',env', atype, n = inferArrayElems env elems in
@@ -283,7 +283,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
    | PCall(name,fname,args,attr) ->
       let args',env',types = inferExpList env args in
       let ret_type       = VType.newvar () in
-      let _,fn_type,ft   = Env.lookupRaise `Function env' fname attr.loc in
+      let _,fn_type,ft   = Env.lookupRaise Scope.Function env' fname attr.loc in
       let fn_args,fn_ret = VType.stripArrow fn_type in
       let active         = Scope.isActive ft in
       let fname_typ      = ref (VType.TId(fname,None)) in
@@ -294,13 +294,13 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
       let e1',env',e1_typ  = inferExp env e1 in
       let e2',env',e2_typ  = inferExp env' e2 in
       let ret_type         = VType.newvar () in
-      let _,fn_type,_      = Env.lookupRaise `Operator env [op] attr.loc in
+      let _,fn_type,_      = Env.lookupRaise Scope.Operator env [op] attr.loc in
       let fn_args,fn_ret   = VType.stripArrow fn_type in
       inferApply (expLoc e) [e1'; e2'] [e1_typ; e2_typ] ret_type fn_args fn_ret;
       POp(op,[e1';e2'],{ attr with typ = Some(ret_type) }), env', ret_type
    | POp(op,args,attr) ->
       let args',env',types = inferExpList env args in
-      let _,fn_type,_   = Env.lookupRaise `Operator env [op] attr.loc in
+      let _,fn_type,_   = Env.lookupRaise Scope.Operator env [op] attr.loc in
       let common_type =
          match VType.stripArrow fn_type with
          | [arg1;arg2], ret ->
@@ -315,7 +315,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
    | PUnOp(op,arg,attr) ->
       let arg',env',arg_type = inferExp env arg in
       let ret_type           = VType.newvar () in
-      let _,fn_type,_        = Env.lookupRaise `Operator env ["|"^op^"|"] attr.loc in
+      let _,fn_type,_        = Env.lookupRaise Scope.Operator env ["|"^op^"|"] attr.loc in
       let fn_args,fn_ret     = VType.stripArrow fn_type in
       inferApply (expLoc e) [arg'] [arg_type] ret_type fn_args fn_ret;
       PUnOp(op,arg',{ attr with typ = Some(ret_type) }), env', ret_type
@@ -379,12 +379,12 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       unifyRaise (expLoc rhs') lhs_typ rhs_typ;
       StmtBind(lhs',rhs',attr), env', ret_type
    | StmtBlock(name,stmts,attr) ->
-      let env' = Env.enter `Block env [] attr in
+      let env' = Env.enter Scope.Block env [] attr in
       let stmts', env', stmt_ret_type = inferStmtList env' ret_type stmts in
-      let env' = Env.exit `Block env' in
+      let env' = Env.exit Scope.Block env' in
       StmtBlock(name,stmts',attr), env', stmt_ret_type
    | StmtFun(name,args,body,ret_type,attr) ->
-      let env'                = Env.enter `Function env name attr in
+      let env'                = Env.enter Scope.Function env name attr in
       let args', types, env'  = addArgsToEnv env' args in
       let types',table        = VType.fixTypeList [] types in
       let ret_type',_         = VType.fixOptType table ret_type in
@@ -392,7 +392,7 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       let last_type           = getReturnType body_ret in
       let typ  = VType.makeArrowType last_type types' in
       let env' = Env.setCurrentType env' typ true in
-      let env' = Env.exit `Function env' in
+      let env' = Env.exit Scope.Function env' in
       let  _   = raiseReturnError (attrLoc attr) ret_type' body_ret in
       StmtFun(name,args',body',Some(last_type),attr), env', NoType
    | StmtIf(cond,then_,else_,attr) ->
@@ -411,11 +411,11 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
    | StmtAliasType (name, alias, attr) ->
       StmtAliasType (name, alias, attr), env, ret_type
    | StmtExternal(name,args,fun_ret_type,linkname,attr) ->
-      let env' = Env.enter `Function env name attr in
+      let env' = Env.enter Scope.Function env name attr in
       let args',types, env' = addArgsToEnv env' args in
       let typ  = VType.makeArrowType fun_ret_type types in
       let env' = Env.setCurrentType env' typ true in
-      let env' = Env.exit `Function env' in
+      let env' = Env.exit Scope.Function env' in
       StmtExternal(name,args',fun_ret_type,linkname,attr), env', ret_type
    | StmtEmpty -> StmtEmpty, env, ret_type
 

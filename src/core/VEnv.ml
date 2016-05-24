@@ -29,51 +29,6 @@ let idStr = PrintTypes.identifierStr
 
 let pathStr path = path |> pathId |> PrintTypes.identifierStr
 
-let builtin_table =
-   [
-      ["int"]  , `Type, VType.Constants.type_type, true;
-      ["real"] , `Type, VType.Constants.type_type, true;
-      ["bool"] , `Type, VType.Constants.type_type, true;
-      ["unit"] , `Type, VType.Constants.type_type, true;
-
-      ["set"] , `Function, VType.Constants.array_set (), false;
-      ["get"] , `Function, VType.Constants.array_get (), false;
-      ["size"] , `Function, VType.Constants.array_size (), false;
-      ["makeArray"], `Function, VType.Constants.array_make (), false;
-
-      ["abs"]  , `Function, VType.Constants.real_real (), false;
-      ["exp"]  , `Function, VType.Constants.real_real (), false;
-      ["sin"]  , `Function, VType.Constants.real_real (), false;
-      ["cos"]  , `Function, VType.Constants.real_real (), false;
-      ["floor"], `Function, VType.Constants.real_real (), false;
-      ["tanh"] , `Function, VType.Constants.real_real (), false;
-      ["tan"]  , `Function, VType.Constants.real_real (), false;
-      ["sqrt"] , `Function, VType.Constants.real_real (), false;
-      ["clip"] , `Function, VType.Constants.a_a_a_a (), false;
-
-      ["int"]  , `Function, VType.Constants.num_int (), false;
-      ["real"] , `Function, VType.Constants.num_real (), false;
-
-      ["|-|"] , `Operator, VType.Constants.num_num (), false;
-      ["+"]  , `Operator, VType.Constants.a_a_a (), false;
-      ["-"]  , `Operator, VType.Constants.a_a_a (), false;
-      ["*"]  , `Operator, VType.Constants.a_a_a (), false;
-      ["/"]  , `Operator, VType.Constants.a_a_a (), false;
-      ["%"]  , `Operator, VType.Constants.a_a_a (), false;
-
-      [">"]   , `Operator, VType.Constants.a_a_bool (), false;
-      ["<"]   , `Operator, VType.Constants.a_a_bool (), false;
-      ["=="]  , `Operator, VType.Constants.a_a_bool (), false;
-      ["<>"]  , `Operator, VType.Constants.a_a_bool (), false;
-      [">="]  , `Operator, VType.Constants.a_a_bool (), false;
-      ["<="]  , `Operator, VType.Constants.a_a_bool (), false;
-
-      ["not"]  , `Function, VType.Constants.bool_bool (), false;
-      ["||"]  , `Operator, VType.Constants.bool_bool_bool (), false;
-      ["&&"]  , `Operator, VType.Constants.bool_bool_bool (), false;
-   ]
-
-let builtin_functions = List.map (fun (a,_,_,_)->a) builtin_table |> IdSet.of_list
 
 (** Maps which function belongs to which context *)
 module Context = struct
@@ -140,34 +95,25 @@ module Context = struct
 
 end
 
-type symbol_kind =
-   | MemSymbol
-   | VarSymbol
-   | InstanceSymbol
-   | FunctionSymbol
-   | ModuleSymbol
-   | OperatorSymbol
-   | TypeSymbol
-   | UndefSymbol
-   [@@deriving show]
-
-
-let kindStr kind : string =
-   match kind with
-   | `Function -> "function"
-   | `Module   -> "module"
-   | `Operator -> "operator"
-   | `Type     -> "type"
-   | `Variable -> "variable"
-   | _ -> "symbol"
 
 (** Used to track the location while traversing and also to lookup function, mem, and module *)
 module Scope = struct
 
+   type kind =
+      | Mem
+      | Var
+      | Instance
+      | Function
+      | Module
+      | Operator
+      | Type
+      | Block
+      [@@deriving show]
+
    type t =
       {
          name      : id;             (** Name of the current scope *)
-         kind      : symbol_kind;    (** Type of the current scope *)
+         kind      : kind;           (** Type of the current scope *)
          parent    : t option;       (** Pointer to it's parent *)
          typ       : VType.t;        (** Type of the symbol *)
 
@@ -195,7 +141,7 @@ module Scope = struct
    type t_simple =
       {
          sname      : id;
-         skind      : symbol_kind;
+         skind      : kind;
          styp       : VType.t;
 
          smodules   : (id * t_simple) list;
@@ -238,10 +184,21 @@ module Scope = struct
          | _ -> t
       in show (up t)
 
-   let empty : t =
+   let kindStr kind : string =
+      match kind with
+      | Function -> "function"
+      | Module   -> "module"
+      | Operator -> "operator"
+      | Type     -> "type"
+      | Var      -> "variable"
+      | Instance -> "instance"
+      | Mem      -> "mem"
+      | _ -> "symbol"
+
+   let create (kind:kind) : t =
       {
          name      = [];
-         kind      = UndefSymbol;
+         kind      = kind;
          parent    = None;
          operators = IdMap.empty;
          modules   = IdMap.empty;
@@ -317,15 +274,15 @@ module Scope = struct
       { parent with operators = IdMap.add t.name t parent.operators }
 
    let addMem (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
-      let new_symbol = { empty with name = name; kind = MemSymbol; typ = typ; loc = loc; } in
+      let new_symbol = { (create Mem) with name = name; typ = typ; loc = loc; } in
       { t with mem_inst = IdMap.add name new_symbol t.mem_inst; active = true }
 
    let addInstance (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
-      let new_symbol = { empty with name = name; kind = InstanceSymbol; typ = typ; loc = loc; } in
+      let new_symbol = { (create Instance) with name = name; typ = typ; loc = loc; } in
       { t with mem_inst = IdMap.add name new_symbol t.mem_inst; active = true }
 
    let addVar (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
-      let new_symbol = { empty with name = name; kind = VarSymbol; typ = typ; loc = loc;  } in
+      let new_symbol = { (create Var) with name = name; typ = typ; loc = loc;  } in
       let first,rest =
          match t.locals with
          | [] -> IdMap.empty,[]
@@ -333,12 +290,12 @@ module Scope = struct
       in
       { t with locals = (IdMap.add name new_symbol first) :: rest }
 
-   let enterAny kind (get:t -> t IdMap.t) (t:t) (name:id) (loc:Loc.t) : t =
+   let enterAny (kind:kind) (get:t -> t IdMap.t) (t:t) (name:id) (loc:Loc.t) : t =
       match IdMap.find name (get t) with
       | sub ->
          { sub with parent = Some(t) }
       | exception Not_found ->
-         { empty with parent = Some(t); name = name; kind = kind; loc = loc }
+         { (create kind) with parent = Some(t); name = name; kind = kind; loc = loc }
 
    let exitAny (exit:t -> t -> t) (t:t) : t =
       match t.parent with
@@ -382,28 +339,28 @@ module Scope = struct
       | Some(parent) ->
          Context.getInitFunction parent.ctx name
 
-   let enter kind (t:t) (name:id) (attr:attr) : t =
+   let enter (kind:kind) (t:t) (name:id) (attr:attr) : t =
       match kind with
-      | `Function ->
-         let t' = enterAny FunctionSymbol getFunction t name attr.loc in
+      | Function ->
+         let t' = enterAny Function getFunction t name attr.loc in
          let t' = { t' with ext_fn = t'.ext_fn <+> attr.ext_fn } in
          if attr.fun_and then
             addToContext t' name attr.init
          else
             newContext t' name attr.init
-      | `Module   -> enterAny ModuleSymbol getModule t name attr.loc
-      | `Operator -> enterAny OperatorSymbol getOperators t name attr.loc
-      | `Type     -> enterAny TypeSymbol getTypes t name attr.loc
-      | `Block    -> { t with locals = IdMap.empty :: t.locals }
+      | Module   -> enterAny Module getModule t name attr.loc
+      | Operator -> enterAny Operator getOperators t name attr.loc
+      | Type     -> enterAny Type getTypes t name attr.loc
+      | Block    -> { t with locals = IdMap.empty :: t.locals }
       | _ -> raise (Invalid_argument "Scope.enter")
 
-   let exit kind (t:t) : t =
+   let exit (kind:kind) (t:t) : t =
       match kind with
-      | `Function -> exitAny primExitFunction t
-      | `Module   -> exitAny primExitModule t
-      | `Operator -> exitAny primExitOperators t
-      | `Type     -> exitAny primExitTypes t
-      | `Block    -> { t with locals = List.tl t.locals }
+      | Function -> exitAny primExitFunction t
+      | Module   -> exitAny primExitModule t
+      | Operator -> exitAny primExitOperators t
+      | Type     -> exitAny primExitTypes t
+      | Block    -> { t with locals = List.tl t.locals }
       | _ -> raise (Invalid_argument "Scope.exit")
 
    let setCurrentType (t:t) (typ:VType.t) (single:bool) : t =
@@ -414,16 +371,16 @@ module Scope = struct
       | None -> None
       | Some(parent) ->
          match t.kind with
-         | ModuleSymbol ->
+         | Module ->
             Some(primExitModule parent t)
-         | FunctionSymbol ->
+         | Function ->
             Some(primExitFunction parent t)
-         | MemSymbol | InstanceSymbol ->
+         | Mem | Instance ->
             Some(primExitMemInst parent t)
-         | VarSymbol -> Some(parent)
-         | OperatorSymbol ->
+         | Var -> Some(parent)
+         | Operator ->
             Some(primExitOperators parent t)
-         | TypeSymbol ->
+         | Type ->
             Some(primExitTypes parent t)
          | _ -> failwith "The type is undefined"
 
@@ -507,13 +464,15 @@ module Scope = struct
       | Some(_) as a -> a
       | None -> lookupVal t name
 
-   let lookupScope kind (t:t) (name:id) : t option =
+   let lookupScope (kind:kind) (t:t) (name:id) : t option =
       match kind with
-      | `Function -> findAny true findFunction t name
-      | `Module   -> findAny true findModule t name
-      | `Operator -> findAny true findOperator t name
-      | `Type     -> findAny true findType t name
-      | `Variable -> lookupVariable t name
+      | Function -> findAny true findFunction t name
+      | Module   -> findAny true findModule t name
+      | Operator -> findAny true findOperator t name
+      | Type     -> findAny true findType t name
+      | Mem | Instance -> findAny true findMemInst t name
+      | Var      -> lookupVariable t name
+      | Block -> failwith "Blocks cannot be lookup"
 
    let lookup kind (t:t) (name:id) : (path * VType.t * t) option =
       match lookupScope kind t name with
@@ -535,6 +494,53 @@ module Scope = struct
       List.exists (fun a -> a.active) tables
 
 end
+
+
+let builtin_table =
+   [
+      ["int"]  , Scope.Type, VType.Constants.type_type, true;
+      ["real"] , Scope.Type, VType.Constants.type_type, true;
+      ["bool"] , Scope.Type, VType.Constants.type_type, true;
+      ["unit"] , Scope.Type, VType.Constants.type_type, true;
+
+      ["set"] ,      Scope.Function, VType.Constants.array_set (), false;
+      ["get"] ,      Scope.Function, VType.Constants.array_get (), false;
+      ["size"] ,     Scope.Function, VType.Constants.array_size (), false;
+      ["makeArray"], Scope.Function, VType.Constants.array_make (), false;
+
+      ["abs"]  , Scope.Function, VType.Constants.real_real (), false;
+      ["exp"]  , Scope.Function, VType.Constants.real_real (), false;
+      ["sin"]  , Scope.Function, VType.Constants.real_real (), false;
+      ["cos"]  , Scope.Function, VType.Constants.real_real (), false;
+      ["floor"], Scope.Function, VType.Constants.real_real (), false;
+      ["tanh"] , Scope.Function, VType.Constants.real_real (), false;
+      ["tan"]  , Scope.Function, VType.Constants.real_real (), false;
+      ["sqrt"] , Scope.Function, VType.Constants.real_real (), false;
+      ["clip"] , Scope.Function, VType.Constants.a_a_a_a (), false;
+
+      ["int"]  , Scope.Function, VType.Constants.num_int (), false;
+      ["real"] , Scope.Function, VType.Constants.num_real (), false;
+
+      ["|-|"] , Scope.Operator, VType.Constants.num_num (), false;
+      ["+"]  , Scope.Operator, VType.Constants.a_a_a (), false;
+      ["-"]  , Scope.Operator, VType.Constants.a_a_a (), false;
+      ["*"]  , Scope.Operator, VType.Constants.a_a_a (), false;
+      ["/"]  , Scope.Operator, VType.Constants.a_a_a (), false;
+      ["%"]  , Scope.Operator, VType.Constants.a_a_a (), false;
+
+      [">"]   , Scope.Operator, VType.Constants.a_a_bool (), false;
+      ["<"]   , Scope.Operator, VType.Constants.a_a_bool (), false;
+      ["=="]  , Scope.Operator, VType.Constants.a_a_bool (), false;
+      ["<>"]  , Scope.Operator, VType.Constants.a_a_bool (), false;
+      [">="]  , Scope.Operator, VType.Constants.a_a_bool (), false;
+      ["<="]  , Scope.Operator, VType.Constants.a_a_bool (), false;
+
+      ["not"] , Scope.Function, VType.Constants.bool_bool (), false;
+      ["||"]  , Scope.Operator, VType.Constants.bool_bool_bool (), false;
+      ["&&"]  , Scope.Operator, VType.Constants.bool_bool_bool (), false;
+   ]
+
+let builtin_functions = List.map (fun (a,_,_,_)->a) builtin_table |> IdSet.of_list
 
 module Env = struct
 
@@ -585,11 +591,11 @@ module Env = struct
    let lookupRaise kind (state:'a t) (name:id) (loc:Loc.t) : path * VType.t * Scope.t =
       match lookup kind state name with
       | Some(a) -> a
-      | None -> Error.raiseError (Printf.sprintf "Unknown %s '%s'" (kindStr kind) (idStr name)) loc
+      | None -> Error.raiseError (Printf.sprintf "Unknown %s '%s'" (Scope.kindStr kind) (idStr name)) loc
 
       (** Returns the mem and instances for a function *)
    let getMemAndInstances (state:'a t) (name:id) : IdTypeSet.t =
-      match Scope.lookup `Function state.scope name with
+      match Scope.lookup Scope.Function state.scope name with
       | None -> IdTypeSet.empty
       | Some(_,_,t) ->
          Scope.getFunctionMemInst t
@@ -598,19 +604,19 @@ module Env = struct
 
    (** Returns the generated context name for the given function *)
    let getContext (state:'a t) (name:id) : path =
-      match Scope.lookup `Function state.scope name with
+      match Scope.lookup Scope.Function state.scope name with
       | None -> failwith "Function not found"
       | Some(_,_,t) -> Scope.getContext t
 
    (** Returns the initialization function if it has beed defines with the attribute *)
    let getInitFunction (state:'a t) (name:id) : id option =
-      match Scope.lookup `Function state.scope name with
+      match Scope.lookup Scope.Function state.scope name with
       | None -> failwith "Function not found"
       | Some(_,_,t) -> Scope.getInitFunction t name
 
    (** Returns true if the function is active *)
    let isActive (state:'a t) (name:id) : bool =
-      match Scope.lookup `Function state.scope name with
+      match Scope.lookup Scope.Function state.scope name with
       | None -> false
       | Some(_,_,t) ->
          Scope.isActive t
@@ -665,7 +671,7 @@ module Env = struct
    let empty data : 'a t =
       {
          data    = data;
-         scope   = Scope.empty;
+         scope   = Scope.create Scope.Module;
       }
       |> initialize
 
