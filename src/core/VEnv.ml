@@ -273,7 +273,7 @@ module Scope = struct
       let sub = findOrCreate t typ loc kind name in
       { sub with parent = Some(t) }
 
-   let exitKind (t:t) : t =
+   let exit (t:t) : t =
       match t.parent with
       | None -> failwith "Scope.exit: cannot exit the top scope"
       | Some(parent) ->
@@ -303,6 +303,23 @@ module Scope = struct
       in
       { t with locals = (IdMap.add name new_symbol first) :: rest }
 
+   let newContext (parent:t) (name:id) (is_init:bool) : t =
+      { parent with ctx = Context.makeNew parent.ctx name is_init }
+
+   let addToContext (parent:t) (name:id) (is_init:bool) : t =
+      { parent with ctx = Context.addTo parent.ctx name is_init }
+
+   let addFunction (t:t) (name:id) (attr:attr) : t =
+      let new_symbol =
+         { (create Function) with name = name;loc = attr.loc; ext_fn = attr.ext_fn } in
+      let t' =
+         if attr.fun_and then
+            addToContext t name attr.init
+         else
+            newContext t name attr.init
+      in
+      { t' with func = IdMap.add name new_symbol t.func; }
+
    let current (t:t) : path =
       let rec parentName parent =
          match parent with
@@ -312,18 +329,6 @@ module Scope = struct
       in
       t.name :: parentName t.parent
       |> List.rev |> List.flatten |> fun a -> Path(a)
-
-   let newContext (t:t) (name:id) (is_init:bool) : t =
-      match t.parent with
-      | None -> t
-      | Some(parent) ->
-         { t with parent = Some({ parent with ctx = Context.makeNew parent.ctx name is_init }) }
-
-   let addToContext (t:t) (name:id) (is_init:bool) : t =
-      match t.parent with
-      | None -> t
-      | Some(parent) ->
-         { t with parent = Some({ parent with ctx = Context.addTo parent.ctx name is_init }) }
 
    let getContext (t:t) : path =
       match t.parent with
@@ -340,33 +345,13 @@ module Scope = struct
          Context.getInitFunction parent.ctx name
 
    let enter (kind:kind) (t:t) (name:id) (attr:attr) : t =
-      match kind with
-      | Function ->
-         let t' = enterKind t ~loc:attr.loc Function name  in
-         let t' = { t' with ext_fn = t'.ext_fn <+> attr.ext_fn } in
-         if attr.fun_and then
-            addToContext t' name attr.init
-         else
-            newContext t' name attr.init
-      | Module   -> enterKind t ~loc:attr.loc Module name
-      | Operator -> enterKind t ~loc:attr.loc Operator name
-      | Type     -> enterKind t ~loc:attr.loc Type name
-      | _ -> raise (Invalid_argument "Scope.enter")
-
-   let exit (t:t) : t =
-      exitKind t
+      enterKind t ~loc:attr.loc kind name
 
    let exitBlock (t:t) : t =
       { t with locals = List.tl t.locals }
 
    let setCurrentType (t:t) (typ:VType.t) (single:bool) : t =
       { t with typ = typ; single = single }
-
-   let getParent (t:t) : t option =
-      match t.parent with
-      | None -> None
-      | Some(_) ->
-         Some(exitKind t)
 
    let getPath (t:t) : id =
       let rec parentPath (parent:t option) : id =
@@ -390,9 +375,9 @@ module Scope = struct
             findAny find_up find found rest
          | None ->
             if find_up then
-               match getParent t with
-               | Some(parent) ->
-                  findAny find_up find parent name
+               match t.parent with
+               | Some(_) ->
+                  findAny find_up find (exit t) name
                | None -> None
             else None
 
@@ -564,6 +549,12 @@ module Env = struct
       {
          state with
          scope   = Scope.addInstance state.scope name typ attr.loc;
+      }
+
+   let addFunction (state:'a t) (name:id) (attr:attr) : 'a t  =
+      {
+         state with
+         scope   = Scope.addFunction state.scope name attr;
       }
 
    (** Returns the full path of a function. *)
