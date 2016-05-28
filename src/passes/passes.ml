@@ -183,15 +183,16 @@ module CreateInitFunction = struct
       | h::t -> h :: (getFunctioTypeName t)
 
    let rec getInitValue (tp:VType.t) : exp =
+      let typedAttr = { emptyAttr with typ = Some(tp)} in
       match !tp with
-      | VType.TId(["real"],_) -> PReal(0.0,{ emptyAttr with typ = Some(tp)})
-      | VType.TId(["int"],_)  -> PInt(0,{ emptyAttr with typ = Some(tp)})
-      | VType.TId(["bool"],_) -> PBool(false,{ emptyAttr with typ = Some(tp)})
-      | VType.TId(name,_) ->
-         PCall(None,getInitFunctioName name,[],{ emptyAttr with typ = Some(tp)})
+      | VType.TId(["real"],_) -> PReal(0.0,typedAttr)
+      | VType.TId(["int"],_)  -> PInt(0,typedAttr)
+      | VType.TId(["bool"],_) -> PBool(false,typedAttr)
+      | VType.TId(name,_)     -> PCall(None,getInitFunctioName name,[],typedAttr)
       | VType.TComposed(["array"],[sub;{ contents = VType.TInt(size,_) }],_) ->
-         let sub_init = getInitValue sub in
-         PCall(None,["makeArray"],[PInt(size,{emptyAttr with typ = Some(VType.Constants.int_type)});sub_init],{ emptyAttr with typ = Some(tp)})
+         let sub_init    = getInitValue sub in
+         let intTypeAttr = {emptyAttr with typ = Some(VType.Constants.int_type)} in
+         PCall(None,["makeArray"],[PInt(size,intTypeAttr);sub_init],typedAttr)
       | VType.TLink(tp) -> getInitValue tp
       | _ -> failwith "getInitValue"
 
@@ -201,7 +202,7 @@ module CreateInitFunction = struct
          begin
             try
                let context_path = Env.getContext state tp_name in
-               let context = Env.pathFromCurrent state context_path in
+               let context      = Env.pathFromCurrent state context_path in
                ref (VType.TId(context,None))
             with | _ -> tp
          end
@@ -215,7 +216,9 @@ module CreateInitFunction = struct
       let new_stmts_set =
          IdTypeSet.fold
             (fun (name,tp) acc ->
-               let new_stmt = StmtBind(LId(ctx_name @ name,Some(tp),{ emptyAttr with typ = Some(tp) }), getInitValue tp, emptyAttr) in
+               let typedAttr = { emptyAttr with typ = Some(tp) } in
+               let lhs       = LId(ctx_name @ name,Some(tp),typedAttr) in
+               let new_stmt  = StmtBind(lhs, getInitValue tp, emptyAttr) in
                StmtSet.add new_stmt acc)
             member_set StmtSet.empty
       in
@@ -223,7 +226,10 @@ module CreateInitFunction = struct
       (* Generates a call to the initialization function if there's one*)
       let init_fun_call =
          match init_fun with
-         | Some(init_fun_name) -> [StmtBind(LWild(emptyAttr),PCall(None,init_fun_name,[ctx_lid],{emptyAttr with typ=Some(VType.Constants.unit_type)}),emptyAttr)]
+         | Some(init_fun_name) ->
+            let unitAttr = { emptyAttr with typ=Some(VType.Constants.unit_type)} in
+            let callExp  = PCall(None,init_fun_name,[ctx_lid],unitAttr) in
+            [StmtBind(LWild(emptyAttr),callExp,emptyAttr)]
          | None -> []
       in
       let return_stmt = StmtReturn(PId(ctx_name,attr),emptyAttr) in

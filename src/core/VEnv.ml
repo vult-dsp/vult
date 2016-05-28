@@ -23,7 +23,6 @@ THE SOFTWARE.
 *)
 
 open TypesVult
-open CCOpt
 
 let idStr = PrintTypes.identifierStr
 
@@ -320,6 +319,7 @@ module Scope = struct
       in
       { t' with func = IdMap.add name new_symbol t.func; }
 
+
    let current (t:t) : path =
       let rec parentName parent =
          match parent with
@@ -330,20 +330,6 @@ module Scope = struct
       t.name :: parentName t.parent
       |> List.rev |> List.flatten |> fun a -> Path(a)
 
-   let getContext (t:t) : path =
-      match t.parent with
-      | None -> raise (Invalid_argument "Scope.getContext")
-      | Some(parent) ->
-         let Path(parent_path) = current parent in
-         let ctx = Context.getContext parent.ctx t.name in
-         Path(parent_path@ctx)
-
-   let getInitFunction (t:t) (name:id) : id option =
-      match t.parent with
-      | None -> raise (Invalid_argument "Scope.getContext")
-      | Some(parent) ->
-         Context.getInitFunction parent.ctx name
-
    let enter (kind:kind) (t:t) (name:id) (attr:attr) : t =
       enterKind t ~loc:attr.loc kind name
 
@@ -352,6 +338,11 @@ module Scope = struct
 
    let setCurrentType (t:t) (typ:VType.t) (single:bool) : t =
       { t with typ = typ; single = single }
+
+   let addBuiltin (t:t) (name,kind,typ,single) =
+      let t' = enter kind t name emptyAttr in
+      let t' = setCurrentType t' typ single in
+      exit t'
 
    let getPath (t:t) : id =
       let rec parentPath (parent:t option) : id =
@@ -407,16 +398,6 @@ module Scope = struct
          List.fold_left (fun s a -> try (IdMap.find a parent.func) :: s with | _ -> s) [t] contexts
       | _ -> [t]
 
-   let getFunctionMemInst (t:t) : (path * VType.t * t) list =
-      let tables = getAllWithSameContext t in
-      let mem_inst =
-         List.map (fun t -> t.mem_inst) tables
-         |> List.map IdMap.to_list
-         |> List.flatten
-         |> List.map snd
-      in
-      List.map getPathAndType mem_inst
-
    let lookupMemInAllContext (t:t) (name:id) : t option =
       let tables = getAllWithSameContext t in
       let rec loop ctx =
@@ -450,16 +431,77 @@ module Scope = struct
    let lookupRaise kind (t:t) (name:id) (loc:Loc.t) : path * VType.t * t =
       match lookup kind t name with
       | Some(a) -> a
-      | None -> Error.raiseError (Printf.sprintf "Unknown %s '%s'" (kindStr kind) (idStr name)) loc
+      | None ->
+         Error.raiseError (Printf.sprintf "Unknown %s '%s'" (kindStr kind) (idStr name)) loc
 
    let isMemOrInstance (t:t) (name:id) : bool =
       match lookupMemInAllContext t name with
       | Some(_) -> true
       | None    -> false
 
+
+   (** Returns all mem and instances of the given scope, assuming is a function *)
+   let getFunctionMemInst (t:t) : t list =
+      getAllWithSameContext t
+      |> List.map (fun a -> a.mem_inst)
+      |> List.map IdMap.to_list
+      |> List.flatten
+      |> List.map snd
+
+   (** Lookup the function and returns a set containing all the
+      instances and mem of all functions in the context *)
+   let getFunctionMemInstSet (t:t) (name:id) : IdTypeSet.t =
+      match lookup Function t name with
+      | None -> IdTypeSet.empty
+      | Some(_,_,s) ->
+         getFunctionMemInst s
+         |> List.map (fun a -> a.name, a.typ)
+         |> IdTypeSet.of_list
+
+   (** Lookup the function and optionally returns the name of the initilization function *)
+   let getInitFunction (t:t) (name:id) : id option =
+      match lookup Function t name with
+      | None -> None
+      | Some(_,_,s) ->
+         match s.parent with
+         | None -> raise (Invalid_argument "Scope.getInitFunction")
+         | Some(parent) ->
+            Context.getInitFunction parent.ctx name
+
+
+   (** Lookup the function and returns the path to the function context *)
+   let getContext (t:t) (name:id) : path =
+      match lookup Function t name with
+      | None -> raise (Invalid_argument "Scope.getContext")
+      | Some(_,_,s) ->
+         match s.parent with
+         | None -> raise (Invalid_argument "Scope.getContext")
+         | Some(parent) ->
+            let Path(parent_path) = current parent in
+            let ctx = Context.getContext parent.ctx s.name in
+            Path(parent_path@ctx)
+
+   (** Returns true/false if the given scope is active *)
    let isActive (t:t) : bool =
       let tables = getAllWithSameContext t in
       List.exists (fun a -> a.active) tables
+
+   (** Lookup the function and returns true/false if the function is active *)
+   let isActiveFunction (t:t) (name:id) : bool =
+      match lookup Function t name with
+      | Some(_,_,s) ->
+         isActive s
+      | None -> false
+
+
+   let pathFromCurrent (t:t) (path:path) =
+      let Path(current) = current t in
+      let Path(id) = path in
+      let rec loop p1 p2 =
+         match p1,p2 with
+         | h1::t1, h2::t2 when h1 = h2 -> loop t1 t2
+         | _,_ -> p2
+      in loop current id
 
 end
 
@@ -563,50 +605,27 @@ module Env = struct
 
    (** Returns the full path of a function. Raises an error if it cannot be found *)
    let lookupRaise kind (state:'a t) (name:id) (loc:Loc.t) : path * VType.t * Scope.t =
-      match lookup kind state name with
-      | Some(a) -> a
-      | None -> Error.raiseError (Printf.sprintf "Unknown %s '%s'" (Scope.kindStr kind) (idStr name)) loc
+      Scope.lookupRaise kind state.scope name loc
 
       (** Returns the mem and instances for a function *)
    let getMemAndInstances (state:'a t) (name:id) : IdTypeSet.t =
-      match Scope.lookup Scope.Function state.scope name with
-      | None -> IdTypeSet.empty
-      | Some(_,_,t) ->
-         Scope.getFunctionMemInst t
-         |> List.map (fun (k,v,_) -> pathLast k, v)
-         |> IdTypeSet.of_list
+      Scope.getFunctionMemInstSet state.scope name
 
    (** Returns the generated context name for the given function *)
    let getContext (state:'a t) (name:id) : path =
-      match Scope.lookup Scope.Function state.scope name with
-      | None -> failwith "Function not found"
-      | Some(_,_,t) -> Scope.getContext t
+      Scope.getContext state.scope name
 
    (** Returns the initialization function if it has beed defines with the attribute *)
    let getInitFunction (state:'a t) (name:id) : id option =
-      match Scope.lookup Scope.Function state.scope name with
-      | None -> failwith "Function not found"
-      | Some(_,_,t) -> Scope.getInitFunction t name
+      Scope.getInitFunction state.scope name
 
    (** Returns true if the function is active *)
    let isActive (state:'a t) (name:id) : bool =
-      match Scope.lookup Scope.Function state.scope name with
-      | None -> false
-      | Some(_,_,t) ->
-         Scope.isActive t
+      Scope.isActiveFunction state.scope name
 
    (** Returns true if the id is a mem or an instance *)
    let isLocalInstanceOrMem (state:'a t) (name:id) : bool =
       Scope.isMemOrInstance state.scope name
-
-   (** Generates a new name for an instance based on the tick *)
-   let generateInstanceName (state:'a t) (name_opt:id option) : 'a t * id =
-      match name_opt with
-      | Some(name) -> state,name
-      | None ->
-         let tick, state' = tick state in
-         let id = ["$fun_"^(string_of_int tick)] in
-         state', id
 
    (** Returns the current location *)
    let currentScope (state:'a t) : path =
@@ -643,15 +662,15 @@ module Env = struct
          scope = Scope.exitBlock state.scope;
       }
 
-   let addBuiltinFunction (state:'a t) (name,kind,typ,single) : 'a t =
-      let state' = enter kind state name emptyAttr in
-      let state' = setCurrentType state' typ single in
-      let state' = exit state' in
-      state'
+   let addBuiltin (state:'a t) (name,kind,typ,single) : 'a t =
+      {
+         state with
+         scope = Scope.addBuiltin state.scope (name,kind,typ,single);
+      }
 
    (** Adds the builtin functions to the given context *)
    let initialize (s:'a t) : 'a t =
-      List.fold_left (fun s a -> addBuiltinFunction s a) s builtin_table
+      List.fold_left (fun s a -> addBuiltin s a) s builtin_table
 
    (** Creates an empty module context *)
    let empty data : 'a t =
@@ -668,12 +687,6 @@ module Env = struct
       { state with data = data }
 
    let pathFromCurrent (state:'a t) (path:path) =
-      let Path(current) = currentScope state in
-      let Path(id) = path in
-      let rec loop p1 p2 =
-         match p1,p2 with
-         | h1::t1, h2::t2 when h1 = h2 -> loop t1 t2
-         | _,_ -> p2
-      in loop current id
+      Scope.pathFromCurrent state.scope path
 
 end
