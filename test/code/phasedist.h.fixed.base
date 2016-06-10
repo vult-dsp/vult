@@ -5,7 +5,7 @@
 #include "vultin.h"
 
 typedef struct Phasedist__ctx_type_0 {
-   int32_t x;
+   fix16_t x;
 } Phasedist__ctx_type_0;
 
 typedef Phasedist__ctx_type_0 Phasedist_smooth_type;
@@ -14,10 +14,10 @@ Phasedist__ctx_type_0 Phasedist__ctx_type_0_init();
 
 Phasedist__ctx_type_0 Phasedist_smooth_init();
 
-int32_t Phasedist_smooth(Phasedist__ctx_type_0 &_ctx, int32_t input);
+fix16_t Phasedist_smooth(Phasedist__ctx_type_0 &_ctx, fix16_t input);
 
 typedef struct Phasedist__ctx_type_1 {
-   int32_t pre_x;
+   fix16_t pre_x;
 } Phasedist__ctx_type_1;
 
 typedef Phasedist__ctx_type_1 Phasedist_change_type;
@@ -26,13 +26,13 @@ Phasedist__ctx_type_1 Phasedist__ctx_type_1_init();
 
 Phasedist__ctx_type_1 Phasedist_change_init();
 
-uint8_t Phasedist_change(Phasedist__ctx_type_1 &_ctx, int32_t x);
+uint8_t Phasedist_change(Phasedist__ctx_type_1 &_ctx, fix16_t x);
 
-int32_t Phasedist_pitchToRate(int32_t d);
+fix16_t Phasedist_pitchToRate(fix16_t d);
 
 typedef struct Phasedist__ctx_type_3 {
-   int32_t rate;
-   int32_t phase;
+   fix16_t rate;
+   fix16_t phase;
    Phasedist__ctx_type_1 _inst0;
 } Phasedist__ctx_type_3;
 
@@ -42,13 +42,13 @@ Phasedist__ctx_type_3 Phasedist__ctx_type_3_init();
 
 Phasedist__ctx_type_3 Phasedist_phasor_init();
 
-int32_t Phasedist_phasor(Phasedist__ctx_type_3 &_ctx, int32_t pitch, uint8_t reset);
+fix16_t Phasedist_phasor(Phasedist__ctx_type_3 &_ctx, fix16_t pitch, uint8_t reset);
 
 typedef struct Phasedist__ctx_type_4 {
-   int32_t volume;
-   int32_t pre_phase1;
-   int32_t pitch;
-   int32_t detune;
+   fix16_t volume;
+   fix16_t pre_phase1;
+   fix16_t pitch;
+   fix16_t detune;
    Phasedist__ctx_type_0 _inst3;
    Phasedist__ctx_type_3 _inst2;
    Phasedist__ctx_type_0 _inst1;
@@ -61,7 +61,7 @@ Phasedist__ctx_type_4 Phasedist__ctx_type_4_init();
 
 Phasedist__ctx_type_4 Phasedist_process_init();
 
-int32_t Phasedist_process(Phasedist__ctx_type_4 &_ctx, int32_t input);
+fix16_t Phasedist_process(Phasedist__ctx_type_4 &_ctx, fix16_t input);
 
 typedef Phasedist__ctx_type_4 Phasedist_noteOn_type;
 

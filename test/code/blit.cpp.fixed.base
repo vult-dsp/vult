@@ -1,6 +1,6 @@
 #include "blit.h"
 
-uint8_t Blit_near_zero(int32_t x){
+uint8_t Blit_near_zero(fix16_t x){
    return (fix_abs(x) < 0x51e /* 0.020000 */);
 }
 
@@ -12,7 +12,7 @@ Blit__ctx_type_1 Blit__ctx_type_1_init(){
 
 Blit__ctx_type_1 Blit_change_init(){ return Blit__ctx_type_1_init();}
 
-uint8_t Blit_change(Blit__ctx_type_1 &_ctx, int32_t x){
+uint8_t Blit_change(Blit__ctx_type_1 &_ctx, fix16_t x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
@@ -27,21 +27,21 @@ Blit__ctx_type_2 Blit__ctx_type_2_init(){
 
 Blit__ctx_type_2 Blit_dcblock_init(){ return Blit__ctx_type_2_init();}
 
-int32_t Blit_dcblock(Blit__ctx_type_2 &_ctx, int32_t x0){
-   int32_t y0 = fix_add(fix_add(x0,(- _ctx.x1)),fix_mul(_ctx.y1,0xfeb8 /* 0.995000 */));
+fix16_t Blit_dcblock(Blit__ctx_type_2 &_ctx, fix16_t x0){
+   fix16_t y0 = fix_add(fix_add(x0,(- _ctx.x1)),fix_mul(_ctx.y1,0xfeb8 /* 0.995000 */));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
 }
 
-int32_t Blit_pitchToRate(int32_t d){
+fix16_t Blit_pitchToRate(fix16_t d){
    return fix_mul(0xc /* 0.000185 */,fix_exp(fix_mul(0xec9 /* 0.057762 */,d)));
 }
 
-int32_t Blit_pulse_train(int32_t m, int32_t phase){
-   int32_t pi_phase = fix_mul(phase,0x3243f /* 3.141593 */);
-   int32_t denominator1 = fix_sin(pi_phase);
-   int32_t tmp1 = 0x0 /* 0.000000 */;
+fix16_t Blit_pulse_train(fix16_t m, fix16_t phase){
+   fix16_t pi_phase = fix_mul(phase,0x3243f /* 3.141593 */);
+   fix16_t denominator1 = fix_sin(pi_phase);
+   fix16_t tmp1 = 0x0 /* 0.000000 */;
    if(Blit_near_zero(denominator1)){
       tmp1 = 0x10000 /* 1.000000 */;
    }
@@ -69,8 +69,8 @@ Blit__ctx_type_5 Blit__ctx_type_5_init(){
 
 Blit__ctx_type_5 Blit_osc_init(){ return Blit__ctx_type_5_init();}
 
-int32_t Blit_osc(Blit__ctx_type_5 &_ctx, int32_t pitch, int32_t pw, int32_t wave){
-   int32_t fixed_pitch = 0x0 /* 0.000000 */;
+fix16_t Blit_osc(Blit__ctx_type_5 &_ctx, fix16_t pitch, fix16_t pw, fix16_t wave){
+   fix16_t fixed_pitch = 0x0 /* 0.000000 */;
    if(wave < 0xaaaa /* 0.666667 */){
       fixed_pitch = pitch;
    }
@@ -80,17 +80,17 @@ int32_t Blit_osc(Blit__ctx_type_5 &_ctx, int32_t pitch, int32_t pw, int32_t wave
    }
    if(Blit_change(_ctx._inst0,fixed_pitch)){
       _ctx.rate = Blit_pitchToRate(fixed_pitch);
-      int32_t p = fix_div(0x10000 /* 1.000000 */,_ctx.rate);
-      int32_t maxHarmonics = fix_floor(fix_mul(p,0x8000 /* 0.500000 */));
+      fix16_t p = fix_div(0x10000 /* 1.000000 */,_ctx.rate);
+      fix16_t maxHarmonics = fix_floor(fix_mul(p,0x8000 /* 0.500000 */));
       _ctx.m = fix_add(fix_mul(0x20000 /* 2.000000 */,maxHarmonics),0x10000 /* 1.000000 */);
    }
-   int32_t shift05 = fix_add(0x8000 /* 0.500000 */,fix_mul(pw,0x7d70 /* 0.490000 */));
-   int32_t shift = fix_add(_ctx.phase,shift05);
+   fix16_t shift05 = fix_add(0x8000 /* 0.500000 */,fix_mul(pw,0x7d70 /* 0.490000 */));
+   fix16_t shift = fix_add(_ctx.phase,shift05);
    if(shift > 0x10000 /* 1.000000 */){
       shift = fix_add(shift,(0xffff0000 /* -1.000000 */));
    }
-   int32_t tmp1 = Blit_pulse_train(_ctx.m,_ctx.phase);
-   int32_t tmp2 = Blit_pulse_train(_ctx.m,shift);
+   fix16_t tmp1 = Blit_pulse_train(_ctx.m,_ctx.phase);
+   fix16_t tmp2 = Blit_pulse_train(_ctx.m,shift);
    _ctx.phase = fix_add(_ctx.phase,_ctx.rate);
    if(_ctx.phase > 0x10000 /* 1.000000 */){
       _ctx.phase = fix_add(_ctx.phase,(0xffff0000 /* -1.000000 */));

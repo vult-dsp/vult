@@ -8,29 +8,29 @@ Moog_filter__ctx_type_0 Moog_filter__ctx_type_0_init(){
 
 Moog_filter__ctx_type_0 Moog_filter_change_init(){ return Moog_filter__ctx_type_0_init();}
 
-uint8_t Moog_filter_change(Moog_filter__ctx_type_0 &_ctx, int32_t x){
+uint8_t Moog_filter_change(Moog_filter__ctx_type_0 &_ctx, fix16_t x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
 
-int32_t Moog_filter_min(int32_t a, int32_t b){
+fix16_t Moog_filter_min(fix16_t a, fix16_t b){
    return ((a < b)?a:b);
 }
 
-int32_t Moog_filter_max(int32_t a, int32_t b){
+fix16_t Moog_filter_max(fix16_t a, fix16_t b){
    return ((a > b)?a:b);
 }
 
-int32_t Moog_filter_clip(int32_t value, int32_t low, int32_t high){
+fix16_t Moog_filter_clip(fix16_t value, fix16_t low, fix16_t high){
    return Moog_filter_min(Moog_filter_max(low,value),high);
 }
 
-int32_t Moog_filter_PI(){
+fix16_t Moog_filter_PI(){
    return 0x3243f /* 3.141593 */;
 }
 
-int32_t Moog_filter_thermal(){
+fix16_t Moog_filter_thermal(){
    return 0xd1b7 /* 0.819200 */;
 }
 
@@ -48,15 +48,15 @@ Moog_filter__ctx_type_6 Moog_filter__ctx_type_6_init(){
 
 Moog_filter__ctx_type_6 Moog_filter_moog_step_init(){ return Moog_filter__ctx_type_6_init();}
 
-int32_t Moog_filter_moog_step(Moog_filter__ctx_type_6 &_ctx, int32_t input, int32_t resFixed, int32_t tune, int32_t output){
-   int32_t i0 = fix_add(input,(- fix_mul(resFixed,output)));
-   int32_t w0 = fix_add(_ctx.dw0,fix_mul(tune,fix_add(fix_tanh(fix_mul(i0,Moog_filter_thermal())),(- _ctx.tw0))));
+fix16_t Moog_filter_moog_step(Moog_filter__ctx_type_6 &_ctx, fix16_t input, fix16_t resFixed, fix16_t tune, fix16_t output){
+   fix16_t i0 = fix_add(input,(- fix_mul(resFixed,output)));
+   fix16_t w0 = fix_add(_ctx.dw0,fix_mul(tune,fix_add(fix_tanh(fix_mul(i0,Moog_filter_thermal())),(- _ctx.tw0))));
    _ctx.tw0 = fix_tanh(fix_mul(w0,Moog_filter_thermal()));
-   int32_t w1 = fix_add(fix_add(_ctx.dw1,fix_mul(tune,_ctx.tw0)),(- _ctx.tw1));
+   fix16_t w1 = fix_add(fix_add(_ctx.dw1,fix_mul(tune,_ctx.tw0)),(- _ctx.tw1));
    _ctx.tw1 = fix_tanh(fix_mul(w1,Moog_filter_thermal()));
-   int32_t w2 = fix_add(fix_add(_ctx.dw2,fix_mul(tune,_ctx.tw1)),(- _ctx.tw2));
+   fix16_t w2 = fix_add(fix_add(_ctx.dw2,fix_mul(tune,_ctx.tw1)),(- _ctx.tw2));
    _ctx.tw2 = fix_tanh(fix_mul(w2,Moog_filter_thermal()));
-   int32_t w3 = fix_add(fix_add(_ctx.dw3,fix_mul(tune,_ctx.tw2)),(- fix_tanh(fix_mul(_ctx.dw3,Moog_filter_thermal()))));
+   fix16_t w3 = fix_add(fix_add(_ctx.dw3,fix_mul(tune,_ctx.tw2)),(- fix_tanh(fix_mul(_ctx.dw3,Moog_filter_thermal()))));
    _ctx.dw0 = w0;
    _ctx.dw1 = w1;
    _ctx.dw2 = w2;
@@ -77,21 +77,21 @@ Moog_filter__ctx_type_7 Moog_filter__ctx_type_7_init(){
 
 Moog_filter__ctx_type_7 Moog_filter_moog_init(){ return Moog_filter__ctx_type_7_init();}
 
-int32_t Moog_filter_moog(Moog_filter__ctx_type_7 &_ctx, int32_t input, int32_t cut, int32_t res){
+fix16_t Moog_filter_moog(Moog_filter__ctx_type_7 &_ctx, fix16_t input, fix16_t cut, fix16_t res){
    if(Moog_filter_change(_ctx._inst0,cut) || Moog_filter_change(_ctx._inst1,res)){
       res = Moog_filter_clip(res,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
       cut = Moog_filter_clip(cut,0x10000 /* 1.000000 */,0x56220000 /* 22050.000000 */);
-      int32_t fc = fix_mul(cut,0x1 /* 0.000023 */);
-      int32_t x_2 = fix_mul(fc,0x8000 /* 0.500000 */);
-      int32_t x2 = fix_mul(fc,fc);
-      int32_t x3 = fix_mul(fc,x2);
-      int32_t fcr = fix_add(fix_add(fix_add(fix_mul(0x1df7c /* 1.873000 */,x3),fix_mul(0x7ed9 /* 0.495500 */,x2)),fix_mul((0xffff59dc /* -0.649000 */),fc)),0xffb1 /* 0.998800 */);
-      int32_t acr = fix_add(fix_add(fix_mul((0xfffc1049 /* -3.936400 */),x2),fix_mul(0x1d745 /* 1.840900 */,fc)),0xff2e /* 0.996800 */);
+      fix16_t fc = fix_mul(cut,0x1 /* 0.000023 */);
+      fix16_t x_2 = fix_mul(fc,0x8000 /* 0.500000 */);
+      fix16_t x2 = fix_mul(fc,fc);
+      fix16_t x3 = fix_mul(fc,x2);
+      fix16_t fcr = fix_add(fix_add(fix_add(fix_mul(0x1df7c /* 1.873000 */,x3),fix_mul(0x7ed9 /* 0.495500 */,x2)),fix_mul((0xffff59dc /* -0.649000 */),fc)),0xffb1 /* 0.998800 */);
+      fix16_t acr = fix_add(fix_add(fix_mul((0xfffc1049 /* -3.936400 */),x2),fix_mul(0x1d745 /* 1.840900 */,fc)),0xff2e /* 0.996800 */);
       _ctx.tune = fix_div(fix_add(0x10000 /* 1.000000 */,(- fix_exp(fix_mul(fix_mul(fix_mul((0xfffe0000 /* -2.000000 */),Moog_filter_PI()),x_2),fcr)))),Moog_filter_thermal());
       _ctx.resFixed = fix_mul(fix_mul(0x40000 /* 4.000000 */,res),acr);
    }
-   int32_t x0 = Moog_filter_moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,_ctx.dx1);
-   int32_t x1 = Moog_filter_moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,x0);
+   fix16_t x0 = Moog_filter_moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,_ctx.dx1);
+   fix16_t x1 = Moog_filter_moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,x0);
    _ctx.dx1 = x1;
    return fix_mul(fix_add(x0,x1),0x8000 /* 0.500000 */);
 }

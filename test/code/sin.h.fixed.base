@@ -5,7 +5,7 @@
 #include "vultin.h"
 
 typedef struct Sin__ctx_type_0 {
-   int32_t pre_x;
+   fix16_t pre_x;
 } Sin__ctx_type_0;
 
 typedef Sin__ctx_type_0 Sin_change_type;
@@ -14,13 +14,13 @@ Sin__ctx_type_0 Sin__ctx_type_0_init();
 
 Sin__ctx_type_0 Sin_change_init();
 
-uint8_t Sin_change(Sin__ctx_type_0 &_ctx, int32_t x);
+uint8_t Sin_change(Sin__ctx_type_0 &_ctx, fix16_t x);
 
 typedef struct Sin__ctx_type_1 {
-   int32_t y2;
-   int32_t y1;
-   int32_t w;
-   int32_t cos_w;
+   fix16_t y2;
+   fix16_t y1;
+   fix16_t w;
+   fix16_t cos_w;
    Sin__ctx_type_0 _inst0;
 } Sin__ctx_type_1;
 
@@ -30,7 +30,7 @@ Sin__ctx_type_1 Sin__ctx_type_1_init();
 
 Sin__ctx_type_1 Sin_sc_osc_init();
 
-int32_t Sin_sc_osc(Sin__ctx_type_1 &_ctx, int32_t pitch);
+fix16_t Sin_sc_osc(Sin__ctx_type_1 &_ctx, fix16_t pitch);
 
 typedef Sin__ctx_type_1 Sin_sc_osc_start_type;
 
@@ -39,7 +39,7 @@ Sin__ctx_type_1 Sin_sc_osc_start_init();
 void Sin_sc_osc_start(Sin__ctx_type_1 &_ctx);
 
 typedef struct Sin__ctx_type_2 {
-   int32_t pitch;
+   fix16_t pitch;
    Sin__ctx_type_1 _inst0;
 } Sin__ctx_type_2;
 
@@ -49,7 +49,7 @@ Sin__ctx_type_2 Sin__ctx_type_2_init();
 
 Sin__ctx_type_2 Sin_process_init();
 
-int32_t Sin_process(Sin__ctx_type_2 &_ctx, int32_t input);
+fix16_t Sin_process(Sin__ctx_type_2 &_ctx, fix16_t input);
 
 typedef Sin__ctx_type_2 Sin_noteOn_type;
 

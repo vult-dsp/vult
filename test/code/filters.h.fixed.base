@@ -4,16 +4,16 @@
 #include <math.h>
 #include "vultin.h"
 
-int32_t Filters_pi();
+fix16_t Filters_pi();
 
-int32_t Filters_min(int32_t a, int32_t b);
+fix16_t Filters_min(fix16_t a, fix16_t b);
 
-int32_t Filters_max(int32_t a, int32_t b);
+fix16_t Filters_max(fix16_t a, fix16_t b);
 
-int32_t Filters_clip(int32_t low, int32_t high, int32_t value);
+fix16_t Filters_clip(fix16_t low, fix16_t high, fix16_t value);
 
 typedef struct Filters__ctx_type_4 {
-   int32_t pre_x;
+   fix16_t pre_x;
 } Filters__ctx_type_4;
 
 typedef Filters__ctx_type_4 Filters_change_type;
@@ -22,11 +22,11 @@ Filters__ctx_type_4 Filters__ctx_type_4_init();
 
 Filters__ctx_type_4 Filters_change_init();
 
-uint8_t Filters_change(Filters__ctx_type_4 &_ctx, int32_t x);
+uint8_t Filters_change(Filters__ctx_type_4 &_ctx, fix16_t x);
 
 typedef struct Filters__ctx_type_5 {
-   int32_t w2;
-   int32_t w1;
+   fix16_t w2;
+   fix16_t w1;
 } Filters__ctx_type_5;
 
 typedef Filters__ctx_type_5 Filters_biquad_type;
@@ -35,11 +35,11 @@ Filters__ctx_type_5 Filters__ctx_type_5_init();
 
 Filters__ctx_type_5 Filters_biquad_init();
 
-int32_t Filters_biquad(Filters__ctx_type_5 &_ctx, int32_t x, int32_t b0, int32_t b1, int32_t b2, int32_t a1, int32_t a2);
+fix16_t Filters_biquad(Filters__ctx_type_5 &_ctx, fix16_t x, fix16_t b0, fix16_t b1, fix16_t b2, fix16_t a1, fix16_t a2);
 
 typedef struct Filters__ctx_type_6 {
-   int32_t k;
-   int32_t fc;
+   fix16_t k;
+   fix16_t fc;
    Filters__ctx_type_5 _inst1;
    Filters__ctx_type_4 _inst0;
 } Filters__ctx_type_6;
@@ -50,14 +50,14 @@ Filters__ctx_type_6 Filters__ctx_type_6_init();
 
 Filters__ctx_type_6 Filters_lp6_init();
 
-int32_t Filters_lp6(Filters__ctx_type_6 &_ctx, int32_t x, int32_t fc);
+fix16_t Filters_lp6(Filters__ctx_type_6 &_ctx, fix16_t x, fix16_t fc);
 
 typedef struct Filters__ctx_type_7 {
-   int32_t b2;
-   int32_t b1;
-   int32_t b0;
-   int32_t a2;
-   int32_t a1;
+   fix16_t b2;
+   fix16_t b1;
+   fix16_t b0;
+   fix16_t a2;
+   fix16_t a1;
    Filters__ctx_type_5 _inst2;
    Filters__ctx_type_4 _inst1;
    Filters__ctx_type_4 _inst0;
@@ -69,7 +69,7 @@ Filters__ctx_type_7 Filters__ctx_type_7_init();
 
 Filters__ctx_type_7 Filters_lp12_init();
 
-int32_t Filters_lp12(Filters__ctx_type_7 &_ctx, int32_t x, int32_t fc, int32_t q);
+fix16_t Filters_lp12(Filters__ctx_type_7 &_ctx, fix16_t x, fix16_t fc, fix16_t q);
 
 typedef struct Filters__ctx_type_8 {
    Filters__ctx_type_5 _inst0;
@@ -81,7 +81,7 @@ Filters__ctx_type_8 Filters__ctx_type_8_init();
 
 Filters__ctx_type_8 Filters_hp6_init();
 
-int32_t Filters_hp6(Filters__ctx_type_8 &_ctx, int32_t x, int32_t fc);
+fix16_t Filters_hp6(Filters__ctx_type_8 &_ctx, fix16_t x, fix16_t fc);
 
 typedef struct Filters__ctx_type_9 {
    Filters__ctx_type_5 _inst0;
@@ -93,14 +93,14 @@ Filters__ctx_type_9 Filters__ctx_type_9_init();
 
 Filters__ctx_type_9 Filters_allp6_init();
 
-int32_t Filters_allp6(Filters__ctx_type_9 &_ctx, int32_t x, int32_t fc);
+fix16_t Filters_allp6(Filters__ctx_type_9 &_ctx, fix16_t x, fix16_t fc);
 
 typedef struct Filters__ctx_type_10 {
-   int32_t b2;
-   int32_t b1;
-   int32_t b0;
-   int32_t a2;
-   int32_t a1;
+   fix16_t b2;
+   fix16_t b1;
+   fix16_t b0;
+   fix16_t a2;
+   fix16_t a1;
    Filters__ctx_type_5 _inst2;
    Filters__ctx_type_4 _inst1;
    Filters__ctx_type_4 _inst0;
@@ -112,14 +112,14 @@ Filters__ctx_type_10 Filters__ctx_type_10_init();
 
 Filters__ctx_type_10 Filters_hp12_init();
 
-int32_t Filters_hp12(Filters__ctx_type_10 &_ctx, int32_t x, int32_t fc, int32_t q);
+fix16_t Filters_hp12(Filters__ctx_type_10 &_ctx, fix16_t x, fix16_t fc, fix16_t q);
 
 typedef struct Filters__ctx_type_11 {
-   int32_t b2;
-   int32_t b1;
-   int32_t b0;
-   int32_t a2;
-   int32_t a1;
+   fix16_t b2;
+   fix16_t b1;
+   fix16_t b0;
+   fix16_t a2;
+   fix16_t a1;
    Filters__ctx_type_5 _inst2;
    Filters__ctx_type_4 _inst1;
    Filters__ctx_type_4 _inst0;
@@ -131,14 +131,14 @@ Filters__ctx_type_11 Filters__ctx_type_11_init();
 
 Filters__ctx_type_11 Filters_bp12_init();
 
-int32_t Filters_bp12(Filters__ctx_type_11 &_ctx, int32_t x, int32_t fc, int32_t q);
+fix16_t Filters_bp12(Filters__ctx_type_11 &_ctx, fix16_t x, fix16_t fc, fix16_t q);
 
 typedef struct Filters__ctx_type_12 {
-   int32_t b2;
-   int32_t b1;
-   int32_t b0;
-   int32_t a2;
-   int32_t a1;
+   fix16_t b2;
+   fix16_t b1;
+   fix16_t b0;
+   fix16_t a2;
+   fix16_t a1;
    Filters__ctx_type_5 _inst2;
    Filters__ctx_type_4 _inst1;
    Filters__ctx_type_4 _inst0;
@@ -150,14 +150,14 @@ Filters__ctx_type_12 Filters__ctx_type_12_init();
 
 Filters__ctx_type_12 Filters_notch12_init();
 
-int32_t Filters_notch12(Filters__ctx_type_12 &_ctx, int32_t x, int32_t fc, int32_t q);
+fix16_t Filters_notch12(Filters__ctx_type_12 &_ctx, fix16_t x, fix16_t fc, fix16_t q);
 
 typedef struct Filters__ctx_type_13 {
-   int32_t b2;
-   int32_t b1;
-   int32_t b0;
-   int32_t a2;
-   int32_t a1;
+   fix16_t b2;
+   fix16_t b1;
+   fix16_t b0;
+   fix16_t a2;
+   fix16_t a1;
    Filters__ctx_type_5 _inst2;
    Filters__ctx_type_4 _inst1;
    Filters__ctx_type_4 _inst0;
@@ -169,7 +169,7 @@ Filters__ctx_type_13 Filters__ctx_type_13_init();
 
 Filters__ctx_type_13 Filters_allp12_init();
 
-int32_t Filters_allp12(Filters__ctx_type_13 &_ctx, int32_t x, int32_t fc, int32_t q);
+fix16_t Filters_allp12(Filters__ctx_type_13 &_ctx, fix16_t x, fix16_t fc, fix16_t q);
 
 
 

@@ -5,7 +5,7 @@
 #include "vultin.h"
 
 typedef struct Volume__ctx_type_0 {
-   int32_t x;
+   fix16_t x;
 } Volume__ctx_type_0;
 
 typedef Volume__ctx_type_0 Volume_smooth_type;
@@ -14,10 +14,10 @@ Volume__ctx_type_0 Volume__ctx_type_0_init();
 
 Volume__ctx_type_0 Volume_smooth_init();
 
-int32_t Volume_smooth(Volume__ctx_type_0 &_ctx, int32_t input);
+fix16_t Volume_smooth(Volume__ctx_type_0 &_ctx, fix16_t input);
 
 typedef struct Volume__ctx_type_1 {
-   int32_t volume;
+   fix16_t volume;
    Volume__ctx_type_0 _inst0;
 } Volume__ctx_type_1;
 
@@ -27,7 +27,7 @@ Volume__ctx_type_1 Volume__ctx_type_1_init();
 
 Volume__ctx_type_1 Volume_process_init();
 
-int32_t Volume_process(Volume__ctx_type_1 &_ctx, int32_t input);
+fix16_t Volume_process(Volume__ctx_type_1 &_ctx, fix16_t input);
 
 typedef Volume__ctx_type_1 Volume_noteOn_type;
 

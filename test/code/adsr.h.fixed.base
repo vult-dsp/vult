@@ -29,7 +29,7 @@ Adsr__ctx_type_1 Adsr_bchange_init();
 uint8_t Adsr_bchange(Adsr__ctx_type_1 &_ctx, uint8_t x);
 
 typedef struct Adsr__ctx_type_2 {
-   int32_t pre_x;
+   fix16_t pre_x;
 } Adsr__ctx_type_2;
 
 typedef Adsr__ctx_type_2 Adsr_lpfilter_type;
@@ -38,15 +38,15 @@ Adsr__ctx_type_2 Adsr__ctx_type_2_init();
 
 Adsr__ctx_type_2 Adsr_lpfilter_init();
 
-int32_t Adsr_lpfilter(Adsr__ctx_type_2 &_ctx, int32_t x);
+fix16_t Adsr_lpfilter(Adsr__ctx_type_2 &_ctx, fix16_t x);
 
 typedef struct Adsr__ctx_type_3 {
-   int32_t value;
-   int32_t sustainLevel;
+   fix16_t value;
+   fix16_t sustainLevel;
    int state;
-   int32_t releaseRate;
-   int32_t decayRate;
-   int32_t attackRate;
+   fix16_t releaseRate;
+   fix16_t decayRate;
+   fix16_t attackRate;
    Adsr__ctx_type_2 _inst2;
    Adsr__ctx_type_1 _inst1;
    Adsr__ctx_type_0 _inst0;
@@ -58,7 +58,7 @@ Adsr__ctx_type_3 Adsr__ctx_type_3_init();
 
 Adsr__ctx_type_3 Adsr_adsr_init();
 
-int32_t Adsr_adsr(Adsr__ctx_type_3 &_ctx, uint8_t gate, int32_t attack, int32_t decay, int32_t sustain, int32_t release);
+fix16_t Adsr_adsr(Adsr__ctx_type_3 &_ctx, uint8_t gate, fix16_t attack, fix16_t decay, fix16_t sustain, fix16_t release);
 
 
 

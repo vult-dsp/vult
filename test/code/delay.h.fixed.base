@@ -5,7 +5,7 @@
 #include "vultin.h"
 
 typedef struct Delay__ctx_type_0 {
-   int32_t x;
+   fix16_t x;
 } Delay__ctx_type_0;
 
 typedef Delay__ctx_type_0 Delay_smooth_type;
@@ -14,10 +14,10 @@ Delay__ctx_type_0 Delay__ctx_type_0_init();
 
 Delay__ctx_type_0 Delay_smooth_init();
 
-int32_t Delay_smooth(Delay__ctx_type_0 &_ctx, int32_t input);
+fix16_t Delay_smooth(Delay__ctx_type_0 &_ctx, fix16_t input);
 
 typedef struct Delay__ctx_type_1 {
-   int32_t pre_x;
+   fix16_t pre_x;
 } Delay__ctx_type_1;
 
 typedef Delay__ctx_type_1 Delay_change_type;
@@ -26,7 +26,7 @@ Delay__ctx_type_1 Delay__ctx_type_1_init();
 
 Delay__ctx_type_1 Delay_change_init();
 
-uint8_t Delay_change(Delay__ctx_type_1 &_ctx, int32_t x);
+uint8_t Delay_change(Delay__ctx_type_1 &_ctx, fix16_t x);
 
 typedef struct Delay__ctx_type_2 {
    uint8_t pre_x;
@@ -52,11 +52,11 @@ Delay__ctx_type_3 Delay_each_init();
 
 uint8_t Delay_each(Delay__ctx_type_3 &_ctx, int n);
 
-int32_t Delay_pitchToRate(int32_t d);
+fix16_t Delay_pitchToRate(fix16_t d);
 
 typedef struct Delay__ctx_type_5 {
-   int32_t rate;
-   int32_t phase;
+   fix16_t rate;
+   fix16_t phase;
    Delay__ctx_type_1 _inst0;
 } Delay__ctx_type_5;
 
@@ -66,10 +66,10 @@ Delay__ctx_type_5 Delay__ctx_type_5_init();
 
 Delay__ctx_type_5 Delay_phasor_init();
 
-int32_t Delay_phasor(Delay__ctx_type_5 &_ctx, int32_t pitch, uint8_t reset);
+fix16_t Delay_phasor(Delay__ctx_type_5 &_ctx, fix16_t pitch, uint8_t reset);
 
 typedef struct Delay__ctx_type_6 {
-   int32_t phase;
+   fix16_t phase;
    Delay__ctx_type_2 _inst0;
 } Delay__ctx_type_6;
 
@@ -79,10 +79,10 @@ Delay__ctx_type_6 Delay__ctx_type_6_init();
 
 Delay__ctx_type_6 Delay_lfo_init();
 
-int32_t Delay_lfo(Delay__ctx_type_6 &_ctx, int32_t f, uint8_t gate);
+fix16_t Delay_lfo(Delay__ctx_type_6 &_ctx, fix16_t f, uint8_t gate);
 
 typedef struct Delay__ctx_type_7 {
-   int32_t pre_phase1;
+   fix16_t pre_phase1;
    Delay__ctx_type_5 _inst2;
    Delay__ctx_type_0 _inst1;
    Delay__ctx_type_5 _inst0;
@@ -94,11 +94,11 @@ Delay__ctx_type_7 Delay__ctx_type_7_init();
 
 Delay__ctx_type_7 Delay_phd_osc_init();
 
-int32_t Delay_phd_osc(Delay__ctx_type_7 &_ctx, int32_t pitch, int32_t detune);
+fix16_t Delay_phd_osc(Delay__ctx_type_7 &_ctx, fix16_t pitch, fix16_t detune);
 
 typedef struct Delay__ctx_type_8 {
    int write_pos;
-   int32_t buffer[44100];
+   fix16_t buffer[44100];
 } Delay__ctx_type_8;
 
 typedef Delay__ctx_type_8 Delay_delay_type;
@@ -107,7 +107,7 @@ Delay__ctx_type_8 Delay__ctx_type_8_init();
 
 Delay__ctx_type_8 Delay_delay_init();
 
-int32_t Delay_delay(Delay__ctx_type_8 &_ctx, int32_t x, int32_t time, int32_t feedback);
+fix16_t Delay_delay(Delay__ctx_type_8 &_ctx, fix16_t x, fix16_t time, fix16_t feedback);
 
 typedef struct Delay__ctx_type_9 {
    int pre;
@@ -136,14 +136,14 @@ Delay__ctx_type_9 Delay_mono_isGateOn_init();
 uint8_t Delay_mono_isGateOn(Delay__ctx_type_9 &_ctx);
 
 typedef struct Delay__ctx_type_10 {
-   int32_t volume;
-   int32_t time;
-   int32_t pitch;
+   fix16_t volume;
+   fix16_t time;
+   fix16_t pitch;
    Delay__ctx_type_9 notes;
-   int32_t lfo_rate;
-   int32_t lfo_amt;
-   int32_t feedback;
-   int32_t detune;
+   fix16_t lfo_rate;
+   fix16_t lfo_amt;
+   fix16_t feedback;
+   fix16_t detune;
    Delay__ctx_type_8 _inst5;
    Delay__ctx_type_0 _inst4;
    Delay__ctx_type_0 _inst3;
@@ -158,7 +158,7 @@ Delay__ctx_type_10 Delay__ctx_type_10_init();
 
 Delay__ctx_type_10 Delay_process_init();
 
-int32_t Delay_process(Delay__ctx_type_10 &_ctx, int32_t input);
+fix16_t Delay_process(Delay__ctx_type_10 &_ctx, fix16_t input);
 
 typedef Delay__ctx_type_10 Delay_noteOn_type;
 
@@ -176,7 +176,7 @@ typedef Delay__ctx_type_10 Delay_controlChange_type;
 
 Delay__ctx_type_10 Delay_controlChange_init();
 
-void Delay_controlChange(Delay__ctx_type_10 &_ctx, int control, int32_t value);
+void Delay_controlChange(Delay__ctx_type_10 &_ctx, int control, fix16_t value);
 
 typedef Delay__ctx_type_10 Delay_default_type;
 

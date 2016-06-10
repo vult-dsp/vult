@@ -128,7 +128,7 @@ let makeFunctionName (id:id) : string list =
 let rec convertType params (tp:VType.t) : type_descr =
    match !tp with
    | VType.TId(["real"],_) when params.real = Float -> CTSimple("float")
-   | VType.TId(["real"],_) when params.real = Fixed -> CTSimple("int32_t")
+   | VType.TId(["real"],_) when params.real = Fixed -> CTSimple("fix16_t")
    | VType.TId(["bool"],_) -> CTSimple("uint8_t")
    | VType.TId(["unit"],_) -> CTSimple("void")
    | VType.TId(id,_) -> CTSimple(underscoreId id)

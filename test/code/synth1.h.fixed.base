@@ -5,7 +5,7 @@
 #include "vultin.h"
 
 typedef struct Synth1__ctx_type_0 {
-   int32_t x;
+   fix16_t x;
 } Synth1__ctx_type_0;
 
 typedef Synth1__ctx_type_0 Synth1_smooth_type;
@@ -14,10 +14,10 @@ Synth1__ctx_type_0 Synth1__ctx_type_0_init();
 
 Synth1__ctx_type_0 Synth1_smooth_init();
 
-int32_t Synth1_smooth(Synth1__ctx_type_0 &_ctx, int32_t input);
+fix16_t Synth1_smooth(Synth1__ctx_type_0 &_ctx, fix16_t input);
 
 typedef struct Synth1__ctx_type_1 {
-   int32_t pre_x;
+   fix16_t pre_x;
 } Synth1__ctx_type_1;
 
 typedef Synth1__ctx_type_1 Synth1_change_type;
@@ -26,7 +26,7 @@ Synth1__ctx_type_1 Synth1__ctx_type_1_init();
 
 Synth1__ctx_type_1 Synth1_change_init();
 
-uint8_t Synth1_change(Synth1__ctx_type_1 &_ctx, int32_t x);
+uint8_t Synth1_change(Synth1__ctx_type_1 &_ctx, fix16_t x);
 
 typedef struct Synth1__ctx_type_2 {
    int pre_x;
@@ -52,11 +52,11 @@ Synth1__ctx_type_3 Synth1_each_init();
 
 uint8_t Synth1_each(Synth1__ctx_type_3 &_ctx, int n);
 
-int32_t Synth1_pitchToRate(int32_t d);
+fix16_t Synth1_pitchToRate(fix16_t d);
 
 typedef struct Synth1__ctx_type_5 {
-   int32_t rate;
-   int32_t phase;
+   fix16_t rate;
+   fix16_t phase;
    Synth1__ctx_type_1 _inst0;
 } Synth1__ctx_type_5;
 
@@ -66,10 +66,10 @@ Synth1__ctx_type_5 Synth1__ctx_type_5_init();
 
 Synth1__ctx_type_5 Synth1_phasor_init();
 
-int32_t Synth1_phasor(Synth1__ctx_type_5 &_ctx, int32_t pitch, uint8_t reset);
+fix16_t Synth1_phasor(Synth1__ctx_type_5 &_ctx, fix16_t pitch, uint8_t reset);
 
 typedef struct Synth1__ctx_type_6 {
-   int32_t phase;
+   fix16_t phase;
    Synth1__ctx_type_2 _inst0;
 } Synth1__ctx_type_6;
 
@@ -79,20 +79,20 @@ Synth1__ctx_type_6 Synth1__ctx_type_6_init();
 
 Synth1__ctx_type_6 Synth1_lfo_init();
 
-int32_t Synth1_lfo(Synth1__ctx_type_6 &_ctx, int32_t f, int gate);
+fix16_t Synth1_lfo(Synth1__ctx_type_6 &_ctx, fix16_t f, int gate);
 
 typedef struct Synth1__ctx_type_7 {
-   int32_t volume;
-   int32_t pre_phase1;
-   int32_t pitch;
-   int32_t n4;
-   int32_t n3;
-   int32_t n2;
-   int32_t n1;
-   int32_t lfo_rate;
-   int32_t lfo_amt;
+   fix16_t volume;
+   fix16_t pre_phase1;
+   fix16_t pitch;
+   fix16_t n4;
+   fix16_t n3;
+   fix16_t n2;
+   fix16_t n1;
+   fix16_t lfo_rate;
+   fix16_t lfo_amt;
    int gate;
-   int32_t detune;
+   fix16_t detune;
    int count;
    Synth1__ctx_type_0 _inst5;
    Synth1__ctx_type_0 _inst4;
@@ -108,25 +108,25 @@ Synth1__ctx_type_7 Synth1__ctx_type_7_init();
 
 Synth1__ctx_type_7 Synth1_process_init();
 
-int32_t Synth1_process(Synth1__ctx_type_7 &_ctx, int32_t input);
+fix16_t Synth1_process(Synth1__ctx_type_7 &_ctx, fix16_t input);
 
 typedef Synth1__ctx_type_7 Synth1_noteOn_type;
 
 Synth1__ctx_type_7 Synth1_noteOn_init();
 
-void Synth1_noteOn(Synth1__ctx_type_7 &_ctx, int32_t note, int velocity);
+void Synth1_noteOn(Synth1__ctx_type_7 &_ctx, fix16_t note, int velocity);
 
 typedef Synth1__ctx_type_7 Synth1_noteOff_type;
 
 Synth1__ctx_type_7 Synth1_noteOff_init();
 
-void Synth1_noteOff(Synth1__ctx_type_7 &_ctx, int32_t note);
+void Synth1_noteOff(Synth1__ctx_type_7 &_ctx, fix16_t note);
 
 typedef Synth1__ctx_type_7 Synth1_controlChange_type;
 
 Synth1__ctx_type_7 Synth1_controlChange_init();
 
-void Synth1_controlChange(Synth1__ctx_type_7 &_ctx, int control, int32_t value);
+void Synth1_controlChange(Synth1__ctx_type_7 &_ctx, int control, fix16_t value);
 
 typedef Synth1__ctx_type_7 Synth1_default_type;
 

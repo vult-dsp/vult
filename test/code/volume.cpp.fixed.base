@@ -8,7 +8,7 @@ Volume__ctx_type_0 Volume__ctx_type_0_init(){
 
 Volume__ctx_type_0 Volume_smooth_init(){ return Volume__ctx_type_0_init();}
 
-int32_t Volume_smooth(Volume__ctx_type_0 &_ctx, int32_t input){
+fix16_t Volume_smooth(Volume__ctx_type_0 &_ctx, fix16_t input){
    _ctx.x = fix_add(_ctx.x,fix_mul(fix_add(input,(- _ctx.x)),0x147 /* 0.005000 */));
    return _ctx.x;
 }
@@ -22,7 +22,7 @@ Volume__ctx_type_1 Volume__ctx_type_1_init(){
 
 Volume__ctx_type_1 Volume_process_init(){ return Volume__ctx_type_1_init();}
 
-int32_t Volume_process(Volume__ctx_type_1 &_ctx, int32_t input){
+fix16_t Volume_process(Volume__ctx_type_1 &_ctx, fix16_t input){
    return fix_mul(input,Volume_smooth(_ctx._inst0,_ctx.volume));
 }
 

@@ -8,7 +8,7 @@ Sin__ctx_type_0 Sin__ctx_type_0_init(){
 
 Sin__ctx_type_0 Sin_change_init(){ return Sin__ctx_type_0_init();}
 
-uint8_t Sin_change(Sin__ctx_type_0 &_ctx, int32_t x){
+uint8_t Sin_change(Sin__ctx_type_0 &_ctx, fix16_t x){
    uint8_t v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
@@ -27,16 +27,16 @@ Sin__ctx_type_1 Sin__ctx_type_1_init(){
 
 Sin__ctx_type_1 Sin_sc_osc_init(){ return Sin__ctx_type_1_init();}
 
-int32_t Sin_sc_osc(Sin__ctx_type_1 &_ctx, int32_t pitch){
-   int32_t g = 0x10000 /* 1.000000 */;
+fix16_t Sin_sc_osc(Sin__ctx_type_1 &_ctx, fix16_t pitch){
+   fix16_t g = 0x10000 /* 1.000000 */;
    if(Sin_change(_ctx._inst0,pitch)){
-      int32_t pre_w = _ctx.w;
+      fix16_t pre_w = _ctx.w;
       _ctx.w = fix_mul(0x4c /* 0.001165 */,fix_exp(fix_mul(0xec9 /* 0.057762 */,pitch)));
       g = fix_div(fix_tan(fix_mul(_ctx.w,0x8000 /* 0.500000 */)),fix_tan(fix_mul(pre_w,0x8000 /* 0.500000 */)));
       _ctx.cos_w = fix_cos(_ctx.w);
    }
-   int32_t y1_next = fix_add(fix_mul(_ctx.cos_w,_ctx.y1),fix_mul(fix_mul(fix_add(_ctx.cos_w,0x10000 /* 1.000000 */),g),_ctx.y2));
-   int32_t y2_next = fix_add(fix_mul(fix_add(_ctx.cos_w,(0xffff0000 /* -1.000000 */)),_ctx.y1),fix_mul(fix_mul(_ctx.cos_w,g),_ctx.y2));
+   fix16_t y1_next = fix_add(fix_mul(_ctx.cos_w,_ctx.y1),fix_mul(fix_mul(fix_add(_ctx.cos_w,0x10000 /* 1.000000 */),g),_ctx.y2));
+   fix16_t y2_next = fix_add(fix_mul(fix_add(_ctx.cos_w,(0xffff0000 /* -1.000000 */)),_ctx.y1),fix_mul(fix_mul(_ctx.cos_w,g),_ctx.y2));
    _ctx.y1 = fix_clip(y1_next,(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
    _ctx.y2 = fix_clip(y2_next,(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
    return _ctx.y1;
@@ -59,7 +59,7 @@ Sin__ctx_type_2 Sin__ctx_type_2_init(){
 
 Sin__ctx_type_2 Sin_process_init(){ return Sin__ctx_type_2_init();}
 
-int32_t Sin_process(Sin__ctx_type_2 &_ctx, int32_t input){
+fix16_t Sin_process(Sin__ctx_type_2 &_ctx, fix16_t input){
    return Sin_sc_osc(_ctx._inst0,_ctx.pitch);
 }
 

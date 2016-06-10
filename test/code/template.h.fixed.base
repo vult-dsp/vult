@@ -4,7 +4,7 @@
 #include <math.h>
 #include "vultin.h"
 
-int32_t Template_process(int32_t input);
+fix16_t Template_process(fix16_t input);
 
 void Template_noteOn(int note, int velocity);
 

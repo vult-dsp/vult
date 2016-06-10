@@ -4,10 +4,10 @@
 #include <math.h>
 #include "vultin.h"
 
-uint8_t Blit_near_zero(int32_t x);
+uint8_t Blit_near_zero(fix16_t x);
 
 typedef struct Blit__ctx_type_1 {
-   int32_t pre_x;
+   fix16_t pre_x;
 } Blit__ctx_type_1;
 
 typedef Blit__ctx_type_1 Blit_change_type;
@@ -16,11 +16,11 @@ Blit__ctx_type_1 Blit__ctx_type_1_init();
 
 Blit__ctx_type_1 Blit_change_init();
 
-uint8_t Blit_change(Blit__ctx_type_1 &_ctx, int32_t x);
+uint8_t Blit_change(Blit__ctx_type_1 &_ctx, fix16_t x);
 
 typedef struct Blit__ctx_type_2 {
-   int32_t y1;
-   int32_t x1;
+   fix16_t y1;
+   fix16_t x1;
 } Blit__ctx_type_2;
 
 typedef Blit__ctx_type_2 Blit_dcblock_type;
@@ -29,20 +29,20 @@ Blit__ctx_type_2 Blit__ctx_type_2_init();
 
 Blit__ctx_type_2 Blit_dcblock_init();
 
-int32_t Blit_dcblock(Blit__ctx_type_2 &_ctx, int32_t x0);
+fix16_t Blit_dcblock(Blit__ctx_type_2 &_ctx, fix16_t x0);
 
-int32_t Blit_pitchToRate(int32_t d);
+fix16_t Blit_pitchToRate(fix16_t d);
 
-int32_t Blit_pulse_train(int32_t m, int32_t phase);
+fix16_t Blit_pulse_train(fix16_t m, fix16_t phase);
 
 typedef struct Blit__ctx_type_5 {
-   int32_t state_triang;
-   int32_t state_saw;
-   int32_t state_pulse;
-   int32_t rate;
-   int32_t phase;
-   int32_t output;
-   int32_t m;
+   fix16_t state_triang;
+   fix16_t state_saw;
+   fix16_t state_pulse;
+   fix16_t rate;
+   fix16_t phase;
+   fix16_t output;
+   fix16_t m;
    Blit__ctx_type_2 _inst1;
    Blit__ctx_type_1 _inst0;
 } Blit__ctx_type_5;
@@ -53,7 +53,7 @@ Blit__ctx_type_5 Blit__ctx_type_5_init();
 
 Blit__ctx_type_5 Blit_osc_init();
 
-int32_t Blit_osc(Blit__ctx_type_5 &_ctx, int32_t pitch, int32_t pw, int32_t wave);
+fix16_t Blit_osc(Blit__ctx_type_5 &_ctx, fix16_t pitch, fix16_t pw, fix16_t wave);
 
 
 

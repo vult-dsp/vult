@@ -36,8 +36,8 @@ Adsr__ctx_type_2 Adsr__ctx_type_2_init(){
 
 Adsr__ctx_type_2 Adsr_lpfilter_init(){ return Adsr__ctx_type_2_init();}
 
-int32_t Adsr_lpfilter(Adsr__ctx_type_2 &_ctx, int32_t x){
-   int32_t ret = fix_mul(fix_add(x,_ctx.pre_x),0x8000 /* 0.500000 */);
+fix16_t Adsr_lpfilter(Adsr__ctx_type_2 &_ctx, fix16_t x){
+   fix16_t ret = fix_mul(fix_add(x,_ctx.pre_x),0x8000 /* 0.500000 */);
    _ctx.pre_x = x;
    return ret;
 }
@@ -58,7 +58,7 @@ Adsr__ctx_type_3 Adsr__ctx_type_3_init(){
 
 Adsr__ctx_type_3 Adsr_adsr_init(){ return Adsr__ctx_type_3_init();}
 
-int32_t Adsr_adsr(Adsr__ctx_type_3 &_ctx, uint8_t gate, int32_t attack, int32_t decay, int32_t sustain, int32_t release){
+fix16_t Adsr_adsr(Adsr__ctx_type_3 &_ctx, uint8_t gate, fix16_t attack, fix16_t decay, fix16_t sustain, fix16_t release){
    int IDLE = 0;
    int ATTACK = 1;
    int DECAY = 2;
@@ -66,12 +66,12 @@ int32_t Adsr_adsr(Adsr__ctx_type_3 &_ctx, uint8_t gate, int32_t attack, int32_t 
    int RELEASE = 4;
    if(Adsr_each(_ctx._inst0,32)){
       _ctx.attackRate = fix_mul(0x1 /* 0.000023 */,fix_div(0x10000 /* 1.000000 */,fix_add(attack,0x1999 /* 0.100000 */)));
-      int32_t inv_sustain = fix_add(0x10000 /* 1.000000 */,(- sustain));
+      fix16_t inv_sustain = fix_add(0x10000 /* 1.000000 */,(- sustain));
       _ctx.decayRate = fix_mul(fix_mul(inv_sustain,0x1 /* 0.000023 */),fix_div(inv_sustain,fix_add(decay,0x1999 /* 0.100000 */)));
       _ctx.releaseRate = fix_mul(0x0 /* 0.000011 */,fix_div(0x8000 /* 0.500000 */,fix_add(release,0x1999 /* 0.100000 */)));
    }
    _ctx.sustainLevel = sustain;
-   int32_t rate = 0x0 /* 0.000000 */;
+   fix16_t rate = 0x0 /* 0.000000 */;
    uint8_t trig = Adsr_bchange(_ctx._inst1,gate);
    uint8_t up = (trig && gate);
    uint8_t down = (trig && (! gate));

@@ -42,15 +42,15 @@ static uint8_t clz(uint32_t x)
 }
 #endif
 
-int32_t fix_div(int32_t a, int32_t b)
+fix16_t fix_div(fix16_t a, fix16_t b)
 {
     if (b == 0) return 0;
-    uint32_t remainder = (a >= 0) ? a : (-a);
-    uint32_t divider = (b >= 0) ? b : (-b);
-    uint32_t quotient = 0;
+    fix16_t remainder = (a >= 0) ? a : (-a);
+    fix16_t divider = (b >= 0) ? b : (-b);
+    fix16_t quotient = 0;
     int bit_pos = 17;
     if (divider & 0xFFF00000) {
-        uint32_t shifted_div = ((divider >> 17) + 1);
+        fix16_t shifted_div = ((divider >> 17) + 1);
         quotient = remainder / shifted_div;
         remainder -= ((uint64_t)quotient * divider) >> 17;
     }
@@ -63,20 +63,20 @@ int32_t fix_div(int32_t a, int32_t b)
         if (shift > bit_pos) shift = bit_pos;
         remainder <<= shift;
         bit_pos -= shift;
-        uint32_t div = remainder / divider;
+        fix16_t div = remainder / divider;
         remainder = remainder % divider;
         quotient += div << bit_pos;
         remainder <<= 1;
         bit_pos--;
     }
-    int32_t result = quotient >> 1;
+    fix16_t result = quotient >> 1;
     if ((a ^ b) & 0x80000000) {
         result = -result;
     }
     return result;
 }
 
-int32_t fix_exp(int32_t inValue) {
+fix16_t fix_exp(fix16_t inValue) {
     if(inValue == 0        ) return 0x00010000;
     if(inValue == 0x00010000) return 178145;
     if(inValue >= 681391   ) return 0x7FFFFFFF;
@@ -85,8 +85,8 @@ int32_t fix_exp(int32_t inValue) {
     // and exp(-x) = 1/exp(x).
     int neg = (inValue < 0);
     if (neg) inValue = -inValue;
-    int32_t result = inValue + 0x00010000;
-    int32_t term = inValue;
+    fix16_t result = inValue + 0x00010000;
+    fix16_t term = inValue;
     uint_fast8_t i;
     for (i = 2; i < 30; i++) {
         term = fix_mul(term, fix_div(inValue, int_to_fix(i)));
@@ -97,18 +97,18 @@ int32_t fix_exp(int32_t inValue) {
     return result;
 }
 
-int32_t fix_sin(int32_t inAngle)
+fix16_t fix_sin(fix16_t inAngle)
 {
-    int32_t tempAngle = inAngle % (fix_pi << 1);
+    fix16_t tempAngle = inAngle % (fix_pi << 1);
 
     if(tempAngle > fix_pi)
         tempAngle -= (fix_pi << 1);
     else if(tempAngle < -fix_pi)
         tempAngle += (fix_pi << 1);
 
-    int32_t tempAngleSq = fix_mul(tempAngle, tempAngle);
+    fix16_t tempAngleSq = fix_mul(tempAngle, tempAngle);
 
-    int32_t tempOut;
+    fix16_t tempOut;
     tempOut = fix_mul(-13, tempAngleSq) + 546;
     tempOut = fix_mul(tempOut, tempAngleSq) - 10923;
     tempOut = fix_mul(tempOut, tempAngleSq) + 65536;
@@ -117,34 +117,34 @@ int32_t fix_sin(int32_t inAngle)
     return tempOut;
 }
 
-int32_t fix_cos(int32_t inAngle)
+fix16_t fix_cos(fix16_t inAngle)
 {
     return fix_sin(inAngle + (fix_pi >> 1));
 }
 
-int32_t fix_tan(int32_t inAngle)
+fix16_t fix_tan(fix16_t inAngle)
 {
     return fix_div(fix_sin(inAngle), fix_cos(inAngle));
 }
 
-int32_t fix_sinh(int32_t inAngle)
+fix16_t fix_sinh(fix16_t inAngle)
 {
     return fix_mul(fix_exp(inAngle)-fix_exp(-inAngle),0x8000);
 }
 
-int32_t fix_cosh(int32_t inAngle)
+fix16_t fix_cosh(fix16_t inAngle)
 {
     return fix_mul(fix_exp(inAngle)+fix_exp(-inAngle),0x8000);
 }
 
-int32_t fix_tanh(int32_t inAngle)
+fix16_t fix_tanh(fix16_t inAngle)
 {
-    int32_t e_x = fix_exp(inAngle);
-    int32_t m_e_x = fix_exp(-inAngle);
+    fix16_t e_x = fix_exp(inAngle);
+    fix16_t m_e_x = fix_exp(-inAngle);
     return fix_div(e_x-m_e_x,e_x+m_e_x);
 }
 
-int32_t fix_sqrt(int32_t inValue)
+fix16_t fix_sqrt(fix16_t inValue)
 {
     uint8_t  neg = (inValue < 0);
     uint32_t num = (neg ? -inValue : inValue);
@@ -228,7 +228,7 @@ void bool_init_array (int8_t *data,int size, int8_t value) {
         data[i] = value;
 }
 
-void fix_init_array  (int32_t *data,int size, int32_t value) {
+void fix_init_array  (fix16_t *data,int size, fix16_t value) {
     int i;
     for(i=0;i<size;i++)
         data[i] = value;
