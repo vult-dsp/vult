@@ -74,7 +74,7 @@ fix16_t Adsr_adsr(Adsr__ctx_type_3 &_ctx, uint8_t gate, fix16_t attack, fix16_t 
    fix16_t rate = 0x0 /* 0.000000 */;
    uint8_t trig = Adsr_bchange(_ctx._inst1,gate);
    uint8_t up = (trig && gate);
-   uint8_t down = (trig && (! gate));
+   uint8_t down = (trig && bool_not(gate));
    if(_ctx.state == IDLE){
       if(up){
          _ctx.state = ATTACK;

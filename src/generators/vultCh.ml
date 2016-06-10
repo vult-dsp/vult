@@ -1,6 +1,31 @@
+(*
+The MIT License (MIT)
+
+Copyright (c) 2014 Leonardo Laguna Ruiz
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*)
+
 open TypesVult
 open PrintBuffer
 open Common
+
 
 type type_descr =
    | CTSimple of string
@@ -100,6 +125,7 @@ type parameters =
       template : Templates.t;
       is_header : bool;
       output : string;
+      repl : Replacements.t;
    }
 
 let fixKeyword key =
@@ -122,17 +148,18 @@ let convertId (id:id) : string =
 let underscoreId (id:id) : string =
    join "_" id
 
-let makeFunctionName (id:id) : string list =
-   [join "_" id]
+let makeFunctionName (id:id) : string =
+   join "_" id
 
 let rec convertType params (tp:VType.t) : type_descr =
    match !tp with
-   | VType.TId(["real"],_) when params.real = Float -> CTSimple("float")
-   | VType.TId(["real"],_) when params.real = Fixed -> CTSimple("fix16_t")
-   | VType.TId(["bool"],_) -> CTSimple("uint8_t")
-   | VType.TId(["unit"],_) -> CTSimple("void")
-   | VType.TId(id,_) -> CTSimple(underscoreId id)
-   | VType.TComposed(["tuple"],_,_) -> CTSimple(VType.getTupleName tp)
+   | VType.TId([typ],_) ->
+      let new_type = Replacements.getType params.repl typ in
+      CTSimple(new_type)
+   | VType.TId(id,_) ->
+      CTSimple(underscoreId id)
+   | VType.TComposed(["tuple"],_,_) ->
+      CTSimple(VType.getTupleName tp)
    | VType.TComposed(["array"],[kind;{ contents = VType.TInt(n,_)}],_) ->
       let sub = convertType params kind in
       CTArray(sub,n)
@@ -147,14 +174,8 @@ let rec convertType params (tp:VType.t) : type_descr =
 
 let getCast params (from_typ:VType.t) (to_typ:VType.t) : string =
    match !(VType.unlink from_typ), !(VType.unlink to_typ) with
-   | VType.TId(["real"],_),VType.TId(["int"],_) when params.real = Fixed ->
-      "fix_to_int"
-   | VType.TId(["real"],_),VType.TId(["int"],_) ->
-      "float_to_int"
-   | VType.TId(["int"],_),VType.TId(["real"],_) when params.real = Fixed ->
-      "int_to_fix"
-   | VType.TId(["int"],_),VType.TId(["real"],_) ->
-      "int_to_float"
+   | VType.TId([from_t],_),VType.TId([to_t],_) ->
+      Replacements.getCast params.repl from_t to_t
    | _ ->
       failwith ("VultCh.getCast: invalid casting of types " ^ PrintTypes.typeStr from_typ ^ " -> " ^ PrintTypes.typeStr to_typ)
 
@@ -204,21 +225,16 @@ let makeNestedCall (name:string) (args:cexp list) : cexp =
    | h :: t -> loop t h
 
 let convertOperator params (op:string) (typ:VType.t) (elems:cexp list) : VType.t * cexp =
-   let is_float = (params.real = Float) && (isReal typ) in
-   let is_int   = (isInt typ) in
-   let is_bool  = (isBool typ) in
-   let is_builtin = is_float || is_int || is_bool in
-   let is_fixed = (params.real = Fixed) && (isReal typ) in
-   match op with
-   | "<>" when is_builtin -> typ, CEOp("!=",elems)
-   | "%"  when is_float   -> typ, CECall("fmodf",elems)
-
-   | "+"  when is_fixed   -> typ, makeNestedCall "fix_add" elems
-   | "-"  when is_fixed   -> typ, CECall("fix_sub",elems)
-   | "*"  when is_fixed   -> typ, makeNestedCall  "fix_mul" elems
-   | "/"  when is_fixed   -> typ, CECall("fix_div",elems)
-
-   | _ -> typ, CEOp(op,elems)
+   match convertType params typ with
+   | CTSimple(typ_t) ->
+      begin match Replacements.getFunctionForOperator params.repl op typ_t with
+      | Some(fn) -> typ, makeNestedCall fn elems
+      | None ->
+         let new_op = Replacements.getOperator params.repl op typ_t in
+         typ, CEOp(new_op,elems)
+      end
+   | _ ->
+      typ, CEOp(op,elems)
 
 let getFunctionSetType (elem_typs:VType.t list) : VType.t =
    match elem_typs with
@@ -226,67 +242,31 @@ let getFunctionSetType (elem_typs:VType.t list) : VType.t =
    | _ -> failwith "VultCh.getFunctionSetType: this is not a call to 'set'"
 
 let getInitArrayFunction params (typ:VType.t) : string =
-   match () with
-   | _ when (params.real = Float) && (isReal typ) -> "float_init_array"
-   | _ when (params.real = Fixed) && (isReal typ) -> "fix_init_array"
-   | _ when (isInt typ) -> "int_init_array"
-   | _ when (isBool typ) -> "bool_init_array"
-   | _ ->failwith ("Invalid array type "^ (PrintTypes.typeStr typ))
+   match convertType params typ with
+   | CTSimple(typ_t) ->
+      begin match Replacements.getArrayInit params.repl typ_t  with
+      | Some(fn) -> fn
+      | _ -> failwith ("Invalid array type "^ (PrintTypes.typeStr typ))
+      end
+   | _ -> failwith ("Invalid array type "^ (PrintTypes.typeStr typ))
 
 let convertFunction params (name:id) (typ:VType.t) (elems:cexp list) (elem_typs:VType.t list): VType.t * cexp =
-   let is_float = (params.real = Float) && (isReal typ) in
-   let is_fixed = (params.real = Fixed) && (isReal typ) in
-   let is_int   = (isInt typ) in
-   let is_bool  = (isBool typ) in
-   let fixed_name =
-      match name with
-      | ["abs"]   when is_float -> `FunctionName(["fabsf"])
-      | ["exp"]   when is_float -> `FunctionName(["expf"])
-      | ["floor"] when is_float -> `FunctionName(["floorf"])
-      | ["max"]   when is_float -> `FunctionName(["fmax"])
-      | ["min"]   when is_float -> `FunctionName(["fmin"])
-      | ["sin"]   when is_float -> `FunctionName(["sinf"])
-      | ["cos"]   when is_float -> `FunctionName(["cosf"])
-      | ["tan"]   when is_float -> `FunctionName(["tanf"])
-      | ["tanh"]  when is_float -> `FunctionName(["tanhf"])
-      | ["sqrt"]  when is_float -> `FunctionName(["sqrtf"])
-      | ["clip"]  when is_float -> `FunctionName(["float_clip"])
-
-      | ["abs"]   when is_fixed -> `FunctionName(["fix_abs"])
-      | ["exp"]   when is_fixed -> `FunctionName(["fix_exp"])
-      | ["floor"] when is_fixed -> `FunctionName(["fix_floor"])
-      | ["max"]   when is_fixed -> `FunctionName(["fix_max"])
-      | ["min"]   when is_fixed -> `FunctionName(["fix_min"])
-      | ["sin"]   when is_fixed -> `FunctionName(["fix_sin"])
-      | ["cos"]   when is_fixed -> `FunctionName(["fix_cos"])
-      | ["tan"]   when is_fixed -> `FunctionName(["fix_tan"])
-      | ["tanh"]  when is_fixed -> `FunctionName(["fix_tanh"])
-      | ["sqrt"]  when is_fixed -> `FunctionName(["fix_sqrt"])
-      | ["clip"]  when is_fixed -> `FunctionName(["fix_clip"])
-
-      | ["clip"]  when is_int   -> `FunctionName(["int_clip"])
-
-      | ["get"]   when is_float -> `FunctionName(["float_get"])
-      | ["get"]   when is_fixed -> `FunctionName(["fix_get"])
-      | ["get"]   when is_int   -> `FunctionName(["int_get"])
-      | ["get"]   when is_bool  -> `FunctionName(["bool_get"])
-
-      | ["set"] ->
-         begin
-            match getFunctionSetType elem_typs with
-            | t when isReal t && params.real = Float ->`FunctionName(["float_set"])
-            | t when isReal t && params.real = Fixed ->`FunctionName(["fix_set"])
-            | t when isInt t ->`FunctionName(["int_set"])
-            | t when isBool t ->`FunctionName(["bool_set"])
-            | _ -> failwith "Invalid type of array"
-         end
-
-      | ["not"] -> `UnOperatorName("!")
-      | _ -> `FunctionName(makeFunctionName name)
-   in
-   match fixed_name with
-   | `FunctionName(fn)   -> typ, CECall(convertId fn, elems)
-   | `UnOperatorName(op) -> typ, CEUnOp(op,List.hd elems)
+   match name with
+   | ["set"] ->
+      begin match convertType params (getFunctionSetType elem_typs) with
+      | CTSimple(typ_t) ->
+         let fn = Replacements.getFunction params.repl "set" typ_t in
+         typ, CECall(fn, elems)
+      | _ -> failwith ("Invalid array type "^ (PrintTypes.typeStr typ))
+      end
+   | [fname] ->
+      begin match convertType params typ with
+      | CTSimple(typ_t) ->
+         let fn = Replacements.getFunction params.repl fname typ_t in
+         typ, CECall(fn, elems)
+      | _ -> typ, CECall(makeFunctionName name, elems)
+      end
+   | _ -> typ, CECall(makeFunctionName name, elems)
 
 let rec convertExp params (e:exp) : VType.t * cexp =
    match e with
@@ -394,7 +374,7 @@ let rec convertStmt params (s:stmt) : cstmt =
    | StmtFun(name,args,body,Some(ret),_) ->
       let arg_names = List.map (convertTypedId params) args in
       let body'  = convertStmt params body in
-      let fname = convertId (makeFunctionName name) in
+      let fname = makeFunctionName name in
       CSFunction(convertType params ret, fname,arg_names,body')
    (* Special case for initializing arrays*)
    | StmtBind(LId(name,_,_),PCall(None,["makeArray"],[size;init],_),_) ->
@@ -786,10 +766,12 @@ module PrintC = struct
 end
 
 let createParameters (args:arguments) : parameters =
+   let () = DefaultReplacements.initialize () in
    let real     = match args.real with | "fixed" -> Fixed | _ -> Float in
    let template = Templates.get args.template in
    let output = Filename.basename args.output in
-   { real = real; template = template; is_header = false; output = output; }
+   let repl = Replacements.getReplacements args.real in
+   { real = real; template = template; is_header = false; output = output; repl = repl }
 
 (** Generates the .c and .h file contents for the given parsed files *)
 let generateChCode (args:arguments) (parser_results:parser_results list) : (string * string) list =

@@ -55,10 +55,13 @@ Library "vult_generators"
   Path: src/generators
   Modules:
     VultJs,
-    VultCh
+    VultCh,
+    DefaultReplacements,
+    Replacements
   BuildDepends:
     vult_core,
-    vult_util
+    vult_util,
+    containers
 
 Library "vult_passes"
   Path: src/passes

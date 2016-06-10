@@ -150,6 +150,10 @@ void int_init_array  (int *data,int size, int value);
 void bool_init_array (int8_t *data,int size, int8_t value);
 void fix_init_array  (fix16_t *data,int size, fix16_t value);
 
+static inline uint8_t bool_not(uint8_t x){
+    return !x;
+}
+
 #ifdef __cplusplus
 }
 #endif

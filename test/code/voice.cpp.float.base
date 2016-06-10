@@ -249,7 +249,7 @@ float Voice_adsr(Voice__ctx_type_13 &_ctx, uint8_t gate, float attack, float dec
    float rate = 0.f;
    uint8_t trig = Voice_bchange(_ctx._inst1,gate);
    uint8_t up = (trig && gate);
-   uint8_t down = (trig && (! gate));
+   uint8_t down = (trig && bool_not(gate));
    if(_ctx.state == IDLE){
       if(up){
          _ctx.state = ATTACK;
