@@ -63,100 +63,100 @@ type exp =
       of attr
    | PBool
       of bool
-      *  attr
+         *  attr
    | PInt
       of int
-      *  attr
+         *  attr
    | PReal
       of float
-      *  attr
+         *  attr
    | PId
       of id    (* name *)
-      *  attr
+         *  attr
    | PArray
       of exp list
-      * attr
+         * attr
    | PUnOp
       of string      (* operator *)
-      *  exp
-      *  attr
+         *  exp
+         *  attr
    | POp
       of string      (* operator *)
-      *  exp list
-      *  attr
+         *  exp list
+         *  attr
    | PCall
       of id option (* name/instance *)
-      *  id        (* type/function name *)
-      *  exp list  (* arguments *)
-      *  attr
+         *  id        (* type/function name *)
+         *  exp list  (* arguments *)
+         *  attr
    | PIf
       of exp (* condition *)
-      *  exp (* then *)
-      *  exp (* else *)
-      *  attr
+         *  exp (* then *)
+         *  exp (* else *)
+         *  attr
    | PGroup
       of exp
-      *  attr
+         *  attr
    | PTuple
       of exp list
-      *  attr
+         *  attr
    | PSeq
       of id option (* Scope name *)
-      *  stmt
-      *  attr
+         *  stmt
+         *  attr
    | PEmpty
    [@@deriving show,eq,ord]
 
 and stmt =
    | StmtVal
       of lhs_exp     (* names/lhs *)
-      *  exp option  (* rhs *)
-      *  attr
+         *  exp option  (* rhs *)
+         *  attr
    | StmtMem
       of lhs_exp     (* names/lhs *)
-      *  exp option  (* initial value *)
-      *  exp option  (* rhs *)
-      *  attr
+         *  exp option  (* initial value *)
+         *  exp option  (* rhs *)
+         *  attr
    | StmtWhile
       of exp         (* condition*)
-      *  stmt        (* statements *)
-      *  attr
+         *  stmt        (* statements *)
+         *  attr
    | StmtReturn
       of exp
-      *  attr
+         *  attr
    | StmtIf
       of exp         (* condition *)
-      *  stmt        (* then *)
-      *  stmt option (* else *)
-      *  attr
+         *  stmt        (* then *)
+         *  stmt option (* else *)
+         *  attr
    | StmtFun
       of id              (* name *)
-      *  typed_id list   (* arguments *)
-      *  stmt            (* body *)
-      *  VType.t option  (* return type *)
-      *  attr
+         *  typed_id list   (* arguments *)
+         *  stmt            (* body *)
+         *  VType.t option  (* return type *)
+         *  attr
    | StmtExternal
       of id             (* name *)
-      *  typed_id list  (* arguments *)
-      *  VType.t        (* return type *)
-      *  string         (* linking name *)
-      *  attr
+         *  typed_id list  (* arguments *)
+         *  VType.t        (* return type *)
+         *  string         (* linking name *)
+         *  attr
    | StmtBind
       of lhs_exp     (* lhs *)
-      *  exp         (* rhs *)
-      *  attr
+         *  exp         (* rhs *)
+         *  attr
    | StmtBlock
       of id option (* scope name *)
-      *  stmt list
-      *  attr
+         *  stmt list
+         *  attr
    | StmtType
       of VType.t       (* name *)
-      *  val_decl list (* members *)
-      *  attr
+         *  val_decl list (* members *)
+         *  attr
    | StmtAliasType
       of VType.t       (* name *)
-      *  VType.t       (* alias type *)
-      *  attr
+         *  VType.t       (* alias type *)
+         *  attr
    | StmtEmpty
    [@@deriving show,eq,ord]
 

@@ -70,65 +70,65 @@ THE SOFTWARE.
 module Default = struct
 
    let keywords = Replacements.makeKeywords
-      [
-         "default", "default_";
-         "switch",  "switch_";
-      ]
+         [
+            "default", "default_";
+            "switch",  "switch_";
+         ]
 
    let types = Replacements.makeTypes
-      [
-         "real", "float";
-         "unit", "void";
-         "bool", "uint8_t";
-         "int",  "int";
-      ]
+         [
+            "real", "float";
+            "unit", "void";
+            "bool", "uint8_t";
+            "int",  "int";
+         ]
 
    let cast = Replacements.makeCasts
-      [
-         ("float", "int"), "float_to_int";
-         ("int", "float"), "int_to_float";
-      ]
+         [
+            ("float", "int"), "float_to_int";
+            ("int", "float"), "int_to_float";
+         ]
 
    let op_to_fun = Replacements.makeOperators
-      [
-         ("%", "float"), "fmodf";
-      ]
+         [
+            ("%", "float"), "fmodf";
+         ]
 
    let op_to_op = Replacements.makeOperators
-      [
-         ("<>", "float"),   "!=";
-         ("<>", "int"),     "!=";
-         ("<>", "uint8_t"), "!=";
-      ]
+         [
+            ("<>", "float"),   "!=";
+            ("<>", "int"),     "!=";
+            ("<>", "uint8_t"), "!=";
+         ]
 
    let fun_to_fun = Replacements.makeFunctions
-      [
-         ("abs", "float"),   "fabsf";
-         ("exp", "float"),   "expf";
-         ("floor", "float"), "floorf";
-         ("max", "float"),   "fmax";
-         ("min", "float"),   "fmin";
-         ("sin", "float"),   "sinf";
-         ("cos", "float"),   "cosf";
-         ("tan", "float"),   "tanf";
-         ("tanh", "float"),  "tanhf";
-         ("sqrt", "float"),  "sqrtf";
-         ("clip", "float"),  "float_clip";
-         ("set",  "float"),  "float_set";
-         ("set",  "int"),    "int_set";
-         ("set",  "uint8_t"), "bool_set";
-         ("get",  "float"),  "float_get";
-         ("get",  "int"),    "int_get";
-         ("get",  "uint8_t"), "bool_get";
-         ("not",  "uint8_t"), "bool_not";
-      ]
+         [
+            ("abs", "float"),   "fabsf";
+            ("exp", "float"),   "expf";
+            ("floor", "float"), "floorf";
+            ("max", "float"),   "fmax";
+            ("min", "float"),   "fmin";
+            ("sin", "float"),   "sinf";
+            ("cos", "float"),   "cosf";
+            ("tan", "float"),   "tanf";
+            ("tanh", "float"),  "tanhf";
+            ("sqrt", "float"),  "sqrtf";
+            ("clip", "float"),  "float_clip";
+            ("set",  "float"),  "float_set";
+            ("set",  "int"),    "int_set";
+            ("set",  "uint8_t"), "bool_set";
+            ("get",  "float"),  "float_get";
+            ("get",  "int"),    "int_get";
+            ("get",  "uint8_t"), "bool_get";
+            ("not",  "uint8_t"), "bool_not";
+         ]
 
    let array_init = Replacements.makeArrayInitializations
-      [
-         "float",   "float_init_array";
-         "int",     "int_init_array";
-         "uint8_t", "bool_init_array";
-      ]
+         [
+            "float",   "float_init_array";
+            "int",     "int_init_array";
+            "uint8_t", "bool_init_array";
+         ]
 
    (* This is the default selection of replacements *)
    let replacements =
@@ -150,50 +150,50 @@ module FixedPoint = struct
    let keywords = Replacements.makeKeywords []
 
    let types = Replacements.makeTypes
-      [
-         "real", "fix16_t";
-      ]
+         [
+            "real", "fix16_t";
+         ]
 
    let cast = Replacements.makeCasts
-      [
-         ("fix16_t", "int"), "fix_to_int";
-         ("int", "fix16_t"), "int_to_fix";
-      ]
+         [
+            ("fix16_t", "int"), "fix_to_int";
+            ("int", "fix16_t"), "int_to_fix";
+         ]
 
    let op_to_fun = Replacements.makeOperators
-      [
-         ("+", "fix16_t"), "fix_add";
-         ("-", "fix16_t"), "fix_sub";
-         ("*", "fix16_t"), "fix_mul";
-         ("/", "fix16_t"), "fix_div";
-      ]
+         [
+            ("+", "fix16_t"), "fix_add";
+            ("-", "fix16_t"), "fix_sub";
+            ("*", "fix16_t"), "fix_mul";
+            ("/", "fix16_t"), "fix_div";
+         ]
 
    let op_to_op = Replacements.makeOperators
-      [
-         ("<>", "fix16_t"), "!=";
-      ]
+         [
+            ("<>", "fix16_t"), "!=";
+         ]
 
    let fun_to_fun = Replacements.makeFunctions
-      [
-         ("abs", "fix16_t"),   "fix_abs";
-         ("exp", "fix16_t"),   "fix_exp";
-         ("floor", "fix16_t"), "fix_floor";
-         ("max", "fix16_t"),   "fix_max";
-         ("min", "fix16_t"),   "fix_min";
-         ("sin", "fix16_t"),   "fix_sin";
-         ("cos", "fix16_t"),   "fix_cos";
-         ("tan", "fix16_t"),   "fix_tan";
-         ("tanh", "fix16_t"),  "fix_tanh";
-         ("sqrt", "fix16_t"),  "fix_sqrt";
-         ("clip", "fix16_t"),  "fix_clip";
-         ("set",  "fix16_t"),  "fix_set";
-         ("get",  "fix16_t"),  "fix_get";
-      ]
+         [
+            ("abs", "fix16_t"),   "fix_abs";
+            ("exp", "fix16_t"),   "fix_exp";
+            ("floor", "fix16_t"), "fix_floor";
+            ("max", "fix16_t"),   "fix_max";
+            ("min", "fix16_t"),   "fix_min";
+            ("sin", "fix16_t"),   "fix_sin";
+            ("cos", "fix16_t"),   "fix_cos";
+            ("tan", "fix16_t"),   "fix_tan";
+            ("tanh", "fix16_t"),  "fix_tanh";
+            ("sqrt", "fix16_t"),  "fix_sqrt";
+            ("clip", "fix16_t"),  "fix_clip";
+            ("set",  "fix16_t"),  "fix_set";
+            ("get",  "fix16_t"),  "fix_get";
+         ]
 
    let array_init = Replacements.makeArrayInitializations
-      [
-         "fix16_t",   "fix_init_array";
-      ]
+         [
+            "fix16_t",   "fix_init_array";
+         ]
 
    (* This group of replacements extends/overwrites the Default.replacements *)
    let replacements =

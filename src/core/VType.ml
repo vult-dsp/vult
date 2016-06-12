@@ -114,7 +114,8 @@ let base (t:t) : id =
 (** Makes a copy of a type (a new instance) *)
 let newinst (t:t) : t =
    let rec copy table t =
-      try (List.find (fun (key,_) -> key == t) table |> snd),table with | Not_found ->
+      try (List.find (fun (key,_) -> key == t) table |> snd),table with
+      | Not_found ->
          match !t with
          | TUnbound(s,level,loc) ->
             let o = ref (TUnbound(s,level,loc)) in
@@ -152,9 +153,7 @@ let newinst (t:t) : t =
    in copy [] t |> fst
 
 let rec fixType table t =
-   try
-      List.find (fun key -> equal key t) table, table
-      with
+   try List.find (fun key -> equal key t) table, table with
    | _ ->
       match t with
       | { contents = TUnbound(_,_,_) } -> t, t :: table
@@ -230,52 +229,53 @@ let pickLoc (loc1:Loc.t option) (loc2:Loc.t option) : Loc.t option =
    | _ -> loc1
 
 let rec unify (t1:t) (t2:t) : bool =
-   if t1 == t2 then true else
-   match t1,t2 with
-   | { contents = TInt(n1,_)}, { contents = TInt(n2,_) } when n1 = n2 -> true
-   | { contents = TUnbound(n1,level1,loc1)}, { contents = TUnbound(_,level2,loc2) } ->
-      let loc = pickLoc loc1 loc2 in
-      let level = min (getLevel level1) (getLevel level2) in
-      let n = if n1 = "" then gensym () else n1 in
-      let t = TUnbound(n,Some(level),loc) in
-      t1 := t;
-      t2 := TLink(t1);
-      true
-   | { contents = TLink(tlink) },t | t, { contents = TLink(tlink) } ->
-      unify t tlink
-   | ({ contents = TUnbound _ } as tu), t | t, ({ contents = TUnbound _ } as tu) ->
-      tu := TLink(t);
-      true
-   | { contents = TComposed(n1,elems1,_) }, { contents = TComposed(n2,elems2,_) } when n1 = n2 && (List.length elems1) = (List.length elems2) ->
-      List.for_all2 unify elems1 elems2
-   | { contents = TArrow(a1,a2,_) }, { contents = TArrow(b1,b2,_) } ->
-      unify a1 b1 && unify a2 b2
-   | { contents = TId(id1,_) }, { contents = TId(id2,_) } when id1 = id2 -> true
+   if t1 == t2 then true
+   else
+      match t1,t2 with
+      | { contents = TInt(n1,_)}, { contents = TInt(n2,_) } when n1 = n2 -> true
+      | { contents = TUnbound(n1,level1,loc1)}, { contents = TUnbound(_,level2,loc2) } ->
+         let loc = pickLoc loc1 loc2 in
+         let level = min (getLevel level1) (getLevel level2) in
+         let n = if n1 = "" then gensym () else n1 in
+         let t = TUnbound(n,Some(level),loc) in
+         t1 := t;
+         t2 := TLink(t1);
+         true
+      | { contents = TLink(tlink) },t | t, { contents = TLink(tlink) } ->
+         unify t tlink
+      | ({ contents = TUnbound _ } as tu), t | t, ({ contents = TUnbound _ } as tu) ->
+         tu := TLink(t);
+         true
+      | { contents = TComposed(n1,elems1,_) }, { contents = TComposed(n2,elems2,_) } when n1 = n2 && (List.length elems1) = (List.length elems2) ->
+         List.for_all2 unify elems1 elems2
+      | { contents = TArrow(a1,a2,_) }, { contents = TArrow(b1,b2,_) } ->
+         unify a1 b1 && unify a2 b2
+      | { contents = TId(id1,_) }, { contents = TId(id2,_) } when id1 = id2 -> true
 
-   | { contents = (TExpAlt(_) as tp1) },{ contents = (TExpAlt(_) as tp2) } when equal_vtype tp1 tp2 ->
-      t2 := TLink(t1);
-      true
+      | { contents = (TExpAlt(_) as tp1) },{ contents = (TExpAlt(_) as tp2) } when equal_vtype tp1 tp2 ->
+         t2 := TLink(t1);
+         true
 
-   (* TODO: unify types with different alternatives *)
+      (* TODO: unify types with different alternatives *)
 
-   | ({ contents = TExpAlt(alt) } as tu), t
-   | t, ({ contents = TExpAlt(alt) } as tu) ->
-      let rec loop alt =
-         match alt with
-         | [] -> false
-         | first_alt :: alt_rest ->
-            if unify t first_alt then
-               begin
-               tu := TLink(first_alt);
-               true
-            end
-         else
-            loop alt_rest
-      in loop alt
-   | { contents = tp1 }, { contents = tp2 } when equal_vtype tp1 tp2 ->
-      true
+      | ({ contents = TExpAlt(alt) } as tu), t
+      | t, ({ contents = TExpAlt(alt) } as tu) ->
+         let rec loop alt =
+            match alt with
+            | [] -> false
+            | first_alt :: alt_rest ->
+               if unify t first_alt then
+                  begin
+                     tu := TLink(first_alt);
+                     true
+                  end
+               else
+                  loop alt_rest
+         in loop alt
+      | { contents = tp1 }, { contents = tp2 } when equal_vtype tp1 tp2 ->
+         true
 
-   | _ -> false
+      | _ -> false
 
 
 (** Put this function somewhere else *)

@@ -43,8 +43,8 @@ let applyExpanderList (mapper:('data,'kind) expand_func) (data:'data) (kind_list
    let state', rev_exp_list =
       List.fold_left
          (fun (s,acc) k ->
-            let s', kl = applyExpander mapper s k in
-            (s', kl::acc)
+             let s', kl = applyExpander mapper s k in
+             (s', kl::acc)
          ) (data,[]) kind_list
    in state', rev_exp_list |> List.rev |> List.flatten
 

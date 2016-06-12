@@ -449,7 +449,7 @@ module Scope = struct
       |> List.map snd
 
    (** Lookup the function and returns a set containing all the
-      instances and mem of all functions in the context *)
+       instances and mem of all functions in the context *)
    let getFunctionMemInstSet (t:t) (name:id) : IdTypeSet.t =
       match lookup Function t name with
       | None -> IdTypeSet.empty
@@ -607,7 +607,7 @@ module Env = struct
    let lookupRaise kind (state:'a t) (name:id) (loc:Loc.t) : path * VType.t * Scope.t =
       Scope.lookupRaise kind state.scope name loc
 
-      (** Returns the mem and instances for a function *)
+   (** Returns the mem and instances for a function *)
    let getMemAndInstances (state:'a t) (name:id) : IdTypeSet.t =
       Scope.getFunctionMemInstSet state.scope name
 

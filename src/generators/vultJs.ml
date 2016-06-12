@@ -71,7 +71,7 @@ module Templates = struct
    let none code = code
 
    let browser code =
-   "function vultProcess(){
+      "function vultProcess(){
     this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
     this.not  = function(x)          { return x==0?1:0; };
     this.real = function(x)          { return x; };

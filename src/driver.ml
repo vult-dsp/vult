@@ -34,10 +34,10 @@ let writeFile (code:string) (file:string) : unit =
 let writeOutput (args:arguments) (files:(string * string) list) : string =
    let write_files = args.output<>"" in
    let txt = List.fold_left
-      (fun s (code,ext) ->
-         let () = if write_files then writeFile code (args.output^"."^ext) in
-         s^"\n"^code)
-      "" files
+         (fun s (code,ext) ->
+             let () = if write_files then writeFile code (args.output^"."^ext) in
+             s^"\n"^code)
+         "" files
    in
    if not write_files then print_endline txt;
    txt
@@ -68,7 +68,7 @@ let dumpParsedFiles (args:arguments) (parser_results:parser_results list) : unit
 (** Parses the code and and generates the target *)
 let parseStringGenerateCode (args:arguments) (code:string) : string =
    ParserVult.parseString code
-   |> fun a -> Passes.applyTransformations args [a]
+   |> (fun a -> Passes.applyTransformations args [a])
    |> generateCode args
 
 

@@ -40,14 +40,14 @@ module TokenStream(S:TokenKindSig) = struct
 
    (** Type containing the stream of tokens *)
    type stream =
-   {
-      lexbuf             : Lexing.lexbuf;
-      mutable has_errors : bool;
-      mutable errors     : Error.t list;
-      mutable peeked     : S.kind token;
-      mutable prev       : S.kind token;
-      lines              : lexed_lines;
-   }
+      {
+         lexbuf             : Lexing.lexbuf;
+         mutable has_errors : bool;
+         mutable errors     : Error.t list;
+         mutable peeked     : S.kind token;
+         mutable prev       : S.kind token;
+         lines              : lexed_lines;
+      }
 
    (** Skips one token *)
    let skip (buffer:stream) : unit =

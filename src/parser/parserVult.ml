@@ -131,9 +131,9 @@ let optString (buffer:Stream.stream) : string option=
 
 (** Creates Pratt parser functions *)
 let prattParser (rbp:int) (buffer:Stream.stream)
-   (lbp:'kind token -> int)
-   (nud:Stream.stream -> 'kind token -> 'exp)
-   (led:Stream.stream -> 'kind token -> 'exp -> 'exp) =
+      (lbp:'kind token -> int)
+      (nud:Stream.stream -> 'kind token -> 'exp)
+      (led:Stream.stream -> 'kind token -> 'exp -> 'exp) =
    let current_token = Stream.current buffer in
    let _             = Stream.skip buffer in
    let left          = nud buffer current_token in
@@ -199,10 +199,10 @@ and type_nud (buffer:Stream.stream) (token:'kind token) : VType.t =
             let token = Stream.current buffer in
             let _     = Stream.skip buffer in
             begin match identifierToken token with
-            | [id] -> ref (VType.TUnbound("'"^id,None,Some(token.loc)))
-            | _    ->
-               let message =  Error.makeError "invalid name for generic type" token.loc in
-               raise (ParserError(message))
+               | [id] -> ref (VType.TUnbound("'"^id,None,Some(token.loc)))
+               | _    ->
+                  let message =  Error.makeError "invalid name for generic type" token.loc in
+                  raise (ParserError(message))
             end
          | _ ->
             let message = Stream.notExpectedError token in
@@ -414,7 +414,7 @@ and exp_led (buffer:Stream.stream) (token:'kind token) (left:exp) : exp =
    | COMMA,_ ->
       pair buffer token left
    | _ -> failwith "exp_led"
-   (*| _ -> token*)
+(*| _ -> token*)
 
 (** <pair> :=  <expression>  ',' <expression> [ ',' <expression> ] *)
 and pair (buffer:Stream.stream) (token:'kind token) (left:exp) : exp =
@@ -587,8 +587,8 @@ and stmtBind (buffer:Stream.stream) : stmt =
       StmtBind(e1,e2,makeAttr start_loc)
    | _ ->
       (*let expected = kindToString EQUAL in
-      let got      = kindToString kind in
-      let message  = Printf.sprintf "Expecting a %s while trying to parse a binding (%s = ...) but got %s" expected (PrintTypes.lhsExpressionStr e1) got in*)
+        let got      = kindToString kind in
+        let message  = Printf.sprintf "Expecting a %s while trying to parse a binding (%s = ...) but got %s" expected (PrintTypes.lhsExpressionStr e1) got in*)
       let message  = Printf.sprintf "This is not a valid statement in the form a = b;" in
       raise (ParserError(Stream.makeError buffer message))
 

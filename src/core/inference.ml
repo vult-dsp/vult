@@ -42,9 +42,9 @@ let typLoc t  = lazy (GetLocation.fromType t)
 let attrLoc attr = lazy (attr.loc)
 let expOptLoc e =
    lazy (
-   match e with
-   | None -> Loc.default
-   | Some(e) -> GetLocation.fromExp e)
+      match e with
+      | None -> Loc.default
+      | Some(e) -> GetLocation.fromExp e)
 
 
 let unifyRaise (loc:Loc.t Lazy.t) (t1:VType.t) (t2:VType.t) : unit =
@@ -62,11 +62,12 @@ let unifyRaise (loc:Loc.t Lazy.t) (t1:VType.t) (t2:VType.t) : unit =
 let rec checkType (loc:Loc.t Lazy.t) (env:'a Env.t) (typ:VType.t) : unit =
    match !typ with
    | VType.TId(name,_) ->
-      let _ =
-         try Env.lookup Scope.Type env name with | _ ->
-         let msg = Printf.sprintf "The type '%s' of this variable is unknown" (idStr name) in
-         Error.raiseError msg (Lazy.force loc)
-      in ()
+      begin
+         try Env.lookup Scope.Type env name |> ignore with
+         | _ ->
+            let msg = Printf.sprintf "The type '%s' of this variable is unknown" (idStr name) in
+            Error.raiseError msg (Lazy.force loc)
+      end
    | VType.TComposed(["array"],[kind;{contents = VType.TInt(_,_)}],_) ->
       checkType loc env kind
 
@@ -121,10 +122,10 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
    | LTuple(elems,attr) ->
       let elems',tpl =
          List.fold_left (fun (elems,tpl) a ->
-            let a',typ = inferLhsExp mem_var env a in
-            a' :: elems, typ :: tpl )
-         ([],[])
-         elems
+               let a',typ = inferLhsExp mem_var env a in
+               a' :: elems, typ :: tpl )
+            ([],[])
+            elems
       in
       let typ = ref (VType.TComposed(["tuple"],List.rev tpl,None)) in
       LTuple(List.rev elems',{ attr with typ = Some(typ) }),typ
@@ -194,8 +195,8 @@ let unifyReturn (loc:Loc.t Lazy.t) (typ1:return_type) (typ2:return_type) : retur
 
 let unifyArrayElem (loc:Loc.t Lazy.t) (t1:VType.t) (t2:VType.t) =
    if not (VType.unify t1 t2) then
-   let msg = Printf.sprintf "This expression has type '%s' but the previous members of the array have type '%s'" (PrintTypes.typeStr t2) (PrintTypes.typeStr t1) in
-   Error.raiseError msg (Lazy.force loc)
+      let msg = Printf.sprintf "This expression has type '%s' but the previous members of the array have type '%s'" (PrintTypes.typeStr t2) (PrintTypes.typeStr t1) in
+      Error.raiseError msg (Lazy.force loc)
 
 let getReturnType (typ:return_type) : VType.t =
    match typ with
@@ -328,21 +329,21 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
 and inferExpList (env:'a Env.t) (elems:exp list) : exp list * 'a Env.t * VType.t list =
    let elems',env',types =
       List.fold_left (fun (elems,env,types) a ->
-         let a',env',typ = inferExp env a in
-         a' :: elems,env', typ :: types )
-      ([],env,[])
-      elems
+            let a',env',typ = inferExp env a in
+            a' :: elems,env', typ :: types )
+         ([],env,[])
+         elems
    in List.rev elems', env', List.rev types
 
 and inferArrayElems (env:'a Env.t) (elems:exp list) : exp list * 'a Env.t * VType.t * int =
    let atype = VType.newvar() in
    let elems',env',count =
       List.fold_left (fun (elems,env,count) a ->
-         let a',env',typ = inferExp env a in
-         unifyArrayElem (expLoc a') atype typ;
-         a' :: elems,env',count+1)
-      ([],env,0)
-      elems
+            let a',env',typ = inferExp env a in
+            unifyArrayElem (expLoc a') atype typ;
+            a' :: elems,env',count+1)
+         ([],env,0)
+         elems
    in
    List.rev elems', env', atype, count
 
@@ -426,8 +427,8 @@ and inferStmtList (env:'a Env.t) (ret_type_in:return_type) (stmts:stmt list) : s
    let stmts', env', ret_type' =
       List.fold_left
          (fun (stmts,env,ret_type) stmt ->
-            let stmt', env', ret_type' = inferStmt env ret_type stmt in
-            stmt' :: stmts, env', ret_type')
+             let stmt', env', ret_type' = inferStmt env ret_type stmt in
+             stmt' :: stmts, env', ret_type')
          ([], env, ret_type_in)
          stmts
    in (List.rev stmts'), env', ret_type'
