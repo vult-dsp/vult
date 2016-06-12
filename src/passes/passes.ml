@@ -513,7 +513,7 @@ module Simplify = struct
       | _ -> false
 
    let minusOne attr (typ:VType.t) : exp =
-      match !(VType.unlink typ) with
+      match !typ with
       | VType.TId(["int"],_) -> PInt(-1,attr)
       | VType.TId(["real"],_) -> PReal(-1.0,attr)
       | _ -> failwith "Simplify.minusOne: invalid numeric value"
@@ -599,7 +599,7 @@ module ProcessArrays = struct
    let getArraySize (typ_opt:VType.t option) : int =
       match typ_opt with
       | Some(typ) ->
-         begin match VType.unlink typ with
+         begin match typ with
          | { contents = VType.TComposed(["array"],[_;{ contents = VType.TInt(n,_)}],_)} -> n
          | _ -> failwith "ProcessArrays.getArraySize: the argument is not an array"
          end
@@ -660,6 +660,19 @@ module ReplaceFunctionNames = struct
 
 end
 
+
+module UnlinkTypes = struct
+
+   let vtype_c : (PassData.t Env.t,VType.vtype) Mapper.mapper_func =
+      Mapper.make @@ fun state typ ->
+         match typ with
+         | VType.TLink(t) -> state, !t
+         | _ -> state, typ
+
+   let mapper = { Mapper.default_mapper with Mapper.vtype_c = vtype_c }
+
+end
+
 (* Basic transformations *)
 let inferPass name (state,stmts) =
    let state' = Env.enter Scope.Module state name emptyAttr in
@@ -669,6 +682,7 @@ let inferPass name (state,stmts) =
 
 let pass1 =
    ReportUnboundType.mapper
+   |> Mapper.seq UnlinkTypes.mapper
    |> Mapper.seq SplitMem.mapper
    |> Mapper.seq SimplifyTupleAssign.mapper
    |> Mapper.seq LHSTupleBinding.mapper
