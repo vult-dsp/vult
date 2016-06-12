@@ -242,7 +242,7 @@ void Synth1_controlChange(Synth1__ctx_type_7 &_ctx, int control, fix16_t value){
 
 Synth1__ctx_type_7 Synth1_default_init(){ return Synth1__ctx_type_7_init();}
 
-void Synth1_default_(Synth1__ctx_type_7 &_ctx){
+void Synth1_default(Synth1__ctx_type_7 &_ctx){
    _ctx.volume = 0x0 /* 0.000000 */;
    _ctx.pitch = 0x2d0000 /* 45.000000 */;
    _ctx.detune = 0xcccc /* 0.800000 */;

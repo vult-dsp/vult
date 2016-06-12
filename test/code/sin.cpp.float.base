@@ -53,7 +53,7 @@ Sin__ctx_type_2 Sin__ctx_type_2_init(){
    Sin__ctx_type_2 _ctx;
    _ctx.pitch = 0.f;
    _ctx._inst0 = Sin__ctx_type_1_init();
-   Sin_default_(_ctx);
+   Sin_default(_ctx);
    return _ctx;
 }
 
@@ -81,7 +81,7 @@ void Sin_controlChange(Sin__ctx_type_2 &_ctx, int control, int value){
 
 Sin__ctx_type_2 Sin_default_init(){ return Sin__ctx_type_2_init();}
 
-void Sin_default_(Sin__ctx_type_2 &_ctx){
+void Sin_default(Sin__ctx_type_2 &_ctx){
    _ctx.pitch = 69.f;
 }
 

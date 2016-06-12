@@ -327,7 +327,7 @@ Synth2__ctx_type_16 Synth2__ctx_type_16_init(){
    _ctx._inst2 = Synth2__ctx_type_7_init();
    _ctx._inst1 = Synth2__ctx_type_11_init();
    _ctx._inst0 = Synth2__ctx_type_14_init();
-   Synth2_default_(_ctx);
+   Synth2_default(_ctx);
    return _ctx;
 }
 
@@ -384,7 +384,7 @@ void Synth2_controlChange(Synth2__ctx_type_16 &_ctx, int control, int value){
 
 Synth2__ctx_type_16 Synth2_default_init(){ return Synth2__ctx_type_16_init();}
 
-void Synth2_default_(Synth2__ctx_type_16 &_ctx){
+void Synth2_default(Synth2__ctx_type_16 &_ctx){
    _ctx.pw = 0.f;
    _ctx.pitch = 42.f;
    _ctx.cut = 1.f;

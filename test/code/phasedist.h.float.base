@@ -85,7 +85,7 @@ typedef Phasedist__ctx_type_4 Phasedist_default_type;
 
 Phasedist__ctx_type_4 Phasedist_default_init();
 
-void Phasedist_default_(Phasedist__ctx_type_4 &_ctx);
+void Phasedist_default(Phasedist__ctx_type_4 &_ctx);
 
 
 

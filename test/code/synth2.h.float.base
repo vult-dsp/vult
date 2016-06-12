@@ -231,7 +231,7 @@ typedef Synth2__ctx_type_16 Synth2_default_type;
 
 Synth2__ctx_type_16 Synth2_default_init();
 
-void Synth2_default_(Synth2__ctx_type_16 &_ctx);
+void Synth2_default(Synth2__ctx_type_16 &_ctx);
 
 
 

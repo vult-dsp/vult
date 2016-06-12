@@ -51,7 +51,7 @@ typedef Volume__ctx_type_1 Volume_default_type;
 
 Volume__ctx_type_1 Volume_default_init();
 
-void Volume_default_(Volume__ctx_type_1 &_ctx);
+void Volume_default(Volume__ctx_type_1 &_ctx);
 
 
 

@@ -56,11 +56,14 @@ Library "vult_generators"
   Modules:
     VultJs,
     VultCh,
+    CLike,
+    VultToCLike,
     DefaultReplacements,
     Replacements
   BuildDepends:
     vult_core,
     vult_util,
+    ppx_deriving.std,
     containers
 
 Library "vult_passes"

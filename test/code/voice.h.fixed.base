@@ -251,7 +251,7 @@ typedef Voice__ctx_type_16 Voice_default_type;
 
 Voice__ctx_type_16 Voice_default_init();
 
-void Voice_default_(Voice__ctx_type_16 &_ctx);
+void Voice_default(Voice__ctx_type_16 &_ctx);
 
 
 

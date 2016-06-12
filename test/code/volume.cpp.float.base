@@ -46,7 +46,7 @@ void Volume_controlChange(Volume__ctx_type_1 &_ctx, int control, int value){
 
 Volume__ctx_type_1 Volume_default_init(){ return Volume__ctx_type_1_init();}
 
-void Volume_default_(Volume__ctx_type_1 &_ctx){
+void Volume_default(Volume__ctx_type_1 &_ctx){
    _ctx.volume = 0.f;
 }
 

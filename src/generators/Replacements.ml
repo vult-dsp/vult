@@ -88,8 +88,10 @@ let empty =
       array_init = SimpleMap.empty;
    }
 
-let getKeyword (t:t) (name:string) : string option =
-   SimpleMap.get name t.keywords
+let getKeyword (t:t) (name:string) : string =
+   match SimpleMap.get name t.keywords with
+   | Some(new_keyword) -> new_keyword
+   | None -> name
 
 let getType (t:t) (name:string) : string =
    match SimpleMap.get name t.types with

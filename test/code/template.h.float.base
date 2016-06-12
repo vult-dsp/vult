@@ -12,7 +12,7 @@ void Template_noteOff(int note);
 
 void Template_controlChange(int control, int value);
 
-void Template_default_();
+void Template_default();
 
 
 

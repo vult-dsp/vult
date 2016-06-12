@@ -132,7 +132,7 @@ typedef Synth1__ctx_type_7 Synth1_default_type;
 
 Synth1__ctx_type_7 Synth1_default_init();
 
-void Synth1_default_(Synth1__ctx_type_7 &_ctx);
+void Synth1_default(Synth1__ctx_type_7 &_ctx);
 
 
 

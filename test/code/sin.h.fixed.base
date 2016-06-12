@@ -73,7 +73,7 @@ typedef Sin__ctx_type_2 Sin_default_type;
 
 Sin__ctx_type_2 Sin_default_init();
 
-void Sin_default_(Sin__ctx_type_2 &_ctx);
+void Sin_default(Sin__ctx_type_2 &_ctx);
 
 
 

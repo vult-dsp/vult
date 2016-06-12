@@ -182,7 +182,7 @@ typedef Delay__ctx_type_10 Delay_default_type;
 
 Delay__ctx_type_10 Delay_default_init();
 
-void Delay_default_(Delay__ctx_type_10 &_ctx);
+void Delay_default(Delay__ctx_type_10 &_ctx);
 
 
 

@@ -269,7 +269,7 @@ void Delay_controlChange(Delay__ctx_type_10 &_ctx, int control, float value){
 
 Delay__ctx_type_10 Delay_default_init(){ return Delay__ctx_type_10_init();}
 
-void Delay_default_(Delay__ctx_type_10 &_ctx){
+void Delay_default(Delay__ctx_type_10 &_ctx){
    _ctx.volume = 0.f;
    _ctx.pitch = 45.f;
    _ctx.detune = 0.8f;

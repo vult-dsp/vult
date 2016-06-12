@@ -459,7 +459,7 @@ Voice__ctx_type_16 Voice__ctx_type_16_init(){
    _ctx._inst2 = Voice__ctx_type_13_init();
    _ctx._inst1 = Voice__ctx_type_10_init();
    _ctx._inst0 = Voice__ctx_type_14_init();
-   Voice_default_(_ctx);
+   Voice_default(_ctx);
    return _ctx;
 }
 
@@ -542,7 +542,7 @@ void Voice_controlChange(Voice__ctx_type_16 &_ctx, int control, int value){
 
 Voice__ctx_type_16 Voice_default_init(){ return Voice__ctx_type_16_init();}
 
-void Voice_default_(Voice__ctx_type_16 &_ctx){
+void Voice_default(Voice__ctx_type_16 &_ctx){
    _ctx.pw = 0.f;
    _ctx.pitch = 42.f;
    _ctx.cut = 1.f;
