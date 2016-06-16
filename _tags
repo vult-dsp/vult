@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: ffc6a1fb531241faf924349090216b94)
+# DO NOT EDIT (digest: b8d2c838a36139aac20f77fcad522dcf)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -31,6 +31,8 @@ true: annot, bin_annot
 # Library vult_generators
 "src/generators/vult_generators.cmxs": use_vult_generators
 <src/generators/*.ml{,i,y}>: pkg_containers
+<src/generators/*.ml{,i,y}>: pkg_pla
+<src/generators/*.ml{,i,y}>: pkg_pla.ppx
 <src/generators/*.ml{,i,y}>: pkg_ppx_deriving.std
 <src/generators/*.ml{,i,y}>: use_vult_core
 <src/generators/*.ml{,i,y}>: use_vult_util
@@ -44,6 +46,8 @@ true: annot, bin_annot
 "src/vult.cmxs": use_vult
 # Executable vultc
 "src/vultc.native": pkg_containers
+"src/vultc.native": pkg_pla
+"src/vultc.native": pkg_pla.ppx
 "src/vultc.native": pkg_ppx_deriving.std
 "src/vultc.native": use_vult
 "src/vultc.native": use_vult_core
@@ -55,6 +59,8 @@ true: annot, bin_annot
 "src/vultc.byte": oasis_executable_vultdebug_byte
 <src/*.ml{,i,y}>: oasis_executable_vultdebug_byte
 "src/vultc.byte": pkg_containers
+"src/vultc.byte": pkg_pla
+"src/vultc.byte": pkg_pla.ppx
 "src/vultc.byte": pkg_ppx_deriving.std
 "src/vultc.byte": use_vult
 "src/vultc.byte": use_vult_core
@@ -66,6 +72,8 @@ true: annot, bin_annot
 "src/vult_node.byte": pkg_containers
 "src/vult_node.byte": pkg_js_of_ocaml
 "src/vult_node.byte": pkg_js_of_ocaml.syntax
+"src/vult_node.byte": pkg_pla
+"src/vult_node.byte": pkg_pla.ppx
 "src/vult_node.byte": pkg_ppx_deriving.std
 "src/vult_node.byte": use_vult
 "src/vult_node.byte": use_vult_core
@@ -76,6 +84,8 @@ true: annot, bin_annot
 <src/*.ml{,i,y}>: pkg_containers
 <src/*.ml{,i,y}>: pkg_js_of_ocaml
 <src/*.ml{,i,y}>: pkg_js_of_ocaml.syntax
+<src/*.ml{,i,y}>: pkg_pla
+<src/*.ml{,i,y}>: pkg_pla.ppx
 <src/*.ml{,i,y}>: pkg_ppx_deriving.std
 <src/*.ml{,i,y}>: use_vult
 <src/*.ml{,i,y}>: use_vult_core
@@ -86,6 +96,8 @@ true: annot, bin_annot
 # Executable vult_tests
 <test/test.{native,byte}>: pkg_containers
 <test/test.{native,byte}>: pkg_oUnit
+<test/test.{native,byte}>: pkg_pla
+<test/test.{native,byte}>: pkg_pla.ppx
 <test/test.{native,byte}>: pkg_ppx_deriving.std
 <test/test.{native,byte}>: pkg_str
 <test/test.{native,byte}>: use_vult
@@ -96,6 +108,8 @@ true: annot, bin_annot
 <test/test.{native,byte}>: use_vult_util
 <test/*.ml{,i,y}>: pkg_containers
 <test/*.ml{,i,y}>: pkg_oUnit
+<test/*.ml{,i,y}>: pkg_pla
+<test/*.ml{,i,y}>: pkg_pla.ppx
 <test/*.ml{,i,y}>: pkg_ppx_deriving.std
 <test/*.ml{,i,y}>: pkg_str
 <test/*.ml{,i,y}>: use_vult

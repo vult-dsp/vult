@@ -6,4 +6,6 @@ PKG oUnit
 PKG containers
 PKG ppx_deriving.std
 PKG ppx_deriving
+PKG pla
+PKG pla.ppx
 FLG -w +27+33

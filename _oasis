@@ -64,7 +64,9 @@ Library "vult_generators"
     vult_core,
     vult_util,
     ppx_deriving.std,
-    containers
+    containers,
+    pla,
+    pla.ppx
 
 Library "vult_passes"
   Path: src/passes
