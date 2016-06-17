@@ -264,22 +264,22 @@ module PrintC = struct
          let ret = printTypeDescr ntype in
          let targs = Pla.map_sep Pla.commaspace printFunArg args in
          if params.is_header then begin
-            Some({pla|<#ret#> <#name#s>(<#targs#>);|pla})
+            Some({pla|<#ret#> <#name#s>(<#targs#>);<#>|pla})
          end
          else begin
             match printStmt params body with
             | Some(tbody) ->
-                  Some({pla|<#ret#> <#name#s>(<#targs#>)<#tbody#>|pla})
-            | None -> Some({pla|<#ret#> <#name#s>(<#targs#>);|pla})
+                  Some({pla|<#ret#> <#name#s>(<#targs#>)<#tbody#><#>|pla})
+            | None -> Some({pla|<#ret#> <#name#s>(<#targs#>);<#>|pla})
          end
       | CSFunction(ntype,name,args,body) ->
          let ret = printTypeDescr ntype in
          let targs = Pla.map_sep Pla.commaspace printFunArg args in
          if params.is_header then
-            Some({pla|<#ret#> <#name#s>(<#targs#>);|pla})
+            Some({pla|<#ret#> <#name#s>(<#targs#>);<#>|pla})
          else
             let tbody = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
-            Some({pla|<#ret#> <#name#s>(<#targs#>){ <#tbody#>}|pla})
+            Some({pla|<#ret#> <#name#s>(<#targs#>){ <#tbody#>}<#>|pla})
       | CSReturn(e1) ->
          let te = printExp params e1 in
          Some({pla|return <#te#>;|pla})
@@ -300,9 +300,7 @@ module PrintC = struct
          let tcond = if isSimple cond then Pla.wrap (Pla.string "(") (Pla.string ")") tcond else tcond in
          let tthen = CCOpt.get_or ~default:Pla.semi (printStmt params then_) in
          let telse = CCOpt.get_or ~default:Pla.semi (printStmt params else_) in
-         Some({pla|if<#tcond#><#tthen#>
-else
-<#telse#>|pla})
+         Some({pla|if<#tcond#><#tthen#><#>else<#><#telse#>|pla})
       | CSType(name,members) when params.is_header ->
          let tmembers =
          Pla.map_sep_all Pla.newline
@@ -311,11 +309,11 @@ else
                 {pla|<#tmember#>;|pla}
             ) members;
          in
-         Some({pla|typedef struct <#name#s> {<#tmembers#+>} <#name#s>;|pla})
+         Some({pla|typedef struct <#name#s> {<#tmembers#+>} <#name#s>;<#>|pla})
       | CSType(_,_) -> None
       | CSAlias(t1,t2) when params.is_header ->
          let tdescr = printTypeDescr t2 in
-         Some({pla|typedef <#t1#s> <#tdescr#>;|pla})
+         Some({pla|typedef <#t1#s> <#tdescr#>;<#>|pla})
       | CSAlias(_,_) -> None
       | CSExtFunc(ntype,name,args) when params.is_header ->
          let ret = printTypeDescr ntype in
