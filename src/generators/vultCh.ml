@@ -118,7 +118,7 @@ module PrintC = struct
          int_of_float (n *. (float_of_int 0x10000))
      in Printf.sprintf "0x%x /* %f */" value n*)
 
-   let rec printExp (params:parameters) (e:cexp) : Pla.template =
+   let rec printExp (params:parameters) (e:cexp) : Pla.t =
       match e with
       | CEFloat(n) when params.real = Fixed ->
          let sn = toFixed n in
@@ -174,7 +174,7 @@ module PrintC = struct
          let name,sub_size = simplifyArray sub in
          name, sub_size @ [string_of_int size]
 
-   let printTypeDescr (typ:type_descr) : Pla.template =
+   let printTypeDescr (typ:type_descr) : Pla.t =
       let kind, sizes = simplifyArray typ in
       match sizes with
       | [] -> Pla.string kind
@@ -182,7 +182,7 @@ module PrintC = struct
          let tsize = Pla.map_sep Pla.comma Pla.string sizes in
          {pla|<#kind#s>[<#tsize#>]|pla}
 
-   let printTypeAndName (is_decl:bool) (typ:type_descr) (name:string) : Pla.template =
+   let printTypeAndName (is_decl:bool) (typ:type_descr) (name:string) : Pla.t =
       let kind, sizes = simplifyArray typ in
       match is_decl, sizes with
       | true,[] -> {pla|<#kind#s> <#name#s>|pla}
@@ -191,7 +191,7 @@ module PrintC = struct
             {pla|<#kind#s> <#name#s>[<#t_sizes#>]|pla}
       | _,_ -> {pla|<#name#s>|pla}
 
-   let printLhsExpTuple (var:string) (is_var:bool) (i:int) (e:clhsexp) : Pla.template =
+   let printLhsExpTuple (var:string) (is_var:bool) (i:int) (e:clhsexp) : Pla.t =
       match e with
       | CLId(CTSimple(typ),name) ->
          if is_var then
@@ -205,11 +205,11 @@ module PrintC = struct
 
       | _ -> failwith "printLhsExpTuple: All other cases should be already covered"
 
-   let printArrayBinding params (var:string) (i:int) (e:cexp) : Pla.template =
+   let printArrayBinding params (var:string) (i:int) (e:cexp) : Pla.t =
       let te = printExp params e in
       {pla|<#var#s>[<#i#i>] = <#te#>; |pla}
 
-   let printLhsExp (is_var:bool) (e:clhsexp) : Pla.template =
+   let printLhsExp (is_var:bool) (e:clhsexp) : Pla.t =
       match e with
       | CLId(CTSimple(typ),name) when is_var ->
          {pla|<#typ#s> <#name#s>|pla}
@@ -221,7 +221,7 @@ module PrintC = struct
 
       | _ -> failwith "printLhsExp: All other cases should be already covered"
 
-   let printFunArg (ntype,name) : Pla.template =
+   let printFunArg (ntype,name) : Pla.t =
       match ntype with
       | Var(typ) ->
          let tdescr = printTypeDescr typ in
@@ -230,7 +230,7 @@ module PrintC = struct
          let tdescr = printTypeDescr typ in
          {pla|<#tdescr#> &<#name#s>|pla}
 
-   let rec printStmt (params:parameters) (stmt:cstmt) : Pla.template option =
+   let rec printStmt (params:parameters) (stmt:cstmt) : Pla.t option =
       match stmt with
       | CSVarDecl(CLWild,None) -> None
       | CSVarDecl(CLWild,Some(value)) ->
@@ -322,7 +322,7 @@ module PrintC = struct
       | CSExtFunc _ -> None
       | CSEmpty -> None
 
-   and printStmtList (params:parameters) (stmts:cstmt list) : Pla.template =
+   and printStmtList (params:parameters) (stmts:cstmt list) : Pla.t =
       let tstmts = CCList.filter_map (printStmt params) stmts in
       Pla.map_sep_all Pla.newline (fun a -> a) tstmts
 
@@ -336,7 +336,7 @@ end
 
 let createParameters (args:arguments) : parameters =
    let () = DefaultReplacements.initialize () in
-   let real     = match args.real with | "fixed" -> Fixed | _ -> Float in
+   let real = match args.real with | "fixed" -> Fixed | _ -> Float in
    let template = Templates.get args.template in
    let output = Filename.basename args.output in
    let repl = Replacements.getReplacements args.real in
