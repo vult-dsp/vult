@@ -23,7 +23,6 @@ THE SOFTWARE.
 *)
 
 open TypesVult
-open PrintBuffer
 open CLike
 
 type real_type =
@@ -99,32 +98,10 @@ module PrintC = struct
       | CENewObj -> true
       | _ -> false
 
-   let toFixed (n:float) : string =
-      let value =
-         if n < 0.0 then
-            Int32.of_float ((-. n) *. (float_of_int 0x10000))
-            |> Int32.lognot
-            |> Int32.add Int32.one
-         else
-            Int32.of_float (n *. (float_of_int 0x10000))
-      in Printf.sprintf "0x%lx /* %f */" value n
-   (*let value =
-      if n < 0.0 then
-         int_of_float ((-. n) *. (float_of_int 0x10000))
-         |> lnot
-         |> (+) 1
-         |> (land) 0xFFFFFFFF
-      else
-         int_of_float (n *. (float_of_int 0x10000))
-     in Printf.sprintf "0x%x /* %f */" value n*)
-
    let rec printExp (params:parameters) (e:cexp) : Pla.t =
       match e with
-      | CEFloat(n) when params.real = Fixed ->
-         let sn = toFixed n in
-         if n < 0.0 then {pla|(<#sn#s>)|pla} else Pla.string sn
-      | CEFloat(n) ->
-         if n < 0.0 then {pla|(<#n#f>f)|pla} else {pla|<#n#f>f|pla}
+      | CEFloat(s,n) ->
+         if n < 0.0 then {pla|(<#s#s>)|pla} else Pla.string s
       | CEInt(n) ->
          if n < 0 then {pla|(<#n#i>)|pla} else {pla|<#n#i>|pla}
       | CEBool(v)   -> Pla.int (if v then 1 else 0)
@@ -157,15 +134,6 @@ module PrintC = struct
    and printChField params (name,value) =
       let tval = printExp params value in
       {pla|.<#name#s> = <#tval#>|pla}
-
-   let isSpecial name =
-      match name with
-      | "process" -> true
-      | "noteOn" -> true
-      | "noteOff" -> true
-      | "controlChange" -> true
-      | "default" -> true
-      | _ -> false
 
    let rec simplifyArray (typ:type_descr) : string * string list =
       match typ with

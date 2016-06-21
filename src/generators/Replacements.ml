@@ -37,6 +37,8 @@ let makeOperators = PairMap.of_list
 
 let makeArrayInitializations = SimpleMap.of_list
 
+let makeRealToString = SimpleMap.of_list
+
 type t =
    {
       keywords   : string SimpleMap.t;
@@ -46,6 +48,7 @@ type t =
       op_to_op   : string PairMap.t;
       fun_to_fun : string PairMap.t;
       array_init : string SimpleMap.t;
+      real_string: (float -> string) SimpleMap.t;
    }
 
 let global_replacement_map :  (t SimpleMap.t) ref = ref (SimpleMap.empty)
@@ -68,24 +71,26 @@ let takeSecond _ (opt1:'a option) (opt2:'a option) : 'a option =
 
 let extendReplacements (first:t) (second:t) : t =
    {
-      keywords   = SimpleMap.merge takeSecond first.keywords   second.keywords;
-      types      = SimpleMap.merge takeSecond first.types      second.types;
-      cast       = PairMap.merge   takeSecond first.cast       second.cast;
-      op_to_fun  = PairMap.merge   takeSecond first.op_to_fun  second.op_to_fun;
-      op_to_op   = PairMap.merge   takeSecond first.op_to_op   second.op_to_op;
-      fun_to_fun = PairMap.merge   takeSecond first.fun_to_fun second.fun_to_fun;
-      array_init = SimpleMap.merge takeSecond first.array_init second.array_init;
+      keywords    = SimpleMap.merge takeSecond first.keywords    second.keywords;
+      types       = SimpleMap.merge takeSecond first.types       second.types;
+      cast        = PairMap.merge   takeSecond first.cast        second.cast;
+      op_to_fun   = PairMap.merge   takeSecond first.op_to_fun   second.op_to_fun;
+      op_to_op    = PairMap.merge   takeSecond first.op_to_op    second.op_to_op;
+      fun_to_fun  = PairMap.merge   takeSecond first.fun_to_fun  second.fun_to_fun;
+      array_init  = SimpleMap.merge takeSecond first.array_init  second.array_init;
+      real_string = SimpleMap.merge takeSecond first.real_string second.real_string;
    }
 
 let empty =
    {
-      keywords   = SimpleMap.empty;
-      types      = SimpleMap.empty;
-      cast       = PairMap.empty;
-      op_to_fun  = PairMap.empty;
-      op_to_op   = PairMap.empty;
-      fun_to_fun = PairMap.empty;
-      array_init = SimpleMap.empty;
+      keywords    = SimpleMap.empty;
+      types       = SimpleMap.empty;
+      cast        = PairMap.empty;
+      op_to_fun   = PairMap.empty;
+      op_to_op    = PairMap.empty;
+      fun_to_fun  = PairMap.empty;
+      array_init  = SimpleMap.empty;
+      real_string = SimpleMap.empty;
    }
 
 let getKeyword (t:t) (name:string) : string =
@@ -123,4 +128,10 @@ let getFunction (t:t) (op:string) (typ:string) : string =
    match PairMap.get (op,typ_t) t.fun_to_fun with
    | Some(new_op) -> new_op
    | None -> op
+
+let getRealToString (t:t) (value:float) (typ:string) : string =
+   let typ_t = getType t typ in
+   match SimpleMap.get typ_t t.real_string with
+   | Some(fn) -> fn value
+   | None -> string_of_float value
 

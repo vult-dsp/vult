@@ -147,7 +147,9 @@ let rec convertExp (r:Replacements.t) (e:exp) : cexp =
    | PUnit(_)       -> CEInt(0)
    | PBool(v,_)     -> CEBool(v)
    | PInt(n,_)      -> CEInt(n)
-   | PReal(v,_)     -> CEFloat(v)
+   | PReal(v,_)     ->
+      let s = Replacements.getRealToString r v "real" in
+      CEFloat(s,v)
    | PId(id,_)      -> CEVar(convertVarId r id)
    | PArray(elems,_) ->
       let elems' = convertExpList r elems in

@@ -130,6 +130,11 @@ module Default = struct
             "uint8_t", "bool_init_array";
          ]
 
+   let real_string = Replacements.makeRealToString
+         [
+            "float", (fun f -> (string_of_float f)^"f")
+         ]
+
    (* This is the default selection of replacements *)
    let replacements =
       Replacements.{
@@ -140,6 +145,7 @@ module Default = struct
          op_to_op;
          fun_to_fun;
          array_init;
+         real_string;
       }
 
 end
@@ -195,6 +201,22 @@ module FixedPoint = struct
             "fix16_t",   "fix_init_array";
          ]
 
+
+   let toFixed (n:float) : string =
+      let value =
+         if n < 0.0 then
+            Int32.of_float ((-. n) *. (float_of_int 0x10000))
+            |> Int32.lognot
+            |> Int32.add Int32.one
+         else
+            Int32.of_float (n *. (float_of_int 0x10000))
+      in Printf.sprintf "0x%lx /* %f */" value n
+
+   let real_string = Replacements.makeRealToString
+         [
+            "fix16_t", toFixed
+         ]
+
    (* This group of replacements extends/overwrites the Default.replacements *)
    let replacements =
       Replacements.extendReplacements Default.replacements
@@ -206,6 +228,7 @@ module FixedPoint = struct
             op_to_op;
             fun_to_fun;
             array_init;
+            real_string;
          }
 
 end

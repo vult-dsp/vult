@@ -34,7 +34,7 @@ type arg_type =
 
 type cexp =
    | CEInt    of int
-   | CEFloat  of float
+   | CEFloat  of string * float
    | CEBool   of bool
    | CEString of string
    | CEArray  of cexp list
