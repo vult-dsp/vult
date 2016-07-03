@@ -24,6 +24,7 @@ Logo design by: John Klimt https://www.facebook.com/JohnKlimt
 
 - ocaml-containers >= 0.15
 - ppx_deriving >= 2.0
+- pla >= 1.0
 - [Optional] ounit >= 2.0 (to run the tests)
 - [Optional] js_of_ocaml >= 2.6 (to run build the web functions)
 
@@ -31,7 +32,7 @@ Logo design by: John Klimt https://www.facebook.com/JohnKlimt
  The simplest way to instal the requirements is with OPAM (https://opam.ocaml.org/)
 ```
 $ opam switch 4.02.3
-$ opam install containers ppx_deriving
+$ opam install containers ppx_deriving pla
 ```
 Optionally to run the tests and building the web functions:
 ```
