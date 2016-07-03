@@ -23,7 +23,6 @@ THE SOFTWARE.
 *)
 
 open TypesVult
-open PrintBuffer
 open Common
 
 type jsexp =
@@ -223,170 +222,135 @@ let rec convertStmt (s:stmt) : jsstmt =
 and convertStmtList (stmts:stmt list) : jsstmt list =
    List.map convertStmt stmts
 
-let rec printExp buffer (e:jsexp) : unit =
+let rec printExp (e:jsexp) : Pla.t =
    match e with
    | JEInteger(n) ->
-      append buffer "(";
-      append buffer (string_of_int n);
-      append buffer "|0)";
+      {pla|(<#n#i>|0)|pla}
    | JEFloat(n) ->
-      if n < 0.0 then append buffer "(";
-      append buffer (string_of_float n);
-      if n < 0.0 then append buffer ")"
-   | JEBool(v)   -> append buffer (if v then "true" else "false")
-   | JEString(s) -> append buffer ("\"" ^ s ^ "\"")
+      if n < 0.0 then {pla|(<#n#f>)|pla} else Pla.float n
+   | JEBool(v) ->
+      Pla.string (if v then "true" else "false")
+   | JEString(s) ->
+      Pla.quoted s
    | JEArray(elems) ->
-      append buffer "[";
-      printExpList buffer "," elems;
-      append buffer "]"
+      let elems_t = Pla.map_sep Pla.comma printExp elems in
+      {pla|[<#elems_t#>]|pla}
    | JECall(name,args) ->
-      append buffer "this.";
-      append buffer name;
-      append buffer "(";
-      printExpList buffer "," args;
-      append buffer ")"
+      let args_t = Pla.map_sep Pla.comma printExp args in
+      {pla|this.<#name#s>(<#args_t#>)|pla}
    | JEUnOp(op,e) ->
-      append buffer "(";
-      append buffer op;
-      append buffer " ";
-      printExp buffer e;
-      append buffer ")"
+      let e_t = printExp e in
+      {pla|(<#op#s> <#e_t#>)|pla}
    | JEOp(op,elems) ->
-      append buffer "(";
-      printExpList buffer (" "^(op)^" ") elems;
-      append buffer ")";
+      let op_t = {pla| <#op#s> |pla} in
+      let elems_t = Pla.map_sep op_t printExp elems in
+      {pla|(<#elems_t#>)|pla}
    | JEVar(name) ->
-      append buffer name
+      Pla.string name
    | JEIf(cond,then_,else_) ->
-      append buffer "(";
-      printExp buffer cond;
-      append buffer "?";
-      printExp buffer then_;
-      append buffer ":";
-      printExp buffer else_;
-      append buffer ")"
-   | JENewObj -> append buffer "{}"
+      let cond_t = printExp cond in
+      let then_t = printExp then_ in
+      let else_t = printExp else_ in
+      {pla|(<#cond_t#>?<#then_t#>:<#else_t#>)|pla}
+   | JENewObj -> Pla.string "{}"
    | JETuple(elems) ->
-      append buffer "{ ";
-      printList buffer printJsField ", " elems;
-      append buffer " }"
+      let elems_t = Pla.map_sep Pla.commaspace printJsField elems in
+      {pla|{ <#elems_t#> }|pla}
 
-and printJsField buffer (name,value) =
-   append buffer name;
-   append buffer " : ";
-   printExp buffer value
+and printJsField (name,value) : Pla.t =
+   let value_t = printExp value in
+   {pla|<#name#s> : <#value_t#>|pla}
 
-and printExpList buffer (sep:string) (e:jsexp list) : unit =
-   match e with
-   | []     -> ()
-   | [ h ]  -> printExp buffer h
-   | h :: t ->
-      printExp buffer h;
-      append buffer sep;
-      printExpList buffer sep t
 
-let printLhsExpTuple buffer (var:string) (is_var:bool) (i:int) (e:jslhsexp) : unit =
+let printLhsExpTuple (var:string) (is_var:bool) (i:int) (e:jslhsexp) : Pla.t =
    match e with
    | JLId(name) ->
-      if is_var then append buffer "var ";
-      append buffer name;
-      append buffer " = ";
-      append buffer var;
-      append buffer (".field_"^(string_of_int i));
-      append buffer "; ";
-   | JLWild -> ()
+      if is_var then
+         {pla|var <#name#s> = <#var#s>.field_<#i#i>; |pla}
+      else
+         {pla|<#name#s> = <#var#s>.field_<#i#i>; |pla}
+
+   | JLWild -> Pla.unit
 
    | _ -> failwith "printLhsExp: All other cases should be already covered"
 
-let rec printStmt buffer (stmt:jsstmt) : unit =
+let wrapInt (is_int:bool) (e:jsexp) : Pla.t =
+   let e_t = printExp e in
+   if is_int then
+      {pla|(<#e_t#>|0)|pla}
+   else e_t
+
+let rec printStmt (stmt:jsstmt) : Pla.t =
    match stmt with
    | JSVarDecl(JLWild,value,_) ->
-      printExp buffer value;
-      append buffer ";";
+      let value_t = printExp value in
+      {pla|<#value_t#>;|pla}
+
    | JSVarDecl(JLId(name),value,is_int) ->
-      append buffer "var ";
-      append buffer name;
-      append buffer " = ";
-      if is_int then append buffer "(";
-      printExp buffer value;
-      if is_int then append buffer "|0)";
-      append buffer ";";
+      let value_t = wrapInt is_int value in
+      {pla|var <#name#s> = <#value_t#>;|pla}
+
    | JSVarDecl(JLTuple(elems),JEVar(name),_) ->
-      List.iteri (printLhsExpTuple buffer name true) elems;
+      List.mapi (printLhsExpTuple name true) elems
+      |> Pla.join
+
    | JSVarDecl(JLTuple(_),_,_) -> failwith "printStmt: invalid tuple assign"
+
    | JSBind(JLWild,value,_) ->
-      printExp buffer value;
-      append buffer ";";
+      Pla.(printExp value ++ semi)
+
    | JSBind(JLTuple(elems),JEVar(name),_) ->
-      List.iteri (printLhsExpTuple buffer name false) elems;
+      List.mapi (printLhsExpTuple name false) elems
+      |> Pla.join
+
    | JSBind(JLTuple(_),_,_) -> failwith "printStmt: invalid tuple assign"
+
    | JSBind(JLId(name),value,is_int) ->
-      append buffer name;
-      append buffer " = ";
-      if is_int then append buffer "(";
-      printExp buffer value;
-      if is_int then append buffer "|0)";
-      append buffer ";";
+      let value_t = wrapInt is_int value in
+      {pla|<#name#s> = <#value_t#>;|pla}
+
    | JSFunction(name,args,(JSBlock(_) as body)) ->
-      append buffer "this.";
-      append buffer name;
-      append buffer " = function(";
-      append buffer (join "," args);
-      append buffer ")";
-      printStmt buffer body;
+      let args_t = Pla.map_sep Pla.comma Pla.string args in
+      let body_t = printStmt body in
+      {pla|this.<#name#s> = function(<#args_t#>)<#body_t#>|pla}
+
    | JSFunction(name,args,body) ->
-      append buffer "this. ";
-      append buffer name;
-      append buffer " = function(";
-      append buffer (join "," args);
-      append buffer ") { ";
-      printStmt buffer body;
-      append buffer "}";
+      let args_t = Pla.map_sep Pla.comma Pla.string args in
+      let body_t = printStmt body in
+      {pla|this.<#name#s> = function(<#args_t#>) { <#body_t#>}|pla}
+
    | JSReturn(e1) ->
-      append buffer "return ";
-      printExp buffer e1;
-      append buffer ";";
+      let e_t = printExp e1 in
+      {pla|return <#e_t#>;|pla}
+
    | JSWhile(cond,body) ->
-      append buffer "while(";
-      printExp buffer cond;
-      append buffer ")";
-      printStmt buffer body;
+      let cond_t = printExp cond in
+      let body_t = printStmt body in
+      {pla|while(<#cond_t#>)<#body_t#>|pla}
+
    | JSBlock(elems) ->
-      append buffer "{";
-      indent buffer;
-      printStmtList buffer elems;
-      outdent buffer;
-      append buffer "}";
+      let elems_t = printStmtList elems in
+      {pla|{<#elems_t#+>}|pla}
+
    | JSIf(cond,then_,None) ->
-      append buffer "if(";
-      printExp buffer cond;
-      append buffer ")";
-      printStmt buffer then_;
+      let cond_t = printExp cond in
+      let then_t = printStmt then_ in
+      {pla|if(<#cond_t#>)<#then_t#>|pla}
+
    | JSIf(cond,then_,Some(else_)) ->
-      append buffer "if(";
-      printExp buffer cond;
-      append buffer ")";
-      printStmt buffer then_;
-      newline buffer;
-      append buffer "else";
-      newline buffer;
-      printStmt buffer else_;
-   | JSEmpty -> ()
+      let cond_t = printExp cond in
+      let then_t = printStmt then_ in
+      let else_t = printStmt else_ in
+      {pla|if(<#cond_t#>)<#then_t#><#>else<#><#else_t#>|pla}
+   | JSEmpty -> Pla.unit
 
-and printStmtList buffer (stmts:jsstmt list) : unit =
-   match stmts with
-   | [] -> ()
-   | h :: t ->
-      printStmt buffer h;
-      newline buffer;
-      printStmtList buffer t
-
+and printStmtList (stmts:jsstmt list) : Pla.t =
+   Pla.map_sep_all Pla.newline printStmt stmts
 
 let printJsCode args (stmts:stmt list) : string =
-   let buffer = makePrintBuffer () in
    let js = convertStmtList stmts in
-   let _ = printStmtList buffer js in
-   let code = contents buffer in
+   let t = printStmtList js in
+   let code = Pla.print t in
    Templates.apply args.template code
 
 let createParameters (args:arguments) : parameters =
@@ -394,7 +358,7 @@ let createParameters (args:arguments) : parameters =
    { template = template }
 
 (** Generates the .c and .h file contents for the given parsed files *)
-let generateJSCode (args:arguments) (parser_results:parser_results list) : (string * string) list =
+let generateJSCode (args:arguments) (parser_results:parser_results list) : (Pla.t * string) list =
    let params = createParameters args in
    let stmts =
       parser_results
@@ -405,5 +369,5 @@ let generateJSCode (args:arguments) (parser_results:parser_results list) : (stri
       |> List.flatten
    in
    let js_text = printJsCode params stmts in
-   [js_text, "js"]
+   [Pla.string js_text, "js"]
 

@@ -23,7 +23,7 @@ this.Adsr__ctx_type_0_init = function(){
    _ctx.count = ((0|0)|0);
    return _ctx;
 }
-this. Adsr_each_init = function() { return this.Adsr__ctx_type_0_init();}
+this.Adsr_each_init = function() { return this.Adsr__ctx_type_0_init();}
 this.Adsr_each = function(_ctx,n){
    var ret = (_ctx.count == (0|0));
    _ctx.count = (((_ctx.count + (1|0)) % n)|0);
@@ -36,7 +36,7 @@ this.Adsr__ctx_type_1_init = function(){
    _ctx.pre_x = false;
    return _ctx;
 }
-this. Adsr_bchange_init = function() { return this.Adsr__ctx_type_1_init();}
+this.Adsr_bchange_init = function() { return this.Adsr__ctx_type_1_init();}
 this.Adsr_bchange = function(_ctx,x){
    var v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
@@ -49,7 +49,7 @@ this.Adsr__ctx_type_2_init = function(){
    _ctx.pre_x = 0.;
    return _ctx;
 }
-this. Adsr_lpfilter_init = function() { return this.Adsr__ctx_type_2_init();}
+this.Adsr_lpfilter_init = function() { return this.Adsr__ctx_type_2_init();}
 this.Adsr_lpfilter = function(_ctx,x){
    var ret = ((x + _ctx.pre_x) * 0.5);
    _ctx.pre_x = x;
@@ -70,7 +70,7 @@ this.Adsr__ctx_type_3_init = function(){
    _ctx._inst0 = this.Adsr__ctx_type_0_init();
    return _ctx;
 }
-this. Adsr_adsr_init = function() { return this.Adsr__ctx_type_3_init();}
+this.Adsr_adsr_init = function() { return this.Adsr__ctx_type_3_init();}
 this.Adsr_adsr = function(_ctx,gate,attack,decay,sustain,release){
    var IDLE = ((0|0)|0);
    var ATTACK = ((1|0)|0);

@@ -23,7 +23,7 @@ this.State_variable__ctx_type_0_init = function(){
    _ctx.pre_x = 0.;
    return _ctx;
 }
-this. State_variable_change_init = function() { return this.State_variable__ctx_type_0_init();}
+this.State_variable_change_init = function() { return this.State_variable__ctx_type_0_init();}
 this.State_variable_change = function(_ctx,x){
    var v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
@@ -37,7 +37,7 @@ this.State_variable__ctx_type_1_init = function(){
    _ctx.dband = 0.;
    return _ctx;
 }
-this. State_variable_svf_step_init = function() { return this.State_variable__ctx_type_1_init();}
+this.State_variable_svf_step_init = function() { return this.State_variable__ctx_type_1_init();}
 this.State_variable_svf_step = function(_ctx,input,g,q,sel){
    var low = (_ctx.dlow + (g * _ctx.dband));
    var high = (input + (- low) + (- (q * _ctx.dband)));
@@ -57,7 +57,7 @@ this.State_variable__ctx_type_2_init = function(){
    _ctx._inst0 = this.State_variable__ctx_type_0_init();
    return _ctx;
 }
-this. State_variable_svf_init = function() { return this.State_variable__ctx_type_2_init();}
+this.State_variable_svf_init = function() { return this.State_variable__ctx_type_2_init();}
 this.State_variable_svf = function(_ctx,input,fc,q,sel){
    fc = this.clip(fc,0.,1.);
    q = this.clip(q,0.,1.);

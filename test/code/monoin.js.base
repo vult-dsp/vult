@@ -25,7 +25,7 @@ this.Monoin__ctx_type_0_init = function(){
    _ctx.count = ((0|0)|0);
    return _ctx;
 }
-this. Monoin_mono_noteOn_init = function() { return this.Monoin__ctx_type_0_init();}
+this.Monoin_mono_noteOn_init = function() { return this.Monoin__ctx_type_0_init();}
 this.Monoin_mono_noteOn = function(_ctx,n){
    if((_ctx.count < (4|0))){
       this.set(_ctx.notes,_ctx.count,n);
@@ -37,7 +37,7 @@ this.Monoin_mono_noteOn = function(_ctx,n){
    return _ctx.pre;
 }
 
-this. Monoin_mono_noteOff_init = function() { return this.Monoin__ctx_type_0_init();}
+this.Monoin_mono_noteOff_init = function() { return this.Monoin__ctx_type_0_init();}
 this.Monoin_mono_noteOff = function(_ctx,n){
    var found = false;
    var pos = {};
@@ -66,7 +66,7 @@ this.Monoin_mono_noteOff = function(_ctx,n){
    return _ctx.pre;
 }
 
-this. Monoin_mono_isGateOn_init = function() { return this.Monoin__ctx_type_0_init();}
+this.Monoin_mono_isGateOn_init = function() { return this.Monoin__ctx_type_0_init();}
 this.Monoin_mono_isGateOn = function(_ctx){
    return (_ctx.count > (0|0));
 }

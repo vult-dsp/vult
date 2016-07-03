@@ -156,10 +156,13 @@ module CodeGenerationTest = struct
          |> Passes.applyTransformationsSingle args
       in
       let () = showResults stmts |> ignore in
-      if real_type = "js" then
-         VultJs.generateJSCode  args [stmts]
-      else
-         VultCh.generateChCode args [stmts]
+      let files =
+         if real_type = "js" then
+            VultJs.generateJSCode  args [stmts]
+         else
+            VultCh.generateChCode args [stmts]
+      in
+      files |> List.map (fun (code,ext) -> Pla.print code, ext)
 
 
    let run (file:string) real_type context : unit =

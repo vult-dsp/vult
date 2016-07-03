@@ -31,10 +31,11 @@ let writeFile (code:string) (file:string) : unit =
    Printf.fprintf oc "%s\n" code;
    close_out oc
 
-let writeOutput (args:arguments) (files:(string * string) list) : string =
+let writeOutput (args:arguments) (files:(Pla.t * string) list) : string =
    let write_files = args.output<>"" in
    let txt = List.fold_left
-         (fun s (code,ext) ->
+         (fun s (code_t,ext) ->
+             let code = Pla.print code_t in
              let () = if write_files then writeFile code (args.output^"."^ext) in
              s^"\n"^code)
          "" files

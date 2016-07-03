@@ -35,7 +35,7 @@ this.Filters__ctx_type_4_init = function(){
    _ctx.pre_x = 0.;
    return _ctx;
 }
-this. Filters_change_init = function() { return this.Filters__ctx_type_4_init();}
+this.Filters_change_init = function() { return this.Filters__ctx_type_4_init();}
 this.Filters_change = function(_ctx,x){
    var v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
@@ -49,7 +49,7 @@ this.Filters__ctx_type_5_init = function(){
    _ctx.w1 = 0.;
    return _ctx;
 }
-this. Filters_biquad_init = function() { return this.Filters__ctx_type_5_init();}
+this.Filters_biquad_init = function() { return this.Filters__ctx_type_5_init();}
 this.Filters_biquad = function(_ctx,x,b0,b1,b2,a1,a2){
    var w0 = (x + (- (a1 * _ctx.w1)) + (- (a2 * _ctx.w2)));
    var y0 = ((b0 * w0) + (b1 * _ctx.w1) + (b2 * _ctx.w2));
@@ -69,7 +69,7 @@ this.Filters__ctx_type_6_init = function(){
    _ctx._inst0 = this.Filters__ctx_type_4_init();
    return _ctx;
 }
-this. Filters_lp6_init = function() { return this.Filters__ctx_type_6_init();}
+this.Filters_lp6_init = function() { return this.Filters__ctx_type_6_init();}
 this.Filters_lp6 = function(_ctx,x,fc){
    if(this.Filters_change(_ctx._inst0,_ctx.fc)){
       _ctx.fc = this.Filters_clip(_ctx.fc,0.,(22050.));
@@ -94,7 +94,7 @@ this.Filters__ctx_type_7_init = function(){
    _ctx._inst0 = this.Filters__ctx_type_4_init();
    return _ctx;
 }
-this. Filters_lp12_init = function() { return this.Filters__ctx_type_7_init();}
+this.Filters_lp12_init = function() { return this.Filters__ctx_type_7_init();}
 this.Filters_lp12 = function(_ctx,x,fc,q){
    if((this.Filters_change(_ctx._inst0,fc) || this.Filters_change(_ctx._inst1,q))){
       var qc = this.Filters_max(this.sqrt(2.),(q + this.sqrt(2.)));
@@ -116,7 +116,7 @@ this.Filters__ctx_type_8_init = function(){
    _ctx._inst0 = this.Filters__ctx_type_5_init();
    return _ctx;
 }
-this. Filters_hp6_init = function() { return this.Filters__ctx_type_8_init();}
+this.Filters_hp6_init = function() { return this.Filters__ctx_type_8_init();}
 this.Filters_hp6 = function(_ctx,x,fc){
    fc = this.Filters_clip(fc,0.,(22050.));
    var k = this.tan((this.Filters_pi() * fc * 2.26757369615e-05));
@@ -132,7 +132,7 @@ this.Filters__ctx_type_9_init = function(){
    _ctx._inst0 = this.Filters__ctx_type_5_init();
    return _ctx;
 }
-this. Filters_allp6_init = function() { return this.Filters__ctx_type_9_init();}
+this.Filters_allp6_init = function() { return this.Filters__ctx_type_9_init();}
 this.Filters_allp6 = function(_ctx,x,fc){
    fc = this.Filters_clip(fc,0.,(22050.));
    var k = this.tan((this.Filters_pi() * fc * 2.26757369615e-05));
@@ -155,7 +155,7 @@ this.Filters__ctx_type_10_init = function(){
    _ctx._inst0 = this.Filters__ctx_type_4_init();
    return _ctx;
 }
-this. Filters_hp12_init = function() { return this.Filters__ctx_type_10_init();}
+this.Filters_hp12_init = function() { return this.Filters__ctx_type_10_init();}
 this.Filters_hp12 = function(_ctx,x,fc,q){
    if((this.Filters_change(_ctx._inst0,fc) || this.Filters_change(_ctx._inst1,q))){
       var qc = this.Filters_max(this.sqrt(2.),(q + this.sqrt(2.)));
@@ -184,7 +184,7 @@ this.Filters__ctx_type_11_init = function(){
    _ctx._inst0 = this.Filters__ctx_type_4_init();
    return _ctx;
 }
-this. Filters_bp12_init = function() { return this.Filters__ctx_type_11_init();}
+this.Filters_bp12_init = function() { return this.Filters__ctx_type_11_init();}
 this.Filters_bp12 = function(_ctx,x,fc,q){
    if((this.Filters_change(_ctx._inst0,fc) || this.Filters_change(_ctx._inst1,q))){
       var qc = this.Filters_max(this.sqrt(2.),(q + this.sqrt(2.)));
@@ -213,7 +213,7 @@ this.Filters__ctx_type_12_init = function(){
    _ctx._inst0 = this.Filters__ctx_type_4_init();
    return _ctx;
 }
-this. Filters_notch12_init = function() { return this.Filters__ctx_type_12_init();}
+this.Filters_notch12_init = function() { return this.Filters__ctx_type_12_init();}
 this.Filters_notch12 = function(_ctx,x,fc,q){
    if((this.Filters_change(_ctx._inst0,fc) || this.Filters_change(_ctx._inst1,q))){
       var qc = this.Filters_max(this.sqrt(2.),(q + this.sqrt(2.)));
@@ -242,7 +242,7 @@ this.Filters__ctx_type_13_init = function(){
    _ctx._inst0 = this.Filters__ctx_type_4_init();
    return _ctx;
 }
-this. Filters_allp12_init = function() { return this.Filters__ctx_type_13_init();}
+this.Filters_allp12_init = function() { return this.Filters__ctx_type_13_init();}
 this.Filters_allp12 = function(_ctx,x,fc,q){
    if((this.Filters_change(_ctx._inst0,fc) || this.Filters_change(_ctx._inst1,q))){
       var qc = this.Filters_max(this.sqrt(2.),(q + this.sqrt(2.)));

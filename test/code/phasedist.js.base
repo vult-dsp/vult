@@ -23,7 +23,7 @@ this.Phasedist__ctx_type_0_init = function(){
    _ctx.x = 0.;
    return _ctx;
 }
-this. Phasedist_smooth_init = function() { return this.Phasedist__ctx_type_0_init();}
+this.Phasedist_smooth_init = function() { return this.Phasedist__ctx_type_0_init();}
 this.Phasedist_smooth = function(_ctx,input){
    _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005));
    return _ctx.x;
@@ -35,7 +35,7 @@ this.Phasedist__ctx_type_1_init = function(){
    _ctx.pre_x = 0.;
    return _ctx;
 }
-this. Phasedist_change_init = function() { return this.Phasedist__ctx_type_1_init();}
+this.Phasedist_change_init = function() { return this.Phasedist__ctx_type_1_init();}
 this.Phasedist_change = function(_ctx,x){
    var v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
@@ -53,7 +53,7 @@ this.Phasedist__ctx_type_3_init = function(){
    _ctx._inst0 = this.Phasedist__ctx_type_1_init();
    return _ctx;
 }
-this. Phasedist_phasor_init = function() { return this.Phasedist__ctx_type_3_init();}
+this.Phasedist_phasor_init = function() { return this.Phasedist__ctx_type_3_init();}
 this.Phasedist_phasor = function(_ctx,pitch,reset){
    if(this.Phasedist_change(_ctx._inst0,pitch)){
       _ctx.rate = this.Phasedist_pitchToRate(pitch);
@@ -75,7 +75,7 @@ this.Phasedist__ctx_type_4_init = function(){
    _ctx._inst0 = this.Phasedist__ctx_type_3_init();
    return _ctx;
 }
-this. Phasedist_process_init = function() { return this.Phasedist__ctx_type_4_init();}
+this.Phasedist_process_init = function() { return this.Phasedist__ctx_type_4_init();}
 this.Phasedist_process = function(_ctx,input){
    var phase1 = this.Phasedist_phasor(_ctx._inst0,_ctx.pitch,false);
    var comp = (1. + (- phase1));
@@ -86,16 +86,16 @@ this.Phasedist_process = function(_ctx,input){
    return (this.Phasedist_smooth(_ctx._inst3,_ctx.volume) * sine * comp);
 }
 
-this. Phasedist_noteOn_init = function() { return this.Phasedist__ctx_type_4_init();}
+this.Phasedist_noteOn_init = function() { return this.Phasedist__ctx_type_4_init();}
 this.Phasedist_noteOn = function(_ctx,note,velocity){
    _ctx.pitch = this.real(note);
 }
 
-this. Phasedist_noteOff_init = function() { return this.Phasedist__ctx_type_4_init();}
+this.Phasedist_noteOff_init = function() { return this.Phasedist__ctx_type_4_init();}
 this.Phasedist_noteOff = function(_ctx,note){
 }
 
-this. Phasedist_controlChange_init = function() { return this.Phasedist__ctx_type_4_init();}
+this.Phasedist_controlChange_init = function() { return this.Phasedist__ctx_type_4_init();}
 this.Phasedist_controlChange = function(_ctx,control,value){
    if((control == (30|0))){
       _ctx.volume = (this.real(value) * 0.00787401574803);
@@ -105,7 +105,7 @@ this.Phasedist_controlChange = function(_ctx,control,value){
    }
 }
 
-this. Phasedist_default_init = function() { return this.Phasedist__ctx_type_4_init();}
+this.Phasedist_default_init = function() { return this.Phasedist__ctx_type_4_init();}
 this.Phasedist_default_ = function(_ctx){
    _ctx.volume = 0.;
    _ctx.pitch = 45.;

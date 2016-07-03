@@ -26,7 +26,7 @@ this.Voice__ctx_type_1_init = function(){
    _ctx.pre_x = 0.;
    return _ctx;
 }
-this. Voice_change_init = function() { return this.Voice__ctx_type_1_init();}
+this.Voice_change_init = function() { return this.Voice__ctx_type_1_init();}
 this.Voice_change = function(_ctx,x){
    var v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
@@ -39,7 +39,7 @@ this.Voice__ctx_type_2_init = function(){
    _ctx.pre_x = false;
    return _ctx;
 }
-this. Voice_bchange_init = function() { return this.Voice__ctx_type_2_init();}
+this.Voice_bchange_init = function() { return this.Voice__ctx_type_2_init();}
 this.Voice_bchange = function(_ctx,x){
    var v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
@@ -52,7 +52,7 @@ this.Voice__ctx_type_3_init = function(){
    _ctx.pre_x = false;
    return _ctx;
 }
-this. Voice_edge_init = function() { return this.Voice__ctx_type_3_init();}
+this.Voice_edge_init = function() { return this.Voice__ctx_type_3_init();}
 this.Voice_edge = function(_ctx,x){
    var v = ((_ctx.pre_x != x) && (_ctx.pre_x == true));
    _ctx.pre_x = x;
@@ -65,7 +65,7 @@ this.Voice__ctx_type_4_init = function(){
    _ctx.count = ((0|0)|0);
    return _ctx;
 }
-this. Voice_each_init = function() { return this.Voice__ctx_type_4_init();}
+this.Voice_each_init = function() { return this.Voice__ctx_type_4_init();}
 this.Voice_each = function(_ctx,n){
    var ret = (_ctx.count == (0|0));
    _ctx.count = (((_ctx.count + (1|0)) % n)|0);
@@ -82,7 +82,7 @@ this.Voice__ctx_type_6_init = function(){
    _ctx.x1 = 0.;
    return _ctx;
 }
-this. Voice_dcblock_init = function() { return this.Voice__ctx_type_6_init();}
+this.Voice_dcblock_init = function() { return this.Voice__ctx_type_6_init();}
 this.Voice_dcblock = function(_ctx,x0){
    var y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995));
    _ctx.x1 = x0;
@@ -96,7 +96,7 @@ this.Voice__ctx_type_7_init = function(){
    _ctx.pre_x = 0.;
    return _ctx;
 }
-this. Voice_lpfilter_init = function() { return this.Voice__ctx_type_7_init();}
+this.Voice_lpfilter_init = function() { return this.Voice__ctx_type_7_init();}
 this.Voice_lpfilter = function(_ctx,x){
    var ret = ((x + _ctx.pre_x) * 0.5);
    _ctx.pre_x = x;
@@ -134,7 +134,7 @@ this.Voice__ctx_type_10_init = function(){
    _ctx._inst0 = this.Voice__ctx_type_1_init();
    return _ctx;
 }
-this. Voice_osc_init = function() { return this.Voice__ctx_type_10_init();}
+this.Voice_osc_init = function() { return this.Voice__ctx_type_10_init();}
 this.Voice_osc = function(_ctx,pitch,pw,wave){
    var fixed_pitch = 0.;
    if((wave < (0.666666666667))){
@@ -188,7 +188,7 @@ this.Voice__ctx_type_11_init = function(){
    _ctx.dband = 0.;
    return _ctx;
 }
-this. Voice_svf_step_init = function() { return this.Voice__ctx_type_11_init();}
+this.Voice_svf_step_init = function() { return this.Voice__ctx_type_11_init();}
 this.Voice_svf_step = function(_ctx,input,g,q,sel){
    var low = (_ctx.dlow + (g * _ctx.dband));
    var high = (input + (- low) + (- (q * _ctx.dband)));
@@ -208,7 +208,7 @@ this.Voice__ctx_type_12_init = function(){
    _ctx._inst0 = this.Voice__ctx_type_1_init();
    return _ctx;
 }
-this. Voice_svf_init = function() { return this.Voice__ctx_type_12_init();}
+this.Voice_svf_init = function() { return this.Voice__ctx_type_12_init();}
 this.Voice_svf = function(_ctx,input,fc,q,sel){
    fc = this.clip(fc,0.,1.);
    q = this.clip(q,0.,1.);
@@ -235,7 +235,7 @@ this.Voice__ctx_type_13_init = function(){
    _ctx._inst0 = this.Voice__ctx_type_4_init();
    return _ctx;
 }
-this. Voice_adsr_init = function() { return this.Voice__ctx_type_13_init();}
+this.Voice_adsr_init = function() { return this.Voice__ctx_type_13_init();}
 this.Voice_adsr = function(_ctx,gate,attack,decay,sustain,release){
    var IDLE = ((0|0)|0);
    var ATTACK = ((1|0)|0);
@@ -316,7 +316,7 @@ this.Voice__ctx_type_14_init = function(){
    _ctx._inst0 = this.Voice__ctx_type_3_init();
    return _ctx;
 }
-this. Voice_lfo_init = function() { return this.Voice__ctx_type_14_init();}
+this.Voice_lfo_init = function() { return this.Voice__ctx_type_14_init();}
 this.Voice_lfo = function(_ctx,f,gate){
    var rate = ((f * 100. * this.Voice_minFixed()) + this.Voice_minFixed());
    if(this.Voice_edge(_ctx._inst0,gate)){
@@ -342,7 +342,7 @@ this.Voice__ctx_type_15_init = function(){
    _ctx.count = ((0|0)|0);
    return _ctx;
 }
-this. Voice_mono_noteOn_init = function() { return this.Voice__ctx_type_15_init();}
+this.Voice_mono_noteOn_init = function() { return this.Voice__ctx_type_15_init();}
 this.Voice_mono_noteOn = function(_ctx,n){
    if((_ctx.count == (0|0))){
       _ctx.n1 = (n|0);
@@ -375,7 +375,7 @@ this.Voice_mono_noteOn = function(_ctx,n){
    return _ctx.pre;
 }
 
-this. Voice_mono_noteOff_init = function() { return this.Voice__ctx_type_15_init();}
+this.Voice_mono_noteOff_init = function() { return this.Voice__ctx_type_15_init();}
 this.Voice_mono_noteOff = function(_ctx,n){
    var found = false;
    if((n == _ctx.n1)){
@@ -428,7 +428,7 @@ this.Voice_mono_noteOff = function(_ctx,n){
    return _ctx.pre;
 }
 
-this. Voice_mono_isGateOn_init = function() { return this.Voice__ctx_type_15_init();}
+this.Voice_mono_isGateOn_init = function() { return this.Voice__ctx_type_15_init();}
 this.Voice_mono_isGateOn = function(_ctx){
    return (_ctx.count > (0|0));
 }
@@ -462,7 +462,7 @@ this.Voice__ctx_type_16_init = function(){
    this.Voice_default_(_ctx);
    return _ctx;
 }
-this. Voice_process_init = function() { return this.Voice__ctx_type_16_init();}
+this.Voice_process_init = function() { return this.Voice__ctx_type_16_init();}
 this.Voice_process = function(_ctx,i){
    var gate = this.Voice_mono_isGateOn(_ctx.monoin);
    var lfo1 = (this.Voice_lfo(_ctx._inst0,_ctx.lfo_rate,gate) * _ctx.lfo_amt);
@@ -474,17 +474,17 @@ this.Voice_process = function(_ctx,i){
    return output;
 }
 
-this. Voice_noteOn_init = function() { return this.Voice__ctx_type_16_init();}
+this.Voice_noteOn_init = function() { return this.Voice__ctx_type_16_init();}
 this.Voice_noteOn = function(_ctx,note,velocity){
    _ctx.pitch = this.real(this.Voice_mono_noteOn(_ctx.monoin,note));
 }
 
-this. Voice_noteOff_init = function() { return this.Voice__ctx_type_16_init();}
+this.Voice_noteOff_init = function() { return this.Voice__ctx_type_16_init();}
 this.Voice_noteOff = function(_ctx,note){
    _ctx.pitch = this.real(this.Voice_mono_noteOff(_ctx.monoin,note));
 }
 
-this. Voice_controlChange_init = function() { return this.Voice__ctx_type_16_init();}
+this.Voice_controlChange_init = function() { return this.Voice__ctx_type_16_init();}
 this.Voice_controlChange = function(_ctx,control,value){
    var value_0_1 = (this.real(value) * 0.00787401574803);
    var value_m1_1 = ((value_0_1 * 2.) + (-1.));
@@ -535,7 +535,7 @@ this.Voice_controlChange = function(_ctx,control,value){
    }
 }
 
-this. Voice_default_init = function() { return this.Voice__ctx_type_16_init();}
+this.Voice_default_init = function() { return this.Voice__ctx_type_16_init();}
 this.Voice_default_ = function(_ctx){
    _ctx.pw = 0.;
    _ctx.pitch = 42.;

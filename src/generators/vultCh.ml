@@ -42,30 +42,28 @@ module Templates = struct
       | "default" -> None
       | t -> failwith (Printf.sprintf "The template '%s' is not available for this generator" t)
 
-   let none code = code
+   let none code : Pla.t = code
 
-   let header (name:string) (code:string) : string =
+   let header (name:string) (code:Pla.t) : Pla.t =
       let file = String.uppercase name in
-      Pla.print
 {pla|#ifndef <#file#s>_H
 #define <#file#s>_H
 #include <stdint.h>
 #include <math.h>
 #include "vultin.h"
 
-<#code#s>
+<#code#>
 
 #endif // <#file#s>_H
 |pla}
 
-   let implementation (file:string) (code:string) : string =
-      Pla.print
+   let implementation (file:string) (code:Pla.t) : Pla.t =
 {pla|#include "<#file#s>.h"
 
-<#code#s>
+<#code#>
 |pla}
 
-   let apply template file code =
+   let apply template file (code:Pla.t) : Pla.t =
       match template with
       | None -> none code
       | Header -> header file code
@@ -295,9 +293,8 @@ module PrintC = struct
       Pla.map_sep_all Pla.newline (fun a -> a) tstmts
 
 
-   let printChCode (params:parameters) (stmts:cstmt list) : string =
-      let t     = printStmtList params stmts in
-      let code  = Pla.print t in
+   let printChCode (params:parameters) (stmts:cstmt list) : Pla.t =
+      let code     = printStmtList params stmts in
       Templates.apply params.template params.output code
 
 end
@@ -311,7 +308,7 @@ let createParameters (args:arguments) : parameters =
    { real = real; template = template; is_header = false; output = output; repl = repl }
 
 (** Generates the .c and .h file contents for the given parsed files *)
-let generateChCode (args:arguments) (parser_results:parser_results list) : (string * string) list =
+let generateChCode (args:arguments) (parser_results:parser_results list) : (Pla.t * string) list =
    let stmts =
       parser_results
       |> List.map (
