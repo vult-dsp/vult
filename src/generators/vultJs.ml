@@ -231,7 +231,7 @@ let rec printExp (e:jsexp) : Pla.t =
    | JEBool(v) ->
       Pla.string (if v then "true" else "false")
    | JEString(s) ->
-      Pla.quoted s
+      Pla.wrap (Pla.string "\"") (Pla.string "\"") (Pla.string s)
    | JEArray(elems) ->
       let elems_t = Pla.map_sep Pla.comma printExp elems in
       {pla|[<#elems_t#>]|pla}
