@@ -106,7 +106,7 @@ module Scope = struct
       | Operator
       | Type
       | Var
-      [@@deriving show]
+   [@@deriving show]
 
    type t =
       {
@@ -154,7 +154,7 @@ module Scope = struct
          sext_fn    : string option;
 
       }
-      [@@deriving show]
+   [@@deriving show]
 
    let rec simple (t:t) : t_simple =
       let simple_pair (k,v) = (k,simple v) in

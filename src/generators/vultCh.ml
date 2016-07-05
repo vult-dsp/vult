@@ -153,8 +153,8 @@ module PrintC = struct
       match is_decl, sizes with
       | true,[] -> {pla|<#kind#s> <#name#s>|pla}
       | true,_  ->
-            let t_sizes = Pla.map_sep Pla.comma Pla.string sizes in
-            {pla|<#kind#s> <#name#s>[<#t_sizes#>]|pla}
+         let t_sizes = Pla.map_sep Pla.comma Pla.string sizes in
+         {pla|<#kind#s> <#name#s>[<#t_sizes#>]|pla}
       | _,_ -> {pla|<#name#s>|pla}
 
    let printLhsExpTuple (var:string) (is_var:bool) (i:int) (e:clhsexp) : Pla.t =
@@ -235,7 +235,7 @@ module PrintC = struct
          else begin
             match printStmt params body with
             | Some(tbody) ->
-                  Some({pla|<#ret#> <#name#s>(<#targs#>)<#tbody#><#>|pla})
+               Some({pla|<#ret#> <#name#s>(<#targs#>)<#tbody#><#>|pla})
             | None -> Some({pla|<#ret#> <#name#s>(<#targs#>);<#>|pla})
          end
       | CSFunction(ntype,name,args,body) ->
@@ -269,11 +269,11 @@ module PrintC = struct
          Some({pla|if<#tcond#><#tthen#><#>else<#><#telse#>|pla})
       | CSType(name,members) when params.is_header ->
          let tmembers =
-         Pla.map_sep_all Pla.newline
-            (fun (typ, name) ->
-                let tmember = printTypeAndName true typ name in
-                {pla|<#tmember#>;|pla}
-            ) members;
+            Pla.map_sep_all Pla.newline
+               (fun (typ, name) ->
+                   let tmember = printTypeAndName true typ name in
+                   {pla|<#tmember#>;|pla}
+               ) members;
          in
          Some({pla|typedef struct <#name#s> {<#tmembers#+>} <#name#s>;<#>|pla})
       | CSType(_,_) -> None

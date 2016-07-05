@@ -97,13 +97,13 @@ let readReference (create:bool) (ext:string) (contents:string) (file:string) (ou
       close_in ic;
       s
    else
-      if create then
-         let oc = open_out ref_file in
-         Printf.fprintf oc "%s" contents;
-         close_out oc;
-         contents
-      else
-         assert_failure (Printf.sprintf "The file '%s' has no reference data" file)
+   if create then
+      let oc = open_out ref_file in
+      Printf.fprintf oc "%s" contents;
+      close_out oc;
+      contents
+   else
+      assert_failure (Printf.sprintf "The file '%s' has no reference data" file)
 
 (** Asserts if the file does not exists *)
 let checkFile (filename:string) : string =
@@ -175,16 +175,16 @@ module CodeGenerationTest = struct
       let references =
          List.map
             (fun (code,ext) ->
-               readReference (writeOutput context) (base_ext ext) code fullfile (in_test_directory folder))
+                readReference (writeOutput context) (base_ext ext) code fullfile (in_test_directory folder))
             currents
       in
       List.iter2
          (fun (current,ext) reference ->
-            assert_equal
-               ~msg:("Generating "^ext^" for file "^fullfile)
-               ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
-               reference current
-            )
+             assert_equal
+                ~msg:("Generating "^ext^" for file "^fullfile)
+                ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
+                reference current
+         )
          currents references
 
    let get files real_type =
