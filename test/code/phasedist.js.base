@@ -14,10 +14,8 @@ function vultProcess(){
     this.set  = function(a,i,v)      { a[i]=v; };
     this.get  = function(a,i)        { return a[i]; };
     this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.Live_process_init = null;
-    this.Live_default_ = null;
-
-
+    this.Phasedist_process_init = null;
+    this.Phasedist_default = null;
 this.Phasedist__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.x = 0.;
@@ -28,8 +26,6 @@ this.Phasedist_smooth = function(_ctx,input){
    _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005));
    return _ctx.x;
 }
-
-
 this.Phasedist__ctx_type_1_init = function(){
    var _ctx = {};
    _ctx.pre_x = 0.;
@@ -44,8 +40,6 @@ this.Phasedist_change = function(_ctx,x){
 this.Phasedist_pitchToRate = function(d){
    return (0.000185392290249 * this.exp((0.0577623 * d)));
 }
-
-
 this.Phasedist__ctx_type_3_init = function(){
    var _ctx = {};
    _ctx.rate = 0.;
@@ -61,8 +55,6 @@ this.Phasedist_phasor = function(_ctx,pitch,reset){
    _ctx.phase = (reset?0.:((_ctx.phase + _ctx.rate) % 1.));
    return _ctx.phase;
 }
-
-
 this.Phasedist__ctx_type_4_init = function(){
    var _ctx = {};
    _ctx.volume = 0.;
@@ -85,16 +77,13 @@ this.Phasedist_process = function(_ctx,input){
    var sine = this.sin((6.28318530718 * phase2));
    return (this.Phasedist_smooth(_ctx._inst3,_ctx.volume) * sine * comp);
 }
-
 this.Phasedist_noteOn_init = function() { return this.Phasedist__ctx_type_4_init();}
 this.Phasedist_noteOn = function(_ctx,note,velocity){
    _ctx.pitch = this.real(note);
 }
-
 this.Phasedist_noteOff_init = function() { return this.Phasedist__ctx_type_4_init();}
 this.Phasedist_noteOff = function(_ctx,note){
 }
-
 this.Phasedist_controlChange_init = function() { return this.Phasedist__ctx_type_4_init();}
 this.Phasedist_controlChange = function(_ctx,control,value){
    if((control == (30|0))){
@@ -104,19 +93,18 @@ this.Phasedist_controlChange = function(_ctx,control,value){
       _ctx.detune = (this.real(value) * 0.00787401574803);
    }
 }
-
 this.Phasedist_default_init = function() { return this.Phasedist__ctx_type_4_init();}
-this.Phasedist_default_ = function(_ctx){
+this.Phasedist_default = function(_ctx){
    _ctx.volume = 0.;
    _ctx.pitch = 45.;
    _ctx.detune = 0.;
 }
 
-    if(this.Live_process_init)  this.context =  this.Live_process_init(); else this.context = {};
-    if(this.Live_default_)      this.Live_default_(this.context);
-    this.liveNoteOn        = function(note,velocity) { if(this.Live_noteOn)        this.Live_noteOn(this.context,note,velocity); };
-    this.liveNoteOff       = function(note,velocity) { if(this.Live_noteOff)       this.Live_noteOff(this.context,note,velocity); };
-    this.liveControlChange = function(note,velocity) { if(this.Live_controlChange) this.Live_controlChange(this.context,note,velocity); };
-    this.liveProcess       = function(input)         { if(this.Live_process)       return this.Live_process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.Live_default_)      return this.Live_default_(this.context); };
+    if(this.Phasedist_process_init)  this.context =  this.Phasedist_process_init(); else this.context = {};
+    if(this.Phasedist_default)      this.Phasedist_default(this.context);
+    this.liveNoteOn        = function(note,velocity) { if(this.Phasedist_noteOn)        this.Phasedist_noteOn(this.context,note,velocity); };
+    this.liveNoteOff       = function(note,velocity) { if(this.Phasedist_noteOff)       this.Phasedist_noteOff(this.context,note,velocity); };
+    this.liveControlChange = function(note,velocity) { if(this.Phasedist_controlChange) this.Phasedist_controlChange(this.context,note,velocity); };
+    this.liveProcess       = function(input)         { if(this.Phasedist_process)       return this.Phasedist_process(this.context,input); else return 0; };
+    this.liveDefault       = function()              { if(this.Phasedist_default)      return this.Phasedist_default(this.context); };
 }

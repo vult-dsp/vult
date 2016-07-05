@@ -14,10 +14,8 @@ function vultProcess(){
     this.set  = function(a,i,v)      { a[i]=v; };
     this.get  = function(a,i)        { return a[i]; };
     this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.Live_process_init = null;
-    this.Live_default_ = null;
-
-
+    this.Sin_process_init = null;
+    this.Sin_default = null;
 this.Sin__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.pre_x = 0.;
@@ -29,8 +27,6 @@ this.Sin_change = function(_ctx,x){
    _ctx.pre_x = x;
    return v;
 }
-
-
 this.Sin__ctx_type_1_init = function(){
    var _ctx = {};
    _ctx.y2 = 0.;
@@ -56,49 +52,42 @@ this.Sin_sc_osc = function(_ctx,pitch){
    _ctx.y2 = this.clip(y2_next,(-1.),1.);
    return _ctx.y1;
 }
-
 this.Sin_sc_osc_start_init = function() { return this.Sin__ctx_type_1_init();}
 this.Sin_sc_osc_start = function(_ctx){
    _ctx.y1 = 1.;
    _ctx.y2 = ((- _ctx.y1) * 0.5);
 }
-
-
 this.Sin__ctx_type_2_init = function(){
    var _ctx = {};
    _ctx.pitch = 0.;
    _ctx._inst0 = this.Sin__ctx_type_1_init();
-   this.Sin_default_(_ctx);
+   this.Sin_default(_ctx);
    return _ctx;
 }
 this.Sin_process_init = function() { return this.Sin__ctx_type_2_init();}
 this.Sin_process = function(_ctx,input){
    return this.Sin_sc_osc(_ctx._inst0,_ctx.pitch);
 }
-
 this.Sin_noteOn_init = function() { return this.Sin__ctx_type_2_init();}
 this.Sin_noteOn = function(_ctx,note,velocity){
    _ctx.pitch = this.real(note);
 }
-
 this.Sin_noteOff_init = function() { return this.Sin__ctx_type_2_init();}
 this.Sin_noteOff = function(_ctx,note){
 }
-
 this.Sin_controlChange_init = function() { return this.Sin__ctx_type_2_init();}
 this.Sin_controlChange = function(_ctx,control,value){
 }
-
 this.Sin_default_init = function() { return this.Sin__ctx_type_2_init();}
-this.Sin_default_ = function(_ctx){
+this.Sin_default = function(_ctx){
    _ctx.pitch = 69.;
 }
 
-    if(this.Live_process_init)  this.context =  this.Live_process_init(); else this.context = {};
-    if(this.Live_default_)      this.Live_default_(this.context);
-    this.liveNoteOn        = function(note,velocity) { if(this.Live_noteOn)        this.Live_noteOn(this.context,note,velocity); };
-    this.liveNoteOff       = function(note,velocity) { if(this.Live_noteOff)       this.Live_noteOff(this.context,note,velocity); };
-    this.liveControlChange = function(note,velocity) { if(this.Live_controlChange) this.Live_controlChange(this.context,note,velocity); };
-    this.liveProcess       = function(input)         { if(this.Live_process)       return this.Live_process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.Live_default_)      return this.Live_default_(this.context); };
+    if(this.Sin_process_init)  this.context =  this.Sin_process_init(); else this.context = {};
+    if(this.Sin_default)      this.Sin_default(this.context);
+    this.liveNoteOn        = function(note,velocity) { if(this.Sin_noteOn)        this.Sin_noteOn(this.context,note,velocity); };
+    this.liveNoteOff       = function(note,velocity) { if(this.Sin_noteOff)       this.Sin_noteOff(this.context,note,velocity); };
+    this.liveControlChange = function(note,velocity) { if(this.Sin_controlChange) this.Sin_controlChange(this.context,note,velocity); };
+    this.liveProcess       = function(input)         { if(this.Sin_process)       return this.Sin_process(this.context,input); else return 0; };
+    this.liveDefault       = function()              { if(this.Sin_default)      return this.Sin_default(this.context); };
 }

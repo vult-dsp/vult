@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 27dea505e440fc54bb50936f828f46a6) *)
+(* DO NOT EDIT (digest: 8bff03793bbe763ece9b08d4f90a7d0c) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -772,8 +772,8 @@ let package_default =
           ("vult_util", ["src/util"], []);
           ("vult_core", ["src/core"], []);
           ("vult_parser", ["src/parser"], []);
-          ("vult_generators", ["src/generators"], []);
           ("vult_passes", ["src/passes"], []);
+          ("vult_generators", ["src/generators"], []);
           ("vult", ["src"], [])
        ];
      lib_c = [];
@@ -799,7 +799,7 @@ let package_default =
             ]);
           ("src/passes", ["src/core"; "src/util"]);
           ("src/parser", ["src/core"; "src/util"]);
-          ("src/generators", ["src/core"; "src/util"]);
+          ("src/generators", ["src/core"; "src/passes"; "src/util"]);
           ("src/core", ["src/util"]);
           ("src",
             [

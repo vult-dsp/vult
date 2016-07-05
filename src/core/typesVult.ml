@@ -263,3 +263,9 @@ let pathLast (path:path) : id =
    in
    match path with
    | Path(p) -> [ last p ]
+
+let moduleName (file:string) : string =
+   file
+   |> Filename.basename
+   |> Filename.chop_extension
+   |> String.capitalize

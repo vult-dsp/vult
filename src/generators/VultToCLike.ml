@@ -26,30 +26,36 @@ open TypesVult
 open CLike
 open Common
 
+type parameters =
+   {
+      repl : Replacements.t;
+      return_by_ref : bool; (* true if any non-simple object should output as a reference *)
+   }
+
 let rec join (sep:string) (id:string list) : string =
    match id with
    | [] -> ""
    | [ name ] -> name
    | h :: t -> h ^ sep ^ (join sep t)
 
-let convertId (r:Replacements.t) (id:id) : string =
-   join "_" id |> Replacements.getKeyword r
+let convertId (p:parameters) (id:id) : string =
+   join "_" id |> Replacements.getKeyword p.repl
 
-let convertVarId (r:Replacements.t) (id:id) : string =
-   List.map (Replacements.getKeyword r) id
+let convertVarId (p:parameters) (id:id) : string =
+   List.map (Replacements.getKeyword p.repl) id
    |> join "."
 
-let rec convertType (r:Replacements.t) (tp:VType.t) : type_descr =
+let rec convertType (p:parameters) (tp:VType.t) : type_descr =
    match !tp with
    | VType.TId([typ],_) ->
-      let new_type = Replacements.getType r typ in
+      let new_type = Replacements.getType p.repl typ in
       CTSimple(new_type)
-   | VType.TId(id,_) -> CTSimple(convertId r id)
+   | VType.TId(id,_) -> CTSimple(convertId p id)
    | VType.TComposed(["tuple"],_,_) -> CTSimple(VType.getTupleName tp)
    | VType.TComposed(["array"],[kind;{ contents = VType.TInt(n,_)}],_) ->
-      let sub = convertType r kind in
+      let sub = convertType p kind in
       CTArray(sub,n)
-   | VType.TLink(tp) -> convertType r tp
+   | VType.TLink(tp) -> convertType p tp
    | VType.TComposed(_,_,_)
    | VType.TInt _
    | VType.TArrow _
@@ -64,18 +70,18 @@ let isValue (typ:VType.t) : bool =
       true
    | _ -> false
 
-let convertTypedId (r:Replacements.t) (e:typed_id) : arg_type * string =
+let convertTypedId (p:parameters) (e:typed_id) : arg_type * string =
    match e with
    | SimpleId(_,_)  -> failwith "VultToCLike.convertTypedId: everything should have types"
    | TypedId(id,typ,_) ->
-      let typ_c   = convertType r typ in
+      let typ_c   = convertType p typ in
       let typ_ref = if isValue typ then Var(typ_c) else Ref(typ_c) in
-      typ_ref, convertVarId r id
+      typ_ref, convertVarId p id
 
-let getCast (r:Replacements.t) (from_type:type_descr) (to_type:type_descr) : string =
+let getCast (p:parameters) (from_type:type_descr) (to_type:type_descr) : string =
    match from_type, to_type with
    | CTSimple(from_t),CTSimple(to_t) ->
-      Replacements.getCast r from_t to_t
+      Replacements.getCast p.repl from_t to_t
    | _ ->
       let from_str = show_type_descr from_type in
       let to_str   = show_type_descr to_type in
@@ -87,14 +93,13 @@ let makeNestedCall (name:string) (args:cexp list) : cexp =
    | [_;_]  -> CECall(name,args)
    | h :: t -> List.fold_left (fun acc a -> CECall(name,[acc;a])) h t
 
-
-let convertOperator (r:Replacements.t) (op:string) (typ:type_descr) (elems:cexp list) : cexp =
+let convertOperator (p:parameters) (op:string) (typ:type_descr) (elems:cexp list) : cexp =
    match typ with
    | CTSimple(typ_t) ->
-      begin match Replacements.getFunctionForOperator r op typ_t with
+      begin match Replacements.getFunctionForOperator p.repl op typ_t with
          | Some(fn) -> makeNestedCall fn elems
          | None ->
-            let new_op = Replacements.getOperator r op typ_t in
+            let new_op = Replacements.getOperator p.repl op typ_t in
             CEOp(new_op,elems)
       end
    | _ -> CEOp(op,elems)
@@ -104,87 +109,87 @@ let getFunctionSetType (elem_typs:type_descr list) : type_descr =
    | [_;_;v] -> v
    | _ -> failwith "VultToCLike.getFunctionSetType: this is not a call to 'set'"
 
-let getInitArrayFunction (r:Replacements.t) (typ:type_descr) : string =
+let getInitArrayFunction (p:parameters) (typ:type_descr) : string =
    match typ with
    | CTSimple(typ_t) ->
-      begin match Replacements.getArrayInit r typ_t  with
+      begin match Replacements.getArrayInit p.repl typ_t  with
          | Some(fn) -> fn
          | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
       end
    | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
 
-let convertFunction (r:Replacements.t) (name:id) (typ:type_descr) (elems:cexp list) (elem_typs:type_descr list) : cexp =
+let convertFunction (p:parameters) (name:id) (typ:type_descr) (elems:cexp list) (elem_typs:type_descr list) : cexp =
    match name with
    (* For the function set we need to get the type based on one of the arguments *)
    | ["set"] ->
       begin match getFunctionSetType elem_typs with
          | CTSimple(typ_t) ->
-            let fn = Replacements.getFunction r "set" typ_t in
+            let fn = Replacements.getFunction p.repl "set" typ_t in
             CECall(fn, elems)
          | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
       end
    | [fname] ->
       begin match typ with
          | CTSimple(typ_t) ->
-            let fn = Replacements.getFunction r fname typ_t in
+            let fn = Replacements.getFunction p.repl fname typ_t in
             CECall(fn, elems)
-         | _ -> CECall(convertId r name, elems)
+         | _ -> CECall(convertId p name, elems)
       end
-   | _ -> CECall(convertId r name, elems)
+   | _ -> CECall(convertId p name, elems)
 
 
-let attrType (r:Replacements.t) (attr:attr) : type_descr =
+let attrType (p:parameters) (attr:attr) : type_descr =
    match attr.typ with
-   | Some(t) -> convertType r t
+   | Some(t) -> convertType p t
    | _ -> failwith "VultToCLike.attrType: everything should have types"
 
-let expType (r:Replacements.t) (e:exp) : type_descr =
+let expType (p:parameters) (e:exp) : type_descr =
    GetAttr.fromExp e
-   |> attrType r
+   |> attrType p
 
-let rec convertExp (r:Replacements.t) (e:exp) : cexp =
+let rec convertExp (p:parameters) (e:exp) : cexp =
    match e with
    | PUnit(_)       -> CEInt(0)
    | PBool(v,_)     -> CEBool(v)
    | PInt(n,_)      -> CEInt(n)
    | PReal(v,_)     ->
-      let s = Replacements.getRealToString r v "real" in
+      let s = Replacements.getRealToString p.repl v "real" in
       CEFloat(s,v)
-   | PId(id,_)      -> CEVar(convertVarId r id)
+   | PId(id,_)      -> CEVar(convertVarId p id)
    | PArray(elems,_) ->
-      let elems' = convertExpList r elems in
+      let elems' = convertExpList p elems in
       CEArray(elems')
    | PUnOp(op,e1,_) ->
-      let e1' = convertExp r e1 in
+      let e1' = convertExp p e1 in
       CEUnOp(op,e1')
    | POp(op,elems,attr) ->
-      let elems' = convertExpList r elems in
-      let typ    = attrType r attr in
-      convertOperator r op typ elems'
+      let elems' = convertExpList p elems in
+      let typ    = attrType p attr in
+      convertOperator p op typ elems'
    | PCall(_,[name],[arg],attr) when name="real" || name="int" || name="bool" ->
-      let arg'     = convertExp r arg in
-      let from_typ = expType r arg in
-      let to_type  = attrType r attr in
+      let arg'     = convertExp p arg in
+      let from_typ = expType p arg in
+      let to_type  = attrType p attr in
       if from_typ <> to_type then
-         CECall(getCast r from_typ to_type, [arg'])
+         CECall(getCast p from_typ to_type, [arg'])
       else arg'
    | PCall(_,name,elems,attr) ->
-      let elems'   = convertExpList r elems in
-      let elem_typ = List.map (expType r) elems in
-      let ret_typ  = attrType r attr in
-      convertFunction r name ret_typ elems' elem_typ
+      let elems'   = convertExpList p elems in
+      let elem_typ = List.map (expType p) elems in
+      let ret_typ  = attrType p attr in
+      convertFunction p name ret_typ elems' elem_typ
    | PIf(cond,then_,else_,_) ->
-      let cond'  = convertExp r cond in
-      let then_' = convertExp r then_ in
-      let else_' = convertExp r else_ in
+      let cond'  = convertExp p cond in
+      let then_' = convertExp p then_ in
+      let else_' = convertExp p else_ in
       CEIf(cond', then_', else_')
-   | PGroup(e1,_)      -> convertExp r e1
-   | PTuple([e1],_)    -> convertExp r e1
+   | PGroup(e1,_)      -> convertExp p e1
+   | PTuple([e1],_)    -> convertExp p e1
    | PTuple(elems,_)   ->
       let elems' =
          List.mapi
             (fun i a ->
-                let a' = convertExp r a in
+                let a' = convertExp p a in
                 "field_"^(string_of_int i), a')
             elems
       in
@@ -192,102 +197,102 @@ let rec convertExp (r:Replacements.t) (e:exp) : cexp =
    | PSeq _            -> failwith "VultToCLike.convertExp: Sequences are not yet supported for js"
    | PEmpty            -> failwith "VultToCLike.convertExp: Empty expressions are not allowed"
 
-and convertExpList (r:Replacements.t) (e:exp list) : cexp list =
-   List.map (convertExp r) e
+and convertExpList (p:parameters) (e:exp list) : cexp list =
+   List.map (convertExp p) e
 
-let rec convertLhsExp is_val (r:Replacements.t) (e:lhs_exp) : clhsexp =
+let rec convertLhsExp (is_val:bool) (p:parameters) (e:lhs_exp) : clhsexp =
    match e with
    | LId(id,Some(typ),_) ->
-      let new_id = convertVarId r id in
-      CLId(convertType r typ, new_id)
+      let new_id = convertVarId p id in
+      CLId(convertType p typ, new_id)
    | LId(_,None,_)   -> failwith "VultToCLike.convertLhsExp: everything should have types"
-   | LTyped(e1,_,_)  -> convertLhsExp is_val r e1
+   | LTyped(e1,_,_)  -> convertLhsExp is_val p e1
    | LTuple(elems,_) ->
-      let elems' = convertLhsExpList is_val r elems in
+      let elems' = convertLhsExpList is_val p elems in
       CLTuple(elems')
    | LWild _ -> CLWild
-   | LGroup(e,_) -> convertLhsExp is_val r e
+   | LGroup(e,_) -> convertLhsExp is_val p e
 
-and convertLhsExpList is_val (r:Replacements.t) (lhsl:lhs_exp list) : clhsexp list =
+and convertLhsExpList (is_val:bool) (p:parameters) (lhsl:lhs_exp list) : clhsexp list =
    List.fold_left
       (fun acc lhs ->
-          (convertLhsExp is_val r lhs) :: acc)
+          (convertLhsExp is_val p lhs) :: acc)
       [] lhsl
    |> List.rev
 
-let rec convertStmt (r:Replacements.t) (s:stmt) : cstmt =
+let rec convertStmt (p:parameters) (s:stmt) : cstmt =
    match s with
    | StmtVal(lhs,None,_) ->
-      let lhs' = convertLhsExp true r lhs in
+      let lhs' = convertLhsExp true p lhs in
       CSVarDecl(lhs',None)
    | StmtVal(lhs,Some(rhs),_) ->
-      let lhs' = convertLhsExp true r lhs in
-      let rhs' = convertExp r rhs in
+      let lhs' = convertLhsExp true p lhs in
+      let rhs' = convertExp p rhs in
       CSVarDecl(lhs',Some(rhs'))
    | StmtMem _                -> CSEmpty
    | StmtWhile(cond,stmt,_) ->
-      let cond' = convertExp r cond in
-      let stmt' = convertStmt r stmt in (* the env is ignored *)
+      let cond' = convertExp p cond in
+      let stmt' = convertStmt p stmt in (* the env is ignored *)
       CSWhile(cond', stmt')
    | StmtReturn(e1,_) ->
-      let e1' = convertExp r e1 in
+      let e1' = convertExp p e1 in
       CSReturn(e1')
    | StmtIf(cond,then_,None,_) ->
-      let cond'  = convertExp r cond in
-      let then_' = convertStmt r then_ in
+      let cond'  = convertExp p cond in
+      let then_' = convertStmt p then_ in
       CSIf(cond',then_', None)
    | StmtIf(cond,then_,Some(else_),_) ->
-      let cond'  = convertExp r cond in
-      let then_' = convertStmt r then_ in
-      let else_' = convertStmt r else_ in
+      let cond'  = convertExp p cond in
+      let then_' = convertStmt p then_ in
+      let else_' = convertStmt p else_ in
       CSIf(cond', then_', Some(else_'))
    | StmtFun(_,_,_,None,_) -> failwith "VultCh.convertStmt: everything should have types"
    | StmtFun(name,args,body,Some(ret),_) ->
-      let arg_names = List.map (convertTypedId r) args in
-      let body' = convertStmt r body in
-      let fname = convertId r name in
-      CSFunction(convertType r ret, fname,arg_names,body')
+      let arg_names = List.map (convertTypedId p) args in
+      let body' = convertStmt p body in
+      let fname = convertId p name in
+      CSFunction(convertType p ret, fname,arg_names,body')
    (* Special case for initializing arrays*)
-   | StmtBind(LId(name,_,_),PCall(None,["makeArray"],[size;init],_),_) ->
-      let init' = convertExp r init in
-      let size' = convertExp r size in
-      let init_typ  = expType r init in
-      let init_func = getInitArrayFunction r init_typ in
-      let var_name  = CEVar(convertVarId r name) in
+   | StmtBind(LId(name,_,_) ,PCall(None,["makeArray"],[size;init],_),_) when p.return_by_ref ->
+      let init' = convertExp p init in
+      let size' = convertExp p size in
+      let init_typ  = expType p init in
+      let init_func = getInitArrayFunction p init_typ in
+      let var_name  = CEVar(convertVarId p name) in
       CSBind(CLWild,CECall(init_func,[var_name;size';init']))
    | StmtBind(lhs,rhs,_) ->
-      let lhs' = convertLhsExp false r lhs in
-      let rhs' = convertExp r rhs in
+      let lhs' = convertLhsExp false p lhs in
+      let rhs' = convertExp p rhs in
       CSBind(lhs', rhs')
    | StmtBlock(_,stmts,_) ->
-      let stmts' = convertStmtList r stmts in
+      let stmts' = convertStmtList p stmts in
       CSBlock(stmts')
    | StmtType(name,members,_) ->
       let type_name =
-         match convertType r name with
+         match convertType p name with
          | CTSimple(t) -> t
          | _ -> failwith "VultCh.convertStmt: invalid alias type"
       in
-      let member_pairs = List.map (fun (id,typ,_) -> convertType r typ, convertVarId r id) members in
+      let member_pairs = List.map (fun (id,typ,_) -> convertType p typ, convertVarId p id) members in
       CSType(type_name,member_pairs)
    | StmtAliasType(t1,t2,_) ->
-      let t1_name   = convertType r t1 in
+      let t1_name   = convertType p t1 in
       let type_name =
-         match convertType r t2 with
+         match convertType p t2 with
          | CTSimple(t) -> t
          | _ -> failwith "VultCh.convertStmt: invalid alias type"
       in
       CSAlias(type_name,t1_name)
    | StmtExternal(_,args,ret,name,_) ->
-      let arg_names = List.map (convertTypedId r) args in
-      CSExtFunc(convertType r ret,name,arg_names)
+      let arg_names = List.map (convertTypedId p) args in
+      CSExtFunc(convertType p ret,name,arg_names)
    | StmtEmpty       -> CSEmpty
 
-and convertStmtList r (stmts:stmt list) : cstmt list =
+and convertStmtList (p:parameters) (stmts:stmt list) : cstmt list =
    let stmts_rev =
       List.fold_left
          (fun acc stmt ->
-             convertStmt r stmt :: acc)
+             convertStmt p stmt :: acc)
          [] stmts
    in
    List.rev stmts_rev

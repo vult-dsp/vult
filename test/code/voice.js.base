@@ -14,13 +14,11 @@ function vultProcess(){
     this.set  = function(a,i,v)      { a[i]=v; };
     this.get  = function(a,i)        { return a[i]; };
     this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.Live_process_init = null;
-    this.Live_default_ = null;
+    this.Voice_process_init = null;
+    this.Voice_default = null;
 this.Voice_minFixed = function(){
    return 1.52588e-05;
 }
-
-
 this.Voice__ctx_type_1_init = function(){
    var _ctx = {};
    _ctx.pre_x = 0.;
@@ -32,8 +30,6 @@ this.Voice_change = function(_ctx,x){
    _ctx.pre_x = x;
    return v;
 }
-
-
 this.Voice__ctx_type_2_init = function(){
    var _ctx = {};
    _ctx.pre_x = false;
@@ -45,8 +41,6 @@ this.Voice_bchange = function(_ctx,x){
    _ctx.pre_x = x;
    return v;
 }
-
-
 this.Voice__ctx_type_3_init = function(){
    var _ctx = {};
    _ctx.pre_x = false;
@@ -58,8 +52,6 @@ this.Voice_edge = function(_ctx,x){
    _ctx.pre_x = x;
    return v;
 }
-
-
 this.Voice__ctx_type_4_init = function(){
    var _ctx = {};
    _ctx.count = ((0|0)|0);
@@ -74,8 +66,6 @@ this.Voice_each = function(_ctx,n){
 this.Voice_near_zero = function(x){
    return (this.abs(x) < 0.02);
 }
-
-
 this.Voice__ctx_type_6_init = function(){
    var _ctx = {};
    _ctx.y1 = 0.;
@@ -89,8 +79,6 @@ this.Voice_dcblock = function(_ctx,x0){
    _ctx.y1 = y0;
    return y0;
 }
-
-
 this.Voice__ctx_type_7_init = function(){
    var _ctx = {};
    _ctx.pre_x = 0.;
@@ -119,8 +107,6 @@ this.Voice_pulse_train = function(m,phase){
    }
    return tmp1;
 }
-
-
 this.Voice__ctx_type_10_init = function(){
    var _ctx = {};
    _ctx.state_triang = 0.;
@@ -180,8 +166,6 @@ this.Voice_osc = function(_ctx,pitch,pw,wave){
    _ctx.output = this.Voice_dcblock(_ctx._inst1,_ctx.output);
    return this.clip((_ctx.output * 0.25),(-1.),1.);
 }
-
-
 this.Voice__ctx_type_11_init = function(){
    var _ctx = {};
    _ctx.dlow = 0.;
@@ -199,8 +183,6 @@ this.Voice_svf_step = function(_ctx,input,g,q,sel){
    var output = ((sel == (0|0))?low:((sel == (1|0))?high:((sel == (2|0))?band:notch)));
    return output;
 }
-
-
 this.Voice__ctx_type_12_init = function(){
    var _ctx = {};
    _ctx.step = this.Voice__ctx_type_11_init();
@@ -220,8 +202,6 @@ this.Voice_svf = function(_ctx,input,fc,q,sel){
    var x2 = this.Voice_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
    return ((x1 + x2) * 0.5);
 }
-
-
 this.Voice__ctx_type_13_init = function(){
    var _ctx = {};
    _ctx.value = 0.;
@@ -307,8 +287,6 @@ this.Voice_adsr = function(_ctx,gate,attack,decay,sustain,release){
    _ctx.value = this.clip((this.Voice_lpfilter(_ctx._inst2,rate) + _ctx.value),0.,1.);
    return _ctx.value;
 }
-
-
 this.Voice__ctx_type_14_init = function(){
    var _ctx = {};
    _ctx.phase = 0.;
@@ -330,8 +308,6 @@ this.Voice_lfo = function(_ctx,f,gate){
    }
    return (this.sin((6.28318530718 * _ctx.phase)) + 0.5);
 }
-
-
 this.Voice__ctx_type_15_init = function(){
    var _ctx = {};
    _ctx.pre = ((0|0)|0);
@@ -374,7 +350,6 @@ this.Voice_mono_noteOn = function(_ctx,n){
    }
    return _ctx.pre;
 }
-
 this.Voice_mono_noteOff_init = function() { return this.Voice__ctx_type_15_init();}
 this.Voice_mono_noteOff = function(_ctx,n){
    var found = false;
@@ -427,13 +402,10 @@ this.Voice_mono_noteOff = function(_ctx,n){
    }
    return _ctx.pre;
 }
-
 this.Voice_mono_isGateOn_init = function() { return this.Voice__ctx_type_15_init();}
 this.Voice_mono_isGateOn = function(_ctx){
    return (_ctx.count > (0|0));
 }
-
-
 this.Voice__ctx_type_16_init = function(){
    var _ctx = {};
    _ctx.wave = 0.;
@@ -459,7 +431,7 @@ this.Voice__ctx_type_16_init = function(){
    _ctx._inst2 = this.Voice__ctx_type_13_init();
    _ctx._inst1 = this.Voice__ctx_type_10_init();
    _ctx._inst0 = this.Voice__ctx_type_14_init();
-   this.Voice_default_(_ctx);
+   this.Voice_default(_ctx);
    return _ctx;
 }
 this.Voice_process_init = function() { return this.Voice__ctx_type_16_init();}
@@ -473,17 +445,14 @@ this.Voice_process = function(_ctx,i){
    var output = (amp_env * this.Voice_svf(_ctx._inst4,x,cut_mod,_ctx.res,(0|0)));
    return output;
 }
-
 this.Voice_noteOn_init = function() { return this.Voice__ctx_type_16_init();}
 this.Voice_noteOn = function(_ctx,note,velocity){
    _ctx.pitch = this.real(this.Voice_mono_noteOn(_ctx.monoin,note));
 }
-
 this.Voice_noteOff_init = function() { return this.Voice__ctx_type_16_init();}
 this.Voice_noteOff = function(_ctx,note){
    _ctx.pitch = this.real(this.Voice_mono_noteOff(_ctx.monoin,note));
 }
-
 this.Voice_controlChange_init = function() { return this.Voice__ctx_type_16_init();}
 this.Voice_controlChange = function(_ctx,control,value){
    var value_0_1 = (this.real(value) * 0.00787401574803);
@@ -534,9 +503,8 @@ this.Voice_controlChange = function(_ctx,control,value){
       _ctx.env_r = value_0_1;
    }
 }
-
 this.Voice_default_init = function() { return this.Voice__ctx_type_16_init();}
-this.Voice_default_ = function(_ctx){
+this.Voice_default = function(_ctx){
    _ctx.pw = 0.;
    _ctx.pitch = 42.;
    _ctx.cut = 1.;
@@ -546,11 +514,11 @@ this.Voice_default_ = function(_ctx){
    _ctx.lfo_rate = 0.;
 }
 
-    if(this.Live_process_init)  this.context =  this.Live_process_init(); else this.context = {};
-    if(this.Live_default_)      this.Live_default_(this.context);
-    this.liveNoteOn        = function(note,velocity) { if(this.Live_noteOn)        this.Live_noteOn(this.context,note,velocity); };
-    this.liveNoteOff       = function(note,velocity) { if(this.Live_noteOff)       this.Live_noteOff(this.context,note,velocity); };
-    this.liveControlChange = function(note,velocity) { if(this.Live_controlChange) this.Live_controlChange(this.context,note,velocity); };
-    this.liveProcess       = function(input)         { if(this.Live_process)       return this.Live_process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.Live_default_)      return this.Live_default_(this.context); };
+    if(this.Voice_process_init)  this.context =  this.Voice_process_init(); else this.context = {};
+    if(this.Voice_default)      this.Voice_default(this.context);
+    this.liveNoteOn        = function(note,velocity) { if(this.Voice_noteOn)        this.Voice_noteOn(this.context,note,velocity); };
+    this.liveNoteOff       = function(note,velocity) { if(this.Voice_noteOff)       this.Voice_noteOff(this.context,note,velocity); };
+    this.liveControlChange = function(note,velocity) { if(this.Voice_controlChange) this.Voice_controlChange(this.context,note,velocity); };
+    this.liveProcess       = function(input)         { if(this.Voice_process)       return this.Voice_process(this.context,input); else return 0; };
+    this.liveDefault       = function()              { if(this.Voice_default)      return this.Voice_default(this.context); };
 }

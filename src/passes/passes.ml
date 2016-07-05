@@ -731,9 +731,7 @@ let passes (name:id) (options:pass_options) (env,stmts) =
 let apply env options (results:parser_results) =
    let module_name =
       results.file
-      |> Filename.basename
-      |> Filename.chop_extension
-      |> String.capitalize
+      |> moduleName
       |> fun a -> [a]
    in
    match CCError.map (fun a-> passes module_name options (env,a)) results.presult with

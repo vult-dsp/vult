@@ -311,14 +311,16 @@ let createParameters (args:arguments) : parameters =
 let generateChCode (args:arguments) (parser_results:parser_results list) : (Pla.t * string) list =
    let stmts =
       parser_results
+      |> Passes.applyTransformations args
       |> List.map (
          fun a -> match a.presult with
             | `Ok(b) -> b
             | _ -> [] )
       |> List.flatten
    in
-   let params = createParameters args in
-   let clike_stmts = VultToCLike.convertStmtList params.repl stmts in
+   let params  = createParameters args in
+   let cparams = VultToCLike.{repl = params.repl; return_by_ref = true } in
+   let clike_stmts = VultToCLike.convertStmtList cparams stmts in
    let h   = PrintC.printChCode { params with is_header = true; template = Templates.Header } clike_stmts in
    let cpp = PrintC.printChCode { params with is_header = false; template = Templates.Implementation } clike_stmts in
    [h,"h"; cpp,"cpp"]

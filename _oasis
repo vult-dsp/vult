@@ -63,6 +63,7 @@ Library "vult_generators"
   BuildDepends:
     vult_core,
     vult_util,
+    vult_passes,
     ppx_deriving.std,
     containers,
     pla,

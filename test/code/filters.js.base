@@ -14,8 +14,8 @@ function vultProcess(){
     this.set  = function(a,i,v)      { a[i]=v; };
     this.get  = function(a,i)        { return a[i]; };
     this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.Live_process_init = null;
-    this.Live_default_ = null;
+    this.Filters_process_init = null;
+    this.Filters_default = null;
 this.Filters_pi = function(){
    return 3.1416;
 }
@@ -28,8 +28,6 @@ this.Filters_max = function(a,b){
 this.Filters_clip = function(low,high,value){
    return this.Filters_min(this.Filters_max(low,value),high);
 }
-
-
 this.Filters__ctx_type_4_init = function(){
    var _ctx = {};
    _ctx.pre_x = 0.;
@@ -41,8 +39,6 @@ this.Filters_change = function(_ctx,x){
    _ctx.pre_x = x;
    return v;
 }
-
-
 this.Filters__ctx_type_5_init = function(){
    var _ctx = {};
    _ctx.w2 = 0.;
@@ -59,8 +55,6 @@ this.Filters_biquad = function(_ctx,x,b0,b1,b2,a1,a2){
    _ctx.w1 = _tmp_1;
    return y0;
 }
-
-
 this.Filters__ctx_type_6_init = function(){
    var _ctx = {};
    _ctx.k = 0.;
@@ -80,8 +74,6 @@ this.Filters_lp6 = function(_ctx,x,fc){
    var a1 = ((_ctx.k + (-1.)) / (_ctx.k + 1.));
    return this.Filters_biquad(_ctx._inst1,x,b0,b1,0.,a1,0.);
 }
-
-
 this.Filters__ctx_type_7_init = function(){
    var _ctx = {};
    _ctx.b2 = 0.;
@@ -109,8 +101,6 @@ this.Filters_lp12 = function(_ctx,x,fc,q){
    }
    return this.Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
-
-
 this.Filters__ctx_type_8_init = function(){
    var _ctx = {};
    _ctx._inst0 = this.Filters__ctx_type_5_init();
@@ -125,8 +115,6 @@ this.Filters_hp6 = function(_ctx,x,fc){
    var a1 = ((k + (-1.)) / (k + 1.));
    return this.Filters_biquad(_ctx._inst0,x,b0,b1,0.,a1,0.);
 }
-
-
 this.Filters__ctx_type_9_init = function(){
    var _ctx = {};
    _ctx._inst0 = this.Filters__ctx_type_5_init();
@@ -141,8 +129,6 @@ this.Filters_allp6 = function(_ctx,x,fc){
    var a1 = ((k + (-1.)) / (k + 1.));
    return this.Filters_biquad(_ctx._inst0,x,b0,b1,0.,a1,0.);
 }
-
-
 this.Filters__ctx_type_10_init = function(){
    var _ctx = {};
    _ctx.b2 = 0.;
@@ -170,8 +156,6 @@ this.Filters_hp12 = function(_ctx,x,fc,q){
    }
    return this.Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
-
-
 this.Filters__ctx_type_11_init = function(){
    var _ctx = {};
    _ctx.b2 = 0.;
@@ -199,8 +183,6 @@ this.Filters_bp12 = function(_ctx,x,fc,q){
    }
    return this.Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
-
-
 this.Filters__ctx_type_12_init = function(){
    var _ctx = {};
    _ctx.b2 = 0.;
@@ -228,8 +210,6 @@ this.Filters_notch12 = function(_ctx,x,fc,q){
    }
    return this.Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
-
-
 this.Filters__ctx_type_13_init = function(){
    var _ctx = {};
    _ctx.b2 = 0.;
@@ -258,11 +238,11 @@ this.Filters_allp12 = function(_ctx,x,fc,q){
    return this.Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
-    if(this.Live_process_init)  this.context =  this.Live_process_init(); else this.context = {};
-    if(this.Live_default_)      this.Live_default_(this.context);
-    this.liveNoteOn        = function(note,velocity) { if(this.Live_noteOn)        this.Live_noteOn(this.context,note,velocity); };
-    this.liveNoteOff       = function(note,velocity) { if(this.Live_noteOff)       this.Live_noteOff(this.context,note,velocity); };
-    this.liveControlChange = function(note,velocity) { if(this.Live_controlChange) this.Live_controlChange(this.context,note,velocity); };
-    this.liveProcess       = function(input)         { if(this.Live_process)       return this.Live_process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.Live_default_)      return this.Live_default_(this.context); };
+    if(this.Filters_process_init)  this.context =  this.Filters_process_init(); else this.context = {};
+    if(this.Filters_default)      this.Filters_default(this.context);
+    this.liveNoteOn        = function(note,velocity) { if(this.Filters_noteOn)        this.Filters_noteOn(this.context,note,velocity); };
+    this.liveNoteOff       = function(note,velocity) { if(this.Filters_noteOff)       this.Filters_noteOff(this.context,note,velocity); };
+    this.liveControlChange = function(note,velocity) { if(this.Filters_controlChange) this.Filters_controlChange(this.context,note,velocity); };
+    this.liveProcess       = function(input)         { if(this.Filters_process)       return this.Filters_process(this.context,input); else return 0; };
+    this.liveDefault       = function()              { if(this.Filters_default)      return this.Filters_default(this.context); };
 }

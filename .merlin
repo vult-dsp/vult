@@ -8,4 +8,6 @@ PKG ppx_deriving.std
 PKG ppx_deriving
 PKG pla
 PKG pla.ppx
+PKG js_of_ocaml.syntax
+PKG js_of_ocaml
 FLG -w +27+33

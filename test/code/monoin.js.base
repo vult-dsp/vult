@@ -14,10 +14,8 @@ function vultProcess(){
     this.set  = function(a,i,v)      { a[i]=v; };
     this.get  = function(a,i)        { return a[i]; };
     this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.Live_process_init = null;
-    this.Live_default_ = null;
-
-
+    this.Monoin_process_init = null;
+    this.Monoin_default = null;
 this.Monoin__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.pre = ((0|0)|0);
@@ -36,7 +34,6 @@ this.Monoin_mono_noteOn = function(_ctx,n){
    }
    return _ctx.pre;
 }
-
 this.Monoin_mono_noteOff_init = function() { return this.Monoin__ctx_type_0_init();}
 this.Monoin_mono_noteOff = function(_ctx,n){
    var found = false;
@@ -65,17 +62,16 @@ this.Monoin_mono_noteOff = function(_ctx,n){
    }
    return _ctx.pre;
 }
-
 this.Monoin_mono_isGateOn_init = function() { return this.Monoin__ctx_type_0_init();}
 this.Monoin_mono_isGateOn = function(_ctx){
    return (_ctx.count > (0|0));
 }
 
-    if(this.Live_process_init)  this.context =  this.Live_process_init(); else this.context = {};
-    if(this.Live_default_)      this.Live_default_(this.context);
-    this.liveNoteOn        = function(note,velocity) { if(this.Live_noteOn)        this.Live_noteOn(this.context,note,velocity); };
-    this.liveNoteOff       = function(note,velocity) { if(this.Live_noteOff)       this.Live_noteOff(this.context,note,velocity); };
-    this.liveControlChange = function(note,velocity) { if(this.Live_controlChange) this.Live_controlChange(this.context,note,velocity); };
-    this.liveProcess       = function(input)         { if(this.Live_process)       return this.Live_process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.Live_default_)      return this.Live_default_(this.context); };
+    if(this.Monoin_process_init)  this.context =  this.Monoin_process_init(); else this.context = {};
+    if(this.Monoin_default)      this.Monoin_default(this.context);
+    this.liveNoteOn        = function(note,velocity) { if(this.Monoin_noteOn)        this.Monoin_noteOn(this.context,note,velocity); };
+    this.liveNoteOff       = function(note,velocity) { if(this.Monoin_noteOff)       this.Monoin_noteOff(this.context,note,velocity); };
+    this.liveControlChange = function(note,velocity) { if(this.Monoin_controlChange) this.Monoin_controlChange(this.context,note,velocity); };
+    this.liveProcess       = function(input)         { if(this.Monoin_process)       return this.Monoin_process(this.context,input); else return 0; };
+    this.liveDefault       = function()              { if(this.Monoin_default)      return this.Monoin_default(this.context); };
 }

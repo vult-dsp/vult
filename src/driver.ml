@@ -69,8 +69,7 @@ let dumpParsedFiles (args:arguments) (parser_results:parser_results list) : unit
 (** Parses the code and and generates the target *)
 let parseStringGenerateCode (args:arguments) (code:string) : string =
    ParserVult.parseString code
-   |> (fun a -> Passes.applyTransformations args [a])
-   |> generateCode args
+   |> fun a -> generateCode args [a]
 
 
 (** Parses the code and returns either the transformed code or the error message *)

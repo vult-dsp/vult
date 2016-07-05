@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: b8d2c838a36139aac20f77fcad522dcf)
+# DO NOT EDIT (digest: f5d143f319cc64ff72d0247908ceb5db)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -28,6 +28,12 @@ true: annot, bin_annot
 <src/parser/*.ml{,i,y}>: pkg_ppx_deriving.std
 <src/parser/*.ml{,i,y}>: use_vult_core
 <src/parser/*.ml{,i,y}>: use_vult_util
+# Library vult_passes
+"src/passes/vult_passes.cmxs": use_vult_passes
+<src/passes/*.ml{,i,y}>: pkg_containers
+<src/passes/*.ml{,i,y}>: pkg_ppx_deriving.std
+<src/passes/*.ml{,i,y}>: use_vult_core
+<src/passes/*.ml{,i,y}>: use_vult_util
 # Library vult_generators
 "src/generators/vult_generators.cmxs": use_vult_generators
 <src/generators/*.ml{,i,y}>: pkg_containers
@@ -35,13 +41,8 @@ true: annot, bin_annot
 <src/generators/*.ml{,i,y}>: pkg_pla.ppx
 <src/generators/*.ml{,i,y}>: pkg_ppx_deriving.std
 <src/generators/*.ml{,i,y}>: use_vult_core
+<src/generators/*.ml{,i,y}>: use_vult_passes
 <src/generators/*.ml{,i,y}>: use_vult_util
-# Library vult_passes
-"src/passes/vult_passes.cmxs": use_vult_passes
-<src/passes/*.ml{,i,y}>: pkg_containers
-<src/passes/*.ml{,i,y}>: pkg_ppx_deriving.std
-<src/passes/*.ml{,i,y}>: use_vult_core
-<src/passes/*.ml{,i,y}>: use_vult_util
 # Library vult
 "src/vult.cmxs": use_vult
 # Executable vultc

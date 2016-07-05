@@ -14,10 +14,8 @@ function vultProcess(){
     this.set  = function(a,i,v)      { a[i]=v; };
     this.get  = function(a,i)        { return a[i]; };
     this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.Live_process_init = null;
-    this.Live_default_ = null;
-
-
+    this.Volume_process_init = null;
+    this.Volume_default = null;
 this.Volume__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.x = 0.;
@@ -28,8 +26,6 @@ this.Volume_smooth = function(_ctx,input){
    _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005));
    return _ctx.x;
 }
-
-
 this.Volume__ctx_type_1_init = function(){
    var _ctx = {};
    _ctx.volume = 0.;
@@ -40,32 +36,28 @@ this.Volume_process_init = function() { return this.Volume__ctx_type_1_init();}
 this.Volume_process = function(_ctx,input){
    return (input * this.Volume_smooth(_ctx._inst0,_ctx.volume));
 }
-
 this.Volume_noteOn_init = function() { return this.Volume__ctx_type_1_init();}
 this.Volume_noteOn = function(_ctx,note,velocity){
 }
-
 this.Volume_noteOff_init = function() { return this.Volume__ctx_type_1_init();}
 this.Volume_noteOff = function(_ctx,note){
 }
-
 this.Volume_controlChange_init = function() { return this.Volume__ctx_type_1_init();}
 this.Volume_controlChange = function(_ctx,control,value){
    if((control == (30|0))){
       _ctx.volume = (this.real(value) * 0.00787401574803);
    }
 }
-
 this.Volume_default_init = function() { return this.Volume__ctx_type_1_init();}
-this.Volume_default_ = function(_ctx){
+this.Volume_default = function(_ctx){
    _ctx.volume = 0.;
 }
 
-    if(this.Live_process_init)  this.context =  this.Live_process_init(); else this.context = {};
-    if(this.Live_default_)      this.Live_default_(this.context);
-    this.liveNoteOn        = function(note,velocity) { if(this.Live_noteOn)        this.Live_noteOn(this.context,note,velocity); };
-    this.liveNoteOff       = function(note,velocity) { if(this.Live_noteOff)       this.Live_noteOff(this.context,note,velocity); };
-    this.liveControlChange = function(note,velocity) { if(this.Live_controlChange) this.Live_controlChange(this.context,note,velocity); };
-    this.liveProcess       = function(input)         { if(this.Live_process)       return this.Live_process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.Live_default_)      return this.Live_default_(this.context); };
+    if(this.Volume_process_init)  this.context =  this.Volume_process_init(); else this.context = {};
+    if(this.Volume_default)      this.Volume_default(this.context);
+    this.liveNoteOn        = function(note,velocity) { if(this.Volume_noteOn)        this.Volume_noteOn(this.context,note,velocity); };
+    this.liveNoteOff       = function(note,velocity) { if(this.Volume_noteOff)       this.Volume_noteOff(this.context,note,velocity); };
+    this.liveControlChange = function(note,velocity) { if(this.Volume_controlChange) this.Volume_controlChange(this.context,note,velocity); };
+    this.liveProcess       = function(input)         { if(this.Volume_process)       return this.Volume_process(this.context,input); else return 0; };
+    this.liveDefault       = function()              { if(this.Volume_default)      return this.Volume_default(this.context); };
 }

@@ -14,10 +14,8 @@ function vultProcess(){
     this.set  = function(a,i,v)      { a[i]=v; };
     this.get  = function(a,i)        { return a[i]; };
     this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.Live_process_init = null;
-    this.Live_default_ = null;
-
-
+    this.Delay_process_init = null;
+    this.Delay_default = null;
 this.Delay__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.x = 0.;
@@ -28,8 +26,6 @@ this.Delay_smooth = function(_ctx,input){
    _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005));
    return _ctx.x;
 }
-
-
 this.Delay__ctx_type_1_init = function(){
    var _ctx = {};
    _ctx.pre_x = 0.;
@@ -41,8 +37,6 @@ this.Delay_change = function(_ctx,x){
    _ctx.pre_x = x;
    return v;
 }
-
-
 this.Delay__ctx_type_2_init = function(){
    var _ctx = {};
    _ctx.pre_x = false;
@@ -54,8 +48,6 @@ this.Delay_edge = function(_ctx,x){
    _ctx.pre_x = x;
    return v;
 }
-
-
 this.Delay__ctx_type_3_init = function(){
    var _ctx = {};
    _ctx.count = ((0|0)|0);
@@ -70,8 +62,6 @@ this.Delay_each = function(_ctx,n){
 this.Delay_pitchToRate = function(d){
    return (0.000185392290249 * this.exp((0.0577623 * d)));
 }
-
-
 this.Delay__ctx_type_5_init = function(){
    var _ctx = {};
    _ctx.rate = 0.;
@@ -87,8 +77,6 @@ this.Delay_phasor = function(_ctx,pitch,reset){
    _ctx.phase = (reset?0.:((_ctx.phase + _ctx.rate) % 1.));
    return _ctx.phase;
 }
-
-
 this.Delay__ctx_type_6_init = function(){
    var _ctx = {};
    _ctx.phase = 0.;
@@ -107,8 +95,6 @@ this.Delay_lfo = function(_ctx,f,gate){
    }
    return (this.sin((6.28318530718 * _ctx.phase)) + (-0.5));
 }
-
-
 this.Delay__ctx_type_7_init = function(){
    var _ctx = {};
    _ctx.pre_phase1 = 0.;
@@ -127,8 +113,6 @@ this.Delay_phd_osc = function(_ctx,pitch,detune){
    var sine = this.sin((6.28318530718 * phase2));
    return (sine * comp);
 }
-
-
 this.Delay__ctx_type_8_init = function(){
    var _ctx = {};
    _ctx.write_pos = ((0|0)|0);
@@ -151,8 +135,6 @@ this.Delay_delay = function(_ctx,x,time,feedback){
    this.set(_ctx.buffer,_ctx.write_pos,this.clip((x + (feedback * ret)),(-1.),1.));
    return ret;
 }
-
-
 this.Delay__ctx_type_9_init = function(){
    var _ctx = {};
    _ctx.pre = ((0|0)|0);
@@ -171,7 +153,6 @@ this.Delay_mono_noteOn = function(_ctx,n){
    }
    return _ctx.pre;
 }
-
 this.Delay_mono_noteOff_init = function() { return this.Delay__ctx_type_9_init();}
 this.Delay_mono_noteOff = function(_ctx,n){
    var found = false;
@@ -200,13 +181,10 @@ this.Delay_mono_noteOff = function(_ctx,n){
    }
    return _ctx.pre;
 }
-
 this.Delay_mono_isGateOn_init = function() { return this.Delay__ctx_type_9_init();}
 this.Delay_mono_isGateOn = function(_ctx){
    return (_ctx.count > (0|0));
 }
-
-
 this.Delay__ctx_type_10_init = function(){
    var _ctx = {};
    _ctx.volume = 0.;
@@ -235,17 +213,14 @@ this.Delay_process = function(_ctx,input){
    var delay_out = this.Delay_delay(_ctx._inst5,osc_out,this.Delay_smooth(_ctx._inst3,_ctx.time),this.Delay_smooth(_ctx._inst4,_ctx.feedback));
    return (_ctx.volume * (osc_out + delay_out) * 0.5);
 }
-
 this.Delay_noteOn_init = function() { return this.Delay__ctx_type_10_init();}
 this.Delay_noteOn = function(_ctx,note,velocity){
    _ctx.pitch = this.real(this.Delay_mono_noteOn(_ctx.notes,note));
 }
-
 this.Delay_noteOff_init = function() { return this.Delay__ctx_type_10_init();}
 this.Delay_noteOff = function(_ctx,note){
    _ctx.pitch = this.real(this.Delay_mono_noteOff(_ctx.notes,note));
 }
-
 this.Delay_controlChange_init = function() { return this.Delay__ctx_type_10_init();}
 this.Delay_controlChange = function(_ctx,control,value){
    if((control == (30|0))){
@@ -258,7 +233,7 @@ this.Delay_controlChange = function(_ctx,control,value){
       _ctx.lfo_rate = (value * 0.00787401574803);
    }
    if((control == (33|0))){
-      _ctx.lfo_amt = (2. * ((this.real(value) * 0.00787401574803) + (-0.5)));
+      _ctx.lfo_amt = (2. * ((value * 0.00787401574803) + (-0.5)));
    }
    if((control == (34|0))){
       _ctx.time = (value * 0.00787401574803);
@@ -267,9 +242,8 @@ this.Delay_controlChange = function(_ctx,control,value){
       _ctx.feedback = (value * 0.00787401574803);
    }
 }
-
 this.Delay_default_init = function() { return this.Delay__ctx_type_10_init();}
-this.Delay_default_ = function(_ctx){
+this.Delay_default = function(_ctx){
    _ctx.volume = 0.;
    _ctx.pitch = 45.;
    _ctx.detune = 0.8;
@@ -279,11 +253,11 @@ this.Delay_default_ = function(_ctx){
    _ctx.feedback = 0.5;
 }
 
-    if(this.Live_process_init)  this.context =  this.Live_process_init(); else this.context = {};
-    if(this.Live_default_)      this.Live_default_(this.context);
-    this.liveNoteOn        = function(note,velocity) { if(this.Live_noteOn)        this.Live_noteOn(this.context,note,velocity); };
-    this.liveNoteOff       = function(note,velocity) { if(this.Live_noteOff)       this.Live_noteOff(this.context,note,velocity); };
-    this.liveControlChange = function(note,velocity) { if(this.Live_controlChange) this.Live_controlChange(this.context,note,velocity); };
-    this.liveProcess       = function(input)         { if(this.Live_process)       return this.Live_process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.Live_default_)      return this.Live_default_(this.context); };
+    if(this.Delay_process_init)  this.context =  this.Delay_process_init(); else this.context = {};
+    if(this.Delay_default)      this.Delay_default(this.context);
+    this.liveNoteOn        = function(note,velocity) { if(this.Delay_noteOn)        this.Delay_noteOn(this.context,note,velocity); };
+    this.liveNoteOff       = function(note,velocity) { if(this.Delay_noteOff)       this.Delay_noteOff(this.context,note,velocity); };
+    this.liveControlChange = function(note,velocity) { if(this.Delay_controlChange) this.Delay_controlChange(this.context,note,velocity); };
+    this.liveProcess       = function(input)         { if(this.Delay_process)       return this.Delay_process(this.context,input); else return 0; };
+    this.liveDefault       = function()              { if(this.Delay_default)      return this.Delay_default(this.context); };
 }

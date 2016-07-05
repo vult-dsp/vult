@@ -14,13 +14,11 @@ function vultProcess(){
     this.set  = function(a,i,v)      { a[i]=v; };
     this.get  = function(a,i)        { return a[i]; };
     this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.Live_process_init = null;
-    this.Live_default_ = null;
+    this.Blit_process_init = null;
+    this.Blit_default = null;
 this.Blit_near_zero = function(x){
    return (this.abs(x) < 0.02);
 }
-
-
 this.Blit__ctx_type_1_init = function(){
    var _ctx = {};
    _ctx.pre_x = 0.;
@@ -32,8 +30,6 @@ this.Blit_change = function(_ctx,x){
    _ctx.pre_x = x;
    return v;
 }
-
-
 this.Blit__ctx_type_2_init = function(){
    var _ctx = {};
    _ctx.y1 = 0.;
@@ -64,8 +60,6 @@ this.Blit_pulse_train = function(m,phase){
    }
    return tmp1;
 }
-
-
 this.Blit__ctx_type_5_init = function(){
    var _ctx = {};
    _ctx.state_triang = 0.;
@@ -126,11 +120,11 @@ this.Blit_osc = function(_ctx,pitch,pw,wave){
    return this.clip((_ctx.output * 0.25),(-1.),1.);
 }
 
-    if(this.Live_process_init)  this.context =  this.Live_process_init(); else this.context = {};
-    if(this.Live_default_)      this.Live_default_(this.context);
-    this.liveNoteOn        = function(note,velocity) { if(this.Live_noteOn)        this.Live_noteOn(this.context,note,velocity); };
-    this.liveNoteOff       = function(note,velocity) { if(this.Live_noteOff)       this.Live_noteOff(this.context,note,velocity); };
-    this.liveControlChange = function(note,velocity) { if(this.Live_controlChange) this.Live_controlChange(this.context,note,velocity); };
-    this.liveProcess       = function(input)         { if(this.Live_process)       return this.Live_process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.Live_default_)      return this.Live_default_(this.context); };
+    if(this.Blit_process_init)  this.context =  this.Blit_process_init(); else this.context = {};
+    if(this.Blit_default)      this.Blit_default(this.context);
+    this.liveNoteOn        = function(note,velocity) { if(this.Blit_noteOn)        this.Blit_noteOn(this.context,note,velocity); };
+    this.liveNoteOff       = function(note,velocity) { if(this.Blit_noteOff)       this.Blit_noteOff(this.context,note,velocity); };
+    this.liveControlChange = function(note,velocity) { if(this.Blit_controlChange) this.Blit_controlChange(this.context,note,velocity); };
+    this.liveProcess       = function(input)         { if(this.Blit_process)       return this.Blit_process(this.context,input); else return 0; };
+    this.liveDefault       = function()              { if(this.Blit_default)      return this.Blit_default(this.context); };
 }

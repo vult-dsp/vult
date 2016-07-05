@@ -14,10 +14,8 @@ function vultProcess(){
     this.set  = function(a,i,v)      { a[i]=v; };
     this.get  = function(a,i)        { return a[i]; };
     this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.Live_process_init = null;
-    this.Live_default_ = null;
-
-
+    this.Moog_filter_process_init = null;
+    this.Moog_filter_default = null;
 this.Moog_filter__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.pre_x = 0.;
@@ -44,8 +42,6 @@ this.Moog_filter_PI = function(){
 this.Moog_filter_thermal = function(){
    return (0.819199996645);
 }
-
-
 this.Moog_filter__ctx_type_6_init = function(){
    var _ctx = {};
    _ctx.tw2 = 0.;
@@ -73,8 +69,6 @@ this.Moog_filter_moog_step = function(_ctx,input,resFixed,tune,output){
    _ctx.dw3 = w3;
    return w3;
 }
-
-
 this.Moog_filter__ctx_type_7_init = function(){
    var _ctx = {};
    _ctx.tune = 0.;
@@ -105,11 +99,11 @@ this.Moog_filter_moog = function(_ctx,input,cut,res){
    return ((x0 + x1) * 0.5);
 }
 
-    if(this.Live_process_init)  this.context =  this.Live_process_init(); else this.context = {};
-    if(this.Live_default_)      this.Live_default_(this.context);
-    this.liveNoteOn        = function(note,velocity) { if(this.Live_noteOn)        this.Live_noteOn(this.context,note,velocity); };
-    this.liveNoteOff       = function(note,velocity) { if(this.Live_noteOff)       this.Live_noteOff(this.context,note,velocity); };
-    this.liveControlChange = function(note,velocity) { if(this.Live_controlChange) this.Live_controlChange(this.context,note,velocity); };
-    this.liveProcess       = function(input)         { if(this.Live_process)       return this.Live_process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.Live_default_)      return this.Live_default_(this.context); };
+    if(this.Moog_filter_process_init)  this.context =  this.Moog_filter_process_init(); else this.context = {};
+    if(this.Moog_filter_default)      this.Moog_filter_default(this.context);
+    this.liveNoteOn        = function(note,velocity) { if(this.Moog_filter_noteOn)        this.Moog_filter_noteOn(this.context,note,velocity); };
+    this.liveNoteOff       = function(note,velocity) { if(this.Moog_filter_noteOff)       this.Moog_filter_noteOff(this.context,note,velocity); };
+    this.liveControlChange = function(note,velocity) { if(this.Moog_filter_controlChange) this.Moog_filter_controlChange(this.context,note,velocity); };
+    this.liveProcess       = function(input)         { if(this.Moog_filter_process)       return this.Moog_filter_process(this.context,input); else return 0; };
+    this.liveDefault       = function()              { if(this.Moog_filter_default)      return this.Moog_filter_default(this.context); };
 }

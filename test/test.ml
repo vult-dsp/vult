@@ -151,10 +151,7 @@ module CodeGenerationTest = struct
          else
             { default_arguments with output = basefile; real = real_type }
       in
-      let stmts =
-         ParserVult.parseFile fullfile
-         |> Passes.applyTransformationsSingle args
-      in
+      let stmts = ParserVult.parseFile fullfile in
       let () = showResults stmts |> ignore in
       let files =
          if real_type = "js" then

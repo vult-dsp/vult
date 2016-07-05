@@ -49,8 +49,6 @@ let main () =
    let parser_results = List.map parseFile args.files in
    (* Reports error of parsing *)
    let _ = List.iter (fun a -> Error.printErrors a.presult a.lines ) parser_results in
-   (* Applies all transformations *)
-   let parser_results = Passes.applyTransformations args parser_results in
    (* Reports error of transformations *)
    let _ = List.iter (fun a -> Error.printErrors a.presult a.lines ) parser_results in
    if not (hasError parser_results) then
