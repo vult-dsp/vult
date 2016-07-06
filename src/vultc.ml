@@ -33,30 +33,20 @@ let processArguments () : arguments =
       "-jscode",   (Arg.Unit   (fun () -> result.jscode   <-true)), "Converts the code to javascript (default: off)";
       "-o",        (Arg.String (fun output -> result.output<-output)), "Defines the prefix of the output files";
       "-real",     (Arg.String (fun real -> result.real<-real)),       "Defines the numeric type for the generated code (float,double,fixed)";
-      "-template", (Arg.String (fun temp -> result.template<-temp)),   "Defines the numeric type for the generated code (float,double,fixed)";
+      "-template", (Arg.String (fun temp -> result.template<-temp)),   "Defines the template used to generate code";
    ]
    in
    let _ = Arg.parse opts (fun a -> result.files <- a::result.files) "Usage: vultc file.vult\n" in
    let _ = result.files <- List.rev result.files in (* Put the files in the correct order  *)
    result
 
-let hasError results =
-   List.exists (fun a -> match a.presult with `Error(_) -> true | _ -> false ) results
-
 let main () =
    let args = processArguments () in
    (* Parse the files *)
    let parser_results = List.map parseFile args.files in
-   (* Reports error of parsing *)
-   let _ = List.iter (fun a -> Error.printErrors a.presult a.lines ) parser_results in
-   (* Reports error of transformations *)
-   let _ = List.iter (fun a -> Error.printErrors a.presult a.lines ) parser_results in
-   if not (hasError parser_results) then
-      begin
-         (* Prints the parsed files if -dparse was passed as argument *)
-         Driver.dumpParsedFiles args parser_results;
-         Driver.generateCode args parser_results |> ignore
-      end
+   (* Prints the parsed files if -dparse was passed as argument *)
+   Driver.dumpParsedFiles args parser_results;
+   Driver.generateCode args parser_results |> ignore
 
 ;;
 main ();;

@@ -262,10 +262,6 @@ let generateJSCode (args:arguments) (parser_results:parser_results list) : (Pla.
    let stmts =
       parser_results
       |> Passes.applyTransformations args
-      |> List.map (
-         fun a -> match a.presult with
-            | `Ok(b) -> b
-            | _ -> [] )
       |> List.flatten
    in
    let js_text = printJsCode params stmts in

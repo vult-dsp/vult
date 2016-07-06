@@ -175,7 +175,7 @@ type scope_kind =
 
 type parser_results =
    {
-      presult : (stmt list,Error.t list) CCError.t;
+      presult : stmt list;
       file    : string;
       lines   : string array;
    }

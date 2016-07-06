@@ -734,13 +734,7 @@ let apply env options (results:parser_results) =
       |> moduleName
       |> fun a -> [a]
    in
-   match CCError.map (fun a-> passes module_name options (env,a)) results.presult with
-   | `Ok(new_env,new_stmts) ->
-      new_env, { results with presult = `Ok(new_stmts) }
-   | `Error(error) ->
-      env, { results with presult = `Error(error) }
-   | exception Error.VError(e) ->
-      env, { results with presult = `Error([e]) }
+   passes module_name options (env,results.presult)
 
 
 let applyTransformations args ?(options=default_options) (results:parser_results list) =

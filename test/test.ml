@@ -112,19 +112,14 @@ let checkFile (filename:string) : string =
       assert_failure (Printf.sprintf "The file '%s' does not exits" filename)
 
 let showResults result : string =
-   match result.presult with
-   | `Ok(b) -> PrintTypes.stmtListStr b
-   | `Error(_) ->
-      let error_strings = Error.reportErrors result.presult result.lines in
-      let result = List.fold_left (fun s a -> s^"\n"^a) "" error_strings in
-      assert_failure ("Errors in the program:\n"^result)
+   PrintTypes.stmtListStr result
 
 (** Module to perform parsing tests *)
 module ParserTest = struct
 
    let process (fullfile:string) : string =
       ParserVult.parseFile fullfile
-      |> showResults
+      |> fun a -> showResults a.presult
 
    let run (file:string) context =
       let folder = "parser" in
@@ -144,22 +139,23 @@ end
 module CodeGenerationTest = struct
 
    let process (fullfile:string) (real_type:string) : (string * string) list =
-      let basefile = Filename.chop_extension (Filename.basename fullfile) in
-      let args =
-         if real_type = "js" then
-            { default_arguments with output = basefile }
-         else
-            { default_arguments with output = basefile; real = real_type }
-      in
-      let stmts = ParserVult.parseFile fullfile in
-      let () = showResults stmts |> ignore in
-      let files =
-         if real_type = "js" then
-            VultJs.generateJSCode  args [stmts]
-         else
-            VultCh.generateChCode args [stmts]
-      in
-      files |> List.map (fun (code,ext) -> Pla.print code, ext)
+         let basefile = Filename.chop_extension (Filename.basename fullfile) in
+         let args =
+            if real_type = "js" then
+               { default_arguments with output = basefile }
+            else
+               { default_arguments with output = basefile; real = real_type }
+         in
+         let stmts = ParserVult.parseFile fullfile in
+         let () = showResults stmts.presult |> ignore in
+         let files =
+            if real_type = "js" then
+               VultJs.generateJSCode  args [stmts]
+            else
+               VultCh.generateChCode args [stmts]
+         in
+         files |> List.map (fun (code,ext) -> Pla.print code, ext)
+
 
 
    let run (file:string) real_type context : unit =
@@ -225,9 +221,7 @@ module CompileTest = struct
 
    let generateCPP (filename:string) (output:string) (real_type:string) : unit =
       let args = { default_arguments with  files = [filename]; ccode = true; output = output; real = real_type } in
-      let parser_results =
-         ParserVult.parseFile filename
-         |> Passes.applyTransformationsSingle args in
+      let parser_results = ParserVult.parseFile filename  in
       Driver.generateCode args [parser_results] |> ignore
 
    let run (real_type:string) (file:string) _ =

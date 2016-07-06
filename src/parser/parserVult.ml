@@ -815,33 +815,20 @@ let parseBuffer (file:string) (buffer) : parser_results =
       let result    = loop [] in
       let all_lines = getFileLines (Stream.lines buffer) in
       if Stream.hasErrors buffer then
-         {
-            presult = `Error(List.rev (Stream.getErrors buffer));
-            lines   = all_lines;
-            file    = file;
-         }
+          raise (Error.Errors(List.rev (Stream.getErrors buffer)))
       else
          {
-            presult = `Ok(result);
+            presult = result;
             lines   = all_lines;
             file    = file;
          }
    with
    | ParserError(error) ->
-      let all_lines = getFileLines (Stream.lines buffer) in
-      {
-         presult = `Error([error]);
-         lines   = all_lines;
-         file    = file;
-      }
+      raise (Error.Errors([error]))
    | _ ->
-      let all_lines = getFileLines (Stream.lines buffer) in
       let loc = (Stream.current buffer).loc in
-      {
-         presult = `Error([Error.PointedError(loc,"Failed to parse the file after the following token")]);
-         lines   = all_lines;
-         file    = file;
-      }
+      let error = Error.PointedError(loc,"Failed to parse the file after the following token") in
+      raise (Error.Errors([error]))
 
 (** Parses a file containing a list of statements and returns the results *)
 let parseFile (filename:string) : parser_results =

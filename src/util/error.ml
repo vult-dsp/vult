@@ -28,7 +28,7 @@ type t =
    | PointedError of Loc.t * string
    | SimpleError  of string
 
-exception VError of t
+exception Errors of t list
 
 (** Takes a location and returns a string in the format "Error in file: file: line l col:c1-c2" *)
 let errorLocationMessage (location:Loc.t) : string =
@@ -110,4 +110,4 @@ let makeError (msg:string) (loc:Loc.t) =
    PointedError(loc,msg)
 
 let raiseError (msg:string) (loc:Loc.t) =
-   raise (VError(makeError msg loc))
+   raise (Errors([makeError msg loc]))

@@ -37,7 +37,7 @@ let compare _ _ = 0
 let default = { start_pos = dummy_pos  ; end_pos = dummy_pos }
 
 (** Returns the current location (start and end) *)
-let getLocation lexbuf =
+let getLocation lexbuf : t =
    {
       start_pos = lexbuf.lex_start_p;
       end_pos   = lexbuf.lex_curr_p;

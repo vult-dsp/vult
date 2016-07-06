@@ -432,6 +432,7 @@ module Scope = struct
       match lookup kind t name with
       | Some(a) -> a
       | None ->
+         Printf.printf "Unknown %s '%s'" (kindStr kind) (idStr name);
          Error.raiseError (Printf.sprintf "Unknown %s '%s'" (kindStr kind) (idStr name)) loc
 
    let isMemOrInstance (t:t) (name:id) : bool =
