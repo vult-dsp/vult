@@ -177,7 +177,6 @@ type parser_results =
    {
       presult : stmt list;
       file    : string;
-      lines   : string array;
    }
 
 type interpreter_results =

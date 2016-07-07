@@ -813,13 +813,11 @@ let parseBuffer (file:string) (buffer) : parser_results =
          | _ -> loop ((stmt buffer)::acc)
       in
       let result    = loop [] in
-      let all_lines = getFileLines (Stream.lines buffer) in
       if Stream.hasErrors buffer then
           raise (Error.Errors(List.rev (Stream.getErrors buffer)))
       else
          {
             presult = result;
-            lines   = all_lines;
             file    = file;
          }
    with

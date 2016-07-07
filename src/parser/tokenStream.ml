@@ -24,12 +24,16 @@ THE SOFTWARE.
 
 open ParserTypes
 
+type source =
+   | File of string
+   | Text of string
+
 (** Parsing exception *)
 exception ParserError of Error.t
 
 module type TokenKindSig = sig
    type kind
-   val next     : lexed_lines -> Lexing.lexbuf -> kind token
+   val next     : Lexing.lexbuf -> kind token
    val kindStr  : kind -> string
    val tokenStr : kind token -> string
    val isEOF    : kind -> bool
@@ -46,13 +50,13 @@ module TokenStream(S:TokenKindSig) = struct
          mutable errors     : Error.t list;
          mutable peeked     : S.kind token;
          mutable prev       : S.kind token;
-         lines              : lexed_lines;
+         source             : source;
       }
 
    (** Skips one token *)
    let skip (buffer:stream) : unit =
       buffer.prev <- buffer.peeked;
-      buffer.peeked <- S.next buffer.lines buffer.lexbuf
+      buffer.peeked <- S.next buffer.lexbuf
 
    (** Returns the current token in the buffer *)
    let current (buffer:stream) : S.kind token =
@@ -65,9 +69,6 @@ module TokenStream(S:TokenKindSig) = struct
    (** Returns the kind of the current token *)
    let peek (buffer:stream) : S.kind =
       (current buffer).kind
-
-   let lines (buffer:stream) : lexed_lines =
-      buffer.lines
 
    let makeError (buffer:stream) (message:string) : Error.t =
       Error.PointedError(Loc.getNext buffer.prev.loc,message)
@@ -93,7 +94,7 @@ module TokenStream(S:TokenKindSig) = struct
       match buffer.peeked with
       | t when t.kind = kind ->
          let _ = buffer.prev <- buffer.peeked in
-         buffer.peeked <- S.next buffer.lines buffer.lexbuf
+         buffer.peeked <- S.next buffer.lexbuf
       | t when S.isEOF t.kind ->
          let expected = S.kindStr kind in
          let message = Printf.sprintf "Expecting a %s but the file ended" expected in
@@ -136,16 +137,15 @@ module TokenStream(S:TokenKindSig) = struct
    let fromString (str:string) : stream =
       let lexbuf = Lexing.from_string str in
       let lines = emptyLexedLines () in
-      let first =  S.next lines lexbuf in
-      { lexbuf = lexbuf; peeked = first; prev = first ; has_errors = false; errors= []; lines = lines }
+      let first =  S.next lexbuf in
+      { lexbuf = lexbuf; peeked = first; prev = first ; has_errors = false; errors= []; source = Text(str) }
 
    (** Creates a token stream given a channel *)
    let fromChannel (chan:in_channel) (file:string) : stream =
       let lexbuf = Lexing.from_channel chan in
-      let lines = emptyLexedLines () in
       lexbuf.Lexing.lex_curr_p <- { lexbuf.Lexing.lex_curr_p with Lexing.pos_fname = file };
-      let first =  S.next lines lexbuf in
-      { lexbuf = lexbuf; peeked = first; prev = first ; has_errors = false; errors = []; lines = lines }
+      let first =  S.next lexbuf in
+      { lexbuf = lexbuf; peeked = first; prev = first ; has_errors = false; errors = []; source = File(file) }
 
 
 end
