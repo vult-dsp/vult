@@ -56,18 +56,18 @@ let keyword_table =
    table
 
 (** Returs the token given the current token kind *)
-let makeToken kind lexbuf =
-   { kind = kind; value = lexeme lexbuf; loc = Loc.getLocation lexbuf; }
+let makeToken source kind lexbuf =
+   { kind = kind; value = lexeme lexbuf; loc = Loc.getLocation source lexbuf; }
 
 (** Returs the a keyword token if that's the case otherwise and id token *)
-let makeIdToken lexbuf =
+let makeIdToken source lexbuf =
    let s = lexeme lexbuf in
    let kind =
       if Hashtbl.mem keyword_table s then
          Hashtbl.find keyword_table s
       else ID
    in
-   { kind = kind; value = s; loc = Loc.getLocation lexbuf; }
+   { kind = kind; value = s; loc = Loc.getLocation source lexbuf; }
 
 (* Functions for testing the tokenizer *)
 let tokenizeString tokenizer str =
@@ -152,111 +152,111 @@ let float =
   ('.' ['0'-'9' '_']* )?
   (['e' 'E'] ['+' '-']? ['0'-'9'] ['0'-'9' '_']*)?
 
-rule next_token = parse
+rule next_token source = parse
   | newline
     { let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
-      next_token lexbuf
+      next_token source lexbuf
     }
-  | blank +     { let _ = lexeme lexbuf in next_token lexbuf }
-  | '.'         { makeToken DOT lexbuf }
-  | '@'         { makeToken AT lexbuf }
-  | '_'         { makeToken WILD lexbuf }
-  | '('         { makeToken LPAREN lexbuf }
-  | ')'         { makeToken RPAREN lexbuf }
-  | '{'         { makeToken LBRACE lexbuf }
-  | '['         { makeToken LBRACK lexbuf }
-  | '}'         { makeToken RBRACE lexbuf }
-  | ']'         { makeToken RBRACK lexbuf }
-  | "{|"        { makeToken LSEQ lexbuf }
-  | "|}"        { makeToken RSEQ lexbuf }
-  | "[|"        { makeToken LARR lexbuf }
-  | "|]"        { makeToken RARR lexbuf }
-  | ':'         { makeToken COLON lexbuf }
-  | ';'         { makeToken SEMI lexbuf }
-  | ','         { makeToken COMMA lexbuf }
-  | '='         { makeToken EQUAL lexbuf }
-  | '''         { makeToken TICK lexbuf }
-  | "->"        { makeToken ARROW lexbuf }
-  | "||"        { makeToken OP lexbuf }
-  | "!"         { makeToken OP lexbuf }
-  | "&&"        { makeToken OP lexbuf }
-  | "=="        { makeToken OP lexbuf }
-  | "<>"        { makeToken OP lexbuf }
-  | "<="        { makeToken OP lexbuf }
-  | ">="        { makeToken OP lexbuf }
-  | [ '<' '>' ] { makeToken OP lexbuf }
-  | '|'         { makeToken OP lexbuf }
-  | '&'         { makeToken OP lexbuf }
-  | [ '+' '-' ] { makeToken OP lexbuf }
-  | [ '*' '/' '%' ] { makeToken OP lexbuf }
-  | int         { makeToken INT lexbuf }
-  | float       { makeToken REAL lexbuf }
+  | blank +     { let _ = lexeme lexbuf in next_token source lexbuf }
+  | '.'         { makeToken source DOT lexbuf }
+  | '@'         { makeToken source AT lexbuf }
+  | '_'         { makeToken source WILD lexbuf }
+  | '('         { makeToken source LPAREN lexbuf }
+  | ')'         { makeToken source RPAREN lexbuf }
+  | '{'         { makeToken source LBRACE lexbuf }
+  | '['         { makeToken source LBRACK lexbuf }
+  | '}'         { makeToken source RBRACE lexbuf }
+  | ']'         { makeToken source RBRACK lexbuf }
+  | "{|"        { makeToken source LSEQ lexbuf }
+  | "|}"        { makeToken source RSEQ lexbuf }
+  | "[|"        { makeToken source LARR lexbuf }
+  | "|]"        { makeToken source RARR lexbuf }
+  | ':'         { makeToken source COLON lexbuf }
+  | ';'         { makeToken source SEMI lexbuf }
+  | ','         { makeToken source COMMA lexbuf }
+  | '='         { makeToken source EQUAL lexbuf }
+  | '''         { makeToken source TICK lexbuf }
+  | "->"        { makeToken source ARROW lexbuf }
+  | "||"        { makeToken source OP lexbuf }
+  | "!"         { makeToken source OP lexbuf }
+  | "&&"        { makeToken source OP lexbuf }
+  | "=="        { makeToken source OP lexbuf }
+  | "<>"        { makeToken source OP lexbuf }
+  | "<="        { makeToken source OP lexbuf }
+  | ">="        { makeToken source OP lexbuf }
+  | [ '<' '>' ] { makeToken source OP lexbuf }
+  | '|'         { makeToken source OP lexbuf }
+  | '&'         { makeToken source OP lexbuf }
+  | [ '+' '-' ] { makeToken source OP lexbuf }
+  | [ '*' '/' '%' ] { makeToken source OP lexbuf }
+  | int         { makeToken source INT lexbuf }
+  | float       { makeToken source REAL lexbuf }
   | startid idchar *
-                { makeIdToken lexbuf }
+                { makeIdToken source lexbuf }
   |  '"'        {
-                  let start_loc = Loc.getLocation lexbuf in
+                  let start_loc = Loc.getLocation source lexbuf in
                   let buffer    = Buffer.create 0 in
-                  let ()        = string buffer lexbuf in
-                  let end_loc   = Loc.getLocation lexbuf in
+                  let ()        = string source buffer lexbuf in
+                  let end_loc   = Loc.getLocation source lexbuf in
                   let str       = Buffer.contents buffer in
                   let loc       = Loc.merge start_loc end_loc in
                   { kind = STRING; value = str; loc = loc; }
 
                 }
-  | "//"        { line_comment lexbuf}
-  | "/*"        { comment 0 lexbuf }
-  | eof         { makeToken EOF lexbuf }
+  | "//"        { line_comment source lexbuf}
+  | "/*"        { comment source 0 lexbuf }
+  | eof         { makeToken source EOF lexbuf }
 
-and line_comment = parse
+and line_comment source = parse
    newline
      {
       let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
-      next_token lexbuf
+      next_token source lexbuf
      }
-  | eof { makeToken EOF lexbuf }
-  | _   { line_comment lexbuf }
+  | eof { makeToken source EOF lexbuf }
+  | _   { line_comment source lexbuf }
 
-and comment level = parse
+and comment source level = parse
   newline
      {
       let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
-      comment level lexbuf
+      comment source level lexbuf
      }
   | "/*"
     {
-      comment (level+1) lexbuf
+      comment source (level+1) lexbuf
     }
   | "*/"
     {
       if level = 0 then
-        next_token lexbuf
+        next_token source lexbuf
       else
-        comment (level-1) lexbuf
+        comment source (level-1) lexbuf
     }
-  | _ { comment level lexbuf }
-  | eof { makeToken EOF lexbuf }
+  | _ { comment source level lexbuf }
+  | eof { makeToken source EOF lexbuf }
 
-and string buffer = parse
+and string source buffer = parse
   |  '"' { () }
   | '\\' newline ([' ' '\t'] * as space)
       {
         let _ = updateLocation lexbuf 1 (String.length space) in
         let s = lexeme lexbuf in
         let () = Buffer.add_string buffer s in
-        string buffer lexbuf
+        string source buffer lexbuf
       }
   | newline
       {
         let _ = updateLocation lexbuf 1 0 in
         let s = lexeme lexbuf in
         let () = Buffer.add_string buffer s in
-        string buffer lexbuf
+        string source buffer lexbuf
       }
   | eof
-      { Error.raiseError "Unterminated string" (Loc.getLocation lexbuf) }
+      { Error.raiseError "Unterminated string" (Loc.getLocation source lexbuf) }
   | _
       {
         let s = lexeme lexbuf in
         let () = Buffer.add_string buffer s in
-        string buffer lexbuf
+        string source buffer lexbuf
       }

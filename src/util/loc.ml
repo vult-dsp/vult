@@ -24,23 +24,30 @@ THE SOFTWARE.
 open Lexing
 (** Type to hold the location *)
 
+(** Source of the code *)
+type source =
+   | File of string
+   | Text of string
+
 (** Location information *)
 type t =
    {
       start_pos : position;
       end_pos   : position;
+      source    : source;
    }
 let pp = fun fmt _ -> Format.pp_print_string fmt "loc"
 let equal _ _ = true
 let compare _ _ = 0
 
-let default = { start_pos = dummy_pos  ; end_pos = dummy_pos }
+let default = { start_pos = dummy_pos  ; end_pos = dummy_pos; source = Text("") }
 
 (** Returns the current location (start and end) *)
-let getLocation lexbuf : t =
+let getLocation (source:source) lexbuf : t =
    {
       start_pos = lexbuf.lex_start_p;
       end_pos   = lexbuf.lex_curr_p;
+      source    = source;
    }
 
 (** Returns the start column *)
@@ -69,7 +76,7 @@ let to_string (location:t) : string =
 (** Returns the location that follows the given location *)
 let getNext (loc:t) : t =
    let end_pos = { loc.end_pos with Lexing.pos_cnum = loc.end_pos.Lexing.pos_cnum } in
-   { start_pos = end_pos; end_pos = end_pos }
+   { start_pos = end_pos; end_pos = end_pos; source = loc.source }
 
 (** Returns the minimal position of two given *)
 let getMinPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.position =
@@ -101,7 +108,7 @@ let merge (loc1:t) (loc2:t) : t =
       loc1
    else
       let start_pos,end_pos = getMinMaxPositions [loc1.start_pos; loc2.start_pos; loc1.end_pos; loc2.end_pos] in
-      { start_pos = start_pos; end_pos = end_pos }
+      { start_pos = start_pos; end_pos = end_pos; source = loc1.source }
 
 let merge3 (loc1:t) (loc2:t) (loc3:t) : t =
    merge (merge loc1 loc2) loc3
