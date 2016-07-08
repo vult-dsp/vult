@@ -50,7 +50,10 @@ let expOptLoc e =
 let unifyRaise (loc:Loc.t Lazy.t) (t1:VType.t) (t2:VType.t) : unit =
    let raise = true in
    if not (VType.unify t1 t2) then
-      let msg = Printf.sprintf "This expression has type '%s' but '%s' was expected" (PrintTypes.typeStr t2) (PrintTypes.typeStr t1) in
+      let msg =
+         Printf.sprintf "This expression has type '%s' but '%s' was expected"
+            (PrintTypes.typeStr t2) (PrintTypes.typeStr t1)
+      in
       if raise then
          Error.raiseError msg (Lazy.force loc)
       else
@@ -72,7 +75,11 @@ let rec checkType (loc:Loc.t Lazy.t) (env:'a Env.t) (typ:VType.t) : unit =
       checkType loc env kind
 
    | VType.TComposed(["array"],_,_)  ->
-      let msg = Printf.sprintf "This array type is invalid '%s'. Arrays are described as array(kind,size)." (PrintTypes.typeStr typ) in
+      let msg =
+         Printf.sprintf
+            "This array type is invalid '%s'. Arrays are described as array(kind,size)."
+            (PrintTypes.typeStr typ)
+      in
       Error.raiseError msg (Lazy.force loc)
 
    | VType.TComposed(name,_,_)  ->
@@ -133,7 +140,12 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
       checkType (lhsLoc e) env typ;
       let e',tpi = inferLhsExp mem_var env e in
       if not (VType.unify typ tpi) then
-         let msg = Printf.sprintf "This declaration has type '%s' but it has been defined before as '%s'" (PrintTypes.typeStr typ) (PrintTypes.typeStr tpi) in
+         let msg =
+            Printf.sprintf
+               "This declaration has type '%s' but it has been defined before as '%s'"
+               (PrintTypes.typeStr typ)
+               (PrintTypes.typeStr tpi)
+         in
          Error.raiseError msg (GetLocation.fromLhsExp e)
       else
          e',tpi
@@ -195,7 +207,11 @@ let unifyReturn (loc:Loc.t Lazy.t) (typ1:return_type) (typ2:return_type) : retur
 
 let unifyArrayElem (loc:Loc.t Lazy.t) (t1:VType.t) (t2:VType.t) =
    if not (VType.unify t1 t2) then
-      let msg = Printf.sprintf "This expression has type '%s' but the previous members of the array have type '%s'" (PrintTypes.typeStr t2) (PrintTypes.typeStr t1) in
+      let msg =
+         Printf.sprintf
+            "This expression has type '%s' but the previous members of the array have type '%s'"
+            (PrintTypes.typeStr t2) (PrintTypes.typeStr t1)
+      in
       Error.raiseError msg (Lazy.force loc)
 
 let getReturnType (typ:return_type) : VType.t =
@@ -213,7 +229,11 @@ let raiseReturnError (loc:Loc.t Lazy.t) (given:VType.t option) (typ:return_type)
    match given,typ with
    | None,_ -> ()
    | Some(gt), GivenType(rt) when VType.compare gt rt == 0 ->
-      let msg = Printf.sprintf "This function is expected to have type '%s' but nothing was returned" (PrintTypes.typeStr gt) in
+      let msg =
+         Printf.sprintf
+            "This function is expected to have type '%s' but nothing was returned"
+            (PrintTypes.typeStr gt)
+      in
       Error.raiseError msg (Lazy.force loc)
    | _ -> ()
 
@@ -221,7 +241,8 @@ let inferApplyArgCount (loc:Loc.t Lazy.t) (args_typ:VType.t list) (fn_args:VType
    let n_args    = List.length args_typ in
    let n_fn_args = List.length fn_args in
    if  n_args <> n_fn_args then
-      Error.raiseError (Printf.sprintf "This function takes %i arguments but %i are passed" n_fn_args n_args) (Lazy.force loc)
+      let msg = Printf.sprintf "This function takes %i arguments but %i are passed" n_fn_args n_args in
+      Error.raiseError msg (Lazy.force loc)
 
 let rec inferApplyArg (args:exp list) (args_typ:VType.t list) (fn_args:VType.t list) : unit =
    match args, args_typ, fn_args with
@@ -231,7 +252,8 @@ let rec inferApplyArg (args:exp list) (args_typ:VType.t list) (fn_args:VType.t l
       inferApplyArg args args_typ fn_args
    | _ -> failwith "Inference.inferApplyArg: invalid input"
 
-let inferApply (loc:Loc.t Lazy.t) (args:exp list) (args_typ:VType.t list) (ret_type:VType.t) (fn_args:VType.t list) (fn_ret_type:VType.t) =
+let inferApply (loc:Loc.t Lazy.t) (args:exp list) (args_typ:VType.t list) (ret_type:VType.t)
+      (fn_args:VType.t list) (fn_ret_type:VType.t) =
    inferApplyArgCount loc args_typ fn_args;
    inferApplyArg args args_typ fn_args;
    unifyRaise loc fn_ret_type ret_type
