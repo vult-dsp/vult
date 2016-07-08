@@ -17,3 +17,4 @@ vult_node.js
 .gitignore
 setup.data
 setup.log
+.vscode
