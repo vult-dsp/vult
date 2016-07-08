@@ -823,10 +823,7 @@ let parseBuffer (file:string) (buffer) : parser_results =
    with
    | ParserError(error) ->
       raise (Error.Errors([error]))
-   | _ ->
-      let loc = (Stream.current buffer).loc in
-      let error = Error.PointedError(loc,"Failed to parse the file after the following token") in
-      raise (Error.Errors([error]))
+   | Error.Errors(_) as e -> raise e
 
 (** Parses a file containing a list of statements and returns the results *)
 let parseFile (filename:string) : parser_results =
