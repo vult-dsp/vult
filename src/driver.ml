@@ -43,29 +43,42 @@ let writeOutput (args:arguments) (files:(Pla.t * string) list) : string =
    if not write_files then print_endline txt;
    txt
 
-
 let generateCode (args:arguments) (parser_results:parser_results list) : string =
-   if args.ccode then
-      let files = VultCh.generateChCode args parser_results in
-      writeOutput args files
-   else
-   if args.jscode then
-      let files = VultJs.generateJSCode args parser_results in
-      writeOutput args files
-   else ""
-
+   try
+      if args.ccode then
+         let files = VultCh.generateChCode args parser_results in
+         writeOutput args files
+      else
+      if args.jscode then
+         let files = VultJs.generateJSCode args parser_results in
+         writeOutput args files
+      else ""
+   with
+   | Error.Errors(errors) ->
+      let error_strings = Error.reportErrors errors in
+      print_endline ("Errors in the program:\n"^error_strings);
+      exit (-1)
 
 (** Prints the parsed files if -dparse was passed as argument *)
 let dumpParsedFiles (args:arguments) (parser_results:parser_results list) : unit =
-   if args.dparse then
-      parser_results
-      |> List.iter (fun a -> PrintTypes.stmtListStr a.presult |> print_string)
+   try
+      if args.dparse then
+         parser_results
+         |> List.iter (fun a -> PrintTypes.stmtListStr a.presult |> print_string)
+   with
+   | Error.Errors(errors) ->
+      let error_strings = Error.reportErrors errors in
+      print_endline ("Errors in the program:\n"^error_strings)
 
 (** Parses the code and and generates the target *)
 let parseStringGenerateCode (args:arguments) (code:string) : string =
-   ParserVult.parseString code
-   |> fun a -> generateCode args [a]
-
+   try
+      ParserVult.parseString code
+      |> fun a -> generateCode args [a]
+   with
+   | Error.Errors(errors) ->
+      let error_strings = Error.reportErrors errors in
+      "Errors in the program:\n"^error_strings
 
 (** Parses the code and returns either the transformed code or the error message *)
 let parsePrintCode (code:string) : string =
@@ -74,20 +87,17 @@ let parsePrintCode (code:string) : string =
       |> Passes.applyTransformationsSingle default_arguments
       |> PrintTypes.stmtListStr
    with
-   | _ ->
-      (*let error_strings:string list = Error.reportErrors result.presult result.lines in
-      let result = List.fold_left (fun s a -> s^"\n"^a) "" error_strings in
-      "Errors in the program:\n"^result*)
-      "error"
+   | Error.Errors(errors) ->
+      let error_strings = Error.reportErrors errors in
+      "Errors in the program:\n"^error_strings
 
 (** Checks the code and returns a list with the errors *)
 let checkCode (code:string) : (string * string * int * int) list =
-   let result =
+   try
       ParserVult.parseString code
       |> Passes.applyTransformationsSingle default_arguments
-   in
-   (*match result.presult with
-   | `Ok(_) -> []
-   | `Error(errors) -> List.map (Error.reportErrorStringNoLoc result.lines) errors*)
-   []
+      |> fun _ -> []
+   with
+   | Error.Errors(errors) ->
+      List.map Error.reportErrorStringNoLoc errors
 

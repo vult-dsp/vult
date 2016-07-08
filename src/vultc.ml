@@ -40,10 +40,19 @@ let processArguments () : arguments =
    let _ = result.files <- List.rev result.files in (* Put the files in the correct order  *)
    result
 
+let parseFiles files =
+   try
+      List.map parseFile files
+   with
+   | Error.Errors(errors) ->
+      let error_strings = Error.reportErrors errors in
+      print_endline ("Errors in the program:\n"^error_strings);
+      exit (-1)
+
 let main () =
    let args = processArguments () in
    (* Parse the files *)
-   let parser_results = List.map parseFile args.files in
+   let parser_results = parseFiles args.files in
    (* Prints the parsed files if -dparse was passed as argument *)
    Driver.dumpParsedFiles args parser_results;
    Driver.generateCode args parser_results |> ignore

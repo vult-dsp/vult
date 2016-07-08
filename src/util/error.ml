@@ -51,45 +51,55 @@ let errorLocationIndicator (line:string) (location:Loc.t) : string =
       (String.make col_start ' ')
       pointer
 
+(** Reads all the lines of a file *)
+let readFile (name:string) : string =
+   let buffer = Buffer.create 128 in
+   let i = open_in name in
+   try
+      while true do
+         Buffer.add_char buffer (input_char i)
+      done; ""
+   with
+   | End_of_file ->
+      close_in i;
+      Buffer.contents buffer
+
 (** Returns the lines corresponding to the given location *)
-let getErrorLines (location:Loc.t) (lines:string array) =
+let getErrorLines (location:Loc.t) =
+   let lines =
+      match location.Loc.source with
+      | Loc.File(filename) -> CCString.lines (readFile filename)
+      | Loc.Text(code) -> CCString.lines code
+   in
    match Loc.line location with
-   | 0 | 1 -> Array.get lines 0
-   | n -> (Array.get lines (n-2))^"\n"^(Array.get lines (n-1))
+   | 0 | 1 -> List.nth lines 0
+   | n -> (List.nth lines (n-2))^"\n"^(List.nth lines (n-1))
 
 (** Takes an error and the lines of the code and returns an error message *)
-let reportErrorString (lines:string array) (error:t) :string =
+let reportErrorString (error:t) : string =
    match error with
    | SimpleError(msg) -> msg^"\n"
    | PointedError(location,msg) ->
       let loc = errorLocationMessage location in
-      let line = getErrorLines location lines in
+      let line = getErrorLines location in
       let indicator = errorLocationIndicator line location in
       loc^msg^"\n"^indicator
 
+let reportErrors (errors: t list) : string =
+   List.map reportErrorString errors
+   |> List.fold_left (fun s a -> s^"\n"^a) ""
+
 (** Returns a tuple with the error an all its information *)
-let reportErrorStringNoLoc (lines:string array) (error:t) : string * string * int * int =
+let reportErrorStringNoLoc (error:t) : string * string * int * int =
    match error with
    | PointedError(location,msg) ->
       let col_start = Loc.startColumn location in
-      let line      = getErrorLines location lines in
+      let line      = getErrorLines location in
       let indicator = errorLocationIndicator line location in
       let full_msg = msg^"\n"^indicator in
       full_msg, (Loc.file location), (Loc.line location), col_start
    | SimpleError(msg) ->
       msg, "-", 0, 0
-
-(** Takes an Either value and returns the errors *)
-let reportErrors (results:('a,t list) CCError.t) (lines:string array) : string list =
-   match results with
-   | `Ok(_) -> []
-   | `Error(errors) ->
-      List.map (reportErrorString lines) errors
-
-(** Takes an Either value containing a list of errors and prints the errors *)
-let printErrors (results:('a,t list) CCError.t) (lines:string array) =
-   let errors = reportErrors results lines in
-   List.iter (fun (a:string) -> print_endline a) errors
 
 (** Joins two errors *)
 let joinErrors : t list -> t list -> t list = List.append
