@@ -23,11 +23,12 @@ THE SOFTWARE.
 *)
 
 open TypesVult
-open ParserVult
-
 
 let generateJSCode s =
-   Driver.parseStringGenerateCode ({ default_arguments with jscode = true; template = "browser"; files = ["live"]}) (Js.to_string s) |> Js.string
+   Driver.parseStringGenerateCode
+      ({ default_arguments with jscode = true; template = "browser"; files = ["live"]})
+      (Js.to_string s)
+   |> Js.string
 
 let parsePrint s =
    Driver.parsePrintCode (Js.to_string s) |> Js.string
