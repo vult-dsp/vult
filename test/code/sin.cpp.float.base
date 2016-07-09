@@ -1,3 +1,4 @@
+
 #include "sin.h"
 
 Sin__ctx_type_0 Sin__ctx_type_0_init(){

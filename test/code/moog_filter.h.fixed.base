@@ -1,3 +1,4 @@
+
 #ifndef MOOG_FILTER_H
 #define MOOG_FILTER_H
 #include <stdint.h>

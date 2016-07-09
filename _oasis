@@ -64,8 +64,18 @@ Library "vult_generators"
     vult_core,
     vult_util,
     vult_passes,
+    vult_templates,
     ppx_deriving.std,
     containers,
+    pla,
+    pla.ppx
+
+Library "vult_templates"
+  Path: src/generators/templates
+  Modules:
+    Templates,
+    TeensyAudio
+  BuildDepends:
     pla,
     pla.ppx
 

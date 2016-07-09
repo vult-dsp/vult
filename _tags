@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: f5d143f319cc64ff72d0247908ceb5db)
+# DO NOT EDIT (digest: 2cea5d9477e4b87051867bf233c3cf27)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -28,6 +28,10 @@ true: annot, bin_annot
 <src/parser/*.ml{,i,y}>: pkg_ppx_deriving.std
 <src/parser/*.ml{,i,y}>: use_vult_core
 <src/parser/*.ml{,i,y}>: use_vult_util
+# Library vult_templates
+"src/generators/templates/vult_templates.cmxs": use_vult_templates
+<src/generators/templates/*.ml{,i,y}>: pkg_pla
+<src/generators/templates/*.ml{,i,y}>: pkg_pla.ppx
 # Library vult_passes
 "src/passes/vult_passes.cmxs": use_vult_passes
 <src/passes/*.ml{,i,y}>: pkg_containers
@@ -42,6 +46,7 @@ true: annot, bin_annot
 <src/generators/*.ml{,i,y}>: pkg_ppx_deriving.std
 <src/generators/*.ml{,i,y}>: use_vult_core
 <src/generators/*.ml{,i,y}>: use_vult_passes
+<src/generators/*.ml{,i,y}>: use_vult_templates
 <src/generators/*.ml{,i,y}>: use_vult_util
 # Library vult
 "src/vult.cmxs": use_vult
@@ -55,6 +60,7 @@ true: annot, bin_annot
 "src/vultc.native": use_vult_generators
 "src/vultc.native": use_vult_parser
 "src/vultc.native": use_vult_passes
+"src/vultc.native": use_vult_templates
 "src/vultc.native": use_vult_util
 # Executable vultdebug
 "src/vultc.byte": oasis_executable_vultdebug_byte
@@ -68,6 +74,7 @@ true: annot, bin_annot
 "src/vultc.byte": use_vult_generators
 "src/vultc.byte": use_vult_parser
 "src/vultc.byte": use_vult_passes
+"src/vultc.byte": use_vult_templates
 "src/vultc.byte": use_vult_util
 # Executable vult_node
 "src/vult_node.byte": pkg_containers
@@ -81,6 +88,7 @@ true: annot, bin_annot
 "src/vult_node.byte": use_vult_generators
 "src/vult_node.byte": use_vult_parser
 "src/vult_node.byte": use_vult_passes
+"src/vult_node.byte": use_vult_templates
 "src/vult_node.byte": use_vult_util
 <src/*.ml{,i,y}>: pkg_containers
 <src/*.ml{,i,y}>: pkg_js_of_ocaml
@@ -93,6 +101,7 @@ true: annot, bin_annot
 <src/*.ml{,i,y}>: use_vult_generators
 <src/*.ml{,i,y}>: use_vult_parser
 <src/*.ml{,i,y}>: use_vult_passes
+<src/*.ml{,i,y}>: use_vult_templates
 <src/*.ml{,i,y}>: use_vult_util
 # Executable vult_tests
 <test/test.{native,byte}>: pkg_containers
@@ -106,6 +115,7 @@ true: annot, bin_annot
 <test/test.{native,byte}>: use_vult_generators
 <test/test.{native,byte}>: use_vult_parser
 <test/test.{native,byte}>: use_vult_passes
+<test/test.{native,byte}>: use_vult_templates
 <test/test.{native,byte}>: use_vult_util
 <test/*.ml{,i,y}>: pkg_containers
 <test/*.ml{,i,y}>: pkg_oUnit
@@ -118,6 +128,7 @@ true: annot, bin_annot
 <test/*.ml{,i,y}>: use_vult_generators
 <test/*.ml{,i,y}>: use_vult_parser
 <test/*.ml{,i,y}>: use_vult_passes
+<test/*.ml{,i,y}>: use_vult_templates
 <test/*.ml{,i,y}>: use_vult_util
 # OASIS_STOP
 true: debug

@@ -1,3 +1,4 @@
+
 #include "template.h"
 
 fix16_t Template_process(fix16_t input){

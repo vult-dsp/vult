@@ -1,3 +1,4 @@
+
 #ifndef SIN_H
 #define SIN_H
 #include <stdint.h>

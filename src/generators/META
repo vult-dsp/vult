@@ -1,10 +1,10 @@
 # OASIS_START
-# DO NOT EDIT (digest: 3fe6f7ac04c936118e55f164a9a96d7f)
+# DO NOT EDIT (digest: 9778f71abac4d40d65fa151b391a9d45)
 version = "0.2"
 description =
 "Vult is a transcompiler well suited to write high-performance DSP code."
 requires =
-"vult_core vult_util vult_passes ppx_deriving.std containers pla pla.ppx"
+"vult_core vult_util vult_passes vult_templates ppx_deriving.std containers pla pla.ppx"
 archive(byte) = "vult_generators.cma"
 archive(byte, plugin) = "vult_generators.cma"
 archive(native) = "vult_generators.cmxa"

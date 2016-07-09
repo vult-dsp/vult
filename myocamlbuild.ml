@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 8bff03793bbe763ece9b08d4f90a7d0c) *)
+(* DO NOT EDIT (digest: bdc8f5fc2a6480799620497a5d9afa8c) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -772,6 +772,7 @@ let package_default =
           ("vult_util", ["src/util"], []);
           ("vult_core", ["src/core"], []);
           ("vult_parser", ["src/parser"], []);
+          ("vult_templates", ["src/generators/templates"], []);
           ("vult_passes", ["src/passes"], []);
           ("vult_generators", ["src/generators"], []);
           ("vult", ["src"], [])
@@ -799,7 +800,9 @@ let package_default =
             ]);
           ("src/passes", ["src/core"; "src/util"]);
           ("src/parser", ["src/core"; "src/util"]);
-          ("src/generators", ["src/core"; "src/passes"; "src/util"]);
+          ("src/generators",
+            ["src/core"; "src/generators/templates"; "src/passes"; "src/util"
+            ]);
           ("src/core", ["src/util"]);
           ("src",
             [
@@ -817,7 +820,7 @@ let conf = {MyOCamlbuildFindlib.no_automatic_syntax = false}
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default conf package_default;;
 
-# 821 "myocamlbuild.ml"
+# 824 "myocamlbuild.ml"
 (* OASIS_STOP *)
 Ocamlbuild_plugin.dispatch (MyOCamlbuildBase.dispatch_combine [
     (function
