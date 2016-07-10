@@ -4,7 +4,7 @@
 
 Vult is a simple and powerful language to program high-performance algorithms that may run in small microprocessors or microcontrollers. Vult is specially useful when programming Digital Signal Processing (DSP) algorithms like audio effects or synthesizers.
 
-The Vult compiler is a transcompiler, which takes Vult code and produces plain C code that can be compiled in any platform with a C/C++ compiler, for example: Arduino or Teensy boards. Vult can also generate JavaScript that can be run directly in the browser. Code written in Vult has freedom.
+The Vult compiler is a transcompiler, which takes Vult code and produces plain C/C++ code that can be compiled in any platform with a C/C++ compiler, for example: Arduino or Teensy boards. Vult can also generate JavaScript that can be run directly in the browser or C/C++ that can be compiled as Pure Data externals. Code written in Vult has freedom.
 
 Check the documentation and tutorial in http://modlfo.github.io/vult/
 
@@ -75,6 +75,12 @@ $ ./vult -ccode -real fixed infile.vult -o outfile
 
 Fixed point arithmetics are performed in q16 format; 16 bits for the integer part and 16 for the decimal.
 
+Vult provides a few templates for example to generate objects compatible with the Teensy Audio Library or Pure Data externals.
+
+You can see this repositories for an example:
+
+- Pure Data https://github.com/modlfo/pd-vult-example
+- Teensy Audio https://github.com/modlfo/teensy-vult-example
 
 ### Roadmap
 
