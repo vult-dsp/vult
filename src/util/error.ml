@@ -65,15 +65,19 @@ let readFile (name:string) : string =
       Buffer.contents buffer
 
 (** Returns the lines corresponding to the given location *)
-let getErrorLines (location:Loc.t) =
+let getErrorLines (location:Loc.t) : string =
    let lines =
       match location.Loc.source with
       | Loc.File(filename) -> CCString.lines (readFile filename)
       | Loc.Text(code) -> CCString.lines code
    in
-   match Loc.line location with
-   | 0 | 1 -> List.nth lines 0
-   | n -> (List.nth lines (n-2))^"\n"^(List.nth lines (n-1))
+   let result =
+      match Loc.line location with
+      | 0 | 1 -> List.nth lines 0
+      | n -> (List.nth lines (n-2))^"\n"^(List.nth lines (n-1))
+   in
+   CCString.replace ~sub:"\t" ~by:" "result
+   
 
 (** Takes an error and the lines of the code and returns an error message *)
 let reportErrorString (error:t) : string =

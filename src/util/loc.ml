@@ -36,11 +36,20 @@ type t =
       end_pos   : position;
       source    : source;
    }
+
 let pp = fun fmt _ -> Format.pp_print_string fmt "loc"
 let equal _ _ = true
 let compare _ _ = 0
 
 let default = { start_pos = dummy_pos  ; end_pos = dummy_pos; source = Text("") }
+
+(** [isSamePos p1 p2] returns true if the positions are equal *)
+let isSamePos (p1:position) (p2:position) : bool =
+   p1.pos_lnum = p2.pos_lnum && p1.pos_bol = p2.pos_bol && p1.pos_cnum = p2.pos_cnum
+
+(** [isSameLoc loc1 loc2] returns true if the locations are equal *)
+let isSameLoc (loc1:t) (loc2:t) : bool =
+   isSamePos loc1.start_pos loc2.start_pos && isSamePos loc1.end_pos loc2.end_pos
 
 (** Returns the current location (start and end) *)
 let getLocation (source:source) lexbuf : t =
@@ -69,6 +78,13 @@ let line (location:t) : int =
 let to_string (location:t) : string =
    Printf.sprintf "%s:%i:%i-%i"
       location.start_pos.pos_fname
+      location.start_pos.pos_lnum
+      (location.start_pos.pos_cnum - location.start_pos.pos_bol)
+      (location.end_pos.pos_cnum - location.start_pos.pos_bol)
+
+(** Returns a readable string representation of the location *)
+let to_string_readable (location:t) : string =
+   Printf.sprintf "line %i, columns %i-%i"
       location.start_pos.pos_lnum
       (location.start_pos.pos_cnum - location.start_pos.pos_bol)
       (location.end_pos.pos_cnum - location.start_pos.pos_bol)

@@ -285,23 +285,6 @@ module Scope = struct
          | Type     -> { parent with types     = IdMap.add t.name t parent.types }
          | Var      -> failwith "exitKind: you should never enter the local variables"
 
-   let addMem (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
-      let new_symbol = { (create Mem) with name = name; typ = typ; loc = loc; } in
-      { t with mem_inst = IdMap.add name new_symbol t.mem_inst; active = true }
-
-   let addInstance (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
-      let new_symbol = { (create Instance) with name = name; typ = typ; loc = loc; } in
-      { t with mem_inst = IdMap.add name new_symbol t.mem_inst; active = true }
-
-   let addVar (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
-      let new_symbol = { (create Var) with name = name; typ = typ; loc = loc;  } in
-      let first,rest =
-         match t.locals with
-         | [] -> IdMap.empty,[]
-         | h::t -> h,t
-      in
-      { t with locals = (IdMap.add name new_symbol first) :: rest }
-
    let newContext (parent:t) (name:id) (is_init:bool) : t =
       { parent with ctx = Context.makeNew parent.ctx name is_init }
 
@@ -439,6 +422,36 @@ module Scope = struct
       match lookupMemInAllContext t name with
       | Some(_) -> true
       | None    -> false
+
+   let addMem (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
+      let new_symbol = { (create Mem) with name = name; typ = typ; loc = loc; } in
+      { t with mem_inst = IdMap.add name new_symbol t.mem_inst; active = true }
+
+   let addInstance (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
+      let new_symbol = { (create Instance) with name = name; typ = typ; loc = loc; } in
+      { t with mem_inst = IdMap.add name new_symbol t.mem_inst; active = true }
+
+
+   let addVar (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
+      (* Check the if the variable exitst *)
+      match lookupVariable t name with
+      | None ->
+         (* The variable does not exits, add it *)
+         let new_symbol = { (create Var) with name = name; typ = typ; loc = loc;  } in
+         let first,rest =
+            match t.locals with
+            | [] -> IdMap.empty,[]
+            | h::t -> h,t
+         in
+         { t with locals = (IdMap.add name new_symbol first) :: rest }
+      | Some(decl) ->
+         (* If it exitst check the locations *)
+         if Loc.isSameLoc loc decl.loc then t else
+            let msg =
+               Printf.sprintf
+                  "Redefinition of variable '%s'. Previously defined here: %s" (idStr name) (Loc.to_string_readable decl.loc)
+            in
+            Error.raiseError msg loc
 
 
    (** Returns all mem and instances of the given scope, assuming is a function *)
