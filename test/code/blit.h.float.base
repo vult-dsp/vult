@@ -56,6 +56,45 @@ Blit__ctx_type_5 Blit_osc_init();
 
 float Blit_osc(Blit__ctx_type_5 &_ctx, float pitch, float pw, float wave);
 
+typedef struct Blit__ctx_type_6 {
+   float wave;
+   float pw;
+   float pitch;
+   Blit__ctx_type_5 _inst0;
+} Blit__ctx_type_6;
+
+typedef Blit__ctx_type_6 Blit_process_type;
+
+Blit__ctx_type_6 Blit__ctx_type_6_init();
+
+Blit__ctx_type_6 Blit_process_init();
+
+float Blit_process(Blit__ctx_type_6 &_ctx, float input);
+
+typedef Blit__ctx_type_6 Blit_noteOn_type;
+
+Blit__ctx_type_6 Blit_noteOn_init();
+
+void Blit_noteOn(Blit__ctx_type_6 &_ctx, int note, int velocity);
+
+typedef Blit__ctx_type_6 Blit_noteOff_type;
+
+Blit__ctx_type_6 Blit_noteOff_init();
+
+void Blit_noteOff(Blit__ctx_type_6 &_ctx, int note);
+
+typedef Blit__ctx_type_6 Blit_controlChange_type;
+
+Blit__ctx_type_6 Blit_controlChange_init();
+
+void Blit_controlChange(Blit__ctx_type_6 &_ctx, int control, int value);
+
+typedef Blit__ctx_type_6 Blit_default_type;
+
+Blit__ctx_type_6 Blit_default_init();
+
+void Blit_default(Blit__ctx_type_6 &_ctx);
+
 
 
 #endif // BLIT_H

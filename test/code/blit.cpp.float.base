@@ -116,4 +116,49 @@ float Blit_osc(Blit__ctx_type_5 &_ctx, float pitch, float pw, float wave){
    return float_clip((_ctx.output * 0.25f),(-1.f),1.f);
 }
 
+Blit__ctx_type_6 Blit__ctx_type_6_init(){
+   Blit__ctx_type_6 _ctx;
+   _ctx.wave = 0.f;
+   _ctx.pw = 0.f;
+   _ctx.pitch = 0.f;
+   _ctx._inst0 = Blit__ctx_type_5_init();
+   return _ctx;
+}
+
+Blit__ctx_type_6 Blit_process_init(){ return Blit__ctx_type_6_init();}
+
+float Blit_process(Blit__ctx_type_6 &_ctx, float input){
+   return Blit_osc(_ctx._inst0,_ctx.pitch,_ctx.pw,_ctx.wave);
+}
+
+Blit__ctx_type_6 Blit_noteOn_init(){ return Blit__ctx_type_6_init();}
+
+void Blit_noteOn(Blit__ctx_type_6 &_ctx, int note, int velocity){
+   _ctx.pitch = int_to_float(note);
+}
+
+Blit__ctx_type_6 Blit_noteOff_init(){ return Blit__ctx_type_6_init();}
+
+void Blit_noteOff(Blit__ctx_type_6 &_ctx, int note){
+}
+
+Blit__ctx_type_6 Blit_controlChange_init(){ return Blit__ctx_type_6_init();}
+
+void Blit_controlChange(Blit__ctx_type_6 &_ctx, int control, int value){
+   if(control == 30){
+      _ctx.pw = (int_to_float(value) * 0.00787401574803f);
+   }
+   if(control == 31){
+      _ctx.wave = (int_to_float(value) * 0.00787401574803f);
+   }
+}
+
+Blit__ctx_type_6 Blit_default_init(){ return Blit__ctx_type_6_init();}
+
+void Blit_default(Blit__ctx_type_6 &_ctx){
+   _ctx.pw = 0.f;
+   _ctx.wave = 45.f;
+   _ctx.pitch = 45.f;
+}
+
 

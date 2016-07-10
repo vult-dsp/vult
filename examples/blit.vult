@@ -96,3 +96,32 @@ fun osc(pitch,pw,wave){
   output = dcblock(output);
   return clip(output/4.,-1.,1.);
 }
+
+// Main processing function
+fun process(input:real){
+   mem pitch,pw,wave;
+   return osc(pitch,pw,wave);
+}
+
+// Called when a note On is received
+and noteOn(note:int,velocity:int){
+    mem pitch = real(note);
+}
+
+// Called when a note Off is received
+and noteOff(note:int){
+}
+
+// Called when a control changes
+and controlChange(control:int,value:int){
+   mem pw,wave;
+   if(control==30) pw = real(value)/127.0;
+   if(control==31) wave = real(value)/127.0;
+}
+
+// Called on initialization to define initial values
+and default(){
+   mem pw = 0.0;
+   mem wave = 45.0;
+   mem pitch = 45.0;
+}

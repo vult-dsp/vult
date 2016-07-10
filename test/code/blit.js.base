@@ -119,6 +119,40 @@ this.Blit_osc = function(_ctx,pitch,pw,wave){
    _ctx.output = this.Blit_dcblock(_ctx._inst1,_ctx.output);
    return this.clip((_ctx.output * 0.25),(-1.),1.);
 }
+this.Blit__ctx_type_6_init = function(){
+   var _ctx = {};
+   _ctx.wave = 0.;
+   _ctx.pw = 0.;
+   _ctx.pitch = 0.;
+   _ctx._inst0 = this.Blit__ctx_type_5_init();
+   return _ctx;
+}
+this.Blit_process_init = function() { return this.Blit__ctx_type_6_init();}
+this.Blit_process = function(_ctx,input){
+   return this.Blit_osc(_ctx._inst0,_ctx.pitch,_ctx.pw,_ctx.wave);
+}
+this.Blit_noteOn_init = function() { return this.Blit__ctx_type_6_init();}
+this.Blit_noteOn = function(_ctx,note,velocity){
+   _ctx.pitch = this.real(note);
+}
+this.Blit_noteOff_init = function() { return this.Blit__ctx_type_6_init();}
+this.Blit_noteOff = function(_ctx,note){
+}
+this.Blit_controlChange_init = function() { return this.Blit__ctx_type_6_init();}
+this.Blit_controlChange = function(_ctx,control,value){
+   if((control == (30|0))){
+      _ctx.pw = (this.real(value) * 0.00787401574803);
+   }
+   if((control == (31|0))){
+      _ctx.wave = (this.real(value) * 0.00787401574803);
+   }
+}
+this.Blit_default_init = function() { return this.Blit__ctx_type_6_init();}
+this.Blit_default = function(_ctx){
+   _ctx.pw = 0.;
+   _ctx.wave = 45.;
+   _ctx.pitch = 45.;
+}
 
     if(this.Blit_process_init)  this.context =  this.Blit_process_init(); else this.context = {};
     if(this.Blit_default)      this.Blit_default(this.context);
