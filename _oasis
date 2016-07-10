@@ -74,6 +74,7 @@ Library "vult_templates"
   Path: src/generators/templates
   Modules:
     Templates,
+    Pd,
     TeensyAudio
   BuildDepends:
     pla,
