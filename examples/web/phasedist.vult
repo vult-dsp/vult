@@ -39,7 +39,7 @@ fun process(input:real){
    pre_phase1 = phase1;
    val phase2 = phasor(pitch+smooth(detune)*32.0,reset);
    val sine  = sin(2.0*3.14159265359*phase2);
-   return (sine*comp);
+   return smooth(volume)*(sine*comp);
 }
 
 // Called when a note On is received
@@ -62,7 +62,7 @@ and controlChange(control:int,value:int){
 
 // Called on initialization to define initial values
 and default(){
-   mem volume = 1.0;
+   mem volume = 0.0;
    mem pitch = 45.0;
    mem detune = 0.0;
 }
