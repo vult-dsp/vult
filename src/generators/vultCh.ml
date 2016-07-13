@@ -22,23 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-open TypesVult
 open CLike
-
-type real_type =
-   | Float
-   | Fixed
-
-type parameters =
-   {
-      real        : real_type;
-      template    : string;
-      is_header   : bool;
-      output      : string;
-      repl        : Replacements.t;
-      module_name : string;
-   }
-
+open GenerateParams
 
 let isSimple (e:cexp) : bool =
    match e with
@@ -51,14 +36,14 @@ let isSimple (e:cexp) : bool =
    | CENewObj -> true
    | _ -> false
 
-let rec printExp (params:parameters) (e:cexp) : Pla.t =
+let rec printExp (params:params) (e:cexp) : Pla.t =
    match e with
    | CEFloat(s,n) ->
       if n < 0.0 then {pla|(<#s#s>)|pla} else Pla.string s
    | CEInt(n) ->
       if n < 0 then {pla|(<#n#i>)|pla} else {pla|<#n#i>|pla}
    | CEBool(v)   -> Pla.int (if v then 1 else 0)
-   | CEString(s) -> {pla|"<#s#s>"|pla}
+   | CEString(s) -> Pla.string_quoted s
    | CEArray(elems) ->
       let telems = Pla.map_sep Pla.comma (printExp params) elems in
       {pla|{<#telems#>}|pla}
@@ -151,7 +136,7 @@ let printFunArg (ntype,name) : Pla.t =
       let tdescr = printTypeDescr typ in
       {pla|<#tdescr#> &<#name#s>|pla}
 
-let rec printStmt (params:parameters) (stmt:cstmt) : Pla.t option =
+let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
    | CSVarDecl(CLWild,None) -> None
    | CSVarDecl(CLWild,Some(value)) ->
@@ -243,39 +228,16 @@ let rec printStmt (params:parameters) (stmt:cstmt) : Pla.t option =
    | CSExtFunc _ -> None
    | CSEmpty -> None
 
-and printStmtList (params:parameters) (stmts:cstmt list) : Pla.t =
+and printStmtList (params:params) (stmts:cstmt list) : Pla.t =
    let tstmts = CCList.filter_map (printStmt params) stmts in
    Pla.map_sep_all Pla.newline (fun a -> a) tstmts
 
-let printChCode (params:parameters) (stmts:cstmt list) : Pla.t =
+let printChCode (params:params) (stmts:cstmt list) : Pla.t =
    let code     = printStmtList params stmts in
    Templates.apply params.is_header params.template params.module_name params.output code
 
-let createParameters (module_name:string) (args:arguments) : parameters =
-   let () = DefaultReplacements.initialize () in
-   let real = match args.real with | "fixed" -> Fixed | _ -> Float in
-   let output = Filename.basename args.output in
-   let repl = Replacements.getReplacements args.real in
-   { real; template = args.template; is_header = false; output; repl; module_name }
-
-(** Gets the name of the main module, which is the last parsed file *)
-let rec getMainModule (parser_results:parser_results list) : string =
-   match parser_results with
-   | []   -> failwith "No files given"
-   | [h]  -> moduleName h.file
-   | _::t -> getMainModule t
-
 (** Generates the .c and .h file contents for the given parsed files *)
-let generateChCode (args:arguments) (parser_results:parser_results list) : (Pla.t * string) list =
-   let module_name = getMainModule parser_results in
-   let stmts =
-      parser_results
-      |> Passes.applyTransformations args
-      |> List.flatten
-   in
-   let params  = createParameters module_name args in
-   let cparams = VultToCLike.{repl = params.repl; return_by_ref = true } in
-   let clike_stmts = VultToCLike.convertStmtList cparams stmts in
-   let h   = printChCode { params with is_header = true } clike_stmts in
-   let cpp = printChCode { params with is_header = false } clike_stmts in
+let print (params:params) (stmts:CLike.cstmt list) : (Pla.t * string) list =
+   let h   = printChCode { params with is_header = true } stmts in
+   let cpp = printChCode { params with is_header = false } stmts in
    [h,"h"; cpp,"cpp"]

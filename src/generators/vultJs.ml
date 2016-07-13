@@ -24,6 +24,7 @@ THE SOFTWARE.
 
 open TypesVult
 open CLike
+open GenerateParams
 
 module Templates = struct
 
@@ -70,20 +71,14 @@ module Templates = struct
 }
 |pla}
 
-   let apply (module_name:string) (template:t) (code:Pla.t) : Pla.t =
+   let apply (module_name:string) (template:string) (code:Pla.t) : Pla.t =
       match template with
-      | None -> none code
-      | Browser -> browser module_name code
+      | "browser" -> browser module_name code
+      | _ -> none code
 
 end
 
-type parameters =
-   {
-      template    : Templates.t;
-      module_name : string;
-   }
-
-let isSpecial (params:parameters) (name:string) : bool =
+let isSpecial (params:params) (name:string) : bool =
    match name with
    | _ when name = params.module_name^"_process" -> true
    | _ when name = params.module_name^"_noteOn" -> true
@@ -100,7 +95,7 @@ let fixContext (is_special:bool) args =
       | t -> (Ref(CTSimple("any")),"_ctx")::t
    else args
 
-let rec printExp (params:parameters) (e:cexp) : Pla.t =
+let rec printExp (params:params) (e:cexp) : Pla.t =
    match e with
    | CEInt(n) ->
       {pla|(<#n#i>|0)|pla}
@@ -135,7 +130,7 @@ let rec printExp (params:parameters) (e:cexp) : Pla.t =
       let elems_t = Pla.map_sep Pla.commaspace (printJsField params) elems in
       {pla|{ <#elems_t#> }|pla}
 
-and printJsField (params:parameters) (name,value) : Pla.t =
+and printJsField (params:params) (name,value) : Pla.t =
    let value_t = printExp params value in
    {pla|<#name#s> : <#value_t#>|pla}
 
@@ -152,13 +147,13 @@ let printLhsExpTuple (var:string) (is_var:bool) (i:int) (e:clhsexp) : Pla.t =
 
    | _ -> failwith "printLhsExp: All other cases should be already covered"
 
-let wrapInt (params:parameters) (is_int:bool) (e:cexp) : Pla.t =
+let wrapInt (params:params) (is_int:bool) (e:cexp) : Pla.t =
    let e_t = printExp params e in
    if is_int then
       {pla|(<#e_t#>|0)|pla}
    else e_t
 
-let rec printStmt (params:parameters) (stmt:cstmt) : Pla.t option =
+let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
    | CSVarDecl(CLWild,Some(value)) ->
       let value_t = printExp params value in
@@ -240,30 +235,16 @@ let rec printStmt (params:parameters) (stmt:cstmt) : Pla.t option =
 
    | CSExtFunc _ -> None
 
-and printStmtList (params:parameters) (stmts:cstmt list) : Pla.t =
+and printStmtList (params:params) (stmts:cstmt list) : Pla.t =
    let tstmts = CCList.filter_map (printStmt params) stmts in
    Pla.map_sep_all Pla.newline (fun a -> a) tstmts
 
-let printJsCode (params:parameters) (stmts:stmt list) : Pla.t =
-   let () = DefaultReplacements.initialize () in
-   let repl = Replacements.getReplacements "js" in
-   let cparams = VultToCLike.{ repl = repl ; return_by_ref = false } in
-   let js = VultToCLike.convertStmtList cparams stmts in
-   let code = printStmtList params js in
+let printJsCode (params:params) (stmts:cstmt list) : Pla.t =
+   let code = printStmtList params stmts in
    Templates.apply params.module_name params.template code
 
-let createParameters (file:string) (args:arguments) : parameters =
-   let template = Templates.get args.template in
-   { template = template; module_name = moduleName file }
-
 (** Generates the .c and .h file contents for the given parsed files *)
-let generateJSCode (args:arguments) (parser_results:parser_results list) : (Pla.t * string) list =
-   let params = createParameters ((List.hd parser_results).file) args in
-   let stmts =
-      parser_results
-      |> Passes.applyTransformations args
-      |> List.flatten
-   in
+let print (params:params) (stmts:CLike.cstmt list) : (Pla.t * string) list =
    let js_text = printJsCode params stmts in
    [js_text, "js"]
 

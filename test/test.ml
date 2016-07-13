@@ -140,23 +140,11 @@ module CodeGenerationTest = struct
 
    let process (fullfile:string) (real_type:string) : (string * string) list =
          let basefile = Filename.chop_extension (Filename.basename fullfile) in
-         let args =
-            if real_type = "js" then
-               { default_arguments with output = basefile }
-            else
-               { default_arguments with output = basefile; real = real_type }
-         in
+         let args  = { default_arguments with output = basefile; real = real_type } in
          let stmts = ParserVult.parseFile fullfile in
-         let () = showResults stmts.presult |> ignore in
-         let files =
-            if real_type = "js" then
-               VultJs.generateJSCode  args [stmts]
-            else
-               VultCh.generateChCode args [stmts]
-         in
+         let ()    = showResults stmts.presult |> ignore in
+         let files = Generate.generateCode [stmts] args in
          files |> List.map (fun (code,ext) -> Pla.print code, ext)
-
-
 
    let run (file:string) real_type context : unit =
       let fullfile = checkFile (in_test_directory ("../examples/"^file)) in

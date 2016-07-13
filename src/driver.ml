@@ -45,14 +45,8 @@ let writeOutput (args:arguments) (files:(Pla.t * string) list) : string =
 
 let generateCode (args:arguments) (parser_results:parser_results list) : string =
    try
-      if args.ccode then
-         let files = VultCh.generateChCode args parser_results in
-         writeOutput args files
-      else
-      if args.jscode then
-         let files = VultJs.generateJSCode args parser_results in
-         writeOutput args files
-      else ""
+      let files = Generate.generateCode parser_results args in
+      writeOutput args files
    with
    | Error.Errors(errors) ->
       let error_strings = Error.reportErrors errors in

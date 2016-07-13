@@ -77,7 +77,7 @@ let getErrorLines (location:Loc.t) : string =
       | n -> (List.nth lines (n-2))^"\n"^(List.nth lines (n-1))
    in
    CCString.replace ~sub:"\t" ~by:" "result
-   
+
 
 (** Takes an error and the lines of the code and returns an error message *)
 let reportErrorString (error:t) : string =
@@ -125,3 +125,6 @@ let makeError (msg:string) (loc:Loc.t) =
 
 let raiseError (msg:string) (loc:Loc.t) =
    raise (Errors([makeError msg loc]))
+
+let raiseErrorMsg (msg:string) =
+   raise (Errors([SimpleError(msg)]))
