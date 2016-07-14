@@ -197,7 +197,7 @@ let rec isUnbound (t:t) : bool =
    | { contents = TLink(t) } -> isUnbound t
    | { contents = TExpAlt(_) } -> true
 
-let rec location (t:t) =
+let rec location (t:t) : Loc.t =
    match t with
    | { contents = TUnbound(_,_,Some(loc)) } -> loc
    | { contents = TId(_,Some(loc)) } -> loc
