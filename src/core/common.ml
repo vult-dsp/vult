@@ -28,14 +28,14 @@ open TypesVult
 module GetIdentifiers = struct
 
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
+      Mapper.make "GetIdentifiers.lhs_exp" @@ fun state exp ->
       match exp with
       | LId(id,_,_) ->
          Env.set state (IdSet.add id (Env.get state)), exp
       | _ -> state, exp
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
+      Mapper.make "GetIdentifiers.exp" @@ fun state exp ->
       match exp with
       | PId(id,_) ->
          Env.set state (IdSet.add id (Env.get state)), exp
@@ -65,8 +65,8 @@ end
 
 module GetLocation = struct
 
-   let attr  : (Loc.t Env.t,attr) Mapper.mapper_func =
-      Mapper.make @@ fun state attr ->
+   let attr : (Loc.t Env.t,attr) Mapper.mapper_func =
+      Mapper.make "GetLocation.attr" @@ fun state attr ->
       let s = Env.get state in
       Env.set state (Loc.merge s attr.loc),attr
 

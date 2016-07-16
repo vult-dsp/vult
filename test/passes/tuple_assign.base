@@ -1,12 +1,14 @@
 {
-   fun foo() : tuple(int,int,int) {
-      val (_tplbind_0:tuple(int,int,int)) = 0,1,2;
-      return _tplbind_0;
+   fun foo() : tuple(int,int,int) /* scope_0 */
+   {
+      val (_tplbind_1:tuple(int,int,int)) = 0,1,2;
+      return _tplbind_1;
    }
 
-   fun bar() : unit {
-      val (_tplbind_0:tuple(int,int,int)) = foo();
-      val ((x:int),(y:int),(z:int)) = _tplbind_0;
+   fun bar() : unit /* scope_0 */
+   {
+      val (_tplbind_1:tuple(int,int,int)) = foo();
+      val ((x:int),(y:int),(z:int)) = _tplbind_1;
       val (w:int) = 3;
       val (a:int) = 0;
       val (b:int) = 1;

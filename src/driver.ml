@@ -58,7 +58,8 @@ let dumpParsedFiles (args:arguments) (parser_results:parser_results list) : unit
    try
       if args.dparse then
          parser_results
-         |> List.iter (fun a -> PrintTypes.stmtListStr a.presult |> print_string)
+         |> Passes.applyTransformations args
+         |> List.iter (fun a -> PrintTypes.stmtListStr a |> print_string)
    with
    | Error.Errors(errors) ->
       let error_strings = Error.reportErrors errors in

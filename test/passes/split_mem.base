@@ -1,4 +1,5 @@
-fun foo() : unit {
+fun foo() : unit /* scope_0 */
+{
    mem (x:int);
    (x:int) = 0;
    mem (y:int);

@@ -5,9 +5,10 @@
       val field_2 : int;
    }
 
-   fun foo() : tuple(int,int,int) {
-      val (_tplbind_0:tuple(int,int,int)) = 1,2,3;
-      return _tplbind_0;
+   fun foo() : tuple(int,int,int) /* scope_0 */
+   {
+      val (_tplbind_1:tuple(int,int,int)) = 1,2,3;
+      return _tplbind_1;
    }
 
    type _tuple_real_int_bool {
@@ -16,9 +17,10 @@
       val field_2 : bool;
    }
 
-   fun bar() : tuple(real,int,bool) {
-      val (_tplbind_0:tuple(real,int,bool)) = 1.,2,false;
-      return _tplbind_0;
+   fun bar() : tuple(real,int,bool) /* scope_0 */
+   {
+      val (_tplbind_1:tuple(real,int,bool)) = 1.,2,false;
+      return _tplbind_1;
    }
 
 }

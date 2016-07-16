@@ -1,6 +1,7 @@
 {
    external foo(x:int) : int "actual_foo";
-   fun External_calls.bar() : int {
+   fun External_calls.bar() : int /* scope_0 */
+   {
       val (x:int) = actual_foo(0);
       return x;
    }

@@ -34,9 +34,9 @@ let identifierBuff buffer id =
 let commentedId buffer id =
    match id with
    | Some(ids) ->
-      append buffer "/*";
+      append buffer "/* ";
       identifierBuff buffer ids;
-      append buffer "*/";
+      append buffer " */";
       newline buffer
    | _ -> ()
 

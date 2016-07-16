@@ -814,7 +814,7 @@ let parseBuffer (file:string) (buffer) : parser_results =
       in
       let result    = loop [] in
       if Stream.hasErrors buffer then
-          raise (Error.Errors(List.rev (Stream.getErrors buffer)))
+         raise (Error.Errors(List.rev (Stream.getErrors buffer)))
       else
          {
             presult = result;

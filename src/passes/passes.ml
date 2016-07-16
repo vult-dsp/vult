@@ -107,7 +107,7 @@ let shouldReapply (state:PassData.t Env.t) : bool =
 module InsertContext = struct
 
    let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
-      Mapper.make @@ fun state stmt ->
+      Mapper.make "InsertContext.stmt" @@ fun state stmt ->
       match stmt with
       | StmtFun(name,args,body,rettype,attr) ->
          let data     = Env.get state in
@@ -123,7 +123,7 @@ module InsertContext = struct
       | _ -> state, stmt
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
+      Mapper.make "InsertContext.exp" @@ fun state exp ->
       match exp with
       | PCall(Some(id),kind,args,attr) ->
          let Path(context) = Env.getContext state kind in
@@ -133,15 +133,15 @@ module InsertContext = struct
          state, PId("_ctx"::id,attr)
       | _ -> state,exp
 
-   let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
+   let lhs_exp  : ('a Env.t,lhs_exp) Mapper.mapper_func =
+      Mapper.make "InsertContext.lhs_exp" @@ fun state exp ->
       match exp with
       | LId(id,tp,attr) when Env.isLocalInstanceOrMem state id ->
          state, LId("_ctx"::id,tp,attr)
       | _ -> state,exp
 
    let stmt_x : ('a Env.t, stmt) Mapper.expand_func =
-      Mapper.makeExpander @@ fun state stmt ->
+      Mapper.makeExpander "InsertContext.stmt_x" @@ fun state stmt ->
       match stmt with
       | StmtMem _ -> state, []
       | _ -> state, [stmt]
@@ -155,7 +155,7 @@ end
 module SplitMem = struct
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
-      Mapper.makeExpander @@ fun state stmt ->
+      Mapper.makeExpander "SplitMem.stmt_x" @@ fun state stmt ->
       match stmt with
       | StmtMem(lhs,init,Some(rhs),attr) ->
          reapply state, [ StmtMem(lhs,init,None,attr); StmtBind(lhs,rhs,attr) ]
@@ -264,7 +264,7 @@ module CreateInitFunction = struct
       StmtAliasType(name_type,typ,emptyAttr)
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
-      Mapper.makeExpander @@ fun state stmt ->
+      Mapper.makeExpander "CreateInitFunction.stmt_x" @@ fun state stmt ->
       match stmt with
       | StmtFun(name,_,_,_,attr) ->
          let data = Env.get state in
@@ -332,7 +332,7 @@ module SimplifyTupleAssign = struct
          stmts1 @ stmts2
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
-      Mapper.makeExpander @@ fun state stmt ->
+      Mapper.makeExpander "SimplifyTupleAssign.stmt_x" @@ fun state stmt ->
       match stmt with
       | StmtVal(LTuple(lhs,_),None,attr) ->
          let stmts = List.map (fun a -> StmtVal(a,None,attr)) lhs in
@@ -359,7 +359,7 @@ end
 module LHSTupleBinding = struct
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
-      Mapper.makeExpander @@ fun state stmt ->
+      Mapper.makeExpander "LHSTupleBinding.stmt_x" @@ fun state stmt ->
       match stmt with
       | StmtVal(LTuple(_,_),Some(PId(_,_)),_) -> state, [stmt]
       | StmtVal(LTuple(_,_),Some(PTuple(_,_)),_) -> state, [stmt]
@@ -407,7 +407,7 @@ module ReportUnboundType = struct
       | Some(typ) -> VType.isUnbound  typ
 
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
+      Mapper.make "ReportUnboundType.lhs_exp" @@ fun state exp ->
       match exp with
       | LId(id,None,attr) ->
          reportError id attr
@@ -416,14 +416,14 @@ module ReportUnboundType = struct
       | _ -> state, exp
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
+      Mapper.make "ReportUnboundType.exp" @@ fun state exp ->
       match exp with
       | PId(id,attr) when isUnbound attr ->
          reportError id attr
       | _ -> state, exp
 
    let typed_id : ('a Env.t,typed_id) Mapper.mapper_func =
-      Mapper.make @@ fun state t ->
+      Mapper.make "ReportUnboundType.typed_id" @@ fun state t ->
       match t with
       | TypedId(id,typ,attr) when VType.isUnbound typ ->
          reportError id attr
@@ -436,7 +436,7 @@ end
 module CreateTypesForTuples = struct
 
    let vtype_c : (TypeSet.t Env.t, VType.vtype) Mapper.mapper_func =
-      Mapper.make @@ fun state t ->
+      Mapper.make "CreateTypesForTuples.vtype_c" @@ fun state t ->
       match t with
       | VType.TComposed(["tuple"],_,_) ->
          let tupl = Env.get state in
@@ -455,7 +455,7 @@ module CreateTypesForTuples = struct
       | _ -> failwith "CreateTypesForTuples.makeTypeDeclaration: there should be only tuples here"
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
-      Mapper.makeExpander @@ fun state stmt ->
+      Mapper.makeExpander "CreateTypesForTuples.stmt_x" @@ fun state stmt ->
       match stmt with
       | StmtFun(_,_,_,_,_) ->
          let data_env,_ = Mapper.map_stmt getTuples_mapper (Env.empty TypeSet.empty) stmt in
@@ -545,7 +545,7 @@ module Simplify = struct
       | _ -> failwith "Simplify.negNum: not a number"
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
+      Mapper.make "Simplify.exp" @@ fun state exp ->
       match exp with
       | POp("/",[e1;PReal(value,attr)],attr2) ->
          reapply state, POp("*",[e1;PReal(1.0 /. value,attr)],attr2)
@@ -578,7 +578,7 @@ end
 module OtherErrors = struct
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
+      Mapper.make "OtherErrors.exp" @@ fun state exp ->
       match exp with
       | PReal(v,attr) ->
          let () =
@@ -606,7 +606,7 @@ module ProcessArrays = struct
       | _ -> failwith "ProcessArrays.getArraySize: type inference should have put a type here"
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
+      Mapper.make "ProcessArrays.exp" @@ fun state exp ->
       match exp with
       | PCall(None,["size"],[arr],attr) ->
          let arr_attr = GetAttr.fromExp arr in
@@ -619,10 +619,27 @@ module ProcessArrays = struct
 
 end
 
+module SimplifyIfExp = struct
+
+   let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
+      Mapper.makeExpander "SimplifyIfExp.stmt_x" @@ fun state stmt ->
+      match stmt with
+      | StmtBind(lhs,PIf(cond,then_,else_,ifattr),attr) ->
+         reapply state,[StmtIf(cond,StmtBind(lhs,then_,ifattr),Some(StmtBind(lhs,else_,ifattr)),attr)]
+      | StmtVal(lhs,Some(PIf(cond,then_,else_,ifattr)),attr) ->
+         let decl = StmtVal(lhs,None,attr) in
+         let if_ = StmtIf(cond,StmtBind(lhs,then_,ifattr),Some(StmtBind(lhs,else_,ifattr)),attr) in
+         reapply state,[decl;if_]
+      | _ -> state, [stmt]
+
+   let mapper = { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
+
+end
+
 module ReplaceFunctionNames = struct
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
-      Mapper.make @@ fun state exp ->
+      Mapper.make "ReplaceFunctionNames.exp" @@ fun state exp ->
       match exp with
       | PCall(name,fname,args,attr) ->
          let Path(path),_,t = Env.lookupRaise Scope.Function state fname attr.loc in
@@ -635,7 +652,7 @@ module ReplaceFunctionNames = struct
       | _ -> state,exp
 
    let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
-      Mapper.make @@ fun state stmt ->
+      Mapper.make "ReplaceFunctionNames.stmt" @@ fun state stmt ->
       match stmt with
       | StmtFun(_,args,body,rettype,attr) ->
          let Path(path) = Env.currentScope state in
@@ -644,7 +661,7 @@ module ReplaceFunctionNames = struct
          state, stmt
 
    let vtype_c : (PassData.t Env.t,VType.vtype) Mapper.mapper_func =
-      Mapper.make @@ fun state typ ->
+      Mapper.make "ReplaceFunctionNames.vtype_c" @@ fun state typ ->
       match typ with
       | VType.TId(id,optloc) ->
          let loc =
@@ -664,7 +681,7 @@ end
 module UnlinkTypes = struct
 
    let vtype_c : (PassData.t Env.t,VType.vtype) Mapper.mapper_func =
-      Mapper.make @@ fun state typ ->
+      Mapper.make "UnlinkTypes.vtype_c" @@ fun state typ ->
       match typ with
       | VType.TLink(t) -> state, !t
       | _ -> state, typ
@@ -686,6 +703,7 @@ let pass1 =
    |> Mapper.seq SplitMem.mapper
    |> Mapper.seq SimplifyTupleAssign.mapper
    |> Mapper.seq LHSTupleBinding.mapper
+   |> Mapper.seq SimplifyIfExp.mapper
 
 let pass2 =
    Simplify.mapper
@@ -701,19 +719,20 @@ let pass4 =
    ReplaceFunctionNames.mapper
 
 
-let rec applyPassRepeat name apply pass (state,stmts) =
+let rec applyPassRepeat name apply pass pass_name (state,stmts) =
+   if Mapper.log then print_endline ("Running "^pass_name);
    if apply then
       let state',stmts' = Mapper.map_stmt_list pass state stmts in
       if shouldReapply state' then
-         applyPassRepeat name apply pass (reset state',stmts')
+         applyPassRepeat name apply pass pass_name (reset state',stmts')
       else
          state',stmts'
    else
       state,stmts
 
-let applyPass name apply pass (state,stmts) =
+let applyPass name apply pass pass_name (state,stmts) =
    let state' = Env.enter Scope.Module state name emptyAttr in
-   let state', stmts' = applyPassRepeat name apply pass (state',stmts) in
+   let state', stmts' = applyPassRepeat name apply pass pass_name (state',stmts) in
    let state' = Env.exit state' in
    (*print_endline (Env.show_full state');*)
    state',stmts'
@@ -723,10 +742,10 @@ let applyPass name apply pass (state,stmts) =
 let passes (name:id) (options:pass_options) (env,stmts) =
    (env,stmts)
    |> inferPass name
-   |> applyPass name options.pass1 pass1
-   |> applyPass name options.pass2 pass2
-   |> applyPass name options.pass3 pass3
-   |> applyPass name options.pass4 pass4
+   |> applyPass name options.pass1 pass1 "pass 1"
+   |> applyPass name options.pass2 pass2 "pass 2"
+   |> applyPass name options.pass3 pass3 "pass 3"
+   |> applyPass name options.pass4 pass4 "pass 4"
 
 let apply env options (results:parser_results) =
    let module_name =

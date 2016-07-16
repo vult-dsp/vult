@@ -83,11 +83,12 @@ module Configuration = struct
       match arg with
       | TypedId(["_ctx"],_,_) -> "data"
       | TypedId(_,typ,attr) ->
-         begin match checkNumeric typ with
-         | Some(typ_name) -> typ_name
-         | None ->
-            let msg = "The type of this argument must be numeric" in
-            Error.raiseError msg attr.loc
+         begin
+            match checkNumeric typ with
+            | Some(typ_name) -> typ_name
+            | None ->
+               let msg = "The type of this argument must be numeric" in
+               Error.raiseError msg attr.loc
          end
       | _ -> failwith "Configuration.getType: Undefined type"
 
@@ -98,7 +99,7 @@ module Configuration = struct
 
    (** This traverser checks the function declarations of the key functions to generate templates *)
    let stmt : (configuration Env.t,stmt) Mapper.mapper_func =
-      Mapper.make @@ fun state stmt ->
+      Mapper.make "Configuration.stmt" @@ fun state stmt ->
       let conf = Env.get state in
       let mname = conf.module_name in
       match stmt with
@@ -112,8 +113,8 @@ module Configuration = struct
          let ninputs = countInputs noteon_inputs in
          let () = (* Report error if the number of inputs do not match *)
             if ninputs <> 2 && ninputs <> 3 then
-            let msg = "The noteOn function should have 2 or 3 arguments (note,velocity) or (note,velocity,channel) " in
-            Error.raiseError msg attr.loc
+               let msg = "The noteOn function should have 2 or 3 arguments (note,velocity) or (note,velocity,channel) " in
+               Error.raiseError msg attr.loc
          in
          let state' = Env.set state { conf with noteon_inputs } in
          state', stmt
@@ -122,18 +123,18 @@ module Configuration = struct
          let ninputs = countInputs noteoff_inputs in
          let () = (* Report error if the number of inputs do not match *)
             if ninputs <> 1 && ninputs <> 2 then
-            let msg = "The noteOff function should have 1 or 2 arguments (note) or (note,channel) " in
-            Error.raiseError msg attr.loc
+               let msg = "The noteOff function should have 1 or 2 arguments (note) or (note,channel) " in
+               Error.raiseError msg attr.loc
          in
          let state' = Env.set state { conf with noteoff_inputs } in
-          state', stmt
+         state', stmt
       | StmtFun([cname;"controlChange"],args,_,_,attr) when mname = cname ->
          let controlchange_inputs = List.map getType args in
          let ninputs = countInputs controlchange_inputs in
          let () = (* Report error if the number of inputs do not match *)
             if ninputs <> 2 && ninputs <> 3 then
-            let msg = "The controlChange function should have 2 or 3 arguments (control,value) or (control,value,channel) " in
-            Error.raiseError msg attr.loc
+               let msg = "The controlChange function should have 2 or 3 arguments (control,value) or (control,value,channel) " in
+               Error.raiseError msg attr.loc
          in
          let state' = Env.set state { conf with controlchange_inputs; } in
          state', stmt
@@ -142,8 +143,8 @@ module Configuration = struct
          let ninputs = countInputs default_inputs in
          let () = (* Report error if the number of inputs do not match *)
             if ninputs <> 0 then
-            let msg = "The 'default' function should not have arguments" in
-            Error.raiseError msg attr.loc
+               let msg = "The 'default' function should not have arguments" in
+               Error.raiseError msg attr.loc
          in
          state, stmt
       | _ -> state, stmt
@@ -191,17 +192,19 @@ let generateJS (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (P
 
 
 let generateCode (parser_results:parser_results list) (args:arguments) : (Pla.t * string) list =
-   let stmts =
-      parser_results
-      |> Passes.applyTransformations args
-   in
-   let module_name = getMainModule parser_results in
-   let last_stmts  = CCList.last 1 stmts |> List.flatten in
-   let conf        = Configuration.get module_name last_stmts in   
-   let all_stmts   = List.flatten stmts in
-   let params      = createParameters module_name args in
-   let ccode       = generateC args params all_stmts in
-   let jscode      = generateJS args params all_stmts in
-   jscode @ ccode
+   if args.ccode || args.jscode then
+      let stmts =
+         parser_results
+         |> Passes.applyTransformations args
+      in
+      let module_name = getMainModule parser_results in
+      let last_stmts  = CCList.last 1 stmts |> List.flatten in
+      let conf        = Configuration.get module_name last_stmts in   
+      let all_stmts   = List.flatten stmts in
+      let params      = createParameters module_name args in
+      let ccode       = generateC args params all_stmts in
+      let jscode      = generateJS args params all_stmts in
+      jscode @ ccode
+   else []
 
 

@@ -403,9 +403,16 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       StmtBind(lhs',rhs',attr), env', ret_type
    | StmtBlock(name,stmts,attr) ->
       let env' = Env.enterBlock env in
+      let env', name' =
+         if CCOpt.is_none name then
+            let n, env' = Env.tick env' in
+            env', Some(["scope_"^(string_of_int n)])
+         else
+            env', name
+      in 
       let stmts', env', stmt_ret_type = inferStmtList env' ret_type stmts in
       let env' = Env.exitBlock env' in
-      StmtBlock(name,stmts',attr), env', stmt_ret_type
+      StmtBlock(name',stmts',attr), env', stmt_ret_type
    | StmtFun(name,args,body,ret_type,attr) ->
       let env'                = Env.addFunction env name attr in
       let env'                = Env.enter Scope.Function env' name attr in

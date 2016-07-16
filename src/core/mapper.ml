@@ -25,18 +25,33 @@ THE SOFTWARE.
 open TypesVult
 open VEnv
 
-type ('data,'kind) mapper_func = ('data -> 'kind -> 'data * 'kind) option
+let log = false
 
-type ('data,'kind) expand_func = ('data -> 'kind -> 'data * 'kind list) option
+type ('data,'kind) mapper_func = (string * ('data -> 'kind -> 'data * 'kind)) option
+
+type ('data,'kind) expand_func = (string * ('data -> 'kind -> 'data * 'kind list)) option
 
 let apply (mapper:('data,'kind) mapper_func) (data:'data) (kind:'kind) : 'data * 'kind =
    match mapper with
-   | Some(f) -> f data kind
+   | Some("",f) -> f data kind
+   | Some(name,f) ->
+      let d,k = f data kind in
+      if log && not (kind == k) then Printf.printf "- %s applied\n" name; 
+      d,k
    | None    -> data, kind
 
 let applyExpander (mapper:('data,'kind) expand_func) (data:'data) (kind:'kind) : 'data * 'kind list =
    match mapper with
-   | Some(f) -> f data kind
+   | Some("",f) -> f data kind
+   | Some(name ,f) ->
+      let d,k = f data kind in
+      if log then
+         begin
+            match k with
+            | [k'] when k' == kind -> ()
+            | _ -> Printf.printf "- %s applied\n" name
+         end;
+      d, k
    | None    -> data, [kind]
 
 let applyExpanderList (mapper:('data,'kind) expand_func) (data:'data) (kind_list:'kind list) : 'data * 'kind list =
@@ -44,15 +59,20 @@ let applyExpanderList (mapper:('data,'kind) expand_func) (data:'data) (kind_list
       List.fold_left
          (fun (s,acc) k ->
              let s', kl = applyExpander mapper s k in
-             (s', kl::acc)
+             let kl' =
+                match kl with
+                | [StmtBlock(None,kl',_)] -> kl'
+                | _ -> kl
+             in
+             (s', kl'::acc)
          ) (data,[]) kind_list
    in state', rev_exp_list |> List.rev |> List.flatten
 
-let make (mapper:'data -> 'kind -> 'data * 'kind) : ('data,'kind) mapper_func =
-   Some(mapper)
+let make (name:string) (mapper:'data -> 'kind -> 'data * 'kind) : ('data,'kind) mapper_func =
+   Some(name,mapper)
 
-let makeExpander (mapper:'data -> 'kind -> 'data * 'kind list) : ('data,'kind) expand_func =
-   Some(mapper)
+let makeExpander (name:string) (mapper:'data -> 'kind -> 'data * 'kind list) : ('data,'kind) expand_func =
+   Some(name,mapper)
 
 (** Makes a chain of mappers. E.g. foo |-> bar will apply first foo then bar. *)
 let (|->) : ('data,'value) mapper_func -> ('data,'value) mapper_func -> ('data,'value) mapper_func =
@@ -61,7 +81,7 @@ let (|->) : ('data,'value) mapper_func -> ('data,'value) mapper_func -> ('data,'
          fun state exp ->
             let state', exp' = apply mapper1 state exp in
             apply mapper2 state' exp'
-      in Some(mapper3)
+      in Some("",mapper3)
 
 let (|*>) : ('data,'value) expand_func -> ('data,'value) expand_func -> ('data,'value) expand_func =
    fun mapper1 mapper2 ->
@@ -70,7 +90,7 @@ let (|*>) : ('data,'value) expand_func -> ('data,'value) expand_func -> ('data,'
             let state', exp_list  = applyExpander mapper1 state exp in
             let state', exp_list' = applyExpanderList mapper2 state' exp_list in
             state', exp_list'
-      in Some(mapper3)
+      in Some("",mapper3)
 
 type 'a mapper =
    {
@@ -297,21 +317,33 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       let state',rhs'  = (mapper_opt map_exp) mapper state' rhs in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.stmt state' (StmtVal(lhs',rhs',attr'))
+      |> map_stmt_subs mapper
+      |> map_stmt_x mapper
+
    | StmtMem(lhs,init,rhs,attr) ->
       let state',lhs'  = map_lhs_exp mapper state lhs in
       let state',init' = (mapper_opt map_exp) mapper state' init in
       let state',rhs'  = (mapper_opt map_exp) mapper state' rhs in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.stmt state' (StmtMem(lhs',init',rhs',attr'))
+      |> map_stmt_subs mapper
+      |> map_stmt_x mapper
+
    | StmtReturn(e,attr) ->
       let state',e'    = map_exp mapper state e in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.stmt state' (StmtReturn(e',attr'))
+      |> map_stmt_subs mapper
+      |> map_stmt_x mapper
+
    | StmtBind(lhs,rhs,attr) ->
       let state',lhs'  = map_lhs_exp mapper state lhs in
       let state',rhs'  = map_exp mapper state' rhs in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.stmt state' (StmtBind(lhs',rhs',attr'))
+      |> map_stmt_subs mapper
+      |> map_stmt_x mapper
+
    | StmtType(name,members,attr) ->
       let base_name    = VType.base name in
       let state'       = Env.enter Scope.Type state base_name emptyAttr in
@@ -320,7 +352,10 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       let state',attr'    = map_attr mapper state' attr in
       let state',stmt' = apply mapper.stmt state' (StmtType(name',members',attr')) in
       let state'       = Env.exit state' in
-      state',stmt'
+      (state',stmt')
+      |> map_stmt_subs mapper
+      |> map_stmt_x mapper
+
    | StmtAliasType(name,tp,attr) ->
       let base_name    = VType.base name in
       let state'       = Env.enter Scope.Type state base_name emptyAttr in
@@ -329,24 +364,36 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       let state',attr' = map_attr mapper state' attr in
       let state',stmt' = apply mapper.stmt state' (StmtAliasType(name',tp',attr')) in
       let state'       = Env.exit state' in
-      state',stmt'
+      (state',stmt')
+      |> map_stmt_subs mapper
+      |> map_stmt_x mapper
+
    | StmtEmpty ->
       apply mapper.stmt state StmtEmpty
+      |> map_stmt_subs mapper      
+      |> map_stmt_x mapper
+
    | StmtWhile(cond,stmts,attr) ->
       let state',cond' = map_exp mapper state cond in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.stmt state' (StmtWhile(cond',stmts,attr'))
       |> map_stmt_subs mapper
+      |> map_stmt_x mapper
+
    | StmtIf(cond,then_,Some(else_),attr) ->
       let state',cond' = map_exp mapper state cond in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.stmt state' (StmtIf(cond',then_,Some(else_),attr'))
       |> map_stmt_subs mapper
+      |> map_stmt_x mapper
+
    | StmtIf(cond,then_,None,attr) ->
       let state',cond' = map_exp mapper state cond in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.stmt state' (StmtIf(cond',then_,None,attr'))
       |> map_stmt_subs mapper
+      |> map_stmt_x mapper
+
    | StmtFun(name,args,body,ret,attr) ->
       let state'       = Env.enter Scope.Function state name emptyAttr in
       let state',name' = map_id mapper state' name in
@@ -358,7 +405,9 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
          |> map_stmt_subs mapper
       in
       let state'       = Env.exit state' in
-      state', stmt'
+      (state', stmt')
+      |> map_stmt_x mapper
+
    | StmtExternal(name,args,ret,linkname,attr) ->
       let state'       = Env.enter Scope.Function state name emptyAttr in
       let state',name' = map_id mapper state' name in
@@ -370,17 +419,28 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
          |> map_stmt_subs mapper
       in
       let state'       = Env.exit state' in
-      state', stmt'
+      (state', stmt')
+      |> map_stmt_x mapper
+
    | StmtBlock(name,stmts,attr) ->
       let state',name' = (mapper_opt map_id) mapper state name in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.stmt state' (StmtBlock(name',stmts,attr'))
       |> map_stmt_subs mapper
+      |> map_stmt_x mapper
+
 
 and map_stmt_list mapper = fun state stmts ->
    let state', stmts' = (mapper_list map_stmt) mapper state stmts in
    let state', stmts' = applyExpanderList mapper.stmt_x state' stmts' in
    state', stmts'
+
+and map_stmt_x mapper = fun (state, stmt) ->
+   let state', stmts' = applyExpander mapper.stmt_x state stmt in
+   match stmts' with
+   | [(StmtBlock _ ) as b ] -> state', b
+   | [stmt'] -> state',stmt'
+   | _ -> state', StmtBlock(None,stmts',emptyAttr)
 
 and map_stmt_subs (mapper:'state mapper) (state,stmt:('state * stmt)) : 'state * stmt =
    match stmt with
@@ -391,23 +451,30 @@ and map_stmt_subs (mapper:'state mapper) (state,stmt:('state * stmt)) : 'state *
    | StmtType _
    | StmtAliasType _
    | StmtExternal _
-   | StmtEmpty -> state, stmt
+   | StmtEmpty ->
+      (state, stmt)
+
    | StmtWhile(cond,stmts,attr) ->
       let state',stmts' = map_stmt mapper state stmts in
-      state',(StmtWhile(cond,stmts',attr))
+      (state',(StmtWhile(cond,stmts',attr)))
+
    | StmtIf(cond,then_,Some(else_),attr) ->
       let state',then_' = map_stmt mapper state then_ in
       let state',else_' = map_stmt mapper state' else_ in
-      state',(StmtIf(cond,then_',Some(else_'),attr))
+      (state',(StmtIf(cond,then_',Some(else_'),attr)))
+
    | StmtIf(cond,then_,None,attr) ->
       let state',then_' = map_stmt mapper state then_ in
-      state',(StmtIf(cond,then_',None,attr))
+      (state',(StmtIf(cond,then_',None,attr)))
+
    | StmtFun(name,args,body,ret,attr) ->
       let state',body'  = map_stmt mapper state body in
-      state',(StmtFun(name,args,body',ret,attr))
+      (state',(StmtFun(name,args,body',ret,attr)))
+
    | StmtBlock(name,stmts,attr) ->
       let state',stmts' = map_stmt_list mapper state stmts in
-      state',(StmtBlock(name,stmts',attr))
+      (state',(StmtBlock(name,stmts',attr)))
+
 
 
 
