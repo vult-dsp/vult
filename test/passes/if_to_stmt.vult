@@ -2,5 +2,8 @@ fun foo() {
    val y;
    val x = if true then 0.0 else if false then 1.0 else 2.0;
    y = if true then 0.0 else if false then 1.0 else 2.0;
-   return (x,y);
+
+   val z;
+   val a = 1.0 + if true then 0.0 else (2.0 + if false then 1.0 else 2.0);
+   z = 1.0 + if true then 0.0 else (2.0 + if false then 1.0 else 2.0);
 }

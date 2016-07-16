@@ -133,6 +133,7 @@ module Scope = struct
          loc       : Loc.t;
 
          tick      : int;
+         in_if     : bool; (** set to true by the mapper when inside an if-expression *)
 
       }
 
@@ -210,6 +211,7 @@ module Scope = struct
          ext_fn    = None;
          loc       = Loc.default;
          tick      = 0;
+         in_if     = false;
 
       }
 
@@ -517,6 +519,15 @@ module Scope = struct
          | _,_ -> p2
       in loop current id
 
+   let enterIf (t:t) : t =
+      { t  with in_if = true }
+
+   let exitIf (t:t) : t =
+      { t  with in_if = false }
+
+   let insideIf (t:t) : bool =
+      t.in_if
+
 end
 
 
@@ -585,6 +596,15 @@ module Env = struct
    let tick (state:'a t) : int * 'a t =
       let tick, scope = Scope.tick state.scope in
       tick, { state with scope = scope }
+
+   let enterIf (state:'a t) : 'a t =
+      { state with scope = Scope.enterIf state.scope }
+
+   let exitIf (state:'a t) : 'a t =
+      { state with scope = Scope.exitIf state.scope }
+
+   let insideIf (state:'a t) : bool =
+      Scope.insideIf state.scope
 
    (** Adds a mem variable to the current context *)
    let addMem (state:'a t) (name:id) (typ:VType.t) (attr:attr) : 'a t  =
@@ -702,5 +722,8 @@ module Env = struct
 
    let pathFromCurrent (state:'a t) (path:path) =
       Scope.pathFromCurrent state.scope path
+
+   let derive (state:'a t) (data:'b) : 'b t =
+      { state with data = data }
 
 end

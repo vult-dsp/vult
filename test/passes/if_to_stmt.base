@@ -1,4 +1,4 @@
-fun foo() : tuple(real,real) /* scope_0 */
+fun foo() : unit /* scope_0 */
 {
    val (y:real);
    val (x:real);
@@ -16,6 +16,27 @@ fun foo() : tuple(real,real) /* scope_0 */
          (y:real) = 1.;
       else
          (y:real) = 2.;
-   val (_tplbind_1:tuple(real,real)) = x,y;
-   return _tplbind_1;
+   val (z:real);
+   val (_if_1:real);
+   if(false)
+      (_if_1:real) = 1.;
+   else
+      (_if_1:real) = 2.;
+   val (_if_2:real);
+   if(true)
+      (_if_2:real) = 0.;
+   else
+      (_if_2:real) = (2. + _if_1);
+   val (a:real) = (1. + _if_2);
+   val (_if_3:real);
+   if(false)
+      (_if_3:real) = 1.;
+   else
+      (_if_3:real) = 2.;
+   val (_if_4:real);
+   if(true)
+      (_if_4:real) = 0.;
+   else
+      (_if_4:real) = (2. + _if_3);
+   (z:real) = (1. + _if_4);
 }

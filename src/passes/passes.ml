@@ -621,6 +621,35 @@ end
 
 module SimplifyIfExp = struct
 
+   (** This mapper is used to bind the if expressions to a variable *)
+   module BindIfExp = struct
+
+      let exp : ((stmt list) Env.t,exp) Mapper.mapper_func =
+         Mapper.make "BindIfExp.exp" @@ fun state exp ->
+         match exp with
+         | PIf(_,_,_,attr) when not (Env.insideIf state) ->
+            let n,state' = Env.tick state in
+            let var_name = "_if_"^(string_of_int n) in
+            let exp'     = PId([var_name],attr) in
+            let lhs      = LId([var_name],attr.typ,attr) in
+            let stmt     = StmtVal(lhs,Some(exp),emptyAttr) in
+            let acc      = Env.get state' in
+            let state'   = Env.set state' (stmt::acc) in
+            state',exp'
+         | _ -> state,exp
+
+      let mapper = { Mapper.default_mapper with Mapper.exp = exp }
+
+   end
+
+   let newState state data =
+      Env.derive state data
+
+   let restoreState original current =
+      let current_data = Env.get current in
+      let original_data = Env.get original in
+      Env.derive current original_data, current_data
+
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "SimplifyIfExp.stmt_x" @@ fun state stmt ->
       match stmt with
@@ -630,6 +659,18 @@ module SimplifyIfExp = struct
          let decl = StmtVal(lhs,None,attr) in
          let if_ = StmtIf(cond,StmtBind(lhs,then_,ifattr),Some(StmtBind(lhs,else_,ifattr)),attr) in
          reapply state,[decl;if_]
+      | StmtBind(lhs,rhs,attr) ->
+         let acc       = newState state [] in
+         let acc',rhs' = Mapper.map_exp_to_stmt BindIfExp.mapper acc rhs in
+         let state',acc_stmts = restoreState state acc' in
+         let stmts'    = StmtBind(lhs,rhs',attr)::acc_stmts in
+         state', List.rev stmts'
+      | StmtVal(lhs,Some(rhs),attr) ->
+         let acc       = newState state [] in
+         let acc',rhs' = Mapper.map_exp_to_stmt BindIfExp.mapper acc rhs in
+         let state',acc_stmts = restoreState state acc' in
+         let stmts'    = StmtVal(lhs,Some(rhs'),attr)::acc_stmts in
+         state', List.rev stmts'
       | _ -> state, [stmt]
 
    let mapper = { Mapper.default_mapper with Mapper.stmt_x = stmt_x }

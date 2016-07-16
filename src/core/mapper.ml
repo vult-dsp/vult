@@ -382,6 +382,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
 
    | StmtIf(cond,then_,Some(else_),attr) ->
       let state',cond' = map_exp mapper state cond in
+      let state'       = Env.enterIf state' in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.stmt state' (StmtIf(cond',then_,Some(else_),attr'))
       |> map_stmt_subs mapper
@@ -390,9 +391,13 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
    | StmtIf(cond,then_,None,attr) ->
       let state',cond' = map_exp mapper state cond in
       let state',attr' = map_attr mapper state' attr in
-      apply mapper.stmt state' (StmtIf(cond',then_,None,attr'))
-      |> map_stmt_subs mapper
-      |> map_stmt_x mapper
+      let state',stmt' =
+         apply mapper.stmt state' (StmtIf(cond',then_,None,attr'))
+         |> map_stmt_subs mapper
+         |> map_stmt_x mapper
+      in
+      let state' = Env.exitIf state' in
+      (state', stmt')
 
    | StmtFun(name,args,body,ret,attr) ->
       let state'       = Env.enter Scope.Function state name emptyAttr in
@@ -475,7 +480,9 @@ and map_stmt_subs (mapper:'state mapper) (state,stmt:('state * stmt)) : 'state *
       let state',stmts' = map_stmt_list mapper state stmts in
       (state',(StmtBlock(name,stmts',attr)))
 
-
-
+(** Applies a mapper to an expression that can collect statements *)
+let map_exp_to_stmt (mapper:'state mapper) (state:'a Env.t) (exp:exp) : 'a Env.t * exp =
+   let state', exp' = map_exp mapper state exp in
+   state', exp'
 
 

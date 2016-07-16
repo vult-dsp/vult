@@ -1,4 +1,4 @@
 fun foo(){
-	val x = if true then (if false then 0.0 else 1.0) else 2.0;
+	val x = 1.0 + if true then (2.0 + if false then 0.0 else 1.0) else 2.0;
 	return x;
 }
