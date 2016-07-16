@@ -1,0 +1,21 @@
+fun foo() : tuple(real,real) /* scope_0 */
+{
+   val (y:real);
+   val (x:real);
+   if(true)
+      (x:real) = 0.;
+   else
+      if(false)
+         (x:real) = 1.;
+      else
+         (x:real) = 2.;
+   if(true)
+      (y:real) = 0.;
+   else
+      if(false)
+         (y:real) = 1.;
+      else
+         (y:real) = 2.;
+   val (_tplbind_1:tuple(real,real)) = x,y;
+   return _tplbind_1;
+}

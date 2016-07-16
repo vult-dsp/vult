@@ -56,6 +56,7 @@ let passes_files =
    [
       "split_mem.vult", pass2_options;
       "tuple_assign.vult", pass2_options;
+      "if_to_stmt.vult", pass2_options;
       "context_simple.vult", pass3_options;
       "context_nested.vult", pass3_options;
       "tuple_to_types.vult", pass3_options;
