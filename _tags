@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 2cea5d9477e4b87051867bf233c3cf27)
+# DO NOT EDIT (digest: da0bd7e1dae5868cb1a03eef1f4fc5d8)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -30,6 +30,7 @@ true: annot, bin_annot
 <src/parser/*.ml{,i,y}>: use_vult_util
 # Library vult_templates
 "src/generators/templates/vult_templates.cmxs": use_vult_templates
+<src/generators/templates/*.ml{,i,y}>: pkg_containers
 <src/generators/templates/*.ml{,i,y}>: pkg_pla
 <src/generators/templates/*.ml{,i,y}>: pkg_pla.ppx
 # Library vult_passes

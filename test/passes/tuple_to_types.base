@@ -1,5 +1,5 @@
 {
-   type _tuple_int_int_int {
+   type tuple(int,int,int) {
       val field_0 : int;
       val field_1 : int;
       val field_2 : int;
@@ -11,7 +11,7 @@
       return _tplbind_1;
    }
 
-   type _tuple_real_int_bool {
+   type tuple(real,int,bool) {
       val field_0 : real;
       val field_1 : int;
       val field_2 : bool;

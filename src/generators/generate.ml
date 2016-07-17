@@ -26,6 +26,7 @@ open TypesVult
 open GenerateParams
 open VEnv
 
+(** Reports an error if the 'real' argument is invalid *)
 let checkRealType (real:string) : unit =
    match real with
    | "fixed" -> ()
@@ -35,29 +36,14 @@ let checkRealType (real:string) : unit =
       let msg = ("Unknown type '"^real^"'\nThe only valid values for -real are: fixed or float") in
       Error.raiseErrorMsg msg
 
-
-type configuration =
-   {
-      module_name     : string;
-      process_inputs  : string list;
-      process_outputs : string list;
-      noteon_inputs   : string list;
-      noteoff_inputs  : string list;
-      controlchange_inputs : string list;
-   }
-
-let empty_conf module_name =
-   {
-      module_name;
-      process_inputs  = [];
-      process_outputs = [];
-      noteon_inputs   = [];
-      noteoff_inputs  = [];
-      controlchange_inputs = [];
-   }
-
 (** Determines the number of inputs and outputs of the key function to generate templates *)
 module Configuration = struct
+
+   (** If the first argument is data, returns true and remove it *)
+   let passData (inputs:string list) : bool * string list =
+     match inputs with
+     | "data"::t -> true, t
+     | _ -> false, inputs
 
    (** Checks that the type is a numeric type *)
    let checkNumeric (typ:VType.t) : string option =
@@ -66,7 +52,7 @@ module Configuration = struct
       | VType.TId(["int"],_)  -> Some("int")
       | _ -> None
 
-   (** Checks that the output is a numeric or a tuple of numbers *)   
+   (** Checks that the output is a numeric or a tuple of numbers *)
    let rec getOutputs (loc:Loc.t) (typ:VType.t) : string list =
       match !typ with
       | VType.TId(["real"],_) -> ["real"]
@@ -78,7 +64,7 @@ module Configuration = struct
          let msg = "The return type of the function process should be a numeric value or a tuple with numeric elements" in
          Error.raiseError msg loc
 
-   (** Returns the type of the argument as a string, if it's the context then the type is data *)      
+   (** Returns the type of the argument as a string, if it's the context then the type is data *)
    let getType (arg:typed_id) : string =
       match arg with
       | TypedId(["_ctx"],_,_) -> "data"
@@ -92,61 +78,38 @@ module Configuration = struct
          end
       | _ -> failwith "Configuration.getType: Undefined type"
 
-   (** Returns the number of inputs excluding 'data' *)
-   let countInputs (inputs:string list) : int =
-      List.filter (fun a -> a <> "data") inputs
-      |> List.length
 
    (** This traverser checks the function declarations of the key functions to generate templates *)
    let stmt : (configuration Env.t,stmt) Mapper.mapper_func =
       Mapper.make "Configuration.stmt" @@ fun state stmt ->
-      let conf = Env.get state in
-      let mname = conf.module_name in
+      let conf : configuration = Env.get state in
       match stmt with
-      | StmtFun([cname;"process"],args,_,Some(rettype),attr) when mname = cname ->
-         let process_inputs = List.map getType args in
+      | StmtFun([cname;"process"],args,_,Some(rettype),attr) when conf.module_name = cname ->
+         let pass_data,process_inputs = List.map getType args |> passData in
          let process_outputs = getOutputs attr.loc rettype in
-         let state' = Env.set state { conf with process_inputs; process_outputs } in
+         let pass_data = conf.pass_data || pass_data in
+         let state' = Env.set state { conf with process_inputs; process_outputs; pass_data } in
          state', stmt
-      | StmtFun([cname;"noteOn"],args,_,_,attr) when mname = cname ->
-         let noteon_inputs = List.map getType args in
-         let ninputs = countInputs noteon_inputs in
-         let () = (* Report error if the number of inputs do not match *)
-            if ninputs <> 2 && ninputs <> 3 then
-               let msg = "The noteOn function should have 2 or 3 arguments (note,velocity) or (note,velocity,channel) " in
-               Error.raiseError msg attr.loc
-         in
-         let state' = Env.set state { conf with noteon_inputs } in
+      | StmtFun([cname;"noteOn"],args,_,_,_) when conf.module_name = cname ->
+         let pass_data,noteon_inputs = List.map getType args |> passData in
+         let pass_data = conf.pass_data || pass_data in
+         let state' = Env.set state { conf with noteon_inputs; pass_data } in
          state', stmt
-      | StmtFun([cname;"noteOff"],args,_,_,attr) when mname = cname ->
-         let noteoff_inputs = List.map getType args in
-         let ninputs = countInputs noteoff_inputs in
-         let () = (* Report error if the number of inputs do not match *)
-            if ninputs <> 1 && ninputs <> 2 then
-               let msg = "The noteOff function should have 1 or 2 arguments (note) or (note,channel) " in
-               Error.raiseError msg attr.loc
-         in
-         let state' = Env.set state { conf with noteoff_inputs } in
+      | StmtFun([cname;"noteOff"],args,_,_,_) when conf.module_name = cname ->
+         let pass_data,noteoff_inputs = List.map getType args |> passData in
+         let pass_data = conf.pass_data || pass_data in
+         let state' = Env.set state { conf with noteoff_inputs; pass_data } in
          state', stmt
-      | StmtFun([cname;"controlChange"],args,_,_,attr) when mname = cname ->
-         let controlchange_inputs = List.map getType args in
-         let ninputs = countInputs controlchange_inputs in
-         let () = (* Report error if the number of inputs do not match *)
-            if ninputs <> 2 && ninputs <> 3 then
-               let msg = "The controlChange function should have 2 or 3 arguments (control,value) or (control,value,channel) " in
-               Error.raiseError msg attr.loc
-         in
-         let state' = Env.set state { conf with controlchange_inputs; } in
+      | StmtFun([cname;"controlChange"],args,_,_,_) when conf.module_name = cname ->
+         let pass_data,controlchange_inputs = List.map getType args |> passData in
+         let pass_data = conf.pass_data || pass_data in
+         let state' = Env.set state { conf with controlchange_inputs; pass_data } in
          state', stmt
-      | StmtFun([cname;"default"],args,_,_,attr) when mname = cname ->
-         let default_inputs = List.map getType args in
-         let ninputs = countInputs default_inputs in
-         let () = (* Report error if the number of inputs do not match *)
-            if ninputs <> 0 then
-               let msg = "The 'default' function should not have arguments" in
-               Error.raiseError msg attr.loc
-         in
-         state, stmt
+      | StmtFun([cname;"default"],args,_,_,_) when conf.module_name = cname ->
+         let pass_data,default_inputs = List.map getType args |> passData in
+         let pass_data = conf.pass_data || pass_data in
+         let state' = Env.set state { conf with default_inputs; pass_data } in
+         state', stmt
       | _ -> state, stmt
 
    let mapper =
@@ -167,41 +130,49 @@ let rec getMainModule (parser_results:parser_results list) : string =
    | [h] -> moduleName h.file
    | _::t -> getMainModule t
 
-let createParameters (module_name:string) (args:arguments) : params =
-   let ()     = DefaultReplacements.initialize () in
-   let ()     = checkRealType args.real in
-   let output = if args.output = "" then "Vult" else Filename.basename args.output in
-   let repl   = Replacements.getReplacements args.real in
-   { real = args.real; template = args.template; is_header = false; output; repl; module_name }
-
-
+(* Generates the C/C++ code if the flag was passed *)
 let generateC (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * string) list=
    if args.ccode then
-      let cparams = VultToCLike.{repl = params.repl; return_by_ref = true } in
+      let cparams     = VultToCLike.{repl = params.repl; return_by_ref = true } in
+      (* Converts the statements to CLike form *)
       let clike_stmts = VultToCLike.convertStmtList cparams stmts in
       VultCh.print params clike_stmts
    else []
 
-
+(* Generates the JS code if the flag was passed *)
 let generateJS (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * string) list=
    if args.jscode then
-      let cparams = VultToCLike.{repl = params.repl; return_by_ref = false } in
+      let cparams     = VultToCLike.{repl = params.repl; return_by_ref = false } in
+      (* Converts the statements to CLike form *)
       let clike_stmts = VultToCLike.convertStmtList cparams stmts in
       VultJs.print params clike_stmts
    else []
 
+(** Returns the code generation parameters based on the vult code *)
+let createParameters (parser_results:parser_results list) (stmts:TypesVult.stmt list list) (args:arguments) =
+   (* Gets the name of the main module (the last passes file name) *)
+   let module_name = getMainModule parser_results in
+   (** Takes the statememts of the last file to search the configuration *)
+   let last_stmts  = CCList.last 1 stmts |> List.flatten in
+   let config      = Configuration.get module_name last_stmts in
+   (* Defines the name of the output module *)
+   let output      = if args.output = "" then "Vult" else Filename.basename args.output in
+   (* Looks for the replacements based on the 'real' argument *)
+   let repl        = Replacements.getReplacements args.real in
+   { real = args.real; template = args.template; is_header = false; output; repl; module_name; config }
+
 
 let generateCode (parser_results:parser_results list) (args:arguments) : (Pla.t * string) list =
    if args.ccode || args.jscode then
-      let stmts =
-         parser_results
-         |> Passes.applyTransformations args
-      in
-      let module_name = getMainModule parser_results in
-      let last_stmts  = CCList.last 1 stmts |> List.flatten in
-      let conf        = Configuration.get module_name last_stmts in   
+      (* Initialize the replacements *)
+      let ()          = DefaultReplacements.initialize () in
+      (* Checks the 'real' argument is valid *)
+      let ()          = checkRealType args.real in
+      (* Applies all passes to the statements *)
+      let stmts       = Passes.applyTransformations args parser_results in
+      let params      = createParameters parser_results stmts args in
+      (* Calls the code generation  *)
       let all_stmts   = List.flatten stmts in
-      let params      = createParameters module_name args in
       let ccode       = generateC args params all_stmts in
       let jscode      = generateJS args params all_stmts in
       jscode @ ccode

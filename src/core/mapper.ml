@@ -370,7 +370,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
 
    | StmtEmpty ->
       apply mapper.stmt state StmtEmpty
-      |> map_stmt_subs mapper      
+      |> map_stmt_subs mapper
       |> map_stmt_x mapper
 
    | StmtWhile(cond,stmts,attr) ->

@@ -162,8 +162,10 @@ module FixedPoint = struct
 
    let cast = Replacements.makeCasts
          [
-            ("fix16_t", "int"), "fix_to_int";
-            ("int", "fix16_t"), "int_to_fix";
+            ("fix16_t", "int"),     "fix_to_int";
+            ("fix16_t", "float"),   "fix_to_float";
+            ("int",     "fix16_t"), "int_to_fix";
+            ("float",   "fix16_t"), "float_to_fix";
          ]
 
    let op_to_fun = Replacements.makeOperators

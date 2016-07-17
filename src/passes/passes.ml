@@ -435,30 +435,31 @@ end
 
 module CreateTypesForTuples = struct
 
-   let vtype_c : (TypeSet.t Env.t, VType.vtype) Mapper.mapper_func =
-      Mapper.make "CreateTypesForTuples.vtype_c" @@ fun state t ->
-      match t with
-      | VType.TComposed(["tuple"],_,_) ->
-         let tupl = Env.get state in
-         Env.set state (TypeSet.add (ref t) tupl), t
-      | _ -> state, t
+   (* This mapper is used to collect a set of tuples *)
+   module TupleSet = struct
+      let vtype_c : (TypeSet.t Env.t, VType.vtype) Mapper.mapper_func =
+         Mapper.make "CreateTypesForTuples.vtype_c" @@ fun state t ->
+         match t with
+         | VType.TComposed(["tuple"],_,_) ->
+            let tupl = Env.get state in
+            Env.set state (TypeSet.add (ref t) tupl), t
+         | _ -> state, t
 
-   let getTuples_mapper = { Mapper.default_mapper with Mapper.vtype_c = vtype_c }
+      let mapper = Mapper.{ default_mapper with vtype_c }
+   end
 
    let makeTypeDeclaration (t:VType.t) : stmt =
       match !t with
       | VType.TComposed(["tuple"],types,_) ->
          let elems = List.mapi (fun i a -> ["field_"^(string_of_int i)],a,emptyAttr) types in
-         let name_str = VType.getTupleName t in
-         let name = VType.TId([name_str],None) in
-         StmtType(ref name,elems,emptyAttr)
+         StmtType(t,elems,emptyAttr)
       | _ -> failwith "CreateTypesForTuples.makeTypeDeclaration: there should be only tuples here"
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "CreateTypesForTuples.stmt_x" @@ fun state stmt ->
       match stmt with
-      | StmtFun(_,_,_,_,_) ->
-         let data_env,_ = Mapper.map_stmt getTuples_mapper (Env.empty TypeSet.empty) stmt in
+      | StmtFun _ ->
+         let data_env,_ = Mapper.map_stmt TupleSet.mapper (Env.empty TypeSet.empty) stmt in
          let new_tuples = Env.get data_env in
          let data       = Env.get state in
          let current    = PassData.getTuples data in
@@ -478,7 +479,7 @@ module CreateTypesForTuples = struct
             state, [stmt]
       | _ -> state, [stmt]
 
-   let mapper = { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
+   let mapper = Mapper.{ default_mapper with stmt_x }
 
 end
 
@@ -624,7 +625,7 @@ module SimplifyIfExp = struct
    (** This mapper is used to bind the if expressions to a variable *)
    module BindIfExp = struct
 
-      let exp : ((stmt list) Env.t,exp) Mapper.mapper_func =
+      let exp : (stmt list Env.t,exp) Mapper.mapper_func =
          Mapper.make "BindIfExp.exp" @@ fun state exp ->
          match exp with
          | PIf(_,_,_,attr) when not (Env.insideIf state) ->
@@ -714,7 +715,7 @@ module ReplaceFunctionNames = struct
          state, VType.TId(type_path,optloc)
       | _ -> state, typ
 
-   let mapper = { Mapper.default_mapper with Mapper.exp = exp; Mapper.stmt = stmt; Mapper.vtype_c = vtype_c }
+   let mapper = Mapper.{ default_mapper with exp; stmt; vtype_c }
 
 end
 

@@ -825,7 +825,7 @@ let dispatch_default = MyOCamlbuildBase.dispatch_default conf package_default;;
 Ocamlbuild_plugin.dispatch (MyOCamlbuildBase.dispatch_combine [
     (function
       | After_rules ->
-          flag ["compile"; "ocaml"; "native"]
+          flag ["compile"; "ocaml"]
             (S[A"-w"; A "+27+33-3"]);
           mark_tag_used "tests";
 

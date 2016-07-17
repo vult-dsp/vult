@@ -59,9 +59,7 @@ Library "vult_generators"
     CLike,
     VultToCLike,
     DefaultReplacements,
-    Replacements,
-    Generate,
-    GenerateParams
+    Generate
   BuildDepends:
     vult_core,
     vult_util,
@@ -75,10 +73,13 @@ Library "vult_generators"
 Library "vult_templates"
   Path: src/generators/templates
   Modules:
+    GenerateParams,
+    Replacements,
     Templates,
     Pd,
     TeensyAudio
   BuildDepends:
+    containers,
     pla,
     pla.ppx
 

@@ -24,10 +24,13 @@ THE SOFTWARE.
 
 (** Template for the Teensy Audio library *)
 
+open GenerateParams
 
 (** Header function *)
-let header (module_name:string) (output:string) (code:Pla.t) : Pla.t =
-   let file = String.uppercase output in
+let header (params:params) (code:Pla.t) : Pla.t =
+   let file = String.uppercase params.output in
+   let output = params.output in
+   let module_name = params.module_name in
    {pla|
 #ifndef <#file#s>_H
 #define <#file#s>_H
@@ -81,7 +84,9 @@ private:
 
 
 (** Implementation function *)
-let implementation (module_name:string) (output:string) (code:Pla.t) : Pla.t =
+let implementation (params:params) (code:Pla.t) : Pla.t =
+   let output      = params.output in
+   let module_name = params.module_name in
    {pla|
 #include "<#output#s>.h"
 
