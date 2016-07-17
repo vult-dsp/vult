@@ -103,6 +103,12 @@ let tildePerformFunctionCall (params:params) (config:configuration) =
       let underscore = Pla.string "_" in
       match config.process_outputs with
       | []  -> Pla.unit,Pla.unit
+      | [o] ->
+         let current_typ = Replacements.getType params.repl o in
+         let decl = [%pla{|<#current_typ#s> ret =|}] in
+         let value = castOutput params o (Pla.string "ret") in
+         let copy = Pla.indent [%pla{|*(out_0++) = <#value#>;|}] in
+         decl,copy
       | o ->
          let decl = Pla.(string "_tuple_" ++ map_sep underscore string o ++ string " ret =") in
          let copy =
@@ -163,9 +169,9 @@ extern "C" {
 static t_class *<#output#s>_tilde_class;
 
 typedef struct _<#output#s>_tilde {
-  t_object  x_obj;
-  float dummy;
-  <#module_name#s>_process_type data;
+   t_object  x_obj;
+   float dummy;
+   <#module_name#s>_process_type data;
 } t_<#output#s>_tilde;
 
 t_int *<#output#s>_tilde_perform(t_int *w)
@@ -177,26 +183,26 @@ t_int *<#output#s>_tilde_perform(t_int *w)
    <#ret#> <#module_name#s>_process(<#args#>);<#copy#>
    }
 
-  return (w+<#last_w#i>);
+   return (w+<#last_w#i>);
 }
 
 void <#output#s>_tilde_dsp(t_<#output#s>_tilde *x, t_signal **sp)
 {
-  dsp_add(<#output#s>_tilde_perform, <#dsp_nargs#i>,
+   dsp_add(<#output#s>_tilde_perform, <#dsp_nargs#i>,
    x,<#vec_decl#>
    sp[0]->s_n);
 }
 
 void *<#output#s>_tilde_new()
 {
-  t_<#output#s>_tilde *x = (t_<#output#s>_tilde *)pd_new(<#output#s>_tilde_class);
+   t_<#output#s>_tilde *x = (t_<#output#s>_tilde *)pd_new(<#output#s>_tilde_class);
 
-  x->data = <#module_name#s>_process_init();
-  <#module_name#s>_default(x->data);
+   x->data = <#module_name#s>_process_init();
+   <#module_name#s>_default(x->data);
 <#inlets#>
 <#outlets#>
 
-  return (void *)x;
+   return (void *)x;
 }
 
 void <#output#s>_tilde_delete(t_<#output#s>_tilde *x){
@@ -204,34 +210,32 @@ void <#output#s>_tilde_delete(t_<#output#s>_tilde *x){
 }
 
 void <#output#s>_noteOn(t_<#output#s>_tilde *x, t_floatarg note, t_floatarg velocity){
-  if((int)velocity) <#module_name#s>_noteOn(x->data, (int)note, (int)velocity);
-  else <#module_name#s>_noteOff(x->data, (int)note);
+   if((int)velocity) <#module_name#s>_noteOn(x->data, (int)note, (int)velocity);
+   else <#module_name#s>_noteOff(x->data, (int)note);
 }
 
 void <#output#s>_noteOff(t_<#output#s>_tilde *x, t_floatarg note) {
-  <#module_name#s>_noteOff(x->data, (int)note);
+   <#module_name#s>_noteOff(x->data, (int)note);
 }
 
 void <#output#s>_controlChange(t_<#output#s>_tilde *x, t_floatarg control, t_floatarg value) {
-  <#module_name#s>_controlChange(x->data, (int)control, (int)value);
+   <#module_name#s>_controlChange(x->data, (int)control, (int)value);
 }
 
 void <#output#s>_tilde_setup(void) {
-  <#output#s>_tilde_class = class_new(gensym("<#output#s>~"),
-        (t_newmethod)<#output#s>_tilde_new, // constructor function
-        (t_method)<#output#s>_tilde_delete, // destructor function
-        sizeof(t_<#output#s>_tilde), // size of the object
-        CLASS_DEFAULT, // type of object
-        A_NULL); // arguments passed
+   <#output#s>_tilde_class = class_new(gensym("<#output#s>~"),
+      (t_newmethod)<#output#s>_tilde_new, // constructor function
+      (t_method)<#output#s>_tilde_delete, // destructor function
+      sizeof(t_<#output#s>_tilde), // size of the object
+      CLASS_DEFAULT, // type of object
+      A_NULL); // arguments passed
 
-  class_addmethod(<#output#s>_tilde_class,
-        (t_method)<#output#s>_tilde_dsp, gensym("dsp"), A_NULL);
-  CLASS_MAINSIGNALIN(<#output#s>_tilde_class, t_<#output#s>_tilde, dummy);
+   class_addmethod(<#output#s>_tilde_class,(t_method)<#output#s>_tilde_dsp, gensym("dsp"), A_NULL);
+   CLASS_MAINSIGNALIN(<#output#s>_tilde_class, t_<#output#s>_tilde, dummy);
 
-  class_addmethod(<#output#s>_tilde_class, (t_method)<#output#s>_noteOn,        gensym("noteOn"),        A_DEFFLOAT, A_DEFFLOAT, A_NULL);
-  class_addmethod(<#output#s>_tilde_class, (t_method)<#output#s>_noteOff,       gensym("noteOff"),       A_DEFFLOAT, A_NULL);
-  class_addmethod(<#output#s>_tilde_class, (t_method)<#output#s>_controlChange, gensym("controlChange"), A_DEFFLOAT, A_DEFFLOAT, A_NULL);
-
+   class_addmethod(<#output#s>_tilde_class, (t_method)<#output#s>_noteOn,        gensym("noteOn"),        A_DEFFLOAT, A_DEFFLOAT, A_NULL);
+   class_addmethod(<#output#s>_tilde_class, (t_method)<#output#s>_noteOff,       gensym("noteOff"),       A_DEFFLOAT, A_NULL);
+   class_addmethod(<#output#s>_tilde_class, (t_method)<#output#s>_controlChange, gensym("controlChange"), A_DEFFLOAT, A_DEFFLOAT, A_NULL);
 }
 
 } // extern "C"
