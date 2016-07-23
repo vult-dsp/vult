@@ -485,6 +485,7 @@ end
 
 module Simplify = struct
 
+   (** Returns the sub elements of an operator, e.g. a+(b+c) -> [a,b,c] *)
    let rec getOpElements (op:string) (elems: exp list) : bool * exp list =
       match elems with
       | [] -> false,[]

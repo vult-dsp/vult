@@ -114,8 +114,8 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
       LWild( { attr with typ = Some(typ) }), typ
    | LId(id,None,attr) ->
       let typ =
-         match Env.lookup Scope.Var env id with
-         | Some(_,typ,_) -> typ
+         match Env.lookupVariable env id with
+         | Some(var) -> var.Scope.typ
          | _ ->
             if mem_var = `Mem || mem_var = `Var then
                VType.newvar ()
@@ -284,8 +284,8 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
    | PReal(v,attr) ->
       PReal(v,{ attr with typ = Some(VType.Constants.real_type) }), env, VType.Constants.real_type
    | PId(id,attr) ->
-      let _,typ,_ = Env.lookupRaise Scope.Var env id attr.loc in
-      PId(id, { attr with typ = Some(typ) }), env, typ
+      let var = Env.lookupVariableRaise env id attr.loc in
+      PId(id, { attr with typ = Some(var.Scope.typ) }), env, var.Scope.typ
    | PArray(elems,attr) ->
       let elems',env', atype, n = inferArrayElems env elems in
       let typ = ref (VType.TComposed(["array"],[atype;ref (VType.TInt(n,None))],None)) in
@@ -409,7 +409,7 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
             env', Some(["scope_"^(string_of_int n)])
          else
             env', name
-      in 
+      in
       let stmts', env', stmt_ret_type = inferStmtList env' ret_type stmts in
       let env' = Env.exitBlock env' in
       StmtBlock(name',stmts',attr), env', stmt_ret_type

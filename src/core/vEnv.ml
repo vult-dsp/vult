@@ -99,14 +99,19 @@ end
 module Scope = struct
 
    type kind =
-      | Mem
-      | Instance
       | Function
       | Module
       | Operator
       | Type
-      | Var
    [@@deriving show]
+
+   type var =
+      {
+         name      : id;
+         typ       : VType.t;
+         loc       : Loc.t;
+         is_inst   : bool;
+      }
 
    type t =
       {
@@ -119,8 +124,8 @@ module Scope = struct
          modules   : t IdMap.t;      (** Modules or namespaces *)
          types     : t IdMap.t;      (** Types *)
          func      : t IdMap.t;      (** Functions *)
-         mem_inst  : t IdMap.t;      (** Mem and instances *)
-         locals    : t IdMap.t list; (** Variables and subscopes *)
+         mem_inst  : var IdMap.t;      (** Mem and instances *)
+         locals    : var IdMap.t list; (** Variables and subscopes *)
 
          ctx       : Context.t;
 
@@ -137,61 +142,12 @@ module Scope = struct
 
       }
 
-   type t_simple =
-      {
-         sname      : id;
-         skind      : kind;
-         styp       : VType.t;
-
-         smodules   : (id * t_simple) list;
-         soperators : (id * t_simple) list;
-         stypes     : (id * t_simple) list;
-         sfunc      : (id * t_simple) list;
-         smem_inst  : (id * t_simple) list;
-         slocals    : (id * t_simple) list list;
-
-         ssingle    : bool;
-         sactive    : bool;
-         sext_fn    : string option;
-
-      }
-   [@@deriving show]
-
-   let rec simple (t:t) : t_simple =
-      let simple_pair (k,v) = (k,simple v) in
-      let f = List.map simple_pair in
-      {  sname = t.name;
-         skind =t.kind;
-         styp = t.typ;
-         soperators = IdMap.to_list t.operators |> f;
-         smodules = IdMap.to_list t.modules |> f;
-         stypes = IdMap.to_list t.types |> f;
-         sfunc = IdMap.to_list t.func |> f;
-         smem_inst = IdMap.to_list t.mem_inst |> f;
-         slocals = List.map IdMap.to_list t.locals |> List.map f;
-         ssingle = t.single;
-         sactive = t.active;
-         sext_fn = t.ext_fn;
-      }
-
-   let show t = simple t |> show_t_simple
-
-   let show_full t =
-      let rec up t =
-         match t.parent with
-         | Some(p) -> up p
-         | _ -> t
-      in show (up t)
-
    let kindStr kind : string =
       match kind with
       | Function -> "function"
       | Module   -> "module"
       | Operator -> "operator"
       | Type     -> "type"
-      | Instance -> "instance"
-      | Mem      -> "mem"
-      | Var      -> "variable"
 
    let create (kind:kind) : t =
       {
@@ -228,7 +184,7 @@ module Scope = struct
       try Some(IdMap.find name t.modules) with
       | _ -> None
 
-   let findMemInst (t:t) (name:id) : t option =
+   let findMemInst (t:t) (name:id) : var option =
       try Some(IdMap.find name t.mem_inst) with
       | _ -> None
 
@@ -244,12 +200,10 @@ module Scope = struct
 
    let getTable (t:t) (kind:kind) : t IdMap.t =
       match kind with
-      | Mem | Instance -> t.mem_inst
       | Function -> t.func
       | Module   -> t.modules
       | Operator -> t.operators
       | Type     -> t.types
-      | Var      -> List.hd t.locals
 
    let setOptLoc (opt_loc:Loc.t option) (t:t) : t =
       match opt_loc with
@@ -279,13 +233,10 @@ module Scope = struct
       | None -> failwith "Scope.exit: cannot exit the top scope"
       | Some(parent) ->
          match t.kind with
-         | Mem
-         | Instance -> { parent with mem_inst  = IdMap.add t.name t parent.mem_inst }
          | Function -> { parent with func      = IdMap.add t.name t parent.func }
          | Module   -> { parent with modules   = IdMap.add t.name t parent.modules }
          | Operator -> { parent with operators = IdMap.add t.name t parent.operators }
          | Type     -> { parent with types     = IdMap.add t.name t parent.types }
-         | Var      -> failwith "exitKind: you should never enter the local variables"
 
    let newContext (parent:t) (name:id) (is_init:bool) : t =
       { parent with ctx = Context.makeNew parent.ctx name is_init }
@@ -324,7 +275,7 @@ module Scope = struct
    let setCurrentType (t:t) (typ:VType.t) (single:bool) : t =
       { t with typ = typ; single = single }
 
-   let addBuiltin (t:t) (name,kind,typ,single) =
+   let addBuiltin (t:t) (kind:kind) (name:id) (typ:VType.t) (single:bool) =
       let t' = enter kind t name emptyAttr in
       let t' = setCurrentType t' typ single in
       exit t'
@@ -357,21 +308,18 @@ module Scope = struct
                | None -> None
             else None
 
-   let rec lookupVal (t:t) (name:id) : t option =
-      match name with
-      | [] -> Some(t)
-      | h::rest ->
-         let rec inner_loop l =
-            match l with
-            | []   -> None
-            | local::locals ->
-               match IdMap.find [h] local with
-               | found ->
-                  lookupVal found rest
-               | exception Not_found ->
-                  inner_loop locals
-         in inner_loop t.locals
+   let rec lookupVal (t:t) (name:id) : var option =
+      let rec inner_loop l =
+         match l with
+         | []   -> None
+         | local::locals ->
+            match IdMap.find name local with
+            | found -> Some(found)
+            | exception Not_found ->
+               inner_loop locals
+      in inner_loop t.locals
 
+   (** Returns all context (functions) within the same context as the current *)
    let getAllWithSameContext (t:t) : t list =
       let contexts =
          match t.parent with
@@ -383,18 +331,21 @@ module Scope = struct
          List.fold_left (fun s a -> try (IdMap.find a parent.func) :: s with | _ -> s) [t] contexts
       | _ -> [t]
 
-   let lookupMemInAllContext (t:t) (name:id) : t option =
+   (** Search for any mem or instance with the given name.
+       Note: it looks in all functions with the same context.
+   *)
+   let lookupMemInAllContext (t:t) (name:id) : var option =
       let tables = getAllWithSameContext t in
       let rec loop ctx =
          match ctx with
          | [] -> None
          | h::tt ->
-            match findAny false findMemInst h name with
+            match findMemInst h name with
             | Some(_) as a -> a
             | None -> loop tt
       in loop tables
 
-   let lookupVariable (t:t) (name:id) : t option =
+   let lookupVariable (t:t) (name:id) : var option =
       match lookupMemInAllContext t name with
       | Some(_) as a -> a
       | None -> lookupVal t name
@@ -405,8 +356,6 @@ module Scope = struct
       | Module   -> findAny true findModule t name
       | Operator -> findAny true findOperator t name
       | Type     -> findAny true findType t name
-      | Mem | Instance -> findAny true findMemInst t name
-      | Var      -> lookupVariable t name
 
    let lookup kind (t:t) (name:id) : (path * VType.t * t) option =
       match lookupScope kind t name with
@@ -420,26 +369,36 @@ module Scope = struct
          Printf.printf "Unknown %s '%s'" (kindStr kind) (idStr name);
          Error.raiseError (Printf.sprintf "Unknown %s '%s'" (kindStr kind) (idStr name)) loc
 
+   let lookupVariableRaise (t:t) (name:id) (loc:Loc.t) : var =
+      match lookupVariable  t name with
+      | Some(a) -> a
+      | None ->
+         Printf.printf "Unknown symbol '%s'" (idStr name);
+         Error.raiseError (Printf.sprintf "Unknown symbol '%s'" (idStr name)) loc
+
+
    let isMemOrInstance (t:t) (name:id) : bool =
       match lookupMemInAllContext t name with
       | Some(_) -> true
       | None    -> false
 
+   (** Adds a new instance to the given scope *)
    let addMem (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
-      let new_symbol = { (create Mem) with name = name; typ = typ; loc = loc; } in
+      let new_symbol = { name = name; typ = typ; loc = loc; is_inst = false } in
       { t with mem_inst = IdMap.add name new_symbol t.mem_inst; active = true }
 
+   (** Adds a new mem variable to the given scope *)
    let addInstance (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
-      let new_symbol = { (create Instance) with name = name; typ = typ; loc = loc; } in
+      let new_symbol = { name = name; typ = typ; loc = loc; is_inst = true } in
       { t with mem_inst = IdMap.add name new_symbol t.mem_inst; active = true }
 
-
+   (** Adds a variable to the given context *)
    let addVar (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
       (* Check the if the variable exitst *)
       match lookupVariable t name with
       | None ->
          (* The variable does not exits, add it *)
-         let new_symbol = { (create Var) with name = name; typ = typ; loc = loc;  } in
+         let new_symbol = { name = name; typ = typ; loc = loc; is_inst = false } in
          let first,rest =
             match t.locals with
             | [] -> IdMap.empty,[]
@@ -457,7 +416,7 @@ module Scope = struct
 
 
    (** Returns all mem and instances of the given scope, assuming is a function *)
-   let getFunctionMemInst (t:t) : t list =
+   let getFunctionMemInst (t:t) : var list =
       getAllWithSameContext t
       |> List.map (fun a -> a.mem_inst)
       |> List.map IdMap.to_list
@@ -471,7 +430,7 @@ module Scope = struct
       | None -> IdTypeSet.empty
       | Some(_,_,s) ->
          getFunctionMemInst s
-         |> List.map (fun a -> a.name, a.typ)
+         |> List.map (fun (a:var) -> a.name, a.typ)
          |> IdTypeSet.of_list
 
    (** Lookup the function and optionally returns the name of the initilization function *)
@@ -575,7 +534,7 @@ let builtin_table =
       ["&&"]  , Scope.Operator, VType.Constants.bool_bool_bool (), false;
    ]
 
-let builtin_functions = List.map (fun (a,_,_,_)->a) builtin_table |> IdSet.of_list
+let builtin_functions = List.map (fun (a,_,_,_)-> a ) builtin_table |> IdSet.of_list
 
 module Env = struct
 
@@ -584,13 +543,6 @@ module Env = struct
          data    : 'a;
          scope   : Scope.t;
       }
-
-   (** Prints all the information of the current environment *)
-   let show (state:'a t) : string=
-      Scope.show state.scope
-
-   let show_full (state:'a t) : string =
-      Scope.show_full state.scope
 
    (** Gets a new tick (integer value) and updates the state *)
    let tick (state:'a t) : int * 'a t =
@@ -640,6 +592,14 @@ module Env = struct
    (** Returns the full path of a function. Raises an error if it cannot be found *)
    let lookupRaise kind (state:'a t) (name:id) (loc:Loc.t) : path * VType.t * Scope.t =
       Scope.lookupRaise kind state.scope name loc
+
+   (** Looks for a variable in the given scope *)
+   let lookupVariable (state:'a t) (name:id) : Scope.var option =
+      Scope.lookupVariable state.scope name
+
+   (** Looks for a variable in the given scope. Raises an error if it cannot be found *)
+   let lookupVariableRaise (state:'a t) (name:id) (loc:Loc.t) : Scope.var =
+      Scope.lookupVariableRaise state.scope name loc
 
    (** Returns the mem and instances for a function *)
    let getMemAndInstances (state:'a t) (name:id) : IdTypeSet.t =
@@ -699,7 +659,7 @@ module Env = struct
    let addBuiltin (state:'a t) (name,kind,typ,single) : 'a t =
       {
          state with
-         scope = Scope.addBuiltin state.scope (name,kind,typ,single);
+         scope = Scope.addBuiltin state.scope kind name typ single;
       }
 
    (** Adds the builtin functions to the given context *)
