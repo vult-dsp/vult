@@ -97,24 +97,18 @@ fix16_t fix_exp(fix16_t inValue) {
     return result;
 }
 
-fix16_t fix_sin(fix16_t inAngle)
-{
-    fix16_t tempAngle = inAngle % (fix_pi << 1);
-
-    if(tempAngle > fix_pi)
-        tempAngle -= (fix_pi << 1);
-    else if(tempAngle < -fix_pi)
-        tempAngle += (fix_pi << 1);
-
-    fix16_t tempAngleSq = fix_mul(tempAngle, tempAngle);
-
-    fix16_t tempOut;
-    tempOut = fix_mul(-13, tempAngleSq) + 546;
-    tempOut = fix_mul(tempOut, tempAngleSq) - 10923;
-    tempOut = fix_mul(tempOut, tempAngleSq) + 65536;
-    tempOut = fix_mul(tempOut, tempAngle);
-
-    return tempOut;
+fix16_t fix_sin(fix16_t x0){
+   fix16_t x1 = (x0 % 0x6487e /* 6.283185 */);
+   uint8_t sign = (x0 > 0x3243f /* 3.141593 */);
+   fix16_t x2 = (x1 % 0x3243f /* 3.141593 */);
+   fix16_t x3;
+   if(x2 > 0x1921f /* 1.570796 */)
+      x3 = fix_add(0x3243f /* 3.141593 */,(- x2));
+   else
+      x3 = x2;
+   fix16_t xp2 = fix_mul(x3,x3);
+   fix16_t acc = fix_mul(x3,fix_add(0x10000 /* 1.000000 */,fix_mul(fix_add((0xffffd556 /* -0.166667 */),fix_mul(0x222 /* 0.008333 */,xp2)),xp2)));
+   return (sign?(- acc):acc);
 }
 
 fix16_t fix_cos(fix16_t inAngle)
