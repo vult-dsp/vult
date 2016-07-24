@@ -1,0 +1,49 @@
+// Copyright (c) 2014 Leonardo Laguna Ruiz
+// License: MIT
+
+// This file contains implementations of a few trigonometric functions
+// that are part of the Vult runtime
+// Most of this functions were obtained with Mathematica. e.g.
+// HornerForm[Evaluate[Normal[Series[Tanh[x], {x, 0, 11}]]]]
+
+fun sin(x0){
+   val x1    = x0 % (2.0*3.14159265359);
+   val sign  = x0 > 3.14159265359;
+   val x2    = x1 % 3.14159265359;
+   val x3    = if x2 > 3.14159265359/2.0 then 3.14159265359 - x2 else x2;
+   val xp2   = x3 * x3;
+   val acc   = x3 * (1.0 + (-1.0/6.0 + 1.0/120.0 * xp2) * xp2);
+   return if sign then -acc else acc;
+}
+
+fun cos(x0){
+   return sin(x0 + 3.14159265359/2.0);
+}
+
+
+fun tanh(x){
+   val xp2 = x * x;
+   return x*(1.0+xp2 *((-1.0/3.0)+xp2*(2.0/15.0+xp2*((-17.0/315.0)+xp2*(62.0/2835.0-1382.0/155925.0*xp2)))));
+}
+
+fun tan(x){
+   val xp2 = x * x;
+   return x*(1.0+xp2 *((1.0/3.0)+xp2*(2.0/15.0+xp2*((17.0/315.0)+xp2*(62.0/2835.0+1382.0/155925.0*xp2)))));
+}
+
+// Alternative implementation. Uses a fixed polynomial size
+// Compared to the version in vultin.c this one avoids
+// using division.
+fun exp(x) {
+   val acc = 1.0/40320.0;
+   acc = 1.0/5040.0 + acc * x;
+   acc = 1.0/720.0 + acc * x;
+   acc = 1.0/120.0 + acc * x;
+   acc = 1.0/24.0 + acc * x;
+   acc = 1.0/6.0 + acc * x;
+   acc = 1.0/2.0 + acc * x;
+   acc = 1.0 + acc * x;
+   acc = 1.0 + acc * x;
+   return acc;
+}
+
