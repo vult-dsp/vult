@@ -1,0 +1,27 @@
+// Copyright (c) 2016 Leonardo Laguna Ruiz
+// License: MIT
+// This file contains functions that are useful in
+// different contexts
+
+
+// Returns true every time the input value changes
+fun change(x:real):bool {
+    mem pre_x;
+    val v:bool = pre_x<>x;
+    pre_x = x;
+    return v;
+}
+
+fun pitchToRate(d) return 8.1758*exp(0.0577623*d)/44100.0;
+
+fun phasor(pitch:real,reset:bool){
+    mem rate,phase;
+    if(change(pitch))
+        rate = pitchToRate(pitch);
+    phase = if reset then 0.0 else (phase + rate) % 1.0;
+    return phase;
+}
+and phasorInit() @[init] {
+   mem rate = pitchToRate(60.0);
+}
+
