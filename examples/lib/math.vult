@@ -33,17 +33,18 @@ fun tan(x){
 
 // Alternative implementation. Uses a fixed polynomial size
 // Compared to the version in vultin.c this one avoids
-// using division.
+// using division. The polynomial is expanded at 3.5 which is
+// better for pitch calculations.
+// Mathematica: HornerForm[Evaluate[Normal[Series[Exp[x],{x,3.5,8}]]]]
 fun exp(x) {
-   val acc = 1.0/40320.0;
-   acc = 1.0/5040.0 + acc * x;
-   acc = 1.0/720.0 + acc * x;
-   acc = 1.0/120.0 + acc * x;
-   acc = 1.0/24.0 + acc * x;
-   acc = 1.0/6.0 + acc * x;
-   acc = 1.0/2.0 + acc * x;
-   acc = 1.0 + acc * x;
-   acc = 1.0 + acc * x;
+   val acc = -0.01642631545570055 + 0.0008213157727850276 * x;
+   acc = 0.16672710187536058 + x * acc;
+   acc = -0.9716165592046876 + x * acc;
+   acc = 3.769326074725287  + x * acc;
+   acc = -9.079440539195287 + x * acc;
+   acc = 15.035981849082908 + x * acc;
+   acc = -12.20233976850298 + x * acc;
+   acc = 6.292667998164617  + x * acc;
    return acc;
 }
 
