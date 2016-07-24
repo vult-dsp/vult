@@ -99,7 +99,7 @@ fix16_t fix_exp(fix16_t inValue) {
 
 fix16_t fix_sin(fix16_t x0){
    fix16_t x1 = (x0 % 0x6487e /* 6.283185 */);
-   uint8_t sign = (x0 > 0x3243f /* 3.141593 */);
+   uint8_t sign = (x1 > 0x3243f /* 3.141593 */);
    fix16_t x2 = (x1 % 0x3243f /* 3.141593 */);
    fix16_t x3;
    if(x2 > 0x1921f /* 1.570796 */)
