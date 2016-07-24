@@ -1,81 +1,35 @@
 
 
-fun each(n){
-   mem count;
-   val ret = (count == 0);
-   count = (count + 1) % n;
-   return ret;
-}
+fun adsr(gate:bool, a,d,s,r) : real {
+   mem state;
+   mem out;
+   mem rate;
+   mem target;
+   // Magic numbers:
+   // 0.001 : scales the effect of input parameters
+   // 1024.0 : improves numeric precision in fixed-point
 
-fun bchange(x) {
-    mem pre_x;
-    val v:bool = pre_x <> x;
-    pre_x = x;
-    return v;
-}
+   out = out + (target - out) * rate * 0.001;
 
-// Average two samples
-fun lpfilter(x){
-   mem pre_x;
-   val ret = (x+pre_x)/2.;
-   pre_x = x;
-   return ret;
-}
-
-fun adsr(gate,attack,decay,sustain,release){
-   mem state,value;
-   mem attackRate;
-   mem decayRate;
-   mem releaseRate;
-   mem sustainLevel;
-
-   val IDLE    = 0;
-   val ATTACK  = 1;
-   val DECAY   = 2;
-   val SUSTAIN = 3;
-   val RELEASE = 4;
-
-   // Calculates the rate every 32 samples
-   if(each(32)){
-      attackRate      = (1./44100.) * (1./(attack+0.1));
-      val inv_sustain = 1. - sustain;
-      decayRate       = (inv_sustain/44100.) * (inv_sustain/(decay+0.1));
-      releaseRate     = (0.5/44100.) * (0.5/(release+0.1));
+   // idle // release
+   if(state == 0) {
+      if(gate) state = 1; // goto attack
+      rate = r;
+      target = 0.0;
    }
-   sustainLevel = sustain;
-
-   val rate = 0.0;
-
-   val trig = bchange(gate);
-
-   val up   = trig && gate;
-   val down = trig && not(gate);
-
-   // State machine of the ADSR
-   if(state == IDLE){
-      if(up) state = ATTACK;
+   // attack
+   if(state == 1) {
+      if(not(gate)) state = 0; // goto release
+      if(out > 1024.0) state = 2; // goto decay
+      rate = a;
+      target = 1.2 * 1024.0;
    }
-   else if(state == ATTACK){
-      if(value >= 1.) state = DECAY;
-      if(down)       state = RELEASE;
-      rate = attackRate;
-   }
-   else if(state == DECAY){
-      if(value <= sustainLevel) state = SUSTAIN;
-      if(down)                  state = RELEASE;
-      rate = -decayRate;
-   }
-   else if(state == SUSTAIN){
-      if(down) state = RELEASE;
-      rate  = 0.;
-      value = sustainLevel;
-   }
-   else if(state == RELEASE){
-      if(value <= 0.) state = IDLE;
-      if(up)         state = ATTACK;
-      rate = -releaseRate;
+   // decay // sustain
+   if (state == 2) {
+      if(not(gate)) state = 0; // goto release
+      rate = d;
+      target = s * 1024.0;
    }
 
-   value = clip(lpfilter(rate) + value,0.,1.);
-   return value;
+   return out/1024.0;
 }
