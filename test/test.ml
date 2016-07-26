@@ -81,6 +81,8 @@ let code_files =
       "web/template.vult";
       "web/volume.vult";
       "web/delay.vult";
+      "lib/math.vult";
+      "lib/util.vult";
    ]
 
 (** Flags that defines if a baseline should be created for tests *)
