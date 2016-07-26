@@ -96,6 +96,7 @@ let fixContext (is_special:bool) args =
 
 let rec printExp (params:params) (e:cexp) : Pla.t =
    match e with
+   | CEEmpty -> Pla.unit
    | CEInt(n) ->
       {pla|(<#n#i>|0)|pla}
    | CEFloat(_,n) ->

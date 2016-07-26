@@ -62,6 +62,7 @@ let passes_files =
       "tuple_to_types.vult", pass3_options;
       "simplify.vult", pass3_options;
       "external_calls.vult", Passes.default_options;
+      "output_references.vult", Passes.default_options;
    ]
 
 
@@ -183,8 +184,9 @@ end
 module PassesTest = struct
 
    let process options (fullfile:string) : string =
+      let args = { default_arguments with ccode = true } in
       ParserVult.parseFile fullfile
-      |> Passes.applyTransformationsSingle default_arguments ~options:options
+      |> Passes.applyTransformationsSingle args ~options:options
       |> showResults
 
    let run options (file:string) context =

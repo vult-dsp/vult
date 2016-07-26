@@ -1,0 +1,11 @@
+fun foo() {
+   if(true)
+      return 0.0,0.0;
+   else
+      return 1.0,1.0;
+}
+
+fun bar() {
+	val x,y = foo(),1;
+	return x;
+}

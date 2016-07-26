@@ -145,10 +145,10 @@ static inline void    bool_set(int8_t a[], int i, int8_t value)  { a[i] = value;
 static inline int8_t  bool_get(int8_t a[], int i)                { return a[i]; }
 
 /* Array initialization */
-void float_init_array(float *data,int size, float value);
-void int_init_array  (int *data,int size, int value);
-void bool_init_array (int8_t *data,int size, int8_t value);
-void fix_init_array  (fix16_t *data,int size, fix16_t value);
+void float_init_array(int size, float value, float *data);
+void int_init_array  (int size, int value, int *data);
+void bool_init_array (int size, int8_t value, int8_t *data);
+void fix_init_array  (int size, fix16_t value, fix16_t *data);
 
 static inline uint8_t bool_not(uint8_t x){
     return !x;

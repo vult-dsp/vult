@@ -104,6 +104,14 @@ let reset (state:PassData.t Env.t) : PassData.t Env.t =
 let shouldReapply (state:PassData.t Env.t) : bool =
    PassData.shouldReapply (Env.get state)
 
+let newState (state:'a Env.t) (data:'b) : 'b Env.t =
+   Env.derive state data
+
+let restoreState (original:'a Env.t) (current:'b Env.t) : 'a Env.t * 'b =
+   let current_data = Env.get current in
+   let original_data = Env.get original in
+   Env.derive current original_data, current_data
+
 module InsertContext = struct
 
    let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
@@ -644,14 +652,6 @@ module SimplifyIfExp = struct
 
    end
 
-   let newState state data =
-      Env.derive state data
-
-   let restoreState original current =
-      let current_data = Env.get current in
-      let original_data = Env.get original in
-      Env.derive current original_data, current_data
-
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "SimplifyIfExp.stmt_x" @@ fun state stmt ->
       match stmt with
@@ -672,6 +672,12 @@ module SimplifyIfExp = struct
          let acc',rhs' = Mapper.map_exp_to_stmt BindIfExp.mapper acc rhs in
          let state',acc_stmts = restoreState state acc' in
          let stmts'    = StmtVal(lhs,Some(rhs'),attr)::acc_stmts in
+         state', List.rev stmts'
+      | StmtReturn(e,attr) ->
+         let acc       = newState state [] in
+         let acc',e' = Mapper.map_exp_to_stmt BindIfExp.mapper acc e in
+         let state',acc_stmts = restoreState state acc' in
+         let stmts'    = StmtReturn(e',attr)::acc_stmts in
          state', List.rev stmts'
       | _ -> state, [stmt]
 
@@ -697,7 +703,7 @@ module ReplaceFunctionNames = struct
    let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
       Mapper.make "ReplaceFunctionNames.stmt" @@ fun state stmt ->
       match stmt with
-      | StmtFun(_,args,body,rettype,attr) ->
+      | StmtFun([_],args,body,rettype,attr) ->
          let Path(path) = Env.currentScope state in
          state, StmtFun(path,args,body,rettype,attr)
       | _ ->
@@ -717,6 +723,107 @@ module ReplaceFunctionNames = struct
       | _ -> state, typ
 
    let mapper = Mapper.{ default_mapper with exp; stmt; vtype_c }
+
+end
+
+module ReturnReferences = struct
+
+   let unitAttr attr = { attr with typ = Some(VType.Constants.unit_type)}
+
+   let isSimpleType (typ:VType.t) : bool =
+      match !typ with
+      | VType.TId(["real"],_) -> true
+      | VType.TId(["int"],_) -> true
+      | VType.TId(["bool"],_) -> true
+      | VType.TId(["unit"],_) -> true
+      | _ -> false
+
+   (** This mapper is used to bind the if expressions to a variable *)
+   module BindFunctionCalls = struct
+
+      let exp : (stmt list Env.t,exp) Mapper.mapper_func =
+         Mapper.make "BindFunctionCalls.exp" @@ fun state exp ->
+         match exp with
+         | PCall(_,_,_,({ typ = Some(typ) } as attr)) when not (isSimpleType typ) ->
+            let n,state' = Env.tick state in
+            let var_name = "_if_"^(string_of_int n) in
+            let exp'     = PId([var_name],attr) in
+            let lhs      = LId([var_name],attr.typ,attr) in
+            let stmt     = StmtVal(lhs,Some(exp),emptyAttr) in
+            let acc      = Env.get state' in
+            let state'   = Env.set state' (stmt::acc) in
+            state',exp'
+         | _ -> state,exp
+
+      let mapper = { Mapper.default_mapper with Mapper.exp = exp }
+
+   end
+
+   let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
+      Mapper.make "ReturnReferences.stmt" @@ fun state stmt ->
+      let data = Env.get state in
+      if not data.PassData.args.ccode then
+         state, stmt
+      else
+         match stmt with
+         | StmtFun(name,args,body,Some(rettype),attr) when not (isSimpleType rettype) ->
+            let output = TypedId(["_output_"],rettype,emptyAttr) in
+            let stmt' = StmtFun(name,args@[output],body,Some(VType.Constants.unit_type),attr) in
+            state, stmt'
+         | StmtBind(LId(lhs,Some(typ),lattr),PCall(inst,name,args,attr),battr) when not (isSimpleType typ) ->
+            let arg = PId(lhs,lattr) in
+            let fixed_attr = unitAttr attr in
+            state, StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],attr),battr)
+         | StmtVal(LId(lhs,Some(typ),lattr),Some(PCall(inst,name,args,attr)),battr) when not (isSimpleType typ) ->
+            let arg = PId(lhs,lattr) in
+            let fixed_attr = unitAttr attr in
+            state, StmtVal(LWild(fixed_attr),Some(PCall(inst,name,args@[arg],attr)),battr)
+         | _ -> state, stmt
+
+   let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
+      Mapper.makeExpander "ReturnReferences.stmt_x" @@ fun state stmt ->
+      let data = Env.get state in
+      if not data.PassData.args.ccode then
+         state, [stmt]
+      else
+         match stmt with
+         | StmtBind(_,PCall(_,_,_,_),_) ->
+            state, [stmt]
+         | StmtVal(_,Some(PCall(_,_,_,_)),_) ->
+            state, [stmt]
+         | StmtBind(lhs,rhs,attr) ->
+            let acc       = newState state [] in
+            let acc',rhs' = Mapper.map_exp_to_stmt BindFunctionCalls.mapper acc rhs in
+            let state',acc_stmts = restoreState state acc' in
+            let state' = if CCList.is_empty acc_stmts then state' else reapply state' in
+            let stmts' = StmtBind(lhs,rhs',attr) :: acc_stmts in
+            state', List.rev stmts'
+         | StmtVal(lhs,Some(rhs),attr) ->
+            let acc       = newState state [] in
+            let acc',rhs' = Mapper.map_exp_to_stmt BindFunctionCalls.mapper acc rhs in
+            let state',acc_stmts = restoreState state acc' in
+            let state' = if CCList.is_empty acc_stmts then state' else reapply state' in
+            let stmts' = StmtVal(lhs,Some(rhs'),attr)::acc_stmts in
+            state', List.rev stmts'
+         | StmtReturn(e,attr) ->
+            let eattr = GetAttr.fromExp e in
+            begin match eattr.typ with
+               | Some(typ) when not (isSimpleType typ) ->
+                  let stmt' = StmtBind(LId(["_output_"],Some(typ),attr),e,attr) in
+                  reapply state, [stmt';StmtReturn(PUnit(unitAttr eattr),attr)]
+               | _ ->
+                  let acc     = newState state [] in
+                  let acc',e' = Mapper.map_exp_to_stmt BindFunctionCalls.mapper acc e in
+                  let state',acc_stmts = restoreState state acc' in
+                  let state' = if CCList.is_empty acc_stmts then state' else reapply state' in
+                  let stmts' = StmtReturn(e',attr)::acc_stmts in
+                  state', List.rev stmts'
+            end
+         | _ -> state, [stmt]
+
+
+   let mapper = Mapper.{ default_mapper with stmt; stmt_x }
+
 
 end
 
@@ -760,6 +867,7 @@ let pass3 =
 
 let pass4 =
    ReplaceFunctionNames.mapper
+   |> Mapper.seq ReturnReferences.mapper
 
 
 let rec applyPassRepeat name apply pass pass_name (state,stmts) =

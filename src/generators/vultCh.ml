@@ -40,6 +40,7 @@ let isSimple (e:cexp) : bool =
 (** Returns a template the print the expression *)
 let rec printExp (params:params) (e:cexp) : Pla.t =
    match e with
+   | CEEmpty -> Pla.unit
    | CEFloat(s,n) ->
       (** Parenthesize if it has a unary minus *)
       if n < 0.0 then

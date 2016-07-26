@@ -204,25 +204,25 @@ fix16_t fix_sqrt(fix16_t inValue)
 }
 
 /* Array initialization */
-void float_init_array(float *data,int size, float value) {
+void float_init_array(int size, float value, float *data) {
     int i;
     for(i=0;i<size;i++)
         data[i] = value;
 }
 
-void int_init_array  (int *data,int size, int value) {
+void int_init_array  (int size, int value, int *data) {
     int i;
     for(i=0;i<size;i++)
         data[i] = value;
 }
 
-void bool_init_array (int8_t *data,int size, int8_t value) {
+void bool_init_array (int size, int8_t value, int8_t *data) {
     int i;
     for(i=0;i<size;i++)
         data[i] = value;
 }
 
-void fix_init_array  (fix16_t *data,int size, fix16_t value) {
+void fix_init_array  (int size, fix16_t value, fix16_t *data) {
     int i;
     for(i=0;i<size;i++)
         data[i] = value;

@@ -149,7 +149,7 @@ let expType (p:parameters) (e:exp) : type_descr =
 
 let rec convertExp (p:parameters) (e:exp) : cexp =
    match e with
-   | PUnit(_)       -> CEInt(0)
+   | PUnit(_)       -> CEEmpty
    | PBool(v,_)     -> CEBool(v)
    | PInt(n,_)      -> CEInt(n)
    | PReal(v,_)     ->
@@ -252,14 +252,13 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let body' = convertStmt p body in
       let fname = convertId p name in
       CSFunction(convertType p ret, fname,arg_names,body')
-   (* Special case for initializing arrays*)
-   | StmtBind(LId(name,_,_) ,PCall(None,["makeArray"],[size;init],_),_) when p.return_by_ref ->
+   | StmtBind(LWild(_) ,PCall(None,["makeArray"],[size;init;var],_),_) when p.return_by_ref ->
       let init' = convertExp p init in
       let size' = convertExp p size in
       let init_typ  = expType p init in
       let init_func = getInitArrayFunction p init_typ in
-      let var_name  = CEVar(convertVarId p name) in
-      CSBind(CLWild,CECall(init_func,[var_name;size';init']))
+      let var'  = convertExp p var in
+      CSBind(CLWild,CECall(init_func,[size';init';var']))
    | StmtBind(lhs,rhs,_) ->
       let lhs' = convertLhsExp false p lhs in
       let rhs' = convertExp p rhs in

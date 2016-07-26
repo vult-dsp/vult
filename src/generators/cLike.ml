@@ -45,6 +45,7 @@ type cexp =
    | CEIf     of cexp * cexp * cexp
    | CETuple  of (string * cexp) list
    | CENewObj
+   | CEEmpty
    [@@deriving show,eq,ord]
 
 type clhsexp =
