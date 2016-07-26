@@ -100,10 +100,10 @@ and lhsExpressionListBuff buffer expl =
 (** Adds to the print buffer a namedId *)
 let rec typedArgBuff buffer id =
    match id with
-   | SimpleId(id1,_) -> identifierBuff buffer id1
-   | TypedId(["_"],id_type,_) ->
+   | SimpleId(id1,_,_) -> identifierBuff buffer id1
+   | TypedId(["_"],id_type,_,_) ->
       typeExpressionBuff buffer id_type
-   | TypedId(id1,id_type,_) ->
+   | TypedId(id1,id_type,_,_) ->
       identifierBuff buffer id1;
       append buffer ":";
       typeExpressionBuff buffer id_type

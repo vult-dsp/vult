@@ -206,15 +206,15 @@ and map_vtype (mapper:'a mapper) (state:'a) (te:VType.vtype ref) : 'a * VType.vt
 
 let rec map_typed_id (mapper:'a mapper) (state:'a) (t:typed_id) : 'a * typed_id =
    match t with
-   | SimpleId(id,attr) ->
+   | SimpleId(id,kind,attr) ->
       let state',id'   = map_id mapper state id in
       let state',attr' = map_attr mapper state' attr in
-      apply mapper.typed_id state' (SimpleId(id',attr'))
-   | TypedId(id,tp,attr) ->
+      apply mapper.typed_id state' (SimpleId(id',kind,attr'))
+   | TypedId(id,tp,kind,attr) ->
       let state',id'   = map_id mapper state id in
       let state',tp'   = map_vtype mapper state' tp in
       let state',attr' = map_attr mapper state' attr in
-      apply mapper.typed_id state' (TypedId(id',tp',attr'))
+      apply mapper.typed_id state' (TypedId(id',tp',kind,attr'))
 
 let rec map_lhs_exp (mapper:'state mapper) (state:'state) (exp:lhs_exp) : 'state * lhs_exp =
    let map_lhs_exp_list = mapper_list map_lhs_exp in

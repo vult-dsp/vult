@@ -123,7 +123,7 @@ module InsertContext = struct
          if Env.isActive state name && not (PassData.hasContextArgument data path) then
             let ctx_full = Env.getContext state name in
             let ctx      = Env.pathFromCurrent state ctx_full in
-            let arg0     = TypedId(["_ctx"],ref (VType.TId(ctx,None)),attr) in
+            let arg0     = TypedId(["_ctx"],ref (VType.TId(ctx,None)),ContextArg,attr) in
             let data'    = PassData.markContextArgument data path in
             Env.set state data', StmtFun(name,arg0::args,body,rettype,attr)
          else
@@ -433,7 +433,7 @@ module ReportUnboundType = struct
    let typed_id : ('a Env.t,typed_id) Mapper.mapper_func =
       Mapper.make "ReportUnboundType.typed_id" @@ fun state t ->
       match t with
-      | TypedId(id,typ,attr) when VType.isUnbound typ ->
+      | TypedId(id,typ,_,attr) when VType.isUnbound typ ->
          reportError id attr
       | _ -> state, t
 
@@ -767,7 +767,7 @@ module ReturnReferences = struct
       else
          match stmt with
          | StmtFun(name,args,body,Some(rettype),attr) when not (isSimpleType rettype) ->
-            let output = TypedId(["_output_"],rettype,emptyAttr) in
+            let output = TypedId(["_output_"],rettype,OutputArg,emptyAttr) in
             let stmt' = StmtFun(name,args@[output],body,Some(VType.Constants.unit_type),attr) in
             state, stmt'
          | StmtBind(LId(lhs,Some(typ),lattr),PCall(inst,name,args,attr),battr) when not (isSimpleType typ) ->

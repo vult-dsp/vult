@@ -40,10 +40,19 @@ let checkRealType (real:string) : unit =
 module Configuration = struct
 
    (** If the first argument is data, returns true and remove it *)
-   let passData (inputs:string list) : bool * string list =
+   let rec passData (inputs:'a list) =
      match inputs with
-     | "data"::t -> true, t
-     | _ -> false, inputs
+     | `Context::t -> 
+         let _,inputs,outputs = passData t in
+         true, inputs, outputs
+     | `Input(typ)::t ->
+         let pass_ctx,inputs,outputs = passData t in
+         pass_ctx, typ::inputs, outputs
+     | `Output(elems)::t ->
+         let pass_ctx,inputs,_ = passData t in
+         pass_ctx, inputs, elems
+     | [] ->
+         false,[],[]
 
    (** Checks that the type is a numeric type *)
    let checkNumeric (typ:VType.t) : string option =
@@ -64,18 +73,27 @@ module Configuration = struct
          let msg = "The return type of the function process should be a numeric value or a tuple with numeric elements" in
          Error.raiseError msg loc
 
+   let getOutputsOrDefault outputs (loc:Loc.t) (typ:VType.t) =
+      match !typ,outputs with
+      | VType.TId(["unit"],_),_ -> outputs
+      | _,[] -> getOutputs loc typ
+      | _ ->
+         failwith "Generate.getOutputsOrDefault: strage error"
+
    (** Returns the type of the argument as a string, if it's the context then the type is data *)
-   let getType (arg:typed_id) : string =
+   let getType (arg:typed_id) =
       match arg with
-      | TypedId(["_ctx"],_,_) -> "data"
-      | TypedId(_,typ,attr) ->
+      | TypedId(_,_,ContextArg,_) -> `Context
+      | TypedId(_,typ,InputArg,attr) ->
          begin
             match checkNumeric typ with
-            | Some(typ_name) -> typ_name
+            | Some(typ_name) -> `Input(typ_name)
             | None ->
                let msg = "The type of this argument must be numeric" in
                Error.raiseError msg attr.loc
          end
+      | TypedId(_,typ,OutputArg,attr) ->
+         `Output (getOutputs attr.loc typ)
       | _ -> failwith "Configuration.getType: Undefined type"
 
 
@@ -85,28 +103,28 @@ module Configuration = struct
       let conf : configuration = Env.get state in
       match stmt with
       | StmtFun([cname;"process"],args,_,Some(rettype),attr) when conf.module_name = cname ->
-         let pass_data,process_inputs = List.map getType args |> passData in
-         let process_outputs = getOutputs attr.loc rettype in
+         let pass_data,process_inputs,process_outputs = List.map getType args |> passData in
+         let process_outputs = getOutputsOrDefault process_outputs attr.loc rettype in
          let pass_data = conf.pass_data || pass_data in
          let state' = Env.set state { conf with process_inputs; process_outputs; pass_data } in
          state', stmt
       | StmtFun([cname;"noteOn"],args,_,_,_) when conf.module_name = cname ->
-         let pass_data,noteon_inputs = List.map getType args |> passData in
+         let pass_data,noteon_inputs,_ = List.map getType args |> passData in
          let pass_data = conf.pass_data || pass_data in
          let state' = Env.set state { conf with noteon_inputs; pass_data } in
          state', stmt
       | StmtFun([cname;"noteOff"],args,_,_,_) when conf.module_name = cname ->
-         let pass_data,noteoff_inputs = List.map getType args |> passData in
+         let pass_data,noteoff_inputs,_ = List.map getType args |> passData in
          let pass_data = conf.pass_data || pass_data in
          let state' = Env.set state { conf with noteoff_inputs; pass_data } in
          state', stmt
       | StmtFun([cname;"controlChange"],args,_,_,_) when conf.module_name = cname ->
-         let pass_data,controlchange_inputs = List.map getType args |> passData in
+         let pass_data,controlchange_inputs,_ = List.map getType args |> passData in
          let pass_data = conf.pass_data || pass_data in
          let state' = Env.set state { conf with controlchange_inputs; pass_data } in
          state', stmt
       | StmtFun([cname;"default"],args,_,_,_) when conf.module_name = cname ->
-         let pass_data,default_inputs = List.map getType args |> passData in
+         let pass_data,default_inputs,_ = List.map getType args |> passData in
          let pass_data = conf.pass_data || pass_data in
          let state' = Env.set state { conf with default_inputs; pass_data } in
          state', stmt

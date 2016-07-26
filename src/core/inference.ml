@@ -168,16 +168,16 @@ let rec addLhsToEnv mem_var (env:'a Env.t) (lhs:lhs_exp) : 'a Env.t =
 let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : typed_id list * VType.t list * 'a Env.t =
    match args with
    | [] -> [], [], env
-   | SimpleId(id,attr)::t ->
+   | SimpleId(id,kind,attr)::t ->
       let typ  = VType.newvar () in
       let env' = Env.addVar env id typ attr in
       let inner_args, inner_typ, env' = addArgsToEnv env' t in
-      TypedId(id,typ,attr) :: inner_args, typ :: inner_typ, env'
-   | TypedId(id,typ,attr)::t ->
+      TypedId(id,typ,kind,attr) :: inner_args, typ :: inner_typ, env'
+   | TypedId(id,typ,kind,attr)::t ->
       checkType (typLoc typ) env typ;
       let env' = Env.addVar env id typ attr in
       let inner_args, inner_typ, env' = addArgsToEnv env' t in
-      TypedId(id,typ,attr) :: inner_args, typ :: inner_typ, env'
+      TypedId(id,typ,kind,attr) :: inner_args, typ :: inner_typ, env'
 
 
 let unifyOpt (loc:Loc.t Lazy.t) (typ1:VType.t option) (typ2:VType.t option) : VType.t option =

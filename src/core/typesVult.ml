@@ -44,9 +44,15 @@ let pp_attr = fun fmt _ -> Format.pp_print_string fmt "attr"
 let equal_attr _ _ = true
 let compare_attr _ _ = 0
 
+type arg_type =
+   | InputArg
+   | OutputArg
+   | ContextArg
+   [@@deriving show,eq,ord]
+
 type typed_id =
-   | SimpleId of id * attr
-   | TypedId  of id * VType.t * attr
+   | SimpleId of id * arg_type * attr
+   | TypedId  of id * VType.t * arg_type * attr
    [@@deriving show,eq,ord]
 
 type lhs_exp =

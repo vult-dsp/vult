@@ -72,8 +72,8 @@ let isValue (typ:VType.t) : bool =
 
 let convertTypedId (p:parameters) (e:typed_id) : arg_type * string =
    match e with
-   | SimpleId(_,_)  -> failwith "VultToCLike.convertTypedId: everything should have types"
-   | TypedId(id,typ,_) ->
+   | SimpleId(_,_,_)  -> failwith "VultToCLike.convertTypedId: everything should have types"
+   | TypedId(id,typ,_,_) ->
       let typ_c   = convertType p typ in
       let typ_ref = if isValue typ then Var(typ_c) else Ref(typ_c) in
       typ_ref, convertVarId p id
