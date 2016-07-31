@@ -47,7 +47,7 @@ class <#output#s> : public AudioStream
 public:
   <#output#s>(void) : AudioStream(0,NULL)
   {
-     data = <#module_name#s>_process_init();
+     <#module_name#s>_process_init(data);
   }
 
   void begin() {
