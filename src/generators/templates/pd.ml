@@ -96,7 +96,7 @@ let tildePerformFunctionCall module_name (params:params) (config:configuration) 
             castInput params s [%pla{|*(in_<#i#i>++)|}])
          config.process_inputs
       |> (fun a -> if config.pass_data then (Pla.string "x->data")::a else a)
-      |> (fun a -> if config.process_outputs <> [] then a@[Pla.string "ret"] else a)
+      |> (fun a -> if List.length config.process_outputs > 1 then a@[Pla.string "ret"] else a)
       |> Pla.join_sep Pla.comma
    in
    (* declares the return variable and copies the values to the output buffers *)
@@ -106,7 +106,7 @@ let tildePerformFunctionCall module_name (params:params) (config:configuration) 
       | []  -> Pla.unit,Pla.unit
       | [o] ->
          let current_typ = Replacements.getType params.repl o in
-         let decl = [%pla{|<#current_typ#s> ret =|}] in
+         let decl = [%pla{|<#current_typ#s> ret = |}] in
          let value = castOutput params o (Pla.string "ret") in
          let copy = [%pla{|*(out_0++) = <#value#>;|}] in
          decl,copy
