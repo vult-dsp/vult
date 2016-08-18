@@ -25,3 +25,5 @@ and phasorInit() @[init] {
    mem rate = pitchToRate(60.0);
 }
 
+// Minimum value that can be represented with the fixed q16
+fun minFixed() return 0.0000152588;

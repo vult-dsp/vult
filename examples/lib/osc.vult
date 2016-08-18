@@ -2,6 +2,29 @@
 // License: MIT
 // Implementation of different oscillators
 
+// Saw  oscillator with simple soft transition
+fun saw_simple(p) {
+   val inc = Util.pitchToRate(p);
+   val i = if inc < Util.minFixed() then Util.minFixed() else inc;
+   // generater a ramp from -1.0  to 1.0
+   mem phase = (2.0*inc + phase) % 2.0;
+   val ph = phase - 1.0;
+   val o = 0.0;
+   // soften the transitions
+   if(ph >= 1.0 - i) {
+      val b = (1.0 - i - ph)/i;
+      o = b * abs(b) + ph;
+   }
+   else if(ph <= i - 1.0) {
+      val b = (i - 1.0 - ph)/i;
+      o = b * abs(b) + ph;
+   }
+   else {
+      o = ph;
+   }
+   return o;
+}
+
 
 // Simple wavetable oscillator
 fun wavetable(pitch:real,reset) : real {
