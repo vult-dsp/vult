@@ -205,14 +205,12 @@ module FixedPoint = struct
 
 
    let toFixed (n:float) : string =
-      let value =
-         if n < 0.0 then
-            Int32.of_float ((-. n) *. (float_of_int 0x10000))
-            |> Int32.lognot
-            |> Int32.add Int32.one
-         else
-            Int32.of_float (n *. (float_of_int 0x10000))
-      in Printf.sprintf "0x%lx /* %f */" value n
+      if n < 0.0 then
+         let value = Int32.of_float ((-. n) *. (float_of_int 0x10000)) in
+         Printf.sprintf "-0x%lx /* %f */" value n
+      else
+         let value = Int32.of_float (n *. (float_of_int 0x10000)) in
+         Printf.sprintf "0x%lx /* %f */" value n
 
    let real_string = Replacements.makeRealToString
          [
