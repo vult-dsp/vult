@@ -419,12 +419,14 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       let args', types, env'  = addArgsToEnv env' args in
       let types',table        = VType.fixTypeList [] types in
       let ret_type',_         = VType.fixOptType table ret_type in
+      let possible_ret_type   = VType.newvar () in
+      let typ  = VType.makeArrowType possible_ret_type types' in
+      let env' = Env.setCurrentType env' typ true in
       let body',env',body_ret = inferStmt env' (makeReturnType ret_type') body in
       let last_type           = getReturnType body_ret in
-      let typ  = VType.makeArrowType last_type types' in
-      let env' = Env.setCurrentType env' typ true in
       let env' = Env.exit env' in
       let  _   = raiseReturnError (attrLoc attr) ret_type' body_ret in
+      unifyRaise (stmtLoc stmt) possible_ret_type last_type;
       StmtFun(name,args',body',Some(last_type),attr), env', NoType
    | StmtIf(cond,then_,else_,attr) ->
       let cond',env', cond_type  = inferExp env cond in
