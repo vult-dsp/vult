@@ -244,18 +244,6 @@ module Scope = struct
    let addToContext (parent:t) (name:id) (is_init:bool) : t =
       { parent with ctx = Context.addTo parent.ctx name is_init }
 
-   let addFunction (t:t) (name:id) (attr:attr) : t =
-      let new_symbol =
-         { (create Function) with name = name;loc = attr.loc; ext_fn = attr.ext_fn } in
-      let t' =
-         if attr.fun_and then
-            addToContext t name attr.init
-         else
-            newContext t name attr.init
-      in
-      { t' with func = IdMap.add name new_symbol t.func; }
-
-
    let current (t:t) : path =
       let rec parentName parent =
          match parent with
@@ -407,12 +395,45 @@ module Scope = struct
          { t with locals = (IdMap.add name new_symbol first) :: rest }
       | Some(decl) ->
          (* If it exitst check the locations *)
-         if Loc.isSameLoc loc decl.loc then t else
+         if Loc.isSameLoc loc decl.loc then
+            t
+         else
             let msg =
                Printf.sprintf
-                  "Redefinition of variable '%s'. Previously defined here: %s" (idStr name) (Loc.to_string_readable decl.loc)
+                  "Redefinition of variable '%s'. Previously defined at %s" (idStr name) (Loc.to_string_readable decl.loc)
             in
             Error.raiseError msg loc
+
+   let addFunction (t:t) (name:id) (attr:attr) : t =
+      let add_it () =
+         let new_symbol =
+            { (create Function) with name = name;loc = attr.loc; ext_fn = attr.ext_fn } in
+         let t' =
+            if attr.fun_and then
+               addToContext t name attr.init
+            else
+               newContext t name attr.init
+         in
+         { t' with func = IdMap.add name new_symbol t.func; }
+      in
+
+      match lookup Function t name with
+      | None -> add_it ()
+
+      | Some(path,_,decl) ->
+         let current_path = pathAppend (current t) name in
+         if path <> current_path then
+            add_it ()
+         else
+            (* If it exitst check the locations *)
+            if Loc.isSameLoc attr.loc decl.loc && current_path = path then
+               t
+            else
+               let msg =
+                  Printf.sprintf
+                     "Redefinition of function '%s'. Previously defined at %s" (idStr name) (Loc.to_string_readable decl.loc)
+               in
+               Error.raiseError msg attr.loc
 
 
    (** Returns all mem and instances of the given scope, assuming is a function *)
