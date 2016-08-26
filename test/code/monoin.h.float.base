@@ -14,21 +14,21 @@ typedef struct Monoin__ctx_type_0 {
 
 typedef Monoin__ctx_type_0 Monoin_mono_noteOn_type;
 
-Monoin__ctx_type_0 Monoin__ctx_type_0_init();
+void Monoin__ctx_type_0_init(Monoin__ctx_type_0 &_output_);
 
-Monoin__ctx_type_0 Monoin_mono_noteOn_init();
+void Monoin_mono_noteOn_init(Monoin__ctx_type_0 &_output_);
 
 int Monoin_mono_noteOn(Monoin__ctx_type_0 &_ctx, int n);
 
 typedef Monoin__ctx_type_0 Monoin_mono_noteOff_type;
 
-Monoin__ctx_type_0 Monoin_mono_noteOff_init();
+void Monoin_mono_noteOff_init(Monoin__ctx_type_0 &_output_);
 
 int Monoin_mono_noteOff(Monoin__ctx_type_0 &_ctx, int n);
 
 typedef Monoin__ctx_type_0 Monoin_mono_isGateOn_type;
 
-Monoin__ctx_type_0 Monoin_mono_isGateOn_init();
+void Monoin_mono_isGateOn_init(Monoin__ctx_type_0 &_output_);
 
 uint8_t Monoin_mono_isGateOn(Monoin__ctx_type_0 &_ctx);
 

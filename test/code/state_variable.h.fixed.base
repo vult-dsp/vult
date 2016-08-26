@@ -12,9 +12,9 @@ typedef struct State_variable__ctx_type_0 {
 
 typedef State_variable__ctx_type_0 State_variable_change_type;
 
-State_variable__ctx_type_0 State_variable__ctx_type_0_init();
+void State_variable__ctx_type_0_init(State_variable__ctx_type_0 &_output_);
 
-State_variable__ctx_type_0 State_variable_change_init();
+void State_variable_change_init(State_variable__ctx_type_0 &_output_);
 
 uint8_t State_variable_change(State_variable__ctx_type_0 &_ctx, fix16_t x);
 
@@ -25,23 +25,23 @@ typedef struct State_variable__ctx_type_1 {
 
 typedef State_variable__ctx_type_1 State_variable_svf_step_type;
 
-State_variable__ctx_type_1 State_variable__ctx_type_1_init();
+void State_variable__ctx_type_1_init(State_variable__ctx_type_1 &_output_);
 
-State_variable__ctx_type_1 State_variable_svf_step_init();
+void State_variable_svf_step_init(State_variable__ctx_type_1 &_output_);
 
 fix16_t State_variable_svf_step(State_variable__ctx_type_1 &_ctx, fix16_t input, fix16_t g, fix16_t q, int sel);
 
 typedef struct State_variable__ctx_type_2 {
    State_variable__ctx_type_1 step;
    fix16_t g;
-   State_variable__ctx_type_0 _inst0;
+   State_variable__ctx_type_0 _inst1;
 } State_variable__ctx_type_2;
 
 typedef State_variable__ctx_type_2 State_variable_svf_type;
 
-State_variable__ctx_type_2 State_variable__ctx_type_2_init();
+void State_variable__ctx_type_2_init(State_variable__ctx_type_2 &_output_);
 
-State_variable__ctx_type_2 State_variable_svf_init();
+void State_variable_svf_init(State_variable__ctx_type_2 &_output_);
 
 fix16_t State_variable_svf(State_variable__ctx_type_2 &_ctx, fix16_t input, fix16_t fc, fix16_t q, int sel);
 

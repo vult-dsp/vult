@@ -7,60 +7,19 @@
 #include "vultin.h"
 
 typedef struct Adsr__ctx_type_0 {
-   int count;
+   fix16_t target;
+   int state;
+   fix16_t rate;
+   fix16_t out;
 } Adsr__ctx_type_0;
 
-typedef Adsr__ctx_type_0 Adsr_each_type;
+typedef Adsr__ctx_type_0 Adsr_adsr_type;
 
-Adsr__ctx_type_0 Adsr__ctx_type_0_init();
+void Adsr__ctx_type_0_init(Adsr__ctx_type_0 &_output_);
 
-Adsr__ctx_type_0 Adsr_each_init();
+void Adsr_adsr_init(Adsr__ctx_type_0 &_output_);
 
-uint8_t Adsr_each(Adsr__ctx_type_0 &_ctx, int n);
-
-typedef struct Adsr__ctx_type_1 {
-   uint8_t pre_x;
-} Adsr__ctx_type_1;
-
-typedef Adsr__ctx_type_1 Adsr_bchange_type;
-
-Adsr__ctx_type_1 Adsr__ctx_type_1_init();
-
-Adsr__ctx_type_1 Adsr_bchange_init();
-
-uint8_t Adsr_bchange(Adsr__ctx_type_1 &_ctx, uint8_t x);
-
-typedef struct Adsr__ctx_type_2 {
-   fix16_t pre_x;
-} Adsr__ctx_type_2;
-
-typedef Adsr__ctx_type_2 Adsr_lpfilter_type;
-
-Adsr__ctx_type_2 Adsr__ctx_type_2_init();
-
-Adsr__ctx_type_2 Adsr_lpfilter_init();
-
-fix16_t Adsr_lpfilter(Adsr__ctx_type_2 &_ctx, fix16_t x);
-
-typedef struct Adsr__ctx_type_3 {
-   fix16_t value;
-   fix16_t sustainLevel;
-   int state;
-   fix16_t releaseRate;
-   fix16_t decayRate;
-   fix16_t attackRate;
-   Adsr__ctx_type_2 _inst2;
-   Adsr__ctx_type_1 _inst1;
-   Adsr__ctx_type_0 _inst0;
-} Adsr__ctx_type_3;
-
-typedef Adsr__ctx_type_3 Adsr_adsr_type;
-
-Adsr__ctx_type_3 Adsr__ctx_type_3_init();
-
-Adsr__ctx_type_3 Adsr_adsr_init();
-
-fix16_t Adsr_adsr(Adsr__ctx_type_3 &_ctx, uint8_t gate, fix16_t attack, fix16_t decay, fix16_t sustain, fix16_t release);
+fix16_t Adsr_adsr(Adsr__ctx_type_0 &_ctx, uint8_t gate, fix16_t a, fix16_t d, fix16_t s, fix16_t r);
 
 
 

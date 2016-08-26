@@ -1,21 +1,3 @@
-function vultProcess(){
-    this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
-    this.not  = function(x)          { return x==0?1:0; };
-    this.real = function(x)          { return x; };
-    this.int  = function(x)          { return x|0; };
-    this.sin  = function(x)          { return Math.sin(x); };
-    this.cos  = function(x)          { return Math.cos(x); };
-    this.abs  = function(x)          { return Math.abs(x); };
-    this.exp  = function(x)          { return Math.exp(x); };
-    this.floor= function(x)          { return Math.floor(x); };
-    this.tan  = function(x)          { return Math.tan(x); };
-    this.tanh = function(x)          { return Math.tanh(x); };
-    this.sqrt = function(x)          { return x; };
-    this.set  = function(a,i,v)      { a[i]=v; };
-    this.get  = function(a,i)        { return a[i]; };
-    this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.Monoin_process_init = null;
-    this.Monoin_default = null;
 this.Monoin__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.pre = ((0|0)|0);
@@ -65,13 +47,4 @@ this.Monoin_mono_noteOff = function(_ctx,n){
 this.Monoin_mono_isGateOn_init = function() { return this.Monoin__ctx_type_0_init();}
 this.Monoin_mono_isGateOn = function(_ctx){
    return (_ctx.count > (0|0));
-}
-
-    if(this.Monoin_process_init)  this.context =  this.Monoin_process_init(); else this.context = {};
-    if(this.Monoin_default)      this.Monoin_default(this.context);
-    this.liveNoteOn        = function(note,velocity) { if(this.Monoin_noteOn)        this.Monoin_noteOn(this.context,note,velocity); };
-    this.liveNoteOff       = function(note,velocity) { if(this.Monoin_noteOff)       this.Monoin_noteOff(this.context,note,velocity); };
-    this.liveControlChange = function(note,velocity) { if(this.Monoin_controlChange) this.Monoin_controlChange(this.context,note,velocity); };
-    this.liveProcess       = function(input)         { if(this.Monoin_process)       return this.Monoin_process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.Monoin_default)      return this.Monoin_default(this.context); };
 }

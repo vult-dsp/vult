@@ -12,46 +12,46 @@ typedef struct Volume__ctx_type_0 {
 
 typedef Volume__ctx_type_0 Volume_smooth_type;
 
-Volume__ctx_type_0 Volume__ctx_type_0_init();
+void Volume__ctx_type_0_init(Volume__ctx_type_0 &_output_);
 
-Volume__ctx_type_0 Volume_smooth_init();
+void Volume_smooth_init(Volume__ctx_type_0 &_output_);
 
 float Volume_smooth(Volume__ctx_type_0 &_ctx, float input);
 
 typedef struct Volume__ctx_type_1 {
    float volume;
-   Volume__ctx_type_0 _inst0;
+   Volume__ctx_type_0 _inst1;
 } Volume__ctx_type_1;
 
 typedef Volume__ctx_type_1 Volume_process_type;
 
-Volume__ctx_type_1 Volume__ctx_type_1_init();
+void Volume__ctx_type_1_init(Volume__ctx_type_1 &_output_);
 
-Volume__ctx_type_1 Volume_process_init();
+void Volume_process_init(Volume__ctx_type_1 &_output_);
 
 float Volume_process(Volume__ctx_type_1 &_ctx, float input);
 
 typedef Volume__ctx_type_1 Volume_noteOn_type;
 
-Volume__ctx_type_1 Volume_noteOn_init();
+void Volume_noteOn_init(Volume__ctx_type_1 &_output_);
 
 void Volume_noteOn(Volume__ctx_type_1 &_ctx, int note, int velocity);
 
 typedef Volume__ctx_type_1 Volume_noteOff_type;
 
-Volume__ctx_type_1 Volume_noteOff_init();
+void Volume_noteOff_init(Volume__ctx_type_1 &_output_);
 
 void Volume_noteOff(Volume__ctx_type_1 &_ctx, int note);
 
 typedef Volume__ctx_type_1 Volume_controlChange_type;
 
-Volume__ctx_type_1 Volume_controlChange_init();
+void Volume_controlChange_init(Volume__ctx_type_1 &_output_);
 
 void Volume_controlChange(Volume__ctx_type_1 &_ctx, int control, int value);
 
 typedef Volume__ctx_type_1 Volume_default_type;
 
-Volume__ctx_type_1 Volume_default_init();
+void Volume_default_init(Volume__ctx_type_1 &_output_);
 
 void Volume_default(Volume__ctx_type_1 &_ctx);
 

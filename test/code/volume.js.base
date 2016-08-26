@@ -1,21 +1,3 @@
-function vultProcess(){
-    this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
-    this.not  = function(x)          { return x==0?1:0; };
-    this.real = function(x)          { return x; };
-    this.int  = function(x)          { return x|0; };
-    this.sin  = function(x)          { return Math.sin(x); };
-    this.cos  = function(x)          { return Math.cos(x); };
-    this.abs  = function(x)          { return Math.abs(x); };
-    this.exp  = function(x)          { return Math.exp(x); };
-    this.floor= function(x)          { return Math.floor(x); };
-    this.tan  = function(x)          { return Math.tan(x); };
-    this.tanh = function(x)          { return Math.tanh(x); };
-    this.sqrt = function(x)          { return x; };
-    this.set  = function(a,i,v)      { a[i]=v; };
-    this.get  = function(a,i)        { return a[i]; };
-    this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.Volume_process_init = null;
-    this.Volume_default = null;
 this.Volume__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.x = 0.;
@@ -29,12 +11,12 @@ this.Volume_smooth = function(_ctx,input){
 this.Volume__ctx_type_1_init = function(){
    var _ctx = {};
    _ctx.volume = 0.;
-   _ctx._inst0 = this.Volume__ctx_type_0_init();
+   _ctx._inst1 = this.Volume__ctx_type_0_init();
    return _ctx;
 }
 this.Volume_process_init = function() { return this.Volume__ctx_type_1_init();}
 this.Volume_process = function(_ctx,input){
-   return (input * this.Volume_smooth(_ctx._inst0,_ctx.volume));
+   return (input * this.Volume_smooth(_ctx._inst1,_ctx.volume));
 }
 this.Volume_noteOn_init = function() { return this.Volume__ctx_type_1_init();}
 this.Volume_noteOn = function(_ctx,note,velocity){
@@ -51,13 +33,4 @@ this.Volume_controlChange = function(_ctx,control,value){
 this.Volume_default_init = function() { return this.Volume__ctx_type_1_init();}
 this.Volume_default = function(_ctx){
    _ctx.volume = 0.;
-}
-
-    if(this.Volume_process_init)  this.context =  this.Volume_process_init(); else this.context = {};
-    if(this.Volume_default)      this.Volume_default(this.context);
-    this.liveNoteOn        = function(note,velocity) { if(this.Volume_noteOn)        this.Volume_noteOn(this.context,note,velocity); };
-    this.liveNoteOff       = function(note,velocity) { if(this.Volume_noteOff)       this.Volume_noteOff(this.context,note,velocity); };
-    this.liveControlChange = function(note,velocity) { if(this.Volume_controlChange) this.Volume_controlChange(this.context,note,velocity); };
-    this.liveProcess       = function(input)         { if(this.Volume_process)       return this.Volume_process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.Volume_default)      return this.Volume_default(this.context); };
 }

@@ -144,7 +144,9 @@ module CodeGenerationTest = struct
 
    let process (fullfile:string) (real_type:string) : (string * string) list =
          let basefile = Filename.chop_extension (Filename.basename fullfile) in
-         let args  = { default_arguments with output = basefile; real = real_type } in
+         let ccode = real_type = "fixed" || real_type = "float" in
+         let jscode = real_type = "js" in
+         let args  = { default_arguments with output = basefile; real = real_type; ccode; jscode } in
          let stmts = ParserVult.parseFile fullfile in
          let ()    = showResults stmts.presult |> ignore in
          let files = Generate.generateCode [stmts] args in
@@ -166,6 +168,7 @@ module CodeGenerationTest = struct
                 readReference (writeOutput context) (base_ext ext) code fullfile (in_test_directory folder))
             currents
       in
+      assert_bool "No code generated" (currents <> []);
       List.iter2
          (fun (current,ext) reference ->
              assert_equal
@@ -222,6 +225,7 @@ module CompileTest = struct
       let output   = Filename.chop_extension (Filename.basename fullfile) in
       Sys.chdir tmp_dir;
       generateCPP fullfile output real_type;
+      assert_bool "No code generated" (Sys.file_exists (output^".cpp"));
       compileFile (output^".cpp");
       compileFile (in_test_directory "../runtime/vultin.c");
       Sys.chdir initial_dir

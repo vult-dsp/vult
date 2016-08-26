@@ -12,9 +12,9 @@ typedef struct Sin__ctx_type_0 {
 
 typedef Sin__ctx_type_0 Sin_change_type;
 
-Sin__ctx_type_0 Sin__ctx_type_0_init();
+void Sin__ctx_type_0_init(Sin__ctx_type_0 &_output_);
 
-Sin__ctx_type_0 Sin_change_init();
+void Sin_change_init(Sin__ctx_type_0 &_output_);
 
 uint8_t Sin_change(Sin__ctx_type_0 &_ctx, float x);
 
@@ -23,57 +23,57 @@ typedef struct Sin__ctx_type_1 {
    float y1;
    float w;
    float cos_w;
-   Sin__ctx_type_0 _inst0;
+   Sin__ctx_type_0 _inst1;
 } Sin__ctx_type_1;
 
 typedef Sin__ctx_type_1 Sin_sc_osc_type;
 
-Sin__ctx_type_1 Sin__ctx_type_1_init();
+void Sin__ctx_type_1_init(Sin__ctx_type_1 &_output_);
 
-Sin__ctx_type_1 Sin_sc_osc_init();
+void Sin_sc_osc_init(Sin__ctx_type_1 &_output_);
 
 float Sin_sc_osc(Sin__ctx_type_1 &_ctx, float pitch);
 
 typedef Sin__ctx_type_1 Sin_sc_osc_start_type;
 
-Sin__ctx_type_1 Sin_sc_osc_start_init();
+void Sin_sc_osc_start_init(Sin__ctx_type_1 &_output_);
 
 void Sin_sc_osc_start(Sin__ctx_type_1 &_ctx);
 
 typedef struct Sin__ctx_type_2 {
    float pitch;
-   Sin__ctx_type_1 _inst0;
+   Sin__ctx_type_1 _inst1;
 } Sin__ctx_type_2;
 
 typedef Sin__ctx_type_2 Sin_process_type;
 
-Sin__ctx_type_2 Sin__ctx_type_2_init();
+void Sin__ctx_type_2_init(Sin__ctx_type_2 &_output_);
 
-Sin__ctx_type_2 Sin_process_init();
+void Sin_process_init(Sin__ctx_type_2 &_output_);
 
 float Sin_process(Sin__ctx_type_2 &_ctx, float input);
 
 typedef Sin__ctx_type_2 Sin_noteOn_type;
 
-Sin__ctx_type_2 Sin_noteOn_init();
+void Sin_noteOn_init(Sin__ctx_type_2 &_output_);
 
 void Sin_noteOn(Sin__ctx_type_2 &_ctx, int note, int velocity);
 
 typedef Sin__ctx_type_2 Sin_noteOff_type;
 
-Sin__ctx_type_2 Sin_noteOff_init();
+void Sin_noteOff_init(Sin__ctx_type_2 &_output_);
 
 void Sin_noteOff(Sin__ctx_type_2 &_ctx, int note);
 
 typedef Sin__ctx_type_2 Sin_controlChange_type;
 
-Sin__ctx_type_2 Sin_controlChange_init();
+void Sin_controlChange_init(Sin__ctx_type_2 &_output_);
 
 void Sin_controlChange(Sin__ctx_type_2 &_ctx, int control, int value);
 
 typedef Sin__ctx_type_2 Sin_default_type;
 
-Sin__ctx_type_2 Sin_default_init();
+void Sin_default_init(Sin__ctx_type_2 &_output_);
 
 void Sin_default(Sin__ctx_type_2 &_ctx);
 

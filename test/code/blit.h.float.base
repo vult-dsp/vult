@@ -14,9 +14,9 @@ typedef struct Blit__ctx_type_1 {
 
 typedef Blit__ctx_type_1 Blit_change_type;
 
-Blit__ctx_type_1 Blit__ctx_type_1_init();
+void Blit__ctx_type_1_init(Blit__ctx_type_1 &_output_);
 
-Blit__ctx_type_1 Blit_change_init();
+void Blit_change_init(Blit__ctx_type_1 &_output_);
 
 uint8_t Blit_change(Blit__ctx_type_1 &_ctx, float x);
 
@@ -27,9 +27,9 @@ typedef struct Blit__ctx_type_2 {
 
 typedef Blit__ctx_type_2 Blit_dcblock_type;
 
-Blit__ctx_type_2 Blit__ctx_type_2_init();
+void Blit__ctx_type_2_init(Blit__ctx_type_2 &_output_);
 
-Blit__ctx_type_2 Blit_dcblock_init();
+void Blit_dcblock_init(Blit__ctx_type_2 &_output_);
 
 float Blit_dcblock(Blit__ctx_type_2 &_ctx, float x0);
 
@@ -45,15 +45,15 @@ typedef struct Blit__ctx_type_5 {
    float phase;
    float output;
    float m;
-   Blit__ctx_type_2 _inst1;
-   Blit__ctx_type_1 _inst0;
+   Blit__ctx_type_1 _inst3;
+   Blit__ctx_type_2 _inst11;
 } Blit__ctx_type_5;
 
 typedef Blit__ctx_type_5 Blit_osc_type;
 
-Blit__ctx_type_5 Blit__ctx_type_5_init();
+void Blit__ctx_type_5_init(Blit__ctx_type_5 &_output_);
 
-Blit__ctx_type_5 Blit_osc_init();
+void Blit_osc_init(Blit__ctx_type_5 &_output_);
 
 float Blit_osc(Blit__ctx_type_5 &_ctx, float pitch, float pw, float wave);
 
@@ -61,38 +61,38 @@ typedef struct Blit__ctx_type_6 {
    float wave;
    float pw;
    float pitch;
-   Blit__ctx_type_5 _inst0;
+   Blit__ctx_type_5 _inst1;
 } Blit__ctx_type_6;
 
 typedef Blit__ctx_type_6 Blit_process_type;
 
-Blit__ctx_type_6 Blit__ctx_type_6_init();
+void Blit__ctx_type_6_init(Blit__ctx_type_6 &_output_);
 
-Blit__ctx_type_6 Blit_process_init();
+void Blit_process_init(Blit__ctx_type_6 &_output_);
 
 float Blit_process(Blit__ctx_type_6 &_ctx, float input);
 
 typedef Blit__ctx_type_6 Blit_noteOn_type;
 
-Blit__ctx_type_6 Blit_noteOn_init();
+void Blit_noteOn_init(Blit__ctx_type_6 &_output_);
 
 void Blit_noteOn(Blit__ctx_type_6 &_ctx, int note, int velocity);
 
 typedef Blit__ctx_type_6 Blit_noteOff_type;
 
-Blit__ctx_type_6 Blit_noteOff_init();
+void Blit_noteOff_init(Blit__ctx_type_6 &_output_);
 
 void Blit_noteOff(Blit__ctx_type_6 &_ctx, int note);
 
 typedef Blit__ctx_type_6 Blit_controlChange_type;
 
-Blit__ctx_type_6 Blit_controlChange_init();
+void Blit_controlChange_init(Blit__ctx_type_6 &_output_);
 
 void Blit_controlChange(Blit__ctx_type_6 &_ctx, int control, int value);
 
 typedef Blit__ctx_type_6 Blit_default_type;
 
-Blit__ctx_type_6 Blit_default_init();
+void Blit_default_init(Blit__ctx_type_6 &_output_);
 
 void Blit_default(Blit__ctx_type_6 &_ctx);
 

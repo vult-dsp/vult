@@ -7,24 +7,36 @@ fix16_t Filters_pi(){
 }
 
 fix16_t Filters_min(fix16_t a, fix16_t b){
-   return ((a < b)?a:b);
+   fix16_t _if_1;
+   if(a < b)_if_1 = a;
+   else
+   _if_1 = b;
+   return _if_1;
 }
 
 fix16_t Filters_max(fix16_t a, fix16_t b){
-   return ((a > b)?a:b);
+   fix16_t _if_1;
+   if(a > b)_if_1 = a;
+   else
+   _if_1 = b;
+   return _if_1;
 }
 
 fix16_t Filters_clip(fix16_t low, fix16_t high, fix16_t value){
    return Filters_min(Filters_max(low,value),high);
 }
 
-Filters__ctx_type_4 Filters__ctx_type_4_init(){
+void Filters__ctx_type_4_init(Filters__ctx_type_4 &_output_){
    Filters__ctx_type_4 _ctx;
    _ctx.pre_x = 0x0 /* 0.000000 */;
-   return _ctx;
+   _output_ = _ctx;
+   return ;
 }
 
-Filters__ctx_type_4 Filters_change_init(){ return Filters__ctx_type_4_init();}
+void Filters_change_init(Filters__ctx_type_4 &_output_){
+   Filters__ctx_type_4_init(_output_);
+   return ;
+}
 
 uint8_t Filters_change(Filters__ctx_type_4 &_ctx, fix16_t x){
    uint8_t v = (_ctx.pre_x != x);
@@ -32,14 +44,18 @@ uint8_t Filters_change(Filters__ctx_type_4 &_ctx, fix16_t x){
    return v;
 }
 
-Filters__ctx_type_5 Filters__ctx_type_5_init(){
+void Filters__ctx_type_5_init(Filters__ctx_type_5 &_output_){
    Filters__ctx_type_5 _ctx;
    _ctx.w2 = 0x0 /* 0.000000 */;
    _ctx.w1 = 0x0 /* 0.000000 */;
-   return _ctx;
+   _output_ = _ctx;
+   return ;
 }
 
-Filters__ctx_type_5 Filters_biquad_init(){ return Filters__ctx_type_5_init();}
+void Filters_biquad_init(Filters__ctx_type_5 &_output_){
+   Filters__ctx_type_5_init(_output_);
+   return ;
+}
 
 fix16_t Filters_biquad(Filters__ctx_type_5 &_ctx, fix16_t x, fix16_t b0, fix16_t b1, fix16_t b2, fix16_t a1, fix16_t a2){
    fix16_t w0 = fix_add(fix_add(x,(- fix_mul(a1,_ctx.w1))),(- fix_mul(a2,_ctx.w2)));
@@ -51,45 +67,53 @@ fix16_t Filters_biquad(Filters__ctx_type_5 &_ctx, fix16_t x, fix16_t b0, fix16_t
    return y0;
 }
 
-Filters__ctx_type_6 Filters__ctx_type_6_init(){
+void Filters__ctx_type_6_init(Filters__ctx_type_6 &_output_){
    Filters__ctx_type_6 _ctx;
    _ctx.k = 0x0 /* 0.000000 */;
    _ctx.fc = 0x0 /* 0.000000 */;
-   _ctx._inst1 = Filters__ctx_type_5_init();
-   _ctx._inst0 = Filters__ctx_type_4_init();
-   return _ctx;
+   Filters__ctx_type_5_init(_ctx._inst3);
+   Filters__ctx_type_4_init(_ctx._inst1);
+   _output_ = _ctx;
+   return ;
 }
 
-Filters__ctx_type_6 Filters_lp6_init(){ return Filters__ctx_type_6_init();}
+void Filters_lp6_init(Filters__ctx_type_6 &_output_){
+   Filters__ctx_type_6_init(_output_);
+   return ;
+}
 
 fix16_t Filters_lp6(Filters__ctx_type_6 &_ctx, fix16_t x, fix16_t fc){
-   if(Filters_change(_ctx._inst0,_ctx.fc)){
+   if(Filters_change(_ctx._inst1,_ctx.fc)){
       _ctx.fc = Filters_clip(_ctx.fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
       _ctx.k = fix_tan(fix_mul(fix_mul(Filters_pi(),_ctx.fc),0x1 /* 0.000023 */));
    }
    fix16_t b0 = fix_div(_ctx.k,fix_add(_ctx.k,0x10000 /* 1.000000 */));
    fix16_t b1 = fix_div(_ctx.k,fix_add(_ctx.k,0x10000 /* 1.000000 */));
-   fix16_t a1 = fix_div(fix_add(_ctx.k,(0xffff0000 /* -1.000000 */)),fix_add(_ctx.k,0x10000 /* 1.000000 */));
-   return Filters_biquad(_ctx._inst1,x,b0,b1,0x0 /* 0.000000 */,a1,0x0 /* 0.000000 */);
+   fix16_t a1 = fix_div(fix_add(_ctx.k,(-0x10000 /* -1.000000 */)),fix_add(_ctx.k,0x10000 /* 1.000000 */));
+   return Filters_biquad(_ctx._inst3,x,b0,b1,0x0 /* 0.000000 */,a1,0x0 /* 0.000000 */);
 }
 
-Filters__ctx_type_7 Filters__ctx_type_7_init(){
+void Filters__ctx_type_7_init(Filters__ctx_type_7 &_output_){
    Filters__ctx_type_7 _ctx;
    _ctx.b2 = 0x0 /* 0.000000 */;
    _ctx.b1 = 0x0 /* 0.000000 */;
    _ctx.b0 = 0x0 /* 0.000000 */;
    _ctx.a2 = 0x0 /* 0.000000 */;
    _ctx.a1 = 0x0 /* 0.000000 */;
-   _ctx._inst2 = Filters__ctx_type_5_init();
-   _ctx._inst1 = Filters__ctx_type_4_init();
-   _ctx._inst0 = Filters__ctx_type_4_init();
-   return _ctx;
+   Filters__ctx_type_5_init(_ctx._inst4);
+   Filters__ctx_type_4_init(_ctx._inst2);
+   Filters__ctx_type_4_init(_ctx._inst1);
+   _output_ = _ctx;
+   return ;
 }
 
-Filters__ctx_type_7 Filters_lp12_init(){ return Filters__ctx_type_7_init();}
+void Filters_lp12_init(Filters__ctx_type_7 &_output_){
+   Filters__ctx_type_7_init(_output_);
+   return ;
+}
 
 fix16_t Filters_lp12(Filters__ctx_type_7 &_ctx, fix16_t x, fix16_t fc, fix16_t q){
-   if(Filters_change(_ctx._inst0,fc) || Filters_change(_ctx._inst1,q)){
+   if(Filters_change(_ctx._inst1,fc) || Filters_change(_ctx._inst2,q)){
       fix16_t qc = Filters_max(fix_sqrt(0x20000 /* 2.000000 */),fix_add(q,fix_sqrt(0x20000 /* 2.000000 */)));
       fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
       fix16_t k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
@@ -97,93 +121,109 @@ fix16_t Filters_lp12(Filters__ctx_type_7 &_ctx, fix16_t x, fix16_t fc, fix16_t q
       _ctx.b0 = fix_div(fix_mul(fix_mul(k,k),qc),den);
       _ctx.b1 = fix_mul(0x20000 /* 2.000000 */,_ctx.b0);
       _ctx.b2 = _ctx.b0;
-      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(0xffff0000 /* -1.000000 */))),den);
+      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(-0x10000 /* -1.000000 */))),den);
       _ctx.a2 = fix_div(fix_add(fix_add(fix_mul(fix_mul(k,k),qc),(- k)),qc),den);
    }
-   return Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
+   return Filters_biquad(_ctx._inst4,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
-Filters__ctx_type_8 Filters__ctx_type_8_init(){
+void Filters__ctx_type_8_init(Filters__ctx_type_8 &_output_){
    Filters__ctx_type_8 _ctx;
-   _ctx._inst0 = Filters__ctx_type_5_init();
-   return _ctx;
+   Filters__ctx_type_5_init(_ctx._inst1);
+   _output_ = _ctx;
+   return ;
 }
 
-Filters__ctx_type_8 Filters_hp6_init(){ return Filters__ctx_type_8_init();}
+void Filters_hp6_init(Filters__ctx_type_8 &_output_){
+   Filters__ctx_type_8_init(_output_);
+   return ;
+}
 
 fix16_t Filters_hp6(Filters__ctx_type_8 &_ctx, fix16_t x, fix16_t fc){
    fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
    fix16_t k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
    fix16_t b0 = fix_div(0x10000 /* 1.000000 */,fix_add(k,0x10000 /* 1.000000 */));
-   fix16_t b1 = fix_div((0xffff0000 /* -1.000000 */),fix_add(k,0x10000 /* 1.000000 */));
-   fix16_t a1 = fix_div(fix_add(k,(0xffff0000 /* -1.000000 */)),fix_add(k,0x10000 /* 1.000000 */));
-   return Filters_biquad(_ctx._inst0,x,b0,b1,0x0 /* 0.000000 */,a1,0x0 /* 0.000000 */);
+   fix16_t b1 = fix_div((-0x10000 /* -1.000000 */),fix_add(k,0x10000 /* 1.000000 */));
+   fix16_t a1 = fix_div(fix_add(k,(-0x10000 /* -1.000000 */)),fix_add(k,0x10000 /* 1.000000 */));
+   return Filters_biquad(_ctx._inst1,x,b0,b1,0x0 /* 0.000000 */,a1,0x0 /* 0.000000 */);
 }
 
-Filters__ctx_type_9 Filters__ctx_type_9_init(){
+void Filters__ctx_type_9_init(Filters__ctx_type_9 &_output_){
    Filters__ctx_type_9 _ctx;
-   _ctx._inst0 = Filters__ctx_type_5_init();
-   return _ctx;
+   Filters__ctx_type_5_init(_ctx._inst1);
+   _output_ = _ctx;
+   return ;
 }
 
-Filters__ctx_type_9 Filters_allp6_init(){ return Filters__ctx_type_9_init();}
+void Filters_allp6_init(Filters__ctx_type_9 &_output_){
+   Filters__ctx_type_9_init(_output_);
+   return ;
+}
 
 fix16_t Filters_allp6(Filters__ctx_type_9 &_ctx, fix16_t x, fix16_t fc){
    fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
    fix16_t k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
-   fix16_t b0 = fix_div(fix_add(k,(0xffff0000 /* -1.000000 */)),fix_add(k,0x10000 /* 1.000000 */));
+   fix16_t b0 = fix_div(fix_add(k,(-0x10000 /* -1.000000 */)),fix_add(k,0x10000 /* 1.000000 */));
    fix16_t b1 = 0x10000 /* 1.000000 */;
-   fix16_t a1 = fix_div(fix_add(k,(0xffff0000 /* -1.000000 */)),fix_add(k,0x10000 /* 1.000000 */));
-   return Filters_biquad(_ctx._inst0,x,b0,b1,0x0 /* 0.000000 */,a1,0x0 /* 0.000000 */);
+   fix16_t a1 = fix_div(fix_add(k,(-0x10000 /* -1.000000 */)),fix_add(k,0x10000 /* 1.000000 */));
+   return Filters_biquad(_ctx._inst1,x,b0,b1,0x0 /* 0.000000 */,a1,0x0 /* 0.000000 */);
 }
 
-Filters__ctx_type_10 Filters__ctx_type_10_init(){
+void Filters__ctx_type_10_init(Filters__ctx_type_10 &_output_){
    Filters__ctx_type_10 _ctx;
    _ctx.b2 = 0x0 /* 0.000000 */;
    _ctx.b1 = 0x0 /* 0.000000 */;
    _ctx.b0 = 0x0 /* 0.000000 */;
    _ctx.a2 = 0x0 /* 0.000000 */;
    _ctx.a1 = 0x0 /* 0.000000 */;
-   _ctx._inst2 = Filters__ctx_type_5_init();
-   _ctx._inst1 = Filters__ctx_type_4_init();
-   _ctx._inst0 = Filters__ctx_type_4_init();
-   return _ctx;
+   Filters__ctx_type_5_init(_ctx._inst4);
+   Filters__ctx_type_4_init(_ctx._inst2);
+   Filters__ctx_type_4_init(_ctx._inst1);
+   _output_ = _ctx;
+   return ;
 }
 
-Filters__ctx_type_10 Filters_hp12_init(){ return Filters__ctx_type_10_init();}
+void Filters_hp12_init(Filters__ctx_type_10 &_output_){
+   Filters__ctx_type_10_init(_output_);
+   return ;
+}
 
 fix16_t Filters_hp12(Filters__ctx_type_10 &_ctx, fix16_t x, fix16_t fc, fix16_t q){
-   if(Filters_change(_ctx._inst0,fc) || Filters_change(_ctx._inst1,q)){
+   if(Filters_change(_ctx._inst1,fc) || Filters_change(_ctx._inst2,q)){
       fix16_t qc = Filters_max(fix_sqrt(0x20000 /* 2.000000 */),fix_add(q,fix_sqrt(0x20000 /* 2.000000 */)));
       fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
       fix16_t k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
       fix16_t den = fix_add(fix_add(fix_mul(fix_mul(k,k),qc),k),qc);
       _ctx.b0 = fix_div(qc,den);
-      _ctx.b1 = fix_div(fix_mul((0xfffe0000 /* -2.000000 */),qc),den);
+      _ctx.b1 = fix_div(fix_mul((-0x20000 /* -2.000000 */),qc),den);
       _ctx.b2 = fix_div(qc,den);
-      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(0xffff0000 /* -1.000000 */))),den);
+      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(-0x10000 /* -1.000000 */))),den);
       _ctx.a2 = fix_div(fix_add(fix_add(fix_mul(fix_mul(k,k),qc),(- k)),qc),den);
    }
-   return Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
+   return Filters_biquad(_ctx._inst4,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
-Filters__ctx_type_11 Filters__ctx_type_11_init(){
+void Filters__ctx_type_11_init(Filters__ctx_type_11 &_output_){
    Filters__ctx_type_11 _ctx;
    _ctx.b2 = 0x0 /* 0.000000 */;
    _ctx.b1 = 0x0 /* 0.000000 */;
    _ctx.b0 = 0x0 /* 0.000000 */;
    _ctx.a2 = 0x0 /* 0.000000 */;
    _ctx.a1 = 0x0 /* 0.000000 */;
-   _ctx._inst2 = Filters__ctx_type_5_init();
-   _ctx._inst1 = Filters__ctx_type_4_init();
-   _ctx._inst0 = Filters__ctx_type_4_init();
-   return _ctx;
+   Filters__ctx_type_5_init(_ctx._inst4);
+   Filters__ctx_type_4_init(_ctx._inst2);
+   Filters__ctx_type_4_init(_ctx._inst1);
+   _output_ = _ctx;
+   return ;
 }
 
-Filters__ctx_type_11 Filters_bp12_init(){ return Filters__ctx_type_11_init();}
+void Filters_bp12_init(Filters__ctx_type_11 &_output_){
+   Filters__ctx_type_11_init(_output_);
+   return ;
+}
 
 fix16_t Filters_bp12(Filters__ctx_type_11 &_ctx, fix16_t x, fix16_t fc, fix16_t q){
-   if(Filters_change(_ctx._inst0,fc) || Filters_change(_ctx._inst1,q)){
+   if(Filters_change(_ctx._inst1,fc) || Filters_change(_ctx._inst2,q)){
       fix16_t qc = Filters_max(fix_sqrt(0x20000 /* 2.000000 */),fix_add(q,fix_sqrt(0x20000 /* 2.000000 */)));
       fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
       fix16_t k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
@@ -191,70 +231,78 @@ fix16_t Filters_bp12(Filters__ctx_type_11 &_ctx, fix16_t x, fix16_t fc, fix16_t 
       _ctx.b0 = fix_div(k,den);
       _ctx.b1 = 0x0 /* 0.000000 */;
       _ctx.b2 = fix_div((- k),den);
-      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(0xffff0000 /* -1.000000 */))),den);
+      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(-0x10000 /* -1.000000 */))),den);
       _ctx.a2 = fix_div(fix_add(fix_add(fix_mul(fix_mul(k,k),qc),(- k)),qc),den);
    }
-   return Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
+   return Filters_biquad(_ctx._inst4,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
-Filters__ctx_type_12 Filters__ctx_type_12_init(){
+void Filters__ctx_type_12_init(Filters__ctx_type_12 &_output_){
    Filters__ctx_type_12 _ctx;
    _ctx.b2 = 0x0 /* 0.000000 */;
    _ctx.b1 = 0x0 /* 0.000000 */;
    _ctx.b0 = 0x0 /* 0.000000 */;
    _ctx.a2 = 0x0 /* 0.000000 */;
    _ctx.a1 = 0x0 /* 0.000000 */;
-   _ctx._inst2 = Filters__ctx_type_5_init();
-   _ctx._inst1 = Filters__ctx_type_4_init();
-   _ctx._inst0 = Filters__ctx_type_4_init();
-   return _ctx;
+   Filters__ctx_type_5_init(_ctx._inst4);
+   Filters__ctx_type_4_init(_ctx._inst2);
+   Filters__ctx_type_4_init(_ctx._inst1);
+   _output_ = _ctx;
+   return ;
 }
 
-Filters__ctx_type_12 Filters_notch12_init(){ return Filters__ctx_type_12_init();}
+void Filters_notch12_init(Filters__ctx_type_12 &_output_){
+   Filters__ctx_type_12_init(_output_);
+   return ;
+}
 
 fix16_t Filters_notch12(Filters__ctx_type_12 &_ctx, fix16_t x, fix16_t fc, fix16_t q){
-   if(Filters_change(_ctx._inst0,fc) || Filters_change(_ctx._inst1,q)){
+   if(Filters_change(_ctx._inst1,fc) || Filters_change(_ctx._inst2,q)){
       fix16_t qc = Filters_max(fix_sqrt(0x20000 /* 2.000000 */),fix_add(q,fix_sqrt(0x20000 /* 2.000000 */)));
       fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
       fix16_t k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
       fix16_t den = fix_add(fix_add(fix_mul(fix_mul(k,k),qc),k),qc);
       _ctx.b0 = fix_div(fix_mul(qc,fix_add(0x10000 /* 1.000000 */,fix_mul(k,k))),den);
-      _ctx.b1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(0xffff0000 /* -1.000000 */))),den);
+      _ctx.b1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(-0x10000 /* -1.000000 */))),den);
       _ctx.b2 = _ctx.b0;
-      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(0xffff0000 /* -1.000000 */))),den);
+      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(-0x10000 /* -1.000000 */))),den);
       _ctx.a2 = fix_div(fix_add(fix_add(fix_mul(fix_mul(k,k),qc),(- k)),qc),den);
    }
-   return Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
+   return Filters_biquad(_ctx._inst4,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
-Filters__ctx_type_13 Filters__ctx_type_13_init(){
+void Filters__ctx_type_13_init(Filters__ctx_type_13 &_output_){
    Filters__ctx_type_13 _ctx;
    _ctx.b2 = 0x0 /* 0.000000 */;
    _ctx.b1 = 0x0 /* 0.000000 */;
    _ctx.b0 = 0x0 /* 0.000000 */;
    _ctx.a2 = 0x0 /* 0.000000 */;
    _ctx.a1 = 0x0 /* 0.000000 */;
-   _ctx._inst2 = Filters__ctx_type_5_init();
-   _ctx._inst1 = Filters__ctx_type_4_init();
-   _ctx._inst0 = Filters__ctx_type_4_init();
-   return _ctx;
+   Filters__ctx_type_5_init(_ctx._inst4);
+   Filters__ctx_type_4_init(_ctx._inst2);
+   Filters__ctx_type_4_init(_ctx._inst1);
+   _output_ = _ctx;
+   return ;
 }
 
-Filters__ctx_type_13 Filters_allp12_init(){ return Filters__ctx_type_13_init();}
+void Filters_allp12_init(Filters__ctx_type_13 &_output_){
+   Filters__ctx_type_13_init(_output_);
+   return ;
+}
 
 fix16_t Filters_allp12(Filters__ctx_type_13 &_ctx, fix16_t x, fix16_t fc, fix16_t q){
-   if(Filters_change(_ctx._inst0,fc) || Filters_change(_ctx._inst1,q)){
+   if(Filters_change(_ctx._inst1,fc) || Filters_change(_ctx._inst2,q)){
       fix16_t qc = Filters_max(fix_sqrt(0x20000 /* 2.000000 */),fix_add(q,fix_sqrt(0x20000 /* 2.000000 */)));
       fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
       fix16_t k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
       fix16_t den = fix_add(fix_add(fix_mul(fix_mul(k,k),qc),k),qc);
       _ctx.b0 = fix_div(fix_add(fix_add(fix_mul(fix_mul(k,k),qc),(- k)),qc),den);
-      _ctx.b1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(0xffff0000 /* -1.000000 */))),den);
+      _ctx.b1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(-0x10000 /* -1.000000 */))),den);
       _ctx.b2 = 0x10000 /* 1.000000 */;
-      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(0xffff0000 /* -1.000000 */))),den);
+      _ctx.a1 = fix_div(fix_mul(fix_mul(0x20000 /* 2.000000 */,qc),fix_add(fix_mul(k,k),(-0x10000 /* -1.000000 */))),den);
       _ctx.a2 = fix_div(fix_add(fix_add(fix_mul(fix_mul(k,k),qc),(- k)),qc),den);
    }
-   return Filters_biquad(_ctx._inst2,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
+   return Filters_biquad(_ctx._inst4,x,_ctx.b0,_ctx.b1,_ctx.b2,_ctx.a1,_ctx.a2);
 }
 
 

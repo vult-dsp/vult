@@ -12,9 +12,9 @@ typedef struct Moog_filter__ctx_type_0 {
 
 typedef Moog_filter__ctx_type_0 Moog_filter_change_type;
 
-Moog_filter__ctx_type_0 Moog_filter__ctx_type_0_init();
+void Moog_filter__ctx_type_0_init(Moog_filter__ctx_type_0 &_output_);
 
-Moog_filter__ctx_type_0 Moog_filter_change_init();
+void Moog_filter_change_init(Moog_filter__ctx_type_0 &_output_);
 
 uint8_t Moog_filter_change(Moog_filter__ctx_type_0 &_ctx, fix16_t x);
 
@@ -40,9 +40,9 @@ typedef struct Moog_filter__ctx_type_6 {
 
 typedef Moog_filter__ctx_type_6 Moog_filter_moog_step_type;
 
-Moog_filter__ctx_type_6 Moog_filter__ctx_type_6_init();
+void Moog_filter__ctx_type_6_init(Moog_filter__ctx_type_6 &_output_);
 
-Moog_filter__ctx_type_6 Moog_filter_moog_step_init();
+void Moog_filter_moog_step_init(Moog_filter__ctx_type_6 &_output_);
 
 fix16_t Moog_filter_moog_step(Moog_filter__ctx_type_6 &_ctx, fix16_t input, fix16_t resFixed, fix16_t tune, fix16_t output);
 
@@ -51,15 +51,15 @@ typedef struct Moog_filter__ctx_type_7 {
    fix16_t resFixed;
    Moog_filter__ctx_type_6 filter;
    fix16_t dx1;
+   Moog_filter__ctx_type_0 _inst2;
    Moog_filter__ctx_type_0 _inst1;
-   Moog_filter__ctx_type_0 _inst0;
 } Moog_filter__ctx_type_7;
 
 typedef Moog_filter__ctx_type_7 Moog_filter_moog_type;
 
-Moog_filter__ctx_type_7 Moog_filter__ctx_type_7_init();
+void Moog_filter__ctx_type_7_init(Moog_filter__ctx_type_7 &_output_);
 
-Moog_filter__ctx_type_7 Moog_filter_moog_init();
+void Moog_filter_moog_init(Moog_filter__ctx_type_7 &_output_);
 
 fix16_t Moog_filter_moog(Moog_filter__ctx_type_7 &_ctx, fix16_t input, fix16_t cut, fix16_t res);
 

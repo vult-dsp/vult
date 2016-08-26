@@ -56,6 +56,8 @@ module Templates = struct
     this.sqrt = function(x)          { return x; };
     this.set  = function(a,i,v)      { a[i]=v; };
     this.get  = function(a,i)        { return a[i]; };
+    this.int_to_float = function(i){ return i; };
+    this.float_to_int = function(i){ return Math.floor(i); };
     this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
     this.<#module_name#s>_process_init = null;
     this.<#module_name#s>_default = null;

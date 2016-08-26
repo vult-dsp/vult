@@ -6,13 +6,17 @@ uint8_t Blit_near_zero(fix16_t x){
    return (fix_abs(x) < 0x51e /* 0.020000 */);
 }
 
-Blit__ctx_type_1 Blit__ctx_type_1_init(){
+void Blit__ctx_type_1_init(Blit__ctx_type_1 &_output_){
    Blit__ctx_type_1 _ctx;
    _ctx.pre_x = 0x0 /* 0.000000 */;
-   return _ctx;
+   _output_ = _ctx;
+   return ;
 }
 
-Blit__ctx_type_1 Blit_change_init(){ return Blit__ctx_type_1_init();}
+void Blit_change_init(Blit__ctx_type_1 &_output_){
+   Blit__ctx_type_1_init(_output_);
+   return ;
+}
 
 uint8_t Blit_change(Blit__ctx_type_1 &_ctx, fix16_t x){
    uint8_t v = (_ctx.pre_x != x);
@@ -20,14 +24,18 @@ uint8_t Blit_change(Blit__ctx_type_1 &_ctx, fix16_t x){
    return v;
 }
 
-Blit__ctx_type_2 Blit__ctx_type_2_init(){
+void Blit__ctx_type_2_init(Blit__ctx_type_2 &_output_){
    Blit__ctx_type_2 _ctx;
    _ctx.y1 = 0x0 /* 0.000000 */;
    _ctx.x1 = 0x0 /* 0.000000 */;
-   return _ctx;
+   _output_ = _ctx;
+   return ;
 }
 
-Blit__ctx_type_2 Blit_dcblock_init(){ return Blit__ctx_type_2_init();}
+void Blit_dcblock_init(Blit__ctx_type_2 &_output_){
+   Blit__ctx_type_2_init(_output_);
+   return ;
+}
 
 fix16_t Blit_dcblock(Blit__ctx_type_2 &_ctx, fix16_t x0){
    fix16_t y0 = fix_add(fix_add(x0,(- _ctx.x1)),fix_mul(_ctx.y1,0xfeb8 /* 0.995000 */));
@@ -55,7 +63,7 @@ fix16_t Blit_pulse_train(fix16_t m, fix16_t phase){
    return tmp1;
 }
 
-Blit__ctx_type_5 Blit__ctx_type_5_init(){
+void Blit__ctx_type_5_init(Blit__ctx_type_5 &_output_){
    Blit__ctx_type_5 _ctx;
    _ctx.state_triang = 0x0 /* 0.000000 */;
    _ctx.state_saw = 0x0 /* 0.000000 */;
@@ -64,12 +72,16 @@ Blit__ctx_type_5 Blit__ctx_type_5_init(){
    _ctx.phase = 0x0 /* 0.000000 */;
    _ctx.output = 0x0 /* 0.000000 */;
    _ctx.m = 0x0 /* 0.000000 */;
-   _ctx._inst1 = Blit__ctx_type_2_init();
-   _ctx._inst0 = Blit__ctx_type_1_init();
-   return _ctx;
+   Blit__ctx_type_1_init(_ctx._inst3);
+   Blit__ctx_type_2_init(_ctx._inst11);
+   _output_ = _ctx;
+   return ;
 }
 
-Blit__ctx_type_5 Blit_osc_init(){ return Blit__ctx_type_5_init();}
+void Blit_osc_init(Blit__ctx_type_5 &_output_){
+   Blit__ctx_type_5_init(_output_);
+   return ;
+}
 
 fix16_t Blit_osc(Blit__ctx_type_5 &_ctx, fix16_t pitch, fix16_t pw, fix16_t wave){
    fix16_t fixed_pitch = 0x0 /* 0.000000 */;
@@ -80,7 +92,7 @@ fix16_t Blit_osc(Blit__ctx_type_5 &_ctx, fix16_t pitch, fix16_t pw, fix16_t wave
    {
       fixed_pitch = fix_add(pitch,0xc0000 /* 12.000000 */);
    }
-   if(Blit_change(_ctx._inst0,fixed_pitch)){
+   if(Blit_change(_ctx._inst3,fixed_pitch)){
       _ctx.rate = Blit_pitchToRate(fixed_pitch);
       fix16_t p = fix_div(0x10000 /* 1.000000 */,_ctx.rate);
       fix16_t maxHarmonics = fix_floor(fix_mul(p,0x8000 /* 0.500000 */));
@@ -89,17 +101,17 @@ fix16_t Blit_osc(Blit__ctx_type_5 &_ctx, fix16_t pitch, fix16_t pw, fix16_t wave
    fix16_t shift05 = fix_add(0x8000 /* 0.500000 */,fix_mul(pw,0x7d70 /* 0.490000 */));
    fix16_t shift = fix_add(_ctx.phase,shift05);
    if(shift > 0x10000 /* 1.000000 */){
-      shift = fix_add(shift,(0xffff0000 /* -1.000000 */));
+      shift = fix_add(shift,(-0x10000 /* -1.000000 */));
    }
    fix16_t tmp1 = Blit_pulse_train(_ctx.m,_ctx.phase);
    fix16_t tmp2 = Blit_pulse_train(_ctx.m,shift);
    _ctx.phase = fix_add(_ctx.phase,_ctx.rate);
    if(_ctx.phase > 0x10000 /* 1.000000 */){
-      _ctx.phase = fix_add(_ctx.phase,(0xffff0000 /* -1.000000 */));
+      _ctx.phase = fix_add(_ctx.phase,(-0x10000 /* -1.000000 */));
    }
-   _ctx.state_pulse = fix_clip(fix_add(fix_add(fix_mul(_ctx.state_pulse,0xffdf /* 0.999500 */),tmp1),(- tmp2)),(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
-   _ctx.state_saw = fix_clip(fix_add(fix_mul(_ctx.state_saw,0xffdf /* 0.999500 */),fix_mul(fix_div(fix_add(fix_add(tmp1,tmp2),fix_mul((0xfffe0000 /* -2.000000 */),_ctx.rate)),shift05),0x8000 /* 0.500000 */)),(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
-   _ctx.state_triang = fix_clip(fix_add(fix_mul(_ctx.state_triang,0xffdf /* 0.999500 */),fix_mul(fix_mul(0x20000 /* 2.000000 */,_ctx.state_pulse),_ctx.rate)),(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
+   _ctx.state_pulse = fix_clip(fix_add(fix_add(fix_mul(_ctx.state_pulse,0xffdf /* 0.999500 */),tmp1),(- tmp2)),(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
+   _ctx.state_saw = fix_clip(fix_add(fix_mul(_ctx.state_saw,0xffdf /* 0.999500 */),fix_mul(fix_div(fix_add(fix_add(tmp1,tmp2),fix_mul((-0x20000 /* -2.000000 */),_ctx.rate)),shift05),0x8000 /* 0.500000 */)),(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
+   _ctx.state_triang = fix_clip(fix_add(fix_mul(_ctx.state_triang,0xffdf /* 0.999500 */),fix_mul(fix_mul(0x20000 /* 2.000000 */,_ctx.state_pulse),_ctx.rate)),(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
    if(wave < 0x5555 /* 0.333333 */){
       _ctx.output = _ctx.state_pulse;
    }
@@ -113,37 +125,50 @@ fix16_t Blit_osc(Blit__ctx_type_5 &_ctx, fix16_t pitch, fix16_t pw, fix16_t wave
          _ctx.output = fix_mul(fix_mul(0x20000 /* 2.000000 */,_ctx.state_triang),fix_add(0x10000 /* 1.000000 */,pw));
       }
    }
-   _ctx.output = Blit_dcblock(_ctx._inst1,_ctx.output);
-   return fix_clip(fix_mul(_ctx.output,0x4000 /* 0.250000 */),(0xffff0000 /* -1.000000 */),0x10000 /* 1.000000 */);
+   _ctx.output = Blit_dcblock(_ctx._inst11,_ctx.output);
+   return fix_clip(fix_mul(_ctx.output,0x4000 /* 0.250000 */),(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
 }
 
-Blit__ctx_type_6 Blit__ctx_type_6_init(){
+void Blit__ctx_type_6_init(Blit__ctx_type_6 &_output_){
    Blit__ctx_type_6 _ctx;
    _ctx.wave = 0x0 /* 0.000000 */;
    _ctx.pw = 0x0 /* 0.000000 */;
    _ctx.pitch = 0x0 /* 0.000000 */;
-   _ctx._inst0 = Blit__ctx_type_5_init();
-   return _ctx;
+   Blit__ctx_type_5_init(_ctx._inst1);
+   _output_ = _ctx;
+   return ;
 }
 
-Blit__ctx_type_6 Blit_process_init(){ return Blit__ctx_type_6_init();}
+void Blit_process_init(Blit__ctx_type_6 &_output_){
+   Blit__ctx_type_6_init(_output_);
+   return ;
+}
 
 fix16_t Blit_process(Blit__ctx_type_6 &_ctx, fix16_t input){
-   return Blit_osc(_ctx._inst0,_ctx.pitch,_ctx.pw,_ctx.wave);
+   return Blit_osc(_ctx._inst1,_ctx.pitch,_ctx.pw,_ctx.wave);
 }
 
-Blit__ctx_type_6 Blit_noteOn_init(){ return Blit__ctx_type_6_init();}
+void Blit_noteOn_init(Blit__ctx_type_6 &_output_){
+   Blit__ctx_type_6_init(_output_);
+   return ;
+}
 
 void Blit_noteOn(Blit__ctx_type_6 &_ctx, int note, int velocity){
    _ctx.pitch = int_to_fix(note);
 }
 
-Blit__ctx_type_6 Blit_noteOff_init(){ return Blit__ctx_type_6_init();}
+void Blit_noteOff_init(Blit__ctx_type_6 &_output_){
+   Blit__ctx_type_6_init(_output_);
+   return ;
+}
 
 void Blit_noteOff(Blit__ctx_type_6 &_ctx, int note){
 }
 
-Blit__ctx_type_6 Blit_controlChange_init(){ return Blit__ctx_type_6_init();}
+void Blit_controlChange_init(Blit__ctx_type_6 &_output_){
+   Blit__ctx_type_6_init(_output_);
+   return ;
+}
 
 void Blit_controlChange(Blit__ctx_type_6 &_ctx, int control, int value){
    if(control == 30){
@@ -154,7 +179,10 @@ void Blit_controlChange(Blit__ctx_type_6 &_ctx, int control, int value){
    }
 }
 
-Blit__ctx_type_6 Blit_default_init(){ return Blit__ctx_type_6_init();}
+void Blit_default_init(Blit__ctx_type_6 &_output_){
+   Blit__ctx_type_6_init(_output_);
+   return ;
+}
 
 void Blit_default(Blit__ctx_type_6 &_ctx){
    _ctx.pw = 0x0 /* 0.000000 */;

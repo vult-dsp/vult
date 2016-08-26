@@ -1,21 +1,3 @@
-function vultProcess(){
-    this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
-    this.not  = function(x)          { return x==0?1:0; };
-    this.real = function(x)          { return x; };
-    this.int  = function(x)          { return x|0; };
-    this.sin  = function(x)          { return Math.sin(x); };
-    this.cos  = function(x)          { return Math.cos(x); };
-    this.abs  = function(x)          { return Math.abs(x); };
-    this.exp  = function(x)          { return Math.exp(x); };
-    this.floor= function(x)          { return Math.floor(x); };
-    this.tan  = function(x)          { return Math.tan(x); };
-    this.tanh = function(x)          { return Math.tanh(x); };
-    this.sqrt = function(x)          { return x; };
-    this.set  = function(a,i,v)      { a[i]=v; };
-    this.get  = function(a,i)        { return a[i]; };
-    this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.Voice_process_init = null;
-    this.Voice_default = null;
 this.Voice_minFixed = function(){
    return 1.52588e-05;
 }
@@ -116,8 +98,8 @@ this.Voice__ctx_type_10_init = function(){
    _ctx.phase = 0.;
    _ctx.output = 0.;
    _ctx.m = 0.;
-   _ctx._inst1 = this.Voice__ctx_type_6_init();
-   _ctx._inst0 = this.Voice__ctx_type_1_init();
+   _ctx._inst3 = this.Voice__ctx_type_1_init();
+   _ctx._inst11 = this.Voice__ctx_type_6_init();
    return _ctx;
 }
 this.Voice_osc_init = function() { return this.Voice__ctx_type_10_init();}
@@ -130,7 +112,7 @@ this.Voice_osc = function(_ctx,pitch,pw,wave){
    {
       fixed_pitch = (pitch + 12.);
    }
-   if(this.Voice_change(_ctx._inst0,fixed_pitch)){
+   if(this.Voice_change(_ctx._inst3,fixed_pitch)){
       _ctx.rate = this.Voice_pitchToRate(fixed_pitch);
       var p = (1. / _ctx.rate);
       var maxHarmonics = this.floor((p * 0.5));
@@ -163,7 +145,7 @@ this.Voice_osc = function(_ctx,pitch,pw,wave){
          _ctx.output = (2. * _ctx.state_triang * (1. + pw));
       }
    }
-   _ctx.output = this.Voice_dcblock(_ctx._inst1,_ctx.output);
+   _ctx.output = this.Voice_dcblock(_ctx._inst11,_ctx.output);
    return this.clip((_ctx.output * 0.25),(-1.),1.);
 }
 this.Voice__ctx_type_11_init = function(){
@@ -180,14 +162,21 @@ this.Voice_svf_step = function(_ctx,input,g,q,sel){
    var notch = (high + low);
    _ctx.dband = this.clip(band,(-1.),1.);
    _ctx.dlow = this.clip(low,(-1.),1.);
-   var output = ((sel == (0|0))?low:((sel == (1|0))?high:((sel == (2|0))?band:notch)));
+   var output = {};
+   if((sel == (0|0)))output = low;
+   else
+   if((sel == (1|0)))output = high;
+   else
+   if((sel == (2|0)))output = band;
+   else
+   output = notch;
    return output;
 }
 this.Voice__ctx_type_12_init = function(){
    var _ctx = {};
    _ctx.step = this.Voice__ctx_type_11_init();
    _ctx.g = 0.;
-   _ctx._inst0 = this.Voice__ctx_type_1_init();
+   _ctx._inst1 = this.Voice__ctx_type_1_init();
    return _ctx;
 }
 this.Voice_svf_init = function() { return this.Voice__ctx_type_12_init();}
@@ -195,7 +184,7 @@ this.Voice_svf = function(_ctx,input,fc,q,sel){
    fc = this.clip(fc,0.,1.);
    q = this.clip(q,0.,1.);
    var fix_q = (2. * (1. + (- q)));
-   if(this.Voice_change(_ctx._inst0,fc)){
+   if(this.Voice_change(_ctx._inst1,fc)){
       _ctx.g = (fc * 0.5);
    }
    var x1 = this.Voice_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
@@ -204,103 +193,55 @@ this.Voice_svf = function(_ctx,input,fc,q,sel){
 }
 this.Voice__ctx_type_13_init = function(){
    var _ctx = {};
-   _ctx.value = 0.;
-   _ctx.sustainLevel = 0.;
+   _ctx.target = 0.;
    _ctx.state = ((0|0)|0);
-   _ctx.releaseRate = 0.;
-   _ctx.decayRate = 0.;
-   _ctx.attackRate = 0.;
-   _ctx._inst2 = this.Voice__ctx_type_7_init();
-   _ctx._inst1 = this.Voice__ctx_type_2_init();
-   _ctx._inst0 = this.Voice__ctx_type_4_init();
+   _ctx.rate = 0.;
+   _ctx.out = 0.;
    return _ctx;
 }
 this.Voice_adsr_init = function() { return this.Voice__ctx_type_13_init();}
-this.Voice_adsr = function(_ctx,gate,attack,decay,sustain,release){
-   var IDLE = ((0|0)|0);
-   var ATTACK = ((1|0)|0);
-   var DECAY = ((2|0)|0);
-   var SUSTAIN = ((3|0)|0);
-   var RELEASE = ((4|0)|0);
-   if(this.Voice_each(_ctx._inst0,(32|0))){
-      _ctx.attackRate = (2.26757369615e-05 * (1. / (attack + 0.1)));
-      var inv_sustain = (1. + (- sustain));
-      _ctx.decayRate = (inv_sustain * 2.26757369615e-05 * (inv_sustain / (decay + 0.1)));
-      _ctx.releaseRate = (1.13378684807e-05 * (0.5 / (release + 0.1)));
-   }
-   _ctx.sustainLevel = sustain;
-   var rate = 0.;
-   var trig = this.Voice_bchange(_ctx._inst1,gate);
-   var up = (trig && gate);
-   var down = (trig && this.not(gate));
-   if((_ctx.state == IDLE)){
-      if(up){
-         _ctx.state = (ATTACK|0);
+this.Voice_adsr = function(_ctx,gate,a,d,s,r){
+   _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.001));
+   if((_ctx.state == (0|0))){
+      if(gate){
+         _ctx.state = ((1|0)|0);
       }
+      _ctx.rate = r;
+      _ctx.target = 0.;
    }
-   else
-   {
-      if((_ctx.state == ATTACK)){
-         if((_ctx.value >= 1.)){
-            _ctx.state = (DECAY|0);
-         }
-         if(down){
-            _ctx.state = (RELEASE|0);
-         }
-         rate = _ctx.attackRate;
+   if((_ctx.state == (1|0))){
+      if(this.not(gate)){
+         _ctx.state = ((0|0)|0);
       }
-      else
-      {
-         if((_ctx.state == DECAY)){
-            if((_ctx.value <= _ctx.sustainLevel)){
-               _ctx.state = (SUSTAIN|0);
-            }
-            if(down){
-               _ctx.state = (RELEASE|0);
-            }
-            rate = (- _ctx.decayRate);
-         }
-         else
-         {
-            if((_ctx.state == SUSTAIN)){
-               if(down){
-                  _ctx.state = (RELEASE|0);
-               }
-               rate = 0.;
-               _ctx.value = _ctx.sustainLevel;
-            }
-            else
-            {
-               if((_ctx.state == RELEASE)){
-                  if((_ctx.value <= 0.)){
-                     _ctx.state = (IDLE|0);
-                  }
-                  if(up){
-                     _ctx.state = (ATTACK|0);
-                  }
-                  rate = (- _ctx.releaseRate);
-               }
-            }
-         }
+      if((_ctx.out > 1024.)){
+         _ctx.state = ((2|0)|0);
       }
+      _ctx.rate = a;
+      _ctx.target = (1228.8);
    }
-   _ctx.value = this.clip((this.Voice_lpfilter(_ctx._inst2,rate) + _ctx.value),0.,1.);
-   return _ctx.value;
+   if((_ctx.state == (2|0))){
+      if(this.not(gate)){
+         _ctx.state = ((0|0)|0);
+      }
+      _ctx.rate = d;
+      _ctx.target = (s * 1024.);
+   }
+   return (_ctx.out * 0.0009765625);
 }
 this.Voice__ctx_type_14_init = function(){
    var _ctx = {};
    _ctx.phase = 0.;
-   _ctx._inst1 = this.Voice__ctx_type_4_init();
-   _ctx._inst0 = this.Voice__ctx_type_3_init();
+   _ctx._inst3 = this.Voice__ctx_type_4_init();
+   _ctx._inst1 = this.Voice__ctx_type_3_init();
    return _ctx;
 }
 this.Voice_lfo_init = function() { return this.Voice__ctx_type_14_init();}
 this.Voice_lfo = function(_ctx,f,gate){
    var rate = ((f * 100. * this.Voice_minFixed()) + this.Voice_minFixed());
-   if(this.Voice_edge(_ctx._inst0,gate)){
+   if(this.Voice_edge(_ctx._inst1,gate)){
       _ctx.phase = 0.;
    }
-   if(this.Voice_each(_ctx._inst1,(4|0))){
+   if(this.Voice_each(_ctx._inst3,(4|0))){
       _ctx.phase = (_ctx.phase + rate);
    }
    if((_ctx.phase > 1.)){
@@ -426,23 +367,23 @@ this.Voice__ctx_type_16_init = function(){
    _ctx.amp_r = 0.;
    _ctx.amp_d = 0.;
    _ctx.amp_a = 0.;
-   _ctx._inst4 = this.Voice__ctx_type_12_init();
+   _ctx._inst5 = this.Voice__ctx_type_12_init();
+   _ctx._inst4 = this.Voice__ctx_type_13_init();
    _ctx._inst3 = this.Voice__ctx_type_13_init();
-   _ctx._inst2 = this.Voice__ctx_type_13_init();
-   _ctx._inst1 = this.Voice__ctx_type_10_init();
-   _ctx._inst0 = this.Voice__ctx_type_14_init();
+   _ctx._inst2 = this.Voice__ctx_type_10_init();
+   _ctx._inst1 = this.Voice__ctx_type_14_init();
    this.Voice_default(_ctx);
    return _ctx;
 }
 this.Voice_process_init = function() { return this.Voice__ctx_type_16_init();}
 this.Voice_process = function(_ctx,i){
    var gate = this.Voice_mono_isGateOn(_ctx.monoin);
-   var lfo1 = (this.Voice_lfo(_ctx._inst0,_ctx.lfo_rate,gate) * _ctx.lfo_amt);
-   var x = this.Voice_osc(_ctx._inst1,_ctx.pitch,(_ctx.pw + lfo1),_ctx.wave);
-   var amp_env = this.Voice_adsr(_ctx._inst2,gate,_ctx.amp_a,_ctx.amp_d,_ctx.amp_s,_ctx.amp_r);
-   var flt_env = this.Voice_adsr(_ctx._inst3,gate,_ctx.env_a,_ctx.env_d,_ctx.env_s,_ctx.end_r);
+   var lfo1 = (this.Voice_lfo(_ctx._inst1,_ctx.lfo_rate,gate) * _ctx.lfo_amt);
+   var x = this.Voice_osc(_ctx._inst2,_ctx.pitch,(_ctx.pw + lfo1),_ctx.wave);
+   var amp_env = this.Voice_adsr(_ctx._inst3,gate,_ctx.amp_a,_ctx.amp_d,_ctx.amp_s,_ctx.amp_r);
+   var flt_env = this.Voice_adsr(_ctx._inst4,gate,_ctx.env_a,_ctx.env_d,_ctx.env_s,_ctx.end_r);
    var cut_mod = (_ctx.cut + (_ctx.flt_atm * flt_env));
-   var output = (amp_env * this.Voice_svf(_ctx._inst4,x,cut_mod,_ctx.res,(0|0)));
+   var output = (amp_env * this.Voice_svf(_ctx._inst5,x,cut_mod,_ctx.res,(0|0)));
    return output;
 }
 this.Voice_noteOn_init = function() { return this.Voice__ctx_type_16_init();}
@@ -512,13 +453,4 @@ this.Voice_default = function(_ctx){
    _ctx.amp_s = 1.;
    _ctx.lfo_amt = 0.5;
    _ctx.lfo_rate = 0.;
-}
-
-    if(this.Voice_process_init)  this.context =  this.Voice_process_init(); else this.context = {};
-    if(this.Voice_default)      this.Voice_default(this.context);
-    this.liveNoteOn        = function(note,velocity) { if(this.Voice_noteOn)        this.Voice_noteOn(this.context,note,velocity); };
-    this.liveNoteOff       = function(note,velocity) { if(this.Voice_noteOff)       this.Voice_noteOff(this.context,note,velocity); };
-    this.liveControlChange = function(note,velocity) { if(this.Voice_controlChange) this.Voice_controlChange(this.context,note,velocity); };
-    this.liveProcess       = function(input)         { if(this.Voice_process)       return this.Voice_process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.Voice_default)      return this.Voice_default(this.context); };
 }
