@@ -188,11 +188,12 @@ let generateCode (parser_results:parser_results list) (args:arguments) : (Pla.t 
       let ()          = checkRealType args.real in
       (* Applies all passes to the statements *)
       let stmts       = Passes.applyTransformations args parser_results in
-      let params      = createParameters parser_results stmts args in
+      let params_c    = createParameters parser_results stmts args in
+      let params_js   = createParameters parser_results stmts { args with real = "js" } in
       (* Calls the code generation  *)
       let all_stmts   = List.flatten stmts in
-      let ccode       = generateC args params all_stmts in
-      let jscode      = generateJS args params all_stmts in
+      let ccode       = generateC args params_c all_stmts in
+      let jscode      = generateJS args params_js all_stmts in
       jscode @ ccode
    else []
 

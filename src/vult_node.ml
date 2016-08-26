@@ -26,7 +26,7 @@ open TypesVult
 
 let generateJSCode s =
    Driver.parseStringGenerateCode
-      ({ default_arguments with jscode = true; template = "browser"; files = ["live"]})
+      ({ default_arguments with jscode = true; real = "js";template = "browser"; files = ["live"]})
       (Js.to_string s)
    |> Js.string
 
