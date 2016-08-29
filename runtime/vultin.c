@@ -29,47 +29,12 @@ NOTE: The code for the fixed-point operations is based on the project:
 */
 #include "vultin.h"
 
-#ifdef __GNUC__
-#define clz(x) (__builtin_clzl(x) - (8 * sizeof(long) - 32))
-#else
-static uint8_t clz(uint32_t x)
-{
-    uint8_t result = 0;
-    if (x == 0) return 32;
-    while (!(x & 0xF0000000)) { result += 4; x <<= 4; }
-    while (!(x & 0x80000000)) { result += 1; x <<= 1; }
-    return result;
-}
-#endif
-
 fix16_t fix_div(fix16_t a, fix16_t b)
 {
     if (b == 0) return 0;
-    fix16_t remainder = (a >= 0) ? a : (-a);
-    fix16_t divider = (b >= 0) ? b : (-b);
-    fix16_t quotient = 0;
-    int bit_pos = 17;
-    if (divider & 0xFFF00000) {
-        fix16_t shifted_div = ((divider >> 17) + 1);
-        quotient = remainder / shifted_div;
-        remainder -= ((uint64_t)quotient * divider) >> 17;
-    }
-    while (!(divider & 0xF) && bit_pos >= 4) {
-        divider >>= 4;
-        bit_pos -= 4;
-    }
-    while (remainder && bit_pos >= 0) {
-        int shift = clz(remainder);
-        if (shift > bit_pos) shift = bit_pos;
-        remainder <<= shift;
-        bit_pos -= shift;
-        fix16_t div = remainder / divider;
-        remainder = remainder % divider;
-        quotient += div << bit_pos;
-        remainder <<= 1;
-        bit_pos--;
-    }
-    fix16_t result = quotient >> 1;
+    fix16_t aa = a > 0 ? a : -a;
+    fix16_t bb = b > 0 ? b : -b;
+    fix16_t result = (((int64_t)aa)<<16)/((int64_t)bb);
     if ((a ^ b) & 0x80000000) {
         result = -result;
     }
