@@ -23,9 +23,28 @@ float Math_cos(float x0){
    return Math_sin((x0 + (1.5707963268f)));
 }
 
-float Math_tanh(float x){
-   float xp2 = (x * x);
-   return (x * (1.f + (xp2 * (((-0.333333333333f)) + (xp2 * ((0.133333333333f) + (xp2 * (((-0.0539682539683f)) + (xp2 * ((0.0218694885362f) + ((-0.0088632355299f) * xp2)))))))))));
+float Math_tanh(float xx){
+   uint8_t positive = (xx > 0.f);
+   float x;
+   if(positive)x = xx;
+   else
+   x = (- xx);
+   float y;
+   int n = 0;
+   while((x > 1.f)){
+      x = (x * 0.5f);
+      n = (n + 1);
+   }
+   y = ((-0.00409341481604f) + (x * (1.04192726436f + (x * ((-0.191854020579f) + (x * (0.185782226563f + (x * ((-0.920884671533f) + (x * (1.24746375479f + (x * ((-0.916265340718f) + (x * (0.428905299435f + (x * ((-0.13323671176f) + (x * (0.02689551524f + (((-0.00322032138218f) + (0.000174583163406f * x)) * x))))))))))))))))))));
+   while((n > 0)){
+      y = ((2.f * y) / (1.f + (y * y)));
+      n = (n + (-1));
+   }
+   float _if_3;
+   if(positive)_if_3 = y;
+   else
+   _if_3 = (- y);
+   return _if_3;
 }
 
 float Math_tan(float x){

@@ -23,9 +23,28 @@ fix16_t Math_cos(fix16_t x0){
    return Math_sin(fix_add(x0,0x1921f /* 1.570796 */));
 }
 
-fix16_t Math_tanh(fix16_t x){
-   fix16_t xp2 = fix_mul(x,x);
-   return fix_mul(x,fix_add(0x10000 /* 1.000000 */,fix_mul(xp2,fix_add((-0x5555 /* -0.333333 */),fix_mul(xp2,fix_add(0x2222 /* 0.133333 */,fix_mul(xp2,fix_add((-0xdd0 /* -0.053968 */),fix_mul(xp2,fix_add(0x599 /* 0.021869 */,fix_mul((-0x244 /* -0.008863 */),xp2)))))))))));
+fix16_t Math_tanh(fix16_t xx){
+   uint8_t positive = (xx > 0x0 /* 0.000000 */);
+   fix16_t x;
+   if(positive)x = xx;
+   else
+   x = (- xx);
+   fix16_t y;
+   int n = 0;
+   while((x > 0x10000 /* 1.000000 */)){
+      x = fix_mul(x,0x8000 /* 0.500000 */);
+      n = (n + 1);
+   }
+   y = fix_add((-0x10c /* -0.004093 */),fix_mul(x,fix_add(0x10abb /* 1.041927 */,fix_mul(x,fix_add((-0x311d /* -0.191854 */),fix_mul(x,fix_add(0x2f8f /* 0.185782 */,fix_mul(x,fix_add((-0xebbf /* -0.920885 */),fix_mul(x,fix_add(0x13f59 /* 1.247464 */,fix_mul(x,fix_add((-0xea90 /* -0.916265 */),fix_mul(x,fix_add(0x6dcc /* 0.428905 */,fix_mul(x,fix_add((-0x221b /* -0.133237 */),fix_mul(x,fix_add(0x6e2 /* 0.026896 */,fix_mul(fix_add((-0xd3 /* -0.003220 */),fix_mul(0xb /* 0.000175 */,x)),x))))))))))))))))))));
+   while((n > 0)){
+      y = fix_div(fix_mul(0x20000 /* 2.000000 */,y),fix_add(0x10000 /* 1.000000 */,fix_mul(y,y)));
+      n = (n + (-1));
+   }
+   fix16_t _if_3;
+   if(positive)_if_3 = y;
+   else
+   _if_3 = (- y);
+   return _if_3;
 }
 
 fix16_t Math_tan(fix16_t x){

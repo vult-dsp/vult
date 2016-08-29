@@ -10,7 +10,7 @@ fix16_t Math_sin(fix16_t x0);
 
 fix16_t Math_cos(fix16_t x0);
 
-fix16_t Math_tanh(fix16_t x);
+fix16_t Math_tanh(fix16_t xx);
 
 fix16_t Math_tan(fix16_t x);
 

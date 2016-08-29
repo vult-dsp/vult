@@ -10,7 +10,7 @@ float Math_sin(float x0);
 
 float Math_cos(float x0);
 
-float Math_tanh(float x);
+float Math_tanh(float xx);
 
 float Math_tan(float x);
 
