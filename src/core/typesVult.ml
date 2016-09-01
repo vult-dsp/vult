@@ -198,6 +198,7 @@ type arguments =
       mutable dparse   : bool;
       mutable ccode    : bool;
       mutable jscode   : bool;
+      mutable luacode  : bool;
       mutable output   : string;
       mutable real     : string;
       mutable template : string;
@@ -209,6 +210,7 @@ let default_arguments =
       dparse = false;
       ccode  = false;
       jscode = false;
+      luacode = false;
       output = "";
       real   = "float";
       template = "default";

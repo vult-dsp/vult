@@ -166,6 +166,15 @@ let generateJS (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (P
       VultJs.print params clike_stmts
    else []
 
+(* Generates the JS code if the flag was passed *)
+let generateLua (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * string) list=
+   if args.luacode then
+      let cparams     = VultToCLike.{repl = params.repl; return_by_ref = false } in
+      (* Converts the statements to CLike form *)
+      let clike_stmts = VultToCLike.convertStmtList cparams stmts in
+      VultLua.print params clike_stmts
+   else []
+
 (** Returns the code generation parameters based on the vult code *)
 let createParameters (parser_results:parser_results list) (stmts:TypesVult.stmt list list) (args:arguments) =
    (* Gets the name of the main module (the last passes file name) *)
@@ -181,7 +190,7 @@ let createParameters (parser_results:parser_results list) (stmts:TypesVult.stmt 
 
 
 let generateCode (parser_results:parser_results list) (args:arguments) : (Pla.t * string) list =
-   if args.ccode || args.jscode then
+   if args.ccode || args.jscode || args.luacode then
       (* Initialize the replacements *)
       let ()          = DefaultReplacements.initialize () in
       (* Checks the 'real' argument is valid *)
@@ -190,11 +199,13 @@ let generateCode (parser_results:parser_results list) (args:arguments) : (Pla.t 
       let stmts       = Passes.applyTransformations args parser_results in
       let params_c    = createParameters parser_results stmts args in
       let params_js   = createParameters parser_results stmts { args with real = "js" } in
+      let params_lua  = createParameters parser_results stmts { args with real = "lua" } in
       (* Calls the code generation  *)
       let all_stmts   = List.flatten stmts in
       let ccode       = generateC args params_c all_stmts in
       let jscode      = generateJS args params_js all_stmts in
-      jscode @ ccode
+      let luacode     = generateLua args params_lua all_stmts in
+      jscode @ ccode @ luacode
    else []
 
 

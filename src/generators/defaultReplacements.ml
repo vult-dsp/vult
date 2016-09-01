@@ -293,10 +293,73 @@ module JavaScript = struct
 
 end
 
+module Lua = struct
+
+   let keywords = Replacements.makeKeywords
+         [
+            "default", "default_";
+            "switch",  "switch_";
+         ]
+
+   let types = Replacements.makeTypes
+         [
+         ]
+
+   let cast = Replacements.makeCasts
+         [
+
+         ]
+
+   let op_to_fun = Replacements.makeOperators
+         [
+         ]
+
+   let op_to_op = Replacements.makeOperators
+         [
+            ("<>", "real"),    "~=";
+            ("<>", "int"),     "~=";
+            ("<>", "bool"),    "~=";
+            ("&&", "bool"),    "and";
+            ("||", "bool"),    "or";
+         ]
+
+   let fun_to_fun = Replacements.makeFunctions
+         [
+
+         ]
+
+   let array_init = Replacements.makeArrayInitializations
+         [
+            "int",    "makeArray";
+            "real",   "makeArray";
+            "bool",   "makeArray";
+         ]
+
+   let real_string = Replacements.makeRealToString
+         [
+
+         ]
+
+   (* This is the default selection of replacements *)
+   let replacements =
+      Replacements.{
+         keywords;
+         types;
+         cast;
+         op_to_fun;
+         op_to_op;
+         fun_to_fun;
+         array_init;
+         real_string;
+      }
+
+end
+
 let initialize () =
    Replacements.registerReplacements "float" Default.replacements;
    Replacements.registerReplacements "fixed" FixedPoint.replacements;
-   Replacements.registerReplacements "js"    JavaScript.replacements
+   Replacements.registerReplacements "js"    JavaScript.replacements;
+   Replacements.registerReplacements "lua"    Lua.replacements
 ;;
 
 

@@ -31,6 +31,7 @@ let processArguments () : arguments =
       "-dparse",   (Arg.Unit   (fun () -> result.dparse   <-true)), "Dumps the parse tree (default: off)";
       "-ccode",    (Arg.Unit   (fun () -> result.ccode    <-true)), "Converts the code to c (default: off)";
       "-jscode",   (Arg.Unit   (fun () -> result.jscode   <-true)), "Converts the code to javascript (default: off)";
+      "-luacode",  (Arg.Unit   (fun () -> result.luacode  <-true)), "Converts the code to lua (default: off)";
       "-o",        (Arg.String (fun output -> result.output<-output)), "Defines the prefix of the output files";
       "-real",     (Arg.String (fun real -> result.real<-real)),       "Defines the numeric type for the generated code (float,double,fixed)";
       "-template", (Arg.String (fun temp -> result.template<-temp)),   "Defines the template used to generate code";
