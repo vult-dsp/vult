@@ -117,28 +117,28 @@ module Scope = struct
       {
          name      : id;             (** Name of the current scope *)
          kind      : kind;           (** Type of the current scope *)
-         parent    : t option;       (** Pointer to it's parent *)
-         typ       : VType.t;        (** Type of the symbol *)
+         parent    : t option ref;       (** Pointer to it's parent *)
+         typ       : VType.t ref;        (** Type of the symbol *)
 
-         operators : t IdMap.t;      (** Operators *)
-         modules   : t IdMap.t;      (** Modules or namespaces *)
-         types     : t IdMap.t;      (** Types *)
-         func      : t IdMap.t;      (** Functions *)
-         mem_inst  : var IdMap.t;      (** Mem and instances *)
-         locals    : var IdMap.t list; (** Variables and subscopes *)
+         operators : t IdMap.t ref;      (** Operators *)
+         modules   : t IdMap.t ref;      (** Modules or namespaces *)
+         types     : t IdMap.t ref;      (** Types *)
+         func      : t IdMap.t ref;      (** Functions *)
+         mem_inst  : var IdMap.t ref;      (** Mem and instances *)
+         locals    : var IdMap.t list ref; (** Variables and subscopes *)
 
-         ctx       : Context.t;
+         ctx       : Context.t ref;
 
-         single    : bool;           (** true if every function call does not create a new instance *)
+         single    : bool ref;           (** true if every function call does not create a new instance *)
 
-         active    : bool;           (** true if the fuction contains a mem or an instance *)
+         active    : bool ref;           (** true if the fuction contains a mem or an instance *)
 
-         ext_fn    : string option;  (** contains the replacement name if it's an external function *)
+         ext_fn    : string option ref;      (** contains the replacement name if it's an external function *)
 
-         loc       : Loc.t;
+         loc       : Loc.t ref;
 
-         tick      : int;
-         in_if     : bool; (** set to true by the mapper when inside an if-expression *)
+         tick      : int ref;
+         in_if     : bool ref; (** set to true by the mapper when inside an if-expression *)
 
       }
 
@@ -153,66 +153,72 @@ module Scope = struct
       {
          name      = [];
          kind      = kind;
-         parent    = None;
-         operators = IdMap.empty;
-         modules   = IdMap.empty;
-         types     = IdMap.empty;
-         func      = IdMap.empty;
-         mem_inst  = IdMap.empty;
-         locals    = [];
-         typ       = VType.Constants.empty;
-         ctx       = Context.empty;
-         single    = true;
-         active    = false;
-         ext_fn    = None;
-         loc       = Loc.default;
-         tick      = 0;
-         in_if     = false;
+         parent    = ref None;
+         operators = ref IdMap.empty;
+         modules   = ref IdMap.empty;
+         types     = ref IdMap.empty;
+         func      = ref IdMap.empty;
+         mem_inst  = ref IdMap.empty;
+         locals    = ref [];
+         typ       = ref VType.Constants.empty;
+         ctx       = ref Context.empty;
+         single    = ref true;
+         active    = ref false;
+         ext_fn    = ref None;
+         loc       = ref Loc.default;
+         tick      = ref 0;
+         in_if     = ref false;
 
       }
 
    let tick (t:t) : int * t =
-      t.tick, { t with tick = t.tick + 1 }
+      let n = !(t.tick) in
+      incr t.tick;
+      n,t
 
    let findFunction (t:t) (name:id) : t option =
-      try Some(IdMap.find name t.func) with
+      try Some(IdMap.find name !(t.func)) with
       | _ ->
-         try Some(IdMap.find name t.modules) with
+         try Some(IdMap.find name !(t.modules)) with
          | _ -> None
 
    let findModule (t:t) (name:id) : t option =
-      try Some(IdMap.find name t.modules) with
+      try Some(IdMap.find name !(t.modules)) with
       | _ -> None
 
    let findMemInst (t:t) (name:id) : var option =
-      try Some(IdMap.find name t.mem_inst) with
+      try Some(IdMap.find name !(t.mem_inst)) with
       | _ -> None
 
    let findType (t:t) (name:id) : t option =
-      try Some(IdMap.find name t.types) with
+      try Some(IdMap.find name !(t.types)) with
       | _ ->
-         try Some(IdMap.find name t.modules) with
+         try Some(IdMap.find name !(t.modules)) with
          | _ -> None
 
    let findOperator (t:t) (name:id) : t option =
-      try Some(IdMap.find name t.operators) with
+      try Some(IdMap.find name !(t.operators)) with
       | _ -> None
 
    let getTable (t:t) (kind:kind) : t IdMap.t =
       match kind with
-      | Function -> t.func
-      | Module   -> t.modules
-      | Operator -> t.operators
-      | Type     -> t.types
+      | Function -> !(t.func)
+      | Module   -> !(t.modules)
+      | Operator -> !(t.operators)
+      | Type     -> !(t.types)
 
    let setOptLoc (opt_loc:Loc.t option) (t:t) : t =
       match opt_loc with
-      | Some(loc) -> { t with loc = loc }
+      | Some(loc) ->
+         t.loc := loc;
+         t
       | None -> t
 
    let setOptType (opt_typ:VType.t option) (t:t) : t =
       match opt_typ with
-      | Some(typ) -> { t with typ = typ }
+      | Some(typ) ->
+         t.typ := typ;
+         t
       | None -> t
 
    let findOrCreate (t:t) (typ:VType.t option) (loc:Loc.t option) (kind:kind) (name:id) =
@@ -222,46 +228,61 @@ module Scope = struct
          { (create kind) with name = name } |> setOptLoc loc |> setOptType typ
 
    let enterBlock (t:t) : t =
-      { t with locals = IdMap.empty :: t.locals }
+      t.locals := IdMap.empty :: !(t.locals);
+      t
 
    let enterKind (t:t) ?(typ:VType.t option) ?(loc:Loc.t option) (kind:kind) (name:id) =
       let sub = findOrCreate t typ loc kind name in
-      { sub with parent = Some(t) }
+      sub.parent := Some(t);
+      sub
 
    let exit (t:t) : t =
-      match t.parent with
+      match !(t.parent) with
       | None -> failwith "Scope.exit: cannot exit the top scope"
       | Some(parent) ->
          match t.kind with
-         | Function -> { parent with func      = IdMap.add t.name t parent.func }
-         | Module   -> { parent with modules   = IdMap.add t.name t parent.modules }
-         | Operator -> { parent with operators = IdMap.add t.name t parent.operators }
-         | Type     -> { parent with types     = IdMap.add t.name t parent.types }
+         | Function ->
+            parent.func := IdMap.add t.name t !(parent.func);
+            parent
+         | Module   ->
+            parent.modules := IdMap.add t.name t !(parent.modules);
+            parent
+         | Operator ->
+            parent.operators := IdMap.add t.name t !(parent.operators);
+            parent
+         | Type     ->
+            parent.types := IdMap.add t.name t !(parent.types);
+            parent
 
    let newContext (parent:t) (name:id) (is_init:bool) : t =
-      { parent with ctx = Context.makeNew parent.ctx name is_init }
+      parent.ctx := Context.makeNew !(parent.ctx) name is_init;
+      parent
 
    let addToContext (parent:t) (name:id) (is_init:bool) : t =
-      { parent with ctx = Context.addTo parent.ctx name is_init }
+      parent.ctx := Context.addTo !(parent.ctx) name is_init;
+      parent
 
    let current (t:t) : path =
       let rec parentName parent =
          match parent with
          | None -> []
          | Some(parent_t) ->
-            parent_t.name :: parentName parent_t.parent
+            parent_t.name :: parentName !(parent_t.parent)
       in
-      t.name :: parentName t.parent
+      t.name :: parentName !(t.parent)
       |> List.rev |> List.flatten |> fun a -> Path(a)
 
    let enter (kind:kind) (t:t) (name:id) (attr:attr) : t =
       enterKind t ~loc:attr.loc kind name
 
    let exitBlock (t:t) : t =
-      { t with locals = List.tl t.locals }
+      t.locals := List.tl !(t.locals);
+      t
 
    let setCurrentType (t:t) (typ:VType.t) (single:bool) : t =
-      { t with typ = typ; single = single }
+      t.typ := typ;
+      t.single := single;
+      t
 
    let addBuiltin (t:t) (kind:kind) (name:id) (typ:VType.t) (single:bool) =
       let t' = enter kind t name emptyAttr in
@@ -272,13 +293,13 @@ module Scope = struct
       let rec parentPath (parent:t option) : id =
          match parent with
          | None -> []
-         | Some(p) -> p.name @ parentPath p.parent
+         | Some(p) -> p.name @ parentPath !(p.parent)
       in
-      t.name @ (parentPath t.parent)
+      t.name @ (parentPath !(t.parent))
       |> List.rev
 
    let getPathAndType (t:t) : path * VType.t * t =
-      let typ = if t.single then t.typ else VType.newinst t.typ in
+      let typ = if !(t.single) then !(t.typ) else VType.newinst !(t.typ) in
       Path(getPath t), typ, t
 
    let rec findAny (find_up:bool) (find:t -> id -> t option) (t:t) (name:id) : t option =
@@ -290,7 +311,7 @@ module Scope = struct
             findAny find_up find found rest
          | None ->
             if find_up then
-               match t.parent with
+               match !(t.parent) with
                | Some(_) ->
                   findAny find_up find (exit t) name
                | None -> None
@@ -305,18 +326,18 @@ module Scope = struct
             | found -> Some(found)
             | exception Not_found ->
                inner_loop locals
-      in inner_loop t.locals
+      in inner_loop !(t.locals)
 
    (** Returns all context (functions) within the same context as the current *)
    let getAllWithSameContext (t:t) : t list =
       let contexts =
-         match t.parent with
+         match !(t.parent) with
          | None -> []
-         | Some(parent) -> Context.getAllWithContext parent.ctx t.name
+         | Some(parent) -> Context.getAllWithContext !(parent.ctx) t.name
       in
-      match t.parent with
+      match !(t.parent) with
       | Some(parent) ->
-         List.fold_left (fun s a -> try (IdMap.find a parent.func) :: s with | _ -> s) [t] contexts
+         List.fold_left (fun s a -> try (IdMap.find a !(parent.func)) :: s with | _ -> s) [t] contexts
       | _ -> [t]
 
    (** Search for any mem or instance with the given name.
@@ -373,12 +394,16 @@ module Scope = struct
    (** Adds a new instance to the given scope *)
    let addMem (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
       let new_symbol = { name = name; typ = typ; loc = loc; is_inst = false } in
-      { t with mem_inst = IdMap.add name new_symbol t.mem_inst; active = true }
+      t.mem_inst := IdMap.add name new_symbol !(t.mem_inst);
+      t.active := true;
+      t
 
    (** Adds a new mem variable to the given scope *)
    let addInstance (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
       let new_symbol = { name = name; typ = typ; loc = loc; is_inst = true } in
-      { t with mem_inst = IdMap.add name new_symbol t.mem_inst; active = true }
+      t.mem_inst := IdMap.add name new_symbol !(t.mem_inst);
+      t.active := true;
+      t
 
    (** Adds a variable to the given context *)
    let addVar (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
@@ -388,11 +413,12 @@ module Scope = struct
          (* The variable does not exits, add it *)
          let new_symbol = { name = name; typ = typ; loc = loc; is_inst = false } in
          let first,rest =
-            match t.locals with
+            match !(t.locals) with
             | [] -> IdMap.empty,[]
             | h::t -> h,t
          in
-         { t with locals = (IdMap.add name new_symbol first) :: rest }
+         t.locals := (IdMap.add name new_symbol first) :: rest;
+         t
       | Some(decl) ->
          (* If it exitst check the locations *)
          if Loc.isSameLoc loc decl.loc then
@@ -407,14 +433,19 @@ module Scope = struct
    let addFunction (t:t) (name:id) (attr:attr) : t =
       let add_it () =
          let new_symbol =
-            { (create Function) with name = name;loc = attr.loc; ext_fn = attr.ext_fn } in
+            let sub = { (create Function) with name = name} in 
+            sub.loc := attr.loc;
+            sub.ext_fn := attr.ext_fn;
+            sub
+         in
          let t' =
             if attr.fun_and then
                addToContext t name attr.init
             else
                newContext t name attr.init
          in
-         { t' with func = IdMap.add name new_symbol t.func; }
+         t'.func := IdMap.add name new_symbol !(t.func);
+         t'
       in
 
       match lookup Function t name with
@@ -426,12 +457,12 @@ module Scope = struct
             add_it ()
          else
             (* If it exitst check the locations *)
-            if Loc.isSameLoc attr.loc decl.loc && current_path = path then
+            if Loc.isSameLoc attr.loc !(decl.loc) && current_path = path then
                t
             else
                let msg =
                   Printf.sprintf
-                     "Redefinition of function '%s'. Previously defined at %s" (idStr name) (Loc.to_string_readable decl.loc)
+                     "Redefinition of function '%s'. Previously defined at %s" (idStr name) (Loc.to_string_readable !(decl.loc))
                in
                Error.raiseError msg attr.loc
 
@@ -439,7 +470,7 @@ module Scope = struct
    (** Returns all mem and instances of the given scope, assuming is a function *)
    let getFunctionMemInst (t:t) : var list =
       getAllWithSameContext t
-      |> List.map (fun a -> a.mem_inst)
+      |> List.map (fun a -> !(a.mem_inst))
       |> List.map IdMap.to_list
       |> List.flatten
       |> List.map snd
@@ -459,10 +490,10 @@ module Scope = struct
       match lookup Function t name with
       | None -> None
       | Some(_,_,s) ->
-         match s.parent with
+         match !(s.parent) with
          | None -> raise (Invalid_argument "Scope.getInitFunction")
          | Some(parent) ->
-            Context.getInitFunction parent.ctx name
+            Context.getInitFunction !(parent.ctx) name
 
 
    (** Lookup the function and returns the path to the function context *)
@@ -470,17 +501,17 @@ module Scope = struct
       match lookup Function t name with
       | None -> raise (Invalid_argument "Scope.getContext")
       | Some(_,_,s) ->
-         match s.parent with
+         match !(s.parent) with
          | None -> raise (Invalid_argument "Scope.getContext")
          | Some(parent) ->
             let Path(parent_path) = current parent in
-            let ctx = Context.getContext parent.ctx s.name in
+            let ctx = Context.getContext !(parent.ctx) s.name in
             Path(parent_path@ctx)
 
    (** Returns true/false if the given scope is active *)
    let isActive (t:t) : bool =
       let tables = getAllWithSameContext t in
-      List.exists (fun a -> a.active) tables
+      List.exists (fun a -> !(a.active)) tables
 
    (** Lookup the function and returns true/false if the function is active *)
    let isActiveFunction (t:t) (name:id) : bool =
@@ -500,13 +531,15 @@ module Scope = struct
       in loop current id
 
    let enterIf (t:t) : t =
-      { t  with in_if = true }
+      t.in_if := true;
+      t
 
    let exitIf (t:t) : t =
-      { t  with in_if = false }
+      t.in_if := false;
+      t
 
    let insideIf (t:t) : bool =
-      t.in_if
+      !(t.in_if)
 
 end
 

@@ -693,7 +693,7 @@ module ReplaceFunctionNames = struct
       | PCall(name,fname,args,attr) ->
          let Path(path),_,t = Env.lookupRaise Scope.Function state fname attr.loc in
          let final_name =
-            match t.Scope.ext_fn with
+            match !(t.Scope.ext_fn) with
             | Some(n) -> [n]
             | None -> path
          in
