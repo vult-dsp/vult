@@ -201,6 +201,9 @@ module CreateInitFunction = struct
          let sub_init    = getInitValue sub in
          let intTypeAttr = {emptyAttr with typ = Some(VType.Constants.int_type)} in
          PCall(None,["makeArray"],[PInt(size,intTypeAttr);sub_init],typedAttr)
+      | VType.TComposed(["tuple"],types,_) ->
+         let elems = List.map getInitValue types in
+         PTuple(elems,typedAttr)
       | VType.TLink(tp) -> getInitValue tp
       | _ -> failwith "getInitValue"
 
@@ -746,7 +749,7 @@ module ReturnReferences = struct
          match exp with
          | PCall(_,_,_,({ typ = Some(typ) } as attr)) when not (isSimpleType typ) ->
             let n,state' = Env.tick state in
-            let var_name = "_if_"^(string_of_int n) in
+            let var_name = "_call_"^(string_of_int n) in
             let exp'     = PId([var_name],attr) in
             let lhs      = LId([var_name],attr.typ,attr) in
             let stmt     = StmtVal(lhs,Some(exp),emptyAttr) in

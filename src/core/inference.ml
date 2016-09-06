@@ -82,6 +82,9 @@ let rec checkType (loc:Loc.t Lazy.t) (env:'a Env.t) (typ:VType.t) : unit =
       in
       Error.raiseError msg (Lazy.force loc)
 
+   | VType.TComposed(["tuple"],elems,_)  ->
+      List.iter (checkType loc env) elems
+
    | VType.TComposed(name,_,_)  ->
       let msg = Printf.sprintf "Unknow composed type '%s'." (idStr name) in
       Error.raiseError msg (Lazy.force loc)

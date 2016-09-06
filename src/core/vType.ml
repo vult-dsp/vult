@@ -63,7 +63,7 @@ let reset_gensym : unit -> unit =
 let gensym : unit -> string = fun () ->
    let n = !gensym_counter in
    let () = incr gensym_counter in
-   string_of_int n
+   "'"^(string_of_int n)
 
 
 (* Determining the |let|-nesting level during the type-checking,

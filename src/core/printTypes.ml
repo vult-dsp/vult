@@ -146,12 +146,13 @@ and expressionBuff buffer (exp:exp) =
       expressionBuff buffer e1;
       append buffer ")"
    | PIf(cond,then_exp,else_exp,_) ->
-      append buffer "if ";
+      append buffer "(if ";
       expressionBuff buffer cond;
       append buffer " then ";
       expressionBuff buffer then_exp;
       append buffer " else ";
-      expressionBuff buffer else_exp
+      expressionBuff buffer else_exp;
+      append buffer ")"
    | PSeq(name,stmts,_) ->
       commentedId buffer name;
       pseqListBuff buffer stmts;
