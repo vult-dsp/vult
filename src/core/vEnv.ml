@@ -570,11 +570,11 @@ let builtin_table =
       ["real"] , Scope.Function, VType.Constants.num_real (), false;
 
       ["|-|"] , Scope.Operator, VType.Constants.num_num (), false;
-      ["+"]  , Scope.Operator, VType.Constants.a_a_a (), false;
-      ["-"]  , Scope.Operator, VType.Constants.a_a_a (), false;
-      ["*"]  , Scope.Operator, VType.Constants.a_a_a (), false;
-      ["/"]  , Scope.Operator, VType.Constants.a_a_a (), false;
-      ["%"]  , Scope.Operator, VType.Constants.a_a_a (), false;
+      ["+"]  , Scope.Operator, VType.Constants.num_num_num (), false;
+      ["-"]  , Scope.Operator, VType.Constants.num_num_num (), false;
+      ["*"]  , Scope.Operator, VType.Constants.num_num_num (), false;
+      ["/"]  , Scope.Operator, VType.Constants.num_num_num (), false;
+      ["%"]  , Scope.Operator, VType.Constants.num_num_num (), false;
 
       [">"]   , Scope.Operator, VType.Constants.a_a_bool (), false;
       ["<"]   , Scope.Operator, VType.Constants.a_a_bool (), false;

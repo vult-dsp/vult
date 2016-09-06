@@ -141,8 +141,8 @@ static inline void    fix_set(fix16_t a[], int i, fix16_t value) { a[i] = value;
 static inline fix16_t fix_get(fix16_t a[], int i)                { return a[i]; }
 static inline void    int_set(int a[], int i, int value)         { a[i] = value; }
 static inline int     int_get(int a[], int i)                    { return a[i]; }
-static inline void    bool_set(int8_t a[], int i, int8_t value)  { a[i] = value; }
-static inline int8_t  bool_get(int8_t a[], int i)                { return a[i]; }
+static inline void    bool_set(uint8_t a[], int i, uint8_t value)  { a[i] = value; }
+static inline uint8_t bool_get(uint8_t a[], int i)                { return a[i]; }
 
 /* Array initialization */
 void float_init_array(int size, float value, float *data);

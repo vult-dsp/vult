@@ -510,7 +510,8 @@ module Simplify = struct
    let isNum (e:exp) : bool =
       match e with
       | PInt _
-      | PReal _ -> true
+      | PReal _
+      | PBool _ -> true
       | _ -> false
 
    let isZero (e:exp) : bool =
@@ -523,6 +524,16 @@ module Simplify = struct
       match e with
       | PInt(1,_)
       | PReal(1.0,_) -> true
+      | _ -> false
+
+   let isTrue (e:exp) : bool =
+      match e with
+      | PBool(true,_) -> true
+      | _ -> false
+
+   let isFalse (e:exp) : bool =
+      match e with
+      | PBool(false,_) -> true
       | _ -> false
 
    let minusOne attr (typ:VType.t) : exp =
@@ -546,6 +557,8 @@ module Simplify = struct
       | [c] when isZero c && op = "*" -> false, [c]
       | [c] when isOne c && op = "*" -> false, other
       | [c] when isZero c && op = "+" -> false, other
+      | [c] when isTrue c && op = "||" -> false, [c]
+      | [c] when isFalse c && op = "||" -> false, other
       | [_] -> false, elems
       | h :: t ->
          let c = List.fold_left (applyOp op) h t in
@@ -573,7 +586,7 @@ module Simplify = struct
          reapply state, POp("*",minus::elems,attr)
 
       (* Collapses trees of sums and multiplications *)
-      | POp(op,elems,attr) when op = "+" || op = "*" ->
+      | POp(op,elems,attr) when op = "+" || op = "*" || op = "||" ->
          let found, elems' = getOpElements op elems in
          let simpl, elems' = simplifyElems op elems' in
          let state' = if found || simpl then reapply state else state in
@@ -786,14 +799,6 @@ module ReturnReferences = struct
             let output = TypedId(["_output_"],rettype,OutputArg,emptyAttr) in
             let stmt' = StmtFun(name,args@[output],body,Some(VType.Constants.unit_type),attr) in
             state, stmt'
-         | StmtBind(LId(lhs,Some(typ),lattr),PCall(inst,name,args,attr),battr) when not (isSimpleType typ) ->
-            let arg = PId(lhs,lattr) in
-            let fixed_attr = unitAttr attr in
-            state, StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],attr),battr)
-         | StmtVal(LId(lhs,Some(typ),lattr),Some(PCall(inst,name,args,attr)),battr) when not (isSimpleType typ) ->
-            let arg = PId(lhs,lattr) in
-            let fixed_attr = unitAttr attr in
-            state, StmtVal(LWild(fixed_attr),Some(PCall(inst,name,args@[arg],attr)),battr)
          | _ -> state, stmt
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
@@ -803,8 +808,16 @@ module ReturnReferences = struct
          state, [stmt]
       else
          match stmt with
+         | StmtBind(LId(lhs,Some(typ),lattr),PCall(inst,name,args,attr),battr) when not (isSimpleType typ) ->
+            let arg = PId(lhs,lattr) in
+            let fixed_attr = unitAttr attr in
+            state, [StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],attr),battr)]
          | StmtBind(_,PCall(_,_,_,_),_) ->
             state, [stmt]
+         | StmtVal(LId(lhs,Some(typ),lattr),Some(PCall(inst,name,args,attr)),battr) when not (isSimpleType typ) ->
+            let arg = PId(lhs,lattr) in
+            let fixed_attr = unitAttr attr in
+            state, [StmtVal(LId(lhs,Some(typ),lattr),None,battr);StmtVal(LWild(fixed_attr),Some(PCall(inst,name,args@[arg],attr)),battr)]
          | StmtVal(_,Some(PCall(_,_,_,_)),_) ->
             state, [stmt]
          | StmtBind(lhs,rhs,attr) ->

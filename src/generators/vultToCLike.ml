@@ -61,7 +61,7 @@ let rec convertType (p:parameters) (tp:VType.t) : type_descr =
    | VType.TArrow _
    | VType.TUnbound _
    | VType.TExpAlt _ ->
-      failwith ("VultToCLike.convertType: unsupported type in c code generation" ^ PrintTypes.typeStr tp)
+      failwith ("VultToCLike.convertType: unsupported type in c code generation: " ^ PrintTypes.typeStr tp)
 
 
 let isValue (typ:VType.t) : bool =

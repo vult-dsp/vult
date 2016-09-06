@@ -22,6 +22,7 @@
 
    fun Output_references.bar(_output_:tuple(real,real)) : unit /* scope_0 */
    {
+      val (x:tuple(real,real));
       val (_:unit) = Output_references.foo(x);
       val (y:int) = 1;
       (_output_:tuple(real,real)) = x;

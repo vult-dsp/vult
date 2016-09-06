@@ -310,7 +310,7 @@ module Constants = struct
    let real_type   = ref (TId(["real"],None))
    let string_type = ref (TId(["string"],None))
 
-   let num_type    () = ref (TExpAlt([real_type; int_type; bool_type]))
+   let num_type    () = ref (TExpAlt([real_type; int_type]))
 
    let real_real () =
       ref (TArrow(real_type,real_type,None))
@@ -322,6 +322,10 @@ module Constants = struct
    let num_num () =
       let num = num_type () in
       ref (TArrow(num,num,None))
+
+   let num_num_num () =
+      let num = num_type () in
+      ref (TArrow(num,ref (TArrow(num,num,None)),None))
 
    let num_num_bool () =
       let num = num_type () in

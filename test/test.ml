@@ -86,8 +86,24 @@ let code_files =
       "lib/util.vult";
    ]
 
+let test_random_code =
+   [
+      "test1.vult";
+      "test2.vult";
+      "test3.vult";
+      "test4.vult";
+      "test5.vult";
+      "test6.vult";
+      "test7.vult";
+   ]
+
 (** Flags that defines if a baseline should be created for tests *)
 let writeOutput = Conf.make_bool "writeout" false "Creates a file with the current results"
+
+let write file contents =
+   let oc = open_out file in
+   Printf.fprintf oc "%s" contents;
+   close_out oc
 
 (** Returns the contents of the reference file for the given vult file *)
 let readReference (create:bool) (ext:string) (contents:string) (file:string) (outdir:string) : string =
@@ -102,9 +118,7 @@ let readReference (create:bool) (ext:string) (contents:string) (file:string) (ou
       s
    else
    if create then
-      let oc = open_out ref_file in
-      Printf.fprintf oc "%s" contents;
-      close_out oc;
+      let () = write ref_file contents in
       contents
    else
       assert_failure (Printf.sprintf "The file '%s' has no reference data" file)
@@ -225,6 +239,35 @@ module CompileTest = struct
       let output   = Filename.chop_extension (Filename.basename fullfile) in
       Sys.chdir tmp_dir;
       generateCPP fullfile output real_type;
+      assert_bool "No code generated" (Sys.file_exists (output^".cpp"));
+      compileFile (output^".cpp");
+      compileFile (in_test_directory "../runtime/vultin.c");
+      Sys.chdir initial_dir
+
+   let get files real_type = "compile">::: (List.map (fun file -> (Filename.basename file) ^"."^ real_type >:: run real_type file) files)
+
+end
+
+(** Tries to compile all the examples *)
+module RandomCompileTest = struct
+
+   let compileFile (file:string) =
+      let basename = Filename.chop_extension (Filename.basename file) in
+      let cmd = Printf.sprintf "gcc -I%s -c %s -o %s" (in_test_directory "../runtime") file basename in
+      if Sys.command cmd <> 0 then
+         assert_failure ("Failed to compile "^file)
+
+   let generateCPP (filename:string) (output:string) (real_type:string) : unit =
+      let args = { default_arguments with  files = [filename]; ccode = true; output = output; real = real_type } in
+      let code = RandProg.run () in
+      write filename code;
+      let parser_results = ParserVult.parseString code in
+      Driver.generateCode args [parser_results] |> ignore
+
+   let run (real_type:string) (file:string) _ =
+      let output   = Filename.chop_extension (Filename.basename file) in
+      Sys.chdir tmp_dir;
+      generateCPP file output real_type;
       assert_bool "No code generated" (Sys.file_exists (output^".cpp"));
       compileFile (output^".cpp");
       compileFile (in_test_directory "../runtime/vultin.c");
