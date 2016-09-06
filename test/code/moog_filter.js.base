@@ -11,14 +11,16 @@ this.Moog_filter_change = function(_ctx,x){
 }
 this.Moog_filter_min = function(a,b){
    var _if_1 = {};
-   if((a < b))_if_1 = a;
+   var _cond_2 = (a < b);
+   if(_cond_2)_if_1 = a;
    else
    _if_1 = b;
    return _if_1;
 }
 this.Moog_filter_max = function(a,b){
    var _if_1 = {};
-   if((a > b))_if_1 = a;
+   var _cond_2 = (a > b);
+   if(_cond_2)_if_1 = a;
    else
    _if_1 = b;
    return _if_1;
@@ -71,7 +73,8 @@ this.Moog_filter__ctx_type_7_init = function(){
 }
 this.Moog_filter_moog_init = function() { return this.Moog_filter__ctx_type_7_init();}
 this.Moog_filter_moog = function(_ctx,input,cut,res){
-   if((this.Moog_filter_change(_ctx._inst1,cut) || this.Moog_filter_change(_ctx._inst2,res))){
+   var _cond_4 = (this.Moog_filter_change(_ctx._inst1,cut) || this.Moog_filter_change(_ctx._inst2,res));
+   if(_cond_4){
       res = this.Moog_filter_clip(res,0.,1.);
       cut = this.Moog_filter_clip(cut,1.,(22050.));
       var fc = (cut * 2.26757369615e-05);

@@ -22,7 +22,8 @@ uint8_t Moog_filter_change(Moog_filter__ctx_type_0 &_ctx, fix16_t x){
 
 fix16_t Moog_filter_min(fix16_t a, fix16_t b){
    fix16_t _if_1;
-   if(a < b)_if_1 = a;
+   uint8_t _cond_2 = (a < b);
+   if(_cond_2)_if_1 = a;
    else
    _if_1 = b;
    return _if_1;
@@ -30,7 +31,8 @@ fix16_t Moog_filter_min(fix16_t a, fix16_t b){
 
 fix16_t Moog_filter_max(fix16_t a, fix16_t b){
    fix16_t _if_1;
-   if(a > b)_if_1 = a;
+   uint8_t _cond_2 = (a > b);
+   if(_cond_2)_if_1 = a;
    else
    _if_1 = b;
    return _if_1;
@@ -100,7 +102,8 @@ void Moog_filter_moog_init(Moog_filter__ctx_type_7 &_output_){
 }
 
 fix16_t Moog_filter_moog(Moog_filter__ctx_type_7 &_ctx, fix16_t input, fix16_t cut, fix16_t res){
-   if(Moog_filter_change(_ctx._inst1,cut) || Moog_filter_change(_ctx._inst2,res)){
+   uint8_t _cond_4 = (Moog_filter_change(_ctx._inst1,cut) || Moog_filter_change(_ctx._inst2,res));
+   if(_cond_4){
       res = Moog_filter_clip(res,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
       cut = Moog_filter_clip(cut,0x10000 /* 1.000000 */,0x56220000 /* 22050.000000 */);
       fix16_t fc = fix_mul(cut,0x1 /* 0.000023 */);

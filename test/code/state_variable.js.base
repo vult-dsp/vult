@@ -24,13 +24,20 @@ this.State_variable_svf_step = function(_ctx,input,g,q,sel){
    _ctx.dband = this.clip(band,(-1.),1.);
    _ctx.dlow = this.clip(low,(-1.),1.);
    var output = {};
-   if((sel == (0|0)))output = low;
+   var _cond_1 = (sel == (0|0));
+   if(_cond_1)output = low;
    else
-   if((sel == (1|0)))output = high;
-   else
-   if((sel == (2|0)))output = band;
-   else
-   output = notch;
+   {
+      var _cond_2 = (sel == (1|0));
+      if(_cond_2)output = high;
+      else
+      {
+         var _cond_3 = (sel == (2|0));
+         if(_cond_3)output = band;
+         else
+         output = notch;
+      }
+   }
    return output;
 }
 this.State_variable__ctx_type_2_init = function(){
@@ -45,7 +52,8 @@ this.State_variable_svf = function(_ctx,input,fc,q,sel){
    fc = this.clip(fc,0.,1.);
    q = this.clip(q,0.,1.);
    var fix_q = (2. * (1. + (- q)));
-   if(this.State_variable_change(_ctx._inst1,fc)){
+   var _cond_3 = this.State_variable_change(_ctx._inst1,fc);
+   if(_cond_3){
       _ctx.g = (fc * 0.5);
    }
    var x1 = this.State_variable_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);

@@ -634,6 +634,11 @@ end
 
 module SimplifyIfExp = struct
 
+   let isSimpleCond (e:exp) : bool =
+      match e with
+      | PBool _ | PId _ -> true
+      | _ -> false
+
    (** This mapper is used to bind the if expressions to a variable *)
    module BindIfExp = struct
 
@@ -658,6 +663,14 @@ module SimplifyIfExp = struct
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "SimplifyIfExp.stmt_x" @@ fun state stmt ->
       match stmt with
+      | StmtIf(cond,then_,else_,attr) when not (isSimpleCond cond) ->
+         let n,state' = Env.tick state in
+         let var_name = "_cond_"^(string_of_int n) in
+         let cond_attr = GetAttr.fromExp cond in
+         let lhs      = LId([var_name],cond_attr.typ,cond_attr) in
+         let cond'    = PId([var_name],cond_attr) in
+         let decl     = StmtVal(lhs,Some(cond),attr) in
+         reapply state', [decl;StmtIf(cond',then_,else_,attr)]
       | StmtBind(lhs,PIf(cond,then_,else_,ifattr),attr) ->
          reapply state,[StmtIf(cond,StmtBind(lhs,then_,ifattr),Some(StmtBind(lhs,else_,ifattr)),attr)]
       | StmtVal(lhs,Some(PIf(cond,then_,else_,ifattr)),attr) ->

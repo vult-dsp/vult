@@ -92,7 +92,8 @@ void Delay_phasor_init(Delay__ctx_type_5 &_output_){
 }
 
 float Delay_phasor(Delay__ctx_type_5 &_ctx, float pitch, uint8_t reset){
-   if(Delay_change(_ctx._inst1,pitch)){
+   uint8_t _cond_3 = Delay_change(_ctx._inst1,pitch);
+   if(_cond_3){
       _ctx.rate = Delay_pitchToRate(pitch);
    }
    if(reset)_ctx.phase = 0.f;
@@ -116,11 +117,13 @@ void Delay_lfo_init(Delay__ctx_type_6 &_output_){
 
 float Delay_lfo(Delay__ctx_type_6 &_ctx, float f, uint8_t gate){
    float rate = (0.000226757369615f * f);
-   if(Delay_edge(_ctx._inst1,gate)){
+   uint8_t _cond_4 = Delay_edge(_ctx._inst1,gate);
+   if(_cond_4){
       _ctx.phase = 0.f;
    }
    _ctx.phase = (_ctx.phase + rate);
-   if(_ctx.phase > 1.f){
+   uint8_t _cond_5 = (_ctx.phase > 1.f);
+   if(_cond_5){
       _ctx.phase = (_ctx.phase + (-1.f));
    }
    return (sinf((6.28318530718f * _ctx.phase)) + (-0.5f));
@@ -171,7 +174,8 @@ float Delay_delay(Delay__ctx_type_8 &_ctx, float x, float time, float feedback){
    int index_i = float_to_int(floorf(index_r));
    int delta = (_ctx.write_pos + (- index_i));
    int read_pos;
-   if(delta < 0)read_pos = (44100 + delta);
+   uint8_t _cond_1 = (delta < 0);
+   if(_cond_1)read_pos = (44100 + delta);
    else
    read_pos = delta;
    float decimal = (index_r + (- int_to_float(index_i)));
@@ -198,10 +202,12 @@ void Delay_mono_noteOn_init(Delay__ctx_type_9 &_output_){
 }
 
 int Delay_mono_noteOn(Delay__ctx_type_9 &_ctx, int n){
-   if(_ctx.count < 4){
+   uint8_t _cond_4 = (_ctx.count < 4);
+   if(_cond_4){
       int_set(_ctx.notes,_ctx.count,n);
       _ctx.pre = n;
-      if(_ctx.count < 4){
+      uint8_t _cond_3 = (_ctx.count < 4);
+      if(_cond_3){
          _ctx.count = (_ctx.count + 1);
       }
    }
@@ -217,11 +223,13 @@ int Delay_mono_noteOff(Delay__ctx_type_9 &_ctx, int n){
    uint8_t found = 0;
    int pos;
    int i = 0;
-   if(_ctx.count == 0){
+   uint8_t _cond_7 = (_ctx.count == 0);
+   if(_cond_7){
       return _ctx.pre;
    }
    while(((i < 4) && bool_not(found))){
-      if(int_get(_ctx.notes,i) == n){
+      uint8_t _cond_8 = (int_get(_ctx.notes,i) == n);
+      if(_cond_8){
          pos = i;
          found = 1;
       }
@@ -233,7 +241,8 @@ int Delay_mono_noteOff(Delay__ctx_type_9 &_ctx, int n){
          int_set(_ctx.notes,(k + (-1)),int_get(_ctx.notes,k));
          k = (k + 1);
       }
-      if(found && (_ctx.count > 0)){
+      uint8_t _cond_9 = (found && (_ctx.count > 0));
+      if(_cond_9){
          _ctx.count = (_ctx.count + (-1));
          _ctx.pre = int_get(_ctx.notes,(_ctx.count + (-1)));
       }
@@ -313,22 +322,28 @@ void Delay_controlChange_init(Delay__ctx_type_10 &_output_){
 }
 
 void Delay_controlChange(Delay__ctx_type_10 &_ctx, int control, float value){
-   if(control == 30){
+   uint8_t _cond_7 = (control == 30);
+   if(_cond_7){
       _ctx.volume = (value * 0.00787401574803f);
    }
-   if(control == 31){
+   uint8_t _cond_8 = (control == 31);
+   if(_cond_8){
       _ctx.detune = (value * 0.00787401574803f);
    }
-   if(control == 32){
+   uint8_t _cond_9 = (control == 32);
+   if(_cond_9){
       _ctx.lfo_rate = (value * 0.00787401574803f);
    }
-   if(control == 33){
+   uint8_t _cond_10 = (control == 33);
+   if(_cond_10){
       _ctx.lfo_amt = (2.f * ((value * 0.00787401574803f) + (-0.5f)));
    }
-   if(control == 34){
+   uint8_t _cond_11 = (control == 34);
+   if(_cond_11){
       _ctx.time = (value * 0.00787401574803f);
    }
-   if(control == 35){
+   uint8_t _cond_12 = (control == 35);
+   if(_cond_12){
       _ctx.feedback = (value * 0.00787401574803f);
    }
 }

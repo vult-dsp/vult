@@ -31,7 +31,8 @@ this.Phasedist__ctx_type_3_init = function(){
 }
 this.Phasedist_phasor_init = function() { return this.Phasedist__ctx_type_3_init();}
 this.Phasedist_phasor = function(_ctx,pitch,reset){
-   if(this.Phasedist_change(_ctx._inst1,pitch)){
+   var _cond_3 = this.Phasedist_change(_ctx._inst1,pitch);
+   if(_cond_3){
       _ctx.rate = this.Phasedist_pitchToRate(pitch);
    }
    if(reset)_ctx.phase = 0.;
@@ -70,10 +71,12 @@ this.Phasedist_noteOff = function(_ctx,note){
 }
 this.Phasedist_controlChange_init = function() { return this.Phasedist__ctx_type_4_init();}
 this.Phasedist_controlChange = function(_ctx,control,value){
-   if((control == (30|0))){
+   var _cond_3 = (control == (30|0));
+   if(_cond_3){
       _ctx.volume = (this.real(value) * 0.00787401574803);
    }
-   if((control == (31|0))){
+   var _cond_4 = (control == (31|0));
+   if(_cond_4){
       _ctx.detune = (this.real(value) * 0.00787401574803);
    }
 }

@@ -7,7 +7,8 @@ float Math_sin(float x0){
    uint8_t sign = (x1 > 3.14159265359f);
    float x2 = fmodf(x1,3.14159265359f);
    float x3;
-   if(x2 > (1.5707963268f))x3 = (3.14159265359f + (- x2));
+   uint8_t _cond_2 = (x2 > (1.5707963268f));
+   if(_cond_2)x3 = (3.14159265359f + (- x2));
    else
    x3 = x2;
    float xp2 = (x3 * x3);

@@ -52,7 +52,8 @@ float Blit_pulse_train(float m, float phase){
    float pi_phase = (phase * 3.14159265359f);
    float denominator1 = sinf(pi_phase);
    float tmp1 = 0.f;
-   if(Blit_near_zero(denominator1)){
+   uint8_t _cond_3 = Blit_near_zero(denominator1);
+   if(_cond_3){
       tmp1 = 1.f;
    }
    else
@@ -85,14 +86,16 @@ void Blit_osc_init(Blit__ctx_type_5 &_output_){
 
 float Blit_osc(Blit__ctx_type_5 &_ctx, float pitch, float pw, float wave){
    float fixed_pitch = 0.f;
-   if(wave < (0.666666666667f)){
+   uint8_t _cond_12 = (wave < (0.666666666667f));
+   if(_cond_12){
       fixed_pitch = pitch;
    }
    else
    {
       fixed_pitch = (pitch + 12.f);
    }
-   if(Blit_change(_ctx._inst3,fixed_pitch)){
+   uint8_t _cond_13 = Blit_change(_ctx._inst3,fixed_pitch);
+   if(_cond_13){
       _ctx.rate = Blit_pitchToRate(fixed_pitch);
       float p = (1.f / _ctx.rate);
       float maxHarmonics = floorf((p * 0.5f));
@@ -100,24 +103,28 @@ float Blit_osc(Blit__ctx_type_5 &_ctx, float pitch, float pw, float wave){
    }
    float shift05 = (0.5f + (pw * 0.49f));
    float shift = (_ctx.phase + shift05);
-   if(shift > 1.f){
+   uint8_t _cond_14 = (shift > 1.f);
+   if(_cond_14){
       shift = (shift + (-1.f));
    }
    float tmp1 = Blit_pulse_train(_ctx.m,_ctx.phase);
    float tmp2 = Blit_pulse_train(_ctx.m,shift);
    _ctx.phase = (_ctx.phase + _ctx.rate);
-   if(_ctx.phase > 1.f){
+   uint8_t _cond_15 = (_ctx.phase > 1.f);
+   if(_cond_15){
       _ctx.phase = (_ctx.phase + (-1.f));
    }
    _ctx.state_pulse = float_clip(((_ctx.state_pulse * 0.9995f) + tmp1 + (- tmp2)),(-1.f),1.f);
    _ctx.state_saw = float_clip(((_ctx.state_saw * 0.9995f) + (((tmp1 + tmp2 + ((-2.f) * _ctx.rate)) / shift05) * 0.5f)),(-1.f),1.f);
    _ctx.state_triang = float_clip(((_ctx.state_triang * 0.9995f) + (2.f * _ctx.state_pulse * _ctx.rate)),(-1.f),1.f);
-   if(wave < (0.333333333333f)){
+   uint8_t _cond_17 = (wave < (0.333333333333f));
+   if(_cond_17){
       _ctx.output = _ctx.state_pulse;
    }
    else
    {
-      if(wave < (0.666666666667f)){
+      uint8_t _cond_16 = (wave < (0.666666666667f));
+      if(_cond_16){
          _ctx.output = (2.f * _ctx.state_saw);
       }
       else
@@ -171,10 +178,12 @@ void Blit_controlChange_init(Blit__ctx_type_6 &_output_){
 }
 
 void Blit_controlChange(Blit__ctx_type_6 &_ctx, int control, int value){
-   if(control == 30){
+   uint8_t _cond_3 = (control == 30);
+   if(_cond_3){
       _ctx.pw = (int_to_float(value) * 0.00787401574803f);
    }
-   if(control == 31){
+   uint8_t _cond_4 = (control == 31);
+   if(_cond_4){
       _ctx.wave = (int_to_float(value) * 0.00787401574803f);
    }
 }

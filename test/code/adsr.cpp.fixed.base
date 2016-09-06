@@ -19,25 +19,31 @@ void Adsr_adsr_init(Adsr__ctx_type_0 &_output_){
 
 fix16_t Adsr_adsr(Adsr__ctx_type_0 &_ctx, uint8_t gate, fix16_t a, fix16_t d, fix16_t s, fix16_t r){
    _ctx.out = fix_add(_ctx.out,fix_mul(fix_mul(fix_add(_ctx.target,(- _ctx.out)),_ctx.rate),0x41 /* 0.001000 */));
-   if(_ctx.state == 0){
+   uint8_t _cond_8 = (_ctx.state == 0);
+   if(_cond_8){
       if(gate){
          _ctx.state = 1;
       }
       _ctx.rate = r;
       _ctx.target = 0x0 /* 0.000000 */;
    }
-   if(_ctx.state == 1){
-      if(bool_not(gate)){
+   uint8_t _cond_11 = (_ctx.state == 1);
+   if(_cond_11){
+      uint8_t _cond_9 = bool_not(gate);
+      if(_cond_9){
          _ctx.state = 0;
       }
-      if(_ctx.out > 0x4000000 /* 1024.000000 */){
+      uint8_t _cond_10 = (_ctx.out > 0x4000000 /* 1024.000000 */);
+      if(_cond_10){
          _ctx.state = 2;
       }
       _ctx.rate = a;
       _ctx.target = 0x4cccccc /* 1228.800000 */;
    }
-   if(_ctx.state == 2){
-      if(bool_not(gate)){
+   uint8_t _cond_13 = (_ctx.state == 2);
+   if(_cond_13){
+      uint8_t _cond_12 = bool_not(gate);
+      if(_cond_12){
          _ctx.state = 0;
       }
       _ctx.rate = d;

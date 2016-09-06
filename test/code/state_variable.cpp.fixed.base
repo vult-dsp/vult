@@ -41,13 +41,20 @@ fix16_t State_variable_svf_step(State_variable__ctx_type_1 &_ctx, fix16_t input,
    _ctx.dband = fix_clip(band,(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
    _ctx.dlow = fix_clip(low,(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
    fix16_t output;
-   if(sel == 0)output = low;
+   uint8_t _cond_1 = (sel == 0);
+   if(_cond_1)output = low;
    else
-   if(sel == 1)output = high;
-   else
-   if(sel == 2)output = band;
-   else
-   output = notch;
+   {
+      uint8_t _cond_2 = (sel == 1);
+      if(_cond_2)output = high;
+      else
+      {
+         uint8_t _cond_3 = (sel == 2);
+         if(_cond_3)output = band;
+         else
+         output = notch;
+      }
+   }
    return output;
 }
 
@@ -69,7 +76,8 @@ fix16_t State_variable_svf(State_variable__ctx_type_2 &_ctx, fix16_t input, fix1
    fc = fix_clip(fc,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
    q = fix_clip(q,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
    fix16_t fix_q = fix_mul(0x20000 /* 2.000000 */,fix_add(0x10000 /* 1.000000 */,(- q)));
-   if(State_variable_change(_ctx._inst1,fc)){
+   uint8_t _cond_3 = State_variable_change(_ctx._inst1,fc);
+   if(_cond_3){
       _ctx.g = fix_mul(fc,0x8000 /* 0.500000 */);
    }
    fix16_t x1 = State_variable_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);

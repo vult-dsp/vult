@@ -3,14 +3,16 @@ this.Filters_pi = function(){
 }
 this.Filters_min = function(a,b){
    var _if_1 = {};
-   if((a < b))_if_1 = a;
+   var _cond_2 = (a < b);
+   if(_cond_2)_if_1 = a;
    else
    _if_1 = b;
    return _if_1;
 }
 this.Filters_max = function(a,b){
    var _if_1 = {};
-   if((a > b))_if_1 = a;
+   var _cond_2 = (a > b);
+   if(_cond_2)_if_1 = a;
    else
    _if_1 = b;
    return _if_1;
@@ -55,7 +57,8 @@ this.Filters__ctx_type_6_init = function(){
 }
 this.Filters_lp6_init = function() { return this.Filters__ctx_type_6_init();}
 this.Filters_lp6 = function(_ctx,x,fc){
-   if(this.Filters_change(_ctx._inst1,_ctx.fc)){
+   var _cond_4 = this.Filters_change(_ctx._inst1,_ctx.fc);
+   if(_cond_4){
       _ctx.fc = this.Filters_clip(_ctx.fc,0.,(22050.));
       _ctx.k = this.tan((this.Filters_pi() * _ctx.fc * 2.26757369615e-05));
    }
@@ -78,7 +81,8 @@ this.Filters__ctx_type_7_init = function(){
 }
 this.Filters_lp12_init = function() { return this.Filters__ctx_type_7_init();}
 this.Filters_lp12 = function(_ctx,x,fc,q){
-   if((this.Filters_change(_ctx._inst1,fc) || this.Filters_change(_ctx._inst2,q))){
+   var _cond_5 = (this.Filters_change(_ctx._inst1,fc) || this.Filters_change(_ctx._inst2,q));
+   if(_cond_5){
       var qc = this.Filters_max(this.sqrt(2.),(q + this.sqrt(2.)));
       fc = this.Filters_clip(fc,0.,(22050.));
       var k = this.tan((this.Filters_pi() * fc * 2.26757369615e-05));
@@ -133,7 +137,8 @@ this.Filters__ctx_type_10_init = function(){
 }
 this.Filters_hp12_init = function() { return this.Filters__ctx_type_10_init();}
 this.Filters_hp12 = function(_ctx,x,fc,q){
-   if((this.Filters_change(_ctx._inst1,fc) || this.Filters_change(_ctx._inst2,q))){
+   var _cond_5 = (this.Filters_change(_ctx._inst1,fc) || this.Filters_change(_ctx._inst2,q));
+   if(_cond_5){
       var qc = this.Filters_max(this.sqrt(2.),(q + this.sqrt(2.)));
       fc = this.Filters_clip(fc,0.,(22050.));
       var k = this.tan((this.Filters_pi() * fc * 2.26757369615e-05));
@@ -160,7 +165,8 @@ this.Filters__ctx_type_11_init = function(){
 }
 this.Filters_bp12_init = function() { return this.Filters__ctx_type_11_init();}
 this.Filters_bp12 = function(_ctx,x,fc,q){
-   if((this.Filters_change(_ctx._inst1,fc) || this.Filters_change(_ctx._inst2,q))){
+   var _cond_5 = (this.Filters_change(_ctx._inst1,fc) || this.Filters_change(_ctx._inst2,q));
+   if(_cond_5){
       var qc = this.Filters_max(this.sqrt(2.),(q + this.sqrt(2.)));
       fc = this.Filters_clip(fc,0.,(22050.));
       var k = this.tan((this.Filters_pi() * fc * 2.26757369615e-05));
@@ -187,7 +193,8 @@ this.Filters__ctx_type_12_init = function(){
 }
 this.Filters_notch12_init = function() { return this.Filters__ctx_type_12_init();}
 this.Filters_notch12 = function(_ctx,x,fc,q){
-   if((this.Filters_change(_ctx._inst1,fc) || this.Filters_change(_ctx._inst2,q))){
+   var _cond_5 = (this.Filters_change(_ctx._inst1,fc) || this.Filters_change(_ctx._inst2,q));
+   if(_cond_5){
       var qc = this.Filters_max(this.sqrt(2.),(q + this.sqrt(2.)));
       fc = this.Filters_clip(fc,0.,(22050.));
       var k = this.tan((this.Filters_pi() * fc * 2.26757369615e-05));
@@ -214,7 +221,8 @@ this.Filters__ctx_type_13_init = function(){
 }
 this.Filters_allp12_init = function() { return this.Filters__ctx_type_13_init();}
 this.Filters_allp12 = function(_ctx,x,fc,q){
-   if((this.Filters_change(_ctx._inst1,fc) || this.Filters_change(_ctx._inst2,q))){
+   var _cond_5 = (this.Filters_change(_ctx._inst1,fc) || this.Filters_change(_ctx._inst2,q));
+   if(_cond_5){
       var qc = this.Filters_max(this.sqrt(2.),(q + this.sqrt(2.)));
       fc = this.Filters_clip(fc,0.,(22050.));
       var k = this.tan((this.Filters_pi() * fc * 2.26757369615e-05));

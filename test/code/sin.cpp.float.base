@@ -39,7 +39,8 @@ void Sin_sc_osc_init(Sin__ctx_type_1 &_output_){
 
 float Sin_sc_osc(Sin__ctx_type_1 &_ctx, float pitch){
    float g = 1.f;
-   if(Sin_change(_ctx._inst1,pitch)){
+   uint8_t _cond_3 = Sin_change(_ctx._inst1,pitch);
+   if(_cond_3){
       float pre_w = _ctx.w;
       _ctx.w = (0.00116485f * expf((0.0577623f * pitch)));
       g = (tanf((_ctx.w * 0.5f)) / tanf((pre_w * 0.5f)));

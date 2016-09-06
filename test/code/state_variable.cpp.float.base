@@ -41,13 +41,20 @@ float State_variable_svf_step(State_variable__ctx_type_1 &_ctx, float input, flo
    _ctx.dband = float_clip(band,(-1.f),1.f);
    _ctx.dlow = float_clip(low,(-1.f),1.f);
    float output;
-   if(sel == 0)output = low;
+   uint8_t _cond_1 = (sel == 0);
+   if(_cond_1)output = low;
    else
-   if(sel == 1)output = high;
-   else
-   if(sel == 2)output = band;
-   else
-   output = notch;
+   {
+      uint8_t _cond_2 = (sel == 1);
+      if(_cond_2)output = high;
+      else
+      {
+         uint8_t _cond_3 = (sel == 2);
+         if(_cond_3)output = band;
+         else
+         output = notch;
+      }
+   }
    return output;
 }
 
@@ -69,7 +76,8 @@ float State_variable_svf(State_variable__ctx_type_2 &_ctx, float input, float fc
    fc = float_clip(fc,0.f,1.f);
    q = float_clip(q,0.f,1.f);
    float fix_q = (2.f * (1.f + (- q)));
-   if(State_variable_change(_ctx._inst1,fc)){
+   uint8_t _cond_3 = State_variable_change(_ctx._inst1,fc);
+   if(_cond_3){
       _ctx.g = (fc * 0.5f);
    }
    float x1 = State_variable_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);

@@ -145,7 +145,8 @@ float Synth2_pulse_train(float m, float phase){
    float pi_phase = (phase * 3.14159265359f);
    float denominator1 = sinf(pi_phase);
    float tmp1 = 0.f;
-   if(Synth2_near_zero(denominator1)){
+   uint8_t _cond_3 = Synth2_near_zero(denominator1);
+   if(_cond_3){
       tmp1 = 1.f;
    }
    else
@@ -178,14 +179,16 @@ void Synth2_osc_init(Synth2__ctx_type_11 &_output_){
 
 float Synth2_osc(Synth2__ctx_type_11 &_ctx, float pitch, float pw, float wave){
    float fixed_pitch = 0.f;
-   if(wave < (0.666666666667f)){
+   uint8_t _cond_12 = (wave < (0.666666666667f));
+   if(_cond_12){
       fixed_pitch = pitch;
    }
    else
    {
       fixed_pitch = (pitch + 12.f);
    }
-   if(Synth2_change(_ctx._inst3,fixed_pitch)){
+   uint8_t _cond_13 = Synth2_change(_ctx._inst3,fixed_pitch);
+   if(_cond_13){
       _ctx.rate = Synth2_pitchToRate(fixed_pitch);
       float p = (1.f / _ctx.rate);
       float maxHarmonics = floorf((p * 0.5f));
@@ -193,24 +196,28 @@ float Synth2_osc(Synth2__ctx_type_11 &_ctx, float pitch, float pw, float wave){
    }
    float shift05 = (0.5f + (pw * 0.49f));
    float shift = (_ctx.phase + shift05);
-   if(shift > 1.f){
+   uint8_t _cond_14 = (shift > 1.f);
+   if(_cond_14){
       shift = (shift + (-1.f));
    }
    float tmp1 = Synth2_pulse_train(_ctx.m,_ctx.phase);
    float tmp2 = Synth2_pulse_train(_ctx.m,shift);
    _ctx.phase = (_ctx.phase + _ctx.rate);
-   if(_ctx.phase > 1.f){
+   uint8_t _cond_15 = (_ctx.phase > 1.f);
+   if(_cond_15){
       _ctx.phase = (_ctx.phase + (-1.f));
    }
    _ctx.state_pulse = float_clip(((_ctx.state_pulse * 0.9995f) + tmp1 + (- tmp2)),(-1.f),1.f);
    _ctx.state_saw = float_clip(((_ctx.state_saw * 0.9995f) + (((tmp1 + tmp2 + ((-2.f) * _ctx.rate)) / shift05) * 0.5f)),(-1.f),1.f);
    _ctx.state_triang = float_clip(((_ctx.state_triang * 0.9995f) + (2.f * _ctx.state_pulse * _ctx.rate)),(-1.f),1.f);
-   if(wave < (0.333333333333f)){
+   uint8_t _cond_17 = (wave < (0.333333333333f));
+   if(_cond_17){
       _ctx.output = _ctx.state_pulse;
    }
    else
    {
-      if(wave < (0.666666666667f)){
+      uint8_t _cond_16 = (wave < (0.666666666667f));
+      if(_cond_16){
          _ctx.output = (2.f * _ctx.state_saw);
       }
       else
@@ -243,13 +250,20 @@ float Synth2_svf_step(Synth2__ctx_type_12 &_ctx, float input, float g, float q, 
    _ctx.dband = float_clip(band,(-1.f),1.f);
    _ctx.dlow = float_clip(low,(-1.f),1.f);
    float output;
-   if(sel == 0)output = low;
+   uint8_t _cond_1 = (sel == 0);
+   if(_cond_1)output = low;
    else
-   if(sel == 1)output = high;
-   else
-   if(sel == 2)output = band;
-   else
-   output = notch;
+   {
+      uint8_t _cond_2 = (sel == 1);
+      if(_cond_2)output = high;
+      else
+      {
+         uint8_t _cond_3 = (sel == 2);
+         if(_cond_3)output = band;
+         else
+         output = notch;
+      }
+   }
    return output;
 }
 
@@ -271,7 +285,8 @@ float Synth2_svf(Synth2__ctx_type_13 &_ctx, float input, float fc, float q, int 
    fc = float_clip(fc,0.f,1.f);
    q = float_clip(q,0.f,1.f);
    float fix_q = (2.f * (1.f + (- q)));
-   if(Synth2_change(_ctx._inst1,fc)){
+   uint8_t _cond_3 = Synth2_change(_ctx._inst1,fc);
+   if(_cond_3){
       _ctx.g = (fc * 0.5f);
    }
    float x1 = Synth2_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
@@ -295,13 +310,16 @@ void Synth2_lfo_init(Synth2__ctx_type_14 &_output_){
 
 float Synth2_lfo(Synth2__ctx_type_14 &_ctx, float f, uint8_t gate){
    float rate = ((f * 100.f * Synth2_minFixed()) + Synth2_minFixed());
-   if(Synth2_edge(_ctx._inst1,gate)){
+   uint8_t _cond_6 = Synth2_edge(_ctx._inst1,gate);
+   if(_cond_6){
       _ctx.phase = 0.f;
    }
-   if(Synth2_each(_ctx._inst3,4)){
+   uint8_t _cond_7 = Synth2_each(_ctx._inst3,4);
+   if(_cond_7){
       _ctx.phase = (_ctx.phase + rate);
    }
-   if(_ctx.phase > 1.f){
+   uint8_t _cond_8 = (_ctx.phase > 1.f);
+   if(_cond_8){
       _ctx.phase = (_ctx.phase + (-1.f));
    }
    return (sinf((6.28318530718f * _ctx.phase)) + 0.5f);
@@ -322,10 +340,12 @@ void Synth2_mono_noteOn_init(Synth2__ctx_type_15 &_output_){
 }
 
 int Synth2_mono_noteOn(Synth2__ctx_type_15 &_ctx, int n){
-   if(_ctx.count < 4){
+   uint8_t _cond_4 = (_ctx.count < 4);
+   if(_cond_4){
       int_set(_ctx.notes,_ctx.count,n);
       _ctx.pre = n;
-      if(_ctx.count < 4){
+      uint8_t _cond_3 = (_ctx.count < 4);
+      if(_cond_3){
          _ctx.count = (_ctx.count + 1);
       }
    }
@@ -341,11 +361,13 @@ int Synth2_mono_noteOff(Synth2__ctx_type_15 &_ctx, int n){
    uint8_t found = 0;
    int pos;
    int i = 0;
-   if(_ctx.count == 0){
+   uint8_t _cond_7 = (_ctx.count == 0);
+   if(_cond_7){
       return _ctx.pre;
    }
    while(((i < 4) && bool_not(found))){
-      if(int_get(_ctx.notes,i) == n){
+      uint8_t _cond_8 = (int_get(_ctx.notes,i) == n);
+      if(_cond_8){
          pos = i;
          found = 1;
       }
@@ -357,7 +379,8 @@ int Synth2_mono_noteOff(Synth2__ctx_type_15 &_ctx, int n){
          int_set(_ctx.notes,(k + (-1)),int_get(_ctx.notes,k));
          k = (k + 1);
       }
-      if(found && (_ctx.count > 0)){
+      uint8_t _cond_9 = (found && (_ctx.count > 0));
+      if(_cond_9){
          _ctx.count = (_ctx.count + (-1));
          _ctx.pre = int_get(_ctx.notes,(_ctx.count + (-1)));
       }
@@ -439,25 +462,32 @@ void Synth2_controlChange_init(Synth2__ctx_type_16 &_output_){
 void Synth2_controlChange(Synth2__ctx_type_16 &_ctx, int control, int value){
    float value_0_1 = (int_to_float(value) * 0.00787401574803f);
    float value_m1_1 = ((value_0_1 * 2.f) + (-1.f));
-   if(control == 30){
+   uint8_t _cond_8 = (control == 30);
+   if(_cond_8){
       _ctx.volume = value_0_1;
    }
-   if(control == 31){
+   uint8_t _cond_9 = (control == 31);
+   if(_cond_9){
       _ctx.wave = value_0_1;
    }
-   if(control == 32){
+   uint8_t _cond_10 = (control == 32);
+   if(_cond_10){
       _ctx.pw = value_0_1;
    }
-   if(control == 33){
+   uint8_t _cond_11 = (control == 33);
+   if(_cond_11){
       _ctx.lfo_rate = value_0_1;
    }
-   if(control == 34){
+   uint8_t _cond_12 = (control == 34);
+   if(_cond_12){
       _ctx.lfo_amt = value_m1_1;
    }
-   if(control == 35){
+   uint8_t _cond_13 = (control == 35);
+   if(_cond_13){
       _ctx.cut = value_0_1;
    }
-   if(control == 36){
+   uint8_t _cond_14 = (control == 36);
+   if(_cond_14){
       _ctx.res = value_0_1;
    }
 }

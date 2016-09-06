@@ -22,7 +22,8 @@ this.Sin__ctx_type_1_init = function(){
 this.Sin_sc_osc_init = function() { return this.Sin__ctx_type_1_init();}
 this.Sin_sc_osc = function(_ctx,pitch){
    var g = 1.;
-   if(this.Sin_change(_ctx._inst1,pitch)){
+   var _cond_3 = this.Sin_change(_ctx._inst1,pitch);
+   if(_cond_3){
       var pre_w = _ctx.w;
       _ctx.w = (0.00116485 * this.exp((0.0577623 * pitch)));
       g = (this.tan((_ctx.w * 0.5)) / this.tan((pre_w * 0.5)));

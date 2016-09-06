@@ -39,7 +39,8 @@ void Sin_sc_osc_init(Sin__ctx_type_1 &_output_){
 
 fix16_t Sin_sc_osc(Sin__ctx_type_1 &_ctx, fix16_t pitch){
    fix16_t g = 0x10000 /* 1.000000 */;
-   if(Sin_change(_ctx._inst1,pitch)){
+   uint8_t _cond_3 = Sin_change(_ctx._inst1,pitch);
+   if(_cond_3){
       fix16_t pre_w = _ctx.w;
       _ctx.w = fix_mul(0x4c /* 0.001165 */,fix_exp(fix_mul(0xec9 /* 0.057762 */,pitch)));
       g = fix_div(fix_tan(fix_mul(_ctx.w,0x8000 /* 0.500000 */)),fix_tan(fix_mul(pre_w,0x8000 /* 0.500000 */)));

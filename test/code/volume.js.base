@@ -26,7 +26,8 @@ this.Volume_noteOff = function(_ctx,note){
 }
 this.Volume_controlChange_init = function() { return this.Volume__ctx_type_1_init();}
 this.Volume_controlChange = function(_ctx,control,value){
-   if((control == (30|0))){
+   var _cond_2 = (control == (30|0));
+   if(_cond_2){
       _ctx.volume = (this.real(value) * 0.00787401574803);
    }
 }

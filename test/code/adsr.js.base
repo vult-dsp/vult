@@ -9,25 +9,31 @@ this.Adsr__ctx_type_0_init = function(){
 this.Adsr_adsr_init = function() { return this.Adsr__ctx_type_0_init();}
 this.Adsr_adsr = function(_ctx,gate,a,d,s,r){
    _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.001));
-   if((_ctx.state == (0|0))){
+   var _cond_8 = (_ctx.state == (0|0));
+   if(_cond_8){
       if(gate){
          _ctx.state = ((1|0)|0);
       }
       _ctx.rate = r;
       _ctx.target = 0.;
    }
-   if((_ctx.state == (1|0))){
-      if(this.not(gate)){
+   var _cond_11 = (_ctx.state == (1|0));
+   if(_cond_11){
+      var _cond_9 = this.not(gate);
+      if(_cond_9){
          _ctx.state = ((0|0)|0);
       }
-      if((_ctx.out > 1024.)){
+      var _cond_10 = (_ctx.out > 1024.);
+      if(_cond_10){
          _ctx.state = ((2|0)|0);
       }
       _ctx.rate = a;
       _ctx.target = (1228.8);
    }
-   if((_ctx.state == (2|0))){
-      if(this.not(gate)){
+   var _cond_13 = (_ctx.state == (2|0));
+   if(_cond_13){
+      var _cond_12 = this.not(gate);
+      if(_cond_12){
          _ctx.state = ((0|0)|0);
       }
       _ctx.rate = d;
