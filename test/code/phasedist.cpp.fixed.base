@@ -60,9 +60,9 @@ fix16_t Phasedist_phasor(Phasedist__ctx_type_3 &_ctx, fix16_t pitch, uint8_t res
    if(_cond_3){
       _ctx.rate = Phasedist_pitchToRate(pitch);
    }
-   if(reset)_ctx.phase = 0x0 /* 0.000000 */;
+   if(reset){ _ctx.phase = 0x0 /* 0.000000 */; }
    else
-   _ctx.phase = (fix_add(_ctx.phase,_ctx.rate) % 0x10000 /* 1.000000 */);
+   { _ctx.phase = (fix_add(_ctx.phase,_ctx.rate) % 0x10000 /* 1.000000 */); }
    return _ctx.phase;
 }
 

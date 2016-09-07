@@ -1,40 +1,42 @@
-fun foo() : unit /* scope_0 */
+fun foo(e:int) : unit /* scope_0 */
 {
    val (y:real);
+   val (cond1:bool) = (e > 0);
+   val (cond2:bool) = (e < 0);
    val (x:real);
-   if(true)
+   if(cond1)
       (x:real) = 0.;
    else
-      if(false)
+      if(cond2)
          (x:real) = 1.;
       else
          (x:real) = 2.;
-   if(true)
+   if(cond1)
       (y:real) = 0.;
    else
-      if(false)
+      if(cond2)
          (y:real) = 1.;
       else
          (y:real) = 2.;
    val (z:real);
    val (_if_1:real);
-   if(false)
+   if(cond2)
       (_if_1:real) = 1.;
    else
       (_if_1:real) = 2.;
    val (_if_2:real);
-   if(true)
+   if(cond1)
       (_if_2:real) = 0.;
    else
       (_if_2:real) = (2. + _if_1);
    val (a:real) = (1. + _if_2);
    val (_if_3:real);
-   if(false)
+   if(cond2)
       (_if_3:real) = 1.;
    else
       (_if_3:real) = 2.;
    val (_if_4:real);
-   if(true)
+   if(cond1)
       (_if_4:real) = 0.;
    else
       (_if_4:real) = (2. + _if_3);

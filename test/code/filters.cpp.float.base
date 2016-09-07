@@ -9,18 +9,18 @@ float Filters_pi(){
 float Filters_min(float a, float b){
    float _if_1;
    uint8_t _cond_2 = (a < b);
-   if(_cond_2)_if_1 = a;
+   if(_cond_2){ _if_1 = a; }
    else
-   _if_1 = b;
+   { _if_1 = b; }
    return _if_1;
 }
 
 float Filters_max(float a, float b){
    float _if_1;
    uint8_t _cond_2 = (a > b);
-   if(_cond_2)_if_1 = a;
+   if(_cond_2){ _if_1 = a; }
    else
-   _if_1 = b;
+   { _if_1 = b; }
    return _if_1;
 }
 

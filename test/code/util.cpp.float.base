@@ -44,9 +44,9 @@ float Util_phasor(Util__ctx_type_2 &_ctx, float pitch, uint8_t reset){
    if(_cond_3){
       _ctx.rate = Util_pitchToRate(pitch);
    }
-   if(reset)_ctx.phase = 0.f;
+   if(reset){ _ctx.phase = 0.f; }
    else
-   _ctx.phase = fmodf((_ctx.phase + _ctx.rate),1.f);
+   { _ctx.phase = fmodf((_ctx.phase + _ctx.rate),1.f); }
    return _ctx.phase;
 }
 

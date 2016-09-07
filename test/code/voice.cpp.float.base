@@ -234,17 +234,17 @@ float Voice_svf_step(Voice__ctx_type_11 &_ctx, float input, float g, float q, in
    _ctx.dlow = float_clip(low,(-1.f),1.f);
    float output;
    uint8_t _cond_1 = (sel == 0);
-   if(_cond_1)output = low;
+   if(_cond_1){ output = low; }
    else
    {
       uint8_t _cond_2 = (sel == 1);
-      if(_cond_2)output = high;
+      if(_cond_2){ output = high; }
       else
       {
          uint8_t _cond_3 = (sel == 2);
-         if(_cond_3)output = band;
+         if(_cond_3){ output = band; }
          else
-         output = notch;
+         { output = notch; }
       }
    }
    return output;

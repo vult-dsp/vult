@@ -1,9 +1,11 @@
-fun foo() {
+fun foo(e) {
    val y;
-   val x = if true then 0.0 else if false then 1.0 else 2.0;
-   y = if true then 0.0 else if false then 1.0 else 2.0;
+   val cond1 = e > 0;
+   val cond2 = e < 0;
+   val x = if cond1 then 0.0 else if cond2 then 1.0 else 2.0;
+   y = if cond1 then 0.0 else if cond2 then 1.0 else 2.0;
 
    val z;
-   val a = 1.0 + if true then 0.0 else (2.0 + if false then 1.0 else 2.0);
-   z = 1.0 + if true then 0.0 else (2.0 + if false then 1.0 else 2.0);
+   val a = 1.0 + if cond1 then 0.0 else (2.0 + if cond2 then 1.0 else 2.0);
+   z = 1.0 + if cond1 then 0.0 else (2.0 + if cond2 then 1.0 else 2.0);
 }

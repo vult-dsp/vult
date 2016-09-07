@@ -44,9 +44,9 @@ fix16_t Util_phasor(Util__ctx_type_2 &_ctx, fix16_t pitch, uint8_t reset){
    if(_cond_3){
       _ctx.rate = Util_pitchToRate(pitch);
    }
-   if(reset)_ctx.phase = 0x0 /* 0.000000 */;
+   if(reset){ _ctx.phase = 0x0 /* 0.000000 */; }
    else
-   _ctx.phase = (fix_add(_ctx.phase,_ctx.rate) % 0x10000 /* 1.000000 */);
+   { _ctx.phase = (fix_add(_ctx.phase,_ctx.rate) % 0x10000 /* 1.000000 */); }
    return _ctx.phase;
 }
 

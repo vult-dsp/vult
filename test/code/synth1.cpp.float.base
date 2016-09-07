@@ -96,9 +96,9 @@ float Synth1_phasor(Synth1__ctx_type_5 &_ctx, float pitch, uint8_t reset){
    if(_cond_3){
       _ctx.rate = Synth1_pitchToRate(pitch);
    }
-   if(reset)_ctx.phase = 0.f;
+   if(reset){ _ctx.phase = 0.f; }
    else
-   _ctx.phase = fmodf((_ctx.phase + _ctx.rate),1.f);
+   { _ctx.phase = fmodf((_ctx.phase + _ctx.rate),1.f); }
    return _ctx.phase;
 }
 
@@ -168,9 +168,9 @@ float Synth1_process(Synth1__ctx_type_7 &_ctx, float input){
    float sine = sinf((6.28318530718f * phase2));
    float gate_value;
    uint8_t _cond_7 = (_ctx.gate > 0);
-   if(_cond_7)gate_value = 1.f;
+   if(_cond_7){ gate_value = 1.f; }
    else
-   gate_value = 0.f;
+   { gate_value = 0.f; }
    return (Synth1_smooth(_ctx._inst5,_ctx.volume) * sine * comp * Synth1_smooth(_ctx._inst6,gate_value));
 }
 
@@ -214,9 +214,9 @@ void Synth1_noteOn(Synth1__ctx_type_7 &_ctx, float note, int velocity){
       _ctx.count = (_ctx.count + 1);
    }
    uint8_t _cond_14 = (_ctx.count > 0);
-   if(_cond_14)_ctx.gate = 1;
+   if(_cond_14){ _ctx.gate = 1; }
    else
-   _ctx.gate = 0;
+   { _ctx.gate = 0; }
 }
 
 void Synth1_noteOff_init(Synth1__ctx_type_7 &_output_){
@@ -267,9 +267,9 @@ void Synth1_noteOff(Synth1__ctx_type_7 &_ctx, float note){
       _ctx.count = (_ctx.count + (-1));
    }
    uint8_t _cond_22 = (_ctx.count > 0);
-   if(_cond_22)_ctx.gate = 1;
+   if(_cond_22){ _ctx.gate = 1; }
    else
-   _ctx.gate = 0;
+   { _ctx.gate = 0; }
    uint8_t _cond_18 = (_ctx.count == 1);
    if(_cond_18){
       _ctx.pitch = _ctx.n1;

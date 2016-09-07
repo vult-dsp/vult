@@ -96,9 +96,9 @@ fix16_t Delay_phasor(Delay__ctx_type_5 &_ctx, fix16_t pitch, uint8_t reset){
    if(_cond_3){
       _ctx.rate = Delay_pitchToRate(pitch);
    }
-   if(reset)_ctx.phase = 0x0 /* 0.000000 */;
+   if(reset){ _ctx.phase = 0x0 /* 0.000000 */; }
    else
-   _ctx.phase = (fix_add(_ctx.phase,_ctx.rate) % 0x10000 /* 1.000000 */);
+   { _ctx.phase = (fix_add(_ctx.phase,_ctx.rate) % 0x10000 /* 1.000000 */); }
    return _ctx.phase;
 }
 
@@ -175,9 +175,9 @@ fix16_t Delay_delay(Delay__ctx_type_8 &_ctx, fix16_t x, fix16_t time, fix16_t fe
    int delta = (_ctx.write_pos + (- index_i));
    int read_pos;
    uint8_t _cond_1 = (delta < 0);
-   if(_cond_1)read_pos = (44100 + delta);
+   if(_cond_1){ read_pos = (44100 + delta); }
    else
-   read_pos = delta;
+   { read_pos = delta; }
    fix16_t decimal = fix_add(index_r,(- int_to_fix(index_i)));
    fix16_t x1 = fix_get(_ctx.buffer,read_pos);
    fix16_t x2 = fix_get(_ctx.buffer,((read_pos + 1) % 44100));
@@ -289,9 +289,9 @@ fix16_t Delay_process(Delay__ctx_type_10 &_ctx, fix16_t input){
    fix16_t lfo_val = fix_mul(Delay_lfo(_ctx._inst1,_ctx.lfo_rate,gate),_ctx.lfo_amt);
    fix16_t o1 = Delay_phd_osc(_ctx._inst2,_ctx.pitch,fix_add(_ctx.detune,lfo_val));
    fix16_t _if_7;
-   if(gate)_if_7 = 0x10000 /* 1.000000 */;
+   if(gate){ _if_7 = 0x10000 /* 1.000000 */; }
    else
-   _if_7 = 0x0 /* 0.000000 */;
+   { _if_7 = 0x0 /* 0.000000 */; }
    fix16_t amp = Delay_smooth(_ctx._inst3,_if_7);
    fix16_t osc_out = fix_mul(o1,amp);
    fix16_t delay_out = Delay_delay(_ctx._inst6,osc_out,Delay_smooth(_ctx._inst4,_ctx.time),Delay_smooth(_ctx._inst5,_ctx.feedback));

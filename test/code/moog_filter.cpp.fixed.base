@@ -23,18 +23,18 @@ uint8_t Moog_filter_change(Moog_filter__ctx_type_0 &_ctx, fix16_t x){
 fix16_t Moog_filter_min(fix16_t a, fix16_t b){
    fix16_t _if_1;
    uint8_t _cond_2 = (a < b);
-   if(_cond_2)_if_1 = a;
+   if(_cond_2){ _if_1 = a; }
    else
-   _if_1 = b;
+   { _if_1 = b; }
    return _if_1;
 }
 
 fix16_t Moog_filter_max(fix16_t a, fix16_t b){
    fix16_t _if_1;
    uint8_t _cond_2 = (a > b);
-   if(_cond_2)_if_1 = a;
+   if(_cond_2){ _if_1 = a; }
    else
-   _if_1 = b;
+   { _if_1 = b; }
    return _if_1;
 }
 

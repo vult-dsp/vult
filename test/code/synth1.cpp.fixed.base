@@ -96,9 +96,9 @@ fix16_t Synth1_phasor(Synth1__ctx_type_5 &_ctx, fix16_t pitch, uint8_t reset){
    if(_cond_3){
       _ctx.rate = Synth1_pitchToRate(pitch);
    }
-   if(reset)_ctx.phase = 0x0 /* 0.000000 */;
+   if(reset){ _ctx.phase = 0x0 /* 0.000000 */; }
    else
-   _ctx.phase = (fix_add(_ctx.phase,_ctx.rate) % 0x10000 /* 1.000000 */);
+   { _ctx.phase = (fix_add(_ctx.phase,_ctx.rate) % 0x10000 /* 1.000000 */); }
    return _ctx.phase;
 }
 
@@ -168,9 +168,9 @@ fix16_t Synth1_process(Synth1__ctx_type_7 &_ctx, fix16_t input){
    fix16_t sine = fix_sin(fix_mul(0x6487e /* 6.283185 */,phase2));
    fix16_t gate_value;
    uint8_t _cond_7 = (_ctx.gate > 0);
-   if(_cond_7)gate_value = 0x10000 /* 1.000000 */;
+   if(_cond_7){ gate_value = 0x10000 /* 1.000000 */; }
    else
-   gate_value = 0x0 /* 0.000000 */;
+   { gate_value = 0x0 /* 0.000000 */; }
    return fix_mul(fix_mul(fix_mul(Synth1_smooth(_ctx._inst5,_ctx.volume),sine),comp),Synth1_smooth(_ctx._inst6,gate_value));
 }
 
@@ -214,9 +214,9 @@ void Synth1_noteOn(Synth1__ctx_type_7 &_ctx, fix16_t note, int velocity){
       _ctx.count = (_ctx.count + 1);
    }
    uint8_t _cond_14 = (_ctx.count > 0);
-   if(_cond_14)_ctx.gate = 1;
+   if(_cond_14){ _ctx.gate = 1; }
    else
-   _ctx.gate = 0;
+   { _ctx.gate = 0; }
 }
 
 void Synth1_noteOff_init(Synth1__ctx_type_7 &_output_){
@@ -267,9 +267,9 @@ void Synth1_noteOff(Synth1__ctx_type_7 &_ctx, fix16_t note){
       _ctx.count = (_ctx.count + (-1));
    }
    uint8_t _cond_22 = (_ctx.count > 0);
-   if(_cond_22)_ctx.gate = 1;
+   if(_cond_22){ _ctx.gate = 1; }
    else
-   _ctx.gate = 0;
+   { _ctx.gate = 0; }
    uint8_t _cond_18 = (_ctx.count == 1);
    if(_cond_18){
       _ctx.pitch = _ctx.n1;

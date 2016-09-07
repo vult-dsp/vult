@@ -273,15 +273,15 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSIf(cond,then_,None) ->
       let tcond = printExp params cond in
       let tcond = if isSimple cond then Pla.wrap (Pla.string "(") (Pla.string ")") tcond else tcond in
-      let tthen = CCOpt.get_or ~default:Pla.semi (printStmt params then_) in
+      let tthen = CCOpt.get_or ~default:Pla.semi (wrapStmtIfNotBlock params then_) in
       Some({pla|if<#tcond#><#tthen#>|pla})
 
    (* If-statement with else*)
    | CSIf(cond,then_,Some(else_)) ->
       let tcond = printExp params cond in
       let tcond = if isSimple cond then Pla.wrap (Pla.string "(") (Pla.string ")") tcond else tcond in
-      let tthen = CCOpt.get_or ~default:Pla.semi (printStmt params then_) in
-      let telse = CCOpt.get_or ~default:Pla.semi (printStmt params else_) in
+      let tthen = CCOpt.get_or ~default:Pla.semi (wrapStmtIfNotBlock params then_) in
+      let telse = CCOpt.get_or ~default:Pla.semi (wrapStmtIfNotBlock params else_) in
       Some({pla|if<#tcond#><#tthen#><#>else<#><#telse#>|pla})
 
    (* Type declaration (only in headers) *)
@@ -321,6 +321,14 @@ and printStmtList (params:params) (stmts:cstmt list) : Pla.t =
    (* Prints the statements and removes all elements that are None *)
    let tstmts = CCList.filter_map (printStmt params) stmts in
    Pla.map_sep_all Pla.newline (fun a -> a) tstmts
+
+and wrapStmtIfNotBlock params stmt =
+   match stmt with
+   | CSBlock _ -> printStmt params stmt
+   | _ ->
+      match printStmt params stmt with
+      | Some(t) -> Some(Pla.wrap (Pla.string "{ ") (Pla.string " }") t)
+      | _ -> None
 
 let printChCode (params:params) (stmts:cstmt list) : Pla.t =
    let code = printStmtList params stmts in

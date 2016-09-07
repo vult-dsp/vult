@@ -4,26 +4,29 @@
       val field_1 : real;
    }
 
-   fun Output_references.foo(_output_:tuple(real,real)) : unit /* scope_0 */
-   if(true)
-      /* scope_1 */
-      {
-         val (_tplbind_3:tuple(real,real)) = 0.,0.;
-         (_output_:tuple(real,real)) = _tplbind_3;
-         return ();
-      }
-   else
-      /* scope_2 */
-      {
-         val (_tplbind_4:tuple(real,real)) = 1.,1.;
-         (_output_:tuple(real,real)) = _tplbind_4;
-         return ();
-      }
+   fun Output_references.foo(x:int,_output_:tuple(real,real)) : unit /* scope_0 */
+   {
+      val (_cond_5:bool) = (x > 0);
+      if(_cond_5)
+         /* scope_1 */
+         {
+            val (_tplbind_3:tuple(real,real)) = 0.,0.;
+            (_output_:tuple(real,real)) = _tplbind_3;
+            return ();
+         }
+      else
+         /* scope_2 */
+         {
+            val (_tplbind_4:tuple(real,real)) = 1.,1.;
+            (_output_:tuple(real,real)) = _tplbind_4;
+            return ();
+         }
+   }
 
    fun Output_references.bar(_output_:tuple(real,real)) : unit /* scope_0 */
    {
       val (x:tuple(real,real));
-      val (_:unit) = Output_references.foo(x);
+      val (_:unit) = Output_references.foo(1,x);
       val (y:int) = 1;
       (_output_:tuple(real,real)) = x;
       return ();

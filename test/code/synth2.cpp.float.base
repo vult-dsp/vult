@@ -251,17 +251,17 @@ float Synth2_svf_step(Synth2__ctx_type_12 &_ctx, float input, float g, float q, 
    _ctx.dlow = float_clip(low,(-1.f),1.f);
    float output;
    uint8_t _cond_1 = (sel == 0);
-   if(_cond_1)output = low;
+   if(_cond_1){ output = low; }
    else
    {
       uint8_t _cond_2 = (sel == 1);
-      if(_cond_2)output = high;
+      if(_cond_2){ output = high; }
       else
       {
          uint8_t _cond_3 = (sel == 2);
-         if(_cond_3)output = band;
+         if(_cond_3){ output = band; }
          else
-         output = notch;
+         { output = notch; }
       }
    }
    return output;
@@ -428,9 +428,9 @@ float Synth2_process(Synth2__ctx_type_16 &_ctx, float i){
    float lfo1 = (Synth2_lfo(_ctx._inst1,_ctx.lfo_rate,gate) * _ctx.lfo_amt);
    float o1 = Synth2_osc(_ctx._inst2,_ctx.pitch,(_ctx.pw + lfo1),_ctx.wave);
    float _if_5;
-   if(gate)_if_5 = 1.f;
+   if(gate){ _if_5 = 1.f; }
    else
-   _if_5 = 0.f;
+   { _if_5 = 0.f; }
    float amp_env = Synth2_smooth(_ctx._inst3,_if_5);
    float output = (amp_env * Synth2_svf(_ctx._inst4,o1,_ctx.cut,_ctx.res,0));
    return (_ctx.volume * output);

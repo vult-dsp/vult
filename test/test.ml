@@ -246,7 +246,7 @@ module RandomCompileTest = struct
 
    let compileFile (file:string) =
       let basename = Filename.chop_extension (Filename.basename file) in
-      let cmd = Printf.sprintf "gcc -I%s -c %s -o %s" (in_test_directory "../runtime") file basename in
+      let cmd = Printf.sprintf "gcc -Wno-unused-value -I%s -c %s -o %s" (in_test_directory "../runtime") file basename in
       if Sys.command cmd <> 0 then
          assert_failure ("Failed to compile "^file)
 

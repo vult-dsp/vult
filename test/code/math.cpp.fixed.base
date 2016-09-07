@@ -8,15 +8,15 @@ fix16_t Math_sin(fix16_t x0){
    fix16_t x2 = (x1 % 0x3243f /* 3.141593 */);
    fix16_t x3;
    uint8_t _cond_2 = (x2 > 0x1921f /* 1.570796 */);
-   if(_cond_2)x3 = fix_add(0x3243f /* 3.141593 */,(- x2));
+   if(_cond_2){ x3 = fix_add(0x3243f /* 3.141593 */,(- x2)); }
    else
-   x3 = x2;
+   { x3 = x2; }
    fix16_t xp2 = fix_mul(x3,x3);
    fix16_t acc = fix_mul(x3,fix_add(0x10000 /* 1.000000 */,fix_mul(fix_add((-0x2aaa /* -0.166667 */),fix_mul(0x222 /* 0.008333 */,xp2)),xp2)));
    fix16_t _if_1;
-   if(sign)_if_1 = (- acc);
+   if(sign){ _if_1 = (- acc); }
    else
-   _if_1 = acc;
+   { _if_1 = acc; }
    return _if_1;
 }
 
@@ -27,9 +27,9 @@ fix16_t Math_cos(fix16_t x0){
 fix16_t Math_tanh(fix16_t xx){
    uint8_t positive = (xx > 0x0 /* 0.000000 */);
    fix16_t x;
-   if(positive)x = xx;
+   if(positive){ x = xx; }
    else
-   x = (- xx);
+   { x = (- xx); }
    fix16_t y;
    int n = 0;
    while((x > 0x10000 /* 1.000000 */)){
@@ -42,9 +42,9 @@ fix16_t Math_tanh(fix16_t xx){
       n = (n + (-1));
    }
    fix16_t _if_3;
-   if(positive)_if_3 = y;
+   if(positive){ _if_3 = y; }
    else
-   _if_3 = (- y);
+   { _if_3 = (- y); }
    return _if_3;
 }
 

@@ -251,17 +251,17 @@ fix16_t Synth2_svf_step(Synth2__ctx_type_12 &_ctx, fix16_t input, fix16_t g, fix
    _ctx.dlow = fix_clip(low,(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
    fix16_t output;
    uint8_t _cond_1 = (sel == 0);
-   if(_cond_1)output = low;
+   if(_cond_1){ output = low; }
    else
    {
       uint8_t _cond_2 = (sel == 1);
-      if(_cond_2)output = high;
+      if(_cond_2){ output = high; }
       else
       {
          uint8_t _cond_3 = (sel == 2);
-         if(_cond_3)output = band;
+         if(_cond_3){ output = band; }
          else
-         output = notch;
+         { output = notch; }
       }
    }
    return output;
@@ -428,9 +428,9 @@ fix16_t Synth2_process(Synth2__ctx_type_16 &_ctx, fix16_t i){
    fix16_t lfo1 = fix_mul(Synth2_lfo(_ctx._inst1,_ctx.lfo_rate,gate),_ctx.lfo_amt);
    fix16_t o1 = Synth2_osc(_ctx._inst2,_ctx.pitch,fix_add(_ctx.pw,lfo1),_ctx.wave);
    fix16_t _if_5;
-   if(gate)_if_5 = 0x10000 /* 1.000000 */;
+   if(gate){ _if_5 = 0x10000 /* 1.000000 */; }
    else
-   _if_5 = 0x0 /* 0.000000 */;
+   { _if_5 = 0x0 /* 0.000000 */; }
    fix16_t amp_env = Synth2_smooth(_ctx._inst3,_if_5);
    fix16_t output = fix_mul(amp_env,Synth2_svf(_ctx._inst4,o1,_ctx.cut,_ctx.res,0));
    return fix_mul(_ctx.volume,output);
