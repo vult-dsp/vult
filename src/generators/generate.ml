@@ -151,7 +151,7 @@ let rec getMainModule (parser_results:parser_results list) : string =
 (* Generates the C/C++ code if the flag was passed *)
 let generateC (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * string) list=
    if args.ccode then
-      let cparams     = VultToCLike.{repl = params.repl; return_by_ref = true } in
+      let cparams     = VultToCLike.{repl = params.repl; ccode = true } in
       (* Converts the statements to CLike form *)
       let clike_stmts = VultToCLike.convertStmtList cparams stmts in
       VultCh.print params clike_stmts
@@ -160,7 +160,7 @@ let generateC (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pl
 (* Generates the JS code if the flag was passed *)
 let generateJS (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * string) list=
    if args.jscode then
-      let cparams     = VultToCLike.{repl = params.repl; return_by_ref = false } in
+      let cparams     = VultToCLike.{repl = params.repl; ccode = false } in
       (* Converts the statements to CLike form *)
       let clike_stmts = VultToCLike.convertStmtList cparams stmts in
       VultJs.print params clike_stmts
@@ -169,7 +169,7 @@ let generateJS (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (P
 (* Generates the JS code if the flag was passed *)
 let generateLua (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * string) list=
    if args.luacode then
-      let cparams     = VultToCLike.{repl = params.repl; return_by_ref = false } in
+      let cparams     = VultToCLike.{repl = params.repl; ccode = false } in
       (* Converts the statements to CLike form *)
       let clike_stmts = VultToCLike.convertStmtList cparams stmts in
       VultLua.print params clike_stmts

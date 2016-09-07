@@ -291,10 +291,14 @@ let rec newExp state typ =
       (isBool typ), nest_p, (fun state ->
          let state' = decr_nest state in
          let t  = newType state' in
-         let e1 = newExp state' t in
-         let e2 = newExp state' t in
-         let op = newLogicBiOp state' in
-         POp(op,[e1;e2],emptyAttr));
+         if isNum t state then
+            let e1 = newExp state' t in
+            let e2 = newExp state' t in
+            let op = newLogicBiOp state' in
+            POp(op,[e1;e2],emptyAttr)
+         else
+            newExp state typ
+         );
       (* if-expression *)
       with_if_exp, nest_p, (fun state ->
          let cond = newExp (no_if_exp state) VType.Constants.bool_type in
@@ -396,14 +400,15 @@ and newStmtList n state =
 
 let newFunction () =
    let name = ["foo_" ^ (string_of_int (Random.int 10000))] in
-   let stmts,_ = newStmtList 50 default_state in
+   let stmts,_ = newStmtList 10 default_state in
    StmtFun(name,[],StmtBlock(None,stmts,emptyAttr),None,emptyAttr)
 
-let test () =
+let test seed =
+   Random.init seed;
    let stmts = [newFunction ()] in
    let code = PrintTypes.stmtListStr stmts in
    code
 
-let run () =
-   test ()
+let run seed =
+   test seed
 ;;

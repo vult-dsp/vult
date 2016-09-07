@@ -576,12 +576,12 @@ let builtin_table =
       ["/"]  , Scope.Operator, VType.Constants.num_num_num (), false;
       ["%"]  , Scope.Operator, VType.Constants.num_num_num (), false;
 
-      [">"]   , Scope.Operator, VType.Constants.a_a_bool (), false;
-      ["<"]   , Scope.Operator, VType.Constants.a_a_bool (), false;
+      [">"]   , Scope.Operator, VType.Constants.num_num_bool (), false;
+      ["<"]   , Scope.Operator, VType.Constants.num_num_bool (), false;
       ["=="]  , Scope.Operator, VType.Constants.a_a_bool (), false;
       ["<>"]  , Scope.Operator, VType.Constants.a_a_bool (), false;
-      [">="]  , Scope.Operator, VType.Constants.a_a_bool (), false;
-      ["<="]  , Scope.Operator, VType.Constants.a_a_bool (), false;
+      [">="]  , Scope.Operator, VType.Constants.num_num_bool (), false;
+      ["<="]  , Scope.Operator, VType.Constants.num_num_bool (), false;
 
       ["not"] , Scope.Function, VType.Constants.bool_bool (), false;
       ["||"]  , Scope.Operator, VType.Constants.bool_bool_bool (), false;

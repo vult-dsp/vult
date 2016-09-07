@@ -548,7 +548,9 @@ module Simplify = struct
       | "*",PInt(n1,attr),PInt(n2,_) -> PInt(n1*n2,attr)
       | "+",PReal(n1,attr),PReal(n2,_) -> PReal(n1+.n2,attr)
       | "*",PReal(n1,attr),PReal(n2,_) -> PReal(n1*.n2,attr)
-      | _ -> failwith "Simplify.applyOp: invalid operation"
+      | "||",PBool(n1,attr),PBool(n2,_) -> PBool(n1 || n2,attr)
+      | "&&",PBool(n1,attr),PBool(n2,_) -> PBool(n1 && n2,attr)
+      | _ -> failwith "Simplify.applyOp: invalid operation on"
 
    let rec simplifyElems op (elems: exp list) : bool  * exp list =
       let constants,other = List.partition isNum elems in
@@ -559,6 +561,8 @@ module Simplify = struct
       | [c] when isZero c && op = "+" -> false, other
       | [c] when isTrue c && op = "||" -> false, [c]
       | [c] when isFalse c && op = "||" -> false, other
+      | [c] when isTrue c && op = "&&" -> false, other
+      | [c] when isFalse c && op = "&&" -> false, [c]
       | [_] -> false, elems
       | h :: t ->
          let c = List.fold_left (applyOp op) h t in
@@ -586,7 +590,7 @@ module Simplify = struct
          reapply state, POp("*",minus::elems,attr)
 
       (* Collapses trees of sums and multiplications *)
-      | POp(op,elems,attr) when op = "+" || op = "*" || op = "||" ->
+      | POp(op,elems,attr) when op = "+" || op = "*" || op = "||" || op = "&&" ->
          let found, elems' = getOpElements op elems in
          let simpl, elems' = simplifyElems op elems' in
          let state' = if found || simpl then reapply state else state in
@@ -767,6 +771,11 @@ module ReturnReferences = struct
       | VType.TId(["unit"],_) -> true
       | _ -> false
 
+   let isSimpleOpType (typ:VType.t option) : bool =
+      match typ with
+      | Some(t) -> isSimpleType t
+      | _ -> true
+
    (** This mapper is used to bind the if expressions to a variable *)
    module BindFunctionCalls = struct
 
@@ -808,10 +817,18 @@ module ReturnReferences = struct
          state, [stmt]
       else
          match stmt with
+         (* regular case a = foo() *)
          | StmtBind(LId(lhs,Some(typ),lattr),PCall(inst,name,args,attr),battr) when not (isSimpleType typ) ->
             let arg = PId(lhs,lattr) in
             let fixed_attr = unitAttr attr in
             state, [StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],attr),battr)]
+         (* special case _ = foo() *)
+         | StmtBind(LWild(wattr),PCall(inst,name,args,attr),battr) when not (isSimpleOpType wattr.typ) ->
+            let i,state' = Env.tick state in
+            let tmp_name = "_unused_" ^ (string_of_int i) in
+            let arg = PId([tmp_name], wattr) in
+            let fixed_attr = unitAttr attr in
+            state', [StmtVal(LId([tmp_name],wattr.typ,battr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],attr),battr)]
          | StmtBind(_,PCall(_,_,_,_),_) ->
             state, [stmt]
          | StmtVal(LId(lhs,Some(typ),lattr),Some(PCall(inst,name,args,attr)),battr) when not (isSimpleType typ) ->
@@ -826,6 +843,7 @@ module ReturnReferences = struct
             let state',acc_stmts = restoreState state acc' in
             let state' = if CCList.is_empty acc_stmts then state' else reapply state' in
             let stmts' = StmtBind(lhs,rhs',attr) :: acc_stmts in
+            let state' = if acc_stmts <> [] then reapply state' else state' in
             state', List.rev stmts'
          | StmtVal(lhs,Some(rhs),attr) ->
             let acc       = newState state [] in
@@ -833,6 +851,7 @@ module ReturnReferences = struct
             let state',acc_stmts = restoreState state acc' in
             let state' = if CCList.is_empty acc_stmts then state' else reapply state' in
             let stmts' = StmtVal(lhs,Some(rhs'),attr)::acc_stmts in
+            let state' = if acc_stmts <> [] then reapply state' else state' in
             state', List.rev stmts'
          | StmtReturn(e,attr) ->
             let eattr = GetAttr.fromExp e in
@@ -846,6 +865,7 @@ module ReturnReferences = struct
                   let state',acc_stmts = restoreState state acc' in
                   let state' = if CCList.is_empty acc_stmts then state' else reapply state' in
                   let stmts' = StmtReturn(e',attr)::acc_stmts in
+                  let state' = if acc_stmts <> [] then reapply state' else state' in
                   state', List.rev stmts'
             end
          | _ -> state, [stmt]

@@ -181,7 +181,7 @@ void int_init_array  (int size, int value, int *data) {
         data[i] = value;
 }
 
-void bool_init_array (int size, int8_t value, int8_t *data) {
+void bool_init_array (int size, uint8_t value, uint8_t *data) {
     int i;
     for(i=0;i<size;i++)
         data[i] = value;

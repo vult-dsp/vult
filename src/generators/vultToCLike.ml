@@ -29,7 +29,7 @@ open Common
 type parameters =
    {
       repl : Replacements.t;
-      return_by_ref : bool; (* true if any non-simple object should output as a reference *)
+      ccode : bool; (* true if we are generating ccode *)
    }
 
 let rec join (sep:string) (id:string list) : string =
@@ -220,6 +220,14 @@ and convertLhsExpList (is_val:bool) (p:parameters) (lhsl:lhs_exp list) : clhsexp
       [] lhsl
    |> List.rev
 
+let getRecordField (name:clhsexp) (index:int) : clhsexp =
+   match name with
+   | CLId(desc,name) ->
+      let name' = name^".field_"^(string_of_int index) in
+      (* possible future bug, the descr does not match the actual type *)
+      CLId(desc,name')
+   | _ -> failwith "VultToCLike.getRecordFiled: Invalid input"
+
 let rec convertStmt (p:parameters) (s:stmt) : cstmt =
    match s with
    | StmtVal(lhs,None,_) ->
@@ -229,7 +237,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let lhs' = convertLhsExp true p lhs in
       let rhs' = convertExp p rhs in
       CSVarDecl(lhs',Some(rhs'))
-   | StmtMem _                -> CSEmpty
+   | StmtMem _ -> CSEmpty
    | StmtWhile(cond,stmt,_) ->
       let cond' = convertExp p cond in
       let stmt' = convertStmt p stmt in (* the env is ignored *)
@@ -252,13 +260,19 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let body' = convertStmt p body in
       let fname = convertId p name in
       CSFunction(convertType p ret, fname,arg_names,body')
-   | StmtBind(LWild(_) ,PCall(None,["makeArray"],[size;init;var],_),_) when p.return_by_ref ->
+   | StmtBind(LWild(_) ,PCall(None,["makeArray"],[size;init;var],_),_) when p.ccode ->
       let init' = convertExp p init in
       let size' = convertExp p size in
       let init_typ  = expType p init in
       let init_func = getInitArrayFunction p init_typ in
       let var'  = convertExp p var in
       CSBind(CLWild,CECall(init_func,[size';init';var']))
+   (* special case to bind tuples in c/c++ It expands tuple assigns *)
+   | StmtBind(LId(_,_,_) as lhs,PTuple(elems,_),_) when p.ccode ->
+      let lhs' = convertLhsExp true p lhs in
+      let elems' = convertExpList p elems in
+      let stmts = List.mapi (fun i e -> CSBind(getRecordField lhs' i,e)) elems' in
+      CSBlock(stmts)
    | StmtBind(lhs,rhs,_) ->
       let lhs' = convertLhsExp false p lhs in
       let rhs' = convertExp p rhs in

@@ -88,13 +88,6 @@ let code_files =
 
 let test_random_code =
    [
-      "test1.vult";
-      "test2.vult";
-      "test3.vult";
-      "test4.vult";
-      "test5.vult";
-      "test6.vult";
-      "test7.vult";
    ]
 
 (** Flags that defines if a baseline should be created for tests *)
@@ -259,7 +252,8 @@ module RandomCompileTest = struct
 
    let generateCPP (filename:string) (output:string) (real_type:string) : unit =
       let args = { default_arguments with  files = [filename]; ccode = true; output = output; real = real_type } in
-      let code = RandProg.run () in
+      let seed = Hashtbl.hash filename in
+      let code = RandProg.run seed in
       write filename code;
       let parser_results = ParserVult.parseString code in
       Driver.generateCode args [parser_results] |> ignore
@@ -287,6 +281,7 @@ let suite =
       CodeGenerationTest.get code_files "js";
       CompileTest.get code_files "float";
       CompileTest.get code_files "fixed";
+      RandomCompileTest.get test_random_code "float";
    ]
 
 
