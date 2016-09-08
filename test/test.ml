@@ -87,8 +87,12 @@ let code_files =
    ]
 
 let test_random_code =
-   [
-   ]
+   (*let rec loop n =
+      if n > 0 then
+         (Printf.sprintf "test%i.vult" n) :: loop (n-1)
+      else []
+   in loop 50*)
+   []
 
 (** Flags that defines if a baseline should be created for tests *)
 let writeOutput = Conf.make_bool "writeout" false "Creates a file with the current results"
@@ -150,14 +154,14 @@ end
 module CodeGenerationTest = struct
 
    let process (fullfile:string) (real_type:string) : (string * string) list =
-         let basefile = Filename.chop_extension (Filename.basename fullfile) in
-         let ccode = real_type = "fixed" || real_type = "float" in
-         let jscode = real_type = "js" in
-         let args  = { default_arguments with output = basefile; real = real_type; ccode; jscode } in
-         let stmts = ParserVult.parseFile fullfile in
-         let ()    = showResults stmts.presult |> ignore in
-         let files = Generate.generateCode [stmts] args in
-         files |> List.map (fun (code,ext) -> Pla.print code, ext)
+      let basefile = Filename.chop_extension (Filename.basename fullfile) in
+      let ccode = real_type = "fixed" || real_type = "float" in
+      let jscode = real_type = "js" in
+      let args  = { default_arguments with output = basefile; real = real_type; ccode; jscode } in
+      let stmts = ParserVult.parseFile fullfile in
+      let ()    = showResults stmts.presult |> ignore in
+      let files = Generate.generateCode [stmts] args in
+      files |> List.map (fun (code,ext) -> Pla.print code, ext)
 
    let run (file:string) real_type context : unit =
       let fullfile = checkFile (in_test_directory ("../examples/"^file)) in
@@ -246,7 +250,7 @@ module RandomCompileTest = struct
 
    let compileFile (file:string) =
       let basename = Filename.chop_extension (Filename.basename file) in
-      let cmd = Printf.sprintf "gcc -Wno-unused-value -I%s -c %s -o %s" (in_test_directory "../runtime") file basename in
+      let cmd = Printf.sprintf "gcc -Wno-unused-value -Wno-tautological-compare -I%s -c %s -o %s" (in_test_directory "../runtime") file basename in
       if Sys.command cmd <> 0 then
          assert_failure ("Failed to compile "^file)
 
@@ -264,7 +268,7 @@ module RandomCompileTest = struct
       generateCPP file output real_type;
       assert_bool "No code generated" (Sys.file_exists (output^".cpp"));
       compileFile (output^".cpp");
-      compileFile (in_test_directory "../runtime/vultin.c");
+      Sys.remove (output^".cpp");
       Sys.chdir initial_dir
 
    let get files real_type = "compile">::: (List.map (fun file -> (Filename.basename file) ^"."^ real_type >:: run real_type file) files)

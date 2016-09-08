@@ -192,3 +192,27 @@ void fix_init_array  (int size, fix16_t value, fix16_t *data) {
     for(i=0;i<size;i++)
         data[i] = value;
 }
+
+void float_copy_array(int size, float* dest, float *src) {
+   int i;
+    for(i=0;i<size;i++)
+        dest[i] = src[i];
+}
+
+void int_copy_array  (int size, int* dest, int *src) {
+   int i;
+    for(i=0;i<size;i++)
+        dest[i] = src[i];
+}
+
+void bool_copy_array (int size, uint8_t* dest, uint8_t *src) {
+   int i;
+    for(i=0;i<size;i++)
+        dest[i] = src[i];
+}
+
+void fix_copy_array  (int size, fix16_t* dest, fix16_t *src) {
+   int i;
+    for(i=0;i<size;i++)
+        dest[i] = src[i];
+}

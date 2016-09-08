@@ -37,6 +37,8 @@ let makeOperators = PairMap.of_list
 
 let makeArrayInitializations = SimpleMap.of_list
 
+let makeArrayCopy = SimpleMap.of_list
+
 let makeRealToString = SimpleMap.of_list
 
 type t =
@@ -48,6 +50,7 @@ type t =
       op_to_op   : string PairMap.t;
       fun_to_fun : string PairMap.t;
       array_init : string SimpleMap.t;
+      array_copy : string SimpleMap.t;
       real_string: (float -> string) SimpleMap.t;
    }
 
@@ -78,6 +81,7 @@ let extendReplacements (first:t) (second:t) : t =
       op_to_op    = PairMap.merge   takeSecond first.op_to_op    second.op_to_op;
       fun_to_fun  = PairMap.merge   takeSecond first.fun_to_fun  second.fun_to_fun;
       array_init  = SimpleMap.merge takeSecond first.array_init  second.array_init;
+      array_copy  = SimpleMap.merge takeSecond first.array_copy  second.array_copy;
       real_string = SimpleMap.merge takeSecond first.real_string second.real_string;
    }
 
@@ -90,6 +94,7 @@ let empty =
       op_to_op    = PairMap.empty;
       fun_to_fun  = PairMap.empty;
       array_init  = SimpleMap.empty;
+      array_copy  = SimpleMap.empty;
       real_string = SimpleMap.empty;
    }
 
@@ -122,6 +127,9 @@ let getOperator (t:t) (op:string) (typ:string) : string =
 
 let getArrayInit (t:t) (name:string) : string option =
    SimpleMap.get name t.array_init
+
+let getArrayCopy (t:t) (name:string) : string option =
+   SimpleMap.get name t.array_copy
 
 let getFunction (t:t) (op:string) (typ:string) : string =
    let typ_t = getType t typ in

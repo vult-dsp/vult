@@ -30,14 +30,14 @@ let default_state =
    {
       max_array_size = 100;
       max_tuple_size = 5;
-      max_int        = 1000;
-      max_real       = 1000.0;
+      max_int        = 100;
+      max_real       = 100.0;
       get_array_type = true;
       get_tuple_type = true;
-      max_type_levels = 3;
+      max_type_levels = 1;
       nest_prob       = 1.0;
-      vars = TypeMap.empty;
-      get_if_exp = true;
+      vars            = TypeMap.empty;
+      get_if_exp      = true;
    }
 
 let rec fold_init f s n =
@@ -74,7 +74,7 @@ let rec filter_count state acc l =
          if prob > 0.0 then
             filter_count state ((n +. prob), h :: e) t
          else
-         filter_count state acc t
+            filter_count state acc t
       else
          filter_count state acc t
 
@@ -86,13 +86,15 @@ let pick_one state (elems: (condition * probability * 'a creator) list) : 'a =
    f state
 
 let makeArray state t =
-   let size = ref (VType.TInt(Random.int state.max_array_size,None)) in
+   let n = (Random.int (state.max_array_size - 1)) + 1 in
+   let size = ref (VType.TInt(n,None)) in
    ref (VType.TComposed(["array"],[t;size],None))
 
 let makeTuple elems =
    ref (VType.TComposed(["tuple"],elems,None))
 
 let normal_p _ = 1.0
+let high_p _ = 2.0
 let low_p    _ = 0.3
 let nest_p state = state.nest_prob
 
@@ -120,15 +122,15 @@ let rec newType state =
       always, normal_p, (fun _ -> VType.Constants.bool_type);
       (* Array *)
       with_array, low_p, (fun state ->
-         let state' = no_tuple (no_array state) in
-         let t = newType state' in
-         makeArray state' t);
+            let state' = no_tuple (no_array state) in
+            let t = newType state' in
+            makeArray state' t);
       (* Tuple *)
       with_tuple, low_p, (fun state ->
-         let nelems = 2 + (Random.int (state.max_tuple_size - 2)) in
-         let state' = decr_level (no_array state) in
-         let t = newTypeList nelems state' in
-         makeTuple t);
+            let nelems = 2 + (Random.int (state.max_tuple_size - 2)) in
+            let state' = decr_level (no_array state) in
+            let t = newTypeList nelems state' in
+            makeTuple t);
    ]
 
 and newTypeList n state =
@@ -163,11 +165,6 @@ let isTuple typ _ =
    match !typ with
    | VType.TComposed(["tuple"],_,_) -> true
    | _ -> false
-
-let arrayTypeAndSize typ =
-   match !typ with
-   | VType.TComposed(["array"],[t;{contents = VType.TInt(n,_)}],_) -> t, n
-   | _ -> failwith "arraySize: invalid input"
 
 let tupleTypes typ =
    match !typ with
@@ -247,66 +244,61 @@ let rec newExp state typ =
       (isInt typ), normal_p,  (fun state -> PInt(Random.int state.max_int,emptyAttr));
       (isReal typ), normal_p, (fun state -> PReal(Random.float state.max_real,emptyAttr));
       (isBool typ), low_p,    (fun _     -> PBool(Random.bool (),emptyAttr));
-      (hasType typ), normal_p, (fun state -> PId(pickVar state typ,emptyAttr) );
+      (hasType typ), high_p, (fun state -> PId(pickVar state typ,emptyAttr) );
       (* literal array *)
       (isArray typ), low_p, (fun state ->
-         let array_type,size = arrayTypeAndSize typ in
-         let elems = newExpList size state array_type in
-         PArray(elems,emptyAttr));
-      (* call to array make *)
-      (isArray typ), normal_p, (fun state ->
-         let array_type,size = arrayTypeAndSize typ in
-         let elem = newExp state array_type in
-         PCall(None,["makeArray"],[PInt(size,emptyAttr);elem],emptyAttr));
+            let array_type,size = VType.arrayTypeAndSize typ in
+            let elems = newExpList size state array_type in
+            PArray(elems,emptyAttr));
       (* call real builtin *)
       (isReal typ), nest_p, (fun state ->
-         let state' = decr_nest state in
-         let elem = newExp state' typ in
-         let fn = newBuiltinFun state in
-         PCall(None,[fn],[elem],emptyAttr));
+            let state' = decr_nest state in
+            let elem = newExp state' typ in
+            let fn = newBuiltinFun state in
+            PCall(None,[fn],[elem],emptyAttr));
       (* call to get array*)
       (hasArrayType typ),nest_p,(fun state ->
-         let array_type, var = pickArrayVar state typ in
-         let _,size = arrayTypeAndSize array_type in
-         let index = Random.int size in
-         PCall(None,["get"],[PId(var,emptyAttr);PInt(index,emptyAttr)],emptyAttr));
+            let array_type, var = pickArrayVar state typ in
+            let _,size = VType.arrayTypeAndSize array_type in
+            let index = Random.int size in
+            PCall(None,["get"],[PId(var,emptyAttr);PInt(index,emptyAttr)],emptyAttr));
       (* tuples *)
       (isTuple typ), low_p, (fun state ->
-         let types = tupleTypes typ in
-         let elems = List.map (newExp state) types in
-         PGroup(PTuple(elems,emptyAttr),emptyAttr));
+            let types = tupleTypes typ in
+            let elems = List.map (newExp state) types in
+            PGroup(PTuple(elems,emptyAttr),emptyAttr));
       (* operators *)
       (isNum typ), nest_p, (fun state ->
-         let state' = decr_nest state in
-         let e1 = newExp state' typ in
-         let e2 = newExp state' typ in
-         let op = newNumBiOp state' in
-         POp(op,[e1;e2],emptyAttr));
+            let state' = decr_nest state in
+            let e1 = newExp state' typ in
+            let e2 = newExp state' typ in
+            let op = newNumBiOp state' in
+            POp(op,[e1;e2],emptyAttr));
       (isBool typ), nest_p, (fun state ->
-         let state' = decr_nest state in
-         let e1 = newExp state' typ in
-         let e2 = newExp state' typ in
-         let op = newBoolBiOp state' in
-         POp(op,[e1;e2],emptyAttr));
+            let state' = decr_nest state in
+            let e1 = newExp state' typ in
+            let e2 = newExp state' typ in
+            let op = newBoolBiOp state' in
+            POp(op,[e1;e2],emptyAttr));
       (isBool typ), nest_p, (fun state ->
-         let state' = decr_nest state in
-         let t  = newType state' in
-         if isNum t state then
-            let e1 = newExp state' t in
-            let e2 = newExp state' t in
-            let op = newLogicBiOp state' in
-            POp(op,[e1;e2],emptyAttr)
-         else
-            newExp state typ
+            let state' = decr_nest state in
+            let t  = newType state' in
+            if isNum t state then
+               let e1 = newExp state' t in
+               let e2 = newExp state' t in
+               let op = newLogicBiOp state' in
+               POp(op,[e1;e2],emptyAttr)
+            else
+               newExp state typ
          );
       (* if-expression *)
       with_if_exp, nest_p, (fun state ->
-         let cond = newExp (no_if_exp state) VType.Constants.bool_type in
-         let state' = decr_nest state in
-         let e1 = newExp state' typ in
-         let e2 = newExp state' typ in
-         PIf(cond,e1,e2,emptyAttr);
-      )
+            let cond = newExp state VType.Constants.bool_type in
+            let state' = decr_nest state in
+            let e1 = newExp state' typ in
+            let e2 = newExp state' typ in
+            PIf(cond,e1,e2,emptyAttr);
+         )
    ]
 
 and newExpList n state typ =
@@ -324,75 +316,76 @@ let rec newLExpDecl state typ =
    pick_one state [
       (* new variable *)
       always, normal_p, (fun state ->
-         let name = getName state in
-         let state' = addVar state name typ in
-         LTyped(LId(name,None,emptyAttr),typ,emptyAttr), state');
+            let name = getName state in
+            let state' = addVar state name typ in
+            LId(name,None,emptyAttr), state');
 
       (* wild *)
-      always, low_p, (fun state -> LWild(emptyAttr),state);
+      always, low_p, (fun state -> LTyped(LWild(emptyAttr),typ,emptyAttr),state);
 
       (* tuple *)
       (isTuple typ), normal_p, (fun state ->
-         let types = tupleTypes typ in
-         let state',lhs_elems =
-            List.fold_left (fun (s,acc) t ->
-               let t',s' = newLExpDecl s t in
-               s', (t' :: acc))
-               (state,[])
-               types
-         in
-         LTuple(List.rev lhs_elems,emptyAttr), state')
-      ]
+            let types = tupleTypes typ in
+            let state',lhs_elems =
+               List.fold_left (fun (s,acc) t ->
+                     let t',s' = newLExpDecl s t in
+                     s', (t' :: acc))
+                  (state,[])
+                  types
+            in
+            LTuple(List.rev lhs_elems,emptyAttr), state')
+   ]
 
 let rec newLExpBind state typ =
    pick_one state [
       (* new variable *)
       always, normal_p, (fun state ->
-         let name = pickVar state typ in
-         LId(name,None,emptyAttr), state);
+            let name = pickVar state typ in
+            LId(name,None,emptyAttr), state);
 
       (* wild *)
       always, low_p, (fun state -> LWild(emptyAttr),state);
 
       (* tuple *)
       (isTuple typ), normal_p, (fun state ->
-         let types = tupleTypes typ in
-         let state',lhs_elems =
-            List.fold_left (fun (s,acc) t ->
-               let t',s' = newLExpBind s t in
-               s', (t' :: acc))
-               (state,[])
-               types
-         in
-         LTuple(List.rev lhs_elems,emptyAttr), state')
-      ]
+            let types = tupleTypes typ in
+            let state',lhs_elems =
+               List.fold_left (fun (s,acc) t ->
+                     let t',s' = newLExpBind s t in
+                     s', (t' :: acc))
+                  (state,[])
+                  types
+            in
+            LTuple(List.rev lhs_elems,emptyAttr), state')
+   ]
 
 let rec newStmt state =
    pick_one state [
       (* val *)
       always, normal_p, (fun state ->
-         let t = newType state in
-         let lhs,state' = newLExpDecl state t in
-         (* here use the old state to not pick the new variable *)
-         let rhs = newExp state t in
-         StmtVal(lhs,Some(rhs),emptyAttr), state'
+            let t = newType state in
+            let lhs,state' = newLExpDecl state t in
+            (* here use the old state to not pick the new variable *)
+            let rhs = newExp state t in
+            StmtVal(lhs,Some(rhs),emptyAttr), state'
          );
       (* mem *)
       always, normal_p, (fun state ->
-         let t = newType state in
-         let lhs,state' = newLExpDecl state t in
-         (* here use the new state to make possible picking the new variable *)
-         let rhs = newExp state' t in
-         StmtMem(lhs,None,Some(rhs),emptyAttr), state');
-      (* bind *)
-      always, normal_p,(fun state ->
-         let t = newType state in
-         if hasType t state then
-            let lhs,state' = newLExpBind state t in
+            let t = newType state in
+            let lhs,state' = newLExpDecl state t in
             (* here use the new state to make possible picking the new variable *)
             let rhs = newExp state' t in
-            StmtBind(lhs,rhs,emptyAttr), state'
-         else newStmt state);
+            let lhs' = LTyped(lhs,t,emptyAttr) in
+            StmtMem(lhs',None,Some(rhs),emptyAttr), state');
+      (* bind *)
+      always, normal_p,(fun state ->
+            let t = newType state in
+            if hasType t state then
+               let lhs,state' = newLExpBind state t in
+               (* here use the new state to make possible picking the new variable *)
+               let rhs = newExp state' t in
+               StmtBind(lhs,rhs,emptyAttr), state'
+            else newStmt state);
    ]
 and newStmtList n state =
    fold_init newStmt state n
@@ -400,7 +393,7 @@ and newStmtList n state =
 
 let newFunction () =
    let name = ["foo_" ^ (string_of_int (Random.int 10000))] in
-   let stmts,_ = newStmtList 10 default_state in
+   let stmts,_ = newStmtList 100 default_state in
    StmtFun(name,[],StmtBlock(None,stmts,emptyAttr),None,emptyAttr)
 
 let test seed =

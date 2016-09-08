@@ -155,6 +155,15 @@ let wrapInt (params:params) (is_int:bool) (e:cexp) : Pla.t =
       {pla|(<#e_t#>|0)|pla}
    else e_t
 
+let getInitValue (descr:type_descr) : string =
+   match descr with
+   | CTSimple("int") -> "(0|0)"
+   | CTSimple("float") -> "0.0"
+   | CTSimple("real") -> "0.0"
+   | CTSimple("bool") -> "false"
+   | CTSimple("unit") -> "0"
+   | _ -> "{}"
+
 let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
    | CSVarDecl(CLWild,Some(value)) ->
@@ -168,8 +177,9 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let value_t = wrapInt params is_int value in
       Some({pla|var <#name#s> = <#value_t#>;|pla})
 
-   | CSVarDecl(CLId(_,name),None) ->
-      Some({pla|var <#name#s> = {};|pla})
+   | CSVarDecl(CLId(tdescr,name),None) ->
+      let init = getInitValue tdescr in
+      Some({pla|var <#name#s> = <#init#s>;|pla})
 
    | CSVarDecl(CLTuple(elems),Some(CEVar(name))) ->
       List.mapi (printLhsExpTuple name true) elems

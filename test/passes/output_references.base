@@ -6,18 +6,23 @@
 
    fun Output_references.foo(x:int,_output_:tuple(real,real)) : unit /* scope_0 */
    {
-      val (_cond_5:bool) = (x > 0);
+      val (_cond_5:bool);
+      (_cond_5:bool) = (x > 0);
       if(_cond_5)
          /* scope_1 */
          {
-            val (_tplbind_3:tuple(real,real)) = 0.,0.;
+            val (_tplbind_3:tuple(real,real));
+            val (_tuple_6:tuple(real,real)) = 0.,0.;
+            (_tplbind_3:tuple(real,real)) = _tuple_6;
             (_output_:tuple(real,real)) = _tplbind_3;
             return ();
          }
       else
          /* scope_2 */
          {
-            val (_tplbind_4:tuple(real,real)) = 1.,1.;
+            val (_tplbind_4:tuple(real,real));
+            val (_tuple_7:tuple(real,real)) = 1.,1.;
+            (_tplbind_4:tuple(real,real)) = _tuple_7;
             (_output_:tuple(real,real)) = _tplbind_4;
             return ();
          }
@@ -26,8 +31,9 @@
    fun Output_references.bar(_output_:tuple(real,real)) : unit /* scope_0 */
    {
       val (x:tuple(real,real));
-      val (_:unit) = Output_references.foo(1,x);
-      val (y:int) = 1;
+      val (y:int);
+      (_:unit) = Output_references.foo(1,x);
+      (y:int) = 1;
       (_output_:tuple(real,real)) = x;
       return ();
    }

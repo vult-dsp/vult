@@ -14,7 +14,8 @@
 
    fun change_a(_ctx:_ctx_type_0,x:real) : bool /* scope_0 */
    {
-      val (ret:bool) = (x <> _ctx.pre);
+      val (ret:bool);
+      (ret:bool) = (x <> _ctx.pre);
       (_ctx.pre:real) = x;
       return ret;
    }
@@ -34,7 +35,8 @@
 
    fun change_b(_ctx:_ctx_type_1,x:real) : bool /* scope_0 */
    {
-      val (ret:bool) = (x <> _ctx.pre);
+      val (ret:bool);
+      (ret:bool) = (x <> _ctx.pre);
       (_ctx.pre:real) = x;
       return ret;
    }
@@ -60,12 +62,18 @@
 
    fun foo(_ctx:_ctx_type_2) : unit /* scope_0 */
    {
-      val (ret1:bool) = change_a(_ctx._inst1,0.);
-      val (ret2:bool) = change_b(_ctx._inst2,0.);
-      val (ret3:bool) = change_a(_ctx.x,0.);
-      val (ret4:bool) = change_a(_ctx.x,0.);
-      val (ret5:bool) = change_b(_ctx.y,0.);
-      val (ret6:bool) = change_b(_ctx.y,0.);
+      val (ret1:bool);
+      (ret1:bool) = change_a(_ctx._inst1,0.);
+      val (ret2:bool);
+      (ret2:bool) = change_b(_ctx._inst2,0.);
+      val (ret3:bool);
+      (ret3:bool) = change_a(_ctx.x,0.);
+      val (ret4:bool);
+      (ret4:bool) = change_a(_ctx.x,0.);
+      val (ret5:bool);
+      (ret5:bool) = change_b(_ctx.y,0.);
+      val (ret6:bool);
+      (ret6:bool) = change_b(_ctx.y,0.);
    }
 
 }

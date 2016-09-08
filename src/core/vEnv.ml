@@ -455,16 +455,15 @@ module Scope = struct
          let current_path = pathAppend (current t) name in
          if path <> current_path then
             add_it ()
-         else
             (* If it exitst check the locations *)
-            if Loc.isSameLoc attr.loc !(decl.loc) && current_path = path then
-               t
-            else
-               let msg =
-                  Printf.sprintf
-                     "Redefinition of function '%s'. Previously defined at %s" (idStr name) (Loc.to_string_readable !(decl.loc))
-               in
-               Error.raiseError msg attr.loc
+         else if Loc.isSameLoc attr.loc !(decl.loc) && current_path = path then
+            t
+         else
+            let msg =
+               Printf.sprintf
+                  "Redefinition of function '%s'. Previously defined at %s" (idStr name) (Loc.to_string_readable !(decl.loc))
+            in
+            Error.raiseError msg attr.loc
 
 
    (** Returns all mem and instances of the given scope, assuming is a function *)

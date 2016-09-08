@@ -15,14 +15,16 @@ void Moog_filter_change_init(Moog_filter__ctx_type_0 &_output_){
 }
 
 uint8_t Moog_filter_change(Moog_filter__ctx_type_0 &_ctx, float x){
-   uint8_t v = (_ctx.pre_x != x);
+   uint8_t v;
+   v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
 
 float Moog_filter_min(float a, float b){
    float _if_1;
-   uint8_t _cond_2 = (a < b);
+   uint8_t _cond_2;
+   _cond_2 = (a < b);
    if(_cond_2){ _if_1 = a; }
    else
    { _if_1 = b; }
@@ -31,7 +33,8 @@ float Moog_filter_min(float a, float b){
 
 float Moog_filter_max(float a, float b){
    float _if_1;
-   uint8_t _cond_2 = (a > b);
+   uint8_t _cond_2;
+   _cond_2 = (a > b);
    if(_cond_2){ _if_1 = a; }
    else
    { _if_1 = b; }
@@ -47,7 +50,7 @@ float Moog_filter_PI(){
 }
 
 float Moog_filter_thermal(){
-   return (0.819199996645f);
+   return 0.819199996645f;
 }
 
 void Moog_filter__ctx_type_6_init(Moog_filter__ctx_type_6 &_output_){
@@ -69,14 +72,19 @@ void Moog_filter_moog_step_init(Moog_filter__ctx_type_6 &_output_){
 }
 
 float Moog_filter_moog_step(Moog_filter__ctx_type_6 &_ctx, float input, float resFixed, float tune, float output){
-   float i0 = (input + (- (resFixed * output)));
-   float w0 = (_ctx.dw0 + (tune * (tanhf((i0 * Moog_filter_thermal())) + (- _ctx.tw0))));
+   float i0;
+   i0 = (input + (- (resFixed * output)));
+   float w0;
+   w0 = (_ctx.dw0 + (tune * (tanhf((i0 * Moog_filter_thermal())) + (- _ctx.tw0))));
    _ctx.tw0 = tanhf((w0 * Moog_filter_thermal()));
-   float w1 = (_ctx.dw1 + (tune * _ctx.tw0) + (- _ctx.tw1));
+   float w1;
+   w1 = (_ctx.dw1 + (tune * _ctx.tw0) + (- _ctx.tw1));
    _ctx.tw1 = tanhf((w1 * Moog_filter_thermal()));
-   float w2 = (_ctx.dw2 + (tune * _ctx.tw1) + (- _ctx.tw2));
+   float w2;
+   w2 = (_ctx.dw2 + (tune * _ctx.tw1) + (- _ctx.tw2));
    _ctx.tw2 = tanhf((w2 * Moog_filter_thermal()));
-   float w3 = (_ctx.dw3 + (tune * _ctx.tw2) + (- tanhf((_ctx.dw3 * Moog_filter_thermal()))));
+   float w3;
+   w3 = (_ctx.dw3 + (tune * _ctx.tw2) + (- tanhf((_ctx.dw3 * Moog_filter_thermal()))));
    _ctx.dw0 = w0;
    _ctx.dw1 = w1;
    _ctx.dw2 = w2;
@@ -102,21 +110,30 @@ void Moog_filter_moog_init(Moog_filter__ctx_type_7 &_output_){
 }
 
 float Moog_filter_moog(Moog_filter__ctx_type_7 &_ctx, float input, float cut, float res){
-   uint8_t _cond_4 = (Moog_filter_change(_ctx._inst1,cut) || Moog_filter_change(_ctx._inst2,res));
+   uint8_t _cond_4;
+   _cond_4 = (Moog_filter_change(_ctx._inst1,cut) || Moog_filter_change(_ctx._inst2,res));
    if(_cond_4){
       res = Moog_filter_clip(res,0.f,1.f);
-      cut = Moog_filter_clip(cut,1.f,(22050.f));
-      float fc = (cut * 2.26757369615e-05f);
-      float x_2 = (fc * 0.5f);
-      float x2 = (fc * fc);
-      float x3 = (fc * x2);
-      float fcr = ((1.873f * x3) + (0.4955f * x2) + ((-0.649f) * fc) + 0.9988f);
-      float acr = (((-3.9364f) * x2) + (1.8409f * fc) + 0.9968f);
+      cut = Moog_filter_clip(cut,1.f,22050.f);
+      float fc;
+      fc = (cut * 2.26757369615e-05f);
+      float x_2;
+      x_2 = (fc * 0.5f);
+      float x2;
+      x2 = (fc * fc);
+      float x3;
+      x3 = (fc * x2);
+      float fcr;
+      fcr = ((1.873f * x3) + (0.4955f * x2) + ((-0.649f) * fc) + 0.9988f);
+      float acr;
+      acr = (((-3.9364f) * x2) + (1.8409f * fc) + 0.9968f);
       _ctx.tune = ((1.f + (- expf(((-2.f) * Moog_filter_PI() * x_2 * fcr)))) / Moog_filter_thermal());
       _ctx.resFixed = (4.f * res * acr);
    }
-   float x0 = Moog_filter_moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,_ctx.dx1);
-   float x1 = Moog_filter_moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,x0);
+   float x0;
+   x0 = Moog_filter_moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,_ctx.dx1);
+   float x1;
+   x1 = Moog_filter_moog_step(_ctx.filter,input,_ctx.resFixed,_ctx.tune,x0);
    _ctx.dx1 = x1;
    return ((x0 + x1) * 0.5f);
 }

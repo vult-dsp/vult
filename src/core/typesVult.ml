@@ -23,7 +23,7 @@ THE SOFTWARE.
 *)
 
 type id = string list
-   [@@deriving show,eq,ord]
+[@@deriving show,eq,ord]
 
 (** This path is used to differentiate simple identifiers from full paths *)
 type path =
@@ -48,12 +48,12 @@ type arg_type =
    | InputArg
    | OutputArg
    | ContextArg
-   [@@deriving show,eq,ord]
+[@@deriving show,eq,ord]
 
 type typed_id =
    | SimpleId of id * arg_type * attr
    | TypedId  of id * VType.t * arg_type * attr
-   [@@deriving show,eq,ord]
+[@@deriving show,eq,ord]
 
 type lhs_exp =
    | LWild  of attr
@@ -61,7 +61,7 @@ type lhs_exp =
    | LTuple of lhs_exp list * attr
    | LTyped of lhs_exp * VType.t * attr
    | LGroup of lhs_exp * attr
-   [@@deriving show,eq,ord]
+[@@deriving show,eq,ord]
 
 (** Parser syntax tree *)
 type exp =
@@ -111,69 +111,69 @@ type exp =
          *  stmt
          *  attr
    | PEmpty
-   [@@deriving show,eq,ord]
+[@@deriving show,eq,ord]
 
 and stmt =
-   | StmtVal
-      of lhs_exp     (* names/lhs *)
-         *  exp option  (* rhs *)
-         *  attr
-   | StmtMem
-      of lhs_exp     (* names/lhs *)
-         *  exp option  (* initial value *)
-         *  exp option  (* rhs *)
-         *  attr
-   | StmtWhile
-      of exp         (* condition*)
-         *  stmt        (* statements *)
-         *  attr
-   | StmtReturn
-      of exp
-         *  attr
-   | StmtIf
-      of exp         (* condition *)
-         *  stmt        (* then *)
-         *  stmt option (* else *)
-         *  attr
-   | StmtFun
-      of id              (* name *)
-         *  typed_id list   (* arguments *)
-         *  stmt            (* body *)
-         *  VType.t option  (* return type *)
-         *  attr
-   | StmtExternal
-      of id             (* name *)
-         *  typed_id list  (* arguments *)
-         *  VType.t        (* return type *)
-         *  string         (* linking name *)
-         *  attr
-   | StmtBind
-      of lhs_exp     (* lhs *)
-         *  exp         (* rhs *)
-         *  attr
-   | StmtBlock
-      of id option (* scope name *)
-         *  stmt list
-         *  attr
-   | StmtType
-      of VType.t       (* name *)
-         *  val_decl list (* members *)
-         *  attr
-   | StmtAliasType
-      of VType.t       (* name *)
-         *  VType.t       (* alias type *)
-         *  attr
-   | StmtEmpty
-   [@@deriving show,eq,ord]
+    | StmtVal
+   of lhs_exp     (* names/lhs *)
+      *  exp option  (* rhs *)
+      *  attr
+  | StmtMem
+    of lhs_exp     (* names/lhs *)
+       *  exp option  (* initial value *)
+       *  exp option  (* rhs *)
+       *  attr
+  | StmtWhile
+    of exp         (* condition*)
+       *  stmt        (* statements *)
+       *  attr
+  | StmtReturn
+    of exp
+       *  attr
+  | StmtIf
+    of exp         (* condition *)
+       *  stmt        (* then *)
+       *  stmt option (* else *)
+       *  attr
+  | StmtFun
+    of id              (* name *)
+       *  typed_id list   (* arguments *)
+       *  stmt            (* body *)
+       *  VType.t option  (* return type *)
+       *  attr
+  | StmtExternal
+    of id             (* name *)
+       *  typed_id list  (* arguments *)
+       *  VType.t        (* return type *)
+       *  string         (* linking name *)
+       *  attr
+  | StmtBind
+    of lhs_exp     (* lhs *)
+       *  exp         (* rhs *)
+       *  attr
+  | StmtBlock
+    of id option (* scope name *)
+       *  stmt list
+       *  attr
+  | StmtType
+    of VType.t       (* name *)
+       *  val_decl list (* members *)
+       *  attr
+  | StmtAliasType
+    of VType.t       (* name *)
+       *  VType.t       (* alias type *)
+       *  attr
+  | StmtEmpty
+[@@deriving show,eq,ord]
 
 and val_decl =
-   id          (* name *)
-   * VType.t  (* type *)
-   * attr
-   [@@deriving show,eq,ord]
+    id          (* name *)
+    * VType.t  (* type *)
+    * attr
+[@@deriving show,eq,ord]
 
 type exp_list = exp list
-   [@@deriving show,eq,ord]
+[@@deriving show,eq,ord]
 
 type scope_kind =
    | FuncScope
@@ -247,7 +247,7 @@ module PathSet = CCSet.Make(struct type t = path let compare = compare end)
 module IdSet = CCSet.Make(struct type t = id let compare = compare end)
 
 type id_type = id * VType.t
-   [@@deriving show,eq,ord]
+[@@deriving show,eq,ord]
 
 
 module IdTypeSet = CCSet.Make(struct type t = id_type let compare = compare_id_type end)

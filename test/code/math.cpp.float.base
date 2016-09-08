@@ -3,16 +3,22 @@
 #include "math.h"
 
 float Math_sin(float x0){
-   float x1 = fmodf(x0,(6.28318530718f));
-   uint8_t sign = (x1 > 3.14159265359f);
-   float x2 = fmodf(x1,3.14159265359f);
+   float x1;
+   x1 = fmodf(x0,6.28318530718f);
+   uint8_t sign;
+   sign = (x1 > 3.14159265359f);
+   float x2;
+   x2 = fmodf(x1,3.14159265359f);
    float x3;
-   uint8_t _cond_2 = (x2 > (1.5707963268f));
+   uint8_t _cond_2;
+   _cond_2 = (x2 > 1.5707963268f);
    if(_cond_2){ x3 = (3.14159265359f + (- x2)); }
    else
    { x3 = x2; }
-   float xp2 = (x3 * x3);
-   float acc = (x3 * (1.f + ((((-0.166666666667f)) + (0.00833333333333f * xp2)) * xp2)));
+   float xp2;
+   xp2 = (x3 * x3);
+   float acc;
+   acc = (x3 * (1.f + (((-0.166666666667f) + (0.00833333333333f * xp2)) * xp2)));
    float _if_1;
    if(sign){ _if_1 = (- acc); }
    else
@@ -21,17 +27,19 @@ float Math_sin(float x0){
 }
 
 float Math_cos(float x0){
-   return Math_sin((x0 + (1.5707963268f)));
+   return Math_sin((x0 + 1.5707963268f));
 }
 
 float Math_tanh(float xx){
-   uint8_t positive = (xx > 0.f);
+   uint8_t positive;
+   positive = (xx > 0.f);
    float x;
    if(positive){ x = xx; }
    else
    { x = (- xx); }
    float y;
-   int n = 0;
+   int n;
+   n = 0;
    while((x > 1.f)){
       x = (x * 0.5f);
       n = (n + 1);
@@ -49,12 +57,14 @@ float Math_tanh(float xx){
 }
 
 float Math_tan(float x){
-   float xp2 = (x * x);
-   return (x * (1.f + (xp2 * ((0.333333333333f) + (xp2 * ((0.133333333333f) + (xp2 * ((0.0539682539683f) + (xp2 * ((0.0218694885362f) + (0.0088632355299f * xp2)))))))))));
+   float xp2;
+   xp2 = (x * x);
+   return (x * (1.f + (xp2 * (0.333333333333f + (xp2 * (0.133333333333f + (xp2 * (0.0539682539683f + (xp2 * (0.0218694885362f + (0.0088632355299f * xp2)))))))))));
 }
 
 float Math_exp(float x){
-   float acc = ((-0.0164263154557f) + (0.000821315772785f * x));
+   float acc;
+   acc = ((-0.0164263154557f) + (0.000821315772785f * x));
    acc = (0.166727101875f + (x * acc));
    acc = ((-0.971616559205f) + (x * acc));
    acc = (3.76932607473f + (x * acc));

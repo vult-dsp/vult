@@ -15,7 +15,8 @@ void State_variable_change_init(State_variable__ctx_type_0 &_output_){
 }
 
 uint8_t State_variable_change(State_variable__ctx_type_0 &_ctx, float x){
-   uint8_t v = (_ctx.pre_x != x);
+   uint8_t v;
+   v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
@@ -34,22 +35,29 @@ void State_variable_svf_step_init(State_variable__ctx_type_1 &_output_){
 }
 
 float State_variable_svf_step(State_variable__ctx_type_1 &_ctx, float input, float g, float q, int sel){
-   float low = (_ctx.dlow + (g * _ctx.dband));
-   float high = (input + (- low) + (- (q * _ctx.dband)));
-   float band = ((g * high) + _ctx.dband);
-   float notch = (high + low);
+   float low;
+   low = (_ctx.dlow + (g * _ctx.dband));
+   float high;
+   high = (input + (- low) + (- (q * _ctx.dband)));
+   float band;
+   band = ((g * high) + _ctx.dband);
+   float notch;
+   notch = (high + low);
    _ctx.dband = float_clip(band,(-1.f),1.f);
    _ctx.dlow = float_clip(low,(-1.f),1.f);
    float output;
-   uint8_t _cond_1 = (sel == 0);
+   uint8_t _cond_1;
+   _cond_1 = (sel == 0);
    if(_cond_1){ output = low; }
    else
    {
-      uint8_t _cond_2 = (sel == 1);
+      uint8_t _cond_2;
+      _cond_2 = (sel == 1);
       if(_cond_2){ output = high; }
       else
       {
-         uint8_t _cond_3 = (sel == 2);
+         uint8_t _cond_3;
+         _cond_3 = (sel == 2);
          if(_cond_3){ output = band; }
          else
          { output = notch; }
@@ -75,13 +83,17 @@ void State_variable_svf_init(State_variable__ctx_type_2 &_output_){
 float State_variable_svf(State_variable__ctx_type_2 &_ctx, float input, float fc, float q, int sel){
    fc = float_clip(fc,0.f,1.f);
    q = float_clip(q,0.f,1.f);
-   float fix_q = (2.f * (1.f + (- q)));
-   uint8_t _cond_3 = State_variable_change(_ctx._inst1,fc);
+   float fix_q;
+   fix_q = (2.f * (1.f + (- q)));
+   uint8_t _cond_3;
+   _cond_3 = State_variable_change(_ctx._inst1,fc);
    if(_cond_3){
       _ctx.g = (fc * 0.5f);
    }
-   float x1 = State_variable_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
-   float x2 = State_variable_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
+   float x1;
+   x1 = State_variable_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
+   float x2;
+   x2 = State_variable_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
    return ((x1 + x2) * 0.5f);
 }
 

@@ -1,8 +1,10 @@
 fun foo(e:int) : unit /* scope_0 */
 {
    val (y:real);
-   val (cond1:bool) = (e > 0);
-   val (cond2:bool) = (e < 0);
+   val (cond1:bool);
+   (cond1:bool) = (e > 0);
+   val (cond2:bool);
+   (cond2:bool) = (e < 0);
    val (x:real);
    if(cond1)
       (x:real) = 0.;
@@ -19,6 +21,7 @@ fun foo(e:int) : unit /* scope_0 */
       else
          (y:real) = 2.;
    val (z:real);
+   val (a:real);
    val (_if_1:real);
    if(cond2)
       (_if_1:real) = 1.;
@@ -29,7 +32,7 @@ fun foo(e:int) : unit /* scope_0 */
       (_if_2:real) = 0.;
    else
       (_if_2:real) = (2. + _if_1);
-   val (a:real) = (1. + _if_2);
+   (a:real) = (1. + _if_2);
    val (_if_3:real);
    if(cond2)
       (_if_3:real) = 1.;

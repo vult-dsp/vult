@@ -167,6 +167,8 @@ module SplitMem = struct
       match stmt with
       | StmtMem(lhs,init,Some(rhs),attr) ->
          reapply state, [ StmtMem(lhs,init,None,attr); StmtBind(lhs,rhs,attr) ]
+      | StmtVal(lhs,Some(rhs),attr) ->
+         reapply state, [ StmtVal(lhs,None,attr); StmtBind(lhs,rhs,attr) ]
       | _ -> state, [stmt]
 
    let mapper =
@@ -316,13 +318,13 @@ end
 
 module SimplifyTupleAssign = struct
 
-   let makeTmp i = ["_tmp_" ^ (string_of_int i)]
+   let makeTmp tick i = ["_tmp_" ^ (string_of_int tick) ^ "_" ^ (string_of_int i)]
 
    let makeValBind lhs rhs = StmtVal(lhs,Some(rhs),emptyAttr)
 
    let makeBind lhs rhs = StmtBind(lhs,rhs,emptyAttr)
 
-   let createAssignments kind lhs rhs =
+   let createAssignments tick kind lhs rhs =
       let lhs_id = GetIdentifiers.fromLhsExpList lhs in
       let rhs_id = GetIdentifiers.fromExpList rhs in
       if IdSet.is_empty (IdSet.inter lhs_id rhs_id) then
@@ -331,13 +333,13 @@ module SimplifyTupleAssign = struct
          let stmts1 =
             List.mapi (fun i a ->
                   let attr = GetAttr.fromExp a in
-                  makeValBind (LId(makeTmp i, attr.typ, attr)) a)
+                  makeValBind (LId(makeTmp tick i, attr.typ, attr)) a)
                rhs
          in
          let stmts2 =
             List.mapi (fun i a ->
                   let attr = GetAttr.fromLhsExp a in
-                  kind a (PId(makeTmp i,attr)))
+                  kind a (PId(makeTmp tick i,attr)))
                lhs
          in
          stmts1 @ stmts2
@@ -350,12 +352,14 @@ module SimplifyTupleAssign = struct
          reapply state, stmts
 
       | StmtVal(LTuple(lhs,_),Some(PTuple(rhs,_)),_) when List.length lhs = List.length rhs ->
-         let stmts = createAssignments makeValBind lhs rhs in
-         reapply state, stmts
+         let tick,state' = Env.tick state in
+         let stmts = createAssignments tick makeValBind lhs rhs in
+         reapply state', stmts
 
       | StmtBind(LTuple(lhs,_),PTuple(rhs,_),_) when List.length lhs = List.length rhs ->
-         let stmts = createAssignments makeBind lhs rhs in
-         reapply state, stmts
+         let tick, state' = Env.tick state in
+         let stmts = createAssignments tick makeBind lhs rhs in
+         reapply state', stmts
 
       | StmtBind(LTuple(_,_),PTuple(_,_),_) ->
          failwith "SimplifyTupleAssign.stmt_x: this error should be catched by the type checker"
@@ -431,7 +435,13 @@ module ReportUnboundType = struct
       match exp with
       | PId(id,attr) when isUnbound attr ->
          reportError id attr
-      | _ -> state, exp
+      | _ ->
+         let attr = GetAttr.fromExp exp in
+         if isUnbound attr then
+            let msg = Printf.sprintf "The type of this expression could not be infered. Add a type annotation." in
+            Error.raiseError msg (attr.loc)
+         else
+            state, exp
 
    let typed_id : ('a Env.t,typed_id) Mapper.mapper_func =
       Mapper.make "ReportUnboundType.typed_id" @@ fun state t ->
@@ -440,7 +450,7 @@ module ReportUnboundType = struct
          reportError id attr
       | _ -> state, t
 
-   let mapper = { Mapper.default_mapper with Mapper.lhs_exp = lhs_exp; exp = exp; typed_id = typed_id; }
+   let mapper = Mapper.{ default_mapper with lhs_exp; exp; typed_id; }
 
 end
 
@@ -466,28 +476,33 @@ module CreateTypesForTuples = struct
          StmtType(t,elems,emptyAttr)
       | _ -> failwith "CreateTypesForTuples.makeTypeDeclaration: there should be only tuples here"
 
+   let getNewTupleDeclarations state stmt =
+      let data_env,_ = Mapper.map_stmt TupleSet.mapper (Env.empty TypeSet.empty) stmt in
+      let new_tuples = Env.get data_env in
+      let data       = Env.get state in
+      let current    = PassData.getTuples data in
+      let not_in_set = TypeSet.diff new_tuples current in
+      if not (TypeSet.is_empty not_in_set) then
+         let decl =
+            TypeSet.fold
+               (fun a acc ->
+                   let type_decl = makeTypeDeclaration a in
+                   type_decl::acc)
+               not_in_set
+               []
+         in
+         let data' = PassData.addTuples data not_in_set in
+         Env.set state data', decl@[stmt]
+      else
+         state, [stmt]
+
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "CreateTypesForTuples.stmt_x" @@ fun state stmt ->
       match stmt with
+      | StmtType _ ->
+         getNewTupleDeclarations state stmt
       | StmtFun _ ->
-         let data_env,_ = Mapper.map_stmt TupleSet.mapper (Env.empty TypeSet.empty) stmt in
-         let new_tuples = Env.get data_env in
-         let data       = Env.get state in
-         let current    = PassData.getTuples data in
-         let not_in_set = TypeSet.diff new_tuples current in
-         if not (TypeSet.is_empty not_in_set) then
-            let decl =
-               TypeSet.fold
-                  (fun a acc ->
-                      let type_decl = makeTypeDeclaration a in
-                      type_decl::acc)
-                  not_in_set
-                  []
-            in
-            let data' = PassData.addTuples data not_in_set in
-            Env.set state data', decl@[stmt]
-         else
-            state, [stmt]
+         getNewTupleDeclarations state stmt
       | _ -> state, [stmt]
 
    let mapper = Mapper.{ default_mapper with stmt_x }
@@ -594,7 +609,13 @@ module Simplify = struct
          let found, elems' = getOpElements op elems in
          let simpl, elems' = simplifyElems op elems' in
          let state' = if found || simpl then reapply state else state in
-         state', POp(op,elems',attr)
+         let exp' =
+            match elems' with
+            | [] -> failwith "Passes.Simplify.exp"
+            | [e] -> e
+            | _ -> POp(op,elems',attr)
+         in
+         state', exp'
       (* Simplifies unary minus *)
       | PUnOp("-",e1,_) when isNum e1 ->
          reapply state, negNum e1
@@ -819,6 +840,15 @@ module ReturnReferences = struct
             let acc      = Env.get state' in
             let state'   = Env.set state' (stmt::acc) in
             state',exp'
+         | PArray(_,attr) ->
+            let n,state' = Env.tick state in
+            let var_name = "_array_"^(string_of_int n) in
+            let exp'     = PId([var_name],attr) in
+            let lhs      = LId([var_name],attr.typ,attr) in
+            let stmt     = StmtVal(lhs,Some(exp),emptyAttr) in
+            let acc      = Env.get state' in
+            let state'   = Env.set state' (stmt::acc) in
+            state',exp'
          | _ -> state,exp
 
       let mapper = { Mapper.default_mapper with Mapper.exp = exp }
@@ -848,6 +878,9 @@ module ReturnReferences = struct
          (* avoids rebinding simple tuple assigns *)
          | StmtVal(LId(_,_,_),Some(PTuple(_,_)),_) ->
             state, [stmt]
+         (* avoids rebinding simple array assigns *)
+         | StmtVal(LId(_,_,_),Some(PArray(_,_)),_) ->
+            state, [stmt]
          (* regular case a = foo() *)
          | StmtBind(LId(lhs,Some(typ),lattr),PCall(inst,name,args,attr),battr) when not (isSimpleType typ) ->
             let arg = PId(lhs,lattr) in
@@ -859,12 +892,12 @@ module ReturnReferences = struct
             let tmp_name = "_unused_" ^ (string_of_int i) in
             let arg = PId([tmp_name], wattr) in
             let fixed_attr = unitAttr attr in
-            state', [StmtVal(LId([tmp_name],wattr.typ,battr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],attr),battr)]
+            state', [StmtVal(LId([tmp_name],wattr.typ,wattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],attr),battr)]
          (* special case _ = a when a is not simple value *)
          | StmtBind(LWild(wattr),e,battr) when not (isSimpleOpType wattr.typ) ->
             let i,state' = Env.tick state in
             let tmp_name = "_unused_" ^ (string_of_int i) in
-            state', [StmtVal(LId([tmp_name],wattr.typ,battr),Some(e),battr)]
+            state', [StmtVal(LId([tmp_name],wattr.typ,wattr),None,battr);StmtBind(LId([tmp_name],wattr.typ,wattr),e,battr)]
          | StmtBind(_,PCall(_,_,_,_),_) ->
             state, [stmt]
          | StmtVal(LId(lhs,Some(typ),lattr),Some(PCall(inst,name,args,attr)),battr) when not (isSimpleType typ) ->
@@ -925,6 +958,26 @@ module UnlinkTypes = struct
 
 end
 
+module DummySimplifications = struct
+
+   let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
+      Mapper.make "DummySimplifications.stmt" @@ fun state stmt ->
+      match stmt with
+      | StmtVal(LWild(wattr),Some(rhs),attr) ->
+         state, StmtBind(LWild(wattr),rhs,attr)
+      | _ -> state, stmt
+
+   let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
+      Mapper.makeExpander "DummySimplifications.stmt_x" @@ fun state stmt ->
+      match stmt with
+      | StmtVal(LWild(_),None,_) ->
+         state, []
+      | _ -> state, [stmt]
+
+   let mapper = Mapper.{ default_mapper with stmt; stmt_x }
+
+end
+
 (* Basic transformations *)
 let inferPass name (state,stmts) =
    let state' = Env.enter Scope.Module state name emptyAttr in
@@ -934,6 +987,7 @@ let inferPass name (state,stmts) =
 
 let pass1 =
    ReportUnboundType.mapper
+   |> Mapper.seq Simplify.mapper
    |> Mapper.seq UnlinkTypes.mapper
    |> Mapper.seq SplitMem.mapper
    |> Mapper.seq SimplifyTupleAssign.mapper
@@ -941,8 +995,7 @@ let pass1 =
    |> Mapper.seq SimplifyIfExp.mapper
 
 let pass2 =
-   Simplify.mapper
-   |> Mapper.seq ProcessArrays.mapper
+   ProcessArrays.mapper
 
 let pass3 =
    InsertContext.mapper
@@ -953,6 +1006,7 @@ let pass3 =
 let pass4 =
    ReplaceFunctionNames.mapper
    |> Mapper.seq ReturnReferences.mapper
+   |> Mapper.seq DummySimplifications.mapper
 
 
 let rec applyPassRepeat name apply pass pass_name (state,stmts) =

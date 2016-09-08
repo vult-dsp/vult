@@ -70,6 +70,12 @@ let isValue (typ:VType.t) : bool =
       true
    | _ -> false
 
+let isArray (typ:VType.t) : bool =
+   match !(VType.unlink typ) with
+   | VType.TComposed(["array"],_,_) -> true
+   | _ -> false
+
+
 let convertTypedId (p:parameters) (e:typed_id) : arg_type * string =
    match e with
    | SimpleId(_,_,_)  -> failwith "VultToCLike.convertTypedId: everything should have types"
@@ -113,6 +119,15 @@ let getInitArrayFunction (p:parameters) (typ:type_descr) : string =
    match typ with
    | CTSimple(typ_t) ->
       begin match Replacements.getArrayInit p.repl typ_t  with
+         | Some(fn) -> fn
+         | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
+      end
+   | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
+
+let getCopyArrayFunction (p:parameters) (typ:type_descr) : string =
+   match typ with
+   | CTSimple(typ_t) ->
+      begin match Replacements.getArrayCopy p.repl typ_t  with
          | Some(fn) -> fn
          | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
       end
@@ -260,6 +275,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let body' = convertStmt p body in
       let fname = convertId p name in
       CSFunction(convertType p ret, fname,arg_names,body')
+   (* special case for c/c++ to replace the makeArray function *)
    | StmtBind(LWild(_) ,PCall(None,["makeArray"],[size;init;var],_),_) when p.ccode ->
       let init' = convertExp p init in
       let size' = convertExp p size in
@@ -273,6 +289,13 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let elems' = convertExpList p elems in
       let stmts = List.mapi (fun i e -> CSBind(getRecordField lhs' i,e)) elems' in
       CSBlock(stmts)
+   (* special for c/c++ to copy arrays *)
+   | StmtBind(LId(lhs,_,{ typ = Some(typ)}),rhs,_) when p.ccode && isArray typ ->
+      let rhs' = convertExp p rhs in
+      let atyp,size = VType.arrayTypeAndSize typ in
+      let atyp' = convertType p atyp in
+      let copy_fn = getCopyArrayFunction p atyp' in
+      CSBind(CLWild,CECall(copy_fn,[CEInt(size);CEVar(convertVarId p lhs);rhs']))
    | StmtBind(lhs,rhs,_) ->
       let lhs' = convertLhsExp false p lhs in
       let rhs' = convertExp p rhs in

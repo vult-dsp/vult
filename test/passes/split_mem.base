@@ -8,8 +8,10 @@ fun foo() : unit /* scope_0 */
    (a:int) = 1;
    (b:int) = 2;
    mem ((z:int),(h:int));
-   val (_tmp_0:int) = h;
-   val (_tmp_1:int) = z;
-   (z:int) = _tmp_0;
-   (h:int) = _tmp_1;
+   val (_tmp_2_0:int);
+   (_tmp_2_0:int) = h;
+   val (_tmp_2_1:int);
+   (_tmp_2_1:int) = z;
+   (z:int) = _tmp_2_0;
+   (h:int) = _tmp_2_1;
 }

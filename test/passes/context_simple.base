@@ -14,7 +14,8 @@
 
    fun change(_ctx:_ctx_type_0,x:real) : bool /* scope_0 */
    {
-      val (ret:bool) = (x <> _ctx.pre);
+      val (ret:bool);
+      (ret:bool) = (x <> _ctx.pre);
       (_ctx.pre:real) = x;
       return ret;
    }
@@ -50,9 +51,12 @@
 
    fun foo(_ctx:_ctx_type_1,x:real) : unit /* scope_0 */
    {
-      val (v1:bool) = change(_ctx._inst1,x);
-      val (v2:bool) = change(_ctx._inst2,x);
-      val (v3:bool) = change(_ctx.c,x);
+      val (v1:bool);
+      (v1:bool) = change(_ctx._inst1,x);
+      val (v2:bool);
+      (v2:bool) = change(_ctx._inst2,x);
+      val (v3:bool);
+      (v3:bool) = change(_ctx.c,x);
       (_:unit) = reset(_ctx.c);
       (_:unit) = set(_ctx.c,0.);
    }

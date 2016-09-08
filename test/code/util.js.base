@@ -5,7 +5,8 @@ this.Util__ctx_type_0_init = function(){
 }
 this.Util_change_init = function() { return this.Util__ctx_type_0_init();}
 this.Util_change = function(_ctx,x){
-   var v = (_ctx.pre_x != x);
+   var v = false;
+   v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
@@ -22,7 +23,8 @@ this.Util__ctx_type_2_init = function(){
 }
 this.Util_phasor_init = function() { return this.Util__ctx_type_2_init();}
 this.Util_phasor = function(_ctx,pitch,reset){
-   var _cond_3 = this.Util_change(_ctx._inst1,pitch);
+   var _cond_3 = false;
+   _cond_3 = this.Util_change(_ctx._inst1,pitch);
    if(_cond_3){
       _ctx.rate = this.Util_pitchToRate(pitch);
    }

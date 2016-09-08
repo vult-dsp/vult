@@ -139,19 +139,14 @@ let printLhsExpTuple (var:string) (is_var:bool) (i:int) (e:clhsexp) : Pla.t =
 
    | _ -> failwith "printLhsExp: All other cases should be already covered"
 
-let wrapInt (params:params) (is_int:bool) (e:cexp) : Pla.t =
-   let e_t = printExp params e in
-   if is_int then
-      {pla|<#e_t#>|pla}
-   else e_t
-
-let isNumeric t =
-   match t with
-   | CTSimple("int") -> true
-   | CTSimple("real") -> true
-   | CTSimple("bool") -> true
-   | CTSimple("float") -> true
-   | _ -> false
+let getInitValue (descr:type_descr) : string =
+   match descr with
+   | CTSimple("int") -> "(0|0)"
+   | CTSimple("real") -> "0.0"
+   | CTSimple("float") -> "0.0"
+   | CTSimple("bool") -> "false"
+   | CTSimple("unit") -> "0"
+   | _ -> "{}"
 
 let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
@@ -161,14 +156,13 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
 
    | CSVarDecl(CLWild,None) -> None
 
-   | CSVarDecl(CLId(tdecr,name),Some(value)) ->
-      let is_int = tdecr = CTSimple("int") in
-      let value_t = wrapInt params is_int value in
+   | CSVarDecl(CLId(_,name),Some(value)) ->
+      let value_t = printExp params value in
       Some({pla|local <#name#s> = <#value_t#>;|pla})
 
    | CSVarDecl(CLId(typ,name),None) ->
-      let init = if isNumeric typ then Pla.int 0 else Pla.string "{}" in
-      Some({pla|local <#name#s> = <#init#>;|pla})
+      let init = getInitValue typ in
+      Some({pla|local <#name#s> = <#init#s>;|pla})
 
    | CSVarDecl(CLTuple(elems),Some(CEVar(name))) ->
       List.mapi (printLhsExpTuple name true) elems
@@ -187,9 +181,8 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
 
    | CSBind(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
 
-   | CSBind(CLId(tdecr,name),value) ->
-      let is_int = tdecr = CTSimple("int") in
-      let value_t = wrapInt params is_int value in
+   | CSBind(CLId(_,name),value) ->
+      let value_t = printExp params value in
       Some({pla|<#name#s> = <#value_t#>;|pla})
 
    | CSFunction(_,name,args,(CSBlock(_) as body)) ->

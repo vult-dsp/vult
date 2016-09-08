@@ -93,7 +93,7 @@ let tildePerformFunctionCall module_name (params:params) (config:configuration) 
    let args =
       List.mapi
          (fun i s ->
-            castInput params s [%pla{|*(in_<#i#i>++)|}])
+             castInput params s [%pla{|*(in_<#i#i>++)|}])
          config.process_inputs
       |> (fun a -> if config.pass_data then (Pla.string "x->data")::a else a)
       |> (fun a -> if List.length config.process_outputs > 1 then a@[Pla.string "ret"] else a)
@@ -115,8 +115,8 @@ let tildePerformFunctionCall module_name (params:params) (config:configuration) 
          let copy =
             List.mapi
                (fun i o ->
-                  let value = castOutput params o [%pla{|ret.field_<#i#i>|}] in
-                  [%pla{|*(out_<#i#i>++) = <#value#>;|}]) o
+                   let value = castOutput params o [%pla{|ret.field_<#i#i>|}] in
+                   [%pla{|*(out_<#i#i>++) = <#value#>;|}]) o
             |> Pla.join_sep_all Pla.newline
          in
          decl,copy
@@ -129,15 +129,15 @@ let tildePerformFunctionVector (config:configuration) : int * Pla.t =
    let decl_templ io index count = [%pla{|t_sample *<#io#s>_<#index#i> = (t_sample *)(w[<#count#i>]);|}] in
    (* First the inputs. We start with count=2 for accessing the vector 'w' *)
    let decl1,count,_  = List.fold_left (fun (s,count,index) _ ->
-      let t = decl_templ "in" index count in (t::s,count+1,index+1))
-      ([],2,0)
-      config.process_inputs
+         let t = decl_templ "in" index count in (t::s,count+1,index+1))
+         ([],2,0)
+         config.process_inputs
    in
    (* now for the outputs, we continue counting with the last value of count *)
    let decl2,count,_  = List.fold_left (fun (s,count,index) _ ->
-      let t = decl_templ "out" index count in (t::s,count+1,index+1))
-      (decl1,count,0)
-      config.process_outputs
+         let t = decl_templ "out" index count in (t::s,count+1,index+1))
+         (decl1,count,0)
+         config.process_outputs
    in
    (* the number of samples is in the next index *)
    let n = [%pla{|<#>int n = (int)(w[<#count#i>]);|}] in

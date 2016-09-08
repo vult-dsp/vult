@@ -15,7 +15,8 @@ void Util_change_init(Util__ctx_type_0 &_output_){
 }
 
 uint8_t Util_change(Util__ctx_type_0 &_ctx, fix16_t x){
-   uint8_t v = (_ctx.pre_x != x);
+   uint8_t v;
+   v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
@@ -40,7 +41,8 @@ void Util_phasor_init(Util__ctx_type_2 &_output_){
 }
 
 fix16_t Util_phasor(Util__ctx_type_2 &_ctx, fix16_t pitch, uint8_t reset){
-   uint8_t _cond_3 = Util_change(_ctx._inst1,pitch);
+   uint8_t _cond_3;
+   _cond_3 = Util_change(_ctx._inst1,pitch);
    if(_cond_3){
       _ctx.rate = Util_pitchToRate(pitch);
    }

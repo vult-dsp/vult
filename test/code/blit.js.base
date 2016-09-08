@@ -8,7 +8,8 @@ this.Blit__ctx_type_1_init = function(){
 }
 this.Blit_change_init = function() { return this.Blit__ctx_type_1_init();}
 this.Blit_change = function(_ctx,x){
-   var v = (_ctx.pre_x != x);
+   var v = false;
+   v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
@@ -20,7 +21,8 @@ this.Blit__ctx_type_2_init = function(){
 }
 this.Blit_dcblock_init = function() { return this.Blit__ctx_type_2_init();}
 this.Blit_dcblock = function(_ctx,x0){
-   var y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995));
+   var y0 = 0.0;
+   y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
@@ -29,10 +31,14 @@ this.Blit_pitchToRate = function(d){
    return (0.000185392290249 * this.exp((0.0577623 * d)));
 }
 this.Blit_pulse_train = function(m,phase){
-   var pi_phase = (phase * 3.14159265359);
-   var denominator1 = this.sin(pi_phase);
-   var tmp1 = 0.;
-   var _cond_3 = this.Blit_near_zero(denominator1);
+   var pi_phase = 0.0;
+   pi_phase = (phase * 3.14159265359);
+   var denominator1 = 0.0;
+   denominator1 = this.sin(pi_phase);
+   var tmp1 = 0.0;
+   tmp1 = 0.;
+   var _cond_3 = false;
+   _cond_3 = this.Blit_near_zero(denominator1);
    if(_cond_3){
       tmp1 = 1.;
    }
@@ -58,8 +64,10 @@ this.Blit__ctx_type_5_init = function(){
 }
 this.Blit_osc_init = function() { return this.Blit__ctx_type_5_init();}
 this.Blit_osc = function(_ctx,pitch,pw,wave){
-   var fixed_pitch = 0.;
-   var _cond_12 = (wave < (0.666666666667));
+   var fixed_pitch = 0.0;
+   fixed_pitch = 0.;
+   var _cond_12 = false;
+   _cond_12 = (wave < 0.666666666667);
    if(_cond_12){
       fixed_pitch = pitch;
    }
@@ -67,36 +75,47 @@ this.Blit_osc = function(_ctx,pitch,pw,wave){
    {
       fixed_pitch = (pitch + 12.);
    }
-   var _cond_13 = this.Blit_change(_ctx._inst3,fixed_pitch);
+   var _cond_13 = false;
+   _cond_13 = this.Blit_change(_ctx._inst3,fixed_pitch);
    if(_cond_13){
       _ctx.rate = this.Blit_pitchToRate(fixed_pitch);
-      var p = (1. / _ctx.rate);
-      var maxHarmonics = this.floor((p * 0.5));
+      var p = 0.0;
+      p = (1. / _ctx.rate);
+      var maxHarmonics = 0.0;
+      maxHarmonics = this.floor((p * 0.5));
       _ctx.m = ((2. * maxHarmonics) + 1.);
    }
-   var shift05 = (0.5 + (pw * 0.49));
-   var shift = (_ctx.phase + shift05);
-   var _cond_14 = (shift > 1.);
+   var shift05 = 0.0;
+   shift05 = (0.5 + (pw * 0.49));
+   var shift = 0.0;
+   shift = (_ctx.phase + shift05);
+   var _cond_14 = false;
+   _cond_14 = (shift > 1.);
    if(_cond_14){
       shift = (shift + (-1.));
    }
-   var tmp1 = this.Blit_pulse_train(_ctx.m,_ctx.phase);
-   var tmp2 = this.Blit_pulse_train(_ctx.m,shift);
+   var tmp1 = 0.0;
+   tmp1 = this.Blit_pulse_train(_ctx.m,_ctx.phase);
+   var tmp2 = 0.0;
+   tmp2 = this.Blit_pulse_train(_ctx.m,shift);
    _ctx.phase = (_ctx.phase + _ctx.rate);
-   var _cond_15 = (_ctx.phase > 1.);
+   var _cond_15 = false;
+   _cond_15 = (_ctx.phase > 1.);
    if(_cond_15){
       _ctx.phase = (_ctx.phase + (-1.));
    }
    _ctx.state_pulse = this.clip(((_ctx.state_pulse * 0.9995) + tmp1 + (- tmp2)),(-1.),1.);
    _ctx.state_saw = this.clip(((_ctx.state_saw * 0.9995) + (((tmp1 + tmp2 + ((-2.) * _ctx.rate)) / shift05) * 0.5)),(-1.),1.);
    _ctx.state_triang = this.clip(((_ctx.state_triang * 0.9995) + (2. * _ctx.state_pulse * _ctx.rate)),(-1.),1.);
-   var _cond_17 = (wave < (0.333333333333));
+   var _cond_17 = false;
+   _cond_17 = (wave < 0.333333333333);
    if(_cond_17){
       _ctx.output = _ctx.state_pulse;
    }
    else
    {
-      var _cond_16 = (wave < (0.666666666667));
+      var _cond_16 = false;
+      _cond_16 = (wave < 0.666666666667);
       if(_cond_16){
          _ctx.output = (2. * _ctx.state_saw);
       }
@@ -129,11 +148,13 @@ this.Blit_noteOff = function(_ctx,note){
 }
 this.Blit_controlChange_init = function() { return this.Blit__ctx_type_6_init();}
 this.Blit_controlChange = function(_ctx,control,value){
-   var _cond_3 = (control == (30|0));
+   var _cond_3 = false;
+   _cond_3 = (control == (30|0));
    if(_cond_3){
       _ctx.pw = (this.real(value) * 0.00787401574803);
    }
-   var _cond_4 = (control == (31|0));
+   var _cond_4 = false;
+   _cond_4 = (control == (31|0));
    if(_cond_4){
       _ctx.wave = (this.real(value) * 0.00787401574803);
    }

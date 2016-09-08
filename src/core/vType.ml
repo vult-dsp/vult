@@ -23,7 +23,7 @@ THE SOFTWARE.
 *)
 
 type id = string list
-   [@@deriving show,eq,ord]
+[@@deriving show,eq,ord]
 
 type vtype =
    | TUnbound  of string * int option * Loc.t option
@@ -33,10 +33,10 @@ type vtype =
    | TLink     of t
    | TExpAlt   of t list
    | TInt      of int * Loc.t option
-   [@@deriving show,eq,ord]
+[@@deriving show,eq,ord]
 
 and t = vtype ref
-   [@@deriving show,eq,ord]
+[@@deriving show,eq,ord]
 
 let rec unlink t =
    match t with
@@ -297,6 +297,10 @@ let rec getTupleName (typ:t) : string =
    | _ -> failwith "There should be no other types here"
 let getTupleName (typ:t) : string = "_" ^ (getTupleName typ)
 
+let arrayTypeAndSize typ =
+   match !typ with
+   | TComposed(["array"],[t;{contents = TInt(n,_)}],_) -> t, n
+   | _ -> failwith "arraySize: invalid input"
 
 (** Constant types *)
 module Constants = struct

@@ -5,7 +5,8 @@ this.State_variable__ctx_type_0_init = function(){
 }
 this.State_variable_change_init = function() { return this.State_variable__ctx_type_0_init();}
 this.State_variable_change = function(_ctx,x){
-   var v = (_ctx.pre_x != x);
+   var v = false;
+   v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
@@ -17,22 +18,29 @@ this.State_variable__ctx_type_1_init = function(){
 }
 this.State_variable_svf_step_init = function() { return this.State_variable__ctx_type_1_init();}
 this.State_variable_svf_step = function(_ctx,input,g,q,sel){
-   var low = (_ctx.dlow + (g * _ctx.dband));
-   var high = (input + (- low) + (- (q * _ctx.dband)));
-   var band = ((g * high) + _ctx.dband);
-   var notch = (high + low);
+   var low = 0.0;
+   low = (_ctx.dlow + (g * _ctx.dband));
+   var high = 0.0;
+   high = (input + (- low) + (- (q * _ctx.dband)));
+   var band = 0.0;
+   band = ((g * high) + _ctx.dband);
+   var notch = 0.0;
+   notch = (high + low);
    _ctx.dband = this.clip(band,(-1.),1.);
    _ctx.dlow = this.clip(low,(-1.),1.);
-   var output = {};
-   var _cond_1 = (sel == (0|0));
+   var output = 0.0;
+   var _cond_1 = false;
+   _cond_1 = (sel == (0|0));
    if(_cond_1)output = low;
    else
    {
-      var _cond_2 = (sel == (1|0));
+      var _cond_2 = false;
+      _cond_2 = (sel == (1|0));
       if(_cond_2)output = high;
       else
       {
-         var _cond_3 = (sel == (2|0));
+         var _cond_3 = false;
+         _cond_3 = (sel == (2|0));
          if(_cond_3)output = band;
          else
          output = notch;
@@ -51,12 +59,16 @@ this.State_variable_svf_init = function() { return this.State_variable__ctx_type
 this.State_variable_svf = function(_ctx,input,fc,q,sel){
    fc = this.clip(fc,0.,1.);
    q = this.clip(q,0.,1.);
-   var fix_q = (2. * (1. + (- q)));
-   var _cond_3 = this.State_variable_change(_ctx._inst1,fc);
+   var fix_q = 0.0;
+   fix_q = (2. * (1. + (- q)));
+   var _cond_3 = false;
+   _cond_3 = this.State_variable_change(_ctx._inst1,fc);
    if(_cond_3){
       _ctx.g = (fc * 0.5);
    }
-   var x1 = this.State_variable_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
-   var x2 = this.State_variable_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
+   var x1 = 0.0;
+   x1 = this.State_variable_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
+   var x2 = 0.0;
+   x2 = this.State_variable_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
    return ((x1 + x2) * 0.5);
 }

@@ -15,7 +15,8 @@ void Sin_change_init(Sin__ctx_type_0 &_output_){
 }
 
 uint8_t Sin_change(Sin__ctx_type_0 &_ctx, float x){
-   uint8_t v = (_ctx.pre_x != x);
+   uint8_t v;
+   v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
@@ -38,16 +39,21 @@ void Sin_sc_osc_init(Sin__ctx_type_1 &_output_){
 }
 
 float Sin_sc_osc(Sin__ctx_type_1 &_ctx, float pitch){
-   float g = 1.f;
-   uint8_t _cond_3 = Sin_change(_ctx._inst1,pitch);
+   float g;
+   g = 1.f;
+   uint8_t _cond_3;
+   _cond_3 = Sin_change(_ctx._inst1,pitch);
    if(_cond_3){
-      float pre_w = _ctx.w;
+      float pre_w;
+      pre_w = _ctx.w;
       _ctx.w = (0.00116485f * expf((0.0577623f * pitch)));
       g = (tanf((_ctx.w * 0.5f)) / tanf((pre_w * 0.5f)));
       _ctx.cos_w = cosf(_ctx.w);
    }
-   float y1_next = ((_ctx.cos_w * _ctx.y1) + ((_ctx.cos_w + 1.f) * g * _ctx.y2));
-   float y2_next = (((_ctx.cos_w + (-1.f)) * _ctx.y1) + (_ctx.cos_w * g * _ctx.y2));
+   float y1_next;
+   y1_next = ((_ctx.cos_w * _ctx.y1) + ((_ctx.cos_w + 1.f) * g * _ctx.y2));
+   float y2_next;
+   y2_next = (((_ctx.cos_w + (-1.f)) * _ctx.y1) + (_ctx.cos_w * g * _ctx.y2));
    _ctx.y1 = float_clip(y1_next,(-1.f),1.f);
    _ctx.y2 = float_clip(y2_next,(-1.f),1.f);
    return _ctx.y1;

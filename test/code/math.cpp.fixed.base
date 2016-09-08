@@ -3,16 +3,22 @@
 #include "math.h"
 
 fix16_t Math_sin(fix16_t x0){
-   fix16_t x1 = (x0 % 0x6487e /* 6.283185 */);
-   uint8_t sign = (x1 > 0x3243f /* 3.141593 */);
-   fix16_t x2 = (x1 % 0x3243f /* 3.141593 */);
+   fix16_t x1;
+   x1 = (x0 % 0x6487e /* 6.283185 */);
+   uint8_t sign;
+   sign = (x1 > 0x3243f /* 3.141593 */);
+   fix16_t x2;
+   x2 = (x1 % 0x3243f /* 3.141593 */);
    fix16_t x3;
-   uint8_t _cond_2 = (x2 > 0x1921f /* 1.570796 */);
+   uint8_t _cond_2;
+   _cond_2 = (x2 > 0x1921f /* 1.570796 */);
    if(_cond_2){ x3 = fix_add(0x3243f /* 3.141593 */,(- x2)); }
    else
    { x3 = x2; }
-   fix16_t xp2 = fix_mul(x3,x3);
-   fix16_t acc = fix_mul(x3,fix_add(0x10000 /* 1.000000 */,fix_mul(fix_add((-0x2aaa /* -0.166667 */),fix_mul(0x222 /* 0.008333 */,xp2)),xp2)));
+   fix16_t xp2;
+   xp2 = fix_mul(x3,x3);
+   fix16_t acc;
+   acc = fix_mul(x3,fix_add(0x10000 /* 1.000000 */,fix_mul(fix_add((-0x2aaa /* -0.166667 */),fix_mul(0x222 /* 0.008333 */,xp2)),xp2)));
    fix16_t _if_1;
    if(sign){ _if_1 = (- acc); }
    else
@@ -25,13 +31,15 @@ fix16_t Math_cos(fix16_t x0){
 }
 
 fix16_t Math_tanh(fix16_t xx){
-   uint8_t positive = (xx > 0x0 /* 0.000000 */);
+   uint8_t positive;
+   positive = (xx > 0x0 /* 0.000000 */);
    fix16_t x;
    if(positive){ x = xx; }
    else
    { x = (- xx); }
    fix16_t y;
-   int n = 0;
+   int n;
+   n = 0;
    while((x > 0x10000 /* 1.000000 */)){
       x = fix_mul(x,0x8000 /* 0.500000 */);
       n = (n + 1);
@@ -49,12 +57,14 @@ fix16_t Math_tanh(fix16_t xx){
 }
 
 fix16_t Math_tan(fix16_t x){
-   fix16_t xp2 = fix_mul(x,x);
+   fix16_t xp2;
+   xp2 = fix_mul(x,x);
    return fix_mul(x,fix_add(0x10000 /* 1.000000 */,fix_mul(xp2,fix_add(0x5555 /* 0.333333 */,fix_mul(xp2,fix_add(0x2222 /* 0.133333 */,fix_mul(xp2,fix_add(0xdd0 /* 0.053968 */,fix_mul(xp2,fix_add(0x599 /* 0.021869 */,fix_mul(0x244 /* 0.008863 */,xp2)))))))))));
 }
 
 fix16_t Math_exp(fix16_t x){
-   fix16_t acc = fix_add((-0x434 /* -0.016426 */),fix_mul(0x35 /* 0.000821 */,x));
+   fix16_t acc;
+   acc = fix_add((-0x434 /* -0.016426 */),fix_mul(0x35 /* 0.000821 */,x));
    acc = fix_add(0x2aae /* 0.166727 */,fix_mul(x,acc));
    acc = fix_add((-0xf8bb /* -0.971617 */),fix_mul(x,acc));
    acc = fix_add(0x3c4f2 /* 3.769326 */,fix_mul(x,acc));

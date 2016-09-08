@@ -150,6 +150,12 @@ void int_init_array  (int size, int value, int *data);
 void bool_init_array (int size, uint8_t value, uint8_t *data);
 void fix_init_array  (int size, fix16_t value, fix16_t *data);
 
+/* Array copy */
+void float_copy_array(int size, float* dest, float *src);
+void int_copy_array  (int size, int* dest, int *src);
+void bool_copy_array (int size, uint8_t* dest, uint8_t *src);
+void fix_copy_array  (int size, fix16_t* dest, fix16_t *src);
+
 static inline uint8_t bool_not(uint8_t x){
     return !x;
 }

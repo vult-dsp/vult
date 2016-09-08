@@ -41,17 +41,17 @@ module Configuration = struct
 
    (** If the first argument is data, returns true and remove it *)
    let rec passData (inputs:'a list) =
-     match inputs with
-     | `Context::t -> 
+      match inputs with
+      | `Context::t -> 
          let _,inputs,outputs = passData t in
          true, inputs, outputs
-     | `Input(typ)::t ->
+      | `Input(typ)::t ->
          let pass_ctx,inputs,outputs = passData t in
          pass_ctx, typ::inputs, outputs
-     | `Output(elems)::t ->
+      | `Output(elems)::t ->
          let pass_ctx,inputs,_ = passData t in
          pass_ctx, inputs, elems
-     | [] ->
+      | [] ->
          false,[],[]
 
    (** Checks that the type is a numeric type *)

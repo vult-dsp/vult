@@ -130,6 +130,13 @@ module Default = struct
             "uint8_t", "bool_init_array";
          ]
 
+   let array_copy = Replacements.makeArrayCopy
+         [
+            "float",   "float_copy_array";
+            "int",     "int_copy_array";
+            "uint8_t", "bool_copy_array";
+         ]
+
    let real_string = Replacements.makeRealToString
          [
             "float", (fun f -> (string_of_float f)^"f")
@@ -146,6 +153,7 @@ module Default = struct
          fun_to_fun;
          array_init;
          real_string;
+         array_copy;
       }
 
 end
@@ -203,6 +211,10 @@ module FixedPoint = struct
             "fix16_t",   "fix_init_array";
          ]
 
+   let array_copy = Replacements.makeArrayCopy
+         [
+            "fix16_t",   "fix_copy_array";
+         ]
 
    let toFixed (n:float) : string =
       if n < 0.0 then
@@ -229,6 +241,7 @@ module FixedPoint = struct
             fun_to_fun;
             array_init;
             real_string;
+            array_copy;
          }
 
 end
@@ -273,6 +286,10 @@ module JavaScript = struct
             "bool",   "makeArray";
          ]
 
+   let array_copy = Replacements.makeArrayCopy
+         [
+         ]
+
    let real_string = Replacements.makeRealToString
          [
 
@@ -289,6 +306,7 @@ module JavaScript = struct
          fun_to_fun;
          array_init;
          real_string;
+         array_copy;
       }
 
 end
@@ -335,6 +353,10 @@ module Lua = struct
             "bool",   "makeArray";
          ]
 
+   let array_copy = Replacements.makeArrayCopy
+         [
+         ]
+
    let real_string = Replacements.makeRealToString
          [
 
@@ -351,6 +373,7 @@ module Lua = struct
          fun_to_fun;
          array_init;
          real_string;
+         array_copy;
       }
 
 end

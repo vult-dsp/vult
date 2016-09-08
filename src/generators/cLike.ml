@@ -25,12 +25,12 @@ THE SOFTWARE.
 type type_descr =
    | CTSimple of string
    | CTArray  of type_descr * int
-   [@@deriving show,eq,ord]
+[@@deriving show,eq,ord]
 
 type arg_type =
    | Ref of type_descr
    | Var of type_descr
-   [@@deriving show,eq,ord]
+[@@deriving show,eq,ord]
 
 type cexp =
    | CEInt    of int
@@ -46,13 +46,13 @@ type cexp =
    | CETuple  of (string * cexp) list
    | CENewObj
    | CEEmpty
-   [@@deriving show,eq,ord]
+[@@deriving show,eq,ord]
 
 type clhsexp =
    | CLWild
    | CLId    of type_descr * string
    | CLTuple of clhsexp list
-   [@@deriving show,eq,ord]
+[@@deriving show,eq,ord]
 
 type cstmt =
    | CSVarDecl  of clhsexp * cexp option
@@ -66,4 +66,4 @@ type cstmt =
    | CSAlias    of string * type_descr
    | CSExtFunc  of type_descr * string * (arg_type * string) list
    | CSEmpty
-   [@@deriving show,eq,ord]
+[@@deriving show,eq,ord]
