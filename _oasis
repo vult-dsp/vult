@@ -163,7 +163,7 @@ Executable "vult_tests"
 Test "vult_tests"
   Run$: flag(tests)
   TestTools: vult_tests
-  Command: $vult_tests -runner sequential
+  Command: $vult_tests
   WorkingDirectory: .
 
 AlphaFeatures: ocamlbuild_more_args
