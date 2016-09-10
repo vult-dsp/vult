@@ -34,7 +34,7 @@ let default_state =
       max_real       = 100.0;
       get_array_type = true;
       get_tuple_type = true;
-      max_type_levels = 1;
+      max_type_levels = 2;
       nest_prob       = 1.0;
       vars            = TypeMap.empty;
       get_if_exp      = true;
@@ -405,7 +405,7 @@ and newStmtList n state =
 
 let newFunction () =
    let name = ["foo_" ^ (string_of_int (Random.int 10000))] in
-   let stmts,_ = newStmtList 100 default_state in
+   let stmts,_ = newStmtList 10 default_state in
    StmtFun(name,[],StmtBlock(None,stmts,emptyAttr),None,emptyAttr)
 
 let test seed =

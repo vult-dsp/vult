@@ -1,18 +1,22 @@
 {
-   type _ctx_type_0 {
+   type Context_simple._ctx_type_0 {
       val pre : real;
    }
 
-   type change_type : _ctx_type_0;
-   fun _ctx_type_0_init() : _ctx_type_0 {
-      val (_ctx:_ctx_type_0);
+   type Context_simple.change_type : Context_simple._ctx_type_0;
+   fun Context_simple._ctx_type_0_init(_output_:Context_simple._ctx_type_0) : unit {
+      val (_ctx:Context_simple._ctx_type_0);
       (_ctx.pre:real) = 0.;
-      return _ctx;
+      (_output_:Context_simple._ctx_type_0) = _ctx;
+      return ();
    }
 
-   fun change_init() : _ctx_type_0 return _ctx_type_0_init();
+   fun Context_simple.change_init(_output_:Context_simple._ctx_type_0) : unit {
+      (_:unit) = Context_simple._ctx_type_0_init(_output_);
+      return ();
+   }
 
-   fun change(_ctx:_ctx_type_0,x:real) : bool /* scope_0 */
+   fun Context_simple.change(_ctx:Context_simple._ctx_type_0,x:real) : bool /* scope_0 */
    {
       val (ret:bool);
       (ret:bool) = (x <> _ctx.pre);
@@ -20,45 +24,55 @@
       return ret;
    }
 
-   type reset_type : _ctx_type_0;
-   fun reset_init() : _ctx_type_0 return _ctx_type_0_init();
+   type Context_simple.reset_type : Context_simple._ctx_type_0;
+   fun Context_simple.reset_init(_output_:Context_simple._ctx_type_0) : unit {
+      (_:unit) = Context_simple._ctx_type_0_init(_output_);
+      return ();
+   }
 
-   and reset(_ctx:_ctx_type_0) : unit /* scope_0 */
+   and Context_simple.reset(_ctx:Context_simple._ctx_type_0) : unit /* scope_0 */
    (_ctx.pre:real) = 0.;
 
-   type set_type : _ctx_type_0;
-   fun set_init() : _ctx_type_0 return _ctx_type_0_init();
+   type Context_simple.set_type : Context_simple._ctx_type_0;
+   fun Context_simple.set_init(_output_:Context_simple._ctx_type_0) : unit {
+      (_:unit) = Context_simple._ctx_type_0_init(_output_);
+      return ();
+   }
 
-   and set(_ctx:_ctx_type_0,x:real) : unit /* scope_0 */
+   and Context_simple.set(_ctx:Context_simple._ctx_type_0,x:real) : unit /* scope_0 */
    (_ctx.pre:real) = x;
 
-   type _ctx_type_1 {
-      val c : _ctx_type_0;
-      val _inst2 : _ctx_type_0;
-      val _inst1 : _ctx_type_0;
+   type Context_simple._ctx_type_1 {
+      val c : Context_simple._ctx_type_0;
+      val _inst2 : Context_simple._ctx_type_0;
+      val _inst1 : Context_simple._ctx_type_0;
    }
 
-   type foo_type : _ctx_type_1;
-   fun _ctx_type_1_init() : _ctx_type_1 {
-      val (_ctx:_ctx_type_1);
-      (_ctx.c:_ctx_type_0) = _ctx_type_0_init();
-      (_ctx._inst2:_ctx_type_0) = _ctx_type_0_init();
-      (_ctx._inst1:_ctx_type_0) = _ctx_type_0_init();
-      return _ctx;
+   type Context_simple.foo_type : Context_simple._ctx_type_1;
+   fun Context_simple._ctx_type_1_init(_output_:Context_simple._ctx_type_1) : unit {
+      val (_ctx:Context_simple._ctx_type_1);
+      (_:unit) = Context_simple._ctx_type_0_init(_ctx.c);
+      (_:unit) = Context_simple._ctx_type_0_init(_ctx._inst2);
+      (_:unit) = Context_simple._ctx_type_0_init(_ctx._inst1);
+      (_output_:Context_simple._ctx_type_1) = _ctx;
+      return ();
    }
 
-   fun foo_init() : _ctx_type_1 return _ctx_type_1_init();
+   fun Context_simple.foo_init(_output_:Context_simple._ctx_type_1) : unit {
+      (_:unit) = Context_simple._ctx_type_1_init(_output_);
+      return ();
+   }
 
-   fun foo(_ctx:_ctx_type_1,x:real) : unit /* scope_0 */
+   fun Context_simple.foo(_ctx:Context_simple._ctx_type_1,x:real) : unit /* scope_0 */
    {
       val (v1:bool);
-      (v1:bool) = change(_ctx._inst1,x);
+      (v1:bool) = Context_simple.change(_ctx._inst1,x);
       val (v2:bool);
-      (v2:bool) = change(_ctx._inst2,x);
+      (v2:bool) = Context_simple.change(_ctx._inst2,x);
       val (v3:bool);
-      (v3:bool) = change(_ctx.c,x);
-      (_:unit) = reset(_ctx.c);
-      (_:unit) = set(_ctx.c,0.);
+      (v3:bool) = Context_simple.change(_ctx.c,x);
+      (_:unit) = Context_simple.reset(_ctx.c);
+      (_:unit) = Context_simple.set(_ctx.c,0.);
    }
 
 }

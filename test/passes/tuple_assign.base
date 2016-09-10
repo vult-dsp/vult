@@ -1,4 +1,10 @@
 {
+   type tuple(int,int,int) {
+      val field_0 : int;
+      val field_1 : int;
+      val field_2 : int;
+   }
+
    fun foo() : tuple(int,int,int) /* scope_0 */
    {
       val (_tuple_1:tuple(int,int,int));

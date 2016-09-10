@@ -64,24 +64,12 @@ let rec convertType (p:parameters) (tp:VType.t) : type_descr =
       failwith ("VultToCLike.convertType: unsupported type in c code generation: " ^ PrintTypes.typeStr tp)
 
 
-let isValue (typ:VType.t) : bool =
-   match !(VType.unlink typ) with
-   | VType.TId(name,_) when name=["int"] || name=["real"] || name=["bool"] || name=["void"] ->
-      true
-   | _ -> false
-
-let isArray (typ:VType.t) : bool =
-   match !(VType.unlink typ) with
-   | VType.TComposed(["array"],_,_) -> true
-   | _ -> false
-
-
 let convertTypedId (p:parameters) (e:typed_id) : arg_type * string =
    match e with
    | SimpleId(_,_,_)  -> failwith "VultToCLike.convertTypedId: everything should have types"
    | TypedId(id,typ,_,_) ->
       let typ_c   = convertType p typ in
-      let typ_ref = if isValue typ then Var(typ_c) else Ref(typ_c) in
+      let typ_ref = if VType.isSimpleType typ then Var(typ_c) else Ref(typ_c) in
       typ_ref, convertVarId p id
 
 let getCast (p:parameters) (from_type:type_descr) (to_type:type_descr) : string =
@@ -235,12 +223,12 @@ and convertLhsExpList (is_val:bool) (p:parameters) (lhsl:lhs_exp list) : clhsexp
       [] lhsl
    |> List.rev
 
-let getRecordField (name:clhsexp) (index:int) : clhsexp =
+let getRecordField (name:lhs_exp) (index:int) (typ:VType.t option) : lhs_exp =
    match name with
-   | CLId(desc,name) ->
-      let name' = name^".field_"^(string_of_int index) in
+   | LId(id,_,attr) ->
+      let field = "field_"^(string_of_int index) in
       (* possible future bug, the descr does not match the actual type *)
-      CLId(desc,name')
+      LId(id@[field],typ,{ attr with typ })
    | _ -> failwith "VultToCLike.getRecordFiled: Invalid input"
 
 let rec convertStmt (p:parameters) (s:stmt) : cstmt =
@@ -284,10 +272,11 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let var'  = convertExp p var in
       CSBind(CLWild,CECall(init_func,[size';init';var']))
    (* special case to bind tuples in c/c++ It expands tuple assigns *)
-   | StmtBind(LId(_,_,_) as lhs,PTuple(elems,_),_) when p.ccode ->
-      let lhs' = convertLhsExp true p lhs in
-      let elems' = convertExpList p elems in
-      let stmts = List.mapi (fun i e -> CSBind(getRecordField lhs' i,e)) elems' in
+   | StmtBind(LId(_,_,_) as lhs,PTuple(elems,_),attr) when p.ccode ->
+      let stmts =
+         List.mapi (fun i e ->
+            let etype = (GetAttr.fromExp e).typ in
+            convertStmt p (StmtBind(getRecordField lhs i etype,e,attr))) elems in
       CSBlock(stmts)
    (* special for c/c++ initialize array variables *)
    | StmtBind(LId(lhs,Some(typ),_),PArray(elems,_),_) when p.ccode ->
@@ -302,7 +291,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       | _ -> failwith ""
       end
    (* special for c/c++ to copy array variables *)
-   | StmtBind(LId(lhs,_,{ typ = Some(typ)}),rhs,_) when p.ccode && isArray typ ->
+   | StmtBind(LId(lhs,_,{ typ = Some(typ)}),rhs,_) when p.ccode && VType.isArray typ ->
       let rhs' = convertExp p rhs in
       let atyp,size = VType.arrayTypeAndSize typ in
       let atyp' = convertType p atyp in

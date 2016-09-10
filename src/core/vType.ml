@@ -302,12 +302,28 @@ let arrayTypeAndSize typ =
    | TComposed(["array"],[t;{contents = TInt(n,_)}],_) -> t, n
    | _ -> failwith "arraySize: invalid input"
 
+let getSubTypes (typ:t) : t list =
+   match !(unlink typ) with
+   | TComposed(_,elems,_) -> elems
+   | _ -> []
+
+let isArray (typ:t) : bool =
+   match !(unlink typ) with
+   | TComposed(["array"],_,_) -> true
+   | _ -> false
+
+let isTuple typ =
+   match !typ with
+   | TComposed(["tuple"],_,_) -> true
+   | _ -> false
+
 let isSimpleType (typ:t) : bool =
    match !typ with
    | TId(["real"],_) -> true
    | TId(["int"],_) -> true
    | TId(["bool"],_) -> true
    | TId(["unit"],_) -> true
+   | TId(["void"],_) -> true
    | _ -> false
 
 let isSimpleOpType (typ:t option) : bool =

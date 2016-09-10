@@ -49,18 +49,17 @@ let parser_files =
       "types_basic.vult";
    ]
 
-let pass2_options = Passes.{ Passes.default_options with pass3 = false; pass4 = false }
-let pass3_options = Passes.{ Passes.default_options with pass4 = false }
+let no_context = Passes.{ Passes.default_options with pass3 = false; pass2 = false; }
 
 let passes_files =
    [
-      "split_mem.vult", pass2_options;
-      "tuple_assign.vult", pass2_options;
-      "if_to_stmt.vult", pass2_options;
-      "context_simple.vult", pass3_options;
-      "context_nested.vult", pass3_options;
-      "tuple_to_types.vult", pass3_options;
-      "simplify.vult", pass3_options;
+      "split_mem.vult", no_context;
+      "tuple_assign.vult", no_context;
+      "if_to_stmt.vult", no_context;
+      "context_simple.vult", Passes.default_options;
+      "context_nested.vult", Passes.default_options;
+      "tuple_to_types.vult", no_context;
+      "simplify.vult", no_context;
       "external_calls.vult", Passes.default_options;
       "output_references.vult", Passes.default_options;
    ]
@@ -272,6 +271,7 @@ module RandomCompileTest = struct
       Sys.remove (output^".cpp");
       Sys.remove (output^".h");
       Sys.remove (output^".vult");
+      Sys.remove (output);
       Sys.chdir initial_dir
 
    let get files real_type = "compile">::: (List.map (fun file -> (Filename.basename file) ^"."^ real_type >:: run real_type file) files)
