@@ -7,9 +7,9 @@
 
    fun foo() : tuple(int,int,int) /* scope_0 */
    {
-      val (_tplbind_1:tuple(int,int,int));
-      (_tplbind_1:tuple(int,int,int)) = 1,2,3;
-      return _tplbind_1;
+      val (_tuple_1:tuple(int,int,int));
+      (_tuple_1:tuple(int,int,int)) = (1,2,3);
+      return _tuple_1;
    }
 
    type tuple(real,int,bool) {
@@ -20,9 +20,9 @@
 
    fun bar() : tuple(real,int,bool) /* scope_0 */
    {
-      val (_tplbind_1:tuple(real,int,bool));
-      (_tplbind_1:tuple(real,int,bool)) = 1.,2,false;
-      return _tplbind_1;
+      val (_tuple_1:tuple(real,int,bool));
+      (_tuple_1:tuple(real,int,bool)) = (1.,2,false);
+      return _tuple_1;
    }
 
 }

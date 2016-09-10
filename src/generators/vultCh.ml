@@ -140,7 +140,7 @@ let printLhsExpTuple (var:string) (is_var:bool) (i:int) (e:clhsexp) : Pla.t =
 
    | CLWild -> Pla.unit
 
-   | _ -> failwith "printLhsExpTuple: All other cases should be already covered"
+   | _ -> failwith ("printLhsExpTuple: All other cases should be already covered\n"^(CLike.show_clhsexp e))
 
 (** Used to print assignments on to an array element *)
 let printArrayBinding params (var:string) (i:int) (e:cexp) : Pla.t =

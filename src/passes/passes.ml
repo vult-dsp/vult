@@ -316,7 +316,7 @@ module CreateInitFunction = struct
 
 end
 
-module SimplifyTupleAssign = struct
+module BindComplexExpressions = struct
 
    let makeTmp tick i = ["_tmp_" ^ (string_of_int tick) ^ "_" ^ (string_of_int i)]
 
@@ -344,66 +344,100 @@ module SimplifyTupleAssign = struct
          in
          stmts1 @ stmts2
 
-   let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
-      Mapper.makeExpander "SimplifyTupleAssign.stmt_x" @@ fun state stmt ->
-      match stmt with
-      | StmtVal(LTuple(lhs,_),None,attr) ->
-         let stmts = List.map (fun a -> StmtVal(a,None,attr)) lhs in
-         reapply state, stmts
+   module BindComplexHelper = struct
 
-      | StmtVal(LTuple(lhs,_),Some(PTuple(rhs,_)),_) when List.length lhs = List.length rhs ->
-         let tick,state' = Env.tick state in
-         let stmts = createAssignments tick makeValBind lhs rhs in
-         reapply state', stmts
+      let exp : (stmt list Env.t,exp) Mapper.mapper_func =
+         Mapper.make "BindComplexHelper.exp" @@ fun state exp ->
+         match exp with
+         | PCall(_,_,_,({ typ = Some(typ) } as attr)) when not (VType.isSimpleType typ) ->
+            let n,state' = Env.tick state in
+            let var_name = "_call_"^(string_of_int n) in
+            let exp'     = PId([var_name],attr) in
+            let lhs      = LId([var_name],attr.typ,attr) in
+            let decl     = StmtVal(lhs,None,emptyAttr) in
+            let bind     = StmtBind(lhs,exp,emptyAttr) in
+            let acc      = Env.get state' in
+            let state'   = Env.set state' (bind::decl::acc) in
+            state',exp'
+         | PTuple(_,attr) ->
+            let n,state' = Env.tick state in
+            let var_name = "_tuple_"^(string_of_int n) in
+            let exp'     = PId([var_name],attr) in
+            let lhs      = LId([var_name],attr.typ,attr) in
+            let decl     = StmtVal(lhs,None,emptyAttr) in
+            let bind     = StmtBind(lhs,exp,emptyAttr) in
+            let acc      = Env.get state' in
+            let state'   = Env.set state' (bind::decl::acc) in
+            state',exp'
+         | PArray(_,attr) ->
+            let n,state' = Env.tick state in
+            let var_name = "_array_"^(string_of_int n) in
+            let exp'     = PId([var_name],attr) in
+            let lhs      = LId([var_name],attr.typ,attr) in
+            let decl     = StmtVal(lhs,None,emptyAttr) in
+            let bind     = StmtBind(lhs,exp,emptyAttr) in
+            let acc      = Env.get state' in
+            let state'   = Env.set state' (bind::decl::acc) in
+            state',exp'
+         | _ -> state,exp
 
-      | StmtBind(LTuple(lhs,_),PTuple(rhs,_),_) when List.length lhs = List.length rhs ->
-         let tick, state' = Env.tick state in
-         let stmts = createAssignments tick makeBind lhs rhs in
-         reapply state', stmts
+      let mapper = { Mapper.default_mapper with Mapper.exp = exp }
 
-      | StmtBind(LTuple(_,_),PTuple(_,_),_) ->
-         failwith "SimplifyTupleAssign.stmt_x: this error should be catched by the type checker"
+   end
 
-      | _ -> state, [stmt]
+      let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
+      Mapper.makeExpander "BindComplexExpressions.stmt_x" @@ fun state stmt ->
+         match stmt with
+         (* avoids rebinding complex expressions *)
+         | StmtVal(LId(_,_,_),Some(_),_) ->
+            state, [stmt]
+         | StmtBind(LId(_,_,_),_,_) ->
+            state, [stmt]
+         | StmtReturn(PId(_,_),_) ->
+            state, [stmt]
+         (* simplify tuple assigns  *)
+         | StmtVal(LTuple(lhs,_),None,attr) ->
+            let stmts = List.map (fun a -> StmtVal(a,None,attr)) lhs in
+            reapply state, stmts
 
-   let mapper =
-      { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
+         | StmtVal(LTuple(lhs,_),Some(PTuple(rhs,_)),_) when List.length lhs = List.length rhs ->
+            let tick,state' = Env.tick state in
+            let stmts = createAssignments tick makeValBind lhs rhs in
+            reapply state', stmts
 
-end
+         | StmtBind(LTuple(lhs,_),PTuple(rhs,_),_) when List.length lhs = List.length rhs ->
+            let tick, state' = Env.tick state in
+            let stmts = createAssignments tick makeBind lhs rhs in
+            reapply state', stmts
 
-module LHSTupleBinding = struct
+         | StmtBind(lhs,rhs,attr) ->
+            let acc       = newState state [] in
+            let acc',rhs' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc rhs in
+            let state',acc_stmts = restoreState state acc' in
+            let state' = if CCList.is_empty acc_stmts then state' else reapply state' in
+            let stmts' = StmtBind(lhs,rhs',attr) :: acc_stmts in
+            let state' = if acc_stmts <> [] then reapply state' else state' in
+            state', List.rev stmts'
 
-   let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
-      Mapper.makeExpander "LHSTupleBinding.stmt_x" @@ fun state stmt ->
-      match stmt with
-      | StmtVal(LTuple(_,_),Some(PId(_,_)),_) -> state, [stmt]
-      | StmtVal(LTuple(_,_),Some(PTuple(_,_)),_) -> state, [stmt]
-      | StmtBind(LTuple(_,_),PId(_,_),_) -> state, [stmt]
-      | StmtBind(LTuple(_,_),PTuple(_,_),_) -> state, [stmt]
-      | StmtBind((LTuple(_,lhs_attr) as lhs),rhs,attr) ->
-         let tick, state' = Env.tick state in
-         let tmp_name = ["_tplbind_"^(string_of_int tick)] in
-         let rhs_attr = GetAttr.fromExp rhs in
-         let tmp = PId(tmp_name,rhs_attr) in
-         let typ = rhs_attr.typ in
-         let ltmp = LId(tmp_name,typ,lhs_attr) in
-         reapply state', [StmtVal(ltmp,Some(rhs),attr); StmtBind(lhs,tmp,attr)]
-      | StmtVal((LTuple(_,lhs_attr) as lhs),Some(rhs),attr) ->
-         let tick, state' = Env.tick state in
-         let tmp_name = ["_tplbind_"^(string_of_int tick)] in
-         let rhs_attr = GetAttr.fromExp rhs in
-         let tmp = PId(tmp_name,rhs_attr) in
-         let typ = rhs_attr.typ in
-         let ltmp = LId(tmp_name,typ,lhs_attr) in
-         reapply state', [StmtVal(ltmp,Some(rhs),attr); StmtVal(lhs,Some(tmp),attr)]
-      | StmtReturn((PTuple(_,rhs_attr) as rhs),attr) ->
-         let tick, state' = Env.tick state in
-         let tmp_name = ["_tplbind_"^(string_of_int tick)] in
-         let tmp = PId(tmp_name,rhs_attr) in
-         let typ = rhs_attr.typ in
-         let ltmp = LId(tmp_name,typ,rhs_attr) in
-         reapply state', [StmtVal(ltmp,Some(rhs),attr);StmtReturn(tmp,attr)]
-      | _ -> state, [stmt]
+         | StmtVal(lhs,Some(rhs),attr) ->
+            let acc       = newState state [] in
+            let acc',rhs' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc rhs in
+            let state',acc_stmts = restoreState state acc' in
+            let state' = if CCList.is_empty acc_stmts then state' else reapply state' in
+            let stmts' = StmtVal(lhs,None,attr)::StmtBind(lhs,rhs',attr)::acc_stmts in
+            let state' = if acc_stmts <> [] then reapply state' else state' in
+            state', List.rev stmts'
+
+         | StmtReturn(e,attr) ->
+            let acc     = newState state [] in
+            let acc',e' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc e in
+            let state',acc_stmts = restoreState state acc' in
+            let state' = if CCList.is_empty acc_stmts then state' else reapply state' in
+            let stmts' = StmtReturn(e',attr)::acc_stmts in
+            let state' = if acc_stmts <> [] then reapply state' else state' in
+            state', List.rev stmts'
+         | _ -> state, [stmt]
+
 
    let mapper =
       { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
@@ -707,9 +741,10 @@ module SimplifyIfExp = struct
             let var_name = "_if_"^(string_of_int n) in
             let exp'     = PId([var_name],attr) in
             let lhs      = LId([var_name],attr.typ,attr) in
-            let stmt     = StmtVal(lhs,Some(exp),emptyAttr) in
+            let decl     = StmtVal(lhs,None,emptyAttr) in
+            let bind     = StmtBind(lhs,exp,emptyAttr) in
             let acc      = Env.get state' in
-            let state'   = Env.set state' (stmt::acc) in
+            let state'   = Env.set state' (bind::decl::acc) in
             state',exp'
          | _ -> state,exp
 
@@ -726,8 +761,9 @@ module SimplifyIfExp = struct
          let cond_attr = GetAttr.fromExp cond in
          let lhs      = LId([var_name],cond_attr.typ,cond_attr) in
          let cond'    = PId([var_name],cond_attr) in
-         let decl     = StmtVal(lhs,Some(cond),attr) in
-         reapply state', [decl;StmtIf(cond',then_,else_,attr)]
+         let decl     = StmtVal(lhs,None,attr) in
+         let bind     = StmtBind(lhs,cond,attr) in
+         reapply state', [decl;bind;StmtIf(cond',then_,else_,attr)]
       | StmtBind(lhs,PIf(cond,then_,else_,ifattr),attr) ->
          reapply state,[StmtIf(cond,StmtBind(lhs,then_,ifattr),Some(StmtBind(lhs,else_,ifattr)),attr)]
       | StmtVal(lhs,Some(PIf(cond,then_,else_,ifattr)),attr) ->
@@ -744,7 +780,7 @@ module SimplifyIfExp = struct
          let acc       = newState state [] in
          let acc',rhs' = Mapper.map_exp_to_stmt BindIfExp.mapper acc rhs in
          let state',acc_stmts = restoreState state acc' in
-         let stmts'    = StmtVal(lhs,Some(rhs'),attr)::acc_stmts in
+         let stmts'    = StmtBind(lhs,rhs',attr)::StmtVal(lhs,None,attr)::acc_stmts in
          state', List.rev stmts'
       | StmtReturn(e,attr) ->
          let acc       = newState state [] in
@@ -803,58 +839,6 @@ module ReturnReferences = struct
 
    let unitAttr attr = { attr with typ = Some(VType.Constants.unit_type)}
 
-   let isSimpleType (typ:VType.t) : bool =
-      match !typ with
-      | VType.TId(["real"],_) -> true
-      | VType.TId(["int"],_) -> true
-      | VType.TId(["bool"],_) -> true
-      | VType.TId(["unit"],_) -> true
-      | _ -> false
-
-   let isSimpleOpType (typ:VType.t option) : bool =
-      match typ with
-      | Some(t) -> isSimpleType t
-      | _ -> true
-
-   (** This mapper is used to bind the stuff that c/c++ cannot support *)
-   module BindFunctionCallsAndTuples = struct
-
-      let exp : (stmt list Env.t,exp) Mapper.mapper_func =
-         Mapper.make "BindFunctionCallsAndTuples.exp" @@ fun state exp ->
-         match exp with
-         | PCall(_,_,_,({ typ = Some(typ) } as attr)) when not (isSimpleType typ) ->
-            let n,state' = Env.tick state in
-            let var_name = "_call_"^(string_of_int n) in
-            let exp'     = PId([var_name],attr) in
-            let lhs      = LId([var_name],attr.typ,attr) in
-            let stmt     = StmtVal(lhs,Some(exp),emptyAttr) in
-            let acc      = Env.get state' in
-            let state'   = Env.set state' (stmt::acc) in
-            state',exp'
-         | PTuple(_,attr) ->
-            let n,state' = Env.tick state in
-            let var_name = "_tuple_"^(string_of_int n) in
-            let exp'     = PId([var_name],attr) in
-            let lhs      = LId([var_name],attr.typ,attr) in
-            let stmt     = StmtVal(lhs,Some(exp),emptyAttr) in
-            let acc      = Env.get state' in
-            let state'   = Env.set state' (stmt::acc) in
-            state',exp'
-         | PArray(_,attr) ->
-            let n,state' = Env.tick state in
-            let var_name = "_array_"^(string_of_int n) in
-            let exp'     = PId([var_name],attr) in
-            let lhs      = LId([var_name],attr.typ,attr) in
-            let stmt     = StmtVal(lhs,Some(exp),emptyAttr) in
-            let acc      = Env.get state' in
-            let state'   = Env.set state' (stmt::acc) in
-            state',exp'
-         | _ -> state,exp
-
-      let mapper = { Mapper.default_mapper with Mapper.exp = exp }
-
-   end
-
    let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
       Mapper.make "ReturnReferences.stmt" @@ fun state stmt ->
       let data = Env.get state in
@@ -862,7 +846,7 @@ module ReturnReferences = struct
          state, stmt
       else
          match stmt with
-         | StmtFun(name,args,body,Some(rettype),attr) when not (isSimpleType rettype) ->
+         | StmtFun(name,args,body,Some(rettype),attr) when not (VType.isSimpleType rettype) ->
             let output = TypedId(["_output_"],rettype,OutputArg,emptyAttr) in
             let stmt' = StmtFun(name,args@[output],body,Some(VType.Constants.unit_type),attr) in
             state, stmt'
@@ -875,68 +859,39 @@ module ReturnReferences = struct
          state, [stmt]
       else
          match stmt with
-         (* avoids rebinding simple tuple assigns *)
-         | StmtVal(LId(_,_,_),Some(PTuple(_,_)),_) ->
-            state, [stmt]
-         (* avoids rebinding simple array assigns *)
-         | StmtVal(LId(_,_,_),Some(PArray(_,_)),_) ->
-            state, [stmt]
          (* regular case a = foo() *)
-         | StmtBind(LId(lhs,Some(typ),lattr),PCall(inst,name,args,attr),battr) when not (isSimpleType typ) ->
+         | StmtBind(LId(lhs,Some(typ),lattr),PCall(inst,name,args,attr),battr) when not (VType.isSimpleType typ) ->
             let arg = PId(lhs,lattr) in
             let fixed_attr = unitAttr attr in
             state, [StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],attr),battr)]
          (* special case _ = foo() when the return is no simple value *)
-         | StmtBind(LWild(wattr),PCall(inst,name,args,attr),battr) when not (isSimpleOpType wattr.typ) ->
+         | StmtBind(LWild(wattr),PCall(inst,name,args,attr),battr) when not (VType.isSimpleOpType wattr.typ) ->
             let i,state' = Env.tick state in
             let tmp_name = "_unused_" ^ (string_of_int i) in
             let arg = PId([tmp_name], wattr) in
             let fixed_attr = unitAttr attr in
             state', [StmtVal(LId([tmp_name],wattr.typ,wattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],attr),battr)]
          (* special case _ = a when a is not simple value *)
-         | StmtBind(LWild(wattr),e,battr) when not (isSimpleOpType wattr.typ) ->
+         | StmtBind(LWild(wattr),e,battr) when not (VType.isSimpleOpType wattr.typ) ->
             let i,state' = Env.tick state in
             let tmp_name = "_unused_" ^ (string_of_int i) in
             state', [StmtVal(LId([tmp_name],wattr.typ,wattr),None,battr);StmtBind(LId([tmp_name],wattr.typ,wattr),e,battr)]
          | StmtBind(_,PCall(_,_,_,_),_) ->
             state, [stmt]
-         | StmtVal(LId(lhs,Some(typ),lattr),Some(PCall(inst,name,args,attr)),battr) when not (isSimpleType typ) ->
+         | StmtVal(LId(lhs,Some(typ),lattr),Some(PCall(inst,name,args,attr)),battr) when not (VType.isSimpleType typ) ->
             let arg = PId(lhs,lattr) in
             let fixed_attr = unitAttr attr in
-            state, [StmtVal(LId(lhs,Some(typ),lattr),None,battr);StmtVal(LWild(fixed_attr),Some(PCall(inst,name,args@[arg],attr)),battr)]
+            state, [StmtVal(LId(lhs,Some(typ),lattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],attr),battr)]
          | StmtVal(_,Some(PCall(_,_,_,_)),_) ->
             state, [stmt]
-         | StmtBind(lhs,rhs,attr) ->
-            let acc       = newState state [] in
-            let acc',rhs' = Mapper.map_exp_to_stmt BindFunctionCallsAndTuples.mapper acc rhs in
-            let state',acc_stmts = restoreState state acc' in
-            let state' = if CCList.is_empty acc_stmts then state' else reapply state' in
-            let stmts' = StmtBind(lhs,rhs',attr) :: acc_stmts in
-            let state' = if acc_stmts <> [] then reapply state' else state' in
-            state', List.rev stmts'
-         | StmtVal(lhs,Some(rhs),attr) ->
-            let acc       = newState state [] in
-            let acc',rhs' = Mapper.map_exp_to_stmt BindFunctionCallsAndTuples.mapper acc rhs in
-            let state',acc_stmts = restoreState state acc' in
-            let state' = if CCList.is_empty acc_stmts then state' else reapply state' in
-            let stmts' = StmtVal(lhs,Some(rhs'),attr)::acc_stmts in
-            let state' = if acc_stmts <> [] then reapply state' else state' in
-            state', List.rev stmts'
          | StmtReturn(e,attr) ->
             let eattr = GetAttr.fromExp e in
-            begin match eattr.typ with
-               | Some(typ) when not (isSimpleType typ) ->
-                  let stmt' = StmtBind(LId(["_output_"],Some(typ),attr),e,attr) in
-                  reapply state, [stmt';StmtReturn(PUnit(unitAttr eattr),attr)]
-               | _ ->
-                  let acc     = newState state [] in
-                  let acc',e' = Mapper.map_exp_to_stmt BindFunctionCallsAndTuples.mapper acc e in
-                  let state',acc_stmts = restoreState state acc' in
-                  let state' = if CCList.is_empty acc_stmts then state' else reapply state' in
-                  let stmts' = StmtReturn(e',attr)::acc_stmts in
-                  let state' = if acc_stmts <> [] then reapply state' else state' in
-                  state', List.rev stmts'
-            end
+            if not (VType.isSimpleOpType eattr.typ) then
+               let stmt' = StmtBind(LId(["_output_"],eattr.typ,attr),e,attr) in
+               reapply state, [stmt';StmtReturn(PUnit(unitAttr eattr),attr)]
+            else
+               state, [stmt]
+
          | _ -> state, [stmt]
 
 
@@ -990,8 +945,7 @@ let pass1 =
    |> Mapper.seq UnlinkTypes.mapper
    |> Mapper.seq SplitMem.mapper
    |> Mapper.seq Simplify.mapper
-   |> Mapper.seq SimplifyTupleAssign.mapper
-   |> Mapper.seq LHSTupleBinding.mapper
+   |> Mapper.seq BindComplexExpressions.mapper
    |> Mapper.seq SimplifyIfExp.mapper
 
 let pass2 =

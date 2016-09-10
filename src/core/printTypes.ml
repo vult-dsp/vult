@@ -140,7 +140,9 @@ and expressionBuff buffer (exp:exp) =
       append buffer ")"
    | PUnit(_) -> append buffer "()"
    | PTuple(elems,_) ->
-      expressionListBuff buffer elems
+      append buffer "(";
+      expressionListBuff buffer elems;
+      append buffer ")"
    | PGroup(e1,_) ->
       append buffer "(";
       expressionBuff buffer e1;

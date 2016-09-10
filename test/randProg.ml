@@ -29,7 +29,7 @@ type 'a creator  = state -> 'a ;;
 let default_state =
    {
       max_array_size = 100;
-      max_tuple_size = 5;
+      max_tuple_size = 3;
       max_int        = 100;
       max_real       = 100.0;
       get_array_type = true;

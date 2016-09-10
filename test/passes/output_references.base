@@ -11,19 +11,17 @@
       if(_cond_5)
          /* scope_1 */
          {
-            val (_tplbind_3:tuple(real,real));
-            val (_tuple_6:tuple(real,real)) = 0.,0.;
-            (_tplbind_3:tuple(real,real)) = _tuple_6;
-            (_output_:tuple(real,real)) = _tplbind_3;
+            val (_tuple_3:tuple(real,real));
+            (_tuple_3:tuple(real,real)) = (0.,0.);
+            (_output_:tuple(real,real)) = _tuple_3;
             return ();
          }
       else
          /* scope_2 */
          {
-            val (_tplbind_4:tuple(real,real));
-            val (_tuple_7:tuple(real,real)) = 1.,1.;
-            (_tplbind_4:tuple(real,real)) = _tuple_7;
-            (_output_:tuple(real,real)) = _tplbind_4;
+            val (_tuple_4:tuple(real,real));
+            (_tuple_4:tuple(real,real)) = (1.,1.);
+            (_output_:tuple(real,real)) = _tuple_4;
             return ();
          }
    }

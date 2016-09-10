@@ -290,7 +290,7 @@ let rec getTupleName (typ:t) : string =
    match !typ with
    | TId(id,_) -> join "_" id
    | TComposed(id,elems,_) ->
-      (join "_" id)::(List.map getTupleName elems)
+      (join "_" id)::"$"::(List.map getTupleName elems)@["$"]
       |> join "_"
    | TLink(e) -> getTupleName e
    | TArrow(e1,e2,_) -> (getTupleName e1)^"__"^(getTupleName e2)
@@ -301,6 +301,19 @@ let arrayTypeAndSize typ =
    match !typ with
    | TComposed(["array"],[t;{contents = TInt(n,_)}],_) -> t, n
    | _ -> failwith "arraySize: invalid input"
+
+let isSimpleType (typ:t) : bool =
+   match !typ with
+   | TId(["real"],_) -> true
+   | TId(["int"],_) -> true
+   | TId(["bool"],_) -> true
+   | TId(["unit"],_) -> true
+   | _ -> false
+
+let isSimpleOpType (typ:t option) : bool =
+   match typ with
+   | Some(t) -> isSimpleType t
+   | _ -> true
 
 (** Constant types *)
 module Constants = struct

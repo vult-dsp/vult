@@ -289,7 +289,19 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let elems' = convertExpList p elems in
       let stmts = List.mapi (fun i e -> CSBind(getRecordField lhs' i,e)) elems' in
       CSBlock(stmts)
-   (* special for c/c++ to copy arrays *)
+   (* special for c/c++ initialize array variables *)
+   | StmtBind(LId(lhs,Some(typ),_),PArray(elems,_),_) when p.ccode ->
+      let elems' = convertExpList p elems in
+      let atype,_ = VType.arrayTypeAndSize typ in
+      let lhs' = convertVarId p lhs in
+      begin match convertType p atype with
+      | CTSimple(typ_t) ->
+         let fn = Replacements.getFunction p.repl "set" typ_t in
+         let stmts = List.mapi (fun i e -> CSBind(CLWild,CECall(fn,[CEVar(lhs');CEInt(i);e]))) elems' in
+         CSBlock(stmts)
+      | _ -> failwith ""
+      end
+   (* special for c/c++ to copy array variables *)
    | StmtBind(LId(lhs,_,{ typ = Some(typ)}),rhs,_) when p.ccode && isArray typ ->
       let rhs' = convertExp p rhs in
       let atyp,size = VType.arrayTypeAndSize typ in
