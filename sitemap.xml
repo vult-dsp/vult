@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>http://modlfo.github.io/vult/</loc>
+    <lastmod>2016-12-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://modlfo.github.io/vult/tutorials/basics/</loc>
+    <lastmod>2016-12-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://modlfo.github.io/vult/tutorials/functions/</loc>
+    <lastmod>2016-11-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://modlfo.github.io/vult/tutorials/dsp/</loc>
+    <lastmod>2016-10-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://modlfo.github.io/vult/blog/lua/</loc>
+    <lastmod>2016-09-08T22:43:03+03:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://modlfo.github.io/vult/tutorials/oversampling/</loc>
+    <lastmod>2016-09-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://modlfo.github.io/vult/blog/pd-teensy/</loc>
+    <lastmod>2016-07-13T20:10:57+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://modlfo.github.io/vult/blog/new-site/</loc>
+    <lastmod>2016-07-12T20:21:43+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://modlfo.github.io/vult/blog/</loc>
+    <lastmod>2016-07-12T17:59:24+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://modlfo.github.io/vult/overview/</loc>
+    <lastmod>2016-07-12T17:59:24+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://modlfo.github.io/vult/tutorials/</loc>
+    <lastmod>2016-07-12T17:59:24+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://modlfo.github.io/vult/demo/</loc>
+    <lastmod>2016-07-12T17:54:12+02:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>http://modlfo.github.io/vult/tutorials/generate-c/</loc>
+    <lastmod>2015-07-12T21:24:58+02:00</lastmod>
+  </url>
+  
+</urlset>

@@ -1,7 +1,7 @@
 function makeEditorBox(name,width,height){
    var editor_div = document.getElementById(name);
    var editor = ace.edit(name);
-   editor.setTheme("ace/theme/monokai");
+   editor.setTheme("ace/theme/clouds");
    editor.getSession().setMode("ace/mode/vult");
    var height_px = editor.session.getLength()*20;
    editor_div.style.height = height;
@@ -13,7 +13,7 @@ function makeEditorBox(name,width,height){
 function makeCodeBox(name,width,mode){
    var editor_div = document.getElementById(name);
    var editor = ace.edit(name);
-   editor.setTheme("ace/theme/monokai");
+   editor.setTheme("ace/theme/clouds");
    editor.getSession().setMode(mode);
    editor.setReadOnly(true);
    editor.setHighlightActiveLine(false);
@@ -34,3 +34,5 @@ var all_c_editors = document.getElementsByClassName("c_code");
 for(var i=0;i<all_c_editors.length;i=i+1){
    makeCodeBox(all_c_editors[i].id,"650px","ace/mode/c_cpp");
 }
+
+

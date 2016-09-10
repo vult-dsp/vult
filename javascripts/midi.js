@@ -61,9 +61,9 @@ window.addEventListener('load', function() {
 
 // UI elements
 nx.onload = function() {
-  nx.colorize("#FF3C3C"); // sets accent (default)
+  nx.colorize("#DBBB2D"); // sets accent (default)
   nx.colorize("border", "#222222");
-  nx.colorize("fill", "#474747");
+  nx.colorize("fill", "#6E6E6E");
   keyboard_input.octaves = 5;
   keyboard_input.init();
 
