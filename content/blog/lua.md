@@ -7,7 +7,7 @@ topics = []
 layout = "post"
 +++
 
-I have been keeping an eye in LuaJIT (http://luajit.org) for some time. It's a very interesting project and I have read very good things about it. Some time ago I made a small benchmark comparing an optimized algorithm written in C++11 against a lazy coded version in OCaml and LuaJIT. In case you are curious here are the results:
+I have been keeping an eye on LuaJIT (http://luajit.org) for some time. It's a very interesting project and I have read very good things about it. Some time ago I made a small benchmark comparing an optimized algorithm written in C++11 against a lazy coded version in OCaml and LuaJIT. In case you are curious here are the results:
 
 | Language | Execution Time | Lines of Code|
 |----------|----------------|--------------|
@@ -19,7 +19,7 @@ Here's a chart that plots the lines of code against the execution time.
 
 {{< figure src="/images/benchmark1.svg" title="" >}}
 
-I have to remark again: *The OCaml and Lua code were not written with optimization in mind*. My intention was to see how fast they program could go without putting to much effort coding.
+I have to remark again: *The OCaml and Lua code were not written with optimization in mind*. My intention was to see how fast they program could go without putting too much effort coding.
 
 One can see that the C++ code is much larger. On the other hand, the OCaml code is very compact. The main reason was that in OCaml I used algebraic data types which neither Lua or C++ have (https://en.wikipedia.org/wiki/Algebraic_data_type). Therefore, all the complex data types needed to be implemented with classes or tables in the case of Lua.
 
