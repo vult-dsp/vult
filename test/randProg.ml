@@ -338,8 +338,8 @@ let rec newLExpDecl state typ =
 
 let rec newLExpBind state typ =
    pick_one state [
-      (* new variable *)
-      always, normal_p, (fun state ->
+      (* pick variable *)
+      (hasType typ), high_p, (fun state ->
             let name = pickVar state typ in
             LId(name,None,emptyAttr), state);
 

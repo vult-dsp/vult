@@ -987,9 +987,9 @@ let inferPass name (state,stmts) =
 
 let pass1 =
    ReportUnboundType.mapper
-   |> Mapper.seq Simplify.mapper
    |> Mapper.seq UnlinkTypes.mapper
    |> Mapper.seq SplitMem.mapper
+   |> Mapper.seq Simplify.mapper
    |> Mapper.seq SimplifyTupleAssign.mapper
    |> Mapper.seq LHSTupleBinding.mapper
    |> Mapper.seq SimplifyIfExp.mapper
