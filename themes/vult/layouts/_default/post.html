@@ -1,0 +1,26 @@
+<link rel="stylesheet" type="text/css" href="../../css/vult.css" media="screen">
+
+<div class="header">
+	<center><img src="../../images/VultH.png" alt="Vult" title="Vult" align="middle"></center>
+</div>
+
+{{ partial "menu.html" . }}
+
+<div class="content">
+    <h2>{{ .Title }}</h2>
+  {{ .Content }}
+</div>
+
+<script src="https://apis.google.com/js/plusone.js"></script>
+
+<center><div id="comments"></div></center>
+<script>
+gapi.comments.render('comments', {
+    href: window.location,
+    width: '624',
+    first_party_property: 'BLOGGER',
+    view_type: 'FILTERED_POSTMOD'
+});
+</script>
+
+{{ partial "footer.html" . }}

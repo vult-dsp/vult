@@ -1,0 +1,6 @@
+baseurl = "http://modlfo.github.io/vult/"
+languageCode = "en-us"
+title = "Vult by modlfo"
+theme = "vult"
+
+relativeURLs = "true"

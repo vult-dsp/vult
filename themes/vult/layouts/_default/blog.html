@@ -1,0 +1,19 @@
+<link rel="stylesheet" type="text/css" href="../css/vult.css" media="screen">
+<link rel="shortcut icon" href="../images/favicon.ico"/>
+
+<div class="header">
+    <center><img src="../images/VultH.png" alt="Vult" title="Vult" align="middle"></center>
+</div>
+
+{{ partial "menu.html" . }}
+
+<div class="content">
+    <div class="blog_list">
+        <ul>
+            {{ range where .Site.Pages "Section" "blog" }}
+                {{ .Render "post_li" }}
+            {{ end }}
+        </ul>
+    </div>
+
+</div>

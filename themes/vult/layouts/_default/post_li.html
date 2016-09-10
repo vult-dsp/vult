@@ -1,0 +1,1 @@
+<li><div style="display:inline-block; width:100px"><time>{{ with .Site.Params.dateFormat }}{{ $.Date.Format . }}{{ else }}{{ .Date.Format "02 Jan 2006" }}{{ end }}</time></div> - <a href="{{ .Permalink }}">{{ .Title }}</a></li>
