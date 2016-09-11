@@ -60,7 +60,7 @@ $ js_of_ocaml vult_node.byte
 ```
 ### Basics
 
-To generate C/C++ code you with floating point arithmetics you have execute vult as follows:
+To generate C/C++ code with floating point arithmetic you have to execute vult as follows:
 
 ```
 $ ./vultc -ccode infile.vult -o outfile
