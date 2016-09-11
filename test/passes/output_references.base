@@ -6,9 +6,9 @@
 
    fun Output_references.foo(x:int,_output_:tuple(real,real)) : unit /* scope_0 */
    {
-      val (_cond_5:bool);
-      (_cond_5:bool) = (x > 0);
-      if(_cond_5)
+      val (_cond_7:bool);
+      (_cond_7:bool) = (x > 0);
+      if(_cond_7)
          /* scope_1 */
          {
             val (_tuple_3:tuple(real,real));
@@ -19,9 +19,9 @@
       else
          /* scope_2 */
          {
-            val (_tuple_4:tuple(real,real));
-            (_tuple_4:tuple(real,real)) = (1.,1.);
-            (_output_:tuple(real,real)) = _tuple_4;
+            val (_tuple_5:tuple(real,real));
+            (_tuple_5:tuple(real,real)) = (1.,1.);
+            (_output_:tuple(real,real)) = _tuple_5;
             return ();
          }
    }

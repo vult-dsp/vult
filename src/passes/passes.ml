@@ -325,6 +325,14 @@ module BindComplexExpressions = struct
 
    let makeBind lhs rhs = StmtBind(lhs,rhs,emptyAttr)
 
+   let isUselessBind lhs rhs =
+      match lhs, rhs with
+      | LId _ , PId _ -> true
+      | _ -> false
+
+   let hasLessThanOneBinding stmts =
+      List.length stmts < 3
+
    let createAssignments tick kind lhs rhs =
       let lhs_id = GetIdentifiers.fromLhsExpList lhs in
       let rhs_id = GetIdentifiers.fromExpList rhs in
@@ -390,10 +398,6 @@ module BindComplexExpressions = struct
       Mapper.makeExpander "BindComplexExpressions.stmt_x" @@ fun state stmt ->
          match stmt with
          (* avoids rebinding complex expressions *)
-         | StmtVal(LId(_,_,_),Some(_),_) ->
-            state, [stmt]
-         | StmtBind(LId(_,_,_),_,_) ->
-            state, [stmt]
          | StmtReturn(PId(_,_),_) ->
             state, [stmt]
          (* simplify tuple assigns  *)
@@ -415,25 +419,28 @@ module BindComplexExpressions = struct
             let acc       = newState state [] in
             let acc',rhs' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc rhs in
             let state',acc_stmts = restoreState state acc' in
-            let state' = if CCList.is_empty acc_stmts then state' else reapply state' in
-            let stmts' = StmtBind(lhs,rhs',attr) :: acc_stmts in
-            let state' = if acc_stmts <> [] then reapply state' else state' in
-            state', List.rev stmts'
+            if isUselessBind lhs rhs' && hasLessThanOneBinding acc_stmts then
+               state, [stmt]
+            else
+               let stmts'   = StmtBind(lhs,rhs',attr) :: acc_stmts in
+               let state'   = if acc_stmts <> [] then reapply state' else state' in
+               state', List.rev stmts'
 
          | StmtVal(lhs,Some(rhs),attr) ->
             let acc       = newState state [] in
             let acc',rhs' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc rhs in
             let state',acc_stmts = restoreState state acc' in
-            let state' = if CCList.is_empty acc_stmts then state' else reapply state' in
-            let stmts' = StmtVal(lhs,None,attr)::StmtBind(lhs,rhs',attr)::acc_stmts in
-            let state' = if acc_stmts <> [] then reapply state' else state' in
-            state', List.rev stmts'
+            if isUselessBind lhs rhs' && hasLessThanOneBinding acc_stmts then
+               state, [stmt]
+            else
+               let stmts' = StmtVal(lhs,None,attr)::StmtBind(lhs,rhs',attr)::acc_stmts in
+               let state' = if acc_stmts <> [] then reapply state' else state' in
+               state', List.rev stmts'
 
          | StmtReturn(e,attr) ->
             let acc     = newState state [] in
             let acc',e' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc e in
             let state',acc_stmts = restoreState state acc' in
-            let state' = if CCList.is_empty acc_stmts then state' else reapply state' in
             let stmts' = StmtReturn(e',attr)::acc_stmts in
             let state' = if acc_stmts <> [] then reapply state' else state' in
             state', List.rev stmts'
@@ -728,26 +735,29 @@ module SimplifyIfExp = struct
       | StmtBind(lhs,PIf(cond,then_,else_,ifattr),attr) ->
          reapply state,[StmtIf(cond,StmtBind(lhs,then_,ifattr),Some(StmtBind(lhs,else_,ifattr)),attr)]
       | StmtVal(lhs,Some(PIf(cond,then_,else_,ifattr)),attr) ->
-         let decl = StmtVal(lhs,None,attr) in
-         let if_ = StmtIf(cond,StmtBind(lhs,then_,ifattr),Some(StmtBind(lhs,else_,ifattr)),attr) in
+         let decl      = StmtVal(lhs,None,attr) in
+         let if_       = StmtIf(cond,StmtBind(lhs,then_,ifattr),Some(StmtBind(lhs,else_,ifattr)),attr) in
          reapply state,[decl;if_]
       | StmtBind(lhs,rhs,attr) ->
          let acc       = newState state [] in
          let acc',rhs' = Mapper.map_exp_to_stmt BindIfExp.mapper acc rhs in
          let state',acc_stmts = restoreState state acc' in
          let stmts'    = StmtBind(lhs,rhs',attr)::acc_stmts in
+         let state'    = if acc_stmts <> [] then reapply state' else state' in
          state', List.rev stmts'
       | StmtVal(lhs,Some(rhs),attr) ->
          let acc       = newState state [] in
          let acc',rhs' = Mapper.map_exp_to_stmt BindIfExp.mapper acc rhs in
          let state',acc_stmts = restoreState state acc' in
          let stmts'    = StmtBind(lhs,rhs',attr)::StmtVal(lhs,None,attr)::acc_stmts in
+         let state'    = if acc_stmts <> [] then reapply state' else state' in
          state', List.rev stmts'
       | StmtReturn(e,attr) ->
          let acc       = newState state [] in
-         let acc',e' = Mapper.map_exp_to_stmt BindIfExp.mapper acc e in
+         let acc',e'   = Mapper.map_exp_to_stmt BindIfExp.mapper acc e in
          let state',acc_stmts = restoreState state acc' in
          let stmts'    = StmtReturn(e',attr)::acc_stmts in
+         let state'    = if acc_stmts <> [] then reapply state' else state' in
          state', List.rev stmts'
       | _ -> state, [stmt]
 
@@ -939,8 +949,8 @@ let pass1 =
    |> Mapper.seq UnlinkTypes.mapper
    |> Mapper.seq SplitMem.mapper
    |> Mapper.seq Simplify.mapper
-   |> Mapper.seq BindComplexExpressions.mapper
    |> Mapper.seq SimplifyIfExp.mapper
+   |> Mapper.seq BindComplexExpressions.mapper
    |> Mapper.seq ProcessArrays.mapper
 
 let pass2 =
