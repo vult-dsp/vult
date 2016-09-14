@@ -170,6 +170,9 @@ let printFunArg (ntype,name) : Pla.t =
    | Var(typ) ->
       let tdescr = printTypeDescr typ in
       {pla|<#tdescr#> <#name#s>|pla}
+   | Ref(CTArray(typ,size)) ->
+      let tdescr = printTypeDescr typ in
+      {pla|<#tdescr#> (&<#name#s>)[<#size#i>]|pla}
    | Ref(typ) ->
       let tdescr = printTypeDescr typ in
       {pla|<#tdescr#> &<#name#s>|pla}
@@ -261,8 +264,9 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    (* Printf while(cond) ... *)
    | CSWhile(cond,body) ->
       let tcond = printExp params cond in
+      let tcond = if isSimple cond then Pla.parenthesize tcond else tcond in
       let tbody = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
-      Some({pla|while(<#tcond#>)<#tbody#>|pla})
+      Some({pla|while<#tcond#><#tbody#>|pla})
 
    (* Prints a block of statements*)
    | CSBlock(elems) ->

@@ -18,6 +18,8 @@ type state =
       get_if_exp : bool;
 
       vars           : id list TypeMap.t;
+
+      return_type   : VType.t option;
    }
 
 type condition   = state -> bool
@@ -34,19 +36,20 @@ let default_state =
       max_real       = 100.0;
       get_array_type = true;
       get_tuple_type = true;
-      max_type_levels = 2;
+      max_type_levels = 1;
       nest_prob       = 1.0;
       vars            = TypeMap.empty;
       get_if_exp      = true;
+      return_type     = None;
    }
 
 let rec fold_init f s n =
    if n > 0 then
-      let e,s' = f s in
-      let e',s' = fold_init f s' (n-1) in
-      e :: e',s'
+      let s',e = f s in
+      let s',e' = fold_init f s' (n-1) in
+      s',e :: e'
    else
-      [],s
+      s,[]
 
 let rec get_elem state min max (n:float) (elems:(condition * probability * 'a creator) list) =
    match elems with
@@ -306,8 +309,12 @@ and newExpList n state typ =
    else (newExp state typ) :: (newExpList (n-1) state typ)
 
 let rec getName state =
-   let number = Random.int 1000 in
-   let name = ["tmp_"^(string_of_int number)] in
+   let random_char _ =
+      let n = Random.int (Char.code 'z' - Char.code 'a') + Char.code 'a' in
+      Char.chr n
+   in
+   let number = String.init 10 random_char in
+   let name = ["tmp_"^number] in
    if hasVar state name then
       getName state
    else name
@@ -359,6 +366,17 @@ let rec newLExpBind state typ =
             LTuple(List.rev lhs_elems,emptyAttr), state')
    ]
 
+let returnType state =
+   match state.return_type with
+   | Some(t) -> state, t
+   | _ ->
+      let t = newType state in
+      let state' = {state with return_type = Some(t) } in
+      state', t
+
+let restoreVars new_vars old =
+   { new_vars with vars = old.vars }
+
 let rec newStmt state =
    pick_one state [
       (* val *)
@@ -367,13 +385,13 @@ let rec newStmt state =
             let lhs,state' = newLExpDecl state t in
             (* here use the old state to not pick the new variable *)
             let rhs = newExp state t in
-            StmtVal(lhs,Some(rhs),emptyAttr), state'
+            state', StmtVal(lhs,Some(rhs),emptyAttr)
          );
       always, low_p, (fun state ->
             let t = newType state in
             let lhs,state' = newLExpDecl state t in
             let lhs' = LTyped(lhs,t,emptyAttr) in
-            StmtVal(lhs',None,emptyAttr), state'
+            state', StmtVal(lhs',None,emptyAttr)
          );
       (* mem *)
       always, normal_p, (fun state ->
@@ -382,13 +400,15 @@ let rec newStmt state =
             (* here use the new state to make possible picking the new variable *)
             let rhs = newExp state' t in
             let lhs' = LTyped(lhs,t,emptyAttr) in
-            StmtMem(lhs',None,Some(rhs),emptyAttr), state');
+            state', StmtMem(lhs',None,Some(rhs),emptyAttr)
+         );
       always, low_p, (fun state ->
             let t = newType state in
             let lhs,state' = newLExpDecl state t in
             (* here use the new state to make possible picking the new variable *)
             let lhs' = LTyped(lhs,t,emptyAttr) in
-            StmtMem(lhs',None,None,emptyAttr), state');
+            state', StmtMem(lhs',None,None,emptyAttr)
+         );
       (* bind *)
       always, normal_p,(fun state ->
             let t = newType state in
@@ -396,16 +416,39 @@ let rec newStmt state =
                let lhs,state' = newLExpBind state t in
                (* here use the new state to make possible picking the new variable *)
                let rhs = newExp state' t in
-               StmtBind(lhs,rhs,emptyAttr), state'
+               state', StmtBind(lhs,rhs,emptyAttr)
             else newStmt state);
-   ]
-and newStmtList n state =
-   fold_init newStmt state n
+      (* return *)
+      always, low_p,(fun state ->
+            let state',t = returnType state in
+            let e = newExp state t in
+            state', StmtReturn(e,emptyAttr)
+         );
+      (* if statements *)
+      always, low_p, (fun state ->
+            let cond = newExp state VType.Constants.bool_type in
+            let state',e1 = newStmtList 3 state in
+            let state',e2 = newStmtList 3 (restoreVars state' state) in
+            let state' = restoreVars state' state in
+            state', StmtIf(cond,StmtBlock(None,e1,emptyAttr),Some(StmtBlock(None,e2,emptyAttr)),emptyAttr));
+      always, low_p, (fun state ->
+            let cond = newExp state VType.Constants.bool_type in
+            let state',e1 = newStmtList 3 state in
+            let state' = restoreVars state' state in
+            state', StmtIf(cond,StmtBlock(None,e1,emptyAttr),None,emptyAttr));
+      always, low_p, (fun state ->
+            let cond = newExp state VType.Constants.bool_type in
+            let state',e1 = newStmtList 3 state in
+            let state' = restoreVars state' state in
+            state', StmtWhile(cond,StmtBlock(None,e1,emptyAttr),emptyAttr));
 
+   ]
+and newStmtList n state  : state * stmt list=
+   fold_init newStmt state n
 
 let newFunction () =
    let name = ["foo_" ^ (string_of_int (Random.int 10000))] in
-   let stmts,_ = newStmtList 10 default_state in
+   let _,stmts = newStmtList 100 default_state in
    StmtFun(name,[],StmtBlock(None,stmts,emptyAttr),None,emptyAttr)
 
 let test seed =

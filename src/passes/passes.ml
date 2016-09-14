@@ -858,7 +858,7 @@ module ReturnReferences = struct
          | StmtReturn(e,attr) ->
             let eattr = GetAttr.fromExp e in
             if not (VType.isSimpleOpType eattr.typ) then
-               let stmt' = StmtBind(LId(["_output_"],eattr.typ,attr),e,attr) in
+               let stmt' = StmtBind(LId(["_output_"],eattr.typ,eattr),e,attr) in
                reapply state, [stmt';StmtReturn(PUnit(unitAttr eattr),attr)]
             else
                state, [stmt]

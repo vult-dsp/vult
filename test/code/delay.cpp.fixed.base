@@ -252,7 +252,7 @@ int Delay_mono_noteOff(Delay__ctx_type_9 &_ctx, int n){
    if(_cond_7){
       return _ctx.pre;
    }
-   while(((i < 4) && bool_not(found))){
+   while((i < 4) && bool_not(found)){
       uint8_t _cond_8;
       _cond_8 = (int_get(_ctx.notes,i) == n);
       if(_cond_8){
@@ -264,7 +264,7 @@ int Delay_mono_noteOff(Delay__ctx_type_9 &_ctx, int n){
    if(found){
       int k;
       k = (pos + 1);
-      while((k < 4)){
+      while(k < 4){
          int_set(_ctx.notes,(k + (-1)),int_get(_ctx.notes,k));
          k = (k + 1);
       }

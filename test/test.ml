@@ -250,7 +250,7 @@ module RandomCompileTest = struct
 
    let compileFile (file:string) =
       let basename = Filename.chop_extension (Filename.basename file) in
-      let cmd = Printf.sprintf "gcc -Wno-div-by-zero -Wno-narrowing -Wno-constant-logical-operand -Wno-division-by-zero -Wno-unused-value -Wno-tautological-compare -I%s -c %s -o %s" (in_test_directory "../runtime") file basename in
+      let cmd = Printf.sprintf "gcc -Wno-return-type -Wno-div-by-zero -Wno-narrowing -Wno-constant-logical-operand -Wno-division-by-zero -Wno-unused-value -Wno-tautological-compare -I%s -c %s -o %s" (in_test_directory "../runtime") file basename in
       if Sys.command cmd <> 0 then
          assert_failure ("Failed to compile "^file)
 
