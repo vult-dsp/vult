@@ -452,44 +452,75 @@ module BindComplexExpressions = struct
 
 end
 
-module ReportUnboundType = struct
+module ReportUnsupportedTypes = struct
 
-   let reportError (name:id) (attr:attr) =
+   let reportUnbound (name:id) (attr:attr) =
       let msg = Printf.sprintf "The type of variable '%s' cannot be infered. Add a type annotation." (idStr name) in
       Error.raiseError msg attr.loc
 
-   let isUnbound attr =
-      match attr.typ with
-      | None -> false
-      | Some(typ) -> VType.isUnbound  typ
+   let reportUnsupportedArray (typ:VType.t) (name:id) (attr:attr) =
+      let msg = Printf.sprintf "The type '%s' of variable '%s' is not supported. Arrays can only contain basic types." (PrintTypes.typeStr typ) (idStr name) in
+      Error.raiseError msg attr.loc
+
+   let reportUnsupportedTuple (typ:VType.t) (name:id) (attr:attr) =
+      let msg = Printf.sprintf "The type '%s' of variable '%s' is not supported. Tuples can only contain basic types." (PrintTypes.typeStr typ) (idStr name) in
+      Error.raiseError msg attr.loc
+
+   let isComplexArray typ =
+      if VType.isArray typ then
+         let t, _ = VType.arrayTypeAndSize typ in
+         not (VType.isSimpleType t)
+      else false
+
+   let isComplexTuple typ =
+      if VType.isTuple typ then
+         let types = VType.getSubTypes typ in
+         List.exists (fun st -> not (VType.isSimpleType st)) types
+      else false
+
 
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
-      Mapper.make "ReportUnboundType.lhs_exp" @@ fun state exp ->
+      Mapper.make "ReportUnsupportedTypes.lhs_exp" @@ fun state exp ->
       match exp with
       | LId(id,None,attr) ->
-         reportError id attr
+         reportUnbound id attr
       | LId(id,Some(t),attr) when VType.isUnbound t ->
-         reportError id attr
+         reportUnbound id attr
+      | LId(id,Some(t),attr) when isComplexArray t ->
+         reportUnsupportedArray t id attr
+      | LId(id,Some(t),attr) when isComplexTuple t ->
+         reportUnsupportedTuple t id attr
       | _ -> state, exp
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
-      Mapper.make "ReportUnboundType.exp" @@ fun state exp ->
+      Mapper.make "ReportUnsupportedTypes.exp" @@ fun state exp ->
       match exp with
-      | PId(id,attr) when isUnbound attr ->
-         reportError id attr
+      | PId(id,({ typ = Some(t) } as attr)) when VType.isUnbound t ->
+         reportUnbound id attr
       | _ ->
          let attr = GetAttr.fromExp exp in
-         if isUnbound attr then
+         match attr.typ with
+         | Some(t) when VType.isUnbound t ->
             let msg = Printf.sprintf "The type of this expression could not be infered. Add a type annotation." in
             Error.raiseError msg (attr.loc)
-         else
+         | Some(t) when isComplexArray t ->
+            let msg = Printf.sprintf "The type '%s' of this expression is not supported. Arrays can only contain basic types." (PrintTypes.typeStr t) in
+            Error.raiseError msg attr.loc
+         | Some(t) when isComplexTuple t ->
+            let msg = Printf.sprintf "The type '%s' of this expression is not supported. Tuples can only contain basic types." (PrintTypes.typeStr t) in
+            Error.raiseError msg attr.loc
+         | _ ->
             state, exp
 
    let typed_id : ('a Env.t,typed_id) Mapper.mapper_func =
-      Mapper.make "ReportUnboundType.typed_id" @@ fun state t ->
+      Mapper.make "ReportUnsupportedTypes.typed_id" @@ fun state t ->
       match t with
       | TypedId(id,typ,_,attr) when VType.isUnbound typ ->
-         reportError id attr
+         reportUnbound id attr
+      | TypedId(id,typ,_,attr) when isComplexArray typ ->
+         reportUnsupportedArray typ id attr
+      | TypedId(id,typ,_,attr) when isComplexTuple typ ->
+         reportUnsupportedTuple typ id attr
       | _ -> state, t
 
    let mapper = Mapper.{ default_mapper with lhs_exp; exp; typed_id; }
@@ -945,8 +976,7 @@ let inferPass name (state,stmts) =
    state',stmts
 
 let pass1 =
-   ReportUnboundType.mapper
-   |> Mapper.seq UnlinkTypes.mapper
+   UnlinkTypes.mapper
    |> Mapper.seq SplitMem.mapper
    |> Mapper.seq Simplify.mapper
    |> Mapper.seq SimplifyIfExp.mapper
@@ -965,6 +995,7 @@ let pass3 =
 
 let pass4 =
    CollectTuples.mapper
+   |> Mapper.seq ReportUnsupportedTypes.mapper
 
 
 let rec applyPassRepeat name apply pass pass_name (state,stmts) =
