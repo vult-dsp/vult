@@ -131,7 +131,7 @@ Executable "vultjs"
     vult_generators,
     containers,
     js_of_ocaml.syntax,
-    js_of_ocaml,
+    js_of_ocaml
 
 Executable "vultdebug"
   Path: src
