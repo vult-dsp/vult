@@ -16,6 +16,30 @@ Logo design by: John Klimt https://www.facebook.com/JohnKlimt
 
 ## Installing
 
+There are three ways of getting the Vult compiler:
+- using the npm (node.js) package manager
+- building from source
+- downloading the released binaries
+
+The npm (node.js) version is updated frequently based on the trunk branch of this repository. This is the prefered mode of installing if you don't want to build form the sources. The binary version (native executable) is updated every minor version of Vult.
+
+If you want to get the latest changes as soon as possible then building from the sources is the recommended method.
+
+## Installing with npm
+
+You need to have node.js and npm installed.
+
+```
+$ npm install vult -g
+```
+This will install provide `vultc` command in your system. If `vultc` is not available for any reason. You run the main file with node as follows:
+```
+$ node vultjs.js
+```
+Alternatively you can download the file `vultjs.js` from https://github.com/modlfo/vultjs and run it with node.
+
+## Compile from Source
+
 ### Requirements
 
 - Ocaml compiler >= 4.02
