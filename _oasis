@@ -118,6 +118,21 @@ Executable "vultc"
     vult_generators,
     containers
 
+Executable "vultjs"
+  Path: src
+  MainIs: vultjs.ml
+  CompiledObject: byte
+  BuildDepends:
+    vult,
+    vult_parser,
+    vult_util,
+    vult_core,
+    vult_passes,
+    vult_generators,
+    containers,
+    js_of_ocaml.syntax,
+    js_of_ocaml,
+
 Executable "vultdebug"
   Path: src
   MainIs: vultc.ml

@@ -26,17 +26,18 @@ THE SOFTWARE.
 
 open TypesVult
 
-let writeFile (code:string) (file:string) : unit =
-   let oc = open_out file in
-   Printf.fprintf oc "%s\n" code;
-   close_out oc
 
 let writeOutput (args:arguments) (files:(Pla.t * string) list) : string =
    let write_files = args.output<>"" in
    let txt = List.fold_left
          (fun s (code_t,ext) ->
              let code = Pla.print code_t in
-             let () = if write_files then writeFile code (args.output^"."^ext) in
+             let () =
+               if write_files then
+                  let filename = args.output^"."^ext in
+                  if not (FileIO.write filename code) then
+                     failwith ("Failed to write file "^filename)
+            in
              s^"\n"^code)
          "" files
    in

@@ -51,24 +51,15 @@ let errorLocationIndicator (line:string) (location:Loc.t) : string =
       (String.make col_start ' ')
       pointer
 
-(** Reads all the lines of a file *)
-let readFile (name:string) : string =
-   let buffer = Buffer.create 128 in
-   let i = open_in name in
-   try
-      while true do
-         Buffer.add_char buffer (input_char i)
-      done; ""
-   with
-   | End_of_file ->
-      close_in i;
-      Buffer.contents buffer
-
 (** Returns the lines corresponding to the given location *)
 let getErrorLines (location:Loc.t) : string =
    let lines =
       match location.Loc.source with
-      | Loc.File(filename) -> CCString.lines (readFile filename)
+      | Loc.File(filename) ->
+         begin match FileIO.read filename with
+         | Some(contents) -> CCString.lines contents
+         | _ -> failwith ("Could not open the file "^filename)
+         end
       | Loc.Text(code) -> CCString.lines code
    in
    let result =

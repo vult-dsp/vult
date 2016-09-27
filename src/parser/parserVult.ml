@@ -827,11 +827,13 @@ let parseBuffer (file:string) (buffer) : parser_results =
 
 (** Parses a file containing a list of statements and returns the results *)
 let parseFile (filename:string) : parser_results =
-   let chan   = open_in filename in
-   let buffer = Stream.fromChannel chan filename in
-   let result = parseBuffer filename buffer in
-   let _      = close_in chan in
-   result
+   match FileIO.read filename with
+   | Some(contents) ->
+      let buffer = Stream.fromString contents in
+      let result = parseBuffer filename buffer in
+      result
+   | None ->
+      failwith ("Could not open the file "^filename)
 
 (** Parses a string containing a list of statements and returns the results *)
 let parseString (text:string) : parser_results =
