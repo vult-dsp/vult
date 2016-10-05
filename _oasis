@@ -130,7 +130,7 @@ Executable "vultjs"
     vult_passes,
     vult_generators,
     containers,
-    js_of_ocaml.syntax,
+    js_of_ocaml.ppx,
     js_of_ocaml
 
 Executable "vultdebug"
@@ -154,7 +154,7 @@ Executable "vult_node"
   Build$: flag(js)
   BuildDepends:
     vult,
-    js_of_ocaml.syntax,
+    js_of_ocaml.ppx,
     js_of_ocaml,
     containers
 

@@ -40,11 +40,11 @@ let fs : fs t = Unsafe.fun_call (Unsafe.js_expr "require") [|Unsafe.inject (stri
 
 let read_fn (path:string) : string option =
    let buffer   = fs##readFileSync (string path) in
-   let contents = to_string (buffer##toString ()) in
-   Some(contents)
+   let contents =  buffer##toString in
+   Some(to_string contents)
 
 let write_fn (path:string) (text:string) : bool =
-   let _ = fs##writeFileSync ((string path),(string text)) in
+   let _ = fs##writeFileSync (string path) (string text) in
    true
 ;;
 

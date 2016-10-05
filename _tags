@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 9ccca80f30fbdcf5dff6628dc560db20)
+# DO NOT EDIT (digest: 17ae4889edcac25e5b3c188125f8b2b2)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -66,7 +66,7 @@ true: annot, bin_annot
 # Executable vultjs
 "src/vultjs.byte": pkg_containers
 "src/vultjs.byte": pkg_js_of_ocaml
-"src/vultjs.byte": pkg_js_of_ocaml.syntax
+"src/vultjs.byte": pkg_js_of_ocaml.ppx
 "src/vultjs.byte": pkg_pla
 "src/vultjs.byte": pkg_pla.ppx
 "src/vultjs.byte": pkg_ppx_deriving.std
@@ -94,7 +94,7 @@ true: annot, bin_annot
 # Executable vult_node
 "src/vult_node.byte": pkg_containers
 "src/vult_node.byte": pkg_js_of_ocaml
-"src/vult_node.byte": pkg_js_of_ocaml.syntax
+"src/vult_node.byte": pkg_js_of_ocaml.ppx
 "src/vult_node.byte": pkg_pla
 "src/vult_node.byte": pkg_pla.ppx
 "src/vult_node.byte": pkg_ppx_deriving.std
@@ -107,7 +107,7 @@ true: annot, bin_annot
 "src/vult_node.byte": use_vult_util
 <src/*.ml{,i,y}>: pkg_containers
 <src/*.ml{,i,y}>: pkg_js_of_ocaml
-<src/*.ml{,i,y}>: pkg_js_of_ocaml.syntax
+<src/*.ml{,i,y}>: pkg_js_of_ocaml.ppx
 <src/*.ml{,i,y}>: pkg_pla
 <src/*.ml{,i,y}>: pkg_pla.ppx
 <src/*.ml{,i,y}>: pkg_ppx_deriving.std
