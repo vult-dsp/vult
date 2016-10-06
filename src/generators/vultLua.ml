@@ -60,7 +60,7 @@ module Templates = struct
       {pla|local this = {}
 local ffi = require("ffi")
 function this.ternary(cond,then_,else_) if cond then return then_ else return else_ end end
-function this.clip(x,low,high)  return (ternary(x<low,low,ternary(x>high,high,x))); end
+function this.clip(x,low,high)  return (this.ternary(x<low,low,this.ternary(x>high,high,x))); end
 function this.real(x)           return x; end
 function this.int(x)            return math.floor(x); end
 function this.sin(x)            return math.sin(x); end
@@ -78,9 +78,9 @@ function this.float_to_int(i)   return math.floor(i); end
 function this.makeArray(size,v) local a = ffi.new("double[?]",size); for i=0,size-1 do a[i]=v end return a; end
 <#code#>
 function this.process(<#process_inputs#>) return this.<#module_name#s>_process(<#process_inputs#>) end
-function this.noteOn(<#noteon_inputs#>) return this.<#module_name#s>_process(<#noteon_inputs#>) end
-function this.noteOff(<#noteoff_inputs#>) return this.<#module_name#s>_process(<#noteoff_inputs#>) end
-function this.controlChange(<#controlchange_inputs#>) return this.<#module_name#s>_process(<#controlchange_inputs#>) end
+function this.noteOn(<#noteon_inputs#>) return this.<#module_name#s>_noteOn(<#noteon_inputs#>) end
+function this.noteOff(<#noteoff_inputs#>) return this.<#module_name#s>_noteOff(<#noteoff_inputs#>) end
+function this.controlChange(<#controlchange_inputs#>) return this.<#module_name#s>_controlChange(<#controlchange_inputs#>) end
 function this.init() return this.<#module_name#s>_process_init() end
 function this.default(ctx) return this.<#module_name#s>_default(ctx) end
 this.config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, noteon_inputs = <#nnoteon_inputs#i>, noteoff_inputs = <#nnoteoff_inputs#i>, controlchange_inputs = <#ncontrolchange_inputs#i> }
@@ -125,6 +125,9 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
    | CEArray(elems) ->
       let elems_t = Pla.map_sep Pla.comma (printExp params) elems in
       {pla|{<#elems_t#>}|pla}
+   | CECall("not",[arg]) ->
+      let arg_t = printExp params arg in
+      {pla|(not <#arg_t#>)|pla}
    | CECall(name,args) ->
       let args_t = Pla.map_sep Pla.comma (printExp params) args in
       {pla|this.<#name#s>(<#args_t#>)|pla}
@@ -167,7 +170,7 @@ let printLhsExpTuple (var:string) (is_var:bool) (i:int) (e:clhsexp) : Pla.t =
 
 let getInitValue (descr:type_descr) : string =
    match descr with
-   | CTSimple("int") -> "(0|0)"
+   | CTSimple("int") -> "0"
    | CTSimple("real") -> "0.0"
    | CTSimple("float") -> "0.0"
    | CTSimple("bool") -> "false"
