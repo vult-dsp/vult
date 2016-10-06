@@ -62,7 +62,7 @@ and controlChange(control:int,value:int){
 
 // Called on initialization to define initial values
 and default(){
-   mem volume = 0.0;
+   mem volume = 1.0;
    mem pitch = 45.0;
    mem detune = 0.0;
 }

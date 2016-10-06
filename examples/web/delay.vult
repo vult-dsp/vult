@@ -200,7 +200,7 @@ and controlChange(control,value){
 
 // Called on initialization to define initial values
 and default(){
-   mem volume = 0.0;
+   mem volume = 1.0;
    mem pitch = 45.0;
    mem detune = 0.8;
    mem lfo_rate = 0.07;
