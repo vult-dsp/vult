@@ -47,7 +47,7 @@ let checkCode s =
    |> Array.of_list |> Js.array
 ;;
 
-Js.Unsafe.global##plop      <- (Js.wrap_callback parsePrint) ;;
-Js.Unsafe.global##jscode    <- (Js.wrap_callback generateJSCode) ;;
-Js.Unsafe.global##checkCode <- (Js.wrap_callback checkCode) ;;
+Js.Unsafe.global##.plop = (Js.wrap_callback parsePrint) ;;
+Js.Unsafe.global##.jscode = (Js.wrap_callback generateJSCode) ;;
+Js.Unsafe.global##.checkCode = (Js.wrap_callback checkCode) ;;
 
