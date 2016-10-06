@@ -143,7 +143,7 @@ void Phasedist_default_init(Phasedist__ctx_type_4 &_output_){
 }
 
 void Phasedist_default(Phasedist__ctx_type_4 &_ctx){
-   _ctx.volume = 0.f;
+   _ctx.volume = 1.f;
    _ctx.pitch = 45.f;
    _ctx.detune = 0.f;
 }

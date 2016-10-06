@@ -285,7 +285,7 @@ this.Synth1_controlChange = function(_ctx,control,value){
 }
 this.Synth1_default_init = function() { return this.Synth1__ctx_type_7_init();}
 this.Synth1_default = function(_ctx){
-   _ctx.volume = 0.;
+   _ctx.volume = 1.;
    _ctx.pitch = 45.;
    _ctx.detune = 0.8;
    _ctx.lfo_rate = 0.07;

@@ -290,7 +290,7 @@ this.Delay_controlChange = function(_ctx,control,value){
 }
 this.Delay_default_init = function() { return this.Delay__ctx_type_10_init();}
 this.Delay_default = function(_ctx){
-   _ctx.volume = 0.;
+   _ctx.volume = 1.;
    _ctx.pitch = 45.;
    _ctx.detune = 0.8;
    _ctx.lfo_rate = 0.07;

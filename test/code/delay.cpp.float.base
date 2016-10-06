@@ -394,7 +394,7 @@ void Delay_default_init(Delay__ctx_type_10 &_output_){
 }
 
 void Delay_default(Delay__ctx_type_10 &_ctx){
-   _ctx.volume = 0.f;
+   _ctx.volume = 1.f;
    _ctx.pitch = 45.f;
    _ctx.detune = 0.8f;
    _ctx.lfo_rate = 0.07f;
