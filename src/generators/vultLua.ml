@@ -39,31 +39,57 @@ module Templates = struct
 
    let none code = code
 
-   let default _ code =
-{pla|local ffi = require("ffi")
-function ternary(cond,then_,else_) if cond then return then_ else return else_ end end
-function clip(x,low,high)  return (ternary(x<low,low,ternary(x>high,high,x))); end
-function real(x)           return x; end
-function int(x)            return x; end
-function sin(x)            return math.sin(x); end
-function cos(x)            return math.cos(x); end
-function abs(x)            return math.abs(x); end
-function exp(x)            return math.exp(x); end
-function floor(x)          return math.floor(x); end
-function tan(x)            return math.tan(x); end
-function tanh(x)           return math.tanh(x); end
-function sqrt(x)           return x; end
-function set(a,i,v)        a[i]=v; end
-function get(a,i)          return a[i]; end
-function int_to_float(i)   return i; end
-function float_to_int(i)   return math.floor(i); end
-function makeArray(size,v) local a = ffi.new("double[?]",size); for i=0,size-1 do a[i]=v end return a; end
+   let default (config:configuration) module_name code =
+      let append_ctx args = if config.pass_data then "ctx"::args else args in
+      let count_context args = if config.pass_data then 1 + args else args in
+      let get_args inputs =
+         inputs
+         |> List.mapi (fun i _ -> "in"^(string_of_int i))
+         |> append_ctx
+         |> Pla.map_sep Pla.comma Pla.string
+      in
+      let process_inputs = get_args config.process_inputs in
+      let noteon_inputs = get_args config.noteon_inputs in
+      let noteoff_inputs = get_args config.noteoff_inputs in
+      let controlchange_inputs = get_args config.controlchange_inputs in
+      let nprocess_inputs = count_context @@ List.length config.process_inputs in
+      let nprocess_outputs = List.length config.process_outputs in
+      let nnoteon_inputs= count_context @@ List.length config.noteon_inputs in
+      let nnoteoff_inputs = count_context @@ List.length config.noteoff_inputs in
+      let ncontrolchange_inputs = count_context @@ List.length config.controlchange_inputs in
+      {pla|local this = {}
+local ffi = require("ffi")
+function this.ternary(cond,then_,else_) if cond then return then_ else return else_ end end
+function this.clip(x,low,high)  return (ternary(x<low,low,ternary(x>high,high,x))); end
+function this.real(x)           return x; end
+function this.int(x)            return math.floor(x); end
+function this.sin(x)            return math.sin(x); end
+function this.cos(x)            return math.cos(x); end
+function this.abs(x)            return math.abs(x); end
+function this.exp(x)            return math.exp(x); end
+function this.floor(x)          return math.floor(x); end
+function this.tan(x)            return math.tan(x); end
+function this.tanh(x)           return math.tanh(x); end
+function this.sqrt(x)           return x; end
+function this.set(a,i,v)        a[i]=v; end
+function this.get(a,i)          return a[i]; end
+function this.int_to_float(i)   return i; end
+function this.float_to_int(i)   return math.floor(i); end
+function this.makeArray(size,v) local a = ffi.new("double[?]",size); for i=0,size-1 do a[i]=v end return a; end
 <#code#>
+function this.process(<#process_inputs#>) return this.<#module_name#s>_process(<#process_inputs#>) end
+function this.noteOn(<#noteon_inputs#>) return this.<#module_name#s>_process(<#noteon_inputs#>) end
+function this.noteOff(<#noteoff_inputs#>) return this.<#module_name#s>_process(<#noteoff_inputs#>) end
+function this.controlChange(<#controlchange_inputs#>) return this.<#module_name#s>_process(<#controlchange_inputs#>) end
+function this.init() return this.<#module_name#s>_process_init() end
+function this.default(ctx) return this.<#module_name#s>_default(ctx) end
+this.config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, noteon_inputs = <#nnoteon_inputs#i>, noteoff_inputs = <#nnoteoff_inputs#i>, controlchange_inputs = <#ncontrolchange_inputs#i> }
+return this
 |pla}
 
-   let apply (module_name:string) (template:string) (code:Pla.t) : Pla.t =
+   let apply (config:configuration) (module_name:string) (template:string) (code:Pla.t) : Pla.t =
       match template with
-      | "default" -> default module_name code
+      | "default" -> default config module_name code
       | _ -> none code
 
 end
@@ -101,7 +127,7 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
       {pla|{<#elems_t#>}|pla}
    | CECall(name,args) ->
       let args_t = Pla.map_sep Pla.comma (printExp params) args in
-      {pla|<#name#s>(<#args_t#>)|pla}
+      {pla|this.<#name#s>(<#args_t#>)|pla}
    | CEUnOp(op,e) ->
       let e_t = printExp params e in
       {pla|(<#op#s> <#e_t#>)|pla}
@@ -190,12 +216,12 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let args = fixContext (isSpecial params name) args in
       let args_t = Pla.map_sep Pla.comma (fun (_,a) -> Pla.string a) args in
       let body_t = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
-      Some({pla|function <#name#s>(<#args_t#>)<#body_t#+><#>end<#>|pla})
+      Some({pla|function this.<#name#s>(<#args_t#>)<#body_t#+><#>end<#>|pla})
 
    | CSFunction(_,name,args,body) ->
       let args_t = Pla.map_sep Pla.comma (fun (_,a) -> Pla.string a) args in
       let body_t = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
-      Some({pla|function <#name#s>(<#args_t#>)<#body_t#+><#>end<#>|pla})
+      Some({pla|function this.<#name#s>(<#args_t#>)<#body_t#+><#>end<#>|pla})
 
    | CSReturn(e1) ->
       let e_t = printExp params e1 in
@@ -235,7 +261,7 @@ and printStmtList (params:params) (stmts:cstmt list) : Pla.t =
 
 let printLuaCode (params:params) (stmts:cstmt list) : Pla.t =
    let code = printStmtList params stmts in
-   Templates.apply params.module_name params.template code
+   Templates.apply params.config params.module_name params.template code
 
 (** Generates the .c and .h file contents for the given parsed files *)
 let print (params:params) (stmts:CLike.cstmt list) : (Pla.t * string) list =

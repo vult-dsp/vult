@@ -33,11 +33,11 @@ let writeOutput (args:arguments) (files:(Pla.t * string) list) : string =
          (fun s (code_t,ext) ->
              let code = Pla.print code_t in
              let () =
-               if write_files then
-                  let filename = args.output^"."^ext in
-                  if not (FileIO.write filename code) then
-                     failwith ("Failed to write file "^filename)
-            in
+                if write_files then
+                   let filename = args.output^"."^ext in
+                   if not (FileIO.write filename code) then
+                      failwith ("Failed to write file "^filename)
+             in
              s^"\n"^code)
          "" files
    in
@@ -97,3 +97,25 @@ let checkCode (code:string) : (string * string * int * int) list =
    | Error.Errors(errors) ->
       List.map Error.reportErrorStringNoLoc errors
 
+let generateLuaCode (files:string list) : string =
+   let args = { default_arguments with files; luacode = true } in
+   match Generate.generateCode (List.map ParserVult.parseFile files) args with
+   | [code_tpl,_] ->
+      let code = Pla.print code_tpl |> String.escaped in
+      Pla.print [%pla{|return { error = {}, code = "<#code#s>" } |}]
+   | _ ->
+      Pla.print  [%pla{|return { error = {}, code = "" }|}]
+   | exception Error.Errors(errors) ->
+      let makeErrorObject error =
+         let msg,file,line,col = Error.reportErrorStringNoLoc error in
+         let msg = String.escaped msg in
+         [%pla{|{ msg = "<#msg#s>", file = "<#file#s>", line = <#line#i>, col = <#col#i>}|}]
+      in
+      let error =
+         Pla.map_sep Pla.comma makeErrorObject errors
+         |> Pla.wrap (Pla.string "{") (Pla.string "}")
+      in
+      Pla.print  [%pla{|return { error = <#error#>, code = "" }|}]
+;;
+
+Callback.register "generateLuaCode" generateLuaCode ;;
