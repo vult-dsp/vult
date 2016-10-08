@@ -734,7 +734,7 @@ module ProcessArrays = struct
          end
       | _ -> failwith "ProcessArrays.getArraySize: type inference should have put a type here"
 
-   let exp : ('a Env.t,exp) Mapper.mapper_func =
+   let exp : (PassData.t Env.t,exp) Mapper.mapper_func =
       Mapper.make "ProcessArrays.exp" @@ fun state exp ->
       match exp with
       | PCall(None,["size"],[arr],attr) ->
@@ -1040,10 +1040,7 @@ let applyPass name apply pass pass_name (state,stmts) =
    let state' = Env.enter Scope.Module state name emptyAttr in
    let state', stmts' = applyPassRepeat name apply pass pass_name (state',stmts) in
    let state' = Env.exit state' in
-   (*print_endline (Env.show_full state');*)
    state',stmts'
-
-
 
 let passes (name:id) (options:pass_options) (env,stmts) =
    (env,stmts)
@@ -1069,9 +1066,6 @@ let applyTransformations args ?(options=default_options) (results:parser_results
       List.fold_left
          (fun (env,acc) stmts ->
              let env',stmts' = apply env options stmts in
-             (*print_endline "-------------";
-               print_endline (Env.show env');
-               print_endline "-------------";*)
              env', stmts'::acc
          )
          (env,[])

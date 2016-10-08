@@ -36,7 +36,11 @@ let apply (mapper:('data,'kind) mapper_func) (data:'data) (kind:'kind) : 'data *
    | Some("",f) -> f data kind
    | Some(name,f) ->
       let d,k = f data kind in
-      if log && not (kind == k) then Printf.printf "- %s applied\n" name; 
+      begin
+      if log && not (kind == k) then
+         let () = Printf.printf "- %s applied\n" name in
+         flush stdout
+      end;
       d,k
    | None    -> data, kind
 
