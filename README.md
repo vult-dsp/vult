@@ -6,7 +6,7 @@ Vult is a simple and powerful language to program high-performance algorithms th
 
 The Vult compiler is a transcompiler, which takes Vult code and produces plain C/C++ code that can be compiled in any platform with a C/C++ compiler, for example: Arduino or Teensy boards. Vult can also generate JavaScript that can be run directly in the browser or C/C++ that can be compiled as Pure Data externals. Code written in Vult has freedom.
 
-Check the documentation and tutorial in http://modlfo.github.io/vult/
+Check out the documentation and tutorial in http://modlfo.github.io/vult/
 
 ## Credits
 
@@ -21,13 +21,13 @@ There are three ways of getting the Vult compiler:
 - building from source
 - downloading the released binaries
 
-The npm (node.js) version is updated frequently based on the trunk branch of this repository. This is the prefered mode of installing if you don't want to build form the sources. The binary version (native executable) is updated every minor version of Vult.
+The npm (node.js) version is updated frequently based on the trunk branch of this repository. This is the prefered mode of installing if you don't want to build from the sources. The binary version (native executable) is updated with every minor version of Vult.
 
 If you want to get the latest changes as soon as possible then building from the sources is the recommended method.
 
 ## Installing with npm
 
-You need to have node.js and npm installed.
+You need to have `node.js` and `npm` installed.
 
 ```
 $ npm install vult -g
@@ -99,9 +99,9 @@ $ ./vult -ccode -real fixed infile.vult -o outfile
 
 Fixed point arithmetics are performed in q16 format; 16 bits for the integer part and 16 for the decimal.
 
-Vult provides a few templates for example to generate objects compatible with the Teensy Audio Library or Pure Data externals.
+Vult provides a few templates; for example to generate objects compatible with the Teensy Audio Library or Pure Data externals.
 
-You can see this repositories for an example:
+You can see these repositories for examples:
 
 - Pure Data https://github.com/modlfo/pd-vult-example
 - Teensy Audio https://github.com/modlfo/teensy-vult-example
