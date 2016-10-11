@@ -121,6 +121,7 @@ Executable "vultc"
 Executable "vultjs"
   Path: src
   MainIs: vultjs.ml
+  Build$: flag(js)
   CompiledObject: byte
   BuildDepends:
     vult,
