@@ -12,7 +12,7 @@ build: [
   [make]
 ]
 install: [make "install"]
-remove: ["ocamlfind" "remove" "vult"]
+remove: ["make" "uninstall"]
 depends: [
   "ocamlbuild" {build}
   "ocamlfind"  {build}
