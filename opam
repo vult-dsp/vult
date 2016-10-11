@@ -14,10 +14,11 @@ build: [
 install: [make "install"]
 remove: ["make" "uninstall"]
 depends: [
-  "ocamlbuild" {build}
-  "ocamlfind"  {build}
-  "cppo"       {build}
-  "containers" {build}
-  "ppx_deriving" {build}
-  "pla"        {build}
+  "containers"   { >= 0.15}
+  "ppx_deriving" { >= 2.0 }
+  "pla"          { >= 1.0 }
+]
+depopts: [
+   "ounit"
+   "js_of_ocaml"
 ]
