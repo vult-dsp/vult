@@ -20,6 +20,4 @@ depends: [
   "containers" {build}
   "ppx_deriving" {build}
   "pla"        {build}
-  "ounit"      {build}
-  "js_of_ocaml" {build}
 ]
