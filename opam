@@ -1,0 +1,23 @@
+opam-version: "1.2"
+name: "vult"
+version: "0.3.0"
+maintainer: "Leonardo Laguna Ruiz <modlfo@gmail.com>"
+authors: "leonardo <modlfo@gmail.com>"
+homepage: "http://modlfo.github.io/vult/"
+bug-reports: ""
+license: "MIT"
+dev-repo: "https://github.com/modlfo/vult.git"
+build: [
+  ["./configure" "--prefix=%{prefix}%"]
+  [make]
+]
+install: [make "install"]
+remove: ["ocamlfind" "remove" "fail"]
+depends: [
+  "ocamlbuild" {build}
+  "ocamlfind"  {build}
+  "cppo"       {build}
+  "containers" {build}
+  "ppx_deriving" {build}
+  "pla"        {build}
+]
