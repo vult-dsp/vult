@@ -14,9 +14,9 @@ build: [
 install: [make "install"]
 remove: ["make" "uninstall"]
 depends: [
-  "containers"   { >= 0.15}
-  "ppx_deriving" { >= 2.0 }
-  "pla"          { >= 1.0 }
+  "containers"   { >= "0.15" }
+  "ppx_deriving" { >= "2.0" }
+  "pla"          { >= "1.0" }
 ]
 depopts: [
    "ounit"
