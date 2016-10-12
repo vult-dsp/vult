@@ -11,3 +11,19 @@ install:
 
 build_script:
   - "%CYG_BASH% '${APPVEYOR_BUILD_FOLDER}/appveyor-opam.sh'"
+
+after_build:
+  - cp %APPVEYOR_BUILD_FOLDER%\_build\src\vultc.native %APPVEYOR_BUILD_FOLDER%\_build\src\vultc.exe
+  - 7z a vult.zip %APPVEYOR_BUILD_FOLDER%\_build\src\vultc.exe runtime\vultin.c runtime\vultin.h
+
+deploy:
+  description: 'Vult Compiler'
+  provider: GitHub
+  auth_token:
+    secure: NnZaMwUACbe83KldLGTsSXYTcad6xdi1326Wky/xP5sU3Q8HdpBXRdC4P9kMs99X
+  artifact: vult.zip
+  draft: true
+  prerelease: false
+  on:
+    branch: master
+    appveyor_repo_tag: true
