@@ -12,3 +12,5 @@ install:
 build_script:
   - "%CYG_BASH% '${APPVEYOR_BUILD_FOLDER}/appveyor-opam.sh'"
 
+after_build:
+  - 7z a vult.zip `opam config var bin`/vultc runtime\vultin.c runtime\vultin.h
