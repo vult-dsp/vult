@@ -13,4 +13,4 @@ build_script:
   - "%CYG_BASH% '${APPVEYOR_BUILD_FOLDER}/appveyor-opam.sh'"
 
 after_build:
-  - "%CYG_BASH% scripts\makezip.sh"
+  - "%CYG_BASH% 'scripts/makezip.sh'"
