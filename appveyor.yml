@@ -13,5 +13,4 @@ build_script:
   - "%CYG_BASH% '${APPVEYOR_BUILD_FOLDER}/appveyor-opam.sh'"
 
 after_build:
-  - set OPAMBINPATH=opam config var bin
-  - 7z a vult.zip %OPAMBINPATH%\vultc runtime\vultin.c runtime\vultin.h
+  - "%CYG_BASH% scripts\makezip.sh"
