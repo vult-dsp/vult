@@ -13,8 +13,7 @@ build_script:
   - "%CYG_BASH% '${APPVEYOR_BUILD_FOLDER}/appveyor-opam.sh'"
 
 after_build:
-  - pwd
-  - ls
+  - make
   - ls _build
   - ls _build\src
   - ls %APPVEYOR_BUILD_FOLDER%
