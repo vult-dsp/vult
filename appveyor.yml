@@ -13,8 +13,8 @@ build_script:
   - "%CYG_BASH% '${APPVEYOR_BUILD_FOLDER}/appveyor-opam.sh'"
 
 after_build:
-  - cp %APPVEYOR_BUILD_FOLDER%\_build\src\vultc.native %APPVEYOR_BUILD_FOLDER%\_build\src\vultc.exe
-  - 7z a vult.zip %APPVEYOR_BUILD_FOLDER%\_build\src\vultc.exe runtime\vultin.c runtime\vultin.h
+  - cp %APPVEYOR_BUILD_FOLDER%\src\vultc.native %APPVEYOR_BUILD_FOLDER%\src\vultc.exe
+  - 7z a vult.zip %APPVEYOR_BUILD_FOLDER%\src\vultc.exe runtime\vultin.c runtime\vultin.h
 
 deploy:
   description: 'Vult Compiler'
