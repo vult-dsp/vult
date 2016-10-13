@@ -16,7 +16,7 @@ after_build:
   - "%CYG_BASH% '${APPVEYOR_BUILD_FOLDER}/scripts/makezip.sh'"
 
 artifacts:
-  - path: ${APPVEYOR_BUILD_FOLDER}/vult-v0.3-win.zip
+  - path: vult-v0.3-win.zip
     name: Vult
 
 deploy:
