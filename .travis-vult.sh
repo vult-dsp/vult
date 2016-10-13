@@ -8,7 +8,7 @@ make test
 cp ./_build/src/vultc.native ./vultc
 if [ $TRAVIS_OS_NAME == linux ];
 then
-   tar -cvzf vult-v0.3-linux.tar.gz vultc runtime/vultin.h runtime/vultin.c
+   tar -cvzf vult-linux.tar.gz vultc runtime/vultin.h runtime/vultin.c
 else
-   tar -cvzf vult-v0.3-osx.tar.gz vultc runtime/vultin.h runtime/vultin.c
+   tar -cvzf vult-osx.tar.gz vultc runtime/vultin.h runtime/vultin.c
 fi

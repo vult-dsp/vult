@@ -12,7 +12,7 @@ deploy:
   provider: releases
   api_key:
     secure: RbNuWwu21dz66PfTw+BL7HKweGqpLrA/LdYVl+AzI8R7vREjs9zFFpd15L/5d0Sk8l1eQhE5i0/O0Lw5sKKyenmbEU6dOGJ7hdSCDByB2mbLsNDIFAClCGGsnHP1IdjB0Snio4TlY6MWWdoasrOtumvN6TNCnFKGSgWXLtByFauXgxwXduMrc8gSMk9/4iMiZrVAUPss+lcwcM3O+5TVjlRJ1FWQPxfEyynq/Chr6qwvNzqZOP9hYJrZzBQrP9hp5LTCnAVpauGcbaYw71HKoH3pz0OUMn342kfoKJejkp5WBEUpQMA96JG/T7YqB7TeK+sBjJkf72KtNXZD44lnR5PqSpnbU0PPEq9gkPHZ7cbICBSI+GuSSh485P5Fvu1Z0KUmhvDe95kTr3KMY8Sj6oe1KHBZnlx3RHRIdJ1DgGCmVv73AEzswIODumm1CNjzmkXLkaI4zfnr4JVquhsWM1rCY3nik5MTGNQkuVJgQ05OMUC/kFItgsja7hymISOwL6Ocfk9voxmLDvB35uc3M9JksmXwf9Rvg9F5iP/Kbeq20r2FYmruY3v11Doa02dthw6JWGNnxeznHIef+RkOp/sGJqnxCuZs+br0N2U9cJzYuF44qQlkaeRAMU8Dz6HIE5kb89RFbXLrYA6Ttj/LEeMwQCfUanUtrx79wM1pBhI=
-  file: vult-v0.3-$TRAVIS_OS_NAME.tar.gz
+  file: vult-$TRAVIS_OS_NAME.tar.gz
   on:
     repo: modlfo/vult
     tags: true
