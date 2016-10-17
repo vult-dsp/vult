@@ -12,3 +12,5 @@ then
 else
    tar -cvzf vult-osx.tar.gz vultc runtime/vultin.h runtime/vultin.c
 fi
+npm install vult -g
+vultc --help
