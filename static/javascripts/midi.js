@@ -17,11 +17,11 @@ function midiMessageReceived( ev ) {
 
   if ( cmd==8 || ((cmd==9)&&(velocity==0)) ) {
     // Note on
-    sendNoteOff(noteNumber);
+    sendNoteOff(noteNumber,channel);
   } else if (cmd == 9) {
-    sendNoteOn(noteNumber,velocity);
+    sendNoteOn(noteNumber,velocity,channel);
   } else if (cmd == 11) {
-    sendControlChange(noteNumber,velocity);
+    sendControlChange(noteNumber,velocity,channel);
     if(updateCC!=null){
       updateCC(noteNumber,velocity);
     }
@@ -82,11 +82,11 @@ nx.onload = function() {
 
   keyboard_input.on('*',function(data){
     if(data.on != 0){
-      sendNoteOn(data.note-24,100);
+      sendNoteOn(data.note-24,100,0);
     }
     else
     {
-      sendNoteOff(data.note-24);
+      sendNoteOff(data.note-24,0);
     }
   });
 

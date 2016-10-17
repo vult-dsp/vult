@@ -15,32 +15,32 @@ var vult_object = null;
 var control_values = [];
 var generated_code = "";
 
-function sendNoteOn(note,velocity){
+function sendNoteOn(note,velocity,channel){
     if(vult_object!=null){
         if(vult_object.liveNoteOn!=null){
-            vult_object.liveNoteOn(note,velocity);
+            vult_object.liveNoteOn(note,velocity,channel);
         }
     }
-    console.log("noteOn("+note+","+velocity+")");
+    console.log("noteOn("+note+","+velocity+","+channel+")");
 }
 
-function sendNoteOff(note){
+function sendNoteOff(note,channel){
     if(vult_object!=null){
         if(vult_object.liveNoteOff!=null){
-            vult_object.liveNoteOff(note);
+            vult_object.liveNoteOff(note,channel);
         }
     }
-    console.log("noteOff("+note+")");
+    console.log("noteOff("+note+","+channel+")");
 }
 
-function sendControlChange(control,value){
+function sendControlChange(control,value,channel){
     control_values[control]=value;
     if(vult_object!=null){
         if(vult_object.liveControlChange!=null){
-            vult_object.liveControlChange(control,value);
+            vult_object.liveControlChange(control,value,channel);
         }
     }
-    console.log("controlChange("+control+","+value+")");
+    console.log("controlChange("+control+","+value+","+channel+")");
 }
 
 function restoreControls(){
@@ -134,8 +134,8 @@ function setAudioOff(){
 var template  = "";
 var volume1   = "";
 var phasedist = "";
-var synt1     = "";
-var synt2     = "";
+var synth1    = "";
+var synth2    = "";
 var delay     = "";
 
 
@@ -153,10 +153,10 @@ function loadPreset(n){
             code = phasedist;
             break;
         case 3:
-            code = synt1;
+            code = synth1;
             break;
         case 4:
-            code = synt2;
+            code = synth2;
             break;
         case 5:
             code = delay;
@@ -171,21 +171,23 @@ function loadPreset(n){
     editor.gotoLine(0);
 }
 
-var request = new XMLHttpRequest();
-request.onreadystatechange = function() {
-  if (request.readyState != 4) return; // Not there yet
-  if (request.status != 200) {
-    return;
-  }
-  var resp = request.responseText;
-  example_files = JSON.parse(resp);
-  template = example_files.files['template.vult'].content;
-  volume1 = example_files.files['volume.vult'].content;
-  phasedist = example_files.files['phasedist.vult'].content;
-  synt1 = example_files.files['synth1.vult'].content;
-  synt2 = example_files.files['synth2.vult'].content;
-  delay = example_files.files['delay.vult'].content;
-  loadPreset(0);
+function loadFile(url,set_fun) {
+    var request = new XMLHttpRequest();
+    request.onreadystatechange = function() {
+      if (request.readyState != 4) return; // Not there yet
+      if (request.status != 200) {
+        return;
+      }
+      var resp = request.responseText;
+      set_fun(resp);
+    }
+    request.open('GET', url, true);
+    request.send();
 }
-request.open('GET', 'https://api.github.com/gists/77bc427f231a1d5b7d8a', true);
-request.send();
+
+loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/template.vult',function(txt) { template = txt; loadPreset(0); });
+loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/delay.vult',function(txt)    { delay = txt; });
+loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/phasedist.vult',function(txt){ phasedist = txt; });
+loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/synth1.vult',function(txt)    { synth1 = txt; });
+loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/synth2.vult',function(txt)    { synth2 = txt; });
+loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/volume.vult',function(txt)    { volume1 = txt; });
