@@ -87,10 +87,10 @@ typedef struct Synth1__ctx_type_7 {
    float volume;
    float pre_phase1;
    float pitch;
-   float n4;
-   float n3;
-   float n2;
-   float n1;
+   int n4;
+   int n3;
+   int n2;
+   int n1;
    float lfo_rate;
    float lfo_amt;
    int gate;
@@ -116,19 +116,19 @@ typedef Synth1__ctx_type_7 Synth1_noteOn_type;
 
 void Synth1_noteOn_init(Synth1__ctx_type_7 &_output_);
 
-void Synth1_noteOn(Synth1__ctx_type_7 &_ctx, float note, int velocity);
+void Synth1_noteOn(Synth1__ctx_type_7 &_ctx, int note, int velocity, int channel);
 
 typedef Synth1__ctx_type_7 Synth1_noteOff_type;
 
 void Synth1_noteOff_init(Synth1__ctx_type_7 &_output_);
 
-void Synth1_noteOff(Synth1__ctx_type_7 &_ctx, float note);
+void Synth1_noteOff(Synth1__ctx_type_7 &_ctx, int note, int channel);
 
 typedef Synth1__ctx_type_7 Synth1_controlChange_type;
 
 void Synth1_controlChange_init(Synth1__ctx_type_7 &_output_);
 
-void Synth1_controlChange(Synth1__ctx_type_7 &_ctx, int control, float value);
+void Synth1_controlChange(Synth1__ctx_type_7 &_ctx, int control, float value, int channel);
 
 typedef Synth1__ctx_type_7 Synth1_default_type;
 

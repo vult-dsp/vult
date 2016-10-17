@@ -55,21 +55,21 @@ public:
   }
 
   // Handles note on events
-  void noteOn(int note, int velocity){
+  void noteOn(int note, int velocity, int channel){
     // If the velocity is larger than zero, means that is turning on
-    if(velocity) <#module_name#s>_noteOn(data, note, velocity);
-    else         <#module_name#s>_noteOff(data, note);
+    if(velocity) <#module_name#s>_noteOn(data, note, velocity, channel);
+    else         <#module_name#s>_noteOff(data, note, channel);
   }
 
   // Handles note off events
-  void noteOff(int note, int velocity) {
-    <#module_name#s>_noteOff(data, note);
+  void noteOff(int note, int velocity, int channel) {
+    <#module_name#s>_noteOff(data, note, channel);
 
   }
 
   // Handles control change events
-  void controlChange(int control, int value) {
-    <#module_name#s>_controlChange(data, control, value);
+  void controlChange(int control, int value, int channel) {
+    <#module_name#s>_controlChange(data, control, value, channel);
   }
 
   virtual void update(void);

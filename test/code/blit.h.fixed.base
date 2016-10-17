@@ -76,19 +76,19 @@ typedef Blit__ctx_type_6 Blit_noteOn_type;
 
 void Blit_noteOn_init(Blit__ctx_type_6 &_output_);
 
-void Blit_noteOn(Blit__ctx_type_6 &_ctx, int note, int velocity);
+void Blit_noteOn(Blit__ctx_type_6 &_ctx, int note, int velocity, int channel);
 
 typedef Blit__ctx_type_6 Blit_noteOff_type;
 
 void Blit_noteOff_init(Blit__ctx_type_6 &_output_);
 
-void Blit_noteOff(Blit__ctx_type_6 &_ctx, int note);
+void Blit_noteOff(Blit__ctx_type_6 &_ctx, int note, int channel);
 
 typedef Blit__ctx_type_6 Blit_controlChange_type;
 
 void Blit_controlChange_init(Blit__ctx_type_6 &_output_);
 
-void Blit_controlChange(Blit__ctx_type_6 &_ctx, int control, int value);
+void Blit_controlChange(Blit__ctx_type_6 &_ctx, int control, int value, int channel);
 
 typedef Blit__ctx_type_6 Blit_default_type;
 

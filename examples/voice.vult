@@ -295,16 +295,16 @@ fun process(i:real){
   return output;
 }
 
-and noteOn(note:int,velocity:int){
+and noteOn(note:int,velocity:int,channel:int){
   mem pitch = real(monoin:mono_noteOn(note));
 }
 
-and noteOff(note:int){
+and noteOff(note:int,channel:int){
   mem pitch = real(monoin:mono_noteOff(note));
 }
 
 // Called when a control changes
-and controlChange(control:int,value:int){
+and controlChange(control:int,value:int,channel:int){
   mem pitch;
   mem pw;
   mem wave;

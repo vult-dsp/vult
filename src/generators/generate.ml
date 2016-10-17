@@ -42,7 +42,7 @@ module Configuration = struct
    (** If the first argument is data, returns true and remove it *)
    let rec passData (inputs:'a list) =
       match inputs with
-      | `Context::t -> 
+      | `Context::t ->
          let _,inputs,outputs = passData t in
          true, inputs, outputs
       | `Input(typ)::t ->
@@ -96,6 +96,33 @@ module Configuration = struct
          `Output (getOutputs attr.loc typ)
       | _ -> failwith "Configuration.getType: Undefined type"
 
+   let checkNoteOn loc (inputs:string list) =
+      match inputs with
+      | [_;_;_] -> ()
+      | _ ->
+         let msg = "The function 'noteOn' must have three arguments (note, velocity, channel)" in
+         Error.raiseError msg loc
+
+   let checkNoteOff loc (inputs:string list) =
+      match inputs with
+      | [_;_] -> ()
+      | _ ->
+         let msg = "The function 'noteOff' must have two arguments (note, channel)" in
+         Error.raiseError msg loc
+
+   let checkControlChange loc (inputs:string list) =
+      match inputs with
+      | [_;_;_] -> ()
+      | _ ->
+         let msg = "The function 'checkControlChange' must have three arguments (control, value, channel)" in
+         Error.raiseError msg loc
+
+   let checkDefault loc (inputs:string list) =
+      match inputs with
+      | [] -> ()
+      | _ ->
+         let msg = "The function 'default' must have no arguments" in
+         Error.raiseError msg loc
 
    (** This traverser checks the function declarations of the key functions to generate templates *)
    let stmt : (configuration Env.t,stmt) Mapper.mapper_func =
@@ -108,23 +135,27 @@ module Configuration = struct
          let pass_data = conf.pass_data || pass_data in
          let state' = Env.set state { conf with process_inputs; process_outputs; pass_data } in
          state', stmt
-      | StmtFun([cname;"noteOn"],args,_,_,_) when conf.module_name = cname ->
+      | StmtFun([cname;"noteOn"],args,_,_,attr) when conf.module_name = cname ->
          let pass_data,noteon_inputs,_ = List.map getType args |> passData in
+         let () = checkNoteOn attr.loc noteon_inputs in
          let pass_data = conf.pass_data || pass_data in
          let state' = Env.set state { conf with noteon_inputs; pass_data } in
          state', stmt
-      | StmtFun([cname;"noteOff"],args,_,_,_) when conf.module_name = cname ->
+      | StmtFun([cname;"noteOff"],args,_,_,attr) when conf.module_name = cname ->
          let pass_data,noteoff_inputs,_ = List.map getType args |> passData in
+         let () = checkNoteOff attr.loc noteoff_inputs in
          let pass_data = conf.pass_data || pass_data in
          let state' = Env.set state { conf with noteoff_inputs; pass_data } in
          state', stmt
-      | StmtFun([cname;"controlChange"],args,_,_,_) when conf.module_name = cname ->
+      | StmtFun([cname;"controlChange"],args,_,_,attr) when conf.module_name = cname ->
          let pass_data,controlchange_inputs,_ = List.map getType args |> passData in
+         let () = checkControlChange attr.loc controlchange_inputs in
          let pass_data = conf.pass_data || pass_data in
          let state' = Env.set state { conf with controlchange_inputs; pass_data } in
          state', stmt
-      | StmtFun([cname;"default"],args,_,_,_) when conf.module_name = cname ->
+      | StmtFun([cname;"default"],args,_,_,attr) when conf.module_name = cname ->
          let pass_data,default_inputs,_ = List.map getType args |> passData in
+         let () = checkDefault attr.loc default_inputs in
          let pass_data = conf.pass_data || pass_data in
          let state' = Env.set state { conf with default_inputs; pass_data } in
          state', stmt
@@ -175,6 +206,25 @@ let generateLua (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (
       VultLua.print params clike_stmts
    else []
 
+let checkConfig (config:configuration) (args:arguments) =
+   if args.ccode && args.template <> "default" || args.luacode || args.jscode then
+      if config.process_inputs = []
+      || config.process_outputs = []
+      || config.noteon_inputs = []
+      || config.noteoff_inputs = []
+      || config.controlchange_inputs = [] then
+         let msg =
+            Pla.print
+               [%pla{|Required functions are not defined or have incorrect inputs or outputs. Here's a template you can use:
+
+fun process(input:real){ return input; }
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int){ }
+and default(){ }|}]
+         in
+         Error.raiseErrorMsg msg
+
 (** Returns the code generation parameters based on the vult code *)
 let createParameters (parser_results:parser_results list) (stmts:TypesVult.stmt list list) (args:arguments) =
    (* Gets the name of the main module (the last passes file name) *)
@@ -182,6 +232,7 @@ let createParameters (parser_results:parser_results list) (stmts:TypesVult.stmt 
    (** Takes the statememts of the last file to search the configuration *)
    let last_stmts  = CCList.last 1 stmts |> List.flatten in
    let config      = Configuration.get module_name last_stmts in
+   let ()          = checkConfig config args in
    (* Defines the name of the output module *)
    let output      = if args.output = "" then "Vult" else Filename.basename args.output in
    (* Looks for the replacements based on the 'real' argument *)

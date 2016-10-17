@@ -174,17 +174,17 @@ fun process(input:real){
 }
 
 // Called when a note On is received
-and noteOn(note:int,velocity:int){
+and noteOn(note:int,velocity:int,channel:int){
    mem pitch = real(notes:mono_noteOn(note));
 }
 
 // Called when a note Off is received
-and noteOff(note){
+and noteOff(note:int,channel:int){
    mem pitch = real(notes:mono_noteOff(note));
 }
 
 // Called when a control changes
-and controlChange(control,value){
+and controlChange(control,value,channel:int){
    mem volume;
    mem detune;
    mem lfo_rate, lfo_amt;

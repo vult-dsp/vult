@@ -64,15 +64,9 @@ let passes_files =
       "output_references.vult", Passes.default_options;
    ]
 
-
-let code_files =
+let stand_alone_files =
    [
-      "adsr.vult";
       "blit.vult";
-      "filters.vult";
-      "monoin.vult";
-      "moog_filter.vult";
-      "state_variable.vult";
       "voice.vult";
       "sin.vult";
       "web/phasedist.vult";
@@ -81,9 +75,20 @@ let code_files =
       "web/template.vult";
       "web/volume.vult";
       "web/delay.vult";
+   ]
+
+let partial_files =
+   [
+      "adsr.vult";
+      "filters.vult";
+      "monoin.vult";
+      "moog_filter.vult";
+      "state_variable.vult";
       "lib/math.vult";
       "lib/util.vult";
    ]
+
+let all_files = stand_alone_files @ partial_files
 
 let test_random_code =
    let rec loop n =
@@ -283,11 +288,11 @@ let suite =
    [
       ParserTest.get  parser_files;
       PassesTest.get  passes_files;
-      CodeGenerationTest.get code_files "float";
-      CodeGenerationTest.get code_files "fixed";
-      CodeGenerationTest.get code_files "js";
-      CompileTest.get code_files "float";
-      CompileTest.get code_files "fixed";
+      CodeGenerationTest.get all_files "float";
+      CodeGenerationTest.get all_files "fixed";
+      CodeGenerationTest.get stand_alone_files "js";
+      CompileTest.get all_files "float";
+      CompileTest.get all_files "fixed";
       RandomCompileTest.get test_random_code "float";
    ]
 

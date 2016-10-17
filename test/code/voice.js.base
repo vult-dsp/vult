@@ -496,15 +496,15 @@ this.Voice_process = function(_ctx,i){
    return output;
 }
 this.Voice_noteOn_init = function() { return this.Voice__ctx_type_16_init();}
-this.Voice_noteOn = function(_ctx,note,velocity){
+this.Voice_noteOn = function(_ctx,note,velocity,channel){
    _ctx.pitch = this.real(this.Voice_mono_noteOn(_ctx.monoin,note));
 }
 this.Voice_noteOff_init = function() { return this.Voice__ctx_type_16_init();}
-this.Voice_noteOff = function(_ctx,note){
+this.Voice_noteOff = function(_ctx,note,channel){
    _ctx.pitch = this.real(this.Voice_mono_noteOff(_ctx.monoin,note));
 }
 this.Voice_controlChange_init = function() { return this.Voice__ctx_type_16_init();}
-this.Voice_controlChange = function(_ctx,control,value){
+this.Voice_controlChange = function(_ctx,control,value,channel){
    var value_0_1 = 0.0;
    value_0_1 = (this.real(value) * 0.00787401574803);
    var value_m1_1 = 0.0;

@@ -72,20 +72,20 @@ fun process(input:real){
 }
 
 // Called when a note On is received
-and noteOn(note,velocity:int){
+and noteOn(note:int,velocity:int,channel:int){
    mem n1,n2,n3,n4;
    mem count,pitch,gate;
    // written this way because Vult does not have array support yet.
-   if(count == 0) { n1 = note; pitch = note; } else
-   if(count == 1) { n2 = note; pitch = note; } else
-   if(count == 2) { n3 = note; pitch = note; } else
-   if(count == 3) { n4 = note; pitch = note; }
+   if(count == 0) { n1 = note; pitch = real(note); } else
+   if(count == 1) { n2 = note; pitch = real(note); } else
+   if(count == 2) { n3 = note; pitch = real(note); } else
+   if(count == 3) { n4 = note; pitch = real(note); }
    if(count <= 4) count = count + 1;
    gate = if count>0 then 1 else 0;
 }
 
 // Called when a note Off is received
-and noteOff(note){
+and noteOff(note,channel:int){
     mem n1,n2,n3,n4;
     mem count,pitch,gate;
     val found = false;
@@ -101,14 +101,14 @@ and noteOff(note){
 
     gate = if count>0 then 1 else 0;
 
-    if(count == 1) pitch = n1;
-    if(count == 2) pitch = n2;
-    if(count == 3) pitch = n3;
-    if(count == 4) pitch = n4;
+    if(count == 1) pitch = real(n1);
+    if(count == 2) pitch = real(n2);
+    if(count == 3) pitch = real(n3);
+    if(count == 4) pitch = real(n4);
 }
 
 // Called when a control changes
-and controlChange(control,value){
+and controlChange(control,value,channel:int){
    mem volume;
    mem detune;
    mem lfo_rate;

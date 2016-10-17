@@ -208,17 +208,17 @@ void <#output#s>_tilde_delete(t_<#output#s>_tilde *x){
 
 }
 
-void <#output#s>_noteOn(t_<#output#s>_tilde *x, t_floatarg note, t_floatarg velocity){
-   if((int)velocity) <#module_name#s>_noteOn(x->data, (int)note, (int)velocity);
-   else <#module_name#s>_noteOff(x->data, (int)note);
+void <#output#s>_noteOn(t_<#output#s>_tilde *x, t_floatarg note, t_floatarg velocity, t_floatarg channel){
+   if((int)velocity) <#module_name#s>_noteOn(x->data, (int)note, (int)velocity, (int)channel);
+   else <#module_name#s>_noteOff(x->data, (int)note, (int)channel);
 }
 
-void <#output#s>_noteOff(t_<#output#s>_tilde *x, t_floatarg note) {
-   <#module_name#s>_noteOff(x->data, (int)note);
+void <#output#s>_noteOff(t_<#output#s>_tilde *x, t_floatarg note, t_floatarg channel) {
+   <#module_name#s>_noteOff(x->data, (int)note, (int)channel);
 }
 
-void <#output#s>_controlChange(t_<#output#s>_tilde *x, t_floatarg control, t_floatarg value) {
-   <#module_name#s>_controlChange(x->data, (int)control, (int)value);
+void <#output#s>_controlChange(t_<#output#s>_tilde *x, t_floatarg control, t_floatarg value, t_floatarg channel) {
+   <#module_name#s>_controlChange(x->data, (int)control, (int)value, (int)channel);
 }
 
 void <#output#s>_tilde_setup(void) {
@@ -232,9 +232,9 @@ void <#output#s>_tilde_setup(void) {
    class_addmethod(<#output#s>_tilde_class,(t_method)<#output#s>_tilde_dsp, gensym("dsp"), A_NULL);
    CLASS_MAINSIGNALIN(<#output#s>_tilde_class, t_<#output#s>_tilde, dummy);
 
-   class_addmethod(<#output#s>_tilde_class, (t_method)<#output#s>_noteOn,        gensym("noteOn"),        A_DEFFLOAT, A_DEFFLOAT, A_NULL);
-   class_addmethod(<#output#s>_tilde_class, (t_method)<#output#s>_noteOff,       gensym("noteOff"),       A_DEFFLOAT, A_NULL);
-   class_addmethod(<#output#s>_tilde_class, (t_method)<#output#s>_controlChange, gensym("controlChange"), A_DEFFLOAT, A_DEFFLOAT, A_NULL);
+   class_addmethod(<#output#s>_tilde_class, (t_method)<#output#s>_noteOn,        gensym("noteOn"),        A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, A_NULL);
+   class_addmethod(<#output#s>_tilde_class, (t_method)<#output#s>_noteOff,       gensym("noteOff"),       A_DEFFLOAT, A_DEFFLOAT, A_NULL);
+   class_addmethod(<#output#s>_tilde_class, (t_method)<#output#s>_controlChange, gensym("controlChange"), A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, A_NULL);
 }
 
 } // extern "C"

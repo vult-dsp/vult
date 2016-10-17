@@ -337,7 +337,7 @@ void Delay_noteOn_init(Delay__ctx_type_10 &_output_){
    return ;
 }
 
-void Delay_noteOn(Delay__ctx_type_10 &_ctx, int note, int velocity){
+void Delay_noteOn(Delay__ctx_type_10 &_ctx, int note, int velocity, int channel){
    _ctx.pitch = int_to_fix(Delay_mono_noteOn(_ctx.notes,note));
 }
 
@@ -346,7 +346,7 @@ void Delay_noteOff_init(Delay__ctx_type_10 &_output_){
    return ;
 }
 
-void Delay_noteOff(Delay__ctx_type_10 &_ctx, int note){
+void Delay_noteOff(Delay__ctx_type_10 &_ctx, int note, int channel){
    _ctx.pitch = int_to_fix(Delay_mono_noteOff(_ctx.notes,note));
 }
 
@@ -355,7 +355,7 @@ void Delay_controlChange_init(Delay__ctx_type_10 &_output_){
    return ;
 }
 
-void Delay_controlChange(Delay__ctx_type_10 &_ctx, int control, fix16_t value){
+void Delay_controlChange(Delay__ctx_type_10 &_ctx, int control, fix16_t value, int channel){
    uint8_t _cond_7;
    _cond_7 = (control == 30);
    if(_cond_7){

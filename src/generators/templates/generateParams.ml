@@ -32,7 +32,7 @@ type configuration =
       noteoff_inputs  : string list;
       controlchange_inputs : string list;
       default_inputs  : string list;
-      pass_data   : bool; (** True if the functions receive the data as first argument *)
+      pass_data       : bool; (** True if the functions receive the data as first argument *)
    }
 
 (** Represents the parameters used during code generation *)

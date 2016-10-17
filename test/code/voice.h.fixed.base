@@ -230,19 +230,19 @@ typedef Voice__ctx_type_16 Voice_noteOn_type;
 
 void Voice_noteOn_init(Voice__ctx_type_16 &_output_);
 
-void Voice_noteOn(Voice__ctx_type_16 &_ctx, int note, int velocity);
+void Voice_noteOn(Voice__ctx_type_16 &_ctx, int note, int velocity, int channel);
 
 typedef Voice__ctx_type_16 Voice_noteOff_type;
 
 void Voice_noteOff_init(Voice__ctx_type_16 &_output_);
 
-void Voice_noteOff(Voice__ctx_type_16 &_ctx, int note);
+void Voice_noteOff(Voice__ctx_type_16 &_ctx, int note, int channel);
 
 typedef Voice__ctx_type_16 Voice_controlChange_type;
 
 void Voice_controlChange_init(Voice__ctx_type_16 &_output_);
 
-void Voice_controlChange(Voice__ctx_type_16 &_ctx, int control, int value);
+void Voice_controlChange(Voice__ctx_type_16 &_ctx, int control, int value, int channel);
 
 typedef Voice__ctx_type_16 Voice_default_type;
 

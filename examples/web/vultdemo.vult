@@ -196,7 +196,7 @@ fun process(input:real){
 }
 
 // Called when a note On is received
-and noteOn(note:int,velocity:int){
+and noteOn(note:int,velocity:int,channel:int){
   if(note==12)
     drum_gate = 1.0;
   if(note>=32 && note<=47) {
@@ -210,7 +210,7 @@ and noteOn(note:int,velocity:int){
 }
 
 // Called when a note Off is received
-and noteOff(note:int){
+and noteOff(note:int,channel:int){
    if(note==12)
       drum_gate = 0.0;
    if(note>=32 && note<=47) {
@@ -222,7 +222,7 @@ and noteOff(note:int){
 }
 
 // Called when a control changes
-and controlChange(control:int,value:int){
+and controlChange(control:int,value:int,channel:int){
   if(control==30) drum_pitch = 42.0 + 24.0 * real(value)/127.0;
   if(control==31) voice1_detune = real(value)/127.0;
   if(control==32) voice2_f = real(value)/127.0;

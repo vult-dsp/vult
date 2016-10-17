@@ -92,7 +92,7 @@ void Sin_noteOn_init(Sin__ctx_type_2 &_output_){
    return ;
 }
 
-void Sin_noteOn(Sin__ctx_type_2 &_ctx, int note, int velocity){
+void Sin_noteOn(Sin__ctx_type_2 &_ctx, int note, int velocity, int channel){
    _ctx.pitch = int_to_float(note);
 }
 
@@ -101,7 +101,7 @@ void Sin_noteOff_init(Sin__ctx_type_2 &_output_){
    return ;
 }
 
-void Sin_noteOff(Sin__ctx_type_2 &_ctx, int note){
+void Sin_noteOff(Sin__ctx_type_2 &_ctx, int note, int channel){
 }
 
 void Sin_controlChange_init(Sin__ctx_type_2 &_output_){
@@ -109,7 +109,7 @@ void Sin_controlChange_init(Sin__ctx_type_2 &_output_){
    return ;
 }
 
-void Sin_controlChange(Sin__ctx_type_2 &_ctx, int control, int value){
+void Sin_controlChange(Sin__ctx_type_2 &_ctx, int control, int value, int channel){
 }
 
 void Sin_default_init(Sin__ctx_type_2 &_output_){

@@ -609,7 +609,7 @@ void Voice_noteOn_init(Voice__ctx_type_16 &_output_){
    return ;
 }
 
-void Voice_noteOn(Voice__ctx_type_16 &_ctx, int note, int velocity){
+void Voice_noteOn(Voice__ctx_type_16 &_ctx, int note, int velocity, int channel){
    _ctx.pitch = int_to_fix(Voice_mono_noteOn(_ctx.monoin,note));
 }
 
@@ -618,7 +618,7 @@ void Voice_noteOff_init(Voice__ctx_type_16 &_output_){
    return ;
 }
 
-void Voice_noteOff(Voice__ctx_type_16 &_ctx, int note){
+void Voice_noteOff(Voice__ctx_type_16 &_ctx, int note, int channel){
    _ctx.pitch = int_to_fix(Voice_mono_noteOff(_ctx.monoin,note));
 }
 
@@ -627,7 +627,7 @@ void Voice_controlChange_init(Voice__ctx_type_16 &_output_){
    return ;
 }
 
-void Voice_controlChange(Voice__ctx_type_16 &_ctx, int control, int value){
+void Voice_controlChange(Voice__ctx_type_16 &_ctx, int control, int value, int channel){
    fix16_t value_0_1;
    value_0_1 = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    fix16_t value_m1_1;

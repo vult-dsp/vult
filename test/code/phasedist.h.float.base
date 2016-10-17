@@ -69,19 +69,19 @@ typedef Phasedist__ctx_type_4 Phasedist_noteOn_type;
 
 void Phasedist_noteOn_init(Phasedist__ctx_type_4 &_output_);
 
-void Phasedist_noteOn(Phasedist__ctx_type_4 &_ctx, int note, int velocity);
+void Phasedist_noteOn(Phasedist__ctx_type_4 &_ctx, int note, int velocity, int channel);
 
 typedef Phasedist__ctx_type_4 Phasedist_noteOff_type;
 
 void Phasedist_noteOff_init(Phasedist__ctx_type_4 &_output_);
 
-void Phasedist_noteOff(Phasedist__ctx_type_4 &_ctx, int note);
+void Phasedist_noteOff(Phasedist__ctx_type_4 &_ctx, int note, int channel);
 
 typedef Phasedist__ctx_type_4 Phasedist_controlChange_type;
 
 void Phasedist_controlChange_init(Phasedist__ctx_type_4 &_output_);
 
-void Phasedist_controlChange(Phasedist__ctx_type_4 &_ctx, int control, int value);
+void Phasedist_controlChange(Phasedist__ctx_type_4 &_ctx, int control, int value, int channel);
 
 typedef Phasedist__ctx_type_4 Phasedist_default_type;
 

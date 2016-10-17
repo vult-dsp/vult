@@ -107,7 +107,7 @@ void Phasedist_noteOn_init(Phasedist__ctx_type_4 &_output_){
    return ;
 }
 
-void Phasedist_noteOn(Phasedist__ctx_type_4 &_ctx, int note, int velocity){
+void Phasedist_noteOn(Phasedist__ctx_type_4 &_ctx, int note, int velocity, int channel){
    _ctx.pitch = int_to_float(note);
 }
 
@@ -116,7 +116,7 @@ void Phasedist_noteOff_init(Phasedist__ctx_type_4 &_output_){
    return ;
 }
 
-void Phasedist_noteOff(Phasedist__ctx_type_4 &_ctx, int note){
+void Phasedist_noteOff(Phasedist__ctx_type_4 &_ctx, int note, int channel){
 }
 
 void Phasedist_controlChange_init(Phasedist__ctx_type_4 &_output_){
@@ -124,7 +124,7 @@ void Phasedist_controlChange_init(Phasedist__ctx_type_4 &_output_){
    return ;
 }
 
-void Phasedist_controlChange(Phasedist__ctx_type_4 &_ctx, int control, int value){
+void Phasedist_controlChange(Phasedist__ctx_type_4 &_ctx, int control, int value, int channel){
    uint8_t _cond_3;
    _cond_3 = (control == 30);
    if(_cond_3){

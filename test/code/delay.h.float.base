@@ -166,19 +166,19 @@ typedef Delay__ctx_type_10 Delay_noteOn_type;
 
 void Delay_noteOn_init(Delay__ctx_type_10 &_output_);
 
-void Delay_noteOn(Delay__ctx_type_10 &_ctx, int note, int velocity);
+void Delay_noteOn(Delay__ctx_type_10 &_ctx, int note, int velocity, int channel);
 
 typedef Delay__ctx_type_10 Delay_noteOff_type;
 
 void Delay_noteOff_init(Delay__ctx_type_10 &_output_);
 
-void Delay_noteOff(Delay__ctx_type_10 &_ctx, int note);
+void Delay_noteOff(Delay__ctx_type_10 &_ctx, int note, int channel);
 
 typedef Delay__ctx_type_10 Delay_controlChange_type;
 
 void Delay_controlChange_init(Delay__ctx_type_10 &_output_);
 
-void Delay_controlChange(Delay__ctx_type_10 &_ctx, int control, float value);
+void Delay_controlChange(Delay__ctx_type_10 &_ctx, int control, float value, int channel);
 
 typedef Delay__ctx_type_10 Delay_default_type;
 

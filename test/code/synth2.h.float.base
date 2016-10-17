@@ -215,19 +215,19 @@ typedef Synth2__ctx_type_16 Synth2_noteOn_type;
 
 void Synth2_noteOn_init(Synth2__ctx_type_16 &_output_);
 
-void Synth2_noteOn(Synth2__ctx_type_16 &_ctx, int note, int velocity);
+void Synth2_noteOn(Synth2__ctx_type_16 &_ctx, int note, int velocity, int channel);
 
 typedef Synth2__ctx_type_16 Synth2_noteOff_type;
 
 void Synth2_noteOff_init(Synth2__ctx_type_16 &_output_);
 
-void Synth2_noteOff(Synth2__ctx_type_16 &_ctx, int note);
+void Synth2_noteOff(Synth2__ctx_type_16 &_ctx, int note, int channel);
 
 typedef Synth2__ctx_type_16 Synth2_controlChange_type;
 
 void Synth2_controlChange_init(Synth2__ctx_type_16 &_output_);
 
-void Synth2_controlChange(Synth2__ctx_type_16 &_ctx, int control, int value);
+void Synth2_controlChange(Synth2__ctx_type_16 &_ctx, int control, int value, int channel);
 
 typedef Synth2__ctx_type_16 Synth2_default_type;
 

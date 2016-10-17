@@ -70,14 +70,14 @@ this.Phasedist_process = function(_ctx,input){
    return (this.Phasedist_smooth(_ctx._inst4,_ctx.volume) * sine * comp);
 }
 this.Phasedist_noteOn_init = function() { return this.Phasedist__ctx_type_4_init();}
-this.Phasedist_noteOn = function(_ctx,note,velocity){
+this.Phasedist_noteOn = function(_ctx,note,velocity,channel){
    _ctx.pitch = this.real(note);
 }
 this.Phasedist_noteOff_init = function() { return this.Phasedist__ctx_type_4_init();}
-this.Phasedist_noteOff = function(_ctx,note){
+this.Phasedist_noteOff = function(_ctx,note,channel){
 }
 this.Phasedist_controlChange_init = function() { return this.Phasedist__ctx_type_4_init();}
-this.Phasedist_controlChange = function(_ctx,control,value){
+this.Phasedist_controlChange = function(_ctx,control,value,channel){
    var _cond_3 = false;
    _cond_3 = (control == (30|0));
    if(_cond_3){

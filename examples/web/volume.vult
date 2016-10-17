@@ -14,15 +14,15 @@ fun process(input:real){
 }
 
 // Called when a note On is received
-and noteOn(note:int,velocity:int){
+and noteOn(note:int,velocity:int,channel:int){
 }
 
 // Called when a note Off is received
-and noteOff(note:int){
+and noteOff(note:int,channel:int){
 }
 
 // Called when a control changes
-and controlChange(control:int,value:int){
+and controlChange(control:int,value:int,channel:int){
    mem volume;
    // Control 30 defines the volume
    if(control==30) volume = real(value)/127.0;

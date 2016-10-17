@@ -279,16 +279,16 @@ fun process(i:real){
   return volume * output;
 }
 
-and noteOn(note:int,velocity:int){
+and noteOn(note:int,velocity:int,channel:int){
   mem pitch = real(monoin:mono_noteOn(note));
 }
 
-and noteOff(note:int){
+and noteOff(note:int,channel:int){
   mem pitch = real(monoin:mono_noteOff(note));
 }
 
 // Called when a control changes
-and controlChange(control:int,value:int){
+and controlChange(control:int,value:int,channel:int){
   mem volume;
   mem pitch, pw, wave;  // oscillator parameters
   mem lfo_rate,lfo_amt; // LFO parameter

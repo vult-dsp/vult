@@ -35,19 +35,19 @@ typedef Volume__ctx_type_1 Volume_noteOn_type;
 
 void Volume_noteOn_init(Volume__ctx_type_1 &_output_);
 
-void Volume_noteOn(Volume__ctx_type_1 &_ctx, int note, int velocity);
+void Volume_noteOn(Volume__ctx_type_1 &_ctx, int note, int velocity, int channel);
 
 typedef Volume__ctx_type_1 Volume_noteOff_type;
 
 void Volume_noteOff_init(Volume__ctx_type_1 &_output_);
 
-void Volume_noteOff(Volume__ctx_type_1 &_ctx, int note);
+void Volume_noteOff(Volume__ctx_type_1 &_ctx, int note, int channel);
 
 typedef Volume__ctx_type_1 Volume_controlChange_type;
 
 void Volume_controlChange_init(Volume__ctx_type_1 &_output_);
 
-void Volume_controlChange(Volume__ctx_type_1 &_ctx, int control, int value);
+void Volume_controlChange(Volume__ctx_type_1 &_ctx, int control, int value, int channel);
 
 typedef Volume__ctx_type_1 Volume_default_type;
 
