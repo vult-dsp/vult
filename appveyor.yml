@@ -20,10 +20,10 @@ artifacts:
     name: Vult
 
 deploy:
-  description: 'Vult Compiler'
+  description: 'New version of the Vult compiler'
   provider: GitHub
+  force_update: true
   auth_token:
     secure: NnZaMwUACbe83KldLGTsSXYTcad6xdi1326Wky/xP5sU3Q8HdpBXRdC4P9kMs99X
-  artifact: ${APPVEYOR_BUILD_FOLDER}/vult-win.zip
   on:
     appveyor_repo_tag: true
