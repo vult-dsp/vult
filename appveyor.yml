@@ -26,5 +26,4 @@ deploy:
     secure: NnZaMwUACbe83KldLGTsSXYTcad6xdi1326Wky/xP5sU3Q8HdpBXRdC4P9kMs99X
   artifact: ${APPVEYOR_BUILD_FOLDER}/vult-win.zip
   on:
-    branch: master
     appveyor_repo_tag: true
