@@ -34,18 +34,23 @@ end
 class type fs = object
    method readFileSync : js_string t -> buffer t meth
    method writeFileSync : js_string t -> js_string t -> unit t meth
+   method existsSync : js_string t -> bool t meth
 end
 
 let fs : fs t = Unsafe.fun_call (Unsafe.js_expr "require") [|Unsafe.inject (string "fs")|]
 
 let read_fn (path:string) : string option =
-   let buffer   = fs##readFileSync (string path) in
-   let contents =  buffer##toString in
-   Some(to_string contents)
+   let exist    = fs##existsSync (string path) in
+   if to_bool exist then
+      let buffer   = fs##readFileSync (string path) in
+      let contents =  buffer##toString in
+      Some(to_string contents)
+   else
+      None
 
 let write_fn (path:string) (text:string) : bool =
    let _ = fs##writeFileSync (string path) (string text) in
-   true
+   to_bool (fs##existsSync (string path))
 ;;
 
 FileIO.setRead read_fn ;;

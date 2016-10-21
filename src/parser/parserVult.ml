@@ -833,7 +833,7 @@ let parseFile (filename:string) : parser_results =
       let result = parseBuffer filename buffer in
       result
    | None ->
-      failwith ("Could not open the file "^filename)
+      Error.raiseErrorMsg ("Could not open the file "^filename)
 
 (** Parses a string containing a list of statements and returns the results *)
 let parseString (text:string) : parser_results =

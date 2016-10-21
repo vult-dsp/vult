@@ -49,7 +49,7 @@ let parseFiles files =
    with
    | Error.Errors(errors) ->
       let error_strings = Error.reportErrors errors in
-      print_endline ("Errors in the program:\n"^error_strings);
+      print_endline ("Error:\n"^error_strings);
       exit (-1)
 
 let main () =
