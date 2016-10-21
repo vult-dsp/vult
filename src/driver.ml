@@ -41,7 +41,7 @@ let writeOutput (args:arguments) (files:(Pla.t * string) list) : string =
              s^"\n"^code)
          "" files
    in
-   if not write_files then print_endline txt;
+   if not write_files && txt <> "" then print_endline txt;
    txt
 
 let generateCode (args:arguments) (parser_results:parser_results list) : string =
