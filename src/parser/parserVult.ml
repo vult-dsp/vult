@@ -805,7 +805,7 @@ let parseDumpStmtList (s:string) : string =
    PrintTypes.stmtStr e
 
 (** Parses a buffer containing a list of statements and returns the results *)
-let parseBuffer (file:string) (buffer) : parser_results =
+let parseBuffer (file:string) (buffer:Stream.stream) : parser_results =
    try
       let rec loop acc =
          match Stream.peek buffer with
@@ -829,14 +829,18 @@ let parseBuffer (file:string) (buffer) : parser_results =
 let parseFile (filename:string) : parser_results =
    match FileIO.read filename with
    | Some(contents) ->
-      let buffer = Stream.fromString contents in
+      let buffer = Stream.fromString ~file:filename contents in
       let result = parseBuffer filename buffer in
       result
    | None ->
       Error.raiseErrorMsg ("Could not open the file "^filename)
 
 (** Parses a string containing a list of statements and returns the results *)
-let parseString (text:string) : parser_results =
-   let buffer = Stream.fromString text in
+let parseString (file:string option) (text:string) : parser_results =
+   let buffer =
+      match file with
+      | Some(f) -> Stream.fromString ~file:f text
+      | None ->  Stream.fromString text
+   in
    let result = parseBuffer "live.vult" buffer in
    result

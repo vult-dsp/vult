@@ -57,8 +57,8 @@ let getErrorLines (location:Loc.t) : string =
       match location.Loc.source with
       | Loc.File(filename) ->
          begin match FileIO.read filename with
-         | Some(contents) -> CCString.lines contents
-         | _ -> failwith ("Could not open the file "^filename)
+            | Some(contents) -> CCString.lines contents
+            | _ -> failwith ("Could not open the file "^filename)
          end
       | Loc.Text(code) -> CCString.lines code
    in
@@ -82,7 +82,7 @@ let reportErrorString (error:t) : string =
 
 let reportErrors (errors: t list) : string =
    List.map reportErrorString errors
-   |> List.fold_left (fun s a -> s^"\n"^a) ""
+   |> String.concat "\n"
 
 (** Returns a tuple with the error an all its information *)
 let reportErrorStringNoLoc (error:t) : string * string * int * int =

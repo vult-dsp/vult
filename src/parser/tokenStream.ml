@@ -130,9 +130,18 @@ module TokenStream(S:TokenKindSig) = struct
       }
 
    (** Creates a token stream given a string *)
-   let fromString (str:string) : stream =
+   let fromString ?file (str:string) : stream =
       let lexbuf = Lexing.from_string str in
-      let source = Loc.Text(str) in
+      let source =
+         match file with
+         | Some(f) ->
+            let lex_start_p = Lexing.{ lexbuf.lex_start_p with pos_fname = f } in
+            let lex_curr_p = Lexing.{ lexbuf.lex_curr_p with pos_fname = f } in
+            lexbuf.Lexing.lex_start_p <- lex_start_p;
+            lexbuf.Lexing.lex_curr_p <- lex_curr_p;
+            Loc.File(f)
+         | None  -> Loc.Text(str)
+      in
       let first =  S.next source lexbuf in
       { lexbuf = lexbuf; peeked = first; prev = first ; has_errors = false; errors= []; source = source }
 

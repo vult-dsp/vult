@@ -51,7 +51,7 @@ let generateCode (args:arguments) (parser_results:parser_results list) : string 
    with
    | Error.Errors(errors) ->
       let error_strings = Error.reportErrors errors in
-      print_endline ("Errors in the program:\n"^error_strings);
+      print_endline error_strings;
       exit (-1)
 
 (** Prints the parsed files if -dparse was passed as argument *)
@@ -64,12 +64,12 @@ let dumpParsedFiles (args:arguments) (parser_results:parser_results list) : unit
    with
    | Error.Errors(errors) ->
       let error_strings = Error.reportErrors errors in
-      print_endline ("Errors in the program:\n"^error_strings)
+      print_endline error_strings
 
 (** Parses the code and and generates the target *)
 let parseStringGenerateCode (args:arguments) (code:string) : string =
    try
-      ParserVult.parseString code
+      ParserVult.parseString None code
       |> fun a -> generateCode args [a]
    with
    | Error.Errors(errors) ->
@@ -79,7 +79,7 @@ let parseStringGenerateCode (args:arguments) (code:string) : string =
 (** Parses the code and returns either the transformed code or the error message *)
 let parsePrintCode (code:string) : string =
    try
-      ParserVult.parseString code
+      ParserVult.parseString None code
       |> Passes.applyTransformationsSingle default_arguments
       |> PrintTypes.stmtListStr
    with
@@ -90,7 +90,7 @@ let parsePrintCode (code:string) : string =
 (** Checks the code and returns a list with the errors *)
 let checkCode (code:string) : (string * string * int * int) list =
    try
-      ParserVult.parseString code
+      ParserVult.parseString None code
       |> Passes.applyTransformationsSingle default_arguments
       |> fun _ -> []
    with

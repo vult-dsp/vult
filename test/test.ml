@@ -264,7 +264,7 @@ module RandomCompileTest = struct
       let seed = Hashtbl.hash filename in
       let code = RandProg.run seed in
       write filename code;
-      let parser_results = ParserVult.parseString code in
+      let parser_results = ParserVult.parseString (Some(filename)) code in
       Driver.generateCode args [parser_results] |> ignore
 
    let run (real_type:string) (file:string) _ =
