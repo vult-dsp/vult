@@ -32,6 +32,12 @@ NOTE: The code for the fixed-point operations is based on the project:
 #define VULTIN_H
 #include <stdint.h>
 
+#ifdef _MSC_VER
+#define static_inline static __inline
+#else
+#define static_inline static inline
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -42,72 +48,72 @@ typedef int32_t fix16_t;
 static const fix16_t fix_pi  = 205887;
 
 // Type conversion
-static inline float  fix_to_float(fix16_t a) {
+static_inline float  fix_to_float(fix16_t a) {
     return (float)a / 0x00010000;
 }
-static inline fix16_t float_to_fix(float a){
+static_inline fix16_t float_to_fix(float a){
     float temp = a * 0x00010000;
     return (fix16_t)temp;
 }
 
-static inline float int_to_float(int a) {
+static_inline float int_to_float(int a) {
     return (float)a;
 }
 
-static inline int float_to_int(float a){
+static_inline int float_to_int(float a){
     return (int)a;
 }
 
-static inline fix16_t int_to_fix(int a) {
+static_inline fix16_t int_to_fix(int a) {
     return a * 0x00010000;
 }
 
-static inline int fix_to_int(fix16_t a)
+static_inline int fix_to_int(fix16_t a)
 {
     return (a >> 16);
 }
 
 // Basic operations for fixed point numbers
-static inline fix16_t fix_add(fix16_t x, fix16_t y){
+static_inline fix16_t fix_add(fix16_t x, fix16_t y){
     return x+y;
 }
 
-static inline fix16_t fix_sub(fix16_t x, fix16_t y){
+static_inline fix16_t fix_sub(fix16_t x, fix16_t y){
     return x-y;
 }
 
-static inline fix16_t fix_mul(fix16_t x, fix16_t y){
+static_inline fix16_t fix_mul(fix16_t x, fix16_t y){
     int64_t res = (int64_t) x * y;
     return (fix16_t) (res >> 16);
 }
 
-static inline fix16_t fix_minus(fix16_t x){
+static_inline fix16_t fix_minus(fix16_t x){
     return -x;
 }
 
 fix16_t fix_div(fix16_t a, fix16_t b);
 
-static inline fix16_t fix_abs(fix16_t x){
+static_inline fix16_t fix_abs(fix16_t x){
     return x<0?(-x):x;
 }
 
-static inline fix16_t fix_min(fix16_t a,fix16_t b){
+static_inline fix16_t fix_min(fix16_t a,fix16_t b){
     return a<b?a:b;
 }
 
-static inline fix16_t fix_max(fix16_t a,fix16_t b){
+static_inline fix16_t fix_max(fix16_t a,fix16_t b){
     return a>b?a:b;
 }
 
-static inline fix16_t fix_clip(fix16_t v,fix16_t minv, fix16_t maxv){
+static_inline fix16_t fix_clip(fix16_t v,fix16_t minv, fix16_t maxv){
     return v>maxv?maxv:(v<minv?minv:v);
 }
 
-static inline fix16_t fix_floor(fix16_t x){
+static_inline fix16_t fix_floor(fix16_t x){
     return (x & 0xFFFF0000);
 }
 
-static inline fix16_t fix_not(fix16_t x){
+static_inline fix16_t fix_not(fix16_t x){
     return ~x;
 }
 
@@ -130,19 +136,19 @@ fix16_t fix_sqrt(fix16_t inValue);
 
 /* Floating point operations */
 
-static inline float float_clip(float value, float low, float high){
+static_inline float float_clip(float value, float low, float high){
     return value<low?low:(value>high?high:value);
 }
 
 /* Array get and set */
-static inline void    float_set(float a[], int i, float value)   { a[i] = value; }
-static inline float   float_get(float a[], int i)                { return a[i]; }
-static inline void    fix_set(fix16_t a[], int i, fix16_t value) { a[i] = value; }
-static inline fix16_t fix_get(fix16_t a[], int i)                { return a[i]; }
-static inline void    int_set(int a[], int i, int value)         { a[i] = value; }
-static inline int     int_get(int a[], int i)                    { return a[i]; }
-static inline void    bool_set(uint8_t a[], int i, uint8_t value)  { a[i] = value; }
-static inline uint8_t bool_get(uint8_t a[], int i)                { return a[i]; }
+static_inline void    float_set(float a[], int i, float value)   { a[i] = value; }
+static_inline float   float_get(float a[], int i)                { return a[i]; }
+static_inline void    fix_set(fix16_t a[], int i, fix16_t value) { a[i] = value; }
+static_inline fix16_t fix_get(fix16_t a[], int i)                { return a[i]; }
+static_inline void    int_set(int a[], int i, int value)         { a[i] = value; }
+static_inline int     int_get(int a[], int i)                    { return a[i]; }
+static_inline void    bool_set(uint8_t a[], int i, uint8_t value)  { a[i] = value; }
+static_inline uint8_t bool_get(uint8_t a[], int i)                { return a[i]; }
 
 /* Array initialization */
 void float_init_array(int size, float value, float *data);
@@ -156,7 +162,7 @@ void int_copy_array  (int size, int* dest, int *src);
 void bool_copy_array (int size, uint8_t* dest, uint8_t *src);
 void fix_copy_array  (int size, fix16_t* dest, fix16_t *src);
 
-static inline uint8_t bool_not(uint8_t x){
+static_inline uint8_t bool_not(uint8_t x){
     return !x;
 }
 
