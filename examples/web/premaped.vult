@@ -1,0 +1,41 @@
+/* This template has all controls pre-mapped */
+
+// Main processing function
+// 'input' is by default a sine wave at 440 Hz
+fun process(input:real){
+   // pre-mapped controls
+   mem cc30,cc31,cc32,cc33;
+   mem cc34,cc35,cc36,cc37;
+   mem cc38,cc39,cc40,cc41;
+
+   return input;
+}
+
+// Called when a note On is received
+and noteOn(note:int,velocity:int,channel:int){
+}
+
+// Called when a note Off is received
+and noteOff(note:int,channel:int){
+}
+
+// Called when a control changes
+and controlChange(control:int,value:int,channel:int){
+   val normalized = real(value)/127.0;
+   if(control==30) cc30 = normalized;
+   if(control==31) cc31 = normalized;
+   if(control==32) cc32 = normalized;
+   if(control==33) cc33 = normalized;
+   if(control==34) cc34 = normalized;
+   if(control==35) cc35 = normalized;
+   if(control==36) cc36 = normalized;
+   if(control==37) cc37 = normalized;
+   if(control==38) cc38 = normalized;
+   if(control==39) cc39 = normalized;
+   if(control==40) cc40 = normalized;
+   if(control==41) cc41 = normalized;
+}
+
+// Called on initialization to define initial values
+and default(){
+}
