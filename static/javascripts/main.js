@@ -25,6 +25,11 @@ function makeCodeBox(name,width,mode){
    editor.resize();
 }
 
+function setEditorFontSize(name, size) {
+   var editor_div = document.getElementById(name);
+   editor_div.style.fontSize=size+'px';
+}
+
 var all_vult_editors = document.getElementsByClassName("vult_code");
 for(var i=0;i<all_vult_editors.length;i=i+1){
    makeCodeBox(all_vult_editors[i].id,"650px","ace/mode/vult");

@@ -137,6 +137,8 @@ var phasedist = "";
 var synth1    = "";
 var synth2    = "";
 var delay     = "";
+var premapped = "";
+var demo1     = "";
 
 
 function loadPreset(n){
@@ -161,7 +163,14 @@ function loadPreset(n){
         case 5:
             code = delay;
             break;
+        case 6:
+            code = premapped;
+            break;
+        case 7:
+            code = demo1;
+            break;
         default:
+            print("Not found")
             code = template;
             break;
     }
@@ -185,9 +194,13 @@ function loadFile(url,set_fun) {
     request.send();
 }
 
-loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/template.vult',function(txt) { template = txt; loadPreset(0); });
-loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/delay.vult',function(txt)    { delay = txt; });
-loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/phasedist.vult',function(txt){ phasedist = txt; });
+loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/template.vult',function(txt)  { template = txt; loadPreset(0); });
+loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/delay.vult',function(txt)     { delay = txt; });
+loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/phasedist.vult',function(txt) { phasedist = txt; });
 loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/synth1.vult',function(txt)    { synth1 = txt; });
 loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/synth2.vult',function(txt)    { synth2 = txt; });
 loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/volume.vult',function(txt)    { volume1 = txt; });
+loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/premaped.vult',function(txt)  { premapped = txt; });
+loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/demo1.vult',function(txt)     { demo1 = txt; });
+
+

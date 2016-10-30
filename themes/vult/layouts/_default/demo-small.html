@@ -1,0 +1,99 @@
+<link rel="stylesheet" type="text/css" href="../css/vult.css" media="screen">
+<link href="https://fonts.googleapis.com/css?family=Francois+One|Rasa" rel="stylesheet">
+<script src="https://use.fontawesome.com/aa67c38f9b.js"></script>
+
+<div class="main" id="main">
+
+   <div id="top-section">
+   </div>
+
+   <div id="side-section">
+      <ul>
+         <li><a onclick="setAudioOn()" style="cursor: pointer;"><i class="fa fa-play" aria-hidden="true"></i></a></li>
+         <li><a onclick="setAudioOff()" style="cursor: pointer;"><i class="fa fa-stop" aria-hidden="true"></i></a></li>
+         <li><a onclick="expandCollapse()" style="cursor: pointer;"><i class="fa fa-folder-open" aria-hidden="true"></i></a></li>
+      </ul>
+      <ul id ="examples" style="visibility: hidden;">
+         <li><a class="example" onclick="loadPreset(0)">Template</a></li>
+         <li><a class="example" onclick="loadPreset(1)">Volume</a></li>
+         <li><a class="example" onclick="loadPreset(2)">PhaseDist</a></li>
+         <li><a class="example" onclick="loadPreset(3)">Synth1</a></li>
+         <li><a class="example" onclick="loadPreset(4)">Synth2</a></li>
+         <li><a class="example" onclick="loadPreset(5)">Delay</a></li>
+         <li><a class="example" onclick="loadPreset(6)">PreMapped</a></li>
+         <li><a class="example" onclick="loadPreset(7)">Demo1</a></li>
+      </ul>
+   </div>
+
+   <div id="middle-section">
+   	<div class="vult_editor" id="editor"></div>
+   </div>
+
+   <div id="bottom-section">
+      <div class="controlsmenu">
+         <div class="knoblabel" >
+            <canvas nx="dial" id="CC30" height="50" width="50"></canvas>
+            <div class="knoblabelelem">CC 30</div>
+         </div>
+         <div class="knoblabel">
+            <canvas nx="dial" id="CC31" height="50" width="50"></canvas>
+            <div class="knoblabelelem">CC 31</div>
+         </div>
+         <div class="knoblabel">
+            <canvas nx="dial" id="CC32" height="50" width="50"></canvas>
+            <div class="knoblabelelem">CC 32</div>
+         </div>
+         <div class="knoblabel">
+            <canvas nx="dial" id="CC33" height="50" width="50"></canvas>
+            <div class="knoblabelelem">CC 33</div>
+         </div>
+         <div class="knoblabel">
+            <canvas nx="dial" id="CC34" height="50" width="50"></canvas>
+            <div class="knoblabelelem">CC 34</div>
+         </div>
+         <div class="knoblabel">
+            <canvas nx="dial" id="CC35" height="50" width="50"></canvas>
+            <div class="knoblabelelem">CC 35</div>
+         </div>
+         <div class="knoblabel">
+            <canvas nx="dial" id="CC36" height="50" width="50"></canvas>
+            <div class="knoblabelelem">CC 36</div>
+         </div>
+         <div class="knoblabel">
+            <canvas nx="dial" id="CC37" height="50" width="50"></canvas>
+            <div class="knoblabelelem">CC 37</div>
+         </div>
+         <div class="knoblabel">
+            <canvas nx="dial" id="CC38" height="50" width="50"></canvas>
+            <div class="knoblabelelem">CC 38</div>
+         </div>
+         <div class="knoblabel">
+            <canvas nx="dial" id="CC39" height="50" width="50"></canvas>
+            <div class="knoblabelelem">CC 39</div>
+         </div>
+         <div class="knoblabel">
+            <canvas nx="dial" id="CC40" height="50" width="50"></canvas>
+            <div class="knoblabelelem">CC 40</div>
+         </div>
+         <div class="knoblabel">
+            <canvas nx="dial" id="CC41" height="50" width="50"></canvas>
+            <div class="knoblabelelem">CC 41</div>
+         </div>
+      </div>
+      <canvas nx="keyboard" id="keyboard_input" width="620px" height="65px"></canvas>
+      <div class="status">
+         <div id="audio_status" style="float:left;width:100px;padding-left:25px">Audio: Off</div>
+         <div id="midi_status"  style="float:left;width:100px">MIDI: Off</div>
+         <div id="code_status"  style="float:left;width:100px">Code: -</div>
+      </div>
+   </div>
+
+</div>
+<script type="text/javascript" src="../javascripts/external/ace/ace.js"></script>
+<script type="text/javascript" src="../javascripts/nexusUI.js"></script>
+<script type="text/javascript" src="../javascripts/main.js"></script>
+<script type="text/javascript" src="../javascripts/audio.js"></script>
+<script type="text/javascript" src="../javascripts/midi.js"></script>
+<script type="text/javascript" src="../javascripts/vult_node.js"></script>
+<script type="text/javascript" src="../javascripts/demo.js"></script>
+<script type="text/javascript"> initDemo (); setEditorFontSize('editor',22); </script>
