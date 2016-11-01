@@ -57,9 +57,11 @@ module Templates = struct
       let nnoteon_inputs= count_context @@ List.length config.noteon_inputs in
       let nnoteoff_inputs = count_context @@ List.length config.noteoff_inputs in
       let ncontrolchange_inputs = count_context @@ List.length config.controlchange_inputs in
-      {pla|local this = {}
+      {pla|
+local this = {}
 local ffi = require("ffi")
 function this.ternary(cond,then_,else_) if cond then return then_ else return else_ end end
+function this.eps()             return 1e-18; end
 function this.clip(x,low,high)  return (this.ternary(x<low,low,this.ternary(x>high,high,x))); end
 function this.real(x)           return x; end
 function this.int(x)            return math.floor(x); end

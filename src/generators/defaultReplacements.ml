@@ -121,6 +121,7 @@ module Default = struct
             ("get",  "int"),    "int_get";
             ("get",  "uint8_t"), "bool_get";
             ("not",  "uint8_t"), "bool_not";
+            ("eps",  "float"),   "float_eps";
          ]
 
    let array_init = Replacements.makeArrayInitializations
@@ -204,6 +205,7 @@ module FixedPoint = struct
             ("clip", "fix16_t"),  "fix_clip";
             ("set",  "fix16_t"),  "fix_set";
             ("get",  "fix16_t"),  "fix_get";
+            ("eps",  "fix16_t"),  "fix_eps";
          ]
 
    let array_init = Replacements.makeArrayInitializations

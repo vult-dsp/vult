@@ -585,6 +585,9 @@ let builtin_table =
       ["not"] , Scope.Function, VType.Constants.bool_bool (), false;
       ["||"]  , Scope.Operator, VType.Constants.bool_bool_bool (), false;
       ["&&"]  , Scope.Operator, VType.Constants.bool_bool_bool (), false;
+
+      ["eps"] , Scope.Function, VType.Constants.real_type, false;
+
    ]
 
 let builtin_functions = List.map (fun (a,_,_,_)-> a ) builtin_table |> IdSet.of_list

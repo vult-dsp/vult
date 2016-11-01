@@ -414,4 +414,6 @@ module Constants = struct
       let array_type = ref (TComposed(["array"],[a;size],None)) in
       ref (TArrow(int_type,ref (TArrow(a,array_type,None)),None))
 
+   let unit_real () =
+      ref (TArrow(unit_type,real_type,None))
 end
