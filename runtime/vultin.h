@@ -133,7 +133,7 @@ static_inline fix16_t fix_not(fix16_t x)
 
 static_inline float float_eps()
 {
-   return 1e-18;
+   return 1e-18f;
 }
 
 static_inline fix16_t fix_eps()
