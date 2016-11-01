@@ -103,7 +103,8 @@ Vult provides a few templates; for example to generate objects compatible with t
 
 You can see these repositories for examples:
 
-- Pure Data https://github.com/modlfo/pd-vult-example
+- PureData https://github.com/modlfo/vult-examples
+- PureData https://github.com/modlfo/pd-vult-example
 - Teensy Audio https://github.com/modlfo/teensy-vult-example
 
 ### Roadmap
