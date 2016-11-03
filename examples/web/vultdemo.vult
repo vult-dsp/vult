@@ -136,8 +136,8 @@ fun delay(x:real, time:real, feedback:real) : real {
    mem buffer : array(real,44100);
    mem write_pos;
    // Constraints the parameter values
-   val time     = clip(time,0.0,1.0);
-   val feedback = clip(feedback,0.0,1.0);
+   time     = clip(time,0.0,1.0);
+   feedback = clip(feedback,0.0,1.0);
    // Gets the position in the buffer to read
    val index_r  = real(size(buffer)) * time;
    val index_i  = int(floor(index_r));
@@ -233,5 +233,5 @@ and controlChange(control:int,value:int,channel:int){
 
 // Called on initialization to define initial values
 and default(){
-   
+
 }
