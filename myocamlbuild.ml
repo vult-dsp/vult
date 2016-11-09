@@ -938,14 +938,14 @@ let dispatch_default = MyOCamlbuildBase.dispatch_default conf package_default;;
 # 939 "myocamlbuild.ml"
 (* OASIS_STOP *)
 Ocamlbuild_plugin.dispatch (MyOCamlbuildBase.dispatch_combine [
-    (function
-      | After_rules ->
-          flag ["compile"; "ocaml"]
-            (S[A"-w"; A "+27+33-3"]);
-          mark_tag_used "tests";
-          mark_tag_used "pkg_js_of_ocaml";
-          mark_tag_used "pkg_js_of_ocaml.ppx";
-          mark_tag_used "pkg_oUnit";
-      | _ -> ()
-    );
-    dispatch_default]);;
+      (function
+         | After_rules ->
+            flag ["compile"; "ocaml"]
+               (S[A"-w"; A "+27+33-3-58"]);
+            mark_tag_used "tests";
+            mark_tag_used "pkg_js_of_ocaml";
+            mark_tag_used "pkg_js_of_ocaml.ppx";
+            mark_tag_used "pkg_oUnit";
+         | _ -> ()
+      );
+      dispatch_default]);;
