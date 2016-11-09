@@ -393,10 +393,18 @@ module Scope = struct
 
    (** Adds a new instance to the given scope *)
    let addMem (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =
-      let new_symbol = { name = name; typ = typ; loc = loc; is_inst = false } in
-      t.mem_inst := IdMap.add name new_symbol !(t.mem_inst);
-      t.active := true;
-      t
+      match lookupVal t name with
+      | None ->
+         let new_symbol = { name = name; typ = typ; loc = loc; is_inst = false } in
+         t.mem_inst := IdMap.add name new_symbol !(t.mem_inst);
+         t.active := true;
+         t
+      | Some(decl) ->
+         let msg =
+            Printf.sprintf
+               "Redefinition of variable '%s'. Previously defined at %s" (idStr name) (Loc.to_string_readable decl.loc)
+         in
+         Error.raiseError msg loc
 
    (** Adds a new mem variable to the given scope *)
    let addInstance (t:t) (name:id) (typ:VType.t) (loc:Loc.t) : t =

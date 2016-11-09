@@ -24,10 +24,10 @@ fun biquad(x:real,b0:real,b1:real,b2:real,a1:real,a2:real){
     return y0;
 }
 
-fun lp6(x,fc) {
+fun lp6(x,fc_in) {
     mem fc,k;
-    if(change(fc)){
-        fc = clip(fc,0.0,44100.0/2.0);
+    if(change(fc_in)){
+        fc = clip(fc_in,0.0,44100.0/2.0);
         k = tan(pi()*fc/44100.0);
     }
     val b0 = k/(k+1.0);

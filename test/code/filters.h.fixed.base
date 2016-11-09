@@ -52,7 +52,7 @@ void Filters__ctx_type_6_init(Filters__ctx_type_6 &_output_);
 
 void Filters_lp6_init(Filters__ctx_type_6 &_output_);
 
-fix16_t Filters_lp6(Filters__ctx_type_6 &_ctx, fix16_t x, fix16_t fc);
+fix16_t Filters_lp6(Filters__ctx_type_6 &_ctx, fix16_t x, fix16_t fc_in);
 
 typedef struct Filters__ctx_type_7 {
    fix16_t b2;

@@ -91,11 +91,11 @@ void Filters_lp6_init(Filters__ctx_type_6 &_output_){
    return ;
 }
 
-float Filters_lp6(Filters__ctx_type_6 &_ctx, float x, float fc){
+float Filters_lp6(Filters__ctx_type_6 &_ctx, float x, float fc_in){
    uint8_t _cond_4;
-   _cond_4 = Filters_change(_ctx._inst1,_ctx.fc);
+   _cond_4 = Filters_change(_ctx._inst1,fc_in);
    if(_cond_4){
-      _ctx.fc = Filters_clip(_ctx.fc,0.f,22050.f);
+      _ctx.fc = Filters_clip(fc_in,0.f,22050.f);
       _ctx.k = tanf((Filters_pi() * _ctx.fc * 2.26757369615e-05f));
    }
    float b0;
