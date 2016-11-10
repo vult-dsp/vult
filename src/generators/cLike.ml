@@ -41,7 +41,7 @@ type cexp =
    | CECall   of string * cexp list
    | CEUnOp   of string * cexp
    | CEOp     of string * cexp list
-   | CEVar    of string
+   | CEVar    of string list
    | CEIf     of cexp * cexp * cexp
    | CETuple  of (string * cexp) list
    | CENewObj
@@ -50,12 +50,12 @@ type cexp =
 
 type clhsexp =
    | CLWild
-   | CLId    of type_descr * string
+   | CLId    of type_descr * string list
    | CLTuple of clhsexp list
 [@@deriving show,eq,ord]
 
 type cstmt =
-   | CSVarDecl  of clhsexp * cexp option
+   | CSVar      of clhsexp
    | CSBind     of clhsexp * cexp
    | CSFunction of type_descr * string * (arg_type * string) list * cstmt
    | CSReturn   of cexp

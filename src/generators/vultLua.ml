@@ -25,6 +25,8 @@ THE SOFTWARE.
 open CLike
 open GenerateParams
 
+let dot = Pla.map_sep (Pla.string ".") Pla.string
+
 module Templates = struct
 
    type t =
@@ -140,8 +142,7 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
       let op_t = {pla| <#op#s> |pla} in
       let elems_t = Pla.map_sep op_t (printExp params) elems in
       {pla|(<#elems_t#>)|pla}
-   | CEVar(name) ->
-      Pla.string name
+   | CEVar(name) -> dot name
    | CEIf(cond,then_,else_) ->
       let cond_t = printExp params cond in
       let then_t = printExp params then_ in
@@ -157,14 +158,16 @@ and printJsField (params:params) (name,value) : Pla.t =
    {pla|<#name#s> : <#value_t#>|pla}
 
 
-let printLhsExpTuple (var:string) (is_var:bool) (i:int) (e:clhsexp) : Pla.t =
+let printLhsExpTuple (var:string list) (is_var:bool) (i:int) (e:clhsexp) : Pla.t =
+   let var = Pla.map_sep (Pla.string ".") Pla.string var in
    let i1 = i + 1 in
    match e with
    | CLId(_,name) ->
+      let name = dot name in
       if is_var then
-         {pla|local <#name#s> = <#var#s>[<#i1#i>]; |pla}
+         {pla|local <#name#> = <#var#>[<#i1#i>]; |pla}
       else
-         {pla|<#name#s> = <#var#s>[<#i1#i>]; |pla}
+         {pla|<#name#> = <#var#>[<#i1#i>]; |pla}
 
    | CLWild -> Pla.unit
 
@@ -181,26 +184,14 @@ let getInitValue (descr:type_descr) : string =
 
 let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
-   | CSVarDecl(CLWild,Some(value)) ->
-      let value_t = printExp params value in
-      Some({pla|<#value_t#>;|pla})
+   | CSVar(CLWild) -> None
 
-   | CSVarDecl(CLWild,None) -> None
-
-   | CSVarDecl(CLId(_,name),Some(value)) ->
-      let value_t = printExp params value in
-      Some({pla|local <#name#s> = <#value_t#>;|pla})
-
-   | CSVarDecl(CLId(typ,name),None) ->
+   | CSVar(CLId(typ,name)) ->
       let init = getInitValue typ in
-      Some({pla|local <#name#s> = <#init#s>;|pla})
+      let name = dot name in
+      Some({pla|local <#name#> = <#init#s>;|pla})
 
-   | CSVarDecl(CLTuple(elems),Some(CEVar(name))) ->
-      List.mapi (printLhsExpTuple name true) elems
-      |> Pla.join
-      |> fun a -> Some(a)
-
-   | CSVarDecl(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
+   | CSVar(CLTuple(_)) -> failwith "printStmt: invalid tuple assign"
 
    | CSBind(CLWild,value) ->
       Some(Pla.(printExp params value ++ semi))
@@ -214,7 +205,8 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
 
    | CSBind(CLId(_,name),value) ->
       let value_t = printExp params value in
-      Some({pla|<#name#s> = <#value_t#>;|pla})
+      let name = dot name in
+      Some({pla|<#name#> = <#value_t#>;|pla})
 
    | CSFunction(_,name,args,(CSBlock(_) as body)) ->
       (* if the function has any of the special names add the ctx argument *)

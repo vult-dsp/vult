@@ -32,18 +32,17 @@ type parameters =
       ccode : bool; (* true if we are generating ccode *)
    }
 
-let rec join (sep:string) (id:string list) : string =
-   match id with
-   | [] -> ""
-   | [ name ] -> name
-   | h :: t -> h ^ sep ^ (join sep t)
-
 let convertId (p:parameters) (id:id) : string =
-   join "_" id |> Replacements.getKeyword p.repl
+   String.concat "_" id |> Replacements.getKeyword p.repl
 
-let convertVarId (p:parameters) (id:id) : string =
+let convertVarId (p:parameters) (id:id) : string list =
    List.map (Replacements.getKeyword p.repl) id
-   |> join "."
+
+let convertSingleVarId (p:parameters) (id:id) : string =
+   match id with
+   | [name] ->
+      Replacements.getKeyword p.repl name
+   | _ -> failwith "VultToCLike.convertSingleVarId: this should be a single identifier"
 
 let rec convertType (p:parameters) (tp:VType.t) : type_descr =
    match !tp with
@@ -70,7 +69,8 @@ let convertTypedId (p:parameters) (e:typed_id) : arg_type * string =
    | TypedId(id,typ,_,_) ->
       let typ_c   = convertType p typ in
       let typ_ref = if VType.isSimpleType typ then Var(typ_c) else Ref(typ_c) in
-      typ_ref, convertVarId p id
+      let ids = convertVarId p id in
+      typ_ref, String.concat "." ids
 
 let getCast (p:parameters) (from_type:type_descr) (to_type:type_descr) : string =
    match from_type, to_type with
@@ -91,10 +91,10 @@ let convertOperator (p:parameters) (op:string) (typ:type_descr) (elems:cexp list
    match typ with
    | CTSimple(typ_t) ->
       begin match Replacements.getFunctionForOperator p.repl op typ_t with
-         | Some(fn) -> makeNestedCall fn elems
-         | None ->
-            let new_op = Replacements.getOperator p.repl op typ_t in
-            CEOp(new_op,elems)
+      | Some(fn) -> makeNestedCall fn elems
+      | None ->
+         let new_op = Replacements.getOperator p.repl op typ_t in
+         CEOp(new_op,elems)
       end
    | _ -> CEOp(op,elems)
 
@@ -107,8 +107,8 @@ let getInitArrayFunction (p:parameters) (typ:type_descr) : string =
    match typ with
    | CTSimple(typ_t) ->
       begin match Replacements.getArrayInit p.repl typ_t  with
-         | Some(fn) -> fn
-         | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
+      | Some(fn) -> fn
+      | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
       end
    | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
 
@@ -116,8 +116,8 @@ let getCopyArrayFunction (p:parameters) (typ:type_descr) : string =
    match typ with
    | CTSimple(typ_t) ->
       begin match Replacements.getArrayCopy p.repl typ_t  with
-         | Some(fn) -> fn
-         | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
+      | Some(fn) -> fn
+      | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
       end
    | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
 
@@ -126,17 +126,17 @@ let convertFunction (p:parameters) (name:id) (typ:type_descr) (elems:cexp list) 
    (* For the function set we need to get the type based on one of the arguments *)
    | ["set"] ->
       begin match getFunctionSetType elem_typs with
-         | CTSimple(typ_t) ->
-            let fn = Replacements.getFunction p.repl "set" typ_t in
-            CECall(fn, elems)
-         | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
+      | CTSimple(typ_t) ->
+         let fn = Replacements.getFunction p.repl "set" typ_t in
+         CECall(fn, elems)
+      | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
       end
    | [fname] ->
       begin match typ with
-         | CTSimple(typ_t) ->
-            let fn = Replacements.getFunction p.repl fname typ_t in
-            CECall(fn, elems)
-         | _ -> CECall(convertId p name, elems)
+      | CTSimple(typ_t) ->
+         let fn = Replacements.getFunction p.repl fname typ_t in
+         CECall(fn, elems)
+      | _ -> CECall(convertId p name, elems)
       end
    | _ -> CECall(convertId p name, elems)
 
@@ -235,11 +235,8 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
    match s with
    | StmtVal(lhs,None,_) ->
       let lhs' = convertLhsExp true p lhs in
-      CSVarDecl(lhs',None)
-   | StmtVal(lhs,Some(rhs),_) ->
-      let lhs' = convertLhsExp true p lhs in
-      let rhs' = convertExp p rhs in
-      CSVarDecl(lhs',Some(rhs'))
+      CSVar(lhs')
+   | StmtVal(_,Some(_),_) -> failwith "VultToCLike.convertStmt: val should not have initializations"
    | StmtMem _ -> CSEmpty
    | StmtWhile(cond,stmt,_) ->
       let cond' = convertExp p cond in
@@ -275,8 +272,8 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
    | StmtBind(LId(_,_,_) as lhs,PTuple(elems,_),attr) when p.ccode ->
       let stmts =
          List.mapi (fun i e ->
-            let etype = (GetAttr.fromExp e).typ in
-            convertStmt p (StmtBind(getRecordField lhs i etype,e,attr))) elems in
+               let etype = (GetAttr.fromExp e).typ in
+               convertStmt p (StmtBind(getRecordField lhs i etype,e,attr))) elems in
       CSBlock(stmts)
    (* special for c/c++ initialize array variables *)
    | StmtBind(LId(lhs,Some(typ),_),PArray(elems,_),_) when p.ccode ->
@@ -310,7 +307,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
          | CTSimple(t) -> t
          | _ -> failwith "VultCh.convertStmt: invalid alias type"
       in
-      let member_pairs = List.map (fun (id,typ,_) -> convertType p typ, convertVarId p id) members in
+      let member_pairs = List.map (fun (id,typ,_) -> convertType p typ, convertSingleVarId p id) members in
       CSType(type_name,member_pairs)
    | StmtAliasType(t1,t2,_) ->
       let t1_name   = convertType p t1 in

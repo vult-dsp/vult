@@ -115,25 +115,26 @@ module Scope = struct
 
    type t =
       {
-         name      : id;             (** Name of the current scope *)
-         kind      : kind;           (** Type of the current scope *)
-         parent    : t option ref;       (** Pointer to it's parent *)
-         typ       : VType.t ref;        (** Type of the symbol *)
+         name      : id;                   (** Name of the current scope *)
+         kind      : kind;                 (** Type of the current scope *)
+         parent    : t option ref;         (** Pointer to it's parent *)
+         typ       : VType.t ref;          (** Type of the symbol *)
 
-         operators : t IdMap.t ref;      (** Operators *)
-         modules   : t IdMap.t ref;      (** Modules or namespaces *)
-         types     : t IdMap.t ref;      (** Types *)
-         func      : t IdMap.t ref;      (** Functions *)
+         (* Sub elements *)
+         operators : t IdMap.t ref;        (** Operators *)
+         modules   : t IdMap.t ref;        (** Modules or namespaces *)
+         types     : t IdMap.t ref;        (** Types *)
+         func      : t IdMap.t ref;        (** Functions *)
          mem_inst  : var IdMap.t ref;      (** Mem and instances *)
          locals    : var IdMap.t list ref; (** Variables and subscopes *)
 
-         ctx       : Context.t ref;
+         ctx       : Context.t ref;        (** keeps track of which functions belong to the same context *)
 
-         single    : bool ref;           (** true if every function call does not create a new instance *)
+         single    : bool ref;             (** true if every function call does not create a new instance of the type *)
 
-         active    : bool ref;           (** true if the fuction contains a mem or an instance *)
+         active    : bool ref;             (** true if the fuction contains a mem or an instance *)
 
-         ext_fn    : string option ref;      (** contains the replacement name if it's an external function *)
+         ext_fn    : string option ref;    (** contains the replacement name if it's an external function *)
 
          loc       : Loc.t ref;
 
@@ -434,14 +435,15 @@ module Scope = struct
          else
             let msg =
                Printf.sprintf
-                  "Redefinition of variable '%s'. Previously defined at %s" (idStr name) (Loc.to_string_readable decl.loc)
+                  "Redefinition of variable '%s'. Previously defined at %s"
+                  (idStr name) (Loc.to_string_readable decl.loc)
             in
             Error.raiseError msg loc
 
    let addFunction (t:t) (name:id) (attr:attr) : t =
       let add_it () =
          let new_symbol =
-            let sub = { (create Function) with name = name} in 
+            let sub = { (create Function) with name = name} in
             sub.loc := attr.loc;
             sub.ext_fn := attr.ext_fn;
             sub

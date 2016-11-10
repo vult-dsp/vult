@@ -25,6 +25,8 @@ THE SOFTWARE.
 open CLike
 open GenerateParams
 
+let dot = Pla.map_sep (Pla.string ".") Pla.string
+
 (** Returns true if the expression is simple and does not need parenthesis *)
 let isSimple (e:cexp) : bool =
    match e with
@@ -75,7 +77,8 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
       let telems = Pla.map_sep sop (printExp params) elems in
       {pla|(<#telems#>)|pla}
 
-   | CEVar(name) -> Pla.string name
+   | CEVar(name) ->
+      dot name
 
    | CEIf(cond,then_,else_) ->
       let tcond = printExp params cond in
@@ -112,50 +115,55 @@ let printTypeDescr (typ:type_descr) : Pla.t =
       {pla|<#kind#s>[<#tsize#>]|pla}
 
 (** Used to print declarations and rebindings of lhs variables *)
-let printTypeAndName (is_decl:bool) (typ:type_descr) (name:string) : Pla.t =
+let printTypeAndName (is_decl:bool) (typ:type_descr) (name:string list) : Pla.t =
    let kind, sizes = simplifyArray typ in
+   let name = dot name in
    match is_decl, sizes with
    (* Simple varible declaration (no sizes) *)
-   | true,[] -> {pla|<#kind#s> <#name#s>|pla}
+   | true,[] -> {pla|<#kind#s> <#name#>|pla}
    (* Array declarations (with sizes) *)
    | true,_  ->
       let t_sizes = Pla.map_sep Pla.comma Pla.string sizes in
-      {pla|<#kind#s> <#name#s>[<#t_sizes#>]|pla}
+      {pla|<#kind#s> <#name#>[<#t_sizes#>]|pla}
    (* Simple rebinding (no declaration) *)
-   | _,_ -> {pla|<#name#s>|pla}
+   | _,_ -> {pla|<#name#>|pla}
 
 (** Used to print assignments of a tuple field to a variable *)
-let printLhsExpTuple (var:string) (is_var:bool) (i:int) (e:clhsexp) : Pla.t =
+let printLhsExpTuple (var:string list) (is_var:bool) (i:int) (e:clhsexp) : Pla.t =
+   let var = dot var in
    match e with
    (* Assigning to a simple variable *)
    | CLId(CTSimple(typ),name) ->
+      let name_ = dot name in
       if is_var then (* with declaration *)
-         {pla|<#typ#s> <#name#s> = <#var#s>.field_<#i#i>;|pla}
+         {pla|<#typ#s> <#name_#> = <#var#>.field_<#i#i>;|pla}
       else (* with no declaration *)
-         {pla|<#name#s> = <#var#s>.field_<#i#i>;|pla}
+         {pla|<#name_#> = <#var#>.field_<#i#i>;|pla}
 
    | CLId(typ,name) ->
       let tdecl = printTypeAndName is_var typ name in
-      {pla|<#tdecl#> = <#var#s>.field_<#i#i>;|pla}
+      {pla|<#tdecl#> = <#var#>.field_<#i#i>;|pla}
 
    | CLWild -> Pla.unit
 
    | _ -> failwith ("printLhsExpTuple: All other cases should be already covered\n"^(CLike.show_clhsexp e))
 
 (** Used to print assignments on to an array element *)
-let printArrayBinding params (var:string) (i:int) (e:cexp) : Pla.t =
+let printArrayBinding params (var:string list) (i:int) (e:cexp) : Pla.t =
    let te = printExp params e in
-   {pla|<#var#s>[<#i#i>] = <#te#>; |pla}
+   let var = dot var in
+   {pla|<#var#>[<#i#i>] = <#te#>; |pla}
 
 (** Prints lhs values with and without declaration *)
 let printLhsExp (is_var:bool) (e:clhsexp) : Pla.t =
    match e with
    (* With declaration *)
    | CLId(CTSimple(typ),name) when is_var ->
-      {pla|<#typ#s> <#name#s>|pla}
+      let name = dot name in
+      {pla|<#typ#s> <#name#>|pla}
    (* without declaration *)
    | CLId(CTSimple(_),name) ->
-      Pla.string name
+      dot name
    (* Other cases can be covered by printTypeAndName *)
    | CLId(typ,name) ->
       printTypeAndName is_var typ name
@@ -181,31 +189,15 @@ let printFunArg (ntype,name) : Pla.t =
 let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
    (* Strange case '_' *)
-   | CSVarDecl(CLWild,None) -> None
-
-   (* Prints type _ = ... *)
-   | CSVarDecl(CLWild,Some(value)) ->
-      let te = printExp params value in
-      Some({pla|<#te#>;|pla})
-
-   (* Prints type x = ... *)
-   | CSVarDecl((CLId(_,_) as lhs),Some(value)) ->
-      let tlhs = printLhsExp true lhs in
-      let te   = printExp params value in
-      Some({pla|<#tlhs#> = <#te#>;|pla})
+   | CSVar(CLWild) -> None
 
    (* Prints type x; *)
-   | CSVarDecl((CLId(_,_) as lhs),None) ->
+   | CSVar(CLId(_,_) as lhs) ->
       let tlhs = printLhsExp true lhs in
       Some({pla|<#tlhs#>;|pla})
 
-   (* Print type (x,y,z) = ... *)
-   | CSVarDecl(CLTuple(elems),Some(CEVar(name))) ->
-      let t = List.mapi (printLhsExpTuple name true) elems |> Pla.join in
-      Some(t)
-
    (* All other cases of assigning tuples will be wrong *)
-   | CSVarDecl(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
+   | CSVar(CLTuple(_)) -> failwith "printStmt: invalid tuple assign"
 
    (* Prints _ = ... *)
    | CSBind(CLWild,value) ->
@@ -228,7 +220,8 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    (* Prints x = ... *)
    | CSBind(CLId(_,name),value) ->
       let te = printExp params value in
-      Some({pla|<#name#s> = <#te#>;|pla})
+      let name = dot name in
+      Some({pla|<#name#> = <#te#>;|pla})
 
    (* Function declarations cotaining more than one statement *)
    | CSFunction(ntype,name,args,(CSBlock(_) as body)) ->
@@ -293,7 +286,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let tmembers =
          Pla.map_sep_all Pla.newline
             (fun (typ, name) ->
-                let tmember = printTypeAndName true typ name in
+                let tmember = printTypeAndName true typ [name] in
                 {pla|<#tmember#>;|pla}
             ) members;
       in
