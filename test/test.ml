@@ -95,7 +95,7 @@ let test_random_code =
       if n > 0 then
          (Printf.sprintf "test%i.vult" n) :: loop (n-1)
       else []
-   in loop 0
+   in loop 100
 
 (** Flags that defines if a baseline should be created for tests *)
 let writeOutput = Conf.make_bool "writeout" false "Creates a file with the current results"
