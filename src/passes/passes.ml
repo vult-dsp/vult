@@ -1052,11 +1052,7 @@ let passes (name:id) (options:pass_options) (env,stmts) =
    |> CreateTupleTypes.run
 
 let apply env options (results:parser_results) =
-   let module_name =
-      results.file
-      |> moduleName
-      |> fun a -> [a]
-   in
+   let module_name = [moduleName results.file] in
    passes module_name options (env,results.presult)
 
 

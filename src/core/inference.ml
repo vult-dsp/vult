@@ -475,11 +475,7 @@ and inferOptStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt option) : stmt
       Some(s'), s_type, s_ret_type
 
 let inferFile state (results:parser_results) =
-   let module_name =
-      results.file
-      |> moduleName
-      |> fun a -> [a]
-   in
+   let module_name = [moduleName results.file] in
    let state' = Env.enter Scope.Module state module_name emptyAttr in
    let stmts,state',_ = inferStmtList state' NoType results.presult in
    let state' = Env.exit state' in
@@ -491,8 +487,7 @@ let infer (results:parser_results list) : parser_results list =
       List.fold_left
          (fun (state,acc) result ->
              let state', result' = inferFile state result in
-             state', result' :: acc
-         )
+             state', result' :: acc)
          (state,[])
          results
    in

@@ -55,11 +55,13 @@ module Env = struct
 
    let top () : env = [new_t ()]
 
+   (**  Returns the first environment *)
    let first (env:env) : t =
       match env with
       | t ::_ -> t
       | []   -> failwith "invalid env"
 
+   (** Used by lookupFunction to iterate the environments until the function is found *)
    let rec lookupFunction_loop (t:t) (env:env) (id:id) : fun_body =
       match id with
       | [] -> failwith ("unknown function: "^(PrintTypes.identifierStr id))
@@ -75,13 +77,17 @@ module Env = struct
             (* not found, go one level up *)
             match env with
             | t' :: env' -> lookupFunction_loop t' env' id
-            | [] -> failwith ("unknown function: "^(PrintTypes.identifierStr id))
+            | [] ->
+               (* no more environments to look for *)
+               failwith ("unknown function: "^(PrintTypes.identifierStr id))
 
+   (** Looks for a function with the given name *)
    let lookupFunction (env:env) (id:id) : fun_body =
       match env with
       | h::t -> lookupFunction_loop h t id
       | []   -> failwith "invalid env"
 
+   (** Used by lookupVar to iterate all local scopes *)
    let rec lookupVar_loop locals id : exp =
       match locals with
       | [] -> raise Not_found
@@ -93,11 +99,14 @@ module Env = struct
 
    let lookupVar (env:env) (id:id) : exp =
       let t = first env in
+      (* first try to find the variable in the context *)
       match Hashtbl.find t.context id with
       | value -> value
       | exception Not_found ->
+         (* if is not in the context then look in the locals *)
          lookupVar_loop t.locals id
 
+   (** Adds a mem variable to the context, if the variable exists, it does nothing *)
    let declareMem (env:env) (id:id) (value:exp) : unit =
       match lookupVar env id with
       | _ -> ()
@@ -105,6 +114,7 @@ module Env = struct
          let t = first env in
          Hashtbl.add t.context id value
 
+   (** Adds a local variable to the current scope, if the variable exists, it does nothing *)
    let declareVal (env:env) (id:id) (value:exp) : unit =
       match lookupVar env id with
       | _ -> ()
@@ -114,6 +124,7 @@ module Env = struct
          | h::_ -> Hashtbl.replace h id value
          | [] -> failwith "invalid env"
 
+   (** Used by updateVar to iterate all local scopes *)
    let rec updateVar_loop (locals:'a list) (id:id) (value:exp) : unit =
       match locals with
       | [] -> failwith ("unknow variable: "^(PrintTypes.identifierStr id))
@@ -123,6 +134,7 @@ module Env = struct
          | exception Not_found ->
             updateVar_loop t id value
 
+   (** Looks for an existing variable and updates its value *)
    let updateVar (env:env) (id:id) (value:exp) : unit =
       let t = first env in
       match Hashtbl.mem t.context id with
@@ -130,14 +142,17 @@ module Env = struct
       | exception Not_found ->
          updateVar_loop t.locals id value
 
+   (** Adds a function to the scope *)
    let addFunction env id stmt =
       let t = first env in
       Hashtbl.add t.functions id stmt
 
+   (** Adds a module to the scope *)
    let addModule (env:env) (id:id) : unit =
       let t = first env in
       Hashtbl.add t.modules id (new_t ())
 
+   (** Enters to the scope of a module *)
    let enterModule (env:env) (id:id) : env =
       let t = first env in
       match Hashtbl.find t.modules id with
@@ -157,6 +172,7 @@ module Env = struct
          t'::l
       | [] -> failwith "invalid env"
 
+   (** Gets the context of a function call *)
    let enterInstance (env:env) (id:id) : env =
       let t = first env in
       match Hashtbl.find t.instances id with
@@ -169,6 +185,10 @@ module Env = struct
 
 end
 
+(** Constant unit value *)
+let ret_unit = PUnit(emptyAttr)
+
+(** Returns a context name for the a funtion call based on its location *)
 let makeInstName (fn:id) (attr:attr) : id =
    let line = Loc.line attr.loc |> string_of_int in
    let col  = Loc.startColumn attr.loc  |> string_of_int in
@@ -176,12 +196,7 @@ let makeInstName (fn:id) (attr:attr) : id =
    | [id] -> [id^"_"^line^"_"^col]
    | _ -> failwith "invalid function name"
 
-let isTrue (cond:exp) : bool =
-   match cond with
-   | PBool(b, _) -> b
-   | _ -> failwith "could not evaluate condition"
-
-(** Returns the initial value given an expression *)
+(** Returns the initial value given the type of an expression *)
 let rec getInitValue (tp:VType.t) : exp =
    match !tp with
    | VType.TId(["unit"],_) -> PUnit(emptyAttr)
@@ -198,20 +213,21 @@ let rec getInitValue (tp:VType.t) : exp =
    | VType.TLink(tp) -> getInitValue tp
    | _ -> failwith "Interpreter.getInitValue"
 
+(** Returns the initial value given the lhs expression *)
 let getInitExp (lhs:lhs_exp) : exp =
    match (GetAttr.fromLhsExp lhs).typ with
    | Some(typ) -> getInitValue typ
    | None ->
       failwith ("Interpreter.getInitExp: cannot get the initial expression: "^(PrintTypes.lhsExpressionStr lhs))
 
-let ret_unit = PUnit(emptyAttr)
-
+(** Evaluates unary operations *)
 let evalUop (op:string) (exp:exp) : exp =
    match op, exp with
    | "-", PInt(v, attr) -> PInt(-v, attr)
    | "-", PReal(v, attr) -> PReal(-.v, attr)
    | _ -> PUnOp(op,exp, emptyAttr)
 
+(** Evaluates binary operations *)
 let evalOp (op:string) (e1:exp) (e2:exp) : exp =
    match op, e1, e2 with
    | "+", PReal(v1, attr), PReal(v2, _)  -> PReal(v1 +. v2, attr)
@@ -240,6 +256,14 @@ let evalOp (op:string) (e1:exp) (e2:exp) : exp =
    | "||", PBool(v1, attr),  PBool(v2, _)  -> PBool(v1 || v2, attr)
    | _ -> POp(op, [e1; e2], emptyAttr)
 
+(** Used to perform series of arithmetic operations *)
+let foldOp (op:string) (args:exp list) : exp =
+   match args with
+   | [] -> failwith ""
+   | h::t ->
+      List.fold_left (evalOp op) h t
+
+(** Adds all the builtin functions to the scope *)
 let builtinFunctions env =
    let real_real f args : exp =
       match args with
@@ -292,30 +316,29 @@ let builtinFunctions env =
 
          "not", Env.Builtin(not);
          "eps", Env.Builtin(eps);
-
       ]
    in
    List.iter (fun (name,body) ->Env.addFunction env [name] body) functions
 
-let foldOp (op:string) (args:exp list) : exp =
-   match args with
-   | [] -> failwith ""
-   | h::t ->
-      List.fold_left (evalOp op) h t
-
+(** Defines which type of bind is performed *)
 type bind_kind =
-   | Update
-   | DeclareVal
-   | DeclareMem
+   | Update     (* Simple update of an existing variable *)
+   | DeclareVal (* Declaration of a local variable *)
+   | DeclareMem (* Declaration of a memory variable *)
 
+(** Binds the an optional rhs to a lhs expression *)
 let rec bind (kind:bind_kind) (env:Env.env) (lhs:lhs_exp) (rhs:exp option) =
    match lhs, rhs, kind with
    | LWild _, _, _ -> ()
    | LTyped(lhs,_,_),_,_
    | LGroup(lhs,_),_,_ -> bind kind env lhs rhs
+   (* cases when the rhs is given *)
    | LId(id, _, _), Some(rhs), Update     -> Env.updateVar env id rhs
    | LId(id, _, _), Some(rhs), DeclareVal -> Env.declareVal env id rhs
    | LId(id, _, _), Some(rhs), DeclareMem -> Env.declareMem env id rhs
+   | LTuple(lhs_elems,_), Some(PTuple(rhs_elems,_)),_ ->
+      List.iter2 (fun l r -> bind kind env l (Some(r))) lhs_elems rhs_elems
+   (* cases in which the rhs is not given *)
    | LId(id, _, _), None, Update ->
       let rhs = getInitExp lhs in
       Env.updateVar env id rhs
@@ -325,18 +348,18 @@ let rec bind (kind:bind_kind) (env:Env.env) (lhs:lhs_exp) (rhs:exp option) =
    | LId(id, _, _), None, DeclareMem ->
       let rhs = getInitExp lhs in
       Env.declareMem env id rhs
-   | LTuple(lhs_elems,_), Some(PTuple(rhs_elems,_)),_ ->
-      List.iter2 (fun l r -> bind kind env l (Some(r))) lhs_elems rhs_elems
    | LTuple(lhs_elems,_), None,_ ->
       List.iter (fun l -> bind kind env l None) lhs_elems
 
    | _ -> failwith "Interpreter.bind: invalid input"
 
-let rec bind_arg (env:Env.env) (lhs:typed_id) (rhs:exp) =
+(** Binds arguments of a function call to a local variable *)
+let rec bindArg (env:Env.env) (lhs:typed_id) (rhs:exp) =
    match lhs, rhs with
    | (TypedId(id,_,_,_) | SimpleId(id, _, _)), rhs ->
       Env.declareVal env id rhs
 
+(** Main function to evaluate an expression *)
 let rec evalExp (env:Env.env) (exp:exp) : exp =
    match exp with
    | PEmpty  -> PEmpty
@@ -351,6 +374,7 @@ let rec evalExp (env:Env.env) (exp:exp) : exp =
          | value -> value
          | exception Not_found -> exp
       end
+
    | PUnOp(op, exp, _) ->
       let exp' = evalExp env exp in
       evalUop op exp'
@@ -396,7 +420,7 @@ let rec evalExp (env:Env.env) (exp:exp) : exp =
 and evalFunction (env:Env.env) (fn:Env.fun_body) (args:exp list) : exp =
    match fn with
    | Env.Declared(StmtFun(_, inputs, stmt, _, _)) ->
-      List.iter2 (bind_arg env) inputs args;
+      List.iter2 (bindArg env) inputs args;
       evalStmt env stmt
    | Env.Builtin(fn) -> fn args
    | _ -> failwith "cannot evaluate function"
@@ -448,6 +472,7 @@ and evalStmt (env:Env.env) (stmt:stmt) =
             ret_unit
          | _ -> failwith "could not evaluate if statement"
       end
+
    | StmtIf(cond, then_, Some(else_), _) ->
       let cond' = evalExp env cond in
       begin
@@ -458,6 +483,7 @@ and evalStmt (env:Env.env) (stmt:stmt) =
             evalStmt env else_
          | _ -> failwith "could not evaluate if statement"
       end
+
    | StmtWhile(cond,body,_) ->
       let rec loop () =
          let cond' = evalExp env cond in
@@ -478,7 +504,7 @@ and evalStmt (env:Env.env) (stmt:stmt) =
    | StmtAliasType _ -> ret_unit
    | StmtExternal _ -> ret_unit
 
-
+(** Evaluates a list of statements *)
 and evalStmts (env:Env.env) (stmts:stmt list) : exp =
    match stmts with
    | [] -> ret_unit
@@ -487,16 +513,15 @@ and evalStmts (env:Env.env) (stmts:stmt list) : exp =
       | PUnit _ -> evalStmts env t
       | ret -> ret
 
-let evalModule (env:Env.env) results =
-   let module_name =
-      results.file
-      |> moduleName
-   in
+let evalModule (env:Env.env) (results:parser_results) =
+   let module_name = moduleName results.file in
    Env.addModule env [module_name];
    let env' = Env.enterModule env [module_name] in
    evalStmts env' results.presult
 
+(** Main function to evaluate the statements. In ordet to work,
+    the type inference should be already done *)
 let eval (results:parser_results list) =
    let env = Env.top () in
    builtinFunctions env;
-   List.map  (evalModule env) results
+   List.map (evalModule env) results
