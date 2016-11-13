@@ -69,7 +69,6 @@ let dumpParsedFiles (args:arguments) (parser_results:parser_results list) : unit
 (** Prints the parsed files if -dparse was passed as argument *)
 let runFiles (args:arguments) (parser_results:parser_results list) : unit =
    try
-      let options = Passes.{ default_options with  pass4 = false; pass3 = false; pass2 = false } in
       let print_val e =
          match e with
          | PUnit _ -> ()
@@ -77,7 +76,7 @@ let runFiles (args:arguments) (parser_results:parser_results list) : unit =
       in
       if args.eval then
          parser_results
-         |> Passes.applyTransformations ~options args
+         |> Inference.infer
          |> Interpreter.eval
          |> List.iter print_val
    with

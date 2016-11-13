@@ -201,7 +201,8 @@ let rec getInitValue (tp:VType.t) : exp =
 let getInitExp (lhs:lhs_exp) : exp =
    match (GetAttr.fromLhsExp lhs).typ with
    | Some(typ) -> getInitValue typ
-   | None -> failwith "Interpreter.getInitExp: cannot get the initial expression"
+   | None ->
+      failwith ("Interpreter.getInitExp: cannot get the initial expression: "^(PrintTypes.lhsExpressionStr lhs))
 
 let ret_unit = PUnit(emptyAttr)
 
