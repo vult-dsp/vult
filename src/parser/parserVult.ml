@@ -394,13 +394,13 @@ and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
          | RBRACK ->
             let attr  = makeAttr start_loc in
             let _     = Stream.consume buffer RBRACK in
-            PArray([],attr)
+            PArray([||],attr)
          | _ ->
             let start_loc = token.loc in
             let elems = expressionList buffer in
             let _     = Stream.consume buffer RBRACK in
             let attr  = makeAttr start_loc in
-            PArray(elems,attr)
+            PArray(Array.of_list elems,attr)
       end
    | _ ->
       let message = Stream.notExpectedError token in

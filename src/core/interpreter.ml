@@ -190,7 +190,7 @@ let rec getInitValue (tp:VType.t) : exp =
    | VType.TId(["bool"],_) -> PBool(false,emptyAttr)
    | VType.TComposed(["array"],[sub;{ contents = VType.TInt(size,_) }],_) ->
       let sub_init = getInitValue sub in
-      let elems = CCList.init size (fun _ -> sub_init) in
+      let elems = Array.init size (fun _ -> sub_init) in
       PArray(elems,emptyAttr)
    | VType.TComposed(["tuple"],types,_) ->
       let elems = List.map getInitValue types in
@@ -359,7 +359,7 @@ let rec evalExp (env:Env.env) (exp:exp) : exp =
       foldOp op elems'
 
    | PArray(elems,attr) ->
-      let elems' = List.map (evalExp env) elems in
+      let elems' = Array.map (evalExp env) elems in
       PArray(elems',attr)
 
    | PTuple(elems,attr) ->

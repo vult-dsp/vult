@@ -52,6 +52,20 @@ let rec printList buffer f sep l =
       append buffer sep;
       printList buffer f sep t
 
+let printArray buffer f sep l =
+   let n = Array.length l in
+   let rec loop i =
+      if i = (n - 1) then
+         let h = Array.get l i in
+         f buffer h
+      else
+         let h  = Array.get l i in
+         let () = f buffer h in
+         let () = append buffer sep in
+         loop (i+1)
+   in
+   if n > 0 then loop 0
+
 (** Function for printing list of elements *)
 let rec printListSepLast buffer f sep l =
    match l with

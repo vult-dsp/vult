@@ -119,7 +119,7 @@ and expressionBuff buffer (exp:exp) =
    | PBool(false,_) -> append buffer "false"
    | PArray(elems,_) ->
       append buffer "[";
-      printList buffer expressionBuff ", " elems;
+      printArray buffer expressionBuff ", " elems;
       append buffer "]"
    | POp(op,args,_) ->
       append buffer "(";

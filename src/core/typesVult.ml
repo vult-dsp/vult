@@ -80,7 +80,7 @@ type exp =
       of id    (* name *)
          *  attr
    | PArray
-      of exp list
+      of exp array
          * attr
    | PUnOp
       of string      (* operator *)

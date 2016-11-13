@@ -163,6 +163,19 @@ let mapper_list mapper_app =
             (state,[]) el
       in state', (List.rev rev_el)
 
+(** Applies any mapper to an array *)
+let mapper_array mapper_app =
+   fun mapper state el ->
+      let ret = Array.copy el in
+      let state',_ =
+         Array.fold_left
+            (fun (s,i) e ->
+                let s',e' = mapper_app mapper s e in
+                Array.set ret i e';
+                s',i+1)
+            (state,0) el
+      in state', ret
+
 (** Applies any mapper to an option value *)
 let mapper_opt mapper_app =
    fun mapper state e_opt ->
@@ -274,7 +287,7 @@ let rec map_exp (mapper:'state mapper) (state:'state) (exp:exp) : 'state * exp =
       let state',attr' = map_attr mapper state' attr in
       apply mapper.exp state' (PId(id',attr'))
    | PArray(elems,attr) ->
-      let state',elems'= map_exp_list mapper state elems in
+      let state',elems'= map_exp_array mapper state elems in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.exp state' (PArray(elems',attr'))
    | PEmpty -> apply mapper.exp state exp
@@ -313,6 +326,8 @@ let rec map_exp (mapper:'state mapper) (state:'state) (exp:exp) : 'state * exp =
       apply mapper.exp state' (PSeq(id',stmt',attr'))
 
 and map_exp_list mapper = fun state exp -> (mapper_list map_exp) mapper state exp
+
+and map_exp_array mapper = fun state exp -> (mapper_array map_exp) mapper state exp
 
 and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
    match stmt with

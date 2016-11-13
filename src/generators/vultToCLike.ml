@@ -91,10 +91,10 @@ let convertOperator (p:parameters) (op:string) (typ:type_descr) (elems:cexp list
    match typ with
    | CTSimple(typ_t) ->
       begin match Replacements.getFunctionForOperator p.repl op typ_t with
-      | Some(fn) -> makeNestedCall fn elems
-      | None ->
-         let new_op = Replacements.getOperator p.repl op typ_t in
-         CEOp(new_op,elems)
+         | Some(fn) -> makeNestedCall fn elems
+         | None ->
+            let new_op = Replacements.getOperator p.repl op typ_t in
+            CEOp(new_op,elems)
       end
    | _ -> CEOp(op,elems)
 
@@ -107,8 +107,8 @@ let getInitArrayFunction (p:parameters) (typ:type_descr) : string =
    match typ with
    | CTSimple(typ_t) ->
       begin match Replacements.getArrayInit p.repl typ_t  with
-      | Some(fn) -> fn
-      | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
+         | Some(fn) -> fn
+         | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
       end
    | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
 
@@ -116,8 +116,8 @@ let getCopyArrayFunction (p:parameters) (typ:type_descr) : string =
    match typ with
    | CTSimple(typ_t) ->
       begin match Replacements.getArrayCopy p.repl typ_t  with
-      | Some(fn) -> fn
-      | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
+         | Some(fn) -> fn
+         | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
       end
    | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
 
@@ -126,17 +126,17 @@ let convertFunction (p:parameters) (name:id) (typ:type_descr) (elems:cexp list) 
    (* For the function set we need to get the type based on one of the arguments *)
    | ["set"] ->
       begin match getFunctionSetType elem_typs with
-      | CTSimple(typ_t) ->
-         let fn = Replacements.getFunction p.repl "set" typ_t in
-         CECall(fn, elems)
-      | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
+         | CTSimple(typ_t) ->
+            let fn = Replacements.getFunction p.repl "set" typ_t in
+            CECall(fn, elems)
+         | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
       end
    | [fname] ->
       begin match typ with
-      | CTSimple(typ_t) ->
-         let fn = Replacements.getFunction p.repl fname typ_t in
-         CECall(fn, elems)
-      | _ -> CECall(convertId p name, elems)
+         | CTSimple(typ_t) ->
+            let fn = Replacements.getFunction p.repl fname typ_t in
+            CECall(fn, elems)
+         | _ -> CECall(convertId p name, elems)
       end
    | _ -> CECall(convertId p name, elems)
 
@@ -160,7 +160,7 @@ let rec convertExp (p:parameters) (e:exp) : cexp =
       CEFloat(s,v)
    | PId(id,_)      -> CEVar(convertVarId p id)
    | PArray(elems,_) ->
-      let elems' = convertExpList p elems in
+      let elems' = convertExpArray p elems in
       CEArray(elems')
    | PUnOp(op,e1,_) ->
       let e1' = convertExp p e1 in
@@ -202,6 +202,9 @@ let rec convertExp (p:parameters) (e:exp) : cexp =
 
 and convertExpList (p:parameters) (e:exp list) : cexp list =
    List.map (convertExp p) e
+
+and convertExpArray (p:parameters) (e:exp array) : cexp list =
+   Array.map (convertExp p) e |> Array.to_list
 
 let rec convertLhsExp (is_val:bool) (p:parameters) (e:lhs_exp) : clhsexp =
    match e with
@@ -277,15 +280,15 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       CSBlock(stmts)
    (* special for c/c++ initialize array variables *)
    | StmtBind(LId(lhs,Some(typ),_),PArray(elems,_),_) when p.ccode ->
-      let elems' = convertExpList p elems in
+      let elems' = convertExpArray p elems in
       let atype,_ = VType.arrayTypeAndSize typ in
       let lhs' = convertVarId p lhs in
       begin match convertType p atype with
-      | CTSimple(typ_t) ->
-         let fn = Replacements.getFunction p.repl "set" typ_t in
-         let stmts = List.mapi (fun i e -> CSBind(CLWild,CECall(fn,[CEVar(lhs');CEInt(i);e]))) elems' in
-         CSBlock(stmts)
-      | _ -> failwith ""
+         | CTSimple(typ_t) ->
+            let fn = Replacements.getFunction p.repl "set" typ_t in
+            let stmts = List.mapi (fun i e -> CSBind(CLWild,CECall(fn,[CEVar(lhs');CEInt(i);e]))) elems' in
+            CSBlock(stmts)
+         | _ -> failwith ""
       end
    (* special for c/c++ to copy array variables *)
    | StmtBind(LId(lhs,_,{ typ = Some(typ)}),rhs,_) when p.ccode && VType.isArray typ ->

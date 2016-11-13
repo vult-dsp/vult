@@ -251,7 +251,7 @@ let rec newExp state typ =
       (* literal array *)
       (isArray typ), low_p, (fun state ->
             let array_type,size = VType.arrayTypeAndSize typ in
-            let elems = newExpList size state array_type in
+            let elems = newExpArray size state array_type in
             PArray(elems,emptyAttr));
       (* call real builtin *)
       (isReal typ), nest_p, (fun state ->
@@ -307,6 +307,9 @@ let rec newExp state typ =
 and newExpList n state typ =
    if n = 0 then []
    else (newExp state typ) :: (newExpList (n-1) state typ)
+
+and newExpArray n state typ =
+   (newExpList n state typ) |> Array.of_list
 
 let rec getName state =
    let random_char _ =

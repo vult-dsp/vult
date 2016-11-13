@@ -360,17 +360,19 @@ and inferExpList (env:'a Env.t) (elems:exp list) : exp list * 'a Env.t * VType.t
          elems
    in List.rev elems', env', List.rev types
 
-and inferArrayElems (env:'a Env.t) (elems:exp list) : exp list * 'a Env.t * VType.t * int =
+and inferArrayElems (env:'a Env.t) (elems:exp array) : exp array * 'a Env.t * VType.t * int =
    let atype = VType.newvar() in
-   let elems',env',count =
-      List.fold_left (fun (elems,env,count) a ->
+   let ret = Array.copy elems in
+   let env',count =
+      Array.fold_left (fun (env,i) a ->
             let a',env',typ = inferExp env a in
             unifyArrayElem (expLoc a') atype typ;
-            a' :: elems,env',count+1)
-         ([],env,0)
+            Array.set ret i a';
+            env',i+1)
+         (env,0)
          elems
    in
-   List.rev elems', env', atype, count
+   ret, env', atype, count
 
 and inferOptExp (env:'a Env.t) (e:exp option) : exp option * 'a Env.t * VType.t =
    match e with
