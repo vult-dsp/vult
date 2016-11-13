@@ -37,9 +37,9 @@ let apply (mapper:('data,'kind) mapper_func) (data:'data) (kind:'kind) : 'data *
    | Some(name,f) ->
       let d,k = f data kind in
       begin
-      if log && not (kind == k) then
-         let () = Printf.printf "- %s applied\n" name in
-         flush stdout
+         if log && not (kind == k) then
+            let () = Printf.printf "- %s applied\n" name in
+            flush stdout
       end;
       d,k
    | None    -> data, kind
@@ -324,12 +324,11 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       |> map_stmt_subs mapper
       |> map_stmt_x mapper
 
-   | StmtMem(lhs,init,rhs,attr) ->
+   | StmtMem(lhs,rhs,attr) ->
       let state',lhs'  = map_lhs_exp mapper state lhs in
-      let state',init' = (mapper_opt map_exp) mapper state' init in
       let state',rhs'  = (mapper_opt map_exp) mapper state' rhs in
       let state',attr' = map_attr mapper state' attr in
-      apply mapper.stmt state' (StmtMem(lhs',init',rhs',attr'))
+      apply mapper.stmt state' (StmtMem(lhs',rhs',attr'))
       |> map_stmt_subs mapper
       |> map_stmt_x mapper
 

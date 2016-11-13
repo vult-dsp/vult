@@ -400,14 +400,14 @@ let rec newStmt state =
             (* here use the new state to make possible picking the new variable *)
             let rhs = newExp state' t in
             let lhs' = LTyped(lhs,t,emptyAttr) in
-            state', StmtMem(lhs',None,Some(rhs),emptyAttr)
+            state', StmtMem(lhs',Some(rhs),emptyAttr)
          );
       always, low_p, (fun state ->
             let t = newType state in
             let lhs,state' = newLExpDecl state t in
             (* here use the new state to make possible picking the new variable *)
             let lhs' = LTyped(lhs,t,emptyAttr) in
-            state', StmtMem(lhs',None,None,emptyAttr)
+            state', StmtMem(lhs',None,emptyAttr)
          );
       (* bind *)
       always, normal_p,(fun state ->

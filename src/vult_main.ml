@@ -35,6 +35,7 @@ let processArguments () : arguments =
       "-o",        (Arg.String (fun output -> result.output<-output)), "output Defines the prefix of the output files";
       "-real",     (Arg.String (fun real -> result.real<-real)),       " Defines the numeric type for the generated code: double,fixed";
       "-template", (Arg.String (fun temp -> result.template<-temp)),   "name Defines the template used to generate code (ccode only): pd, teensy";
+      "-eval",     (Arg.Unit   (fun () -> result.eval      <- true)),  " Runs the code (default: off)";
       "-version",  (Arg.Unit   (fun () -> result.show_version<-true)), " Show the version of vult";
    ]
       |> Arg.align
@@ -66,4 +67,5 @@ let main () =
          let parser_results = parseFiles args.files in
          (* Prints the parsed files if -dparse was passed as argument *)
          Driver.dumpParsedFiles args parser_results;
-         Driver.generateCode args parser_results |> ignore
+         Driver.generateCode args parser_results |> ignore;
+         Driver.runFiles args parser_results |> ignore

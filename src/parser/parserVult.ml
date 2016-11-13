@@ -85,7 +85,7 @@ let getLhsExpLocation (e:lhs_exp) : Loc.t =
 let getStmtLocation (s:stmt)  : Loc.t =
    match s with
    | StmtVal(_,_,attr)
-   | StmtMem(_,_,_,attr)
+   | StmtMem(_,_,attr)
    | StmtReturn(_,attr)
    | StmtIf(_,_,_,attr)
    | StmtFun(_,_,_,_,attr)
@@ -554,7 +554,6 @@ and stmtMem (buffer:Stream.stream) : stmt =
    let start_loc = Stream.location buffer in
    let _         = Stream.consume buffer MEM in
    let lhs       = lhs_expression 0 buffer in
-   let init      = initExpression buffer in
    (* TODO: Add check of lhs *)
    match Stream.peek buffer with
    | EQUAL ->
@@ -562,11 +561,11 @@ and stmtMem (buffer:Stream.stream) : stmt =
       let rhs  = expression 0 buffer in
       let _    = Stream.consume buffer SEMI in
       let attr = makeAttr start_loc in
-      StmtMem(lhs,init,Some(rhs),attr)
+      StmtMem(lhs,Some(rhs),attr)
    | _ ->
       let _    = Stream.consume buffer SEMI in
       let attr = makeAttr start_loc in
-      StmtMem(lhs,init,None,attr)
+      StmtMem(lhs,None,attr)
 
 (** <statement> := | 'return' <expression> ';' *)
 and stmtReturn (buffer:Stream.stream) : stmt =

@@ -120,7 +120,6 @@ and stmt =
       *  attr
   | StmtMem
     of lhs_exp     (* names/lhs *)
-       *  exp option  (* initial value *)
        *  exp option  (* rhs *)
        *  attr
   | StmtWhile
@@ -196,6 +195,7 @@ type arguments =
    {
       mutable files    : string list;
       mutable dparse   : bool;
+      mutable eval     : bool;
       mutable ccode    : bool;
       mutable jscode   : bool;
       mutable luacode  : bool;
@@ -210,6 +210,7 @@ let default_arguments =
       files  = [];
       dparse = false;
       ccode  = false;
+      eval   = false;
       jscode = false;
       luacode = false;
       output = "";

@@ -64,8 +64,7 @@ Library "vult_generators"
     CLike,
     VultToCLike,
     DefaultReplacements,
-    Generate,
-    Interpreter
+    Generate
   BuildDepends:
     vult_core,
     vult_util,

@@ -387,14 +387,12 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       unifyRaise (expOptLoc rhs) lhs_typ rhs_typ;
       let env' = addLhsToEnv `Var env' lhs' in
       StmtVal(lhs', rhs', attr), env', ret_type
-   | StmtMem(lhs,init,rhs,attr) ->
+   | StmtMem(lhs,rhs,attr) ->
       let lhs', lhs_typ   = inferLhsExp `Mem env lhs in
       let env'            = addLhsToEnv `Mem env lhs' in
-      let init',env', init_typ = inferOptExp env' init in
       let rhs',env', rhs_typ   = inferOptExp env' rhs in
-      unifyRaise (expOptLoc init') lhs_typ init_typ;
       unifyRaise (expOptLoc rhs') lhs_typ rhs_typ;
-      StmtMem(lhs', init', rhs', attr), env', ret_type
+      StmtMem(lhs', rhs', attr), env', ret_type
    | StmtReturn(e,attr) ->
       let e',env', typ = inferExp env e in
       let ret_type'    = unifyReturn (expLoc e) ret_type (ReturnType(typ)) in

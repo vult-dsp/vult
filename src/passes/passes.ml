@@ -165,8 +165,8 @@ module SplitMem = struct
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "SplitMem.stmt_x" @@ fun state stmt ->
       match stmt with
-      | StmtMem(lhs,init,Some(rhs),attr) ->
-         reapply state, [ StmtMem(lhs,init,None,attr); StmtBind(lhs,rhs,attr) ]
+      | StmtMem(lhs,Some(rhs),attr) ->
+         reapply state, [ StmtMem(lhs,None,attr); StmtBind(lhs,rhs,attr) ]
       | StmtVal(lhs,Some(rhs),attr) ->
          reapply state, [ StmtVal(lhs,None,attr); StmtBind(lhs,rhs,attr) ]
       | _ -> state, [stmt]
@@ -394,57 +394,57 @@ module BindComplexExpressions = struct
 
    end
 
-      let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
+   let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "BindComplexExpressions.stmt_x" @@ fun state stmt ->
-         match stmt with
-         (* avoids rebinding complex expressions *)
-         | StmtReturn(PId(_,_),_) ->
+      match stmt with
+      (* avoids rebinding complex expressions *)
+      | StmtReturn(PId(_,_),_) ->
+         state, [stmt]
+      (* simplify tuple assigns  *)
+      | StmtVal(LTuple(lhs,_),None,attr) ->
+         let stmts = List.map (fun a -> StmtVal(a,None,attr)) lhs in
+         reapply state, stmts
+
+      | StmtVal(LTuple(lhs,_),Some(PTuple(rhs,_)),_) when List.length lhs = List.length rhs ->
+         let tick,state' = Env.tick state in
+         let stmts = createAssignments tick makeValBind lhs rhs in
+         reapply state', stmts
+
+      | StmtBind(LTuple(lhs,_),PTuple(rhs,_),_) when List.length lhs = List.length rhs ->
+         let tick, state' = Env.tick state in
+         let stmts = createAssignments tick makeBind lhs rhs in
+         reapply state', stmts
+
+      | StmtBind(lhs,rhs,attr) ->
+         let acc       = newState state [] in
+         let acc',rhs' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc rhs in
+         let state',acc_stmts = restoreState state acc' in
+         if isUselessBind lhs rhs' && hasLessThanOneBinding acc_stmts then
             state, [stmt]
-         (* simplify tuple assigns  *)
-         | StmtVal(LTuple(lhs,_),None,attr) ->
-            let stmts = List.map (fun a -> StmtVal(a,None,attr)) lhs in
-            reapply state, stmts
+         else
+            let stmts'   = StmtBind(lhs,rhs',attr) :: acc_stmts in
+            let state'   = if acc_stmts <> [] then reapply state' else state' in
+            state', List.rev stmts'
 
-         | StmtVal(LTuple(lhs,_),Some(PTuple(rhs,_)),_) when List.length lhs = List.length rhs ->
-            let tick,state' = Env.tick state in
-            let stmts = createAssignments tick makeValBind lhs rhs in
-            reapply state', stmts
-
-         | StmtBind(LTuple(lhs,_),PTuple(rhs,_),_) when List.length lhs = List.length rhs ->
-            let tick, state' = Env.tick state in
-            let stmts = createAssignments tick makeBind lhs rhs in
-            reapply state', stmts
-
-         | StmtBind(lhs,rhs,attr) ->
-            let acc       = newState state [] in
-            let acc',rhs' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc rhs in
-            let state',acc_stmts = restoreState state acc' in
-            if isUselessBind lhs rhs' && hasLessThanOneBinding acc_stmts then
-               state, [stmt]
-            else
-               let stmts'   = StmtBind(lhs,rhs',attr) :: acc_stmts in
-               let state'   = if acc_stmts <> [] then reapply state' else state' in
-               state', List.rev stmts'
-
-         | StmtVal(lhs,Some(rhs),attr) ->
-            let acc       = newState state [] in
-            let acc',rhs' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc rhs in
-            let state',acc_stmts = restoreState state acc' in
-            if isUselessBind lhs rhs' && hasLessThanOneBinding acc_stmts then
-               state, [stmt]
-            else
-               let stmts' = StmtVal(lhs,None,attr)::StmtBind(lhs,rhs',attr)::acc_stmts in
-               let state' = if acc_stmts <> [] then reapply state' else state' in
-               state', List.rev stmts'
-
-         | StmtReturn(e,attr) ->
-            let acc     = newState state [] in
-            let acc',e' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc e in
-            let state',acc_stmts = restoreState state acc' in
-            let stmts' = StmtReturn(e',attr)::acc_stmts in
+      | StmtVal(lhs,Some(rhs),attr) ->
+         let acc       = newState state [] in
+         let acc',rhs' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc rhs in
+         let state',acc_stmts = restoreState state acc' in
+         if isUselessBind lhs rhs' && hasLessThanOneBinding acc_stmts then
+            state, [stmt]
+         else
+            let stmts' = StmtVal(lhs,None,attr)::StmtBind(lhs,rhs',attr)::acc_stmts in
             let state' = if acc_stmts <> [] then reapply state' else state' in
             state', List.rev stmts'
-         | _ -> state, [stmt]
+
+      | StmtReturn(e,attr) ->
+         let acc     = newState state [] in
+         let acc',e' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc e in
+         let state',acc_stmts = restoreState state acc' in
+         let stmts' = StmtReturn(e',attr)::acc_stmts in
+         let state' = if acc_stmts <> [] then reapply state' else state' in
+         state', List.rev stmts'
+      | _ -> state, [stmt]
 
 
    let mapper =
@@ -526,19 +526,19 @@ module ReportUnsupportedTypes = struct
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make "ReportUnsupportedTypes.exp" @@ fun state exp ->
-         let attr = GetAttr.fromExp exp in
-         match attr.typ with
-         | Some(t) when VType.isUnbound t ->
-            let msg = Printf.sprintf "The type of this expression could not be infered. Add a type annotation." in
-            Error.raiseError msg (attr.loc)
-         | Some(t) when isComplexArray t ->
-            let msg = Printf.sprintf "The type '%s' of this expression is not supported. Arrays can only contain basic types." (PrintTypes.typeStr t) in
-            Error.raiseError msg attr.loc
-         | Some(t) when isComplexTuple t ->
-            let msg = Printf.sprintf "The type '%s' of this expression is not supported. Tuples can only contain basic types." (PrintTypes.typeStr t) in
-            Error.raiseError msg attr.loc
-         | _ ->
-            state, exp
+      let attr = GetAttr.fromExp exp in
+      match attr.typ with
+      | Some(t) when VType.isUnbound t ->
+         let msg = Printf.sprintf "The type of this expression could not be infered. Add a type annotation." in
+         Error.raiseError msg (attr.loc)
+      | Some(t) when isComplexArray t ->
+         let msg = Printf.sprintf "The type '%s' of this expression is not supported. Arrays can only contain basic types." (PrintTypes.typeStr t) in
+         Error.raiseError msg attr.loc
+      | Some(t) when isComplexTuple t ->
+         let msg = Printf.sprintf "The type '%s' of this expression is not supported. Tuples can only contain basic types." (PrintTypes.typeStr t) in
+         Error.raiseError msg attr.loc
+      | _ ->
+         state, exp
 
    let typed_id : ('a Env.t,typed_id) Mapper.mapper_func =
       Mapper.make "ReportUnsupportedTypes.typed_id" @@ fun state t ->
@@ -1065,8 +1065,9 @@ let applyTransformations args ?(options=default_options) (results:parser_results
    let _,stmts_list =
       List.fold_left
          (fun (env,acc) stmts ->
-             let env',stmts' = apply env options stmts in
-             env', stmts'::acc
+             let env', stmts' = apply env options stmts in
+             let result' = { stmts with presult = stmts' } in
+             env', result'::acc
          )
          (env,[])
          results
@@ -1076,4 +1077,4 @@ let applyTransformations args ?(options=default_options) (results:parser_results
 let applyTransformationsSingle args ?(options=default_options) (results:parser_results) =
    let env = Env.empty (PassData.empty args) in
    let _,stmts' = apply env options results in
-   stmts'
+   { results with presult = stmts' }

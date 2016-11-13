@@ -215,7 +215,8 @@ let checkConfig (config:configuration) (args:arguments) =
       || config.controlchange_inputs = [] then
          let msg =
             Pla.print
-               [%pla{|Required functions are not defined or have incorrect inputs or outputs. Here's a template you can use:
+               [%pla{|
+Required functions are not defined or have incorrect inputs or outputs. Here's a template you can use:
 
 fun process(input:real){ return input; }
 and noteOn(note:int,velocity:int,channel:int){ }
@@ -226,9 +227,10 @@ and default(){ }|}]
          Error.raiseErrorMsg msg
 
 (** Returns the code generation parameters based on the vult code *)
-let createParameters (parser_results:parser_results list) (stmts:TypesVult.stmt list list) (args:arguments) =
+let createParameters (results:parser_results list) (args:arguments) =
    (* Gets the name of the main module (the last passes file name) *)
-   let module_name = getMainModule parser_results in
+   let module_name = getMainModule results in
+   let stmts       = List.map (fun a -> a.presult ) results in
    (** Takes the statememts of the last file to search the configuration *)
    let last_stmts  = CCList.last 1 stmts |> List.flatten in
    let config      = Configuration.get module_name last_stmts in
@@ -248,11 +250,11 @@ let generateCode (parser_results:parser_results list) (args:arguments) : (Pla.t 
       let ()          = checkRealType args.real in
       (* Applies all passes to the statements *)
       let stmts       = Passes.applyTransformations args parser_results in
-      let params_c    = createParameters parser_results stmts args in
-      let params_js   = createParameters parser_results stmts { args with real = "js" } in
-      let params_lua  = createParameters parser_results stmts { args with real = "lua" } in
+      let params_c    = createParameters stmts args in
+      let params_js   = createParameters stmts { args with real = "js" } in
+      let params_lua  = createParameters stmts { args with real = "lua" } in
       (* Calls the code generation  *)
-      let all_stmts   = List.flatten stmts in
+      let all_stmts   = List.flatten (List.map (fun a -> a.presult) stmts) in
       let ccode       = generateC args params_c all_stmts in
       let jscode      = generateJS args params_js all_stmts in
       let luacode     = generateLua args params_lua all_stmts in

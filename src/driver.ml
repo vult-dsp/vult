@@ -60,7 +60,26 @@ let dumpParsedFiles (args:arguments) (parser_results:parser_results list) : unit
       if args.dparse then
          parser_results
          |> Passes.applyTransformations args
-         |> List.iter (fun a -> PrintTypes.stmtListStr a |> print_string)
+         |> List.iter (fun a -> PrintTypes.stmtListStr a.presult |> print_string)
+   with
+   | Error.Errors(errors) ->
+      let error_strings = Error.reportErrors errors in
+      print_endline error_strings
+
+(** Prints the parsed files if -dparse was passed as argument *)
+let runFiles (args:arguments) (parser_results:parser_results list) : unit =
+   try
+      let options = Passes.{ default_options with  pass4 = false; pass3 = false; pass2 = false } in
+      let print_val e =
+         match e with
+         | PUnit _ -> ()
+         | _ -> print_endline (PrintTypes.expressionStr e)
+      in
+      if args.eval then
+         parser_results
+         |> Passes.applyTransformations ~options args
+         |> Interpreter.eval
+         |> List.iter print_val
    with
    | Error.Errors(errors) ->
       let error_strings = Error.reportErrors errors in
@@ -81,7 +100,7 @@ let parsePrintCode (code:string) : string =
    try
       ParserVult.parseString None code
       |> Passes.applyTransformationsSingle default_arguments
-      |> PrintTypes.stmtListStr
+      |> (fun a -> PrintTypes.stmtListStr a.presult)
    with
    | Error.Errors(errors) ->
       let error_strings = Error.reportErrors errors in

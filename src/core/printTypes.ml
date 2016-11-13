@@ -172,12 +172,9 @@ and stmtBuff buffer (s:stmt) =
       append buffer "val ";
       lhsExpressionBuff buffer e1;
       append buffer ";"
-   | StmtMem(e1,e2,e3,_) ->
+   | StmtMem(e1,e3,_) ->
       append buffer "mem ";
       lhsExpressionBuff buffer e1;
-      CCOpt.iter (fun a ->
-            append buffer "@";
-            expressionBuff buffer a) e2;
       CCOpt.iter (fun a ->
             append buffer " = ";
             expressionBuff buffer a) e3;

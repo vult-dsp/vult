@@ -130,14 +130,14 @@ let checkFile (filename:string) : string =
       assert_failure (Printf.sprintf "The file '%s' does not exits" filename)
 
 let showResults result : string =
-   PrintTypes.stmtListStr result
+   PrintTypes.stmtListStr result.presult
 
 (** Module to perform parsing tests *)
 module ParserTest = struct
 
    let process (fullfile:string) : string =
       ParserVult.parseFile fullfile
-      |> fun a -> showResults a.presult
+      |> fun a -> showResults a
 
    let run (file:string) context =
       let folder = "parser" in
@@ -162,7 +162,7 @@ module CodeGenerationTest = struct
       let jscode = real_type = "js" in
       let args  = { default_arguments with output = basefile; real = real_type; ccode; jscode } in
       let stmts = ParserVult.parseFile fullfile in
-      let ()    = showResults stmts.presult |> ignore in
+      let ()    = showResults stmts |> ignore in
       let files = Generate.generateCode [stmts] args in
       files |> List.map (fun (code,ext) -> Pla.print code, ext)
 
