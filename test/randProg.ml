@@ -33,7 +33,7 @@ let default_state =
       max_array_size = 100;
       max_tuple_size = 3;
       max_int        = 100;
-      max_real       = 100.0;
+      max_real       = 1.0;
       get_array_type = true;
       get_tuple_type = true;
       max_type_levels = 1;
@@ -238,14 +238,12 @@ let newBuiltinFun state =
       always, normal_p, (fun _ -> "cos");
       always, normal_p, (fun _ -> "floor");
       always, normal_p, (fun _ -> "tanh");
-      always, normal_p, (fun _ -> "tan");
-      always, normal_p, (fun _ -> "sqrt");
    ]
 
 let rec newExp state typ =
    pick_one state [
-      (isInt typ), normal_p,  (fun state -> PInt(Random.int state.max_int,emptyAttr));
-      (isReal typ), normal_p, (fun state -> PReal(Random.float state.max_real,emptyAttr));
+      (isInt typ), normal_p,  (fun state -> PInt((Random.int state.max_int)+1,emptyAttr));
+      (isReal typ), normal_p, (fun state -> PReal((Random.float state.max_real)+.1.0,emptyAttr));
       (isBool typ), low_p,    (fun _     -> PBool(Random.bool (),emptyAttr));
       (hasType typ), high_p, (fun state -> PId(pickVar state typ,emptyAttr) );
       (* literal array *)

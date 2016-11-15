@@ -75,7 +75,7 @@ fun phd_osc(pitch:real,detune:real) : real {
 
 // Simple delay.
 fun delay(x:real, time:real, feedback:real) : real {
-   mem buffer : array(real,44100);
+   mem buffer : array(real,30000);
    mem write_pos;
    // Constraints the parameter values
    time     = clip(time,0.0,1.0);

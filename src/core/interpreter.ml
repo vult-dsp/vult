@@ -256,6 +256,7 @@ let evalOp (op:string) (e1:exp) (e2:exp) : exp =
    | "||", PBool(v1, attr),  PBool(v2, _)  -> PBool(v1 || v2, attr)
    | _ -> POp(op, [e1; e2], emptyAttr)
 
+
 (** Used to perform series of arithmetic operations *)
 let foldOp (op:string) (args:exp list) : exp =
    match args with
@@ -283,7 +284,7 @@ let builtinFunctions env =
       | [PBool(v,attr)] -> PInt((if v then 1 else 0),attr)
       | _ -> failwith "int: invalid arguments"
    in
-   let float args =
+   let real args =
       match args with
       | [PReal(v,attr)] -> PReal(v,attr)
       | [PInt(v,attr)]  -> PReal(float_of_int v,attr)
@@ -308,11 +309,12 @@ let builtinFunctions env =
          "cos", Env.Builtin(real_real cos);
          "floor", Env.Builtin(real_real floor);
          "tanh", Env.Builtin(real_real tanh);
+         "tan",  Env.Builtin(real_real tan);
          "sqrt", Env.Builtin(real_real sqrt);
          "clip", Env.Builtin(clip);
 
          "int", Env.Builtin(int);
-         "float", Env.Builtin(float);
+         "real", Env.Builtin(real);
 
          "not", Env.Builtin(not);
          "eps", Env.Builtin(eps);
@@ -513,15 +515,47 @@ and evalStmts (env:Env.env) (stmts:stmt list) : exp =
       | PUnit _ -> evalStmts env t
       | ret -> ret
 
+let rec loadStmts (env:Env.env) (stmts:stmt list) : unit =
+   match stmts with
+   | [] -> ()
+   | (StmtFun(_) as h)::t ->
+      let _ = evalStmt env h in
+      loadStmts env t
+   | _::t ->
+      loadStmts env t
+
+let loadModule (env:Env.env) (results:parser_results) =
+   let module_name = moduleName results.file in
+   Env.addModule env [module_name];
+   let env' = Env.enterModule env [module_name] in
+   loadStmts env' results.presult
+
 let evalModule (env:Env.env) (results:parser_results) =
    let module_name = moduleName results.file in
    Env.addModule env [module_name];
    let env' = Env.enterModule env [module_name] in
    evalStmts env' results.presult
 
-(** Main function to evaluate the statements. In ordet to work,
-    the type inference should be already done *)
+(** Loads the functions without evaluating the top level statements *)
+let load (results:parser_results list) : Env.env =
+   let env = Env.top () in
+   builtinFunctions env;
+   let _ =
+      results
+      |> Inference.infer
+      |> List.map (loadModule env)
+   in
+   env
+
+(** Main function to evaluate the statements. *)
 let eval (results:parser_results list) =
    let env = Env.top () in
    builtinFunctions env;
-   List.map (evalModule env) results
+   results
+   |> Inference.infer
+   |> List.map (evalModule env)
+
+let getEnv () =
+   let env  = Env.top () in
+   builtinFunctions env;
+   env

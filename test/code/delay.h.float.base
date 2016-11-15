@@ -100,7 +100,7 @@ float Delay_phd_osc(Delay__ctx_type_7 &_ctx, float pitch, float detune);
 
 typedef struct Delay__ctx_type_8 {
    int write_pos;
-   float buffer[44100];
+   float buffer[30000];
 } Delay__ctx_type_8;
 
 typedef Delay__ctx_type_8 Delay_delay_type;

@@ -75,16 +75,16 @@ float Moog_filter_moog_step(Moog_filter__ctx_type_6 &_ctx, float input, float re
    float i0;
    i0 = (input + (- (resFixed * output)));
    float w0;
-   w0 = (_ctx.dw0 + (tune * (tanhf((i0 * Moog_filter_thermal())) + (- _ctx.tw0))));
-   _ctx.tw0 = tanhf((w0 * Moog_filter_thermal()));
+   w0 = (_ctx.dw0 + (tune * (tanhf((i0 * 0.819199996645f)) + (- _ctx.tw0))));
+   _ctx.tw0 = tanhf((w0 * 0.819199996645f));
    float w1;
    w1 = (_ctx.dw1 + (tune * _ctx.tw0) + (- _ctx.tw1));
-   _ctx.tw1 = tanhf((w1 * Moog_filter_thermal()));
+   _ctx.tw1 = tanhf((w1 * 0.819199996645f));
    float w2;
    w2 = (_ctx.dw2 + (tune * _ctx.tw1) + (- _ctx.tw2));
-   _ctx.tw2 = tanhf((w2 * Moog_filter_thermal()));
+   _ctx.tw2 = tanhf((w2 * 0.819199996645f));
    float w3;
-   w3 = (_ctx.dw3 + (tune * _ctx.tw2) + (- tanhf((_ctx.dw3 * Moog_filter_thermal()))));
+   w3 = (_ctx.dw3 + (tune * _ctx.tw2) + (- tanhf((_ctx.dw3 * 0.819199996645f))));
    _ctx.dw0 = w0;
    _ctx.dw1 = w1;
    _ctx.dw2 = w2;
@@ -127,7 +127,7 @@ float Moog_filter_moog(Moog_filter__ctx_type_7 &_ctx, float input, float cut, fl
       fcr = ((1.873f * x3) + (0.4955f * x2) + ((-0.649f) * fc) + 0.9988f);
       float acr;
       acr = (((-3.9364f) * x2) + (1.8409f * fc) + 0.9968f);
-      _ctx.tune = ((1.f + (- expf(((-2.f) * Moog_filter_PI() * x_2 * fcr)))) / Moog_filter_thermal());
+      _ctx.tune = ((1.f + (- expf(((-6.28318530718f) * x_2 * fcr)))) * 1.22070313f);
       _ctx.resFixed = (4.f * res * acr);
    }
    float x0;

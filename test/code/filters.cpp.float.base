@@ -96,7 +96,7 @@ float Filters_lp6(Filters__ctx_type_6 &_ctx, float x, float fc_in){
    _cond_4 = Filters_change(_ctx._inst1,fc_in);
    if(_cond_4){
       _ctx.fc = Filters_clip(fc_in,0.f,22050.f);
-      _ctx.k = tanf((Filters_pi() * _ctx.fc * 2.26757369615e-05f));
+      _ctx.k = tanf((7.12380952381e-05f * _ctx.fc));
    }
    float b0;
    b0 = (_ctx.k / (_ctx.k + 1.f));
@@ -131,10 +131,10 @@ float Filters_lp12(Filters__ctx_type_7 &_ctx, float x, float fc, float q){
    _cond_5 = (Filters_change(_ctx._inst1,fc) || Filters_change(_ctx._inst2,q));
    if(_cond_5){
       float qc;
-      qc = Filters_max(sqrtf(2.f),(q + sqrtf(2.f)));
+      qc = Filters_max(1.41421356237f,(q + 1.41421356237f));
       fc = Filters_clip(fc,0.f,22050.f);
       float k;
-      k = tanf((Filters_pi() * fc * 2.26757369615e-05f));
+      k = tanf((7.12380952381e-05f * fc));
       float den;
       den = ((k * k * qc) + k + qc);
       _ctx.b0 = ((k * k * qc) / den);
@@ -161,7 +161,7 @@ void Filters_hp6_init(Filters__ctx_type_8 &_output_){
 float Filters_hp6(Filters__ctx_type_8 &_ctx, float x, float fc){
    fc = Filters_clip(fc,0.f,22050.f);
    float k;
-   k = tanf((Filters_pi() * fc * 2.26757369615e-05f));
+   k = tanf((7.12380952381e-05f * fc));
    float b0;
    b0 = (1.f / (k + 1.f));
    float b1;
@@ -186,7 +186,7 @@ void Filters_allp6_init(Filters__ctx_type_9 &_output_){
 float Filters_allp6(Filters__ctx_type_9 &_ctx, float x, float fc){
    fc = Filters_clip(fc,0.f,22050.f);
    float k;
-   k = tanf((Filters_pi() * fc * 2.26757369615e-05f));
+   k = tanf((7.12380952381e-05f * fc));
    float b0;
    b0 = ((k + (-1.f)) / (k + 1.f));
    float b1;
@@ -220,10 +220,10 @@ float Filters_hp12(Filters__ctx_type_10 &_ctx, float x, float fc, float q){
    _cond_5 = (Filters_change(_ctx._inst1,fc) || Filters_change(_ctx._inst2,q));
    if(_cond_5){
       float qc;
-      qc = Filters_max(sqrtf(2.f),(q + sqrtf(2.f)));
+      qc = Filters_max(1.41421356237f,(q + 1.41421356237f));
       fc = Filters_clip(fc,0.f,22050.f);
       float k;
-      k = tanf((Filters_pi() * fc * 2.26757369615e-05f));
+      k = tanf((7.12380952381e-05f * fc));
       float den;
       den = ((k * k * qc) + k + qc);
       _ctx.b0 = (qc / den);
@@ -259,10 +259,10 @@ float Filters_bp12(Filters__ctx_type_11 &_ctx, float x, float fc, float q){
    _cond_5 = (Filters_change(_ctx._inst1,fc) || Filters_change(_ctx._inst2,q));
    if(_cond_5){
       float qc;
-      qc = Filters_max(sqrtf(2.f),(q + sqrtf(2.f)));
+      qc = Filters_max(1.41421356237f,(q + 1.41421356237f));
       fc = Filters_clip(fc,0.f,22050.f);
       float k;
-      k = tanf((Filters_pi() * fc * 2.26757369615e-05f));
+      k = tanf((7.12380952381e-05f * fc));
       float den;
       den = ((k * k * qc) + k + qc);
       _ctx.b0 = (k / den);
@@ -298,10 +298,10 @@ float Filters_notch12(Filters__ctx_type_12 &_ctx, float x, float fc, float q){
    _cond_5 = (Filters_change(_ctx._inst1,fc) || Filters_change(_ctx._inst2,q));
    if(_cond_5){
       float qc;
-      qc = Filters_max(sqrtf(2.f),(q + sqrtf(2.f)));
+      qc = Filters_max(1.41421356237f,(q + 1.41421356237f));
       fc = Filters_clip(fc,0.f,22050.f);
       float k;
-      k = tanf((Filters_pi() * fc * 2.26757369615e-05f));
+      k = tanf((7.12380952381e-05f * fc));
       float den;
       den = ((k * k * qc) + k + qc);
       _ctx.b0 = ((qc * (1.f + (k * k))) / den);
@@ -337,10 +337,10 @@ float Filters_allp12(Filters__ctx_type_13 &_ctx, float x, float fc, float q){
    _cond_5 = (Filters_change(_ctx._inst1,fc) || Filters_change(_ctx._inst2,q));
    if(_cond_5){
       float qc;
-      qc = Filters_max(sqrtf(2.f),(q + sqrtf(2.f)));
+      qc = Filters_max(1.41421356237f,(q + 1.41421356237f));
       fc = Filters_clip(fc,0.f,22050.f);
       float k;
-      k = tanf((Filters_pi() * fc * 2.26757369615e-05f));
+      k = tanf((7.12380952381e-05f * fc));
       float den;
       den = ((k * k * qc) + k + qc);
       _ctx.b0 = (((k * k * qc) + (- k) + qc) / den);

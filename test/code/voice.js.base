@@ -299,7 +299,7 @@ this.Voice__ctx_type_14_init = function(){
 this.Voice_lfo_init = function() { return this.Voice__ctx_type_14_init();}
 this.Voice_lfo = function(_ctx,f,gate){
    var rate = 0.0;
-   rate = ((f * 100. * this.Voice_minFixed()) + this.Voice_minFixed());
+   rate = ((0.00152588 * f) + 1.52588e-05);
    var _cond_6 = false;
    _cond_6 = this.Voice_edge(_ctx._inst1,gate);
    if(_cond_6){

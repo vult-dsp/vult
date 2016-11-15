@@ -115,7 +115,7 @@ this.Delay_phd_osc = function(_ctx,pitch,detune){
 this.Delay__ctx_type_8_init = function(){
    var _ctx = {};
    _ctx.write_pos = ((0|0)|0);
-   _ctx.buffer = this.makeArray((44100|0),0.);
+   _ctx.buffer = this.makeArray((30000|0),0.);
    return _ctx;
 }
 this.Delay_delay_init = function() { return this.Delay__ctx_type_8_init();}
@@ -123,7 +123,7 @@ this.Delay_delay = function(_ctx,x,time,feedback){
    time = this.clip(time,0.,1.);
    feedback = this.clip(feedback,0.,1.);
    var index_r = 0.0;
-   index_r = (this.real((44100|0)) * time);
+   index_r = (30000. * time);
    var index_i = (0|0);
    index_i = (this.int(this.floor(index_r))|0);
    var delta = (0|0);
@@ -131,7 +131,7 @@ this.Delay_delay = function(_ctx,x,time,feedback){
    var read_pos = (0|0);
    var _cond_1 = false;
    _cond_1 = (delta < (0|0));
-   if(_cond_1)read_pos = (((44100|0) + delta)|0);
+   if(_cond_1)read_pos = (((30000|0) + delta)|0);
    else
    read_pos = (delta|0);
    var decimal = 0.0;
@@ -139,10 +139,10 @@ this.Delay_delay = function(_ctx,x,time,feedback){
    var x1 = 0.0;
    x1 = this.get(_ctx.buffer,read_pos);
    var x2 = 0.0;
-   x2 = this.get(_ctx.buffer,((read_pos + (1|0)) % (44100|0)));
+   x2 = this.get(_ctx.buffer,((read_pos + (1|0)) % (30000|0)));
    var ret = 0.0;
    ret = (((x2 + (- x1)) * decimal) + x1);
-   _ctx.write_pos = (((_ctx.write_pos + (1|0)) % (44100|0))|0);
+   _ctx.write_pos = (((_ctx.write_pos + (1|0)) % (30000|0))|0);
    this.set(_ctx.buffer,_ctx.write_pos,this.clip((x + (feedback * ret)),(-1.),1.));
    return ret;
 }

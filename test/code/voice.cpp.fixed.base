@@ -383,7 +383,7 @@ void Voice_lfo_init(Voice__ctx_type_14 &_output_){
 
 fix16_t Voice_lfo(Voice__ctx_type_14 &_ctx, fix16_t f, uint8_t gate){
    fix16_t rate;
-   rate = fix_add(fix_mul(fix_mul(f,0x640000 /* 100.000000 */),Voice_minFixed()),Voice_minFixed());
+   rate = fix_add(fix_mul(0x64 /* 0.001526 */,f),0x1 /* 0.000015 */);
    uint8_t _cond_6;
    _cond_6 = Voice_edge(_ctx._inst1,gate);
    if(_cond_6){

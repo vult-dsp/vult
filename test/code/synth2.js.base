@@ -260,7 +260,7 @@ this.Synth2__ctx_type_14_init = function(){
 this.Synth2_lfo_init = function() { return this.Synth2__ctx_type_14_init();}
 this.Synth2_lfo = function(_ctx,f,gate){
    var rate = 0.0;
-   rate = ((f * 100. * this.Synth2_minFixed()) + this.Synth2_minFixed());
+   rate = ((0.00152588 * f) + 1.52588e-05);
    var _cond_6 = false;
    _cond_6 = this.Synth2_edge(_ctx._inst1,gate);
    if(_cond_6){

@@ -49,19 +49,20 @@ let parser_files =
       "types_basic.vult";
    ]
 
-let no_context = Passes.{ Passes.default_options with pass3 = false; pass2 = false; }
+let no_context = Passes.{ Passes.default_options with pass4 = false; pass3 = false; pass2 = false; }
+let no_eval = Passes.{ Passes.default_options with pass2 = false; }
 
 let passes_files =
    [
       "split_mem.vult", no_context;
       "tuple_assign.vult", no_context;
       "if_to_stmt.vult", no_context;
-      "context_simple.vult", Passes.default_options;
-      "context_nested.vult", Passes.default_options;
+      "context_simple.vult", no_eval;
+      "context_nested.vult", no_eval;
       "tuple_to_types.vult", no_context;
       "simplify.vult", no_context;
-      "external_calls.vult", Passes.default_options;
-      "output_references.vult", Passes.default_options;
+      "external_calls.vult", no_eval;
+      "output_references.vult", no_eval;
    ]
 
 let stand_alone_files =
@@ -95,7 +96,7 @@ let test_random_code =
       if n > 0 then
          (Printf.sprintf "test%i.vult" n) :: loop (n-1)
       else []
-   in loop 100
+   in loop 50
 
 (** Flags that defines if a baseline should be created for tests *)
 let writeOutput = Conf.make_bool "writeout" false "Creates a file with the current results"

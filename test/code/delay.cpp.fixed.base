@@ -169,7 +169,7 @@ fix16_t Delay_phd_osc(Delay__ctx_type_7 &_ctx, fix16_t pitch, fix16_t detune){
 void Delay__ctx_type_8_init(Delay__ctx_type_8 &_output_){
    Delay__ctx_type_8 _ctx;
    _ctx.write_pos = 0;
-   fix_init_array(44100,0x0 /* 0.000000 */,_ctx.buffer);
+   fix_init_array(30000,0x0 /* 0.000000 */,_ctx.buffer);
    _output_ = _ctx;
    return ;
 }
@@ -183,7 +183,7 @@ fix16_t Delay_delay(Delay__ctx_type_8 &_ctx, fix16_t x, fix16_t time, fix16_t fe
    time = fix_clip(time,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
    feedback = fix_clip(feedback,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
    fix16_t index_r;
-   index_r = fix_mul(int_to_fix(44100),time);
+   index_r = fix_mul(0x75300000 /* 30000.000000 */,time);
    int index_i;
    index_i = fix_to_int(fix_floor(index_r));
    int delta;
@@ -191,7 +191,7 @@ fix16_t Delay_delay(Delay__ctx_type_8 &_ctx, fix16_t x, fix16_t time, fix16_t fe
    int read_pos;
    uint8_t _cond_1;
    _cond_1 = (delta < 0);
-   if(_cond_1){ read_pos = (44100 + delta); }
+   if(_cond_1){ read_pos = (30000 + delta); }
    else
    { read_pos = delta; }
    fix16_t decimal;
@@ -199,10 +199,10 @@ fix16_t Delay_delay(Delay__ctx_type_8 &_ctx, fix16_t x, fix16_t time, fix16_t fe
    fix16_t x1;
    x1 = fix_get(_ctx.buffer,read_pos);
    fix16_t x2;
-   x2 = fix_get(_ctx.buffer,((read_pos + 1) % 44100));
+   x2 = fix_get(_ctx.buffer,((read_pos + 1) % 30000));
    fix16_t ret;
    ret = fix_add(fix_mul(fix_add(x2,(- x1)),decimal),x1);
-   _ctx.write_pos = ((_ctx.write_pos + 1) % 44100);
+   _ctx.write_pos = ((_ctx.write_pos + 1) % 30000);
    fix_set(_ctx.buffer,_ctx.write_pos,fix_clip(fix_add(x,fix_mul(feedback,ret)),(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */));
    return ret;
 }

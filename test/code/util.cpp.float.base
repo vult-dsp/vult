@@ -58,7 +58,7 @@ void Util_phasorInit_init(Util__ctx_type_2 &_output_){
 }
 
 void Util_phasorInit(Util__ctx_type_2 &_ctx){
-   _ctx.rate = Util_pitchToRate(60.f);
+   _ctx.rate = 0.00593256572975f;
 }
 
 float Util_minFixed(){

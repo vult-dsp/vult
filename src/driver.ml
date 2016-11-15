@@ -76,7 +76,6 @@ let runFiles (args:arguments) (parser_results:parser_results list) : unit =
       in
       if args.eval then
          parser_results
-         |> Inference.infer
          |> Interpreter.eval
          |> List.iter print_val
    with

@@ -96,7 +96,7 @@ fix16_t Filters_lp6(Filters__ctx_type_6 &_ctx, fix16_t x, fix16_t fc_in){
    _cond_4 = Filters_change(_ctx._inst1,fc_in);
    if(_cond_4){
       _ctx.fc = Filters_clip(fc_in,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
-      _ctx.k = fix_tan(fix_mul(fix_mul(Filters_pi(),_ctx.fc),0x1 /* 0.000023 */));
+      _ctx.k = fix_tan(fix_mul(0x4 /* 0.000071 */,_ctx.fc));
    }
    fix16_t b0;
    b0 = fix_div(_ctx.k,fix_add(_ctx.k,0x10000 /* 1.000000 */));
@@ -131,10 +131,10 @@ fix16_t Filters_lp12(Filters__ctx_type_7 &_ctx, fix16_t x, fix16_t fc, fix16_t q
    _cond_5 = (Filters_change(_ctx._inst1,fc) || Filters_change(_ctx._inst2,q));
    if(_cond_5){
       fix16_t qc;
-      qc = Filters_max(fix_sqrt(0x20000 /* 2.000000 */),fix_add(q,fix_sqrt(0x20000 /* 2.000000 */)));
+      qc = Filters_max(0x16a09 /* 1.414214 */,fix_add(q,0x16a09 /* 1.414214 */));
       fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
       fix16_t k;
-      k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
+      k = fix_tan(fix_mul(0x4 /* 0.000071 */,fc));
       fix16_t den;
       den = fix_add(fix_add(fix_mul(fix_mul(k,k),qc),k),qc);
       _ctx.b0 = fix_div(fix_mul(fix_mul(k,k),qc),den);
@@ -161,7 +161,7 @@ void Filters_hp6_init(Filters__ctx_type_8 &_output_){
 fix16_t Filters_hp6(Filters__ctx_type_8 &_ctx, fix16_t x, fix16_t fc){
    fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
    fix16_t k;
-   k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
+   k = fix_tan(fix_mul(0x4 /* 0.000071 */,fc));
    fix16_t b0;
    b0 = fix_div(0x10000 /* 1.000000 */,fix_add(k,0x10000 /* 1.000000 */));
    fix16_t b1;
@@ -186,7 +186,7 @@ void Filters_allp6_init(Filters__ctx_type_9 &_output_){
 fix16_t Filters_allp6(Filters__ctx_type_9 &_ctx, fix16_t x, fix16_t fc){
    fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
    fix16_t k;
-   k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
+   k = fix_tan(fix_mul(0x4 /* 0.000071 */,fc));
    fix16_t b0;
    b0 = fix_div(fix_add(k,(-0x10000 /* -1.000000 */)),fix_add(k,0x10000 /* 1.000000 */));
    fix16_t b1;
@@ -220,10 +220,10 @@ fix16_t Filters_hp12(Filters__ctx_type_10 &_ctx, fix16_t x, fix16_t fc, fix16_t 
    _cond_5 = (Filters_change(_ctx._inst1,fc) || Filters_change(_ctx._inst2,q));
    if(_cond_5){
       fix16_t qc;
-      qc = Filters_max(fix_sqrt(0x20000 /* 2.000000 */),fix_add(q,fix_sqrt(0x20000 /* 2.000000 */)));
+      qc = Filters_max(0x16a09 /* 1.414214 */,fix_add(q,0x16a09 /* 1.414214 */));
       fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
       fix16_t k;
-      k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
+      k = fix_tan(fix_mul(0x4 /* 0.000071 */,fc));
       fix16_t den;
       den = fix_add(fix_add(fix_mul(fix_mul(k,k),qc),k),qc);
       _ctx.b0 = fix_div(qc,den);
@@ -259,10 +259,10 @@ fix16_t Filters_bp12(Filters__ctx_type_11 &_ctx, fix16_t x, fix16_t fc, fix16_t 
    _cond_5 = (Filters_change(_ctx._inst1,fc) || Filters_change(_ctx._inst2,q));
    if(_cond_5){
       fix16_t qc;
-      qc = Filters_max(fix_sqrt(0x20000 /* 2.000000 */),fix_add(q,fix_sqrt(0x20000 /* 2.000000 */)));
+      qc = Filters_max(0x16a09 /* 1.414214 */,fix_add(q,0x16a09 /* 1.414214 */));
       fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
       fix16_t k;
-      k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
+      k = fix_tan(fix_mul(0x4 /* 0.000071 */,fc));
       fix16_t den;
       den = fix_add(fix_add(fix_mul(fix_mul(k,k),qc),k),qc);
       _ctx.b0 = fix_div(k,den);
@@ -298,10 +298,10 @@ fix16_t Filters_notch12(Filters__ctx_type_12 &_ctx, fix16_t x, fix16_t fc, fix16
    _cond_5 = (Filters_change(_ctx._inst1,fc) || Filters_change(_ctx._inst2,q));
    if(_cond_5){
       fix16_t qc;
-      qc = Filters_max(fix_sqrt(0x20000 /* 2.000000 */),fix_add(q,fix_sqrt(0x20000 /* 2.000000 */)));
+      qc = Filters_max(0x16a09 /* 1.414214 */,fix_add(q,0x16a09 /* 1.414214 */));
       fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
       fix16_t k;
-      k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
+      k = fix_tan(fix_mul(0x4 /* 0.000071 */,fc));
       fix16_t den;
       den = fix_add(fix_add(fix_mul(fix_mul(k,k),qc),k),qc);
       _ctx.b0 = fix_div(fix_mul(qc,fix_add(0x10000 /* 1.000000 */,fix_mul(k,k))),den);
@@ -337,10 +337,10 @@ fix16_t Filters_allp12(Filters__ctx_type_13 &_ctx, fix16_t x, fix16_t fc, fix16_
    _cond_5 = (Filters_change(_ctx._inst1,fc) || Filters_change(_ctx._inst2,q));
    if(_cond_5){
       fix16_t qc;
-      qc = Filters_max(fix_sqrt(0x20000 /* 2.000000 */),fix_add(q,fix_sqrt(0x20000 /* 2.000000 */)));
+      qc = Filters_max(0x16a09 /* 1.414214 */,fix_add(q,0x16a09 /* 1.414214 */));
       fc = Filters_clip(fc,0x0 /* 0.000000 */,0x56220000 /* 22050.000000 */);
       fix16_t k;
-      k = fix_tan(fix_mul(fix_mul(Filters_pi(),fc),0x1 /* 0.000023 */));
+      k = fix_tan(fix_mul(0x4 /* 0.000071 */,fc));
       fix16_t den;
       den = fix_add(fix_add(fix_mul(fix_mul(k,k),qc),k),qc);
       _ctx.b0 = fix_div(fix_add(fix_add(fix_mul(fix_mul(k,k),qc),(- k)),qc),den);

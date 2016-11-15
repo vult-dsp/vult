@@ -344,7 +344,7 @@ void Synth2_lfo_init(Synth2__ctx_type_14 &_output_){
 
 float Synth2_lfo(Synth2__ctx_type_14 &_ctx, float f, uint8_t gate){
    float rate;
-   rate = ((f * 100.f * Synth2_minFixed()) + Synth2_minFixed());
+   rate = ((0.00152588f * f) + 1.52588e-05f);
    uint8_t _cond_6;
    _cond_6 = Synth2_edge(_ctx._inst1,gate);
    if(_cond_6){

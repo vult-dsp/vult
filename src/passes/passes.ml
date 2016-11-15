@@ -30,18 +30,22 @@ open Common
 
 type pass_options =
    {
+      eval  : bool;
       pass1 : bool;
       pass2 : bool;
       pass3 : bool;
       pass4 : bool;
+      pass5 : bool;
    }
 
 let default_options =
    {
+      eval  = true;
       pass1 = true;
       pass2 = true;
       pass3 = true;
       pass4 = true;
+      pass5 = true;
    }
 
 module PassData = struct
@@ -53,6 +57,7 @@ module PassData = struct
          used_tuples  : TypeSet.t;
          repeat       : bool;
          args         : arguments;
+         interp_env   : Interpreter.Env.env;
       }
 
    let hasInitFunction (t:t) (path:path) : bool =
@@ -89,6 +94,7 @@ module PassData = struct
          add_ctx      = PathSet.empty;
          used_tuples  = TypeSet.empty;
          args         = args;
+         interp_env   = Interpreter.getEnv ();
       }
 
 end
@@ -568,6 +574,41 @@ module CollectTuples = struct
 
 end
 
+module Evaluate = struct
+
+   let isConst exp =
+      match exp with
+      | PInt _ | PReal _ | PBool _ -> true
+      | _ -> false
+
+   let getInterpEnv state =
+      let env = (Env.get state).PassData.interp_env in
+      match Env.currentScope state with
+      | Path([]) -> env
+      | Path(module_::_) -> Interpreter.Env.enterModule env [module_]
+
+   let exp : ('a Env.t,exp) Mapper.mapper_func =
+      Mapper.make "Simplify.exp" @@ fun state exp ->
+      match exp with
+      | PCall(None,_,args,_) when List.for_all isConst args ->
+         let env = getInterpEnv state in
+         let exp' = Interpreter.evalExp env exp in
+         state, exp'
+      (*| PReal(v, attr) ->
+         begin
+            match classify_float v with
+            | FP_normal -> state, exp
+            | FP_subnormal -> state, exp
+            | FP_zero -> state, exp
+            | FP_infinite -> state, PReal(3.40282347E+38, attr)
+            | FP_nan -> failwith "real number evaluates to nan"
+         end*)
+      | _ -> state, exp
+
+   let mapper = Mapper.{ default_mapper with exp = exp }
+
+end
+
 module Simplify = struct
 
    (** Returns the sub elements of an operator, e.g. a+(b+c) -> [a,b,c] *)
@@ -995,11 +1036,18 @@ module CreateTupleTypes = struct
 end
 
 (* Basic transformations *)
-let inferPass name (state,stmts) =
+let inferPass (name:id) (state,stmts) =
    let state' = Env.enter Scope.Module state name emptyAttr in
    let stmts,state',_ = Inference.inferStmtList state' Inference.NoType stmts in
    let state' = Env.exit state' in
-   state',stmts
+   state', stmts
+
+let interPass (name:id) (state,stmts) =
+   let data = Env.get state in
+   Interpreter.Env.addModule data.PassData.interp_env name;
+   let env' = Interpreter.Env.enterModule data.PassData.interp_env name in
+   Interpreter.loadStmts env' stmts;
+   state, stmts
 
 let pass1 =
    UnlinkTypes.mapper
@@ -1011,16 +1059,20 @@ let pass1 =
    |> Mapper.seq ProcessArrays.mapper
 
 let pass2 =
+   Simplify.mapper
+   |> Mapper.seq Evaluate.mapper
+
+let pass3 =
    InsertContext.mapper
    |> Mapper.seq CreateInitFunction.mapper
    |> Mapper.seq OtherErrors.mapper
 
-let pass3 =
+let pass4 =
    ReplaceFunctionNames.mapper
    |> Mapper.seq ReturnReferences.mapper
    |> Mapper.seq DummySimplifications.mapper
 
-let pass4 =
+let pass5 =
    CollectTuples.mapper
    |> Mapper.seq ReportUnsupportedTypes.mapper
 
@@ -1045,10 +1097,12 @@ let applyPass name apply pass pass_name (state,stmts) =
 let passes (name:id) (options:pass_options) (env,stmts) =
    (env,stmts)
    |> inferPass name
+   |> interPass name
    |> applyPass name options.pass1 pass1 "pass 1"
    |> applyPass name options.pass2 pass2 "pass 2"
    |> applyPass name options.pass3 pass3 "pass 3"
    |> applyPass name options.pass4 pass4 "pass 4"
+   |> applyPass name options.pass5 pass5 "pass 5"
    |> CreateTupleTypes.run
 
 let apply env options (results:parser_results) =

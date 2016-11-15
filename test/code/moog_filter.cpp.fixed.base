@@ -75,16 +75,16 @@ fix16_t Moog_filter_moog_step(Moog_filter__ctx_type_6 &_ctx, fix16_t input, fix1
    fix16_t i0;
    i0 = fix_add(input,(- fix_mul(resFixed,output)));
    fix16_t w0;
-   w0 = fix_add(_ctx.dw0,fix_mul(tune,fix_add(fix_tanh(fix_mul(i0,Moog_filter_thermal())),(- _ctx.tw0))));
-   _ctx.tw0 = fix_tanh(fix_mul(w0,Moog_filter_thermal()));
+   w0 = fix_add(_ctx.dw0,fix_mul(tune,fix_add(fix_tanh(fix_mul(i0,0xd1b7 /* 0.819200 */)),(- _ctx.tw0))));
+   _ctx.tw0 = fix_tanh(fix_mul(w0,0xd1b7 /* 0.819200 */));
    fix16_t w1;
    w1 = fix_add(fix_add(_ctx.dw1,fix_mul(tune,_ctx.tw0)),(- _ctx.tw1));
-   _ctx.tw1 = fix_tanh(fix_mul(w1,Moog_filter_thermal()));
+   _ctx.tw1 = fix_tanh(fix_mul(w1,0xd1b7 /* 0.819200 */));
    fix16_t w2;
    w2 = fix_add(fix_add(_ctx.dw2,fix_mul(tune,_ctx.tw1)),(- _ctx.tw2));
-   _ctx.tw2 = fix_tanh(fix_mul(w2,Moog_filter_thermal()));
+   _ctx.tw2 = fix_tanh(fix_mul(w2,0xd1b7 /* 0.819200 */));
    fix16_t w3;
-   w3 = fix_add(fix_add(_ctx.dw3,fix_mul(tune,_ctx.tw2)),(- fix_tanh(fix_mul(_ctx.dw3,Moog_filter_thermal()))));
+   w3 = fix_add(fix_add(_ctx.dw3,fix_mul(tune,_ctx.tw2)),(- fix_tanh(fix_mul(_ctx.dw3,0xd1b7 /* 0.819200 */))));
    _ctx.dw0 = w0;
    _ctx.dw1 = w1;
    _ctx.dw2 = w2;
@@ -127,7 +127,7 @@ fix16_t Moog_filter_moog(Moog_filter__ctx_type_7 &_ctx, fix16_t input, fix16_t c
       fcr = fix_add(fix_add(fix_add(fix_mul(0x1df7c /* 1.873000 */,x3),fix_mul(0x7ed9 /* 0.495500 */,x2)),fix_mul((-0xa624 /* -0.649000 */),fc)),0xffb1 /* 0.998800 */);
       fix16_t acr;
       acr = fix_add(fix_add(fix_mul((-0x3efb7 /* -3.936400 */),x2),fix_mul(0x1d745 /* 1.840900 */,fc)),0xff2e /* 0.996800 */);
-      _ctx.tune = fix_div(fix_add(0x10000 /* 1.000000 */,(- fix_exp(fix_mul(fix_mul(fix_mul((-0x20000 /* -2.000000 */),Moog_filter_PI()),x_2),fcr)))),Moog_filter_thermal());
+      _ctx.tune = fix_mul(fix_add(0x10000 /* 1.000000 */,(- fix_exp(fix_mul(fix_mul((-0x6487e /* -6.283185 */),x_2),fcr)))),0x13880 /* 1.220703 */);
       _ctx.resFixed = fix_mul(fix_mul(0x40000 /* 4.000000 */,res),acr);
    }
    fix16_t x0;
