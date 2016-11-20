@@ -19,7 +19,7 @@ set(OBJECT_OUTPUT ${CMAKE_CURRENT_LIST_DIR}/../_build/src/driver.native.${OBJ_EX
 
 add_custom_command(
    OUTPUT ${OBJECT_OUTPUT}
-   COMMAND ocamlbuild -use-ocamlfind -no-hygiene -pkg pla -pkg containers -pkg ppx_deriving.std src/driver.native..${OBJ_EXT}
+   COMMAND ocamlbuild -use-ocamlfind -no-hygiene -pkg pla -pkg containers -pkg ppx_deriving.std src/driver.native.${OBJ_EXT}
    WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/../
 )
 
