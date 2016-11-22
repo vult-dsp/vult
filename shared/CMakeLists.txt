@@ -11,8 +11,10 @@ include_directories(${OCAMLLIB})
 
 if(WIN32)
    set(OBJ_EXT obj)
+   set(LIBRARIES libasmrun ws2_32)
 else(WIN32)
    set(OBJ_EXT o)
+   set(LIBRARIES asmrun_pic)
 endif(WIN32)
 
 set(OBJECT_OUTPUT ${CMAKE_CURRENT_LIST_DIR}/../_build/src/driver.native.${OBJ_EXT})
@@ -25,6 +27,6 @@ add_custom_command(
 
 add_custom_target(vult_object ALL DEPENDS ${OBJECT_OUTPUT})
 
-add_library(vult_shared SHARED exports.c ${OBJECT_OUTPUT})
+add_library(vult SHARED exports.c flexdll_stub.c ${OBJECT_OUTPUT})
 
-target_link_libraries(vult_shared asmrun_pic)
+target_link_libraries(vult ${LIBRARIES})
