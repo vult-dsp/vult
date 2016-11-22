@@ -1,7 +1,5 @@
 #!/usr/bin/env sh
 
-export VULTPATH=`pwd`
-
 # removes the cygwin link because has the same name as the Visual C++ link
 rm /usr/bin/link.exe
 
@@ -57,7 +55,9 @@ case "$ocaml_system" in
 esac
 eval $(opam config env)
 opam install pla containers ppx_deriving ounit yojson
-cd $VULTPATH
+cd $APPVEYOR_BUILD_FOLDER
+ls
+pwd
 ./configure
 make
 cd shared
