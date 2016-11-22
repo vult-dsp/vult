@@ -1,4 +1,3 @@
- cmake_minimum_required(VERSION 2.8)
 
 # Gets the location of the ocaml libraries
 execute_process(

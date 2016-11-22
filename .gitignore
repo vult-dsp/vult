@@ -19,3 +19,4 @@ setup.data
 setup.log
 .vscode
 /test.vult
+/build/

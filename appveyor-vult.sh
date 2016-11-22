@@ -60,10 +60,8 @@ ls
 pwd
 ./configure
 make
-cd shared
 mkdir build
 cd build
 cmake ../ -G "NMake Makefiles"
 nmake
-cd ..
 cd ..
