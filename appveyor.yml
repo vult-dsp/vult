@@ -1,16 +1,17 @@
-platform:
-  - x86
+platform: x64
+
+os: Visual Studio 2015
 
 environment:
   CYG_ROOT: "C:\\cygwin"
   CYG_BASH: "%CYG_ROOT%\\bin\\bash -lc"
 
 install:
-  - appveyor DownloadFile https://raw.githubusercontent.com/ocaml/ocaml-ci-scripts/master/appveyor-opam.sh
-  - "%CYG_ROOT%\\setup-x86.exe -qnNdO -R %CYG_ROOT% -s http://cygwin.mirror.constant.com -l C:/cygwin/var/cache/setup -P rsync -P patch -P diffutils -P make -P unzip -P git -P m4 -P perl -P mingw64-x86_64-gcc-core"
+  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
+  - "%CYG_ROOT%\\setup-x86.exe -qnNdO -R %CYG_ROOT% -s http://cygwin.mirror.constant.com -l C:/cygwin/var/cache/setup -P rsync -P patch -P diffutils -P make -P unzip -P git -P m4 -P perl"
 
 build_script:
-  - "%CYG_BASH% '${APPVEYOR_BUILD_FOLDER}/appveyor-opam.sh'"
+  - "%CYG_BASH% '${APPVEYOR_BUILD_FOLDER}/appveyor-vult.sh'"
 
 after_build:
   - "%CYG_BASH% '${APPVEYOR_BUILD_FOLDER}/scripts/makezip.sh'"
