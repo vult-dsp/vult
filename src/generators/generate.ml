@@ -243,7 +243,7 @@ let createParameters (results:parser_results list) (args:arguments) =
 
 
 let generateCode (parser_results:parser_results list) (args:arguments) : (Pla.t * string) list =
-   if args.ccode || args.jscode || args.luacode then
+   if args.ccode || args.jscode || args.luacode && parser_results <> [] then
       (* Initialize the replacements *)
       let ()          = DefaultReplacements.initialize () in
       (* Checks the 'real' argument is valid *)

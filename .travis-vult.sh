@@ -14,8 +14,8 @@ else
 fi
 npm install vult -g
 vultc --help
-cd shared
 mkdir build
 cd build
 cmake ../
 make
+./vtest
