@@ -13,8 +13,8 @@ value makeStringList(const char **list, int n)
 {
    CAMLparam0();
    CAMLlocal3(result, str, tmp);
-
-   for (int i = n - 1; i >= 0; i--)
+   int i;
+   for (i = n - 1; i >= 0; i--)
    {
       str = caml_copy_string(list[i]);
       tmp = caml_alloc(2, 0);
