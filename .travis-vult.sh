@@ -18,4 +18,4 @@ mkdir build
 cd build
 cmake ../
 make
-./vtest
+./shared/vtest
