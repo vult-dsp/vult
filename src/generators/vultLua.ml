@@ -59,6 +59,7 @@ module Templates = struct
       let nnoteon_inputs= count_context @@ List.length config.noteon_inputs in
       let nnoteoff_inputs = count_context @@ List.length config.noteoff_inputs in
       let ncontrolchange_inputs = count_context @@ List.length config.controlchange_inputs in
+      let pass_data = if config.pass_data then Pla.string "true" else Pla.string "false" in
       {pla|
 local this = {}
 local ffi = require("ffi")
@@ -87,7 +88,7 @@ function this.noteOff(<#noteoff_inputs#>) return this.<#module_name#s>_noteOff(<
 function this.controlChange(<#controlchange_inputs#>) return this.<#module_name#s>_controlChange(<#controlchange_inputs#>) end
 function this.init() return this.<#module_name#s>_process_init() end
 function this.default(ctx) return this.<#module_name#s>_default(ctx) end
-this.config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, noteon_inputs = <#nnoteon_inputs#i>, noteoff_inputs = <#nnoteoff_inputs#i>, controlchange_inputs = <#ncontrolchange_inputs#i> }
+this.config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, noteon_inputs = <#nnoteon_inputs#i>, noteoff_inputs = <#nnoteoff_inputs#i>, controlchange_inputs = <#ncontrolchange_inputs#i>, is_active = <#pass_data#> }
 return this
 |pla}
 
