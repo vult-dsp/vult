@@ -6,4 +6,12 @@
 #define EXPORT __attribute__((visibility("default")))
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 EXPORT char *generateLuaCode(const char **files, int n);
+
+#ifdef __cplusplus
+}
+#endif
