@@ -27,18 +27,35 @@ open Js
 (** Main file when running Vult with node. It replaces the FileIO functions to have access to the file system.
 *)
 
+(* declares the node.js object 'process' *)
+class type process = object
+   (* returns the current working directory *)
+   method cwd : js_string t meth
+end
+
+(* declares the node.js object 'buffer' *)
 class type buffer = object
+   (* converts the buffer object to string *)
    method toString : js_string t meth
 end
 
+(* declares the node.js object 'fs' *)
 class type fs = object
+   (* returns the contents of a file *)
    method readFileSync : js_string t -> buffer t meth
+   (* writes a string to a file *)
    method writeFileSync : js_string t -> js_string t -> unit t meth
+   (* checks if a file exists *)
    method existsSync : js_string t -> bool t meth
 end
 
+(* declares the variable 'fs' as: fs = require('fs') *)
 let fs : fs t = Unsafe.fun_call (Unsafe.js_expr "require") [|Unsafe.inject (string "fs")|]
 
+(* declares the variable 'process' as: process = require('process') *)
+let process : process t = Unsafe.fun_call (Unsafe.js_expr "require") [|Unsafe.inject (string "process")|]
+
+(* This is a wrapper that allows calling the node.js function from ocaml *)
 let read_fn (path:string) : string option =
    let exist    = fs##existsSync (string path) in
    if to_bool exist then
@@ -48,13 +65,25 @@ let read_fn (path:string) : string option =
    else
       None
 
+(* This is a wrapper that allows calling the node.js function from ocaml *)
 let write_fn (path:string) (text:string) : bool =
    let _ = fs##writeFileSync (string path) (string text) in
    to_bool (fs##existsSync (string path))
+
+(* This is a wrapper that allows calling the node.js function from ocaml *)
+let exists_fn (path:string)  : bool =
+   to_bool (fs##existsSync (string path))
+
+(* This is a wrapper that allows calling the node.js function from ocaml *)
+let cwd_fn (path:string)  : string =
+   to_string (process##cwd)
 ;;
 
+(* replaces all the native functions for the node.js versions *)
 FileIO.setRead read_fn ;;
 FileIO.setWrite write_fn ;;
+FileIO.setExists exists_fn ;;
 
+(* calls the main function to start the execution *)
 Vult_main.main () ;;
 

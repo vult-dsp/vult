@@ -118,3 +118,23 @@ module GetAttr = struct
       | LTyped(_,_,attr)
       | LGroup(_,attr) -> attr
 end
+
+
+module GetDependencies = struct
+
+   let exp : ('a Env.t,exp) Mapper.mapper_func =
+      Mapper.make "GetIdentifiers.exp" @@ fun state exp ->
+      match exp with
+      | PId([id;_],_) ->
+         Env.set state (IdSet.add [id] (Env.get state)), exp
+      | PCall(_,[id;_],_,_) ->
+         Env.set state (IdSet.add [id] (Env.get state)), exp
+      | _ -> state, exp
+
+   let mapper = Mapper.{ default_mapper with exp }
+
+   let fromStmts (stmts:stmt list) : IdSet.t =
+      let s, _ = Mapper.map_stmt_list mapper (Env.empty IdSet.empty) stmts in
+      Env.get s
+
+end

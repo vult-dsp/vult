@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
-open ParserVult
 open TypesVult
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
@@ -36,6 +35,7 @@ let processArguments () : arguments =
       "-real",     (Arg.String (fun real -> result.real<-real)),       " Defines the numeric type for the generated code: double,fixed";
       "-template", (Arg.String (fun temp -> result.template<-temp)),   "name Defines the template used to generate code (ccode only): pd, teensy";
       "-eval",     (Arg.Unit   (fun () -> result.eval      <- true)),  " Runs the code (default: off)";
+      "-i",        (Arg.String (fun path -> result.includes <- path :: result.includes)), "path Adds the given path to the list of places to look for modules";
       "-version",  (Arg.Unit   (fun () -> result.show_version<-true)), " Show the version of vult";
    ]
       |> Arg.align
@@ -44,9 +44,9 @@ let processArguments () : arguments =
    let _ = result.files <- List.rev result.files in (* Put the files in the correct order  *)
    result
 
-let parseFiles files =
+let parseFiles arguments files =
    try
-      List.map parseFile files
+      Loader.loadFiles arguments files
    with
    | Error.Errors(errors) ->
       let error_strings = Error.reportErrors errors in
@@ -64,7 +64,7 @@ let main () =
          print_endline ("vult " ^ Version.version ^ " - https://github.com/modlfo/vult");
          print_endline "no input files"
       | _ ->
-         let parser_results = parseFiles args.files in
+         let parser_results = parseFiles args args.files in
          (* Prints the parsed files if -dparse was passed as argument *)
          Driver.dumpParsedFiles args parser_results;
          Driver.generateCode args parser_results |> ignore;

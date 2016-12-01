@@ -203,6 +203,7 @@ type arguments =
       mutable real     : string;
       mutable template : string;
       mutable show_version : bool;
+      mutable includes : string list;
    }
 
 let default_arguments =
@@ -217,6 +218,7 @@ let default_arguments =
       real   = "float";
       template = "default";
       show_version = false;
+      includes = [];
    }
 
 let makeAttr (loc:Loc.t) : attr =

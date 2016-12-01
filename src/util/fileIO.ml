@@ -25,6 +25,15 @@ THE SOFTWARE.
 (** This file provides a hackish way of replacing the file IO functions for Node.js
     implementations that in order to run Vult with node *)
 
+(** ref holding the current working directory.
+    The default function is the native.
+*)
+let cwd_fun =
+   ref (fun () -> Sys.getcwd ())
+
+(** ref holding the write file function.
+    The default function is the native.
+*)
 let read_fun =
    ref (fun path ->
          if Sys.file_exists path then
@@ -41,21 +50,60 @@ let read_fun =
                Some(Buffer.contents buffer)
          else None)
 
+(** ref holding the read file function.
+    The default function is the native.
+*)
+let write_fun =
+   ref (fun path text ->
+         try
+            let file = open_out path in
+            output_string file text;
+            close_out file;
+            true
+         with | _ -> false)
+
+(** ref holding the file exists.
+    The default function is the native.
+*)
+let exists_fun =
+   ref (fun path -> Sys.file_exists path)
+
+
+
+(** This function is used to change the actual reaf-file function.
+    When compiling for node.js the function is replaced at runtime by the code
+*)
 let setRead f = read_fun := f
 
+(** This function is used to change the actual write-to-file function.
+    When compiling for node.js the function is replaced at runtime by the code
+*)
+let setWrite (f:string -> string -> bool) = write_fun := f
+
+(** This function is used to change the actual file-exists function.
+    When compiling for node.js the function is replaced at runtime by the code
+*)
+let setExists (f:string -> bool) = exists_fun := f
+
+(** This function is used to change the actual cwd function.
+    When compiling for node.js the function is replaced at runtime by the code
+*)
+let setCwd (f:unit -> string) = cwd_fun := f
+
+
+
+(** Main function to read files given the path *)
 let read (path:string) : string option =
    !read_fun path
 
-let write_fun =
-   ref (fun path text ->
-      try
-         let file = open_out path in
-         output_string file text;
-         close_out file;
-         true
-      with | _ -> false)
-
-let setWrite f = write_fun := f
-
+(** Main function to write files given the path and the text *)
 let write (path:string) (text:string) : bool =
    !write_fun path text
+
+(** Main function to check if a file exists *)
+let exists (path:string) : bool =
+   !exists_fun path
+
+(* Gets the current directory *)
+let cwd () : string =
+   !cwd_fun ()
