@@ -53,7 +53,7 @@ end
 let fs : fs t = Unsafe.fun_call (Unsafe.js_expr "require") [|Unsafe.inject (string "fs")|]
 
 (* declares the variable 'process' as: process = require('process') *)
-let process : process t = Unsafe.fun_call (Unsafe.js_expr "require") [|Unsafe.inject (string "process")|]
+let process : process t = Unsafe.js_expr "process"
 
 (* This is a wrapper that allows calling the node.js function from ocaml *)
 let read_fn (path:string) : string option =
