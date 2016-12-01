@@ -116,7 +116,8 @@ let checkCode (code:string) : (string * string * int * int) list =
 
 let generateLuaCode (files:string list) : string =
    let args = { default_arguments with files; luacode = true } in
-   match Generate.generateCode (List.map ParserVult.parseFile files) args with
+   let parsed = Loader.loadFiles args files in
+   match Generate.generateCode parsed args with
    | [code_tpl,_] ->
       let code = Pla.print code_tpl |> String.escaped in
       Pla.print [%pla{|return { error = {}, code = "<#code#s>" } |}]
