@@ -504,30 +504,17 @@ module ReportUnsupportedTypes = struct
       let msg = Printf.sprintf "The type '%s' of variable '%s' is not supported. Arrays can only contain basic types." (PrintTypes.typeStr typ) (idStr name) in
       Error.raiseError msg attr.loc
 
-   let reportUnsupportedTuple (typ:VType.t) (name:id) (attr:attr) =
-      let msg = Printf.sprintf "The type '%s' of variable '%s' is not supported. Tuples can only contain basic types." (PrintTypes.typeStr typ) (idStr name) in
-      Error.raiseError msg attr.loc
-
    let isComplexArray typ =
       if VType.isArray typ then
          let t, _ = VType.arrayTypeAndSize typ in
          not (VType.isSimpleType t)
       else false
 
-   let isComplexTuple typ =
-      if VType.isTuple typ then
-         let types = VType.getSubTypes typ in
-         List.exists (fun st -> not (VType.isSimpleType st)) types
-      else false
-
-
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
       Mapper.make "ReportUnsupportedTypes.lhs_exp" @@ fun state exp ->
       match exp with
       | LId(id,Some(t),attr) when isComplexArray t ->
          reportUnsupportedArray t id attr
-      | LId(id,Some(t),attr) when isComplexTuple t ->
-         reportUnsupportedTuple t id attr
       | _ -> state, exp
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
@@ -540,9 +527,6 @@ module ReportUnsupportedTypes = struct
       | Some(t) when isComplexArray t ->
          let msg = Printf.sprintf "The type '%s' of this expression is not supported. Arrays can only contain basic types." (PrintTypes.typeStr t) in
          Error.raiseError msg attr.loc
-      | Some(t) when isComplexTuple t ->
-         let msg = Printf.sprintf "The type '%s' of this expression is not supported. Tuples can only contain basic types." (PrintTypes.typeStr t) in
-         Error.raiseError msg attr.loc
       | _ ->
          state, exp
 
@@ -551,8 +535,6 @@ module ReportUnsupportedTypes = struct
       match t with
       | TypedId(id,typ,_,attr) when isComplexArray typ ->
          reportUnsupportedArray typ id attr
-      | TypedId(id,typ,_,attr) when isComplexTuple typ ->
-         reportUnsupportedTuple typ id attr
       | _ -> state, t
 
    let mapper = Mapper.{ default_mapper with lhs_exp; exp; typed_id; }
@@ -1004,6 +986,8 @@ end
 
 module CreateTupleTypes = struct
 
+   type 'a dependencies = ('a * 'a list) list
+
    let getSubTuples (t:VType.t) : VType.t list =
       VType.getSubTypes t |> List.filter VType.isTuple
 
@@ -1014,24 +998,35 @@ module CreateTupleTypes = struct
          StmtType(t,elems,emptyAttr)
       | _ -> failwith "CreateTupleTypes.makeTypeDeclaration: there should be only tuples here"
 
-   let rec getDeclarations visited remaining =
+   let rec getDeclarations dependencies visited remaining : VType.t dependencies=
       match remaining with
-      | [] -> visited,[]
+      | [] ->
+         Hashtbl.fold (fun a b acc -> (a,b)::acc) dependencies []
       | h::t when TypeSet.mem h visited ->
-         getDeclarations visited t
+         getDeclarations dependencies visited t
       | h::t ->
          let sub = getSubTuples h in
          let visited' = TypeSet.add h visited in
-         let visited',sub_sorted = getDeclarations visited' sub in
-         let visited', inner = getDeclarations visited' t in
-         visited' , inner @ h :: sub_sorted
+         let () = Hashtbl.add dependencies h sub in
+         getDeclarations dependencies visited' (sub@t)
+
+   let rec checkCircularDepedencies components =
+      match components with
+      | [] -> ()
+      | [_]::t -> checkCircularDepedencies t
+      | types::_ ->
+         let types_str = List.map PrintTypes.typeStr types |> String.concat ", " in
+         let msg = "The following tuple types have circular dependencies: " ^ types_str in
+         Error.raiseErrorMsg msg
 
    let run (state,stmts) =
       let data = Env.get state in
-      let tuples = TypeSet.elements (PassData.getTuples data) in
-      let _,sorted = getDeclarations TypeSet.empty tuples in
-      let decl = List.map makeTypeDeclaration (List.rev sorted) in
-      state,decl @ stmts
+      let tuples = TypeSet.elements (PassData.getTuples data) |> List.map VType.unlink in
+      let dependencies = getDeclarations (Hashtbl.create 8) TypeSet.empty tuples in
+      let components = Components.components dependencies in
+      let sorted = List.map List.hd components in
+      let decl = List.map makeTypeDeclaration sorted in
+      state, decl @ stmts
 
 end
 
