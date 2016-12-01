@@ -174,7 +174,7 @@ end
 (** Gets the name of the main module, which is the last parsed file *)
 let rec getMainModule (parser_results:parser_results list) : string =
    match parser_results with
-   | []   -> failwith "No files given"
+   | []   -> Error.raiseErrorMsg "No files given"
    | [h] when h.file = "" -> "Vult"
    | [h] -> moduleName h.file
    | _::t -> getMainModule t

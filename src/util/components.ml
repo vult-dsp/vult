@@ -67,6 +67,9 @@ module G = struct
       let () = Hashtbl.replace g.vertex to_v () in
       ()
 
+   let addVertex (g:'a g) (v:'a) : unit =
+      Hashtbl.replace g.vertex v ()
+
    (* gets the all vertices pointed by a given vertex *)
    let getDependencies (g:'a g) (v:'a) : 'a list =
       match Hashtbl.find g.forward v with
@@ -86,7 +89,7 @@ module G = struct
    (* makes a graph given a list of the vertices and it's dependencies *)
    let make (e: ('a * 'a list) list) : 'a g =
       let g = empty () in
-      let () = List.iter (fun (v,deps) -> List.iter (addEdge g v) deps) e
+      let () = List.iter (fun (v,deps) -> addVertex g v; List.iter (addEdge g v) deps) e
       in g
 
 end

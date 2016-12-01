@@ -75,7 +75,7 @@ let exists_fn (path:string)  : bool =
    to_bool (fs##existsSync (string path))
 
 (* This is a wrapper that allows calling the node.js function from ocaml *)
-let cwd_fn (path:string)  : string =
+let cwd_fn ()  : string =
    to_string (process##cwd)
 ;;
 
@@ -83,6 +83,7 @@ let cwd_fn (path:string)  : string =
 FileIO.setRead read_fn ;;
 FileIO.setWrite write_fn ;;
 FileIO.setExists exists_fn ;;
+FileIO.setCwd cwd_fn ;;
 
 (* calls the main function to start the execution *)
 Vult_main.main () ;;

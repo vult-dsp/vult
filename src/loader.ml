@@ -48,7 +48,7 @@ let getIncludes (arguments:arguments) (files:string list) : string list =
    let implicit_dirs = List.map Filename.dirname files in
    (* these are the extra include paths passed in the arguments *)
    let explicit_dir = List.map  (Filename.concat current) arguments.includes in
-   List.sort_uniq compare (implicit_dirs @ explicit_dir)
+   List.sort_uniq compare (current :: implicit_dirs @ explicit_dir)
 
 (* main function that iterates the input files, gets the dependencies and searchs for the dependencies locations *)
 let rec loadFiles_loop (includes:string list) dependencies parsed (files:string list) =
@@ -85,7 +85,7 @@ let rec checkComponents (comps:string list list) : unit =
       Error.raiseErrorMsg msg
 
 (* Given a list of files, finds and parses all the dependencies and returns the parsed contents in order *)
-let loadFiles (arguments:arguments) (files:string list) : parser_results list=
+let loadFiles (arguments:arguments) (files:string list) : parser_results list =
    let includes = getIncludes arguments files in
    let dependencies, parsed = loadFiles_loop includes (Hashtbl.create 8) (Hashtbl.create 8) files in
    let dep_list = Hashtbl.fold (fun a b acc -> (a,b)::acc) dependencies [] in
