@@ -298,6 +298,6 @@ module Attributes = struct
       | [] -> false
       | AId(name,_)::_ when id = name -> true
       | AFun(name,_,_)::_ when id = name -> true
-      | _::t -> has id attr
+      | _::t -> has id t
 
 end

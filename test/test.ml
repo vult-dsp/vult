@@ -49,8 +49,8 @@ let parser_files =
       "types_basic.vult";
    ]
 
-let no_context = Passes.{ Passes.default_options with pass4 = false; pass3 = false; pass2 = false; }
-let no_eval = Passes.{ Passes.default_options with pass2 = false; }
+let no_context = PassCommon.{ default_options with pass4 = false; pass3 = false; pass2 = false; }
+let no_eval = PassCommon.{ default_options with pass2 = false; }
 
 let passes_files =
    [
