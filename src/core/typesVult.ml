@@ -29,15 +29,22 @@ type id = string list
 type path =
    | Path of id
 
+
+type attr_exp =
+   | AId of id * Loc.t
+   | AFun of id * (id * attr_exp) list * Loc.t
+   | AInt of string * Loc.t
+   | AReal of string * Loc.t
+
 type attr =
    {
       loc     : Loc.t;
       fun_and : bool;
       active  : bool;
       bound   : bool;
-      init    : bool;
       ext_fn  : string option;
       typ     : VType.t option;
+      exp     : attr_exp list;
    }
 
 let pp_attr = fun fmt _ -> Format.pp_print_string fmt "attr"
@@ -228,8 +235,8 @@ let makeAttr (loc:Loc.t) : attr =
       active  = false;
       bound   = false;
       typ     = None;
-      init    = false;
       ext_fn  = None;
+      exp     = [];
    }
 
 let emptyAttr =
@@ -239,8 +246,8 @@ let emptyAttr =
       active  = false;
       bound   = false;
       typ     = None;
-      init    = false;
       ext_fn  = None;
+      exp     = [];
    }
 
 module IdMap = CCMap.Make(struct type t = id let compare = compare end)
@@ -283,3 +290,14 @@ let moduleName (file:string) : string =
    |> Filename.basename
    |> Filename.chop_extension
    |> String.capitalize
+
+module Attributes = struct
+
+   let rec has (id:id) (attr:attr_exp list) =
+      match attr with
+      | [] -> false
+      | AId(name,_)::_ when id = name -> true
+      | AFun(name,_,_)::_ when id = name -> true
+      | _::t -> has id attr
+
+end

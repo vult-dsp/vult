@@ -151,40 +151,76 @@ let prattParser (rbp:int) (buffer:Stream.stream)
 let identifierToken (token:'kind token) : id =
    splitOnDot token.value
 
+let commaSepList parser buffer =
+   let rec loop acc =
+      (* power of 20 avoids returning a tuple instead of a list*)
+      let e = parser 20 buffer in
+      match Stream.peek buffer with
+      | COMMA ->
+         let _ = Stream.skip buffer in
+         loop (e::acc)
+      | _ -> List.rev (e::acc)
+   in loop []
+
 (** Parses attribute expressions *)
-let rec attrExpression (rbp:int) (buffer:Stream.stream) : attr =
+let rec attrExpression (rbp:int) (buffer:Stream.stream) : attr_exp =
    prattParser rbp buffer getLbp attr_nud attr_led
 
-and attr_nud (buffer:Stream.stream) (token:'kind token) : attr =
+and attrExpressionList (buffer:Stream.stream) : attr_exp list =
+   commaSepList attrExpression buffer
+
+and attr_nud (buffer:Stream.stream) (token:'kind token) : attr_exp =
    match token.kind with
    | ID ->
       let id = identifierToken token in
       begin
-         match id with
-         | ["init"] -> { emptyAttr with init = true }
+         match Stream.peek buffer with
+         | LPAREN ->
+            let _ = Stream.skip buffer in
+            begin
+               match Stream.peek buffer with
+               | RPAREN ->
+                  let _ = Stream.skip buffer in
+                  AFun(id, [], token.loc)
+               | _ ->
+                  let values = attrPairList buffer in
+                  let _ = Stream.consume buffer RPAREN in
+                  AFun(id, values, token.loc)
+            end
          | _ ->
-            let message = Stream.makeError buffer "Unknown attribute" in
-            raise (ParserError(message))
+            AId(id, token.loc)
       end
+   | INT -> AInt(token.value, token.loc)
+   | REAL -> AReal(token.value, token.loc)
    | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
 
-and attr_led (_:Stream.stream) (token:'kind token) (_:attr) : attr =
+and attr_led (_:Stream.stream) (token:'kind token) (_:attr_exp) : attr_exp =
    match token.kind with
    | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
 
-let optAttrExpression (rbp:int) (buffer:Stream.stream) : attr =
+and attrPair (bp:int) (buffer:Stream.stream) : id * attr_exp =
+   let id = identifierToken (Stream.current buffer) in
+   let _  = Stream.skip buffer in
+   let _  = Stream.consume buffer EQUAL in
+   let value = attrExpression bp buffer in
+   id, value
+
+and attrPairList (buffer:Stream.stream) : (id * attr_exp) list =
+   commaSepList attrPair buffer
+
+let optAttrExpressions (buffer:Stream.stream) : attr_exp list =
    match Stream.peek buffer with
    | AT ->
       let _ = Stream.consume buffer AT in
       let _ = Stream.consume buffer LBRACK in
-      let attr = attrExpression rbp buffer in
+      let attr = attrExpressionList buffer in
       let _ = Stream.consume buffer RBRACK in
       attr
-   | _ -> emptyAttr
+   | _ -> []
 
 (** Parses a type expression using a Pratt parser *)
 let rec typeExpression (rbp:int) (buffer:Stream.stream) : VType.t =
@@ -263,16 +299,7 @@ and composedType (buffer:Stream.stream) (token:'kind token) (id:id) : VType.t =
    ref (VType.TComposed(id,args, Some(token.loc)))
 
 and typeArgList (buffer:Stream.stream) : VType.t list =
-   let rec loop acc =
-      (* power of 20 avoids returning a tuple instead of a list*)
-      let e =  typeExpression 20 buffer in
-      match Stream.peek buffer with
-      | COMMA ->
-         let _ = Stream.skip buffer in
-         loop (e::acc)
-      | _ -> List.rev (e::acc)
-   in loop []
-
+   commaSepList typeExpression buffer
 
 (** Parses left hand side expression using a Pratt parser *)
 let rec lhs_expression (rbp:int) (buffer:Stream.stream) : lhs_exp =
@@ -456,15 +483,7 @@ and binaryOp (buffer:Stream.stream) (token:'kind token) (left:exp) : exp =
 
 (** <expressionList> := <expression> [',' <expression> ] *)
 and expressionList (buffer:Stream.stream) : exp list =
-   let rec loop acc =
-      (* power of 20 avoids returning a tuple instead of a list*)
-      let e = expression 20 buffer in
-      match Stream.peek buffer with
-      | COMMA ->
-         let _ = Stream.skip buffer in
-         loop (e::acc)
-      | _ -> List.rev (e::acc)
-   in loop []
+   commaSepList expression buffer
 
 (** typedArg := <ID> [ ':' <ID>]  *)
 and typedArgOpt (buffer:Stream.stream) : typed_id =
@@ -645,9 +664,9 @@ and stmtFunction (buffer:Stream.stream) : stmt =
          Some(typeExpression 0 buffer)
       | _ -> None
    in
-   let attr      = optAttrExpression 0 buffer in
+   let attr_exp  = optAttrExpressions buffer in
    let body      = stmtList buffer in
-   let attr      = { attr with loc = start_loc } in
+   let attr      = { emptyAttr with loc = start_loc; exp = attr_exp } in
    let attr      = if isjoin then { attr with fun_and = true } else attr in
    StmtFun(name,args,body,vtype,attr)
 

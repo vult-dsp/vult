@@ -448,11 +448,12 @@ module Scope = struct
             sub.ext_fn := attr.ext_fn;
             sub
          in
+         let init = Attributes.has ["init"] attr.exp in
          let t' =
             if attr.fun_and then
-               addToContext t name attr.init
+               addToContext t name init
             else
-               newContext t name attr.init
+               newContext t name init
          in
          t'.func := IdMap.add name new_symbol !(t.func);
          t'
