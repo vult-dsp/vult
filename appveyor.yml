@@ -8,7 +8,7 @@ environment:
 
 install:
   - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
-  - "%CYG_ROOT%\\setup-x86.exe -qnNdO -R %CYG_ROOT% -s http://cygwin.mirror.constant.com -l C:/cygwin/var/cache/setup -P rsync -P patch -P diffutils -P make -P unzip -P git -P m4 -P perl"
+  - "%CYG_ROOT%\\setup-x86.exe -qnNdO -R %CYG_ROOT% -s http://cygwin.mirror.constant.com -l C:/cygwin/var/cache/setup -P rsync -P patch -P make -P unzip -P git -P perl"
 
 build_script:
   - "%CYG_BASH% '${APPVEYOR_BUILD_FOLDER}/appveyor-vult.sh'"
