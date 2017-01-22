@@ -98,12 +98,12 @@ type exp =
          *  exp list
          *  attr
    | PCall
-      of id option (* name/instance *)
+      of id option    (* name/instance *)
          *  id        (* type/function name *)
          *  exp list  (* arguments *)
          *  attr
    | PIf
-      of exp (* condition *)
+      of exp    (* condition *)
          *  exp (* then *)
          *  exp (* else *)
          *  attr
@@ -122,51 +122,51 @@ type exp =
 
 and stmt =
     | StmtVal
-   of lhs_exp     (* names/lhs *)
+   of lhs_exp        (* names/lhs *)
       *  exp option  (* rhs *)
       *  attr
   | StmtMem
-    of lhs_exp     (* names/lhs *)
+    of lhs_exp        (* names/lhs *)
        *  exp option  (* rhs *)
        *  attr
   | StmtWhile
-    of exp         (* condition*)
+    of exp            (* condition*)
        *  stmt        (* statements *)
        *  attr
   | StmtReturn
     of exp
        *  attr
   | StmtIf
-    of exp         (* condition *)
+    of exp            (* condition *)
        *  stmt        (* then *)
        *  stmt option (* else *)
        *  attr
   | StmtFun
-    of id              (* name *)
+    of id                 (* name *)
        *  typed_id list   (* arguments *)
        *  stmt            (* body *)
        *  VType.t option  (* return type *)
        *  attr
   | StmtExternal
-    of id             (* name *)
+    of id                (* name *)
        *  typed_id list  (* arguments *)
        *  VType.t        (* return type *)
        *  string         (* linking name *)
        *  attr
   | StmtBind
-    of lhs_exp     (* lhs *)
+    of lhs_exp        (* lhs *)
        *  exp         (* rhs *)
        *  attr
   | StmtBlock
-    of id option (* scope name *)
+    of id option      (* scope name *)
        *  stmt list
        *  attr
   | StmtType
-    of VType.t       (* name *)
+    of VType.t          (* name *)
        *  val_decl list (* members *)
        *  attr
   | StmtAliasType
-    of VType.t       (* name *)
+    of VType.t          (* name *)
        *  VType.t       (* alias type *)
        *  attr
   | StmtEmpty
@@ -174,7 +174,7 @@ and stmt =
 
 and val_decl =
     id          (* name *)
-    * VType.t  (* type *)
+    * VType.t   (* type *)
     * attr
 [@@deriving show,eq,ord]
 
@@ -291,13 +291,3 @@ let moduleName (file:string) : string =
    |> Filename.chop_extension
    |> String.capitalize
 
-module Attributes = struct
-
-   let rec has (id:id) (attr:attr_exp list) =
-      match attr with
-      | [] -> false
-      | AId(name,_)::_ when id = name -> true
-      | AFun(name,_,_)::_ when id = name -> true
-      | _::t -> has id t
-
-end

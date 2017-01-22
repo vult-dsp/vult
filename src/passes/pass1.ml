@@ -35,7 +35,7 @@ module UnlinkTypes = struct
       | VType.TLink(t) -> state, !t
       | _ -> state, typ
 
-   let mapper = { Mapper.default_mapper with Mapper.vtype_c = vtype_c }
+   let mapper = Mapper.{ default_mapper with vtype_c }
 
 end
 
@@ -92,7 +92,7 @@ module SplitMem = struct
       | _ -> state, [stmt]
 
    let mapper =
-      { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
+      Mapper.{ default_mapper with stmt_x }
 
 end
 
@@ -228,7 +228,7 @@ module Simplify = struct
          reapply state, []
       | _ -> state, [stmt]
 
-   let mapper = { Mapper.default_mapper with Mapper.exp = exp; stmt_x }
+   let mapper = Mapper.{ default_mapper with exp; stmt_x }
 
 end
 
@@ -302,7 +302,7 @@ module SimplifyIfExp = struct
          state', List.rev stmts'
       | _ -> state, [stmt]
 
-   let mapper = { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
+   let mapper = Mapper.{ default_mapper with stmt_x }
 
 end
 
@@ -437,7 +437,7 @@ module BindComplexExpressions = struct
 
 
    let mapper =
-      { Mapper.default_mapper with Mapper.stmt_x = stmt_x }
+      Mapper.{ default_mapper with stmt_x }
 
 end
 
@@ -462,7 +462,7 @@ module ProcessArrays = struct
       | _ ->
          state, exp
 
-   let mapper = { Mapper.default_mapper with Mapper.exp = exp }
+   let mapper = Mapper.{ default_mapper with exp }
 
 end
 

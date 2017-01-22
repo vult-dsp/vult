@@ -181,7 +181,7 @@ and attr_nud (buffer:Stream.stream) (token:'kind token) : attr_exp =
                match Stream.peek buffer with
                | RPAREN ->
                   let _ = Stream.skip buffer in
-                  AFun(id, [], token.loc)
+                  AId(id, token.loc)
                | _ ->
                   let values = attrPairList buffer in
                   let _ = Stream.consume buffer RPAREN in

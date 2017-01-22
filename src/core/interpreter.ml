@@ -359,7 +359,7 @@ let rec bind (kind:bind_kind) (env:Env.env) (lhs:lhs_exp) (rhs:exp option) =
 let rec bindArg (env:Env.env) (lhs:typed_id) (rhs:exp) =
    match lhs, rhs with
    | (TypedId(id,_,_,_) | SimpleId(id, _, _)), rhs ->
-      Env.declareVal env id rhs
+      Env.updateVar env id rhs
 
 (** Main function to evaluate an expression *)
 let rec evalExp (env:Env.env) (exp:exp) : exp =

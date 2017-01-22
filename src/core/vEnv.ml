@@ -448,7 +448,7 @@ module Scope = struct
             sub.ext_fn := attr.ext_fn;
             sub
          in
-         let init = Attributes.has ["init"] attr.exp in
+         let init = Attributes.has attr.exp ["init"] in
          let t' =
             if attr.fun_and then
                addToContext t name init

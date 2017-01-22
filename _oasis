@@ -21,7 +21,8 @@ Library "vult_util"
   Modules:
     Error,
     Loc,
-    PrintBuffer
+    PrintBuffer,
+    Fitting
   BuildDepends:
     containers
 
@@ -35,6 +36,7 @@ Library "vult_core"
     Inference,
     VEnv,
     Common,
+    Attributes,
     VType
   BuildDepends:
     vult_util,
