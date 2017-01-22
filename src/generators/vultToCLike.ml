@@ -239,6 +239,10 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
    | StmtVal(lhs,None,_) ->
       let lhs' = convertLhsExp true p lhs in
       CSVar(lhs')
+   | StmtVal(lhs,Some(rhs),attr) when attr.const ->
+      let lhs' = convertLhsExp false p lhs in
+      let rhs' = convertExp p rhs in
+      CSConst(lhs', rhs')
    | StmtVal(_,Some(_),_) -> failwith "VultToCLike.convertStmt: val should not have initializations"
    | StmtMem _ -> CSEmpty
    | StmtWhile(cond,stmt,_) ->

@@ -223,6 +223,17 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let name = dot name in
       Some({pla|<#name#> = <#te#>;|pla})
 
+   (* Prints const x = ... *)
+   | CSConst(lhs,((CEInt _ | CEFloat _ | CEBool _ | CEArray _ ) as value)) ->
+      if params.is_header then
+         let tlhs = printLhsExp true lhs in
+         let te = printExp params value in
+         Some({pla|static const <#tlhs#> = <#te#>;|pla})
+      else None
+
+   (* All other cases should be errors *)
+   | CSConst _ -> failwith "printStmt: invalid constant declaration"
+
    (* Function declarations cotaining more than one statement *)
    | CSFunction(ntype,name,args,(CSBlock(_) as body)) ->
       let ret   = printTypeDescr ntype in

@@ -326,6 +326,11 @@ let isSimpleType (typ:t) : bool =
    | TId(["void"],_) -> true
    | _ -> false
 
+let isRealType (typ:t) : bool =
+   match !typ with
+   | TId(["real"],_) -> true
+   | _ -> false
+
 let isSimpleOpType (typ:t option) : bool =
    match typ with
    | Some(t) -> isSimpleType t

@@ -68,10 +68,18 @@ module MakeTables = struct
       | PReal(value,_) -> value
       | _ -> failwith "The result of the evaluation is not a float"
 
+   let makeFloat x =
+      PReal(x,emptyAttr)
+
    let getCoefficients l =
       match l with
       | [x1; x2; x3] -> x1, x2, x3
       | _ -> failwith "the curve fitting returned more than three points"
+
+   let checkRealReturn typ : bool =
+      match typ with
+      | None -> failwith "the type is not defined"
+      | Some(t) -> VType.isRealType t
 
    let getTableIndividualParams loc args =
       let remaining, found = Attributes.(getParameterList loc args [(["size"],Int); (["min"],Real); (["max"],Real)]) in
@@ -95,6 +103,14 @@ module MakeTables = struct
          Some(getTableIndividualParams loc args)
       | _::t -> getTableParams t
 
+   let makeTableDecl fname name data =
+      let t = VType.Constants.real_type in
+      let ta = ref (VType.TComposed(["array"], [t; ref (VType.TInt(List.length data, None))], None)) in
+      let attr_array = { emptyAttr with typ = Some(ta) } in
+      let varname = [String.concat "_" (fname @ name)] in
+      let arr = PArray((List.map makeFloat data |> Array.of_list), emptyAttr) in
+      StmtVal(LId(varname, Some(ta), attr_array), Some(arr), { emptyAttr with const = true})
+
    let evaluateFunction env name x =
       let exp = PCall(None, name, [PReal(x, emptyAttr)], emptyAttr) in
       let value = Interpreter.evalExp env exp in
@@ -102,10 +118,17 @@ module MakeTables = struct
 
    let calculateTables env name size min max =
       let delta = (max -. min) /. (float_of_int (size - 1)) in
-      let rec loop index acc0 acc1 acc2 =
-         if index < 0 then acc0, acc1, acc2
+      let rec loop index xx acc0 acc1 acc2 =
+         if index < 0 then
+            [
+               makeTableDecl name ["x0_"] xx;
+               makeTableDecl name ["c0_"] acc0;
+               makeTableDecl name ["c1_"] acc1;
+               makeTableDecl name ["c2_"] acc2
+            ]
          else
             let r_index = float_of_int index in
+            let xx_point = min +. delta *. r_index in
             let x =
                [ min +. delta *. r_index;
                  min +. delta *. (r_index +. 0.5);
@@ -113,21 +136,27 @@ module MakeTables = struct
             in
             let y = List.map (fun a -> evaluateFunction env name a) x in
             let c0, c1, c2 = Fitting.fit x y |> getCoefficients in
-            loop (index-1) (c0::acc0) (c1::acc1) (c2::acc2)
+            loop (index-1) (xx_point::xx) (c0::acc0) (c1::acc1) (c2::acc2)
       in
-      loop (size - 1) [] [] []
+      loop (size - 1) [] [] [] []
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "MakeTables.stmt_x" @@ fun state stmt ->
       match stmt with
-      | StmtFun(name, _args, _body, _ret, attr) ->
+      | StmtFun(name, args, _body, ret, attr) ->
          begin
-            match getTableParams attr.exp with
-            | None -> state, [stmt]
-            | Some(size, min, max) ->
+            match getTableParams attr.exp, args with
+            | None, _ -> state, [stmt]
+            | Some(size, min, max), [_] when checkRealReturn ret ->
                let env = getInterpEnv state in
-               let _result = calculateTables env name size min max in
-               state, [stmt]
+               let result = calculateTables env name size min max in
+               state, result @ [stmt]
+            | Some _, _::_ ->
+               let msg = "This annotation can only be applied to functions of one argument" in
+               Error.raiseError msg attr.loc
+            | Some _,_ ->
+               let msg = "This annotation can only be applied to functions returning 'real'" in
+               Error.raiseError msg attr.loc
          end
       | _ -> state, [stmt]
 

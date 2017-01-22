@@ -181,6 +181,23 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
 
    | CSVar(CLTuple(_)) -> failwith "printStmt: invalid tuple assign"
 
+   | CSConst(CLId(tdecr,name),value) ->
+      let is_int = tdecr = CTSimple("int") in
+      let value_t = wrapInt params is_int value in
+      let name = dot name in
+      Some({pla|var <#name#> = <#value_t#>;|pla})
+
+   | CSConst(CLWild,value) ->
+      let value_t = printExp params value in
+      Some({pla|<#value_t#>;|pla})
+
+   | CSConst(CLTuple(elems),CEVar(name)) ->
+      List.mapi (printLhsExpTuple name true) elems
+      |> Pla.join
+      |> fun a -> Some(a)
+
+   | CSConst _ -> failwith "printStmt: invalid constant assign"
+
    | CSBind(CLWild,value) ->
       Some(Pla.(printExp params value ++ semi))
 

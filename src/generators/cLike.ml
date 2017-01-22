@@ -56,6 +56,7 @@ type clhsexp =
 
 type cstmt =
    | CSVar      of clhsexp
+   | CSConst    of clhsexp * cexp
    | CSBind     of clhsexp * cexp
    | CSFunction of type_descr * string * (arg_type * string) list * cstmt
    | CSReturn   of cexp

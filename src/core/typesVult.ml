@@ -42,6 +42,7 @@ type attr =
       fun_and : bool;
       active  : bool;
       bound   : bool;
+      const   : bool;
       ext_fn  : string option;
       typ     : VType.t option;
       exp     : attr_exp list;
@@ -237,6 +238,7 @@ let makeAttr (loc:Loc.t) : attr =
       typ     = None;
       ext_fn  = None;
       exp     = [];
+      const   = false;
    }
 
 let emptyAttr =
@@ -248,6 +250,7 @@ let emptyAttr =
       typ     = None;
       ext_fn  = None;
       exp     = [];
+      const   = false;
    }
 
 module IdMap = CCMap.Make(struct type t = id let compare = compare end)
