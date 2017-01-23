@@ -63,6 +63,17 @@ end
 
 module MakeTables = struct
 
+   let int_type = VType.Constants.int_type
+   let real_type = VType.Constants.real_type
+   let attr_int = { emptyAttr with typ = Some(int_type) }
+   let attr_real = { emptyAttr with typ = Some(real_type) }
+
+   let array_type size =
+      ref (VType.TComposed(["array"], [real_type; ref (VType.TInt(size, None))], None))
+
+   let attr_array size =
+      { emptyAttr with typ = Some(array_type size) }
+
    let getFloat x =
       match x with
       | PReal(value,_) -> value
@@ -103,13 +114,52 @@ module MakeTables = struct
          Some(getTableIndividualParams loc args)
       | _::t -> getTableParams t
 
+   let rec removeTableParams (attr:attr_exp list) =
+      match attr with
+      | [] -> []
+      | AFun(name,_,_)::t when name = ["table"] ->
+         removeTableParams t
+      | h::t -> h :: (removeTableParams t)
+
+   let getInputVar arg =
+      match arg with
+      | [SimpleId(id,_,_)]
+      | [TypedId(id,_,_,_)] -> PId(id,attr_real)
+      | _ -> failwith "invalid input variable"
+
+   let makeVarName (fname:id) (var:id) : id =
+      [String.concat "_" (fname @ var)]
+
    let makeTableDecl fname name data =
-      let t = VType.Constants.real_type in
-      let ta = ref (VType.TComposed(["array"], [t; ref (VType.TInt(List.length data, None))], None)) in
-      let attr_array = { emptyAttr with typ = Some(ta) } in
-      let varname = [String.concat "_" (fname @ name)] in
+      let varname = makeVarName fname name in
       let arr = PArray((List.map makeFloat data |> Array.of_list), emptyAttr) in
-      StmtVal(LId(varname, Some(ta), attr_array), Some(arr), { emptyAttr with const = true})
+      let size = List.length data in
+      StmtVal(LId(varname, Some(array_type size), attr_array size), Some(arr), { emptyAttr with const = true})
+
+   let makeNewBody fname size input =
+      let lindex = LId(["index"],Some(int_type), attr_int) in
+      let rindex = PId(["index"], attr_int) in
+      let getCoeff a = PCall(None,["get"], [PId(makeVarName fname [a], attr_array size); rindex], attr_real) in
+      StmtBlock(
+         None,
+         [
+            StmtMem(lindex,None,emptyAttr);
+            StmtBind(lindex,
+                     PCall(None,["find_index"],
+                           [
+                              PId(["index"],attr_int);
+                              PId(makeVarName fname ["x0"], attr_array size)
+                           ], attr_real),emptyAttr);
+            StmtReturn(
+               POp("+",
+                   [getCoeff "c0";
+                    POp("*",[input;
+                             (POp("+",
+                                  [getCoeff "c1";
+                                   POp("*",
+                                       [getCoeff "c2";input],attr_real)],attr_real))],
+                        attr_real)],attr_real),emptyAttr)
+         ], emptyAttr)
 
    let evaluateFunction env name x =
       let exp = PCall(None, name, [PReal(x, emptyAttr)], emptyAttr) in
@@ -143,14 +193,19 @@ module MakeTables = struct
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "MakeTables.stmt_x" @@ fun state stmt ->
       match stmt with
-      | StmtFun(name, args, _body, ret, attr) ->
+      | StmtFun(name, args, _, ret, attr) ->
          begin
             match getTableParams attr.exp, args with
             | None, _ -> state, [stmt]
             | Some(size, min, max), [_] when checkRealReturn ret ->
                let env = getInterpEnv state in
                let result = calculateTables env name size min max in
-               state, result @ [stmt]
+               let attr' = { attr with exp = removeTableParams attr.exp } in
+               let var = getInputVar args in
+               let body' = makeNewBody name size var in
+               let state'                = Env.enter Scope.Function state name attr in
+               let _ = Env.addMem state' ["index"] int_type attr in
+               state, result @ [StmtFun(name, args, body', ret, attr')]
             | Some _, _::_ ->
                let msg = "This annotation can only be applied to functions of one argument" in
                Error.raiseError msg attr.loc

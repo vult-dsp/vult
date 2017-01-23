@@ -339,6 +339,8 @@ let isSimpleOpType (typ:t option) : bool =
 (** Constant types *)
 module Constants = struct
 
+   let (|->) a b = ref (TArrow(a,b,None))
+
    let empty       = ref (TId([""],None))
 
    let type_type   = ref (TId(["type"],None))
@@ -351,74 +353,81 @@ module Constants = struct
    let num_type    () = ref (TExpAlt([real_type; int_type]))
 
    let real_real () =
-      ref (TArrow(real_type,real_type,None))
+      real_type |-> real_type
 
    let a_a_a () =
       let a = ref (TUnbound("'a",None,None)) in
-      ref (TArrow(a,ref (TArrow(a,a,None)),None))
+      a |-> (a |-> a)
 
    let num_num () =
       let num = num_type () in
-      ref (TArrow(num,num,None))
+      num |-> num
 
    let num_num_num () =
       let num = num_type () in
-      ref (TArrow(num,ref (TArrow(num,num,None)),None))
+      num |-> (num |-> num)
 
    let num_num_bool () =
       let num = num_type () in
-      ref (TArrow(num,ref (TArrow(num,bool_type,None)),None))
+      num |-> (num |-> bool_type)
 
    let a_a_bool () =
       let a = ref (TUnbound("'a",None,None)) in
-      ref (TArrow(a,ref (TArrow(a,bool_type,None)),None))
+      a |-> (a |-> bool_type)
 
    let int_int_int () =
-      ref (TArrow(int_type,ref (TArrow(int_type,int_type,None)),None))
+      int_type |-> (int_type |-> int_type)
 
    let num_num_num_num () =
       let num = num_type () in
-      ref (TArrow(num,ref (TArrow(num,ref (TArrow(num,num,None)),None)),None))
+      num |-> (num |-> (num |-> num))
 
    let a_a_a_a () =
       let a = ref (TUnbound("'a",None,None)) in
-      ref (TArrow(a,ref (TArrow(a,ref (TArrow(a,a,None)),None)),None))
+      a |-> (a |-> (a |-> a))
 
-   let bool_bool () = ref (TArrow(bool_type,bool_type,None))
+   let bool_bool () =
+      bool_type |-> bool_type
 
    let bool_bool_bool () =
-      ref (TArrow(bool_type,ref (TArrow(bool_type,bool_type,None)),None))
+      bool_type |-> (bool_type |-> bool_type)
 
    let num_int () =
-      ref (TArrow(num_type (),int_type,None))
+      num_type () |-> int_type
 
    let num_real () =
-      ref (TArrow(num_type (),real_type,None))
+      num_type () |-> real_type
 
    let array_size () =
       let a = ref (TUnbound("'a",None,None)) in
       let size = ref (TUnbound("'size",None,None)) in
       let array_type = ref (TComposed(["array"],[a;size],None)) in
-      ref (TArrow(array_type,int_type,None))
+      array_type |-> int_type
 
    let array_get () =
       let a = ref (TUnbound("'a",None,None)) in
       let size = ref (TUnbound("'size",None,None)) in
       let array_type = ref (TComposed(["array"],[a;size],None)) in
-      ref (TArrow(array_type,ref (TArrow(int_type,a,None)), None))
+      array_type |-> (int_type |-> a)
 
    let array_set () =
       let a = ref (TUnbound("'a",None,None)) in
       let size = ref (TUnbound("'size",None,None)) in
       let array_type = ref (TComposed(["array"],[a;size],None)) in
-      ref(TArrow(array_type,ref (TArrow(int_type,ref (TArrow(a,unit_type,None)), None)),None))
+      array_type |-> (int_type |-> (a |-> unit_type))
 
    let array_make () =
       let a = ref (TUnbound("'a",None,None)) in
       let size = ref (TUnbound("'size",None,None)) in
       let array_type = ref (TComposed(["array"],[a;size],None)) in
-      ref (TArrow(int_type,ref (TArrow(a,array_type,None)),None))
+      int_type |-> (a |-> array_type)
 
    let unit_real () =
-      ref (TArrow(unit_type,real_type,None))
+      unit_type |-> real_type
+
+   let find_index () =
+      let size = ref (TUnbound("'size",None,None)) in
+      let array_type = ref (TComposed(["array"],[real_type;size],None)) in
+      int_type |-> (array_type |-> int_type)
+
 end

@@ -122,6 +122,7 @@ module Default = struct
             ("get",  "uint8_t"), "bool_get";
             ("not",  "uint8_t"), "bool_not";
             ("eps",  "float"),   "float_eps";
+            ("find_index",  "float"),"float_find_index";
          ]
 
    let array_init = Replacements.makeArrayInitializations

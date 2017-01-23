@@ -561,6 +561,8 @@ let builtin_table =
       ["bool"] , Scope.Type, VType.Constants.type_type, true;
       ["unit"] , Scope.Type, VType.Constants.type_type, true;
 
+      ["find_index"] , Scope.Function, VType.Constants.find_index (), true;
+
       ["set"] ,      Scope.Function, VType.Constants.array_set (), false;
       ["get"] ,      Scope.Function, VType.Constants.array_get (), false;
       ["size"] ,     Scope.Function, VType.Constants.array_size (), false;
