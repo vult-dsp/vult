@@ -148,6 +148,7 @@ module MakeTables = struct
                      PCall(None,["find_index"],
                            [
                               PId(["index"],attr_int);
+                              input;
                               PId(makeVarName fname ["x0"], attr_array size)
                            ], attr_real),emptyAttr);
             StmtReturn(
@@ -171,10 +172,10 @@ module MakeTables = struct
       let rec loop index xx acc0 acc1 acc2 =
          if index < 0 then
             [
-               makeTableDecl name ["x0_"] xx;
-               makeTableDecl name ["c0_"] acc0;
-               makeTableDecl name ["c1_"] acc1;
-               makeTableDecl name ["c2_"] acc2
+               makeTableDecl name ["x0"] xx;
+               makeTableDecl name ["c0"] acc0;
+               makeTableDecl name ["c1"] acc1;
+               makeTableDecl name ["c2"] acc2
             ]
          else
             let r_index = float_of_int index in
@@ -198,13 +199,11 @@ module MakeTables = struct
             match getTableParams attr.exp, args with
             | None, _ -> state, [stmt]
             | Some(size, min, max), [_] when checkRealReturn ret ->
-               let env = getInterpEnv state in
+               let env    = getInterpEnv state in
                let result = calculateTables env name size min max in
-               let attr' = { attr with exp = removeTableParams attr.exp } in
-               let var = getInputVar args in
-               let body' = makeNewBody name size var in
-               let state'                = Env.enter Scope.Function state name attr in
-               let _ = Env.addMem state' ["index"] int_type attr in
+               let attr'  = { attr with exp = removeTableParams attr.exp } in
+               let var    = getInputVar args in
+               let body'  = makeNewBody name size var in
                state, result @ [StmtFun(name, args, body', ret, attr')]
             | Some _, _::_ ->
                let msg = "This annotation can only be applied to functions of one argument" in

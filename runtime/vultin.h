@@ -191,7 +191,7 @@ static_inline uint8_t bool_not(uint8_t x)
    return !x;
 }
 
-int float_find_index(int index, float x[], int size);
+int float_find_index(int index, float x, float xc[], int size);
 
 #ifdef __cplusplus
 }

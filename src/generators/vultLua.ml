@@ -81,6 +81,15 @@ function this.get(a,i)          return a[i]; end
 function this.int_to_float(i)   return i; end
 function this.float_to_int(i)   return math.floor(i); end
 function this.makeArray(size,v) local a = ffi.new("double[?]",size); for i=0,size-1 do a[i]=v end return a; end
+function this.find_index(index,x,xc,size) {
+       while (1) {
+         if (index < 0) return 0;
+         else if (index >= size) return size - 1;
+         else if (x < xc[index]) index = index - 1;
+         else if (x >= xc[index + 1]) index = index + 1;
+         else return index;
+         }
+      }
 <#code#>
 function this.process(<#process_inputs#>) return this.<#module_name#s>_process(<#process_inputs#>) end
 function this.noteOn(<#noteon_inputs#>) return this.<#module_name#s>_noteOn(<#noteon_inputs#>) end

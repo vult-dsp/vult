@@ -238,7 +238,19 @@ void fix_copy_array(int size, fix16_t *dest, fix16_t *src)
       dest[i] = src[i];
 }
 
-int float_find_index(int index, float x[], int size)
+int float_find_index(int index, float x, float xc[], int size)
 {
-   return 0;
+   while (1)
+   {
+      if (index < 0)
+         return 0;
+      else if (index >= size)
+         return size - 1;
+      else if (x < xc[index])
+         index = index - 1;
+      else if (x >= xc[index + 1])
+         index = index + 1;
+      else
+         return index;
+   }
 }
