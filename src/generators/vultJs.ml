@@ -63,6 +63,7 @@ function vultProcess(){
     this.int_to_float = function(i){ return i; };
     this.float_to_int = function(i){ return Math.floor(i); };
     this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
+    this.wrap_array = function(a) { return a; }
     this.find_index = function(index,x,xc,size) {
        while (1) {
          if (index < 0) return 0;

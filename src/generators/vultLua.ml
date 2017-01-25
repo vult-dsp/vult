@@ -81,6 +81,7 @@ function this.get(a,i)          return a[i]; end
 function this.int_to_float(i)   return i; end
 function this.float_to_int(i)   return math.floor(i); end
 function this.makeArray(size,v) local a = ffi.new("double[?]",size); for i=0,size-1 do a[i]=v end return a; end
+function this.wrap_array(a)     return a; end
 function this.find_index(index,x,xc,size) {
        while (1) {
          if (index < 0) return 0;
