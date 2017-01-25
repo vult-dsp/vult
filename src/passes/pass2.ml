@@ -139,7 +139,9 @@ module MakeTables = struct
    let makeNewBody fname size input =
       let lindex = LId(["index"],Some(int_type), attr_int) in
       let rindex = PId(["index"], attr_int) in
-      let getCoeff a = PCall(None,["get"], [PId(makeVarName fname [a], attr_array size); rindex], attr_real) in
+      let getCoeff a =
+         PCall(None,["get"], [PCall(None,["wrap_array"], [PId(makeVarName fname [a], attr_array size)], attr_real); rindex], attr_real)
+      in
       StmtBlock(
          None,
          [
@@ -149,7 +151,8 @@ module MakeTables = struct
                            [
                               PId(["index"],attr_int);
                               input;
-                              PId(makeVarName fname ["x0"], attr_array size)
+                              PId(makeVarName fname ["x0"], attr_array size);
+                              PInt(size,attr_int);
                            ], attr_real),emptyAttr);
             StmtReturn(
                POp("+",

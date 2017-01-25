@@ -22,23 +22,23 @@ uint8_t Moog_filter_change(Moog_filter__ctx_type_0 &_ctx, float x){
 }
 
 float Moog_filter_min(float a, float b){
-   float _if_1;
-   uint8_t _cond_2;
-   _cond_2 = (a < b);
-   if(_cond_2){ _if_1 = a; }
+   float _if_11;
+   uint8_t _cond_14;
+   _cond_14 = (a < b);
+   if(_cond_14){ _if_11 = a; }
    else
-   { _if_1 = b; }
-   return _if_1;
+   { _if_11 = b; }
+   return _if_11;
 }
 
 float Moog_filter_max(float a, float b){
-   float _if_1;
-   uint8_t _cond_2;
-   _cond_2 = (a > b);
-   if(_cond_2){ _if_1 = a; }
+   float _if_12;
+   uint8_t _cond_15;
+   _cond_15 = (a > b);
+   if(_cond_15){ _if_12 = a; }
    else
-   { _if_1 = b; }
-   return _if_1;
+   { _if_12 = b; }
+   return _if_12;
 }
 
 float Moog_filter_clip(float value, float low, float high){
@@ -98,8 +98,8 @@ void Moog_filter__ctx_type_7_init(Moog_filter__ctx_type_7 &_output_){
    _ctx.resFixed = 0.f;
    Moog_filter__ctx_type_6_init(_ctx.filter);
    _ctx.dx1 = 0.f;
-   Moog_filter__ctx_type_0_init(_ctx._inst2);
-   Moog_filter__ctx_type_0_init(_ctx._inst1);
+   Moog_filter__ctx_type_0_init(_ctx._inst9);
+   Moog_filter__ctx_type_0_init(_ctx._inst8);
    _output_ = _ctx;
    return ;
 }
@@ -110,9 +110,9 @@ void Moog_filter_moog_init(Moog_filter__ctx_type_7 &_output_){
 }
 
 float Moog_filter_moog(Moog_filter__ctx_type_7 &_ctx, float input, float cut, float res){
-   uint8_t _cond_4;
-   _cond_4 = (Moog_filter_change(_ctx._inst1,cut) || Moog_filter_change(_ctx._inst2,res));
-   if(_cond_4){
+   uint8_t _cond_13;
+   _cond_13 = (Moog_filter_change(_ctx._inst8,cut) || Moog_filter_change(_ctx._inst9,res));
+   if(_cond_13){
       res = Moog_filter_clip(res,0.f,1.f);
       cut = Moog_filter_clip(cut,1.f,22050.f);
       float fc;

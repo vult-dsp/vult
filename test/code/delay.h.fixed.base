@@ -59,7 +59,7 @@ fix16_t Delay_pitchToRate(fix16_t d);
 typedef struct Delay__ctx_type_5 {
    fix16_t rate;
    fix16_t phase;
-   Delay__ctx_type_1 _inst1;
+   Delay__ctx_type_1 _inst6;
 } Delay__ctx_type_5;
 
 typedef Delay__ctx_type_5 Delay_phasor_type;
@@ -72,7 +72,7 @@ fix16_t Delay_phasor(Delay__ctx_type_5 &_ctx, fix16_t pitch, uint8_t reset);
 
 typedef struct Delay__ctx_type_6 {
    fix16_t phase;
-   Delay__ctx_type_2 _inst1;
+   Delay__ctx_type_2 _inst9;
 } Delay__ctx_type_6;
 
 typedef Delay__ctx_type_6 Delay_lfo_type;
@@ -85,9 +85,9 @@ fix16_t Delay_lfo(Delay__ctx_type_6 &_ctx, fix16_t f, uint8_t gate);
 
 typedef struct Delay__ctx_type_7 {
    fix16_t pre_phase1;
-   Delay__ctx_type_5 _inst3;
-   Delay__ctx_type_0 _inst2;
-   Delay__ctx_type_5 _inst1;
+   Delay__ctx_type_5 _inst15;
+   Delay__ctx_type_0 _inst14;
+   Delay__ctx_type_5 _inst13;
 } Delay__ctx_type_7;
 
 typedef Delay__ctx_type_7 Delay_phd_osc_type;
@@ -146,12 +146,12 @@ typedef struct Delay__ctx_type_10 {
    fix16_t lfo_amt;
    fix16_t feedback;
    fix16_t detune;
-   Delay__ctx_type_8 _inst6;
-   Delay__ctx_type_0 _inst5;
-   Delay__ctx_type_0 _inst4;
-   Delay__ctx_type_0 _inst3;
-   Delay__ctx_type_7 _inst2;
-   Delay__ctx_type_6 _inst1;
+   Delay__ctx_type_8 _inst34;
+   Delay__ctx_type_0 _inst33;
+   Delay__ctx_type_0 _inst32;
+   Delay__ctx_type_0 _inst31;
+   Delay__ctx_type_7 _inst30;
+   Delay__ctx_type_6 _inst29;
 } Delay__ctx_type_10;
 
 typedef Delay__ctx_type_10 Delay_process_type;

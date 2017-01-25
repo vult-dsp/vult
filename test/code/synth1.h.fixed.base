@@ -59,7 +59,7 @@ fix16_t Synth1_pitchToRate(fix16_t d);
 typedef struct Synth1__ctx_type_5 {
    fix16_t rate;
    fix16_t phase;
-   Synth1__ctx_type_1 _inst1;
+   Synth1__ctx_type_1 _inst6;
 } Synth1__ctx_type_5;
 
 typedef Synth1__ctx_type_5 Synth1_phasor_type;
@@ -72,7 +72,7 @@ fix16_t Synth1_phasor(Synth1__ctx_type_5 &_ctx, fix16_t pitch, uint8_t reset);
 
 typedef struct Synth1__ctx_type_6 {
    fix16_t phase;
-   Synth1__ctx_type_2 _inst1;
+   Synth1__ctx_type_2 _inst9;
 } Synth1__ctx_type_6;
 
 typedef Synth1__ctx_type_6 Synth1_lfo_type;
@@ -96,12 +96,12 @@ typedef struct Synth1__ctx_type_7 {
    int gate;
    fix16_t detune;
    int count;
-   Synth1__ctx_type_0 _inst6;
-   Synth1__ctx_type_0 _inst5;
-   Synth1__ctx_type_5 _inst4;
-   Synth1__ctx_type_0 _inst3;
-   Synth1__ctx_type_5 _inst2;
-   Synth1__ctx_type_6 _inst1;
+   Synth1__ctx_type_0 _inst18;
+   Synth1__ctx_type_0 _inst17;
+   Synth1__ctx_type_5 _inst16;
+   Synth1__ctx_type_0 _inst15;
+   Synth1__ctx_type_5 _inst14;
+   Synth1__ctx_type_6 _inst13;
 } Synth1__ctx_type_7;
 
 typedef Synth1__ctx_type_7 Synth1_process_type;

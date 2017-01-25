@@ -11,12 +11,12 @@ this.Volume_smooth = function(_ctx,input){
 this.Volume__ctx_type_1_init = function(){
    var _ctx = {};
    _ctx.volume = 0.;
-   _ctx._inst1 = this.Volume__ctx_type_0_init();
+   _ctx._inst2 = this.Volume__ctx_type_0_init();
    return _ctx;
 }
 this.Volume_process_init = function() { return this.Volume__ctx_type_1_init();}
 this.Volume_process = function(_ctx,input){
-   return (input * this.Volume_smooth(_ctx._inst1,_ctx.volume));
+   return (input * this.Volume_smooth(_ctx._inst2,_ctx.volume));
 }
 this.Volume_noteOn_init = function() { return this.Volume__ctx_type_1_init();}
 this.Volume_noteOn = function(_ctx,note,velocity,channel){
@@ -26,9 +26,9 @@ this.Volume_noteOff = function(_ctx,note,channel){
 }
 this.Volume_controlChange_init = function() { return this.Volume__ctx_type_1_init();}
 this.Volume_controlChange = function(_ctx,control,value,channel){
-   var _cond_2 = false;
-   _cond_2 = (control == (30|0));
-   if(_cond_2){
+   var _cond_8 = false;
+   _cond_8 = (control == (30|0));
+   if(_cond_8){
       _ctx.volume = (this.real(value) * 0.00787401574803);
    }
 }

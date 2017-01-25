@@ -154,9 +154,9 @@ float Synth2_pulse_train(float m, float phase){
    denominator1 = sinf(pi_phase);
    float tmp1;
    tmp1 = 0.f;
-   uint8_t _cond_3;
-   _cond_3 = Synth2_near_zero(denominator1);
-   if(_cond_3){
+   uint8_t _cond_63;
+   _cond_63 = Synth2_near_zero(denominator1);
+   if(_cond_63){
       tmp1 = 1.f;
    }
    else
@@ -176,8 +176,8 @@ void Synth2__ctx_type_11_init(Synth2__ctx_type_11 &_output_){
    _ctx.phase = 0.f;
    _ctx.output = 0.f;
    _ctx.m = 0.f;
-   Synth2__ctx_type_1_init(_ctx._inst3);
-   Synth2__ctx_type_6_init(_ctx._inst11);
+   Synth2__ctx_type_6_init(_ctx._inst24);
+   Synth2__ctx_type_1_init(_ctx._inst16);
    _output_ = _ctx;
    return ;
 }
@@ -190,18 +190,18 @@ void Synth2_osc_init(Synth2__ctx_type_11 &_output_){
 float Synth2_osc(Synth2__ctx_type_11 &_ctx, float pitch, float pw, float wave){
    float fixed_pitch;
    fixed_pitch = 0.f;
-   uint8_t _cond_12;
-   _cond_12 = (wave < 0.666666666667f);
-   if(_cond_12){
+   uint8_t _cond_64;
+   _cond_64 = (wave < 0.666666666667f);
+   if(_cond_64){
       fixed_pitch = pitch;
    }
    else
    {
       fixed_pitch = (pitch + 12.f);
    }
-   uint8_t _cond_13;
-   _cond_13 = Synth2_change(_ctx._inst3,fixed_pitch);
-   if(_cond_13){
+   uint8_t _cond_65;
+   _cond_65 = Synth2_change(_ctx._inst16,fixed_pitch);
+   if(_cond_65){
       _ctx.rate = Synth2_pitchToRate(fixed_pitch);
       float p;
       p = (1.f / _ctx.rate);
@@ -213,9 +213,9 @@ float Synth2_osc(Synth2__ctx_type_11 &_ctx, float pitch, float pw, float wave){
    shift05 = (0.5f + (pw * 0.49f));
    float shift;
    shift = (_ctx.phase + shift05);
-   uint8_t _cond_14;
-   _cond_14 = (shift > 1.f);
-   if(_cond_14){
+   uint8_t _cond_66;
+   _cond_66 = (shift > 1.f);
+   if(_cond_66){
       shift = (shift + (-1.f));
    }
    float tmp1;
@@ -223,24 +223,24 @@ float Synth2_osc(Synth2__ctx_type_11 &_ctx, float pitch, float pw, float wave){
    float tmp2;
    tmp2 = Synth2_pulse_train(_ctx.m,shift);
    _ctx.phase = (_ctx.phase + _ctx.rate);
-   uint8_t _cond_15;
-   _cond_15 = (_ctx.phase > 1.f);
-   if(_cond_15){
+   uint8_t _cond_67;
+   _cond_67 = (_ctx.phase > 1.f);
+   if(_cond_67){
       _ctx.phase = (_ctx.phase + (-1.f));
    }
    _ctx.state_pulse = float_clip(((_ctx.state_pulse * 0.9995f) + tmp1 + (- tmp2)),(-1.f),1.f);
    _ctx.state_saw = float_clip(((_ctx.state_saw * 0.9995f) + (((tmp1 + tmp2 + ((-2.f) * _ctx.rate)) / shift05) * 0.5f)),(-1.f),1.f);
    _ctx.state_triang = float_clip(((_ctx.state_triang * 0.9995f) + (2.f * _ctx.state_pulse * _ctx.rate)),(-1.f),1.f);
-   uint8_t _cond_17;
-   _cond_17 = (wave < 0.333333333333f);
-   if(_cond_17){
+   uint8_t _cond_69;
+   _cond_69 = (wave < 0.333333333333f);
+   if(_cond_69){
       _ctx.output = _ctx.state_pulse;
    }
    else
    {
-      uint8_t _cond_16;
-      _cond_16 = (wave < 0.666666666667f);
-      if(_cond_16){
+      uint8_t _cond_68;
+      _cond_68 = (wave < 0.666666666667f);
+      if(_cond_68){
          _ctx.output = (2.f * _ctx.state_saw);
       }
       else
@@ -248,7 +248,7 @@ float Synth2_osc(Synth2__ctx_type_11 &_ctx, float pitch, float pw, float wave){
          _ctx.output = (2.f * _ctx.state_triang * (1.f + pw));
       }
    }
-   _ctx.output = Synth2_dcblock(_ctx._inst11,_ctx.output);
+   _ctx.output = Synth2_dcblock(_ctx._inst24,_ctx.output);
    return float_clip((_ctx.output * 0.25f),(-1.f),1.f);
 }
 
@@ -277,19 +277,19 @@ float Synth2_svf_step(Synth2__ctx_type_12 &_ctx, float input, float g, float q, 
    _ctx.dband = float_clip(band,(-1.f),1.f);
    _ctx.dlow = float_clip(low,(-1.f),1.f);
    float output;
-   uint8_t _cond_1;
-   _cond_1 = (sel == 0);
-   if(_cond_1){ output = low; }
+   uint8_t _cond_70;
+   _cond_70 = (sel == 0);
+   if(_cond_70){ output = low; }
    else
    {
-      uint8_t _cond_2;
-      _cond_2 = (sel == 1);
-      if(_cond_2){ output = high; }
+      uint8_t _cond_88;
+      _cond_88 = (sel == 1);
+      if(_cond_88){ output = high; }
       else
       {
-         uint8_t _cond_3;
-         _cond_3 = (sel == 2);
-         if(_cond_3){ output = band; }
+         uint8_t _cond_89;
+         _cond_89 = (sel == 2);
+         if(_cond_89){ output = band; }
          else
          { output = notch; }
       }
@@ -301,7 +301,7 @@ void Synth2__ctx_type_13_init(Synth2__ctx_type_13 &_output_){
    Synth2__ctx_type_13 _ctx;
    Synth2__ctx_type_12_init(_ctx.step);
    _ctx.g = 0.f;
-   Synth2__ctx_type_1_init(_ctx._inst1);
+   Synth2__ctx_type_1_init(_ctx._inst27);
    _output_ = _ctx;
    return ;
 }
@@ -316,9 +316,9 @@ float Synth2_svf(Synth2__ctx_type_13 &_ctx, float input, float fc, float q, int 
    q = float_clip(q,0.f,1.f);
    float fix_q;
    fix_q = (2.f * (1.f + (- q)));
-   uint8_t _cond_3;
-   _cond_3 = Synth2_change(_ctx._inst1,fc);
-   if(_cond_3){
+   uint8_t _cond_71;
+   _cond_71 = Synth2_change(_ctx._inst27,fc);
+   if(_cond_71){
       _ctx.g = (fc * 0.5f);
    }
    float x1;
@@ -331,8 +331,8 @@ float Synth2_svf(Synth2__ctx_type_13 &_ctx, float input, float fc, float q, int 
 void Synth2__ctx_type_14_init(Synth2__ctx_type_14 &_output_){
    Synth2__ctx_type_14 _ctx;
    _ctx.phase = 0.f;
-   Synth2__ctx_type_4_init(_ctx._inst3);
-   Synth2__ctx_type_3_init(_ctx._inst1);
+   Synth2__ctx_type_4_init(_ctx._inst32);
+   Synth2__ctx_type_3_init(_ctx._inst30);
    _output_ = _ctx;
    return ;
 }
@@ -345,19 +345,19 @@ void Synth2_lfo_init(Synth2__ctx_type_14 &_output_){
 float Synth2_lfo(Synth2__ctx_type_14 &_ctx, float f, uint8_t gate){
    float rate;
    rate = ((0.00152588f * f) + 1.52588e-05f);
-   uint8_t _cond_6;
-   _cond_6 = Synth2_edge(_ctx._inst1,gate);
-   if(_cond_6){
+   uint8_t _cond_72;
+   _cond_72 = Synth2_edge(_ctx._inst30,gate);
+   if(_cond_72){
       _ctx.phase = 0.f;
    }
-   uint8_t _cond_7;
-   _cond_7 = Synth2_each(_ctx._inst3,4);
-   if(_cond_7){
+   uint8_t _cond_73;
+   _cond_73 = Synth2_each(_ctx._inst32,4);
+   if(_cond_73){
       _ctx.phase = (_ctx.phase + rate);
    }
-   uint8_t _cond_8;
-   _cond_8 = (_ctx.phase > 1.f);
-   if(_cond_8){
+   uint8_t _cond_74;
+   _cond_74 = (_ctx.phase > 1.f);
+   if(_cond_74){
       _ctx.phase = (_ctx.phase + (-1.f));
    }
    return (sinf((6.28318530718f * _ctx.phase)) + 0.5f);
@@ -378,14 +378,14 @@ void Synth2_mono_noteOn_init(Synth2__ctx_type_15 &_output_){
 }
 
 int Synth2_mono_noteOn(Synth2__ctx_type_15 &_ctx, int n){
-   uint8_t _cond_4;
-   _cond_4 = (_ctx.count < 4);
-   if(_cond_4){
+   uint8_t _cond_76;
+   _cond_76 = (_ctx.count < 4);
+   if(_cond_76){
       int_set(_ctx.notes,_ctx.count,n);
       _ctx.pre = n;
-      uint8_t _cond_3;
-      _cond_3 = (_ctx.count < 4);
-      if(_cond_3){
+      uint8_t _cond_75;
+      _cond_75 = (_ctx.count < 4);
+      if(_cond_75){
          _ctx.count = (_ctx.count + 1);
       }
    }
@@ -403,15 +403,15 @@ int Synth2_mono_noteOff(Synth2__ctx_type_15 &_ctx, int n){
    int pos;
    int i;
    i = 0;
-   uint8_t _cond_7;
-   _cond_7 = (_ctx.count == 0);
-   if(_cond_7){
+   uint8_t _cond_77;
+   _cond_77 = (_ctx.count == 0);
+   if(_cond_77){
       return _ctx.pre;
    }
    while((i < 4) && bool_not(found)){
-      uint8_t _cond_8;
-      _cond_8 = (int_get(_ctx.notes,i) == n);
-      if(_cond_8){
+      uint8_t _cond_78;
+      _cond_78 = (int_get(_ctx.notes,i) == n);
+      if(_cond_78){
          pos = i;
          found = 1;
       }
@@ -424,9 +424,9 @@ int Synth2_mono_noteOff(Synth2__ctx_type_15 &_ctx, int n){
          int_set(_ctx.notes,(k + (-1)),int_get(_ctx.notes,k));
          k = (k + 1);
       }
-      uint8_t _cond_9;
-      _cond_9 = (found && (_ctx.count > 0));
-      if(_cond_9){
+      uint8_t _cond_79;
+      _cond_79 = (found && (_ctx.count > 0));
+      if(_cond_79){
          _ctx.count = (_ctx.count + (-1));
          _ctx.pre = int_get(_ctx.notes,(_ctx.count + (-1)));
       }
@@ -455,10 +455,10 @@ void Synth2__ctx_type_16_init(Synth2__ctx_type_16 &_output_){
    _ctx.lfo_amt = 0.f;
    _ctx.cut = 0.f;
    _ctx.amp_s = 0.f;
-   Synth2__ctx_type_13_init(_ctx._inst4);
-   Synth2__ctx_type_7_init(_ctx._inst3);
-   Synth2__ctx_type_11_init(_ctx._inst2);
-   Synth2__ctx_type_14_init(_ctx._inst1);
+   Synth2__ctx_type_13_init(_ctx._inst50);
+   Synth2__ctx_type_7_init(_ctx._inst49);
+   Synth2__ctx_type_11_init(_ctx._inst48);
+   Synth2__ctx_type_14_init(_ctx._inst47);
    Synth2_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -473,17 +473,17 @@ float Synth2_process(Synth2__ctx_type_16 &_ctx, float i){
    uint8_t gate;
    gate = Synth2_mono_isGateOn(_ctx.monoin);
    float lfo1;
-   lfo1 = (Synth2_lfo(_ctx._inst1,_ctx.lfo_rate,gate) * _ctx.lfo_amt);
+   lfo1 = (Synth2_lfo(_ctx._inst47,_ctx.lfo_rate,gate) * _ctx.lfo_amt);
    float o1;
-   o1 = Synth2_osc(_ctx._inst2,_ctx.pitch,(_ctx.pw + lfo1),_ctx.wave);
+   o1 = Synth2_osc(_ctx._inst48,_ctx.pitch,(_ctx.pw + lfo1),_ctx.wave);
    float amp_env;
-   float _if_5;
-   if(gate){ _if_5 = 1.f; }
+   float _if_80;
+   if(gate){ _if_80 = 1.f; }
    else
-   { _if_5 = 0.f; }
-   amp_env = Synth2_smooth(_ctx._inst3,_if_5);
+   { _if_80 = 0.f; }
+   amp_env = Synth2_smooth(_ctx._inst49,_if_80);
    float output;
-   output = (amp_env * Synth2_svf(_ctx._inst4,o1,_ctx.cut,_ctx.res,0));
+   output = (amp_env * Synth2_svf(_ctx._inst50,o1,_ctx.cut,_ctx.res,0));
    return (_ctx.volume * output);
 }
 
@@ -515,39 +515,39 @@ void Synth2_controlChange(Synth2__ctx_type_16 &_ctx, int control, int value, int
    value_0_1 = (int_to_float(value) * 0.00787401574803f);
    float value_m1_1;
    value_m1_1 = ((value_0_1 * 2.f) + (-1.f));
-   uint8_t _cond_8;
-   _cond_8 = (control == 30);
-   if(_cond_8){
+   uint8_t _cond_81;
+   _cond_81 = (control == 30);
+   if(_cond_81){
       _ctx.volume = value_0_1;
    }
-   uint8_t _cond_9;
-   _cond_9 = (control == 31);
-   if(_cond_9){
+   uint8_t _cond_82;
+   _cond_82 = (control == 31);
+   if(_cond_82){
       _ctx.wave = value_0_1;
    }
-   uint8_t _cond_10;
-   _cond_10 = (control == 32);
-   if(_cond_10){
+   uint8_t _cond_83;
+   _cond_83 = (control == 32);
+   if(_cond_83){
       _ctx.pw = value_0_1;
    }
-   uint8_t _cond_11;
-   _cond_11 = (control == 33);
-   if(_cond_11){
+   uint8_t _cond_84;
+   _cond_84 = (control == 33);
+   if(_cond_84){
       _ctx.lfo_rate = value_0_1;
    }
-   uint8_t _cond_12;
-   _cond_12 = (control == 34);
-   if(_cond_12){
+   uint8_t _cond_85;
+   _cond_85 = (control == 34);
+   if(_cond_85){
       _ctx.lfo_amt = value_m1_1;
    }
-   uint8_t _cond_13;
-   _cond_13 = (control == 35);
-   if(_cond_13){
+   uint8_t _cond_86;
+   _cond_86 = (control == 35);
+   if(_cond_86){
       _ctx.cut = value_0_1;
    }
-   uint8_t _cond_14;
-   _cond_14 = (control == 36);
-   if(_cond_14){
+   uint8_t _cond_87;
+   _cond_87 = (control == 36);
+   if(_cond_87){
       _ctx.res = value_0_1;
    }
 }

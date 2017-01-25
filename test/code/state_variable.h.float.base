@@ -34,7 +34,7 @@ float State_variable_svf_step(State_variable__ctx_type_1 &_ctx, float input, flo
 typedef struct State_variable__ctx_type_2 {
    State_variable__ctx_type_1 step;
    float g;
-   State_variable__ctx_type_0 _inst1;
+   State_variable__ctx_type_0 _inst3;
 } State_variable__ctx_type_2;
 
 typedef State_variable__ctx_type_2 State_variable_svf_type;

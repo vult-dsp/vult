@@ -150,7 +150,7 @@ module Scope = struct
       | Operator -> "operator"
       | Type     -> "type"
 
-   let create (kind:kind) : t =
+   let create (kind:kind) tick : t =
       {
          name      = [];
          kind      = kind;
@@ -167,7 +167,7 @@ module Scope = struct
          active    = ref false;
          ext_fn    = ref None;
          loc       = ref Loc.default;
-         tick      = ref 0;
+         tick      = tick;
          in_if     = ref false;
 
       }
@@ -226,7 +226,7 @@ module Scope = struct
       match IdMap.find name (getTable t kind) with
       | found -> found
       | exception Not_found ->
-         { (create kind) with name = name } |> setOptLoc loc |> setOptType typ
+         { (create kind t.tick) with name = name } |> setOptLoc loc |> setOptType typ
 
    let enterBlock (t:t) : t =
       t.locals := IdMap.empty :: !(t.locals);
@@ -443,7 +443,7 @@ module Scope = struct
    let addFunction (t:t) (name:id) (attr:attr) : t =
       let add_it () =
          let new_symbol =
-            let sub = { (create Function) with name = name} in
+            let sub = { (create Function t.tick) with name = name} in
             sub.loc := attr.loc;
             sub.ext_fn := attr.ext_fn;
             sub
@@ -562,6 +562,7 @@ let builtin_table =
       ["unit"] , Scope.Type, VType.Constants.type_type, true;
 
       ["find_index"] , Scope.Function, VType.Constants.find_index (), true;
+      ["wrap_array"] , Scope.Function, VType.Constants.wrap_array (), true;
 
       ["set"] ,      Scope.Function, VType.Constants.array_set (), false;
       ["get"] ,      Scope.Function, VType.Constants.array_get (), false;
@@ -739,7 +740,7 @@ module Env = struct
    let empty data : 'a t =
       {
          data    = data;
-         scope   = Scope.create Scope.Module;
+         scope   = Scope.create Scope.Module (ref 0);
       }
       |> initialize
 

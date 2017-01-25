@@ -51,8 +51,8 @@ typedef struct Moog_filter__ctx_type_7 {
    float resFixed;
    Moog_filter__ctx_type_6 filter;
    float dx1;
-   Moog_filter__ctx_type_0 _inst2;
-   Moog_filter__ctx_type_0 _inst1;
+   Moog_filter__ctx_type_0 _inst9;
+   Moog_filter__ctx_type_0 _inst8;
 } Moog_filter__ctx_type_7;
 
 typedef Moog_filter__ctx_type_7 Moog_filter_moog_type;

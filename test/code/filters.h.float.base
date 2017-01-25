@@ -42,8 +42,8 @@ float Filters_biquad(Filters__ctx_type_5 &_ctx, float x, float b0, float b1, flo
 typedef struct Filters__ctx_type_6 {
    float k;
    float fc;
-   Filters__ctx_type_5 _inst3;
-   Filters__ctx_type_4 _inst1;
+   Filters__ctx_type_5 _inst9;
+   Filters__ctx_type_4 _inst7;
 } Filters__ctx_type_6;
 
 typedef Filters__ctx_type_6 Filters_lp6_type;
@@ -60,9 +60,9 @@ typedef struct Filters__ctx_type_7 {
    float b0;
    float a2;
    float a1;
-   Filters__ctx_type_5 _inst4;
-   Filters__ctx_type_4 _inst2;
-   Filters__ctx_type_4 _inst1;
+   Filters__ctx_type_5 _inst14;
+   Filters__ctx_type_4 _inst12;
+   Filters__ctx_type_4 _inst11;
 } Filters__ctx_type_7;
 
 typedef Filters__ctx_type_7 Filters_lp12_type;
@@ -74,7 +74,7 @@ void Filters_lp12_init(Filters__ctx_type_7 &_output_);
 float Filters_lp12(Filters__ctx_type_7 &_ctx, float x, float fc, float q);
 
 typedef struct Filters__ctx_type_8 {
-   Filters__ctx_type_5 _inst1;
+   Filters__ctx_type_5 _inst16;
 } Filters__ctx_type_8;
 
 typedef Filters__ctx_type_8 Filters_hp6_type;
@@ -86,7 +86,7 @@ void Filters_hp6_init(Filters__ctx_type_8 &_output_);
 float Filters_hp6(Filters__ctx_type_8 &_ctx, float x, float fc);
 
 typedef struct Filters__ctx_type_9 {
-   Filters__ctx_type_5 _inst1;
+   Filters__ctx_type_5 _inst18;
 } Filters__ctx_type_9;
 
 typedef Filters__ctx_type_9 Filters_allp6_type;
@@ -103,9 +103,9 @@ typedef struct Filters__ctx_type_10 {
    float b0;
    float a2;
    float a1;
-   Filters__ctx_type_5 _inst4;
-   Filters__ctx_type_4 _inst2;
-   Filters__ctx_type_4 _inst1;
+   Filters__ctx_type_5 _inst23;
+   Filters__ctx_type_4 _inst21;
+   Filters__ctx_type_4 _inst20;
 } Filters__ctx_type_10;
 
 typedef Filters__ctx_type_10 Filters_hp12_type;
@@ -122,9 +122,9 @@ typedef struct Filters__ctx_type_11 {
    float b0;
    float a2;
    float a1;
-   Filters__ctx_type_5 _inst4;
-   Filters__ctx_type_4 _inst2;
-   Filters__ctx_type_4 _inst1;
+   Filters__ctx_type_5 _inst28;
+   Filters__ctx_type_4 _inst26;
+   Filters__ctx_type_4 _inst25;
 } Filters__ctx_type_11;
 
 typedef Filters__ctx_type_11 Filters_bp12_type;
@@ -141,9 +141,9 @@ typedef struct Filters__ctx_type_12 {
    float b0;
    float a2;
    float a1;
-   Filters__ctx_type_5 _inst4;
-   Filters__ctx_type_4 _inst2;
-   Filters__ctx_type_4 _inst1;
+   Filters__ctx_type_5 _inst33;
+   Filters__ctx_type_4 _inst31;
+   Filters__ctx_type_4 _inst30;
 } Filters__ctx_type_12;
 
 typedef Filters__ctx_type_12 Filters_notch12_type;
@@ -160,9 +160,9 @@ typedef struct Filters__ctx_type_13 {
    float b0;
    float a2;
    float a1;
-   Filters__ctx_type_5 _inst4;
-   Filters__ctx_type_4 _inst2;
-   Filters__ctx_type_4 _inst1;
+   Filters__ctx_type_5 _inst38;
+   Filters__ctx_type_4 _inst36;
+   Filters__ctx_type_4 _inst35;
 } Filters__ctx_type_13;
 
 typedef Filters__ctx_type_13 Filters_allp12_type;

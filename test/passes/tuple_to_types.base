@@ -13,16 +13,16 @@
 
    fun foo() : tuple(int,int,int) /* scope_0 */
    {
-      val (_tuple_1:tuple(int,int,int));
-      (_tuple_1:tuple(int,int,int)) = (1,2,3);
-      return _tuple_1;
+      val (_tuple_2:tuple(int,int,int));
+      (_tuple_2:tuple(int,int,int)) = (1,2,3);
+      return _tuple_2;
    }
 
-   fun bar() : tuple(real,int,bool) /* scope_0 */
+   fun bar() : tuple(real,int,bool) /* scope_1 */
    {
-      val (_tuple_1:tuple(real,int,bool));
-      (_tuple_1:tuple(real,int,bool)) = (1.,2,false);
-      return _tuple_1;
+      val (_tuple_4:tuple(real,int,bool));
+      (_tuple_4:tuple(real,int,bool)) = (1.,2,false);
+      return _tuple_4;
    }
 
 }

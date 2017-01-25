@@ -95,8 +95,8 @@ typedef struct Voice__ctx_type_10 {
    fix16_t phase;
    fix16_t output;
    fix16_t m;
-   Voice__ctx_type_1 _inst3;
-   Voice__ctx_type_6 _inst11;
+   Voice__ctx_type_6 _inst23;
+   Voice__ctx_type_1 _inst15;
 } Voice__ctx_type_10;
 
 typedef Voice__ctx_type_10 Voice_osc_type;
@@ -123,7 +123,7 @@ fix16_t Voice_svf_step(Voice__ctx_type_11 &_ctx, fix16_t input, fix16_t g, fix16
 typedef struct Voice__ctx_type_12 {
    Voice__ctx_type_11 step;
    fix16_t g;
-   Voice__ctx_type_1 _inst1;
+   Voice__ctx_type_1 _inst26;
 } Voice__ctx_type_12;
 
 typedef Voice__ctx_type_12 Voice_svf_type;
@@ -151,8 +151,8 @@ fix16_t Voice_adsr(Voice__ctx_type_13 &_ctx, uint8_t gate, fix16_t a, fix16_t d,
 
 typedef struct Voice__ctx_type_14 {
    fix16_t phase;
-   Voice__ctx_type_4 _inst3;
-   Voice__ctx_type_3 _inst1;
+   Voice__ctx_type_4 _inst39;
+   Voice__ctx_type_3 _inst37;
 } Voice__ctx_type_14;
 
 typedef Voice__ctx_type_14 Voice_lfo_type;
@@ -211,11 +211,11 @@ typedef struct Voice__ctx_type_16 {
    fix16_t amp_r;
    fix16_t amp_d;
    fix16_t amp_a;
-   Voice__ctx_type_12 _inst5;
-   Voice__ctx_type_13 _inst4;
-   Voice__ctx_type_13 _inst3;
-   Voice__ctx_type_10 _inst2;
-   Voice__ctx_type_14 _inst1;
+   Voice__ctx_type_12 _inst70;
+   Voice__ctx_type_13 _inst69;
+   Voice__ctx_type_13 _inst68;
+   Voice__ctx_type_10 _inst67;
+   Voice__ctx_type_14 _inst66;
 } Voice__ctx_type_16;
 
 typedef Voice__ctx_type_16 Voice_process_type;

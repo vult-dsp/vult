@@ -45,8 +45,8 @@ typedef struct Blit__ctx_type_5 {
    fix16_t phase;
    fix16_t output;
    fix16_t m;
-   Blit__ctx_type_1 _inst3;
-   Blit__ctx_type_2 _inst11;
+   Blit__ctx_type_2 _inst18;
+   Blit__ctx_type_1 _inst10;
 } Blit__ctx_type_5;
 
 typedef Blit__ctx_type_5 Blit_osc_type;
@@ -61,7 +61,7 @@ typedef struct Blit__ctx_type_6 {
    fix16_t wave;
    fix16_t pw;
    fix16_t pitch;
-   Blit__ctx_type_5 _inst1;
+   Blit__ctx_type_5 _inst20;
 } Blit__ctx_type_6;
 
 typedef Blit__ctx_type_6 Blit_process_type;

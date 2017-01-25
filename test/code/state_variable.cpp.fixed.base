@@ -46,19 +46,19 @@ fix16_t State_variable_svf_step(State_variable__ctx_type_1 &_ctx, fix16_t input,
    _ctx.dband = fix_clip(band,(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
    _ctx.dlow = fix_clip(low,(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
    fix16_t output;
-   uint8_t _cond_1;
-   _cond_1 = (sel == 0);
-   if(_cond_1){ output = low; }
+   uint8_t _cond_5;
+   _cond_5 = (sel == 0);
+   if(_cond_5){ output = low; }
    else
    {
-      uint8_t _cond_2;
-      _cond_2 = (sel == 1);
-      if(_cond_2){ output = high; }
+      uint8_t _cond_7;
+      _cond_7 = (sel == 1);
+      if(_cond_7){ output = high; }
       else
       {
-         uint8_t _cond_3;
-         _cond_3 = (sel == 2);
-         if(_cond_3){ output = band; }
+         uint8_t _cond_8;
+         _cond_8 = (sel == 2);
+         if(_cond_8){ output = band; }
          else
          { output = notch; }
       }
@@ -70,7 +70,7 @@ void State_variable__ctx_type_2_init(State_variable__ctx_type_2 &_output_){
    State_variable__ctx_type_2 _ctx;
    State_variable__ctx_type_1_init(_ctx.step);
    _ctx.g = 0x0 /* 0.000000 */;
-   State_variable__ctx_type_0_init(_ctx._inst1);
+   State_variable__ctx_type_0_init(_ctx._inst3);
    _output_ = _ctx;
    return ;
 }
@@ -85,9 +85,9 @@ fix16_t State_variable_svf(State_variable__ctx_type_2 &_ctx, fix16_t input, fix1
    q = fix_clip(q,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
    fix16_t fix_q;
    fix_q = fix_mul(0x20000 /* 2.000000 */,fix_add(0x10000 /* 1.000000 */,(- q)));
-   uint8_t _cond_3;
-   _cond_3 = State_variable_change(_ctx._inst1,fc);
-   if(_cond_3){
+   uint8_t _cond_6;
+   _cond_6 = State_variable_change(_ctx._inst3,fc);
+   if(_cond_6){
       _ctx.g = fix_mul(fc,0x8000 /* 0.500000 */);
    }
    fix16_t x1;

@@ -17,14 +17,14 @@ void Monoin_mono_noteOn_init(Monoin__ctx_type_0 &_output_){
 }
 
 int Monoin_mono_noteOn(Monoin__ctx_type_0 &_ctx, int n){
-   uint8_t _cond_4;
-   _cond_4 = (_ctx.count < 4);
-   if(_cond_4){
+   uint8_t _cond_12;
+   _cond_12 = (_ctx.count < 4);
+   if(_cond_12){
       int_set(_ctx.notes,_ctx.count,n);
       _ctx.pre = n;
-      uint8_t _cond_3;
-      _cond_3 = (_ctx.count < 4);
-      if(_cond_3){
+      uint8_t _cond_11;
+      _cond_11 = (_ctx.count < 4);
+      if(_cond_11){
          _ctx.count = (_ctx.count + 1);
       }
    }
@@ -42,15 +42,15 @@ int Monoin_mono_noteOff(Monoin__ctx_type_0 &_ctx, int n){
    int pos;
    int i;
    i = 0;
-   uint8_t _cond_7;
-   _cond_7 = (_ctx.count == 0);
-   if(_cond_7){
+   uint8_t _cond_13;
+   _cond_13 = (_ctx.count == 0);
+   if(_cond_13){
       return _ctx.pre;
    }
    while((i < 4) && bool_not(found)){
-      uint8_t _cond_8;
-      _cond_8 = (int_get(_ctx.notes,i) == n);
-      if(_cond_8){
+      uint8_t _cond_14;
+      _cond_14 = (int_get(_ctx.notes,i) == n);
+      if(_cond_14){
          pos = i;
          found = 1;
       }
@@ -63,9 +63,9 @@ int Monoin_mono_noteOff(Monoin__ctx_type_0 &_ctx, int n){
          int_set(_ctx.notes,(k + (-1)),int_get(_ctx.notes,k));
          k = (k + 1);
       }
-      uint8_t _cond_9;
-      _cond_9 = (found && (_ctx.count > 0));
-      if(_cond_9){
+      uint8_t _cond_15;
+      _cond_15 = (found && (_ctx.count > 0));
+      if(_cond_15){
          _ctx.count = (_ctx.count + (-1));
          _ctx.pre = int_get(_ctx.notes,(_ctx.count + (-1)));
       }

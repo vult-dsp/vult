@@ -84,7 +84,7 @@ void Delay__ctx_type_5_init(Delay__ctx_type_5 &_output_){
    Delay__ctx_type_5 _ctx;
    _ctx.rate = 0.f;
    _ctx.phase = 0.f;
-   Delay__ctx_type_1_init(_ctx._inst1);
+   Delay__ctx_type_1_init(_ctx._inst6);
    _output_ = _ctx;
    return ;
 }
@@ -95,9 +95,9 @@ void Delay_phasor_init(Delay__ctx_type_5 &_output_){
 }
 
 float Delay_phasor(Delay__ctx_type_5 &_ctx, float pitch, uint8_t reset){
-   uint8_t _cond_3;
-   _cond_3 = Delay_change(_ctx._inst1,pitch);
-   if(_cond_3){
+   uint8_t _cond_45;
+   _cond_45 = Delay_change(_ctx._inst6,pitch);
+   if(_cond_45){
       _ctx.rate = Delay_pitchToRate(pitch);
    }
    if(reset){ _ctx.phase = 0.f; }
@@ -109,7 +109,7 @@ float Delay_phasor(Delay__ctx_type_5 &_ctx, float pitch, uint8_t reset){
 void Delay__ctx_type_6_init(Delay__ctx_type_6 &_output_){
    Delay__ctx_type_6 _ctx;
    _ctx.phase = 0.f;
-   Delay__ctx_type_2_init(_ctx._inst1);
+   Delay__ctx_type_2_init(_ctx._inst9);
    _output_ = _ctx;
    return ;
 }
@@ -122,15 +122,15 @@ void Delay_lfo_init(Delay__ctx_type_6 &_output_){
 float Delay_lfo(Delay__ctx_type_6 &_ctx, float f, uint8_t gate){
    float rate;
    rate = (0.000226757369615f * f);
-   uint8_t _cond_4;
-   _cond_4 = Delay_edge(_ctx._inst1,gate);
-   if(_cond_4){
+   uint8_t _cond_46;
+   _cond_46 = Delay_edge(_ctx._inst9,gate);
+   if(_cond_46){
       _ctx.phase = 0.f;
    }
    _ctx.phase = (_ctx.phase + rate);
-   uint8_t _cond_5;
-   _cond_5 = (_ctx.phase > 1.f);
-   if(_cond_5){
+   uint8_t _cond_47;
+   _cond_47 = (_ctx.phase > 1.f);
+   if(_cond_47){
       _ctx.phase = (_ctx.phase + (-1.f));
    }
    return (sinf((6.28318530718f * _ctx.phase)) + (-0.5f));
@@ -139,9 +139,9 @@ float Delay_lfo(Delay__ctx_type_6 &_ctx, float f, uint8_t gate){
 void Delay__ctx_type_7_init(Delay__ctx_type_7 &_output_){
    Delay__ctx_type_7 _ctx;
    _ctx.pre_phase1 = 0.f;
-   Delay__ctx_type_5_init(_ctx._inst3);
-   Delay__ctx_type_0_init(_ctx._inst2);
-   Delay__ctx_type_5_init(_ctx._inst1);
+   Delay__ctx_type_5_init(_ctx._inst15);
+   Delay__ctx_type_0_init(_ctx._inst14);
+   Delay__ctx_type_5_init(_ctx._inst13);
    _output_ = _ctx;
    return ;
 }
@@ -153,14 +153,14 @@ void Delay_phd_osc_init(Delay__ctx_type_7 &_output_){
 
 float Delay_phd_osc(Delay__ctx_type_7 &_ctx, float pitch, float detune){
    float phase1;
-   phase1 = Delay_phasor(_ctx._inst1,pitch,0);
+   phase1 = Delay_phasor(_ctx._inst13,pitch,0);
    float comp;
    comp = (1.f + (- phase1));
    uint8_t reset;
    reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5f);
    _ctx.pre_phase1 = phase1;
    float phase2;
-   phase2 = Delay_phasor(_ctx._inst3,(pitch + (Delay_smooth(_ctx._inst2,detune) * 32.f)),reset);
+   phase2 = Delay_phasor(_ctx._inst15,(pitch + (Delay_smooth(_ctx._inst14,detune) * 32.f)),reset);
    float sine;
    sine = sinf((6.28318530718f * phase2));
    return (sine * comp);
@@ -189,9 +189,9 @@ float Delay_delay(Delay__ctx_type_8 &_ctx, float x, float time, float feedback){
    int delta;
    delta = (_ctx.write_pos + (- index_i));
    int read_pos;
-   uint8_t _cond_1;
-   _cond_1 = (delta < 0);
-   if(_cond_1){ read_pos = (30000 + delta); }
+   uint8_t _cond_48;
+   _cond_48 = (delta < 0);
+   if(_cond_48){ read_pos = (30000 + delta); }
    else
    { read_pos = delta; }
    float decimal;
@@ -222,14 +222,14 @@ void Delay_mono_noteOn_init(Delay__ctx_type_9 &_output_){
 }
 
 int Delay_mono_noteOn(Delay__ctx_type_9 &_ctx, int n){
-   uint8_t _cond_4;
-   _cond_4 = (_ctx.count < 4);
-   if(_cond_4){
+   uint8_t _cond_50;
+   _cond_50 = (_ctx.count < 4);
+   if(_cond_50){
       int_set(_ctx.notes,_ctx.count,n);
       _ctx.pre = n;
-      uint8_t _cond_3;
-      _cond_3 = (_ctx.count < 4);
-      if(_cond_3){
+      uint8_t _cond_49;
+      _cond_49 = (_ctx.count < 4);
+      if(_cond_49){
          _ctx.count = (_ctx.count + 1);
       }
    }
@@ -247,15 +247,15 @@ int Delay_mono_noteOff(Delay__ctx_type_9 &_ctx, int n){
    int pos;
    int i;
    i = 0;
-   uint8_t _cond_7;
-   _cond_7 = (_ctx.count == 0);
-   if(_cond_7){
+   uint8_t _cond_51;
+   _cond_51 = (_ctx.count == 0);
+   if(_cond_51){
       return _ctx.pre;
    }
    while((i < 4) && bool_not(found)){
-      uint8_t _cond_8;
-      _cond_8 = (int_get(_ctx.notes,i) == n);
-      if(_cond_8){
+      uint8_t _cond_52;
+      _cond_52 = (int_get(_ctx.notes,i) == n);
+      if(_cond_52){
          pos = i;
          found = 1;
       }
@@ -268,9 +268,9 @@ int Delay_mono_noteOff(Delay__ctx_type_9 &_ctx, int n){
          int_set(_ctx.notes,(k + (-1)),int_get(_ctx.notes,k));
          k = (k + 1);
       }
-      uint8_t _cond_9;
-      _cond_9 = (found && (_ctx.count > 0));
-      if(_cond_9){
+      uint8_t _cond_53;
+      _cond_53 = (found && (_ctx.count > 0));
+      if(_cond_53){
          _ctx.count = (_ctx.count + (-1));
          _ctx.pre = int_get(_ctx.notes,(_ctx.count + (-1)));
       }
@@ -297,12 +297,12 @@ void Delay__ctx_type_10_init(Delay__ctx_type_10 &_output_){
    _ctx.lfo_amt = 0.f;
    _ctx.feedback = 0.f;
    _ctx.detune = 0.f;
-   Delay__ctx_type_8_init(_ctx._inst6);
-   Delay__ctx_type_0_init(_ctx._inst5);
-   Delay__ctx_type_0_init(_ctx._inst4);
-   Delay__ctx_type_0_init(_ctx._inst3);
-   Delay__ctx_type_7_init(_ctx._inst2);
-   Delay__ctx_type_6_init(_ctx._inst1);
+   Delay__ctx_type_8_init(_ctx._inst34);
+   Delay__ctx_type_0_init(_ctx._inst33);
+   Delay__ctx_type_0_init(_ctx._inst32);
+   Delay__ctx_type_0_init(_ctx._inst31);
+   Delay__ctx_type_7_init(_ctx._inst30);
+   Delay__ctx_type_6_init(_ctx._inst29);
    _output_ = _ctx;
    return ;
 }
@@ -316,19 +316,19 @@ float Delay_process(Delay__ctx_type_10 &_ctx, float input){
    uint8_t gate;
    gate = Delay_mono_isGateOn(_ctx.notes);
    float lfo_val;
-   lfo_val = (Delay_lfo(_ctx._inst1,_ctx.lfo_rate,gate) * _ctx.lfo_amt);
+   lfo_val = (Delay_lfo(_ctx._inst29,_ctx.lfo_rate,gate) * _ctx.lfo_amt);
    float o1;
-   o1 = Delay_phd_osc(_ctx._inst2,_ctx.pitch,(_ctx.detune + lfo_val));
+   o1 = Delay_phd_osc(_ctx._inst30,_ctx.pitch,(_ctx.detune + lfo_val));
    float amp;
-   float _if_7;
-   if(gate){ _if_7 = 1.f; }
+   float _if_54;
+   if(gate){ _if_54 = 1.f; }
    else
-   { _if_7 = 0.f; }
-   amp = Delay_smooth(_ctx._inst3,_if_7);
+   { _if_54 = 0.f; }
+   amp = Delay_smooth(_ctx._inst31,_if_54);
    float osc_out;
    osc_out = (o1 * amp);
    float delay_out;
-   delay_out = Delay_delay(_ctx._inst6,osc_out,Delay_smooth(_ctx._inst4,_ctx.time),Delay_smooth(_ctx._inst5,_ctx.feedback));
+   delay_out = Delay_delay(_ctx._inst34,osc_out,Delay_smooth(_ctx._inst32,_ctx.time),Delay_smooth(_ctx._inst33,_ctx.feedback));
    return (_ctx.volume * (osc_out + delay_out) * 0.5f);
 }
 
@@ -356,34 +356,34 @@ void Delay_controlChange_init(Delay__ctx_type_10 &_output_){
 }
 
 void Delay_controlChange(Delay__ctx_type_10 &_ctx, int control, float value, int channel){
-   uint8_t _cond_7;
-   _cond_7 = (control == 30);
-   if(_cond_7){
+   uint8_t _cond_55;
+   _cond_55 = (control == 30);
+   if(_cond_55){
       _ctx.volume = (value * 0.00787401574803f);
    }
-   uint8_t _cond_8;
-   _cond_8 = (control == 31);
-   if(_cond_8){
+   uint8_t _cond_56;
+   _cond_56 = (control == 31);
+   if(_cond_56){
       _ctx.detune = (value * 0.00787401574803f);
    }
-   uint8_t _cond_9;
-   _cond_9 = (control == 32);
-   if(_cond_9){
+   uint8_t _cond_57;
+   _cond_57 = (control == 32);
+   if(_cond_57){
       _ctx.lfo_rate = (value * 0.00787401574803f);
    }
-   uint8_t _cond_10;
-   _cond_10 = (control == 33);
-   if(_cond_10){
+   uint8_t _cond_58;
+   _cond_58 = (control == 33);
+   if(_cond_58){
       _ctx.lfo_amt = (2.f * ((value * 0.00787401574803f) + (-0.5f)));
    }
-   uint8_t _cond_11;
-   _cond_11 = (control == 34);
-   if(_cond_11){
+   uint8_t _cond_59;
+   _cond_59 = (control == 34);
+   if(_cond_59){
       _ctx.time = (value * 0.00787401574803f);
    }
-   uint8_t _cond_12;
-   _cond_12 = (control == 35);
-   if(_cond_12){
+   uint8_t _cond_60;
+   _cond_60 = (control == 35);
+   if(_cond_60){
       _ctx.feedback = (value * 0.00787401574803f);
    }
 }

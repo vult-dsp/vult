@@ -191,7 +191,9 @@ static_inline uint8_t bool_not(uint8_t x)
    return !x;
 }
 
-int float_find_index(int index, float x, float xc[], int size);
+/* Tables copy */
+int fix_find_index(int index, fix16_t x, const fix16_t xc[], int size);
+fix16_t *fix_wrap_array(const fix16_t x[]);
 
 #ifdef __cplusplus
 }

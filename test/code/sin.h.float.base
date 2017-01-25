@@ -23,7 +23,7 @@ typedef struct Sin__ctx_type_1 {
    float y1;
    float w;
    float cos_w;
-   Sin__ctx_type_0 _inst1;
+   Sin__ctx_type_0 _inst2;
 } Sin__ctx_type_1;
 
 typedef Sin__ctx_type_1 Sin_sc_osc_type;
@@ -42,7 +42,7 @@ void Sin_sc_osc_start(Sin__ctx_type_1 &_ctx);
 
 typedef struct Sin__ctx_type_2 {
    float pitch;
-   Sin__ctx_type_1 _inst1;
+   Sin__ctx_type_1 _inst6;
 } Sin__ctx_type_2;
 
 typedef Sin__ctx_type_2 Sin_process_type;

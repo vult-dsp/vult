@@ -23,7 +23,7 @@ fix16_t Util_pitchToRate(fix16_t d);
 typedef struct Util__ctx_type_2 {
    fix16_t rate;
    fix16_t phase;
-   Util__ctx_type_0 _inst1;
+   Util__ctx_type_0 _inst3;
 } Util__ctx_type_2;
 
 typedef Util__ctx_type_2 Util_phasor_type;

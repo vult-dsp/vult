@@ -10,20 +10,20 @@ float Math_sin(float x0){
    float x2;
    x2 = fmodf(x1,3.14159265359f);
    float x3;
-   uint8_t _cond_2;
-   _cond_2 = (x2 > 1.5707963268f);
-   if(_cond_2){ x3 = (3.14159265359f + (- x2)); }
+   uint8_t _cond_8;
+   _cond_8 = (x2 > 1.5707963268f);
+   if(_cond_8){ x3 = (3.14159265359f + (- x2)); }
    else
    { x3 = x2; }
    float xp2;
    xp2 = (x3 * x3);
    float acc;
    acc = (x3 * (1.f + (((-0.166666666667f) + (0.00833333333333f * xp2)) * xp2)));
-   float _if_1;
-   if(sign){ _if_1 = (- acc); }
+   float _if_7;
+   if(sign){ _if_7 = (- acc); }
    else
-   { _if_1 = acc; }
-   return _if_1;
+   { _if_7 = acc; }
+   return _if_7;
 }
 
 float Math_cos(float x0){
@@ -49,11 +49,11 @@ float Math_tanh(float xx){
       y = ((2.f * y) / (1.f + (y * y)));
       n = (n + (-1));
    }
-   float _if_3;
-   if(positive){ _if_3 = y; }
+   float _if_9;
+   if(positive){ _if_9 = y; }
    else
-   { _if_3 = (- y); }
-   return _if_3;
+   { _if_9 = (- y); }
+   return _if_9;
 }
 
 float Math_tan(float x){

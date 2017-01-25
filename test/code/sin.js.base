@@ -16,7 +16,7 @@ this.Sin__ctx_type_1_init = function(){
    _ctx.y1 = 0.;
    _ctx.w = 0.;
    _ctx.cos_w = 0.;
-   _ctx._inst1 = this.Sin__ctx_type_0_init();
+   _ctx._inst2 = this.Sin__ctx_type_0_init();
    this.Sin_sc_osc_start(_ctx);
    return _ctx;
 }
@@ -24,9 +24,9 @@ this.Sin_sc_osc_init = function() { return this.Sin__ctx_type_1_init();}
 this.Sin_sc_osc = function(_ctx,pitch){
    var g = 0.0;
    g = 1.;
-   var _cond_3 = false;
-   _cond_3 = this.Sin_change(_ctx._inst1,pitch);
-   if(_cond_3){
+   var _cond_11 = false;
+   _cond_11 = this.Sin_change(_ctx._inst2,pitch);
+   if(_cond_11){
       var pre_w = 0.0;
       pre_w = _ctx.w;
       _ctx.w = (0.00116485 * this.exp((0.0577623 * pitch)));
@@ -49,13 +49,13 @@ this.Sin_sc_osc_start = function(_ctx){
 this.Sin__ctx_type_2_init = function(){
    var _ctx = {};
    _ctx.pitch = 0.;
-   _ctx._inst1 = this.Sin__ctx_type_1_init();
+   _ctx._inst6 = this.Sin__ctx_type_1_init();
    this.Sin_default(_ctx);
    return _ctx;
 }
 this.Sin_process_init = function() { return this.Sin__ctx_type_2_init();}
 this.Sin_process = function(_ctx,input){
-   return this.Sin_sc_osc(_ctx._inst1,_ctx.pitch);
+   return this.Sin_sc_osc(_ctx._inst6,_ctx.pitch);
 }
 this.Sin_noteOn_init = function() { return this.Sin__ctx_type_2_init();}
 this.Sin_noteOn = function(_ctx,note,velocity,channel){

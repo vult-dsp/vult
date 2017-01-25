@@ -170,8 +170,8 @@ and attrExpressionList (buffer:Stream.stream) : attr_exp list =
    commaSepList attrExpression buffer
 
 and attr_nud (buffer:Stream.stream) (token:'kind token) : attr_exp =
-   match token.kind with
-   | ID ->
+   match token.kind, token.value with
+   | ID, _ ->
       let id = identifierToken token in
       begin
          match Stream.peek buffer with
@@ -190,11 +190,19 @@ and attr_nud (buffer:Stream.stream) (token:'kind token) : attr_exp =
          | _ ->
             AId(id, token.loc)
       end
-   | INT -> AInt(token.value, token.loc)
-   | REAL -> AReal(token.value, token.loc)
+   | OP,"-" -> attr_unaryOp buffer token
+   | INT, _ -> AInt(token.value, token.loc)
+   | REAL, _ -> AReal(token.value, token.loc)
    | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
+
+and attr_unaryOp (buffer:Stream.stream) (token:'kind token) : attr_exp =
+   let right = attrExpression 70 buffer in
+   match right with
+   | AInt(value,loc) -> AInt("-"^value,loc)
+   | AReal(value,loc) -> AReal("-"^value,loc)
+   | _ -> Error.raiseError "invalid value" token.loc
 
 and attr_led (_:Stream.stream) (token:'kind token) (_:attr_exp) : attr_exp =
    match token.kind with

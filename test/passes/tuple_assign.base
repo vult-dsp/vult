@@ -7,20 +7,20 @@
 
    fun foo() : tuple(int,int,int) /* scope_0 */
    {
-      val (_tuple_1:tuple(int,int,int));
-      (_tuple_1:tuple(int,int,int)) = (0,1,2);
-      return _tuple_1;
+      val (_tuple_2:tuple(int,int,int));
+      (_tuple_2:tuple(int,int,int)) = (0,1,2);
+      return _tuple_2;
    }
 
-   fun bar() : unit /* scope_0 */
+   fun bar() : unit /* scope_1 */
    {
       val (x:int);
       val (y:int);
       val (z:int);
       val (w:int);
-      val (_call_6:tuple(int,int,int));
-      (_call_6:tuple(int,int,int)) = foo();
-      ((x:int),(y:int),(z:int)) = _call_6;
+      val (_call_9:tuple(int,int,int));
+      (_call_9:tuple(int,int,int)) = foo();
+      ((x:int),(y:int),(z:int)) = _call_9;
       (w:int) = 3;
       val (a:int);
       val (b:int);
@@ -34,15 +34,15 @@
       val (t:int);
       (r:int) = 0;
       (t:int) = 1;
-      val (_tmp_4_0:int);
-      (_tmp_4_0:int) = t;
-      val (_tmp_4_1:int);
-      (_tmp_4_1:int) = r;
-      val (_tmp_4_2:int);
-      (_tmp_4_2:int) = 0;
-      (r:int) = _tmp_4_0;
-      (t:int) = _tmp_4_1;
-      (_:int) = _tmp_4_2;
+      val (_tmp_7_0:int);
+      (_tmp_7_0:int) = t;
+      val (_tmp_7_1:int);
+      (_tmp_7_1:int) = r;
+      val (_tmp_7_2:int);
+      (_tmp_7_2:int) = 0;
+      (r:int) = _tmp_7_0;
+      (t:int) = _tmp_7_1;
+      (_:int) = _tmp_7_2;
       val (t1:int);
       val (t2:int);
       (t1:int) = 3;

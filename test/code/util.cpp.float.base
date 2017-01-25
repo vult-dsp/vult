@@ -29,7 +29,7 @@ void Util__ctx_type_2_init(Util__ctx_type_2 &_output_){
    Util__ctx_type_2 _ctx;
    _ctx.rate = 0.f;
    _ctx.phase = 0.f;
-   Util__ctx_type_0_init(_ctx._inst1);
+   Util__ctx_type_0_init(_ctx._inst3);
    Util_phasorInit(_ctx);
    _output_ = _ctx;
    return ;
@@ -41,9 +41,9 @@ void Util_phasor_init(Util__ctx_type_2 &_output_){
 }
 
 float Util_phasor(Util__ctx_type_2 &_ctx, float pitch, uint8_t reset){
-   uint8_t _cond_3;
-   _cond_3 = Util_change(_ctx._inst1,pitch);
-   if(_cond_3){
+   uint8_t _cond_7;
+   _cond_7 = Util_change(_ctx._inst3,pitch);
+   if(_cond_7){
       _ctx.rate = Util_pitchToRate(pitch);
    }
    if(reset){ _ctx.phase = 0.f; }

@@ -51,14 +51,14 @@ this.Synth1__ctx_type_5_init = function(){
    var _ctx = {};
    _ctx.rate = 0.;
    _ctx.phase = 0.;
-   _ctx._inst1 = this.Synth1__ctx_type_1_init();
+   _ctx._inst6 = this.Synth1__ctx_type_1_init();
    return _ctx;
 }
 this.Synth1_phasor_init = function() { return this.Synth1__ctx_type_5_init();}
 this.Synth1_phasor = function(_ctx,pitch,reset){
-   var _cond_3 = false;
-   _cond_3 = this.Synth1_change(_ctx._inst1,pitch);
-   if(_cond_3){
+   var _cond_47 = false;
+   _cond_47 = this.Synth1_change(_ctx._inst6,pitch);
+   if(_cond_47){
       _ctx.rate = this.Synth1_pitchToRate(pitch);
    }
    if(reset)_ctx.phase = 0.;
@@ -69,22 +69,22 @@ this.Synth1_phasor = function(_ctx,pitch,reset){
 this.Synth1__ctx_type_6_init = function(){
    var _ctx = {};
    _ctx.phase = 0.;
-   _ctx._inst1 = this.Synth1__ctx_type_2_init();
+   _ctx._inst9 = this.Synth1__ctx_type_2_init();
    return _ctx;
 }
 this.Synth1_lfo_init = function() { return this.Synth1__ctx_type_6_init();}
 this.Synth1_lfo = function(_ctx,f,gate){
    var rate = 0.0;
    rate = (0.000226757369615 * f);
-   var _cond_4 = false;
-   _cond_4 = this.Synth1_edge(_ctx._inst1,gate);
-   if(_cond_4){
+   var _cond_48 = false;
+   _cond_48 = this.Synth1_edge(_ctx._inst9,gate);
+   if(_cond_48){
       _ctx.phase = 0.;
    }
    _ctx.phase = (_ctx.phase + rate);
-   var _cond_5 = false;
-   _cond_5 = (_ctx.phase > 1.);
-   if(_cond_5){
+   var _cond_49 = false;
+   _cond_49 = (_ctx.phase > 1.);
+   if(_cond_49){
       _ctx.phase = (_ctx.phase + (-1.));
    }
    return (this.sin((6.28318530718 * _ctx.phase)) + (-0.5));
@@ -103,80 +103,80 @@ this.Synth1__ctx_type_7_init = function(){
    _ctx.gate = ((0|0)|0);
    _ctx.detune = 0.;
    _ctx.count = ((0|0)|0);
-   _ctx._inst6 = this.Synth1__ctx_type_0_init();
-   _ctx._inst5 = this.Synth1__ctx_type_0_init();
-   _ctx._inst4 = this.Synth1__ctx_type_5_init();
-   _ctx._inst3 = this.Synth1__ctx_type_0_init();
-   _ctx._inst2 = this.Synth1__ctx_type_5_init();
-   _ctx._inst1 = this.Synth1__ctx_type_6_init();
+   _ctx._inst18 = this.Synth1__ctx_type_0_init();
+   _ctx._inst17 = this.Synth1__ctx_type_0_init();
+   _ctx._inst16 = this.Synth1__ctx_type_5_init();
+   _ctx._inst15 = this.Synth1__ctx_type_0_init();
+   _ctx._inst14 = this.Synth1__ctx_type_5_init();
+   _ctx._inst13 = this.Synth1__ctx_type_6_init();
    return _ctx;
 }
 this.Synth1_process_init = function() { return this.Synth1__ctx_type_7_init();}
 this.Synth1_process = function(_ctx,input){
    var lfo_val = 0.0;
-   lfo_val = (this.Synth1_lfo(_ctx._inst1,_ctx.lfo_rate,_ctx.gate) * _ctx.lfo_amt);
+   lfo_val = (this.Synth1_lfo(_ctx._inst13,_ctx.lfo_rate,_ctx.gate) * _ctx.lfo_amt);
    var phase1 = 0.0;
-   phase1 = this.Synth1_phasor(_ctx._inst2,_ctx.pitch,false);
+   phase1 = this.Synth1_phasor(_ctx._inst14,_ctx.pitch,false);
    var comp = 0.0;
    comp = (1. + (- phase1));
    var reset = false;
    reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5);
    _ctx.pre_phase1 = phase1;
    var phase2 = 0.0;
-   phase2 = this.Synth1_phasor(_ctx._inst4,(_ctx.pitch + (this.Synth1_smooth(_ctx._inst3,(_ctx.detune + lfo_val)) * 32.)),reset);
+   phase2 = this.Synth1_phasor(_ctx._inst16,(_ctx.pitch + (this.Synth1_smooth(_ctx._inst15,(_ctx.detune + lfo_val)) * 32.)),reset);
    var sine = 0.0;
    sine = this.sin((6.28318530718 * phase2));
    var gate_value = 0.0;
-   var _cond_7 = false;
-   _cond_7 = (_ctx.gate > (0|0));
-   if(_cond_7)gate_value = 1.;
+   var _cond_50 = false;
+   _cond_50 = (_ctx.gate > (0|0));
+   if(_cond_50)gate_value = 1.;
    else
    gate_value = 0.;
-   return (this.Synth1_smooth(_ctx._inst5,_ctx.volume) * sine * comp * this.Synth1_smooth(_ctx._inst6,gate_value));
+   return (this.Synth1_smooth(_ctx._inst17,_ctx.volume) * sine * comp * this.Synth1_smooth(_ctx._inst18,gate_value));
 }
 this.Synth1_noteOn_init = function() { return this.Synth1__ctx_type_7_init();}
 this.Synth1_noteOn = function(_ctx,note,velocity,channel){
-   var _cond_12 = false;
-   _cond_12 = (_ctx.count == (0|0));
-   if(_cond_12){
+   var _cond_54 = false;
+   _cond_54 = (_ctx.count == (0|0));
+   if(_cond_54){
       _ctx.n1 = (note|0);
       _ctx.pitch = this.real(note);
    }
    else
    {
-      var _cond_11 = false;
-      _cond_11 = (_ctx.count == (1|0));
-      if(_cond_11){
+      var _cond_53 = false;
+      _cond_53 = (_ctx.count == (1|0));
+      if(_cond_53){
          _ctx.n2 = (note|0);
          _ctx.pitch = this.real(note);
       }
       else
       {
-         var _cond_10 = false;
-         _cond_10 = (_ctx.count == (2|0));
-         if(_cond_10){
+         var _cond_52 = false;
+         _cond_52 = (_ctx.count == (2|0));
+         if(_cond_52){
             _ctx.n3 = (note|0);
             _ctx.pitch = this.real(note);
          }
          else
          {
-            var _cond_9 = false;
-            _cond_9 = (_ctx.count == (3|0));
-            if(_cond_9){
+            var _cond_51 = false;
+            _cond_51 = (_ctx.count == (3|0));
+            if(_cond_51){
                _ctx.n4 = (note|0);
                _ctx.pitch = this.real(note);
             }
          }
       }
    }
-   var _cond_13 = false;
-   _cond_13 = (_ctx.count <= (4|0));
-   if(_cond_13){
+   var _cond_55 = false;
+   _cond_55 = (_ctx.count <= (4|0));
+   if(_cond_55){
       _ctx.count = ((_ctx.count + (1|0))|0);
    }
-   var _cond_14 = false;
-   _cond_14 = (_ctx.count > (0|0));
-   if(_cond_14)_ctx.gate = ((1|0)|0);
+   var _cond_56 = false;
+   _cond_56 = (_ctx.count > (0|0));
+   if(_cond_56)_ctx.gate = ((1|0)|0);
    else
    _ctx.gate = ((0|0)|0);
 }
@@ -184,102 +184,102 @@ this.Synth1_noteOff_init = function() { return this.Synth1__ctx_type_7_init();}
 this.Synth1_noteOff = function(_ctx,note,channel){
    var found = false;
    found = false;
-   var _cond_18 = false;
-   _cond_18 = (note == _ctx.n1);
-   if(_cond_18){
-      var _tmp_13_0 = (0|0);
-      _tmp_13_0 = (_ctx.n2|0);
-      var _tmp_13_1 = (0|0);
-      _tmp_13_1 = (_ctx.n3|0);
-      var _tmp_13_2 = (0|0);
-      _tmp_13_2 = (_ctx.n4|0);
-      _ctx.n1 = (_tmp_13_0|0);
-      _ctx.n2 = (_tmp_13_1|0);
-      _ctx.n3 = (_tmp_13_2|0);
+   var _cond_62 = false;
+   _cond_62 = (note == _ctx.n1);
+   if(_cond_62){
+      var _tmp_57_0 = (0|0);
+      _tmp_57_0 = (_ctx.n2|0);
+      var _tmp_57_1 = (0|0);
+      _tmp_57_1 = (_ctx.n3|0);
+      var _tmp_57_2 = (0|0);
+      _tmp_57_2 = (_ctx.n4|0);
+      _ctx.n1 = (_tmp_57_0|0);
+      _ctx.n2 = (_tmp_57_1|0);
+      _ctx.n3 = (_tmp_57_2|0);
       found = true;
    }
    else
    {
-      var _cond_17 = false;
-      _cond_17 = (note == _ctx.n2);
-      if(_cond_17){
-         var _tmp_14_0 = (0|0);
-         _tmp_14_0 = (_ctx.n3|0);
-         var _tmp_14_1 = (0|0);
-         _tmp_14_1 = (_ctx.n4|0);
-         _ctx.n2 = (_tmp_14_0|0);
-         _ctx.n3 = (_tmp_14_1|0);
+      var _cond_61 = false;
+      _cond_61 = (note == _ctx.n2);
+      if(_cond_61){
+         var _tmp_58_0 = (0|0);
+         _tmp_58_0 = (_ctx.n3|0);
+         var _tmp_58_1 = (0|0);
+         _tmp_58_1 = (_ctx.n4|0);
+         _ctx.n2 = (_tmp_58_0|0);
+         _ctx.n3 = (_tmp_58_1|0);
          found = true;
       }
       else
       {
-         var _cond_16 = false;
-         _cond_16 = (note == _ctx.n3);
-         if(_cond_16){
+         var _cond_60 = false;
+         _cond_60 = (note == _ctx.n3);
+         if(_cond_60){
             _ctx.n3 = (_ctx.n4|0);
             found = true;
          }
          else
          {
-            var _cond_15 = false;
-            _cond_15 = (note == _ctx.n4);
-            if(_cond_15){
+            var _cond_59 = false;
+            _cond_59 = (note == _ctx.n4);
+            if(_cond_59){
                found = true;
             }
          }
       }
    }
-   var _cond_19 = false;
-   _cond_19 = (found && (_ctx.count > (0|0)));
-   if(_cond_19){
+   var _cond_63 = false;
+   _cond_63 = (found && (_ctx.count > (0|0)));
+   if(_cond_63){
       _ctx.count = ((_ctx.count + (-1|0))|0);
    }
-   var _cond_24 = false;
-   _cond_24 = (_ctx.count > (0|0));
-   if(_cond_24)_ctx.gate = ((1|0)|0);
+   var _cond_68 = false;
+   _cond_68 = (_ctx.count > (0|0));
+   if(_cond_68)_ctx.gate = ((1|0)|0);
    else
    _ctx.gate = ((0|0)|0);
-   var _cond_20 = false;
-   _cond_20 = (_ctx.count == (1|0));
-   if(_cond_20){
+   var _cond_64 = false;
+   _cond_64 = (_ctx.count == (1|0));
+   if(_cond_64){
       _ctx.pitch = this.real(_ctx.n1);
    }
-   var _cond_21 = false;
-   _cond_21 = (_ctx.count == (2|0));
-   if(_cond_21){
+   var _cond_65 = false;
+   _cond_65 = (_ctx.count == (2|0));
+   if(_cond_65){
       _ctx.pitch = this.real(_ctx.n2);
    }
-   var _cond_22 = false;
-   _cond_22 = (_ctx.count == (3|0));
-   if(_cond_22){
+   var _cond_66 = false;
+   _cond_66 = (_ctx.count == (3|0));
+   if(_cond_66){
       _ctx.pitch = this.real(_ctx.n3);
    }
-   var _cond_23 = false;
-   _cond_23 = (_ctx.count == (4|0));
-   if(_cond_23){
+   var _cond_67 = false;
+   _cond_67 = (_ctx.count == (4|0));
+   if(_cond_67){
       _ctx.pitch = this.real(_ctx.n4);
    }
 }
 this.Synth1_controlChange_init = function() { return this.Synth1__ctx_type_7_init();}
 this.Synth1_controlChange = function(_ctx,control,value,channel){
-   var _cond_5 = false;
-   _cond_5 = (control == (30|0));
-   if(_cond_5){
+   var _cond_69 = false;
+   _cond_69 = (control == (30|0));
+   if(_cond_69){
       _ctx.volume = (value * 0.00787401574803);
    }
-   var _cond_6 = false;
-   _cond_6 = (control == (31|0));
-   if(_cond_6){
+   var _cond_70 = false;
+   _cond_70 = (control == (31|0));
+   if(_cond_70){
       _ctx.detune = (value * 0.00787401574803);
    }
-   var _cond_7 = false;
-   _cond_7 = (control == (32|0));
-   if(_cond_7){
+   var _cond_71 = false;
+   _cond_71 = (control == (32|0));
+   if(_cond_71){
       _ctx.lfo_rate = (value * 0.00787401574803);
    }
-   var _cond_8 = false;
-   _cond_8 = (control == (33|0));
-   if(_cond_8){
+   var _cond_72 = false;
+   _cond_72 = (control == (33|0));
+   if(_cond_72){
       _ctx.lfo_amt = (2. * ((value * 0.00787401574803) + (-0.5)));
    }
 }

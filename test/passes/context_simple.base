@@ -30,7 +30,7 @@
       return ();
    }
 
-   and Context_simple.reset(_ctx:Context_simple._ctx_type_0) : unit /* scope_0 */
+   and Context_simple.reset(_ctx:Context_simple._ctx_type_0) : unit /* scope_1 */
    (_ctx.pre:real) = 0.;
 
    type Context_simple.set_type : Context_simple._ctx_type_0;
@@ -39,21 +39,21 @@
       return ();
    }
 
-   and Context_simple.set(_ctx:Context_simple._ctx_type_0,x:real) : unit /* scope_0 */
+   and Context_simple.set(_ctx:Context_simple._ctx_type_0,x:real) : unit /* scope_2 */
    (_ctx.pre:real) = x;
 
    type Context_simple._ctx_type_1 {
       val c : Context_simple._ctx_type_0;
-      val _inst2 : Context_simple._ctx_type_0;
-      val _inst1 : Context_simple._ctx_type_0;
+      val _inst5 : Context_simple._ctx_type_0;
+      val _inst4 : Context_simple._ctx_type_0;
    }
 
    type Context_simple.foo_type : Context_simple._ctx_type_1;
    fun Context_simple._ctx_type_1_init(_output_:Context_simple._ctx_type_1) : unit {
       val (_ctx:Context_simple._ctx_type_1);
       (_:unit) = Context_simple._ctx_type_0_init(_ctx.c);
-      (_:unit) = Context_simple._ctx_type_0_init(_ctx._inst2);
-      (_:unit) = Context_simple._ctx_type_0_init(_ctx._inst1);
+      (_:unit) = Context_simple._ctx_type_0_init(_ctx._inst5);
+      (_:unit) = Context_simple._ctx_type_0_init(_ctx._inst4);
       (_output_:Context_simple._ctx_type_1) = _ctx;
       return ();
    }
@@ -63,12 +63,12 @@
       return ();
    }
 
-   fun Context_simple.foo(_ctx:Context_simple._ctx_type_1,x:real) : unit /* scope_0 */
+   fun Context_simple.foo(_ctx:Context_simple._ctx_type_1,x:real) : unit /* scope_3 */
    {
       val (v1:bool);
-      (v1:bool) = Context_simple.change(_ctx._inst1,x);
+      (v1:bool) = Context_simple.change(_ctx._inst4,x);
       val (v2:bool);
-      (v2:bool) = Context_simple.change(_ctx._inst2,x);
+      (v2:bool) = Context_simple.change(_ctx._inst5,x);
       val (v3:bool);
       (v3:bool) = Context_simple.change(_ctx.c,x);
       (_:unit) = Context_simple.reset(_ctx.c);

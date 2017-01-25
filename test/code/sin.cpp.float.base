@@ -27,7 +27,7 @@ void Sin__ctx_type_1_init(Sin__ctx_type_1 &_output_){
    _ctx.y1 = 0.f;
    _ctx.w = 0.f;
    _ctx.cos_w = 0.f;
-   Sin__ctx_type_0_init(_ctx._inst1);
+   Sin__ctx_type_0_init(_ctx._inst2);
    Sin_sc_osc_start(_ctx);
    _output_ = _ctx;
    return ;
@@ -41,9 +41,9 @@ void Sin_sc_osc_init(Sin__ctx_type_1 &_output_){
 float Sin_sc_osc(Sin__ctx_type_1 &_ctx, float pitch){
    float g;
    g = 1.f;
-   uint8_t _cond_3;
-   _cond_3 = Sin_change(_ctx._inst1,pitch);
-   if(_cond_3){
+   uint8_t _cond_11;
+   _cond_11 = Sin_change(_ctx._inst2,pitch);
+   if(_cond_11){
       float pre_w;
       pre_w = _ctx.w;
       _ctx.w = (0.00116485f * expf((0.0577623f * pitch)));
@@ -72,7 +72,7 @@ void Sin_sc_osc_start(Sin__ctx_type_1 &_ctx){
 void Sin__ctx_type_2_init(Sin__ctx_type_2 &_output_){
    Sin__ctx_type_2 _ctx;
    _ctx.pitch = 0.f;
-   Sin__ctx_type_1_init(_ctx._inst1);
+   Sin__ctx_type_1_init(_ctx._inst6);
    Sin_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -84,7 +84,7 @@ void Sin_process_init(Sin__ctx_type_2 &_output_){
 }
 
 float Sin_process(Sin__ctx_type_2 &_ctx, float input){
-   return Sin_sc_osc(_ctx._inst1,_ctx.pitch);
+   return Sin_sc_osc(_ctx._inst6,_ctx.pitch);
 }
 
 void Sin_noteOn_init(Sin__ctx_type_2 &_output_){

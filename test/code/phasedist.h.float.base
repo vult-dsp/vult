@@ -35,7 +35,7 @@ float Phasedist_pitchToRate(float d);
 typedef struct Phasedist__ctx_type_3 {
    float rate;
    float phase;
-   Phasedist__ctx_type_1 _inst1;
+   Phasedist__ctx_type_1 _inst4;
 } Phasedist__ctx_type_3;
 
 typedef Phasedist__ctx_type_3 Phasedist_phasor_type;
@@ -51,10 +51,10 @@ typedef struct Phasedist__ctx_type_4 {
    float pre_phase1;
    float pitch;
    float detune;
-   Phasedist__ctx_type_0 _inst4;
-   Phasedist__ctx_type_3 _inst3;
-   Phasedist__ctx_type_0 _inst2;
-   Phasedist__ctx_type_3 _inst1;
+   Phasedist__ctx_type_3 _inst9;
+   Phasedist__ctx_type_0 _inst8;
+   Phasedist__ctx_type_3 _inst7;
+   Phasedist__ctx_type_0 _inst10;
 } Phasedist__ctx_type_4;
 
 typedef Phasedist__ctx_type_4 Phasedist_process_type;

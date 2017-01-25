@@ -22,7 +22,7 @@ float Volume_smooth(Volume__ctx_type_0 &_ctx, float input){
 void Volume__ctx_type_1_init(Volume__ctx_type_1 &_output_){
    Volume__ctx_type_1 _ctx;
    _ctx.volume = 0.f;
-   Volume__ctx_type_0_init(_ctx._inst1);
+   Volume__ctx_type_0_init(_ctx._inst2);
    _output_ = _ctx;
    return ;
 }
@@ -33,7 +33,7 @@ void Volume_process_init(Volume__ctx_type_1 &_output_){
 }
 
 float Volume_process(Volume__ctx_type_1 &_ctx, float input){
-   return (input * Volume_smooth(_ctx._inst1,_ctx.volume));
+   return (input * Volume_smooth(_ctx._inst2,_ctx.volume));
 }
 
 void Volume_noteOn_init(Volume__ctx_type_1 &_output_){
@@ -58,9 +58,9 @@ void Volume_controlChange_init(Volume__ctx_type_1 &_output_){
 }
 
 void Volume_controlChange(Volume__ctx_type_1 &_ctx, int control, int value, int channel){
-   uint8_t _cond_2;
-   _cond_2 = (control == 30);
-   if(_cond_2){
+   uint8_t _cond_8;
+   _cond_8 = (control == 30);
+   if(_cond_8){
       _ctx.volume = (int_to_float(value) * 0.00787401574803f);
    }
 }
