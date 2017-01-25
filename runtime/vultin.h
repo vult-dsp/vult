@@ -195,6 +195,9 @@ static_inline uint8_t bool_not(uint8_t x)
 int fix_find_index(int index, fix16_t x, const fix16_t xc[], int size);
 fix16_t *fix_wrap_array(const fix16_t x[]);
 
+float *float_wrap_array(const float x[]);
+int float_find_index(int index, float x, const float xc[], int size);
+
 #ifdef __cplusplus
 }
 #endif
