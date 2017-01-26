@@ -136,24 +136,18 @@ module MakeTables = struct
       let size = List.length data in
       StmtVal(LId(varname, Some(array_type size), attr_array size), Some(arr), { emptyAttr with const = true})
 
-   let makeNewBody fname size input =
+   let makeNewBody fname size min max input =
       let lindex = LId(["index"],Some(int_type), attr_int) in
       let rindex = PId(["index"], attr_int) in
       let getCoeff a =
          PCall(None,["get"], [PCall(None,["wrap_array"], [PId(makeVarName fname [a], attr_array size)], attr_real); rindex], attr_real)
       in
+      let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min),attr_real) in
       StmtBlock(
          None,
          [
-            StmtMem(lindex,None,emptyAttr);
-            StmtBind(lindex,
-                     PCall(None,["find_index"],
-                           [
-                              PId(["index"],attr_int);
-                              input;
-                              PId(makeVarName fname ["x0"], attr_array size);
-                              PInt(size,attr_int);
-                           ], attr_real),emptyAttr);
+            StmtVal(lindex,None,emptyAttr);
+            StmtBind(lindex, POp("*",[initial_index;POp("-",[input; PReal(min,attr_real)],attr_real)],attr_int),emptyAttr);
             StmtReturn(
                POp("+",
                    [getCoeff "c0";
@@ -175,7 +169,6 @@ module MakeTables = struct
       let rec loop index xx acc0 acc1 acc2 =
          if index < 0 then
             [
-               makeTableDecl name ["x0"] xx;
                makeTableDecl name ["c0"] acc0;
                makeTableDecl name ["c1"] acc1;
                makeTableDecl name ["c2"] acc2
@@ -206,8 +199,8 @@ module MakeTables = struct
                let result = calculateTables env name size min max in
                let attr'  = { attr with exp = removeTableParams attr.exp } in
                let var    = getInputVar args in
-               let body'  = makeNewBody name size var in
-               state, result @ [StmtFun(name, args, body', ret, attr')]
+               let body'  = makeNewBody name size min max var in
+               reapply state, result @ [StmtFun(name, args, body', ret, attr')]
             | Some _, _::_ ->
                let msg = "This annotation can only be applied to functions of one argument" in
                Error.raiseError msg attr.loc

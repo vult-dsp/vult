@@ -46,12 +46,6 @@ let expOptLoc e =
       | None -> Loc.default
       | Some(e) -> GetLocation.fromExp e)
 
-(** Checks if the function has a @[table] annotation, if so, adds a mem variable 'index' *)
-let doTableAttr env attr =
-   if Attributes.has attr.exp ["table"] then
-      Env.addMem env ["index"] VType.Constants.int_type emptyAttr
-   else env
-
 let unifyRaise (loc:Loc.t Lazy.t) (t1:VType.t) (t2:VType.t) : unit =
    let raise = true in
    if not (VType.unify t1 t2) then
@@ -430,7 +424,6 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       let possible_ret_type   = VType.newvar () in
       let typ                 = VType.makeArrowType possible_ret_type types' in
       let env' = Env.setCurrentType env' typ true in
-      let env'                = doTableAttr env' attr in
       let body',env',body_ret = inferStmt env' (makeReturnType ret_type') body in
       let last_type           = getReturnType body_ret in
       let env' = Env.exit env' in

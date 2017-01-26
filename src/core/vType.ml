@@ -425,11 +425,6 @@ module Constants = struct
    let unit_real () =
       unit_type |-> real_type
 
-   let find_index () =
-      let size = ref (TUnbound("'size",None,None)) in
-      let array_type = ref (TComposed(["array"],[real_type;size],None)) in
-      int_type |-> (real_type |-> (array_type |-> int_type))
-
    let wrap_array () =
       let a = ref (TUnbound("'a",None,None)) in
       let size = ref (TUnbound("'size",None,None)) in

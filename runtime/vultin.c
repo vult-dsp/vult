@@ -243,41 +243,7 @@ float *float_wrap_array(const float x[])
    return (float *)x;
 }
 
-int float_find_index(int index, float x, const float xc[], int size)
-{
-   while (1)
-   {
-      if (index < 0)
-         return 0;
-      else if (index >= size)
-         return size - 1;
-      else if (x < xc[index])
-         index = index - 1;
-      else if (x >= xc[index + 1])
-         index = index + 1;
-      else
-         return index;
-   }
-}
-
 fix16_t *fix_wrap_array(const fix16_t x[])
 {
    return (fix16_t *)x;
-}
-
-int fix_find_index(int index, fix16_t x, const fix16_t xc[], int size)
-{
-   while (1)
-   {
-      if (index < 0)
-         return 0;
-      else if (index >= size)
-         return size - 1;
-      else if (x < xc[index])
-         index = index - 1;
-      else if (x >= xc[index + 1])
-         index = index + 1;
-      else
-         return index;
-   }
 }
