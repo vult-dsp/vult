@@ -159,10 +159,13 @@ module MakeTables = struct
                         attr_real)],attr_real),emptyAttr)
          ], emptyAttr)
 
-   let evaluateFunction env name x =
-      let exp = PCall(None, name, [PReal(x, emptyAttr)], emptyAttr) in
-      let value = Interpreter.evalExp env exp in
-      getFloat value
+   let evaluateFunction env (name:id) (x:float) =
+      match name with
+      | [_; fname] ->
+         let exp = PCall(None, [fname], [PReal(x, emptyAttr)], emptyAttr) in
+         let value = Interpreter.evalExp env exp in
+         getFloat value
+      | _ -> failwith "evaluateFunction: the function should be a full path"
 
    let calculateTables env name size min max =
       let delta = (max -. min) /. (float_of_int (size - 1)) in
@@ -196,10 +199,12 @@ module MakeTables = struct
             | None, _ -> state, [stmt]
             | Some(size, min, max), [_] when checkRealReturn ret ->
                let env    = getInterpEnv state in
-               let result = calculateTables env name size min max in
+               let Path(path) = Env.currentScope state in
+               let full_path = path@name in
+               let result = calculateTables env full_path size min max in
                let attr'  = { attr with exp = removeTableParams attr.exp } in
                let var    = getInputVar args in
-               let body'  = makeNewBody name size min max var in
+               let body'  = makeNewBody full_path size min max var in
                reapply state, result @ [StmtFun(name, args, body', ret, attr')]
             | Some _, _::_ ->
                let msg = "This annotation can only be applied to functions of one argument" in
