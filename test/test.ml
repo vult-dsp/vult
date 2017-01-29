@@ -38,7 +38,7 @@ let os : string =
          match call_uname () with
          | "Linux"  -> "Linux"
          | "Darwin" -> "OSX"
-         | s -> failwith "cannot get os"
+         | _ -> failwith "cannot get os"
          | exception _ -> failwith "cannot get os"
       end
    | _ -> failwith "cannot get os"
@@ -316,7 +316,7 @@ module BenchTest = struct
 
    let linkFiles (output:string) (files:string list) =
       let lflags = if os = "Linux" then "-lm" else "" in
-      let cmd = Printf.sprintf "gcc %s -o %s %s" lflags output (String.concat " " files) in
+      let cmd = Printf.sprintf "gcc -o %s %s %s" output (String.concat " " files) lflags in
       if Sys.command cmd <> 0 then
          assert_failure ("Failed to link ")
 
