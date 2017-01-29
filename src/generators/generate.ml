@@ -208,8 +208,7 @@ let generateLua (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (
 
 let checkConfig (config:configuration) (args:arguments) =
    if args.ccode && args.template <> "default" || args.luacode || args.jscode then
-      if config.process_inputs = []
-      || config.process_outputs = []
+      if config.process_outputs = []
       || config.noteon_inputs = []
       || config.noteoff_inputs = []
       || config.controlchange_inputs = [] then
