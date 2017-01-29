@@ -94,6 +94,20 @@ static_inline fix16_t fix_mul(fix16_t x, fix16_t y)
    return (fix16_t)(res >> 16);
 }
 
+static_inline fix16_t fix_div(fix16_t a, fix16_t b)
+{
+   if (b == 0)
+      return 0;
+   fix16_t aa = a > 0 ? a : -a;
+   fix16_t bb = b > 0 ? b : -b;
+   fix16_t result = (((int64_t)aa) << 16) / ((int64_t)bb);
+   if ((a ^ b) & 0x80000000)
+   {
+      result = -result;
+   }
+   return result;
+}
+
 static_inline fix16_t fix_minus(fix16_t x)
 {
    return -x;
@@ -192,8 +206,8 @@ static_inline uint8_t bool_not(uint8_t x)
 }
 
 /* Tables */
-fix16_t *fix_wrap_array(const fix16_t x[]);
-float *float_wrap_array(const float x[]);
+static_inline fix16_t *fix_wrap_array(const fix16_t x[]) { return (fix16_t *)x; };
+static_inline float *float_wrap_array(const float x[]) { return (float *)x; };
 
 #ifdef __cplusplus
 }

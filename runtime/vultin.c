@@ -29,20 +29,6 @@ NOTE: The code for the fixed-point operations is based on the project:
 */
 #include "vultin.h"
 
-fix16_t fix_div(fix16_t a, fix16_t b)
-{
-   if (b == 0)
-      return 0;
-   fix16_t aa = a > 0 ? a : -a;
-   fix16_t bb = b > 0 ? b : -b;
-   fix16_t result = (((int64_t)aa) << 16) / ((int64_t)bb);
-   if ((a ^ b) & 0x80000000)
-   {
-      result = -result;
-   }
-   return result;
-}
-
 fix16_t fix_exp(fix16_t inValue)
 {
    if (inValue == 0)
@@ -236,14 +222,4 @@ void fix_copy_array(int size, fix16_t *dest, fix16_t *src)
    int i;
    for (i = 0; i < size; i++)
       dest[i] = src[i];
-}
-
-float *float_wrap_array(const float x[])
-{
-   return (float *)x;
-}
-
-fix16_t *fix_wrap_array(const fix16_t x[])
-{
-   return (fix16_t *)x;
 }
