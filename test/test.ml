@@ -24,6 +24,26 @@ THE SOFTWARE.
 open OUnit2
 open TypesVult
 
+let call_uname () =
+   let ic = Unix.open_process_in "uname" in
+   let uname = input_line ic in
+   let () = close_in ic in
+   uname
+
+let os : string =
+   match Sys.os_type with
+   | "Win32" | "Cygwin" -> "Windows"
+   | "Unix" ->
+      begin
+         match call_uname () with
+         | "Linux"  -> "Linux"
+         | "Darwin" -> "OSX"
+         | s -> failwith "cannot get os"
+         | exception _ -> failwith "cannot get os"
+      end
+   | _ -> failwith "cannot get os"
+;;
+
 let initial_dir = Sys.getcwd ()
 
 let test_directory = Filename.concat initial_dir "test"
@@ -295,7 +315,8 @@ module BenchTest = struct
          assert_failure ("Failed to compile "^file)
 
    let linkFiles (output:string) (files:string list) =
-      let cmd = Printf.sprintf "gcc -o %s %s" output (String.concat " " files) in
+      let lflags = if os = "Linux" then "-lm" else "" in
+      let cmd = Printf.sprintf "gcc %s -o %s %s" lflags output (String.concat " " files) in
       if Sys.command cmd <> 0 then
          assert_failure ("Failed to link ")
 
