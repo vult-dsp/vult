@@ -183,7 +183,35 @@ let getInitValue (descr:type_descr) : string =
    | CTSimple("float") -> "0.0"
    | CTSimple("bool") -> "false"
    | CTSimple("unit") -> "0"
+   (*| CTSimple(name)-> "ffi.new(\"struct "^name^"\", {})"*)
    | _ -> "{}"
+
+(*
+(** Returns the base type name and a list of its sizes *)
+let rec simplifyArray (typ:type_descr) : string * string list =
+   match typ with
+   | CTSimple("real") -> "double", []
+   | CTSimple("int") -> "int", []
+   | CTSimple("bool") -> "bool", []
+   | CTSimple(name) -> name, []
+   | CTArray(sub,size) ->
+      let name,sub_size = simplifyArray sub in
+      name, sub_size @ [string_of_int size]
+
+(** Used to print declarations and rebindings of lhs variables *)
+let printTypeAndName (is_decl:bool) (typ:type_descr) (name:string list) : Pla.t =
+   let kind, sizes = simplifyArray typ in
+   let name = dot name in
+   match is_decl, sizes with
+   (* Simple varible declaration (no sizes) *)
+   | true,[] -> {pla|<#kind#s> <#name#>|pla}
+   (* Array declarations (with sizes) *)
+   | true,_  ->
+      let t_sizes = Pla.map_sep Pla.comma Pla.string sizes in
+      {pla|<#kind#s> <#name#>[<#t_sizes#>]|pla}
+   (* Simple rebinding (no declaration) *)
+   | _,_ -> {pla|<#name#>|pla}
+*)
 
 let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
@@ -266,7 +294,17 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSEmpty -> None
 
    | CSType _ -> None
-
+(*
+   | CSType(name,members) ->
+      let tmembers =
+         Pla.map_sep_all Pla.newline
+            (fun (typ, name) ->
+                let tmember = printTypeAndName true typ [name] in
+                {pla|<#tmember#>;|pla}
+            ) members;
+      in
+      Some({pla|ffi.cdef[[ typedef struct <#name#s> {<#tmembers#+>} <#name#s>;<#> ]]|pla})
+*)
    | CSAlias _ -> None
 
    | CSExtFunc _ -> None
