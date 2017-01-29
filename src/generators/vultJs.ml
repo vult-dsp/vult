@@ -171,14 +171,22 @@ let getInitValue (descr:type_descr) : string =
 
 let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
-   | CSVar(CLWild) -> None
+   | CSVar(CLWild,None) -> None
 
-   | CSVar(CLId(tdescr,name)) ->
+   | CSVar(CLId(tdescr,name), None) ->
       let init = getInitValue tdescr in
       let name = dot name in
       Some({pla|var <#name#> = <#init#s>;|pla})
 
-   | CSVar(CLTuple(_)) -> failwith "printStmt: invalid tuple assign"
+   | CSVar(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
+
+   | CSVar(CLId(tdecr,name),Some(value)) ->
+      let is_int = tdecr = CTSimple("int") in
+      let value_t = wrapInt params is_int value in
+      let name = dot name in
+      Some({pla|var <#name#> = <#value_t#>;|pla})
+
+   | CSVar(_,_) -> failwith "printStmt: invalid variable declaration"
 
    | CSConst(CLId(tdecr,name),value) ->
       let is_int = tdecr = CTSimple("int") in

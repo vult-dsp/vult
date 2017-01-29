@@ -55,7 +55,7 @@ type clhsexp =
 [@@deriving show,eq,ord]
 
 type cstmt =
-   | CSVar      of clhsexp
+   | CSVar      of clhsexp * cexp option
    | CSConst    of clhsexp * cexp
    | CSBind     of clhsexp * cexp
    | CSFunction of type_descr * string * (arg_type * string) list * cstmt

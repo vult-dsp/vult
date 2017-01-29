@@ -234,15 +234,33 @@ let getRecordField (name:lhs_exp) (index:int) (typ:VType.t option) : lhs_exp =
       LId(id@[field],typ,{ attr with typ })
    | _ -> failwith "VultToCLike.getRecordFiled: Invalid input"
 
+let rec collectVarBind stmts =
+   match stmts with
+   | [] -> []
+   | CSVar(lhs1,None)::CSBind(lhs2,rhs)::t when lhs1 = lhs2 ->
+      collectVarBind (CSVar(lhs1,Some(rhs)) ::  t)
+   | CSVar(CLId(_,lhs),Some(rhs))::CSIf(CEVar(cond),then_,else_)::t when lhs = cond ->
+      collectVarBind (CSIf(rhs,then_,else_)::t)
+   | h::t -> h :: collectVarBind t
+
+let collectStmt (p:parameters) stmt =
+   match stmt with
+   | CSBlock(stmts) when not p.ccode -> CSBlock(collectVarBind stmts)
+   | _ -> stmt
+
 let rec convertStmt (p:parameters) (s:stmt) : cstmt =
    match s with
    | StmtVal(lhs,None,_) ->
       let lhs' = convertLhsExp true p lhs in
-      CSVar(lhs')
+      CSVar(lhs',None)
    | StmtVal(lhs,Some(rhs),attr) when attr.const ->
       let lhs' = convertLhsExp false p lhs in
       let rhs' = convertExp p rhs in
       CSConst(lhs', rhs')
+   | StmtVal(lhs,Some(rhs),attr) when attr.const ->
+      let lhs' = convertLhsExp false p lhs in
+      let rhs' = convertExp p rhs in
+      CSVar(lhs', Some(rhs'))
    | StmtVal(_,Some(_),_) -> failwith "VultToCLike.convertStmt: val should not have initializations"
    | StmtMem _ -> CSEmpty
    | StmtWhile(cond,stmt,_) ->
@@ -266,7 +284,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let arg_names = List.map (convertTypedId p) args in
       let body' = convertStmt p body in
       let fname = convertId p name in
-      CSFunction(convertType p ret, fname,arg_names,body')
+      CSFunction(convertType p ret, fname,arg_names,collectStmt p body')
    (* special case for c/c++ to replace the makeArray function *)
    | StmtBind(LWild(_) ,PCall(None,["makeArray"],[size;init;var],_),_) when p.ccode ->
       let init' = convertExp p init in

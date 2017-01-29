@@ -67,7 +67,7 @@ function this.ternary(cond,then_,else_) if cond then return then_ else return el
 function this.eps()             return 1e-18; end
 function this.clip(x,low,high)  return (this.ternary(x<low,low,this.ternary(x>high,high,x))); end
 function this.real(x)           return x; end
-function this.int(x)            return math.floor(x); end
+function this.int(x)            local int_part,_ = math.modf(x) return int_part; end
 function this.sin(x)            return math.sin(x); end
 function this.cos(x)            return math.cos(x); end
 function this.abs(x)            return math.abs(x); end
@@ -78,8 +78,6 @@ function this.tanh(x)           return math.tanh(x); end
 function this.sqrt(x)           return x; end
 function this.set(a,i,v)        a[i]=v; end
 function this.get(a,i)          return a[i]; end
-function this.int_to_float(i)   return i; end
-function this.float_to_int(i)   return math.floor(i); end
 function this.makeArray(size,v) local a = ffi.new("double[?]",size); for i=0,size-1 do a[i]=v end return a; end
 function this.wrap_array(a)     return a; end
 <#code#>
@@ -215,14 +213,21 @@ let printTypeAndName (is_decl:bool) (typ:type_descr) (name:string list) : Pla.t 
 
 let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
-   | CSVar(CLWild) -> None
+   | CSVar(CLWild,None) -> None
 
-   | CSVar(CLId(typ,name)) ->
+   | CSVar(CLId(typ,name),None) ->
       let init = getInitValue typ in
       let name = dot name in
       Some({pla|local <#name#> = <#init#s>;|pla})
 
-   | CSVar(CLTuple(_)) -> failwith "printStmt: invalid tuple assign"
+   | CSVar(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
+
+   | CSVar(CLId(_,name),Some(value)) ->
+      let value_t = printExp params value in
+      let name = dot name in
+      Some({pla|local <#name#> = <#value_t#>;|pla})
+
+   | CSVar(_,_) -> failwith "printStmt: invalid variable declaration"
 
    | CSConst(CLId(_,name),value) ->
       let value_t = printExp params value in

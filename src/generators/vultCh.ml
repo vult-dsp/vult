@@ -189,15 +189,17 @@ let printFunArg (ntype,name) : Pla.t =
 let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
    (* Strange case '_' *)
-   | CSVar(CLWild) -> None
+   | CSVar(CLWild,None) -> None
 
    (* Prints type x; *)
-   | CSVar(CLId(_,_) as lhs) ->
+   | CSVar(CLId(_,_) as lhs, None) ->
       let tlhs = printLhsExp true lhs in
       Some({pla|<#tlhs#>;|pla})
 
    (* All other cases of assigning tuples will be wrong *)
-   | CSVar(CLTuple(_)) -> failwith "printStmt: invalid tuple assign"
+   | CSVar(CLTuple(_),None) -> failwith "printStmt: invalid tuple assign"
+
+   | CSVar(_,_) -> failwith "printStmt: in c code generation there should not be initializations"
 
    (* Prints _ = ... *)
    | CSBind(CLWild,value) ->
