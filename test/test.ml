@@ -284,6 +284,44 @@ module RandomCompileTest = struct
 
 end
 
+
+(** Compiles the benchmark *)
+module BenchTest = struct
+
+   let compileFile (file:string) =
+      let basename = Filename.chop_extension (Filename.basename file) in
+      let cmd = Printf.sprintf "gcc -Werror -I. -I%s -O3 -c %s -o %s.o" (in_test_directory "../runtime") file basename in
+      if Sys.command cmd <> 0 then
+         assert_failure ("Failed to compile "^file)
+
+   let linkFiles (output:string) (files:string list) =
+      let cmd = Printf.sprintf "gcc -o %s %s" output (String.concat " " files) in
+      if Sys.command cmd <> 0 then
+         assert_failure ("Failed to link ")
+
+   let generateCPP (filename:string) (output:string) (real_type:string) : unit =
+      let args = { default_arguments with  files = [filename]; ccode = true; output = output; real = real_type } in
+      let parser_results = ParserVult.parseFile filename  in
+      Driver.generateCode args [parser_results] |> ignore
+
+   let run real_type _ =
+      let vultfile = checkFile (in_test_directory ("../test/bench/bench.vult")) in
+      let output   = Filename.chop_extension (Filename.basename vultfile) in
+      Sys.chdir tmp_dir;
+      generateCPP vultfile output real_type;
+      assert_bool "No code generated" (Sys.file_exists (output^".cpp"));
+      compileFile (output^".cpp");
+      compileFile (in_test_directory "../runtime/vultin.c");
+      compileFile (in_test_directory "../test/bench/main.cpp");
+      linkFiles ("bench_"^real_type) ["vultin.o";"bench.o";"main.o"];
+      Sys.remove (output^".cpp");
+      Sys.remove (output^".h");
+      Sys.chdir initial_dir
+
+   let get = "bench">::: (["bench_float" >:: run "float"; "bench_fixed" >:: run "fixed"])
+
+end
+
 let suite =
    "vult">:::
    [
@@ -295,6 +333,7 @@ let suite =
       CompileTest.get all_files "float";
       CompileTest.get all_files "fixed";
       RandomCompileTest.get test_random_code "float";
+      BenchTest.get;
    ]
 
 

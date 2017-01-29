@@ -1,0 +1,223 @@
+/* This one mashes some of the code in order to generate a changing patch
+   used for benchmarking */
+
+fun near_zero(x) : bool return abs(x)<1e-9;
+
+fun pitchToRate(d) @[table(size=32,min=0.0,max=127.0)]
+   return 8.1758*exp(0.0577623*d)/44100.0;
+
+fun cvToRate(cv) @[table(size=32,min=-10.0,max=10.0)] {
+   return pitchToRate(cv * 12.0 + 48.0);
+}
+
+fun dcblock(x0){
+  mem x1,y1;
+  val y0 = x0-x1+y1*0.995;
+  x1,y1 = x0,y0;
+  return y0;
+}
+
+fun change(x:real):bool {
+    mem pre_x;
+    val v:bool = pre_x <> x;
+    pre_x = x;
+    return v;
+}
+
+fun osc_saw(cv) {
+   mem inc;
+   if(change(cv))
+      inc = cvToRate(cv);
+   val i = if inc < eps() then eps() else inc;
+   // generater a ramp from -1.0  to 1.0
+   mem phase = (2.0*inc + phase) % 2.0;
+   val ph = phase - 1.0;
+   val o = 0.0;
+   // soften the transitions
+   if(ph >= 1.0 - i) {
+      val b = (1.0 - i - ph)/i;
+      o = b * abs(b) + ph;
+   }
+   else if(ph <= i - 1.0) {
+      val b = (i - 1.0 - ph)/i;
+      o = b * abs(b) + ph;
+   }
+   else {
+      o = ph;
+   }
+   return o;
+}
+and init()@[init]{
+   inc = cvToRate(0.0);
+}
+
+fun pulse_train(m,phase){
+  val pi_phase = phase * 3.141592653589793;
+  val denominator1 = sin(pi_phase);
+  val tmp1 = 0.;
+  if(near_zero(denominator1)) {
+    tmp1 = 1.;
+  }
+  else {
+    tmp1 = sin(m * pi_phase);
+    tmp1 =  tmp1 / (m * denominator1);
+  }
+  return tmp1;
+}
+
+// Generates BW-limited waveforms using the blit algorithm.
+// It can generate PWM puses, saws and triangles.
+fun osc_blit(cv,pw,wave:real){
+  mem m;
+  mem rate;
+  mem phase;
+  mem state_triang;
+  mem state_pulse;
+  mem state_saw;
+  mem output;
+
+  val fixed_cv = 0.;
+  if(wave < 2.) {
+    fixed_cv = cv;
+  }
+  else {
+    fixed_cv = cv + 1.;
+  }
+  // Updates the parameters if the cv changed
+  if(change(fixed_cv)) {
+    rate = cvToRate(fixed_cv);
+    val p = 1. / rate;
+    val maxHarmonics = floor(p/2.);
+    m = 2. * maxHarmonics + 1.;
+  }
+  // Generates a shifted version of the phase
+  val shift05 = 0.5 + pw * 0.49;
+  val shift = phase + shift05;
+  if(shift > 1.) {
+    shift = shift - 1.;
+  }
+  // Generates the first pulse train
+  val tmp1 = pulse_train(m,phase);
+  // Generates the second pulse train
+  val tmp2 = pulse_train(m,shift);
+  // Updates the phase
+  phase = phase + rate;
+  if(phase > 1.) {
+    phase = phase - 1.;
+  }
+
+  // Calculates the waveforms based on the pulse trains
+  state_pulse  = clip(state_pulse  * 0.9995 + tmp1 - tmp2, -1., 1.);
+  state_saw    = clip(state_saw    * 0.9995 + (tmp1 + tmp2  - 2. * rate)/shift05/2., -1.,1.);
+  state_triang = clip(state_triang * 0.9995 + 2. * state_pulse * rate, -1.,1.);
+
+  // Select the wave to output
+  if(wave < 1.) {
+    output = state_pulse;
+  }
+  else if(wave < 2.) {
+    output = 2. * state_saw;
+  }
+  else {
+    output = 2. * state_triang*(1. + pw);
+  }
+
+  output = dcblock(output);
+  return clip(output,-1.,1.);
+}
+and init_blit()@[init]{
+  rate = cvToRate(0.0);
+  val p = 1. / rate;
+  val maxHarmonics = floor(p/2.);
+  m = 2. * maxHarmonics + 1.;
+}
+
+fun map(x,x0,x1,y0,y1) {
+  return (x-x0)*(y1-y0)/(x1-x0) + y0;
+}
+
+// Calculates one step of the state-variable filter
+fun svf_step(input,g,q,sel:int) : real {
+   mem dlow, dband;
+   val low = dlow + g * dband;
+   val high = input - low - q*dband;
+   val band = g * high + dband;
+   val notch = high + low;
+
+   dband = 16.0 * tanh(band / 16.0);
+   dlow  = 16.0 * tanh(low / 16.0);
+   val output =
+      if sel == 0 then low else
+      if sel == 1 then high else
+      if sel == 2 then band else
+      notch;
+   return output;
+}
+
+// Approximation of the conversion from cv to g with a polynomial
+// of order 12 in horner form
+fun cv_to_g(cv) @[table(size=32,min=-10.0,max=10.0)] {
+  return
+    0.009318797958475242 +
+    cv * (0.006459251786931072 +
+    cv * (0.0022385574814801443 +
+    cv * (0.0005171829148165939 +
+    cv * (0.0000896034571077366 +
+    cv * (0.000012414393453329774 +
+    cv * (1.431642806057933e-6 +
+    cv * (1.4101291724873928e-7 +
+    cv * (1.2022942926780243e-8 +
+    cv * (8.809351679821987e-10 +
+    cv * (5.169925926612357e-11 +
+    (1.4881084386612797e-12 - 2.206247215709283e-13 * cv) * cv))))))))));
+}
+
+// Main function for the state-variable filter with 2x of oversampling
+// cv: -1 to 6 v (1v/oct)
+// q: 0 to 5 v
+fun flt_svf(input,cv,q,sel){
+   mem g;
+   cv = clip(cv,-1.0,6.0);
+   q  = clip(q, 0.0, 5.0);
+   val fix_q = map(q, 0.0, 5.0, 2.0, 0.0);
+
+   // 2x oversampling and controlling with cv
+   if(change(cv)){
+      g = cv_to_g(cv);
+   }
+
+   // In Vult oversamplig in very easy!
+   val x1 = step:svf_step(input,g,fix_q,sel);
+   val x2 = step:svf_step(input,g,fix_q,sel);
+
+   return (x1+x2)/2.;
+}
+
+// Main processing function
+// 'input' is by default a sine wave at 440 Hz
+fun process(){
+    val lfo1 = osc_saw(-7.0);
+    val lfo2 = -osc_saw(-8.5);
+    val lfo3 = osc_saw(-9.0);
+    val lfo4 = osc_saw(-9.5);
+    val o1 = osc_blit(lfo1,lfo2,abs(lfo3 * 2.0));
+
+    val o = flt_svf(o1,abs(lfo4*5.0),0.5,0);
+   return o;
+}
+
+// Called when a note On is received
+and noteOn(note:int,velocity:int,channel:int){
+}
+
+// Called when a note Off is received
+and noteOff(note:int,channel:int){
+}
+
+// Called when a control changes
+and controlChange(control:int,value:int,channel:int){
+}
+
+// Called on initialization to define initial values
+and default(){
+}
