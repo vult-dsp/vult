@@ -29,22 +29,11 @@ let dot = Pla.map_sep (Pla.string ".") Pla.string
 
 module Templates = struct
 
-   type t =
-      | None
-      | Browser
-
-   let get template =
-      match template with
-      | "none"   -> None
-      | "default" -> Browser
-      | "browser" -> Browser
-      | t -> failwith (Printf.sprintf "The template '%s' is not available for this generator" t)
-
    let none code = code
 
-   let browser module_name code =
+   let common exports module_name code =
       {pla|
-function vultProcess(){
+<#exports#>{
     this.eps  = function()           { return 1e-18 };
     this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
     this.not  = function(x)          { return x==0?1:0; };
@@ -77,9 +66,18 @@ function vultProcess(){
 }
 |pla}
 
+   let browser module_name code =
+      let exports = Pla.string "function vultProcess()" in
+      common exports module_name code
+
+   let node module_name code =
+      let exports = Pla.string "exports.vultProcess = function ()" in
+      common exports module_name code
+
    let apply (module_name:string) (template:string) (code:Pla.t) : Pla.t =
       match template with
       | "browser" -> browser module_name code
+      | "node" -> node module_name code
       | _ -> none code
 
 end
