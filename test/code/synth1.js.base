@@ -15,8 +15,7 @@ this.Synth1__ctx_type_1_init = function(){
 }
 this.Synth1_change_init = function() { return this.Synth1__ctx_type_1_init();}
 this.Synth1_change = function(_ctx,x){
-   var v = false;
-   v = (_ctx.pre_x != x);
+   var v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
@@ -27,8 +26,7 @@ this.Synth1__ctx_type_2_init = function(){
 }
 this.Synth1_edge_init = function() { return this.Synth1__ctx_type_2_init();}
 this.Synth1_edge = function(_ctx,x){
-   var v = false;
-   v = ((_ctx.pre_x != x) && (_ctx.pre_x == (0|0)));
+   var v = ((_ctx.pre_x != x) && (_ctx.pre_x == (0|0)));
    _ctx.pre_x = (x|0);
    return v;
 }
@@ -39,8 +37,7 @@ this.Synth1__ctx_type_3_init = function(){
 }
 this.Synth1_each_init = function() { return this.Synth1__ctx_type_3_init();}
 this.Synth1_each = function(_ctx,n){
-   var ret = false;
-   ret = (_ctx.count == (0|0));
+   var ret = (_ctx.count == (0|0));
    _ctx.count = (((_ctx.count + (1|0)) % n)|0);
    return ret;
 }
@@ -56,9 +53,7 @@ this.Synth1__ctx_type_5_init = function(){
 }
 this.Synth1_phasor_init = function() { return this.Synth1__ctx_type_5_init();}
 this.Synth1_phasor = function(_ctx,pitch,reset){
-   var _cond_47 = false;
-   _cond_47 = this.Synth1_change(_ctx._inst6,pitch);
-   if(_cond_47){
+   if(this.Synth1_change(_ctx._inst6,pitch)){
       _ctx.rate = this.Synth1_pitchToRate(pitch);
    }
    if(reset)_ctx.phase = 0.;
@@ -74,17 +69,12 @@ this.Synth1__ctx_type_6_init = function(){
 }
 this.Synth1_lfo_init = function() { return this.Synth1__ctx_type_6_init();}
 this.Synth1_lfo = function(_ctx,f,gate){
-   var rate = 0.0;
-   rate = (0.000226757369615 * f);
-   var _cond_48 = false;
-   _cond_48 = this.Synth1_edge(_ctx._inst9,gate);
-   if(_cond_48){
+   var rate = (0.000226757369615 * f);
+   if(this.Synth1_edge(_ctx._inst9,gate)){
       _ctx.phase = 0.;
    }
    _ctx.phase = (_ctx.phase + rate);
-   var _cond_49 = false;
-   _cond_49 = (_ctx.phase > 1.);
-   if(_cond_49){
+   if((_ctx.phase > 1.)){
       _ctx.phase = (_ctx.phase + (-1.));
    }
    return (this.sin((6.28318530718 * _ctx.phase)) + (-0.5));
@@ -113,32 +103,22 @@ this.Synth1__ctx_type_7_init = function(){
 }
 this.Synth1_process_init = function() { return this.Synth1__ctx_type_7_init();}
 this.Synth1_process = function(_ctx,input){
-   var lfo_val = 0.0;
-   lfo_val = (this.Synth1_lfo(_ctx._inst13,_ctx.lfo_rate,_ctx.gate) * _ctx.lfo_amt);
-   var phase1 = 0.0;
-   phase1 = this.Synth1_phasor(_ctx._inst14,_ctx.pitch,false);
-   var comp = 0.0;
-   comp = (1. + (- phase1));
-   var reset = false;
-   reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5);
+   var lfo_val = (this.Synth1_lfo(_ctx._inst13,_ctx.lfo_rate,_ctx.gate) * _ctx.lfo_amt);
+   var phase1 = this.Synth1_phasor(_ctx._inst14,_ctx.pitch,false);
+   var comp = (1. + (- phase1));
+   var reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5);
    _ctx.pre_phase1 = phase1;
-   var phase2 = 0.0;
-   phase2 = this.Synth1_phasor(_ctx._inst16,(_ctx.pitch + (this.Synth1_smooth(_ctx._inst15,(_ctx.detune + lfo_val)) * 32.)),reset);
-   var sine = 0.0;
-   sine = this.sin((6.28318530718 * phase2));
+   var phase2 = this.Synth1_phasor(_ctx._inst16,(_ctx.pitch + (this.Synth1_smooth(_ctx._inst15,(_ctx.detune + lfo_val)) * 32.)),reset);
+   var sine = this.sin((6.28318530718 * phase2));
    var gate_value = 0.0;
-   var _cond_50 = false;
-   _cond_50 = (_ctx.gate > (0|0));
-   if(_cond_50)gate_value = 1.;
+   if((_ctx.gate > (0|0)))gate_value = 1.;
    else
    gate_value = 0.;
    return (this.Synth1_smooth(_ctx._inst17,_ctx.volume) * sine * comp * this.Synth1_smooth(_ctx._inst18,gate_value));
 }
 this.Synth1_noteOn_init = function() { return this.Synth1__ctx_type_7_init();}
 this.Synth1_noteOn = function(_ctx,note,velocity,channel){
-   var _cond_54 = false;
-   _cond_54 = (_ctx.count == (0|0));
-   if(_cond_54){
+   if((_ctx.count == (0|0))){
       _ctx.n1 = (note|0);
       _ctx.pitch = this.real(note);
    }
@@ -169,24 +149,17 @@ this.Synth1_noteOn = function(_ctx,note,velocity,channel){
          }
       }
    }
-   var _cond_55 = false;
-   _cond_55 = (_ctx.count <= (4|0));
-   if(_cond_55){
+   if((_ctx.count <= (4|0))){
       _ctx.count = ((_ctx.count + (1|0))|0);
    }
-   var _cond_56 = false;
-   _cond_56 = (_ctx.count > (0|0));
-   if(_cond_56)_ctx.gate = ((1|0)|0);
+   if((_ctx.count > (0|0)))_ctx.gate = ((1|0)|0);
    else
    _ctx.gate = ((0|0)|0);
 }
 this.Synth1_noteOff_init = function() { return this.Synth1__ctx_type_7_init();}
 this.Synth1_noteOff = function(_ctx,note,channel){
    var found = false;
-   found = false;
-   var _cond_62 = false;
-   _cond_62 = (note == _ctx.n1);
-   if(_cond_62){
+   if((note == _ctx.n1)){
       var _tmp_57_0 = (0|0);
       _tmp_57_0 = (_ctx.n2|0);
       var _tmp_57_1 = (0|0);
@@ -229,57 +202,37 @@ this.Synth1_noteOff = function(_ctx,note,channel){
          }
       }
    }
-   var _cond_63 = false;
-   _cond_63 = (found && (_ctx.count > (0|0)));
-   if(_cond_63){
+   if((found && (_ctx.count > (0|0)))){
       _ctx.count = ((_ctx.count + (-1|0))|0);
    }
-   var _cond_68 = false;
-   _cond_68 = (_ctx.count > (0|0));
-   if(_cond_68)_ctx.gate = ((1|0)|0);
+   if((_ctx.count > (0|0)))_ctx.gate = ((1|0)|0);
    else
    _ctx.gate = ((0|0)|0);
-   var _cond_64 = false;
-   _cond_64 = (_ctx.count == (1|0));
-   if(_cond_64){
+   if((_ctx.count == (1|0))){
       _ctx.pitch = this.real(_ctx.n1);
    }
-   var _cond_65 = false;
-   _cond_65 = (_ctx.count == (2|0));
-   if(_cond_65){
+   if((_ctx.count == (2|0))){
       _ctx.pitch = this.real(_ctx.n2);
    }
-   var _cond_66 = false;
-   _cond_66 = (_ctx.count == (3|0));
-   if(_cond_66){
+   if((_ctx.count == (3|0))){
       _ctx.pitch = this.real(_ctx.n3);
    }
-   var _cond_67 = false;
-   _cond_67 = (_ctx.count == (4|0));
-   if(_cond_67){
+   if((_ctx.count == (4|0))){
       _ctx.pitch = this.real(_ctx.n4);
    }
 }
 this.Synth1_controlChange_init = function() { return this.Synth1__ctx_type_7_init();}
 this.Synth1_controlChange = function(_ctx,control,value,channel){
-   var _cond_69 = false;
-   _cond_69 = (control == (30|0));
-   if(_cond_69){
+   if((control == (30|0))){
       _ctx.volume = (value * 0.00787401574803);
    }
-   var _cond_70 = false;
-   _cond_70 = (control == (31|0));
-   if(_cond_70){
+   if((control == (31|0))){
       _ctx.detune = (value * 0.00787401574803);
    }
-   var _cond_71 = false;
-   _cond_71 = (control == (32|0));
-   if(_cond_71){
+   if((control == (32|0))){
       _ctx.lfo_rate = (value * 0.00787401574803);
    }
-   var _cond_72 = false;
-   _cond_72 = (control == (33|0));
-   if(_cond_72){
+   if((control == (33|0))){
       _ctx.lfo_amt = (2. * ((value * 0.00787401574803) + (-0.5)));
    }
 }

@@ -15,8 +15,7 @@ this.Phasedist__ctx_type_1_init = function(){
 }
 this.Phasedist_change_init = function() { return this.Phasedist__ctx_type_1_init();}
 this.Phasedist_change = function(_ctx,x){
-   var v = false;
-   v = (_ctx.pre_x != x);
+   var v = (_ctx.pre_x != x);
    _ctx.pre_x = x;
    return v;
 }
@@ -32,9 +31,7 @@ this.Phasedist__ctx_type_3_init = function(){
 }
 this.Phasedist_phasor_init = function() { return this.Phasedist__ctx_type_3_init();}
 this.Phasedist_phasor = function(_ctx,pitch,reset){
-   var _cond_17 = false;
-   _cond_17 = this.Phasedist_change(_ctx._inst4,pitch);
-   if(_cond_17){
+   if(this.Phasedist_change(_ctx._inst4,pitch)){
       _ctx.rate = this.Phasedist_pitchToRate(pitch);
    }
    if(reset)_ctx.phase = 0.;
@@ -56,17 +53,12 @@ this.Phasedist__ctx_type_4_init = function(){
 }
 this.Phasedist_process_init = function() { return this.Phasedist__ctx_type_4_init();}
 this.Phasedist_process = function(_ctx,input){
-   var phase1 = 0.0;
-   phase1 = this.Phasedist_phasor(_ctx._inst7,_ctx.pitch,false);
-   var comp = 0.0;
-   comp = (1. + (- phase1));
-   var reset = false;
-   reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5);
+   var phase1 = this.Phasedist_phasor(_ctx._inst7,_ctx.pitch,false);
+   var comp = (1. + (- phase1));
+   var reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5);
    _ctx.pre_phase1 = phase1;
-   var phase2 = 0.0;
-   phase2 = this.Phasedist_phasor(_ctx._inst9,(_ctx.pitch + (this.Phasedist_smooth(_ctx._inst8,_ctx.detune) * 32.)),reset);
-   var sine = 0.0;
-   sine = this.sin((6.28318530718 * phase2));
+   var phase2 = this.Phasedist_phasor(_ctx._inst9,(_ctx.pitch + (this.Phasedist_smooth(_ctx._inst8,_ctx.detune) * 32.)),reset);
+   var sine = this.sin((6.28318530718 * phase2));
    return (this.Phasedist_smooth(_ctx._inst10,_ctx.volume) * sine * comp);
 }
 this.Phasedist_noteOn_init = function() { return this.Phasedist__ctx_type_4_init();}
@@ -78,14 +70,10 @@ this.Phasedist_noteOff = function(_ctx,note,channel){
 }
 this.Phasedist_controlChange_init = function() { return this.Phasedist__ctx_type_4_init();}
 this.Phasedist_controlChange = function(_ctx,control,value,channel){
-   var _cond_18 = false;
-   _cond_18 = (control == (30|0));
-   if(_cond_18){
+   if((control == (30|0))){
       _ctx.volume = (this.real(value) * 0.00787401574803);
    }
-   var _cond_19 = false;
-   _cond_19 = (control == (31|0));
-   if(_cond_19){
+   if((control == (31|0))){
       _ctx.detune = (this.real(value) * 0.00787401574803);
    }
 }
