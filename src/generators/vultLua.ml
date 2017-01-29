@@ -76,8 +76,8 @@ function this.floor(x)          return math.floor(x); end
 function this.tan(x)            return math.tan(x); end
 function this.tanh(x)           return math.tanh(x); end
 function this.sqrt(x)           return x; end
-function this.set(a,i,v)        a[i]=v; end
-function this.get(a,i)          return a[i]; end
+function this.set(a,i,v)        a[i+1]=v; end
+function this.get(a,i)          return a[i+1]; end
 function this.int_to_float(i)   return i; end
 function this.float_to_int(i)   return math.floor(i); end
 function this.makeArray(size,v) local a = ffi.new("double[?]",size); for i=0,size-1 do a[i]=v end return a; end
