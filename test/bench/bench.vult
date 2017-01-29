@@ -10,6 +10,19 @@ fun cvToRate(cv) @[table(size=32,min=-10.0,max=10.0)] {
    return pitchToRate(cv * 12.0 + 48.0);
 }
 
+fun otanh(x:real) @[table(size=256,min=-100.0,max=100.0)]{
+    return tanh(x);
+}
+
+fun osin_table(x:real) @[table(size=128,min=0.0,max=3.16)]
+{
+   return sin(x);
+}
+
+fun osin(x:real) {
+   return osin_table(x%3.14159265359);
+}
+
 fun dcblock(x0){
   mem x1,y1;
   val y0 = x0-x1+y1*0.995;
@@ -53,13 +66,13 @@ and init()@[init]{
 
 fun pulse_train(m,phase){
   val pi_phase = phase * 3.141592653589793;
-  val denominator1 = sin(pi_phase);
+  val denominator1 = osin(pi_phase);
   val tmp1 = 0.;
   if(near_zero(denominator1)) {
     tmp1 = 1.;
   }
   else {
-    tmp1 = sin(m * pi_phase);
+    tmp1 = osin(m * pi_phase);
     tmp1 =  tmp1 / (m * denominator1);
   }
   return tmp1;
@@ -144,8 +157,8 @@ fun svf_step(input,g,q,sel:int) : real {
    val band = g * high + dband;
    val notch = high + low;
 
-   dband = 16.0 * tanh(band / 16.0);
-   dlow  = 16.0 * tanh(low / 16.0);
+   dband = 16.0 * otanh(band / 16.0);
+   dlow  = 16.0 * otanh(low / 16.0);
    val output =
       if sel == 0 then low else
       if sel == 1 then high else
