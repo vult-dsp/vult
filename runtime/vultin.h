@@ -103,13 +103,7 @@ static_inline fix16_t fix_div(fix16_t a, fix16_t b)
 {
    if (b == 0)
       return 0;
-   fix16_t aa = a > 0 ? a : -a;
-   fix16_t bb = b > 0 ? b : -b;
-   fix16_t result = (((int64_t)aa) << 16) / ((int64_t)bb);
-   if ((a ^ b) & 0x80000000)
-   {
-      result = -result;
-   }
+   fix16_t result = (((int64_t)a) << 16) / ((int64_t)b);
    return result;
 }
 
@@ -117,8 +111,6 @@ static_inline fix16_t fix_minus(fix16_t x)
 {
    return -x;
 }
-
-fix16_t fix_div(fix16_t a, fix16_t b);
 
 static_inline fix16_t fix_abs(fix16_t x)
 {
