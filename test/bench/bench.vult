@@ -10,7 +10,7 @@ fun cvToRate(cv) @[table(size=32,min=-10.0,max=10.0)] {
    return pitchToRate(cv * 12.0 + 48.0);
 }
 
-fun otanh(x:real) @[table(size=256,min=-100.0,max=100.0)]{
+fun otanh(x:real) @[table(size=32,min=-9.0,max=9.0)]{
     return tanh(x);
 }
 
