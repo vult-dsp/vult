@@ -114,6 +114,7 @@ module Default = struct
             ("tanh", "float"),  "tanhf";
             ("sqrt", "float"),  "sqrtf";
             ("clip", "float"),  "float_clip";
+            ("clip", "int"),    "int_clip";
             ("set",  "float"),  "float_set";
             ("set",  "int"),    "int_set";
             ("set",  "uint8_t"), "bool_set";

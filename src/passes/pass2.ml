@@ -148,12 +148,18 @@ module MakeTables = struct
          [
             StmtVal(lindex,None,emptyAttr);
             StmtBind(lindex,
-                     PCall(None,["int"],
-                           [POp("*",
-                                [
-                                   initial_index;
-                                   POp("-",[input; PReal(min,attr_real)],attr_real)
-                                ],attr_real)],attr_int),emptyAttr);
+                     PCall(None,["clip"],
+                           [
+                              PCall(None,["int"],
+                                    [POp("*",
+                                         [
+                                            initial_index;
+                                            POp("-",[input; PReal(min,attr_real)],attr_real)
+                                         ],attr_real)],attr_int);
+                              PInt(0,attr_int);
+                              PInt(size-1,attr_int);
+                           ],attr_int),
+                     emptyAttr);
             StmtReturn(
                POp("+",
                    [getCoeff "c0";

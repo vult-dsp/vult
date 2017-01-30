@@ -77,6 +77,11 @@ static_inline int fix_to_int(fix16_t a)
    return (a >> 16);
 }
 
+static_inline int int_clip(int v, int minv, int maxv)
+{
+   return v > maxv ? maxv : (v < minv ? minv : v);
+}
+
 // Basic operations for fixed point numbers
 static_inline fix16_t fix_add(fix16_t x, fix16_t y)
 {
