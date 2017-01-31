@@ -28,6 +28,7 @@ let processArguments () : arguments =
    let result = { default_arguments with files = [] }  in
    let opts = [
       "-dparse",   (Arg.Unit   (fun () -> result.dparse   <-true)),    " Dumps the parse tree (default: off)";
+      "-deps",     (Arg.Unit   (fun () -> result.deps     <-true)),    " Prints all file dependencies";
       "-ccode",    (Arg.Unit   (fun () -> result.ccode    <-true)),    " Converts the code to c (default: off)";
       "-jscode",   (Arg.Unit   (fun () -> result.jscode   <-true)),    " Converts the code to javascript (default: off)";
       "-luacode",  (Arg.Unit   (fun () -> result.luacode  <-true)),    " Converts the code to lua (default: off)";
@@ -65,7 +66,14 @@ let main () =
          print_endline "no input files"
       | _ ->
          let parser_results = parseFiles args args.files in
-         (* Prints the parsed files if -dparse was passed as argument *)
-         Driver.dumpParsedFiles args parser_results;
-         Driver.generateCode args parser_results |> ignore;
-         Driver.runFiles args parser_results |> ignore
+         if args.deps then
+            List.map (fun r -> r.file) parser_results
+            |> String.concat " "
+            |> print_endline
+         else
+            begin
+               (* Prints the parsed files if -dparse was passed as argument *)
+               Driver.dumpParsedFiles args parser_results;
+               Driver.generateCode args parser_results |> ignore;
+               Driver.runFiles args parser_results |> ignore
+            end

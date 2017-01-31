@@ -66,7 +66,10 @@ let rec loadFiles_loop (includes:string list) dependencies parsed (files:string 
             |> List.map List.hd
          in
          (* finds all the files for the used modules *)
-         let h_dep_files = List.map (findModule includes) h_deps in
+         let h_dep_files =
+            List.map (findModule includes) h_deps
+            |> List.filter (fun a -> a<>h)
+         in
          (* updates the tables *)
          let ()          = Hashtbl.add dependencies h_module h_deps in
          let ()          = Hashtbl.add parsed h_module h_parsed in

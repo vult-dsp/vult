@@ -212,6 +212,7 @@ type arguments =
       mutable template : string;
       mutable show_version : bool;
       mutable includes : string list;
+      mutable deps    : bool;
    }
 
 let default_arguments =
@@ -227,6 +228,7 @@ let default_arguments =
       template = "default";
       show_version = false;
       includes = [];
+      deps = false;
    }
 
 let makeAttr (loc:Loc.t) : attr =
