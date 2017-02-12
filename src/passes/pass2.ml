@@ -180,7 +180,8 @@ module MakeTables = struct
       | _ -> failwith "evaluateFunction: the function should be a full path"
 
    let calculateTables env name size min max =
-      let delta = (max -. min) /. (float_of_int (size - 1)) in
+      let map x x0 x1 y0 y1 = (x -. x0) *. (y1 -. y0) /. (x1 -. x0) +. y0 in
+      let map_x x = map x 0. (float_of_int size) min max in
       let rec loop index xx acc0 acc1 acc2 =
          if index < 0 then
             [
@@ -190,17 +191,17 @@ module MakeTables = struct
             ]
          else
             let r_index = float_of_int index in
-            let xx_point = min +. delta *. r_index in
+            let xx_point = map_x r_index in
             let x =
-               [ min +. delta *. r_index;
-                 min +. delta *. (r_index +. 0.5);
-                 min +. delta *. (r_index +. 1.0); ]
+               [ xx_point;
+                 map_x (r_index +. 0.5);
+                 map_x (r_index +. 1.0); ]
             in
             let y = List.map (fun a -> evaluateFunction env name a) x in
             let c0, c1, c2 = Fitting.fit x y |> getCoefficients in
             loop (index-1) (xx_point::xx) (c0::acc0) (c1::acc1) (c2::acc2)
       in
-      loop (size - 1) [] [] [] []
+      loop size [] [] [] []
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "MakeTables.stmt_x" @@ fun state stmt ->
