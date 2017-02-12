@@ -1,6 +1,6 @@
 ![Vult](/other/Images/Vult.png?raw=true "Vult")
 
-[![Build Status](https://travis-ci.org/modlfo/vult.svg?branch=master)](https://travis-ci.org/modlfo/vult) [![Build status](https://ci.appveyor.com/api/projects/status/07x9yqby88bh3q8j?svg=true)](https://ci.appveyor.com/project/modlfo/vult) [![Stories in Ready](https://badge.waffle.io/modlfo/vult.svg?label=ready&title=Ready)](http://waffle.io/modlfo/vult) 
+[![Build Status](https://travis-ci.org/modlfo/vult.svg?branch=master)](https://travis-ci.org/modlfo/vult) [![Build status](https://ci.appveyor.com/api/projects/status/07x9yqby88bh3q8j?svg=true)](https://ci.appveyor.com/project/modlfo/vult) [![Stories in Ready](https://badge.waffle.io/modlfo/vult.svg?label=ready&title=Ready)](http://waffle.io/modlfo/vult)
 
 Vult is a simple and powerful language to program high-performance algorithms that may run in small microprocessors or microcontrollers. Vult is specially useful when programming Digital Signal Processing (DSP) algorithms like audio effects or synthesizers.
 
@@ -46,7 +46,7 @@ Alternatively you can download the file `vultjs.js` from https://github.com/modl
 
 #### Ocaml Libraries
 
-- ocaml-containers >= 0.15
+- ocaml-containers == 0.22.1
 - ppx_deriving >= 2.0
 - pla >= 1.0
 - [Optional] ounit >= 2.0 (to run the tests)
@@ -56,7 +56,7 @@ Alternatively you can download the file `vultjs.js` from https://github.com/modl
  The simplest way to instal the requirements is with OPAM (https://opam.ocaml.org/)
 ```
 $ opam switch 4.02.3
-$ opam install containers ppx_deriving pla
+$ opam install containers.0.22.1 ppx_deriving pla
 ```
 Optionally to run the tests and building the web functions:
 ```
