@@ -56,7 +56,7 @@ Alternatively you can download the file `vultjs.js` from https://github.com/modl
  The simplest way to instal the requirements is with OPAM (https://opam.ocaml.org/)
 ```
 $ opam switch 4.02.3
-$ opam install containers.0.22.1 ppx_deriving pla
+$ opam install containers ppx_deriving pla
 ```
 Optionally to run the tests and building the web functions:
 ```
