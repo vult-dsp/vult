@@ -194,7 +194,7 @@ type parser_results =
 
 type interpreter_results =
    {
-      iresult : (string,Error.t list) CCError.t;
+      iresult : (string,Error.t list) result;
       lines   : string array;
    }
 

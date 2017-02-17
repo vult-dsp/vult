@@ -111,8 +111,8 @@ let applyPass name apply pass pass_name (state,stmts) =
 let passes (name:id) (options:pass_options) (env,stmts) =
    (env,stmts)
    |> inferPass name
-   |> interPass name
    |> applyPass name options.pass1 Pass1.run "pass 1"
+   |> interPass name (* loads the functions in the interpreter *)
    |> applyPass name options.pass2 Pass2.run "pass 2"
    |> applyPass name options.pass3 Pass3.run "pass 3"
    |> applyPass name options.pass4 Pass4.run "pass 4"

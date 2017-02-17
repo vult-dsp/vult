@@ -75,7 +75,7 @@ let runFiles (args:arguments) (parser_results:parser_results list) : unit =
          | _ -> print_endline (PrintTypes.expressionStr e)
       in
       if args.eval then
-         parser_results
+         Passes.applyTransformations args ~options:PassCommon.interpreter_options parser_results
          |> Interpreter.eval
          |> List.iter print_val
    with

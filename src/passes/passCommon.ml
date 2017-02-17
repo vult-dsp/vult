@@ -45,6 +45,16 @@ let default_options =
       pass5 = true;
    }
 
+let interpreter_options =
+   {
+      eval  = true;
+      pass1 = true;
+      pass2 = false;
+      pass3 = false;
+      pass4 = false;
+      pass5 = false;
+   }
+
 module PassData = struct
 
    type t =
