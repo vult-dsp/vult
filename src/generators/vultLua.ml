@@ -323,7 +323,7 @@ let printLuaCode (params:params) (stmts:cstmt list) : Pla.t =
    Templates.apply params.config params.module_name params.template code
 
 (** Generates the .c and .h file contents for the given parsed files *)
-let print (params:params) (stmts:CLike.cstmt list) : (Pla.t * string) list =
+let print (params:params) (stmts:CLike.cstmt list) : (Pla.t * filename) list =
    let js_text = printLuaCode params stmts in
-   [js_text, "lua"]
+   [js_text, ExtOnly "lua"]
 

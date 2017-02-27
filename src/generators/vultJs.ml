@@ -274,7 +274,7 @@ let printJsCode (params:params) (stmts:cstmt list) : Pla.t =
    Templates.apply params.module_name params.template code
 
 (** Generates the .c and .h file contents for the given parsed files *)
-let print (params:params) (stmts:CLike.cstmt list) : (Pla.t * string) list =
+let print (params:params) (stmts:CLike.cstmt list) : (Pla.t * filename) list =
    let js_text = printJsCode params stmts in
-   [js_text, "js"]
+   [js_text, ExtOnly "js"]
 

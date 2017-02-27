@@ -112,4 +112,8 @@ void <#output#s>::update(void)
 
 |pla}
 
-let get = header, implementation
+let get (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * filename) list =
+   [
+      header params header_code, ExtOnly "h";
+      implementation params impl_code, ExtOnly "cpp"
+   ]

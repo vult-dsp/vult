@@ -2,10 +2,6 @@
 
 open GenerateParams
 
-type template = params -> Pla.t -> Pla.t
-
-type t = template * template
-
 module Default = struct
 
    let header (params:params) (code:Pla.t) : Pla.t =
@@ -32,20 +28,22 @@ module Default = struct
 <#code#>
 |pla}
 
-   let get : t = header, implementation
-
+   let get (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * filename) list =
+      [
+         header params header_code, ExtOnly "h";
+         implementation params impl_code, ExtOnly "cpp"
+      ]
 end
 
-let apply (params:params) (code:Pla.t) : Pla.t =
-   let header,impl =
+let apply (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * filename) list =
+   let template =
       match params.template with
-      | "none"    -> Default.get
-      | "default" -> Default.get
-      | "teensy"  -> TeensyAudio.get
-      | "pd"      -> Pd.get
+      | "none"     -> Default.get
+      | "default"  -> Default.get
+      | "teensy"   -> TeensyAudio.get
+      | "pd"       -> Pd.get
+      | "modelica" -> Modelica.get
       | t -> failwith (Printf.sprintf "The template '%s' is not available for this generator" t)
    in
-   if params.is_header then
-      header params code
-   else
-      impl params code
+   template params header_code impl_code
+

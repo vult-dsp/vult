@@ -340,12 +340,8 @@ and wrapStmtIfNotBlock params stmt =
       | Some(t) -> Some(Pla.wrap (Pla.string "{ ") (Pla.string " }") t)
       | _ -> None
 
-let printChCode (params:params) (stmts:cstmt list) : Pla.t =
-   let code = printStmtList params stmts in
-   Templates.apply params code
-
 (** Generates the .c and .h file contents for the given parsed files *)
-let print (params:params) (stmts:CLike.cstmt list) : (Pla.t * string) list =
-   let h   = printChCode { params with is_header = true } stmts in
-   let cpp = printChCode { params with is_header = false } stmts in
-   [h,"h"; cpp,"cpp"]
+let print (params:params) (stmts:CLike.cstmt list) : (Pla.t * filename) list =
+   let h   = printStmtList { params with is_header = true } stmts in
+   let cpp = printStmtList { params with is_header = false } stmts in
+   Templates.apply params h cpp

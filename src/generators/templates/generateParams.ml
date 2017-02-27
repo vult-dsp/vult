@@ -59,3 +59,8 @@ let empty_conf module_name =
       default_inputs = [];
       pass_data      = false;
    }
+
+
+type filename =
+   | ExtOnly of string
+   | FullName of string

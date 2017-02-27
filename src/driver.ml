@@ -25,16 +25,20 @@ THE SOFTWARE.
 (** Contains top level functions to perform common tasks *)
 
 open TypesVult
+open GenerateParams
 
-
-let writeOutput (args:arguments) (files:(Pla.t * string) list) : string =
+let writeOutput (args:arguments) (files:(Pla.t * filename) list) : string =
    let write_files = args.output<>"" in
    let txt = List.fold_left
          (fun s (code_t,ext) ->
              let code = Pla.print code_t in
              let () =
                 if write_files then
-                   let filename = args.output^"."^ext in
+                   let filename =
+                      match ext with
+                      | ExtOnly(e) -> args.output^"."^e
+                      | FullName(n) -> Filename.concat (Filename.dirname args.output) n
+                   in
                    if not (FileIO.write filename code) then
                       failwith ("Failed to write file "^filename)
              in

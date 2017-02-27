@@ -180,7 +180,7 @@ let rec getMainModule (parser_results:parser_results list) : string =
    | _::t -> getMainModule t
 
 (* Generates the C/C++ code if the flag was passed *)
-let generateC (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * string) list=
+let generateC (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * filename) list=
    if args.ccode then
       let cparams     = VultToCLike.{repl = params.repl; ccode = true } in
       (* Converts the statements to CLike form *)
@@ -189,7 +189,7 @@ let generateC (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pl
    else []
 
 (* Generates the JS code if the flag was passed *)
-let generateJS (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * string) list=
+let generateJS (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * filename) list=
    if args.jscode then
       let cparams     = VultToCLike.{repl = params.repl; ccode = false } in
       (* Converts the statements to CLike form *)
@@ -198,7 +198,7 @@ let generateJS (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (P
    else []
 
 (* Generates the JS code if the flag was passed *)
-let generateLua (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * string) list=
+let generateLua (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * filename) list=
    if args.luacode then
       let cparams     = VultToCLike.{repl = params.repl; ccode = false } in
       (* Converts the statements to CLike form *)
@@ -241,7 +241,7 @@ let createParameters (results:parser_results list) (args:arguments) =
    { real = args.real; template = args.template; is_header = false; output; repl; module_name; config }
 
 
-let generateCode (parser_results:parser_results list) (args:arguments) : (Pla.t * string) list =
+let generateCode (parser_results:parser_results list) (args:arguments) : (Pla.t * filename) list =
    if args.ccode || args.jscode || args.luacode && parser_results <> [] then
       (* Initialize the replacements *)
       let ()          = DefaultReplacements.initialize () in

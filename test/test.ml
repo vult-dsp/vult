@@ -23,6 +23,7 @@ THE SOFTWARE.
 *)
 open OUnit2
 open TypesVult
+open GenerateParams
 
 let call_uname () =
    let ic = Unix.open_process_in "uname" in
@@ -177,6 +178,11 @@ end
 (** Module to perform code generation tests *)
 module CodeGenerationTest = struct
 
+   let getExt (filename:filename) : string =
+      match filename with
+      | ExtOnly(ext) -> ext
+      | FullName(name) -> name
+
    let process (fullfile:string) (real_type:string) : (string * string) list =
       let basefile = Filename.chop_extension (Filename.basename fullfile) in
       let ccode = real_type = "fixed" || real_type = "float" in
@@ -185,7 +191,7 @@ module CodeGenerationTest = struct
       let stmts = ParserVult.parseFile fullfile in
       let ()    = showResults stmts |> ignore in
       let files = Generate.generateCode [stmts] args in
-      files |> List.map (fun (code,ext) -> Pla.print code, ext)
+      files |> List.map (fun (code,ext) -> Pla.print code, getExt ext)
 
    let run (file:string) real_type context : unit =
       let fullfile = checkFile (in_test_directory ("../examples/"^file)) in

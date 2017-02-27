@@ -85,6 +85,7 @@ Library "vult_templates"
     Replacements,
     Templates,
     Pd,
+    Modelica,
     TeensyAudio
   BuildDepends:
     containers,
