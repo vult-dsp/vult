@@ -19,8 +19,6 @@ after_build:
 artifacts:
   - path: vult-win.zip
     name: Vult
-  - path: vult-dll.zip
-    name: Vult Shared Library
 
 deploy:
   description: 'New version of the Vult compiler'

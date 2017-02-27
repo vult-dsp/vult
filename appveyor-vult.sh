@@ -60,9 +60,3 @@ ls
 pwd
 ./configure
 make
-mkdir build
-cd build
-cmake ../ -G "NMake Makefiles"
-nmake
-./shared/vtest
-cd ..
