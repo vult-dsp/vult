@@ -33,7 +33,7 @@ let rec findModule (includes:string list) (module_name:string) : string =
       Error.raiseErrorMsg ("A file for the module '" ^ module_name ^ "' was not found in any of the included locations")
    | h::t ->
       (* first checks an uncapitalized file *)
-      let file1 = Filename.concat h ((String.uncapitalize module_name) ^ ".vult") in
+      let file1 = Filename.concat h ((String.uncapitalize_ascii module_name) ^ ".vult") in
       if FileIO.exists file1 then file1
       else
          (* then checks a file with the same name as the module *)

@@ -138,6 +138,3 @@ let generateLuaCode (files:string list) : string =
          |> Pla.wrap (Pla.string "{") (Pla.string "}")
       in
       Pla.print  [%pla{|return { error = <#error#>, code = "" }|}]
-;;
-
-Callback.register "generateLuaCode" generateLuaCode ;;

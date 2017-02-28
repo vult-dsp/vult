@@ -22,6 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
+(* replaces all the native functions for the node.js versions *)
+Node.replaceFunctions ();;
+
 open TypesVult
 
 let generateJSCode s =
@@ -50,4 +53,8 @@ let checkCode s =
 Js.Unsafe.set Js.Unsafe.global "plop" (Js.wrap_callback parsePrint) ;;
 Js.Unsafe.set Js.Unsafe.global "jscode" (Js.wrap_callback generateJSCode) ;;
 Js.Unsafe.set Js.Unsafe.global "checkCode" (Js.wrap_callback checkCode) ;;
+
+Js.export "plop" (Js.wrap_callback parsePrint) ;;
+Js.export "jscode" (Js.wrap_callback generateJSCode) ;;
+Js.export "checkCode" (Js.wrap_callback checkCode) ;;
 

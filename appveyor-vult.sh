@@ -58,5 +58,4 @@ opam install pla containers ppx_deriving ounit yojson
 cd $APPVEYOR_BUILD_FOLDER
 ls
 pwd
-./configure
 make

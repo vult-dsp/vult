@@ -294,5 +294,5 @@ let moduleName (file:string) : string =
    file
    |> Filename.basename
    |> Filename.chop_extension
-   |> String.capitalize
+   |> String.capitalize_ascii
 

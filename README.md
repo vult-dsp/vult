@@ -8,31 +8,60 @@ The Vult compiler is a transcompiler, which takes Vult code and produces plain C
 
 Check out the documentation and tutorial in http://modlfo.github.io/vult/
 
+### Basics
+
+To generate C/C++ code with floating point arithmetic you have to execute vult as follows:
+
+```
+$ vultc -ccode infile.vult -o outfile
+```
+
+This will produce the files `outfile.h` and `outfile.cpp`. In order to compile and link these files you need to include in your project the files `runtime/vultin.h` and `runtime/vultin.c`.
+
+To generate code with fixed point arithmetics you need to execute:
+```
+$ vultc -ccode -real fixed infile.vult -o outfile
+```
+
+Fixed point arithmetics are performed in q16 format; 16 bits for the integer part and 16 for the decimal.
+
+Vult provides a few templates; for example to generate objects compatible with the Teensy Audio Library or Pure Data externals.
+
+You can see these repositories for examples:
+
+- PureData https://github.com/modlfo/vult-examples
+- PureData https://github.com/modlfo/pd-vult-example
+- Teensy Audio https://github.com/modlfo/teensy-vult-example
+
 ## Credits
 
 Vult is maintained by: Leonardo Laguna Ruiz with the help of Carl Jönsson and Johan Rhodin
 
 Logo design by: John Klimt https://www.facebook.com/JohnKlimt
 
+### Contact
+
+If you want to receive notifications for future development of this project you can join to the google group http://groups.google.com/d/forum/vult
+
 ## Installing
 
 There are three ways of getting the Vult compiler:
 - using the npm (node.js) package manager
-- building from source
 - downloading the released binaries
+- building from source
 
 The npm (node.js) version is updated frequently based on the trunk branch of this repository. This is the prefered mode of installing if you don't want to build from the sources. The binary version (native executable) is updated with every minor version of Vult.
 
 If you want to get the latest changes as soon as possible then building from the sources is the recommended method.
 
-## Installing with npm
+## Installing (or updating) with npm
 
 You need to have `node.js` and `npm` installed.
 
 ```
 $ npm install vult -g
 ```
-This will install provide `vultc` command in your system. If `vultc` is not available for any reason. You run the main file with node as follows:
+This will install provide `vultc` command in your system. If `vultc` is not available for any reason. You can run the main file with node as follows:
 ```
 $ node vultjs.js
 ```
@@ -42,7 +71,7 @@ Alternatively you can download the file `vultjs.js` from https://github.com/modl
 
 ### Requirements
 
-- Ocaml compiler >= 4.04
+- Ocaml compiler >= 4.03
 
 #### Ocaml Libraries
 
@@ -50,7 +79,7 @@ Alternatively you can download the file `vultjs.js` from https://github.com/modl
 - ppx_deriving >= 2.0
 - pla >= 1.0
 - [Optional] ounit >= 2.0 (to run the tests)
-- [Optional] js_of_ocaml >= 2.6 (to run build the web functions)
+- [Optional] js_of_ocaml >= 2.6 (to build the web functions)
 
 ### Installing the tools
  The simplest way to instal the requirements is with OPAM (https://opam.ocaml.org/)
@@ -64,55 +93,18 @@ $ opam install ounit js_of_ocaml
 ```
 ### Compiling Vult
 ```
-$ ./configure
 $ make
 ```
 In platforms without make you can build with the following command:
 ```
-$ ocaml setup.ml -build
+$ ocamlbuild -use-ocamlfind src/vultc.native
 ```
 Running tests:
 ```
-$ ./configure --enable-tests
 $ make test
 ```
 Building the web functions:
 ```
-$ ./configure --enable-js
-$ make
-$ js_of_ocaml vult_node.byte
+$ make js
 ```
-### Basics
-
-To generate C/C++ code with floating point arithmetic you have to execute vult as follows:
-
-```
-$ ./vultc -ccode infile.vult -o outfile
-```
-
-This will produce the files `outfile.h` and `outfile.cpp`. In order to compile and link these files you need to include in your project the files `runtime/vultin.h` and `runtime/vultin.c`.
-
-To generate code with fixed point arithmetics you need to execute:
-```
-$ ./vult -ccode -real fixed infile.vult -o outfile
-```
-
-Fixed point arithmetics are performed in q16 format; 16 bits for the integer part and 16 for the decimal.
-
-Vult provides a few templates; for example to generate objects compatible with the Teensy Audio Library or Pure Data externals.
-
-You can see these repositories for examples:
-
-- PureData https://github.com/modlfo/vult-examples
-- PureData https://github.com/modlfo/pd-vult-example
-- Teensy Audio https://github.com/modlfo/teensy-vult-example
-
-### Roadmap
-
-You can see what we are working on and what's planned for Vult in the waffle.io board https://waffle.io/modlfo/vult
-
-### Contact
-
-If you want to receive notifications for future development of this project you can join to the google group http://groups.google.com/d/forum/vult
-
 

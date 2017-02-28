@@ -58,7 +58,7 @@ let processArgs (config:configuration) =
 
 (** Header function *)
 let header (params:params) (code:Pla.t) : Pla.t =
-   let file = String.uppercase params.output in
+   let file = String.uppercase_ascii params.output in
    let output = params.output in
    let ret, args = processArgs params.config in
    {pla|

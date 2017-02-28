@@ -3,8 +3,7 @@ export OPAMYES=1
 eval $(opam config env)
 
 opam install containers ppx_deriving ounit js_of_ocaml pla
-./configure --enable-tests --enable-js
-make test
+make all
 cp ./_build/src/vultc.native ./vultc
 if [ $TRAVIS_OS_NAME == linux ];
 then
