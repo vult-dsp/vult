@@ -9,8 +9,8 @@
 <**/*.byte> or <**/*.d.byte> or <**/*.native> : package(containers), package(pla), package(ppx_deriving)
 
 # Link libraries for the Test executable
-<test/*.ml> : package(ounit)
-<test/*.byte> or <test/*.d.byte> or <test/*.native> : package(ounit), package(str)
+<test/*.ml> : package(oUnit)
+<test/*.byte> or <test/*.d.byte> or <test/*.native> : package(oUnit), package(str)
 
 # Link libraries and ppx for Js (js_of_ocaml) files
 <src/vultjs.byte> or <src/vult_node.byte> : package(js_of_ocaml)
