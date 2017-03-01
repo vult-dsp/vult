@@ -25,7 +25,10 @@ THE SOFTWARE.
 open GenerateParams
 open CLike
 open Ollvm_ez
+open TypesVult
 module P = Ollvm.Printer
+
+type vars = Value.t IdMap.t
 
 let rec printType (typ:string) : Type.t =
    match typ with
@@ -45,15 +48,15 @@ let rec printTypeDescr (typ:type_descr) : Type.t=
 
 
 (** Returns a template the print the expression *)
-let rec printExp m (e:cexp) =
+let rec printExp _m vars (e:cexp) =
    match e with
-   | CEInt(n)      -> m, Value.i32 n
-   | CEBool(true)  -> m, Value.i1 1
-   | CEBool(false) -> m, Value.i1 0
-   | CEFloat(_,n)  -> m, Value.float n
-   | CEVar([name],typ) ->
-      let typ' = printTypeDescr typ in
-      Module.local m typ' name
+   | CEInt(n)      -> Value.i32 n
+   | CEBool(true)  -> Value.i1 1
+   | CEBool(false) -> Value.i1 0
+   | CEFloat(_,n)  -> Value.float n
+   | CEVar([name],_) ->
+      let var = IdMap.find [name] vars in
+      var
 
    | _ -> failwith (CLike.show_cexp e)
 
@@ -66,56 +69,83 @@ let declareFunctionArg (m,acc) (typ,name) =
    let m,var = Module.local m (printArgType typ) name in
    m, (var::acc)
 
-let rec printStmt m (stmt:cstmt) =
-   match stmt with
-   (* Prints type x; *)
-   | CSVar(CLId(typ,[name]), None) ->
-      let typ' = printTypeDescr typ in
-      let alloc = Instr.alloca typ' in
-      let m, var = Module.local m typ' name in
-      m, [Instr.(var <-- alloc)]
+let is_reg s =
+   String.get s 0 = '$'
 
-   | CSBind(CLId(typ,[lhs]),CEOp(_,[e1;e2],_)) ->
-      let typ' = printTypeDescr typ in
-      let m, e1' = printExp m e1 in
-      let m, e2' = printExp m e2 in
+let rec printStmt (m:Module.t) (vars:vars) (stmt:cstmt) : Module.t * vars * 'a =
+   match stmt with
+   (* Do not allocate the temporary variables *)
+   | CSVar(CLId(typ,[name]), None) when is_reg name ->
+      let typ'   = printTypeDescr typ in
+      let m, var = Module.local m typ' name in
+      let vars   = IdMap.add [name] var vars in
+      m, vars, []
+
+   (* All other variables are allocated *)
+   | CSVar(CLId(typ,[name]), None) ->
+      let typ'   = printTypeDescr typ in
+      let alloc  = Instr.alloca typ' in
+      let m, var = Module.local m typ' name in
+      let vars   = IdMap.add [name] var vars in
+      m, vars, [Instr.(var <-- alloc)]
+
+   | CSBind(CLId(_,[lhs]), ((CEInt _ | CEFloat _ | CEBool _ ) as rhs)) ->
+      let rhs'    = printExp m vars rhs in
+      let var    = IdMap.find [lhs] vars in
+      let _,res  = Instr.store rhs' var in
+      m, vars, [res]
+
+   | CSBind(CLId(_,[lhs]), CEOp(_,[e1;e2],_)) when is_reg lhs ->
+      let e1'    = printExp m vars e1 in
+      let e2'    = printExp m vars e2 in
+      let var    = IdMap.find [lhs] vars in
+      m, vars, [Instr.(var <-- (add e1' e2'));]
+
+   | CSBind(CLId(typ,[lhs]), CEOp(_,[e1;e2],_)) ->
+      let typ'   = printTypeDescr typ in
+      let e1'    = printExp m vars e1 in
+      let e2'    = printExp m vars e2 in
+      let var    = IdMap.find [lhs] vars in
       let m, tmp = Module.local m typ' "" in
-      let m, var = Module.local m typ' lhs in
-      let _,res = Instr.store tmp var in
-      m, [res; Instr.(tmp <-- (add e1' e2'));]
+      let _,res  = Instr.store tmp var in
+      m, vars, [res; Instr.(tmp <-- (add e1' e2'))]
 
    | CSReturn(e) ->
-      let m, e' = printExp m e in
+      let e' = printExp m vars e in
       let r = Instr.ret e' in
-      m,[r]
+      m,vars, [r]
 
    | _ -> failwith (CLike.show_cstmt stmt)
 
-let printBody (m:Module.t) stmt : Module.t * Ollvm_ast.instr list =
+let printBody (m:Module.t) (vars:vars) (stmt:cstmt)  : Module.t * vars * Ollvm_ast.instr list =
    match stmt with
-   | CSBlock([]) -> m, []
+   | CSBlock([]) -> m, vars, []
    | CSBlock(body) ->
-      let m, body' =
-         List.fold_left (fun (m,acc) stmt -> let m',s = printStmt m stmt in m',(s@acc)) (m,[]) body
+      let m, vars, body' =
+         List.fold_left
+            (fun (m,vars,acc) stmt ->
+                let m', vars',s = printStmt m vars stmt in
+                m',vars',(s@acc))
+            (m,vars,[]) body
       in
-      m, List.rev body'
+      m, vars, List.rev body'
    | _ ->
-      let m, s = printStmt m stmt in
-      m, s
+      let m, vars, s = printStmt m vars stmt in
+      m, vars, s
 
-let printTopLevel m (stmt:cstmt) =
+let printTopLevel (m:Module.t) (vars:vars) (stmt:cstmt) : Module.t * vars =
    match stmt with
    | CSFunction(ntype,name,args,body) ->
-      let ret = printTypeDescr ntype in
-      let m, fname = Module.global m ret name in
-      let m, rev_args = List.fold_left declareFunctionArg (m,[]) args in
-      let args' = List.rev rev_args in
-      let m, fun_entry = Module.local m Type.label (name^"_entry") in
-      let m, body' = printBody m body in
-      let def = Block.define fname args' [Block.block fun_entry body'] in
-      Module.definition m def
+      let ret            = printTypeDescr ntype in
+      let m, fname       = Module.global m ret name in
+      let m, rev_args    = List.fold_left declareFunctionArg (m,[]) args in
+      let args'          = List.rev rev_args in
+      let m, fun_entry   = Module.local m Type.label (name^"_entry") in
+      let m, vars, body' = printBody m vars body in
+      let def            = Block.define fname args' [Block.block fun_entry body'] in
+      Module.definition m def, vars
 
-   | CSType _ -> m
+   | CSType _ -> m, vars
 
    | _ -> failwith "invalid"
 
@@ -126,7 +156,9 @@ let print (_params:params) (stmts:CLike.cstmt list) : (Pla.t * filename) list =
          ("x86_64", "pc", "linux-gnu")
          "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
    in
-   let m = List.fold_left printTopLevel m stmts in
+   let m, _ =
+      List.fold_left (fun (m ,vars) stmt ->printTopLevel m vars stmt) (m, IdMap.empty) stmts
+   in
    let buffer = Buffer.create 0 in
    let formatter = Format.formatter_of_buffer buffer in
    let () = P.modul (P.empty_env ()) formatter m.Module.m_module in

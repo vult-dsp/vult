@@ -53,7 +53,7 @@ module Atomic = struct
       | CEEmpty -> unit_typ
 
    let makeTemp s =
-      let name = "_r"^(string_of_int s.tick) in
+      let name = "$r"^(string_of_int s.tick) in
       { tick = s.tick + 1 }, name
 
    let bindToTemp s exp =
