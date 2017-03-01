@@ -205,6 +205,7 @@ type arguments =
       mutable dparse   : bool;
       mutable eval     : bool;
       mutable ccode    : bool;
+      mutable llvm    : bool;
       mutable jscode   : bool;
       mutable luacode  : bool;
       mutable output   : string;
@@ -220,6 +221,7 @@ let default_arguments =
       files  = [];
       dparse = false;
       ccode  = false;
+      llvm  = false;
       eval   = false;
       jscode = false;
       luacode = false;

@@ -130,11 +130,12 @@ module MakeTables = struct
    let makeVarName (fname:id) (var:id) : id =
       [String.concat "_" (fname @ var)]
 
-   let makeTableDecl fname name data =
+   let makeTableDecl attr fname name data =
       let varname = makeVarName fname name in
-      let arr = PArray((List.map makeFloat data |> Array.of_list), emptyAttr) in
       let size = List.length data in
-      StmtVal(LId(varname, Some(array_type size), attr_array size), Some(arr), { emptyAttr with const = true})
+      let atype = array_type size in
+      let arr = PArray((List.map makeFloat data |> Array.of_list), { attr with typ = Some(atype) }) in
+      StmtVal(LId(varname, Some(atype), attr_array size), Some(arr), { emptyAttr with const = true})
 
    let makeNewBody fname size min max input =
       let lindex = LId(["index"],Some(int_type), attr_int) in
@@ -179,15 +180,15 @@ module MakeTables = struct
          getFloat value
       | _ -> failwith "evaluateFunction: the function should be a full path"
 
-   let calculateTables env name size min max =
+   let calculateTables env attr name size min max =
       let map x x0 x1 y0 y1 = (x -. x0) *. (y1 -. y0) /. (x1 -. x0) +. y0 in
       let map_x x = map x 0. (float_of_int size) min max in
       let rec loop index xx acc0 acc1 acc2 =
          if index < 0 then
             [
-               makeTableDecl name ["c0"] acc0;
-               makeTableDecl name ["c1"] acc1;
-               makeTableDecl name ["c2"] acc2
+               makeTableDecl attr name ["c0"] acc0;
+               makeTableDecl attr name ["c1"] acc1;
+               makeTableDecl attr name ["c2"] acc2
             ]
          else
             let r_index = float_of_int index in
@@ -214,7 +215,7 @@ module MakeTables = struct
                let env    = getInterpEnv state in
                let Path(path) = Env.currentScope state in
                let full_path = path@name in
-               let result = calculateTables env full_path size min max in
+               let result = calculateTables env attr full_path size min max in
                let attr'  = { attr with exp = removeTableParams attr.exp } in
                let var    = getInputVar args in
                let body'  = makeNewBody full_path size min max var in

@@ -110,28 +110,27 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
       Pla.string (if v then "true" else "false")
    | CEString(s) ->
       Pla.wrap (Pla.string "\"") (Pla.string "\"") (Pla.string s)
-   | CEArray(elems) ->
+   | CEArray(elems,_) ->
       let elems_t = Pla.map_sep Pla.comma (printExp params) elems in
       {pla|[<#elems_t#>]|pla}
-   | CECall(name,args) ->
+   | CECall(name,args,_) ->
       let args_t = Pla.map_sep Pla.comma (printExp params) args in
       {pla|this.<#name#s>(<#args_t#>)|pla}
-   | CEUnOp(op,e) ->
+   | CEUnOp(op,e,_) ->
       let e_t = printExp params e in
       {pla|(<#op#s> <#e_t#>)|pla}
-   | CEOp(op,elems) ->
+   | CEOp(op,elems,_) ->
       let op_t = {pla| <#op#s> |pla} in
       let elems_t = Pla.map_sep op_t (printExp params) elems in
       {pla|(<#elems_t#>)|pla}
-   | CEVar(name) ->
+   | CEVar(name,_) ->
       dot name
-   | CEIf(cond,then_,else_) ->
+   | CEIf(cond,then_,else_,_) ->
       let cond_t = printExp params cond in
       let then_t = printExp params then_ in
       let else_t = printExp params else_ in
       {pla|(<#cond_t#>?<#then_t#>:<#else_t#>)|pla}
-   | CENewObj -> Pla.string "{}"
-   | CETuple(elems) ->
+   | CETuple(elems,_) ->
       let elems_t = Pla.map_sep Pla.commaspace (printJsField params) elems in
       {pla|{ <#elems_t#> }|pla}
 
@@ -198,7 +197,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let value_t = printExp params value in
       Some({pla|<#value_t#>;|pla})
 
-   | CSConst(CLTuple(elems),CEVar(name)) ->
+   | CSConst(CLTuple(elems),CEVar(name,_)) ->
       List.mapi (printLhsExpTuple name true) elems
       |> Pla.join
       |> fun a -> Some(a)
@@ -208,7 +207,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSBind(CLWild,value) ->
       Some(Pla.(printExp params value ++ semi))
 
-   | CSBind(CLTuple(elems),CEVar(name)) ->
+   | CSBind(CLTuple(elems),CEVar(name,_)) ->
       List.mapi (printLhsExpTuple name false) elems
       |> Pla.join
       |> fun a -> Some(a)

@@ -10,4 +10,5 @@ PKG pla
 PKG pla.ppx
 PKG js_of_ocaml.ppx
 PKG js_of_ocaml
+PKG ollvm
 FLG -w +27+33-58

@@ -26,10 +26,190 @@ open TypesVult
 open CLike
 open Common
 
+let unit_typ = CTSimple("unit")
+
+module Atomic = struct
+   type s = { tick : int }
+
+   let is_unit ts =
+      match ts with
+      | CTSimple("unit") -> true
+      | CTSimple("void") -> true
+      | _ -> false
+
+   let cexpType e =
+      match e with
+      | CEInt _   -> CTSimple("int")
+      | CEFloat _ -> CTSimple("real")
+      | CEBool _  -> CTSimple("bool")
+      | CEString _ -> CTSimple("string")
+      | CEArray(_,ts)
+      | CECall(_,_,ts)
+      | CEUnOp(_,_,ts)
+      | CEOp(_,_,ts)
+      | CEVar(_,ts)
+      | CEIf(_,_,_,ts)
+      | CETuple(_,ts) -> ts
+      | CEEmpty -> unit_typ
+
+   let makeTemp s =
+      let name = "_r"^(string_of_int s.tick) in
+      { tick = s.tick + 1 }, name
+
+   let bindToTemp s exp =
+      let s', name = makeTemp s in
+      let ts = cexpType exp in
+      let lhs = CLId(ts,[name]) in
+      let stmt = [CSVar(lhs,None) ;CSBind(lhs,exp)] in
+      s', stmt, CEVar([name],ts)
+
+   let rec makeOpAtomic s op ts elems : s * cstmt list * cexp  =
+      match elems with
+      | []
+      | [_] -> failwith "makeOpAtomic: invalid input"
+      | [e1; e2] ->
+         let s, pre1, e1' = makeExpAtomic s e1 in
+         let s, pre2, e2' = makeExpAtomic s e2 in
+         let s, pre3, a = bindToTemp s (CEOp(op, [e1'; e2'], ts)) in
+         s, pre1 @ pre2@ pre3, a
+      | h::t ->
+         let s, pre1, h' = makeExpAtomic s h in
+         let s, pre2, a = makeOpAtomic s op ts t in
+         let s, pre3, b = bindToTemp s (CEOp(op, [h'; a], ts)) in
+         s, pre1@pre2@pre3, b
+
+
+   and makeExpAtomic (s:s) (exp:cexp) : s * cstmt list * cexp =
+      match exp with
+      | CEInt _
+      | CEFloat _
+      | CEBool _
+      | CEString _ -> s, [], exp
+      | CEVar([_],_) -> s, [], exp
+      | CEVar _ ->
+         let s, pre, e = bindToTemp s exp in
+         s, pre, e
+      | CEArray(elems, ts) ->
+         let s, pre, elems' = makeExpListAtomic s elems in
+         let s, pre1, ret = bindToTemp s (CEArray(elems', ts)) in
+         s, pre@pre1, ret
+
+      | CECall(_, _, ts) when is_unit ts ->
+         s, [], exp
+
+      | CECall(name, args, ts) ->
+         let s, pre, args' = makeExpListAtomic s args in
+         let s, pre1, ret = bindToTemp s (CECall(name,args', ts)) in
+         s, pre@pre1, ret
+
+      | CEUnOp(op,arg,ts) ->
+         let s, pre, arg' = makeExpAtomic s arg in
+         let s, pre1, ret = bindToTemp s (CEUnOp(op,arg',ts)) in
+         s, pre@pre1, ret
+
+      | CETuple(elems, ts) ->
+         let labels, expl = List.split elems in
+         let s, pre, expl' = makeExpListAtomic s expl in
+         let elems' = List.combine labels expl' in
+         let s, pre1, ret = bindToTemp s (CETuple(elems', ts)) in
+         s, pre@pre1, ret
+
+      | CEIf(cond,then_,else_,ts) ->
+         let s, tmp = makeTemp s in
+         let ltmp = CLId(ts, [tmp]) in
+         let if_stmt = CSIf(cond,CSBind(ltmp,then_),Some(CSBind(ltmp,else_))) in
+         s, [CSVar(ltmp,None); if_stmt], CEVar([tmp],ts)
+
+      | CEOp(op,elems,ts) ->
+         makeOpAtomic s op ts elems
+
+      | CEEmpty -> s, [], CEEmpty
+
+
+   and makeExpListAtomic (s:s) (elems: cexp list) : s * cstmt list * cexp list =
+      let s', pre_rev, elems_rev =
+         List.fold_left
+            (fun (s,pre,acc) exp ->
+                let s', p, e' = makeExpAtomic s exp in
+                s', (p::pre), (e'::acc))
+            (s,[],[])
+            elems
+      in
+      s', List.concat (List.rev pre_rev), List.rev elems_rev
+
+   let makeSingleStmt stmts =
+      match stmts with
+      | [] -> CSEmpty
+      | [stmt] -> stmt
+      | _ -> CSBlock(stmts)
+
+
+   let rec makeStmtAtomic (s:s) (stmt:cstmt) =
+      match stmt with
+      | CSVar(_,None)
+      | CSType _
+      | CSAlias _
+      | CSExtFunc _-> s, [stmt]
+      | CSVar(lhs,Some(rhs)) ->
+         let s, pre, rhs' = makeExpAtomic s rhs in
+         s, pre @ [CSVar(lhs, None); CSBind(lhs, rhs')]
+
+      | CSBind(lhs,rhs) ->
+         let s, pre, rhs' = makeExpAtomic s rhs in
+         s, pre @ [CSBind(lhs, rhs')]
+
+      | CSConst(lhs,rhs) ->
+         s, [CSConst(lhs, rhs)]
+
+      | CSReturn(e) ->
+         let s, pre, e' = makeExpAtomic s e in
+         s, pre @ [CSReturn(e')]
+
+      | CSWhile(cond,body) ->
+         let s, pre, cond' = makeExpAtomic s cond in
+         let s, body' = makeStmtAtomic s body in
+         s, pre @ [CSWhile(cond', makeSingleStmt body')]
+
+      | CSIf(cond,then_,Some(else_)) ->
+         let s, pre, cond' = makeExpAtomic s cond in
+         let s, then_' = makeStmtAtomic s then_ in
+         let s, else_' = makeStmtAtomic s else_ in
+         s, pre @ [CSIf(cond', makeSingleStmt then_', Some(makeSingleStmt else_'))]
+
+      | CSIf(cond,then_, None) ->
+         let s, pre, cond' = makeExpAtomic s cond in
+         let s, then_' = makeStmtAtomic s then_ in
+         s, pre @ [CSIf(cond', makeSingleStmt then_', None)]
+
+      | CSFunction(ts, name, args, body) ->
+         let s, body' = makeStmtAtomic s body in
+         s, [CSFunction(ts, name, args, makeSingleStmt body')]
+
+      | CSBlock(stmts) ->
+         let s, stmts' = makeStmtListAtomic s stmts in
+         s, [CSBlock(stmts')]
+
+      | CSEmpty -> s,[stmt]
+
+   and makeStmtListAtomic (s:s) (stmts:cstmt list) =
+      let s, stmt_rev =
+         List.fold_left
+            (fun (s,acc) stmt ->
+                let s, stmt' = makeStmtAtomic s stmt in
+                s, stmt' :: acc)
+            (s,[])
+            stmts
+      in
+      s, List.concat (List.rev stmt_rev)
+end
+
+
+
 type parameters =
    {
       repl : Replacements.t;
       ccode : bool; (* true if we are generating ccode *)
+      llvm : bool;  (* true if we are generating llvm *)
    }
 
 let convertId (p:parameters) (id:id) : string =
@@ -62,7 +242,6 @@ let rec convertType (p:parameters) (tp:VType.t) : type_descr =
    | VType.TExpAlt _ ->
       failwith ("VultToCLike.convertType: unsupported type in c code generation: " ^ PrintTypes.typeStr tp)
 
-
 let convertTypedId (p:parameters) (e:typed_id) : arg_type * string =
    match e with
    | SimpleId(_,_,_)  -> failwith "VultToCLike.convertTypedId: everything should have types"
@@ -81,22 +260,22 @@ let getCast (p:parameters) (from_type:type_descr) (to_type:type_descr) : string 
       let to_str   = show_type_descr to_type in
       failwith ("VultToCLike.getCast: invalid casting of types " ^ from_str ^ " -> " ^ to_str)
 
-let makeNestedCall (name:string) (args:cexp list) : cexp =
+let makeNestedCall (typ:type_descr) (name:string) (args:cexp list) : cexp =
    match args with
    | []     -> failwith "VultToCLike.makeNestedCall: invalid number of arguments"
-   | [_;_]  -> CECall(name,args)
-   | h :: t -> List.fold_left (fun acc a -> CECall(name,[acc;a])) h t
+   | [_;_]  -> CECall(name, args, typ)
+   | h :: t -> List.fold_left (fun acc a -> CECall(name, [acc;a], typ)) h t
 
 let convertOperator (p:parameters) (op:string) (typ:type_descr) (elems:cexp list) : cexp =
    match typ with
    | CTSimple(typ_t) ->
       begin match Replacements.getFunctionForOperator p.repl op typ_t with
-         | Some(fn) -> makeNestedCall fn elems
+         | Some(fn) -> makeNestedCall typ fn elems
          | None ->
             let new_op = Replacements.getOperator p.repl op typ_t in
-            CEOp(new_op,elems)
+            CEOp(new_op, elems, typ)
       end
-   | _ -> CEOp(op,elems)
+   | _ -> CEOp(op, elems, typ)
 
 let getFunctionSetType (elem_typs:type_descr list) : type_descr =
    match elem_typs with
@@ -128,17 +307,17 @@ let convertFunction (p:parameters) (name:id) (typ:type_descr) (elems:cexp list) 
       begin match getFunctionSetType elem_typs with
          | CTSimple(typ_t) ->
             let fn = Replacements.getFunction p.repl "set" typ_t in
-            CECall(fn, elems)
+            CECall(fn, elems, typ)
          | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
       end
    | [fname] ->
       begin match typ with
          | CTSimple(typ_t) ->
             let fn = Replacements.getFunction p.repl fname typ_t in
-            CECall(fn, elems)
-         | _ -> CECall(convertId p name, elems)
+            CECall(fn, elems, typ)
+         | _ -> CECall(convertId p name, elems, typ)
       end
-   | _ -> CECall(convertId p name, elems)
+   | _ -> CECall(convertId p name, elems, typ)
 
 
 let attrType (p:parameters) (attr:attr) : type_descr =
@@ -151,20 +330,21 @@ let expType (p:parameters) (e:exp) : type_descr =
    |> attrType p
 
 let rec convertExp (p:parameters) (e:exp) : cexp =
+   let typ = attrType p in
    match e with
-   | PUnit(_)       -> CEEmpty
-   | PBool(v,_)     -> CEBool(v)
-   | PInt(n,_)      -> CEInt(n)
-   | PReal(v,_)     ->
+   | PUnit(_)    -> CEEmpty
+   | PBool(v,_)  -> CEBool(v)
+   | PInt(n,_)   -> CEInt(n)
+   | PReal(v,_)  ->
       let s = Replacements.getRealToString p.repl v "real" in
       CEFloat(s,v)
-   | PId(id,_)      -> CEVar(convertVarId p id)
-   | PArray(elems,_) ->
+   | PId(id,attr) -> CEVar(convertVarId p id, typ attr)
+   | PArray(elems,attr) ->
       let elems' = convertExpArray p elems in
-      CEArray(elems')
-   | PUnOp(op,e1,_) ->
+      CEArray(elems', typ attr)
+   | PUnOp(op,e1,attr) ->
       let e1' = convertExp p e1 in
-      CEUnOp(op,e1')
+      CEUnOp(op, e1', typ attr)
    | POp(op,elems,attr) ->
       let elems' = convertExpList p elems in
       let typ    = attrType p attr in
@@ -174,21 +354,21 @@ let rec convertExp (p:parameters) (e:exp) : cexp =
       let from_typ = expType p arg in
       let to_type  = attrType p attr in
       if from_typ <> to_type then
-         CECall(getCast p from_typ to_type, [arg'])
+         CECall(getCast p from_typ to_type, [arg'], typ attr)
       else arg'
    | PCall(_,name,elems,attr) ->
       let elems'   = convertExpList p elems in
       let elem_typ = List.map (expType p) elems in
       let ret_typ  = attrType p attr in
       convertFunction p name ret_typ elems' elem_typ
-   | PIf(cond,then_,else_,_) ->
+   | PIf(cond,then_,else_,attr) ->
       let cond'  = convertExp p cond in
       let then_' = convertExp p then_ in
       let else_' = convertExp p else_ in
-      CEIf(cond', then_', else_')
+      CEIf(cond', then_', else_', typ attr)
    | PGroup(e1,_)      -> convertExp p e1
    | PTuple([e1],_)    -> convertExp p e1
-   | PTuple(elems,_)   ->
+   | PTuple(elems,attr)   ->
       let elems' =
          List.mapi
             (fun i a ->
@@ -196,7 +376,7 @@ let rec convertExp (p:parameters) (e:exp) : cexp =
                 "field_"^(string_of_int i), a')
             elems
       in
-      CETuple(elems')
+      CETuple(elems', typ attr)
    | PSeq _            -> failwith "VultToCLike.convertExp: Sequences are not yet supported for js"
    | PEmpty            -> failwith "VultToCLike.convertExp: Empty expressions are not allowed"
 
@@ -239,7 +419,7 @@ let rec collectVarBind stmts =
    | [] -> []
    | CSVar(lhs1,None)::CSBind(lhs2,rhs)::t when lhs1 = lhs2 ->
       collectVarBind (CSVar(lhs1,Some(rhs)) ::  t)
-   | CSVar(CLId(_,lhs),Some(rhs))::CSIf(CEVar(cond),then_,else_)::t when lhs = cond ->
+   | CSVar(CLId(_,lhs),Some(rhs))::CSIf(CEVar(cond,_),then_,else_)::t when lhs = cond ->
       collectVarBind (CSIf(rhs,then_,else_)::t)
    | h::t -> h :: collectVarBind t
 
@@ -286,13 +466,13 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let fname = convertId p name in
       CSFunction(convertType p ret, fname,arg_names,collectStmt p body')
    (* special case for c/c++ to replace the makeArray function *)
-   | StmtBind(LWild(_) ,PCall(None,["makeArray"],[size;init;var],_),_) when p.ccode ->
+   | StmtBind(LWild(_) ,PCall(None,["makeArray"],[size;init;var],attr),_) when p.ccode ->
       let init' = convertExp p init in
       let size' = convertExp p size in
       let init_typ  = expType p init in
       let init_func = getInitArrayFunction p init_typ in
       let var'  = convertExp p var in
-      CSBind(CLWild,CECall(init_func,[size';init';var']))
+      CSBind(CLWild,CECall(init_func,[size';init';var'], attrType p attr))
    (* special case to bind tuples in c/c++ It expands tuple assigns *)
    | StmtBind(LId(_,_,_) as lhs,PTuple(elems,_),attr) when p.ccode ->
       let stmts =
@@ -301,14 +481,14 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
                convertStmt p (StmtBind(getRecordField lhs i etype,e,attr))) elems in
       CSBlock(stmts)
    (* special for c/c++ initialize array variables *)
-   | StmtBind(LId(lhs,Some(typ),_),PArray(elems,_),_) when p.ccode ->
+   | StmtBind(LId(lhs,Some(atyp),_),PArray(elems,_),_) when p.ccode ->
       let elems' = convertExpArray p elems in
-      let atype,_ = VType.arrayTypeAndSize typ in
+      let atype,_ = VType.arrayTypeAndSize atyp in
       let lhs' = convertVarId p lhs in
       begin match convertType p atype with
-         | CTSimple(typ_t) ->
+         | CTSimple(typ_t) as typ ->
             let fn = Replacements.getFunction p.repl "set" typ_t in
-            let stmts = List.mapi (fun i e -> CSBind(CLWild,CECall(fn,[CEVar(lhs');CEInt(i);e]))) elems' in
+            let stmts = List.mapi (fun i e -> CSBind(CLWild,CECall(fn,[CEVar(lhs', typ);CEInt(i);e],unit_typ))) elems' in
             CSBlock(stmts)
          | _ -> failwith ""
       end
@@ -318,7 +498,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let atyp,size = VType.arrayTypeAndSize typ in
       let atyp' = convertType p atyp in
       let copy_fn = getCopyArrayFunction p atyp' in
-      CSBind(CLWild,CECall(copy_fn,[CEInt(size);CEVar(convertVarId p lhs);rhs']))
+      CSBind(CLWild,CECall(copy_fn,[CEInt(size);CEVar(convertVarId p lhs, atyp');rhs'],unit_typ))
    | StmtBind(lhs,rhs,_) ->
       let lhs' = convertLhsExp false p lhs in
       let rhs' = convertExp p rhs in
@@ -355,3 +535,11 @@ and convertStmtList (p:parameters) (stmts:stmt list) : cstmt list =
          [] stmts
    in
    List.rev stmts_rev
+
+let convert (p:parameters) (stmts:stmt list) : cstmt list =
+   let cstmts = convertStmtList p stmts in
+   if p.llvm then
+      let _ , ctmts = Atomic.makeStmtListAtomic { Atomic.tick = 0 } cstmts in
+      ctmts
+   else
+      cstmts

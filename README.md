@@ -78,6 +78,7 @@ Alternatively you can download the file `vultjs.js` from https://github.com/modl
 - ocaml-containers >= 0.22
 - ppx_deriving >= 2.0
 - pla >= 1.0
+- ollvm = 0.99
 - [Optional] ounit >= 2.0 (to run the tests)
 - [Optional] js_of_ocaml >= 2.6 (to build the web functions)
 
@@ -85,7 +86,7 @@ Alternatively you can download the file `vultjs.js` from https://github.com/modl
  The simplest way to instal the requirements is with OPAM (https://opam.ocaml.org/)
 ```
 $ opam switch 4.04.0
-$ opam install containers ppx_deriving pla
+$ opam install containers ppx_deriving pla ollvm
 ```
 Optionally to run the tests and building the web functions:
 ```

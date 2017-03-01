@@ -32,6 +32,7 @@ let processArguments () : arguments =
       "-ccode",    (Arg.Unit   (fun () -> result.ccode    <-true)),    " Converts the code to c (default: off)";
       "-jscode",   (Arg.Unit   (fun () -> result.jscode   <-true)),    " Converts the code to javascript (default: off)";
       "-luacode",  (Arg.Unit   (fun () -> result.luacode  <-true)),    " Converts the code to lua (default: off)";
+      "-llvmcode", (Arg.Unit   (fun () -> result.llvm     <-true)),    " Converts the code to LLVM IR (default: off)";
       "-o",        (Arg.String (fun output -> result.output<-output)), "output Defines the prefix of the output files";
       "-real",     (Arg.String (fun real -> result.real<-real)),       " Defines the numeric type for the generated code: double,fixed";
       "-template", (Arg.String (fun temp -> result.template<-temp)),   "name Defines the template used to generate code (ccode only): pd, teensy";

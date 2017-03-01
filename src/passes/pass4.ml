@@ -96,14 +96,14 @@ module ReturnReferences = struct
          | StmtBind(LId(lhs,Some(typ),lattr),PCall(inst,name,args,attr),battr) when not (VType.isSimpleType typ) ->
             let arg = PId(lhs,lattr) in
             let fixed_attr = unitAttr attr in
-            state, [StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],attr),battr)]
+            state, [StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],fixed_attr),battr)]
          (* special case _ = foo() when the return is no simple value *)
          | StmtBind(LWild(wattr),PCall(inst,name,args,attr),battr) when not (VType.isSimpleOpType wattr.typ) ->
             let i,state' = Env.tick state in
             let tmp_name = "_unused_" ^ (string_of_int i) in
             let arg = PId([tmp_name], wattr) in
             let fixed_attr = unitAttr attr in
-            state', [StmtVal(LId([tmp_name],wattr.typ,wattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],attr),battr)]
+            state', [StmtVal(LId([tmp_name],wattr.typ,wattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],fixed_attr),battr)]
          (* special case _ = a when a is not simple value *)
          | StmtBind(LWild(wattr),e,battr) when not (VType.isSimpleOpType wattr.typ) ->
             let i,state' = Env.tick state in
@@ -114,7 +114,7 @@ module ReturnReferences = struct
          | StmtVal(LId(lhs,Some(typ),lattr),Some(PCall(inst,name,args,attr)),battr) when not (VType.isSimpleType typ) ->
             let arg = PId(lhs,lattr) in
             let fixed_attr = unitAttr attr in
-            state, [StmtVal(LId(lhs,Some(typ),lattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],attr),battr)]
+            state, [StmtVal(LId(lhs,Some(typ),lattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],fixed_attr),battr)]
          | StmtVal(_,Some(PCall(_,_,_,_)),_) ->
             state, [stmt]
          | StmtReturn(e,attr) ->

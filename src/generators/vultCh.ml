@@ -35,8 +35,7 @@ let isSimple (e:cexp) : bool =
    | CEBool _
    | CEString _
    | CECall _
-   | CEVar _
-   | CENewObj -> true
+   | CEVar _ -> true
    | _ -> false
 
 (** Returns a template the print the expression *)
@@ -60,35 +59,33 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
 
    | CEString(s) -> Pla.string_quoted s
 
-   | CEArray(elems) ->
+   | CEArray(elems,_) ->
       let telems = Pla.map_sep Pla.comma (printExp params) elems in
       {pla|{<#telems#>}|pla}
 
-   | CECall(name,args) ->
+   | CECall(name,args,_) ->
       let targs = Pla.map_sep Pla.comma (printExp params) args in
       {pla|<#name#s>(<#targs#>)|pla}
 
-   | CEUnOp(op,e) ->
+   | CEUnOp(op,e,_) ->
       let te = printExp params e in
       {pla|(<#op#s> <#te#>)|pla}
 
-   | CEOp(op,elems) ->
+   | CEOp(op,elems,_) ->
       let sop = {pla| <#op#s> |pla} in
       let telems = Pla.map_sep sop (printExp params) elems in
       {pla|(<#telems#>)|pla}
 
-   | CEVar(name) ->
+   | CEVar(name,_) ->
       dot name
 
-   | CEIf(cond,then_,else_) ->
+   | CEIf(cond,then_,else_,_) ->
       let tcond = printExp params cond in
       let tthen = printExp params then_ in
       let telse = printExp params else_ in
       {pla|(<#tcond#>?<#tthen#>:<#telse#>)|pla}
 
-   | CENewObj -> Pla.string "{}"
-
-   | CETuple(elems) ->
+   | CETuple(elems,_) ->
       let telems = Pla.map_sep Pla.comma (printChField params) elems in
       {pla|{ <#telems#> }|pla}
 
@@ -207,15 +204,15 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       Some({pla|<#te#>;|pla})
 
    (* Print (x,y,z) = ... *)
-   | CSBind(CLTuple(elems),CEVar(name)) ->
-      let t =List.mapi (printLhsExpTuple name false) elems |> Pla.join in
+   | CSBind(CLTuple(elems),CEVar(name,_)) ->
+      let t = List.mapi (printLhsExpTuple name false) elems |> Pla.join in
       Some(t)
 
    (* All other cases of assigning tuples will be wrong *)
    | CSBind(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
 
    (* Prints x = [ ... ] *)
-   | CSBind(CLId(_,name),CEArray(elems)) ->
+   | CSBind(CLId(_,name),CEArray(elems,_)) ->
       let t = List.mapi (printArrayBinding params name) elems |> Pla.join in
       Some(t)
 

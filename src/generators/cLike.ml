@@ -37,14 +37,13 @@ type cexp =
    | CEFloat  of string * float
    | CEBool   of bool
    | CEString of string
-   | CEArray  of cexp list
-   | CECall   of string * cexp list
-   | CEUnOp   of string * cexp
-   | CEOp     of string * cexp list
-   | CEVar    of string list
-   | CEIf     of cexp * cexp * cexp
-   | CETuple  of (string * cexp) list
-   | CENewObj
+   | CEArray  of cexp list * type_descr
+   | CECall   of string * cexp list * type_descr
+   | CEUnOp   of string * cexp * type_descr
+   | CEOp     of string * cexp list * type_descr
+   | CEVar    of string list * type_descr
+   | CEIf     of cexp * cexp * cexp * type_descr
+   | CETuple  of (string * cexp) list * type_descr
    | CEEmpty
 [@@deriving show,eq,ord]
 
