@@ -59,8 +59,9 @@ git clone https://github.com/modlfo/ollvm.git
 cd ollvm
 ./configure
 make
+cd src/ollvm
 make install
-cd ..
+cd ../../../
 rm -rf ollvm
 cd $APPVEYOR_BUILD_FOLDER
 ls
