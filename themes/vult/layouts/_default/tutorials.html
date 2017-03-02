@@ -1,19 +1,33 @@
 <link rel="stylesheet" type="text/css" href="../css/vult.css" media="screen">
-<link rel="shortcut icon" href="../images/favicon.ico"/>
+<link rel="shortcut icon" href="../images/favicon.ico" />
 
 <div class="header">
-    <center><img src="../images/VultH.png" alt="Vult" title="Vult" align="middle"></center>
+   <center><img src="../images/VultH.png" alt="Vult" title="Vult" align="middle"></center>
 </div>
 
 {{ partial "menu.html" . }}
 
 <div class="content">
-    <div class="tutorial_list">
-        <ul>
-            {{ range where .Site.Pages "Section" "tutorials" }}
-                {{ .Render "tutorial_li" }}
-            {{ end }}
-        </ul>
-    </div>
+   <h2> Tutorials </h2>
+
+   <div class="tutorial_list">
+      <ul>
+         {{ range where .Site.Pages "Section" "tutorials" }} {{ .Render "tutorial_li" }} {{ end }}
+      </ul>
+   </div>
+   <h2> Other documents </h2>
+   <div class="tutorial_list">
+      <ul>
+         <li><a href="https://github.com/modlfo/vult/wiki/Language-Reference">Language Reference</a></li>
+      </ul>
+   </div>
+
+   <h2> Examples </h2>
+   <div class="tutorial_list">
+      <ul>
+         <li><a href="https://github.com/modlfo/vult-examples">Audio objects for PureData</a></li>
+         <li><a href="https://github.com/modlfo/teensy-vult-example">Exporting code for the Teensy board</a></li>
+      </ul>
+   </div>
 
 </div>

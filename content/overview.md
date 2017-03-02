@@ -38,4 +38,4 @@ If you want to receive notifications for future development of this project you 
 ## Credits
 Logo design by: John Klimt https://www.facebook.com/JohnKlimt
 
-Vult is maintained by **modlfö** (Leonardo Laguna Ruiz) with the help of Carl Jönsson and Johan Rhodin.
+Vult is maintained by [**modlfö** (Leonardo Laguna Ruiz)](https://modlfo.github.io) with the help of Carl Jönsson and Johan Rhodin.
