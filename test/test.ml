@@ -97,6 +97,7 @@ let stand_alone_files =
       "web/template.vult";
       "web/volume.vult";
       "web/delay.vult";
+      "../test/bench/bench.vult";
    ]
 
 let partial_files =
