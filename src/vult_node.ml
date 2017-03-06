@@ -28,13 +28,15 @@ Node.replaceFunctions ();;
 open TypesVult
 
 let generateJSCode s =
-   Driver.parseStringGenerateCode
-      ({ default_arguments with jscode = true; real = "js";template = "browser"; files = ["live"]})
-      (Js.to_string s)
-   |> Js.string
-
-let parsePrint s =
-   Driver.parsePrintCode (Js.to_string s) |> Js.string
+   let args = { default_arguments with jscode = true; real = "js";template = "browser"; files = [Code("live", (Js.to_string s))]} in
+   let result = Driver.main args in
+   match result with
+   | [GeneratedCode [code,_]] ->
+      Js.string (Pla.print code)
+   | [Errors errors] ->
+      let error_strings = Error.reportErrors errors in
+      Js.string ("Errors in the program:\n"^error_strings)
+   | _ -> Js.string "unknown error"
 
 let checkCode s =
    Driver.checkCode (Js.to_string s)
@@ -50,11 +52,9 @@ let checkCode s =
    |> Array.of_list |> Js.array
 ;;
 
-Js.Unsafe.set Js.Unsafe.global "plop" (Js.wrap_callback parsePrint) ;;
 Js.Unsafe.set Js.Unsafe.global "jscode" (Js.wrap_callback generateJSCode) ;;
 Js.Unsafe.set Js.Unsafe.global "checkCode" (Js.wrap_callback checkCode) ;;
 
-Js.export "plop" (Js.wrap_callback parsePrint) ;;
 Js.export "jscode" (Js.wrap_callback generateJSCode) ;;
 Js.export "checkCode" (Js.wrap_callback checkCode) ;;
 

@@ -42,25 +42,29 @@ let rec findModule (includes:string list) (module_name:string) : string =
          else findModule t module_name
 
 (** Returns a list with all the possible directories where files can be found *)
-let getIncludes (arguments:arguments) (files:string list) : string list =
+let getIncludes (arguments:arguments) (files:input list) : string list =
    let current = FileIO.cwd () in
    (* the directories of the input files are considered include paths *)
-   let implicit_dirs = List.map Filename.dirname files in
+   let implicit_dirs = List.map (fun input -> match input with | File(f) | Code(f,_) -> Filename.dirname f) files in
    (* these are the extra include paths passed in the arguments *)
    let explicit_dir = List.map  (Filename.concat current) arguments.includes in
    List.sort_uniq compare (current :: implicit_dirs @ explicit_dir)
 
 (* main function that iterates the input files, gets the dependencies and searchs for the dependencies locations *)
-let rec loadFiles_loop (includes:string list) dependencies parsed (files:string list) =
+let rec loadFiles_loop (includes:string list) dependencies parsed (files:input list) =
    match files with
    | [] -> dependencies, parsed
-   | h::t ->
+   | ((File(h) | Code(h,_)) as input)::t ->
       (* check that the file has not been visited before *)
       if not (Hashtbl.mem parsed h) then
          let h_module    = moduleName h in
-         let h_parsed    = ParserVult.parseFile h in
+         let h_parsed    =
+            match input with
+            | File(_) -> ParserVult.parseFile h
+            | Code(_,txt) -> ParserVult.parseString (Some(h)) txt
+         in
          (* gets the depencies based on the modules used *)
-         let h_deps      =
+         let h_deps =
             Common.GetDependencies.fromStmts h_parsed.presult
             |> IdSet.to_list
             |> List.map List.hd
@@ -69,6 +73,7 @@ let rec loadFiles_loop (includes:string list) dependencies parsed (files:string 
          let h_dep_files =
             List.map (findModule includes) h_deps
             |> List.filter (fun a -> a<>h)
+            |> List.map (fun a -> File(a))
          in
          (* updates the tables *)
          let ()          = Hashtbl.add dependencies h_module h_deps in
@@ -88,7 +93,7 @@ let rec checkComponents (comps:string list list) : unit =
       Error.raiseErrorMsg msg
 
 (* Given a list of files, finds and parses all the dependencies and returns the parsed contents in order *)
-let loadFiles (arguments:arguments) (files:string list) : parser_results list =
+let loadFiles (arguments:arguments) (files:input list) : parser_results list =
    let includes = getIncludes arguments files in
    let dependencies, parsed = loadFiles_loop includes (Hashtbl.create 8) (Hashtbl.create 8) files in
    let dep_list = Hashtbl.fold (fun a b acc -> (a,b)::acc) dependencies [] in

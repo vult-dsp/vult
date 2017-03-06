@@ -25,88 +25,37 @@ THE SOFTWARE.
 (** Contains top level functions to perform common tasks *)
 
 open TypesVult
-open GenerateParams
 
-let writeOutput (args:arguments) (files:(Pla.t * filename) list) : string =
-   let write_files = args.output<>"" in
-   let txt = List.fold_left
-         (fun s (code_t,ext) ->
-             let code = Pla.print code_t in
-             let () =
-                if write_files then
-                   let filename =
-                      match ext with
-                      | ExtOnly(e) -> args.output^"."^e
-                      | FullName(n) -> Filename.concat (Filename.dirname args.output) n
-                   in
-                   if not (FileIO.write filename code) then
-                      failwith ("Failed to write file "^filename)
-             in
-             s^"\n"^code)
-         "" files
+let generateCode (args:arguments) (parser_results:parser_results list) : output list =
+   match Generate.generateCode parser_results args with
+   | [] -> []
+   | results -> [GeneratedCode results]
+
+(** Prints the parsed files if -dparse was passed as argument *)
+let dumpParsedFiles (args:arguments) (parser_results:parser_results list) : output list  =
+   if args.dparse then
+      parser_results
+      |> Passes.applyTransformations args
+      |> List.map (fun a -> PrintTypes.stmtListStr a.presult)
+      |> String.concat "\n"
+      |> (fun a -> [ParsedCode a])
+   else []
+
+(** Prints the parsed files if -dparse was passed as argument *)
+let runFiles (args:arguments) (parser_results:parser_results list) : output list =
+   let print_val e =
+      match e with
+      | PUnit _ -> []
+      | _ -> [PrintTypes.expressionStr e]
    in
-   if not write_files && txt <> "" then print_endline txt;
-   txt
-
-let generateCode (args:arguments) (parser_results:parser_results list) : string =
-   try
-      let files = Generate.generateCode parser_results args in
-      writeOutput args files
-   with
-   | Error.Errors(errors) ->
-      let error_strings = Error.reportErrors errors in
-      print_endline error_strings;
-      exit (-1)
-
-(** Prints the parsed files if -dparse was passed as argument *)
-let dumpParsedFiles (args:arguments) (parser_results:parser_results list) : unit =
-   try
-      if args.dparse then
-         parser_results
-         |> Passes.applyTransformations args
-         |> List.iter (fun a -> PrintTypes.stmtListStr a.presult |> print_string)
-   with
-   | Error.Errors(errors) ->
-      let error_strings = Error.reportErrors errors in
-      print_endline error_strings
-
-(** Prints the parsed files if -dparse was passed as argument *)
-let runFiles (args:arguments) (parser_results:parser_results list) : unit =
-   try
-      let print_val e =
-         match e with
-         | PUnit _ -> ()
-         | _ -> print_endline (PrintTypes.expressionStr e)
-      in
-      if args.eval then
-         Passes.applyTransformations args ~options:PassCommon.interpreter_options parser_results
-         |> Interpreter.eval
-         |> List.iter print_val
-   with
-   | Error.Errors(errors) ->
-      let error_strings = Error.reportErrors errors in
-      print_endline error_strings
-
-(** Parses the code and and generates the target *)
-let parseStringGenerateCode (args:arguments) (code:string) : string =
-   try
-      ParserVult.parseString None code
-      |> fun a -> generateCode args [a]
-   with
-   | Error.Errors(errors) ->
-      let error_strings = Error.reportErrors errors in
-      "Errors in the program:\n"^error_strings
-
-(** Parses the code and returns either the transformed code or the error message *)
-let parsePrintCode (code:string) : string =
-   try
-      ParserVult.parseString None code
-      |> Passes.applyTransformationsSingle default_arguments
-      |> (fun a -> PrintTypes.stmtListStr a.presult)
-   with
-   | Error.Errors(errors) ->
-      let error_strings = Error.reportErrors errors in
-      "Errors in the program:\n"^error_strings
+   if args.eval then
+      Passes.applyTransformations args ~options:PassCommon.interpreter_options parser_results
+      |> Interpreter.eval
+      |> List.map print_val
+      |> List.flatten
+      |> (fun a -> [Interpret (String.concat "\n" a)])
+   else
+      []
 
 (** Checks the code and returns a list with the errors *)
 let checkCode (code:string) : (string * string * int * int) list =
@@ -118,6 +67,7 @@ let checkCode (code:string) : (string * string * int * int) list =
    | Error.Errors(errors) ->
       List.map Error.reportErrorStringNoLoc errors
 
+(*
 let generateLuaCode (files:string list) : string =
    let args = { default_arguments with files; luacode = true } in
    let parsed = Loader.loadFiles args files in
@@ -138,3 +88,31 @@ let generateLuaCode (files:string list) : string =
          |> Pla.wrap (Pla.string "{") (Pla.string "}")
       in
       Pla.print  [%pla{|return { error = <#error#>, code = "" }|}]
+
+*)
+
+let version = String.sub Version.version 1 ((String.length Version.version) - 2)
+
+let main (args:arguments)  : output list =
+   try
+      if args.show_version then
+         [Version version]
+      else
+         (* Parse the files *)
+         match args.files with
+         | [] ->
+            [Message ("vult " ^ version ^ " - https://github.com/modlfo/vult\nno input files")]
+         | _ ->
+            let parser_results = Loader.loadFiles args args.files in
+            if args.deps then
+               List.map (fun r -> r.file) parser_results
+               |> (fun s -> [Dependencies s])
+            else
+               begin
+                  dumpParsedFiles args parser_results
+                  @  generateCode args parser_results
+                  @ runFiles args parser_results
+               end
+   with
+   | Error.Errors(errors) -> [Errors errors]
+

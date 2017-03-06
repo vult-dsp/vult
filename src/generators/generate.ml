@@ -248,8 +248,7 @@ let createParameters (results:parser_results list) (args:arguments) =
    let repl        = Replacements.getReplacements args.real in
    { real = args.real; template = args.template; is_header = false; output; repl; module_name; config }
 
-
-let generateCode (parser_results:parser_results list) (args:arguments) : (Pla.t * filename) list =
+let generateCode (parser_results:parser_results list) (args:arguments) : (Pla.t * GenerateParams.filename) list =
    if args.ccode || args.jscode || args.luacode || args.llvm && parser_results <> [] then
       (* Initialize the replacements *)
       let ()          = DefaultReplacements.initialize () in

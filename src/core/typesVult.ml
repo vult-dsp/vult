@@ -192,16 +192,23 @@ type parser_results =
       file    : string;
    }
 
-type interpreter_results =
-   {
-      iresult : (string,Error.t list) result;
-      lines   : string array;
-   }
+type input =
+   | File of string
+   | Code of string * string
+
+type output =
+   | Version of string
+   | Message of string
+   | Dependencies of string list
+   | ParsedCode of string
+   | GeneratedCode of (Pla.t * GenerateParams.filename) list
+   | Interpret of string
+   | Errors of Error.t list
 
 (** Stores the options passed to the command line *)
 type arguments =
    {
-      mutable files    : string list;
+      mutable files    : input list;
       mutable dparse   : bool;
       mutable eval     : bool;
       mutable ccode    : bool;

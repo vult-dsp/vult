@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 open TypesVult
+open GenerateParams
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : arguments =
@@ -42,41 +43,34 @@ let processArguments () : arguments =
    ]
       |> Arg.align
    in
-   let _ = Arg.parse opts (fun a -> result.files <- a::result.files) "Usage: vultc file.vult [options]\noptions:" in
+   let _ = Arg.parse opts (fun a -> result.files <- File(a)::result.files) "Usage: vultc file.vult [options]\noptions:" in
    let _ = result.files <- List.rev result.files in (* Put the files in the correct order  *)
    result
 
-let parseFiles arguments files =
-   try
-      Loader.loadFiles arguments files
-   with
-   | Error.Errors(errors) ->
-      let error_strings = Error.reportErrors errors in
-      print_endline ("Error:\n"^error_strings);
-      exit (-1)
+let getFile (args:arguments) (ext:filename) : string =
+   match ext with
+   | ExtOnly(e) -> args.output^"."^e
+   | FullName(n) -> Filename.concat (Filename.dirname args.output) n
 
-let version = String.sub Version.version 1 ((String.length Version.version) - 2)
+
+let showResult (args:arguments) (output:output) =
+   match output with
+   | Version v -> print_endline v
+   | Message v -> print_endline v
+   | Dependencies deps -> String.concat " " deps |> print_endline
+   | ParsedCode v -> print_endline v
+   | GeneratedCode files when args.output <> "" ->
+      List.iter (fun (text,file) -> FileIO.write (getFile args file) (Pla.print text) |> ignore) files
+   | GeneratedCode files ->
+      List.iter (fun (text,_) -> print_endline (Pla.print text)) files
+   | Interpret v -> print_endline v
+   | Errors errors ->
+      let error_strings = Error.reportErrors errors in
+      print_endline ("Error:\n"^error_strings)
+
 
 let main () =
    let args = processArguments () in
-   if args.show_version then
-      print_endline version
-   else
-      (* Parse the files *)
-      match args.files with
-      | [] ->
-         print_endline ("vult " ^ version ^ " - https://github.com/modlfo/vult");
-         print_endline "no input files"
-      | _ ->
-         let parser_results = parseFiles args args.files in
-         if args.deps then
-            List.map (fun r -> r.file) parser_results
-            |> String.concat " "
-            |> print_endline
-         else
-            begin
-               (* Prints the parsed files if -dparse was passed as argument *)
-               Driver.dumpParsedFiles args parser_results;
-               Driver.generateCode args parser_results |> ignore;
-               Driver.runFiles args parser_results |> ignore
-            end
+   let results = Driver.main args in
+   List.iter (showResult args) results;
+   exit 0

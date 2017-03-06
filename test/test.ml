@@ -48,6 +48,14 @@ let os : string =
    | _ -> failwith "cannot get os"
 ;;
 
+let getFile (args:arguments) (ext:filename) : string =
+   match ext with
+   | ExtOnly(e) -> args.output^"."^e
+   | FullName(n) -> Filename.concat (Filename.dirname args.output) n
+
+let writeFiles args files =
+   List.iter (fun (text,file) -> FileIO.write (getFile args file) (Pla.print text) |> ignore) files
+
 let initial_dir = Sys.getcwd ()
 
 let test_directory = Filename.concat initial_dir "test"
@@ -261,9 +269,10 @@ module CompileTest = struct
          assert_failure ("Failed to compile "^file)
 
    let generateCPP (filename:string) (output:string) (real_type:string) : unit =
-      let args = { default_arguments with  files = [filename]; ccode = true; output = output; real = real_type } in
+      let args = { default_arguments with  files = [File filename]; ccode = true; output = output; real = real_type } in
       let parser_results = ParserVult.parseFile filename  in
-      Driver.generateCode args [parser_results] |> ignore
+      let gen = Generate.generateCode [parser_results] args in
+      writeFiles args gen
 
    let run (real_type:string) (file:string) _ =
       let fullfile = checkFile (in_test_directory ("../examples/"^file)) in
@@ -291,12 +300,13 @@ module RandomCompileTest = struct
          assert_failure ("Failed to compile "^file)
 
    let generateCPP (filename:string) (output:string) (real_type:string) : unit =
-      let args = { default_arguments with  files = [filename]; ccode = true; output = output; real = real_type } in
+      let args = { default_arguments with  files = [File filename]; ccode = true; output = output; real = real_type } in
       let seed = Hashtbl.hash filename in
       let code = RandProg.run seed in
       write filename code;
       let parser_results = ParserVult.parseString (Some(filename)) code in
-      Driver.generateCode args [parser_results] |> ignore
+      let gen = Generate.generateCode [parser_results] args in
+      writeFiles args gen
 
    let run (real_type:string) (file:string) _ =
       let output   = Filename.chop_extension (Filename.basename file) in
@@ -331,9 +341,10 @@ module BenchTest = struct
          assert_failure ("Failed to link ")
 
    let generateCPP (filename:string) (output:string) (real_type:string) : unit =
-      let args = { default_arguments with  files = [filename]; ccode = true; output = output; real = real_type } in
+      let args = { default_arguments with  files = [File filename]; ccode = true; output = output; real = real_type } in
       let parser_results = ParserVult.parseFile filename  in
-      Driver.generateCode args [parser_results] |> ignore
+      let gen = Generate.generateCode [parser_results] args in
+      writeFiles args gen
 
    let run real_type _ =
       let vultfile = checkFile (in_test_directory ("../test/bench/bench.vult")) in
