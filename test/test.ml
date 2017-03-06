@@ -24,6 +24,9 @@ THE SOFTWARE.
 open OUnit2
 open TypesVult
 open GenerateParams
+;;
+
+Float.reduce_precision := true;;
 
 let call_uname () =
    let ic = Unix.open_process_in "uname" in

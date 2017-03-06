@@ -4,21 +4,21 @@
 
 float Math_sin(float x0){
    float x1;
-   x1 = fmodf(x0,6.28318530718f);
+   x1 = fmodf(x0,6.283185f);
    uint8_t sign;
-   sign = (x1 > 3.14159265359f);
+   sign = (x1 > 3.141593f);
    float x2;
-   x2 = fmodf(x1,3.14159265359f);
+   x2 = fmodf(x1,3.141593f);
    float x3;
    uint8_t _cond_8;
-   _cond_8 = (x2 > 1.5707963268f);
-   if(_cond_8){ x3 = (3.14159265359f + (- x2)); }
+   _cond_8 = (x2 > 1.570796f);
+   if(_cond_8){ x3 = (3.141593f + (- x2)); }
    else
    { x3 = x2; }
    float xp2;
    xp2 = (x3 * x3);
    float acc;
-   acc = (x3 * (1.f + (((-0.166666666667f) + (0.00833333333333f * xp2)) * xp2)));
+   acc = (x3 * (1.000000f + (((-0.166667f) + (0.008333f * xp2)) * xp2)));
    float _if_7;
    if(sign){ _if_7 = (- acc); }
    else
@@ -27,12 +27,12 @@ float Math_sin(float x0){
 }
 
 float Math_cos(float x0){
-   return Math_sin((x0 + 1.5707963268f));
+   return Math_sin((x0 + 1.570796f));
 }
 
 float Math_tanh(float xx){
    uint8_t positive;
-   positive = (xx > 0.f);
+   positive = (xx > 0.000000f);
    float x;
    if(positive){ x = xx; }
    else
@@ -40,13 +40,13 @@ float Math_tanh(float xx){
    float y;
    int n;
    n = 0;
-   while(x > 1.f){
-      x = (x * 0.5f);
+   while(x > 1.000000f){
+      x = (x * 0.500000f);
       n = (n + 1);
    }
-   y = ((-0.00409341481604f) + (x * (1.04192726436f + (x * ((-0.191854020579f) + (x * (0.185782226563f + (x * ((-0.920884671533f) + (x * (1.24746375479f + (x * ((-0.916265340718f) + (x * (0.428905299435f + (x * ((-0.13323671176f) + (x * (0.02689551524f + (((-0.00322032138218f) + (0.000174583163406f * x)) * x))))))))))))))))))));
+   y = ((-0.004093f) + (x * (1.041927f + (x * ((-0.191854f) + (x * (0.185782f + (x * ((-0.920885f) + (x * (1.247464f + (x * ((-0.916265f) + (x * (0.428905f + (x * ((-0.133237f) + (x * (0.026896f + (((-0.003220f) + (0.000175f * x)) * x))))))))))))))))))));
    while(n > 0){
-      y = ((2.f * y) / (1.f + (y * y)));
+      y = ((2.000000f * y) / (1.000000f + (y * y)));
       n = (n + (-1));
    }
    float _if_9;
@@ -59,19 +59,19 @@ float Math_tanh(float xx){
 float Math_tan(float x){
    float xp2;
    xp2 = (x * x);
-   return (x * (1.f + (xp2 * (0.333333333333f + (xp2 * (0.133333333333f + (xp2 * (0.0539682539683f + (xp2 * (0.0218694885362f + (0.0088632355299f * xp2)))))))))));
+   return (x * (1.000000f + (xp2 * (0.333333f + (xp2 * (0.133333f + (xp2 * (0.053968f + (xp2 * (0.021869f + (0.008863f * xp2)))))))))));
 }
 
 float Math_exp(float x){
    float acc;
-   acc = ((-0.0164263154557f) + (0.000821315772785f * x));
-   acc = (0.166727101875f + (x * acc));
-   acc = ((-0.971616559205f) + (x * acc));
-   acc = (3.76932607473f + (x * acc));
-   acc = ((-9.0794405392f) + (x * acc));
-   acc = (15.0359818491f + (x * acc));
-   acc = ((-12.2023397685f) + (x * acc));
-   acc = (6.29266799816f + (x * acc));
+   acc = ((-0.016426f) + (0.000821f * x));
+   acc = (0.166727f + (x * acc));
+   acc = ((-0.971617f) + (x * acc));
+   acc = (3.769326f + (x * acc));
+   acc = ((-9.079441f) + (x * acc));
+   acc = (15.035982f + (x * acc));
+   acc = ((-12.202340f) + (x * acc));
+   acc = (6.292668f + (x * acc));
    return acc;
 }
 

@@ -4,7 +4,7 @@
 
 void Sin__ctx_type_0_init(Sin__ctx_type_0 &_output_){
    Sin__ctx_type_0 _ctx;
-   _ctx.pre_x = 0.f;
+   _ctx.pre_x = 0.000000f;
    _output_ = _ctx;
    return ;
 }
@@ -23,10 +23,10 @@ uint8_t Sin_change(Sin__ctx_type_0 &_ctx, float x){
 
 void Sin__ctx_type_1_init(Sin__ctx_type_1 &_output_){
    Sin__ctx_type_1 _ctx;
-   _ctx.y2 = 0.f;
-   _ctx.y1 = 0.f;
-   _ctx.w = 0.f;
-   _ctx.cos_w = 0.f;
+   _ctx.y2 = 0.000000f;
+   _ctx.y1 = 0.000000f;
+   _ctx.w = 0.000000f;
+   _ctx.cos_w = 0.000000f;
    Sin__ctx_type_0_init(_ctx._inst2);
    Sin_sc_osc_start(_ctx);
    _output_ = _ctx;
@@ -40,22 +40,22 @@ void Sin_sc_osc_init(Sin__ctx_type_1 &_output_){
 
 float Sin_sc_osc(Sin__ctx_type_1 &_ctx, float pitch){
    float g;
-   g = 1.f;
+   g = 1.000000f;
    uint8_t _cond_11;
    _cond_11 = Sin_change(_ctx._inst2,pitch);
    if(_cond_11){
       float pre_w;
       pre_w = _ctx.w;
-      _ctx.w = (0.00116485f * expf((0.0577623f * pitch)));
-      g = (tanf((_ctx.w * 0.5f)) / tanf((pre_w * 0.5f)));
+      _ctx.w = (0.001165f * expf((0.057762f * pitch)));
+      g = (tanf((_ctx.w * 0.500000f)) / tanf((pre_w * 0.500000f)));
       _ctx.cos_w = cosf(_ctx.w);
    }
    float y1_next;
-   y1_next = ((_ctx.cos_w * _ctx.y1) + ((_ctx.cos_w + 1.f) * g * _ctx.y2));
+   y1_next = ((_ctx.cos_w * _ctx.y1) + ((_ctx.cos_w + 1.000000f) * g * _ctx.y2));
    float y2_next;
-   y2_next = (((_ctx.cos_w + (-1.f)) * _ctx.y1) + (_ctx.cos_w * g * _ctx.y2));
-   _ctx.y1 = float_clip(y1_next,(-1.f),1.f);
-   _ctx.y2 = float_clip(y2_next,(-1.f),1.f);
+   y2_next = (((_ctx.cos_w + (-1.000000f)) * _ctx.y1) + (_ctx.cos_w * g * _ctx.y2));
+   _ctx.y1 = float_clip(y1_next,(-1.000000f),1.000000f);
+   _ctx.y2 = float_clip(y2_next,(-1.000000f),1.000000f);
    return _ctx.y1;
 }
 
@@ -65,13 +65,13 @@ void Sin_sc_osc_start_init(Sin__ctx_type_1 &_output_){
 }
 
 void Sin_sc_osc_start(Sin__ctx_type_1 &_ctx){
-   _ctx.y1 = 1.f;
-   _ctx.y2 = ((- _ctx.y1) * 0.5f);
+   _ctx.y1 = 1.000000f;
+   _ctx.y2 = ((- _ctx.y1) * 0.500000f);
 }
 
 void Sin__ctx_type_2_init(Sin__ctx_type_2 &_output_){
    Sin__ctx_type_2 _ctx;
-   _ctx.pitch = 0.f;
+   _ctx.pitch = 0.000000f;
    Sin__ctx_type_1_init(_ctx._inst6);
    Sin_default(_ctx);
    _output_ = _ctx;
@@ -118,7 +118,7 @@ void Sin_default_init(Sin__ctx_type_2 &_output_){
 }
 
 void Sin_default(Sin__ctx_type_2 &_ctx){
-   _ctx.pitch = 69.f;
+   _ctx.pitch = 69.000000f;
 }
 
 

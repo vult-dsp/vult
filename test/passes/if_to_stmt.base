@@ -7,41 +7,41 @@ fun foo(e:int) : unit /* scope_0 */
    (cond2:bool) = (e < 0);
    val (x:real);
    if(cond1)
-      (x:real) = 0.;
+      (x:real) = 0.000000;
    else
       if(cond2)
-         (x:real) = 1.;
+         (x:real) = 1.000000;
       else
-         (x:real) = 2.;
+         (x:real) = 2.000000;
    if(cond1)
-      (y:real) = 0.;
+      (y:real) = 0.000000;
    else
       if(cond2)
-         (y:real) = 1.;
+         (y:real) = 1.000000;
       else
-         (y:real) = 2.;
+         (y:real) = 2.000000;
    val (z:real);
    val (a:real);
    val (_if_1:real);
    if(cond2)
-      (_if_1:real) = 1.;
+      (_if_1:real) = 1.000000;
    else
-      (_if_1:real) = 2.;
+      (_if_1:real) = 2.000000;
    val (_if_2:real);
    if(cond1)
-      (_if_2:real) = 0.;
+      (_if_2:real) = 0.000000;
    else
-      (_if_2:real) = (2. + _if_1);
-   (a:real) = (1. + _if_2);
+      (_if_2:real) = (2.000000 + _if_1);
+   (a:real) = (1.000000 + _if_2);
    val (_if_3:real);
    if(cond2)
-      (_if_3:real) = 1.;
+      (_if_3:real) = 1.000000;
    else
-      (_if_3:real) = 2.;
+      (_if_3:real) = 2.000000;
    val (_if_4:real);
    if(cond1)
-      (_if_4:real) = 0.;
+      (_if_4:real) = 0.000000;
    else
-      (_if_4:real) = (2. + _if_3);
-   (z:real) = (1. + _if_4);
+      (_if_4:real) = (2.000000 + _if_3);
+   (z:real) = (1.000000 + _if_4);
 }

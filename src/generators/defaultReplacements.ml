@@ -142,7 +142,7 @@ module Default = struct
 
    let real_string = Replacements.makeRealToString
          [
-            "float", (fun f -> (string_of_float f)^"f")
+            "float", (fun f -> (Float.to_string f)^"f")
          ]
 
    (* This is the default selection of replacements *)

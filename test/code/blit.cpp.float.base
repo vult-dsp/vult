@@ -3,12 +3,12 @@
 #include "blit.h"
 
 uint8_t Blit_near_zero(float x){
-   return (fabsf(x) < 0.02f);
+   return (fabsf(x) < 0.020000f);
 }
 
 void Blit__ctx_type_1_init(Blit__ctx_type_1 &_output_){
    Blit__ctx_type_1 _ctx;
-   _ctx.pre_x = 0.f;
+   _ctx.pre_x = 0.000000f;
    _output_ = _ctx;
    return ;
 }
@@ -27,8 +27,8 @@ uint8_t Blit_change(Blit__ctx_type_1 &_ctx, float x){
 
 void Blit__ctx_type_2_init(Blit__ctx_type_2 &_output_){
    Blit__ctx_type_2 _ctx;
-   _ctx.y1 = 0.f;
-   _ctx.x1 = 0.f;
+   _ctx.y1 = 0.000000f;
+   _ctx.x1 = 0.000000f;
    _output_ = _ctx;
    return ;
 }
@@ -40,27 +40,27 @@ void Blit_dcblock_init(Blit__ctx_type_2 &_output_){
 
 float Blit_dcblock(Blit__ctx_type_2 &_ctx, float x0){
    float y0;
-   y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995f));
+   y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995000f));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
 }
 
 float Blit_pitchToRate(float d){
-   return (0.000185392290249f * expf((0.0577623f * d)));
+   return (0.000185f * expf((0.057762f * d)));
 }
 
 float Blit_pulse_train(float m, float phase){
    float pi_phase;
-   pi_phase = (phase * 3.14159265359f);
+   pi_phase = (phase * 3.141593f);
    float denominator1;
    denominator1 = sinf(pi_phase);
    float tmp1;
-   tmp1 = 0.f;
+   tmp1 = 0.000000f;
    uint8_t _cond_28;
    _cond_28 = Blit_near_zero(denominator1);
    if(_cond_28){
-      tmp1 = 1.f;
+      tmp1 = 1.000000f;
    }
    else
    {
@@ -72,13 +72,13 @@ float Blit_pulse_train(float m, float phase){
 
 void Blit__ctx_type_5_init(Blit__ctx_type_5 &_output_){
    Blit__ctx_type_5 _ctx;
-   _ctx.state_triang = 0.f;
-   _ctx.state_saw = 0.f;
-   _ctx.state_pulse = 0.f;
-   _ctx.rate = 0.f;
-   _ctx.phase = 0.f;
-   _ctx.output = 0.f;
-   _ctx.m = 0.f;
+   _ctx.state_triang = 0.000000f;
+   _ctx.state_saw = 0.000000f;
+   _ctx.state_pulse = 0.000000f;
+   _ctx.rate = 0.000000f;
+   _ctx.phase = 0.000000f;
+   _ctx.output = 0.000000f;
+   _ctx.m = 0.000000f;
    Blit__ctx_type_2_init(_ctx._inst18);
    Blit__ctx_type_1_init(_ctx._inst10);
    _output_ = _ctx;
@@ -92,34 +92,34 @@ void Blit_osc_init(Blit__ctx_type_5 &_output_){
 
 float Blit_osc(Blit__ctx_type_5 &_ctx, float pitch, float pw, float wave){
    float fixed_pitch;
-   fixed_pitch = 0.f;
+   fixed_pitch = 0.000000f;
    uint8_t _cond_29;
-   _cond_29 = (wave < 0.666666666667f);
+   _cond_29 = (wave < 0.666667f);
    if(_cond_29){
       fixed_pitch = pitch;
    }
    else
    {
-      fixed_pitch = (pitch + 12.f);
+      fixed_pitch = (pitch + 12.000000f);
    }
    uint8_t _cond_30;
    _cond_30 = Blit_change(_ctx._inst10,fixed_pitch);
    if(_cond_30){
       _ctx.rate = Blit_pitchToRate(fixed_pitch);
       float p;
-      p = (1.f / _ctx.rate);
+      p = (1.000000f / _ctx.rate);
       float maxHarmonics;
-      maxHarmonics = floorf((p * 0.5f));
-      _ctx.m = ((2.f * maxHarmonics) + 1.f);
+      maxHarmonics = floorf((p * 0.500000f));
+      _ctx.m = ((2.000000f * maxHarmonics) + 1.000000f);
    }
    float shift05;
-   shift05 = (0.5f + (pw * 0.49f));
+   shift05 = (0.500000f + (pw * 0.490000f));
    float shift;
    shift = (_ctx.phase + shift05);
    uint8_t _cond_31;
-   _cond_31 = (shift > 1.f);
+   _cond_31 = (shift > 1.000000f);
    if(_cond_31){
-      shift = (shift + (-1.f));
+      shift = (shift + (-1.000000f));
    }
    float tmp1;
    tmp1 = Blit_pulse_train(_ctx.m,_ctx.phase);
@@ -127,39 +127,39 @@ float Blit_osc(Blit__ctx_type_5 &_ctx, float pitch, float pw, float wave){
    tmp2 = Blit_pulse_train(_ctx.m,shift);
    _ctx.phase = (_ctx.phase + _ctx.rate);
    uint8_t _cond_32;
-   _cond_32 = (_ctx.phase > 1.f);
+   _cond_32 = (_ctx.phase > 1.000000f);
    if(_cond_32){
-      _ctx.phase = (_ctx.phase + (-1.f));
+      _ctx.phase = (_ctx.phase + (-1.000000f));
    }
-   _ctx.state_pulse = float_clip(((_ctx.state_pulse * 0.9995f) + tmp1 + (- tmp2)),(-1.f),1.f);
-   _ctx.state_saw = float_clip(((_ctx.state_saw * 0.9995f) + (((tmp1 + tmp2 + ((-2.f) * _ctx.rate)) / shift05) * 0.5f)),(-1.f),1.f);
-   _ctx.state_triang = float_clip(((_ctx.state_triang * 0.9995f) + (2.f * _ctx.state_pulse * _ctx.rate)),(-1.f),1.f);
+   _ctx.state_pulse = float_clip(((_ctx.state_pulse * 0.999500f) + tmp1 + (- tmp2)),(-1.000000f),1.000000f);
+   _ctx.state_saw = float_clip(((_ctx.state_saw * 0.999500f) + (((tmp1 + tmp2 + ((-2.000000f) * _ctx.rate)) / shift05) * 0.500000f)),(-1.000000f),1.000000f);
+   _ctx.state_triang = float_clip(((_ctx.state_triang * 0.999500f) + (2.000000f * _ctx.state_pulse * _ctx.rate)),(-1.000000f),1.000000f);
    uint8_t _cond_34;
-   _cond_34 = (wave < 0.333333333333f);
+   _cond_34 = (wave < 0.333333f);
    if(_cond_34){
       _ctx.output = _ctx.state_pulse;
    }
    else
    {
       uint8_t _cond_33;
-      _cond_33 = (wave < 0.666666666667f);
+      _cond_33 = (wave < 0.666667f);
       if(_cond_33){
-         _ctx.output = (2.f * _ctx.state_saw);
+         _ctx.output = (2.000000f * _ctx.state_saw);
       }
       else
       {
-         _ctx.output = (2.f * _ctx.state_triang * (1.f + pw));
+         _ctx.output = (2.000000f * _ctx.state_triang * (1.000000f + pw));
       }
    }
    _ctx.output = Blit_dcblock(_ctx._inst18,_ctx.output);
-   return float_clip((_ctx.output * 0.25f),(-1.f),1.f);
+   return float_clip((_ctx.output * 0.250000f),(-1.000000f),1.000000f);
 }
 
 void Blit__ctx_type_6_init(Blit__ctx_type_6 &_output_){
    Blit__ctx_type_6 _ctx;
-   _ctx.wave = 0.f;
-   _ctx.pw = 0.f;
-   _ctx.pitch = 0.f;
+   _ctx.wave = 0.000000f;
+   _ctx.pw = 0.000000f;
+   _ctx.pitch = 0.000000f;
    Blit__ctx_type_5_init(_ctx._inst20);
    _output_ = _ctx;
    return ;
@@ -200,12 +200,12 @@ void Blit_controlChange(Blit__ctx_type_6 &_ctx, int control, int value, int chan
    uint8_t _cond_35;
    _cond_35 = (control == 30);
    if(_cond_35){
-      _ctx.pw = (int_to_float(value) * 0.00787401574803f);
+      _ctx.pw = (int_to_float(value) * 0.007874f);
    }
    uint8_t _cond_36;
    _cond_36 = (control == 31);
    if(_cond_36){
-      _ctx.wave = (int_to_float(value) * 0.00787401574803f);
+      _ctx.wave = (int_to_float(value) * 0.007874f);
    }
 }
 
@@ -215,9 +215,9 @@ void Blit_default_init(Blit__ctx_type_6 &_output_){
 }
 
 void Blit_default(Blit__ctx_type_6 &_ctx){
-   _ctx.pw = 0.f;
-   _ctx.wave = 45.f;
-   _ctx.pitch = 45.f;
+   _ctx.pw = 0.000000f;
+   _ctx.wave = 45.000000f;
+   _ctx.pitch = 45.000000f;
 }
 
 

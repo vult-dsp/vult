@@ -1,6 +1,6 @@
 fun values() {
    val x = 0;
-   val x = 0.;
+   val x = 0.000000;
    val x = true;
    val x = false;
    val x = (-1);

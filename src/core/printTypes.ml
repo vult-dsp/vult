@@ -114,7 +114,7 @@ and expressionBuff buffer (exp:exp) =
    | PId(s,_)   ->
       identifierBuff buffer s
    | PInt(s,_)  -> append buffer (string_of_int s)
-   | PReal(s,_) -> append buffer (string_of_float s)
+   | PReal(s,_) -> append buffer (Float.to_string s)
    | PBool(true,_)  -> append buffer "true"
    | PBool(false,_) -> append buffer "false"
    | PArray(elems,_) ->

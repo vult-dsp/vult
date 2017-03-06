@@ -21,7 +21,7 @@
    fun bar() : tuple(real,int,bool) /* scope_1 */
    {
       val (_tuple_4:tuple(real,int,bool));
-      (_tuple_4:tuple(real,int,bool)) = (1.,2,false);
+      (_tuple_4:tuple(real,int,bool)) = (1.000000,2,false);
       return _tuple_4;
    }
 

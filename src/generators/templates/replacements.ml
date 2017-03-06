@@ -141,5 +141,5 @@ let getRealToString (t:t) (value:float) (typ:string) : string =
    let typ_t = getType t typ in
    match SimpleMap.get typ_t t.real_string with
    | Some(fn) -> fn value
-   | None -> string_of_float value
+   | None -> Float.to_string value
 

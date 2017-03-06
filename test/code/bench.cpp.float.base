@@ -3,41 +3,41 @@
 #include "bench.h"
 
 uint8_t Bench_near_zero(float x){
-   return (fabsf(x) < 1e-09f);
+   return (fabsf(x) < 0.000000f);
 }
 
 float Bench_pitchToRate(float d){
    int index;
-   index = int_clip(float_to_int((0.244094488189f * d)),0,31);
+   index = int_clip(float_to_int((0.244094f * d)),0,31);
    return (float_get(float_wrap_array(Bench_pitchToRate_c0),index) + (d * (float_get(float_wrap_array(Bench_pitchToRate_c1),index) + (float_get(float_wrap_array(Bench_pitchToRate_c2),index) * d))));
 }
 
 float Bench_cvToRate(float cv){
    int index;
-   index = int_clip(float_to_int((1.55f * (cv + 10.f))),0,31);
+   index = int_clip(float_to_int((1.550000f * (cv + 10.000000f))),0,31);
    return (float_get(float_wrap_array(Bench_cvToRate_c0),index) + (cv * (float_get(float_wrap_array(Bench_cvToRate_c1),index) + (float_get(float_wrap_array(Bench_cvToRate_c2),index) * cv))));
 }
 
 float Bench_otanh(float x){
    int index;
-   index = int_clip(float_to_int((1.72222222222f * (x + 9.f))),0,31);
+   index = int_clip(float_to_int((1.722222f * (x + 9.000000f))),0,31);
    return (float_get(float_wrap_array(Bench_otanh_c0),index) + (x * (float_get(float_wrap_array(Bench_otanh_c1),index) + (float_get(float_wrap_array(Bench_otanh_c2),index) * x))));
 }
 
 float Bench_osin_table(float x){
    int index;
-   index = int_clip(float_to_int((40.1898734177f * x)),0,127);
+   index = int_clip(float_to_int((40.189873f * x)),0,127);
    return (float_get(float_wrap_array(Bench_osin_table_c0),index) + (x * (float_get(float_wrap_array(Bench_osin_table_c1),index) + (float_get(float_wrap_array(Bench_osin_table_c2),index) * x))));
 }
 
 float Bench_osin(float x){
-   return Bench_osin_table(fmodf(x,3.14159265359f));
+   return Bench_osin_table(fmodf(x,3.141593f));
 }
 
 void Bench__ctx_type_6_init(Bench__ctx_type_6 &_output_){
    Bench__ctx_type_6 _ctx;
-   _ctx.y1 = 0.f;
-   _ctx.x1 = 0.f;
+   _ctx.y1 = 0.000000f;
+   _ctx.x1 = 0.000000f;
    _output_ = _ctx;
    return ;
 }
@@ -49,7 +49,7 @@ void Bench_dcblock_init(Bench__ctx_type_6 &_output_){
 
 float Bench_dcblock(Bench__ctx_type_6 &_ctx, float x0){
    float y0;
-   y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995f));
+   y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995000f));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
@@ -57,7 +57,7 @@ float Bench_dcblock(Bench__ctx_type_6 &_ctx, float x0){
 
 void Bench__ctx_type_7_init(Bench__ctx_type_7 &_output_){
    Bench__ctx_type_7 _ctx;
-   _ctx.pre_x = 0.f;
+   _ctx.pre_x = 0.000000f;
    _output_ = _ctx;
    return ;
 }
@@ -76,8 +76,8 @@ uint8_t Bench_change(Bench__ctx_type_7 &_ctx, float x){
 
 void Bench__ctx_type_8_init(Bench__ctx_type_8 &_output_){
    Bench__ctx_type_8 _ctx;
-   _ctx.phase = 0.f;
-   _ctx.inc = 0.f;
+   _ctx.phase = 0.000000f;
+   _ctx.inc = 0.000000f;
    Bench__ctx_type_7_init(_ctx._inst9);
    Bench_init(_ctx);
    _output_ = _ctx;
@@ -97,29 +97,29 @@ float Bench_osc_saw(Bench__ctx_type_8 &_ctx, float cv){
    }
    float i;
    uint8_t _cond_53;
-   _cond_53 = (_ctx.inc < 1e-18f);
-   if(_cond_53){ i = 1e-18f; }
+   _cond_53 = (_ctx.inc < 0.000000f);
+   if(_cond_53){ i = 0.000000f; }
    else
    { i = _ctx.inc; }
-   _ctx.phase = fmodf(((2.f * _ctx.inc) + _ctx.phase),2.f);
+   _ctx.phase = fmodf(((2.000000f * _ctx.inc) + _ctx.phase),2.000000f);
    float ph;
-   ph = (_ctx.phase + (-1.f));
+   ph = (_ctx.phase + (-1.000000f));
    float o;
-   o = 0.f;
+   o = 0.000000f;
    uint8_t _cond_52;
-   _cond_52 = (ph >= (1.f + (- i)));
+   _cond_52 = (ph >= (1.000000f + (- i)));
    if(_cond_52){
       float b;
-      b = ((1.f + (- i) + (- ph)) / i);
+      b = ((1.000000f + (- i) + (- ph)) / i);
       o = ((b * fabsf(b)) + ph);
    }
    else
    {
       uint8_t _cond_51;
-      _cond_51 = (ph <= (i + (-1.f)));
+      _cond_51 = (ph <= (i + (-1.000000f)));
       if(_cond_51){
          float b;
-         b = ((i + (-1.f) + (- ph)) / i);
+         b = ((i + (-1.000000f) + (- ph)) / i);
          o = ((b * fabsf(b)) + ph);
       }
       else
@@ -136,20 +136,20 @@ void Bench_init_init(Bench__ctx_type_8 &_output_){
 }
 
 void Bench_init(Bench__ctx_type_8 &_ctx){
-   _ctx.inc = 0.0029662816207f;
+   _ctx.inc = 0.002966f;
 }
 
 float Bench_pulse_train(float m, float phase){
    float pi_phase;
-   pi_phase = (phase * 3.14159265359f);
+   pi_phase = (phase * 3.141593f);
    float denominator1;
    denominator1 = Bench_osin(pi_phase);
    float tmp1;
-   tmp1 = 0.f;
+   tmp1 = 0.000000f;
    uint8_t _cond_54;
    _cond_54 = Bench_near_zero(denominator1);
    if(_cond_54){
-      tmp1 = 1.f;
+      tmp1 = 1.000000f;
    }
    else
    {
@@ -161,13 +161,13 @@ float Bench_pulse_train(float m, float phase){
 
 void Bench__ctx_type_10_init(Bench__ctx_type_10 &_output_){
    Bench__ctx_type_10 _ctx;
-   _ctx.state_triang = 0.f;
-   _ctx.state_saw = 0.f;
-   _ctx.state_pulse = 0.f;
-   _ctx.rate = 0.f;
-   _ctx.phase = 0.f;
-   _ctx.output = 0.f;
-   _ctx.m = 0.f;
+   _ctx.state_triang = 0.000000f;
+   _ctx.state_saw = 0.000000f;
+   _ctx.state_pulse = 0.000000f;
+   _ctx.rate = 0.000000f;
+   _ctx.phase = 0.000000f;
+   _ctx.output = 0.000000f;
+   _ctx.m = 0.000000f;
    Bench__ctx_type_6_init(_ctx._inst30);
    Bench__ctx_type_7_init(_ctx._inst22);
    Bench_init_blit(_ctx);
@@ -182,34 +182,34 @@ void Bench_osc_blit_init(Bench__ctx_type_10 &_output_){
 
 float Bench_osc_blit(Bench__ctx_type_10 &_ctx, float cv, float pw, float wave){
    float fixed_cv;
-   fixed_cv = 0.f;
+   fixed_cv = 0.000000f;
    uint8_t _cond_55;
-   _cond_55 = (wave < 2.f);
+   _cond_55 = (wave < 2.000000f);
    if(_cond_55){
       fixed_cv = cv;
    }
    else
    {
-      fixed_cv = (cv + 1.f);
+      fixed_cv = (cv + 1.000000f);
    }
    uint8_t _cond_56;
    _cond_56 = Bench_change(_ctx._inst22,fixed_cv);
    if(_cond_56){
       _ctx.rate = Bench_cvToRate(fixed_cv);
       float p;
-      p = (1.f / _ctx.rate);
+      p = (1.000000f / _ctx.rate);
       float maxHarmonics;
-      maxHarmonics = floorf((p * 0.5f));
-      _ctx.m = ((2.f * maxHarmonics) + 1.f);
+      maxHarmonics = floorf((p * 0.500000f));
+      _ctx.m = ((2.000000f * maxHarmonics) + 1.000000f);
    }
    float shift05;
-   shift05 = (0.5f + (pw * 0.49f));
+   shift05 = (0.500000f + (pw * 0.490000f));
    float shift;
    shift = (_ctx.phase + shift05);
    uint8_t _cond_57;
-   _cond_57 = (shift > 1.f);
+   _cond_57 = (shift > 1.000000f);
    if(_cond_57){
-      shift = (shift + (-1.f));
+      shift = (shift + (-1.000000f));
    }
    float tmp1;
    tmp1 = Bench_pulse_train(_ctx.m,_ctx.phase);
@@ -217,32 +217,32 @@ float Bench_osc_blit(Bench__ctx_type_10 &_ctx, float cv, float pw, float wave){
    tmp2 = Bench_pulse_train(_ctx.m,shift);
    _ctx.phase = (_ctx.phase + _ctx.rate);
    uint8_t _cond_58;
-   _cond_58 = (_ctx.phase > 1.f);
+   _cond_58 = (_ctx.phase > 1.000000f);
    if(_cond_58){
-      _ctx.phase = (_ctx.phase + (-1.f));
+      _ctx.phase = (_ctx.phase + (-1.000000f));
    }
-   _ctx.state_pulse = float_clip(((_ctx.state_pulse * 0.9995f) + tmp1 + (- tmp2)),(-1.f),1.f);
-   _ctx.state_saw = float_clip(((_ctx.state_saw * 0.9995f) + (((tmp1 + tmp2 + ((-2.f) * _ctx.rate)) / shift05) * 0.5f)),(-1.f),1.f);
-   _ctx.state_triang = float_clip(((_ctx.state_triang * 0.9995f) + (2.f * _ctx.state_pulse * _ctx.rate)),(-1.f),1.f);
+   _ctx.state_pulse = float_clip(((_ctx.state_pulse * 0.999500f) + tmp1 + (- tmp2)),(-1.000000f),1.000000f);
+   _ctx.state_saw = float_clip(((_ctx.state_saw * 0.999500f) + (((tmp1 + tmp2 + ((-2.000000f) * _ctx.rate)) / shift05) * 0.500000f)),(-1.000000f),1.000000f);
+   _ctx.state_triang = float_clip(((_ctx.state_triang * 0.999500f) + (2.000000f * _ctx.state_pulse * _ctx.rate)),(-1.000000f),1.000000f);
    uint8_t _cond_60;
-   _cond_60 = (wave < 1.f);
+   _cond_60 = (wave < 1.000000f);
    if(_cond_60){
       _ctx.output = _ctx.state_pulse;
    }
    else
    {
       uint8_t _cond_59;
-      _cond_59 = (wave < 2.f);
+      _cond_59 = (wave < 2.000000f);
       if(_cond_59){
-         _ctx.output = (2.f * _ctx.state_saw);
+         _ctx.output = (2.000000f * _ctx.state_saw);
       }
       else
       {
-         _ctx.output = (2.f * _ctx.state_triang * (1.f + pw));
+         _ctx.output = (2.000000f * _ctx.state_triang * (1.000000f + pw));
       }
    }
    _ctx.output = Bench_dcblock(_ctx._inst30,_ctx.output);
-   return float_clip(_ctx.output,(-1.f),1.f);
+   return float_clip(_ctx.output,(-1.000000f),1.000000f);
 }
 
 void Bench_init_blit_init(Bench__ctx_type_10 &_output_){
@@ -251,12 +251,12 @@ void Bench_init_blit_init(Bench__ctx_type_10 &_output_){
 }
 
 void Bench_init_blit(Bench__ctx_type_10 &_ctx){
-   _ctx.rate = 0.0029662816207f;
+   _ctx.rate = 0.002966f;
    float p;
-   p = (1.f / _ctx.rate);
+   p = (1.000000f / _ctx.rate);
    float maxHarmonics;
-   maxHarmonics = floorf((p * 0.5f));
-   _ctx.m = ((2.f * maxHarmonics) + 1.f);
+   maxHarmonics = floorf((p * 0.500000f));
+   _ctx.m = ((2.000000f * maxHarmonics) + 1.000000f);
 }
 
 float Bench_map(float x, float x0, float x1, float y0, float y1){
@@ -265,8 +265,8 @@ float Bench_map(float x, float x0, float x1, float y0, float y1){
 
 void Bench__ctx_type_12_init(Bench__ctx_type_12 &_output_){
    Bench__ctx_type_12 _ctx;
-   _ctx.dlow = 0.f;
-   _ctx.dband = 0.f;
+   _ctx.dlow = 0.000000f;
+   _ctx.dband = 0.000000f;
    _output_ = _ctx;
    return ;
 }
@@ -285,8 +285,8 @@ float Bench_svf_step(Bench__ctx_type_12 &_ctx, float input, float g, float q, in
    band = ((g * high) + _ctx.dband);
    float notch;
    notch = (high + low);
-   _ctx.dband = (16.f * Bench_otanh((band * 0.0625f)));
-   _ctx.dlow = (16.f * Bench_otanh((low * 0.0625f)));
+   _ctx.dband = (16.000000f * Bench_otanh((band * 0.062500f)));
+   _ctx.dlow = (16.000000f * Bench_otanh((low * 0.062500f)));
    float output;
    uint8_t _cond_61;
    _cond_61 = (sel == 0);
@@ -310,14 +310,14 @@ float Bench_svf_step(Bench__ctx_type_12 &_ctx, float input, float g, float q, in
 
 float Bench_cv_to_g(float cv){
    int index;
-   index = int_clip(float_to_int((1.55f * (cv + 10.f))),0,31);
+   index = int_clip(float_to_int((1.550000f * (cv + 10.000000f))),0,31);
    return (float_get(float_wrap_array(Bench_cv_to_g_c0),index) + (cv * (float_get(float_wrap_array(Bench_cv_to_g_c1),index) + (float_get(float_wrap_array(Bench_cv_to_g_c2),index) * cv))));
 }
 
 void Bench__ctx_type_14_init(Bench__ctx_type_14 &_output_){
    Bench__ctx_type_14 _ctx;
    Bench__ctx_type_12_init(_ctx.step);
-   _ctx.g = 0.f;
+   _ctx.g = 0.000000f;
    Bench__ctx_type_7_init(_ctx._inst36);
    _output_ = _ctx;
    return ;
@@ -329,10 +329,10 @@ void Bench_flt_svf_init(Bench__ctx_type_14 &_output_){
 }
 
 float Bench_flt_svf(Bench__ctx_type_14 &_ctx, float input, float cv, float q, int sel){
-   cv = float_clip(cv,(-1.f),6.f);
-   q = float_clip(q,0.f,5.f);
+   cv = float_clip(cv,(-1.000000f),6.000000f);
+   q = float_clip(q,0.000000f,5.000000f);
    float fix_q;
-   fix_q = Bench_map(q,0.f,5.f,2.f,0.f);
+   fix_q = Bench_map(q,0.000000f,5.000000f,2.000000f,0.000000f);
    uint8_t _cond_62;
    _cond_62 = Bench_change(_ctx._inst36,cv);
    if(_cond_62){
@@ -342,7 +342,7 @@ float Bench_flt_svf(Bench__ctx_type_14 &_ctx, float input, float cv, float q, in
    x1 = Bench_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
    float x2;
    x2 = Bench_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
-   return ((x1 + x2) * 0.5f);
+   return ((x1 + x2) * 0.500000f);
 }
 
 void Bench__ctx_type_15_init(Bench__ctx_type_15 &_output_){
@@ -364,17 +364,17 @@ void Bench_process_init(Bench__ctx_type_15 &_output_){
 
 float Bench_process(Bench__ctx_type_15 &_ctx){
    float lfo1;
-   lfo1 = Bench_osc_saw(_ctx._inst39,(-7.f));
+   lfo1 = Bench_osc_saw(_ctx._inst39,(-7.000000f));
    float lfo2;
-   lfo2 = (- Bench_osc_saw(_ctx._inst40,(-8.5f)));
+   lfo2 = (- Bench_osc_saw(_ctx._inst40,(-8.500000f)));
    float lfo3;
-   lfo3 = Bench_osc_saw(_ctx._inst41,(-9.f));
+   lfo3 = Bench_osc_saw(_ctx._inst41,(-9.000000f));
    float lfo4;
-   lfo4 = Bench_osc_saw(_ctx._inst42,(-9.5f));
+   lfo4 = Bench_osc_saw(_ctx._inst42,(-9.500000f));
    float o1;
-   o1 = Bench_osc_blit(_ctx._inst43,lfo1,lfo2,fabsf((lfo3 * 2.f)));
+   o1 = Bench_osc_blit(_ctx._inst43,lfo1,lfo2,fabsf((lfo3 * 2.000000f)));
    float o;
-   o = Bench_flt_svf(_ctx._inst44,o1,fabsf((lfo4 * 5.f)),0.5f,0);
+   o = Bench_flt_svf(_ctx._inst44,o1,fabsf((lfo4 * 5.000000f)),0.500000f,0);
    return o;
 }
 
