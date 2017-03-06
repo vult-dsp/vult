@@ -55,15 +55,17 @@ let parseFiles arguments files =
       print_endline ("Error:\n"^error_strings);
       exit (-1)
 
+let version = String.sub Version.version 1 ((String.length Version.version) - 2)
+
 let main () =
    let args = processArguments () in
    if args.show_version then
-      print_endline Version.version
+      print_endline version
    else
       (* Parse the files *)
       match args.files with
       | [] ->
-         print_endline ("vult " ^ Version.version ^ " - https://github.com/modlfo/vult");
+         print_endline ("vult " ^ version ^ " - https://github.com/modlfo/vult");
          print_endline "no input files"
       | _ ->
          let parser_results = parseFiles args args.files in

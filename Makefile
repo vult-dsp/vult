@@ -1,6 +1,6 @@
 OCB = ocamlbuild -use-ocamlfind
 
-compiler:
+compiler: version
 			$(OCB) src/vultc.native src/vultc.byte
 
 js:
@@ -12,6 +12,11 @@ js:
 test:
 			$(OCB) test/test.native
 			./test.native -runner sequential
+
+version :
+			@echo "let version = \"" > src/version.ml
+			@git describe >> src/version.ml
+			@echo "\"" >> src/version.ml
 
 test-update:
 			$(OCB) test/test.native
