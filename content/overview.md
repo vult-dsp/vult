@@ -12,7 +12,7 @@ Vult is a simple and powerful language to program high-performance algorithms th
 
 ## Code Generation
 
-The Vult compiler is a transcompiler which takes Vult code and produces C/C++ or JavaScript code. The C/C++ code that can be compiled in any platform with a C/C++ compiler, for example: Arduino or Teensy boards. The Javascript that can be run directly in the browser.
+The Vult compiler is a transcompiler which takes Vult code and produces C/C++, JavaScript or LuaJIT code. The C/C++ code that can be compiled in any platform with a C/C++ compiler, for example: Arduino or Teensy boards. The Javascript that can be run directly in the browser.
 
 In addition Vult provides templates that generate code that can be directly compiled into a Pure Data external or an object compatible with the Teensy Audio Library.
 
@@ -33,7 +33,7 @@ Vult is on continuous development, suggestions for new features are welcome.
 ## Roadmap
 You can see what we are working on and what's planned for Vult in the https://waffle.io/modlfo/vult board.
 
-If you want to receive notifications for future development of this project you can join to the google group Vult Group.
+If you want to receive notifications for future development of this project you can join to the google group [Vult Group](http://groups.google.com/d/forum/vult).
 
 ## Credits
 Logo design by: John Klimt https://www.facebook.com/JohnKlimt
