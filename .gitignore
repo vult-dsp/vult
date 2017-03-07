@@ -4,7 +4,7 @@ _build/*
 *.d.byte
 *.top
 .DS_Store
-vult_node.js
+vultweb.js
 vultjs.js
 .vscode/.browse.VC.db
 .vscode/launch.json
