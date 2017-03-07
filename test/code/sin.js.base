@@ -1,6 +1,6 @@
 this.Sin__ctx_type_0_init = function(){
    var _ctx = {};
-   _ctx.pre_x = 0.;
+   _ctx.pre_x = 0.000000;
    return _ctx;
 }
 this.Sin_change_init = function() { return this.Sin__ctx_type_0_init();}
@@ -11,38 +11,38 @@ this.Sin_change = function(_ctx,x){
 }
 this.Sin__ctx_type_1_init = function(){
    var _ctx = {};
-   _ctx.y2 = 0.;
-   _ctx.y1 = 0.;
-   _ctx.w = 0.;
-   _ctx.cos_w = 0.;
+   _ctx.y2 = 0.000000;
+   _ctx.y1 = 0.000000;
+   _ctx.w = 0.000000;
+   _ctx.cos_w = 0.000000;
    _ctx._inst2 = this.Sin__ctx_type_0_init();
    this.Sin_sc_osc_start(_ctx);
    return _ctx;
 }
 this.Sin_sc_osc_init = function() { return this.Sin__ctx_type_1_init();}
 this.Sin_sc_osc = function(_ctx,pitch){
-   var g = 1.;
+   var g = 1.000000;
    if(this.Sin_change(_ctx._inst2,pitch)){
       var pre_w = 0.0;
       pre_w = _ctx.w;
-      _ctx.w = (0.00116485 * this.exp((0.0577623 * pitch)));
-      g = (this.tan((_ctx.w * 0.5)) / this.tan((pre_w * 0.5)));
+      _ctx.w = (0.001165 * this.exp((0.057762 * pitch)));
+      g = (this.tan((_ctx.w * 0.500000)) / this.tan((pre_w * 0.500000)));
       _ctx.cos_w = this.cos(_ctx.w);
    }
-   var y1_next = ((_ctx.cos_w * _ctx.y1) + ((_ctx.cos_w + 1.) * g * _ctx.y2));
-   var y2_next = (((_ctx.cos_w + (-1.)) * _ctx.y1) + (_ctx.cos_w * g * _ctx.y2));
-   _ctx.y1 = this.clip(y1_next,(-1.),1.);
-   _ctx.y2 = this.clip(y2_next,(-1.),1.);
+   var y1_next = ((_ctx.cos_w * _ctx.y1) + ((_ctx.cos_w + 1.000000) * g * _ctx.y2));
+   var y2_next = (((_ctx.cos_w + (-1.000000)) * _ctx.y1) + (_ctx.cos_w * g * _ctx.y2));
+   _ctx.y1 = this.clip(y1_next,(-1.000000),1.000000);
+   _ctx.y2 = this.clip(y2_next,(-1.000000),1.000000);
    return _ctx.y1;
 }
 this.Sin_sc_osc_start_init = function() { return this.Sin__ctx_type_1_init();}
 this.Sin_sc_osc_start = function(_ctx){
-   _ctx.y1 = 1.;
-   _ctx.y2 = ((- _ctx.y1) * 0.5);
+   _ctx.y1 = 1.000000;
+   _ctx.y2 = ((- _ctx.y1) * 0.500000);
 }
 this.Sin__ctx_type_2_init = function(){
    var _ctx = {};
-   _ctx.pitch = 0.;
+   _ctx.pitch = 0.000000;
    _ctx._inst6 = this.Sin__ctx_type_1_init();
    this.Sin_default(_ctx);
    return _ctx;
@@ -63,5 +63,5 @@ this.Sin_controlChange = function(_ctx,control,value,channel){
 }
 this.Sin_default_init = function() { return this.Sin__ctx_type_2_init();}
 this.Sin_default = function(_ctx){
-   _ctx.pitch = 69.;
+   _ctx.pitch = 69.000000;
 }

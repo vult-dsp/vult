@@ -22,34 +22,40 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-(* replaces all the native functions for the node.js versions *)
-Node.replaceFunctions ();;
-
 open TypesVult
 
 let generateJSCode s =
-   let args = { default_arguments with jscode = true; real = "js";template = "browser"; files = [Code("live", (Js.to_string s))]} in
-   let result = Driver.main args in
-   match result with
+   let args = { default_arguments with jscode = true; real = "js"; template = "browser"; files = [Code("live.vult", (Js.to_string s))]} in
+   match Driver.main args with
    | [GeneratedCode [code,_]] ->
       Js.string (Pla.print code)
    | [Errors errors] ->
-      let error_strings = Error.reportErrors errors in
+      let error_strings =
+         List.map
+            (fun error -> let msg, _, _, _ = Error.reportErrorStringNoLoc error in msg)
+            errors
+         |> String.concat "\n"
+      in
       Js.string ("Errors in the program:\n"^error_strings)
    | _ -> Js.string "unknown error"
 
+let makeAceError (e:Error.t) =
+   let msg,_,line,col = Error.reportErrorStringNoLoc e in
+   Js.Unsafe.obj
+      [| ("text",Js.Unsafe.inject (Js.string msg));
+         ("row",Js.Unsafe.inject (Js.string (string_of_int (line - 1))));
+         ("column",Js.Unsafe.inject (Js.string (string_of_int (col - 1))));
+         ("type",Js.Unsafe.inject (Js.string "error"));
+         ("raw",Js.Unsafe.inject (Js.string msg));
+      |]
+
 let checkCode s =
-   Driver.checkCode (Js.to_string s)
-   |> List.map
-      (fun (msg,_,line,col) ->
-          Js.Unsafe.obj
-             [| ("text",Js.Unsafe.inject (Js.string msg));
-                ("row",Js.Unsafe.inject (Js.string (string_of_int (line - 1))));
-                ("column",Js.Unsafe.inject (Js.string (string_of_int (col - 1))));
-                ("type",Js.Unsafe.inject (Js.string "error"));
-                ("raw",Js.Unsafe.inject (Js.string msg));
-             |])
-   |> Array.of_list |> Js.array
+   let args = { default_arguments with check = true; files = [Code("live.vult", (Js.to_string s))]} in
+   match Driver.main args with
+   | [Errors errors] ->
+      let error_objects = List.map makeAceError errors in
+      error_objects |> Array.of_list |> Js.array
+   | _ -> Js.array [||]
 ;;
 
 Js.Unsafe.set Js.Unsafe.global "jscode" (Js.wrap_callback generateJSCode) ;;

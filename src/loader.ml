@@ -61,7 +61,7 @@ let rec loadFiles_loop (includes:string list) dependencies parsed (files:input l
          let h_parsed    =
             match input with
             | File(_) -> ParserVult.parseFile h
-            | Code(_,txt) -> ParserVult.parseString (Some(h)) txt
+            | Code(_,txt) -> ParserVult.parseString None txt
          in
          (* gets the depencies based on the modules used *)
          let h_deps =

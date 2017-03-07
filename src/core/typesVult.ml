@@ -203,6 +203,7 @@ type output =
    | ParsedCode of string
    | GeneratedCode of (Pla.t * GenerateParams.filename) list
    | Interpret of string
+   | CheckOk
    | Errors of Error.t list
 
 (** Stores the options passed to the command line *)
@@ -211,8 +212,9 @@ type arguments =
       mutable files    : input list;
       mutable dparse   : bool;
       mutable eval     : bool;
+      mutable check    : bool;
       mutable ccode    : bool;
-      mutable llvm    : bool;
+      mutable llvm     : bool;
       mutable jscode   : bool;
       mutable luacode  : bool;
       mutable output   : string;
@@ -228,12 +230,13 @@ let default_arguments =
       files  = [];
       dparse = false;
       ccode  = false;
-      llvm  = false;
+      llvm   = false;
       eval   = false;
+      check  = false;
       jscode = false;
       luacode = false;
-      output = "";
-      real   = "float";
+      output  = "";
+      real    = "float";
       template = "default";
       show_version = false;
       includes = [];

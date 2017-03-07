@@ -58,14 +58,16 @@ let runFiles (args:arguments) (parser_results:parser_results list) : output list
       []
 
 (** Checks the code and returns a list with the errors *)
-let checkCode (code:string) : (string * string * int * int) list =
-   try
-      ParserVult.parseString None code
-      |> Passes.applyTransformationsSingle default_arguments
-      |> fun _ -> []
-   with
-   | Error.Errors(errors) ->
-      List.map Error.reportErrorStringNoLoc errors
+let checkCode (args:arguments) (parser_results:parser_results list) : output list =
+   if args.check then
+      try
+         parser_results
+         |> Passes.applyTransformations args
+         |> fun _ -> [CheckOk]
+      with
+      | Error.Errors(errors) ->
+         [Errors errors]
+   else []
 
 (*
 let generateLuaCode (files:string list) : string =
@@ -110,8 +112,9 @@ let main (args:arguments)  : output list =
             else
                begin
                   dumpParsedFiles args parser_results
-                  @  generateCode args parser_results
+                  @ generateCode args parser_results
                   @ runFiles args parser_results
+                  @ checkCode args parser_results
                end
    with
    | Error.Errors(errors) -> [Errors errors]

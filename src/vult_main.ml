@@ -31,6 +31,7 @@ let processArguments () : arguments =
       "-dparse",   (Arg.Unit   (fun () -> result.dparse   <-true)),    " Dumps the parse tree (default: off)";
       "-deps",     (Arg.Unit   (fun () -> result.deps     <-true)),    " Prints all file dependencies";
       "-ccode",    (Arg.Unit   (fun () -> result.ccode    <-true)),    " Converts the code to c (default: off)";
+      "-check",    (Arg.Unit   (fun () -> result.check    <-true)),    " Checks the code without generating any code (default: off)";
       "-jscode",   (Arg.Unit   (fun () -> result.jscode   <-true)),    " Converts the code to javascript (default: off)";
       "-luacode",  (Arg.Unit   (fun () -> result.luacode  <-true)),    " Converts the code to lua (default: off)";
       "-llvmcode", (Arg.Unit   (fun () -> result.llvm     <-true)),    " Converts the code to LLVM IR (default: off)";
@@ -64,6 +65,7 @@ let showResult (args:arguments) (output:output) =
    | GeneratedCode files ->
       List.iter (fun (text,_) -> print_endline (Pla.print text)) files
    | Interpret v -> print_endline v
+   | CheckOk -> ()
    | Errors errors ->
       let error_strings = Error.reportErrors errors in
       print_endline ("Error:\n"^error_strings)

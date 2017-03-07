@@ -105,7 +105,8 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
    | CEInt(n) ->
       {pla|(<#n#i>|0)|pla}
    | CEFloat(_,n) ->
-      if n < 0.0 then {pla|(<#n#f>)|pla} else Pla.float n
+      let sf = Float.to_string n in
+      if n < 0.0 then {pla|(<#sf#s>)|pla} else Pla.string sf
    | CEBool(v) ->
       Pla.string (if v then "true" else "false")
    | CEString(s) ->
