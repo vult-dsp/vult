@@ -13,7 +13,7 @@
          <li><a onclick="setAudioOff()" style="cursor: pointer;"><i class="fa fa-stop" aria-hidden="true"></i></a></li>
          <li><a onclick="expandCollapse()" style="cursor: pointer;"><i class="fa fa-folder-open" aria-hidden="true"></i></a></li>
       </ul>
-      <ul id ="examples" style="visibility: hidden;">
+      <ul id="examples" style="visibility: hidden;">
          <li><a class="example" onclick="loadPreset(0)">Template</a></li>
          <li><a class="example" onclick="loadPreset(1)">Volume</a></li>
          <li><a class="example" onclick="loadPreset(2)">PhaseDist</a></li>
@@ -26,12 +26,12 @@
    </div>
 
    <div id="middle-section">
-   	<div class="vult_editor" id="editor"></div>
+      <div class="vult_editor" id="editor"></div>
    </div>
 
    <div id="bottom-section">
       <div class="controlsmenu">
-         <div class="knoblabel" >
+         <div class="knoblabel">
             <canvas nx="dial" id="CC30" height="50" width="50"></canvas>
             <div class="knoblabelelem">CC 30</div>
          </div>
@@ -83,8 +83,8 @@
       <canvas nx="keyboard" id="keyboard_input" width="620px" height="65px"></canvas>
       <div class="status">
          <div id="audio_status" style="float:left;width:100px;padding-left:25px">Audio: Off</div>
-         <div id="midi_status"  style="float:left;width:100px">MIDI: Off</div>
-         <div id="code_status"  style="float:left;width:100px">Code: -</div>
+         <div id="midi_status" style="float:left;width:100px">MIDI: Off</div>
+         <div id="code_status" style="float:left;width:100px">Code: -</div>
       </div>
    </div>
 
@@ -94,6 +94,9 @@
 <script type="text/javascript" src="../javascripts/main.js"></script>
 <script type="text/javascript" src="../javascripts/audio.js"></script>
 <script type="text/javascript" src="../javascripts/midi.js"></script>
-<script type="text/javascript" src="../javascripts/vult_node.js"></script>
+<script type="text/javascript" src="../javascripts/vultweb.js"></script>
 <script type="text/javascript" src="../javascripts/demo.js"></script>
-<script type="text/javascript"> initDemo (); setEditorFontSize('editor',22); </script>
+<script type="text/javascript">
+   initDemo();
+   setEditorFontSize('editor', 22);
+</script>
