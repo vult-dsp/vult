@@ -4,8 +4,8 @@ compiler: version
 			$(OCB) src/vultc.native src/vultc.byte
 
 js:
-			$(OCB) src/vultjs.byte
-			$(OCB) src/vultweb.byte
+			$(OCB) src/js/vultjs.byte
+			$(OCB) src/js/vultweb.byte
 			js_of_ocaml vultjs.byte
 			js_of_ocaml vultweb.byte
 

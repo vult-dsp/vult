@@ -615,7 +615,7 @@ and stmtBind (buffer:Stream.stream) : stmt =
       (*let expected = kindToString EQUAL in
         let got      = kindToString kind in
         let message  = Printf.sprintf "Expecting a %s while trying to parse a binding (%s = ...) but got %s" expected (PrintTypes.lhsExpressionStr e1) got in*)
-      let message  = Printf.sprintf "This is not a valid statement in the form a = b;" in
+      let message  = Printf.sprintf "Invalid statement. All statements should be in the forms: \"a = b;\" or \"_ = b();\" " in
       raise (ParserError(Stream.makeError buffer message))
 
 (** <statement> := 'if' '(' <expression> ')' <statementList> ['else' <statementList> ]*)

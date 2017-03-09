@@ -23,8 +23,7 @@ THE SOFTWARE.
 *)
 
 (* replaces all the native functions for the node.js versions *)
-Node.replaceFunctions ();;
+NodeIO.replaceFunctions ();;
 
 (* calls the main function to start the execution *)
 Vult_main.main () ;;
-
