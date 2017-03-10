@@ -195,6 +195,7 @@ type parser_results =
 type input =
    | File of string
    | Code of string * string
+[@@deriving show,eq,ord]
 
 type output =
    | Version of string
@@ -224,6 +225,8 @@ type arguments =
       mutable includes : string list;
       mutable deps    : bool;
    }
+[@@deriving show,eq,ord]
+
 
 let default_arguments =
    {

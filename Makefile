@@ -6,8 +6,10 @@ compiler: version
 js:
 			$(OCB) src/js/vultjs.byte
 			$(OCB) src/js/vultweb.byte
+			$(OCB) src/js/vultlib.byte
 			js_of_ocaml vultjs.byte
 			js_of_ocaml vultweb.byte
+			js_of_ocaml vultlib.byte
 
 test:
 			$(OCB) test/test.native
@@ -26,6 +28,6 @@ all: 		compiler js test
 
 clean:
 			$(OCB) -clean
-			rm -f vultjs.js vultweb.js
+			rm -f vultjs.js vultweb.js vultlib.js
 
 .PHONY: 	all clean compiler js test
