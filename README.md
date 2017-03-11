@@ -33,6 +33,11 @@ You can see these repositories for examples:
 - PureData https://github.com/modlfo/pd-vult-example
 - Teensy Audio https://github.com/modlfo/teensy-vult-example
 
+In the Wiki
+
+- [Language Reference](https://github.com/modlfo/vult/wiki/Language-Reference)
+- [Command Line Options](https://github.com/modlfo/vult/wiki/Command-Line-Options)
+
 ## Credits
 
 Vult is maintained by: Leonardo Laguna Ruiz with the help of Carl Jönsson and Johan Rhodin
@@ -42,6 +47,8 @@ Logo design by: John Klimt https://www.facebook.com/JohnKlimt
 ### Contact
 
 If you want to receive notifications for future development of this project you can join to the google group http://groups.google.com/d/forum/vult
+
+E-mail: [my-github-user-name]@gmail.com
 
 ## Installing
 
