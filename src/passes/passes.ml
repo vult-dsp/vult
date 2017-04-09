@@ -65,14 +65,14 @@ module CreateTupleTypes = struct
          let msg = "The following tuple types have circular dependencies: " ^ types_str in
          Error.raiseErrorMsg msg
 
-   let run (state,stmts) =
+   let run state =
       let data = Env.get state in
       let tuples = TypeSet.elements (PassData.getTuples data) |> List.map VType.unlink in
       let dependencies = getDeclarations (Hashtbl.create 8) TypeSet.empty tuples in
       let components = Components.components dependencies in
       let sorted = List.map List.hd components in
       let decl = List.map makeTypeDeclaration sorted in
-      state, decl @ stmts
+      decl
 
 end
 
@@ -117,7 +117,6 @@ let passes (name:id) (options:pass_options) (env,stmts) =
    |> applyPass name options.pass3 Pass3.run "pass 3"
    |> applyPass name options.pass4 Pass4.run "pass 4"
    |> applyPass name options.pass5 Pass5.run "pass 5"
-   |> CreateTupleTypes.run
 
 let apply env options (results:parser_results) =
    let module_name = [moduleName results.file] in
@@ -126,7 +125,7 @@ let apply env options (results:parser_results) =
 
 let applyTransformations args ?(options=default_options) (results:parser_results list) =
    let env = Env.empty (PassData.empty args) in
-   let _,stmts_list =
+   let env, stmts_list =
       List.fold_left
          (fun (env,acc) stmts ->
              let env', stmts' = apply env options stmts in
@@ -136,9 +135,11 @@ let applyTransformations args ?(options=default_options) (results:parser_results
          (env,[])
          results
    in
-   List.rev stmts_list
+   let tuples = { presult = CreateTupleTypes.run env; file = "" } in
+   tuples :: List.rev stmts_list
 
 let applyTransformationsSingle args ?(options=default_options) (results:parser_results) =
    let env = Env.empty (PassData.empty args) in
-   let _,stmts' = apply env options results in
-   { results with presult = stmts' }
+   let env, stmts' = apply env options results in
+   let tuples = CreateTupleTypes.run env in
+   { results with presult = tuples@stmts' }
