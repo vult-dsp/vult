@@ -1,4 +1,4 @@
-OCB = ocamlbuild -use-ocamlfind
+OCB = ocamlbuild -j 4 -use-ocamlfind
 
 compiler: version
 			$(OCB) src/vultc.native src/vultc.byte
