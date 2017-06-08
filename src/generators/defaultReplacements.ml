@@ -123,6 +123,7 @@ module Default = struct
             ("get",  "uint8_t"), "bool_get";
             ("not",  "uint8_t"), "bool_not";
             ("eps",  "float"),   "float_eps";
+            ("random", "float"),   "float_random";
             ("wrap_array",  "float"),"float_wrap_array";
          ]
 
@@ -208,6 +209,7 @@ module FixedPoint = struct
             ("set",  "fix16_t"),  "fix_set";
             ("get",  "fix16_t"),  "fix_get";
             ("eps",  "fix16_t"),  "fix_eps";
+            ("random", "fix16_t"),  "fix_random";
             ("wrap_array","fix16_t"), "fix_wrap_array";
          ]
 

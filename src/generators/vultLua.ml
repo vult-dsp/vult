@@ -65,6 +65,8 @@ local this = {}
 local ffi = require("ffi")
 function this.ternary(cond,then_,else_) if cond then return then_ else return else_ end end
 function this.eps()             return 1e-18; end
+function this.random()          return math.random(); end
+function this.irandom()         return math.floor(math.random() * 4294967296); end
 function this.clip(x,low,high)  return (this.ternary(x<low,low,this.ternary(x>high,high,x))); end
 function this.real(x)           return x; end
 function this.int(x)            local int_part,_ = math.modf(x) return int_part; end

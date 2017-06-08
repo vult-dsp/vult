@@ -223,3 +223,19 @@ void fix_copy_array(int size, fix16_t *dest, fix16_t *src)
    for (i = 0; i < size; i++)
       dest[i] = src[i];
 }
+
+float float_random()
+{
+   return (float)rand() / RAND_MAX;
+}
+
+fix16_t fix_random()
+{
+   float temp = ((float)rand() / RAND_MAX) * 0x00010000;
+   return (fix16_t)temp;
+}
+
+int irandom()
+{
+   return (int)rand();
+}

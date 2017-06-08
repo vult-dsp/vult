@@ -601,6 +601,9 @@ let builtin_table =
 
       ["eps"] , Scope.Function, VType.Constants.real_type, false;
 
+      ["random"], Scope.Function, VType.Constants.real_type, false;
+      ["irandom"], Scope.Function, VType.Constants.int_type, false;
+
    ]
 
 let builtin_functions = List.map (fun (a,_,_,_)-> a ) builtin_table |> IdSet.of_list

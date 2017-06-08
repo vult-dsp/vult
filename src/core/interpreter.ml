@@ -302,6 +302,16 @@ let builtinFunctions env =
       | [] -> PReal(1e-18,emptyAttr)
       | _ -> failwith "eps: invalid arguments"
    in
+   let random args =
+      match args with
+      | [] -> PReal(Random.float 1.0,emptyAttr)
+      | _ -> failwith "random: invalid arguments"
+   in
+   let irandom args =
+      match args with
+      | [] -> PInt(Random.int max_int,emptyAttr)
+      | _ -> failwith "irandom: invalid arguments"
+   in
    let functions =
       [
          "abs", Env.Builtin(real_real abs_float);
@@ -319,6 +329,9 @@ let builtinFunctions env =
 
          "not", Env.Builtin(not);
          "eps", Env.Builtin(eps);
+
+         "random", Env.Builtin(random);
+         "irandom", Env.Builtin(irandom);
       ]
    in
    List.iter (fun (name,body) ->Env.addFunction env [name] body) functions

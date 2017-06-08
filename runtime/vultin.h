@@ -30,7 +30,9 @@ NOTE: The code for the fixed-point operations is based on the project:
 
 #ifndef VULTIN_H
 #define VULTIN_H
+
 #include <stdint.h>
+#include <stdlib.h>
 
 #ifdef _MSC_VER
 #define static_inline static __inline
@@ -205,6 +207,11 @@ static_inline uint8_t bool_not(uint8_t x)
 /* Tables */
 static_inline fix16_t *fix_wrap_array(const fix16_t x[]) { return (fix16_t *)x; };
 static_inline float *float_wrap_array(const float x[]) { return (float *)x; };
+
+/* Random numbers */
+float float_random();
+fix16_t fix_random();
+int irandom();
 
 #ifdef __cplusplus
 }

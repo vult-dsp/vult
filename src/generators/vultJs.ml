@@ -34,6 +34,8 @@ module Templates = struct
    let common exports module_name code =
       {pla|
 <#exports#>{
+    this.random = function()         { return Math.random(); };
+    this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
     this.eps  = function()           { return 1e-18 };
     this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
     this.not  = function(x)          { return x==0?1:0; };

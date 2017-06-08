@@ -34,6 +34,8 @@ let getInterpEnv state =
 
 module Evaluate = struct
 
+   let avoid = IdSet.of_list [["random"]; ["irandom"]]
+
    let isConst exp =
       match exp with
       | PInt _ | PReal _ | PBool _ -> true
@@ -42,7 +44,7 @@ module Evaluate = struct
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make "Simplify.exp" @@ fun state exp ->
       match exp with
-      | PCall(None,_,args,_) when List.for_all isConst args ->
+      | PCall(None, name, args, _) when List.for_all isConst args && not (IdSet.mem name avoid) ->
          let env = getInterpEnv state in
          let exp' = Interpreter.evalExp env exp in
          state, exp'

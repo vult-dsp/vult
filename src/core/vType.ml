@@ -425,6 +425,12 @@ module Constants = struct
    let unit_real () =
       unit_type |-> real_type
 
+   let unit_real () =
+      unit_type |-> int_type
+
+   let int_unit () =
+      int_type |-> unit_type
+
    let wrap_array () =
       let a = ref (TUnbound("'a",None,None)) in
       let size = ref (TUnbound("'size",None,None)) in
