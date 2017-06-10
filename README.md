@@ -37,6 +37,7 @@ In the Wiki
 
 - [Language Reference](https://github.com/modlfo/vult/wiki/Language-Reference)
 - [Command Line Options](https://github.com/modlfo/vult/wiki/Command-Line-Options)
+- [Videos and Examples](https://github.com/modlfo/vult/wiki/Videos-and-Examples)
 
 ## Credits
 
