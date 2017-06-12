@@ -17,7 +17,7 @@ test:
 
 version :
 			@echo "let version = \"" > src/version.ml
-			@git describe >> src/version.ml
+			@git describe --abbrev=0 >> src/version.ml
 			@echo "\"" >> src/version.ml
 
 test-update:
