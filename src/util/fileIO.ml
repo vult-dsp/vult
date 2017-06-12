@@ -31,7 +31,7 @@ THE SOFTWARE.
 let cwd_fun =
    ref (fun () -> Sys.getcwd ())
 
-(** ref holding the write file function.
+(** ref holding the read file function.
     The default function is the native.
 *)
 let read_fun =
@@ -48,6 +48,25 @@ let read_fun =
             with | _ ->
                close_in file;
                Some(Buffer.contents buffer)
+         else None)
+
+(** ref holding the read_bytes file function.
+    The default function is the native.
+*)
+let read_bytes_fun =
+   ref (fun path ->
+         if Sys.file_exists path then
+            let file = open_in path in
+            let buffer = Buffer.create 16 in
+            try
+               while true do
+                  let c = input_char file in
+                  Buffer.add_char buffer c
+               done;
+               None
+            with | End_of_file ->
+               close_in file;
+               Some(buffer)
          else None)
 
 (** ref holding the read file function.
@@ -70,12 +89,17 @@ let exists_fun =
 
 
 
-(** This function is used to change the actual reaf-file function.
+(** This function is used to change the actual read_bytes function.
+    When compiling for node.js the function is replaced at runtime by the code
+*)
+let setReadBytes f = read_bytes_fun := f
+
+(** This function is used to change the actual read file function.
     When compiling for node.js the function is replaced at runtime by the code
 *)
 let setRead f = read_fun := f
 
-(** This function is used to change the actual write-to-file function.
+(** This function is used to change the actual write to file function.
     When compiling for node.js the function is replaced at runtime by the code
 *)
 let setWrite (f:string -> string -> bool) = write_fun := f
@@ -91,6 +115,9 @@ let setExists (f:string -> bool) = exists_fun := f
 let setCwd (f:unit -> string) = cwd_fun := f
 
 
+(** Main function to read file bytes given the path *)
+let read_bytes (path:string) : Buffer.t option =
+   !read_bytes_fun path
 
 (** Main function to read files given the path *)
 let read (path:string) : string option =
