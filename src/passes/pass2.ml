@@ -136,7 +136,7 @@ module MakeTables = struct
       let varname = makeVarName fname name in
       let size = List.length data in
       let atype = array_type size in
-      let arr = PArray((List.map makeFloat data |> Array.of_list), { attr with typ = Some(atype) }) in
+      let arr = PArray((CCList.map makeFloat data |> Array.of_list), { attr with typ = Some(atype) }) in
       StmtVal(LId(varname, Some(atype), attr_array size), Some(arr), { emptyAttr with const = true})
 
    let makeNewBody fname size min max input =
@@ -182,29 +182,35 @@ module MakeTables = struct
          getFloat value
       | _ -> failwith "evaluateFunction: the function should be a full path"
 
+   let rec fitData data index acc0 acc1 acc2 =
+      if index < 0 then
+         acc0, acc1, acc2
+      else
+         let p1 = Array.get data (index *  2) in
+         let p2 = Array.get data (index * 2 + 1) in
+         let p3 = Array.get data (index * 2 + 2) in
+         let x = [ fst p1; fst p2; fst p3] in
+         let y = [ snd p1; snd p2; snd p3] in
+         let c0, c1, c2 = Fitting.fit x y |> getCoefficients in
+         fitData data (index-1) (c0::acc0) (c1::acc1) (c2::acc2)
+
    let calculateTables env attr name size min max =
       let map x x0 x1 y0 y1 = (x -. x0) *. (y1 -. y0) /. (x1 -. x0) +. y0 in
       let map_x x = map x 0. (float_of_int size) min max in
-      let rec loop index xx acc0 acc1 acc2 =
-         if index < 0 then
-            [
-               makeTableDecl attr name ["c0"] acc0;
-               makeTableDecl attr name ["c1"] acc1;
-               makeTableDecl attr name ["c2"] acc2
-            ]
-         else
-            let r_index = float_of_int index in
-            let xx_point = map_x r_index in
-            let x =
-               [ xx_point;
-                 map_x (r_index +. 0.5);
-                 map_x (r_index +. 1.0); ]
-            in
-            let y = List.map (fun a -> evaluateFunction env name a) x in
-            let c0, c1, c2 = Fitting.fit x y |> getCoefficients in
-            loop (index-1) (xx_point::xx) (c0::acc0) (c1::acc1) (c2::acc2)
+      let data =
+         Array.init ((size * 2) + 4)
+            (fun i ->
+                let x = map_x ((float_of_int i) /. 2.0) in
+                x, evaluateFunction env name x
+            )
       in
-      loop size [] [] [] []
+      let acc0, acc1, acc2 = fitData data size [] [] [] in
+      [
+         makeTableDecl attr name ["c0"] acc0;
+         makeTableDecl attr name ["c1"] acc1;
+         makeTableDecl attr name ["c2"] acc2
+      ]
+
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "MakeTables.stmt_x" @@ fun state stmt ->
@@ -222,10 +228,10 @@ module MakeTables = struct
                let var    = getInputVar args in
                let body'  = makeNewBody full_path size min max var in
                reapply state, result @ [StmtFun(name, args, body', ret, attr')]
-            | Some _, _::_ ->
+            | Some _, _::_::_ ->
                let msg = "This annotation can only be applied to functions of one argument" in
                Error.raiseError msg attr.loc
-            | Some _,_ ->
+            | Some _, _ ->
                let msg = "This annotation can only be applied to functions returning 'real'" in
                Error.raiseError msg attr.loc
          end
