@@ -56,6 +56,20 @@ let fs : fs t = Unsafe.fun_call (Unsafe.js_expr "require") [|Unsafe.inject (stri
 let process : process t = Unsafe.js_expr "process"
 
 (* This is a wrapper that allows calling the node.js function from ocaml *)
+let read_bytes_fn (path:string) : Buffer.t option =
+   let exist    = fs##existsSync (string path) in
+   if to_bool exist then
+      let buffer     = fs##readFileSync (string path) in
+      let contents   = buffer##toString in
+      let str        = to_string contents in
+      let ret_buffer = Buffer.create 0 in
+      let ()         = Buffer.add_string ret_buffer str in
+      Some ret_buffer
+   else
+      None
+
+
+(* This is a wrapper that allows calling the node.js function from ocaml *)
 let read_fn (path:string) : string option =
    let exist    = fs##existsSync (string path) in
    if to_bool exist then
@@ -83,4 +97,5 @@ let replaceFunctions () =
    FileIO.setRead read_fn;
    FileIO.setWrite write_fn;
    FileIO.setExists exists_fn;
-   FileIO.setCwd cwd_fn
+   FileIO.setCwd cwd_fn;
+   FileIO.setReadBytes read_bytes_fn
