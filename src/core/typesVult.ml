@@ -35,6 +35,7 @@ type attr_exp =
    | AFun of id * (id * attr_exp) list * Loc.t
    | AInt of string * Loc.t
    | AReal of string * Loc.t
+   | AString of string * Loc.t
 
 type attr =
    {

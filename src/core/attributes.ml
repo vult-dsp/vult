@@ -42,6 +42,7 @@ let getLocation (attr:attr_exp) : Loc.t =
    | AId(_,loc)    -> loc
    | AReal(_,loc)  -> loc
    | AFun(_,_,loc) -> loc
+   | AString(_,loc) -> loc
 
 let getType (attr:attr_exp) : string =
    match attr with
@@ -49,6 +50,7 @@ let getType (attr:attr_exp) : string =
    | AId(_,_)    -> "identifier"
    | AReal(_,_)  -> "real"
    | AFun(_,_,_) -> "attribute"
+   | AString(_,_) -> "string"
 
 let getTypeLiteral (t:t) : string =
    match t with

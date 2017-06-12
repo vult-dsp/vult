@@ -193,6 +193,7 @@ and attr_nud (buffer:Stream.stream) (token:'kind token) : attr_exp =
    | OP,"-" -> attr_unaryOp buffer token
    | INT, _ -> AInt(token.value, token.loc)
    | REAL, _ -> AReal(token.value, token.loc)
+   | STRING, _ -> AString(token.value, token.loc)
    | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
@@ -648,9 +649,10 @@ and stmtExternal (buffer:Stream.stream) : stmt =
    let _      = Stream.consume buffer COLON in
    let vtype  = typeExpression 0 buffer in
    let link_name = string buffer in
-   let _      = Stream.consume buffer SEMI in
+   let attr_exp  = optAttrExpressions buffer in
+   let _         = Stream.consume buffer SEMI in
    let start_loc = token.loc in
-   let attr      = { (makeAttr start_loc) with ext_fn = Some(link_name) } in
+   let attr      = { (makeAttr start_loc) with ext_fn = Some(link_name); exp = attr_exp } in
    StmtExternal(name,args,vtype,link_name,attr)
 (** 'fun' <id> '(' <typedArgList> ')' [ ':' type ] <stmtList> *)
 and stmtFunction (buffer:Stream.stream) : stmt =
