@@ -10,5 +10,9 @@
    "editor.formatOnSave": true,
    "files.associations": {
       "*.ml": "ocaml"
+   },
+   "[ocaml]": {
+      "editor.tabSize": 3,
+      "editor.insertSpaces": true
    }
 }
