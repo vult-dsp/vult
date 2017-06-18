@@ -282,6 +282,9 @@ let rec map_exp (mapper:'state mapper) (state:'state) (exp:exp) : 'state * exp =
    | PReal(r,attr) ->
       let state',attr' = map_attr mapper state attr in
       apply mapper.exp state' (PReal(r,attr'))
+   | PString(s,attr) ->
+      let state',attr' = map_attr mapper state attr in
+      apply mapper.exp state' (PString(s,attr'))
    | PId(id,attr) ->
       let state',id'   = map_id mapper state id in
       let state',attr' = map_attr mapper state' attr in

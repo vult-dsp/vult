@@ -62,13 +62,13 @@ module Env = struct
       | []   -> failwith "invalid env"
 
    (** Used by lookupFunction to iterate the environments until the function is found *)
-   let rec lookupFunction_loop (t:t) (env:env) (id:id) : t * fun_body =
+   let rec lookupFunction_loop (t:t) (env:env) (id:id) : (t * fun_body) option =
       match id with
-      | [] -> failwith ("unknown function: "^(PrintTypes.identifierStr id))
+      | [] -> None
       | name1::name2 ->
          if name2 = [] && Hashtbl.mem t.functions [name1] then
             (* exists in the functions table and it's a single name *)
-            t, Hashtbl.find t.functions [name1]
+            Some (t, Hashtbl.find t.functions [name1])
          else if name2 <> [] && Hashtbl.mem t.modules [name1] then
             (* exists in the modules table and it is not a single name *)
             let t' = Hashtbl.find t.modules [name1] in
@@ -79,10 +79,10 @@ module Env = struct
             | t' :: env' -> lookupFunction_loop t' env' id
             | [] ->
                (* no more environments to look for *)
-               failwith ("unknown function: "^(PrintTypes.identifierStr id))
+               None
 
    (** Looks for a function with the given name *)
-   let lookupFunction (env:env) (id:id) : t * fun_body =
+   let lookupFunction (env:env) (id:id) : (t * fun_body) option =
       match env with
       | h::t -> lookupFunction_loop h t id
       | []   -> failwith "invalid env"
@@ -383,10 +383,10 @@ let rec evalExp (env:Env.env) (exp:exp) : exp =
    | PUnit _ -> exp
    | PInt _  -> exp
    | PReal _ -> exp
+   | PString _ -> exp
    | PGroup(e, _) -> evalExp env e
    | PId(id,_) ->
-      begin
-         match Env.lookupVar env id with
+      begin match Env.lookupVar env id with
          | value -> value
          | exception Not_found -> exp
       end
@@ -422,16 +422,21 @@ let rec evalExp (env:Env.env) (exp:exp) : exp =
 
    | PCall(Some(inst), name, args, _) ->
       let args' = List.map (evalExp env) args in
-      let t,fn  = Env.lookupFunction env name in
-      let env'  = Env.enterInstance (t::env) inst in
-      evalFunction env' fn args'
-
+      begin match Env.lookupFunction env name with
+         | Some (t,fn) ->
+            let env'  = Env.enterInstance (t::env) inst in
+            evalFunction env' fn args'
+         | None -> exp
+      end
    | PCall(None, name, args, attr) ->
       let args' = List.map (evalExp env) args in
-      let t,fn  = Env.lookupFunction env name in
-      let inst  = makeInstName name attr in
-      let env'  = Env.enterInstance (t::env) inst in
-      evalFunction env' fn args'
+      begin match Env.lookupFunction env name with
+         | Some (t,fn) ->
+            let inst  = makeInstName name attr in
+            let env'  = Env.enterInstance (t::env) inst in
+            evalFunction env' fn args'
+         | None -> exp
+      end
 
 and evalFunction (env:Env.env) (fn:Env.fun_body) (args:exp list) : exp =
    match fn with

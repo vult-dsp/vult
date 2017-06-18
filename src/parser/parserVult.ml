@@ -28,6 +28,7 @@ open LexerVult
 open TypesVult
 open ParserTypes
 open TokenStream
+open Common
 
 
 module TokenKind = struct
@@ -54,24 +55,6 @@ let rec moveToNextStatement (buffer:Stream.stream) : unit =
    | _ ->
       let _ = Stream.skip buffer in
       moveToNextStatement buffer
-
-(** Returns the location of an expression *)
-let getExpLocation (e:exp) : Loc.t =
-   match e with
-   | PUnit(attr)
-   | PInt(_,attr)
-   | PBool(_,attr)
-   | PReal(_,attr)
-   | PId(_,attr)
-   | PUnOp(_,_,attr)
-   | POp(_,_,attr)
-   | PCall(_,_,_,attr)
-   | PIf(_,_,_,attr)
-   | PGroup(_,attr)
-   | PTuple(_,attr)
-   | PArray(_,attr)
-   | PSeq(_,_,attr) -> attr.loc
-   | PEmpty -> Loc.default
 
 let getLhsExpLocation (e:lhs_exp) : Loc.t =
    match e with
@@ -381,7 +364,7 @@ and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
                | PCall(None,fname,args,attr) ->
                   PCall(Some(id),fname,args,attr)
                | _ ->
-                  let loc   = getExpLocation exp_call in
+                  let loc   = (GetAttr.fromExp exp_call).loc in
                   let error = Error.PointedError(Loc.getNext loc,"After ':' you can only have a function call") in
                   raise (ParserError(error))
             end
@@ -462,7 +445,7 @@ and pair (buffer:Stream.stream) (token:'kind token) (left:exp) : exp =
    in
    let elems1    = left  |> getElems in
    let elems2    = right |> getElems in
-   let start_loc = getExpLocation left in
+   let start_loc = (GetAttr.fromExp left).loc in
    let attr      = makeAttr start_loc in
    PTuple(elems1@elems2,attr)
 
@@ -626,7 +609,7 @@ and stmtIf (buffer:Stream.stream) : stmt =
    let cond = expression 0 buffer in
    let _    = Stream.consume buffer RPAREN in
    let tstm = stmtList buffer in
-   let start_loc = getExpLocation cond in
+   let start_loc = (GetAttr.fromExp cond).loc in
    match Stream.peek buffer with
    | ELSE ->
       let _    = Stream.consume buffer ELSE in
@@ -648,11 +631,22 @@ and stmtExternal (buffer:Stream.stream) : stmt =
    let _      = Stream.consume buffer RPAREN in
    let _      = Stream.consume buffer COLON in
    let vtype  = typeExpression 0 buffer in
-   let link_name = string buffer in
-   let attr_exp  = optAttrExpressions buffer in
+   let link_name, attr_exp =
+      match Stream.peek buffer with
+      | STRING ->
+         let link_name = string buffer in
+         let attr_exp  = optAttrExpressions buffer in
+         Some(link_name), attr_exp
+      | AT ->
+         let attr_exp  = optAttrExpressions buffer in
+         None, attr_exp
+      | _ ->
+         let message  = Printf.sprintf "Expecting a string with a link name or an attribute" in
+         raise (ParserError(Stream.makeError buffer message))
+   in
    let _         = Stream.consume buffer SEMI in
    let start_loc = token.loc in
-   let attr      = { (makeAttr start_loc) with ext_fn = Some(link_name); exp = attr_exp } in
+   let attr      = { (makeAttr start_loc) with ext_fn = link_name; exp = attr_exp } in
    StmtExternal(name,args,vtype,link_name,attr)
 (** 'fun' <id> '(' <typedArgList> ')' [ ':' type ] <stmtList> *)
 and stmtFunction (buffer:Stream.stream) : stmt =

@@ -335,6 +335,7 @@ let rec convertExp (p:parameters) (e:exp) : cexp =
    | PUnit(_)    -> CEEmpty
    | PBool(v,_)  -> CEBool(v)
    | PInt(n,_)   -> CEInt(n)
+   | PString(s,_)   -> CEString(s)
    | PReal(v,_)  ->
       let s = Replacements.getRealToString p.repl v "real" in
       CEFloat(s,v)
@@ -522,9 +523,13 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
          | _ -> failwith "VultCh.convertStmt: invalid alias type"
       in
       CSAlias(type_name,t1_name)
-   | StmtExternal(_,args,ret,name,_) ->
+   | StmtExternal(_,args,ret,Some link_name,_) ->
       let arg_names = List.map (convertTypedId p) args in
-      CSExtFunc(convertType p ret,name,arg_names)
+      CSExtFunc(convertType p ret,link_name,arg_names)
+   | StmtExternal(name,args,ret,None,_) ->
+      let fname = convertId p name in
+      let arg_names = List.map (convertTypedId p) args in
+      CSExtFunc(convertType p ret,fname,arg_names)
    | StmtEmpty       -> CSEmpty
 
 and convertStmtList (p:parameters) (stmts:stmt list) : cstmt list =

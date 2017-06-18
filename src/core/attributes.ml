@@ -28,6 +28,7 @@ type t =
    | Int
    | Real
    | Id
+   | String
 
 let rec has (attr:attr_exp list) (id:id) =
    match attr with
@@ -57,26 +58,34 @@ let getTypeLiteral (t:t) : string =
    | Int  -> "integer"
    | Real -> "real"
    | Id   -> "identifier"
+   | String   -> "string"
 
-let rec getParam (remaining:(id * attr_exp) list) (args:(id * attr_exp) list) (id:id) =
+let rec getParam (remaining:(id * attr_exp) list) (args:(id * attr_exp) list) (id:string) =
    match args with
    | [] -> remaining, None
-   | (name,value)::t when name = id ->
+   | (name,value)::t when name = [id] ->
       (remaining@t), Some(value)
    | h::t -> getParam (h::remaining) t id
 
 let getTypedParam (args:(id * attr_exp) list) (id,typ) =
+   let lattr loc = { emptyAttr with loc} in
    match getParam [] args id with
-   | r, Some(AReal(_,_) as value) when typ = Real -> r, Some(value)
-   | r, Some(AInt(_,_) as value)  when typ = Int  -> r, Some(value)
-   | r, Some(AId(_,_) as value)   when typ = Id   -> r, Some(value)
+   | r, Some(AReal(value,loc)) when typ = Real ->
+      r, Some(PReal(float_of_string value, lattr loc))
+   | r, Some(AInt(value,loc)) when typ = Int ->
+      r, Some(PInt(int_of_string value, lattr loc))
+   | r, Some(AId(value,loc)) when typ = Id ->
+      r, Some(PId(value, lattr loc))
+   | r, Some(AString(value,loc)) when typ = String ->
+      r, Some(PString(value, lattr loc))
+
    | _, Some(value) ->
       let loc = getLocation value in
-      let msg = Printf.sprintf "The parameter '%s' was expected to be of type '%s' but it is '%s'" (PrintTypes.identifierStr id) (getTypeLiteral typ) (getType value) in
+      let msg = Printf.sprintf "The parameter '%s' was expected to be of type '%s' but it is '%s'" id (getTypeLiteral typ) (getType value) in
       Error.raiseError msg loc
    | r, None -> r, None
 
-let getParameterList loc (args:(id * attr_exp) list) (params: (id * t) list) : (id * attr_exp) list * attr_exp list =
+let getParameterList loc (args:(id * attr_exp) list) (params: (string * t) list) : (id * attr_exp) list * exp list =
    let rec loop remaning found params =
       match params with
       | [] -> remaning, List.rev found
@@ -86,6 +95,34 @@ let getParameterList loc (args:(id * attr_exp) list) (params: (id * t) list) : (
             loop remaning' (value::found) t
          | _, None ->
             let name, typ = h in
-            let msg = Printf.sprintf "The annotation was expected to have a parameter with name '%s' and type '%s'" (PrintTypes.identifierStr name) (getTypeLiteral typ) in
+            let msg = Printf.sprintf "The attribute was expected to have a parameter with name '%s' and type '%s'" name (getTypeLiteral typ) in
             Error.raiseError msg loc
    in loop args [] params
+
+
+let getTableIndividualParams (loc:Loc.t) params msg args =
+   let remaining, found = getParameterList loc args params in
+   match remaining with
+   | _::_ ->
+      let params_s =  List.map (fun (id,_) -> PrintTypes.identifierStr id) remaining |> String.concat ", " in
+      let msg = "The following arguments are unknown for the current attribute: "^ params_s in
+      Error.raiseError msg loc
+   | [] ->
+      if List.length found = List.length params then
+         found
+      else
+         Error.raiseError msg loc
+
+let rec getTableParams (fname:string) (params:(string * t) list) (msg:string) (attr:attr_exp list) =
+   match attr with
+   | [] -> None
+   | AFun(name,args,loc)::_ when name = [fname] ->
+      Some(loc, getTableIndividualParams loc params msg args)
+   | _ :: t -> getTableParams fname params msg t
+
+let rec removeAttrFunc (fname:string) (attr:attr_exp list) : attr_exp list =
+   match attr with
+   | [] -> []
+   | AFun(name,_,_)::t when name = [fname] ->
+      removeAttrFunc fname t
+   | h::t -> h :: (removeAttrFunc fname t)

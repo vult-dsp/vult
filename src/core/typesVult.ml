@@ -85,6 +85,10 @@ type exp =
    | PReal
       of float
          *  attr
+   | PString
+      of string
+         *  attr
+
    | PId
       of id    (* name *)
          *  attr
@@ -153,7 +157,7 @@ and stmt =
     of id                (* name *)
        *  typed_id list  (* arguments *)
        *  VType.t        (* return type *)
-       *  string         (* linking name *)
+       *  string option  (* linking name *)
        *  attr
   | StmtBind
     of lhs_exp        (* lhs *)
@@ -305,6 +309,12 @@ let pathLast (path:path) : id =
    in
    match path with
    | Path(p) -> [ last p ]
+
+let appendToId (id:id) (post:string) : id =
+   match id with
+   | [name] -> [name ^ post]
+   | [pkg; name] -> [pkg; name ^ post]
+   | _ -> failwith "invalid id"
 
 let moduleName (file:string) : string =
    file

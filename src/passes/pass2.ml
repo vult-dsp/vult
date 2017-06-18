@@ -63,26 +63,40 @@ module Evaluate = struct
 
 end
 
-module MakeTables = struct
+module Tables = struct
 
    let int_type = VType.Constants.int_type
    let real_type = VType.Constants.real_type
    let attr_int = { emptyAttr with typ = Some(int_type) }
    let attr_real = { emptyAttr with typ = Some(real_type) }
 
-   let array_type size =
+   let real_array_type size =
       ref (VType.TComposed(["array"], [real_type; ref (VType.TInt(size, None))], None))
 
    let attr_array size =
-      { emptyAttr with typ = Some(array_type size) }
+      { emptyAttr with typ = Some(real_array_type size) }
+
+   let makeVarName (fname:id) (var:id) : id =
+      [String.concat "_" (fname @ var)]
+
+   let makeFloat x =
+      PReal(x,emptyAttr)
+
+   let makeDecl attr fname name data =
+      let varname = makeVarName fname name in
+      let size = List.length data in
+      let atype = real_array_type size in
+      let arr = PArray((CCList.map makeFloat data |> Array.of_list), { attr with typ = Some(atype) }) in
+      StmtVal(LId(varname, Some(atype), attr_array size), Some(arr), { emptyAttr with const = true})
+
+end
+
+module MakeTables = struct
 
    let getFloat x =
       match x with
       | PReal(value,_) -> value
       | _ -> failwith "The result of the evaluation is not a float"
-
-   let makeFloat x =
-      PReal(x,emptyAttr)
 
    let getCoefficients l =
       match l with
@@ -94,58 +108,20 @@ module MakeTables = struct
       | None -> failwith "the type is not defined"
       | Some(t) -> VType.isRealType t
 
-   let getTableIndividualParams loc args =
-      let remaining, found = Attributes.(getParameterList loc args [(["size"],Int); (["min"],Real); (["max"],Real)]) in
-      match remaining with
-      | _::_ ->
-         let params_s =  List.map (fun (id,_) -> PrintTypes.identifierStr id) remaining |> String.concat ", " in
-         let msg = "The following arguments are unknown for the current anotation: "^ params_s in
-         Error.raiseError msg loc
-      | [] ->
-         match found with
-         | [AInt(size,_); AReal(min,_); AReal(max,_)] ->
-            (int_of_string size), (float_of_string min), (float_of_string max)
-         | _ ->
-            let msg = "The annotation 'table' requires specific parameters. e.g. 'table(size=128,min=0.0,max=1.0)'" in
-            Error.raiseError msg loc
-
-   let rec getTableParams (attr:attr_exp list) =
-      match attr with
-      | [] -> None
-      | AFun(name,args,loc)::_ when name = ["table"] ->
-         Some(getTableIndividualParams loc args)
-      | _::t -> getTableParams t
-
-   let rec removeTableParams (attr:attr_exp list) =
-      match attr with
-      | [] -> []
-      | AFun(name,_,_)::t when name = ["table"] ->
-         removeTableParams t
-      | h::t -> h :: (removeTableParams t)
-
    let getInputVar arg =
       match arg with
-      | [SimpleId(id,_,_)]
-      | [TypedId(id,_,_,_)] -> PId(id,attr_real)
-      | _ -> failwith "invalid input variable"
-
-   let makeVarName (fname:id) (var:id) : id =
-      [String.concat "_" (fname @ var)]
-
-   let makeTableDecl attr fname name data =
-      let varname = makeVarName fname name in
-      let size = List.length data in
-      let atype = array_type size in
-      let arr = PArray((CCList.map makeFloat data |> Array.of_list), { attr with typ = Some(atype) }) in
-      StmtVal(LId(varname, Some(atype), attr_array size), Some(arr), { emptyAttr with const = true})
+      | SimpleId(id,_,_)
+      | TypedId(id,_,_,_) -> PId(id,Tables.attr_real)
 
    let makeNewBody fname size min max input =
-      let lindex = LId(["index"],Some(int_type), attr_int) in
-      let rindex = PId(["index"], attr_int) in
+      let lindex = LId(["index"],Some(Tables.int_type), Tables.attr_int) in
+      let rindex = PId(["index"], Tables.attr_int) in
       let getCoeff a =
-         PCall(None,["get"], [PCall(None,["wrap_array"], [PId(makeVarName fname [a], attr_array size)], attr_real); rindex], attr_real)
+         PCall(None,["get"],
+               [PCall(None,["wrap_array"], [PId(Tables.makeVarName fname [a], Tables.attr_array size)], Tables.attr_real); rindex],
+               Tables.attr_real)
       in
-      let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min),attr_real) in
+      let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), Tables.attr_real) in
       StmtBlock(
          None,
          [
@@ -157,11 +133,11 @@ module MakeTables = struct
                                     [POp("*",
                                          [
                                             initial_index;
-                                            POp("-",[input; PReal(min,attr_real)],attr_real)
-                                         ],attr_real)],attr_int);
-                              PInt(0,attr_int);
-                              PInt(size-1,attr_int);
-                           ],attr_int),
+                                            POp("-",[input; PReal(min,Tables.attr_real)], Tables.attr_real)
+                                         ], Tables.attr_real)], Tables.attr_int);
+                              PInt(0, Tables.attr_int);
+                              PInt(size-1, Tables.attr_int);
+                           ], Tables.attr_int),
                      emptyAttr);
             StmtReturn(
                POp("+",
@@ -170,8 +146,8 @@ module MakeTables = struct
                              (POp("+",
                                   [getCoeff "c1";
                                    POp("*",
-                                       [getCoeff "c2";input],attr_real)],attr_real))],
-                        attr_real)],attr_real),emptyAttr)
+                                       [getCoeff "c2";input], Tables.attr_real)], Tables.attr_real))],
+                        Tables.attr_real)], Tables.attr_real),emptyAttr)
          ], emptyAttr)
 
    let evaluateFunction env (name:id) (x:float) =
@@ -206,36 +182,138 @@ module MakeTables = struct
       in
       let acc0, acc1, acc2 = fitData data size [] [] [] in
       [
-         makeTableDecl attr name ["c0"] acc0;
-         makeTableDecl attr name ["c1"] acc1;
-         makeTableDecl attr name ["c2"] acc2
+         Tables.makeDecl attr name ["c0"] acc0;
+         Tables.makeDecl attr name ["c1"] acc1;
+         Tables.makeDecl attr name ["c2"] acc2
       ]
 
+   let checkInputVariables loc args =
+      match args with
+      | [ var ] -> getInputVar var
+      | _ ->
+         let msg = "This attribute requires the function to have only one argument:\n\"fun foo(x:real) : real\"" in
+         Error.raiseError msg loc
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "MakeTables.stmt_x" @@ fun state stmt ->
       match stmt with
       | StmtFun(name, args, _, ret, attr) ->
          begin
-            match getTableParams attr.exp, args with
-            | None, _ -> state, [stmt]
-            | Some(size, min, max), [_] when checkRealReturn ret ->
-               let env    = getInterpEnv state in
+            let params = Attributes.["size", Int; "min", Real; "max", Real] in
+            let msg    = "The attribute 'table' requires specific parameters. e.g. 'table(size=128,min=0.0,max=1.0)'" in
+            match Attributes.getTableParams "table" params msg attr.exp with
+            | None -> state, [stmt]
+            | Some(_, [PInt(size, _); PReal(min, _); PReal(max, _)]) when checkRealReturn ret ->
+               let var    = checkInputVariables attr.loc args in
+               let env        = getInterpEnv state in
                let Path(path) = Env.currentScope state in
-               let full_path = path@name in
-               let result = calculateTables env attr full_path size min max in
-               let attr'  = { attr with exp = removeTableParams attr.exp } in
-               let var    = getInputVar args in
-               let body'  = makeNewBody full_path size min max var in
+               let full_path  = path@name in
+               let result     = calculateTables env attr full_path size min max in
+               let attr'      = { attr with exp = Attributes.removeAttrFunc "table" attr.exp } in
+               let body'      = makeNewBody full_path size min max var in
                reapply state, result @ [StmtFun(name, args, body', ret, attr')]
-            | Some _, _::_::_ ->
-               let msg = "This annotation can only be applied to functions of one argument" in
-               Error.raiseError msg attr.loc
-            | Some _, _ ->
-               let msg = "This annotation can only be applied to functions returning 'real'" in
-               Error.raiseError msg attr.loc
+            | Some(loc, _) ->
+               let msg = "This attribute can only be applied to functions returning 'real'" in
+               Error.raiseError msg loc
          end
       | _ -> state, [stmt]
+
+   let mapper = Mapper.{ default_mapper with stmt_x }
+
+end
+
+module EmbedWavFile = struct
+
+   let readFile (loc:Loc.t) (includes:string list) (file:string) : WavFile.wave =
+      match FileIO.findFile includes file with
+      | Some filename ->
+         begin match WavFile.read filename with
+            | Ok (wave) -> wave
+            | Error read_msg ->
+               let msg = "Failed to read the wav file '" ^ file ^ "': " ^ read_msg in
+               Error.raiseError msg loc
+         end
+      | None ->
+         let msg = "The file '"^file^"' was not found in any of the include locations" in
+         Error.raiseError msg loc
+
+
+   let checkNumberOfChannels (loc:Loc.t) (channels:int) (wave:WavFile.wave) : unit =
+      if wave.WavFile.channels <> channels then
+         let msg = "The given number of channels (" ^ (string_of_int channels) ^ ") does not match the actual number of the channels in the file (" ^ (string_of_int wave.WavFile.channels) ^ ")" in
+         Error.raiseError msg loc
+
+
+   let getDeclarations (attr:attr) (name:id) (wav_data:WavFile.wave) : stmt list =
+      Array.mapi
+         (fun i v -> Tables.makeDecl attr name ["chan_"^(string_of_int i)] (Array.to_list v))
+         wav_data.WavFile.data
+      |> Array.to_list
+
+
+   let checkInputVariables (loc:Loc.t) (args:typed_id list) : exp * exp =
+      match args with
+      | [ channel ; index ] -> MakeTables.getInputVar channel, MakeTables.getInputVar index
+      | _ ->
+         let msg = "This attribute requires the function to have the following arguments:\n\"external wave(channel:int, index:int) : real\"" in
+         Error.raiseError msg loc
+
+
+   let accessChannel fname (attr:attr) (channel:exp) (index:exp) (samples:int) (i:int) : stmt =
+      let attr_bool  = { emptyAttr with typ = Some(VType.Constants.bool_type) } in
+      let attr_real  = { emptyAttr with typ = Some(VType.Constants.real_type) } in
+      let attr_int   = { emptyAttr with typ = Some(VType.Constants.int_type) } in
+      let table_name = Tables.makeVarName fname ["chan_"^(string_of_int i)] in
+      let table      = PCall(None, ["wrap_array"], [PId(table_name, Tables.attr_array samples)], attr_real) in
+      let i          = PInt(i, Tables.attr_int) in
+      let samples_e  = PInt(samples, Tables.attr_int) in
+      StmtIf(
+         POp("==", [channel; i],attr_bool),
+         StmtReturn(PCall(None,["get"], [table; POp("%",[index; samples_e],attr_int)], attr_real),attr),
+         None,
+         attr)
+
+
+   let makeNewBody (fname:id) (attr:attr) (args:typed_id list) (wave:WavFile.wave) : stmt =
+      let attr_real  = { emptyAttr with typ = Some(VType.Constants.real_type) } in
+      let channel, index = checkInputVariables attr.loc args in
+      let stmts   = CCList.init wave.WavFile.channels (accessChannel fname attr channel index  wave.WavFile.samples) in
+      let default = StmtReturn( PReal(0.0,attr_real),attr) in
+      StmtBlock(None, stmts @ [default], attr)
+
+
+   let makeSizeFunction (fname:id) (attr:attr) (size:int) : stmt =
+      let attr_int = { emptyAttr with typ = Some(VType.Constants.int_type) } in
+      let size_name = appendToId fname "_samples" in
+      StmtFun(size_name, [], StmtReturn(PInt(size,attr_int),attr), Some(VType.Constants.int_type), attr)
+
+
+   let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
+      Mapper.makeExpander "MakeTables.stmt_x" @@ fun state stmt ->
+      match stmt with
+      | StmtExternal(name, args, ret, _, attr) ->
+         begin
+            let params = Attributes.["channels", Int; "file", String] in
+            let msg    = "The attribute 'wave' requires specific parameters. e.g. 'wave(channels=1,file=\"file.wav\")'" in
+            match Attributes.getTableParams "wave" params msg attr.exp with
+            | None -> state, [stmt]
+            | Some(loc, [PInt(channels, _); PString(file, _)]) when VType.isRealType ret ->
+               let Path(path) = Env.currentScope state in
+               let full_path  = path @ name in
+               let includes   = (Env.get state).PassData.args.includes in
+               let wave       = readFile loc includes file in
+               let ()         = checkNumberOfChannels loc channels wave in
+               let result     = getDeclarations attr full_path wave in
+               let body       = makeNewBody full_path attr args wave in
+               let attr'      = { attr with exp = Attributes.removeAttrFunc "wave" attr.exp; ext_fn = None } in
+               let size_fun   = makeSizeFunction name attr wave.WavFile.samples in
+               reapply state, result @ [size_fun; StmtFun(full_path, args, body, Some ret, attr')]
+            | Some (loc, _) ->
+               let msg = "This attribute can only be applied to functions returning 'real'" in
+               Error.raiseError msg loc
+         end
+      | _ -> state, [stmt]
+
 
    let mapper = Mapper.{ default_mapper with stmt_x }
 
@@ -245,3 +323,4 @@ let run =
    Pass1.Simplify.mapper
    |> Mapper.seq Evaluate.mapper
    |> Mapper.seq MakeTables.mapper
+   |> Mapper.seq EmbedWavFile.mapper

@@ -36,7 +36,7 @@ end
 (* declares the node.js object 'buffer' *)
 class type buffer = object
    (* converts the buffer object to string *)
-   method toString : js_string t meth
+   method toString : js_string t -> js_string t meth
 end
 
 (* declares the node.js object 'fs' *)
@@ -60,7 +60,7 @@ let read_bytes_fn (path:string) : Buffer.t option =
    let exist    = fs##existsSync (string path) in
    if to_bool exist then
       let buffer     = fs##readFileSync (string path) in
-      let contents   = buffer##toString in
+      let contents   = buffer##toString (Js.string "ascii") in
       let str        = to_string contents in
       let ret_buffer = Buffer.create 0 in
       let ()         = Buffer.add_string ret_buffer str in
@@ -74,7 +74,7 @@ let read_fn (path:string) : string option =
    let exist    = fs##existsSync (string path) in
    if to_bool exist then
       let buffer   = fs##readFileSync (string path) in
-      let contents =  buffer##toString in
+      let contents =  buffer##toString (Js.string "utf8") in
       Some(to_string contents)
    else
       None

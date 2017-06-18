@@ -115,6 +115,10 @@ and expressionBuff buffer (exp:exp) =
       identifierBuff buffer s
    | PInt(s,_)  -> append buffer (string_of_int s)
    | PReal(s,_) -> append buffer (Float.to_string s)
+   | PString(s,_) ->
+      append buffer "\"";
+      append buffer s;
+      append buffer "\""
    | PBool(true,_)  -> append buffer "true"
    | PBool(false,_) -> append buffer "false"
    | PArray(elems,_) ->
@@ -221,9 +225,13 @@ and stmtBuff buffer (s:stmt) =
       printList buffer typedArgBuff "," args;
       append buffer ") : ";
       typeExpressionBuff buffer vtype;
-      append buffer " \"";
-      append buffer link_name;
-      append buffer "\"";
+      begin match link_name with
+         | Some s ->
+            append buffer " \"";
+            append buffer s;
+            append buffer "\""
+         | None -> ()
+      end;
       append buffer ";"
    | StmtBind(e1,e2,_) ->
       lhsExpressionBuff buffer e1;

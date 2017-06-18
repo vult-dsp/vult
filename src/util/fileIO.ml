@@ -134,3 +134,17 @@ let exists (path:string) : bool =
 (* Gets the current directory *)
 let cwd () : string =
    !cwd_fun ()
+
+let findFile (includes:string list) (filename:string) : string option =
+   if exists filename then
+      Some filename
+   else
+      let rec loop inc =
+         match inc with
+         | [] -> None
+         | h :: t ->
+            let fullname = Filename.concat h filename in
+            if exists fullname then Some fullname
+            else loop t
+      in
+      loop includes

@@ -127,11 +127,11 @@ let readSample24 (buffer:buffer) : float =
    else
       (Int32.to_float v) /. max_24
 
-let getReadSampleFunction (bits:int32) : buffer -> float =
+let getReadSampleFunction (bits:int32) : (buffer -> float, string) result =
    match Int32.to_int bits with
-   | 16 -> readSample16
-   | 24 -> readSample24
-   | _ -> failwith "unsupported bits"
+   | 16 -> Ok readSample16
+   | 24 -> Ok readSample24
+   | _ -> Error ("Wave file encoded in an unsupported bits per sample: "^(string_of_int (Int32.to_int bits)))
 
 (** Reads the given number of samples into the data arrays *)
 let readSamples (buffer:buffer) (channels:int) (size:int) (data: float array array) (read_fn:buffer -> float) : int =
@@ -178,10 +178,15 @@ let checkFormat (buffer:buffer) =
          else
             Ok ()
 
-type wav_data = float array array
+type wave =
+   {
+      channels : int;
+      samples : int;
+      data : float array array;
+   }
 
 (** Reads a wav file and returns an array containing the channels *)
-let read (file:string) : (wav_data, string) result =
+let read (file:string) : (wave, string) result =
    match FileIO.read_bytes file with
    | None -> Error "failed to open the file"
    | Some data ->
@@ -194,12 +199,14 @@ let read (file:string) : (wav_data, string) result =
          let _byte_rate   = read4 buffer in
          let _block_align = read2 buffer in
          let bits_per_sample = read2 buffer in
-         let sample_fn    = getReadSampleFunction bits_per_sample in
-         if not (searchData buffer) then
-            Error "the file does not contain data"
-         else
-            let size        = read4 buffer |> Int32.to_int in
-            let no_samples  = size / channels / (Int32.to_int bits_per_sample / 8) in
-            let arrays      = Array.init channels (fun _ -> Array.make no_samples 0.0 ) in
-            let _no_samples = readSamples buffer channels no_samples arrays sample_fn in
-            Ok arrays
+         match getReadSampleFunction bits_per_sample with
+         | Error _ as e -> e
+         | Ok sample_fn ->
+            if not (searchData buffer) then
+               Error "the file does not contain data"
+            else
+               let size        = read4 buffer |> Int32.to_int in
+               let no_samples  = size / channels / (Int32.to_int bits_per_sample / 8) in
+               let data        = Array.init channels (fun _ -> Array.make no_samples 0.0 ) in
+               let samples     = readSamples buffer channels no_samples data sample_fn in
+               Ok { channels; samples; data }
