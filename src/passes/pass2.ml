@@ -251,6 +251,7 @@ module EmbedWavFile = struct
       |> Array.to_list
 
 
+   (** Verifies that the arguments of the attribute correspond to the necessary *)
    let checkInputVariables (loc:Loc.t) (args:typed_id list) : exp * exp =
       match args with
       | [ channel ; index ] -> MakeTables.getInputVar channel, MakeTables.getInputVar index
@@ -259,7 +260,8 @@ module EmbedWavFile = struct
          Error.raiseError msg loc
 
 
-   let accessChannel fname (attr:attr) (channel:exp) (index:exp) (samples:int) (i:int) : stmt =
+   (** Generates the statement that reads the arrays if the reuqested channel matches *)
+   let accessChannel (fname:id) (attr:attr) (channel:exp) (index:exp) (samples:int) (i:int) : stmt =
       let attr_bool  = { emptyAttr with typ = Some(VType.Constants.bool_type) } in
       let attr_real  = { emptyAttr with typ = Some(VType.Constants.real_type) } in
       let attr_int   = { emptyAttr with typ = Some(VType.Constants.int_type) } in
@@ -274,6 +276,7 @@ module EmbedWavFile = struct
          attr)
 
 
+   (** Generates the function that access the data of the wave file *)
    let makeNewBody (fname:id) (attr:attr) (args:typed_id list) (wave:WavFile.wave) : stmt =
       let attr_real  = { emptyAttr with typ = Some(VType.Constants.real_type) } in
       let channel, index = checkInputVariables attr.loc args in
@@ -282,6 +285,7 @@ module EmbedWavFile = struct
       StmtBlock(None, stmts @ [default], attr)
 
 
+   (** Generates a function <name>_samples that return the size of the wav file *)
    let makeSizeFunction (fname:id) (attr:attr) (size:int) : stmt =
       let attr_int = { emptyAttr with typ = Some(VType.Constants.int_type) } in
       let size_name = appendToId fname "_samples" in

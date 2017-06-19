@@ -109,6 +109,7 @@ let stand_alone_files =
       "web/volume.vult";
       "web/delay.vult";
       "../test/bench/bench.vult";
+      "../test/passes/wav_file.vult";
    ]
 
 let partial_files =
@@ -196,14 +197,21 @@ module CodeGenerationTest = struct
       | FullName(name) -> name
 
    let process (fullfile:string) (real_type:string) : (string * string) list =
-      let basefile = Filename.chop_extension (Filename.basename fullfile) in
-      let ccode = real_type = "fixed" || real_type = "float" in
-      let jscode = real_type = "js" in
-      let args  = { default_arguments with output = basefile; real = real_type; ccode; jscode } in
-      let stmts = ParserVult.parseFile fullfile in
-      let ()    = showResults stmts |> ignore in
-      let files = Generate.generateCode [stmts] args in
-      files |> List.map (fun (code,ext) -> Pla.print code, getExt ext)
+      try
+         let basefile = Filename.chop_extension (Filename.basename fullfile) in
+         let dir      = in_test_directory "passes" in
+         let ccode    = real_type = "fixed" || real_type = "float" in
+         let jscode   = real_type = "js" in
+         let args     = { default_arguments with output = basefile; real = real_type; ccode; jscode; includes = [dir] } in
+         let stmts    = ParserVult.parseFile fullfile in
+         let ()       = showResults stmts |> ignore in
+         let files    = Generate.generateCode [stmts] args in
+         files |> List.map (fun (code,ext) -> Pla.print code, getExt ext)
+      with
+      | Error.Errors errors ->
+         let msg = Error.reportErrors errors in
+         assert_failure msg
+
 
    let run (file:string) real_type context : unit =
       let fullfile = checkFile (in_test_directory ("../examples/"^file)) in
@@ -269,7 +277,8 @@ module CompileTest = struct
          assert_failure ("Failed to compile "^file)
 
    let generateCPP (filename:string) (output:string) (real_type:string) : unit =
-      let args = { default_arguments with  files = [File filename]; ccode = true; output = output; real = real_type } in
+      let dir      = in_test_directory "passes" in
+      let args = { default_arguments with  files = [File filename]; ccode = true; output = output; real = real_type; includes = [dir] } in
       let parser_results = ParserVult.parseFile filename  in
       let gen = Generate.generateCode [parser_results] args in
       writeFiles args gen

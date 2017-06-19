@@ -1,0 +1,19 @@
+external ext_wave(channel:int, index:int) : real @[wave(channels=1,file="wave.wav")];
+
+fun index() {
+   mem i = (i + 1) % ext_wave_samples();
+   return i;
+}
+
+fun osc_wave(cv:real) {
+   return ext_wave(0,index());
+}
+
+fun process(cv) {
+   return osc_wave(cv);
+}
+
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int){ }
+and default(){ }
