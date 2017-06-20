@@ -5,6 +5,7 @@ description = ""
 tags = []
 topics = []
 layout = "post"
+author = "Leonardo Laguna Ruiz"
 +++
 
 A new repository with more Vult examples is available:

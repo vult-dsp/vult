@@ -5,6 +5,7 @@ description = ""
 tags = []
 topics = []
 layout = "post"
+author = "Leonardo Laguna Ruiz"
 +++
 
 In the last months I have been making many improvements to the Vult compiler. These improvements cannot be easily tried by the users due to the fact that for me creating binaries for all the platforms is very time consuming. Therefore, in order for the users to try the latests changes they need to compile Vult from the source code. Even though the process is well documented in the repository, this can be time consuming and difficult for people unfamiliar with the OCaml tools.

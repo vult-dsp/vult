@@ -5,6 +5,7 @@ description = ""
 tags = []
 topics = []
 layout = "post"
+author = "Leonardo Laguna Ruiz"
 +++
 
 Recently I implemented simpler way to call the Vult compiler with multiple files. Previously Vult required that you passed every file in a correct order. For example:
