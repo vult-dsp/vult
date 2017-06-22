@@ -273,7 +273,7 @@ module CompileTest = struct
 
    let compileFile (file:string) =
       let basename = Filename.chop_extension (Filename.basename file) in
-      let cmd = Printf.sprintf "gcc -Werror -Wno-c++11-compat-deprecated-writable-strings -I%s -c %s -o %s" (in_test_directory "../runtime") file basename in
+      let cmd = Printf.sprintf "gcc -Werror -Wno-write-strings -I%s -c %s -o %s" (in_test_directory "../runtime") file basename in
       if Sys.command cmd <> 0 then
          assert_failure ("Failed to compile "^file)
 
