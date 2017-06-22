@@ -1,0 +1,12 @@
+fun test_print() {
+   _ = log(1);
+   _ = log(2.0);
+   _ = log("leonardo");
+   _ = log(true);
+}
+
+fun process(input:real){ return input; }
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int){ }
+and default(){ }

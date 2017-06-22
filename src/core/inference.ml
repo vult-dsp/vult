@@ -226,7 +226,7 @@ let unifyArrayElem (loc:Loc.t Lazy.t) (t1:VType.t) (t2:VType.t) =
 
 let getReturnType (typ:return_type) : VType.t =
    match typ with
-   | NoType        -> VType.Constants.unit_type
+   | NoType        -> VType.Const.unit_type
    | GivenType(t)  -> t
    | ReturnType(t) -> t
 
@@ -285,19 +285,19 @@ let addInstance (env:'a Env.t) (isactive:bool) (name:id option) (typ:VType.t) (a
 let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
    match e with
    | PUnit(attr) ->
-      let typ = VType.Constants.unit_type in
+      let typ = VType.Const.unit_type in
       PUnit({ attr with typ = Some(typ) }), env, typ
    | PBool(v,attr) ->
-      let typ = VType.Constants.bool_type in
+      let typ = VType.Const.bool_type in
       PBool(v,{ attr with typ = Some(typ) }), env, typ
    | PInt(v,attr) ->
-      let typ = VType.Constants.int_type in
+      let typ = VType.Const.int_type in
       PInt(v,{ attr with typ = Some(typ) }), env, typ
    | PReal(v,attr) ->
-      let typ = VType.Constants.real_type in
+      let typ = VType.Const.real_type in
       PReal(v,{ attr with typ = Some(typ) }), env, typ
    | PString(s,attr) ->
-      let typ = VType.Constants.string_type in
+      let typ = VType.Const.string_type in
       PString(s,{ attr with typ = Some(typ) }), env, typ
    | PId(id,attr) ->
       let var = Env.lookupVariableRaise env id attr.loc in
@@ -316,7 +316,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
       let cond', env', cond_type = inferExp env cond in
       let then_',env', then_type = inferExp env' then_ in
       let else_',env', else_type = inferExp env' else_ in
-      unifyRaise (expLoc cond') (VType.Constants.bool_type) cond_type;
+      unifyRaise (expLoc cond') (VType.Const.bool_type) cond_type;
       unifyRaise (expLoc else_') then_type else_type;
       PIf(cond',then_',else_',{ attr with typ = Some(then_type) }), env', then_type
    | PCall(name,fname,args,attr) ->
@@ -362,7 +362,7 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
       let stmt', _, ret_type = inferStmt env NoType stmt in
       let typ = getReturnType ret_type in
       PSeq(name,stmt',{ attr with typ = Some(typ)}), env, typ
-   | PEmpty -> PEmpty, env, VType.Constants.unit_type
+   | PEmpty -> PEmpty, env, VType.Const.unit_type
 
 and inferExpList (env:'a Env.t) (elems:exp list) : exp list * 'a Env.t * VType.t list =
    let elems',env',types =
@@ -446,13 +446,13 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       StmtFun(name,args',body',Some(last_type),attr), env', NoType
    | StmtIf(cond,then_,else_,attr) ->
       let cond',env', cond_type  = inferExp env cond in
-      unifyRaise (expLoc cond') (VType.Constants.bool_type) cond_type;
+      unifyRaise (expLoc cond') (VType.Const.bool_type) cond_type;
       let then_', env', ret_type' = inferStmt env' ret_type then_ in
       let else_', env', ret_type' = inferOptStmt env' ret_type' else_ in
       StmtIf(cond',then_',else_',attr), env', ret_type'
    | StmtWhile(cond,body,attr) ->
       let cond',env', cond_type  = inferExp env cond in
-      unifyRaise (expLoc cond') (VType.Constants.bool_type) cond_type;
+      unifyRaise (expLoc cond') (VType.Const.bool_type) cond_type;
       let body', env', ret_type' = inferStmt env' ret_type body in
       StmtWhile(cond',body',attr), env', ret_type'
    | StmtType(name,members,attr) ->
@@ -471,7 +471,7 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
          if Attributes.has attr.exp ["wave"] then
             let size_name = appendToId name "_samples" in
             let attr = { attr with ext_fn = None } in
-            registerSpecialFunction env' size_name [] VType.Constants.int_type attr, attr
+            registerSpecialFunction env' size_name [] VType.Const.int_type attr, attr
          else
             env', attr
       in

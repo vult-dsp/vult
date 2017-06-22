@@ -70,7 +70,7 @@ end
 
 module ReturnReferences = struct
 
-   let unitAttr attr = { attr with typ = Some(VType.Constants.unit_type)}
+   let unitAttr attr = { attr with typ = Some(VType.Const.unit_type)}
 
    let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
       Mapper.make "ReturnReferences.stmt" @@ fun state stmt ->
@@ -81,7 +81,7 @@ module ReturnReferences = struct
          match stmt with
          | StmtFun(name,args,body,Some(rettype),attr) when not (VType.isSimpleType rettype) ->
             let output = TypedId(["_output_"],rettype,OutputArg,emptyAttr) in
-            let stmt' = StmtFun(name,args@[output],body,Some(VType.Constants.unit_type),attr) in
+            let stmt' = StmtFun(name,args@[output],body,Some(VType.Const.unit_type),attr) in
             state, stmt'
          | _ -> state, stmt
 

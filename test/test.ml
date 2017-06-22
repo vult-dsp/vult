@@ -110,6 +110,7 @@ let stand_alone_files =
       "web/delay.vult";
       "../test/bench/bench.vult";
       "../test/passes/wav_file.vult";
+      "../test/other/log.vult";
    ]
 
 let partial_files =
@@ -272,7 +273,7 @@ module CompileTest = struct
 
    let compileFile (file:string) =
       let basename = Filename.chop_extension (Filename.basename file) in
-      let cmd = Printf.sprintf "gcc -Werror -I%s -c %s -o %s" (in_test_directory "../runtime") file basename in
+      let cmd = Printf.sprintf "gcc -Werror -Wno-c++11-compat-deprecated-writable-strings -I%s -c %s -o %s" (in_test_directory "../runtime") file basename in
       if Sys.command cmd <> 0 then
          assert_failure ("Failed to compile "^file)
 

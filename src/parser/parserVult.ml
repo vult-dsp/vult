@@ -388,6 +388,9 @@ and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
    | REAL,_  ->
       let attr = makeAttr token.loc in
       PReal(float_of_string token.value,attr)
+   | STRING,_  ->
+      let attr = makeAttr token.loc in
+      PString(token.value, attr)
    | TRUE,_  ->
       let attr = makeAttr token.loc in
       PBool(true,attr)

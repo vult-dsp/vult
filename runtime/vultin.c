@@ -28,6 +28,7 @@ NOTE: The code for the fixed-point operations is based on the project:
 
 */
 #include "vultin.h"
+#include "stdio.h"
 
 fix16_t fix_exp(fix16_t inValue)
 {
@@ -238,4 +239,25 @@ fix16_t fix_random()
 int irandom()
 {
    return (int)rand();
+}
+
+void float_print(float value)
+{
+   printf("%f\n", value);
+}
+void fix_print(fix16_t value)
+{
+   printf("%f\n", fix_to_float(value));
+}
+void int_print(int value)
+{
+   printf("%i\n", value);
+}
+void string_print(char *value)
+{
+   printf("%s\n", value);
+}
+void bool_print(uint8_t value)
+{
+   printf("%s\n", value ? "true" : "false");
 }

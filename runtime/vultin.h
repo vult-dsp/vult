@@ -213,6 +213,13 @@ float float_random();
 fix16_t fix_random();
 int irandom();
 
+/* Print values */
+void float_print(float value);
+void fix_print(fix16_t value);
+void int_print(int value);
+void string_print(char *value);
+void bool_print(uint8_t value);
+
 #ifdef __cplusplus
 }
 #endif

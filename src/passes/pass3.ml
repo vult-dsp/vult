@@ -97,7 +97,7 @@ module CreateInitFunction = struct
       | VType.TId(name,_)     -> PCall(None,getInitFunctioName name,[],typedAttr)
       | VType.TComposed(["array"],[sub;{ contents = VType.TInt(size,_) }],_) ->
          let sub_init    = getInitValue sub in
-         let intTypeAttr = {emptyAttr with typ = Some(VType.Constants.int_type)} in
+         let intTypeAttr = {emptyAttr with typ = Some(VType.Const.int_type)} in
          PCall(None,["makeArray"],[PInt(size,intTypeAttr);sub_init],typedAttr)
       | VType.TComposed(["tuple"],types,_) ->
          let elems = List.map getInitValue types in
@@ -136,7 +136,7 @@ module CreateInitFunction = struct
       let init_fun_call =
          match init_fun with
          | Some(init_fun_name) ->
-            let unitAttr = { emptyAttr with typ=Some(VType.Constants.unit_type)} in
+            let unitAttr = { emptyAttr with typ=Some(VType.Const.unit_type)} in
             let callExp  = PCall(None,init_fun_name,[ctx_lid],unitAttr) in
             [StmtBind(LWild(emptyAttr),callExp,emptyAttr)]
          | None -> []

@@ -120,9 +120,9 @@ let decr_nest state = { state with nest_prob = state.nest_prob *. 0.5 }
 
 let rec newType state =
    pick_one state [
-      always, normal_p, (fun _ -> VType.Constants.int_type);
-      always, normal_p, (fun _ -> VType.Constants.real_type);
-      always, normal_p, (fun _ -> VType.Constants.bool_type);
+      always, normal_p, (fun _ -> VType.Const.int_type);
+      always, normal_p, (fun _ -> VType.Const.real_type);
+      always, normal_p, (fun _ -> VType.Const.bool_type);
       (* Array *)
       with_array, low_p, (fun state ->
             let state' = no_tuple (no_array state) in
@@ -142,13 +142,13 @@ and newTypeList n state =
 
 
 let isInt typ _ =
-   VType.compare VType.Constants.int_type typ = 0
+   VType.compare VType.Const.int_type typ = 0
 
 let isReal typ _ =
-   VType.compare VType.Constants.real_type typ = 0
+   VType.compare VType.Const.real_type typ = 0
 
 let isBool typ _ =
-   VType.compare VType.Constants.bool_type typ = 0
+   VType.compare VType.Const.bool_type typ = 0
 
 let isNum typ state =
    isReal typ state || isInt typ state
@@ -294,7 +294,7 @@ let rec newExp state typ =
          );
       (* if-expression *)
       with_if_exp, nest_p, (fun state ->
-            let cond = newExp state VType.Constants.bool_type in
+            let cond = newExp state VType.Const.bool_type in
             let state' = decr_nest state in
             let e1 = newExp state' typ in
             let e2 = newExp state' typ in
@@ -427,18 +427,18 @@ let rec newStmt state =
          );
       (* if statements *)
       always, low_p, (fun state ->
-            let cond = newExp state VType.Constants.bool_type in
+            let cond = newExp state VType.Const.bool_type in
             let state',e1 = newStmtList 3 state in
             let state',e2 = newStmtList 3 (restoreVars state' state) in
             let state' = restoreVars state' state in
             state', StmtIf(cond,StmtBlock(None,e1,emptyAttr),Some(StmtBlock(None,e2,emptyAttr)),emptyAttr));
       always, low_p, (fun state ->
-            let cond = newExp state VType.Constants.bool_type in
+            let cond = newExp state VType.Const.bool_type in
             let state',e1 = newStmtList 3 state in
             let state' = restoreVars state' state in
             state', StmtIf(cond,StmtBlock(None,e1,emptyAttr),None,emptyAttr));
       always, low_p, (fun state ->
-            let cond = newExp state VType.Constants.bool_type in
+            let cond = newExp state VType.Const.bool_type in
             let state',e1 = newStmtList 3 state in
             let state' = restoreVars state' state in
             state', StmtWhile(cond,StmtBlock(None,e1,emptyAttr),emptyAttr));

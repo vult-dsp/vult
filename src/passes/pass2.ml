@@ -65,8 +65,8 @@ end
 
 module Tables = struct
 
-   let int_type = VType.Constants.int_type
-   let real_type = VType.Constants.real_type
+   let int_type = VType.Const.int_type
+   let real_type = VType.Const.real_type
    let attr_int = { emptyAttr with typ = Some(int_type) }
    let attr_real = { emptyAttr with typ = Some(real_type) }
 
@@ -262,9 +262,9 @@ module EmbedWavFile = struct
 
    (** Generates the statement that reads the arrays if the reuqested channel matches *)
    let accessChannel (fname:id) (attr:attr) (channel:exp) (index:exp) (samples:int) (i:int) : stmt =
-      let attr_bool  = { emptyAttr with typ = Some(VType.Constants.bool_type) } in
-      let attr_real  = { emptyAttr with typ = Some(VType.Constants.real_type) } in
-      let attr_int   = { emptyAttr with typ = Some(VType.Constants.int_type) } in
+      let attr_bool  = { emptyAttr with typ = Some(VType.Const.bool_type) } in
+      let attr_real  = { emptyAttr with typ = Some(VType.Const.real_type) } in
+      let attr_int   = { emptyAttr with typ = Some(VType.Const.int_type) } in
       let table_name = Tables.makeVarName fname ["chan_"^(string_of_int i)] in
       let table      = PCall(None, ["wrap_array"], [PId(table_name, Tables.attr_array samples)], attr_real) in
       let i          = PInt(i, Tables.attr_int) in
@@ -278,7 +278,7 @@ module EmbedWavFile = struct
 
    (** Generates the function that access the data of the wave file *)
    let makeNewBody (fname:id) (attr:attr) (args:typed_id list) (wave:WavFile.wave) : stmt =
-      let attr_real  = { emptyAttr with typ = Some(VType.Constants.real_type) } in
+      let attr_real  = { emptyAttr with typ = Some(VType.Const.real_type) } in
       let channel, index = checkInputVariables attr.loc args in
       let stmts   = CCList.init wave.WavFile.channels (accessChannel fname attr channel index  wave.WavFile.samples) in
       let default = StmtReturn( PReal(0.0,attr_real),attr) in
@@ -287,9 +287,9 @@ module EmbedWavFile = struct
 
    (** Generates a function <name>_samples that return the size of the wav file *)
    let makeSizeFunction (fname:id) (attr:attr) (size:int) : stmt =
-      let attr_int = { emptyAttr with typ = Some(VType.Constants.int_type) } in
+      let attr_int = { emptyAttr with typ = Some(VType.Const.int_type) } in
       let size_name = appendToId fname "_samples" in
-      StmtFun(size_name, [], StmtReturn(PInt(size,attr_int),attr), Some(VType.Constants.int_type), attr)
+      StmtFun(size_name, [], StmtReturn(PInt(size,attr_int),attr), Some(VType.Const.int_type), attr)
 
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =

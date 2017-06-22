@@ -324,6 +324,7 @@ let isSimpleType (typ:t) : bool =
    | TId(["bool"],_) -> true
    | TId(["unit"],_) -> true
    | TId(["void"],_) -> true
+   | TId(["string"],_) -> true
    | _ -> false
 
 let isRealType (typ:t) : bool =
@@ -337,7 +338,7 @@ let isSimpleOpType (typ:t option) : bool =
    | _ -> true
 
 (** Constant types *)
-module Constants = struct
+module Const = struct
 
    let (|->) a b = ref (TArrow(a,b,None))
 
@@ -354,6 +355,10 @@ module Constants = struct
 
    let real_real () =
       real_type |-> real_type
+
+   let a_a () =
+      let a = ref (TUnbound("'a",None,None)) in
+      a |-> a
 
    let a_a_a () =
       let a = ref (TUnbound("'a",None,None)) in

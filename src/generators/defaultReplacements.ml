@@ -125,6 +125,10 @@ module Default = struct
             ("eps",  "float"),   "float_eps";
             ("random", "float"),   "float_random";
             ("wrap_array",  "float"),"float_wrap_array";
+            ("log",  "float"),   "float_print";
+            ("log",  "int"),     "int_print";
+            ("log",  "uint8_t"), "bool_print";
+            ("log",  "string"),  "string_print";
          ]
 
    let array_init = Replacements.makeArrayInitializations
@@ -211,6 +215,7 @@ module FixedPoint = struct
             ("eps",  "fix16_t"),  "fix_eps";
             ("random", "fix16_t"),  "fix_random";
             ("wrap_array","fix16_t"), "fix_wrap_array";
+            ("log","fix16_t"), "fix_print";
          ]
 
    let array_init = Replacements.makeArrayInitializations
@@ -283,7 +288,6 @@ module JavaScript = struct
 
    let fun_to_fun = Replacements.makeFunctions
          [
-
          ]
 
    let array_init = Replacements.makeArrayInitializations

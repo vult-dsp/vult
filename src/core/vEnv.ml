@@ -161,7 +161,7 @@ module Scope = struct
          func      = ref IdMap.empty;
          mem_inst  = ref IdMap.empty;
          locals    = ref [];
-         typ       = ref VType.Constants.empty;
+         typ       = ref VType.Const.empty;
          ctx       = ref Context.empty;
          single    = ref true;
          active    = ref false;
@@ -556,53 +556,56 @@ end
 
 let builtin_table =
    [
-      ["int"]  , Scope.Type, VType.Constants.type_type, true;
-      ["real"] , Scope.Type, VType.Constants.type_type, true;
-      ["bool"] , Scope.Type, VType.Constants.type_type, true;
-      ["unit"] , Scope.Type, VType.Constants.type_type, true;
+      ["int"]  , Scope.Type, VType.Const.type_type, true;
+      ["real"] , Scope.Type, VType.Const.type_type, true;
+      ["bool"] , Scope.Type, VType.Const.type_type, true;
+      ["unit"] , Scope.Type, VType.Const.type_type, true;
+      ["string"], Scope.Type, VType.Const.type_type, true;
 
-      ["wrap_array"] , Scope.Function, VType.Constants.wrap_array (), true;
+      ["wrap_array"] , Scope.Function, VType.Const.wrap_array (), true;
 
-      ["set"] ,      Scope.Function, VType.Constants.array_set (), false;
-      ["get"] ,      Scope.Function, VType.Constants.array_get (), false;
-      ["size"] ,     Scope.Function, VType.Constants.array_size (), false;
-      ["makeArray"], Scope.Function, VType.Constants.array_make (), false;
+      ["set"] ,      Scope.Function, VType.Const.array_set (), false;
+      ["get"] ,      Scope.Function, VType.Const.array_get (), false;
+      ["size"] ,     Scope.Function, VType.Const.array_size (), false;
+      ["makeArray"], Scope.Function, VType.Const.array_make (), false;
 
-      ["abs"]  , Scope.Function, VType.Constants.real_real (), false;
-      ["exp"]  , Scope.Function, VType.Constants.real_real (), false;
-      ["sin"]  , Scope.Function, VType.Constants.real_real (), false;
-      ["cos"]  , Scope.Function, VType.Constants.real_real (), false;
-      ["floor"], Scope.Function, VType.Constants.real_real (), false;
-      ["tanh"] , Scope.Function, VType.Constants.real_real (), false;
-      ["tan"]  , Scope.Function, VType.Constants.real_real (), false;
-      ["sqrt"] , Scope.Function, VType.Constants.real_real (), false;
-      ["clip"] , Scope.Function, VType.Constants.a_a_a_a (), false;
+      ["abs"]  , Scope.Function, VType.Const.real_real (), false;
+      ["exp"]  , Scope.Function, VType.Const.real_real (), false;
+      ["sin"]  , Scope.Function, VType.Const.real_real (), false;
+      ["cos"]  , Scope.Function, VType.Const.real_real (), false;
+      ["floor"], Scope.Function, VType.Const.real_real (), false;
+      ["tanh"] , Scope.Function, VType.Const.real_real (), false;
+      ["tan"]  , Scope.Function, VType.Const.real_real (), false;
+      ["sqrt"] , Scope.Function, VType.Const.real_real (), false;
+      ["clip"] , Scope.Function, VType.Const.a_a_a_a (), false;
 
-      ["int"]  , Scope.Function, VType.Constants.num_int (), false;
-      ["real"] , Scope.Function, VType.Constants.num_real (), false;
+      ["int"]  , Scope.Function, VType.Const.num_int (), false;
+      ["real"] , Scope.Function, VType.Const.num_real (), false;
 
-      ["|-|"] , Scope.Operator, VType.Constants.num_num (), false;
-      ["+"]  , Scope.Operator, VType.Constants.num_num_num (), false;
-      ["-"]  , Scope.Operator, VType.Constants.num_num_num (), false;
-      ["*"]  , Scope.Operator, VType.Constants.num_num_num (), false;
-      ["/"]  , Scope.Operator, VType.Constants.num_num_num (), false;
-      ["%"]  , Scope.Operator, VType.Constants.num_num_num (), false;
+      ["|-|"] , Scope.Operator, VType.Const.num_num (), false;
+      ["+"]  , Scope.Operator, VType.Const.num_num_num (), false;
+      ["-"]  , Scope.Operator, VType.Const.num_num_num (), false;
+      ["*"]  , Scope.Operator, VType.Const.num_num_num (), false;
+      ["/"]  , Scope.Operator, VType.Const.num_num_num (), false;
+      ["%"]  , Scope.Operator, VType.Const.num_num_num (), false;
 
-      [">"]   , Scope.Operator, VType.Constants.num_num_bool (), false;
-      ["<"]   , Scope.Operator, VType.Constants.num_num_bool (), false;
-      ["=="]  , Scope.Operator, VType.Constants.a_a_bool (), false;
-      ["<>"]  , Scope.Operator, VType.Constants.a_a_bool (), false;
-      [">="]  , Scope.Operator, VType.Constants.num_num_bool (), false;
-      ["<="]  , Scope.Operator, VType.Constants.num_num_bool (), false;
+      [">"]   , Scope.Operator, VType.Const.num_num_bool (), false;
+      ["<"]   , Scope.Operator, VType.Const.num_num_bool (), false;
+      ["=="]  , Scope.Operator, VType.Const.a_a_bool (), false;
+      ["<>"]  , Scope.Operator, VType.Const.a_a_bool (), false;
+      [">="]  , Scope.Operator, VType.Const.num_num_bool (), false;
+      ["<="]  , Scope.Operator, VType.Const.num_num_bool (), false;
 
-      ["not"] , Scope.Function, VType.Constants.bool_bool (), false;
-      ["||"]  , Scope.Operator, VType.Constants.bool_bool_bool (), false;
-      ["&&"]  , Scope.Operator, VType.Constants.bool_bool_bool (), false;
+      ["not"] , Scope.Function, VType.Const.bool_bool (), false;
+      ["||"]  , Scope.Operator, VType.Const.bool_bool_bool (), false;
+      ["&&"]  , Scope.Operator, VType.Const.bool_bool_bool (), false;
 
-      ["eps"] , Scope.Function, VType.Constants.real_type, false;
+      ["eps"] , Scope.Function, VType.Const.real_type, false;
 
-      ["random"], Scope.Function, VType.Constants.real_type, false;
-      ["irandom"], Scope.Function, VType.Constants.int_type, false;
+      ["random"], Scope.Function, VType.Const.real_type, false;
+      ["irandom"], Scope.Function, VType.Const.int_type, false;
+
+      ["log"], Scope.Function, VType.Const.a_a (), false;
 
    ]
 
