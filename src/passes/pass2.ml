@@ -41,22 +41,34 @@ module Evaluate = struct
       | PInt _ | PReal _ | PBool _ -> true
       | _ -> false
 
+   let markAsEvaluated (call:exp) : exp =
+      match call with
+      | PCall(inst, name, args, attr) ->
+         let attr = { attr with evaluated = true } in
+         PCall(inst, name, args, attr)
+      | _ -> call
+
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make "Simplify.exp" @@ fun state exp ->
       match exp with
-      | PCall(None, name, args, _) when List.for_all isConst args && not (IdSet.mem name avoid) ->
-         let env = getInterpEnv state in
-         let exp' = Interpreter.evalExp env exp in
-         state, exp'
-      (*| PReal(v, attr) ->
+      | PCall(None, name, args, attr) when
+           not attr.evaluated
+           && List.for_all isConst args
+           && not (IdSet.mem name avoid) ->
+         let env    = getInterpEnv state in
+         let exp'   = Interpreter.evalExp env exp in
+         state, markAsEvaluated exp'
+      | PReal(v, attr) ->
          begin
             match classify_float v with
             | FP_normal -> state, exp
             | FP_subnormal -> state, exp
             | FP_zero -> state, exp
             | FP_infinite -> state, PReal(3.40282347E+38, attr)
-            | FP_nan -> failwith "real number evaluates to nan"
-         end*)
+            | FP_nan ->
+               let msg = "The number is NaN, this can be the result of a simplification" in
+               Error.raiseError msg attr.loc
+         end
       | _ -> state, exp
 
    let mapper = Mapper.{ default_mapper with exp = exp }
@@ -199,9 +211,9 @@ module MakeTables = struct
       match stmt with
       | StmtFun(name, args, _, ret, attr) ->
          begin
-            let params = Attributes.["size", Int; "min", Real; "max", Real] in
+            let params = Tags.["size", Int; "min", Real; "max", Real] in
             let msg    = "The attribute 'table' requires specific parameters. e.g. 'table(size=128,min=0.0,max=1.0)'" in
-            match Attributes.getTableParams "table" params msg attr.exp with
+            match Tags.getTableParams "table" params msg attr.exp with
             | None -> state, [stmt]
             | Some(_, [PInt(size, _); PReal(min, _); PReal(max, _)]) when checkRealReturn ret ->
                let var    = checkInputVariables attr.loc args in
@@ -209,7 +221,7 @@ module MakeTables = struct
                let Path(path) = Env.currentScope state in
                let full_path  = path@name in
                let result     = calculateTables env attr full_path size min max in
-               let attr'      = { attr with exp = Attributes.removeAttrFunc "table" attr.exp } in
+               let attr'      = { attr with exp = Tags.removeAttrFunc "table" attr.exp } in
                let body'      = makeNewBody full_path size min max var in
                reapply state, result @ [StmtFun(name, args, body', ret, attr')]
             | Some(loc, _) ->
@@ -297,9 +309,9 @@ module EmbedWavFile = struct
       match stmt with
       | StmtExternal(name, args, ret, _, attr) ->
          begin
-            let params = Attributes.["channels", Int; "file", String] in
+            let params = Tags.["channels", Int; "file", String] in
             let msg    = "The attribute 'wave' requires specific parameters. e.g. 'wave(channels=1,file=\"file.wav\")'" in
-            match Attributes.getTableParams "wave" params msg attr.exp with
+            match Tags.getTableParams "wave" params msg attr.exp with
             | None -> state, [stmt]
             | Some(loc, [PInt(channels, _); PString(file, _)]) when VType.isRealType ret ->
                let Path(path) = Env.currentScope state in
@@ -309,7 +321,7 @@ module EmbedWavFile = struct
                let ()         = checkNumberOfChannels loc channels wave in
                let result     = getDeclarations attr full_path wave in
                let body       = makeNewBody full_path attr args wave in
-               let attr'      = { attr with exp = Attributes.removeAttrFunc "wave" attr.exp; ext_fn = None } in
+               let attr'      = { attr with exp = Tags.removeAttrFunc "wave" attr.exp; ext_fn = None } in
                let size_fun   = makeSizeFunction name attr wave.WavFile.samples in
                reapply state, result @ [size_fun; StmtFun(full_path, args, body, Some ret, attr')]
             | Some (loc, _) ->

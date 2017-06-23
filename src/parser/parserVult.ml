@@ -145,14 +145,14 @@ let commaSepList parser buffer =
       | _ -> List.rev (e::acc)
    in loop []
 
-(** Parses attribute expressions *)
-let rec attrExpression (rbp:int) (buffer:Stream.stream) : attr_exp =
-   prattParser rbp buffer getLbp attr_nud attr_led
+(** Parses tag expressions *)
+let rec tagExpression (rbp:int) (buffer:Stream.stream) : attr_exp =
+   prattParser rbp buffer getLbp tag_nud tag_led
 
-and attrExpressionList (buffer:Stream.stream) : attr_exp list =
-   commaSepList attrExpression buffer
+and tagExpressionList (buffer:Stream.stream) : attr_exp list =
+   commaSepList tagExpression buffer
 
-and attr_nud (buffer:Stream.stream) (token:'kind token) : attr_exp =
+and tag_nud (buffer:Stream.stream) (token:'kind token) : attr_exp =
    match token.kind, token.value with
    | ID, _ ->
       let id = identifierToken token in
@@ -166,14 +166,14 @@ and attr_nud (buffer:Stream.stream) (token:'kind token) : attr_exp =
                   let _ = Stream.skip buffer in
                   AId(id, token.loc)
                | _ ->
-                  let values = attrPairList buffer in
+                  let values = tagPairList buffer in
                   let _ = Stream.consume buffer RPAREN in
                   AFun(id, values, token.loc)
             end
          | _ ->
             AId(id, token.loc)
       end
-   | OP,"-" -> attr_unaryOp buffer token
+   | OP,"-" -> tag_unaryOp buffer token
    | INT, _ -> AInt(token.value, token.loc)
    | REAL, _ -> AReal(token.value, token.loc)
    | STRING, _ -> AString(token.value, token.loc)
@@ -181,35 +181,35 @@ and attr_nud (buffer:Stream.stream) (token:'kind token) : attr_exp =
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
 
-and attr_unaryOp (buffer:Stream.stream) (token:'kind token) : attr_exp =
-   let right = attrExpression 70 buffer in
+and tag_unaryOp (buffer:Stream.stream) (token:'kind token) : attr_exp =
+   let right = tagExpression 70 buffer in
    match right with
    | AInt(value,loc) -> AInt("-"^value,loc)
    | AReal(value,loc) -> AReal("-"^value,loc)
    | _ -> Error.raiseError "invalid value" token.loc
 
-and attr_led (_:Stream.stream) (token:'kind token) (_:attr_exp) : attr_exp =
+and tag_led (_:Stream.stream) (token:'kind token) (_:attr_exp) : attr_exp =
    match token.kind with
    | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
 
-and attrPair (bp:int) (buffer:Stream.stream) : id * attr_exp =
+and tagPair (bp:int) (buffer:Stream.stream) : id * attr_exp =
    let id = identifierToken (Stream.current buffer) in
    let _  = Stream.skip buffer in
    let _  = Stream.consume buffer EQUAL in
-   let value = attrExpression bp buffer in
+   let value = tagExpression bp buffer in
    id, value
 
-and attrPairList (buffer:Stream.stream) : (id * attr_exp) list =
-   commaSepList attrPair buffer
+and tagPairList (buffer:Stream.stream) : (id * attr_exp) list =
+   commaSepList tagPair buffer
 
-let optAttrExpressions (buffer:Stream.stream) : attr_exp list =
+let optTagExpressions (buffer:Stream.stream) : attr_exp list =
    match Stream.peek buffer with
    | AT ->
       let _ = Stream.consume buffer AT in
       let _ = Stream.consume buffer LBRACK in
-      let attr = attrExpressionList buffer in
+      let attr = tagExpressionList buffer in
       let _ = Stream.consume buffer RBRACK in
       attr
    | _ -> []
@@ -638,13 +638,13 @@ and stmtExternal (buffer:Stream.stream) : stmt =
       match Stream.peek buffer with
       | STRING ->
          let link_name = string buffer in
-         let attr_exp  = optAttrExpressions buffer in
-         Some(link_name), attr_exp
+         let tag_exp  = optTagExpressions buffer in
+         Some(link_name), tag_exp
       | AT ->
-         let attr_exp  = optAttrExpressions buffer in
+         let attr_exp  = optTagExpressions buffer in
          None, attr_exp
       | _ ->
-         let message  = Printf.sprintf "Expecting a string with a link name or an attribute" in
+         let message  = Printf.sprintf "Expecting a string with a link name or a tag" in
          raise (ParserError(Stream.makeError buffer message))
    in
    let _         = Stream.consume buffer SEMI in
@@ -671,9 +671,9 @@ and stmtFunction (buffer:Stream.stream) : stmt =
          Some(typeExpression 0 buffer)
       | _ -> None
    in
-   let attr_exp  = optAttrExpressions buffer in
+   let tag_exp  = optTagExpressions buffer in
    let body      = stmtList buffer in
-   let attr      = { emptyAttr with loc = start_loc; exp = attr_exp } in
+   let attr      = { emptyAttr with loc = start_loc; exp = tag_exp } in
    let attr      = if isjoin then { attr with fun_and = true } else attr in
    StmtFun(name,args,body,vtype,attr)
 

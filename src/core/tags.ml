@@ -50,7 +50,7 @@ let getType (attr:attr_exp) : string =
    | AInt(_,_)   -> "integer"
    | AId(_,_)    -> "identifier"
    | AReal(_,_)  -> "real"
-   | AFun(_,_,_) -> "attribute"
+   | AFun(_,_,_) -> "tag"
    | AString(_,_) -> "string"
 
 let getTypeLiteral (t:t) : string =
@@ -95,7 +95,7 @@ let getParameterList loc (args:(id * attr_exp) list) (params: (string * t) list)
             loop remaning' (value::found) t
          | _, None ->
             let name, typ = h in
-            let msg = Printf.sprintf "The attribute was expected to have a parameter with name '%s' and type '%s'" name (getTypeLiteral typ) in
+            let msg = Printf.sprintf "The tag was expected to have a parameter with name '%s' and type '%s'" name (getTypeLiteral typ) in
             Error.raiseError msg loc
    in loop args [] params
 
@@ -105,7 +105,7 @@ let getTableIndividualParams (loc:Loc.t) params msg args =
    match remaining with
    | _::_ ->
       let params_s =  List.map (fun (id,_) -> PrintTypes.identifierStr id) remaining |> String.concat ", " in
-      let msg = "The following arguments are unknown for the current attribute: "^ params_s in
+      let msg = "The following arguments are unknown for the current tag: "^ params_s in
       Error.raiseError msg loc
    | [] ->
       if List.length found = List.length params then
