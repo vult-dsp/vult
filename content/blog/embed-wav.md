@@ -12,14 +12,14 @@ Around the 2000's I got my first VST plugin; it was a PPG Wave. The sounds produ
 
 To make a wavetable synthesizer you need waveforms. One of the things I considered was to extract the waves from the PPG ROM, but in the process of trying that I found the work of [Adventure Kid](https://www.adventurekid.se) who has created a large database of waveforms and impulse response files [AKRT](https://www.adventurekid.se/AKRT/). He provides the wavetables and IR as WAV files.
 
-In order to use wavetables in Vult (as the ones provided by Adventure Kid) it's necessary to load them in some way. Since Vult is all about the code, the easiest way is to include the wavetables in the code itself. To that purpose we have now a a new attribute `@[wave]` that allows to specify a WAV file. The function marked with the attribute is replaced at compile-time with a function that returns the data of the file. For example:
+In order to use wavetables in Vult (as the ones provided by Adventure Kid) it's necessary to load them in some way. Since Vult is all about the code, the easiest way is to include the wavetables in the code itself. To that purpose we have now a new tag `@[wave]` that allows to specify a WAV file. The function marked with the tag is replaced at compile-time with a function that returns the data of the file. For example:
 
 <div class="vult_code" id="snipet-1">
 external mywave(channel:int, index:int) : real
    @[wave(channels=1, file="wave.wav")];
 </div>
 
-The code above declares an external function called `mywave`. The function must take as arguments two integers: the channel and the sample index. The attribute `@[wave(channels=1, file="wave.wav")]` specifies that the WAV file has one channel and that the file name is `wave.wav`.
+The code above declares an external function called `mywave`. The function must take as arguments two integers: the channel and the sample index. The tag `@[wave(channels=1, file="wave.wav")]` specifies that the WAV file has one channel and that the file name is `wave.wav`.
 
 While running, the Vult compiler will look for the file `wave.wav` in the same location of the current file or in the include directories passed with the flag `-i`. To access the data we can call the function providing the channel we want to read and the index of the sample as follows:
 
@@ -33,7 +33,7 @@ fun fun() {
 
 If we try to read a channel that does not exists the function will return zero. If we pass an index outside the range of the wav file, the mod (%) operation is used to fix the index. This will make it behave as a circular buffer.
 
-The attribute also generates a new function with the name `<name>_samples()` that returns the number of samples in the WAV file. In the case above, the function will be called `mywave_samples()`. If another function with the same name exists we will get a compilation error.
+The tag also generates a new function with the name `<name>_samples()` that returns the number of samples in the WAV file. In the case above, the function will be called `mywave_samples()`. If another function with the same name exists we will get a compilation error.
 
 As a complete example, the following code will play back in a loop the embedded wave file.
 

@@ -33,7 +33,7 @@ We can see that the formula uses an exponential. Calculating an exponential ever
 }
 </div>
 
-The annotation `@[table(size=128,min=0.0,max=127.0)]` specifies that the function needs to be converted to a table of size `128`, with a minimum value of `0.0` and a maximum of `127.0`. In this case Vult will split the range of the function into 128 segments and for each segment a second order polynomial that fits the values is calculated. All the coefficients are precalculated. The above function will be replaced by the following code (for a size 8 table):
+The tag `@[table(size=128,min=0.0,max=127.0)]` specifies that the function needs to be converted to a table of size `128`, with a minimum value of `0.0` and a maximum of `127.0`. In this case Vult will split the range of the function into 128 segments and for each segment a second order polynomial that fits the values is calculated. All the coefficients are precalculated. The above function will be replaced by the following code (for a size 8 table):
 
 <div class="vult_code" id="snipet-2">
 // Precalculated Coefficients
