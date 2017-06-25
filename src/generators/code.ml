@@ -22,16 +22,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
+(** Intermedia representation for the target languages *)
+
+(** Description of types *)
 type type_descr =
    | CTSimple of string
    | CTArray  of type_descr * int
 [@@deriving show,eq,ord]
 
+(** Description of arguments to functions *)
 type arg_type =
    | Ref of type_descr
    | Var of type_descr
 [@@deriving show,eq,ord]
 
+(** Description of expressions (rhs) *)
 type cexp =
    | CEInt    of int
    | CEFloat  of string * float
@@ -47,12 +52,14 @@ type cexp =
    | CEEmpty
 [@@deriving show,eq,ord]
 
+(** Description of expressions (lhs) *)
 type clhsexp =
    | CLWild
    | CLId    of type_descr * string list
    | CLTuple of clhsexp list
 [@@deriving show,eq,ord]
 
+(** Description of statements *)
 type cstmt =
    | CSVar      of clhsexp * cexp option
    | CSConst    of clhsexp * cexp

@@ -22,12 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-type attr_exp =
-   | AId     of Id.t * Loc.t
-   | AFun    of Id.t * (Id.t * attr_exp) list * Loc.t
-   | AInt    of string * Loc.t
-   | AReal   of string * Loc.t
-   | AString of string * Loc.t
+(** Main description of a Vult program *)
+
+type tag =
+   | TId     of Id.t * Loc.t
+   | TFun    of Id.t * (Id.t * tag) list * Loc.t
+   | TInt    of string * Loc.t
+   | TReal   of string * Loc.t
+   | TString of string * Loc.t
 
 type attr =
    {
@@ -38,7 +40,7 @@ type attr =
       const   : bool;
       ext_fn  : string option;
       typ     : Typ.t option;
-      exp     : attr_exp list;
+      exp     : tag list;
       evaluated : bool;
    }
 

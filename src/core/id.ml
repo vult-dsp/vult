@@ -22,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
+(** Identifiers and Path *)
+
 type t = string list
 [@@deriving show,eq,ord]
 

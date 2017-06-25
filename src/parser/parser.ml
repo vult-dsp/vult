@@ -146,13 +146,13 @@ let commaSepList parser buffer =
    in loop []
 
 (** Parses tag expressions *)
-let rec tagExpression (rbp:int) (buffer:Stream.stream) : attr_exp =
+let rec tagExpression (rbp:int) (buffer:Stream.stream) : tag =
    prattParser rbp buffer getLbp tag_nud tag_led
 
-and tagExpressionList (buffer:Stream.stream) : attr_exp list =
+and tagExpressionList (buffer:Stream.stream) : tag list =
    commaSepList tagExpression buffer
 
-and tag_nud (buffer:Stream.stream) (token:'kind token) : attr_exp =
+and tag_nud (buffer:Stream.stream) (token:'kind token) : tag =
    match token.kind, token.value with
    | ID, _ ->
       let id = identifierToken token in
@@ -164,47 +164,47 @@ and tag_nud (buffer:Stream.stream) (token:'kind token) : attr_exp =
                match Stream.peek buffer with
                | RPAREN ->
                   let _ = Stream.skip buffer in
-                  AId(id, token.loc)
+                  TId(id, token.loc)
                | _ ->
                   let values = tagPairList buffer in
                   let _ = Stream.consume buffer RPAREN in
-                  AFun(id, values, token.loc)
+                  TFun(id, values, token.loc)
             end
          | _ ->
-            AId(id, token.loc)
+            TId(id, token.loc)
       end
    | OP,"-" -> tag_unaryOp buffer token
-   | INT, _ -> AInt(token.value, token.loc)
-   | REAL, _ -> AReal(token.value, token.loc)
-   | STRING, _ -> AString(token.value, token.loc)
+   | INT, _ -> TInt(token.value, token.loc)
+   | REAL, _ -> TReal(token.value, token.loc)
+   | STRING, _ -> TString(token.value, token.loc)
    | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
 
-and tag_unaryOp (buffer:Stream.stream) (token:'kind token) : attr_exp =
+and tag_unaryOp (buffer:Stream.stream) (token:'kind token) : tag =
    let right = tagExpression 70 buffer in
    match right with
-   | AInt(value,loc) -> AInt("-"^value,loc)
-   | AReal(value,loc) -> AReal("-"^value,loc)
+   | TInt(value,loc) -> TInt("-"^value,loc)
+   | TReal(value,loc) -> TReal("-"^value,loc)
    | _ -> Error.raiseError "invalid value" token.loc
 
-and tag_led (_:Stream.stream) (token:'kind token) (_:attr_exp) : attr_exp =
+and tag_led (_:Stream.stream) (token:'kind token) (_:tag) : tag =
    match token.kind with
    | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
 
-and tagPair (bp:int) (buffer:Stream.stream) : Id.t * attr_exp =
+and tagPair (bp:int) (buffer:Stream.stream) : Id.t * tag =
    let id = identifierToken (Stream.current buffer) in
    let _  = Stream.skip buffer in
    let _  = Stream.consume buffer EQUAL in
    let value = tagExpression bp buffer in
    id, value
 
-and tagPairList (buffer:Stream.stream) : (Id.t * attr_exp) list =
+and tagPairList (buffer:Stream.stream) : (Id.t * tag) list =
    commaSepList tagPair buffer
 
-let optTagExpressions (buffer:Stream.stream) : attr_exp list =
+let optTagExpressions (buffer:Stream.stream) : tag list =
    match Stream.peek buffer with
    | AT ->
       let _ = Stream.consume buffer AT in
@@ -634,22 +634,22 @@ and stmtExternal (buffer:Stream.stream) : stmt =
    let _      = Stream.consume buffer RPAREN in
    let _      = Stream.consume buffer COLON in
    let vtype  = typeExpression 0 buffer in
-   let link_name, attr_exp =
+   let link_name, tag =
       match Stream.peek buffer with
       | STRING ->
          let link_name = string buffer in
          let tag_exp  = optTagExpressions buffer in
          Some(link_name), tag_exp
       | AT ->
-         let attr_exp  = optTagExpressions buffer in
-         None, attr_exp
+         let tag  = optTagExpressions buffer in
+         None, tag
       | _ ->
          let message  = Printf.sprintf "Expecting a string with a link name or a tag" in
          raise (ParserError(Stream.makeError buffer message))
    in
    let _         = Stream.consume buffer SEMI in
    let start_loc = token.loc in
-   let attr      = { (makeAttr start_loc) with ext_fn = link_name; exp = attr_exp } in
+   let attr      = { (makeAttr start_loc) with ext_fn = link_name; exp = tag } in
    StmtExternal(name,args,vtype,link_name,attr)
 (** 'fun' <id> '(' <typedArgList> ')' [ ':' type ] <stmtList> *)
 and stmtFunction (buffer:Stream.stream) : stmt =

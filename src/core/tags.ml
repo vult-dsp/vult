@@ -30,28 +30,28 @@ type t =
    | Id
    | String
 
-let rec has (attr:attr_exp list) (id:Id.t) =
+let rec has (attr:tag list) (id:Id.t) =
    match attr with
    | [] -> false
-   | AId(name,_)::_ when id = name -> true
-   | AFun(name,_,_)::_ when id = name -> true
+   | TId(name,_)::_ when id = name -> true
+   | TFun(name,_,_)::_ when id = name -> true
    | _::t -> has t id
 
-let getLocation (attr:attr_exp) : Loc.t =
+let getLocation (attr:tag) : Loc.t =
    match attr with
-   | AInt(_,loc)   -> loc
-   | AId(_,loc)    -> loc
-   | AReal(_,loc)  -> loc
-   | AFun(_,_,loc) -> loc
-   | AString(_,loc) -> loc
+   | TInt(_,loc)   -> loc
+   | TId(_,loc)    -> loc
+   | TReal(_,loc)  -> loc
+   | TFun(_,_,loc) -> loc
+   | TString(_,loc) -> loc
 
-let getType (attr:attr_exp) : string =
+let getType (attr:tag) : string =
    match attr with
-   | AInt(_,_)   -> "integer"
-   | AId(_,_)    -> "identifier"
-   | AReal(_,_)  -> "real"
-   | AFun(_,_,_) -> "tag"
-   | AString(_,_) -> "string"
+   | TInt(_,_)   -> "integer"
+   | TId(_,_)    -> "identifier"
+   | TReal(_,_)  -> "real"
+   | TFun(_,_,_) -> "tag"
+   | TString(_,_) -> "string"
 
 let getTypeLiteral (t:t) : string =
    match t with
@@ -60,23 +60,23 @@ let getTypeLiteral (t:t) : string =
    | Id   -> "identifier"
    | String   -> "string"
 
-let rec getParam (remaining:(Id.t * attr_exp) list) (args:(Id.t * attr_exp) list) (id:string) =
+let rec getParam (remaining:(Id.t * tag) list) (args:(Id.t * tag) list) (id:string) =
    match args with
    | [] -> remaining, None
    | (name,value)::t when name = [id] ->
       (remaining@t), Some(value)
    | h::t -> getParam (h::remaining) t id
 
-let getTypedParam (args:(Id.t * attr_exp) list) (id,typ) =
+let getTypedParam (args:(Id.t * tag) list) (id,typ) =
    let lattr loc = { emptyAttr with loc} in
    match getParam [] args id with
-   | r, Some(AReal(value,loc)) when typ = Real ->
+   | r, Some(TReal(value,loc)) when typ = Real ->
       r, Some(PReal(float_of_string value, lattr loc))
-   | r, Some(AInt(value,loc)) when typ = Int ->
+   | r, Some(TInt(value,loc)) when typ = Int ->
       r, Some(PInt(int_of_string value, lattr loc))
-   | r, Some(AId(value,loc)) when typ = Id ->
+   | r, Some(TId(value,loc)) when typ = Id ->
       r, Some(PId(value, lattr loc))
-   | r, Some(AString(value,loc)) when typ = String ->
+   | r, Some(TString(value,loc)) when typ = String ->
       r, Some(PString(value, lattr loc))
 
    | _, Some(value) ->
@@ -85,7 +85,7 @@ let getTypedParam (args:(Id.t * attr_exp) list) (id,typ) =
       Error.raiseError msg loc
    | r, None -> r, None
 
-let getParameterList (loc:Loc.t) (args:(Id.t * attr_exp) list) (params: (string * t) list) : (Id.t * attr_exp) list * exp list =
+let getParameterList (loc:Loc.t) (args:(Id.t * tag) list) (params: (string * t) list) : (Id.t * tag) list * exp list =
    let rec loop remaning found params =
       match params with
       | [] -> remaning, List.rev found
@@ -113,16 +113,16 @@ let getTableIndividualParams (loc:Loc.t) params msg args =
       else
          Error.raiseError msg loc
 
-let rec getTableParams (fname:string) (params:(string * t) list) (msg:string) (attr:attr_exp list) =
+let rec getTableParams (fname:string) (params:(string * t) list) (msg:string) (attr:tag list) =
    match attr with
    | [] -> None
-   | AFun(name,args,loc)::_ when name = [fname] ->
+   | TFun(name,args,loc)::_ when name = [fname] ->
       Some(loc, getTableIndividualParams loc params msg args)
    | _ :: t -> getTableParams fname params msg t
 
-let rec removeAttrFunc (fname:string) (attr:attr_exp list) : attr_exp list =
+let rec removeAttrFunc (fname:string) (attr:tag list) : tag list =
    match attr with
    | [] -> []
-   | AFun(name,_,_)::t when name = [fname] ->
+   | TFun(name,_,_)::t when name = [fname] ->
       removeAttrFunc fname t
    | h::t -> h :: (removeAttrFunc fname t)
