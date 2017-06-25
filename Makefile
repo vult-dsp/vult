@@ -3,15 +3,17 @@ OCB = ocamlbuild -j 4 -use-ocamlfind
 compiler: version
 			$(OCB) src/vultc.native src/vultc.byte
 
-js:
-			$(OCB) src/js/vultjs.byte
+js: jscompiler
 			$(OCB) src/js/vultweb.byte
 			$(OCB) src/js/vultlib.byte
-			js_of_ocaml vultjs.byte
 			js_of_ocaml vultweb.byte
 			js_of_ocaml vultlib.byte
 
-test:
+jscompiler:
+			$(OCB) src/js/vultjs.byte
+			js_of_ocaml vultjs.byte
+
+test: compiler jscompiler
 			$(OCB) test/test.native
 			./test.native -runner sequential
 

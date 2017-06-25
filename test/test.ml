@@ -134,24 +134,49 @@ let test_random_code =
    in loop 10
 
 (** Flags that defines if a baseline should be created for tests *)
-let writeOutput = Conf.make_bool "writeout" false "Creates a file with the current results"
+let create_output = Conf.make_bool "writeout" false "Creates a file with the current results"
 
 let write file contents =
    let oc = open_out file in
    Printf.fprintf oc "%s" contents;
    close_out oc
 
+let read file =
+   let ic = open_in file in
+   let n = in_channel_length ic in
+   let s = Bytes.create n in
+   really_input ic s 0 n;
+   close_in ic;
+   s
+
+let readOutputAndReference (create:bool) (outdir:string) (output, reference) =
+   let output_txt =
+      if Sys.file_exists output then
+         let contents = read output in
+         let () = Sys.remove output in
+         contents
+      else
+         assert_failure (Printf.sprintf "The file '%s' was not generated" output)
+   in
+   let reference = Filename.concat outdir (Filename.basename reference) in
+   let reference_txt =
+      if Sys.file_exists reference then
+         read reference
+      else
+      if create then
+         let () = write reference output in
+         output
+      else
+         assert_failure (Printf.sprintf "The file '%s' has no reference data" reference)
+   in
+   output_txt, reference_txt
+
 (** Returns the contents of the reference file for the given vult file *)
 let readReference (create:bool) (ext:string) (contents:string) (file:string) (outdir:string) : string =
    let basefile = Filename.chop_extension (Filename.basename file) in
    let ref_file = Filename.concat outdir (basefile^"."^ext) in
    if Sys.file_exists ref_file then
-      let ic = open_in ref_file in
-      let n = in_channel_length ic in
-      let s = Bytes.create n in
-      really_input ic s 0 n;
-      close_in ic;
-      s
+      read ref_file
    else
    if create then
       let () = write ref_file contents in
@@ -179,7 +204,7 @@ module ParserTest = struct
       let folder = "parser" in
       let fullfile  = checkFile (in_test_directory (folder^"/"^file)) in
       let current   = process fullfile in
-      let reference = readReference (writeOutput context) "base" current fullfile (in_test_directory folder) in
+      let reference = readReference (create_output context) "base" current fullfile (in_test_directory folder) in
       assert_equal
          ~msg:("Parsing file "^fullfile)
          ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
@@ -188,7 +213,7 @@ module ParserTest = struct
    let get files = "parser">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)
 
 end
-
+(*
 (** Module to perform code generation tests *)
 module CodeGenerationTest = struct
 
@@ -244,6 +269,7 @@ module CodeGenerationTest = struct
       "code">::: (List.map (fun file -> (Filename.basename file) ^ "."^ real_type >:: run file real_type) files)
 
 end
+*)
 
 (** Module to perform transformation tests *)
 module PassesTest = struct
@@ -258,7 +284,7 @@ module PassesTest = struct
       let folder = "passes" in
       let fullfile  = checkFile (in_test_directory (folder^"/"^file)) in
       let current   = process options fullfile in
-      let reference = readReference (writeOutput context) "base" current fullfile (in_test_directory folder) in
+      let reference = readReference (create_output context) "base" current fullfile (in_test_directory folder) in
       assert_equal
          ~msg:("Transforming file "^fullfile)
          ~pp_diff:(fun fmt (a,b) -> Format.fprintf fmt "\n%s" (Diff.lineDiff a b) )
@@ -268,6 +294,7 @@ module PassesTest = struct
 
 end
 
+(*
 (** Tries to compile all the examples *)
 module CompileTest = struct
 
@@ -299,6 +326,7 @@ module CompileTest = struct
    let get files real_type = "compile">::: (List.map (fun file -> (Filename.basename file) ^"."^ real_type >:: run real_type file) files)
 
 end
+*)
 
 (** Tries to compile all the examples *)
 module RandomCompileTest = struct
@@ -334,7 +362,6 @@ module RandomCompileTest = struct
 
 end
 
-
 (** Compiles the benchmark *)
 module BenchTest = struct
 
@@ -351,7 +378,7 @@ module BenchTest = struct
          assert_failure ("Failed to link ")
 
    let generateCPP (filename:string) (output:string) (real_type:string) : unit =
-      let args = { default_arguments with  files = [File filename]; ccode = true; output = output; real = real_type } in
+      let args = { default_arguments with files = [File filename]; ccode = true; output = output; real = real_type } in
       let parser_results = Parser.parseFile filename  in
       let gen = Generate.generateCode [parser_results] args in
       writeFiles args gen
@@ -374,16 +401,92 @@ module BenchTest = struct
 
 end
 
+type compiler =
+   | Node
+   | Native
+
+module CliTest = struct
+
+   let callCompiler (file:string) =
+      let basename = Filename.chop_extension (Filename.basename file) in
+      let cmd = Printf.sprintf "gcc -Werror -Wno-write-strings -I%s -c %s -o %s" (in_test_directory "../runtime") file basename in
+      if Sys.command cmd <> 0 then
+         assert_failure ("Failed to compile "^file)
+
+   let compileCppFile (file:string) =
+      let output = Filename.chop_extension (Filename.basename file) in
+      Sys.chdir tmp_dir;
+      assert_bool "No code generated" (Sys.file_exists (output^".cpp"));
+      callCompiler (output^".cpp");
+      callCompiler (in_test_directory "../runtime/vultin.c");
+      Sys.chdir initial_dir
+
+   let callVult (compiler:compiler) (fullfile:string) code_type =
+      let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
+      let flags, ext =
+         match code_type with
+         | "fixed" -> "-ccode -real fixed", [".cpp",".cpp.fixed.base"; ".h", ".h.fixed.base"]
+         | "float" -> "-ccode", [".cpp",".cpp.float.base"; ".h", ".h.float.base"]
+         | "js" -> "-jscode", [".js", ".js.base"]
+         | "lua" -> "-luacode", [".lua", ".lua.base"]
+         | _ -> failwith "Unknown target to run test"
+      in
+      let vultc = if compiler = Node then "node ./vultjs.js" else "./vultc.native" in
+      let cmd = vultc ^ " -test " ^ flags ^ " -o " ^ basefile ^ " " ^ fullfile in
+      let generated_files =
+         match Sys.command cmd with
+         | 0 -> List.map (fun e -> basefile ^ (fst e), basefile ^ (snd e)) ext
+         | _ -> assert_failure "failed to call the compiler"
+         | exception _ -> assert_failure "failed to call the compiler in a bad way"
+      in
+      let () =
+         match code_type with
+         | "fixed" | "float" -> compileCppFile fullfile
+         | _ -> ()
+      in
+      generated_files
+
+   let process (compiler:compiler) (fullfile:string) code_type =
+      try
+         callVult compiler fullfile code_type
+      with
+      | Error.Errors errors ->
+         let msg = Error.reportErrors errors in
+         assert_failure msg
+
+
+   let run (file:string) use_node real_type context : unit =
+      let fullfile = checkFile (in_test_directory ("../examples/"^file)) in
+      let generated_files = process use_node fullfile real_type in
+      let files_content =
+         List.map (readOutputAndReference (create_output context) (in_test_directory "code")) generated_files
+      in
+      assert_bool "No code generated" (files_content <> []);
+      List.iter
+         (fun (current, reference) ->
+             assert_equal
+                ~msg:("Generating file "^fullfile)
+                ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
+                reference current
+         )
+         files_content
+
+   let get files use_node real_type =
+      "code">::: (List.map (fun file -> (Filename.basename file) ^ "."^ real_type >:: run file use_node real_type) files)
+
+end
+
 let suite =
    "vult">:::
    [
       ParserTest.get  parser_files;
       PassesTest.get  passes_files;
-      CodeGenerationTest.get all_files "float";
-      CodeGenerationTest.get all_files "fixed";
-      CodeGenerationTest.get stand_alone_files "js";
-      CompileTest.get all_files "float";
-      CompileTest.get all_files "fixed";
+      CliTest.get stand_alone_files Native "js";
+      CliTest.get all_files Native "float";
+      CliTest.get all_files Native "fixed";
+      CliTest.get stand_alone_files Node "js";
+      CliTest.get all_files Node "float";
+      CliTest.get all_files Node "fixed";
       RandomCompileTest.get test_random_code "float";
       BenchTest.get;
    ]

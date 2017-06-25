@@ -41,6 +41,7 @@ let processArguments () : args =
       "-eval",     (Arg.Unit   (fun () -> result.eval      <- true)),  " Runs the code (default: off)";
       "-i",        (Arg.String (fun path -> result.includes <- path :: result.includes)), "path Adds the given path to the list of places to look for modules";
       "-version",  (Arg.Unit   (fun () -> result.show_version<-true)), " Show the version of vult";
+      "-test",     (Arg.Unit   (fun () -> Float.reduce_precision := true)), " Enters a special mode useful only for testing (default: off)";
    ]
       |> Arg.align
    in
