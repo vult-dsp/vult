@@ -148,7 +148,8 @@ let readSamples (buffer:buffer) (channels:int) (size:int) (data: float array arr
    in
    (** iterates reading the samples *)
    let rec loop_samples index =
-      if index >= size then size
+      if index >= size then
+         size
       else if loop_channels index 0 then
          loop_samples (index + 1)
       else

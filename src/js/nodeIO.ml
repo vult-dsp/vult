@@ -37,6 +37,7 @@ end
 class type buffer = object
    (* converts the buffer object to string *)
    method toString : js_string t -> js_string t meth
+   method length : int Js.readonly_prop
 end
 
 (* declares the node.js object 'fs' *)
@@ -55,26 +56,41 @@ let fs : fs t = Unsafe.fun_call (Unsafe.js_expr "require") [|Unsafe.inject (stri
 (* declares the variable 'process' as: process = require('process') *)
 let process : process t = Unsafe.js_expr "process"
 
+let rec copyData size bytes array index =
+   if index > size then
+      bytes
+   else
+      match Optdef.to_option (array_get array index) with
+      | Some value ->
+         Bytes.set bytes index value;
+         copyData size bytes array (index+1)
+      | None -> bytes
+
+
+
+
 (* This is a wrapper that allows calling the node.js function from ocaml *)
 let read_bytes_fn (path:string) : Buffer.t option =
    let exist    = fs##existsSync (string path) in
    if to_bool exist then
       let buffer     = fs##readFileSync (string path) in
-      let contents   = buffer##toString (Js.string "ascii") in
-      let str        = to_string contents in
-      let ret_buffer = Buffer.create 0 in
-      let ()         = Buffer.add_string ret_buffer str in
-      Some ret_buffer
+      let size       = buffer##.length in
+      let array      = Unsafe.coerce buffer in
+      let bytes      = Bytes.create size in
+      let contents   = copyData size bytes array 0 in
+      let buffer     = Buffer.create size in
+      let ()         = Buffer.add_string buffer contents in
+      Some buffer
    else
       None
 
 
 (* This is a wrapper that allows calling the node.js function from ocaml *)
 let read_fn (path:string) : string option =
-   let exist    = fs##existsSync (string path) in
+   let exist = fs##existsSync (string path) in
    if to_bool exist then
-      let buffer   = fs##readFileSync (string path) in
-      let contents =  buffer##toString (Js.string "utf8") in
+      let buffer  = fs##readFileSync (string path) in
+      let contents = buffer##toString (Js.string "ascii") in
       Some(to_string contents)
    else
       None
