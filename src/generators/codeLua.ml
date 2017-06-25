@@ -22,65 +22,80 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-open CLike
+open Code
 open GenerateParams
 
 let dot = Pla.map_sep (Pla.string ".") Pla.string
 
 module Templates = struct
 
+   type t =
+      | None
+      | Default
+
+   let get template =
+      match template with
+      | "none"   -> None
+      | "default" -> Default
+      | t -> failwith (Printf.sprintf "The template '%s' is not available for this generator" t)
+
    let none code = code
 
-   let common exports module_name code =
+   let default (config:configuration) module_name code =
+      let append_ctx args = if config.pass_data then "ctx"::args else args in
+      let count_context args = if config.pass_data then 1 + args else args in
+      let get_args inputs =
+         inputs
+         |> List.mapi (fun i _ -> "in"^(string_of_int i))
+         |> append_ctx
+         |> Pla.map_sep Pla.comma Pla.string
+      in
+      let process_inputs = get_args config.process_inputs in
+      let noteon_inputs = get_args config.noteon_inputs in
+      let noteoff_inputs = get_args config.noteoff_inputs in
+      let controlchange_inputs = get_args config.controlchange_inputs in
+      let nprocess_inputs = count_context @@ List.length config.process_inputs in
+      let nprocess_outputs = List.length config.process_outputs in
+      let nnoteon_inputs= count_context @@ List.length config.noteon_inputs in
+      let nnoteoff_inputs = count_context @@ List.length config.noteoff_inputs in
+      let ncontrolchange_inputs = count_context @@ List.length config.controlchange_inputs in
+      let pass_data = if config.pass_data then Pla.string "true" else Pla.string "false" in
       {pla|
-<#exports#>{
-    this.random = function()         { return Math.random(); };
-    this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
-    this.eps  = function()           { return 1e-18 };
-    this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
-    this.not  = function(x)          { return x==0?1:0; };
-    this.real = function(x)          { return x; };
-    this.int  = function(x)          { return x|0; };
-    this.sin  = function(x)          { return Math.sin(x); };
-    this.cos  = function(x)          { return Math.cos(x); };
-    this.abs  = function(x)          { return Math.abs(x); };
-    this.exp  = function(x)          { return Math.exp(x); };
-    this.floor= function(x)          { return Math.floor(x); };
-    this.tan  = function(x)          { return Math.tan(x); };
-    this.tanh = function(x)          { return Math.tanh(x); };
-    this.sqrt = function(x)          { return x; };
-    this.set  = function(a,i,v)      { a[i]=v; };
-    this.get  = function(a,i)        { return a[i]; };
-    this.int_to_float = function(i){ return i; };
-    this.float_to_int = function(i){ return Math.floor(i); };
-    this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.wrap_array = function(a) { return a; }
-    this.log = function(x) { console.log(x); }
-    this.<#module_name#s>_process_init = null;
-    this.<#module_name#s>_default = null;
+local this = {}
+local ffi = require("ffi")
+function this.ternary(cond,then_,else_) if cond then return then_ else return else_ end end
+function this.eps()             return 1e-18; end
+function this.random()          return math.random(); end
+function this.irandom()         return math.floor(math.random() * 4294967296); end
+function this.clip(x,low,high)  return (this.ternary(x<low,low,this.ternary(x>high,high,x))); end
+function this.real(x)           return x; end
+function this.int(x)            local int_part,_ = math.modf(x) return int_part; end
+function this.sin(x)            return math.sin(x); end
+function this.cos(x)            return math.cos(x); end
+function this.abs(x)            return math.abs(x); end
+function this.exp(x)            return math.exp(x); end
+function this.floor(x)          return math.floor(x); end
+function this.tan(x)            return math.tan(x); end
+function this.tanh(x)           return math.tanh(x); end
+function this.sqrt(x)           return x; end
+function this.set(a,i,v)        a[i]=v; end
+function this.get(a,i)          return a[i]; end
+function this.makeArray(size,v) local a = ffi.new("double[?]",size); for i=0,size-1 do a[i]=v end return a; end
+function this.wrap_array(a)     return a; end
 <#code#>
-    if(this.<#module_name#s>_process_init)  this.context =  this.<#module_name#s>_process_init(); else this.context = {};
-    if(this.<#module_name#s>_default)      this.<#module_name#s>_default(this.context);
-    this.liveNoteOn        = function(note,velocity,channel) { if(this.<#module_name#s>_noteOn)        this.<#module_name#s>_noteOn(this.context,note,velocity,channel); };
-    this.liveNoteOff       = function(note,velocity,channel) { if(this.<#module_name#s>_noteOff)       this.<#module_name#s>_noteOff(this.context,note,velocity,channel); };
-    this.liveControlChange = function(note,velocity,channel) { if(this.<#module_name#s>_controlChange) this.<#module_name#s>_controlChange(this.context,note,velocity,channel); };
-    this.liveProcess       = function(input)         { if(this.<#module_name#s>_process)       return this.<#module_name#s>_process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.<#module_name#s>_default)      return this.<#module_name#s>_default(this.context); };
-}
+function this.process(<#process_inputs#>) return this.<#module_name#s>_process(<#process_inputs#>) end
+function this.noteOn(<#noteon_inputs#>) return this.<#module_name#s>_noteOn(<#noteon_inputs#>) end
+function this.noteOff(<#noteoff_inputs#>) return this.<#module_name#s>_noteOff(<#noteoff_inputs#>) end
+function this.controlChange(<#controlchange_inputs#>) return this.<#module_name#s>_controlChange(<#controlchange_inputs#>) end
+function this.init() return this.<#module_name#s>_process_init() end
+function this.default(ctx) return this.<#module_name#s>_default(ctx) end
+this.config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, noteon_inputs = <#nnoteon_inputs#i>, noteoff_inputs = <#nnoteoff_inputs#i>, controlchange_inputs = <#ncontrolchange_inputs#i>, is_active = <#pass_data#> }
+return this
 |pla}
 
-   let browser module_name code =
-      let exports = Pla.string "function vultProcess()" in
-      common exports module_name code
-
-   let node module_name code =
-      let exports = Pla.string "exports.vultProcess = function ()" in
-      common exports module_name code
-
-   let apply (module_name:string) (template:string) (code:Pla.t) : Pla.t =
+   let apply (config:configuration) (module_name:string) (template:string) (code:Pla.t) : Pla.t =
       match template with
-      | "browser" -> browser module_name code
-      | "node" -> node module_name code
+      | "default" -> default config module_name code
       | _ -> none code
 
 end
@@ -106,7 +121,7 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
    match e with
    | CEEmpty -> Pla.unit
    | CEInt(n) ->
-      {pla|(<#n#i>|0)|pla}
+      {pla|<#n#i>|pla}
    | CEFloat(_,n) ->
       let sf = Float.to_string n in
       if n < 0.0 then {pla|(<#sf#s>)|pla} else Pla.string sf
@@ -115,8 +130,12 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
    | CEString(s) ->
       Pla.wrap (Pla.string "\"") (Pla.string "\"") (Pla.string s)
    | CEArray(elems,_) ->
+      let size = List.length elems in
       let elems_t = Pla.map_sep Pla.comma (printExp params) elems in
-      {pla|[<#elems_t#>]|pla}
+      {pla|ffi.new("double[<#size#i>]", {<#elems_t#>})|pla}
+   | CECall("not",[arg],_) ->
+      let arg_t = printExp params arg in
+      {pla|(not <#arg_t#>)|pla}
    | CECall(name,args,_) ->
       let args_t = Pla.map_sep Pla.comma (printExp params) args in
       {pla|this.<#name#s>(<#args_t#>)|pla}
@@ -127,13 +146,12 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
       let op_t = {pla| <#op#s> |pla} in
       let elems_t = Pla.map_sep op_t (printExp params) elems in
       {pla|(<#elems_t#>)|pla}
-   | CEVar(name,_) ->
-      dot name
+   | CEVar(name,_) -> dot name
    | CEIf(cond,then_,else_,_) ->
       let cond_t = printExp params cond in
       let then_t = printExp params then_ in
       let else_t = printExp params else_ in
-      {pla|(<#cond_t#>?<#then_t#>:<#else_t#>)|pla}
+      {pla|(ternary(<#cond_t#>, <#then_t#>, <#else_t#>)|pla}
    | CETuple(elems,_) ->
       let elems_t = Pla.map_sep Pla.commaspace (printJsField params) elems in
       {pla|{ <#elems_t#> }|pla}
@@ -144,30 +162,25 @@ and printJsField (params:params) (name,value) : Pla.t =
 
 
 let printLhsExpTuple (var:string list) (is_var:bool) (i:int) (e:clhsexp) : Pla.t =
-   let var = dot var in
+   let var = Pla.map_sep (Pla.string ".") Pla.string var in
+   let i1 = i + 1 in
    match e with
    | CLId(_,name) ->
       let name = dot name in
       if is_var then
-         {pla|var <#name#> = <#var#>.field_<#i#i>; |pla}
+         {pla|local <#name#> = <#var#>[<#i1#i>]; |pla}
       else
-         {pla|<#name#> = <#var#>.field_<#i#i>; |pla}
+         {pla|<#name#> = <#var#>[<#i1#i>]; |pla}
 
    | CLWild -> Pla.unit
 
    | _ -> failwith "printLhsExp: All other cases should be already covered"
 
-let wrapInt (params:params) (is_int:bool) (e:cexp) : Pla.t =
-   let e_t = printExp params e in
-   if is_int then
-      {pla|(<#e_t#>|0)|pla}
-   else e_t
-
 let getInitValue (descr:type_descr) : string =
    match descr with
-   | CTSimple("int") -> "(0|0)"
-   | CTSimple("float") -> "0.0"
+   | CTSimple("int") -> "0"
    | CTSimple("real") -> "0.0"
+   | CTSimple("float") -> "0.0"
    | CTSimple("bool") -> "false"
    | CTSimple("unit") -> "0"
    | _ -> "{}"
@@ -176,26 +189,24 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
    | CSVar(CLWild,None) -> None
 
-   | CSVar(CLId(tdescr,name), None) ->
-      let init = getInitValue tdescr in
+   | CSVar(CLId(typ,name),None) ->
+      let init = getInitValue typ in
       let name = dot name in
-      Some({pla|var <#name#> = <#init#s>;|pla})
+      Some({pla|local <#name#> = <#init#s>;|pla})
 
    | CSVar(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
 
-   | CSVar(CLId(tdecr,name),Some(value)) ->
-      let is_int = tdecr = CTSimple("int") in
-      let value_t = wrapInt params is_int value in
+   | CSVar(CLId(_,name),Some(value)) ->
+      let value_t = printExp params value in
       let name = dot name in
-      Some({pla|var <#name#> = <#value_t#>;|pla})
+      Some({pla|local <#name#> = <#value_t#>;|pla})
 
    | CSVar(_,_) -> failwith "printStmt: invalid variable declaration"
 
-   | CSConst(CLId(tdecr,name),value) ->
-      let is_int = tdecr = CTSimple("int") in
-      let value_t = wrapInt params is_int value in
+   | CSConst(CLId(_,name),value) ->
+      let value_t = printExp params value in
       let name = dot name in
-      Some({pla|var <#name#> = <#value_t#>;|pla})
+      Some({pla|local <#name#> = <#value_t#>;|pla})
 
    | CSConst(CLWild,value) ->
       let value_t = printExp params value in
@@ -218,9 +229,8 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
 
    | CSBind(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
 
-   | CSBind(CLId(tdecr,name),value) ->
-      let is_int = tdecr = CTSimple("int") in
-      let value_t = wrapInt params is_int value in
+   | CSBind(CLId(_,name),value) ->
+      let value_t = printExp params value in
       let name = dot name in
       Some({pla|<#name#> = <#value_t#>;|pla})
 
@@ -229,12 +239,12 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let args = fixContext (isSpecial params name) args in
       let args_t = Pla.map_sep Pla.comma (fun (_,a) -> Pla.string a) args in
       let body_t = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
-      Some({pla|this.<#name#s> = function(<#args_t#>)<#body_t#>|pla})
+      Some({pla|function this.<#name#s>(<#args_t#>)<#body_t#+><#>end<#>|pla})
 
    | CSFunction(_,name,args,body) ->
       let args_t = Pla.map_sep Pla.comma (fun (_,a) -> Pla.string a) args in
       let body_t = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
-      Some({pla|this.<#name#s> = function(<#args_t#>) { <#body_t#>}|pla})
+      Some({pla|function this.<#name#s>(<#args_t#>)<#body_t#+><#>end<#>|pla})
 
    | CSReturn(e1) ->
       let e_t = printExp params e1 in
@@ -243,22 +253,22 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSWhile(cond,body) ->
       let cond_t = printExp params cond in
       let body_t = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
-      Some({pla|while(<#cond_t#>)<#body_t#>|pla})
+      Some({pla|while <#cond_t#> do<#body_t#+>end|pla})
 
    | CSBlock(elems) ->
       let elems_t = printStmtList params elems in
-      Some({pla|{<#elems_t#+>}|pla})
+      Some({pla|<#elems_t#>|pla})
 
    | CSIf(cond,then_,None) ->
       let cond_t = printExp params cond in
       let then_t = CCOpt.get_or ~default:Pla.semi (printStmt params then_) in
-      Some({pla|if(<#cond_t#>)<#then_t#>|pla})
+      Some({pla|if <#cond_t#> then<#then_t#+><#>end|pla})
 
    | CSIf(cond,then_,Some(else_)) ->
       let cond_t = printExp params cond in
       let then_t = CCOpt.get_or ~default:Pla.semi (printStmt params then_) in
       let else_t = CCOpt.get_or ~default:Pla.semi (printStmt params else_) in
-      Some({pla|if(<#cond_t#>)<#then_t#><#>else<#><#else_t#>|pla})
+      Some({pla|if <#cond_t#> then<#then_t#+><#>else<#><#else_t#+><#>end|pla})
 
    | CSEmpty -> None
 
@@ -272,12 +282,12 @@ and printStmtList (params:params) (stmts:cstmt list) : Pla.t =
    let tstmts = CCList.filter_map (printStmt params) stmts in
    Pla.map_sep_all Pla.newline (fun a -> a) tstmts
 
-let printJsCode (params:params) (stmts:cstmt list) : Pla.t =
+let printLuaCode (params:params) (stmts:cstmt list) : Pla.t =
    let code = printStmtList params stmts in
-   Templates.apply params.module_name params.template code
+   Templates.apply params.config params.module_name params.template code
 
 (** Generates the .c and .h file contents for the given parsed files *)
-let print (params:params) (stmts:CLike.cstmt list) : (Pla.t * filename) list =
-   let js_text = printJsCode params stmts in
-   [js_text, ExtOnly "js"]
+let print (params:params) (stmts:Code.cstmt list) : (Pla.t * filename) list =
+   let js_text = printLuaCode params stmts in
+   [js_text, ExtOnly "lua"]
 

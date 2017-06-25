@@ -26,13 +26,13 @@ This code is based on the type inference examples provided in:
 
 *)
 
-open TypesVult
-open VEnv
+open Prog
+open Env
 open Common
 
 type return_type =
-   | GivenType of VType.t
-   | ReturnType of VType.t
+   | GivenType of Typ.t
+   | ReturnType of Typ.t
    | NoType
 
 let expLoc e  = lazy (GetLocation.fromExp e)
@@ -46,12 +46,12 @@ let expOptLoc e =
       | None -> Loc.default
       | Some(e) -> GetLocation.fromExp e)
 
-let unifyRaise (loc:Loc.t Lazy.t) (t1:VType.t) (t2:VType.t) : unit =
+let unifyRaise (loc:Loc.t Lazy.t) (t1:Typ.t) (t2:Typ.t) : unit =
    let raise = true in
-   if not (VType.unify t1 t2) then
+   if not (Typ.unify t1 t2) then
       let msg =
          Printf.sprintf "This expression has type '%s' but '%s' was expected"
-            (PrintTypes.typeStr t2) (PrintTypes.typeStr t1)
+            (PrintProg.typeStr t2) (PrintProg.typeStr t1)
       in
       if raise then
          Error.raiseError msg (Lazy.force loc)
@@ -61,46 +61,46 @@ let unifyRaise (loc:Loc.t Lazy.t) (t1:VType.t) (t2:VType.t) : unit =
             print_endline msg
          end
 
-let rec checkType (loc:Loc.t Lazy.t) (env:'a Env.t) (typ:VType.t) : unit =
+let rec checkType (loc:Loc.t Lazy.t) (env:'a Env.t) (typ:Typ.t) : unit =
    match !typ with
-   | VType.TId(name,_) ->
+   | Typ.TId(name,_) ->
       begin
          try Env.lookup Scope.Type env name |> ignore with
          | _ ->
             let msg = Printf.sprintf "The type '%s' of this variable is unknown" (idStr name) in
             Error.raiseError msg (Lazy.force loc)
       end
-   | VType.TComposed(["array"],[kind;{contents = VType.TInt(_,_)}],_) ->
+   | Typ.TComposed(["array"],[kind;{contents = Typ.TInt(_,_)}],_) ->
       checkType loc env kind
 
-   | VType.TComposed(["array"],_,_)  ->
+   | Typ.TComposed(["array"],_,_)  ->
       let msg =
          Printf.sprintf
             "This array type is invalid '%s'. Arrays are described as array(kind,size)."
-            (PrintTypes.typeStr typ)
+            (PrintProg.typeStr typ)
       in
       Error.raiseError msg (Lazy.force loc)
 
-   | VType.TComposed(["tuple"],elems,_)  ->
+   | Typ.TComposed(["tuple"],elems,_)  ->
       List.iter (checkType loc env) elems
 
-   | VType.TComposed(name,_,_)  ->
+   | Typ.TComposed(name,_,_)  ->
       let msg = Printf.sprintf "Unknow composed type '%s'." (idStr name) in
       Error.raiseError msg (Lazy.force loc)
 
-   | VType.TArrow(t1,t2,_) ->
+   | Typ.TArrow(t1,t2,_) ->
       checkType loc env t1;
       checkType loc env t2;
 
-   | VType.TLink(t) -> checkType loc env t
+   | Typ.TLink(t) -> checkType loc env t
 
-   | VType.TExpAlt(elems) ->
+   | Typ.TExpAlt(elems) ->
       List.iter (checkType loc env) elems
 
-   | VType.TInt(_,_) -> ()
-   | VType.TUnbound(_,_,_) -> ()
+   | Typ.TInt(_,_) -> ()
+   | Typ.TUnbound(_,_,_) -> ()
 
-let rec unifyListSameType (args:exp list) (types:VType.t list) (common_type:VType.t) =
+let rec unifyListSameType (args:exp list) (types:Typ.t list) (common_type:Typ.t) =
    match args, types with
    | [],[] -> common_type
    | arg::args, typ::types ->
@@ -109,10 +109,10 @@ let rec unifyListSameType (args:exp list) (types:VType.t list) (common_type:VTyp
    | _ -> raise (Invalid_argument "unifyListSameType")
 
 
-let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
+let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * Typ.t =
    match e with
    | LWild(attr) ->
-      let typ = VType.newvar () in
+      let typ = Typ.newvar () in
       LWild( { attr with typ = Some(typ) }), typ
    | LId(id,None,attr) ->
       let typ =
@@ -120,7 +120,7 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
          | Some(var) -> var.Scope.typ
          | _ ->
             if mem_var = `Mem || mem_var = `Var then
-               VType.newvar ()
+               Typ.newvar ()
             else
                let msg = Printf.sprintf "The symbol '%s' is not defined" (idStr id) in
                Error.raiseError msg attr.loc
@@ -136,17 +136,17 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * VType.t =
             ([],[])
             elems
       in
-      let typ = ref (VType.TComposed(["tuple"],List.rev tpl,None)) in
+      let typ = ref (Typ.TComposed(["tuple"],List.rev tpl,None)) in
       LTuple(List.rev elems',{ attr with typ = Some(typ) }),typ
    | LTyped(e,typ,_) ->
       checkType (lhsLoc e) env typ;
       let e',tpi = inferLhsExp mem_var env e in
-      if not (VType.unify typ tpi) then
+      if not (Typ.unify typ tpi) then
          let msg =
             Printf.sprintf
                "This declaration has type '%s' but it has been defined before as '%s'"
-               (PrintTypes.typeStr typ)
-               (PrintTypes.typeStr tpi)
+               (PrintProg.typeStr typ)
+               (PrintProg.typeStr tpi)
          in
          Error.raiseError msg (GetLocation.fromLhsExp e)
       else
@@ -167,11 +167,11 @@ let rec addLhsToEnv mem_var (env:'a Env.t) (lhs:lhs_exp) : 'a Env.t =
    | LGroup(e,_) ->
       addLhsToEnv mem_var env e
 
-let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : typed_id list * VType.t list * 'a Env.t =
+let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : typed_id list * Typ.t list * 'a Env.t =
    match args with
    | [] -> [], [], env
    | SimpleId(id,kind,attr)::t ->
-      let typ  = VType.newvar () in
+      let typ  = Typ.newvar () in
       let env' = Env.addVar env id typ attr in
       let inner_args, inner_typ, env' = addArgsToEnv env' t in
       TypedId(id,typ,kind,attr) :: inner_args, typ :: inner_typ, env'
@@ -182,15 +182,15 @@ let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : typed_id list * VType
       TypedId(id,typ,kind,attr) :: inner_args, typ :: inner_typ, env'
 
 
-let registerSpecialFunction (env:'a Env.t) (name:id) (args:typed_id list) (ret:VType.t) (attr:attr) =
+let registerSpecialFunction (env:'a Env.t) (name:Id.t) (args:typed_id list) (ret:Typ.t) (attr:attr) =
    let env' = Env.addFunction env name attr in
    let env' = Env.enter Scope.Function env' name attr in
    let _, types, env' = addArgsToEnv env' args in
-   let typ  = VType.makeArrowType ret types in
+   let typ  = Typ.makeArrowType ret types in
    let env' = Env.setCurrentType env' typ true in
    Env.exit env'
 
-let unifyOpt (loc:Loc.t Lazy.t) (typ1:VType.t option) (typ2:VType.t option) : VType.t option =
+let unifyOpt (loc:Loc.t Lazy.t) (typ1:Typ.t option) (typ2:Typ.t option) : Typ.t option =
    match typ1,typ2 with
    | None, None    -> None
    | Some(_), None -> typ1
@@ -215,46 +215,46 @@ let unifyReturn (loc:Loc.t Lazy.t) (typ1:return_type) (typ2:return_type) : retur
       unifyRaise loc gt rt;
       GivenType(rt)
 
-let unifyArrayElem (loc:Loc.t Lazy.t) (t1:VType.t) (t2:VType.t) =
-   if not (VType.unify t1 t2) then
+let unifyArrayElem (loc:Loc.t Lazy.t) (t1:Typ.t) (t2:Typ.t) =
+   if not (Typ.unify t1 t2) then
       let msg =
          Printf.sprintf
             "This expression has type '%s' but the previous members of the array have type '%s'"
-            (PrintTypes.typeStr t2) (PrintTypes.typeStr t1)
+            (PrintProg.typeStr t2) (PrintProg.typeStr t1)
       in
       Error.raiseError msg (Lazy.force loc)
 
-let getReturnType (typ:return_type) : VType.t =
+let getReturnType (typ:return_type) : Typ.t =
    match typ with
-   | NoType        -> VType.Const.unit_type
+   | NoType        -> Typ.Const.unit_type
    | GivenType(t)  -> t
    | ReturnType(t) -> t
 
-let makeReturnType (v:VType.t option) : return_type =
+let makeReturnType (v:Typ.t option) : return_type =
    match v with
    | None    -> NoType
    | Some(s) -> GivenType(s)
 
-let raiseReturnError (loc:Loc.t Lazy.t) (given:VType.t option) (typ:return_type) =
+let raiseReturnError (loc:Loc.t Lazy.t) (given:Typ.t option) (typ:return_type) =
    match given,typ with
    | None,_ -> ()
-   | Some(gt), GivenType(rt) when VType.compare gt rt == 0 ->
+   | Some(gt), GivenType(rt) when Typ.compare gt rt == 0 ->
       let msg =
          Printf.sprintf
             "This function is expected to have type '%s' but nothing was returned"
-            (PrintTypes.typeStr gt)
+            (PrintProg.typeStr gt)
       in
       Error.raiseError msg (Lazy.force loc)
    | _ -> ()
 
-let inferApplyArgCount (loc:Loc.t Lazy.t) (args_typ:VType.t list) (fn_args:VType.t list) : unit =
+let inferApplyArgCount (loc:Loc.t Lazy.t) (args_typ:Typ.t list) (fn_args:Typ.t list) : unit =
    let n_args    = List.length args_typ in
    let n_fn_args = List.length fn_args in
    if  n_args <> n_fn_args then
       let msg = Printf.sprintf "This function takes %i arguments but %i are passed" n_fn_args n_args in
       Error.raiseError msg (Lazy.force loc)
 
-let rec inferApplyArg (args:exp list) (args_typ:VType.t list) (fn_args:VType.t list) : unit =
+let rec inferApplyArg (args:exp list) (args_typ:Typ.t list) (fn_args:Typ.t list) : unit =
    match args, args_typ, fn_args with
    | [], [], [] -> ()
    | arg::args, arg_typ::args_typ, fn_arg::fn_args ->
@@ -262,13 +262,13 @@ let rec inferApplyArg (args:exp list) (args_typ:VType.t list) (fn_args:VType.t l
       inferApplyArg args args_typ fn_args
    | _ -> failwith "Inference.inferApplyArg: invalid input"
 
-let inferApply (loc:Loc.t Lazy.t) (args:exp list) (args_typ:VType.t list) (ret_type:VType.t)
-      (fn_args:VType.t list) (fn_ret_type:VType.t) =
+let inferApply (loc:Loc.t Lazy.t) (args:exp list) (args_typ:Typ.t list) (ret_type:Typ.t)
+      (fn_args:Typ.t list) (fn_ret_type:Typ.t) =
    inferApplyArgCount loc args_typ fn_args;
    inferApplyArg args args_typ fn_args;
    unifyRaise loc fn_ret_type ret_type
 
-let addInstance (env:'a Env.t) (isactive:bool) (name:id option) (typ:VType.t) (attr:attr) : 'a Env.t * id option =
+let addInstance (env:'a Env.t) (isactive:bool) (name:Id.t option) (typ:Typ.t) (attr:attr) : 'a Env.t * Id.t option =
    if isactive then
       match name with
       | Some(n) ->
@@ -282,68 +282,68 @@ let addInstance (env:'a Env.t) (isactive:bool) (name:id option) (typ:VType.t) (a
    else
       env, None
 
-let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
+let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * Typ.t =
    match e with
    | PUnit(attr) ->
-      let typ = VType.Const.unit_type in
+      let typ = Typ.Const.unit_type in
       PUnit({ attr with typ = Some(typ) }), env, typ
    | PBool(v,attr) ->
-      let typ = VType.Const.bool_type in
+      let typ = Typ.Const.bool_type in
       PBool(v,{ attr with typ = Some(typ) }), env, typ
    | PInt(v,attr) ->
-      let typ = VType.Const.int_type in
+      let typ = Typ.Const.int_type in
       PInt(v,{ attr with typ = Some(typ) }), env, typ
    | PReal(v,attr) ->
-      let typ = VType.Const.real_type in
+      let typ = Typ.Const.real_type in
       PReal(v,{ attr with typ = Some(typ) }), env, typ
    | PString(s,attr) ->
-      let typ = VType.Const.string_type in
+      let typ = Typ.Const.string_type in
       PString(s,{ attr with typ = Some(typ) }), env, typ
    | PId(id,attr) ->
       let var = Env.lookupVariableRaise env id attr.loc in
       PId(id, { attr with typ = Some(var.Scope.typ) }), env, var.Scope.typ
    | PArray(elems,attr) ->
       let elems',env', atype, n = inferArrayElems env elems in
-      let typ = ref (VType.TComposed(["array"],[atype;ref (VType.TInt(n,None))],None)) in
+      let typ = ref (Typ.TComposed(["array"],[atype;ref (Typ.TInt(n,None))],None)) in
       PArray(elems',{ attr with typ = Some(typ) }), env', typ
    | PGroup(e,_) ->
       inferExp env e
    | PTuple(elems,attr) ->
       let elems',env', types = inferExpList env elems in
-      let typ = ref (VType.TComposed(["tuple"],types,None)) in
+      let typ = ref (Typ.TComposed(["tuple"],types,None)) in
       PTuple(elems',{ attr with typ = Some(typ) }), env', typ
    | PIf(cond,then_,else_,attr) ->
       let cond', env', cond_type = inferExp env cond in
       let then_',env', then_type = inferExp env' then_ in
       let else_',env', else_type = inferExp env' else_ in
-      unifyRaise (expLoc cond') (VType.Const.bool_type) cond_type;
+      unifyRaise (expLoc cond') (Typ.Const.bool_type) cond_type;
       unifyRaise (expLoc else_') then_type else_type;
       PIf(cond',then_',else_',{ attr with typ = Some(then_type) }), env', then_type
    | PCall(name,fname,args,attr) ->
       let args',env',types = inferExpList env args in
-      let ret_type       = VType.newvar () in
+      let ret_type       = Typ.newvar () in
       let _,fn_type,ft   = Env.lookupRaise Scope.Function env' fname attr.loc in
-      let fn_args,fn_ret = VType.stripArrow fn_type in
+      let fn_args,fn_ret = Typ.stripArrow fn_type in
       let active         = Scope.isActive ft in
-      let fname_typ      = ref (VType.TId(fname,None)) in
+      let fname_typ      = ref (Typ.TId(fname,None)) in
       let env',name'     = addInstance env' active name fname_typ attr in
       inferApply (expLoc e) args' types ret_type fn_args fn_ret;
       PCall(name',fname,args',{ attr with typ = Some(ret_type) }), env', ret_type
    | POp(op,[e1;e2],attr) ->
       let e1',env',e1_typ  = inferExp env e1 in
       let e2',env',e2_typ  = inferExp env' e2 in
-      let ret_type         = VType.newvar () in
+      let ret_type         = Typ.newvar () in
       let _,fn_type,_      = Env.lookupRaise Scope.Operator env [op] attr.loc in
-      let fn_args,fn_ret   = VType.stripArrow fn_type in
+      let fn_args,fn_ret   = Typ.stripArrow fn_type in
       inferApply (expLoc e) [e1'; e2'] [e1_typ; e2_typ] ret_type fn_args fn_ret;
       POp(op,[e1';e2'],{ attr with typ = Some(ret_type) }), env', ret_type
    | POp(op,args,attr) ->
       let args',env',types = inferExpList env args in
       let _,fn_type,_   = Env.lookupRaise Scope.Operator env [op] attr.loc in
       let common_type =
-         match VType.stripArrow fn_type with
+         match Typ.stripArrow fn_type with
          | [arg1;arg2], ret ->
-            if VType.unify arg1 arg2 && VType.unify arg2 ret then
+            if Typ.unify arg1 arg2 && Typ.unify arg2 ret then
                ret
             else
                failwith "The operator cannot be used with multiple arguments"
@@ -353,18 +353,18 @@ let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * VType.t =
       POp(op,args',{ attr with typ = Some(ret_type) }), env', ret_type
    | PUnOp(op,arg,attr) ->
       let arg',env',arg_type = inferExp env arg in
-      let ret_type           = VType.newvar () in
+      let ret_type           = Typ.newvar () in
       let _,fn_type,_        = Env.lookupRaise Scope.Operator env ["|"^op^"|"] attr.loc in
-      let fn_args,fn_ret     = VType.stripArrow fn_type in
+      let fn_args,fn_ret     = Typ.stripArrow fn_type in
       inferApply (expLoc e) [arg'] [arg_type] ret_type fn_args fn_ret;
       PUnOp(op,arg',{ attr with typ = Some(ret_type) }), env', ret_type
    | PSeq(name,stmt,attr) ->
       let stmt', _, ret_type = inferStmt env NoType stmt in
       let typ = getReturnType ret_type in
       PSeq(name,stmt',{ attr with typ = Some(typ)}), env, typ
-   | PEmpty -> PEmpty, env, VType.Const.unit_type
+   | PEmpty -> PEmpty, env, Typ.Const.unit_type
 
-and inferExpList (env:'a Env.t) (elems:exp list) : exp list * 'a Env.t * VType.t list =
+and inferExpList (env:'a Env.t) (elems:exp list) : exp list * 'a Env.t * Typ.t list =
    let elems',env',types =
       List.fold_left (fun (elems,env,types) a ->
             let a',env',typ = inferExp env a in
@@ -373,8 +373,8 @@ and inferExpList (env:'a Env.t) (elems:exp list) : exp list * 'a Env.t * VType.t
          elems
    in List.rev elems', env', List.rev types
 
-and inferArrayElems (env:'a Env.t) (elems:exp array) : exp array * 'a Env.t * VType.t * int =
-   let atype = VType.newvar() in
+and inferArrayElems (env:'a Env.t) (elems:exp array) : exp array * 'a Env.t * Typ.t * int =
+   let atype = Typ.newvar() in
    let ret = Array.copy elems in
    let env',count =
       Array.fold_left (fun (env,i) a ->
@@ -387,9 +387,9 @@ and inferArrayElems (env:'a Env.t) (elems:exp array) : exp array * 'a Env.t * VT
    in
    ret, env', atype, count
 
-and inferOptExp (env:'a Env.t) (e:exp option) : exp option * 'a Env.t * VType.t =
+and inferOptExp (env:'a Env.t) (e:exp option) : exp option * 'a Env.t * Typ.t =
    match e with
-   | None    -> None, env, VType.newvar ()
+   | None    -> None, env, Typ.newvar ()
    | Some(e) ->
       let e',env',typ = inferExp env e in
       Some(e'), env', typ
@@ -433,10 +433,10 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       let env'                = Env.addFunction env name attr in
       let env'                = Env.enter Scope.Function env' name attr in
       let args', types, env'  = addArgsToEnv env' args in
-      let types',table        = VType.fixTypeList [] types in
-      let ret_type',_         = VType.fixOptType table ret_type in
-      let possible_ret_type   = VType.newvar () in
-      let typ                 = VType.makeArrowType possible_ret_type types' in
+      let types',table        = Typ.fixTypeList [] types in
+      let ret_type',_         = Typ.fixOptType table ret_type in
+      let possible_ret_type   = Typ.newvar () in
+      let typ                 = Typ.makeArrowType possible_ret_type types' in
       let env'                = Env.setCurrentType env' typ true in
       let body',env',body_ret = inferStmt env' (makeReturnType ret_type') body in
       let last_type           = getReturnType body_ret in
@@ -446,13 +446,13 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       StmtFun(name,args',body',Some(last_type),attr), env', NoType
    | StmtIf(cond,then_,else_,attr) ->
       let cond',env', cond_type  = inferExp env cond in
-      unifyRaise (expLoc cond') (VType.Const.bool_type) cond_type;
+      unifyRaise (expLoc cond') (Typ.Const.bool_type) cond_type;
       let then_', env', ret_type' = inferStmt env' ret_type then_ in
       let else_', env', ret_type' = inferOptStmt env' ret_type' else_ in
       StmtIf(cond',then_',else_',attr), env', ret_type'
    | StmtWhile(cond,body,attr) ->
       let cond',env', cond_type  = inferExp env cond in
-      unifyRaise (expLoc cond') (VType.Const.bool_type) cond_type;
+      unifyRaise (expLoc cond') (Typ.Const.bool_type) cond_type;
       let body', env', ret_type' = inferStmt env' ret_type body in
       StmtWhile(cond',body',attr), env', ret_type'
    | StmtType(name,members,attr) ->
@@ -463,15 +463,15 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       let env' = Env.addFunction env name attr in
       let env' = Env.enter Scope.Function env' name attr in
       let args',types, env' = addArgsToEnv env' args in
-      let typ  = VType.makeArrowType fun_ret_type types in
+      let typ  = Typ.makeArrowType fun_ret_type types in
       let env' = Env.setCurrentType env' typ true in
       let env' = Env.exit env' in
       let env',attr =
          (* her we register the functions that are generated by tags *)
          if Tags.has attr.exp ["wave"] then
-            let size_name = appendToId name "_samples" in
+            let size_name = Id.postfix name "_samples" in
             let attr = { attr with ext_fn = None } in
-            registerSpecialFunction env' size_name [] VType.Const.int_type attr, attr
+            registerSpecialFunction env' size_name [] Typ.Const.int_type attr, attr
          else
             env', attr
       in

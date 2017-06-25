@@ -22,19 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-type id = string list
-[@@deriving show,eq,ord]
-
-(** This path is used to differentiate simple identifiers from full paths *)
-type path =
-   | Path of id
-
-
 type attr_exp =
-   | AId of id * Loc.t
-   | AFun of id * (id * attr_exp) list * Loc.t
-   | AInt of string * Loc.t
-   | AReal of string * Loc.t
+   | AId     of Id.t * Loc.t
+   | AFun    of Id.t * (Id.t * attr_exp) list * Loc.t
+   | AInt    of string * Loc.t
+   | AReal   of string * Loc.t
    | AString of string * Loc.t
 
 type attr =
@@ -45,7 +37,7 @@ type attr =
       bound   : bool;
       const   : bool;
       ext_fn  : string option;
-      typ     : VType.t option;
+      typ     : Typ.t option;
       exp     : attr_exp list;
       evaluated : bool;
    }
@@ -61,15 +53,15 @@ type arg_type =
 [@@deriving show,eq,ord]
 
 type typed_id =
-   | SimpleId of id * arg_type * attr
-   | TypedId  of id * VType.t * arg_type * attr
+   | SimpleId of Id.t * arg_type * attr
+   | TypedId  of Id.t * Typ.t * arg_type * attr
 [@@deriving show,eq,ord]
 
 type lhs_exp =
    | LWild  of attr
-   | LId    of id * VType.t option * attr
+   | LId    of Id.t * Typ.t option * attr
    | LTuple of lhs_exp list * attr
-   | LTyped of lhs_exp * VType.t * attr
+   | LTyped of lhs_exp * Typ.t * attr
    | LGroup of lhs_exp * attr
 [@@deriving show,eq,ord]
 
@@ -91,7 +83,7 @@ type exp =
          *  attr
 
    | PId
-      of id    (* name *)
+      of Id.t    (* name *)
          *  attr
    | PArray
       of exp array
@@ -105,8 +97,8 @@ type exp =
          *  exp list
          *  attr
    | PCall
-      of id option    (* name/instance *)
-         *  id        (* type/function name *)
+      of Id.t option    (* name/instance *)
+         *  Id.t        (* type/function name *)
          *  exp list  (* arguments *)
          *  attr
    | PIf
@@ -121,7 +113,7 @@ type exp =
       of exp list
          *  attr
    | PSeq
-      of id option (* Scope name *)
+      of Id.t option (* Scope name *)
          *  stmt
          *  attr
    | PEmpty
@@ -149,15 +141,15 @@ and stmt =
        *  stmt option (* else *)
        *  attr
   | StmtFun
-    of id                 (* name *)
+    of Id.t               (* name *)
        *  typed_id list   (* arguments *)
        *  stmt            (* body *)
-       *  VType.t option  (* return type *)
+       *  Typ.t option  (* return type *)
        *  attr
   | StmtExternal
-    of id                (* name *)
+    of Id.t              (* name *)
        *  typed_id list  (* arguments *)
-       *  VType.t        (* return type *)
+       *  Typ.t        (* return type *)
        *  string option  (* linking name *)
        *  attr
   | StmtBind
@@ -165,23 +157,23 @@ and stmt =
        *  exp         (* rhs *)
        *  attr
   | StmtBlock
-    of id option      (* scope name *)
+    of Id.t option      (* scope name *)
        *  stmt list
        *  attr
   | StmtType
-    of VType.t          (* name *)
+    of Typ.t          (* name *)
        *  val_decl list (* members *)
        *  attr
   | StmtAliasType
-    of VType.t          (* name *)
-       *  VType.t       (* alias type *)
+    of Typ.t          (* name *)
+       *  Typ.t       (* alias type *)
        *  attr
   | StmtEmpty
 [@@deriving show,eq,ord]
 
 and val_decl =
-    id          (* name *)
-    * VType.t   (* type *)
+    Id.t        (* name *)
+    * Typ.t   (* type *)
     * attr
 [@@deriving show,eq,ord]
 
@@ -196,60 +188,6 @@ type parser_results =
    {
       presult : stmt list;
       file    : string;
-   }
-
-type input =
-   | File of string
-   | Code of string * string
-[@@deriving show,eq,ord]
-
-type output =
-   | Version of string
-   | Message of string
-   | Dependencies of string list
-   | ParsedCode of string
-   | GeneratedCode of (Pla.t * GenerateParams.filename) list
-   | Interpret of string
-   | CheckOk
-   | Errors of Error.t list
-
-(** Stores the options passed to the command line *)
-type arguments =
-   {
-      mutable files    : input list;
-      mutable dparse   : bool;
-      mutable eval     : bool;
-      mutable check    : bool;
-      mutable ccode    : bool;
-      mutable llvm     : bool;
-      mutable jscode   : bool;
-      mutable luacode  : bool;
-      mutable output   : string;
-      mutable real     : string;
-      mutable template : string;
-      mutable show_version : bool;
-      mutable includes : string list;
-      mutable deps    : bool;
-   }
-[@@deriving show,eq,ord]
-
-
-let default_arguments =
-   {
-      files  = [];
-      dparse = false;
-      ccode  = false;
-      llvm   = false;
-      eval   = false;
-      check  = false;
-      jscode = false;
-      luacode = false;
-      output  = "";
-      real    = "float";
-      template = "default";
-      show_version = false;
-      includes = [];
-      deps = false;
    }
 
 let makeAttr (loc:Loc.t) : attr =
@@ -277,47 +215,6 @@ let emptyAttr =
       const   = false;
       evaluated = false;
    }
-
-module IdMap = CCMap.Make(struct type t = id let compare = compare end)
-
-module PathMap = CCMap.Make(struct type t = path let compare = compare end)
-
-module PathSet = CCSet.Make(struct type t = path let compare = compare end)
-
-module IdSet = CCSet.Make(struct type t = id let compare = compare end)
-
-type id_type = id * VType.t
-[@@deriving show,eq,ord]
-
-
-module IdTypeSet = CCSet.Make(struct type t = id_type let compare = compare_id_type end)
-
-module TypeSet = CCSet.Make(struct type t = VType.t let compare = VType.compare end)
-
-module TypeMap = CCMap.Make(struct type t = VType.t let compare = VType.compare end)
-
-let pathId (path:path) : id =
-   let Path(id) = path in
-   id
-
-let pathAppend (path:path) (id:id) : path =
-   let Path(p) = path in
-   Path(p@id)
-
-let pathLast (path:path) : id =
-   let rec last = function
-      | []  -> failwith "Invalid path"
-      | [h] -> h
-      | _::t -> last t
-   in
-   match path with
-   | Path(p) -> [ last p ]
-
-let appendToId (id:id) (post:string) : id =
-   match id with
-   | [name] -> [name ^ post]
-   | [pkg; name] -> [pkg; name ^ post]
-   | _ -> failwith "invalid id"
 
 let moduleName (file:string) : string =
    file

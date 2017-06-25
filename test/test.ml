@@ -22,9 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 open OUnit2
-open TypesVult
+open Prog
 open GenerateParams
-;;
+open Args ;;
 
 Float.reduce_precision := true;;
 
@@ -48,7 +48,7 @@ let os : string =
    | _ -> failwith "cannot get os"
 ;;
 
-let getFile (args:arguments) (ext:filename) : string =
+let getFile (args:args) (ext:filename) : string =
    match ext with
    | ExtOnly(e) -> args.output^"."^e
    | FullName(n) -> Filename.concat (Filename.dirname args.output) n
@@ -166,13 +166,13 @@ let checkFile (filename:string) : string =
       assert_failure (Printf.sprintf "The file '%s' does not exits" filename)
 
 let showResults result : string =
-   PrintTypes.stmtListStr result.presult
+   PrintProg.stmtListStr result.presult
 
 (** Module to perform parsing tests *)
 module ParserTest = struct
 
    let process (fullfile:string) : string =
-      ParserVult.parseFile fullfile
+      Parser.parseFile fullfile
       |> fun a -> showResults a
 
    let run (file:string) context =
@@ -204,7 +204,7 @@ module CodeGenerationTest = struct
          let ccode    = real_type = "fixed" || real_type = "float" in
          let jscode   = real_type = "js" in
          let args     = { default_arguments with output = basefile; real = real_type; ccode; jscode; includes = [dir] } in
-         let stmts    = ParserVult.parseFile fullfile in
+         let stmts    = Parser.parseFile fullfile in
          let ()       = showResults stmts |> ignore in
          let files    = Generate.generateCode [stmts] args in
          files |> List.map (fun (code,ext) -> Pla.print code, getExt ext)
@@ -250,7 +250,7 @@ module PassesTest = struct
 
    let process options (fullfile:string) : string =
       let args = { default_arguments with ccode = true } in
-      ParserVult.parseFile fullfile
+      Parser.parseFile fullfile
       |> Passes.applyTransformationsSingle args ~options:options
       |> showResults
 
@@ -280,7 +280,7 @@ module CompileTest = struct
    let generateCPP (filename:string) (output:string) (real_type:string) : unit =
       let dir      = in_test_directory "passes" in
       let args = { default_arguments with  files = [File filename]; ccode = true; output = output; real = real_type; includes = [dir] } in
-      let parser_results = ParserVult.parseFile filename  in
+      let parser_results = Parser.parseFile filename  in
       let gen = Generate.generateCode [parser_results] args in
       writeFiles args gen
 
@@ -314,7 +314,7 @@ module RandomCompileTest = struct
       let seed = Hashtbl.hash filename in
       let code = RandProg.run seed in
       write filename code;
-      let parser_results = ParserVult.parseString (Some(filename)) code in
+      let parser_results = Parser.parseString (Some(filename)) code in
       let gen = Generate.generateCode [parser_results] args in
       writeFiles args gen
 
@@ -352,7 +352,7 @@ module BenchTest = struct
 
    let generateCPP (filename:string) (output:string) (real_type:string) : unit =
       let args = { default_arguments with  files = [File filename]; ccode = true; output = output; real = real_type } in
-      let parser_results = ParserVult.parseFile filename  in
+      let parser_results = Parser.parseFile filename  in
       let gen = Generate.generateCode [parser_results] args in
       writeFiles args gen
 

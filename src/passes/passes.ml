@@ -24,8 +24,9 @@ THE SOFTWARE.
 
 (** Transformations and optimizations of the syntax tree *)
 
-open TypesVult
-open VEnv
+open Prog
+open Env
+open Maps
 
 open PassCommon
 
@@ -34,17 +35,17 @@ module CreateTupleTypes = struct
 
    type 'a dependencies = ('a * 'a list) list
 
-   let getSubTuples (t:VType.t) : VType.t list =
-      VType.getSubTypes t |> List.filter VType.isTuple
+   let getSubTuples (t:Typ.t) : Typ.t list =
+      Typ.getSubTypes t |> List.filter Typ.isTuple
 
-   let makeTypeDeclaration (t:VType.t) : stmt =
+   let makeTypeDeclaration (t:Typ.t) : stmt =
       match !t with
-      | VType.TComposed(["tuple"],types,_) ->
+      | Typ.TComposed(["tuple"],types,_) ->
          let elems = List.mapi (fun i a -> ["field_"^(string_of_int i)],a,emptyAttr) types in
          StmtType(t,elems,emptyAttr)
       | _ -> failwith "CreateTupleTypes.makeTypeDeclaration: there should be only tuples here"
 
-   let rec getDeclarations dependencies visited remaining : VType.t dependencies=
+   let rec getDeclarations dependencies visited remaining : Typ.t dependencies=
       match remaining with
       | [] ->
          Hashtbl.fold (fun a b acc -> (a,b)::acc) dependencies []
@@ -61,13 +62,13 @@ module CreateTupleTypes = struct
       | [] -> ()
       | [_]::t -> checkCircularDepedencies t
       | types::_ ->
-         let types_str = List.map PrintTypes.typeStr types |> String.concat ", " in
+         let types_str = List.map PrintProg.typeStr types |> String.concat ", " in
          let msg = "The following tuple types have circular dependencies: " ^ types_str in
          Error.raiseErrorMsg msg
 
    let run state =
       let data = Env.get state in
-      let tuples = TypeSet.elements (PassData.getTuples data) |> List.map VType.unlink in
+      let tuples = TypeSet.elements (PassData.getTuples data) |> List.map Typ.unlink in
       let dependencies = getDeclarations (Hashtbl.create 8) TypeSet.empty tuples in
       let components = Components.components dependencies in
       let sorted = List.map List.hd components in
@@ -77,13 +78,13 @@ module CreateTupleTypes = struct
 end
 
 (* Basic transformations *)
-let inferPass (name:id) (state,stmts) =
+let inferPass (name:Id.t) (state,stmts) =
    let state' = Env.enter Scope.Module state name emptyAttr in
    let stmts,state',_ = Inference.inferStmtList state' Inference.NoType stmts in
    let state' = Env.exit state' in
    state', stmts
 
-let interPass (name:id) (state,stmts) =
+let interPass (name:Id.t) (state,stmts) =
    let data = Env.get state in
    Interpreter.Env.addModule data.PassData.interp_env name;
    let env' = Interpreter.Env.enterModule data.PassData.interp_env name in
@@ -108,7 +109,7 @@ let applyPass name apply pass pass_name (state,stmts) =
    let state' = Env.exit state' in
    state',stmts'
 
-let passes (name:id) (options:pass_options) (env,stmts) =
+let passes (name:Id.t) (options:pass_options) (env,stmts) =
    (env,stmts)
    |> inferPass name
    |> applyPass name options.pass1 Pass1.run "pass 1"

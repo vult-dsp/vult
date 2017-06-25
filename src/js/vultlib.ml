@@ -27,8 +27,8 @@ THE SOFTWARE.
    Vult compile functions.
 *)
 
-open TypesVult
 open GenerateParams
+open Args
 
 
 (** Js object to represent the errors *)
@@ -114,7 +114,7 @@ let convertInputFiles (files:js_file_code Js.t Js.js_array Js.t) : input list =
    |> List.flatten
 
 
-let getFile (args:arguments) (ext:filename) : string =
+let getFile (args:args) (ext:filename) : string =
    match ext with
    | ExtOnly(e) -> args.output^"."^e
    | FullName(n) -> Filename.concat (Filename.dirname args.output) n
@@ -159,7 +159,7 @@ let getArguments (obj:js_args Js.t) =
 
 
 (** Applies the reduced set of options to the vult [arguments] *)
-let applyOptions (options:options Js.t) (args:arguments) =
+let applyOptions (options:options Js.t) (args:args) =
    set (options##.output)   (fun v -> args.output <- Js.to_string v);
    set (options##.real)     (fun v -> args.real <- Js.to_string v);
    set (options##.template) (fun v -> args.template <- Js.to_string v);
@@ -167,7 +167,7 @@ let applyOptions (options:options Js.t) (args:arguments) =
 
 
 (** Generic function to convert the vult [output] to js *)
-let showResult (args:arguments) (output:output) : 'a Js.t =
+let showResult (args:args) (output:output) : 'a Js.t =
    match output with
    | Version v ->
       let obj = new_object () in
@@ -203,7 +203,7 @@ let showResult (args:arguments) (output:output) : 'a Js.t =
       obj
 
 (** Uses [showResults] to convert the vult [output] to a js array *)
-let showResults (args:arguments) (results:output list) =
+let showResults (args:args) (results:output list) =
    results
    |> List.map (showResult args)
    |> Array.of_list

@@ -22,9 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-open TypesVult
+open Prog
 open GenerateParams
-open VEnv
+open Env
+open Args
 
 (** Reports an error if the 'real' argument is invalid *)
 let checkRealType (real:string) : unit =
@@ -55,27 +56,27 @@ module Configuration = struct
          false,[],[]
 
    (** Checks that the type is a numeric type *)
-   let checkNumeric (typ:VType.t) : string option =
+   let checkNumeric (typ:Typ.t) : string option =
       match !typ with
-      | VType.TId(["real"],_) -> Some("real")
-      | VType.TId(["int"],_)  -> Some("int")
+      | Typ.TId(["real"],_) -> Some("real")
+      | Typ.TId(["int"],_)  -> Some("int")
       | _ -> None
 
    (** Checks that the output is a numeric or a tuple of numbers *)
-   let rec getOutputs (loc:Loc.t) (typ:VType.t) : string list =
+   let rec getOutputs (loc:Loc.t) (typ:Typ.t) : string list =
       match !typ with
-      | VType.TId(["real"],_) -> ["real"]
-      | VType.TId(["int"],_) -> ["int"]
-      | VType.TComposed(["tuple"],elems,_) ->
+      | Typ.TId(["real"],_) -> ["real"]
+      | Typ.TId(["int"],_) -> ["int"]
+      | Typ.TComposed(["tuple"],elems,_) ->
          List.map (getOutputs loc) elems
          |> List.flatten
       | _ ->
          let msg = "The return type of the function process should be a numeric value or a tuple with numeric elements" in
          Error.raiseError msg loc
 
-   let getOutputsOrDefault outputs (loc:Loc.t) (typ:VType.t) =
+   let getOutputsOrDefault outputs (loc:Loc.t) (typ:Typ.t) =
       match !typ,outputs with
-      | VType.TId(["unit"],_),_ -> outputs
+      | Typ.TId(["unit"],_),_ -> outputs
       | _,[] -> getOutputs loc typ
       | _ ->
          failwith "Generate.getOutputsOrDefault: strage error"
@@ -165,7 +166,7 @@ module Configuration = struct
       { Mapper.default_mapper with Mapper.stmt = stmt }
 
    (** Get the configuration from the statements *)
-   let get (module_name:string) (stmts:TypesVult.stmt list) : configuration =
+   let get (module_name:string) (stmts:Prog.stmt list) : configuration =
       let env = Env.empty (empty_conf module_name) in
       let env',_ = Mapper.map_stmt_list mapper env stmts in
       Env.get env'
@@ -180,41 +181,41 @@ let rec getMainModule (parser_results:parser_results list) : string =
    | _::t -> getMainModule t
 
 (* Generates the C/C++ code if the flag was passed *)
-let generateC (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * filename) list=
+let generateC (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * filename) list=
    if args.ccode then
-      let cparams     = VultToCLike.{repl = params.repl; ccode = true; llvm = false } in
-      (* Converts the statements to CLike form *)
-      let clike_stmts = VultToCLike.convert cparams stmts in
-      VultCh.print params clike_stmts
+      let cparams     = ProgToCode.{repl = params.repl; ccode = true; llvm = false } in
+      (* Converts the statements to Code form *)
+      let clike_stmts = ProgToCode.convert cparams stmts in
+      CodeC.print params clike_stmts
    else []
 
-let generateLLVM (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * filename) list=
+let generateLLVM (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * filename) list=
    if args.llvm then
-      let cparams     = VultToCLike.{repl = params.repl; ccode = true; llvm = true } in
-      (* Converts the statements to CLike form *)
-      let clike_stmts = VultToCLike.convert cparams stmts in
-      Vllvm.print params clike_stmts
+      let cparams     = ProgToCode.{repl = params.repl; ccode = true; llvm = true } in
+      (* Converts the statements to Code form *)
+      let clike_stmts = ProgToCode.convert cparams stmts in
+      CodeLLVM.print params clike_stmts
    else []
 
 (* Generates the JS code if the flag was passed *)
-let generateJS (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * filename) list=
+let generateJS (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * filename) list=
    if args.jscode then
-      let cparams     = VultToCLike.{repl = params.repl; ccode = false; llvm = false } in
-      (* Converts the statements to CLike form *)
-      let clike_stmts = VultToCLike.convert cparams stmts in
-      VultJs.print params clike_stmts
+      let cparams     = ProgToCode.{repl = params.repl; ccode = false; llvm = false } in
+      (* Converts the statements to Code form *)
+      let clike_stmts = ProgToCode.convert cparams stmts in
+      CodeJs.print params clike_stmts
    else []
 
 (* Generates the JS code if the flag was passed *)
-let generateLua (args:arguments) (params:params) (stmts:TypesVult.stmt list) : (Pla.t * filename) list=
+let generateLua (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * filename) list=
    if args.luacode then
-      let cparams     = VultToCLike.{repl = params.repl; ccode = false; llvm = false } in
-      (* Converts the statements to CLike form *)
-      let clike_stmts = VultToCLike.convert cparams stmts in
-      VultLua.print params clike_stmts
+      let cparams     = ProgToCode.{repl = params.repl; ccode = false; llvm = false } in
+      (* Converts the statements to Code form *)
+      let clike_stmts = ProgToCode.convert cparams stmts in
+      CodeLua.print params clike_stmts
    else []
 
-let checkConfig (config:configuration) (args:arguments) =
+let checkConfig (config:configuration) (args:args) =
    if args.ccode && args.template <> "default" || args.luacode || args.jscode then
       if config.process_outputs = []
       || config.noteon_inputs = []
@@ -234,7 +235,7 @@ and default(){ }|}]
          Error.raiseErrorMsg msg
 
 (** Returns the code generation parameters based on the vult code *)
-let createParameters (results:parser_results list) (args:arguments) =
+let createParameters (results:parser_results list) (args:args) =
    (* Gets the name of the main module (the last passes file name) *)
    let module_name = getMainModule results in
    let stmts       = List.map (fun a -> a.presult ) results in
@@ -248,7 +249,7 @@ let createParameters (results:parser_results list) (args:arguments) =
    let repl        = Replacements.getReplacements args.real in
    { real = args.real; template = args.template; is_header = false; output; repl; module_name; config }
 
-let generateCode (parser_results:parser_results list) (args:arguments) : (Pla.t * GenerateParams.filename) list =
+let generateCode (parser_results:parser_results list) (args:args) : (Pla.t * GenerateParams.filename) list =
    if args.ccode || args.jscode || args.luacode || args.llvm && parser_results <> [] then
       (* Initialize the replacements *)
       let ()          = DefaultReplacements.initialize () in

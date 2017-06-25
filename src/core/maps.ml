@@ -1,7 +1,7 @@
 (*
 The MIT License (MIT)
 
-Copyright (c) 2014 Leonardo Laguna Ruiz, Carl Jönsson
+Copyright (c) 2017 Leonardo Laguna Ruiz
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,5 +21,20 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
+module IdMap = CCMap.Make(struct type t = Id.t let compare = compare end)
 
-Cli.main () ;;
+module PathMap = CCMap.Make(struct type t = Id.path let compare = compare end)
+
+module PathSet = CCSet.Make(struct type t = Id.path let compare = compare end)
+
+module IdSet = CCSet.Make(struct type t = Id.t let compare = compare end)
+
+type id_type = Id.t * Typ.t
+[@@deriving show,eq,ord]
+
+
+module IdTypeSet = CCSet.Make(struct type t = id_type let compare = compare_id_type end)
+
+module TypeSet = CCSet.Make(struct type t = Typ.t let compare = Typ.compare end)
+
+module TypeMap = CCMap.Make(struct type t = Typ.t let compare = Typ.compare end)

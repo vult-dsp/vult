@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 (** Printing of types *)
 
-open TypesVult
+open Prog
 open PrintBuffer
 
 (** Add an identifier to the print buffer *)
@@ -40,24 +40,24 @@ let commentedId buffer id =
       newline buffer
    | _ -> ()
 
-let rec typeExpressionBuff buffer (tp:VType.t) =
+let rec typeExpressionBuff buffer (tp:Typ.t) =
    match !tp with
-   | VType.TId(id,_) ->
+   | Typ.TId(id,_) ->
       identifierBuff buffer id
-   | VType.TInt(n,_) ->
+   | Typ.TInt(n,_) ->
       append buffer (string_of_int n)
-   | VType.TComposed(id,args,_) ->
+   | Typ.TComposed(id,args,_) ->
       identifierBuff buffer id;
       append buffer "(";
       typeExpressionListBuff buffer args;
       append buffer ")"
-   | VType.TArrow(t1,t2,_) ->
+   | Typ.TArrow(t1,t2,_) ->
       typeExpressionBuff buffer t1;
       append buffer " -> ";
       typeExpressionBuff buffer t2
-   | VType.TUnbound(name,_,_) -> append buffer name;
-   | VType.TLink(tp) -> typeExpressionBuff buffer tp
-   | VType.TExpAlt(expl) ->
+   | Typ.TUnbound(name,_,_) -> append buffer name;
+   | Typ.TLink(tp) -> typeExpressionBuff buffer tp
+   | Typ.TExpAlt(expl) ->
       append buffer "(";
       printList buffer typeExpressionBuff " | " expl;
       append buffer ")"
@@ -347,7 +347,7 @@ let expressionStr e =
    contents print_buffer
 
 (** Converts to string an type expression *)
-let typeStr (e:VType.t) =
+let typeStr (e:Typ.t) =
    let print_buffer = makePrintBuffer () in
    typeExpressionBuff print_buffer e;
    contents print_buffer

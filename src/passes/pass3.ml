@@ -23,8 +23,11 @@ THE SOFTWARE.
 *)
 
 open PassCommon
-open VEnv
-open TypesVult
+open Env
+open Prog
+open Args
+open Maps
+
 
 module InsertContext = struct
 
@@ -37,7 +40,7 @@ module InsertContext = struct
          if Env.isActive state name && not (PassData.hasContextArgument data path) then
             let ctx_full = Env.getContext state name in
             let ctx      = Env.pathFromCurrent state ctx_full in
-            let arg0     = TypedId(["_ctx"],ref (VType.TId(ctx,None)),ContextArg,attr) in
+            let arg0     = TypedId(["_ctx"],ref (Typ.TId(ctx,None)),ContextArg,attr) in
             let data'    = PassData.markContextArgument data path in
             Env.set state data', StmtFun(name,arg0::args,body,rettype,attr)
          else
@@ -48,8 +51,8 @@ module InsertContext = struct
       Mapper.make "InsertContext.exp" @@ fun state exp ->
       match exp with
       | PCall(Some(id),kind,args,attr) ->
-         let Path(context) = Env.getContext state kind in
-         let typ = ref (VType.TId(context,None)) in
+         let Id.Path(context) = Env.getContext state kind in
+         let typ = ref (Typ.TId(context,None)) in
          state,PCall(None,kind,PId("_ctx"::id,{ attr with typ = Some(typ) })::args,attr)
       | PId(id,attr) when Env.isLocalInstanceOrMem state id ->
          state, PId("_ctx"::id,attr)
@@ -76,50 +79,50 @@ module CreateInitFunction = struct
 
    module StmtSet = Set.Make(struct type t = stmt let compare = compare_stmt end)
 
-   let rec getInitFunctioName (id:id) : id =
+   let rec getInitFunctioName (id:Id.t) : Id.t =
       match id with
       | [] -> failwith "getInitFunctioName: empty id"
       | [last] -> [ last^"_init" ]
       | h::t -> h :: (getInitFunctioName t)
 
-   let rec getFunctioTypeName (id:id) : id =
+   let rec getFunctioTypeName (id:Id.t) : Id.t =
       match id with
       | [] -> failwith "getFunctioTypeName: empty id"
       | [last] -> [ last^"_type" ]
       | h::t -> h :: (getFunctioTypeName t)
 
-   let rec getInitValue (tp:VType.t) : exp =
+   let rec getInitValue (tp:Typ.t) : exp =
       let typedAttr = { emptyAttr with typ = Some(tp)} in
       match !tp with
-      | VType.TId(["real"],_) -> PReal(0.0,typedAttr)
-      | VType.TId(["int"],_)  -> PInt(0,typedAttr)
-      | VType.TId(["bool"],_) -> PBool(false,typedAttr)
-      | VType.TId(name,_)     -> PCall(None,getInitFunctioName name,[],typedAttr)
-      | VType.TComposed(["array"],[sub;{ contents = VType.TInt(size,_) }],_) ->
+      | Typ.TId(["real"],_) -> PReal(0.0,typedAttr)
+      | Typ.TId(["int"],_)  -> PInt(0,typedAttr)
+      | Typ.TId(["bool"],_) -> PBool(false,typedAttr)
+      | Typ.TId(name,_)     -> PCall(None,getInitFunctioName name,[],typedAttr)
+      | Typ.TComposed(["array"],[sub;{ contents = Typ.TInt(size,_) }],_) ->
          let sub_init    = getInitValue sub in
-         let intTypeAttr = {emptyAttr with typ = Some(VType.Const.int_type)} in
+         let intTypeAttr = {emptyAttr with typ = Some(Typ.Const.int_type)} in
          PCall(None,["makeArray"],[PInt(size,intTypeAttr);sub_init],typedAttr)
-      | VType.TComposed(["tuple"],types,_) ->
+      | Typ.TComposed(["tuple"],types,_) ->
          let elems = List.map getInitValue types in
          PTuple(elems,typedAttr)
-      | VType.TLink(tp) -> getInitValue tp
+      | Typ.TLink(tp) -> getInitValue tp
       | _ -> failwith "getInitValue"
 
    let getContextIfPossible state tp =
       match tp with
-      | { contents = VType.TId(tp_name,_) } ->
+      | { contents = Typ.TId(tp_name,_) } ->
          begin
             try
                let context_path = Env.getContext state tp_name in
                let context      = Env.pathFromCurrent state context_path in
-               ref (VType.TId(context,None))
+               ref (Typ.TId(context,None))
             with | _ -> tp
          end
       | _ -> tp
 
-   let generateInitFunction (ctx:id) (init_fun:id option) (member_set:IdTypeSet.t) : stmt =
+   let generateInitFunction (ctx:Id.t) (init_fun:Id.t option) (member_set:IdTypeSet.t) : stmt =
       let ctx_name = ["_ctx"] in
-      let typ = ref (VType.TId(ctx,None)) in
+      let typ = ref (Typ.TId(ctx,None)) in
       let ctx_lid = PId(ctx_name,{ emptyAttr with typ = Some(typ)}) in
       (* Generates bindings for all members *)
       let new_stmts_set =
@@ -136,7 +139,7 @@ module CreateInitFunction = struct
       let init_fun_call =
          match init_fun with
          | Some(init_fun_name) ->
-            let unitAttr = { emptyAttr with typ=Some(VType.Const.unit_type)} in
+            let unitAttr = { emptyAttr with typ=Some(Typ.Const.unit_type)} in
             let callExp  = PCall(None,init_fun_name,[ctx_lid],unitAttr) in
             [StmtBind(LWild(emptyAttr),callExp,emptyAttr)]
          | None -> []
@@ -146,30 +149,30 @@ module CreateInitFunction = struct
       let stmts = StmtSet.fold (fun a acc -> a::acc) new_stmts_set (init_fun_call@[return_stmt]) in
       StmtFun(getInitFunctioName ctx, [], StmtBlock(None, ctx_decl::stmts, emptyAttr), Some(typ), emptyAttr)
 
-   let generateContextType (ctx:id) (member_set:IdTypeSet.t) : stmt =
+   let generateContextType (ctx:Id.t) (member_set:IdTypeSet.t) : stmt =
       let members =
          IdTypeSet.fold
             (fun (name,tp) acc ->
                 (name, tp, emptyAttr) :: acc
             ) member_set []
       in
-      StmtType(ref (VType.TId(ctx,None)),members,emptyAttr)
+      StmtType(ref (Typ.TId(ctx,None)),members,emptyAttr)
 
-   let generateInitFunctionWrapper (state:'a Env.t) (name:id) : stmt =
+   let generateInitFunctionWrapper (state:'a Env.t) (name:Id.t) : stmt =
       let ctx_path = Env.getContext state name in
       let ctx = Env.pathFromCurrent state ctx_path in
-      let typ = ref (VType.TId(ctx,None)) in
+      let typ = ref (Typ.TId(ctx,None)) in
       let attr = { emptyAttr with typ = Some(typ) } in
       StmtFun(getInitFunctioName name,
               [],
               StmtReturn(PCall(None,getInitFunctioName ctx,[],attr),attr),
               Some(typ), emptyAttr)
 
-   let generateTypeAlias (state:'a Env.t) (name:id) : stmt =
+   let generateTypeAlias (state:'a Env.t) (name:Id.t) : stmt =
       let ctx_path  = Env.getContext state name in
       let ctx       = Env.pathFromCurrent state ctx_path in
-      let typ       = ref (VType.TId(ctx,None)) in
-      let name_type = ref (VType.TId(getFunctioTypeName name,None)) in
+      let typ       = ref (Typ.TId(ctx,None)) in
+      let name_type = ref (Typ.TId(getFunctioTypeName name,None)) in
       StmtAliasType(name_type,typ,emptyAttr)
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =

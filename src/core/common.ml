@@ -22,8 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-open VEnv
-open TypesVult
+open Env
+open Prog
+open Maps
 
 module GetIdentifiers = struct
 
@@ -87,7 +88,7 @@ module GetLocation = struct
       let s, _ = Mapper.map_lhs_exp mapper dummy_env e in
       Env.get s
 
-   let fromType (e:VType.t) : Loc.t = VType.location e
+   let fromType (e:Typ.t) : Loc.t = Typ.location e
 
 end
 

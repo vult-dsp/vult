@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-open ParserTypes
+open Ptypes
 
 (** Parsing exception *)
 exception ParserError of Error.t

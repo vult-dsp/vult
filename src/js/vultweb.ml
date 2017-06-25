@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-open TypesVult
+open Args
 
 let generateJSCode s =
    let args = { default_arguments with jscode = true; real = "js"; template = "browser"; files = [Code("live.vult", (Js.to_string s))]} in

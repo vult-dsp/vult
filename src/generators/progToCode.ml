@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-open TypesVult
-open CLike
+open Prog
+open Code
 open Common
 
 let unit_typ = CTSimple("unit")
@@ -212,42 +212,42 @@ type parameters =
       llvm : bool;  (* true if we are generating llvm *)
    }
 
-let convertId (p:parameters) (id:id) : string =
+let convertId (p:parameters) (id:Id.t) : string =
    String.concat "_" id |> Replacements.getKeyword p.repl
 
-let convertVarId (p:parameters) (id:id) : string list =
+let convertVarId (p:parameters) (id:Id.t) : string list =
    List.map (Replacements.getKeyword p.repl) id
 
-let convertSingleVarId (p:parameters) (id:id) : string =
+let convertSingleVarId (p:parameters) (id:Id.t) : string =
    match id with
    | [name] ->
       Replacements.getKeyword p.repl name
-   | _ -> failwith "VultToCLike.convertSingleVarId: this should be a single identifier"
+   | _ -> failwith "ProgToCode.convertSingleVarId: this should be a single identifier"
 
-let rec convertType (p:parameters) (tp:VType.t) : type_descr =
+let rec convertType (p:parameters) (tp:Typ.t) : type_descr =
    match !tp with
-   | VType.TId([typ],_) ->
+   | Typ.TId([typ],_) ->
       let new_type = Replacements.getType p.repl typ in
       CTSimple(new_type)
-   | VType.TId(id,_) -> CTSimple(convertId p id)
-   | VType.TComposed(["tuple"],_,_) -> CTSimple(VType.getTupleName tp)
-   | VType.TComposed(["array"],[kind;{ contents = VType.TInt(n,_)}],_) ->
+   | Typ.TId(id,_) -> CTSimple(convertId p id)
+   | Typ.TComposed(["tuple"],_,_) -> CTSimple(Typ.getTupleName tp)
+   | Typ.TComposed(["array"],[kind;{ contents = Typ.TInt(n,_)}],_) ->
       let sub = convertType p kind in
       CTArray(sub,n)
-   | VType.TLink(tp) -> convertType p tp
-   | VType.TComposed(_,_,_)
-   | VType.TInt _
-   | VType.TArrow _
-   | VType.TUnbound _
-   | VType.TExpAlt _ ->
-      failwith ("VultToCLike.convertType: unsupported type in c code generation: " ^ PrintTypes.typeStr tp)
+   | Typ.TLink(tp) -> convertType p tp
+   | Typ.TComposed(_,_,_)
+   | Typ.TInt _
+   | Typ.TArrow _
+   | Typ.TUnbound _
+   | Typ.TExpAlt _ ->
+      failwith ("ProgToCode.convertType: unsupported type in c code generation: " ^ PrintProg.typeStr tp)
 
 let convertTypedId (p:parameters) (e:typed_id) : arg_type * string =
    match e with
-   | SimpleId(_,_,_)  -> failwith "VultToCLike.convertTypedId: everything should have types"
+   | SimpleId(_,_,_)  -> failwith "ProgToCode.convertTypedId: everything should have types"
    | TypedId(id,typ,_,_) ->
       let typ_c   = convertType p typ in
-      let typ_ref = if VType.isSimpleType typ then Var(typ_c) else Ref(typ_c) in
+      let typ_ref = if Typ.isSimpleType typ then Var(typ_c) else Ref(typ_c) in
       let ids = convertVarId p id in
       typ_ref, String.concat "." ids
 
@@ -258,11 +258,11 @@ let getCast (p:parameters) (from_type:type_descr) (to_type:type_descr) : string 
    | _ ->
       let from_str = show_type_descr from_type in
       let to_str   = show_type_descr to_type in
-      failwith ("VultToCLike.getCast: invalid casting of types " ^ from_str ^ " -> " ^ to_str)
+      failwith ("ProgToCode.getCast: invalid casting of types " ^ from_str ^ " -> " ^ to_str)
 
 let makeNestedCall (typ:type_descr) (name:string) (args:cexp list) : cexp =
    match args with
-   | []     -> failwith "VultToCLike.makeNestedCall: invalid number of arguments"
+   | []     -> failwith "ProgToCode.makeNestedCall: invalid number of arguments"
    | [_;_]  -> CECall(name, args, typ)
    | h :: t -> List.fold_left (fun acc a -> CECall(name, [acc;a], typ)) h t
 
@@ -280,7 +280,7 @@ let convertOperator (p:parameters) (op:string) (typ:type_descr) (elems:cexp list
 let getFunctionSetType (elem_typs:type_descr list) : type_descr =
    match elem_typs with
    | [_;_;v] -> v
-   | _ -> failwith "VultToCLike.getFunctionSetType: this is not a call to 'set'"
+   | _ -> failwith "ProgToCode.getFunctionSetType: this is not a call to 'set'"
 
 let getInitArrayFunction (p:parameters) (typ:type_descr) : string =
    match typ with
@@ -300,7 +300,7 @@ let getCopyArrayFunction (p:parameters) (typ:type_descr) : string =
       end
    | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
 
-let convertFunction (p:parameters) (name:id) (typ:type_descr) (elems:cexp list) (elem_typs:type_descr list) : cexp =
+let convertFunction (p:parameters) (name:Id.t) (typ:type_descr) (elems:cexp list) (elem_typs:type_descr list) : cexp =
    match name with
    (* For the function set we need to get the type based on one of the arguments *)
    | ["set"] ->
@@ -323,7 +323,7 @@ let convertFunction (p:parameters) (name:id) (typ:type_descr) (elems:cexp list) 
 let attrType (p:parameters) (attr:attr) : type_descr =
    match attr.typ with
    | Some(t) -> convertType p t
-   | _ -> failwith "VultToCLike.attrType: everything should have types"
+   | _ -> failwith "ProgToCode.attrType: everything should have types"
 
 let expType (p:parameters) (e:exp) : type_descr =
    GetAttr.fromExp e
@@ -378,8 +378,8 @@ let rec convertExp (p:parameters) (e:exp) : cexp =
             elems
       in
       CETuple(elems', typ attr)
-   | PSeq _            -> failwith "VultToCLike.convertExp: Sequences are not yet supported for js"
-   | PEmpty            -> failwith "VultToCLike.convertExp: Empty expressions are not allowed"
+   | PSeq _            -> failwith "ProgToCode.convertExp: Sequences are not yet supported for js"
+   | PEmpty            -> failwith "ProgToCode.convertExp: Empty expressions are not allowed"
 
 and convertExpList (p:parameters) (e:exp list) : cexp list =
    List.map (convertExp p) e
@@ -392,7 +392,7 @@ let rec convertLhsExp (is_val:bool) (p:parameters) (e:lhs_exp) : clhsexp =
    | LId(id,Some(typ),_) ->
       let new_id = convertVarId p id in
       CLId(convertType p typ, new_id)
-   | LId(_,None,_)   -> failwith "VultToCLike.convertLhsExp: everything should have types"
+   | LId(_,None,_)   -> failwith "ProgToCode.convertLhsExp: everything should have types"
    | LTyped(e1,_,_)  -> convertLhsExp is_val p e1
    | LTuple(elems,_) ->
       let elems' = convertLhsExpList is_val p elems in
@@ -407,13 +407,13 @@ and convertLhsExpList (is_val:bool) (p:parameters) (lhsl:lhs_exp list) : clhsexp
       [] lhsl
    |> List.rev
 
-let getRecordField (name:lhs_exp) (index:int) (typ:VType.t option) : lhs_exp =
+let getRecordField (name:lhs_exp) (index:int) (typ:Typ.t option) : lhs_exp =
    match name with
    | LId(id,_,attr) ->
       let field = "field_"^(string_of_int index) in
       (* possible future bug, the descr does not match the actual type *)
       LId(id@[field],typ,{ attr with typ })
-   | _ -> failwith "VultToCLike.getRecordFiled: Invalid input"
+   | _ -> failwith "ProgToCode.getRecordFiled: Invalid input"
 
 let rec collectVarBind stmts =
    match stmts with
@@ -442,7 +442,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let lhs' = convertLhsExp false p lhs in
       let rhs' = convertExp p rhs in
       CSVar(lhs', Some(rhs'))
-   | StmtVal(_,Some(_),_) -> failwith "VultToCLike.convertStmt: val should not have initializations"
+   | StmtVal(_,Some(_),_) -> failwith "ProgToCode.convertStmt: val should not have initializations"
    | StmtMem _ -> CSEmpty
    | StmtWhile(cond,stmt,_) ->
       let cond' = convertExp p cond in
@@ -460,7 +460,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let then_' = convertStmt p then_ in
       let else_' = convertStmt p else_ in
       CSIf(cond', then_', Some(else_'))
-   | StmtFun(_,_,_,None,_) -> failwith "VultCh.convertStmt: everything should have types"
+   | StmtFun(_,_,_,None,_) -> failwith "CodeC.convertStmt: everything should have types"
    | StmtFun(name,args,body,Some(ret),_) ->
       let arg_names = List.map (convertTypedId p) args in
       let body' = convertStmt p body in
@@ -484,7 +484,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
    (* special for c/c++ initialize array variables *)
    | StmtBind(LId(lhs,Some(atyp),_),PArray(elems,_),_) when p.ccode ->
       let elems' = convertExpArray p elems in
-      let atype,_ = VType.arrayTypeAndSize atyp in
+      let atype,_ = Typ.arrayTypeAndSize atyp in
       let lhs' = convertVarId p lhs in
       begin match convertType p atype with
          | CTSimple(typ_t) as typ ->
@@ -494,9 +494,9 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
          | _ -> failwith ""
       end
    (* special for c/c++ to copy array variables *)
-   | StmtBind(LId(lhs,_,{ typ = Some(typ)}),rhs,_) when p.ccode && VType.isArray typ ->
+   | StmtBind(LId(lhs,_,{ typ = Some(typ)}),rhs,_) when p.ccode && Typ.isArray typ ->
       let rhs' = convertExp p rhs in
-      let atyp,size = VType.arrayTypeAndSize typ in
+      let atyp,size = Typ.arrayTypeAndSize typ in
       let atyp' = convertType p atyp in
       let copy_fn = getCopyArrayFunction p atyp' in
       CSBind(CLWild,CECall(copy_fn,[CEInt(size);CEVar(convertVarId p lhs, atyp');rhs'],unit_typ))
@@ -511,7 +511,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let type_name =
          match convertType p name with
          | CTSimple(t) -> t
-         | _ -> failwith "VultCh.convertStmt: invalid alias type"
+         | _ -> failwith "CodeC.convertStmt: invalid alias type"
       in
       let member_pairs = List.map (fun (id,typ,_) -> convertType p typ, convertSingleVarId p id) members in
       CSType(type_name,member_pairs)
@@ -520,7 +520,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let type_name =
          match convertType p t2 with
          | CTSimple(t) -> t
-         | _ -> failwith "VultCh.convertStmt: invalid alias type"
+         | _ -> failwith "CodeC.convertStmt: invalid alias type"
       in
       CSAlias(type_name,t1_name)
    | StmtExternal(_,args,ret,Some link_name,_) ->

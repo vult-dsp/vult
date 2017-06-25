@@ -24,9 +24,9 @@ THE SOFTWARE.
 
 (** Vult Parser *)
 
-open LexerVult
-open TypesVult
-open ParserTypes
+open Lexer
+open Prog
+open Ptypes
 open TokenStream
 open Common
 
@@ -131,7 +131,7 @@ let prattParser (rbp:int) (buffer:Stream.stream)
          left
    in loop next_token left (rbp < (lbp next_token))
 
-let identifierToken (token:'kind token) : id =
+let identifierToken (token:'kind token) : Id.t =
    splitOnDot token.value
 
 let commaSepList parser buffer =
@@ -194,14 +194,14 @@ and tag_led (_:Stream.stream) (token:'kind token) (_:attr_exp) : attr_exp =
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
 
-and tagPair (bp:int) (buffer:Stream.stream) : id * attr_exp =
+and tagPair (bp:int) (buffer:Stream.stream) : Id.t * attr_exp =
    let id = identifierToken (Stream.current buffer) in
    let _  = Stream.skip buffer in
    let _  = Stream.consume buffer EQUAL in
    let value = tagExpression bp buffer in
    id, value
 
-and tagPairList (buffer:Stream.stream) : (id * attr_exp) list =
+and tagPairList (buffer:Stream.stream) : (Id.t * attr_exp) list =
    commaSepList tagPair buffer
 
 let optTagExpressions (buffer:Stream.stream) : attr_exp list =
@@ -215,10 +215,10 @@ let optTagExpressions (buffer:Stream.stream) : attr_exp list =
    | _ -> []
 
 (** Parses a type expression using a Pratt parser *)
-let rec typeExpression (rbp:int) (buffer:Stream.stream) : VType.t =
+let rec typeExpression (rbp:int) (buffer:Stream.stream) : Typ.t =
    prattParser rbp buffer getLbp type_nud type_led
 
-and type_nud (buffer:Stream.stream) (token:'kind token) : VType.t =
+and type_nud (buffer:Stream.stream) (token:'kind token) : Typ.t =
    match token.kind with
    | TICK ->
       begin
@@ -227,7 +227,7 @@ and type_nud (buffer:Stream.stream) (token:'kind token) : VType.t =
             let token = Stream.current buffer in
             let _     = Stream.skip buffer in
             begin match identifierToken token with
-               | [id] -> ref (VType.TUnbound("'"^id,None,Some(token.loc)))
+               | [id] -> ref (Typ.TUnbound("'"^id,None,Some(token.loc)))
                | _    ->
                   let message =  Error.makeError "invalid name for generic type" token.loc in
                   raise (ParserError(message))
@@ -242,45 +242,45 @@ and type_nud (buffer:Stream.stream) (token:'kind token) : VType.t =
          match Stream.peek buffer with
          | LPAREN ->
             composedType buffer token id
-         | _ -> ref (VType.TId(id, Some(token.loc)))
+         | _ -> ref (Typ.TId(id, Some(token.loc)))
       end
-   | WILD -> ref (VType.TUnbound("",None,Some(token.loc)))
+   | WILD -> ref (Typ.TUnbound("",None,Some(token.loc)))
    | LPAREN ->
       begin
          let start_loc = token.loc in
          match Stream.peek buffer with
          | RPAREN ->
             let _ = Stream.skip buffer in
-            ref (VType.TId(["unit"], Some(start_loc)))
+            ref (Typ.TId(["unit"], Some(start_loc)))
          | _ ->
             let el = typeArgList buffer in
             begin
                match el with
-               | []   -> ref (VType.TId(["unit"], Some(start_loc)))
+               | []   -> ref (Typ.TId(["unit"], Some(start_loc)))
                | [tp] -> tp
                | _ ->
                   let _ = Stream.consume buffer RPAREN in
-                  ref (VType.TComposed(["tuple"],el, Some(start_loc)))
+                  ref (Typ.TComposed(["tuple"],el, Some(start_loc)))
             end
       end
    | INT ->
-      ref (VType.TInt(int_of_string token.value, Some(token.loc)))
+      ref (Typ.TInt(int_of_string token.value, Some(token.loc)))
    | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
 
-and type_led (buffer:Stream.stream) (token:'kind token) (left:VType.t) : VType.t =
+and type_led (buffer:Stream.stream) (token:'kind token) (left:Typ.t) : Typ.t =
    match token.kind with
    | ARROW ->
       let right = typeExpression 0 buffer in
-      let typ = ref (VType.TArrow(left,right,Some(token.loc))) in
-      let typ',_ = VType.fixType [] typ in
+      let typ = ref (Typ.TArrow(left,right,Some(token.loc))) in
+      let typ',_ = Typ.fixType [] typ in
       typ'
    | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError(message))
 
-and composedType (buffer:Stream.stream) (token:'kind token) (id:id) : VType.t =
+and composedType (buffer:Stream.stream) (token:'kind token) (id:Id.t) : Typ.t =
    let _ = Stream.skip buffer in
    let args =
       match Stream.peek buffer with
@@ -288,9 +288,9 @@ and composedType (buffer:Stream.stream) (token:'kind token) (id:id) : VType.t =
       | _ -> typeArgList buffer
    in
    let _ = Stream.consume buffer RPAREN in
-   ref (VType.TComposed(id,args, Some(token.loc)))
+   ref (Typ.TComposed(id,args, Some(token.loc)))
 
-and typeArgList (buffer:Stream.stream) : VType.t list =
+and typeArgList (buffer:Stream.stream) : Typ.t list =
    commaSepList typeExpression buffer
 
 (** Parses left hand side expression using a Pratt parser *)
@@ -453,7 +453,7 @@ and pair (buffer:Stream.stream) (token:'kind token) (left:exp) : exp =
    PTuple(elems1@elems2,attr)
 
 (** <functionCall> := <id> '(' <expressionList> ')' *)
-and functionCall (buffer:Stream.stream) (token:'kind token) (id:id) : exp =
+and functionCall (buffer:Stream.stream) (token:'kind token) (id:Id.t) : exp =
    let _    = Stream.skip buffer in
    let args =
       match Stream.peek buffer with
@@ -505,7 +505,7 @@ and typedArg (buffer:Stream.stream) : typed_id =
    let attr  = makeAttr token.loc in
    TypedId(splitOnDot token.value,e,InputArg,attr)
 
-and id (buffer:Stream.stream) : id =
+and id (buffer:Stream.stream) : Id.t =
    let _     = Stream.expect buffer ID in
    let token = Stream.current buffer in
    let _     = Stream.skip buffer in
@@ -601,7 +601,7 @@ and stmtBind (buffer:Stream.stream) : stmt =
    | _ ->
       (*let expected = kindToString EQUAL in
         let got      = kindToString kind in
-        let message  = Printf.sprintf "Expecting a %s while trying to parse a binding (%s = ...) but got %s" expected (PrintTypes.lhsExpressionStr e1) got in*)
+        let message  = Printf.sprintf "Expecting a %s while trying to parse a binding (%s = ...) but got %s" expected (PrintProg.lhsExpressionStr e1) got in*)
       let message  = Printf.sprintf "Invalid statement. All statements should be in the forms: \"a = b;\" or \"_ = b();\" " in
       raise (ParserError(Stream.makeError buffer message))
 
@@ -803,7 +803,7 @@ let parseExp (s:string) : exp =
    expression 0 buffer
 
 (** Parses an type given a string *)
-let parseType (s:string) : VType.t =
+let parseType (s:string) : Typ.t =
    let buffer = Stream.fromString s in
    typeExpression 0 buffer
 
@@ -822,12 +822,12 @@ let parseStmtList (s:string) : stmt =
 (** Parses the given expression and prints it *)
 let parseDumpExp (s:string) : string =
    let e = parseExp s in
-   PrintTypes.expressionStr e
+   PrintProg.expressionStr e
 
 (** Parses a list of statements and prints them *)
 let parseDumpStmtList (s:string) : string =
    let e = parseStmtList s in
-   PrintTypes.stmtStr e
+   PrintProg.stmtStr e
 
 (** Parses a buffer containing a list of statements and returns the results *)
 let parseBuffer (file:string) (buffer:Stream.stream) : parser_results =

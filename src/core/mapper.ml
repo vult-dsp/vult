@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-open TypesVult
-open VEnv
+open Prog
+open Env
 
 let log = false
 
@@ -98,14 +98,14 @@ let (|*>) : ('data,'value) expand_func -> ('data,'value) expand_func -> ('data,'
 
 type 'a mapper =
    {
-      vtype_c  : ('a, VType.vtype) mapper_func;
+      vtype_c  : ('a, Typ.vtype) mapper_func;
       typed_id : ('a, typed_id)   mapper_func;
       exp      : ('a, exp)        mapper_func;
       lhs_exp  : ('a, lhs_exp)    mapper_func;
       val_decl : ('a, val_decl)   mapper_func;
       stmt     : ('a, stmt)       mapper_func;
       attr     : ('a, attr)       mapper_func;
-      id       : ('a, id)         mapper_func;
+      id       : ('a, Id.t)         mapper_func;
 
       stmt_x   : ('a, stmt)      expand_func;
    }
@@ -185,38 +185,38 @@ let mapper_opt mapper_app =
          let state',e' = mapper_app mapper state e in
          state',Some(e')
 
-let map_id (mapper:'a mapper) (state:'a) (id:id) : 'a * id =
+let map_id (mapper:'a mapper) (state:'a) (id:Id.t) : 'a * Id.t =
    apply mapper.id state id
 
 let rec map_attr (mapper:'a mapper) (state:'a) (attr:attr) : 'a * attr =
    let state',tp'   = (mapper_opt map_vtype) mapper state attr.typ in
    apply mapper.attr state' { attr with typ = tp' }
 
-and map_vtype_c (mapper:'a mapper) (state:'a) (te:VType.vtype) : 'a * VType.vtype =
+and map_vtype_c (mapper:'a mapper) (state:'a) (te:Typ.vtype) : 'a * Typ.vtype =
    let map_vtype_list = mapper_list map_vtype in
    match te with
-   | VType.TInt(_,_)
-   | VType.TUnbound(_,_,_) ->
+   | Typ.TInt(_,_)
+   | Typ.TUnbound(_,_,_) ->
       state,te
-   | VType.TId(id,loc) ->
+   | Typ.TId(id,loc) ->
       let state',id'   = map_id mapper state id in
-      apply mapper.vtype_c state' (VType.TId(id',loc))
-   | VType.TComposed(id,el,loc) ->
+      apply mapper.vtype_c state' (Typ.TId(id',loc))
+   | Typ.TComposed(id,el,loc) ->
       let state',id'   = map_id mapper state id in
       let state',el'   = map_vtype_list mapper state' el in
-      apply mapper.vtype_c state' (VType.TComposed(id',el',loc))
-   | VType.TArrow(e1,e2,loc) ->
+      apply mapper.vtype_c state' (Typ.TComposed(id',el',loc))
+   | Typ.TArrow(e1,e2,loc) ->
       let state',e1'   = map_vtype mapper state e1 in
       let state',e2'   = map_vtype mapper state' e2 in
-      apply mapper.vtype_c state' (VType.TArrow(e1',e2',loc))
-   | VType.TLink(tp) ->
+      apply mapper.vtype_c state' (Typ.TArrow(e1',e2',loc))
+   | Typ.TLink(tp) ->
       let state',tp'   = map_vtype mapper state tp in
-      apply mapper.vtype_c state' (VType.TLink(tp'))
-   | VType.TExpAlt(elems) ->
+      apply mapper.vtype_c state' (Typ.TLink(tp'))
+   | Typ.TExpAlt(elems) ->
       let state', elems' = mapper_list map_vtype mapper state elems in
-      apply mapper.vtype_c state' (VType.TExpAlt(elems'))
+      apply mapper.vtype_c state' (Typ.TExpAlt(elems'))
 
-and map_vtype (mapper:'a mapper) (state:'a) (te:VType.vtype ref) : 'a * VType.vtype ref =
+and map_vtype (mapper:'a mapper) (state:'a) (te:Typ.vtype ref) : 'a * Typ.vtype ref =
    let state',tp = map_vtype_c mapper state !te in
    te := tp;
    state', te
@@ -366,7 +366,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       |> map_stmt_x mapper
 
    | StmtType(name,members,attr) ->
-      let base_name    = VType.base name in
+      let base_name    = Typ.base name in
       let state'       = Env.enter Scope.Type state base_name emptyAttr in
       let state',name' = map_vtype mapper state' name in
       let state',members' = (mapper_list map_val_decl) mapper state' members in
@@ -378,7 +378,7 @@ and map_stmt (mapper:'state mapper) (state:'state) (stmt:stmt) : 'state * stmt =
       |> map_stmt_x mapper
 
    | StmtAliasType(name,tp,attr) ->
-      let base_name    = VType.base name in
+      let base_name    = Typ.base name in
       let state'       = Env.enter Scope.Type state base_name emptyAttr in
       let state',name' = map_vtype mapper state' name in
       let state',tp'   = map_vtype mapper state' tp in

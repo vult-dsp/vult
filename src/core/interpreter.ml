@@ -23,7 +23,7 @@ THE SOFTWARE.
 
 *)
 
-open TypesVult
+open Prog
 open Common
 
 module Env = struct
@@ -34,11 +34,11 @@ module Env = struct
 
    type t =
       {
-         locals    : (id, exp) Hashtbl.t list;
-         context   : (id, exp) Hashtbl.t;
-         instances : (id, t) Hashtbl.t;
-         functions : (id, fun_body) Hashtbl.t;
-         modules   : (id, t) Hashtbl.t;
+         locals    : (Id.t, exp) Hashtbl.t list;
+         context   : (Id.t, exp) Hashtbl.t;
+         instances : (Id.t, t) Hashtbl.t;
+         functions : (Id.t, fun_body) Hashtbl.t;
+         modules   : (Id.t, t) Hashtbl.t;
       }
 
    (** Non empty list of 't' *)
@@ -62,7 +62,7 @@ module Env = struct
       | []   -> failwith "invalid env"
 
    (** Used by lookupFunction to iterate the environments until the function is found *)
-   let rec lookupFunction_loop (t:t) (env:env) (id:id) : (t * fun_body) option =
+   let rec lookupFunction_loop (t:t) (env:env) (id:Id.t) : (t * fun_body) option =
       match id with
       | [] -> None
       | name1::name2 ->
@@ -82,7 +82,7 @@ module Env = struct
                None
 
    (** Looks for a function with the given name *)
-   let lookupFunction (env:env) (id:id) : (t * fun_body) option =
+   let lookupFunction (env:env) (id:Id.t) : (t * fun_body) option =
       match env with
       | h::t -> lookupFunction_loop h t id
       | []   -> failwith "invalid env"
@@ -97,7 +97,7 @@ module Env = struct
          | exception Not_found ->
             lookupVar_loop t id
 
-   let lookupVar (env:env) (id:id) : exp =
+   let lookupVar (env:env) (id:Id.t) : exp =
       let t = first env in
       (* first try to find the variable in the context *)
       match Hashtbl.find t.context id with
@@ -107,7 +107,7 @@ module Env = struct
          lookupVar_loop t.locals id
 
    (** Adds a mem variable to the context, if the variable exists, it does nothing *)
-   let declareMem (env:env) (id:id) (value:exp) : unit =
+   let declareMem (env:env) (id:Id.t) (value:exp) : unit =
       match lookupVar env id with
       | _ -> ()
       | exception Not_found ->
@@ -115,7 +115,7 @@ module Env = struct
          Hashtbl.add t.context id value
 
    (** Adds a local variable to the current scope, if the variable exists, it does nothing *)
-   let declareVal (env:env) (id:id) (value:exp) : unit =
+   let declareVal (env:env) (id:Id.t) (value:exp) : unit =
       match lookupVar env id with
       | _ -> ()
       | exception Not_found ->
@@ -125,9 +125,9 @@ module Env = struct
          | [] -> failwith "invalid env"
 
    (** Used by updateVar to iterate all local scopes *)
-   let rec updateVar_loop (locals:'a list) (id:id) (value:exp) : unit =
+   let rec updateVar_loop (locals:'a list) (id:Id.t) (value:exp) : unit =
       match locals with
-      | [] -> failwith ("unknow variable: "^(PrintTypes.identifierStr id))
+      | [] -> failwith ("unknow variable: "^(PrintProg.identifierStr id))
       | h::t ->
          match Hashtbl.mem h id with
          | _ -> Hashtbl.replace h id value
@@ -135,7 +135,7 @@ module Env = struct
             updateVar_loop t id value
 
    (** Looks for an existing variable and updates its value *)
-   let updateVar (env:env) (id:id) (value:exp) : unit =
+   let updateVar (env:env) (id:Id.t) (value:exp) : unit =
       let t = first env in
       match Hashtbl.mem t.context id with
       | _ -> Hashtbl.replace t.context id value
@@ -148,16 +148,16 @@ module Env = struct
       Hashtbl.add t.functions id stmt
 
    (** Adds a module to the scope *)
-   let addModule (env:env) (id:id) : unit =
+   let addModule (env:env) (id:Id.t) : unit =
       let t = first env in
       Hashtbl.add t.modules id (new_t ())
 
    (** Enters to the scope of a module *)
-   let enterModule (env:env) (id:id) : env =
+   let enterModule (env:env) (id:Id.t) : env =
       let t = first env in
       match Hashtbl.find t.modules id with
       | module_t -> module_t :: env
-      | exception Not_found -> failwith ("unknown module: "^(PrintTypes.identifierStr id))
+      | exception Not_found -> failwith ("unknown module: "^(PrintProg.identifierStr id))
 
    (** Inserts a table to store local variables *)
    let enterLocal (env:env) : env =
@@ -173,7 +173,7 @@ module Env = struct
       | [] -> failwith "invalid env"
 
    (** Gets the context of a function call *)
-   let enterInstance (env:env) (id:id) : env =
+   let enterInstance (env:env) (id:Id.t) : env =
       let t = first env in
       match Hashtbl.find t.instances id with
       | inst -> inst :: env
@@ -189,7 +189,7 @@ end
 let ret_unit = PUnit(emptyAttr)
 
 (** Returns a context name for the a funtion call based on its location *)
-let makeInstName (fn:id) (attr:attr) : id =
+let makeInstName (fn:Id.t) (attr:attr) : Id.t =
    let line = Loc.line attr.loc |> string_of_int in
    let col  = Loc.startColumn attr.loc  |> string_of_int in
    match fn with
@@ -198,20 +198,20 @@ let makeInstName (fn:id) (attr:attr) : id =
    | _ -> failwith "invalid function name"
 
 (** Returns the initial value given the type of an expression *)
-let rec getInitValue (tp:VType.t) : exp =
+let rec getInitValue (tp:Typ.t) : exp =
    match !tp with
-   | VType.TId(["unit"],_) -> PUnit(emptyAttr)
-   | VType.TId(["real"],_) -> PReal(0.0,emptyAttr)
-   | VType.TId(["int"],_)  -> PInt(0,emptyAttr)
-   | VType.TId(["bool"],_) -> PBool(false,emptyAttr)
-   | VType.TComposed(["array"],[sub;{ contents = VType.TInt(size,_) }],_) ->
+   | Typ.TId(["unit"],_) -> PUnit(emptyAttr)
+   | Typ.TId(["real"],_) -> PReal(0.0,emptyAttr)
+   | Typ.TId(["int"],_)  -> PInt(0,emptyAttr)
+   | Typ.TId(["bool"],_) -> PBool(false,emptyAttr)
+   | Typ.TComposed(["array"],[sub;{ contents = Typ.TInt(size,_) }],_) ->
       let sub_init = getInitValue sub in
       let elems = Array.init size (fun _ -> sub_init) in
       PArray(elems,emptyAttr)
-   | VType.TComposed(["tuple"],types,_) ->
+   | Typ.TComposed(["tuple"],types,_) ->
       let elems = List.map getInitValue types in
       PTuple(elems,emptyAttr)
-   | VType.TLink(tp) -> getInitValue tp
+   | Typ.TLink(tp) -> getInitValue tp
    | _ -> failwith "Interpreter.getInitValue"
 
 (** Returns the initial value given the lhs expression *)
@@ -219,7 +219,7 @@ let getInitExp (lhs:lhs_exp) : exp =
    match (GetAttr.fromLhsExp lhs).typ with
    | Some(typ) -> getInitValue typ
    | None ->
-      failwith ("Interpreter.getInitExp: cannot get the initial expression: "^(PrintTypes.lhsExpressionStr lhs))
+      failwith ("Interpreter.getInitExp: cannot get the initial expression: "^(PrintProg.lhsExpressionStr lhs))
 
 (** Evaluates unary operations *)
 let evalUop (op:string) (exp:exp) : exp =

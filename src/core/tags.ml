@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-open TypesVult
+open Prog
 
 type t =
    | Int
@@ -30,7 +30,7 @@ type t =
    | Id
    | String
 
-let rec has (attr:attr_exp list) (id:id) =
+let rec has (attr:attr_exp list) (id:Id.t) =
    match attr with
    | [] -> false
    | AId(name,_)::_ when id = name -> true
@@ -60,14 +60,14 @@ let getTypeLiteral (t:t) : string =
    | Id   -> "identifier"
    | String   -> "string"
 
-let rec getParam (remaining:(id * attr_exp) list) (args:(id * attr_exp) list) (id:string) =
+let rec getParam (remaining:(Id.t * attr_exp) list) (args:(Id.t * attr_exp) list) (id:string) =
    match args with
    | [] -> remaining, None
    | (name,value)::t when name = [id] ->
       (remaining@t), Some(value)
    | h::t -> getParam (h::remaining) t id
 
-let getTypedParam (args:(id * attr_exp) list) (id,typ) =
+let getTypedParam (args:(Id.t * attr_exp) list) (id,typ) =
    let lattr loc = { emptyAttr with loc} in
    match getParam [] args id with
    | r, Some(AReal(value,loc)) when typ = Real ->
@@ -85,7 +85,7 @@ let getTypedParam (args:(id * attr_exp) list) (id,typ) =
       Error.raiseError msg loc
    | r, None -> r, None
 
-let getParameterList loc (args:(id * attr_exp) list) (params: (string * t) list) : (id * attr_exp) list * exp list =
+let getParameterList (loc:Loc.t) (args:(Id.t * attr_exp) list) (params: (string * t) list) : (Id.t * attr_exp) list * exp list =
    let rec loop remaning found params =
       match params with
       | [] -> remaning, List.rev found
@@ -104,7 +104,7 @@ let getTableIndividualParams (loc:Loc.t) params msg args =
    let remaining, found = getParameterList loc args params in
    match remaining with
    | _::_ ->
-      let params_s =  List.map (fun (id,_) -> PrintTypes.identifierStr id) remaining |> String.concat ", " in
+      let params_s =  List.map (fun (id,_) -> PrintProg.identifierStr id) remaining |> String.concat ", " in
       let msg = "The following arguments are unknown for the current tag: "^ params_s in
       Error.raiseError msg loc
    | [] ->

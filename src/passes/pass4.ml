@@ -23,9 +23,10 @@ THE SOFTWARE.
 *)
 
 open PassCommon
-open VEnv
-open TypesVult
+open Env
+open Prog
 open Common
+open Args
 
 module ReplaceFunctionNames = struct
 
@@ -33,7 +34,7 @@ module ReplaceFunctionNames = struct
       Mapper.make "ReplaceFunctionNames.exp" @@ fun state exp ->
       match exp with
       | PCall(name,fname,args,attr) ->
-         let Path(path),_,t = Env.lookupRaise Scope.Function state fname attr.loc in
+         let Id.Path(path),_,t = Env.lookupRaise Scope.Function state fname attr.loc in
          let final_name =
             match !(t.Scope.ext_fn) with
             | Some(n) -> [n]
@@ -46,22 +47,22 @@ module ReplaceFunctionNames = struct
       Mapper.make "ReplaceFunctionNames.stmt" @@ fun state stmt ->
       match stmt with
       | StmtFun([_],args,body,rettype,attr) ->
-         let Path(path) = Env.currentScope state in
+         let Id.Path(path) = Env.currentScope state in
          state, StmtFun(path,args,body,rettype,attr)
       | _ ->
          state, stmt
 
-   let vtype_c : (PassData.t Env.t,VType.vtype) Mapper.mapper_func =
+   let vtype_c : (PassData.t Env.t,Typ.vtype) Mapper.mapper_func =
       Mapper.make "ReplaceFunctionNames.vtype_c" @@ fun state typ ->
       match typ with
-      | VType.TId(id,optloc) ->
+      | Typ.TId(id,optloc) ->
          let loc =
             match optloc with
             | Some(loc) -> loc
             | None -> Loc.default
          in
-         let Path(type_path),_,_ = Env.lookupRaise Scope.Type state id loc in
-         state, VType.TId(type_path,optloc)
+         let Id.Path(type_path),_,_ = Env.lookupRaise Scope.Type state id loc in
+         state, Typ.TId(type_path,optloc)
       | _ -> state, typ
 
    let mapper = Mapper.{ default_mapper with exp; stmt; vtype_c }
@@ -70,18 +71,19 @@ end
 
 module ReturnReferences = struct
 
-   let unitAttr attr = { attr with typ = Some(VType.Const.unit_type)}
+   let unitAttr attr = { attr with typ = Some(Typ.Const.unit_type)}
 
    let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
       Mapper.make "ReturnReferences.stmt" @@ fun state stmt ->
       let data = Env.get state in
-      if not data.PassData.args.ccode then
+      let args = data.PassData.args in
+      if not args.ccode then
          state, stmt
       else
          match stmt with
-         | StmtFun(name,args,body,Some(rettype),attr) when not (VType.isSimpleType rettype) ->
+         | StmtFun(name,args,body,Some(rettype),attr) when not (Typ.isSimpleType rettype) ->
             let output = TypedId(["_output_"],rettype,OutputArg,emptyAttr) in
-            let stmt' = StmtFun(name,args@[output],body,Some(VType.Const.unit_type),attr) in
+            let stmt' = StmtFun(name,args@[output],body,Some(Typ.Const.unit_type),attr) in
             state, stmt'
          | _ -> state, stmt
 
@@ -93,25 +95,25 @@ module ReturnReferences = struct
       else
          match stmt with
          (* regular case a = foo() *)
-         | StmtBind(LId(lhs,Some(typ),lattr),PCall(inst,name,args,attr),battr) when not (VType.isSimpleType typ) ->
+         | StmtBind(LId(lhs,Some(typ),lattr),PCall(inst,name,args,attr),battr) when not (Typ.isSimpleType typ) ->
             let arg = PId(lhs,lattr) in
             let fixed_attr = unitAttr attr in
             state, [StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],fixed_attr),battr)]
          (* special case _ = foo() when the return is no simple value *)
-         | StmtBind(LWild(wattr),PCall(inst,name,args,attr),battr) when not (VType.isSimpleOpType wattr.typ) ->
+         | StmtBind(LWild(wattr),PCall(inst,name,args,attr),battr) when not (Typ.isSimpleOpType wattr.typ) ->
             let i,state' = Env.tick state in
             let tmp_name = "_unused_" ^ (string_of_int i) in
             let arg = PId([tmp_name], wattr) in
             let fixed_attr = unitAttr attr in
             state', [StmtVal(LId([tmp_name],wattr.typ,wattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],fixed_attr),battr)]
          (* special case _ = a when a is not simple value *)
-         | StmtBind(LWild(wattr),e,battr) when not (VType.isSimpleOpType wattr.typ) ->
+         | StmtBind(LWild(wattr),e,battr) when not (Typ.isSimpleOpType wattr.typ) ->
             let i,state' = Env.tick state in
             let tmp_name = "_unused_" ^ (string_of_int i) in
             state', [StmtVal(LId([tmp_name],wattr.typ,wattr),None,battr);StmtBind(LId([tmp_name],wattr.typ,wattr),e,battr)]
          | StmtBind(_,PCall(_,_,_,_),_) ->
             state, [stmt]
-         | StmtVal(LId(lhs,Some(typ),lattr),Some(PCall(inst,name,args,attr)),battr) when not (VType.isSimpleType typ) ->
+         | StmtVal(LId(lhs,Some(typ),lattr),Some(PCall(inst,name,args,attr)),battr) when not (Typ.isSimpleType typ) ->
             let arg = PId(lhs,lattr) in
             let fixed_attr = unitAttr attr in
             state, [StmtVal(LId(lhs,Some(typ),lattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],fixed_attr),battr)]
@@ -119,7 +121,7 @@ module ReturnReferences = struct
             state, [stmt]
          | StmtReturn(e,attr) ->
             let eattr = GetAttr.fromExp e in
-            if not (VType.isSimpleOpType eattr.typ) then
+            if not (Typ.isSimpleOpType eattr.typ) then
                let stmt' = StmtBind(LId(["_output_"],eattr.typ,eattr),e,attr) in
                reapply state, [stmt';StmtReturn(PUnit(unitAttr eattr),attr)]
             else

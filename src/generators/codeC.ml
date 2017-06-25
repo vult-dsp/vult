@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-open CLike
+open Code
 open GenerateParams
 
 let dot = Pla.map_sep (Pla.string ".") Pla.string
@@ -143,7 +143,7 @@ let printLhsExpTuple (var:string list) (is_var:bool) (i:int) (e:clhsexp) : Pla.t
 
    | CLWild -> Pla.unit
 
-   | _ -> failwith ("printLhsExpTuple: All other cases should be already covered\n"^(CLike.show_clhsexp e))
+   | _ -> failwith ("printLhsExpTuple: All other cases should be already covered\n"^(Code.show_clhsexp e))
 
 (** Used to print assignments on to an array element *)
 let printArrayBinding params (var:string list) (i:int) (e:cexp) : Pla.t =
@@ -338,7 +338,7 @@ and wrapStmtIfNotBlock params stmt =
       | _ -> None
 
 (** Generates the .c and .h file contents for the given parsed files *)
-let print (params:params) (stmts:CLike.cstmt list) : (Pla.t * filename) list =
+let print (params:params) (stmts:Code.cstmt list) : (Pla.t * filename) list =
    let h   = printStmtList { params with is_header = true } stmts in
    let cpp = printStmtList { params with is_header = false } stmts in
    Templates.apply params h cpp

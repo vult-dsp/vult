@@ -42,7 +42,7 @@ type params =
       template    : string;         (** Used template *)
       is_header   : bool;           (** Set to true if it should generate a C/C++ header *)
       output      : string;         (** Argument given via '-o' *)
-      repl        : Replacements.t; (** Replacements used during Vult -> CLike conversion *)
+      repl        : Replacements.t; (** Replacements used during Vult -> Code conversion *)
       module_name : string;         (** Name of the main mudule *)
       config      : configuration;  (** Pluggin configuration *)
    }

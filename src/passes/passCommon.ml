@@ -22,8 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-open TypesVult
-open VEnv
+open Env
+open Args
+open Maps
 
 type pass_options =
    {
@@ -63,20 +64,20 @@ module PassData = struct
          add_ctx      : PathSet.t;
          used_tuples  : TypeSet.t;
          repeat       : bool;
-         args         : arguments;
+         args         : args;
          interp_env   : Interpreter.Env.env;
       }
 
-   let hasInitFunction (t:t) (path:path) : bool =
+   let hasInitFunction (t:t) (path:Id.path) : bool =
       PathSet.mem path t.gen_init_ctx
 
-   let hasContextArgument (t:t) (path:path) : bool =
+   let hasContextArgument (t:t) (path:Id.path) : bool =
       PathSet.mem path t.add_ctx
 
-   let markInitFunction (t:t) (path:path) : t =
+   let markInitFunction (t:t) (path:Id.path) : t =
       { t with gen_init_ctx = PathSet.add path t.gen_init_ctx }
 
-   let markContextArgument (t:t) (path:path) : t =
+   let markContextArgument (t:t) (path:Id.path) : t =
       { t with add_ctx = PathSet.add path t.add_ctx }
 
    let reapply (t:t) : t =
@@ -88,7 +89,7 @@ module PassData = struct
    let shouldReapply (t:t) : bool =
       t.repeat
 
-   let addTuple (t:t) (tup:VType.t) : t =
+   let addTuple (t:t) (tup:Typ.t) : t =
       { t with used_tuples = TypeSet.add tup t.used_tuples }
 
    let getTuples (t:t) : TypeSet.t =

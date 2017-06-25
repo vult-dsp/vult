@@ -26,4 +26,4 @@ THE SOFTWARE.
 NodeIO.replaceFunctions ();;
 
 (* calls the main function to start the execution *)
-Vult_main.main () ;;
+Cli.main () ;;

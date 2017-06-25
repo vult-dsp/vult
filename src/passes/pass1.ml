@@ -23,16 +23,17 @@ THE SOFTWARE.
 *)
 
 open PassCommon
-open VEnv
-open TypesVult
+open Env
+open Prog
 open Common
+open Maps
 
 module UnlinkTypes = struct
 
-   let vtype_c : (PassData.t Env.t,VType.vtype) Mapper.mapper_func =
+   let vtype_c : (PassData.t Env.t,Typ.vtype) Mapper.mapper_func =
       Mapper.make "UnlinkTypes.vtype_c" @@ fun state typ ->
       match typ with
-      | VType.TLink(t) -> state, !t
+      | Typ.TLink(t) -> state, !t
       | _ -> state, typ
 
    let mapper = Mapper.{ default_mapper with vtype_c }
@@ -41,7 +42,7 @@ end
 
 module ReportUnboundTypes = struct
 
-   let reportUnbound (name:id) (attr:attr) =
+   let reportUnbound (name:Id.t) (attr:attr) =
       let msg = Printf.sprintf "The type of variable '%s' cannot be infered. Add a type annotation." (idStr name) in
       Error.raiseError msg attr.loc
 
@@ -50,19 +51,19 @@ module ReportUnboundTypes = struct
       match exp with
       | LId(id,None,attr) ->
          reportUnbound id attr
-      | LId(id,Some(t),attr) when VType.isUnbound t ->
+      | LId(id,Some(t),attr) when Typ.isUnbound t ->
          reportUnbound id attr
       | _ -> state, exp
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make "ReportUnboundTypes.exp" @@ fun state exp ->
       match exp with
-      | PId(id,({ typ = Some(t) } as attr)) when VType.isUnbound t ->
+      | PId(id,({ typ = Some(t) } as attr)) when Typ.isUnbound t ->
          reportUnbound id attr
       | _ ->
          let attr = GetAttr.fromExp exp in
          match attr.typ with
-         | Some(t) when VType.isUnbound t ->
+         | Some(t) when Typ.isUnbound t ->
             let msg = Printf.sprintf "The type of this expression could not be infered. Add a type annotation." in
             Error.raiseError msg (attr.loc)
          | _ ->
@@ -71,7 +72,7 @@ module ReportUnboundTypes = struct
    let typed_id : ('a Env.t,typed_id) Mapper.mapper_func =
       Mapper.make "ReportUnboundTypes.typed_id" @@ fun state t ->
       match t with
-      | TypedId(id,typ,_,attr) when VType.isUnbound typ ->
+      | TypedId(id,typ,_,attr) when Typ.isUnbound typ ->
          reportUnbound id attr
       | _ -> state, t
 
@@ -138,10 +139,10 @@ module Simplify = struct
       | PBool(false,_) -> true
       | _ -> false
 
-   let minusOne attr (typ:VType.t) : exp =
+   let minusOne attr (typ:Typ.t) : exp =
       match !typ with
-      | VType.TId(["int"],_) -> PInt(-1,attr)
-      | VType.TId(["real"],_) -> PReal(-1.0,attr)
+      | Typ.TId(["int"],_) -> PInt(-1,attr)
+      | Typ.TId(["real"],_) -> PReal(-1.0,attr)
       | _ -> failwith "Simplify.minusOne: invalid numeric value"
 
    let applyOp (op:string) (e1:exp) (e2:exp) : exp =
@@ -347,7 +348,7 @@ module BindComplexExpressions = struct
       let exp : (stmt list Env.t,exp) Mapper.mapper_func =
          Mapper.make "BindComplexHelper.exp" @@ fun state exp ->
          match exp with
-         | PCall(_,_,_,({ typ = Some(typ) } as attr)) when not (VType.isSimpleType typ) ->
+         | PCall(_,_,_,({ typ = Some(typ) } as attr)) when not (Typ.isSimpleType typ) ->
             let n,state' = Env.tick state in
             let var_name = "_call_"^(string_of_int n) in
             let exp'     = PId([var_name],attr) in
@@ -443,11 +444,11 @@ end
 
 module ProcessArrays = struct
 
-   let getArraySize (typ_opt:VType.t option) : int =
+   let getArraySize (typ_opt:Typ.t option) : int =
       match typ_opt with
       | Some(typ) ->
          begin match typ with
-            | { contents = VType.TComposed(["array"],[_;{ contents = VType.TInt(n,_)}],_)} -> n
+            | { contents = Typ.TComposed(["array"],[_;{ contents = Typ.TInt(n,_)}],_)} -> n
             | _ -> failwith "ProcessArrays.getArraySize: the argument is not an array"
          end
       | _ -> failwith "ProcessArrays.getArraySize: type inference should have put a type here"

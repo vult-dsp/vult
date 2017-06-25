@@ -23,9 +23,10 @@ THE SOFTWARE.
 *)
 
 open GenerateParams
-open CLike
+open Code
 open Ollvm_ez
-open TypesVult
+open Maps
+
 module P = Ollvm.Printer
 
 type vars = Value.t IdMap.t
@@ -58,7 +59,7 @@ let rec printExp _m vars (e:cexp) =
       let var = IdMap.find [name] vars in
       var
 
-   | _ -> failwith (CLike.show_cexp e)
+   | _ -> failwith (Code.show_cexp e)
 
 let printArgType arg : Type.t =
    match arg with
@@ -115,7 +116,7 @@ let rec printStmt (m:Module.t) (vars:vars) (stmt:cstmt) : Module.t * vars * 'a =
       let r = Instr.ret e' in
       m,vars, [r]
 
-   | _ -> failwith (CLike.show_cstmt stmt)
+   | _ -> failwith (Code.show_cstmt stmt)
 
 let printBody (m:Module.t) (vars:vars) (stmt:cstmt)  : Module.t * vars * Ollvm_ast.instr list =
    match stmt with
@@ -150,7 +151,7 @@ let printTopLevel (m:Module.t) (vars:vars) (stmt:cstmt) : Module.t * vars =
    | _ -> failwith "invalid"
 
 
-let print (_params:params) (stmts:CLike.cstmt list) : (Pla.t * filename) list =
+let print (_params:params) (stmts:Code.cstmt list) : (Pla.t * filename) list =
    let m = Module.init
          "name"
          ("x86_64", "pc", "linux-gnu")

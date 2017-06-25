@@ -23,17 +23,17 @@ THE SOFTWARE.
 *)
 
 open PassCommon
-open VEnv
-open TypesVult
+open Env
+open Prog
 open Common
 
 
 module CollectTuples = struct
 
-   let vtype_c : ('a Env.t, VType.vtype) Mapper.mapper_func =
+   let vtype_c : ('a Env.t, Typ.vtype) Mapper.mapper_func =
       Mapper.make "CollectTuples.vtype_c" @@ fun state t ->
       match t with
-      | VType.TComposed(["tuple"],_,_) ->
+      | Typ.TComposed(["tuple"],_,_) ->
          let data       = Env.get state in
          let data' = PassData.addTuple data (ref t) in
          Env.set state data', t
@@ -45,14 +45,14 @@ end
 
 module ReportUnsupportedTypes = struct
 
-   let reportUnsupportedArray (typ:VType.t) (name:id) (attr:attr) =
-      let msg = Printf.sprintf "The type '%s' of variable '%s' is not supported. Arrays can only contain basic types." (PrintTypes.typeStr typ) (idStr name) in
+   let reportUnsupportedArray (typ:Typ.t) (name:Id.t) (attr:attr) =
+      let msg = Printf.sprintf "The type '%s' of variable '%s' is not supported. Arrays can only contain basic types." (PrintProg.typeStr typ) (idStr name) in
       Error.raiseError msg attr.loc
 
    let isComplexArray typ =
-      if VType.isArray typ then
-         let t, _ = VType.arrayTypeAndSize typ in
-         not (VType.isSimpleType t)
+      if Typ.isArray typ then
+         let t, _ = Typ.arrayTypeAndSize typ in
+         not (Typ.isSimpleType t)
       else false
 
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
@@ -66,11 +66,11 @@ module ReportUnsupportedTypes = struct
       Mapper.make "ReportUnsupportedTypes.exp" @@ fun state exp ->
       let attr = GetAttr.fromExp exp in
       match attr.typ with
-      | Some(t) when VType.isUnbound t ->
+      | Some(t) when Typ.isUnbound t ->
          let msg = Printf.sprintf "The type of this expression could not be infered. Add a type annotation." in
          Error.raiseError msg (attr.loc)
       | Some(t) when isComplexArray t ->
-         let msg = Printf.sprintf "The type '%s' of this expression is not supported. Arrays can only contain basic types." (PrintTypes.typeStr t) in
+         let msg = Printf.sprintf "The type '%s' of this expression is not supported. Arrays can only contain basic types." (PrintProg.typeStr t) in
          Error.raiseError msg attr.loc
       | _ ->
          state, exp

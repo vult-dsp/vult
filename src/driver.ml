@@ -24,29 +24,30 @@ THE SOFTWARE.
 
 (** Contains top level functions to perform common tasks *)
 
-open TypesVult
+open Prog
+open Args
 
-let generateCode (args:arguments) (parser_results:parser_results list) : output list =
+let generateCode (args:args) (parser_results:parser_results list) : output list =
    match Generate.generateCode parser_results args with
    | [] -> []
    | results -> [GeneratedCode results]
 
 (** Prints the parsed files if -dparse was passed as argument *)
-let dumpParsedFiles (args:arguments) (parser_results:parser_results list) : output list  =
+let dumpParsedFiles (args:args) (parser_results:parser_results list) : output list  =
    if args.dparse then
       parser_results
       |> Passes.applyTransformations args
-      |> List.map (fun a -> PrintTypes.stmtListStr a.presult)
+      |> List.map (fun a -> PrintProg.stmtListStr a.presult)
       |> String.concat "\n"
       |> (fun a -> [ParsedCode a])
    else []
 
 (** Prints the parsed files if -dparse was passed as argument *)
-let runFiles (args:arguments) (parser_results:parser_results list) : output list =
+let runFiles (args:args) (parser_results:parser_results list) : output list =
    let print_val e =
       match e with
       | PUnit _ -> []
-      | _ -> [PrintTypes.expressionStr e]
+      | _ -> [PrintProg.expressionStr e]
    in
    if args.eval then
       Passes.applyTransformations args ~options:PassCommon.interpreter_options parser_results
@@ -58,7 +59,7 @@ let runFiles (args:arguments) (parser_results:parser_results list) : output list
       []
 
 (** Checks the code and returns a list with the errors *)
-let checkCode (args:arguments) (parser_results:parser_results list) : output list =
+let checkCode (args:args) (parser_results:parser_results list) : output list =
    if args.check then
       try
          parser_results
@@ -95,7 +96,7 @@ let generateLuaCode (files:string list) : string =
 
 let version = String.sub Version.version 1 ((String.length Version.version) - 2)
 
-let main (args:arguments)  : output list =
+let main (args:args)  : output list =
    try
       if args.show_version then
          [Version version]

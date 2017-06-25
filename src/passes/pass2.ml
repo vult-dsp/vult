@@ -23,14 +23,16 @@ THE SOFTWARE.
 *)
 
 open PassCommon
-open VEnv
-open TypesVult
+open Env
+open Prog
+open Args
+open Maps
 
 let getInterpEnv state =
    let env = (Env.get state).PassData.interp_env in
-   match Env.currentScope state with
-   | Path([]) -> env
-   | Path(module_::_) -> Interpreter.Env.enterModule env [module_]
+   match Id.getPathModule (Env.currentScope state) with
+   | None-> env
+   | Some(module_) -> Interpreter.Env.enterModule env [module_]
 
 module Evaluate = struct
 
@@ -77,25 +79,22 @@ end
 
 module Tables = struct
 
-   let int_type = VType.Const.int_type
-   let real_type = VType.Const.real_type
+   let int_type = Typ.Const.int_type
+   let real_type = Typ.Const.real_type
    let attr_int = { emptyAttr with typ = Some(int_type) }
    let attr_real = { emptyAttr with typ = Some(real_type) }
 
    let real_array_type size =
-      ref (VType.TComposed(["array"], [real_type; ref (VType.TInt(size, None))], None))
+      ref (Typ.TComposed(["array"], [real_type; ref (Typ.TInt(size, None))], None))
 
    let attr_array size =
       { emptyAttr with typ = Some(real_array_type size) }
-
-   let makeVarName (fname:id) (var:id) : id =
-      [String.concat "_" (fname @ var)]
 
    let makeFloat x =
       PReal(x,emptyAttr)
 
    let makeDecl attr fname name data =
-      let varname = makeVarName fname name in
+      let varname = Id.joinSep "_" fname name in
       let size = List.length data in
       let atype = real_array_type size in
       let arr = PArray((CCList.map makeFloat data |> Array.of_list), { attr with typ = Some(atype) }) in
@@ -118,7 +117,7 @@ module MakeTables = struct
    let checkRealReturn typ : bool =
       match typ with
       | None -> failwith "the type is not defined"
-      | Some(t) -> VType.isRealType t
+      | Some(t) -> Typ.isRealType t
 
    let getInputVar arg =
       match arg with
@@ -130,7 +129,7 @@ module MakeTables = struct
       let rindex = PId(["index"], Tables.attr_int) in
       let getCoeff a =
          PCall(None,["get"],
-               [PCall(None,["wrap_array"], [PId(Tables.makeVarName fname [a], Tables.attr_array size)], Tables.attr_real); rindex],
+               [PCall(None,["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array size)], Tables.attr_real); rindex],
                Tables.attr_real)
       in
       let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), Tables.attr_real) in
@@ -162,9 +161,9 @@ module MakeTables = struct
                         Tables.attr_real)], Tables.attr_real),emptyAttr)
          ], emptyAttr)
 
-   let evaluateFunction env (name:id) (x:float) =
-      match name with
-      | [_; fname] ->
+   let evaluateFunction env (name:Id.t) (x:float) =
+      match Id.getNameNoModule name with
+      | Some fname ->
          let exp = PCall(None, [fname], [PReal(x, emptyAttr)], emptyAttr) in
          let value = Interpreter.evalExp env exp in
          getFloat value
@@ -217,12 +216,12 @@ module MakeTables = struct
             | None -> state, [stmt]
             | Some(_, [PInt(size, _); PReal(min, _); PReal(max, _)]) when checkRealReturn ret ->
                let var    = checkInputVariables attr.loc args in
-               let env        = getInterpEnv state in
-               let Path(path) = Env.currentScope state in
-               let full_path  = path@name in
-               let result     = calculateTables env attr full_path size min max in
-               let attr'      = { attr with exp = Tags.removeAttrFunc "table" attr.exp } in
-               let body'      = makeNewBody full_path size min max var in
+               let env           = getInterpEnv state in
+               let Id.Path(path) = Env.currentScope state in
+               let full_path     = path@name in
+               let result        = calculateTables env attr full_path size min max in
+               let attr'         = { attr with exp = Tags.removeAttrFunc "table" attr.exp } in
+               let body'         = makeNewBody full_path size min max var in
                reapply state, result @ [StmtFun(name, args, body', ret, attr')]
             | Some(loc, _) ->
                let msg = "This attribute can only be applied to functions returning 'real'" in
@@ -256,7 +255,7 @@ module EmbedWavFile = struct
          Error.raiseError msg loc
 
 
-   let getDeclarations (attr:attr) (name:id) (wav_data:WavFile.wave) : stmt list =
+   let getDeclarations (attr:attr) (name:Id.t) (wav_data:WavFile.wave) : stmt list =
       Array.mapi
          (fun i v -> Tables.makeDecl attr name ["chan_"^(string_of_int i)] (Array.to_list v))
          wav_data.WavFile.data
@@ -273,11 +272,11 @@ module EmbedWavFile = struct
 
 
    (** Generates the statement that reads the arrays if the reuqested channel matches *)
-   let accessChannel (fname:id) (attr:attr) (channel:exp) (index:exp) (samples:int) (i:int) : stmt =
-      let attr_bool  = { emptyAttr with typ = Some(VType.Const.bool_type) } in
-      let attr_real  = { emptyAttr with typ = Some(VType.Const.real_type) } in
-      let attr_int   = { emptyAttr with typ = Some(VType.Const.int_type) } in
-      let table_name = Tables.makeVarName fname ["chan_"^(string_of_int i)] in
+   let accessChannel (fname:Id.t) (attr:attr) (channel:exp) (index:exp) (samples:int) (i:int) : stmt =
+      let attr_bool  = { emptyAttr with typ = Some(Typ.Const.bool_type) } in
+      let attr_real  = { emptyAttr with typ = Some(Typ.Const.real_type) } in
+      let attr_int   = { emptyAttr with typ = Some(Typ.Const.int_type) } in
+      let table_name = Id.joinSep "_" fname ["chan_"^(string_of_int i)] in
       let table      = PCall(None, ["wrap_array"], [PId(table_name, Tables.attr_array samples)], attr_real) in
       let i          = PInt(i, Tables.attr_int) in
       let samples_e  = PInt(samples, Tables.attr_int) in
@@ -289,8 +288,8 @@ module EmbedWavFile = struct
 
 
    (** Generates the function that access the data of the wave file *)
-   let makeNewBody (fname:id) (attr:attr) (args:typed_id list) (wave:WavFile.wave) : stmt =
-      let attr_real  = { emptyAttr with typ = Some(VType.Const.real_type) } in
+   let makeNewBody (fname:Id.t) (attr:attr) (args:typed_id list) (wave:WavFile.wave) : stmt =
+      let attr_real  = { emptyAttr with typ = Some(Typ.Const.real_type) } in
       let channel, index = checkInputVariables attr.loc args in
       let stmts   = CCList.init wave.WavFile.channels (accessChannel fname attr channel index  wave.WavFile.samples) in
       let default = StmtReturn( PReal(0.0,attr_real),attr) in
@@ -298,10 +297,10 @@ module EmbedWavFile = struct
 
 
    (** Generates a function <name>_samples that return the size of the wav file *)
-   let makeSizeFunction (fname:id) (attr:attr) (size:int) : stmt =
-      let attr_int = { emptyAttr with typ = Some(VType.Const.int_type) } in
-      let size_name = appendToId fname "_samples" in
-      StmtFun(size_name, [], StmtReturn(PInt(size,attr_int),attr), Some(VType.Const.int_type), attr)
+   let makeSizeFunction (fname:Id.t) (attr:attr) (size:int) : stmt =
+      let attr_int = { emptyAttr with typ = Some(Typ.Const.int_type) } in
+      let size_name = Id.postfix fname "_samples" in
+      StmtFun(size_name, [], StmtReturn(PInt(size,attr_int),attr), Some(Typ.Const.int_type), attr)
 
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
@@ -313,8 +312,8 @@ module EmbedWavFile = struct
             let msg    = "The attribute 'wave' requires specific parameters. e.g. 'wave(channels=1,file=\"file.wav\")'" in
             match Tags.getTableParams "wave" params msg attr.exp with
             | None -> state, [stmt]
-            | Some(loc, [PInt(channels, _); PString(file, _)]) when VType.isRealType ret ->
-               let Path(path) = Env.currentScope state in
+            | Some(loc, [PInt(channels, _); PString(file, _)]) when Typ.isRealType ret ->
+               let Id.Path(path) = Env.currentScope state in
                let full_path  = path @ name in
                let includes   = (Env.get state).PassData.args.includes in
                let wave       = readFile loc includes file in

@@ -108,7 +108,7 @@ let base (t:t) : id =
    match !t with
    | TId(id,_) -> id
    | TComposed(id,_,_) -> id
-   | _ -> failwith "VType.base: this type does not have a base type"
+   | _ -> failwith "Typ.base: this type does not have a base type"
 
 
 (** Makes a copy of a type (a new instance) *)

@@ -1,6 +1,6 @@
-open TypesVult
+open Prog
 
-module TypeMap = Map.Make(struct type t = VType.t let compare = VType.compare end)
+module TypeMap = Map.Make(struct type t = Typ.t let compare = Typ.compare end)
 
 type state =
    {
@@ -17,9 +17,9 @@ type state =
 
       get_if_exp : bool;
 
-      vars           : id list TypeMap.t;
+      vars           : Id.t list TypeMap.t;
 
-      return_type   : VType.t option;
+      return_type   : Typ.t option;
    }
 
 type condition   = state -> bool
@@ -90,11 +90,11 @@ let pick_one state (elems: (condition * probability * 'a creator) list) : 'a =
 
 let makeArray state t =
    let n = (Random.int (state.max_array_size - 1)) + 1 in
-   let size = ref (VType.TInt(n,None)) in
-   ref (VType.TComposed(["array"],[t;size],None))
+   let size = ref (Typ.TInt(n,None)) in
+   ref (Typ.TComposed(["array"],[t;size],None))
 
 let makeTuple elems =
-   ref (VType.TComposed(["tuple"],elems,None))
+   ref (Typ.TComposed(["tuple"],elems,None))
 
 let normal_p _ = 1.0
 let high_p _ = 2.0
@@ -120,9 +120,9 @@ let decr_nest state = { state with nest_prob = state.nest_prob *. 0.5 }
 
 let rec newType state =
    pick_one state [
-      always, normal_p, (fun _ -> VType.Const.int_type);
-      always, normal_p, (fun _ -> VType.Const.real_type);
-      always, normal_p, (fun _ -> VType.Const.bool_type);
+      always, normal_p, (fun _ -> Typ.Const.int_type);
+      always, normal_p, (fun _ -> Typ.Const.real_type);
+      always, normal_p, (fun _ -> Typ.Const.bool_type);
       (* Array *)
       with_array, low_p, (fun state ->
             let state' = no_tuple (no_array state) in
@@ -142,36 +142,36 @@ and newTypeList n state =
 
 
 let isInt typ _ =
-   VType.compare VType.Const.int_type typ = 0
+   Typ.compare Typ.Const.int_type typ = 0
 
 let isReal typ _ =
-   VType.compare VType.Const.real_type typ = 0
+   Typ.compare Typ.Const.real_type typ = 0
 
 let isBool typ _ =
-   VType.compare VType.Const.bool_type typ = 0
+   Typ.compare Typ.Const.bool_type typ = 0
 
 let isNum typ state =
    isReal typ state || isInt typ state
 
 let isArray typ _ =
    match !typ with
-   | VType.TComposed(["array"],_,_) -> true
+   | Typ.TComposed(["array"],_,_) -> true
    | _ -> false
 
 let isArrayOfType subtype typ =
    match !typ with
-   | VType.TComposed(["array"],[t;{contents = VType.TInt(_,_)}],_) ->
-      VType.compare subtype t = 0
+   | Typ.TComposed(["array"],[t;{contents = Typ.TInt(_,_)}],_) ->
+      Typ.compare subtype t = 0
    | _ -> false
 
 let isTuple typ _ =
    match !typ with
-   | VType.TComposed(["tuple"],_,_) -> true
+   | Typ.TComposed(["tuple"],_,_) -> true
    | _ -> false
 
 let tupleTypes typ =
    match !typ with
-   | VType.TComposed(["tuple"],elems,_) -> elems
+   | Typ.TComposed(["tuple"],elems,_) -> elems
    | _ -> failwith "tupleTypes: invalid input"
 
 let pickVar state typ =
@@ -248,7 +248,7 @@ let rec newExp state typ =
       (hasType typ), high_p, (fun state -> PId(pickVar state typ,emptyAttr) );
       (* literal array *)
       (isArray typ), low_p, (fun state ->
-            let array_type,size = VType.arrayTypeAndSize typ in
+            let array_type,size = Typ.arrayTypeAndSize typ in
             let elems = newExpArray size state array_type in
             PArray(elems,emptyAttr));
       (* call real builtin *)
@@ -260,7 +260,7 @@ let rec newExp state typ =
       (* call to get array*)
       (hasArrayType typ),nest_p,(fun state ->
             let array_type, var = pickArrayVar state typ in
-            let _,size = VType.arrayTypeAndSize array_type in
+            let _,size = Typ.arrayTypeAndSize array_type in
             let index = Random.int size in
             PCall(None,["get"],[PId(var,emptyAttr);PInt(index,emptyAttr)],emptyAttr));
       (* tuples *)
@@ -294,7 +294,7 @@ let rec newExp state typ =
          );
       (* if-expression *)
       with_if_exp, nest_p, (fun state ->
-            let cond = newExp state VType.Const.bool_type in
+            let cond = newExp state Typ.Const.bool_type in
             let state' = decr_nest state in
             let e1 = newExp state' typ in
             let e2 = newExp state' typ in
@@ -427,18 +427,18 @@ let rec newStmt state =
          );
       (* if statements *)
       always, low_p, (fun state ->
-            let cond = newExp state VType.Const.bool_type in
+            let cond = newExp state Typ.Const.bool_type in
             let state',e1 = newStmtList 3 state in
             let state',e2 = newStmtList 3 (restoreVars state' state) in
             let state' = restoreVars state' state in
             state', StmtIf(cond,StmtBlock(None,e1,emptyAttr),Some(StmtBlock(None,e2,emptyAttr)),emptyAttr));
       always, low_p, (fun state ->
-            let cond = newExp state VType.Const.bool_type in
+            let cond = newExp state Typ.Const.bool_type in
             let state',e1 = newStmtList 3 state in
             let state' = restoreVars state' state in
             state', StmtIf(cond,StmtBlock(None,e1,emptyAttr),None,emptyAttr));
       always, low_p, (fun state ->
-            let cond = newExp state VType.Const.bool_type in
+            let cond = newExp state Typ.Const.bool_type in
             let state',e1 = newStmtList 3 state in
             let state' = restoreVars state' state in
             state', StmtWhile(cond,StmtBlock(None,e1,emptyAttr),emptyAttr));
@@ -455,7 +455,7 @@ let newFunction () =
 let test seed =
    Random.init seed;
    let stmts = [newFunction ()] in
-   let code = PrintTypes.stmtListStr stmts in
+   let code = PrintProg.stmtListStr stmts in
    code
 
 let run seed =
