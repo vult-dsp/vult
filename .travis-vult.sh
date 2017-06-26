@@ -8,7 +8,6 @@ git clone https://github.com/LuaJIT/LuaJIT.git
 cd LuaJIT
 git checkout v2.1
 make
-make install
 export PATH=$PATH:`pwd`/src
 cd ..
 # compile Vult
