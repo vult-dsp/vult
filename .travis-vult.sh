@@ -9,6 +9,7 @@ cd LuaJIT
 git checkout v2.1
 make
 sudo make install
+cd ..
 rm -rf LuaJIT
 # compile Vult
 make all
