@@ -1,0 +1,705 @@
+
+local this = {}
+local ffi = require("ffi")
+function this.ternary(cond,then_,else_) if cond then return then_ else return else_ end end
+function this.eps()             return 1e-18; end
+function this.random()          return math.random(); end
+function this.irandom()         return math.floor(math.random() * 4294967296); end
+function this.clip(x,low,high)  return (this.ternary(x<low,low,this.ternary(x>high,high,x))); end
+function this.real(x)           return x; end
+function this.int(x)            local int_part,_ = math.modf(x) return int_part; end
+function this.sin(x)            return math.sin(x); end
+function this.cos(x)            return math.cos(x); end
+function this.abs(x)            return math.abs(x); end
+function this.exp(x)            return math.exp(x); end
+function this.floor(x)          return math.floor(x); end
+function this.tan(x)            return math.tan(x); end
+function this.tanh(x)           return math.tanh(x); end
+function this.sqrt(x)           return x; end
+function this.set(a,i,v)        a[i]=v; end
+function this.get(a,i)          return a[i]; end
+function this.makeArray(size,v) local a = ffi.new("double[?]",size); for i=0,size-1 do a[i]=v end return a; end
+function this.wrap_array(a)     return a; end
+function this.Voice_minFixed()
+   return 0.000015;
+
+end
+
+function this.Voice__ctx_type_1_init()
+   local _ctx = {};
+   _ctx.pre_x = 0.000000;
+   return _ctx;
+
+end
+
+function this.Voice_change_init()
+   return this.Voice__ctx_type_1_init();
+end
+
+function this.Voice_change(_ctx,x)
+   local v = (_ctx.pre_x ~= x);
+   _ctx.pre_x = x;
+   return v;
+
+end
+
+function this.Voice__ctx_type_2_init()
+   local _ctx = {};
+   _ctx.pre_x = false;
+   return _ctx;
+
+end
+
+function this.Voice_bchange_init()
+   return this.Voice__ctx_type_2_init();
+end
+
+function this.Voice_bchange(_ctx,x)
+   local v = (_ctx.pre_x ~= x);
+   _ctx.pre_x = x;
+   return v;
+
+end
+
+function this.Voice__ctx_type_3_init()
+   local _ctx = {};
+   _ctx.pre_x = false;
+   return _ctx;
+
+end
+
+function this.Voice_edge_init()
+   return this.Voice__ctx_type_3_init();
+end
+
+function this.Voice_edge(_ctx,x)
+   local v = ((_ctx.pre_x ~= x) and (_ctx.pre_x == true));
+   _ctx.pre_x = x;
+   return v;
+
+end
+
+function this.Voice__ctx_type_4_init()
+   local _ctx = {};
+   _ctx.count = 0;
+   return _ctx;
+
+end
+
+function this.Voice_each_init()
+   return this.Voice__ctx_type_4_init();
+end
+
+function this.Voice_each(_ctx,n)
+   local ret = (_ctx.count == 0);
+   _ctx.count = ((_ctx.count + 1) % n);
+   return ret;
+
+end
+
+function this.Voice_near_zero(x)
+   return (this.abs(x) < 0.020000);
+
+end
+
+function this.Voice__ctx_type_6_init()
+   local _ctx = {};
+   _ctx.y1 = 0.000000;
+   _ctx.x1 = 0.000000;
+   return _ctx;
+
+end
+
+function this.Voice_dcblock_init()
+   return this.Voice__ctx_type_6_init();
+end
+
+function this.Voice_dcblock(_ctx,x0)
+   local y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995000));
+   _ctx.x1 = x0;
+   _ctx.y1 = y0;
+   return y0;
+
+end
+
+function this.Voice__ctx_type_7_init()
+   local _ctx = {};
+   _ctx.pre_x = 0.000000;
+   return _ctx;
+
+end
+
+function this.Voice_lpfilter_init()
+   return this.Voice__ctx_type_7_init();
+end
+
+function this.Voice_lpfilter(_ctx,x)
+   local ret = ((x + _ctx.pre_x) * 0.500000);
+   _ctx.pre_x = x;
+   return ret;
+
+end
+
+function this.Voice_pitchToRate(d)
+   return (0.000185 * this.exp((0.057762 * d)));
+
+end
+
+function this.Voice_pulse_train(m,phase)
+   local pi_phase = (phase * 3.141593);
+   local denominator1 = this.sin(pi_phase);
+   local tmp1 = 0.000000;
+   if this.Voice_near_zero(denominator1) then
+      tmp1 = 1.000000;
+
+   else
+
+      tmp1 = this.sin((m * pi_phase));
+      tmp1 = (tmp1 / (m * denominator1));
+
+   end
+   return tmp1;
+
+end
+
+function this.Voice__ctx_type_10_init()
+   local _ctx = {};
+   _ctx.state_triang = 0.000000;
+   _ctx.state_saw = 0.000000;
+   _ctx.state_pulse = 0.000000;
+   _ctx.rate = 0.000000;
+   _ctx.phase = 0.000000;
+   _ctx.output = 0.000000;
+   _ctx.m = 0.000000;
+   _ctx._inst23 = this.Voice__ctx_type_6_init();
+   _ctx._inst15 = this.Voice__ctx_type_1_init();
+   return _ctx;
+
+end
+
+function this.Voice_osc_init()
+   return this.Voice__ctx_type_10_init();
+end
+
+function this.Voice_osc(_ctx,pitch,pw,wave)
+   local fixed_pitch = 0.000000;
+   if (wave < 0.666667) then
+      fixed_pitch = pitch;
+
+   else
+
+      fixed_pitch = (pitch + 12.000000);
+
+   end
+   if this.Voice_change(_ctx._inst15,fixed_pitch) then
+      _ctx.rate = this.Voice_pitchToRate(fixed_pitch);
+      local p = 0.0;
+      p = (1.000000 / _ctx.rate);
+      local maxHarmonics = 0.0;
+      maxHarmonics = this.floor((p * 0.500000));
+      _ctx.m = ((2.000000 * maxHarmonics) + 1.000000);
+
+   end
+   local shift05 = (0.500000 + (pw * 0.490000));
+   local shift = (_ctx.phase + shift05);
+   if (shift > 1.000000) then
+      shift = (shift + (-1.000000));
+
+   end
+   local tmp1 = this.Voice_pulse_train(_ctx.m,_ctx.phase);
+   local tmp2 = this.Voice_pulse_train(_ctx.m,shift);
+   _ctx.phase = (_ctx.phase + _ctx.rate);
+   if (_ctx.phase > 1.000000) then
+      _ctx.phase = (_ctx.phase + (-1.000000));
+
+   end
+   _ctx.state_pulse = this.clip(((_ctx.state_pulse * 0.999500) + tmp1 + (- tmp2)),(-1.000000),1.000000);
+   _ctx.state_saw = this.clip(((_ctx.state_saw * 0.999500) + (((tmp1 + tmp2 + ((-2.000000) * _ctx.rate)) / shift05) * 0.500000)),(-1.000000),1.000000);
+   _ctx.state_triang = this.clip(((_ctx.state_triang * 0.999500) + (2.000000 * _ctx.state_pulse * _ctx.rate)),(-1.000000),1.000000);
+   if (wave < 0.333333) then
+      _ctx.output = _ctx.state_pulse;
+
+   else
+
+      local _cond_96 = false;
+      _cond_96 = (wave < 0.666667);
+      if _cond_96 then
+         _ctx.output = (2.000000 * _ctx.state_saw);
+
+      else
+
+         _ctx.output = (2.000000 * _ctx.state_triang * (1.000000 + pw));
+
+      end
+
+   end
+   _ctx.output = this.Voice_dcblock(_ctx._inst23,_ctx.output);
+   return this.clip((_ctx.output * 0.250000),(-1.000000),1.000000);
+
+end
+
+function this.Voice__ctx_type_11_init()
+   local _ctx = {};
+   _ctx.dlow = 0.000000;
+   _ctx.dband = 0.000000;
+   return _ctx;
+
+end
+
+function this.Voice_svf_step_init()
+   return this.Voice__ctx_type_11_init();
+end
+
+function this.Voice_svf_step(_ctx,input,g,q,sel)
+   local low = (_ctx.dlow + (g * _ctx.dband));
+   local high = (input + (- low) + (- (q * _ctx.dband)));
+   local band = ((g * high) + _ctx.dband);
+   local notch = (high + low);
+   _ctx.dband = this.clip(band,(-1.000000),1.000000);
+   _ctx.dlow = this.clip(low,(-1.000000),1.000000);
+   local output = 0.0;
+   if (sel == 0) then
+      output = low;
+   else
+
+      local _cond_140 = false;
+      _cond_140 = (sel == 1);
+      if _cond_140 then
+         output = high;
+      else
+
+         local _cond_141 = false;
+         _cond_141 = (sel == 2);
+         if _cond_141 then
+            output = band;
+         else
+
+            output = notch;
+         end
+
+      end
+
+   end
+   return output;
+
+end
+
+function this.Voice__ctx_type_12_init()
+   local _ctx = {};
+   _ctx.step = this.Voice__ctx_type_11_init();
+   _ctx.g = 0.000000;
+   _ctx._inst26 = this.Voice__ctx_type_1_init();
+   return _ctx;
+
+end
+
+function this.Voice_svf_init()
+   return this.Voice__ctx_type_12_init();
+end
+
+function this.Voice_svf(_ctx,input,fc,q,sel)
+   fc = this.clip(fc,0.000000,1.000000);
+   q = this.clip(q,0.000000,1.000000);
+   local fix_q = (2.000000 * (1.000000 + (- q)));
+   if this.Voice_change(_ctx._inst26,fc) then
+      _ctx.g = (fc * 0.500000);
+
+   end
+   local x1 = this.Voice_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
+   local x2 = this.Voice_svf_step(_ctx.step,input,_ctx.g,fix_q,sel);
+   return ((x1 + x2) * 0.500000);
+
+end
+
+function this.Voice__ctx_type_13_init()
+   local _ctx = {};
+   _ctx.target = 0.000000;
+   _ctx.state = 0;
+   _ctx.rate = 0.000000;
+   _ctx.out = 0.000000;
+   return _ctx;
+
+end
+
+function this.Voice_adsr_init()
+   return this.Voice__ctx_type_13_init();
+end
+
+function this.Voice_adsr(_ctx,gate,a,d,s,r)
+   _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.001000));
+   if (_ctx.state == 0) then
+      if gate then
+         _ctx.state = 1;
+
+      end
+      _ctx.rate = r;
+      _ctx.target = 0.000000;
+
+   end
+   if (_ctx.state == 1) then
+      local _cond_101 = false;
+      _cond_101 = (not gate);
+      if _cond_101 then
+         _ctx.state = 0;
+
+      end
+      local _cond_102 = false;
+      _cond_102 = (_ctx.out > 1024.000000);
+      if _cond_102 then
+         _ctx.state = 2;
+
+      end
+      _ctx.rate = a;
+      _ctx.target = 1228.800000;
+
+   end
+   if (_ctx.state == 2) then
+      local _cond_104 = false;
+      _cond_104 = (not gate);
+      if _cond_104 then
+         _ctx.state = 0;
+
+      end
+      _ctx.rate = d;
+      _ctx.target = (s * 1024.000000);
+
+   end
+   return (_ctx.out * 0.000977);
+
+end
+
+function this.Voice__ctx_type_14_init()
+   local _ctx = {};
+   _ctx.phase = 0.000000;
+   _ctx._inst39 = this.Voice__ctx_type_4_init();
+   _ctx._inst37 = this.Voice__ctx_type_3_init();
+   return _ctx;
+
+end
+
+function this.Voice_lfo_init()
+   return this.Voice__ctx_type_14_init();
+end
+
+function this.Voice_lfo(_ctx,f,gate)
+   local rate = ((0.001526 * f) + 0.000015);
+   if this.Voice_edge(_ctx._inst37,gate) then
+      _ctx.phase = 0.000000;
+
+   end
+   if this.Voice_each(_ctx._inst39,4) then
+      _ctx.phase = (_ctx.phase + rate);
+
+   end
+   if (_ctx.phase > 1.000000) then
+      _ctx.phase = (_ctx.phase + (-1.000000));
+
+   end
+   return (this.sin((6.283185 * _ctx.phase)) + 0.500000);
+
+end
+
+function this.Voice__ctx_type_15_init()
+   local _ctx = {};
+   _ctx.pre = 0;
+   _ctx.n4 = 0;
+   _ctx.n3 = 0;
+   _ctx.n2 = 0;
+   _ctx.n1 = 0;
+   _ctx.count = 0;
+   return _ctx;
+
+end
+
+function this.Voice_mono_noteOn_init()
+   return this.Voice__ctx_type_15_init();
+end
+
+function this.Voice_mono_noteOn(_ctx,n)
+   if (_ctx.count == 0) then
+      _ctx.n1 = n;
+      _ctx.pre = n;
+
+   else
+
+      local _cond_111 = false;
+      _cond_111 = (_ctx.count == 1);
+      if _cond_111 then
+         _ctx.n2 = n;
+         _ctx.pre = n;
+
+      else
+
+         local _cond_110 = false;
+         _cond_110 = (_ctx.count == 2);
+         if _cond_110 then
+            _ctx.n3 = n;
+            _ctx.pre = n;
+
+         else
+
+            local _cond_109 = false;
+            _cond_109 = (_ctx.count == 3);
+            if _cond_109 then
+               _ctx.n4 = n;
+
+            end
+
+         end
+
+      end
+
+   end
+   _ctx.pre = n;
+   if (_ctx.count <= 4) then
+      _ctx.count = (_ctx.count + 1);
+
+   end
+   return _ctx.pre;
+
+end
+
+function this.Voice_mono_noteOff_init()
+   return this.Voice__ctx_type_15_init();
+end
+
+function this.Voice_mono_noteOff(_ctx,n)
+   local found = false;
+   if (n == _ctx.n1) then
+      local _tmp_114_0 = 0;
+      _tmp_114_0 = _ctx.n2;
+      local _tmp_114_1 = 0;
+      _tmp_114_1 = _ctx.n3;
+      local _tmp_114_2 = 0;
+      _tmp_114_2 = _ctx.n4;
+      _ctx.n1 = _tmp_114_0;
+      _ctx.n2 = _tmp_114_1;
+      _ctx.n3 = _tmp_114_2;
+      found = true;
+
+   else
+
+      local _cond_118 = false;
+      _cond_118 = (n == _ctx.n2);
+      if _cond_118 then
+         local _tmp_115_0 = 0;
+         _tmp_115_0 = _ctx.n3;
+         local _tmp_115_1 = 0;
+         _tmp_115_1 = _ctx.n4;
+         _ctx.n2 = _tmp_115_0;
+         _ctx.n3 = _tmp_115_1;
+         found = true;
+
+      else
+
+         local _cond_117 = false;
+         _cond_117 = (n == _ctx.n3);
+         if _cond_117 then
+            _ctx.n3 = _ctx.n4;
+            found = true;
+
+         else
+
+            local _cond_116 = false;
+            _cond_116 = (n == _ctx.n4);
+            if _cond_116 then
+               found = true;
+
+            end
+
+         end
+
+      end
+
+   end
+   if (found and (_ctx.count > 0)) then
+      _ctx.count = (_ctx.count + -1);
+
+   end
+   if (_ctx.count == 1) then
+      _ctx.pre = _ctx.n1;
+
+   end
+   if (_ctx.count == 2) then
+      _ctx.pre = _ctx.n2;
+
+   end
+   if (_ctx.count == 3) then
+      _ctx.pre = _ctx.n3;
+
+   end
+   if (_ctx.count == 4) then
+      _ctx.pre = _ctx.n4;
+
+   end
+   return _ctx.pre;
+
+end
+
+function this.Voice_mono_isGateOn_init()
+   return this.Voice__ctx_type_15_init();
+end
+
+function this.Voice_mono_isGateOn(_ctx)
+   return (_ctx.count > 0);
+
+end
+
+function this.Voice__ctx_type_16_init()
+   local _ctx = {};
+   _ctx.wave = 0.000000;
+   _ctx.res = 0.000000;
+   _ctx.pw = 0.000000;
+   _ctx.pitch = 0.000000;
+   _ctx.monoin = this.Voice__ctx_type_15_init();
+   _ctx.lfo_rate = 0.000000;
+   _ctx.lfo_amt = 0.000000;
+   _ctx.flt_atm = 0.000000;
+   _ctx.env_s = 0.000000;
+   _ctx.env_r = 0.000000;
+   _ctx.env_d = 0.000000;
+   _ctx.env_a = 0.000000;
+   _ctx.end_r = 0.000000;
+   _ctx.cut = 0.000000;
+   _ctx.amp_s = 0.000000;
+   _ctx.amp_r = 0.000000;
+   _ctx.amp_d = 0.000000;
+   _ctx.amp_a = 0.000000;
+   _ctx._inst70 = this.Voice__ctx_type_12_init();
+   _ctx._inst69 = this.Voice__ctx_type_13_init();
+   _ctx._inst68 = this.Voice__ctx_type_13_init();
+   _ctx._inst67 = this.Voice__ctx_type_10_init();
+   _ctx._inst66 = this.Voice__ctx_type_14_init();
+   this.Voice_default(_ctx);
+   return _ctx;
+
+end
+
+function this.Voice_process_init()
+   return this.Voice__ctx_type_16_init();
+end
+
+function this.Voice_process(_ctx,i)
+   local gate = this.Voice_mono_isGateOn(_ctx.monoin);
+   local lfo1 = (this.Voice_lfo(_ctx._inst66,_ctx.lfo_rate,gate) * _ctx.lfo_amt);
+   local x = this.Voice_osc(_ctx._inst67,_ctx.pitch,(_ctx.pw + lfo1),_ctx.wave);
+   local amp_env = this.Voice_adsr(_ctx._inst68,gate,_ctx.amp_a,_ctx.amp_d,_ctx.amp_s,_ctx.amp_r);
+   local flt_env = this.Voice_adsr(_ctx._inst69,gate,_ctx.env_a,_ctx.env_d,_ctx.env_s,_ctx.end_r);
+   local cut_mod = (_ctx.cut + (_ctx.flt_atm * flt_env));
+   local output = (amp_env * this.Voice_svf(_ctx._inst70,x,cut_mod,_ctx.res,0));
+   return output;
+
+end
+
+function this.Voice_noteOn_init()
+   return this.Voice__ctx_type_16_init();
+end
+
+function this.Voice_noteOn(_ctx,note,velocity,channel)
+   _ctx.pitch = this.real(this.Voice_mono_noteOn(_ctx.monoin,note));
+
+end
+
+function this.Voice_noteOff_init()
+   return this.Voice__ctx_type_16_init();
+end
+
+function this.Voice_noteOff(_ctx,note,channel)
+   _ctx.pitch = this.real(this.Voice_mono_noteOff(_ctx.monoin,note));
+
+end
+
+function this.Voice_controlChange_init()
+   return this.Voice__ctx_type_16_init();
+end
+
+function this.Voice_controlChange(_ctx,control,value,channel)
+   local value_0_1 = (this.real(value) * 0.007874);
+   local value_m1_1 = ((value_0_1 * 2.000000) + (-1.000000));
+   if (control == 30) then
+      _ctx.wave = value_0_1;
+
+   end
+   if (control == 31) then
+      _ctx.pw = value_0_1;
+
+   end
+   if (control == 32) then
+      _ctx.lfo_amt = value_m1_1;
+
+   end
+   if (control == 33) then
+      _ctx.lfo_rate = value_0_1;
+
+   end
+   if (control == 34) then
+      _ctx.amp_a = value_0_1;
+
+   end
+   if (control == 35) then
+      _ctx.amp_d = value_0_1;
+
+   end
+   if (control == 36) then
+      _ctx.amp_s = value_0_1;
+
+   end
+   if (control == 37) then
+      _ctx.amp_r = value_0_1;
+
+   end
+   if (control == 38) then
+      _ctx.cut = value_0_1;
+
+   end
+   if (control == 39) then
+      _ctx.res = value_0_1;
+
+   end
+   if (control == 40) then
+      _ctx.flt_atm = value_m1_1;
+
+   end
+   if (control == 41) then
+      _ctx.env_a = value_0_1;
+
+   end
+   if (control == 42) then
+      _ctx.env_d = value_0_1;
+
+   end
+   if (control == 43) then
+      _ctx.env_s = value_0_1;
+
+   end
+   if (control == 44) then
+      _ctx.env_r = value_0_1;
+
+   end
+
+end
+
+function this.Voice_default_init()
+   return this.Voice__ctx_type_16_init();
+end
+
+function this.Voice_default(_ctx)
+   _ctx.pw = 0.000000;
+   _ctx.pitch = 42.000000;
+   _ctx.cut = 1.000000;
+   _ctx.res = 0.000000;
+   _ctx.amp_s = 1.000000;
+   _ctx.lfo_amt = 0.500000;
+   _ctx.lfo_rate = 0.000000;
+
+end
+
+
+function this.process(ctx,in0) return this.Voice_process(ctx,in0) end
+function this.noteOn(ctx,in0,in1,in2) return this.Voice_noteOn(ctx,in0,in1,in2) end
+function this.noteOff(ctx,in0,in1) return this.Voice_noteOff(ctx,in0,in1) end
+function this.controlChange(ctx,in0,in1,in2) return this.Voice_controlChange(ctx,in0,in1,in2) end
+function this.init() return this.Voice_process_init() end
+function this.default(ctx) return this.Voice_default(ctx) end
+this.config = { inputs = 2, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+return this
