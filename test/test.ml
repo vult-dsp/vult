@@ -339,6 +339,16 @@ module CliTest = struct
          assert_failure ("Failed to check "^file);
       Sys.chdir initial_dir
 
+   let checkLuaFile (file:string) : unit =
+      let output = Filename.chop_extension (Filename.basename file) in
+      Sys.chdir tmp_dir;
+      assert_bool "No code generated" (Sys.file_exists (output^".lua"));
+      let cmd = "luajit -bl " ^ output ^ ".lua > " ^ output ^ ".b" in
+      if Sys.command cmd <> 0 then
+         assert_failure ("Failed to check "^file);
+      Sys.remove (output ^ ".b");
+      Sys.chdir initial_dir
+
    let callVult (compiler:compiler) (fullfile:string) code_type =
       let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
       let flags, ext =
@@ -361,6 +371,7 @@ module CliTest = struct
          match code_type with
          | "fixed" | "float" -> compileCppFile fullfile
          | "js" -> checkJsFile fullfile
+         | "lua" -> checkLuaFile fullfile
          | _ -> ()
       in
       generated_files
