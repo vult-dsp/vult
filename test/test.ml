@@ -370,8 +370,8 @@ module CliTest = struct
       let () =
          match code_type with
          | "fixed" | "float" -> compileCppFile fullfile
-         | "js" -> checkJsFile fullfile
-         | "lua" -> checkLuaFile fullfile
+         | "js" -> (* checkJsFile fullfile *) ()
+         | "lua" -> (*checkLuaFile fullfile*) ()
          | _ -> ()
       in
       generated_files
@@ -386,6 +386,7 @@ module CliTest = struct
 
 
    let run (file:string) use_node real_type context : unit =
+      Sys.chdir initial_dir;
       let fullfile = checkFile (in_test_directory ("../examples/"^file)) in
       let generated_files = process use_node fullfile real_type in
       let files_content =
