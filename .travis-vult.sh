@@ -4,13 +4,12 @@ eval $(opam config env)
 # installs all dependencies
 opam install containers ppx_deriving ounit js_of_ocaml js_of_ocaml-ppx pla ollvm
 # install LuaJIT to run the Lua tests
-cd ..
 git clone https://github.com/LuaJIT/LuaJIT.git
 cd LuaJIT
 git checkout v2.1
 make
-export PATH=$PATH:`pwd`/src
-cd vult
+sudo make install
+rm -rf LuaJIT
 # compile Vult
 make all
 # prepare to package
