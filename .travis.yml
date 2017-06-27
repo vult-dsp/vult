@@ -7,6 +7,11 @@ env:
 os:
 - linux
 - osx
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -qq update ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y luajit ; fi
+
 deploy:
   skip_cleanup: true
   overwrite: true
