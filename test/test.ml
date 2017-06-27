@@ -165,7 +165,9 @@ let test_random_code =
    in loop 10
 
 (** Flags that defines if a baseline should be created for tests *)
-let create_output = Conf.make_bool "writeout" false "Creates a file with the current results"
+let update_test = Conf.make_bool "update" false "Creates a file with the current results"
+(** Flags that defines if we should use the command line version of the compiler *)
+let coverage_test = Conf.make_bool "coverage" false "Uses static linked compiler instead of the command line"
 
 let write file contents =
    let oc = open_out file in
@@ -235,7 +237,7 @@ module ParserTest = struct
       let folder = "parser" in
       let fullfile  = checkFile (in_test_directory (folder^"/"^file)) in
       let current   = process fullfile in
-      let reference = readReference (create_output context) "base" current fullfile (in_test_directory folder) in
+      let reference = readReference (update_test context) "base" current fullfile (in_test_directory folder) in
       assert_equal
          ~msg:("Parsing file "^fullfile)
          ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
@@ -258,7 +260,7 @@ module PassesTest = struct
       let folder = "passes" in
       let fullfile  = checkFile (in_test_directory (folder^"/"^file)) in
       let current   = process options fullfile in
-      let reference = readReference (create_output context) "base" current fullfile (in_test_directory folder) in
+      let reference = readReference (update_test context) "base" current fullfile (in_test_directory folder) in
       assert_equal
          ~msg:("Transforming file "^fullfile)
          ~pp_diff:(fun fmt (a,b) -> Format.fprintf fmt "\n%s" (Diff.lineDiff a b) )
@@ -380,7 +382,7 @@ module CliTest = struct
       Sys.remove (output ^ ".b");
       Sys.chdir initial_dir
 
-   let callVult (compiler:compiler) (fullfile:string) code_type =
+   let callVultCli (compiler:compiler) (fullfile:string) code_type =
       let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
       let flags, ext =
          match code_type with
@@ -407,9 +409,32 @@ module CliTest = struct
       in
       generated_files
 
-   let process (compiler:compiler) (fullfile:string) code_type =
+   let callVultInternal (_:compiler) (fullfile:string) code_type =
+      let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
+      let args = default_arguments in
+      let args, ext =
+         match code_type with
+         | "fixed" -> { args with ccode = true; real = "fixed" }, [".cpp",".cpp.fixed.base"; ".h", ".h.fixed.base"]
+         | "float" -> { args with ccode = true }, [".cpp",".cpp.float.base"; ".h", ".h.float.base"]
+         | "js" -> { args with jscode = true }, [".js", ".js.base"]
+         | "lua" -> { args with luacode = true }, [".lua", ".lua.base"]
+         | _ -> failwith "Unknown target to run test"
+      in
+      let args = { args with output = basefile; files = [ File fullfile ] } in
+      let results = Driver.main args in
+      let () = List.iter (Cli.showResult args) results in
+      let generated_files =  List.map (fun e -> basefile ^ (fst e), basefile ^ (snd e)) ext in
+      generated_files
+
+   let callVult context (compiler:compiler) (fullfile:string) code_type =
+      if coverage_test context then
+         callVultInternal compiler fullfile code_type
+      else
+         callVultCli compiler fullfile code_type
+
+   let process context (compiler:compiler) (fullfile:string) code_type =
       try
-         callVult compiler fullfile code_type
+         callVult context compiler fullfile code_type
       with
       | Error.Errors errors ->
          let msg = Error.reportErrors errors in
@@ -419,9 +444,9 @@ module CliTest = struct
    let run (file:string) use_node real_type context : unit =
       Sys.chdir initial_dir;
       let fullfile = checkFile (in_test_directory ("../examples/"^file)) in
-      let generated_files = process use_node fullfile real_type in
+      let generated_files = process context use_node fullfile real_type in
       let files_content =
-         List.map (readOutputAndReference (create_output context) (in_test_directory "code")) generated_files
+         List.map (readOutputAndReference (update_test context) (in_test_directory "code")) generated_files
       in
       assert_bool "No code generated" (files_content <> []);
       List.iter

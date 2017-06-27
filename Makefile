@@ -22,14 +22,21 @@ version :
 			@git describe --abbrev=0 >> src/version.ml
 			@echo "\"" >> src/version.ml
 
-test-update:
+test-update: compiler jscompiler
 			$(OCB) test/test.native
-			./test.native -runner sequential -writeout true -shards 1
+			./test.native -runner sequential -update true -shards 1
+
+coverage: compiler
+			BISECT_COVERAGE=YES $(OCB) test/test.native
+			./test.native -runner sequential -shards 1 -coverage true
+			bisect-ppx-report -I _build/ -html bisect_coverage/ bisect*.out
 
 all: 		compiler js test
 
 clean:
 			$(OCB) -clean
 			rm -f vultjs.js vultweb.js vultlib.js
+			rm -f bisect*.out
+			rm -rf bisect_coverage
 
 .PHONY: 	all clean compiler js test
