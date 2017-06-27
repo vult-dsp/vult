@@ -15,7 +15,7 @@ jscompiler:
 
 test: compiler jscompiler
 			$(OCB) test/test.native
-			./test.native -runner sequential
+			./test.native -runner sequential -shards 1
 
 version :
 			@echo "let version = \"" > src/version.ml
@@ -24,7 +24,7 @@ version :
 
 test-update:
 			$(OCB) test/test.native
-			./test.native -runner sequential -writeout true
+			./test.native -runner sequential -writeout true -shards 1
 
 all: 		compiler js test
 

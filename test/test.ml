@@ -66,6 +66,37 @@ let tmp_dir = Filename.get_temp_dir_name ()
 
 let in_tmp_dir path = Filename.concat tmp_dir path
 
+
+let tryToRun cmd =
+   Sys.chdir tmp_dir;
+   let result =
+      match Sys.command cmd with
+      | 0 -> true
+      | _ -> false
+      | exception _ -> false
+   in
+   Sys.chdir initial_dir;
+   result
+
+(** checks if node can be called with flag -c *)
+let has_node =
+   if tryToRun ("node -c " ^ (in_test_directory "other/test.js")) then
+      let () = print_endline "Js syntax will be checked" in
+      true
+   else
+      let () = print_endline "Js syntax will not be checked" in
+      false
+
+(** checks if luajit can be called *)
+let has_lua =
+   if tryToRun ("luajit -bl " ^ (in_test_directory "other/test.lua") ^ " > out") then
+      let () = print_endline "Lua syntax will be checked" in
+      true
+   else
+      let () = print_endline "Lua syntax will not be checked" in
+      false
+
+
 let parser_files =
    [
       "stmt_val_mem.vult";
@@ -370,8 +401,8 @@ module CliTest = struct
       let () =
          match code_type with
          | "fixed" | "float" -> compileCppFile fullfile
-         | "js" -> (* checkJsFile fullfile *) ()
-         | "lua" -> (*checkLuaFile fullfile*) ()
+         | "js" -> if has_node then checkJsFile fullfile
+         | "lua" -> if has_lua then checkLuaFile fullfile
          | _ -> ()
       in
       generated_files
