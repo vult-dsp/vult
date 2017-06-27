@@ -319,8 +319,20 @@ module BenchTest = struct
       if Sys.command cmd <> 0 then
          assert_failure ("Failed to link ")
 
-   let generateCPP (filename:string) (output:string) (real_type:string) : unit =
+   let generateC (filename:string) (output:string) (real_type:string) : unit =
       let args = { default_arguments with files = [File filename]; ccode = true; output = output; real = real_type } in
+      let parser_results = Parser.parseFile filename  in
+      let gen = Generate.generateCode [parser_results] args in
+      writeFiles args gen
+
+   let generateJs (filename:string) (output:string) : unit =
+      let args = { default_arguments with files = [File filename]; template = "node"; jscode = true; output = output } in
+      let parser_results = Parser.parseFile filename  in
+      let gen = Generate.generateCode [parser_results] args in
+      writeFiles args gen
+
+   let generateLua (filename:string) (output:string) : unit =
+      let args = { default_arguments with files = [File filename]; luacode = true; output = output } in
       let parser_results = Parser.parseFile filename  in
       let gen = Generate.generateCode [parser_results] args in
       writeFiles args gen
@@ -329,17 +341,31 @@ module BenchTest = struct
       let vultfile = checkFile (in_test_directory ("../test/bench/bench.vult")) in
       let output   = Filename.chop_extension (Filename.basename vultfile) in
       Sys.chdir tmp_dir;
-      generateCPP vultfile output real_type;
+      generateC vultfile output real_type;
       assert_bool "No code generated" (Sys.file_exists (output^".cpp"));
       compileFile (output^".cpp");
       compileFile (in_test_directory "../runtime/vultin.c");
       compileFile (in_test_directory "../test/bench/main.cpp");
       linkFiles ("bench_"^real_type) ["vultin.o";"bench.o";"main.o"];
+      print_endline ("### Real numbers: "^real_type ^ "");
+      ignore (Sys.command ("./bench_"^real_type));
       Sys.remove (output^".cpp");
       Sys.remove (output^".h");
       Sys.chdir initial_dir
 
-   let get = "bench">::: (["bench_float" >:: run "float"; "bench_fixed" >:: run "fixed"])
+   let runJsLua _ =
+      let vultfile = checkFile (in_test_directory ("../test/bench/bench.vult")) in
+      let output   = Filename.chop_extension (Filename.basename vultfile) in
+
+      Sys.chdir (in_test_directory "bench");
+      generateJs vultfile output;
+      generateLua vultfile output;
+      if has_node then ignore (Sys.command "node main.js");
+      if has_node then ignore (Sys.command "luajit main.lua");
+      Sys.chdir initial_dir
+
+
+   let get = "bench">::: (["bench_float" >:: run "float"; "bench_fixed" >:: run "fixed"; "js_lua" >:: runJsLua])
 
 end
 
