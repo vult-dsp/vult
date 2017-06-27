@@ -1,12 +1,11 @@
 language: c
 sudo: required
+dist: trusty
 script: bash -ex .travis-vult.sh
 env:
 - OCAML_VERSION=4.04
 os:
 - linux
-  dist: trusty
-  sudo: required
 - osx
 deploy:
   skip_cleanup: true
