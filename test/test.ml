@@ -23,60 +23,18 @@ THE SOFTWARE.
 *)
 open OUnit2
 open Prog
-open GenerateParams
-open Args ;;
+open Args
+open Tcommon
+;;
 
 Float.reduce_precision := true;;
 
-let call_uname () =
-   let ic = Unix.open_process_in "uname" in
-   let uname = input_line ic in
-   let () = close_in ic in
-   uname
-
-let os : string =
-   match Sys.os_type with
-   | "Win32" | "Cygwin" -> "Windows"
-   | "Unix" ->
-      begin
-         match call_uname () with
-         | "Linux"  -> "Linux"
-         | "Darwin" -> "OSX"
-         | _ -> failwith "cannot get os"
-         | exception _ -> failwith "cannot get os"
-      end
-   | _ -> failwith "cannot get os"
-;;
-
-let getFile (args:args) (ext:filename) : string =
-   match ext with
-   | ExtOnly(e) -> args.output^"."^e
-   | FullName(n) -> Filename.concat (Filename.dirname args.output) n
-
-let writeFiles args files =
-   List.iter (fun (text,file) -> FileIO.write (getFile args file) (Pla.print text) |> ignore) files
-
-let initial_dir = Sys.getcwd ()
 
 let test_directory = Filename.concat initial_dir "test"
 
 let in_test_directory path = Filename.concat test_directory path
 
-let tmp_dir = Filename.get_temp_dir_name ()
-
 let in_tmp_dir path = Filename.concat tmp_dir path
-
-
-let tryToRun cmd =
-   Sys.chdir tmp_dir;
-   let result =
-      match Sys.command cmd with
-      | 0 -> true
-      | _ -> false
-      | exception _ -> false
-   in
-   Sys.chdir initial_dir;
-   result
 
 (** checks if node can be called with flag -c *)
 let has_node =
@@ -128,11 +86,8 @@ let passes_files =
       "output_references.vult", no_eval;
    ]
 
-let stand_alone_files =
+let all_files =
    [
-      "blit.vult";
-      "voice.vult";
-      "sin.vult";
       "web/phasedist.vult";
       "web/synth1.vult";
       "web/synth2.vult";
@@ -142,20 +97,53 @@ let stand_alone_files =
       "../test/bench/bench.vult";
       "../test/passes/wav_file.vult";
       "../test/other/log.vult";
+
+      "effects/bitcrush.vult";
+      "effects/short_delay.vult";
+      "effects/saturate_soft.vult";
+      "effects/saturate.vult";
+
+      "env/ad.vult";
+      "env/adsr.vult";
+      "env/ahr.vult";
+      "env/lfo.vult";
+      "env/swept.vult";
+
+      "filters/ladder.vult";
+      "filters/svf.vult";
+
+      "midi/gates.vult";
+      "midi/monocv.vult";
+      "midi/polycv.vult";
+
+      "osc/blit.vult";
+      "osc/noise.vult";
+      "osc/phd.vult";
+      "osc/saw_eptr.vult";
+      "osc/saw_ptr1.vult";
+      "osc/saw_ptr2.vult";
+      "osc/saw_r.vult";
+      "osc/saw.vult";
+      "osc/sawcore.vult";
+      "osc/sine.vult";
+      "osc/tricore.vult";
+
+      "units/kick.vult";
+      "units/voice_4.vult";
+
    ]
 
-let partial_files =
+let includes =
    [
-      "adsr.vult";
-      "filters.vult";
-      "monoin.vult";
-      "moog_filter.vult";
-      "state_variable.vult";
-      "lib/math.vult";
-      "lib/util.vult";
+      "effects";
+      "env";
+      "filters";
+      "midi";
+      "osc";
+      "unit";
+      "util";
    ]
-
-let all_files = stand_alone_files @ partial_files
+   |> List.map (fun dir -> in_test_directory ("../examples/"^dir))
 
 let test_random_code =
    let rec loop n =
@@ -361,7 +349,7 @@ module BenchTest = struct
       generateJs vultfile output;
       generateLua vultfile output;
       if has_node then ignore (Sys.command "node main.js");
-      if has_node then ignore (Sys.command "luajit main.lua");
+      if has_lua then ignore (Sys.command "luajit main.lua");
       Sys.chdir initial_dir
 
 
@@ -418,6 +406,8 @@ module CliTest = struct
          | "lua" -> "-luacode", [".lua", ".lua.base"]
          | _ -> failwith "Unknown target to run test"
       in
+      let includes_flags = List.map (fun a -> "-i "^a) includes |> String.concat " " in
+      let flags = flags ^ " " ^ includes_flags in
       let vultc = if compiler = Node then "node ./vultjs.js" else "./vultc.native" in
       let cmd = vultc ^ " -test " ^ flags ^ " -o " ^ basefile ^ " " ^ fullfile in
       let generated_files =
@@ -437,7 +427,7 @@ module CliTest = struct
 
    let callVultInternal (_:compiler) (fullfile:string) code_type =
       let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
-      let args = default_arguments in
+      let args = { default_arguments with includes = includes } in
       let args, ext =
          match code_type with
          | "fixed" -> { args with ccode = true; real = "fixed" }, [".cpp",".cpp.fixed.base"; ".h", ".h.fixed.base"]
@@ -494,12 +484,8 @@ let suite =
    [
       ParserTest.get  parser_files;
       PassesTest.get  passes_files;
-      CliTest.get stand_alone_files Native "js";
-      CliTest.get stand_alone_files Native "lua";
       CliTest.get all_files Native "float";
       CliTest.get all_files Native "fixed";
-      CliTest.get stand_alone_files Node "js";
-      CliTest.get stand_alone_files Node "lua";
       CliTest.get all_files Node "float";
       CliTest.get all_files Node "fixed";
       RandomCompileTest.get test_random_code "float";

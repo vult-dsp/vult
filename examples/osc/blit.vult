@@ -1,0 +1,97 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Multioscillator using BLIT synthesis
+*/
+
+
+fun period(cv) @[table(size=32,min=0.0,max=1.0)] {
+  val pitch = Util.cvToPitch(cv);
+  val f = 8.175798915643707 * exp(0.057762265046662105 * pitch); //440. 2^((pitch - 69)/12.)
+  return 44100.0 / f / 2.0;
+}
+
+// Returns the number of harmonics necessary for the given cv
+fun harmonics(cv) : real {
+  val p = int(period(cv));
+  return real(2 * p + 1);
+}
+
+// Generates a BW-limited pulse train given the phase and the number of harmonics
+fun pulse_train(m,phase){
+  val pi_phase = phase / 2.0;
+  val denominator = Tables.nsine(pi_phase);
+  val out = 0.;
+  if(denominator <= eps()) {
+    out = 1.;
+  }
+  else {
+    val numerator = Tables.nsine((m * pi_phase)%1.0);
+    out =  numerator / (m * denominator);
+  }
+  return out;
+}
+
+// Generates BW-limited waveforms using the blit algorithm.
+// It can generate PWM puses, saws and triangles.
+fun osc_blit(cv,pw,wave:real){
+  mem m;
+  mem rate;
+  mem state_pulse;
+  mem state_saw;
+  mem output;
+
+  val fixed_cv = 0.;
+  if(wave < 1.) {
+    fixed_cv = cv;
+  }
+  else
+  {
+    fixed_cv = cv - 0.1;
+  }
+  // Updates the parameters if the cv changed
+  if(Util.change(fixed_cv)) {
+    m = harmonics(fixed_cv);
+    rate = Util.cvToRate_unit(fixed_cv);
+  }
+  val phase = Saw.process(fixed_cv, 0.0);
+  // Generates a shifted version of the phase
+  val shift05 = 0.5 + pw * 0.49;
+  val shift = phase + shift05;
+  if(shift > 1.) {
+    shift = shift - 1.;
+  }
+  // Generates the first pulse train
+  val pulse1 = pulse_train(m,phase);
+  // Generates the second pulse train
+  val pulse2 = pulse_train(m,shift);
+
+  // Calculates the waveforms based on the pulse trains
+  state_pulse  = state_pulse  * 0.9995 + pulse1 - pulse2;
+  state_saw    = state_saw    * 0.9995 + (pulse1 + pulse2  - 2. * rate)/shift05/2.;
+
+  // Select the wave to output
+  if(wave < 1.) {
+    output = state_pulse;
+  }
+  else {
+    output = 2. * state_saw;
+  }
+
+  output = Util.dcblock(output);
+  return output;
+}
+and init()@[init]{
+  m = harmonics(0.0);
+  rate = Util.cvToRate_unit(0.0);
+}
+
+fun process(cv, pw, wave) {
+   return osc_blit(cv, pw, wave);
+}
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int){ }
+and default(){ }

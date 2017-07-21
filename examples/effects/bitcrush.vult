@@ -1,0 +1,26 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Simple bitcrusher
+*/
+
+fun process(i:real, cv:real) {
+	val out = i;
+	if(cv == 0.0){
+		out = i;
+	}
+	else {
+		val crush = cv * 10.0;
+		// this provides a nice sounding curve
+		val factor =  100.0 / crush;
+		val x = int(i * factor);
+		out = real(x)/factor;
+	}
+	return out;
+}
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int){ }
+and default(){ }

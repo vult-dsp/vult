@@ -1,0 +1,13 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Tables of different functions
+*/
+
+
+// Normalized sine table
+fun nsine(x) @[table(size=128,min=0.0,max=1.0)] {
+   return sin(6.283185307179586 * x);
+}

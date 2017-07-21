@@ -1,0 +1,46 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Delay with 22050 samples
+*/
+
+fun soft(x1) {
+   mem x2,x3,x4;
+   val o = (x1+x2+x3+x4)/4.0;
+   x2,x3,x4 = x1,x2,x3;
+   return o;
+}
+
+fun do(x:real, time:real, feedback:real) : real {
+   mem buffer : array(real,22050);
+   mem write_pos;
+   // Constraints the parameter values
+   time     = clip(time,0.0,1.0);
+   feedback = clip(feedback,0.0,1.0);
+   // Gets the position in the buffer to read
+   val index_r  = real(size(buffer)) * time;
+   val index_i  = int(floor(index_r));
+   val delta    = write_pos - index_i;
+   val read_pos = if delta < 0 then size(buffer)+delta else delta;
+   // Gets the decimal part of the position
+   val decimal  = index_r - real(index_i);
+   // Reads the values in the buffer
+   val x1 = get(buffer,read_pos);
+   val x2 = get(buffer,(read_pos+1) % size(buffer));
+   // Interpolates the value
+   val ret = (x2-x1)*decimal + x1;
+   // Write the data to the buffer
+   write_pos = (write_pos+1) % size(buffer);
+   _ = set(buffer,write_pos,tanh(x+feedback*ret));
+   return ret;
+}
+
+fun process(x, time, feedback) {
+   return do(x, soft(time), feedback);
+}
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int){ }
+and default(){ }

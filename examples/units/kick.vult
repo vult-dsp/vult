@@ -1,0 +1,40 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Drum synth in the 909 kick style
+*/
+
+fun do(gate, odecay, pitch, swept, noise) {
+   // Envelope of the drum. One parameter affects the hold and relase
+   val osc_env, env_reset = Ahr.do(gate, 0.005, 0.1 + odecay ,odecay+0.01);
+   // Change of pitch
+   val cv = Swept.process(1.0-env_reset, pitch + swept*0.4, pitch, 0.1);
+   // Main triangle oscillator
+   // Note: the oscillator is dissabled while the nevelop resets
+   val osc = Tricore.process(cv, 0.0, env_reset);
+   // Saturates the triangle to get a sine with some harmonics
+   val osc_sat = Saturate.process(1.5 *  osc);
+
+   val noise_env, _ = Ahr.do(gate, 0.001, 0.01, noise * 0.01+0.001);
+   val noise_osc = noise * Noise.process(1.0) / 3.0;
+
+   return osc_env * osc_sat + noise_env * noise_osc;
+}
+
+
+fun process(gate) {
+   mem odecay, pitch, swept, noise;
+   return do(gate, odecay, pitch, swept, noise);
+}
+
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int) {
+   if(control == 30) odecay = real(value)/127.0;
+   if(control == 31) pitch = Util.map(real(value), 0.0, 127.0, 0.0, 0.1);
+   if(control == 32) swept = real(value)/127.0;
+   if(control == 33) noise = real(value)/127.0;
+}
+and default(){ }

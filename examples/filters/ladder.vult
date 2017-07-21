@@ -1,0 +1,52 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Diode ladder filter with 2x of oversampling
+*/
+
+fun getTune(cv) @[table(size=128,min=0.0,max=1.0)] {
+  val pitch = Util.cvToPitch(cv);
+  val f = 8.175798915643707*exp(0.057762265046662105*pitch);
+  val g = 1.0 - exp(-6.283185307179586 * f /(44100.0*2.0));
+  return g;
+}
+
+fun step(x,cv,res) {
+   mem ya, yb, yc, yd;
+   mem wa, wb, wc;
+   mem tune;
+
+   val _2vt = 2.0 * 1.22070313;
+
+   if(Util.change(cv)){
+        tune = _2vt * getTune(cv);
+   }
+
+   ya = ya + tune * (Saturate.process((x - 4.0*res*yd)/_2vt) - wa);
+   wa = Saturate.process(ya/_2vt);
+   yb = yb + tune * (wa - wb);
+   wb = Saturate.process(yb/_2vt);
+   yc = yc + tune * (wb - wc);
+   wc = Saturate.process(yc/_2vt);
+   yd = yd + tune * (wc - Saturate.process(yd/_2vt));
+
+   return yd;
+}
+
+fun process(input:real, cut:real, res:real):real{
+    // clips the inputs to the valid range
+    res = clip(res,0.0,1.0);
+    cut = clip(cut,-0.3,1.0);
+
+    val i = input / 2.0;
+    // 2x oversampling
+    val x0 = filter:step(input, cut, res);
+    val x1 = filter:step(input, cut, res);
+    return (x0+x1) * (1.0 + 2.0 * res);
+}
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int){ }
+and default(){ }

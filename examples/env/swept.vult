@@ -1,0 +1,23 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Produces a signal that goes from 'start' to 'end' at a given rate
+when 'gate' is triggered.
+*/
+
+fun process(gate, start, end, rate) {
+   mem out;
+   val a_rate = 1.0 / (100.0 * rate + 0.01);
+   val bgate = gate > 0.5;
+   out = out + ((end *  1024.0) - out) * rate * 0.004;
+   if(Util.edge(bgate))
+      out = start * 1024.0;
+   return out/1024.0;
+}
+
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int){ }
+and default(){ }

@@ -1,0 +1,67 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Collection of small useful functions
+*/
+
+fun edge(x:bool) : bool {
+   mem pre;
+   val ret = x && not(pre);
+   pre = x;
+   return ret;
+}
+
+fun change(x:real):bool {
+    mem pre_x;
+    val v:bool = pre_x <> x;
+    pre_x = x;
+    return v;
+}
+
+fun map(x:real,x0,x1,y0,y1) : real {
+  return (x-x0)*(y1-y0)/(x1-x0) + y0;
+}
+
+fun dcblock(x0){
+  mem x1,y1;
+  val y0 = x0-x1+y1*0.995;
+  x1,y1 = x0,y0;
+  return y0;
+}
+
+fun smooth(input){
+   mem x;
+   x = x+(input-x)*0.005;
+   return x;
+}
+
+fun average2(x1:real) : real {
+   mem x0;
+   val result = (x0 + x1) / 2.0;
+   x0 = x1;
+   return result;
+}
+
+/* Rate to get a 2^10 ramp */
+fun pitchToRate(pitch) @[table(size=32,min=0.0,max=127.0)] {
+   // 2^10 /44100 440 2^((pitch - 69)/12.)
+   return 0.18984168003671556 * exp(0.057762265046662105 * pitch);
+}
+
+fun cvToPitch(cv) {
+   return cv * 120.0 + 24.0;
+}
+
+fun cvToRate(cv) @[table(size=32,min=0.0,max=0.9)] {
+   return pitchToRate(cvToPitch(cv));
+}
+
+fun pitchToCv(pitch) {
+   return 1.0/120.0 * (-24.0 + pitch);
+}
+
+fun cvToRate_unit(cv) @[table(size=32,min=0.0,max=0.9)] {
+   return pitchToRate(cvToPitch(cv))/1024.0;
+}

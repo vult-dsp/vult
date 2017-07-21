@@ -1,0 +1,93 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Handles midi on/off events in order to behave and
+produces four groups of note, gate and vel values to
+use in a polyphonic synth.
+*/
+
+fun velToCV(vel:int) {
+   return real(vel) / 127.0;
+}
+
+fun velToGate(vel:int) {
+   return if vel > 0 then real(vel) / 127.0 else 0.0;
+}
+
+fun poly_noteOn(note, velocity) {
+   mem notes : array(int,4);
+   mem vel   : array(int,4);
+
+   val i = 0;
+   val found = false;
+
+   while(i < 4 && not(found)) {
+      if(get(vel,i) == 0){
+         _ = set(notes, i, note);
+         _ = set(vel, i, velocity);
+         found = true;
+      }
+      i = i + 1;
+   }
+}
+
+and poly_noteOff(note) {
+
+   val i = 0;
+   val found = false;
+
+   while(i < 4 && not(found)) {
+      if(get(notes,i) == note){
+         _ = set(vel, i, 0);
+         found = true;
+      }
+      i = i + 1;
+   }
+}
+
+and polyState() {
+   val note1 = Util.pitchToCv(real(get(notes,0)));
+   val note2 = Util.pitchToCv(real(get(notes,1)));
+   val note3 = Util.pitchToCv(real(get(notes,2)));
+   val note4 = Util.pitchToCv(real(get(notes,3)));
+
+   val vel1 = velToCV(get(vel,0));
+   val vel2 = velToCV(get(vel,1));
+   val vel3 = velToCV(get(vel,2));
+   val vel4 = velToCV(get(vel,3));
+
+   val gate1 = velToGate(get(vel,0));
+   val gate2 = velToGate(get(vel,1));
+   val gate3 = velToGate(get(vel,2));
+   val gate4 = velToGate(get(vel,3));
+
+
+   return note1, vel1, gate1, note2, vel2, gate2, note3, vel3, gate3, note4, vel4, gate4;
+}
+
+
+fun process(c:int) {
+   mem channel_in = c;
+   return poly:polyState();
+}
+and noteOn(note:int, velocity:int, channel:int) {
+   if(channel_in == channel) {
+      if(velocity > 0) {
+         _ = poly:poly_noteOn(note,velocity);
+      }
+      else {
+         _ = poly:poly_noteOff(note);
+      }
+   }
+}
+and noteOff(note:int, channel:int) {
+   if(channel_in == channel) {
+      _ = poly:poly_noteOff(note);
+   }
+}
+and controlChange(control:int, value: int, channel:int) {
+}
+and default() {
+}

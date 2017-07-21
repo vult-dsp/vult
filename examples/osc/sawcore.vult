@@ -1,0 +1,75 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Saw oscillator with hard-sync using PTR W=2
+*/
+
+fun ptr_w2(phase, rate) {
+    val out;
+    val s1 = rate;
+    val s2 = s1 + rate;
+    if(phase < s1) {
+      val d = phase / rate;
+      val t2 = s2 / 1024.0;
+      out = false, 1.0 + d * (-d + t2);
+    }
+    else if (phase < s2) {
+      val d = phase / rate;
+      val t2 = s2 / 1024.0;
+      out = false, 3.0 + d * (-4.0 + d + t2);
+    }
+    else {
+      out = true, 0.0;
+    }
+    return out;
+}
+
+fun process(cv, reset) {
+   mem rate;
+   mem reset_state;
+   mem phase, reset_phase;
+   val transition = 0.0;
+   val out = 0.0;
+   // Calculate the rate only when the cv changes
+   if(Util.change(cv)) {
+      rate = Util.cvToRate(cv);
+   }
+   // Determine the next value
+   val new_phase = phase + rate;
+
+   // Check if the oscillator needs to reset or wrap the value
+   val do_reset = Util.edge(reset > 0.0);
+   val do_wrap = new_phase > 1024.0;
+   // if reset was triggered or the cycle ended enter reset state
+   if(do_reset || do_wrap) {
+      // this is gonna be the initial value from which the oscillator starts resetting
+      reset_phase = phase;
+      // do the wrapping if needed
+      new_phase = if do_wrap then new_phase - 1024.0 else 0.0;
+      // enter the reset state
+      reset_state = true;
+   }
+
+   // update the phase
+   phase = new_phase;
+   out = phase;
+   if(reset_state) {
+      val done, ptr = ptr_w2(phase, rate);
+      transition = (ptr+1.0)/2.0 * reset_phase;
+      if(done) {
+         reset_state = false;
+      }
+      else {
+         out = transition;
+      }
+   }
+   return 2.0 * (out / 1024.0) - 1.0;
+}
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int){ }
+and default() @[init] {
+   rate = Util.cvToRate(0.0);
+}

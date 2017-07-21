@@ -22,3 +22,5 @@ true : color(always)
 
 # Enables more warnings
 true : warn(+27+33-58)
+
+<examples> : not_hygienic

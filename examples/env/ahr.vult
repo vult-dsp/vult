@@ -1,0 +1,91 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Attack Hold Release Envelope.
+
+To pass the parameters as direct values use the function 'do'.
+For parameters as controls use 'process'.
+*/
+
+fun do(gate:real, a:real, h:real, r:real) {
+   mem state;
+   mem out;
+   mem rate;
+   mem target;
+   mem hold_phase;
+
+   val release = 0;
+   val attack  = 1;
+   val hold    = 2;
+   val reset   = 3;
+
+   val bgate = gate > 0.0;
+
+   if(Util.edge(bgate)) {
+      state = reset;
+   }
+
+   val resetting = if state == reset then 1.0 else 0.0;
+
+   // transitions
+
+   if(Util.edge(out > 1024.0)) {
+      hold_phase = 0.0;
+      state = hold;
+   }
+   if(out < 10.0 && state == reset) {
+      state = attack;
+   }
+   if(hold_phase > 100.0 && state == hold) {
+      state = release;
+   }
+
+   // states
+
+   if(state == reset) {
+      rate = 1.0 / (100.0 * 0.01 + 0.01);
+      target = 0.0;
+   }
+   if(state == attack) {
+      rate = 1.0 / (100.0 * a + 0.01);
+      target = 1.2 * 1024.0;
+   }
+   if(state == hold) {
+      val hrate = 1.0 / (100.0 * h + 0.01);
+      hold_phase = hold_phase + hrate;
+   }
+   if(state == release) {
+      rate = 1.0 / (100.0 * r + 0.01);
+      target = 0.0;
+   }
+
+   out = out + (target - out) * rate * 0.005;
+
+
+   return clip(out/1024.0,0.0,1.0), resetting;
+}
+
+fun process(gate:real) {
+   mem knob1, knob2, knob3;
+
+   return do(gate,knob1,knob2,knob3);
+}
+and noteOn(note:int, velocity:int, channel:int) {
+}
+and noteOff(note:int, channel:int) {
+}
+and controlChange(control:int, value: int, channel:int) {
+   if(control == 1)
+      knob1 = real(value)/127.0;
+   if(control == 2)
+      knob2 = real(value)/127.0;
+   if(control == 3)
+      knob3 = real(value)/127.0;
+}
+and default() {
+   knob1 = 0.0;
+   knob2 = 0.5;
+   knob3 = 0.5;
+}

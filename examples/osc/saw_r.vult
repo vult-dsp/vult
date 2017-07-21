@@ -1,0 +1,37 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Saw oscillator using soft transitions
+*/
+
+fun process(cv) {
+   mem inc;
+   if(Util.change(cv))
+      inc = Util.cvToRate_unit(cv);
+   val i = if inc < eps() then eps() else inc;
+   // generate a ramp from -1.0  to 1.0
+   mem phase = (2.0 * inc + phase) % 2.0;
+   val ph = phase - 1.0;
+   val o = 0.0;
+   // soften the transitions
+   if(ph >= 1.0 - i) {
+      val b = (1.0 - i - ph)/i;
+      o = b * abs(b) + ph;
+   }
+   else if(ph <= i - 1.0) {
+      val b = (i - 1.0 - ph)/i;
+      o = b * abs(b) + ph;
+   }
+   else {
+      o = ph;
+   }
+   return o;
+}
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int){ }
+and default() @[init]{
+   inc = Util.cvToRate_unit(0.0);
+}

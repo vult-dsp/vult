@@ -1,0 +1,70 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Full voice for a synthesizer containing four oscillators one filter and one LFO
+*/
+
+fun process(cv:real, vel:real, gate:real) {
+   // Oscillator levels
+   mem level1, level2, level3, level4;
+   // Oscillator PW
+   mem pw1, pw2, pw3, pw4;
+   // LFO
+   mem lfo_rate, lfo_pw, lfo_cv, lfo_flt, lfo_shape, lfo_reset;
+   // Filter
+   mem flt_cut, flt_res, flt_shape;
+   // Envelope
+   mem attack, decay, sustain, release;
+
+   val lfo = Lfo.process(lfo_rate,lfo_shape,gate*lfo_reset);
+
+   val mod_pw = lfo_pw * lfo;
+   val mod_cv = lfo_cv * lfo;
+   val mod_flt = lfo_flt * lfo;
+
+   val o1 = Blit.process(cv+0.0001+mod_cv,pw1+mod_pw, 0.0);
+   val o2 = Blit.process(cv+0.0002+mod_cv,pw2+mod_pw, 1.0);
+   val o3 = Blit.process(cv+pw3+mod_cv, pw1+mod_pw, 0.0);
+   val sub = Saturate.process((5.0*pw4 + 2.0) * Tricore.process(cv+mod_cv, 0.0, 1.0));
+
+   val o = level1*o1+level2*o2+level3*o3+level4*sub;
+
+   val f = Svf.process(o,flt_cut+mod_flt,flt_res,flt_shape);
+
+   val env = Adsr.do(gate,attack,decay,sustain,release);
+
+   return env*f;
+}
+
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int) {
+   if(control == 30) level1 = real(value)/127.0;
+   if(control == 31) level2 = real(value)/127.0;
+   if(control == 32) level3 = real(value)/127.0;
+   if(control == 33) level4 = real(value)/127.0;
+
+   if(control == 34) pw1 = real(value)/127.0;
+   if(control == 35) pw2 = real(value)/127.0;
+   if(control == 36) pw3 = real(value)/127.0/10.0;
+   if(control == 37) pw4 = real(value)/127.0;
+
+   if(control == 38) lfo_rate = Util.map(real(value),0.0,127.0,-0.4, 0.1);
+   if(control == 39) lfo_shape = 3.0 * real(value)/127.0;
+   if(control == 40) lfo_pw = Util.map(real(value),0.0, 127.0, -1.0, 1.0);
+   if(control == 41) lfo_cv = Util.map(real(value),0.0, 127.0, -0.10, 0.1);
+   if(control == 42) lfo_flt =  Util.map(real(value),0.0, 127.0, -0.3, 0.3);
+   if(control == 43) lfo_reset = if value > 0 then 1.0 else 0.0;
+
+   if(control == 44) flt_cut = Util.map(real(value),0.0,127.0,-0.2, 0.5);
+   if(control == 45) flt_res = real(value)/127.0;
+   if(control == 46) flt_shape = value * 4 / 127;
+
+   if(control == 47) attack = real(value)/127.0;
+   if(control == 48) decay = real(value)/127.0;
+   if(control == 49) sustain = real(value)/127.0;
+   if(control == 50) release = real(value)/127.0;
+}
+and default(){ }

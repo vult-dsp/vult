@@ -1,0 +1,95 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Handles midi on/off events in order to behave
+like a monophonic sinthesizer that can hold 4 notes
+*/
+
+// Activates a note and returns the current note value
+fun mono_noteOn(n:int){
+   mem count,pre;
+   mem notes : array(int,4);
+   // Do not add more that the size of array
+   if(count < size(notes)) {
+     _ = set(notes,count,n);
+     pre = n;
+     if(count < size(notes)) count = count + 1;
+   }
+   return pre;
+}
+
+// Deactivates a note and returns the following note value;
+and mono_noteOff(n:int) {
+   mem count,pre;
+   mem notes : array(int,4);
+   val found = false;
+   val pos;
+   val i = 0;
+   // if there are no notes, no dot do anything
+   if(count == 0)
+      return pre;
+   // Finds the location of the note
+   while(i < size(notes) && not(found)){
+      if(get(notes,i) == n) {
+         pos = i;
+         found = true;
+      }
+      i = i + 1;
+   }
+   // if the note was found moves all the notes one location
+   if(found) {
+      val k = pos + 1;
+      while(k < size(notes)) {
+         _ = set(notes,k-1,get(notes,k));
+         k = k + 1;
+      }
+      // If found, decrease the number of active notes
+      if(found && count>0) {
+         count = count - 1;
+         pre = get(notes,count - 1);
+      }
+   }
+   return pre;
+}
+
+// Returns 1 if any note is active
+and mono_isGateOn() {
+   mem count;
+   return count > 0;
+}
+
+fun process(c:int) {
+   mem cv, vel, gate;
+   mem active_note;
+   mem channel_in;
+
+   channel_in = c;
+
+   gate = if notes:mono_isGateOn() then vel else 0.0;
+
+   cv = Util.pitchToCv(real(active_note));
+
+   return cv, vel, gate;
+}
+and noteOn(note:int, velocity:int, channel:int) {
+	if(channel_in == channel) {
+		if(velocity > 0) {
+			active_note = notes:mono_noteOn(note);
+			vel = real(velocity) / 127.0;
+		}
+		else {
+			active_note = notes:mono_noteOff(note);
+		}
+	}
+}
+and noteOff(note:int, channel:int) {
+	if(channel_in == channel) {
+		active_note = notes:mono_noteOff(note);
+	}
+}
+and controlChange(control:int, value: int, channel:int) {
+}
+and default() {
+}

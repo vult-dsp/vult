@@ -1,0 +1,61 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Takes notes from 36 to 43 and generates gate signals.
+*/
+
+fun velToCV(vel:int) {
+   return real(vel) / 127.0;
+}
+
+
+fun gates_noteOn(note, velocity) {
+   mem vel : array(int,8);
+
+   if(note >= 36 && note <=43) {
+      val n = note - 36;
+      _ = set(vel, n, velocity);
+   }
+}
+
+and gates_noteOff(note) {
+
+   if(note >= 36 && note <=43) {
+      val n = note - 36;
+      _ = set(vel, n,0);
+   }
+}
+
+and gates_state() {
+   val vel1 = velToCV(get(vel,0));
+   val vel2 = velToCV(get(vel,1));
+   val vel3 = velToCV(get(vel,2));
+   val vel4 = velToCV(get(vel,3));
+   val vel5 = velToCV(get(vel,4));
+   val vel6 = velToCV(get(vel,5));
+   val vel7 = velToCV(get(vel,6));
+   val vel8 = velToCV(get(vel,7));
+   return vel1, vel2, vel3, vel4, vel5, vel6, vel7, vel8;
+}
+
+
+fun process(c:int) {
+   mem channel_in = c;
+   return gates:gates_state();
+}
+and noteOn(note:int, velocity:int, channel:int) {
+   if(channel_in == channel) {
+      _ = gates:gates_noteOn(note, velocity);
+   }
+}
+and noteOff(note:int, channel:int) {
+   if(channel_in == channel) {
+      _ = gates:gates_noteOff(note);
+   }
+}
+and controlChange(control:int, value: int, channel:int) {
+}
+and default() {
+}

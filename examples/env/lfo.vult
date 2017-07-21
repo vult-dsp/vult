@@ -1,0 +1,36 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Saw, triangle and square LFO
+*/
+
+fun soft(x1) {
+   mem x2,x3,x4;
+   val o = (x1+x2+x3+x4)/4.0;
+   x2,x3,x4 = x1,x2,x3;
+   return o;
+}
+
+fun process(cv, shape, reset) {
+   mem rate;
+   if(Util.change(cv))
+      rate = Util.cvToRate_unit(cv-0.3);
+   mem phase = (phase + rate) % 2.0;
+   val breset = reset > 0.0;
+   if(Util.edge(breset))
+      phase = 0.0;
+   val tmp = phase - 1.0;
+   val o =
+      if shape < 1.0 then tmp
+      else if shape < 2.0 then
+         (abs(tmp) * 2.0 - 1.0)
+      else
+         (if tmp > 0.0 then 1.0 else 0.0);
+   return soft(o);
+}
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int){ }
+and default(){ }
