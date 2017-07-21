@@ -118,5 +118,7 @@ let main (args:args)  : output list =
                   @ checkCode args parser_results
                end
    with
-   | Error.Errors(errors) -> [Errors errors]
+   | Error.Errors(errors) ->
+      if args.deps then []
+      else [Errors errors]
 
