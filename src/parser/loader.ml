@@ -30,18 +30,17 @@ open Maps
 
 
 (** Given a module name, it looks for a matching file in all include directories *)
-let rec findModule (includes:string list) (module_name:string) : string =
+let rec findModule (includes:string list) (module_name:string) : string option =
    match includes with
-   | [] ->
-      Error.raiseErrorMsg ("A file for the module '" ^ module_name ^ "' was not found in any of the included locations")
+   | [] -> None
    | h::t ->
       (* first checks an uncapitalized file *)
       let file1 = Filename.concat h ((String.uncapitalize_ascii module_name) ^ ".vult") in
-      if FileIO.exists file1 then file1
+      if FileIO.exists file1 then Some file1
       else
          (* then checks a file with the same name as the module *)
          let file2 = Filename.concat h (module_name ^ ".vult") in
-         if FileIO.exists file2 then file2
+         if FileIO.exists file2 then Some file2
          else findModule t module_name
 
 (** Returns a list with all the possible directories where files can be found *)
@@ -74,7 +73,7 @@ let rec loadFiles_loop (includes:string list) dependencies parsed (files:input l
          in
          (* finds all the files for the used modules *)
          let h_dep_files =
-            List.map (findModule includes) h_deps
+            CCList.filter_map (findModule includes) h_deps
             |> List.filter (fun a -> a<>h)
             |> List.map (fun a ->  File(a))
          in
