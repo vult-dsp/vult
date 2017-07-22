@@ -27,10 +27,9 @@ Fixed point arithmetics are performed in q16 format; 16 bits for the integer par
 
 Vult provides a few templates; for example to generate objects compatible with the Teensy Audio Library or Pure Data externals.
 
-You can see these repositories for examples:
+You can check these repositories for examples:
 
-- PureData https://github.com/modlfo/vult-examples
-- PureData https://github.com/modlfo/pd-vult-example
+- PureData https://github.com/modlfo/vult/examples
 - Teensy Audio https://github.com/modlfo/teensy-vult-example
 
 In the Wiki

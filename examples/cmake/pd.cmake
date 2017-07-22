@@ -38,6 +38,11 @@ function(vult_pd output source includes)
       set(includes_flag -i ${dir} ${includes_flag})
    endforeach(dir)
 
+   # check the file
+    execute_process(
+      COMMAND ${VULT} ${includes_flag} -check ${source}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
    # get the dependencies
    execute_process(
       COMMAND ${VULT} ${includes_flag} -deps ${source}

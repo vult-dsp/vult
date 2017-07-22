@@ -51,7 +51,7 @@ vult_pd(svf filters/svf.vult VULT_INCLUDES)
 
 vult_pd(saturate effects/saturate.vult VULT_INCLUDES)
 vult_pd(saturate_soft effects/saturate_soft.vult VULT_INCLUDES)
-vult_pd(short_delay effects/delay.vult VULT_INCLUDES)
+vult_pd(short_delay effects/short_delay.vult VULT_INCLUDES)
 vult_pd(bitcrush effects/bitcrush.vult VULT_INCLUDES)
 
 # UNITS
