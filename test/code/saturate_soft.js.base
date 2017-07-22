@@ -1,0 +1,43 @@
+var Saturate_soft_table_c0 = [0.000000,(-0.000837),(-0.004130),(-0.011331),(-0.023628),(-0.041861),(-0.066455),(-0.097383),(-0.134146),(-0.175783),(-0.220903)];
+var Saturate_soft_table_c1 = [1.000234,1.003027,1.008519,1.016526,1.026781,1.038945,1.052619,1.067357,1.082688,1.098122,1.113175];
+var Saturate_soft_table_c2 = [(-0.001171),(-0.003500),(-0.005790),(-0.008016),(-0.010154),(-0.012182),(-0.014083),(-0.015839),(-0.017437),(-0.018867),(-0.020123)];
+this.Saturate_soft_table = function(x){
+   var index = (this.clip(this.int((1.500000 * x)),(0|0),(9|0))|0);
+   return (this.get(this.wrap_array(Saturate_soft_table_c0),index) + (x * (this.get(this.wrap_array(Saturate_soft_table_c1),index) + (this.get(this.wrap_array(Saturate_soft_table_c2),index) * x))));
+}
+this.Saturate_soft_process = function(_ctx,x){
+   if((x == 0.000000)){
+      return 0.000000;
+   }
+   var fixed = 0.0;
+   var sign = false;
+   if((x > 0.000000)){
+      fixed = x;
+      sign = false;
+   }
+   else
+   {
+      fixed = (- x);
+      sign = true;
+   }
+   var out = 0.000000;
+   if((fixed > 6.000000)){
+      out = 1.000000;
+   }
+   else
+   {
+      out = this.Saturate_soft_table(fixed);
+   }
+   if(sign)out = (- out);
+   else
+   out = out;
+   return out;
+}
+this.Saturate_soft_noteOn = function(_ctx,note,velocity,channel){
+}
+this.Saturate_soft_noteOff = function(_ctx,note,channel){
+}
+this.Saturate_soft_controlChange = function(_ctx,control,value,channel){
+}
+this.Saturate_soft_default = function(_ctx){
+}

@@ -1,0 +1,43 @@
+var Saturate_table_c0 = [0.000000,(-0.007122),0.249321,0.586047,0.806743,0.917595,0.966766,0.987103,0.995137,0.998208,0.999352];
+var Saturate_table_c1 = [1.047001,1.113257,0.685850,0.304651,0.117525,0.042540,0.014886,0.005099,0.001720,0.000574,0.000189];
+var Saturate_table_c2 = [(-0.253198),(-0.343842),(-0.165755),(-0.057906),(-0.018252),(-0.005573),(-0.001686),(-0.000508),(-0.000153),(-0.000046),(-0.000014)];
+this.Saturate_table = function(x){
+   var index = (this.clip(this.int((1.500000 * x)),(0|0),(9|0))|0);
+   return (this.get(this.wrap_array(Saturate_table_c0),index) + (x * (this.get(this.wrap_array(Saturate_table_c1),index) + (this.get(this.wrap_array(Saturate_table_c2),index) * x))));
+}
+this.Saturate_process = function(_ctx,x){
+   if((x == 0.000000)){
+      return 0.000000;
+   }
+   var fixed = 0.0;
+   var sign = false;
+   if((x > 0.000000)){
+      fixed = x;
+      sign = false;
+   }
+   else
+   {
+      fixed = (- x);
+      sign = true;
+   }
+   var out = 0.000000;
+   if((fixed > 6.000000)){
+      out = 1.000000;
+   }
+   else
+   {
+      out = this.Saturate_table(fixed);
+   }
+   if(sign)out = (- out);
+   else
+   out = out;
+   return out;
+}
+this.Saturate_noteOn = function(_ctx,note,velocity,channel){
+}
+this.Saturate_noteOff = function(_ctx,note,channel){
+}
+this.Saturate_controlChange = function(_ctx,control,value,channel){
+}
+this.Saturate_default = function(_ctx){
+}

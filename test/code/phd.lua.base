@@ -1,0 +1,299 @@
+
+local this = {}
+local ffi = require("ffi")
+function this.ternary(cond,then_,else_) if cond then return then_ else return else_ end end
+function this.eps()             return 1e-18; end
+function this.random()          return math.random(); end
+function this.irandom()         return math.floor(math.random() * 4294967296); end
+function this.clip(x,low,high)  return (this.ternary(x<low,low,this.ternary(x>high,high,x))); end
+function this.real(x)           return x; end
+function this.int(x)            local int_part,_ = math.modf(x) return int_part; end
+function this.sin(x)            return math.sin(x); end
+function this.cos(x)            return math.cos(x); end
+function this.abs(x)            return math.abs(x); end
+function this.exp(x)            return math.exp(x); end
+function this.floor(x)          return math.floor(x); end
+function this.tan(x)            return math.tan(x); end
+function this.tanh(x)           return math.tanh(x); end
+function this.sqrt(x)           return x; end
+function this.set(a,i,v)        a[i]=v; end
+function this.get(a,i)          return a[i]; end
+function this.makeArray(size,v) local a = ffi.new("double[?]",size); for i=0,size-1 do a[i]=v end return a; end
+function this.wrap_array(a)     return a; end
+function this.Util__ctx_type_0_init()
+   local _ctx = {};
+   _ctx.pre = false;
+   return _ctx;
+
+end
+
+function this.Util_edge_init()
+   return this.Util__ctx_type_0_init();
+end
+
+function this.Util_edge(_ctx,x)
+   local ret = (x and (not _ctx.pre));
+   _ctx.pre = x;
+   return ret;
+
+end
+
+function this.Util__ctx_type_1_init()
+   local _ctx = {};
+   _ctx.pre_x = 0.000000;
+   return _ctx;
+
+end
+
+function this.Util_change_init()
+   return this.Util__ctx_type_1_init();
+end
+
+function this.Util_change(_ctx,x)
+   local v = (_ctx.pre_x ~= x);
+   _ctx.pre_x = x;
+   return v;
+
+end
+
+function this.Util_map(x,x0,x1,y0,y1)
+   return ((((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))) + y0);
+
+end
+
+function this.Util__ctx_type_3_init()
+   local _ctx = {};
+   _ctx.y1 = 0.000000;
+   _ctx.x1 = 0.000000;
+   return _ctx;
+
+end
+
+function this.Util_dcblock_init()
+   return this.Util__ctx_type_3_init();
+end
+
+function this.Util_dcblock(_ctx,x0)
+   local y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995000));
+   _ctx.x1 = x0;
+   _ctx.y1 = y0;
+   return y0;
+
+end
+
+function this.Util__ctx_type_4_init()
+   local _ctx = {};
+   _ctx.x = 0.000000;
+   return _ctx;
+
+end
+
+function this.Util_smooth_init()
+   return this.Util__ctx_type_4_init();
+end
+
+function this.Util_smooth(_ctx,input)
+   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005000));
+   return _ctx.x;
+
+end
+
+function this.Util__ctx_type_5_init()
+   local _ctx = {};
+   _ctx.x0 = 0.000000;
+   return _ctx;
+
+end
+
+function this.Util_average2_init()
+   return this.Util__ctx_type_5_init();
+end
+
+function this.Util_average2(_ctx,x1)
+   local result = ((_ctx.x0 + x1) * 0.500000);
+   _ctx.x0 = x1;
+   return result;
+
+end
+
+local Util_pitchToRate_c0 = ffi.new("double[33]", {0.189842,0.191326,0.198689,0.219425,0.265677,0.356438,0.520651,0.801560,1.262758,1.996562,3.135544,4.868347,7.461281,11.287715,16.867996,24.923305,36.448521,52.809903,75.876616,108.197225,153.232414,215.672344,301.846626,420.298038,582.505178,803.812129,1104.880165,1513.124126,2065.373952,2810.230550,3812.902888,5159.525580,6963.761469});
+local Util_pitchToRate_c1 = ffi.new("double[33]", {0.010913,0.010176,0.008334,0.004867,(-0.000939),(-0.010061),(-0.023820),(-0.044002),(-0.073002),(-0.114025),(-0.171341),(-0.250621),(-0.359381),(-0.507548),(-0.708208),(-0.978575),(-1.341250),(-1.825848),(-2.471123),(-3.327721),(-4.461658),(-5.959006),(-7.931626),(-10.525312),(-13.929212),(-18.387588),(-24.219785),(-31.835151),(-41.769557),(-54.706455),(-71.541226),(-93.422592),(-121.823163)});
+local Util_pitchToRate_c2 = ffi.new("double[33]", {0.000356,0.000447,0.000562,0.000707,0.000889,0.001119,0.001407,0.001769,0.002225,0.002799,0.003520,0.004426,0.005567,0.007001,0.008805,0.011074,0.013927,0.017515,0.022028,0.027704,0.034841,0.043818,0.055107,0.069305,0.087163,0.109617,0.137862,0.173377,0.218054,0.274227,0.344892,0.433780,0.545543});
+function this.Util_pitchToRate(pitch)
+   local index = this.clip(this.int((0.244094 * pitch)),0,31);
+   return (this.get(this.wrap_array(Util_pitchToRate_c0),index) + (pitch * (this.get(this.wrap_array(Util_pitchToRate_c1),index) + (this.get(this.wrap_array(Util_pitchToRate_c2),index) * pitch))));
+
+end
+
+function this.Util_cvToPitch(cv)
+   return ((cv * 120.000000) + 24.000000);
+
+end
+
+local Util_cvToRate_c0 = ffi.new("double[33]", {0.759367,0.762877,0.779737,0.825652,0.924648,1.112398,1.440687,1.983392,2.844434,4.168310,6.153994,9.073195,13.294301,19.313616,27.796102,39.628290,55.986657,78.426750,108.998215,150.387464,206.118533,280.781675,380.357513,512.612775,687.616764,918.349028,1221.607949,1619.052235,2138.629322,2815.436671,3696.162408,4838.694117,6318.211520});
+local Util_cvToRate_c1 = ffi.new("double[33]", {5.245583,4.998943,4.403089,3.319116,1.564497,(-1.099256),(-4.982226),(-10.485864),(-18.127956),(-28.574100),(-42.677360),(-61.528124),(-86.516770),(-119.412133),(-162.460318),(-218.508269),(-291.156786),(-384.956978),(-505.652297),(-660.458539),(-858.494950),(-1111.173376),(-1432.858445),(-1841.544459),(-2359.816046),(-3015.795467),(-3844.838138),(-4891.101919),(-6210.197274),(-7868.993868),(-9955.778008),(-12575.747874),(-15862.234621)});
+local Util_cvToRate_c2 = ffi.new("double[33]", {20.125592,24.457572,29.722000,36.119582,43.894227,53.342343,64.824143,78.777366,95.733987,116.340471,141.382451,171.814646,208.797363,253.740413,308.357211,374.730622,455.389632,553.410816,672.536916,817.290611,993.216833,1207.000622,1466.803875,1782.529271,2166.244997,2632.487590,3199.072620,3887.673024,4724.859179,5741.245302,6977.441755,8479.290028,10304.455486});
+function this.Util_cvToRate(cv)
+   local index = this.clip(this.int((34.444444 * cv)),0,31);
+   return (this.get(this.wrap_array(Util_cvToRate_c0),index) + (cv * (this.get(this.wrap_array(Util_cvToRate_c1),index) + (this.get(this.wrap_array(Util_cvToRate_c2),index) * cv))));
+
+end
+
+function this.Util_pitchToCv(pitch)
+   return (0.008333 * ((-24.000000) + pitch));
+
+end
+
+local Util_cvToRate_unit_c0 = ffi.new("double[33]", {0.000742,0.000745,0.000761,0.000806,0.000903,0.001086,0.001407,0.001937,0.002778,0.004071,0.006010,0.008861,0.012983,0.018861,0.027145,0.038700,0.054674,0.076589,0.106444,0.146863,0.201288,0.274201,0.371443,0.500598,0.671501,0.896825,1.192977,1.581106,2.088505,2.749450,3.609534,4.725287,6.170128});
+local Util_cvToRate_unit_c1 = ffi.new("double[33]", {0.005123,0.004882,0.004300,0.003241,0.001528,(-0.001073),(-0.004865),(-0.010240),(-0.017703),(-0.027904),(-0.041677),(-0.060086),(-0.084489),(-0.116613),(-0.158653),(-0.213387),(-0.284333),(-0.375935),(-0.493801),(-0.644979),(-0.838374),(-1.085130),(-1.399276),(-1.798383),(-2.304508),(-2.945113),(-3.754725),(-4.776467),(-6.064646),(-7.684564),(-9.722439),(-12.281004),(-15.490463)});
+local Util_cvToRate_unit_c2 = ffi.new("double[33]", {0.019654,0.023884,0.029025,0.035273,0.042865,0.052092,0.063305,0.076931,0.093490,0.113614,0.138069,0.167788,0.203904,0.247793,0.301130,0.365948,0.444716,0.540440,0.656774,0.798135,0.969938,1.178712,1.432426,1.740751,2.115474,2.570789,3.124094,3.796556,4.614120,5.606685,6.813908,8.280557,10.062945});
+function this.Util_cvToRate_unit(cv)
+   local index = this.clip(this.int((34.444444 * cv)),0,31);
+   return (this.get(this.wrap_array(Util_cvToRate_unit_c0),index) + (cv * (this.get(this.wrap_array(Util_cvToRate_unit_c1),index) + (this.get(this.wrap_array(Util_cvToRate_unit_c2),index) * cv))));
+
+end
+
+function this.Phase__ctx_type_0_init()
+   local _ctx = {};
+   _ctx.rate = 0.000000;
+   _ctx.phase = 0.000000;
+   _ctx._inst15 = this.Util__ctx_type_0_init();
+   _ctx._inst13 = this.Util__ctx_type_1_init();
+   this.Phase_default(_ctx);
+   return _ctx;
+
+end
+
+function this.Phase_process_init()
+   return this.Phase__ctx_type_0_init();
+end
+
+function this.Phase_process(_ctx,cv,reset)
+   if this.Util_change(_ctx._inst13,cv) then
+      _ctx.rate = this.Util_cvToRate(cv);
+
+   end
+   if this.Util_edge(_ctx._inst15,(reset > 0.500000)) then
+      _ctx.phase = 0.000000;
+   else
+
+      _ctx.phase = (_ctx.phase + _ctx.rate);
+   end
+   if (_ctx.phase > 1024.000000) then
+      _ctx.phase = (_ctx.phase + (-1024.000000));
+   else
+
+      _ctx.phase = _ctx.phase;
+   end
+   return (_ctx.phase * 0.000977);
+
+end
+
+function this.Phase_noteOn_init()
+   return this.Phase__ctx_type_0_init();
+end
+
+function this.Phase_noteOn(_ctx,note,velocity,channel)
+
+end
+
+function this.Phase_noteOff_init()
+   return this.Phase__ctx_type_0_init();
+end
+
+function this.Phase_noteOff(_ctx,note,channel)
+
+end
+
+function this.Phase_controlChange_init()
+   return this.Phase__ctx_type_0_init();
+end
+
+function this.Phase_controlChange(_ctx,control,value,channel)
+
+end
+
+function this.Phase_default_init()
+   return this.Phase__ctx_type_0_init();
+end
+
+function this.Phase_default(_ctx)
+   _ctx.rate = 0.759367;
+
+end
+
+local Tables_nsine_c0 = ffi.new("double[129]", {0.000000,(-0.000059),(-0.000294),(-0.000821),(-0.001748),(-0.003182),(-0.005218),(-0.007945),(-0.011441),(-0.015769),(-0.020982),(-0.027117),(-0.034194),(-0.042218),(-0.051174),(-0.061028),(-0.071728),(-0.083199),(-0.095348),(-0.108059),(-0.121193),(-0.134593),(-0.148077),(-0.161443),(-0.174469),(-0.186911),(-0.198505),(-0.208970),(-0.218004),(-0.225290),(-0.230496),(-0.233273),(-0.233261),(-0.230090),(-0.223377),(-0.212736),(-0.197773),(-0.178091),(-0.153292),(-0.122979),(-0.086760),(-0.044248),0.004935,0.061157,0.124770,0.196113,0.275501,0.363233,0.459580,0.564787,0.679070,0.802614,0.935568,1.078046,1.230121,1.391827,1.563154,1.744046,1.934404,2.134075,2.342860,2.560508,2.786714,3.021123,3.263323,3.512849,3.769181,4.031743,4.299905,4.572984,4.850242,5.130888,5.414079,5.698922,5.984476,6.269752,6.553717,6.835294,7.113369,7.386787,7.654362,7.914877,8.167086,8.409721,8.641495,8.861104,9.067233,9.258562,9.433767,9.591528,9.730531,9.849477,9.947084,10.022092,10.073270,10.099421,10.099386,10.072052,10.016353,9.931281,9.815887,9.669287,9.490669,9.279297,9.034513,8.755748,8.442520,8.094445,7.711234,7.292703,6.838775,6.349479,5.824963,5.265486,4.671429,4.043291,3.381696,2.687392,1.961252,1.204276,0.417591,(-0.397552),(-1.239772),(-2.107564),(-2.999299),(-3.913225),(-4.847471),(-5.800047),(-6.768847)});
+local Tables_nsine_c1 = ffi.new("double[129]", {6.284447,6.299564,6.329688,6.374603,6.433980,6.507388,6.594289,6.694041,6.805905,6.929043,7.062522,7.205321,7.356331,7.514365,7.678156,7.846367,8.017595,8.190378,8.363199,8.534492,8.702652,8.866039,9.022985,9.171802,9.310788,9.438236,9.552440,9.651704,9.734348,9.798715,9.843181,9.866160,9.866113,9.841556,9.791063,9.713277,9.606917,9.470782,9.303758,9.104827,8.873070,8.607671,8.307927,7.973252,7.603175,7.197355,6.755575,6.277752,5.763935,5.214312,4.629210,4.009096,3.354579,2.666410,1.945484,1.192836,0.409645,(-0.402770),(-1.242953),(-2.109312),(-3.000120),(-3.913520),(-4.847530),(-5.800047),(-6.768847),(-7.751597),(-8.745857),(-9.749086),(-10.758648),(-11.771823),(-12.785807),(-13.797728),(-14.804647),(-15.803569),(-16.791454),(-17.765220),(-18.721759),(-19.657940),(-20.570624),(-21.456668),(-22.312942),(-23.136331),(-23.923752),(-24.672159),(-25.378556),(-26.040006),(-26.653641),(-27.216673),(-27.726403),(-28.180230),(-28.575662),(-28.910326),(-29.181973),(-29.388492),(-29.527917),(-29.598433),(-29.598386),(-29.526292),(-29.380840),(-29.160902),(-28.865538),(-28.494004),(-28.045752),(-27.520443),(-26.917941),(-26.238327),(-25.481894),(-24.649155),(-23.740843),(-22.757909),(-21.701528),(-20.573098),(-19.374236),(-18.106780),(-16.772786),(-15.374524),(-13.914479),(-12.395342),(-10.820010),(-9.191577),(-7.513332),(-5.788748),(-4.021481),(-2.215356),(-0.374364),1.497351,3.395497,5.315646,7.253247});
+local Tables_nsine_c2 = ffi.new("double[129]", {(-0.484400),(-1.452033),(-2.416169),(-3.374483),(-4.324668),(-5.264435),(-6.191519),(-7.103687),(-7.998741),(-8.874526),(-9.728932),(-10.559900),(-11.365428),(-12.143575),(-12.892468),(-13.610302),(-14.295347),(-14.945953),(-15.560554),(-16.137667),(-16.675904),(-17.173967),(-17.630656),(-18.044871),(-18.415615),(-18.741994),(-19.023222),(-19.258621),(-19.447625),(-19.589777),(-19.684736),(-19.732273),(-19.732273),(-19.684736),(-19.589777),(-19.447625),(-19.258621),(-19.023222),(-18.741994),(-18.415615),(-18.044871),(-17.630656),(-17.173967),(-16.675904),(-16.137667),(-15.560554),(-14.945953),(-14.295347),(-13.610302),(-12.892468),(-12.143575),(-11.365428),(-10.559900),(-9.728932),(-8.874526),(-7.998741),(-7.103687),(-6.191519),(-5.264435),(-4.324668),(-3.374483),(-2.416169),(-1.452033),(-0.484400),0.484400,1.452033,2.416169,3.374483,4.324668,5.264435,6.191519,7.103687,7.998741,8.874526,9.728932,10.559900,11.365428,12.143575,12.892468,13.610302,14.295347,14.945953,15.560554,16.137667,16.675904,17.173967,17.630656,18.044871,18.415615,18.741994,19.023222,19.258621,19.447625,19.589777,19.684736,19.732273,19.732273,19.684736,19.589777,19.447625,19.258621,19.023222,18.741994,18.415615,18.044871,17.630656,17.173967,16.675904,16.137667,15.560554,14.945953,14.295347,13.610302,12.892468,12.143575,11.365428,10.559900,9.728932,8.874526,7.998741,7.103687,6.191519,5.264435,4.324668,3.374483,2.416169,1.452033,0.484400,(-0.484400)});
+function this.Tables_nsine(x)
+   local index = this.clip(this.int((127.000000 * x)),0,127);
+   return (this.get(this.wrap_array(Tables_nsine_c0),index) + (x * (this.get(this.wrap_array(Tables_nsine_c1),index) + (this.get(this.wrap_array(Tables_nsine_c2),index) * x))));
+
+end
+
+function this.Phd__ctx_type_0_init()
+   local _ctx = {};
+   _ctx.pre_phase1 = 0.000000;
+   _ctx._inst27 = this.Phase__ctx_type_0_init();
+   _ctx._inst26 = this.Util__ctx_type_4_init();
+   _ctx._inst25 = this.Phase__ctx_type_0_init();
+   return _ctx;
+
+end
+
+function this.Phd_process_init()
+   return this.Phd__ctx_type_0_init();
+end
+
+function this.Phd_process(_ctx,cv,detune)
+   local phase1 = this.Phase_process(_ctx._inst25,cv,0.000000);
+   local comp = (1.000000 + (- phase1));
+   local reset = (_ctx.pre_phase1 + (- phase1));
+   _ctx.pre_phase1 = phase1;
+   local phase2 = this.Phase_process(_ctx._inst27,(cv + this.Util_smooth(_ctx._inst26,(detune * 0.500000))),reset);
+   local sine = this.Tables_nsine(phase2);
+   return (sine * comp);
+
+end
+
+function this.Phd_noteOn_init()
+   return this.Phd__ctx_type_0_init();
+end
+
+function this.Phd_noteOn(_ctx,note,velocity,channel)
+
+end
+
+function this.Phd_noteOff_init()
+   return this.Phd__ctx_type_0_init();
+end
+
+function this.Phd_noteOff(_ctx,note,channel)
+
+end
+
+function this.Phd_controlChange_init()
+   return this.Phd__ctx_type_0_init();
+end
+
+function this.Phd_controlChange(_ctx,control,value,channel)
+
+end
+
+function this.Phd_default_init()
+   return this.Phd__ctx_type_0_init();
+end
+
+function this.Phd_default(_ctx)
+
+end
+
+
+function this.process(ctx,in0,in1) return this.Phd_process(ctx,in0,in1) end
+function this.noteOn(ctx,in0,in1,in2) return this.Phd_noteOn(ctx,in0,in1,in2) end
+function this.noteOff(ctx,in0,in1) return this.Phd_noteOff(ctx,in0,in1) end
+function this.controlChange(ctx,in0,in1,in2) return this.Phd_controlChange(ctx,in0,in1,in2) end
+function this.init() return this.Phd_process_init() end
+function this.default(ctx) return this.Phd_default(ctx) end
+this.config = { inputs = 3, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+return this

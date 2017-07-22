@@ -1,0 +1,25 @@
+this.Bitcrush_process = function(_ctx,i,cv){
+   var out = i;
+   if((cv == 0.000000)){
+      out = i;
+   }
+   else
+   {
+      var crush = 0.0;
+      crush = (cv * 10.000000);
+      var factor = 0.0;
+      factor = (100.000000 / crush);
+      var x = (0|0);
+      x = (this.int((i * factor))|0);
+      out = (this.real(x) / factor);
+   }
+   return out;
+}
+this.Bitcrush_noteOn = function(_ctx,note,velocity,channel){
+}
+this.Bitcrush_noteOff = function(_ctx,note,channel){
+}
+this.Bitcrush_controlChange = function(_ctx,control,value,channel){
+}
+this.Bitcrush_default = function(_ctx){
+}

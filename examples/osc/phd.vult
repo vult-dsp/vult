@@ -10,11 +10,11 @@ http://en.wikipedia.org/wiki/Phase_distortion_synthesis
 
 fun process(cv,detune) {
 	 mem pre_phase1;
-   val phase1 = Saw.process(cv, 0.0);
+   val phase1 = Phase.process(cv, 0.0);
    val comp   = 1.0 - phase1;
    val reset  = pre_phase1 - phase1;
    pre_phase1 = phase1;
-   val phase2 = Saw.process(cv + Util.smooth(detune / 2.0), reset);
+   val phase2 = Phase.process(cv + Util.smooth(detune / 2.0), reset);
    val sine  = Tables.nsine(phase2);
    return sine * comp;
 }

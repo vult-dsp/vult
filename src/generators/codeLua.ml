@@ -158,7 +158,7 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
 
 and printJsField (params:params) (name,value) : Pla.t =
    let value_t = printExp params value in
-   {pla|<#name#s> : <#value_t#>|pla}
+   {pla|<#name#s> = <#value_t#>|pla}
 
 
 let printLhsExpTuple (var:string list) (is_var:bool) (i:int) (e:clhsexp) : Pla.t =

@@ -575,23 +575,23 @@ fix16_t Tables_nsine(fix16_t x){
    return fix_add(fix_get(fix_wrap_array(Tables_nsine_c0),index),fix_mul(x,fix_add(fix_get(fix_wrap_array(Tables_nsine_c1),index),fix_mul(fix_get(fix_wrap_array(Tables_nsine_c2),index),x))));
 }
 
-void Saw__ctx_type_0_init(Saw__ctx_type_0 &_output_){
-   Saw__ctx_type_0 _ctx;
+void Phase__ctx_type_0_init(Phase__ctx_type_0 &_output_){
+   Phase__ctx_type_0 _ctx;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
    Util__ctx_type_0_init(_ctx._inst97);
    Util__ctx_type_1_init(_ctx._inst95);
-   Saw_default(_ctx);
+   Phase_default(_ctx);
    _output_ = _ctx;
    return ;
 }
 
-void Saw_process_init(Saw__ctx_type_0 &_output_){
-   Saw__ctx_type_0_init(_output_);
+void Phase_process_init(Phase__ctx_type_0 &_output_){
+   Phase__ctx_type_0_init(_output_);
    return ;
 }
 
-fix16_t Saw_process(Saw__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset){
+fix16_t Phase_process(Phase__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset){
    uint8_t _cond_102;
    _cond_102 = Util_change(_ctx._inst95,cv);
    if(_cond_102){
@@ -610,36 +610,36 @@ fix16_t Saw_process(Saw__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset){
    return fix_mul(_ctx.phase,0x40 /* 0.000977 */);
 }
 
-void Saw_noteOn_init(Saw__ctx_type_0 &_output_){
-   Saw__ctx_type_0_init(_output_);
+void Phase_noteOn_init(Phase__ctx_type_0 &_output_){
+   Phase__ctx_type_0_init(_output_);
    return ;
 }
 
-void Saw_noteOn(Saw__ctx_type_0 &_ctx, int note, int velocity, int channel){
+void Phase_noteOn(Phase__ctx_type_0 &_ctx, int note, int velocity, int channel){
 }
 
-void Saw_noteOff_init(Saw__ctx_type_0 &_output_){
-   Saw__ctx_type_0_init(_output_);
+void Phase_noteOff_init(Phase__ctx_type_0 &_output_){
+   Phase__ctx_type_0_init(_output_);
    return ;
 }
 
-void Saw_noteOff(Saw__ctx_type_0 &_ctx, int note, int channel){
+void Phase_noteOff(Phase__ctx_type_0 &_ctx, int note, int channel){
 }
 
-void Saw_controlChange_init(Saw__ctx_type_0 &_output_){
-   Saw__ctx_type_0_init(_output_);
+void Phase_controlChange_init(Phase__ctx_type_0 &_output_){
+   Phase__ctx_type_0_init(_output_);
    return ;
 }
 
-void Saw_controlChange(Saw__ctx_type_0 &_ctx, int control, int value, int channel){
+void Phase_controlChange(Phase__ctx_type_0 &_ctx, int control, int value, int channel){
 }
 
-void Saw_default_init(Saw__ctx_type_0 &_output_){
-   Saw__ctx_type_0_init(_output_);
+void Phase_default_init(Phase__ctx_type_0 &_output_){
+   Phase__ctx_type_0_init(_output_);
    return ;
 }
 
-void Saw_default(Saw__ctx_type_0 &_ctx){
+void Phase_default(Phase__ctx_type_0 &_ctx){
    _ctx.rate = 0xc265 /* 0.759367 */;
 }
 
@@ -684,7 +684,7 @@ void Blit__ctx_type_3_init(Blit__ctx_type_3 &_output_){
    _ctx.output = 0x0 /* 0.000000 */;
    _ctx.m = 0x0 /* 0.000000 */;
    Util__ctx_type_3_init(_ctx._inst119);
-   Saw__ctx_type_0_init(_ctx._inst115);
+   Phase__ctx_type_0_init(_ctx._inst115);
    Util__ctx_type_1_init(_ctx._inst113);
    Blit_init(_ctx);
    _output_ = _ctx;
@@ -715,7 +715,7 @@ fix16_t Blit_osc_blit(Blit__ctx_type_3 &_ctx, fix16_t cv, fix16_t pw, fix16_t wa
       _ctx.rate = Util_cvToRate_unit(fixed_cv);
    }
    fix16_t phase;
-   phase = Saw_process(_ctx._inst115,fixed_cv,0x0 /* 0.000000 */);
+   phase = Phase_process(_ctx._inst115,fixed_cv,0x0 /* 0.000000 */);
    fix16_t shift05;
    shift05 = fix_add(0x8000 /* 0.500000 */,fix_mul(pw,0x7d70 /* 0.490000 */));
    fix16_t shift;

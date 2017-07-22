@@ -1,0 +1,92 @@
+
+local this = {}
+local ffi = require("ffi")
+function this.ternary(cond,then_,else_) if cond then return then_ else return else_ end end
+function this.eps()             return 1e-18; end
+function this.random()          return math.random(); end
+function this.irandom()         return math.floor(math.random() * 4294967296); end
+function this.clip(x,low,high)  return (this.ternary(x<low,low,this.ternary(x>high,high,x))); end
+function this.real(x)           return x; end
+function this.int(x)            local int_part,_ = math.modf(x) return int_part; end
+function this.sin(x)            return math.sin(x); end
+function this.cos(x)            return math.cos(x); end
+function this.abs(x)            return math.abs(x); end
+function this.exp(x)            return math.exp(x); end
+function this.floor(x)          return math.floor(x); end
+function this.tan(x)            return math.tan(x); end
+function this.tanh(x)           return math.tanh(x); end
+function this.sqrt(x)           return x; end
+function this.set(a,i,v)        a[i]=v; end
+function this.get(a,i)          return a[i]; end
+function this.makeArray(size,v) local a = ffi.new("double[?]",size); for i=0,size-1 do a[i]=v end return a; end
+function this.wrap_array(a)     return a; end
+local Saturate_table_c0 = ffi.new("double[11]", {0.000000,(-0.007122),0.249321,0.586047,0.806743,0.917595,0.966766,0.987103,0.995137,0.998208,0.999352});
+local Saturate_table_c1 = ffi.new("double[11]", {1.047001,1.113257,0.685850,0.304651,0.117525,0.042540,0.014886,0.005099,0.001720,0.000574,0.000189});
+local Saturate_table_c2 = ffi.new("double[11]", {(-0.253198),(-0.343842),(-0.165755),(-0.057906),(-0.018252),(-0.005573),(-0.001686),(-0.000508),(-0.000153),(-0.000046),(-0.000014)});
+function this.Saturate_table(x)
+   local index = this.clip(this.int((1.500000 * x)),0,9);
+   return (this.get(this.wrap_array(Saturate_table_c0),index) + (x * (this.get(this.wrap_array(Saturate_table_c1),index) + (this.get(this.wrap_array(Saturate_table_c2),index) * x))));
+
+end
+
+function this.Saturate_process(_ctx,x)
+   if (x == 0.000000) then
+      return 0.000000;
+
+   end
+   local fixed = 0.0;
+   local sign = false;
+   if (x > 0.000000) then
+      fixed = x;
+      sign = false;
+
+   else
+
+      fixed = (- x);
+      sign = true;
+
+   end
+   local out = 0.000000;
+   if (fixed > 6.000000) then
+      out = 1.000000;
+
+   else
+
+      out = this.Saturate_table(fixed);
+
+   end
+   if sign then
+      out = (- out);
+   else
+
+      out = out;
+   end
+   return out;
+
+end
+
+function this.Saturate_noteOn(_ctx,note,velocity,channel)
+
+end
+
+function this.Saturate_noteOff(_ctx,note,channel)
+
+end
+
+function this.Saturate_controlChange(_ctx,control,value,channel)
+
+end
+
+function this.Saturate_default(_ctx)
+
+end
+
+
+function this.process(in0) return this.Saturate_process(in0) end
+function this.noteOn(in0,in1,in2) return this.Saturate_noteOn(in0,in1,in2) end
+function this.noteOff(in0,in1) return this.Saturate_noteOff(in0,in1) end
+function this.controlChange(in0,in1,in2) return this.Saturate_controlChange(in0,in1,in2) end
+function this.init() return this.Saturate_process_init() end
+function this.default(ctx) return this.Saturate_default(ctx) end
+this.config = { inputs = 1, outputs = 1, noteon_inputs = 3, noteoff_inputs = 2, controlchange_inputs = 3, is_active = false }
+return this

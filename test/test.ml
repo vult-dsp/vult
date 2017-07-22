@@ -123,7 +123,7 @@ let all_files =
       "osc/saw_ptr1.vult";
       "osc/saw_ptr2.vult";
       "osc/saw_r.vult";
-      "osc/saw.vult";
+      "osc/phase.vult";
       "osc/sawcore.vult";
       "osc/sine.vult";
       "osc/tricore.vult";
@@ -486,8 +486,12 @@ let suite =
       PassesTest.get  passes_files;
       CliTest.get all_files Native "float";
       CliTest.get all_files Native "fixed";
+      CliTest.get all_files Native "js";
+      CliTest.get all_files Native "lua";
       CliTest.get all_files Node "float";
       CliTest.get all_files Node "fixed";
+      CliTest.get all_files Node "js";
+      CliTest.get all_files Node "lua";
       RandomCompileTest.get test_random_code "float";
       BenchTest.get;
    ]

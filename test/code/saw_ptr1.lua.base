@@ -1,0 +1,240 @@
+
+local this = {}
+local ffi = require("ffi")
+function this.ternary(cond,then_,else_) if cond then return then_ else return else_ end end
+function this.eps()             return 1e-18; end
+function this.random()          return math.random(); end
+function this.irandom()         return math.floor(math.random() * 4294967296); end
+function this.clip(x,low,high)  return (this.ternary(x<low,low,this.ternary(x>high,high,x))); end
+function this.real(x)           return x; end
+function this.int(x)            local int_part,_ = math.modf(x) return int_part; end
+function this.sin(x)            return math.sin(x); end
+function this.cos(x)            return math.cos(x); end
+function this.abs(x)            return math.abs(x); end
+function this.exp(x)            return math.exp(x); end
+function this.floor(x)          return math.floor(x); end
+function this.tan(x)            return math.tan(x); end
+function this.tanh(x)           return math.tanh(x); end
+function this.sqrt(x)           return x; end
+function this.set(a,i,v)        a[i]=v; end
+function this.get(a,i)          return a[i]; end
+function this.makeArray(size,v) local a = ffi.new("double[?]",size); for i=0,size-1 do a[i]=v end return a; end
+function this.wrap_array(a)     return a; end
+function this.Util__ctx_type_0_init()
+   local _ctx = {};
+   _ctx.pre = false;
+   return _ctx;
+
+end
+
+function this.Util_edge_init()
+   return this.Util__ctx_type_0_init();
+end
+
+function this.Util_edge(_ctx,x)
+   local ret = (x and (not _ctx.pre));
+   _ctx.pre = x;
+   return ret;
+
+end
+
+function this.Util__ctx_type_1_init()
+   local _ctx = {};
+   _ctx.pre_x = 0.000000;
+   return _ctx;
+
+end
+
+function this.Util_change_init()
+   return this.Util__ctx_type_1_init();
+end
+
+function this.Util_change(_ctx,x)
+   local v = (_ctx.pre_x ~= x);
+   _ctx.pre_x = x;
+   return v;
+
+end
+
+function this.Util_map(x,x0,x1,y0,y1)
+   return ((((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))) + y0);
+
+end
+
+function this.Util__ctx_type_3_init()
+   local _ctx = {};
+   _ctx.y1 = 0.000000;
+   _ctx.x1 = 0.000000;
+   return _ctx;
+
+end
+
+function this.Util_dcblock_init()
+   return this.Util__ctx_type_3_init();
+end
+
+function this.Util_dcblock(_ctx,x0)
+   local y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995000));
+   _ctx.x1 = x0;
+   _ctx.y1 = y0;
+   return y0;
+
+end
+
+function this.Util__ctx_type_4_init()
+   local _ctx = {};
+   _ctx.x = 0.000000;
+   return _ctx;
+
+end
+
+function this.Util_smooth_init()
+   return this.Util__ctx_type_4_init();
+end
+
+function this.Util_smooth(_ctx,input)
+   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005000));
+   return _ctx.x;
+
+end
+
+function this.Util__ctx_type_5_init()
+   local _ctx = {};
+   _ctx.x0 = 0.000000;
+   return _ctx;
+
+end
+
+function this.Util_average2_init()
+   return this.Util__ctx_type_5_init();
+end
+
+function this.Util_average2(_ctx,x1)
+   local result = ((_ctx.x0 + x1) * 0.500000);
+   _ctx.x0 = x1;
+   return result;
+
+end
+
+local Util_pitchToRate_c0 = ffi.new("double[33]", {0.189842,0.191326,0.198689,0.219425,0.265677,0.356438,0.520651,0.801560,1.262758,1.996562,3.135544,4.868347,7.461281,11.287715,16.867996,24.923305,36.448521,52.809903,75.876616,108.197225,153.232414,215.672344,301.846626,420.298038,582.505178,803.812129,1104.880165,1513.124126,2065.373952,2810.230550,3812.902888,5159.525580,6963.761469});
+local Util_pitchToRate_c1 = ffi.new("double[33]", {0.010913,0.010176,0.008334,0.004867,(-0.000939),(-0.010061),(-0.023820),(-0.044002),(-0.073002),(-0.114025),(-0.171341),(-0.250621),(-0.359381),(-0.507548),(-0.708208),(-0.978575),(-1.341250),(-1.825848),(-2.471123),(-3.327721),(-4.461658),(-5.959006),(-7.931626),(-10.525312),(-13.929212),(-18.387588),(-24.219785),(-31.835151),(-41.769557),(-54.706455),(-71.541226),(-93.422592),(-121.823163)});
+local Util_pitchToRate_c2 = ffi.new("double[33]", {0.000356,0.000447,0.000562,0.000707,0.000889,0.001119,0.001407,0.001769,0.002225,0.002799,0.003520,0.004426,0.005567,0.007001,0.008805,0.011074,0.013927,0.017515,0.022028,0.027704,0.034841,0.043818,0.055107,0.069305,0.087163,0.109617,0.137862,0.173377,0.218054,0.274227,0.344892,0.433780,0.545543});
+function this.Util_pitchToRate(pitch)
+   local index = this.clip(this.int((0.244094 * pitch)),0,31);
+   return (this.get(this.wrap_array(Util_pitchToRate_c0),index) + (pitch * (this.get(this.wrap_array(Util_pitchToRate_c1),index) + (this.get(this.wrap_array(Util_pitchToRate_c2),index) * pitch))));
+
+end
+
+function this.Util_cvToPitch(cv)
+   return ((cv * 120.000000) + 24.000000);
+
+end
+
+local Util_cvToRate_c0 = ffi.new("double[33]", {0.759367,0.762877,0.779737,0.825652,0.924648,1.112398,1.440687,1.983392,2.844434,4.168310,6.153994,9.073195,13.294301,19.313616,27.796102,39.628290,55.986657,78.426750,108.998215,150.387464,206.118533,280.781675,380.357513,512.612775,687.616764,918.349028,1221.607949,1619.052235,2138.629322,2815.436671,3696.162408,4838.694117,6318.211520});
+local Util_cvToRate_c1 = ffi.new("double[33]", {5.245583,4.998943,4.403089,3.319116,1.564497,(-1.099256),(-4.982226),(-10.485864),(-18.127956),(-28.574100),(-42.677360),(-61.528124),(-86.516770),(-119.412133),(-162.460318),(-218.508269),(-291.156786),(-384.956978),(-505.652297),(-660.458539),(-858.494950),(-1111.173376),(-1432.858445),(-1841.544459),(-2359.816046),(-3015.795467),(-3844.838138),(-4891.101919),(-6210.197274),(-7868.993868),(-9955.778008),(-12575.747874),(-15862.234621)});
+local Util_cvToRate_c2 = ffi.new("double[33]", {20.125592,24.457572,29.722000,36.119582,43.894227,53.342343,64.824143,78.777366,95.733987,116.340471,141.382451,171.814646,208.797363,253.740413,308.357211,374.730622,455.389632,553.410816,672.536916,817.290611,993.216833,1207.000622,1466.803875,1782.529271,2166.244997,2632.487590,3199.072620,3887.673024,4724.859179,5741.245302,6977.441755,8479.290028,10304.455486});
+function this.Util_cvToRate(cv)
+   local index = this.clip(this.int((34.444444 * cv)),0,31);
+   return (this.get(this.wrap_array(Util_cvToRate_c0),index) + (cv * (this.get(this.wrap_array(Util_cvToRate_c1),index) + (this.get(this.wrap_array(Util_cvToRate_c2),index) * cv))));
+
+end
+
+function this.Util_pitchToCv(pitch)
+   return (0.008333 * ((-24.000000) + pitch));
+
+end
+
+local Util_cvToRate_unit_c0 = ffi.new("double[33]", {0.000742,0.000745,0.000761,0.000806,0.000903,0.001086,0.001407,0.001937,0.002778,0.004071,0.006010,0.008861,0.012983,0.018861,0.027145,0.038700,0.054674,0.076589,0.106444,0.146863,0.201288,0.274201,0.371443,0.500598,0.671501,0.896825,1.192977,1.581106,2.088505,2.749450,3.609534,4.725287,6.170128});
+local Util_cvToRate_unit_c1 = ffi.new("double[33]", {0.005123,0.004882,0.004300,0.003241,0.001528,(-0.001073),(-0.004865),(-0.010240),(-0.017703),(-0.027904),(-0.041677),(-0.060086),(-0.084489),(-0.116613),(-0.158653),(-0.213387),(-0.284333),(-0.375935),(-0.493801),(-0.644979),(-0.838374),(-1.085130),(-1.399276),(-1.798383),(-2.304508),(-2.945113),(-3.754725),(-4.776467),(-6.064646),(-7.684564),(-9.722439),(-12.281004),(-15.490463)});
+local Util_cvToRate_unit_c2 = ffi.new("double[33]", {0.019654,0.023884,0.029025,0.035273,0.042865,0.052092,0.063305,0.076931,0.093490,0.113614,0.138069,0.167788,0.203904,0.247793,0.301130,0.365948,0.444716,0.540440,0.656774,0.798135,0.969938,1.178712,1.432426,1.740751,2.115474,2.570789,3.124094,3.796556,4.614120,5.606685,6.813908,8.280557,10.062945});
+function this.Util_cvToRate_unit(cv)
+   local index = this.clip(this.int((34.444444 * cv)),0,31);
+   return (this.get(this.wrap_array(Util_cvToRate_unit_c0),index) + (cv * (this.get(this.wrap_array(Util_cvToRate_unit_c1),index) + (this.get(this.wrap_array(Util_cvToRate_unit_c2),index) * cv))));
+
+end
+
+function this.Saw_ptr1__ctx_type_0_init()
+   local _ctx = {};
+   _ctx.rate = 0.000000;
+   _ctx.phase = 0.000000;
+   _ctx._inst13 = this.Util__ctx_type_1_init();
+   this.Saw_ptr1_default(_ctx);
+   return _ctx;
+
+end
+
+function this.Saw_ptr1_process_init()
+   return this.Saw_ptr1__ctx_type_0_init();
+end
+
+function this.Saw_ptr1_process(_ctx,cv)
+   if this.Util_change(_ctx._inst13,cv) then
+      _ctx.rate = this.Util_cvToRate_unit(cv);
+
+   end
+   local out = 0.0;
+   local s1 = _ctx.rate;
+   local dc = (-1.000000);
+   _ctx.phase = (_ctx.phase + _ctx.rate);
+   if (_ctx.phase > 1.000000) then
+      _ctx.phase = (_ctx.phase + (-1.000000));
+   else
+
+      _ctx.phase = _ctx.phase;
+   end
+   if (_ctx.phase < s1) then
+      local d = 0.0;
+      d = (_ctx.phase / _ctx.rate);
+      out = (((-2.000000) * d) + 2.000000 + dc);
+
+   else
+
+      out = ((2.000000 * _ctx.phase) + (- dc));
+
+   end
+   return out;
+
+end
+
+function this.Saw_ptr1_noteOn_init()
+   return this.Saw_ptr1__ctx_type_0_init();
+end
+
+function this.Saw_ptr1_noteOn(_ctx,note,velocity,channel)
+
+end
+
+function this.Saw_ptr1_noteOff_init()
+   return this.Saw_ptr1__ctx_type_0_init();
+end
+
+function this.Saw_ptr1_noteOff(_ctx,note,channel)
+
+end
+
+function this.Saw_ptr1_controlChange_init()
+   return this.Saw_ptr1__ctx_type_0_init();
+end
+
+function this.Saw_ptr1_controlChange(_ctx,control,value,channel)
+
+end
+
+function this.Saw_ptr1_default_init()
+   return this.Saw_ptr1__ctx_type_0_init();
+end
+
+function this.Saw_ptr1_default(_ctx)
+   _ctx.rate = 0.000742;
+
+end
+
+
+function this.process(ctx,in0) return this.Saw_ptr1_process(ctx,in0) end
+function this.noteOn(ctx,in0,in1,in2) return this.Saw_ptr1_noteOn(ctx,in0,in1,in2) end
+function this.noteOff(ctx,in0,in1) return this.Saw_ptr1_noteOff(ctx,in0,in1) end
+function this.controlChange(ctx,in0,in1,in2) return this.Saw_ptr1_controlChange(ctx,in0,in1,in2) end
+function this.init() return this.Saw_ptr1_process_init() end
+function this.default(ctx) return this.Saw_ptr1_default(ctx) end
+this.config = { inputs = 2, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+return this

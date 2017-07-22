@@ -1,0 +1,67 @@
+this.Gates_velToCV = function(vel){
+   return (this.real(vel) * 0.007874);
+}
+this.Gates__ctx_type_1_init = function(){
+   var _ctx = {};
+   _ctx.vel = this.makeArray((8|0),(0|0));
+   return _ctx;
+}
+this.Gates_gates_noteOn_init = function() { return this.Gates__ctx_type_1_init();}
+this.Gates_gates_noteOn = function(_ctx,note,velocity){
+   if(((note >= (36|0)) && (note <= (43|0)))){
+      var n = (0|0);
+      n = ((note + (-36|0))|0);
+      this.set(_ctx.vel,n,velocity);
+   }
+}
+this.Gates_gates_noteOff_init = function() { return this.Gates__ctx_type_1_init();}
+this.Gates_gates_noteOff = function(_ctx,note){
+   if(((note >= (36|0)) && (note <= (43|0)))){
+      var n = (0|0);
+      n = ((note + (-36|0))|0);
+      this.set(_ctx.vel,n,(0|0));
+   }
+}
+this.Gates_gates_state_init = function() { return this.Gates__ctx_type_1_init();}
+this.Gates_gates_state = function(_ctx){
+   var vel1 = this.Gates_velToCV(this.get(_ctx.vel,(0|0)));
+   var vel2 = this.Gates_velToCV(this.get(_ctx.vel,(1|0)));
+   var vel3 = this.Gates_velToCV(this.get(_ctx.vel,(2|0)));
+   var vel4 = this.Gates_velToCV(this.get(_ctx.vel,(3|0)));
+   var vel5 = this.Gates_velToCV(this.get(_ctx.vel,(4|0)));
+   var vel6 = this.Gates_velToCV(this.get(_ctx.vel,(5|0)));
+   var vel7 = this.Gates_velToCV(this.get(_ctx.vel,(6|0)));
+   var vel8 = this.Gates_velToCV(this.get(_ctx.vel,(7|0)));
+   var _tuple_15 = { field_0 : vel1, field_1 : vel2, field_2 : vel3, field_3 : vel4, field_4 : vel5, field_5 : vel6, field_6 : vel7, field_7 : vel8 };
+   return _tuple_15;
+}
+this.Gates__ctx_type_2_init = function(){
+   var _ctx = {};
+   _ctx.gates = this.Gates__ctx_type_1_init();
+   _ctx.channel_in = ((0|0)|0);
+   return _ctx;
+}
+this.Gates_process_init = function() { return this.Gates__ctx_type_2_init();}
+this.Gates_process = function(_ctx,c){
+   _ctx.channel_in = (c|0);
+   var _call_17 = this.Gates_gates_state(_ctx.gates);
+   return _call_17;
+}
+this.Gates_noteOn_init = function() { return this.Gates__ctx_type_2_init();}
+this.Gates_noteOn = function(_ctx,note,velocity,channel){
+   if((_ctx.channel_in == channel)){
+      this.Gates_gates_noteOn(_ctx.gates,note,velocity);
+   }
+}
+this.Gates_noteOff_init = function() { return this.Gates__ctx_type_2_init();}
+this.Gates_noteOff = function(_ctx,note,channel){
+   if((_ctx.channel_in == channel)){
+      this.Gates_gates_noteOff(_ctx.gates,note);
+   }
+}
+this.Gates_controlChange_init = function() { return this.Gates__ctx_type_2_init();}
+this.Gates_controlChange = function(_ctx,control,value,channel){
+}
+this.Gates_default_init = function() { return this.Gates__ctx_type_2_init();}
+this.Gates_default = function(_ctx){
+}

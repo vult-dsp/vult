@@ -11,11 +11,11 @@ fun process(cv, reset) {
    if(Util.edge(reset > 0.5)) {
       trig = true;
    }
-   val phase = p:Saw.process(cv, 0.0);
+   val phase = p:Phase.process(cv, 0.0);
    // the frequency changes only during the zero crossings
    if(phase < eps() && trig) {
       trig = false;
-      _ = p:Saw.process(cv, 0.0);
+      _ = p:Phase.process(cv, 0.0);
    }
    return Tables.nsine(phase);
 }

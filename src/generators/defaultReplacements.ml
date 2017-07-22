@@ -321,7 +321,7 @@ module JavaScript = struct
             "short", "short_";
             "synchronized", "synchronized_";
             "throws", "throws_";
-            "transient", "transient_"; 
+            "transient", "transient_";
             "volatile", "volatile_";
             "undefined", "undefined_";
             "null", "null_";
@@ -390,8 +390,20 @@ module Lua = struct
 
    let keywords = Replacements.makeKeywords
          [
-            "default", "default_";
-            "switch",  "switch_";
+            "and", "and_";
+            "break", "break_";
+            "do", "do_";
+            "elseif", "elseif_";
+            "end", "end_";
+            "for", "for_";
+            "function", "function_";
+            "in", "in_";
+            "local", "local_";
+            "nil", "nil_";
+            "or", "or_";
+            "repeat", "repeat_";
+            "return", "return_";
+            "until", "until_";
          ]
 
    let types = Replacements.makeTypes

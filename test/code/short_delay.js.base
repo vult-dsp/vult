@@ -1,0 +1,65 @@
+this.Short_delay__ctx_type_0_init = function(){
+   var _ctx = {};
+   _ctx.x4 = 0.000000;
+   _ctx.x3 = 0.000000;
+   _ctx.x2 = 0.000000;
+   return _ctx;
+}
+this.Short_delay_soft_init = function() { return this.Short_delay__ctx_type_0_init();}
+this.Short_delay_soft = function(_ctx,x1){
+   var o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) * 0.250000);
+   var _tmp_9_0 = x1;
+   var _tmp_9_1 = _ctx.x2;
+   var _tmp_9_2 = _ctx.x3;
+   _ctx.x2 = _tmp_9_0;
+   _ctx.x3 = _tmp_9_1;
+   _ctx.x4 = _tmp_9_2;
+   return o;
+}
+this.Short_delay__ctx_type_1_init = function(){
+   var _ctx = {};
+   _ctx.write_pos = ((0|0)|0);
+   _ctx.buffer = this.makeArray((22050|0),0.000000);
+   return _ctx;
+}
+this.Short_delay_do_init = function() { return this.Short_delay__ctx_type_1_init();}
+this.Short_delay_do = function(_ctx,x,time,feedback){
+   time = this.clip(time,0.000000,1.000000);
+   feedback = this.clip(feedback,0.000000,1.000000);
+   var index_r = (22050.000000 * time);
+   var index_i = (this.int(this.floor(index_r))|0);
+   var delta = ((_ctx.write_pos + (- index_i))|0);
+   var read_pos = (0|0);
+   if((delta < (0|0)))read_pos = (((22050|0) + delta)|0);
+   else
+   read_pos = (delta|0);
+   var decimal = (index_r + (- this.real(index_i)));
+   var x1 = this.get(_ctx.buffer,read_pos);
+   var x2 = this.get(_ctx.buffer,((read_pos + (1|0)) % (22050|0)));
+   var ret = (((x2 + (- x1)) * decimal) + x1);
+   _ctx.write_pos = (((_ctx.write_pos + (1|0)) % (22050|0))|0);
+   this.set(_ctx.buffer,_ctx.write_pos,this.tanh((x + (feedback * ret))));
+   return ret;
+}
+this.Short_delay__ctx_type_2_init = function(){
+   var _ctx = {};
+   _ctx._inst4 = this.Short_delay__ctx_type_1_init();
+   _ctx._inst3 = this.Short_delay__ctx_type_0_init();
+   return _ctx;
+}
+this.Short_delay_process_init = function() { return this.Short_delay__ctx_type_2_init();}
+this.Short_delay_process = function(_ctx,x,time,feedback){
+   return this.Short_delay_do(_ctx._inst4,x,this.Short_delay_soft(_ctx._inst3,time),feedback);
+}
+this.Short_delay_noteOn_init = function() { return this.Short_delay__ctx_type_2_init();}
+this.Short_delay_noteOn = function(_ctx,note,velocity,channel){
+}
+this.Short_delay_noteOff_init = function() { return this.Short_delay__ctx_type_2_init();}
+this.Short_delay_noteOff = function(_ctx,note,channel){
+}
+this.Short_delay_controlChange_init = function() { return this.Short_delay__ctx_type_2_init();}
+this.Short_delay_controlChange = function(_ctx,control,value,channel){
+}
+this.Short_delay_default_init = function() { return this.Short_delay__ctx_type_2_init();}
+this.Short_delay_default = function(_ctx){
+}

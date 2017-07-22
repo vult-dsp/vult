@@ -267,44 +267,44 @@ static const float Tables_nsine_c1[129] = {6.284447f,6.299564f,6.329688f,6.37460
 static const float Tables_nsine_c2[129] = {(-0.484400f),(-1.452033f),(-2.416169f),(-3.374483f),(-4.324668f),(-5.264435f),(-6.191519f),(-7.103687f),(-7.998741f),(-8.874526f),(-9.728932f),(-10.559900f),(-11.365428f),(-12.143575f),(-12.892468f),(-13.610302f),(-14.295347f),(-14.945953f),(-15.560554f),(-16.137667f),(-16.675904f),(-17.173967f),(-17.630656f),(-18.044871f),(-18.415615f),(-18.741994f),(-19.023222f),(-19.258621f),(-19.447625f),(-19.589777f),(-19.684736f),(-19.732273f),(-19.732273f),(-19.684736f),(-19.589777f),(-19.447625f),(-19.258621f),(-19.023222f),(-18.741994f),(-18.415615f),(-18.044871f),(-17.630656f),(-17.173967f),(-16.675904f),(-16.137667f),(-15.560554f),(-14.945953f),(-14.295347f),(-13.610302f),(-12.892468f),(-12.143575f),(-11.365428f),(-10.559900f),(-9.728932f),(-8.874526f),(-7.998741f),(-7.103687f),(-6.191519f),(-5.264435f),(-4.324668f),(-3.374483f),(-2.416169f),(-1.452033f),(-0.484400f),0.484400f,1.452033f,2.416169f,3.374483f,4.324668f,5.264435f,6.191519f,7.103687f,7.998741f,8.874526f,9.728932f,10.559900f,11.365428f,12.143575f,12.892468f,13.610302f,14.295347f,14.945953f,15.560554f,16.137667f,16.675904f,17.173967f,17.630656f,18.044871f,18.415615f,18.741994f,19.023222f,19.258621f,19.447625f,19.589777f,19.684736f,19.732273f,19.732273f,19.684736f,19.589777f,19.447625f,19.258621f,19.023222f,18.741994f,18.415615f,18.044871f,17.630656f,17.173967f,16.675904f,16.137667f,15.560554f,14.945953f,14.295347f,13.610302f,12.892468f,12.143575f,11.365428f,10.559900f,9.728932f,8.874526f,7.998741f,7.103687f,6.191519f,5.264435f,4.324668f,3.374483f,2.416169f,1.452033f,0.484400f,(-0.484400f)};
 float Tables_nsine(float x);
 
-typedef struct Saw__ctx_type_0 {
+typedef struct Phase__ctx_type_0 {
    float rate;
    float phase;
    Util__ctx_type_0 _inst97;
    Util__ctx_type_1 _inst95;
-} Saw__ctx_type_0;
+} Phase__ctx_type_0;
 
-typedef Saw__ctx_type_0 Saw_process_type;
+typedef Phase__ctx_type_0 Phase_process_type;
 
-void Saw__ctx_type_0_init(Saw__ctx_type_0 &_output_);
+void Phase__ctx_type_0_init(Phase__ctx_type_0 &_output_);
 
-void Saw_process_init(Saw__ctx_type_0 &_output_);
+void Phase_process_init(Phase__ctx_type_0 &_output_);
 
-float Saw_process(Saw__ctx_type_0 &_ctx, float cv, float reset);
+float Phase_process(Phase__ctx_type_0 &_ctx, float cv, float reset);
 
-typedef Saw__ctx_type_0 Saw_noteOn_type;
+typedef Phase__ctx_type_0 Phase_noteOn_type;
 
-void Saw_noteOn_init(Saw__ctx_type_0 &_output_);
+void Phase_noteOn_init(Phase__ctx_type_0 &_output_);
 
-void Saw_noteOn(Saw__ctx_type_0 &_ctx, int note, int velocity, int channel);
+void Phase_noteOn(Phase__ctx_type_0 &_ctx, int note, int velocity, int channel);
 
-typedef Saw__ctx_type_0 Saw_noteOff_type;
+typedef Phase__ctx_type_0 Phase_noteOff_type;
 
-void Saw_noteOff_init(Saw__ctx_type_0 &_output_);
+void Phase_noteOff_init(Phase__ctx_type_0 &_output_);
 
-void Saw_noteOff(Saw__ctx_type_0 &_ctx, int note, int channel);
+void Phase_noteOff(Phase__ctx_type_0 &_ctx, int note, int channel);
 
-typedef Saw__ctx_type_0 Saw_controlChange_type;
+typedef Phase__ctx_type_0 Phase_controlChange_type;
 
-void Saw_controlChange_init(Saw__ctx_type_0 &_output_);
+void Phase_controlChange_init(Phase__ctx_type_0 &_output_);
 
-void Saw_controlChange(Saw__ctx_type_0 &_ctx, int control, int value, int channel);
+void Phase_controlChange(Phase__ctx_type_0 &_ctx, int control, int value, int channel);
 
-typedef Saw__ctx_type_0 Saw_default_type;
+typedef Phase__ctx_type_0 Phase_default_type;
 
-void Saw_default_init(Saw__ctx_type_0 &_output_);
+void Phase_default_init(Phase__ctx_type_0 &_output_);
 
-void Saw_default(Saw__ctx_type_0 &_ctx);
+void Phase_default(Phase__ctx_type_0 &_ctx);
 
 static const float Blit_period_c0[33] = {674.246035f,671.553838f,662.761782f,646.759522f,623.799428f,594.871802f,561.298277f,524.476942f,485.731369f,446.229382f,406.947440f,368.663774f,331.968683f,297.284156f,264.887666f,234.936857f,207.493124f,182.543016f,160.016907f,139.804832f,121.769557f,105.757117f,91.605116f,79.149088f,68.227249f,58.683895f,50.371734f,43.153355f,36.902033f,31.502025f,26.848494f,22.847166f,19.413794f};
 static const float Blit_period_c1[33] = {(-4656.656311f),(-4481.960579f),(-4198.686133f),(-3855.751543f),(-3487.139455f),(-3115.858821f),(-2756.930319f),(-2419.625141f),(-2109.134753f),(-1827.808334f),(-1576.062963f),(-1353.047092f),(-1157.118864f),(-986.186250f),(-837.944665f),(-710.039113f),(-600.171234f),(-506.166566f),(-426.013463f),(-357.882151f),(-300.130190f),(-251.298904f),(-210.104105f),(-175.423450f),(-146.282114f),(-121.837895f),(-101.366537f),(-84.247726f),(-69.952082f),(-58.029259f),(-48.097248f),(-39.832833f),(-32.963186f)};
@@ -322,7 +322,7 @@ typedef struct Blit__ctx_type_3 {
    float output;
    float m;
    Util__ctx_type_3 _inst119;
-   Saw__ctx_type_0 _inst115;
+   Phase__ctx_type_0 _inst115;
    Util__ctx_type_1 _inst113;
 } Blit__ctx_type_3;
 

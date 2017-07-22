@@ -1,0 +1,140 @@
+
+local this = {}
+local ffi = require("ffi")
+function this.ternary(cond,then_,else_) if cond then return then_ else return else_ end end
+function this.eps()             return 1e-18; end
+function this.random()          return math.random(); end
+function this.irandom()         return math.floor(math.random() * 4294967296); end
+function this.clip(x,low,high)  return (this.ternary(x<low,low,this.ternary(x>high,high,x))); end
+function this.real(x)           return x; end
+function this.int(x)            local int_part,_ = math.modf(x) return int_part; end
+function this.sin(x)            return math.sin(x); end
+function this.cos(x)            return math.cos(x); end
+function this.abs(x)            return math.abs(x); end
+function this.exp(x)            return math.exp(x); end
+function this.floor(x)          return math.floor(x); end
+function this.tan(x)            return math.tan(x); end
+function this.tanh(x)           return math.tanh(x); end
+function this.sqrt(x)           return x; end
+function this.set(a,i,v)        a[i]=v; end
+function this.get(a,i)          return a[i]; end
+function this.makeArray(size,v) local a = ffi.new("double[?]",size); for i=0,size-1 do a[i]=v end return a; end
+function this.wrap_array(a)     return a; end
+function this.Short_delay__ctx_type_0_init()
+   local _ctx = {};
+   _ctx.x4 = 0.000000;
+   _ctx.x3 = 0.000000;
+   _ctx.x2 = 0.000000;
+   return _ctx;
+
+end
+
+function this.Short_delay_soft_init()
+   return this.Short_delay__ctx_type_0_init();
+end
+
+function this.Short_delay_soft(_ctx,x1)
+   local o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) * 0.250000);
+   local _tmp_9_0 = x1;
+   local _tmp_9_1 = _ctx.x2;
+   local _tmp_9_2 = _ctx.x3;
+   _ctx.x2 = _tmp_9_0;
+   _ctx.x3 = _tmp_9_1;
+   _ctx.x4 = _tmp_9_2;
+   return o;
+
+end
+
+function this.Short_delay__ctx_type_1_init()
+   local _ctx = {};
+   _ctx.write_pos = 0;
+   _ctx.buffer = this.makeArray(22050,0.000000);
+   return _ctx;
+
+end
+
+function this.Short_delay_do_init()
+   return this.Short_delay__ctx_type_1_init();
+end
+
+function this.Short_delay_do(_ctx,x,time,feedback)
+   time = this.clip(time,0.000000,1.000000);
+   feedback = this.clip(feedback,0.000000,1.000000);
+   local index_r = (22050.000000 * time);
+   local index_i = this.int(this.floor(index_r));
+   local delta = (_ctx.write_pos + (- index_i));
+   local read_pos = 0;
+   if (delta < 0) then
+      read_pos = (22050 + delta);
+   else
+
+      read_pos = delta;
+   end
+   local decimal = (index_r + (- this.real(index_i)));
+   local x1 = this.get(_ctx.buffer,read_pos);
+   local x2 = this.get(_ctx.buffer,((read_pos + 1) % 22050));
+   local ret = (((x2 + (- x1)) * decimal) + x1);
+   _ctx.write_pos = ((_ctx.write_pos + 1) % 22050);
+   this.set(_ctx.buffer,_ctx.write_pos,this.tanh((x + (feedback * ret))));
+   return ret;
+
+end
+
+function this.Short_delay__ctx_type_2_init()
+   local _ctx = {};
+   _ctx._inst4 = this.Short_delay__ctx_type_1_init();
+   _ctx._inst3 = this.Short_delay__ctx_type_0_init();
+   return _ctx;
+
+end
+
+function this.Short_delay_process_init()
+   return this.Short_delay__ctx_type_2_init();
+end
+
+function this.Short_delay_process(_ctx,x,time,feedback)
+   return this.Short_delay_do(_ctx._inst4,x,this.Short_delay_soft(_ctx._inst3,time),feedback);
+
+end
+
+function this.Short_delay_noteOn_init()
+   return this.Short_delay__ctx_type_2_init();
+end
+
+function this.Short_delay_noteOn(_ctx,note,velocity,channel)
+
+end
+
+function this.Short_delay_noteOff_init()
+   return this.Short_delay__ctx_type_2_init();
+end
+
+function this.Short_delay_noteOff(_ctx,note,channel)
+
+end
+
+function this.Short_delay_controlChange_init()
+   return this.Short_delay__ctx_type_2_init();
+end
+
+function this.Short_delay_controlChange(_ctx,control,value,channel)
+
+end
+
+function this.Short_delay_default_init()
+   return this.Short_delay__ctx_type_2_init();
+end
+
+function this.Short_delay_default(_ctx)
+
+end
+
+
+function this.process(ctx,in0,in1,in2) return this.Short_delay_process(ctx,in0,in1,in2) end
+function this.noteOn(ctx,in0,in1,in2) return this.Short_delay_noteOn(ctx,in0,in1,in2) end
+function this.noteOff(ctx,in0,in1) return this.Short_delay_noteOff(ctx,in0,in1) end
+function this.controlChange(ctx,in0,in1,in2) return this.Short_delay_controlChange(ctx,in0,in1,in2) end
+function this.init() return this.Short_delay_process_init() end
+function this.default(ctx) return this.Short_delay_default(ctx) end
+this.config = { inputs = 4, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+return this

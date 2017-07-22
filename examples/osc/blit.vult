@@ -56,7 +56,7 @@ fun osc_blit(cv,pw,wave:real){
     m = harmonics(fixed_cv);
     rate = Util.cvToRate_unit(fixed_cv);
   }
-  val phase = Saw.process(fixed_cv, 0.0);
+  val phase = Phase.process(fixed_cv, 0.0);
   // Generates a shifted version of the phase
   val shift05 = 0.5 + pw * 0.49;
   val shift = phase + shift05;
