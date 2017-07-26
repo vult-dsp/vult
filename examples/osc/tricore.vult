@@ -14,7 +14,7 @@ fun process(cv:real, reset:real, disable:real) : real {
    val out = 0.0;
    // Calculate the rate only when the cv changes
    if(Util.change(cv)) {
-      rate = 4.0 * Util.cvToRate(cv);
+      rate = 4.0 * Util.cvToRate_1024(cv);
    }
    // Determine the next value
    val new_phase = phase + if direction then rate else -rate;
@@ -65,5 +65,5 @@ and noteOn(note:int,velocity:int,channel:int){ }
 and noteOff(note:int,channel:int){ }
 and controlChange(control:int,value:int,channel:int){ }
 and default() @[init] {
-   rate = Util.cvToRate(0.0);
+   rate = Util.cvToRate_1024(0.0);
 }

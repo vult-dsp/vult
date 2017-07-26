@@ -11,7 +11,7 @@ fun process(cv) {
    mem rate, phase;
    val y = 0.0;
    if(Util.change(cv)) {
-      rate = Util.cvToRate_unit(cv);
+      rate = Util.cvToRate(cv);
    }
    phase = phase + rate * 2.0;
    if(phase > 1.0 - rate) {
@@ -26,5 +26,5 @@ and noteOn(note:int,velocity:int,channel:int){ }
 and noteOff(note:int,channel:int){ }
 and controlChange(control:int,value:int,channel:int){ }
 and default()@[init]{
-   mem rate = Util.cvToRate_unit(0.0);
+   mem rate = Util.cvToRate(0.0);
 }

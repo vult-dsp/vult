@@ -45,16 +45,25 @@ fun average2(x1:real) : real {
 }
 
 /* Rate to get a 2^10 ramp */
-fun pitchToRate(pitch) @[table(size=32,min=0.0,max=127.0)] {
+fun pitchToRate_1024(pitch) @[table(size=32,min=0.0,max=127.0)] {
    // 2^10 /44100 440 2^((pitch - 69)/12.)
    return 0.18984168003671556 * exp(0.057762265046662105 * pitch);
+}
+
+fun pitchToRate(pitch) @[table(size=32, min=0.0, max=127.0)] {
+   // 1.0 /44100 440 2^((pitch - 69)/12.)
+   return 0.00018539226566085504 * exp(0.057762265046662105 * pitch);
 }
 
 fun cvToPitch(cv) {
    return cv * 120.0 + 24.0;
 }
 
-fun cvToRate(cv) @[table(size=32,min=0.0,max=0.9)] {
+fun cvToRate_1024(cv) @[table(size=32,min=0.0,max=0.9)] {
+   return pitchToRate_1024(cvToPitch(cv));
+}
+
+fun cvToRate(cv) @[table(size=32, min=0.0, max=0.9)] {
    return pitchToRate(cvToPitch(cv));
 }
 
@@ -62,6 +71,3 @@ fun pitchToCv(pitch) {
    return 1.0/120.0 * (-24.0 + pitch);
 }
 
-fun cvToRate_unit(cv) @[table(size=32,min=0.0,max=0.9)] {
-   return pitchToRate(cvToPitch(cv))/1024.0;
-}

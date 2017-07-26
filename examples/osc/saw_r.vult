@@ -9,7 +9,7 @@ Saw oscillator using soft transitions
 fun process(cv) {
    mem inc;
    if(Util.change(cv))
-      inc = Util.cvToRate_unit(cv);
+      inc = Util.cvToRate(cv);
    val i = if inc < eps() then eps() else inc;
    // generate a ramp from -1.0  to 1.0
    mem phase = (2.0 * inc + phase) % 2.0;
@@ -33,5 +33,5 @@ and noteOn(note:int,velocity:int,channel:int){ }
 and noteOff(note:int,channel:int){ }
 and controlChange(control:int,value:int,channel:int){ }
 and default() @[init]{
-   inc = Util.cvToRate_unit(0.0);
+   inc = Util.cvToRate(0.0);
 }

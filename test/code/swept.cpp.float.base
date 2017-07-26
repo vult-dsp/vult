@@ -101,6 +101,12 @@ float Util_average2(Util__ctx_type_5 &_ctx, float x1){
    return result;
 }
 
+float Util_pitchToRate_1024(float pitch){
+   int index;
+   index = int_clip(float_to_int((0.244094f * pitch)),0,31);
+   return (float_get(float_wrap_array(Util_pitchToRate_1024_c0),index) + (pitch * (float_get(float_wrap_array(Util_pitchToRate_1024_c1),index) + (float_get(float_wrap_array(Util_pitchToRate_1024_c2),index) * pitch))));
+}
+
 float Util_pitchToRate(float pitch){
    int index;
    index = int_clip(float_to_int((0.244094f * pitch)),0,31);
@@ -109,6 +115,12 @@ float Util_pitchToRate(float pitch){
 
 float Util_cvToPitch(float cv){
    return ((cv * 120.000000f) + 24.000000f);
+}
+
+float Util_cvToRate_1024(float cv){
+   int index;
+   index = int_clip(float_to_int((34.444444f * cv)),0,31);
+   return (float_get(float_wrap_array(Util_cvToRate_1024_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToRate_1024_c1),index) + (float_get(float_wrap_array(Util_cvToRate_1024_c2),index) * cv))));
 }
 
 float Util_cvToRate(float cv){
@@ -121,16 +133,10 @@ float Util_pitchToCv(float pitch){
    return (0.008333f * ((-24.000000f) + pitch));
 }
 
-float Util_cvToRate_unit(float cv){
-   int index;
-   index = int_clip(float_to_int((34.444444f * cv)),0,31);
-   return (float_get(float_wrap_array(Util_cvToRate_unit_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToRate_unit_c1),index) + (float_get(float_wrap_array(Util_cvToRate_unit_c2),index) * cv))));
-}
-
 void Swept__ctx_type_0_init(Swept__ctx_type_0 &_output_){
    Swept__ctx_type_0 _ctx;
    _ctx.out = 0.000000f;
-   Util__ctx_type_0_init(_ctx._inst13);
+   Util__ctx_type_0_init(_ctx._inst14);
    _output_ = _ctx;
    return ;
 }
@@ -146,9 +152,9 @@ float Swept_process(Swept__ctx_type_0 &_ctx, float gate, float start, float end,
    uint8_t bgate;
    bgate = (gate > 0.500000f);
    _ctx.out = (_ctx.out + (((end * 1024.000000f) + (- _ctx.out)) * rate * 0.004000f));
-   uint8_t _cond_19;
-   _cond_19 = Util_edge(_ctx._inst13,bgate);
-   if(_cond_19){
+   uint8_t _cond_20;
+   _cond_20 = Util_edge(_ctx._inst14,bgate);
+   if(_cond_20){
       _ctx.out = (start * 1024.000000f);
    }
    return (_ctx.out * 0.000977f);

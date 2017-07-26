@@ -101,6 +101,12 @@ float Util_average2(Util__ctx_type_5 &_ctx, float x1){
    return result;
 }
 
+float Util_pitchToRate_1024(float pitch){
+   int index;
+   index = int_clip(float_to_int((0.244094f * pitch)),0,31);
+   return (float_get(float_wrap_array(Util_pitchToRate_1024_c0),index) + (pitch * (float_get(float_wrap_array(Util_pitchToRate_1024_c1),index) + (float_get(float_wrap_array(Util_pitchToRate_1024_c2),index) * pitch))));
+}
+
 float Util_pitchToRate(float pitch){
    int index;
    index = int_clip(float_to_int((0.244094f * pitch)),0,31);
@@ -109,6 +115,12 @@ float Util_pitchToRate(float pitch){
 
 float Util_cvToPitch(float cv){
    return ((cv * 120.000000f) + 24.000000f);
+}
+
+float Util_cvToRate_1024(float cv){
+   int index;
+   index = int_clip(float_to_int((34.444444f * cv)),0,31);
+   return (float_get(float_wrap_array(Util_cvToRate_1024_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToRate_1024_c1),index) + (float_get(float_wrap_array(Util_cvToRate_1024_c2),index) * cv))));
 }
 
 float Util_cvToRate(float cv){
@@ -121,12 +133,6 @@ float Util_pitchToCv(float pitch){
    return (0.008333f * ((-24.000000f) + pitch));
 }
 
-float Util_cvToRate_unit(float cv){
-   int index;
-   index = int_clip(float_to_int((34.444444f * cv)),0,31);
-   return (float_get(float_wrap_array(Util_cvToRate_unit_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToRate_unit_c1),index) + (float_get(float_wrap_array(Util_cvToRate_unit_c2),index) * cv))));
-}
-
 float Saturate_table(float x){
    int index;
    index = int_clip(float_to_int((1.500000f * x)),0,9);
@@ -134,16 +140,16 @@ float Saturate_table(float x){
 }
 
 float Saturate_process(float x){
-   uint8_t _cond_21;
-   _cond_21 = (x == 0.000000f);
-   if(_cond_21){
+   uint8_t _cond_22;
+   _cond_22 = (x == 0.000000f);
+   if(_cond_22){
       return 0.000000f;
    }
    float fixed;
    uint8_t sign;
-   uint8_t _cond_23;
-   _cond_23 = (x > 0.000000f);
-   if(_cond_23){
+   uint8_t _cond_24;
+   _cond_24 = (x > 0.000000f);
+   if(_cond_24){
       fixed = x;
       sign = 0;
    }
@@ -154,9 +160,9 @@ float Saturate_process(float x){
    }
    float out;
    out = 0.000000f;
-   uint8_t _cond_22;
-   _cond_22 = (fixed > 6.000000f);
-   if(_cond_22){
+   uint8_t _cond_23;
+   _cond_23 = (fixed > 6.000000f);
+   if(_cond_23){
       out = 1.000000f;
    }
    else
@@ -197,7 +203,7 @@ void Ladder__ctx_type_1_init(Ladder__ctx_type_1 &_output_){
    _ctx.wb = 0.000000f;
    _ctx.wa = 0.000000f;
    _ctx.tune = 0.000000f;
-   Util__ctx_type_1_init(_ctx._inst28);
+   Util__ctx_type_1_init(_ctx._inst29);
    _output_ = _ctx;
    return ;
 }
@@ -210,9 +216,9 @@ void Ladder_step_init(Ladder__ctx_type_1 &_output_){
 float Ladder_step(Ladder__ctx_type_1 &_ctx, float x, float cv, float res){
    float _2vt;
    _2vt = 2.441406f;
-   uint8_t _cond_35;
-   _cond_35 = Util_change(_ctx._inst28,cv);
-   if(_cond_35){
+   uint8_t _cond_36;
+   _cond_36 = Util_change(_ctx._inst29,cv);
+   if(_cond_36){
       _ctx.tune = (_2vt * Ladder_getTune(cv));
    }
    _ctx.ya = (_ctx.ya + (_ctx.tune * (Saturate_process(((x + ((-4.000000f) * res * _ctx.yd)) / _2vt)) + (- _ctx.wa))));

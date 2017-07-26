@@ -101,6 +101,12 @@ float Util_average2(Util__ctx_type_5 &_ctx, float x1){
    return result;
 }
 
+float Util_pitchToRate_1024(float pitch){
+   int index;
+   index = int_clip(float_to_int((0.244094f * pitch)),0,31);
+   return (float_get(float_wrap_array(Util_pitchToRate_1024_c0),index) + (pitch * (float_get(float_wrap_array(Util_pitchToRate_1024_c1),index) + (float_get(float_wrap_array(Util_pitchToRate_1024_c2),index) * pitch))));
+}
+
 float Util_pitchToRate(float pitch){
    int index;
    index = int_clip(float_to_int((0.244094f * pitch)),0,31);
@@ -109,6 +115,12 @@ float Util_pitchToRate(float pitch){
 
 float Util_cvToPitch(float cv){
    return ((cv * 120.000000f) + 24.000000f);
+}
+
+float Util_cvToRate_1024(float cv){
+   int index;
+   index = int_clip(float_to_int((34.444444f * cv)),0,31);
+   return (float_get(float_wrap_array(Util_cvToRate_1024_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToRate_1024_c1),index) + (float_get(float_wrap_array(Util_cvToRate_1024_c2),index) * cv))));
 }
 
 float Util_cvToRate(float cv){
@@ -121,18 +133,12 @@ float Util_pitchToCv(float pitch){
    return (0.008333f * ((-24.000000f) + pitch));
 }
 
-float Util_cvToRate_unit(float cv){
-   int index;
-   index = int_clip(float_to_int((34.444444f * cv)),0,31);
-   return (float_get(float_wrap_array(Util_cvToRate_unit_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToRate_unit_c1),index) + (float_get(float_wrap_array(Util_cvToRate_unit_c2),index) * cv))));
-}
-
 void Phase__ctx_type_0_init(Phase__ctx_type_0 &_output_){
    Phase__ctx_type_0 _ctx;
    _ctx.rate = 0.000000f;
    _ctx.phase = 0.000000f;
-   Util__ctx_type_0_init(_ctx._inst15);
-   Util__ctx_type_1_init(_ctx._inst13);
+   Util__ctx_type_0_init(_ctx._inst16);
+   Util__ctx_type_1_init(_ctx._inst14);
    Phase_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -144,19 +150,19 @@ void Phase_process_init(Phase__ctx_type_0 &_output_){
 }
 
 float Phase_process(Phase__ctx_type_0 &_ctx, float cv, float reset){
-   uint8_t _cond_20;
-   _cond_20 = Util_change(_ctx._inst13,cv);
-   if(_cond_20){
-      _ctx.rate = Util_cvToRate(cv);
-   }
    uint8_t _cond_21;
-   _cond_21 = Util_edge(_ctx._inst15,(reset > 0.500000f));
-   if(_cond_21){ _ctx.phase = 0.000000f; }
+   _cond_21 = Util_change(_ctx._inst14,cv);
+   if(_cond_21){
+      _ctx.rate = Util_cvToRate_1024(cv);
+   }
+   uint8_t _cond_22;
+   _cond_22 = Util_edge(_ctx._inst16,(reset > 0.500000f));
+   if(_cond_22){ _ctx.phase = 0.000000f; }
    else
    { _ctx.phase = (_ctx.phase + _ctx.rate); }
-   uint8_t _cond_22;
-   _cond_22 = (_ctx.phase > 1024.000000f);
-   if(_cond_22){ _ctx.phase = (_ctx.phase + (-1024.000000f)); }
+   uint8_t _cond_23;
+   _cond_23 = (_ctx.phase > 1024.000000f);
+   if(_cond_23){ _ctx.phase = (_ctx.phase + (-1024.000000f)); }
    else
    { _ctx.phase = _ctx.phase; }
    return (_ctx.phase * 0.000977f);
@@ -205,7 +211,7 @@ void Sine__ctx_type_0_init(Sine__ctx_type_0 &_output_){
    Sine__ctx_type_0 _ctx;
    _ctx.trig = 0;
    Phase__ctx_type_0_init(_ctx.p);
-   Util__ctx_type_0_init(_ctx._inst25);
+   Util__ctx_type_0_init(_ctx._inst26);
    _output_ = _ctx;
    return ;
 }
@@ -216,16 +222,16 @@ void Sine_process_init(Sine__ctx_type_0 &_output_){
 }
 
 float Sine_process(Sine__ctx_type_0 &_ctx, float cv, float reset){
-   uint8_t _cond_32;
-   _cond_32 = Util_edge(_ctx._inst25,(reset > 0.500000f));
-   if(_cond_32){
+   uint8_t _cond_33;
+   _cond_33 = Util_edge(_ctx._inst26,(reset > 0.500000f));
+   if(_cond_33){
       _ctx.trig = 1;
    }
    float phase;
    phase = Phase_process(_ctx.p,cv,0.000000f);
-   uint8_t _cond_33;
-   _cond_33 = ((phase < 0.000000f) && _ctx.trig);
-   if(_cond_33){
+   uint8_t _cond_34;
+   _cond_34 = ((phase < 0.000000f) && _ctx.trig);
+   if(_cond_34){
       _ctx.trig = 0;
       Phase_process(_ctx.p,cv,0.000000f);
    }

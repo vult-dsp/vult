@@ -101,6 +101,12 @@ float Util_average2(Util__ctx_type_5 &_ctx, float x1){
    return result;
 }
 
+float Util_pitchToRate_1024(float pitch){
+   int index;
+   index = int_clip(float_to_int((0.244094f * pitch)),0,31);
+   return (float_get(float_wrap_array(Util_pitchToRate_1024_c0),index) + (pitch * (float_get(float_wrap_array(Util_pitchToRate_1024_c1),index) + (float_get(float_wrap_array(Util_pitchToRate_1024_c2),index) * pitch))));
+}
+
 float Util_pitchToRate(float pitch){
    int index;
    index = int_clip(float_to_int((0.244094f * pitch)),0,31);
@@ -109,6 +115,12 @@ float Util_pitchToRate(float pitch){
 
 float Util_cvToPitch(float cv){
    return ((cv * 120.000000f) + 24.000000f);
+}
+
+float Util_cvToRate_1024(float cv){
+   int index;
+   index = int_clip(float_to_int((34.444444f * cv)),0,31);
+   return (float_get(float_wrap_array(Util_cvToRate_1024_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToRate_1024_c1),index) + (float_get(float_wrap_array(Util_cvToRate_1024_c2),index) * cv))));
 }
 
 float Util_cvToRate(float cv){
@@ -121,17 +133,11 @@ float Util_pitchToCv(float pitch){
    return (0.008333f * ((-24.000000f) + pitch));
 }
 
-float Util_cvToRate_unit(float cv){
-   int index;
-   index = int_clip(float_to_int((34.444444f * cv)),0,31);
-   return (float_get(float_wrap_array(Util_cvToRate_unit_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToRate_unit_c1),index) + (float_get(float_wrap_array(Util_cvToRate_unit_c2),index) * cv))));
-}
-
 void Saw_r__ctx_type_0_init(Saw_r__ctx_type_0 &_output_){
    Saw_r__ctx_type_0 _ctx;
    _ctx.phase = 0.000000f;
    _ctx.inc = 0.000000f;
-   Util__ctx_type_1_init(_ctx._inst13);
+   Util__ctx_type_1_init(_ctx._inst14);
    Saw_r_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -143,15 +149,15 @@ void Saw_r_process_init(Saw_r__ctx_type_0 &_output_){
 }
 
 float Saw_r_process(Saw_r__ctx_type_0 &_ctx, float cv){
-   uint8_t _cond_23;
-   _cond_23 = Util_change(_ctx._inst13,cv);
-   if(_cond_23){
-      _ctx.inc = Util_cvToRate_unit(cv);
+   uint8_t _cond_24;
+   _cond_24 = Util_change(_ctx._inst14,cv);
+   if(_cond_24){
+      _ctx.inc = Util_cvToRate(cv);
    }
    float i;
-   uint8_t _cond_26;
-   _cond_26 = (_ctx.inc < 0.000000f);
-   if(_cond_26){ i = 0.000000f; }
+   uint8_t _cond_27;
+   _cond_27 = (_ctx.inc < 0.000000f);
+   if(_cond_27){ i = 0.000000f; }
    else
    { i = _ctx.inc; }
    _ctx.phase = fmodf(((2.000000f * _ctx.inc) + _ctx.phase),2.000000f);
@@ -159,18 +165,18 @@ float Saw_r_process(Saw_r__ctx_type_0 &_ctx, float cv){
    ph = (_ctx.phase + (-1.000000f));
    float o;
    o = 0.000000f;
-   uint8_t _cond_25;
-   _cond_25 = (ph >= (1.000000f + (- i)));
-   if(_cond_25){
+   uint8_t _cond_26;
+   _cond_26 = (ph >= (1.000000f + (- i)));
+   if(_cond_26){
       float b;
       b = ((1.000000f + (- i) + (- ph)) / i);
       o = ((b * fabsf(b)) + ph);
    }
    else
    {
-      uint8_t _cond_24;
-      _cond_24 = (ph <= (i + (-1.000000f)));
-      if(_cond_24){
+      uint8_t _cond_25;
+      _cond_25 = (ph <= (i + (-1.000000f)));
+      if(_cond_25){
          float b;
          b = ((i + (-1.000000f) + (- ph)) / i);
          o = ((b * fabsf(b)) + ph);

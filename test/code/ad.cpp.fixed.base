@@ -101,6 +101,12 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    return result;
 }
 
+fix16_t Util_pitchToRate_1024(fix16_t pitch){
+   int index;
+   index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
+   return fix_add(fix_get(fix_wrap_array(Util_pitchToRate_1024_c0),index),fix_mul(pitch,fix_add(fix_get(fix_wrap_array(Util_pitchToRate_1024_c1),index),fix_mul(fix_get(fix_wrap_array(Util_pitchToRate_1024_c2),index),pitch))));
+}
+
 fix16_t Util_pitchToRate(fix16_t pitch){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
@@ -109,6 +115,12 @@ fix16_t Util_pitchToRate(fix16_t pitch){
 
 fix16_t Util_cvToPitch(fix16_t cv){
    return fix_add(fix_mul(cv,0x780000 /* 120.000000 */),0x180000 /* 24.000000 */);
+}
+
+fix16_t Util_cvToRate_1024(fix16_t cv){
+   int index;
+   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
+   return fix_add(fix_get(fix_wrap_array(Util_cvToRate_1024_c0),index),fix_mul(cv,fix_add(fix_get(fix_wrap_array(Util_cvToRate_1024_c1),index),fix_mul(fix_get(fix_wrap_array(Util_cvToRate_1024_c2),index),cv))));
 }
 
 fix16_t Util_cvToRate(fix16_t cv){
@@ -121,12 +133,6 @@ fix16_t Util_pitchToCv(fix16_t pitch){
    return fix_mul(0x222 /* 0.008333 */,fix_add((-0x180000 /* -24.000000 */),pitch));
 }
 
-fix16_t Util_cvToRate_unit(fix16_t cv){
-   int index;
-   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
-   return fix_add(fix_get(fix_wrap_array(Util_cvToRate_unit_c0),index),fix_mul(cv,fix_add(fix_get(fix_wrap_array(Util_cvToRate_unit_c1),index),fix_mul(fix_get(fix_wrap_array(Util_cvToRate_unit_c2),index),cv))));
-}
-
 void Ad__ctx_type_0_init(Ad__ctx_type_0 &_output_){
    Ad__ctx_type_0 _ctx;
    _ctx.target = 0x0 /* 0.000000 */;
@@ -134,7 +140,7 @@ void Ad__ctx_type_0_init(Ad__ctx_type_0 &_output_){
    _ctx.scale = 0x0 /* 0.000000 */;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.out = 0x0 /* 0.000000 */;
-   Util__ctx_type_0_init(_ctx._inst14);
+   Util__ctx_type_0_init(_ctx._inst15);
    _output_ = _ctx;
    return ;
 }
@@ -152,24 +158,24 @@ fix16_t Ad_do(Ad__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t d){
    uint8_t bgate;
    bgate = (gate > 0x0 /* 0.000000 */);
    _ctx.out = fix_add(_ctx.out,fix_mul(fix_mul(fix_add(_ctx.target,(- _ctx.out)),_ctx.rate),0x106 /* 0.004000 */));
-   uint8_t _cond_27;
-   _cond_27 = (_ctx.state == 0);
-   if(_cond_27){
-      uint8_t _cond_26;
-      _cond_26 = Util_edge(_ctx._inst14,bgate);
-      if(_cond_26){
+   uint8_t _cond_28;
+   _cond_28 = (_ctx.state == 0);
+   if(_cond_28){
+      uint8_t _cond_27;
+      _cond_27 = Util_edge(_ctx._inst15,bgate);
+      if(_cond_27){
          _ctx.state = 1;
          _ctx.scale = fix_mul(gate,0x3333 /* 0.200000 */);
       }
       _ctx.rate = d_rate;
       _ctx.target = 0x0 /* 0.000000 */;
    }
-   uint8_t _cond_29;
-   _cond_29 = (_ctx.state == 1);
-   if(_cond_29){
-      uint8_t _cond_28;
-      _cond_28 = (bool_not(bgate) || (_ctx.out > 0x4000000 /* 1024.000000 */));
-      if(_cond_28){
+   uint8_t _cond_30;
+   _cond_30 = (_ctx.state == 1);
+   if(_cond_30){
+      uint8_t _cond_29;
+      _cond_29 = (bool_not(bgate) || (_ctx.out > 0x4000000 /* 1024.000000 */));
+      if(_cond_29){
          _ctx.state = 0;
       }
       _ctx.rate = a_rate;
@@ -182,7 +188,7 @@ void Ad__ctx_type_1_init(Ad__ctx_type_1 &_output_){
    Ad__ctx_type_1 _ctx;
    _ctx.knob2 = 0x0 /* 0.000000 */;
    _ctx.knob1 = 0x0 /* 0.000000 */;
-   Ad__ctx_type_0_init(_ctx._inst19);
+   Ad__ctx_type_0_init(_ctx._inst20);
    _output_ = _ctx;
    return ;
 }
@@ -193,7 +199,7 @@ void Ad_process_init(Ad__ctx_type_1 &_output_){
 }
 
 fix16_t Ad_process(Ad__ctx_type_1 &_ctx, fix16_t gate){
-   return Ad_do(_ctx._inst19,gate,_ctx.knob1,_ctx.knob2);
+   return Ad_do(_ctx._inst20,gate,_ctx.knob1,_ctx.knob2);
 }
 
 void Ad_noteOn_init(Ad__ctx_type_1 &_output_){
@@ -218,14 +224,14 @@ void Ad_controlChange_init(Ad__ctx_type_1 &_output_){
 }
 
 void Ad_controlChange(Ad__ctx_type_1 &_ctx, int control, int value, int channel){
-   uint8_t _cond_30;
-   _cond_30 = (control == 1);
-   if(_cond_30){
+   uint8_t _cond_31;
+   _cond_31 = (control == 1);
+   if(_cond_31){
       _ctx.knob1 = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    }
-   uint8_t _cond_31;
-   _cond_31 = (control == 2);
-   if(_cond_31){
+   uint8_t _cond_32;
+   _cond_32 = (control == 2);
+   if(_cond_32){
       _ctx.knob2 = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    }
 }

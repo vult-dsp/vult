@@ -13,31 +13,34 @@ fun period(cv) @[table(size=32,min=0.0,max=1.0)] {
   return 44100.0 / f / 2.0;
 }
 
-// Returns the number of harmonics necessary for the given cv
-fun harmonics(cv) : real {
-  val p = int(period(cv));
-  return real(2 * p + 1);
-}
-
 // Generates a BW-limited pulse train given the phase and the number of harmonics
-fun pulse_train(m,phase){
-  val pi_phase = phase / 2.0;
-  val denominator = Tables.nsine(pi_phase);
-  val out = 0.;
-  if(denominator <= eps()) {
-    out = 1.;
-  }
-  else {
-    val numerator = Tables.nsine((m * pi_phase)%1.0);
-    out =  numerator / (m * denominator);
-  }
-  return out;
+fun pulse_train(cv, phase){
+   mem m, scale;
+   if(Util.change(cv)){
+      m = 2 * int(period(cv)) + 1;
+      scale = 2.0 * period(cv);
+   }
+   val pi_phase = phase / 2.0;
+   val denominator = Tables.nsine(pi_phase);
+   val out = 0.;
+   if(denominator <= eps()) {
+      out = 1.;
+   }
+   else {
+      val m_phase = (real(m) * pi_phase) % 1.0;
+      val numerator = Tables.nsine(m_phase);
+      out =  numerator / (scale * denominator);
+   }
+   return out;
+}
+and pulse_start() @[init] {
+   m = 2 * int(period(0.0)) + 1;
+   scale = 2.0 * period(0.0) + 1.0;
 }
 
 // Generates BW-limited waveforms using the blit algorithm.
 // It can generate PWM puses, saws and triangles.
 fun osc_blit(cv,pw,wave:real){
-  mem m;
   mem rate;
   mem state_pulse;
   mem state_saw;
@@ -53,8 +56,7 @@ fun osc_blit(cv,pw,wave:real){
   }
   // Updates the parameters if the cv changed
   if(Util.change(fixed_cv)) {
-    m = harmonics(fixed_cv);
-    rate = Util.cvToRate_unit(fixed_cv);
+    rate = Util.cvToRate(fixed_cv);
   }
   val phase = Phase.process(fixed_cv, 0.0);
   // Generates a shifted version of the phase
@@ -64,9 +66,9 @@ fun osc_blit(cv,pw,wave:real){
     shift = shift - 1.;
   }
   // Generates the first pulse train
-  val pulse1 = pulse_train(m,phase);
+  val pulse1 = pulse_train(fixed_cv, phase);
   // Generates the second pulse train
-  val pulse2 = pulse_train(m,shift);
+  val pulse2 = pulse_train(fixed_cv, shift);
 
   // Calculates the waveforms based on the pulse trains
   state_pulse  = state_pulse  * 0.9995 + pulse1 - pulse2;
@@ -84,8 +86,7 @@ fun osc_blit(cv,pw,wave:real){
   return output;
 }
 and init()@[init]{
-  m = harmonics(0.0);
-  rate = Util.cvToRate_unit(0.0);
+  rate = Util.cvToRate(0.0);
 }
 
 fun process(cv, pw, wave) {

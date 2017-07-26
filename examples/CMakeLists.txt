@@ -18,6 +18,7 @@ set(VULT_INCLUDES util osc midi env filters effects)
 
 vult_pd(phase osc/phase.vult VULT_INCLUDES)
 vult_pd(blit osc/blit.vult VULT_INCLUDES)
+vult_pd(saw_blit osc/saw_blit.vult VULT_INCLUDES)
 vult_pd(noise osc/noise.vult VULT_INCLUDES)
 vult_pd(phd osc/phd.vult VULT_INCLUDES)
 vult_pd(saw_eptr osc/saw_eptr.vult VULT_INCLUDES)

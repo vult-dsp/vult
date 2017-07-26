@@ -101,6 +101,12 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    return result;
 }
 
+fix16_t Util_pitchToRate_1024(fix16_t pitch){
+   int index;
+   index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
+   return fix_add(fix_get(fix_wrap_array(Util_pitchToRate_1024_c0),index),fix_mul(pitch,fix_add(fix_get(fix_wrap_array(Util_pitchToRate_1024_c1),index),fix_mul(fix_get(fix_wrap_array(Util_pitchToRate_1024_c2),index),pitch))));
+}
+
 fix16_t Util_pitchToRate(fix16_t pitch){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
@@ -109,6 +115,12 @@ fix16_t Util_pitchToRate(fix16_t pitch){
 
 fix16_t Util_cvToPitch(fix16_t cv){
    return fix_add(fix_mul(cv,0x780000 /* 120.000000 */),0x180000 /* 24.000000 */);
+}
+
+fix16_t Util_cvToRate_1024(fix16_t cv){
+   int index;
+   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
+   return fix_add(fix_get(fix_wrap_array(Util_cvToRate_1024_c0),index),fix_mul(cv,fix_add(fix_get(fix_wrap_array(Util_cvToRate_1024_c1),index),fix_mul(fix_get(fix_wrap_array(Util_cvToRate_1024_c2),index),cv))));
 }
 
 fix16_t Util_cvToRate(fix16_t cv){
@@ -121,16 +133,10 @@ fix16_t Util_pitchToCv(fix16_t pitch){
    return fix_mul(0x222 /* 0.008333 */,fix_add((-0x180000 /* -24.000000 */),pitch));
 }
 
-fix16_t Util_cvToRate_unit(fix16_t cv){
-   int index;
-   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
-   return fix_add(fix_get(fix_wrap_array(Util_cvToRate_unit_c0),index),fix_mul(cv,fix_add(fix_get(fix_wrap_array(Util_cvToRate_unit_c1),index),fix_mul(fix_get(fix_wrap_array(Util_cvToRate_unit_c2),index),cv))));
-}
-
 void Swept__ctx_type_0_init(Swept__ctx_type_0 &_output_){
    Swept__ctx_type_0 _ctx;
    _ctx.out = 0x0 /* 0.000000 */;
-   Util__ctx_type_0_init(_ctx._inst13);
+   Util__ctx_type_0_init(_ctx._inst14);
    _output_ = _ctx;
    return ;
 }
@@ -146,9 +152,9 @@ fix16_t Swept_process(Swept__ctx_type_0 &_ctx, fix16_t gate, fix16_t start, fix1
    uint8_t bgate;
    bgate = (gate > 0x8000 /* 0.500000 */);
    _ctx.out = fix_add(_ctx.out,fix_mul(fix_mul(fix_add(fix_mul(end,0x4000000 /* 1024.000000 */),(- _ctx.out)),rate),0x106 /* 0.004000 */));
-   uint8_t _cond_19;
-   _cond_19 = Util_edge(_ctx._inst13,bgate);
-   if(_cond_19){
+   uint8_t _cond_20;
+   _cond_20 = Util_edge(_ctx._inst14,bgate);
+   if(_cond_20){
       _ctx.out = fix_mul(start,0x4000000 /* 1024.000000 */);
    }
    return fix_mul(_ctx.out,0x40 /* 0.000977 */);

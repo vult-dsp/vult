@@ -101,6 +101,12 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    return result;
 }
 
+fix16_t Util_pitchToRate_1024(fix16_t pitch){
+   int index;
+   index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
+   return fix_add(fix_get(fix_wrap_array(Util_pitchToRate_1024_c0),index),fix_mul(pitch,fix_add(fix_get(fix_wrap_array(Util_pitchToRate_1024_c1),index),fix_mul(fix_get(fix_wrap_array(Util_pitchToRate_1024_c2),index),pitch))));
+}
+
 fix16_t Util_pitchToRate(fix16_t pitch){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
@@ -109,6 +115,12 @@ fix16_t Util_pitchToRate(fix16_t pitch){
 
 fix16_t Util_cvToPitch(fix16_t cv){
    return fix_add(fix_mul(cv,0x780000 /* 120.000000 */),0x180000 /* 24.000000 */);
+}
+
+fix16_t Util_cvToRate_1024(fix16_t cv){
+   int index;
+   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
+   return fix_add(fix_get(fix_wrap_array(Util_cvToRate_1024_c0),index),fix_mul(cv,fix_add(fix_get(fix_wrap_array(Util_cvToRate_1024_c1),index),fix_mul(fix_get(fix_wrap_array(Util_cvToRate_1024_c2),index),cv))));
 }
 
 fix16_t Util_cvToRate(fix16_t cv){
@@ -121,21 +133,15 @@ fix16_t Util_pitchToCv(fix16_t pitch){
    return fix_mul(0x222 /* 0.008333 */,fix_add((-0x180000 /* -24.000000 */),pitch));
 }
 
-fix16_t Util_cvToRate_unit(fix16_t cv){
-   int index;
-   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
-   return fix_add(fix_get(fix_wrap_array(Util_cvToRate_unit_c0),index),fix_mul(cv,fix_add(fix_get(fix_wrap_array(Util_cvToRate_unit_c1),index),fix_mul(fix_get(fix_wrap_array(Util_cvToRate_unit_c2),index),cv))));
-}
-
 void Sawcore_ptr_w2(fix16_t phase, fix16_t rate, _tuple_$_bool_real_$ &_output_){
    _tuple_$_bool_real_$ out;
    fix16_t s1;
    s1 = rate;
    fix16_t s2;
    s2 = fix_add(s1,rate);
-   uint8_t _cond_36;
-   _cond_36 = (phase < s1);
-   if(_cond_36){
+   uint8_t _cond_37;
+   _cond_37 = (phase < s1);
+   if(_cond_37){
       fix16_t d;
       d = fix_div(phase,rate);
       fix16_t t2;
@@ -147,9 +153,9 @@ void Sawcore_ptr_w2(fix16_t phase, fix16_t rate, _tuple_$_bool_real_$ &_output_)
    }
    else
    {
-      uint8_t _cond_35;
-      _cond_35 = (phase < s2);
-      if(_cond_35){
+      uint8_t _cond_36;
+      _cond_36 = (phase < s2);
+      if(_cond_36){
          fix16_t d;
          d = fix_div(phase,rate);
          fix16_t t2;
@@ -177,8 +183,8 @@ void Sawcore__ctx_type_1_init(Sawcore__ctx_type_1 &_output_){
    _ctx.reset_phase = 0x0 /* 0.000000 */;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
-   Util__ctx_type_0_init(_ctx._inst20);
-   Util__ctx_type_1_init(_ctx._inst18);
+   Util__ctx_type_0_init(_ctx._inst21);
+   Util__ctx_type_1_init(_ctx._inst19);
    Sawcore_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -194,20 +200,20 @@ fix16_t Sawcore_process(Sawcore__ctx_type_1 &_ctx, fix16_t cv, fix16_t reset){
    transition = 0x0 /* 0.000000 */;
    fix16_t out;
    out = 0x0 /* 0.000000 */;
-   uint8_t _cond_37;
-   _cond_37 = Util_change(_ctx._inst18,cv);
-   if(_cond_37){
-      _ctx.rate = Util_cvToRate(cv);
+   uint8_t _cond_38;
+   _cond_38 = Util_change(_ctx._inst19,cv);
+   if(_cond_38){
+      _ctx.rate = Util_cvToRate_1024(cv);
    }
    fix16_t new_phase;
    new_phase = fix_add(_ctx.phase,_ctx.rate);
    uint8_t do_reset;
-   do_reset = Util_edge(_ctx._inst20,(reset > 0x0 /* 0.000000 */));
+   do_reset = Util_edge(_ctx._inst21,(reset > 0x0 /* 0.000000 */));
    uint8_t do_wrap;
    do_wrap = (new_phase > 0x4000000 /* 1024.000000 */);
-   uint8_t _cond_38;
-   _cond_38 = (do_reset || do_wrap);
-   if(_cond_38){
+   uint8_t _cond_39;
+   _cond_39 = (do_reset || do_wrap);
+   if(_cond_39){
       _ctx.reset_phase = _ctx.phase;
       if(do_wrap){ new_phase = fix_add(new_phase,(-0x4000000 /* -1024.000000 */)); }
       else
@@ -219,9 +225,9 @@ fix16_t Sawcore_process(Sawcore__ctx_type_1 &_ctx, fix16_t cv, fix16_t reset){
    if(_ctx.reset_state){
       uint8_t done;
       fix16_t ptr;
-      _tuple_$_bool_real_$ _call_39;
-      Sawcore_ptr_w2(_ctx.phase,_ctx.rate,_call_39);
-      done = _call_39.field_0;ptr = _call_39.field_1;
+      _tuple_$_bool_real_$ _call_40;
+      Sawcore_ptr_w2(_ctx.phase,_ctx.rate,_call_40);
+      done = _call_40.field_0;ptr = _call_40.field_1;
       transition = fix_mul(fix_mul(fix_add(ptr,0x10000 /* 1.000000 */),0x8000 /* 0.500000 */),_ctx.reset_phase);
       if(done){
          _ctx.reset_state = 0;

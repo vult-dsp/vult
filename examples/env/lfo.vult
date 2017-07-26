@@ -16,7 +16,7 @@ fun soft(x1) {
 fun process(cv, shape, reset) {
    mem rate;
    if(Util.change(cv))
-      rate = Util.cvToRate_unit(cv-0.3);
+      rate = Util.cvToRate(cv-0.3);
    mem phase = (phase + rate) % 2.0;
    val breset = reset > 0.0;
    if(Util.edge(breset))

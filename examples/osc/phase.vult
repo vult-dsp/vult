@@ -11,7 +11,7 @@ fun process(cv:real, reset:real) : real {
    mem rate;
    if(Util.change(cv))
    {
-      rate = Util.cvToRate(cv);
+      rate = Util.cvToRate_1024(cv);
    }
    mem phase = if Util.edge(reset > 0.5) then 0.0 else phase + rate;
    phase = if phase > 1024.0 then phase - 1024.0 else phase;
@@ -21,5 +21,5 @@ and noteOn(note:int,velocity:int,channel:int){ }
 and noteOff(note:int,channel:int){ }
 and controlChange(control:int,value:int,channel:int){ }
 and default()@[init] {
-   rate = Util.cvToRate(0.0);
+   rate = Util.cvToRate_1024(0.0);
 }

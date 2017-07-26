@@ -6,7 +6,7 @@ A set of Vult examples where each file is a standalone module that can be compil
 
 The modules follow these conventions:
 
-* Pitch: 0.1 per octave, where 0.0 corresponds to C1
+* Pitch: 0.1 per octave, where 0.0 corresponds to C0
 * Audio: -1.0 to 1.0
 * Envelopes: 0.0 to 1.0
 * Gates: 0.0 to 1.0
@@ -25,7 +25,7 @@ The examples are organized in the following folders:
 
 ## Build the Modules
 
-To build the modules as PD externals you need to have installed [cmake](https://cmake.org) and the Vult compiler needs to be in your path as [vultc].
+To build the modules as PD externals you need to have installed [cmake](https://cmake.org) and the Vult compiler needs to be in your path as `vultc`.
 
 ```
 $ cd examples

@@ -101,6 +101,12 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    return result;
 }
 
+fix16_t Util_pitchToRate_1024(fix16_t pitch){
+   int index;
+   index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
+   return fix_add(fix_get(fix_wrap_array(Util_pitchToRate_1024_c0),index),fix_mul(pitch,fix_add(fix_get(fix_wrap_array(Util_pitchToRate_1024_c1),index),fix_mul(fix_get(fix_wrap_array(Util_pitchToRate_1024_c2),index),pitch))));
+}
+
 fix16_t Util_pitchToRate(fix16_t pitch){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
@@ -109,6 +115,12 @@ fix16_t Util_pitchToRate(fix16_t pitch){
 
 fix16_t Util_cvToPitch(fix16_t cv){
    return fix_add(fix_mul(cv,0x780000 /* 120.000000 */),0x180000 /* 24.000000 */);
+}
+
+fix16_t Util_cvToRate_1024(fix16_t cv){
+   int index;
+   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
+   return fix_add(fix_get(fix_wrap_array(Util_cvToRate_1024_c0),index),fix_mul(cv,fix_add(fix_get(fix_wrap_array(Util_cvToRate_1024_c1),index),fix_mul(fix_get(fix_wrap_array(Util_cvToRate_1024_c2),index),cv))));
 }
 
 fix16_t Util_cvToRate(fix16_t cv){
@@ -121,12 +133,6 @@ fix16_t Util_pitchToCv(fix16_t pitch){
    return fix_mul(0x222 /* 0.008333 */,fix_add((-0x180000 /* -24.000000 */),pitch));
 }
 
-fix16_t Util_cvToRate_unit(fix16_t cv){
-   int index;
-   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
-   return fix_add(fix_get(fix_wrap_array(Util_cvToRate_unit_c0),index),fix_mul(cv,fix_add(fix_get(fix_wrap_array(Util_cvToRate_unit_c1),index),fix_mul(fix_get(fix_wrap_array(Util_cvToRate_unit_c2),index),cv))));
-}
-
 fix16_t Saturate_soft_table(fix16_t x){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x18000 /* 1.500000 */,x)),0,9);
@@ -134,16 +140,16 @@ fix16_t Saturate_soft_table(fix16_t x){
 }
 
 fix16_t Saturate_soft_process(fix16_t x){
-   uint8_t _cond_21;
-   _cond_21 = (x == 0x0 /* 0.000000 */);
-   if(_cond_21){
+   uint8_t _cond_22;
+   _cond_22 = (x == 0x0 /* 0.000000 */);
+   if(_cond_22){
       return 0x0 /* 0.000000 */;
    }
    fix16_t fixed;
    uint8_t sign;
-   uint8_t _cond_23;
-   _cond_23 = (x > 0x0 /* 0.000000 */);
-   if(_cond_23){
+   uint8_t _cond_24;
+   _cond_24 = (x > 0x0 /* 0.000000 */);
+   if(_cond_24){
       fixed = x;
       sign = 0;
    }
@@ -154,9 +160,9 @@ fix16_t Saturate_soft_process(fix16_t x){
    }
    fix16_t out;
    out = 0x0 /* 0.000000 */;
-   uint8_t _cond_22;
-   _cond_22 = (fixed > 0x60000 /* 6.000000 */);
-   if(_cond_22){
+   uint8_t _cond_23;
+   _cond_23 = (fixed > 0x60000 /* 6.000000 */);
+   if(_cond_23){
       out = 0x10000 /* 1.000000 */;
    }
    else
@@ -193,8 +199,8 @@ void Svf__ctx_type_1_init(Svf__ctx_type_1 &_output_){
    _ctx.z1 = 0x0 /* 0.000000 */;
    _ctx.inv_den = 0x0 /* 0.000000 */;
    _ctx.g = 0x0 /* 0.000000 */;
+   Util__ctx_type_1_init(_ctx._inst30);
    Util__ctx_type_1_init(_ctx._inst29);
-   Util__ctx_type_1_init(_ctx._inst28);
    _ctx.R = 0x0 /* 0.000000 */;
    Svf_default(_ctx);
    _output_ = _ctx;
@@ -208,9 +214,9 @@ void Svf_process_init(Svf__ctx_type_1 &_output_){
 
 fix16_t Svf_process(Svf__ctx_type_1 &_ctx, fix16_t x, fix16_t cv, fix16_t q, int sel){
    q = fix_add(q,0x8000 /* 0.500000 */);
-   uint8_t _cond_35;
-   _cond_35 = (Util_change(_ctx._inst28,cv) || Util_change(_ctx._inst29,q));
-   if(_cond_35){
+   uint8_t _cond_36;
+   _cond_36 = (Util_change(_ctx._inst29,cv) || Util_change(_ctx._inst30,q));
+   if(_cond_36){
       _ctx.g = Svf_calc_g(cv);
       _ctx.R = fix_div(0x10000 /* 1.000000 */,fix_mul(0x20000 /* 2.000000 */,fix_add(q,0x0 /* 0.000000 */)));
       _ctx.inv_den = fix_div(0x10000 /* 1.000000 */,fix_add(fix_add(0x10000 /* 1.000000 */,fix_mul(fix_mul(0x20000 /* 2.000000 */,_ctx.R),_ctx.g)),fix_mul(_ctx.g,_ctx.g)));
@@ -226,19 +232,19 @@ fix16_t Svf_process(Svf__ctx_type_1 &_ctx, fix16_t x, fix16_t cv, fix16_t q, int
    _ctx.z1 = fix_add(fix_mul(_ctx.g,high),band);
    _ctx.z2 = fix_add(fix_mul(_ctx.g,band),low);
    fix16_t output;
-   uint8_t _cond_36;
-   _cond_36 = (sel == 0);
-   if(_cond_36){ output = low; }
+   uint8_t _cond_37;
+   _cond_37 = (sel == 0);
+   if(_cond_37){ output = low; }
    else
    {
-      uint8_t _cond_37;
-      _cond_37 = (sel == 1);
-      if(_cond_37){ output = high; }
+      uint8_t _cond_38;
+      _cond_38 = (sel == 1);
+      if(_cond_38){ output = high; }
       else
       {
-         uint8_t _cond_38;
-         _cond_38 = (sel == 2);
-         if(_cond_38){ output = band; }
+         uint8_t _cond_39;
+         _cond_39 = (sel == 2);
+         if(_cond_39){ output = band; }
          else
          { output = notch; }
       }
