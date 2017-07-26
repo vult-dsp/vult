@@ -92,7 +92,7 @@ Alternatively you can download the file `vultjs.js` from https://github.com/modl
 ### Installing the tools
  The simplest way to instal the requirements is with OPAM (https://opam.ocaml.org/)
 ```
-$ opam switch 4.04.0
+$ opam switch 4.04.2
 $ opam install containers ppx_deriving pla ollvm
 ```
 Optionally to run the tests and building the web functions:
