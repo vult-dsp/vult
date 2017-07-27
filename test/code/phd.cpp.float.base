@@ -133,12 +133,18 @@ float Util_pitchToCv(float pitch){
    return (0.008333f * ((-24.000000f) + pitch));
 }
 
+float Util_cvToperiod(float cv){
+   int index;
+   index = int_clip(float_to_int((31.000000f * cv)),0,31);
+   return (float_get(float_wrap_array(Util_cvToperiod_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToperiod_c1),index) + (float_get(float_wrap_array(Util_cvToperiod_c2),index) * cv))));
+}
+
 void Phase__ctx_type_0_init(Phase__ctx_type_0 &_output_){
    Phase__ctx_type_0 _ctx;
    _ctx.rate = 0.000000f;
    _ctx.phase = 0.000000f;
-   Util__ctx_type_0_init(_ctx._inst16);
-   Util__ctx_type_1_init(_ctx._inst14);
+   Util__ctx_type_0_init(_ctx._inst17);
+   Util__ctx_type_1_init(_ctx._inst15);
    Phase_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -150,19 +156,19 @@ void Phase_process_init(Phase__ctx_type_0 &_output_){
 }
 
 float Phase_process(Phase__ctx_type_0 &_ctx, float cv, float reset){
-   uint8_t _cond_21;
-   _cond_21 = Util_change(_ctx._inst14,cv);
-   if(_cond_21){
+   uint8_t _cond_22;
+   _cond_22 = Util_change(_ctx._inst15,cv);
+   if(_cond_22){
       _ctx.rate = Util_cvToRate_1024(cv);
    }
-   uint8_t _cond_22;
-   _cond_22 = Util_edge(_ctx._inst16,(reset > 0.500000f));
-   if(_cond_22){ _ctx.phase = 0.000000f; }
+   uint8_t _cond_23;
+   _cond_23 = Util_edge(_ctx._inst17,(reset > 0.500000f));
+   if(_cond_23){ _ctx.phase = 0.000000f; }
    else
    { _ctx.phase = (_ctx.phase + _ctx.rate); }
-   uint8_t _cond_23;
-   _cond_23 = (_ctx.phase > 1024.000000f);
-   if(_cond_23){ _ctx.phase = (_ctx.phase + (-1024.000000f)); }
+   uint8_t _cond_24;
+   _cond_24 = (_ctx.phase > 1024.000000f);
+   if(_cond_24){ _ctx.phase = (_ctx.phase + (-1024.000000f)); }
    else
    { _ctx.phase = _ctx.phase; }
    return (_ctx.phase * 0.000977f);
@@ -210,9 +216,9 @@ float Tables_nsine(float x){
 void Phd__ctx_type_0_init(Phd__ctx_type_0 &_output_){
    Phd__ctx_type_0 _ctx;
    _ctx.pre_phase1 = 0.000000f;
-   Phase__ctx_type_0_init(_ctx._inst28);
-   Util__ctx_type_4_init(_ctx._inst27);
-   Phase__ctx_type_0_init(_ctx._inst26);
+   Phase__ctx_type_0_init(_ctx._inst29);
+   Util__ctx_type_4_init(_ctx._inst28);
+   Phase__ctx_type_0_init(_ctx._inst27);
    _output_ = _ctx;
    return ;
 }
@@ -224,14 +230,14 @@ void Phd_process_init(Phd__ctx_type_0 &_output_){
 
 float Phd_process(Phd__ctx_type_0 &_ctx, float cv, float detune){
    float phase1;
-   phase1 = Phase_process(_ctx._inst26,cv,0.000000f);
+   phase1 = Phase_process(_ctx._inst27,cv,0.000000f);
    float comp;
    comp = (1.000000f + (- phase1));
    float reset;
    reset = (_ctx.pre_phase1 + (- phase1));
    _ctx.pre_phase1 = phase1;
    float phase2;
-   phase2 = Phase_process(_ctx._inst28,(cv + Util_smooth(_ctx._inst27,(detune * 0.500000f))),reset);
+   phase2 = Phase_process(_ctx._inst29,(cv + Util_smooth(_ctx._inst28,(detune * 0.500000f))),reset);
    float sine;
    sine = Tables_nsine(phase2);
    return (sine * comp);

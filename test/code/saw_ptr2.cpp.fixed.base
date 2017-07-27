@@ -133,11 +133,17 @@ fix16_t Util_pitchToCv(fix16_t pitch){
    return fix_mul(0x222 /* 0.008333 */,fix_add((-0x180000 /* -24.000000 */),pitch));
 }
 
+fix16_t Util_cvToperiod(fix16_t cv){
+   int index;
+   index = int_clip(fix_to_int(fix_mul(0x1f0000 /* 31.000000 */,cv)),0,31);
+   return fix_add(fix_get(fix_wrap_array(Util_cvToperiod_c0),index),fix_mul(cv,fix_add(fix_get(fix_wrap_array(Util_cvToperiod_c1),index),fix_mul(fix_get(fix_wrap_array(Util_cvToperiod_c2),index),cv))));
+}
+
 void Saw_ptr2__ctx_type_0_init(Saw_ptr2__ctx_type_0 &_output_){
    Saw_ptr2__ctx_type_0 _ctx;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
-   Util__ctx_type_1_init(_ctx._inst14);
+   Util__ctx_type_1_init(_ctx._inst15);
    Saw_ptr2_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -149,9 +155,9 @@ void Saw_ptr2_process_init(Saw_ptr2__ctx_type_0 &_output_){
 }
 
 fix16_t Saw_ptr2_process(Saw_ptr2__ctx_type_0 &_ctx, fix16_t cv){
-   uint8_t _cond_24;
-   _cond_24 = Util_change(_ctx._inst14,cv);
-   if(_cond_24){
+   uint8_t _cond_25;
+   _cond_25 = Util_change(_ctx._inst15,cv);
+   if(_cond_25){
       _ctx.rate = Util_cvToRate(cv);
    }
    fix16_t out;
@@ -160,23 +166,23 @@ fix16_t Saw_ptr2_process(Saw_ptr2__ctx_type_0 &_ctx, fix16_t cv){
    fix16_t s2;
    s2 = fix_add(s1,_ctx.rate);
    _ctx.phase = fix_add(_ctx.phase,_ctx.rate);
-   uint8_t _cond_27;
-   _cond_27 = (_ctx.phase > 0x10000 /* 1.000000 */);
-   if(_cond_27){ _ctx.phase = fix_add(_ctx.phase,(-0x10000 /* -1.000000 */)); }
+   uint8_t _cond_28;
+   _cond_28 = (_ctx.phase > 0x10000 /* 1.000000 */);
+   if(_cond_28){ _ctx.phase = fix_add(_ctx.phase,(-0x10000 /* -1.000000 */)); }
    else
    { _ctx.phase = _ctx.phase; }
-   uint8_t _cond_26;
-   _cond_26 = (_ctx.phase < s1);
-   if(_cond_26){
+   uint8_t _cond_27;
+   _cond_27 = (_ctx.phase < s1);
+   if(_cond_27){
       fix16_t d;
       d = fix_div(_ctx.phase,_ctx.rate);
       out = fix_add(0x10000 /* 1.000000 */,fix_mul(d,fix_add((- d),s2)));
    }
    else
    {
-      uint8_t _cond_25;
-      _cond_25 = (_ctx.phase < s2);
-      if(_cond_25){
+      uint8_t _cond_26;
+      _cond_26 = (_ctx.phase < s2);
+      if(_cond_26){
          fix16_t d;
          d = fix_div(_ctx.phase,_ctx.rate);
          out = fix_add(0x30000 /* 3.000000 */,fix_mul(d,fix_add(fix_add((-0x40000 /* -4.000000 */),d),s2)));

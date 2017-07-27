@@ -162,6 +162,15 @@ function this.Util_pitchToCv(pitch)
 
 end
 
+local Util_cvToperiod_c0 = ffi.new("double[33]", {674.246035,671.553838,662.761782,646.759522,623.799428,594.871802,561.298277,524.476942,485.731369,446.229382,406.947440,368.663774,331.968683,297.284156,264.887666,234.936857,207.493124,182.543016,160.016907,139.804832,121.769557,105.757117,91.605116,79.149088,68.227249,58.683895,50.371734,43.153355,36.902033,31.502025,26.848494,22.847166,19.413794});
+local Util_cvToperiod_c1 = ffi.new("double[33]", {(-4656.656311),(-4481.960579),(-4198.686133),(-3855.751543),(-3487.139455),(-3115.858821),(-2756.930319),(-2419.625141),(-2109.134753),(-1827.808334),(-1576.062963),(-1353.047092),(-1157.118864),(-986.186250),(-837.944665),(-710.039113),(-600.171234),(-506.166566),(-426.013463),(-357.882151),(-300.130190),(-251.298904),(-210.104105),(-175.423450),(-146.282114),(-121.837895),(-101.366537),(-84.247726),(-69.952082),(-58.029259),(-48.097248),(-39.832833),(-32.963186)});
+local Util_cvToperiod_c2 = ffi.new("double[33]", {14548.823162,11715.369522,9433.744675,7596.477297,6117.026622,4925.706117,3966.401040,3193.925264,2571.892879,2071.004308,1667.666208,1342.880152,1081.347751,870.750049,701.167268,564.611553,454.650724,366.105298,294.804521,237.389916,191.157082,153.928316,123.950032,99.810164,80.371652,64.718885,52.114569,41.965005,33.792117,27.210939,21.911477,17.644111,14.207835});
+function this.Util_cvToperiod(cv)
+   local index = this.clip(this.int((31.000000 * cv)),0,31);
+   return (this.get(this.wrap_array(Util_cvToperiod_c0),index) + (cv * (this.get(this.wrap_array(Util_cvToperiod_c1),index) + (this.get(this.wrap_array(Util_cvToperiod_c2),index) * cv))));
+
+end
+
 function this.Lfo__ctx_type_0_init()
    local _ctx = {};
    _ctx.x4 = 0.000000;
@@ -177,12 +186,12 @@ end
 
 function this.Lfo_soft(_ctx,x1)
    local o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) * 0.250000);
-   local _tmp_24_0 = x1;
-   local _tmp_24_1 = _ctx.x2;
-   local _tmp_24_2 = _ctx.x3;
-   _ctx.x2 = _tmp_24_0;
-   _ctx.x3 = _tmp_24_1;
-   _ctx.x4 = _tmp_24_2;
+   local _tmp_25_0 = x1;
+   local _tmp_25_1 = _ctx.x2;
+   local _tmp_25_2 = _ctx.x3;
+   _ctx.x2 = _tmp_25_0;
+   _ctx.x3 = _tmp_25_1;
+   _ctx.x4 = _tmp_25_2;
    return o;
 
 end
@@ -191,9 +200,9 @@ function this.Lfo__ctx_type_1_init()
    local _ctx = {};
    _ctx.rate = 0.000000;
    _ctx.phase = 0.000000;
-   _ctx._inst19 = this.Lfo__ctx_type_0_init();
-   _ctx._inst17 = this.Util__ctx_type_0_init();
-   _ctx._inst15 = this.Util__ctx_type_1_init();
+   _ctx._inst20 = this.Lfo__ctx_type_0_init();
+   _ctx._inst18 = this.Util__ctx_type_0_init();
+   _ctx._inst16 = this.Util__ctx_type_1_init();
    return _ctx;
 
 end
@@ -203,13 +212,13 @@ function this.Lfo_process_init()
 end
 
 function this.Lfo_process(_ctx,cv,shape,reset)
-   if this.Util_change(_ctx._inst15,cv) then
+   if this.Util_change(_ctx._inst16,cv) then
       _ctx.rate = this.Util_cvToRate((cv + (-0.300000)));
 
    end
    _ctx.phase = ((_ctx.phase + _ctx.rate) % 2.000000);
    local breset = (reset > 0.000000);
-   if this.Util_edge(_ctx._inst17,breset) then
+   if this.Util_edge(_ctx._inst18,breset) then
       _ctx.phase = 0.000000;
 
    end
@@ -219,15 +228,15 @@ function this.Lfo_process(_ctx,cv,shape,reset)
       o = tmp;
    else
 
-      local _cond_28 = false;
-      _cond_28 = (shape < 2.000000);
-      if _cond_28 then
+      local _cond_29 = false;
+      _cond_29 = (shape < 2.000000);
+      if _cond_29 then
          o = ((this.abs(tmp) * 2.000000) + (-1.000000));
       else
 
-         local _cond_29 = false;
-         _cond_29 = (tmp > 0.000000);
-         if _cond_29 then
+         local _cond_30 = false;
+         _cond_30 = (tmp > 0.000000);
+         if _cond_30 then
             o = 1.000000;
          else
 
@@ -237,7 +246,7 @@ function this.Lfo_process(_ctx,cv,shape,reset)
       end
 
    end
-   return this.Lfo_soft(_ctx._inst19,o);
+   return this.Lfo_soft(_ctx._inst20,o);
 
 end
 

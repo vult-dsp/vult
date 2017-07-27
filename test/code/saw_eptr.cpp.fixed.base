@@ -133,11 +133,17 @@ fix16_t Util_pitchToCv(fix16_t pitch){
    return fix_mul(0x222 /* 0.008333 */,fix_add((-0x180000 /* -24.000000 */),pitch));
 }
 
+fix16_t Util_cvToperiod(fix16_t cv){
+   int index;
+   index = int_clip(fix_to_int(fix_mul(0x1f0000 /* 31.000000 */,cv)),0,31);
+   return fix_add(fix_get(fix_wrap_array(Util_cvToperiod_c0),index),fix_mul(cv,fix_add(fix_get(fix_wrap_array(Util_cvToperiod_c1),index),fix_mul(fix_get(fix_wrap_array(Util_cvToperiod_c2),index),cv))));
+}
+
 void Saw_eptr__ctx_type_0_init(Saw_eptr__ctx_type_0 &_output_){
    Saw_eptr__ctx_type_0 _ctx;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
-   Util__ctx_type_1_init(_ctx._inst14);
+   Util__ctx_type_1_init(_ctx._inst15);
    Saw_eptr_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -151,15 +157,15 @@ void Saw_eptr_process_init(Saw_eptr__ctx_type_0 &_output_){
 fix16_t Saw_eptr_process(Saw_eptr__ctx_type_0 &_ctx, fix16_t cv){
    fix16_t y;
    y = 0x0 /* 0.000000 */;
-   uint8_t _cond_22;
-   _cond_22 = Util_change(_ctx._inst14,cv);
-   if(_cond_22){
+   uint8_t _cond_23;
+   _cond_23 = Util_change(_ctx._inst15,cv);
+   if(_cond_23){
       _ctx.rate = Util_cvToRate(cv);
    }
    _ctx.phase = fix_add(_ctx.phase,fix_mul(_ctx.rate,0x20000 /* 2.000000 */));
-   uint8_t _cond_23;
-   _cond_23 = (_ctx.phase > fix_add(0x10000 /* 1.000000 */,(- _ctx.rate)));
-   if(_cond_23){
+   uint8_t _cond_24;
+   _cond_24 = (_ctx.phase > fix_add(0x10000 /* 1.000000 */,(- _ctx.rate)));
+   if(_cond_24){
       y = fix_add(fix_add(fix_add(_ctx.phase,(- fix_div(_ctx.phase,_ctx.rate))),fix_div(0x10000 /* 1.000000 */,_ctx.rate)),(-0x10000 /* -1.000000 */));
       _ctx.phase = fix_add(_ctx.phase,(-0x20000 /* -2.000000 */));
    }

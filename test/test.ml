@@ -102,6 +102,7 @@ let all_files =
       "effects/short_delay.vult";
       "effects/saturate_soft.vult";
       "effects/saturate.vult";
+      "effects/rescomb.vult";
 
       "env/ad.vult";
       "env/adsr.vult";

@@ -162,6 +162,15 @@ function this.Util_pitchToCv(pitch)
 
 end
 
+local Util_cvToperiod_c0 = ffi.new("double[33]", {674.246035,671.553838,662.761782,646.759522,623.799428,594.871802,561.298277,524.476942,485.731369,446.229382,406.947440,368.663774,331.968683,297.284156,264.887666,234.936857,207.493124,182.543016,160.016907,139.804832,121.769557,105.757117,91.605116,79.149088,68.227249,58.683895,50.371734,43.153355,36.902033,31.502025,26.848494,22.847166,19.413794});
+local Util_cvToperiod_c1 = ffi.new("double[33]", {(-4656.656311),(-4481.960579),(-4198.686133),(-3855.751543),(-3487.139455),(-3115.858821),(-2756.930319),(-2419.625141),(-2109.134753),(-1827.808334),(-1576.062963),(-1353.047092),(-1157.118864),(-986.186250),(-837.944665),(-710.039113),(-600.171234),(-506.166566),(-426.013463),(-357.882151),(-300.130190),(-251.298904),(-210.104105),(-175.423450),(-146.282114),(-121.837895),(-101.366537),(-84.247726),(-69.952082),(-58.029259),(-48.097248),(-39.832833),(-32.963186)});
+local Util_cvToperiod_c2 = ffi.new("double[33]", {14548.823162,11715.369522,9433.744675,7596.477297,6117.026622,4925.706117,3966.401040,3193.925264,2571.892879,2071.004308,1667.666208,1342.880152,1081.347751,870.750049,701.167268,564.611553,454.650724,366.105298,294.804521,237.389916,191.157082,153.928316,123.950032,99.810164,80.371652,64.718885,52.114569,41.965005,33.792117,27.210939,21.911477,17.644111,14.207835});
+function this.Util_cvToperiod(cv)
+   local index = this.clip(this.int((31.000000 * cv)),0,31);
+   return (this.get(this.wrap_array(Util_cvToperiod_c0),index) + (cv * (this.get(this.wrap_array(Util_cvToperiod_c1),index) + (this.get(this.wrap_array(Util_cvToperiod_c2),index) * cv))));
+
+end
+
 function this.Adsr__ctx_type_0_init()
    local _ctx = {};
    _ctx.target = 0.000000;
@@ -169,8 +178,8 @@ function this.Adsr__ctx_type_0_init()
    _ctx.scale = 0.000000;
    _ctx.rate = 0.000000;
    _ctx.out = 0.000000;
-   _ctx._inst22 = this.Util__ctx_type_4_init();
-   _ctx._inst15 = this.Util__ctx_type_0_init();
+   _ctx._inst23 = this.Util__ctx_type_4_init();
+   _ctx._inst16 = this.Util__ctx_type_0_init();
    return _ctx;
 
 end
@@ -186,9 +195,9 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
    _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.004000));
    local bgate = (gate > 0.000000);
    if (_ctx.state == 0) then
-      local _cond_33 = false;
-      _cond_33 = this.Util_edge(_ctx._inst15,bgate);
-      if _cond_33 then
+      local _cond_34 = false;
+      _cond_34 = this.Util_edge(_ctx._inst16,bgate);
+      if _cond_34 then
          _ctx.state = 1;
          _ctx.scale = (gate * 0.200000);
 
@@ -198,15 +207,15 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
 
    end
    if (_ctx.state == 1) then
-      local _cond_35 = false;
-      _cond_35 = (not bgate);
-      if _cond_35 then
+      local _cond_36 = false;
+      _cond_36 = (not bgate);
+      if _cond_36 then
          _ctx.state = 0;
 
       end
-      local _cond_36 = false;
-      _cond_36 = (_ctx.out > 1024.000000);
-      if _cond_36 then
+      local _cond_37 = false;
+      _cond_37 = (_ctx.out > 1024.000000);
+      if _cond_37 then
          _ctx.state = 2;
 
       end
@@ -215,9 +224,9 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
 
    end
    if (_ctx.state == 2) then
-      local _cond_38 = false;
-      _cond_38 = (not bgate);
-      if _cond_38 then
+      local _cond_39 = false;
+      _cond_39 = (not bgate);
+      if _cond_39 then
          _ctx.state = 0;
 
       end
@@ -225,7 +234,7 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
       _ctx.target = (s * 1024.000000);
 
    end
-   return (this.Util_smooth(_ctx._inst22,_ctx.scale) * this.clip((_ctx.out * 0.000977),0.000000,1.000000));
+   return (this.Util_smooth(_ctx._inst23,_ctx.scale) * this.clip((_ctx.out * 0.000977),0.000000,1.000000));
 
 end
 
@@ -235,7 +244,7 @@ function this.Adsr__ctx_type_1_init()
    _ctx.knob3 = 0.000000;
    _ctx.knob2 = 0.000000;
    _ctx.knob1 = 0.000000;
-   _ctx._inst24 = this.Adsr__ctx_type_0_init();
+   _ctx._inst25 = this.Adsr__ctx_type_0_init();
    return _ctx;
 
 end
@@ -245,7 +254,7 @@ function this.Adsr_process_init()
 end
 
 function this.Adsr_process(_ctx,gate)
-   return this.Adsr_do(_ctx._inst24,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4);
+   return this.Adsr_do(_ctx._inst25,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4);
 
 end
 

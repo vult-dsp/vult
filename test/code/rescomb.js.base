@@ -1,3 +1,46 @@
+var Saturate_soft_table_c0 = [0.000000,(-0.000837),(-0.004130),(-0.011331),(-0.023628),(-0.041861),(-0.066455),(-0.097383),(-0.134146),(-0.175783),(-0.220903)];
+var Saturate_soft_table_c1 = [1.000234,1.003027,1.008519,1.016526,1.026781,1.038945,1.052619,1.067357,1.082688,1.098122,1.113175];
+var Saturate_soft_table_c2 = [(-0.001171),(-0.003500),(-0.005790),(-0.008016),(-0.010154),(-0.012182),(-0.014083),(-0.015839),(-0.017437),(-0.018867),(-0.020123)];
+this.Saturate_soft_table = function(x){
+   var index = (this.clip(this.int((1.500000 * x)),(0|0),(9|0))|0);
+   return (this.get(this.wrap_array(Saturate_soft_table_c0),index) + (x * (this.get(this.wrap_array(Saturate_soft_table_c1),index) + (this.get(this.wrap_array(Saturate_soft_table_c2),index) * x))));
+}
+this.Saturate_soft_process = function(x){
+   if((x == 0.000000)){
+      return 0.000000;
+   }
+   var fixed = 0.0;
+   var sign = false;
+   if((x > 0.000000)){
+      fixed = x;
+      sign = false;
+   }
+   else
+   {
+      fixed = (- x);
+      sign = true;
+   }
+   var out = 0.000000;
+   if((fixed > 6.000000)){
+      out = 1.000000;
+   }
+   else
+   {
+      out = this.Saturate_soft_table(fixed);
+   }
+   if(sign)out = (- out);
+   else
+   out = out;
+   return out;
+}
+this.Saturate_soft_noteOn = function(note,velocity,channel){
+}
+this.Saturate_soft_noteOff = function(note,channel){
+}
+this.Saturate_soft_controlChange = function(control,value,channel){
+}
+this.Saturate_soft_default = function(){
+}
 this.Util__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.pre = false;
@@ -98,88 +141,58 @@ this.Util_cvToperiod = function(cv){
    var index = (this.clip(this.int((31.000000 * cv)),(0|0),(31|0))|0);
    return (this.get(this.wrap_array(Util_cvToperiod_c0),index) + (cv * (this.get(this.wrap_array(Util_cvToperiod_c1),index) + (this.get(this.wrap_array(Util_cvToperiod_c2),index) * cv))));
 }
-this.Tricore__ctx_type_0_init = function(){
+this.Rescomb__ctx_type_0_init = function(){
    var _ctx = {};
-   _ctx.reset_state = false;
-   _ctx.reset_phase = 0.000000;
-   _ctx.rate = 0.000000;
-   _ctx.phase = 0.000000;
-   _ctx.direction = false;
-   _ctx._inst18 = this.Util__ctx_type_0_init();
-   _ctx._inst17 = this.Util__ctx_type_0_init();
-   _ctx._inst15 = this.Util__ctx_type_1_init();
-   this.Tricore_default(_ctx);
+   _ctx.write_pos = ((0|0)|0);
+   _ctx.buffer = this.makeArray((675|0),0.000000);
    return _ctx;
 }
-this.Tricore_process_init = function() { return this.Tricore__ctx_type_0_init();}
-this.Tricore_process = function(_ctx,cv,reset,disable){
-   var out = 0.000000;
-   if(this.Util_change(_ctx._inst15,cv)){
-      _ctx.rate = (4.000000 * this.Util_cvToRate_1024(cv));
-   }
-   var new_phase = 0.0;
-   var _if_31 = 0.0;
-   if(_ctx.direction)_if_31 = _ctx.rate;
+this.Rescomb_delay_init = function() { return this.Rescomb__ctx_type_0_init();}
+this.Rescomb_delay = function(_ctx,x,cv){
+   _ctx.write_pos = (((_ctx.write_pos + (1|0)) % (675|0))|0);
+   this.set(_ctx.buffer,_ctx.write_pos,x);
+   var r_size = 675.000000;
+   var r_index = ((this.real(_ctx.write_pos) + (- this.Util_cvToperiod(cv))) % r_size);
+   if((r_index < 0.000000))r_index = (r_size + r_index);
    else
-   _if_31 = (- _ctx.rate);
-   new_phase = (_ctx.phase + _if_31);
-   var bdisable = (disable > 0.500000);
-   if((this.Util_edge(_ctx._inst17,(reset > 0.000000)) || this.Util_edge(_ctx._inst18,bdisable))){
-      _ctx.reset_phase = _ctx.phase;
-      _ctx.reset_state = true;
-      new_phase = 0.000000;
-   }
-   if((new_phase > 1024.000000)){
-      new_phase = (1024.000000 + (- (new_phase + (-1024.000000))));
-      _ctx.direction = false;
-   }
-   else
-   {
-      var _cond_33 = false;
-      _cond_33 = (new_phase < (-1024.000000));
-      if(_cond_33){
-         _ctx.direction = true;
-         new_phase = new_phase;
-      }
-   }
-   if(bdisable)_ctx.phase = 0.000000;
-   else
-   _ctx.phase = new_phase;
-   if(_ctx.reset_state){
-      var _cond_36 = false;
-      _cond_36 = ((this.abs(_ctx.reset_phase) > 10.000000) || bdisable);
-      if(_cond_36){
-         var reset_speed = 0.0;
-         if(bdisable)reset_speed = 0.010000;
-         else
-         reset_speed = 0.500000;
-         _ctx.reset_phase = (_ctx.reset_phase + (- (_ctx.reset_phase * reset_speed)));
-      }
-      else
-      {
-         var _cond_35 = false;
-         _cond_35 = (_ctx.reset_phase > 10.000000);
-         if(_cond_35)_ctx.reset_phase = _ctx.reset_phase;
-         else
-         _ctx.reset_phase = 0.000000;
-         _ctx.reset_state = false;
-         _ctx.direction = true;
-      }
-      out = _ctx.reset_phase;
-   }
-   out = (out + _ctx.phase);
-   return (out * 0.000977);
+   r_index = r_index;
+   var t1 = (this.int(this.floor(r_index))|0);
+   var t2 = (((t1 + (1|0)) % (675|0))|0);
+   var decimal = (r_index + (- this.real(t1)));
+   var x1 = this.get(_ctx.buffer,t1);
+   var x2 = this.get(_ctx.buffer,t2);
+   var ret = (((x2 + (- x1)) * decimal) + x1);
+   return ret;
 }
-this.Tricore_noteOn_init = function() { return this.Tricore__ctx_type_0_init();}
-this.Tricore_noteOn = function(_ctx,note,velocity,channel){
+this.Rescomb__ctx_type_1_init = function(){
+   var _ctx = {};
+   _ctx.y = 0.000000;
+   _ctx._inst30 = this.Rescomb__ctx_type_0_init();
+   return _ctx;
 }
-this.Tricore_noteOff_init = function() { return this.Tricore__ctx_type_0_init();}
-this.Tricore_noteOff = function(_ctx,note,channel){
+this.Rescomb_do_init = function() { return this.Rescomb__ctx_type_1_init();}
+this.Rescomb_do = function(_ctx,in_,cv,tone,res){
+   _ctx.y = this.Saturate_soft_process(((tone * this.Rescomb_delay(_ctx._inst30,(in_ + (_ctx.y * res)),cv)) + in_));
+   return _ctx.y;
 }
-this.Tricore_controlChange_init = function() { return this.Tricore__ctx_type_0_init();}
-this.Tricore_controlChange = function(_ctx,control,value,channel){
+this.Rescomb__ctx_type_2_init = function(){
+   var _ctx = {};
+   _ctx._inst32 = this.Rescomb__ctx_type_1_init();
+   return _ctx;
 }
-this.Tricore_default_init = function() { return this.Tricore__ctx_type_0_init();}
-this.Tricore_default = function(_ctx){
-   _ctx.rate = 0.759367;
+this.Rescomb_process_init = function() { return this.Rescomb__ctx_type_2_init();}
+this.Rescomb_process = function(_ctx,in_,cv,tone,res){
+   return this.Rescomb_do(_ctx._inst32,in_,cv,tone,res);
+}
+this.Rescomb_noteOn_init = function() { return this.Rescomb__ctx_type_2_init();}
+this.Rescomb_noteOn = function(_ctx,note,velocity,channel){
+}
+this.Rescomb_noteOff_init = function() { return this.Rescomb__ctx_type_2_init();}
+this.Rescomb_noteOff = function(_ctx,note,channel){
+}
+this.Rescomb_controlChange_init = function() { return this.Rescomb__ctx_type_2_init();}
+this.Rescomb_controlChange = function(_ctx,control,value,channel){
+}
+this.Rescomb_default_init = function() { return this.Rescomb__ctx_type_2_init();}
+this.Rescomb_default = function(_ctx){
 }

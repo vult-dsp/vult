@@ -245,6 +245,15 @@ function this.Util_pitchToCv(pitch)
 
 end
 
+local Util_cvToperiod_c0 = ffi.new("double[33]", {674.246035,671.553838,662.761782,646.759522,623.799428,594.871802,561.298277,524.476942,485.731369,446.229382,406.947440,368.663774,331.968683,297.284156,264.887666,234.936857,207.493124,182.543016,160.016907,139.804832,121.769557,105.757117,91.605116,79.149088,68.227249,58.683895,50.371734,43.153355,36.902033,31.502025,26.848494,22.847166,19.413794});
+local Util_cvToperiod_c1 = ffi.new("double[33]", {(-4656.656311),(-4481.960579),(-4198.686133),(-3855.751543),(-3487.139455),(-3115.858821),(-2756.930319),(-2419.625141),(-2109.134753),(-1827.808334),(-1576.062963),(-1353.047092),(-1157.118864),(-986.186250),(-837.944665),(-710.039113),(-600.171234),(-506.166566),(-426.013463),(-357.882151),(-300.130190),(-251.298904),(-210.104105),(-175.423450),(-146.282114),(-121.837895),(-101.366537),(-84.247726),(-69.952082),(-58.029259),(-48.097248),(-39.832833),(-32.963186)});
+local Util_cvToperiod_c2 = ffi.new("double[33]", {14548.823162,11715.369522,9433.744675,7596.477297,6117.026622,4925.706117,3966.401040,3193.925264,2571.892879,2071.004308,1667.666208,1342.880152,1081.347751,870.750049,701.167268,564.611553,454.650724,366.105298,294.804521,237.389916,191.157082,153.928316,123.950032,99.810164,80.371652,64.718885,52.114569,41.965005,33.792117,27.210939,21.911477,17.644111,14.207835});
+function this.Util_cvToperiod(cv)
+   local index = this.clip(this.int((31.000000 * cv)),0,31);
+   return (this.get(this.wrap_array(Util_cvToperiod_c0),index) + (cv * (this.get(this.wrap_array(Util_cvToperiod_c1),index) + (this.get(this.wrap_array(Util_cvToperiod_c2),index) * cv))));
+
+end
+
 function this.Tricore__ctx_type_0_init()
    local _ctx = {};
    _ctx.reset_state = false;
@@ -252,9 +261,9 @@ function this.Tricore__ctx_type_0_init()
    _ctx.rate = 0.000000;
    _ctx.phase = 0.000000;
    _ctx.direction = false;
+   _ctx._inst26 = this.Util__ctx_type_0_init();
    _ctx._inst25 = this.Util__ctx_type_0_init();
-   _ctx._inst24 = this.Util__ctx_type_0_init();
-   _ctx._inst22 = this.Util__ctx_type_1_init();
+   _ctx._inst23 = this.Util__ctx_type_1_init();
    this.Tricore_default(_ctx);
    return _ctx;
 
@@ -266,21 +275,21 @@ end
 
 function this.Tricore_process(_ctx,cv,reset,disable)
    local out = 0.000000;
-   if this.Util_change(_ctx._inst22,cv) then
+   if this.Util_change(_ctx._inst23,cv) then
       _ctx.rate = (4.000000 * this.Util_cvToRate_1024(cv));
 
    end
    local new_phase = 0.0;
-   local _if_38 = 0.0;
+   local _if_39 = 0.0;
    if _ctx.direction then
-      _if_38 = _ctx.rate;
+      _if_39 = _ctx.rate;
    else
 
-      _if_38 = (- _ctx.rate);
+      _if_39 = (- _ctx.rate);
    end
-   new_phase = (_ctx.phase + _if_38);
+   new_phase = (_ctx.phase + _if_39);
    local bdisable = (disable > 0.500000);
-   if (this.Util_edge(_ctx._inst24,(reset > 0.000000)) or this.Util_edge(_ctx._inst25,bdisable)) then
+   if (this.Util_edge(_ctx._inst25,(reset > 0.000000)) or this.Util_edge(_ctx._inst26,bdisable)) then
       _ctx.reset_phase = _ctx.phase;
       _ctx.reset_state = true;
       new_phase = 0.000000;
@@ -292,9 +301,9 @@ function this.Tricore_process(_ctx,cv,reset,disable)
 
    else
 
-      local _cond_40 = false;
-      _cond_40 = (new_phase < (-1024.000000));
-      if _cond_40 then
+      local _cond_41 = false;
+      _cond_41 = (new_phase < (-1024.000000));
+      if _cond_41 then
          _ctx.direction = true;
          new_phase = new_phase;
 
@@ -308,9 +317,9 @@ function this.Tricore_process(_ctx,cv,reset,disable)
       _ctx.phase = new_phase;
    end
    if _ctx.reset_state then
-      local _cond_43 = false;
-      _cond_43 = ((this.abs(_ctx.reset_phase) > 10.000000) or bdisable);
-      if _cond_43 then
+      local _cond_44 = false;
+      _cond_44 = ((this.abs(_ctx.reset_phase) > 10.000000) or bdisable);
+      if _cond_44 then
          local reset_speed = 0.0;
          if bdisable then
             reset_speed = 0.010000;
@@ -322,9 +331,9 @@ function this.Tricore_process(_ctx,cv,reset,disable)
 
       else
 
-         local _cond_42 = false;
-         _cond_42 = (_ctx.reset_phase > 10.000000);
-         if _cond_42 then
+         local _cond_43 = false;
+         _cond_43 = (_ctx.reset_phase > 10.000000);
+         if _cond_43 then
             _ctx.reset_phase = _ctx.reset_phase;
          else
 
@@ -378,7 +387,7 @@ end
 function this.Swept__ctx_type_0_init()
    local _ctx = {};
    _ctx.out = 0.000000;
-   _ctx._inst45 = this.Util__ctx_type_0_init();
+   _ctx._inst46 = this.Util__ctx_type_0_init();
    return _ctx;
 
 end
@@ -391,7 +400,7 @@ function this.Swept_process(_ctx,gate,start,end_,rate)
    local a_rate = (1.000000 / ((100.000000 * rate) + 0.010000));
    local bgate = (gate > 0.500000);
    _ctx.out = (_ctx.out + (((end_ * 1024.000000) + (- _ctx.out)) * rate * 0.004000));
-   if this.Util_edge(_ctx._inst45,bgate) then
+   if this.Util_edge(_ctx._inst46,bgate) then
       _ctx.out = (start * 1024.000000);
 
    end
@@ -499,8 +508,8 @@ function this.Ahr__ctx_type_0_init()
    _ctx.rate = 0.000000;
    _ctx.out = 0.000000;
    _ctx.hold_phase = 0.000000;
-   _ctx._inst69 = this.Util__ctx_type_0_init();
-   _ctx._inst67 = this.Util__ctx_type_0_init();
+   _ctx._inst70 = this.Util__ctx_type_0_init();
+   _ctx._inst68 = this.Util__ctx_type_0_init();
    return _ctx;
 
 end
@@ -515,7 +524,7 @@ function this.Ahr_do(_ctx,gate,a,h,r)
    local hold = 2;
    local reset = 3;
    local bgate = (gate > 0.000000);
-   if this.Util_edge(_ctx._inst67,bgate) then
+   if this.Util_edge(_ctx._inst68,bgate) then
       _ctx.state = reset;
 
    end
@@ -526,7 +535,7 @@ function this.Ahr_do(_ctx,gate,a,h,r)
 
       resetting = 0.000000;
    end
-   if this.Util_edge(_ctx._inst69,(_ctx.out > 1024.000000)) then
+   if this.Util_edge(_ctx._inst70,(_ctx.out > 1024.000000)) then
       _ctx.hold_phase = 0.000000;
       _ctx.state = hold;
 
@@ -561,8 +570,8 @@ function this.Ahr_do(_ctx,gate,a,h,r)
 
    end
    _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.005000));
-   local _tuple_94 = { field_0 = this.clip((_ctx.out * 0.000977),0.000000,1.000000), field_1 = resetting };
-   return _tuple_94;
+   local _tuple_95 = { field_0 = this.clip((_ctx.out * 0.000977),0.000000,1.000000), field_1 = resetting };
+   return _tuple_95;
 
 end
 
@@ -571,7 +580,7 @@ function this.Ahr__ctx_type_1_init()
    _ctx.knob3 = 0.000000;
    _ctx.knob2 = 0.000000;
    _ctx.knob1 = 0.000000;
-   _ctx._inst78 = this.Ahr__ctx_type_0_init();
+   _ctx._inst79 = this.Ahr__ctx_type_0_init();
    return _ctx;
 
 end
@@ -581,8 +590,8 @@ function this.Ahr_process_init()
 end
 
 function this.Ahr_process(_ctx,gate)
-   local _call_97 = this.Ahr_do(_ctx._inst78,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
-   return _call_97;
+   local _call_98 = this.Ahr_do(_ctx._inst79,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
+   return _call_98;
 
 end
 
@@ -635,11 +644,11 @@ end
 
 function this.Kick__ctx_type_0_init()
    local _ctx = {};
-   _ctx._inst115 = this.Noise__ctx_type_1_init();
-   _ctx._inst114 = this.Ahr__ctx_type_0_init();
-   _ctx._inst113 = this.Tricore__ctx_type_0_init();
-   _ctx._inst112 = this.Swept__ctx_type_0_init();
-   _ctx._inst111 = this.Ahr__ctx_type_0_init();
+   _ctx._inst116 = this.Noise__ctx_type_1_init();
+   _ctx._inst115 = this.Ahr__ctx_type_0_init();
+   _ctx._inst114 = this.Tricore__ctx_type_0_init();
+   _ctx._inst113 = this.Swept__ctx_type_0_init();
+   _ctx._inst112 = this.Ahr__ctx_type_0_init();
    return _ctx;
 
 end
@@ -651,15 +660,15 @@ end
 function this.Kick_do(_ctx,gate,odecay,pitch,swept,noise)
    local osc_env = 0.0;
    local env_reset = 0.0;
-   local _call_126 = this.Ahr_do(_ctx._inst111,gate,0.005000,(0.100000 + odecay),(odecay + 0.010000));
-   osc_env = _call_126[1]; env_reset = _call_126[2]; 
-   local cv = this.Swept_process(_ctx._inst112,(1.000000 + (- env_reset)),(pitch + (swept * 0.400000)),pitch,0.100000);
-   local osc = this.Tricore_process(_ctx._inst113,cv,0.000000,env_reset);
+   local _call_127 = this.Ahr_do(_ctx._inst112,gate,0.005000,(0.100000 + odecay),(odecay + 0.010000));
+   osc_env = _call_127[1]; env_reset = _call_127[2]; 
+   local cv = this.Swept_process(_ctx._inst113,(1.000000 + (- env_reset)),(pitch + (swept * 0.400000)),pitch,0.100000);
+   local osc = this.Tricore_process(_ctx._inst114,cv,0.000000,env_reset);
    local osc_sat = this.Saturate_process((1.500000 * osc));
    local noise_env = 0.0;
-   local _call_127 = this.Ahr_do(_ctx._inst114,gate,0.001000,0.010000,((noise * 0.010000) + 0.001000));
-   noise_env = _call_127[1]; 
-   local noise_osc = (noise * this.Noise_process(_ctx._inst115,1.000000) * 0.333333);
+   local _call_128 = this.Ahr_do(_ctx._inst115,gate,0.001000,0.010000,((noise * 0.010000) + 0.001000));
+   noise_env = _call_128[1]; 
+   local noise_osc = (noise * this.Noise_process(_ctx._inst116,1.000000) * 0.333333);
    return ((osc_env * osc_sat) + (noise_env * noise_osc));
 
 end
@@ -670,7 +679,7 @@ function this.Kick__ctx_type_1_init()
    _ctx.pitch = 0.000000;
    _ctx.odecay = 0.000000;
    _ctx.noise = 0.000000;
-   _ctx._inst117 = this.Kick__ctx_type_0_init();
+   _ctx._inst118 = this.Kick__ctx_type_0_init();
    return _ctx;
 
 end
@@ -680,7 +689,7 @@ function this.Kick_process_init()
 end
 
 function this.Kick_process(_ctx,gate)
-   return this.Kick_do(_ctx._inst117,gate,_ctx.odecay,_ctx.pitch,_ctx.swept,_ctx.noise);
+   return this.Kick_do(_ctx._inst118,gate,_ctx.odecay,_ctx.pitch,_ctx.swept,_ctx.noise);
 
 end
 

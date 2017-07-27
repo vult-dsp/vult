@@ -133,18 +133,24 @@ fix16_t Util_pitchToCv(fix16_t pitch){
    return fix_mul(0x222 /* 0.008333 */,fix_add((-0x180000 /* -24.000000 */),pitch));
 }
 
+fix16_t Util_cvToperiod(fix16_t cv){
+   int index;
+   index = int_clip(fix_to_int(fix_mul(0x1f0000 /* 31.000000 */,cv)),0,31);
+   return fix_add(fix_get(fix_wrap_array(Util_cvToperiod_c0),index),fix_mul(cv,fix_add(fix_get(fix_wrap_array(Util_cvToperiod_c1),index),fix_mul(fix_get(fix_wrap_array(Util_cvToperiod_c2),index),cv))));
+}
+
 fix16_t Polycv_velToCV(int vel){
    return fix_mul(int_to_fix(vel),0x204 /* 0.007874 */);
 }
 
 fix16_t Polycv_velToGate(int vel){
-   fix16_t _if_31;
-   uint8_t _cond_41;
-   _cond_41 = (vel > 0);
-   if(_cond_41){ _if_31 = fix_mul(int_to_fix(vel),0x204 /* 0.007874 */); }
+   fix16_t _if_32;
+   uint8_t _cond_42;
+   _cond_42 = (vel > 0);
+   if(_cond_42){ _if_32 = fix_mul(int_to_fix(vel),0x204 /* 0.007874 */); }
    else
-   { _if_31 = 0x0 /* 0.000000 */; }
-   return _if_31;
+   { _if_32 = 0x0 /* 0.000000 */; }
+   return _if_32;
 }
 
 void Polycv__ctx_type_2_init(Polycv__ctx_type_2 &_output_){
@@ -166,9 +172,9 @@ void Polycv_poly_noteOn(Polycv__ctx_type_2 &_ctx, int note, int velocity){
    uint8_t found;
    found = 0;
    while((i < 4) && bool_not(found)){
-      uint8_t _cond_32;
-      _cond_32 = (int_get(_ctx.vel,i) == 0);
-      if(_cond_32){
+      uint8_t _cond_33;
+      _cond_33 = (int_get(_ctx.vel,i) == 0);
+      if(_cond_33){
          int_set(_ctx.notes,i,note);
          int_set(_ctx.vel,i,velocity);
          found = 1;
@@ -188,9 +194,9 @@ void Polycv_poly_noteOff(Polycv__ctx_type_2 &_ctx, int note){
    uint8_t found;
    found = 0;
    while((i < 4) && bool_not(found)){
-      uint8_t _cond_33;
-      _cond_33 = (int_get(_ctx.notes,i) == note);
-      if(_cond_33){
+      uint8_t _cond_34;
+      _cond_34 = (int_get(_ctx.notes,i) == note);
+      if(_cond_34){
          int_set(_ctx.vel,i,0);
          found = 1;
       }
@@ -228,22 +234,22 @@ void Polycv_polyState(Polycv__ctx_type_2 &_ctx, _tuple_$_real_real_real_real_rea
    gate3 = Polycv_velToGate(int_get(_ctx.vel,2));
    fix16_t gate4;
    gate4 = Polycv_velToGate(int_get(_ctx.vel,3));
-   _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ _tuple_34;
+   _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ _tuple_35;
    {
-      _tuple_34.field_0 = note1;
-      _tuple_34.field_1 = vel1;
-      _tuple_34.field_2 = gate1;
-      _tuple_34.field_3 = note2;
-      _tuple_34.field_4 = vel2;
-      _tuple_34.field_5 = gate2;
-      _tuple_34.field_6 = note3;
-      _tuple_34.field_7 = vel3;
-      _tuple_34.field_8 = gate3;
-      _tuple_34.field_9 = note4;
-      _tuple_34.field_10 = vel4;
-      _tuple_34.field_11 = gate4;
+      _tuple_35.field_0 = note1;
+      _tuple_35.field_1 = vel1;
+      _tuple_35.field_2 = gate1;
+      _tuple_35.field_3 = note2;
+      _tuple_35.field_4 = vel2;
+      _tuple_35.field_5 = gate2;
+      _tuple_35.field_6 = note3;
+      _tuple_35.field_7 = vel3;
+      _tuple_35.field_8 = gate3;
+      _tuple_35.field_9 = note4;
+      _tuple_35.field_10 = vel4;
+      _tuple_35.field_11 = gate4;
    }
-   _output_ = _tuple_34;
+   _output_ = _tuple_35;
    return ;
 }
 
@@ -262,9 +268,9 @@ void Polycv_process_init(Polycv__ctx_type_3 &_output_){
 
 void Polycv_process(Polycv__ctx_type_3 &_ctx, int c, _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ &_output_){
    _ctx.channel_in = c;
-   _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ _call_36;
-   Polycv_polyState(_ctx.poly,_call_36);
-   _output_ = _call_36;
+   _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ _call_37;
+   Polycv_polyState(_ctx.poly,_call_37);
+   _output_ = _call_37;
    return ;
 }
 
@@ -274,12 +280,12 @@ void Polycv_noteOn_init(Polycv__ctx_type_3 &_output_){
 }
 
 void Polycv_noteOn(Polycv__ctx_type_3 &_ctx, int note, int velocity, int channel){
-   uint8_t _cond_39;
-   _cond_39 = (_ctx.channel_in == channel);
-   if(_cond_39){
-      uint8_t _cond_38;
-      _cond_38 = (velocity > 0);
-      if(_cond_38){
+   uint8_t _cond_40;
+   _cond_40 = (_ctx.channel_in == channel);
+   if(_cond_40){
+      uint8_t _cond_39;
+      _cond_39 = (velocity > 0);
+      if(_cond_39){
          Polycv_poly_noteOn(_ctx.poly,note,velocity);
       }
       else
@@ -295,9 +301,9 @@ void Polycv_noteOff_init(Polycv__ctx_type_3 &_output_){
 }
 
 void Polycv_noteOff(Polycv__ctx_type_3 &_ctx, int note, int channel){
-   uint8_t _cond_40;
-   _cond_40 = (_ctx.channel_in == channel);
-   if(_cond_40){
+   uint8_t _cond_41;
+   _cond_41 = (_ctx.channel_in == channel);
+   if(_cond_41){
       Polycv_poly_noteOff(_ctx.poly,note);
    }
 }

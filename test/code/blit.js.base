@@ -91,21 +91,28 @@ this.Util_cvToRate = function(cv){
 this.Util_pitchToCv = function(pitch){
    return (0.008333 * ((-24.000000) + pitch));
 }
+var Util_cvToperiod_c0 = [674.246035,671.553838,662.761782,646.759522,623.799428,594.871802,561.298277,524.476942,485.731369,446.229382,406.947440,368.663774,331.968683,297.284156,264.887666,234.936857,207.493124,182.543016,160.016907,139.804832,121.769557,105.757117,91.605116,79.149088,68.227249,58.683895,50.371734,43.153355,36.902033,31.502025,26.848494,22.847166,19.413794];
+var Util_cvToperiod_c1 = [(-4656.656311),(-4481.960579),(-4198.686133),(-3855.751543),(-3487.139455),(-3115.858821),(-2756.930319),(-2419.625141),(-2109.134753),(-1827.808334),(-1576.062963),(-1353.047092),(-1157.118864),(-986.186250),(-837.944665),(-710.039113),(-600.171234),(-506.166566),(-426.013463),(-357.882151),(-300.130190),(-251.298904),(-210.104105),(-175.423450),(-146.282114),(-121.837895),(-101.366537),(-84.247726),(-69.952082),(-58.029259),(-48.097248),(-39.832833),(-32.963186)];
+var Util_cvToperiod_c2 = [14548.823162,11715.369522,9433.744675,7596.477297,6117.026622,4925.706117,3966.401040,3193.925264,2571.892879,2071.004308,1667.666208,1342.880152,1081.347751,870.750049,701.167268,564.611553,454.650724,366.105298,294.804521,237.389916,191.157082,153.928316,123.950032,99.810164,80.371652,64.718885,52.114569,41.965005,33.792117,27.210939,21.911477,17.644111,14.207835];
+this.Util_cvToperiod = function(cv){
+   var index = (this.clip(this.int((31.000000 * cv)),(0|0),(31|0))|0);
+   return (this.get(this.wrap_array(Util_cvToperiod_c0),index) + (cv * (this.get(this.wrap_array(Util_cvToperiod_c1),index) + (this.get(this.wrap_array(Util_cvToperiod_c2),index) * cv))));
+}
 this.Phase__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.rate = 0.000000;
    _ctx.phase = 0.000000;
-   _ctx._inst16 = this.Util__ctx_type_0_init();
-   _ctx._inst14 = this.Util__ctx_type_1_init();
+   _ctx._inst17 = this.Util__ctx_type_0_init();
+   _ctx._inst15 = this.Util__ctx_type_1_init();
    this.Phase_default(_ctx);
    return _ctx;
 }
 this.Phase_process_init = function() { return this.Phase__ctx_type_0_init();}
 this.Phase_process = function(_ctx,cv,reset){
-   if(this.Util_change(_ctx._inst14,cv)){
+   if(this.Util_change(_ctx._inst15,cv)){
       _ctx.rate = this.Util_cvToRate_1024(cv);
    }
-   if(this.Util_edge(_ctx._inst16,(reset > 0.500000)))_ctx.phase = 0.000000;
+   if(this.Util_edge(_ctx._inst17,(reset > 0.500000)))_ctx.phase = 0.000000;
    else
    _ctx.phase = (_ctx.phase + _ctx.rate);
    if((_ctx.phase > 1024.000000))_ctx.phase = (_ctx.phase + (-1024.000000));
@@ -133,14 +140,7 @@ this.Tables_nsine = function(x){
    var index = (this.clip(this.int((127.000000 * x)),(0|0),(127|0))|0);
    return (this.get(this.wrap_array(Tables_nsine_c0),index) + (x * (this.get(this.wrap_array(Tables_nsine_c1),index) + (this.get(this.wrap_array(Tables_nsine_c2),index) * x))));
 }
-var Blit_period_c0 = [674.246035,671.553838,662.761782,646.759522,623.799428,594.871802,561.298277,524.476942,485.731369,446.229382,406.947440,368.663774,331.968683,297.284156,264.887666,234.936857,207.493124,182.543016,160.016907,139.804832,121.769557,105.757117,91.605116,79.149088,68.227249,58.683895,50.371734,43.153355,36.902033,31.502025,26.848494,22.847166,19.413794];
-var Blit_period_c1 = [(-4656.656311),(-4481.960579),(-4198.686133),(-3855.751543),(-3487.139455),(-3115.858821),(-2756.930319),(-2419.625141),(-2109.134753),(-1827.808334),(-1576.062963),(-1353.047092),(-1157.118864),(-986.186250),(-837.944665),(-710.039113),(-600.171234),(-506.166566),(-426.013463),(-357.882151),(-300.130190),(-251.298904),(-210.104105),(-175.423450),(-146.282114),(-121.837895),(-101.366537),(-84.247726),(-69.952082),(-58.029259),(-48.097248),(-39.832833),(-32.963186)];
-var Blit_period_c2 = [14548.823162,11715.369522,9433.744675,7596.477297,6117.026622,4925.706117,3966.401040,3193.925264,2571.892879,2071.004308,1667.666208,1342.880152,1081.347751,870.750049,701.167268,564.611553,454.650724,366.105298,294.804521,237.389916,191.157082,153.928316,123.950032,99.810164,80.371652,64.718885,52.114569,41.965005,33.792117,27.210939,21.911477,17.644111,14.207835];
-this.Blit_period = function(cv){
-   var index = (this.clip(this.int((31.000000 * cv)),(0|0),(31|0))|0);
-   return (this.get(this.wrap_array(Blit_period_c0),index) + (cv * (this.get(this.wrap_array(Blit_period_c1),index) + (this.get(this.wrap_array(Blit_period_c2),index) * cv))));
-}
-this.Blit__ctx_type_1_init = function(){
+this.Blit__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.scale = 0.000000;
    _ctx.m = ((0|0)|0);
@@ -148,11 +148,11 @@ this.Blit__ctx_type_1_init = function(){
    this.Blit_pulse_start(_ctx);
    return _ctx;
 }
-this.Blit_pulse_train_init = function() { return this.Blit__ctx_type_1_init();}
+this.Blit_pulse_train_init = function() { return this.Blit__ctx_type_0_init();}
 this.Blit_pulse_train = function(_ctx,cv,phase){
    if(this.Util_change(_ctx._inst27,cv)){
-      _ctx.m = ((((2|0) * this.int(this.Blit_period(cv))) + (1|0))|0);
-      _ctx.scale = (2.000000 * this.Blit_period(cv));
+      _ctx.m = ((((2|0) * this.int(this.Util_cvToperiod(cv))) + (1|0))|0);
+      _ctx.scale = (2.000000 * this.Util_cvToperiod(cv));
    }
    var pi_phase = (phase * 0.500000);
    var denominator = this.Tables_nsine(pi_phase);
@@ -170,26 +170,26 @@ this.Blit_pulse_train = function(_ctx,cv,phase){
    }
    return out;
 }
-this.Blit_pulse_start_init = function() { return this.Blit__ctx_type_1_init();}
+this.Blit_pulse_start_init = function() { return this.Blit__ctx_type_0_init();}
 this.Blit_pulse_start = function(_ctx){
    _ctx.m = ((1349|0)|0);
    _ctx.scale = 1349.492070;
 }
-this.Blit__ctx_type_2_init = function(){
+this.Blit__ctx_type_1_init = function(){
    var _ctx = {};
    _ctx.state_saw = 0.000000;
    _ctx.state_pulse = 0.000000;
    _ctx.rate = 0.000000;
    _ctx.output = 0.000000;
    _ctx._inst43 = this.Util__ctx_type_3_init();
-   _ctx._inst40 = this.Blit__ctx_type_1_init();
-   _ctx._inst39 = this.Blit__ctx_type_1_init();
+   _ctx._inst40 = this.Blit__ctx_type_0_init();
+   _ctx._inst39 = this.Blit__ctx_type_0_init();
    _ctx._inst37 = this.Phase__ctx_type_0_init();
    _ctx._inst35 = this.Util__ctx_type_1_init();
    this.Blit_init(_ctx);
    return _ctx;
 }
-this.Blit_osc_blit_init = function() { return this.Blit__ctx_type_2_init();}
+this.Blit_osc_blit_init = function() { return this.Blit__ctx_type_1_init();}
 this.Blit_osc_blit = function(_ctx,cv,pw,wave){
    var fixed_cv = 0.000000;
    if((wave < 1.000000)){
@@ -222,28 +222,28 @@ this.Blit_osc_blit = function(_ctx,cv,pw,wave){
    _ctx.output = this.Util_dcblock(_ctx._inst43,_ctx.output);
    return _ctx.output;
 }
-this.Blit_init_init = function() { return this.Blit__ctx_type_2_init();}
+this.Blit_init_init = function() { return this.Blit__ctx_type_1_init();}
 this.Blit_init = function(_ctx){
    _ctx.rate = 0.000742;
 }
-this.Blit__ctx_type_3_init = function(){
+this.Blit__ctx_type_2_init = function(){
    var _ctx = {};
-   _ctx._inst46 = this.Blit__ctx_type_2_init();
+   _ctx._inst46 = this.Blit__ctx_type_1_init();
    return _ctx;
 }
-this.Blit_process_init = function() { return this.Blit__ctx_type_3_init();}
+this.Blit_process_init = function() { return this.Blit__ctx_type_2_init();}
 this.Blit_process = function(_ctx,cv,pw,wave){
    return this.Blit_osc_blit(_ctx._inst46,cv,pw,wave);
 }
-this.Blit_noteOn_init = function() { return this.Blit__ctx_type_3_init();}
+this.Blit_noteOn_init = function() { return this.Blit__ctx_type_2_init();}
 this.Blit_noteOn = function(_ctx,note,velocity,channel){
 }
-this.Blit_noteOff_init = function() { return this.Blit__ctx_type_3_init();}
+this.Blit_noteOff_init = function() { return this.Blit__ctx_type_2_init();}
 this.Blit_noteOff = function(_ctx,note,channel){
 }
-this.Blit_controlChange_init = function() { return this.Blit__ctx_type_3_init();}
+this.Blit_controlChange_init = function() { return this.Blit__ctx_type_2_init();}
 this.Blit_controlChange = function(_ctx,control,value,channel){
 }
-this.Blit_default_init = function() { return this.Blit__ctx_type_3_init();}
+this.Blit_default_init = function() { return this.Blit__ctx_type_2_init();}
 this.Blit_default = function(_ctx){
 }

@@ -91,6 +91,13 @@ this.Util_cvToRate = function(cv){
 this.Util_pitchToCv = function(pitch){
    return (0.008333 * ((-24.000000) + pitch));
 }
+var Util_cvToperiod_c0 = [674.246035,671.553838,662.761782,646.759522,623.799428,594.871802,561.298277,524.476942,485.731369,446.229382,406.947440,368.663774,331.968683,297.284156,264.887666,234.936857,207.493124,182.543016,160.016907,139.804832,121.769557,105.757117,91.605116,79.149088,68.227249,58.683895,50.371734,43.153355,36.902033,31.502025,26.848494,22.847166,19.413794];
+var Util_cvToperiod_c1 = [(-4656.656311),(-4481.960579),(-4198.686133),(-3855.751543),(-3487.139455),(-3115.858821),(-2756.930319),(-2419.625141),(-2109.134753),(-1827.808334),(-1576.062963),(-1353.047092),(-1157.118864),(-986.186250),(-837.944665),(-710.039113),(-600.171234),(-506.166566),(-426.013463),(-357.882151),(-300.130190),(-251.298904),(-210.104105),(-175.423450),(-146.282114),(-121.837895),(-101.366537),(-84.247726),(-69.952082),(-58.029259),(-48.097248),(-39.832833),(-32.963186)];
+var Util_cvToperiod_c2 = [14548.823162,11715.369522,9433.744675,7596.477297,6117.026622,4925.706117,3966.401040,3193.925264,2571.892879,2071.004308,1667.666208,1342.880152,1081.347751,870.750049,701.167268,564.611553,454.650724,366.105298,294.804521,237.389916,191.157082,153.928316,123.950032,99.810164,80.371652,64.718885,52.114569,41.965005,33.792117,27.210939,21.911477,17.644111,14.207835];
+this.Util_cvToperiod = function(cv){
+   var index = (this.clip(this.int((31.000000 * cv)),(0|0),(31|0))|0);
+   return (this.get(this.wrap_array(Util_cvToperiod_c0),index) + (cv * (this.get(this.wrap_array(Util_cvToperiod_c1),index) + (this.get(this.wrap_array(Util_cvToperiod_c2),index) * cv))));
+}
 this.Monocv__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.pre = ((0|0)|0);
@@ -103,9 +110,9 @@ this.Monocv_mono_noteOn = function(_ctx,n){
    if((_ctx.count < (4|0))){
       this.set(_ctx.notes,_ctx.count,n);
       _ctx.pre = (n|0);
-      var _cond_33 = false;
-      _cond_33 = (_ctx.count < (4|0));
-      if(_cond_33){
+      var _cond_34 = false;
+      _cond_34 = (_ctx.count < (4|0));
+      if(_cond_34){
          _ctx.count = ((_ctx.count + (1|0))|0);
       }
    }
@@ -120,9 +127,9 @@ this.Monocv_mono_noteOff = function(_ctx,n){
       return _ctx.pre;
    }
    while(((i < (4|0)) && this.not(found))){
-      var _cond_36 = false;
-      _cond_36 = (this.get(_ctx.notes,i) == n);
-      if(_cond_36){
+      var _cond_37 = false;
+      _cond_37 = (this.get(_ctx.notes,i) == n);
+      if(_cond_37){
          pos = (i|0);
          found = true;
       }
@@ -135,9 +142,9 @@ this.Monocv_mono_noteOff = function(_ctx,n){
          this.set(_ctx.notes,(k + (-1|0)),this.get(_ctx.notes,k));
          k = ((k + (1|0))|0);
       }
-      var _cond_37 = false;
-      _cond_37 = (found && (_ctx.count > (0|0)));
-      if(_cond_37){
+      var _cond_38 = false;
+      _cond_38 = (found && (_ctx.count > (0|0)));
+      if(_cond_38){
          _ctx.count = ((_ctx.count + (-1|0))|0);
          _ctx.pre = (this.get(_ctx.notes,(_ctx.count + (-1|0)))|0);
       }
@@ -165,15 +172,15 @@ this.Monocv_process = function(_ctx,c){
    else
    _ctx.gate = 0.000000;
    _ctx.cv = this.Util_pitchToCv(this.real(_ctx.active_note));
-   var _tuple_38 = { field_0 : _ctx.cv, field_1 : _ctx.vel, field_2 : _ctx.gate };
-   return _tuple_38;
+   var _tuple_39 = { field_0 : _ctx.cv, field_1 : _ctx.vel, field_2 : _ctx.gate };
+   return _tuple_39;
 }
 this.Monocv_noteOn_init = function() { return this.Monocv__ctx_type_1_init();}
 this.Monocv_noteOn = function(_ctx,note,velocity,channel){
    if((_ctx.channel_in == channel)){
-      var _cond_41 = false;
-      _cond_41 = (velocity > (0|0));
-      if(_cond_41){
+      var _cond_42 = false;
+      _cond_42 = (velocity > (0|0));
+      if(_cond_42){
          _ctx.active_note = (this.Monocv_mono_noteOn(_ctx.notes,note)|0);
          _ctx.vel = (this.real(velocity) * 0.007874);
       }

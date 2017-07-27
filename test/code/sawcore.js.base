@@ -91,6 +91,13 @@ this.Util_cvToRate = function(cv){
 this.Util_pitchToCv = function(pitch){
    return (0.008333 * ((-24.000000) + pitch));
 }
+var Util_cvToperiod_c0 = [674.246035,671.553838,662.761782,646.759522,623.799428,594.871802,561.298277,524.476942,485.731369,446.229382,406.947440,368.663774,331.968683,297.284156,264.887666,234.936857,207.493124,182.543016,160.016907,139.804832,121.769557,105.757117,91.605116,79.149088,68.227249,58.683895,50.371734,43.153355,36.902033,31.502025,26.848494,22.847166,19.413794];
+var Util_cvToperiod_c1 = [(-4656.656311),(-4481.960579),(-4198.686133),(-3855.751543),(-3487.139455),(-3115.858821),(-2756.930319),(-2419.625141),(-2109.134753),(-1827.808334),(-1576.062963),(-1353.047092),(-1157.118864),(-986.186250),(-837.944665),(-710.039113),(-600.171234),(-506.166566),(-426.013463),(-357.882151),(-300.130190),(-251.298904),(-210.104105),(-175.423450),(-146.282114),(-121.837895),(-101.366537),(-84.247726),(-69.952082),(-58.029259),(-48.097248),(-39.832833),(-32.963186)];
+var Util_cvToperiod_c2 = [14548.823162,11715.369522,9433.744675,7596.477297,6117.026622,4925.706117,3966.401040,3193.925264,2571.892879,2071.004308,1667.666208,1342.880152,1081.347751,870.750049,701.167268,564.611553,454.650724,366.105298,294.804521,237.389916,191.157082,153.928316,123.950032,99.810164,80.371652,64.718885,52.114569,41.965005,33.792117,27.210939,21.911477,17.644111,14.207835];
+this.Util_cvToperiod = function(cv){
+   var index = (this.clip(this.int((31.000000 * cv)),(0|0),(31|0))|0);
+   return (this.get(this.wrap_array(Util_cvToperiod_c0),index) + (cv * (this.get(this.wrap_array(Util_cvToperiod_c1),index) + (this.get(this.wrap_array(Util_cvToperiod_c2),index) * cv))));
+}
 this.Sawcore_ptr_w2 = function(phase,rate){
    var out = {};
    var s1 = rate;
@@ -104,9 +111,9 @@ this.Sawcore_ptr_w2 = function(phase,rate){
    }
    else
    {
-      var _cond_36 = false;
-      _cond_36 = (phase < s2);
-      if(_cond_36){
+      var _cond_37 = false;
+      _cond_37 = (phase < s2);
+      if(_cond_37){
          var d = 0.0;
          d = (phase / rate);
          var t2 = 0.0;
@@ -126,8 +133,8 @@ this.Sawcore__ctx_type_1_init = function(){
    _ctx.reset_phase = 0.000000;
    _ctx.rate = 0.000000;
    _ctx.phase = 0.000000;
-   _ctx._inst21 = this.Util__ctx_type_0_init();
-   _ctx._inst19 = this.Util__ctx_type_1_init();
+   _ctx._inst22 = this.Util__ctx_type_0_init();
+   _ctx._inst20 = this.Util__ctx_type_1_init();
    this.Sawcore_default(_ctx);
    return _ctx;
 }
@@ -135,11 +142,11 @@ this.Sawcore_process_init = function() { return this.Sawcore__ctx_type_1_init();
 this.Sawcore_process = function(_ctx,cv,reset){
    var transition = 0.000000;
    var out = 0.000000;
-   if(this.Util_change(_ctx._inst19,cv)){
+   if(this.Util_change(_ctx._inst20,cv)){
       _ctx.rate = this.Util_cvToRate_1024(cv);
    }
    var new_phase = (_ctx.phase + _ctx.rate);
-   var do_reset = this.Util_edge(_ctx._inst21,(reset > 0.000000));
+   var do_reset = this.Util_edge(_ctx._inst22,(reset > 0.000000));
    var do_wrap = (new_phase > 1024.000000);
    if((do_reset || do_wrap)){
       _ctx.reset_phase = _ctx.phase;
@@ -153,9 +160,9 @@ this.Sawcore_process = function(_ctx,cv,reset){
    if(_ctx.reset_state){
       var done = false;
       var ptr = 0.0;
-      var _call_40 = {};
-      _call_40 = this.Sawcore_ptr_w2(_ctx.phase,_ctx.rate);
-      done = _call_40.field_0; ptr = _call_40.field_1; 
+      var _call_41 = {};
+      _call_41 = this.Sawcore_ptr_w2(_ctx.phase,_ctx.rate);
+      done = _call_41.field_0; ptr = _call_41.field_1; 
       transition = ((ptr + 1.000000) * 0.500000 * _ctx.reset_phase);
       if(done){
          _ctx.reset_state = false;

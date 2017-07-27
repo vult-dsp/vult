@@ -1,0 +1,40 @@
+/*
+The MIT License (MIT)
+
+Copyright (c) 2017 Leonardo Laguna Ruiz
+-----
+Comb filter resonator
+*/
+
+fun delay(x:real, cv:real) : real {
+   mem buffer : array(real, 675);
+   mem write_pos = (write_pos+1) % size(buffer);
+   _ = set(buffer, write_pos, x);
+   // Gets the position in the buffer to read
+   val r_size = real(size(buffer));
+   val r_index  = (real(write_pos) - Util.cvToperiod(cv)) % r_size;
+   r_index = if r_index < 0.0 then r_size + r_index else r_index;
+   val t1 = int(floor(r_index));
+   val t2 = (t1 + 1) % size(buffer);
+   // Gets the decimal part of the position
+   val decimal  = r_index - real(t1);
+   // Reads the values in the buffer
+   val x1 = get(buffer,t1);
+   val x2 = get(buffer,t2);
+   // Interpolates the value
+   val ret = (x2-x1) * decimal + x1;
+   return ret;
+}
+
+fun do(in, cv, tone, res) {
+   mem y = Saturate_soft.process(tone * delay(in + y * res, cv) + in);
+   return y;
+}
+
+fun process(in, cv, tone, res) : real {
+   return do(in, cv, tone, res);
+}
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int){ }
+and default(){ }

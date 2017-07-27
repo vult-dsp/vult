@@ -133,6 +133,12 @@ float Util_pitchToCv(float pitch){
    return (0.008333f * ((-24.000000f) + pitch));
 }
 
+float Util_cvToperiod(float cv){
+   int index;
+   index = int_clip(float_to_int((31.000000f * cv)),0,31);
+   return (float_get(float_wrap_array(Util_cvToperiod_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToperiod_c1),index) + (float_get(float_wrap_array(Util_cvToperiod_c2),index) * cv))));
+}
+
 void Ad__ctx_type_0_init(Ad__ctx_type_0 &_output_){
    Ad__ctx_type_0 _ctx;
    _ctx.target = 0.000000f;
@@ -140,7 +146,7 @@ void Ad__ctx_type_0_init(Ad__ctx_type_0 &_output_){
    _ctx.scale = 0.000000f;
    _ctx.rate = 0.000000f;
    _ctx.out = 0.000000f;
-   Util__ctx_type_0_init(_ctx._inst15);
+   Util__ctx_type_0_init(_ctx._inst16);
    _output_ = _ctx;
    return ;
 }
@@ -158,24 +164,24 @@ float Ad_do(Ad__ctx_type_0 &_ctx, float gate, float a, float d){
    uint8_t bgate;
    bgate = (gate > 0.000000f);
    _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.004000f));
-   uint8_t _cond_28;
-   _cond_28 = (_ctx.state == 0);
-   if(_cond_28){
-      uint8_t _cond_27;
-      _cond_27 = Util_edge(_ctx._inst15,bgate);
-      if(_cond_27){
+   uint8_t _cond_29;
+   _cond_29 = (_ctx.state == 0);
+   if(_cond_29){
+      uint8_t _cond_28;
+      _cond_28 = Util_edge(_ctx._inst16,bgate);
+      if(_cond_28){
          _ctx.state = 1;
          _ctx.scale = (gate * 0.200000f);
       }
       _ctx.rate = d_rate;
       _ctx.target = 0.000000f;
    }
-   uint8_t _cond_30;
-   _cond_30 = (_ctx.state == 1);
-   if(_cond_30){
-      uint8_t _cond_29;
-      _cond_29 = (bool_not(bgate) || (_ctx.out > 1024.000000f));
-      if(_cond_29){
+   uint8_t _cond_31;
+   _cond_31 = (_ctx.state == 1);
+   if(_cond_31){
+      uint8_t _cond_30;
+      _cond_30 = (bool_not(bgate) || (_ctx.out > 1024.000000f));
+      if(_cond_30){
          _ctx.state = 0;
       }
       _ctx.rate = a_rate;
@@ -188,7 +194,7 @@ void Ad__ctx_type_1_init(Ad__ctx_type_1 &_output_){
    Ad__ctx_type_1 _ctx;
    _ctx.knob2 = 0.000000f;
    _ctx.knob1 = 0.000000f;
-   Ad__ctx_type_0_init(_ctx._inst20);
+   Ad__ctx_type_0_init(_ctx._inst21);
    _output_ = _ctx;
    return ;
 }
@@ -199,7 +205,7 @@ void Ad_process_init(Ad__ctx_type_1 &_output_){
 }
 
 float Ad_process(Ad__ctx_type_1 &_ctx, float gate){
-   return Ad_do(_ctx._inst20,gate,_ctx.knob1,_ctx.knob2);
+   return Ad_do(_ctx._inst21,gate,_ctx.knob1,_ctx.knob2);
 }
 
 void Ad_noteOn_init(Ad__ctx_type_1 &_output_){
@@ -224,14 +230,14 @@ void Ad_controlChange_init(Ad__ctx_type_1 &_output_){
 }
 
 void Ad_controlChange(Ad__ctx_type_1 &_ctx, int control, int value, int channel){
-   uint8_t _cond_31;
-   _cond_31 = (control == 1);
-   if(_cond_31){
+   uint8_t _cond_32;
+   _cond_32 = (control == 1);
+   if(_cond_32){
       _ctx.knob1 = (int_to_float(value) * 0.007874f);
    }
-   uint8_t _cond_32;
-   _cond_32 = (control == 2);
-   if(_cond_32){
+   uint8_t _cond_33;
+   _cond_33 = (control == 2);
+   if(_cond_33){
       _ctx.knob2 = (int_to_float(value) * 0.007874f);
    }
 }

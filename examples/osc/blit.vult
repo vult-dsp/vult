@@ -6,19 +6,12 @@ Copyright (c) 2017 Leonardo Laguna Ruiz
 Multioscillator using BLIT synthesis
 */
 
-
-fun period(cv) @[table(size=32,min=0.0,max=1.0)] {
-  val pitch = Util.cvToPitch(cv);
-  val f = 8.175798915643707 * exp(0.057762265046662105 * pitch); //440. 2^((pitch - 69)/12.)
-  return 44100.0 / f / 2.0;
-}
-
 // Generates a BW-limited pulse train given the phase and the number of harmonics
 fun pulse_train(cv, phase){
    mem m, scale;
    if(Util.change(cv)){
-      m = 2 * int(period(cv)) + 1;
-      scale = 2.0 * period(cv);
+      m = 2 * int(Util.cvToperiod(cv)) + 1;
+      scale = 2.0 * Util.cvToperiod(cv);
    }
    val pi_phase = phase / 2.0;
    val denominator = Tables.nsine(pi_phase);
@@ -34,8 +27,8 @@ fun pulse_train(cv, phase){
    return out;
 }
 and pulse_start() @[init] {
-   m = 2 * int(period(0.0)) + 1;
-   scale = 2.0 * period(0.0) + 1.0;
+   m = 2 * int(Util.cvToperiod(0.0)) + 1;
+   scale = 2.0 * Util.cvToperiod(0.0) + 1.0;
 }
 
 // Generates BW-limited waveforms using the blit algorithm.

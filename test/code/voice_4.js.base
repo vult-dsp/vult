@@ -91,6 +91,13 @@ this.Util_cvToRate = function(cv){
 this.Util_pitchToCv = function(pitch){
    return (0.008333 * ((-24.000000) + pitch));
 }
+var Util_cvToperiod_c0 = [674.246035,671.553838,662.761782,646.759522,623.799428,594.871802,561.298277,524.476942,485.731369,446.229382,406.947440,368.663774,331.968683,297.284156,264.887666,234.936857,207.493124,182.543016,160.016907,139.804832,121.769557,105.757117,91.605116,79.149088,68.227249,58.683895,50.371734,43.153355,36.902033,31.502025,26.848494,22.847166,19.413794];
+var Util_cvToperiod_c1 = [(-4656.656311),(-4481.960579),(-4198.686133),(-3855.751543),(-3487.139455),(-3115.858821),(-2756.930319),(-2419.625141),(-2109.134753),(-1827.808334),(-1576.062963),(-1353.047092),(-1157.118864),(-986.186250),(-837.944665),(-710.039113),(-600.171234),(-506.166566),(-426.013463),(-357.882151),(-300.130190),(-251.298904),(-210.104105),(-175.423450),(-146.282114),(-121.837895),(-101.366537),(-84.247726),(-69.952082),(-58.029259),(-48.097248),(-39.832833),(-32.963186)];
+var Util_cvToperiod_c2 = [14548.823162,11715.369522,9433.744675,7596.477297,6117.026622,4925.706117,3966.401040,3193.925264,2571.892879,2071.004308,1667.666208,1342.880152,1081.347751,870.750049,701.167268,564.611553,454.650724,366.105298,294.804521,237.389916,191.157082,153.928316,123.950032,99.810164,80.371652,64.718885,52.114569,41.965005,33.792117,27.210939,21.911477,17.644111,14.207835];
+this.Util_cvToperiod = function(cv){
+   var index = (this.clip(this.int((31.000000 * cv)),(0|0),(31|0))|0);
+   return (this.get(this.wrap_array(Util_cvToperiod_c0),index) + (cv * (this.get(this.wrap_array(Util_cvToperiod_c1),index) + (this.get(this.wrap_array(Util_cvToperiod_c2),index) * cv))));
+}
 this.Tricore__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.reset_state = false;
@@ -98,26 +105,26 @@ this.Tricore__ctx_type_0_init = function(){
    _ctx.rate = 0.000000;
    _ctx.phase = 0.000000;
    _ctx.direction = false;
+   _ctx._inst18 = this.Util__ctx_type_0_init();
    _ctx._inst17 = this.Util__ctx_type_0_init();
-   _ctx._inst16 = this.Util__ctx_type_0_init();
-   _ctx._inst14 = this.Util__ctx_type_1_init();
+   _ctx._inst15 = this.Util__ctx_type_1_init();
    this.Tricore_default(_ctx);
    return _ctx;
 }
 this.Tricore_process_init = function() { return this.Tricore__ctx_type_0_init();}
 this.Tricore_process = function(_ctx,cv,reset,disable){
    var out = 0.000000;
-   if(this.Util_change(_ctx._inst14,cv)){
+   if(this.Util_change(_ctx._inst15,cv)){
       _ctx.rate = (4.000000 * this.Util_cvToRate_1024(cv));
    }
    var new_phase = 0.0;
-   var _if_30 = 0.0;
-   if(_ctx.direction)_if_30 = _ctx.rate;
+   var _if_31 = 0.0;
+   if(_ctx.direction)_if_31 = _ctx.rate;
    else
-   _if_30 = (- _ctx.rate);
-   new_phase = (_ctx.phase + _if_30);
+   _if_31 = (- _ctx.rate);
+   new_phase = (_ctx.phase + _if_31);
    var bdisable = (disable > 0.500000);
-   if((this.Util_edge(_ctx._inst16,(reset > 0.000000)) || this.Util_edge(_ctx._inst17,bdisable))){
+   if((this.Util_edge(_ctx._inst17,(reset > 0.000000)) || this.Util_edge(_ctx._inst18,bdisable))){
       _ctx.reset_phase = _ctx.phase;
       _ctx.reset_state = true;
       new_phase = 0.000000;
@@ -128,9 +135,9 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
    }
    else
    {
-      var _cond_32 = false;
-      _cond_32 = (new_phase < (-1024.000000));
-      if(_cond_32){
+      var _cond_33 = false;
+      _cond_33 = (new_phase < (-1024.000000));
+      if(_cond_33){
          _ctx.direction = true;
          new_phase = new_phase;
       }
@@ -139,9 +146,9 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
    else
    _ctx.phase = new_phase;
    if(_ctx.reset_state){
-      var _cond_35 = false;
-      _cond_35 = ((this.abs(_ctx.reset_phase) > 10.000000) || bdisable);
-      if(_cond_35){
+      var _cond_36 = false;
+      _cond_36 = ((this.abs(_ctx.reset_phase) > 10.000000) || bdisable);
+      if(_cond_36){
          var reset_speed = 0.0;
          if(bdisable)reset_speed = 0.010000;
          else
@@ -150,9 +157,9 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
       }
       else
       {
-         var _cond_34 = false;
-         _cond_34 = (_ctx.reset_phase > 10.000000);
-         if(_cond_34)_ctx.reset_phase = _ctx.reset_phase;
+         var _cond_35 = false;
+         _cond_35 = (_ctx.reset_phase > 10.000000);
+         if(_cond_35)_ctx.reset_phase = _ctx.reset_phase;
          else
          _ctx.reset_phase = 0.000000;
          _ctx.reset_state = false;
@@ -232,8 +239,8 @@ this.Svf__ctx_type_1_init = function(){
    _ctx.z1 = 0.000000;
    _ctx.inv_den = 0.000000;
    _ctx.g = 0.000000;
+   _ctx._inst54 = this.Util__ctx_type_1_init();
    _ctx._inst53 = this.Util__ctx_type_1_init();
-   _ctx._inst52 = this.Util__ctx_type_1_init();
    _ctx.R = 0.000000;
    this.Svf_default(_ctx);
    return _ctx;
@@ -241,7 +248,7 @@ this.Svf__ctx_type_1_init = function(){
 this.Svf_process_init = function() { return this.Svf__ctx_type_1_init();}
 this.Svf_process = function(_ctx,x,cv,q,sel){
    q = (q + 0.500000);
-   if((this.Util_change(_ctx._inst52,cv) || this.Util_change(_ctx._inst53,q))){
+   if((this.Util_change(_ctx._inst53,cv) || this.Util_change(_ctx._inst54,q))){
       _ctx.g = this.Svf_calc_g(cv);
       _ctx.R = (1.000000 / (2.000000 * (q + 0.000000)));
       _ctx.inv_den = (1.000000 / (1.000000 + (2.000000 * _ctx.R * _ctx.g) + (_ctx.g * _ctx.g)));
@@ -256,14 +263,14 @@ this.Svf_process = function(_ctx,x,cv,q,sel){
    if((sel == (0|0)))output = low;
    else
    {
-      var _cond_61 = false;
-      _cond_61 = (sel == (1|0));
-      if(_cond_61)output = high;
+      var _cond_62 = false;
+      _cond_62 = (sel == (1|0));
+      if(_cond_62)output = high;
       else
       {
-         var _cond_62 = false;
-         _cond_62 = (sel == (2|0));
-         if(_cond_62)output = band;
+         var _cond_63 = false;
+         _cond_63 = (sel == (2|0));
+         if(_cond_63)output = band;
          else
          output = notch;
       }
@@ -338,31 +345,31 @@ this.Lfo__ctx_type_0_init = function(){
 this.Lfo_soft_init = function() { return this.Lfo__ctx_type_0_init();}
 this.Lfo_soft = function(_ctx,x1){
    var o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) * 0.250000);
-   var _tmp_88_0 = x1;
-   var _tmp_88_1 = _ctx.x2;
-   var _tmp_88_2 = _ctx.x3;
-   _ctx.x2 = _tmp_88_0;
-   _ctx.x3 = _tmp_88_1;
-   _ctx.x4 = _tmp_88_2;
+   var _tmp_89_0 = x1;
+   var _tmp_89_1 = _ctx.x2;
+   var _tmp_89_2 = _ctx.x3;
+   _ctx.x2 = _tmp_89_0;
+   _ctx.x3 = _tmp_89_1;
+   _ctx.x4 = _tmp_89_2;
    return o;
 }
 this.Lfo__ctx_type_1_init = function(){
    var _ctx = {};
    _ctx.rate = 0.000000;
    _ctx.phase = 0.000000;
-   _ctx._inst83 = this.Lfo__ctx_type_0_init();
-   _ctx._inst81 = this.Util__ctx_type_0_init();
-   _ctx._inst79 = this.Util__ctx_type_1_init();
+   _ctx._inst84 = this.Lfo__ctx_type_0_init();
+   _ctx._inst82 = this.Util__ctx_type_0_init();
+   _ctx._inst80 = this.Util__ctx_type_1_init();
    return _ctx;
 }
 this.Lfo_process_init = function() { return this.Lfo__ctx_type_1_init();}
 this.Lfo_process = function(_ctx,cv,shape,reset){
-   if(this.Util_change(_ctx._inst79,cv)){
+   if(this.Util_change(_ctx._inst80,cv)){
       _ctx.rate = this.Util_cvToRate((cv + (-0.300000)));
    }
    _ctx.phase = ((_ctx.phase + _ctx.rate) % 2.000000);
    var breset = (reset > 0.000000);
-   if(this.Util_edge(_ctx._inst81,breset)){
+   if(this.Util_edge(_ctx._inst82,breset)){
       _ctx.phase = 0.000000;
    }
    var tmp = (_ctx.phase + (-1.000000));
@@ -370,19 +377,19 @@ this.Lfo_process = function(_ctx,cv,shape,reset){
    if((shape < 1.000000))o = tmp;
    else
    {
-      var _cond_92 = false;
-      _cond_92 = (shape < 2.000000);
-      if(_cond_92)o = ((this.abs(tmp) * 2.000000) + (-1.000000));
+      var _cond_93 = false;
+      _cond_93 = (shape < 2.000000);
+      if(_cond_93)o = ((this.abs(tmp) * 2.000000) + (-1.000000));
       else
       {
-         var _cond_93 = false;
-         _cond_93 = (tmp > 0.000000);
-         if(_cond_93)o = 1.000000;
+         var _cond_94 = false;
+         _cond_94 = (tmp > 0.000000);
+         if(_cond_94)o = 1.000000;
          else
          o = 0.000000;
       }
    }
-   return this.Lfo_soft(_ctx._inst83,o);
+   return this.Lfo_soft(_ctx._inst84,o);
 }
 this.Lfo_noteOn_init = function() { return this.Lfo__ctx_type_1_init();}
 this.Lfo_noteOn = function(_ctx,note,velocity,channel){
@@ -407,17 +414,17 @@ this.Phase__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.rate = 0.000000;
    _ctx.phase = 0.000000;
-   _ctx._inst98 = this.Util__ctx_type_0_init();
-   _ctx._inst96 = this.Util__ctx_type_1_init();
+   _ctx._inst99 = this.Util__ctx_type_0_init();
+   _ctx._inst97 = this.Util__ctx_type_1_init();
    this.Phase_default(_ctx);
    return _ctx;
 }
 this.Phase_process_init = function() { return this.Phase__ctx_type_0_init();}
 this.Phase_process = function(_ctx,cv,reset){
-   if(this.Util_change(_ctx._inst96,cv)){
+   if(this.Util_change(_ctx._inst97,cv)){
       _ctx.rate = this.Util_cvToRate_1024(cv);
    }
-   if(this.Util_edge(_ctx._inst98,(reset > 0.500000)))_ctx.phase = 0.000000;
+   if(this.Util_edge(_ctx._inst99,(reset > 0.500000)))_ctx.phase = 0.000000;
    else
    _ctx.phase = (_ctx.phase + _ctx.rate);
    if((_ctx.phase > 1024.000000))_ctx.phase = (_ctx.phase + (-1024.000000));
@@ -438,14 +445,7 @@ this.Phase_default_init = function() { return this.Phase__ctx_type_0_init();}
 this.Phase_default = function(_ctx){
    _ctx.rate = 0.759367;
 }
-var Blit_period_c0 = [674.246035,671.553838,662.761782,646.759522,623.799428,594.871802,561.298277,524.476942,485.731369,446.229382,406.947440,368.663774,331.968683,297.284156,264.887666,234.936857,207.493124,182.543016,160.016907,139.804832,121.769557,105.757117,91.605116,79.149088,68.227249,58.683895,50.371734,43.153355,36.902033,31.502025,26.848494,22.847166,19.413794];
-var Blit_period_c1 = [(-4656.656311),(-4481.960579),(-4198.686133),(-3855.751543),(-3487.139455),(-3115.858821),(-2756.930319),(-2419.625141),(-2109.134753),(-1827.808334),(-1576.062963),(-1353.047092),(-1157.118864),(-986.186250),(-837.944665),(-710.039113),(-600.171234),(-506.166566),(-426.013463),(-357.882151),(-300.130190),(-251.298904),(-210.104105),(-175.423450),(-146.282114),(-121.837895),(-101.366537),(-84.247726),(-69.952082),(-58.029259),(-48.097248),(-39.832833),(-32.963186)];
-var Blit_period_c2 = [14548.823162,11715.369522,9433.744675,7596.477297,6117.026622,4925.706117,3966.401040,3193.925264,2571.892879,2071.004308,1667.666208,1342.880152,1081.347751,870.750049,701.167268,564.611553,454.650724,366.105298,294.804521,237.389916,191.157082,153.928316,123.950032,99.810164,80.371652,64.718885,52.114569,41.965005,33.792117,27.210939,21.911477,17.644111,14.207835];
-this.Blit_period = function(cv){
-   var index = (this.clip(this.int((31.000000 * cv)),(0|0),(31|0))|0);
-   return (this.get(this.wrap_array(Blit_period_c0),index) + (cv * (this.get(this.wrap_array(Blit_period_c1),index) + (this.get(this.wrap_array(Blit_period_c2),index) * cv))));
-}
-this.Blit__ctx_type_1_init = function(){
+this.Blit__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.scale = 0.000000;
    _ctx.m = ((0|0)|0);
@@ -453,11 +453,11 @@ this.Blit__ctx_type_1_init = function(){
    this.Blit_pulse_start(_ctx);
    return _ctx;
 }
-this.Blit_pulse_train_init = function() { return this.Blit__ctx_type_1_init();}
+this.Blit_pulse_train_init = function() { return this.Blit__ctx_type_0_init();}
 this.Blit_pulse_train = function(_ctx,cv,phase){
    if(this.Util_change(_ctx._inst108,cv)){
-      _ctx.m = ((((2|0) * this.int(this.Blit_period(cv))) + (1|0))|0);
-      _ctx.scale = (2.000000 * this.Blit_period(cv));
+      _ctx.m = ((((2|0) * this.int(this.Util_cvToperiod(cv))) + (1|0))|0);
+      _ctx.scale = (2.000000 * this.Util_cvToperiod(cv));
    }
    var pi_phase = (phase * 0.500000);
    var denominator = this.Tables_nsine(pi_phase);
@@ -475,26 +475,26 @@ this.Blit_pulse_train = function(_ctx,cv,phase){
    }
    return out;
 }
-this.Blit_pulse_start_init = function() { return this.Blit__ctx_type_1_init();}
+this.Blit_pulse_start_init = function() { return this.Blit__ctx_type_0_init();}
 this.Blit_pulse_start = function(_ctx){
    _ctx.m = ((1349|0)|0);
    _ctx.scale = 1349.492070;
 }
-this.Blit__ctx_type_2_init = function(){
+this.Blit__ctx_type_1_init = function(){
    var _ctx = {};
    _ctx.state_saw = 0.000000;
    _ctx.state_pulse = 0.000000;
    _ctx.rate = 0.000000;
    _ctx.output = 0.000000;
    _ctx._inst124 = this.Util__ctx_type_3_init();
-   _ctx._inst121 = this.Blit__ctx_type_1_init();
-   _ctx._inst120 = this.Blit__ctx_type_1_init();
+   _ctx._inst121 = this.Blit__ctx_type_0_init();
+   _ctx._inst120 = this.Blit__ctx_type_0_init();
    _ctx._inst118 = this.Phase__ctx_type_0_init();
    _ctx._inst116 = this.Util__ctx_type_1_init();
    this.Blit_init(_ctx);
    return _ctx;
 }
-this.Blit_osc_blit_init = function() { return this.Blit__ctx_type_2_init();}
+this.Blit_osc_blit_init = function() { return this.Blit__ctx_type_1_init();}
 this.Blit_osc_blit = function(_ctx,cv,pw,wave){
    var fixed_cv = 0.000000;
    if((wave < 1.000000)){
@@ -527,29 +527,29 @@ this.Blit_osc_blit = function(_ctx,cv,pw,wave){
    _ctx.output = this.Util_dcblock(_ctx._inst124,_ctx.output);
    return _ctx.output;
 }
-this.Blit_init_init = function() { return this.Blit__ctx_type_2_init();}
+this.Blit_init_init = function() { return this.Blit__ctx_type_1_init();}
 this.Blit_init = function(_ctx){
    _ctx.rate = 0.000742;
 }
-this.Blit__ctx_type_3_init = function(){
+this.Blit__ctx_type_2_init = function(){
    var _ctx = {};
-   _ctx._inst127 = this.Blit__ctx_type_2_init();
+   _ctx._inst127 = this.Blit__ctx_type_1_init();
    return _ctx;
 }
-this.Blit_process_init = function() { return this.Blit__ctx_type_3_init();}
+this.Blit_process_init = function() { return this.Blit__ctx_type_2_init();}
 this.Blit_process = function(_ctx,cv,pw,wave){
    return this.Blit_osc_blit(_ctx._inst127,cv,pw,wave);
 }
-this.Blit_noteOn_init = function() { return this.Blit__ctx_type_3_init();}
+this.Blit_noteOn_init = function() { return this.Blit__ctx_type_2_init();}
 this.Blit_noteOn = function(_ctx,note,velocity,channel){
 }
-this.Blit_noteOff_init = function() { return this.Blit__ctx_type_3_init();}
+this.Blit_noteOff_init = function() { return this.Blit__ctx_type_2_init();}
 this.Blit_noteOff = function(_ctx,note,channel){
 }
-this.Blit_controlChange_init = function() { return this.Blit__ctx_type_3_init();}
+this.Blit_controlChange_init = function() { return this.Blit__ctx_type_2_init();}
 this.Blit_controlChange = function(_ctx,control,value,channel){
 }
-this.Blit_default_init = function() { return this.Blit__ctx_type_3_init();}
+this.Blit_default_init = function() { return this.Blit__ctx_type_2_init();}
 this.Blit_default = function(_ctx){
 }
 this.Adsr__ctx_type_0_init = function(){
@@ -672,9 +672,9 @@ this.Voice_4__ctx_type_0_init = function(){
    _ctx._inst176 = this.Adsr__ctx_type_0_init();
    _ctx._inst175 = this.Svf__ctx_type_1_init();
    _ctx._inst174 = this.Tricore__ctx_type_0_init();
-   _ctx._inst173 = this.Blit__ctx_type_3_init();
-   _ctx._inst172 = this.Blit__ctx_type_3_init();
-   _ctx._inst171 = this.Blit__ctx_type_3_init();
+   _ctx._inst173 = this.Blit__ctx_type_2_init();
+   _ctx._inst172 = this.Blit__ctx_type_2_init();
+   _ctx._inst171 = this.Blit__ctx_type_2_init();
    _ctx._inst170 = this.Lfo__ctx_type_1_init();
    return _ctx;
 }
