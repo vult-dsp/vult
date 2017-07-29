@@ -42,6 +42,7 @@ let apply (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * filen
       | "default"  -> Default.get
       | "teensy"   -> TeensyAudio.get
       | "pd"       -> Pd.get
+      | "max"       -> Max.get
       | "modelica" -> Modelica.get
       | t -> failwith (Printf.sprintf "The template '%s' is not available for this generator" t)
    in
