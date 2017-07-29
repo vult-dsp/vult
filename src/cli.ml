@@ -69,7 +69,7 @@ let showResult (args:args) (output:output) =
    | CheckOk -> ()
    | Errors errors ->
       let error_strings = Error.reportErrors errors in
-      print_endline ("Error:\n"^error_strings)
+      prerr_endline ("Error:\n"^error_strings)
 
 
 let main () =
