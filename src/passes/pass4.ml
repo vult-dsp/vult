@@ -142,6 +142,9 @@ module DummySimplifications = struct
       match stmt with
       | StmtVal(LWild(wattr),Some(rhs),attr) ->
          state, StmtBind(LWild(wattr),rhs,attr)
+      | StmtIf(cond, then_, Some(StmtBlock(_, [], _)), attr) ->
+         state, StmtIf(cond, then_, None, attr)
+
       | _ -> state, stmt
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
@@ -149,6 +152,8 @@ module DummySimplifications = struct
       match stmt with
       | StmtVal(LWild(_),None,_) ->
          state, []
+      | StmtBind(LId(lhs, _, _), PId(rhs, _), _ ) when compare lhs rhs = 0 ->
+         reapply state, []
       | _ -> state, [stmt]
 
    let mapper = Mapper.{ default_mapper with stmt; stmt_x }
