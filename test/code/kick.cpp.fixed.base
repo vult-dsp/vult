@@ -283,7 +283,6 @@ fix16_t Tricore_process(Tricore__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset, fi
       _cond_41 = (new_phase < (-0x4000000 /* -1024.000000 */));
       if(_cond_41){
          _ctx.direction = 1;
-         new_phase = new_phase;
       }
    }
    if(bdisable){ _ctx.phase = 0x0 /* 0.000000 */; }
@@ -303,9 +302,7 @@ fix16_t Tricore_process(Tricore__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset, fi
       {
          uint8_t _cond_43;
          _cond_43 = (_ctx.reset_phase > 0xa0000 /* 10.000000 */);
-         if(_cond_43){ _ctx.reset_phase = _ctx.reset_phase; }
-         else
-         { _ctx.reset_phase = 0x0 /* 0.000000 */; }
+         if(bool_not(_cond_43)){ _ctx.reset_phase = 0x0 /* 0.000000 */; }
          _ctx.reset_state = 0;
          _ctx.direction = 1;
       }
@@ -444,8 +441,6 @@ fix16_t Saturate_process(fix16_t x){
       out = Saturate_table(fixed);
    }
    if(sign){ out = (- out); }
-   else
-   { out = out; }
    return out;
 }
 

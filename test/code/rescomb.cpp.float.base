@@ -39,8 +39,6 @@ float Saturate_soft_process(float x){
       out = Saturate_soft_table(fixed);
    }
    if(sign){ out = (- out); }
-   else
-   { out = out; }
    return out;
 }
 
@@ -216,8 +214,6 @@ float Rescomb_delay(Rescomb__ctx_type_0 &_ctx, float x, float cv){
    uint8_t _cond_37;
    _cond_37 = (r_index < 0.000000f);
    if(_cond_37){ r_index = (r_size + r_index); }
-   else
-   { r_index = r_index; }
    int t1;
    t1 = float_to_int(floorf(r_index));
    int t2;

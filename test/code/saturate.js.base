@@ -29,8 +29,6 @@ this.Saturate_process = function(_ctx,x){
       out = this.Saturate_table(fixed);
    }
    if(sign)out = (- out);
-   else
-   out = out;
    return out;
 }
 this.Saturate_noteOn = function(_ctx,note,velocity,channel){

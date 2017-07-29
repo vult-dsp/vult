@@ -176,8 +176,6 @@ float Saturate_process(float x){
       out = Saturate_table(fixed);
    }
    if(sign){ out = (- out); }
-   else
-   { out = out; }
    return out;
 }
 

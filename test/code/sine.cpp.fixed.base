@@ -169,8 +169,6 @@ fix16_t Phase_process(Phase__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset){
    uint8_t _cond_24;
    _cond_24 = (_ctx.phase > 0x4000000 /* 1024.000000 */);
    if(_cond_24){ _ctx.phase = fix_add(_ctx.phase,(-0x4000000 /* -1024.000000 */)); }
-   else
-   { _ctx.phase = _ctx.phase; }
    return fix_mul(_ctx.phase,0x40 /* 0.000977 */);
 }
 

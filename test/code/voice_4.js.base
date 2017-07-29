@@ -139,7 +139,6 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
       _cond_33 = (new_phase < (-1024.000000));
       if(_cond_33){
          _ctx.direction = true;
-         new_phase = new_phase;
       }
    }
    if(bdisable)_ctx.phase = 0.000000;
@@ -159,9 +158,7 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
       {
          var _cond_35 = false;
          _cond_35 = (_ctx.reset_phase > 10.000000);
-         if(_cond_35)_ctx.reset_phase = _ctx.reset_phase;
-         else
-         _ctx.reset_phase = 0.000000;
+         if(this.not(_cond_35))_ctx.reset_phase = 0.000000;
          _ctx.reset_state = false;
          _ctx.direction = true;
       }
@@ -214,8 +211,6 @@ this.Saturate_soft_process = function(x){
       out = this.Saturate_soft_table(fixed);
    }
    if(sign)out = (- out);
-   else
-   out = out;
    return out;
 }
 this.Saturate_soft_noteOn = function(note,velocity,channel){
@@ -323,8 +318,6 @@ this.Saturate_process = function(x){
       out = this.Saturate_table(fixed);
    }
    if(sign)out = (- out);
-   else
-   out = out;
    return out;
 }
 this.Saturate_noteOn = function(note,velocity,channel){
@@ -428,8 +421,6 @@ this.Phase_process = function(_ctx,cv,reset){
    else
    _ctx.phase = (_ctx.phase + _ctx.rate);
    if((_ctx.phase > 1024.000000))_ctx.phase = (_ctx.phase + (-1024.000000));
-   else
-   _ctx.phase = _ctx.phase;
    return (_ctx.phase * 0.000977);
 }
 this.Phase_noteOn_init = function() { return this.Phase__ctx_type_0_init();}

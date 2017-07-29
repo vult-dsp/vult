@@ -222,7 +222,6 @@ function this.Tricore_process(_ctx,cv,reset,disable)
       _cond_33 = (new_phase < (-1024.000000));
       if _cond_33 then
          _ctx.direction = true;
-         new_phase = new_phase;
 
       end
 
@@ -250,10 +249,7 @@ function this.Tricore_process(_ctx,cv,reset,disable)
 
          local _cond_35 = false;
          _cond_35 = (_ctx.reset_phase > 10.000000);
-         if _cond_35 then
-            _ctx.reset_phase = _ctx.reset_phase;
-         else
-
+         if (not _cond_35) then
             _ctx.reset_phase = 0.000000;
          end
          _ctx.reset_state = false;
@@ -338,9 +334,6 @@ function this.Saturate_soft_process(x)
    end
    if sign then
       out = (- out);
-   else
-
-      out = out;
    end
    return out;
 
@@ -502,9 +495,6 @@ function this.Saturate_process(x)
    end
    if sign then
       out = (- out);
-   else
-
-      out = out;
    end
    return out;
 
@@ -674,9 +664,6 @@ function this.Phase_process(_ctx,cv,reset)
    end
    if (_ctx.phase > 1024.000000) then
       _ctx.phase = (_ctx.phase + (-1024.000000));
-   else
-
-      _ctx.phase = _ctx.phase;
    end
    return (_ctx.phase * 0.000977);
 

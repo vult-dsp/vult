@@ -39,8 +39,6 @@ fix16_t Saturate_soft_process(fix16_t x){
       out = Saturate_soft_table(fixed);
    }
    if(sign){ out = (- out); }
-   else
-   { out = out; }
    return out;
 }
 
@@ -216,8 +214,6 @@ fix16_t Rescomb_delay(Rescomb__ctx_type_0 &_ctx, fix16_t x, fix16_t cv){
    uint8_t _cond_37;
    _cond_37 = (r_index < 0x0 /* 0.000000 */);
    if(_cond_37){ r_index = fix_add(r_size,r_index); }
-   else
-   { r_index = r_index; }
    int t1;
    t1 = fix_to_int(fix_floor(r_index));
    int t2;

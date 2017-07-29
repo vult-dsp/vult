@@ -196,9 +196,6 @@ function this.Saw_ptr1_process(_ctx,cv)
    _ctx.phase = (_ctx.phase + _ctx.rate);
    if (_ctx.phase > 1.000000) then
       _ctx.phase = (_ctx.phase + (-1.000000));
-   else
-
-      _ctx.phase = _ctx.phase;
    end
    if (_ctx.phase < s1) then
       local d = 0.0;

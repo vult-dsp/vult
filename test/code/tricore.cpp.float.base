@@ -194,7 +194,6 @@ float Tricore_process(Tricore__ctx_type_0 &_ctx, float cv, float reset, float di
       _cond_33 = (new_phase < (-1024.000000f));
       if(_cond_33){
          _ctx.direction = 1;
-         new_phase = new_phase;
       }
    }
    if(bdisable){ _ctx.phase = 0.000000f; }
@@ -214,9 +213,7 @@ float Tricore_process(Tricore__ctx_type_0 &_ctx, float cv, float reset, float di
       {
          uint8_t _cond_35;
          _cond_35 = (_ctx.reset_phase > 10.000000f);
-         if(_cond_35){ _ctx.reset_phase = _ctx.reset_phase; }
-         else
-         { _ctx.reset_phase = 0.000000f; }
+         if(bool_not(_cond_35)){ _ctx.reset_phase = 0.000000f; }
          _ctx.reset_state = 0;
          _ctx.direction = 1;
       }

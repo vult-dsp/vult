@@ -169,8 +169,6 @@ fix16_t Saw_ptr1_process(Saw_ptr1__ctx_type_0 &_ctx, fix16_t cv){
    uint8_t _cond_25;
    _cond_25 = (_ctx.phase > 0x10000 /* 1.000000 */);
    if(_cond_25){ _ctx.phase = fix_add(_ctx.phase,(-0x10000 /* -1.000000 */)); }
-   else
-   { _ctx.phase = _ctx.phase; }
    uint8_t _cond_24;
    _cond_24 = (_ctx.phase < s1);
    if(_cond_24){

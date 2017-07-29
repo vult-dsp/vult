@@ -57,9 +57,6 @@ function this.Saturate_soft_process(x)
    end
    if sign then
       out = (- out);
-   else
-
-      out = out;
    end
    return out;
 
@@ -251,9 +248,6 @@ function this.Rescomb_delay(_ctx,x,cv)
    local r_index = ((this.real(_ctx.write_pos) + (- this.Util_cvToperiod(cv))) % r_size);
    if (r_index < 0.000000) then
       r_index = (r_size + r_index);
-   else
-
-      r_index = r_index;
    end
    local t1 = this.int(this.floor(r_index));
    local t2 = ((t1 + 1) % 675);

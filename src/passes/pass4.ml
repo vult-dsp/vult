@@ -144,6 +144,9 @@ module DummySimplifications = struct
          state, StmtBind(LWild(wattr),rhs,attr)
       | StmtIf(cond, then_, Some(StmtBlock(_, [], _)), attr) ->
          state, StmtIf(cond, then_, None, attr)
+      | StmtIf(cond, StmtBlock(_, [], _), Some(else_), attr) ->
+         let cod_attr = GetAttr.fromExp cond in
+         state, StmtIf(PCall(None, ["not"], [cond], cod_attr), else_, None, attr)
 
       | _ -> state, stmt
 

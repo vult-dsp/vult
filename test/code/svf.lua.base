@@ -208,9 +208,6 @@ function this.Saturate_soft_process(x)
    end
    if sign then
       out = (- out);
-   else
-
-      out = out;
    end
    return out;
 

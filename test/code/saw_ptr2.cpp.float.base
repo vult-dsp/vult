@@ -169,8 +169,6 @@ float Saw_ptr2_process(Saw_ptr2__ctx_type_0 &_ctx, float cv){
    uint8_t _cond_28;
    _cond_28 = (_ctx.phase > 1.000000f);
    if(_cond_28){ _ctx.phase = (_ctx.phase + (-1.000000f)); }
-   else
-   { _ctx.phase = _ctx.phase; }
    uint8_t _cond_27;
    _cond_27 = (_ctx.phase < s1);
    if(_cond_27){

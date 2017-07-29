@@ -176,8 +176,6 @@ fix16_t Saturate_soft_process(fix16_t x){
       out = Saturate_soft_table(fixed);
    }
    if(sign){ out = (- out); }
-   else
-   { out = out; }
    return out;
 }
 

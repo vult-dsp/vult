@@ -139,7 +139,6 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
       _cond_33 = (new_phase < (-1024.000000));
       if(_cond_33){
          _ctx.direction = true;
-         new_phase = new_phase;
       }
    }
    if(bdisable)_ctx.phase = 0.000000;
@@ -159,9 +158,7 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
       {
          var _cond_35 = false;
          _cond_35 = (_ctx.reset_phase > 10.000000);
-         if(_cond_35)_ctx.reset_phase = _ctx.reset_phase;
-         else
-         _ctx.reset_phase = 0.000000;
+         if(this.not(_cond_35))_ctx.reset_phase = 0.000000;
          _ctx.reset_state = false;
          _ctx.direction = true;
       }

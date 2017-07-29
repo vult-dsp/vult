@@ -176,8 +176,6 @@ fix16_t Saturate_process(fix16_t x){
       out = Saturate_table(fixed);
    }
    if(sign){ out = (- out); }
-   else
-   { out = out; }
    return out;
 }
 

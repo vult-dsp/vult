@@ -116,8 +116,6 @@ this.Saw_ptr1_process = function(_ctx,cv){
    var dc = (-1.000000);
    _ctx.phase = (_ctx.phase + _ctx.rate);
    if((_ctx.phase > 1.000000))_ctx.phase = (_ctx.phase + (-1.000000));
-   else
-   _ctx.phase = _ctx.phase;
    if((_ctx.phase < s1)){
       var d = 0.0;
       d = (_ctx.phase / _ctx.rate);

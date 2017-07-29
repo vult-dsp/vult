@@ -29,8 +29,6 @@ this.Saturate_soft_process = function(_ctx,x){
       out = this.Saturate_soft_table(fixed);
    }
    if(sign)out = (- out);
-   else
-   out = out;
    return out;
 }
 this.Saturate_soft_noteOn = function(_ctx,note,velocity,channel){

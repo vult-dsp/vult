@@ -29,8 +29,6 @@ this.Saturate_soft_process = function(x){
       out = this.Saturate_soft_table(fixed);
    }
    if(sign)out = (- out);
-   else
-   out = out;
    return out;
 }
 this.Saturate_soft_noteOn = function(note,velocity,channel){
@@ -154,8 +152,6 @@ this.Rescomb_delay = function(_ctx,x,cv){
    var r_size = 675.000000;
    var r_index = ((this.real(_ctx.write_pos) + (- this.Util_cvToperiod(cv))) % r_size);
    if((r_index < 0.000000))r_index = (r_size + r_index);
-   else
-   r_index = r_index;
    var t1 = (this.int(this.floor(r_index))|0);
    var t2 = (((t1 + (1|0)) % (675|0))|0);
    var decimal = (r_index + (- this.real(t1)));
