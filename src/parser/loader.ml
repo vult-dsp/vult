@@ -103,5 +103,10 @@ let loadFiles (arguments:args) (files:input list) : parser_results list =
    let comps = Components.components dep_list in
    let () = checkComponents comps in
    let sorted_deps = List.map List.hd comps in
-   List.map (fun module_name -> Hashtbl.find parsed module_name) sorted_deps
+   CCList.filter_map
+      (fun module_name ->
+          match Hashtbl.find parsed module_name with
+          | found -> Some found
+          | exception Not_found -> None)
+      sorted_deps
 
