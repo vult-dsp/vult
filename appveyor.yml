@@ -5,7 +5,7 @@ os: Visual Studio 2015
 environment:
   CYG_ROOT: "C:\\cygwin"
   CYG_BASH: "%CYG_ROOT%\\bin\\bash -lc"
-  nodejs_version: "6"
+  nodejs_version: "7"
 
 install:
   - ps: Install-Product node $env:nodejs_version
