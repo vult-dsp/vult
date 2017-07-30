@@ -70,9 +70,9 @@ $ npm install vult -g
 ```
 This will install provide `vultc` command in your system. If `vultc` is not available for any reason. You can run the main file with node as follows:
 ```
-$ node vultjs.js
+$ node vultc.js
 ```
-Alternatively you can download the file `vultjs.js` from https://github.com/modlfo/vultjs and run it with node.
+Alternatively you can download the file `vultc.js` from https://github.com/modlfo/vultjs and run it with node.
 
 ## Compile from Source
 

@@ -5,7 +5,7 @@ _build/*
 *.top
 .DS_Store
 vultweb.js
-vultjs.js
+vultc.js
 .vscode/.browse.VC.db
 .vscode/launch.json
 /vultlib.js

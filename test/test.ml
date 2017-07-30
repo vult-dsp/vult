@@ -409,7 +409,7 @@ module CliTest = struct
       in
       let includes_flags = List.map (fun a -> "-i "^a) includes |> String.concat " " in
       let flags = flags ^ " " ^ includes_flags in
-      let vultc = if compiler = Node then "node ./vultjs.js" else "./vultc.native" in
+      let vultc = if compiler = Node then "node ./vultc.js" else "./vultc.native" in
       let cmd = vultc ^ " -test " ^ flags ^ " -o " ^ basefile ^ " " ^ fullfile in
       let generated_files =
          match Sys.command cmd with

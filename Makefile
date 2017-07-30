@@ -9,9 +9,8 @@ js: jscompiler
 			js_of_ocaml vultweb.byte
 			js_of_ocaml vultlib.byte
 
-jscompiler:
-			$(OCB) src/js/vultjs.byte
-			js_of_ocaml vultjs.byte
+jscompiler: compiler
+			js_of_ocaml vultc.byte
 
 test: compiler jscompiler
 			$(OCB) test/test.native
@@ -35,7 +34,7 @@ all: 		compiler js test
 
 clean:
 			$(OCB) -clean
-			rm -f vultjs.js vultweb.js vultlib.js
+			rm -f vultc.js vultweb.js vultlib.js
 			rm -f bisect*.out
 			rm -rf bisect_coverage
 
