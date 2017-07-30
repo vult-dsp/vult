@@ -16,3 +16,11 @@ fi
 # test the instalation of vulc from npm and check it runs
 npm install vult -g
 vultc --help
+# compile the examples
+cd examples
+mkdir build
+cd build
+cmake ../
+make
+cd ..
+cd ..
