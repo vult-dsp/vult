@@ -35,4 +35,4 @@ $ cmake ../
 $ make
 ```
 
-After building, all the PD externals will be available in the [build] directory. To use them with PD you need to include this directory in the start path of PD.
+After building, all the PD externals will be available in the `build` directory. To use them with PD you need to include this directory in the start path of PD.
