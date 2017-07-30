@@ -70,7 +70,7 @@ ls
 pwd
 make
 # install vultc from npm
-npm install -g vultc
+npm install -g vult
 # build the examples
 cd examples
 mkdir build
