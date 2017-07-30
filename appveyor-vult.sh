@@ -55,6 +55,7 @@ case "$ocaml_system" in
 esac
 eval $(opam config env)
 opam install pla containers ppx_deriving ounit yojson menhir
+# install ollvm from my own github
 git clone https://github.com/modlfo/ollvm.git
 cd ollvm
 ./configure
@@ -63,7 +64,17 @@ cd src/ollvm
 make install
 cd ../../../
 rm -rf ollvm
+# build vult
 cd $APPVEYOR_BUILD_FOLDER
 ls
 pwd
 make
+# install vultc from npm
+npm install -g vultc
+# build the examples
+cd examples
+mkdir build
+cd build
+cmake ../ -G "NMake Makefiles"
+nmake
+cd $APPVEYOR_BUILD_FOLDER
