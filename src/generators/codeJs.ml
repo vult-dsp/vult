@@ -31,56 +31,65 @@ module Templates = struct
 
    let none code = code
 
-   let common exports module_name code =
-      {pla|
-<#exports#>{
-    this.random = function()         { return Math.random(); };
-    this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
-    this.eps  = function()           { return 1e-18 };
-    this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
-    this.not  = function(x)          { return x==0?1:0; };
-    this.real = function(x)          { return x; };
-    this.int  = function(x)          { return x|0; };
-    this.sin  = function(x)          { return Math.sin(x); };
-    this.cos  = function(x)          { return Math.cos(x); };
-    this.abs  = function(x)          { return Math.abs(x); };
-    this.exp  = function(x)          { return Math.exp(x); };
-    this.floor= function(x)          { return Math.floor(x); };
-    this.tan  = function(x)          { return Math.tan(x); };
-    this.tanh = function(x)          { return Math.tanh(x); };
-    this.sqrt = function(x)          { return x; };
-    this.set  = function(a,i,v)      { a[i]=v; };
-    this.get  = function(a,i)        { return a[i]; };
-    this.int_to_float = function(i){ return i; };
-    this.float_to_int = function(i){ return Math.floor(i); };
-    this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-    this.wrap_array = function(a) { return a; }
-    this.log = function(x) { console.log(x); }
-    this.<#module_name#s>_process_init = null;
-    this.<#module_name#s>_default = null;
-<#code#>
-    if(this.<#module_name#s>_process_init)  this.context =  this.<#module_name#s>_process_init(); else this.context = {};
-    if(this.<#module_name#s>_default)      this.<#module_name#s>_default(this.context);
-    this.liveNoteOn        = function(note,velocity,channel) { if(this.<#module_name#s>_noteOn)        this.<#module_name#s>_noteOn(this.context,note,velocity,channel); };
-    this.liveNoteOff       = function(note,velocity,channel) { if(this.<#module_name#s>_noteOff)       this.<#module_name#s>_noteOff(this.context,note,velocity,channel); };
-    this.liveControlChange = function(note,velocity,channel) { if(this.<#module_name#s>_controlChange) this.<#module_name#s>_controlChange(this.context,note,velocity,channel); };
-    this.liveProcess       = function(input)         { if(this.<#module_name#s>_process)       return this.<#module_name#s>_process(this.context,input); else return 0; };
-    this.liveDefault       = function()              { if(this.<#module_name#s>_default)      return this.<#module_name#s>_default(this.context); };
-}
-|pla}
+   let runtime : Pla.t =
+      Pla.string
+         {| // Vult runtime functions
+            this.random = function()         { return Math.random(); };
+            this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
+            this.eps  = function()           { return 1e-18 };
+            this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
+            this.not  = function(x)          { return x==0?1:0; };
+            this.real = function(x)          { return x; };
+            this.int  = function(x)          { return x|0; };
+            this.sin  = function(x)          { return Math.sin(x); };
+            this.cos  = function(x)          { return Math.cos(x); };
+            this.abs  = function(x)          { return Math.abs(x); };
+            this.exp  = function(x)          { return Math.exp(x); };
+            this.floor= function(x)          { return Math.floor(x); };
+            this.tan  = function(x)          { return Math.tan(x); };
+            this.tanh = function(x)          { return Math.tanh(x); };
+            this.sqrt = function(x)          { return x; };
+            this.set  = function(a,i,v)      { a[i]=v; };
+            this.get  = function(a,i)        { return a[i]; };
+            this.int_to_float = function(i){ return i; };
+            this.float_to_int = function(i){ return Math.floor(i); };
+            this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
+            this.wrap_array = function(a) { return a; }
+            this.log = function(x) { console.log(x); }
+         |}
 
-   let browser module_name code =
+   let common function_decl module_name code =
+      let return =
+         [%pla
+           {|<#function_decl#> {
+             <#runtime#>
+             this.<#module_name#s>_process_init = null;
+             this.<#module_name#s>_default = null;
+             <#code#>
+             if(this.<#module_name#s>_process_init)  this.context =  this.<#module_name#s>_process_init(); else this.context = {};
+             if(this.<#module_name#s>_default)      this.<#module_name#s>_default(this.context);
+             this.liveNoteOn        = function(note,velocity,channel) { if(this.<#module_name#s>_noteOn)        this.<#module_name#s>_noteOn(this.context,note,velocity,channel); };
+             this.liveNoteOff       = function(note,velocity,channel) { if(this.<#module_name#s>_noteOff)       this.<#module_name#s>_noteOff(this.context,note,velocity,channel); };
+             this.liveControlChange = function(note,velocity,channel) { if(this.<#module_name#s>_controlChange) this.<#module_name#s>_controlChange(this.context,note,velocity,channel); };
+             this.liveProcess       = function(input)         { if(this.<#module_name#s>_process)       return this.<#module_name#s>_process(this.context,input); else return 0; };
+             this.liveDefault       = function() { if(this.<#module_name#s>_default)      return this.<#module_name#s>_default(this.context); };
+             }|}]
+      in
+      return
+
+   let browser _config module_name code : Pla.t =
       let exports = Pla.string "function vultProcess()" in
       common exports module_name code
 
-   let node module_name code =
+   let node _config module_name code : Pla.t =
       let exports = Pla.string "exports.vultProcess = function ()" in
       common exports module_name code
 
-   let apply (module_name:string) (template:string) (code:Pla.t) : Pla.t =
+   let apply (params:params) (module_name:string) (template:string) (code:Pla.t) : Pla.t =
       match template with
-      | "browser" -> browser module_name code
-      | "node" -> node module_name code
+      | "browser" -> browser params.config module_name code
+      | "node" -> node params.config module_name code
+      | "webaudio" -> Webaudio.get params runtime code
       | _ -> none code
 
 end
@@ -274,7 +283,7 @@ and printStmtList (params:params) (stmts:cstmt list) : Pla.t =
 
 let printJsCode (params:params) (stmts:cstmt list) : Pla.t =
    let code = printStmtList params stmts in
-   Templates.apply params.module_name params.template code
+   Templates.apply params params.module_name params.template code
 
 (** Generates the .c and .h file contents for the given parsed files *)
 let print (params:params) (stmts:Code.cstmt list) : (Pla.t * filename) list =
