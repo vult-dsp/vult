@@ -71,10 +71,3 @@ pwd
 make
 # install vultc from npm
 npm install -g vult
-# build the examples
-cd examples
-mkdir build
-cd build
-cmake ../ -G "NMake Makefiles"
-nmake
-cd $APPVEYOR_BUILD_FOLDER
