@@ -814,7 +814,7 @@
             var e = this.doc.getValue();
             e = e.replace(/^#!.*\n/, "\n");
             if (!e) return this.sender.emit("annotate", []);
-            var t = checkCode(e);
+            var t = vult.checkCode(e);
             this.sender.emit("annotate", t)
          }
       }.call(s.prototype)

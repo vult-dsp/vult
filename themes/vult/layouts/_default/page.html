@@ -1,12 +1,12 @@
-<link rel="stylesheet" type="text/css" href="../css/vult.css" media="screen">
-<link rel="shortcut icon" href="../images/favicon.ico"/>
+ {{ partial "menu.html" . }}
 
-<div class="header">
-	<center><img src="../images/VultH.png" alt="Vult" title="Vult" align="middle"></center>
+<div class="container">
+   <div class="row">
+      <div class="col-md-2"> </div>
+      <div class="col-md-8 col-md-auto">
+         {{ .Content }}
+      </div>
+   </div>
 </div>
 
-{{ partial "menu.html" . }}
-
-<div class="content">
-  {{ .Content }}
-</div>
+{{ partial "footer.html" . }}

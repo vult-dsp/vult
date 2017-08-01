@@ -1,15 +1,14 @@
-<link rel="stylesheet" type="text/css" href="../../css/vult.css" media="screen">
+ {{ partial "menu.html" . }}
 
-<div class="header">
-   <center><img src="../../images/VultH.png" alt="Vult" title="Vult" align="middle"></center>
-</div>
+<div class="container">
+   <div class="row">
+      <div class="col-md-2"> </div>
+      <div class="col-md-8 col-md-auto">
+         <h2>{{ .Title }}</h2>
+         {{ .Content }} {{ partial "disqus.html" . }}
 
-{{ partial "menu.html" . }}
-
-<div class="content">
-   <h2>{{ .Title }}</h2>
-   {{ .Content }} {{ partial "disqus.html" . }}
-
+      </div>
+   </div>
 </div>
 
 

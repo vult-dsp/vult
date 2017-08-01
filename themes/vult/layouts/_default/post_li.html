@@ -1,4 +1,5 @@
-<li>
-   <div style="display:inline-block;"><a href="{{ .Permalink }}">{{ .Title }}</a></div> -
-   <time>{{ with .Site.Params.dateFormat }}{{ $.Date.Format . }}{{ else }}{{ .Date.Format "02 Jan 2006" }}{{ end }}</time>
-</li>
+<h1>{{ .Title }}</h1>
+<em><time>{{ with .Site.Params.dateFormat }}{{ $.Date.Format . }}{{ else }}{{ .Date.Format "02 Jan 2006" }}{{ end }}</time></em>
+<hr>
+<p> {{ .Summary }} </p>
+<button type="button" class="btn btn-default"><a href="{{ .Permalink }}">Read more</a></button>

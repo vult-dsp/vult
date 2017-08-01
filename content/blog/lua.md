@@ -10,11 +10,16 @@ author = "Leonardo Laguna Ruiz"
 
 I have been keeping an eye on LuaJIT (http://luajit.org) for some time. It's a very interesting project and I have read very good things about it. Some time ago I made a small benchmark comparing an optimized algorithm written in C++11 against a lazy coded version in OCaml and LuaJIT. In case you are curious here are the results:
 
-| Language | Execution Time | Lines of Code|
-|----------|----------------|--------------|
-| C++11    |    0.355 s     |     180      |
-| OCaml    |    0.54 s      |     63       |
-| LuaJIT   |    0.78 s      |     85       |
+<table class="table">
+<thead>
+   <tr> <th> Language </th> <th> Execution Time </th> <th> Lines of Code </th> </tr>
+</thead>
+<tbody>
+   <tr> <td> C++11 </td> <td> 0.355 s  </td> <td> 180 </td> </tr>
+   <tr> <td> OCaml </td> <td> 0.54 s  </td> <td> 63 </td> </tr>
+   <tr> <td> LuaJIT </td> <td> 0.78 s  </td> <td> 85 </td> </tr>
+</tbody>
+</table>
 
 Here's a chart that plots the lines of code against the execution time.
 
@@ -34,10 +39,17 @@ $ ./vultc.native -luacode code.vult -o code
 
 In order to check the performance I took one of the examples I have in Vult and made a test rendering 1000 s of audio. Here are the results:
 
-| Language | Execution Time |
-|----------|----------------|
-| C++11    |    2.77 s      |
-| LuaJIT   |    3.55 s      |
+
+<table class="table">
+<thead>
+   <tr> <th> Language </th> <th> Execution Time </th> </tr>
+</thead>
+<tbody>
+   <tr> <td> C++11 </td> <td> 2.77 s  </td> </tr>
+   <tr> <td> LuaJIT </td> <td> 3.55 s  </td> </tr>
+</tbody>
+</table>
+
 
 Here's the graphic view:
 

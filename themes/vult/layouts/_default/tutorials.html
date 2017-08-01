@@ -1,34 +1,34 @@
-<link rel="stylesheet" type="text/css" href="../css/vult.css" media="screen">
-<link rel="shortcut icon" href="../images/favicon.ico" />
-
-<div class="header">
-   <center><img src="../images/VultH.png" alt="Vult" title="Vult" align="middle"></center>
-</div>
-
 {{ partial "menu.html" . }}
 
-<div class="content">
-   <h2> Tutorials </h2>
+<div class="container">
+   <div class="row">
+      <div class="col-md-2"> </div>
+      <div class="col-md-8 col-md-auto">
+         <h2> Tutorials </h2>
 
-   <div class="tutorial_list">
-      <ul>
-         {{ range where .Site.Pages "Section" "tutorials" }} {{ .Render "tutorial_li" }} {{ end }}
-      </ul>
-   </div>
-   <h2> Other documents </h2>
-   <div class="tutorial_list">
-      <ul>
-         <li><a href="https://github.com/modlfo/vult/wiki/Language-Reference">Language Reference</a></li>
-         <li><a href="https://github.com/modlfo/vult/wiki/Command-Line-Options">Command Line Options</a></li>
-      </ul>
-   </div>
+         <div class="tutorial_list">
+            <ul>
+               {{ range where .Site.Pages "Section" "tutorials" }} {{ .Render "tutorial_li" }} {{ end }}
+            </ul>
+         </div>
+         <h2> Other documents </h2>
+         <div class="tutorial_list">
+            <ul>
+               <li><a href="https://github.com/modlfo/vult/wiki/Language-Reference">Language Reference</a></li>
+               <li><a href="https://github.com/modlfo/vult/wiki/Command-Line-Options">Command Line Options</a></li>
+            </ul>
+         </div>
 
-   <h2> Examples </h2>
-   <div class="tutorial_list">
-      <ul>
-         <li><a href="https://github.com/modlfo/vult-examples">Audio objects for PureData</a></li>
-         <li><a href="https://github.com/modlfo/teensy-vult-example">Exporting code for the Teensy board</a></li>
-      </ul>
-   </div>
+         <h2> Examples </h2>
+         <div class="tutorial_list">
+            <ul>
+               <li><a href="https://github.com/modlfo/vult-examples">Audio objects for PureData</a></li>
+               <li><a href="https://github.com/modlfo/teensy-vult-example">Exporting code for the Teensy board</a></li>
+            </ul>
+         </div>
 
+      </div>
+   </div>
 </div>
+
+{{ partial "footer.html" . }}

@@ -1,146 +1,63 @@
-/* General settings */
-
-h1 {
-   text-align: center;
-}
-
-h2 {
-   text-align: center;
-}
-
 body {
-   font-family: 'Francois One', sans-serif;
+   font-size: 16px;
+}
+
+a.navbar-brand {
+   padding-top: 10px;
+}
+
+.footer {
+   text-align: center;
    color: #353535;
-   font-size: 20px;
-   margin: 0px;
 }
 
-p {
-   font-size: 25px;
-   font-family: 'Rasa', serif;
+.footer a {
+   color: #353535;
 }
 
-li strong {
-   font-size: 18px;
-   font-family: 'Francois One', sans-serif;
+.container {
+   margin-top: 20px;
+   margin-right: auto;
+   margin-left: auto;
 }
 
-strong {
-   font-size: 22px;
-   font-family: 'Francois One', sans-serif;
+.navbar .navbar-nav {
+   display: inline-block;
+   float: none;
+   vertical-align: top;
+   font-weight: bold;
 }
 
-.content li {
-   font-family: 'Rasa', serif;
+.navbar-inverse {
+   background-color: #353535;
+   border-color: #353535;
+}
+
+.navbar {
+   margin-bottom: 0px;
+   border-radius: 0px;
+}
+
+.navbar .navbar-collapse {
+   text-align: center;
+}
+
+.container li {
    list-style-type: none;
-   font-size: 22px;
 }
 
-.content li:before {
+.container li:before {
    font-family: 'FontAwesome';
    content: '\f192';
-   font-size: 16px;
+   font-size: 12px;
    margin: 0 5px 0 -15px;
 }
-
-code {
-   font-size: 20px;
-   color: #3F3F3F;
-}
-
-table {}
-
-td {
-   font-size: 18px;
-   font-family: 'Rasa', serif;
-   text-align: center;
-}
-
-th {
-   padding-left: 10px;
-}
-
-
-/* unvisited link */
-
-a:link {
-   color: #000000;
-   font-family: 'Francois One', sans-serif;
-   font-size: 20px;
-   text-decoration: none;
-}
-
-
-/* visited link */
-
-a:visited {
-   color: #353535;
-   text-decoration: none;
-}
-
-
-/* Main page only */
 
 .frontpage {
    max-width: 800px;
    text-align: center;
    margin: auto;
-}
-
-
-/* Menu */
-
-.menu {
-   max-width: 800px;
-   padding-top: 20px;
-   padding-bottom: 20px;
-   margin: auto;
-}
-
-
-/* Content for all pages */
-
-.content {
-   max-width: 800px;
-   margin: auto;
-}
-
-
-/* Navigation menu */
-
-div.menu ul {
-   list-style-type: none;
-   margin: 0;
-   padding: 0;
-   border-top: solid;
-   border-bottom: solid;
-}
-
-div.menu li {
-   display: inline-block;
-   /*border-style: solid;*/
-   border-width: 4px;
-   padding: 2px;
-   border-radius: 15px;
-   width: 100px;
-}
-
-div.menu a {
-   text-decoration: none;
-   font-size: 18px;
-}
-
-
-/* Lists */
-
-.tutorial_list {
-   width: 400px;
-   margin: auto;
-}
-
-.blog_list {
-   width: 600px;
-   margin: auto;
+   margin-top: 40px;
 }
 
 

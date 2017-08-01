@@ -71,10 +71,15 @@ fun wave_table(x) @[table(size=127,min=0.0,max=4.0)] {
 
 This feature works as well with fixed-point code. In one of the benchmarks that I ran I got the following results:
 
-| Representation |    No tables   |  With tables |
-|----------------|----------------|--------------|
-| Floating-point |    1.57 s      |     1.11 s   |
-| Fixed-point    |    3.10 s      |     0.94 s   |
+<table class="table">
+<thead>
+   <tr> <th> Representation </th> <th> No tables </th> <th> With tables </th> </tr>
+</thead>
+<tbody>
+   <tr> <td> Floating-point </td> <td> 1.57 s  </td> <td> 1.11 s </td> </tr>
+   <tr> <td> Fixed-point </td> <td> 3.10 s  </td> <td> 0.94 s </td> </tr>
+</tbody>
+</table>
 
 We can see that for fixed-point it really had a impact in the performance. The benchmark now runs 3 times faster.
 
