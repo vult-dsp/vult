@@ -55,7 +55,7 @@ function updateProgram() {
    var editor = ace.edit("editor");
    var new_vult_object = null;
    try {
-      generated_code = jscode(editor.getValue()) + " new vultProcess()";
+      generated_code = vult.generateJSCode(editor.getValue()) + " new vultProcess()";
       console.log(generated_code);
       new_vult_object = eval(generated_code);
    } catch (err) {
