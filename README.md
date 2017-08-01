@@ -48,31 +48,31 @@ Logo design by: John Klimt https://www.facebook.com/JohnKlimt
 
 If you want to receive notifications for future development of this project you can join to the google group http://groups.google.com/d/forum/vult
 
-E-mail: [my-github-user-name]@gmail.com
+E-mail: modlfo@gmail.com
 
 ## Installing
 
-There are three ways of getting the Vult compiler:
-- using the npm (node.js) package manager
-- downloading the released binaries
-- building from source
+There are two flavors the Vult compiler:
+- command line ([native executables](https://github.com/modlfo/vult/releases) and [node.js version](https://www.npmjs.com/package/vult))
+- [node.js library](https://www.npmjs.com/package/vultlib)
 
-The npm (node.js) version is updated frequently based on the trunk branch of this repository. This is the prefered mode of installing if you don't want to build from the sources. The binary version (native executable) is updated with every minor version of Vult.
 
-If you want to get the latest changes as soon as possible then building from the sources is the recommended method.
-
-## Installing (or updating) with npm
+## Installing
 
 You need to have `node.js` and `npm` installed.
 
 ```
 $ npm install vult -g
 ```
-This will install provide `vultc` command in your system. If `vultc` is not available for any reason. You can run the main file with node as follows:
+
+This will install provide `vultc` command in your path. Vult is updated frequently, you can use the same command to update Vult.
+
+The native executables can be downloaded from the [releases page](https://github.com/modlfo/vult/releases).
+
+To install the node.js library use:
 ```
-$ node vultc.js
+$ npm install vultlib
 ```
-Alternatively you can download the file `vultc.js` from https://github.com/modlfo/vultjs and run it with node.
 
 ## Compile from Source
 
@@ -100,19 +100,21 @@ Optionally to run the tests and building the web functions:
 $ opam install ounit js_of_ocaml js_of_ocaml-ppx
 ```
 ### Compiling Vult
+
+To compile the native executable:
 ```
 $ make
 ```
-In platforms without make you can build with the following command:
+
+Compile the node.js code:
 ```
-$ ocamlbuild -use-ocamlfind src/vultc.native
+$ make jscompiler
 ```
-Running tests:
+
+Running tests (Linux and macOS):
 ```
 $ make test
 ```
-Building the web functions:
-```
-$ make js
-```
+
+
 
