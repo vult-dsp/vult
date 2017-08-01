@@ -3,7 +3,7 @@ export OPAMYES=1
 opam switch 4.04.2 -y
 eval $(opam config env)
 # installs all dependencies
-opam install containers ppx_deriving ounit js_of_ocaml js_of_ocaml-ppx pla ollvm
+opam install containers ppx_deriving ounit js_of_ocaml js_of_ocaml-ppx pla ollvm ocveralls bisect_ppx
 make all
 # prepare to package
 cp ./_build/src/vultc.native ./vultc
@@ -24,3 +24,5 @@ cmake ../
 make
 cd ..
 cd ..
+# run the coverage
+make coverage

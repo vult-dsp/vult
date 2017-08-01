@@ -29,6 +29,7 @@ test-update: compiler jscompiler
 			./test.native -runner sequential -update true -shards 1
 
 coverage: compiler
+			$(OCB) -clean
 			BISECT_COVERAGE=YES $(OCB) test/test.native
 			./test.native -runner sequential -shards 1 -coverage true
 			bisect-ppx-report -I _build/ -html bisect_coverage/ bisect*.out
