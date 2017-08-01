@@ -33,7 +33,7 @@ coverage: compiler
 			./test.native -runner sequential -shards 1 -coverage true
 			bisect-ppx-report -I _build/ -html bisect_coverage/ bisect*.out
 
-all: 		compiler js test
+all: 		compiler js test web jscompiler
 
 clean:
 			$(OCB) -clean
