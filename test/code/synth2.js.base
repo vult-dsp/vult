@@ -360,6 +360,7 @@ this.Synth2_controlChange = function(_ctx,control,value,channel){
 }
 this.Synth2_default_init = function() { return this.Synth2__ctx_type_16_init();}
 this.Synth2_default = function(_ctx){
+   _ctx.volume = 1.000000;
    _ctx.pw = 0.000000;
    _ctx.pitch = 42.000000;
    _ctx.cut = 1.000000;

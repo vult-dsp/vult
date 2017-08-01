@@ -558,6 +558,7 @@ void Synth2_default_init(Synth2__ctx_type_16 &_output_){
 }
 
 void Synth2_default(Synth2__ctx_type_16 &_ctx){
+   _ctx.volume = 1.000000f;
    _ctx.pw = 0.000000f;
    _ctx.pitch = 42.000000f;
    _ctx.cut = 1.000000f;

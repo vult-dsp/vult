@@ -308,6 +308,7 @@ and controlChange(control:int,value:int,channel:int){
 
 // Called on initialization to define initial values
 and default() @[init] {
+    mem volume = 1.0;
     mem pw = 0.0;
     mem pitch = 42.0;
     mem cut = 1.0;
