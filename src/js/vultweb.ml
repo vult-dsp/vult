@@ -58,9 +58,14 @@ let checkCode s =
    | _ -> Js.array [||]
 ;;
 
-Js.Unsafe.set Js.Unsafe.global "jscode" (Js.wrap_callback generateJSCode) ;;
-Js.Unsafe.set Js.Unsafe.global "checkCode" (Js.wrap_callback checkCode) ;;
-
-Js.export "jscode" (Js.wrap_callback generateJSCode) ;;
-Js.export "checkCode" (Js.wrap_callback checkCode) ;;
-
+let _ =
+   Js.export "vult"
+      (object%js
+         method main        = Vultlib.main
+         method version     = Vultlib.version
+         method generateJs  = Vultlib.generateJs
+         method generateC   = Vultlib.generateC
+         method generateLua = Vultlib.generateLua
+         method checkCode   = checkCode
+         method generateJSCode = generateJSCode
+      end)

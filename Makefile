@@ -4,13 +4,16 @@ compiler: version
 			$(OCB) src/vultc.native src/vultc.byte
 
 js: jscompiler
-			$(OCB) src/js/vultweb.byte
 			$(OCB) src/js/vultlib.byte
-			js_of_ocaml vultweb.byte
-			js_of_ocaml vultlib.byte
+			js_of_ocaml --opt 3 vultlib.byte
 
 jscompiler: compiler
-			js_of_ocaml vultc.byte
+			js_of_ocaml --opt 3 vultc.byte
+
+web:
+			$(OCB) src/js/vultweb.byte
+			js_of_ocaml vultweb.byte --pretty
+			sed -i -e "s/require(\"fs\")/null/g" vultweb.js
 
 test: compiler jscompiler
 			$(OCB) test/test.native
