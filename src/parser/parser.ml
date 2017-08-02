@@ -107,11 +107,6 @@ let string (buffer:Stream.stream) : string =
    let _     = Stream.skip buffer in
    token.value
 
-let optString (buffer:Stream.stream) : string option=
-   match Stream.peek buffer with
-   | STRING -> Some(string buffer)
-   | _ -> None
-
 (** Creates Pratt parser functions *)
 let prattParser (rbp:int) (buffer:Stream.stream)
       (lbp:'kind token -> int)
@@ -307,7 +302,7 @@ and lhs_nud (buffer:Stream.stream) (token:'kind token) : lhs_exp =
       begin
          match Stream.peek buffer with
          | RPAREN ->
-            let message = Stream.notExpectedError token in
+            let message = Error.PointedError(token.loc, "Invalid left hand side of assignment") in
             raise (ParserError(message))
          | _ ->
             let e = lhs_expression 0 buffer in
@@ -316,7 +311,7 @@ and lhs_nud (buffer:Stream.stream) (token:'kind token) : lhs_exp =
             LGroup(e,attr)
       end
    | _ ->
-      let message = Stream.notExpectedError token in
+      let message = Error.PointedError(token.loc, "Invalid left hand side of assignment") in
       raise (ParserError(message))
 
 and lhs_led (buffer:Stream.stream) (token:'kind token) (left:lhs_exp) : lhs_exp =
@@ -326,7 +321,8 @@ and lhs_led (buffer:Stream.stream) (token:'kind token) (left:lhs_exp) : lhs_exp 
       LTyped(left,vtype,makeAttr token.loc)
    | COMMA ->
       lhs_pair buffer token left
-   | _ -> failwith "lhs_led"
+   | _ -> let message = Error.PointedError(token.loc, "Invalid left hand side of assignment") in
+      raise (ParserError(message))
 
 (** <pair> :=  <expression>  ',' <expression> [ ',' <expression> ] *)
 and lhs_pair (buffer:Stream.stream) (token:'kind token) (left:lhs_exp) : lhs_exp =
@@ -365,7 +361,7 @@ and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
                   PCall(Some(id),fname,args,attr)
                | _ ->
                   let loc   = (GetAttr.fromExp exp_call).loc in
-                  let error = Error.PointedError(Loc.getNext loc,"After ':' you can only have a function call") in
+                  let error = Error.PointedError(Loc.getNext loc,"After ':' you can only have a function call e.g. foo()") in
                   raise (ParserError(error))
             end
          | _ -> PId(id,makeAttr token.loc)
@@ -425,7 +421,7 @@ and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
             PArray(Array.of_list elems,attr)
       end
    | _ ->
-      let message = Stream.notExpectedError token in
+      let message = Error.PointedError(token.loc, "Invalid expression") in
       raise (ParserError(message))
 
 (** Led function for the Pratt parser *)
@@ -435,8 +431,10 @@ and exp_led (buffer:Stream.stream) (token:'kind token) (left:exp) : exp =
       binaryOp buffer token left
    | COMMA,_ ->
       pair buffer token left
-   | _ -> failwith "exp_led"
-(*| _ -> token*)
+   | _ ->
+      let message = Error.PointedError(token.loc, "Invalid expression") in
+      raise (ParserError(message))
+
 
 (** <pair> :=  <expression>  ',' <expression> [ ',' <expression> ] *)
 and pair (buffer:Stream.stream) (token:'kind token) (left:exp) : exp =
@@ -526,25 +524,6 @@ and typedArgList (optional_type:bool) (buffer:Stream.stream) : typed_id list =
       end
    | _ -> []
 
-(** <optStartValue> := '(' <expression> ')' *)
-and optStartValue (buffer:Stream.stream) : exp option =
-   match Stream.peek buffer with
-   | LPAREN ->
-      let _ = Stream.consume buffer LPAREN in
-      let e = expression 0 buffer in
-      let _ = Stream.consume buffer RPAREN in
-      Some(e)
-   | _ -> None
-
-(** initExpression := '(' expression ')'*)
-and initExpression (buffer:Stream.stream) : exp option =
-   match Stream.peek buffer with
-   | AT ->
-      let _ = Stream.skip buffer in
-      let e = expression 0 buffer in
-      Some(e)
-   | _ -> None
-
 (** <statement> := | 'val' <valBindList> ';' *)
 and stmtVal (buffer:Stream.stream) : stmt =
    let start_loc = Stream.location buffer in
@@ -599,9 +578,6 @@ and stmtBind (buffer:Stream.stream) : stmt =
       let _  = Stream.consume buffer SEMI in
       StmtBind(e1,e2,makeAttr start_loc)
    | _ ->
-      (*let expected = kindToString EQUAL in
-        let got      = kindToString kind in
-        let message  = Printf.sprintf "Expecting a %s while trying to parse a binding (%s = ...) but got %s" expected (PrintProg.lhsExpressionStr e1) got in*)
       let message  = Printf.sprintf "Invalid statement. All statements should be in the forms: \"a = b;\" or \"_ = b();\" " in
       raise (ParserError(Stream.makeError buffer message))
 

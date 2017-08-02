@@ -34,7 +34,7 @@ exception Errors of t list
 let errorLocationMessage (location:Loc.t) : string =
    let col_start = Loc.startColumn location in
    let col_end   = Loc.endColumn location in
-   Printf.sprintf "Error in file: %s: line %i col:%i-%i\n"
+   Printf.sprintf "Error: %s:%i:%i-%i: "
       (Loc.file location)
       (Loc.line location)
       col_start

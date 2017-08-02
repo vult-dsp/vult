@@ -206,6 +206,11 @@ rule next_token source = parse
   | "//"        { line_comment source lexbuf}
   | "/*"        { comment source 0 lexbuf }
   | eof         { makeToken source EOF lexbuf }
+  | _ as c      {
+                  let loc = Loc.getLocation source lexbuf in
+                  let message = Error.PointedError(loc, Printf.sprintf "Invalid character '%c' " c) in
+                  raise (Error.Errors([message]))
+                }
 
 and line_comment source = parse
    newline

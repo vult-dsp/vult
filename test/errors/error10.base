@@ -1,0 +1,3 @@
+Error: /Users/leonardo/Development/vult/vult/test/errors/error10.vult:1:6-6: Expecting a list of value declarations '{ val x:... }' or a type alias ': type' but got '='
+type x = int;
+      ^

@@ -1,0 +1,4 @@
+Error: /Users/leonardo/Development/vult/vult/test/errors/error2.vult:2:3-4: Invalid left hand side of assignment
+fun foo() {
+   1 = 1;
+   ^

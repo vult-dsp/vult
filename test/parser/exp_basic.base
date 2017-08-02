@@ -5,4 +5,5 @@ fun values() {
    val x = false;
    val x = (-1);
    val y = x;
+   val z = ();
 }

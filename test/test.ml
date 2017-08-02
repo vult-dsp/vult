@@ -70,6 +70,21 @@ let parser_files =
       "types_basic.vult";
    ]
 
+let errors_files =
+   [
+      "error1.vult";
+      "error2.vult";
+      "error3.vult";
+      "error4.vult";
+      "error5.vult";
+      "error6.vult";
+      "error7.vult";
+      "error8.vult";
+      "error9.vult";
+      "error10.vult";
+   ]
+
+
 let no_context = PassCommon.{ default_options with pass4 = false; pass3 = false; pass2 = false; }
 let no_eval = PassCommon.{ default_options with pass2 = false; }
 
@@ -233,6 +248,37 @@ module ParserTest = struct
          reference current
 
    let get files = "parser">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)
+
+end
+
+module ErrorTest = struct
+
+   let process (fullfile:string) =
+      let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
+      let args = { default_arguments with includes = includes } in
+      let args = { args with output = basefile; files = [ File fullfile ] } in
+      let results = Driver.main args in
+      List.fold_left
+         (fun s a ->
+             match a with
+             | Errors e ->
+                (List.map Error.reportErrorString e) @ s
+             | _ -> s)
+         []
+         results
+      |> String.concat "\n"
+
+   let run (file:string) context =
+      let folder = "errors" in
+      let fullfile  = checkFile (in_test_directory (folder^"/"^file)) in
+      let current   = process fullfile in
+      let reference = readReference (update_test context) "base" current fullfile (in_test_directory folder) in
+      assert_equal
+         ~msg:("Error mismatch in file "^fullfile)
+         ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
+         reference current
+
+   let get files = "errors">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)
 
 end
 
@@ -483,6 +529,7 @@ end
 let suite =
    "vult">:::
    [
+      ErrorTest.get errors_files;
       ParserTest.get  parser_files;
       PassesTest.get  passes_files;
       CliTest.get all_files Native "float";
