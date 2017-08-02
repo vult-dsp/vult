@@ -1,0 +1,4 @@
+The type 'array(tuple(int,int),3)' of variable 'x' is not supported. Arrays can only contain basic types.
+fun foo() {
+   val x : array(tuple(int, int), 3);
+       ^

@@ -82,6 +82,11 @@ let errors_files =
       "error8.vult";
       "error9.vult";
       "error10.vult";
+      "error11.vult";
+      "error12.vult";
+      "error13.vult";
+      "error14.vult";
+      "error15.vult";
    ]
 
 
@@ -255,7 +260,7 @@ module ErrorTest = struct
 
    let process (fullfile:string) =
       let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
-      let args = { default_arguments with includes = includes } in
+      let args = { default_arguments with includes = includes; check = true } in
       let args = { args with output = basefile; files = [ File fullfile ] } in
       let results = Driver.main args in
       List.fold_left

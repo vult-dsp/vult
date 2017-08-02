@@ -1,0 +1,4 @@
+This expression has type 'real' but 'int' was expected
+fun foo() {
+   val x = 1 + 1.0;
+               ^^^

@@ -1,0 +1,4 @@
+The type of variable 'x' cannot be infered. Add a type annotation.
+fun foo() {
+   val x;
+       ^
