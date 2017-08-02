@@ -1,4 +1,4 @@
-Error: /Users/leonardo/Development/vult/vult/test/errors/error3.vult:2:4-5: Invalid left hand side of assignment
+Invalid left hand side of assignment
 fun foo() {
    x-y = 1;
     ^

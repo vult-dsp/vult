@@ -1,4 +1,4 @@
-Error: /Users/leonardo/Development/vult/vult/test/errors/error5.vult:2:7-8: Invalid expression
+Invalid expression
 fun foo() {
    _ = *1;
        ^

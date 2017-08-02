@@ -1,4 +1,4 @@
-Error: /Users/leonardo/Development/vult/vult/test/errors/error8.vult:2:6-6: Invalid statement. All statements should be in the forms: "a = b;" or "_ = b();" 
+Invalid statement. All statements should be in the forms: "a = b;" or "_ = b();" 
 fun foo() {
    bar();
       ^

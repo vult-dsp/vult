@@ -262,7 +262,7 @@ module ErrorTest = struct
          (fun s a ->
              match a with
              | Errors e ->
-                (List.map Error.reportErrorString e) @ s
+                (List.map (fun a -> let msg,_,_,_ = Error.reportErrorStringNoLoc a in msg) e) @ s
              | _ -> s)
          []
          results

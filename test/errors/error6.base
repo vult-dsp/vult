@@ -1,4 +1,4 @@
-Error: /Users/leonardo/Development/vult/vult/test/errors/error6.vult:2:9-10: Invalid character '#' 
+Invalid character '#' 
 fun foo() {
    _ = 1 # 3;
          ^
