@@ -6,6 +6,22 @@ a.navbar-brand {
    padding-top: 10px;
 }
 
+a {
+   color: #B79533
+}
+
+h1 {
+   font-family: 'Domine', serif;
+}
+
+h2 {
+   font-family: 'Domine', serif;
+}
+
+h3 {
+   font-family: 'Domine', serif;
+}
+
 .footer {
    text-align: center;
    color: #353535;
@@ -96,6 +112,10 @@ main {
    margin: 0;
    background-color: #353535;
    color: #FFFFFF;
+}
+
+#side-section a {
+   color: #FFFFFF
 }
 
 #side-section ul {
