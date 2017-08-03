@@ -40,31 +40,50 @@ let rec findModule (includes:string list) (module_name:string) : string option =
       else
          (* then checks a file with the same name as the module *)
          let file2 = Filename.concat h (module_name ^ ".vult") in
-         if FileIO.exists file2 then Some file2
-         else findModule t module_name
+         if FileIO.exists file2 then
+            Some file2
+         else
+            findModule t module_name
 
 (** Returns a list with all the possible directories where files can be found *)
 let getIncludes (arguments:args) (files:input list) : string list =
    let current = FileIO.cwd () in
    (* the directories of the input files are considered include paths *)
-   let implicit_dirs = List.map (fun input -> match input with | File(f) | Code(f,_) -> Filename.dirname f) files in
+   let implicit_dirs =
+      List.map
+         (fun input ->
+             match input with
+             | File(f)
+             | Code(f,_) -> Filename.dirname f)
+         files
+   in
    (* these are the extra include paths passed in the arguments *)
-   let explicit_dir = List.map (fun a  -> if Filename.is_relative a then Filename.concat current a else a) arguments.includes in
+   let explicit_dir =
+      List.map
+         (fun a  ->
+             if Filename.is_relative a then
+                Filename.concat current a
+             else
+                a)
+         arguments.includes
+   in
    List.sort_uniq compare (current :: implicit_dirs @ explicit_dir)
 
 (* main function that iterates the input files, gets the dependencies and searchs for the dependencies locations *)
-let rec loadFiles_loop (includes:string list) dependencies parsed (files:input list) =
+let rec loadFiles_loop (includes:string list) dependencies parsed visited (files:input list) =
    match files with
    | [] -> dependencies, parsed
    | (( File(h) | Code(h,_)) as input)::t ->
       (* check that the file has not been visited before *)
-      if not (Hashtbl.mem parsed h) then
-         let h_module    = moduleName h in
+      let h_module    = moduleName h in
+      if not (Hashtbl.mem visited h_module) then
+         let () = Hashtbl.add visited h_module true in
          let h_parsed    =
             match input with
             |  File(_) -> Parser.parseFile h
             |  Code(_,txt) -> Parser.parseString None txt
          in
+         let () = Hashtbl.add parsed h_module h_parsed in
          (* gets the depencies based on the modules used *)
          let h_deps =
             Common.GetDependencies.fromStmts h_parsed.presult
@@ -79,10 +98,9 @@ let rec loadFiles_loop (includes:string list) dependencies parsed (files:input l
          in
          (* updates the tables *)
          let ()          = Hashtbl.add dependencies h_module h_deps in
-         let ()          = Hashtbl.add parsed h_module h_parsed in
-         loadFiles_loop includes dependencies parsed (t @ h_dep_files)
+         loadFiles_loop includes dependencies parsed visited (t @ h_dep_files)
       else
-         loadFiles_loop includes dependencies parsed t
+         loadFiles_loop includes dependencies parsed visited t
 
 (** Raises an error if the modules have circular dependencies *)
 let rec checkComponents (comps:string list list) : unit =
@@ -98,7 +116,7 @@ let rec checkComponents (comps:string list list) : unit =
 let loadFiles (arguments:args) (files:input list) : parser_results list =
    let includes = getIncludes arguments files in
    arguments.includes <- includes;
-   let dependencies, parsed = loadFiles_loop includes (Hashtbl.create 8) (Hashtbl.create 8) files in
+   let dependencies, parsed = loadFiles_loop includes (Hashtbl.create 8) (Hashtbl.create 8) (Hashtbl.create 8) files in
    let dep_list = Hashtbl.fold (fun a b acc -> (a,b)::acc) dependencies [] in
    let comps = Components.components dep_list in
    let () = checkComponents comps in

@@ -67,7 +67,7 @@ module ReportUnsupportedTypes = struct
       let attr = GetAttr.fromExp exp in
       match attr.typ with
       | Some(t) when Typ.isUnbound t ->
-         let msg = Printf.sprintf "The type of this expression could not be infered. Add a type annotation." in
+         let msg = Printf.sprintf "The type of this expression could not be inferred. Add a type annotation." in
          Error.raiseError msg (attr.loc)
       | Some(t) when isComplexArray t ->
          let msg = Printf.sprintf "The type '%s' of this expression is not supported. Arrays can only contain basic types." (PrintProg.typeStr t) in

@@ -1,0 +1,4 @@
+Unknown function 'NonExisting.foo'
+fun foo() {
+   val x = NonExisting.foo();
+           ^^^^^^^^^^^^^^^

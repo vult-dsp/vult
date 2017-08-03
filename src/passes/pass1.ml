@@ -43,7 +43,7 @@ end
 module ReportUnboundTypes = struct
 
    let reportUnbound (name:Id.t) (attr:attr) =
-      let msg = Printf.sprintf "The type of variable '%s' cannot be infered. Add a type annotation." (idStr name) in
+      let msg = Printf.sprintf "The type of variable '%s' cannot be inferred. Add a type annotation." (idStr name) in
       Error.raiseError msg attr.loc
 
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
@@ -64,7 +64,7 @@ module ReportUnboundTypes = struct
          let attr = GetAttr.fromExp exp in
          match attr.typ with
          | Some(t) when Typ.isUnbound t ->
-            let msg = Printf.sprintf "The type of this expression could not be infered. Add a type annotation." in
+            let msg = Printf.sprintf "The type of this expression could not be inferred. Add a type annotation." in
             Error.raiseError msg (attr.loc)
          | _ ->
             state, exp
