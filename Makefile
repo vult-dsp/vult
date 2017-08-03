@@ -8,7 +8,8 @@ js: jscompiler
 			js_of_ocaml --opt 3 vultlib.byte
 
 jscompiler: compiler
-			js_of_ocaml --opt 3 vultc.byte
+			js_of_ocaml --opt 3 --custom-header="#!/usr/bin/env node" vultc.byte
+			chmod +x vultc.js
 
 web:
 			$(OCB) src/js/vultweb.byte
