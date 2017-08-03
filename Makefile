@@ -13,7 +13,7 @@ jscompiler: compiler
 web:
 			$(OCB) src/js/vultweb.byte
 			js_of_ocaml --opt 3 vultweb.byte
-			sed -i -e "s/require(/foo(/g" vultweb.js
+			sed -i -e "s/this.fs=require(..)/this.fs=null/g" vultweb.js
 
 test: compiler jscompiler
 			$(OCB) test/test.native
