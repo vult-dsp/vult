@@ -46,7 +46,7 @@ end
 module ReportUnsupportedTypes = struct
 
    let reportUnsupportedArray (typ:Typ.t) (name:Id.t) (attr:attr) =
-      let msg = Printf.sprintf "The type '%s' of variable '%s' is not supported. Arrays can only contain basic types." (PrintProg.typeStr typ) (idStr name) in
+      let msg = Printf.sprintf "The type '%s' of variable '%s' is not supported. Arrays can only contain basic types." (PrintProg.typeStr typ) (Id.show name) in
       Error.raiseError msg attr.loc
 
    let isComplexArray typ =

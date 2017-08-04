@@ -610,7 +610,7 @@ and stmtExternal (buffer:Stream.stream) : stmt =
    let _      = Stream.consume buffer RPAREN in
    let _      = Stream.consume buffer COLON in
    let vtype  = typeExpression 0 buffer in
-   let link_name, tag =
+   let link_name, tags =
       match Stream.peek buffer with
       | STRING ->
          let link_name = string buffer in
@@ -625,7 +625,7 @@ and stmtExternal (buffer:Stream.stream) : stmt =
    in
    let _         = Stream.consume buffer SEMI in
    let start_loc = token.loc in
-   let attr      = { (makeAttr start_loc) with ext_fn = link_name; exp = tag } in
+   let attr      = { (makeAttr start_loc) with ext_fn = link_name; tags } in
    StmtExternal(name,args,vtype,link_name,attr)
 (** 'fun' <id> '(' <typedArgList> ')' [ ':' type ] <stmtList> *)
 and stmtFunction (buffer:Stream.stream) : stmt =
@@ -647,9 +647,9 @@ and stmtFunction (buffer:Stream.stream) : stmt =
          Some(typeExpression 0 buffer)
       | _ -> None
    in
-   let tag_exp  = optTagExpressions buffer in
+   let tags      = optTagExpressions buffer in
    let body      = stmtList buffer in
-   let attr      = { emptyAttr with loc = start_loc; exp = tag_exp } in
+   let attr      = { emptyAttr with loc = start_loc; tags } in
    let attr      = if isjoin then { attr with fun_and = true } else attr in
    StmtFun(name,args,body,vtype,attr)
 

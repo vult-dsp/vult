@@ -77,6 +77,47 @@ module Evaluate = struct
 
 end
 
+(*
+module Inline = struct
+
+   let makePrefix (attr:attr) : string=
+      let line = Loc.line attr.loc in
+      let col = Loc.startColumn attr.loc in
+      Printf.sprintf "_inlined_%i_%i" line col
+
+   let inline prefix (args:exp list) (fargs:typed_id list) =
+      List.map2
+         (fun lhs rhs ->
+             match lhs with
+             | SimpleId(lhs,_,_) -> failwith ""
+             | TypedId(lhs,typ,_,attr) ->
+                let lhs_exp =LId(Id.postfix lhs prefix, Some typ, attr) in
+                StmtVal(lhs_exp, Some rhs, attr))
+         fargs args
+
+   let exp : ('a Env.t,exp) Mapper.mapper_func =
+      Mapper.make "Simplify.exp" @@ fun state exp ->
+      match exp with
+      | PCall(None, name, args, attr) when not (Env.isBuiltin name) ->
+         let env = getInterpEnv state in
+         let _ = Env.lookupRaise Scope.Function state name attr.loc in
+         let exp =
+            match Interpreter.Env.lookupFunction env name with
+            | Some (_,(Interpreter.Env.Declared (StmtFun(_, fargs, body, _, fattr)))) when Tags.is_empty fattr.tags ->
+               let prefix = makePrefix attr in
+               let r = inline prefix args fargs in
+               PSeq(None, StmtBlock(None, r, attr), attr)
+            | _ -> PCall(None, name, args, { attr with no_inline = true })
+         in
+         state, exp
+
+      | _ -> state, exp
+
+   let mapper = Mapper.{ default_mapper with exp = exp }
+
+end
+*)
+
 module Tables = struct
 
    let int_type = Typ.Const.int_type
@@ -212,7 +253,7 @@ module MakeTables = struct
          begin
             let params = Tags.["size", Int; "min", Real; "max", Real] in
             let msg    = "The attribute 'table' requires specific parameters. e.g. 'table(size=128,min=0.0,max=1.0)'" in
-            match Tags.getTableParams "table" params msg attr.exp with
+            match Tags.getTableParams "table" params msg attr.tags with
             | None -> state, [stmt]
             | Some(_, [PInt(size, _); PReal(min, _); PReal(max, _)]) when checkRealReturn ret ->
                let var    = checkInputVariables attr.loc args in
@@ -220,7 +261,7 @@ module MakeTables = struct
                let Id.Path(path) = Env.currentScope state in
                let full_path     = path@name in
                let result        = calculateTables env attr full_path size min max in
-               let attr'         = { attr with exp = Tags.removeAttrFunc "table" attr.exp } in
+               let attr'         = { attr with tags = Tags.removeAttrFunc "table" attr.tags } in
                let body'         = makeNewBody full_path size min max var in
                reapply state, result @ [StmtFun(name, args, body', ret, attr')]
             | Some(loc, _) ->
@@ -310,7 +351,7 @@ module EmbedWavFile = struct
          begin
             let params = Tags.["channels", Int; "file", String] in
             let msg    = "The attribute 'wave' requires specific parameters. e.g. 'wave(channels=1,file=\"file.wav\")'" in
-            match Tags.getTableParams "wave" params msg attr.exp with
+            match Tags.getTableParams "wave" params msg attr.tags with
             | None -> state, [stmt]
             | Some(loc, [PInt(channels, _); PString(file, _)]) when Typ.isRealType ret ->
                let Id.Path(path) = Env.currentScope state in
@@ -320,7 +361,7 @@ module EmbedWavFile = struct
                let ()         = checkNumberOfChannels loc channels wave in
                let result     = getDeclarations attr full_path wave in
                let body       = makeNewBody full_path attr args wave in
-               let attr'      = { attr with exp = Tags.removeAttrFunc "wave" attr.exp; ext_fn = None } in
+               let attr'      = { attr with tags = Tags.removeAttrFunc "wave" attr.tags; ext_fn = None } in
                let size_fun   = makeSizeFunction name attr wave.WavFile.samples in
                reapply state, result @ [size_fun; StmtFun(full_path, args, body, Some ret, attr')]
             | Some (loc, _) ->

@@ -30,12 +30,15 @@ type t =
    | Id
    | String
 
-let rec has (attr:tag list) (id:Id.t) =
-   match attr with
+let rec has (tags:tag list) (id:Id.t) =
+   match tags with
    | [] -> false
    | TId(name,_)::_ when id = name -> true
    | TFun(name,_,_)::_ when id = name -> true
    | _::t -> has t id
+
+let is_empty (tags:tag list) =
+   tags = []
 
 let getLocation (attr:tag) : Loc.t =
    match attr with

@@ -25,11 +25,6 @@ THE SOFTWARE.
 open Prog
 open Maps
 
-let idStr = PrintProg.identifierStr
-
-let pathStr path = path |> Id.pathToId |> PrintProg.identifierStr
-
-
 (** Maps which function belongs to which context *)
 module Context = struct
 
@@ -377,14 +372,14 @@ module Scope = struct
       match lookup kind t name with
       | Some(a) -> a
       | None ->
-         Error.raiseError (Printf.sprintf "Unknown %s '%s'" (kindStr kind) (idStr name)) loc
+         Error.raiseError (Printf.sprintf "Unknown %s '%s'" (kindStr kind) (Id.show name)) loc
 
    let lookupVariableRaise (t:t) (name:Id.t) (loc:Loc.t) : var =
       match lookupVariable  t name with
       | Some(a) -> a
       | None ->
-         Printf.printf "Unknown symbol '%s'" (idStr name);
-         Error.raiseError (Printf.sprintf "Unknown symbol '%s'" (idStr name)) loc
+         Printf.printf "Unknown symbol '%s'" (Id.show name);
+         Error.raiseError (Printf.sprintf "Unknown symbol '%s'" (Id.show name)) loc
 
 
    let isMemOrInstance (t:t) (name:Id.t) : bool =
@@ -403,7 +398,7 @@ module Scope = struct
       | Some(decl) ->
          let msg =
             Printf.sprintf
-               "Redefinition of variable '%s'. Previously defined at %s" (idStr name) (Loc.to_string_readable decl.loc)
+               "Redefinition of variable '%s'. Previously defined at %s" (Id.show name) (Loc.to_string_readable decl.loc)
          in
          Error.raiseError msg loc
 
@@ -436,7 +431,7 @@ module Scope = struct
             let msg =
                Printf.sprintf
                   "Redefinition of variable '%s'. Previously defined at %s"
-                  (idStr name) (Loc.to_string_readable decl.loc)
+                  (Id.show name) (Loc.to_string_readable decl.loc)
             in
             Error.raiseError msg loc
 
@@ -448,7 +443,7 @@ module Scope = struct
             sub.ext_fn := attr.ext_fn;
             sub
          in
-         let init = Tags.has attr.exp ["init"] in
+         let init = Tags.has attr.tags ["init"] in
          let t' =
             if attr.fun_and then
                addToContext t name init
@@ -472,7 +467,7 @@ module Scope = struct
          else
             let msg =
                Printf.sprintf
-                  "Redefinition of function '%s'. Previously defined at %s" (idStr name) (Loc.to_string_readable !(decl.loc))
+                  "Redefinition of function '%s'. Previously defined at %s" (Id.show name) (Loc.to_string_readable !(decl.loc))
             in
             Error.raiseError msg attr.loc
 
@@ -691,6 +686,10 @@ module Env = struct
    (** Returns true if the function is active *)
    let isActive (state:'a t) (name:Id.t) : bool =
       Scope.isActiveFunction state.scope name
+
+   (** Checks if the id s a builtin function*)
+   let isBuiltin (name:Id.t) : bool =
+      IdSet.mem name builtin_functions
 
    (** Returns true if the id is a mem or an instance *)
    let isLocalInstanceOrMem (state:'a t) (name:Id.t) : bool =

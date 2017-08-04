@@ -40,8 +40,9 @@ type attr =
       const   : bool;
       ext_fn  : string option;
       typ     : Typ.t option;
-      exp     : tag list;
+      tags    : tag list;
       evaluated : bool;
+      no_inline : bool;
    }
 
 let pp_attr = fun fmt _ -> Format.pp_print_string fmt "attr"
@@ -200,9 +201,10 @@ let makeAttr (loc:Loc.t) : attr =
       bound   = false;
       typ     = None;
       ext_fn  = None;
-      exp     = [];
+      tags    = [];
       const   = false;
       evaluated = false;
+      no_inline = false;
    }
 
 let emptyAttr =
@@ -213,9 +215,10 @@ let emptyAttr =
       bound   = false;
       typ     = None;
       ext_fn  = None;
-      exp     = [];
+      tags    = [];
       const   = false;
       evaluated = false;
+      no_inline = false;
    }
 
 let moduleName (file:string) : string =

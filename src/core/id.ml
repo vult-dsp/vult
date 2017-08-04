@@ -51,6 +51,8 @@ let getNameNoModule (id:t) : string option =
    | _ :: name :: _ -> Some name
    | _ -> None
 
+let show (id:t) : string =
+   String.concat "." id
 
 (* ===== PATHS ======= *)
 
@@ -69,3 +71,7 @@ let pathToId (path:path) : t =
 let pathJoin (path:path) (id:t) : path =
    let Path(p) = path in
    Path(p@id)
+
+let pathSwow (path:path) : string =
+   path |> pathToId |> show
+
