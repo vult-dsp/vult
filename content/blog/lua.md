@@ -10,6 +10,9 @@ author = "Leonardo Laguna Ruiz"
 
 I have been keeping an eye on LuaJIT (http://luajit.org) for some time. It's a very interesting project and I have read very good things about it. Some time ago I made a small benchmark comparing an optimized algorithm written in C++11 against a lazy coded version in OCaml and LuaJIT. In case you are curious here are the results:
 
+<!--more-->
+
+
 <table class="table">
 <thead>
    <tr> <th> Language </th> <th> Execution Time </th> <th> Lines of Code </th> </tr>

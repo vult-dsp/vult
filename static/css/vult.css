@@ -2,32 +2,16 @@ body {
    font-size: 16px;
 }
 
-a.navbar-brand {
-   padding-top: 10px;
+.top-menu {
+   max-width: 780px;
 }
 
 a {
    color: #B79533
 }
 
-h1 {
-   font-family: 'Domine', serif;
-}
-
-h2 {
-   font-family: 'Domine', serif;
-}
-
-h3 {
-   font-family: 'Domine', serif;
-}
-
 .footer {
    text-align: center;
-   color: #353535;
-}
-
-.footer a {
    color: #353535;
 }
 

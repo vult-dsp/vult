@@ -12,6 +12,9 @@ A new repository with more Vult examples is available:
 
 https://github.com/modlfo/vult-examples
 
+<!--more-->
+
+
 This repository contains a set of standalone Vult files that can be easily compiled as PureData objects.
 
 The main idea behind this objects is to create collection of "modules" that try to follow the Eurorack voltage convention: the inputs are controlled by voltages. The oscillators follow the convention of 1 volt per octave. Parameters use a range of 0-5 volts.

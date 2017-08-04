@@ -14,6 +14,9 @@ author = "Leonardo Laguna Ruiz"
 
 This is one of the features that has been in the TODO list since the creation of Vult. When generating code, now is possible to annotate a function and Vult will automatically create a table-based implementation which will be faster. This is specially useful when generating code for microcontrollers.
 
+<!--more-->
+
+
 As an example, take the function used to convert from pitch (MIDI note number) to frequency.
 
 <div>$$f = 440 \cdot 2^{ \frac {d - 69} {12}} $$</div>

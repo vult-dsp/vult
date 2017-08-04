@@ -10,6 +10,9 @@ author = "Leonardo Laguna Ruiz"
 
 Around the 2000's I got my first VST plugin; it was a PPG Wave. The sounds produced by this plugin got me intrigued because it sounded very different from other soft synths that I have heard. The main difference was that the PPG was based on wavetables. Since I started working on Vult, making a wavetable synthesizer has been in the list.
 
+<!--more-->
+
+
 To make a wavetable synthesizer you need waveforms. One of the things I considered was to extract the waves from the PPG ROM, but in the process of trying that I found the work of [Adventure Kid](https://www.adventurekid.se) who has created a large database of waveforms and impulse response files [AKRT](https://www.adventurekid.se/AKRT/). He provides the wavetables and IR as WAV files.
 
 In order to use wavetables in Vult (as the ones provided by Adventure Kid) it's necessary to load them in some way. Since Vult is all about the code, the easiest way is to include the wavetables in the code itself. To that purpose we have now a new tag `@[wave]` that allows to specify a WAV file. The function marked with the tag is replaced at compile-time with a function that returns the data of the file. For example:

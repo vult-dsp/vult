@@ -10,6 +10,8 @@ author = "Leonardo Laguna Ruiz"
 
 In the last months I have been making many improvements to the Vult compiler. These improvements cannot be easily tried by the users due to the fact that for me creating binaries for all the platforms is very time consuming. Therefore, in order for the users to try the latests changes they need to compile Vult from the source code. Even though the process is well documented in the repository, this can be time consuming and difficult for people unfamiliar with the OCaml tools.
 
+<!--more-->
+
 I have been using `js_of_ocaml` for quite some time to convert parts of the Vult compiler to JavaScript that runs in the live demo page http://modlfo.github.io/vult/demo/ however the code there does not perform any I/O to disk since it's intended to run in the web browser.
 
 I tried to convert the whole application to JavaScript to see if it could run (as it is) with the latest improvements of `js_of_ocaml`. That way I can distribute a JavaScript version that can be run with node.js. Node.js has many advantages, for example:

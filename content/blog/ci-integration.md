@@ -10,6 +10,9 @@ author = "Leonardo Laguna Ruiz"
 
 I have been using Travis CI for running tests and checking that Vult build correctly. Travis CI can build Vult in OSX and Linux. However, due to the status of OCaml it was difficult to setup something similar in Windows with AppVeyor. Thankfully the OCaml community has published a set of script to configure different CI services:
 
+<!--more-->
+
+
 - https://github.com/ocaml/ocaml-ci-scripts
 
 Using those scripts I could get the AppVeyor continuous integration working. Here you can take a look at the status of both services:

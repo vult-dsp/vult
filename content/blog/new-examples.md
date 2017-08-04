@@ -11,6 +11,8 @@ author = "Leonardo Laguna Ruiz"
 
 In the past, the examples folder of Vult contained just a few files that were developed in an early stage. Most of the 'real' examples were developed in a separate [repository](https://github.com/modlfo/vult-examples). In order to improve the testing of the Vult compiler the examples have been moved into the Vult repository.
 
+<!--more-->
+
 The examples contain different types of:
 
 - Oscillators
