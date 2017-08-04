@@ -78,9 +78,9 @@ let get (params:params) runtime code : Pla.t =
       <#runtime#>
       <#code#>
       this.context = this.<#module_name#s>_process_init();
-      this.default = function () { this.<#module_name#s>_default(this.context); }
       };
    var processor = new code ();
+   processor.<#module_name#s>_default(processor.context);
    var node = audioContext.createScriptProcessor(0, <#nprocess_inputs#i>, <#nprocess_outputs#i>);
    node.inputs = <#nprocess_inputs#i>;
    node.outputs = <#nprocess_outputs#i>;

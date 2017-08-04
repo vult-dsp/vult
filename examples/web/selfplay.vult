@@ -1,0 +1,131 @@
+
+/* First we have a bunch of utility functions */
+
+// Returns true if the input value changes
+fun change(x:real):bool {
+    mem pre_x;
+    val v:bool = pre_x <> x;
+    pre_x = x;
+    return v;
+}
+
+// Returns true when the value goes from false to true
+fun edge(x:bool) : bool {
+   mem pre;
+   val ret = x && not(pre);
+   pre = x;
+   return ret;
+}
+
+// Softens the input signal
+fun smooth(input){
+   mem x;
+   x = x+(input-x)*0.005;
+   return x;
+}
+
+// Converst a MIDI pitch to a delta value used for oscillators
+fun pitchToRate(pitch) @[table(size=32, min=0.0, max=127.0)] {
+   // 1.0 /44100 440 2^((pitch - 69)/12.)
+   return 0.00018539226566085504 * exp(0.057762265046662105 * pitch);
+}
+
+// Converts a cv value (0.0 - 1.0) to a pitch
+fun cvToPitch(cv) {
+   return cv * 120.0 + 24.0;
+}
+
+// Converts a cv value (0.0 - 1.0) to a delta value used for oscillators
+fun cvToRate(cv) @[table(size=32, min=0.0, max=1.0)] {
+   return pitchToRate(cvToPitch(cv));
+}
+
+// Generates a wave table with the given harmonics
+fun wave(phase) @[table(size=128, min=0.0, max=1.0)] {
+   val x1 = 1.0 * sin(phase * 1.0 * 6.28318530718);
+   val x2 = 0.5 * sin(phase * 2.0 * 6.28318530718);
+   val x3 = 0.3 * sin(phase * 3.0 * 6.28318530718);
+   val x4 = 0.3 * sin(phase * 4.0 * 6.28318530718);
+   val x5 = 0.2 * sin(phase * 5.0 * 6.28318530718);
+   val x6 = 0.1 * sin(phase * 6.0 * 6.28318530718);
+   return x1+x2+x3+x4+x5+x6;
+}
+
+// Produces a tuned (aliased) saw wave
+fun phase(cv:real) : real {
+   mem rate;
+   if(change(cv))
+   {
+      rate = cvToRate(cv);
+   }
+   mem phase = phase + rate;
+   phase = if phase > 1.0 then phase - 1.0 else phase;
+   return phase;
+}
+and phase_start() @[init] {
+    rate = cvToRate(0.0);
+}
+
+// Produces a slow saw wave
+fun lfo(cv:real) : real {
+   mem rate;
+   if(change(cv))
+   {
+      rate = cv / 4000.0;
+   }
+   mem phase = phase + rate;
+   phase = if phase > 1.0 then phase - 1.0 else phase;
+   return phase;
+}
+
+// Tuned oscillator using the wave table generated before
+fun osc(cv){
+    return wave(phase(cv));
+}
+
+// Returns a random value every time the input crosses through 0.5
+fun shnoise(phase){
+   mem out;
+   if(edge(phase>0.5))
+      out = random();
+   return smooth(out);
+}
+
+// Returns a pulse based on the input phase
+fun pulse(phase){
+    mem out;
+    out = if phase>0.5 then 1.0 else 0.0;
+    return smooth(out);
+}
+
+fun process(input:real){
+
+   // Creates three LFOs
+   val lfo1 = lfo(0.01);
+   val lfo2 = lfo(0.2);
+   val lfo3 = lfo(0.1);
+
+   // Uses the LFOs to create two more modulation signals
+   val mod1 = 0.1 * lfo1;
+   val mod2 = osc(shnoise(lfo3));
+
+   // Generates three oscillators  with weird modulations
+   val o1 = osc(0.3 + mod1) * shnoise(lfo2);
+   val o2 = osc(0.3 + (0.1 - mod1)) * shnoise(lfo2);
+   val o3 = osc(0.4 + 0.3 *mod2) * shnoise(lfo3);
+   val o4 = 1.5 * osc(0.1 + 0.1 * mod2) * pulse(lfo2);
+
+   return  o1 + o2 + o3 + o4;
+}
+
+and noteOn(note:int,velocity:int,channel:int){
+}
+
+and noteOff(note:int,channel:int){
+}
+
+and controlChange(control:int,value:int,channel:int){
+}
+
+and default(){
+}

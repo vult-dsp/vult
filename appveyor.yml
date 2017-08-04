@@ -23,7 +23,7 @@ artifacts:
     name: Vult
 
 deploy:
-  description: 'New version of the Vult compiler'
+  description: 'New version of the Vult compiler\n\nUpdate your installation with: npm install -g vult\n or dowload the binaries from: https://github.com/modlfo/vult/releases'
   provider: GitHub
   force_update: true
   auth_token:
