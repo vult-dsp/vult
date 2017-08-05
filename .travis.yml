@@ -1,7 +1,5 @@
-language: node_js
-dist: trusty
-os:
-- linux
+language: generic
+os: linux
 
 before_script:
   - wget https://github.com/gohugoio/hugo/releases/download/v0.25.1/hugo_0.25.1_Linux-64bit.tar.gz
