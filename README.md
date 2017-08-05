@@ -29,6 +29,7 @@ Vult provides a few templates; for example to generate objects compatible with t
 
 You can check these repositories for examples:
 
+- WebAudio https://github.com/modlfo/vult-webaudio
 - PureData https://github.com/modlfo/vult/tree/master/examples
 - Teensy Audio https://github.com/modlfo/teensy-vult-example
 
