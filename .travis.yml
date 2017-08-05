@@ -1,0 +1,13 @@
+language: node_js
+dist: trusty
+os:
+- linux
+
+before_script:
+  - wget https://github.com/gohugoio/hugo/releases/download/v0.25.1/hugo_0.25.1_Linux-64bit.tar.gz
+  - mkdir hugo
+  - tar -xvf hugo_0.25.1_Linux-64bit.tar.gz -C ./hugo
+  - export PATH=$PATH:$TRAVIS_BUILD_DIR/hugo
+
+script: hugo
+
