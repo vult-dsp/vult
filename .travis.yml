@@ -8,4 +8,3 @@ before_script:
   - export PATH=$PATH:$TRAVIS_BUILD_DIR/hugo
 
 script: hugo
-
