@@ -44,7 +44,7 @@ Vult is maintained by: Leonardo Laguna Ruiz with the help of Carl Jönsson and J
 
 Logo design by: John Klimt https://www.facebook.com/JohnKlimt
 
-### Contact
+## Contact
 
 If you want to receive notifications for future development of this project you can join to the google group http://groups.google.com/d/forum/vult
 
@@ -52,12 +52,13 @@ E-mail: modlfo@gmail.com
 
 ## Installing
 
-There are two flavors the Vult compiler:
+There are three flavors the Vult compiler:
 - command line ([native executables](https://github.com/modlfo/vult/releases) and [node.js version](https://www.npmjs.com/package/vult))
 - [node.js library](https://www.npmjs.com/package/vultlib)
+- [web browser library](https://github.com/modlfo/vult/releases)
 
 
-## Installing
+### Installing with npm
 
 You need to have `node.js` and `npm` installed.
 
@@ -73,6 +74,17 @@ To install the node.js library use:
 ```
 $ npm install vultlib
 ```
+
+### Embedding in a Web page
+
+The compiler can be embedded in a web page providing and it provides all the functionality.
+```
+<script src="https://modlfo.github.io/vult/javascripts/vultweb.js"></script>
+```
+
+For an example check:
+
+https://github.com/modlfo/vult-webaudio
 
 ## Compile from Source
 
