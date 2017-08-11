@@ -28,6 +28,7 @@ vult_pd(saw_r osc/saw_r.vult VULT_INCLUDES)
 vult_pd(sawcore osc/sawcore.vult VULT_INCLUDES)
 vult_pd(sine osc/sine.vult VULT_INCLUDES)
 vult_pd(tricore osc/tricore.vult VULT_INCLUDES)
+vult_pd(minblep osc/minblep.vult VULT_INCLUDES)
 
 # MIDI
 
