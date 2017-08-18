@@ -179,7 +179,7 @@ let test_random_code =
 (** Flags that defines if a baseline should be created for tests *)
 let update_test = Conf.make_bool "update" false "Creates a file with the current results"
 (** Flags that defines if we should use the command line version of the compiler *)
-let coverage_test = Conf.make_bool "coverage" false "Uses static linked compiler instead of the command line"
+let internal_test = Conf.make_bool "internal" false "Uses static linked compiler instead of the command line"
 
 let write file contents =
    let oc = open_out file in
@@ -495,7 +495,7 @@ module CliTest = struct
       generated_files
 
    let callVult context (compiler:compiler) (fullfile:string) code_type =
-      if coverage_test context then
+      if internal_test context then
          callVultInternal compiler fullfile code_type
       else
          callVultCli compiler fullfile code_type

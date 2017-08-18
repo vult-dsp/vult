@@ -20,20 +20,25 @@ test: compiler jscompiler
 			$(OCB) test/test.native
 			./test.native -runner sequential -shards 1
 
-version :
-			@echo "let version = \"" > src/version.ml
-			@git describe --abbrev=0 >> src/version.ml
-			@echo "\"" >> src/version.ml
+test-fast:
+			$(OCB) test/test.native
+			./test.native -runner sequential -shards 1 -internal true
 
 test-update: compiler jscompiler
 			$(OCB) test/test.native
 			./test.native -runner sequential -update true -shards 1
 
-coverage: compiler
+coverage: compiler jscompiler
 			$(OCB) -clean
 			BISECT_COVERAGE=YES $(OCB) test/test.native
-			BISECT_FILE=_build/coverage ./test.native -runner sequential -shards 1 -coverage true
+			BISECT_COVERAGE=YES $(OCB) src/vultc.native
+			BISECT_FILE=_build/coverage ./test.native -runner sequential -shards 1
 			ocveralls --prefix _build _build/coverage*.out --send
+
+version :
+			@echo "let version = \"" > src/version.ml
+			@git describe --abbrev=0 >> src/version.ml
+			@echo "\"" >> src/version.ml
 
 all: 		compiler js test web jscompiler
 
