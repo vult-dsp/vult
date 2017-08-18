@@ -109,51 +109,6 @@ let rec unifyListSameType (args:exp list) (types:Typ.t list) (common_type:Typ.t)
    | _ -> raise (Invalid_argument "unifyListSameType")
 
 
-let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * Typ.t =
-   match e with
-   | LWild(attr) ->
-      let typ = Typ.newvar () in
-      LWild( { attr with typ = Some(typ) }), typ
-   | LId(id,None,attr) ->
-      let typ =
-         match Env.lookupVariable env id with
-         | Some(var) -> var.Scope.typ
-         | _ ->
-            if mem_var = `Mem || mem_var = `Var then
-               Typ.newvar ()
-            else
-               let msg = Printf.sprintf "The symbol '%s' is not defined" (Id.show id) in
-               Error.raiseError msg attr.loc
-      in
-      LId(id,Some(typ),{ attr with typ = Some(typ) }), typ
-   | LId(id,Some(typ),attr) ->
-      LId(id,Some(typ),{ attr with typ = Some(typ) }), typ
-   | LTuple(elems,attr) ->
-      let elems',tpl =
-         List.fold_left (fun (elems,tpl) a ->
-               let a',typ = inferLhsExp mem_var env a in
-               a' :: elems, typ :: tpl )
-            ([],[])
-            elems
-      in
-      let typ = ref (Typ.TComposed(["tuple"],List.rev tpl,None)) in
-      LTuple(List.rev elems',{ attr with typ = Some(typ) }),typ
-   | LTyped(e,typ,_) ->
-      checkType (lhsLoc e) env typ;
-      let e',tpi = inferLhsExp mem_var env e in
-      if not (Typ.unify typ tpi) then
-         let msg =
-            Printf.sprintf
-               "This declaration has type '%s' but it has been defined before as '%s'"
-               (PrintProg.typeStr typ)
-               (PrintProg.typeStr tpi)
-         in
-         Error.raiseError msg (GetLocation.fromLhsExp e)
-      else
-         e',tpi
-   | LGroup(eg,_) ->
-      inferLhsExp mem_var env eg
-
 let rec addLhsToEnv mem_var (env:'a Env.t) (lhs:lhs_exp) : 'a Env.t =
    match lhs with
    | LWild _ -> env
@@ -165,6 +120,8 @@ let rec addLhsToEnv mem_var (env:'a Env.t) (lhs:lhs_exp) : 'a Env.t =
    | LTyped(e,_,_) ->
       addLhsToEnv mem_var env e
    | LGroup(e,_) ->
+      addLhsToEnv mem_var env e
+   | LIndex(e,_,_) ->
       addLhsToEnv mem_var env e
 
 let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : typed_id list * Typ.t list * 'a Env.t =
@@ -282,7 +239,78 @@ let addInstance (env:'a Env.t) (isactive:bool) (name:Id.t option) (typ:Typ.t) (a
    else
       env, None
 
-let rec inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * Typ.t =
+let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * Typ.t =
+   match e with
+   | LWild(attr) ->
+      let typ = Typ.newvar () in
+      LWild( { attr with typ = Some(typ) }), typ
+   | LId(id,None,attr) ->
+      let typ =
+         match Env.lookupVariable env id with
+         | Some(var) -> var.Scope.typ
+         | _ ->
+            if mem_var = `Mem || mem_var = `Val then
+               Typ.newvar ()
+            else
+               let msg = Printf.sprintf "The symbol '%s' is not defined" (Id.show id) in
+               Error.raiseError msg attr.loc
+      in
+      LId(id,Some(typ),{ attr with typ = Some(typ) }), typ
+   | LId(id,Some(typ),attr) ->
+      LId(id,Some(typ),{ attr with typ = Some(typ) }), typ
+   | LTuple(elems,attr) ->
+      let elems',tpl =
+         List.fold_left (fun (elems,tpl) a ->
+               let a',typ = inferLhsExp mem_var env a in
+               a' :: elems, typ :: tpl )
+            ([],[])
+            elems
+      in
+      let typ = ref (Typ.TComposed(["tuple"],List.rev tpl,None)) in
+      LTuple(List.rev elems',{ attr with typ = Some(typ) }),typ
+   | LTyped(e,typ,_) ->
+      checkType (lhsLoc e) env typ;
+      let e',tpi = inferLhsExp mem_var env e in
+      if not (Typ.unify typ tpi) then
+         let msg =
+            Printf.sprintf
+               "This declaration has type '%s' but it has been defined before as '%s'"
+               (PrintProg.typeStr typ)
+               (PrintProg.typeStr tpi)
+         in
+         Error.raiseError msg (GetLocation.fromLhsExp e)
+      else
+         e',tpi
+   | LGroup(eg,_) ->
+      inferLhsExp mem_var env eg
+
+   | LIndex(lhs, PInt(size, _), _) when mem_var = `Val || mem_var = `Mem ->
+      let lhs', lhs_typ = inferLhsExp mem_var env lhs in
+      let a = ref (Typ.TUnbound("'a",None,None)) in
+      let size = ref (Typ.TInt(size,None)) in
+      let arr_type = ref (Typ.TComposed(["array"],[a;size],None)) in
+      unifyRaise (lhsLoc lhs) lhs_typ arr_type;
+      lhs', arr_type
+
+   | LIndex(_, index, _) when mem_var = `Val || mem_var = `Mem ->
+      let msg =
+         Printf.sprintf
+            "This expression '%s' defines the size of the array and must be an integer"
+            (PrintProg.expressionStr index)
+      in
+      Error.raiseError msg (GetLocation.fromExp index)
+
+   | LIndex(lhs, index, attr) ->
+      let lhs', lhs_typ = inferLhsExp mem_var env lhs in
+      let index', _, index_typ = inferExp env index in
+      let a = ref (Typ.TUnbound("'a",None,None)) in
+      let size = ref (Typ.TUnbound("'size",None,None)) in
+      let arr_type = ref (Typ.TComposed(["array"],[a;size],None)) in
+      unifyRaise (lhsLoc lhs) lhs_typ arr_type;
+      unifyRaise (expLoc index) index_typ Typ.Const.int_type;
+      LIndex(lhs', index', attr), a
+
+and inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * Typ.t =
    match e with
    | PUnit(attr) ->
       let typ = Typ.Const.unit_type in
@@ -397,10 +425,10 @@ and inferOptExp (env:'a Env.t) (e:exp option) : exp option * 'a Env.t * Typ.t =
 and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.t * return_type =
    match stmt with
    | StmtVal(lhs,rhs,attr) ->
-      let lhs', lhs_typ = inferLhsExp `Var env lhs in
+      let lhs', lhs_typ = inferLhsExp `Val env lhs in
       let rhs', env', rhs_typ = inferOptExp env rhs in
       unifyRaise (expOptLoc rhs) lhs_typ rhs_typ;
-      let env' = addLhsToEnv `Var env' lhs' in
+      let env' = addLhsToEnv `Val env' lhs' in
       StmtVal(lhs', rhs', attr), env', ret_type
    | StmtMem(lhs,rhs,attr) ->
       let lhs', lhs_typ   = inferLhsExp `Mem env lhs in

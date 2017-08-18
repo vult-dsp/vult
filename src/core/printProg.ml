@@ -94,11 +94,17 @@ let rec lhsExpressionBuff buffer (lhs:lhs_exp) =
       append buffer "(";
       lhsExpressionBuff buffer elems;
       append buffer ")"
+   | LIndex(lhs, index,_) ->
+      lhsExpressionBuff buffer lhs;
+      append buffer "[";
+      expressionBuff buffer index;
+      append buffer "]"
+
 and lhsExpressionListBuff buffer expl =
    printList buffer lhsExpressionBuff "," expl
 
 (** Adds to the print buffer a namedId *)
-let rec typedArgBuff buffer id =
+and typedArgBuff buffer id =
    match id with
    | SimpleId(id1,_,_) -> identifierBuff buffer id1
    | TypedId(["_"],id_type,_,_) ->

@@ -68,6 +68,7 @@ let parser_files =
       "exp_array.vult";
       "exp_tuples.vult";
       "types_basic.vult";
+      "array_syntax.vult";
    ]
 
 let errors_files =

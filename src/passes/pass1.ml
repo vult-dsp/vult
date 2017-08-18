@@ -463,7 +463,15 @@ module ProcessArrays = struct
       | _ ->
          state, exp
 
-   let mapper = Mapper.{ default_mapper with exp }
+   let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
+      Mapper.make "ProcessArrays.stmt" @@ fun state stmt ->
+      match stmt with
+      | StmtBind(LIndex(LId(lhs,_,idattr),index,lattr), value, attr) ->
+         state, StmtBind(LWild lattr, PCall(None, ["set"], [PId(lhs, idattr) ;index; value], lattr), attr)
+      | _ ->
+         state, stmt
+
+   let mapper = Mapper.{ default_mapper with exp; stmt }
 
 end
 

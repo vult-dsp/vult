@@ -257,10 +257,15 @@ let rec map_lhs_exp (mapper:'state mapper) (state:'state) (exp:lhs_exp) : 'state
       let state',attr'  = map_attr mapper state attr in
       let state',e' = map_lhs_exp mapper state' e in
       apply mapper.lhs_exp state' (LGroup(e',attr'))
+   | LIndex(e,index,attr) ->
+      let state',e'     = map_lhs_exp  mapper state e in
+      let state',index' = map_exp mapper state' index in
+      let state',attr'  = map_attr mapper state' attr in
+      apply mapper.lhs_exp state' (LIndex(e',index',attr'))
 
 and map_lhs_exp_list mapper = fun state exp -> (mapper_list map_lhs_exp) mapper state exp
 
-let map_val_decl (mapper:'state mapper) (state:'state) (v:val_decl) : 'state * val_decl =
+and map_val_decl (mapper:'state mapper) (state:'state) (v:val_decl) : 'state * val_decl =
    let id,tp,attr   = v in
    let state',id'   = map_id mapper state id in
    let state',tp'   = map_vtype mapper state' tp in
@@ -268,7 +273,7 @@ let map_val_decl (mapper:'state mapper) (state:'state) (v:val_decl) : 'state * v
    state',(id',tp',attr')
 
 (** Traverses the expression in a bottom-up fashion *)
-let rec map_exp (mapper:'state mapper) (state:'state) (exp:exp) : 'state * exp =
+and map_exp (mapper:'state mapper) (state:'state) (exp:exp) : 'state * exp =
    match exp with
    | PUnit(attr) ->
       let state',attr' = map_attr mapper state attr in

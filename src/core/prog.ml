@@ -66,60 +66,61 @@ type lhs_exp =
    | LTuple of lhs_exp list * attr
    | LTyped of lhs_exp * Typ.t * attr
    | LGroup of lhs_exp * attr
+   | LIndex of lhs_exp * exp * attr
 [@@deriving show,eq,ord]
 
 (** Parser syntax tree *)
-type exp =
-   | PUnit
-      of attr
-   | PBool
-      of bool
-         *  attr
-   | PInt
-      of int
-         *  attr
-   | PReal
-      of float
-         *  attr
-   | PString
-      of string
-         *  attr
+and exp =
+    | PUnit
+   of attr
+  | PBool
+    of bool
+       *  attr
+  | PInt
+    of int
+       *  attr
+  | PReal
+    of float
+       *  attr
+  | PString
+    of string
+       *  attr
 
-   | PId
-      of Id.t    (* name *)
-         *  attr
-   | PArray
-      of exp array
-         * attr
-   | PUnOp
-      of string      (* operator *)
-         *  exp
-         *  attr
-   | POp
-      of string      (* operator *)
-         *  exp list
-         *  attr
-   | PCall
-      of Id.t option    (* name/instance *)
-         *  Id.t        (* type/function name *)
-         *  exp list  (* arguments *)
-         *  attr
-   | PIf
-      of exp    (* condition *)
-         *  exp (* then *)
-         *  exp (* else *)
-         *  attr
-   | PGroup
-      of exp
-         *  attr
-   | PTuple
-      of exp list
-         *  attr
-   | PSeq
-      of Id.t option (* Scope name *)
-         *  stmt
-         *  attr
-   | PEmpty
+  | PId
+    of Id.t    (* name *)
+       *  attr
+  | PArray
+    of exp array
+       * attr
+  | PUnOp
+    of string      (* operator *)
+       *  exp
+       *  attr
+  | POp
+    of string      (* operator *)
+       *  exp list
+       *  attr
+  | PCall
+    of Id.t option    (* name/instance *)
+       *  Id.t        (* type/function name *)
+       *  exp list  (* arguments *)
+       *  attr
+  | PIf
+    of exp    (* condition *)
+       *  exp (* then *)
+       *  exp (* else *)
+       *  attr
+  | PGroup
+    of exp
+       *  attr
+  | PTuple
+    of exp list
+       *  attr
+  | PSeq
+    of Id.t option (* Scope name *)
+       *  stmt
+       *  attr
+  | PEmpty
 [@@deriving show,eq,ord]
 
 and stmt =

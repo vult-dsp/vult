@@ -442,4 +442,9 @@ module Const = struct
       let array_type = ref (TComposed(["array"],[a;size],None)) in
       array_type |-> array_type
 
+   let some_array () =
+      let a = ref (TUnbound("'a",None,None)) in
+      let size = ref (TUnbound("'size",None,None)) in
+      ref (TComposed(["array"],[a;size],None))
+
 end

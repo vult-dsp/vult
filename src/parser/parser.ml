@@ -62,7 +62,8 @@ let getLhsExpLocation (e:lhs_exp) : Loc.t =
    | LId(_,_,attr)
    | LTuple(_,attr)
    | LTyped(_,_,attr)
-   | LGroup(_,attr) -> attr.loc
+   | LGroup(_,attr)
+   | LIndex(_,_,attr) -> attr.loc
 
 (** Returns the location of an statement *)
 let getStmtLocation (s:stmt)  : Loc.t =
@@ -295,9 +296,19 @@ let rec lhs_expression (rbp:int) (buffer:Stream.stream) : lhs_exp =
 and lhs_nud (buffer:Stream.stream) (token:'kind token) : lhs_exp =
    match token.kind with
    | WILD -> LWild(makeAttr token.loc)
-   | ID   ->
+   | ID ->
       let id = identifierToken token in
-      LId(id,None,makeAttr token.loc)
+      begin match Stream.peek buffer with
+         | LBRACK ->
+            let _     = Stream.skip buffer in
+            let index = expression 0 buffer in
+            let _     = Stream.consume buffer RBRACK in
+            let attr  = makeAttr token.loc in
+            let lhs   = LId(id,None,makeAttr token.loc) in
+            LIndex(lhs, index, attr)
+
+         | _ -> LId(id,None,makeAttr token.loc)
+      end
    | LPAREN ->
       begin
          match Stream.peek buffer with
@@ -338,7 +349,7 @@ and lhs_pair (buffer:Stream.stream) (token:'kind token) (left:lhs_exp) : lhs_exp
    LTuple(elems1@elems2,makeAttr loc)
 
 (** Parses an expression using a Pratt parser *)
-let rec expression (rbp:int) (buffer:Stream.stream) : exp =
+and expression (rbp:int) (buffer:Stream.stream) : exp =
    prattParser rbp buffer getLbp exp_nud exp_led
 
 (** Nud function for the Pratt parser *)
@@ -352,6 +363,12 @@ and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
          match Stream.peek buffer with
          | LPAREN ->
             functionCall buffer token id
+         | LBRACK ->
+            let _     = Stream.skip buffer in
+            let index = expression 100 buffer in
+            let _     = Stream.consume buffer RBRACK in
+            let attr  = makeAttr token.loc in
+            PCall(None,["get"],[PId(id, attr); index], attr)
          | COLON ->
             let _        = Stream.skip buffer in
             let exp_call = expression 100 buffer in

@@ -399,6 +399,7 @@ let rec convertLhsExp (is_val:bool) (p:parameters) (e:lhs_exp) : clhsexp =
       CLTuple(elems')
    | LWild _ -> CLWild
    | LGroup(e,_) -> convertLhsExp is_val p e
+   | LIndex _ -> failwith "LIndex should have been removed"
 
 and convertLhsExpList (is_val:bool) (p:parameters) (lhsl:lhs_exp list) : clhsexp list =
    List.fold_left
@@ -530,7 +531,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let fname = convertId p name in
       let arg_names = List.map (convertTypedId p) args in
       CSExtFunc(convertType p ret,fname,arg_names)
-   | StmtEmpty       -> CSEmpty
+   | StmtEmpty -> CSEmpty
 
 and convertStmtList (p:parameters) (stmts:stmt list) : cstmt list =
    let stmts_rev =
