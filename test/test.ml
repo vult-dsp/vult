@@ -219,12 +219,9 @@ let readOutputAndReference (create:bool) (outdir:string) (output, reference) =
 let readReference (create:bool) (ext:string) (contents:string) (file:string) (outdir:string) : string =
    let basefile = Filename.chop_extension (Filename.basename file) in
    let ref_file = Filename.concat outdir (basefile^"."^ext) in
+   let () = if create then write ref_file contents in
    if Sys.file_exists ref_file then
       read ref_file
-   else
-   if create then
-      let () = write ref_file contents in
-      contents
    else
       assert_failure (Printf.sprintf "The file '%s' has no reference data" file)
 
