@@ -113,6 +113,11 @@ static const fix16_t Util_cvToperiod_c1[33] = {(-0x1230a803 /* -4656.656311 */),
 static const fix16_t Util_cvToperiod_c2[33] = {0x38d4d2ba /* 14548.823162 */,0x2dc35e98 /* 11715.369522 */,0x24d9bea3 /* 9433.744675 */,0x1dac7a30 /* 7596.477297 */,0x17e506d0 /* 6117.026622 */,0x133db4c4 /* 4925.706117 */,0xf7e66aa /* 3966.401040 */,0xc79ecde /* 3193.925264 */,0xa0be493 /* 2571.892879 */,0x817011a /* 2071.004308 */,0x683aa8c /* 1667.666208 */,0x53ee151 /* 1342.880152 */,0x4395906 /* 1081.347751 */,0x366c003 /* 870.750049 */,0x2bd2ad2 /* 701.167268 */,0x2349c8e /* 564.611553 */,0x1c6a695 /* 454.650724 */,0x16e1af4 /* 366.105298 */,0x126cdf5 /* 294.804521 */,0xed63d1 /* 237.389916 */,0xbf2836 /* 191.157082 */,0x99eda6 /* 153.928316 */,0x7bf335 /* 123.950032 */,0x63cf66 /* 99.810164 */,0x505f24 /* 80.371652 */,0x40b808 /* 64.718885 */,0x341d54 /* 52.114569 */,0x29f70a /* 41.965005 */,0x21cac8 /* 33.792117 */,0x1b3600 /* 27.210939 */,0x15e956 /* 21.911477 */,0x11a4e4 /* 17.644111 */,0xe3534 /* 14.207835 */};
 fix16_t Util_cvToperiod(fix16_t cv);
 
+static const fix16_t Util_cvTokHz_c0[33] = {0x85f /* 0.032703 */,0x86d /* 0.032916 */,0x8b1 /* 0.033958 */,0x96f /* 0.036857 */,0xb11 /* 0.043242 */,0xe3c /* 0.055616 */,0x13e5 /* 0.077724 */,0x1d75 /* 0.115069 */,0x2cf5 /* 0.175614 */,0x454f /* 0.270739 */,0x6aa2 /* 0.416537 */,0xa2b4 /* 0.635567 */,0xf58e /* 0.959207 */,0x16e4a /* 1.430818 */,0x21c26 /* 2.109960 */,0x313f9 /* 3.078021 */,0x47219 /* 4.445697 */,0x65ce7 /* 6.362909 */,0x9082c /* 9.031922 */,0xcb984 /* 12.724677 */,0x11ce3d /* 17.805619 */,0x18c301 /* 24.761735 */,0x223df3 /* 34.241990 */,0x2f1bea /* 47.109042 */,0x4081c6 /* 64.506928 */,0x57f316 /* 87.949557 */,0x776fad /* 119.436234 */,0xa19a2e /* 161.602273 */,0xd9ea47 /* 217.915148 */,0x124edfb /* 292.929619 */,0x1889e86 /* 392.619240 */,0x20cce80 /* 524.806645 */,0x2bbb8b4 /* 699.721497 */};
+static const fix16_t Util_cvTokHz_c1[33] = {0x39c8 /* 0.225719 */,0x3658 /* 0.212293 */,0x2dde /* 0.179169 */,0x1e1b /* 0.117605 */,0x40a /* 0.015780 */,(-0x2465 /* -0.142178 */),(-0x60a1 /* -0.377466 */),(-0xb7df /* -0.718250 */),(-0x133a8 /* -1.201797 */),(-0x1e092 /* -1.877228 */),(-0x2cf1f /* -2.809077 */),(-0x414f5 /* -4.081867 */),(-0x5ce56 /* -5.806008 */),(-0x82018 /* -8.125373 */),(-0xb3a1e /* -11.227028 */),(-0xf5a8c /* -15.353705 */),(-0x14d1de /* -20.819795 */),(-0x1c0823 /* -28.031798 */),(-0x2583b6 /* -37.514503 */),(-0x31f1c5 /* -49.944414 */),(-0x423144 /* -66.192449 */),(-0x5760df /* -87.378404 */),(-0x72f0bd /* -114.940396 */),(-0x96b92c /* -150.723337 */),(-0xc51772 /* -197.091584 */),(-0x1011281 /* -257.072284 */),(-0x14e89a4 /* -334.537674 */),(-0x1b26fd1 /* -434.436788 */),(-0x23316fe /* -563.089817 */),(-0x2d88fd5 /* -728.561858 */),(-0x3ad2323 /* -941.137258 */),(-0x4bdebdc /* -1213.921328 */),(-0x61b9a72 /* -1563.603302 */)};
+static const fix16_t Util_cvTokHz_c2[33] = {0xe057 /* 0.876338 */,0x11699 /* 1.088287 */,0x159fb /* 1.351498 */,0x1ada9 /* 1.678368 */,0x21594 /* 2.084294 */,0x296a1 /* 2.588397 */,0x336e4 /* 3.214421 */,0x3fdea /* 3.991854 */,0x4f512 /* 4.957315 */,0x62801 /* 6.156280 */,0x7a52d /* 7.645225 */,0x97e89 /* 9.494282 */,0xbca61 /* 11.790549 */,0xea466 /* 14.642185 */,0x122efa /* 18.183512 */,0x1694d2 /* 22.581336 */,0x1c0af5 /* 28.042809 */,0x22d33f /* 34.825181 */,0x2b3f77 /* 43.247923 */,0x35b530 /* 53.707771 */,0x42b289 /* 66.697415 */,0x52d426 /* 82.828706 */,0x66dc89 /* 102.861476 */,0x7fbd44 /* 127.739327 */,0x9ea253 /* 158.634081 */,0xc5003f /* 197.000973 */,0xf4a5ae /* 244.647198 */,0x12fd129 /* 303.817033 */,0x1794c2c /* 377.297556 */,0x1d48cc7 /* 468.549918 */,0x245df54 /* 581.872376 */,0x2d29a4e /* 722.602756 */,0x3815eb0 /* 897.369877 */};
+fix16_t Util_cvTokHz(fix16_t cv);
+
 typedef struct Rescomb__ctx_type_0 {
    int write_pos;
    fix16_t buffer[675];
@@ -126,54 +131,60 @@ void Rescomb_delay_init(Rescomb__ctx_type_0 &_output_);
 
 fix16_t Rescomb_delay(Rescomb__ctx_type_0 &_ctx, fix16_t x, fix16_t cv);
 
-typedef struct Rescomb__ctx_type_1 {
-   fix16_t y;
-   Rescomb__ctx_type_0 _inst30;
-} Rescomb__ctx_type_1;
-
-typedef Rescomb__ctx_type_1 Rescomb_do_type;
-
-void Rescomb__ctx_type_1_init(Rescomb__ctx_type_1 &_output_);
-
-void Rescomb_do_init(Rescomb__ctx_type_1 &_output_);
-
-fix16_t Rescomb_do(Rescomb__ctx_type_1 &_ctx, fix16_t in, fix16_t cv, fix16_t tone, fix16_t res);
+static const fix16_t Rescomb_toneCurve_c0[65] = {(-0x6857 /* -0.407589 */),(-0x66a8 /* -0.401009 */),(-0x64f6 /* -0.394386 */),(-0x633b /* -0.387630 */),(-0x617e /* -0.380829 */),(-0x5fad /* -0.373747 */),(-0x5dde /* -0.366680 */),(-0x5c01 /* -0.359397 */),(-0x5a1b /* -0.351983 */),(-0x582b /* -0.344420 */),(-0x562f /* -0.336656 */),(-0x5428 /* -0.328740 */),(-0x5213 /* -0.320616 */),(-0x4ff1 /* -0.312280 */),(-0x4dc0 /* -0.303717 */),(-0x4b7e /* -0.294902 */),(-0x492b /* -0.285819 */),(-0x46c4 /* -0.276434 */),(-0x4447 /* -0.266718 */),(-0x41b2 /* -0.256634 */),(-0x3f02 /* -0.246135 */),(-0x3c33 /* -0.235166 */),(-0x3941 /* -0.223657 */),(-0x3626 /* -0.211519 */),(-0x32d9 /* -0.198634 */),(-0x2f51 /* -0.184844 */),(-0x2b80 /* -0.169923 */),(-0x274d /* -0.153529 */),(-0x2295 /* -0.135098 */),(-0x1d11 /* -0.113552 */),(-0x160b /* -0.086112 */),(-0x0 /* -0.000000 */),0x0 /* 0.000000 */,0x160b /* 0.086112 */,0x1d11 /* 0.113552 */,0x2295 /* 0.135098 */,0x274d /* 0.153529 */,0x2b80 /* 0.169923 */,0x2f51 /* 0.184844 */,0x32d9 /* 0.198634 */,0x3626 /* 0.211519 */,0x3941 /* 0.223657 */,0x3c33 /* 0.235166 */,0x3f02 /* 0.246135 */,0x41b2 /* 0.256634 */,0x4447 /* 0.266718 */,0x46c4 /* 0.276434 */,0x492b /* 0.285820 */,0x4b7e /* 0.294904 */,0x4dc0 /* 0.303717 */,0x4ff1 /* 0.312280 */,0x5213 /* 0.320616 */,0x5428 /* 0.328748 */,0x562f /* 0.336666 */,0x582b /* 0.344416 */,0x5a1a /* 0.351974 */,0x5c01 /* 0.359399 */,0x5ddd /* 0.366662 */,0x5fb1 /* 0.373799 */,0x6178 /* 0.380751 */,0x633b /* 0.387624 */,0x64f4 /* 0.394354 */,0x66ab /* 0.401060 */,0x685b /* 0.407639 */,0x69f4 /* 0.413891 */};
+static const fix16_t Rescomb_toneCurve_c1[65] = {0xb0b1 /* 0.690206 */,0xb38b /* 0.701353 */,0xb68d /* 0.713091 */,0xb9bb /* 0.725512 */,0xbd17 /* 0.738640 */,0xc09d /* 0.752398 */,0xc45b /* 0.767019 */,0xc852 /* 0.782508 */,0xcc8b /* 0.799002 */,0xd10a /* 0.816570 */,0xd5d9 /* 0.835348 */,0xdb01 /* 0.855499 */,0xe08e /* 0.877168 */,0xe68b /* 0.900572 */,0xed0b /* 0.925959 */,0xf420 /* 0.953625 */,0xfbe2 /* 0.983931 */,0x1046f /* 1.017323 */,0x10dea /* 1.054364 */,0x11884 /* 1.095775 */,0x12479 /* 1.142486 */,0x1321b /* 1.195738 */,0x141d8 /* 1.257215 */,0x1544c /* 1.329286 */,0x16a57 /* 1.415395 */,0x18553 /* 1.520799 */,0x1a76d /* 1.654015 */,0x1d47a /* 1.829994 */,0x21404 /* 2.078198 */,0x277dd /* 2.468227 */,0x33b63 /* 3.231982 */,0x97124 /* 9.441957 */,0x97124 /* 9.441957 */,0x33b63 /* 3.231982 */,0x277dd /* 2.468227 */,0x21404 /* 2.078198 */,0x1d47a /* 1.829994 */,0x1a76d /* 1.654015 */,0x18553 /* 1.520799 */,0x16a57 /* 1.415395 */,0x1544c /* 1.329286 */,0x141d8 /* 1.257215 */,0x1321b /* 1.195737 */,0x12479 /* 1.142486 */,0x11884 /* 1.095774 */,0x10dea /* 1.054363 */,0x1046f /* 1.017323 */,0xfbe2 /* 0.983932 */,0xf420 /* 0.953627 */,0xed0b /* 0.925962 */,0xe68b /* 0.900572 */,0xe08e /* 0.877168 */,0xdb02 /* 0.855505 */,0xd5d9 /* 0.835351 */,0xd10b /* 0.816582 */,0xcc8b /* 0.799001 */,0xc852 /* 0.782507 */,0xc45c /* 0.767034 */,0xc09e /* 0.752413 */,0xbd11 /* 0.738546 */,0xb9b9 /* 0.725485 */,0xb68d /* 0.713091 */,0xb38a /* 0.701330 */,0xb0ab /* 0.690121 */,0xade9 /* 0.679350 */};
+static const fix16_t Rescomb_toneCurve_c2[65] = {0x18ec /* 0.097358 */,0x1a29 /* 0.102203 */,0x1b82 /* 0.107458 */,0x1cf8 /* 0.113169 */,0x1e8d /* 0.119347 */,0x204e /* 0.126195 */,0x2239 /* 0.133683 */,0x2457 /* 0.141960 */,0x26af /* 0.151119 */,0x294b /* 0.161304 */,0x2c35 /* 0.172686 */,0x2f7b /* 0.185478 */,0x332f /* 0.199938 */,0x3764 /* 0.216376 */,0x3c35 /* 0.235190 */,0x41c4 /* 0.256897 */,0x483c /* 0.282166 */,0x4fd6 /* 0.311868 */,0x58e0 /* 0.347176 */,0x63c2 /* 0.389687 */,0x710f /* 0.441645 */,0x819b /* 0.506276 */,0x969f /* 0.588374 */,0xb202 /* 0.695352 */,0xd6d7 /* 0.839219 */,0x10a66 /* 1.040634 */,0x15684 /* 1.337963 */,0x1cf69 /* 1.810204 */,0x2a551 /* 2.645769 */,0x46906 /* 4.410255 */,0x9b72a /* 9.715489 */,0x721456 /* 114.079447 */,(-0x721456 /* -114.079447 */),(-0x9b72a /* -9.715489 */),(-0x46906 /* -4.410255 */),(-0x2a551 /* -2.645769 */),(-0x1cf69 /* -1.810204 */),(-0x15684 /* -1.337963 */),(-0x10a66 /* -1.040634 */),(-0xd6d7 /* -0.839219 */),(-0xb202 /* -0.695352 */),(-0x969f /* -0.588375 */),(-0x819b /* -0.506276 */),(-0x710f /* -0.441644 */),(-0x63c2 /* -0.389686 */),(-0x58e0 /* -0.347174 */),(-0x4fd6 /* -0.311870 */),(-0x483c /* -0.282168 */),(-0x41c3 /* -0.256896 */),(-0x3c35 /* -0.235192 */),(-0x3764 /* -0.216376 */),(-0x332f /* -0.199938 */),(-0x2f7c /* -0.185496 */),(-0x2c35 /* -0.172693 */),(-0x294a /* -0.161300 */),(-0x26b0 /* -0.151125 */),(-0x2457 /* -0.141960 */),(-0x2239 /* -0.133689 */),(-0x204c /* -0.126160 */),(-0x1e8f /* -0.119376 */),(-0x1cf8 /* -0.113169 */),(-0x1b7f /* -0.107418 */),(-0x1a2a /* -0.102217 */),(-0x18ea /* -0.097324 */),(-0x17ca /* -0.092934 */)};
+fix16_t Rescomb_toneCurve(fix16_t tone);
 
 typedef struct Rescomb__ctx_type_2 {
-   Rescomb__ctx_type_1 _inst32;
+   fix16_t output;
+   Rescomb__ctx_type_0 _inst33;
+   Util__ctx_type_3 _inst32;
 } Rescomb__ctx_type_2;
 
-typedef Rescomb__ctx_type_2 Rescomb_process_type;
+typedef Rescomb__ctx_type_2 Rescomb_do_type;
 
 void Rescomb__ctx_type_2_init(Rescomb__ctx_type_2 &_output_);
 
-void Rescomb_process_init(Rescomb__ctx_type_2 &_output_);
+void Rescomb_do_init(Rescomb__ctx_type_2 &_output_);
 
-fix16_t Rescomb_process(Rescomb__ctx_type_2 &_ctx, fix16_t in, fix16_t cv, fix16_t tone, fix16_t res);
+fix16_t Rescomb_do(Rescomb__ctx_type_2 &_ctx, fix16_t in, fix16_t cv, fix16_t tone, fix16_t res);
 
-typedef Rescomb__ctx_type_2 Rescomb_noteOn_type;
+typedef struct Rescomb__ctx_type_3 {
+   Rescomb__ctx_type_2 _inst35;
+} Rescomb__ctx_type_3;
 
-void Rescomb_noteOn_init(Rescomb__ctx_type_2 &_output_);
+typedef Rescomb__ctx_type_3 Rescomb_process_type;
 
-void Rescomb_noteOn(Rescomb__ctx_type_2 &_ctx, int note, int velocity, int channel);
+void Rescomb__ctx_type_3_init(Rescomb__ctx_type_3 &_output_);
 
-typedef Rescomb__ctx_type_2 Rescomb_noteOff_type;
+void Rescomb_process_init(Rescomb__ctx_type_3 &_output_);
 
-void Rescomb_noteOff_init(Rescomb__ctx_type_2 &_output_);
+fix16_t Rescomb_process(Rescomb__ctx_type_3 &_ctx, fix16_t in, fix16_t cv, fix16_t tone, fix16_t res);
 
-void Rescomb_noteOff(Rescomb__ctx_type_2 &_ctx, int note, int channel);
+typedef Rescomb__ctx_type_3 Rescomb_noteOn_type;
 
-typedef Rescomb__ctx_type_2 Rescomb_controlChange_type;
+void Rescomb_noteOn_init(Rescomb__ctx_type_3 &_output_);
 
-void Rescomb_controlChange_init(Rescomb__ctx_type_2 &_output_);
+void Rescomb_noteOn(Rescomb__ctx_type_3 &_ctx, int note, int velocity, int channel);
 
-void Rescomb_controlChange(Rescomb__ctx_type_2 &_ctx, int control, int value, int channel);
+typedef Rescomb__ctx_type_3 Rescomb_noteOff_type;
 
-typedef Rescomb__ctx_type_2 Rescomb_default_type;
+void Rescomb_noteOff_init(Rescomb__ctx_type_3 &_output_);
 
-void Rescomb_default_init(Rescomb__ctx_type_2 &_output_);
+void Rescomb_noteOff(Rescomb__ctx_type_3 &_ctx, int note, int channel);
 
-void Rescomb_default(Rescomb__ctx_type_2 &_ctx);
+typedef Rescomb__ctx_type_3 Rescomb_controlChange_type;
+
+void Rescomb_controlChange_init(Rescomb__ctx_type_3 &_output_);
+
+void Rescomb_controlChange(Rescomb__ctx_type_3 &_ctx, int control, int value, int channel);
+
+typedef Rescomb__ctx_type_3 Rescomb_default_type;
+
+void Rescomb_default_init(Rescomb__ctx_type_3 &_output_);
+
+void Rescomb_default(Rescomb__ctx_type_3 &_ctx);
 
 
 

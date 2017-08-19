@@ -139,11 +139,17 @@ float Util_cvToperiod(float cv){
    return (float_get(float_wrap_array(Util_cvToperiod_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToperiod_c1),index) + (float_get(float_wrap_array(Util_cvToperiod_c2),index) * cv))));
 }
 
+float Util_cvTokHz(float cv){
+   int index;
+   index = int_clip(float_to_int((31.000000f * cv)),0,31);
+   return (float_get(float_wrap_array(Util_cvTokHz_c0),index) + (cv * (float_get(float_wrap_array(Util_cvTokHz_c1),index) + (float_get(float_wrap_array(Util_cvTokHz_c2),index) * cv))));
+}
+
 void Saw_r__ctx_type_0_init(Saw_r__ctx_type_0 &_output_){
    Saw_r__ctx_type_0 _ctx;
    _ctx.phase = 0.000000f;
    _ctx.inc = 0.000000f;
-   Util__ctx_type_1_init(_ctx._inst15);
+   Util__ctx_type_1_init(_ctx._inst16);
    Saw_r_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -155,15 +161,15 @@ void Saw_r_process_init(Saw_r__ctx_type_0 &_output_){
 }
 
 float Saw_r_process(Saw_r__ctx_type_0 &_ctx, float cv){
-   uint8_t _cond_25;
-   _cond_25 = Util_change(_ctx._inst15,cv);
-   if(_cond_25){
+   uint8_t _cond_26;
+   _cond_26 = Util_change(_ctx._inst16,cv);
+   if(_cond_26){
       _ctx.inc = Util_cvToRate(cv);
    }
    float i;
-   uint8_t _cond_28;
-   _cond_28 = (_ctx.inc < 0.000000f);
-   if(_cond_28){ i = 0.000000f; }
+   uint8_t _cond_29;
+   _cond_29 = (_ctx.inc < 0.000000f);
+   if(_cond_29){ i = 0.000000f; }
    else
    { i = _ctx.inc; }
    _ctx.phase = fmodf(((2.000000f * _ctx.inc) + _ctx.phase),2.000000f);
@@ -171,18 +177,18 @@ float Saw_r_process(Saw_r__ctx_type_0 &_ctx, float cv){
    ph = (_ctx.phase + (-1.000000f));
    float o;
    o = 0.000000f;
-   uint8_t _cond_27;
-   _cond_27 = (ph >= (1.000000f + (- i)));
-   if(_cond_27){
+   uint8_t _cond_28;
+   _cond_28 = (ph >= (1.000000f + (- i)));
+   if(_cond_28){
       float b;
       b = ((1.000000f + (- i) + (- ph)) / i);
       o = ((b * fabsf(b)) + ph);
    }
    else
    {
-      uint8_t _cond_26;
-      _cond_26 = (ph <= (i + (-1.000000f)));
-      if(_cond_26){
+      uint8_t _cond_27;
+      _cond_27 = (ph <= (i + (-1.000000f)));
+      if(_cond_27){
          float b;
          b = ((i + (-1.000000f) + (- ph)) / i);
          o = ((b * fabsf(b)) + ph);

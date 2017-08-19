@@ -6,22 +6,13 @@ Copyright (c) 2017 Leonardo Laguna Ruiz
 Tanh satuation
 */
 
-fun table(x) @[table(size=10,min=0.0,max=6.0)] {
+fun table(x) @[table(size=128,min=-12.0,max=12.0)] {
   return tanh(x);
 }
 
 fun process(x) {
-  if(x==0.0) return 0.0;
-  val fixed, sign = if x > 0.0 then x,false else -x, true;
-  val out = 0.0;
-  if(fixed > 6.0) {
-    out = 1.0;
-  }
-  else {
-    out = table(fixed);
-  }
-  out = if sign then -out else out;
-  return out;
+   if(x==0.0) return 0.0;
+   return table(x);
 }
 and noteOn(note:int,velocity:int,channel:int){ }
 and noteOff(note:int,channel:int){ }

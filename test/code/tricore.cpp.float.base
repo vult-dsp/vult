@@ -139,6 +139,12 @@ float Util_cvToperiod(float cv){
    return (float_get(float_wrap_array(Util_cvToperiod_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToperiod_c1),index) + (float_get(float_wrap_array(Util_cvToperiod_c2),index) * cv))));
 }
 
+float Util_cvTokHz(float cv){
+   int index;
+   index = int_clip(float_to_int((31.000000f * cv)),0,31);
+   return (float_get(float_wrap_array(Util_cvTokHz_c0),index) + (cv * (float_get(float_wrap_array(Util_cvTokHz_c1),index) + (float_get(float_wrap_array(Util_cvTokHz_c2),index) * cv))));
+}
+
 void Tricore__ctx_type_0_init(Tricore__ctx_type_0 &_output_){
    Tricore__ctx_type_0 _ctx;
    _ctx.reset_state = 0;
@@ -146,9 +152,9 @@ void Tricore__ctx_type_0_init(Tricore__ctx_type_0 &_output_){
    _ctx.rate = 0.000000f;
    _ctx.phase = 0.000000f;
    _ctx.direction = 0;
+   Util__ctx_type_0_init(_ctx._inst19);
    Util__ctx_type_0_init(_ctx._inst18);
-   Util__ctx_type_0_init(_ctx._inst17);
-   Util__ctx_type_1_init(_ctx._inst15);
+   Util__ctx_type_1_init(_ctx._inst16);
    Tricore_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -162,37 +168,37 @@ void Tricore_process_init(Tricore__ctx_type_0 &_output_){
 float Tricore_process(Tricore__ctx_type_0 &_ctx, float cv, float reset, float disable){
    float out;
    out = 0.000000f;
-   uint8_t _cond_30;
-   _cond_30 = Util_change(_ctx._inst15,cv);
-   if(_cond_30){
+   uint8_t _cond_31;
+   _cond_31 = Util_change(_ctx._inst16,cv);
+   if(_cond_31){
       _ctx.rate = (4.000000f * Util_cvToRate_1024(cv));
    }
    float new_phase;
-   float _if_31;
-   if(_ctx.direction){ _if_31 = _ctx.rate; }
+   float _if_32;
+   if(_ctx.direction){ _if_32 = _ctx.rate; }
    else
-   { _if_31 = (- _ctx.rate); }
-   new_phase = (_ctx.phase + _if_31);
+   { _if_32 = (- _ctx.rate); }
+   new_phase = (_ctx.phase + _if_32);
    uint8_t bdisable;
    bdisable = (disable > 0.500000f);
-   uint8_t _cond_32;
-   _cond_32 = (Util_edge(_ctx._inst17,(reset > 0.000000f)) || Util_edge(_ctx._inst18,bdisable));
-   if(_cond_32){
+   uint8_t _cond_33;
+   _cond_33 = (Util_edge(_ctx._inst18,(reset > 0.000000f)) || Util_edge(_ctx._inst19,bdisable));
+   if(_cond_33){
       _ctx.reset_phase = _ctx.phase;
       _ctx.reset_state = 1;
       new_phase = 0.000000f;
    }
-   uint8_t _cond_34;
-   _cond_34 = (new_phase > 1024.000000f);
-   if(_cond_34){
+   uint8_t _cond_35;
+   _cond_35 = (new_phase > 1024.000000f);
+   if(_cond_35){
       new_phase = (1024.000000f + (- (new_phase + (-1024.000000f))));
       _ctx.direction = 0;
    }
    else
    {
-      uint8_t _cond_33;
-      _cond_33 = (new_phase < (-1024.000000f));
-      if(_cond_33){
+      uint8_t _cond_34;
+      _cond_34 = (new_phase < (-1024.000000f));
+      if(_cond_34){
          _ctx.direction = 1;
       }
    }
@@ -200,9 +206,9 @@ float Tricore_process(Tricore__ctx_type_0 &_ctx, float cv, float reset, float di
    else
    { _ctx.phase = new_phase; }
    if(_ctx.reset_state){
-      uint8_t _cond_36;
-      _cond_36 = ((fabsf(_ctx.reset_phase) > 10.000000f) || bdisable);
-      if(_cond_36){
+      uint8_t _cond_37;
+      _cond_37 = ((fabsf(_ctx.reset_phase) > 10.000000f) || bdisable);
+      if(_cond_37){
          float reset_speed;
          if(bdisable){ reset_speed = 0.010000f; }
          else
@@ -211,9 +217,9 @@ float Tricore_process(Tricore__ctx_type_0 &_ctx, float cv, float reset, float di
       }
       else
       {
-         uint8_t _cond_35;
-         _cond_35 = (_ctx.reset_phase > 10.000000f);
-         if(bool_not(_cond_35)){ _ctx.reset_phase = 0.000000f; }
+         uint8_t _cond_36;
+         _cond_36 = (_ctx.reset_phase > 10.000000f);
+         if(bool_not(_cond_36)){ _ctx.reset_phase = 0.000000f; }
          _ctx.reset_state = 0;
          _ctx.direction = 1;
       }

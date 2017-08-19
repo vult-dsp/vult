@@ -3,48 +3,73 @@ The MIT License (MIT)
 
 Copyright (c) 2017 Leonardo Laguna Ruiz
 -----
-Diode ladder filter with 2x of oversampling
+Diode ladder filter
 */
 
-fun getTune(cv) @[table(size=128,min=0.0,max=1.0)] {
-  val pitch = Util.cvToPitch(cv);
-  val f = 8.175798915643707*exp(0.057762265046662105*pitch);
-  val g = 1.0 - exp(-6.283185307179586 * f /(44100.0*2.0));
-  return g;
+fun tune(cut) @[table(min = 0.0, max = 1.0, size = 128)]{
+   val f = Util.cvTokHz(cut);
+   f = clip(f, 0.0, 20.0);
+   val fh = (2.0 * 3.1415) * f / (4.0 * 44.1);
+   return fh;
 }
 
-fun step(x,cv,res) {
-   mem ya, yb, yc, yd;
-   mem wa, wb, wc;
-   mem tune;
+fun ladder_step(input, fh, res, p, dp) {
+   val w0 = Saturate.process(input - 4.0 * res * p[3]);
+   val w1 = Saturate.process(p[0]);
+   dp[0] = (w0 - w1) * fh;
+   val w3 = Saturate.process(p[1]);
+   dp[1] = (w1 - w3) * fh;
+   val w5 = Saturate.process(p[2]);
+   dp[2] = (w3 - w5) * fh;
+   val w7 = Saturate.process(p[3]);
+   dp[3] = (w5 - w7) * fh;
+}
 
-   val _2vt = 2.0 * 1.22070313;
-
-   if(Util.change(cv)){
-        tune = _2vt * getTune(cv);
+fun heun(input, cut, res) {
+   mem fh;
+   mem p[4];
+   val dp[4], pt[4], dpt[4];
+   if(Util.change(cut)) {
+      fh = tune(cut);
    }
+   _ = ladder_step(input, fh, res, p, dpt);
+   pt[0] = p[0] + dpt[0];
+   pt[1] = p[1] + dpt[1];
+   pt[2] = p[2] + dpt[2];
+   pt[3] = p[3] + dpt[3];
+   _ = ladder_step(input, fh, res, pt, dp);
+   p[0] = p[0] + (dp[0] + dpt[0])/ 2.0;
+   p[1] = p[1] + (dp[1] + dpt[1])/ 2.0;
+   p[2] = p[2] + (dp[2] + dpt[2])/ 2.0;
+   p[3] = p[3] + (dp[3] + dpt[3])/ 2.0;
+   return p[3];
+}
 
-   ya = ya + tune * (Saturate.process((x - 4.0*res*yd)/_2vt) - wa);
-   wa = Saturate.process(ya/_2vt);
-   yb = yb + tune * (wa - wb);
-   wb = Saturate.process(yb/_2vt);
-   yc = yc + tune * (wb - wc);
-   wc = Saturate.process(yc/_2vt);
-   yd = yd + tune * (wc - Saturate.process(yd/_2vt));
+fun euler(input, cut, res) {
+   mem fh;
+   mem p[4];
+   val dpt[4];
+   if(Util.change(cut)) {
+      fh = tune(cut);
+   }
+   _ = ladder_step(input, fh, res, p, dpt);
+   p[0] = p[0] + dpt[0];
+   p[1] = p[1] + dpt[1];
+   p[2] = p[2] + dpt[2];
+   p[3] = p[3] + dpt[3];
+   return p[3];
+}
 
-   return yd;
+fun ladder(input, cut, res) {
+   return heun(input, cut, res);
 }
 
 fun process(input:real, cut:real, res:real):real{
-    // clips the inputs to the valid range
-    res = clip(res,0.0,1.0);
-    cut = clip(cut,-0.3,1.0);
-
-    val i = input / 2.0;
-    // 2x oversampling
-    val x0 = filter:step(input, cut, res);
-    val x1 = filter:step(input, cut, res);
-    return (x0+x1) * (1.0 + 2.0 * res);
+    _ = f:ladder(input, cut, res);
+    _ = f:ladder(input, cut, res);
+    _ = f:ladder(input, cut, res);
+    val out = f:ladder(input, cut, res);
+    return out;
 }
 and noteOn(note:int,velocity:int,channel:int){ }
 and noteOff(note:int,channel:int){ }

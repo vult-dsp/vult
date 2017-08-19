@@ -139,6 +139,12 @@ float Util_cvToperiod(float cv){
    return (float_get(float_wrap_array(Util_cvToperiod_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToperiod_c1),index) + (float_get(float_wrap_array(Util_cvToperiod_c2),index) * cv))));
 }
 
+float Util_cvTokHz(float cv){
+   int index;
+   index = int_clip(float_to_int((31.000000f * cv)),0,31);
+   return (float_get(float_wrap_array(Util_cvTokHz_c0),index) + (cv * (float_get(float_wrap_array(Util_cvTokHz_c1),index) + (float_get(float_wrap_array(Util_cvTokHz_c2),index) * cv))));
+}
+
 void Lfo__ctx_type_0_init(Lfo__ctx_type_0 &_output_){
    Lfo__ctx_type_0 _ctx;
    _ctx.x4 = 0.000000f;
@@ -156,15 +162,15 @@ void Lfo_soft_init(Lfo__ctx_type_0 &_output_){
 float Lfo_soft(Lfo__ctx_type_0 &_ctx, float x1){
    float o;
    o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) * 0.250000f);
-   float _tmp_25_0;
-   _tmp_25_0 = x1;
-   float _tmp_25_1;
-   _tmp_25_1 = _ctx.x2;
-   float _tmp_25_2;
-   _tmp_25_2 = _ctx.x3;
-   _ctx.x2 = _tmp_25_0;
-   _ctx.x3 = _tmp_25_1;
-   _ctx.x4 = _tmp_25_2;
+   float _tmp_26_0;
+   _tmp_26_0 = x1;
+   float _tmp_26_1;
+   _tmp_26_1 = _ctx.x2;
+   float _tmp_26_2;
+   _tmp_26_2 = _ctx.x3;
+   _ctx.x2 = _tmp_26_0;
+   _ctx.x3 = _tmp_26_1;
+   _ctx.x4 = _tmp_26_2;
    return o;
 }
 
@@ -172,9 +178,9 @@ void Lfo__ctx_type_1_init(Lfo__ctx_type_1 &_output_){
    Lfo__ctx_type_1 _ctx;
    _ctx.rate = 0.000000f;
    _ctx.phase = 0.000000f;
-   Lfo__ctx_type_0_init(_ctx._inst20);
-   Util__ctx_type_0_init(_ctx._inst18);
-   Util__ctx_type_1_init(_ctx._inst16);
+   Lfo__ctx_type_0_init(_ctx._inst21);
+   Util__ctx_type_0_init(_ctx._inst19);
+   Util__ctx_type_1_init(_ctx._inst17);
    _output_ = _ctx;
    return ;
 }
@@ -185,40 +191,40 @@ void Lfo_process_init(Lfo__ctx_type_1 &_output_){
 }
 
 float Lfo_process(Lfo__ctx_type_1 &_ctx, float cv, float shape, float reset){
-   uint8_t _cond_26;
-   _cond_26 = Util_change(_ctx._inst16,cv);
-   if(_cond_26){
+   uint8_t _cond_27;
+   _cond_27 = Util_change(_ctx._inst17,cv);
+   if(_cond_27){
       _ctx.rate = Util_cvToRate((cv + (-0.300000f)));
    }
    _ctx.phase = fmodf((_ctx.phase + _ctx.rate),2.000000f);
    uint8_t breset;
    breset = (reset > 0.000000f);
-   uint8_t _cond_27;
-   _cond_27 = Util_edge(_ctx._inst18,breset);
-   if(_cond_27){
+   uint8_t _cond_28;
+   _cond_28 = Util_edge(_ctx._inst19,breset);
+   if(_cond_28){
       _ctx.phase = 0.000000f;
    }
    float tmp;
    tmp = (_ctx.phase + (-1.000000f));
    float o;
-   uint8_t _cond_28;
-   _cond_28 = (shape < 1.000000f);
-   if(_cond_28){ o = tmp; }
+   uint8_t _cond_29;
+   _cond_29 = (shape < 1.000000f);
+   if(_cond_29){ o = tmp; }
    else
    {
-      uint8_t _cond_29;
-      _cond_29 = (shape < 2.000000f);
-      if(_cond_29){ o = ((fabsf(tmp) * 2.000000f) + (-1.000000f)); }
+      uint8_t _cond_30;
+      _cond_30 = (shape < 2.000000f);
+      if(_cond_30){ o = ((fabsf(tmp) * 2.000000f) + (-1.000000f)); }
       else
       {
-         uint8_t _cond_30;
-         _cond_30 = (tmp > 0.000000f);
-         if(_cond_30){ o = 1.000000f; }
+         uint8_t _cond_31;
+         _cond_31 = (tmp > 0.000000f);
+         if(_cond_31){ o = 1.000000f; }
          else
          { o = 0.000000f; }
       }
    }
-   return Lfo_soft(_ctx._inst20,o);
+   return Lfo_soft(_ctx._inst21,o);
 }
 
 void Lfo_noteOn_init(Lfo__ctx_type_1 &_output_){

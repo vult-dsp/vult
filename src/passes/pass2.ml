@@ -131,14 +131,14 @@ module Tables = struct
    let attr_array size =
       { emptyAttr with typ = Some(real_array_type size) }
 
-   let makeFloat x =
-      PReal(x,emptyAttr)
+   let makeFloat loc x =
+      PReal(x,{ emptyAttr with loc })
 
    let makeDecl attr fname name data =
       let varname = Id.joinSep "_" fname name in
       let size = List.length data in
       let atype = real_array_type size in
-      let arr = PArray((CCList.map makeFloat data |> Array.of_list), { attr with typ = Some(atype) }) in
+      let arr = PArray((CCList.map (makeFloat attr.loc) data |> Array.of_list), { attr with typ = Some(atype) }) in
       StmtVal(LId(varname, Some(atype), attr_array size), Some(arr), { emptyAttr with const = true})
 
 end

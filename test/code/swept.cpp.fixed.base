@@ -139,10 +139,16 @@ fix16_t Util_cvToperiod(fix16_t cv){
    return fix_add(fix_get(fix_wrap_array(Util_cvToperiod_c0),index),fix_mul(cv,fix_add(fix_get(fix_wrap_array(Util_cvToperiod_c1),index),fix_mul(fix_get(fix_wrap_array(Util_cvToperiod_c2),index),cv))));
 }
 
+fix16_t Util_cvTokHz(fix16_t cv){
+   int index;
+   index = int_clip(fix_to_int(fix_mul(0x1f0000 /* 31.000000 */,cv)),0,31);
+   return fix_add(fix_get(fix_wrap_array(Util_cvTokHz_c0),index),fix_mul(cv,fix_add(fix_get(fix_wrap_array(Util_cvTokHz_c1),index),fix_mul(fix_get(fix_wrap_array(Util_cvTokHz_c2),index),cv))));
+}
+
 void Swept__ctx_type_0_init(Swept__ctx_type_0 &_output_){
    Swept__ctx_type_0 _ctx;
    _ctx.out = 0x0 /* 0.000000 */;
-   Util__ctx_type_0_init(_ctx._inst15);
+   Util__ctx_type_0_init(_ctx._inst16);
    _output_ = _ctx;
    return ;
 }
@@ -158,9 +164,9 @@ fix16_t Swept_process(Swept__ctx_type_0 &_ctx, fix16_t gate, fix16_t start, fix1
    uint8_t bgate;
    bgate = (gate > 0x8000 /* 0.500000 */);
    _ctx.out = fix_add(_ctx.out,fix_mul(fix_mul(fix_add(fix_mul(end,0x4000000 /* 1024.000000 */),(- _ctx.out)),rate),0x106 /* 0.004000 */));
-   uint8_t _cond_21;
-   _cond_21 = Util_edge(_ctx._inst15,bgate);
-   if(_cond_21){
+   uint8_t _cond_22;
+   _cond_22 = Util_edge(_ctx._inst16,bgate);
+   if(_cond_22){
       _ctx.out = fix_mul(start,0x4000000 /* 1024.000000 */);
    }
    return fix_mul(_ctx.out,0x40 /* 0.000977 */);

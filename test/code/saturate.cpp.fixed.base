@@ -4,42 +4,17 @@
 
 fix16_t Saturate_table(fix16_t x){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x18000 /* 1.500000 */,x)),0,9);
+   index = int_clip(fix_to_int(fix_mul(0x54aaa /* 5.291667 */,fix_add(x,0xc0000 /* 12.000000 */))),0,127);
    return fix_add(fix_get(fix_wrap_array(Saturate_table_c0),index),fix_mul(x,fix_add(fix_get(fix_wrap_array(Saturate_table_c1),index),fix_mul(fix_get(fix_wrap_array(Saturate_table_c2),index),x))));
 }
 
 fix16_t Saturate_process(fix16_t x){
-   uint8_t _cond_9;
-   _cond_9 = (x == 0x0 /* 0.000000 */);
-   if(_cond_9){
+   uint8_t _cond_7;
+   _cond_7 = (x == 0x0 /* 0.000000 */);
+   if(_cond_7){
       return 0x0 /* 0.000000 */;
    }
-   fix16_t fixed;
-   uint8_t sign;
-   uint8_t _cond_11;
-   _cond_11 = (x > 0x0 /* 0.000000 */);
-   if(_cond_11){
-      fixed = x;
-      sign = 0;
-   }
-   else
-   {
-      fixed = (- x);
-      sign = 1;
-   }
-   fix16_t out;
-   out = 0x0 /* 0.000000 */;
-   uint8_t _cond_10;
-   _cond_10 = (fixed > 0x60000 /* 6.000000 */);
-   if(_cond_10){
-      out = 0x10000 /* 1.000000 */;
-   }
-   else
-   {
-      out = Saturate_table(fixed);
-   }
-   if(sign){ out = (- out); }
-   return out;
+   return Saturate_table(x);
 }
 
 void Saturate_noteOn(int note, int velocity, int channel){

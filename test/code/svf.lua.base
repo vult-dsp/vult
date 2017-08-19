@@ -171,6 +171,15 @@ function this.Util_cvToperiod(cv)
 
 end
 
+local Util_cvTokHz_c0 = ffi.new("double[33]", {0.032703,0.032916,0.033958,0.036857,0.043242,0.055616,0.077724,0.115069,0.175614,0.270739,0.416537,0.635567,0.959207,1.430818,2.109960,3.078021,4.445697,6.362909,9.031922,12.724677,17.805619,24.761735,34.241990,47.109042,64.506928,87.949557,119.436234,161.602273,217.915148,292.929619,392.619240,524.806645,699.721497});
+local Util_cvTokHz_c1 = ffi.new("double[33]", {0.225719,0.212293,0.179169,0.117605,0.015780,(-0.142178),(-0.377466),(-0.718250),(-1.201797),(-1.877228),(-2.809077),(-4.081867),(-5.806008),(-8.125373),(-11.227028),(-15.353705),(-20.819795),(-28.031798),(-37.514503),(-49.944414),(-66.192449),(-87.378404),(-114.940396),(-150.723337),(-197.091584),(-257.072284),(-334.537674),(-434.436788),(-563.089817),(-728.561858),(-941.137258),(-1213.921328),(-1563.603302)});
+local Util_cvTokHz_c2 = ffi.new("double[33]", {0.876338,1.088287,1.351498,1.678368,2.084294,2.588397,3.214421,3.991854,4.957315,6.156280,7.645225,9.494282,11.790549,14.642185,18.183512,22.581336,28.042809,34.825181,43.247923,53.707771,66.697415,82.828706,102.861476,127.739327,158.634081,197.000973,244.647198,303.817033,377.297556,468.549918,581.872376,722.602756,897.369877});
+function this.Util_cvTokHz(cv)
+   local index = this.clip(this.int((31.000000 * cv)),0,31);
+   return (this.get(this.wrap_array(Util_cvTokHz_c0),index) + (cv * (this.get(this.wrap_array(Util_cvTokHz_c1),index) + (this.get(this.wrap_array(Util_cvTokHz_c2),index) * cv))));
+
+end
+
 local Saturate_soft_table_c0 = ffi.new("double[11]", {0.000000,(-0.000837),(-0.004130),(-0.011331),(-0.023628),(-0.041861),(-0.066455),(-0.097383),(-0.134146),(-0.175783),(-0.220903)});
 local Saturate_soft_table_c1 = ffi.new("double[11]", {1.000234,1.003027,1.008519,1.016526,1.026781,1.038945,1.052619,1.067357,1.082688,1.098122,1.113175});
 local Saturate_soft_table_c2 = ffi.new("double[11]", {(-0.001171),(-0.003500),(-0.005790),(-0.008016),(-0.010154),(-0.012182),(-0.014083),(-0.015839),(-0.017437),(-0.018867),(-0.020123)});
@@ -244,8 +253,8 @@ function this.Svf__ctx_type_1_init()
    _ctx.z1 = 0.000000;
    _ctx.inv_den = 0.000000;
    _ctx.g = 0.000000;
+   _ctx._inst32 = this.Util__ctx_type_1_init();
    _ctx._inst31 = this.Util__ctx_type_1_init();
-   _ctx._inst30 = this.Util__ctx_type_1_init();
    _ctx.R = 0.000000;
    this.Svf_default(_ctx);
    return _ctx;
@@ -258,7 +267,7 @@ end
 
 function this.Svf_process(_ctx,x,cv,q,sel)
    q = (q + 0.500000);
-   if (this.Util_change(_ctx._inst30,cv) or this.Util_change(_ctx._inst31,q)) then
+   if (this.Util_change(_ctx._inst31,cv) or this.Util_change(_ctx._inst32,q)) then
       _ctx.g = this.Svf_calc_g(cv);
       _ctx.R = (1.000000 / (2.000000 * (q + 0.000000)));
       _ctx.inv_den = (1.000000 / (1.000000 + (2.000000 * _ctx.R * _ctx.g) + (_ctx.g * _ctx.g)));
@@ -275,15 +284,15 @@ function this.Svf_process(_ctx,x,cv,q,sel)
       output = low;
    else
 
-      local _cond_39 = false;
-      _cond_39 = (sel == 1);
-      if _cond_39 then
+      local _cond_40 = false;
+      _cond_40 = (sel == 1);
+      if _cond_40 then
          output = high;
       else
 
-         local _cond_40 = false;
-         _cond_40 = (sel == 2);
-         if _cond_40 then
+         local _cond_41 = false;
+         _cond_41 = (sel == 2);
+         if _cond_41 then
             output = band;
          else
 

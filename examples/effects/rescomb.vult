@@ -26,9 +26,17 @@ fun delay(x:real, cv:real) : real {
    return ret;
 }
 
+fun toneCurve(tone) @[table(min=-1.2,max=1.2,size=64)] {
+   val sign = if tone < 0.0 then -1.0 else 1.0;
+   return sign * sqrt(abs(tone));
+}
+
 fun do(in, cv, tone, res) {
-   mem y = Saturate_soft.process(tone * delay(in + y * res, cv) + in);
-   return y;
+   mem output;
+   val feedback = Util.dcblock(output * res);
+   val saturated_input = Saturate_soft.process(in + feedback);
+   output = toneCurve(tone) * delay(saturated_input, cv) + in;
+   return Saturate_soft.process(output);
 }
 
 fun process(in, cv, tone, res) : real {

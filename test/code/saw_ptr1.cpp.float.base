@@ -139,11 +139,17 @@ float Util_cvToperiod(float cv){
    return (float_get(float_wrap_array(Util_cvToperiod_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToperiod_c1),index) + (float_get(float_wrap_array(Util_cvToperiod_c2),index) * cv))));
 }
 
+float Util_cvTokHz(float cv){
+   int index;
+   index = int_clip(float_to_int((31.000000f * cv)),0,31);
+   return (float_get(float_wrap_array(Util_cvTokHz_c0),index) + (cv * (float_get(float_wrap_array(Util_cvTokHz_c1),index) + (float_get(float_wrap_array(Util_cvTokHz_c2),index) * cv))));
+}
+
 void Saw_ptr1__ctx_type_0_init(Saw_ptr1__ctx_type_0 &_output_){
    Saw_ptr1__ctx_type_0 _ctx;
    _ctx.rate = 0.000000f;
    _ctx.phase = 0.000000f;
-   Util__ctx_type_1_init(_ctx._inst15);
+   Util__ctx_type_1_init(_ctx._inst16);
    Saw_ptr1_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -155,9 +161,9 @@ void Saw_ptr1_process_init(Saw_ptr1__ctx_type_0 &_output_){
 }
 
 float Saw_ptr1_process(Saw_ptr1__ctx_type_0 &_ctx, float cv){
-   uint8_t _cond_23;
-   _cond_23 = Util_change(_ctx._inst15,cv);
-   if(_cond_23){
+   uint8_t _cond_24;
+   _cond_24 = Util_change(_ctx._inst16,cv);
+   if(_cond_24){
       _ctx.rate = Util_cvToRate(cv);
    }
    float out;
@@ -166,12 +172,12 @@ float Saw_ptr1_process(Saw_ptr1__ctx_type_0 &_ctx, float cv){
    float dc;
    dc = (-1.000000f);
    _ctx.phase = (_ctx.phase + _ctx.rate);
+   uint8_t _cond_26;
+   _cond_26 = (_ctx.phase > 1.000000f);
+   if(_cond_26){ _ctx.phase = (_ctx.phase + (-1.000000f)); }
    uint8_t _cond_25;
-   _cond_25 = (_ctx.phase > 1.000000f);
-   if(_cond_25){ _ctx.phase = (_ctx.phase + (-1.000000f)); }
-   uint8_t _cond_24;
-   _cond_24 = (_ctx.phase < s1);
-   if(_cond_24){
+   _cond_25 = (_ctx.phase < s1);
+   if(_cond_25){
       float d;
       d = (_ctx.phase / _ctx.rate);
       out = (((-2.000000f) * d) + 2.000000f + dc);

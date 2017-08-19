@@ -220,7 +220,11 @@ let readOutputAndReference (create:bool) (outdir:string) (output, reference) =
 let readReference (create:bool) (ext:string) (contents:string) (file:string) (outdir:string) : string =
    let basefile = Filename.chop_extension (Filename.basename file) in
    let ref_file = Filename.concat outdir (basefile^"."^ext) in
-   let () = if create then write ref_file contents in
+   let () =
+      if create then
+         let () = Sys.remove ref_file in
+         write ref_file contents
+   in
    if Sys.file_exists ref_file then
       read ref_file
    else

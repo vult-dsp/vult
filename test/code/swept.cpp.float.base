@@ -139,10 +139,16 @@ float Util_cvToperiod(float cv){
    return (float_get(float_wrap_array(Util_cvToperiod_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToperiod_c1),index) + (float_get(float_wrap_array(Util_cvToperiod_c2),index) * cv))));
 }
 
+float Util_cvTokHz(float cv){
+   int index;
+   index = int_clip(float_to_int((31.000000f * cv)),0,31);
+   return (float_get(float_wrap_array(Util_cvTokHz_c0),index) + (cv * (float_get(float_wrap_array(Util_cvTokHz_c1),index) + (float_get(float_wrap_array(Util_cvTokHz_c2),index) * cv))));
+}
+
 void Swept__ctx_type_0_init(Swept__ctx_type_0 &_output_){
    Swept__ctx_type_0 _ctx;
    _ctx.out = 0.000000f;
-   Util__ctx_type_0_init(_ctx._inst15);
+   Util__ctx_type_0_init(_ctx._inst16);
    _output_ = _ctx;
    return ;
 }
@@ -158,9 +164,9 @@ float Swept_process(Swept__ctx_type_0 &_ctx, float gate, float start, float end,
    uint8_t bgate;
    bgate = (gate > 0.500000f);
    _ctx.out = (_ctx.out + (((end * 1024.000000f) + (- _ctx.out)) * rate * 0.004000f));
-   uint8_t _cond_21;
-   _cond_21 = Util_edge(_ctx._inst15,bgate);
-   if(_cond_21){
+   uint8_t _cond_22;
+   _cond_22 = Util_edge(_ctx._inst16,bgate);
+   if(_cond_22){
       _ctx.out = (start * 1024.000000f);
    }
    return (_ctx.out * 0.000977f);

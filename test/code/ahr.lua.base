@@ -171,6 +171,15 @@ function this.Util_cvToperiod(cv)
 
 end
 
+local Util_cvTokHz_c0 = ffi.new("double[33]", {0.032703,0.032916,0.033958,0.036857,0.043242,0.055616,0.077724,0.115069,0.175614,0.270739,0.416537,0.635567,0.959207,1.430818,2.109960,3.078021,4.445697,6.362909,9.031922,12.724677,17.805619,24.761735,34.241990,47.109042,64.506928,87.949557,119.436234,161.602273,217.915148,292.929619,392.619240,524.806645,699.721497});
+local Util_cvTokHz_c1 = ffi.new("double[33]", {0.225719,0.212293,0.179169,0.117605,0.015780,(-0.142178),(-0.377466),(-0.718250),(-1.201797),(-1.877228),(-2.809077),(-4.081867),(-5.806008),(-8.125373),(-11.227028),(-15.353705),(-20.819795),(-28.031798),(-37.514503),(-49.944414),(-66.192449),(-87.378404),(-114.940396),(-150.723337),(-197.091584),(-257.072284),(-334.537674),(-434.436788),(-563.089817),(-728.561858),(-941.137258),(-1213.921328),(-1563.603302)});
+local Util_cvTokHz_c2 = ffi.new("double[33]", {0.876338,1.088287,1.351498,1.678368,2.084294,2.588397,3.214421,3.991854,4.957315,6.156280,7.645225,9.494282,11.790549,14.642185,18.183512,22.581336,28.042809,34.825181,43.247923,53.707771,66.697415,82.828706,102.861476,127.739327,158.634081,197.000973,244.647198,303.817033,377.297556,468.549918,581.872376,722.602756,897.369877});
+function this.Util_cvTokHz(cv)
+   local index = this.clip(this.int((31.000000 * cv)),0,31);
+   return (this.get(this.wrap_array(Util_cvTokHz_c0),index) + (cv * (this.get(this.wrap_array(Util_cvTokHz_c1),index) + (this.get(this.wrap_array(Util_cvTokHz_c2),index) * cv))));
+
+end
+
 function this.Ahr__ctx_type_0_init()
    local _ctx = {};
    _ctx.target = 0.000000;
@@ -178,8 +187,8 @@ function this.Ahr__ctx_type_0_init()
    _ctx.rate = 0.000000;
    _ctx.out = 0.000000;
    _ctx.hold_phase = 0.000000;
-   _ctx._inst17 = this.Util__ctx_type_0_init();
-   _ctx._inst15 = this.Util__ctx_type_0_init();
+   _ctx._inst18 = this.Util__ctx_type_0_init();
+   _ctx._inst16 = this.Util__ctx_type_0_init();
    return _ctx;
 
 end
@@ -194,7 +203,7 @@ function this.Ahr_do(_ctx,gate,a,h,r)
    local hold = 2;
    local reset = 3;
    local bgate = (gate > 0.000000);
-   if this.Util_edge(_ctx._inst15,bgate) then
+   if this.Util_edge(_ctx._inst16,bgate) then
       _ctx.state = reset;
 
    end
@@ -205,7 +214,7 @@ function this.Ahr_do(_ctx,gate,a,h,r)
 
       resetting = 0.000000;
    end
-   if this.Util_edge(_ctx._inst17,(_ctx.out > 1024.000000)) then
+   if this.Util_edge(_ctx._inst18,(_ctx.out > 1024.000000)) then
       _ctx.hold_phase = 0.000000;
       _ctx.state = hold;
 
@@ -240,8 +249,8 @@ function this.Ahr_do(_ctx,gate,a,h,r)
 
    end
    _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.005000));
-   local _tuple_42 = { field_0 = this.clip((_ctx.out * 0.000977),0.000000,1.000000), field_1 = resetting };
-   return _tuple_42;
+   local _tuple_43 = { field_0 = this.clip((_ctx.out * 0.000977),0.000000,1.000000), field_1 = resetting };
+   return _tuple_43;
 
 end
 
@@ -250,7 +259,7 @@ function this.Ahr__ctx_type_1_init()
    _ctx.knob3 = 0.000000;
    _ctx.knob2 = 0.000000;
    _ctx.knob1 = 0.000000;
-   _ctx._inst26 = this.Ahr__ctx_type_0_init();
+   _ctx._inst27 = this.Ahr__ctx_type_0_init();
    return _ctx;
 
 end
@@ -260,8 +269,8 @@ function this.Ahr_process_init()
 end
 
 function this.Ahr_process(_ctx,gate)
-   local _call_45 = this.Ahr_do(_ctx._inst26,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
-   return _call_45;
+   local _call_46 = this.Ahr_do(_ctx._inst27,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
+   return _call_46;
 
 end
 

@@ -139,44 +139,25 @@ float Util_cvToperiod(float cv){
    return (float_get(float_wrap_array(Util_cvToperiod_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToperiod_c1),index) + (float_get(float_wrap_array(Util_cvToperiod_c2),index) * cv))));
 }
 
+float Util_cvTokHz(float cv){
+   int index;
+   index = int_clip(float_to_int((31.000000f * cv)),0,31);
+   return (float_get(float_wrap_array(Util_cvTokHz_c0),index) + (cv * (float_get(float_wrap_array(Util_cvTokHz_c1),index) + (float_get(float_wrap_array(Util_cvTokHz_c2),index) * cv))));
+}
+
 float Saturate_table(float x){
    int index;
-   index = int_clip(float_to_int((1.500000f * x)),0,9);
+   index = int_clip(float_to_int((5.291667f * (x + 12.000000f))),0,127);
    return (float_get(float_wrap_array(Saturate_table_c0),index) + (x * (float_get(float_wrap_array(Saturate_table_c1),index) + (float_get(float_wrap_array(Saturate_table_c2),index) * x))));
 }
 
 float Saturate_process(float x){
-   uint8_t _cond_23;
-   _cond_23 = (x == 0.000000f);
-   if(_cond_23){
+   uint8_t _cond_22;
+   _cond_22 = (x == 0.000000f);
+   if(_cond_22){
       return 0.000000f;
    }
-   float fixed;
-   uint8_t sign;
-   uint8_t _cond_25;
-   _cond_25 = (x > 0.000000f);
-   if(_cond_25){
-      fixed = x;
-      sign = 0;
-   }
-   else
-   {
-      fixed = (- x);
-      sign = 1;
-   }
-   float out;
-   out = 0.000000f;
-   uint8_t _cond_24;
-   _cond_24 = (fixed > 6.000000f);
-   if(_cond_24){
-      out = 1.000000f;
-   }
-   else
-   {
-      out = Saturate_table(fixed);
-   }
-   if(sign){ out = (- out); }
-   return out;
+   return Saturate_table(x);
 }
 
 void Saturate_noteOn(int note, int velocity, int channel){
@@ -191,104 +172,161 @@ void Saturate_controlChange(int control, int value, int channel){
 void Saturate_default(){
 }
 
-float Ladder_getTune(float cv){
+float Ladder_tune(float cut){
    int index;
-   index = int_clip(float_to_int((127.000000f * cv)),0,127);
-   return (float_get(float_wrap_array(Ladder_getTune_c0),index) + (cv * (float_get(float_wrap_array(Ladder_getTune_c1),index) + (float_get(float_wrap_array(Ladder_getTune_c2),index) * cv))));
+   index = int_clip(float_to_int((127.000000f * cut)),0,127);
+   return (float_get(float_wrap_array(Ladder_tune_c0),index) + (cut * (float_get(float_wrap_array(Ladder_tune_c1),index) + (float_get(float_wrap_array(Ladder_tune_c2),index) * cut))));
 }
 
-void Ladder__ctx_type_1_init(Ladder__ctx_type_1 &_output_){
-   Ladder__ctx_type_1 _ctx;
-   _ctx.yd = 0.000000f;
-   _ctx.yc = 0.000000f;
-   _ctx.yb = 0.000000f;
-   _ctx.ya = 0.000000f;
-   _ctx.wc = 0.000000f;
-   _ctx.wb = 0.000000f;
-   _ctx.wa = 0.000000f;
-   _ctx.tune = 0.000000f;
-   Util__ctx_type_1_init(_ctx._inst30);
-   _output_ = _ctx;
-   return ;
-}
-
-void Ladder_step_init(Ladder__ctx_type_1 &_output_){
-   Ladder__ctx_type_1_init(_output_);
-   return ;
-}
-
-float Ladder_step(Ladder__ctx_type_1 &_ctx, float x, float cv, float res){
-   float _2vt;
-   _2vt = 2.441406f;
-   uint8_t _cond_37;
-   _cond_37 = Util_change(_ctx._inst30,cv);
-   if(_cond_37){
-      _ctx.tune = (_2vt * Ladder_getTune(cv));
-   }
-   _ctx.ya = (_ctx.ya + (_ctx.tune * (Saturate_process(((x + ((-4.000000f) * res * _ctx.yd)) / _2vt)) + (- _ctx.wa))));
-   _ctx.wa = Saturate_process((_ctx.ya / _2vt));
-   _ctx.yb = (_ctx.yb + (_ctx.tune * (_ctx.wa + (- _ctx.wb))));
-   _ctx.wb = Saturate_process((_ctx.yb / _2vt));
-   _ctx.yc = (_ctx.yc + (_ctx.tune * (_ctx.wb + (- _ctx.wc))));
-   _ctx.wc = Saturate_process((_ctx.yc / _2vt));
-   _ctx.yd = (_ctx.yd + (_ctx.tune * (_ctx.wc + (- Saturate_process((_ctx.yd / _2vt))))));
-   return _ctx.yd;
+void Ladder_ladder_step(float input, float fh, float res, float (&p)[4], float (&dp)[4]){
+   float w0;
+   w0 = Saturate_process((input + ((-4.000000f) * res * float_get(p,3))));
+   float w1;
+   w1 = Saturate_process(float_get(p,0));
+   float_set(dp,0,((w0 + (- w1)) * fh));
+   float w3;
+   w3 = Saturate_process(float_get(p,1));
+   float_set(dp,1,((w1 + (- w3)) * fh));
+   float w5;
+   w5 = Saturate_process(float_get(p,2));
+   float_set(dp,2,((w3 + (- w5)) * fh));
+   float w7;
+   w7 = Saturate_process(float_get(p,3));
+   float_set(dp,3,((w5 + (- w7)) * fh));
 }
 
 void Ladder__ctx_type_2_init(Ladder__ctx_type_2 &_output_){
    Ladder__ctx_type_2 _ctx;
-   Ladder__ctx_type_1_init(_ctx.filter);
+   float_init_array(4,0.000000f,_ctx.p);
+   _ctx.fh = 0.000000f;
+   Util__ctx_type_1_init(_ctx._inst26);
    _output_ = _ctx;
    return ;
 }
 
-void Ladder_process_init(Ladder__ctx_type_2 &_output_){
+void Ladder_heun_init(Ladder__ctx_type_2 &_output_){
    Ladder__ctx_type_2_init(_output_);
    return ;
 }
 
-float Ladder_process(Ladder__ctx_type_2 &_ctx, float input, float cut, float res){
-   res = float_clip(res,0.000000f,1.000000f);
-   cut = float_clip(cut,(-0.300000f),1.000000f);
-   float i;
-   i = (input * 0.500000f);
-   float x0;
-   x0 = Ladder_step(_ctx.filter,input,cut,res);
-   float x1;
-   x1 = Ladder_step(_ctx.filter,input,cut,res);
-   return ((x0 + x1) * (1.000000f + (2.000000f * res)));
+float Ladder_heun(Ladder__ctx_type_2 &_ctx, float input, float cut, float res){
+   float dp[4];
+   float pt[4];
+   float dpt[4];
+   uint8_t _cond_38;
+   _cond_38 = Util_change(_ctx._inst26,cut);
+   if(_cond_38){
+      _ctx.fh = Ladder_tune(cut);
+   }
+   Ladder_ladder_step(input,_ctx.fh,res,_ctx.p,dpt);
+   float_set(pt,0,(float_get(_ctx.p,0) + float_get(dpt,0)));
+   float_set(pt,1,(float_get(_ctx.p,1) + float_get(dpt,1)));
+   float_set(pt,2,(float_get(_ctx.p,2) + float_get(dpt,2)));
+   float_set(pt,3,(float_get(_ctx.p,3) + float_get(dpt,3)));
+   Ladder_ladder_step(input,_ctx.fh,res,pt,dp);
+   float_set(_ctx.p,0,(float_get(_ctx.p,0) + ((float_get(dp,0) + float_get(dpt,0)) * 0.500000f)));
+   float_set(_ctx.p,1,(float_get(_ctx.p,1) + ((float_get(dp,1) + float_get(dpt,1)) * 0.500000f)));
+   float_set(_ctx.p,2,(float_get(_ctx.p,2) + ((float_get(dp,2) + float_get(dpt,2)) * 0.500000f)));
+   float_set(_ctx.p,3,(float_get(_ctx.p,3) + ((float_get(dp,3) + float_get(dpt,3)) * 0.500000f)));
+   return float_get(_ctx.p,3);
 }
 
-void Ladder_noteOn_init(Ladder__ctx_type_2 &_output_){
-   Ladder__ctx_type_2_init(_output_);
+void Ladder__ctx_type_3_init(Ladder__ctx_type_3 &_output_){
+   Ladder__ctx_type_3 _ctx;
+   float_init_array(4,0.000000f,_ctx.p);
+   _ctx.fh = 0.000000f;
+   Util__ctx_type_1_init(_ctx._inst29);
+   _output_ = _ctx;
    return ;
 }
 
-void Ladder_noteOn(Ladder__ctx_type_2 &_ctx, int note, int velocity, int channel){
-}
-
-void Ladder_noteOff_init(Ladder__ctx_type_2 &_output_){
-   Ladder__ctx_type_2_init(_output_);
+void Ladder_euler_init(Ladder__ctx_type_3 &_output_){
+   Ladder__ctx_type_3_init(_output_);
    return ;
 }
 
-void Ladder_noteOff(Ladder__ctx_type_2 &_ctx, int note, int channel){
+float Ladder_euler(Ladder__ctx_type_3 &_ctx, float input, float cut, float res){
+   float dpt[4];
+   uint8_t _cond_39;
+   _cond_39 = Util_change(_ctx._inst29,cut);
+   if(_cond_39){
+      _ctx.fh = Ladder_tune(cut);
+   }
+   Ladder_ladder_step(input,_ctx.fh,res,_ctx.p,dpt);
+   float_set(_ctx.p,0,(float_get(_ctx.p,0) + float_get(dpt,0)));
+   float_set(_ctx.p,1,(float_get(_ctx.p,1) + float_get(dpt,1)));
+   float_set(_ctx.p,2,(float_get(_ctx.p,2) + float_get(dpt,2)));
+   float_set(_ctx.p,3,(float_get(_ctx.p,3) + float_get(dpt,3)));
+   return float_get(_ctx.p,3);
 }
 
-void Ladder_controlChange_init(Ladder__ctx_type_2 &_output_){
-   Ladder__ctx_type_2_init(_output_);
+void Ladder__ctx_type_4_init(Ladder__ctx_type_4 &_output_){
+   Ladder__ctx_type_4 _ctx;
+   Ladder__ctx_type_2_init(_ctx._inst32);
+   _output_ = _ctx;
    return ;
 }
 
-void Ladder_controlChange(Ladder__ctx_type_2 &_ctx, int control, int value, int channel){
-}
-
-void Ladder_default_init(Ladder__ctx_type_2 &_output_){
-   Ladder__ctx_type_2_init(_output_);
+void Ladder_ladder_init(Ladder__ctx_type_4 &_output_){
+   Ladder__ctx_type_4_init(_output_);
    return ;
 }
 
-void Ladder_default(Ladder__ctx_type_2 &_ctx){
+float Ladder_ladder(Ladder__ctx_type_4 &_ctx, float input, float cut, float res){
+   return Ladder_heun(_ctx._inst32,input,cut,res);
+}
+
+void Ladder__ctx_type_5_init(Ladder__ctx_type_5 &_output_){
+   Ladder__ctx_type_5 _ctx;
+   Ladder__ctx_type_4_init(_ctx.f);
+   _output_ = _ctx;
+   return ;
+}
+
+void Ladder_process_init(Ladder__ctx_type_5 &_output_){
+   Ladder__ctx_type_5_init(_output_);
+   return ;
+}
+
+float Ladder_process(Ladder__ctx_type_5 &_ctx, float input, float cut, float res){
+   Ladder_ladder(_ctx.f,input,cut,res);
+   Ladder_ladder(_ctx.f,input,cut,res);
+   Ladder_ladder(_ctx.f,input,cut,res);
+   float out;
+   out = Ladder_ladder(_ctx.f,input,cut,res);
+   return out;
+}
+
+void Ladder_noteOn_init(Ladder__ctx_type_5 &_output_){
+   Ladder__ctx_type_5_init(_output_);
+   return ;
+}
+
+void Ladder_noteOn(Ladder__ctx_type_5 &_ctx, int note, int velocity, int channel){
+}
+
+void Ladder_noteOff_init(Ladder__ctx_type_5 &_output_){
+   Ladder__ctx_type_5_init(_output_);
+   return ;
+}
+
+void Ladder_noteOff(Ladder__ctx_type_5 &_ctx, int note, int channel){
+}
+
+void Ladder_controlChange_init(Ladder__ctx_type_5 &_output_){
+   Ladder__ctx_type_5_init(_output_);
+   return ;
+}
+
+void Ladder_controlChange(Ladder__ctx_type_5 &_ctx, int control, int value, int channel){
+}
+
+void Ladder_default_init(Ladder__ctx_type_5 &_output_){
+   Ladder__ctx_type_5_init(_output_);
+   return ;
+}
+
+void Ladder_default(Ladder__ctx_type_5 &_ctx){
 }
 
 

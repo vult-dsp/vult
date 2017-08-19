@@ -191,6 +191,12 @@ float Util_cvToperiod(float cv){
    return (float_get(float_wrap_array(Util_cvToperiod_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToperiod_c1),index) + (float_get(float_wrap_array(Util_cvToperiod_c2),index) * cv))));
 }
 
+float Util_cvTokHz(float cv){
+   int index;
+   index = int_clip(float_to_int((31.000000f * cv)),0,31);
+   return (float_get(float_wrap_array(Util_cvTokHz_c0),index) + (cv * (float_get(float_wrap_array(Util_cvTokHz_c1),index) + (float_get(float_wrap_array(Util_cvTokHz_c2),index) * cv))));
+}
+
 void Rescomb__ctx_type_0_init(Rescomb__ctx_type_0 &_output_){
    Rescomb__ctx_type_0 _ctx;
    _ctx.write_pos = 0;
@@ -211,9 +217,9 @@ float Rescomb_delay(Rescomb__ctx_type_0 &_ctx, float x, float cv){
    r_size = 675.000000f;
    float r_index;
    r_index = fmodf((int_to_float(_ctx.write_pos) + (- Util_cvToperiod(cv))),r_size);
-   uint8_t _cond_37;
-   _cond_37 = (r_index < 0.000000f);
-   if(_cond_37){ r_index = (r_size + r_index); }
+   uint8_t _cond_40;
+   _cond_40 = (r_index < 0.000000f);
+   if(_cond_40){ r_index = (r_size + r_index); }
    int t1;
    t1 = float_to_int(floorf(r_index));
    int t2;
@@ -229,70 +235,81 @@ float Rescomb_delay(Rescomb__ctx_type_0 &_ctx, float x, float cv){
    return ret;
 }
 
-void Rescomb__ctx_type_1_init(Rescomb__ctx_type_1 &_output_){
-   Rescomb__ctx_type_1 _ctx;
-   _ctx.y = 0.000000f;
-   Rescomb__ctx_type_0_init(_ctx._inst30);
-   _output_ = _ctx;
-   return ;
-}
-
-void Rescomb_do_init(Rescomb__ctx_type_1 &_output_){
-   Rescomb__ctx_type_1_init(_output_);
-   return ;
-}
-
-float Rescomb_do(Rescomb__ctx_type_1 &_ctx, float in, float cv, float tone, float res){
-   _ctx.y = Saturate_soft_process(((tone * Rescomb_delay(_ctx._inst30,(in + (_ctx.y * res)),cv)) + in));
-   return _ctx.y;
+float Rescomb_toneCurve(float tone){
+   int index;
+   index = int_clip(float_to_int((26.250000f * (tone + 1.200000f))),0,63);
+   return (float_get(float_wrap_array(Rescomb_toneCurve_c0),index) + (tone * (float_get(float_wrap_array(Rescomb_toneCurve_c1),index) + (float_get(float_wrap_array(Rescomb_toneCurve_c2),index) * tone))));
 }
 
 void Rescomb__ctx_type_2_init(Rescomb__ctx_type_2 &_output_){
    Rescomb__ctx_type_2 _ctx;
-   Rescomb__ctx_type_1_init(_ctx._inst32);
+   _ctx.output = 0.000000f;
+   Rescomb__ctx_type_0_init(_ctx._inst33);
+   Util__ctx_type_3_init(_ctx._inst32);
    _output_ = _ctx;
    return ;
 }
 
-void Rescomb_process_init(Rescomb__ctx_type_2 &_output_){
+void Rescomb_do_init(Rescomb__ctx_type_2 &_output_){
    Rescomb__ctx_type_2_init(_output_);
    return ;
 }
 
-float Rescomb_process(Rescomb__ctx_type_2 &_ctx, float in, float cv, float tone, float res){
-   return Rescomb_do(_ctx._inst32,in,cv,tone,res);
+float Rescomb_do(Rescomb__ctx_type_2 &_ctx, float in, float cv, float tone, float res){
+   float feedback;
+   feedback = Util_dcblock(_ctx._inst32,(_ctx.output * res));
+   float saturated_input;
+   saturated_input = Saturate_soft_process((in + feedback));
+   _ctx.output = ((Rescomb_toneCurve(tone) * Rescomb_delay(_ctx._inst33,saturated_input,cv)) + in);
+   return Saturate_soft_process(_ctx.output);
 }
 
-void Rescomb_noteOn_init(Rescomb__ctx_type_2 &_output_){
-   Rescomb__ctx_type_2_init(_output_);
+void Rescomb__ctx_type_3_init(Rescomb__ctx_type_3 &_output_){
+   Rescomb__ctx_type_3 _ctx;
+   Rescomb__ctx_type_2_init(_ctx._inst35);
+   _output_ = _ctx;
    return ;
 }
 
-void Rescomb_noteOn(Rescomb__ctx_type_2 &_ctx, int note, int velocity, int channel){
-}
-
-void Rescomb_noteOff_init(Rescomb__ctx_type_2 &_output_){
-   Rescomb__ctx_type_2_init(_output_);
+void Rescomb_process_init(Rescomb__ctx_type_3 &_output_){
+   Rescomb__ctx_type_3_init(_output_);
    return ;
 }
 
-void Rescomb_noteOff(Rescomb__ctx_type_2 &_ctx, int note, int channel){
+float Rescomb_process(Rescomb__ctx_type_3 &_ctx, float in, float cv, float tone, float res){
+   return Rescomb_do(_ctx._inst35,in,cv,tone,res);
 }
 
-void Rescomb_controlChange_init(Rescomb__ctx_type_2 &_output_){
-   Rescomb__ctx_type_2_init(_output_);
+void Rescomb_noteOn_init(Rescomb__ctx_type_3 &_output_){
+   Rescomb__ctx_type_3_init(_output_);
    return ;
 }
 
-void Rescomb_controlChange(Rescomb__ctx_type_2 &_ctx, int control, int value, int channel){
+void Rescomb_noteOn(Rescomb__ctx_type_3 &_ctx, int note, int velocity, int channel){
 }
 
-void Rescomb_default_init(Rescomb__ctx_type_2 &_output_){
-   Rescomb__ctx_type_2_init(_output_);
+void Rescomb_noteOff_init(Rescomb__ctx_type_3 &_output_){
+   Rescomb__ctx_type_3_init(_output_);
    return ;
 }
 
-void Rescomb_default(Rescomb__ctx_type_2 &_ctx){
+void Rescomb_noteOff(Rescomb__ctx_type_3 &_ctx, int note, int channel){
+}
+
+void Rescomb_controlChange_init(Rescomb__ctx_type_3 &_output_){
+   Rescomb__ctx_type_3_init(_output_);
+   return ;
+}
+
+void Rescomb_controlChange(Rescomb__ctx_type_3 &_ctx, int control, int value, int channel){
+}
+
+void Rescomb_default_init(Rescomb__ctx_type_3 &_output_){
+   Rescomb__ctx_type_3_init(_output_);
+   return ;
+}
+
+void Rescomb_default(Rescomb__ctx_type_3 &_ctx){
 }
 
 

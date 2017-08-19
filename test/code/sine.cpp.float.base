@@ -139,12 +139,18 @@ float Util_cvToperiod(float cv){
    return (float_get(float_wrap_array(Util_cvToperiod_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToperiod_c1),index) + (float_get(float_wrap_array(Util_cvToperiod_c2),index) * cv))));
 }
 
+float Util_cvTokHz(float cv){
+   int index;
+   index = int_clip(float_to_int((31.000000f * cv)),0,31);
+   return (float_get(float_wrap_array(Util_cvTokHz_c0),index) + (cv * (float_get(float_wrap_array(Util_cvTokHz_c1),index) + (float_get(float_wrap_array(Util_cvTokHz_c2),index) * cv))));
+}
+
 void Phase__ctx_type_0_init(Phase__ctx_type_0 &_output_){
    Phase__ctx_type_0 _ctx;
    _ctx.rate = 0.000000f;
    _ctx.phase = 0.000000f;
-   Util__ctx_type_0_init(_ctx._inst17);
-   Util__ctx_type_1_init(_ctx._inst15);
+   Util__ctx_type_0_init(_ctx._inst18);
+   Util__ctx_type_1_init(_ctx._inst16);
    Phase_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -156,19 +162,19 @@ void Phase_process_init(Phase__ctx_type_0 &_output_){
 }
 
 float Phase_process(Phase__ctx_type_0 &_ctx, float cv, float reset){
-   uint8_t _cond_22;
-   _cond_22 = Util_change(_ctx._inst15,cv);
-   if(_cond_22){
+   uint8_t _cond_23;
+   _cond_23 = Util_change(_ctx._inst16,cv);
+   if(_cond_23){
       _ctx.rate = Util_cvToRate_1024(cv);
    }
-   uint8_t _cond_23;
-   _cond_23 = Util_edge(_ctx._inst17,(reset > 0.500000f));
-   if(_cond_23){ _ctx.phase = 0.000000f; }
+   uint8_t _cond_24;
+   _cond_24 = Util_edge(_ctx._inst18,(reset > 0.500000f));
+   if(_cond_24){ _ctx.phase = 0.000000f; }
    else
    { _ctx.phase = (_ctx.phase + _ctx.rate); }
-   uint8_t _cond_24;
-   _cond_24 = (_ctx.phase > 1024.000000f);
-   if(_cond_24){ _ctx.phase = (_ctx.phase + (-1024.000000f)); }
+   uint8_t _cond_25;
+   _cond_25 = (_ctx.phase > 1024.000000f);
+   if(_cond_25){ _ctx.phase = (_ctx.phase + (-1024.000000f)); }
    return (_ctx.phase * 0.000977f);
 }
 
@@ -215,7 +221,7 @@ void Sine__ctx_type_0_init(Sine__ctx_type_0 &_output_){
    Sine__ctx_type_0 _ctx;
    _ctx.trig = 0;
    Phase__ctx_type_0_init(_ctx.p);
-   Util__ctx_type_0_init(_ctx._inst27);
+   Util__ctx_type_0_init(_ctx._inst28);
    _output_ = _ctx;
    return ;
 }
@@ -226,16 +232,16 @@ void Sine_process_init(Sine__ctx_type_0 &_output_){
 }
 
 float Sine_process(Sine__ctx_type_0 &_ctx, float cv, float reset){
-   uint8_t _cond_34;
-   _cond_34 = Util_edge(_ctx._inst27,(reset > 0.500000f));
-   if(_cond_34){
+   uint8_t _cond_35;
+   _cond_35 = Util_edge(_ctx._inst28,(reset > 0.500000f));
+   if(_cond_35){
       _ctx.trig = 1;
    }
    float phase;
    phase = Phase_process(_ctx.p,cv,0.000000f);
-   uint8_t _cond_35;
-   _cond_35 = ((phase < 0.000000f) && _ctx.trig);
-   if(_cond_35){
+   uint8_t _cond_36;
+   _cond_36 = ((phase < 0.000000f) && _ctx.trig);
+   if(_cond_36){
       _ctx.trig = 0;
       Phase_process(_ctx.p,cv,0.000000f);
    }
