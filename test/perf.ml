@@ -140,10 +140,7 @@ let runLua vultfile =
 
 
 let main () =
-   List.iter (runC "float") files;
-   List.iter (runC "fixed") files;
-   List.iter runLua files;
-   List.iter runJs files;
+   List.iter (fun f -> runC "float" f; runC "fixed" f; runLua f; runJs f) files;
 ;;
 
 main () ;;
