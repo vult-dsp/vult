@@ -32,10 +32,13 @@ fun toneCurve(tone) @[table(min=-1.2,max=1.2,size=64)] {
 }
 
 fun do(in, cv, tone, res) {
-   mem output;
+   mem output, stone;
+   if(Util.change(tone)){
+      stone = toneCurve(tone);
+   }
    val feedback = Util.dcblock(output * res);
    val saturated_input = Saturate_soft.process(in + feedback);
-   output = toneCurve(tone) * delay(saturated_input, cv) + in;
+   output = stone * delay(saturated_input, cv) + in;
    return Saturate_soft.process(output);
 }
 

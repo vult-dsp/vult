@@ -656,13 +656,13 @@ function this.Kick_do(_ctx,gate,odecay,pitch,swept,noise)
    local osc_env = 0.0;
    local env_reset = 0.0;
    local _call_127 = this.Ahr_do(_ctx._inst112,gate,0.005000,(0.100000 + odecay),(odecay + 0.010000));
-   osc_env = _call_127[1]; env_reset = _call_127[2]; 
+   osc_env = _call_127.field_0; env_reset = _call_127.field_1; 
    local cv = this.Swept_process(_ctx._inst113,(1.000000 + (- env_reset)),(pitch + (swept * 0.400000)),pitch,0.100000);
    local osc = this.Tricore_process(_ctx._inst114,cv,0.000000,env_reset);
    local osc_sat = this.Saturate_process((1.500000 * osc));
    local noise_env = 0.0;
    local _call_128 = this.Ahr_do(_ctx._inst115,gate,0.001000,0.010000,((noise * 0.010000) + 0.001000));
-   noise_env = _call_128[1]; 
+   noise_env = _call_128.field_0; 
    local noise_osc = (noise * this.Noise_process(_ctx._inst116,1.000000) * 0.333333);
    return ((osc_env * osc_sat) + (noise_env * noise_osc));
 

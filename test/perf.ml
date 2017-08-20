@@ -48,6 +48,7 @@ let files =
       "test/perf/svf_perf.vult";
       "test/perf/ladder_euler_perf.vult";
       "test/perf/ladder_heun_perf.vult";
+      "test/perf/rescomb_perf.vult";
    ]
    |> List.map in_proj_dir
 

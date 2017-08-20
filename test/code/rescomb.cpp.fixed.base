@@ -237,9 +237,9 @@ fix16_t Rescomb_delay(Rescomb__ctx_type_0 &_ctx, fix16_t x, fix16_t cv){
    r_size = 0x2a30000 /* 675.000000 */;
    fix16_t r_index;
    r_index = (fix_add(int_to_fix(_ctx.write_pos),(- Util_cvToperiod(cv))) % r_size);
-   uint8_t _cond_47;
-   _cond_47 = (r_index < 0x0 /* 0.000000 */);
-   if(_cond_47){ r_index = fix_add(r_size,r_index); }
+   uint8_t _cond_49;
+   _cond_49 = (r_index < 0x0 /* 0.000000 */);
+   if(_cond_49){ r_index = fix_add(r_size,r_index); }
    int t1;
    t1 = fix_to_int(fix_floor(r_index));
    int t2;
@@ -263,9 +263,11 @@ fix16_t Rescomb_toneCurve(fix16_t tone){
 
 void Rescomb__ctx_type_2_init(Rescomb__ctx_type_2 &_output_){
    Rescomb__ctx_type_2 _ctx;
+   _ctx.stone = 0x0 /* 0.000000 */;
    _ctx.output = 0x0 /* 0.000000 */;
-   Rescomb__ctx_type_0_init(_ctx._inst40);
-   Util__ctx_type_3_init(_ctx._inst39);
+   Rescomb__ctx_type_0_init(_ctx._inst42);
+   Util__ctx_type_3_init(_ctx._inst41);
+   Util__ctx_type_1_init(_ctx._inst39);
    _output_ = _ctx;
    return ;
 }
@@ -276,17 +278,22 @@ void Rescomb_do_init(Rescomb__ctx_type_2 &_output_){
 }
 
 fix16_t Rescomb_do(Rescomb__ctx_type_2 &_ctx, fix16_t in, fix16_t cv, fix16_t tone, fix16_t res){
+   uint8_t _cond_51;
+   _cond_51 = Util_change(_ctx._inst39,tone);
+   if(_cond_51){
+      _ctx.stone = Rescomb_toneCurve(tone);
+   }
    fix16_t feedback;
-   feedback = Util_dcblock(_ctx._inst39,fix_mul(_ctx.output,res));
+   feedback = Util_dcblock(_ctx._inst41,fix_mul(_ctx.output,res));
    fix16_t saturated_input;
    saturated_input = Saturate_soft_process(fix_add(in,feedback));
-   _ctx.output = fix_add(fix_mul(Rescomb_toneCurve(tone),Rescomb_delay(_ctx._inst40,saturated_input,cv)),in);
+   _ctx.output = fix_add(fix_mul(_ctx.stone,Rescomb_delay(_ctx._inst42,saturated_input,cv)),in);
    return Saturate_soft_process(_ctx.output);
 }
 
 void Rescomb__ctx_type_3_init(Rescomb__ctx_type_3 &_output_){
    Rescomb__ctx_type_3 _ctx;
-   Rescomb__ctx_type_2_init(_ctx._inst42);
+   Rescomb__ctx_type_2_init(_ctx._inst44);
    _output_ = _ctx;
    return ;
 }
@@ -297,7 +304,7 @@ void Rescomb_process_init(Rescomb__ctx_type_3 &_output_){
 }
 
 fix16_t Rescomb_process(Rescomb__ctx_type_3 &_ctx, fix16_t in, fix16_t cv, fix16_t tone, fix16_t res){
-   return Rescomb_do(_ctx._inst42,in,cv,tone,res);
+   return Rescomb_do(_ctx._inst44,in,cv,tone,res);
 }
 
 void Rescomb_noteOn_init(Rescomb__ctx_type_3 &_output_){

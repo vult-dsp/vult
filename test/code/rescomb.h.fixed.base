@@ -139,9 +139,11 @@ static const fix16_t Rescomb_toneCurve_c2[65] = {0x18ec /* 0.097358 */,0x1a29 /*
 fix16_t Rescomb_toneCurve(fix16_t tone);
 
 typedef struct Rescomb__ctx_type_2 {
+   fix16_t stone;
    fix16_t output;
-   Rescomb__ctx_type_0 _inst40;
-   Util__ctx_type_3 _inst39;
+   Rescomb__ctx_type_0 _inst42;
+   Util__ctx_type_3 _inst41;
+   Util__ctx_type_1 _inst39;
 } Rescomb__ctx_type_2;
 
 typedef Rescomb__ctx_type_2 Rescomb_do_type;
@@ -153,7 +155,7 @@ void Rescomb_do_init(Rescomb__ctx_type_2 &_output_);
 fix16_t Rescomb_do(Rescomb__ctx_type_2 &_ctx, fix16_t in, fix16_t cv, fix16_t tone, fix16_t res);
 
 typedef struct Rescomb__ctx_type_3 {
-   Rescomb__ctx_type_2 _inst42;
+   Rescomb__ctx_type_2 _inst44;
 } Rescomb__ctx_type_3;
 
 typedef Rescomb__ctx_type_3 Rescomb_process_type;

@@ -279,7 +279,7 @@ function this.Sawcore_process(_ctx,cv,reset)
       local ptr = 0.0;
       local _call_49 = {};
       _call_49 = this.Sawcore_ptr_w2(_ctx.phase,_ctx.rate);
-      done = _call_49[1]; ptr = _call_49[2]; 
+      done = _call_49.field_0; ptr = _call_49.field_1; 
       transition = ((ptr + 1.000000) * 0.500000 * _ctx.reset_phase);
       if done then
          _ctx.reset_state = false;

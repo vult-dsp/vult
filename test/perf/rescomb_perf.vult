@@ -1,0 +1,11 @@
+
+fun process(input:real) : real {
+   val i = Saw_eptr.process(0.1);
+   val cv = Ramp.do(1.0, 0.0, 0.7);
+   val q = Ramp.do(0.1, 0.0, 1.0);
+   return Rescomb.process(i, cv, q, 0.0);
+}
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int){ }
+and default(){ }

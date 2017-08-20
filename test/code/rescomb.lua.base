@@ -300,9 +300,11 @@ end
 
 function this.Rescomb__ctx_type_2_init()
    local _ctx = {};
+   _ctx.stone = 0.000000;
    _ctx.output = 0.000000;
-   _ctx._inst40 = this.Rescomb__ctx_type_0_init();
-   _ctx._inst39 = this.Util__ctx_type_3_init();
+   _ctx._inst42 = this.Rescomb__ctx_type_0_init();
+   _ctx._inst41 = this.Util__ctx_type_3_init();
+   _ctx._inst39 = this.Util__ctx_type_1_init();
    return _ctx;
 
 end
@@ -312,16 +314,20 @@ function this.Rescomb_do_init()
 end
 
 function this.Rescomb_do(_ctx,in_,cv,tone,res)
-   local feedback = this.Util_dcblock(_ctx._inst39,(_ctx.output * res));
+   if this.Util_change(_ctx._inst39,tone) then
+      _ctx.stone = this.Rescomb_toneCurve(tone);
+
+   end
+   local feedback = this.Util_dcblock(_ctx._inst41,(_ctx.output * res));
    local saturated_input = this.Saturate_soft_process((in_ + feedback));
-   _ctx.output = ((this.Rescomb_toneCurve(tone) * this.Rescomb_delay(_ctx._inst40,saturated_input,cv)) + in_);
+   _ctx.output = ((_ctx.stone * this.Rescomb_delay(_ctx._inst42,saturated_input,cv)) + in_);
    return this.Saturate_soft_process(_ctx.output);
 
 end
 
 function this.Rescomb__ctx_type_3_init()
    local _ctx = {};
-   _ctx._inst42 = this.Rescomb__ctx_type_2_init();
+   _ctx._inst44 = this.Rescomb__ctx_type_2_init();
    return _ctx;
 
 end
@@ -331,7 +337,7 @@ function this.Rescomb_process_init()
 end
 
 function this.Rescomb_process(_ctx,in_,cv,tone,res)
-   return this.Rescomb_do(_ctx._inst42,in_,cv,tone,res);
+   return this.Rescomb_do(_ctx._inst44,in_,cv,tone,res);
 
 end
 
