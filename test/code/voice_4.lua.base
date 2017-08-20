@@ -327,45 +327,17 @@ function this.Tricore_default(_ctx)
 
 end
 
-local Saturate_soft_table_c0 = ffi.new("double[11]", {0.000000,(-0.000837),(-0.004130),(-0.011331),(-0.023628),(-0.041861),(-0.066455),(-0.097383),(-0.134146),(-0.175783),(-0.220903)});
-local Saturate_soft_table_c1 = ffi.new("double[11]", {1.000234,1.003027,1.008519,1.016526,1.026781,1.038945,1.052619,1.067357,1.082688,1.098122,1.113175});
-local Saturate_soft_table_c2 = ffi.new("double[11]", {(-0.001171),(-0.003500),(-0.005790),(-0.008016),(-0.010154),(-0.012182),(-0.014083),(-0.015839),(-0.017437),(-0.018867),(-0.020123)});
+local Saturate_soft_table_c0 = ffi.new("double[66]", {(-8.551395),(-8.031581),(-7.495173),(-6.941354),(-6.372317),(-5.793511),(-5.207770),(-4.619621),(-4.035829),(-3.461083),(-2.902259),(-2.366490),(-1.860709),(-1.392085),(-0.967287),(-0.592455),(-0.272557),(-0.011069),0.190456,0.332663,0.418609,0.453804,0.446033,0.404924,0.341291,0.266251,0.190231,0.121953,0.067564,0.030037,0.008985,0.000923,0.000000,(-0.000923),(-0.008985),(-0.030037),(-0.067564),(-0.121953),(-0.190231),(-0.266251),(-0.341291),(-0.404924),(-0.446033),(-0.453804),(-0.418609),(-0.332666),(-0.190451),0.011068,0.272539,0.592436,0.967277,1.392035,1.860709,2.366538,2.902329,3.461142,4.036128,4.619653,5.207774,5.793615,6.371757,6.940220,7.494295,8.032314,8.552015,9.049418});
+local Saturate_soft_table_c1 = ffi.new("double[66]", {0.359022,0.392434,0.428240,0.466430,0.506928,0.549736,0.594640,0.641433,0.689913,0.739571,0.790028,0.840660,0.890789,0.939610,0.986252,1.029749,1.069123,1.103374,1.131586,1.152958,1.166892,1.173069,1.171520,1.162678,1.147415,1.127033,1.103218,1.077944,1.053342,1.031519,1.014380,1.003443,0.999685,1.003443,1.014380,1.031519,1.053342,1.077944,1.103218,1.127033,1.147415,1.162678,1.171520,1.173069,1.166892,1.152959,1.131586,1.103374,1.069121,1.029748,0.986250,0.939611,0.890792,0.840665,0.790033,0.739584,0.689894,0.641441,0.594623,0.549769,0.506907,0.466408,0.428263,0.392457,0.359046,0.327989});
+local Saturate_soft_table_c2 = ffi.new("double[66]", {0.004508,0.005046,0.005642,0.006300,0.007022,0.007812,0.008672,0.009605,0.010610,0.011683,0.012822,0.014018,0.015260,0.016531,0.017811,0.019074,0.020285,0.021407,0.022394,0.023197,0.023762,0.024033,0.023956,0.023480,0.022565,0.021181,0.019316,0.016977,0.014195,0.011022,0.007534,0.003824,0.000000,(-0.003824),(-0.007534),(-0.011022),(-0.014195),(-0.016977),(-0.019316),(-0.021181),(-0.022565),(-0.023480),(-0.023956),(-0.024033),(-0.023762),(-0.023197),(-0.022394),(-0.021407),(-0.020285),(-0.019074),(-0.017812),(-0.016531),(-0.015260),(-0.014018),(-0.012822),(-0.011683),(-0.010609),(-0.009605),(-0.008672),(-0.007813),(-0.007021),(-0.006299),(-0.005642),(-0.005046),(-0.004508),(-0.004021)});
 function this.Saturate_soft_table(x)
-   local index = this.clip(this.int((1.500000 * x)),0,9);
+   local index = this.clip(this.int((x + 32.000000)),0,64);
    return (this.get(this.wrap_array(Saturate_soft_table_c0),index) + (x * (this.get(this.wrap_array(Saturate_soft_table_c1),index) + (this.get(this.wrap_array(Saturate_soft_table_c2),index) * x))));
 
 end
 
 function this.Saturate_soft_process(x)
-   if (x == 0.000000) then
-      return 0.000000;
-
-   end
-   local fixed = 0.0;
-   local sign = false;
-   if (x > 0.000000) then
-      fixed = x;
-      sign = false;
-
-   else
-
-      fixed = (- x);
-      sign = true;
-
-   end
-   local out = 0.000000;
-   if (fixed > 6.000000) then
-      out = 1.000000;
-
-   else
-
-      out = this.Saturate_soft_table(fixed);
-
-   end
-   if sign then
-      out = (- out);
-   end
-   return out;
+   return this.Saturate_soft_table(x);
 
 end
 
@@ -400,8 +372,8 @@ function this.Svf__ctx_type_1_init()
    _ctx.z1 = 0.000000;
    _ctx.inv_den = 0.000000;
    _ctx.g = 0.000000;
-   _ctx._inst62 = this.Util__ctx_type_1_init();
-   _ctx._inst61 = this.Util__ctx_type_1_init();
+   _ctx._inst54 = this.Util__ctx_type_1_init();
+   _ctx._inst53 = this.Util__ctx_type_1_init();
    _ctx.R = 0.000000;
    this.Svf_default(_ctx);
    return _ctx;
@@ -414,7 +386,7 @@ end
 
 function this.Svf_process(_ctx,x,cv,q,sel)
    q = (q + 0.500000);
-   if (this.Util_change(_ctx._inst61,cv) or this.Util_change(_ctx._inst62,q)) then
+   if (this.Util_change(_ctx._inst53,cv) or this.Util_change(_ctx._inst54,q)) then
       _ctx.g = this.Svf_calc_g(cv);
       _ctx.R = (1.000000 / (2.000000 * (q + 0.000000)));
       _ctx.inv_den = (1.000000 / (1.000000 + (2.000000 * _ctx.R * _ctx.g) + (_ctx.g * _ctx.g)));
@@ -431,15 +403,15 @@ function this.Svf_process(_ctx,x,cv,q,sel)
       output = low;
    else
 
-      local _cond_70 = false;
-      _cond_70 = (sel == 1);
-      if _cond_70 then
+      local _cond_62 = false;
+      _cond_62 = (sel == 1);
+      if _cond_62 then
          output = high;
       else
 
-         local _cond_71 = false;
-         _cond_71 = (sel == 2);
-         if _cond_71 then
+         local _cond_63 = false;
+         _cond_63 = (sel == 2);
+         if _cond_63 then
             output = band;
          else
 
@@ -533,12 +505,12 @@ end
 
 function this.Lfo_soft(_ctx,x1)
    local o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) * 0.250000);
-   local _tmp_89_0 = x1;
-   local _tmp_89_1 = _ctx.x2;
-   local _tmp_89_2 = _ctx.x3;
-   _ctx.x2 = _tmp_89_0;
-   _ctx.x3 = _tmp_89_1;
-   _ctx.x4 = _tmp_89_2;
+   local _tmp_81_0 = x1;
+   local _tmp_81_1 = _ctx.x2;
+   local _tmp_81_2 = _ctx.x3;
+   _ctx.x2 = _tmp_81_0;
+   _ctx.x3 = _tmp_81_1;
+   _ctx.x4 = _tmp_81_2;
    return o;
 
 end
@@ -547,9 +519,9 @@ function this.Lfo__ctx_type_1_init()
    local _ctx = {};
    _ctx.rate = 0.000000;
    _ctx.phase = 0.000000;
-   _ctx._inst84 = this.Lfo__ctx_type_0_init();
-   _ctx._inst82 = this.Util__ctx_type_0_init();
-   _ctx._inst80 = this.Util__ctx_type_1_init();
+   _ctx._inst76 = this.Lfo__ctx_type_0_init();
+   _ctx._inst74 = this.Util__ctx_type_0_init();
+   _ctx._inst72 = this.Util__ctx_type_1_init();
    return _ctx;
 
 end
@@ -559,13 +531,13 @@ function this.Lfo_process_init()
 end
 
 function this.Lfo_process(_ctx,cv,shape,reset)
-   if this.Util_change(_ctx._inst80,cv) then
+   if this.Util_change(_ctx._inst72,cv) then
       _ctx.rate = this.Util_cvToRate((cv + (-0.300000)));
 
    end
    _ctx.phase = ((_ctx.phase + _ctx.rate) % 2.000000);
    local breset = (reset > 0.000000);
-   if this.Util_edge(_ctx._inst82,breset) then
+   if this.Util_edge(_ctx._inst74,breset) then
       _ctx.phase = 0.000000;
 
    end
@@ -575,15 +547,15 @@ function this.Lfo_process(_ctx,cv,shape,reset)
       o = tmp;
    else
 
-      local _cond_93 = false;
-      _cond_93 = (shape < 2.000000);
-      if _cond_93 then
+      local _cond_85 = false;
+      _cond_85 = (shape < 2.000000);
+      if _cond_85 then
          o = ((this.abs(tmp) * 2.000000) + (-1.000000));
       else
 
-         local _cond_94 = false;
-         _cond_94 = (tmp > 0.000000);
-         if _cond_94 then
+         local _cond_86 = false;
+         _cond_86 = (tmp > 0.000000);
+         if _cond_86 then
             o = 1.000000;
          else
 
@@ -593,7 +565,7 @@ function this.Lfo_process(_ctx,cv,shape,reset)
       end
 
    end
-   return this.Lfo_soft(_ctx._inst84,o);
+   return this.Lfo_soft(_ctx._inst76,o);
 
 end
 
@@ -642,8 +614,8 @@ function this.Phase__ctx_type_0_init()
    local _ctx = {};
    _ctx.rate = 0.000000;
    _ctx.phase = 0.000000;
-   _ctx._inst99 = this.Util__ctx_type_0_init();
-   _ctx._inst97 = this.Util__ctx_type_1_init();
+   _ctx._inst91 = this.Util__ctx_type_0_init();
+   _ctx._inst89 = this.Util__ctx_type_1_init();
    this.Phase_default(_ctx);
    return _ctx;
 
@@ -654,11 +626,11 @@ function this.Phase_process_init()
 end
 
 function this.Phase_process(_ctx,cv,reset)
-   if this.Util_change(_ctx._inst97,cv) then
+   if this.Util_change(_ctx._inst89,cv) then
       _ctx.rate = this.Util_cvToRate_1024(cv);
 
    end
-   if this.Util_edge(_ctx._inst99,(reset > 0.500000)) then
+   if this.Util_edge(_ctx._inst91,(reset > 0.500000)) then
       _ctx.phase = 0.000000;
    else
 
@@ -708,7 +680,7 @@ function this.Blit__ctx_type_0_init()
    local _ctx = {};
    _ctx.scale = 0.000000;
    _ctx.m = 0;
-   _ctx._inst108 = this.Util__ctx_type_1_init();
+   _ctx._inst100 = this.Util__ctx_type_1_init();
    this.Blit_pulse_start(_ctx);
    return _ctx;
 
@@ -719,7 +691,7 @@ function this.Blit_pulse_train_init()
 end
 
 function this.Blit_pulse_train(_ctx,cv,phase)
-   if this.Util_change(_ctx._inst108,cv) then
+   if this.Util_change(_ctx._inst100,cv) then
       _ctx.m = ((2 * this.int(this.Util_cvToperiod(cv))) + 1);
       _ctx.scale = (2.000000 * this.Util_cvToperiod(cv));
 
@@ -759,11 +731,11 @@ function this.Blit__ctx_type_1_init()
    _ctx.state_pulse = 0.000000;
    _ctx.rate = 0.000000;
    _ctx.output = 0.000000;
-   _ctx._inst124 = this.Util__ctx_type_3_init();
-   _ctx._inst121 = this.Blit__ctx_type_0_init();
-   _ctx._inst120 = this.Blit__ctx_type_0_init();
-   _ctx._inst118 = this.Phase__ctx_type_0_init();
-   _ctx._inst116 = this.Util__ctx_type_1_init();
+   _ctx._inst116 = this.Util__ctx_type_3_init();
+   _ctx._inst113 = this.Blit__ctx_type_0_init();
+   _ctx._inst112 = this.Blit__ctx_type_0_init();
+   _ctx._inst110 = this.Phase__ctx_type_0_init();
+   _ctx._inst108 = this.Util__ctx_type_1_init();
    this.Blit_init(_ctx);
    return _ctx;
 
@@ -783,19 +755,19 @@ function this.Blit_osc_blit(_ctx,cv,pw,wave)
       fixed_cv = (cv + (-0.100000));
 
    end
-   if this.Util_change(_ctx._inst116,fixed_cv) then
+   if this.Util_change(_ctx._inst108,fixed_cv) then
       _ctx.rate = this.Util_cvToRate(fixed_cv);
 
    end
-   local phase = this.Phase_process(_ctx._inst118,fixed_cv,0.000000);
+   local phase = this.Phase_process(_ctx._inst110,fixed_cv,0.000000);
    local shift05 = (0.500000 + (pw * 0.490000));
    local shift = (phase + shift05);
    if (shift > 1.000000) then
       shift = (shift + (-1.000000));
 
    end
-   local pulse1 = this.Blit_pulse_train(_ctx._inst120,fixed_cv,phase);
-   local pulse2 = this.Blit_pulse_train(_ctx._inst121,fixed_cv,shift);
+   local pulse1 = this.Blit_pulse_train(_ctx._inst112,fixed_cv,phase);
+   local pulse2 = this.Blit_pulse_train(_ctx._inst113,fixed_cv,shift);
    _ctx.state_pulse = ((_ctx.state_pulse * 0.999500) + pulse1 + (- pulse2));
    _ctx.state_saw = ((_ctx.state_saw * 0.999500) + (((pulse1 + pulse2 + ((-2.000000) * _ctx.rate)) / shift05) * 0.500000));
    if (wave < 1.000000) then
@@ -806,7 +778,7 @@ function this.Blit_osc_blit(_ctx,cv,pw,wave)
       _ctx.output = (2.000000 * _ctx.state_saw);
 
    end
-   _ctx.output = this.Util_dcblock(_ctx._inst124,_ctx.output);
+   _ctx.output = this.Util_dcblock(_ctx._inst116,_ctx.output);
    return _ctx.output;
 
 end
@@ -822,7 +794,7 @@ end
 
 function this.Blit__ctx_type_2_init()
    local _ctx = {};
-   _ctx._inst127 = this.Blit__ctx_type_1_init();
+   _ctx._inst119 = this.Blit__ctx_type_1_init();
    return _ctx;
 
 end
@@ -832,7 +804,7 @@ function this.Blit_process_init()
 end
 
 function this.Blit_process(_ctx,cv,pw,wave)
-   return this.Blit_osc_blit(_ctx._inst127,cv,pw,wave);
+   return this.Blit_osc_blit(_ctx._inst119,cv,pw,wave);
 
 end
 
@@ -875,8 +847,8 @@ function this.Adsr__ctx_type_0_init()
    _ctx.scale = 0.000000;
    _ctx.rate = 0.000000;
    _ctx.out = 0.000000;
-   _ctx._inst147 = this.Util__ctx_type_4_init();
-   _ctx._inst140 = this.Util__ctx_type_0_init();
+   _ctx._inst139 = this.Util__ctx_type_4_init();
+   _ctx._inst132 = this.Util__ctx_type_0_init();
    return _ctx;
 
 end
@@ -892,9 +864,9 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
    _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.004000));
    local bgate = (gate > 0.000000);
    if (_ctx.state == 0) then
-      local _cond_158 = false;
-      _cond_158 = this.Util_edge(_ctx._inst140,bgate);
-      if _cond_158 then
+      local _cond_150 = false;
+      _cond_150 = this.Util_edge(_ctx._inst132,bgate);
+      if _cond_150 then
          _ctx.state = 1;
          _ctx.scale = (gate * 0.200000);
 
@@ -904,15 +876,15 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
 
    end
    if (_ctx.state == 1) then
-      local _cond_160 = false;
-      _cond_160 = (not bgate);
-      if _cond_160 then
+      local _cond_152 = false;
+      _cond_152 = (not bgate);
+      if _cond_152 then
          _ctx.state = 0;
 
       end
-      local _cond_161 = false;
-      _cond_161 = (_ctx.out > 1024.000000);
-      if _cond_161 then
+      local _cond_153 = false;
+      _cond_153 = (_ctx.out > 1024.000000);
+      if _cond_153 then
          _ctx.state = 2;
 
       end
@@ -921,9 +893,9 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
 
    end
    if (_ctx.state == 2) then
-      local _cond_163 = false;
-      _cond_163 = (not bgate);
-      if _cond_163 then
+      local _cond_155 = false;
+      _cond_155 = (not bgate);
+      if _cond_155 then
          _ctx.state = 0;
 
       end
@@ -931,7 +903,7 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
       _ctx.target = (s * 1024.000000);
 
    end
-   return (this.Util_smooth(_ctx._inst147,_ctx.scale) * this.clip((_ctx.out * 0.000977),0.000000,1.000000));
+   return (this.Util_smooth(_ctx._inst139,_ctx.scale) * this.clip((_ctx.out * 0.000977),0.000000,1.000000));
 
 end
 
@@ -941,7 +913,7 @@ function this.Adsr__ctx_type_1_init()
    _ctx.knob3 = 0.000000;
    _ctx.knob2 = 0.000000;
    _ctx.knob1 = 0.000000;
-   _ctx._inst149 = this.Adsr__ctx_type_0_init();
+   _ctx._inst141 = this.Adsr__ctx_type_0_init();
    return _ctx;
 
 end
@@ -951,7 +923,7 @@ function this.Adsr_process_init()
 end
 
 function this.Adsr_process(_ctx,gate)
-   return this.Adsr_do(_ctx._inst149,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4);
+   return this.Adsr_do(_ctx._inst141,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4);
 
 end
 
@@ -1030,13 +1002,13 @@ function this.Voice_4__ctx_type_0_init()
    _ctx.flt_cut = 0.000000;
    _ctx.decay = 0.000000;
    _ctx.attack = 0.000000;
-   _ctx._inst176 = this.Adsr__ctx_type_0_init();
-   _ctx._inst175 = this.Svf__ctx_type_1_init();
-   _ctx._inst174 = this.Tricore__ctx_type_0_init();
-   _ctx._inst173 = this.Blit__ctx_type_2_init();
-   _ctx._inst172 = this.Blit__ctx_type_2_init();
-   _ctx._inst171 = this.Blit__ctx_type_2_init();
-   _ctx._inst170 = this.Lfo__ctx_type_1_init();
+   _ctx._inst168 = this.Adsr__ctx_type_0_init();
+   _ctx._inst167 = this.Svf__ctx_type_1_init();
+   _ctx._inst166 = this.Tricore__ctx_type_0_init();
+   _ctx._inst165 = this.Blit__ctx_type_2_init();
+   _ctx._inst164 = this.Blit__ctx_type_2_init();
+   _ctx._inst163 = this.Blit__ctx_type_2_init();
+   _ctx._inst162 = this.Lfo__ctx_type_1_init();
    return _ctx;
 
 end
@@ -1046,17 +1018,17 @@ function this.Voice_4_process_init()
 end
 
 function this.Voice_4_process(_ctx,cv,vel,gate)
-   local lfo = this.Lfo_process(_ctx._inst170,_ctx.lfo_rate,_ctx.lfo_shape,(gate * _ctx.lfo_reset));
+   local lfo = this.Lfo_process(_ctx._inst162,_ctx.lfo_rate,_ctx.lfo_shape,(gate * _ctx.lfo_reset));
    local mod_pw = (_ctx.lfo_pw * lfo);
    local mod_cv = (_ctx.lfo_cv * lfo);
    local mod_flt = (_ctx.lfo_flt * lfo);
-   local o1 = this.Blit_process(_ctx._inst171,(cv + 0.000100 + mod_cv),(_ctx.pw1 + mod_pw),0.000000);
-   local o2 = this.Blit_process(_ctx._inst172,(cv + 0.000200 + mod_cv),(_ctx.pw2 + mod_pw),1.000000);
-   local o3 = this.Blit_process(_ctx._inst173,(cv + _ctx.pw3 + mod_cv),(_ctx.pw1 + mod_pw),0.000000);
-   local sub = this.Saturate_process((((5.000000 * _ctx.pw4) + 2.000000) * this.Tricore_process(_ctx._inst174,(cv + mod_cv),0.000000,1.000000)));
+   local o1 = this.Blit_process(_ctx._inst163,(cv + 0.000100 + mod_cv),(_ctx.pw1 + mod_pw),0.000000);
+   local o2 = this.Blit_process(_ctx._inst164,(cv + 0.000200 + mod_cv),(_ctx.pw2 + mod_pw),1.000000);
+   local o3 = this.Blit_process(_ctx._inst165,(cv + _ctx.pw3 + mod_cv),(_ctx.pw1 + mod_pw),0.000000);
+   local sub = this.Saturate_process((((5.000000 * _ctx.pw4) + 2.000000) * this.Tricore_process(_ctx._inst166,(cv + mod_cv),0.000000,1.000000)));
    local o = ((_ctx.level1 * o1) + (_ctx.level2 * o2) + (_ctx.level3 * o3) + (_ctx.level4 * sub));
-   local f = this.Svf_process(_ctx._inst175,o,(_ctx.flt_cut + mod_flt),_ctx.flt_res,_ctx.flt_shape);
-   local env = this.Adsr_do(_ctx._inst176,gate,_ctx.attack,_ctx.decay,_ctx.sustain,_ctx.release);
+   local f = this.Svf_process(_ctx._inst167,o,(_ctx.flt_cut + mod_flt),_ctx.flt_res,_ctx.flt_shape);
+   local env = this.Adsr_do(_ctx._inst168,gate,_ctx.attack,_ctx.decay,_ctx.sustain,_ctx.release);
    return (env * f);
 
 end
@@ -1135,9 +1107,9 @@ function this.Voice_4_controlChange(_ctx,control,value,channel)
 
    end
    if (control == 43) then
-      local _cond_215 = false;
-      _cond_215 = (value > 0);
-      if _cond_215 then
+      local _cond_207 = false;
+      _cond_207 = (value > 0);
+      if _cond_207 then
          _ctx.lfo_reset = 1.000000;
       else
 

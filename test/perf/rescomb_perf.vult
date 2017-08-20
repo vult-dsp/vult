@@ -1,6 +1,6 @@
 
 fun process(input:real) : real {
-   val i = Saw_eptr.process(0.1);
+   val i = Audio.process();
    val cv = Ramp.do(1.0, 0.0, 0.7);
    val q = Ramp.do(0.1, 0.0, 1.0);
    return Rescomb.process(i, cv, q, 0.0);

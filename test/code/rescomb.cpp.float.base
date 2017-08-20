@@ -4,42 +4,12 @@
 
 float Saturate_soft_table(float x){
    int index;
-   index = int_clip(float_to_int((1.500000f * x)),0,9);
+   index = int_clip(float_to_int((x + 32.000000f)),0,64);
    return (float_get(float_wrap_array(Saturate_soft_table_c0),index) + (x * (float_get(float_wrap_array(Saturate_soft_table_c1),index) + (float_get(float_wrap_array(Saturate_soft_table_c2),index) * x))));
 }
 
 float Saturate_soft_process(float x){
-   uint8_t _cond_9;
-   _cond_9 = (x == 0.000000f);
-   if(_cond_9){
-      return 0.000000f;
-   }
-   float fixed;
-   uint8_t sign;
-   uint8_t _cond_11;
-   _cond_11 = (x > 0.000000f);
-   if(_cond_11){
-      fixed = x;
-      sign = 0;
-   }
-   else
-   {
-      fixed = (- x);
-      sign = 1;
-   }
-   float out;
-   out = 0.000000f;
-   uint8_t _cond_10;
-   _cond_10 = (fixed > 6.000000f);
-   if(_cond_10){
-      out = 1.000000f;
-   }
-   else
-   {
-      out = Saturate_soft_table(fixed);
-   }
-   if(sign){ out = (- out); }
-   return out;
+   return Saturate_soft_table(x);
 }
 
 void Saturate_soft_noteOn(int note, int velocity, int channel){
@@ -154,16 +124,16 @@ float Util_average2(Util__ctx_type_5 &_ctx, float x1){
 }
 
 float Util_cubic_clipper(float x){
-   uint8_t _cond_35;
-   _cond_35 = (x <= (-0.666667f));
-   if(_cond_35){
+   uint8_t _cond_27;
+   _cond_27 = (x <= (-0.666667f));
+   if(_cond_27){
       return (-0.666667f);
    }
    else
    {
-      uint8_t _cond_34;
-      _cond_34 = (x >= 0.666667f);
-      if(_cond_34){
+      uint8_t _cond_26;
+      _cond_26 = (x >= 0.666667f);
+      if(_cond_26){
          return 0.666667f;
       }
       else
@@ -237,9 +207,9 @@ float Rescomb_delay(Rescomb__ctx_type_0 &_ctx, float x, float cv){
    r_size = 675.000000f;
    float r_index;
    r_index = fmodf((int_to_float(_ctx.write_pos) + (- Util_cvToperiod(cv))),r_size);
-   uint8_t _cond_49;
-   _cond_49 = (r_index < 0.000000f);
-   if(_cond_49){ r_index = (r_size + r_index); }
+   uint8_t _cond_41;
+   _cond_41 = (r_index < 0.000000f);
+   if(_cond_41){ r_index = (r_size + r_index); }
    int t1;
    t1 = float_to_int(floorf(r_index));
    int t2;
@@ -265,9 +235,9 @@ void Rescomb__ctx_type_2_init(Rescomb__ctx_type_2 &_output_){
    Rescomb__ctx_type_2 _ctx;
    _ctx.stone = 0.000000f;
    _ctx.output = 0.000000f;
-   Rescomb__ctx_type_0_init(_ctx._inst42);
-   Util__ctx_type_3_init(_ctx._inst41);
-   Util__ctx_type_1_init(_ctx._inst39);
+   Rescomb__ctx_type_0_init(_ctx._inst34);
+   Util__ctx_type_3_init(_ctx._inst33);
+   Util__ctx_type_1_init(_ctx._inst31);
    _output_ = _ctx;
    return ;
 }
@@ -278,22 +248,22 @@ void Rescomb_do_init(Rescomb__ctx_type_2 &_output_){
 }
 
 float Rescomb_do(Rescomb__ctx_type_2 &_ctx, float in, float cv, float tone, float res){
-   uint8_t _cond_51;
-   _cond_51 = Util_change(_ctx._inst39,tone);
-   if(_cond_51){
+   uint8_t _cond_43;
+   _cond_43 = Util_change(_ctx._inst31,tone);
+   if(_cond_43){
       _ctx.stone = Rescomb_toneCurve(tone);
    }
    float feedback;
-   feedback = Util_dcblock(_ctx._inst41,(_ctx.output * res));
+   feedback = Util_dcblock(_ctx._inst33,(_ctx.output * res));
    float saturated_input;
    saturated_input = Saturate_soft_process((in + feedback));
-   _ctx.output = ((_ctx.stone * Rescomb_delay(_ctx._inst42,saturated_input,cv)) + in);
+   _ctx.output = ((_ctx.stone * Rescomb_delay(_ctx._inst34,saturated_input,cv)) + in);
    return Saturate_soft_process(_ctx.output);
 }
 
 void Rescomb__ctx_type_3_init(Rescomb__ctx_type_3 &_output_){
    Rescomb__ctx_type_3 _ctx;
-   Rescomb__ctx_type_2_init(_ctx._inst44);
+   Rescomb__ctx_type_2_init(_ctx._inst36);
    _output_ = _ctx;
    return ;
 }
@@ -304,7 +274,7 @@ void Rescomb_process_init(Rescomb__ctx_type_3 &_output_){
 }
 
 float Rescomb_process(Rescomb__ctx_type_3 &_ctx, float in, float cv, float tone, float res){
-   return Rescomb_do(_ctx._inst44,in,cv,tone,res);
+   return Rescomb_do(_ctx._inst36,in,cv,tone,res);
 }
 
 void Rescomb_noteOn_init(Rescomb__ctx_type_3 &_output_){

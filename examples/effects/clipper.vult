@@ -3,19 +3,13 @@ The MIT License (MIT)
 
 Copyright (c) 2017 Leonardo Laguna Ruiz
 -----
-
-Tanh satuation with limits around -16 to 16
+Cubic clipper satuation
 */
 
-
-fun table(x) @[table(size=65,min=-32.0,max=32.0)] {
-  return 16.0 * tanh(x / 16.0);
-}
-
 fun process(x) {
-  return table(x);
+   return Util.cubic_clipper(x);
 }
 and noteOn(note:int,velocity:int,channel:int){ }
 and noteOff(note:int,channel:int){ }
 and controlChange(control:int,value:int,channel:int){ }
-and default(){ }
+and default() { }

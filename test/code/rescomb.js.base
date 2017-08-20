@@ -1,35 +1,12 @@
-var Saturate_soft_table_c0 = [0.000000,(-0.000837),(-0.004130),(-0.011331),(-0.023628),(-0.041861),(-0.066455),(-0.097383),(-0.134146),(-0.175783),(-0.220903)];
-var Saturate_soft_table_c1 = [1.000234,1.003027,1.008519,1.016526,1.026781,1.038945,1.052619,1.067357,1.082688,1.098122,1.113175];
-var Saturate_soft_table_c2 = [(-0.001171),(-0.003500),(-0.005790),(-0.008016),(-0.010154),(-0.012182),(-0.014083),(-0.015839),(-0.017437),(-0.018867),(-0.020123)];
+var Saturate_soft_table_c0 = [(-8.551395),(-8.031581),(-7.495173),(-6.941354),(-6.372317),(-5.793511),(-5.207770),(-4.619621),(-4.035829),(-3.461083),(-2.902259),(-2.366490),(-1.860709),(-1.392085),(-0.967287),(-0.592455),(-0.272557),(-0.011069),0.190456,0.332663,0.418609,0.453804,0.446033,0.404924,0.341291,0.266251,0.190231,0.121953,0.067564,0.030037,0.008985,0.000923,0.000000,(-0.000923),(-0.008985),(-0.030037),(-0.067564),(-0.121953),(-0.190231),(-0.266251),(-0.341291),(-0.404924),(-0.446033),(-0.453804),(-0.418609),(-0.332666),(-0.190451),0.011068,0.272539,0.592436,0.967277,1.392035,1.860709,2.366538,2.902329,3.461142,4.036128,4.619653,5.207774,5.793615,6.371757,6.940220,7.494295,8.032314,8.552015,9.049418];
+var Saturate_soft_table_c1 = [0.359022,0.392434,0.428240,0.466430,0.506928,0.549736,0.594640,0.641433,0.689913,0.739571,0.790028,0.840660,0.890789,0.939610,0.986252,1.029749,1.069123,1.103374,1.131586,1.152958,1.166892,1.173069,1.171520,1.162678,1.147415,1.127033,1.103218,1.077944,1.053342,1.031519,1.014380,1.003443,0.999685,1.003443,1.014380,1.031519,1.053342,1.077944,1.103218,1.127033,1.147415,1.162678,1.171520,1.173069,1.166892,1.152959,1.131586,1.103374,1.069121,1.029748,0.986250,0.939611,0.890792,0.840665,0.790033,0.739584,0.689894,0.641441,0.594623,0.549769,0.506907,0.466408,0.428263,0.392457,0.359046,0.327989];
+var Saturate_soft_table_c2 = [0.004508,0.005046,0.005642,0.006300,0.007022,0.007812,0.008672,0.009605,0.010610,0.011683,0.012822,0.014018,0.015260,0.016531,0.017811,0.019074,0.020285,0.021407,0.022394,0.023197,0.023762,0.024033,0.023956,0.023480,0.022565,0.021181,0.019316,0.016977,0.014195,0.011022,0.007534,0.003824,0.000000,(-0.003824),(-0.007534),(-0.011022),(-0.014195),(-0.016977),(-0.019316),(-0.021181),(-0.022565),(-0.023480),(-0.023956),(-0.024033),(-0.023762),(-0.023197),(-0.022394),(-0.021407),(-0.020285),(-0.019074),(-0.017812),(-0.016531),(-0.015260),(-0.014018),(-0.012822),(-0.011683),(-0.010609),(-0.009605),(-0.008672),(-0.007813),(-0.007021),(-0.006299),(-0.005642),(-0.005046),(-0.004508),(-0.004021)];
 this.Saturate_soft_table = function(x){
-   var index = (this.clip(this.int((1.500000 * x)),(0|0),(9|0))|0);
+   var index = (this.clip(this.int((x + 32.000000)),(0|0),(64|0))|0);
    return (this.get(this.wrap_array(Saturate_soft_table_c0),index) + (x * (this.get(this.wrap_array(Saturate_soft_table_c1),index) + (this.get(this.wrap_array(Saturate_soft_table_c2),index) * x))));
 }
 this.Saturate_soft_process = function(x){
-   if((x == 0.000000)){
-      return 0.000000;
-   }
-   var fixed = 0.0;
-   var sign = false;
-   if((x > 0.000000)){
-      fixed = x;
-      sign = false;
-   }
-   else
-   {
-      fixed = (- x);
-      sign = true;
-   }
-   var out = 0.000000;
-   if((fixed > 6.000000)){
-      out = 1.000000;
-   }
-   else
-   {
-      out = this.Saturate_soft_table(fixed);
-   }
-   if(sign)out = (- out);
-   return out;
+   return this.Saturate_soft_table(x);
 }
 this.Saturate_soft_noteOn = function(note,velocity,channel){
 }
@@ -104,9 +81,9 @@ this.Util_cubic_clipper = function(x){
    }
    else
    {
-      var _cond_34 = false;
-      _cond_34 = (x >= 0.666667);
-      if(_cond_34){
+      var _cond_26 = false;
+      _cond_26 = (x >= 0.666667);
+      if(_cond_26){
          return 0.666667;
       }
       else
@@ -195,29 +172,29 @@ this.Rescomb__ctx_type_2_init = function(){
    var _ctx = {};
    _ctx.stone = 0.000000;
    _ctx.output = 0.000000;
-   _ctx._inst42 = this.Rescomb__ctx_type_0_init();
-   _ctx._inst41 = this.Util__ctx_type_3_init();
-   _ctx._inst39 = this.Util__ctx_type_1_init();
+   _ctx._inst34 = this.Rescomb__ctx_type_0_init();
+   _ctx._inst33 = this.Util__ctx_type_3_init();
+   _ctx._inst31 = this.Util__ctx_type_1_init();
    return _ctx;
 }
 this.Rescomb_do_init = function() { return this.Rescomb__ctx_type_2_init();}
 this.Rescomb_do = function(_ctx,in_,cv,tone,res){
-   if(this.Util_change(_ctx._inst39,tone)){
+   if(this.Util_change(_ctx._inst31,tone)){
       _ctx.stone = this.Rescomb_toneCurve(tone);
    }
-   var feedback = this.Util_dcblock(_ctx._inst41,(_ctx.output * res));
+   var feedback = this.Util_dcblock(_ctx._inst33,(_ctx.output * res));
    var saturated_input = this.Saturate_soft_process((in_ + feedback));
-   _ctx.output = ((_ctx.stone * this.Rescomb_delay(_ctx._inst42,saturated_input,cv)) + in_);
+   _ctx.output = ((_ctx.stone * this.Rescomb_delay(_ctx._inst34,saturated_input,cv)) + in_);
    return this.Saturate_soft_process(_ctx.output);
 }
 this.Rescomb__ctx_type_3_init = function(){
    var _ctx = {};
-   _ctx._inst44 = this.Rescomb__ctx_type_2_init();
+   _ctx._inst36 = this.Rescomb__ctx_type_2_init();
    return _ctx;
 }
 this.Rescomb_process_init = function() { return this.Rescomb__ctx_type_3_init();}
 this.Rescomb_process = function(_ctx,in_,cv,tone,res){
-   return this.Rescomb_do(_ctx._inst44,in_,cv,tone,res);
+   return this.Rescomb_do(_ctx._inst36,in_,cv,tone,res);
 }
 this.Rescomb_noteOn_init = function() { return this.Rescomb__ctx_type_3_init();}
 this.Rescomb_noteOn = function(_ctx,note,velocity,channel){

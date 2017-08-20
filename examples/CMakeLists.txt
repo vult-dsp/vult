@@ -56,6 +56,7 @@ vult_pd(saturate_soft effects/saturate_soft.vult VULT_INCLUDES)
 vult_pd(short_delay effects/short_delay.vult VULT_INCLUDES)
 vult_pd(bitcrush effects/bitcrush.vult VULT_INCLUDES)
 vult_pd(rescomb effects/rescomb.vult VULT_INCLUDES)
+vult_pd(clipper effects/clipper.vult VULT_INCLUDES)
 
 # UNITS
 

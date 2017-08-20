@@ -1,9 +1,7 @@
 
 fun process(input:real) : real {
    val i = Audio.process();
-   val cv = Ramp.do(1.0, 0.0, 0.7);
-   val q = Ramp.do(0.1, 0.0, 1.0);
-   return Ladder.process_heun(i, cv, q);
+   return Saturate.process(i);
 }
 and noteOn(note:int,velocity:int,channel:int){ }
 and noteOff(note:int,channel:int){ }

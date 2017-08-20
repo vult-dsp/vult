@@ -49,6 +49,11 @@ let files =
       "test/perf/ladder_euler_perf.vult";
       "test/perf/ladder_heun_perf.vult";
       "test/perf/rescomb_perf.vult";
+      "test/perf/bitcrush_perf.vult";
+      "test/perf/saturate_soft_perf.vult";
+      "test/perf/saturate_perf.vult";
+      "test/perf/clipper_perf.vult";
+      "test/perf/short_delay_perf.vult";
    ]
    |> List.map in_proj_dir
 
@@ -129,7 +134,7 @@ let runLua vultfile =
       let output = Filename.chop_extension (Filename.basename vultfile) in
       Sys.chdir tmp_dir;
       generateLua vultfile output;
-      ignore (Sys.command "luajit main.lua");
+      ignore (Sys.command "luajit -O3 main.lua");
       Sys.chdir initial_dir
    with e -> showError e
 
