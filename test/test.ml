@@ -117,7 +117,6 @@ let all_files =
       "web/template.vult";
       "web/volume.vult";
       "web/delay.vult";
-      "../test/bench/bench.vult";
       "../test/passes/wav_file.vult";
       "../test/other/log.vult";
 
@@ -348,71 +347,6 @@ module RandomCompileTest = struct
 
 end
 
-(** Compiles the benchmark *)
-module BenchTest = struct
-
-   let compileFile (file:string) =
-      let basename = Filename.chop_extension (Filename.basename file) in
-      let cmd = Printf.sprintf "gcc -Werror -I. -I%s -O3 -c %s -o %s.o" (in_test_directory "../runtime") file basename in
-      if Sys.command cmd <> 0 then
-         assert_failure ("Failed to compile "^file)
-
-   let linkFiles (output:string) (files:string list) =
-      let lflags = if os = "Linux" then "-lm" else "" in
-      let cmd = Printf.sprintf "gcc -o %s %s %s" output (String.concat " " files) lflags in
-      if Sys.command cmd <> 0 then
-         assert_failure ("Failed to link ")
-
-   let generateC (filename:string) (output:string) (real_type:string) : unit =
-      let args = { default_arguments with files = [File filename]; ccode = true; output = output; real = real_type } in
-      let parser_results = Parser.parseFile filename  in
-      let gen = Generate.generateCode [parser_results] args in
-      writeFiles args gen
-
-   let generateJs (filename:string) (output:string) : unit =
-      let args = { default_arguments with files = [File filename]; template = "node"; jscode = true; output = output } in
-      let parser_results = Parser.parseFile filename  in
-      let gen = Generate.generateCode [parser_results] args in
-      writeFiles args gen
-
-   let generateLua (filename:string) (output:string) : unit =
-      let args = { default_arguments with files = [File filename]; luacode = true; output = output } in
-      let parser_results = Parser.parseFile filename  in
-      let gen = Generate.generateCode [parser_results] args in
-      writeFiles args gen
-
-   let run real_type _ =
-      let vultfile = checkFile (in_test_directory ("../test/bench/bench.vult")) in
-      let output   = Filename.chop_extension (Filename.basename vultfile) in
-      Sys.chdir tmp_dir;
-      generateC vultfile output real_type;
-      assert_bool "No code generated" (Sys.file_exists (output^".cpp"));
-      compileFile (output^".cpp");
-      compileFile (in_test_directory "../runtime/vultin.c");
-      compileFile (in_test_directory "../test/bench/main.cpp");
-      linkFiles ("bench_"^real_type) ["vultin.o";"bench.o";"main.o"];
-      print_endline ("### Real numbers: "^real_type ^ "");
-      ignore (Sys.command ("./bench_"^real_type));
-      Sys.remove (output^".cpp");
-      Sys.remove (output^".h");
-      Sys.chdir initial_dir
-
-   let runJsLua _ =
-      let vultfile = checkFile (in_test_directory ("../test/bench/bench.vult")) in
-      let output   = Filename.chop_extension (Filename.basename vultfile) in
-
-      Sys.chdir (in_test_directory "bench");
-      generateJs vultfile output;
-      generateLua vultfile output;
-      if has_node then ignore (Sys.command "node main.js");
-      if has_lua then ignore (Sys.command "luajit main.lua");
-      Sys.chdir initial_dir
-
-
-   let get = "bench">::: (["bench_float" >:: run "float"; "bench_fixed" >:: run "fixed"; "js_lua" >:: runJsLua])
-
-end
-
 type compiler =
    | Node
    | Native
@@ -550,7 +484,6 @@ let suite =
       CliTest.get all_files Node "js";
       CliTest.get all_files Node "lua";
       RandomCompileTest.get test_random_code "float";
-      BenchTest.get;
    ]
 
 
