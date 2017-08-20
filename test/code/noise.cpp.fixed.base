@@ -22,9 +22,9 @@ fix16_t Noise_pinker(Noise__ctx_type_0 &_ctx, fix16_t x){
    fix16_t a1;
    a1 = (-0xf1cf /* -0.944574 */);
    fix16_t w0;
-   w0 = fix_add(x,(- fix_mul(a1,_ctx.w1)));
+   w0 = (x + (- fix_mul(a1,_ctx.w1)));
    fix16_t y0;
-   y0 = fix_add(fix_mul(b0,w0),fix_mul(b1,_ctx.w1));
+   y0 = (fix_mul(b0,w0) + fix_mul(b1,_ctx.w1));
    _ctx.w1 = w0;
    return y0;
 }
@@ -53,9 +53,9 @@ fix16_t Noise_process(Noise__ctx_type_1 &_ctx, fix16_t color){
    fix16_t out;
    uint8_t _cond_7;
    _cond_7 = (color > 0x8000 /* 0.500000 */);
-   if(_cond_7){ out = Noise_pinker(_ctx._inst2,fix_add(y1,(- y2))); }
+   if(_cond_7){ out = Noise_pinker(_ctx._inst2,(y1 + (- y2))); }
    else
-   { out = fix_add(y1,(- y2)); }
+   { out = (y1 + (- y2)); }
    return fix_mul(0x20000 /* 2.000000 */,out);
 }
 

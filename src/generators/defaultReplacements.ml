@@ -186,8 +186,6 @@ module FixedPoint = struct
 
    let op_to_fun = Replacements.makeOperators
          [
-            ("+", "fix16_t"), "fix_add";
-            ("-", "fix16_t"), "fix_sub";
             ("*", "fix16_t"), "fix_mul";
             ("/", "fix16_t"), "fix_div";
          ]

@@ -15,7 +15,7 @@ void Volume_smooth_init(Volume__ctx_type_0 &_output_){
 }
 
 fix16_t Volume_smooth(Volume__ctx_type_0 &_ctx, fix16_t input){
-   _ctx.x = fix_add(_ctx.x,fix_mul(fix_add(input,(- _ctx.x)),0x147 /* 0.005000 */));
+   _ctx.x = (_ctx.x + fix_mul((input + (- _ctx.x)),0x147 /* 0.005000 */));
    return _ctx.x;
 }
 

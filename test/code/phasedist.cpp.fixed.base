@@ -15,7 +15,7 @@ void Phasedist_smooth_init(Phasedist__ctx_type_0 &_output_){
 }
 
 fix16_t Phasedist_smooth(Phasedist__ctx_type_0 &_ctx, fix16_t input){
-   _ctx.x = fix_add(_ctx.x,fix_mul(fix_add(input,(- _ctx.x)),0x147 /* 0.005000 */));
+   _ctx.x = (_ctx.x + fix_mul((input + (- _ctx.x)),0x147 /* 0.005000 */));
    return _ctx.x;
 }
 
@@ -65,7 +65,7 @@ fix16_t Phasedist_phasor(Phasedist__ctx_type_3 &_ctx, fix16_t pitch, uint8_t res
    if(reset){ _ctx.phase = 0x0 /* 0.000000 */; }
    uint8_t _cond_18;
    _cond_18 = (_ctx.phase > 0x10000 /* 1.000000 */);
-   if(_cond_18){ _ctx.phase = fix_add(_ctx.phase,(-0x10000 /* -1.000000 */)); }
+   if(_cond_18){ _ctx.phase = (_ctx.phase + (-0x10000 /* -1.000000 */)); }
    return _ctx.phase;
 }
 
@@ -92,12 +92,12 @@ fix16_t Phasedist_process(Phasedist__ctx_type_4 &_ctx, fix16_t input){
    fix16_t phase1;
    phase1 = Phasedist_phasor(_ctx._inst7,_ctx.pitch,0);
    fix16_t comp;
-   comp = fix_add(0x10000 /* 1.000000 */,(- phase1));
+   comp = (0x10000 /* 1.000000 */ + (- phase1));
    uint8_t reset;
-   reset = (fix_add(_ctx.pre_phase1,(- phase1)) > 0x8000 /* 0.500000 */);
+   reset = ((_ctx.pre_phase1 + (- phase1)) > 0x8000 /* 0.500000 */);
    _ctx.pre_phase1 = phase1;
    fix16_t phase2;
-   phase2 = Phasedist_phasor(_ctx._inst9,fix_add(_ctx.pitch,fix_mul(Phasedist_smooth(_ctx._inst8,_ctx.detune),0x200000 /* 32.000000 */)),reset);
+   phase2 = Phasedist_phasor(_ctx._inst9,(_ctx.pitch + fix_mul(Phasedist_smooth(_ctx._inst8,_ctx.detune),0x200000 /* 32.000000 */)),reset);
    fix16_t sine;
    sine = fix_sin(fix_mul(0x6487e /* 6.283185 */,phase2));
    return fix_mul(fix_mul(Phasedist_smooth(_ctx._inst10,_ctx.volume),sine),comp);

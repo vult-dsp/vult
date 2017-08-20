@@ -18,7 +18,7 @@ void Short_delay_soft_init(Short_delay__ctx_type_0 &_output_){
 
 fix16_t Short_delay_soft(Short_delay__ctx_type_0 &_ctx, fix16_t x1){
    fix16_t o;
-   o = fix_mul(fix_add(fix_add(fix_add(x1,_ctx.x2),_ctx.x3),_ctx.x4),0x4000 /* 0.250000 */);
+   o = fix_mul((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4),0x4000 /* 0.250000 */);
    fix16_t _tmp_9_0;
    _tmp_9_0 = x1;
    fix16_t _tmp_9_1;
@@ -60,15 +60,15 @@ fix16_t Short_delay_do(Short_delay__ctx_type_1 &_ctx, fix16_t x, fix16_t time, f
    else
    { read_pos = delta; }
    fix16_t decimal;
-   decimal = fix_add(index_r,(- int_to_fix(index_i)));
+   decimal = (index_r + (- int_to_fix(index_i)));
    fix16_t x1;
    x1 = fix_get(_ctx.buffer,read_pos);
    fix16_t x2;
    x2 = fix_get(_ctx.buffer,((read_pos + 1) % 22050));
    fix16_t ret;
-   ret = fix_add(fix_mul(fix_add(x2,(- x1)),decimal),x1);
+   ret = (fix_mul((x2 + (- x1)),decimal) + x1);
    _ctx.write_pos = ((_ctx.write_pos + 1) % 22050);
-   fix_set(_ctx.buffer,_ctx.write_pos,fix_tanh(fix_add(x,fix_mul(feedback,ret))));
+   fix_set(_ctx.buffer,_ctx.write_pos,fix_tanh((x + fix_mul(feedback,ret))));
    return ret;
 }
 
