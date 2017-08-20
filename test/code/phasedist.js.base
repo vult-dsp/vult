@@ -35,8 +35,7 @@ this.Phasedist_phasor = function(_ctx,pitch,reset){
       _ctx.rate = this.Phasedist_pitchToRate(pitch);
    }
    if(reset)_ctx.phase = 0.000000;
-   else
-   _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.000000);
+   if((_ctx.phase > 1.000000))_ctx.phase = (_ctx.phase + (-1.000000));
    return _ctx.phase;
 }
 this.Phasedist__ctx_type_4_init = function(){

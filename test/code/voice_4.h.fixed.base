@@ -287,8 +287,8 @@ fix16_t Tables_nsine(fix16_t x);
 typedef struct Phase__ctx_type_0 {
    fix16_t rate;
    fix16_t phase;
-   Util__ctx_type_0 _inst91;
-   Util__ctx_type_1 _inst89;
+   Util__ctx_type_0 _inst92;
+   Util__ctx_type_1 _inst90;
 } Phase__ctx_type_0;
 
 typedef Phase__ctx_type_0 Phase_process_type;
@@ -326,7 +326,7 @@ void Phase_default(Phase__ctx_type_0 &_ctx);
 typedef struct Blit__ctx_type_0 {
    fix16_t scale;
    int m;
-   Util__ctx_type_1 _inst100;
+   Util__ctx_type_1 _inst101;
 } Blit__ctx_type_0;
 
 typedef Blit__ctx_type_0 Blit_pulse_train_type;
@@ -348,11 +348,11 @@ typedef struct Blit__ctx_type_1 {
    fix16_t state_pulse;
    fix16_t rate;
    fix16_t output;
-   Util__ctx_type_3 _inst116;
+   Util__ctx_type_3 _inst117;
+   Blit__ctx_type_0 _inst114;
    Blit__ctx_type_0 _inst113;
-   Blit__ctx_type_0 _inst112;
-   Phase__ctx_type_0 _inst110;
-   Util__ctx_type_1 _inst108;
+   Phase__ctx_type_0 _inst111;
+   Util__ctx_type_1 _inst109;
 } Blit__ctx_type_1;
 
 typedef Blit__ctx_type_1 Blit_osc_blit_type;
@@ -370,7 +370,7 @@ void Blit_init_init(Blit__ctx_type_1 &_output_);
 void Blit_init(Blit__ctx_type_1 &_ctx);
 
 typedef struct Blit__ctx_type_2 {
-   Blit__ctx_type_1 _inst119;
+   Blit__ctx_type_1 _inst120;
 } Blit__ctx_type_2;
 
 typedef Blit__ctx_type_2 Blit_process_type;
@@ -411,8 +411,8 @@ typedef struct Adsr__ctx_type_0 {
    fix16_t scale;
    fix16_t rate;
    fix16_t out;
-   Util__ctx_type_4 _inst139;
-   Util__ctx_type_0 _inst132;
+   Util__ctx_type_4 _inst140;
+   Util__ctx_type_0 _inst133;
 } Adsr__ctx_type_0;
 
 typedef Adsr__ctx_type_0 Adsr_do_type;
@@ -428,7 +428,7 @@ typedef struct Adsr__ctx_type_1 {
    fix16_t knob3;
    fix16_t knob2;
    fix16_t knob1;
-   Adsr__ctx_type_0 _inst141;
+   Adsr__ctx_type_0 _inst142;
 } Adsr__ctx_type_1;
 
 typedef Adsr__ctx_type_1 Adsr_process_type;
@@ -485,13 +485,13 @@ typedef struct Voice_4__ctx_type_0 {
    fix16_t flt_cut;
    fix16_t decay;
    fix16_t attack;
-   Adsr__ctx_type_0 _inst168;
-   Svf__ctx_type_1 _inst167;
-   Tricore__ctx_type_0 _inst166;
+   Adsr__ctx_type_0 _inst169;
+   Svf__ctx_type_1 _inst168;
+   Tricore__ctx_type_0 _inst167;
+   Blit__ctx_type_2 _inst166;
    Blit__ctx_type_2 _inst165;
    Blit__ctx_type_2 _inst164;
-   Blit__ctx_type_2 _inst163;
-   Lfo__ctx_type_1 _inst162;
+   Lfo__ctx_type_1 _inst163;
 } Voice_4__ctx_type_0;
 
 typedef Voice_4__ctx_type_0 Voice_4_process_type;

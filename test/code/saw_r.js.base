@@ -139,7 +139,8 @@ this.Saw_r_process = function(_ctx,cv){
    if((_ctx.inc < 0.000000))i = 0.000000;
    else
    i = _ctx.inc;
-   _ctx.phase = (((2.000000 * _ctx.inc) + _ctx.phase) % 2.000000);
+   _ctx.phase = ((2.000000 * _ctx.inc) + _ctx.phase);
+   if((_ctx.phase > 2.000000))_ctx.phase = (_ctx.phase + (-2.000000));
    var ph = (_ctx.phase + (-1.000000));
    var o = 0.000000;
    if((ph >= (1.000000 + (- i)))){

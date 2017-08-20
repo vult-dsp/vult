@@ -12,7 +12,8 @@ fun process(cv) {
       inc = Util.cvToRate(cv);
    val i = if inc < eps() then eps() else inc;
    // generate a ramp from -1.0  to 1.0
-   mem phase = (2.0 * inc + phase) % 2.0;
+   mem phase = (2.0 * inc + phase);
+   phase = if phase > 2.0 then phase - 2.0 else phase;
    val ph = phase - 1.0;
    val o = 0.0;
    // soften the transitions

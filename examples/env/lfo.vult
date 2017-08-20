@@ -17,7 +17,8 @@ fun process(cv, shape, reset) {
    mem rate;
    if(Util.change(cv))
       rate = Util.cvToRate(cv-0.3);
-   mem phase = (phase + rate) % 2.0;
+   mem phase = phase + rate;
+   phase = if phase > 2.0 then phase - 2.0 else phase;
    val breset = reset > 0.0;
    if(Util.edge(breset))
       phase = 0.0;

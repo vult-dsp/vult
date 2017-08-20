@@ -227,7 +227,10 @@ function this.Saw_r_process(_ctx,cv)
 
       i = _ctx.inc;
    end
-   _ctx.phase = (((2.000000 * _ctx.inc) + _ctx.phase) % 2.000000);
+   _ctx.phase = ((2.000000 * _ctx.inc) + _ctx.phase);
+   if (_ctx.phase > 2.000000) then
+      _ctx.phase = (_ctx.phase + (-2.000000));
+   end
    local ph = (_ctx.phase + (-1.000000));
    local o = 0.000000;
    if (ph >= (1.000000 + (- i))) then

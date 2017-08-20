@@ -192,7 +192,10 @@ float Saw_r_process(Saw_r__ctx_type_0 &_ctx, float cv){
    if(_cond_36){ i = 0.000000f; }
    else
    { i = _ctx.inc; }
-   _ctx.phase = fmodf(((2.000000f * _ctx.inc) + _ctx.phase),2.000000f);
+   _ctx.phase = ((2.000000f * _ctx.inc) + _ctx.phase);
+   uint8_t _cond_37;
+   _cond_37 = (_ctx.phase > 2.000000f);
+   if(_cond_37){ _ctx.phase = (_ctx.phase + (-2.000000f)); }
    float ph;
    ph = (_ctx.phase + (-1.000000f));
    float o;

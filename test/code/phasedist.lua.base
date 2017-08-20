@@ -80,9 +80,9 @@ function this.Phasedist_phasor(_ctx,pitch,reset)
    end
    if reset then
       _ctx.phase = 0.000000;
-   else
-
-      _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.000000);
+   end
+   if (_ctx.phase > 1.000000) then
+      _ctx.phase = (_ctx.phase + (-1.000000));
    end
    return _ctx.phase;
 

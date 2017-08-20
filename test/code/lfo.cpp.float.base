@@ -216,7 +216,10 @@ float Lfo_process(Lfo__ctx_type_1 &_ctx, float cv, float shape, float reset){
    if(_cond_34){
       _ctx.rate = Util_cvToRate((cv + (-0.300000f)));
    }
-   _ctx.phase = fmodf((_ctx.phase + _ctx.rate),2.000000f);
+   _ctx.phase = (_ctx.phase + _ctx.rate);
+   uint8_t _cond_36;
+   _cond_36 = (_ctx.phase > 2.000000f);
+   if(_cond_36){ _ctx.phase = (_ctx.phase + (-2.000000f)); }
    uint8_t breset;
    breset = (reset > 0.000000f);
    uint8_t _cond_35;
@@ -227,19 +230,19 @@ float Lfo_process(Lfo__ctx_type_1 &_ctx, float cv, float shape, float reset){
    float tmp;
    tmp = (_ctx.phase + (-1.000000f));
    float o;
-   uint8_t _cond_36;
-   _cond_36 = (shape < 1.000000f);
-   if(_cond_36){ o = tmp; }
+   uint8_t _cond_37;
+   _cond_37 = (shape < 1.000000f);
+   if(_cond_37){ o = tmp; }
    else
    {
-      uint8_t _cond_37;
-      _cond_37 = (shape < 2.000000f);
-      if(_cond_37){ o = ((fabsf(tmp) * 2.000000f) + (-1.000000f)); }
+      uint8_t _cond_38;
+      _cond_38 = (shape < 2.000000f);
+      if(_cond_38){ o = ((fabsf(tmp) * 2.000000f) + (-1.000000f)); }
       else
       {
-         uint8_t _cond_38;
-         _cond_38 = (tmp > 0.000000f);
-         if(_cond_38){ o = 1.000000f; }
+         uint8_t _cond_39;
+         _cond_39 = (tmp > 0.000000f);
+         if(_cond_39){ o = 1.000000f; }
          else
          { o = 0.000000f; }
       }

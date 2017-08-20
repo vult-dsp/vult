@@ -154,7 +154,8 @@ this.Lfo_process = function(_ctx,cv,shape,reset){
    if(this.Util_change(_ctx._inst24,cv)){
       _ctx.rate = this.Util_cvToRate((cv + (-0.300000)));
    }
-   _ctx.phase = ((_ctx.phase + _ctx.rate) % 2.000000);
+   _ctx.phase = (_ctx.phase + _ctx.rate);
+   if((_ctx.phase > 2.000000))_ctx.phase = (_ctx.phase + (-2.000000));
    var breset = (reset > 0.000000);
    if(this.Util_edge(_ctx._inst26,breset)){
       _ctx.phase = 0.000000;
@@ -164,14 +165,14 @@ this.Lfo_process = function(_ctx,cv,shape,reset){
    if((shape < 1.000000))o = tmp;
    else
    {
-      var _cond_37 = false;
-      _cond_37 = (shape < 2.000000);
-      if(_cond_37)o = ((this.abs(tmp) * 2.000000) + (-1.000000));
+      var _cond_38 = false;
+      _cond_38 = (shape < 2.000000);
+      if(_cond_38)o = ((this.abs(tmp) * 2.000000) + (-1.000000));
       else
       {
-         var _cond_38 = false;
-         _cond_38 = (tmp > 0.000000);
-         if(_cond_38)o = 1.000000;
+         var _cond_39 = false;
+         _cond_39 = (tmp > 0.000000);
+         if(_cond_39)o = 1.000000;
          else
          o = 0.000000;
       }

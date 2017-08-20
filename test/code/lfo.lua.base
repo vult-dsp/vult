@@ -246,7 +246,10 @@ function this.Lfo_process(_ctx,cv,shape,reset)
       _ctx.rate = this.Util_cvToRate((cv + (-0.300000)));
 
    end
-   _ctx.phase = ((_ctx.phase + _ctx.rate) % 2.000000);
+   _ctx.phase = (_ctx.phase + _ctx.rate);
+   if (_ctx.phase > 2.000000) then
+      _ctx.phase = (_ctx.phase + (-2.000000));
+   end
    local breset = (reset > 0.000000);
    if this.Util_edge(_ctx._inst26,breset) then
       _ctx.phase = 0.000000;
@@ -258,15 +261,15 @@ function this.Lfo_process(_ctx,cv,shape,reset)
       o = tmp;
    else
 
-      local _cond_37 = false;
-      _cond_37 = (shape < 2.000000);
-      if _cond_37 then
+      local _cond_38 = false;
+      _cond_38 = (shape < 2.000000);
+      if _cond_38 then
          o = ((this.abs(tmp) * 2.000000) + (-1.000000));
       else
 
-         local _cond_38 = false;
-         _cond_38 = (tmp > 0.000000);
-         if _cond_38 then
+         local _cond_39 = false;
+         _cond_39 = (tmp > 0.000000);
+         if _cond_39 then
             o = 1.000000;
          else
 

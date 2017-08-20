@@ -216,7 +216,10 @@ fix16_t Lfo_process(Lfo__ctx_type_1 &_ctx, fix16_t cv, fix16_t shape, fix16_t re
    if(_cond_34){
       _ctx.rate = Util_cvToRate(fix_add(cv,(-0x4ccc /* -0.300000 */)));
    }
-   _ctx.phase = (fix_add(_ctx.phase,_ctx.rate) % 0x20000 /* 2.000000 */);
+   _ctx.phase = fix_add(_ctx.phase,_ctx.rate);
+   uint8_t _cond_36;
+   _cond_36 = (_ctx.phase > 0x20000 /* 2.000000 */);
+   if(_cond_36){ _ctx.phase = fix_add(_ctx.phase,(-0x20000 /* -2.000000 */)); }
    uint8_t breset;
    breset = (reset > 0x0 /* 0.000000 */);
    uint8_t _cond_35;
@@ -227,19 +230,19 @@ fix16_t Lfo_process(Lfo__ctx_type_1 &_ctx, fix16_t cv, fix16_t shape, fix16_t re
    fix16_t tmp;
    tmp = fix_add(_ctx.phase,(-0x10000 /* -1.000000 */));
    fix16_t o;
-   uint8_t _cond_36;
-   _cond_36 = (shape < 0x10000 /* 1.000000 */);
-   if(_cond_36){ o = tmp; }
+   uint8_t _cond_37;
+   _cond_37 = (shape < 0x10000 /* 1.000000 */);
+   if(_cond_37){ o = tmp; }
    else
    {
-      uint8_t _cond_37;
-      _cond_37 = (shape < 0x20000 /* 2.000000 */);
-      if(_cond_37){ o = fix_add(fix_mul(fix_abs(tmp),0x20000 /* 2.000000 */),(-0x10000 /* -1.000000 */)); }
+      uint8_t _cond_38;
+      _cond_38 = (shape < 0x20000 /* 2.000000 */);
+      if(_cond_38){ o = fix_add(fix_mul(fix_abs(tmp),0x20000 /* 2.000000 */),(-0x10000 /* -1.000000 */)); }
       else
       {
-         uint8_t _cond_38;
-         _cond_38 = (tmp > 0x0 /* 0.000000 */);
-         if(_cond_38){ o = 0x10000 /* 1.000000 */; }
+         uint8_t _cond_39;
+         _cond_39 = (tmp > 0x0 /* 0.000000 */);
+         if(_cond_39){ o = 0x10000 /* 1.000000 */; }
          else
          { o = 0x0 /* 0.000000 */; }
       }
