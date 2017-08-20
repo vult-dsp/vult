@@ -26,7 +26,7 @@ THE SOFTWARE.
 open GenerateParams
 
 (** Header function *)
-let main (params:params) : Pla.t =
+let mainC (params:params) : Pla.t =
    let output = params.output in
    let module_name = params.module_name in
    let real = params.real in
@@ -50,12 +50,12 @@ int main(void)
    }
    diff = clock() - start;
    float sec = (diff * 1000 / CLOCKS_PER_SEC) / 1000.0;
-   printf("%s\t%s\t%f ms/s\n", "<#module_name#s>", "<#real#s>", (sec / time) * 1000.0);
+   printf("<#module_name#s>\tC++ <#real#s>\t%f ms/s\n", (sec / time) * 1000.0);
    return 0;
 }
 |pla}
 
-let impl params impl_code =
+let implC params impl_code =
    let output = params.output in
    {pla|
    #include "vultin.h"
@@ -64,7 +64,7 @@ let impl params impl_code =
    <#impl_code#>
    |pla}
 
-let header _ header_code =
+let headerC _ header_code =
    {pla|
    #include "math.h"
    #include "stdint.h"
@@ -75,7 +75,76 @@ let header _ header_code =
 
 let getC (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * filename) list =
    [
-      header params header_code, ExtOnly "h";
-      impl params impl_code, ExtOnly "cpp";
-      main params, FullName "main.cpp";
+      headerC params header_code, ExtOnly "h";
+      implC params impl_code, ExtOnly "cpp";
+      mainC params, FullName "main.cpp";
+   ]
+
+
+let mainJs params =
+   let output = params.output in
+   let module_name = params.module_name in
+   {pla|var code = require("./<#output#s>.js");
+        var vultProcess = new code.vultProcess();
+        var data = vultProcess.<#module_name#s>_process_init();
+        vultProcess.<#module_name#s>_default();
+
+        var time = 50;
+        var samples = 44100 * time;
+
+        var start = new Date();
+        while (samples > 0) {
+        vultProcess.<#module_name#s>_process(data, 0.0);
+        samples--;
+        }
+        var end = (new Date() - start);
+        console.info("<#module_name#s>\tJs\t", end / time, "ms/s");
+   |pla}
+
+let implJs params code runtime =
+   let module_name = params.module_name in
+   {pla|exports.vultProcess = function () {
+        <#runtime#>
+        this.<#module_name#s>_process_init = null;
+        this.<#module_name#s>_default = null;
+        <#code#>
+        if(this.<#module_name#s>_process_init)  this.context =  this.<#module_name#s>_process_init(); else this.context = {};
+        if(this.<#module_name#s>_default)      this.<#module_name#s>_default(this.context);
+        this.liveNoteOn        = function(note,velocity,channel) { if(this.<#module_name#s>_noteOn)        this.<#module_name#s>_noteOn(this.context,note,velocity,channel); };
+        this.liveNoteOff       = function(note,velocity,channel) { if(this.<#module_name#s>_noteOff)       this.<#module_name#s>_noteOff(this.context,note,velocity,channel); };
+        this.liveControlChange = function(note,velocity,channel) { if(this.<#module_name#s>_controlChange) this.<#module_name#s>_controlChange(this.context,note,velocity,channel); };
+        this.liveProcess       = function(input)         { if(this.<#module_name#s>_process)       return this.<#module_name#s>_process(this.context,input); else return 0; };
+        this.liveDefault       = function() { if(this.<#module_name#s>_default)      return this.<#module_name#s>_default(this.context); };
+        }|pla}
+
+
+let getJs (params:params) runtime code : (Pla.t * filename) list =
+   [
+      mainJs params, FullName "main.js";
+      implJs params code runtime, ExtOnly "js"
+   ]
+
+
+let mainLua (params:params) =
+   let output = params.output in
+   let module_name = params.module_name in
+   {pla|
+   vult = loadfile("./<#output#s>.lua")()
+   data = vult.<#module_name#s>_process_init()
+   vult.<#module_name#s>_default(data)
+   time = 50
+   samples = 44100 * time
+   local start = os.clock()
+   while samples > 0 do
+      vult.<#module_name#s>_process(data, 0.0)
+      samples = samples -1
+   end
+   local finish = (os.clock() - start) * 1000.0
+   print("<#module_name#s>\tLua", finish / time, "ms/s")
+   |pla}
+
+let getLua (params:params) default_code : (Pla.t * filename) list =
+   [
+      default_code, ExtOnly "lua";
+      mainLua params, FullName "main.lua"
    ]

@@ -29,7 +29,7 @@ let dot = Pla.map_sep (Pla.string ".") Pla.string
 
 module Templates = struct
 
-   let none code = code
+   let none code = [ code, ExtOnly "js"]
 
    let runtime : Pla.t =
       Pla.string
@@ -59,37 +59,34 @@ module Templates = struct
          |}
 
    let common function_decl module_name code =
-      let return =
-         [%pla
-           {|<#function_decl#> {
-             <#runtime#>
-             this.<#module_name#s>_process_init = null;
-             this.<#module_name#s>_default = null;
-             <#code#>
-             if(this.<#module_name#s>_process_init)  this.context =  this.<#module_name#s>_process_init(); else this.context = {};
-             if(this.<#module_name#s>_default)      this.<#module_name#s>_default(this.context);
-             this.liveNoteOn        = function(note,velocity,channel) { if(this.<#module_name#s>_noteOn)        this.<#module_name#s>_noteOn(this.context,note,velocity,channel); };
-             this.liveNoteOff       = function(note,velocity,channel) { if(this.<#module_name#s>_noteOff)       this.<#module_name#s>_noteOff(this.context,note,velocity,channel); };
-             this.liveControlChange = function(note,velocity,channel) { if(this.<#module_name#s>_controlChange) this.<#module_name#s>_controlChange(this.context,note,velocity,channel); };
-             this.liveProcess       = function(input)         { if(this.<#module_name#s>_process)       return this.<#module_name#s>_process(this.context,input); else return 0; };
-             this.liveDefault       = function() { if(this.<#module_name#s>_default)      return this.<#module_name#s>_default(this.context); };
-             }|}]
-      in
-      return
+      {pla|<#function_decl#> {
+           <#runtime#>
+           this.<#module_name#s>_process_init = null;
+           this.<#module_name#s>_default = null;
+           <#code#>
+           if(this.<#module_name#s>_process_init)  this.context =  this.<#module_name#s>_process_init(); else this.context = {};
+           if(this.<#module_name#s>_default)      this.<#module_name#s>_default(this.context);
+           this.liveNoteOn        = function(note,velocity,channel) { if(this.<#module_name#s>_noteOn)        this.<#module_name#s>_noteOn(this.context,note,velocity,channel); };
+           this.liveNoteOff       = function(note,velocity,channel) { if(this.<#module_name#s>_noteOff)       this.<#module_name#s>_noteOff(this.context,note,velocity,channel); };
+           this.liveControlChange = function(note,velocity,channel) { if(this.<#module_name#s>_controlChange) this.<#module_name#s>_controlChange(this.context,note,velocity,channel); };
+           this.liveProcess       = function(input)         { if(this.<#module_name#s>_process)       return this.<#module_name#s>_process(this.context,input); else return 0; };
+           this.liveDefault       = function() { if(this.<#module_name#s>_default)      return this.<#module_name#s>_default(this.context); };
+           }|pla}
 
-   let browser _config module_name code : Pla.t =
+   let browser _config module_name code : (Pla.t * filename) list =
       let exports = Pla.string "function vultProcess()" in
-      common exports module_name code
+      [ common exports module_name code, ExtOnly "js"]
 
-   let node _config module_name code : Pla.t =
+   let node _config module_name code : (Pla.t * filename) list =
       let exports = Pla.string "exports.vultProcess = function ()" in
-      common exports module_name code
+      [ common exports module_name code, ExtOnly "js"]
 
-   let apply (params:params) (module_name:string) (template:string) (code:Pla.t) : Pla.t =
+   let apply (params:params) (module_name:string) (template:string) (code:Pla.t) : (Pla.t * filename) list =
       match template with
       | "browser" -> browser params.config module_name code
       | "node" -> node params.config module_name code
       | "webaudio" -> Webaudio.get params runtime code
+      | "performance" -> Performance.getJs params runtime code
       | _ -> none code
 
 end
@@ -281,12 +278,11 @@ and printStmtList (params:params) (stmts:cstmt list) : Pla.t =
    let tstmts = CCList.filter_map (printStmt params) stmts in
    Pla.map_sep_all Pla.newline (fun a -> a) tstmts
 
-let printJsCode (params:params) (stmts:cstmt list) : Pla.t =
+let printJsCode (params:params) (stmts:cstmt list) : (Pla.t * filename) list =
    let code = printStmtList params stmts in
    Templates.apply params params.module_name params.template code
 
 (** Generates the .c and .h file contents for the given parsed files *)
 let print (params:params) (stmts:Code.cstmt list) : (Pla.t * filename) list =
-   let js_text = printJsCode params stmts in
-   [js_text, ExtOnly "js"]
+   printJsCode params stmts
 

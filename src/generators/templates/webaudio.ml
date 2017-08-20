@@ -61,7 +61,7 @@ let controlChangeFunction (params:params) =
    }
 |}]
 
-let get (params:params) runtime code : Pla.t =
+let get (params:params) runtime code : (Pla.t * filename) list =
    let config = params.config in
    let module_name = params.module_name in
    let nprocess_inputs  = List.length config.process_inputs in
@@ -96,4 +96,4 @@ let get (params:params) runtime code : Pla.t =
    })
 |}]
    in
-   text
+   [ text, ExtOnly "js"]

@@ -1,6 +1,6 @@
 
 fun do(speed, min, max) {
    mem acc = (acc + 1.0/44100.0 * speed) % 1.0;
-   val q = floor(acc * 100.0)/ 100.0;
+   val q = real(int(acc * 100.0))/ 100.0;
    return min + q * max;
 }

@@ -88,18 +88,18 @@ let generateC (filename:string) (output:string) (real:string) : unit =
    writeFiles args gen
 
 let generateJs (filename:string) (output:string) : unit =
-   let args = { default_arguments with files = [File filename]; template = "node"; jscode = true; output = output } in
-   let parser_results = Parser.parseFile filename  in
-   let gen = Generate.generateCode [parser_results] args in
+   let args = { default_arguments with files = [File filename]; template = "performance"; includes; jscode = true; output } in
+   let parser_results = Loader.loadFiles args [File filename]  in
+   let gen = Generate.generateCode parser_results args in
    writeFiles args gen
 
 let generateLua (filename:string) (output:string) : unit =
-   let args = { default_arguments with files = [File filename]; luacode = true; output = output } in
-   let parser_results = Parser.parseFile filename  in
-   let gen = Generate.generateCode [parser_results] args in
+   let args = { default_arguments with files = [File filename]; template = "performance"; includes; luacode = true; output } in
+   let parser_results = Loader.loadFiles args [File filename]  in
+   let gen = Generate.generateCode parser_results args in
    writeFiles args gen
 
-let run real_type vultfile =
+let runC real_type vultfile =
    try
       let output = Filename.chop_extension (Filename.basename vultfile) in
       Sys.chdir tmp_dir;
@@ -114,20 +114,30 @@ let run real_type vultfile =
       Sys.chdir initial_dir
    with e -> showError e
 
-let runJsLua _ =
-   let vultfile = in_proj_dir ("test/bench/bench.vult") in
-   let output   = Filename.chop_extension (Filename.basename vultfile) in
-   Sys.chdir (in_proj_dir "bench");
-   generateJs vultfile output;
-   generateLua vultfile output;
-   ignore (Sys.command "node main.js");
-   ignore (Sys.command "luajit main.lua");
-   Sys.chdir initial_dir
+let runJs vultfile =
+   try
+      let output = Filename.chop_extension (Filename.basename vultfile) in
+      Sys.chdir tmp_dir;
+      generateJs vultfile output;
+      ignore (Sys.command "node main.js");
+      Sys.chdir initial_dir
+   with e -> showError e
+
+let runLua vultfile =
+   try
+      let output = Filename.chop_extension (Filename.basename vultfile) in
+      Sys.chdir tmp_dir;
+      generateLua vultfile output;
+      ignore (Sys.command "luajit main.lua");
+      Sys.chdir initial_dir
+   with e -> showError e
 
 
 let main () =
-   List.iter (run "float") files;
-   List.iter (run "fixed") files;
+   List.iter (runC "float") files;
+   List.iter (runC "fixed") files;
+   List.iter runLua files;
+   List.iter runJs files;
 ;;
 
 main () ;;

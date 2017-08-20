@@ -93,10 +93,11 @@ this.config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, 
 return this
 |pla}
 
-   let apply (config:configuration) (module_name:string) (template:string) (code:Pla.t) : Pla.t =
+   let apply params (module_name:string) (template:string) (code:Pla.t) : (Pla.t * filename) list =
       match template with
-      | "default" -> default config module_name code
-      | _ -> none code
+      | "default" -> [ default params.config module_name code, ExtOnly "lua"]
+      | "performance" -> Performance.getLua params (default params.config module_name code)
+      | _ -> [none code, ExtOnly "lua"]
 
 end
 
@@ -163,14 +164,13 @@ and printJsField (params:params) (name,value) : Pla.t =
 
 let printLhsExpTuple (var:string list) (is_var:bool) (i:int) (e:clhsexp) : Pla.t =
    let var = Pla.map_sep (Pla.string ".") Pla.string var in
-   let i1 = i + 1 in
    match e with
    | CLId(_,name) ->
       let name = dot name in
       if is_var then
-         {pla|local <#name#> = <#var#>[<#i1#i>]; |pla}
+         {pla|local <#name#> = <#var#>.field_<#i#i>; |pla}
       else
-         {pla|<#name#> = <#var#>[<#i1#i>]; |pla}
+         {pla|<#name#> = <#var#>.field_<#i#i>; |pla}
 
    | CLWild -> Pla.unit
 
@@ -282,12 +282,11 @@ and printStmtList (params:params) (stmts:cstmt list) : Pla.t =
    let tstmts = CCList.filter_map (printStmt params) stmts in
    Pla.map_sep_all Pla.newline (fun a -> a) tstmts
 
-let printLuaCode (params:params) (stmts:cstmt list) : Pla.t =
+let printLuaCode (params:params) (stmts:cstmt list) : (Pla.t * filename ) list =
    let code = printStmtList params stmts in
-   Templates.apply params.config params.module_name params.template code
+   Templates.apply params params.module_name params.template code
 
 (** Generates the .c and .h file contents for the given parsed files *)
 let print (params:params) (stmts:Code.cstmt list) : (Pla.t * filename) list =
-   let js_text = printLuaCode params stmts in
-   [js_text, ExtOnly "lua"]
+   printLuaCode params stmts
 
