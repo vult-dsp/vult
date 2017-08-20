@@ -1,6 +1,6 @@
 +++
 date = "2017-08-20T21:21:01+03:00"
-title = "Lessons learned about performance Pt.1"
+title = "Performance Tips: floating-point mod"
 layout = "post"
 
 +++
