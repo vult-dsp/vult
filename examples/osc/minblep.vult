@@ -66,8 +66,7 @@ fun smooth(input){
    return x;
 }
 
-fun process(cv_in:real, reset: real){
-   val cv = smooth(cv_in);
+fun process(cv:real, reset: real){
    val breset = reset > 0.5;
    val out1 = o:minblep_step(cv, breset);
    val out2 = o:minblep_step(cv, breset);

@@ -25,13 +25,49 @@ THE SOFTWARE.
 open Args
 open Tcommon
 
+let init_dir = Sys.getcwd ()
 
-let in_test_directory _ = failwith ""
+let in_proj_dir file =
+   Filename.concat init_dir file
+
+
+let files =
+   [
+      "test/perf/saw_eptr_perf.vult";
+      "test/perf/saw_ptr1_perf.vult";
+      "test/perf/saw_ptr2_perf.vult";
+      "test/perf/saw_r_perf.vult";
+      "test/perf/sawcore_perf.vult";
+      "test/perf/saw_blit_perf.vult";
+      "test/perf/blit_perf.vult";
+      "test/perf/minblep_perf.vult";
+      "test/perf/noise_perf.vult";
+      "test/perf/phd_perf.vult";
+      "test/perf/sine_perf.vult";
+      "test/perf/tricore_perf.vult";
+   ]
+   |> List.map in_proj_dir
+
+let includes =
+   [
+      "examples/util";
+      "examples/osc";
+      "examples/filters";
+   ]
+   |> List.map in_proj_dir
+
+let showError e =
+   match e with
+   | Error.Errors errors ->
+      let error_strings = Error.reportErrors errors in
+      prerr_endline (error_strings)
+   | _ ->
+      raise e
 
 
 let compileFile (file:string) =
    let basename = Filename.chop_extension (Filename.basename file) in
-   let cmd = Printf.sprintf "gcc -Werror -I. -I%s -O3 -c %s -o %s.o" (in_test_directory "../runtime") file basename in
+   let cmd = Printf.sprintf "gcc -Werror -I. -I%s -O3 -c %s -o %s.o" (in_proj_dir "runtime") file basename in
    if Sys.command cmd <> 0 then
       failwith ("Failed to compile "^file)
 
@@ -41,10 +77,10 @@ let linkFiles (output:string) (files:string list) =
    if Sys.command cmd <> 0 then
       failwith ("Failed to link ")
 
-let generateC (filename:string) (output:string) (real_type:string) : unit =
-   let args = { default_arguments with files = [File filename]; ccode = true; output = output; real = real_type } in
-   let parser_results = Parser.parseFile filename  in
-   let gen = Generate.generateCode [parser_results] args in
+let generateC (filename:string) (output:string) (real:string) : unit =
+   let args = { default_arguments with files = [File filename]; ccode = true; output; real; template = "performance"; includes } in
+   let parser_results = Loader.loadFiles args [File filename]  in
+   let gen = Generate.generateCode parser_results args in
    writeFiles args gen
 
 let generateJs (filename:string) (output:string) : unit =
@@ -59,29 +95,35 @@ let generateLua (filename:string) (output:string) : unit =
    let gen = Generate.generateCode [parser_results] args in
    writeFiles args gen
 
-let run real_type _ =
-   let vultfile = in_test_directory ("../test/bench/bench.vult") in
-   let output   = Filename.chop_extension (Filename.basename vultfile) in
-   Sys.chdir tmp_dir;
-   generateC vultfile output real_type;
-   if (Sys.file_exists (output^".cpp")) then failwith "No code generated";
-   compileFile (output^".cpp");
-   compileFile (in_test_directory "../runtime/vultin.c");
-   compileFile (in_test_directory "../test/bench/main.cpp");
-   linkFiles ("bench_"^real_type) ["vultin.o";"bench.o";"main.o"];
-   print_endline ("### Real numbers: "^real_type ^ "");
-   ignore (Sys.command ("./bench_"^real_type));
-   Sys.remove (output^".cpp");
-   Sys.remove (output^".h");
-   Sys.chdir initial_dir
+let run real_type vultfile =
+   try
+      let output = Filename.chop_extension (Filename.basename vultfile) in
+      Sys.chdir tmp_dir;
+      generateC vultfile output real_type;
+      compileFile (output^".cpp");
+      compileFile (in_proj_dir "runtime/vultin.c");
+      compileFile ("main.cpp");
+      linkFiles ("perf_"^real_type) ["vultin.o";output^".o";"main.o"];
+      ignore (Sys.command ("./perf_"^real_type));
+      Sys.remove (output^".cpp");
+      Sys.remove (output^".h");
+      Sys.chdir initial_dir
+   with e -> showError e
 
 let runJsLua _ =
-   let vultfile = in_test_directory ("../test/bench/bench.vult") in
+   let vultfile = in_proj_dir ("test/bench/bench.vult") in
    let output   = Filename.chop_extension (Filename.basename vultfile) in
-
-   Sys.chdir (in_test_directory "bench");
+   Sys.chdir (in_proj_dir "bench");
    generateJs vultfile output;
    generateLua vultfile output;
    ignore (Sys.command "node main.js");
    ignore (Sys.command "luajit main.lua");
    Sys.chdir initial_dir
+
+
+let main () =
+   List.iter (run "float") files;
+   List.iter (run "fixed") files;
+;;
+
+main () ;;

@@ -28,3 +28,5 @@ cmake ../
 make
 cd ..
 cd ..
+# runs the performance tests
+make perf

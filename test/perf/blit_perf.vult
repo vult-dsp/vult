@@ -1,0 +1,9 @@
+
+fun process(input:real) : real {
+   val cv = Ramp.do(0.1, 0.0, 0.7);
+   return Blit.process(cv,0.0,1.0);
+}
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int){ }
+and default(){ }

@@ -1,0 +1,10 @@
+
+fun process(input:real) : real {
+   val cv = Ramp.do(0.1, 0.0, 0.7);
+   val detune = Ramp.do(0.5, 0.0, 0.1);
+   return Phd.process(cv,detune);
+}
+and noteOn(note:int,velocity:int,channel:int){ }
+and noteOff(note:int,channel:int){ }
+and controlChange(control:int,value:int,channel:int){ }
+and default(){ }

@@ -20,6 +20,10 @@ test: compiler jscompiler
 			$(OCB) test/test.native
 			./test.native -runner sequential -shards 1
 
+perf:
+			$(OCB) test/perf.native
+			./perf.native
+
 test-fast:
 			$(OCB) test/test.native
 			./test.native -runner sequential -shards 1 -internal true

@@ -1,0 +1,5 @@
+
+fun do(speed, min, max) {
+   mem acc = (acc + 1.0/44100.0 * speed) % 1.0;
+   return min + acc * max;
+}

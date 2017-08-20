@@ -62,7 +62,7 @@ and do_default() @[init] {
 }
 
 fun process(cv) {
-   val output = osc:do(Util.smooth(cv));
+   val output = osc:do(cv);
    return output;
 }
 and noteOn(note:int,velocity:int,channel:int){ }
