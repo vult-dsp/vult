@@ -101,6 +101,26 @@ float Util_average2(Util__ctx_type_5 &_ctx, float x1){
    return result;
 }
 
+float Util_cubic_clipper(float x){
+   uint8_t _cond_21;
+   _cond_21 = (x <= (-0.666667f));
+   if(_cond_21){
+      return (-0.666667f);
+   }
+   else
+   {
+      uint8_t _cond_20;
+      _cond_20 = (x >= 0.666667f);
+      if(_cond_20){
+         return 0.666667f;
+      }
+      else
+      {
+         return (x + ((-0.333333f) * x * x * x));
+      }
+   }
+}
+
 float Util_pitchToRate_1024(float pitch){
    int index;
    index = int_clip(float_to_int((0.244094f * pitch)),0,31);
@@ -149,7 +169,7 @@ void Saw_r__ctx_type_0_init(Saw_r__ctx_type_0 &_output_){
    Saw_r__ctx_type_0 _ctx;
    _ctx.phase = 0.000000f;
    _ctx.inc = 0.000000f;
-   Util__ctx_type_1_init(_ctx._inst16);
+   Util__ctx_type_1_init(_ctx._inst23);
    Saw_r_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -161,15 +181,15 @@ void Saw_r_process_init(Saw_r__ctx_type_0 &_output_){
 }
 
 float Saw_r_process(Saw_r__ctx_type_0 &_ctx, float cv){
-   uint8_t _cond_26;
-   _cond_26 = Util_change(_ctx._inst16,cv);
-   if(_cond_26){
+   uint8_t _cond_33;
+   _cond_33 = Util_change(_ctx._inst23,cv);
+   if(_cond_33){
       _ctx.inc = Util_cvToRate(cv);
    }
    float i;
-   uint8_t _cond_29;
-   _cond_29 = (_ctx.inc < 0.000000f);
-   if(_cond_29){ i = 0.000000f; }
+   uint8_t _cond_36;
+   _cond_36 = (_ctx.inc < 0.000000f);
+   if(_cond_36){ i = 0.000000f; }
    else
    { i = _ctx.inc; }
    _ctx.phase = fmodf(((2.000000f * _ctx.inc) + _ctx.phase),2.000000f);
@@ -177,18 +197,18 @@ float Saw_r_process(Saw_r__ctx_type_0 &_ctx, float cv){
    ph = (_ctx.phase + (-1.000000f));
    float o;
    o = 0.000000f;
-   uint8_t _cond_28;
-   _cond_28 = (ph >= (1.000000f + (- i)));
-   if(_cond_28){
+   uint8_t _cond_35;
+   _cond_35 = (ph >= (1.000000f + (- i)));
+   if(_cond_35){
       float b;
       b = ((1.000000f + (- i) + (- ph)) / i);
       o = ((b * fabsf(b)) + ph);
    }
    else
    {
-      uint8_t _cond_27;
-      _cond_27 = (ph <= (i + (-1.000000f)));
-      if(_cond_27){
+      uint8_t _cond_34;
+      _cond_34 = (ph <= (i + (-1.000000f)));
+      if(_cond_34){
          float b;
          b = ((i + (-1.000000f) + (- ph)) / i);
          o = ((b * fabsf(b)) + ph);

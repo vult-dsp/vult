@@ -4,16 +4,11 @@
 
 float Saturate_table(float x){
    int index;
-   index = int_clip(float_to_int((5.291667f * (x + 12.000000f))),0,127);
+   index = int_clip(float_to_int((x + 12.000000f)),0,24);
    return (float_get(float_wrap_array(Saturate_table_c0),index) + (x * (float_get(float_wrap_array(Saturate_table_c1),index) + (float_get(float_wrap_array(Saturate_table_c2),index) * x))));
 }
 
 float Saturate_process(float x){
-   uint8_t _cond_7;
-   _cond_7 = (x == 0.000000f);
-   if(_cond_7){
-      return 0.000000f;
-   }
    return Saturate_table(x);
 }
 

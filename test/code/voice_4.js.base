@@ -57,6 +57,23 @@ this.Util_average2 = function(_ctx,x1){
    _ctx.x0 = x1;
    return result;
 }
+this.Util_cubic_clipper = function(x){
+   if((x <= (-0.666667))){
+      return (-0.666667);
+   }
+   else
+   {
+      var _cond_20 = false;
+      _cond_20 = (x >= 0.666667);
+      if(_cond_20){
+         return 0.666667;
+      }
+      else
+      {
+         return (x + ((-0.333333) * x * x * x));
+      }
+   }
+}
 var Util_pitchToRate_1024_c0 = [0.189842,0.191326,0.198689,0.219425,0.265677,0.356438,0.520651,0.801560,1.262758,1.996562,3.135544,4.868347,7.461281,11.287715,16.867996,24.923305,36.448521,52.809903,75.876616,108.197225,153.232414,215.672344,301.846626,420.298038,582.505178,803.812129,1104.880165,1513.124126,2065.373952,2810.230550,3812.902888,5159.525580,6963.761469];
 var Util_pitchToRate_1024_c1 = [0.010913,0.010176,0.008334,0.004867,(-0.000939),(-0.010061),(-0.023820),(-0.044002),(-0.073002),(-0.114025),(-0.171341),(-0.250621),(-0.359381),(-0.507548),(-0.708208),(-0.978575),(-1.341250),(-1.825848),(-2.471123),(-3.327721),(-4.461658),(-5.959006),(-7.931626),(-10.525312),(-13.929212),(-18.387588),(-24.219785),(-31.835151),(-41.769557),(-54.706455),(-71.541226),(-93.422592),(-121.823163)];
 var Util_pitchToRate_1024_c2 = [0.000356,0.000447,0.000562,0.000707,0.000889,0.001119,0.001407,0.001769,0.002225,0.002799,0.003520,0.004426,0.005567,0.007001,0.008805,0.011074,0.013927,0.017515,0.022028,0.027704,0.034841,0.043818,0.055107,0.069305,0.087163,0.109617,0.137862,0.173377,0.218054,0.274227,0.344892,0.433780,0.545543];
@@ -112,26 +129,26 @@ this.Tricore__ctx_type_0_init = function(){
    _ctx.rate = 0.000000;
    _ctx.phase = 0.000000;
    _ctx.direction = false;
-   _ctx._inst19 = this.Util__ctx_type_0_init();
-   _ctx._inst18 = this.Util__ctx_type_0_init();
-   _ctx._inst16 = this.Util__ctx_type_1_init();
+   _ctx._inst26 = this.Util__ctx_type_0_init();
+   _ctx._inst25 = this.Util__ctx_type_0_init();
+   _ctx._inst23 = this.Util__ctx_type_1_init();
    this.Tricore_default(_ctx);
    return _ctx;
 }
 this.Tricore_process_init = function() { return this.Tricore__ctx_type_0_init();}
 this.Tricore_process = function(_ctx,cv,reset,disable){
    var out = 0.000000;
-   if(this.Util_change(_ctx._inst16,cv)){
+   if(this.Util_change(_ctx._inst23,cv)){
       _ctx.rate = (4.000000 * this.Util_cvToRate_1024(cv));
    }
    var new_phase = 0.0;
-   var _if_32 = 0.0;
-   if(_ctx.direction)_if_32 = _ctx.rate;
+   var _if_39 = 0.0;
+   if(_ctx.direction)_if_39 = _ctx.rate;
    else
-   _if_32 = (- _ctx.rate);
-   new_phase = (_ctx.phase + _if_32);
+   _if_39 = (- _ctx.rate);
+   new_phase = (_ctx.phase + _if_39);
    var bdisable = (disable > 0.500000);
-   if((this.Util_edge(_ctx._inst18,(reset > 0.000000)) || this.Util_edge(_ctx._inst19,bdisable))){
+   if((this.Util_edge(_ctx._inst25,(reset > 0.000000)) || this.Util_edge(_ctx._inst26,bdisable))){
       _ctx.reset_phase = _ctx.phase;
       _ctx.reset_state = true;
       new_phase = 0.000000;
@@ -142,9 +159,9 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
    }
    else
    {
-      var _cond_34 = false;
-      _cond_34 = (new_phase < (-1024.000000));
-      if(_cond_34){
+      var _cond_41 = false;
+      _cond_41 = (new_phase < (-1024.000000));
+      if(_cond_41){
          _ctx.direction = true;
       }
    }
@@ -152,9 +169,9 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
    else
    _ctx.phase = new_phase;
    if(_ctx.reset_state){
-      var _cond_37 = false;
-      _cond_37 = ((this.abs(_ctx.reset_phase) > 10.000000) || bdisable);
-      if(_cond_37){
+      var _cond_44 = false;
+      _cond_44 = ((this.abs(_ctx.reset_phase) > 10.000000) || bdisable);
+      if(_cond_44){
          var reset_speed = 0.0;
          if(bdisable)reset_speed = 0.010000;
          else
@@ -163,9 +180,9 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
       }
       else
       {
-         var _cond_36 = false;
-         _cond_36 = (_ctx.reset_phase > 10.000000);
-         if(this.not(_cond_36))_ctx.reset_phase = 0.000000;
+         var _cond_43 = false;
+         _cond_43 = (_ctx.reset_phase > 10.000000);
+         if(this.not(_cond_43))_ctx.reset_phase = 0.000000;
          _ctx.reset_state = false;
          _ctx.direction = true;
       }
@@ -241,8 +258,8 @@ this.Svf__ctx_type_1_init = function(){
    _ctx.z1 = 0.000000;
    _ctx.inv_den = 0.000000;
    _ctx.g = 0.000000;
-   _ctx._inst55 = this.Util__ctx_type_1_init();
-   _ctx._inst54 = this.Util__ctx_type_1_init();
+   _ctx._inst62 = this.Util__ctx_type_1_init();
+   _ctx._inst61 = this.Util__ctx_type_1_init();
    _ctx.R = 0.000000;
    this.Svf_default(_ctx);
    return _ctx;
@@ -250,7 +267,7 @@ this.Svf__ctx_type_1_init = function(){
 this.Svf_process_init = function() { return this.Svf__ctx_type_1_init();}
 this.Svf_process = function(_ctx,x,cv,q,sel){
    q = (q + 0.500000);
-   if((this.Util_change(_ctx._inst54,cv) || this.Util_change(_ctx._inst55,q))){
+   if((this.Util_change(_ctx._inst61,cv) || this.Util_change(_ctx._inst62,q))){
       _ctx.g = this.Svf_calc_g(cv);
       _ctx.R = (1.000000 / (2.000000 * (q + 0.000000)));
       _ctx.inv_den = (1.000000 / (1.000000 + (2.000000 * _ctx.R * _ctx.g) + (_ctx.g * _ctx.g)));
@@ -265,14 +282,14 @@ this.Svf_process = function(_ctx,x,cv,q,sel){
    if((sel == (0|0)))output = low;
    else
    {
-      var _cond_63 = false;
-      _cond_63 = (sel == (1|0));
-      if(_cond_63)output = high;
+      var _cond_70 = false;
+      _cond_70 = (sel == (1|0));
+      if(_cond_70)output = high;
       else
       {
-         var _cond_64 = false;
-         _cond_64 = (sel == (2|0));
-         if(_cond_64)output = band;
+         var _cond_71 = false;
+         _cond_71 = (sel == (2|0));
+         if(_cond_71)output = band;
          else
          output = notch;
       }
@@ -294,17 +311,14 @@ this.Svf_default = function(_ctx){
    _ctx.R = 1.000000;
    _ctx.inv_den = (1.000000 / (1.000000 + (_ctx.g * _ctx.g)));
 }
-var Saturate_table_c0 = [(-1.001374),(-1.006906),(-0.998630),(-0.998630),(-0.998630),(-0.998630),(-0.998630),(-0.998630),(-0.998630),(-0.998630),(-0.998629),(-0.998629),(-0.998629),(-0.998628),(-0.998627),(-0.998625),(-0.998624),(-0.998621),(-0.998617),(-0.998612),(-0.999975),(-0.999965),(-0.999952),(-0.999933),(-0.999907),(-0.999871),(-0.999821),(-0.999753),(-0.999658),(-0.999529),(-0.999350),(-0.999106),(-0.998772),(-0.998316),(-0.997694),(-0.996849),(-0.995702),(-0.994152),(-0.992060),(-0.989247),(-0.985477),(-0.980441),(-0.973743),(-0.964872),(-0.953183),(-0.937867),(-0.917930),(-0.892172),(-0.859190),(-0.817409),(-0.765175),(-0.700938),(-0.623579),(-0.532923),(-0.430471),(-0.320268),(-0.209647),(-0.109223),(-0.031177),0.014939,0.028028,0.018870,0.005421,0.000000,0.000000,(-0.005421),(-0.018870),(-0.028028),(-0.014939),0.031177,0.109223,0.209647,0.320268,0.430471,0.532923,0.623579,0.700938,0.765175,0.817409,0.859190,0.892172,0.917930,0.937867,0.953183,0.964872,0.973743,0.980441,0.985477,0.989247,0.992060,0.994152,0.995702,0.996849,0.997694,0.998316,0.998772,0.999106,0.999350,0.999529,0.999658,0.999753,0.999821,0.999871,0.999907,0.999933,0.999952,0.999965,0.999975,0.998612,0.998617,0.998621,0.998624,0.998625,0.998627,0.998628,0.998629,0.998629,0.998629,0.998630,0.998630,0.998630,0.998630,0.998630,0.998630,0.998630,0.998630,1.006906,1.001374,1.001374];
-var Saturate_table_c1 = [(-0.000000),(-0.000000),0.000000,0.000000,0.000000,(-0.000000),0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000001,0.000001,0.000001,0.000002,0.000003,0.000004,0.000006,0.000008,0.000012,0.000016,0.000023,0.000033,0.000047,0.000067,0.000095,0.000135,0.000191,0.000270,0.000381,0.000538,0.000759,0.001071,0.001508,0.002121,0.002980,0.004181,0.005858,0.008196,0.011447,0.015958,0.022199,0.030808,0.042638,0.058822,0.080842,0.110598,0.150459,0.203255,0.272141,0.360212,0.469700,0.600552,0.748290,0.901487,1.040196,1.138141,1.172059,1.137998,1.064638,1.005717,1.005717,1.064638,1.137998,1.172059,1.138141,1.040196,0.901487,0.748290,0.600552,0.469700,0.360212,0.272141,0.203255,0.150459,0.110598,0.080842,0.058822,0.042638,0.030808,0.022199,0.015958,0.011447,0.008196,0.005858,0.004181,0.002980,0.002121,0.001508,0.001071,0.000759,0.000538,0.000381,0.000270,0.000191,0.000135,0.000095,0.000067,0.000047,0.000033,0.000023,0.000016,0.000012,0.000008,0.000006,0.000004,0.000003,0.000002,0.000001,0.000001,0.000001,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,(-0.000000),0.000000,0.000000,0.000000,(-0.000000),(-0.000000),0.000000];
-var Saturate_table_c2 = [(-0.000000),0.000000,(-0.000000),0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000001,0.000001,0.000001,0.000002,0.000003,0.000005,0.000007,0.000010,0.000014,0.000020,0.000030,0.000043,0.000063,0.000092,0.000133,0.000194,0.000282,0.000410,0.000597,0.000868,0.001263,0.001836,0.002669,0.003879,0.005634,0.008176,0.011851,0.017149,0.024754,0.035602,0.050937,0.072327,0.101579,0.140422,0.189749,0.248174,0.309805,0.361810,0.383764,0.352153,0.252165,0.092126,(-0.092126),(-0.252165),(-0.352153),(-0.383764),(-0.361810),(-0.309805),(-0.248174),(-0.189749),(-0.140422),(-0.101579),(-0.072327),(-0.050937),(-0.035602),(-0.024754),(-0.017149),(-0.011851),(-0.008176),(-0.005634),(-0.003879),(-0.002669),(-0.001836),(-0.001263),(-0.000868),(-0.000597),(-0.000410),(-0.000282),(-0.000194),(-0.000133),(-0.000092),(-0.000063),(-0.000043),(-0.000030),(-0.000020),(-0.000014),(-0.000010),(-0.000007),(-0.000005),(-0.000003),(-0.000002),(-0.000001),(-0.000001),(-0.000001),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),0.000000,(-0.000000),0.000000,(-0.000000)];
+var Saturate_table_c0 = [(-1.000000),(-0.999999),(-0.999998),(-0.999989),(-0.999938),(-0.999668),(-0.998293),(-0.991621),(-0.961512),(-0.840904),(-0.470267),0.000402,0.000000,(-0.000402),0.470267,0.840904,0.961512,0.991621,0.998293,0.999668,0.999938,0.999989,0.999998,1.000000,1.000000,1.000000];
+var Saturate_table_c1 = [0.000000,0.000000,0.000000,0.000002,0.000015,0.000091,0.000540,0.003120,0.017423,0.091625,0.414243,1.085316,0.929674,1.085316,0.414243,0.091625,0.017423,0.003120,0.000540,0.000091,0.000015,0.000002,0.000000,0.000000,0.000000,(-0.000000)];
+var Saturate_table_c2 = [0.000000,0.000000,0.000000,0.000000,0.000001,0.000006,0.000043,0.000292,0.001990,0.013391,0.083468,0.322510,0.000000,(-0.322510),(-0.083468),(-0.013391),(-0.001990),(-0.000292),(-0.000043),(-0.000006),(-0.000001),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000)];
 this.Saturate_table = function(x){
-   var index = (this.clip(this.int((5.291667 * (x + 12.000000))),(0|0),(127|0))|0);
+   var index = (this.clip(this.int((x + 12.000000)),(0|0),(24|0))|0);
    return (this.get(this.wrap_array(Saturate_table_c0),index) + (x * (this.get(this.wrap_array(Saturate_table_c1),index) + (this.get(this.wrap_array(Saturate_table_c2),index) * x))));
 }
 this.Saturate_process = function(x){
-   if((x == 0.000000)){
-      return 0.000000;
-   }
    return this.Saturate_table(x);
 }
 this.Saturate_noteOn = function(note,velocity,channel){
@@ -325,31 +339,31 @@ this.Lfo__ctx_type_0_init = function(){
 this.Lfo_soft_init = function() { return this.Lfo__ctx_type_0_init();}
 this.Lfo_soft = function(_ctx,x1){
    var o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) * 0.250000);
-   var _tmp_84_0 = x1;
-   var _tmp_84_1 = _ctx.x2;
-   var _tmp_84_2 = _ctx.x3;
-   _ctx.x2 = _tmp_84_0;
-   _ctx.x3 = _tmp_84_1;
-   _ctx.x4 = _tmp_84_2;
+   var _tmp_89_0 = x1;
+   var _tmp_89_1 = _ctx.x2;
+   var _tmp_89_2 = _ctx.x3;
+   _ctx.x2 = _tmp_89_0;
+   _ctx.x3 = _tmp_89_1;
+   _ctx.x4 = _tmp_89_2;
    return o;
 }
 this.Lfo__ctx_type_1_init = function(){
    var _ctx = {};
    _ctx.rate = 0.000000;
    _ctx.phase = 0.000000;
-   _ctx._inst79 = this.Lfo__ctx_type_0_init();
-   _ctx._inst77 = this.Util__ctx_type_0_init();
-   _ctx._inst75 = this.Util__ctx_type_1_init();
+   _ctx._inst84 = this.Lfo__ctx_type_0_init();
+   _ctx._inst82 = this.Util__ctx_type_0_init();
+   _ctx._inst80 = this.Util__ctx_type_1_init();
    return _ctx;
 }
 this.Lfo_process_init = function() { return this.Lfo__ctx_type_1_init();}
 this.Lfo_process = function(_ctx,cv,shape,reset){
-   if(this.Util_change(_ctx._inst75,cv)){
+   if(this.Util_change(_ctx._inst80,cv)){
       _ctx.rate = this.Util_cvToRate((cv + (-0.300000)));
    }
    _ctx.phase = ((_ctx.phase + _ctx.rate) % 2.000000);
    var breset = (reset > 0.000000);
-   if(this.Util_edge(_ctx._inst77,breset)){
+   if(this.Util_edge(_ctx._inst82,breset)){
       _ctx.phase = 0.000000;
    }
    var tmp = (_ctx.phase + (-1.000000));
@@ -357,19 +371,19 @@ this.Lfo_process = function(_ctx,cv,shape,reset){
    if((shape < 1.000000))o = tmp;
    else
    {
-      var _cond_88 = false;
-      _cond_88 = (shape < 2.000000);
-      if(_cond_88)o = ((this.abs(tmp) * 2.000000) + (-1.000000));
+      var _cond_93 = false;
+      _cond_93 = (shape < 2.000000);
+      if(_cond_93)o = ((this.abs(tmp) * 2.000000) + (-1.000000));
       else
       {
-         var _cond_89 = false;
-         _cond_89 = (tmp > 0.000000);
-         if(_cond_89)o = 1.000000;
+         var _cond_94 = false;
+         _cond_94 = (tmp > 0.000000);
+         if(_cond_94)o = 1.000000;
          else
          o = 0.000000;
       }
    }
-   return this.Lfo_soft(_ctx._inst79,o);
+   return this.Lfo_soft(_ctx._inst84,o);
 }
 this.Lfo_noteOn_init = function() { return this.Lfo__ctx_type_1_init();}
 this.Lfo_noteOn = function(_ctx,note,velocity,channel){
@@ -394,17 +408,17 @@ this.Phase__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.rate = 0.000000;
    _ctx.phase = 0.000000;
-   _ctx._inst94 = this.Util__ctx_type_0_init();
-   _ctx._inst92 = this.Util__ctx_type_1_init();
+   _ctx._inst99 = this.Util__ctx_type_0_init();
+   _ctx._inst97 = this.Util__ctx_type_1_init();
    this.Phase_default(_ctx);
    return _ctx;
 }
 this.Phase_process_init = function() { return this.Phase__ctx_type_0_init();}
 this.Phase_process = function(_ctx,cv,reset){
-   if(this.Util_change(_ctx._inst92,cv)){
+   if(this.Util_change(_ctx._inst97,cv)){
       _ctx.rate = this.Util_cvToRate_1024(cv);
    }
-   if(this.Util_edge(_ctx._inst94,(reset > 0.500000)))_ctx.phase = 0.000000;
+   if(this.Util_edge(_ctx._inst99,(reset > 0.500000)))_ctx.phase = 0.000000;
    else
    _ctx.phase = (_ctx.phase + _ctx.rate);
    if((_ctx.phase > 1024.000000))_ctx.phase = (_ctx.phase + (-1024.000000));
@@ -427,13 +441,13 @@ this.Blit__ctx_type_0_init = function(){
    var _ctx = {};
    _ctx.scale = 0.000000;
    _ctx.m = ((0|0)|0);
-   _ctx._inst103 = this.Util__ctx_type_1_init();
+   _ctx._inst108 = this.Util__ctx_type_1_init();
    this.Blit_pulse_start(_ctx);
    return _ctx;
 }
 this.Blit_pulse_train_init = function() { return this.Blit__ctx_type_0_init();}
 this.Blit_pulse_train = function(_ctx,cv,phase){
-   if(this.Util_change(_ctx._inst103,cv)){
+   if(this.Util_change(_ctx._inst108,cv)){
       _ctx.m = ((((2|0) * this.int(this.Util_cvToperiod(cv))) + (1|0))|0);
       _ctx.scale = (2.000000 * this.Util_cvToperiod(cv));
    }
@@ -464,11 +478,11 @@ this.Blit__ctx_type_1_init = function(){
    _ctx.state_pulse = 0.000000;
    _ctx.rate = 0.000000;
    _ctx.output = 0.000000;
-   _ctx._inst119 = this.Util__ctx_type_3_init();
-   _ctx._inst116 = this.Blit__ctx_type_0_init();
-   _ctx._inst115 = this.Blit__ctx_type_0_init();
-   _ctx._inst113 = this.Phase__ctx_type_0_init();
-   _ctx._inst111 = this.Util__ctx_type_1_init();
+   _ctx._inst124 = this.Util__ctx_type_3_init();
+   _ctx._inst121 = this.Blit__ctx_type_0_init();
+   _ctx._inst120 = this.Blit__ctx_type_0_init();
+   _ctx._inst118 = this.Phase__ctx_type_0_init();
+   _ctx._inst116 = this.Util__ctx_type_1_init();
    this.Blit_init(_ctx);
    return _ctx;
 }
@@ -482,17 +496,17 @@ this.Blit_osc_blit = function(_ctx,cv,pw,wave){
    {
       fixed_cv = (cv + (-0.100000));
    }
-   if(this.Util_change(_ctx._inst111,fixed_cv)){
+   if(this.Util_change(_ctx._inst116,fixed_cv)){
       _ctx.rate = this.Util_cvToRate(fixed_cv);
    }
-   var phase = this.Phase_process(_ctx._inst113,fixed_cv,0.000000);
+   var phase = this.Phase_process(_ctx._inst118,fixed_cv,0.000000);
    var shift05 = (0.500000 + (pw * 0.490000));
    var shift = (phase + shift05);
    if((shift > 1.000000)){
       shift = (shift + (-1.000000));
    }
-   var pulse1 = this.Blit_pulse_train(_ctx._inst115,fixed_cv,phase);
-   var pulse2 = this.Blit_pulse_train(_ctx._inst116,fixed_cv,shift);
+   var pulse1 = this.Blit_pulse_train(_ctx._inst120,fixed_cv,phase);
+   var pulse2 = this.Blit_pulse_train(_ctx._inst121,fixed_cv,shift);
    _ctx.state_pulse = ((_ctx.state_pulse * 0.999500) + pulse1 + (- pulse2));
    _ctx.state_saw = ((_ctx.state_saw * 0.999500) + (((pulse1 + pulse2 + ((-2.000000) * _ctx.rate)) / shift05) * 0.500000));
    if((wave < 1.000000)){
@@ -502,7 +516,7 @@ this.Blit_osc_blit = function(_ctx,cv,pw,wave){
    {
       _ctx.output = (2.000000 * _ctx.state_saw);
    }
-   _ctx.output = this.Util_dcblock(_ctx._inst119,_ctx.output);
+   _ctx.output = this.Util_dcblock(_ctx._inst124,_ctx.output);
    return _ctx.output;
 }
 this.Blit_init_init = function() { return this.Blit__ctx_type_1_init();}
@@ -511,12 +525,12 @@ this.Blit_init = function(_ctx){
 }
 this.Blit__ctx_type_2_init = function(){
    var _ctx = {};
-   _ctx._inst122 = this.Blit__ctx_type_1_init();
+   _ctx._inst127 = this.Blit__ctx_type_1_init();
    return _ctx;
 }
 this.Blit_process_init = function() { return this.Blit__ctx_type_2_init();}
 this.Blit_process = function(_ctx,cv,pw,wave){
-   return this.Blit_osc_blit(_ctx._inst122,cv,pw,wave);
+   return this.Blit_osc_blit(_ctx._inst127,cv,pw,wave);
 }
 this.Blit_noteOn_init = function() { return this.Blit__ctx_type_2_init();}
 this.Blit_noteOn = function(_ctx,note,velocity,channel){
@@ -537,8 +551,8 @@ this.Adsr__ctx_type_0_init = function(){
    _ctx.scale = 0.000000;
    _ctx.rate = 0.000000;
    _ctx.out = 0.000000;
-   _ctx._inst142 = this.Util__ctx_type_4_init();
-   _ctx._inst135 = this.Util__ctx_type_0_init();
+   _ctx._inst147 = this.Util__ctx_type_4_init();
+   _ctx._inst140 = this.Util__ctx_type_0_init();
    return _ctx;
 }
 this.Adsr_do_init = function() { return this.Adsr__ctx_type_0_init();}
@@ -549,9 +563,9 @@ this.Adsr_do = function(_ctx,gate,a,d,s,r){
    _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.004000));
    var bgate = (gate > 0.000000);
    if((_ctx.state == (0|0))){
-      var _cond_153 = false;
-      _cond_153 = this.Util_edge(_ctx._inst135,bgate);
-      if(_cond_153){
+      var _cond_158 = false;
+      _cond_158 = this.Util_edge(_ctx._inst140,bgate);
+      if(_cond_158){
          _ctx.state = ((1|0)|0);
          _ctx.scale = (gate * 0.200000);
       }
@@ -559,29 +573,29 @@ this.Adsr_do = function(_ctx,gate,a,d,s,r){
       _ctx.target = 0.000000;
    }
    if((_ctx.state == (1|0))){
-      var _cond_155 = false;
-      _cond_155 = this.not(bgate);
-      if(_cond_155){
+      var _cond_160 = false;
+      _cond_160 = this.not(bgate);
+      if(_cond_160){
          _ctx.state = ((0|0)|0);
       }
-      var _cond_156 = false;
-      _cond_156 = (_ctx.out > 1024.000000);
-      if(_cond_156){
+      var _cond_161 = false;
+      _cond_161 = (_ctx.out > 1024.000000);
+      if(_cond_161){
          _ctx.state = ((2|0)|0);
       }
       _ctx.rate = a_rate;
       _ctx.target = 1228.800000;
    }
    if((_ctx.state == (2|0))){
-      var _cond_158 = false;
-      _cond_158 = this.not(bgate);
-      if(_cond_158){
+      var _cond_163 = false;
+      _cond_163 = this.not(bgate);
+      if(_cond_163){
          _ctx.state = ((0|0)|0);
       }
       _ctx.rate = d_rate;
       _ctx.target = (s * 1024.000000);
    }
-   return (this.Util_smooth(_ctx._inst142,_ctx.scale) * this.clip((_ctx.out * 0.000977),0.000000,1.000000));
+   return (this.Util_smooth(_ctx._inst147,_ctx.scale) * this.clip((_ctx.out * 0.000977),0.000000,1.000000));
 }
 this.Adsr__ctx_type_1_init = function(){
    var _ctx = {};
@@ -589,12 +603,12 @@ this.Adsr__ctx_type_1_init = function(){
    _ctx.knob3 = 0.000000;
    _ctx.knob2 = 0.000000;
    _ctx.knob1 = 0.000000;
-   _ctx._inst144 = this.Adsr__ctx_type_0_init();
+   _ctx._inst149 = this.Adsr__ctx_type_0_init();
    return _ctx;
 }
 this.Adsr_process_init = function() { return this.Adsr__ctx_type_1_init();}
 this.Adsr_process = function(_ctx,gate){
-   return this.Adsr_do(_ctx._inst144,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4);
+   return this.Adsr_do(_ctx._inst149,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4);
 }
 this.Adsr_noteOn_init = function() { return this.Adsr__ctx_type_1_init();}
 this.Adsr_noteOn = function(_ctx,note,velocity,channel){
@@ -647,28 +661,28 @@ this.Voice_4__ctx_type_0_init = function(){
    _ctx.flt_cut = 0.000000;
    _ctx.decay = 0.000000;
    _ctx.attack = 0.000000;
-   _ctx._inst171 = this.Adsr__ctx_type_0_init();
-   _ctx._inst170 = this.Svf__ctx_type_1_init();
-   _ctx._inst169 = this.Tricore__ctx_type_0_init();
-   _ctx._inst168 = this.Blit__ctx_type_2_init();
-   _ctx._inst167 = this.Blit__ctx_type_2_init();
-   _ctx._inst166 = this.Blit__ctx_type_2_init();
-   _ctx._inst165 = this.Lfo__ctx_type_1_init();
+   _ctx._inst176 = this.Adsr__ctx_type_0_init();
+   _ctx._inst175 = this.Svf__ctx_type_1_init();
+   _ctx._inst174 = this.Tricore__ctx_type_0_init();
+   _ctx._inst173 = this.Blit__ctx_type_2_init();
+   _ctx._inst172 = this.Blit__ctx_type_2_init();
+   _ctx._inst171 = this.Blit__ctx_type_2_init();
+   _ctx._inst170 = this.Lfo__ctx_type_1_init();
    return _ctx;
 }
 this.Voice_4_process_init = function() { return this.Voice_4__ctx_type_0_init();}
 this.Voice_4_process = function(_ctx,cv,vel,gate){
-   var lfo = this.Lfo_process(_ctx._inst165,_ctx.lfo_rate,_ctx.lfo_shape,(gate * _ctx.lfo_reset));
+   var lfo = this.Lfo_process(_ctx._inst170,_ctx.lfo_rate,_ctx.lfo_shape,(gate * _ctx.lfo_reset));
    var mod_pw = (_ctx.lfo_pw * lfo);
    var mod_cv = (_ctx.lfo_cv * lfo);
    var mod_flt = (_ctx.lfo_flt * lfo);
-   var o1 = this.Blit_process(_ctx._inst166,(cv + 0.000100 + mod_cv),(_ctx.pw1 + mod_pw),0.000000);
-   var o2 = this.Blit_process(_ctx._inst167,(cv + 0.000200 + mod_cv),(_ctx.pw2 + mod_pw),1.000000);
-   var o3 = this.Blit_process(_ctx._inst168,(cv + _ctx.pw3 + mod_cv),(_ctx.pw1 + mod_pw),0.000000);
-   var sub = this.Saturate_process((((5.000000 * _ctx.pw4) + 2.000000) * this.Tricore_process(_ctx._inst169,(cv + mod_cv),0.000000,1.000000)));
+   var o1 = this.Blit_process(_ctx._inst171,(cv + 0.000100 + mod_cv),(_ctx.pw1 + mod_pw),0.000000);
+   var o2 = this.Blit_process(_ctx._inst172,(cv + 0.000200 + mod_cv),(_ctx.pw2 + mod_pw),1.000000);
+   var o3 = this.Blit_process(_ctx._inst173,(cv + _ctx.pw3 + mod_cv),(_ctx.pw1 + mod_pw),0.000000);
+   var sub = this.Saturate_process((((5.000000 * _ctx.pw4) + 2.000000) * this.Tricore_process(_ctx._inst174,(cv + mod_cv),0.000000,1.000000)));
    var o = ((_ctx.level1 * o1) + (_ctx.level2 * o2) + (_ctx.level3 * o3) + (_ctx.level4 * sub));
-   var f = this.Svf_process(_ctx._inst170,o,(_ctx.flt_cut + mod_flt),_ctx.flt_res,_ctx.flt_shape);
-   var env = this.Adsr_do(_ctx._inst171,gate,_ctx.attack,_ctx.decay,_ctx.sustain,_ctx.release);
+   var f = this.Svf_process(_ctx._inst175,o,(_ctx.flt_cut + mod_flt),_ctx.flt_res,_ctx.flt_shape);
+   var env = this.Adsr_do(_ctx._inst176,gate,_ctx.attack,_ctx.decay,_ctx.sustain,_ctx.release);
    return (env * f);
 }
 this.Voice_4_noteOn_init = function() { return this.Voice_4__ctx_type_0_init();}
@@ -719,9 +733,9 @@ this.Voice_4_controlChange = function(_ctx,control,value,channel){
       _ctx.lfo_flt = this.Util_map(this.real(value),0.000000,127.000000,(-0.300000),0.300000);
    }
    if((control == (43|0))){
-      var _cond_210 = false;
-      _cond_210 = (value > (0|0));
-      if(_cond_210)_ctx.lfo_reset = 1.000000;
+      var _cond_215 = false;
+      _cond_215 = (value > (0|0));
+      if(_cond_215)_ctx.lfo_reset = 1.000000;
       else
       _ctx.lfo_reset = 0.000000;
    }

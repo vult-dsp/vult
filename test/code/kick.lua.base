@@ -199,6 +199,27 @@ function this.Util_average2(_ctx,x1)
 
 end
 
+function this.Util_cubic_clipper(x)
+   if (x <= (-0.666667)) then
+      return (-0.666667);
+
+   else
+
+      local _cond_28 = false;
+      _cond_28 = (x >= 0.666667);
+      if _cond_28 then
+         return 0.666667;
+
+      else
+
+         return (x + ((-0.333333) * x * x * x));
+
+      end
+
+   end
+
+end
+
 local Util_pitchToRate_1024_c0 = ffi.new("double[33]", {0.189842,0.191326,0.198689,0.219425,0.265677,0.356438,0.520651,0.801560,1.262758,1.996562,3.135544,4.868347,7.461281,11.287715,16.867996,24.923305,36.448521,52.809903,75.876616,108.197225,153.232414,215.672344,301.846626,420.298038,582.505178,803.812129,1104.880165,1513.124126,2065.373952,2810.230550,3812.902888,5159.525580,6963.761469});
 local Util_pitchToRate_1024_c1 = ffi.new("double[33]", {0.010913,0.010176,0.008334,0.004867,(-0.000939),(-0.010061),(-0.023820),(-0.044002),(-0.073002),(-0.114025),(-0.171341),(-0.250621),(-0.359381),(-0.507548),(-0.708208),(-0.978575),(-1.341250),(-1.825848),(-2.471123),(-3.327721),(-4.461658),(-5.959006),(-7.931626),(-10.525312),(-13.929212),(-18.387588),(-24.219785),(-31.835151),(-41.769557),(-54.706455),(-71.541226),(-93.422592),(-121.823163)});
 local Util_pitchToRate_1024_c2 = ffi.new("double[33]", {0.000356,0.000447,0.000562,0.000707,0.000889,0.001119,0.001407,0.001769,0.002225,0.002799,0.003520,0.004426,0.005567,0.007001,0.008805,0.011074,0.013927,0.017515,0.022028,0.027704,0.034841,0.043818,0.055107,0.069305,0.087163,0.109617,0.137862,0.173377,0.218054,0.274227,0.344892,0.433780,0.545543});
@@ -270,9 +291,9 @@ function this.Tricore__ctx_type_0_init()
    _ctx.rate = 0.000000;
    _ctx.phase = 0.000000;
    _ctx.direction = false;
-   _ctx._inst27 = this.Util__ctx_type_0_init();
-   _ctx._inst26 = this.Util__ctx_type_0_init();
-   _ctx._inst24 = this.Util__ctx_type_1_init();
+   _ctx._inst34 = this.Util__ctx_type_0_init();
+   _ctx._inst33 = this.Util__ctx_type_0_init();
+   _ctx._inst31 = this.Util__ctx_type_1_init();
    this.Tricore_default(_ctx);
    return _ctx;
 
@@ -284,21 +305,21 @@ end
 
 function this.Tricore_process(_ctx,cv,reset,disable)
    local out = 0.000000;
-   if this.Util_change(_ctx._inst24,cv) then
+   if this.Util_change(_ctx._inst31,cv) then
       _ctx.rate = (4.000000 * this.Util_cvToRate_1024(cv));
 
    end
    local new_phase = 0.0;
-   local _if_40 = 0.0;
+   local _if_47 = 0.0;
    if _ctx.direction then
-      _if_40 = _ctx.rate;
+      _if_47 = _ctx.rate;
    else
 
-      _if_40 = (- _ctx.rate);
+      _if_47 = (- _ctx.rate);
    end
-   new_phase = (_ctx.phase + _if_40);
+   new_phase = (_ctx.phase + _if_47);
    local bdisable = (disable > 0.500000);
-   if (this.Util_edge(_ctx._inst26,(reset > 0.000000)) or this.Util_edge(_ctx._inst27,bdisable)) then
+   if (this.Util_edge(_ctx._inst33,(reset > 0.000000)) or this.Util_edge(_ctx._inst34,bdisable)) then
       _ctx.reset_phase = _ctx.phase;
       _ctx.reset_state = true;
       new_phase = 0.000000;
@@ -310,9 +331,9 @@ function this.Tricore_process(_ctx,cv,reset,disable)
 
    else
 
-      local _cond_42 = false;
-      _cond_42 = (new_phase < (-1024.000000));
-      if _cond_42 then
+      local _cond_49 = false;
+      _cond_49 = (new_phase < (-1024.000000));
+      if _cond_49 then
          _ctx.direction = true;
 
       end
@@ -325,9 +346,9 @@ function this.Tricore_process(_ctx,cv,reset,disable)
       _ctx.phase = new_phase;
    end
    if _ctx.reset_state then
-      local _cond_45 = false;
-      _cond_45 = ((this.abs(_ctx.reset_phase) > 10.000000) or bdisable);
-      if _cond_45 then
+      local _cond_52 = false;
+      _cond_52 = ((this.abs(_ctx.reset_phase) > 10.000000) or bdisable);
+      if _cond_52 then
          local reset_speed = 0.0;
          if bdisable then
             reset_speed = 0.010000;
@@ -339,9 +360,9 @@ function this.Tricore_process(_ctx,cv,reset,disable)
 
       else
 
-         local _cond_44 = false;
-         _cond_44 = (_ctx.reset_phase > 10.000000);
-         if (not _cond_44) then
+         local _cond_51 = false;
+         _cond_51 = (_ctx.reset_phase > 10.000000);
+         if (not _cond_51) then
             _ctx.reset_phase = 0.000000;
          end
          _ctx.reset_state = false;
@@ -392,7 +413,7 @@ end
 function this.Swept__ctx_type_0_init()
    local _ctx = {};
    _ctx.out = 0.000000;
-   _ctx._inst47 = this.Util__ctx_type_0_init();
+   _ctx._inst54 = this.Util__ctx_type_0_init();
    return _ctx;
 
 end
@@ -405,7 +426,7 @@ function this.Swept_process(_ctx,gate,start,end_,rate)
    local a_rate = (1.000000 / ((100.000000 * rate) + 0.010000));
    local bgate = (gate > 0.500000);
    _ctx.out = (_ctx.out + (((end_ * 1024.000000) + (- _ctx.out)) * rate * 0.004000));
-   if this.Util_edge(_ctx._inst47,bgate) then
+   if this.Util_edge(_ctx._inst54,bgate) then
       _ctx.out = (start * 1024.000000);
 
    end
@@ -445,20 +466,16 @@ function this.Swept_default(_ctx)
 
 end
 
-local Saturate_table_c0 = ffi.new("double[129]", {(-1.001374),(-1.006906),(-0.998630),(-0.998630),(-0.998630),(-0.998630),(-0.998630),(-0.998630),(-0.998630),(-0.998630),(-0.998629),(-0.998629),(-0.998629),(-0.998628),(-0.998627),(-0.998625),(-0.998624),(-0.998621),(-0.998617),(-0.998612),(-0.999975),(-0.999965),(-0.999952),(-0.999933),(-0.999907),(-0.999871),(-0.999821),(-0.999753),(-0.999658),(-0.999529),(-0.999350),(-0.999106),(-0.998772),(-0.998316),(-0.997694),(-0.996849),(-0.995702),(-0.994152),(-0.992060),(-0.989247),(-0.985477),(-0.980441),(-0.973743),(-0.964872),(-0.953183),(-0.937867),(-0.917930),(-0.892172),(-0.859190),(-0.817409),(-0.765175),(-0.700938),(-0.623579),(-0.532923),(-0.430471),(-0.320268),(-0.209647),(-0.109223),(-0.031177),0.014939,0.028028,0.018870,0.005421,0.000000,0.000000,(-0.005421),(-0.018870),(-0.028028),(-0.014939),0.031177,0.109223,0.209647,0.320268,0.430471,0.532923,0.623579,0.700938,0.765175,0.817409,0.859190,0.892172,0.917930,0.937867,0.953183,0.964872,0.973743,0.980441,0.985477,0.989247,0.992060,0.994152,0.995702,0.996849,0.997694,0.998316,0.998772,0.999106,0.999350,0.999529,0.999658,0.999753,0.999821,0.999871,0.999907,0.999933,0.999952,0.999965,0.999975,0.998612,0.998617,0.998621,0.998624,0.998625,0.998627,0.998628,0.998629,0.998629,0.998629,0.998630,0.998630,0.998630,0.998630,0.998630,0.998630,0.998630,0.998630,1.006906,1.001374,1.001374});
-local Saturate_table_c1 = ffi.new("double[129]", {(-0.000000),(-0.000000),0.000000,0.000000,0.000000,(-0.000000),0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000001,0.000001,0.000001,0.000002,0.000003,0.000004,0.000006,0.000008,0.000012,0.000016,0.000023,0.000033,0.000047,0.000067,0.000095,0.000135,0.000191,0.000270,0.000381,0.000538,0.000759,0.001071,0.001508,0.002121,0.002980,0.004181,0.005858,0.008196,0.011447,0.015958,0.022199,0.030808,0.042638,0.058822,0.080842,0.110598,0.150459,0.203255,0.272141,0.360212,0.469700,0.600552,0.748290,0.901487,1.040196,1.138141,1.172059,1.137998,1.064638,1.005717,1.005717,1.064638,1.137998,1.172059,1.138141,1.040196,0.901487,0.748290,0.600552,0.469700,0.360212,0.272141,0.203255,0.150459,0.110598,0.080842,0.058822,0.042638,0.030808,0.022199,0.015958,0.011447,0.008196,0.005858,0.004181,0.002980,0.002121,0.001508,0.001071,0.000759,0.000538,0.000381,0.000270,0.000191,0.000135,0.000095,0.000067,0.000047,0.000033,0.000023,0.000016,0.000012,0.000008,0.000006,0.000004,0.000003,0.000002,0.000001,0.000001,0.000001,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,(-0.000000),0.000000,0.000000,0.000000,(-0.000000),(-0.000000),0.000000});
-local Saturate_table_c2 = ffi.new("double[129]", {(-0.000000),0.000000,(-0.000000),0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000001,0.000001,0.000001,0.000002,0.000003,0.000005,0.000007,0.000010,0.000014,0.000020,0.000030,0.000043,0.000063,0.000092,0.000133,0.000194,0.000282,0.000410,0.000597,0.000868,0.001263,0.001836,0.002669,0.003879,0.005634,0.008176,0.011851,0.017149,0.024754,0.035602,0.050937,0.072327,0.101579,0.140422,0.189749,0.248174,0.309805,0.361810,0.383764,0.352153,0.252165,0.092126,(-0.092126),(-0.252165),(-0.352153),(-0.383764),(-0.361810),(-0.309805),(-0.248174),(-0.189749),(-0.140422),(-0.101579),(-0.072327),(-0.050937),(-0.035602),(-0.024754),(-0.017149),(-0.011851),(-0.008176),(-0.005634),(-0.003879),(-0.002669),(-0.001836),(-0.001263),(-0.000868),(-0.000597),(-0.000410),(-0.000282),(-0.000194),(-0.000133),(-0.000092),(-0.000063),(-0.000043),(-0.000030),(-0.000020),(-0.000014),(-0.000010),(-0.000007),(-0.000005),(-0.000003),(-0.000002),(-0.000001),(-0.000001),(-0.000001),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000),0.000000,(-0.000000),0.000000,(-0.000000)});
+local Saturate_table_c0 = ffi.new("double[26]", {(-1.000000),(-0.999999),(-0.999998),(-0.999989),(-0.999938),(-0.999668),(-0.998293),(-0.991621),(-0.961512),(-0.840904),(-0.470267),0.000402,0.000000,(-0.000402),0.470267,0.840904,0.961512,0.991621,0.998293,0.999668,0.999938,0.999989,0.999998,1.000000,1.000000,1.000000});
+local Saturate_table_c1 = ffi.new("double[26]", {0.000000,0.000000,0.000000,0.000002,0.000015,0.000091,0.000540,0.003120,0.017423,0.091625,0.414243,1.085316,0.929674,1.085316,0.414243,0.091625,0.017423,0.003120,0.000540,0.000091,0.000015,0.000002,0.000000,0.000000,0.000000,(-0.000000)});
+local Saturate_table_c2 = ffi.new("double[26]", {0.000000,0.000000,0.000000,0.000000,0.000001,0.000006,0.000043,0.000292,0.001990,0.013391,0.083468,0.322510,0.000000,(-0.322510),(-0.083468),(-0.013391),(-0.001990),(-0.000292),(-0.000043),(-0.000006),(-0.000001),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000)});
 function this.Saturate_table(x)
-   local index = this.clip(this.int((5.291667 * (x + 12.000000))),0,127);
+   local index = this.clip(this.int((x + 12.000000)),0,24);
    return (this.get(this.wrap_array(Saturate_table_c0),index) + (x * (this.get(this.wrap_array(Saturate_table_c1),index) + (this.get(this.wrap_array(Saturate_table_c2),index) * x))));
 
 end
 
 function this.Saturate_process(x)
-   if (x == 0.000000) then
-      return 0.000000;
-
-   end
    return this.Saturate_table(x);
 
 end
@@ -486,8 +503,8 @@ function this.Ahr__ctx_type_0_init()
    _ctx.rate = 0.000000;
    _ctx.out = 0.000000;
    _ctx.hold_phase = 0.000000;
-   _ctx._inst65 = this.Util__ctx_type_0_init();
-   _ctx._inst63 = this.Util__ctx_type_0_init();
+   _ctx._inst70 = this.Util__ctx_type_0_init();
+   _ctx._inst68 = this.Util__ctx_type_0_init();
    return _ctx;
 
 end
@@ -502,7 +519,7 @@ function this.Ahr_do(_ctx,gate,a,h,r)
    local hold = 2;
    local reset = 3;
    local bgate = (gate > 0.000000);
-   if this.Util_edge(_ctx._inst63,bgate) then
+   if this.Util_edge(_ctx._inst68,bgate) then
       _ctx.state = reset;
 
    end
@@ -513,7 +530,7 @@ function this.Ahr_do(_ctx,gate,a,h,r)
 
       resetting = 0.000000;
    end
-   if this.Util_edge(_ctx._inst65,(_ctx.out > 1024.000000)) then
+   if this.Util_edge(_ctx._inst70,(_ctx.out > 1024.000000)) then
       _ctx.hold_phase = 0.000000;
       _ctx.state = hold;
 
@@ -548,8 +565,8 @@ function this.Ahr_do(_ctx,gate,a,h,r)
 
    end
    _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.005000));
-   local _tuple_90 = { field_0 = this.clip((_ctx.out * 0.000977),0.000000,1.000000), field_1 = resetting };
-   return _tuple_90;
+   local _tuple_95 = { field_0 = this.clip((_ctx.out * 0.000977),0.000000,1.000000), field_1 = resetting };
+   return _tuple_95;
 
 end
 
@@ -558,7 +575,7 @@ function this.Ahr__ctx_type_1_init()
    _ctx.knob3 = 0.000000;
    _ctx.knob2 = 0.000000;
    _ctx.knob1 = 0.000000;
-   _ctx._inst74 = this.Ahr__ctx_type_0_init();
+   _ctx._inst79 = this.Ahr__ctx_type_0_init();
    return _ctx;
 
 end
@@ -568,8 +585,8 @@ function this.Ahr_process_init()
 end
 
 function this.Ahr_process(_ctx,gate)
-   local _call_93 = this.Ahr_do(_ctx._inst74,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
-   return _call_93;
+   local _call_98 = this.Ahr_do(_ctx._inst79,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
+   return _call_98;
 
 end
 
@@ -622,11 +639,11 @@ end
 
 function this.Kick__ctx_type_0_init()
    local _ctx = {};
-   _ctx._inst111 = this.Noise__ctx_type_1_init();
-   _ctx._inst110 = this.Ahr__ctx_type_0_init();
-   _ctx._inst109 = this.Tricore__ctx_type_0_init();
-   _ctx._inst108 = this.Swept__ctx_type_0_init();
-   _ctx._inst107 = this.Ahr__ctx_type_0_init();
+   _ctx._inst116 = this.Noise__ctx_type_1_init();
+   _ctx._inst115 = this.Ahr__ctx_type_0_init();
+   _ctx._inst114 = this.Tricore__ctx_type_0_init();
+   _ctx._inst113 = this.Swept__ctx_type_0_init();
+   _ctx._inst112 = this.Ahr__ctx_type_0_init();
    return _ctx;
 
 end
@@ -638,15 +655,15 @@ end
 function this.Kick_do(_ctx,gate,odecay,pitch,swept,noise)
    local osc_env = 0.0;
    local env_reset = 0.0;
-   local _call_122 = this.Ahr_do(_ctx._inst107,gate,0.005000,(0.100000 + odecay),(odecay + 0.010000));
-   osc_env = _call_122[1]; env_reset = _call_122[2]; 
-   local cv = this.Swept_process(_ctx._inst108,(1.000000 + (- env_reset)),(pitch + (swept * 0.400000)),pitch,0.100000);
-   local osc = this.Tricore_process(_ctx._inst109,cv,0.000000,env_reset);
+   local _call_127 = this.Ahr_do(_ctx._inst112,gate,0.005000,(0.100000 + odecay),(odecay + 0.010000));
+   osc_env = _call_127[1]; env_reset = _call_127[2]; 
+   local cv = this.Swept_process(_ctx._inst113,(1.000000 + (- env_reset)),(pitch + (swept * 0.400000)),pitch,0.100000);
+   local osc = this.Tricore_process(_ctx._inst114,cv,0.000000,env_reset);
    local osc_sat = this.Saturate_process((1.500000 * osc));
    local noise_env = 0.0;
-   local _call_123 = this.Ahr_do(_ctx._inst110,gate,0.001000,0.010000,((noise * 0.010000) + 0.001000));
-   noise_env = _call_123[1]; 
-   local noise_osc = (noise * this.Noise_process(_ctx._inst111,1.000000) * 0.333333);
+   local _call_128 = this.Ahr_do(_ctx._inst115,gate,0.001000,0.010000,((noise * 0.010000) + 0.001000));
+   noise_env = _call_128[1]; 
+   local noise_osc = (noise * this.Noise_process(_ctx._inst116,1.000000) * 0.333333);
    return ((osc_env * osc_sat) + (noise_env * noise_osc));
 
 end
@@ -657,7 +674,7 @@ function this.Kick__ctx_type_1_init()
    _ctx.pitch = 0.000000;
    _ctx.odecay = 0.000000;
    _ctx.noise = 0.000000;
-   _ctx._inst113 = this.Kick__ctx_type_0_init();
+   _ctx._inst118 = this.Kick__ctx_type_0_init();
    return _ctx;
 
 end
@@ -667,7 +684,7 @@ function this.Kick_process_init()
 end
 
 function this.Kick_process(_ctx,gate)
-   return this.Kick_do(_ctx._inst113,gate,_ctx.odecay,_ctx.pitch,_ctx.swept,_ctx.noise);
+   return this.Kick_do(_ctx._inst118,gate,_ctx.odecay,_ctx.pitch,_ctx.swept,_ctx.noise);
 
 end
 

@@ -57,6 +57,23 @@ this.Util_average2 = function(_ctx,x1){
    _ctx.x0 = x1;
    return result;
 }
+this.Util_cubic_clipper = function(x){
+   if((x <= (-0.666667))){
+      return (-0.666667);
+   }
+   else
+   {
+      var _cond_20 = false;
+      _cond_20 = (x >= 0.666667);
+      if(_cond_20){
+         return 0.666667;
+      }
+      else
+      {
+         return (x + ((-0.333333) * x * x * x));
+      }
+   }
+}
 var Util_pitchToRate_1024_c0 = [0.189842,0.191326,0.198689,0.219425,0.265677,0.356438,0.520651,0.801560,1.262758,1.996562,3.135544,4.868347,7.461281,11.287715,16.867996,24.923305,36.448521,52.809903,75.876616,108.197225,153.232414,215.672344,301.846626,420.298038,582.505178,803.812129,1104.880165,1513.124126,2065.373952,2810.230550,3812.902888,5159.525580,6963.761469];
 var Util_pitchToRate_1024_c1 = [0.010913,0.010176,0.008334,0.004867,(-0.000939),(-0.010061),(-0.023820),(-0.044002),(-0.073002),(-0.114025),(-0.171341),(-0.250621),(-0.359381),(-0.507548),(-0.708208),(-0.978575),(-1.341250),(-1.825848),(-2.471123),(-3.327721),(-4.461658),(-5.959006),(-7.931626),(-10.525312),(-13.929212),(-18.387588),(-24.219785),(-31.835151),(-41.769557),(-54.706455),(-71.541226),(-93.422592),(-121.823163)];
 var Util_pitchToRate_1024_c2 = [0.000356,0.000447,0.000562,0.000707,0.000889,0.001119,0.001407,0.001769,0.002225,0.002799,0.003520,0.004426,0.005567,0.007001,0.008805,0.011074,0.013927,0.017515,0.022028,0.027704,0.034841,0.043818,0.055107,0.069305,0.087163,0.109617,0.137862,0.173377,0.218054,0.274227,0.344892,0.433780,0.545543];
@@ -109,11 +126,11 @@ this.Polycv_velToCV = function(vel){
    return (this.real(vel) * 0.007874);
 }
 this.Polycv_velToGate = function(vel){
-   var _if_33 = 0.0;
-   if((vel > (0|0)))_if_33 = (this.real(vel) * 0.007874);
+   var _if_40 = 0.0;
+   if((vel > (0|0)))_if_40 = (this.real(vel) * 0.007874);
    else
-   _if_33 = 0.000000;
-   return _if_33;
+   _if_40 = 0.000000;
+   return _if_40;
 }
 this.Polycv__ctx_type_2_init = function(){
    var _ctx = {};
@@ -126,9 +143,9 @@ this.Polycv_poly_noteOn = function(_ctx,note,velocity){
    var i = ((0|0)|0);
    var found = false;
    while(((i < (4|0)) && this.not(found))){
-      var _cond_34 = false;
-      _cond_34 = (this.get(_ctx.vel,i) == (0|0));
-      if(_cond_34){
+      var _cond_41 = false;
+      _cond_41 = (this.get(_ctx.vel,i) == (0|0));
+      if(_cond_41){
          this.set(_ctx.notes,i,note);
          this.set(_ctx.vel,i,velocity);
          found = true;
@@ -141,9 +158,9 @@ this.Polycv_poly_noteOff = function(_ctx,note){
    var i = ((0|0)|0);
    var found = false;
    while(((i < (4|0)) && this.not(found))){
-      var _cond_35 = false;
-      _cond_35 = (this.get(_ctx.notes,i) == note);
-      if(_cond_35){
+      var _cond_42 = false;
+      _cond_42 = (this.get(_ctx.notes,i) == note);
+      if(_cond_42){
          this.set(_ctx.vel,i,(0|0));
          found = true;
       }
@@ -164,8 +181,8 @@ this.Polycv_polyState = function(_ctx){
    var gate2 = this.Polycv_velToGate(this.get(_ctx.vel,(1|0)));
    var gate3 = this.Polycv_velToGate(this.get(_ctx.vel,(2|0)));
    var gate4 = this.Polycv_velToGate(this.get(_ctx.vel,(3|0)));
-   var _tuple_36 = { field_0 : note1, field_1 : vel1, field_2 : gate1, field_3 : note2, field_4 : vel2, field_5 : gate2, field_6 : note3, field_7 : vel3, field_8 : gate3, field_9 : note4, field_10 : vel4, field_11 : gate4 };
-   return _tuple_36;
+   var _tuple_43 = { field_0 : note1, field_1 : vel1, field_2 : gate1, field_3 : note2, field_4 : vel2, field_5 : gate2, field_6 : note3, field_7 : vel3, field_8 : gate3, field_9 : note4, field_10 : vel4, field_11 : gate4 };
+   return _tuple_43;
 }
 this.Polycv__ctx_type_3_init = function(){
    var _ctx = {};
@@ -176,15 +193,15 @@ this.Polycv__ctx_type_3_init = function(){
 this.Polycv_process_init = function() { return this.Polycv__ctx_type_3_init();}
 this.Polycv_process = function(_ctx,c){
    _ctx.channel_in = (c|0);
-   var _call_38 = this.Polycv_polyState(_ctx.poly);
-   return _call_38;
+   var _call_45 = this.Polycv_polyState(_ctx.poly);
+   return _call_45;
 }
 this.Polycv_noteOn_init = function() { return this.Polycv__ctx_type_3_init();}
 this.Polycv_noteOn = function(_ctx,note,velocity,channel){
    if((_ctx.channel_in == channel)){
-      var _cond_40 = false;
-      _cond_40 = (velocity > (0|0));
-      if(_cond_40){
+      var _cond_47 = false;
+      _cond_47 = (velocity > (0|0));
+      if(_cond_47){
          this.Polycv_poly_noteOn(_ctx.poly,note,velocity);
       }
       else

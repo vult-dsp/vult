@@ -1,6 +1,6 @@
 
 fun process(input:real) : real {
-   val cv = Ramp.do(0.1, 0.0, 0.7);
+   val cv = Ramp.do(1.0, 0.0, 0.7);
    return Saw_blit.process(cv);
 }
 and noteOn(note:int,velocity:int,channel:int){ }

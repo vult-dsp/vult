@@ -101,6 +101,26 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    return result;
 }
 
+fix16_t Util_cubic_clipper(fix16_t x){
+   uint8_t _cond_21;
+   _cond_21 = (x <= (-0xaaaa /* -0.666667 */));
+   if(_cond_21){
+      return (-0xaaaa /* -0.666667 */);
+   }
+   else
+   {
+      uint8_t _cond_20;
+      _cond_20 = (x >= 0xaaaa /* 0.666667 */);
+      if(_cond_20){
+         return 0xaaaa /* 0.666667 */;
+      }
+      else
+      {
+         return fix_add(x,fix_mul(fix_mul(fix_mul((-0x5555 /* -0.333333 */),x),x),x));
+      }
+   }
+}
+
 fix16_t Util_pitchToRate_1024(fix16_t pitch){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
@@ -148,7 +168,7 @@ fix16_t Util_cvTokHz(fix16_t cv){
 void Swept__ctx_type_0_init(Swept__ctx_type_0 &_output_){
    Swept__ctx_type_0 _ctx;
    _ctx.out = 0x0 /* 0.000000 */;
-   Util__ctx_type_0_init(_ctx._inst16);
+   Util__ctx_type_0_init(_ctx._inst23);
    _output_ = _ctx;
    return ;
 }
@@ -164,9 +184,9 @@ fix16_t Swept_process(Swept__ctx_type_0 &_ctx, fix16_t gate, fix16_t start, fix1
    uint8_t bgate;
    bgate = (gate > 0x8000 /* 0.500000 */);
    _ctx.out = fix_add(_ctx.out,fix_mul(fix_mul(fix_add(fix_mul(end,0x4000000 /* 1024.000000 */),(- _ctx.out)),rate),0x106 /* 0.004000 */));
-   uint8_t _cond_22;
-   _cond_22 = Util_edge(_ctx._inst16,bgate);
-   if(_cond_22){
+   uint8_t _cond_29;
+   _cond_29 = Util_edge(_ctx._inst23,bgate);
+   if(_cond_29){
       _ctx.out = fix_mul(start,0x4000000 /* 1024.000000 */);
    }
    return fix_mul(_ctx.out,0x40 /* 0.000977 */);

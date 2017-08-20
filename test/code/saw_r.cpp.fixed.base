@@ -101,6 +101,26 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    return result;
 }
 
+fix16_t Util_cubic_clipper(fix16_t x){
+   uint8_t _cond_21;
+   _cond_21 = (x <= (-0xaaaa /* -0.666667 */));
+   if(_cond_21){
+      return (-0xaaaa /* -0.666667 */);
+   }
+   else
+   {
+      uint8_t _cond_20;
+      _cond_20 = (x >= 0xaaaa /* 0.666667 */);
+      if(_cond_20){
+         return 0xaaaa /* 0.666667 */;
+      }
+      else
+      {
+         return fix_add(x,fix_mul(fix_mul(fix_mul((-0x5555 /* -0.333333 */),x),x),x));
+      }
+   }
+}
+
 fix16_t Util_pitchToRate_1024(fix16_t pitch){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
@@ -149,7 +169,7 @@ void Saw_r__ctx_type_0_init(Saw_r__ctx_type_0 &_output_){
    Saw_r__ctx_type_0 _ctx;
    _ctx.phase = 0x0 /* 0.000000 */;
    _ctx.inc = 0x0 /* 0.000000 */;
-   Util__ctx_type_1_init(_ctx._inst16);
+   Util__ctx_type_1_init(_ctx._inst23);
    Saw_r_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -161,15 +181,15 @@ void Saw_r_process_init(Saw_r__ctx_type_0 &_output_){
 }
 
 fix16_t Saw_r_process(Saw_r__ctx_type_0 &_ctx, fix16_t cv){
-   uint8_t _cond_26;
-   _cond_26 = Util_change(_ctx._inst16,cv);
-   if(_cond_26){
+   uint8_t _cond_33;
+   _cond_33 = Util_change(_ctx._inst23,cv);
+   if(_cond_33){
       _ctx.inc = Util_cvToRate(cv);
    }
    fix16_t i;
-   uint8_t _cond_29;
-   _cond_29 = (_ctx.inc < 0x0 /* 0.000000 */);
-   if(_cond_29){ i = 0x0 /* 0.000000 */; }
+   uint8_t _cond_36;
+   _cond_36 = (_ctx.inc < 0x0 /* 0.000000 */);
+   if(_cond_36){ i = 0x0 /* 0.000000 */; }
    else
    { i = _ctx.inc; }
    _ctx.phase = (fix_add(fix_mul(0x20000 /* 2.000000 */,_ctx.inc),_ctx.phase) % 0x20000 /* 2.000000 */);
@@ -177,18 +197,18 @@ fix16_t Saw_r_process(Saw_r__ctx_type_0 &_ctx, fix16_t cv){
    ph = fix_add(_ctx.phase,(-0x10000 /* -1.000000 */));
    fix16_t o;
    o = 0x0 /* 0.000000 */;
-   uint8_t _cond_28;
-   _cond_28 = (ph >= fix_add(0x10000 /* 1.000000 */,(- i)));
-   if(_cond_28){
+   uint8_t _cond_35;
+   _cond_35 = (ph >= fix_add(0x10000 /* 1.000000 */,(- i)));
+   if(_cond_35){
       fix16_t b;
       b = fix_div(fix_add(fix_add(0x10000 /* 1.000000 */,(- i)),(- ph)),i);
       o = fix_add(fix_mul(b,fix_abs(b)),ph);
    }
    else
    {
-      uint8_t _cond_27;
-      _cond_27 = (ph <= fix_add(i,(-0x10000 /* -1.000000 */)));
-      if(_cond_27){
+      uint8_t _cond_34;
+      _cond_34 = (ph <= fix_add(i,(-0x10000 /* -1.000000 */)));
+      if(_cond_34){
          fix16_t b;
          b = fix_div(fix_add(fix_add(i,(-0x10000 /* -1.000000 */)),(- ph)),i);
          o = fix_add(fix_mul(b,fix_abs(b)),ph);

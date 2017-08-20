@@ -101,6 +101,26 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    return result;
 }
 
+fix16_t Util_cubic_clipper(fix16_t x){
+   uint8_t _cond_21;
+   _cond_21 = (x <= (-0xaaaa /* -0.666667 */));
+   if(_cond_21){
+      return (-0xaaaa /* -0.666667 */);
+   }
+   else
+   {
+      uint8_t _cond_20;
+      _cond_20 = (x >= 0xaaaa /* 0.666667 */);
+      if(_cond_20){
+         return 0xaaaa /* 0.666667 */;
+      }
+      else
+      {
+         return fix_add(x,fix_mul(fix_mul(fix_mul((-0x5555 /* -0.333333 */),x),x),x));
+      }
+   }
+}
+
 fix16_t Util_pitchToRate_1024(fix16_t pitch){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
@@ -149,7 +169,7 @@ void Saw_ptr2__ctx_type_0_init(Saw_ptr2__ctx_type_0 &_output_){
    Saw_ptr2__ctx_type_0 _ctx;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
-   Util__ctx_type_1_init(_ctx._inst16);
+   Util__ctx_type_1_init(_ctx._inst23);
    Saw_ptr2_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -161,9 +181,9 @@ void Saw_ptr2_process_init(Saw_ptr2__ctx_type_0 &_output_){
 }
 
 fix16_t Saw_ptr2_process(Saw_ptr2__ctx_type_0 &_ctx, fix16_t cv){
-   uint8_t _cond_26;
-   _cond_26 = Util_change(_ctx._inst16,cv);
-   if(_cond_26){
+   uint8_t _cond_33;
+   _cond_33 = Util_change(_ctx._inst23,cv);
+   if(_cond_33){
       _ctx.rate = Util_cvToRate(cv);
    }
    fix16_t out;
@@ -172,21 +192,21 @@ fix16_t Saw_ptr2_process(Saw_ptr2__ctx_type_0 &_ctx, fix16_t cv){
    fix16_t s2;
    s2 = fix_add(s1,_ctx.rate);
    _ctx.phase = fix_add(_ctx.phase,_ctx.rate);
-   uint8_t _cond_29;
-   _cond_29 = (_ctx.phase > 0x10000 /* 1.000000 */);
-   if(_cond_29){ _ctx.phase = fix_add(_ctx.phase,(-0x10000 /* -1.000000 */)); }
-   uint8_t _cond_28;
-   _cond_28 = (_ctx.phase < s1);
-   if(_cond_28){
+   uint8_t _cond_36;
+   _cond_36 = (_ctx.phase > 0x10000 /* 1.000000 */);
+   if(_cond_36){ _ctx.phase = fix_add(_ctx.phase,(-0x10000 /* -1.000000 */)); }
+   uint8_t _cond_35;
+   _cond_35 = (_ctx.phase < s1);
+   if(_cond_35){
       fix16_t d;
       d = fix_div(_ctx.phase,_ctx.rate);
       out = fix_add(0x10000 /* 1.000000 */,fix_mul(d,fix_add((- d),s2)));
    }
    else
    {
-      uint8_t _cond_27;
-      _cond_27 = (_ctx.phase < s2);
-      if(_cond_27){
+      uint8_t _cond_34;
+      _cond_34 = (_ctx.phase < s2);
+      if(_cond_34){
          fix16_t d;
          d = fix_div(_ctx.phase,_ctx.rate);
          out = fix_add(0x30000 /* 3.000000 */,fix_mul(d,fix_add(fix_add((-0x40000 /* -4.000000 */),d),s2)));

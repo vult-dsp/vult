@@ -1,7 +1,9 @@
 
 fun process(input:real) : real {
+   val i = Saw_eptr.process(0.1);
    val cv = Ramp.do(1.0, 0.0, 0.7);
-   return Tricore.process(cv, 0.0, 0.0);
+   val q = Ramp.do(0.1, 0.0, 1.0);
+   return Svf.process(i, cv, q, 0);
 }
 and noteOn(note:int,velocity:int,channel:int){ }
 and noteOff(note:int,channel:int){ }

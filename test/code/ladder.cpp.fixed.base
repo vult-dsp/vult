@@ -101,6 +101,26 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    return result;
 }
 
+fix16_t Util_cubic_clipper(fix16_t x){
+   uint8_t _cond_21;
+   _cond_21 = (x <= (-0xaaaa /* -0.666667 */));
+   if(_cond_21){
+      return (-0xaaaa /* -0.666667 */);
+   }
+   else
+   {
+      uint8_t _cond_20;
+      _cond_20 = (x >= 0xaaaa /* 0.666667 */);
+      if(_cond_20){
+         return 0xaaaa /* 0.666667 */;
+      }
+      else
+      {
+         return fix_add(x,fix_mul(fix_mul(fix_mul((-0x5555 /* -0.333333 */),x),x),x));
+      }
+   }
+}
+
 fix16_t Util_pitchToRate_1024(fix16_t pitch){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
@@ -145,33 +165,6 @@ fix16_t Util_cvTokHz(fix16_t cv){
    return fix_add(fix_get(fix_wrap_array(Util_cvTokHz_c0),index),fix_mul(cv,fix_add(fix_get(fix_wrap_array(Util_cvTokHz_c1),index),fix_mul(fix_get(fix_wrap_array(Util_cvTokHz_c2),index),cv))));
 }
 
-fix16_t Saturate_table(fix16_t x){
-   int index;
-   index = int_clip(fix_to_int(fix_mul(0x54aaa /* 5.291667 */,fix_add(x,0xc0000 /* 12.000000 */))),0,127);
-   return fix_add(fix_get(fix_wrap_array(Saturate_table_c0),index),fix_mul(x,fix_add(fix_get(fix_wrap_array(Saturate_table_c1),index),fix_mul(fix_get(fix_wrap_array(Saturate_table_c2),index),x))));
-}
-
-fix16_t Saturate_process(fix16_t x){
-   uint8_t _cond_22;
-   _cond_22 = (x == 0x0 /* 0.000000 */);
-   if(_cond_22){
-      return 0x0 /* 0.000000 */;
-   }
-   return Saturate_table(x);
-}
-
-void Saturate_noteOn(int note, int velocity, int channel){
-}
-
-void Saturate_noteOff(int note, int channel){
-}
-
-void Saturate_controlChange(int control, int value, int channel){
-}
-
-void Saturate_default(){
-}
-
 fix16_t Ladder_tune(fix16_t cut){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x7f0000 /* 127.000000 */,cut)),0,127);
@@ -180,18 +173,18 @@ fix16_t Ladder_tune(fix16_t cut){
 
 void Ladder_ladder_step(fix16_t input, fix16_t fh, fix16_t res, fix16_t (&p)[4], fix16_t (&dp)[4]){
    fix16_t w0;
-   w0 = Saturate_process(fix_add(input,fix_mul(fix_mul((-0x40000 /* -4.000000 */),res),fix_get(p,3))));
+   w0 = Util_cubic_clipper(fix_add(input,fix_mul(fix_mul((-0x40000 /* -4.000000 */),res),fix_get(p,3))));
    fix16_t w1;
-   w1 = Saturate_process(fix_get(p,0));
+   w1 = Util_cubic_clipper(fix_get(p,0));
    fix_set(dp,0,fix_mul(fix_add(w0,(- w1)),fh));
    fix16_t w3;
-   w3 = Saturate_process(fix_get(p,1));
+   w3 = Util_cubic_clipper(fix_get(p,1));
    fix_set(dp,1,fix_mul(fix_add(w1,(- w3)),fh));
    fix16_t w5;
-   w5 = Saturate_process(fix_get(p,2));
+   w5 = Util_cubic_clipper(fix_get(p,2));
    fix_set(dp,2,fix_mul(fix_add(w3,(- w5)),fh));
    fix16_t w7;
-   w7 = Saturate_process(fix_get(p,3));
+   w7 = Util_cubic_clipper(fix_get(p,3));
    fix_set(dp,3,fix_mul(fix_add(w5,(- w7)),fh));
 }
 
@@ -199,7 +192,7 @@ void Ladder__ctx_type_2_init(Ladder__ctx_type_2 &_output_){
    Ladder__ctx_type_2 _ctx;
    fix_init_array(4,0x0 /* 0.000000 */,_ctx.p);
    _ctx.fh = 0x0 /* 0.000000 */;
-   Util__ctx_type_1_init(_ctx._inst26);
+   Util__ctx_type_1_init(_ctx._inst25);
    _output_ = _ctx;
    return ;
 }
@@ -214,7 +207,7 @@ fix16_t Ladder_heun(Ladder__ctx_type_2 &_ctx, fix16_t input, fix16_t cut, fix16_
    fix16_t pt[4];
    fix16_t dpt[4];
    uint8_t _cond_38;
-   _cond_38 = Util_change(_ctx._inst26,cut);
+   _cond_38 = Util_change(_ctx._inst25,cut);
    if(_cond_38){
       _ctx.fh = Ladder_tune(cut);
    }
@@ -235,7 +228,7 @@ void Ladder__ctx_type_3_init(Ladder__ctx_type_3 &_output_){
    Ladder__ctx_type_3 _ctx;
    fix_init_array(4,0x0 /* 0.000000 */,_ctx.p);
    _ctx.fh = 0x0 /* 0.000000 */;
-   Util__ctx_type_1_init(_ctx._inst29);
+   Util__ctx_type_1_init(_ctx._inst28);
    _output_ = _ctx;
    return ;
 }
@@ -248,7 +241,7 @@ void Ladder_euler_init(Ladder__ctx_type_3 &_output_){
 fix16_t Ladder_euler(Ladder__ctx_type_3 &_ctx, fix16_t input, fix16_t cut, fix16_t res){
    fix16_t dpt[4];
    uint8_t _cond_39;
-   _cond_39 = Util_change(_ctx._inst29,cut);
+   _cond_39 = Util_change(_ctx._inst28,cut);
    if(_cond_39){
       _ctx.fh = Ladder_tune(cut);
    }
@@ -262,71 +255,92 @@ fix16_t Ladder_euler(Ladder__ctx_type_3 &_ctx, fix16_t input, fix16_t cut, fix16
 
 void Ladder__ctx_type_4_init(Ladder__ctx_type_4 &_output_){
    Ladder__ctx_type_4 _ctx;
-   Ladder__ctx_type_2_init(_ctx._inst32);
+   Ladder__ctx_type_3_init(_ctx.e);
    _output_ = _ctx;
    return ;
 }
 
-void Ladder_ladder_init(Ladder__ctx_type_4 &_output_){
+void Ladder_process_euler_init(Ladder__ctx_type_4 &_output_){
    Ladder__ctx_type_4_init(_output_);
    return ;
 }
 
-fix16_t Ladder_ladder(Ladder__ctx_type_4 &_ctx, fix16_t input, fix16_t cut, fix16_t res){
-   return Ladder_heun(_ctx._inst32,input,cut,res);
+fix16_t Ladder_process_euler(Ladder__ctx_type_4 &_ctx, fix16_t input, fix16_t cut, fix16_t res){
+   Ladder_euler(_ctx.e,input,cut,res);
+   Ladder_euler(_ctx.e,input,cut,res);
+   Ladder_euler(_ctx.e,input,cut,res);
+   fix16_t out;
+   out = Ladder_euler(_ctx.e,input,cut,res);
+   return out;
 }
 
 void Ladder__ctx_type_5_init(Ladder__ctx_type_5 &_output_){
    Ladder__ctx_type_5 _ctx;
-   Ladder__ctx_type_4_init(_ctx.f);
+   Ladder__ctx_type_2_init(_ctx.h);
    _output_ = _ctx;
    return ;
 }
 
-void Ladder_process_init(Ladder__ctx_type_5 &_output_){
+void Ladder_process_heun_init(Ladder__ctx_type_5 &_output_){
    Ladder__ctx_type_5_init(_output_);
    return ;
 }
 
-fix16_t Ladder_process(Ladder__ctx_type_5 &_ctx, fix16_t input, fix16_t cut, fix16_t res){
-   Ladder_ladder(_ctx.f,input,cut,res);
-   Ladder_ladder(_ctx.f,input,cut,res);
-   Ladder_ladder(_ctx.f,input,cut,res);
+fix16_t Ladder_process_heun(Ladder__ctx_type_5 &_ctx, fix16_t input, fix16_t cut, fix16_t res){
+   Ladder_heun(_ctx.h,input,cut,res);
+   Ladder_heun(_ctx.h,input,cut,res);
+   Ladder_heun(_ctx.h,input,cut,res);
    fix16_t out;
-   out = Ladder_ladder(_ctx.f,input,cut,res);
+   out = Ladder_heun(_ctx.h,input,cut,res);
    return out;
 }
 
-void Ladder_noteOn_init(Ladder__ctx_type_5 &_output_){
-   Ladder__ctx_type_5_init(_output_);
+void Ladder__ctx_type_6_init(Ladder__ctx_type_6 &_output_){
+   Ladder__ctx_type_6 _ctx;
+   Ladder__ctx_type_5_init(_ctx._inst33);
+   _output_ = _ctx;
    return ;
 }
 
-void Ladder_noteOn(Ladder__ctx_type_5 &_ctx, int note, int velocity, int channel){
-}
-
-void Ladder_noteOff_init(Ladder__ctx_type_5 &_output_){
-   Ladder__ctx_type_5_init(_output_);
+void Ladder_process_init(Ladder__ctx_type_6 &_output_){
+   Ladder__ctx_type_6_init(_output_);
    return ;
 }
 
-void Ladder_noteOff(Ladder__ctx_type_5 &_ctx, int note, int channel){
+fix16_t Ladder_process(Ladder__ctx_type_6 &_ctx, fix16_t input, fix16_t cut, fix16_t res){
+   return Ladder_process_heun(_ctx._inst33,input,cut,res);
 }
 
-void Ladder_controlChange_init(Ladder__ctx_type_5 &_output_){
-   Ladder__ctx_type_5_init(_output_);
+void Ladder_noteOn_init(Ladder__ctx_type_6 &_output_){
+   Ladder__ctx_type_6_init(_output_);
    return ;
 }
 
-void Ladder_controlChange(Ladder__ctx_type_5 &_ctx, int control, int value, int channel){
+void Ladder_noteOn(Ladder__ctx_type_6 &_ctx, int note, int velocity, int channel){
 }
 
-void Ladder_default_init(Ladder__ctx_type_5 &_output_){
-   Ladder__ctx_type_5_init(_output_);
+void Ladder_noteOff_init(Ladder__ctx_type_6 &_output_){
+   Ladder__ctx_type_6_init(_output_);
    return ;
 }
 
-void Ladder_default(Ladder__ctx_type_5 &_ctx){
+void Ladder_noteOff(Ladder__ctx_type_6 &_ctx, int note, int channel){
+}
+
+void Ladder_controlChange_init(Ladder__ctx_type_6 &_output_){
+   Ladder__ctx_type_6_init(_output_);
+   return ;
+}
+
+void Ladder_controlChange(Ladder__ctx_type_6 &_ctx, int control, int value, int channel){
+}
+
+void Ladder_default_init(Ladder__ctx_type_6 &_output_){
+   Ladder__ctx_type_6_init(_output_);
+   return ;
+}
+
+void Ladder_default(Ladder__ctx_type_6 &_ctx){
 }
 
 

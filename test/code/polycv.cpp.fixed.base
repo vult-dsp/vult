@@ -101,6 +101,26 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    return result;
 }
 
+fix16_t Util_cubic_clipper(fix16_t x){
+   uint8_t _cond_21;
+   _cond_21 = (x <= (-0xaaaa /* -0.666667 */));
+   if(_cond_21){
+      return (-0xaaaa /* -0.666667 */);
+   }
+   else
+   {
+      uint8_t _cond_20;
+      _cond_20 = (x >= 0xaaaa /* 0.666667 */);
+      if(_cond_20){
+         return 0xaaaa /* 0.666667 */;
+      }
+      else
+      {
+         return fix_add(x,fix_mul(fix_mul(fix_mul((-0x5555 /* -0.333333 */),x),x),x));
+      }
+   }
+}
+
 fix16_t Util_pitchToRate_1024(fix16_t pitch){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
@@ -150,13 +170,13 @@ fix16_t Polycv_velToCV(int vel){
 }
 
 fix16_t Polycv_velToGate(int vel){
-   fix16_t _if_33;
-   uint8_t _cond_43;
-   _cond_43 = (vel > 0);
-   if(_cond_43){ _if_33 = fix_mul(int_to_fix(vel),0x204 /* 0.007874 */); }
+   fix16_t _if_40;
+   uint8_t _cond_50;
+   _cond_50 = (vel > 0);
+   if(_cond_50){ _if_40 = fix_mul(int_to_fix(vel),0x204 /* 0.007874 */); }
    else
-   { _if_33 = 0x0 /* 0.000000 */; }
-   return _if_33;
+   { _if_40 = 0x0 /* 0.000000 */; }
+   return _if_40;
 }
 
 void Polycv__ctx_type_2_init(Polycv__ctx_type_2 &_output_){
@@ -178,9 +198,9 @@ void Polycv_poly_noteOn(Polycv__ctx_type_2 &_ctx, int note, int velocity){
    uint8_t found;
    found = 0;
    while((i < 4) && bool_not(found)){
-      uint8_t _cond_34;
-      _cond_34 = (int_get(_ctx.vel,i) == 0);
-      if(_cond_34){
+      uint8_t _cond_41;
+      _cond_41 = (int_get(_ctx.vel,i) == 0);
+      if(_cond_41){
          int_set(_ctx.notes,i,note);
          int_set(_ctx.vel,i,velocity);
          found = 1;
@@ -200,9 +220,9 @@ void Polycv_poly_noteOff(Polycv__ctx_type_2 &_ctx, int note){
    uint8_t found;
    found = 0;
    while((i < 4) && bool_not(found)){
-      uint8_t _cond_35;
-      _cond_35 = (int_get(_ctx.notes,i) == note);
-      if(_cond_35){
+      uint8_t _cond_42;
+      _cond_42 = (int_get(_ctx.notes,i) == note);
+      if(_cond_42){
          int_set(_ctx.vel,i,0);
          found = 1;
       }
@@ -240,22 +260,22 @@ void Polycv_polyState(Polycv__ctx_type_2 &_ctx, _tuple_$_real_real_real_real_rea
    gate3 = Polycv_velToGate(int_get(_ctx.vel,2));
    fix16_t gate4;
    gate4 = Polycv_velToGate(int_get(_ctx.vel,3));
-   _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ _tuple_36;
+   _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ _tuple_43;
    {
-      _tuple_36.field_0 = note1;
-      _tuple_36.field_1 = vel1;
-      _tuple_36.field_2 = gate1;
-      _tuple_36.field_3 = note2;
-      _tuple_36.field_4 = vel2;
-      _tuple_36.field_5 = gate2;
-      _tuple_36.field_6 = note3;
-      _tuple_36.field_7 = vel3;
-      _tuple_36.field_8 = gate3;
-      _tuple_36.field_9 = note4;
-      _tuple_36.field_10 = vel4;
-      _tuple_36.field_11 = gate4;
+      _tuple_43.field_0 = note1;
+      _tuple_43.field_1 = vel1;
+      _tuple_43.field_2 = gate1;
+      _tuple_43.field_3 = note2;
+      _tuple_43.field_4 = vel2;
+      _tuple_43.field_5 = gate2;
+      _tuple_43.field_6 = note3;
+      _tuple_43.field_7 = vel3;
+      _tuple_43.field_8 = gate3;
+      _tuple_43.field_9 = note4;
+      _tuple_43.field_10 = vel4;
+      _tuple_43.field_11 = gate4;
    }
-   _output_ = _tuple_36;
+   _output_ = _tuple_43;
    return ;
 }
 
@@ -274,9 +294,9 @@ void Polycv_process_init(Polycv__ctx_type_3 &_output_){
 
 void Polycv_process(Polycv__ctx_type_3 &_ctx, int c, _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ &_output_){
    _ctx.channel_in = c;
-   _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ _call_38;
-   Polycv_polyState(_ctx.poly,_call_38);
-   _output_ = _call_38;
+   _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ _call_45;
+   Polycv_polyState(_ctx.poly,_call_45);
+   _output_ = _call_45;
    return ;
 }
 
@@ -286,12 +306,12 @@ void Polycv_noteOn_init(Polycv__ctx_type_3 &_output_){
 }
 
 void Polycv_noteOn(Polycv__ctx_type_3 &_ctx, int note, int velocity, int channel){
-   uint8_t _cond_41;
-   _cond_41 = (_ctx.channel_in == channel);
-   if(_cond_41){
-      uint8_t _cond_40;
-      _cond_40 = (velocity > 0);
-      if(_cond_40){
+   uint8_t _cond_48;
+   _cond_48 = (_ctx.channel_in == channel);
+   if(_cond_48){
+      uint8_t _cond_47;
+      _cond_47 = (velocity > 0);
+      if(_cond_47){
          Polycv_poly_noteOn(_ctx.poly,note,velocity);
       }
       else
@@ -307,9 +327,9 @@ void Polycv_noteOff_init(Polycv__ctx_type_3 &_output_){
 }
 
 void Polycv_noteOff(Polycv__ctx_type_3 &_ctx, int note, int channel){
-   uint8_t _cond_42;
-   _cond_42 = (_ctx.channel_in == channel);
-   if(_cond_42){
+   uint8_t _cond_49;
+   _cond_49 = (_ctx.channel_in == channel);
+   if(_cond_49){
       Polycv_poly_noteOff(_ctx.poly,note);
    }
 }

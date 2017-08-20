@@ -45,6 +45,9 @@ let files =
       "test/perf/phd_perf.vult";
       "test/perf/sine_perf.vult";
       "test/perf/tricore_perf.vult";
+      "test/perf/svf_perf.vult";
+      "test/perf/ladder_euler_perf.vult";
+      "test/perf/ladder_heun_perf.vult";
    ]
    |> List.map in_proj_dir
 
@@ -53,6 +56,7 @@ let includes =
       "examples/util";
       "examples/osc";
       "examples/filters";
+      "examples/effects";
    ]
    |> List.map in_proj_dir
 

@@ -101,6 +101,26 @@ float Util_average2(Util__ctx_type_5 &_ctx, float x1){
    return result;
 }
 
+float Util_cubic_clipper(float x){
+   uint8_t _cond_21;
+   _cond_21 = (x <= (-0.666667f));
+   if(_cond_21){
+      return (-0.666667f);
+   }
+   else
+   {
+      uint8_t _cond_20;
+      _cond_20 = (x >= 0.666667f);
+      if(_cond_20){
+         return 0.666667f;
+      }
+      else
+      {
+         return (x + ((-0.333333f) * x * x * x));
+      }
+   }
+}
+
 float Util_pitchToRate_1024(float pitch){
    int index;
    index = int_clip(float_to_int((0.244094f * pitch)),0,31);
@@ -160,14 +180,14 @@ void Monocv_mono_noteOn_init(Monocv__ctx_type_0 &_output_){
 }
 
 int Monocv_mono_noteOn(Monocv__ctx_type_0 &_ctx, int n){
-   uint8_t _cond_36;
-   _cond_36 = (_ctx.count < 4);
-   if(_cond_36){
+   uint8_t _cond_43;
+   _cond_43 = (_ctx.count < 4);
+   if(_cond_43){
       int_set(_ctx.notes,_ctx.count,n);
       _ctx.pre = n;
-      uint8_t _cond_35;
-      _cond_35 = (_ctx.count < 4);
-      if(_cond_35){
+      uint8_t _cond_42;
+      _cond_42 = (_ctx.count < 4);
+      if(_cond_42){
          _ctx.count = (_ctx.count + 1);
       }
    }
@@ -185,15 +205,15 @@ int Monocv_mono_noteOff(Monocv__ctx_type_0 &_ctx, int n){
    int pos;
    int i;
    i = 0;
-   uint8_t _cond_37;
-   _cond_37 = (_ctx.count == 0);
-   if(_cond_37){
+   uint8_t _cond_44;
+   _cond_44 = (_ctx.count == 0);
+   if(_cond_44){
       return _ctx.pre;
    }
    while((i < 4) && bool_not(found)){
-      uint8_t _cond_38;
-      _cond_38 = (int_get(_ctx.notes,i) == n);
-      if(_cond_38){
+      uint8_t _cond_45;
+      _cond_45 = (int_get(_ctx.notes,i) == n);
+      if(_cond_45){
          pos = i;
          found = 1;
       }
@@ -206,9 +226,9 @@ int Monocv_mono_noteOff(Monocv__ctx_type_0 &_ctx, int n){
          int_set(_ctx.notes,(k + (-1)),int_get(_ctx.notes,k));
          k = (k + 1);
       }
-      uint8_t _cond_39;
-      _cond_39 = (found && (_ctx.count > 0));
-      if(_cond_39){
+      uint8_t _cond_46;
+      _cond_46 = (found && (_ctx.count > 0));
+      if(_cond_46){
          _ctx.count = (_ctx.count + (-1));
          _ctx.pre = int_get(_ctx.notes,(_ctx.count + (-1)));
       }
@@ -244,19 +264,19 @@ void Monocv_process_init(Monocv__ctx_type_1 &_output_){
 
 void Monocv_process(Monocv__ctx_type_1 &_ctx, int c, _tuple_$_real_real_real_$ &_output_){
    _ctx.channel_in = c;
-   uint8_t _cond_41;
-   _cond_41 = Monocv_mono_isGateOn(_ctx.notes);
-   if(_cond_41){ _ctx.gate = _ctx.vel; }
+   uint8_t _cond_48;
+   _cond_48 = Monocv_mono_isGateOn(_ctx.notes);
+   if(_cond_48){ _ctx.gate = _ctx.vel; }
    else
    { _ctx.gate = 0.000000f; }
    _ctx.cv = Util_pitchToCv(int_to_float(_ctx.active_note));
-   _tuple_$_real_real_real_$ _tuple_40;
+   _tuple_$_real_real_real_$ _tuple_47;
    {
-      _tuple_40.field_0 = _ctx.cv;
-      _tuple_40.field_1 = _ctx.vel;
-      _tuple_40.field_2 = _ctx.gate;
+      _tuple_47.field_0 = _ctx.cv;
+      _tuple_47.field_1 = _ctx.vel;
+      _tuple_47.field_2 = _ctx.gate;
    }
-   _output_ = _tuple_40;
+   _output_ = _tuple_47;
    return ;
 }
 
@@ -266,12 +286,12 @@ void Monocv_noteOn_init(Monocv__ctx_type_1 &_output_){
 }
 
 void Monocv_noteOn(Monocv__ctx_type_1 &_ctx, int note, int velocity, int channel){
-   uint8_t _cond_44;
-   _cond_44 = (_ctx.channel_in == channel);
-   if(_cond_44){
-      uint8_t _cond_43;
-      _cond_43 = (velocity > 0);
-      if(_cond_43){
+   uint8_t _cond_51;
+   _cond_51 = (_ctx.channel_in == channel);
+   if(_cond_51){
+      uint8_t _cond_50;
+      _cond_50 = (velocity > 0);
+      if(_cond_50){
          _ctx.active_note = Monocv_mono_noteOn(_ctx.notes,note);
          _ctx.vel = (int_to_float(velocity) * 0.007874f);
       }
@@ -288,9 +308,9 @@ void Monocv_noteOff_init(Monocv__ctx_type_1 &_output_){
 }
 
 void Monocv_noteOff(Monocv__ctx_type_1 &_ctx, int note, int channel){
-   uint8_t _cond_45;
-   _cond_45 = (_ctx.channel_in == channel);
-   if(_cond_45){
+   uint8_t _cond_52;
+   _cond_52 = (_ctx.channel_in == channel);
+   if(_cond_52){
       _ctx.active_note = Monocv_mono_noteOff(_ctx.notes,note);
    }
 }

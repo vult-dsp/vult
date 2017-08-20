@@ -174,6 +174,27 @@ function this.Util_average2(_ctx,x1)
 
 end
 
+function this.Util_cubic_clipper(x)
+   if (x <= (-0.666667)) then
+      return (-0.666667);
+
+   else
+
+      local _cond_34 = false;
+      _cond_34 = (x >= 0.666667);
+      if _cond_34 then
+         return 0.666667;
+
+      else
+
+         return (x + ((-0.333333) * x * x * x));
+
+      end
+
+   end
+
+end
+
 local Util_pitchToRate_1024_c0 = ffi.new("double[33]", {0.189842,0.191326,0.198689,0.219425,0.265677,0.356438,0.520651,0.801560,1.262758,1.996562,3.135544,4.868347,7.461281,11.287715,16.867996,24.923305,36.448521,52.809903,75.876616,108.197225,153.232414,215.672344,301.846626,420.298038,582.505178,803.812129,1104.880165,1513.124126,2065.373952,2810.230550,3812.902888,5159.525580,6963.761469});
 local Util_pitchToRate_1024_c1 = ffi.new("double[33]", {0.010913,0.010176,0.008334,0.004867,(-0.000939),(-0.010061),(-0.023820),(-0.044002),(-0.073002),(-0.114025),(-0.171341),(-0.250621),(-0.359381),(-0.507548),(-0.708208),(-0.978575),(-1.341250),(-1.825848),(-2.471123),(-3.327721),(-4.461658),(-5.959006),(-7.931626),(-10.525312),(-13.929212),(-18.387588),(-24.219785),(-31.835151),(-41.769557),(-54.706455),(-71.541226),(-93.422592),(-121.823163)});
 local Util_pitchToRate_1024_c2 = ffi.new("double[33]", {0.000356,0.000447,0.000562,0.000707,0.000889,0.001119,0.001407,0.001769,0.002225,0.002799,0.003520,0.004426,0.005567,0.007001,0.008805,0.011074,0.013927,0.017515,0.022028,0.027704,0.034841,0.043818,0.055107,0.069305,0.087163,0.109617,0.137862,0.173377,0.218054,0.274227,0.344892,0.433780,0.545543});
@@ -280,8 +301,8 @@ end
 function this.Rescomb__ctx_type_2_init()
    local _ctx = {};
    _ctx.output = 0.000000;
-   _ctx._inst33 = this.Rescomb__ctx_type_0_init();
-   _ctx._inst32 = this.Util__ctx_type_3_init();
+   _ctx._inst40 = this.Rescomb__ctx_type_0_init();
+   _ctx._inst39 = this.Util__ctx_type_3_init();
    return _ctx;
 
 end
@@ -291,16 +312,16 @@ function this.Rescomb_do_init()
 end
 
 function this.Rescomb_do(_ctx,in_,cv,tone,res)
-   local feedback = this.Util_dcblock(_ctx._inst32,(_ctx.output * res));
+   local feedback = this.Util_dcblock(_ctx._inst39,(_ctx.output * res));
    local saturated_input = this.Saturate_soft_process((in_ + feedback));
-   _ctx.output = ((this.Rescomb_toneCurve(tone) * this.Rescomb_delay(_ctx._inst33,saturated_input,cv)) + in_);
+   _ctx.output = ((this.Rescomb_toneCurve(tone) * this.Rescomb_delay(_ctx._inst40,saturated_input,cv)) + in_);
    return this.Saturate_soft_process(_ctx.output);
 
 end
 
 function this.Rescomb__ctx_type_3_init()
    local _ctx = {};
-   _ctx._inst35 = this.Rescomb__ctx_type_2_init();
+   _ctx._inst42 = this.Rescomb__ctx_type_2_init();
    return _ctx;
 
 end
@@ -310,7 +331,7 @@ function this.Rescomb_process_init()
 end
 
 function this.Rescomb_process(_ctx,in_,cv,tone,res)
-   return this.Rescomb_do(_ctx._inst35,in_,cv,tone,res);
+   return this.Rescomb_do(_ctx._inst42,in_,cv,tone,res);
 
 end
 

@@ -14,14 +14,14 @@ fun tune(cut) @[table(min = 0.0, max = 1.0, size = 128)]{
 }
 
 fun ladder_step(input, fh, res, p, dp) {
-   val w0 = Saturate.process(input - 4.0 * res * p[3]);
-   val w1 = Saturate.process(p[0]);
+   val w0 = Util.cubic_clipper(input - 4.0 * res * p[3]);
+   val w1 = Util.cubic_clipper(p[0]);
    dp[0] = (w0 - w1) * fh;
-   val w3 = Saturate.process(p[1]);
+   val w3 = Util.cubic_clipper(p[1]);
    dp[1] = (w1 - w3) * fh;
-   val w5 = Saturate.process(p[2]);
+   val w5 = Util.cubic_clipper(p[2]);
    dp[2] = (w3 - w5) * fh;
-   val w7 = Saturate.process(p[3]);
+   val w7 = Util.cubic_clipper(p[3]);
    dp[3] = (w5 - w7) * fh;
 }
 
@@ -60,17 +60,26 @@ fun euler(input, cut, res) {
    return p[3];
 }
 
-fun ladder(input, cut, res) {
-   return heun(input, cut, res);
+fun process_euler(input:real, cut:real, res:real):real{
+    _ = e:euler(input, cut, res);
+    _ = e:euler(input, cut, res);
+    _ = e:euler(input, cut, res);
+    val out = e:euler(input, cut, res);
+    return out;
+}
+
+fun process_heun(input:real, cut:real, res:real):real{
+    _ = h:heun(input, cut, res);
+    _ = h:heun(input, cut, res);
+    _ = h:heun(input, cut, res);
+    val out = h:heun(input, cut, res);
+    return out;
 }
 
 fun process(input:real, cut:real, res:real):real{
-    _ = f:ladder(input, cut, res);
-    _ = f:ladder(input, cut, res);
-    _ = f:ladder(input, cut, res);
-    val out = f:ladder(input, cut, res);
-    return out;
+    return process_heun(input, cut, res);
 }
+
 and noteOn(note:int,velocity:int,channel:int){ }
 and noteOff(note:int,channel:int){ }
 and controlChange(control:int,value:int,channel:int){ }

@@ -44,6 +44,15 @@ fun average2(x1:real) : real {
    return result;
 }
 
+fun cubic_clipper(x) {
+   if(x <= -2.0/3.0)
+      return -2.0/3.0;
+   else if(x >= 2.0/3.0)
+      return 2.0/3.0;
+   else
+      return x - (x * x * x) / 3.0;
+}
+
 /* Rate to get a 2^10 ramp */
 fun pitchToRate_1024(pitch) @[table(size=32,min=0.0,max=127.0)] {
    // 2^10 /44100 440 2^((pitch - 69)/12.)

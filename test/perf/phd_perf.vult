@@ -1,6 +1,6 @@
 
 fun process(input:real) : real {
-   val cv = Ramp.do(0.1, 0.0, 0.7);
+   val cv = Ramp.do(1.0, 0.0, 0.7);
    val detune = Ramp.do(0.5, 0.0, 0.1);
    return Phd.process(cv,detune);
 }
