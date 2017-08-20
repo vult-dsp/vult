@@ -25,6 +25,8 @@ THE SOFTWARE.
 
 open GenerateParams
 
+let time = 100.0
+
 (** Header function *)
 let mainC (params:params) : Pla.t =
    let output = params.output in
@@ -40,7 +42,7 @@ int main(void)
    <#module_name#s>_process_type data;
    <#module_name#s>_process_init(data);
    <#module_name#s>_default(data);
-   float time = 100.0;
+   float time = <#time#f>;
    int samples = 44100 * (int)time;
    clock_t start = clock(), diff;
    while (samples > 0)
@@ -89,7 +91,7 @@ let mainJs params =
         var data = vultProcess.<#module_name#s>_process_init();
         vultProcess.<#module_name#s>_default();
 
-        var time = 100;
+        var time = <#time#f>;
         var samples = 44100 * time;
 
         var start = new Date();
@@ -132,7 +134,7 @@ let mainLua (params:params) =
    vult = loadfile("./<#output#s>.lua")()
    data = vult.<#module_name#s>_process_init()
    vult.<#module_name#s>_default(data)
-   time = 100
+   time = <#time#f>
    samples = 44100 * time
    local start = os.clock()
    while samples > 0 do
