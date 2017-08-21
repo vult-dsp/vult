@@ -78,9 +78,9 @@ function this.floor(x)          return math.floor(x); end
 function this.tan(x)            return math.tan(x); end
 function this.tanh(x)           return math.tanh(x); end
 function this.sqrt(x)           return x; end
-function this.set(a,i,v)        a[i]=v; end
-function this.get(a,i)          return a[i]; end
-function this.makeArray(size,v) local a = ffi.new("double[?]",size); for i=0,size-1 do a[i]=v end return a; end
+function this.set(a,i,v)        a[i+1]=v; end
+function this.get(a,i)          return a[i+1]; end
+function this.makeArray(size,v) local a = {}; for i=1,size do a[i]=v end return a; end
 function this.wrap_array(a)     return a; end
 <#code#>
 function this.process(<#process_inputs#>) return this.<#module_name#s>_process(<#process_inputs#>) end
@@ -131,9 +131,8 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
    | CEString(s) ->
       Pla.wrap (Pla.string "\"") (Pla.string "\"") (Pla.string s)
    | CEArray(elems,_) ->
-      let size = List.length elems in
       let elems_t = Pla.map_sep Pla.comma (printExp params) elems in
-      {pla|ffi.new("double[<#size#i>]", {<#elems_t#>})|pla}
+      {pla|{<#elems_t#>}|pla}
    | CECall("not",[arg],_) ->
       let arg_t = printExp params arg in
       {pla|(not <#arg_t#>)|pla}
@@ -187,7 +186,7 @@ let rec getInitValue (descr:type_descr) : Pla.t =
       let init = getInitValue typ in
       if size < 256 then
          let elems = (CCList.init size (fun _ -> init) |> Pla.join_sep Pla.comma) in
-         {pla|ffi.new("double[<#size#i>]", {<#elems#>})|pla}
+         {pla|{<#elems#>}|pla}
       else
          {pla|this.makeArray(<#size#i>,<#init#>)|pla}
    | _ -> Pla.string "{}"
@@ -250,7 +249,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let value_t = printExp params value in
       let name = dot name in
       let index = printExp params index in
-      Some({pla|<#name#>[<#index#>] = <#value_t#>;|pla})
+      Some({pla|<#name#>[<#index#>+1] = <#value_t#>;|pla})
 
    | CSFunction(_,name,args,(CSBlock(_) as body)) ->
       (* if the function has any of the special names add the ctx argument *)
