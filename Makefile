@@ -28,9 +28,9 @@ test-fast:
 			$(OCB) test/test.native
 			./test.native -runner sequential -shards 1 -internal true
 
-test-update: compiler jscompiler
+test-update:
 			$(OCB) test/test.native
-			./test.native -runner sequential -update true -shards 1
+			./test.native -runner sequential -update true -shards 1 -internal true
 
 coverage: compiler jscompiler
 			$(OCB) -clean

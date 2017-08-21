@@ -387,7 +387,7 @@ and convertExpList (p:parameters) (e:exp list) : cexp list =
 and convertExpArray (p:parameters) (e:exp array) : cexp list =
    Array.map (convertExp p) e |> Array.to_list
 
-let rec convertLhsExp (is_val:bool) (p:parameters) (e:lhs_exp) : clhsexp =
+and convertLhsExp (is_val:bool) (p:parameters) (e:lhs_exp) : clhsexp =
    match e with
    | LId(id,Some(typ),_) ->
       let new_id = convertVarId p id in
@@ -399,7 +399,12 @@ let rec convertLhsExp (is_val:bool) (p:parameters) (e:lhs_exp) : clhsexp =
       CLTuple(elems')
    | LWild _ -> CLWild
    | LGroup(e,_) -> convertLhsExp is_val p e
-   | LIndex _ -> failwith "LIndex should have been removed"
+   | LIndex (_, None, _, _) -> failwith "ProgToCode.convertLhsExp: everything should have types"
+   | LIndex (id,Some(typ), index, _) ->
+      let new_id = convertVarId p id in
+      let index = convertExp p index in
+      CLIndex (convertType p typ, new_id, index)
+
 
 and convertLhsExpList (is_val:bool) (p:parameters) (lhsl:lhs_exp list) : clhsexp list =
    List.fold_left

@@ -63,6 +63,8 @@ module InsertContext = struct
       match exp with
       | LId(id,tp,attr) when Env.isLocalInstanceOrMem state id ->
          state, LId("_ctx"::id,tp,attr)
+      | LIndex(id,tp,index,attr) when Env.isLocalInstanceOrMem state id ->
+         state, LIndex("_ctx"::id,tp,index,attr)
       | _ -> state,exp
 
    let stmt_x : ('a Env.t, stmt) Mapper.expand_func =

@@ -63,7 +63,7 @@ let getLhsExpLocation (e:lhs_exp) : Loc.t =
    | LTuple(_,attr)
    | LTyped(_,_,attr)
    | LGroup(_,attr)
-   | LIndex(_,_,attr) -> attr.loc
+   | LIndex(_,_,_,attr) -> attr.loc
 
 (** Returns the location of an statement *)
 let getStmtLocation (s:stmt)  : Loc.t =
@@ -304,8 +304,7 @@ and lhs_nud (buffer:Stream.stream) (token:'kind token) : lhs_exp =
             let index = expression 0 buffer in
             let _     = Stream.consume buffer RBRACK in
             let attr  = makeAttr token.loc in
-            let lhs   = LId(id,None,makeAttr token.loc) in
-            LIndex(lhs, index, attr)
+            LIndex(id, None, index, attr)
 
          | _ -> LId(id,None,makeAttr token.loc)
       end

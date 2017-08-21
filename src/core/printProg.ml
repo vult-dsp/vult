@@ -94,11 +94,21 @@ let rec lhsExpressionBuff buffer (lhs:lhs_exp) =
       append buffer "(";
       lhsExpressionBuff buffer elems;
       append buffer ")"
-   | LIndex(lhs, index,_) ->
-      lhsExpressionBuff buffer lhs;
+   | LIndex(id, None, index,_) ->
+      identifierBuff buffer id;
       append buffer "[";
       expressionBuff buffer index;
       append buffer "]"
+
+   | LIndex(id, Some(tp), index, _) ->
+      append buffer "(";
+      identifierBuff buffer id;
+      append buffer "[";
+      expressionBuff buffer index;
+      append buffer "]";
+      append buffer ":";
+      typeExpressionBuff buffer tp;
+      append buffer ")"
 
 and lhsExpressionListBuff buffer expl =
    printList buffer lhsExpressionBuff "," expl

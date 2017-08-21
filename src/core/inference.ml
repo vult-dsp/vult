@@ -121,8 +121,9 @@ let rec addLhsToEnv mem_var (env:'a Env.t) (lhs:lhs_exp) : 'a Env.t =
       addLhsToEnv mem_var env e
    | LGroup(e,_) ->
       addLhsToEnv mem_var env e
-   | LIndex(e,_,_) ->
-      addLhsToEnv mem_var env e
+   | LIndex(_, None, _, _) -> env
+   | LIndex(id, Some(typ), _, attr) ->
+      if mem_var = `Mem then Env.addMem env id typ attr else Env.addVar env id typ attr
 
 let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : typed_id list * Typ.t list * 'a Env.t =
    match args with
@@ -284,15 +285,20 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * Typ.t =
    | LGroup(eg,_) ->
       inferLhsExp mem_var env eg
 
-   | LIndex(lhs, PInt(size, _), _) when mem_var = `Val || mem_var = `Mem ->
-      let lhs', lhs_typ = inferLhsExp mem_var env lhs in
+   | LIndex(id, otyp, PInt(size, sattr), attr) when mem_var = `Val || mem_var = `Mem ->
+      let typ =
+         match Env.lookupVariable env id, otyp with
+         | Some(var), _ -> var.Scope.typ
+         | _, Some typ -> typ
+         | _ -> Typ.newvar ()
+      in
       let a = ref (Typ.TUnbound("'a",None,None)) in
-      let size = ref (Typ.TInt(size,None)) in
-      let arr_type = ref (Typ.TComposed(["array"],[a;size],None)) in
-      unifyRaise (lhsLoc lhs) lhs_typ arr_type;
-      lhs', arr_type
+      let size_t = ref (Typ.TInt(size,None)) in
+      let arr_type = ref (Typ.TComposed(["array"],[a;size_t],None)) in
+      unifyRaise (attrLoc attr) typ arr_type;
+      LIndex(id, Some typ, PInt(size, sattr), attr), arr_type
 
-   | LIndex(_, index, _) when mem_var = `Val || mem_var = `Mem ->
+   | LIndex(_, _, index, _) when mem_var = `Val || mem_var = `Mem ->
       let msg =
          Printf.sprintf
             "This expression '%s' defines the size of the array and must be an integer"
@@ -300,15 +306,20 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * Typ.t =
       in
       Error.raiseError msg (GetLocation.fromExp index)
 
-   | LIndex(lhs, index, attr) ->
-      let lhs', lhs_typ = inferLhsExp mem_var env lhs in
+   | LIndex(id, otyp, index, attr) ->
+      let typ =
+         match Env.lookupVariable env id, otyp with
+         | Some(var), _ -> var.Scope.typ
+         | _, Some typ -> typ
+         | _ -> Typ.newvar ()
+      in
       let index', _, index_typ = inferExp env index in
       let a = ref (Typ.TUnbound("'a",None,None)) in
       let size = ref (Typ.TUnbound("'size",None,None)) in
       let arr_type = ref (Typ.TComposed(["array"],[a;size],None)) in
-      unifyRaise (lhsLoc lhs) lhs_typ arr_type;
+      unifyRaise (attrLoc attr) typ arr_type;
       unifyRaise (expLoc index) index_typ Typ.Const.int_type;
-      LIndex(lhs', index', attr), a
+      LIndex(id, Some typ, index', attr), a
 
 and inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * Typ.t =
    match e with

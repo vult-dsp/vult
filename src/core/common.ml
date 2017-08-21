@@ -119,7 +119,7 @@ module GetAttr = struct
       | LTuple(_,attr)
       | LTyped(_,_,attr)
       | LGroup(_,attr) -> attr
-      | LIndex(_,_,attr) -> attr
+      | LIndex(_,_,_,attr) -> attr
 
 end
 

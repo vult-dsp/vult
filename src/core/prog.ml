@@ -66,7 +66,7 @@ type lhs_exp =
    | LTuple of lhs_exp list * attr
    | LTyped of lhs_exp * Typ.t * attr
    | LGroup of lhs_exp * attr
-   | LIndex of lhs_exp * exp * attr
+   | LIndex of Id.t * Typ.t option * exp * attr
 [@@deriving show,eq,ord]
 
 (** Parser syntax tree *)

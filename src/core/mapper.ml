@@ -257,11 +257,12 @@ let rec map_lhs_exp (mapper:'state mapper) (state:'state) (exp:lhs_exp) : 'state
       let state',attr'  = map_attr mapper state attr in
       let state',e' = map_lhs_exp mapper state' e in
       apply mapper.lhs_exp state' (LGroup(e',attr'))
-   | LIndex(e,index,attr) ->
-      let state',e'     = map_lhs_exp  mapper state e in
+   | LIndex(id,tp,index,attr) ->
+      let state',id'   = map_id mapper state id in
+      let state',tp'   = (mapper_opt map_vtype) mapper state' tp in
       let state',index' = map_exp mapper state' index in
       let state',attr'  = map_attr mapper state' attr in
-      apply mapper.lhs_exp state' (LIndex(e',index',attr'))
+      apply mapper.lhs_exp state' (LIndex(id', tp', index', attr'))
 
 and map_lhs_exp_list mapper = fun state exp -> (mapper_list map_lhs_exp) mapper state exp
 

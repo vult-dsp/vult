@@ -176,14 +176,21 @@ let printLhsExpTuple (var:string list) (is_var:bool) (i:int) (e:clhsexp) : Pla.t
 
    | _ -> failwith "printLhsExp: All other cases should be already covered"
 
-let getInitValue (descr:type_descr) : string =
+let rec getInitValue (descr:type_descr) : Pla.t =
    match descr with
-   | CTSimple("int") -> "0"
-   | CTSimple("real") -> "0.0"
-   | CTSimple("float") -> "0.0"
-   | CTSimple("bool") -> "false"
-   | CTSimple("unit") -> "0"
-   | _ -> "{}"
+   | CTSimple("int") -> Pla.string "0"
+   | CTSimple("float") -> Pla.string  "0.0"
+   | CTSimple("real") -> Pla.string  "0.0"
+   | CTSimple("bool") -> Pla.string  "false"
+   | CTSimple("unit") -> Pla.string  "0"
+   | CTArray(typ, size) ->
+      let init = getInitValue typ in
+      if size < 256 then
+         let elems = (CCList.init size (fun _ -> init) |> Pla.join_sep Pla.comma) in
+         {pla|ffi.new("double[<#size#i>]", {<#elems#>})|pla}
+      else
+         {pla|this.makeArray(<#size#i>,<#init#>)|pla}
+   | _ -> Pla.string "{}"
 
 let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
@@ -192,7 +199,12 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSVar(CLId(typ,name),None) ->
       let init = getInitValue typ in
       let name = dot name in
-      Some({pla|local <#name#> = <#init#s>;|pla})
+      Some({pla|local <#name#> = <#init#>;|pla})
+
+   | CSVar(CLIndex(typ, name,_),None) ->
+      let init = getInitValue typ in
+      let name = dot name in
+      Some({pla|local <#name#> = <#init#>;|pla})
 
    | CSVar(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
 
@@ -222,7 +234,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSBind(CLWild,value) ->
       Some(Pla.(printExp params value ++ semi))
 
-   | CSBind(CLTuple(elems),CEVar(name,_)) ->
+   | CSBind(CLTuple(elems), CEVar(name,_)) ->
       List.mapi (printLhsExpTuple name false) elems
       |> Pla.join
       |> fun a -> Some(a)
@@ -233,6 +245,12 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let value_t = printExp params value in
       let name = dot name in
       Some({pla|<#name#> = <#value_t#>;|pla})
+
+   | CSBind(CLIndex(_, name, index),value) ->
+      let value_t = printExp params value in
+      let name = dot name in
+      let index = printExp params index in
+      Some({pla|<#name#>[<#index#>] = <#value_t#>;|pla})
 
    | CSFunction(_,name,args,(CSBlock(_) as body)) ->
       (* if the function has any of the special names add the ctx argument *)

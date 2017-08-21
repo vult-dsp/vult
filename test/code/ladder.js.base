@@ -132,13 +132,13 @@ this.Ladder_tune = function(cut){
 this.Ladder_ladder_step = function(input,fh,res,p,dp){
    var w0 = this.Util_cubic_clipper((input + ((-4.000000) * res * this.get(p,(3|0)))));
    var w1 = this.Util_cubic_clipper(this.get(p,(0|0)));
-   this.set(dp,(0|0),((w0 + (- w1)) * fh));
+   dp[(0|0)] = ((w0 + (- w1)) * fh);
    var w3 = this.Util_cubic_clipper(this.get(p,(1|0)));
-   this.set(dp,(1|0),((w1 + (- w3)) * fh));
+   dp[(1|0)] = ((w1 + (- w3)) * fh);
    var w5 = this.Util_cubic_clipper(this.get(p,(2|0)));
-   this.set(dp,(2|0),((w3 + (- w5)) * fh));
+   dp[(2|0)] = ((w3 + (- w5)) * fh);
    var w7 = this.Util_cubic_clipper(this.get(p,(3|0)));
-   this.set(dp,(3|0),((w5 + (- w7)) * fh));
+   dp[(3|0)] = ((w5 + (- w7)) * fh);
 }
 this.Ladder__ctx_type_2_init = function(){
    var _ctx = {};
@@ -149,22 +149,22 @@ this.Ladder__ctx_type_2_init = function(){
 }
 this.Ladder_heun_init = function() { return this.Ladder__ctx_type_2_init();}
 this.Ladder_heun = function(_ctx,input,cut,res){
-   var dp = {};
-   var pt = {};
-   var dpt = {};
+   var dp = [0.0,0.0,0.0,0.0];
+   var pt = [0.0,0.0,0.0,0.0];
+   var dpt = [0.0,0.0,0.0,0.0];
    if(this.Util_change(_ctx._inst25,cut)){
       _ctx.fh = this.Ladder_tune(cut);
    }
    this.Ladder_ladder_step(input,_ctx.fh,res,_ctx.p,dpt);
-   this.set(pt,(0|0),(this.get(_ctx.p,(0|0)) + this.get(dpt,(0|0))));
-   this.set(pt,(1|0),(this.get(_ctx.p,(1|0)) + this.get(dpt,(1|0))));
-   this.set(pt,(2|0),(this.get(_ctx.p,(2|0)) + this.get(dpt,(2|0))));
-   this.set(pt,(3|0),(this.get(_ctx.p,(3|0)) + this.get(dpt,(3|0))));
+   pt[(0|0)] = (this.get(_ctx.p,(0|0)) + this.get(dpt,(0|0)));
+   pt[(1|0)] = (this.get(_ctx.p,(1|0)) + this.get(dpt,(1|0)));
+   pt[(2|0)] = (this.get(_ctx.p,(2|0)) + this.get(dpt,(2|0)));
+   pt[(3|0)] = (this.get(_ctx.p,(3|0)) + this.get(dpt,(3|0)));
    this.Ladder_ladder_step(input,_ctx.fh,res,pt,dp);
-   this.set(_ctx.p,(0|0),(this.get(_ctx.p,(0|0)) + ((this.get(dp,(0|0)) + this.get(dpt,(0|0))) * 0.500000)));
-   this.set(_ctx.p,(1|0),(this.get(_ctx.p,(1|0)) + ((this.get(dp,(1|0)) + this.get(dpt,(1|0))) * 0.500000)));
-   this.set(_ctx.p,(2|0),(this.get(_ctx.p,(2|0)) + ((this.get(dp,(2|0)) + this.get(dpt,(2|0))) * 0.500000)));
-   this.set(_ctx.p,(3|0),(this.get(_ctx.p,(3|0)) + ((this.get(dp,(3|0)) + this.get(dpt,(3|0))) * 0.500000)));
+   _ctx.p[(0|0)] = (this.get(_ctx.p,(0|0)) + ((this.get(dp,(0|0)) + this.get(dpt,(0|0))) * 0.500000));
+   _ctx.p[(1|0)] = (this.get(_ctx.p,(1|0)) + ((this.get(dp,(1|0)) + this.get(dpt,(1|0))) * 0.500000));
+   _ctx.p[(2|0)] = (this.get(_ctx.p,(2|0)) + ((this.get(dp,(2|0)) + this.get(dpt,(2|0))) * 0.500000));
+   _ctx.p[(3|0)] = (this.get(_ctx.p,(3|0)) + ((this.get(dp,(3|0)) + this.get(dpt,(3|0))) * 0.500000));
    return this.get(_ctx.p,(3|0));
 }
 this.Ladder__ctx_type_3_init = function(){
@@ -176,15 +176,15 @@ this.Ladder__ctx_type_3_init = function(){
 }
 this.Ladder_euler_init = function() { return this.Ladder__ctx_type_3_init();}
 this.Ladder_euler = function(_ctx,input,cut,res){
-   var dpt = {};
+   var dpt = [0.0,0.0,0.0,0.0];
    if(this.Util_change(_ctx._inst28,cut)){
       _ctx.fh = this.Ladder_tune(cut);
    }
    this.Ladder_ladder_step(input,_ctx.fh,res,_ctx.p,dpt);
-   this.set(_ctx.p,(0|0),(this.get(_ctx.p,(0|0)) + this.get(dpt,(0|0))));
-   this.set(_ctx.p,(1|0),(this.get(_ctx.p,(1|0)) + this.get(dpt,(1|0))));
-   this.set(_ctx.p,(2|0),(this.get(_ctx.p,(2|0)) + this.get(dpt,(2|0))));
-   this.set(_ctx.p,(3|0),(this.get(_ctx.p,(3|0)) + this.get(dpt,(3|0))));
+   _ctx.p[(0|0)] = (this.get(_ctx.p,(0|0)) + this.get(dpt,(0|0)));
+   _ctx.p[(1|0)] = (this.get(_ctx.p,(1|0)) + this.get(dpt,(1|0)));
+   _ctx.p[(2|0)] = (this.get(_ctx.p,(2|0)) + this.get(dpt,(2|0)));
+   _ctx.p[(3|0)] = (this.get(_ctx.p,(3|0)) + this.get(dpt,(3|0)));
    return this.get(_ctx.p,(3|0));
 }
 this.Ladder__ctx_type_4_init = function(){

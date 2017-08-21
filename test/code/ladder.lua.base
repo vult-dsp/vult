@@ -213,13 +213,13 @@ end
 function this.Ladder_ladder_step(input,fh,res,p,dp)
    local w0 = this.Util_cubic_clipper((input + ((-4.000000) * res * this.get(p,3))));
    local w1 = this.Util_cubic_clipper(this.get(p,0));
-   this.set(dp,0,((w0 + (- w1)) * fh));
+   dp[0] = ((w0 + (- w1)) * fh);
    local w3 = this.Util_cubic_clipper(this.get(p,1));
-   this.set(dp,1,((w1 + (- w3)) * fh));
+   dp[1] = ((w1 + (- w3)) * fh);
    local w5 = this.Util_cubic_clipper(this.get(p,2));
-   this.set(dp,2,((w3 + (- w5)) * fh));
+   dp[2] = ((w3 + (- w5)) * fh);
    local w7 = this.Util_cubic_clipper(this.get(p,3));
-   this.set(dp,3,((w5 + (- w7)) * fh));
+   dp[3] = ((w5 + (- w7)) * fh);
 
 end
 
@@ -237,23 +237,23 @@ function this.Ladder_heun_init()
 end
 
 function this.Ladder_heun(_ctx,input,cut,res)
-   local dp = {};
-   local pt = {};
-   local dpt = {};
+   local dp = ffi.new("double[4]", {0.0,0.0,0.0,0.0});
+   local pt = ffi.new("double[4]", {0.0,0.0,0.0,0.0});
+   local dpt = ffi.new("double[4]", {0.0,0.0,0.0,0.0});
    if this.Util_change(_ctx._inst25,cut) then
       _ctx.fh = this.Ladder_tune(cut);
 
    end
    this.Ladder_ladder_step(input,_ctx.fh,res,_ctx.p,dpt);
-   this.set(pt,0,(this.get(_ctx.p,0) + this.get(dpt,0)));
-   this.set(pt,1,(this.get(_ctx.p,1) + this.get(dpt,1)));
-   this.set(pt,2,(this.get(_ctx.p,2) + this.get(dpt,2)));
-   this.set(pt,3,(this.get(_ctx.p,3) + this.get(dpt,3)));
+   pt[0] = (this.get(_ctx.p,0) + this.get(dpt,0));
+   pt[1] = (this.get(_ctx.p,1) + this.get(dpt,1));
+   pt[2] = (this.get(_ctx.p,2) + this.get(dpt,2));
+   pt[3] = (this.get(_ctx.p,3) + this.get(dpt,3));
    this.Ladder_ladder_step(input,_ctx.fh,res,pt,dp);
-   this.set(_ctx.p,0,(this.get(_ctx.p,0) + ((this.get(dp,0) + this.get(dpt,0)) * 0.500000)));
-   this.set(_ctx.p,1,(this.get(_ctx.p,1) + ((this.get(dp,1) + this.get(dpt,1)) * 0.500000)));
-   this.set(_ctx.p,2,(this.get(_ctx.p,2) + ((this.get(dp,2) + this.get(dpt,2)) * 0.500000)));
-   this.set(_ctx.p,3,(this.get(_ctx.p,3) + ((this.get(dp,3) + this.get(dpt,3)) * 0.500000)));
+   _ctx.p[0] = (this.get(_ctx.p,0) + ((this.get(dp,0) + this.get(dpt,0)) * 0.500000));
+   _ctx.p[1] = (this.get(_ctx.p,1) + ((this.get(dp,1) + this.get(dpt,1)) * 0.500000));
+   _ctx.p[2] = (this.get(_ctx.p,2) + ((this.get(dp,2) + this.get(dpt,2)) * 0.500000));
+   _ctx.p[3] = (this.get(_ctx.p,3) + ((this.get(dp,3) + this.get(dpt,3)) * 0.500000));
    return this.get(_ctx.p,3);
 
 end
@@ -272,16 +272,16 @@ function this.Ladder_euler_init()
 end
 
 function this.Ladder_euler(_ctx,input,cut,res)
-   local dpt = {};
+   local dpt = ffi.new("double[4]", {0.0,0.0,0.0,0.0});
    if this.Util_change(_ctx._inst28,cut) then
       _ctx.fh = this.Ladder_tune(cut);
 
    end
    this.Ladder_ladder_step(input,_ctx.fh,res,_ctx.p,dpt);
-   this.set(_ctx.p,0,(this.get(_ctx.p,0) + this.get(dpt,0)));
-   this.set(_ctx.p,1,(this.get(_ctx.p,1) + this.get(dpt,1)));
-   this.set(_ctx.p,2,(this.get(_ctx.p,2) + this.get(dpt,2)));
-   this.set(_ctx.p,3,(this.get(_ctx.p,3) + this.get(dpt,3)));
+   _ctx.p[0] = (this.get(_ctx.p,0) + this.get(dpt,0));
+   _ctx.p[1] = (this.get(_ctx.p,1) + this.get(dpt,1));
+   _ctx.p[2] = (this.get(_ctx.p,2) + this.get(dpt,2));
+   _ctx.p[3] = (this.get(_ctx.p,3) + this.get(dpt,3));
    return this.get(_ctx.p,3);
 
 end
