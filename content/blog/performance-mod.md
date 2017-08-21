@@ -26,6 +26,9 @@ When rendering the different implementations of Saw wave oscillators we get the 
 </tbody>
 </table>
 
+{{< figure src="/images/saw_perf.png" title="" >}}
+
+
 A few strange things can be spotted by looking at the table. The Saw PRT gets almost twice as slow for Js. I'm not gonna investigate that one here. The one that is more interesting is the Saw R? going from fixed-point to floating-point; it gets 3 to 4 times slower.
 
 The implementation (part of it) looks as follows:
