@@ -21,7 +21,7 @@ When rendering the different implementations of Saw wave oscillators we get the 
    <tr> <td> Saw EPTR </td> <td> 0.368 ms/s  </td> <td> 0.264 ms/s </td> <td> 0.418 ms/s </td> <td>  0.539 ms/s </td> </tr>
    <tr> <td> Saw PTR W=1</td> <td> 0.385 ms/s  </td> <td> 0.255 ms/s </td> <td> 0.396 ms/s </td> <td> 0.583 ms/s </td> </tr>
    <tr> <td> Saw PTR W=2</td> <td> 0.384 ms/s  </td> <td> 0.286 ms/s </td> <td> 0.434 ms/s </td> <td> 1.057 ms/s </td> </tr>
-   <tr> <td> Saw R?</td> <td> 0.821 ms/s  </td> <td> 0.284 ms/s </td> <td> 0.446 ms/s </td> <td> 1.523 ms/s </td> </tr>
+   <tr> <td> Saw R?</td> <td> <b>0.821</b> ms/s  </td> <td> <b>0.284</b> ms/s </td> <td> 0.446 ms/s </td> <td> 1.523 ms/s </td> </tr>
    <tr> <td> Saw BLIT</td> <td> 1.593 ms/s  </td> <td> 1.729 ms/s </td> <td> 1.866 ms/s </td> <td> 3.229 ms/s </td> </tr>
 </tbody>
 </table>
