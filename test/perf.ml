@@ -88,19 +88,19 @@ let linkFiles (output:string) (files:string list) =
       failwith ("Failed to link ")
 
 let generateC (filename:string) (output:string) (real:string) : unit =
-   let args = { default_arguments with files = [File filename]; ccode = true; output; real; template = "performance"; includes } in
+   let args = { default_arguments with files = [File filename]; code = CCode; output; real; template = "performance"; includes } in
    let parser_results = Loader.loadFiles args [File filename]  in
    let gen = Generate.generateCode parser_results args in
    writeFiles args gen
 
 let generateJs (filename:string) (output:string) : unit =
-   let args = { default_arguments with files = [File filename]; template = "performance"; includes; jscode = true; output } in
+   let args = { default_arguments with files = [File filename]; template = "performance"; includes; code = JSCode; output } in
    let parser_results = Loader.loadFiles args [File filename]  in
    let gen = Generate.generateCode parser_results args in
    writeFiles args gen
 
 let generateLua (filename:string) (output:string) : unit =
-   let args = { default_arguments with files = [File filename]; template = "performance"; includes; luacode = true; output } in
+   let args = { default_arguments with files = [File filename]; template = "performance"; includes; code = LuaCode; output } in
    let parser_results = Loader.loadFiles args [File filename]  in
    let gen = Generate.generateCode parser_results args in
    writeFiles args gen

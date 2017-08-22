@@ -225,7 +225,7 @@ local Util_pitchToRate_1024_c1 = {0.010913,0.010176,0.008334,0.004867,(-0.000939
 local Util_pitchToRate_1024_c2 = {0.000356,0.000447,0.000562,0.000707,0.000889,0.001119,0.001407,0.001769,0.002225,0.002799,0.003520,0.004426,0.005567,0.007001,0.008805,0.011074,0.013927,0.017515,0.022028,0.027704,0.034841,0.043818,0.055107,0.069305,0.087163,0.109617,0.137862,0.173377,0.218054,0.274227,0.344892,0.433780,0.545543};
 function this.Util_pitchToRate_1024(pitch)
    local index = this.clip(this.int((0.244094 * pitch)),0,31);
-   return (this.wrap_array(Util_pitchToRate_1024_c0)[index+1] + (pitch * (this.wrap_array(Util_pitchToRate_1024_c1)[index+1] + (this.wrap_array(Util_pitchToRate_1024_c2)[index+1] * pitch))));
+   return (Util_pitchToRate_1024_c0[index+1] + (pitch * (Util_pitchToRate_1024_c1[index+1] + (Util_pitchToRate_1024_c2[index+1] * pitch))));
 
 end
 
@@ -234,7 +234,7 @@ local Util_pitchToRate_c1 = {0.000011,0.000010,0.000008,0.000005,(-0.000001),(-0
 local Util_pitchToRate_c2 = {0.000000,0.000000,0.000001,0.000001,0.000001,0.000001,0.000001,0.000002,0.000002,0.000003,0.000003,0.000004,0.000005,0.000007,0.000009,0.000011,0.000014,0.000017,0.000022,0.000027,0.000034,0.000043,0.000054,0.000068,0.000085,0.000107,0.000135,0.000169,0.000213,0.000268,0.000337,0.000424,0.000533};
 function this.Util_pitchToRate(pitch)
    local index = this.clip(this.int((0.244094 * pitch)),0,31);
-   return (this.wrap_array(Util_pitchToRate_c0)[index+1] + (pitch * (this.wrap_array(Util_pitchToRate_c1)[index+1] + (this.wrap_array(Util_pitchToRate_c2)[index+1] * pitch))));
+   return (Util_pitchToRate_c0[index+1] + (pitch * (Util_pitchToRate_c1[index+1] + (Util_pitchToRate_c2[index+1] * pitch))));
 
 end
 
@@ -248,7 +248,7 @@ local Util_cvToRate_1024_c1 = {5.245583,4.998943,4.403089,3.319116,1.564497,(-1.
 local Util_cvToRate_1024_c2 = {20.125592,24.457572,29.722000,36.119582,43.894227,53.342343,64.824143,78.777366,95.733987,116.340471,141.382451,171.814646,208.797363,253.740413,308.357211,374.730622,455.389632,553.410816,672.536916,817.290611,993.216833,1207.000622,1466.803875,1782.529271,2166.244997,2632.487590,3199.072620,3887.673024,4724.859179,5741.245302,6977.441755,8479.290028,10304.455486};
 function this.Util_cvToRate_1024(cv)
    local index = this.clip(this.int((34.444444 * cv)),0,31);
-   return (this.wrap_array(Util_cvToRate_1024_c0)[index+1] + (cv * (this.wrap_array(Util_cvToRate_1024_c1)[index+1] + (this.wrap_array(Util_cvToRate_1024_c2)[index+1] * cv))));
+   return (Util_cvToRate_1024_c0[index+1] + (cv * (Util_cvToRate_1024_c1[index+1] + (Util_cvToRate_1024_c2[index+1] * cv))));
 
 end
 
@@ -257,7 +257,7 @@ local Util_cvToRate_c1 = {0.005123,0.004882,0.004300,0.003241,0.001528,(-0.00107
 local Util_cvToRate_c2 = {0.019654,0.023884,0.029025,0.035273,0.042865,0.052092,0.063305,0.076931,0.093490,0.113614,0.138069,0.167788,0.203904,0.247793,0.301130,0.365948,0.444716,0.540440,0.656774,0.798135,0.969938,1.178712,1.432426,1.740751,2.115474,2.570789,3.124094,3.796556,4.614120,5.606685,6.813908,8.280557,10.062945};
 function this.Util_cvToRate(cv)
    local index = this.clip(this.int((34.444444 * cv)),0,31);
-   return (this.wrap_array(Util_cvToRate_c0)[index+1] + (cv * (this.wrap_array(Util_cvToRate_c1)[index+1] + (this.wrap_array(Util_cvToRate_c2)[index+1] * cv))));
+   return (Util_cvToRate_c0[index+1] + (cv * (Util_cvToRate_c1[index+1] + (Util_cvToRate_c2[index+1] * cv))));
 
 end
 
@@ -271,7 +271,7 @@ local Util_cvToperiod_c1 = {(-4656.656311),(-4481.960579),(-4198.686133),(-3855.
 local Util_cvToperiod_c2 = {14548.823162,11715.369522,9433.744675,7596.477297,6117.026622,4925.706117,3966.401040,3193.925264,2571.892879,2071.004308,1667.666208,1342.880152,1081.347751,870.750049,701.167268,564.611553,454.650724,366.105298,294.804521,237.389916,191.157082,153.928316,123.950032,99.810164,80.371652,64.718885,52.114569,41.965005,33.792117,27.210939,21.911477,17.644111,14.207835};
 function this.Util_cvToperiod(cv)
    local index = this.clip(this.int((31.000000 * cv)),0,31);
-   return (this.wrap_array(Util_cvToperiod_c0)[index+1] + (cv * (this.wrap_array(Util_cvToperiod_c1)[index+1] + (this.wrap_array(Util_cvToperiod_c2)[index+1] * cv))));
+   return (Util_cvToperiod_c0[index+1] + (cv * (Util_cvToperiod_c1[index+1] + (Util_cvToperiod_c2[index+1] * cv))));
 
 end
 
@@ -280,7 +280,7 @@ local Util_cvTokHz_c1 = {0.225719,0.212293,0.179169,0.117605,0.015780,(-0.142178
 local Util_cvTokHz_c2 = {0.876338,1.088287,1.351498,1.678368,2.084294,2.588397,3.214421,3.991854,4.957315,6.156280,7.645225,9.494282,11.790549,14.642185,18.183512,22.581336,28.042809,34.825181,43.247923,53.707771,66.697415,82.828706,102.861476,127.739327,158.634081,197.000973,244.647198,303.817033,377.297556,468.549918,581.872376,722.602756,897.369877};
 function this.Util_cvTokHz(cv)
    local index = this.clip(this.int((31.000000 * cv)),0,31);
-   return (this.wrap_array(Util_cvTokHz_c0)[index+1] + (cv * (this.wrap_array(Util_cvTokHz_c1)[index+1] + (this.wrap_array(Util_cvTokHz_c2)[index+1] * cv))));
+   return (Util_cvTokHz_c0[index+1] + (cv * (Util_cvTokHz_c1[index+1] + (Util_cvTokHz_c2[index+1] * cv))));
 
 end
 
@@ -471,7 +471,7 @@ local Saturate_table_c1 = {0.000000,0.000000,0.000000,0.000002,0.000015,0.000091
 local Saturate_table_c2 = {0.000000,0.000000,0.000000,0.000000,0.000001,0.000006,0.000043,0.000292,0.001990,0.013391,0.083468,0.322510,0.000000,(-0.322510),(-0.083468),(-0.013391),(-0.001990),(-0.000292),(-0.000043),(-0.000006),(-0.000001),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000)};
 function this.Saturate_table(x)
    local index = this.clip(this.int((x + 12.000000)),0,24);
-   return (this.wrap_array(Saturate_table_c0)[index+1] + (x * (this.wrap_array(Saturate_table_c1)[index+1] + (this.wrap_array(Saturate_table_c2)[index+1] * x))));
+   return (Saturate_table_c0[index+1] + (x * (Saturate_table_c1[index+1] + (Saturate_table_c2[index+1] * x))));
 
 end
 

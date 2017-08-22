@@ -3,7 +3,7 @@ var Saturate_table_c1 = [0.000000,0.000000,0.000000,0.000002,0.000015,0.000091,0
 var Saturate_table_c2 = [0.000000,0.000000,0.000000,0.000000,0.000001,0.000006,0.000043,0.000292,0.001990,0.013391,0.083468,0.322510,0.000000,(-0.322510),(-0.083468),(-0.013391),(-0.001990),(-0.000292),(-0.000043),(-0.000006),(-0.000001),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000)];
 this.Saturate_table = function(x){
    var index = (this.clip(this.int((x + 12.000000)),(0|0),(24|0))|0);
-   return (this.wrap_array(Saturate_table_c0)[index] + (x * (this.wrap_array(Saturate_table_c1)[index] + (this.wrap_array(Saturate_table_c2)[index] * x))));
+   return (Saturate_table_c0[index] + (x * (Saturate_table_c1[index] + (Saturate_table_c2[index] * x))));
 }
 this.Saturate_process = function(_ctx,x){
    return this.Saturate_table(x);
