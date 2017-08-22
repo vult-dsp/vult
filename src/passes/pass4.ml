@@ -147,6 +147,13 @@ module DummySimplifications = struct
             state, e
          else
             state, exp
+
+      | PCall(None, ["not"], [e], attr) ->
+         let args = (Env.get state).PassData.args in
+         if args.code = JSCode || args.code = LuaCode then
+            state, POp("==",[e; PBool(false, attr)], attr)
+         else
+            state, exp
       | _ -> state, exp
 
    let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =

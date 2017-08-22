@@ -5,7 +5,7 @@ this.Util__ctx_type_0_init = function(){
 }
 this.Util_edge_init = function() { return this.Util__ctx_type_0_init();}
 this.Util_edge = function(_ctx,x){
-   var ret = (x && this.not(_ctx.pre));
+   var ret = (x && (_ctx.pre == false));
    _ctx.pre = x;
    return ret;
 }
@@ -150,7 +150,7 @@ this.Monocv_mono_noteOff = function(_ctx,n){
    if((_ctx.count == (0|0))){
       return _ctx.pre;
    }
-   while(((i < (4|0)) && this.not(found))){
+   while(((i < (4|0)) && (found == false))){
       var _cond_45 = false;
       _cond_45 = (this.get(_ctx.notes,i) == n);
       if(_cond_45){

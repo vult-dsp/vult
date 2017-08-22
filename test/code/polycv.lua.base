@@ -32,7 +32,7 @@ function this.Util_edge_init()
 end
 
 function this.Util_edge(_ctx,x)
-   local ret = (x and (not _ctx.pre));
+   local ret = (x and (_ctx.pre == false));
    _ctx.pre = x;
    return ret;
 
@@ -233,7 +233,7 @@ end
 function this.Polycv_poly_noteOn(_ctx,note,velocity)
    local i = 0;
    local found = false;
-   while ((i < 4) and (not found)) do
+   while ((i < 4) and (found == false)) do
       local _cond_41 = false;
       _cond_41 = (this.get(_ctx.vel,i) == 0);
       if _cond_41 then
@@ -254,7 +254,7 @@ end
 function this.Polycv_poly_noteOff(_ctx,note)
    local i = 0;
    local found = false;
-   while ((i < 4) and (not found)) do
+   while ((i < 4) and (found == false)) do
       local _cond_42 = false;
       _cond_42 = (this.get(_ctx.notes,i) == note);
       if _cond_42 then

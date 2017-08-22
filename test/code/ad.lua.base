@@ -32,7 +32,7 @@ function this.Util_edge_init()
 end
 
 function this.Util_edge(_ctx,x)
-   local ret = (x and (not _ctx.pre));
+   local ret = (x and (_ctx.pre == false));
    _ctx.pre = x;
    return ret;
 
@@ -236,7 +236,7 @@ function this.Ad_do(_ctx,gate,a,d)
    end
    if (_ctx.state == 1) then
       local _cond_38 = false;
-      _cond_38 = ((not bgate) or (_ctx.out > 1024.000000));
+      _cond_38 = ((bgate == false) or (_ctx.out > 1024.000000));
       if _cond_38 then
          _ctx.state = 0;
 

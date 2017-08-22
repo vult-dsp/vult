@@ -5,7 +5,7 @@ this.Util__ctx_type_0_init = function(){
 }
 this.Util_edge_init = function() { return this.Util__ctx_type_0_init();}
 this.Util_edge = function(_ctx,x){
-   var ret = (x && this.not(_ctx.pre));
+   var ret = (x && (_ctx.pre == false));
    _ctx.pre = x;
    return ret;
 }
@@ -150,7 +150,7 @@ this.Ad_do = function(_ctx,gate,a,d){
    }
    if((_ctx.state == (1|0))){
       var _cond_38 = false;
-      _cond_38 = (this.not(bgate) || (_ctx.out > 1024.000000));
+      _cond_38 = ((bgate == false) || (_ctx.out > 1024.000000));
       if(_cond_38){
          _ctx.state = ((0|0)|0);
       }

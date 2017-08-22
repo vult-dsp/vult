@@ -5,7 +5,7 @@ this.Util__ctx_type_0_init = function(){
 }
 this.Util_edge_init = function() { return this.Util__ctx_type_0_init();}
 this.Util_edge = function(_ctx,x){
-   var ret = (x && this.not(_ctx.pre));
+   var ret = (x && (_ctx.pre == false));
    _ctx.pre = x;
    return ret;
 }
@@ -142,7 +142,7 @@ this.Polycv_poly_noteOn_init = function() { return this.Polycv__ctx_type_2_init(
 this.Polycv_poly_noteOn = function(_ctx,note,velocity){
    var i = ((0|0)|0);
    var found = false;
-   while(((i < (4|0)) && this.not(found))){
+   while(((i < (4|0)) && (found == false))){
       var _cond_41 = false;
       _cond_41 = (this.get(_ctx.vel,i) == (0|0));
       if(_cond_41){
@@ -157,7 +157,7 @@ this.Polycv_poly_noteOff_init = function() { return this.Polycv__ctx_type_2_init
 this.Polycv_poly_noteOff = function(_ctx,note){
    var i = ((0|0)|0);
    var found = false;
-   while(((i < (4|0)) && this.not(found))){
+   while(((i < (4|0)) && (found == false))){
       var _cond_42 = false;
       _cond_42 = (this.get(_ctx.notes,i) == note);
       if(_cond_42){

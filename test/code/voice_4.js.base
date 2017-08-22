@@ -5,7 +5,7 @@ this.Util__ctx_type_0_init = function(){
 }
 this.Util_edge_init = function() { return this.Util__ctx_type_0_init();}
 this.Util_edge = function(_ctx,x){
-   var ret = (x && this.not(_ctx.pre));
+   var ret = (x && (_ctx.pre == false));
    _ctx.pre = x;
    return ret;
 }
@@ -552,7 +552,7 @@ this.Adsr_do = function(_ctx,gate,a,d,s,r){
    }
    if((_ctx.state == (1|0))){
       var _cond_153 = false;
-      _cond_153 = this.not(bgate);
+      _cond_153 = (bgate == false);
       if(_cond_153){
          _ctx.state = ((0|0)|0);
       }
@@ -566,7 +566,7 @@ this.Adsr_do = function(_ctx,gate,a,d,s,r){
    }
    if((_ctx.state == (2|0))){
       var _cond_156 = false;
-      _cond_156 = this.not(bgate);
+      _cond_156 = (bgate == false);
       if(_cond_156){
          _ctx.state = ((0|0)|0);
       }

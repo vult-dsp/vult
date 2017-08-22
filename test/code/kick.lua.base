@@ -115,7 +115,7 @@ function this.Util_edge_init()
 end
 
 function this.Util_edge(_ctx,x)
-   local ret = (x and (not _ctx.pre));
+   local ret = (x and (_ctx.pre == false));
    _ctx.pre = x;
    return ret;
 

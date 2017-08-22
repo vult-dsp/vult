@@ -32,7 +32,7 @@ function this.Util_edge_init()
 end
 
 function this.Util_edge(_ctx,x)
-   local ret = (x and (not _ctx.pre));
+   local ret = (x and (_ctx.pre == false));
    _ctx.pre = x;
    return ret;
 
@@ -242,7 +242,7 @@ function this.Monocv_mono_noteOff(_ctx,n)
       return _ctx.pre;
 
    end
-   while ((i < 4) and (not found)) do
+   while ((i < 4) and (found == false)) do
       local _cond_45 = false;
       _cond_45 = (this.get(_ctx.notes,i) == n);
       if _cond_45 then

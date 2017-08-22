@@ -5,7 +5,7 @@ this.Util__ctx_type_0_init = function(){
 }
 this.Util_edge_init = function() { return this.Util__ctx_type_0_init();}
 this.Util_edge = function(_ctx,x){
-   var ret = (x && this.not(_ctx.pre));
+   var ret = (x && (_ctx.pre == false));
    _ctx.pre = x;
    return ret;
 }

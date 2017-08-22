@@ -252,7 +252,7 @@ function this.Delay_mono_noteOff(_ctx,n)
       return _ctx.pre;
 
    end
-   while ((i < 4) and (not found)) do
+   while ((i < 4) and (found == false)) do
       local _cond_52 = false;
       _cond_52 = (this.get(_ctx.notes,i) == n);
       if _cond_52 then

@@ -32,7 +32,7 @@ function this.Util_edge_init()
 end
 
 function this.Util_edge(_ctx,x)
-   local ret = (x and (not _ctx.pre));
+   local ret = (x and (_ctx.pre == false));
    _ctx.pre = x;
    return ret;
 
@@ -880,7 +880,7 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
    end
    if (_ctx.state == 1) then
       local _cond_153 = false;
-      _cond_153 = (not bgate);
+      _cond_153 = (bgate == false);
       if _cond_153 then
          _ctx.state = 0;
 
@@ -897,7 +897,7 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
    end
    if (_ctx.state == 2) then
       local _cond_156 = false;
-      _cond_156 = (not bgate);
+      _cond_156 = (bgate == false);
       if _cond_156 then
          _ctx.state = 0;
 
