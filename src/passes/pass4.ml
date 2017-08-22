@@ -77,7 +77,7 @@ module ReturnReferences = struct
       Mapper.make "ReturnReferences.stmt" @@ fun state stmt ->
       let data = Env.get state in
       let args = data.PassData.args in
-      if not args.ccode then
+      if not (args.code = CCode) then
          state, stmt
       else
          match stmt with
@@ -90,7 +90,8 @@ module ReturnReferences = struct
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "ReturnReferences.stmt_x" @@ fun state stmt ->
       let data = Env.get state in
-      if not data.PassData.args.ccode then
+      let args = data.PassData.args in
+      if not (args.code = CCode) then
          state, [stmt]
       else
          match stmt with

@@ -25,6 +25,7 @@ THE SOFTWARE.
 open Prog
 open Code
 open Common
+open Args
 
 let unit_typ = CTSimple("unit")
 
@@ -212,8 +213,7 @@ end
 type parameters =
    {
       repl : Replacements.t;
-      ccode : bool; (* true if we are generating ccode *)
-      llvm : bool;  (* true if we are generating llvm *)
+      code : Args.code;
    }
 
 let convertId (p:parameters) (id:Id.t) : string =
@@ -442,7 +442,7 @@ let rec collectVarBind stmts =
 
 let collectStmt (p:parameters) stmt =
    match stmt with
-   | CSBlock(stmts) when not p.ccode -> CSBlock(collectVarBind stmts)
+   | CSBlock(stmts) when not (p.code = CCode) -> CSBlock(collectVarBind stmts)
    | _ -> stmt
 
 let rec convertStmt (p:parameters) (s:stmt) : cstmt =
@@ -483,7 +483,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let fname = convertId p name in
       CSFunction(convertType p ret, fname,arg_names,collectStmt p body')
    (* special case for c/c++ to replace the makeArray function *)
-   | StmtBind(LWild(_) ,PCall(None,["makeArray"],[size;init;var],attr),_) when p.ccode ->
+   | StmtBind(LWild(_) ,PCall(None,["makeArray"],[size;init;var],attr),_) when p.code = CCode ->
       let init' = convertExp p init in
       let size' = convertExp p size in
       let init_typ  = expType p init in
@@ -491,14 +491,14 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let var'  = convertExp p var in
       CSBind(CLWild,CECall(init_func,[size';init';var'], attrType p attr))
    (* special case to bind tuples in c/c++ It expands tuple assigns *)
-   | StmtBind(LId(_,_,_) as lhs,PTuple(elems,_),attr) when p.ccode ->
+   | StmtBind(LId(_,_,_) as lhs,PTuple(elems,_),attr) when p.code = CCode ->
       let stmts =
          List.mapi (fun i e ->
                let etype = (GetAttr.fromExp e).typ in
                convertStmt p (StmtBind(getRecordField lhs i etype,e,attr))) elems in
       CSBlock(stmts)
    (* special for c/c++ initialize array variables *)
-   | StmtBind(LId(lhs,Some(atyp),_),PArray(elems,_),_) when p.ccode ->
+   | StmtBind(LId(lhs,Some(atyp),_),PArray(elems,_),_) when p.code = CCode ->
       let elems' = convertExpArray p elems in
       let atype,_ = Typ.arrayTypeAndSize atyp in
       let lhs' = convertVarId p lhs in
@@ -506,7 +506,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let stmts = List.mapi (fun i e -> CSBind(CLIndex(typ, lhs', CEInt(i)),e)) elems' in
       CSBlock(stmts)
    (* special for c/c++ to copy array variables *)
-   | StmtBind(LId(lhs,_,{ typ = Some(typ)}),rhs,_) when p.ccode && Typ.isArray typ ->
+   | StmtBind(LId(lhs,_,{ typ = Some(typ)}),rhs,_) when p.code = CCode && Typ.isArray typ ->
       let rhs' = convertExp p rhs in
       let atyp,size = Typ.arrayTypeAndSize typ in
       let atyp' = convertType p atyp in
@@ -555,7 +555,7 @@ and convertStmtList (p:parameters) (stmts:stmt list) : cstmt list =
 
 let convert (p:parameters) (stmts:stmt list) : cstmt list =
    let cstmts = convertStmtList p stmts in
-   if p.llvm then
+   if p.code = LLVMCode then
       let _ , ctmts = Atomic.makeStmtListAtomic { Atomic.tick = 0 } cstmts in
       ctmts
    else

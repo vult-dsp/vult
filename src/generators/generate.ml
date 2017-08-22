@@ -182,55 +182,47 @@ let rec getMainModule (parser_results:parser_results list) : string =
 
 (* Generates the C/C++ code if the flag was passed *)
 let generateC (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * filename) list=
-   if args.ccode then
-      let cparams     = ProgToCode.{repl = params.repl; ccode = true; llvm = false } in
-      (* Converts the statements to Code form *)
-      let clike_stmts = ProgToCode.convert cparams stmts in
-      CodeC.print params clike_stmts
-   else []
+   let cparams     = ProgToCode.{repl = params.repl; code = args.code} in
+   (* Converts the statements to Code form *)
+   let clike_stmts = ProgToCode.convert cparams stmts in
+   CodeC.print params clike_stmts
 
 let generateLLVM (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * filename) list=
-   if args.llvm then
-      let cparams     = ProgToCode.{repl = params.repl; ccode = true; llvm = true } in
-      (* Converts the statements to Code form *)
-      let clike_stmts = ProgToCode.convert cparams stmts in
-      CodeLLVM.print params clike_stmts
-   else []
+   let cparams     = ProgToCode.{repl = params.repl; code = args.code } in
+   (* Converts the statements to Code form *)
+   let clike_stmts = ProgToCode.convert cparams stmts in
+   CodeLLVM.print params clike_stmts
 
 (* Generates the JS code if the flag was passed *)
 let generateJS (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * filename) list=
-   if args.jscode then
-      let cparams     = ProgToCode.{repl = params.repl; ccode = false; llvm = false } in
-      (* Converts the statements to Code form *)
-      let clike_stmts = ProgToCode.convert cparams stmts in
-      CodeJs.print params clike_stmts
-   else []
+   let cparams     = ProgToCode.{repl = params.repl; code = args.code } in
+   (* Converts the statements to Code form *)
+   let clike_stmts = ProgToCode.convert cparams stmts in
+   CodeJs.print params clike_stmts
 
 (* Generates the JS code if the flag was passed *)
 let generateLua (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * filename) list=
-   if args.luacode then
-      let cparams     = ProgToCode.{repl = params.repl; ccode = false; llvm = false } in
-      (* Converts the statements to Code form *)
-      let clike_stmts = ProgToCode.convert cparams stmts in
-      CodeLua.print params clike_stmts
-   else []
+   let cparams     = ProgToCode.{repl = params.repl; code = args.code } in
+   (* Converts the statements to Code form *)
+   let clike_stmts = ProgToCode.convert cparams stmts in
+   CodeLua.print params clike_stmts
 
 let checkConfig (config:configuration) (args:args) =
-   if args.ccode && args.template <> "default" || args.luacode || args.jscode then
+   if args.code = CCode && args.template <> "default" || args.code = LuaCode || args.code = JSCode then
       if config.process_outputs = []
       || config.noteon_inputs = []
       || config.noteoff_inputs = []
       || config.controlchange_inputs = [] then
          let msg =
             Pla.print
-               [%pla{|
+               {pla|
 Required functions are not defined or have incorrect inputs or outputs. Here's a template you can use:
 
 fun process(input:real){ return input; }
 and noteOn(note:int,velocity:int,channel:int){ }
 and noteOff(note:int,channel:int){ }
 and controlChange(control:int,value:int,channel:int){ }
-and default(){ }|}]
+and default(){ }|pla}
          in
          Error.raiseErrorMsg msg
 
@@ -250,7 +242,7 @@ let createParameters (results:parser_results list) (args:args) =
    { real = args.real; template = args.template; is_header = false; output; repl; module_name; config }
 
 let generateCode (parser_results:parser_results list) (args:args) : (Pla.t * GenerateParams.filename) list =
-   if args.ccode || args.jscode || args.luacode || args.llvm && parser_results <> [] then
+   if args.code <> NoCode && parser_results <> [] then
       (* Initialize the replacements *)
       let ()          = DefaultReplacements.initialize () in
       (* Checks the 'real' argument is valid *)
@@ -262,11 +254,12 @@ let generateCode (parser_results:parser_results list) (args:args) : (Pla.t * Gen
       let params_lua  = createParameters stmts { args with real = "lua" } in
       (* Calls the code generation  *)
       let all_stmts   = List.flatten (List.map (fun a -> a.presult) stmts) in
-      let llvm        = generateLLVM args params_c all_stmts in
-      let ccode       = generateC args params_c all_stmts in
-      let jscode      = generateJS args params_js all_stmts in
-      let luacode     = generateLua args params_lua all_stmts in
-      jscode @ ccode @ luacode @ llvm
+      match args.code with
+      | NoCode -> []
+      | CCode -> generateC args params_c all_stmts
+      | JSCode -> generateJS args params_js all_stmts
+      | LuaCode -> generateLua args params_lua all_stmts
+      | LLVMCode -> generateLLVM args params_c all_stmts
    else []
 
 

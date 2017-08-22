@@ -294,7 +294,7 @@ end
 module PassesTest = struct
 
    let process options (fullfile:string) : string =
-      let args = { default_arguments with ccode = true } in
+      let args = { default_arguments with code = CCode } in
       Parser.parseFile fullfile
       |> Passes.applyTransformationsSingle args ~options:options
       |> showResults
@@ -323,7 +323,7 @@ module RandomCompileTest = struct
          assert_failure ("Failed to compile "^file)
 
    let generateCPP (filename:string) (output:string) (real_type:string) : unit =
-      let args = { default_arguments with  files = [File filename]; ccode = true; output = output; real = real_type } in
+      let args = { default_arguments with  files = [File filename]; code = CCode; output = output; real = real_type } in
       let seed = Hashtbl.hash filename in
       let code = RandProg.run seed in
       write filename code;
@@ -420,10 +420,10 @@ module CliTest = struct
       let args = { default_arguments with includes = includes } in
       let args, ext =
          match code_type with
-         | "fixed" -> { args with ccode = true; real = "fixed" }, [".cpp",".cpp.fixed.base"; ".h", ".h.fixed.base"]
-         | "float" -> { args with ccode = true }, [".cpp",".cpp.float.base"; ".h", ".h.float.base"]
-         | "js" -> { args with jscode = true }, [".js", ".js.base"]
-         | "lua" -> { args with luacode = true }, [".lua", ".lua.base"]
+         | "fixed" -> { args with code = CCode; real = "fixed" }, [".cpp",".cpp.fixed.base"; ".h", ".h.fixed.base"]
+         | "float" -> { args with code = CCode }, [".cpp",".cpp.float.base"; ".h", ".h.float.base"]
+         | "js" -> { args with code = JSCode }, [".js", ".js.base"]
+         | "lua" -> { args with code = LuaCode }, [".lua", ".lua.base"]
          | _ -> failwith "Unknown target to run test"
       in
       let args = { args with output = basefile; files = [ File fullfile ] } in

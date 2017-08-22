@@ -37,6 +37,14 @@ type output =
    | CheckOk
    | Errors of Error.t list
 
+type code =
+   | NoCode
+   | CCode
+   | JSCode
+   | LuaCode
+   | LLVMCode
+[@@deriving show,eq,ord]
+
 (** Stores the options passed to the command line *)
 type args =
    {
@@ -44,10 +52,7 @@ type args =
       mutable dparse   : bool;
       mutable eval     : bool;
       mutable check    : bool;
-      mutable ccode    : bool;
-      mutable llvm     : bool;
-      mutable jscode   : bool;
-      mutable luacode  : bool;
+      mutable code     : code;
       mutable output   : string;
       mutable real     : string;
       mutable template : string;
@@ -62,12 +67,9 @@ let default_arguments : args =
    {
       files  = [];
       dparse = false;
-      ccode  = false;
-      llvm   = false;
+      code   = NoCode;
       eval   = false;
       check  = false;
-      jscode = false;
-      luacode = false;
       output  = "";
       real    = "float";
       template = "default";
