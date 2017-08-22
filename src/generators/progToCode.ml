@@ -48,6 +48,7 @@ module Atomic = struct
       | CEUnOp(_,_,ts)
       | CEOp(_,_,ts)
       | CEVar(_,ts)
+      | CEIndex(_,_,ts)
       | CEIf(_,_,_,ts)
       | CETuple(_,ts) -> ts
       | CEEmpty -> unit_typ
@@ -87,6 +88,9 @@ module Atomic = struct
       | CEString _ -> s, [], exp
       | CEVar([_],_) -> s, [], exp
       | CEVar _ ->
+         let s, pre, e = bindToTemp s exp in
+         s, pre, e
+      | CEIndex _ ->
          let s, pre, e = bindToTemp s exp in
          s, pre, e
       | CEArray(elems, ts) ->
@@ -339,7 +343,13 @@ let rec convertExp (p:parameters) (e:exp) : cexp =
    | PReal(v,_)  ->
       let s = Replacements.getRealToString p.repl v "real" in
       CEFloat(s,v)
-   | PId(id,attr) -> CEVar(convertVarId p id, typ attr)
+   | PId(id,attr) ->
+      CEVar(convertVarId p id, typ attr)
+   | PIndex(e, index, attr) ->
+      let e' = convertExp p e in
+      let index' = convertExp p index in
+      CEIndex(e', index', typ attr)
+
    | PArray(elems,attr) ->
       let elems' = convertExpArray p elems in
       CEArray(elems', typ attr)
@@ -492,13 +502,9 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let elems' = convertExpArray p elems in
       let atype,_ = Typ.arrayTypeAndSize atyp in
       let lhs' = convertVarId p lhs in
-      begin match convertType p atype with
-         | CTSimple(typ_t) as typ ->
-            let fn = Replacements.getFunction p.repl "set" typ_t in
-            let stmts = List.mapi (fun i e -> CSBind(CLWild,CECall(fn,[CEVar(lhs', typ);CEInt(i);e],unit_typ))) elems' in
-            CSBlock(stmts)
-         | _ -> failwith ""
-      end
+      let typ = convertType p atype in
+      let stmts = List.mapi (fun i e -> CSBind(CLIndex(typ, lhs', CEInt(i)),e)) elems' in
+      CSBlock(stmts)
    (* special for c/c++ to copy array variables *)
    | StmtBind(LId(lhs,_,{ typ = Some(typ)}),rhs,_) when p.ccode && Typ.isArray typ ->
       let rhs' = convertExp p rhs in

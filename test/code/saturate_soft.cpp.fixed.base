@@ -5,7 +5,7 @@
 fix16_t Saturate_soft_table(fix16_t x){
    int index;
    index = int_clip(fix_to_int((x + 0x200000 /* 32.000000 */)),0,64);
-   return (fix_get(fix_wrap_array(Saturate_soft_table_c0),index) + fix_mul(x,(fix_get(fix_wrap_array(Saturate_soft_table_c1),index) + fix_mul(fix_get(fix_wrap_array(Saturate_soft_table_c2),index),x))));
+   return (fix_wrap_array(Saturate_soft_table_c0)[index] + fix_mul(x,(fix_wrap_array(Saturate_soft_table_c1)[index] + fix_mul(fix_wrap_array(Saturate_soft_table_c2)[index],x))));
 }
 
 fix16_t Saturate_soft_process(fix16_t x){

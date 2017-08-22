@@ -89,6 +89,12 @@ and exp =
   | PId
     of Id.t    (* name *)
        *  attr
+
+  | PIndex
+    of exp
+       *  exp
+       *  attr
+
   | PArray
     of exp array
        * attr

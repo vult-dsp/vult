@@ -124,13 +124,13 @@ float Util_cubic_clipper(float x){
 float Util_pitchToRate_1024(float pitch){
    int index;
    index = int_clip(float_to_int((0.244094f * pitch)),0,31);
-   return (float_get(float_wrap_array(Util_pitchToRate_1024_c0),index) + (pitch * (float_get(float_wrap_array(Util_pitchToRate_1024_c1),index) + (float_get(float_wrap_array(Util_pitchToRate_1024_c2),index) * pitch))));
+   return (float_wrap_array(Util_pitchToRate_1024_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_1024_c1)[index] + (float_wrap_array(Util_pitchToRate_1024_c2)[index] * pitch))));
 }
 
 float Util_pitchToRate(float pitch){
    int index;
    index = int_clip(float_to_int((0.244094f * pitch)),0,31);
-   return (float_get(float_wrap_array(Util_pitchToRate_c0),index) + (pitch * (float_get(float_wrap_array(Util_pitchToRate_c1),index) + (float_get(float_wrap_array(Util_pitchToRate_c2),index) * pitch))));
+   return (float_wrap_array(Util_pitchToRate_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_c1)[index] + (float_wrap_array(Util_pitchToRate_c2)[index] * pitch))));
 }
 
 float Util_cvToPitch(float cv){
@@ -140,13 +140,13 @@ float Util_cvToPitch(float cv){
 float Util_cvToRate_1024(float cv){
    int index;
    index = int_clip(float_to_int((34.444444f * cv)),0,31);
-   return (float_get(float_wrap_array(Util_cvToRate_1024_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToRate_1024_c1),index) + (float_get(float_wrap_array(Util_cvToRate_1024_c2),index) * cv))));
+   return (float_wrap_array(Util_cvToRate_1024_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_1024_c1)[index] + (float_wrap_array(Util_cvToRate_1024_c2)[index] * cv))));
 }
 
 float Util_cvToRate(float cv){
    int index;
    index = int_clip(float_to_int((34.444444f * cv)),0,31);
-   return (float_get(float_wrap_array(Util_cvToRate_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToRate_c1),index) + (float_get(float_wrap_array(Util_cvToRate_c2),index) * cv))));
+   return (float_wrap_array(Util_cvToRate_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_c1)[index] + (float_wrap_array(Util_cvToRate_c2)[index] * cv))));
 }
 
 float Util_pitchToCv(float pitch){
@@ -156,35 +156,35 @@ float Util_pitchToCv(float pitch){
 float Util_cvToperiod(float cv){
    int index;
    index = int_clip(float_to_int((31.000000f * cv)),0,31);
-   return (float_get(float_wrap_array(Util_cvToperiod_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToperiod_c1),index) + (float_get(float_wrap_array(Util_cvToperiod_c2),index) * cv))));
+   return (float_wrap_array(Util_cvToperiod_c0)[index] + (cv * (float_wrap_array(Util_cvToperiod_c1)[index] + (float_wrap_array(Util_cvToperiod_c2)[index] * cv))));
 }
 
 float Util_cvTokHz(float cv){
    int index;
    index = int_clip(float_to_int((31.000000f * cv)),0,31);
-   return (float_get(float_wrap_array(Util_cvTokHz_c0),index) + (cv * (float_get(float_wrap_array(Util_cvTokHz_c1),index) + (float_get(float_wrap_array(Util_cvTokHz_c2),index) * cv))));
+   return (float_wrap_array(Util_cvTokHz_c0)[index] + (cv * (float_wrap_array(Util_cvTokHz_c1)[index] + (float_wrap_array(Util_cvTokHz_c2)[index] * cv))));
 }
 
 float Ladder_tune(float cut){
    int index;
    index = int_clip(float_to_int((127.000000f * cut)),0,127);
-   return (float_get(float_wrap_array(Ladder_tune_c0),index) + (cut * (float_get(float_wrap_array(Ladder_tune_c1),index) + (float_get(float_wrap_array(Ladder_tune_c2),index) * cut))));
+   return (float_wrap_array(Ladder_tune_c0)[index] + (cut * (float_wrap_array(Ladder_tune_c1)[index] + (float_wrap_array(Ladder_tune_c2)[index] * cut))));
 }
 
 void Ladder_ladder_step(float input, float fh, float res, float (&p)[4], float (&dp)[4]){
    float w0;
-   w0 = Util_cubic_clipper((input + ((-4.000000f) * res * float_get(p,3))));
+   w0 = Util_cubic_clipper((input + ((-4.000000f) * res * p[3])));
    float w1;
-   w1 = Util_cubic_clipper(float_get(p,0));
+   w1 = Util_cubic_clipper(p[0]);
    dp[0] = ((w0 + (- w1)) * fh);
    float w3;
-   w3 = Util_cubic_clipper(float_get(p,1));
+   w3 = Util_cubic_clipper(p[1]);
    dp[1] = ((w1 + (- w3)) * fh);
    float w5;
-   w5 = Util_cubic_clipper(float_get(p,2));
+   w5 = Util_cubic_clipper(p[2]);
    dp[2] = ((w3 + (- w5)) * fh);
    float w7;
-   w7 = Util_cubic_clipper(float_get(p,3));
+   w7 = Util_cubic_clipper(p[3]);
    dp[3] = ((w5 + (- w7)) * fh);
 }
 
@@ -212,16 +212,16 @@ float Ladder_heun(Ladder__ctx_type_2 &_ctx, float input, float cut, float res){
       _ctx.fh = Ladder_tune(cut);
    }
    Ladder_ladder_step(input,_ctx.fh,res,_ctx.p,dpt);
-   pt[0] = (float_get(_ctx.p,0) + float_get(dpt,0));
-   pt[1] = (float_get(_ctx.p,1) + float_get(dpt,1));
-   pt[2] = (float_get(_ctx.p,2) + float_get(dpt,2));
-   pt[3] = (float_get(_ctx.p,3) + float_get(dpt,3));
+   pt[0] = (_ctx.p[0] + dpt[0]);
+   pt[1] = (_ctx.p[1] + dpt[1]);
+   pt[2] = (_ctx.p[2] + dpt[2]);
+   pt[3] = (_ctx.p[3] + dpt[3]);
    Ladder_ladder_step(input,_ctx.fh,res,pt,dp);
-   _ctx.p[0] = (float_get(_ctx.p,0) + ((float_get(dp,0) + float_get(dpt,0)) * 0.500000f));
-   _ctx.p[1] = (float_get(_ctx.p,1) + ((float_get(dp,1) + float_get(dpt,1)) * 0.500000f));
-   _ctx.p[2] = (float_get(_ctx.p,2) + ((float_get(dp,2) + float_get(dpt,2)) * 0.500000f));
-   _ctx.p[3] = (float_get(_ctx.p,3) + ((float_get(dp,3) + float_get(dpt,3)) * 0.500000f));
-   return float_get(_ctx.p,3);
+   _ctx.p[0] = (_ctx.p[0] + ((dp[0] + dpt[0]) * 0.500000f));
+   _ctx.p[1] = (_ctx.p[1] + ((dp[1] + dpt[1]) * 0.500000f));
+   _ctx.p[2] = (_ctx.p[2] + ((dp[2] + dpt[2]) * 0.500000f));
+   _ctx.p[3] = (_ctx.p[3] + ((dp[3] + dpt[3]) * 0.500000f));
+   return _ctx.p[3];
 }
 
 void Ladder__ctx_type_3_init(Ladder__ctx_type_3 &_output_){
@@ -246,11 +246,11 @@ float Ladder_euler(Ladder__ctx_type_3 &_ctx, float input, float cut, float res){
       _ctx.fh = Ladder_tune(cut);
    }
    Ladder_ladder_step(input,_ctx.fh,res,_ctx.p,dpt);
-   _ctx.p[0] = (float_get(_ctx.p,0) + float_get(dpt,0));
-   _ctx.p[1] = (float_get(_ctx.p,1) + float_get(dpt,1));
-   _ctx.p[2] = (float_get(_ctx.p,2) + float_get(dpt,2));
-   _ctx.p[3] = (float_get(_ctx.p,3) + float_get(dpt,3));
-   return float_get(_ctx.p,3);
+   _ctx.p[0] = (_ctx.p[0] + dpt[0]);
+   _ctx.p[1] = (_ctx.p[1] + dpt[1]);
+   _ctx.p[2] = (_ctx.p[2] + dpt[2]);
+   _ctx.p[3] = (_ctx.p[3] + dpt[3]);
+   return _ctx.p[3];
 }
 
 void Ladder__ctx_type_4_init(Ladder__ctx_type_4 &_output_){

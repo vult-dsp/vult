@@ -169,9 +169,8 @@ module MakeTables = struct
       let lindex = LId(["index"],Some(Tables.int_type), Tables.attr_int) in
       let rindex = PId(["index"], Tables.attr_int) in
       let getCoeff a =
-         PCall(None,["get"],
-               [PCall(None,["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array size)], Tables.attr_real); rindex],
-               Tables.attr_real)
+         let arr = PCall(None,["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array size)], Tables.attr_real) in
+         PIndex(arr, rindex, Tables.attr_real)
       in
       let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), Tables.attr_real) in
       StmtBlock(
@@ -323,7 +322,7 @@ module EmbedWavFile = struct
       let samples_e  = PInt(samples, Tables.attr_int) in
       StmtIf(
          POp("==", [channel; i],attr_bool),
-         StmtReturn(PCall(None,["get"], [table; POp("%",[index; samples_e],attr_int)], attr_real),attr),
+         StmtReturn(PIndex(table, POp("%",[index; samples_e],attr_int), attr_real),attr),
          None,
          attr)
 

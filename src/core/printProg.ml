@@ -137,6 +137,11 @@ and expressionBuff buffer (exp:exp) =
       append buffer "\""
    | PBool(true,_)  -> append buffer "true"
    | PBool(false,_) -> append buffer "false"
+   | PIndex(e, index, _)   ->
+      expressionBuff buffer e;
+      append buffer "[";
+      expressionBuff buffer index;
+      append buffer "]"
    | PArray(elems,_) ->
       append buffer "[";
       printArray buffer expressionBuff ", " elems;

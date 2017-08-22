@@ -5,7 +5,7 @@
 fix16_t Saturate_soft_table(fix16_t x){
    int index;
    index = int_clip(fix_to_int((x + 0x200000 /* 32.000000 */)),0,64);
-   return (fix_get(fix_wrap_array(Saturate_soft_table_c0),index) + fix_mul(x,(fix_get(fix_wrap_array(Saturate_soft_table_c1),index) + fix_mul(fix_get(fix_wrap_array(Saturate_soft_table_c2),index),x))));
+   return (fix_wrap_array(Saturate_soft_table_c0)[index] + fix_mul(x,(fix_wrap_array(Saturate_soft_table_c1)[index] + fix_mul(fix_wrap_array(Saturate_soft_table_c2)[index],x))));
 }
 
 fix16_t Saturate_soft_process(fix16_t x){
@@ -146,13 +146,13 @@ fix16_t Util_cubic_clipper(fix16_t x){
 fix16_t Util_pitchToRate_1024(fix16_t pitch){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
-   return (fix_get(fix_wrap_array(Util_pitchToRate_1024_c0),index) + fix_mul(pitch,(fix_get(fix_wrap_array(Util_pitchToRate_1024_c1),index) + fix_mul(fix_get(fix_wrap_array(Util_pitchToRate_1024_c2),index),pitch))));
+   return (fix_wrap_array(Util_pitchToRate_1024_c0)[index] + fix_mul(pitch,(fix_wrap_array(Util_pitchToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_pitchToRate_1024_c2)[index],pitch))));
 }
 
 fix16_t Util_pitchToRate(fix16_t pitch){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
-   return (fix_get(fix_wrap_array(Util_pitchToRate_c0),index) + fix_mul(pitch,(fix_get(fix_wrap_array(Util_pitchToRate_c1),index) + fix_mul(fix_get(fix_wrap_array(Util_pitchToRate_c2),index),pitch))));
+   return (fix_wrap_array(Util_pitchToRate_c0)[index] + fix_mul(pitch,(fix_wrap_array(Util_pitchToRate_c1)[index] + fix_mul(fix_wrap_array(Util_pitchToRate_c2)[index],pitch))));
 }
 
 fix16_t Util_cvToPitch(fix16_t cv){
@@ -162,13 +162,13 @@ fix16_t Util_cvToPitch(fix16_t cv){
 fix16_t Util_cvToRate_1024(fix16_t cv){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
-   return (fix_get(fix_wrap_array(Util_cvToRate_1024_c0),index) + fix_mul(cv,(fix_get(fix_wrap_array(Util_cvToRate_1024_c1),index) + fix_mul(fix_get(fix_wrap_array(Util_cvToRate_1024_c2),index),cv))));
+   return (fix_wrap_array(Util_cvToRate_1024_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_1024_c2)[index],cv))));
 }
 
 fix16_t Util_cvToRate(fix16_t cv){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
-   return (fix_get(fix_wrap_array(Util_cvToRate_c0),index) + fix_mul(cv,(fix_get(fix_wrap_array(Util_cvToRate_c1),index) + fix_mul(fix_get(fix_wrap_array(Util_cvToRate_c2),index),cv))));
+   return (fix_wrap_array(Util_cvToRate_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_c2)[index],cv))));
 }
 
 fix16_t Util_pitchToCv(fix16_t pitch){
@@ -178,13 +178,13 @@ fix16_t Util_pitchToCv(fix16_t pitch){
 fix16_t Util_cvToperiod(fix16_t cv){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x1f0000 /* 31.000000 */,cv)),0,31);
-   return (fix_get(fix_wrap_array(Util_cvToperiod_c0),index) + fix_mul(cv,(fix_get(fix_wrap_array(Util_cvToperiod_c1),index) + fix_mul(fix_get(fix_wrap_array(Util_cvToperiod_c2),index),cv))));
+   return (fix_wrap_array(Util_cvToperiod_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToperiod_c1)[index] + fix_mul(fix_wrap_array(Util_cvToperiod_c2)[index],cv))));
 }
 
 fix16_t Util_cvTokHz(fix16_t cv){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x1f0000 /* 31.000000 */,cv)),0,31);
-   return (fix_get(fix_wrap_array(Util_cvTokHz_c0),index) + fix_mul(cv,(fix_get(fix_wrap_array(Util_cvTokHz_c1),index) + fix_mul(fix_get(fix_wrap_array(Util_cvTokHz_c2),index),cv))));
+   return (fix_wrap_array(Util_cvTokHz_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvTokHz_c1)[index] + fix_mul(fix_wrap_array(Util_cvTokHz_c2)[index],cv))));
 }
 
 void Rescomb__ctx_type_0_init(Rescomb__ctx_type_0 &_output_){
@@ -228,7 +228,7 @@ fix16_t Rescomb_delay(Rescomb__ctx_type_0 &_ctx, fix16_t x, fix16_t cv){
 fix16_t Rescomb_toneCurve(fix16_t tone){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x1a4000 /* 26.250000 */,(tone + 0x13333 /* 1.200000 */))),0,63);
-   return (fix_get(fix_wrap_array(Rescomb_toneCurve_c0),index) + fix_mul(tone,(fix_get(fix_wrap_array(Rescomb_toneCurve_c1),index) + fix_mul(fix_get(fix_wrap_array(Rescomb_toneCurve_c2),index),tone))));
+   return (fix_wrap_array(Rescomb_toneCurve_c0)[index] + fix_mul(tone,(fix_wrap_array(Rescomb_toneCurve_c1)[index] + fix_mul(fix_wrap_array(Rescomb_toneCurve_c2)[index],tone))));
 }
 
 void Rescomb__ctx_type_2_init(Rescomb__ctx_type_2 &_output_){

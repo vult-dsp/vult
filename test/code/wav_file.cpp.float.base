@@ -5,7 +5,7 @@
 int Wav_file_ext_wave_samples(){return 600;}
 
 float Wav_file_ext_wave(int channel, int index){
-   if(channel == 0){ return float_get(float_wrap_array(Wav_file_ext_wave_chan_0),(index % 600)); }
+   if(channel == 0){ return float_wrap_array(Wav_file_ext_wave_chan_0)[(index % 600)]; }
    return 0.000000f;
 }
 

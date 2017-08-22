@@ -295,6 +295,11 @@ and map_exp (mapper:'state mapper) (state:'state) (exp:exp) : 'state * exp =
       let state',id'   = map_id mapper state id in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.exp state' (PId(id',attr'))
+   | PIndex(e,index,attr) ->
+      let state',e' = map_exp mapper state e in
+      let state',index' = map_exp mapper state' index in
+      let state',attr' = map_attr mapper state' attr in
+      apply mapper.exp state' (PIndex(e',index',attr'))
    | PArray(elems,attr) ->
       let state',elems'= map_exp_array mapper state elems in
       let state',attr' = map_attr mapper state' attr in

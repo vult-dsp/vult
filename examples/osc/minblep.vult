@@ -1,29 +1,5 @@
 external minblep(ch:int,i:int) : real @[wave(channels=1,file="minblep.wav")];
 
-
-fun biquad(x:real,b0:real,b1:real,b2:real,a1:real,a2:real){
-    mem w1,w2;
-    val w0 = x - a1*w1 - a2*w2;
-    val y0 = b0*w0 + b1*w1 + b2*w2;
-    w2, w1 = w1, w0;
-    return y0;
-}
-
-fun lp12(x,fc,q) {
-    mem b0,b1,b2,a1,a2;
-    if (Util.change(fc) || Util.change(q)) {
-        val qc = q+sqrt(2.0);
-        val k = tan(3.1415926535897*fc/(4.0 * 44100.0));
-        val den = k*k*qc+k+qc;
-        b0 = k*k*qc/den;
-        b1 = 2.0*b0;
-        b2 = b0;
-        a1 = 2.0*qc*(k*k-1.0)/den;
-        a2 = (k*k*qc-k+qc)/den;
-    }
-    return biquad(x,b0,b1,b2,a1,a2);
-}
-
 fun minblep_play(trigger) {
    mem playing;
    mem index;
@@ -31,13 +7,16 @@ fun minblep_play(trigger) {
       index = 0;
       playing = true;
    }
-   if(index >= minblep_samples()) {
-      playing = false;
-      index = 0;
+   val out = 0.0;
+   if(playing) {
+      if(index >= minblep_samples()) {
+         playing = false;
+         index = 0;
+      }
+      else
+         index = index + 16;
+      out = if playing then minblep(0, index) else 0.0;
    }
-   else
-      index = index + 16;
-   val out = if playing then minblep(0, index) else 0.0;
    return out;
 }
 
@@ -56,14 +35,7 @@ fun minblep_step(cv:real, reset: bool) {
    val o3 = minblep_play(active_blep == 3);
    val pulses = o0 - o1 + o2 - o3;
    mem acc = acc * 0.996 + 20.0 * pulses;
-   val out = lp12(lp12(lp12(acc, 19000.0, 0.0), 19000.0, 0.0), 19000.0, 0.0);
-   return out;
-}
-
-fun smooth(input){
-   mem x;
-   x = x+(input-x)*0.0005;
-   return x;
+   return acc;
 }
 
 fun process(cv:real, reset: real){

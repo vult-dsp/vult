@@ -25,7 +25,7 @@ local Saturate_table_c1 = {0.000000,0.000000,0.000000,0.000002,0.000015,0.000091
 local Saturate_table_c2 = {0.000000,0.000000,0.000000,0.000000,0.000001,0.000006,0.000043,0.000292,0.001990,0.013391,0.083468,0.322510,0.000000,(-0.322510),(-0.083468),(-0.013391),(-0.001990),(-0.000292),(-0.000043),(-0.000006),(-0.000001),(-0.000000),(-0.000000),(-0.000000),(-0.000000),(-0.000000)};
 function this.Saturate_table(x)
    local index = this.clip(this.int((x + 12.000000)),0,24);
-   return (this.get(this.wrap_array(Saturate_table_c0),index) + (x * (this.get(this.wrap_array(Saturate_table_c1),index) + (this.get(this.wrap_array(Saturate_table_c2),index) * x))));
+   return (this.wrap_array(Saturate_table_c0)[index+1] + (x * (this.wrap_array(Saturate_table_c1)[index+1] + (this.wrap_array(Saturate_table_c2)[index+1] * x))));
 
 end
 

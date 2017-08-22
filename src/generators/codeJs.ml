@@ -135,6 +135,10 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
       {pla|(<#elems_t#>)|pla}
    | CEVar(name,_) ->
       dot name
+   | CEIndex(e, index, _) ->
+      let e = printExp params e in
+      let index = printExp params index in
+      {pla|<#e#>[<#index#>]|pla}
    | CEIf(cond,then_,else_,_) ->
       let cond_t = printExp params cond in
       let then_t = printExp params then_ in

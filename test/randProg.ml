@@ -262,7 +262,7 @@ let rec newExp state typ =
             let array_type, var = pickArrayVar state typ in
             let _,size = Typ.arrayTypeAndSize array_type in
             let index = Random.int size in
-            PCall(None,["get"],[PId(var,emptyAttr);PInt(index,emptyAttr)],emptyAttr));
+            PIndex(PId(var,emptyAttr),PInt(index,emptyAttr),emptyAttr));
       (* tuples *)
       (isTuple typ), low_p, (fun state ->
             let types = tupleTypes typ in

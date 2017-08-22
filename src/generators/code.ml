@@ -47,6 +47,7 @@ type cexp =
    | CEUnOp   of string * cexp * type_descr
    | CEOp     of string * cexp list * type_descr
    | CEVar    of string list * type_descr
+   | CEIndex  of cexp * cexp * type_descr
    | CEIf     of cexp * cexp * cexp * type_descr
    | CETuple  of (string * cexp) list * type_descr
    | CEEmpty

@@ -375,6 +375,12 @@ let rec bindArg (env:Env.env) (lhs:typed_id) (rhs:exp) =
    | (TypedId(id,_,_,_) | SimpleId(id, _, _)), rhs ->
       Env.updateVar env id rhs
 
+let getIndex (id:exp) (index:exp) : exp option =
+   match id, index with
+   | PArray (elems, _), PInt(n, _) ->
+      Some (Array.get elems n)
+   | _ -> None
+
 (** Main function to evaluate an expression *)
 let rec evalExp (env:Env.env) (exp:exp) : exp =
    match exp with
@@ -389,6 +395,14 @@ let rec evalExp (env:Env.env) (exp:exp) : exp =
       begin match Env.lookupVar env id with
          | value -> value
          | exception Not_found -> exp
+      end
+
+   | PIndex(e, index, attr) ->
+      let value = evalExp env e in
+      let index' = evalExp env index in
+      begin match getIndex value index' with
+         | Some v -> v
+         | None -> PIndex(value, index', attr)
       end
 
    | PUnOp(op, exp, _) ->

@@ -213,13 +213,13 @@ float Util_cubic_clipper(float x){
 float Util_pitchToRate_1024(float pitch){
    int index;
    index = int_clip(float_to_int((0.244094f * pitch)),0,31);
-   return (float_get(float_wrap_array(Util_pitchToRate_1024_c0),index) + (pitch * (float_get(float_wrap_array(Util_pitchToRate_1024_c1),index) + (float_get(float_wrap_array(Util_pitchToRate_1024_c2),index) * pitch))));
+   return (float_wrap_array(Util_pitchToRate_1024_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_1024_c1)[index] + (float_wrap_array(Util_pitchToRate_1024_c2)[index] * pitch))));
 }
 
 float Util_pitchToRate(float pitch){
    int index;
    index = int_clip(float_to_int((0.244094f * pitch)),0,31);
-   return (float_get(float_wrap_array(Util_pitchToRate_c0),index) + (pitch * (float_get(float_wrap_array(Util_pitchToRate_c1),index) + (float_get(float_wrap_array(Util_pitchToRate_c2),index) * pitch))));
+   return (float_wrap_array(Util_pitchToRate_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_c1)[index] + (float_wrap_array(Util_pitchToRate_c2)[index] * pitch))));
 }
 
 float Util_cvToPitch(float cv){
@@ -229,13 +229,13 @@ float Util_cvToPitch(float cv){
 float Util_cvToRate_1024(float cv){
    int index;
    index = int_clip(float_to_int((34.444444f * cv)),0,31);
-   return (float_get(float_wrap_array(Util_cvToRate_1024_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToRate_1024_c1),index) + (float_get(float_wrap_array(Util_cvToRate_1024_c2),index) * cv))));
+   return (float_wrap_array(Util_cvToRate_1024_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_1024_c1)[index] + (float_wrap_array(Util_cvToRate_1024_c2)[index] * cv))));
 }
 
 float Util_cvToRate(float cv){
    int index;
    index = int_clip(float_to_int((34.444444f * cv)),0,31);
-   return (float_get(float_wrap_array(Util_cvToRate_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToRate_c1),index) + (float_get(float_wrap_array(Util_cvToRate_c2),index) * cv))));
+   return (float_wrap_array(Util_cvToRate_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_c1)[index] + (float_wrap_array(Util_cvToRate_c2)[index] * cv))));
 }
 
 float Util_pitchToCv(float pitch){
@@ -245,13 +245,13 @@ float Util_pitchToCv(float pitch){
 float Util_cvToperiod(float cv){
    int index;
    index = int_clip(float_to_int((31.000000f * cv)),0,31);
-   return (float_get(float_wrap_array(Util_cvToperiod_c0),index) + (cv * (float_get(float_wrap_array(Util_cvToperiod_c1),index) + (float_get(float_wrap_array(Util_cvToperiod_c2),index) * cv))));
+   return (float_wrap_array(Util_cvToperiod_c0)[index] + (cv * (float_wrap_array(Util_cvToperiod_c1)[index] + (float_wrap_array(Util_cvToperiod_c2)[index] * cv))));
 }
 
 float Util_cvTokHz(float cv){
    int index;
    index = int_clip(float_to_int((31.000000f * cv)),0,31);
-   return (float_get(float_wrap_array(Util_cvTokHz_c0),index) + (cv * (float_get(float_wrap_array(Util_cvTokHz_c1),index) + (float_get(float_wrap_array(Util_cvTokHz_c2),index) * cv))));
+   return (float_wrap_array(Util_cvTokHz_c0)[index] + (cv * (float_wrap_array(Util_cvTokHz_c1)[index] + (float_wrap_array(Util_cvTokHz_c2)[index] * cv))));
 }
 
 void Tricore__ctx_type_0_init(Tricore__ctx_type_0 &_output_){
@@ -433,7 +433,7 @@ void Swept_default(Swept__ctx_type_0 &_ctx){
 float Saturate_table(float x){
    int index;
    index = int_clip(float_to_int((x + 12.000000f)),0,24);
-   return (float_get(float_wrap_array(Saturate_table_c0),index) + (x * (float_get(float_wrap_array(Saturate_table_c1),index) + (float_get(float_wrap_array(Saturate_table_c2),index) * x))));
+   return (float_wrap_array(Saturate_table_c0)[index] + (x * (float_wrap_array(Saturate_table_c1)[index] + (float_wrap_array(Saturate_table_c2)[index] * x))));
 }
 
 float Saturate_process(float x){

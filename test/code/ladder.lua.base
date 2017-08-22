@@ -142,7 +142,7 @@ local Util_pitchToRate_1024_c1 = {0.010913,0.010176,0.008334,0.004867,(-0.000939
 local Util_pitchToRate_1024_c2 = {0.000356,0.000447,0.000562,0.000707,0.000889,0.001119,0.001407,0.001769,0.002225,0.002799,0.003520,0.004426,0.005567,0.007001,0.008805,0.011074,0.013927,0.017515,0.022028,0.027704,0.034841,0.043818,0.055107,0.069305,0.087163,0.109617,0.137862,0.173377,0.218054,0.274227,0.344892,0.433780,0.545543};
 function this.Util_pitchToRate_1024(pitch)
    local index = this.clip(this.int((0.244094 * pitch)),0,31);
-   return (this.get(this.wrap_array(Util_pitchToRate_1024_c0),index) + (pitch * (this.get(this.wrap_array(Util_pitchToRate_1024_c1),index) + (this.get(this.wrap_array(Util_pitchToRate_1024_c2),index) * pitch))));
+   return (this.wrap_array(Util_pitchToRate_1024_c0)[index+1] + (pitch * (this.wrap_array(Util_pitchToRate_1024_c1)[index+1] + (this.wrap_array(Util_pitchToRate_1024_c2)[index+1] * pitch))));
 
 end
 
@@ -151,7 +151,7 @@ local Util_pitchToRate_c1 = {0.000011,0.000010,0.000008,0.000005,(-0.000001),(-0
 local Util_pitchToRate_c2 = {0.000000,0.000000,0.000001,0.000001,0.000001,0.000001,0.000001,0.000002,0.000002,0.000003,0.000003,0.000004,0.000005,0.000007,0.000009,0.000011,0.000014,0.000017,0.000022,0.000027,0.000034,0.000043,0.000054,0.000068,0.000085,0.000107,0.000135,0.000169,0.000213,0.000268,0.000337,0.000424,0.000533};
 function this.Util_pitchToRate(pitch)
    local index = this.clip(this.int((0.244094 * pitch)),0,31);
-   return (this.get(this.wrap_array(Util_pitchToRate_c0),index) + (pitch * (this.get(this.wrap_array(Util_pitchToRate_c1),index) + (this.get(this.wrap_array(Util_pitchToRate_c2),index) * pitch))));
+   return (this.wrap_array(Util_pitchToRate_c0)[index+1] + (pitch * (this.wrap_array(Util_pitchToRate_c1)[index+1] + (this.wrap_array(Util_pitchToRate_c2)[index+1] * pitch))));
 
 end
 
@@ -165,7 +165,7 @@ local Util_cvToRate_1024_c1 = {5.245583,4.998943,4.403089,3.319116,1.564497,(-1.
 local Util_cvToRate_1024_c2 = {20.125592,24.457572,29.722000,36.119582,43.894227,53.342343,64.824143,78.777366,95.733987,116.340471,141.382451,171.814646,208.797363,253.740413,308.357211,374.730622,455.389632,553.410816,672.536916,817.290611,993.216833,1207.000622,1466.803875,1782.529271,2166.244997,2632.487590,3199.072620,3887.673024,4724.859179,5741.245302,6977.441755,8479.290028,10304.455486};
 function this.Util_cvToRate_1024(cv)
    local index = this.clip(this.int((34.444444 * cv)),0,31);
-   return (this.get(this.wrap_array(Util_cvToRate_1024_c0),index) + (cv * (this.get(this.wrap_array(Util_cvToRate_1024_c1),index) + (this.get(this.wrap_array(Util_cvToRate_1024_c2),index) * cv))));
+   return (this.wrap_array(Util_cvToRate_1024_c0)[index+1] + (cv * (this.wrap_array(Util_cvToRate_1024_c1)[index+1] + (this.wrap_array(Util_cvToRate_1024_c2)[index+1] * cv))));
 
 end
 
@@ -174,7 +174,7 @@ local Util_cvToRate_c1 = {0.005123,0.004882,0.004300,0.003241,0.001528,(-0.00107
 local Util_cvToRate_c2 = {0.019654,0.023884,0.029025,0.035273,0.042865,0.052092,0.063305,0.076931,0.093490,0.113614,0.138069,0.167788,0.203904,0.247793,0.301130,0.365948,0.444716,0.540440,0.656774,0.798135,0.969938,1.178712,1.432426,1.740751,2.115474,2.570789,3.124094,3.796556,4.614120,5.606685,6.813908,8.280557,10.062945};
 function this.Util_cvToRate(cv)
    local index = this.clip(this.int((34.444444 * cv)),0,31);
-   return (this.get(this.wrap_array(Util_cvToRate_c0),index) + (cv * (this.get(this.wrap_array(Util_cvToRate_c1),index) + (this.get(this.wrap_array(Util_cvToRate_c2),index) * cv))));
+   return (this.wrap_array(Util_cvToRate_c0)[index+1] + (cv * (this.wrap_array(Util_cvToRate_c1)[index+1] + (this.wrap_array(Util_cvToRate_c2)[index+1] * cv))));
 
 end
 
@@ -188,7 +188,7 @@ local Util_cvToperiod_c1 = {(-4656.656311),(-4481.960579),(-4198.686133),(-3855.
 local Util_cvToperiod_c2 = {14548.823162,11715.369522,9433.744675,7596.477297,6117.026622,4925.706117,3966.401040,3193.925264,2571.892879,2071.004308,1667.666208,1342.880152,1081.347751,870.750049,701.167268,564.611553,454.650724,366.105298,294.804521,237.389916,191.157082,153.928316,123.950032,99.810164,80.371652,64.718885,52.114569,41.965005,33.792117,27.210939,21.911477,17.644111,14.207835};
 function this.Util_cvToperiod(cv)
    local index = this.clip(this.int((31.000000 * cv)),0,31);
-   return (this.get(this.wrap_array(Util_cvToperiod_c0),index) + (cv * (this.get(this.wrap_array(Util_cvToperiod_c1),index) + (this.get(this.wrap_array(Util_cvToperiod_c2),index) * cv))));
+   return (this.wrap_array(Util_cvToperiod_c0)[index+1] + (cv * (this.wrap_array(Util_cvToperiod_c1)[index+1] + (this.wrap_array(Util_cvToperiod_c2)[index+1] * cv))));
 
 end
 
@@ -197,7 +197,7 @@ local Util_cvTokHz_c1 = {0.225719,0.212293,0.179169,0.117605,0.015780,(-0.142178
 local Util_cvTokHz_c2 = {0.876338,1.088287,1.351498,1.678368,2.084294,2.588397,3.214421,3.991854,4.957315,6.156280,7.645225,9.494282,11.790549,14.642185,18.183512,22.581336,28.042809,34.825181,43.247923,53.707771,66.697415,82.828706,102.861476,127.739327,158.634081,197.000973,244.647198,303.817033,377.297556,468.549918,581.872376,722.602756,897.369877};
 function this.Util_cvTokHz(cv)
    local index = this.clip(this.int((31.000000 * cv)),0,31);
-   return (this.get(this.wrap_array(Util_cvTokHz_c0),index) + (cv * (this.get(this.wrap_array(Util_cvTokHz_c1),index) + (this.get(this.wrap_array(Util_cvTokHz_c2),index) * cv))));
+   return (this.wrap_array(Util_cvTokHz_c0)[index+1] + (cv * (this.wrap_array(Util_cvTokHz_c1)[index+1] + (this.wrap_array(Util_cvTokHz_c2)[index+1] * cv))));
 
 end
 
@@ -206,19 +206,19 @@ local Ladder_tune_c1 = {0.008072,0.008047,0.007994,0.007910,0.007793,0.007637,0.
 local Ladder_tune_c2 = {0.028752,0.030352,0.032041,0.033824,0.035706,0.037693,0.039790,0.042004,0.044341,0.046809,0.049413,0.052163,0.055066,0.058130,0.061364,0.064779,0.068384,0.072189,0.076206,0.080446,0.084923,0.089648,0.094637,0.099903,0.105462,0.111331,0.117526,0.124065,0.130969,0.138257,0.145950,0.154071,0.162645,0.171695,0.181249,0.191335,0.201982,0.213221,0.225086,0.237611,0.250833,0.264790,0.279524,0.295079,0.311498,0.328832,0.347130,0.366446,0.386837,0.408362,0.431086,0.455073,0.480396,0.507128,0.535347,0.565137,0.596584,0.629781,0.664825,0.701819,0.740872,0.782098,0.825618,0.871560,0.920058,0.971255,1.025300,1.082353,1.142581,1.206160,1.273277,1.344129,1.418923,1.497879,1.581229,1.669217,1.762101,1.860153,1.963662,2.072930,2.188278,2.310046,2.438589,2.574284,2.717531,2.868748,3.028380,3.196895,3.374787,3.562577,3.760818,3.970089,4.191005,4.424215,4.670401,4.930286,5.204633,5.494245,5.799974,6.122714,6.463414,6.823072,7.202743,7.603540,8.026641,8.473285,8.944782,9.442516,9.967947,10.522615,11.108148,11.726262,12.378772,13.067591,13.794740,14.562351,15.372675,16.228090,(-600.544281),0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000};
 function this.Ladder_tune(cut)
    local index = this.clip(this.int((127.000000 * cut)),0,127);
-   return (this.get(this.wrap_array(Ladder_tune_c0),index) + (cut * (this.get(this.wrap_array(Ladder_tune_c1),index) + (this.get(this.wrap_array(Ladder_tune_c2),index) * cut))));
+   return (this.wrap_array(Ladder_tune_c0)[index+1] + (cut * (this.wrap_array(Ladder_tune_c1)[index+1] + (this.wrap_array(Ladder_tune_c2)[index+1] * cut))));
 
 end
 
 function this.Ladder_ladder_step(input,fh,res,p,dp)
-   local w0 = this.Util_cubic_clipper((input + ((-4.000000) * res * this.get(p,3))));
-   local w1 = this.Util_cubic_clipper(this.get(p,0));
+   local w0 = this.Util_cubic_clipper((input + ((-4.000000) * res * p[3+1])));
+   local w1 = this.Util_cubic_clipper(p[0+1]);
    dp[0+1] = ((w0 + (- w1)) * fh);
-   local w3 = this.Util_cubic_clipper(this.get(p,1));
+   local w3 = this.Util_cubic_clipper(p[1+1]);
    dp[1+1] = ((w1 + (- w3)) * fh);
-   local w5 = this.Util_cubic_clipper(this.get(p,2));
+   local w5 = this.Util_cubic_clipper(p[2+1]);
    dp[2+1] = ((w3 + (- w5)) * fh);
-   local w7 = this.Util_cubic_clipper(this.get(p,3));
+   local w7 = this.Util_cubic_clipper(p[3+1]);
    dp[3+1] = ((w5 + (- w7)) * fh);
 
 end
@@ -245,16 +245,16 @@ function this.Ladder_heun(_ctx,input,cut,res)
 
    end
    this.Ladder_ladder_step(input,_ctx.fh,res,_ctx.p,dpt);
-   pt[0+1] = (this.get(_ctx.p,0) + this.get(dpt,0));
-   pt[1+1] = (this.get(_ctx.p,1) + this.get(dpt,1));
-   pt[2+1] = (this.get(_ctx.p,2) + this.get(dpt,2));
-   pt[3+1] = (this.get(_ctx.p,3) + this.get(dpt,3));
+   pt[0+1] = (_ctx.p[0+1] + dpt[0+1]);
+   pt[1+1] = (_ctx.p[1+1] + dpt[1+1]);
+   pt[2+1] = (_ctx.p[2+1] + dpt[2+1]);
+   pt[3+1] = (_ctx.p[3+1] + dpt[3+1]);
    this.Ladder_ladder_step(input,_ctx.fh,res,pt,dp);
-   _ctx.p[0+1] = (this.get(_ctx.p,0) + ((this.get(dp,0) + this.get(dpt,0)) * 0.500000));
-   _ctx.p[1+1] = (this.get(_ctx.p,1) + ((this.get(dp,1) + this.get(dpt,1)) * 0.500000));
-   _ctx.p[2+1] = (this.get(_ctx.p,2) + ((this.get(dp,2) + this.get(dpt,2)) * 0.500000));
-   _ctx.p[3+1] = (this.get(_ctx.p,3) + ((this.get(dp,3) + this.get(dpt,3)) * 0.500000));
-   return this.get(_ctx.p,3);
+   _ctx.p[0+1] = (_ctx.p[0+1] + ((dp[0+1] + dpt[0+1]) * 0.500000));
+   _ctx.p[1+1] = (_ctx.p[1+1] + ((dp[1+1] + dpt[1+1]) * 0.500000));
+   _ctx.p[2+1] = (_ctx.p[2+1] + ((dp[2+1] + dpt[2+1]) * 0.500000));
+   _ctx.p[3+1] = (_ctx.p[3+1] + ((dp[3+1] + dpt[3+1]) * 0.500000));
+   return _ctx.p[3+1];
 
 end
 
@@ -278,11 +278,11 @@ function this.Ladder_euler(_ctx,input,cut,res)
 
    end
    this.Ladder_ladder_step(input,_ctx.fh,res,_ctx.p,dpt);
-   _ctx.p[0+1] = (this.get(_ctx.p,0) + this.get(dpt,0));
-   _ctx.p[1+1] = (this.get(_ctx.p,1) + this.get(dpt,1));
-   _ctx.p[2+1] = (this.get(_ctx.p,2) + this.get(dpt,2));
-   _ctx.p[3+1] = (this.get(_ctx.p,3) + this.get(dpt,3));
-   return this.get(_ctx.p,3);
+   _ctx.p[0+1] = (_ctx.p[0+1] + dpt[0+1]);
+   _ctx.p[1+1] = (_ctx.p[1+1] + dpt[1+1]);
+   _ctx.p[2+1] = (_ctx.p[2+1] + dpt[2+1]);
+   _ctx.p[3+1] = (_ctx.p[3+1] + dpt[3+1]);
+   return _ctx.p[3+1];
 
 end
 

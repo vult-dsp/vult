@@ -341,6 +341,17 @@ and inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * Typ.t =
    | PId(id,attr) ->
       let var = Env.lookupVariableRaise env id attr.loc in
       PId(id, { attr with typ = Some(var.Scope.typ) }), env, var.Scope.typ
+   | PIndex(e,index,attr) ->
+      let index', env', index_type = inferExp env index in
+      unifyRaise (expLoc index') (Typ.Const.int_type) index_type;
+      let e', env', e_type = inferExp env' e in
+      let a = ref (Typ.TUnbound("'a",None,None)) in
+      let size = ref (Typ.TUnbound("'size",None,None)) in
+      let array_type = ref (Typ.TComposed(["array"],[a;size],None)) in
+      unifyRaise (expLoc index') (Typ.Const.int_type) index_type;
+      unifyRaise (expLoc e) array_type e_type;
+      PIndex(e',index', { attr with typ = Some(a) }), env', a
+
    | PArray(elems,attr) ->
       let elems',env', atype, n = inferArrayElems env elems in
       let typ = ref (Typ.TComposed(["array"],[atype;ref (Typ.TInt(n,None))],None)) in

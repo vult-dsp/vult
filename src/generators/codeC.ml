@@ -35,6 +35,7 @@ let isSimple (e:cexp) : bool =
    | CEBool _
    | CEString _
    | CECall _
+   | CEIndex _
    | CEVar _ -> true
    | _ -> false
 
@@ -131,6 +132,11 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
 
    | CEVar(name,_) ->
       dot name
+
+   | CEIndex(e, index, _) ->
+      let index = printExp params index in
+      let e = printExp params e in
+      {pla|<#e#>[<#index#>]|pla}
 
    | CEIf(cond,then_,else_,_) ->
       let tcond = printExp params cond in
