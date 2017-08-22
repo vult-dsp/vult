@@ -29,7 +29,8 @@ macro(add_pd_object name files)
    target_link_libraries(${name} ${LINK_LIBRARIES})
 endmacro(add_pd_object)
 
-set(VULT vultc)
+find_program(VULT NAMES vultc.native vultc HINTS ${CMAKE_CURRENT_LIST_DIR}/../../)
+message(STATUS "Vult compiler found in ${VULT}")
 
 function(vult_pd output source includes)
    set(OUTPUT_FILES ${CMAKE_CURRENT_BINARY_DIR}/${output}.cpp ${CMAKE_CURRENT_BINARY_DIR}/${output}.h)
