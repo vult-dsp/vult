@@ -5,15 +5,15 @@ compiler: version
 
 js: jscompiler
 			$(OCB) src/js/vultlib.byte
-			js_of_ocaml --opt 3 vultlib.byte
+			js_of_ocaml vultlib.byte
 
 jscompiler: compiler
-			js_of_ocaml --opt 3 --custom-header="#!/usr/bin/env node" vultc.byte
+			js_of_ocaml --custom-header="#!/usr/bin/env node" vultc.byte
 			chmod +x vultc.js
 
 web:
 			$(OCB) src/js/vultweb.byte
-			js_of_ocaml --opt 3 vultweb.byte
+			js_of_ocaml vultweb.byte
 			sed -i -e "s/this.fs=require(..)/this.fs=null/g" vultweb.js
 
 test: compiler jscompiler
