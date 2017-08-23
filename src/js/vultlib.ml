@@ -52,12 +52,9 @@ class type js_args = object
    method version  : bool Js.optdef_prop
    method dparse   : bool Js.optdef_prop
    method deps     : bool Js.optdef_prop
-   method ccode    : bool Js.optdef_prop
    method check    : bool Js.optdef_prop
-   method jscode   : bool Js.optdef_prop
-   method luacode  : bool Js.optdef_prop
-   method llvm     : bool Js.optdef_prop
    method eval     : bool Js.optdef_prop
+   method code     : Js.js_string Js.t Js.optdef_prop
    method output   : Js.js_string Js.t Js.optdef_prop
    method real     : Js.js_string Js.t Js.optdef_prop
    method template : Js.js_string Js.t Js.optdef_prop
@@ -138,18 +135,23 @@ let set value fset =
    if Js.Optdef.test value then
       Js.Optdef.iter value (fun a -> fset a)
 
+let convertCodeName code =
+   match code with
+   | "c" -> CCode
+   | "js" -> JSCode
+   | "lua" -> LuaCode
+   | "llvm" -> LLVMCode
+   | _ -> failwith (Printf.sprintf "unknow code generator '%s'" code)
+
 (** Returns the Vult [arguments] based on the arguments object passed from js *)
 let getArguments (obj:js_args Js.t) =
    let args = { default_arguments with files = [] } in
    set (obj##.dparse)   (fun v -> args.dparse <- v);
    set (obj##.deps)     (fun v -> args.deps <- v);
-   set (obj##.ccode)    (fun v -> args.ccode <- v);
    set (obj##.check)    (fun v -> args.check <- v);
-   set (obj##.jscode)   (fun v -> args.jscode <- v);
-   set (obj##.luacode)  (fun v -> args.luacode <- v);
-   set (obj##.llvm)     (fun v -> args.llvm <- v);
    set (obj##.eval)     (fun v -> args.eval <- v);
    set (obj##.version)  (fun v -> args.show_version <- v);
+   set (obj##.code)     (fun v  -> args.code <- convertCodeName(Js.to_string v));
    set (obj##.output)   (fun v -> args.output <- Js.to_string v);
    set (obj##.real)     (fun v -> args.real <- Js.to_string v);
    set (obj##.template) (fun v -> args.template <- Js.to_string v);
@@ -232,20 +234,20 @@ let codeGeneration args results =
    | _ -> failwith "unknown error"
 
 let generateJs (files:js_file_code Js.t Js.js_array Js.t) (options: 'a Js.t) =
-   let args    = { default_arguments with jscode = true; files = convertInputFiles files } in
+   let args    = { default_arguments with code = JSCode; files = convertInputFiles files } in
    let ()      = applyOptions options args in
    let results = Driver.main args in
    codeGeneration args results
 
 
 let generateC (files:js_file_code Js.t Js.js_array Js.t) (options: 'a Js.t) =
-   let args    = { default_arguments with ccode = true; files = convertInputFiles files } in
+   let args    = { default_arguments with code = CCode; files = convertInputFiles files } in
    let ()      = applyOptions options args in
    let results = Driver.main args in
    codeGeneration args results
 
 let generateLua (files:js_file_code Js.t Js.js_array Js.t) (options: 'a Js.t) =
-   let args = { default_arguments with luacode = true; files = convertInputFiles files } in
+   let args = { default_arguments with code = LuaCode; files = convertInputFiles files } in
    let ()      = applyOptions options args in
    let results = Driver.main args in
    codeGeneration args results

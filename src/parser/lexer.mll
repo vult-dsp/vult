@@ -147,6 +147,7 @@ let uppercase = ['A'-'Z']
 let startid = ['A'-'Z' 'a'-'z' '_']
 let idchar = ['A'-'Z' 'a'-'z' '_' '0'-'9' '.']
 let int = ['0'-'9']+
+let xint = "0x" ['0'-'9' 'A'-'F' 'a'-'f']+
 let float =
   ['0'-'9']+
   ('.' ['0'-'9']* )?
@@ -190,6 +191,7 @@ rule next_token source = parse
   | [ '+' '-' ] { makeToken source OP lexbuf }
   | [ '*' '/' '%' ] { makeToken source OP lexbuf }
   | int         { makeToken source INT lexbuf }
+  | xint        { makeToken source INT lexbuf }
   | float       { makeToken source REAL lexbuf }
   | startid idchar *
                 { makeIdToken source lexbuf }

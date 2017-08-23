@@ -183,7 +183,7 @@ void Ahr_do_init(Ahr__ctx_type_0 &_output_){
    return ;
 }
 
-void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r, _tuple_$_real_real_$ &_output_){
+void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r, _tuple___real_real__ &_output_){
    int release;
    release = 0;
    int attack;
@@ -247,7 +247,7 @@ void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r
       _ctx.target = 0x0 /* 0.000000 */;
    }
    _ctx.out = (_ctx.out + fix_mul(fix_mul((_ctx.target + (- _ctx.out)),_ctx.rate),0x147 /* 0.005000 */));
-   _tuple_$_real_real_$ _tuple_50;
+   _tuple___real_real__ _tuple_50;
    {
       _tuple_50.field_0 = fix_clip(fix_mul(_ctx.out,0x40 /* 0.000977 */),0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
       _tuple_50.field_1 = resetting;
@@ -271,8 +271,8 @@ void Ahr_process_init(Ahr__ctx_type_1 &_output_){
    return ;
 }
 
-void Ahr_process(Ahr__ctx_type_1 &_ctx, fix16_t gate, _tuple_$_real_real_$ &_output_){
-   _tuple_$_real_real_$ _call_53;
+void Ahr_process(Ahr__ctx_type_1 &_ctx, fix16_t gate, _tuple___real_real__ &_output_){
+   _tuple___real_real__ _call_53;
    Ahr_do(_ctx._inst34,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_call_53);
    _output_ = _call_53;
    return ;

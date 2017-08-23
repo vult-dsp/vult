@@ -139,7 +139,7 @@ let tildePerformFunctionCall module_name (params:params) (config:configuration) 
          let copy = [%pla{|*(out_0++) = <#value#>;|}] in
          decl,copy
       | o ->
-         let decl = Pla.(string "_tuple_$_" ++ map_sep underscore string o ++ string "_$ ret; ") in
+         let decl = Pla.(string "_tuple___" ++ map_sep underscore string o ++ string "__ ret; ") in
          let copy =
             List.mapi
                (fun i o ->

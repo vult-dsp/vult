@@ -6,10 +6,10 @@
 #include <math.h>
 #include "vultin.h"
 
-typedef struct _tuple_$_bool_real_$ {
+typedef struct _tuple___bool_real__ {
    uint8_t field_0;
    fix16_t field_1;
-} _tuple_$_bool_real_$;
+} _tuple___bool_real__;
 
 typedef struct Util__ctx_type_0 {
    uint8_t pre;
@@ -110,7 +110,7 @@ static const fix16_t Util_cvTokHz_c1[33] = {0x39c8 /* 0.225719 */,0x3658 /* 0.21
 static const fix16_t Util_cvTokHz_c2[33] = {0xe057 /* 0.876338 */,0x11699 /* 1.088287 */,0x159fb /* 1.351498 */,0x1ada9 /* 1.678368 */,0x21594 /* 2.084294 */,0x296a1 /* 2.588397 */,0x336e4 /* 3.214421 */,0x3fdea /* 3.991854 */,0x4f512 /* 4.957315 */,0x62801 /* 6.156280 */,0x7a52d /* 7.645225 */,0x97e89 /* 9.494282 */,0xbca61 /* 11.790549 */,0xea466 /* 14.642185 */,0x122efa /* 18.183512 */,0x1694d2 /* 22.581336 */,0x1c0af5 /* 28.042809 */,0x22d33f /* 34.825181 */,0x2b3f77 /* 43.247923 */,0x35b530 /* 53.707771 */,0x42b289 /* 66.697415 */,0x52d426 /* 82.828706 */,0x66dc89 /* 102.861476 */,0x7fbd44 /* 127.739327 */,0x9ea253 /* 158.634081 */,0xc5003f /* 197.000973 */,0xf4a5ae /* 244.647198 */,0x12fd129 /* 303.817033 */,0x1794c2c /* 377.297556 */,0x1d48cc7 /* 468.549918 */,0x245df54 /* 581.872376 */,0x2d29a4e /* 722.602756 */,0x3815eb0 /* 897.369877 */};
 fix16_t Util_cvTokHz(fix16_t cv);
 
-void Sawcore_ptr_w2(fix16_t phase, fix16_t rate, _tuple_$_bool_real_$ &_output_);
+void Sawcore_ptr_w2(fix16_t phase, fix16_t rate, _tuple___bool_real__ &_output_);
 
 typedef struct Sawcore__ctx_type_1 {
    uint8_t reset_state;

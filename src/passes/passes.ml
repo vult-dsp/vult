@@ -136,8 +136,11 @@ let applyTransformations args ?(options=default_options) (results:parser_results
          (env,[])
          results
    in
-   let tuples = { presult = CreateTupleTypes.run env; file = "" } in
-   tuples :: List.rev stmts_list
+   if options.tuples then
+      let tuples = { presult = CreateTupleTypes.run env; file = "" } in
+      tuples :: List.rev stmts_list
+   else
+      List.rev stmts_list
 
 let applyTransformationsSingle args ?(options=default_options) (results:parser_results) =
    let env = Env.empty (PassData.empty args) in

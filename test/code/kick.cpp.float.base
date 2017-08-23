@@ -470,7 +470,7 @@ void Ahr_do_init(Ahr__ctx_type_0 &_output_){
    return ;
 }
 
-void Ahr_do(Ahr__ctx_type_0 &_ctx, float gate, float a, float h, float r, _tuple_$_real_real_$ &_output_){
+void Ahr_do(Ahr__ctx_type_0 &_ctx, float gate, float a, float h, float r, _tuple___real_real__ &_output_){
    int release;
    release = 0;
    int attack;
@@ -534,7 +534,7 @@ void Ahr_do(Ahr__ctx_type_0 &_ctx, float gate, float a, float h, float r, _tuple
       _ctx.target = 0.000000f;
    }
    _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.005000f));
-   _tuple_$_real_real_$ _tuple_95;
+   _tuple___real_real__ _tuple_95;
    {
       _tuple_95.field_0 = float_clip((_ctx.out * 0.000977f),0.000000f,1.000000f);
       _tuple_95.field_1 = resetting;
@@ -558,8 +558,8 @@ void Ahr_process_init(Ahr__ctx_type_1 &_output_){
    return ;
 }
 
-void Ahr_process(Ahr__ctx_type_1 &_ctx, float gate, _tuple_$_real_real_$ &_output_){
-   _tuple_$_real_real_$ _call_98;
+void Ahr_process(Ahr__ctx_type_1 &_ctx, float gate, _tuple___real_real__ &_output_){
+   _tuple___real_real__ _call_98;
    Ahr_do(_ctx._inst79,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_call_98);
    _output_ = _call_98;
    return ;
@@ -634,7 +634,7 @@ void Kick_do_init(Kick__ctx_type_0 &_output_){
 float Kick_do(Kick__ctx_type_0 &_ctx, float gate, float odecay, float pitch, float swept, float noise){
    float osc_env;
    float env_reset;
-   _tuple_$_real_real_$ _call_127;
+   _tuple___real_real__ _call_127;
    Ahr_do(_ctx._inst112,gate,0.005000f,(0.100000f + odecay),(odecay + 0.010000f),_call_127);
    osc_env = _call_127.field_0;env_reset = _call_127.field_1;
    float cv;
@@ -644,7 +644,7 @@ float Kick_do(Kick__ctx_type_0 &_ctx, float gate, float odecay, float pitch, flo
    float osc_sat;
    osc_sat = Saturate_process((1.500000f * osc));
    float noise_env;
-   _tuple_$_real_real_$ _call_128;
+   _tuple___real_real__ _call_128;
    Ahr_do(_ctx._inst115,gate,0.001000f,0.010000f,((noise * 0.010000f) + 0.001000f),_call_128);
    noise_env = _call_128.field_0;
    float noise_osc;

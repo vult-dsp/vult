@@ -6,10 +6,10 @@
 #include <math.h>
 #include "vultin.h"
 
-typedef struct _tuple_$_bool_real_$ {
+typedef struct _tuple___bool_real__ {
    uint8_t field_0;
    float field_1;
-} _tuple_$_bool_real_$;
+} _tuple___bool_real__;
 
 typedef struct Util__ctx_type_0 {
    uint8_t pre;
@@ -110,7 +110,7 @@ static const float Util_cvTokHz_c1[33] = {0.225719f,0.212293f,0.179169f,0.117605
 static const float Util_cvTokHz_c2[33] = {0.876338f,1.088287f,1.351498f,1.678368f,2.084294f,2.588397f,3.214421f,3.991854f,4.957315f,6.156280f,7.645225f,9.494282f,11.790549f,14.642185f,18.183512f,22.581336f,28.042809f,34.825181f,43.247923f,53.707771f,66.697415f,82.828706f,102.861476f,127.739327f,158.634081f,197.000973f,244.647198f,303.817033f,377.297556f,468.549918f,581.872376f,722.602756f,897.369877f};
 float Util_cvTokHz(float cv);
 
-void Sawcore_ptr_w2(float phase, float rate, _tuple_$_bool_real_$ &_output_);
+void Sawcore_ptr_w2(float phase, float rate, _tuple___bool_real__ &_output_);
 
 typedef struct Sawcore__ctx_type_1 {
    uint8_t reset_state;

@@ -33,14 +33,14 @@ module ReplaceFunctionNames = struct
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make "ReplaceFunctionNames.exp" @@ fun state exp ->
       match exp with
-      | PCall(name,fname,args,attr) ->
+      | PCall(name,fname,args,attr) when attr.ext_fn = None ->
          let Id.Path(path),_,t = Env.lookupRaise Scope.Function state fname attr.loc in
-         let final_name =
+         let final_name, attr =
             match !(t.Scope.ext_fn) with
-            | Some(n) -> [n]
-            | None -> path
+            | Some(n) -> [n], { attr with ext_fn = Some n}
+            | None -> path, attr
          in
-         state, PCall(name,final_name,args,attr)
+         state, PCall(name, final_name, args, attr)
       | _ -> state,exp
 
    let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =

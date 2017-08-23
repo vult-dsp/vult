@@ -6,10 +6,10 @@
 #include <math.h>
 #include "vultin.h"
 
-typedef struct _tuple_$_real_real_$ {
+typedef struct _tuple___real_real__ {
    fix16_t field_0;
    fix16_t field_1;
-} _tuple_$_real_real_$;
+} _tuple___real_real__;
 
 typedef struct Noise__ctx_type_0 {
    fix16_t w1;
@@ -271,7 +271,7 @@ void Ahr__ctx_type_0_init(Ahr__ctx_type_0 &_output_);
 
 void Ahr_do_init(Ahr__ctx_type_0 &_output_);
 
-void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r, _tuple_$_real_real_$ &_output_);
+void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r, _tuple___real_real__ &_output_);
 
 typedef struct Ahr__ctx_type_1 {
    fix16_t knob3;
@@ -286,7 +286,7 @@ void Ahr__ctx_type_1_init(Ahr__ctx_type_1 &_output_);
 
 void Ahr_process_init(Ahr__ctx_type_1 &_output_);
 
-void Ahr_process(Ahr__ctx_type_1 &_ctx, fix16_t gate, _tuple_$_real_real_$ &_output_);
+void Ahr_process(Ahr__ctx_type_1 &_ctx, fix16_t gate, _tuple___real_real__ &_output_);
 
 typedef Ahr__ctx_type_1 Ahr_noteOn_type;
 

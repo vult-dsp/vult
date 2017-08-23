@@ -25,7 +25,7 @@ THE SOFTWARE.
 open Args
 
 let generateJSCode s =
-   let args = { default_arguments with jscode = true; real = "js"; template = "browser"; files = [Code("live.vult", (Js.to_string s))]} in
+   let args = { default_arguments with code = JSCode; real = "js"; template = "browser"; files = [Code("live.vult", (Js.to_string s))]} in
    match Driver.main args with
    | [GeneratedCode [code,_]] ->
       Js.string (Pla.print code)

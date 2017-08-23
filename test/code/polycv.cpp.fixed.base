@@ -235,7 +235,7 @@ void Polycv_polyState_init(Polycv__ctx_type_2 &_output_){
    return ;
 }
 
-void Polycv_polyState(Polycv__ctx_type_2 &_ctx, _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ &_output_){
+void Polycv_polyState(Polycv__ctx_type_2 &_ctx, _tuple___real_real_real_real_real_real_real_real_real_real_real_real__ &_output_){
    fix16_t note1;
    note1 = Util_pitchToCv(int_to_fix(int_get(_ctx.notes,0)));
    fix16_t note2;
@@ -260,7 +260,7 @@ void Polycv_polyState(Polycv__ctx_type_2 &_ctx, _tuple_$_real_real_real_real_rea
    gate3 = Polycv_velToGate(int_get(_ctx.vel,2));
    fix16_t gate4;
    gate4 = Polycv_velToGate(int_get(_ctx.vel,3));
-   _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ _tuple_43;
+   _tuple___real_real_real_real_real_real_real_real_real_real_real_real__ _tuple_43;
    {
       _tuple_43.field_0 = note1;
       _tuple_43.field_1 = vel1;
@@ -292,9 +292,9 @@ void Polycv_process_init(Polycv__ctx_type_3 &_output_){
    return ;
 }
 
-void Polycv_process(Polycv__ctx_type_3 &_ctx, int c, _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ &_output_){
+void Polycv_process(Polycv__ctx_type_3 &_ctx, int c, _tuple___real_real_real_real_real_real_real_real_real_real_real_real__ &_output_){
    _ctx.channel_in = c;
-   _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ _call_45;
+   _tuple___real_real_real_real_real_real_real_real_real_real_real_real__ _call_45;
    Polycv_polyState(_ctx.poly,_call_45);
    _output_ = _call_45;
    return ;

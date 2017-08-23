@@ -290,7 +290,7 @@ let rec getTupleName (typ:t) : string =
    match !typ with
    | TId(id,_) -> join "_" id
    | TComposed(id,elems,_) ->
-      (join "_" id)::"$"::(List.map getTupleName elems)@["$"]
+      (join "_" id)::"_"::(List.map getTupleName elems)@["_"]
       |> join "_"
    | TLink(e) -> getTupleName e
    | TArrow(e1,e2,_) -> (getTupleName e1)^"__"^(getTupleName e2)

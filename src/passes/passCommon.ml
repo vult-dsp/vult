@@ -34,6 +34,7 @@ type pass_options =
       pass3 : bool;
       pass4 : bool;
       pass5 : bool;
+      tuples: bool;
    }
 
 let default_options =
@@ -44,6 +45,7 @@ let default_options =
       pass3 = true;
       pass4 = true;
       pass5 = true;
+      tuples = true;
    }
 
 let interpreter_options =
@@ -54,6 +56,7 @@ let interpreter_options =
       pass3 = false;
       pass4 = false;
       pass5 = false;
+      tuples = false;
    }
 
 module PassData = struct

@@ -312,6 +312,26 @@ let builtinFunctions env =
       | [] -> PInt(Random.int max_int,emptyAttr)
       | _ -> failwith "irandom: invalid arguments"
    in
+   let log args =
+      match args with
+      | [e] ->
+         print_endline (PrintProg.expressionStr e);
+         PUnit(emptyAttr)
+      | _ -> failwith "log: invalid arguments"
+   in
+   let get args =
+      match args with
+      | [PArray(elems,_); PInt(i,_)] ->
+         Array.get elems i
+      | _ -> failwith "get: invalid arguments"
+   in
+   let set args =
+      match args with
+      | [PArray(elems,_); PInt(i,_); value] ->
+         Array.set elems i value;
+         PUnit(emptyAttr)
+      | _ -> failwith "get: invalid arguments"
+   in
    let functions =
       [
          "abs", Env.Builtin(real_real abs_float);
@@ -332,6 +352,9 @@ let builtinFunctions env =
 
          "random", Env.Builtin(random);
          "irandom", Env.Builtin(irandom);
+         "log", Env.Builtin(log);
+         "get", Env.Builtin(get);
+         "set", Env.Builtin(set);
       ]
    in
    List.iter (fun (name,body) ->Env.addFunction env [name] body) functions

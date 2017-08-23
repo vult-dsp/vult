@@ -6,11 +6,11 @@
 #include <math.h>
 #include "vultin.h"
 
-typedef struct _tuple_$_real_real_real_$ {
+typedef struct _tuple___real_real_real__ {
    float field_0;
    float field_1;
    float field_2;
-} _tuple_$_real_real_real_$;
+} _tuple___real_real_real__;
 
 typedef struct Util__ctx_type_0 {
    uint8_t pre;
@@ -152,7 +152,7 @@ void Monocv__ctx_type_1_init(Monocv__ctx_type_1 &_output_);
 
 void Monocv_process_init(Monocv__ctx_type_1 &_output_);
 
-void Monocv_process(Monocv__ctx_type_1 &_ctx, int c, _tuple_$_real_real_real_$ &_output_);
+void Monocv_process(Monocv__ctx_type_1 &_ctx, int c, _tuple___real_real_real__ &_output_);
 
 typedef Monocv__ctx_type_1 Monocv_noteOn_type;
 

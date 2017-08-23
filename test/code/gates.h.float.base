@@ -6,7 +6,7 @@
 #include <math.h>
 #include "vultin.h"
 
-typedef struct _tuple_$_real_real_real_real_real_real_real_real_$ {
+typedef struct _tuple___real_real_real_real_real_real_real_real__ {
    float field_0;
    float field_1;
    float field_2;
@@ -15,7 +15,7 @@ typedef struct _tuple_$_real_real_real_real_real_real_real_real_$ {
    float field_5;
    float field_6;
    float field_7;
-} _tuple_$_real_real_real_real_real_real_real_real_$;
+} _tuple___real_real_real_real_real_real_real_real__;
 
 float Gates_velToCV(int vel);
 
@@ -41,7 +41,7 @@ typedef Gates__ctx_type_1 Gates_gates_state_type;
 
 void Gates_gates_state_init(Gates__ctx_type_1 &_output_);
 
-void Gates_gates_state(Gates__ctx_type_1 &_ctx, _tuple_$_real_real_real_real_real_real_real_real_$ &_output_);
+void Gates_gates_state(Gates__ctx_type_1 &_ctx, _tuple___real_real_real_real_real_real_real_real__ &_output_);
 
 typedef struct Gates__ctx_type_2 {
    Gates__ctx_type_1 gates;
@@ -54,7 +54,7 @@ void Gates__ctx_type_2_init(Gates__ctx_type_2 &_output_);
 
 void Gates_process_init(Gates__ctx_type_2 &_output_);
 
-void Gates_process(Gates__ctx_type_2 &_ctx, int c, _tuple_$_real_real_real_real_real_real_real_real_$ &_output_);
+void Gates_process(Gates__ctx_type_2 &_ctx, int c, _tuple___real_real_real_real_real_real_real_real__ &_output_);
 
 typedef Gates__ctx_type_2 Gates_noteOn_type;
 

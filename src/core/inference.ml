@@ -196,7 +196,8 @@ let makeReturnType (v:Typ.t option) : return_type =
 let raiseReturnError (loc:Loc.t Lazy.t) (given:Typ.t option) (typ:return_type) =
    match given,typ with
    | None,_ -> ()
-   | Some(gt), GivenType(rt) when Typ.compare gt rt == 0 ->
+   | Some(gt), GivenType(rt) when Typ.compare gt rt = 0 && Typ.compare gt Typ.Const.unit_type = 0 -> ()
+   | Some(gt), GivenType(rt) when Typ.compare gt rt = 0 ->
       let msg =
          Printf.sprintf
             "This function is expected to have type '%s' but nothing was returned"

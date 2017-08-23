@@ -48,7 +48,7 @@ void Gates_gates_state_init(Gates__ctx_type_1 &_output_){
    return ;
 }
 
-void Gates_gates_state(Gates__ctx_type_1 &_ctx, _tuple_$_real_real_real_real_real_real_real_real_$ &_output_){
+void Gates_gates_state(Gates__ctx_type_1 &_ctx, _tuple___real_real_real_real_real_real_real_real__ &_output_){
    fix16_t vel1;
    vel1 = Gates_velToCV(int_get(_ctx.vel,0));
    fix16_t vel2;
@@ -65,7 +65,7 @@ void Gates_gates_state(Gates__ctx_type_1 &_ctx, _tuple_$_real_real_real_real_rea
    vel7 = Gates_velToCV(int_get(_ctx.vel,6));
    fix16_t vel8;
    vel8 = Gates_velToCV(int_get(_ctx.vel,7));
-   _tuple_$_real_real_real_real_real_real_real_real_$ _tuple_15;
+   _tuple___real_real_real_real_real_real_real_real__ _tuple_15;
    {
       _tuple_15.field_0 = vel1;
       _tuple_15.field_1 = vel2;
@@ -93,9 +93,9 @@ void Gates_process_init(Gates__ctx_type_2 &_output_){
    return ;
 }
 
-void Gates_process(Gates__ctx_type_2 &_ctx, int c, _tuple_$_real_real_real_real_real_real_real_real_$ &_output_){
+void Gates_process(Gates__ctx_type_2 &_ctx, int c, _tuple___real_real_real_real_real_real_real_real__ &_output_){
    _ctx.channel_in = c;
-   _tuple_$_real_real_real_real_real_real_real_real_$ _call_17;
+   _tuple___real_real_real_real_real_real_real_real__ _call_17;
    Gates_gates_state(_ctx.gates,_call_17);
    _output_ = _call_17;
    return ;

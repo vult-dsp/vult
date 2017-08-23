@@ -262,7 +262,7 @@ void Monocv_process_init(Monocv__ctx_type_1 &_output_){
    return ;
 }
 
-void Monocv_process(Monocv__ctx_type_1 &_ctx, int c, _tuple_$_real_real_real_$ &_output_){
+void Monocv_process(Monocv__ctx_type_1 &_ctx, int c, _tuple___real_real_real__ &_output_){
    _ctx.channel_in = c;
    uint8_t _cond_48;
    _cond_48 = Monocv_mono_isGateOn(_ctx.notes);
@@ -270,7 +270,7 @@ void Monocv_process(Monocv__ctx_type_1 &_ctx, int c, _tuple_$_real_real_real_$ &
    else
    { _ctx.gate = 0x0 /* 0.000000 */; }
    _ctx.cv = Util_pitchToCv(int_to_fix(_ctx.active_note));
-   _tuple_$_real_real_real_$ _tuple_47;
+   _tuple___real_real_real__ _tuple_47;
    {
       _tuple_47.field_0 = _ctx.cv;
       _tuple_47.field_1 = _ctx.vel;

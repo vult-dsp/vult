@@ -6,7 +6,7 @@
 #include <math.h>
 #include "vultin.h"
 
-typedef struct _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ {
+typedef struct _tuple___real_real_real_real_real_real_real_real_real_real_real_real__ {
    float field_0;
    float field_1;
    float field_2;
@@ -19,7 +19,7 @@ typedef struct _tuple_$_real_real_real_real_real_real_real_real_real_real_real_r
    float field_9;
    float field_10;
    float field_11;
-} _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$;
+} _tuple___real_real_real_real_real_real_real_real_real_real_real_real__;
 
 typedef struct Util__ctx_type_0 {
    uint8_t pre;
@@ -147,7 +147,7 @@ typedef Polycv__ctx_type_2 Polycv_polyState_type;
 
 void Polycv_polyState_init(Polycv__ctx_type_2 &_output_);
 
-void Polycv_polyState(Polycv__ctx_type_2 &_ctx, _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ &_output_);
+void Polycv_polyState(Polycv__ctx_type_2 &_ctx, _tuple___real_real_real_real_real_real_real_real_real_real_real_real__ &_output_);
 
 typedef struct Polycv__ctx_type_3 {
    Polycv__ctx_type_2 poly;
@@ -160,7 +160,7 @@ void Polycv__ctx_type_3_init(Polycv__ctx_type_3 &_output_);
 
 void Polycv_process_init(Polycv__ctx_type_3 &_output_);
 
-void Polycv_process(Polycv__ctx_type_3 &_ctx, int c, _tuple_$_real_real_real_real_real_real_real_real_real_real_real_real_$ &_output_);
+void Polycv_process(Polycv__ctx_type_3 &_ctx, int c, _tuple___real_real_real_real_real_real_real_real_real_real_real_real__ &_output_);
 
 typedef Polycv__ctx_type_3 Polycv_noteOn_type;
 

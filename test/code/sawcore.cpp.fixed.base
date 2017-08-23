@@ -165,8 +165,8 @@ fix16_t Util_cvTokHz(fix16_t cv){
    return (fix_wrap_array(Util_cvTokHz_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvTokHz_c1)[index] + fix_mul(fix_wrap_array(Util_cvTokHz_c2)[index],cv))));
 }
 
-void Sawcore_ptr_w2(fix16_t phase, fix16_t rate, _tuple_$_bool_real_$ &_output_){
-   _tuple_$_bool_real_$ out;
+void Sawcore_ptr_w2(fix16_t phase, fix16_t rate, _tuple___bool_real__ &_output_){
+   _tuple___bool_real__ out;
    fix16_t s1;
    s1 = rate;
    fix16_t s2;
@@ -257,7 +257,7 @@ fix16_t Sawcore_process(Sawcore__ctx_type_1 &_ctx, fix16_t cv, fix16_t reset){
    if(_ctx.reset_state){
       uint8_t done;
       fix16_t ptr;
-      _tuple_$_bool_real_$ _call_49;
+      _tuple___bool_real__ _call_49;
       Sawcore_ptr_w2(_ctx.phase,_ctx.rate,_call_49);
       done = _call_49.field_0;ptr = _call_49.field_1;
       transition = fix_mul(fix_mul((ptr + 0x10000 /* 1.000000 */),0x8000 /* 0.500000 */),_ctx.reset_phase);

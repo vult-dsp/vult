@@ -36,7 +36,7 @@ let getInterpEnv state =
 
 module Evaluate = struct
 
-   let avoid = IdSet.of_list [["random"]; ["irandom"]]
+   let avoid = IdSet.of_list [["random"]; ["irandom"]; ["log"]]
 
    let isConst exp =
       match exp with
