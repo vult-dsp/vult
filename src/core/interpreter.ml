@@ -30,7 +30,7 @@ module Env = struct
 
    type fun_body =
       | Declared of stmt
-      | Builtin of (exp list -> exp)
+      | Builtin of ( attr -> exp list -> exp)
 
    type t =
       {
@@ -267,69 +267,74 @@ let foldOp (op:string) (args:exp list) : exp =
 
 (** Adds all the builtin functions to the scope *)
 let builtinFunctions env =
-   let real_real f args : exp =
+   let real_real f attr args : exp =
       match args with
-      | [PReal(v,attr)] -> PReal(f v, attr)
+      | [PReal(v,_)] -> PReal(f v, attr)
       | _ -> failwith "invalid arguments"
    in
-   let clip args =
+   let clip attr args =
       match args with
-      | [PReal(v,attr); PReal(mi,_); PReal(ma,_)] -> PReal(max mi (min ma v) ,attr)
-      | [PInt(v,attr); PInt(mi,_); PInt(ma,_)] -> PInt(max mi (min ma v) ,attr)
+      | [PReal(v,_); PReal(mi,_); PReal(ma,_)] -> PReal(max mi (min ma v) ,attr)
+      | [PInt(v,_); PInt(mi,_); PInt(ma,_)] -> PInt(max mi (min ma v) ,attr)
       | _ -> failwith "clip: invalid arguments"
    in
-   let int args =
+   let int attr args =
       match args with
-      | [PReal(v,attr)] -> PInt(int_of_float v,attr)
-      | [PInt(v,attr)]  -> PInt(v,attr)
-      | [PBool(v,attr)] -> PInt((if v then 1 else 0),attr)
+      | [PReal(v,_)] -> PInt(int_of_float v,attr)
+      | [PInt(v,_)]  -> PInt(v,attr)
+      | [PBool(v,_)] -> PInt((if v then 1 else 0),attr)
       | _ -> failwith "int: invalid arguments"
    in
-   let real args =
+   let real attr args =
       match args with
-      | [PReal(v,attr)] -> PReal(v,attr)
-      | [PInt(v,attr)]  -> PReal(float_of_int v,attr)
-      | [PBool(v,attr)] -> PReal((if v then 1.0 else 0.0),attr)
+      | [PReal(v,_)] -> PReal(v,attr)
+      | [PInt(v,_)]  -> PReal(float_of_int v,attr)
+      | [PBool(v,_)] -> PReal((if v then 1.0 else 0.0),attr)
       | _ -> failwith "real: invalid arguments"
    in
-   let not args =
+   let not attr args =
       match args with
-      | [PBool(v,attr)] -> PBool(not v,attr)
+      | [PBool(v,_)] -> PBool(not v,attr)
       | _ -> failwith "real: invalid arguments"
    in
-   let eps args =
+   let eps attr args =
       match args with
-      | [] -> PReal(1e-18,emptyAttr)
+      | [] -> PReal(1e-18, attr)
       | _ -> failwith "eps: invalid arguments"
    in
-   let random args =
+   let pi attr args =
       match args with
-      | [] -> PReal(Random.float 1.0,emptyAttr)
+      | [] -> PReal(3.1415926535897932384, attr)
+      | _ -> failwith "pi: invalid arguments"
+   in
+   let random attr args =
+      match args with
+      | [] -> PReal(Random.float 1.0, attr)
       | _ -> failwith "random: invalid arguments"
    in
-   let irandom args =
+   let irandom attr args =
       match args with
-      | [] -> PInt(Random.int max_int,emptyAttr)
+      | [] -> PInt(Random.int max_int, attr)
       | _ -> failwith "irandom: invalid arguments"
    in
-   let log args =
+   let log attr args =
       match args with
       | [e] ->
          print_endline (PrintProg.expressionStr e);
-         PUnit(emptyAttr)
+         PUnit(attr)
       | _ -> failwith "log: invalid arguments"
    in
-   let get args =
+   let get _attr args =
       match args with
       | [PArray(elems,_); PInt(i,_)] ->
          Array.get elems i
       | _ -> failwith "get: invalid arguments"
    in
-   let set args =
+   let set attr args =
       match args with
       | [PArray(elems,_); PInt(i,_); value] ->
          Array.set elems i value;
-         PUnit(emptyAttr)
+         PUnit(attr)
       | _ -> failwith "get: invalid arguments"
    in
    let functions =
@@ -349,6 +354,7 @@ let builtinFunctions env =
 
          "not", Env.Builtin(not);
          "eps", Env.Builtin(eps);
+         "pi", Env.Builtin(pi);
 
          "random", Env.Builtin(random);
          "irandom", Env.Builtin(irandom);
@@ -457,12 +463,12 @@ let rec evalExp (env:Env.env) (exp:exp) : exp =
 
    | PSeq(_, stmt, _) -> evalStmt env stmt
 
-   | PCall(Some(inst), name, args, _) ->
+   | PCall(Some(inst), name, args, attr) ->
       let args' = List.map (evalExp env) args in
       begin match Env.lookupFunction env name with
          | Some (t,fn) ->
             let env'  = Env.enterInstance (t::env) inst in
-            evalFunction env' fn args'
+            evalFunction env' fn attr args'
          | None -> exp
       end
    | PCall(None, name, args, attr) ->
@@ -471,16 +477,16 @@ let rec evalExp (env:Env.env) (exp:exp) : exp =
          | Some (t,fn) ->
             let inst  = makeInstName name attr in
             let env'  = Env.enterInstance (t::env) inst in
-            evalFunction env' fn args'
+            evalFunction env' fn attr args'
          | None -> exp
       end
 
-and evalFunction (env:Env.env) (fn:Env.fun_body) (args:exp list) : exp =
+and evalFunction (env:Env.env) (fn:Env.fun_body) (attr:Prog.attr) (args:exp list) : exp =
    match fn with
    | Env.Declared(StmtFun(_, inputs, stmt, _, _)) ->
       List.iter2 (bindArg env) inputs args;
       evalStmt env stmt
-   | Env.Builtin(fn) -> fn args
+   | Env.Builtin(fn) -> fn attr args
    | _ -> failwith "cannot evaluate function"
 
 and evalStmt (env:Env.env) (stmt:stmt) =

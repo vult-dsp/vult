@@ -596,6 +596,7 @@ let builtin_table =
       ["&&"]  , Scope.Operator, Typ.Const.bool_bool_bool (), false;
 
       ["eps"] , Scope.Function, Typ.Const.real_type, false;
+      ["pi"] , Scope.Function, Typ.Const.real_type, false;
 
       ["random"], Scope.Function, Typ.Const.real_type, false;
       ["irandom"], Scope.Function, Typ.Const.int_type, false;

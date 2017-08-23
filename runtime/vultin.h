@@ -46,8 +46,6 @@ extern "C" {
 
 typedef int32_t fix16_t;
 
-static const fix16_t fix_pi = 205887;
-
 // Type conversion
 static_inline float fix_to_float(fix16_t a)
 {
@@ -152,6 +150,16 @@ static_inline float float_eps()
 static_inline fix16_t fix_eps()
 {
    return 1;
+}
+
+static_inline float float_pi()
+{
+   return 3.1415926535897932384f;
+}
+
+static_inline fix16_t fix_pi()
+{
+   return 205887;
 }
 
 fix16_t fix_exp(fix16_t inValue);

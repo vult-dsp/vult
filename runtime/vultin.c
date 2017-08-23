@@ -77,7 +77,7 @@ fix16_t fix_sin(fix16_t x0)
 
 fix16_t fix_cos(fix16_t inAngle)
 {
-   return fix_sin(inAngle + (fix_pi >> 1));
+   return fix_sin(inAngle + (fix_pi() >> 1));
 }
 
 fix16_t fix_tan(fix16_t inAngle)
