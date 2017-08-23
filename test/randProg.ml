@@ -15,11 +15,11 @@ type state =
       get_array_type : bool;
       get_tuple_type : bool;
 
-      get_if_exp : bool;
+      get_if_exp     : bool;
 
       vars           : Id.t list TypeMap.t;
 
-      return_type   : Typ.t option;
+      return_type    : Typ.t option;
    }
 
 type condition   = state -> bool
@@ -36,7 +36,7 @@ let default_state =
       max_real       = 1.0;
       get_array_type = true;
       get_tuple_type = true;
-      max_type_levels = 3;
+      max_type_levels = 2;
       nest_prob       = 1.0;
       vars            = TypeMap.empty;
       get_if_exp      = true;
@@ -240,12 +240,18 @@ let newBuiltinFun state =
       always, normal_p, (fun _ -> "tanh");
    ]
 
+let newBuiltinFunNoArgs state =
+   pick_one state [
+      always, normal_p, (fun _ -> "eps");
+      always, normal_p, (fun _ -> "pi");
+   ]
+
 let rec newExp state typ =
    pick_one state [
       (isInt typ), normal_p,  (fun state -> PInt((Random.int state.max_int)+1,emptyAttr));
       (isReal typ), normal_p, (fun state -> PReal((Random.float state.max_real)+.1.0,emptyAttr));
       (isBool typ), low_p,    (fun _     -> PBool(Random.bool (),emptyAttr));
-      (hasType typ), high_p, (fun state -> PId(pickVar state typ,emptyAttr) );
+      (hasType typ), high_p, (fun state  -> PId(pickVar state typ,emptyAttr) );
       (* literal array *)
       (isArray typ), low_p, (fun state ->
             let array_type,size = Typ.arrayTypeAndSize typ in
@@ -255,8 +261,13 @@ let rec newExp state typ =
       (isReal typ), nest_p, (fun state ->
             let state' = decr_nest state in
             let elem = newExp state' typ in
-            let fn = newBuiltinFun state in
+            let fn = newBuiltinFun state' in
             PCall(None,[fn],[elem],emptyAttr));
+      (* call real builtin no args *)
+      (isReal typ), nest_p, (fun state ->
+            let state' = decr_nest state in
+            let fn = newBuiltinFunNoArgs state' in
+            PCall(None,[fn],[],emptyAttr));
       (* call to get array*)
       (hasArrayType typ),nest_p,(fun state ->
             let array_type, var = pickArrayVar state typ in
