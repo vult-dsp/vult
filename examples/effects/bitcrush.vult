@@ -6,17 +6,20 @@ Copyright (c) 2017 Leonardo Laguna Ruiz
 Simple bitcrusher
 */
 
+fun factor(cv) @[table(min = 0.0, max = 1.0, size = 128)] {
+   val x = 0.6 + 0.3 * cv;
+   return 10000.0 * exp(-x * 10.0);
+}
+
 fun process(i:real, cv:real) {
 	val out = i;
 	if(cv == 0.0){
 		out = i;
 	}
 	else {
-		val crush = cv * 10.0;
-		// this provides a nice sounding curve
-		val factor =  100.0 / crush;
-		val x = int(i * factor);
-		out = real(x)/factor;
+		val b = factor(cv);
+		val x = int(i * b);
+		out = real(x)/b;
 	}
 	return out;
 }
