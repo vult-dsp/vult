@@ -23,8 +23,7 @@ THE SOFTWARE.
 *)
 
 (** Template for the Teensy Audio library *)
-
-open GenerateParams
+open Config
 
 (** Header function *)
 let header (params:params) (code:Pla.t) : Pla.t =
@@ -112,8 +111,8 @@ void <#output#s>::update(void)
 
 |pla}
 
-let get (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * filename) list =
+let get (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * FileKind.t) list =
    [
-      header params header_code, ExtOnly "h";
-      implementation params impl_code, ExtOnly "cpp"
+      header params header_code, FileKind.ExtOnly "h";
+      implementation params impl_code, FileKind.ExtOnly "cpp"
    ]

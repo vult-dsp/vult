@@ -342,10 +342,10 @@ function this.Adsr_default(_ctx)
 end
 
 
-function this.process(ctx,in0) return this.Adsr_process(ctx,in0) end
-function this.noteOn(ctx,in0,in1,in2) return this.Adsr_noteOn(ctx,in0,in1,in2) end
-function this.noteOff(ctx,in0,in1) return this.Adsr_noteOff(ctx,in0,in1) end
-function this.controlChange(ctx,in0,in1,in2) return this.Adsr_controlChange(ctx,in0,in1,in2) end
+function this.process(ctx,gate) return this.Adsr_process(ctx,gate) end
+function this.noteOn(ctx,note,velocity,channel) return this.Adsr_noteOn(ctx,note,velocity,channel) end
+function this.noteOff(ctx,note,channel) return this.Adsr_noteOff(ctx,note,channel) end
+function this.controlChange(ctx,control,value,channel) return this.Adsr_controlChange(ctx,control,value,channel) end
 function this.init() return this.Adsr_process_init() end
 function this.default(ctx) return this.Adsr_default(ctx) end
 this.config = { inputs = 2, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }

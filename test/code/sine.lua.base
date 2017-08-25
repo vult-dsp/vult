@@ -338,10 +338,10 @@ function this.Sine_default(_ctx)
 end
 
 
-function this.process(ctx,in0,in1) return this.Sine_process(ctx,in0,in1) end
-function this.noteOn(ctx,in0,in1,in2) return this.Sine_noteOn(ctx,in0,in1,in2) end
-function this.noteOff(ctx,in0,in1) return this.Sine_noteOff(ctx,in0,in1) end
-function this.controlChange(ctx,in0,in1,in2) return this.Sine_controlChange(ctx,in0,in1,in2) end
+function this.process(ctx,cv,reset) return this.Sine_process(ctx,cv,reset) end
+function this.noteOn(ctx,note,velocity,channel) return this.Sine_noteOn(ctx,note,velocity,channel) end
+function this.noteOff(ctx,note,channel) return this.Sine_noteOff(ctx,note,channel) end
+function this.controlChange(ctx,control,value,channel) return this.Sine_controlChange(ctx,control,value,channel) end
 function this.init() return this.Sine_process_init() end
 function this.default(ctx) return this.Sine_default(ctx) end
 this.config = { inputs = 3, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }

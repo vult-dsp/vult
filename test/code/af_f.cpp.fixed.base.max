@@ -68,15 +68,15 @@ typedef struct _af_f_tilde {
 
 void af_f_tilde_perform(t_af_f_tilde *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam)
 {
-
+   
    double *in_0 = ins[0];
    double *out_0 = outs[0];
 
    int n = sampleframes;
    while (n--) {
-      
+   
    float in_0_value = x->in0_connected? *(in_0++): x->in0_value;
-      
+   
    fix16_t ret =  Af_f_process(x->data,float_to_fix(in_0_value));
    *(out_0++) = fix_to_float(ret);
    }
@@ -95,8 +95,8 @@ void *af_f_tilde_new(t_symbol *s, long argc, t_atom *argv)
 
    Af_f_process_init(x->data);
    Af_f_default(x->data);
-dsp_setup((t_pxobject *)x, 1);
-
+   dsp_setup((t_pxobject *)x, 1);
+   
    outlet_new((t_object *)x, "signal");
 
    return (void *)x;

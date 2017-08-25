@@ -22,10 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-open GenerateParams
 open Code
 open Ollvm_ez
 open Maps
+open Config
 
 module P = Ollvm.Printer
 
@@ -151,7 +151,7 @@ let printTopLevel (m:Module.t) (vars:vars) (stmt:cstmt) : Module.t * vars =
    | _ -> failwith "invalid"
 
 
-let print (_params:params) (stmts:Code.cstmt list) : (Pla.t * filename) list =
+let print (_params:params) (stmts:Code.cstmt list) : (Pla.t * FileKind.t) list =
    let m = Module.init
          "name"
          ("x86_64", "pc", "linux-gnu")
@@ -163,4 +163,4 @@ let print (_params:params) (stmts:Code.cstmt list) : (Pla.t * filename) list =
    let buffer = Buffer.create 0 in
    let formatter = Format.formatter_of_buffer buffer in
    let () = P.modul (P.empty_env ()) formatter m.Module.m_module in
-   [Pla.string (Buffer.contents buffer), ExtOnly "ll"]
+   [Pla.string (Buffer.contents buffer), FileKind.ExtOnly "ll"]

@@ -23,7 +23,7 @@ THE SOFTWARE.
 *)
 
 open Code
-open GenerateParams
+open Config
 
 let dot = Pla.map_sep (Pla.string ".") Pla.string
 
@@ -41,25 +41,22 @@ module Templates = struct
 
    let none code = code
 
-   let default (config:configuration) module_name code =
-      let append_ctx args = if config.pass_data then "ctx"::args else args in
-      let count_context args = if config.pass_data then 1 + args else args in
+   let default (config:config) module_name code =
       let get_args inputs =
          inputs
-         |> List.mapi (fun i _ -> "in"^(string_of_int i))
-         |> append_ctx
+         |> List.map (fun s -> match s with | IContext -> "ctx" |  IReal name | IInt name | IBool name -> name)
          |> Pla.map_sep Pla.comma Pla.string
       in
       let process_inputs = get_args config.process_inputs in
       let noteon_inputs = get_args config.noteon_inputs in
       let noteoff_inputs = get_args config.noteoff_inputs in
       let controlchange_inputs = get_args config.controlchange_inputs in
-      let nprocess_inputs = count_context @@ List.length config.process_inputs in
+      let nprocess_inputs = List.length config.process_inputs in
       let nprocess_outputs = List.length config.process_outputs in
-      let nnoteon_inputs= count_context @@ List.length config.noteon_inputs in
-      let nnoteoff_inputs = count_context @@ List.length config.noteoff_inputs in
-      let ncontrolchange_inputs = count_context @@ List.length config.controlchange_inputs in
-      let pass_data = if config.pass_data then Pla.string "true" else Pla.string "false" in
+      let nnoteon_inputs= List.length config.noteon_inputs in
+      let nnoteoff_inputs = List.length config.noteoff_inputs in
+      let ncontrolchange_inputs = List.length config.controlchange_inputs in
+      let pass_data = if List.exists (fun a -> a = IContext) config.process_inputs then Pla.string "true" else Pla.string "false" in
       {pla|
 local this = {}
 local ffi = require("ffi")
@@ -94,11 +91,11 @@ this.config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, 
 return this
 |pla}
 
-   let apply params (module_name:string) (template:string) (code:Pla.t) : (Pla.t * filename) list =
+   let apply params (module_name:string) (template:string) (code:Pla.t) : (Pla.t * FileKind.t) list =
       match template with
-      | "default" -> [ default params.config module_name code, ExtOnly "lua"]
+      | "default" -> [ default params.config module_name code, FileKind.ExtOnly "lua"]
       | "performance" -> Performance.getLua params (default params.config module_name code)
-      | _ -> [none code, ExtOnly "lua"]
+      | _ -> [none code, FileKind.ExtOnly "lua"]
 
 end
 
@@ -304,11 +301,11 @@ and printStmtList (params:params) (stmts:cstmt list) : Pla.t =
    let tstmts = CCList.filter_map (printStmt params) stmts in
    Pla.map_sep_all Pla.newline (fun a -> a) tstmts
 
-let printLuaCode (params:params) (stmts:cstmt list) : (Pla.t * filename ) list =
+let printLuaCode (params:params) (stmts:cstmt list) : (Pla.t * FileKind.t ) list =
    let code = printStmtList params stmts in
    Templates.apply params params.module_name params.template code
 
 (** Generates the .c and .h file contents for the given parsed files *)
-let print (params:params) (stmts:Code.cstmt list) : (Pla.t * filename) list =
+let print (params:params) (stmts:Code.cstmt list) : (Pla.t * FileKind.t) list =
    printLuaCode params stmts
 

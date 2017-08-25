@@ -401,10 +401,10 @@ function this.Delay_default(_ctx)
 end
 
 
-function this.process(ctx,in0) return this.Delay_process(ctx,in0) end
-function this.noteOn(ctx,in0,in1,in2) return this.Delay_noteOn(ctx,in0,in1,in2) end
-function this.noteOff(ctx,in0,in1) return this.Delay_noteOff(ctx,in0,in1) end
-function this.controlChange(ctx,in0,in1,in2) return this.Delay_controlChange(ctx,in0,in1,in2) end
+function this.process(ctx,input) return this.Delay_process(ctx,input) end
+function this.noteOn(ctx,note,velocity,channel) return this.Delay_noteOn(ctx,note,velocity,channel) end
+function this.noteOff(ctx,note,channel) return this.Delay_noteOff(ctx,note,channel) end
+function this.controlChange(ctx,control,value,channel) return this.Delay_controlChange(ctx,control,value,channel) end
 function this.init() return this.Delay_process_init() end
 function this.default(ctx) return this.Delay_default(ctx) end
 this.config = { inputs = 2, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }

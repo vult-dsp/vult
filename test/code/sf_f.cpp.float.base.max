@@ -35,15 +35,15 @@ typedef struct _sf_f_tilde {
 
 void sf_f_tilde_perform(t_sf_f_tilde *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam)
 {
-
+   
    double *in_0 = ins[0];
    double *out_0 = outs[0];
 
    int n = sampleframes;
    while (n--) {
-      
+   
    float in_0_value = x->in0_connected? *(in_0++): x->in0_value;
-      
+   
    float ret =  Sf_f_process((float) in_0_value);
    *(out_0++) = (float) ret;
    }
@@ -62,8 +62,8 @@ void *sf_f_tilde_new(t_symbol *s, long argc, t_atom *argv)
 
    
    
-dsp_setup((t_pxobject *)x, 1);
-
+   dsp_setup((t_pxobject *)x, 1);
+   
    outlet_new((t_object *)x, "signal");
 
    return (void *)x;

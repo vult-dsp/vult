@@ -27,7 +27,6 @@ THE SOFTWARE.
    Vult compile functions.
 *)
 
-open GenerateParams
 open Args
 
 
@@ -111,10 +110,10 @@ let convertInputFiles (files:js_file_code Js.t Js.js_array Js.t) : input list =
    |> List.flatten
 
 
-let getFile (args:args) (ext:filename) : string =
+let getFile (args:args) (ext:FileKind.t) : string =
    match ext with
-   | ExtOnly(e) -> args.output^"."^e
-   | FullName(n) -> Filename.concat (Filename.dirname args.output) n
+   | FileKind.ExtOnly(e) -> args.output^"."^e
+   | FileKind.FullName(n) -> Filename.concat (Filename.dirname args.output) n
 
 
 (** Returns a [js_file_code] given the file name and its code (used as return value)*)

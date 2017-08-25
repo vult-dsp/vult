@@ -85,6 +85,5 @@ this.Afi_fi_default = function(_ctx){
    node.controlChange = function(control,value,channel) {
       processor.Afi_fi_controlChange(processor.context,control,value,channel);
    }
-
    return node;
    })

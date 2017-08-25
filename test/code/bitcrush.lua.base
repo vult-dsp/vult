@@ -65,10 +65,10 @@ function this.Bitcrush_default(_ctx)
 end
 
 
-function this.process(in0,in1) return this.Bitcrush_process(in0,in1) end
-function this.noteOn(in0,in1,in2) return this.Bitcrush_noteOn(in0,in1,in2) end
-function this.noteOff(in0,in1) return this.Bitcrush_noteOff(in0,in1) end
-function this.controlChange(in0,in1,in2) return this.Bitcrush_controlChange(in0,in1,in2) end
+function this.process(i,cv) return this.Bitcrush_process(i,cv) end
+function this.noteOn(note,velocity,channel) return this.Bitcrush_noteOn(note,velocity,channel) end
+function this.noteOff(note,channel) return this.Bitcrush_noteOff(note,channel) end
+function this.controlChange(control,value,channel) return this.Bitcrush_controlChange(control,value,channel) end
 function this.init() return this.Bitcrush_process_init() end
 function this.default(ctx) return this.Bitcrush_default(ctx) end
 this.config = { inputs = 2, outputs = 1, noteon_inputs = 3, noteoff_inputs = 2, controlchange_inputs = 3, is_active = false }

@@ -69,6 +69,5 @@ this.Sf_f_default = function(_ctx){
    node.controlChange = function(control,value,channel) {
       processor.Sf_f_controlChange(control,value,channel);
    }
-
    return node;
    })

@@ -52,10 +52,10 @@ function this.Saturate_default(_ctx)
 end
 
 
-function this.process(in0) return this.Saturate_process(in0) end
-function this.noteOn(in0,in1,in2) return this.Saturate_noteOn(in0,in1,in2) end
-function this.noteOff(in0,in1) return this.Saturate_noteOff(in0,in1) end
-function this.controlChange(in0,in1,in2) return this.Saturate_controlChange(in0,in1,in2) end
+function this.process(x) return this.Saturate_process(x) end
+function this.noteOn(note,velocity,channel) return this.Saturate_noteOn(note,velocity,channel) end
+function this.noteOff(note,channel) return this.Saturate_noteOff(note,channel) end
+function this.controlChange(control,value,channel) return this.Saturate_controlChange(control,value,channel) end
 function this.init() return this.Saturate_process_init() end
 function this.default(ctx) return this.Saturate_default(ctx) end
 this.config = { inputs = 1, outputs = 1, noteon_inputs = 3, noteoff_inputs = 2, controlchange_inputs = 3, is_active = false }

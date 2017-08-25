@@ -23,7 +23,7 @@ THE SOFTWARE.
 *)
 
 open Code
-open GenerateParams
+open Config
 
 let dot = Pla.map_sep (Pla.string ".") Pla.string
 
@@ -368,7 +368,7 @@ and wrapStmtIfNotBlock params stmt =
       | _ -> None
 
 (** Generates the .c and .h file contents for the given parsed files *)
-let print (params:params) (stmts:Code.cstmt list) : (Pla.t * filename) list =
+let print (params:params) (stmts:Code.cstmt list) : (Pla.t * FileKind.t) list =
    let h   = printStmtList { params with is_header = true } stmts in
    let cpp = printStmtList { params with is_header = false } stmts in
    Templates.apply params h cpp

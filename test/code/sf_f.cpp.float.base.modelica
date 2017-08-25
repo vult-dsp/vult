@@ -44,22 +44,22 @@ return (float) ret;
 }
 
 
-EXPORT void sf_f__noteOn(void *object, int note, int vel, int channel){
+EXPORT void sf_f__noteOn(void *object, int note,int velocity,int channel){
    float *data = (float *)object;
-   if(vel) Sf_f_noteOn((int)note,(int)vel,(int)channel);
+   if(vel) Sf_f_noteOn((int)note,(int)velocity,(int)channel);
    else Sf_f_noteOff((int)note,(int)channel);
 }
 
 
 
-EXPORT void sf_f__noteOff(void *object, int note, int channel) {
+EXPORT void sf_f__noteOff(void *object, int note,int channel) {
    float *data = (float *)object;
    Sf_f_noteOff((int)note,(int)channel);
 }
 
 
 
-EXPORT void sf_f__controlChange(void *object, int control, int value, int channel) {
+EXPORT void sf_f__controlChange(void *object, int control,int value,int channel) {
    float *data = (float *)object;
    Sf_f_controlChange((int)control,(int)value,(int)channel);
 }

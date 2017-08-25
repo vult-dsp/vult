@@ -359,10 +359,10 @@ function this.Polycv_default(_ctx)
 end
 
 
-function this.process(ctx,in0) return this.Polycv_process(ctx,in0) end
-function this.noteOn(ctx,in0,in1,in2) return this.Polycv_noteOn(ctx,in0,in1,in2) end
-function this.noteOff(ctx,in0,in1) return this.Polycv_noteOff(ctx,in0,in1) end
-function this.controlChange(ctx,in0,in1,in2) return this.Polycv_controlChange(ctx,in0,in1,in2) end
+function this.process(ctx,c) return this.Polycv_process(ctx,c) end
+function this.noteOn(ctx,note,velocity,channel) return this.Polycv_noteOn(ctx,note,velocity,channel) end
+function this.noteOff(ctx,note,channel) return this.Polycv_noteOff(ctx,note,channel) end
+function this.controlChange(ctx,control,value,channel) return this.Polycv_controlChange(ctx,control,value,channel) end
 function this.init() return this.Polycv_process_init() end
 function this.default(ctx) return this.Polycv_default(ctx) end
 this.config = { inputs = 2, outputs = 12, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }

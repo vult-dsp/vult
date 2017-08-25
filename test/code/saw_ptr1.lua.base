@@ -276,10 +276,10 @@ function this.Saw_ptr1_default(_ctx)
 end
 
 
-function this.process(ctx,in0) return this.Saw_ptr1_process(ctx,in0) end
-function this.noteOn(ctx,in0,in1,in2) return this.Saw_ptr1_noteOn(ctx,in0,in1,in2) end
-function this.noteOff(ctx,in0,in1) return this.Saw_ptr1_noteOff(ctx,in0,in1) end
-function this.controlChange(ctx,in0,in1,in2) return this.Saw_ptr1_controlChange(ctx,in0,in1,in2) end
+function this.process(ctx,cv) return this.Saw_ptr1_process(ctx,cv) end
+function this.noteOn(ctx,note,velocity,channel) return this.Saw_ptr1_noteOn(ctx,note,velocity,channel) end
+function this.noteOff(ctx,note,channel) return this.Saw_ptr1_noteOff(ctx,note,channel) end
+function this.controlChange(ctx,control,value,channel) return this.Saw_ptr1_controlChange(ctx,control,value,channel) end
 function this.init() return this.Saw_ptr1_process_init() end
 function this.default(ctx) return this.Saw_ptr1_default(ctx) end
 this.config = { inputs = 2, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }

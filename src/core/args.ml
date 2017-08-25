@@ -32,7 +32,7 @@ type output =
    | Message of string
    | Dependencies of string list
    | ParsedCode of string
-   | GeneratedCode of (Pla.t * GenerateParams.filename) list
+   | GeneratedCode of (Pla.t * FileKind.t) list
    | Interpret of string
    | CheckOk
    | Errors of Error.t list

@@ -24,35 +24,45 @@ THE SOFTWARE.
 
 (** Template for the Teensy Audio library *)
 
-open GenerateParams
+open Config
 
-let modelicaType m =
+let modelicaOutputType m =
    match m with
-   | "real" -> "double"
-   | "int" -> "int"
-   | "bool" -> "int"
-   | _ -> failwith "modelicaType: unknown type"
+   | OReal -> "double"
+   | OInt -> "int"
+   | OBool -> "int"
 
-let processArgs (config:configuration) =
+let modelicaInputType m =
+   match m with
+   | IReal _ -> "double"
+   | IInt _ -> "int"
+   | IBool _  -> "int"
+   | IContext -> "void *object"
+
+let rec removeContext inputs =
+   match inputs with
+   | IContext :: t -> removeContext t
+   | _ -> inputs
+
+let processArgs (config:config) =
    let return_type, outputs =
       match config.process_outputs with
       | [] -> Pla.string "void", []
-      | [typ] -> Pla.string (modelicaType typ), []
+      | [typ] -> Pla.string (modelicaOutputType typ), []
       | _ ->
          let outputs =
             config.process_outputs
-            |> List.map modelicaType
+            |> List.map modelicaOutputType
             |> List.mapi (fun i typ -> {pla|<#typ#s> &out_<#i#i>|pla})
          in
          Pla.string "void", outputs
    in
    let inputs =
-      config.process_inputs
-      |> List.map modelicaType
+      removeContext config.process_inputs
+      |> List.map modelicaInputType
       |> List.mapi (fun i typ -> {pla|<#typ#s> in_<#i#i>|pla})
    in
-   let obj = Pla.string "void *object" in
-   let args = obj :: inputs @ outputs |> Pla.join_sep Pla.commaspace in
+   let args = {pla|void *object|pla}:: inputs @ outputs |> Pla.join_sep Pla.commaspace in
    return_type, args
 
 
@@ -108,105 +118,109 @@ EXPORT void <#output#s>__controlChange(void *object, int control, int value, int
 
 let castType (cast:string) (value:Pla.t) : Pla.t =
    match cast with
-   | "float" -> [%pla{|(float) <#value#>|}]
-   | "int" -> [%pla{|(int) <#value#>|}]
-   | "bool" -> [%pla{|(bool) <#value#>|}]
-   | _ ->[%pla{|<#cast#s>(<#value#>)|}]
+   | "float" -> {pla|(float) <#value#>|pla}
+   | "int" -> {pla|(int) <#value#>|pla}
+   | "bool" -> {pla|(bool) <#value#>|pla}
+   | _ ->{pla|<#cast#s>(<#value#>)|pla}
 
-let castInput (params:params) (typ:string) (value:Pla.t) : Pla.t =
-   let current_typ = Replacements.getType params.repl typ in
+let castInput (params:params) (typ:input) (value:Pla.t) : Pla.t =
+   let current_typ = Replacements.getType params.repl (Config.inputTypeString typ) in
    let cast = Replacements.getCast params.repl "float" current_typ in
    castType cast value
 
-let castOutput (params:params) (typ:string) (value:Pla.t) : Pla.t =
-   let current_typ = Replacements.getType params.repl typ in
+let castOutput (params:params) (typ:output) (value:Pla.t) : Pla.t =
+   let current_typ = Replacements.getType params.repl (Config.outputTypeString typ) in
    let cast = Replacements.getCast params.repl current_typ "float" in
    castType cast value
 
-let processFunctionCall module_name (params:params) (config:configuration) =
+let inputName params (i,acc) s =
+   match s with
+   | IContext -> i, (Pla.string "*data" :: acc)
+   | _ -> i + 1, (castInput params s {pla|in_<#i#i>|pla} :: acc)
+
+let processFunctionCall module_name (params:params) (config:config) =
    (* generates the aguments for the process call *)
    let args =
-      List.mapi
-         (fun i s ->
-             castInput params s [%pla{|in_<#i#i>|}])
-         config.process_inputs
-      |> (fun a -> if config.pass_data then (Pla.string "*data")::a else a)
+      List.fold_left (inputName params) (0,[]) config.process_inputs
+      |> snd |> List.rev
       |> (fun a -> if List.length config.process_outputs > 1 then a@[Pla.string "ret"] else a)
       |> Pla.join_sep Pla.comma
    in
    (* declares the return variable and copies the values to the output buffers *)
    let ret,copy =
+      let output_pla a = Pla.string (Config.outputTypeString a) in
       let underscore = Pla.string "_" in
       match config.process_outputs with
       | []  -> Pla.unit,Pla.unit
       | [o] ->
-         let current_typ = Replacements.getType params.repl o in
-         let decl = [%pla{|<#current_typ#s> ret = |}] in
+         let current_typ = Replacements.getType params.repl (Config.outputTypeString o) in
+         let decl = {pla|<#current_typ#s> ret = |pla} in
          let value = castOutput params o (Pla.string "ret") in
-         let copy = [%pla{|return <#value#>;|}] in
+         let copy = {pla|return <#value#>;|pla} in
          decl,copy
       | o ->
-         let decl = Pla.(string "_tuple___" ++ map_sep underscore string o ++ string "__ ret; ") in
+         let decl = Pla.(string "_tuple___" ++ map_sep underscore output_pla o ++ string "__ ret; ") in
          let copy =
             List.mapi
                (fun i o ->
-                   let value = castOutput params o [%pla{|ret.field_<#i#i>|}] in
-                   [%pla{|out_<#i#i> = <#value#>;|}]) o
+                   let value = castOutput params o {pla|ret.field_<#i#i>|pla} in
+                   {pla|out_<#i#i> = <#value#>;|pla}) o
             |> Pla.join_sep_all Pla.newline
          in
          decl,copy
    in
-   [%pla{|<#ret#> <#module_name#s>_process(<#args#>);<#><#copy#>|}]
+   {pla|<#ret#> <#module_name#s>_process(<#args#>);<#><#copy#>|pla}
 
 let getInitDefaultCalls module_name params =
-   if params.config.pass_data then
-      [%pla{|<#module_name#s>_process_type|}],
-      [%pla{|<#module_name#s>_process_init(*data);|}],
-      [%pla{|<#module_name#s>_default(*data);|}]
+   if  List.exists (fun s -> s = IContext) params.config.process_inputs then
+      {pla|<#module_name#s>_process_type|pla},
+      {pla|<#module_name#s>_process_init(*data);|pla},
+      {pla|<#module_name#s>_default(*data);|pla}
    else
       Pla.string "float", Pla.unit, Pla.unit
+
+let functionInput i =
+   match i with
+   | IContext -> Pla.string "*data"
+   | IReal name | IInt name | IBool name -> {pla|(int)<#name#s>|pla}
+
+let functionInputDecls i =
+   match i with
+   | IContext -> failwith ""
+   | IReal name | IInt name | IBool name -> {pla|int <#name#s>|pla}
 
 let noteFunctions (params:params) main_type =
    let output = params.output in
    let module_name = params.module_name in
-   let on_args =
-      ["(int)note"; "(int)vel"; "(int)channel"]
-      |> (fun a -> if params.config.pass_data then "*data"::a else a)
-      |> Pla.map_sep Pla.comma Pla.string
-   in
-   let off_args =
-      ["(int)note"; "(int)channel"]
-      |> (fun a -> if params.config.pass_data then "*data"::a else a)
-      |> Pla.map_sep Pla.comma Pla.string
-   in
-   [%pla{|
-EXPORT void <#output#s>__noteOn(void *object, int note, int vel, int channel){
+   let on_args = Pla.map_sep Pla.comma functionInputDecls (removeContext params.config.noteon_inputs) in
+   let off_args = Pla.map_sep Pla.comma functionInputDecls (removeContext params.config.noteoff_inputs) in
+   let on_call_args = Pla.map_sep Pla.comma functionInput params.config.noteon_inputs in
+   let off_call_args = Pla.map_sep Pla.comma functionInput params.config.noteoff_inputs in
+   {pla|
+EXPORT void <#output#s>__noteOn(void *object, <#on_args#>){
    <#main_type#> *data = (<#main_type#> *)object;
-   if(vel) <#module_name#s>_noteOn(<#on_args#>);
-   else <#module_name#s>_noteOff(<#off_args#>);
+   if(vel) <#module_name#s>_noteOn(<#on_call_args#>);
+   else <#module_name#s>_noteOff(<#off_call_args#>);
 }
-|}],
-   [%pla{|
-EXPORT void <#output#s>__noteOff(void *object, int note, int channel) {
+|pla},
+   {pla|
+EXPORT void <#output#s>__noteOff(void *object, <#off_args#>) {
    <#main_type#> *data = (<#main_type#> *)object;
-   <#module_name#s>_noteOff(<#off_args#>);
+   <#module_name#s>_noteOff(<#off_call_args#>);
 }
-|}]
+|pla}
 
 let controlChangeFunction (params:params) main_type =
    let output = params.output in
    let module_name = params.module_name in
-   let ctrl_args =
-      ["(int)control"; "(int)value"; "(int)channel"]
-      |> (fun a -> if params.config.pass_data then "*data"::a else a)
-      |> Pla.map_sep Pla.comma Pla.string
-   in
-   [%pla{|
-EXPORT void <#output#s>__controlChange(void *object, int control, int value, int channel) {
+   let ctrl_args = Pla.map_sep Pla.comma functionInputDecls (removeContext params.config.controlchange_inputs) in
+   let ctrl_call_args = Pla.map_sep Pla.comma functionInput params.config.controlchange_inputs in
+   {pla|
+EXPORT void <#output#s>__controlChange(void *object, <#ctrl_args#>) {
    <#main_type#> *data = (<#main_type#> *)object;
-   <#module_name#s>_controlChange(<#ctrl_args#>);
+   <#module_name#s>_controlChange(<#ctrl_call_args#>);
 }
-|}]
+|pla}
 
 (** Implementation function *)
 let implementation (params:params) (code:Pla.t) : Pla.t =
@@ -255,7 +269,7 @@ EXPORT <#ret#> <#output#s>__process(<#args#>)
 } // extern "C"
 |pla}
 
-let cmakeFile (params:params) : Pla.t * filename =
+let cmakeFile (params:params) : Pla.t * FileKind.t =
    let output = params.output in
    {pla|
 cmake_minimum_required(VERSION 2.8)
@@ -270,24 +284,17 @@ add_library(<#output#s> SHARED ${SRC})
 install(TARGETS <#output#s> DESTINATION Library)
 install(FILES vultin.h <#output#s>.h DESTINATION Include)
 |pla},
-   FullName("CMakeLists.txt")
+   FileKind.FullName("CMakeLists.txt")
 
-let getModelicaType (typ:string) : string =
-   match typ with
-   | "int" -> "Integer"
-   | "real" -> "Real"
-   | "float" -> "Real"
-   | "bool" -> "Boolean"
-   | _ -> failwith ("getModelicaType: unknown type "^typ)
-
-let process_input_output_decl kind names types =
+let process_input_output_decl (f:'a -> string) (kind:string) (names:string list) (types:'a list) =
    List.map2
-      (fun name typ -> let motype = getModelicaType typ in {pla|<#kind#s> <#motype#s> <#name#s>;|pla})
-      names
-      types
+      (fun name typ ->
+          let motype = f typ in
+          {pla|<#kind#s> <#motype#s> <#name#s>;|pla})
+      names types
    |> Pla.join_sep Pla.newline
 
-let getModelica (params:params) : Pla.t * filename =
+let getModelica (params:params) : Pla.t * FileKind.t =
    let output = params.output in
    let input_names = List.mapi (fun i _ -> "in"^(string_of_int i)) params.config.process_inputs in
    let output_names = List.mapi (fun i _ -> "out"^(string_of_int i)) params.config.process_outputs in
@@ -298,8 +305,8 @@ let getModelica (params:params) : Pla.t * filename =
 
    let process_ext_call_inputs = "obj"::input_names |> Pla.map_sep Pla.commaspace Pla.string in
 
-   let process_input_decl = process_input_output_decl "input" input_names params.config.process_inputs in
-   let process_output_decl = process_input_output_decl "output" output_names params.config.process_outputs in
+   let process_input_decl = process_input_output_decl modelicaInputType "input" input_names params.config.process_inputs in
+   let process_output_decl = process_input_output_decl modelicaOutputType "output" output_names params.config.process_outputs in
 
    let process_call_inputs = "obj"::input_array_names |> Pla.map_sep Pla.commaspace Pla.string in
    let process_call_outputs = output_array_names |> Pla.map_sep Pla.commaspace Pla.string |> Pla.parenthesize in
@@ -348,13 +355,13 @@ package <#output#s>
    end Internal;
 end <#output#s>;
 |pla},
-   FullName(params.output^".mo")
+   FileKind.FullName(params.output^".mo")
 
 
-let get (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * filename) list =
+let get (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * FileKind.t) list =
    [
-      header params header_code, ExtOnly("h");
-      implementation params impl_code, ExtOnly("cpp");
+      header params header_code, FileKind.ExtOnly("h");
+      implementation params impl_code, FileKind.ExtOnly("cpp");
       cmakeFile params;
       getModelica params;
    ]

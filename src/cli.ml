@@ -21,7 +21,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
-open GenerateParams
 open Args
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
@@ -49,10 +48,10 @@ let processArguments () : args =
    let _ = result.files <- List.rev result.files in (* Put the files in the correct order  *)
    result
 
-let getFile (args:args) (ext:filename) : string =
+let getFile (args:args) (ext:FileKind.t) : string =
    match ext with
-   | ExtOnly(e) -> args.output^"."^e
-   | FullName(n) -> Filename.concat (Filename.dirname args.output) n
+   | FileKind.ExtOnly(e) -> args.output^"."^e
+   | FileKind.FullName(n) -> Filename.concat (Filename.dirname args.output) n
 
 
 let showResult (args:args) (output:output) =

@@ -23,9 +23,9 @@ THE SOFTWARE.
 *)
 
 
-open GenerateParams
-
 let time = 100.0
+
+open Config
 
 (** Header function *)
 let mainC (params:params) : Pla.t =
@@ -75,11 +75,11 @@ let headerC _ header_code =
    <#header_code#>
 |pla}
 
-let getC (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * filename) list =
+let getC (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * FileKind.t) list =
    [
-      headerC params header_code, ExtOnly "h";
-      implC params impl_code, ExtOnly "cpp";
-      mainC params, FullName "main.cpp";
+      headerC params header_code, FileKind.ExtOnly "h";
+      implC params impl_code, FileKind.ExtOnly "cpp";
+      mainC params, FileKind.FullName "main.cpp";
    ]
 
 
@@ -120,10 +120,10 @@ let implJs params code runtime =
         }|pla}
 
 
-let getJs (params:params) runtime code : (Pla.t * filename) list =
+let getJs (params:params) runtime code : (Pla.t * FileKind.t) list =
    [
-      mainJs params, FullName "main.js";
-      implJs params code runtime, ExtOnly "js"
+      mainJs params, FileKind.FullName "main.js";
+      implJs params code runtime, FileKind.ExtOnly "js"
    ]
 
 
@@ -145,8 +145,8 @@ let mainLua (params:params) =
    print("<#module_name#s>\tLua", finish / time, "ms/s")
    |pla}
 
-let getLua (params:params) default_code : (Pla.t * filename) list =
+let getLua (params:params) default_code : (Pla.t * FileKind.t) list =
    [
-      default_code, ExtOnly "lua";
-      mainLua params, FullName "main.lua"
+      default_code, FileKind.ExtOnly "lua";
+      mainLua params, FileKind.FullName "main.lua"
    ]

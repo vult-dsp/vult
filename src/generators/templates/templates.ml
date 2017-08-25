@@ -1,6 +1,6 @@
 
 
-open GenerateParams
+open Config
 
 module Default = struct
 
@@ -28,14 +28,14 @@ module Default = struct
 <#code#>
 |pla}
 
-   let get (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * filename) list =
+   let get (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * FileKind.t) list =
       [
-         header params header_code, ExtOnly "h";
-         implementation params impl_code, ExtOnly "cpp"
+         header params header_code, FileKind.ExtOnly "h";
+         implementation params impl_code, FileKind.ExtOnly "cpp"
       ]
 end
 
-let apply (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * filename) list =
+let apply (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * FileKind.t) list =
    let template =
       match params.template with
       | "none"     -> Default.get

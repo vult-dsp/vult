@@ -85,22 +85,22 @@ out_1 = (float) ret.field_1;
 }
 
 
-EXPORT void aff_ff__noteOn(void *object, int note, int vel, int channel){
+EXPORT void aff_ff__noteOn(void *object, int note,int velocity,int channel){
    Aff_ff_process_type *data = (Aff_ff_process_type *)object;
-   if(vel) Aff_ff_noteOn(*data,(int)note,(int)vel,(int)channel);
+   if(vel) Aff_ff_noteOn(*data,(int)note,(int)velocity,(int)channel);
    else Aff_ff_noteOff(*data,(int)note,(int)channel);
 }
 
 
 
-EXPORT void aff_ff__noteOff(void *object, int note, int channel) {
+EXPORT void aff_ff__noteOff(void *object, int note,int channel) {
    Aff_ff_process_type *data = (Aff_ff_process_type *)object;
    Aff_ff_noteOff(*data,(int)note,(int)channel);
 }
 
 
 
-EXPORT void aff_ff__controlChange(void *object, int control, int value, int channel) {
+EXPORT void aff_ff__controlChange(void *object, int control,int value,int channel) {
    Aff_ff_process_type *data = (Aff_ff_process_type *)object;
    Aff_ff_controlChange(*data,(int)control,(int)value,(int)channel);
 }

@@ -52,22 +52,22 @@ out_1 = int_to_float(ret.field_1);
 }
 
 
-EXPORT void sfi_fi__noteOn(void *object, int note, int vel, int channel){
+EXPORT void sfi_fi__noteOn(void *object, int note,int velocity,int channel){
    float *data = (float *)object;
-   if(vel) Sfi_fi_noteOn((int)note,(int)vel,(int)channel);
+   if(vel) Sfi_fi_noteOn((int)note,(int)velocity,(int)channel);
    else Sfi_fi_noteOff((int)note,(int)channel);
 }
 
 
 
-EXPORT void sfi_fi__noteOff(void *object, int note, int channel) {
+EXPORT void sfi_fi__noteOff(void *object, int note,int channel) {
    float *data = (float *)object;
    Sfi_fi_noteOff((int)note,(int)channel);
 }
 
 
 
-EXPORT void sfi_fi__controlChange(void *object, int control, int value, int channel) {
+EXPORT void sfi_fi__controlChange(void *object, int control,int value,int channel) {
    float *data = (float *)object;
    Sfi_fi_controlChange((int)control,(int)value,(int)channel);
 }

@@ -317,10 +317,10 @@ function this.Lfo_default(_ctx)
 end
 
 
-function this.process(ctx,in0,in1,in2) return this.Lfo_process(ctx,in0,in1,in2) end
-function this.noteOn(ctx,in0,in1,in2) return this.Lfo_noteOn(ctx,in0,in1,in2) end
-function this.noteOff(ctx,in0,in1) return this.Lfo_noteOff(ctx,in0,in1) end
-function this.controlChange(ctx,in0,in1,in2) return this.Lfo_controlChange(ctx,in0,in1,in2) end
+function this.process(ctx,cv,shape,reset) return this.Lfo_process(ctx,cv,shape,reset) end
+function this.noteOn(ctx,note,velocity,channel) return this.Lfo_noteOn(ctx,note,velocity,channel) end
+function this.noteOff(ctx,note,channel) return this.Lfo_noteOff(ctx,note,channel) end
+function this.controlChange(ctx,control,value,channel) return this.Lfo_controlChange(ctx,control,value,channel) end
 function this.init() return this.Lfo_process_init() end
 function this.default(ctx) return this.Lfo_default(ctx) end
 this.config = { inputs = 4, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }

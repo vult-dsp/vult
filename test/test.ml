@@ -536,6 +536,7 @@ let suite =
       ErrorTest.get errors_files;
       ParserTest.get  parser_files;
       PassesTest.get  passes_files;
+
       Templates.get template_files "pd" "float";
       Templates.get template_files "pd" "fixed";
       Templates.get template_files "max" "float";

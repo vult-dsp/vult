@@ -23,8 +23,7 @@ THE SOFTWARE.
 *)
 
 (** Template for the Teensy Audio library *)
-
-open GenerateParams
+open Config
 
 (** Header function *)
 let header (params:params) (code:Pla.t) : Pla.t =
@@ -58,42 +57,48 @@ EXPORT void ext_main(void *r);
 #endif // <#file#s>_H
 |pla}
 
+let rec removeContext inputs =
+   match inputs with
+   | IContext :: t -> removeContext t
+   | _ -> inputs
+
 (** Add extra inlets if the object requires more than one *)
-let addInlets (config:configuration) =
-   let n = List.length config.process_inputs in
+let addInlets (config:config) =
+   let inputs = removeContext config.process_inputs in
+   let n = List.length inputs in
    let inlet_data =
-      config.process_inputs
-      |> List.mapi (fun i _ -> [ [%pla {|float in<#i#i>_value;|}]; [%pla {|short in<#i#i>_connected;|}]])
+      inputs
+      |> List.mapi (fun i _ -> [ {pla|float in<#i#i>_value;|pla}; {pla|short in<#i#i>_connected;|pla}])
       |> List.flatten
       |> Pla.join_sep Pla.newline
       |> Pla.indent
    in
    let connected_inlets =
-      config.process_inputs
-      |> List.mapi (fun i _ -> [%pla {|x->in<#i#i>_connected = count[<#i#i>];|}])
+      removeContext config.process_inputs
+      |> List.mapi (fun i _ -> {pla|x->in<#i#i>_connected = count[<#i#i>];|pla})
       |> Pla.join_sep Pla.newline
       |> Pla.indent
    in
-   let init = [%pla {|dsp_setup((t_pxobject *)x, <#n#i>);|}] in
+   let init = {pla|dsp_setup((t_pxobject *)x, <#n#i>);|pla} in
    init, inlet_data, connected_inlets
 
 (** Generates code to handle the float message in an inlet *)
-let inletFloatMsg (config:configuration) =
+let inletFloatMsg (config:config) =
    List.mapi
-      (fun i _ -> [%pla {|if(in == <#i#i>) x->in<#i#i>_value = f;|}])
-      config.process_inputs
+      (fun i _ -> {pla|if(in == <#i#i>) x->in<#i#i>_value = f;|pla})
+      (removeContext config.process_inputs)
    |> Pla.join_sep Pla.newline
    |> Pla.indent
 
-let defaultInputs (config:configuration) =
+let defaultInputs (config:config) =
    List.mapi
-      (fun i _ -> [%pla {|float in_<#i#i>_value = x->in<#i#i>_connected? *(in_<#i#i>++): x->in<#i#i>_value;|}])
-      config.process_inputs
+      (fun i _ -> {pla|float in_<#i#i>_value = x->in<#i#i>_connected? *(in_<#i#i>++): x->in<#i#i>_value;|pla})
+      (removeContext config.process_inputs)
    |> Pla.join_sep Pla.newline
    |> Pla.indent
 
 (** Add the outlets *)
-let addOutlets (config:configuration) =
+let addOutlets (config:config) =
    config.process_outputs
    |> List.map (fun _ -> Pla.string "outlet_new((t_object *)x, \"signal\");")
    |> Pla.join_sep Pla.newline
@@ -101,110 +106,106 @@ let addOutlets (config:configuration) =
 
 let castType (cast:string) (value:Pla.t) : Pla.t =
    match cast with
-   | "float" -> [%pla{|(float) <#value#>|}]
-   | "int" -> [%pla{|(int) <#value#>|}]
-   | "bool" -> [%pla{|(bool) <#value#>|}]
-   | _ ->[%pla{|<#cast#s>(<#value#>)|}]
+   | "float" -> {pla|(float) <#value#>|pla}
+   | "int" -> {pla|(int) <#value#>|pla}
+   | "bool" -> {pla|(bool) <#value#>|pla}
+   | _ -> {pla|<#cast#s>(<#value#>)|pla}
 
-let castInput (params:params) (typ:string) (value:Pla.t) : Pla.t =
-   let current_typ = Replacements.getType params.repl typ in
+let castInput (params:params) (typ:input) (value:Pla.t) : Pla.t =
+   let current_typ = Replacements.getType params.repl (Config.inputTypeString typ) in
    let cast = Replacements.getCast params.repl "float" current_typ in
    castType cast value
 
-let castOutput (params:params) (typ:string) (value:Pla.t) : Pla.t =
-   let current_typ = Replacements.getType params.repl typ in
+let castOutput (params:params) (typ:output) (value:Pla.t) : Pla.t =
+   let current_typ = Replacements.getType params.repl (Config.outputTypeString typ) in
    let cast = Replacements.getCast params.repl current_typ "float" in
    castType cast value
 
-let tildePerformFunctionCall module_name (params:params) (config:configuration) =
+let inputName params (i,acc) s =
+   match s with
+   | IContext -> i, (Pla.string "x->data" :: acc)
+   | _ -> i + 1, (castInput params s {pla|in_<#i#i>_value|pla} :: acc)
+
+let tildePerformFunctionCall module_name (params:params) (config:config) =
    (* generates the aguments for the process call *)
    let args =
-      List.mapi
-         (fun i s ->
-             castInput params s [%pla{|in_<#i#i>_value|}])
-         config.process_inputs
-      |> (fun a -> if config.pass_data then (Pla.string "x->data")::a else a)
-      |> (fun a -> if List.length config.process_outputs > 1 then a@[Pla.string "ret"] else a)
+      List.fold_left (inputName params) (0,[]) config.process_inputs
+      |> snd |> List.rev
+      |> (fun a -> if List.length config.process_outputs > 1 then a @ [Pla.string "ret"] else a)
       |> Pla.join_sep Pla.comma
    in
    (* declares the return variable and copies the values to the output buffers *)
    let ret,copy =
+      let output_pla a = Pla.string (Config.outputTypeString a) in
       let underscore = Pla.string "_" in
       match config.process_outputs with
       | []  -> Pla.unit,Pla.unit
       | [o] ->
-         let current_typ = Replacements.getType params.repl o in
-         let decl = [%pla{|<#current_typ#s> ret = |}] in
+         let current_typ = Replacements.getType params.repl (Config.outputTypeString o) in
+         let decl = {pla|<#current_typ#s> ret = |pla} in
          let value = castOutput params o (Pla.string "ret") in
-         let copy = [%pla{|*(out_0++) = <#value#>;|}] in
+         let copy = {pla|*(out_0++) = <#value#>;|pla} in
          decl,copy
       | o ->
-         let decl = Pla.(string "_tuple___" ++ map_sep underscore string o ++ string "__ ret; ") in
+         let decl = Pla.(string "_tuple___" ++ map_sep underscore output_pla o ++ string "__ ret; ") in
          let copy =
             List.mapi
                (fun i o ->
-                   let value = castOutput params o [%pla{|ret.field_<#i#i>|}] in
-                   [%pla{|*(out_<#i#i>++) = <#value#>;|}]) o
+                   let value = castOutput params o {pla|ret.field_<#i#i>|pla} in
+                   {pla|*(out_<#i#i>++) = <#value#>;|pla}) o
             |> Pla.join_sep_all Pla.newline
          in
          decl,copy
    in
-   [%pla{|<#ret#> <#module_name#s>_process(<#args#>);<#><#copy#>|}]
+   {pla|<#ret#> <#module_name#s>_process(<#args#>);<#><#copy#>|pla}
 
 (** Generates the buffer access of _tilde_perform function *)
-let tildePerformFunctionVector (config:configuration) : Pla.t =
-   let inputs = List.mapi (fun i _ -> [%pla{|double *in_<#i#i> = ins[<#i#i>];|}]) config.process_inputs in
-   let outputs = List.mapi (fun i _ -> [%pla{|double *out_<#i#i> = outs[<#i#i>];|}]) config.process_outputs in
+let tildePerformFunctionVector (config:config) : Pla.t =
+   let inputs = List.mapi (fun i _ -> {pla|double *in_<#i#i> = ins[<#i#i>];|pla}) (removeContext config.process_inputs) in
+   let outputs = List.mapi (fun i _ -> {pla|double *out_<#i#i> = outs[<#i#i>];|pla}) config.process_outputs in
    let decl = inputs @ outputs |> Pla.join_sep Pla.newline |> Pla.indent in
    decl
 
 
 let getInitDefaultCalls module_name params =
-   if params.config.pass_data then
-      [%pla{|<#module_name#s>_process_type|}],
-      [%pla{|<#module_name#s>_process_init(x->data);|}],
-      [%pla{|<#module_name#s>_default(x->data);|}]
+   if List.exists (fun a -> a = IContext) params.config.process_inputs then
+      {pla|<#module_name#s>_process_type|pla},
+      {pla|<#module_name#s>_process_init(x->data);|pla},
+      {pla|<#module_name#s>_default(x->data);|pla}
    else
       Pla.string "float", Pla.unit, Pla.unit
+
+let functionInput i =
+   match i with
+   | IContext -> Pla.string "x->data"
+   | IReal name | IInt name | IBool name -> {pla|(int)<#name#s>|pla}
 
 let noteFunctions (params:params) =
    let output = params.output in
    let module_name = params.module_name in
-   let on_args =
-      ["(int)note"; "(int)velocity"; "(int)channel"]
-      |> (fun a -> if params.config.pass_data then "x->data"::a else a)
-      |> Pla.map_sep Pla.comma Pla.string
-   in
-   let off_args =
-      ["(int)note"; "(int)channel"]
-      |> (fun a -> if params.config.pass_data then "x->data"::a else a)
-      |> Pla.map_sep Pla.comma Pla.string
-   in
-   [%pla{|
+   let on_args = Pla.map_sep Pla.comma functionInput params.config.noteon_inputs in
+   let off_args = Pla.map_sep Pla.comma functionInput params.config.noteoff_inputs in
+   {pla|
 void <#output#s>_noteOn(t_<#output#s>_tilde *x, double note, double velocity, double channel){
    if((int)velocity) <#module_name#s>_noteOn(<#on_args#>);
    else <#module_name#s>_noteOff(<#off_args#>);
 }
-|}],
-   [%pla{|
+|pla},
+   {pla|
 void <#output#s>_noteOff(t_<#output#s>_tilde *x, double note, double channel) {
    <#module_name#s>_noteOff(<#off_args#>);
 }
-|}]
+|pla}
 
 let controlChangeFunction (params:params) =
    let output = params.output in
    let module_name = params.module_name in
-   let ctrl_args =
-      ["(int)control"; "(int)value"; "(int)channel"]
-      |> (fun a -> if params.config.pass_data then "x->data"::a else a)
-      |> Pla.map_sep Pla.comma Pla.string
-   in
-   [%pla{|
+   let ctrl_args = Pla.map_sep Pla.comma functionInput params.config.controlchange_inputs in
+   {pla|
 void <#output#s>_controlChange(t_<#output#s>_tilde *x, double control, double value, double channel) {
    <#module_name#s>_controlChange(<#ctrl_args#>);
 }
-|}]
+|pla}
 
 (** Implementation function *)
 let implementation (params:params) (code:Pla.t) : Pla.t =
@@ -242,12 +243,12 @@ typedef struct _<#output#s>_tilde {
 
 void <#output#s>_tilde_perform(t_<#output#s>_tilde *x, t_object *dsp64, double **ins, long numins, double **outs, long numouts, long sampleframes, long flags, void *userparam)
 {
-<#io_decl#>
+   <#io_decl#>
 
    int n = sampleframes;
    while (n--) {
-      <#default_inputs#>
-      <#process_call#+>
+   <#default_inputs#>
+   <#process_call#+>
    }
 }
 
@@ -263,8 +264,8 @@ void *<#output#s>_tilde_new(t_symbol *s, long argc, t_atom *argv)
 
    <#init_call#>
    <#default_call#>
-<#inlets#>
-<#outlets#>
+   <#inlets#>
+   <#outlets#>
 
    return (void *)x;
 }
@@ -303,8 +304,8 @@ void ext_main(void *r) {
 } // extern "C"
 |pla}
 
-let get (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * filename) list =
+let get (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * FileKind.t) list =
    [
-      header params header_code, ExtOnly "h";
-      implementation params impl_code, ExtOnly "cpp"
+      header params header_code, FileKind.ExtOnly "h";
+      implementation params impl_code, FileKind.ExtOnly "cpp"
    ]

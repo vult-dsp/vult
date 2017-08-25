@@ -85,6 +85,5 @@ this.Aff_ff_default = function(_ctx){
    node.controlChange = function(control,value,channel) {
       processor.Aff_ff_controlChange(processor.context,control,value,channel);
    }
-
    return node;
    })

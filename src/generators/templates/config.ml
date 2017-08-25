@@ -22,17 +22,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-(** Represents the 'pluggin' configuration *)
-type configuration =
+type input =
+   | IContext
+   | IReal of string
+   | IInt of string
+   | IBool of string
+
+type output =
+   | OReal
+   | OInt
+   | OBool
+
+(** Represents the 'plugin' configuration *)
+type config =
    {
       module_name     : string;
-      process_inputs  : string list;
-      process_outputs : string list;
-      noteon_inputs   : string list;
-      noteoff_inputs  : string list;
-      controlchange_inputs : string list;
-      default_inputs  : string list;
-      pass_data       : bool; (** True if the functions receive the data as first argument *)
+      process_inputs  : input list;
+      process_outputs : output list;
+      noteon_inputs   : input list;
+      noteoff_inputs  : input list;
+      controlchange_inputs : input list;
+      default_inputs  : input list;
    }
 
 (** Represents the parameters used during code generation *)
@@ -44,7 +54,7 @@ type params =
       output      : string;         (** Argument given via '-o' *)
       repl        : Replacements.t; (** Replacements used during Vult -> Code conversion *)
       module_name : string;         (** Name of the main mudule *)
-      config      : configuration;  (** Pluggin configuration *)
+      config      : config;         (** Pluggin configuration *)
    }
 
 (** Empty default configuration *)
@@ -57,10 +67,18 @@ let empty_conf module_name =
       noteoff_inputs  = [];
       controlchange_inputs = [];
       default_inputs = [];
-      pass_data      = false;
    }
 
+let inputTypeString (m:input) : string =
+   match m with
+   | IContext -> "context"
+   | IReal _ -> "real"
+   | IInt _ -> "int"
+   | IBool _ -> "bool"
 
-type filename =
-   | ExtOnly of string
-   | FullName of string
+let outputTypeString (m:output) : string =
+   match m with
+   | OReal -> "real"
+   | OInt -> "int"
+   | OBool -> "bool"
+

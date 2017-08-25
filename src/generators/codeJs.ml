@@ -23,13 +23,13 @@ THE SOFTWARE.
 *)
 
 open Code
-open GenerateParams
+open Config
 
 let dot = Pla.map_sep (Pla.string ".") Pla.string
 
 module Templates = struct
 
-   let none code = [ code, ExtOnly "js"]
+   let none code = [ code, FileKind.ExtOnly "js"]
 
    let runtime : Pla.t =
       Pla.string
@@ -74,15 +74,15 @@ module Templates = struct
            this.liveDefault       = function() { if(this.<#module_name#s>_default)      return this.<#module_name#s>_default(this.context); };
            }|pla}
 
-   let browser _config module_name code : (Pla.t * filename) list =
+   let browser _config module_name code : (Pla.t * FileKind.t) list =
       let exports = Pla.string "function vultProcess()" in
-      [ common exports module_name code, ExtOnly "js"]
+      [ common exports module_name code, FileKind.ExtOnly "js"]
 
-   let node _config module_name code : (Pla.t * filename) list =
+   let node _config module_name code : (Pla.t * FileKind.t) list =
       let exports = Pla.string "exports.vultProcess = function ()" in
-      [ common exports module_name code, ExtOnly "js"]
+      [ common exports module_name code, FileKind.ExtOnly "js"]
 
-   let apply (params:params) (module_name:string) (template:string) (code:Pla.t) : (Pla.t * filename) list =
+   let apply (params:params) (module_name:string) (template:string) (code:Pla.t) : (Pla.t * FileKind.t) list =
       match template with
       | "browser" -> browser params.config module_name code
       | "node" -> node params.config module_name code
@@ -302,11 +302,11 @@ and printStmtList (params:params) (stmts:cstmt list) : Pla.t =
    let tstmts = CCList.filter_map (printStmt params) stmts in
    Pla.map_sep_all Pla.newline (fun a -> a) tstmts
 
-let printJsCode (params:params) (stmts:cstmt list) : (Pla.t * filename) list =
+let printJsCode (params:params) (stmts:cstmt list) : (Pla.t * FileKind.t) list =
    let code = printStmtList params stmts in
    Templates.apply params params.module_name params.template code
 
 (** Generates the .c and .h file contents for the given parsed files *)
-let print (params:params) (stmts:Code.cstmt list) : (Pla.t * filename) list =
+let print (params:params) (stmts:Code.cstmt list) : (Pla.t * FileKind.t) list =
    printJsCode params stmts
 

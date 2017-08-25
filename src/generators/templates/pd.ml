@@ -23,8 +23,7 @@ THE SOFTWARE.
 *)
 
 (** Template for the Teensy Audio library *)
-
-open GenerateParams
+open Config
 
 (** Header function *)
 let header (params:params) (code:Pla.t) : Pla.t =
@@ -57,9 +56,15 @@ EXPORT void <#output#s>_tilde_setup(void);
 #endif // <#file#s>_H
 |pla}
 
+let rec removeContext inputs =
+   match inputs with
+   | IContext :: t -> removeContext t
+   | _ -> inputs
+
 (** Add extra inlets if the object requires more than one *)
-let addInlets (config:configuration) =
-   match config.process_inputs with
+let rec addInlets inputs =
+   match inputs with
+   | IContext :: t -> addInlets t
    | [] | [_] -> Pla.unit
    | _::t ->
       List.map (fun _ -> Pla.string "inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);") t
@@ -67,84 +72,86 @@ let addInlets (config:configuration) =
       |> Pla.indent
 
 (** Add the outlets *)
-let addOutlets (config:configuration) =
+let addOutlets (config:config) =
    config.process_outputs
    |> List.map (fun _ -> Pla.string "outlet_new(&x->x_obj, &s_signal);")
    |> Pla.join_sep Pla.newline
    |> Pla.indent
 
 (** Generates contents for the _tilde_new function *)
-let tildeNewFunction (config:configuration) : int * Pla.t =
-   let all_signals = config.process_inputs @ config.process_outputs in
-   let dsp_nargs = 2 + List.length all_signals in
+let tildeNewFunction (config:config) : int * Pla.t =
+   let dsp_nargs = List.length (removeContext config.process_inputs) + List.length config.process_outputs in
    let vec_decl =
-      List.mapi (fun i _ -> [%pla {|sp[<#i#i>]->s_vec|}] ) all_signals
-      |> Pla.join_sep_all [%pla{|,<#>|}]
+      CCList.init dsp_nargs (fun i  -> {pla|sp[<#i#i>]->s_vec|pla})
+      |> Pla.join_sep_all {pla|,<#>|pla}
       |> Pla.indent
    in
-   dsp_nargs,vec_decl
+   dsp_nargs + 2,vec_decl
 
 let castType (cast:string) (value:Pla.t) : Pla.t =
    match cast with
-   | "float" -> [%pla{|(float) <#value#>|}]
-   | "int" -> [%pla{|(int) <#value#>|}]
-   | "bool" -> [%pla{|(bool) <#value#>|}]
-   | _ ->[%pla{|<#cast#s>(<#value#>)|}]
+   | "float" -> {pla|(float) <#value#>|pla}
+   | "int" -> {pla|(int) <#value#>|pla}
+   | "bool" -> {pla|(bool) <#value#>|pla}
+   | _ -> {pla|<#cast#s>(<#value#>)|pla}
 
-let castInput (params:params) (typ:string) (value:Pla.t) : Pla.t =
-   let current_typ = Replacements.getType params.repl typ in
+let castInput (params:params) (typ:input) (value:Pla.t) : Pla.t =
+   let current_typ = Replacements.getType params.repl (Config.inputTypeString typ) in
    let cast = Replacements.getCast params.repl "float" current_typ in
    castType cast value
 
-let castOutput (params:params) (typ:string) (value:Pla.t) : Pla.t =
-   let current_typ = Replacements.getType params.repl typ in
+let castOutput (params:params) (typ:output) (value:Pla.t) : Pla.t =
+   let current_typ = Replacements.getType params.repl (Config.outputTypeString typ) in
    let cast = Replacements.getCast params.repl current_typ "float" in
    castType cast value
 
-let tildePerformFunctionCall module_name (params:params) (config:configuration) =
+let inputName params (i,acc) s =
+   match s with
+   | IContext -> i, (Pla.string "x->data" :: acc)
+   | _ -> i + 1, (castInput params s {pla|*(in_<#i#i>++)|pla} :: acc)
+
+let tildePerformFunctionCall module_name (params:params) (config:config) =
    (* generates the aguments for the process call *)
    let args =
-      List.mapi
-         (fun i s ->
-             castInput params s [%pla{|*(in_<#i#i>++)|}])
-         config.process_inputs
-      |> (fun a -> if config.pass_data then (Pla.string "x->data")::a else a)
-      |> (fun a -> if List.length config.process_outputs > 1 then a@[Pla.string "ret"] else a)
+      List.fold_left (inputName params) (0,[]) config.process_inputs
+      |> snd |> List.rev
+      |> (fun a -> if List.length config.process_outputs > 1 then a @ [Pla.string "ret"] else a)
       |> Pla.join_sep Pla.comma
    in
    (* declares the return variable and copies the values to the output buffers *)
    let ret,copy =
+      let output_pla a = Pla.string (Config.outputTypeString a) in
       let underscore = Pla.string "_" in
       match config.process_outputs with
       | []  -> Pla.unit,Pla.unit
       | [o] ->
-         let current_typ = Replacements.getType params.repl o in
-         let decl = [%pla{|<#current_typ#s> ret = |}] in
+         let current_typ = Replacements.getType params.repl (Config.outputTypeString o) in
+         let decl = {pla|<#current_typ#s> ret = |pla} in
          let value = castOutput params o (Pla.string "ret") in
-         let copy = [%pla{|*(out_0++) = <#value#>;|}] in
+         let copy = {pla|*(out_0++) = <#value#>;|pla} in
          decl,copy
       | o ->
-         let decl = Pla.(string "_tuple___" ++ map_sep underscore string o ++ string "__ ret; ") in
+         let decl = Pla.(string "_tuple___" ++ map_sep underscore output_pla o ++ string "__ ret; ") in
          let copy =
             List.mapi
                (fun i o ->
-                   let value = castOutput params o [%pla{|ret.field_<#i#i>|}] in
-                   [%pla{|*(out_<#i#i>++) = <#value#>;|}]) o
+                   let value = castOutput params o {pla|ret.field_<#i#i>|pla} in
+                   {pla|*(out_<#i#i>++) = <#value#>;|pla}) o
             |> Pla.join_sep_all Pla.newline
          in
          decl,copy
    in
-   [%pla{|<#ret#> <#module_name#s>_process(<#args#>);<#><#copy#>|}]
+   {pla|<#ret#> <#module_name#s>_process(<#args#>);<#><#copy#>|pla}
 
 (** Generates the buffer access of _tilde_perform function *)
-let tildePerformFunctionVector (config:configuration) : int * Pla.t =
+let tildePerformFunctionVector (config:config) : int * Pla.t =
    (* we use this template to acces the buffers of inputs and outputs *)
-   let decl_templ io index count = [%pla{|t_sample *<#io#s>_<#index#i> = (t_sample *)(w[<#count#i>]);|}] in
+   let decl_templ io index count = {pla|t_sample *<#io#s>_<#index#i> = (t_sample *)(w[<#count#i>]);|pla} in
    (* First the inputs. We start with count=2 for accessing the vector 'w' *)
    let decl1,count,_  = List.fold_left (fun (s,count,index) _ ->
          let t = decl_templ "in" index count in (t::s,count+1,index+1))
          ([],2,0)
-         config.process_inputs
+         (removeContext config.process_inputs)
    in
    (* now for the outputs, we continue counting with the last value of count *)
    let decl2,count,_  = List.fold_left (fun (s,count,index) _ ->
@@ -153,7 +160,7 @@ let tildePerformFunctionVector (config:configuration) : int * Pla.t =
          config.process_outputs
    in
    (* the number of samples is in the next index *)
-   let n = [%pla{|<#>int n = (int)(w[<#count#i>]);|}] in
+   let n = {pla|<#>int n = (int)(w[<#count#i>]);|pla} in
    (* appends all the declarations *)
    let decl = List.rev (n::decl2) |> Pla.join_sep Pla.newline |> Pla.indent in
    (* we return the number of buffers used *)
@@ -161,58 +168,51 @@ let tildePerformFunctionVector (config:configuration) : int * Pla.t =
 
 
 let getInitDefaultCalls module_name params =
-   if params.config.pass_data then
-      [%pla{|<#module_name#s>_process_type|}],
-      [%pla{|<#module_name#s>_process_init(x->data);|}],
-      [%pla{|<#module_name#s>_default(x->data);|}]
+   if List.exists (fun a -> a = IContext) params.config.process_inputs then
+      {pla|<#module_name#s>_process_type|pla},
+      {pla|<#module_name#s>_process_init(x->data);|pla},
+      {pla|<#module_name#s>_default(x->data);|pla}
    else
       Pla.string "float", Pla.unit, Pla.unit
+
+let functionInput i =
+   match i with
+   | IContext -> Pla.string "x->data"
+   | IReal name | IInt name | IBool name -> {pla|(int)<#name#s>|pla}
 
 let noteFunctions (params:params) =
    let output = params.output in
    let module_name = params.module_name in
-   let on_args =
-      ["(int)note"; "(int)velocity"; "(int)channel"]
-      |> (fun a -> if params.config.pass_data then "x->data"::a else a)
-      |> Pla.map_sep Pla.comma Pla.string
-   in
-   let off_args =
-      ["(int)note"; "(int)channel"]
-      |> (fun a -> if params.config.pass_data then "x->data"::a else a)
-      |> Pla.map_sep Pla.comma Pla.string
-   in
-   [%pla{|
+   let on_args = Pla.map_sep Pla.comma functionInput params.config.noteon_inputs in
+   let off_args = Pla.map_sep Pla.comma functionInput params.config.noteoff_inputs in
+   {pla|
 void <#output#s>_noteOn(t_<#output#s>_tilde *x, t_floatarg note, t_floatarg velocity, t_floatarg channel){
    if((int)velocity) <#module_name#s>_noteOn(<#on_args#>);
    else <#module_name#s>_noteOff(<#off_args#>);
 }
-|}],
-   [%pla{|
+|pla},
+   {pla|
 void <#output#s>_noteOff(t_<#output#s>_tilde *x, t_floatarg note, t_floatarg channel) {
    <#module_name#s>_noteOff(<#off_args#>);
 }
-|}]
+|pla}
 
 let controlChangeFunction (params:params) =
    let output = params.output in
    let module_name = params.module_name in
-   let ctrl_args =
-      ["(int)control"; "(int)value"; "(int)channel"]
-      |> (fun a -> if params.config.pass_data then "x->data"::a else a)
-      |> Pla.map_sep Pla.comma Pla.string
-   in
-   [%pla{|
+   let ctrl_args = Pla.map_sep Pla.comma functionInput params.config.controlchange_inputs in
+   {pla|
 void <#output#s>_controlChange(t_<#output#s>_tilde *x, t_floatarg control, t_floatarg value, t_floatarg channel) {
    <#module_name#s>_controlChange(<#ctrl_args#>);
 }
-|}]
+|pla}
 
 (** Implementation function *)
 let implementation (params:params) (code:Pla.t) : Pla.t =
    let output = params.output in
    let module_name = params.module_name in
    (* Generate extra inlets *)
-   let inlets = addInlets params.config in
+   let inlets = addInlets params.config.process_inputs in
    (* Generates the outlets*)
    let outlets = addOutlets params.config in
 
@@ -294,8 +294,8 @@ void <#output#s>_tilde_setup(void) {
 } // extern "C"
 |pla}
 
-let get (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * filename) list =
+let get (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * FileKind.t) list =
    [
-      header params header_code, ExtOnly "h";
-      implementation params impl_code, ExtOnly "cpp"
+      header params header_code, FileKind.ExtOnly "h";
+      implementation params impl_code, FileKind.ExtOnly "cpp"
    ]

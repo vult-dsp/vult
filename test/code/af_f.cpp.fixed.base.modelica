@@ -77,22 +77,22 @@ return fix_to_float(ret);
 }
 
 
-EXPORT void af_f__noteOn(void *object, int note, int vel, int channel){
+EXPORT void af_f__noteOn(void *object, int note,int velocity,int channel){
    Af_f_process_type *data = (Af_f_process_type *)object;
-   if(vel) Af_f_noteOn(*data,(int)note,(int)vel,(int)channel);
+   if(vel) Af_f_noteOn(*data,(int)note,(int)velocity,(int)channel);
    else Af_f_noteOff(*data,(int)note,(int)channel);
 }
 
 
 
-EXPORT void af_f__noteOff(void *object, int note, int channel) {
+EXPORT void af_f__noteOff(void *object, int note,int channel) {
    Af_f_process_type *data = (Af_f_process_type *)object;
    Af_f_noteOff(*data,(int)note,(int)channel);
 }
 
 
 
-EXPORT void af_f__controlChange(void *object, int control, int value, int channel) {
+EXPORT void af_f__controlChange(void *object, int control,int value,int channel) {
    Af_f_process_type *data = (Af_f_process_type *)object;
    Af_f_controlChange(*data,(int)control,(int)value,(int)channel);
 }

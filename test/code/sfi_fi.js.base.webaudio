@@ -74,6 +74,5 @@ this.Sfi_fi_default = function(_ctx){
    node.controlChange = function(control,value,channel) {
       processor.Sfi_fi_controlChange(control,value,channel);
    }
-
    return node;
    })
