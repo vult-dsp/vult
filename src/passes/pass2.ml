@@ -57,9 +57,13 @@ module Evaluate = struct
            not attr.evaluated
            && List.for_all isConst args
            && not (IdSet.mem name avoid) ->
-         let env    = getInterpEnv state in
-         let exp'   = Interpreter.evalExp env exp in
-         state, markAsEvaluated exp'
+         let env     = getInterpEnv state in
+         begin match Interpreter.evalExp env exp with
+            | new_exp ->
+               state, markAsEvaluated new_exp
+            | exception Interpreter.Abort ->
+               state, markAsEvaluated exp
+         end
       | PReal(v, attr) ->
          begin
             match classify_float v with

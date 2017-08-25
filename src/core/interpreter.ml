@@ -29,6 +29,7 @@ open Common
 module Env = struct
 
    type fun_body =
+      | External
       | Declared of stmt
       | Builtin of ( attr -> exp list -> exp)
 
@@ -184,6 +185,8 @@ module Env = struct
 
 
 end
+
+exception Abort
 
 (** Constant unit value *)
 let ret_unit = PUnit(emptyAttr)
@@ -468,7 +471,10 @@ let rec evalExp (env:Env.env) (exp:exp) : exp =
       begin match Env.lookupFunction env name with
          | Some (t,fn) ->
             let env'  = Env.enterInstance (t::env) inst in
-            evalFunction env' fn attr args'
+            begin match evalFunction env' fn attr args' with
+               | Some exp -> exp
+               | None -> exp
+            end
          | None -> exp
       end
    | PCall(None, name, args, attr) ->
@@ -477,17 +483,20 @@ let rec evalExp (env:Env.env) (exp:exp) : exp =
          | Some (t,fn) ->
             let inst  = makeInstName name attr in
             let env'  = Env.enterInstance (t::env) inst in
-            evalFunction env' fn attr args'
-         | None -> exp
+            begin match evalFunction env' fn attr args' with
+               | Some exp -> exp
+               | None -> exp
+            end
+         | None -> raise Abort
       end
 
-and evalFunction (env:Env.env) (fn:Env.fun_body) (attr:Prog.attr) (args:exp list) : exp =
+and evalFunction (env:Env.env) (fn:Env.fun_body) (attr:Prog.attr) (args:exp list) : exp option =
    match fn with
    | Env.Declared(StmtFun(_, inputs, stmt, _, _)) ->
       List.iter2 (bindArg env) inputs args;
-      evalStmt env stmt
-   | Env.Builtin(fn) -> fn attr args
-   | _ -> failwith "cannot evaluate function"
+      Some (evalStmt env stmt)
+   | Env.Builtin(fn) -> Some (fn attr args)
+   | _ -> None
 
 and evalStmt (env:Env.env) (stmt:stmt) =
    match stmt with
@@ -566,7 +575,9 @@ and evalStmt (env:Env.env) (stmt:stmt) =
 
    | StmtType _ -> ret_unit
    | StmtAliasType _ -> ret_unit
-   | StmtExternal _ -> ret_unit
+   | StmtExternal (name,_,_,_,_)  ->
+      Env.addFunction env name (Env.External);
+      ret_unit
 
 (** Evaluates a list of statements *)
 and evalStmts (env:Env.env) (stmts:stmt list) : exp =
