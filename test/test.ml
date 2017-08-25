@@ -98,6 +98,10 @@ let template_files =
       "sff_f.vult";
       "sff_ff.vult";
       "sfi_fi.vult";
+      "af_f.vult";
+      "aff_f.vult";
+      "aff_ff.vult";
+      "afi_fi.vult";
    ]
 
 let no_context = PassCommon.{ default_options with pass4 = false; pass3 = false; pass2 = false; }

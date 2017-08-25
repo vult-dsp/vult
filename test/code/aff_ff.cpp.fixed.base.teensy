@@ -1,0 +1,78 @@
+
+#include "aff_ff.h"
+
+void Aff_ff__ctx_type_0_init(Aff_ff__ctx_type_0 &_output_){
+   Aff_ff__ctx_type_0 _ctx;
+   _ctx.x = 0;
+   _output_ = _ctx;
+   return ;
+}
+
+void Aff_ff_process_init(Aff_ff__ctx_type_0 &_output_){
+   Aff_ff__ctx_type_0_init(_output_);
+   return ;
+}
+
+void Aff_ff_process(Aff_ff__ctx_type_0 &_ctx, fix16_t a, fix16_t b, _tuple___real_real__ &_output_){
+   _ctx.x = (_ctx.x + 1);
+   _tuple___real_real__ _tuple_5;
+   {
+      _tuple_5.field_0 = (a + b);
+      _tuple_5.field_1 = (a + (- b));
+   }
+   _output_ = _tuple_5;
+   return ;
+}
+
+void Aff_ff_noteOn_init(Aff_ff__ctx_type_0 &_output_){
+   Aff_ff__ctx_type_0_init(_output_);
+   return ;
+}
+
+void Aff_ff_noteOn(Aff_ff__ctx_type_0 &_ctx, int note, int velocity, int channel){
+}
+
+void Aff_ff_noteOff_init(Aff_ff__ctx_type_0 &_output_){
+   Aff_ff__ctx_type_0_init(_output_);
+   return ;
+}
+
+void Aff_ff_noteOff(Aff_ff__ctx_type_0 &_ctx, int note, int channel){
+}
+
+void Aff_ff_controlChange_init(Aff_ff__ctx_type_0 &_output_){
+   Aff_ff__ctx_type_0_init(_output_);
+   return ;
+}
+
+void Aff_ff_controlChange(Aff_ff__ctx_type_0 &_ctx, int control, int value, int channel){
+}
+
+void Aff_ff_default_init(Aff_ff__ctx_type_0 &_output_){
+   Aff_ff__ctx_type_0_init(_output_);
+   return ;
+}
+
+void Aff_ff_default(Aff_ff__ctx_type_0 &_ctx){
+}
+
+
+
+void aff_ff::update(void)
+{
+  audio_block_t *block;
+  short *bp;
+
+  block = allocate();
+  if (block) {
+    bp = block->data;
+      for(int i = 0;i < AUDIO_BLOCK_SAMPLES;i++) {
+        fix16_t v = Aff_ff_process(data,0);
+        *bp++ = (int16_t)(v / 2);
+      }
+
+    transmit(block,0);
+    release(block);
+  }
+}
+

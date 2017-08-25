@@ -1,0 +1,85 @@
+
+#ifndef AFF_F_H
+#define AFF_F_H
+
+#include <stdint.h>
+#include <math.h>
+#include "vultin.h"
+#include "AudioStream.h"
+
+typedef struct Aff_f__ctx_type_0 {
+   int x;
+} Aff_f__ctx_type_0;
+
+typedef Aff_f__ctx_type_0 Aff_f_process_type;
+
+void Aff_f__ctx_type_0_init(Aff_f__ctx_type_0 &_output_);
+
+void Aff_f_process_init(Aff_f__ctx_type_0 &_output_);
+
+fix16_t Aff_f_process(Aff_f__ctx_type_0 &_ctx, fix16_t a, fix16_t b);
+
+typedef Aff_f__ctx_type_0 Aff_f_noteOn_type;
+
+void Aff_f_noteOn_init(Aff_f__ctx_type_0 &_output_);
+
+void Aff_f_noteOn(Aff_f__ctx_type_0 &_ctx, int note, int velocity, int channel);
+
+typedef Aff_f__ctx_type_0 Aff_f_noteOff_type;
+
+void Aff_f_noteOff_init(Aff_f__ctx_type_0 &_output_);
+
+void Aff_f_noteOff(Aff_f__ctx_type_0 &_ctx, int note, int channel);
+
+typedef Aff_f__ctx_type_0 Aff_f_controlChange_type;
+
+void Aff_f_controlChange_init(Aff_f__ctx_type_0 &_output_);
+
+void Aff_f_controlChange(Aff_f__ctx_type_0 &_ctx, int control, int value, int channel);
+
+typedef Aff_f__ctx_type_0 Aff_f_default_type;
+
+void Aff_f_default_init(Aff_f__ctx_type_0 &_output_);
+
+void Aff_f_default(Aff_f__ctx_type_0 &_ctx);
+
+
+
+class aff_f : public AudioStream
+{
+public:
+  aff_f(void) : AudioStream(0,NULL)
+  {
+     Aff_f_process_init(data);
+  }
+
+  void begin() {
+    Aff_f_default(data);
+  }
+
+  // Handles note on events
+  void noteOn(int note, int velocity, int channel){
+    // If the velocity is larger than zero, means that is turning on
+    if(velocity) Aff_f_noteOn(data, note, velocity, channel);
+    else         Aff_f_noteOff(data, note, channel);
+  }
+
+  // Handles note off events
+  void noteOff(int note, int velocity, int channel) {
+    Aff_f_noteOff(data, note, channel);
+
+  }
+
+  // Handles control change events
+  void controlChange(int control, int value, int channel) {
+    Aff_f_controlChange(data, control, value, channel);
+  }
+
+  virtual void update(void);
+
+private:
+  Aff_f_process_type data;
+
+};
+
+#endif // AFF_F_H

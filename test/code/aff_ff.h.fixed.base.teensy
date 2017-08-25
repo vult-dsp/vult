@@ -1,0 +1,90 @@
+
+#ifndef AFF_FF_H
+#define AFF_FF_H
+
+#include <stdint.h>
+#include <math.h>
+#include "vultin.h"
+#include "AudioStream.h"
+
+typedef struct _tuple___real_real__ {
+   fix16_t field_0;
+   fix16_t field_1;
+} _tuple___real_real__;
+
+typedef struct Aff_ff__ctx_type_0 {
+   int x;
+} Aff_ff__ctx_type_0;
+
+typedef Aff_ff__ctx_type_0 Aff_ff_process_type;
+
+void Aff_ff__ctx_type_0_init(Aff_ff__ctx_type_0 &_output_);
+
+void Aff_ff_process_init(Aff_ff__ctx_type_0 &_output_);
+
+void Aff_ff_process(Aff_ff__ctx_type_0 &_ctx, fix16_t a, fix16_t b, _tuple___real_real__ &_output_);
+
+typedef Aff_ff__ctx_type_0 Aff_ff_noteOn_type;
+
+void Aff_ff_noteOn_init(Aff_ff__ctx_type_0 &_output_);
+
+void Aff_ff_noteOn(Aff_ff__ctx_type_0 &_ctx, int note, int velocity, int channel);
+
+typedef Aff_ff__ctx_type_0 Aff_ff_noteOff_type;
+
+void Aff_ff_noteOff_init(Aff_ff__ctx_type_0 &_output_);
+
+void Aff_ff_noteOff(Aff_ff__ctx_type_0 &_ctx, int note, int channel);
+
+typedef Aff_ff__ctx_type_0 Aff_ff_controlChange_type;
+
+void Aff_ff_controlChange_init(Aff_ff__ctx_type_0 &_output_);
+
+void Aff_ff_controlChange(Aff_ff__ctx_type_0 &_ctx, int control, int value, int channel);
+
+typedef Aff_ff__ctx_type_0 Aff_ff_default_type;
+
+void Aff_ff_default_init(Aff_ff__ctx_type_0 &_output_);
+
+void Aff_ff_default(Aff_ff__ctx_type_0 &_ctx);
+
+
+
+class aff_ff : public AudioStream
+{
+public:
+  aff_ff(void) : AudioStream(0,NULL)
+  {
+     Aff_ff_process_init(data);
+  }
+
+  void begin() {
+    Aff_ff_default(data);
+  }
+
+  // Handles note on events
+  void noteOn(int note, int velocity, int channel){
+    // If the velocity is larger than zero, means that is turning on
+    if(velocity) Aff_ff_noteOn(data, note, velocity, channel);
+    else         Aff_ff_noteOff(data, note, channel);
+  }
+
+  // Handles note off events
+  void noteOff(int note, int velocity, int channel) {
+    Aff_ff_noteOff(data, note, channel);
+
+  }
+
+  // Handles control change events
+  void controlChange(int control, int value, int channel) {
+    Aff_ff_controlChange(data, control, value, channel);
+  }
+
+  virtual void update(void);
+
+private:
+  Aff_ff_process_type data;
+
+};
+
+#endif // AFF_FF_H

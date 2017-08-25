@@ -1,0 +1,78 @@
+
+#include "afi_fi.h"
+
+void Afi_fi__ctx_type_0_init(Afi_fi__ctx_type_0 &_output_){
+   Afi_fi__ctx_type_0 _ctx;
+   _ctx.x = 0;
+   _output_ = _ctx;
+   return ;
+}
+
+void Afi_fi_process_init(Afi_fi__ctx_type_0 &_output_){
+   Afi_fi__ctx_type_0_init(_output_);
+   return ;
+}
+
+void Afi_fi_process(Afi_fi__ctx_type_0 &_ctx, fix16_t a, int b, _tuple___real_int__ &_output_){
+   _ctx.x = (_ctx.x + 1);
+   _tuple___real_int__ _tuple_5;
+   {
+      _tuple_5.field_0 = a;
+      _tuple_5.field_1 = b;
+   }
+   _output_ = _tuple_5;
+   return ;
+}
+
+void Afi_fi_noteOn_init(Afi_fi__ctx_type_0 &_output_){
+   Afi_fi__ctx_type_0_init(_output_);
+   return ;
+}
+
+void Afi_fi_noteOn(Afi_fi__ctx_type_0 &_ctx, int note, int velocity, int channel){
+}
+
+void Afi_fi_noteOff_init(Afi_fi__ctx_type_0 &_output_){
+   Afi_fi__ctx_type_0_init(_output_);
+   return ;
+}
+
+void Afi_fi_noteOff(Afi_fi__ctx_type_0 &_ctx, int note, int channel){
+}
+
+void Afi_fi_controlChange_init(Afi_fi__ctx_type_0 &_output_){
+   Afi_fi__ctx_type_0_init(_output_);
+   return ;
+}
+
+void Afi_fi_controlChange(Afi_fi__ctx_type_0 &_ctx, int control, int value, int channel){
+}
+
+void Afi_fi_default_init(Afi_fi__ctx_type_0 &_output_){
+   Afi_fi__ctx_type_0_init(_output_);
+   return ;
+}
+
+void Afi_fi_default(Afi_fi__ctx_type_0 &_ctx){
+}
+
+
+
+void afi_fi::update(void)
+{
+  audio_block_t *block;
+  short *bp;
+
+  block = allocate();
+  if (block) {
+    bp = block->data;
+      for(int i = 0;i < AUDIO_BLOCK_SAMPLES;i++) {
+        fix16_t v = Afi_fi_process(data,0);
+        *bp++ = (int16_t)(v / 2);
+      }
+
+    transmit(block,0);
+    release(block);
+  }
+}
+

@@ -1,0 +1,90 @@
+
+#ifndef AFI_FI_H
+#define AFI_FI_H
+
+#include <stdint.h>
+#include <math.h>
+#include "vultin.h"
+#include "AudioStream.h"
+
+typedef struct _tuple___real_int__ {
+   fix16_t field_0;
+   int field_1;
+} _tuple___real_int__;
+
+typedef struct Afi_fi__ctx_type_0 {
+   int x;
+} Afi_fi__ctx_type_0;
+
+typedef Afi_fi__ctx_type_0 Afi_fi_process_type;
+
+void Afi_fi__ctx_type_0_init(Afi_fi__ctx_type_0 &_output_);
+
+void Afi_fi_process_init(Afi_fi__ctx_type_0 &_output_);
+
+void Afi_fi_process(Afi_fi__ctx_type_0 &_ctx, fix16_t a, int b, _tuple___real_int__ &_output_);
+
+typedef Afi_fi__ctx_type_0 Afi_fi_noteOn_type;
+
+void Afi_fi_noteOn_init(Afi_fi__ctx_type_0 &_output_);
+
+void Afi_fi_noteOn(Afi_fi__ctx_type_0 &_ctx, int note, int velocity, int channel);
+
+typedef Afi_fi__ctx_type_0 Afi_fi_noteOff_type;
+
+void Afi_fi_noteOff_init(Afi_fi__ctx_type_0 &_output_);
+
+void Afi_fi_noteOff(Afi_fi__ctx_type_0 &_ctx, int note, int channel);
+
+typedef Afi_fi__ctx_type_0 Afi_fi_controlChange_type;
+
+void Afi_fi_controlChange_init(Afi_fi__ctx_type_0 &_output_);
+
+void Afi_fi_controlChange(Afi_fi__ctx_type_0 &_ctx, int control, int value, int channel);
+
+typedef Afi_fi__ctx_type_0 Afi_fi_default_type;
+
+void Afi_fi_default_init(Afi_fi__ctx_type_0 &_output_);
+
+void Afi_fi_default(Afi_fi__ctx_type_0 &_ctx);
+
+
+
+class afi_fi : public AudioStream
+{
+public:
+  afi_fi(void) : AudioStream(0,NULL)
+  {
+     Afi_fi_process_init(data);
+  }
+
+  void begin() {
+    Afi_fi_default(data);
+  }
+
+  // Handles note on events
+  void noteOn(int note, int velocity, int channel){
+    // If the velocity is larger than zero, means that is turning on
+    if(velocity) Afi_fi_noteOn(data, note, velocity, channel);
+    else         Afi_fi_noteOff(data, note, channel);
+  }
+
+  // Handles note off events
+  void noteOff(int note, int velocity, int channel) {
+    Afi_fi_noteOff(data, note, channel);
+
+  }
+
+  // Handles control change events
+  void controlChange(int control, int value, int channel) {
+    Afi_fi_controlChange(data, control, value, channel);
+  }
+
+  virtual void update(void);
+
+private:
+  Afi_fi_process_type data;
+
+};
+
+#endif // AFI_FI_H
