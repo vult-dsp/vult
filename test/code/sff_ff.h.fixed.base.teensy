@@ -1,0 +1,64 @@
+
+#ifndef SFF_FF_H
+#define SFF_FF_H
+
+#include <stdint.h>
+#include <math.h>
+#include "vultin.h"
+#include "AudioStream.h"
+
+typedef struct _tuple___real_real__ {
+   fix16_t field_0;
+   fix16_t field_1;
+} _tuple___real_real__;
+
+void Sff_ff_process(fix16_t a, fix16_t b, _tuple___real_real__ &_output_);
+
+void Sff_ff_noteOn(int note, int velocity, int channel);
+
+void Sff_ff_noteOff(int note, int channel);
+
+void Sff_ff_controlChange(int control, int value, int channel);
+
+void Sff_ff_default();
+
+
+
+class sff_ff : public AudioStream
+{
+public:
+  sff_ff(void) : AudioStream(0,NULL)
+  {
+     Sff_ff_process_init(data);
+  }
+
+  void begin() {
+    Sff_ff_default(data);
+  }
+
+  // Handles note on events
+  void noteOn(int note, int velocity, int channel){
+    // If the velocity is larger than zero, means that is turning on
+    if(velocity) Sff_ff_noteOn(data, note, velocity, channel);
+    else         Sff_ff_noteOff(data, note, channel);
+  }
+
+  // Handles note off events
+  void noteOff(int note, int velocity, int channel) {
+    Sff_ff_noteOff(data, note, channel);
+
+  }
+
+  // Handles control change events
+  void controlChange(int control, int value, int channel) {
+    Sff_ff_controlChange(data, control, value, channel);
+  }
+
+  virtual void update(void);
+
+private:
+  Sff_ff_process_type data;
+
+};
+
+#endif // SFF_FF_H

@@ -1,0 +1,39 @@
+
+#include "sff_f.h"
+
+fix16_t Sff_f_process(fix16_t a, fix16_t b){
+   return fix_mul(a,b);
+}
+
+void Sff_f_noteOn(int note, int velocity, int channel){
+}
+
+void Sff_f_noteOff(int note, int channel){
+}
+
+void Sff_f_controlChange(int control, int value, int channel){
+}
+
+void Sff_f_default(){
+}
+
+
+
+void sff_f::update(void)
+{
+  audio_block_t *block;
+  short *bp;
+
+  block = allocate();
+  if (block) {
+    bp = block->data;
+      for(int i = 0;i < AUDIO_BLOCK_SAMPLES;i++) {
+        fix16_t v = Sff_f_process(data,0);
+        *bp++ = (int16_t)(v / 2);
+      }
+
+    transmit(block,0);
+    release(block);
+  }
+}
+

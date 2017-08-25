@@ -1,0 +1,64 @@
+
+#ifndef SFI_FI_H
+#define SFI_FI_H
+
+#include <stdint.h>
+#include <math.h>
+#include "vultin.h"
+#include "AudioStream.h"
+
+typedef struct _tuple___real_int__ {
+   fix16_t field_0;
+   int field_1;
+} _tuple___real_int__;
+
+void Sfi_fi_process(fix16_t a, int b, _tuple___real_int__ &_output_);
+
+void Sfi_fi_noteOn(int note, int velocity, int channel);
+
+void Sfi_fi_noteOff(int note, int channel);
+
+void Sfi_fi_controlChange(int control, int value, int channel);
+
+void Sfi_fi_default();
+
+
+
+class sfi_fi : public AudioStream
+{
+public:
+  sfi_fi(void) : AudioStream(0,NULL)
+  {
+     Sfi_fi_process_init(data);
+  }
+
+  void begin() {
+    Sfi_fi_default(data);
+  }
+
+  // Handles note on events
+  void noteOn(int note, int velocity, int channel){
+    // If the velocity is larger than zero, means that is turning on
+    if(velocity) Sfi_fi_noteOn(data, note, velocity, channel);
+    else         Sfi_fi_noteOff(data, note, channel);
+  }
+
+  // Handles note off events
+  void noteOff(int note, int velocity, int channel) {
+    Sfi_fi_noteOff(data, note, channel);
+
+  }
+
+  // Handles control change events
+  void controlChange(int control, int value, int channel) {
+    Sfi_fi_controlChange(data, control, value, channel);
+  }
+
+  virtual void update(void);
+
+private:
+  Sfi_fi_process_type data;
+
+};
+
+#endif // SFI_FI_H

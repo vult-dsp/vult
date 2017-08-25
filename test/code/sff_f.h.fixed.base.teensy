@@ -1,0 +1,59 @@
+
+#ifndef SFF_F_H
+#define SFF_F_H
+
+#include <stdint.h>
+#include <math.h>
+#include "vultin.h"
+#include "AudioStream.h"
+
+fix16_t Sff_f_process(fix16_t a, fix16_t b);
+
+void Sff_f_noteOn(int note, int velocity, int channel);
+
+void Sff_f_noteOff(int note, int channel);
+
+void Sff_f_controlChange(int control, int value, int channel);
+
+void Sff_f_default();
+
+
+
+class sff_f : public AudioStream
+{
+public:
+  sff_f(void) : AudioStream(0,NULL)
+  {
+     Sff_f_process_init(data);
+  }
+
+  void begin() {
+    Sff_f_default(data);
+  }
+
+  // Handles note on events
+  void noteOn(int note, int velocity, int channel){
+    // If the velocity is larger than zero, means that is turning on
+    if(velocity) Sff_f_noteOn(data, note, velocity, channel);
+    else         Sff_f_noteOff(data, note, channel);
+  }
+
+  // Handles note off events
+  void noteOff(int note, int velocity, int channel) {
+    Sff_f_noteOff(data, note, channel);
+
+  }
+
+  // Handles control change events
+  void controlChange(int control, int value, int channel) {
+    Sff_f_controlChange(data, control, value, channel);
+  }
+
+  virtual void update(void);
+
+private:
+  Sff_f_process_type data;
+
+};
+
+#endif // SFF_F_H

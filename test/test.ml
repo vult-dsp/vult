@@ -92,6 +92,13 @@ let errors_files =
       "error17.vult";
    ]
 
+let template_files =
+   [
+      "sf_f.vult";
+      "sff_f.vult";
+      "sff_ff.vult";
+      "sfi_fi.vult";
+   ]
 
 let no_context = PassCommon.{ default_options with pass4 = false; pass3 = false; pass2 = false; }
 let no_eval = PassCommon.{ default_options with pass2 = false; }
@@ -469,12 +476,73 @@ module CliTest = struct
 
 end
 
+module Templates = struct
+
+   let callVult template (fullfile:string) code_type =
+      let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
+      let args = { default_arguments with includes = includes } in
+      let args, ext =
+         match code_type with
+         | "fixed" -> { args with template; code = CCode; real = "fixed" }, [".cpp",".cpp.fixed.base."^template; ".h", ".h.fixed.base."^template]
+         | "float" -> { args with template; code = CCode }, [".cpp",".cpp.float.base."^template; ".h", ".h.float.base."^template]
+         | "js" -> { args with template; code = JSCode }, [".js", ".js.base."^template]
+         | "lua" -> { args with template; code = LuaCode }, [".lua", ".lua.base."^template]
+         | _ -> failwith "Unknown target to run test"
+      in
+      let args = { args with output = basefile; files = [ File fullfile ] } in
+      let results = Driver.main args in
+      let () = List.iter (Cli.showResult args) results in
+      let generated_files =  List.map (fun e -> basefile ^ (fst e), basefile ^ (snd e)) ext in
+      generated_files
+
+   let process _context template (fullfile:string) code_type =
+      try
+         callVult template fullfile code_type
+      with
+      | Error.Errors errors ->
+         let msg = Error.reportErrors errors in
+         assert_failure msg
+
+
+   let run (file:string) template real_type context : unit =
+      Sys.chdir initial_dir;
+      let fullfile = checkFile (in_test_directory ("templates/"^file)) in
+      let generated_files = process context template fullfile real_type in
+      let files_content =
+         List.map (readOutputAndReference (update_test context) (in_test_directory "code")) generated_files
+      in
+      assert_bool "No code generated" (files_content <> []);
+      List.iter
+         (fun (current, reference) ->
+             assert_equal
+                ~msg:("Generating file "^fullfile)
+                ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
+                reference current
+         )
+         files_content
+
+   let get files template real_type =
+      "code">::: (List.map (fun file -> (Filename.basename file) ^ "."^ real_type ^ "_" ^ template >:: run file template real_type) files)
+
+end
+
 let suite =
    "vult">:::
    [
       ErrorTest.get errors_files;
       ParserTest.get  parser_files;
       PassesTest.get  passes_files;
+      Templates.get template_files "pd" "float";
+      Templates.get template_files "pd" "fixed";
+      Templates.get template_files "max" "float";
+      Templates.get template_files "max" "fixed";
+      Templates.get template_files "modelica" "float";
+      Templates.get template_files "modelica" "fixed";
+      Templates.get template_files "teensy" "fixed";
+
+      Templates.get template_files "webaudio" "js";
+      Templates.get template_files "browser" "js";
+
       CliTest.get all_files Native "float";
       CliTest.get all_files Native "fixed";
       CliTest.get all_files Native "js";

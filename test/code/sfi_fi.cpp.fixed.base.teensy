@@ -1,0 +1,45 @@
+
+#include "sfi_fi.h"
+
+void Sfi_fi_process(fix16_t a, int b, _tuple___real_int__ &_output_){
+   _tuple___real_int__ _tuple_5;
+   {
+      _tuple_5.field_0 = a;
+      _tuple_5.field_1 = b;
+   }
+   _output_ = _tuple_5;
+   return ;
+}
+
+void Sfi_fi_noteOn(int note, int velocity, int channel){
+}
+
+void Sfi_fi_noteOff(int note, int channel){
+}
+
+void Sfi_fi_controlChange(int control, int value, int channel){
+}
+
+void Sfi_fi_default(){
+}
+
+
+
+void sfi_fi::update(void)
+{
+  audio_block_t *block;
+  short *bp;
+
+  block = allocate();
+  if (block) {
+    bp = block->data;
+      for(int i = 0;i < AUDIO_BLOCK_SAMPLES;i++) {
+        fix16_t v = Sfi_fi_process(data,0);
+        *bp++ = (int16_t)(v / 2);
+      }
+
+    transmit(block,0);
+    release(block);
+  }
+}
+
