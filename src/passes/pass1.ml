@@ -97,6 +97,46 @@ module SplitMem = struct
 
 end
 
+
+(** Checks that a variable was not declared as mem and val at the same time *)
+module ConflictingDeclarations = struct
+
+   let rec checkLhs env lhs : unit =
+      match lhs with
+      | LWild _ -> ()
+      | LTuple (elems, _) ->
+         List.iter (checkLhs env) elems
+      | LTyped(lhs, _, _) -> checkLhs env lhs
+      | LGroup(lhs, _) -> checkLhs env lhs
+      | LIndex(id, _, _, attr)
+      | LId (id,_,attr) ->
+         begin match Env.lookupVariable env id with
+            | Some decl ->
+               if Loc.isSameLoc attr.loc decl.Scope.loc then
+                  ()
+               else
+                  let msg =
+                     Printf.sprintf
+                        "Redefinition of symbol '%s'. Previously defined at %s"
+                        (Id.show id) (Loc.to_string_readable decl.Scope.loc)
+                  in
+                  Error.raiseError msg attr.loc
+            | _ -> ()
+         end
+
+   let stmt : ('a Env.t,stmt) Mapper.mapper_func =
+      Mapper.make "ConflictingDeclarations.stmt" @@ fun state stmt ->
+      match stmt with
+      | StmtVal(lhs,_,_) ->
+         let () = checkLhs state lhs in
+         state, stmt
+      | _ -> state, stmt
+
+   let mapper =
+      Mapper.{ default_mapper with stmt }
+
+end
+
 module Simplify = struct
 
    (** Returns the sub elements of an operator, e.g. a+(b+c) -> [a,b,c] *)
@@ -475,3 +515,4 @@ let run =
    |> Mapper.seq SimplifyIfExp.mapper
    |> Mapper.seq BindComplexExpressions.mapper
    |> Mapper.seq ProcessArrays.mapper
+   |> Mapper.seq ConflictingDeclarations.mapper
