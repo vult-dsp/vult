@@ -143,6 +143,28 @@ module Env = struct
       | exception Not_found ->
          updateVar_loop t.locals id value
 
+   (** Used by updateArrayVar to iterate all local scopes *)
+   let rec updateArrayVar_loop (locals:'a list) (id:Id.t) (index:exp) (value:exp) : unit =
+      match locals with
+      | [] -> failwith ("unknow variable: "^(PrintProg.identifierStr id))
+      | h::t ->
+         match Hashtbl.find h id, index with
+         | PArray(elems, _), PInt(index, _) ->
+            Array.set elems index value
+         | _ -> failwith "cannot update array"
+         | exception Not_found ->
+            updateArrayVar_loop t id index value
+
+   (** Looks for an existing variable and updates its value *)
+   let updateArrayVar (env:env) (id:Id.t) (index:exp) (value:exp) : unit =
+      let t = first env in
+      match Hashtbl.find t.context id, index with
+      | PArray(elems, _), PInt(index, _) ->
+         Array.set elems index value
+      | _ -> failwith "cannot update array"
+      | exception Not_found ->
+         updateArrayVar_loop t.locals id index value
+
    (** Adds a function to the scope *)
    let addFunction env id stmt =
       let t = first env in
@@ -374,6 +396,19 @@ type bind_kind =
    | DeclareVal (* Declaration of a local variable *)
    | DeclareMem (* Declaration of a memory variable *)
 
+(** Binds arguments of a function call to a local variable *)
+let rec bindArg (env:Env.env) (lhs:typed_id) (rhs:exp) =
+   match lhs, rhs with
+   | (TypedId(id,_,_,_) | SimpleId(id, _, _)), rhs ->
+      Env.updateVar env id rhs
+
+let getIndex (id:exp) (index:exp) : exp option =
+   match id, index with
+   | PArray (elems, _), PInt(n, _) ->
+      Some (Array.get elems n)
+   | _ -> None
+
+
 (** Binds the an optional rhs to a lhs expression *)
 let rec bind (kind:bind_kind) (env:Env.env) (lhs:lhs_exp) (rhs:exp option) =
    match lhs, rhs, kind with
@@ -399,22 +434,22 @@ let rec bind (kind:bind_kind) (env:Env.env) (lhs:lhs_exp) (rhs:exp option) =
    | LTuple(lhs_elems,_), None,_ ->
       List.iter (fun l -> bind kind env l None) lhs_elems
 
-   | _ -> failwith "Interpreter.bind: invalid input"
+   | LIndex(id,_,_,_), None, DeclareVal ->
+      let rhs = getInitExp lhs in
+      Env.declareVal env id rhs
 
-(** Binds arguments of a function call to a local variable *)
-let rec bindArg (env:Env.env) (lhs:typed_id) (rhs:exp) =
-   match lhs, rhs with
-   | (TypedId(id,_,_,_) | SimpleId(id, _, _)), rhs ->
-      Env.updateVar env id rhs
+   | LIndex(id, _, _, _), None, DeclareMem ->
+      let rhs = getInitExp lhs in
+      Env.declareMem env id rhs
 
-let getIndex (id:exp) (index:exp) : exp option =
-   match id, index with
-   | PArray (elems, _), PInt(n, _) ->
-      Some (Array.get elems n)
-   | _ -> None
+   | LIndex(id, _, index, _), Some(rhs), Update ->
+      let index = evalExp env index in
+      Env.updateArrayVar env id index rhs
+
+   | _ -> failwith ("Interpreter.bind: invalid input" ^ (Prog.show_lhs_exp lhs))
 
 (** Main function to evaluate an expression *)
-let rec evalExp (env:Env.env) (exp:exp) : exp =
+and evalExp (env:Env.env) (exp:exp) : exp =
    match exp with
    | PEmpty  -> PEmpty
    | PBool _ -> exp

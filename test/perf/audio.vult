@@ -1,9 +1,6 @@
 fun process() : real {
-   mem rate;
+   val rate = 0.00148314;
    mem phase = phase + rate;
    phase = if phase > 1.0 then phase - 1.0 else phase;
    return phase;
-}
-and default()@[init] {
-   rate = Util.cvToRate(0.1);
 }

@@ -105,6 +105,29 @@ let template_files =
       "afi_fi.vult";
    ]
 
+let perf_files =
+   [
+      "Saw_eptr_perf.vult";
+      "Saw_ptr1_perf.vult";
+      "Saw_ptr2_perf.vult";
+      "Saw_r_perf.vult";
+      "Sawcore_perf.vult";
+      "Saw_blit_perf.vult";
+      "Blit_perf.vult";
+      "Noise_perf.vult";
+      "Phd_perf.vult";
+      "Sine_perf.vult";
+      "Tricore_perf.vult";
+      "Svf_perf.vult";
+      "Ladder_euler_perf.vult";
+      "Rescomb_perf.vult";
+      "Bitcrush_perf.vult";
+      "Saturate_soft_perf.vult";
+      "Saturate_perf.vult";
+      "Clipper_perf.vult";
+      "Short_delay_perf.vult";
+   ]
+
 let no_context = PassCommon.{ default_options with pass4 = false; pass3 = false; pass2 = false; }
 let no_eval = PassCommon.{ default_options with pass2 = false; }
 
@@ -475,7 +498,7 @@ module CliTest = struct
          files_content
 
    let get files use_node real_type =
-      "code">::: (List.map (fun file -> (Filename.basename file) ^ "."^ real_type >:: run file use_node real_type) files)
+      "cli">::: (List.map (fun file -> (Filename.basename file) ^ "."^ real_type >:: run file use_node real_type) files)
 
 end
 
@@ -525,7 +548,38 @@ module Templates = struct
          files_content
 
    let get files template real_type =
-      "code">::: (List.map (fun file -> (Filename.basename file) ^ "."^ real_type ^ "_" ^ template >:: run file template real_type) files)
+      "template">::: (List.map (fun file -> (Filename.basename file) ^ "."^ real_type ^ "_" ^ template >:: run file template real_type) files)
+
+end
+
+
+module Interpret = struct
+
+   let run file _context =
+      let fullfile = checkFile (in_test_directory ("perf/"^file)) in
+      let module_name = moduleName fullfile in
+      let code = {pla|
+      val sample = 0;
+      val out = 0.0;
+      while (sample < 100) {
+         out = <#module_name#s>.process(0.0);
+         sample = sample + 1;
+      }
+      return out;|pla}
+                 |> Pla.print
+      in
+      let args = { default_arguments with files = [Code ("intepret.vult", code)]; eval = true; includes = (in_test_directory "perf") :: includes } in
+      let results = Driver.main args in
+      List.iter
+         (fun result ->
+             match result with
+             | Errors errors ->
+                assert_failure (Error.reportErrors errors)
+             | _ -> ())
+         results
+
+   let get files =
+      "run">::: (List.map (fun file -> Filename.basename file >:: run file) files)
 
 end
 
@@ -556,6 +610,8 @@ let suite =
       CliTest.get all_files Node "js";
       CliTest.get all_files Node "lua";
       RandomCompileTest.get test_random_code "float";
+
+      Interpret.get perf_files;
    ]
 
 

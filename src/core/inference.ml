@@ -297,7 +297,7 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * Typ.t =
       let size_t = ref (Typ.TInt(size,None)) in
       let arr_type = ref (Typ.TComposed(["array"],[a;size_t],None)) in
       unifyRaise (attrLoc attr) typ arr_type;
-      LIndex(id, Some typ, PInt(size, sattr), attr), arr_type
+      LIndex(id, Some typ, PInt(size, sattr), { attr with typ = Some arr_type}), arr_type
 
    | LIndex(_, _, index, _) when mem_var = `Val || mem_var = `Mem ->
       let msg =
@@ -320,7 +320,7 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * Typ.t =
       let arr_type = ref (Typ.TComposed(["array"],[a;size],None)) in
       unifyRaise (attrLoc attr) typ arr_type;
       unifyRaise (expLoc index) index_typ Typ.Const.int_type;
-      LIndex(id, Some typ, index', attr), a
+      LIndex(id, Some typ, index', { attr with typ = Some a }), a
 
 and inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * Typ.t =
    match e with
