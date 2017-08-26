@@ -37,7 +37,9 @@ coverage: compiler jscompiler
 			$(OCB) -clean
 			BISECT_COVERAGE=YES $(OCB) test/test.native
 			BISECT_COVERAGE=YES $(OCB) src/vultc.native
+			BISECT_COVERAGE=YES $(OCB) test/perf.native
 			BISECT_FILE=_build/coverage ./test.native -runner sequential -shards 1
+			BISECT_FILE=_build/coverage ./perf.native
 			ocveralls --prefix _build _build/coverage*.out --send
 
 version :
