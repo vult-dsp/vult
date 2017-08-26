@@ -107,25 +107,25 @@ let template_files =
 
 let perf_files =
    [
-      "Saw_eptr_perf.vult";
-      "Saw_ptr1_perf.vult";
-      "Saw_ptr2_perf.vult";
-      "Saw_r_perf.vult";
-      "Sawcore_perf.vult";
-      "Saw_blit_perf.vult";
-      "Blit_perf.vult";
-      "Noise_perf.vult";
-      "Phd_perf.vult";
-      "Sine_perf.vult";
-      "Tricore_perf.vult";
-      "Svf_perf.vult";
-      "Ladder_euler_perf.vult";
-      "Rescomb_perf.vult";
-      "Bitcrush_perf.vult";
-      "Saturate_soft_perf.vult";
-      "Saturate_perf.vult";
-      "Clipper_perf.vult";
-      "Short_delay_perf.vult";
+      "saw_eptr_perf.vult";
+      "saw_ptr1_perf.vult";
+      "saw_ptr2_perf.vult";
+      "saw_r_perf.vult";
+      "sawcore_perf.vult";
+      "saw_blit_perf.vult";
+      "blit_perf.vult";
+      "noise_perf.vult";
+      "phd_perf.vult";
+      "sine_perf.vult";
+      "tricore_perf.vult";
+      "svf_perf.vult";
+      "ladder_euler_perf.vult";
+      "rescomb_perf.vult";
+      "bitcrush_perf.vult";
+      "saturate_soft_perf.vult";
+      "saturate_perf.vult";
+      "clipper_perf.vult";
+      "short_delay_perf.vult";
    ]
 
 let no_context = PassCommon.{ default_options with pass4 = false; pass3 = false; pass2 = false; }
