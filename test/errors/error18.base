@@ -1,0 +1,4 @@
+Redefinition of symbol 'a'. Previously defined at line 8, columns 9-12
+fun bar() {
+   val a = 0;
+       ^
