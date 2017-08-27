@@ -31,7 +31,7 @@ open Config
 let mainC (params:params) : Pla.t =
    let output = params.output in
    let module_name = params.module_name in
-   let real = params.real in
+   let real = if params.real = "fixed" then "fx" else "fl" in
    {pla|
 #include "<#output#s>.h"
 #include "vultin.h"
