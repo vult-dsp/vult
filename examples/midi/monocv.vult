@@ -69,7 +69,11 @@ fun process(c:int) {
 
    gate = if notes:mono_isGateOn() then vel else 0.0;
 
-   cv = Util.pitchToCv(real(active_note));
+   val note = real(active_note);
+
+   if(Util.change(note)) {
+      cv = Util.pitchToCv(note);
+   }
 
    return cv, vel, gate;
 }

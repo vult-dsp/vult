@@ -97,7 +97,7 @@ let multiply x y =
    z
 
 (** Performs second order curve fitting of three points *)
-let fit x_points y_points =
+let fit (x_points:float list) (y_points:float list) : float list =
    match List.length x_points, List.length y_points with
    | 3, 3 ->
       (* prepare the matrix X *)
@@ -119,3 +119,12 @@ let fit x_points y_points =
       in
       result
    | _ -> failwith "Fitting is only implemented for second order"
+
+let lagrange (x_points:float list) (y_points:float list) : float list =
+   match x_points, y_points with
+   | [x1; x2; x3], [y1; y2; y3] ->
+      let c0 = (x2 *. x3  *. y1) /. ((x1 -. x2) *. (x1 -. x3)) +. (x1  *. x3  *. y2)/.((-.x1 +. x2)  *. (x2 -. x3)) +. (x1  *. x2  *. y3) /. ((-.x1 +. x3) *. (-.x2 +. x3)) in
+      let c1 = -.((x2 *. y1)/.((x1 -. x2) *. (x1 -. x3))) -. (x3 *. y1)/.((x1 -. x2) *. (x1 -. x3)) -. (x1 *. y2)/.((-.x1 +. x2) *. (x2 -. x3)) -. (x3 *. y2)/.((-.x1 +. x2) *. (x2 -. x3)) -. (x1 *. y3)/.((-.x1 +. x3) *. (-.x2 +. x3)) -. (x2 *. y3)/.((-.x1 +. x3) *. (-.x2 +. x3)) in
+      let c2 = y1 /. ((x1 -. x2) *. (x1 -. x3)) +. y2 /.((-.x1 +. x2) *. (x2 -. x3)) +. y3/.((-.x1 +. x3) *. (-.x2 +. x3)) in
+      [c0; c1; c2]
+   | _ -> failwith "Fitting.lagrange: invalid input"

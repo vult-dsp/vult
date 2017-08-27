@@ -145,7 +145,7 @@ fix16_t Util_cvToRate_1024(fix16_t cv){
 
 fix16_t Util_cvToRate(fix16_t cv){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
+   index = int_clip(fix_to_int(fix_mul(0x8d1c71 /* 141.111111 */,cv)),0,127);
    return (fix_wrap_array(Util_cvToRate_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_c2)[index],cv))));
 }
 
@@ -167,7 +167,7 @@ fix16_t Util_cvTokHz(fix16_t cv){
 
 fix16_t Saturate_soft_table(fix16_t x){
    int index;
-   index = int_clip(fix_to_int((x + 0x200000 /* 32.000000 */)),0,64);
+   index = int_clip(fix_to_int(fix_mul(0x50000 /* 5.000000 */,(x + 0x180000 /* 24.000000 */))),0,240);
    return (fix_wrap_array(Saturate_soft_table_c0)[index] + fix_mul(x,(fix_wrap_array(Saturate_soft_table_c1)[index] + fix_mul(fix_wrap_array(Saturate_soft_table_c2)[index],x))));
 }
 

@@ -72,7 +72,7 @@ fun cvToRate_1024(cv) @[table(size=32,min=0.0,max=0.9)] {
    return pitchToRate_1024(cvToPitch(cv));
 }
 
-fun cvToRate(cv) @[table(size=32, min=0.0, max=0.9)] {
+fun cvToRate(cv) @[table(size=128, min=0.0, max=0.9)] {
    return pitchToRate(cvToPitch(cv));
 }
 

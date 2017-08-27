@@ -8,7 +8,7 @@ Tanh satuation with limits around -16 to 16
 */
 
 
-fun table(x) @[table(size=65,min=-32.0,max=32.0)] {
+fun table(x) @[table(min = -24.0, max = 24.0, size = 241)] {
   return 16.0 * tanh(x / 16.0);
 }
 
