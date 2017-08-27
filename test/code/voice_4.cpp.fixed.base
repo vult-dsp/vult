@@ -406,7 +406,7 @@ void Svf_default(Svf__ctx_type_1 &_ctx){
 
 fix16_t Saturate_table(fix16_t x){
    int index;
-   index = int_clip(fix_to_int((x + 0xc0000 /* 12.000000 */)),0,24);
+   index = int_clip(fix_to_int(fix_mul(0x20000 /* 2.000000 */,(x + 0x180000 /* 24.000000 */))),0,96);
    return (fix_wrap_array(Saturate_table_c0)[index] + fix_mul(x,(fix_wrap_array(Saturate_table_c1)[index] + fix_mul(fix_wrap_array(Saturate_table_c2)[index],x))));
 }
 
