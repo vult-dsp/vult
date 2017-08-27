@@ -58,65 +58,81 @@ module Atomic = struct
       let name = "$r"^(string_of_int s.tick) in
       { tick = s.tick + 1 }, name
 
-   let bindToTemp s exp =
-      let s', name = makeTemp s in
-      let ts = cexpType exp in
-      let lhs = CLId(ts,[name]) in
-      let stmt = [CSVar(lhs,None) ;CSBind(lhs,exp)] in
-      s', stmt, CEVar([name],ts)
+   type bind_type =
+      | Temp
+      | Bind of clhsexp
+      | NoBind
 
-   let rec makeOpAtomic s op ts elems : s * cstmt list * cexp  =
+   let bindToTemp (s:s) (bind:bind_type) (exp:cexp) : s * cstmt list * cexp =
+      match bind with
+      | Bind (CLId(ts, var) as lhs) ->
+         let stmt = [CSBind(lhs,exp)] in
+         s, stmt, CEVar(var,ts)
+      | NoBind ->
+         let stmt = [CSBind(CLWild,exp)] in
+         s, stmt, CEEmpty
+      | _ ->
+         let s', name = makeTemp s in
+         let ts = cexpType exp in
+         let lhs = CLId(ts,[name]) in
+         let stmt = [CSVar(lhs,None); CSBind(lhs,exp)] in
+         s', stmt, CEVar([name],ts)
+
+
+   let rec makeOpAtomic s (bind:bind_type) op ts elems : s * cstmt list * cexp  =
       match elems with
       | []
       | [_] -> failwith "makeOpAtomic: invalid input"
       | [e1; e2] ->
-         let s, pre1, e1' = makeExpAtomic s e1 in
-         let s, pre2, e2' = makeExpAtomic s e2 in
-         let s, pre3, a = bindToTemp s (CEOp(op, [e1'; e2'], ts)) in
+         let s, pre1, e1' = makeExpAtomic s Temp e1 in
+         let s, pre2, e2' = makeExpAtomic s Temp e2 in
+         let s, pre3, a = bindToTemp s bind (CEOp(op, [e1'; e2'], ts)) in
          s, pre1 @ pre2@ pre3, a
       | h::t ->
-         let s, pre1, h' = makeExpAtomic s h in
-         let s, pre2, a = makeOpAtomic s op ts t in
-         let s, pre3, b = bindToTemp s (CEOp(op, [h'; a], ts)) in
+         let s, pre1, h' = makeExpAtomic s Temp h in
+         let s, pre2, a = makeOpAtomic s Temp op ts t in
+         let s, pre3, b = bindToTemp s bind (CEOp(op, [h'; a], ts)) in
          s, pre1@pre2@pre3, b
 
 
-   and makeExpAtomic (s:s) (exp:cexp) : s * cstmt list * cexp =
+   and makeExpAtomic (s:s) (bind:bind_type) (exp:cexp) : s * cstmt list * cexp =
       match exp with
       | CEInt _
       | CEFloat _
       | CEBool _
-      | CEString _ -> s, [], exp
-      | CEVar([_],_) -> s, [], exp
-      | CEVar _ ->
-         let s, pre, e = bindToTemp s exp in
+      | CEString _
+      | CEVar _ when bind <> Temp ->
+         let s, pre, e = bindToTemp s bind exp in
          s, pre, e
+      | CEInt _
+      | CEFloat _
+      | CEBool _
+      | CEString _
+      | CEVar _ ->
+         s, [], exp
       | CEIndex _ ->
-         let s, pre, e = bindToTemp s exp in
+         let s, pre, e = bindToTemp s bind exp in
          s, pre, e
       | CEArray(elems, ts) ->
          let s, pre, elems' = makeExpListAtomic s elems in
-         let s, pre1, ret = bindToTemp s (CEArray(elems', ts)) in
+         let s, pre1, ret = bindToTemp s bind (CEArray(elems', ts)) in
          s, pre@pre1, ret
-
-      | CECall(_, _, ts) when is_unit ts ->
-         s, [], exp
 
       | CECall(name, args, ts) ->
          let s, pre, args' = makeExpListAtomic s args in
-         let s, pre1, ret = bindToTemp s (CECall(name,args', ts)) in
-         s, pre@pre1, ret
+         let s, pre1, ret = bindToTemp s bind (CECall(name, args', ts)) in
+         s, pre @ pre1, ret
 
       | CEUnOp(op,arg,ts) ->
-         let s, pre, arg' = makeExpAtomic s arg in
-         let s, pre1, ret = bindToTemp s (CEUnOp(op,arg',ts)) in
+         let s, pre, arg' = makeExpAtomic s Temp arg in
+         let s, pre1, ret = bindToTemp s bind (CEUnOp(op,arg',ts)) in
          s, pre@pre1, ret
 
       | CETuple(elems, ts) ->
          let labels, expl = List.split elems in
          let s, pre, expl' = makeExpListAtomic s expl in
          let elems' = List.combine labels expl' in
-         let s, pre1, ret = bindToTemp s (CETuple(elems', ts)) in
+         let s, pre1, ret = bindToTemp s bind (CETuple(elems', ts)) in
          s, pre@pre1, ret
 
       | CEIf(cond,then_,else_,ts) ->
@@ -126,7 +142,8 @@ module Atomic = struct
          s, [CSVar(ltmp,None); if_stmt], CEVar([tmp],ts)
 
       | CEOp(op,elems,ts) ->
-         makeOpAtomic s op ts elems
+         let s, pre, ret = makeOpAtomic s bind op ts elems in
+         s, pre, ret
 
       | CEEmpty -> s, [], CEEmpty
 
@@ -135,7 +152,7 @@ module Atomic = struct
       let s', pre_rev, elems_rev =
          List.fold_left
             (fun (s,pre,acc) exp ->
-                let s', p, e' = makeExpAtomic s exp in
+                let s', p, e' = makeExpAtomic s Temp exp in
                 s', (p::pre), (e'::acc))
             (s,[],[])
             elems
@@ -155,34 +172,47 @@ module Atomic = struct
       | CSType _
       | CSAlias _
       | CSExtFunc _-> s, [stmt]
-      | CSVar(lhs,Some(rhs)) ->
-         let s, pre, rhs' = makeExpAtomic s rhs in
+
+      | CSVar((CLId _ as lhs), Some(rhs)) ->
+         let s, pre, _ = makeExpAtomic s (Bind lhs) rhs in
+         s, pre
+
+      | CSVar(lhs, Some(rhs)) ->
+         let s, pre, rhs' = makeExpAtomic s Temp rhs in
          s, pre @ [CSVar(lhs, None); CSBind(lhs, rhs')]
 
+      | CSBind(CLWild, rhs) ->
+         let s, pre, _ = makeExpAtomic s NoBind rhs in
+         s, pre
+
+      | CSBind((CLId _ as lhs),rhs) ->
+         let s, pre, _ = makeExpAtomic s (Bind lhs) rhs in
+         s, pre
+
       | CSBind(lhs,rhs) ->
-         let s, pre, rhs' = makeExpAtomic s rhs in
+         let s, pre, rhs' = makeExpAtomic s Temp rhs in
          s, pre @ [CSBind(lhs, rhs')]
 
       | CSConst(lhs,rhs) ->
          s, [CSConst(lhs, rhs)]
 
       | CSReturn(e) ->
-         let s, pre, e' = makeExpAtomic s e in
+         let s, pre, e' = makeExpAtomic s Temp e in
          s, pre @ [CSReturn(e')]
 
       | CSWhile(cond,body) ->
-         let s, pre, cond' = makeExpAtomic s cond in
+         let s, pre, cond' = makeExpAtomic s Temp cond in
          let s, body' = makeStmtAtomic s body in
          s, pre @ [CSWhile(cond', makeSingleStmt body')]
 
       | CSIf(cond,then_,Some(else_)) ->
-         let s, pre, cond' = makeExpAtomic s cond in
+         let s, pre, cond' = makeExpAtomic s Temp cond in
          let s, then_' = makeStmtAtomic s then_ in
          let s, else_' = makeStmtAtomic s else_ in
          s, pre @ [CSIf(cond', makeSingleStmt then_', Some(makeSingleStmt else_'))]
 
       | CSIf(cond,then_, None) ->
-         let s, pre, cond' = makeExpAtomic s cond in
+         let s, pre, cond' = makeExpAtomic s Temp cond in
          let s, then_' = makeStmtAtomic s then_ in
          s, pre @ [CSIf(cond', makeSingleStmt then_', None)]
 
