@@ -103,33 +103,33 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
 
 fix16_t Util_cubic_clipper(fix16_t x){
    uint8_t _cond_21;
-   _cond_21 = (x <= (-0xaaaa /* -0.666667 */));
+   _cond_21 = (x <= (-0xaaa6 /* -0.666600 */));
    if(_cond_21){
-      return (-0xaaaa /* -0.666667 */);
+      return (-0xaaa6 /* -0.666600 */);
    }
    else
    {
       uint8_t _cond_20;
-      _cond_20 = (x >= 0xaaaa /* 0.666667 */);
+      _cond_20 = (x >= 0xaaa6 /* 0.666600 */);
       if(_cond_20){
-         return 0xaaaa /* 0.666667 */;
+         return 0xaaa6 /* 0.666600 */;
       }
       else
       {
-         return (x + fix_mul(fix_mul(fix_mul((-0x5555 /* -0.333333 */),x),x),x));
+         return (x + fix_mul(fix_mul(fix_mul((-0x5553 /* -0.333300 */),x),x),x));
       }
    }
 }
 
 fix16_t Util_pitchToRate_1024(fix16_t pitch){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
+   index = int_clip(fix_to_int(fix_mul(0x3e76 /* 0.244000 */,pitch)),0,31);
    return (fix_wrap_array(Util_pitchToRate_1024_c0)[index] + fix_mul(pitch,(fix_wrap_array(Util_pitchToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_pitchToRate_1024_c2)[index],pitch))));
 }
 
 fix16_t Util_pitchToRate(fix16_t pitch){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
+   index = int_clip(fix_to_int(fix_mul(0x3e76 /* 0.244000 */,pitch)),0,31);
    return (fix_wrap_array(Util_pitchToRate_c0)[index] + fix_mul(pitch,(fix_wrap_array(Util_pitchToRate_c1)[index] + fix_mul(fix_wrap_array(Util_pitchToRate_c2)[index],pitch))));
 }
 
@@ -139,18 +139,18 @@ fix16_t Util_cvToPitch(fix16_t cv){
 
 fix16_t Util_cvToRate_1024(fix16_t cv){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
+   index = int_clip(fix_to_int(fix_mul(0x2271c4 /* 34.444400 */,cv)),0,31);
    return (fix_wrap_array(Util_cvToRate_1024_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_1024_c2)[index],cv))));
 }
 
 fix16_t Util_cvToRate(fix16_t cv){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x8d1c71 /* 141.111111 */,cv)),0,127);
+   index = int_clip(fix_to_int(fix_mul(0x8d1c71 /* 141.111100 */,cv)),0,127);
    return (fix_wrap_array(Util_cvToRate_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_c2)[index],cv))));
 }
 
 fix16_t Util_pitchToCv(fix16_t pitch){
-   return fix_mul(0x222 /* 0.008333 */,((-0x180000 /* -24.000000 */) + pitch));
+   return fix_mul(0x21f /* 0.008300 */,((-0x180000 /* -24.000000 */) + pitch));
 }
 
 fix16_t Util_cvToperiod(fix16_t cv){
@@ -228,7 +228,7 @@ void Phase_default_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_default(Phase__ctx_type_0 &_ctx){
-   _ctx.rate = 0xc265 /* 0.759367 */;
+   _ctx.rate = 0xc261 /* 0.759300 */;
 }
 
 

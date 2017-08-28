@@ -16,11 +16,11 @@ void Noise_pinker_init(Noise__ctx_type_0 &_output_){
 
 fix16_t Noise_pinker(Noise__ctx_type_0 &_ctx, fix16_t x){
    fix16_t b0;
-   b0 = 0x718 /* 0.027713 */;
+   b0 = 0x717 /* 0.027700 */;
    fix16_t b1;
-   b1 = 0x718 /* 0.027713 */;
+   b1 = 0x717 /* 0.027700 */;
    fix16_t a1;
-   a1 = (-0xf1cf /* -0.944574 */);
+   a1 = (-0xf1ca /* -0.944500 */);
    fix16_t w0;
    w0 = (x + (- fix_mul(a1,_ctx.w1)));
    fix16_t y0;
@@ -46,10 +46,10 @@ void Noise_process_init(Noise__ctx_type_1 &_output_){
 fix16_t Noise_process(Noise__ctx_type_1 &_ctx, fix16_t color){
    _ctx.x1 = (((_ctx.x1 * 17389) + 7919) % 32768);
    fix16_t y1;
-   y1 = fix_mul(int_to_fix(_ctx.x1),0x2 /* 0.000031 */);
+   y1 = fix_mul(int_to_fix(_ctx.x1),0x0 /* 0.000000 */);
    _ctx.x2 = (((_ctx.x2 * 27449) + 12553) % 32768);
    fix16_t y2;
-   y2 = fix_mul(int_to_fix(_ctx.x2),0x2 /* 0.000031 */);
+   y2 = fix_mul(int_to_fix(_ctx.x2),0x0 /* 0.000000 */);
    fix16_t out;
    uint8_t _cond_7;
    _cond_7 = (color > 0x8000 /* 0.500000 */);
@@ -192,33 +192,33 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
 
 fix16_t Util_cubic_clipper(fix16_t x){
    uint8_t _cond_29;
-   _cond_29 = (x <= (-0xaaaa /* -0.666667 */));
+   _cond_29 = (x <= (-0xaaa6 /* -0.666600 */));
    if(_cond_29){
-      return (-0xaaaa /* -0.666667 */);
+      return (-0xaaa6 /* -0.666600 */);
    }
    else
    {
       uint8_t _cond_28;
-      _cond_28 = (x >= 0xaaaa /* 0.666667 */);
+      _cond_28 = (x >= 0xaaa6 /* 0.666600 */);
       if(_cond_28){
-         return 0xaaaa /* 0.666667 */;
+         return 0xaaa6 /* 0.666600 */;
       }
       else
       {
-         return (x + fix_mul(fix_mul(fix_mul((-0x5555 /* -0.333333 */),x),x),x));
+         return (x + fix_mul(fix_mul(fix_mul((-0x5553 /* -0.333300 */),x),x),x));
       }
    }
 }
 
 fix16_t Util_pitchToRate_1024(fix16_t pitch){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
+   index = int_clip(fix_to_int(fix_mul(0x3e76 /* 0.244000 */,pitch)),0,31);
    return (fix_wrap_array(Util_pitchToRate_1024_c0)[index] + fix_mul(pitch,(fix_wrap_array(Util_pitchToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_pitchToRate_1024_c2)[index],pitch))));
 }
 
 fix16_t Util_pitchToRate(fix16_t pitch){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
+   index = int_clip(fix_to_int(fix_mul(0x3e76 /* 0.244000 */,pitch)),0,31);
    return (fix_wrap_array(Util_pitchToRate_c0)[index] + fix_mul(pitch,(fix_wrap_array(Util_pitchToRate_c1)[index] + fix_mul(fix_wrap_array(Util_pitchToRate_c2)[index],pitch))));
 }
 
@@ -228,18 +228,18 @@ fix16_t Util_cvToPitch(fix16_t cv){
 
 fix16_t Util_cvToRate_1024(fix16_t cv){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
+   index = int_clip(fix_to_int(fix_mul(0x2271c4 /* 34.444400 */,cv)),0,31);
    return (fix_wrap_array(Util_cvToRate_1024_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_1024_c2)[index],cv))));
 }
 
 fix16_t Util_cvToRate(fix16_t cv){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x8d1c71 /* 141.111111 */,cv)),0,127);
+   index = int_clip(fix_to_int(fix_mul(0x8d1c71 /* 141.111100 */,cv)),0,127);
    return (fix_wrap_array(Util_cvToRate_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_c2)[index],cv))));
 }
 
 fix16_t Util_pitchToCv(fix16_t pitch){
-   return fix_mul(0x222 /* 0.008333 */,((-0x180000 /* -24.000000 */) + pitch));
+   return fix_mul(0x21f /* 0.008300 */,((-0x180000 /* -24.000000 */) + pitch));
 }
 
 fix16_t Util_cvToperiod(fix16_t cv){
@@ -368,7 +368,7 @@ void Tricore_default_init(Tricore__ctx_type_0 &_output_){
 }
 
 void Tricore_default(Tricore__ctx_type_0 &_ctx){
-   _ctx.rate = 0xc265 /* 0.759367 */;
+   _ctx.rate = 0xc261 /* 0.759300 */;
 }
 
 void Swept__ctx_type_0_init(Swept__ctx_type_0 &_output_){
@@ -511,7 +511,7 @@ void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r
    uint8_t _cond_91;
    _cond_91 = (_ctx.state == reset);
    if(_cond_91){
-      _ctx.rate = 0xfd77 /* 0.990099 */;
+      _ctx.rate = 0xfd70 /* 0.990000 */;
       _ctx.target = 0x0 /* 0.000000 */;
    }
    uint8_t _cond_92;
@@ -590,17 +590,17 @@ void Ahr_controlChange(Ahr__ctx_type_1 &_ctx, int control, int value, int channe
    uint8_t _cond_100;
    _cond_100 = (control == 1);
    if(_cond_100){
-      _ctx.knob1 = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
+      _ctx.knob1 = fix_mul(int_to_fix(value),0x1ff /* 0.007800 */);
    }
    uint8_t _cond_101;
    _cond_101 = (control == 2);
    if(_cond_101){
-      _ctx.knob2 = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
+      _ctx.knob2 = fix_mul(int_to_fix(value),0x1ff /* 0.007800 */);
    }
    uint8_t _cond_102;
    _cond_102 = (control == 3);
    if(_cond_102){
-      _ctx.knob3 = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
+      _ctx.knob3 = fix_mul(int_to_fix(value),0x1ff /* 0.007800 */);
    }
 }
 
@@ -648,7 +648,7 @@ fix16_t Kick_do(Kick__ctx_type_0 &_ctx, fix16_t gate, fix16_t odecay, fix16_t pi
    Ahr_do(_ctx._inst115,gate,0x41 /* 0.001000 */,0x28f /* 0.010000 */,(fix_mul(noise,0x28f /* 0.010000 */) + 0x41 /* 0.001000 */),_call_128);
    noise_env = _call_128.field_0;
    fix16_t noise_osc;
-   noise_osc = fix_mul(fix_mul(noise,Noise_process(_ctx._inst116,0x10000 /* 1.000000 */)),0x5555 /* 0.333333 */);
+   noise_osc = fix_mul(fix_mul(noise,Noise_process(_ctx._inst116,0x10000 /* 1.000000 */)),0x5553 /* 0.333300 */);
    return (fix_mul(osc_env,osc_sat) + fix_mul(noise_env,noise_osc));
 }
 
@@ -697,7 +697,7 @@ void Kick_controlChange(Kick__ctx_type_1 &_ctx, int control, int value, int chan
    uint8_t _cond_131;
    _cond_131 = (control == 30);
    if(_cond_131){
-      _ctx.odecay = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
+      _ctx.odecay = fix_mul(int_to_fix(value),0x1ff /* 0.007800 */);
    }
    uint8_t _cond_132;
    _cond_132 = (control == 31);
@@ -707,12 +707,12 @@ void Kick_controlChange(Kick__ctx_type_1 &_ctx, int control, int value, int chan
    uint8_t _cond_133;
    _cond_133 = (control == 32);
    if(_cond_133){
-      _ctx.swept = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
+      _ctx.swept = fix_mul(int_to_fix(value),0x1ff /* 0.007800 */);
    }
    uint8_t _cond_134;
    _cond_134 = (control == 33);
    if(_cond_134){
-      _ctx.noise = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
+      _ctx.noise = fix_mul(int_to_fix(value),0x1ff /* 0.007800 */);
    }
 }
 

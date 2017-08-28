@@ -4,7 +4,7 @@
 
 float Bitcrush_factor(float cv){
    int index;
-   index = int_clip(float_to_int((127.0000f * cv)),0,127);
+   index = int_clip(float_to_int((127.00000f * cv)),0,127);
    return (float_wrap_array(Bitcrush_factor_c0)[index] + (cv * (float_wrap_array(Bitcrush_factor_c1)[index] + (float_wrap_array(Bitcrush_factor_c2)[index] * cv))));
 }
 
@@ -12,7 +12,7 @@ float Bitcrush_process(float i, float cv){
    float out;
    out = i;
    uint8_t _cond_8;
-   _cond_8 = (cv == 0.0000f);
+   _cond_8 = (cv == 0.00000f);
    if(_cond_8){
       out = i;
    }

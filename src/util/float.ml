@@ -28,4 +28,15 @@ let to_string (f:float) =
    if not !reduce_precision then
       string_of_float f
    else
-      Printf.sprintf "%.4f" f
+      Printf.sprintf "%.5f" f
+
+let crop (f:float) =
+   if not !reduce_precision then f
+   else
+      let nf = int_of_float (f *. 10000.0) in
+      let ff = (float_of_int nf) /. 10000.0 in
+      match classify_float ff with
+      | FP_normal -> ff
+      | FP_subnormal -> 0.0
+      | FP_zero -> 0.0
+      | _ -> f

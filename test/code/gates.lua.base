@@ -22,7 +22,7 @@ function this.get(a,i)          return a[i+1]; end
 function this.makeArray(size,v) local a = {}; for i=1,size do a[i]=v end return a; end
 function this.wrap_array(a)     return a; end
 function this.Gates_velToCV(vel)
-   return (this.real(vel) * 0.0079);
+   return (this.real(vel) * 0.00780);
 
 end
 

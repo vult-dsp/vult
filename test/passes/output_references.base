@@ -12,7 +12,7 @@
          /* scope_1 */
          {
             val (_tuple_4:tuple(real,real));
-            (_tuple_4:tuple(real,real)) = (0.0000,0.0000);
+            (_tuple_4:tuple(real,real)) = (0.00000,0.00000);
             (_output_:tuple(real,real)) = _tuple_4;
             return ();
          }
@@ -20,7 +20,7 @@
          /* scope_2 */
          {
             val (_tuple_6:tuple(real,real));
-            (_tuple_6:tuple(real,real)) = (1.0000,1.0000);
+            (_tuple_6:tuple(real,real)) = (1.00000,1.00000);
             (_output_:tuple(real,real)) = _tuple_6;
             return ();
          }

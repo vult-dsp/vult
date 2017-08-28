@@ -371,8 +371,8 @@ let rec convertExp (p:parameters) (e:exp) : cexp =
    | PInt(n,_)   -> CEInt(n)
    | PString(s,_)   -> CEString(s)
    | PReal(v,_)  ->
-      let s = Replacements.getRealToString p.repl v "real" in
-      CEFloat(s,v)
+      let s = Replacements.getRealToString p.repl (Float.crop v) "real" in
+      CEFloat(s,Float.crop v)
    | PId(id,attr) ->
       CEVar(convertVarId p id, typ attr)
    | PIndex(e, index, attr) ->

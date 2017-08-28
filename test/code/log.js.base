@@ -1,6 +1,6 @@
 this.Log_test_print = function(){
    this.log((1|0));
-   this.log(2.0000);
+   this.log(2.00000);
    this.log("leonardo");
    this.log(true);
 }

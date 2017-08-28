@@ -6,7 +6,7 @@
    type Context_simple.change_type : Context_simple._ctx_type_0;
    fun Context_simple._ctx_type_0_init(_output_:Context_simple._ctx_type_0) : unit {
       val (_ctx:Context_simple._ctx_type_0);
-      (_ctx.pre:real) = 0.0000;
+      (_ctx.pre:real) = 0.00000;
       (_output_:Context_simple._ctx_type_0) = _ctx;
       return ();
    }
@@ -31,7 +31,7 @@
    }
 
    and Context_simple.reset(_ctx:Context_simple._ctx_type_0) : unit /* scope_1 */
-   (_ctx.pre:real) = 0.0000;
+   (_ctx.pre:real) = 0.00000;
 
    type Context_simple.set_type : Context_simple._ctx_type_0;
    fun Context_simple.set_init(_output_:Context_simple._ctx_type_0) : unit {
@@ -72,7 +72,7 @@
       val (v3:bool);
       (v3:bool) = Context_simple.change(_ctx.c,x);
       (_:unit) = Context_simple.reset(_ctx.c);
-      (_:unit) = Context_simple.set(_ctx.c,0.0000);
+      (_:unit) = Context_simple.set(_ctx.c,0.00000);
    }
 
 }

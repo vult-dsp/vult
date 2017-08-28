@@ -1,13 +1,13 @@
 this.Noise__ctx_type_0_init = function(){
    var _ctx = {};
-   _ctx.w1 = 0.0000;
+   _ctx.w1 = 0.00000;
    return _ctx;
 }
 this.Noise_pinker_init = function() { return this.Noise__ctx_type_0_init();}
 this.Noise_pinker = function(_ctx,x){
-   var b0 = 0.0277;
-   var b1 = 0.0277;
-   var a1 = (-0.9446);
+   var b0 = 0.02770;
+   var b1 = 0.02770;
+   var a1 = (-0.94450);
    var w0 = (x + (- (a1 * _ctx.w1)));
    var y0 = ((b0 * w0) + (b1 * _ctx.w1));
    _ctx.w1 = w0;
@@ -23,14 +23,14 @@ this.Noise__ctx_type_1_init = function(){
 this.Noise_process_init = function() { return this.Noise__ctx_type_1_init();}
 this.Noise_process = function(_ctx,color){
    _ctx.x1 = ((((_ctx.x1 * (17389|0)) + (7919|0)) % (32768|0))|0);
-   var y1 = (this.real(_ctx.x1) * 0.0000);
+   var y1 = (this.real(_ctx.x1) * 0.00000);
    _ctx.x2 = ((((_ctx.x2 * (27449|0)) + (12553|0)) % (32768|0))|0);
-   var y2 = (this.real(_ctx.x2) * 0.0000);
+   var y2 = (this.real(_ctx.x2) * 0.00000);
    var out = 0.0;
-   if((color > 0.5000))out = this.Noise_pinker(_ctx._inst2,(y1 + (- y2)));
+   if((color > 0.50000))out = this.Noise_pinker(_ctx._inst2,(y1 + (- y2)));
    else
    out = (y1 + (- y2));
-   return (2.0000 * out);
+   return (2.00000 * out);
 }
 this.Noise_noteOn_init = function() { return this.Noise__ctx_type_1_init();}
 this.Noise_noteOn = function(_ctx,note,velocity,channel){
