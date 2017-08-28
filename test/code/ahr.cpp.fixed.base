@@ -96,7 +96,7 @@ void Util_average2_init(Util__ctx_type_5 &_output_){
 
 fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    fix16_t result;
-   result = fix_mul((_ctx.x0 + x1),0x8000 /* 0.500000 */);
+   result = ((_ctx.x0 + x1) >> 1);
    _ctx.x0 = x1;
    return result;
 }
@@ -249,7 +249,7 @@ void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r
    _ctx.out = (_ctx.out + fix_mul(fix_mul((_ctx.target + (- _ctx.out)),_ctx.rate),0x147 /* 0.005000 */));
    _tuple___real_real__ _tuple_50;
    {
-      _tuple_50.field_0 = fix_clip(fix_mul(_ctx.out,0x40 /* 0.000977 */),0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
+      _tuple_50.field_0 = fix_clip((_ctx.out >> 10),0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
       _tuple_50.field_1 = resetting;
    }
    _output_ = _tuple_50;

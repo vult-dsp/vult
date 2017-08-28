@@ -1,7 +1,7 @@
 fun foo() : array(real,3) {
    val y[3] = [1, 2, 4];
    mem x;
-   x[0] = 1.000000;
+   x[0] = 1.0000;
    y[0] = int(x[1]);
    return x;
 }

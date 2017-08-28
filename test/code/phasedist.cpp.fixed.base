@@ -97,7 +97,7 @@ fix16_t Phasedist_process(Phasedist__ctx_type_4 &_ctx, fix16_t input){
    reset = ((_ctx.pre_phase1 + (- phase1)) > 0x8000 /* 0.500000 */);
    _ctx.pre_phase1 = phase1;
    fix16_t phase2;
-   phase2 = Phasedist_phasor(_ctx._inst9,(_ctx.pitch + fix_mul(Phasedist_smooth(_ctx._inst8,_ctx.detune),0x200000 /* 32.000000 */)),reset);
+   phase2 = Phasedist_phasor(_ctx._inst9,(_ctx.pitch + (Phasedist_smooth(_ctx._inst8,_ctx.detune) << 5)),reset);
    fix16_t sine;
    sine = fix_sin(fix_mul(0x6487e /* 6.283185 */,phase2));
    return fix_mul(fix_mul(Phasedist_smooth(_ctx._inst10,_ctx.volume),sine),comp);

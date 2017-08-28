@@ -56,7 +56,7 @@ fix16_t Noise_process(Noise__ctx_type_1 &_ctx, fix16_t color){
    if(_cond_7){ out = Noise_pinker(_ctx._inst2,(y1 + (- y2))); }
    else
    { out = (y1 + (- y2)); }
-   return fix_mul(0x20000 /* 2.000000 */,out);
+   return (out << 1);
 }
 
 void Noise_noteOn_init(Noise__ctx_type_1 &_output_){
@@ -185,7 +185,7 @@ void Util_average2_init(Util__ctx_type_5 &_output_){
 
 fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    fix16_t result;
-   result = fix_mul((_ctx.x0 + x1),0x8000 /* 0.500000 */);
+   result = ((_ctx.x0 + x1) >> 1);
    _ctx.x0 = x1;
    return result;
 }
@@ -280,7 +280,7 @@ fix16_t Tricore_process(Tricore__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset, fi
    uint8_t _cond_46;
    _cond_46 = Util_change(_ctx._inst31,cv);
    if(_cond_46){
-      _ctx.rate = fix_mul(0x40000 /* 4.000000 */,Util_cvToRate_1024(cv));
+      _ctx.rate = (Util_cvToRate_1024(cv) << 2);
    }
    fix16_t new_phase;
    fix16_t _if_47;
@@ -335,7 +335,7 @@ fix16_t Tricore_process(Tricore__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset, fi
       out = _ctx.reset_phase;
    }
    out = (out + _ctx.phase);
-   return fix_mul(out,0x40 /* 0.000977 */);
+   return (out >> 10);
 }
 
 void Tricore_noteOn_init(Tricore__ctx_type_0 &_output_){
@@ -389,13 +389,13 @@ fix16_t Swept_process(Swept__ctx_type_0 &_ctx, fix16_t gate, fix16_t start, fix1
    a_rate = fix_div(0x10000 /* 1.000000 */,(fix_mul(0x640000 /* 100.000000 */,rate) + 0x28f /* 0.010000 */));
    uint8_t bgate;
    bgate = (gate > 0x8000 /* 0.500000 */);
-   _ctx.out = (_ctx.out + fix_mul(fix_mul((fix_mul(end,0x4000000 /* 1024.000000 */) + (- _ctx.out)),rate),0x106 /* 0.004000 */));
+   _ctx.out = (_ctx.out + fix_mul(fix_mul(((end << 10) + (- _ctx.out)),rate),0x106 /* 0.004000 */));
    uint8_t _cond_60;
    _cond_60 = Util_edge(_ctx._inst54,bgate);
    if(_cond_60){
-      _ctx.out = fix_mul(start,0x4000000 /* 1024.000000 */);
+      _ctx.out = (start << 10);
    }
-   return fix_mul(_ctx.out,0x40 /* 0.000977 */);
+   return (_ctx.out >> 10);
 }
 
 void Swept_noteOn_init(Swept__ctx_type_0 &_output_){
@@ -536,7 +536,7 @@ void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r
    _ctx.out = (_ctx.out + fix_mul(fix_mul((_ctx.target + (- _ctx.out)),_ctx.rate),0x147 /* 0.005000 */));
    _tuple___real_real__ _tuple_95;
    {
-      _tuple_95.field_0 = fix_clip(fix_mul(_ctx.out,0x40 /* 0.000977 */),0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
+      _tuple_95.field_0 = fix_clip((_ctx.out >> 10),0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
       _tuple_95.field_1 = resetting;
    }
    _output_ = _tuple_95;

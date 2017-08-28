@@ -56,7 +56,7 @@ fix16_t Noise_process(Noise__ctx_type_1 &_ctx, fix16_t color){
    if(_cond_7){ out = Noise_pinker(_ctx._inst2,(y1 + (- y2))); }
    else
    { out = (y1 + (- y2)); }
-   return fix_mul(0x20000 /* 2.000000 */,out);
+   return (out << 1);
 }
 
 void Noise_noteOn_init(Noise__ctx_type_1 &_output_){

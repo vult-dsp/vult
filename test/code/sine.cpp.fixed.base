@@ -96,7 +96,7 @@ void Util_average2_init(Util__ctx_type_5 &_output_){
 
 fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    fix16_t result;
-   result = fix_mul((_ctx.x0 + x1),0x8000 /* 0.500000 */);
+   result = ((_ctx.x0 + x1) >> 1);
    _ctx.x0 = x1;
    return result;
 }
@@ -195,7 +195,7 @@ fix16_t Phase_process(Phase__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset){
    uint8_t _cond_32;
    _cond_32 = (_ctx.phase > 0x4000000 /* 1024.000000 */);
    if(_cond_32){ _ctx.phase = (_ctx.phase + (-0x4000000 /* -1024.000000 */)); }
-   return fix_mul(_ctx.phase,0x40 /* 0.000977 */);
+   return (_ctx.phase >> 10);
 }
 
 void Phase_noteOn_init(Phase__ctx_type_0 &_output_){

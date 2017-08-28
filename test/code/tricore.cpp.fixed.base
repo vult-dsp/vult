@@ -96,7 +96,7 @@ void Util_average2_init(Util__ctx_type_5 &_output_){
 
 fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    fix16_t result;
-   result = fix_mul((_ctx.x0 + x1),0x8000 /* 0.500000 */);
+   result = ((_ctx.x0 + x1) >> 1);
    _ctx.x0 = x1;
    return result;
 }
@@ -191,7 +191,7 @@ fix16_t Tricore_process(Tricore__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset, fi
    uint8_t _cond_38;
    _cond_38 = Util_change(_ctx._inst23,cv);
    if(_cond_38){
-      _ctx.rate = fix_mul(0x40000 /* 4.000000 */,Util_cvToRate_1024(cv));
+      _ctx.rate = (Util_cvToRate_1024(cv) << 2);
    }
    fix16_t new_phase;
    fix16_t _if_39;
@@ -246,7 +246,7 @@ fix16_t Tricore_process(Tricore__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset, fi
       out = _ctx.reset_phase;
    }
    out = (out + _ctx.phase);
-   return fix_mul(out,0x40 /* 0.000977 */);
+   return (out >> 10);
 }
 
 void Tricore_noteOn_init(Tricore__ctx_type_0 &_output_){

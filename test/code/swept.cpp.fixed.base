@@ -96,7 +96,7 @@ void Util_average2_init(Util__ctx_type_5 &_output_){
 
 fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    fix16_t result;
-   result = fix_mul((_ctx.x0 + x1),0x8000 /* 0.500000 */);
+   result = ((_ctx.x0 + x1) >> 1);
    _ctx.x0 = x1;
    return result;
 }
@@ -183,13 +183,13 @@ fix16_t Swept_process(Swept__ctx_type_0 &_ctx, fix16_t gate, fix16_t start, fix1
    a_rate = fix_div(0x10000 /* 1.000000 */,(fix_mul(0x640000 /* 100.000000 */,rate) + 0x28f /* 0.010000 */));
    uint8_t bgate;
    bgate = (gate > 0x8000 /* 0.500000 */);
-   _ctx.out = (_ctx.out + fix_mul(fix_mul((fix_mul(end,0x4000000 /* 1024.000000 */) + (- _ctx.out)),rate),0x106 /* 0.004000 */));
+   _ctx.out = (_ctx.out + fix_mul(fix_mul(((end << 10) + (- _ctx.out)),rate),0x106 /* 0.004000 */));
    uint8_t _cond_29;
    _cond_29 = Util_edge(_ctx._inst23,bgate);
    if(_cond_29){
-      _ctx.out = fix_mul(start,0x4000000 /* 1024.000000 */);
+      _ctx.out = (start << 10);
    }
-   return fix_mul(_ctx.out,0x40 /* 0.000977 */);
+   return (_ctx.out >> 10);
 }
 
 void Swept_noteOn_init(Swept__ctx_type_0 &_output_){

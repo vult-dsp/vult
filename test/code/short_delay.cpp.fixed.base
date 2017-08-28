@@ -18,7 +18,7 @@ void Short_delay_soft_init(Short_delay__ctx_type_0 &_output_){
 
 fix16_t Short_delay_soft(Short_delay__ctx_type_0 &_ctx, fix16_t x1){
    fix16_t o;
-   o = fix_mul((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4),0x4000 /* 0.250000 */);
+   o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) >> 2);
    fix16_t _tmp_9_0;
    _tmp_9_0 = x1;
    fix16_t _tmp_9_1;

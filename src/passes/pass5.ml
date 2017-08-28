@@ -86,6 +86,95 @@ module ReportUnsupportedTypes = struct
 
 end
 
+module SimplifyFixed = struct
+
+   let fixSign sign (e:exp) : exp =
+      if sign then
+         match e with
+         | PInt(value,attr) -> PInt(-value,attr)
+         | PReal(value,attr) -> PReal(-.value,attr)
+         | _ -> PUnOp("-",e,GetAttr.fromExp e)
+      else e
+
+   let powers n =
+      match n with
+      | 2 -> 1
+      | 4 -> 2
+      | 8 -> 3
+      | 16 -> 4
+      | 32 -> 5
+      | 64 -> 6
+      | 128 -> 7
+      | 256 -> 8
+      | 512 -> 9
+      | 1024 -> 10
+      | 2048 -> 11
+      | 4096 -> 12
+      | 8192 -> 13
+      | 16384 -> 14
+      | _ -> failwith "invalid input"
+
+   let rec isPowerOfTwo (n:int) (value:float) : int option =
+      if n > 16384 then None
+      else
+      if value = (float_of_int n) then
+         Some (powers n)
+      else isPowerOfTwo (2 * n) value
+
+   let isNum (e:exp) : bool =
+      match e with
+      | PInt _
+      | PReal _
+      | PBool _ -> true
+      | _ -> false
+
+   let rec find e acc attr =
+      match e with
+      | [] -> false, POp("*", acc, attr)
+      (* multiply / divide by an int power of two *)
+      | (PInt(n, iattr) as h) :: t ->
+         let sign = n < 0 in
+         let nn = abs n in
+         begin match isPowerOfTwo 2 (float_of_int nn) with
+            | Some p -> true, fixSign sign (POp("<<", [POp("*", acc @ t, attr); PInt(p, iattr)], attr))
+            | None -> find t (h::acc) attr
+         end
+      (* multiply / divide by an int power of two *)
+      | (PReal(n, iattr) as h) :: t ->
+         let sign = n < 0.0 in
+         let div = abs_float n < 1.0 in
+         let nn = if div then 1.0 /. (abs_float n) else abs_float n in
+         begin match isPowerOfTwo 2 nn with
+            | Some p ->
+               let op = if div then ">>" else "<<" in
+               true, fixSign sign (POp(op, [POp("*", acc @ t, attr); PInt(p, iattr)], attr))
+            | None -> find t (h::acc) attr
+         end
+      | h::t -> find t (h::acc) attr
+
+   let exp : ('a Env.t,exp) Mapper.mapper_func =
+      Mapper.make "Simplify.exp" @@ fun state exp ->
+      let data = Env.get state in
+      let args = data.PassData.args in
+      if args.Args.real = "fixed" then
+         match exp with
+         | POp("*", elems, attr) ->
+            let constants, other = List.partition isNum elems in
+            let found, new_exp = find constants other attr in
+            if found then
+               reapply state, new_exp
+            else
+               state, exp
+         | _ -> state, exp
+      else
+         state, exp
+
+
+   let mapper = Mapper.{ default_mapper with exp }
+
+end
+
 let run =
    CollectTuples.mapper
    |> Mapper.seq ReportUnsupportedTypes.mapper
+   |> Mapper.seq SimplifyFixed.mapper

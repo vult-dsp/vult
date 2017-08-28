@@ -23,7 +23,7 @@ function this.makeArray(size,v) local a = {}; for i=1,size do a[i]=v end return 
 function this.wrap_array(a)     return a; end
 function this.Delay__ctx_type_0_init()
    local _ctx = {};
-   _ctx.x = 0.000000;
+   _ctx.x = 0.0000;
    return _ctx;
 
 end
@@ -33,14 +33,14 @@ function this.Delay_smooth_init()
 end
 
 function this.Delay_smooth(_ctx,input)
-   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005000));
+   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.0050));
    return _ctx.x;
 
 end
 
 function this.Delay__ctx_type_1_init()
    local _ctx = {};
-   _ctx.pre_x = 0.000000;
+   _ctx.pre_x = 0.0000;
    return _ctx;
 
 end
@@ -93,14 +93,14 @@ function this.Delay_each(_ctx,n)
 end
 
 function this.Delay_pitchToRate(d)
-   return (0.000185 * this.exp((0.057762 * d)));
+   return (0.0002 * this.exp((0.0578 * d)));
 
 end
 
 function this.Delay__ctx_type_5_init()
    local _ctx = {};
-   _ctx.rate = 0.000000;
-   _ctx.phase = 0.000000;
+   _ctx.rate = 0.0000;
+   _ctx.phase = 0.0000;
    _ctx._inst6 = this.Delay__ctx_type_1_init();
    return _ctx;
 
@@ -116,10 +116,10 @@ function this.Delay_phasor(_ctx,pitch,reset)
 
    end
    if reset then
-      _ctx.phase = 0.000000;
+      _ctx.phase = 0.0000;
    else
 
-      _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.000000);
+      _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.0000);
    end
    return _ctx.phase;
 
@@ -127,7 +127,7 @@ end
 
 function this.Delay__ctx_type_6_init()
    local _ctx = {};
-   _ctx.phase = 0.000000;
+   _ctx.phase = 0.0000;
    _ctx._inst9 = this.Delay__ctx_type_2_init();
    return _ctx;
 
@@ -138,23 +138,23 @@ function this.Delay_lfo_init()
 end
 
 function this.Delay_lfo(_ctx,f,gate)
-   local rate = (0.000227 * f);
+   local rate = (0.0002 * f);
    if this.Delay_edge(_ctx._inst9,gate) then
-      _ctx.phase = 0.000000;
+      _ctx.phase = 0.0000;
 
    end
    _ctx.phase = (_ctx.phase + rate);
-   if (_ctx.phase > 1.000000) then
-      _ctx.phase = (_ctx.phase + (-1.000000));
+   if (_ctx.phase > 1.0000) then
+      _ctx.phase = (_ctx.phase + (-1.0000));
 
    end
-   return (this.sin((6.283185 * _ctx.phase)) + (-0.500000));
+   return (this.sin((6.2832 * _ctx.phase)) + (-0.5000));
 
 end
 
 function this.Delay__ctx_type_7_init()
    local _ctx = {};
-   _ctx.pre_phase1 = 0.000000;
+   _ctx.pre_phase1 = 0.0000;
    _ctx._inst15 = this.Delay__ctx_type_5_init();
    _ctx._inst14 = this.Delay__ctx_type_0_init();
    _ctx._inst13 = this.Delay__ctx_type_5_init();
@@ -168,11 +168,11 @@ end
 
 function this.Delay_phd_osc(_ctx,pitch,detune)
    local phase1 = this.Delay_phasor(_ctx._inst13,pitch,false);
-   local comp = (1.000000 + (- phase1));
-   local reset = ((_ctx.pre_phase1 + (- phase1)) > 0.500000);
+   local comp = (1.0000 + (- phase1));
+   local reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5000);
    _ctx.pre_phase1 = phase1;
-   local phase2 = this.Delay_phasor(_ctx._inst15,(pitch + (this.Delay_smooth(_ctx._inst14,detune) * 32.000000)),reset);
-   local sine = this.sin((6.283185 * phase2));
+   local phase2 = this.Delay_phasor(_ctx._inst15,(pitch + (this.Delay_smooth(_ctx._inst14,detune) * 32.0000)),reset);
+   local sine = this.sin((6.2832 * phase2));
    return (sine * comp);
 
 end
@@ -180,7 +180,7 @@ end
 function this.Delay__ctx_type_8_init()
    local _ctx = {};
    _ctx.write_pos = 0;
-   _ctx.buffer = this.makeArray(30000,0.000000);
+   _ctx.buffer = this.makeArray(30000,0.0000);
    return _ctx;
 
 end
@@ -190,9 +190,9 @@ function this.Delay_delay_init()
 end
 
 function this.Delay_delay(_ctx,x,time,feedback)
-   time = this.clip(time,0.000000,1.000000);
-   feedback = this.clip(feedback,0.000000,1.000000);
-   local index_r = (30000.000000 * time);
+   time = this.clip(time,0.0000,1.0000);
+   feedback = this.clip(feedback,0.0000,1.0000);
+   local index_r = (30000.0000 * time);
    local index_i = this.int(this.floor(index_r));
    local delta = (_ctx.write_pos + (- index_i));
    local read_pos = 0;
@@ -207,7 +207,7 @@ function this.Delay_delay(_ctx,x,time,feedback)
    local x2 = this.get(_ctx.buffer,((read_pos + 1) % 30000));
    local ret = (((x2 + (- x1)) * decimal) + x1);
    _ctx.write_pos = ((_ctx.write_pos + 1) % 30000);
-   this.set(_ctx.buffer,_ctx.write_pos,this.clip((x + (feedback * ret)),(-1.000000),1.000000));
+   this.set(_ctx.buffer,_ctx.write_pos,this.clip((x + (feedback * ret)),(-1.0000),1.0000));
    return ret;
 
 end
@@ -294,14 +294,14 @@ end
 
 function this.Delay__ctx_type_10_init()
    local _ctx = {};
-   _ctx.volume = 0.000000;
-   _ctx.time = 0.000000;
-   _ctx.pitch = 0.000000;
+   _ctx.volume = 0.0000;
+   _ctx.time = 0.0000;
+   _ctx.pitch = 0.0000;
    _ctx.notes = this.Delay__ctx_type_9_init();
-   _ctx.lfo_rate = 0.000000;
-   _ctx.lfo_amt = 0.000000;
-   _ctx.feedback = 0.000000;
-   _ctx.detune = 0.000000;
+   _ctx.lfo_rate = 0.0000;
+   _ctx.lfo_amt = 0.0000;
+   _ctx.feedback = 0.0000;
+   _ctx.detune = 0.0000;
    _ctx._inst34 = this.Delay__ctx_type_8_init();
    _ctx._inst33 = this.Delay__ctx_type_0_init();
    _ctx._inst32 = this.Delay__ctx_type_0_init();
@@ -323,15 +323,15 @@ function this.Delay_process(_ctx,input)
    local amp = 0.0;
    local _if_54 = 0.0;
    if gate then
-      _if_54 = 1.000000;
+      _if_54 = 1.0000;
    else
 
-      _if_54 = 0.000000;
+      _if_54 = 0.0000;
    end
    amp = this.Delay_smooth(_ctx._inst31,_if_54);
    local osc_out = (o1 * amp);
    local delay_out = this.Delay_delay(_ctx._inst34,osc_out,this.Delay_smooth(_ctx._inst32,_ctx.time),this.Delay_smooth(_ctx._inst33,_ctx.feedback));
-   return (_ctx.volume * (osc_out + delay_out) * 0.500000);
+   return (_ctx.volume * (osc_out + delay_out) * 0.5000);
 
 end
 
@@ -359,27 +359,27 @@ end
 
 function this.Delay_controlChange(_ctx,control,value,channel)
    if (control == 30) then
-      _ctx.volume = (value * 0.007874);
+      _ctx.volume = (value * 0.0079);
 
    end
    if (control == 31) then
-      _ctx.detune = (value * 0.007874);
+      _ctx.detune = (value * 0.0079);
 
    end
    if (control == 32) then
-      _ctx.lfo_rate = (value * 0.007874);
+      _ctx.lfo_rate = (value * 0.0079);
 
    end
    if (control == 33) then
-      _ctx.lfo_amt = (2.000000 * ((value * 0.007874) + (-0.500000)));
+      _ctx.lfo_amt = (2.0000 * ((value * 0.0079) + (-0.5000)));
 
    end
    if (control == 34) then
-      _ctx.time = (value * 0.007874);
+      _ctx.time = (value * 0.0079);
 
    end
    if (control == 35) then
-      _ctx.feedback = (value * 0.007874);
+      _ctx.feedback = (value * 0.0079);
 
    end
 
@@ -390,13 +390,13 @@ function this.Delay_default_init()
 end
 
 function this.Delay_default(_ctx)
-   _ctx.volume = 1.000000;
-   _ctx.pitch = 45.000000;
-   _ctx.detune = 0.800000;
-   _ctx.lfo_rate = 0.070000;
-   _ctx.lfo_amt = (-0.800000);
-   _ctx.time = 0.500000;
-   _ctx.feedback = 0.500000;
+   _ctx.volume = 1.0000;
+   _ctx.pitch = 45.0000;
+   _ctx.detune = 0.8000;
+   _ctx.lfo_rate = 0.0700;
+   _ctx.lfo_amt = (-0.8000);
+   _ctx.time = 0.5000;
+   _ctx.feedback = 0.5000;
 
 end
 

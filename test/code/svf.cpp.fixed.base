@@ -96,7 +96,7 @@ void Util_average2_init(Util__ctx_type_5 &_output_){
 
 fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    fix16_t result;
-   result = fix_mul((_ctx.x0 + x1),0x8000 /* 0.500000 */);
+   result = ((_ctx.x0 + x1) >> 1);
    _ctx.x0 = x1;
    return result;
 }
@@ -218,11 +218,11 @@ fix16_t Svf_process(Svf__ctx_type_1 &_ctx, fix16_t x, fix16_t cv, fix16_t q, int
    _cond_37 = (Util_change(_ctx._inst30,cv) || Util_change(_ctx._inst31,q));
    if(_cond_37){
       _ctx.g = Svf_calc_g(cv);
-      _ctx.R = fix_div(0x10000 /* 1.000000 */,fix_mul(0x20000 /* 2.000000 */,(q + 0x0 /* 0.000000 */)));
-      _ctx.inv_den = fix_div(0x10000 /* 1.000000 */,(0x10000 /* 1.000000 */ + fix_mul(fix_mul(0x20000 /* 2.000000 */,_ctx.R),_ctx.g) + fix_mul(_ctx.g,_ctx.g)));
+      _ctx.R = fix_div(0x10000 /* 1.000000 */,((q + 0x0 /* 0.000000 */) << 1));
+      _ctx.inv_den = fix_div(0x10000 /* 1.000000 */,(0x10000 /* 1.000000 */ + (fix_mul(_ctx.R,_ctx.g) << 1) + fix_mul(_ctx.g,_ctx.g)));
    }
    fix16_t high;
-   high = fix_mul((x + (- fix_mul((fix_mul(0x20000 /* 2.000000 */,_ctx.R) + _ctx.g),_ctx.z1)) + (- _ctx.z2)),_ctx.inv_den);
+   high = fix_mul((x + (- fix_mul(((_ctx.R << 1) + _ctx.g),_ctx.z1)) + (- _ctx.z2)),_ctx.inv_den);
    fix16_t band;
    band = (fix_mul(_ctx.g,high) + _ctx.z1);
    fix16_t low;

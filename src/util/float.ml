@@ -28,4 +28,4 @@ let to_string (f:float) =
    if not !reduce_precision then
       string_of_float f
    else
-      Printf.sprintf "%.6f" f
+      Printf.sprintf "%.4f" f

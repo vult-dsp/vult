@@ -96,7 +96,7 @@ void Util_average2_init(Util__ctx_type_5 &_output_){
 
 fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    fix16_t result;
-   result = fix_mul((_ctx.x0 + x1),0x8000 /* 0.500000 */);
+   result = ((_ctx.x0 + x1) >> 1);
    _ctx.x0 = x1;
    return result;
 }
@@ -230,9 +230,9 @@ fix16_t Adsr_do(Adsr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t d, fix1
          _ctx.state = 0;
       }
       _ctx.rate = d_rate;
-      _ctx.target = fix_mul(s,0x4000000 /* 1024.000000 */);
+      _ctx.target = (s << 10);
    }
-   return fix_mul(Util_smooth(_ctx._inst31,_ctx.scale),fix_clip(fix_mul(_ctx.out,0x40 /* 0.000977 */),0x0 /* 0.000000 */,0x10000 /* 1.000000 */));
+   return fix_mul(Util_smooth(_ctx._inst31,_ctx.scale),fix_clip((_ctx.out >> 10),0x0 /* 0.000000 */,0x10000 /* 1.000000 */));
 }
 
 void Adsr__ctx_type_1_init(Adsr__ctx_type_1 &_output_){

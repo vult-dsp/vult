@@ -23,9 +23,9 @@ function this.makeArray(size,v) local a = {}; for i=1,size do a[i]=v end return 
 function this.wrap_array(a)     return a; end
 function this.Short_delay__ctx_type_0_init()
    local _ctx = {};
-   _ctx.x4 = 0.000000;
-   _ctx.x3 = 0.000000;
-   _ctx.x2 = 0.000000;
+   _ctx.x4 = 0.0000;
+   _ctx.x3 = 0.0000;
+   _ctx.x2 = 0.0000;
    return _ctx;
 
 end
@@ -35,7 +35,7 @@ function this.Short_delay_soft_init()
 end
 
 function this.Short_delay_soft(_ctx,x1)
-   local o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) * 0.250000);
+   local o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) * 0.2500);
    local _tmp_9_0 = x1;
    local _tmp_9_1 = _ctx.x2;
    local _tmp_9_2 = _ctx.x3;
@@ -49,7 +49,7 @@ end
 function this.Short_delay__ctx_type_1_init()
    local _ctx = {};
    _ctx.write_pos = 0;
-   _ctx.buffer = this.makeArray(22050,0.000000);
+   _ctx.buffer = this.makeArray(22050,0.0000);
    return _ctx;
 
 end
@@ -59,9 +59,9 @@ function this.Short_delay_do_init()
 end
 
 function this.Short_delay_do(_ctx,x,time,feedback)
-   time = this.clip(time,0.000000,1.000000);
-   feedback = this.clip(feedback,0.000000,1.000000);
-   local index_r = (22050.000000 * time);
+   time = this.clip(time,0.0000,1.0000);
+   feedback = this.clip(feedback,0.0000,1.0000);
+   local index_r = (22050.0000 * time);
    local index_i = this.int(this.floor(index_r));
    local delta = (_ctx.write_pos + (- index_i));
    local read_pos = 0;

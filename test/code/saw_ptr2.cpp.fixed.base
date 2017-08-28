@@ -96,7 +96,7 @@ void Util_average2_init(Util__ctx_type_5 &_output_){
 
 fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    fix16_t result;
-   result = fix_mul((_ctx.x0 + x1),0x8000 /* 0.500000 */);
+   result = ((_ctx.x0 + x1) >> 1);
    _ctx.x0 = x1;
    return result;
 }
@@ -213,7 +213,7 @@ fix16_t Saw_ptr2_process(Saw_ptr2__ctx_type_0 &_ctx, fix16_t cv){
       }
       else
       {
-         out = (fix_mul(0x20000 /* 2.000000 */,_ctx.phase) + (-0x10000 /* -1.000000 */));
+         out = ((_ctx.phase << 1) + (-0x10000 /* -1.000000 */));
       }
    }
    return out;

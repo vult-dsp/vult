@@ -23,7 +23,7 @@ uint8_t Util_edge(Util__ctx_type_0 &_ctx, uint8_t x){
 
 void Util__ctx_type_1_init(Util__ctx_type_1 &_output_){
    Util__ctx_type_1 _ctx;
-   _ctx.pre_x = 0.000000f;
+   _ctx.pre_x = 0.0000f;
    _output_ = _ctx;
    return ;
 }
@@ -46,8 +46,8 @@ float Util_map(float x, float x0, float x1, float y0, float y1){
 
 void Util__ctx_type_3_init(Util__ctx_type_3 &_output_){
    Util__ctx_type_3 _ctx;
-   _ctx.y1 = 0.000000f;
-   _ctx.x1 = 0.000000f;
+   _ctx.y1 = 0.0000f;
+   _ctx.x1 = 0.0000f;
    _output_ = _ctx;
    return ;
 }
@@ -59,7 +59,7 @@ void Util_dcblock_init(Util__ctx_type_3 &_output_){
 
 float Util_dcblock(Util__ctx_type_3 &_ctx, float x0){
    float y0;
-   y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995000f));
+   y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.9950f));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
@@ -67,7 +67,7 @@ float Util_dcblock(Util__ctx_type_3 &_ctx, float x0){
 
 void Util__ctx_type_4_init(Util__ctx_type_4 &_output_){
    Util__ctx_type_4 _ctx;
-   _ctx.x = 0.000000f;
+   _ctx.x = 0.0000f;
    _output_ = _ctx;
    return ;
 }
@@ -78,13 +78,13 @@ void Util_smooth_init(Util__ctx_type_4 &_output_){
 }
 
 float Util_smooth(Util__ctx_type_4 &_ctx, float input){
-   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005000f));
+   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.0050f));
    return _ctx.x;
 }
 
 void Util__ctx_type_5_init(Util__ctx_type_5 &_output_){
    Util__ctx_type_5 _ctx;
-   _ctx.x0 = 0.000000f;
+   _ctx.x0 = 0.0000f;
    _output_ = _ctx;
    return ;
 }
@@ -96,79 +96,79 @@ void Util_average2_init(Util__ctx_type_5 &_output_){
 
 float Util_average2(Util__ctx_type_5 &_ctx, float x1){
    float result;
-   result = ((_ctx.x0 + x1) * 0.500000f);
+   result = ((_ctx.x0 + x1) * 0.5000f);
    _ctx.x0 = x1;
    return result;
 }
 
 float Util_cubic_clipper(float x){
    uint8_t _cond_21;
-   _cond_21 = (x <= (-0.666667f));
+   _cond_21 = (x <= (-0.6667f));
    if(_cond_21){
-      return (-0.666667f);
+      return (-0.6667f);
    }
    else
    {
       uint8_t _cond_20;
-      _cond_20 = (x >= 0.666667f);
+      _cond_20 = (x >= 0.6667f);
       if(_cond_20){
-         return 0.666667f;
+         return 0.6667f;
       }
       else
       {
-         return (x + ((-0.333333f) * x * x * x));
+         return (x + ((-0.3333f) * x * x * x));
       }
    }
 }
 
 float Util_pitchToRate_1024(float pitch){
    int index;
-   index = int_clip(float_to_int((0.244094f * pitch)),0,31);
+   index = int_clip(float_to_int((0.2441f * pitch)),0,31);
    return (float_wrap_array(Util_pitchToRate_1024_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_1024_c1)[index] + (float_wrap_array(Util_pitchToRate_1024_c2)[index] * pitch))));
 }
 
 float Util_pitchToRate(float pitch){
    int index;
-   index = int_clip(float_to_int((0.244094f * pitch)),0,31);
+   index = int_clip(float_to_int((0.2441f * pitch)),0,31);
    return (float_wrap_array(Util_pitchToRate_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_c1)[index] + (float_wrap_array(Util_pitchToRate_c2)[index] * pitch))));
 }
 
 float Util_cvToPitch(float cv){
-   return ((cv * 120.000000f) + 24.000000f);
+   return ((cv * 120.0000f) + 24.0000f);
 }
 
 float Util_cvToRate_1024(float cv){
    int index;
-   index = int_clip(float_to_int((34.444444f * cv)),0,31);
+   index = int_clip(float_to_int((34.4444f * cv)),0,31);
    return (float_wrap_array(Util_cvToRate_1024_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_1024_c1)[index] + (float_wrap_array(Util_cvToRate_1024_c2)[index] * cv))));
 }
 
 float Util_cvToRate(float cv){
    int index;
-   index = int_clip(float_to_int((141.111111f * cv)),0,127);
+   index = int_clip(float_to_int((141.1111f * cv)),0,127);
    return (float_wrap_array(Util_cvToRate_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_c1)[index] + (float_wrap_array(Util_cvToRate_c2)[index] * cv))));
 }
 
 float Util_pitchToCv(float pitch){
-   return (0.008333f * ((-24.000000f) + pitch));
+   return (0.0083f * ((-24.0000f) + pitch));
 }
 
 float Util_cvToperiod(float cv){
    int index;
-   index = int_clip(float_to_int((31.000000f * cv)),0,31);
+   index = int_clip(float_to_int((31.0000f * cv)),0,31);
    return (float_wrap_array(Util_cvToperiod_c0)[index] + (cv * (float_wrap_array(Util_cvToperiod_c1)[index] + (float_wrap_array(Util_cvToperiod_c2)[index] * cv))));
 }
 
 float Util_cvTokHz(float cv){
    int index;
-   index = int_clip(float_to_int((31.000000f * cv)),0,31);
+   index = int_clip(float_to_int((31.0000f * cv)),0,31);
    return (float_wrap_array(Util_cvTokHz_c0)[index] + (cv * (float_wrap_array(Util_cvTokHz_c1)[index] + (float_wrap_array(Util_cvTokHz_c2)[index] * cv))));
 }
 
 void Saw_ptr2__ctx_type_0_init(Saw_ptr2__ctx_type_0 &_output_){
    Saw_ptr2__ctx_type_0 _ctx;
-   _ctx.rate = 0.000000f;
-   _ctx.phase = 0.000000f;
+   _ctx.rate = 0.0000f;
+   _ctx.phase = 0.0000f;
    Util__ctx_type_1_init(_ctx._inst23);
    Saw_ptr2_default(_ctx);
    _output_ = _ctx;
@@ -193,14 +193,14 @@ float Saw_ptr2_process(Saw_ptr2__ctx_type_0 &_ctx, float cv){
    s2 = (s1 + _ctx.rate);
    _ctx.phase = (_ctx.phase + _ctx.rate);
    uint8_t _cond_36;
-   _cond_36 = (_ctx.phase > 1.000000f);
-   if(_cond_36){ _ctx.phase = (_ctx.phase + (-1.000000f)); }
+   _cond_36 = (_ctx.phase > 1.0000f);
+   if(_cond_36){ _ctx.phase = (_ctx.phase + (-1.0000f)); }
    uint8_t _cond_35;
    _cond_35 = (_ctx.phase < s1);
    if(_cond_35){
       float d;
       d = (_ctx.phase / _ctx.rate);
-      out = (1.000000f + (d * ((- d) + s2)));
+      out = (1.0000f + (d * ((- d) + s2)));
    }
    else
    {
@@ -209,11 +209,11 @@ float Saw_ptr2_process(Saw_ptr2__ctx_type_0 &_ctx, float cv){
       if(_cond_34){
          float d;
          d = (_ctx.phase / _ctx.rate);
-         out = (3.000000f + (d * ((-4.000000f) + d + s2)));
+         out = (3.0000f + (d * ((-4.0000f) + d + s2)));
       }
       else
       {
-         out = ((2.000000f * _ctx.phase) + (-1.000000f));
+         out = ((2.0000f * _ctx.phase) + (-1.0000f));
       }
    }
    return out;
@@ -249,7 +249,7 @@ void Saw_ptr2_default_init(Saw_ptr2__ctx_type_0 &_output_){
 }
 
 void Saw_ptr2_default(Saw_ptr2__ctx_type_0 &_ctx){
-   _ctx.rate = 0.000742f;
+   _ctx.rate = 0.0007f;
 }
 
 

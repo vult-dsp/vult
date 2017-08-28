@@ -96,7 +96,7 @@ void Util_average2_init(Util__ctx_type_5 &_output_){
 
 fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    fix16_t result;
-   result = fix_mul((_ctx.x0 + x1),0x8000 /* 0.500000 */);
+   result = ((_ctx.x0 + x1) >> 1);
    _ctx.x0 = x1;
    return result;
 }
@@ -191,7 +191,7 @@ fix16_t Tricore_process(Tricore__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset, fi
    uint8_t _cond_38;
    _cond_38 = Util_change(_ctx._inst23,cv);
    if(_cond_38){
-      _ctx.rate = fix_mul(0x40000 /* 4.000000 */,Util_cvToRate_1024(cv));
+      _ctx.rate = (Util_cvToRate_1024(cv) << 2);
    }
    fix16_t new_phase;
    fix16_t _if_39;
@@ -246,7 +246,7 @@ fix16_t Tricore_process(Tricore__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset, fi
       out = _ctx.reset_phase;
    }
    out = (out + _ctx.phase);
-   return fix_mul(out,0x40 /* 0.000977 */);
+   return (out >> 10);
 }
 
 void Tricore_noteOn_init(Tricore__ctx_type_0 &_output_){
@@ -335,11 +335,11 @@ fix16_t Svf_process(Svf__ctx_type_1 &_ctx, fix16_t x, fix16_t cv, fix16_t q, int
    _cond_60 = (Util_change(_ctx._inst53,cv) || Util_change(_ctx._inst54,q));
    if(_cond_60){
       _ctx.g = Svf_calc_g(cv);
-      _ctx.R = fix_div(0x10000 /* 1.000000 */,fix_mul(0x20000 /* 2.000000 */,(q + 0x0 /* 0.000000 */)));
-      _ctx.inv_den = fix_div(0x10000 /* 1.000000 */,(0x10000 /* 1.000000 */ + fix_mul(fix_mul(0x20000 /* 2.000000 */,_ctx.R),_ctx.g) + fix_mul(_ctx.g,_ctx.g)));
+      _ctx.R = fix_div(0x10000 /* 1.000000 */,((q + 0x0 /* 0.000000 */) << 1));
+      _ctx.inv_den = fix_div(0x10000 /* 1.000000 */,(0x10000 /* 1.000000 */ + (fix_mul(_ctx.R,_ctx.g) << 1) + fix_mul(_ctx.g,_ctx.g)));
    }
    fix16_t high;
-   high = fix_mul((x + (- fix_mul((fix_mul(0x20000 /* 2.000000 */,_ctx.R) + _ctx.g),_ctx.z1)) + (- _ctx.z2)),_ctx.inv_den);
+   high = fix_mul((x + (- fix_mul(((_ctx.R << 1) + _ctx.g),_ctx.z1)) + (- _ctx.z2)),_ctx.inv_den);
    fix16_t band;
    band = (fix_mul(_ctx.g,high) + _ctx.z1);
    fix16_t low;
@@ -442,7 +442,7 @@ void Lfo_soft_init(Lfo__ctx_type_0 &_output_){
 
 fix16_t Lfo_soft(Lfo__ctx_type_0 &_ctx, fix16_t x1){
    fix16_t o;
-   o = fix_mul((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4),0x4000 /* 0.250000 */);
+   o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) >> 2);
    fix16_t _tmp_81_0;
    _tmp_81_0 = x1;
    fix16_t _tmp_81_1;
@@ -498,7 +498,7 @@ fix16_t Lfo_process(Lfo__ctx_type_1 &_ctx, fix16_t cv, fix16_t shape, fix16_t re
    {
       uint8_t _cond_86;
       _cond_86 = (shape < 0x20000 /* 2.000000 */);
-      if(_cond_86){ o = (fix_mul(fix_abs(tmp),0x20000 /* 2.000000 */) + (-0x10000 /* -1.000000 */)); }
+      if(_cond_86){ o = ((fix_abs(tmp) << 1) + (-0x10000 /* -1.000000 */)); }
       else
       {
          uint8_t _cond_87;
@@ -579,7 +579,7 @@ fix16_t Phase_process(Phase__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset){
    uint8_t _cond_99;
    _cond_99 = (_ctx.phase > 0x4000000 /* 1024.000000 */);
    if(_cond_99){ _ctx.phase = (_ctx.phase + (-0x4000000 /* -1024.000000 */)); }
-   return fix_mul(_ctx.phase,0x40 /* 0.000977 */);
+   return (_ctx.phase >> 10);
 }
 
 void Phase_noteOn_init(Phase__ctx_type_0 &_output_){
@@ -634,11 +634,11 @@ fix16_t Blit_pulse_train(Blit__ctx_type_0 &_ctx, fix16_t cv, fix16_t phase){
    uint8_t _cond_125;
    _cond_125 = Util_change(_ctx._inst101,cv);
    if(_cond_125){
-      _ctx.m = ((2 * fix_to_int(Util_cvToperiod(cv))) + 1);
-      _ctx.scale = fix_mul(0x20000 /* 2.000000 */,Util_cvToperiod(cv));
+      _ctx.m = (((fix_to_int(Util_cvToperiod(cv))) << 1) + 1);
+      _ctx.scale = (Util_cvToperiod(cv) << 1);
    }
    fix16_t pi_phase;
-   pi_phase = fix_mul(phase,0x8000 /* 0.500000 */);
+   pi_phase = (phase >> 1);
    fix16_t denominator;
    denominator = Tables_nsine(pi_phase);
    fix16_t out;
@@ -723,7 +723,7 @@ fix16_t Blit_osc_blit(Blit__ctx_type_1 &_ctx, fix16_t cv, fix16_t pw, fix16_t wa
    fix16_t pulse2;
    pulse2 = Blit_pulse_train(_ctx._inst114,fixed_cv,shift);
    _ctx.state_pulse = (fix_mul(_ctx.state_pulse,0xffdf /* 0.999500 */) + pulse1 + (- pulse2));
-   _ctx.state_saw = (fix_mul(_ctx.state_saw,0xffdf /* 0.999500 */) + fix_mul(fix_div((pulse1 + pulse2 + fix_mul((-0x20000 /* -2.000000 */),_ctx.rate)),shift05),0x8000 /* 0.500000 */));
+   _ctx.state_saw = (fix_mul(_ctx.state_saw,0xffdf /* 0.999500 */) + (fix_div((pulse1 + pulse2 + (- (_ctx.rate << 1))),shift05) >> 1));
    uint8_t _cond_130;
    _cond_130 = (wave < 0x10000 /* 1.000000 */);
    if(_cond_130){
@@ -731,7 +731,7 @@ fix16_t Blit_osc_blit(Blit__ctx_type_1 &_ctx, fix16_t cv, fix16_t pw, fix16_t wa
    }
    else
    {
-      _ctx.output = fix_mul(0x20000 /* 2.000000 */,_ctx.state_saw);
+      _ctx.output = (_ctx.state_saw << 1);
    }
    _ctx.output = Util_dcblock(_ctx._inst117,_ctx.output);
    return _ctx.output;
@@ -859,9 +859,9 @@ fix16_t Adsr_do(Adsr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t d, fix1
          _ctx.state = 0;
       }
       _ctx.rate = d_rate;
-      _ctx.target = fix_mul(s,0x4000000 /* 1024.000000 */);
+      _ctx.target = (s << 10);
    }
-   return fix_mul(Util_smooth(_ctx._inst140,_ctx.scale),fix_clip(fix_mul(_ctx.out,0x40 /* 0.000977 */),0x0 /* 0.000000 */,0x10000 /* 1.000000 */));
+   return fix_mul(Util_smooth(_ctx._inst140,_ctx.scale),fix_clip((_ctx.out >> 10),0x0 /* 0.000000 */,0x10000 /* 1.000000 */));
 }
 
 void Adsr__ctx_type_1_init(Adsr__ctx_type_1 &_output_){
@@ -1114,7 +1114,7 @@ void Voice_4_controlChange(Voice_4__ctx_type_0 &_ctx, int control, int value, in
    uint8_t _cond_212;
    _cond_212 = (control == 46);
    if(_cond_212){
-      _ctx.flt_shape = ((value * 4) / 127);
+      _ctx.flt_shape = (((value) << 2) / 127);
    }
    uint8_t _cond_213;
    _cond_213 = (control == 47);

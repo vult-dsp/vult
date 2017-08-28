@@ -96,7 +96,7 @@ void Util_average2_init(Util__ctx_type_5 &_output_){
 
 fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    fix16_t result;
-   result = fix_mul((_ctx.x0 + x1),0x8000 /* 0.500000 */);
+   result = ((_ctx.x0 + x1) >> 1);
    _ctx.x0 = x1;
    return result;
 }
@@ -181,7 +181,7 @@ void Lfo_soft_init(Lfo__ctx_type_0 &_output_){
 
 fix16_t Lfo_soft(Lfo__ctx_type_0 &_ctx, fix16_t x1){
    fix16_t o;
-   o = fix_mul((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4),0x4000 /* 0.250000 */);
+   o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) >> 2);
    fix16_t _tmp_33_0;
    _tmp_33_0 = x1;
    fix16_t _tmp_33_1;
@@ -237,7 +237,7 @@ fix16_t Lfo_process(Lfo__ctx_type_1 &_ctx, fix16_t cv, fix16_t shape, fix16_t re
    {
       uint8_t _cond_38;
       _cond_38 = (shape < 0x20000 /* 2.000000 */);
-      if(_cond_38){ o = (fix_mul(fix_abs(tmp),0x20000 /* 2.000000 */) + (-0x10000 /* -1.000000 */)); }
+      if(_cond_38){ o = ((fix_abs(tmp) << 1) + (-0x10000 /* -1.000000 */)); }
       else
       {
          uint8_t _cond_39;

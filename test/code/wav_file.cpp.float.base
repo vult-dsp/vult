@@ -6,7 +6,7 @@ int Wav_file_ext_wave_samples(){return 600;}
 
 float Wav_file_ext_wave(int channel, int index){
    if(channel == 0){ return float_wrap_array(Wav_file_ext_wave_chan_0)[(index % 600)]; }
-   return 0.000000f;
+   return 0.0000f;
 }
 
 void Wav_file__ctx_type_2_init(Wav_file__ctx_type_2 &_output_){

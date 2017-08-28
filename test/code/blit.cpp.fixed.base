@@ -96,7 +96,7 @@ void Util_average2_init(Util__ctx_type_5 &_output_){
 
 fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
    fix16_t result;
-   result = fix_mul((_ctx.x0 + x1),0x8000 /* 0.500000 */);
+   result = ((_ctx.x0 + x1) >> 1);
    _ctx.x0 = x1;
    return result;
 }
@@ -195,7 +195,7 @@ fix16_t Phase_process(Phase__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset){
    uint8_t _cond_32;
    _cond_32 = (_ctx.phase > 0x4000000 /* 1024.000000 */);
    if(_cond_32){ _ctx.phase = (_ctx.phase + (-0x4000000 /* -1024.000000 */)); }
-   return fix_mul(_ctx.phase,0x40 /* 0.000977 */);
+   return (_ctx.phase >> 10);
 }
 
 void Phase_noteOn_init(Phase__ctx_type_0 &_output_){
@@ -256,11 +256,11 @@ fix16_t Blit_pulse_train(Blit__ctx_type_0 &_ctx, fix16_t cv, fix16_t phase){
    uint8_t _cond_59;
    _cond_59 = Util_change(_ctx._inst35,cv);
    if(_cond_59){
-      _ctx.m = ((2 * fix_to_int(Util_cvToperiod(cv))) + 1);
-      _ctx.scale = fix_mul(0x20000 /* 2.000000 */,Util_cvToperiod(cv));
+      _ctx.m = (((fix_to_int(Util_cvToperiod(cv))) << 1) + 1);
+      _ctx.scale = (Util_cvToperiod(cv) << 1);
    }
    fix16_t pi_phase;
-   pi_phase = fix_mul(phase,0x8000 /* 0.500000 */);
+   pi_phase = (phase >> 1);
    fix16_t denominator;
    denominator = Tables_nsine(pi_phase);
    fix16_t out;
@@ -345,7 +345,7 @@ fix16_t Blit_osc_blit(Blit__ctx_type_1 &_ctx, fix16_t cv, fix16_t pw, fix16_t wa
    fix16_t pulse2;
    pulse2 = Blit_pulse_train(_ctx._inst48,fixed_cv,shift);
    _ctx.state_pulse = (fix_mul(_ctx.state_pulse,0xffdf /* 0.999500 */) + pulse1 + (- pulse2));
-   _ctx.state_saw = (fix_mul(_ctx.state_saw,0xffdf /* 0.999500 */) + fix_mul(fix_div((pulse1 + pulse2 + fix_mul((-0x20000 /* -2.000000 */),_ctx.rate)),shift05),0x8000 /* 0.500000 */));
+   _ctx.state_saw = (fix_mul(_ctx.state_saw,0xffdf /* 0.999500 */) + (fix_div((pulse1 + pulse2 + (- (_ctx.rate << 1))),shift05) >> 1));
    uint8_t _cond_64;
    _cond_64 = (wave < 0x10000 /* 1.000000 */);
    if(_cond_64){
@@ -353,7 +353,7 @@ fix16_t Blit_osc_blit(Blit__ctx_type_1 &_ctx, fix16_t cv, fix16_t pw, fix16_t wa
    }
    else
    {
-      _ctx.output = fix_mul(0x20000 /* 2.000000 */,_ctx.state_saw);
+      _ctx.output = (_ctx.state_saw << 1);
    }
    _ctx.output = Util_dcblock(_ctx._inst51,_ctx.output);
    return _ctx.output;

@@ -4,7 +4,7 @@
 
 float Saturate_soft_table(float x){
    int index;
-   index = int_clip(float_to_int((5.000000f * (x + 24.000000f))),0,240);
+   index = int_clip(float_to_int((5.0000f * (x + 24.0000f))),0,240);
    return (float_wrap_array(Saturate_soft_table_c0)[index] + (x * (float_wrap_array(Saturate_soft_table_c1)[index] + (float_wrap_array(Saturate_soft_table_c2)[index] * x))));
 }
 
@@ -45,7 +45,7 @@ uint8_t Util_edge(Util__ctx_type_0 &_ctx, uint8_t x){
 
 void Util__ctx_type_1_init(Util__ctx_type_1 &_output_){
    Util__ctx_type_1 _ctx;
-   _ctx.pre_x = 0.000000f;
+   _ctx.pre_x = 0.0000f;
    _output_ = _ctx;
    return ;
 }
@@ -68,8 +68,8 @@ float Util_map(float x, float x0, float x1, float y0, float y1){
 
 void Util__ctx_type_3_init(Util__ctx_type_3 &_output_){
    Util__ctx_type_3 _ctx;
-   _ctx.y1 = 0.000000f;
-   _ctx.x1 = 0.000000f;
+   _ctx.y1 = 0.0000f;
+   _ctx.x1 = 0.0000f;
    _output_ = _ctx;
    return ;
 }
@@ -81,7 +81,7 @@ void Util_dcblock_init(Util__ctx_type_3 &_output_){
 
 float Util_dcblock(Util__ctx_type_3 &_ctx, float x0){
    float y0;
-   y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995000f));
+   y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.9950f));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
@@ -89,7 +89,7 @@ float Util_dcblock(Util__ctx_type_3 &_ctx, float x0){
 
 void Util__ctx_type_4_init(Util__ctx_type_4 &_output_){
    Util__ctx_type_4 _ctx;
-   _ctx.x = 0.000000f;
+   _ctx.x = 0.0000f;
    _output_ = _ctx;
    return ;
 }
@@ -100,13 +100,13 @@ void Util_smooth_init(Util__ctx_type_4 &_output_){
 }
 
 float Util_smooth(Util__ctx_type_4 &_ctx, float input){
-   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005000f));
+   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.0050f));
    return _ctx.x;
 }
 
 void Util__ctx_type_5_init(Util__ctx_type_5 &_output_){
    Util__ctx_type_5 _ctx;
-   _ctx.x0 = 0.000000f;
+   _ctx.x0 = 0.0000f;
    _output_ = _ctx;
    return ;
 }
@@ -118,79 +118,79 @@ void Util_average2_init(Util__ctx_type_5 &_output_){
 
 float Util_average2(Util__ctx_type_5 &_ctx, float x1){
    float result;
-   result = ((_ctx.x0 + x1) * 0.500000f);
+   result = ((_ctx.x0 + x1) * 0.5000f);
    _ctx.x0 = x1;
    return result;
 }
 
 float Util_cubic_clipper(float x){
    uint8_t _cond_27;
-   _cond_27 = (x <= (-0.666667f));
+   _cond_27 = (x <= (-0.6667f));
    if(_cond_27){
-      return (-0.666667f);
+      return (-0.6667f);
    }
    else
    {
       uint8_t _cond_26;
-      _cond_26 = (x >= 0.666667f);
+      _cond_26 = (x >= 0.6667f);
       if(_cond_26){
-         return 0.666667f;
+         return 0.6667f;
       }
       else
       {
-         return (x + ((-0.333333f) * x * x * x));
+         return (x + ((-0.3333f) * x * x * x));
       }
    }
 }
 
 float Util_pitchToRate_1024(float pitch){
    int index;
-   index = int_clip(float_to_int((0.244094f * pitch)),0,31);
+   index = int_clip(float_to_int((0.2441f * pitch)),0,31);
    return (float_wrap_array(Util_pitchToRate_1024_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_1024_c1)[index] + (float_wrap_array(Util_pitchToRate_1024_c2)[index] * pitch))));
 }
 
 float Util_pitchToRate(float pitch){
    int index;
-   index = int_clip(float_to_int((0.244094f * pitch)),0,31);
+   index = int_clip(float_to_int((0.2441f * pitch)),0,31);
    return (float_wrap_array(Util_pitchToRate_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_c1)[index] + (float_wrap_array(Util_pitchToRate_c2)[index] * pitch))));
 }
 
 float Util_cvToPitch(float cv){
-   return ((cv * 120.000000f) + 24.000000f);
+   return ((cv * 120.0000f) + 24.0000f);
 }
 
 float Util_cvToRate_1024(float cv){
    int index;
-   index = int_clip(float_to_int((34.444444f * cv)),0,31);
+   index = int_clip(float_to_int((34.4444f * cv)),0,31);
    return (float_wrap_array(Util_cvToRate_1024_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_1024_c1)[index] + (float_wrap_array(Util_cvToRate_1024_c2)[index] * cv))));
 }
 
 float Util_cvToRate(float cv){
    int index;
-   index = int_clip(float_to_int((141.111111f * cv)),0,127);
+   index = int_clip(float_to_int((141.1111f * cv)),0,127);
    return (float_wrap_array(Util_cvToRate_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_c1)[index] + (float_wrap_array(Util_cvToRate_c2)[index] * cv))));
 }
 
 float Util_pitchToCv(float pitch){
-   return (0.008333f * ((-24.000000f) + pitch));
+   return (0.0083f * ((-24.0000f) + pitch));
 }
 
 float Util_cvToperiod(float cv){
    int index;
-   index = int_clip(float_to_int((31.000000f * cv)),0,31);
+   index = int_clip(float_to_int((31.0000f * cv)),0,31);
    return (float_wrap_array(Util_cvToperiod_c0)[index] + (cv * (float_wrap_array(Util_cvToperiod_c1)[index] + (float_wrap_array(Util_cvToperiod_c2)[index] * cv))));
 }
 
 float Util_cvTokHz(float cv){
    int index;
-   index = int_clip(float_to_int((31.000000f * cv)),0,31);
+   index = int_clip(float_to_int((31.0000f * cv)),0,31);
    return (float_wrap_array(Util_cvTokHz_c0)[index] + (cv * (float_wrap_array(Util_cvTokHz_c1)[index] + (float_wrap_array(Util_cvTokHz_c2)[index] * cv))));
 }
 
 void Rescomb__ctx_type_0_init(Rescomb__ctx_type_0 &_output_){
    Rescomb__ctx_type_0 _ctx;
    _ctx.write_pos = 0;
-   float_init_array(675,0.000000f,_ctx.buffer);
+   float_init_array(675,0.0000f,_ctx.buffer);
    _output_ = _ctx;
    return ;
 }
@@ -204,11 +204,11 @@ float Rescomb_delay(Rescomb__ctx_type_0 &_ctx, float x, float cv){
    _ctx.write_pos = ((_ctx.write_pos + 1) % 675);
    float_set(_ctx.buffer,_ctx.write_pos,x);
    float r_size;
-   r_size = 675.000000f;
+   r_size = 675.0000f;
    float r_index;
    r_index = fmodf((int_to_float(_ctx.write_pos) + (- Util_cvToperiod(cv))),r_size);
    uint8_t _cond_41;
-   _cond_41 = (r_index < 0.000000f);
+   _cond_41 = (r_index < 0.0000f);
    if(_cond_41){ r_index = (r_size + r_index); }
    int t1;
    t1 = float_to_int(floorf(r_index));
@@ -227,14 +227,14 @@ float Rescomb_delay(Rescomb__ctx_type_0 &_ctx, float x, float cv){
 
 float Rescomb_toneCurve(float tone){
    int index;
-   index = int_clip(float_to_int((26.250000f * (tone + 1.200000f))),0,63);
+   index = int_clip(float_to_int((26.2500f * (tone + 1.2000f))),0,63);
    return (float_wrap_array(Rescomb_toneCurve_c0)[index] + (tone * (float_wrap_array(Rescomb_toneCurve_c1)[index] + (float_wrap_array(Rescomb_toneCurve_c2)[index] * tone))));
 }
 
 void Rescomb__ctx_type_2_init(Rescomb__ctx_type_2 &_output_){
    Rescomb__ctx_type_2 _ctx;
-   _ctx.stone = 0.000000f;
-   _ctx.output = 0.000000f;
+   _ctx.stone = 0.0000f;
+   _ctx.output = 0.0000f;
    Rescomb__ctx_type_0_init(_ctx._inst34);
    Util__ctx_type_3_init(_ctx._inst33);
    Util__ctx_type_1_init(_ctx._inst31);

@@ -176,7 +176,7 @@ fix16_t Synth1_process(Synth1__ctx_type_7 &_ctx, fix16_t input){
    reset = ((_ctx.pre_phase1 + (- phase1)) > 0x8000 /* 0.500000 */);
    _ctx.pre_phase1 = phase1;
    fix16_t phase2;
-   phase2 = Synth1_phasor(_ctx._inst16,(_ctx.pitch + fix_mul(Synth1_smooth(_ctx._inst15,(_ctx.detune + lfo_val)),0x200000 /* 32.000000 */)),reset);
+   phase2 = Synth1_phasor(_ctx._inst16,(_ctx.pitch + (Synth1_smooth(_ctx._inst15,(_ctx.detune + lfo_val)) << 5)),reset);
    fix16_t sine;
    sine = fix_sin(fix_mul(0x6487e /* 6.283185 */,phase2));
    fix16_t gate_value;
@@ -348,7 +348,7 @@ void Synth1_controlChange(Synth1__ctx_type_7 &_ctx, int control, fix16_t value, 
    uint8_t _cond_72;
    _cond_72 = (control == 33);
    if(_cond_72){
-      _ctx.lfo_amt = fix_mul(0x20000 /* 2.000000 */,(fix_mul(value,0x204 /* 0.007874 */) + (-0x8000 /* -0.500000 */)));
+      _ctx.lfo_amt = ((fix_mul(value,0x204 /* 0.007874 */) + (-0x8000 /* -0.500000 */)) << 1);
    }
 }
 
