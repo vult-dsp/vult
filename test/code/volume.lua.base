@@ -23,7 +23,7 @@ function this.makeArray(size,v) local a = {}; for i=1,size do a[i]=v end return 
 function this.wrap_array(a)     return a; end
 function this.Volume__ctx_type_0_init()
    local _ctx = {};
-   _ctx.x = 0.00000;
+   _ctx.x = 0.;
    return _ctx;
 
 end
@@ -33,14 +33,14 @@ function this.Volume_smooth_init()
 end
 
 function this.Volume_smooth(_ctx,input)
-   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.00500));
+   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005));
    return _ctx.x;
 
 end
 
 function this.Volume__ctx_type_1_init()
    local _ctx = {};
-   _ctx.volume = 0.00000;
+   _ctx.volume = 0.;
    _ctx._inst2 = this.Volume__ctx_type_0_init();
    return _ctx;
 
@@ -77,7 +77,7 @@ end
 
 function this.Volume_controlChange(_ctx,control,value,channel)
    if (control == 30) then
-      _ctx.volume = (this.real(value) * 0.00780);
+      _ctx.volume = (this.real(value) * 0.00787401574803);
 
    end
 
@@ -88,7 +88,7 @@ function this.Volume_default_init()
 end
 
 function this.Volume_default(_ctx)
-   _ctx.volume = 0.00000;
+   _ctx.volume = 0.;
 
 end
 

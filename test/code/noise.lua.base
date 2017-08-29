@@ -23,7 +23,7 @@ function this.makeArray(size,v) local a = {}; for i=1,size do a[i]=v end return 
 function this.wrap_array(a)     return a; end
 function this.Noise__ctx_type_0_init()
    local _ctx = {};
-   _ctx.w1 = 0.00000;
+   _ctx.w1 = 0.;
    return _ctx;
 
 end
@@ -33,9 +33,9 @@ function this.Noise_pinker_init()
 end
 
 function this.Noise_pinker(_ctx,x)
-   local b0 = 0.02770;
-   local b1 = 0.02770;
-   local a1 = (-0.94450);
+   local b0 = 0.0277129863191;
+   local b1 = 0.0277129863191;
+   local a1 = (-0.944574027362);
    local w0 = (x + (- (a1 * _ctx.w1)));
    local y0 = ((b0 * w0) + (b1 * _ctx.w1));
    _ctx.w1 = w0;
@@ -58,17 +58,17 @@ end
 
 function this.Noise_process(_ctx,color)
    _ctx.x1 = (((_ctx.x1 * 17389) + 7919) % 32768);
-   local y1 = (this.real(_ctx.x1) * 0.00000);
+   local y1 = (this.real(_ctx.x1) * 3.0517578125e-05);
    _ctx.x2 = (((_ctx.x2 * 27449) + 12553) % 32768);
-   local y2 = (this.real(_ctx.x2) * 0.00000);
+   local y2 = (this.real(_ctx.x2) * 3.0517578125e-05);
    local out = 0.0;
-   if (color > 0.50000) then
+   if (color > 0.5) then
       out = this.Noise_pinker(_ctx._inst2,(y1 + (- y2)));
    else
 
       out = (y1 + (- y2));
    end
-   return (2.00000 * out);
+   return (2. * out);
 
 end
 

@@ -23,7 +23,7 @@ uint8_t Util_edge(Util__ctx_type_0 &_ctx, uint8_t x){
 
 void Util__ctx_type_1_init(Util__ctx_type_1 &_output_){
    Util__ctx_type_1 _ctx;
-   _ctx.pre_x = 0.00000f;
+   _ctx.pre_x = 0.f;
    _output_ = _ctx;
    return ;
 }
@@ -46,8 +46,8 @@ float Util_map(float x, float x0, float x1, float y0, float y1){
 
 void Util__ctx_type_3_init(Util__ctx_type_3 &_output_){
    Util__ctx_type_3 _ctx;
-   _ctx.y1 = 0.00000f;
-   _ctx.x1 = 0.00000f;
+   _ctx.y1 = 0.f;
+   _ctx.x1 = 0.f;
    _output_ = _ctx;
    return ;
 }
@@ -59,7 +59,7 @@ void Util_dcblock_init(Util__ctx_type_3 &_output_){
 
 float Util_dcblock(Util__ctx_type_3 &_ctx, float x0){
    float y0;
-   y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.99500f));
+   y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995f));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
@@ -67,7 +67,7 @@ float Util_dcblock(Util__ctx_type_3 &_ctx, float x0){
 
 void Util__ctx_type_4_init(Util__ctx_type_4 &_output_){
    Util__ctx_type_4 _ctx;
-   _ctx.x = 0.00000f;
+   _ctx.x = 0.f;
    _output_ = _ctx;
    return ;
 }
@@ -78,13 +78,13 @@ void Util_smooth_init(Util__ctx_type_4 &_output_){
 }
 
 float Util_smooth(Util__ctx_type_4 &_ctx, float input){
-   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.00500f));
+   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005f));
    return _ctx.x;
 }
 
 void Util__ctx_type_5_init(Util__ctx_type_5 &_output_){
    Util__ctx_type_5 _ctx;
-   _ctx.x0 = 0.00000f;
+   _ctx.x0 = 0.f;
    _output_ = _ctx;
    return ;
 }
@@ -96,79 +96,79 @@ void Util_average2_init(Util__ctx_type_5 &_output_){
 
 float Util_average2(Util__ctx_type_5 &_ctx, float x1){
    float result;
-   result = ((_ctx.x0 + x1) * 0.50000f);
+   result = ((_ctx.x0 + x1) * 0.5f);
    _ctx.x0 = x1;
    return result;
 }
 
 float Util_cubic_clipper(float x){
    uint8_t _cond_21;
-   _cond_21 = (x <= (-0.66660f));
+   _cond_21 = (x <= (-0.666666666667f));
    if(_cond_21){
-      return (-0.66660f);
+      return (-0.666666666667f);
    }
    else
    {
       uint8_t _cond_20;
-      _cond_20 = (x >= 0.66660f);
+      _cond_20 = (x >= 0.666666666667f);
       if(_cond_20){
-         return 0.66660f;
+         return 0.666666666667f;
       }
       else
       {
-         return (x + ((-0.33330f) * x * x * x));
+         return (x + ((-0.333333333333f) * x * x * x));
       }
    }
 }
 
 float Util_pitchToRate_1024(float pitch){
    int index;
-   index = int_clip(float_to_int((0.24400f * pitch)),0,31);
+   index = int_clip(float_to_int((0.244094488189f * pitch)),0,31);
    return (float_wrap_array(Util_pitchToRate_1024_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_1024_c1)[index] + (float_wrap_array(Util_pitchToRate_1024_c2)[index] * pitch))));
 }
 
 float Util_pitchToRate(float pitch){
    int index;
-   index = int_clip(float_to_int((0.24400f * pitch)),0,31);
+   index = int_clip(float_to_int((0.244094488189f * pitch)),0,31);
    return (float_wrap_array(Util_pitchToRate_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_c1)[index] + (float_wrap_array(Util_pitchToRate_c2)[index] * pitch))));
 }
 
 float Util_cvToPitch(float cv){
-   return ((cv * 120.00000f) + 24.00000f);
+   return ((cv * 120.f) + 24.f);
 }
 
 float Util_cvToRate_1024(float cv){
    int index;
-   index = int_clip(float_to_int((34.44440f * cv)),0,31);
+   index = int_clip(float_to_int((34.4444444444f * cv)),0,31);
    return (float_wrap_array(Util_cvToRate_1024_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_1024_c1)[index] + (float_wrap_array(Util_cvToRate_1024_c2)[index] * cv))));
 }
 
 float Util_cvToRate(float cv){
    int index;
-   index = int_clip(float_to_int((141.11110f * cv)),0,127);
+   index = int_clip(float_to_int((141.111111111f * cv)),0,127);
    return (float_wrap_array(Util_cvToRate_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_c1)[index] + (float_wrap_array(Util_cvToRate_c2)[index] * cv))));
 }
 
 float Util_pitchToCv(float pitch){
-   return (0.00830f * ((-24.00000f) + pitch));
+   return (0.00833333333333f * ((-24.f) + pitch));
 }
 
 float Util_cvToperiod(float cv){
    int index;
-   index = int_clip(float_to_int((31.00000f * cv)),0,31);
+   index = int_clip(float_to_int((31.f * cv)),0,31);
    return (float_wrap_array(Util_cvToperiod_c0)[index] + (cv * (float_wrap_array(Util_cvToperiod_c1)[index] + (float_wrap_array(Util_cvToperiod_c2)[index] * cv))));
 }
 
 float Util_cvTokHz(float cv){
    int index;
-   index = int_clip(float_to_int((31.00000f * cv)),0,31);
+   index = int_clip(float_to_int((31.f * cv)),0,31);
    return (float_wrap_array(Util_cvTokHz_c0)[index] + (cv * (float_wrap_array(Util_cvTokHz_c1)[index] + (float_wrap_array(Util_cvTokHz_c2)[index] * cv))));
 }
 
 void Phase__ctx_type_0_init(Phase__ctx_type_0 &_output_){
    Phase__ctx_type_0 _ctx;
-   _ctx.rate = 0.00000f;
-   _ctx.phase = 0.00000f;
+   _ctx.rate = 0.f;
+   _ctx.phase = 0.f;
    Util__ctx_type_0_init(_ctx._inst25);
    Util__ctx_type_1_init(_ctx._inst23);
    Phase_default(_ctx);
@@ -188,14 +188,14 @@ float Phase_process(Phase__ctx_type_0 &_ctx, float cv, float reset){
       _ctx.rate = Util_cvToRate_1024(cv);
    }
    uint8_t _cond_31;
-   _cond_31 = Util_edge(_ctx._inst25,(reset > 0.50000f));
-   if(_cond_31){ _ctx.phase = 0.00000f; }
+   _cond_31 = Util_edge(_ctx._inst25,(reset > 0.5f));
+   if(_cond_31){ _ctx.phase = 0.f; }
    else
    { _ctx.phase = (_ctx.phase + _ctx.rate); }
    uint8_t _cond_32;
-   _cond_32 = (_ctx.phase > 1024.00000f);
-   if(_cond_32){ _ctx.phase = (_ctx.phase + (-1024.00000f)); }
-   return (_ctx.phase * 0.00090f);
+   _cond_32 = (_ctx.phase > 1024.f);
+   if(_cond_32){ _ctx.phase = (_ctx.phase + (-1024.f)); }
+   return (_ctx.phase * 0.0009765625f);
 }
 
 void Phase_noteOn_init(Phase__ctx_type_0 &_output_){
@@ -228,18 +228,18 @@ void Phase_default_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_default(Phase__ctx_type_0 &_ctx){
-   _ctx.rate = 0.75930f;
+   _ctx.rate = 0.759366720147f;
 }
 
 float Tables_nsine(float x){
    int index;
-   index = int_clip(float_to_int((127.00000f * x)),0,127);
+   index = int_clip(float_to_int((127.f * x)),0,127);
    return (float_wrap_array(Tables_nsine_c0)[index] + (x * (float_wrap_array(Tables_nsine_c1)[index] + (float_wrap_array(Tables_nsine_c2)[index] * x))));
 }
 
 void Phd__ctx_type_0_init(Phd__ctx_type_0 &_output_){
    Phd__ctx_type_0 _ctx;
-   _ctx.pre_phase1 = 0.00000f;
+   _ctx.pre_phase1 = 0.f;
    Phase__ctx_type_0_init(_ctx._inst37);
    Util__ctx_type_4_init(_ctx._inst36);
    Phase__ctx_type_0_init(_ctx._inst35);
@@ -254,14 +254,14 @@ void Phd_process_init(Phd__ctx_type_0 &_output_){
 
 float Phd_process(Phd__ctx_type_0 &_ctx, float cv, float detune){
    float phase1;
-   phase1 = Phase_process(_ctx._inst35,cv,0.00000f);
+   phase1 = Phase_process(_ctx._inst35,cv,0.f);
    float comp;
-   comp = (1.00000f + (- phase1));
+   comp = (1.f + (- phase1));
    float reset;
    reset = (_ctx.pre_phase1 + (- phase1));
    _ctx.pre_phase1 = phase1;
    float phase2;
-   phase2 = Phase_process(_ctx._inst37,(cv + Util_smooth(_ctx._inst36,(detune * 0.50000f))),reset);
+   phase2 = Phase_process(_ctx._inst37,(cv + Util_smooth(_ctx._inst36,(detune * 0.5f))),reset);
    float sine;
    sine = Tables_nsine(phase2);
    return (sine * comp);

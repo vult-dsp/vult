@@ -4,7 +4,7 @@
 
 void Log_test_print(){
    int_print(1);
-   float_print(2.00000f);
+   float_print(2.f);
    string_print("leonardo");
    bool_print(1);
 }

@@ -284,6 +284,7 @@ module ParserTest = struct
       let current   = process fullfile in
       let reference = readReference (update_test context) "base" current fullfile (in_test_directory folder) in
       assert_equal
+         ~cmp:Diff.compare
          ~msg:("Parsing file "^fullfile)
          ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
          reference current
@@ -315,6 +316,7 @@ module ErrorTest = struct
       let current   = process fullfile in
       let reference = readReference (update_test context) "base" current fullfile (in_test_directory folder) in
       assert_equal
+         ~cmp:Diff.compare
          ~msg:("Error mismatch in file "^fullfile)
          ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
          reference current
@@ -338,6 +340,7 @@ module PassesTest = struct
       let current   = process options fullfile in
       let reference = readReference (update_test context) "base" current fullfile (in_test_directory folder) in
       assert_equal
+         ~cmp:Diff.compare
          ~msg:("Transforming file "^fullfile)
          ~pp_diff:(fun fmt (a,b) -> Format.fprintf fmt "\n%s" (Diff.lineDiff a b) )
          reference current
@@ -491,6 +494,7 @@ module CliTest = struct
       List.iter
          (fun (current, reference) ->
              assert_equal
+                ~cmp:Diff.compare
                 ~msg:("Generating file "^fullfile)
                 ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
                 reference current
@@ -541,6 +545,7 @@ module Templates = struct
       List.iter
          (fun (current, reference) ->
              assert_equal
+                ~cmp:Diff.compare
                 ~msg:("Generating file "^fullfile)
                 ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
                 reference current

@@ -1,5 +1,5 @@
 this.Gates_velToCV = function(vel){
-   return (this.real(vel) * 0.00780);
+   return (this.real(vel) * 0.00787401574803);
 }
 this.Gates__ctx_type_1_init = function(){
    var _ctx = {};

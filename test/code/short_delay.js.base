@@ -1,13 +1,13 @@
 this.Short_delay__ctx_type_0_init = function(){
    var _ctx = {};
-   _ctx.x4 = 0.00000;
-   _ctx.x3 = 0.00000;
-   _ctx.x2 = 0.00000;
+   _ctx.x4 = 0.;
+   _ctx.x3 = 0.;
+   _ctx.x2 = 0.;
    return _ctx;
 }
 this.Short_delay_soft_init = function() { return this.Short_delay__ctx_type_0_init();}
 this.Short_delay_soft = function(_ctx,x1){
-   var o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) * 0.25000);
+   var o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) * 0.25);
    var _tmp_9_0 = x1;
    var _tmp_9_1 = _ctx.x2;
    var _tmp_9_2 = _ctx.x3;
@@ -19,14 +19,14 @@ this.Short_delay_soft = function(_ctx,x1){
 this.Short_delay__ctx_type_1_init = function(){
    var _ctx = {};
    _ctx.write_pos = ((0|0)|0);
-   _ctx.buffer = this.makeArray((22050|0),0.00000);
+   _ctx.buffer = this.makeArray((22050|0),0.);
    return _ctx;
 }
 this.Short_delay_do_init = function() { return this.Short_delay__ctx_type_1_init();}
 this.Short_delay_do = function(_ctx,x,time,feedback){
-   time = this.clip(time,0.00000,1.00000);
-   feedback = this.clip(feedback,0.00000,1.00000);
-   var index_r = (22050.00000 * time);
+   time = this.clip(time,0.,1.);
+   feedback = this.clip(feedback,0.,1.);
+   var index_r = (22050. * time);
    var index_i = (this.int(this.floor(index_r))|0);
    var delta = ((_ctx.write_pos + (- index_i))|0);
    var read_pos = (0|0);

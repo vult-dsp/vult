@@ -6,7 +6,7 @@
    type Context_nested.change_a_type : Context_nested._ctx_type_0;
    fun Context_nested._ctx_type_0_init(_output_:Context_nested._ctx_type_0) : unit {
       val (_ctx:Context_nested._ctx_type_0);
-      (_ctx.pre:real) = 0.00000;
+      (_ctx.pre:real) = 0.;
       (_output_:Context_nested._ctx_type_0) = _ctx;
       return ();
    }
@@ -31,7 +31,7 @@
    type Context_nested.change_b_type : Context_nested._ctx_type_1;
    fun Context_nested._ctx_type_1_init(_output_:Context_nested._ctx_type_1) : unit {
       val (_ctx:Context_nested._ctx_type_1);
-      (_ctx.pre:real) = 0.00000;
+      (_ctx.pre:real) = 0.;
       (_output_:Context_nested._ctx_type_1) = _ctx;
       return ();
    }
@@ -75,17 +75,17 @@
    fun Context_nested.foo(_ctx:Context_nested._ctx_type_2) : unit /* scope_2 */
    {
       val (ret1:bool);
-      (ret1:bool) = Context_nested.change_a(_ctx._inst3,0.00000);
+      (ret1:bool) = Context_nested.change_a(_ctx._inst3,0.);
       val (ret2:bool);
-      (ret2:bool) = Context_nested.change_b(_ctx._inst4,0.00000);
+      (ret2:bool) = Context_nested.change_b(_ctx._inst4,0.);
       val (ret3:bool);
-      (ret3:bool) = Context_nested.change_a(_ctx.x,0.00000);
+      (ret3:bool) = Context_nested.change_a(_ctx.x,0.);
       val (ret4:bool);
-      (ret4:bool) = Context_nested.change_a(_ctx.x,0.00000);
+      (ret4:bool) = Context_nested.change_a(_ctx.x,0.);
       val (ret5:bool);
-      (ret5:bool) = Context_nested.change_b(_ctx.y,0.00000);
+      (ret5:bool) = Context_nested.change_b(_ctx.y,0.);
       val (ret6:bool);
-      (ret6:bool) = Context_nested.change_b(_ctx.y,0.00000);
+      (ret6:bool) = Context_nested.change_b(_ctx.y,0.);
    }
 
 }

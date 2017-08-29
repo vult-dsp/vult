@@ -3,7 +3,7 @@
 #include "gates.h"
 
 float Gates_velToCV(int vel){
-   return (int_to_float(vel) * 0.00780f);
+   return (int_to_float(vel) * 0.00787401574803f);
 }
 
 void Gates__ctx_type_1_init(Gates__ctx_type_1 &_output_){

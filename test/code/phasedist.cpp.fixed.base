@@ -39,7 +39,7 @@ uint8_t Phasedist_change(Phasedist__ctx_type_1 &_ctx, fix16_t x){
 }
 
 fix16_t Phasedist_pitchToRate(fix16_t d){
-   return fix_mul(0x6 /* 0.000100 */,fix_exp(fix_mul(0xec5 /* 0.057700 */,d)));
+   return fix_mul(0xc /* 0.000185 */,fix_exp(fix_mul(0xec9 /* 0.057762 */,d)));
 }
 
 void Phasedist__ctx_type_3_init(Phasedist__ctx_type_3 &_output_){
@@ -99,7 +99,7 @@ fix16_t Phasedist_process(Phasedist__ctx_type_4 &_ctx, fix16_t input){
    fix16_t phase2;
    phase2 = Phasedist_phasor(_ctx._inst9,(_ctx.pitch + (Phasedist_smooth(_ctx._inst8,_ctx.detune) << 5)),reset);
    fix16_t sine;
-   sine = fix_sin(fix_mul(0x64879 /* 6.283100 */,phase2));
+   sine = fix_sin(fix_mul(0x6487e /* 6.283185 */,phase2));
    return fix_mul(fix_mul(Phasedist_smooth(_ctx._inst10,_ctx.volume),sine),comp);
 }
 
@@ -129,12 +129,12 @@ void Phasedist_controlChange(Phasedist__ctx_type_4 &_ctx, int control, int value
    uint8_t _cond_19;
    _cond_19 = (control == 30);
    if(_cond_19){
-      _ctx.volume = fix_mul(int_to_fix(value),0x1ff /* 0.007800 */);
+      _ctx.volume = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    }
    uint8_t _cond_20;
    _cond_20 = (control == 31);
    if(_cond_20){
-      _ctx.detune = fix_mul(int_to_fix(value),0x1ff /* 0.007800 */);
+      _ctx.detune = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    }
 }
 

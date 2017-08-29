@@ -4,7 +4,7 @@
 
 float Saturate_table(float x){
    int index;
-   index = int_clip(float_to_int((5.00000f * (x + 24.00000f))),0,240);
+   index = int_clip(float_to_int((5.f * (x + 24.f))),0,240);
    return (float_wrap_array(Saturate_table_c0)[index] + (x * (float_wrap_array(Saturate_table_c1)[index] + (float_wrap_array(Saturate_table_c2)[index] * x))));
 }
 

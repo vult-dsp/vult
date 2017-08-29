@@ -3,9 +3,9 @@ fun foo() {
    buffer = [1, 2, 3, 4, 5, 6, 7, 8];
    val (buffer0:array(int,0)) = [];
    val buffer1 = [1];
-   val buffer2 = [1.00000, 2.00000];
+   val buffer2 = [1., 2.];
    val x = get(buffer2,0);
-   _ = set(buffer2,0,0.00000);
+   _ = set(buffer2,0,0.);
    val y = get(buffer1,0);
    _ = set(buffer1,0,0);
 }

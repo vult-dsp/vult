@@ -3,7 +3,7 @@
 #include "gates.h"
 
 fix16_t Gates_velToCV(int vel){
-   return fix_mul(int_to_fix(vel),0x1ff /* 0.007800 */);
+   return fix_mul(int_to_fix(vel),0x204 /* 0.007874 */);
 }
 
 void Gates__ctx_type_1_init(Gates__ctx_type_1 &_output_){

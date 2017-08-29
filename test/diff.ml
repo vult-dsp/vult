@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
+
 let rec join_buff (buff:Buffer.t) (sep:string) (l:string list) : unit =
    match l with
    | [] -> ()
@@ -82,3 +83,54 @@ let lineDiff str1 str2 =
    let lseq = lcs lines1 lines2 in
    let final_seq = interleaveLineDiff lines1 lines2 lseq in
    stringJoinWith "\n" final_seq
+
+
+let tokenString t =
+   let open BaseTok in
+   match t with
+   |	Id s -> s
+   |	Int i -> string_of_int i
+   |	Float f -> string_of_float f
+   |	Other s -> s
+   |  Hex i -> string_of_int i
+   |	EOF -> ""
+
+let tokenizeLine line =
+   let stream = Lexing.from_string line in
+   let tokens = ref [] in
+   let () =
+      let rec loop () =
+         match BaseTok.read stream  with
+         | BaseTok.EOF -> ()
+         | t ->
+            tokens := t :: !tokens;
+            loop ()
+      in loop ()
+   in
+   List.rev !tokens
+
+let equalToken t1 t2 =
+   let open BaseTok in
+   match t1, t2 with
+   | Float f1, Float f2 ->
+      let result =
+         if abs_float f2 < 1e-6 || abs_float f1 < 1e-6 then
+            abs_float (f1 -. f2)  < 1e-6
+         else
+            let delta = abs_float (f1 -. f2) /. f2 in
+            delta < 0.01
+      in
+      let () = if not result then Printf.printf "diff %f %f\n" f1 f2 in
+      result
+
+   | _ -> compare t1 t2 = 0
+
+let compareLine line1 line2 =
+   let s1 = tokenizeLine line1 in
+   let s2 = tokenizeLine line2 in
+   List.for_all2 equalToken s1 s2
+
+let compare str1 str2 =
+   let lines1 = stringSplit "\n" str1 in
+   let lines2 = stringSplit "\n" str2 in
+   List.for_all2 compareLine lines1 lines2

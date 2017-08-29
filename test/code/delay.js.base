@@ -1,16 +1,16 @@
 this.Delay__ctx_type_0_init = function(){
    var _ctx = {};
-   _ctx.x = 0.00000;
+   _ctx.x = 0.;
    return _ctx;
 }
 this.Delay_smooth_init = function() { return this.Delay__ctx_type_0_init();}
 this.Delay_smooth = function(_ctx,input){
-   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.00500));
+   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005));
    return _ctx.x;
 }
 this.Delay__ctx_type_1_init = function(){
    var _ctx = {};
-   _ctx.pre_x = 0.00000;
+   _ctx.pre_x = 0.;
    return _ctx;
 }
 this.Delay_change_init = function() { return this.Delay__ctx_type_1_init();}
@@ -42,12 +42,12 @@ this.Delay_each = function(_ctx,n){
    return ret;
 }
 this.Delay_pitchToRate = function(d){
-   return (0.00010 * this.exp((0.05770 * d)));
+   return (0.000185392290249 * this.exp((0.0577623 * d)));
 }
 this.Delay__ctx_type_5_init = function(){
    var _ctx = {};
-   _ctx.rate = 0.00000;
-   _ctx.phase = 0.00000;
+   _ctx.rate = 0.;
+   _ctx.phase = 0.;
    _ctx._inst6 = this.Delay__ctx_type_1_init();
    return _ctx;
 }
@@ -56,32 +56,32 @@ this.Delay_phasor = function(_ctx,pitch,reset){
    if(this.Delay_change(_ctx._inst6,pitch)){
       _ctx.rate = this.Delay_pitchToRate(pitch);
    }
-   if(reset)_ctx.phase = 0.00000;
+   if(reset)_ctx.phase = 0.;
    else
-   _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.00000);
+   _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.);
    return _ctx.phase;
 }
 this.Delay__ctx_type_6_init = function(){
    var _ctx = {};
-   _ctx.phase = 0.00000;
+   _ctx.phase = 0.;
    _ctx._inst9 = this.Delay__ctx_type_2_init();
    return _ctx;
 }
 this.Delay_lfo_init = function() { return this.Delay__ctx_type_6_init();}
 this.Delay_lfo = function(_ctx,f,gate){
-   var rate = (0.00020 * f);
+   var rate = (0.000226757369615 * f);
    if(this.Delay_edge(_ctx._inst9,gate)){
-      _ctx.phase = 0.00000;
+      _ctx.phase = 0.;
    }
    _ctx.phase = (_ctx.phase + rate);
-   if((_ctx.phase > 1.00000)){
-      _ctx.phase = (_ctx.phase + (-1.00000));
+   if((_ctx.phase > 1.)){
+      _ctx.phase = (_ctx.phase + (-1.));
    }
-   return (this.sin((6.28310 * _ctx.phase)) + (-0.50000));
+   return (this.sin((6.28318530718 * _ctx.phase)) + (-0.5));
 }
 this.Delay__ctx_type_7_init = function(){
    var _ctx = {};
-   _ctx.pre_phase1 = 0.00000;
+   _ctx.pre_phase1 = 0.;
    _ctx._inst15 = this.Delay__ctx_type_5_init();
    _ctx._inst14 = this.Delay__ctx_type_0_init();
    _ctx._inst13 = this.Delay__ctx_type_5_init();
@@ -90,24 +90,24 @@ this.Delay__ctx_type_7_init = function(){
 this.Delay_phd_osc_init = function() { return this.Delay__ctx_type_7_init();}
 this.Delay_phd_osc = function(_ctx,pitch,detune){
    var phase1 = this.Delay_phasor(_ctx._inst13,pitch,false);
-   var comp = (1.00000 + (- phase1));
-   var reset = ((_ctx.pre_phase1 + (- phase1)) > 0.50000);
+   var comp = (1. + (- phase1));
+   var reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5);
    _ctx.pre_phase1 = phase1;
-   var phase2 = this.Delay_phasor(_ctx._inst15,(pitch + (this.Delay_smooth(_ctx._inst14,detune) * 32.00000)),reset);
-   var sine = this.sin((6.28310 * phase2));
+   var phase2 = this.Delay_phasor(_ctx._inst15,(pitch + (this.Delay_smooth(_ctx._inst14,detune) * 32.)),reset);
+   var sine = this.sin((6.28318530718 * phase2));
    return (sine * comp);
 }
 this.Delay__ctx_type_8_init = function(){
    var _ctx = {};
    _ctx.write_pos = ((0|0)|0);
-   _ctx.buffer = this.makeArray((30000|0),0.00000);
+   _ctx.buffer = this.makeArray((30000|0),0.);
    return _ctx;
 }
 this.Delay_delay_init = function() { return this.Delay__ctx_type_8_init();}
 this.Delay_delay = function(_ctx,x,time,feedback){
-   time = this.clip(time,0.00000,1.00000);
-   feedback = this.clip(feedback,0.00000,1.00000);
-   var index_r = (30000.00000 * time);
+   time = this.clip(time,0.,1.);
+   feedback = this.clip(feedback,0.,1.);
+   var index_r = (30000. * time);
    var index_i = (this.int(this.floor(index_r))|0);
    var delta = ((_ctx.write_pos + (- index_i))|0);
    var read_pos = (0|0);
@@ -119,7 +119,7 @@ this.Delay_delay = function(_ctx,x,time,feedback){
    var x2 = this.get(_ctx.buffer,((read_pos + (1|0)) % (30000|0)));
    var ret = (((x2 + (- x1)) * decimal) + x1);
    _ctx.write_pos = (((_ctx.write_pos + (1|0)) % (30000|0))|0);
-   this.set(_ctx.buffer,_ctx.write_pos,this.clip((x + (feedback * ret)),(-1.00000),1.00000));
+   this.set(_ctx.buffer,_ctx.write_pos,this.clip((x + (feedback * ret)),(-1.),1.));
    return ret;
 }
 this.Delay__ctx_type_9_init = function(){
@@ -181,14 +181,14 @@ this.Delay_mono_isGateOn = function(_ctx){
 }
 this.Delay__ctx_type_10_init = function(){
    var _ctx = {};
-   _ctx.volume = 0.00000;
-   _ctx.time = 0.00000;
-   _ctx.pitch = 0.00000;
+   _ctx.volume = 0.;
+   _ctx.time = 0.;
+   _ctx.pitch = 0.;
    _ctx.notes = this.Delay__ctx_type_9_init();
-   _ctx.lfo_rate = 0.00000;
-   _ctx.lfo_amt = 0.00000;
-   _ctx.feedback = 0.00000;
-   _ctx.detune = 0.00000;
+   _ctx.lfo_rate = 0.;
+   _ctx.lfo_amt = 0.;
+   _ctx.feedback = 0.;
+   _ctx.detune = 0.;
    _ctx._inst34 = this.Delay__ctx_type_8_init();
    _ctx._inst33 = this.Delay__ctx_type_0_init();
    _ctx._inst32 = this.Delay__ctx_type_0_init();
@@ -204,13 +204,13 @@ this.Delay_process = function(_ctx,input){
    var o1 = this.Delay_phd_osc(_ctx._inst30,_ctx.pitch,(_ctx.detune + lfo_val));
    var amp = 0.0;
    var _if_54 = 0.0;
-   if(gate)_if_54 = 1.00000;
+   if(gate)_if_54 = 1.;
    else
-   _if_54 = 0.00000;
+   _if_54 = 0.;
    amp = this.Delay_smooth(_ctx._inst31,_if_54);
    var osc_out = (o1 * amp);
    var delay_out = this.Delay_delay(_ctx._inst34,osc_out,this.Delay_smooth(_ctx._inst32,_ctx.time),this.Delay_smooth(_ctx._inst33,_ctx.feedback));
-   return (_ctx.volume * (osc_out + delay_out) * 0.50000);
+   return (_ctx.volume * (osc_out + delay_out) * 0.5);
 }
 this.Delay_noteOn_init = function() { return this.Delay__ctx_type_10_init();}
 this.Delay_noteOn = function(_ctx,note,velocity,channel){
@@ -223,31 +223,31 @@ this.Delay_noteOff = function(_ctx,note,channel){
 this.Delay_controlChange_init = function() { return this.Delay__ctx_type_10_init();}
 this.Delay_controlChange = function(_ctx,control,value,channel){
    if((control == (30|0))){
-      _ctx.volume = (value * 0.00780);
+      _ctx.volume = (value * 0.00787401574803);
    }
    if((control == (31|0))){
-      _ctx.detune = (value * 0.00780);
+      _ctx.detune = (value * 0.00787401574803);
    }
    if((control == (32|0))){
-      _ctx.lfo_rate = (value * 0.00780);
+      _ctx.lfo_rate = (value * 0.00787401574803);
    }
    if((control == (33|0))){
-      _ctx.lfo_amt = (2.00000 * ((value * 0.00780) + (-0.50000)));
+      _ctx.lfo_amt = (2. * ((value * 0.00787401574803) + (-0.5)));
    }
    if((control == (34|0))){
-      _ctx.time = (value * 0.00780);
+      _ctx.time = (value * 0.00787401574803);
    }
    if((control == (35|0))){
-      _ctx.feedback = (value * 0.00780);
+      _ctx.feedback = (value * 0.00787401574803);
    }
 }
 this.Delay_default_init = function() { return this.Delay__ctx_type_10_init();}
 this.Delay_default = function(_ctx){
-   _ctx.volume = 1.00000;
-   _ctx.pitch = 45.00000;
-   _ctx.detune = 0.80000;
-   _ctx.lfo_rate = 0.07000;
-   _ctx.lfo_amt = (-0.80000);
-   _ctx.time = 0.50000;
-   _ctx.feedback = 0.50000;
+   _ctx.volume = 1.;
+   _ctx.pitch = 45.;
+   _ctx.detune = 0.8;
+   _ctx.lfo_rate = 0.07;
+   _ctx.lfo_amt = (-0.8);
+   _ctx.time = 0.5;
+   _ctx.feedback = 0.5;
 }
