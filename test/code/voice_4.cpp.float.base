@@ -103,33 +103,33 @@ float Util_average2(Util__ctx_type_5 &_ctx, float x1){
 
 float Util_cubic_clipper(float x){
    uint8_t _cond_21;
-   _cond_21 = (x <= (-0.666666666667f));
+   _cond_21 = (x <= -0.6666666f);
    if(_cond_21){
-      return (-0.666666666667f);
+      return -0.6666666f;
    }
    else
    {
       uint8_t _cond_20;
-      _cond_20 = (x >= 0.666666666667f);
+      _cond_20 = (x >= 0.6666667f);
       if(_cond_20){
-         return 0.666666666667f;
+         return 0.6666667f;
       }
       else
       {
-         return (x + ((-0.333333333333f) * x * x * x));
+         return (x + (-0.3333333f * x * x * x));
       }
    }
 }
 
 float Util_pitchToRate_1024(float pitch){
    int index;
-   index = int_clip(float_to_int((0.244094488189f * pitch)),0,31);
+   index = int_clip(float_to_int((0.2440945f * pitch)),0,31);
    return (float_wrap_array(Util_pitchToRate_1024_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_1024_c1)[index] + (float_wrap_array(Util_pitchToRate_1024_c2)[index] * pitch))));
 }
 
 float Util_pitchToRate(float pitch){
    int index;
-   index = int_clip(float_to_int((0.244094488189f * pitch)),0,31);
+   index = int_clip(float_to_int((0.2440945f * pitch)),0,31);
    return (float_wrap_array(Util_pitchToRate_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_c1)[index] + (float_wrap_array(Util_pitchToRate_c2)[index] * pitch))));
 }
 
@@ -139,18 +139,18 @@ float Util_cvToPitch(float cv){
 
 float Util_cvToRate_1024(float cv){
    int index;
-   index = int_clip(float_to_int((34.4444444444f * cv)),0,31);
+   index = int_clip(float_to_int((34.4444445f * cv)),0,31);
    return (float_wrap_array(Util_cvToRate_1024_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_1024_c1)[index] + (float_wrap_array(Util_cvToRate_1024_c2)[index] * cv))));
 }
 
 float Util_cvToRate(float cv){
    int index;
-   index = int_clip(float_to_int((141.111111111f * cv)),0,127);
+   index = int_clip(float_to_int((141.1111112f * cv)),0,127);
    return (float_wrap_array(Util_cvToRate_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_c1)[index] + (float_wrap_array(Util_cvToRate_c2)[index] * cv))));
 }
 
 float Util_pitchToCv(float pitch){
-   return (0.00833333333333f * ((-24.f) + pitch));
+   return (0.0083334f * (-24.f + pitch));
 }
 
 float Util_cvToperiod(float cv){
@@ -211,13 +211,13 @@ float Tricore_process(Tricore__ctx_type_0 &_ctx, float cv, float reset, float di
    uint8_t _cond_42;
    _cond_42 = (new_phase > 1024.f);
    if(_cond_42){
-      new_phase = (1024.f + (- (new_phase + (-1024.f))));
+      new_phase = (1024.f + (- (new_phase + -1024.f)));
       _ctx.direction = 0;
    }
    else
    {
       uint8_t _cond_41;
-      _cond_41 = (new_phase < (-1024.f));
+      _cond_41 = (new_phase < -1024.f);
       if(_cond_41){
          _ctx.direction = 1;
       }
@@ -246,7 +246,7 @@ float Tricore_process(Tricore__ctx_type_0 &_ctx, float cv, float reset, float di
       out = _ctx.reset_phase;
    }
    out = (out + _ctx.phase);
-   return (out * 0.0009765625f);
+   return (out * 0.0009766f);
 }
 
 void Tricore_noteOn_init(Tricore__ctx_type_0 &_output_){
@@ -279,7 +279,7 @@ void Tricore_default_init(Tricore__ctx_type_0 &_output_){
 }
 
 void Tricore_default(Tricore__ctx_type_0 &_ctx){
-   _ctx.rate = 0.759366720147f;
+   _ctx.rate = 0.7593668f;
 }
 
 float Saturate_soft_table(float x){
@@ -306,7 +306,7 @@ void Saturate_soft_default(){
 
 float Svf_calc_g(float cv){
    int index;
-   index = int_clip(float_to_int((141.111111111f * cv)),0,127);
+   index = int_clip(float_to_int((141.1111112f * cv)),0,127);
    return (float_wrap_array(Svf_calc_g_c0)[index] + (cv * (float_wrap_array(Svf_calc_g_c1)[index] + (float_wrap_array(Svf_calc_g_c2)[index] * cv))));
 }
 
@@ -335,7 +335,7 @@ float Svf_process(Svf__ctx_type_1 &_ctx, float x, float cv, float q, int sel){
    _cond_60 = (Util_change(_ctx._inst53,cv) || Util_change(_ctx._inst54,q));
    if(_cond_60){
       _ctx.g = Svf_calc_g(cv);
-      _ctx.R = (1.f / (2.f * (q + 1e-18f)));
+      _ctx.R = (1.f / (2.f * (q + 1e-07f)));
       _ctx.inv_den = (1.f / (1.f + (2.f * _ctx.R * _ctx.g) + (_ctx.g * _ctx.g)));
    }
    float high;
@@ -399,7 +399,7 @@ void Svf_default_init(Svf__ctx_type_1 &_output_){
 }
 
 void Svf_default(Svf__ctx_type_1 &_ctx){
-   _ctx.g = 0.0023297121342f;
+   _ctx.g = 0.0023298f;
    _ctx.R = 1.f;
    _ctx.inv_den = (1.f / (1.f + (_ctx.g * _ctx.g)));
 }
@@ -475,12 +475,12 @@ float Lfo_process(Lfo__ctx_type_1 &_ctx, float cv, float shape, float reset){
    uint8_t _cond_82;
    _cond_82 = Util_change(_ctx._inst72,cv);
    if(_cond_82){
-      _ctx.rate = Util_cvToRate((cv + (-0.3f)));
+      _ctx.rate = Util_cvToRate((cv + -0.3f));
    }
    _ctx.phase = (_ctx.phase + _ctx.rate);
    uint8_t _cond_84;
    _cond_84 = (_ctx.phase > 2.f);
-   if(_cond_84){ _ctx.phase = (_ctx.phase + (-2.f)); }
+   if(_cond_84){ _ctx.phase = (_ctx.phase + -2.f); }
    uint8_t breset;
    breset = (reset > 0.f);
    uint8_t _cond_83;
@@ -489,7 +489,7 @@ float Lfo_process(Lfo__ctx_type_1 &_ctx, float cv, float shape, float reset){
       _ctx.phase = 0.f;
    }
    float tmp;
-   tmp = (_ctx.phase + (-1.f));
+   tmp = (_ctx.phase + -1.f);
    float o;
    uint8_t _cond_85;
    _cond_85 = (shape < 1.f);
@@ -498,7 +498,7 @@ float Lfo_process(Lfo__ctx_type_1 &_ctx, float cv, float shape, float reset){
    {
       uint8_t _cond_86;
       _cond_86 = (shape < 2.f);
-      if(_cond_86){ o = ((fabsf(tmp) * 2.f) + (-1.f)); }
+      if(_cond_86){ o = ((fabsf(tmp) * 2.f) + -1.f); }
       else
       {
          uint8_t _cond_87;
@@ -578,8 +578,8 @@ float Phase_process(Phase__ctx_type_0 &_ctx, float cv, float reset){
    { _ctx.phase = (_ctx.phase + _ctx.rate); }
    uint8_t _cond_99;
    _cond_99 = (_ctx.phase > 1024.f);
-   if(_cond_99){ _ctx.phase = (_ctx.phase + (-1024.f)); }
-   return (_ctx.phase * 0.0009765625f);
+   if(_cond_99){ _ctx.phase = (_ctx.phase + -1024.f); }
+   return (_ctx.phase * 0.0009766f);
 }
 
 void Phase_noteOn_init(Phase__ctx_type_0 &_output_){
@@ -612,7 +612,7 @@ void Phase_default_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_default(Phase__ctx_type_0 &_ctx){
-   _ctx.rate = 0.759366720147f;
+   _ctx.rate = 0.7593668f;
 }
 
 void Blit__ctx_type_0_init(Blit__ctx_type_0 &_output_){
@@ -644,7 +644,7 @@ float Blit_pulse_train(Blit__ctx_type_0 &_ctx, float cv, float phase){
    float out;
    out = 0.f;
    uint8_t _cond_126;
-   _cond_126 = (denominator <= 1e-18f);
+   _cond_126 = (denominator <= 1e-07f);
    if(_cond_126){
       out = 1.f;
    }
@@ -666,7 +666,7 @@ void Blit_pulse_start_init(Blit__ctx_type_0 &_output_){
 
 void Blit_pulse_start(Blit__ctx_type_0 &_ctx){
    _ctx.m = 1349;
-   _ctx.scale = 1349.49206955f;
+   _ctx.scale = 1349.4920696f;
 }
 
 void Blit__ctx_type_1_init(Blit__ctx_type_1 &_output_){
@@ -700,7 +700,7 @@ float Blit_osc_blit(Blit__ctx_type_1 &_ctx, float cv, float pw, float wave){
    }
    else
    {
-      fixed_cv = (cv + (-0.1f));
+      fixed_cv = (cv + -0.1f);
    }
    uint8_t _cond_128;
    _cond_128 = Util_change(_ctx._inst109,fixed_cv);
@@ -716,14 +716,14 @@ float Blit_osc_blit(Blit__ctx_type_1 &_ctx, float cv, float pw, float wave){
    uint8_t _cond_129;
    _cond_129 = (shift > 1.f);
    if(_cond_129){
-      shift = (shift + (-1.f));
+      shift = (shift + -1.f);
    }
    float pulse1;
    pulse1 = Blit_pulse_train(_ctx._inst113,fixed_cv,phase);
    float pulse2;
    pulse2 = Blit_pulse_train(_ctx._inst114,fixed_cv,shift);
    _ctx.state_pulse = ((_ctx.state_pulse * 0.9995f) + pulse1 + (- pulse2));
-   _ctx.state_saw = ((_ctx.state_saw * 0.9995f) + (((pulse1 + pulse2 + ((-2.f) * _ctx.rate)) / shift05) * 0.5f));
+   _ctx.state_saw = ((_ctx.state_saw * 0.9995f) + (((pulse1 + pulse2 + (-2.f * _ctx.rate)) / shift05) * 0.5f));
    uint8_t _cond_130;
    _cond_130 = (wave < 1.f);
    if(_cond_130){
@@ -743,7 +743,7 @@ void Blit_init_init(Blit__ctx_type_1 &_output_){
 }
 
 void Blit_init(Blit__ctx_type_1 &_ctx){
-   _ctx.rate = 0.000741569062643f;
+   _ctx.rate = 0.0007416f;
 }
 
 void Blit__ctx_type_2_init(Blit__ctx_type_2 &_output_){
@@ -861,7 +861,7 @@ float Adsr_do(Adsr__ctx_type_0 &_ctx, float gate, float a, float d, float s, flo
       _ctx.rate = d_rate;
       _ctx.target = (s * 1024.f);
    }
-   return (Util_smooth(_ctx._inst140,_ctx.scale) * float_clip((_ctx.out * 0.0009765625f),0.f,1.f));
+   return (Util_smooth(_ctx._inst140,_ctx.scale) * float_clip((_ctx.out * 0.0009766f),0.f,1.f));
 }
 
 void Adsr__ctx_type_1_init(Adsr__ctx_type_1 &_output_){
@@ -909,22 +909,22 @@ void Adsr_controlChange(Adsr__ctx_type_1 &_ctx, int control, int value, int chan
    uint8_t _cond_158;
    _cond_158 = (control == 1);
    if(_cond_158){
-      _ctx.knob1 = (int_to_float(value) * 0.00787401574803f);
+      _ctx.knob1 = (int_to_float(value) * 0.0078741f);
    }
    uint8_t _cond_159;
    _cond_159 = (control == 2);
    if(_cond_159){
-      _ctx.knob2 = (int_to_float(value) * 0.00787401574803f);
+      _ctx.knob2 = (int_to_float(value) * 0.0078741f);
    }
    uint8_t _cond_160;
    _cond_160 = (control == 3);
    if(_cond_160){
-      _ctx.knob3 = (int_to_float(value) * 0.00787401574803f);
+      _ctx.knob3 = (int_to_float(value) * 0.0078741f);
    }
    uint8_t _cond_161;
    _cond_161 = (control == 4);
    if(_cond_161){
-      _ctx.knob4 = (int_to_float(value) * 0.00787401574803f);
+      _ctx.knob4 = (int_to_float(value) * 0.0078741f);
    }
 }
 
@@ -1030,67 +1030,67 @@ void Voice_4_controlChange(Voice_4__ctx_type_0 &_ctx, int control, int value, in
    uint8_t _cond_195;
    _cond_195 = (control == 30);
    if(_cond_195){
-      _ctx.level1 = (int_to_float(value) * 0.00787401574803f);
+      _ctx.level1 = (int_to_float(value) * 0.0078741f);
    }
    uint8_t _cond_196;
    _cond_196 = (control == 31);
    if(_cond_196){
-      _ctx.level2 = (int_to_float(value) * 0.00787401574803f);
+      _ctx.level2 = (int_to_float(value) * 0.0078741f);
    }
    uint8_t _cond_197;
    _cond_197 = (control == 32);
    if(_cond_197){
-      _ctx.level3 = (int_to_float(value) * 0.00787401574803f);
+      _ctx.level3 = (int_to_float(value) * 0.0078741f);
    }
    uint8_t _cond_198;
    _cond_198 = (control == 33);
    if(_cond_198){
-      _ctx.level4 = (int_to_float(value) * 0.00787401574803f);
+      _ctx.level4 = (int_to_float(value) * 0.0078741f);
    }
    uint8_t _cond_199;
    _cond_199 = (control == 34);
    if(_cond_199){
-      _ctx.pw1 = (int_to_float(value) * 0.00787401574803f);
+      _ctx.pw1 = (int_to_float(value) * 0.0078741f);
    }
    uint8_t _cond_200;
    _cond_200 = (control == 35);
    if(_cond_200){
-      _ctx.pw2 = (int_to_float(value) * 0.00787401574803f);
+      _ctx.pw2 = (int_to_float(value) * 0.0078741f);
    }
    uint8_t _cond_201;
    _cond_201 = (control == 36);
    if(_cond_201){
-      _ctx.pw3 = (0.000787401574803f * int_to_float(value));
+      _ctx.pw3 = (0.0007875f * int_to_float(value));
    }
    uint8_t _cond_202;
    _cond_202 = (control == 37);
    if(_cond_202){
-      _ctx.pw4 = (int_to_float(value) * 0.00787401574803f);
+      _ctx.pw4 = (int_to_float(value) * 0.0078741f);
    }
    uint8_t _cond_203;
    _cond_203 = (control == 38);
    if(_cond_203){
-      _ctx.lfo_rate = Util_map(int_to_float(value),0.f,127.f,(-0.4f),0.1f);
+      _ctx.lfo_rate = Util_map(int_to_float(value),0.f,127.f,-0.4f,0.1f);
    }
    uint8_t _cond_204;
    _cond_204 = (control == 39);
    if(_cond_204){
-      _ctx.lfo_shape = (0.0236220472441f * int_to_float(value));
+      _ctx.lfo_shape = (0.0236221f * int_to_float(value));
    }
    uint8_t _cond_205;
    _cond_205 = (control == 40);
    if(_cond_205){
-      _ctx.lfo_pw = Util_map(int_to_float(value),0.f,127.f,(-1.f),1.f);
+      _ctx.lfo_pw = Util_map(int_to_float(value),0.f,127.f,-1.f,1.f);
    }
    uint8_t _cond_206;
    _cond_206 = (control == 41);
    if(_cond_206){
-      _ctx.lfo_cv = Util_map(int_to_float(value),0.f,127.f,(-0.1f),0.1f);
+      _ctx.lfo_cv = Util_map(int_to_float(value),0.f,127.f,-0.1f,0.1f);
    }
    uint8_t _cond_207;
    _cond_207 = (control == 42);
    if(_cond_207){
-      _ctx.lfo_flt = Util_map(int_to_float(value),0.f,127.f,(-0.3f),0.3f);
+      _ctx.lfo_flt = Util_map(int_to_float(value),0.f,127.f,-0.3f,0.3f);
    }
    uint8_t _cond_209;
    _cond_209 = (control == 43);
@@ -1104,12 +1104,12 @@ void Voice_4_controlChange(Voice_4__ctx_type_0 &_ctx, int control, int value, in
    uint8_t _cond_210;
    _cond_210 = (control == 44);
    if(_cond_210){
-      _ctx.flt_cut = Util_map(int_to_float(value),0.f,127.f,(-0.2f),0.5f);
+      _ctx.flt_cut = Util_map(int_to_float(value),0.f,127.f,-0.2f,0.5f);
    }
    uint8_t _cond_211;
    _cond_211 = (control == 45);
    if(_cond_211){
-      _ctx.flt_res = (int_to_float(value) * 0.00787401574803f);
+      _ctx.flt_res = (int_to_float(value) * 0.0078741f);
    }
    uint8_t _cond_212;
    _cond_212 = (control == 46);
@@ -1119,22 +1119,22 @@ void Voice_4_controlChange(Voice_4__ctx_type_0 &_ctx, int control, int value, in
    uint8_t _cond_213;
    _cond_213 = (control == 47);
    if(_cond_213){
-      _ctx.attack = (int_to_float(value) * 0.00787401574803f);
+      _ctx.attack = (int_to_float(value) * 0.0078741f);
    }
    uint8_t _cond_214;
    _cond_214 = (control == 48);
    if(_cond_214){
-      _ctx.decay = (int_to_float(value) * 0.00787401574803f);
+      _ctx.decay = (int_to_float(value) * 0.0078741f);
    }
    uint8_t _cond_215;
    _cond_215 = (control == 49);
    if(_cond_215){
-      _ctx.sustain = (int_to_float(value) * 0.00787401574803f);
+      _ctx.sustain = (int_to_float(value) * 0.0078741f);
    }
    uint8_t _cond_216;
    _cond_216 = (control == 50);
    if(_cond_216){
-      _ctx.release = (int_to_float(value) * 0.00787401574803f);
+      _ctx.release = (int_to_float(value) * 0.0078741f);
    }
 }
 

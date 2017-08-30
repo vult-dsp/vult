@@ -77,7 +77,7 @@ uint8_t Synth1_each(Synth1__ctx_type_3 &_ctx, int n){
 }
 
 float Synth1_pitchToRate(float d){
-   return (0.000185392290249f * expf((0.0577623f * d)));
+   return (0.0001854f * expf((0.0577623f * d)));
 }
 
 void Synth1__ctx_type_5_init(Synth1__ctx_type_5 &_output_){
@@ -121,7 +121,7 @@ void Synth1_lfo_init(Synth1__ctx_type_6 &_output_){
 
 float Synth1_lfo(Synth1__ctx_type_6 &_ctx, float f, int gate){
    float rate;
-   rate = (0.000226757369615f * f);
+   rate = (0.0002268f * f);
    uint8_t _cond_48;
    _cond_48 = Synth1_edge(_ctx._inst9,gate);
    if(_cond_48){
@@ -131,9 +131,9 @@ float Synth1_lfo(Synth1__ctx_type_6 &_ctx, float f, int gate){
    uint8_t _cond_49;
    _cond_49 = (_ctx.phase > 1.f);
    if(_cond_49){
-      _ctx.phase = (_ctx.phase + (-1.f));
+      _ctx.phase = (_ctx.phase + -1.f);
    }
-   return (sinf((6.28318530718f * _ctx.phase)) + (-0.5f));
+   return (sinf((6.2831854f * _ctx.phase)) + -0.5f);
 }
 
 void Synth1__ctx_type_7_init(Synth1__ctx_type_7 &_output_){
@@ -178,7 +178,7 @@ float Synth1_process(Synth1__ctx_type_7 &_ctx, float input){
    float phase2;
    phase2 = Synth1_phasor(_ctx._inst16,(_ctx.pitch + (Synth1_smooth(_ctx._inst15,(_ctx.detune + lfo_val)) * 32.f)),reset);
    float sine;
-   sine = sinf((6.28318530718f * phase2));
+   sine = sinf((6.2831854f * phase2));
    float gate_value;
    uint8_t _cond_50;
    _cond_50 = (_ctx.gate > 0);
@@ -333,22 +333,22 @@ void Synth1_controlChange(Synth1__ctx_type_7 &_ctx, int control, float value, in
    uint8_t _cond_69;
    _cond_69 = (control == 30);
    if(_cond_69){
-      _ctx.volume = (value * 0.00787401574803f);
+      _ctx.volume = (value * 0.0078741f);
    }
    uint8_t _cond_70;
    _cond_70 = (control == 31);
    if(_cond_70){
-      _ctx.detune = (value * 0.00787401574803f);
+      _ctx.detune = (value * 0.0078741f);
    }
    uint8_t _cond_71;
    _cond_71 = (control == 32);
    if(_cond_71){
-      _ctx.lfo_rate = (value * 0.00787401574803f);
+      _ctx.lfo_rate = (value * 0.0078741f);
    }
    uint8_t _cond_72;
    _cond_72 = (control == 33);
    if(_cond_72){
-      _ctx.lfo_amt = (2.f * ((value * 0.00787401574803f) + (-0.5f)));
+      _ctx.lfo_amt = (2.f * ((value * 0.0078741f) + -0.5f));
    }
 }
 
@@ -361,8 +361,8 @@ void Synth1_default(Synth1__ctx_type_7 &_ctx){
    _ctx.volume = 1.f;
    _ctx.pitch = 45.f;
    _ctx.detune = 0.8f;
-   _ctx.lfo_rate = 0.07f;
-   _ctx.lfo_amt = (-0.8f);
+   _ctx.lfo_rate = 0.0700001f;
+   _ctx.lfo_amt = -0.8f;
 }
 
 

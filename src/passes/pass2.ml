@@ -222,7 +222,7 @@ module MakeTables = struct
          let p3 = Array.get data (index * 2 + 2) in
          let x = [ fst p1; fst p2; fst p3] in
          let y = [ snd p1; snd p2; snd p3] in
-         let c0, c1, c2 = Fitting.fit x y |> getCoefficients in
+         let c0, c1, c2 = Fitting.lagrange x y |> getCoefficients in
          fitData data (index-1) (c0::acc0) (c1::acc1) (c2::acc2)
 
    let calculateTables env attr name size min max =

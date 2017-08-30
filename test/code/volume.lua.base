@@ -77,7 +77,7 @@ end
 
 function this.Volume_controlChange(_ctx,control,value,channel)
    if (control == 30) then
-      _ctx.volume = (this.real(value) * 0.00787401574803);
+      _ctx.volume = (this.real(value) * 0.0078741);
 
    end
 

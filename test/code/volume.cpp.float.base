@@ -61,7 +61,7 @@ void Volume_controlChange(Volume__ctx_type_1 &_ctx, int control, int value, int 
    uint8_t _cond_8;
    _cond_8 = (control == 30);
    if(_cond_8){
-      _ctx.volume = (int_to_float(value) * 0.00787401574803f);
+      _ctx.volume = (int_to_float(value) * 0.0078741f);
    }
 }
 

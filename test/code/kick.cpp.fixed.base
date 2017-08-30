@@ -20,7 +20,7 @@ fix16_t Noise_pinker(Noise__ctx_type_0 &_ctx, fix16_t x){
    fix16_t b1;
    b1 = 0x718 /* 0.027713 */;
    fix16_t a1;
-   a1 = (-0xf1cf /* -0.944574 */);
+   a1 = -0xf1cf /* -0.944574 */;
    fix16_t w0;
    w0 = (x + (- fix_mul(a1,_ctx.w1)));
    fix16_t y0;
@@ -192,9 +192,9 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
 
 fix16_t Util_cubic_clipper(fix16_t x){
    uint8_t _cond_29;
-   _cond_29 = (x <= (-0xaaaa /* -0.666667 */));
+   _cond_29 = (x <= -0xaaaa /* -0.666667 */);
    if(_cond_29){
-      return (-0xaaaa /* -0.666667 */);
+      return -0xaaaa /* -0.666667 */;
    }
    else
    {
@@ -205,7 +205,7 @@ fix16_t Util_cubic_clipper(fix16_t x){
       }
       else
       {
-         return (x + fix_mul(fix_mul(fix_mul((-0x5555 /* -0.333333 */),x),x),x));
+         return (x + fix_mul(fix_mul(fix_mul(-0x5555 /* -0.333333 */,x),x),x));
       }
    }
 }
@@ -228,7 +228,7 @@ fix16_t Util_cvToPitch(fix16_t cv){
 
 fix16_t Util_cvToRate_1024(fix16_t cv){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
+   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444445 */,cv)),0,31);
    return (fix_wrap_array(Util_cvToRate_1024_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_1024_c2)[index],cv))));
 }
 
@@ -239,7 +239,7 @@ fix16_t Util_cvToRate(fix16_t cv){
 }
 
 fix16_t Util_pitchToCv(fix16_t pitch){
-   return fix_mul(0x222 /* 0.008333 */,((-0x180000 /* -24.000000 */) + pitch));
+   return fix_mul(0x222 /* 0.008333 */,(-0x180000 /* -24.000000 */ + pitch));
 }
 
 fix16_t Util_cvToperiod(fix16_t cv){
@@ -300,13 +300,13 @@ fix16_t Tricore_process(Tricore__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset, fi
    uint8_t _cond_50;
    _cond_50 = (new_phase > 0x4000000 /* 1024.000000 */);
    if(_cond_50){
-      new_phase = (0x4000000 /* 1024.000000 */ + (- (new_phase + (-0x4000000 /* -1024.000000 */))));
+      new_phase = (0x4000000 /* 1024.000000 */ + (- (new_phase + -0x4000000 /* -1024.000000 */)));
       _ctx.direction = 0;
    }
    else
    {
       uint8_t _cond_49;
-      _cond_49 = (new_phase < (-0x4000000 /* -1024.000000 */));
+      _cond_49 = (new_phase < -0x4000000 /* -1024.000000 */);
       if(_cond_49){
          _ctx.direction = 1;
       }

@@ -3,7 +3,7 @@
 #include "synth2.h"
 
 float Synth2_minFixed(){
-   return 1.52588e-05f;
+   return 1.53e-05f;
 }
 
 void Synth2__ctx_type_1_init(Synth2__ctx_type_1 &_output_){
@@ -144,12 +144,12 @@ float Synth2_lpfilter(Synth2__ctx_type_8 &_ctx, float x){
 }
 
 float Synth2_pitchToRate(float d){
-   return (0.000185392290249f * expf((0.0577623f * d)));
+   return (0.0001854f * expf((0.0577623f * d)));
 }
 
 float Synth2_pulse_train(float m, float phase){
    float pi_phase;
-   pi_phase = (phase * 3.14159265359f);
+   pi_phase = (phase * 3.1415927f);
    float denominator1;
    denominator1 = sinf(pi_phase);
    float tmp1;
@@ -191,7 +191,7 @@ float Synth2_osc(Synth2__ctx_type_11 &_ctx, float pitch, float pw, float wave){
    float fixed_pitch;
    fixed_pitch = 0.f;
    uint8_t _cond_64;
-   _cond_64 = (wave < 0.666666666667f);
+   _cond_64 = (wave < 0.6666667f);
    if(_cond_64){
       fixed_pitch = pitch;
    }
@@ -216,7 +216,7 @@ float Synth2_osc(Synth2__ctx_type_11 &_ctx, float pitch, float pw, float wave){
    uint8_t _cond_66;
    _cond_66 = (shift > 1.f);
    if(_cond_66){
-      shift = (shift + (-1.f));
+      shift = (shift + -1.f);
    }
    float tmp1;
    tmp1 = Synth2_pulse_train(_ctx.m,_ctx.phase);
@@ -226,20 +226,20 @@ float Synth2_osc(Synth2__ctx_type_11 &_ctx, float pitch, float pw, float wave){
    uint8_t _cond_67;
    _cond_67 = (_ctx.phase > 1.f);
    if(_cond_67){
-      _ctx.phase = (_ctx.phase + (-1.f));
+      _ctx.phase = (_ctx.phase + -1.f);
    }
-   _ctx.state_pulse = float_clip(((_ctx.state_pulse * 0.9995f) + tmp1 + (- tmp2)),(-1.f),1.f);
-   _ctx.state_saw = float_clip(((_ctx.state_saw * 0.9995f) + (((tmp1 + tmp2 + ((-2.f) * _ctx.rate)) / shift05) * 0.5f)),(-1.f),1.f);
-   _ctx.state_triang = float_clip(((_ctx.state_triang * 0.9995f) + (2.f * _ctx.state_pulse * _ctx.rate)),(-1.f),1.f);
+   _ctx.state_pulse = float_clip(((_ctx.state_pulse * 0.9995f) + tmp1 + (- tmp2)),-1.f,1.f);
+   _ctx.state_saw = float_clip(((_ctx.state_saw * 0.9995f) + (((tmp1 + tmp2 + (-2.f * _ctx.rate)) / shift05) * 0.5f)),-1.f,1.f);
+   _ctx.state_triang = float_clip(((_ctx.state_triang * 0.9995f) + (2.f * _ctx.state_pulse * _ctx.rate)),-1.f,1.f);
    uint8_t _cond_69;
-   _cond_69 = (wave < 0.333333333333f);
+   _cond_69 = (wave < 0.3333334f);
    if(_cond_69){
       _ctx.output = _ctx.state_pulse;
    }
    else
    {
       uint8_t _cond_68;
-      _cond_68 = (wave < 0.666666666667f);
+      _cond_68 = (wave < 0.6666667f);
       if(_cond_68){
          _ctx.output = (2.f * _ctx.state_saw);
       }
@@ -249,7 +249,7 @@ float Synth2_osc(Synth2__ctx_type_11 &_ctx, float pitch, float pw, float wave){
       }
    }
    _ctx.output = Synth2_dcblock(_ctx._inst24,_ctx.output);
-   return float_clip((_ctx.output * 0.25f),(-1.f),1.f);
+   return float_clip((_ctx.output * 0.25f),-1.f,1.f);
 }
 
 void Synth2__ctx_type_12_init(Synth2__ctx_type_12 &_output_){
@@ -274,8 +274,8 @@ float Synth2_svf_step(Synth2__ctx_type_12 &_ctx, float input, float g, float q, 
    band = ((g * high) + _ctx.dband);
    float notch;
    notch = (high + low);
-   _ctx.dband = float_clip(band,(-1.f),1.f);
-   _ctx.dlow = float_clip(low,(-1.f),1.f);
+   _ctx.dband = float_clip(band,-1.f,1.f);
+   _ctx.dlow = float_clip(low,-1.f,1.f);
    float output;
    uint8_t _cond_70;
    _cond_70 = (sel == 0);
@@ -344,7 +344,7 @@ void Synth2_lfo_init(Synth2__ctx_type_14 &_output_){
 
 float Synth2_lfo(Synth2__ctx_type_14 &_ctx, float f, uint8_t gate){
    float rate;
-   rate = ((0.00152588f * f) + 1.52588e-05f);
+   rate = ((0.0015259f * f) + 1.53e-05f);
    uint8_t _cond_72;
    _cond_72 = Synth2_edge(_ctx._inst30,gate);
    if(_cond_72){
@@ -358,9 +358,9 @@ float Synth2_lfo(Synth2__ctx_type_14 &_ctx, float f, uint8_t gate){
    uint8_t _cond_74;
    _cond_74 = (_ctx.phase > 1.f);
    if(_cond_74){
-      _ctx.phase = (_ctx.phase + (-1.f));
+      _ctx.phase = (_ctx.phase + -1.f);
    }
-   return (sinf((6.28318530718f * _ctx.phase)) + 0.5f);
+   return (sinf((6.2831854f * _ctx.phase)) + 0.5f);
 }
 
 void Synth2__ctx_type_15_init(Synth2__ctx_type_15 &_output_){
@@ -512,9 +512,9 @@ void Synth2_controlChange_init(Synth2__ctx_type_16 &_output_){
 
 void Synth2_controlChange(Synth2__ctx_type_16 &_ctx, int control, int value, int channel){
    float value_0_1;
-   value_0_1 = (int_to_float(value) * 0.00787401574803f);
+   value_0_1 = (int_to_float(value) * 0.0078741f);
    float value_m1_1;
-   value_m1_1 = ((value_0_1 * 2.f) + (-1.f));
+   value_m1_1 = ((value_0_1 * 2.f) + -1.f);
    uint8_t _cond_81;
    _cond_81 = (control == 30);
    if(_cond_81){

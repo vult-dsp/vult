@@ -216,7 +216,7 @@ fix16_t Synth2_osc(Synth2__ctx_type_11 &_ctx, fix16_t pitch, fix16_t pw, fix16_t
    uint8_t _cond_66;
    _cond_66 = (shift > 0x10000 /* 1.000000 */);
    if(_cond_66){
-      shift = (shift + (-0x10000 /* -1.000000 */));
+      shift = (shift + -0x10000 /* -1.000000 */);
    }
    fix16_t tmp1;
    tmp1 = Synth2_pulse_train(_ctx.m,_ctx.phase);
@@ -226,11 +226,11 @@ fix16_t Synth2_osc(Synth2__ctx_type_11 &_ctx, fix16_t pitch, fix16_t pw, fix16_t
    uint8_t _cond_67;
    _cond_67 = (_ctx.phase > 0x10000 /* 1.000000 */);
    if(_cond_67){
-      _ctx.phase = (_ctx.phase + (-0x10000 /* -1.000000 */));
+      _ctx.phase = (_ctx.phase + -0x10000 /* -1.000000 */);
    }
-   _ctx.state_pulse = fix_clip((fix_mul(_ctx.state_pulse,0xffdf /* 0.999500 */) + tmp1 + (- tmp2)),(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
-   _ctx.state_saw = fix_clip((fix_mul(_ctx.state_saw,0xffdf /* 0.999500 */) + (fix_div((tmp1 + tmp2 + (- (_ctx.rate << 1))),shift05) >> 1)),(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
-   _ctx.state_triang = fix_clip((fix_mul(_ctx.state_triang,0xffdf /* 0.999500 */) + (fix_mul(_ctx.state_pulse,_ctx.rate) << 1)),(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
+   _ctx.state_pulse = fix_clip((fix_mul(_ctx.state_pulse,0xffdf /* 0.999500 */) + tmp1 + (- tmp2)),-0x10000 /* -1.000000 */,0x10000 /* 1.000000 */);
+   _ctx.state_saw = fix_clip((fix_mul(_ctx.state_saw,0xffdf /* 0.999500 */) + (fix_div((tmp1 + tmp2 + (- (_ctx.rate << 1))),shift05) >> 1)),-0x10000 /* -1.000000 */,0x10000 /* 1.000000 */);
+   _ctx.state_triang = fix_clip((fix_mul(_ctx.state_triang,0xffdf /* 0.999500 */) + (fix_mul(_ctx.state_pulse,_ctx.rate) << 1)),-0x10000 /* -1.000000 */,0x10000 /* 1.000000 */);
    uint8_t _cond_69;
    _cond_69 = (wave < 0x5555 /* 0.333333 */);
    if(_cond_69){
@@ -249,7 +249,7 @@ fix16_t Synth2_osc(Synth2__ctx_type_11 &_ctx, fix16_t pitch, fix16_t pw, fix16_t
       }
    }
    _ctx.output = Synth2_dcblock(_ctx._inst24,_ctx.output);
-   return fix_clip((_ctx.output >> 2),(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
+   return fix_clip((_ctx.output >> 2),-0x10000 /* -1.000000 */,0x10000 /* 1.000000 */);
 }
 
 void Synth2__ctx_type_12_init(Synth2__ctx_type_12 &_output_){
@@ -274,8 +274,8 @@ fix16_t Synth2_svf_step(Synth2__ctx_type_12 &_ctx, fix16_t input, fix16_t g, fix
    band = (fix_mul(g,high) + _ctx.dband);
    fix16_t notch;
    notch = (high + low);
-   _ctx.dband = fix_clip(band,(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
-   _ctx.dlow = fix_clip(low,(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
+   _ctx.dband = fix_clip(band,-0x10000 /* -1.000000 */,0x10000 /* 1.000000 */);
+   _ctx.dlow = fix_clip(low,-0x10000 /* -1.000000 */,0x10000 /* 1.000000 */);
    fix16_t output;
    uint8_t _cond_70;
    _cond_70 = (sel == 0);
@@ -358,7 +358,7 @@ fix16_t Synth2_lfo(Synth2__ctx_type_14 &_ctx, fix16_t f, uint8_t gate){
    uint8_t _cond_74;
    _cond_74 = (_ctx.phase > 0x10000 /* 1.000000 */);
    if(_cond_74){
-      _ctx.phase = (_ctx.phase + (-0x10000 /* -1.000000 */));
+      _ctx.phase = (_ctx.phase + -0x10000 /* -1.000000 */);
    }
    return (fix_sin(fix_mul(0x6487e /* 6.283185 */,_ctx.phase)) + 0x8000 /* 0.500000 */);
 }
@@ -514,7 +514,7 @@ void Synth2_controlChange(Synth2__ctx_type_16 &_ctx, int control, int value, int
    fix16_t value_0_1;
    value_0_1 = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    fix16_t value_m1_1;
-   value_m1_1 = ((value_0_1 << 1) + (-0x10000 /* -1.000000 */));
+   value_m1_1 = ((value_0_1 << 1) + -0x10000 /* -1.000000 */);
    uint8_t _cond_81;
    _cond_81 = (control == 30);
    if(_cond_81){

@@ -103,33 +103,33 @@ float Util_average2(Util__ctx_type_5 &_ctx, float x1){
 
 float Util_cubic_clipper(float x){
    uint8_t _cond_21;
-   _cond_21 = (x <= (-0.666666666667f));
+   _cond_21 = (x <= -0.6666666f);
    if(_cond_21){
-      return (-0.666666666667f);
+      return -0.6666666f;
    }
    else
    {
       uint8_t _cond_20;
-      _cond_20 = (x >= 0.666666666667f);
+      _cond_20 = (x >= 0.6666667f);
       if(_cond_20){
-         return 0.666666666667f;
+         return 0.6666667f;
       }
       else
       {
-         return (x + ((-0.333333333333f) * x * x * x));
+         return (x + (-0.3333333f * x * x * x));
       }
    }
 }
 
 float Util_pitchToRate_1024(float pitch){
    int index;
-   index = int_clip(float_to_int((0.244094488189f * pitch)),0,31);
+   index = int_clip(float_to_int((0.2440945f * pitch)),0,31);
    return (float_wrap_array(Util_pitchToRate_1024_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_1024_c1)[index] + (float_wrap_array(Util_pitchToRate_1024_c2)[index] * pitch))));
 }
 
 float Util_pitchToRate(float pitch){
    int index;
-   index = int_clip(float_to_int((0.244094488189f * pitch)),0,31);
+   index = int_clip(float_to_int((0.2440945f * pitch)),0,31);
    return (float_wrap_array(Util_pitchToRate_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_c1)[index] + (float_wrap_array(Util_pitchToRate_c2)[index] * pitch))));
 }
 
@@ -139,18 +139,18 @@ float Util_cvToPitch(float cv){
 
 float Util_cvToRate_1024(float cv){
    int index;
-   index = int_clip(float_to_int((34.4444444444f * cv)),0,31);
+   index = int_clip(float_to_int((34.4444445f * cv)),0,31);
    return (float_wrap_array(Util_cvToRate_1024_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_1024_c1)[index] + (float_wrap_array(Util_cvToRate_1024_c2)[index] * cv))));
 }
 
 float Util_cvToRate(float cv){
    int index;
-   index = int_clip(float_to_int((141.111111111f * cv)),0,127);
+   index = int_clip(float_to_int((141.1111112f * cv)),0,127);
    return (float_wrap_array(Util_cvToRate_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_c1)[index] + (float_wrap_array(Util_cvToRate_c2)[index] * cv))));
 }
 
 float Util_pitchToCv(float pitch){
-   return (0.00833333333333f * ((-24.f) + pitch));
+   return (0.0083334f * (-24.f + pitch));
 }
 
 float Util_cvToperiod(float cv){
@@ -300,7 +300,7 @@ void Monocv_noteOn(Monocv__ctx_type_1 &_ctx, int note, int velocity, int channel
       _cond_53 = (velocity > 0);
       if(_cond_53){
          _ctx.active_note = Monocv_mono_noteOn(_ctx.notes,note);
-         _ctx.vel = (int_to_float(velocity) * 0.00787401574803f);
+         _ctx.vel = (int_to_float(velocity) * 0.0078741f);
       }
       else
       {

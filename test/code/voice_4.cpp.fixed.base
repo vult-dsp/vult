@@ -103,9 +103,9 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
 
 fix16_t Util_cubic_clipper(fix16_t x){
    uint8_t _cond_21;
-   _cond_21 = (x <= (-0xaaaa /* -0.666667 */));
+   _cond_21 = (x <= -0xaaaa /* -0.666667 */);
    if(_cond_21){
-      return (-0xaaaa /* -0.666667 */);
+      return -0xaaaa /* -0.666667 */;
    }
    else
    {
@@ -116,7 +116,7 @@ fix16_t Util_cubic_clipper(fix16_t x){
       }
       else
       {
-         return (x + fix_mul(fix_mul(fix_mul((-0x5555 /* -0.333333 */),x),x),x));
+         return (x + fix_mul(fix_mul(fix_mul(-0x5555 /* -0.333333 */,x),x),x));
       }
    }
 }
@@ -139,7 +139,7 @@ fix16_t Util_cvToPitch(fix16_t cv){
 
 fix16_t Util_cvToRate_1024(fix16_t cv){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
+   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444445 */,cv)),0,31);
    return (fix_wrap_array(Util_cvToRate_1024_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_1024_c2)[index],cv))));
 }
 
@@ -150,7 +150,7 @@ fix16_t Util_cvToRate(fix16_t cv){
 }
 
 fix16_t Util_pitchToCv(fix16_t pitch){
-   return fix_mul(0x222 /* 0.008333 */,((-0x180000 /* -24.000000 */) + pitch));
+   return fix_mul(0x222 /* 0.008333 */,(-0x180000 /* -24.000000 */ + pitch));
 }
 
 fix16_t Util_cvToperiod(fix16_t cv){
@@ -211,13 +211,13 @@ fix16_t Tricore_process(Tricore__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset, fi
    uint8_t _cond_42;
    _cond_42 = (new_phase > 0x4000000 /* 1024.000000 */);
    if(_cond_42){
-      new_phase = (0x4000000 /* 1024.000000 */ + (- (new_phase + (-0x4000000 /* -1024.000000 */))));
+      new_phase = (0x4000000 /* 1024.000000 */ + (- (new_phase + -0x4000000 /* -1024.000000 */)));
       _ctx.direction = 0;
    }
    else
    {
       uint8_t _cond_41;
-      _cond_41 = (new_phase < (-0x4000000 /* -1024.000000 */));
+      _cond_41 = (new_phase < -0x4000000 /* -1024.000000 */);
       if(_cond_41){
          _ctx.direction = 1;
       }
@@ -475,12 +475,12 @@ fix16_t Lfo_process(Lfo__ctx_type_1 &_ctx, fix16_t cv, fix16_t shape, fix16_t re
    uint8_t _cond_82;
    _cond_82 = Util_change(_ctx._inst72,cv);
    if(_cond_82){
-      _ctx.rate = Util_cvToRate((cv + (-0x4ccc /* -0.300000 */)));
+      _ctx.rate = Util_cvToRate((cv + -0x4ccc /* -0.300000 */));
    }
    _ctx.phase = (_ctx.phase + _ctx.rate);
    uint8_t _cond_84;
    _cond_84 = (_ctx.phase > 0x20000 /* 2.000000 */);
-   if(_cond_84){ _ctx.phase = (_ctx.phase + (-0x20000 /* -2.000000 */)); }
+   if(_cond_84){ _ctx.phase = (_ctx.phase + -0x20000 /* -2.000000 */); }
    uint8_t breset;
    breset = (reset > 0x0 /* 0.000000 */);
    uint8_t _cond_83;
@@ -489,7 +489,7 @@ fix16_t Lfo_process(Lfo__ctx_type_1 &_ctx, fix16_t cv, fix16_t shape, fix16_t re
       _ctx.phase = 0x0 /* 0.000000 */;
    }
    fix16_t tmp;
-   tmp = (_ctx.phase + (-0x10000 /* -1.000000 */));
+   tmp = (_ctx.phase + -0x10000 /* -1.000000 */);
    fix16_t o;
    uint8_t _cond_85;
    _cond_85 = (shape < 0x10000 /* 1.000000 */);
@@ -498,7 +498,7 @@ fix16_t Lfo_process(Lfo__ctx_type_1 &_ctx, fix16_t cv, fix16_t shape, fix16_t re
    {
       uint8_t _cond_86;
       _cond_86 = (shape < 0x20000 /* 2.000000 */);
-      if(_cond_86){ o = ((fix_abs(tmp) << 1) + (-0x10000 /* -1.000000 */)); }
+      if(_cond_86){ o = ((fix_abs(tmp) << 1) + -0x10000 /* -1.000000 */); }
       else
       {
          uint8_t _cond_87;
@@ -578,7 +578,7 @@ fix16_t Phase_process(Phase__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset){
    { _ctx.phase = (_ctx.phase + _ctx.rate); }
    uint8_t _cond_99;
    _cond_99 = (_ctx.phase > 0x4000000 /* 1024.000000 */);
-   if(_cond_99){ _ctx.phase = (_ctx.phase + (-0x4000000 /* -1024.000000 */)); }
+   if(_cond_99){ _ctx.phase = (_ctx.phase + -0x4000000 /* -1024.000000 */); }
    return (_ctx.phase >> 10);
 }
 
@@ -700,7 +700,7 @@ fix16_t Blit_osc_blit(Blit__ctx_type_1 &_ctx, fix16_t cv, fix16_t pw, fix16_t wa
    }
    else
    {
-      fixed_cv = (cv + (-0x1999 /* -0.100000 */));
+      fixed_cv = (cv + -0x1999 /* -0.100000 */);
    }
    uint8_t _cond_128;
    _cond_128 = Util_change(_ctx._inst109,fixed_cv);
@@ -716,7 +716,7 @@ fix16_t Blit_osc_blit(Blit__ctx_type_1 &_ctx, fix16_t cv, fix16_t pw, fix16_t wa
    uint8_t _cond_129;
    _cond_129 = (shift > 0x10000 /* 1.000000 */);
    if(_cond_129){
-      shift = (shift + (-0x10000 /* -1.000000 */));
+      shift = (shift + -0x10000 /* -1.000000 */);
    }
    fix16_t pulse1;
    pulse1 = Blit_pulse_train(_ctx._inst113,fixed_cv,phase);
@@ -1060,7 +1060,7 @@ void Voice_4_controlChange(Voice_4__ctx_type_0 &_ctx, int control, int value, in
    uint8_t _cond_201;
    _cond_201 = (control == 36);
    if(_cond_201){
-      _ctx.pw3 = fix_mul(0x33 /* 0.000787 */,int_to_fix(value));
+      _ctx.pw3 = fix_mul(0x33 /* 0.000788 */,int_to_fix(value));
    }
    uint8_t _cond_202;
    _cond_202 = (control == 37);
@@ -1070,7 +1070,7 @@ void Voice_4_controlChange(Voice_4__ctx_type_0 &_ctx, int control, int value, in
    uint8_t _cond_203;
    _cond_203 = (control == 38);
    if(_cond_203){
-      _ctx.lfo_rate = Util_map(int_to_fix(value),0x0 /* 0.000000 */,0x7f0000 /* 127.000000 */,(-0x6666 /* -0.400000 */),0x1999 /* 0.100000 */);
+      _ctx.lfo_rate = Util_map(int_to_fix(value),0x0 /* 0.000000 */,0x7f0000 /* 127.000000 */,-0x6666 /* -0.400000 */,0x1999 /* 0.100000 */);
    }
    uint8_t _cond_204;
    _cond_204 = (control == 39);
@@ -1080,17 +1080,17 @@ void Voice_4_controlChange(Voice_4__ctx_type_0 &_ctx, int control, int value, in
    uint8_t _cond_205;
    _cond_205 = (control == 40);
    if(_cond_205){
-      _ctx.lfo_pw = Util_map(int_to_fix(value),0x0 /* 0.000000 */,0x7f0000 /* 127.000000 */,(-0x10000 /* -1.000000 */),0x10000 /* 1.000000 */);
+      _ctx.lfo_pw = Util_map(int_to_fix(value),0x0 /* 0.000000 */,0x7f0000 /* 127.000000 */,-0x10000 /* -1.000000 */,0x10000 /* 1.000000 */);
    }
    uint8_t _cond_206;
    _cond_206 = (control == 41);
    if(_cond_206){
-      _ctx.lfo_cv = Util_map(int_to_fix(value),0x0 /* 0.000000 */,0x7f0000 /* 127.000000 */,(-0x1999 /* -0.100000 */),0x1999 /* 0.100000 */);
+      _ctx.lfo_cv = Util_map(int_to_fix(value),0x0 /* 0.000000 */,0x7f0000 /* 127.000000 */,-0x1999 /* -0.100000 */,0x1999 /* 0.100000 */);
    }
    uint8_t _cond_207;
    _cond_207 = (control == 42);
    if(_cond_207){
-      _ctx.lfo_flt = Util_map(int_to_fix(value),0x0 /* 0.000000 */,0x7f0000 /* 127.000000 */,(-0x4ccc /* -0.300000 */),0x4ccc /* 0.300000 */);
+      _ctx.lfo_flt = Util_map(int_to_fix(value),0x0 /* 0.000000 */,0x7f0000 /* 127.000000 */,-0x4ccc /* -0.300000 */,0x4ccc /* 0.300000 */);
    }
    uint8_t _cond_209;
    _cond_209 = (control == 43);
@@ -1104,7 +1104,7 @@ void Voice_4_controlChange(Voice_4__ctx_type_0 &_ctx, int control, int value, in
    uint8_t _cond_210;
    _cond_210 = (control == 44);
    if(_cond_210){
-      _ctx.flt_cut = Util_map(int_to_fix(value),0x0 /* 0.000000 */,0x7f0000 /* 127.000000 */,(-0x3333 /* -0.200000 */),0x8000 /* 0.500000 */);
+      _ctx.flt_cut = Util_map(int_to_fix(value),0x0 /* 0.000000 */,0x7f0000 /* 127.000000 */,-0x3333 /* -0.200000 */,0x8000 /* 0.500000 */);
    }
    uint8_t _cond_211;
    _cond_211 = (control == 45);

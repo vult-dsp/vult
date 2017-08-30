@@ -28,4 +28,7 @@ let to_string (f:float) =
    string_of_float f
 
 let crop (f:float) =
-   f
+   if !reduce_precision then
+      let ff = f *. 10000000.0 in
+      (ceil ff) /. 10000000.0
+   else f

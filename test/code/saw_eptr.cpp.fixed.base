@@ -103,9 +103,9 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
 
 fix16_t Util_cubic_clipper(fix16_t x){
    uint8_t _cond_21;
-   _cond_21 = (x <= (-0xaaaa /* -0.666667 */));
+   _cond_21 = (x <= -0xaaaa /* -0.666667 */);
    if(_cond_21){
-      return (-0xaaaa /* -0.666667 */);
+      return -0xaaaa /* -0.666667 */;
    }
    else
    {
@@ -116,7 +116,7 @@ fix16_t Util_cubic_clipper(fix16_t x){
       }
       else
       {
-         return (x + fix_mul(fix_mul(fix_mul((-0x5555 /* -0.333333 */),x),x),x));
+         return (x + fix_mul(fix_mul(fix_mul(-0x5555 /* -0.333333 */,x),x),x));
       }
    }
 }
@@ -139,7 +139,7 @@ fix16_t Util_cvToPitch(fix16_t cv){
 
 fix16_t Util_cvToRate_1024(fix16_t cv){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
+   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444445 */,cv)),0,31);
    return (fix_wrap_array(Util_cvToRate_1024_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_1024_c2)[index],cv))));
 }
 
@@ -150,7 +150,7 @@ fix16_t Util_cvToRate(fix16_t cv){
 }
 
 fix16_t Util_pitchToCv(fix16_t pitch){
-   return fix_mul(0x222 /* 0.008333 */,((-0x180000 /* -24.000000 */) + pitch));
+   return fix_mul(0x222 /* 0.008333 */,(-0x180000 /* -24.000000 */ + pitch));
 }
 
 fix16_t Util_cvToperiod(fix16_t cv){
@@ -192,8 +192,8 @@ fix16_t Saw_eptr_process(Saw_eptr__ctx_type_0 &_ctx, fix16_t cv){
    uint8_t _cond_32;
    _cond_32 = (_ctx.phase > (0x10000 /* 1.000000 */ + (- _ctx.rate)));
    if(_cond_32){
-      y = (_ctx.phase + (- fix_div(_ctx.phase,_ctx.rate)) + fix_div(0x10000 /* 1.000000 */,_ctx.rate) + (-0x10000 /* -1.000000 */));
-      _ctx.phase = (_ctx.phase + (-0x20000 /* -2.000000 */));
+      y = (_ctx.phase + (- fix_div(_ctx.phase,_ctx.rate)) + fix_div(0x10000 /* 1.000000 */,_ctx.rate) + -0x10000 /* -1.000000 */);
+      _ctx.phase = (_ctx.phase + -0x20000 /* -2.000000 */);
    }
    else
    {

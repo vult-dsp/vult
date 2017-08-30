@@ -123,8 +123,9 @@ let fit (x_points:float list) (y_points:float list) : float list =
 let lagrange (x_points:float list) (y_points:float list) : float list =
    match x_points, y_points with
    | [x1; x2; x3], [y1; y2; y3] ->
-      let c0 = (x2 *. x3  *. y1) /. ((x1 -. x2) *. (x1 -. x3)) +. (x1  *. x3  *. y2)/.((-.x1 +. x2)  *. (x2 -. x3)) +. (x1  *. x2  *. y3) /. ((-.x1 +. x3) *. (-.x2 +. x3)) in
-      let c1 = -.((x2 *. y1)/.((x1 -. x2) *. (x1 -. x3))) -. (x3 *. y1)/.((x1 -. x2) *. (x1 -. x3)) -. (x1 *. y2)/.((-.x1 +. x2) *. (x2 -. x3)) -. (x3 *. y2)/.((-.x1 +. x2) *. (x2 -. x3)) -. (x1 *. y3)/.((-.x1 +. x3) *. (-.x2 +. x3)) -. (x2 *. y3)/.((-.x1 +. x3) *. (-.x2 +. x3)) in
-      let c2 = y1 /. ((x1 -. x2) *. (x1 -. x3)) +. y2 /.((-.x1 +. x2) *. (x2 -. x3)) +. y3/.((-.x1 +. x3) *. (-.x2 +. x3)) in
+      let den = (x1 -. x2) *. (x1 -. x3) *. (x2 -. x3) in
+      let c0 = (x2 *. (x2 -. x3) *. x3 *. y1 +. x1 *. x3 *. (x3 -. x1) *. y2 +. x1 *. (x1 -. x2) *. x2 *. y3) /. den in
+      let c1 = (x3 *. x3 *. (y1 -. y2) +. x1 *. x1 *. (y2 -. y3) +. x2 *. x2 *. (y3 -. y1)) /. den in
+      let c2 = (x3 *. (y2 -. y1) +. x2 *. (y1 -. y3) +. x1 *. (y3 -. y2)) /. den in
       [c0; c1; c2]
    | _ -> failwith "Fitting.lagrange: invalid input"

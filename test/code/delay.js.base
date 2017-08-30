@@ -42,7 +42,7 @@ this.Delay_each = function(_ctx,n){
    return ret;
 }
 this.Delay_pitchToRate = function(d){
-   return (0.000185392290249 * this.exp((0.0577623 * d)));
+   return (0.0001854 * this.exp((0.0577623 * d)));
 }
 this.Delay__ctx_type_5_init = function(){
    var _ctx = {};
@@ -69,7 +69,7 @@ this.Delay__ctx_type_6_init = function(){
 }
 this.Delay_lfo_init = function() { return this.Delay__ctx_type_6_init();}
 this.Delay_lfo = function(_ctx,f,gate){
-   var rate = (0.000226757369615 * f);
+   var rate = (0.0002268 * f);
    if(this.Delay_edge(_ctx._inst9,gate)){
       _ctx.phase = 0.;
    }
@@ -77,7 +77,7 @@ this.Delay_lfo = function(_ctx,f,gate){
    if((_ctx.phase > 1.)){
       _ctx.phase = (_ctx.phase + (-1.));
    }
-   return (this.sin((6.28318530718 * _ctx.phase)) + (-0.5));
+   return (this.sin((6.2831854 * _ctx.phase)) + (-0.5));
 }
 this.Delay__ctx_type_7_init = function(){
    var _ctx = {};
@@ -94,7 +94,7 @@ this.Delay_phd_osc = function(_ctx,pitch,detune){
    var reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5);
    _ctx.pre_phase1 = phase1;
    var phase2 = this.Delay_phasor(_ctx._inst15,(pitch + (this.Delay_smooth(_ctx._inst14,detune) * 32.)),reset);
-   var sine = this.sin((6.28318530718 * phase2));
+   var sine = this.sin((6.2831854 * phase2));
    return (sine * comp);
 }
 this.Delay__ctx_type_8_init = function(){
@@ -223,22 +223,22 @@ this.Delay_noteOff = function(_ctx,note,channel){
 this.Delay_controlChange_init = function() { return this.Delay__ctx_type_10_init();}
 this.Delay_controlChange = function(_ctx,control,value,channel){
    if((control == (30|0))){
-      _ctx.volume = (value * 0.00787401574803);
+      _ctx.volume = (value * 0.0078741);
    }
    if((control == (31|0))){
-      _ctx.detune = (value * 0.00787401574803);
+      _ctx.detune = (value * 0.0078741);
    }
    if((control == (32|0))){
-      _ctx.lfo_rate = (value * 0.00787401574803);
+      _ctx.lfo_rate = (value * 0.0078741);
    }
    if((control == (33|0))){
-      _ctx.lfo_amt = (2. * ((value * 0.00787401574803) + (-0.5)));
+      _ctx.lfo_amt = (2. * ((value * 0.0078741) + (-0.5)));
    }
    if((control == (34|0))){
-      _ctx.time = (value * 0.00787401574803);
+      _ctx.time = (value * 0.0078741);
    }
    if((control == (35|0))){
-      _ctx.feedback = (value * 0.00787401574803);
+      _ctx.feedback = (value * 0.0078741);
    }
 }
 this.Delay_default_init = function() { return this.Delay__ctx_type_10_init();}
@@ -246,7 +246,7 @@ this.Delay_default = function(_ctx){
    _ctx.volume = 1.;
    _ctx.pitch = 45.;
    _ctx.detune = 0.8;
-   _ctx.lfo_rate = 0.07;
+   _ctx.lfo_rate = 0.0700001;
    _ctx.lfo_amt = (-0.8);
    _ctx.time = 0.5;
    _ctx.feedback = 0.5;

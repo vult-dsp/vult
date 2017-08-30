@@ -103,9 +103,9 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
 
 fix16_t Util_cubic_clipper(fix16_t x){
    uint8_t _cond_21;
-   _cond_21 = (x <= (-0xaaaa /* -0.666667 */));
+   _cond_21 = (x <= -0xaaaa /* -0.666667 */);
    if(_cond_21){
-      return (-0xaaaa /* -0.666667 */);
+      return -0xaaaa /* -0.666667 */;
    }
    else
    {
@@ -116,7 +116,7 @@ fix16_t Util_cubic_clipper(fix16_t x){
       }
       else
       {
-         return (x + fix_mul(fix_mul(fix_mul((-0x5555 /* -0.333333 */),x),x),x));
+         return (x + fix_mul(fix_mul(fix_mul(-0x5555 /* -0.333333 */,x),x),x));
       }
    }
 }
@@ -139,7 +139,7 @@ fix16_t Util_cvToPitch(fix16_t cv){
 
 fix16_t Util_cvToRate_1024(fix16_t cv){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444444 */,cv)),0,31);
+   index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444445 */,cv)),0,31);
    return (fix_wrap_array(Util_cvToRate_1024_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_1024_c2)[index],cv))));
 }
 
@@ -150,7 +150,7 @@ fix16_t Util_cvToRate(fix16_t cv){
 }
 
 fix16_t Util_pitchToCv(fix16_t pitch){
-   return fix_mul(0x222 /* 0.008333 */,((-0x180000 /* -24.000000 */) + pitch));
+   return fix_mul(0x222 /* 0.008333 */,(-0x180000 /* -24.000000 */ + pitch));
 }
 
 fix16_t Util_cvToperiod(fix16_t cv){
@@ -194,7 +194,7 @@ void Sawcore_ptr_w2(fix16_t phase, fix16_t rate, _tuple___bool_real__ &_output_)
          t2 = (s2 >> 10);
          {
             out.field_0 = 0;
-            out.field_1 = (0x30000 /* 3.000000 */ + fix_mul(d,((-0x40000 /* -4.000000 */) + d + t2)));
+            out.field_1 = (0x30000 /* 3.000000 */ + fix_mul(d,(-0x40000 /* -4.000000 */ + d + t2)));
          }
       }
       else
@@ -247,7 +247,7 @@ fix16_t Sawcore_process(Sawcore__ctx_type_1 &_ctx, fix16_t cv, fix16_t reset){
    _cond_48 = (do_reset || do_wrap);
    if(_cond_48){
       _ctx.reset_phase = _ctx.phase;
-      if(do_wrap){ new_phase = (new_phase + (-0x4000000 /* -1024.000000 */)); }
+      if(do_wrap){ new_phase = (new_phase + -0x4000000 /* -1024.000000 */); }
       else
       { new_phase = 0x0 /* 0.000000 */; }
       _ctx.reset_state = 1;
@@ -269,7 +269,7 @@ fix16_t Sawcore_process(Sawcore__ctx_type_1 &_ctx, fix16_t cv, fix16_t reset){
          out = transition;
       }
    }
-   return ((out >> 9) + (-0x10000 /* -1.000000 */));
+   return ((out >> 9) + -0x10000 /* -1.000000 */);
 }
 
 void Sawcore_noteOn_init(Sawcore__ctx_type_1 &_output_){

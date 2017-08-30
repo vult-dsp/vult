@@ -109,21 +109,35 @@ let tokenizeLine line =
    in
    List.rev !tokens
 
-let equalToken t1 t2 =
+let rec equalToken t1 t2 =
    let open BaseTok in
    match t1, t2 with
    | Float f1, Float f2 ->
       let result =
-         if abs_float f2 < 1e-6 || abs_float f1 < 1e-6 then
-            abs_float (f1 -. f2)  < 1e-6
+         if abs_float f2 < 1e-6 && abs_float f1 < 1e-6 then
+            true
          else
-            let delta = abs_float (f1 -. f2) /. f2 in
-            delta < 0.01
+            let delta = abs_float (f1 -. f2) in
+            delta < 1e-6
       in
       let () = if not result then Printf.printf "diff %f %f\n" f1 f2 in
       result
 
-   | _ -> compare t1 t2 = 0
+   | Int n1, Int n2 when n1 = n2 -> true
+
+   | Hex n1, Hex n2 ->
+      abs (n1 - n2) <= 1
+
+   | Id n1, Id n2 when n1 = n2 -> true
+
+   | Other n1, Other n2 when n1 = n2 -> true
+
+   | EOF, EOF -> true
+
+   | _ ->
+      let msg = Printf.sprintf "%s <> %s" (tokenString t1) (tokenString t2) in
+      prerr_endline msg;
+      false
 
 let compareLine line1 line2 =
    let s1 = tokenizeLine line1 in

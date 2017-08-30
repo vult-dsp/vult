@@ -20,7 +20,7 @@ fix16_t Noise_pinker(Noise__ctx_type_0 &_ctx, fix16_t x){
    fix16_t b1;
    b1 = 0x718 /* 0.027713 */;
    fix16_t a1;
-   a1 = (-0xf1cf /* -0.944574 */);
+   a1 = -0xf1cf /* -0.944574 */;
    fix16_t w0;
    w0 = (x + (- fix_mul(a1,_ctx.w1)));
    fix16_t y0;
