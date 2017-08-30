@@ -33,7 +33,7 @@ fun do(x:real, time:real, feedback:real) : real {
    val ret = (x2-x1)*decimal + x1;
    // Write the data to the buffer
    write_pos = (write_pos+1) % size(buffer);
-   _ = set(buffer,write_pos,tanh(x+feedback*ret));
+   _ = set(buffer, write_pos, Saturate.process(x+feedback*ret));
    return ret;
 }
 

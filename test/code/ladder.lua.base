@@ -202,149 +202,162 @@ function this.Util_cvTokHz(cv)
 
 end
 
-local Ladder_tune_c0 = {0.0011649,0.001165,0.0011654,0.0011664,0.0011682,0.0011712,0.0011759,0.0011825,0.0011916,0.0012038,0.0012197,0.0012401,0.0012656,0.0012972,0.0013359,0.0013828,0.0014392,0.0015063,0.0015858,0.0016793,0.0017886,0.0019158,0.0020632,0.0022333,0.0024288,0.0026527,0.0029084,0.0031995,0.0035299,0.0039041,0.0043268,0.0048032,0.0053392,0.0059409,0.0066151,0.0073693,0.0082117,0.009151,0.0101968,0.0113598,0.0126512,0.0140835,0.0156701,0.0174258,0.0193663,0.0215089,0.0238725,0.0264772,0.029345,0.0325,0.0359677,0.0397764,0.0439561,0.0485398,0.0535629,0.0590636,0.0650835,0.0716674,0.0788636,0.0867244,0.0953063,0.1046703,0.114882,0.1260125,0.1381383,0.151342,0.1657125,0.1813459,0.1983454,0.2168226,0.2368974,0.258699,0.2823666,0.30805,0.3359104,0.3661213,0.3988694,0.4343555,0.4727955,0.5144216,0.5594834,0.6082493,0.6610078,0.7180685,0.7797646,0.8464537,0.9185198,0.9963755,1.0804636,1.1712597,1.269274,1.3750543,1.4891884,1.6123069,1.7450863,1.8882523,2.0425832,2.2089135,2.3881382,2.5812166,2.7891772,3.0131222,3.254233,3.5137755,3.793106,4.0936777,4.417047,4.7648813,5.1389661,5.5412136,5.973671,6.4385305,6.9381386,7.4750073,8.051825,8.6714692,9.3370188,10.0517683,(-516.1684513),0.7123583,0.7123583,0.7123583,0.7123583,0.7123583,0.7123583,0.7123583,0.7123583,0.7123583,0.7123583};
-local Ladder_tune_c1 = {0.008072,0.0080469,0.007994,0.0079103,0.0077926,0.0076373,0.0074405,0.0071982,0.006906,0.0065588,0.0061517,0.005679,0.0051346,0.004512,0.0038043,0.0030038,0.0021024,0.0010915,(-3.85e-05),(-0.0012976),(-0.0026967),(-0.0042476),(-0.0059626),(-0.0078554),(-0.0099404),(-0.012233),(-0.0147501),(-0.0175094),(-0.0205301),(-0.0238328),(-0.0274394),(-0.0313737),(-0.0356608),(-0.0403279),(-0.0454039),(-0.0509201),(-0.0569095),(-0.0634078),(-0.0704531),(-0.0780861),(-0.0863505),(-0.0952929),(-0.104963),(-0.1154143),(-0.1267037),(-0.1388922),(-0.1520448),(-0.166231),(-0.1815253),(-0.198007),(-0.2157608),(-0.2348774),(-0.2554534),(-0.277592),(-0.3014035),(-0.3270054),(-0.3545233),(-0.3840911),(-0.4158518),(-0.4499579),(-0.486572),(-0.5258677),(-0.56803),(-0.6132562),(-0.6617569),(-0.7137563),(-0.7694937),(-0.8292241),(-0.8932193),(-0.9617689),(-1.0351816),(-1.1137865),(-1.197934),(-1.2879977),(-1.3843752),(-1.4874906),(-1.5977951),(-1.7157695),(-1.8419261),(-1.9768099),(-2.1210017),(-2.2751197),(-2.4398221),(-2.6158096),(-2.8038282),(-3.0046719),(-3.2191859),(-3.4482695),(-3.6928801),(-3.9540364),(-4.2328222),(-4.530391),(-4.8479699),(-5.1868644),(-5.5484634),(-5.9342444),(-6.3457788),(-6.7847384),(-7.252901),(-7.7521574),(-8.2845184),(-8.8521224),(-9.4572432),(-10.1022985),(-10.7898589),(-11.5226576),(-12.3036002),(-13.1357755),(-14.0224673),(-14.9671658),(-15.9735813),(-17.0456569),(-18.1875838),(-19.4038163),(-20.6990879),(-22.0784291),(-23.5471853),(-25.1110365),1114.2911473,-0.,-0.,-0.,-0.,-0.,-0.,-0.,-0.,-0.,-0.};
-local Ladder_tune_c2 = {0.0287519,0.0303518,0.0320407,0.0338236,0.0357057,0.0376926,0.03979,0.0420041,0.0443414,0.0468088,0.0494135,0.0521631,0.0550657,0.0581298,0.0613645,0.0647791,0.0683838,0.072189,0.0762059,0.0804464,0.0849229,0.0896484,0.0946369,0.099903,0.1054621,0.1113306,0.1175256,0.1240653,0.130969,0.1382568,0.1459501,0.1540715,0.1626448,0.1716952,0.1812492,0.1913349,0.2019817,0.213221,0.2250858,0.2376107,0.2508326,0.2647902,0.2795245,0.2950787,0.3114984,0.3288318,0.3471297,0.3664457,0.3868367,0.4083623,0.4310857,0.4550735,0.4803961,0.5071279,0.5353471,0.5651366,0.5965837,0.6297807,0.664825,0.7018193,0.7408721,0.7820981,0.8256181,0.8715597,0.9200578,0.9712546,1.0253002,1.0823532,1.142581,1.2061601,1.2732771,1.3441288,1.4189231,1.4978793,1.5812291,1.6692168,1.7621007,1.8601531,1.9636617,2.07293,2.1882785,2.3100457,2.4385886,2.5742843,2.7175308,2.8687482,3.0283802,3.196895,3.3747868,3.5625774,3.7608177,3.970089,4.1910053,4.4242146,4.6704008,4.9302861,5.2046327,5.4942454,5.7999737,6.1227142,6.4634138,6.8230716,7.2027426,7.6035405,8.0266409,8.4732847,8.9447822,9.4425162,9.9679467,10.5226148,11.1081476,11.7262624,12.3787724,13.0675914,13.7947399,14.5623506,15.3726752,16.2280905,(-600.5442814),-0.,-0.,-0.,-0.,-0.,-0.,-0.,-0.,-0.,-0.};
+local Ladder_tune_c0 = {0.0011649,0.001165,0.0011654,0.0011664,0.0011682,0.0011713,0.0011759,0.0011825,0.0011917,0.0012039,0.0012198,0.0012401,0.0012656,0.0012972,0.001336,0.0013829,0.0014392,0.0015064,0.0015858,0.0016793,0.0017886,0.0019159,0.0020633,0.0022334,0.0024289,0.0026528,0.0029085,0.0031996,0.00353,0.0039042,0.0043269,0.0048034,0.0053393,0.005941,0.0066153,0.0073695,0.0082119,0.0091512,0.0101971,0.0113601,0.0126516,0.0140839,0.0156706,0.0174263,0.0193668,0.0215096,0.0238732,0.0264779,0.0293459,0.0325009,0.0359688,0.0397775,0.0439574,0.0485412,0.0535644,0.0590654,0.0650854,0.0716695,0.0788659,0.086727,0.0953091,0.1046734,0.1148854,0.1260162,0.1381424,0.1513464,0.1657174,0.1813512,0.1983513,0.216829,0.2369043,0.2587066,0.2823749,0.3080591,0.3359203,0.3661321,0.3988812,0.4343683,0.4728094,0.5144367,0.5594999,0.6082673,0.6610272,0.7180897,0.7797876,0.8464786,0.9185469,0.9964049,1.0804955,1.1712942,1.2693114,1.3750949,1.4892324,1.6123545,1.7451378,1.888308,2.0426435,2.2089787,2.3882087,2.5812928,2.7892594,3.0132111,3.254329,3.5138791,3.7932179,4.0937984,4.4171773,4.7650219,5.1391177,5.541377,5.9738472,6.4387203,6.9383432,7.4752277,8.0520625,8.6717249,9.3372941,10.0520648,(-516.1836749),0.7123793,0.7123793,0.7123793,0.7123793,0.7123793,0.7123793,0.7123793,0.7123793,0.7123793,0.7123793};
+local Ladder_tune_c1 = {0.0080722,0.0080471,0.0079942,0.0079106,0.0077928,0.0076375,0.0074407,0.0071985,0.0069062,0.006559,0.0061519,0.0056792,0.0051347,0.0045122,0.0038044,0.0030039,0.0021025,0.0010915,(-3.85e-05),(-0.0012977),(-0.0026968),(-0.0042477),(-0.0059628),(-0.0078556),(-0.0099407),(-0.0122334),(-0.0147505),(-0.0175099),(-0.0205307),(-0.0238335),(-0.0274402),(-0.0313746),(-0.0356618),(-0.040329),(-0.0454053),(-0.0509216),(-0.0569112),(-0.0634097),(-0.0704552),(-0.0780884),(-0.0863531),(-0.0952957),(-0.1049661),(-0.1154177),(-0.1267075),(-0.1388963),(-0.1520492),(-0.1662359),(-0.1815307),(-0.1980128),(-0.2157672),(-0.2348843),(-0.2554609),(-0.2776002),(-0.3014124),(-0.327015),(-0.3545337),(-0.3841024),(-0.4158641),(-0.4499712),(-0.4865864),(-0.5258832),(-0.5680467),(-0.6132743),(-0.6617764),(-0.7137774),(-0.7695164),(-0.8292486),(-0.8932456),(-0.9617972),(-1.0352122),(-1.1138194),(-1.1979694),(-1.2880357),(-1.3844161),(-1.4875344),(-1.5978422),(-1.7158201),(-1.8419804),(-1.9768682),(-2.1210642),(-2.2751868),(-2.439894),(-2.6158867),(-2.8039109),(-3.0047605),(-3.2192808),(-3.4483712),(-3.6929891),(-3.954153),(-4.2329471),(-4.5305246),(-4.8481129),(-5.1870174),(-5.548627),(-5.9344194),(-6.345966),(-6.7849385),(-7.2531149),(-7.752386),(-8.2847627),(-8.8523835),(-9.4575221),(-10.1025964),(-10.7901772),(-11.5229975),(-12.3039631),(-13.136163),(-14.0228809),(-14.9676073),(-15.9740524),(-17.0461596),(-18.1881202),(-19.4043886),(-20.6996984),(-22.0790803),(-23.5478798),(-25.1117771),1114.3240116,-0.,-0.,-0.,-0.,-0.,-0.,-0.,-0.,-0.,-0.};
+local Ladder_tune_c2 = {0.0287527,0.0303526,0.0320416,0.0338246,0.0357068,0.0376937,0.0397911,0.0420053,0.0443427,0.0468102,0.0494149,0.0521646,0.0550673,0.0581315,0.0613663,0.064781,0.0683858,0.0721911,0.0762082,0.0804488,0.0849254,0.0896511,0.0946397,0.099906,0.1054652,0.1113339,0.1175291,0.124069,0.1309728,0.1382608,0.1459544,0.154076,0.1626496,0.1717003,0.1812546,0.1913405,0.2019877,0.2132273,0.2250924,0.2376177,0.25084,0.264798,0.2795327,0.2950874,0.3115076,0.3288415,0.3471399,0.3664566,0.3868481,0.4083743,0.4310984,0.4550869,0.4804103,0.5071428,0.5353629,0.5651532,0.5966013,0.6297993,0.6648446,0.70184,0.740894,0.7821211,0.8256424,0.8715854,0.9200849,0.9712832,1.0253305,1.0823852,1.1426147,1.2061957,1.2733146,1.3441684,1.4189649,1.4979235,1.5812757,1.6692661,1.7621527,1.860208,1.9637196,2.0729911,2.1883431,2.3101138,2.4386605,2.5743602,2.7176109,2.8688329,3.0284696,3.1969893,3.3748863,3.5626825,3.7609286,3.9702061,4.1911289,4.4243451,4.6705385,4.9304315,5.2047862,5.4944075,5.8001447,6.1228948,6.4636044,6.8232728,7.202955,7.6037648,8.0268776,8.4735346,8.945046,9.4427947,9.9682406,10.5229252,11.1084752,11.7266083,12.3791375,13.0679768,13.7951467,14.5627801,15.3731286,16.2285691,(-600.5619935),-0.,-0.,-0.,-0.,-0.,-0.,-0.,-0.,-0.,-0.};
 function this.Ladder_tune(cut)
    local index = this.clip(this.int((127. * cut)),0,127);
    return (Ladder_tune_c0[index+1] + (cut * (Ladder_tune_c1[index+1] + (Ladder_tune_c2[index+1] * cut))));
 
 end
 
-function this.Ladder_ladder_step(input,fh,res,p,dp)
-   local w0 = this.Util_cubic_clipper((input + ((-4.) * res * p[3+1])));
-   local w1 = this.Util_cubic_clipper(p[0+1]);
-   dp[0+1] = ((w0 + (- w1)) * fh);
-   local w3 = this.Util_cubic_clipper(p[1+1]);
-   dp[1+1] = ((w1 + (- w3)) * fh);
-   local w5 = this.Util_cubic_clipper(p[2+1]);
-   dp[2+1] = ((w3 + (- w5)) * fh);
-   local w7 = this.Util_cubic_clipper(p[3+1]);
-   dp[3+1] = ((w5 + (- w7)) * fh);
-
-end
-
-function this.Ladder__ctx_type_2_init()
+function this.Ladder__ctx_type_1_init()
    local _ctx = {};
-   _ctx.p = this.makeArray(4,0.);
-   _ctx.fh = 0.;
-   _ctx._inst25 = this.Util__ctx_type_1_init();
+   _ctx.p3 = 0.;
+   _ctx.p2 = 0.;
+   _ctx.p1 = 0.;
+   _ctx.p0 = 0.;
    return _ctx;
 
 end
 
 function this.Ladder_heun_init()
-   return this.Ladder__ctx_type_2_init();
+   return this.Ladder__ctx_type_1_init();
 end
 
-function this.Ladder_heun(_ctx,input,cut,res)
-   local dp = {0.0,0.0,0.0,0.0};
-   local pt = {0.0,0.0,0.0,0.0};
-   local dpt = {0.0,0.0,0.0,0.0};
-   if this.Util_change(_ctx._inst25,cut) then
-      _ctx.fh = this.Ladder_tune(cut);
-
-   end
-   this.Ladder_ladder_step(input,_ctx.fh,res,_ctx.p,dpt);
-   pt[0+1] = (_ctx.p[0+1] + dpt[0+1]);
-   pt[1+1] = (_ctx.p[1+1] + dpt[1+1]);
-   pt[2+1] = (_ctx.p[2+1] + dpt[2+1]);
-   pt[3+1] = (_ctx.p[3+1] + dpt[3+1]);
-   this.Ladder_ladder_step(input,_ctx.fh,res,pt,dp);
-   _ctx.p[0+1] = (_ctx.p[0+1] + ((dp[0+1] + dpt[0+1]) * 0.5));
-   _ctx.p[1+1] = (_ctx.p[1+1] + ((dp[1+1] + dpt[1+1]) * 0.5));
-   _ctx.p[2+1] = (_ctx.p[2+1] + ((dp[2+1] + dpt[2+1]) * 0.5));
-   _ctx.p[3+1] = (_ctx.p[3+1] + ((dp[3+1] + dpt[3+1]) * 0.5));
-   return _ctx.p[3+1];
+function this.Ladder_heun(_ctx,input,fh,res)
+   local wt0 = this.Util_cubic_clipper((input + ((-4.) * res * _ctx.p3)));
+   local wt1 = this.Util_cubic_clipper(_ctx.p0);
+   local dpt0 = ((wt0 + (- wt1)) * fh);
+   local wt3 = this.Util_cubic_clipper(_ctx.p1);
+   local dpt1 = ((wt1 + (- wt3)) * fh);
+   local wt5 = this.Util_cubic_clipper(_ctx.p2);
+   local dpt2 = ((wt3 + (- wt5)) * fh);
+   local wt7 = this.Util_cubic_clipper(_ctx.p3);
+   local dpt3 = ((wt5 + (- wt7)) * fh);
+   local pt0 = (_ctx.p0 + dpt0);
+   local pt1 = (_ctx.p1 + dpt1);
+   local pt2 = (_ctx.p2 + dpt2);
+   local pt3 = (_ctx.p3 + dpt3);
+   local w0 = this.Util_cubic_clipper((input + ((-4.) * res * pt3)));
+   local w1 = this.Util_cubic_clipper(pt0);
+   local dp0 = ((w0 + (- w1)) * fh);
+   local w3 = this.Util_cubic_clipper(pt1);
+   local dp1 = ((w1 + (- w3)) * fh);
+   local w5 = this.Util_cubic_clipper(pt2);
+   local dp2 = ((w3 + (- w5)) * fh);
+   local w7 = this.Util_cubic_clipper(pt3);
+   local dp3 = ((w5 + (- w7)) * fh);
+   _ctx.p0 = (_ctx.p0 + ((dp0 + dpt0) * 0.5));
+   _ctx.p1 = (_ctx.p1 + ((dp1 + dpt1) * 0.5));
+   _ctx.p2 = (_ctx.p2 + ((dp2 + dpt2) * 0.5));
+   _ctx.p3 = (_ctx.p3 + ((dp3 + dpt3) * 0.5));
+   return _ctx.p3;
 
 end
 
-function this.Ladder__ctx_type_3_init()
+function this.Ladder__ctx_type_2_init()
    local _ctx = {};
-   _ctx.p = this.makeArray(4,0.);
-   _ctx.fh = 0.;
-   _ctx._inst28 = this.Util__ctx_type_1_init();
+   _ctx.p3 = 0.;
+   _ctx.p2 = 0.;
+   _ctx.p1 = 0.;
+   _ctx.p0 = 0.;
    return _ctx;
 
 end
 
 function this.Ladder_euler_init()
-   return this.Ladder__ctx_type_3_init();
+   return this.Ladder__ctx_type_2_init();
 end
 
-function this.Ladder_euler(_ctx,input,cut,res)
-   local dpt = {0.0,0.0,0.0,0.0};
-   if this.Util_change(_ctx._inst28,cut) then
-      _ctx.fh = this.Ladder_tune(cut);
-
-   end
-   this.Ladder_ladder_step(input,_ctx.fh,res,_ctx.p,dpt);
-   _ctx.p[0+1] = (_ctx.p[0+1] + dpt[0+1]);
-   _ctx.p[1+1] = (_ctx.p[1+1] + dpt[1+1]);
-   _ctx.p[2+1] = (_ctx.p[2+1] + dpt[2+1]);
-   _ctx.p[3+1] = (_ctx.p[3+1] + dpt[3+1]);
-   return _ctx.p[3+1];
+function this.Ladder_euler(_ctx,input,fh,res)
+   local w0 = this.Util_cubic_clipper((input + ((-4.) * res * _ctx.p3)));
+   local w1 = this.Util_cubic_clipper(_ctx.p0);
+   local dpt0 = ((w0 + (- w1)) * fh);
+   local w3 = this.Util_cubic_clipper(_ctx.p1);
+   local dpt1 = ((w1 + (- w3)) * fh);
+   local w5 = this.Util_cubic_clipper(_ctx.p2);
+   local dpt2 = ((w3 + (- w5)) * fh);
+   local w7 = this.Util_cubic_clipper(_ctx.p3);
+   local dpt3 = ((w5 + (- w7)) * fh);
+   _ctx.p0 = (_ctx.p0 + dpt0);
+   _ctx.p1 = (_ctx.p1 + dpt1);
+   _ctx.p2 = (_ctx.p2 + dpt2);
+   _ctx.p3 = (_ctx.p3 + dpt3);
+   return _ctx.p3;
 
 end
 
-function this.Ladder__ctx_type_4_init()
+function this.Ladder__ctx_type_3_init()
    local _ctx = {};
-   _ctx.e = this.Ladder__ctx_type_3_init();
+   _ctx.fh = 0.;
+   _ctx.e = this.Ladder__ctx_type_2_init();
+   _ctx._inst26 = this.Util__ctx_type_1_init();
    return _ctx;
 
 end
 
 function this.Ladder_process_euler_init()
-   return this.Ladder__ctx_type_4_init();
+   return this.Ladder__ctx_type_3_init();
 end
 
 function this.Ladder_process_euler(_ctx,input,cut,res)
-   this.Ladder_euler(_ctx.e,input,cut,res);
-   this.Ladder_euler(_ctx.e,input,cut,res);
-   this.Ladder_euler(_ctx.e,input,cut,res);
-   local out = this.Ladder_euler(_ctx.e,input,cut,res);
+   if this.Util_change(_ctx._inst26,cut) then
+      _ctx.fh = this.Ladder_tune(cut);
+
+   end
+   this.Ladder_euler(_ctx.e,input,_ctx.fh,res);
+   this.Ladder_euler(_ctx.e,input,_ctx.fh,res);
+   this.Ladder_euler(_ctx.e,input,_ctx.fh,res);
+   local out = this.Ladder_euler(_ctx.e,input,_ctx.fh,res);
+   return out;
+
+end
+
+function this.Ladder__ctx_type_4_init()
+   local _ctx = {};
+   _ctx.h = this.Ladder__ctx_type_1_init();
+   _ctx.fh = 0.;
+   _ctx._inst29 = this.Util__ctx_type_1_init();
+   return _ctx;
+
+end
+
+function this.Ladder_process_heun_init()
+   return this.Ladder__ctx_type_4_init();
+end
+
+function this.Ladder_process_heun(_ctx,input,cut,res)
+   if this.Util_change(_ctx._inst29,cut) then
+      _ctx.fh = this.Ladder_tune(cut);
+
+   end
+   this.Ladder_heun(_ctx.h,input,_ctx.fh,res);
+   this.Ladder_heun(_ctx.h,input,_ctx.fh,res);
+   this.Ladder_heun(_ctx.h,input,_ctx.fh,res);
+   local out = this.Ladder_heun(_ctx.h,input,_ctx.fh,res);
    return out;
 
 end
 
 function this.Ladder__ctx_type_5_init()
    local _ctx = {};
-   _ctx.h = this.Ladder__ctx_type_2_init();
-   return _ctx;
-
-end
-
-function this.Ladder_process_heun_init()
-   return this.Ladder__ctx_type_5_init();
-end
-
-function this.Ladder_process_heun(_ctx,input,cut,res)
-   this.Ladder_heun(_ctx.h,input,cut,res);
-   this.Ladder_heun(_ctx.h,input,cut,res);
-   this.Ladder_heun(_ctx.h,input,cut,res);
-   local out = this.Ladder_heun(_ctx.h,input,cut,res);
-   return out;
-
-end
-
-function this.Ladder__ctx_type_6_init()
-   local _ctx = {};
-   _ctx._inst33 = this.Ladder__ctx_type_5_init();
+   _ctx._inst32 = this.Ladder__ctx_type_4_init();
    return _ctx;
 
 end
 
 function this.Ladder_process_init()
-   return this.Ladder__ctx_type_6_init();
+   return this.Ladder__ctx_type_5_init();
 end
 
 function this.Ladder_process(_ctx,input,cut,res)
-   return this.Ladder_process_heun(_ctx._inst33,input,cut,res);
+   return this.Ladder_process_heun(_ctx._inst32,input,cut,res);
 
 end
 
 function this.Ladder_noteOn_init()
-   return this.Ladder__ctx_type_6_init();
+   return this.Ladder__ctx_type_5_init();
 end
 
 function this.Ladder_noteOn(_ctx,note,velocity,channel)
@@ -352,7 +365,7 @@ function this.Ladder_noteOn(_ctx,note,velocity,channel)
 end
 
 function this.Ladder_noteOff_init()
-   return this.Ladder__ctx_type_6_init();
+   return this.Ladder__ctx_type_5_init();
 end
 
 function this.Ladder_noteOff(_ctx,note,channel)
@@ -360,7 +373,7 @@ function this.Ladder_noteOff(_ctx,note,channel)
 end
 
 function this.Ladder_controlChange_init()
-   return this.Ladder__ctx_type_6_init();
+   return this.Ladder__ctx_type_5_init();
 end
 
 function this.Ladder_controlChange(_ctx,control,value,channel)
@@ -368,7 +381,7 @@ function this.Ladder_controlChange(_ctx,control,value,channel)
 end
 
 function this.Ladder_default_init()
-   return this.Ladder__ctx_type_6_init();
+   return this.Ladder__ctx_type_5_init();
 end
 
 function this.Ladder_default(_ctx)

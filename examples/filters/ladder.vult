@@ -9,70 +9,85 @@ Diode ladder filter
 fun tune(cut) @[table(min = 0.0, max = 1.0, size = 128)]{
    val f = Util.cvTokHz(cut);
    f = clip(f, 0.0, 20.0);
-   val fh = (2.0 * 3.1415) * f / (4.0 * 44.1);
+   val fh = (2.0 * pi()) * f / (4.0 * 44.1);
    return fh;
 }
 
-fun ladder_step(input, fh, res, p, dp) {
-   val w0 = Util.cubic_clipper(input - 4.0 * res * p[3]);
-   val w1 = Util.cubic_clipper(p[0]);
-   dp[0] = (w0 - w1) * fh;
-   val w3 = Util.cubic_clipper(p[1]);
-   dp[1] = (w1 - w3) * fh;
-   val w5 = Util.cubic_clipper(p[2]);
-   dp[2] = (w3 - w5) * fh;
-   val w7 = Util.cubic_clipper(p[3]);
-   dp[3] = (w5 - w7) * fh;
+fun heun(input, fh, res) {
+   mem p0, p1, p2, p3;
+
+   val wt0 = Util.cubic_clipper(input - 4.0 * res * p3);
+   val wt1 = Util.cubic_clipper(p0);
+   val dpt0 = (wt0 - wt1) * fh;
+   val wt3 = Util.cubic_clipper(p1);
+   val dpt1 = (wt1 - wt3) * fh;
+   val wt5 = Util.cubic_clipper(p2);
+   val dpt2 = (wt3 - wt5) * fh;
+   val wt7 = Util.cubic_clipper(p3);
+   val dpt3 = (wt5 - wt7) * fh;
+
+   val pt0 = p0 + dpt0;
+   val pt1 = p1 + dpt1;
+   val pt2 = p2 + dpt2;
+   val pt3 = p3 + dpt3;
+
+   val w0 = Util.cubic_clipper(input - 4.0 * res * pt3);
+   val w1 = Util.cubic_clipper(pt0);
+   val dp0 = (w0 - w1) * fh;
+   val w3 = Util.cubic_clipper(pt1);
+   val dp1 = (w1 - w3) * fh;
+   val w5 = Util.cubic_clipper(pt2);
+   val dp2 = (w3 - w5) * fh;
+   val w7 = Util.cubic_clipper(pt3);
+   val dp3 = (w5 - w7) * fh;
+
+   p0 = p0 + (dp0 + dpt0)/ 2.0;
+   p1 = p1 + (dp1 + dpt1)/ 2.0;
+   p2 = p2 + (dp2 + dpt2)/ 2.0;
+   p3 = p3 + (dp3 + dpt3)/ 2.0;
+
+   return p3;
 }
 
-fun heun(input, cut, res) {
-   mem fh;
-   mem p[4];
-   val dp[4], pt[4], dpt[4];
-   if(Util.change(cut)) {
-      fh = tune(cut);
-   }
-   _ = ladder_step(input, fh, res, p, dpt);
-   pt[0] = p[0] + dpt[0];
-   pt[1] = p[1] + dpt[1];
-   pt[2] = p[2] + dpt[2];
-   pt[3] = p[3] + dpt[3];
-   _ = ladder_step(input, fh, res, pt, dp);
-   p[0] = p[0] + (dp[0] + dpt[0])/ 2.0;
-   p[1] = p[1] + (dp[1] + dpt[1])/ 2.0;
-   p[2] = p[2] + (dp[2] + dpt[2])/ 2.0;
-   p[3] = p[3] + (dp[3] + dpt[3])/ 2.0;
-   return p[3];
-}
-
-fun euler(input, cut, res) {
-   mem fh;
-   mem p[4];
-   val dpt[4];
-   if(Util.change(cut)) {
-      fh = tune(cut);
-   }
-   _ = ladder_step(input, fh, res, p, dpt);
-   p[0] = p[0] + dpt[0];
-   p[1] = p[1] + dpt[1];
-   p[2] = p[2] + dpt[2];
-   p[3] = p[3] + dpt[3];
-   return p[3];
+fun euler(input, fh, res) {
+   mem p0, p1, p2, p3;
+   val w0 = Util.cubic_clipper(input - 4.0 * res * p3);
+   val w1 = Util.cubic_clipper(p0);
+   val dpt0 = (w0 - w1) * fh;
+   val w3 = Util.cubic_clipper(p1);
+   val dpt1 = (w1 - w3) * fh;
+   val w5 = Util.cubic_clipper(p2);
+   val dpt2 = (w3 - w5) * fh;
+   val w7 = Util.cubic_clipper(p3);
+   val dpt3 = (w5 - w7) * fh;
+   p0 = p0 + dpt0;
+   p1 = p1 + dpt1;
+   p2 = p2 + dpt2;
+   p3 = p3 + dpt3;
+   return p3;
 }
 
 fun process_euler(input:real, cut:real, res:real):real{
-    _ = e:euler(input, cut, res);
-    _ = e:euler(input, cut, res);
-    _ = e:euler(input, cut, res);
-    val out = e:euler(input, cut, res);
+   mem fh;
+   if(Util.change(cut)) {
+      fh = tune(cut);
+   }
+    _ = e:euler(input, fh, res);
+    _ = e:euler(input, fh, res);
+    _ = e:euler(input, fh, res);
+    val out = e:euler(input, fh, res);
     return out;
 }
 
 fun process_heun(input:real, cut:real, res:real):real{
-    _ = h:heun(input, cut, res);
-    _ = h:heun(input, cut, res);
-    _ = h:heun(input, cut, res);
-    val out = h:heun(input, cut, res);
+   mem fh;
+   if(Util.change(cut)) {
+      fh = tune(cut);
+   }
+    _ = h:heun(input, fh, res);
+    _ = h:heun(input, fh, res);
+    _ = h:heun(input, fh, res);
+    val out = h:heun(input, fh, res);
     return out;
 }
 
