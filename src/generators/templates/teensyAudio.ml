@@ -27,7 +27,7 @@ open Config
 
 (** Header function *)
 let header (params:params) (code:Pla.t) : Pla.t =
-   let file = String.uppercase_ascii params.output in
+   let file = String.uppercase params.output in
    let output = params.output in
    let module_name = params.module_name in
    {pla|

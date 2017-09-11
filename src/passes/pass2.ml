@@ -283,8 +283,8 @@ module EmbedWavFile = struct
       match FileIO.findFile includes file with
       | Some filename ->
          begin match WavFile.read filename with
-            | Ok (wave) -> wave
-            | Error read_msg ->
+            | Result.Ok (wave) -> wave
+            | Result.Error read_msg ->
                let msg = "Failed to read the wav file '" ^ file ^ "': " ^ read_msg in
                Error.raiseError msg loc
          end

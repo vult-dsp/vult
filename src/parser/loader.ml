@@ -35,7 +35,7 @@ let rec findModule (includes:string list) (module_name:string) : string option =
    | [] -> None
    | h::t ->
       (* first checks an uncapitalized file *)
-      let file1 = Filename.concat h ((String.uncapitalize_ascii module_name) ^ ".vult") in
+      let file1 = Filename.concat h ((String.uncapitalize module_name) ^ ".vult") in
       if FileIO.exists file1 then Some file1
       else
          (* then checks a file with the same name as the module *)
