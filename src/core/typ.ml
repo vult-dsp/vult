@@ -57,8 +57,6 @@ let rec unlink t =
 let compare a b = compare (unlink a) (unlink b)
 
 let gensym_counter = ref 0
-let reset_gensym : unit -> unit =
-   fun () -> gensym_counter := 0
 
 let gensym : unit -> string = fun () ->
    let n = !gensym_counter in
@@ -75,18 +73,6 @@ let gensym : unit -> string = fun () ->
 let current_level_val = ref 1
 let current_level () = !current_level_val
 
-let reset_level () = current_level_val := 1
-
-let reset_type_variables () =       (* name from OCaml's typing/typetext.ml *)
-   reset_gensym ();
-   reset_level ()
-
-(* Increase level *)
-let enterLevel () =
-   incr current_level_val
-(* Restore level *)
-let leaveLevel () =
-   decr current_level_val
 
 let rec makeArrowType (last:t) (types:t list) : t =
    match types with

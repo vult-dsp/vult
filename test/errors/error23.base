@@ -1,0 +1,4 @@
+This declaration has type 'real' but it has been defined before as 'int'
+   val x = 0;
+   val x : real;
+       ^

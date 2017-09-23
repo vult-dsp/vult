@@ -1,0 +1,5 @@
+fun foo () {
+   val x = 0;
+   val x : real;
+}
+

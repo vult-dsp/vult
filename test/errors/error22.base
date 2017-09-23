@@ -1,0 +1,4 @@
+The symbol 'x' is not defined
+fun foo () {
+   x = 0;
+   ^

@@ -1,0 +1,3 @@
+This function is expected to have type 'int' but nothing was returned
+fun foo () : int {
+    ^^^

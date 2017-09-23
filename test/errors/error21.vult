@@ -1,0 +1,6 @@
+fun foo (x, y) {
+}
+
+fun bar () {
+   val x = foo(1);
+}

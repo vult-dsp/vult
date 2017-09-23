@@ -91,6 +91,11 @@ let errors_files =
       "error16.vult";
       "error17.vult";
       "error18.vult";
+      "error19.vult";
+      "error20.vult";
+      "error21.vult";
+      "error22.vult";
+      "error23.vult";
    ]
 
 let template_files =

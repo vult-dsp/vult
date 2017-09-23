@@ -1,0 +1,4 @@
+This function takes 2 arguments but 1 are passed
+fun bar () {
+   val x = foo(1);
+           ^^^^^
