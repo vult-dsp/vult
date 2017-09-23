@@ -88,6 +88,15 @@ end
 
 module SimplifyFixed = struct
 
+   (* Creates a multiplication with the given terms if
+      the list has more than two terms
+   *)
+   let makeMult elems attr =
+      match elems with
+      | [] -> failwith "SimplifyFixed.makeMult: invalid input"
+      | [e] -> e
+      | _ -> POp("*", elems, attr)
+
    let fixSign sign (e:exp) : exp =
       if sign then
          match e with
@@ -130,13 +139,13 @@ module SimplifyFixed = struct
 
    let rec find e acc attr =
       match e with
-      | [] -> false, POp("*", acc, attr)
+      | [] -> false, makeMult acc attr
       (* multiply / divide by an int power of two *)
       | (PInt(n, iattr) as h) :: t ->
          let sign = n < 0 in
          let nn = abs n in
          begin match isPowerOfTwo 2 (float_of_int nn) with
-            | Some p -> true, fixSign sign (POp("<<", [POp("*", acc @ t, attr); PInt(p, iattr)], attr))
+            | Some p -> true, fixSign sign (POp("<<", [(makeMult (acc @ t) attr); PInt(p, iattr)], attr))
             | None -> find t (h::acc) attr
          end
       (* multiply / divide by an int power of two *)
@@ -147,7 +156,7 @@ module SimplifyFixed = struct
          begin match isPowerOfTwo 2 nn with
             | Some p ->
                let op = if div then ">>" else "<<" in
-               true, fixSign sign (POp(op, [POp("*", acc @ t, attr); PInt(p, iattr)], attr))
+               true, fixSign sign (POp(op, [(makeMult (acc @ t) attr); PInt(p, iattr)], attr))
             | None -> find t (h::acc) attr
          end
       | h::t -> find t (h::acc) attr

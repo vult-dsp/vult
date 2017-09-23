@@ -634,7 +634,7 @@ fix16_t Blit_pulse_train(Blit__ctx_type_0 &_ctx, fix16_t cv, fix16_t phase){
    uint8_t _cond_125;
    _cond_125 = Util_change(_ctx._inst101,cv);
    if(_cond_125){
-      _ctx.m = (((fix_to_int(Util_cvToperiod(cv))) << 1) + 1);
+      _ctx.m = ((fix_to_int(Util_cvToperiod(cv)) << 1) + 1);
       _ctx.scale = (Util_cvToperiod(cv) << 1);
    }
    fix16_t pi_phase;
@@ -1114,7 +1114,7 @@ void Voice_4_controlChange(Voice_4__ctx_type_0 &_ctx, int control, int value, in
    uint8_t _cond_212;
    _cond_212 = (control == 46);
    if(_cond_212){
-      _ctx.flt_shape = (((value) << 2) / 127);
+      _ctx.flt_shape = ((value << 2) / 127);
    }
    uint8_t _cond_213;
    _cond_213 = (control == 47);

@@ -252,7 +252,7 @@ function this.Rescomb_delay(_ctx,x,cv)
    if (r_index < 0.) then
       r_index = (r_size + r_index);
    end
-   local t1 = this.int(this.floor(r_index));
+   local t1 = (this.int(this.floor(r_index)) % 675);
    local t2 = ((t1 + 1) % 675);
    local decimal = (r_index + (- this.real(t1)));
    local x1 = this.get(_ctx.buffer,t1);

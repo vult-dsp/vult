@@ -14,7 +14,7 @@ fun delay(x:real, cv:real) : real {
    val r_size = real(size(buffer));
    val r_index  = (real(write_pos) - Util.cvToperiod(cv)) % r_size;
    r_index = if r_index < 0.0 then r_size + r_index else r_index;
-   val t1 = int(floor(r_index));
+   val t1 = int(floor(r_index)) % size(buffer);
    val t2 = (t1 + 1) % size(buffer);
    // Gets the decimal part of the position
    val decimal  = r_index - real(t1);

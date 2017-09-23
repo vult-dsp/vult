@@ -211,7 +211,7 @@ fix16_t Rescomb_delay(Rescomb__ctx_type_0 &_ctx, fix16_t x, fix16_t cv){
    _cond_41 = (r_index < 0x0 /* 0.000000 */);
    if(_cond_41){ r_index = (r_size + r_index); }
    int t1;
-   t1 = fix_to_int(fix_floor(r_index));
+   t1 = (fix_to_int(fix_floor(r_index)) % 675);
    int t2;
    t2 = ((t1 + 1) % 675);
    fix16_t decimal;

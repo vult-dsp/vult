@@ -256,7 +256,7 @@ fix16_t Blit_pulse_train(Blit__ctx_type_0 &_ctx, fix16_t cv, fix16_t phase){
    uint8_t _cond_59;
    _cond_59 = Util_change(_ctx._inst35,cv);
    if(_cond_59){
-      _ctx.m = (((fix_to_int(Util_cvToperiod(cv))) << 1) + 1);
+      _ctx.m = ((fix_to_int(Util_cvToperiod(cv)) << 1) + 1);
       _ctx.scale = (Util_cvToperiod(cv) << 1);
    }
    fix16_t pi_phase;

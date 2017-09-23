@@ -211,7 +211,7 @@ float Rescomb_delay(Rescomb__ctx_type_0 &_ctx, float x, float cv){
    _cond_41 = (r_index < 0.f);
    if(_cond_41){ r_index = (r_size + r_index); }
    int t1;
-   t1 = float_to_int(floorf(r_index));
+   t1 = (float_to_int(floorf(r_index)) % 675);
    int t2;
    t2 = ((t1 + 1) % 675);
    float decimal;

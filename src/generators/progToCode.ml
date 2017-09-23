@@ -79,10 +79,10 @@ module Atomic = struct
          s', stmt, CEVar([name],ts)
 
 
-   let rec makeOpAtomic s (bind:bind_type) op ts elems : s * cstmt list * cexp  =
+   let rec makeOpAtomic s (bind:bind_type) (op:string) (ts:type_descr) (elems:cexp list) : s * cstmt list * cexp  =
       match elems with
-      | []
-      | [_] -> failwith "makeOpAtomic: invalid input"
+      | [] -> failwith "makeOpAtomic: invalid input"
+      | [e] -> failwith (Printf.sprintf "makeOpAtomic: invalid input '%s' expression '%s'" op (Code.show_cexp e))
       | [e1; e2] ->
          let s, pre1, e1' = makeExpAtomic s Temp e1 in
          let s, pre2, e2' = makeExpAtomic s Temp e2 in
