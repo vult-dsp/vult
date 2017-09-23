@@ -77,7 +77,7 @@ let showError e =
 
 let compileFile (file:string) =
    let basename = Filename.chop_extension (Filename.basename file) in
-   let cmd = Printf.sprintf "gcc -Werror -I. -I%s -O3 -c %s -o %s.o" (in_proj_dir "runtime") file basename in
+   let cmd = Printf.sprintf "gcc -ffast-math -Werror -I. -I%s -O3 -c %s -o %s.o" (in_proj_dir "runtime") file basename in
    if Sys.command cmd <> 0 then
       failwith ("Failed to compile "^file)
 
