@@ -42,19 +42,16 @@ let empty_data =
    }
 
 let getFields (s:data) (typ:string) : int Table.t =
-   match Table.find_opt typ s.record_aliases with
-   | None ->
-      begin match Table.find_opt typ s.records with
-         | Some fields -> fields
-         | None -> failwith "CodeLLVM.getFields: the record type was not found"
+   match Table.find typ s.record_aliases with
+   | alias ->
+      begin match Table.find alias s.records with
+         | fields -> fields
+         | exception Not_found -> failwith "CodeLLVM.getFields: the record alias type was not found"
       end
-   | Some alias ->
-      match Table.find_opt alias s.records with
-      | Some fields -> fields
-      | None -> failwith "CodeLLVM.getFields: the record alias type was not found"
-
-
-
+   | exception Not_found ->
+      match Table.find typ s.records with
+      | fields -> fields
+      | exception Not_found -> failwith "CodeLLVM.getFields: the record type was not found"
 
 let rec printType (typ:string) =
    match typ with
