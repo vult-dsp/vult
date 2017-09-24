@@ -98,7 +98,6 @@ https://github.com/modlfo/vult-webaudio
 - containers >= 1.2
 - ppx_deriving >= 4.1
 - pla >= 1.1
-- ollvm = 0.99
 - result >= 0.99
 - [Optional] ounit >= 2.0 (to run the tests)
 - [Optional] js_of_ocaml >= 3.0 (to build the web functions)
@@ -107,7 +106,7 @@ https://github.com/modlfo/vult-webaudio
  The simplest way to instal the requirements is with OPAM (https://opam.ocaml.org/)
 ```
 $ opam switch 4.04.2
-$ opam install containers ppx_deriving pla ollvm result
+$ opam install containers ppx_deriving pla result
 ```
 Optionally to run the tests and building the web functions:
 ```

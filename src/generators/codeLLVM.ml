@@ -23,144 +23,171 @@ THE SOFTWARE.
 *)
 
 open Code
-open Ollvm_ez
-open Maps
 open Config
 
-module P = Ollvm.Printer
+module Table = CCMap.Make(String)
 
-type vars = Value.t IdMap.t
+type data =
+   {
+      (* Keeps track of the record index tables *)
+      records : (int Table.t) Table.t;
+      (* Keeps track of declared struct name *)
+      record_aliases : string Table.t;
+   }
 
-let rec printType (typ:string) : Type.t =
+let empty_data =
+   {
+      records = Table.empty;
+      record_aliases = Table.empty;
+   }
+
+let getFields (s:data) (typ:string) : int Table.t =
+   match Table.find_opt typ s.record_aliases with
+   | None ->
+      begin match Table.find_opt typ s.records with
+         | Some fields -> fields
+         | None -> failwith "CodeLLVM.getFields: the record type was not found"
+      end
+   | Some alias ->
+      match Table.find_opt alias s.records with
+      | Some fields -> fields
+      | None -> failwith "CodeLLVM.getFields: the record alias type was not found"
+
+
+
+
+let rec printType (typ:string) =
    match typ with
-   | "int" -> Type.i32
-   | "real" -> Type.float
-   | "float" -> Type.float
-   | "bool" -> Type.i1
-   | "uint8_t" -> Type.i1
-   | "void" -> Type.void
-   | _ -> failwith ("unknown type "^typ)
+   | "int" -> "i32"
+   | "real" -> "float"
+   | "float" -> "float"
+   | "bool" -> "i1"
+   | "uint8_t" -> "i1"
+   | "void" -> "void"
+   | _ -> "%struct." ^ typ
 
 (** Returns the representation of a type description *)
-let rec printTypeDescr (typ:type_descr) : Type.t=
+let rec printTypeDescr (typ:type_descr) : Pla.t =
    match typ with
-   | CTSimple(typ) -> printType typ
-   | CTArray(tdescr,_) -> Type.pointer (printTypeDescr tdescr)
-
+   | CTSimple(typ) -> Pla.string (printType typ)
+   | CTArray(tdescr,_) -> Pla.append (printTypeDescr tdescr) (Pla.string "*")
 
 (** Returns a template the print the expression *)
-let rec printExp _m vars (e:cexp) =
+let rec printExp (e:cexp) =
    match e with
-   | CEInt(n)      -> Value.i32 n
-   | CEBool(true)  -> Value.i1 1
-   | CEBool(false) -> Value.i1 0
-   | CEFloat(_,n)  -> Value.float n
-   | CEVar([name],_) ->
-      let var = IdMap.find [name] vars in
-      var
+   | CEInt(n)      -> {pla|i32 <#n#i>|pla}
+   | CEBool(true)  -> {pla|i1 1|pla}
+   | CEBool(false) -> {pla|i1 0|pla}
+   | CEFloat(_,n)  -> {pla|float <#n#f>|pla}
+   | CEVar([name],typ) ->
+      let typ = printTypeDescr typ in
+      {pla|<#typ#> %<#name#s>|pla}
+
 
    | _ -> failwith (Code.show_cexp e)
 
-let printArgType arg : Type.t =
+let printArgType arg =
    match arg with
    | Var(td) -> printTypeDescr td
-   | Ref(td) -> Type.pointer (printTypeDescr td)
+   | Ref(td) -> Pla.append (printTypeDescr td) (Pla.string "*")
 
-let declareFunctionArg (m,acc) (typ,name) =
+(*let declareFunctionArg (m,acc) (typ,name) =
    let m,var = Module.local m (printArgType typ) name in
    m, (var::acc)
+*)
 
-let is_reg s =
-   String.get s 0 = '$'
+let getOp op typ =
+   match op, typ with
+   (* float operations *)
+   | "+", CTSimple("float") -> "fadd"
+   | "-", CTSimple("float") -> "fsub"
+   | "*", CTSimple("float") -> "fmul"
+   | "/", CTSimple("float") -> "fdiv"
+   (* int operations *)
+   | "+", CTSimple("int") -> "add"
+   | "-", CTSimple("int") -> "sub"
+   | "*", CTSimple("int") -> "mul"
+   | "/", CTSimple("int") -> "div"
+   | _ -> failwith "CodeLLVM.getOp: operator not implemented"
 
-let rec printStmt (m:Module.t) (vars:vars) (stmt:cstmt) : Module.t * vars * 'a =
+let is_reg s = String.get s 0 = '$'
+
+let rec printStmt s (stmt:cstmt) =
    match stmt with
    (* Do not allocate the temporary variables *)
-   | CSVar(CLId(typ,[name]), None) when is_reg name ->
-      let typ'   = printTypeDescr typ in
-      let m, var = Module.local m typ' name in
-      let vars   = IdMap.add [name] var vars in
-      m, vars, []
+   | CSVar(CLId(_,[name]), None) when is_reg name -> s, None
 
    (* All other variables are allocated *)
    | CSVar(CLId(typ,[name]), None) ->
-      let typ'   = printTypeDescr typ in
-      let alloc  = Instr.alloca typ' in
-      let m, var = Module.local m typ' name in
-      let vars   = IdMap.add [name] var vars in
-      m, vars, [Instr.(var <-- alloc)]
+      let typ = printTypeDescr typ in
+      s, Some {pla|%<#name#s> = alloca <#typ#>|pla}
 
-   | CSBind(CLId(_,[lhs]), ((CEInt _ | CEFloat _ | CEBool _ ) as rhs)) ->
-      let rhs'    = printExp m vars rhs in
-      let var    = IdMap.find [lhs] vars in
-      let _,res  = Instr.store rhs' var in
-      m, vars, [res]
+   | CSBind(CLId(_,[lhs]), (( CEInt _ | CEFloat _ | CEBool _ | CEString _) as rhs)) ->
+      let rhs = printExp rhs in
+      s, Some {pla|store <#rhs#>, %<#lhs#s>|pla}
 
-   | CSBind(CLId(_,[lhs]), CEOp(_,[e1;e2],_)) when is_reg lhs ->
-      let e1'    = printExp m vars e1 in
-      let e2'    = printExp m vars e2 in
-      let var    = IdMap.find [lhs] vars in
-      m, vars, [Instr.(var <-- (add e1' e2'));]
+   | CSBind(CLId(_,[lhs]), CEVar([rhs],typ)) ->
+      let typ = printTypeDescr typ in
+      s, Some {pla|%<#lhs#s> = load <#typ#>, <#typ#>* %<#rhs#s>|pla}
 
-   | CSBind(CLId(typ,[lhs]), CEOp(_,[e1;e2],_)) ->
-      let typ'   = printTypeDescr typ in
-      let e1'    = printExp m vars e1 in
-      let e2'    = printExp m vars e2 in
-      let var    = IdMap.find [lhs] vars in
-      let m, tmp = Module.local m typ' "" in
-      let _,res  = Instr.store tmp var in
-      m, vars, [res; Instr.(tmp <-- (add e1' e2'))]
+   | CSBind(CLId(typ,[lhs]), CEOp(op,[e1;e2],_)) when is_reg lhs ->
+      let op  = getOp op typ in
+      let typ = printTypeDescr typ in
+      let e1  = printExp e1 in
+      let e2  = printExp e2 in
+      s, Some {pla|%<#lhs#s> = <#op#s> <#typ#> <#e1#>, <#e2#>|pla}
+
+   | CSBind(CLId(_typ,[_lhs]), CEOp(_,[_e1;_e2],_)) ->
+      (*let typ'   = printTypeDescr typ in
+        let e1'    = printExp m vars e1 in
+        let e2'    = printExp m vars e2 in
+        let var    = IdMap.find [lhs] vars in
+        let m, tmp = Module.local m typ' "" in
+        let _,res  = Instr.store tmp var in
+        m, vars, [res; Instr.(tmp <-- (add e1' e2'))];*)
+      failwith ""
 
    | CSReturn(e) ->
-      let e' = printExp m vars e in
-      let r = Instr.ret e' in
-      m,vars, [r]
+      let e = printExp e in
+      s, Some {pla|ret <#e#>|pla}
 
    | _ -> failwith (Code.show_cstmt stmt)
 
-let printBody (m:Module.t) (vars:vars) (stmt:cstmt)  : Module.t * vars * Ollvm_ast.instr list =
+let printBody s (stmt:cstmt) : 'state * Pla.t =
    match stmt with
-   | CSBlock([]) -> m, vars, []
+   | CSBlock([]) -> s, Pla.unit
    | CSBlock(body) ->
-      let m, vars, body' =
-         List.fold_left
-            (fun (m,vars,acc) stmt ->
-                let m', vars',s = printStmt m vars stmt in
-                m',vars',(s@acc))
-            (m,vars,[]) body
-      in
-      m, vars, List.rev body'
-   | _ ->
-      let m, vars, s = printStmt m vars stmt in
-      m, vars, s
+      List.fold_left
+         (fun (s,p) stmt ->
+             match printStmt s stmt with
+             | s, (Some stmt) -> s, Pla.append p (Pla.append stmt Pla.newline)
+             | s, None -> s, p)
+         (s, Pla.unit) body
+   | _ -> failwith ""
 
-let printTopLevel (m:Module.t) (vars:vars) (stmt:cstmt) : Module.t * vars =
+let printTopLevel s (stmt:cstmt) : 'state * Pla.t =
    match stmt with
-   | CSFunction(ntype,name,args,body) ->
-      let ret            = printTypeDescr ntype in
-      let m, fname       = Module.global m ret name in
-      let m, rev_args    = List.fold_left declareFunctionArg (m,[]) args in
-      let args'          = List.rev rev_args in
-      let m, fun_entry   = Module.local m Type.label (name^"_entry") in
-      let m, vars, body' = printBody m vars body in
-      let def            = Block.define fname args' [Block.block fun_entry body'] in
-      Module.definition m def, vars
+   | CSFunction(_ntype, _name, _args, body) ->
+      printBody s body
 
-   | CSType _ -> m, vars
+   | CSType (name, fields) ->
+      let record_fields, _ = List.fold_left (fun (m,i) (_typ,name) -> Table.add name i m, i + 1) (Table.empty,0) fields in
+      let s = { s with records = Table.add name record_fields s.records } in
+      let types = Pla.map_sep Pla.comma (fun (typ,_) -> printTypeDescr typ) fields in
+      s, {pla|%struct.<#name#s> = type { <#types#> }|pla}
+
+   | CSAlias(name, CTSimple source) ->
+      let s = { s with record_aliases = Table.add name source s.record_aliases } in
+      s, Pla.unit
 
    | _ -> failwith "invalid"
 
 
 let print (_params:params) (stmts:Code.cstmt list) : (Pla.t * FileKind.t) list =
-   let m = Module.init
-         "name"
-         ("x86_64", "pc", "linux-gnu")
-         "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
+   let _, p =
+      List.fold_left (fun (s,p) stmt ->
+            let s, stmt = printTopLevel s stmt in
+            s, Pla.append p (Pla.append stmt Pla.newline))
+         (empty_data,Pla.unit) stmts
    in
-   let m, _ =
-      List.fold_left (fun (m ,vars) stmt ->printTopLevel m vars stmt) (m, IdMap.empty) stmts
-   in
-   let buffer = Buffer.create 0 in
-   let formatter = Format.formatter_of_buffer buffer in
-   let () = P.modul (P.empty_env ()) formatter m.Module.m_module in
-   [Pla.string (Buffer.contents buffer), FileKind.ExtOnly "ll"]
+   [p, FileKind.ExtOnly "ll"]
