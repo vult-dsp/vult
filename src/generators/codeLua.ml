@@ -198,12 +198,12 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSVar(CLWild,None) -> None
 
    | CSVar(CLId(typ,name),None) ->
-      let init = getInitValue typ in
+      let init = getInitValue (List.hd typ) in
       let name = dot name in
       Some({pla|local <#name#> = <#init#>;|pla})
 
    | CSVar(CLIndex(typ, name,_),None) ->
-      let init = getInitValue typ in
+      let init = getInitValue (List.hd typ) in
       let name = dot name in
       Some({pla|local <#name#> = <#init#>;|pla})
 

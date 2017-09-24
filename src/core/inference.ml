@@ -39,6 +39,7 @@ let expLoc e  = lazy (GetLocation.fromExp e)
 let lhsLoc e  = lazy (GetLocation.fromLhsExp e)
 let stmtLoc e = lazy (GetLocation.fromStmt e)
 let typLoc t  = lazy (GetLocation.fromType t)
+let typListLoc t  = lazy (GetLocation.fromType (Typ.first t))
 let attrLoc attr = lazy (attr.loc)
 let expOptLoc e =
    lazy (
@@ -113,7 +114,8 @@ let rec addLhsToEnv mem_var (env:'a Env.t) (lhs:lhs_exp) : 'a Env.t =
    match lhs with
    | LWild _ -> env
    | LId(id,Some(typ),attr) ->
-      if mem_var = `Mem then Env.addMem env id typ attr else Env.addVar env id typ attr
+      let ftyp = Typ.first typ in
+      if mem_var = `Mem then Env.addMem env id ftyp attr else Env.addVar env id ftyp attr
    | LId(_,None,_) -> env
    | LTuple(elems,_) ->
       List.fold_left (fun e a -> addLhsToEnv mem_var e a) env elems
@@ -123,7 +125,8 @@ let rec addLhsToEnv mem_var (env:'a Env.t) (lhs:lhs_exp) : 'a Env.t =
       addLhsToEnv mem_var env e
    | LIndex(_, None, _, _) -> env
    | LIndex(id, Some(typ), _, attr) ->
-      if mem_var = `Mem then Env.addMem env id typ attr else Env.addVar env id typ attr
+      let ftyp = Typ.first typ in
+      if mem_var = `Mem then Env.addMem env id ftyp attr else Env.addVar env id ftyp attr
 
 let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : typed_id list * Typ.t list * 'a Env.t =
    match args with
@@ -132,12 +135,13 @@ let rec addArgsToEnv (env:'a Env.t) (args:typed_id list) : typed_id list * Typ.t
       let typ  = Typ.newvar () in
       let env' = Env.addVar env id typ attr in
       let inner_args, inner_typ, env' = addArgsToEnv env' t in
-      TypedId(id,typ,kind,attr) :: inner_args, typ :: inner_typ, env'
+      TypedId(id,[typ],kind,attr) :: inner_args, typ :: inner_typ, env'
    | TypedId(id,typ,kind,attr)::t ->
-      checkType (typLoc typ) env typ;
-      let env' = Env.addVar env id typ attr in
+      let first_typ = Typ.first typ in
+      checkType (typLoc first_typ) env first_typ;
+      let env' = Env.addVar env id first_typ attr in
       let inner_args, inner_typ, env' = addArgsToEnv env' t in
-      TypedId(id,typ,kind,attr) :: inner_args, typ :: inner_typ, env'
+      TypedId(id,typ,kind,attr) :: inner_args, first_typ :: inner_typ, env'
 
 
 let registerSpecialFunction (env:'a Env.t) (name:Id.t) (args:typed_id list) (ret:Typ.t) (attr:attr) =
@@ -257,9 +261,10 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * Typ.t =
                let msg = Printf.sprintf "The symbol '%s' is not defined" (Id.show id) in
                Error.raiseError msg attr.loc
       in
-      LId(id,Some(typ),{ attr with typ = Some(typ) }), typ
-   | LId(id,Some(typ),attr) ->
-      LId(id,Some(typ),{ attr with typ = Some(typ) }), typ
+      LId(id,Some [typ],{ attr with typ = Some typ }), typ
+   | LId(id, Some typ, attr) ->
+      let ftyp = Typ.first typ in
+      LId(id,Some typ, { attr with typ = Some ftyp }), ftyp
    | LTuple(elems,attr) ->
       let elems',tpl =
          List.fold_left (fun (elems,tpl) a ->
@@ -290,14 +295,14 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * Typ.t =
       let typ =
          match Env.lookupVariable env id, otyp with
          | Some(var), _ -> var.Scope.typ
-         | _, Some typ -> typ
+         | _, Some typ -> Typ.first typ
          | _ -> Typ.newvar ()
       in
       let a = ref (Typ.TUnbound("'a",None,None)) in
       let size_t = ref (Typ.TInt(size,None)) in
       let arr_type = ref (Typ.TComposed(["array"],[a;size_t],None)) in
       unifyRaise (attrLoc attr) typ arr_type;
-      LIndex(id, Some typ, PInt(size, sattr), { attr with typ = Some arr_type}), arr_type
+      LIndex(id, Some [typ], PInt(size, sattr), { attr with typ = Some arr_type}), arr_type
 
    | LIndex(_, _, index, _) when mem_var = `Val || mem_var = `Mem ->
       let msg =
@@ -311,7 +316,7 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * Typ.t =
       let typ =
          match Env.lookupVariable env id, otyp with
          | Some(var), _ -> var.Scope.typ
-         | _, Some typ -> typ
+         | _, Some typ -> Typ.first typ
          | _ -> Typ.newvar ()
       in
       let index', _, index_typ = inferExp env index in
@@ -320,7 +325,7 @@ let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * Typ.t =
       let arr_type = ref (Typ.TComposed(["array"],[a;size],None)) in
       unifyRaise (attrLoc attr) typ arr_type;
       unifyRaise (expLoc index) index_typ Typ.Const.int_type;
-      LIndex(id, Some typ, index', { attr with typ = Some a }), a
+      LIndex(id, Some [typ], index', { attr with typ = Some a }), a
 
 and inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * Typ.t =
    match e with

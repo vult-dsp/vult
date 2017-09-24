@@ -40,7 +40,8 @@ module InsertContext = struct
          if Env.isActive state name && not (PassData.hasContextArgument data path) then
             let ctx_full = Env.getContext state name in
             let ctx      = Env.pathFromCurrent state ctx_full in
-            let arg0     = TypedId(["_ctx"],ref (Typ.TId(ctx,None)),ContextArg,attr) in
+            let typ      = [ref (Typ.TId(ctx,None))] in
+            let arg0     = TypedId(["_ctx"],typ,ContextArg,attr) in
             let data'    = PassData.markContextArgument data path in
             Env.set state data', StmtFun(name,arg0::args,body,rettype,attr)
          else
@@ -131,7 +132,7 @@ module CreateInitFunction = struct
          IdTypeSet.fold
             (fun (name,tp) acc ->
                 let typedAttr = { emptyAttr with typ = Some(tp) } in
-                let lhs       = LId(ctx_name @ name,Some(tp),typedAttr) in
+                let lhs       = LId(ctx_name @ name,Some [tp],typedAttr) in
                 let new_stmt  = StmtBind(lhs, getInitValue tp, emptyAttr) in
                 StmtSet.add new_stmt acc)
             member_set StmtSet.empty
@@ -147,7 +148,7 @@ module CreateInitFunction = struct
          | None -> []
       in
       let return_stmt = StmtReturn(PId(ctx_name,attr),emptyAttr) in
-      let ctx_decl = StmtVal(LId(ctx_name,Some(typ),attr),None,emptyAttr) in
+      let ctx_decl = StmtVal(LId(ctx_name,Some [typ],attr),None,emptyAttr) in
       let stmts = StmtSet.fold (fun a acc -> a::acc) new_stmts_set (init_fun_call@[return_stmt]) in
       StmtFun(getInitFunctioName ctx, [], StmtBlock(None, ctx_decl::stmts, emptyAttr), Some(typ), emptyAttr)
 
@@ -155,7 +156,7 @@ module CreateInitFunction = struct
       let members =
          IdTypeSet.fold
             (fun (name,tp) acc ->
-                (name, tp, emptyAttr) :: acc
+                (name, [tp], emptyAttr) :: acc
             ) member_set []
       in
       StmtType(ref (Typ.TId(ctx,None)),members,emptyAttr)

@@ -58,8 +58,8 @@ module ReportUnsupportedTypes = struct
    let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
       Mapper.make "ReportUnsupportedTypes.lhs_exp" @@ fun state exp ->
       match exp with
-      | LId(id,Some(t),attr) when isComplexArray t ->
-         reportUnsupportedArray t id attr
+      | LId(id,Some t,attr) when isComplexArray (Typ.first t) ->
+         reportUnsupportedArray (Typ.first t) id attr
       | _ -> state, exp
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
@@ -78,8 +78,8 @@ module ReportUnsupportedTypes = struct
    let typed_id : ('a Env.t,typed_id) Mapper.mapper_func =
       Mapper.make "ReportUnsupportedTypes.typed_id" @@ fun state t ->
       match t with
-      | TypedId(id,typ,_,attr) when isComplexArray typ ->
-         reportUnsupportedArray typ id attr
+      | TypedId(id,typ,_,attr) when isComplexArray (Typ.first typ) ->
+         reportUnsupportedArray (Typ.first typ) id attr
       | _ -> state, t
 
    let mapper = Mapper.{ default_mapper with lhs_exp; exp; typed_id; }

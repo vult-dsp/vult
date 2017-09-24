@@ -57,16 +57,16 @@ type arg_type =
 
 type typed_id =
    | SimpleId of Id.t * arg_type * attr
-   | TypedId  of Id.t * Typ.t * arg_type * attr
+   | TypedId  of Id.t * Typ.t list * arg_type * attr
 [@@deriving show,eq,ord]
 
 type lhs_exp =
    | LWild  of attr
-   | LId    of Id.t * Typ.t option * attr
+   | LId    of Id.t * Typ.t list option * attr
    | LTuple of lhs_exp list * attr
    | LTyped of lhs_exp * Typ.t * attr
    | LGroup of lhs_exp * attr
-   | LIndex of Id.t * Typ.t option * exp * attr
+   | LIndex of Id.t * Typ.t list option * exp * attr
 [@@deriving show,eq,ord]
 
 (** Parser syntax tree *)
@@ -154,12 +154,12 @@ and stmt =
     of Id.t               (* name *)
        *  typed_id list   (* arguments *)
        *  stmt            (* body *)
-       *  Typ.t option  (* return type *)
+       *  Typ.t option    (* return type *)
        *  attr
   | StmtExternal
     of Id.t              (* name *)
        *  typed_id list  (* arguments *)
-       *  Typ.t        (* return type *)
+       *  Typ.t          (* return type *)
        *  string option  (* linking name *)
        *  attr
   | StmtBind
@@ -182,8 +182,8 @@ and stmt =
 [@@deriving show,eq,ord]
 
 and val_decl =
-    Id.t        (* name *)
-    * Typ.t   (* type *)
+    Id.t         (* name *)
+    * Typ.t list (* type *)
     * attr
 [@@deriving show,eq,ord]
 

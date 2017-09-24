@@ -58,25 +58,28 @@ let printTypeDescr (typ:type_descr) : Pla.t =
       {pla|<#kind#s>[<#tsize#>]|pla}
 
 (** Used to print declarations and rebindings of lhs variables *)
-let printTypeAndName (is_decl:bool) (typ:type_descr) (name:string list) : Pla.t =
-   let kind, sizes = simplifyArray typ in
-   let name = dot name in
-   match is_decl, sizes with
-   (* Simple varible declaration (no sizes) *)
-   | true,[] -> {pla|<#kind#s> <#name#>|pla}
-   (* Array declarations (with sizes) *)
-   | true,_  ->
-      let t_sizes = Pla.map_sep Pla.comma Pla.string sizes in
-      {pla|<#kind#s> <#name#>[<#t_sizes#>]|pla}
-   (* Simple rebinding (no declaration) *)
-   | _,_ -> {pla|<#name#>|pla}
+let printTypeAndName (is_decl:bool) (typ:type_descr list) (name:string list) : Pla.t =
+   match typ, name with
+   | [typ], [name] ->
+      let kind, sizes = simplifyArray typ in
+      begin match is_decl, sizes with
+         (* Simple varible declaration (no sizes) *)
+         | true,[] -> {pla|<#kind#s> <#name#s>|pla}
+         (* Array declarations (with sizes) *)
+         | true,_  ->
+            let t_sizes = Pla.map_sep Pla.comma Pla.string sizes in
+            {pla|<#kind#s> <#name#s>[<#t_sizes#>]|pla}
+         (* Simple rebinding (no declaration) *)
+         | _,_ -> {pla|<#name#s>|pla}
+      end
+   | _ -> failwith "CodeC.printTypeAndName: invalid input"
 
 (** Used to print assignments of a tuple field to a variable *)
 let printLhsExpTuple (var:string list) (is_var:bool) (i:int) (e:clhsexp) : Pla.t =
    let var = dot var in
    match e with
    (* Assigning to a simple variable *)
-   | CLId(CTSimple(typ),name) ->
+   | CLId(CTSimple typ :: _,name) ->
       let name_ = dot name in
       if is_var then (* with declaration *)
          {pla|<#typ#s> <#name_#> = <#var#>.field_<#i#i>;|pla}
@@ -151,34 +154,24 @@ and printChField (params:params) ((name:string),(value:cexp)) =
 (** Prints lhs values with and without declaration *)
 and printLhsExp params (is_var:bool) (e:clhsexp) : Pla.t =
    match e with
-   (* With declaration *)
-   | CLId(CTSimple(typ),name) when is_var ->
-      let name = dot name in
-      {pla|<#typ#s> <#name#>|pla}
-   (* without declaration *)
-   | CLId(CTSimple(_),name) ->
-      dot name
-   (* Other cases can be covered by printTypeAndName *)
    | CLId(typ,name) ->
       printTypeAndName is_var typ name
    (* if it was an '_' do not print anything *)
    | CLWild -> Pla.unit
 
-   | CLIndex(CTSimple typ, name, index) when is_var ->
+   | CLIndex([CTSimple typ], [name], index) when is_var ->
       let index = printExp params index in
-      let name = dot name in
-      {pla|<#typ#s> <#name#>[<#index#>]|pla}
+      {pla|<#typ#s> <#name#s>[<#index#>]|pla}
 
-   | CLIndex(typ, name, _) when is_var ->
+   | CLIndex(typ :: _, name, _) when is_var ->
       let name = dot name in
       let typ, sizes = simplifyArray typ in
       let sizes_t = Pla.map_join (fun i -> {pla|[<#i#s>]|pla}) sizes in
       {pla|<#typ#s> <#name#><#sizes_t#>|pla}
 
-   | CLIndex(CTSimple _, name, index) ->
+   | CLIndex([CTSimple _], [name], index) ->
       let index = printExp params index in
-      let name = dot name in
-      {pla|<#name#>[<#index#>]|pla}
+      {pla|<#name#s>[<#index#>]|pla}
 
    | _ -> failwith "uncovered case"
 
@@ -321,7 +314,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let tmembers =
          Pla.map_sep_all Pla.newline
             (fun (typ, name) ->
-                let tmember = printTypeAndName true typ [name] in
+                let tmember = printTypeAndName true [typ] [name] in
                 {pla|<#tmember#>;|pla}
             ) members;
       in

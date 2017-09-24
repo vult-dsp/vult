@@ -323,6 +323,16 @@ let isSimpleOpType (typ:t option) : bool =
    | Some(t) -> isSimpleType t
    | _ -> true
 
+let first (t:t list) : t =
+   match t with
+   | h :: _ -> h
+   | _ -> failwith "Typ.first: invalid type"
+
+let makeListOpt t =
+   match t with
+   | Some t -> Some [t]
+   | None -> None
+
 (** Constant types *)
 module Const = struct
 

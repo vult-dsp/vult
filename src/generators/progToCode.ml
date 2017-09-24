@@ -58,11 +58,12 @@ module Atomic = struct
       | CEString _ ->
          let new_type = Replacements.getType p.repl "string" in
          CTSimple(new_type)
+      | CEVar(_,ts :: _) -> ts
+      | CEVar(_,[]) -> failwith "Atomic.cexpType: invalid type"
       | CEArray(_,ts)
       | CECall(_,_,ts)
       | CEUnOp(_,_,ts)
       | CEOp(_,_,ts)
-      | CEVar(_,ts)
       | CEIndex(_,_,ts)
       | CEIf(_,_,_,ts)
       | CETuple(_,ts) -> ts
@@ -88,9 +89,9 @@ module Atomic = struct
       | _ ->
          let s', name = makeTemp s in
          let ts = cexpType p exp in
-         let lhs = CLId(ts,[name]) in
+         let lhs = CLId([ts],[name]) in
          let stmt = [CSVar(lhs,None); CSBind(lhs,exp)] in
-         s', stmt, CEVar([name],ts)
+         s', stmt, CEVar([name],[ts])
 
 
    let rec makeOpAtomic p s (bind:bind_type) (op:string) (ts:type_descr) (elems:cexp list) : s * cstmt list * cexp  =
@@ -155,9 +156,9 @@ module Atomic = struct
 
       | CEIf(cond,then_,else_,ts) ->
          let s, tmp = makeTemp s in
-         let ltmp = CLId(ts, [tmp]) in
+         let ltmp = CLId([ts], [tmp]) in
          let if_stmt = CSIf(cond,CSBind(ltmp,then_),Some(CSBind(ltmp,else_))) in
-         s, [CSVar(ltmp,None); if_stmt], CEVar([tmp],ts)
+         s, [CSVar(ltmp,None); if_stmt], CEVar([tmp],[ts])
 
       | CEOp(op,elems,ts) ->
          let s, pre, ret = makeOpAtomic p s bind op ts elems in
@@ -278,12 +279,16 @@ let rec convertType (p:parameters) (tp:Typ.t) : type_descr =
    | Typ.TExpAlt _ ->
       failwith ("ProgToCode.convertType: unsupported type in c code generation: " ^ PrintProg.typeStr tp)
 
+let convertTypeList (p:parameters) (tp:Typ.t list) : type_descr list =
+   List.map (convertType p) tp
+
 let convertTypedId (p:parameters) (e:typed_id) : arg_type * string =
    match e with
    | SimpleId(_,_,_)  -> failwith "ProgToCode.convertTypedId: everything should have types"
    | TypedId(id,typ,_,_) ->
-      let typ_c   = convertType p typ in
-      let typ_ref = if Typ.isSimpleType typ then Var(typ_c) else Ref(typ_c) in
+      let ftype = Typ.first typ in
+      let typ_c = convertType p ftype in
+      let typ_ref = if Typ.isSimpleType ftype then Var(typ_c) else Ref(typ_c) in
       let ids = convertVarId p id in
       typ_ref, String.concat "." ids
 
@@ -376,7 +381,7 @@ let rec convertExp (p:parameters) (e:exp) : cexp =
       let s = Replacements.getRealToString p.repl (Float.crop v) "real" in
       CEFloat(s,Float.crop v)
    | PId(id,attr) ->
-      CEVar(convertVarId p id, typ attr)
+      CEVar(convertVarId p id, [typ attr])
    | PIndex(e, index, attr) ->
       let e' = convertExp p e in
       let index' = convertExp p index in
@@ -431,9 +436,10 @@ and convertExpArray (p:parameters) (e:exp array) : cexp list =
 
 and convertLhsExp (is_val:bool) (p:parameters) (e:lhs_exp) : clhsexp =
    match e with
-   | LId(id,Some(typ),_) ->
+   | LId(id,Some typ,_) ->
       let new_id = convertVarId p id in
-      CLId(convertType p typ, new_id)
+      let typl = convertTypeList p typ in
+      CLId(typl, new_id)
    | LId(_,None,_)   -> failwith "ProgToCode.convertLhsExp: everything should have types"
    | LTyped(e1,_,_)  -> convertLhsExp is_val p e1
    | LTuple(elems,_) ->
@@ -445,7 +451,8 @@ and convertLhsExp (is_val:bool) (p:parameters) (e:lhs_exp) : clhsexp =
    | LIndex (id,Some(typ), index, _) ->
       let new_id = convertVarId p id in
       let index = convertExp p index in
-      CLIndex (convertType p typ, new_id, index)
+      let typl = convertTypeList p typ in
+      CLIndex (typl, new_id, index)
 
 
 and convertLhsExpList (is_val:bool) (p:parameters) (lhsl:lhs_exp list) : clhsexp list =
@@ -459,8 +466,13 @@ let getRecordField (name:lhs_exp) (index:int) (typ:Typ.t option) : lhs_exp =
    match name with
    | LId(id,_,attr) ->
       let field = "field_"^(string_of_int index) in
-      (* possible future bug, the descr does not match the actual type *)
-      LId(id@[field],typ,{ attr with typ })
+      let ftyp =
+         (* possible future bug, the descr does not match the actual type *)
+         match typ with
+         | Some t -> Some [t]
+         | None -> None
+      in
+      LId(id@[field],ftyp,{ attr with typ })
    | _ -> failwith "ProgToCode.getRecordFiled: Invalid input"
 
 let rec collectVarBind stmts =
@@ -530,12 +542,12 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
                convertStmt p (StmtBind(getRecordField lhs i etype,e,attr))) elems in
       CSBlock(stmts)
    (* special for c/c++ initialize array variables *)
-   | StmtBind(LId(lhs,Some(atyp),_),PArray(elems,_),_) when p.code = CCode ->
+   | StmtBind(LId(lhs,Some atyp,_),PArray(elems,_),_) when p.code = CCode ->
       let elems' = convertExpArray p elems in
-      let atype,_ = Typ.arrayTypeAndSize atyp in
+      let atype,_ = Typ.arrayTypeAndSize (Typ.first atyp) in
       let lhs' = convertVarId p lhs in
       let typ = convertType p atype in
-      let stmts = List.mapi (fun i e -> CSBind(CLIndex(typ, lhs', CEInt(i)),e)) elems' in
+      let stmts = List.mapi (fun i e -> CSBind(CLIndex([typ], lhs', CEInt(i)),e)) elems' in
       CSBlock(stmts)
    (* special for c/c++ to copy array variables *)
    | StmtBind(LId(lhs,_,{ typ = Some(typ)}),rhs,_) when p.code = CCode && Typ.isArray typ ->
@@ -543,7 +555,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let atyp,size = Typ.arrayTypeAndSize typ in
       let atyp' = convertType p atyp in
       let copy_fn = getCopyArrayFunction p atyp' in
-      CSBind(CLWild,CECall(copy_fn,[CEInt(size);CEVar(convertVarId p lhs, atyp');rhs'],unit_typ))
+      CSBind(CLWild,CECall(copy_fn,[CEInt(size);CEVar(convertVarId p lhs, [atyp']);rhs'],unit_typ))
    | StmtBind(lhs,rhs,_) ->
       let lhs' = convertLhsExp false p lhs in
       let rhs' = convertExp p rhs in
@@ -557,7 +569,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
          | CTSimple(t) -> t
          | _ -> failwith "CodeC.convertStmt: invalid alias type"
       in
-      let member_pairs = List.map (fun (id,typ,_) -> convertType p typ, convertSingleVarId p id) members in
+      let member_pairs = List.map (fun (id,typ,_) -> convertType p (List.hd typ), convertSingleVarId p id) members in
       CSType(type_name,member_pairs)
    | StmtAliasType(t1,t2,_) ->
       let t1_name   = convertType p t1 in

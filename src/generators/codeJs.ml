@@ -195,27 +195,27 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSVar(CLWild,None) -> None
 
    | CSVar(CLId(tdescr,name), None) ->
-      let init = getInitValue tdescr in
+      let init = getInitValue (List.hd tdescr) in
       let name = dot name in
       Some({pla|var <#name#> = <#init#>;|pla})
 
    | CSVar(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
 
    | CSVar(CLId(tdecr,name),Some(value)) ->
-      let is_int = tdecr = CTSimple("int") in
+      let is_int = List.hd tdecr = CTSimple("int") in
       let value_t = wrapInt params is_int value in
       let name = dot name in
       Some({pla|var <#name#> = <#value_t#>;|pla})
 
    | CSVar(CLIndex(typ,name,_),None) ->
-      let init = getInitValue typ in
+      let init = getInitValue (List.hd typ) in
       let name = dot name in
       Some({pla|var <#name#> = <#init#>;|pla})
 
    | CSVar(_,_) -> failwith "printStmt: invalid variable declaration"
 
    | CSConst(CLId(tdecr,name),value) ->
-      let is_int = tdecr = CTSimple("int") in
+      let is_int = List.hd tdecr = CTSimple("int") in
       let value_t = wrapInt params is_int value in
       let name = dot name in
       Some({pla|var <#name#> = <#value_t#>;|pla})
@@ -242,13 +242,13 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSBind(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
 
    | CSBind(CLId(tdecr,name),value) ->
-      let is_int = tdecr = CTSimple("int") in
+      let is_int = List.hd tdecr = CTSimple("int") in
       let value_t = wrapInt params is_int value in
       let name = dot name in
       Some({pla|<#name#> = <#value_t#>;|pla})
 
    | CSBind(CLIndex(tdecr, name, index),value) ->
-      let is_int = tdecr = CTSimple("int") in
+      let is_int = List.hd tdecr = CTSimple("int") in
       let value_t = wrapInt params is_int value in
       let name = dot name in
       let index = printExp params index in

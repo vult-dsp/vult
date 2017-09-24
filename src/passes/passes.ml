@@ -41,7 +41,7 @@ module CreateTupleTypes = struct
    let makeTypeDeclaration (t:Typ.t) : stmt =
       match !t with
       | Typ.TComposed(["tuple"],types,_) ->
-         let elems = List.mapi (fun i a -> ["field_"^(string_of_int i)],a,emptyAttr) types in
+         let elems = List.mapi (fun i a -> ["field_"^(string_of_int i)],[a],emptyAttr) types in
          StmtType(t,elems,emptyAttr)
       | _ -> failwith "CreateTupleTypes.makeTypeDeclaration: there should be only tuples here"
 

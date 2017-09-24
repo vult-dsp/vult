@@ -86,7 +86,7 @@ module Configuration = struct
    let getType repl (arg:typed_id) =
       match arg with
       | TypedId(_,_,ContextArg,_) -> `Input Config.IContext
-      | TypedId([name],typ,InputArg,attr) ->
+      | TypedId([name],[typ],InputArg,attr) ->
          begin
             match checkNumeric repl name typ with
             | Some(typ_name) -> `Input typ_name
@@ -94,7 +94,7 @@ module Configuration = struct
                let msg = "The type of this argument must be numeric" in
                Error.raiseError msg attr.loc
          end
-      | TypedId([_],typ,OutputArg,attr) ->
+      | TypedId([_],[typ],OutputArg,attr) ->
          `Output (getOutputs attr.loc typ)
       | _ -> failwith "Configuration.getType: Undefined type"
 

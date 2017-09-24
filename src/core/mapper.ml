@@ -216,10 +216,13 @@ and map_vtype_c (mapper:'a mapper) (state:'a) (te:Typ.vtype) : 'a * Typ.vtype =
       let state', elems' = mapper_list map_vtype mapper state elems in
       apply mapper.vtype_c state' (Typ.TExpAlt(elems'))
 
-and map_vtype (mapper:'a mapper) (state:'a) (te:Typ.vtype ref) : 'a * Typ.vtype ref =
+and map_vtype (mapper:'a mapper) (state:'a) (te:Typ.t) : 'a * Typ.t =
    let state',tp = map_vtype_c mapper state !te in
    te := tp;
    state', te
+
+let map_type_list (mapper:'a mapper) (state:'a) (te:Typ.t list) : 'a * Typ.t list =
+   mapper_list map_vtype mapper state te
 
 let rec map_typed_id (mapper:'a mapper) (state:'a) (t:typed_id) : 'a * typed_id =
    match t with
@@ -229,7 +232,7 @@ let rec map_typed_id (mapper:'a mapper) (state:'a) (t:typed_id) : 'a * typed_id 
       apply mapper.typed_id state' (SimpleId(id',kind,attr'))
    | TypedId(id,tp,kind,attr) ->
       let state',id'   = map_id mapper state id in
-      let state',tp'   = map_vtype mapper state' tp in
+      let state',tp'   = map_type_list mapper state' tp in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.typed_id state' (TypedId(id',tp',kind,attr'))
 
@@ -241,7 +244,7 @@ let rec map_lhs_exp (mapper:'state mapper) (state:'state) (exp:lhs_exp) : 'state
       apply mapper.lhs_exp state' (LWild(attr'))
    | LId(id,tp,attr) ->
       let state',id'   = map_id mapper state id in
-      let state',tp'   = (mapper_opt map_vtype) mapper state' tp in
+      let state',tp'   = (mapper_opt map_type_list) mapper state' tp in
       let state',attr' = map_attr mapper state' attr in
       apply mapper.lhs_exp state' (LId(id',tp',attr'))
    | LTyped(e,tp,attr) ->
@@ -259,7 +262,7 @@ let rec map_lhs_exp (mapper:'state mapper) (state:'state) (exp:lhs_exp) : 'state
       apply mapper.lhs_exp state' (LGroup(e',attr'))
    | LIndex(id,tp,index,attr) ->
       let state',id'   = map_id mapper state id in
-      let state',tp'   = (mapper_opt map_vtype) mapper state' tp in
+      let state',tp'   = (mapper_opt map_type_list) mapper state' tp in
       let state',index' = map_exp mapper state' index in
       let state',attr'  = map_attr mapper state' attr in
       apply mapper.lhs_exp state' (LIndex(id', tp', index', attr'))
@@ -269,7 +272,7 @@ and map_lhs_exp_list mapper = fun state exp -> (mapper_list map_lhs_exp) mapper 
 and map_val_decl (mapper:'state mapper) (state:'state) (v:val_decl) : 'state * val_decl =
    let id,tp,attr   = v in
    let state',id'   = map_id mapper state id in
-   let state',tp'   = map_vtype mapper state' tp in
+   let state',tp'   = map_type_list mapper state' tp in
    let state',attr' = map_attr mapper state' attr in
    state',(id',tp',attr')
 

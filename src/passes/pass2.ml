@@ -143,7 +143,7 @@ module Tables = struct
       let size = List.length data in
       let atype = real_array_type size in
       let arr = PArray((CCList.map (makeFloat attr.loc) data |> Array.of_list), { attr with typ = Some(atype) }) in
-      StmtVal(LId(varname, Some(atype), attr_array size), Some(arr), { emptyAttr with const = true})
+      StmtVal(LId(varname, Some [atype], attr_array size), Some(arr), { emptyAttr with const = true})
 
 end
 
@@ -170,7 +170,7 @@ module MakeTables = struct
       | TypedId(id,_,_,_) -> PId(id,Tables.attr_real)
 
    let makeNewBody fname size min max input =
-      let lindex = LId(["index"],Some(Tables.int_type), Tables.attr_int) in
+      let lindex = LId(["index"],Some [Tables.int_type], Tables.attr_int) in
       let rindex = PId(["index"], Tables.attr_int) in
       let getCoeff a =
          let arr = PCall(None,["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array size)], Tables.attr_real) in

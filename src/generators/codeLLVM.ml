@@ -76,7 +76,7 @@ let rec printExp (e:cexp) =
    | CEBool(true)  -> {pla|i1 1|pla}
    | CEBool(false) -> {pla|i1 0|pla}
    | CEFloat(_,n)  -> {pla|float <#n#f>|pla}
-   | CEVar([name],typ) ->
+   | CEVar([name],[typ]) ->
       let typ = printTypeDescr typ in
       {pla|<#typ#> %<#name#s>|pla}
 
@@ -115,7 +115,7 @@ let rec printStmt s (stmt:cstmt) =
    | CSVar(CLId(_,[name]), None) when is_reg name -> s, None
 
    (* All other variables are allocated *)
-   | CSVar(CLId(typ,[name]), None) ->
+   | CSVar(CLId([typ],[name]), None) ->
       let typ = printTypeDescr typ in
       s, Some {pla|%<#name#s> = alloca <#typ#>|pla}
 
@@ -123,11 +123,11 @@ let rec printStmt s (stmt:cstmt) =
       let rhs = printExp rhs in
       s, Some {pla|store <#rhs#>, %<#lhs#s>|pla}
 
-   | CSBind(CLId(_,[lhs]), CEVar([rhs],typ)) ->
+   | CSBind(CLId(_,[lhs]), CEVar([rhs],[typ])) ->
       let typ = printTypeDescr typ in
       s, Some {pla|%<#lhs#s> = load <#typ#>, <#typ#>* %<#rhs#s>|pla}
 
-   | CSBind(CLId(typ,[lhs]), CEOp(op,[e1;e2],_)) when is_reg lhs ->
+   | CSBind(CLId([typ],[lhs]), CEOp(op,[e1;e2],_)) when is_reg lhs ->
       let op  = getOp op typ in
       let typ = printTypeDescr typ in
       let e1  = printExp e1 in

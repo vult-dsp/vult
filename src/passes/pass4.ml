@@ -82,7 +82,7 @@ module ReturnReferences = struct
       else
          match stmt with
          | StmtFun(name,args,body,Some(rettype),attr) when not (Typ.isSimpleType rettype) ->
-            let output = TypedId(["_output_"],rettype,OutputArg,emptyAttr) in
+            let output = TypedId(["_output_"],[rettype],OutputArg,emptyAttr) in
             let stmt' = StmtFun(name,args@[output],body,Some(Typ.Const.unit_type),attr) in
             state, stmt'
          | _ -> state, stmt
@@ -96,7 +96,7 @@ module ReturnReferences = struct
       else
          match stmt with
          (* regular case a = foo() *)
-         | StmtBind(LId(lhs,Some(typ),lattr),PCall(inst,name,args,attr),battr) when not (Typ.isSimpleType typ) ->
+         | StmtBind(LId(lhs,Some(typ),lattr),PCall(inst,name,args,attr),battr) when not (Typ.isSimpleType (Typ.first typ)) ->
             let arg = PId(lhs,lattr) in
             let fixed_attr = unitAttr attr in
             state, [StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],fixed_attr),battr)]
@@ -106,15 +106,15 @@ module ReturnReferences = struct
             let tmp_name = "_unused_" ^ (string_of_int i) in
             let arg = PId([tmp_name], wattr) in
             let fixed_attr = unitAttr attr in
-            state', [StmtVal(LId([tmp_name],wattr.typ,wattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],fixed_attr),battr)]
+            state', [StmtVal(LId([tmp_name],Typ.makeListOpt wattr.typ,wattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],fixed_attr),battr)]
          (* special case _ = a when a is not simple value *)
          | StmtBind(LWild(wattr),e,battr) when not (Typ.isSimpleOpType wattr.typ) ->
             let i,state' = Env.tick state in
             let tmp_name = "_unused_" ^ (string_of_int i) in
-            state', [StmtVal(LId([tmp_name],wattr.typ,wattr),None,battr);StmtBind(LId([tmp_name],wattr.typ,wattr),e,battr)]
+            state', [StmtVal(LId([tmp_name],Typ.makeListOpt wattr.typ,wattr),None,battr);StmtBind(LId([tmp_name],Typ.makeListOpt wattr.typ,wattr),e,battr)]
          | StmtBind(_,PCall(_,_,_,_),_) ->
             state, [stmt]
-         | StmtVal(LId(lhs,Some(typ),lattr),Some(PCall(inst,name,args,attr)),battr) when not (Typ.isSimpleType typ) ->
+         | StmtVal(LId(lhs,Some(typ),lattr),Some(PCall(inst,name,args,attr)),battr) when not (Typ.isSimpleType (Typ.first typ)) ->
             let arg = PId(lhs,lattr) in
             let fixed_attr = unitAttr attr in
             state, [StmtVal(LId(lhs,Some(typ),lattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],fixed_attr),battr)]
@@ -123,7 +123,7 @@ module ReturnReferences = struct
          | StmtReturn(e,attr) ->
             let eattr = GetAttr.fromExp e in
             if not (Typ.isSimpleOpType eattr.typ) then
-               let stmt' = StmtBind(LId(["_output_"],eattr.typ,eattr),e,attr) in
+               let stmt' = StmtBind(LId(["_output_"],Typ.makeListOpt eattr.typ,eattr),e,attr) in
                reapply state, [stmt';StmtReturn(PUnit(unitAttr eattr),attr)]
             else
                state, [stmt]

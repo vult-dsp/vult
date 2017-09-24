@@ -51,7 +51,7 @@ module ReportUnboundTypes = struct
       match exp with
       | LId(id,None,attr) ->
          reportUnbound id attr
-      | LId(id,Some(t),attr) when Typ.isUnbound t ->
+      | LId(id,Some t,attr) when Typ.isUnbound (Typ.first t) ->
          reportUnbound id attr
       | _ -> state, exp
 
@@ -72,7 +72,7 @@ module ReportUnboundTypes = struct
    let typed_id : ('a Env.t,typed_id) Mapper.mapper_func =
       Mapper.make "ReportUnboundTypes.typed_id" @@ fun state t ->
       match t with
-      | TypedId(id,typ,_,attr) when Typ.isUnbound typ ->
+      | TypedId(id,typ,_,attr) when Typ.isUnbound (Typ.first typ) ->
          reportUnbound id attr
       | _ -> state, t
 
@@ -290,7 +290,7 @@ module SimplifyIfExp = struct
             let n,state' = Env.tick state in
             let var_name = "_if_"^(string_of_int n) in
             let exp'     = PId([var_name],attr) in
-            let lhs      = LId([var_name],attr.typ,attr) in
+            let lhs      = LId([var_name], Typ.makeListOpt attr.typ, attr) in
             let decl     = StmtVal(lhs,None,emptyAttr) in
             let bind     = StmtBind(lhs,exp,emptyAttr) in
             let acc      = Env.get state' in
@@ -309,7 +309,7 @@ module SimplifyIfExp = struct
          let n,state' = Env.tick state in
          let var_name = "_cond_"^(string_of_int n) in
          let cond_attr = GetAttr.fromExp cond in
-         let lhs      = LId([var_name],cond_attr.typ,cond_attr) in
+         let lhs      = LId([var_name], Typ.makeListOpt cond_attr.typ,cond_attr) in
          let cond'    = PId([var_name],cond_attr) in
          let decl     = StmtVal(lhs,None,attr) in
          let bind     = StmtBind(lhs,cond,attr) in
@@ -372,7 +372,7 @@ module BindComplexExpressions = struct
          let stmts1 =
             List.mapi (fun i a ->
                   let attr = GetAttr.fromExp a in
-                  makeValBind (LId(makeTmp tick i, attr.typ, attr)) a)
+                  makeValBind (LId(makeTmp tick i, Typ.makeListOpt attr.typ, attr)) a)
                rhs
          in
          let stmts2 =
@@ -392,7 +392,7 @@ module BindComplexExpressions = struct
             let n,state' = Env.tick state in
             let var_name = "_call_"^(string_of_int n) in
             let exp'     = PId([var_name],attr) in
-            let lhs      = LId([var_name],attr.typ,attr) in
+            let lhs      = LId([var_name], Typ.makeListOpt attr.typ,attr) in
             let decl     = StmtVal(lhs,None,emptyAttr) in
             let bind     = StmtBind(lhs,exp,emptyAttr) in
             let acc      = Env.get state' in
@@ -402,7 +402,7 @@ module BindComplexExpressions = struct
             let n,state' = Env.tick state in
             let var_name = "_tuple_"^(string_of_int n) in
             let exp'     = PId([var_name],attr) in
-            let lhs      = LId([var_name],attr.typ,attr) in
+            let lhs      = LId([var_name],Typ.makeListOpt attr.typ,attr) in
             let decl     = StmtVal(lhs,None,emptyAttr) in
             let bind     = StmtBind(lhs,exp,emptyAttr) in
             let acc      = Env.get state' in
@@ -412,7 +412,7 @@ module BindComplexExpressions = struct
             let n,state' = Env.tick state in
             let var_name = "_array_"^(string_of_int n) in
             let exp'     = PId([var_name],attr) in
-            let lhs      = LId([var_name],attr.typ,attr) in
+            let lhs      = LId([var_name],Typ.makeListOpt attr.typ,attr) in
             let decl     = StmtVal(lhs,None,emptyAttr) in
             let bind     = StmtBind(lhs,exp,emptyAttr) in
             let acc      = Env.get state' in

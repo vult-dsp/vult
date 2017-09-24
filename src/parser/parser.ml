@@ -504,7 +504,7 @@ and typedArgOpt (buffer:Stream.stream) : typed_id =
       let _    = Stream.skip buffer in
       let e    = typeExpression 20 buffer in
       let attr = makeAttr token.loc in
-      TypedId(splitOnDot token.value,e,InputArg,attr)
+      TypedId(splitOnDot token.value,[e],InputArg,attr)
    | _ ->
       let attr = makeAttr token.loc in
       SimpleId(splitOnDot token.value,InputArg,attr)
@@ -517,7 +517,7 @@ and typedArg (buffer:Stream.stream) : typed_id =
    let _     = Stream.consume buffer COLON in
    let e     = typeExpression 20 buffer in
    let attr  = makeAttr token.loc in
-   TypedId(splitOnDot token.value,e,InputArg,attr)
+   TypedId(splitOnDot token.value,[e],InputArg,attr)
 
 and id (buffer:Stream.stream) : Id.t =
    let _     = Stream.expect buffer ID in
@@ -709,7 +709,7 @@ and valDecl (buffer:Stream.stream) : val_decl =
    let id        = id buffer in
    let _         = Stream.consume buffer COLON in
    let val_type  = typeExpression 10 buffer in
-   id,val_type,makeAttr start_loc
+   id,[val_type],makeAttr start_loc
 
 (** 'while' (<expression>) <stmtList> *)
 and stmtWhile (buffer:Stream.stream) : stmt =

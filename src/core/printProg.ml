@@ -78,7 +78,7 @@ let rec lhsExpressionBuff buffer (lhs:lhs_exp) =
       append buffer "(";
       identifierBuff buffer id;
       append buffer ":";
-      typeExpressionBuff buffer tp;
+      typeExpressionBuff buffer (Typ.first tp);
       append buffer ")"
    | LTuple(elems,_) ->
       append buffer "(";
@@ -107,7 +107,7 @@ let rec lhsExpressionBuff buffer (lhs:lhs_exp) =
       expressionBuff buffer index;
       append buffer "]";
       append buffer ":";
-      typeExpressionBuff buffer tp;
+      typeExpressionBuff buffer (Typ.first tp);
       append buffer ")"
 
 and lhsExpressionListBuff buffer expl =
@@ -118,11 +118,11 @@ and typedArgBuff buffer id =
    match id with
    | SimpleId(id1,_,_) -> identifierBuff buffer id1
    | TypedId(["_"],id_type,_,_) ->
-      typeExpressionBuff buffer id_type
+      typeExpressionBuff buffer (Typ.first id_type)
    | TypedId(id1,id_type,_,_) ->
       identifierBuff buffer id1;
       append buffer ":";
-      typeExpressionBuff buffer id_type
+      typeExpressionBuff buffer (Typ.first id_type)
 
 (** Adds to the print buffer an expression *)
 and expressionBuff buffer (exp:exp) =
@@ -334,7 +334,7 @@ and valDecl buffer val_decl =
    append buffer "val ";
    identifierBuff buffer id;
    append buffer " : ";
-   typeExpressionBuff buffer e;
+   typeExpressionBuff buffer (Typ.first e);
    append buffer ";";
    newline buffer
 
