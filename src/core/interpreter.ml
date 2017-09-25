@@ -59,7 +59,7 @@ module Env = struct
    (**  Returns the first environment *)
    let first (env:env) : t =
       match env with
-      | t ::_ -> t
+      | t  :: _ -> t
       | []   -> failwith "invalid env"
 
    (** Used by lookupFunction to iterate the environments until the function is found *)
@@ -85,14 +85,14 @@ module Env = struct
    (** Looks for a function with the given name *)
    let lookupFunction (env:env) (id:Id.t) : (t * fun_body) option =
       match env with
-      | h::t -> lookupFunction_loop h t id
+      | h :: t -> lookupFunction_loop h t id
       | []   -> failwith "invalid env"
 
    (** Used by lookupVar to iterate all local scopes *)
    let rec lookupVar_loop locals id : exp =
       match locals with
       | [] -> raise Not_found
-      | h::t ->
+      | h :: t ->
          match Hashtbl.find h id with
          | value -> value
          | exception Not_found ->
@@ -122,14 +122,14 @@ module Env = struct
       | exception Not_found ->
          let t = first env in
          match t.locals with
-         | h::_ -> Hashtbl.replace h id value
+         | h :: _ -> Hashtbl.replace h id value
          | [] -> failwith "invalid env"
 
    (** Used by updateVar to iterate all local scopes *)
    let rec updateVar_loop (locals:'a list) (id:Id.t) (value:exp) : unit =
       match locals with
-      | [] -> failwith ("unknow variable: "^(PrintProg.identifierStr id))
-      | h::t ->
+      | [] -> failwith ("unknow variable: " ^ (PrintProg.identifierStr id))
+      | h :: t ->
          match Hashtbl.mem h id with
          | _ -> Hashtbl.replace h id value
          | exception Not_found ->
@@ -146,8 +146,8 @@ module Env = struct
    (** Used by updateArrayVar to iterate all local scopes *)
    let rec updateArrayVar_loop (locals:'a list) (id:Id.t) (index:exp) (value:exp) : unit =
       match locals with
-      | [] -> failwith ("unknow variable: "^(PrintProg.identifierStr id))
-      | h::t ->
+      | [] -> failwith ("unknow variable: " ^ (PrintProg.identifierStr id))
+      | h :: t ->
          match Hashtbl.find h id, index with
          | PArray(elems, _), PInt(index, _) ->
             Array.set elems index value
@@ -180,7 +180,7 @@ module Env = struct
       let t = first env in
       match Hashtbl.find t.modules id with
       | module_t -> module_t :: env
-      | exception Not_found -> failwith ("unknown module: "^(PrintProg.identifierStr id))
+      | exception Not_found -> failwith ("unknown module: " ^ (PrintProg.identifierStr id))
 
    (** Inserts a table to store local variables *)
    let enterLocal (env:env) : env =
@@ -189,10 +189,10 @@ module Env = struct
          let locals = (Hashtbl.create 0) :: t.locals in
          let t' = { t with locals } in
          [t']
-      | t::l ->
+      | t :: l ->
          let locals = (Hashtbl.create 0) :: t.locals in
          let t' = { t with locals } in
-         t'::l
+         t' :: l
       | [] -> failwith "invalid env"
 
    (** Gets the context of a function call *)
@@ -218,24 +218,24 @@ let makeInstName (fn:Id.t) (attr:attr) : Id.t =
    let line = Loc.line attr.loc |> string_of_int in
    let col  = Loc.startColumn attr.loc  |> string_of_int in
    match fn with
-   | [id] -> [id^"_"^line^"_"^col]
-   | [pack;id] -> [pack^"_"^id^"_"^line^"_"^col]
+   | [id] -> [id ^ "_"^line ^ "_"^col]
+   | [pack; id] -> [pack ^ "_"^id ^ "_"^line ^ "_"^col]
    | _ -> failwith "invalid function name"
 
 (** Returns the initial value given the type of an expression *)
 let rec getInitValue (tp:Typ.t) : exp =
    match !tp with
-   | Typ.TId(["unit"],_) -> PUnit(emptyAttr)
-   | Typ.TId(["real"],_) -> PReal(0.0,emptyAttr)
-   | Typ.TId(["int"],_)  -> PInt(0,emptyAttr)
-   | Typ.TId(["bool"],_) -> PBool(false,emptyAttr)
-   | Typ.TComposed(["array"],[sub;{ contents = Typ.TInt(size,_) }],_) ->
+   | Typ.TId(["unit"], _) -> PUnit(emptyAttr)
+   | Typ.TId(["real"], _) -> PReal(0.0, emptyAttr)
+   | Typ.TId(["int"], _)  -> PInt(0, emptyAttr)
+   | Typ.TId(["bool"], _) -> PBool(false, emptyAttr)
+   | Typ.TComposed(["array"], [sub; { contents = Typ.TInt(size, _) }], _) ->
       let sub_init = getInitValue sub in
       let elems = Array.init size (fun _ -> sub_init) in
-      PArray(elems,emptyAttr)
-   | Typ.TComposed(["tuple"],types,_) ->
+      PArray(elems, emptyAttr)
+   | Typ.TComposed(["tuple"], types, _) ->
       let elems = List.map getInitValue types in
-      PTuple(elems,emptyAttr)
+      PTuple(elems, emptyAttr)
    | Typ.TLink(tp) -> getInitValue tp
    | _ -> failwith "Interpreter.getInitValue"
 
@@ -244,14 +244,14 @@ let getInitExp (lhs:lhs_exp) : exp =
    match (GetAttr.fromLhsExp lhs).typ with
    | Some(typ) -> getInitValue typ
    | None ->
-      failwith ("Interpreter.getInitExp: cannot get the initial expression: "^(PrintProg.lhsExpressionStr lhs))
+      failwith ("Interpreter.getInitExp: cannot get the initial expression: " ^ (PrintProg.lhsExpressionStr lhs))
 
 (** Evaluates unary operations *)
 let evalUop (op:string) (exp:exp) : exp =
    match op, exp with
    | "-", PInt(v, attr) -> PInt(-v, attr)
    | "-", PReal(v, attr) -> PReal(-.v, attr)
-   | _ -> PUnOp(op,exp, emptyAttr)
+   | _ -> PUnOp(op, exp, emptyAttr)
 
 (** Evaluates binary operations *)
 let evalOp (op:string) (e1:exp) (e2:exp) : exp =
@@ -259,11 +259,11 @@ let evalOp (op:string) (e1:exp) (e2:exp) : exp =
    | "+", PReal(v1, attr), PReal(v2, _)  -> PReal(v1 +. v2, attr)
    | "+", PInt(v1, attr),  PInt(v2, _)   -> PInt(v1 + v2, attr)
    | "-", PReal(v1, attr), PReal(v2, _)  -> PReal(v1 -. v2, attr)
-   | "-", PInt(v1, attr),  PInt(v2 ,_)   -> PInt(v1 - v2, attr)
+   | "-", PInt(v1, attr),  PInt(v2 , _)   -> PInt(v1 - v2, attr)
    | "*", PReal(v1, attr), PReal(v2, _)  -> PReal(v1 *. v2, attr)
    | "*", PInt(v1, attr),  PInt(v2, _)   -> PInt(v1 * v2, attr)
    | "/", PReal(v1, attr), PReal(v2, _)  -> PReal(v1  /. v2, attr)
-   | "/", PInt(v1, attr),  PInt(v2,_)    -> PInt(v1 / v2, attr)
+   | "/", PInt(v1, attr),  PInt(v2, _)    -> PInt(v1 / v2, attr)
    | "%", PReal(v1, attr), PReal(v2, _)  -> PReal(mod_float  v1  v2, attr)
    | "%", PInt(v1, attr),  PInt(v2, _)   -> PInt(v1 mod v2, attr)
    | "==", PReal(v1, attr), PReal(v2, _) -> PBool(v1 = v2, attr)
@@ -287,39 +287,39 @@ let evalOp (op:string) (e1:exp) (e2:exp) : exp =
 let foldOp (op:string) (args:exp list) : exp =
    match args with
    | [] -> failwith ""
-   | h::t ->
+   | h :: t ->
       List.fold_left (evalOp op) h t
 
 (** Adds all the builtin functions to the scope *)
 let builtinFunctions env =
    let real_real f attr args : exp =
       match args with
-      | [PReal(v,_)] -> PReal(f v, attr)
+      | [PReal(v, _)] -> PReal(f v, attr)
       | _ -> failwith "invalid arguments"
    in
    let clip attr args =
       match args with
-      | [PReal(v,_); PReal(mi,_); PReal(ma,_)] -> PReal(max mi (min ma v) ,attr)
-      | [PInt(v,_); PInt(mi,_); PInt(ma,_)] -> PInt(max mi (min ma v) ,attr)
+      | [PReal(v, _); PReal(mi, _); PReal(ma, _)] -> PReal(max mi (min ma v) , attr)
+      | [PInt(v, _); PInt(mi, _); PInt(ma, _)] -> PInt(max mi (min ma v) , attr)
       | _ -> failwith "clip: invalid arguments"
    in
    let int attr args =
       match args with
-      | [PReal(v,_)] -> PInt(int_of_float v,attr)
-      | [PInt(v,_)]  -> PInt(v,attr)
-      | [PBool(v,_)] -> PInt((if v then 1 else 0),attr)
+      | [PReal(v, _)] -> PInt(int_of_float v, attr)
+      | [PInt(v, _)]  -> PInt(v, attr)
+      | [PBool(v, _)] -> PInt((if v then 1 else 0), attr)
       | _ -> failwith "int: invalid arguments"
    in
    let real attr args =
       match args with
-      | [PReal(v,_)] -> PReal(v,attr)
-      | [PInt(v,_)]  -> PReal(float_of_int v,attr)
-      | [PBool(v,_)] -> PReal((if v then 1.0 else 0.0),attr)
+      | [PReal(v, _)] -> PReal(v, attr)
+      | [PInt(v, _)]  -> PReal(float_of_int v, attr)
+      | [PBool(v, _)] -> PReal((if v then 1.0 else 0.0), attr)
       | _ -> failwith "real: invalid arguments"
    in
    let not attr args =
       match args with
-      | [PBool(v,_)] -> PBool(not v,attr)
+      | [PBool(v, _)] -> PBool(not v, attr)
       | _ -> failwith "real: invalid arguments"
    in
    let eps attr args =
@@ -351,13 +351,13 @@ let builtinFunctions env =
    in
    let get _attr args =
       match args with
-      | [PArray(elems,_); PInt(i,_)] ->
+      | [PArray(elems, _); PInt(i, _)] ->
          Array.get elems i
       | _ -> failwith "get: invalid arguments"
    in
    let set attr args =
       match args with
-      | [PArray(elems,_); PInt(i,_); value] ->
+      | [PArray(elems, _); PInt(i, _); value] ->
          Array.set elems i value;
          PUnit(attr)
       | _ -> failwith "get: invalid arguments"
@@ -388,7 +388,7 @@ let builtinFunctions env =
          "set", Env.Builtin(set);
       ]
    in
-   List.iter (fun (name,body) ->Env.addFunction env [name] body) functions
+   List.iter (fun (name, body) ->Env.addFunction env [name] body) functions
 
 (** Defines which type of bind is performed *)
 type bind_kind =
@@ -399,7 +399,7 @@ type bind_kind =
 (** Binds arguments of a function call to a local variable *)
 let rec bindArg (env:Env.env) (lhs:typed_id) (rhs:exp) =
    match lhs, rhs with
-   | (TypedId(id,_,_,_) | SimpleId(id, _, _)), rhs ->
+   | (TypedId(id, _, _, _) | SimpleId(id, _, _)), rhs ->
       Env.updateVar env id rhs
 
 let getIndex (id:exp) (index:exp) : exp option =
@@ -413,13 +413,13 @@ let getIndex (id:exp) (index:exp) : exp option =
 let rec bind (kind:bind_kind) (env:Env.env) (lhs:lhs_exp) (rhs:exp option) =
    match lhs, rhs, kind with
    | LWild _, _, _ -> ()
-   | LTyped(lhs,_,_),_,_
-   | LGroup(lhs,_),_,_ -> bind kind env lhs rhs
+   | LTyped(lhs, _, _), _, _
+   | LGroup(lhs, _), _, _ -> bind kind env lhs rhs
    (* cases when the rhs is given *)
    | LId(id, _, _), Some(rhs), Update     -> Env.updateVar env id rhs
    | LId(id, _, _), Some(rhs), DeclareVal -> Env.declareVal env id rhs
    | LId(id, _, _), Some(rhs), DeclareMem -> Env.declareMem env id rhs
-   | LTuple(lhs_elems,_), Some(PTuple(rhs_elems,_)),_ ->
+   | LTuple(lhs_elems, _), Some(PTuple(rhs_elems, _)), _ ->
       List.iter2 (fun l r -> bind kind env l (Some(r))) lhs_elems rhs_elems
    (* cases in which the rhs is not given *)
    | LId(id, _, _), None, Update ->
@@ -431,10 +431,10 @@ let rec bind (kind:bind_kind) (env:Env.env) (lhs:lhs_exp) (rhs:exp option) =
    | LId(id, _, _), None, DeclareMem ->
       let rhs = getInitExp lhs in
       Env.declareMem env id rhs
-   | LTuple(lhs_elems,_), None,_ ->
+   | LTuple(lhs_elems, _), None, _ ->
       List.iter (fun l -> bind kind env l None) lhs_elems
 
-   | LIndex(id,_,_,_), None, DeclareVal ->
+   | LIndex(id, _, _, _), None, DeclareVal ->
       let rhs = getInitExp lhs in
       Env.declareVal env id rhs
 
@@ -458,7 +458,7 @@ and evalExp (env:Env.env) (exp:exp) : exp =
    | PReal _ -> exp
    | PString _ -> exp
    | PGroup(e, _) -> evalExp env e
-   | PId(id,_) ->
+   | PId(id, _) ->
       begin match Env.lookupVar env id with
          | value -> value
          | exception Not_found -> exp
@@ -480,13 +480,13 @@ and evalExp (env:Env.env) (exp:exp) : exp =
       let elems' = List.map (evalExp env) elems in
       foldOp op elems'
 
-   | PArray(elems,attr) ->
+   | PArray(elems, attr) ->
       let elems' = Array.map (evalExp env) elems in
-      PArray(elems',attr)
+      PArray(elems', attr)
 
-   | PTuple(elems,attr) ->
+   | PTuple(elems, attr) ->
       let elems' = List.map (evalExp env) elems in
-      PTuple(elems',attr)
+      PTuple(elems', attr)
 
    | PIf(cond, then_, else_, attr) ->
       let cond' = evalExp env cond in
@@ -504,7 +504,7 @@ and evalExp (env:Env.env) (exp:exp) : exp =
    | PCall(Some(inst), name, args, attr) ->
       let args' = List.map (evalExp env) args in
       begin match Env.lookupFunction env name with
-         | Some (t,fn) ->
+         | Some (t, fn) ->
             let env'  = Env.enterInstance (t::env) inst in
             begin match evalFunction env' fn attr args' with
                | Some exp -> exp
@@ -515,7 +515,7 @@ and evalExp (env:Env.env) (exp:exp) : exp =
    | PCall(None, name, args, attr) ->
       let args' = List.map (evalExp env) args in
       begin match Env.lookupFunction env name with
-         | Some (t,fn) ->
+         | Some (t, fn) ->
             let inst  = makeInstName name attr in
             let env'  = Env.enterInstance (t::env) inst in
             begin match evalFunction env' fn attr args' with
@@ -564,7 +564,7 @@ and evalStmt (env:Env.env) (stmt:stmt) =
       let env' = Env.enterLocal env in
       evalStmts env' stmts
 
-   | StmtFun(name,_,_,_,_) ->
+   | StmtFun(name, _, _, _, _) ->
       Env.addFunction env name (Env.Declared(stmt));
       ret_unit
 
@@ -592,7 +592,7 @@ and evalStmt (env:Env.env) (stmt:stmt) =
          | _ -> failwith "could not evaluate if statement"
       end
 
-   | StmtWhile(cond,body,_) ->
+   | StmtWhile(cond, body, _) ->
       let rec loop () =
          let cond' = evalExp env cond in
          match cond' with
@@ -610,7 +610,7 @@ and evalStmt (env:Env.env) (stmt:stmt) =
 
    | StmtType _ -> ret_unit
    | StmtAliasType _ -> ret_unit
-   | StmtExternal (name,_,_,_,_)  ->
+   | StmtExternal (name, _, _, _, _)  ->
       Env.addFunction env name (Env.External);
       ret_unit
 
@@ -618,7 +618,7 @@ and evalStmt (env:Env.env) (stmt:stmt) =
 and evalStmts (env:Env.env) (stmts:stmt list) : exp =
    match stmts with
    | [] -> ret_unit
-   | h::t ->
+   | h :: t ->
       match evalStmt env h with
       | PUnit _ -> evalStmts env t
       | ret -> ret
@@ -626,10 +626,10 @@ and evalStmts (env:Env.env) (stmts:stmt list) : exp =
 let rec loadStmts (env:Env.env) (stmts:stmt list) : unit =
    match stmts with
    | [] -> ()
-   | (StmtFun(_) as h)::t ->
+   | (StmtFun(_) as h) :: t ->
       let _ = evalStmt env h in
       loadStmts env t
-   | _::t ->
+   | _ :: t ->
       loadStmts env t
 
 let loadModule (env:Env.env) (results:parser_results) =

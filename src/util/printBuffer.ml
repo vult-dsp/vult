@@ -47,7 +47,7 @@ let rec printList buffer f sep l =
    match l with
    | []   -> ()
    | [h]  -> f buffer h
-   | h::t ->
+   | h :: t ->
       f buffer h;
       append buffer sep;
       printList buffer f sep t
@@ -73,7 +73,7 @@ let rec printListSepLast buffer f sep l =
    | [h]  ->
       f buffer h;
       sep buffer
-   | h::t ->
+   | h :: t ->
       f buffer h;
       sep buffer;
       printListSepLast buffer f sep t
@@ -84,7 +84,7 @@ let rec printListSep buffer f sep l =
    | []   -> ()
    | [h]  ->
       f buffer h
-   | h::t ->
+   | h :: t ->
       f buffer h;
       sep buffer;
       printListSep buffer f sep t

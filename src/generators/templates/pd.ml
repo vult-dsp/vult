@@ -66,15 +66,15 @@ let rec addInlets inputs =
    match inputs with
    | IContext :: t -> addInlets t
    | [] | [_] -> Pla.unit
-   | _::t ->
-      List.map (fun _ -> Pla.string "inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);") t
+   | _ :: t ->
+      List.map (fun _ -> Pla.string "inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal); ") t
       |> Pla.join_sep Pla.newline
       |> Pla.indent
 
 (** Add the outlets *)
 let addOutlets (config:config) =
    config.process_outputs
-   |> List.map (fun _ -> Pla.string "outlet_new(&x->x_obj, &s_signal);")
+   |> List.map (fun _ -> Pla.string "outlet_new(&x->x_obj, &s_signal); ")
    |> Pla.join_sep Pla.newline
    |> Pla.indent
 
@@ -83,10 +83,10 @@ let tildeNewFunction (config:config) : int * Pla.t =
    let dsp_nargs = List.length (removeContext config.process_inputs) + List.length config.process_outputs in
    let vec_decl =
       CCList.init dsp_nargs (fun i  -> {pla|sp[<#i#i>]->s_vec|pla})
-      |> Pla.join_sep_all {pla|,<#>|pla}
+      |> Pla.join_sep_all {pla|, <#>|pla}
       |> Pla.indent
    in
-   dsp_nargs + 2,vec_decl
+   dsp_nargs + 2, vec_decl
 
 let castType (cast:string) (value:Pla.t) : Pla.t =
    match cast with
@@ -105,7 +105,7 @@ let castOutput (params:params) (typ:output) (value:Pla.t) : Pla.t =
    let cast = Replacements.getCast params.repl current_typ "float" in
    castType cast value
 
-let inputName params (i,acc) s =
+let inputName params (i, acc) s =
    match s with
    | IContext -> i, (Pla.string "x->data" :: acc)
    | _ -> i + 1, (castInput params s {pla|*(in_<#i#i>++)|pla} :: acc)
@@ -113,56 +113,56 @@ let inputName params (i,acc) s =
 let tildePerformFunctionCall module_name (params:params) (config:config) =
    (* generates the aguments for the process call *)
    let args =
-      List.fold_left (inputName params) (0,[]) config.process_inputs
+      List.fold_left (inputName params) (0, []) config.process_inputs
       |> snd |> List.rev
       |> (fun a -> if List.length config.process_outputs > 1 then a @ [Pla.string "ret"] else a)
       |> Pla.join_sep Pla.comma
    in
    (* declares the return variable and copies the values to the output buffers *)
-   let ret,copy =
+   let ret, copy =
       let output_pla a = Pla.string (Config.outputTypeString a) in
       let underscore = Pla.string "_" in
       match config.process_outputs with
-      | []  -> Pla.unit,Pla.unit
+      | []  -> Pla.unit, Pla.unit
       | [o] ->
          let current_typ = Replacements.getType params.repl (Config.outputTypeString o) in
          let decl = {pla|<#current_typ#s> ret = |pla} in
          let value = castOutput params o (Pla.string "ret") in
-         let copy = {pla|*(out_0++) = <#value#>;|pla} in
-         decl,copy
+         let copy = {pla|*(out_0++) = <#value#>; |pla} in
+         decl, copy
       | o ->
          let decl = Pla.(string "_tuple___" ++ map_sep underscore output_pla o ++ string "__ ret; ") in
          let copy =
             List.mapi
                (fun i o ->
                    let value = castOutput params o {pla|ret.field_<#i#i>|pla} in
-                   {pla|*(out_<#i#i>++) = <#value#>;|pla}) o
+                   {pla|*(out_<#i#i>++) = <#value#>; |pla}) o
             |> Pla.join_sep_all Pla.newline
          in
-         decl,copy
+         decl, copy
    in
-   {pla|<#ret#> <#module_name#s>_process(<#args#>);<#><#copy#>|pla}
+   {pla|<#ret#> <#module_name#s>_process(<#args#>); <#><#copy#>|pla}
 
 (** Generates the buffer access of _tilde_perform function *)
 let tildePerformFunctionVector (config:config) : int * Pla.t =
    (* we use this template to acces the buffers of inputs and outputs *)
-   let decl_templ io index count = {pla|t_sample *<#io#s>_<#index#i> = (t_sample *)(w[<#count#i>]);|pla} in
+   let decl_templ io index count = {pla|t_sample *<#io#s>_<#index#i> = (t_sample *)(w[<#count#i>]); |pla} in
    (* First the inputs. We start with count=2 for accessing the vector 'w' *)
-   let decl1,count,_  = List.fold_left (fun (s,count,index) _ ->
-         let t = decl_templ "in" index count in (t::s,count+1,index+1))
-         ([],2,0)
+   let decl1, count, _  = List.fold_left (fun (s, count, index) _ ->
+         let t = decl_templ "in" index count in (t :: s, count+1, index+1))
+         ([], 2, 0)
          (removeContext config.process_inputs)
    in
    (* now for the outputs, we continue counting with the last value of count *)
-   let decl2,count,_  = List.fold_left (fun (s,count,index) _ ->
-         let t = decl_templ "out" index count in (t::s,count+1,index+1))
-         (decl1,count,0)
+   let decl2, count, _  = List.fold_left (fun (s, count, index) _ ->
+         let t = decl_templ "out" index count in (t :: s, count+1, index+1))
+         (decl1, count, 0)
          config.process_outputs
    in
    (* the number of samples is in the next index *)
-   let n = {pla|<#>int n = (int)(w[<#count#i>]);|pla} in
+   let n = {pla|<#>int n = (int)(w[<#count#i>]); |pla} in
    (* appends all the declarations *)
-   let decl = List.rev (n::decl2) |> Pla.join_sep Pla.newline |> Pla.indent in
+   let decl = List.rev (n :: decl2) |> Pla.join_sep Pla.newline |> Pla.indent in
    (* we return the number of buffers used *)
    count + 1, decl
 
@@ -170,8 +170,8 @@ let tildePerformFunctionVector (config:config) : int * Pla.t =
 let getInitDefaultCalls module_name params =
    if List.exists (fun a -> a = IContext) params.config.process_inputs then
       {pla|<#module_name#s>_process_type|pla},
-      {pla|<#module_name#s>_process_init(x->data);|pla},
-      {pla|<#module_name#s>_default(x->data);|pla}
+      {pla|<#module_name#s>_process_init(x->data); |pla},
+      {pla|<#module_name#s>_default(x->data); |pla}
    else
       Pla.string "float", Pla.unit, Pla.unit
 
@@ -216,7 +216,7 @@ let implementation (params:params) (code:Pla.t) : Pla.t =
    (* Generates the outlets*)
    let outlets = addOutlets params.config in
 
-   let dsp_nargs,vec_decl = tildeNewFunction params.config in
+   let dsp_nargs, vec_decl = tildeNewFunction params.config in
    let last_w, io_decl = tildePerformFunctionVector params.config in
    let process_call = tildePerformFunctionCall module_name params params.config in
    let main_type, init_call, default_call = getInitDefaultCalls module_name params in
@@ -252,7 +252,7 @@ t_int *<#output#s>_tilde_perform(t_int *w)
 void <#output#s>_tilde_dsp(t_<#output#s>_tilde *x, t_signal **sp)
 {
    dsp_add(<#output#s>_tilde_perform, <#dsp_nargs#i>,
-   x,<#vec_decl#>
+   x, <#vec_decl#>
    sp[0]->s_n);
 }
 
@@ -283,7 +283,7 @@ void <#output#s>_tilde_setup(void) {
       CLASS_DEFAULT, // type of object
       A_NULL); // arguments passed
 
-   class_addmethod(<#output#s>_tilde_class,(t_method)<#output#s>_tilde_dsp, gensym("dsp"), A_NULL);
+   class_addmethod(<#output#s>_tilde_class, (t_method)<#output#s>_tilde_dsp, gensym("dsp"), A_NULL);
    CLASS_MAINSIGNALIN(<#output#s>_tilde_class, t_<#output#s>_tilde, dummy);
 
    class_addmethod(<#output#s>_tilde_class, (t_method)<#output#s>_noteOn,        gensym("noteOn"),        A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, A_NULL);

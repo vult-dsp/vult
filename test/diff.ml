@@ -65,7 +65,7 @@ let lcs xs' ys' =
 
 let rec interleaveLineDiff a b l =
    match a, b, l with
-   | _, _, [] -> (List.map (fun x -> "- "^x) a)@(List.map (fun x -> "+ "^x) b)
+   | _, _, [] -> (List.map (fun x -> "- " ^ x) a)@(List.map (fun x -> "+ " ^ x) b)
    | [], _, _ :: _ |_, [], _ :: _ -> failwith "Diff.interleaveLineDiff: The results obtained from 'Diff.lcs' function are incorrect"
    | ah :: at, bh :: bt, lh :: lt ->
       begin

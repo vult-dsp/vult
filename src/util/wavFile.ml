@@ -133,7 +133,7 @@ let getReadSampleFunction (bits:int32) : (buffer -> float, string) result =
    match Int32.to_int bits with
    | 16 -> Ok readSample16
    | 24 -> Ok readSample24
-   | _ -> Error ("Wave file encoded in an unsupported bits per sample: "^(string_of_int (Int32.to_int bits)))
+   | _ -> Error ("Wave file encoded in an unsupported bits per sample: " ^ (string_of_int (Int32.to_int bits)))
 
 (** Reads the given number of samples into the data arrays *)
 let readSamples (buffer:buffer) (channels:int) (size:int) (data: float array array) (read_fn:buffer -> float) : int =

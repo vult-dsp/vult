@@ -50,7 +50,7 @@ module Evaluate = struct
          PCall(inst, name, args, attr)
       | _ -> call
 
-   let exp : ('a Env.t,exp) Mapper.mapper_func =
+   let exp : ('a Env.t, exp) Mapper.mapper_func =
       Mapper.make "Simplify.exp" @@ fun state exp ->
       match exp with
       | PCall(None, name, args, attr) when
@@ -93,8 +93,8 @@ module Inline = struct
       List.map2
          (fun lhs rhs ->
              match lhs with
-             | SimpleId(lhs,_,_) -> failwith ""
-             | TypedId(lhs,typ,_,attr) ->
+             | SimpleId(lhs, _, _) -> failwith ""
+             | TypedId(lhs,typ, _,attr) ->
                 let lhs_exp =LId(Id.postfix lhs prefix, Some typ, attr) in
                 StmtVal(lhs_exp, Some rhs, attr))
          fargs args
@@ -107,7 +107,7 @@ module Inline = struct
          let _ = Env.lookupRaise Scope.Function state name attr.loc in
          let exp =
             match Interpreter.Env.lookupFunction env name with
-            | Some (_,(Interpreter.Env.Declared (StmtFun(_, fargs, body, _, fattr)))) when Tags.is_empty fattr.tags ->
+            | Some (_, (Interpreter.Env.Declared (StmtFun(_, fargs, body, _, fattr)))) when Tags.is_empty fattr.tags ->
                let prefix = makePrefix attr in
                let r = inline prefix args fargs in
                PSeq(None, StmtBlock(None, r, attr), attr)
@@ -136,7 +136,7 @@ module Tables = struct
       { emptyAttr with typ = Some(real_array_type size) }
 
    let makeFloat loc x =
-      PReal(x,{ emptyAttr with loc })
+      PReal(x, { emptyAttr with loc })
 
    let makeDecl attr fname name data =
       let varname = Id.joinSep "_" fname name in
@@ -151,7 +151,7 @@ module MakeTables = struct
 
    let getFloat x =
       match x with
-      | PReal(value,_) -> value
+      | PReal(value, _) -> value
       | _ -> failwith "The result of the evaluation is not a float"
 
    let getCoefficients l =
@@ -166,14 +166,14 @@ module MakeTables = struct
 
    let getInputVar arg =
       match arg with
-      | SimpleId(id,_,_)
-      | TypedId(id,_,_,_) -> PId(id,Tables.attr_real)
+      | SimpleId(id, _, _)
+      | TypedId(id, _, _, _) -> PId(id,Tables.attr_real)
 
    let makeNewBody fname size min max input =
       let lindex = LId(["index"],Some [Tables.int_type], Tables.attr_int) in
       let rindex = PId(["index"], Tables.attr_int) in
       let getCoeff a =
-         let arr = PCall(None,["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array size)], Tables.attr_real) in
+         let arr = PCall(None, ["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array size)], Tables.attr_real) in
          PIndex(arr, rindex, Tables.attr_real)
       in
       let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), Tables.attr_real) in
@@ -182,13 +182,13 @@ module MakeTables = struct
          [
             StmtVal(lindex,None,emptyAttr);
             StmtBind(lindex,
-                     PCall(None,["clip"],
+                     PCall(None, ["clip"],
                            [
-                              PCall(None,["int"],
+                              PCall(None, ["int"],
                                     [POp("*",
                                          [
                                             initial_index;
-                                            POp("-",[input; PReal(min,Tables.attr_real)], Tables.attr_real)
+                                            POp("-", [input; PReal(min,Tables.attr_real)], Tables.attr_real)
                                          ], Tables.attr_real)], Tables.attr_int);
                               PInt(0, Tables.attr_int);
                               PInt(size-1, Tables.attr_int);
@@ -197,11 +197,11 @@ module MakeTables = struct
             StmtReturn(
                POp("+",
                    [getCoeff "c0";
-                    POp("*",[input;
-                             (POp("+",
-                                  [getCoeff "c1";
-                                   POp("*",
-                                       [getCoeff "c2";input], Tables.attr_real)], Tables.attr_real))],
+                    POp("*", [input;
+                              (POp("+",
+                                   [getCoeff "c1";
+                                    POp("*",
+                                        [getCoeff "c2";input], Tables.attr_real)], Tables.attr_real))],
                         Tables.attr_real)], Tables.attr_real),emptyAttr)
          ], emptyAttr)
 
@@ -289,7 +289,7 @@ module EmbedWavFile = struct
                Error.raiseError msg loc
          end
       | None ->
-         let msg = "The file '"^file^"' was not found in any of the include locations" in
+         let msg = "The file '"^file ^ "' was not found in any of the include locations" in
          Error.raiseError msg loc
 
 
@@ -301,7 +301,7 @@ module EmbedWavFile = struct
 
    let getDeclarations (attr:attr) (name:Id.t) (wav_data:WavFile.wave) : stmt list =
       Array.mapi
-         (fun i v -> Tables.makeDecl attr name ["chan_"^(string_of_int i)] (Array.to_list v))
+         (fun i v -> Tables.makeDecl attr name ["chan_" ^ (string_of_int i)] (Array.to_list v))
          wav_data.WavFile.data
       |> Array.to_list
 
@@ -320,13 +320,13 @@ module EmbedWavFile = struct
       let attr_bool  = { emptyAttr with typ = Some(Typ.Const.bool_type) } in
       let attr_real  = { emptyAttr with typ = Some(Typ.Const.real_type) } in
       let attr_int   = { emptyAttr with typ = Some(Typ.Const.int_type) } in
-      let table_name = Id.joinSep "_" fname ["chan_"^(string_of_int i)] in
+      let table_name = Id.joinSep "_" fname ["chan_" ^ (string_of_int i)] in
       let table      = PCall(None, ["wrap_array"], [PId(table_name, Tables.attr_array samples)], attr_real) in
       let i          = PInt(i, Tables.attr_int) in
       let samples_e  = PInt(samples, Tables.attr_int) in
       StmtIf(
          POp("==", [channel; i],attr_bool),
-         StmtReturn(PIndex(table, POp("%",[index; samples_e],attr_int), attr_real),attr),
+         StmtReturn(PIndex(table, POp("%", [index; samples_e],attr_int), attr_real),attr),
          None,
          attr)
 

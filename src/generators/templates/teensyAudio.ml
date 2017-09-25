@@ -44,7 +44,7 @@ let header (params:params) (code:Pla.t) : Pla.t =
 class <#output#s> : public AudioStream
 {
 public:
-  <#output#s>(void) : AudioStream(0,NULL)
+  <#output#s>(void) : AudioStream(0, NULL)
   {
      <#module_name#s>_process_init(data);
   }
@@ -99,12 +99,12 @@ void <#output#s>::update(void)
   block = allocate();
   if (block) {
     bp = block->data;
-      for(int i = 0;i < AUDIO_BLOCK_SAMPLES;i++) {
-        fix16_t v = <#module_name#s>_process(data,0);
+      for(int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+        fix16_t v = <#module_name#s>_process(data, 0);
         *bp++ = (int16_t)(v / 2);
       }
 
-    transmit(block,0);
+    transmit(block, 0);
     release(block);
   }
 }

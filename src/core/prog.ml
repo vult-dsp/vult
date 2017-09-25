@@ -53,7 +53,7 @@ type arg_type =
    | InputArg
    | OutputArg
    | ContextArg
-[@@deriving show,eq,ord]
+[@@deriving show, eq,ord]
 
 type typed_id =
    | SimpleId of Id.t * arg_type * attr

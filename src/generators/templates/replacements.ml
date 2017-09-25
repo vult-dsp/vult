@@ -111,17 +111,17 @@ let getType (t:t) (name:string) : string =
 let getCast (t:t) (from_t:string) (to_t:string) : string =
    let to_tt   = getType t to_t in
    let from_tt = getType t from_t in
-   match PairMap.get (from_tt,to_tt) t.cast with
+   match PairMap.get (from_tt, to_tt) t.cast with
    | Some(cast) -> cast
    | None -> to_tt
 
 let getFunctionForOperator (t:t) (op:string) (typ:string) : string option =
    let typ_t = getType t typ in
-   PairMap.get (op,typ_t) t.op_to_fun
+   PairMap.get (op, typ_t) t.op_to_fun
 
 let getOperator (t:t) (op:string) (typ:string) : string =
    let typ_t = getType t typ in
-   match PairMap.get (op,typ_t) t.op_to_op with
+   match PairMap.get (op, typ_t) t.op_to_op with
    | Some(new_op) -> new_op
    | None -> op
 
@@ -133,7 +133,7 @@ let getArrayCopy (t:t) (name:string) : string option =
 
 let getFunction (t:t) (op:string) (typ:string) : string =
    let typ_t = getType t typ in
-   match PairMap.get (op,typ_t) t.fun_to_fun with
+   match PairMap.get (op, typ_t) t.fun_to_fun with
    | Some(new_op) -> new_op
    | None -> op
 

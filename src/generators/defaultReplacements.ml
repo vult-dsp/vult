@@ -125,7 +125,7 @@ module Default = struct
             ("eps",  "float"),   "float_eps";
             ("pi",   "float"),   "float_pi";
             ("random", "float"), "float_random";
-            ("wrap_array",  "float"),"float_wrap_array";
+            ("wrap_array",  "float"), "float_wrap_array";
             ("log",  "float"),   "float_print";
             ("log",  "int"),     "int_print";
             ("log",  "uint8_t"), "bool_print";
@@ -148,7 +148,7 @@ module Default = struct
 
    let real_string = Replacements.makeRealToString
          [
-            "float", (fun f -> (Float.to_string f)^"f")
+            "float", (fun f -> (Float.to_string f) ^ "f")
          ]
 
    (* This is the default selection of replacements *)
@@ -214,8 +214,8 @@ module FixedPoint = struct
             ("eps",  "fix16_t"),  "fix_eps";
             ("pi",  "fix16_t"),  "fix_pi";
             ("random", "fix16_t"),  "fix_random";
-            ("wrap_array","fix16_t"), "fix_wrap_array";
-            ("log","fix16_t"), "fix_print";
+            ("wrap_array", "fix16_t"), "fix_wrap_array";
+            ("log", "fix16_t"), "fix_print";
          ]
 
    let array_init = Replacements.makeArrayInitializations
@@ -296,7 +296,7 @@ module JavaScript = struct
             "void", "void_";
             "while", "while_";
             "with", "with_";
-            "yield","yield_";
+            "yield", "yield_";
             "enum", "enum_";
             "implements", "implements_";
             "interface", "interface_";
@@ -471,5 +471,3 @@ let initialize () =
    Replacements.registerReplacements "js"    JavaScript.replacements;
    Replacements.registerReplacements "lua"    Lua.replacements
 ;;
-
-

@@ -33,7 +33,7 @@ module CollectTuples = struct
    let vtype_c : ('a Env.t, Typ.vtype) Mapper.mapper_func =
       Mapper.make "CollectTuples.vtype_c" @@ fun state t ->
       match t with
-      | Typ.TComposed(["tuple"],_,_) ->
+      | Typ.TComposed(["tuple"], _, _) ->
          let data       = Env.get state in
          let data' = PassData.addTuple data (ref t) in
          Env.set state data', t
@@ -55,7 +55,7 @@ module ReportUnsupportedTypes = struct
          not (Typ.isSimpleType t)
       else false
 
-   let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
+   let lhs_exp : ('a Env.t, lhs_exp) Mapper.mapper_func =
       Mapper.make "ReportUnsupportedTypes.lhs_exp" @@ fun state exp ->
       match exp with
       | LId(id,Some t,attr) when isComplexArray (Typ.first t) ->
@@ -78,7 +78,7 @@ module ReportUnsupportedTypes = struct
    let typed_id : ('a Env.t,typed_id) Mapper.mapper_func =
       Mapper.make "ReportUnsupportedTypes.typed_id" @@ fun state t ->
       match t with
-      | TypedId(id,typ,_,attr) when isComplexArray (Typ.first typ) ->
+      | TypedId(id, typ, _,attr) when isComplexArray (Typ.first typ) ->
          reportUnsupportedArray (Typ.first typ) id attr
       | _ -> state, t
 
@@ -102,7 +102,7 @@ module SimplifyFixed = struct
          match e with
          | PInt(value,attr) -> PInt(-value,attr)
          | PReal(value,attr) -> PReal(-.value,attr)
-         | _ -> PUnOp("-",e,GetAttr.fromExp e)
+         | _ -> PUnOp("-", e,GetAttr.fromExp e)
       else e
 
    let powers n =
@@ -159,7 +159,7 @@ module SimplifyFixed = struct
                true, fixSign sign (POp(op, [(makeMult (acc @ t) attr); PInt(p, iattr)], attr))
             | None -> find t (h::acc) attr
          end
-      | h::t -> find t (h::acc) attr
+      | h :: t -> find t (h::acc) attr
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make "Simplify.exp" @@ fun state exp ->

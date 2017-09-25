@@ -28,13 +28,13 @@ THE SOFTWARE.
 type type_descr =
    | CTSimple of string
    | CTArray  of type_descr * int
-[@@deriving show,eq,ord]
+[@@deriving show, eq, ord]
 
 (** Description of arguments to functions *)
 type arg_type =
    | Ref of type_descr
    | Var of type_descr
-[@@deriving show,eq,ord]
+[@@deriving show, eq, ord]
 
 (** Description of expressions (rhs) *)
 type cexp =
@@ -51,7 +51,7 @@ type cexp =
    | CEIf     of cexp * cexp * cexp * type_descr
    | CETuple  of (string * cexp) list * type_descr
    | CEEmpty
-[@@deriving show,eq,ord]
+[@@deriving show, eq, ord]
 
 (** Description of expressions (lhs) *)
 and clhsexp =
@@ -59,7 +59,7 @@ and clhsexp =
   | CLId    of type_descr list * string list
   | CLTuple of clhsexp list
   | CLIndex of type_descr list * string list * cexp
-[@@deriving show,eq,ord]
+[@@deriving show, eq, ord]
 
 (** Description of statements *)
 type cstmt =
@@ -75,4 +75,4 @@ type cstmt =
    | CSAlias    of string * type_descr
    | CSExtFunc  of type_descr * string * (arg_type * string) list
    | CSEmpty
-[@@deriving show,eq,ord]
+[@@deriving show, eq, ord]

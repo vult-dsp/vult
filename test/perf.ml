@@ -79,7 +79,7 @@ let compileFile (file:string) =
    let basename = Filename.chop_extension (Filename.basename file) in
    let cmd = Printf.sprintf "gcc -ffast-math -Werror -I. -I%s -O3 -c %s -o %s.o" (in_proj_dir "runtime") file basename in
    if Sys.command cmd <> 0 then
-      failwith ("Failed to compile "^file)
+      failwith ("Failed to compile " ^ file)
 
 let linkFiles (output:string) (files:string list) =
    let lflags = if os = "Linux" then "-lm" else "" in
@@ -110,13 +110,13 @@ let runC real_type vultfile =
       let output = Filename.chop_extension (Filename.basename vultfile) in
       Sys.chdir tmp_dir;
       generateC vultfile output real_type;
-      compileFile (output^".cpp");
+      compileFile (output ^ ".cpp");
       compileFile (in_proj_dir "runtime/vultin.c");
       compileFile ("main.cpp");
-      linkFiles ("perf_"^real_type) ["vultin.o";output^".o";"main.o"];
-      ignore (Sys.command ("./perf_"^real_type));
-      Sys.remove (output^".cpp");
-      Sys.remove (output^".h");
+      linkFiles ("perf_" ^ real_type) ["vultin.o"; output ^ ".o"; "main.o"];
+      ignore (Sys.command ("./perf_" ^ real_type));
+      Sys.remove (output ^ ".cpp");
+      Sys.remove (output ^ ".h");
       Sys.chdir initial_dir
    with e -> showError e
 

@@ -67,7 +67,7 @@ let rec printType (typ:string) =
 let rec printTypeDescr (typ:type_descr) : Pla.t =
    match typ with
    | CTSimple(typ) -> Pla.string (printType typ)
-   | CTArray(tdescr,_) -> Pla.append (printTypeDescr tdescr) (Pla.string "*")
+   | CTArray(tdescr, _) -> Pla.append (printTypeDescr tdescr) (Pla.string "*")
 
 (** Returns a template the print the expression *)
 let rec printExp (e:cexp) =
@@ -75,8 +75,8 @@ let rec printExp (e:cexp) =
    | CEInt(n)      -> {pla|i32 <#n#i>|pla}
    | CEBool(true)  -> {pla|i1 1|pla}
    | CEBool(false) -> {pla|i1 0|pla}
-   | CEFloat(_,n)  -> {pla|float <#n#f>|pla}
-   | CEVar([name],[typ]) ->
+   | CEFloat(_, n)  -> {pla|float <#n#f>|pla}
+   | CEVar([name], [typ]) ->
       let typ = printTypeDescr typ in
       {pla|<#typ#> %<#name#s>|pla}
 
@@ -88,7 +88,7 @@ let printArgType arg =
    | Var(td) -> printTypeDescr td
    | Ref(td) -> Pla.append (printTypeDescr td) (Pla.string "*")
 
-(*let declareFunctionArg (m,acc) (typ,name) =
+(*let declareFunctionArg (m, acc) (typ,name) =
    let m,var = Module.local m (printArgType typ) name in
    m, (var::acc)
 *)
@@ -112,36 +112,36 @@ let is_reg s = String.get s 0 = '$'
 let rec printStmt s (stmt:cstmt) =
    match stmt with
    (* Do not allocate the temporary variables *)
-   | CSVar(CLId(_,[name]), None) when is_reg name -> s, None
+   | CSVar(CLId(_, [name]), None) when is_reg name -> s, None
 
    (* All other variables are allocated *)
-   | CSVar(CLId([typ],[name]), None) ->
+   | CSVar(CLId([typ], [name]), None) ->
       let typ = printTypeDescr typ in
       s, Some {pla|%<#name#s> = alloca <#typ#>|pla}
 
-   | CSBind(CLId(_,[lhs]), (( CEInt _ | CEFloat _ | CEBool _ | CEString _) as rhs)) ->
+   | CSBind(CLId(_, [lhs]), (( CEInt _ | CEFloat _ | CEBool _ | CEString _) as rhs)) ->
       let rhs = printExp rhs in
       s, Some {pla|store <#rhs#>, %<#lhs#s>|pla}
 
-   | CSBind(CLId(_,[lhs]), CEVar([rhs],[typ])) ->
+   | CSBind(CLId(_, [lhs]), CEVar([rhs], [typ])) ->
       let typ = printTypeDescr typ in
       s, Some {pla|%<#lhs#s> = load <#typ#>, <#typ#>* %<#rhs#s>|pla}
 
-   | CSBind(CLId([typ],[lhs]), CEOp(op,[e1;e2],_)) when is_reg lhs ->
+   | CSBind(CLId([typ], [lhs]), CEOp(op, [e1;e2], _)) when is_reg lhs ->
       let op  = getOp op typ in
       let typ = printTypeDescr typ in
       let e1  = printExp e1 in
       let e2  = printExp e2 in
       s, Some {pla|%<#lhs#s> = <#op#s> <#typ#> <#e1#>, <#e2#>|pla}
 
-   | CSBind(CLId(_typ,[_lhs]), CEOp(_,[_e1;_e2],_)) ->
+   | CSBind(CLId(_typ, [_lhs]), CEOp(_, [_e1;_e2], _)) ->
       (*let typ'   = printTypeDescr typ in
         let e1'    = printExp m vars e1 in
         let e2'    = printExp m vars e2 in
         let var    = IdMap.find [lhs] vars in
         let m, tmp = Module.local m typ' "" in
         let _,res  = Instr.store tmp var in
-        m, vars, [res; Instr.(tmp <-- (add e1' e2'))];*)
+        m, vars, [res; Instr.(tmp <-- (add e1' e2'))]; *)
       failwith ""
 
    | CSReturn(e) ->
@@ -155,7 +155,7 @@ let printBody s (stmt:cstmt) : 'state * Pla.t =
    | CSBlock([]) -> s, Pla.unit
    | CSBlock(body) ->
       List.fold_left
-         (fun (s,p) stmt ->
+         (fun (s, p) stmt ->
              match printStmt s stmt with
              | s, (Some stmt) -> s, Pla.append p (Pla.append stmt Pla.newline)
              | s, None -> s, p)
@@ -168,9 +168,9 @@ let printTopLevel s (stmt:cstmt) : 'state * Pla.t =
       printBody s body
 
    | CSType (name, fields) ->
-      let record_fields, _ = List.fold_left (fun (m,i) (_typ,name) -> Table.add name i m, i + 1) (Table.empty,0) fields in
+      let record_fields, _ = List.fold_left (fun (m, i) (_typ,name) -> Table.add name i m, i + 1) (Table.empty, 0) fields in
       let s = { s with records = Table.add name record_fields s.records } in
-      let types = Pla.map_sep Pla.comma (fun (typ,_) -> printTypeDescr typ) fields in
+      let types = Pla.map_sep Pla.comma (fun (typ, _) -> printTypeDescr typ) fields in
       s, {pla|%struct.<#name#s> = type { <#types#> }|pla}
 
    | CSAlias(name, CTSimple source) ->
@@ -182,7 +182,7 @@ let printTopLevel s (stmt:cstmt) : 'state * Pla.t =
 
 let print (_params:params) (stmts:Code.cstmt list) : (Pla.t * FileKind.t) list =
    let _, p =
-      List.fold_left (fun (s,p) stmt ->
+      List.fold_left (fun (s, p) stmt ->
             let s, stmt = printTopLevel s stmt in
             s, Pla.append p (Pla.append stmt Pla.newline))
          (empty_data,Pla.unit) stmts

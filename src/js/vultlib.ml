@@ -95,7 +95,7 @@ let convertInputFile (i:js_file_code Js.t) : input list =
    match Js.Optdef.to_option i##.file, Js.Optdef.to_option i##.code with
    | Some(file), Some(code) ->
       [Code(Js.to_string file, (Js.to_string code))]
-   | Some(file),None ->
+   | Some(file), None ->
       [File((Js.to_string file))]
    | None, Some(code) ->
       [Code("live.vult", (Js.to_string code))]
@@ -112,7 +112,7 @@ let convertInputFiles (files:js_file_code Js.t Js.js_array Js.t) : input list =
 
 let getFile (args:args) (ext:FileKind.t) : string =
    match ext with
-   | FileKind.ExtOnly(e) -> args.output^"."^e
+   | FileKind.ExtOnly(e) -> args.output ^ "." ^ e
    | FileKind.FullName(n) -> Filename.concat (Filename.dirname args.output) n
 
 
@@ -125,7 +125,7 @@ let convertOutputFile (file:string) (code:string) : js_file_code Js.t =
 
 (** Converts a list of output files *)
 let convertOutputFiles args files =
-   List.map (fun (text,file) -> convertOutputFile (getFile args file) (Pla.print text)) files
+   List.map (fun (text, file) -> convertOutputFile (getFile args file) (Pla.print text)) files
    |> Array.of_list |> Js.array
 
 

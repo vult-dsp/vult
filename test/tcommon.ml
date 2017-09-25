@@ -61,8 +61,8 @@ let tryToRun cmd =
 
 let getFile (args:args) (ext:FileKind.t) : string =
    match ext with
-   | FileKind.ExtOnly(e) -> args.output^"."^e
+   | FileKind.ExtOnly(e) -> args.output ^ "." ^ e
    | FileKind.FullName(n) -> Filename.concat (Filename.dirname args.output) n
 
 let writeFiles args files =
-   List.iter (fun (text,file) -> FileIO.write (getFile args file) (Pla.print text) |> ignore) files
+   List.iter (fun (text, file) -> FileIO.write (getFile args file) (Pla.print text) |> ignore) files

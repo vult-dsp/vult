@@ -50,7 +50,7 @@ module G = struct
          (* inserts edge from_v to to_v *)
          match Hashtbl.find g.forward from_v with
          | deps ->
-            Hashtbl.replace g.forward from_v (to_v::deps)
+            Hashtbl.replace g.forward from_v (to_v :: deps)
          | exception Not_found ->
             Hashtbl.add g.forward from_v [to_v]
       in
@@ -58,7 +58,7 @@ module G = struct
          (* inserts edge to_v to from_v *)
          match Hashtbl.find g.backward to_v with
          | deps ->
-            Hashtbl.replace g.backward to_v (from_v::deps)
+            Hashtbl.replace g.backward to_v (from_v :: deps)
          | exception Not_found ->
             Hashtbl.add g.backward to_v [from_v]
       in
@@ -84,12 +84,12 @@ module G = struct
 
    (* returns a list with all vertices of the graph *)
    let getVertices (g:'a g) : 'a list =
-      Hashtbl.fold (fun v _ acc -> v::acc) g.vertex []
+      Hashtbl.fold (fun v _ acc -> v :: acc) g.vertex []
 
    (* makes a graph given a list of the vertices and it's dependencies *)
    let make (e: ('a * 'a list) list) : 'a g =
       let g = empty () in
-      let () = List.iter (fun (v,deps) -> addVertex g v; List.iter (addEdge g v) deps) e
+      let () = List.iter (fun (v, deps) -> addVertex g v; List.iter (addEdge g v) deps) e
       in g
 
 end
@@ -113,7 +113,7 @@ module S = struct
    let pop (s:'a t) : 'a =
       match !s with
       | [] -> failwith "Stack is empty"
-      | h::t -> s := t; h
+      | h :: t -> s := t; h
 
    (* returns a list representation of the stack *)
    let toList (s:'a t) : 'a list = !s

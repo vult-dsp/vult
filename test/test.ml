@@ -258,7 +258,7 @@ let readOutputAndReference (create:bool) (outdir:string) (output, reference) =
 (** Returns the contents of the reference file for the given vult file *)
 let readReference (update:bool) (ext:string) (contents:string) (file:string) (outdir:string) : string =
    let basefile = Filename.chop_extension (Filename.basename file) in
-   let ref_file = Filename.concat outdir (basefile^"."^ext) in
+   let ref_file = Filename.concat outdir (basefile ^ "."^ext) in
    if update then
       let () = write ref_file contents in
       contents
@@ -285,13 +285,13 @@ module ParserTest = struct
 
    let run (file:string) context =
       let folder = "parser" in
-      let fullfile  = checkFile (in_test_directory (folder^"/"^file)) in
+      let fullfile  = checkFile (in_test_directory (folder ^ "/"^file)) in
       let current   = process fullfile in
       let reference = readReference (update_test context) "base" current fullfile (in_test_directory folder) in
       assert_equal
          ~cmp:Diff.compare
          ~msg:("Parsing file "^fullfile)
-         ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
+         ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
          reference current
 
    let get files = "parser">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)
@@ -309,7 +309,7 @@ module ErrorTest = struct
          (fun s a ->
              match a with
              | Errors e ->
-                (List.map (fun a -> let msg,_,_,_ = Error.reportErrorStringNoLoc a in msg) e) @ s
+                (List.map (fun a -> let msg, _, _, _ = Error.reportErrorStringNoLoc a in msg) e) @ s
              | _ -> s)
          []
          results
@@ -317,13 +317,13 @@ module ErrorTest = struct
 
    let run (file:string) context =
       let folder = "errors" in
-      let fullfile  = checkFile (in_test_directory (folder^"/"^file)) in
+      let fullfile  = checkFile (in_test_directory (folder ^ "/"^file)) in
       let current   = process fullfile in
       let reference = readReference (update_test context) "base" current fullfile (in_test_directory folder) in
       assert_equal
          ~cmp:Diff.compare
          ~msg:("Error mismatch in file "^fullfile)
-         ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
+         ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
          reference current
 
    let get files = "errors">::: (List.map (fun file -> (Filename.basename file) >:: run file) files)
@@ -341,16 +341,16 @@ module PassesTest = struct
 
    let run options (file:string) context =
       let folder = "passes" in
-      let fullfile  = checkFile (in_test_directory (folder^"/"^file)) in
+      let fullfile  = checkFile (in_test_directory (folder ^ "/"^file)) in
       let current   = process options fullfile in
       let reference = readReference (update_test context) "base" current fullfile (in_test_directory folder) in
       assert_equal
          ~cmp:Diff.compare
          ~msg:("Transforming file "^fullfile)
-         ~pp_diff:(fun fmt (a,b) -> Format.fprintf fmt "\n%s" (Diff.lineDiff a b) )
+         ~pp_diff:(fun fmt (a, b) -> Format.fprintf fmt "\n%s" (Diff.lineDiff a b) )
          reference current
 
-   let get files = "passes">::: (List.map (fun (file,options) -> (Filename.basename file) >:: run options file) files)
+   let get files = "passes">::: (List.map (fun (file, options) -> (Filename.basename file) >:: run options file) files)
 
 end
 
@@ -376,15 +376,15 @@ module RandomCompileTest = struct
       let output   = Filename.chop_extension (Filename.basename file) in
       Sys.chdir tmp_dir;
       generateCPP file output real_type;
-      assert_bool "No code generated" (Sys.file_exists (output^".cpp"));
-      compileFile (output^".cpp");
-      Sys.remove (output^".cpp");
-      Sys.remove (output^".h");
-      Sys.remove (output^".vult");
+      assert_bool "No code generated" (Sys.file_exists (output ^ ".cpp"));
+      compileFile (output ^ ".cpp");
+      Sys.remove (output ^ ".cpp");
+      Sys.remove (output ^ ".h");
+      Sys.remove (output ^ ".vult");
       Sys.remove (output);
       Sys.chdir initial_dir
 
-   let get files real_type = "compile">::: (List.map (fun file -> (Filename.basename file) ^"."^ real_type >:: run real_type file) files)
+   let get files real_type = "compile">::: (List.map (fun file -> (Filename.basename file)  ^ "."^ real_type >:: run real_type file) files)
 
 end
 
@@ -403,15 +403,15 @@ module CliTest = struct
    let compileCppFile (file:string) : unit =
       let output = Filename.chop_extension (Filename.basename file) in
       Sys.chdir tmp_dir;
-      assert_bool "No code generated" (Sys.file_exists (output^".cpp"));
-      callCompiler (output^".cpp");
+      assert_bool "No code generated" (Sys.file_exists (output ^ ".cpp"));
+      callCompiler (output ^ ".cpp");
       callCompiler (in_test_directory "../runtime/vultin.c");
       Sys.chdir initial_dir
 
    let checkJsFile (file:string) : unit =
       let output = Filename.chop_extension (Filename.basename file) in
       Sys.chdir tmp_dir;
-      assert_bool "No code generated" (Sys.file_exists (output^".js"));
+      assert_bool "No code generated" (Sys.file_exists (output ^ ".js"));
       let cmd = "node -c " ^ output ^ ".js" in
       if Sys.command cmd <> 0 then
          assert_failure ("Failed to check "^file);
@@ -420,7 +420,7 @@ module CliTest = struct
    let checkLuaFile (file:string) : unit =
       let output = Filename.chop_extension (Filename.basename file) in
       Sys.chdir tmp_dir;
-      assert_bool "No code generated" (Sys.file_exists (output^".lua"));
+      assert_bool "No code generated" (Sys.file_exists (output ^ ".lua"));
       let cmd = "luajit -bl " ^ output ^ ".lua > " ^ output ^ ".b" in
       if Sys.command cmd <> 0 then
          assert_failure ("Failed to check "^file);
@@ -431,13 +431,13 @@ module CliTest = struct
       let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
       let flags, ext =
          match code_type with
-         | "fixed" -> "-ccode -real fixed", [".cpp",".cpp.fixed.base"; ".h", ".h.fixed.base"]
-         | "float" -> "-ccode", [".cpp",".cpp.float.base"; ".h", ".h.float.base"]
+         | "fixed" -> "-ccode -real fixed", [".cpp", ".cpp.fixed.base"; ".h", ".h.fixed.base"]
+         | "float" -> "-ccode", [".cpp", ".cpp.float.base"; ".h", ".h.float.base"]
          | "js" -> "-jscode", [".js", ".js.base"]
          | "lua" -> "-luacode", [".lua", ".lua.base"]
          | _ -> failwith "Unknown target to run test"
       in
-      let includes_flags = List.map (fun a -> "-i "^a) includes |> String.concat " " in
+      let includes_flags = List.map (fun a -> "-i " ^ a) includes |> String.concat " " in
       let flags = flags ^ " " ^ includes_flags in
       let vultc = if compiler = Node then "node ./vultc.js" else "./vultc.native" in
       let cmd = vultc ^ " -test " ^ flags ^ " -o " ^ basefile ^ " " ^ fullfile in
@@ -461,8 +461,8 @@ module CliTest = struct
       let args = { default_arguments with includes = includes } in
       let args, ext =
          match code_type with
-         | "fixed" -> { args with code = CCode; real = "fixed" }, [".cpp",".cpp.fixed.base"; ".h", ".h.fixed.base"]
-         | "float" -> { args with code = CCode }, [".cpp",".cpp.float.base"; ".h", ".h.float.base"]
+         | "fixed" -> { args with code = CCode; real = "fixed" }, [".cpp", ".cpp.fixed.base"; ".h", ".h.fixed.base"]
+         | "float" -> { args with code = CCode }, [".cpp", ".cpp.float.base"; ".h", ".h.float.base"]
          | "js" -> { args with code = JSCode }, [".js", ".js.base"]
          | "lua" -> { args with code = LuaCode }, [".lua", ".lua.base"]
          | _ -> failwith "Unknown target to run test"
@@ -501,7 +501,7 @@ module CliTest = struct
              assert_equal
                 ~cmp:Diff.compare
                 ~msg:("Generating file "^fullfile)
-                ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
+                ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
                 reference current
          )
          files_content
@@ -518,8 +518,8 @@ module Templates = struct
       let args = { default_arguments with includes = includes } in
       let args, ext =
          match code_type with
-         | "fixed" -> { args with template; code = CCode; real = "fixed" }, [".cpp",".cpp.fixed.base."^template; ".h", ".h.fixed.base."^template]
-         | "float" -> { args with template; code = CCode }, [".cpp",".cpp.float.base."^template; ".h", ".h.float.base."^template]
+         | "fixed" -> { args with template; code = CCode; real = "fixed" }, [".cpp", ".cpp.fixed.base."^template; ".h", ".h.fixed.base."^template]
+         | "float" -> { args with template; code = CCode }, [".cpp", ".cpp.float.base."^template; ".h", ".h.float.base."^template]
          | "js" -> { args with template; code = JSCode }, [".js", ".js.base."^template]
          | "lua" -> { args with template; code = LuaCode }, [".lua", ".lua.base."^template]
          | _ -> failwith "Unknown target to run test"
@@ -552,7 +552,7 @@ module Templates = struct
              assert_equal
                 ~cmp:Diff.compare
                 ~msg:("Generating file "^fullfile)
-                ~pp_diff:(fun ff (a,b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
+                ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b) )
                 reference current
          )
          files_content

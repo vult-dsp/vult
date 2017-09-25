@@ -33,7 +33,7 @@ open Maps
 let rec findModule (includes:string list) (module_name:string) : string option =
    match includes with
    | [] -> None
-   | h::t ->
+   | h :: t ->
       (* first checks an uncapitalized file *)
       let file1 = Filename.concat h ((String.uncapitalize module_name) ^ ".vult") in
       if FileIO.exists file1 then Some file1
@@ -54,7 +54,7 @@ let getIncludes (arguments:args) (files:input list) : string list =
          (fun input ->
              match input with
              | File(f)
-             | Code(f,_) -> Filename.dirname f)
+             | Code(f, _) -> Filename.dirname f)
          files
    in
    (* these are the extra include paths passed in the arguments *)
@@ -73,7 +73,7 @@ let getIncludes (arguments:args) (files:input list) : string list =
 let rec loadFiles_loop (includes:string list) dependencies parsed visited (files:input list) =
    match files with
    | [] -> dependencies, parsed
-   | (( File(h) | Code(h,_)) as input)::t ->
+   | (( File(h) | Code(h, _)) as input) :: t ->
       (* check that the file has not been visited before *)
       let h_module    = moduleName h in
       if not (Hashtbl.mem visited h_module) then
@@ -81,7 +81,7 @@ let rec loadFiles_loop (includes:string list) dependencies parsed visited (files
          let h_parsed    =
             match input with
             |  File(_) -> Parser.parseFile h
-            |  Code(_,txt) -> Parser.parseString None txt
+            |  Code(_, txt) -> Parser.parseString None txt
          in
          let () = Hashtbl.add parsed h_module h_parsed in
          (* gets the depencies based on the modules used *)
@@ -106,8 +106,8 @@ let rec loadFiles_loop (includes:string list) dependencies parsed visited (files
 let rec checkComponents (comps:string list list) : unit =
    match comps with
    | [] -> ()
-   | [_]::t -> checkComponents t
-   | h::_ ->
+   | [_] :: t -> checkComponents t
+   | h :: _ ->
       (* in this case one of the components has more than one module *)
       let msg = "The following modules have circular dependencies: " ^ (String.concat ", " h) in
       Error.raiseErrorMsg msg
@@ -117,7 +117,7 @@ let loadFiles (arguments:args) (files:input list) : parser_results list =
    let includes = getIncludes arguments files in
    arguments.includes <- includes;
    let dependencies, parsed = loadFiles_loop includes (Hashtbl.create 8) (Hashtbl.create 8) (Hashtbl.create 8) files in
-   let dep_list = Hashtbl.fold (fun a b acc -> (a,b)::acc) dependencies [] in
+   let dep_list = Hashtbl.fold (fun a b acc -> (a, b) :: acc) dependencies [] in
    let comps = Components.components dep_list in
    let () = checkComponents comps in
    let sorted_deps = List.map List.hd comps in

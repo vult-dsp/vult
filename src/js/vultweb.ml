@@ -27,7 +27,7 @@ open Args
 let generateJSCode s =
    let args = { default_arguments with code = JSCode; real = "js"; template = "browser"; files = [Code("live.vult", (Js.to_string s))]} in
    match Driver.main args with
-   | [GeneratedCode [code,_]] ->
+   | [GeneratedCode [code, _]] ->
       Js.string (Pla.print code)
    | [Errors errors] ->
       let error_strings =
@@ -40,13 +40,13 @@ let generateJSCode s =
    | _ -> Js.string "unknown error"
 
 let makeAceError (e:Error.t) =
-   let msg,_,line,col = Error.reportErrorStringNoLoc e in
+   let msg, _, line, col = Error.reportErrorStringNoLoc e in
    Js.Unsafe.obj
-      [| ("text",Js.Unsafe.inject (Js.string msg));
-         ("row",Js.Unsafe.inject (Js.string (string_of_int (line - 1))));
-         ("column",Js.Unsafe.inject (Js.string (string_of_int (col - 1))));
-         ("type",Js.Unsafe.inject (Js.string "error"));
-         ("raw",Js.Unsafe.inject (Js.string msg));
+      [| ("text", Js.Unsafe.inject (Js.string msg));
+         ("row", Js.Unsafe.inject (Js.string (string_of_int (line - 1))));
+         ("column", Js.Unsafe.inject (Js.string (string_of_int (col - 1))));
+         ("type", Js.Unsafe.inject (Js.string "error"));
+         ("raw", Js.Unsafe.inject (Js.string msg));
       |]
 
 let checkCode s =

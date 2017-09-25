@@ -30,11 +30,11 @@ open Args
 
 module ReplaceFunctionNames = struct
 
-   let exp : ('a Env.t,exp) Mapper.mapper_func =
+   let exp : ('a Env.t, exp) Mapper.mapper_func =
       Mapper.make "ReplaceFunctionNames.exp" @@ fun state exp ->
       match exp with
       | PCall(name,fname,args,attr) when attr.ext_fn = None ->
-         let Id.Path(path),_,t = Env.lookupRaise Scope.Function state fname attr.loc in
+         let Id.Path(path), _, t = Env.lookupRaise Scope.Function state fname attr.loc in
          let final_name, attr =
             match !(t.Scope.ext_fn) with
             | Some(n) -> [n], { attr with ext_fn = Some n}
@@ -61,7 +61,7 @@ module ReplaceFunctionNames = struct
             | Some(loc) -> loc
             | None -> Loc.default
          in
-         let Id.Path(type_path),_,_ = Env.lookupRaise Scope.Type state id loc in
+         let Id.Path(type_path), _, _ = Env.lookupRaise Scope.Type state id loc in
          state, Typ.TId(type_path,optloc)
       | _ -> state, typ
 
@@ -81,9 +81,9 @@ module ReturnReferences = struct
          state, stmt
       else
          match stmt with
-         | StmtFun(name,args,body,Some(rettype),attr) when not (Typ.isSimpleType rettype) ->
-            let output = TypedId(["_output_"],[rettype],OutputArg,emptyAttr) in
-            let stmt' = StmtFun(name,args@[output],body,Some(Typ.Const.unit_type),attr) in
+         | StmtFun(name, args, body, Some(rettype), attr) when not (Typ.isSimpleType rettype) ->
+            let output = TypedId(["_output_"], [rettype], OutputArg,emptyAttr) in
+            let stmt' = StmtFun(name, args @ [output], body, Some(Typ.Const.unit_type), attr) in
             state, stmt'
          | _ -> state, stmt
 
@@ -96,10 +96,10 @@ module ReturnReferences = struct
       else
          match stmt with
          (* regular case a = foo() *)
-         | StmtBind(LId(lhs,Some(typ),lattr),PCall(inst,name,args,attr),battr) when not (Typ.isSimpleType (Typ.first typ)) ->
-            let arg = PId(lhs,lattr) in
+         | StmtBind(LId(lhs, Some(typ), lattr), PCall(inst, name, args, attr), battr) when not (Typ.isSimpleType (Typ.first typ)) ->
+            let arg = PId(lhs, lattr) in
             let fixed_attr = unitAttr attr in
-            state, [StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],fixed_attr),battr)]
+            state, [StmtBind(LWild(fixed_attr), PCall(inst, name, args @ [arg], fixed_attr), battr)]
          (* special case _ = foo() when the return is no simple value *)
          | StmtBind(LWild(wattr),PCall(inst,name,args,attr),battr) when not (Typ.isSimpleOpType wattr.typ) ->
             let i,state' = Env.tick state in
@@ -108,22 +108,22 @@ module ReturnReferences = struct
             let fixed_attr = unitAttr attr in
             state', [StmtVal(LId([tmp_name],Typ.makeListOpt wattr.typ,wattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],fixed_attr),battr)]
          (* special case _ = a when a is not simple value *)
-         | StmtBind(LWild(wattr),e,battr) when not (Typ.isSimpleOpType wattr.typ) ->
+         | StmtBind(LWild(wattr), e,battr) when not (Typ.isSimpleOpType wattr.typ) ->
             let i,state' = Env.tick state in
             let tmp_name = "_unused_" ^ (string_of_int i) in
-            state', [StmtVal(LId([tmp_name],Typ.makeListOpt wattr.typ,wattr),None,battr);StmtBind(LId([tmp_name],Typ.makeListOpt wattr.typ,wattr),e,battr)]
-         | StmtBind(_,PCall(_,_,_,_),_) ->
+            state', [StmtVal(LId([tmp_name],Typ.makeListOpt wattr.typ,wattr),None,battr);StmtBind(LId([tmp_name],Typ.makeListOpt wattr.typ,wattr), e,battr)]
+         | StmtBind(_,PCall(_, _, _, _), _) ->
             state, [stmt]
          | StmtVal(LId(lhs,Some(typ),lattr),Some(PCall(inst,name,args,attr)),battr) when not (Typ.isSimpleType (Typ.first typ)) ->
             let arg = PId(lhs,lattr) in
             let fixed_attr = unitAttr attr in
             state, [StmtVal(LId(lhs,Some(typ),lattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],fixed_attr),battr)]
-         | StmtVal(_,Some(PCall(_,_,_,_)),_) ->
+         | StmtVal(_,Some(PCall(_, _, _, _)), _) ->
             state, [stmt]
          | StmtReturn(e,attr) ->
             let eattr = GetAttr.fromExp e in
             if not (Typ.isSimpleOpType eattr.typ) then
-               let stmt' = StmtBind(LId(["_output_"],Typ.makeListOpt eattr.typ,eattr),e,attr) in
+               let stmt' = StmtBind(LId(["_output_"],Typ.makeListOpt eattr.typ,eattr), e,attr) in
                reapply state, [stmt';StmtReturn(PUnit(unitAttr eattr),attr)]
             else
                state, [stmt]
@@ -151,7 +151,7 @@ module DummySimplifications = struct
       | PCall(None, ["not"], [e], attr) ->
          let args = (Env.get state).PassData.args in
          if args.code = JSCode || args.code = LuaCode then
-            state, POp("==",[e; PBool(false, attr)], attr)
+            state, POp("==", [e; PBool(false, attr)], attr)
          else
             state, exp
       | _ -> state, exp
@@ -172,7 +172,7 @@ module DummySimplifications = struct
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "DummySimplifications.stmt_x" @@ fun state stmt ->
       match stmt with
-      | StmtVal(LWild(_),None,_) ->
+      | StmtVal(LWild(_),None, _) ->
          state, []
       | StmtBind(LId(lhs, _, _), PId(rhs, _), _ ) when compare lhs rhs = 0 ->
          reapply state, []

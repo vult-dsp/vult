@@ -40,18 +40,18 @@ module CreateTupleTypes = struct
 
    let makeTypeDeclaration (t:Typ.t) : stmt =
       match !t with
-      | Typ.TComposed(["tuple"],types,_) ->
-         let elems = List.mapi (fun i a -> ["field_"^(string_of_int i)],[a],emptyAttr) types in
-         StmtType(t,elems,emptyAttr)
+      | Typ.TComposed(["tuple"], types, _) ->
+         let elems = List.mapi (fun i a -> ["field_" ^ (string_of_int i)], [a], emptyAttr) types in
+         StmtType(t, elems, emptyAttr)
       | _ -> failwith "CreateTupleTypes.makeTypeDeclaration: there should be only tuples here"
 
    let rec getDeclarations dependencies visited remaining : Typ.t dependencies=
       match remaining with
       | [] ->
-         Hashtbl.fold (fun a b acc -> (a,b)::acc) dependencies []
-      | h::t when TypeSet.mem h visited ->
+         Hashtbl.fold (fun a b acc -> (a, b) :: acc) dependencies []
+      | h :: t when TypeSet.mem h visited ->
          getDeclarations dependencies visited t
-      | h::t ->
+      | h :: t ->
          let sub = getSubTuples h in
          let visited' = TypeSet.add h visited in
          let () = Hashtbl.add dependencies h sub in
@@ -60,8 +60,8 @@ module CreateTupleTypes = struct
    let rec checkCircularDepedencies components =
       match components with
       | [] -> ()
-      | [_]::t -> checkCircularDepedencies t
-      | types::_ ->
+      | [_] :: t -> checkCircularDepedencies t
+      | types :: _ ->
          let types_str = List.map PrintProg.typeStr types |> String.concat ", " in
          let msg = "The following tuple types have circular dependencies: " ^ types_str in
          Error.raiseErrorMsg msg
@@ -80,7 +80,7 @@ end
 (* Basic transformations *)
 let inferPass (name:Id.t) (state,stmts) =
    let state' = Env.enter Scope.Module state name emptyAttr in
-   let stmts,state',_ = Inference.inferStmtList state' Inference.NoType stmts in
+   let stmts, state', _ = Inference.inferStmtList state' Inference.NoType stmts in
    let state' = Env.exit state' in
    state', stmts
 
@@ -133,7 +133,7 @@ let applyTransformations args ?(options=default_options) (results:parser_results
              let result' = { stmts with presult = stmts' } in
              env', result'::acc
          )
-         (env,[])
+         (env, [])
          results
    in
    if options.tuples then

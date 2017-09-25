@@ -133,7 +133,7 @@ let castOutput (params:params) (typ:output) (value:Pla.t) : Pla.t =
    let cast = Replacements.getCast params.repl current_typ "float" in
    castType cast value
 
-let inputName params (i,acc) s =
+let inputName params (i, acc) s =
    match s with
    | IContext -> i, (Pla.string "*data" :: acc)
    | _ -> i + 1, (castInput params s {pla|in_<#i#i>|pla} :: acc)
@@ -141,35 +141,35 @@ let inputName params (i,acc) s =
 let processFunctionCall module_name (params:params) (config:config) =
    (* generates the aguments for the process call *)
    let args =
-      List.fold_left (inputName params) (0,[]) config.process_inputs
+      List.fold_left (inputName params) (0, []) config.process_inputs
       |> snd |> List.rev
-      |> (fun a -> if List.length config.process_outputs > 1 then a@[Pla.string "ret"] else a)
+      |> (fun a -> if List.length config.process_outputs > 1 then a @ [Pla.string "ret"] else a)
       |> Pla.join_sep Pla.comma
    in
    (* declares the return variable and copies the values to the output buffers *)
-   let ret,copy =
+   let ret, copy =
       let output_pla a = Pla.string (Config.outputTypeString a) in
       let underscore = Pla.string "_" in
       match config.process_outputs with
-      | []  -> Pla.unit,Pla.unit
+      | []  -> Pla.unit, Pla.unit
       | [o] ->
          let current_typ = Replacements.getType params.repl (Config.outputTypeString o) in
          let decl = {pla|<#current_typ#s> ret = |pla} in
          let value = castOutput params o (Pla.string "ret") in
-         let copy = {pla|return <#value#>;|pla} in
-         decl,copy
+         let copy = {pla|return <#value#>; |pla} in
+         decl, copy
       | o ->
          let decl = Pla.(string "_tuple___" ++ map_sep underscore output_pla o ++ string "__ ret; ") in
          let copy =
             List.mapi
                (fun i o ->
                    let value = castOutput params o {pla|ret.field_<#i#i>|pla} in
-                   {pla|out_<#i#i> = <#value#>;|pla}) o
+                   {pla|out_<#i#i> = <#value#>; |pla}) o
             |> Pla.join_sep_all Pla.newline
          in
-         decl,copy
+         decl, copy
    in
-   {pla|<#ret#> <#module_name#s>_process(<#args#>);<#><#copy#>|pla}
+   {pla|<#ret#> <#module_name#s>_process(<#args#>); <#><#copy#>|pla}
 
 let getInitDefaultCalls module_name params =
    if  List.exists (fun s -> s = IContext) params.config.process_inputs then
@@ -296,19 +296,19 @@ let process_input_output_decl (f:'a -> string) (kind:string) (names:string list)
 
 let getModelica (params:params) : Pla.t * FileKind.t =
    let output = params.output in
-   let input_names = List.mapi (fun i _ -> "in"^(string_of_int i)) params.config.process_inputs in
-   let output_names = List.mapi (fun i _ -> "out"^(string_of_int i)) params.config.process_outputs in
-   let input_array_names = List.mapi (fun i _ -> "u["^(string_of_int (i+1))^"]") params.config.process_inputs in
-   let output_array_names = List.mapi (fun i _ -> "y["^(string_of_int (i+1))^"]") params.config.process_outputs in
+   let input_names = List.mapi (fun i _ -> "in" ^ (string_of_int i)) params.config.process_inputs in
+   let output_names = List.mapi (fun i _ -> "out" ^ (string_of_int i)) params.config.process_outputs in
+   let input_array_names = List.mapi (fun i _ -> "u[" ^ (string_of_int (i+1)) ^ "]") params.config.process_inputs in
+   let output_array_names = List.mapi (fun i _ -> "y[" ^ (string_of_int (i+1)) ^ "]") params.config.process_outputs in
    let nin = List.length params.config.process_inputs in
    let nout = List.length params.config.process_outputs in
 
-   let process_ext_call_inputs = "obj"::input_names |> Pla.map_sep Pla.commaspace Pla.string in
+   let process_ext_call_inputs = "obj" :: input_names |> Pla.map_sep Pla.commaspace Pla.string in
 
    let process_input_decl = process_input_output_decl modelicaInputType "input" input_names params.config.process_inputs in
    let process_output_decl = process_input_output_decl modelicaOutputType "output" output_names params.config.process_outputs in
 
-   let process_call_inputs = "obj"::input_array_names |> Pla.map_sep Pla.commaspace Pla.string in
+   let process_call_inputs = "obj" :: input_array_names |> Pla.map_sep Pla.commaspace Pla.string in
    let process_call_outputs = output_array_names |> Pla.map_sep Pla.commaspace Pla.string |> Pla.parenthesize in
 
    let ext_calls =
@@ -316,7 +316,7 @@ let getModelica (params:params) : Pla.t * FileKind.t =
       | 0 -> {pla|<#output#s>__process(<#process_ext_call_inputs#>)|pla}
       | 1 -> {pla|out0 = <#output#s>__process(<#process_ext_call_inputs#>)|pla}
       | _ ->
-         let args = "obj"::input_names@output_names |> Pla.map_sep Pla.commaspace Pla.string in
+         let args = "obj" :: input_names@output_names |> Pla.map_sep Pla.commaspace Pla.string in
          {pla|<#output#s>__process(<#args#>)|pla}
    in
    {pla|
@@ -355,7 +355,7 @@ package <#output#s>
    end Internal;
 end <#output#s>;
 |pla},
-   FileKind.FullName(params.output^".mo")
+   FileKind.FullName(params.output ^ ".mo")
 
 
 let get (params:params) (header_code:Pla.t) (impl_code:Pla.t) : (Pla.t * FileKind.t) list =

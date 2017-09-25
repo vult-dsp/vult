@@ -25,7 +25,7 @@ THE SOFTWARE.
 type input =
    | File of string
    | Code of string * string
-[@@deriving show,eq,ord]
+[@@deriving show, eq,ord]
 
 type output =
    | Version of string

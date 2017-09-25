@@ -44,8 +44,8 @@ let isSimple (e:cexp) : bool =
 let rec simplifyArray (typ:type_descr) : string * string list =
    match typ with
    | CTSimple(name) -> name, []
-   | CTArray(sub,size) ->
-      let name,sub_size = simplifyArray sub in
+   | CTArray(sub, size) ->
+      let name, sub_size = simplifyArray sub in
       name, sub_size @ [string_of_int size]
 
 (** Returns the representation of a type description *)
@@ -64,13 +64,13 @@ let printTypeAndName (is_decl:bool) (typ:type_descr list) (name:string list) : P
       let kind, sizes = simplifyArray typ in
       begin match is_decl, sizes with
          (* Simple varible declaration (no sizes) *)
-         | true,[] -> {pla|<#kind#s> <#name#s>|pla}
+         | true, [] -> {pla|<#kind#s> <#name#s>|pla}
          (* Array declarations (with sizes) *)
-         | true,_  ->
+         | true, _  ->
             let t_sizes = Pla.map_sep Pla.comma Pla.string sizes in
             {pla|<#kind#s> <#name#s>[<#t_sizes#>]|pla}
          (* Simple rebinding (no declaration) *)
-         | _,_ -> {pla|<#name#s>|pla}
+         | _, _ -> {pla|<#name#s>|pla}
       end
    | _ -> failwith "CodeC.printTypeAndName: invalid input"
 
@@ -79,27 +79,27 @@ let printLhsExpTuple (var:string list) (is_var:bool) (i:int) (e:clhsexp) : Pla.t
    let var = dot var in
    match e with
    (* Assigning to a simple variable *)
-   | CLId(CTSimple typ :: _,name) ->
+   | CLId(CTSimple typ :: _, name) ->
       let name_ = dot name in
       if is_var then (* with declaration *)
          {pla|<#typ#s> <#name_#> = <#var#>.field_<#i#i>;|pla}
       else (* with no declaration *)
          {pla|<#name_#> = <#var#>.field_<#i#i>;|pla}
 
-   | CLId(typ,name) ->
+   | CLId(typ, name) ->
       let tdecl = printTypeAndName is_var typ name in
       {pla|<#tdecl#> = <#var#>.field_<#i#i>;|pla}
 
    | CLWild -> Pla.unit
 
-   | _ -> failwith ("printLhsExpTuple: All other cases should be already covered\n"^(Code.show_clhsexp e))
+   | _ -> failwith ("printLhsExpTuple: All other cases should be already covered\n" ^ (Code.show_clhsexp e))
 
 
 (** Returns a template the print the expression *)
 let rec printExp (params:params) (e:cexp) : Pla.t =
    match e with
    | CEEmpty -> Pla.unit
-   | CEFloat(s,_) -> Pla.string s
+   | CEFloat(s, _) -> Pla.string s
 
    | CEInt(n) ->
       (** Parenthesize if it has a unary minus *)
@@ -111,24 +111,24 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
 
    | CEString(s) -> Pla.string_quoted s
 
-   | CEArray(elems,_) ->
+   | CEArray(elems, _) ->
       let telems = Pla.map_sep Pla.comma (printExp params) elems in
       {pla|{<#telems#>}|pla}
 
-   | CECall(name,args,_) ->
+   | CECall(name, args, _) ->
       let targs = Pla.map_sep Pla.comma (printExp params) args in
       {pla|<#name#s>(<#targs#>)|pla}
 
-   | CEUnOp(op,e,_) ->
+   | CEUnOp(op, e, _) ->
       let te = printExp params e in
       {pla|(<#op#s> <#te#>)|pla}
 
-   | CEOp(op,elems,_) ->
+   | CEOp(op, elems, _) ->
       let sop = {pla| <#op#s> |pla} in
       let telems = Pla.map_sep sop (printExp params) elems in
       {pla|(<#telems#>)|pla}
 
-   | CEVar(name,_) ->
+   | CEVar(name, _) ->
       dot name
 
    | CEIndex(e, index, _) ->
@@ -136,25 +136,25 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
       let e = printExp params e in
       {pla|<#e#>[<#index#>]|pla}
 
-   | CEIf(cond,then_,else_,_) ->
+   | CEIf(cond, then_, else_, _) ->
       let tcond = printExp params cond in
       let tthen = printExp params then_ in
       let telse = printExp params else_ in
       {pla|(<#tcond#>?<#tthen#>:<#telse#>)|pla}
 
-   | CETuple(elems,_) ->
+   | CETuple(elems, _) ->
       let telems = Pla.map_sep Pla.comma (printChField params) elems in
       {pla|{ <#telems#> }|pla}
 
 (** Used to print the elements of a tuple *)
-and printChField (params:params) ((name:string),(value:cexp)) =
+and printChField (params:params) ((name:string), (value:cexp)) =
    let tval = printExp params value in
    {pla|.<#name#s> = <#tval#>|pla}
 
 (** Prints lhs values with and without declaration *)
 and printLhsExp params (is_var:bool) (e:clhsexp) : Pla.t =
    match e with
-   | CLId(typ,name) ->
+   | CLId(typ, name) ->
       printTypeAndName is_var typ name
    (* if it was an '_' do not print anything *)
    | CLWild -> Pla.unit
@@ -182,12 +182,12 @@ let printArrayBinding params (var:string list) (i:int) (e:cexp) : Pla.t =
    {pla|<#var#>[<#i#i>] = <#te#>; |pla}
 
 (** Prints arguments to functions either pass by value or reference *)
-let printFunArg (ntype,name) : Pla.t =
+let printFunArg (ntype, name) : Pla.t =
    match ntype with
    | Var(typ) ->
       let tdescr = printTypeDescr typ in
       {pla|<#tdescr#> <#name#s>|pla}
-   | Ref(CTArray(typ,size)) ->
+   | Ref(CTArray(typ, size)) ->
       let tdescr = printTypeDescr typ in
       {pla|<#tdescr#> (&<#name#s>)[<#size#i>]|pla}
    | Ref(typ) ->
@@ -198,7 +198,7 @@ let printFunArg (ntype,name) : Pla.t =
 let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
    (* Strange case '_' *)
-   | CSVar(CLWild,None) -> None
+   | CSVar(CLWild, None) -> None
 
    (* Prints type x; *)
    | CSVar((CLId _ | CLIndex _) as lhs, None) ->
@@ -206,42 +206,42 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       Some({pla|<#tlhs#>;|pla})
 
    (* All other cases of assigning tuples will be wrong *)
-   | CSVar(CLTuple(_),None) -> failwith "printStmt: invalid tuple assign"
+   | CSVar(CLTuple(_), None) -> failwith "printStmt: invalid tuple assign"
 
-   | CSVar(_,_) -> failwith "printStmt: in c code generation there should not be initializations"
+   | CSVar(_, _) -> failwith "printStmt: in c code generation there should not be initializations"
 
    (* Prints _ = ... *)
-   | CSBind(CLWild,value) ->
+   | CSBind(CLWild, value) ->
       let te = printExp params value in
       Some({pla|<#te#>;|pla})
 
-   (* Print (x,y,z) = ... *)
-   | CSBind(CLTuple(elems),CEVar(name,_)) ->
+   (* Print (x, y, z) = ... *)
+   | CSBind(CLTuple(elems), CEVar(name, _)) ->
       let t = List.mapi (printLhsExpTuple name false) elems |> Pla.join in
       Some(t)
 
    (* All other cases of assigning tuples will be wrong *)
-   | CSBind(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
+   | CSBind(CLTuple(_), _) -> failwith "printStmt: invalid tuple assign"
 
    (* Prints x = [ ... ] *)
-   | CSBind(CLId(_,name),CEArray(elems,_)) ->
+   | CSBind(CLId(_, name), CEArray(elems, _)) ->
       let t = List.mapi (printArrayBinding params name) elems |> Pla.join in
       Some(t)
 
    (* Prints x = ... *)
-   | CSBind(CLId(_,name),value) ->
+   | CSBind(CLId(_, name), value) ->
       let te = printExp params value in
       let name = dot name in
       Some({pla|<#name#> = <#te#>;|pla})
 
-   | CSBind(CLIndex(_, name, index),value) ->
+   | CSBind(CLIndex(_, name, index), value) ->
       let te = printExp params value in
       let name = dot name in
       let index = printExp params index in
       Some({pla|<#name#>[<#index#>] = <#te#>;|pla})
 
    (* Prints const x = ... *)
-   | CSConst(lhs,((CEInt _ | CEFloat _ | CEBool _ | CEArray _ ) as value)) ->
+   | CSConst(lhs, ((CEInt _ | CEFloat _ | CEBool _ | CEArray _ ) as value)) ->
       if params.is_header then
          let tlhs = printLhsExp params true lhs in
          let te = printExp params value in
@@ -252,7 +252,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSConst _ -> failwith "printStmt: invalid constant declaration"
 
    (* Function declarations cotaining more than one statement *)
-   | CSFunction(ntype,name,args,(CSBlock(_) as body)) ->
+   | CSFunction(ntype, name, args, (CSBlock(_) as body)) ->
       let ret   = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
       (* if we are printing a header, skip the body *)
@@ -267,7 +267,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
          | None -> Some({pla|<#ret#> <#name#s>(<#targs#>){};<#>|pla})
       end
    (* Function declarations cotaining a single statement *)
-   | CSFunction(ntype,name,args,body) ->
+   | CSFunction(ntype, name, args, body) ->
       let ret = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
       (* if we are printing a header, skip the body *)
@@ -283,7 +283,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       Some({pla|return <#te#>;|pla})
 
    (* Printf while(cond) ... *)
-   | CSWhile(cond,body) ->
+   | CSWhile(cond, body) ->
       let tcond = printExp params cond in
       let tcond = if isSimple cond then Pla.parenthesize tcond else tcond in
       let tbody = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
@@ -295,14 +295,14 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       Some({pla|{<#telems#+>}|pla})
 
    (* If-statement without an else*)
-   | CSIf(cond,then_,None) ->
+   | CSIf(cond, then_, None) ->
       let tcond = printExp params cond in
       let tcond = if isSimple cond then Pla.wrap (Pla.string "(") (Pla.string ")") tcond else tcond in
       let tthen = CCOpt.get_or ~default:Pla.semi (wrapStmtIfNotBlock params then_) in
       Some({pla|if<#tcond#><#tthen#>|pla})
 
    (* If-statement with else*)
-   | CSIf(cond,then_,Some(else_)) ->
+   | CSIf(cond, then_, Some(else_)) ->
       let tcond = printExp params cond in
       let tcond = if isSimple cond then Pla.wrap (Pla.string "(") (Pla.string ")") tcond else tcond in
       let tthen = CCOpt.get_or ~default:Pla.semi (wrapStmtIfNotBlock params then_) in
@@ -310,7 +310,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       Some({pla|if<#tcond#><#tthen#><#>else<#><#telse#>|pla})
 
    (* Type declaration (only in headers) *)
-   | CSType(name,members) when params.is_header ->
+   | CSType(name, members) when params.is_header ->
       let tmembers =
          Pla.map_sep_all Pla.newline
             (fun (typ, name) ->
@@ -321,18 +321,18 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       Some({pla|typedef struct <#name#s> {<#tmembers#+>} <#name#s>;<#>|pla})
 
    (* Do not print type delcarations in implementation file *)
-   | CSType(_,_) -> None
+   | CSType(_, _) -> None
 
    (* Type declaration aliases (only in headers) *)
-   | CSAlias(t1,t2) when params.is_header ->
+   | CSAlias(t1, t2) when params.is_header ->
       let tdescr = printTypeDescr t2 in
       Some({pla|typedef <#t1#s> <#tdescr#>;<#>|pla})
 
    (* Do not print type delcarations in implementation file *)
-   | CSAlias(_,_) -> None
+   | CSAlias(_, _) -> None
 
    (* External function definitions (only in headers) *)
-   | CSExtFunc(ntype,name,args) when params.is_header ->
+   | CSExtFunc(ntype, name, args) when params.is_header ->
       let ret = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
       Some({pla|extern <#ret#> <#name#s>(<#targs#>);|pla})

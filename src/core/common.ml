@@ -28,17 +28,17 @@ open Maps
 
 module GetIdentifiers = struct
 
-   let lhs_exp : ('a Env.t,lhs_exp) Mapper.mapper_func =
+   let lhs_exp : ('a Env.t, lhs_exp) Mapper.mapper_func =
       Mapper.make "GetIdentifiers.lhs_exp" @@ fun state exp ->
       match exp with
-      | LId(id,_,_) ->
+      | LId(id, _, _) ->
          Env.set state (IdSet.add id (Env.get state)), exp
       | _ -> state, exp
 
-   let exp : ('a Env.t,exp) Mapper.mapper_func =
+   let exp : ('a Env.t, exp) Mapper.mapper_func =
       Mapper.make "GetIdentifiers.exp" @@ fun state exp ->
       match exp with
-      | PId(id,_) ->
+      | PId(id, _) ->
          Env.set state (IdSet.add id (Env.get state)), exp
       | _ -> state, exp
 
@@ -66,10 +66,10 @@ end
 
 module GetLocation = struct
 
-   let attr : (Loc.t Env.t,attr) Mapper.mapper_func =
+   let attr : (Loc.t Env.t, attr) Mapper.mapper_func =
       Mapper.make "GetLocation.attr" @@ fun state attr ->
       let s = Env.get state in
-      Env.set state (Loc.merge s attr.loc),attr
+      Env.set state (Loc.merge s attr.loc), attr
 
    let mapper = { Mapper.default_mapper with Mapper.attr = attr }
 
@@ -97,42 +97,42 @@ module GetAttr = struct
    let fromExp (e:exp) : attr =
       match e with
       | PUnit(attr)
-      | PBool(_,attr)
-      | PInt(_,attr)
-      | PReal(_,attr)
-      | PString(_,attr)
-      | PId(_,attr)
-      | PIndex(_,_,attr)
-      | PArray(_,attr)
-      | PUnOp(_,_,attr)
-      | POp(_,_,attr)
-      | PCall(_,_,_,attr)
-      | PIf(_,_,_,attr)
-      | PGroup(_,attr)
-      | PTuple(_,attr)
-      | PSeq(_,_,attr) -> attr
+      | PBool(_, attr)
+      | PInt(_, attr)
+      | PReal(_, attr)
+      | PString(_, attr)
+      | PId(_, attr)
+      | PIndex(_, _, attr)
+      | PArray(_, attr)
+      | PUnOp(_, _, attr)
+      | POp(_, _, attr)
+      | PCall(_, _, _, attr)
+      | PIf(_, _, _, attr)
+      | PGroup(_, attr)
+      | PTuple(_, attr)
+      | PSeq(_, _, attr) -> attr
       | PEmpty -> emptyAttr
 
    let fromLhsExp (e:lhs_exp) : attr =
       match e with
       | LWild(attr)
-      | LId(_,_,attr)
-      | LTuple(_,attr)
-      | LTyped(_,_,attr)
-      | LGroup(_,attr) -> attr
-      | LIndex(_,_,_,attr) -> attr
+      | LId(_, _, attr)
+      | LTuple(_, attr)
+      | LTyped(_, _, attr)
+      | LGroup(_, attr) -> attr
+      | LIndex(_, _, _, attr) -> attr
 
 end
 
 
 module GetDependencies = struct
 
-   let exp : ('a Env.t,exp) Mapper.mapper_func =
+   let exp : ('a Env.t, exp) Mapper.mapper_func =
       Mapper.make "GetIdentifiers.exp" @@ fun state exp ->
       match exp with
-      | PId([id;_],_) ->
+      | PId([id; _], _) ->
          Env.set state (IdSet.add [id] (Env.get state)), exp
-      | PCall(_,[id;_],_,_) ->
+      | PCall(_, [id; _], _, _) ->
          Env.set state (IdSet.add [id] (Env.get state)), exp
       | _ -> state, exp
 

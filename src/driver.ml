@@ -75,14 +75,14 @@ let generateLuaCode (files:string list) : string =
    let args = { default_arguments with files; luacode = true } in
    let parsed = Loader.loadFiles args files in
    match Generate.generateCode parsed args with
-   | [code_tpl,_] ->
+   | [code_tpl, _] ->
       let code = Pla.print code_tpl |> String.escaped in
       Pla.print [%pla{|return { error = {}, code = "<#code#s>" } |}]
    | _ ->
       Pla.print  [%pla{|return { error = {}, code = "" }|}]
    | exception Error.Errors(errors) ->
       let makeErrorObject error =
-         let msg,file,line,col = Error.reportErrorStringNoLoc error in
+         let msg, file, line, col = Error.reportErrorStringNoLoc error in
          let msg = String.escaped msg in
          [%pla{|{ msg = "<#msg#s>", file = "<#file#s>", line = <#line#i>, col = <#col#i>}|}]
       in

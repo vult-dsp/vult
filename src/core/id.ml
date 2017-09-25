@@ -25,7 +25,7 @@ THE SOFTWARE.
 (** Identifiers and Path *)
 
 type t = string list
-[@@deriving show,eq,ord]
+[@@deriving show, eq, ord]
 
 (** This path is used to differentiate simple identifiers from full paths *)
 type path =

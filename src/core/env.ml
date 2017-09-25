@@ -30,11 +30,11 @@ module Context = struct
 
    type t =
       {
-         forward   : Id.t IdMap.t;
-         backward  : IdSet.t IdMap.t;
-         init_fun  : Id.t IdMap.t;
-         count     : int;
-         current   : Id.t;
+         forward  : Id.t IdMap.t;
+         backward : IdSet.t IdMap.t;
+         init_fun : Id.t IdMap.t;
+         count    : int;
+         current  : Id.t;
       }
 
    let empty =
@@ -62,7 +62,7 @@ module Context = struct
       if IdMap.mem func context.forward then
          context
       else
-         let context_name = ["_ctx_type_"^(string_of_int context.count)] in
+         let context_name = ["_ctx_type_" ^ (string_of_int context.count)] in
          {
             count    = context.count+1;
             current  = context_name;
@@ -171,7 +171,7 @@ module Scope = struct
    let tick (t:t) : int * t =
       let n = !(t.tick) in
       incr t.tick;
-      n,t
+      n, t
 
    let findFunction (t:t) (name:Id.t) : t option =
       try Some(IdMap.find name !(t.func)) with
@@ -302,7 +302,7 @@ module Scope = struct
    let rec findAny (find_up:bool) (find:t -> Id.t -> t option) (t:t) (name:Id.t) : t option =
       match name with
       | [] -> Some(t)
-      | h::rest ->
+      | h :: rest ->
          match find t [h] with
          | Some(found) ->
             findAny find_up find found rest
@@ -318,7 +318,7 @@ module Scope = struct
       let rec inner_loop l =
          match l with
          | []   -> None
-         | local::locals ->
+         | local :: locals ->
             match IdMap.find name local with
             | found -> Some(found)
             | exception Not_found ->
@@ -345,7 +345,7 @@ module Scope = struct
       let rec loop ctx =
          match ctx with
          | [] -> None
-         | h::tt ->
+         | h :: tt ->
             match findMemInst h name with
             | Some(_) as a -> a
             | None -> loop tt
@@ -416,10 +416,10 @@ module Scope = struct
       | None ->
          (* The variable does not exits, add it *)
          let new_symbol = { name = name; typ = typ; loc = loc; is_inst = false } in
-         let first,rest =
+         let first, rest =
             match !(t.locals) with
-            | [] -> IdMap.empty,[]
-            | h::t -> h,t
+            | [] -> IdMap.empty, []
+            | h :: t -> h, t
          in
          t.locals := (IdMap.add name new_symbol first) :: rest;
          t
@@ -457,7 +457,7 @@ module Scope = struct
       match lookup Function t name with
       | None -> add_it ()
 
-      | Some(path,_,decl) ->
+      | Some(path, _, decl) ->
          let current_path = Id.pathJoin (current t) name in
          if path <> current_path then
             add_it ()
@@ -485,7 +485,7 @@ module Scope = struct
    let getFunctionMemInstSet (t:t) (name:Id.t) : IdTypeSet.t =
       match lookup Function t name with
       | None -> IdTypeSet.empty
-      | Some(_,_,s) ->
+      | Some(_, _, s) ->
          getFunctionMemInst s
          |> List.map (fun (a:var) -> a.name, a.typ)
          |> IdTypeSet.of_list
@@ -494,7 +494,7 @@ module Scope = struct
    let getInitFunction (t:t) (name:Id.t) : Id.t option =
       match lookup Function t name with
       | None -> None
-      | Some(_,_,s) ->
+      | Some(_, _, s) ->
          match !(s.parent) with
          | None -> raise (Invalid_argument "Scope.getInitFunction")
          | Some(parent) ->
@@ -505,13 +505,13 @@ module Scope = struct
    let getContext (t:t) (name:Id.t) : Id.path =
       match lookup Function t name with
       | None -> raise (Invalid_argument "Scope.getContext")
-      | Some(_,_,s) ->
+      | Some(_, _, s) ->
          match !(s.parent) with
          | None -> raise (Invalid_argument "Scope.getContext")
          | Some(parent) ->
             let Id.Path(parent_path) = current parent in
             let ctx = Context.getContext !(parent.ctx) s.name in
-            Id.Path(parent_path@ctx)
+            Id.Path(parent_path @ ctx)
 
    (** Returns true/false if the given scope is active *)
    let isActive (t:t) : bool =
@@ -521,7 +521,7 @@ module Scope = struct
    (** Lookup the function and returns true/false if the function is active *)
    let isActiveFunction (t:t) (name:Id.t) : bool =
       match lookup Function t name with
-      | Some(_,_,s) ->
+      | Some(_, _, s) ->
          isActive s
       | None -> false
 
@@ -530,9 +530,9 @@ module Scope = struct
       let Id.Path(current) = current t in
       let Id.Path(id) = path in
       let rec loop p1 p2 =
-         match p1,p2 with
-         | h1::t1, h2::t2 when h1 = h2 -> loop t1 t2
-         | _,_ -> p2
+         match p1, p2 with
+         | h1 :: t1, h2 :: t2 when h1 = h2 -> loop t1 t2
+         | _, _ -> p2
       in loop current id
 
    let enterIf (t:t) : t =
@@ -605,7 +605,7 @@ let builtin_table =
 
    ]
 
-let builtin_functions = List.map (fun (a,_,_,_)-> a ) builtin_table |> IdSet.of_list
+let builtin_functions = List.map (fun (a, _, _, _)-> a ) builtin_table |> IdSet.of_list
 
 module Env = struct
 
@@ -633,27 +633,27 @@ module Env = struct
    let addMem (state:'a t) (name:Id.t) (typ:Typ.t) (attr:attr) : 'a t  =
       {
          state with
-         scope   = Scope.addMem state.scope name typ attr.loc;
+         scope = Scope.addMem state.scope name typ attr.loc;
       }
 
    (** Adds a variable to the current block *)
    let addVar (state:'a t) (name:Id.t) (typ:Typ.t) (attr:attr) : 'a t  =
       {
          state with
-         scope   = Scope.addVar state.scope name typ attr.loc;
+         scope = Scope.addVar state.scope name typ attr.loc;
       }
 
    (** Adds an instance to the current block *)
    let addInstance (state:'a t) (name:Id.t) (typ:Typ.t) (attr:attr) : 'a t  =
       {
          state with
-         scope   = Scope.addInstance state.scope name typ attr.loc;
+         scope = Scope.addInstance state.scope name typ attr.loc;
       }
 
    let addFunction (state:'a t) (name:Id.t) (attr:attr) : 'a t  =
       {
          state with
-         scope   = Scope.addFunction state.scope name attr;
+         scope = Scope.addFunction state.scope name attr;
       }
 
    (** Returns the full path of a function. *)
@@ -731,7 +731,7 @@ module Env = struct
          scope = Scope.exitBlock state.scope;
       }
 
-   let addBuiltin (state:'a t) (name,kind,typ,single) : 'a t =
+   let addBuiltin (state:'a t) (name, kind, typ, single) : 'a t =
       {
          state with
          scope = Scope.addBuiltin state.scope kind name typ single;
@@ -744,8 +744,8 @@ module Env = struct
    (** Creates an empty module context *)
    let empty data : 'a t =
       {
-         data    = data;
-         scope   = Scope.create Scope.Module (ref 0);
+         data  = data;
+         scope = Scope.create Scope.Module (ref 0);
       }
       |> initialize
 

@@ -30,7 +30,7 @@ module PathSet = CCSet.Make(struct type t = Id.path let compare = compare end)
 module IdSet = CCSet.Make(struct type t = Id.t let compare = compare end)
 
 type id_type = Id.t * Typ.t
-[@@deriving show,eq,ord]
+[@@deriving show, eq, ord]
 
 
 module IdTypeSet = CCSet.Make(struct type t = id_type let compare = compare_id_type end)

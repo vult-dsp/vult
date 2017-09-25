@@ -45,7 +45,7 @@ let errorLocationMessage (location:Loc.t) : string =
 let errorLocationIndicator (line:string) (location:Loc.t) : string =
    let col_start = max (Loc.startColumn location) 0 in
    let col_end   = max (Loc.endColumn location) 0 in
-   let pointer   = if (col_end - col_start) <> 0 then (String.make (col_end - col_start) '^') else "^" in
+   let pointer   = if (col_end - col_start) <> 0 then (String.make (col_end - col_start) '^') else " ^ " in
    Printf.sprintf "%s\n%s%s\n"
       line
       (String.make col_start ' ')
@@ -58,14 +58,14 @@ let getErrorLines (location:Loc.t) : string =
       | Loc.File(filename) ->
          begin match FileIO.read filename with
             | Some(contents) -> CCString.lines contents
-            | _ -> failwith ("Could not open the file "^filename)
+            | _ -> failwith ("Could not open the file " ^ filename)
          end
       | Loc.Text(code) -> CCString.lines code
    in
    let result =
       match Loc.line location with
       | 0 | 1 -> List.nth lines 0
-      | n -> (List.nth lines (n-2))^"\n"^(List.nth lines (n-1))
+      | n -> (List.nth lines (n-2)) ^ "\n" ^ (List.nth lines (n-1))
    in
    CCString.replace ~sub:"\t" ~by:" "result
 
@@ -73,12 +73,12 @@ let getErrorLines (location:Loc.t) : string =
 (** Takes an error and the lines of the code and returns an error message *)
 let reportErrorString (error:t) : string =
    match error with
-   | SimpleError(msg) -> msg^"\n"
-   | PointedError(location,msg) ->
+   | SimpleError(msg) -> msg ^ "\n"
+   | PointedError(location, msg) ->
       let loc = errorLocationMessage location in
       let line = getErrorLines location in
       let indicator = errorLocationIndicator line location in
-      loc^msg^"\n"^indicator
+      loc ^ msg ^ "\n" ^ indicator
 
 let reportErrors (errors: t list) : string =
    List.map reportErrorString errors
@@ -87,11 +87,11 @@ let reportErrors (errors: t list) : string =
 (** Returns a tuple with the error an all its information *)
 let reportErrorStringNoLoc (error:t) : string * string * int * int =
    match error with
-   | PointedError(location,msg) ->
+   | PointedError(location, msg) ->
       let col_start = Loc.startColumn location in
       let line      = getErrorLines location in
       let indicator = errorLocationIndicator line location in
-      let full_msg = msg^"\n"^indicator in
+      let full_msg = msg ^ "\n" ^ indicator in
       full_msg, (Loc.file location), (Loc.line location), col_start
    | SimpleError(msg) ->
       msg, "-", 0, 0
@@ -102,7 +102,7 @@ let joinErrors : t list -> t list -> t list = List.append
 (** Joins two optional errors *)
 let joinErrorOptions : t list option -> t list option -> t list option =
    fun maybeErr1 maybeErr2 ->
-      match (maybeErr1,maybeErr2) with
+      match (maybeErr1, maybeErr2) with
       | (Some _ as ret, None) -> ret
       | (None, (Some _ as ret)) -> ret
       | (Some err1, Some err2) -> Some (joinErrors err1 err2)
@@ -112,7 +112,7 @@ let joinErrorOptions : t list option -> t list option -> t list option =
 let joinErrorOptionsList : t list option list -> t list option = List.fold_left joinErrorOptions None
 
 let makeError (msg:string) (loc:Loc.t) =
-   PointedError(loc,msg)
+   PointedError(loc, msg)
 
 let raiseError (msg:string) (loc:Loc.t) =
    raise (Errors([makeError msg loc]))

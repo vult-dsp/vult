@@ -112,8 +112,8 @@ let getMaxPosition (pos1:Lexing.position) (pos2:Lexing.position) : Lexing.positi
 let getMinMaxPositions (pos_list:Lexing.position list) =
    match pos_list with
    | []  -> failwith "getMinMaxPositions: No positions passed"
-   | [h] -> h,h
-   | h::_   -> List.fold_left (fun (min,max) a -> getMinPosition a min, getMaxPosition a max) (h,h) pos_list
+   | [h] -> h, h
+   | h :: _   -> List.fold_left (fun (min, max) a -> getMinPosition a min, getMaxPosition a max) (h, h) pos_list
 
 
 (** Returns a new location with the start and end positions updated *)
@@ -123,7 +123,7 @@ let merge (loc1:t) (loc2:t) : t =
    else if loc2 = default then
       loc1
    else
-      let start_pos,end_pos = getMinMaxPositions [loc1.start_pos; loc2.start_pos; loc1.end_pos; loc2.end_pos] in
+      let start_pos, end_pos = getMinMaxPositions [loc1.start_pos; loc2.start_pos; loc1.end_pos; loc2.end_pos] in
       { start_pos = start_pos; end_pos = end_pos; source = loc1.source }
 
 let merge3 (loc1:t) (loc2:t) (loc3:t) : t =

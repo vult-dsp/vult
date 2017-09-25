@@ -31,17 +31,17 @@ open Maps
 
 module InsertContext = struct
 
-   let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
+   let stmt : (PassData.t Env.t, stmt) Mapper.mapper_func =
       Mapper.make "InsertContext.stmt" @@ fun state stmt ->
       match stmt with
       | StmtFun(name,args,body,rettype,attr) ->
          let data     = Env.get state in
-         let path,_,_ = Env.lookupRaise Scope.Function state name attr.loc in
+         let path, _, _ = Env.lookupRaise Scope.Function state name attr.loc in
          if Env.isActive state name && not (PassData.hasContextArgument data path) then
             let ctx_full = Env.getContext state name in
             let ctx      = Env.pathFromCurrent state ctx_full in
-            let typ      = [ref (Typ.TId(ctx,None))] in
-            let arg0     = TypedId(["_ctx"],typ,ContextArg,attr) in
+            let typ      = [ref (Typ.TId(ctx, None))] in
+            let arg0     = TypedId(["_ctx"], typ, ContextArg, attr) in
             let data'    = PassData.markContextArgument data path in
             Env.set state data', StmtFun(name,arg0::args,body,rettype,attr)
          else
@@ -51,21 +51,21 @@ module InsertContext = struct
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make "InsertContext.exp" @@ fun state exp ->
       match exp with
-      | PCall(Some(id),kind,args,attr) ->
+      | PCall(Some(id), kind, args, attr) ->
          let Id.Path(context) = Env.getContext state kind in
-         let typ = ref (Typ.TId(context,None)) in
-         state,PCall(None,kind,PId("_ctx"::id,{ attr with typ = Some(typ) })::args,attr)
-      | PId(id,attr) when Env.isLocalInstanceOrMem state id ->
-         state, PId("_ctx"::id,attr)
-      | _ -> state,exp
+         let typ = ref (Typ.TId(context, None)) in
+         state, PCall(None, kind, PId("_ctx" :: id, { attr with typ = Some(typ) }) :: args, attr)
+      | PId(id, attr) when Env.isLocalInstanceOrMem state id ->
+         state, PId("_ctx" :: id, attr)
+      | _ -> state, exp
 
    let lhs_exp  : ('a Env.t,lhs_exp) Mapper.mapper_func =
       Mapper.make "InsertContext.lhs_exp" @@ fun state exp ->
       match exp with
-      | LId(id,tp,attr) when Env.isLocalInstanceOrMem state id ->
-         state, LId("_ctx"::id,tp,attr)
-      | LIndex(id,tp,index,attr) when Env.isLocalInstanceOrMem state id ->
-         state, LIndex("_ctx"::id,tp,index,attr)
+      | LId(id, tp, attr) when Env.isLocalInstanceOrMem state id ->
+         state, LId("_ctx" :: id, tp, attr)
+      | LIndex(id, tp, index, attr) when Env.isLocalInstanceOrMem state id ->
+         state, LIndex("_ctx" :: id, tp, index, attr)
       | _ -> state,exp
 
    let stmt_x : ('a Env.t, stmt) Mapper.expand_func =
@@ -85,27 +85,27 @@ module CreateInitFunction = struct
    let rec getInitFunctioName (id:Id.t) : Id.t =
       match id with
       | [] -> failwith "getInitFunctioName: empty id"
-      | [last] -> [ last^"_init" ]
-      | h::t -> h :: (getInitFunctioName t)
+      | [last] -> [ last ^ "_init" ]
+      | h :: t -> h :: (getInitFunctioName t)
 
    let rec getFunctioTypeName (id:Id.t) : Id.t =
       match id with
       | [] -> failwith "getFunctioTypeName: empty id"
-      | [last] -> [ last^"_type" ]
-      | h::t -> h :: (getFunctioTypeName t)
+      | [last] -> [ last ^ "_type" ]
+      | h :: t -> h :: (getFunctioTypeName t)
 
    let rec getInitValue (tp:Typ.t) : exp =
       let typedAttr = { emptyAttr with typ = Some(tp)} in
       match !tp with
-      | Typ.TId(["real"],_) -> PReal(0.0,typedAttr)
-      | Typ.TId(["int"],_)  -> PInt(0,typedAttr)
-      | Typ.TId(["bool"],_) -> PBool(false,typedAttr)
-      | Typ.TId(name,_)     -> PCall(None,getInitFunctioName name,[],typedAttr)
-      | Typ.TComposed(["array"],[sub;{ contents = Typ.TInt(size,_) }],_) ->
+      | Typ.TId(["real"], _) -> PReal(0.0,typedAttr)
+      | Typ.TId(["int"], _)  -> PInt(0,typedAttr)
+      | Typ.TId(["bool"], _) -> PBool(false,typedAttr)
+      | Typ.TId(name, _)     -> PCall(None,getInitFunctioName name, [],typedAttr)
+      | Typ.TComposed(["array"], [sub; { contents = Typ.TInt(size, _) }], _) ->
          let sub_init    = getInitValue sub in
          let intTypeAttr = {emptyAttr with typ = Some(Typ.Const.int_type)} in
-         PCall(None,["makeArray"],[PInt(size,intTypeAttr);sub_init],typedAttr)
-      | Typ.TComposed(["tuple"],types,_) ->
+         PCall(None, ["makeArray"], [PInt(size,intTypeAttr);sub_init],typedAttr)
+      | Typ.TComposed(["tuple"],types, _) ->
          let elems = List.map getInitValue types in
          PTuple(elems,typedAttr)
       | Typ.TLink(tp) -> getInitValue tp
@@ -113,7 +113,7 @@ module CreateInitFunction = struct
 
    let getContextIfPossible state tp =
       match tp with
-      | { contents = Typ.TId(tp_name,_) } ->
+      | { contents = Typ.TId(tp_name, _) } ->
          begin
             try
                let context_path = Env.getContext state tp_name in
@@ -126,7 +126,7 @@ module CreateInitFunction = struct
    let generateInitFunction (ctx:Id.t) (init_fun:Id.t option) (member_set:IdTypeSet.t) : stmt =
       let ctx_name = ["_ctx"] in
       let typ = ref (Typ.TId(ctx,None)) in
-      let ctx_lid = PId(ctx_name,{ emptyAttr with typ = Some(typ)}) in
+      let ctx_lid = PId(ctx_name, { emptyAttr with typ = Some(typ)}) in
       (* Generates bindings for all members *)
       let new_stmts_set =
          IdTypeSet.fold
@@ -143,14 +143,14 @@ module CreateInitFunction = struct
          match init_fun with
          | Some(init_fun_name) ->
             let unitAttr = { emptyAttr with typ=Some(Typ.Const.unit_type)} in
-            let callExp  = PCall(None,init_fun_name,[ctx_lid],unitAttr) in
+            let callExp  = PCall(None,init_fun_name, [ctx_lid],unitAttr) in
             [StmtBind(LWild(emptyAttr),callExp,emptyAttr)]
          | None -> []
       in
-      let return_stmt = StmtReturn(PId(ctx_name,attr),emptyAttr) in
-      let ctx_decl = StmtVal(LId(ctx_name,Some [typ],attr),None,emptyAttr) in
-      let stmts = StmtSet.fold (fun a acc -> a::acc) new_stmts_set (init_fun_call@[return_stmt]) in
-      StmtFun(getInitFunctioName ctx, [], StmtBlock(None, ctx_decl::stmts, emptyAttr), Some(typ), emptyAttr)
+      let return_stmt = StmtReturn(PId(ctx_name, attr), emptyAttr) in
+      let ctx_decl = StmtVal(LId(ctx_name, Some [typ], attr), None, emptyAttr) in
+      let stmts = StmtSet.fold (fun a acc -> a :: acc) new_stmts_set (init_fun_call @ [return_stmt]) in
+      StmtFun(getInitFunctioName ctx, [], StmtBlock(None, ctx_decl :: stmts, emptyAttr), Some(typ), emptyAttr)
 
    let generateContextType (ctx:Id.t) (member_set:IdTypeSet.t) : stmt =
       let members =
@@ -168,7 +168,7 @@ module CreateInitFunction = struct
       let attr = { emptyAttr with typ = Some(typ) } in
       StmtFun(getInitFunctioName name,
               [],
-              StmtReturn(PCall(None,getInitFunctioName ctx,[],attr),attr),
+              StmtReturn(PCall(None,getInitFunctioName ctx, [],attr),attr),
               Some(typ), emptyAttr)
 
    let generateTypeAlias (state:'a Env.t) (name:Id.t) : stmt =
@@ -181,9 +181,9 @@ module CreateInitFunction = struct
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "CreateInitFunction.stmt_x" @@ fun state stmt ->
       match stmt with
-      | StmtFun(name,_,_,_,attr) ->
+      | StmtFun(name, _, _, _,attr) ->
          let data = Env.get state in
-         let path,_,_ = Env.lookupRaise Scope.Function state name attr.loc in
+         let path, _, _ = Env.lookupRaise Scope.Function state name attr.loc in
          if Env.isActive state name && not (PassData.hasInitFunction data path) then
             let ctx_path = Env.getContext state name in
             let ctx     = Env.pathFromCurrent state ctx_path in

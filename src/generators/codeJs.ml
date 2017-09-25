@@ -94,19 +94,19 @@ end
 
 let isSpecial (params:params) (name:string) : bool =
    match name with
-   | _ when name = params.module_name^"_process" -> true
-   | _ when name = params.module_name^"_noteOn" -> true
-   | _ when name = params.module_name^"_noteOff" -> true
-   | _ when name = params.module_name^"_controlChange" -> true
-   | _ when name = params.module_name^"_default" -> true
+   | _ when name = params.module_name ^ "_process" -> true
+   | _ when name = params.module_name ^ "_noteOn" -> true
+   | _ when name = params.module_name ^ "_noteOff" -> true
+   | _ when name = params.module_name ^ "_controlChange" -> true
+   | _ when name = params.module_name ^ "_default" -> true
    | _ -> false
 
 let fixContext (is_special:bool) args =
    if is_special then
       match args with
-      | [] -> [(Ref(CTSimple("any")),"_ctx")]
-      | (_,"_ctx")::_ -> args
-      | t -> (Ref(CTSimple("any")),"_ctx")::t
+      | [] -> [(Ref(CTSimple("any")), "_ctx")]
+      | (_, "_ctx") :: _ -> args
+      | t -> (Ref(CTSimple("any")), "_ctx") :: t
    else args
 
 let rec printExp (params:params) (e:cexp) : Pla.t =
@@ -114,42 +114,42 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
    | CEEmpty -> Pla.unit
    | CEInt(n) ->
       {pla|(<#n#i>|0)|pla}
-   | CEFloat(_,n) ->
+   | CEFloat(_, n) ->
       let sf = Float.to_string n in
       if n < 0.0 then {pla|(<#sf#s>)|pla} else Pla.string sf
    | CEBool(v) ->
       Pla.string (if v then "true" else "false")
    | CEString(s) ->
       Pla.wrap (Pla.string "\"") (Pla.string "\"") (Pla.string s)
-   | CEArray(elems,_) ->
+   | CEArray(elems, _) ->
       let elems_t = Pla.map_sep Pla.comma (printExp params) elems in
       {pla|[<#elems_t#>]|pla}
-   | CECall(name,args,_) ->
+   | CECall(name, args, _) ->
       let args_t = Pla.map_sep Pla.comma (printExp params) args in
       {pla|this.<#name#s>(<#args_t#>)|pla}
-   | CEUnOp(op,e,_) ->
+   | CEUnOp(op, e, _) ->
       let e_t = printExp params e in
       {pla|(<#op#s> <#e_t#>)|pla}
-   | CEOp(op,elems,_) ->
+   | CEOp(op, elems, _) ->
       let op_t = {pla| <#op#s> |pla} in
       let elems_t = Pla.map_sep op_t (printExp params) elems in
       {pla|(<#elems_t#>)|pla}
-   | CEVar(name,_) ->
+   | CEVar(name, _) ->
       dot name
    | CEIndex(e, index, _) ->
       let e = printExp params e in
       let index = printExp params index in
       {pla|<#e#>[<#index#>]|pla}
-   | CEIf(cond,then_,else_,_) ->
+   | CEIf(cond, then_, else_, _) ->
       let cond_t = printExp params cond in
       let then_t = printExp params then_ in
       let else_t = printExp params else_ in
       {pla|(<#cond_t#>?<#then_t#>:<#else_t#>)|pla}
-   | CETuple(elems,_) ->
+   | CETuple(elems, _) ->
       let elems_t = Pla.map_sep Pla.commaspace (printJsField params) elems in
       {pla|{ <#elems_t#> }|pla}
 
-and printJsField (params:params) (name,value) : Pla.t =
+and printJsField (params:params) (name, value) : Pla.t =
    let value_t = printExp params value in
    {pla|<#name#s> : <#value_t#>|pla}
 
@@ -157,7 +157,7 @@ and printJsField (params:params) (name,value) : Pla.t =
 let printLhsExpTuple (var:string list) (is_var:bool) (i:int) (e:clhsexp) : Pla.t =
    let var = dot var in
    match e with
-   | CLId(_,name) ->
+   | CLId(_, name) ->
       let name = dot name in
       if is_var then
          {pla|var <#name#> = <#var#>.field_<#i#i>; |pla}
@@ -192,85 +192,85 @@ let rec getInitValue (descr:type_descr) : Pla.t =
 
 let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
-   | CSVar(CLWild,None) -> None
+   | CSVar(CLWild, None) -> None
 
-   | CSVar(CLId(tdescr,name), None) ->
+   | CSVar(CLId(tdescr, name), None) ->
       let init = getInitValue (List.hd tdescr) in
       let name = dot name in
-      Some({pla|var <#name#> = <#init#>;|pla})
+      Some({pla|var <#name#> = <#init#>; |pla})
 
-   | CSVar(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
+   | CSVar(CLTuple(_), _) -> failwith "printStmt: invalid tuple assign"
 
-   | CSVar(CLId(tdecr,name),Some(value)) ->
+   | CSVar(CLId(tdecr, name), Some(value)) ->
       let is_int = List.hd tdecr = CTSimple("int") in
       let value_t = wrapInt params is_int value in
       let name = dot name in
-      Some({pla|var <#name#> = <#value_t#>;|pla})
+      Some({pla|var <#name#> = <#value_t#>; |pla})
 
-   | CSVar(CLIndex(typ,name,_),None) ->
+   | CSVar(CLIndex(typ, name, _), None) ->
       let init = getInitValue (List.hd typ) in
       let name = dot name in
-      Some({pla|var <#name#> = <#init#>;|pla})
+      Some({pla|var <#name#> = <#init#>; |pla})
 
-   | CSVar(_,_) -> failwith "printStmt: invalid variable declaration"
+   | CSVar(_, _) -> failwith "printStmt: invalid variable declaration"
 
-   | CSConst(CLId(tdecr,name),value) ->
+   | CSConst(CLId(tdecr, name), value) ->
       let is_int = List.hd tdecr = CTSimple("int") in
       let value_t = wrapInt params is_int value in
       let name = dot name in
-      Some({pla|var <#name#> = <#value_t#>;|pla})
+      Some({pla|var <#name#> = <#value_t#>; |pla})
 
-   | CSConst(CLWild,value) ->
+   | CSConst(CLWild, value) ->
       let value_t = printExp params value in
-      Some({pla|<#value_t#>;|pla})
+      Some({pla|<#value_t#>; |pla})
 
-   | CSConst(CLTuple(elems),CEVar(name,_)) ->
+   | CSConst(CLTuple(elems), CEVar(name, _)) ->
       List.mapi (printLhsExpTuple name true) elems
       |> Pla.join
       |> fun a -> Some(a)
 
    | CSConst _ -> failwith "printStmt: invalid constant assign"
 
-   | CSBind(CLWild,value) ->
+   | CSBind(CLWild, value) ->
       Some(Pla.(printExp params value ++ semi))
 
-   | CSBind(CLTuple(elems),CEVar(name,_)) ->
+   | CSBind(CLTuple(elems), CEVar(name, _)) ->
       List.mapi (printLhsExpTuple name false) elems
       |> Pla.join
       |> fun a -> Some(a)
 
-   | CSBind(CLTuple(_),_) -> failwith "printStmt: invalid tuple assign"
+   | CSBind(CLTuple(_), _) -> failwith "printStmt: invalid tuple assign"
 
-   | CSBind(CLId(tdecr,name),value) ->
+   | CSBind(CLId(tdecr, name), value) ->
       let is_int = List.hd tdecr = CTSimple("int") in
       let value_t = wrapInt params is_int value in
       let name = dot name in
-      Some({pla|<#name#> = <#value_t#>;|pla})
+      Some({pla|<#name#> = <#value_t#>; |pla})
 
-   | CSBind(CLIndex(tdecr, name, index),value) ->
+   | CSBind(CLIndex(tdecr, name, index), value) ->
       let is_int = List.hd tdecr = CTSimple("int") in
       let value_t = wrapInt params is_int value in
       let name = dot name in
       let index = printExp params index in
-      Some({pla|<#name#>[<#index#>] = <#value_t#>;|pla})
+      Some({pla|<#name#>[<#index#>] = <#value_t#>; |pla})
 
-   | CSFunction(_,name,args,(CSBlock(_) as body)) ->
+   | CSFunction(_, name, args, (CSBlock(_) as body)) ->
       (* if the function has any of the special names add the ctx argument *)
       let args = fixContext (isSpecial params name) args in
-      let args_t = Pla.map_sep Pla.comma (fun (_,a) -> Pla.string a) args in
+      let args_t = Pla.map_sep Pla.comma (fun (_, a) -> Pla.string a) args in
       let body_t = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
       Some({pla|this.<#name#s> = function(<#args_t#>)<#body_t#>|pla})
 
-   | CSFunction(_,name,args,body) ->
-      let args_t = Pla.map_sep Pla.comma (fun (_,a) -> Pla.string a) args in
+   | CSFunction(_, name, args, body) ->
+      let args_t = Pla.map_sep Pla.comma (fun (_, a) -> Pla.string a) args in
       let body_t = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
       Some({pla|this.<#name#s> = function(<#args_t#>) { <#body_t#>}|pla})
 
    | CSReturn(e1) ->
       let e_t = printExp params e1 in
-      Some({pla|return <#e_t#>;|pla})
+      Some({pla|return <#e_t#>; |pla})
 
-   | CSWhile(cond,body) ->
+   | CSWhile(cond, body) ->
       let cond_t = printExp params cond in
       let body_t = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
       Some({pla|while(<#cond_t#>)<#body_t#>|pla})
@@ -279,12 +279,12 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let elems_t = printStmtList params elems in
       Some({pla|{<#elems_t#+>}|pla})
 
-   | CSIf(cond,then_,None) ->
+   | CSIf(cond, then_, None) ->
       let cond_t = printExp params cond in
       let then_t = CCOpt.get_or ~default:Pla.semi (printStmt params then_) in
       Some({pla|if(<#cond_t#>)<#then_t#>|pla})
 
-   | CSIf(cond,then_,Some(else_)) ->
+   | CSIf(cond, then_, Some(else_)) ->
       let cond_t = printExp params cond in
       let then_t = CCOpt.get_or ~default:Pla.semi (printStmt params then_) in
       let else_t = CCOpt.get_or ~default:Pla.semi (printStmt params else_) in

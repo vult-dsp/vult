@@ -30,7 +30,7 @@ open Maps
 
 module UnlinkTypes = struct
 
-   let vtype_c : (PassData.t Env.t,Typ.vtype) Mapper.mapper_func =
+   let vtype_c : (PassData.t Env.t, Typ.vtype) Mapper.mapper_func =
       Mapper.make "UnlinkTypes.vtype_c" @@ fun state typ ->
       match typ with
       | Typ.TLink(t) -> state, !t
@@ -58,7 +58,7 @@ module ReportUnboundTypes = struct
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make "ReportUnboundTypes.exp" @@ fun state exp ->
       match exp with
-      | PId(id,({ typ = Some(t) } as attr)) when Typ.isUnbound t ->
+      | PId(id, ({ typ = Some(t) } as attr)) when Typ.isUnbound t ->
          reportUnbound id attr
       | _ ->
          let attr = GetAttr.fromExp exp in
@@ -72,7 +72,7 @@ module ReportUnboundTypes = struct
    let typed_id : ('a Env.t,typed_id) Mapper.mapper_func =
       Mapper.make "ReportUnboundTypes.typed_id" @@ fun state t ->
       match t with
-      | TypedId(id,typ,_,attr) when Typ.isUnbound (Typ.first typ) ->
+      | TypedId(id,typ, _,attr) when Typ.isUnbound (Typ.first typ) ->
          reportUnbound id attr
       | _ -> state, t
 
@@ -109,7 +109,7 @@ module ConflictingDeclarations = struct
       | LTyped(lhs, _, _) -> checkLhs env lhs
       | LGroup(lhs, _) -> checkLhs env lhs
       | LIndex(id, _, _, attr)
-      | LId (id,_,attr) ->
+      | LId (id, _,attr) ->
          begin match Env.lookupVariable env id with
             | Some decl ->
                if Loc.isSameLoc attr.loc decl.Scope.loc then
@@ -127,7 +127,7 @@ module ConflictingDeclarations = struct
    let stmt : ('a Env.t,stmt) Mapper.mapper_func =
       Mapper.make "ConflictingDeclarations.stmt" @@ fun state stmt ->
       match stmt with
-      | StmtVal(lhs,_,_) ->
+      | StmtVal(lhs, _, _) ->
          let () = checkLhs state lhs in
          state, stmt
       | _ -> state, stmt
@@ -139,11 +139,11 @@ end
 
 module Simplify = struct
 
-   (** Returns the sub elements of an operator, e.g. a+(b+c) -> [a,b,c] *)
+   (** Returns the sub elements of an operator, e.g. a+(b+c) -> [a, b, c] *)
    let rec getOpElements (op:string) (elems: exp list) : bool * exp list =
       match elems with
-      | [] -> false,[]
-      | POp(op',sub,_) :: t when op' = op ->
+      | [] -> false, []
+      | POp(op',sub, _) :: t when op' = op ->
          let _, t' = getOpElements op t in
          true, sub @ t'
       | h :: t ->
@@ -159,40 +159,40 @@ module Simplify = struct
 
    let isZero (e:exp) : bool =
       match e with
-      | PInt(0,_)
-      | PReal(0.0,_) -> true
+      | PInt(0, _)
+      | PReal(0.0, _) -> true
       | _ -> false
 
    let isOne (e:exp) : bool =
       match e with
-      | PInt(1,_)
-      | PReal(1.0,_) -> true
+      | PInt(1, _)
+      | PReal(1.0, _) -> true
       | _ -> false
 
    let isTrue (e:exp) : bool =
       match e with
-      | PBool(true,_) -> true
+      | PBool(true, _) -> true
       | _ -> false
 
    let isFalse (e:exp) : bool =
       match e with
-      | PBool(false,_) -> true
+      | PBool(false, _) -> true
       | _ -> false
 
    let minusOne attr (typ:Typ.t) : exp =
       match !typ with
-      | Typ.TId(["int"],_) -> PInt(-1,attr)
-      | Typ.TId(["real"],_) -> PReal(-1.0,attr)
+      | Typ.TId(["int"], _) -> PInt(-1,attr)
+      | Typ.TId(["real"], _) -> PReal(-1.0,attr)
       | _ -> failwith "Simplify.minusOne: invalid numeric value"
 
    let applyOp (op:string) (e1:exp) (e2:exp) : exp =
       match op,e1,e2 with
-      | "+",PInt(n1,attr),PInt(n2,_) -> PInt(n1+n2,attr)
-      | "*",PInt(n1,attr),PInt(n2,_) -> PInt(n1*n2,attr)
-      | "+",PReal(n1,attr),PReal(n2,_) -> PReal(n1+.n2,attr)
-      | "*",PReal(n1,attr),PReal(n2,_) -> PReal(n1*.n2,attr)
-      | "||",PBool(n1,attr),PBool(n2,_) -> PBool(n1 || n2,attr)
-      | "&&",PBool(n1,attr),PBool(n2,_) -> PBool(n1 && n2,attr)
+      | "+",PInt(n1,attr),PInt(n2, _) -> PInt(n1+n2,attr)
+      | "*",PInt(n1,attr),PInt(n2, _) -> PInt(n1*n2,attr)
+      | "+",PReal(n1,attr),PReal(n2, _) -> PReal(n1+.n2,attr)
+      | "*",PReal(n1,attr),PReal(n2, _) -> PReal(n1*.n2,attr)
+      | "||",PBool(n1,attr),PBool(n2, _) -> PBool(n1 || n2,attr)
+      | "&&",PBool(n1,attr),PBool(n2, _) -> PBool(n1 && n2,attr)
       | _ -> failwith "Simplify.applyOp: invalid operation on"
 
    let rec simplifyElems op (elems: exp list) : bool  * exp list =
@@ -220,15 +220,15 @@ module Simplify = struct
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make "Simplify.exp" @@ fun state exp ->
       match exp with
-      | POp("/",[e1;PReal(value,attr)],attr2) ->
-         reapply state, POp("*",[e1;PReal(1.0 /. value,attr)],attr2)
-      | POp("-",[e1;e2],attr) when isNum e2 ->
-         reapply state, POp("+",[e1;negNum e2],attr)
-      | POp("-",[e1;(PUnOp("-",e2,_))],attr) ->
-         reapply state, POp("+",[e1;e2],attr)
-      | POp("-",[e1;e2],attr) ->
-         reapply state, POp("+",[e1;PUnOp("-",e2,attr)],attr)
-      | PUnOp("-",POp("*",elems,({typ = Some(t)} as attr)),_) when List.exists isNum elems ->
+      | POp("/", [e1;PReal(value,attr)],attr2) ->
+         reapply state, POp("*", [e1;PReal(1.0 /. value,attr)],attr2)
+      | POp("-", [e1;e2],attr) when isNum e2 ->
+         reapply state, POp("+", [e1;negNum e2],attr)
+      | POp("-", [e1; (PUnOp("-",e2, _))],attr) ->
+         reapply state, POp("+", [e1;e2],attr)
+      | POp("-", [e1;e2],attr) ->
+         reapply state, POp("+", [e1;PUnOp("-",e2,attr)],attr)
+      | PUnOp("-",POp("*",elems, ({typ = Some(t)} as attr)), _) when List.exists isNum elems ->
          let minus = minusOne attr t in
          reapply state, POp("*",minus::elems,attr)
 
@@ -245,11 +245,11 @@ module Simplify = struct
          in
          state', exp'
       (* Simplifies unary minus *)
-      | PUnOp("-",e1,_) when isNum e1 ->
+      | PUnOp("-",e1, _) when isNum e1 ->
          reapply state, negNum e1
 
       (* Simplifies constant condition *)
-      | PIf(cond,then_,else_,_) ->
+      | PIf(cond,then_,else_, _) ->
          if isTrue cond then
             reapply state, then_
          else if isFalse cond then
@@ -261,11 +261,11 @@ module Simplify = struct
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "Simplify.stmt_x" @@ fun state stmt ->
       match stmt with
-      | StmtIf(PBool(true,_),then_,_,_)->
+      | StmtIf(PBool(true, _),then_, _, _)->
          reapply state, [then_]
-      | StmtIf(PBool(false,_),_,Some(else_),_) ->
+      | StmtIf(PBool(false, _), _,Some(else_), _) ->
          reapply state, [else_]
-      | StmtIf(PBool(false,_),_,None,_) ->
+      | StmtIf(PBool(false, _), _,None, _) ->
          reapply state, []
       | _ -> state, [stmt]
 
@@ -286,9 +286,9 @@ module SimplifyIfExp = struct
       let exp : (stmt list Env.t,exp) Mapper.mapper_func =
          Mapper.make "BindIfExp.exp" @@ fun state exp ->
          match exp with
-         | PIf(_,_,_,attr) when not (Env.insideIf state) ->
+         | PIf(_, _, _,attr) when not (Env.insideIf state) ->
             let n,state' = Env.tick state in
-            let var_name = "_if_"^(string_of_int n) in
+            let var_name = "_if_" ^ (string_of_int n) in
             let exp'     = PId([var_name],attr) in
             let lhs      = LId([var_name], Typ.makeListOpt attr.typ, attr) in
             let decl     = StmtVal(lhs,None,emptyAttr) in
@@ -307,7 +307,7 @@ module SimplifyIfExp = struct
       match stmt with
       | StmtIf(cond,then_,else_,attr) when not (isSimpleCond cond) ->
          let n,state' = Env.tick state in
-         let var_name = "_cond_"^(string_of_int n) in
+         let var_name = "_cond_" ^ (string_of_int n) in
          let cond_attr = GetAttr.fromExp cond in
          let lhs      = LId([var_name], Typ.makeListOpt cond_attr.typ,cond_attr) in
          let cond'    = PId([var_name],cond_attr) in
@@ -315,11 +315,11 @@ module SimplifyIfExp = struct
          let bind     = StmtBind(lhs,cond,attr) in
          reapply state', [decl;bind;StmtIf(cond',then_,else_,attr)]
       | StmtBind(lhs,PIf(cond,then_,else_,ifattr),attr) ->
-         reapply state,[StmtIf(cond,StmtBind(lhs,then_,ifattr),Some(StmtBind(lhs,else_,ifattr)),attr)]
+         reapply state, [StmtIf(cond,StmtBind(lhs,then_,ifattr),Some(StmtBind(lhs,else_,ifattr)),attr)]
       | StmtVal(lhs,Some(PIf(cond,then_,else_,ifattr)),attr) ->
          let decl      = StmtVal(lhs,None,attr) in
          let if_       = StmtIf(cond,StmtBind(lhs,then_,ifattr),Some(StmtBind(lhs,else_,ifattr)),attr) in
-         reapply state,[decl;if_]
+         reapply state, [decl;if_]
       | StmtBind(lhs,rhs,attr) ->
          let acc       = newState state [] in
          let acc',rhs' = Mapper.map_exp_to_stmt BindIfExp.mapper acc rhs in
@@ -336,7 +336,7 @@ module SimplifyIfExp = struct
          state', List.rev stmts'
       | StmtReturn(e,attr) ->
          let acc       = newState state [] in
-         let acc',e'   = Mapper.map_exp_to_stmt BindIfExp.mapper acc e in
+         let acc', e'   = Mapper.map_exp_to_stmt BindIfExp.mapper acc e in
          let state',acc_stmts = restoreState state acc' in
          let stmts'    = StmtReturn(e',attr)::acc_stmts in
          let state'    = if acc_stmts <> [] then reapply state' else state' in
@@ -388,9 +388,9 @@ module BindComplexExpressions = struct
       let exp : (stmt list Env.t,exp) Mapper.mapper_func =
          Mapper.make "BindComplexHelper.exp" @@ fun state exp ->
          match exp with
-         | PCall(_,_,_,({ typ = Some(typ) } as attr)) when not (Typ.isSimpleType typ) ->
+         | PCall(_, _, _, ({ typ = Some(typ) } as attr)) when not (Typ.isSimpleType typ) ->
             let n,state' = Env.tick state in
-            let var_name = "_call_"^(string_of_int n) in
+            let var_name = "_call_" ^ (string_of_int n) in
             let exp'     = PId([var_name],attr) in
             let lhs      = LId([var_name], Typ.makeListOpt attr.typ,attr) in
             let decl     = StmtVal(lhs,None,emptyAttr) in
@@ -400,7 +400,7 @@ module BindComplexExpressions = struct
             state',exp'
          | PTuple(_,attr) ->
             let n,state' = Env.tick state in
-            let var_name = "_tuple_"^(string_of_int n) in
+            let var_name = "_tuple_" ^ (string_of_int n) in
             let exp'     = PId([var_name],attr) in
             let lhs      = LId([var_name],Typ.makeListOpt attr.typ,attr) in
             let decl     = StmtVal(lhs,None,emptyAttr) in
@@ -410,7 +410,7 @@ module BindComplexExpressions = struct
             state',exp'
          | PArray(_,attr) ->
             let n,state' = Env.tick state in
-            let var_name = "_array_"^(string_of_int n) in
+            let var_name = "_array_" ^ (string_of_int n) in
             let exp'     = PId([var_name],attr) in
             let lhs      = LId([var_name],Typ.makeListOpt attr.typ,attr) in
             let decl     = StmtVal(lhs,None,emptyAttr) in
@@ -428,19 +428,19 @@ module BindComplexExpressions = struct
       Mapper.makeExpander "BindComplexExpressions.stmt_x" @@ fun state stmt ->
       match stmt with
       (* avoids rebinding complex expressions *)
-      | StmtReturn(PId(_,_),_) ->
+      | StmtReturn(PId(_, _), _) ->
          state, [stmt]
       (* simplify tuple assigns  *)
-      | StmtVal(LTuple(lhs,_),None,attr) ->
+      | StmtVal(LTuple(lhs, _),None,attr) ->
          let stmts = List.map (fun a -> StmtVal(a,None,attr)) lhs in
          reapply state, stmts
 
-      | StmtVal(LTuple(lhs,_),Some(PTuple(rhs,_)),_) when List.length lhs = List.length rhs ->
+      | StmtVal(LTuple(lhs, _),Some(PTuple(rhs, _)), _) when List.length lhs = List.length rhs ->
          let tick,state' = Env.tick state in
          let stmts = createAssignments tick makeValBind lhs rhs in
          reapply state', stmts
 
-      | StmtBind(LTuple(lhs,_),PTuple(rhs,_),_) when List.length lhs = List.length rhs ->
+      | StmtBind(LTuple(lhs, _),PTuple(rhs, _), _) when List.length lhs = List.length rhs ->
          let tick, state' = Env.tick state in
          let stmts = createAssignments tick makeBind lhs rhs in
          reapply state', stmts
@@ -469,7 +469,7 @@ module BindComplexExpressions = struct
 
       | StmtReturn(e,attr) ->
          let acc     = newState state [] in
-         let acc',e' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc e in
+         let acc', e' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc e in
          let state',acc_stmts = restoreState state acc' in
          let stmts' = StmtReturn(e',attr)::acc_stmts in
          let state' = if acc_stmts <> [] then reapply state' else state' in
@@ -488,7 +488,7 @@ module ProcessArrays = struct
       match typ_opt with
       | Some(typ) ->
          begin match typ with
-            | { contents = Typ.TComposed(["array"],[_;{ contents = Typ.TInt(n,_)}],_)} -> n
+            | { contents = Typ.TComposed(["array"], [_; { contents = Typ.TInt(n, _)}], _)} -> n
             | _ -> failwith "ProcessArrays.getArraySize: the argument is not an array"
          end
       | _ -> failwith "ProcessArrays.getArraySize: type inference should have put a type here"
@@ -496,7 +496,7 @@ module ProcessArrays = struct
    let exp : (PassData.t Env.t,exp) Mapper.mapper_func =
       Mapper.make "ProcessArrays.exp" @@ fun state exp ->
       match exp with
-      | PCall(None,["size"],[arr],attr) ->
+      | PCall(None, ["size"], [arr],attr) ->
          let arr_attr = GetAttr.fromExp arr in
          let size = getArraySize arr_attr.typ in
          state, PInt(size,attr)

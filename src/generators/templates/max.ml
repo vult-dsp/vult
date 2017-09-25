@@ -121,7 +121,7 @@ let castOutput (params:params) (typ:output) (value:Pla.t) : Pla.t =
    let cast = Replacements.getCast params.repl current_typ "float" in
    castType cast value
 
-let inputName params (i,acc) s =
+let inputName params (i, acc) s =
    match s with
    | IContext -> i, (Pla.string "x->data" :: acc)
    | _ -> i + 1, (castInput params s {pla|in_<#i#i>_value|pla} :: acc)
@@ -129,23 +129,23 @@ let inputName params (i,acc) s =
 let tildePerformFunctionCall module_name (params:params) (config:config) =
    (* generates the aguments for the process call *)
    let args =
-      List.fold_left (inputName params) (0,[]) config.process_inputs
+      List.fold_left (inputName params) (0, []) config.process_inputs
       |> snd |> List.rev
       |> (fun a -> if List.length config.process_outputs > 1 then a @ [Pla.string "ret"] else a)
       |> Pla.join_sep Pla.comma
    in
    (* declares the return variable and copies the values to the output buffers *)
-   let ret,copy =
+   let ret, copy =
       let output_pla a = Pla.string (Config.outputTypeString a) in
       let underscore = Pla.string "_" in
       match config.process_outputs with
-      | []  -> Pla.unit,Pla.unit
+      | []  -> Pla.unit, Pla.unit
       | [o] ->
          let current_typ = Replacements.getType params.repl (Config.outputTypeString o) in
          let decl = {pla|<#current_typ#s> ret = |pla} in
          let value = castOutput params o (Pla.string "ret") in
          let copy = {pla|*(out_0++) = <#value#>;|pla} in
-         decl,copy
+         decl, copy
       | o ->
          let decl = Pla.(string "_tuple___" ++ map_sep underscore output_pla o ++ string "__ ret; ") in
          let copy =
@@ -155,7 +155,7 @@ let tildePerformFunctionCall module_name (params:params) (config:config) =
                    {pla|*(out_<#i#i>++) = <#value#>;|pla}) o
             |> Pla.join_sep_all Pla.newline
          in
-         decl,copy
+         decl, copy
    in
    {pla|<#ret#> <#module_name#s>_process(<#args#>);<#><#copy#>|pla}
 
