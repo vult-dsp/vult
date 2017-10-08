@@ -123,6 +123,11 @@ let rec printStmt s (stmt:cstmt) =
       let rhs = printExp rhs in
       s, Some {pla|store <#rhs#>, %<#lhs#s>|pla}
 
+   | CSBind(CLId([t1; CTSimple t2], [lhs1; lhs2]), (( CEInt _ | CEFloat _ | CEBool _ | CEString _) as rhs)) ->
+      let rhs = printExp rhs in
+      s, Some {pla|<#lhs2#s> = getelementptr inbounds <#t2#s>, <#t2#s> <#lhs1#s>, i32 0, i32 0
+                   store <#rhs#>, i32* <#lhs2#s>|pla}
+
    | CSBind(CLId(_, [lhs]), CEVar([rhs], [typ])) ->
       let typ = printTypeDescr typ in
       s, Some {pla|%<#lhs#s> = load <#typ#>, <#typ#>* %<#rhs#s>|pla}

@@ -50,11 +50,11 @@ module Templates = struct
             this.tan  = function(x)          { return Math.tan(x); };
             this.tanh = function(x)          { return Math.tanh(x); };
             this.sqrt = function(x)          { return x; };
-            this.set  = function(a,i,v)      { a[i]=v; };
-            this.get  = function(a,i)        { return a[i]; };
-            this.int_to_float = function(i){ return i; };
-            this.float_to_int = function(i){ return Math.floor(i); };
-            this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
+            this.set  = function(a, i, v)    { a[i]=v; };
+            this.get  = function(a, i)       { return a[i]; };
+            this.int_to_float = function(i)  { return i; };
+            this.float_to_int = function(i)  { return Math.floor(i); };
+            this.makeArray = function(size, v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
             this.wrap_array = function(a) { return a; }
             this.log = function(x) { console.log(x); }
          |}
