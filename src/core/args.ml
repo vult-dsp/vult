@@ -59,6 +59,7 @@ type args =
       mutable show_version : bool;
       mutable includes : string list;
       mutable deps    : bool;
+      mutable fs      : float option;
    }
 [@@deriving show,eq,ord]
 
@@ -76,4 +77,5 @@ let default_arguments : args =
       show_version = false;
       includes = [];
       deps = false;
+      fs = None;
    }

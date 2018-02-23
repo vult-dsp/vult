@@ -82,7 +82,7 @@ let read4_chars (buffer:buffer) : string =
    Bytes.set result 1 c2;
    Bytes.set result 2 c3;
    Bytes.set result 3 c4;
-   result
+   Bytes.to_string result
 
 
 (** Moves chunk by chunk until it finds the "data" chunk *)

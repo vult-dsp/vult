@@ -75,7 +75,7 @@ let read_bytes_fn (path:string) : Buffer.t option =
       let bytes      = Bytes.create size in
       let contents   = copyData size bytes array 0 in
       let buffer     = Buffer.create size in
-      let ()         = Buffer.add_string buffer contents in
+      let ()         = Buffer.add_bytes buffer contents in
       Some buffer
    else
       None

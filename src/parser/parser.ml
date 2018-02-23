@@ -150,7 +150,8 @@ and tagExpressionList (buffer:Stream.stream) : tag list =
 
 and tag_nud (buffer:Stream.stream) (token:'kind token) : tag =
    match token.kind, token.value with
-   | ID, _ ->
+   | ID, _
+   | TABLE,_ ->
       let id = identifierToken token in
       begin
          match Stream.peek buffer with
@@ -721,6 +722,20 @@ and stmtWhile (buffer:Stream.stream) : stmt =
    let tstm = stmtList buffer in
    StmtWhile(cond, tstm, makeAttr start_loc)
 
+and stmtTable (buffer:Stream.stream) : stmt =
+   let e1        = lhs_expression 0 buffer in
+   let start_loc = getLhsExpLocation e1 in
+   match Stream.peek buffer with
+   | EQUAL ->
+      let _  = Stream.consume buffer EQUAL in
+      let e2 = expression 0 buffer in
+      let _  = Stream.consume buffer SEMI in
+      StmtBind(e1, e2, { (makeAttr start_loc) with const = true })
+   | _ ->
+      let message  = Printf.sprintf "Invalid statement. All statements should be in the forms: \"a = b; \" or \"_ = b(); \" " in
+      raise (ParserError(Stream.makeError buffer message))
+
+
 (** <statement> := ... *)
 and stmt (buffer:Stream.stream) : stmt =
    try
@@ -733,6 +748,7 @@ and stmt (buffer:Stream.stream) : stmt =
       | AND   ->    stmtFunction buffer
       | WHILE ->    stmtWhile    buffer
       | TYPE  ->    stmtType     buffer
+      | TABLE ->    stmtTable    buffer
       | EXTERNAL -> stmtExternal buffer
       | _        -> stmtBind     buffer
    with

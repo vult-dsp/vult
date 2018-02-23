@@ -6,12 +6,12 @@ Copyright (c) 2017 Leonardo Laguna Ruiz
 Tanh satuation
 */
 
-fun table(x) @[table(min = -24.0, max = 24.0, size = 241)]{
+fun tanh_table(x) @[table(min = -24.0, max = 24.0, size = 241)]{
   return tanh(x);
 }
 
 fun process(x) {
-   return table(x);
+   return tanh_table(x);
 }
 and noteOn(note:int,velocity:int,channel:int){ }
 and noteOff(note:int,channel:int){ }

@@ -27,20 +27,21 @@ open Args
 let processArguments () : args =
    let result = { default_arguments with files = [] }  in
    let opts = [
-      "-dparse",   (Arg.Unit   (fun () -> result.dparse   <-true)),      " Dumps the parse tree (default: off)";
-      "-deps",     (Arg.Unit   (fun () -> result.deps     <-true)),      " Prints all file dependencies";
-      "-ccode",    (Arg.Unit   (fun () -> result.code     <-CCode)),     " Converts the code to c (default: off)";
-      "-check",    (Arg.Unit   (fun () -> result.check    <-true)),      " Checks the code without generating any code (default: off)";
-      "-jscode",   (Arg.Unit   (fun () -> result.code     <-JSCode)),    " Converts the code to javascript (default: off)";
-      "-luacode",  (Arg.Unit   (fun () -> result.code     <-LuaCode)),   " Converts the code to lua (default: off)";
-      "-llvmcode", (Arg.Unit   (fun () -> result.code     <-LLVMCode)),  " Converts the code to LLVM IR (default: off)";
-      "-o",        (Arg.String (fun output -> result.output <- output)), "output Defines the prefix of the output files";
-      "-real",     (Arg.String (fun real -> result.real     <- real)),   " Defines the numeric type for the generated code: double, fixed";
-      "-template", (Arg.String (fun temp -> result.template <- temp)),   "name Defines the template used to generate code (ccode only): pd, teensy";
-      "-eval",     (Arg.Unit   (fun () -> result.eval       <- true)),   " Runs the code (default: off)";
-      "-i",        (Arg.String (fun path -> result.includes <- path :: result.includes)), "path Adds the given path to the list of places to look for modules";
-      "-version",  (Arg.Unit   (fun () -> result.show_version <- true)), " Show the version of vult";
-      "-test",     (Arg.Unit   (fun () -> Float.reduce_precision := true)), " Enters a special mode useful only for testing (default: off)";
+      "-dparse",    (Arg.Unit   (fun () -> result.dparse   <-true)),      " Dumps the parse tree (default: off)";
+      "-deps",      (Arg.Unit   (fun () -> result.deps     <-true)),      " Prints all file dependencies";
+      "-ccode",     (Arg.Unit   (fun () -> result.code     <-CCode)),     " Converts the code to c (default: off)";
+      "-check",     (Arg.Unit   (fun () -> result.check    <-true)),      " Checks the code without generating any code (default: off)";
+      "-jscode",    (Arg.Unit   (fun () -> result.code     <-JSCode)),    " Converts the code to javascript (default: off)";
+      "-luacode",   (Arg.Unit   (fun () -> result.code     <-LuaCode)),   " Converts the code to lua (default: off)";
+      "-llvmcode",  (Arg.Unit   (fun () -> result.code     <-LLVMCode)),  " Converts the code to LLVM IR (default: off)";
+      "-o",         (Arg.String (fun output -> result.output <- output)), "output Defines the prefix of the output files";
+      "-real",      (Arg.String (fun real -> result.real   <- real)),     " Defines the numeric type for the generated code: double, fixed";
+      "-samplerate",(Arg.Float  (fun fs -> result.fs <- Some fs)),         "number When set, the function samplerate() is evaluated";
+      "-template",  (Arg.String (fun temp -> result.template <- temp)),   "name Defines the template used to generate code (ccode only): pd, teensy";
+      "-eval",      (Arg.Unit   (fun () -> result.eval       <- true)),   " Runs the code (default: off)";
+      "-i",         (Arg.String (fun path -> result.includes <- path :: result.includes)), "path Adds the given path to the list of places to look for modules";
+      "-version",   (Arg.Unit   (fun () -> result.show_version <- true)), " Show the version of vult";
+      "-test",      (Arg.Unit   (fun () -> Float.reduce_precision := true)), " Enters a special mode useful only for testing (default: off)";
    ]
       |> Arg.align
    in

@@ -282,14 +282,14 @@ void Tricore_default(Tricore__ctx_type_0 &_ctx){
    _ctx.rate = 0.7593668f;
 }
 
-float Saturate_soft_table(float x){
+float Saturate_soft_tanh_table(float x){
    int index;
    index = int_clip(float_to_int((5.f * (x + 24.f))),0,240);
-   return (float_wrap_array(Saturate_soft_table_c0)[index] + (x * (float_wrap_array(Saturate_soft_table_c1)[index] + (float_wrap_array(Saturate_soft_table_c2)[index] * x))));
+   return (float_wrap_array(Saturate_soft_tanh_table_c0)[index] + (x * (float_wrap_array(Saturate_soft_tanh_table_c1)[index] + (float_wrap_array(Saturate_soft_tanh_table_c2)[index] * x))));
 }
 
 float Saturate_soft_process(float x){
-   return Saturate_soft_table(x);
+   return Saturate_soft_tanh_table(x);
 }
 
 void Saturate_soft_noteOn(int note, int velocity, int channel){
@@ -404,14 +404,14 @@ void Svf_default(Svf__ctx_type_1 &_ctx){
    _ctx.inv_den = (1.f / (1.f + (_ctx.g * _ctx.g)));
 }
 
-float Saturate_table(float x){
+float Saturate_tanh_table(float x){
    int index;
    index = int_clip(float_to_int((5.f * (x + 24.f))),0,240);
-   return (float_wrap_array(Saturate_table_c0)[index] + (x * (float_wrap_array(Saturate_table_c1)[index] + (float_wrap_array(Saturate_table_c2)[index] * x))));
+   return (float_wrap_array(Saturate_tanh_table_c0)[index] + (x * (float_wrap_array(Saturate_tanh_table_c1)[index] + (float_wrap_array(Saturate_tanh_table_c2)[index] * x))));
 }
 
 float Saturate_process(float x){
-   return Saturate_table(x);
+   return Saturate_tanh_table(x);
 }
 
 void Saturate_noteOn(int note, int velocity, int channel){

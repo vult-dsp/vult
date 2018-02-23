@@ -332,16 +332,16 @@ let builtinFunctions env =
       | [] -> PReal(3.1415926535897932384, attr)
       | _ -> failwith "pi: invalid arguments"
    in
-   let random attr args =
+   (*let random attr args =
       match args with
       | [] -> PReal(Random.float 1.0, attr)
       | _ -> failwith "random: invalid arguments"
-   in
-   let irandom attr args =
+     in
+     let irandom attr args =
       match args with
       | [] -> PInt(Random.int max_int, attr)
       | _ -> failwith "irandom: invalid arguments"
-   in
+     in*)
    let log attr args =
       match args with
       | [e] ->
@@ -381,8 +381,8 @@ let builtinFunctions env =
          "eps", Env.Builtin(eps);
          "pi", Env.Builtin(pi);
 
-         "random", Env.Builtin(random);
-         "irandom", Env.Builtin(irandom);
+         (*"random", Env.Builtin(random);
+           "irandom", Env.Builtin(irandom);*)
          "log", Env.Builtin(log);
          "get", Env.Builtin(get);
          "set", Env.Builtin(set);

@@ -46,121 +46,68 @@ extern "C" {
 
 typedef int32_t fix16_t;
 
+extern float float_samplerate();
+extern fix16_t fix_samplerate();
+
 // Type conversion
-static_inline float fix_to_float(fix16_t a)
-{
-   return (float)a / 0x00010000;
-}
-static_inline fix16_t float_to_fix(float a)
-{
-   float temp = a * 0x00010000;
-   return (fix16_t)temp;
+static_inline float fix_to_float(fix16_t a) { return (float)a / 0x00010000; }
+static_inline fix16_t float_to_fix(float a) {
+  float temp = a * 0x00010000;
+  return (fix16_t)temp;
 }
 
-static_inline float int_to_float(int a)
-{
-   return (float)a;
-}
+static_inline float int_to_float(int a) { return (float)a; }
 
-static_inline int float_to_int(float a)
-{
-   return (int)a;
-}
+static_inline int float_to_int(float a) { return (int)a; }
 
-static_inline fix16_t int_to_fix(int a)
-{
-   return a * 0x00010000;
-}
+static_inline fix16_t int_to_fix(int a) { return a * 0x00010000; }
 
-static_inline int fix_to_int(fix16_t a)
-{
-   return (a >> 16);
-}
+static_inline int fix_to_int(fix16_t a) { return (a >> 16); }
 
-static_inline int int_clip(int v, int minv, int maxv)
-{
-   return v > maxv ? maxv : (v < minv ? minv : v);
+static_inline int int_clip(int v, int minv, int maxv) {
+  return v > maxv ? maxv : (v < minv ? minv : v);
 }
 
 // Basic operations for fixed point numbers
-static_inline fix16_t fix_add(fix16_t x, fix16_t y)
-{
-   return x + y;
+static_inline fix16_t fix_add(fix16_t x, fix16_t y) { return x + y; }
+
+static_inline fix16_t fix_sub(fix16_t x, fix16_t y) { return x - y; }
+
+static_inline fix16_t fix_mul(fix16_t x, fix16_t y) {
+  int64_t res = (int64_t)x * y;
+  return (fix16_t)(res >> 16);
 }
 
-static_inline fix16_t fix_sub(fix16_t x, fix16_t y)
-{
-   return x - y;
+static_inline fix16_t fix_div(fix16_t a, fix16_t b) {
+  if (b == 0)
+    return 0;
+  fix16_t result = (((int64_t)a) << 16) / ((int64_t)b);
+  return result;
 }
 
-static_inline fix16_t fix_mul(fix16_t x, fix16_t y)
-{
-   int64_t res = (int64_t)x * y;
-   return (fix16_t)(res >> 16);
+static_inline fix16_t fix_minus(fix16_t x) { return -x; }
+
+static_inline fix16_t fix_abs(fix16_t x) { return x < 0 ? (-x) : x; }
+
+static_inline fix16_t fix_min(fix16_t a, fix16_t b) { return a < b ? a : b; }
+
+static_inline fix16_t fix_max(fix16_t a, fix16_t b) { return a > b ? a : b; }
+
+static_inline fix16_t fix_clip(fix16_t v, fix16_t minv, fix16_t maxv) {
+  return v > maxv ? maxv : (v < minv ? minv : v);
 }
 
-static_inline fix16_t fix_div(fix16_t a, fix16_t b)
-{
-   if (b == 0)
-      return 0;
-   fix16_t result = (((int64_t)a) << 16) / ((int64_t)b);
-   return result;
-}
+static_inline fix16_t fix_floor(fix16_t x) { return (x & 0xFFFF0000); }
 
-static_inline fix16_t fix_minus(fix16_t x)
-{
-   return -x;
-}
+static_inline fix16_t fix_not(fix16_t x) { return ~x; }
 
-static_inline fix16_t fix_abs(fix16_t x)
-{
-   return x < 0 ? (-x) : x;
-}
+static_inline float float_eps() { return 1e-18f; }
 
-static_inline fix16_t fix_min(fix16_t a, fix16_t b)
-{
-   return a < b ? a : b;
-}
+static_inline fix16_t fix_eps() { return 1; }
 
-static_inline fix16_t fix_max(fix16_t a, fix16_t b)
-{
-   return a > b ? a : b;
-}
+static_inline float float_pi() { return 3.1415926535897932384f; }
 
-static_inline fix16_t fix_clip(fix16_t v, fix16_t minv, fix16_t maxv)
-{
-   return v > maxv ? maxv : (v < minv ? minv : v);
-}
-
-static_inline fix16_t fix_floor(fix16_t x)
-{
-   return (x & 0xFFFF0000);
-}
-
-static_inline fix16_t fix_not(fix16_t x)
-{
-   return ~x;
-}
-
-static_inline float float_eps()
-{
-   return 1e-18f;
-}
-
-static_inline fix16_t fix_eps()
-{
-   return 1;
-}
-
-static_inline float float_pi()
-{
-   return 3.1415926535897932384f;
-}
-
-static_inline fix16_t fix_pi()
-{
-   return 205887;
-}
+static_inline fix16_t fix_pi() { return 205887; }
 
 fix16_t fix_exp(fix16_t inValue);
 
@@ -180,9 +127,8 @@ fix16_t fix_sqrt(fix16_t inValue);
 
 /* Floating point operations */
 
-static_inline float float_clip(float value, float low, float high)
-{
-   return value < low ? low : (value > high ? high : value);
+static_inline float float_clip(float value, float low, float high) {
+  return value < low ? low : (value > high ? high : value);
 }
 
 /* Array get and set */
@@ -207,13 +153,12 @@ void int_copy_array(int size, int *dest, int *src);
 void bool_copy_array(int size, uint8_t *dest, uint8_t *src);
 void fix_copy_array(int size, fix16_t *dest, fix16_t *src);
 
-static_inline uint8_t bool_not(uint8_t x)
-{
-   return !x;
-}
+static_inline uint8_t bool_not(uint8_t x) { return !x; }
 
 /* Tables */
-static_inline fix16_t *fix_wrap_array(const fix16_t x[]) { return (fix16_t *)x; };
+static_inline fix16_t *fix_wrap_array(const fix16_t x[]) {
+  return (fix16_t *)x;
+};
 static_inline float *float_wrap_array(const float x[]) { return (float *)x; };
 
 /* Random numbers */

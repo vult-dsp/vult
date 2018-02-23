@@ -430,14 +430,14 @@ void Swept_default_init(Swept__ctx_type_0 &_output_){
 void Swept_default(Swept__ctx_type_0 &_ctx){
 }
 
-fix16_t Saturate_table(fix16_t x){
+fix16_t Saturate_tanh_table(fix16_t x){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x50000 /* 5.000000 */,(x + 0x180000 /* 24.000000 */))),0,240);
-   return (fix_wrap_array(Saturate_table_c0)[index] + fix_mul(x,(fix_wrap_array(Saturate_table_c1)[index] + fix_mul(fix_wrap_array(Saturate_table_c2)[index],x))));
+   return (fix_wrap_array(Saturate_tanh_table_c0)[index] + fix_mul(x,(fix_wrap_array(Saturate_tanh_table_c1)[index] + fix_mul(fix_wrap_array(Saturate_tanh_table_c2)[index],x))));
 }
 
 fix16_t Saturate_process(fix16_t x){
-   return Saturate_table(x);
+   return Saturate_tanh_table(x);
 }
 
 void Saturate_noteOn(int note, int velocity, int channel){

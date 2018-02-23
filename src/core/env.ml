@@ -601,6 +601,8 @@ let builtin_table =
       ["random"], Scope.Function, Typ.Const.real_type, false;
       ["irandom"], Scope.Function, Typ.Const.int_type, false;
 
+      ["samplerate"], Scope.Function, Typ.Const.real_type, false;
+
       ["log"], Scope.Function, Typ.Const.a_a (), false;
 
    ]

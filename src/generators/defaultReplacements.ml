@@ -125,6 +125,7 @@ module Default = struct
             ("eps",  "float"),   "float_eps";
             ("pi",   "float"),   "float_pi";
             ("random", "float"), "float_random";
+            ("samplerate", "float"), "float_samplerate";
             ("wrap_array",  "float"), "float_wrap_array";
             ("log",  "float"),   "float_print";
             ("log",  "int"),     "int_print";
@@ -214,6 +215,7 @@ module FixedPoint = struct
             ("eps",  "fix16_t"),  "fix_eps";
             ("pi",  "fix16_t"),  "fix_pi";
             ("random", "fix16_t"),  "fix_random";
+            ("samplerate", "fix16_t"),  "fix_samplerate";
             ("wrap_array", "fix16_t"), "fix_wrap_array";
             ("log", "fix16_t"), "fix_print";
          ]

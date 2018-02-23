@@ -53,6 +53,13 @@ module Evaluate = struct
    let exp : ('a Env.t, exp) Mapper.mapper_func =
       Mapper.make "Simplify.exp" @@ fun state exp ->
       match exp with
+      | PCall(None, ["samplerate"], [], attr) ->
+         let data = Env.get state in
+         begin match data.PassData.args.fs with
+            | None -> state, exp
+            | Some fs -> state, PReal(fs, attr)
+         end
+
       | PCall(None, name, args, attr) when
            not attr.evaluated
            && List.for_all isConst args
