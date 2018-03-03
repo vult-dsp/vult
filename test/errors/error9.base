@@ -1,3 +1,3 @@
 Expecting a string with a link name or a tag
 external foo() : int;
-                    ^
+                     ^ 

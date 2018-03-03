@@ -34,14 +34,14 @@ t_int *sf_f_tilde_perform(t_int *w)
 {
    t_sf_f_tilde *x = (t_sf_f_tilde *)(w[1]);
 
-   t_sample *in_0 = (t_sample *)(w[2]);
-   t_sample *out_0 = (t_sample *)(w[3]);
+   t_sample *in_0 = (t_sample *)(w[2]); 
+   t_sample *out_0 = (t_sample *)(w[3]); 
 
-   int n = (int)(w[4]);
+   int n = (int)(w[4]); 
 
    while (n--) {
-   float ret =  Sf_f_process((float) *(in_0++));
-   *(out_0++) = (float) ret;
+   float ret =  Sf_f_process((float) *(in_0++)); 
+   *(out_0++) = (float) ret; 
    }
 
    return (w+5);
@@ -50,9 +50,9 @@ t_int *sf_f_tilde_perform(t_int *w)
 void sf_f_tilde_dsp(t_sf_f_tilde *x, t_signal **sp)
 {
    dsp_add(sf_f_tilde_perform, 4,
-   x,
-   sp[0]->s_vec,
-   sp[1]->s_vec,
+   x, 
+   sp[0]->s_vec, 
+   sp[1]->s_vec, 
 
    sp[0]->s_n);
 }
@@ -65,7 +65,7 @@ void *sf_f_tilde_new()
    
 
 
-   outlet_new(&x->x_obj, &s_signal);
+   outlet_new(&x->x_obj, &s_signal); 
 
    return (void *)x;
 }
@@ -98,7 +98,7 @@ void sf_f_tilde_setup(void) {
       CLASS_DEFAULT, // type of object
       A_NULL); // arguments passed
 
-   class_addmethod(sf_f_tilde_class,(t_method)sf_f_tilde_dsp, gensym("dsp"), A_NULL);
+   class_addmethod(sf_f_tilde_class, (t_method)sf_f_tilde_dsp, gensym("dsp"), A_NULL);
    CLASS_MAINSIGNALIN(sf_f_tilde_class, t_sf_f_tilde, dummy);
 
    class_addmethod(sf_f_tilde_class, (t_method)sf_f_noteOn,        gensym("noteOn"),        A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, A_NULL);

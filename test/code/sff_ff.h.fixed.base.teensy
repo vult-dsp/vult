@@ -27,7 +27,7 @@ void Sff_ff_default();
 class sff_ff : public AudioStream
 {
 public:
-  sff_ff(void) : AudioStream(0,NULL)
+  sff_ff(void) : AudioStream(2, inputQueueArray)
   {
      Sff_ff_process_init(data);
   }
@@ -58,6 +58,7 @@ public:
 
 private:
   Sff_ff_process_type data;
+  audio_block_t *inputQueueArray[2];
 
 };
 

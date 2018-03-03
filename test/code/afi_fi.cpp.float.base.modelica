@@ -78,9 +78,9 @@ EXPORT void afi_fi__destructor(void *object)
 EXPORT void afi_fi__process(void *object, double in_0, int in_1, double &out_0, int &out_1)
 {
    Afi_fi_process_type *data = (Afi_fi_process_type *)object;
-   _tuple___real_int__ ret;  Afi_fi_process(*data,(float) in_0,float_to_int(in_1),ret);
-out_0 = (float) ret.field_0;
-out_1 = int_to_float(ret.field_1);
+   _tuple___real_int__ ret;  Afi_fi_process(*data,(float) in_0,float_to_int(in_1),ret); 
+out_0 = (float) ret.field_0; 
+out_1 = int_to_float(ret.field_1); 
 
 }
 

@@ -142,9 +142,13 @@ let rec equalToken t1 t2 =
 let compareLine line1 line2 =
    let s1 = tokenizeLine line1 in
    let s2 = tokenizeLine line2 in
-   List.for_all2 equalToken s1 s2
+   try
+      List.for_all2 equalToken s1 s2
+   with Invalid_argument _ -> false
 
 let compare str1 str2 =
    let lines1 = stringSplit "\n" str1 in
    let lines2 = stringSplit "\n" str2 in
-   List.for_all2 compareLine lines1 lines2
+   try
+      List.for_all2 compareLine lines1 lines2
+   with Invalid_argument _ -> false

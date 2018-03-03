@@ -34,15 +34,15 @@ t_int *sff_f_tilde_perform(t_int *w)
 {
    t_sff_f_tilde *x = (t_sff_f_tilde *)(w[1]);
 
-   t_sample *in_0 = (t_sample *)(w[2]);
-   t_sample *in_1 = (t_sample *)(w[3]);
-   t_sample *out_0 = (t_sample *)(w[4]);
+   t_sample *in_0 = (t_sample *)(w[2]); 
+   t_sample *in_1 = (t_sample *)(w[3]); 
+   t_sample *out_0 = (t_sample *)(w[4]); 
 
-   int n = (int)(w[5]);
+   int n = (int)(w[5]); 
 
    while (n--) {
-   float ret =  Sff_f_process((float) *(in_0++),(float) *(in_1++));
-   *(out_0++) = (float) ret;
+   float ret =  Sff_f_process((float) *(in_0++),(float) *(in_1++)); 
+   *(out_0++) = (float) ret; 
    }
 
    return (w+6);
@@ -51,10 +51,10 @@ t_int *sff_f_tilde_perform(t_int *w)
 void sff_f_tilde_dsp(t_sff_f_tilde *x, t_signal **sp)
 {
    dsp_add(sff_f_tilde_perform, 5,
-   x,
-   sp[0]->s_vec,
-   sp[1]->s_vec,
-   sp[2]->s_vec,
+   x, 
+   sp[0]->s_vec, 
+   sp[1]->s_vec, 
+   sp[2]->s_vec, 
 
    sp[0]->s_n);
 }
@@ -66,9 +66,9 @@ void *sff_f_tilde_new()
    
    
 
-   inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);
+   inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal); 
 
-   outlet_new(&x->x_obj, &s_signal);
+   outlet_new(&x->x_obj, &s_signal); 
 
    return (void *)x;
 }
@@ -101,7 +101,7 @@ void sff_f_tilde_setup(void) {
       CLASS_DEFAULT, // type of object
       A_NULL); // arguments passed
 
-   class_addmethod(sff_f_tilde_class,(t_method)sff_f_tilde_dsp, gensym("dsp"), A_NULL);
+   class_addmethod(sff_f_tilde_class, (t_method)sff_f_tilde_dsp, gensym("dsp"), A_NULL);
    CLASS_MAINSIGNALIN(sff_f_tilde_class, t_sff_f_tilde, dummy);
 
    class_addmethod(sff_f_tilde_class, (t_method)sff_f_noteOn,        gensym("noteOn"),        A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, A_NULL);

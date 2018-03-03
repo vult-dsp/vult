@@ -2,235 +2,235 @@
 local this = {}
 local ffi = require("ffi")
 function this.ternary(cond,then_,else_) if cond then return then_ else return else_ end end
-function this.eps()             return 1e-18; end
-function this.pi()              return 3.1415926535897932384; end
-function this.random()          return math.random(); end
-function this.irandom()         return math.floor(math.random() * 4294967296); end
-function this.clip(x,low,high)  return (this.ternary(x<low,low,this.ternary(x>high,high,x))); end
-function this.real(x)           return x; end
-function this.int(x)            local int_part,_ = math.modf(x) return int_part; end
-function this.sin(x)            return math.sin(x); end
-function this.cos(x)            return math.cos(x); end
-function this.abs(x)            return math.abs(x); end
-function this.exp(x)            return math.exp(x); end
-function this.floor(x)          return math.floor(x); end
-function this.tan(x)            return math.tan(x); end
-function this.tanh(x)           return math.tanh(x); end
-function this.sqrt(x)           return x; end
-function this.set(a,i,v)        a[i+1]=v; end
-function this.get(a,i)          return a[i+1]; end
-function this.makeArray(size,v) local a = {}; for i=1,size do a[i]=v end return a; end
-function this.wrap_array(a)     return a; end
+function this.eps()              return 1e-18; end
+function this.pi()               return 3.1415926535897932384; end
+function this.random()           return math.random(); end
+function this.irandom()          return math.floor(math.random() * 4294967296); end
+function this.clip(x,low,high)   return (this.ternary(x<low, low, this.ternary(x>high, high, x))); end
+function this.real(x)            return x; end
+function this.int(x)             local int_part,_ = math.modf(x) return int_part; end
+function this.sin(x)             return math.sin(x); end
+function this.cos(x)             return math.cos(x); end
+function this.abs(x)             return math.abs(x); end
+function this.exp(x)             return math.exp(x); end
+function this.floor(x)           return math.floor(x); end
+function this.tan(x)             return math.tan(x); end
+function this.tanh(x)            return math.tanh(x); end
+function this.sqrt(x)            return x; end
+function this.set(a, i, v)       a[i+1]=v; end
+function this.get(a, i)          return a[i+1]; end
+function this.makeArray(size, v) local a = {}; for i=1,size do a[i]=v end return a; end
+function this.wrap_array(a)      return a; end
 function this.Synth1__ctx_type_0_init()
-   local _ctx = {};
-   _ctx.x = 0.;
-   return _ctx;
+   local _ctx = {}; 
+   _ctx.x = 0.; 
+   return _ctx; 
 
 end
 
 function this.Synth1_smooth_init()
-   return this.Synth1__ctx_type_0_init();
+   return this.Synth1__ctx_type_0_init(); 
 end
 
 function this.Synth1_smooth(_ctx,input)
-   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005));
-   return _ctx.x;
+   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005)); 
+   return _ctx.x; 
 
 end
 
 function this.Synth1__ctx_type_1_init()
-   local _ctx = {};
-   _ctx.pre_x = 0.;
-   return _ctx;
+   local _ctx = {}; 
+   _ctx.pre_x = 0.; 
+   return _ctx; 
 
 end
 
 function this.Synth1_change_init()
-   return this.Synth1__ctx_type_1_init();
+   return this.Synth1__ctx_type_1_init(); 
 end
 
 function this.Synth1_change(_ctx,x)
-   local v = (_ctx.pre_x ~= x);
-   _ctx.pre_x = x;
-   return v;
+   local v = (_ctx.pre_x ~= x); 
+   _ctx.pre_x = x; 
+   return v; 
 
 end
 
 function this.Synth1__ctx_type_2_init()
-   local _ctx = {};
-   _ctx.pre_x = 0;
-   return _ctx;
+   local _ctx = {}; 
+   _ctx.pre_x = 0; 
+   return _ctx; 
 
 end
 
 function this.Synth1_edge_init()
-   return this.Synth1__ctx_type_2_init();
+   return this.Synth1__ctx_type_2_init(); 
 end
 
 function this.Synth1_edge(_ctx,x)
-   local v = ((_ctx.pre_x ~= x) and (_ctx.pre_x == 0));
-   _ctx.pre_x = x;
-   return v;
+   local v = ((_ctx.pre_x ~= x) and (_ctx.pre_x == 0)); 
+   _ctx.pre_x = x; 
+   return v; 
 
 end
 
 function this.Synth1__ctx_type_3_init()
-   local _ctx = {};
-   _ctx.count = 0;
-   return _ctx;
+   local _ctx = {}; 
+   _ctx.count = 0; 
+   return _ctx; 
 
 end
 
 function this.Synth1_each_init()
-   return this.Synth1__ctx_type_3_init();
+   return this.Synth1__ctx_type_3_init(); 
 end
 
 function this.Synth1_each(_ctx,n)
-   local ret = (_ctx.count == 0);
-   _ctx.count = ((_ctx.count + 1) % n);
-   return ret;
+   local ret = (_ctx.count == 0); 
+   _ctx.count = ((_ctx.count + 1) % n); 
+   return ret; 
 
 end
 
 function this.Synth1_pitchToRate(d)
-   return (0.0001854 * this.exp((0.0577623 * d)));
+   return (0.0001854 * this.exp((0.0577623 * d))); 
 
 end
 
 function this.Synth1__ctx_type_5_init()
-   local _ctx = {};
-   _ctx.rate = 0.;
-   _ctx.phase = 0.;
-   _ctx._inst6 = this.Synth1__ctx_type_1_init();
-   return _ctx;
+   local _ctx = {}; 
+   _ctx.rate = 0.; 
+   _ctx.phase = 0.; 
+   _ctx._inst6 = this.Synth1__ctx_type_1_init(); 
+   return _ctx; 
 
 end
 
 function this.Synth1_phasor_init()
-   return this.Synth1__ctx_type_5_init();
+   return this.Synth1__ctx_type_5_init(); 
 end
 
 function this.Synth1_phasor(_ctx,pitch,reset)
    if this.Synth1_change(_ctx._inst6,pitch) then
-      _ctx.rate = this.Synth1_pitchToRate(pitch);
+      _ctx.rate = this.Synth1_pitchToRate(pitch); 
 
    end
    if reset then
-      _ctx.phase = 0.;
+      _ctx.phase = 0.; 
    else
 
-      _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.);
+      _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.); 
    end
-   return _ctx.phase;
+   return _ctx.phase; 
 
 end
 
 function this.Synth1__ctx_type_6_init()
-   local _ctx = {};
-   _ctx.phase = 0.;
-   _ctx._inst9 = this.Synth1__ctx_type_2_init();
-   return _ctx;
+   local _ctx = {}; 
+   _ctx.phase = 0.; 
+   _ctx._inst9 = this.Synth1__ctx_type_2_init(); 
+   return _ctx; 
 
 end
 
 function this.Synth1_lfo_init()
-   return this.Synth1__ctx_type_6_init();
+   return this.Synth1__ctx_type_6_init(); 
 end
 
 function this.Synth1_lfo(_ctx,f,gate)
-   local rate = (0.0002268 * f);
+   local rate = (0.0002268 * f); 
    if this.Synth1_edge(_ctx._inst9,gate) then
-      _ctx.phase = 0.;
+      _ctx.phase = 0.; 
 
    end
-   _ctx.phase = (_ctx.phase + rate);
+   _ctx.phase = (_ctx.phase + rate); 
    if (_ctx.phase > 1.) then
-      _ctx.phase = (_ctx.phase + (-1.));
+      _ctx.phase = (_ctx.phase + (-1.)); 
 
    end
-   return (this.sin((6.2831854 * _ctx.phase)) + (-0.5));
+   return (this.sin((6.2831854 * _ctx.phase)) + (-0.5)); 
 
 end
 
 function this.Synth1__ctx_type_7_init()
-   local _ctx = {};
-   _ctx.volume = 0.;
-   _ctx.pre_phase1 = 0.;
-   _ctx.pitch = 0.;
-   _ctx.n4 = 0;
-   _ctx.n3 = 0;
-   _ctx.n2 = 0;
-   _ctx.n1 = 0;
-   _ctx.lfo_rate = 0.;
-   _ctx.lfo_amt = 0.;
-   _ctx.gate = 0;
-   _ctx.detune = 0.;
-   _ctx.count = 0;
-   _ctx._inst18 = this.Synth1__ctx_type_0_init();
-   _ctx._inst17 = this.Synth1__ctx_type_0_init();
-   _ctx._inst16 = this.Synth1__ctx_type_5_init();
-   _ctx._inst15 = this.Synth1__ctx_type_0_init();
-   _ctx._inst14 = this.Synth1__ctx_type_5_init();
-   _ctx._inst13 = this.Synth1__ctx_type_6_init();
-   return _ctx;
+   local _ctx = {}; 
+   _ctx.volume = 0.; 
+   _ctx.pre_phase1 = 0.; 
+   _ctx.pitch = 0.; 
+   _ctx.n4 = 0; 
+   _ctx.n3 = 0; 
+   _ctx.n2 = 0; 
+   _ctx.n1 = 0; 
+   _ctx.lfo_rate = 0.; 
+   _ctx.lfo_amt = 0.; 
+   _ctx.gate = 0; 
+   _ctx.detune = 0.; 
+   _ctx.count = 0; 
+   _ctx._inst18 = this.Synth1__ctx_type_0_init(); 
+   _ctx._inst17 = this.Synth1__ctx_type_0_init(); 
+   _ctx._inst16 = this.Synth1__ctx_type_5_init(); 
+   _ctx._inst15 = this.Synth1__ctx_type_0_init(); 
+   _ctx._inst14 = this.Synth1__ctx_type_5_init(); 
+   _ctx._inst13 = this.Synth1__ctx_type_6_init(); 
+   return _ctx; 
 
 end
 
 function this.Synth1_process_init()
-   return this.Synth1__ctx_type_7_init();
+   return this.Synth1__ctx_type_7_init(); 
 end
 
 function this.Synth1_process(_ctx,input)
-   local lfo_val = (this.Synth1_lfo(_ctx._inst13,_ctx.lfo_rate,_ctx.gate) * _ctx.lfo_amt);
-   local phase1 = this.Synth1_phasor(_ctx._inst14,_ctx.pitch,false);
-   local comp = (1. + (- phase1));
-   local reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5);
-   _ctx.pre_phase1 = phase1;
-   local phase2 = this.Synth1_phasor(_ctx._inst16,(_ctx.pitch + (this.Synth1_smooth(_ctx._inst15,(_ctx.detune + lfo_val)) * 32.)),reset);
-   local sine = this.sin((6.2831854 * phase2));
-   local gate_value = 0.0;
+   local lfo_val = (this.Synth1_lfo(_ctx._inst13,_ctx.lfo_rate,_ctx.gate) * _ctx.lfo_amt); 
+   local phase1 = this.Synth1_phasor(_ctx._inst14,_ctx.pitch,false); 
+   local comp = (1. + (- phase1)); 
+   local reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5); 
+   _ctx.pre_phase1 = phase1; 
+   local phase2 = this.Synth1_phasor(_ctx._inst16,(_ctx.pitch + (this.Synth1_smooth(_ctx._inst15,(_ctx.detune + lfo_val)) * 32.)),reset); 
+   local sine = this.sin((6.2831854 * phase2)); 
+   local gate_value = 0.0; 
    if (_ctx.gate > 0) then
-      gate_value = 1.;
+      gate_value = 1.; 
    else
 
-      gate_value = 0.;
+      gate_value = 0.; 
    end
-   return (this.Synth1_smooth(_ctx._inst17,_ctx.volume) * sine * comp * this.Synth1_smooth(_ctx._inst18,gate_value));
+   return (this.Synth1_smooth(_ctx._inst17,_ctx.volume) * sine * comp * this.Synth1_smooth(_ctx._inst18,gate_value)); 
 
 end
 
 function this.Synth1_noteOn_init()
-   return this.Synth1__ctx_type_7_init();
+   return this.Synth1__ctx_type_7_init(); 
 end
 
 function this.Synth1_noteOn(_ctx,note,velocity,channel)
    if (_ctx.count == 0) then
-      _ctx.n1 = note;
-      _ctx.pitch = this.real(note);
+      _ctx.n1 = note; 
+      _ctx.pitch = this.real(note); 
 
    else
 
-      local _cond_53 = false;
-      _cond_53 = (_ctx.count == 1);
+      local _cond_53 = false; 
+      _cond_53 = (_ctx.count == 1); 
       if _cond_53 then
-         _ctx.n2 = note;
-         _ctx.pitch = this.real(note);
+         _ctx.n2 = note; 
+         _ctx.pitch = this.real(note); 
 
       else
 
-         local _cond_52 = false;
-         _cond_52 = (_ctx.count == 2);
+         local _cond_52 = false; 
+         _cond_52 = (_ctx.count == 2); 
          if _cond_52 then
-            _ctx.n3 = note;
-            _ctx.pitch = this.real(note);
+            _ctx.n3 = note; 
+            _ctx.pitch = this.real(note); 
 
          else
 
-            local _cond_51 = false;
-            _cond_51 = (_ctx.count == 3);
+            local _cond_51 = false; 
+            _cond_51 = (_ctx.count == 3); 
             if _cond_51 then
-               _ctx.n4 = note;
-               _ctx.pitch = this.real(note);
+               _ctx.n4 = note; 
+               _ctx.pitch = this.real(note); 
 
             end
 
@@ -240,63 +240,63 @@ function this.Synth1_noteOn(_ctx,note,velocity,channel)
 
    end
    if (_ctx.count <= 4) then
-      _ctx.count = (_ctx.count + 1);
+      _ctx.count = (_ctx.count + 1); 
 
    end
    if (_ctx.count > 0) then
-      _ctx.gate = 1;
+      _ctx.gate = 1; 
    else
 
-      _ctx.gate = 0;
+      _ctx.gate = 0; 
    end
 
 end
 
 function this.Synth1_noteOff_init()
-   return this.Synth1__ctx_type_7_init();
+   return this.Synth1__ctx_type_7_init(); 
 end
 
 function this.Synth1_noteOff(_ctx,note,channel)
-   local found = false;
+   local found = false; 
    if (note == _ctx.n1) then
-      local _tmp_57_0 = 0;
-      _tmp_57_0 = _ctx.n2;
-      local _tmp_57_1 = 0;
-      _tmp_57_1 = _ctx.n3;
-      local _tmp_57_2 = 0;
-      _tmp_57_2 = _ctx.n4;
-      _ctx.n1 = _tmp_57_0;
-      _ctx.n2 = _tmp_57_1;
-      _ctx.n3 = _tmp_57_2;
-      found = true;
+      local _tmp_57_0 = 0; 
+      _tmp_57_0 = _ctx.n2; 
+      local _tmp_57_1 = 0; 
+      _tmp_57_1 = _ctx.n3; 
+      local _tmp_57_2 = 0; 
+      _tmp_57_2 = _ctx.n4; 
+      _ctx.n1 = _tmp_57_0; 
+      _ctx.n2 = _tmp_57_1; 
+      _ctx.n3 = _tmp_57_2; 
+      found = true; 
 
    else
 
-      local _cond_61 = false;
-      _cond_61 = (note == _ctx.n2);
+      local _cond_61 = false; 
+      _cond_61 = (note == _ctx.n2); 
       if _cond_61 then
-         local _tmp_58_0 = 0;
-         _tmp_58_0 = _ctx.n3;
-         local _tmp_58_1 = 0;
-         _tmp_58_1 = _ctx.n4;
-         _ctx.n2 = _tmp_58_0;
-         _ctx.n3 = _tmp_58_1;
-         found = true;
+         local _tmp_58_0 = 0; 
+         _tmp_58_0 = _ctx.n3; 
+         local _tmp_58_1 = 0; 
+         _tmp_58_1 = _ctx.n4; 
+         _ctx.n2 = _tmp_58_0; 
+         _ctx.n3 = _tmp_58_1; 
+         found = true; 
 
       else
 
-         local _cond_60 = false;
-         _cond_60 = (note == _ctx.n3);
+         local _cond_60 = false; 
+         _cond_60 = (note == _ctx.n3); 
          if _cond_60 then
-            _ctx.n3 = _ctx.n4;
-            found = true;
+            _ctx.n3 = _ctx.n4; 
+            found = true; 
 
          else
 
-            local _cond_59 = false;
-            _cond_59 = (note == _ctx.n4);
+            local _cond_59 = false; 
+            _cond_59 = (note == _ctx.n4); 
             if _cond_59 then
-               found = true;
+               found = true; 
 
             end
 
@@ -306,68 +306,68 @@ function this.Synth1_noteOff(_ctx,note,channel)
 
    end
    if (found and (_ctx.count > 0)) then
-      _ctx.count = (_ctx.count + -1);
+      _ctx.count = (_ctx.count + -1); 
 
    end
    if (_ctx.count > 0) then
-      _ctx.gate = 1;
+      _ctx.gate = 1; 
    else
 
-      _ctx.gate = 0;
+      _ctx.gate = 0; 
    end
    if (_ctx.count == 1) then
-      _ctx.pitch = this.real(_ctx.n1);
+      _ctx.pitch = this.real(_ctx.n1); 
 
    end
    if (_ctx.count == 2) then
-      _ctx.pitch = this.real(_ctx.n2);
+      _ctx.pitch = this.real(_ctx.n2); 
 
    end
    if (_ctx.count == 3) then
-      _ctx.pitch = this.real(_ctx.n3);
+      _ctx.pitch = this.real(_ctx.n3); 
 
    end
    if (_ctx.count == 4) then
-      _ctx.pitch = this.real(_ctx.n4);
+      _ctx.pitch = this.real(_ctx.n4); 
 
    end
 
 end
 
 function this.Synth1_controlChange_init()
-   return this.Synth1__ctx_type_7_init();
+   return this.Synth1__ctx_type_7_init(); 
 end
 
 function this.Synth1_controlChange(_ctx,control,value,channel)
    if (control == 30) then
-      _ctx.volume = (value * 0.0078741);
+      _ctx.volume = (value * 0.0078741); 
 
    end
    if (control == 31) then
-      _ctx.detune = (value * 0.0078741);
+      _ctx.detune = (value * 0.0078741); 
 
    end
    if (control == 32) then
-      _ctx.lfo_rate = (value * 0.0078741);
+      _ctx.lfo_rate = (value * 0.0078741); 
 
    end
    if (control == 33) then
-      _ctx.lfo_amt = (2. * ((value * 0.0078741) + (-0.5)));
+      _ctx.lfo_amt = (2. * ((value * 0.0078741) + (-0.5))); 
 
    end
 
 end
 
 function this.Synth1_default_init()
-   return this.Synth1__ctx_type_7_init();
+   return this.Synth1__ctx_type_7_init(); 
 end
 
 function this.Synth1_default(_ctx)
-   _ctx.volume = 1.;
-   _ctx.pitch = 45.;
-   _ctx.detune = 0.8;
-   _ctx.lfo_rate = 0.0700001;
-   _ctx.lfo_amt = (-0.8);
+   _ctx.volume = 1.; 
+   _ctx.pitch = 45.; 
+   _ctx.detune = 0.8; 
+   _ctx.lfo_rate = 0.0700001; 
+   _ctx.lfo_amt = (-0.8); 
 
 end
 

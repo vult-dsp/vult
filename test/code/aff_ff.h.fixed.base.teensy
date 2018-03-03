@@ -53,7 +53,7 @@ void Aff_ff_default(Aff_ff__ctx_type_0 &_ctx);
 class aff_ff : public AudioStream
 {
 public:
-  aff_ff(void) : AudioStream(0,NULL)
+  aff_ff(void) : AudioStream(2, inputQueueArray)
   {
      Aff_ff_process_init(data);
   }
@@ -84,6 +84,7 @@ public:
 
 private:
   Aff_ff_process_type data;
+  audio_block_t *inputQueueArray[2];
 
 };
 

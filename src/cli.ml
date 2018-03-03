@@ -62,7 +62,7 @@ let showResult (args:args) (output:output) =
    | Dependencies deps -> String.concat " " deps |> print_endline
    | ParsedCode v -> print_endline v
    | GeneratedCode files when args.output <> "" ->
-      List.iter (fun (text, file) -> FileIO.write (getFile args file) (Pla.print text) |> ignore) files
+      List.iter (fun (text, file) -> FileIO.writeIfDifferent (getFile args file) (Pla.print text) |> ignore) files
    | GeneratedCode files ->
       List.iter (fun (text, _) -> print_endline (Pla.print text)) files
    | Interpret v -> print_endline v

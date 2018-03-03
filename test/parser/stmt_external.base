@@ -1,4 +1,4 @@
 {
-   external foo() : int "foo";
-   external bar(x:int) : int "bar";
+   external foo() : int "foo"; 
+   external bar(x:int) : int "bar"; 
 }

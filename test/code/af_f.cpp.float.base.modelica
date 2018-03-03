@@ -72,8 +72,8 @@ EXPORT void af_f__destructor(void *object)
 EXPORT double af_f__process(void *object, double in_0)
 {
    Af_f_process_type *data = (Af_f_process_type *)object;
-   float ret =  Af_f_process(*data,(float) in_0);
-return (float) ret;
+   float ret =  Af_f_process(*data,(float) in_0); 
+return (float) ret; 
 }
 
 

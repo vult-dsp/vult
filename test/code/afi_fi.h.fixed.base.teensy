@@ -53,7 +53,7 @@ void Afi_fi_default(Afi_fi__ctx_type_0 &_ctx);
 class afi_fi : public AudioStream
 {
 public:
-  afi_fi(void) : AudioStream(0,NULL)
+  afi_fi(void) : AudioStream(2, inputQueueArray)
   {
      Afi_fi_process_init(data);
   }
@@ -84,6 +84,7 @@ public:
 
 private:
   Afi_fi_process_type data;
+  audio_block_t *inputQueueArray[2];
 
 };
 

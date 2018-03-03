@@ -1,28 +1,28 @@
 {
-   type tuple(real,int,bool) {
-      val field_0 : real;
-      val field_1 : int;
-      val field_2 : bool;
+   type tuple(real, int, bool) {
+      val field_0 : real; 
+      val field_1 : int; 
+      val field_2 : bool; 
    }
 
-   type tuple(int,int,int) {
-      val field_0 : int;
-      val field_1 : int;
-      val field_2 : int;
+   type tuple(int, int, int) {
+      val field_0 : int; 
+      val field_1 : int; 
+      val field_2 : int; 
    }
 
-   fun foo() : tuple(int,int,int) /* scope_0 */
+   fun foo() : tuple(int, int, int) /* scope_0 */
    {
-      val (_tuple_2:tuple(int,int,int));
-      (_tuple_2:tuple(int,int,int)) = (1,2,3);
-      return _tuple_2;
+      val (_tuple_2:tuple(int, int, int)); 
+      (_tuple_2:tuple(int, int, int)) = (1, 2, 3); 
+      return _tuple_2; 
    }
 
-   fun bar() : tuple(real,int,bool) /* scope_1 */
+   fun bar() : tuple(real, int, bool) /* scope_1 */
    {
-      val (_tuple_4:tuple(real,int,bool));
-      (_tuple_4:tuple(real,int,bool)) = (1.,2,false);
-      return _tuple_4;
+      val (_tuple_4:tuple(real, int, bool)); 
+      (_tuple_4:tuple(real, int, bool)) = (1., 2, false); 
+      return _tuple_4; 
    }
 
 }

@@ -78,9 +78,9 @@ EXPORT void aff_ff__destructor(void *object)
 EXPORT void aff_ff__process(void *object, double in_0, double in_1, double &out_0, double &out_1)
 {
    Aff_ff_process_type *data = (Aff_ff_process_type *)object;
-   _tuple___real_real__ ret;  Aff_ff_process(*data,(float) in_0,(float) in_1,ret);
-out_0 = (float) ret.field_0;
-out_1 = (float) ret.field_1;
+   _tuple___real_real__ ret;  Aff_ff_process(*data,(float) in_0,(float) in_1,ret); 
+out_0 = (float) ret.field_0; 
+out_1 = (float) ret.field_1; 
 
 }
 

@@ -1,4 +1,4 @@
 After ':' you can only have a function call e.g. foo()
 fun foo() {
    _ = foo:foo;
-              ^
+               ^ 

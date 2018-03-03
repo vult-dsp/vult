@@ -27,7 +27,7 @@ void Sfi_fi_default();
 class sfi_fi : public AudioStream
 {
 public:
-  sfi_fi(void) : AudioStream(0,NULL)
+  sfi_fi(void) : AudioStream(2, inputQueueArray)
   {
      Sfi_fi_process_init(data);
   }
@@ -58,6 +58,7 @@ public:
 
 private:
   Sfi_fi_process_type data;
+  audio_block_t *inputQueueArray[2];
 
 };
 

@@ -54,19 +54,18 @@ void Af_f_default(Af_f__ctx_type_0 &_ctx){
 
 void af_f::update(void)
 {
-  audio_block_t *block;
-  short *bp;
 
-  block = allocate();
-  if (block) {
-    bp = block->data;
-      for(int i = 0;i < AUDIO_BLOCK_SAMPLES;i++) {
-        fix16_t v = Af_f_process(data,0);
-        *bp++ = (int16_t)(v / 2);
-      }
 
-    transmit(block,0);
-    release(block);
-  }
+   audio_block_t * block0 = receiveWritable(0); if(!block0) return;
+
+   for(int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+      fix16_t v = Af_f_process(data, 0);
+      *bp++ = (int16_t)(v / 2);
+   }
+
+
+   transmit(block0, 0);
+
+   release(block0);
 }
 

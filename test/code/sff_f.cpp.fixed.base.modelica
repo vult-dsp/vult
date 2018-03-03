@@ -39,8 +39,8 @@ EXPORT void sff_f__destructor(void *object)
 EXPORT double sff_f__process(void *object, double in_0, double in_1)
 {
    float *data = (float *)object;
-   fix16_t ret =  Sff_f_process(float_to_fix(in_0),float_to_fix(in_1));
-return fix_to_float(ret);
+   fix16_t ret =  Sff_f_process(float_to_fix(in_0),float_to_fix(in_1)); 
+return fix_to_float(ret); 
 }
 
 

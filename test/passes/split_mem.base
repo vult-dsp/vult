@@ -1,25 +1,25 @@
 {
-   type tuple(int,int) {
-      val field_0 : int;
-      val field_1 : int;
+   type tuple(int, int) {
+      val field_0 : int; 
+      val field_1 : int; 
    }
 
    fun foo() : unit /* scope_0 */
    {
-      mem (x:int);
-      (x:int) = 0;
-      mem (y:int);
-      (y:int) = (y + 1);
-      mem ((a:int),(b:int));
-      (a:int) = 1;
-      (b:int) = 2;
-      mem ((z:int),(h:int));
-      val (_tmp_2_0:int);
-      (_tmp_2_0:int) = h;
-      val (_tmp_2_1:int);
-      (_tmp_2_1:int) = z;
-      (z:int) = _tmp_2_0;
-      (h:int) = _tmp_2_1;
+      mem (x:int); 
+      (x:int) = 0; 
+      mem (y:int); 
+      (y:int) = (y + 1); 
+      mem ((a:int), (b:int)); 
+      (a:int) = 1; 
+      (b:int) = 2; 
+      mem ((z:int), (h:int)); 
+      val (_tmp_2_0:int); 
+      (_tmp_2_0:int) = h; 
+      val (_tmp_2_1:int); 
+      (_tmp_2_1:int) = z; 
+      (z:int) = _tmp_2_0; 
+      (h:int) = _tmp_2_1; 
    }
 
 }

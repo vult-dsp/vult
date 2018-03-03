@@ -82,3 +82,8 @@ let outputTypeString (m:output) : string =
    | OInt -> "int"
    | OBool -> "bool"
 
+let countInputsNoCtx (inputs:input list) : int =
+   List.fold_left (fun s a -> match a with IContext -> s | _ -> s + 1) 0 inputs
+
+let countOutputs (outputs:output list) : int =
+   List.length outputs

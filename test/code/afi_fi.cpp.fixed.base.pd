@@ -73,17 +73,17 @@ t_int *afi_fi_tilde_perform(t_int *w)
 {
    t_afi_fi_tilde *x = (t_afi_fi_tilde *)(w[1]);
 
-   t_sample *in_0 = (t_sample *)(w[2]);
-   t_sample *in_1 = (t_sample *)(w[3]);
-   t_sample *out_0 = (t_sample *)(w[4]);
-   t_sample *out_1 = (t_sample *)(w[5]);
+   t_sample *in_0 = (t_sample *)(w[2]); 
+   t_sample *in_1 = (t_sample *)(w[3]); 
+   t_sample *out_0 = (t_sample *)(w[4]); 
+   t_sample *out_1 = (t_sample *)(w[5]); 
 
-   int n = (int)(w[6]);
+   int n = (int)(w[6]); 
 
    while (n--) {
-   _tuple___real_int__ ret;  Afi_fi_process(x->data,float_to_fix(*(in_0++)),float_to_int(*(in_1++)),ret);
-   *(out_0++) = fix_to_float(ret.field_0);
-   *(out_1++) = int_to_float(ret.field_1);
+   _tuple___real_int__ ret;  Afi_fi_process(x->data,float_to_fix(*(in_0++)),float_to_int(*(in_1++)),ret); 
+   *(out_0++) = fix_to_float(ret.field_0); 
+   *(out_1++) = int_to_float(ret.field_1); 
 
    }
 
@@ -93,11 +93,11 @@ t_int *afi_fi_tilde_perform(t_int *w)
 void afi_fi_tilde_dsp(t_afi_fi_tilde *x, t_signal **sp)
 {
    dsp_add(afi_fi_tilde_perform, 6,
-   x,
-   sp[0]->s_vec,
-   sp[1]->s_vec,
-   sp[2]->s_vec,
-   sp[3]->s_vec,
+   x, 
+   sp[0]->s_vec, 
+   sp[1]->s_vec, 
+   sp[2]->s_vec, 
+   sp[3]->s_vec, 
 
    sp[0]->s_n);
 }
@@ -106,13 +106,13 @@ void *afi_fi_tilde_new()
 {
    t_afi_fi_tilde *x = (t_afi_fi_tilde *)pd_new(afi_fi_tilde_class);
 
-   Afi_fi_process_init(x->data);
-   Afi_fi_default(x->data);
+   Afi_fi_process_init(x->data); 
+   Afi_fi_default(x->data); 
 
-   inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);
+   inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal); 
 
-   outlet_new(&x->x_obj, &s_signal);
-   outlet_new(&x->x_obj, &s_signal);
+   outlet_new(&x->x_obj, &s_signal); 
+   outlet_new(&x->x_obj, &s_signal); 
 
    return (void *)x;
 }
@@ -145,7 +145,7 @@ void afi_fi_tilde_setup(void) {
       CLASS_DEFAULT, // type of object
       A_NULL); // arguments passed
 
-   class_addmethod(afi_fi_tilde_class,(t_method)afi_fi_tilde_dsp, gensym("dsp"), A_NULL);
+   class_addmethod(afi_fi_tilde_class, (t_method)afi_fi_tilde_dsp, gensym("dsp"), A_NULL);
    CLASS_MAINSIGNALIN(afi_fi_tilde_class, t_afi_fi_tilde, dummy);
 
    class_addmethod(afi_fi_tilde_class, (t_method)afi_fi_noteOn,        gensym("noteOn"),        A_DEFFLOAT, A_DEFFLOAT, A_DEFFLOAT, A_NULL);

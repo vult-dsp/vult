@@ -25,11 +25,19 @@ THE SOFTWARE.
 (** Template for the Teensy Audio library *)
 open Config
 
+let inputsArray n_inputs =
+   if n_inputs > 0 then
+      {pla|audio_block_t *inputQueueArray[<#n_inputs#i>];|pla}, {pla|inputQueueArray|pla}
+   else
+      Pla.unit, {pla|NULL|pla}
+
 (** Header function *)
 let header (params:params) (code:Pla.t) : Pla.t =
    let file = String.uppercase params.output in
    let output = params.output in
    let module_name = params.module_name in
+   let n_inputs = Config.countInputsNoCtx params.config.process_inputs in
+   let input_queue_delc, input_queue_name = inputsArray n_inputs in
    {pla|
 #ifndef <#file#s>_H
 #define <#file#s>_H
@@ -44,7 +52,7 @@ let header (params:params) (code:Pla.t) : Pla.t =
 class <#output#s> : public AudioStream
 {
 public:
-  <#output#s>(void) : AudioStream(0, NULL)
+  <#output#s>(void) : AudioStream(<#n_inputs#i>, <#input_queue_name#>)
   {
      <#module_name#s>_process_init(data);
   }
@@ -75,6 +83,7 @@ public:
 
 private:
   <#module_name#s>_process_type data;
+  <#input_queue_delc#>
 
 };
 
@@ -82,10 +91,36 @@ private:
 |pla}
 
 
+let rec allocateBlocks (block:int) (inputs:int) (outputs:int) =
+   match inputs, outputs with
+   | 0, 0 -> []
+   | 0, _ ->
+      let t = {pla|audio_block_t * block<#block#i> = allocate(); if(!block<#block#i>) return;|pla} in
+      t :: (allocateBlocks (block + 1) inputs (outputs - 1))
+   | _, 0 ->
+      let t = {pla|audio_block_t * block<#block#i> = receiveReadOnly(<#block#i>); if(!block<#block#i>) return;|pla} in
+      t :: (allocateBlocks (block + 1) (inputs - 1) outputs)
+   | _, _ ->
+      let t = {pla|audio_block_t * block<#block#i> = receiveWritable(<#block#i>); if(!block<#block#i>) return;|pla} in
+      t :: (allocateBlocks (block + 1) (inputs - 1) (outputs - 1))
+
+let transmitBlocks (outputs:int) =
+   CCList.init outputs (fun i -> {pla|transmit(block<#i#i>, <#i#i>);|pla})
+   |> Pla.join_sep Pla.newline
+
+let releaseBlocks (blocks:int) =
+   CCList.init blocks (fun i -> {pla|release(block<#i#i>);|pla})
+   |> Pla.join_sep Pla.newline
+
 (** Implementation function *)
 let implementation (params:params) (code:Pla.t) : Pla.t =
    let output      = params.output in
    let module_name = params.module_name in
+   let n_inputs    = Config.countInputsNoCtx params.config.process_inputs in
+   let n_outputs   = Config.countOutputs params.config.process_outputs in
+   let allocate_blocks = allocateBlocks 0 n_inputs n_outputs |> Pla.join_sep Pla.newline in
+   let transmit_blocks = transmitBlocks n_outputs in
+   let release_blocks  = releaseBlocks (max n_inputs n_outputs) in
    {pla|
 #include "<#output#s>.h"
 
@@ -93,20 +128,16 @@ let implementation (params:params) (code:Pla.t) : Pla.t =
 
 void <#output#s>::update(void)
 {
-  audio_block_t *block;
-  short *bp;
 
-  block = allocate();
-  if (block) {
-    bp = block->data;
-      for(int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-        fix16_t v = <#module_name#s>_process(data, 0);
-        *bp++ = (int16_t)(v / 2);
-      }
+<#allocate_blocks#+>
 
-    transmit(block, 0);
-    release(block);
-  }
+   for(int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+      fix16_t v = <#module_name#s>_process(data, 0);
+      *bp++ = (int16_t)(v / 2);
+   }
+
+<#transmit_blocks#+>
+<#release_blocks#+>
 }
 
 |pla}

@@ -5,7 +5,7 @@ this.Log_test_print = function(){
    this.log(true);
 }
 this.Log_process = function(_ctx,input){
-   return input;
+   return input; 
 }
 this.Log_noteOn = function(_ctx,note,velocity,channel){
 }

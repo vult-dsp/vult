@@ -148,3 +148,11 @@ let findFile (includes:string list) (filename:string) : string option =
             else loop t
       in
       loop includes
+
+let writeIfDifferent (path:string) (text:string) : bool =
+   if exists path then
+      match read path with
+      | Some current when compare current text = 0 -> true
+      | _ -> write path text
+   else
+      write path text

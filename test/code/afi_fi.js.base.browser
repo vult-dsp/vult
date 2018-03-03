@@ -16,37 +16,37 @@ function vultProcess() {
             this.tan  = function(x)          { return Math.tan(x); };
             this.tanh = function(x)          { return Math.tanh(x); };
             this.sqrt = function(x)          { return x; };
-            this.set  = function(a,i,v)      { a[i]=v; };
-            this.get  = function(a,i)        { return a[i]; };
-            this.int_to_float = function(i){ return i; };
-            this.float_to_int = function(i){ return Math.floor(i); };
-            this.makeArray = function(size,v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
+            this.set  = function(a, i, v)    { a[i]=v; };
+            this.get  = function(a, i)       { return a[i]; };
+            this.int_to_float = function(i)  { return i; };
+            this.float_to_int = function(i)  { return Math.floor(i); };
+            this.makeArray = function(size, v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
             this.wrap_array = function(a) { return a; }
             this.log = function(x) { console.log(x); }
          
            this.Afi_fi_process_init = null;
            this.Afi_fi_default = null;
            this.Afi_fi__ctx_type_0_init = function(){
-   var _ctx = {};
-   _ctx.x = ((0|0)|0);
-   return _ctx;
+   var _ctx = {}; 
+   _ctx.x = ((0|0)|0); 
+   return _ctx; 
 }
-this.Afi_fi_process_init = function() { return this.Afi_fi__ctx_type_0_init();}
+this.Afi_fi_process_init = function() { return this.Afi_fi__ctx_type_0_init(); }
 this.Afi_fi_process = function(_ctx,a,b){
-   _ctx.x = ((_ctx.x + (1|0))|0);
-   var _tuple_5 = { field_0 : a, field_1 : b };
-   return _tuple_5;
+   _ctx.x = ((_ctx.x + (1|0))|0); 
+   var _tuple_5 = { field_0 : a, field_1 : b }; 
+   return _tuple_5; 
 }
-this.Afi_fi_noteOn_init = function() { return this.Afi_fi__ctx_type_0_init();}
+this.Afi_fi_noteOn_init = function() { return this.Afi_fi__ctx_type_0_init(); }
 this.Afi_fi_noteOn = function(_ctx,note,velocity,channel){
 }
-this.Afi_fi_noteOff_init = function() { return this.Afi_fi__ctx_type_0_init();}
+this.Afi_fi_noteOff_init = function() { return this.Afi_fi__ctx_type_0_init(); }
 this.Afi_fi_noteOff = function(_ctx,note,channel){
 }
-this.Afi_fi_controlChange_init = function() { return this.Afi_fi__ctx_type_0_init();}
+this.Afi_fi_controlChange_init = function() { return this.Afi_fi__ctx_type_0_init(); }
 this.Afi_fi_controlChange = function(_ctx,control,value,channel){
 }
-this.Afi_fi_default_init = function() { return this.Afi_fi__ctx_type_0_init();}
+this.Afi_fi_default_init = function() { return this.Afi_fi__ctx_type_0_init(); }
 this.Afi_fi_default = function(_ctx){
 }
 
