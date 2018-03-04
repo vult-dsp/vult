@@ -311,6 +311,7 @@ let isSimpleType (typ:t) : bool =
    | TId(["unit"], _) -> true
    | TId(["void"], _) -> true
    | TId(["string"], _) -> true
+   | TId(["abstract"], _) -> true
    | _ -> false
 
 let isRealType (typ:t) : bool =

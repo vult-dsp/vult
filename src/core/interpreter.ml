@@ -25,7 +25,7 @@ THE SOFTWARE.
 
 open Prog
 open Common
-
+(*
 type value =
    | Unit
    | Int of int
@@ -163,6 +163,7 @@ let rec compileExp env exp =
 
    | PEmpty -> failwith ""
    | PSeq _ -> failwith ""
+*)
 
 module Env = struct
 
@@ -366,6 +367,7 @@ let rec getInitValue (tp:Typ.t) : exp =
    | Typ.TId(["unit"], _) -> PUnit(emptyAttr)
    | Typ.TId(["real"], _) -> PReal(0.0, emptyAttr)
    | Typ.TId(["int"], _)  -> PInt(0, emptyAttr)
+   | Typ.TId(["abstract"], _)  -> PInt(0, emptyAttr)
    | Typ.TId(["bool"], _) -> PBool(false, emptyAttr)
    | Typ.TComposed(["array"], [sub; { contents = Typ.TInt(size, _) }], _) ->
       let sub_init = getInitValue sub in
@@ -508,6 +510,7 @@ let builtinFunctions env =
          "cos", Env.Builtin(real_real cos);
          "floor", Env.Builtin(real_real floor);
          "tanh", Env.Builtin(real_real tanh);
+         "cosh", Env.Builtin(real_real cosh);
          "tan",  Env.Builtin(real_real tan);
          "sqrt", Env.Builtin(real_real sqrt);
          "clip", Env.Builtin(clip);

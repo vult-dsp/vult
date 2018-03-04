@@ -111,6 +111,7 @@ module CreateInitFunction = struct
       match !tp with
       | Typ.TId(["real"], _) -> PReal(0.0,typedAttr)
       | Typ.TId(["int"], _)  -> PInt(0,typedAttr)
+      | Typ.TId(["abstract"], _) -> PInt(0,typedAttr)
       | Typ.TId(["bool"], _) -> PBool(false,typedAttr)
       | Typ.TId(name, _)     -> PCall(None,getInitFunctioName name, [],typedAttr)
       | Typ.TComposed(["array"], [sub; { contents = Typ.TInt(size, _) }], _) ->

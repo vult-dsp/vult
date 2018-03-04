@@ -81,6 +81,7 @@ module Default = struct
             "unit", "void";
             "bool", "uint8_t";
             "int",  "int";
+            "abstract",  "void*";
          ]
 
    let cast = Replacements.makeCasts
@@ -112,6 +113,7 @@ module Default = struct
             ("cos", "float"),   "cosf";
             ("tan", "float"),   "tanf";
             ("tanh", "float"),  "tanhf";
+            ("cosh", "float"),  "coshf";
             ("sqrt", "float"),  "sqrtf";
             ("clip", "float"),  "float_clip";
             ("clip", "int"),    "int_clip";

@@ -63,9 +63,10 @@ let getErrorLines (location:Loc.t) : string =
       | Loc.Text(code) -> CCString.lines code
    in
    let result =
-      match Loc.line location with
-      | 0 | 1 -> List.nth lines 0
-      | n -> (List.nth lines (n-2)) ^ "\n" ^ (List.nth lines (n-1))
+      match Loc.line location, lines with
+      | _, [] -> ""
+      | (0 | 1), _ -> List.nth lines 0
+      | n, _ -> (List.nth lines (n-2)) ^ "\n" ^ (List.nth lines (n-1))
    in
    CCString.replace ~sub:"\t" ~by:" "result
 

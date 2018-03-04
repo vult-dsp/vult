@@ -177,6 +177,7 @@ let wrapInt (params:params) (is_int:bool) (e:cexp) : Pla.t =
 let rec getInitValue (descr:type_descr) : Pla.t =
    match descr with
    | CTSimple("int") -> Pla.string "(0|0)"
+   | CTSimple("abstract") -> Pla.string "0"
    | CTSimple("float") -> Pla.string  "0.0"
    | CTSimple("real") -> Pla.string  "0.0"
    | CTSimple("bool") -> Pla.string  "false"
