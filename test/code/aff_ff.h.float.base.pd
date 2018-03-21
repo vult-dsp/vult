@@ -8,11 +8,6 @@
 #include "vultin.h"
 #include <m_pd.h>
 
-typedef struct _tuple___real_real__ {
-   float field_0;
-   float field_1;
-} _tuple___real_real__;
-
 typedef struct Aff_ff__ctx_type_0 {
    int x;
 } Aff_ff__ctx_type_0;

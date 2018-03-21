@@ -112,6 +112,60 @@ let releaseBlocks (blocks:int) =
    CCList.init blocks (fun i -> {pla|release(block<#i#i>);|pla})
    |> Pla.join_sep Pla.newline
 
+let castInput params typ i acc =
+   match typ with
+   | IReal _ when params.real = "fixed" ->
+      i + 1, {pla|fix16_t in<#i#i> = short_to_fix(block<#i#i>->data[i]);|pla} :: acc
+   | IReal _ ->
+      i + 1, {pla|float in<#i#i> = short_to_float(block<#i#i>->data[i]);|pla} :: acc
+   | IBool _ ->
+      i + 1, {pla|uint8_t in<#i#i> = block<#i#i>->data[i] != 0;|pla} :: acc
+   | IInt _ ->
+      i + 1, {pla|int in<#i#i> = block<#i#i>->data[i];|pla} :: acc
+   | IContext -> i,acc
+
+let castOutput params typ value =
+   match typ with
+   | OReal when params.real = "fixed" ->
+      {pla|fix_to_short(<#value#>)|pla}
+   | OReal ->
+      {pla|<#value#>|pla}
+   | OBool ->
+      {pla|<#value#>|pla}
+   | OInt ->
+      {pla|<#value#>|pla}
+
+let declareInputs params =
+   List.fold_left
+      (fun (i,acc) a -> castInput params a i acc) (0,[])
+      params.config.process_inputs
+   |> snd
+   |> Pla.join_sep Pla.newline
+   |> Pla.indent |> Pla.indent
+
+let declReturn params =
+   let output_pla a = Pla.string (Config.outputTypeString a) in
+   let underscore = Pla.string "_" in
+   match params.config.process_outputs with
+   | []  -> Pla.unit, Pla.unit
+   | [o] ->
+      let current_typ = Replacements.getType params.repl (Config.outputTypeString o) in
+      let decl = {pla|<#current_typ#s> out;|pla} in
+      let value = castOutput params o (Pla.string "out") in
+      let copy = {pla|block0->data[i] = <#value#>; |pla} in
+      decl, copy
+   | o ->
+      let decl = Pla.(string "_tuple___" ++ map_sep underscore output_pla o ++ string "__ out; ") in
+      let copy =
+         List.mapi
+            (fun i o ->
+                let value = castOutput params o {pla|ret.field_<#i#i>|pla} in
+                {pla|block<#i#i>->data[i] = <#value#>; |pla}) o
+         |> Pla.join_sep_all Pla.newline
+         |> Pla.indent
+      in
+      decl, copy
+
 (** Implementation function *)
 let implementation (params:params) (code:Pla.t) : Pla.t =
    let output      = params.output in
@@ -121,6 +175,8 @@ let implementation (params:params) (code:Pla.t) : Pla.t =
    let allocate_blocks = allocateBlocks 0 n_inputs n_outputs |> Pla.join_sep Pla.newline in
    let transmit_blocks = transmitBlocks n_outputs in
    let release_blocks  = releaseBlocks (max n_inputs n_outputs) in
+   let inputs = declareInputs params in
+   let decl_out, copy_out = declReturn params in
    {pla|
 #include "<#output#s>.h"
 
@@ -131,9 +187,10 @@ void <#output#s>::update(void)
 
 <#allocate_blocks#+>
 
-   for(int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-      fix16_t v = <#module_name#s>_process(data, 0);
-      *bp++ = (int16_t)(v / 2);
+   for(int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) { <#inputs#>
+      <#decl_out#>
+      out = <#module_name#s>_process(data);
+<#copy_out#>
    }
 
 <#transmit_blocks#+>

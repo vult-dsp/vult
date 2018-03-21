@@ -1,9 +1,4 @@
 {
-   type tuple(real, real) {
-      val field_0 : real; 
-      val field_1 : real; 
-   }
-
    fun Output_references.foo(x:int, _output_:tuple(real, real)) : unit /* scope_0 */
    {
       val (_cond_8:bool); 

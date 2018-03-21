@@ -405,7 +405,7 @@ module CliTest = struct
       Sys.chdir tmp_dir;
       assert_bool "No code generated" (Sys.file_exists (output ^ ".cpp"));
       callCompiler (output ^ ".cpp");
-      callCompiler (in_test_directory "../runtime/vultin.c");
+      callCompiler (in_test_directory "../runtime/vultin.cpp");
       Sys.chdir initial_dir
 
    let checkJsFile (file:string) : unit =

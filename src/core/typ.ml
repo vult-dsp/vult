@@ -439,6 +439,12 @@ module Const = struct
       let array_type = ref (TComposed(["array"], [a;size], None)) in
       array_type |-> array_type
 
+   let tuple_real_real () =
+      ref (TComposed(["tuple"], [real_type; real_type], None))
+
+   let real_tuple_real_real () =
+      real_type |-> tuple_real_real ()
+
    let some_array () =
       let a = ref (TUnbound("'a", None, None)) in
       let size = ref (TUnbound("'size", None, None)) in

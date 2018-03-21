@@ -111,7 +111,7 @@ let runC real_type vultfile =
       Sys.chdir tmp_dir;
       generateC vultfile output real_type;
       compileFile (output ^ ".cpp");
-      compileFile (in_proj_dir "runtime/vultin.c");
+      compileFile (in_proj_dir "runtime/vultin.cpp");
       compileFile ("main.cpp");
       linkFiles ("perf_" ^ real_type) ["vultin.o"; output ^ ".o"; "main.o"];
       ignore (Sys.command ("./perf_" ^ real_type));

@@ -323,6 +323,11 @@ let getFunctionSetType (elem_typs:type_descr list) : type_descr =
    | [_; _; v] -> v
    | _ -> failwith "ProgToCode.getFunctionSetType: this is not a call to 'set'"
 
+let getFunctionFirstArgType (elem_typs:type_descr list) : type_descr =
+   match elem_typs with
+   | v :: _ -> v
+   | _ -> failwith "ProgToCode.getFunctionFirstArgType: this is not a call to 'split'"
+
 let getInitArrayFunction (p:parameters) (typ:type_descr) : string =
    match typ with
    | CTSimple(typ_t) ->
@@ -348,6 +353,13 @@ let convertFunction (p:parameters) (name:Id.t) (typ:type_descr) (elems:cexp list
       begin match getFunctionSetType elem_typs with
          | CTSimple(typ_t) ->
             let fn = Replacements.getFunction p.repl "set" typ_t in
+            CECall(fn, elems, typ)
+         | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
+      end
+   | ["split"] ->
+      begin match getFunctionFirstArgType elem_typs with
+         | CTSimple(typ_t) ->
+            let fn = Replacements.getFunction p.repl "split" typ_t in
             CECall(fn, elems, typ)
          | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
       end

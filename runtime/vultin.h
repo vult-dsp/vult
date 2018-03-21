@@ -31,6 +31,7 @@ NOTE: The code for the fixed-point operations is based on the project:
 #ifndef VULTIN_H
 #define VULTIN_H
 
+#include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -55,6 +56,16 @@ static_inline fix16_t float_to_fix(float a) {
   float temp = a * 0x00010000;
   return (fix16_t)temp;
 }
+
+static_inline fix16_t short_to_fix(int16_t x) {
+  return 0x8000 & x ? 0xFFFF0000 | x : x;
+}
+
+static_inline int16_t fix_to_short(fix16_t x) {
+  return (x >= 0x00010000 ? 0x00010000 - 1 : x) / 2;
+}
+
+static_inline float short_to_float(int16_t x) { return (float)x / 0x00010000; }
 
 static_inline float int_to_float(int a) { return (float)a; }
 
@@ -172,6 +183,13 @@ void fix_print(fix16_t value);
 void int_print(int value);
 void string_print(char *value);
 void bool_print(uint8_t value);
+
+typedef struct _tuple___real_real__ {
+  float field_0;
+  float field_1;
+} _tuple___real_real__;
+
+void float_split(float x, _tuple___real_real__ &output);
 
 #ifdef __cplusplus
 }

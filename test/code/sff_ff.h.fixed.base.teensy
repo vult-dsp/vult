@@ -7,11 +7,6 @@
 #include "vultin.h"
 #include "AudioStream.h"
 
-typedef struct _tuple___real_real__ {
-   fix16_t field_0;
-   fix16_t field_1;
-} _tuple___real_real__;
-
 void Sff_ff_process(fix16_t a, fix16_t b, _tuple___real_real__ &_output_);
 
 void Sff_ff_noteOn(int note, int velocity, int channel);

@@ -277,7 +277,7 @@ set(CMAKE_BUILD_TYPE Release)
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_LIST_DIR}/Resources CACHE PATH "Install" FORCE)
 
-set(SRC <#output#s>.cpp <#output#s>.h vultin.c vultin.h)
+set(SRC <#output#s>.cpp <#output#s>.h vultin.cpp vultin.h)
 
 add_library(<#output#s> SHARED ${SRC})
 

@@ -133,6 +133,7 @@ module Default = struct
             ("log",  "int"),     "int_print";
             ("log",  "uint8_t"), "bool_print";
             ("log",  "string"),  "string_print";
+            ("split", "float"), "float_split";
          ]
 
    let array_init = Replacements.makeArrayInitializations

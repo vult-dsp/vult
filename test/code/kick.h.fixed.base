@@ -6,11 +6,6 @@
 #include <math.h>
 #include "vultin.h"
 
-typedef struct _tuple___real_real__ {
-   fix16_t field_0;
-   fix16_t field_1;
-} _tuple___real_real__;
-
 typedef struct Noise__ctx_type_0 {
    fix16_t w1;
 } Noise__ctx_type_0;

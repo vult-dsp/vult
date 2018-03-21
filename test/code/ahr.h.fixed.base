@@ -6,11 +6,6 @@
 #include <math.h>
 #include "vultin.h"
 
-typedef struct _tuple___real_real__ {
-   fix16_t field_0;
-   fix16_t field_1;
-} _tuple___real_real__;
-
 typedef struct Util__ctx_type_0 {
    uint8_t pre;
 } Util__ctx_type_0;

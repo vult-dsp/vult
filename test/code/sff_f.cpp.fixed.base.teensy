@@ -26,9 +26,13 @@ void sff_f::update(void)
    audio_block_t * block0 = receiveWritable(0); if(!block0) return;
    audio_block_t * block1 = receiveReadOnly(1); if(!block1) return;
 
-   for(int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-      fix16_t v = Sff_f_process(data, 0);
-      *bp++ = (int16_t)(v / 2);
+   for(int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) { 
+
+      fix16_t in1 = short_to_fix(block1->data[i]);
+      fix16_t in0 = short_to_fix(block0->data[i]);
+      fix16_t out;
+      out = Sff_f_process(data);
+block0->data[i] = fix_to_short(out); 
    }
 
 
