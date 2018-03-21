@@ -13,9 +13,9 @@ make all
 cp ./_build/src/vultc.native ./vultc
 if [ $TRAVIS_OS_NAME == linux ];
 then
-   tar -cvzf vult-linux.tar.gz vultc runtime/vultin.h runtime/vultin.c
+   tar -cvzf vult-linux.tar.gz vultc runtime/vultin.h runtime/vultin.cpp
 else
-   tar -cvzf vult-osx.tar.gz vultc runtime/vultin.h runtime/vultin.c
+   tar -cvzf vult-osx.tar.gz vultc runtime/vultin.h runtime/vultin.cpp
 fi
 # test the instalation of vulc from npm and check it runs
 npm install vult -g

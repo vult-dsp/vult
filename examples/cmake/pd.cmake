@@ -57,6 +57,6 @@ function(vult_pd output source includes)
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
       COMMAND ${VULT} ${includes_flag} ${source} -ccode -template pd -o ${CMAKE_CURRENT_BINARY_DIR}/${output})
    add_custom_target(${output}_code ALL DEPENDS ${output}.cpp ${output}.h)
-   set(src ${OUTPUT_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/../runtime/vultin.c ${CMAKE_CURRENT_SOURCE_DIR}/../runtime/vultin.h)
+   set(src ${OUTPUT_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/../runtime/vultin.cpp ${CMAKE_CURRENT_SOURCE_DIR}/../runtime/vultin.h)
    add_pd_object(${output} src)
 endfunction(vult_pd)

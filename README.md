@@ -16,7 +16,7 @@ To generate C/C++ code with floating point arithmetic you have to execute vult a
 $ vultc -ccode infile.vult -o outfile
 ```
 
-This will produce the files `outfile.h` and `outfile.cpp`. In order to compile and link these files you need to include in your project the files `runtime/vultin.h` and `runtime/vultin.c`.
+This will produce the files `outfile.h` and `outfile.cpp`. In order to compile and link these files you need to include in your project the files `runtime/vultin.h` and `runtime/vultin.cpp`.
 
 To generate code with fixed point arithmetics you need to execute:
 ```
