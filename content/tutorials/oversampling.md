@@ -64,7 +64,7 @@ if we want to create modify the filter above and make it stereo we can do it as 
     _         = left:lowpass(l,fixed_w0,q);
     val l_out = left:lowpass(l,fixed_w0,q);
     // process the right side
-    _         = right:lowpass(l,fixed_w0,q);
+    _         = right:lowpass(r,fixed_w0,q);
     val r_out = right:lowpass(r,fixed_w0,q);
     return l_out,r_out;
 }
