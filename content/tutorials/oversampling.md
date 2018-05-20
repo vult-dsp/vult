@@ -80,9 +80,9 @@ Notice that we have named the contexts of the functions `left` and `right`. In a
     _         = left:lowpass(l,fixed_w0,q);
     val l_out = left:lowpass(l,fixed_w0,q);
     // process the right side
-    _         = right:lowpass(l,fixed_w0,q);
-    _         = right:lowpass(l,fixed_w0,q);
-    _         = right:lowpass(l,fixed_w0,q);
+    _         = right:lowpass(r,fixed_w0,q);
+    _         = right:lowpass(r,fixed_w0,q);
+    _         = right:lowpass(r,fixed_w0,q);
     val r_out = right:lowpass(r,fixed_w0,q);
     return l_out,r_out;
 }
