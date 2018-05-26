@@ -123,9 +123,7 @@ function this.Util_cubic_clipper(x)
 
    else
 
-      local _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if _cond_20 then
+      if (x >= 0.6666667) then
          return 0.6666667; 
 
       else
@@ -278,15 +276,11 @@ function this.Svf_process(_ctx,x,cv,q,sel)
       output = low; 
    else
 
-      local _cond_39 = false; 
-      _cond_39 = (sel == 1); 
-      if _cond_39 then
+      if (sel == 1) then
          output = high; 
       else
 
-         local _cond_40 = false; 
-         _cond_40 = (sel == 2); 
-         if _cond_40 then
+         if (sel == 2) then
             output = band; 
          else
 

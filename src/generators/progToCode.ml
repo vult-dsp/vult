@@ -492,13 +492,27 @@ let rec collectVarBind stmts =
    | [] -> []
    | CSVar(lhs1, None)::CSBind(lhs2, rhs) :: t when lhs1 = lhs2 ->
       collectVarBind (CSVar(lhs1, Some(rhs)) ::  t)
-   | CSVar(CLId(_, lhs), Some(rhs))::CSIf(CEVar(cond, _), then_, else_) :: t when lhs = cond ->
+   | CSVar(CLId(_, lhs), Some(rhs)) :: CSIf(CEVar(cond, _), then_, else_) :: t when lhs = cond ->
       collectVarBind (CSIf(rhs, then_, else_) :: t)
-   | h :: t -> h :: collectVarBind t
+   | CSVar(lhs1, None) :: CSBind(lhs2, rhs) :: t  ->
+      CSVar(lhs1, None) :: CSBind(lhs2, rhs) :: collectVarBind t
+   | h :: t -> collectVarBindBlock h :: collectVarBind t
+
+and collectVarBindBlock block =
+   match block with
+   | CSBlock stmts ->
+      let stmts = collectVarBind stmts in
+      CSBlock stmts
+   | CSIf(cond, then_, else_)  ->
+      CSIf(cond, collectVarBindBlock then_, CCOpt.map collectVarBindBlock else_)
+   | CSWhile(cond, body)  ->
+      CSWhile(cond, collectVarBindBlock body)
+   | _ -> block
+
 
 let collectStmt (p:parameters) stmt =
    match stmt with
-   | CSBlock(stmts) when p.code = JSCode || p.code = LuaCode -> CSBlock(collectVarBind stmts)
+   | CSBlock(stmts) when p.code = JSCode || p.code = LuaCode || p.code = JavaCode -> CSBlock(collectVarBind stmts)
    | _ -> stmt
 
 let rec convertStmt (p:parameters) (s:stmt) : cstmt =

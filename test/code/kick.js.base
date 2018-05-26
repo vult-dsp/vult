@@ -109,9 +109,7 @@ this.Util_cubic_clipper = function(x){
    }
    else
    {
-      var _cond_28 = false; 
-      _cond_28 = (x >= 0.6666667); 
-      if(_cond_28){
+      if((x >= 0.6666667)){
          return 0.6666667; 
       }
       else
@@ -205,9 +203,7 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
    }
    else
    {
-      var _cond_49 = false; 
-      _cond_49 = (new_phase < (-1024.)); 
-      if(_cond_49){
+      if((new_phase < (-1024.))){
          _ctx.direction = true; 
       }
    }
@@ -215,9 +211,7 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
    else
    _ctx.phase = new_phase; 
    if(_ctx.reset_state){
-      var _cond_52 = false; 
-      _cond_52 = ((this.abs(_ctx.reset_phase) > 10.) || bdisable); 
-      if(_cond_52){
+      if(((this.abs(_ctx.reset_phase) > 10.) || bdisable)){
          var reset_speed = 0.0; 
          if(bdisable)reset_speed = 0.01; 
          else
@@ -226,8 +220,7 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
       }
       else
       {
-         var _cond_51 = false; 
-         _cond_51 = (_ctx.reset_phase > 10.); 
+         var _cond_51 = (_ctx.reset_phase > 10.); 
          if(this.not(_cond_51))_ctx.reset_phase = 0.; 
          _ctx.reset_state = false; 
          _ctx.direction = true; 
@@ -340,8 +333,7 @@ this.Ahr_do = function(_ctx,gate,a,h,r){
       _ctx.target = 1228.8; 
    }
    if((_ctx.state == hold)){
-      var hrate = 0.0; 
-      hrate = (1. / ((100. * h) + 0.01)); 
+      var hrate = (1. / ((100. * h) + 0.01)); 
       _ctx.hold_phase = (_ctx.hold_phase + hrate); 
    }
    if((_ctx.state == release)){

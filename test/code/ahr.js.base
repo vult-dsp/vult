@@ -63,9 +63,7 @@ this.Util_cubic_clipper = function(x){
    }
    else
    {
-      var _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if(_cond_20){
+      if((x >= 0.6666667)){
          return 0.6666667; 
       }
       else
@@ -166,8 +164,7 @@ this.Ahr_do = function(_ctx,gate,a,h,r){
       _ctx.target = 1228.8; 
    }
    if((_ctx.state == hold)){
-      var hrate = 0.0; 
-      hrate = (1. / ((100. * h) + 0.01)); 
+      var hrate = (1. / ((100. * h) + 0.01)); 
       _ctx.hold_phase = (_ctx.hold_phase + hrate); 
    }
    if((_ctx.state == release)){

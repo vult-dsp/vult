@@ -63,9 +63,7 @@ this.Util_cubic_clipper = function(x){
    }
    else
    {
-      var _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if(_cond_20){
+      if((x >= 0.6666667)){
          return 0.6666667; 
       }
       else
@@ -159,9 +157,7 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
    }
    else
    {
-      var _cond_41 = false; 
-      _cond_41 = (new_phase < (-1024.)); 
-      if(_cond_41){
+      if((new_phase < (-1024.))){
          _ctx.direction = true; 
       }
    }
@@ -169,9 +165,7 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
    else
    _ctx.phase = new_phase; 
    if(_ctx.reset_state){
-      var _cond_44 = false; 
-      _cond_44 = ((this.abs(_ctx.reset_phase) > 10.) || bdisable); 
-      if(_cond_44){
+      if(((this.abs(_ctx.reset_phase) > 10.) || bdisable)){
          var reset_speed = 0.0; 
          if(bdisable)reset_speed = 0.01; 
          else
@@ -180,8 +174,7 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
       }
       else
       {
-         var _cond_43 = false; 
-         _cond_43 = (_ctx.reset_phase > 10.); 
+         var _cond_43 = (_ctx.reset_phase > 10.); 
          if(this.not(_cond_43))_ctx.reset_phase = 0.; 
          _ctx.reset_state = false; 
          _ctx.direction = true; 
@@ -259,14 +252,10 @@ this.Svf_process = function(_ctx,x,cv,q,sel){
    if((sel == (0|0)))output = low; 
    else
    {
-      var _cond_62 = false; 
-      _cond_62 = (sel == (1|0)); 
-      if(_cond_62)output = high; 
+      if((sel == (1|0)))output = high; 
       else
       {
-         var _cond_63 = false; 
-         _cond_63 = (sel == (2|0)); 
-         if(_cond_63)output = band; 
+         if((sel == (2|0)))output = band; 
          else
          output = notch; 
       }
@@ -349,14 +338,10 @@ this.Lfo_process = function(_ctx,cv,shape,reset){
    if((shape < 1.))o = tmp; 
    else
    {
-      var _cond_86 = false; 
-      _cond_86 = (shape < 2.); 
-      if(_cond_86)o = ((this.abs(tmp) * 2.) + (-1.)); 
+      if((shape < 2.))o = ((this.abs(tmp) * 2.) + (-1.)); 
       else
       {
-         var _cond_87 = false; 
-         _cond_87 = (tmp > 0.); 
-         if(_cond_87)o = 1.; 
+         if((tmp > 0.))o = 1.; 
          else
          o = 0.; 
       }
@@ -437,10 +422,8 @@ this.Blit_pulse_train = function(_ctx,cv,phase){
    }
    else
    {
-      var m_phase = 0.0; 
-      m_phase = ((this.real(_ctx.m) * pi_phase) % 1.); 
-      var numerator = 0.0; 
-      numerator = this.Tables_nsine(m_phase); 
+      var m_phase = ((this.real(_ctx.m) * pi_phase) % 1.); 
+      var numerator = this.Tables_nsine(m_phase); 
       out = (numerator / (_ctx.scale * denominator)); 
    }
    return out; 
@@ -541,9 +524,7 @@ this.Adsr_do = function(_ctx,gate,a,d,s,r){
    _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.004)); 
    var bgate = (gate > 0.); 
    if((_ctx.state == (0|0))){
-      var _cond_151 = false; 
-      _cond_151 = this.Util_edge(_ctx._inst133,bgate); 
-      if(_cond_151){
+      if(this.Util_edge(_ctx._inst133,bgate)){
          _ctx.state = ((1|0)|0); 
          _ctx.scale = (gate * 0.2); 
       }
@@ -551,23 +532,17 @@ this.Adsr_do = function(_ctx,gate,a,d,s,r){
       _ctx.target = 0.; 
    }
    if((_ctx.state == (1|0))){
-      var _cond_153 = false; 
-      _cond_153 = (bgate == false); 
-      if(_cond_153){
+      if((bgate == false)){
          _ctx.state = ((0|0)|0); 
       }
-      var _cond_154 = false; 
-      _cond_154 = (_ctx.out > 1024.); 
-      if(_cond_154){
+      if((_ctx.out > 1024.)){
          _ctx.state = ((2|0)|0); 
       }
       _ctx.rate = a_rate; 
       _ctx.target = 1228.8; 
    }
    if((_ctx.state == (2|0))){
-      var _cond_156 = false; 
-      _cond_156 = (bgate == false); 
-      if(_cond_156){
+      if((bgate == false)){
          _ctx.state = ((0|0)|0); 
       }
       _ctx.rate = d_rate; 
@@ -711,9 +686,7 @@ this.Voice_4_controlChange = function(_ctx,control,value,channel){
       _ctx.lfo_flt = this.Util_map(this.real(value),0.,127.,(-0.3),0.3); 
    }
    if((control == (43|0))){
-      var _cond_208 = false; 
-      _cond_208 = (value > (0|0)); 
-      if(_cond_208)_ctx.lfo_reset = 1.; 
+      if((value > (0|0)))_ctx.lfo_reset = 1.; 
       else
       _ctx.lfo_reset = 0.; 
    }

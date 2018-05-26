@@ -43,6 +43,7 @@ type code =
    | JSCode
    | LuaCode
    | LLVMCode
+   | JavaCode
 [@@deriving show,eq,ord]
 
 (** Stores the options passed to the command line *)

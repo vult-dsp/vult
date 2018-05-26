@@ -12,10 +12,8 @@ this.Bitcrush_process = function(_ctx,i,cv){
    }
    else
    {
-      var b = 0.0; 
-      b = this.Bitcrush_factor(cv); 
-      var x = (0|0); 
-      x = (this.int((i * b))|0); 
+      var b = this.Bitcrush_factor(cv); 
+      var x = (this.int((i * b))|0); 
       out = (this.real(x) / b); 
    }
    return out; 

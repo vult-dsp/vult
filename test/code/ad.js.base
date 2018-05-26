@@ -63,9 +63,7 @@ this.Util_cubic_clipper = function(x){
    }
    else
    {
-      var _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if(_cond_20){
+      if((x >= 0.6666667)){
          return 0.6666667; 
       }
       else
@@ -139,9 +137,7 @@ this.Ad_do = function(_ctx,gate,a,d){
    var bgate = (gate > 0.); 
    _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.004)); 
    if((_ctx.state == (0|0))){
-      var _cond_36 = false; 
-      _cond_36 = this.Util_edge(_ctx._inst24,bgate); 
-      if(_cond_36){
+      if(this.Util_edge(_ctx._inst24,bgate)){
          _ctx.state = ((1|0)|0); 
          _ctx.scale = (gate * 0.2); 
       }
@@ -149,9 +145,7 @@ this.Ad_do = function(_ctx,gate,a,d){
       _ctx.target = 0.; 
    }
    if((_ctx.state == (1|0))){
-      var _cond_38 = false; 
-      _cond_38 = ((bgate == false) || (_ctx.out > 1024.)); 
-      if(_cond_38){
+      if(((bgate == false) || (_ctx.out > 1024.))){
          _ctx.state = ((0|0)|0); 
       }
       _ctx.rate = a_rate; 

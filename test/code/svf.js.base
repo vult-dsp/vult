@@ -63,9 +63,7 @@ this.Util_cubic_clipper = function(x){
    }
    else
    {
-      var _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if(_cond_20){
+      if((x >= 0.6666667)){
          return 0.6666667; 
       }
       else
@@ -177,14 +175,10 @@ this.Svf_process = function(_ctx,x,cv,q,sel){
    if((sel == (0|0)))output = low; 
    else
    {
-      var _cond_39 = false; 
-      _cond_39 = (sel == (1|0)); 
-      if(_cond_39)output = high; 
+      if((sel == (1|0)))output = high; 
       else
       {
-         var _cond_40 = false; 
-         _cond_40 = (sel == (2|0)); 
-         if(_cond_40)output = band; 
+         if((sel == (2|0)))output = band; 
          else
          output = notch; 
       }

@@ -123,9 +123,7 @@ function this.Util_cubic_clipper(x)
 
    else
 
-      local _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if _cond_20 then
+      if (x >= 0.6666667) then
          return 0.6666667; 
 
       else
@@ -305,10 +303,8 @@ function this.Blit_pulse_train(_ctx,cv,phase)
 
    else
 
-      local m_phase = 0.0; 
-      m_phase = ((this.real(_ctx.m) * pi_phase) % 1.); 
-      local numerator = 0.0; 
-      numerator = this.Tables_nsine(m_phase); 
+      local m_phase = ((this.real(_ctx.m) * pi_phase) % 1.); 
+      local numerator = this.Tables_nsine(m_phase); 
       out = (numerator / (_ctx.scale * denominator)); 
 
    end

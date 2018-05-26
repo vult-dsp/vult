@@ -353,6 +353,9 @@ module Const = struct
    let real_real () =
       real_type |-> real_type
 
+   let real_real_real () =
+      real_type |-> (real_type |-> real_type)
+
    let a_a () =
       let a = ref (TUnbound("'a", None, None)) in
       a |-> a

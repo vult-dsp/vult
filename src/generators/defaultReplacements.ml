@@ -114,6 +114,7 @@ module Default = struct
             ("tan", "float"),   "tanf";
             ("tanh", "float"),  "tanhf";
             ("cosh", "float"),  "coshf";
+            ("sinh", "float"),  "sinhf";
             ("sqrt", "float"),  "sqrtf";
             ("clip", "float"),  "float_clip";
             ("clip", "int"),    "int_clip";
@@ -171,6 +172,85 @@ module Default = struct
 
 end
 
+module Java = struct
+
+   let keywords = Replacements.makeKeywords
+         [
+            "default", "default_";
+            "switch",  "switch_";
+         ]
+
+   let types = Replacements.makeTypes
+         [
+            "real", "float";
+            "unit", "void";
+            "bool", "boolean";
+            "int",  "int";
+         ]
+
+   let cast = Replacements.makeCasts
+         [
+            ("float", "int"), "float_to_int";
+            ("int", "float"), "int_to_float";
+         ]
+
+   let op_to_fun = Replacements.makeOperators
+         [
+         ]
+
+   let op_to_op = Replacements.makeOperators
+         [
+            ("<>", "float"),   "!=";
+            ("<>", "int"),     "!=";
+            ("<>", "boolean"), "!=";
+         ]
+
+   let fun_to_fun = Replacements.makeFunctions
+         [
+            ("abs", "float"),   "Math.abs";
+            ("max", "float"),   "Math.max";
+            ("min", "float"),   "Math.min";
+            ("log",  "float"),   "float_print";
+            ("log",  "int"),     "int_print";
+            ("log",  "uint8_t"), "bool_print";
+            ("log",  "string"),  "string_print";
+            ("samplerate", "float"),  "External.samplerate";
+         ]
+
+   let array_init = Replacements.makeArrayInitializations
+         [
+            "float",   "float_init_array";
+            "int",     "int_init_array";
+            "uint8_t", "bool_init_array";
+         ]
+
+   let array_copy = Replacements.makeArrayCopy
+         [
+            "float",   "float_copy_array";
+            "int",     "int_copy_array";
+            "uint8_t", "bool_copy_array";
+         ]
+
+   let real_string = Replacements.makeRealToString
+         [
+            "float", (fun f -> (Float.to_string f) ^ "f")
+         ]
+
+   (* This is the default selection of replacements *)
+   let replacements =
+      Replacements.{
+         keywords;
+         types;
+         cast;
+         op_to_fun;
+         op_to_op;
+         fun_to_fun;
+         array_init;
+         real_string;
+         array_copy;
+      }
+
+end
 
 module FixedPoint = struct
 
@@ -471,8 +551,10 @@ module Lua = struct
 end
 
 let initialize () =
+   Replacements.registerReplacements "default" Default.replacements;
    Replacements.registerReplacements "float" Default.replacements;
    Replacements.registerReplacements "fixed" FixedPoint.replacements;
    Replacements.registerReplacements "js"    JavaScript.replacements;
-   Replacements.registerReplacements "lua"    Lua.replacements
+   Replacements.registerReplacements "lua"   Lua.replacements;
+   Replacements.registerReplacements "java"   Java.replacements
 ;;

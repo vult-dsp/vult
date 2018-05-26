@@ -211,10 +211,8 @@ function this.Synth2_osc(_ctx,pitch,pw,wave)
    end
    if this.Synth2_change(_ctx._inst16,fixed_pitch) then
       _ctx.rate = this.Synth2_pitchToRate(fixed_pitch); 
-      local p = 0.0; 
-      p = (1. / _ctx.rate); 
-      local maxHarmonics = 0.0; 
-      maxHarmonics = this.floor((p * 0.5)); 
+      local p = (1. / _ctx.rate); 
+      local maxHarmonics = this.floor((p * 0.5)); 
       _ctx.m = ((2. * maxHarmonics) + 1.); 
 
    end
@@ -239,9 +237,7 @@ function this.Synth2_osc(_ctx,pitch,pw,wave)
 
    else
 
-      local _cond_68 = false; 
-      _cond_68 = (wave < 0.6666667); 
-      if _cond_68 then
+      if (wave < 0.6666667) then
          _ctx.output = (2. * _ctx.state_saw); 
 
       else
@@ -280,15 +276,11 @@ function this.Synth2_svf_step(_ctx,input,g,q,sel)
       output = low; 
    else
 
-      local _cond_88 = false; 
-      _cond_88 = (sel == 1); 
-      if _cond_88 then
+      if (sel == 1) then
          output = high; 
       else
 
-         local _cond_89 = false; 
-         _cond_89 = (sel == 2); 
-         if _cond_89 then
+         if (sel == 2) then
             output = band; 
          else
 
@@ -377,9 +369,7 @@ function this.Synth2_mono_noteOn(_ctx,n)
    if (_ctx.count < 4) then
       this.set(_ctx.notes,_ctx.count,n);
       _ctx.pre = n; 
-      local _cond_75 = false; 
-      _cond_75 = (_ctx.count < 4); 
-      if _cond_75 then
+      if (_ctx.count < 4) then
          _ctx.count = (_ctx.count + 1); 
 
       end
@@ -402,9 +392,7 @@ function this.Synth2_mono_noteOff(_ctx,n)
 
    end
    while ((i < 4) and (found == false)) do
-      local _cond_78 = false; 
-      _cond_78 = (this.get(_ctx.notes,i) == n); 
-      if _cond_78 then
+      if (this.get(_ctx.notes,i) == n) then
          pos = i; 
          found = true; 
 
@@ -412,15 +400,12 @@ function this.Synth2_mono_noteOff(_ctx,n)
       i = (i + 1); 
    end
    if found then
-      local k = 0; 
-      k = (pos + 1); 
+      local k = (pos + 1); 
       while (k < 4) do
          this.set(_ctx.notes,(k + -1),this.get(_ctx.notes,k));
          k = (k + 1); 
       end
-      local _cond_79 = false; 
-      _cond_79 = (found and (_ctx.count > 0)); 
-      if _cond_79 then
+      if (found and (_ctx.count > 0)) then
          _ctx.count = (_ctx.count + -1); 
          _ctx.pre = this.get(_ctx.notes,(_ctx.count + -1)); 
 

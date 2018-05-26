@@ -63,9 +63,7 @@ this.Util_cubic_clipper = function(x){
    }
    else
    {
-      var _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if(_cond_20){
+      if((x >= 0.6666667)){
          return 0.6666667; 
       }
       else
@@ -134,9 +132,7 @@ this.Monocv_mono_noteOn = function(_ctx,n){
    if((_ctx.count < (4|0))){
       this.set(_ctx.notes,_ctx.count,n);
       _ctx.pre = (n|0); 
-      var _cond_44 = false; 
-      _cond_44 = (_ctx.count < (4|0)); 
-      if(_cond_44){
+      if((_ctx.count < (4|0))){
          _ctx.count = ((_ctx.count + (1|0))|0); 
       }
    }
@@ -151,24 +147,19 @@ this.Monocv_mono_noteOff = function(_ctx,n){
       return _ctx.pre; 
    }
    while(((i < (4|0)) && (found == false))){
-      var _cond_47 = false; 
-      _cond_47 = (this.get(_ctx.notes,i) == n); 
-      if(_cond_47){
+      if((this.get(_ctx.notes,i) == n)){
          pos = (i|0); 
          found = true; 
       }
       i = ((i + (1|0))|0); 
    }
    if(found){
-      var k = (0|0); 
-      k = ((pos + (1|0))|0); 
+      var k = ((pos + (1|0))|0); 
       while((k < (4|0))){
          this.set(_ctx.notes,(k + (-1|0)),this.get(_ctx.notes,k));
          k = ((k + (1|0))|0); 
       }
-      var _cond_48 = false; 
-      _cond_48 = (found && (_ctx.count > (0|0))); 
-      if(_cond_48){
+      if((found && (_ctx.count > (0|0)))){
          _ctx.count = ((_ctx.count + (-1|0))|0); 
          _ctx.pre = (this.get(_ctx.notes,(_ctx.count + (-1|0)))|0); 
       }
@@ -206,9 +197,7 @@ this.Monocv_process = function(_ctx,c){
 this.Monocv_noteOn_init = function() { return this.Monocv__ctx_type_1_init(); }
 this.Monocv_noteOn = function(_ctx,note,velocity,channel){
    if((_ctx.channel_in == channel)){
-      var _cond_53 = false; 
-      _cond_53 = (velocity > (0|0)); 
-      if(_cond_53){
+      if((velocity > (0|0))){
          _ctx.active_note = (this.Monocv_mono_noteOn(_ctx.notes,note)|0); 
          _ctx.vel = (this.real(velocity) * 0.0078741); 
       }

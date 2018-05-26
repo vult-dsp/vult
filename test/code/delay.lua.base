@@ -229,9 +229,7 @@ function this.Delay_mono_noteOn(_ctx,n)
    if (_ctx.count < 4) then
       this.set(_ctx.notes,_ctx.count,n);
       _ctx.pre = n; 
-      local _cond_49 = false; 
-      _cond_49 = (_ctx.count < 4); 
-      if _cond_49 then
+      if (_ctx.count < 4) then
          _ctx.count = (_ctx.count + 1); 
 
       end
@@ -254,9 +252,7 @@ function this.Delay_mono_noteOff(_ctx,n)
 
    end
    while ((i < 4) and (found == false)) do
-      local _cond_52 = false; 
-      _cond_52 = (this.get(_ctx.notes,i) == n); 
-      if _cond_52 then
+      if (this.get(_ctx.notes,i) == n) then
          pos = i; 
          found = true; 
 
@@ -264,15 +260,12 @@ function this.Delay_mono_noteOff(_ctx,n)
       i = (i + 1); 
    end
    if found then
-      local k = 0; 
-      k = (pos + 1); 
+      local k = (pos + 1); 
       while (k < 4) do
          this.set(_ctx.notes,(k + -1),this.get(_ctx.notes,k));
          k = (k + 1); 
       end
-      local _cond_53 = false; 
-      _cond_53 = (found and (_ctx.count > 0)); 
-      if _cond_53 then
+      if (found and (_ctx.count > 0)) then
          _ctx.count = (_ctx.count + -1); 
          _ctx.pre = this.get(_ctx.notes,(_ctx.count + -1)); 
 

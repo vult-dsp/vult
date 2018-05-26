@@ -210,25 +210,19 @@ function this.Synth1_noteOn(_ctx,note,velocity,channel)
 
    else
 
-      local _cond_53 = false; 
-      _cond_53 = (_ctx.count == 1); 
-      if _cond_53 then
+      if (_ctx.count == 1) then
          _ctx.n2 = note; 
          _ctx.pitch = this.real(note); 
 
       else
 
-         local _cond_52 = false; 
-         _cond_52 = (_ctx.count == 2); 
-         if _cond_52 then
+         if (_ctx.count == 2) then
             _ctx.n3 = note; 
             _ctx.pitch = this.real(note); 
 
          else
 
-            local _cond_51 = false; 
-            _cond_51 = (_ctx.count == 3); 
-            if _cond_51 then
+            if (_ctx.count == 3) then
                _ctx.n4 = note; 
                _ctx.pitch = this.real(note); 
 
@@ -259,12 +253,9 @@ end
 function this.Synth1_noteOff(_ctx,note,channel)
    local found = false; 
    if (note == _ctx.n1) then
-      local _tmp_57_0 = 0; 
-      _tmp_57_0 = _ctx.n2; 
-      local _tmp_57_1 = 0; 
-      _tmp_57_1 = _ctx.n3; 
-      local _tmp_57_2 = 0; 
-      _tmp_57_2 = _ctx.n4; 
+      local _tmp_57_0 = _ctx.n2; 
+      local _tmp_57_1 = _ctx.n3; 
+      local _tmp_57_2 = _ctx.n4; 
       _ctx.n1 = _tmp_57_0; 
       _ctx.n2 = _tmp_57_1; 
       _ctx.n3 = _tmp_57_2; 
@@ -272,30 +263,22 @@ function this.Synth1_noteOff(_ctx,note,channel)
 
    else
 
-      local _cond_61 = false; 
-      _cond_61 = (note == _ctx.n2); 
-      if _cond_61 then
-         local _tmp_58_0 = 0; 
-         _tmp_58_0 = _ctx.n3; 
-         local _tmp_58_1 = 0; 
-         _tmp_58_1 = _ctx.n4; 
+      if (note == _ctx.n2) then
+         local _tmp_58_0 = _ctx.n3; 
+         local _tmp_58_1 = _ctx.n4; 
          _ctx.n2 = _tmp_58_0; 
          _ctx.n3 = _tmp_58_1; 
          found = true; 
 
       else
 
-         local _cond_60 = false; 
-         _cond_60 = (note == _ctx.n3); 
-         if _cond_60 then
+         if (note == _ctx.n3) then
             _ctx.n3 = _ctx.n4; 
             found = true; 
 
          else
 
-            local _cond_59 = false; 
-            _cond_59 = (note == _ctx.n4); 
-            if _cond_59 then
+            if (note == _ctx.n4) then
                found = true; 
 
             end

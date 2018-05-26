@@ -123,9 +123,7 @@ function this.Util_cubic_clipper(x)
 
    else
 
-      local _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if _cond_20 then
+      if (x >= 0.6666667) then
          return 0.6666667; 
 
       else
@@ -219,9 +217,7 @@ function this.Monocv_mono_noteOn(_ctx,n)
    if (_ctx.count < 4) then
       this.set(_ctx.notes,_ctx.count,n);
       _ctx.pre = n; 
-      local _cond_44 = false; 
-      _cond_44 = (_ctx.count < 4); 
-      if _cond_44 then
+      if (_ctx.count < 4) then
          _ctx.count = (_ctx.count + 1); 
 
       end
@@ -244,9 +240,7 @@ function this.Monocv_mono_noteOff(_ctx,n)
 
    end
    while ((i < 4) and (found == false)) do
-      local _cond_47 = false; 
-      _cond_47 = (this.get(_ctx.notes,i) == n); 
-      if _cond_47 then
+      if (this.get(_ctx.notes,i) == n) then
          pos = i; 
          found = true; 
 
@@ -254,15 +248,12 @@ function this.Monocv_mono_noteOff(_ctx,n)
       i = (i + 1); 
    end
    if found then
-      local k = 0; 
-      k = (pos + 1); 
+      local k = (pos + 1); 
       while (k < 4) do
          this.set(_ctx.notes,(k + -1),this.get(_ctx.notes,k));
          k = (k + 1); 
       end
-      local _cond_48 = false; 
-      _cond_48 = (found and (_ctx.count > 0)); 
-      if _cond_48 then
+      if (found and (_ctx.count > 0)) then
          _ctx.count = (_ctx.count + -1); 
          _ctx.pre = this.get(_ctx.notes,(_ctx.count + -1)); 
 
@@ -323,9 +314,7 @@ end
 
 function this.Monocv_noteOn(_ctx,note,velocity,channel)
    if (_ctx.channel_in == channel) then
-      local _cond_53 = false; 
-      _cond_53 = (velocity > 0); 
-      if _cond_53 then
+      if (velocity > 0) then
          _ctx.active_note = this.Monocv_mono_noteOn(_ctx.notes,note); 
          _ctx.vel = (this.real(velocity) * 0.0078741); 
 

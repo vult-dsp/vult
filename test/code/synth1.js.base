@@ -124,25 +124,19 @@ this.Synth1_noteOn = function(_ctx,note,velocity,channel){
    }
    else
    {
-      var _cond_53 = false; 
-      _cond_53 = (_ctx.count == (1|0)); 
-      if(_cond_53){
+      if((_ctx.count == (1|0))){
          _ctx.n2 = (note|0); 
          _ctx.pitch = this.real(note); 
       }
       else
       {
-         var _cond_52 = false; 
-         _cond_52 = (_ctx.count == (2|0)); 
-         if(_cond_52){
+         if((_ctx.count == (2|0))){
             _ctx.n3 = (note|0); 
             _ctx.pitch = this.real(note); 
          }
          else
          {
-            var _cond_51 = false; 
-            _cond_51 = (_ctx.count == (3|0)); 
-            if(_cond_51){
+            if((_ctx.count == (3|0))){
                _ctx.n4 = (note|0); 
                _ctx.pitch = this.real(note); 
             }
@@ -160,12 +154,9 @@ this.Synth1_noteOff_init = function() { return this.Synth1__ctx_type_7_init(); }
 this.Synth1_noteOff = function(_ctx,note,channel){
    var found = false; 
    if((note == _ctx.n1)){
-      var _tmp_57_0 = (0|0); 
-      _tmp_57_0 = (_ctx.n2|0); 
-      var _tmp_57_1 = (0|0); 
-      _tmp_57_1 = (_ctx.n3|0); 
-      var _tmp_57_2 = (0|0); 
-      _tmp_57_2 = (_ctx.n4|0); 
+      var _tmp_57_0 = (_ctx.n2|0); 
+      var _tmp_57_1 = (_ctx.n3|0); 
+      var _tmp_57_2 = (_ctx.n4|0); 
       _ctx.n1 = (_tmp_57_0|0); 
       _ctx.n2 = (_tmp_57_1|0); 
       _ctx.n3 = (_tmp_57_2|0); 
@@ -173,30 +164,22 @@ this.Synth1_noteOff = function(_ctx,note,channel){
    }
    else
    {
-      var _cond_61 = false; 
-      _cond_61 = (note == _ctx.n2); 
-      if(_cond_61){
-         var _tmp_58_0 = (0|0); 
-         _tmp_58_0 = (_ctx.n3|0); 
-         var _tmp_58_1 = (0|0); 
-         _tmp_58_1 = (_ctx.n4|0); 
+      if((note == _ctx.n2)){
+         var _tmp_58_0 = (_ctx.n3|0); 
+         var _tmp_58_1 = (_ctx.n4|0); 
          _ctx.n2 = (_tmp_58_0|0); 
          _ctx.n3 = (_tmp_58_1|0); 
          found = true; 
       }
       else
       {
-         var _cond_60 = false; 
-         _cond_60 = (note == _ctx.n3); 
-         if(_cond_60){
+         if((note == _ctx.n3)){
             _ctx.n3 = (_ctx.n4|0); 
             found = true; 
          }
          else
          {
-            var _cond_59 = false; 
-            _cond_59 = (note == _ctx.n4); 
-            if(_cond_59){
+            if((note == _ctx.n4)){
                found = true; 
             }
          }

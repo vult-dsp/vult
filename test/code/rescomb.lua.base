@@ -153,9 +153,7 @@ function this.Util_cubic_clipper(x)
 
    else
 
-      local _cond_26 = false; 
-      _cond_26 = (x >= 0.6666667); 
-      if _cond_26 then
+      if (x >= 0.6666667) then
          return 0.6666667; 
 
       else

@@ -134,9 +134,7 @@ this.Delay_mono_noteOn = function(_ctx,n){
    if((_ctx.count < (4|0))){
       this.set(_ctx.notes,_ctx.count,n);
       _ctx.pre = (n|0); 
-      var _cond_49 = false; 
-      _cond_49 = (_ctx.count < (4|0)); 
-      if(_cond_49){
+      if((_ctx.count < (4|0))){
          _ctx.count = ((_ctx.count + (1|0))|0); 
       }
    }
@@ -151,24 +149,19 @@ this.Delay_mono_noteOff = function(_ctx,n){
       return _ctx.pre; 
    }
    while(((i < (4|0)) && (found == false))){
-      var _cond_52 = false; 
-      _cond_52 = (this.get(_ctx.notes,i) == n); 
-      if(_cond_52){
+      if((this.get(_ctx.notes,i) == n)){
          pos = (i|0); 
          found = true; 
       }
       i = ((i + (1|0))|0); 
    }
    if(found){
-      var k = (0|0); 
-      k = ((pos + (1|0))|0); 
+      var k = ((pos + (1|0))|0); 
       while((k < (4|0))){
          this.set(_ctx.notes,(k + (-1|0)),this.get(_ctx.notes,k));
          k = ((k + (1|0))|0); 
       }
-      var _cond_53 = false; 
-      _cond_53 = (found && (_ctx.count > (0|0))); 
-      if(_cond_53){
+      if((found && (_ctx.count > (0|0)))){
          _ctx.count = ((_ctx.count + (-1|0))|0); 
          _ctx.pre = (this.get(_ctx.notes,(_ctx.count + (-1|0)))|0); 
       }

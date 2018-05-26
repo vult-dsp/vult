@@ -63,9 +63,7 @@ this.Util_cubic_clipper = function(x){
    }
    else
    {
-      var _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if(_cond_20){
+      if((x >= 0.6666667)){
          return 0.6666667; 
       }
       else
@@ -143,9 +141,7 @@ this.Polycv_poly_noteOn = function(_ctx,note,velocity){
    var i = ((0|0)|0); 
    var found = false; 
    while(((i < (4|0)) && (found == false))){
-      var _cond_41 = false; 
-      _cond_41 = (this.get(_ctx.vel,i) == (0|0)); 
-      if(_cond_41){
+      if((this.get(_ctx.vel,i) == (0|0))){
          this.set(_ctx.notes,i,note);
          this.set(_ctx.vel,i,velocity);
          found = true; 
@@ -158,9 +154,7 @@ this.Polycv_poly_noteOff = function(_ctx,note){
    var i = ((0|0)|0); 
    var found = false; 
    while(((i < (4|0)) && (found == false))){
-      var _cond_42 = false; 
-      _cond_42 = (this.get(_ctx.notes,i) == note); 
-      if(_cond_42){
+      if((this.get(_ctx.notes,i) == note)){
          this.set(_ctx.vel,i,(0|0));
          found = true; 
       }
@@ -199,9 +193,7 @@ this.Polycv_process = function(_ctx,c){
 this.Polycv_noteOn_init = function() { return this.Polycv__ctx_type_3_init(); }
 this.Polycv_noteOn = function(_ctx,note,velocity,channel){
    if((_ctx.channel_in == channel)){
-      var _cond_47 = false; 
-      _cond_47 = (velocity > (0|0)); 
-      if(_cond_47){
+      if((velocity > (0|0))){
          this.Polycv_poly_noteOn(_ctx.poly,note,velocity);
       }
       else

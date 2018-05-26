@@ -123,9 +123,7 @@ function this.Util_cubic_clipper(x)
 
    else
 
-      local _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if _cond_20 then
+      if (x >= 0.6666667) then
          return 0.6666667; 
 
       else
@@ -262,15 +260,11 @@ function this.Lfo_process(_ctx,cv,shape,reset)
       o = tmp; 
    else
 
-      local _cond_38 = false; 
-      _cond_38 = (shape < 2.); 
-      if _cond_38 then
+      if (shape < 2.) then
          o = ((this.abs(tmp) * 2.) + (-1.)); 
       else
 
-         local _cond_39 = false; 
-         _cond_39 = (tmp > 0.); 
-         if _cond_39 then
+         if (tmp > 0.) then
             o = 1.; 
          else
 

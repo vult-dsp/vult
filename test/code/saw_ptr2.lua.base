@@ -123,9 +123,7 @@ function this.Util_cubic_clipper(x)
 
    else
 
-      local _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if _cond_20 then
+      if (x >= 0.6666667) then
          return 0.6666667; 
 
       else
@@ -229,17 +227,13 @@ function this.Saw_ptr2_process(_ctx,cv)
       _ctx.phase = (_ctx.phase + (-1.)); 
    end
    if (_ctx.phase < s1) then
-      local d = 0.0; 
-      d = (_ctx.phase / _ctx.rate); 
+      local d = (_ctx.phase / _ctx.rate); 
       out = (1. + (d * ((- d) + s2))); 
 
    else
 
-      local _cond_34 = false; 
-      _cond_34 = (_ctx.phase < s2); 
-      if _cond_34 then
-         local d = 0.0; 
-         d = (_ctx.phase / _ctx.rate); 
+      if (_ctx.phase < s2) then
+         local d = (_ctx.phase / _ctx.rate); 
          out = (3. + (d * ((-4.) + d + s2))); 
 
       else

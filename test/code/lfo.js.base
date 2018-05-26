@@ -63,9 +63,7 @@ this.Util_cubic_clipper = function(x){
    }
    else
    {
-      var _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if(_cond_20){
+      if((x >= 0.6666667)){
          return 0.6666667; 
       }
       else
@@ -165,14 +163,10 @@ this.Lfo_process = function(_ctx,cv,shape,reset){
    if((shape < 1.))o = tmp; 
    else
    {
-      var _cond_38 = false; 
-      _cond_38 = (shape < 2.); 
-      if(_cond_38)o = ((this.abs(tmp) * 2.) + (-1.)); 
+      if((shape < 2.))o = ((this.abs(tmp) * 2.) + (-1.)); 
       else
       {
-         var _cond_39 = false; 
-         _cond_39 = (tmp > 0.); 
-         if(_cond_39)o = 1.; 
+         if((tmp > 0.))o = 1.; 
          else
          o = 0.; 
       }

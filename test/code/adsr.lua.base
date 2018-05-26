@@ -123,9 +123,7 @@ function this.Util_cubic_clipper(x)
 
    else
 
-      local _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if _cond_20 then
+      if (x >= 0.6666667) then
          return 0.6666667; 
 
       else
@@ -226,9 +224,7 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
    _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.004)); 
    local bgate = (gate > 0.); 
    if (_ctx.state == 0) then
-      local _cond_42 = false; 
-      _cond_42 = this.Util_edge(_ctx._inst24,bgate); 
-      if _cond_42 then
+      if this.Util_edge(_ctx._inst24,bgate) then
          _ctx.state = 1; 
          _ctx.scale = (gate * 0.2); 
 
@@ -238,15 +234,11 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
 
    end
    if (_ctx.state == 1) then
-      local _cond_44 = false; 
-      _cond_44 = (bgate == false); 
-      if _cond_44 then
+      if (bgate == false) then
          _ctx.state = 0; 
 
       end
-      local _cond_45 = false; 
-      _cond_45 = (_ctx.out > 1024.); 
-      if _cond_45 then
+      if (_ctx.out > 1024.) then
          _ctx.state = 2; 
 
       end
@@ -255,9 +247,7 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
 
    end
    if (_ctx.state == 2) then
-      local _cond_47 = false; 
-      _cond_47 = (bgate == false); 
-      if _cond_47 then
+      if (bgate == false) then
          _ctx.state = 0; 
 
       end

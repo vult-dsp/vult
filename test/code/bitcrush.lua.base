@@ -37,10 +37,8 @@ function this.Bitcrush_process(_ctx,i,cv)
 
    else
 
-      local b = 0.0; 
-      b = this.Bitcrush_factor(cv); 
-      local x = 0; 
-      x = this.int((i * b)); 
+      local b = this.Bitcrush_factor(cv); 
+      local x = this.int((i * b)); 
       out = (this.real(x) / b); 
 
    end

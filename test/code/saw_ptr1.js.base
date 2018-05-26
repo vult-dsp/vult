@@ -63,9 +63,7 @@ this.Util_cubic_clipper = function(x){
    }
    else
    {
-      var _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if(_cond_20){
+      if((x >= 0.6666667)){
          return 0.6666667; 
       }
       else
@@ -141,8 +139,7 @@ this.Saw_ptr1_process = function(_ctx,cv){
    _ctx.phase = (_ctx.phase + _ctx.rate); 
    if((_ctx.phase > 1.))_ctx.phase = (_ctx.phase + (-1.)); 
    if((_ctx.phase < s1)){
-      var d = 0.0; 
-      d = (_ctx.phase / _ctx.rate); 
+      var d = (_ctx.phase / _ctx.rate); 
       out = (((-2.) * d) + 2. + dc); 
    }
    else

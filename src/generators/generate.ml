@@ -182,27 +182,34 @@ let rec getMainModule (parser_results:parser_results list) : string =
 
 (* Generates the C/C++ code if the flag was passed *)
 let generateC (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
-   let cparams     = ProgToCode.{repl = params.repl; code = args.code} in
+   let cparams     = ProgToCode.{ repl = params.repl; code = args.code} in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeC.print params clike_stmts
 
+(* Generates the C/C++ code if the flag was passed *)
+let generateJava (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
+   let cparams     = ProgToCode.{ repl = params.repl; code = args.code} in
+   (* Converts the statements to Code form *)
+   let clike_stmts = ProgToCode.convert cparams stmts in
+   CodeJava.print params clike_stmts
+
 let generateLLVM (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
-   let cparams     = ProgToCode.{repl = params.repl; code = args.code } in
+   let cparams     = ProgToCode.{ repl = params.repl; code = args.code } in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeLLVM.print params clike_stmts
 
 (* Generates the JS code if the flag was passed *)
 let generateJS (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
-   let cparams     = ProgToCode.{repl = params.repl; code = args.code } in
+   let cparams     = ProgToCode.{ repl = params.repl; code = args.code } in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeJs.print params clike_stmts
 
 (* Generates the JS code if the flag was passed *)
 let generateLua (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
-   let cparams     = ProgToCode.{repl = params.repl; code = args.code } in
+   let cparams     = ProgToCode.{ repl = params.repl; code = args.code } in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeLua.print params clike_stmts
@@ -226,13 +233,21 @@ and default(){ }|pla}
          in
          Error.raiseErrorMsg msg
 
+let replacements args =
+   match args.code with
+   | JavaCode -> "java"
+   | JSCode -> "js"
+   | LuaCode -> "lua"
+   | CCode -> args.real
+   | _ -> "default"
+
 (** Returns the code generation parameters based on the vult code *)
 let createParameters (results:parser_results list) (args:args) : params =
    (* Gets the name of the main module (the last passes file name) *)
    let module_name = getMainModule results in
    let stmts       = List.map (fun a -> a.presult) results in
    (* Looks for the replacements based on the 'real' argument *)
-   let repl        = Replacements.getReplacements args.real in
+   let repl        = Replacements.getReplacements (replacements args) in
    (** Takes the statememts of the last file to search the configuration *)
    let last_stmts  = CCList.last 1 stmts |> List.flatten in
    let config      = Configuration.get repl module_name last_stmts in
@@ -257,6 +272,7 @@ let generateCode (parser_results:parser_results list) (args:args) : (Pla.t * Fil
       match args.code with
       | NoCode -> []
       | CCode -> generateC args params_c all_stmts
+      | JavaCode -> generateJava args params_c all_stmts
       | JSCode -> generateJS args params_js all_stmts
       | LuaCode -> generateLua args params_lua all_stmts
       | LLVMCode -> generateLLVM args params_c all_stmts

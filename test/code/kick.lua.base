@@ -206,9 +206,7 @@ function this.Util_cubic_clipper(x)
 
    else
 
-      local _cond_28 = false; 
-      _cond_28 = (x >= 0.6666667); 
-      if _cond_28 then
+      if (x >= 0.6666667) then
          return 0.6666667; 
 
       else
@@ -332,9 +330,7 @@ function this.Tricore_process(_ctx,cv,reset,disable)
 
    else
 
-      local _cond_49 = false; 
-      _cond_49 = (new_phase < (-1024.)); 
-      if _cond_49 then
+      if (new_phase < (-1024.)) then
          _ctx.direction = true; 
 
       end
@@ -347,9 +343,7 @@ function this.Tricore_process(_ctx,cv,reset,disable)
       _ctx.phase = new_phase; 
    end
    if _ctx.reset_state then
-      local _cond_52 = false; 
-      _cond_52 = ((this.abs(_ctx.reset_phase) > 10.) or bdisable); 
-      if _cond_52 then
+      if ((this.abs(_ctx.reset_phase) > 10.) or bdisable) then
          local reset_speed = 0.0; 
          if bdisable then
             reset_speed = 0.01; 
@@ -361,8 +355,7 @@ function this.Tricore_process(_ctx,cv,reset,disable)
 
       else
 
-         local _cond_51 = false; 
-         _cond_51 = (_ctx.reset_phase > 10.); 
+         local _cond_51 = (_ctx.reset_phase > 10.); 
          if (not _cond_51) then
             _ctx.reset_phase = 0.; 
          end
@@ -555,8 +548,7 @@ function this.Ahr_do(_ctx,gate,a,h,r)
 
    end
    if (_ctx.state == hold) then
-      local hrate = 0.0; 
-      hrate = (1. / ((100. * h) + 0.01)); 
+      local hrate = (1. / ((100. * h) + 0.01)); 
       _ctx.hold_phase = (_ctx.hold_phase + hrate); 
 
    end

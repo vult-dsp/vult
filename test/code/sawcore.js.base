@@ -63,9 +63,7 @@ this.Util_cubic_clipper = function(x){
    }
    else
    {
-      var _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if(_cond_20){
+      if((x >= 0.6666667)){
          return 0.6666667; 
       }
       else
@@ -127,21 +125,15 @@ this.Sawcore_ptr_w2 = function(phase,rate){
    var s1 = rate; 
    var s2 = (s1 + rate); 
    if((phase < s1)){
-      var d = 0.0; 
-      d = (phase / rate); 
-      var t2 = 0.0; 
-      t2 = (s2 * 0.0009766); 
+      var d = (phase / rate); 
+      var t2 = (s2 * 0.0009766); 
       out = { field_0 : false, field_1 : (1. + (d * ((- d) + t2))) }; 
    }
    else
    {
-      var _cond_45 = false; 
-      _cond_45 = (phase < s2); 
-      if(_cond_45){
-         var d = 0.0; 
-         d = (phase / rate); 
-         var t2 = 0.0; 
-         t2 = (s2 * 0.0009766); 
+      if((phase < s2)){
+         var d = (phase / rate); 
+         var t2 = (s2 * 0.0009766); 
          out = { field_0 : false, field_1 : (3. + (d * ((-4.) + d + t2))) }; 
       }
       else
@@ -184,8 +176,7 @@ this.Sawcore_process = function(_ctx,cv,reset){
    if(_ctx.reset_state){
       var done = false; 
       var ptr = 0.0; 
-      var _call_49 = {}; 
-      _call_49 = this.Sawcore_ptr_w2(_ctx.phase,_ctx.rate); 
+      var _call_49 = this.Sawcore_ptr_w2(_ctx.phase,_ctx.rate); 
       done = _call_49.field_0; ptr = _call_49.field_1; 
       transition = ((ptr + 1.) * 0.5 * _ctx.reset_phase); 
       if(done){

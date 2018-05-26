@@ -63,9 +63,7 @@ this.Util_cubic_clipper = function(x){
    }
    else
    {
-      var _cond_20 = false; 
-      _cond_20 = (x >= 0.6666667); 
-      if(_cond_20){
+      if((x >= 0.6666667)){
          return 0.6666667; 
       }
       else
@@ -184,10 +182,8 @@ this.Blit_pulse_train = function(_ctx,cv,phase){
    }
    else
    {
-      var m_phase = 0.0; 
-      m_phase = ((this.real(_ctx.m) * pi_phase) % 1.); 
-      var numerator = 0.0; 
-      numerator = this.Tables_nsine(m_phase); 
+      var m_phase = ((this.real(_ctx.m) * pi_phase) % 1.); 
+      var numerator = this.Tables_nsine(m_phase); 
       out = (numerator / (_ctx.scale * denominator)); 
    }
    return out; 

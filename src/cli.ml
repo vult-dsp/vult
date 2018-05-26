@@ -30,6 +30,7 @@ let processArguments () : args =
       "-dparse",    (Arg.Unit   (fun () -> result.dparse   <-true)),      " Dumps the parse tree (default: off)";
       "-deps",      (Arg.Unit   (fun () -> result.deps     <-true)),      " Prints all file dependencies";
       "-ccode",     (Arg.Unit   (fun () -> result.code     <-CCode)),     " Converts the code to c (default: off)";
+      "-javacode",  (Arg.Unit   (fun () -> result.code     <-JavaCode)),  " Converts the code to java (default: off)";
       "-check",     (Arg.Unit   (fun () -> result.check    <-true)),      " Checks the code without generating any code (default: off)";
       "-jscode",    (Arg.Unit   (fun () -> result.code     <-JSCode)),    " Converts the code to javascript (default: off)";
       "-luacode",   (Arg.Unit   (fun () -> result.code     <-LuaCode)),   " Converts the code to lua (default: off)";

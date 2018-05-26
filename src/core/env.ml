@@ -571,7 +571,9 @@ let builtin_table =
       ["cos"]  , Scope.Function, Typ.Const.real_real (), false;
       ["floor"], Scope.Function, Typ.Const.real_real (), false;
       ["tanh"] , Scope.Function, Typ.Const.real_real (), false;
+      ["pow"]  , Scope.Function, Typ.Const.real_real_real (), false;
       ["cosh"] , Scope.Function, Typ.Const.real_real (), false;
+      ["sinh"] , Scope.Function, Typ.Const.real_real (), false;
       ["tan"]  , Scope.Function, Typ.Const.real_real (), false;
       ["sqrt"] , Scope.Function, Typ.Const.real_real (), false;
       ["clip"] , Scope.Function, Typ.Const.a_a_a_a (), false;

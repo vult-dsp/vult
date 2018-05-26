@@ -34,9 +34,11 @@ module ReplaceFunctionNames = struct
       Mapper.make "ReplaceFunctionNames.exp" @@ fun state exp ->
       match exp with
       | PCall(name,fname,args,attr) when attr.ext_fn = None ->
+         let data = Env.get state in
          let Id.Path(path), _, t = Env.lookupRaise Scope.Function state fname attr.loc in
          let final_name, attr =
             match !(t.Scope.ext_fn) with
+            | Some(n) when data.PassData.args.code = JavaCode -> ["External."^n], { attr with ext_fn = Some ("External."^n)}
             | Some(n) -> [n], { attr with ext_fn = Some n}
             | None -> path, attr
          in
