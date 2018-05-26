@@ -60,24 +60,24 @@ module Templates = struct
          *)
       {pla|
 class _tuple___real_real__ {
-   public float field_0;
-   public float field_1;
+   public double field_0;
+   public double field_1;
 
    public _tuple___real_real__() {
       this.field_0 = 0.0f;
       this.field_1 = 0.0f;
    }
 
-   public _tuple___real_real__(float field_0, float field_1) {
+   public _tuple___real_real__(double field_0, double field_1) {
       this.field_0 = field_0;
       this.field_1 = field_1;
    }
 };
 
-_tuple___real_real__ split(float x) {
+_tuple___real_real__ split(double x) {
    double integer = Math.floor(x);
    double fractional = x - integer;
-   return new _tuple___real_real__((float)integer, (float)fractional);
+   return new _tuple___real_real__((double)integer, (double)fractional);
 }
 
 int clip(int x, int minv, int maxv) {
@@ -88,7 +88,7 @@ int clip(int x, int minv, int maxv) {
    else return x;
 }
 
-float clip(float x, float minv, float maxv) {
+double clip(double x, double minv, double maxv) {
    if(x > maxv)
       return maxv;
    else if(x < minv)
@@ -102,8 +102,8 @@ int[] makeArray(int size, int init) {
    return a;
 }
 
-float[] makeArray(int size, float init) {
-   float a[] = new float[size];
+double[] makeArray(int size, double init) {
+   double a[] = new double[size];
    Arrays.fill(a, init);
    return a;
 }
@@ -112,65 +112,29 @@ boolean not(boolean x) {
    return !x;
 }
 
-float tanh(float x) {
-   return (float)Math.tanh(x);
+double int_to_float(int x) {
+   return (double)x;
 }
 
-float cos(float x) {
-   return (float)Math.cos(x);
-}
-
-float sin(float x) {
-   return (float)Math.sin(x);
-}
-
-float exp(float x) {
-   return (float)Math.exp(x);
-}
-
-float int_to_float(int x) {
-   return (float)x;
-}
-
-int float_to_int(float x) {
+int float_to_int(double x) {
    return (int)x;
 }
 
-float cosh(float x) {
-   return (float)Math.cosh(x);
-}
-
-float sinh(float x) {
-   return (float)Math.sinh(x);
-}
-
-float tan(float x) {
-   return (float)Math.tan(x);
-}
-
-float sqrt(float x) {
-   return (float)Math.sqrt(x);
-}
-
-float pow(float x, float y) {
-   return (float)Math.pow(x, y);
-}
-
-float floor(float x) {
-   return (float)Math.floor(x);
+double floor(double x) {
+   return (double)Math.floor(x);
 }
 
 static Random rand = new Random();
 
-float random() {
+double random() {
    return rand.nextFloat();
 }
 
-float get(float[] a, int i) {
+double get(double[] a, int i) {
    return a[i];
 }
 
-void set(float[] a, int i, float val) {
+void set(double[] a, int i, double val) {
    a[i] = val;
 }
 
@@ -182,7 +146,7 @@ void set(int[] a, int i, int val) {
    a[i] = val;
 }
 
-float[] wrap_array(float x[]) {
+double[] wrap_array(double x[]) {
    return x;
 }
 
@@ -244,6 +208,7 @@ let rec getInitValue (descr:type_descr) : Pla.t =
    | CTSimple("int") -> Pla.string "0"
    | CTSimple("abstract") -> Pla.string "0"
    | CTSimple("float") -> Pla.string  "0.0f"
+   | CTSimple("double") -> Pla.string  "0.0"
    | CTSimple("real") -> Pla.string  "0.0"
    | CTSimple("boolean") -> Pla.string  "false"
    | CTSimple("unit") -> Pla.string  "0"
