@@ -395,7 +395,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       if params.is_header then
          let tlhs = printLhsExp params true lhs in
          let te = printExp params value in
-         Some({pla|static final <#tlhs#> = <#te#>;|pla})
+         Some({pla|static <#tlhs#> = <#te#>;|pla})
       else None
 
    (* All other cases should be errors *)
@@ -412,9 +412,9 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       else begin
          match printStmt params body with
          | Some(tbody) ->
-            Some({pla|final <#ret#> <#name#s>(<#targs#>)<#tbody#><#>|pla})
+            Some({pla|private <#ret#> <#name#s>(<#targs#>)<#tbody#><#>|pla})
          (* Covers the case when the body is empty *)
-         | None -> Some({pla|final <#ret#> <#name#s>(<#targs#>){}<#>|pla})
+         | None -> Some({pla|private <#ret#> <#name#s>(<#targs#>){}<#>|pla})
       end
    (* Function declarations cotaining a single statement *)
    | CSFunction(ntype, name, args, body) ->
@@ -425,7 +425,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
          None
       else
          let tbody = CCOpt.get_or ~default:Pla.unit (printStmt params body) in
-         Some({pla|final <#ret#> <#name#s>(<#targs#>){<#tbody#>}<#>|pla})
+         Some({pla|private <#ret#> <#name#s>(<#targs#>){<#tbody#>}<#>|pla})
 
    (* Prints return x *)
    | CSReturn(e1) ->
@@ -485,7 +485,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
          in
          {pla|<#name#s>(){ <#init#> }|pla}
       in
-      Some({pla|class <#name#s> {<#tmembers#+> <#constructor_default#+> <#constructor#+> }<#>|pla})
+      Some({pla|private class <#name#s> {<#tmembers#+> <#constructor_default#+> <#constructor#+> }<#>|pla})
 
    (* Do not print type delcarations in implementation file *)
    | CSType(_, _) -> None
