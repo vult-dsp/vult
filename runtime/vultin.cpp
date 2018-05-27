@@ -216,6 +216,3 @@ void int_print(int value) { printf("%i\n", value); }
 void string_print(char *value) { printf("%s\n", value); }
 void bool_print(uint8_t value) { printf("%s\n", value ? "true" : "false"); }
 
-void float_split(float x, _tuple___real_real__ &output) {
-  output.field_1 = modff(x, &output.field_0);
-}

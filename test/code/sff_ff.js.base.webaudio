@@ -26,16 +26,32 @@
             this.wrap_array = function(a) { return a; }
             this.log = function(x) { console.log(x); }
          
-      this.Sff_ff_process = function(_ctx,a,b){
-   var _tuple_5 = { field_0 : (a + b), field_1 : (a + (- b)) }; 
-   return _tuple_5; 
+      this.Sff_ff__ctx_type_0_init = function(){
+   var _ctx = {}; 
+   _ctx.process_ret_1 = 0.; 
+   _ctx.process_ret_0 = 0.; 
+   return _ctx; 
 }
+this.Sff_ff_process_init = function() { return this.Sff_ff__ctx_type_0_init(); }
+this.Sff_ff_process = function(_ctx,a,b){
+   _ctx.process_ret_0 = (a + b); 
+   _ctx.process_ret_1 = (a + (- b)); 
+   return ; 
+}
+this.Sff_ff_process_ret_0_init = function() { return this.Sff_ff__ctx_type_0_init(); }
+this.Sff_ff_process_ret_0 = function(_ctx) { return _ctx.process_ret_0; }
+this.Sff_ff_process_ret_1_init = function() { return this.Sff_ff__ctx_type_0_init(); }
+this.Sff_ff_process_ret_1 = function(_ctx) { return _ctx.process_ret_1; }
+this.Sff_ff_noteOn_init = function() { return this.Sff_ff__ctx_type_0_init(); }
 this.Sff_ff_noteOn = function(_ctx,note,velocity,channel){
 }
+this.Sff_ff_noteOff_init = function() { return this.Sff_ff__ctx_type_0_init(); }
 this.Sff_ff_noteOff = function(_ctx,note,channel){
 }
+this.Sff_ff_controlChange_init = function() { return this.Sff_ff__ctx_type_0_init(); }
 this.Sff_ff_controlChange = function(_ctx,control,value,channel){
 }
+this.Sff_ff_default_init = function() { return this.Sff_ff__ctx_type_0_init(); }
 this.Sff_ff_default = function(_ctx){
 }
 
@@ -55,7 +71,7 @@ this.Sff_ff_default = function(_ctx){
    var out_1 = e.outputBuffer.getChannelData(1); 
 
    for (var n = 0; n < e.inputBuffer.length; n++) {
-             var ret = processor.Sff_ff_process(in_0[n],in_1[n],ret); 
+             var ret = processor.Sff_ff_process(processor.context,in_0[n],in_1[n],ret); 
    out_0[n] = ret.field_0; 
    out_1[n] = ret.field_1; 
     
@@ -63,16 +79,16 @@ this.Sff_ff_default = function(_ctx){
    }
 
    node.noteOn = function(note, velocity, channel){
-      if(velocity > 0) processor.Sff_ff_noteOn(note,velocity,channel);
-      else processor.Sff_ff_noteOff(note,channel);
+      if(velocity > 0) processor.Sff_ff_noteOn(processor.context,note,velocity,channel);
+      else processor.Sff_ff_noteOff(processor.context,note,channel);
    }
 
    node.noteOff = function(note, channel) {
-      processor.Sff_ff_noteOff(note,channel);
+      processor.Sff_ff_noteOff(processor.context,note,channel);
    }
 
    node.controlChange = function(control, value, channel) {
-      processor.Sff_ff_controlChange(control,value,channel);
+      processor.Sff_ff_controlChange(processor.context,control,value,channel);
    }
    return node;
    })

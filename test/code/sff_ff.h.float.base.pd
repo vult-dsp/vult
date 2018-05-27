@@ -8,15 +8,59 @@
 #include "vultin.h"
 #include <m_pd.h>
 
-void Sff_ff_process(float a, float b, _tuple___real_real__ &_output_);
+typedef struct _tuple___real_real__ {
+   float field_0;
+   float field_1;
+} _tuple___real_real__;
 
-void Sff_ff_noteOn(int note, int velocity, int channel);
+typedef struct Sff_ff__ctx_type_0 {
+   float process_ret_1;
+   float process_ret_0;
+} Sff_ff__ctx_type_0;
 
-void Sff_ff_noteOff(int note, int channel);
+typedef Sff_ff__ctx_type_0 Sff_ff_process_type;
 
-void Sff_ff_controlChange(int control, int value, int channel);
+void Sff_ff__ctx_type_0_init(Sff_ff__ctx_type_0 &_output_);
 
-void Sff_ff_default();
+void Sff_ff_process_init(Sff_ff__ctx_type_0 &_output_);
+
+void Sff_ff_process(Sff_ff__ctx_type_0 &_ctx, float a, float b);
+
+typedef Sff_ff__ctx_type_0 Sff_ff_process_ret_0_type;
+
+void Sff_ff_process_ret_0_init(Sff_ff__ctx_type_0 &_output_);
+
+float Sff_ff_process_ret_0(Sff_ff__ctx_type_0 &_ctx);
+
+typedef Sff_ff__ctx_type_0 Sff_ff_process_ret_1_type;
+
+void Sff_ff_process_ret_1_init(Sff_ff__ctx_type_0 &_output_);
+
+float Sff_ff_process_ret_1(Sff_ff__ctx_type_0 &_ctx);
+
+typedef Sff_ff__ctx_type_0 Sff_ff_noteOn_type;
+
+void Sff_ff_noteOn_init(Sff_ff__ctx_type_0 &_output_);
+
+void Sff_ff_noteOn(Sff_ff__ctx_type_0 &_ctx, int note, int velocity, int channel);
+
+typedef Sff_ff__ctx_type_0 Sff_ff_noteOff_type;
+
+void Sff_ff_noteOff_init(Sff_ff__ctx_type_0 &_output_);
+
+void Sff_ff_noteOff(Sff_ff__ctx_type_0 &_ctx, int note, int channel);
+
+typedef Sff_ff__ctx_type_0 Sff_ff_controlChange_type;
+
+void Sff_ff_controlChange_init(Sff_ff__ctx_type_0 &_output_);
+
+void Sff_ff_controlChange(Sff_ff__ctx_type_0 &_ctx, int control, int value, int channel);
+
+typedef Sff_ff__ctx_type_0 Sff_ff_default_type;
+
+void Sff_ff_default_init(Sff_ff__ctx_type_0 &_output_);
+
+void Sff_ff_default(Sff_ff__ctx_type_0 &_ctx);
 
 
 

@@ -172,6 +172,8 @@ void Ahr__ctx_type_0_init(Ahr__ctx_type_0 &_output_){
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.out = 0x0 /* 0.000000 */;
    _ctx.hold_phase = 0x0 /* 0.000000 */;
+   _ctx.do_ret_1 = 0x0 /* 0.000000 */;
+   _ctx.do_ret_0 = 0x0 /* 0.000000 */;
    Util__ctx_type_0_init(_ctx._inst25);
    Util__ctx_type_0_init(_ctx._inst23);
    _output_ = _ctx;
@@ -183,7 +185,7 @@ void Ahr_do_init(Ahr__ctx_type_0 &_output_){
    return ;
 }
 
-void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r, _tuple___real_real__ &_output_){
+void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r){
    int release;
    release = 0;
    int attack;
@@ -247,17 +249,29 @@ void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r
       _ctx.target = 0x0 /* 0.000000 */;
    }
    _ctx.out = (_ctx.out + fix_mul(fix_mul((_ctx.target + (- _ctx.out)),_ctx.rate),0x147 /* 0.005000 */));
-   _tuple___real_real__ _tuple_50;
-   {
-      _tuple_50.field_0 = fix_clip((_ctx.out >> 10),0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
-      _tuple_50.field_1 = resetting;
-   }
-   _output_ = _tuple_50;
+   _ctx.do_ret_0 = fix_clip((_ctx.out >> 10),0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
+   _ctx.do_ret_1 = resetting;
    return ;
 }
 
+void Ahr_do_ret_0_init(Ahr__ctx_type_0 &_output_){
+   Ahr__ctx_type_0_init(_output_);
+   return ;
+}
+
+fix16_t Ahr_do_ret_0(Ahr__ctx_type_0 &_ctx){return _ctx.do_ret_0;}
+
+void Ahr_do_ret_1_init(Ahr__ctx_type_0 &_output_){
+   Ahr__ctx_type_0_init(_output_);
+   return ;
+}
+
+fix16_t Ahr_do_ret_1(Ahr__ctx_type_0 &_ctx){return _ctx.do_ret_1;}
+
 void Ahr__ctx_type_1_init(Ahr__ctx_type_1 &_output_){
    Ahr__ctx_type_1 _ctx;
+   _ctx.process_ret_1 = 0x0 /* 0.000000 */;
+   _ctx.process_ret_0 = 0x0 /* 0.000000 */;
    _ctx.knob3 = 0x0 /* 0.000000 */;
    _ctx.knob2 = 0x0 /* 0.000000 */;
    _ctx.knob1 = 0x0 /* 0.000000 */;
@@ -271,12 +285,26 @@ void Ahr_process_init(Ahr__ctx_type_1 &_output_){
    return ;
 }
 
-void Ahr_process(Ahr__ctx_type_1 &_ctx, fix16_t gate, _tuple___real_real__ &_output_){
-   _tuple___real_real__ _call_53;
-   Ahr_do(_ctx._inst34,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_call_53);
-   _output_ = _call_53;
+void Ahr_process(Ahr__ctx_type_1 &_ctx, fix16_t gate){
+   Ahr_do(_ctx._inst34,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
+   _ctx.process_ret_0 = Ahr_do_ret_0(_ctx._inst34);
+   _ctx.process_ret_1 = Ahr_do_ret_1(_ctx._inst34);
    return ;
 }
+
+void Ahr_process_ret_0_init(Ahr__ctx_type_1 &_output_){
+   Ahr__ctx_type_1_init(_output_);
+   return ;
+}
+
+fix16_t Ahr_process_ret_0(Ahr__ctx_type_1 &_ctx){return _ctx.process_ret_0;}
+
+void Ahr_process_ret_1_init(Ahr__ctx_type_1 &_output_){
+   Ahr__ctx_type_1_init(_output_);
+   return ;
+}
+
+fix16_t Ahr_process_ret_1(Ahr__ctx_type_1 &_ctx){return _ctx.process_ret_1;}
 
 void Ahr_noteOn_init(Ahr__ctx_type_1 &_output_){
    Ahr__ctx_type_1_init(_output_);
@@ -300,19 +328,19 @@ void Ahr_controlChange_init(Ahr__ctx_type_1 &_output_){
 }
 
 void Ahr_controlChange(Ahr__ctx_type_1 &_ctx, int control, int value, int channel){
-   uint8_t _cond_55;
-   _cond_55 = (control == 1);
-   if(_cond_55){
+   uint8_t _cond_53;
+   _cond_53 = (control == 1);
+   if(_cond_53){
       _ctx.knob1 = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    }
-   uint8_t _cond_56;
-   _cond_56 = (control == 2);
-   if(_cond_56){
+   uint8_t _cond_54;
+   _cond_54 = (control == 2);
+   if(_cond_54){
       _ctx.knob2 = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    }
-   uint8_t _cond_57;
-   _cond_57 = (control == 3);
-   if(_cond_57){
+   uint8_t _cond_55;
+   _cond_55 = (control == 3);
+   if(_cond_55){
       _ctx.knob3 = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    }
 }

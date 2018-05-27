@@ -388,6 +388,7 @@ module BindComplexExpressions = struct
       let exp : (stmt list Env.t,exp) Mapper.mapper_func =
          Mapper.make "BindComplexHelper.exp" @@ fun state exp ->
          match exp with
+         (*
          | PCall(_, _, _, ({ typ = Some(typ) } as attr)) when not (Typ.isSimpleType typ) ->
             let n,state' = Env.tick state in
             let var_name = "_call_" ^ (string_of_int n) in
@@ -398,6 +399,7 @@ module BindComplexExpressions = struct
             let acc      = Env.get state' in
             let state'   = Env.set state' (bind::decl::acc) in
             state',exp'
+            *)
          | PTuple(_,attr) ->
             let n,state' = Env.tick state in
             let var_name = "_tuple_" ^ (string_of_int n) in
@@ -507,12 +509,40 @@ module ProcessArrays = struct
 
 end
 
+module ChangeTupleReturnCalls = struct
+
+   let createReturnTuple inst fname typ =
+      match !typ with
+      | Typ.TComposed(_, elems,_) ->
+         let telems =
+            List.mapi
+               (fun i typ ->
+                   let id = Inference.varReturnName fname i in
+                   PCall(inst, id, [], { emptyAttr with typ = Some typ})) elems
+         in
+         PTuple(telems,{ emptyAttr with typ = Some typ} )
+      | _ -> failwith "this should be a tuple"
+
+   let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
+      Mapper.makeExpander "ChangeTupleReturnCalls.stmt_x" @@ fun state stmt ->
+      match stmt with
+      | StmtBind(LWild _, PCall _ , _) -> state, [stmt]
+      | StmtBind(lhs, (PCall(inst, fname, _, { typ = Some(typ) }) as rhs), attr) when Typ.isTuple typ ->
+         let tuple = createReturnTuple inst fname typ in
+         reapply state, [StmtBind(LWild emptyAttr, rhs, attr); StmtBind(lhs, tuple, attr)]
+      | _ -> state, [stmt]
+
+   let mapper = Mapper.{ default_mapper with stmt_x }
+
+end
+
 let run =
    UnlinkTypes.mapper
    |> Mapper.seq ReportUnboundTypes.mapper
    |> Mapper.seq SplitMem.mapper
    |> Mapper.seq Simplify.mapper
    |> Mapper.seq SimplifyIfExp.mapper
+   |> Mapper.seq ChangeTupleReturnCalls.mapper
    |> Mapper.seq BindComplexExpressions.mapper
    |> Mapper.seq ProcessArrays.mapper
    |> Mapper.seq ConflictingDeclarations.mapper

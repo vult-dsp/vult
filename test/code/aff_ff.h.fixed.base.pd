@@ -8,8 +8,15 @@
 #include "vultin.h"
 #include <m_pd.h>
 
+typedef struct _tuple___real_real__ {
+   fix16_t field_0;
+   fix16_t field_1;
+} _tuple___real_real__;
+
 typedef struct Aff_ff__ctx_type_0 {
    int x;
+   fix16_t process_ret_1;
+   fix16_t process_ret_0;
 } Aff_ff__ctx_type_0;
 
 typedef Aff_ff__ctx_type_0 Aff_ff_process_type;
@@ -18,7 +25,19 @@ void Aff_ff__ctx_type_0_init(Aff_ff__ctx_type_0 &_output_);
 
 void Aff_ff_process_init(Aff_ff__ctx_type_0 &_output_);
 
-void Aff_ff_process(Aff_ff__ctx_type_0 &_ctx, fix16_t a, fix16_t b, _tuple___real_real__ &_output_);
+void Aff_ff_process(Aff_ff__ctx_type_0 &_ctx, fix16_t a, fix16_t b);
+
+typedef Aff_ff__ctx_type_0 Aff_ff_process_ret_0_type;
+
+void Aff_ff_process_ret_0_init(Aff_ff__ctx_type_0 &_output_);
+
+fix16_t Aff_ff_process_ret_0(Aff_ff__ctx_type_0 &_ctx);
+
+typedef Aff_ff__ctx_type_0 Aff_ff_process_ret_1_type;
+
+void Aff_ff_process_ret_1_init(Aff_ff__ctx_type_0 &_output_);
+
+fix16_t Aff_ff_process_ret_1(Aff_ff__ctx_type_0 &_ctx);
 
 typedef Aff_ff__ctx_type_0 Aff_ff_noteOn_type;
 

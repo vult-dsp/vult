@@ -17,6 +17,8 @@ typedef struct _tuple___real_int__ {
 
 typedef struct Afi_fi__ctx_type_0 {
    int x;
+   int process_ret_1;
+   fix16_t process_ret_0;
 } Afi_fi__ctx_type_0;
 
 typedef Afi_fi__ctx_type_0 Afi_fi_process_type;
@@ -25,7 +27,19 @@ void Afi_fi__ctx_type_0_init(Afi_fi__ctx_type_0 &_output_);
 
 void Afi_fi_process_init(Afi_fi__ctx_type_0 &_output_);
 
-void Afi_fi_process(Afi_fi__ctx_type_0 &_ctx, fix16_t a, int b, _tuple___real_int__ &_output_);
+void Afi_fi_process(Afi_fi__ctx_type_0 &_ctx, fix16_t a, int b);
+
+typedef Afi_fi__ctx_type_0 Afi_fi_process_ret_0_type;
+
+void Afi_fi_process_ret_0_init(Afi_fi__ctx_type_0 &_output_);
+
+fix16_t Afi_fi_process_ret_0(Afi_fi__ctx_type_0 &_ctx);
+
+typedef Afi_fi__ctx_type_0 Afi_fi_process_ret_1_type;
+
+void Afi_fi_process_ret_1_init(Afi_fi__ctx_type_0 &_output_);
+
+int Afi_fi_process_ret_1(Afi_fi__ctx_type_0 &_ctx);
 
 typedef Afi_fi__ctx_type_0 Afi_fi_noteOn_type;
 

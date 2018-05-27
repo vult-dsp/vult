@@ -231,6 +231,59 @@ let inferApply (loc:Loc.t Lazy.t) (args:exp list) (args_typ:Typ.t list) (ret_typ
    inferApplyArg args args_typ fn_args;
    unifyRaise loc fn_ret_type ret_type
 
+let varReturnName name n =
+   Id.postfix name ("_ret_" ^ (string_of_int n))
+
+(* Instead of returning tuples, use the context to return the values *)
+let addMemForReturnTuple fname typ env =
+   match !(Typ.unlink typ) with
+   | Typ.TComposed(["tuple"], elems, loc) ->
+      let loc = CCOpt.get_or ~default:Loc.default loc in
+      let attr = { emptyAttr with loc} in
+      let env, _ =
+         List.fold_left
+            (fun (env, i) typ ->
+                let id = varReturnName fname i in
+                Env.addMem env id typ attr, i + 1)
+            (env, 0) elems
+      in
+      env, elems
+   | _ -> env, []
+
+let createLhsTuple fname typ_list =
+   let elems =
+      List.mapi
+         (fun i typ ->
+             let id = varReturnName fname i in
+             LId(id, Some [typ], emptyAttr))
+         typ_list
+   in
+   LTuple(elems, emptyAttr)
+
+let rec replaceTupleReturn stmts (tuple:lhs_exp) =
+   match stmts with
+   | [] -> []
+   | StmtReturn(e, attr) :: t ->
+      StmtBind(tuple, e, attr) :: StmtReturn(PUnit emptyAttr, attr) :: replaceTupleReturn t tuple
+   | h :: t ->
+      replaceTupleReturnBlock h tuple :: replaceTupleReturn t tuple
+
+and replaceTupleReturnBlock (stmt:stmt) (tuple:lhs_exp) : stmt =
+   match stmt with
+   | StmtBlock (scope, stmts, attr) ->
+      let stmts = replaceTupleReturn stmts tuple in
+      StmtBlock (scope, stmts, attr)
+   | StmtIf(cond, then_, else_, attr)  ->
+      StmtIf(cond, replaceTupleReturnBlock then_ tuple, CCOpt.map (fun a -> replaceTupleReturnBlock a tuple) else_, attr)
+   | StmtWhile(cond, body, attr)  ->
+      StmtWhile(cond, replaceTupleReturnBlock body tuple, attr)
+   | _ -> stmt
+
+let makeBlock stmts =
+   match stmts with
+   | [stmt] -> stmt
+   | _ -> StmtBlock(None, stmts, emptyAttr)
+
 let addInstance (env:'a Env.t) (isactive:bool) (name:Id.t option) (typ:Typ.t) (attr:attr) : 'a Env.t * Id.t option =
    if isactive then
       match name with
@@ -245,7 +298,24 @@ let addInstance (env:'a Env.t) (isactive:bool) (name:Id.t option) (typ:Typ.t) (a
    else
       env, None
 
-let rec inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * Typ.t =
+let createReturnTupleFunction name typ i =
+   let id = varReturnName name i in
+   let body = StmtReturn(PId(id, { emptyAttr with typ = Some typ }), emptyAttr) in
+   id, [], body, Some typ, { emptyAttr with fun_and = true; active = true }
+
+let rec attachReturnTupleFunctions name elems env =
+   let env, _, fns =
+      List.fold_left
+         (fun (env, i, acc) elem ->
+             let fname, args, body, ret, attr = createReturnTupleFunction name elem i in
+             let stmt = StmtFun(fname, args, body, ret, attr) in
+             let _body, env, _ = inferStmt env (GivenType elem) stmt in
+             env, i + 1, stmt :: acc)
+         (env, 0, []) elems
+   in
+   env, fns
+
+and inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * Typ.t =
    match e with
    | LWild(attr) ->
       let typ = Typ.newvar () in
@@ -417,7 +487,7 @@ and inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * Typ.t =
    | PSeq(name, stmt, attr) ->
       let stmt', _, ret_type = inferStmt env NoType stmt in
       let typ = getReturnType ret_type in
-      PSeq(name, stmt', { attr with typ = Some(typ)}), env, typ
+      PSeq(name, makeBlock stmt', { attr with typ = Some(typ)}), env, typ
    | PEmpty -> PEmpty, env, Typ.Const.unit_type
 
 and inferExpList (env:'a Env.t) (elems:exp list) : exp list * 'a Env.t * Typ.t list =
@@ -450,29 +520,29 @@ and inferOptExp (env:'a Env.t) (e:exp option) : exp option * 'a Env.t * Typ.t =
       let e', env', typ = inferExp env e in
       Some(e'), env', typ
 
-and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.t * return_type =
+and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt list * 'a Env.t * return_type =
    match stmt with
    | StmtVal(lhs, rhs, attr) ->
       let lhs', lhs_typ = inferLhsExp `Val env lhs in
       let rhs', env', rhs_typ = inferOptExp env rhs in
       unifyRaise (expOptLoc rhs) lhs_typ rhs_typ;
       let env' = addLhsToEnv `Val env' lhs' in
-      StmtVal(lhs', rhs', attr), env', ret_type
+      [StmtVal(lhs', rhs', attr)], env', ret_type
    | StmtMem(lhs, rhs, attr) ->
       let lhs', lhs_typ = inferLhsExp `Mem env lhs in
       let env'          = addLhsToEnv `Mem env lhs' in
       let rhs', env', rhs_typ = inferOptExp env' rhs in
       unifyRaise (expOptLoc rhs') lhs_typ rhs_typ;
-      StmtMem(lhs', rhs', attr), env', ret_type
+      [StmtMem(lhs', rhs', attr)], env', ret_type
    | StmtReturn(e, attr) ->
       let e', env', typ = inferExp env e in
       let ret_type'     = unifyReturn (expLoc e) ret_type (ReturnType(typ)) in
-      StmtReturn(e', attr), env', ret_type'
+      [StmtReturn(e', attr)], env', ret_type'
    | StmtBind(lhs, rhs, attr) ->
       let lhs', lhs_typ       = inferLhsExp `None env lhs in
       let rhs', env', rhs_typ = inferExp env rhs in
       unifyRaise (expLoc rhs') lhs_typ rhs_typ;
-      StmtBind(lhs', rhs', attr), env', ret_type
+      [StmtBind(lhs', rhs', attr)], env', ret_type
    | StmtBlock(name, stmts, attr) ->
       let env' = Env.enterBlock env in
       let env', name' =
@@ -484,7 +554,7 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       in
       let stmts', env', stmt_ret_type = inferStmtList env' ret_type stmts in
       let env' = Env.exitBlock env' in
-      StmtBlock(name', stmts', attr), env', stmt_ret_type
+      [StmtBlock(name', stmts', attr)], env', stmt_ret_type
    | StmtFun(name, args, body, ret_type, attr) ->
       let env'                = Env.addFunction env name attr in
       let env'                = Env.enter Scope.Function env' name attr in
@@ -496,25 +566,31 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
       let env'                = Env.setCurrentType env' typ true in
       let body', env', body_ret = inferStmt env' (makeReturnType ret_type') body in
       let last_type           = getReturnType body_ret in
+      (* all this code prepare the function to return tuples with the context *)
+      let env', telems        = addMemForReturnTuple name last_type env' in
+      let body'               = if telems = [] then body' else replaceTupleReturn body' (createLhsTuple name telems) in
+      let body'               = makeBlock body' in
       let env'                = Env.exit env' in
       let  _                  = raiseReturnError (attrLoc attr) ret_type' body_ret in
-      unifyRaise (stmtLoc stmt) possible_ret_type last_type;
-      StmtFun(name, args', body', Some(last_type), attr), env', NoType
+      let ()                  = unifyRaise (stmtLoc stmt) possible_ret_type last_type in
+      let env', fns           = attachReturnTupleFunctions name telems env' in
+      fns @ [StmtFun(name, args', body', Some(last_type), attr)], env', NoType
+
    | StmtIf(cond, then_, else_, attr) ->
       let cond', env', cond_type  = inferExp env cond in
       unifyRaise (expLoc cond') (Typ.Const.bool_type) cond_type;
       let then_', env', ret_type' = inferStmt env' ret_type then_ in
       let else_', env', ret_type' = inferOptStmt env' ret_type' else_ in
-      StmtIf(cond', then_', else_', attr), env', ret_type'
+      [StmtIf(cond', makeBlock then_', else_', attr)], env', ret_type'
    | StmtWhile(cond, body, attr) ->
       let cond', env', cond_type  = inferExp env cond in
       unifyRaise (expLoc cond') (Typ.Const.bool_type) cond_type;
       let body', env', ret_type' = inferStmt env' ret_type body in
-      StmtWhile(cond', body', attr), env', ret_type'
+      [StmtWhile(cond', makeBlock body', attr)], env', ret_type'
    | StmtType(name, members, attr) ->
-      StmtType(name, members, attr), env, ret_type
+      [StmtType(name, members, attr)], env, ret_type
    | StmtAliasType (name, alias, attr) ->
-      StmtAliasType (name, alias, attr), env, ret_type
+      [StmtAliasType (name, alias, attr)], env, ret_type
    | StmtExternal(name, args, fun_ret_type, linkname, attr) ->
       let env' = Env.addFunction env name attr in
       let env' = Env.enter Scope.Function env' name attr in
@@ -531,8 +607,8 @@ and inferStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt) : stmt * 'a Env.
          else
             env', attr
       in
-      StmtExternal(name, args', fun_ret_type, linkname, attr), env', ret_type
-   | StmtEmpty -> StmtEmpty, env, ret_type
+      [StmtExternal(name, args', fun_ret_type, linkname, attr)], env', ret_type
+   | StmtEmpty -> [StmtEmpty], env, ret_type
 
 
 and inferStmtList (env:'a Env.t) (ret_type_in:return_type) (stmts:stmt list) : stmt list * 'a Env.t * return_type =
@@ -540,7 +616,7 @@ and inferStmtList (env:'a Env.t) (ret_type_in:return_type) (stmts:stmt list) : s
       List.fold_left
          (fun (stmts, env, ret_type) stmt ->
              let stmt', env', ret_type' = inferStmt env ret_type stmt in
-             stmt' :: stmts, env', ret_type')
+             stmt' @ stmts, env', ret_type')
          ([], env, ret_type_in)
          stmts
    in (List.rev stmts'), env', ret_type'
@@ -550,7 +626,7 @@ and inferOptStmt (env:'a Env.t) (ret_type:return_type) (stmt:stmt option) : stmt
    | None -> None, env, ret_type
    | Some(s) ->
       let s', s_type, s_ret_type = inferStmt env ret_type s in
-      Some(s'), s_type, s_ret_type
+      Some(makeBlock s'), s_type, s_ret_type
 
 let inferFile state (results:parser_results) =
    let module_name = [moduleName results.file] in

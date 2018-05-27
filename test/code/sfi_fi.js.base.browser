@@ -26,16 +26,32 @@ function vultProcess() {
          
            this.Sfi_fi_process_init = null;
            this.Sfi_fi_default = null;
-           this.Sfi_fi_process = function(_ctx,a,b){
-   var _tuple_5 = { field_0 : a, field_1 : b }; 
-   return _tuple_5; 
+           this.Sfi_fi__ctx_type_0_init = function(){
+   var _ctx = {}; 
+   _ctx.process_ret_1 = ((0|0)|0); 
+   _ctx.process_ret_0 = 0.; 
+   return _ctx; 
 }
+this.Sfi_fi_process_init = function() { return this.Sfi_fi__ctx_type_0_init(); }
+this.Sfi_fi_process = function(_ctx,a,b){
+   _ctx.process_ret_0 = a; 
+   _ctx.process_ret_1 = (b|0); 
+   return ; 
+}
+this.Sfi_fi_process_ret_0_init = function() { return this.Sfi_fi__ctx_type_0_init(); }
+this.Sfi_fi_process_ret_0 = function(_ctx) { return _ctx.process_ret_0; }
+this.Sfi_fi_process_ret_1_init = function() { return this.Sfi_fi__ctx_type_0_init(); }
+this.Sfi_fi_process_ret_1 = function(_ctx) { return _ctx.process_ret_1; }
+this.Sfi_fi_noteOn_init = function() { return this.Sfi_fi__ctx_type_0_init(); }
 this.Sfi_fi_noteOn = function(_ctx,note,velocity,channel){
 }
+this.Sfi_fi_noteOff_init = function() { return this.Sfi_fi__ctx_type_0_init(); }
 this.Sfi_fi_noteOff = function(_ctx,note,channel){
 }
+this.Sfi_fi_controlChange_init = function() { return this.Sfi_fi__ctx_type_0_init(); }
 this.Sfi_fi_controlChange = function(_ctx,control,value,channel){
 }
+this.Sfi_fi_default_init = function() { return this.Sfi_fi__ctx_type_0_init(); }
 this.Sfi_fi_default = function(_ctx){
 }
 

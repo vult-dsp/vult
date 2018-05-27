@@ -173,6 +173,9 @@ this.Monocv_mono_isGateOn = function(_ctx){
 this.Monocv__ctx_type_1_init = function(){
    var _ctx = {}; 
    _ctx.vel = 0.; 
+   _ctx.process_ret_2 = 0.; 
+   _ctx.process_ret_1 = 0.; 
+   _ctx.process_ret_0 = 0.; 
    _ctx.notes = this.Monocv__ctx_type_0_init(); 
    _ctx.gate = 0.; 
    _ctx.cv = 0.; 
@@ -191,9 +194,17 @@ this.Monocv_process = function(_ctx,c){
    if(this.Util_change(_ctx._inst34,note)){
       _ctx.cv = this.Util_pitchToCv(note); 
    }
-   var _tuple_50 = { field_0 : _ctx.cv, field_1 : _ctx.vel, field_2 : _ctx.gate }; 
-   return _tuple_50; 
+   _ctx.process_ret_0 = _ctx.cv; 
+   _ctx.process_ret_1 = _ctx.vel; 
+   _ctx.process_ret_2 = _ctx.gate; 
+   return ; 
 }
+this.Monocv_process_ret_0_init = function() { return this.Monocv__ctx_type_1_init(); }
+this.Monocv_process_ret_0 = function(_ctx) { return _ctx.process_ret_0; }
+this.Monocv_process_ret_1_init = function() { return this.Monocv__ctx_type_1_init(); }
+this.Monocv_process_ret_1 = function(_ctx) { return _ctx.process_ret_1; }
+this.Monocv_process_ret_2_init = function() { return this.Monocv__ctx_type_1_init(); }
+this.Monocv_process_ret_2 = function(_ctx) { return _ctx.process_ret_2; }
 this.Monocv_noteOn_init = function() { return this.Monocv__ctx_type_1_init(); }
 this.Monocv_noteOn = function(_ctx,note,velocity,channel){
    if((_ctx.channel_in == channel)){

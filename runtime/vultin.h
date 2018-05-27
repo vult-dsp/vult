@@ -184,13 +184,6 @@ void int_print(int value);
 void string_print(char *value);
 void bool_print(uint8_t value);
 
-typedef struct _tuple___real_real__ {
-  float field_0;
-  float field_1;
-} _tuple___real_real__;
-
-void float_split(float x, _tuple___real_real__ &output);
-
 #ifdef __cplusplus
 }
 #endif

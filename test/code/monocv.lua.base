@@ -276,6 +276,9 @@ end
 function this.Monocv__ctx_type_1_init()
    local _ctx = {}; 
    _ctx.vel = 0.; 
+   _ctx.process_ret_2 = 0.; 
+   _ctx.process_ret_1 = 0.; 
+   _ctx.process_ret_0 = 0.; 
    _ctx.notes = this.Monocv__ctx_type_0_init(); 
    _ctx.gate = 0.; 
    _ctx.cv = 0.; 
@@ -303,9 +306,35 @@ function this.Monocv_process(_ctx,c)
       _ctx.cv = this.Util_pitchToCv(note); 
 
    end
-   local _tuple_50 = { field_0 = _ctx.cv, field_1 = _ctx.vel, field_2 = _ctx.gate }; 
-   return _tuple_50; 
+   _ctx.process_ret_0 = _ctx.cv; 
+   _ctx.process_ret_1 = _ctx.vel; 
+   _ctx.process_ret_2 = _ctx.gate; 
+   return ; 
 
+end
+
+function this.Monocv_process_ret_0_init()
+   return this.Monocv__ctx_type_1_init(); 
+end
+
+function this.Monocv_process_ret_0(_ctx)
+   return _ctx.process_ret_0; 
+end
+
+function this.Monocv_process_ret_1_init()
+   return this.Monocv__ctx_type_1_init(); 
+end
+
+function this.Monocv_process_ret_1(_ctx)
+   return _ctx.process_ret_1; 
+end
+
+function this.Monocv_process_ret_2_init()
+   return this.Monocv__ctx_type_1_init(); 
+end
+
+function this.Monocv_process_ret_2(_ctx)
+   return _ctx.process_ret_2; 
 end
 
 function this.Monocv_noteOn_init()

@@ -4,6 +4,14 @@ this.Gates_velToCV = function(vel){
 this.Gates__ctx_type_1_init = function(){
    var _ctx = {}; 
    _ctx.vel = this.makeArray((8|0),(0|0)); 
+   _ctx.gates_state_ret_7 = 0.; 
+   _ctx.gates_state_ret_6 = 0.; 
+   _ctx.gates_state_ret_5 = 0.; 
+   _ctx.gates_state_ret_4 = 0.; 
+   _ctx.gates_state_ret_3 = 0.; 
+   _ctx.gates_state_ret_2 = 0.; 
+   _ctx.gates_state_ret_1 = 0.; 
+   _ctx.gates_state_ret_0 = 0.; 
    return _ctx; 
 }
 this.Gates_gates_noteOn_init = function() { return this.Gates__ctx_type_1_init(); }
@@ -30,11 +38,42 @@ this.Gates_gates_state = function(_ctx){
    var vel6 = this.Gates_velToCV(this.get(_ctx.vel,(5|0))); 
    var vel7 = this.Gates_velToCV(this.get(_ctx.vel,(6|0))); 
    var vel8 = this.Gates_velToCV(this.get(_ctx.vel,(7|0))); 
-   var _tuple_15 = { field_0 : vel1, field_1 : vel2, field_2 : vel3, field_3 : vel4, field_4 : vel5, field_5 : vel6, field_6 : vel7, field_7 : vel8 }; 
-   return _tuple_15; 
+   _ctx.gates_state_ret_0 = vel1; 
+   _ctx.gates_state_ret_1 = vel2; 
+   _ctx.gates_state_ret_2 = vel3; 
+   _ctx.gates_state_ret_3 = vel4; 
+   _ctx.gates_state_ret_4 = vel5; 
+   _ctx.gates_state_ret_5 = vel6; 
+   _ctx.gates_state_ret_6 = vel7; 
+   _ctx.gates_state_ret_7 = vel8; 
+   return ; 
 }
+this.Gates_gates_state_ret_0_init = function() { return this.Gates__ctx_type_1_init(); }
+this.Gates_gates_state_ret_0 = function(_ctx) { return _ctx.gates_state_ret_0; }
+this.Gates_gates_state_ret_1_init = function() { return this.Gates__ctx_type_1_init(); }
+this.Gates_gates_state_ret_1 = function(_ctx) { return _ctx.gates_state_ret_1; }
+this.Gates_gates_state_ret_2_init = function() { return this.Gates__ctx_type_1_init(); }
+this.Gates_gates_state_ret_2 = function(_ctx) { return _ctx.gates_state_ret_2; }
+this.Gates_gates_state_ret_3_init = function() { return this.Gates__ctx_type_1_init(); }
+this.Gates_gates_state_ret_3 = function(_ctx) { return _ctx.gates_state_ret_3; }
+this.Gates_gates_state_ret_4_init = function() { return this.Gates__ctx_type_1_init(); }
+this.Gates_gates_state_ret_4 = function(_ctx) { return _ctx.gates_state_ret_4; }
+this.Gates_gates_state_ret_5_init = function() { return this.Gates__ctx_type_1_init(); }
+this.Gates_gates_state_ret_5 = function(_ctx) { return _ctx.gates_state_ret_5; }
+this.Gates_gates_state_ret_6_init = function() { return this.Gates__ctx_type_1_init(); }
+this.Gates_gates_state_ret_6 = function(_ctx) { return _ctx.gates_state_ret_6; }
+this.Gates_gates_state_ret_7_init = function() { return this.Gates__ctx_type_1_init(); }
+this.Gates_gates_state_ret_7 = function(_ctx) { return _ctx.gates_state_ret_7; }
 this.Gates__ctx_type_2_init = function(){
    var _ctx = {}; 
+   _ctx.process_ret_7 = 0.; 
+   _ctx.process_ret_6 = 0.; 
+   _ctx.process_ret_5 = 0.; 
+   _ctx.process_ret_4 = 0.; 
+   _ctx.process_ret_3 = 0.; 
+   _ctx.process_ret_2 = 0.; 
+   _ctx.process_ret_1 = 0.; 
+   _ctx.process_ret_0 = 0.; 
    _ctx.gates = this.Gates__ctx_type_1_init(); 
    _ctx.channel_in = ((0|0)|0); 
    return _ctx; 
@@ -42,9 +81,33 @@ this.Gates__ctx_type_2_init = function(){
 this.Gates_process_init = function() { return this.Gates__ctx_type_2_init(); }
 this.Gates_process = function(_ctx,c){
    _ctx.channel_in = (c|0); 
-   var _call_17 = this.Gates_gates_state(_ctx.gates); 
-   return _call_17; 
+   this.Gates_gates_state(_ctx.gates);
+   _ctx.process_ret_0 = this.Gates_gates_state_ret_0(_ctx.gates); 
+   _ctx.process_ret_1 = this.Gates_gates_state_ret_1(_ctx.gates); 
+   _ctx.process_ret_2 = this.Gates_gates_state_ret_2(_ctx.gates); 
+   _ctx.process_ret_3 = this.Gates_gates_state_ret_3(_ctx.gates); 
+   _ctx.process_ret_4 = this.Gates_gates_state_ret_4(_ctx.gates); 
+   _ctx.process_ret_5 = this.Gates_gates_state_ret_5(_ctx.gates); 
+   _ctx.process_ret_6 = this.Gates_gates_state_ret_6(_ctx.gates); 
+   _ctx.process_ret_7 = this.Gates_gates_state_ret_7(_ctx.gates); 
+   return ; 
 }
+this.Gates_process_ret_0_init = function() { return this.Gates__ctx_type_2_init(); }
+this.Gates_process_ret_0 = function(_ctx) { return _ctx.process_ret_0; }
+this.Gates_process_ret_1_init = function() { return this.Gates__ctx_type_2_init(); }
+this.Gates_process_ret_1 = function(_ctx) { return _ctx.process_ret_1; }
+this.Gates_process_ret_2_init = function() { return this.Gates__ctx_type_2_init(); }
+this.Gates_process_ret_2 = function(_ctx) { return _ctx.process_ret_2; }
+this.Gates_process_ret_3_init = function() { return this.Gates__ctx_type_2_init(); }
+this.Gates_process_ret_3 = function(_ctx) { return _ctx.process_ret_3; }
+this.Gates_process_ret_4_init = function() { return this.Gates__ctx_type_2_init(); }
+this.Gates_process_ret_4 = function(_ctx) { return _ctx.process_ret_4; }
+this.Gates_process_ret_5_init = function() { return this.Gates__ctx_type_2_init(); }
+this.Gates_process_ret_5 = function(_ctx) { return _ctx.process_ret_5; }
+this.Gates_process_ret_6_init = function() { return this.Gates__ctx_type_2_init(); }
+this.Gates_process_ret_6 = function(_ctx) { return _ctx.process_ret_6; }
+this.Gates_process_ret_7_init = function() { return this.Gates__ctx_type_2_init(); }
+this.Gates_process_ret_7 = function(_ctx) { return _ctx.process_ret_7; }
 this.Gates_noteOn_init = function() { return this.Gates__ctx_type_2_init(); }
 this.Gates_noteOn = function(_ctx,note,velocity,channel){
    if((_ctx.channel_in == channel)){

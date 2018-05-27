@@ -26,16 +26,32 @@
             this.wrap_array = function(a) { return a; }
             this.log = function(x) { console.log(x); }
          
-      this.Sfi_fi_process = function(_ctx,a,b){
-   var _tuple_5 = { field_0 : a, field_1 : b }; 
-   return _tuple_5; 
+      this.Sfi_fi__ctx_type_0_init = function(){
+   var _ctx = {}; 
+   _ctx.process_ret_1 = ((0|0)|0); 
+   _ctx.process_ret_0 = 0.; 
+   return _ctx; 
 }
+this.Sfi_fi_process_init = function() { return this.Sfi_fi__ctx_type_0_init(); }
+this.Sfi_fi_process = function(_ctx,a,b){
+   _ctx.process_ret_0 = a; 
+   _ctx.process_ret_1 = (b|0); 
+   return ; 
+}
+this.Sfi_fi_process_ret_0_init = function() { return this.Sfi_fi__ctx_type_0_init(); }
+this.Sfi_fi_process_ret_0 = function(_ctx) { return _ctx.process_ret_0; }
+this.Sfi_fi_process_ret_1_init = function() { return this.Sfi_fi__ctx_type_0_init(); }
+this.Sfi_fi_process_ret_1 = function(_ctx) { return _ctx.process_ret_1; }
+this.Sfi_fi_noteOn_init = function() { return this.Sfi_fi__ctx_type_0_init(); }
 this.Sfi_fi_noteOn = function(_ctx,note,velocity,channel){
 }
+this.Sfi_fi_noteOff_init = function() { return this.Sfi_fi__ctx_type_0_init(); }
 this.Sfi_fi_noteOff = function(_ctx,note,channel){
 }
+this.Sfi_fi_controlChange_init = function() { return this.Sfi_fi__ctx_type_0_init(); }
 this.Sfi_fi_controlChange = function(_ctx,control,value,channel){
 }
+this.Sfi_fi_default_init = function() { return this.Sfi_fi__ctx_type_0_init(); }
 this.Sfi_fi_default = function(_ctx){
 }
 
@@ -55,7 +71,7 @@ this.Sfi_fi_default = function(_ctx){
    var out_1 = e.outputBuffer.getChannelData(1); 
 
    for (var n = 0; n < e.inputBuffer.length; n++) {
-             var ret = processor.Sfi_fi_process(in_0[n],in_1[n],ret); 
+             var ret = processor.Sfi_fi_process(processor.context,in_0[n],in_1[n],ret); 
    out_0[n] = ret.field_0; 
    out_1[n] = ret.field_1; 
     
@@ -63,16 +79,16 @@ this.Sfi_fi_default = function(_ctx){
    }
 
    node.noteOn = function(note, velocity, channel){
-      if(velocity > 0) processor.Sfi_fi_noteOn(note,velocity,channel);
-      else processor.Sfi_fi_noteOff(note,channel);
+      if(velocity > 0) processor.Sfi_fi_noteOn(processor.context,note,velocity,channel);
+      else processor.Sfi_fi_noteOff(processor.context,note,channel);
    }
 
    node.noteOff = function(note, channel) {
-      processor.Sfi_fi_noteOff(note,channel);
+      processor.Sfi_fi_noteOff(processor.context,note,channel);
    }
 
    node.controlChange = function(control, value, channel) {
-      processor.Sfi_fi_controlChange(control,value,channel);
+      processor.Sfi_fi_controlChange(processor.context,control,value,channel);
    }
    return node;
    })

@@ -21,6 +21,14 @@ float Gates_velToCV(int vel);
 
 typedef struct Gates__ctx_type_1 {
    int vel[8];
+   float gates_state_ret_7;
+   float gates_state_ret_6;
+   float gates_state_ret_5;
+   float gates_state_ret_4;
+   float gates_state_ret_3;
+   float gates_state_ret_2;
+   float gates_state_ret_1;
+   float gates_state_ret_0;
 } Gates__ctx_type_1;
 
 typedef Gates__ctx_type_1 Gates_gates_noteOn_type;
@@ -41,9 +49,65 @@ typedef Gates__ctx_type_1 Gates_gates_state_type;
 
 void Gates_gates_state_init(Gates__ctx_type_1 &_output_);
 
-void Gates_gates_state(Gates__ctx_type_1 &_ctx, _tuple___real_real_real_real_real_real_real_real__ &_output_);
+void Gates_gates_state(Gates__ctx_type_1 &_ctx);
+
+typedef Gates__ctx_type_1 Gates_gates_state_ret_0_type;
+
+void Gates_gates_state_ret_0_init(Gates__ctx_type_1 &_output_);
+
+float Gates_gates_state_ret_0(Gates__ctx_type_1 &_ctx);
+
+typedef Gates__ctx_type_1 Gates_gates_state_ret_1_type;
+
+void Gates_gates_state_ret_1_init(Gates__ctx_type_1 &_output_);
+
+float Gates_gates_state_ret_1(Gates__ctx_type_1 &_ctx);
+
+typedef Gates__ctx_type_1 Gates_gates_state_ret_2_type;
+
+void Gates_gates_state_ret_2_init(Gates__ctx_type_1 &_output_);
+
+float Gates_gates_state_ret_2(Gates__ctx_type_1 &_ctx);
+
+typedef Gates__ctx_type_1 Gates_gates_state_ret_3_type;
+
+void Gates_gates_state_ret_3_init(Gates__ctx_type_1 &_output_);
+
+float Gates_gates_state_ret_3(Gates__ctx_type_1 &_ctx);
+
+typedef Gates__ctx_type_1 Gates_gates_state_ret_4_type;
+
+void Gates_gates_state_ret_4_init(Gates__ctx_type_1 &_output_);
+
+float Gates_gates_state_ret_4(Gates__ctx_type_1 &_ctx);
+
+typedef Gates__ctx_type_1 Gates_gates_state_ret_5_type;
+
+void Gates_gates_state_ret_5_init(Gates__ctx_type_1 &_output_);
+
+float Gates_gates_state_ret_5(Gates__ctx_type_1 &_ctx);
+
+typedef Gates__ctx_type_1 Gates_gates_state_ret_6_type;
+
+void Gates_gates_state_ret_6_init(Gates__ctx_type_1 &_output_);
+
+float Gates_gates_state_ret_6(Gates__ctx_type_1 &_ctx);
+
+typedef Gates__ctx_type_1 Gates_gates_state_ret_7_type;
+
+void Gates_gates_state_ret_7_init(Gates__ctx_type_1 &_output_);
+
+float Gates_gates_state_ret_7(Gates__ctx_type_1 &_ctx);
 
 typedef struct Gates__ctx_type_2 {
+   float process_ret_7;
+   float process_ret_6;
+   float process_ret_5;
+   float process_ret_4;
+   float process_ret_3;
+   float process_ret_2;
+   float process_ret_1;
+   float process_ret_0;
    Gates__ctx_type_1 gates;
    int channel_in;
 } Gates__ctx_type_2;
@@ -54,7 +118,55 @@ void Gates__ctx_type_2_init(Gates__ctx_type_2 &_output_);
 
 void Gates_process_init(Gates__ctx_type_2 &_output_);
 
-void Gates_process(Gates__ctx_type_2 &_ctx, int c, _tuple___real_real_real_real_real_real_real_real__ &_output_);
+void Gates_process(Gates__ctx_type_2 &_ctx, int c);
+
+typedef Gates__ctx_type_2 Gates_process_ret_0_type;
+
+void Gates_process_ret_0_init(Gates__ctx_type_2 &_output_);
+
+float Gates_process_ret_0(Gates__ctx_type_2 &_ctx);
+
+typedef Gates__ctx_type_2 Gates_process_ret_1_type;
+
+void Gates_process_ret_1_init(Gates__ctx_type_2 &_output_);
+
+float Gates_process_ret_1(Gates__ctx_type_2 &_ctx);
+
+typedef Gates__ctx_type_2 Gates_process_ret_2_type;
+
+void Gates_process_ret_2_init(Gates__ctx_type_2 &_output_);
+
+float Gates_process_ret_2(Gates__ctx_type_2 &_ctx);
+
+typedef Gates__ctx_type_2 Gates_process_ret_3_type;
+
+void Gates_process_ret_3_init(Gates__ctx_type_2 &_output_);
+
+float Gates_process_ret_3(Gates__ctx_type_2 &_ctx);
+
+typedef Gates__ctx_type_2 Gates_process_ret_4_type;
+
+void Gates_process_ret_4_init(Gates__ctx_type_2 &_output_);
+
+float Gates_process_ret_4(Gates__ctx_type_2 &_ctx);
+
+typedef Gates__ctx_type_2 Gates_process_ret_5_type;
+
+void Gates_process_ret_5_init(Gates__ctx_type_2 &_output_);
+
+float Gates_process_ret_5(Gates__ctx_type_2 &_ctx);
+
+typedef Gates__ctx_type_2 Gates_process_ret_6_type;
+
+void Gates_process_ret_6_init(Gates__ctx_type_2 &_output_);
+
+float Gates_process_ret_6(Gates__ctx_type_2 &_ctx);
+
+typedef Gates__ctx_type_2 Gates_process_ret_7_type;
+
+void Gates_process_ret_7_init(Gates__ctx_type_2 &_output_);
+
+float Gates_process_ret_7(Gates__ctx_type_2 &_ctx);
 
 typedef Gates__ctx_type_2 Gates_noteOn_type;
 

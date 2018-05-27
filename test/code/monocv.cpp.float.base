@@ -248,6 +248,9 @@ uint8_t Monocv_mono_isGateOn(Monocv__ctx_type_0 &_ctx){
 void Monocv__ctx_type_1_init(Monocv__ctx_type_1 &_output_){
    Monocv__ctx_type_1 _ctx;
    _ctx.vel = 0.f;
+   _ctx.process_ret_2 = 0.f;
+   _ctx.process_ret_1 = 0.f;
+   _ctx.process_ret_0 = 0.f;
    Monocv__ctx_type_0_init(_ctx.notes);
    _ctx.gate = 0.f;
    _ctx.cv = 0.f;
@@ -263,7 +266,7 @@ void Monocv_process_init(Monocv__ctx_type_1 &_output_){
    return ;
 }
 
-void Monocv_process(Monocv__ctx_type_1 &_ctx, int c, _tuple___real_real_real__ &_output_){
+void Monocv_process(Monocv__ctx_type_1 &_ctx, int c){
    _ctx.channel_in = c;
    uint8_t _cond_51;
    _cond_51 = Monocv_mono_isGateOn(_ctx.notes);
@@ -277,15 +280,32 @@ void Monocv_process(Monocv__ctx_type_1 &_ctx, int c, _tuple___real_real_real__ &
    if(_cond_49){
       _ctx.cv = Util_pitchToCv(note);
    }
-   _tuple___real_real_real__ _tuple_50;
-   {
-      _tuple_50.field_0 = _ctx.cv;
-      _tuple_50.field_1 = _ctx.vel;
-      _tuple_50.field_2 = _ctx.gate;
-   }
-   _output_ = _tuple_50;
+   _ctx.process_ret_0 = _ctx.cv;
+   _ctx.process_ret_1 = _ctx.vel;
+   _ctx.process_ret_2 = _ctx.gate;
    return ;
 }
+
+void Monocv_process_ret_0_init(Monocv__ctx_type_1 &_output_){
+   Monocv__ctx_type_1_init(_output_);
+   return ;
+}
+
+float Monocv_process_ret_0(Monocv__ctx_type_1 &_ctx){return _ctx.process_ret_0;}
+
+void Monocv_process_ret_1_init(Monocv__ctx_type_1 &_output_){
+   Monocv__ctx_type_1_init(_output_);
+   return ;
+}
+
+float Monocv_process_ret_1(Monocv__ctx_type_1 &_ctx){return _ctx.process_ret_1;}
+
+void Monocv_process_ret_2_init(Monocv__ctx_type_1 &_output_){
+   Monocv__ctx_type_1_init(_output_);
+   return ;
+}
+
+float Monocv_process_ret_2(Monocv__ctx_type_1 &_ctx){return _ctx.process_ret_2;}
 
 void Monocv_noteOn_init(Monocv__ctx_type_1 &_output_){
    Monocv__ctx_type_1_init(_output_);
@@ -293,12 +313,12 @@ void Monocv_noteOn_init(Monocv__ctx_type_1 &_output_){
 }
 
 void Monocv_noteOn(Monocv__ctx_type_1 &_ctx, int note, int velocity, int channel){
-   uint8_t _cond_54;
-   _cond_54 = (_ctx.channel_in == channel);
-   if(_cond_54){
-      uint8_t _cond_53;
-      _cond_53 = (velocity > 0);
-      if(_cond_53){
+   uint8_t _cond_53;
+   _cond_53 = (_ctx.channel_in == channel);
+   if(_cond_53){
+      uint8_t _cond_52;
+      _cond_52 = (velocity > 0);
+      if(_cond_52){
          _ctx.active_note = Monocv_mono_noteOn(_ctx.notes,note);
          _ctx.vel = (int_to_float(velocity) * 0.0078741f);
       }
@@ -315,9 +335,9 @@ void Monocv_noteOff_init(Monocv__ctx_type_1 &_output_){
 }
 
 void Monocv_noteOff(Monocv__ctx_type_1 &_ctx, int note, int channel){
-   uint8_t _cond_55;
-   _cond_55 = (_ctx.channel_in == channel);
-   if(_cond_55){
+   uint8_t _cond_54;
+   _cond_54 = (_ctx.channel_in == channel);
+   if(_cond_54){
       _ctx.active_note = Monocv_mono_noteOff(_ctx.notes,note);
    }
 }

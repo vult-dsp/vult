@@ -38,6 +38,13 @@ let postfix (id:t) (post:string) : t =
    | [pkg; name] -> [pkg; name ^ post]
    | _ -> failwith "invalid id"
 
+(** Adds the given string at the end of the identifier *)
+let prefix (id:t) (pre:string) : t =
+   match id with
+   | [name] -> [pre ^ name]
+   | [pkg; name] -> [pkg; pre ^ name]
+   | _ -> failwith "invalid id"
+
 (** Takes two identifier and makes one (with a single name) seperated by the given character. *)
 let joinSep (sep:string) (fname:t) (var:t) : t =
    [String.concat sep (fname @ var)]

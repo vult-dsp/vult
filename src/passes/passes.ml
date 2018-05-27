@@ -45,10 +45,6 @@ module CreateTupleTypes = struct
          StmtType(t, elems, emptyAttr)
       | _ -> failwith "CreateTupleTypes.makeTypeDeclaration: there should be only tuples here"
 
-   let removeBuiltinTuples (tuples:Typ.t list) : Typ.t list =
-      let tuple_real_real = Typ.Const.tuple_real_real () in
-      List.filter (fun a -> Typ.compare a tuple_real_real <> 0) tuples
-
    let rec getDeclarations dependencies visited remaining : Typ.t dependencies=
       match remaining with
       | [] ->
@@ -56,7 +52,7 @@ module CreateTupleTypes = struct
       | h :: t when TypeSet.mem h visited ->
          getDeclarations dependencies visited t
       | h :: t ->
-         let sub = getSubTuples h |> removeBuiltinTuples in
+         let sub = getSubTuples h in
          let visited' = TypeSet.add h visited in
          let () = Hashtbl.add dependencies h sub in
          getDeclarations dependencies visited' (sub@t)
@@ -75,7 +71,6 @@ module CreateTupleTypes = struct
       let tuples =
          TypeSet.elements (PassData.getTuples data)
          |> List.map Typ.unlink
-         |> removeBuiltinTuples
       in
       let dependencies = getDeclarations (Hashtbl.create 8) TypeSet.empty tuples in
       let components = Components.components dependencies in

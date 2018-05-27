@@ -165,15 +165,28 @@ float Util_cvTokHz(float cv){
    return (float_wrap_array(Util_cvTokHz_c0)[index] + (cv * (float_wrap_array(Util_cvTokHz_c1)[index] + (float_wrap_array(Util_cvTokHz_c2)[index] * cv))));
 }
 
-void Sawcore_ptr_w2(float phase, float rate, _tuple___bool_real__ &_output_){
+void Sawcore__ctx_type_0_init(Sawcore__ctx_type_0 &_output_){
+   Sawcore__ctx_type_0 _ctx;
+   _ctx.ptr_w2_ret_1 = 0.f;
+   _ctx.ptr_w2_ret_0 = 0;
+   _output_ = _ctx;
+   return ;
+}
+
+void Sawcore_ptr_w2_init(Sawcore__ctx_type_0 &_output_){
+   Sawcore__ctx_type_0_init(_output_);
+   return ;
+}
+
+void Sawcore_ptr_w2(Sawcore__ctx_type_0 &_ctx, float phase, float rate){
    _tuple___bool_real__ out;
    float s1;
    s1 = rate;
    float s2;
    s2 = (s1 + rate);
-   uint8_t _cond_46;
-   _cond_46 = (phase < s1);
-   if(_cond_46){
+   uint8_t _cond_47;
+   _cond_47 = (phase < s1);
+   if(_cond_47){
       float d;
       d = (phase / rate);
       float t2;
@@ -185,9 +198,9 @@ void Sawcore_ptr_w2(float phase, float rate, _tuple___bool_real__ &_output_){
    }
    else
    {
-      uint8_t _cond_45;
-      _cond_45 = (phase < s2);
-      if(_cond_45){
+      uint8_t _cond_46;
+      _cond_46 = (phase < s2);
+      if(_cond_46){
          float d;
          d = (phase / rate);
          float t2;
@@ -205,9 +218,23 @@ void Sawcore_ptr_w2(float phase, float rate, _tuple___bool_real__ &_output_){
          }
       }
    }
-   _output_ = out;
+   _ctx.ptr_w2_ret_0 = out.field_0;_ctx.ptr_w2_ret_1 = out.field_1;
    return ;
 }
+
+void Sawcore_ptr_w2_ret_0_init(Sawcore__ctx_type_0 &_output_){
+   Sawcore__ctx_type_0_init(_output_);
+   return ;
+}
+
+uint8_t Sawcore_ptr_w2_ret_0(Sawcore__ctx_type_0 &_ctx){return _ctx.ptr_w2_ret_0;}
+
+void Sawcore_ptr_w2_ret_1_init(Sawcore__ctx_type_0 &_output_){
+   Sawcore__ctx_type_0_init(_output_);
+   return ;
+}
+
+float Sawcore_ptr_w2_ret_1(Sawcore__ctx_type_0 &_ctx){return _ctx.ptr_w2_ret_1;}
 
 void Sawcore__ctx_type_1_init(Sawcore__ctx_type_1 &_output_){
    Sawcore__ctx_type_1 _ctx;
@@ -215,6 +242,7 @@ void Sawcore__ctx_type_1_init(Sawcore__ctx_type_1 &_output_){
    _ctx.reset_phase = 0.f;
    _ctx.rate = 0.f;
    _ctx.phase = 0.f;
+   Sawcore__ctx_type_0_init(_ctx._inst33);
    Util__ctx_type_0_init(_ctx._inst30);
    Util__ctx_type_1_init(_ctx._inst28);
    Sawcore_default(_ctx);
@@ -232,9 +260,9 @@ float Sawcore_process(Sawcore__ctx_type_1 &_ctx, float cv, float reset){
    transition = 0.f;
    float out;
    out = 0.f;
-   uint8_t _cond_47;
-   _cond_47 = Util_change(_ctx._inst28,cv);
-   if(_cond_47){
+   uint8_t _cond_48;
+   _cond_48 = Util_change(_ctx._inst28,cv);
+   if(_cond_48){
       _ctx.rate = Util_cvToRate_1024(cv);
    }
    float new_phase;
@@ -243,9 +271,9 @@ float Sawcore_process(Sawcore__ctx_type_1 &_ctx, float cv, float reset){
    do_reset = Util_edge(_ctx._inst30,(reset > 0.f));
    uint8_t do_wrap;
    do_wrap = (new_phase > 1024.f);
-   uint8_t _cond_48;
-   _cond_48 = (do_reset || do_wrap);
-   if(_cond_48){
+   uint8_t _cond_49;
+   _cond_49 = (do_reset || do_wrap);
+   if(_cond_49){
       _ctx.reset_phase = _ctx.phase;
       if(do_wrap){ new_phase = (new_phase + -1024.f); }
       else
@@ -257,9 +285,9 @@ float Sawcore_process(Sawcore__ctx_type_1 &_ctx, float cv, float reset){
    if(_ctx.reset_state){
       uint8_t done;
       float ptr;
-      _tuple___bool_real__ _call_49;
-      Sawcore_ptr_w2(_ctx.phase,_ctx.rate,_call_49);
-      done = _call_49.field_0;ptr = _call_49.field_1;
+      Sawcore_ptr_w2(_ctx._inst33,_ctx.phase,_ctx.rate);
+      done = Sawcore_ptr_w2_ret_0(_ctx._inst33);
+      ptr = Sawcore_ptr_w2_ret_1(_ctx._inst33);
       transition = ((ptr + 1.f) * 0.5f * _ctx.reset_phase);
       if(done){
          _ctx.reset_state = 0;

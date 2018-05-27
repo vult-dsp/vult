@@ -126,6 +126,18 @@ fix16_t Polycv_velToGate(int vel);
 
 typedef struct Polycv__ctx_type_2 {
    int vel[4];
+   fix16_t polyState_ret_9;
+   fix16_t polyState_ret_8;
+   fix16_t polyState_ret_7;
+   fix16_t polyState_ret_6;
+   fix16_t polyState_ret_5;
+   fix16_t polyState_ret_4;
+   fix16_t polyState_ret_3;
+   fix16_t polyState_ret_2;
+   fix16_t polyState_ret_11;
+   fix16_t polyState_ret_10;
+   fix16_t polyState_ret_1;
+   fix16_t polyState_ret_0;
    int notes[4];
 } Polycv__ctx_type_2;
 
@@ -147,9 +159,93 @@ typedef Polycv__ctx_type_2 Polycv_polyState_type;
 
 void Polycv_polyState_init(Polycv__ctx_type_2 &_output_);
 
-void Polycv_polyState(Polycv__ctx_type_2 &_ctx, _tuple___real_real_real_real_real_real_real_real_real_real_real_real__ &_output_);
+void Polycv_polyState(Polycv__ctx_type_2 &_ctx);
+
+typedef Polycv__ctx_type_2 Polycv_polyState_ret_0_type;
+
+void Polycv_polyState_ret_0_init(Polycv__ctx_type_2 &_output_);
+
+fix16_t Polycv_polyState_ret_0(Polycv__ctx_type_2 &_ctx);
+
+typedef Polycv__ctx_type_2 Polycv_polyState_ret_1_type;
+
+void Polycv_polyState_ret_1_init(Polycv__ctx_type_2 &_output_);
+
+fix16_t Polycv_polyState_ret_1(Polycv__ctx_type_2 &_ctx);
+
+typedef Polycv__ctx_type_2 Polycv_polyState_ret_2_type;
+
+void Polycv_polyState_ret_2_init(Polycv__ctx_type_2 &_output_);
+
+fix16_t Polycv_polyState_ret_2(Polycv__ctx_type_2 &_ctx);
+
+typedef Polycv__ctx_type_2 Polycv_polyState_ret_3_type;
+
+void Polycv_polyState_ret_3_init(Polycv__ctx_type_2 &_output_);
+
+fix16_t Polycv_polyState_ret_3(Polycv__ctx_type_2 &_ctx);
+
+typedef Polycv__ctx_type_2 Polycv_polyState_ret_4_type;
+
+void Polycv_polyState_ret_4_init(Polycv__ctx_type_2 &_output_);
+
+fix16_t Polycv_polyState_ret_4(Polycv__ctx_type_2 &_ctx);
+
+typedef Polycv__ctx_type_2 Polycv_polyState_ret_5_type;
+
+void Polycv_polyState_ret_5_init(Polycv__ctx_type_2 &_output_);
+
+fix16_t Polycv_polyState_ret_5(Polycv__ctx_type_2 &_ctx);
+
+typedef Polycv__ctx_type_2 Polycv_polyState_ret_6_type;
+
+void Polycv_polyState_ret_6_init(Polycv__ctx_type_2 &_output_);
+
+fix16_t Polycv_polyState_ret_6(Polycv__ctx_type_2 &_ctx);
+
+typedef Polycv__ctx_type_2 Polycv_polyState_ret_7_type;
+
+void Polycv_polyState_ret_7_init(Polycv__ctx_type_2 &_output_);
+
+fix16_t Polycv_polyState_ret_7(Polycv__ctx_type_2 &_ctx);
+
+typedef Polycv__ctx_type_2 Polycv_polyState_ret_8_type;
+
+void Polycv_polyState_ret_8_init(Polycv__ctx_type_2 &_output_);
+
+fix16_t Polycv_polyState_ret_8(Polycv__ctx_type_2 &_ctx);
+
+typedef Polycv__ctx_type_2 Polycv_polyState_ret_9_type;
+
+void Polycv_polyState_ret_9_init(Polycv__ctx_type_2 &_output_);
+
+fix16_t Polycv_polyState_ret_9(Polycv__ctx_type_2 &_ctx);
+
+typedef Polycv__ctx_type_2 Polycv_polyState_ret_10_type;
+
+void Polycv_polyState_ret_10_init(Polycv__ctx_type_2 &_output_);
+
+fix16_t Polycv_polyState_ret_10(Polycv__ctx_type_2 &_ctx);
+
+typedef Polycv__ctx_type_2 Polycv_polyState_ret_11_type;
+
+void Polycv_polyState_ret_11_init(Polycv__ctx_type_2 &_output_);
+
+fix16_t Polycv_polyState_ret_11(Polycv__ctx_type_2 &_ctx);
 
 typedef struct Polycv__ctx_type_3 {
+   fix16_t process_ret_9;
+   fix16_t process_ret_8;
+   fix16_t process_ret_7;
+   fix16_t process_ret_6;
+   fix16_t process_ret_5;
+   fix16_t process_ret_4;
+   fix16_t process_ret_3;
+   fix16_t process_ret_2;
+   fix16_t process_ret_11;
+   fix16_t process_ret_10;
+   fix16_t process_ret_1;
+   fix16_t process_ret_0;
    Polycv__ctx_type_2 poly;
    int channel_in;
 } Polycv__ctx_type_3;
@@ -160,7 +256,79 @@ void Polycv__ctx_type_3_init(Polycv__ctx_type_3 &_output_);
 
 void Polycv_process_init(Polycv__ctx_type_3 &_output_);
 
-void Polycv_process(Polycv__ctx_type_3 &_ctx, int c, _tuple___real_real_real_real_real_real_real_real_real_real_real_real__ &_output_);
+void Polycv_process(Polycv__ctx_type_3 &_ctx, int c);
+
+typedef Polycv__ctx_type_3 Polycv_process_ret_0_type;
+
+void Polycv_process_ret_0_init(Polycv__ctx_type_3 &_output_);
+
+fix16_t Polycv_process_ret_0(Polycv__ctx_type_3 &_ctx);
+
+typedef Polycv__ctx_type_3 Polycv_process_ret_1_type;
+
+void Polycv_process_ret_1_init(Polycv__ctx_type_3 &_output_);
+
+fix16_t Polycv_process_ret_1(Polycv__ctx_type_3 &_ctx);
+
+typedef Polycv__ctx_type_3 Polycv_process_ret_2_type;
+
+void Polycv_process_ret_2_init(Polycv__ctx_type_3 &_output_);
+
+fix16_t Polycv_process_ret_2(Polycv__ctx_type_3 &_ctx);
+
+typedef Polycv__ctx_type_3 Polycv_process_ret_3_type;
+
+void Polycv_process_ret_3_init(Polycv__ctx_type_3 &_output_);
+
+fix16_t Polycv_process_ret_3(Polycv__ctx_type_3 &_ctx);
+
+typedef Polycv__ctx_type_3 Polycv_process_ret_4_type;
+
+void Polycv_process_ret_4_init(Polycv__ctx_type_3 &_output_);
+
+fix16_t Polycv_process_ret_4(Polycv__ctx_type_3 &_ctx);
+
+typedef Polycv__ctx_type_3 Polycv_process_ret_5_type;
+
+void Polycv_process_ret_5_init(Polycv__ctx_type_3 &_output_);
+
+fix16_t Polycv_process_ret_5(Polycv__ctx_type_3 &_ctx);
+
+typedef Polycv__ctx_type_3 Polycv_process_ret_6_type;
+
+void Polycv_process_ret_6_init(Polycv__ctx_type_3 &_output_);
+
+fix16_t Polycv_process_ret_6(Polycv__ctx_type_3 &_ctx);
+
+typedef Polycv__ctx_type_3 Polycv_process_ret_7_type;
+
+void Polycv_process_ret_7_init(Polycv__ctx_type_3 &_output_);
+
+fix16_t Polycv_process_ret_7(Polycv__ctx_type_3 &_ctx);
+
+typedef Polycv__ctx_type_3 Polycv_process_ret_8_type;
+
+void Polycv_process_ret_8_init(Polycv__ctx_type_3 &_output_);
+
+fix16_t Polycv_process_ret_8(Polycv__ctx_type_3 &_ctx);
+
+typedef Polycv__ctx_type_3 Polycv_process_ret_9_type;
+
+void Polycv_process_ret_9_init(Polycv__ctx_type_3 &_output_);
+
+fix16_t Polycv_process_ret_9(Polycv__ctx_type_3 &_ctx);
+
+typedef Polycv__ctx_type_3 Polycv_process_ret_10_type;
+
+void Polycv_process_ret_10_init(Polycv__ctx_type_3 &_output_);
+
+fix16_t Polycv_process_ret_10(Polycv__ctx_type_3 &_ctx);
+
+typedef Polycv__ctx_type_3 Polycv_process_ret_11_type;
+
+void Polycv_process_ret_11_init(Polycv__ctx_type_3 &_output_);
+
+fix16_t Polycv_process_ret_11(Polycv__ctx_type_3 &_ctx);
 
 typedef Polycv__ctx_type_3 Polycv_noteOn_type;
 

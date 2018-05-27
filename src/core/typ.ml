@@ -324,6 +324,11 @@ let isSimpleOpType (typ:t option) : bool =
    | Some(t) -> isSimpleType t
    | _ -> true
 
+let isTupleOpType (typ:t option) : bool =
+   match typ with
+   | Some(t) -> isTuple t
+   | _ -> true
+
 let first (t:t list) : t =
    match t with
    | h :: _ -> h

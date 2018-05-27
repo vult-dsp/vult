@@ -40,6 +40,7 @@ let processArguments () : args =
       "-samplerate",(Arg.Float  (fun fs -> result.fs <- Some fs)),         "number When set, the function samplerate() is evaluated";
       "-template",  (Arg.String (fun temp -> result.template <- temp)),   "name Defines the template used to generate code (ccode only): pd, teensy";
       "-eval",      (Arg.Unit   (fun () -> result.eval       <- true)),   " Runs the code (default: off)";
+      "-tables",    (Arg.Bool   (fun b -> result.tables     <- b)),       " Create lookup tables (default: on)";
       "-i",         (Arg.String (fun path -> result.includes <- path :: result.includes)), "path Adds the given path to the list of places to look for modules";
       "-version",   (Arg.Unit   (fun () -> result.show_version <- true)), " Show the version of vult";
       "-test",      (Arg.Unit   (fun () -> Float.reduce_precision := true)), " Enters a special mode useful only for testing (default: off)";

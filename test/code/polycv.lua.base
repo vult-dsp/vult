@@ -220,6 +220,18 @@ end
 function this.Polycv__ctx_type_2_init()
    local _ctx = {}; 
    _ctx.vel = this.makeArray(4,0); 
+   _ctx.polyState_ret_9 = 0.; 
+   _ctx.polyState_ret_8 = 0.; 
+   _ctx.polyState_ret_7 = 0.; 
+   _ctx.polyState_ret_6 = 0.; 
+   _ctx.polyState_ret_5 = 0.; 
+   _ctx.polyState_ret_4 = 0.; 
+   _ctx.polyState_ret_3 = 0.; 
+   _ctx.polyState_ret_2 = 0.; 
+   _ctx.polyState_ret_11 = 0.; 
+   _ctx.polyState_ret_10 = 0.; 
+   _ctx.polyState_ret_1 = 0.; 
+   _ctx.polyState_ret_0 = 0.; 
    _ctx.notes = this.makeArray(4,0); 
    return _ctx; 
 
@@ -279,13 +291,132 @@ function this.Polycv_polyState(_ctx)
    local gate2 = this.Polycv_velToGate(this.get(_ctx.vel,1)); 
    local gate3 = this.Polycv_velToGate(this.get(_ctx.vel,2)); 
    local gate4 = this.Polycv_velToGate(this.get(_ctx.vel,3)); 
-   local _tuple_43 = { field_0 = note1, field_1 = vel1, field_2 = gate1, field_3 = note2, field_4 = vel2, field_5 = gate2, field_6 = note3, field_7 = vel3, field_8 = gate3, field_9 = note4, field_10 = vel4, field_11 = gate4 }; 
-   return _tuple_43; 
+   _ctx.polyState_ret_0 = note1; 
+   _ctx.polyState_ret_1 = vel1; 
+   _ctx.polyState_ret_2 = gate1; 
+   _ctx.polyState_ret_3 = note2; 
+   _ctx.polyState_ret_4 = vel2; 
+   _ctx.polyState_ret_5 = gate2; 
+   _ctx.polyState_ret_6 = note3; 
+   _ctx.polyState_ret_7 = vel3; 
+   _ctx.polyState_ret_8 = gate3; 
+   _ctx.polyState_ret_9 = note4; 
+   _ctx.polyState_ret_10 = vel4; 
+   _ctx.polyState_ret_11 = gate4; 
+   return ; 
 
+end
+
+function this.Polycv_polyState_ret_0_init()
+   return this.Polycv__ctx_type_2_init(); 
+end
+
+function this.Polycv_polyState_ret_0(_ctx)
+   return _ctx.polyState_ret_0; 
+end
+
+function this.Polycv_polyState_ret_1_init()
+   return this.Polycv__ctx_type_2_init(); 
+end
+
+function this.Polycv_polyState_ret_1(_ctx)
+   return _ctx.polyState_ret_1; 
+end
+
+function this.Polycv_polyState_ret_2_init()
+   return this.Polycv__ctx_type_2_init(); 
+end
+
+function this.Polycv_polyState_ret_2(_ctx)
+   return _ctx.polyState_ret_2; 
+end
+
+function this.Polycv_polyState_ret_3_init()
+   return this.Polycv__ctx_type_2_init(); 
+end
+
+function this.Polycv_polyState_ret_3(_ctx)
+   return _ctx.polyState_ret_3; 
+end
+
+function this.Polycv_polyState_ret_4_init()
+   return this.Polycv__ctx_type_2_init(); 
+end
+
+function this.Polycv_polyState_ret_4(_ctx)
+   return _ctx.polyState_ret_4; 
+end
+
+function this.Polycv_polyState_ret_5_init()
+   return this.Polycv__ctx_type_2_init(); 
+end
+
+function this.Polycv_polyState_ret_5(_ctx)
+   return _ctx.polyState_ret_5; 
+end
+
+function this.Polycv_polyState_ret_6_init()
+   return this.Polycv__ctx_type_2_init(); 
+end
+
+function this.Polycv_polyState_ret_6(_ctx)
+   return _ctx.polyState_ret_6; 
+end
+
+function this.Polycv_polyState_ret_7_init()
+   return this.Polycv__ctx_type_2_init(); 
+end
+
+function this.Polycv_polyState_ret_7(_ctx)
+   return _ctx.polyState_ret_7; 
+end
+
+function this.Polycv_polyState_ret_8_init()
+   return this.Polycv__ctx_type_2_init(); 
+end
+
+function this.Polycv_polyState_ret_8(_ctx)
+   return _ctx.polyState_ret_8; 
+end
+
+function this.Polycv_polyState_ret_9_init()
+   return this.Polycv__ctx_type_2_init(); 
+end
+
+function this.Polycv_polyState_ret_9(_ctx)
+   return _ctx.polyState_ret_9; 
+end
+
+function this.Polycv_polyState_ret_10_init()
+   return this.Polycv__ctx_type_2_init(); 
+end
+
+function this.Polycv_polyState_ret_10(_ctx)
+   return _ctx.polyState_ret_10; 
+end
+
+function this.Polycv_polyState_ret_11_init()
+   return this.Polycv__ctx_type_2_init(); 
+end
+
+function this.Polycv_polyState_ret_11(_ctx)
+   return _ctx.polyState_ret_11; 
 end
 
 function this.Polycv__ctx_type_3_init()
    local _ctx = {}; 
+   _ctx.process_ret_9 = 0.; 
+   _ctx.process_ret_8 = 0.; 
+   _ctx.process_ret_7 = 0.; 
+   _ctx.process_ret_6 = 0.; 
+   _ctx.process_ret_5 = 0.; 
+   _ctx.process_ret_4 = 0.; 
+   _ctx.process_ret_3 = 0.; 
+   _ctx.process_ret_2 = 0.; 
+   _ctx.process_ret_11 = 0.; 
+   _ctx.process_ret_10 = 0.; 
+   _ctx.process_ret_1 = 0.; 
+   _ctx.process_ret_0 = 0.; 
    _ctx.poly = this.Polycv__ctx_type_2_init(); 
    _ctx.channel_in = 0; 
    return _ctx; 
@@ -298,9 +429,117 @@ end
 
 function this.Polycv_process(_ctx,c)
    _ctx.channel_in = c; 
-   local _call_45 = this.Polycv_polyState(_ctx.poly); 
-   return _call_45; 
+   this.Polycv_polyState(_ctx.poly);
+   _ctx.process_ret_0 = this.Polycv_polyState_ret_0(_ctx.poly); 
+   _ctx.process_ret_1 = this.Polycv_polyState_ret_1(_ctx.poly); 
+   _ctx.process_ret_2 = this.Polycv_polyState_ret_2(_ctx.poly); 
+   _ctx.process_ret_3 = this.Polycv_polyState_ret_3(_ctx.poly); 
+   _ctx.process_ret_4 = this.Polycv_polyState_ret_4(_ctx.poly); 
+   _ctx.process_ret_5 = this.Polycv_polyState_ret_5(_ctx.poly); 
+   _ctx.process_ret_6 = this.Polycv_polyState_ret_6(_ctx.poly); 
+   _ctx.process_ret_7 = this.Polycv_polyState_ret_7(_ctx.poly); 
+   _ctx.process_ret_8 = this.Polycv_polyState_ret_8(_ctx.poly); 
+   _ctx.process_ret_9 = this.Polycv_polyState_ret_9(_ctx.poly); 
+   _ctx.process_ret_10 = this.Polycv_polyState_ret_10(_ctx.poly); 
+   _ctx.process_ret_11 = this.Polycv_polyState_ret_11(_ctx.poly); 
+   return ; 
 
+end
+
+function this.Polycv_process_ret_0_init()
+   return this.Polycv__ctx_type_3_init(); 
+end
+
+function this.Polycv_process_ret_0(_ctx)
+   return _ctx.process_ret_0; 
+end
+
+function this.Polycv_process_ret_1_init()
+   return this.Polycv__ctx_type_3_init(); 
+end
+
+function this.Polycv_process_ret_1(_ctx)
+   return _ctx.process_ret_1; 
+end
+
+function this.Polycv_process_ret_2_init()
+   return this.Polycv__ctx_type_3_init(); 
+end
+
+function this.Polycv_process_ret_2(_ctx)
+   return _ctx.process_ret_2; 
+end
+
+function this.Polycv_process_ret_3_init()
+   return this.Polycv__ctx_type_3_init(); 
+end
+
+function this.Polycv_process_ret_3(_ctx)
+   return _ctx.process_ret_3; 
+end
+
+function this.Polycv_process_ret_4_init()
+   return this.Polycv__ctx_type_3_init(); 
+end
+
+function this.Polycv_process_ret_4(_ctx)
+   return _ctx.process_ret_4; 
+end
+
+function this.Polycv_process_ret_5_init()
+   return this.Polycv__ctx_type_3_init(); 
+end
+
+function this.Polycv_process_ret_5(_ctx)
+   return _ctx.process_ret_5; 
+end
+
+function this.Polycv_process_ret_6_init()
+   return this.Polycv__ctx_type_3_init(); 
+end
+
+function this.Polycv_process_ret_6(_ctx)
+   return _ctx.process_ret_6; 
+end
+
+function this.Polycv_process_ret_7_init()
+   return this.Polycv__ctx_type_3_init(); 
+end
+
+function this.Polycv_process_ret_7(_ctx)
+   return _ctx.process_ret_7; 
+end
+
+function this.Polycv_process_ret_8_init()
+   return this.Polycv__ctx_type_3_init(); 
+end
+
+function this.Polycv_process_ret_8(_ctx)
+   return _ctx.process_ret_8; 
+end
+
+function this.Polycv_process_ret_9_init()
+   return this.Polycv__ctx_type_3_init(); 
+end
+
+function this.Polycv_process_ret_9(_ctx)
+   return _ctx.process_ret_9; 
+end
+
+function this.Polycv_process_ret_10_init()
+   return this.Polycv__ctx_type_3_init(); 
+end
+
+function this.Polycv_process_ret_10(_ctx)
+   return _ctx.process_ret_10; 
+end
+
+function this.Polycv_process_ret_11_init()
+   return this.Polycv__ctx_type_3_init(); 
+end
+
+function this.Polycv_process_ret_11(_ctx)
+   return _ctx.process_ret_11; 
 end
 
 function this.Polycv_noteOn_init()

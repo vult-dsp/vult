@@ -7,10 +7,17 @@
 
    fun foo() : tuple(int, int, int) /* scope_0 */
    {
-      val (_tuple_2:tuple(int, int, int)); 
-      (_tuple_2:tuple(int, int, int)) = (0, 1, 2); 
-      return _tuple_2; 
+      (foo_ret_0:int) = 0; 
+      (foo_ret_1:int) = 1; 
+      (foo_ret_2:int) = 2; 
+      return (); 
    }
+
+   and foo_ret_0() : int return foo_ret_0; 
+
+   and foo_ret_1() : int return foo_ret_1; 
+
+   and foo_ret_2() : int return foo_ret_2; 
 
    fun bar() : unit /* scope_1 */
    {
@@ -18,9 +25,10 @@
       val (y:int); 
       val (z:int); 
       val (w:int); 
-      val (_call_9:tuple(int, int, int)); 
-      (_call_9:tuple(int, int, int)) = foo(); 
-      ((x:int), (y:int), (z:int)) = _call_9; 
+      _ = _inst2:foo(); 
+      (x:int) = _inst2:foo_ret_0(); 
+      (y:int) = _inst2:foo_ret_1(); 
+      (z:int) = _inst2:foo_ret_2(); 
       (w:int) = 3; 
       val (a:int); 
       val (b:int); 

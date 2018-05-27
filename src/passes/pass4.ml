@@ -75,13 +75,20 @@ module ReturnReferences = struct
 
    let unitAttr attr = { attr with typ = Some(Typ.Const.unit_type)}
 
+   let returnRefType typ =
+      if Typ.isTuple typ then false
+      else not (Typ.isSimpleType typ)
+
+   let returnRefTypeOpt typ =
+      CCOpt.map_or ~default:false returnRefType typ
+
    let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
       Mapper.make "ReturnReferences.stmt" @@ fun state stmt ->
       let data = Env.get state in
       let args = data.PassData.args in
       if args.code = CCode || args.code = LLVMCode then
          match stmt with
-         | StmtFun(name, args, body, Some(rettype), attr) when not (Typ.isSimpleType rettype) ->
+         | StmtFun(name, args, body, Some(rettype), attr) when returnRefType rettype ->
             let output = TypedId(["_output_"], [rettype], OutputArg,emptyAttr) in
             let stmt' = StmtFun(name, args @ [output], body, Some(Typ.Const.unit_type), attr) in
             state, stmt'
@@ -98,25 +105,25 @@ module ReturnReferences = struct
       else
          match stmt with
          (* regular case a = foo() *)
-         | StmtBind(LId(lhs, Some(typ), lattr), PCall(inst, name, args, attr), battr) when not (Typ.isSimpleType (Typ.first typ)) ->
+         | StmtBind(LId(lhs, Some(typ), lattr), PCall(inst, name, args, attr), battr) when returnRefType (Typ.first typ) ->
             let arg = PId(lhs, lattr) in
             let fixed_attr = unitAttr attr in
             state, [StmtBind(LWild(fixed_attr), PCall(inst, name, args @ [arg], fixed_attr), battr)]
          (* special case _ = foo() when the return is no simple value *)
-         | StmtBind(LWild(wattr),PCall(inst,name,args,attr),battr) when not (Typ.isSimpleOpType wattr.typ) ->
+         | StmtBind(LWild(wattr),PCall(inst,name,args,attr),battr) when returnRefTypeOpt wattr.typ ->
             let i,state' = Env.tick state in
             let tmp_name = "_unused_" ^ (string_of_int i) in
             let arg = PId([tmp_name], wattr) in
             let fixed_attr = unitAttr attr in
             state', [StmtVal(LId([tmp_name],Typ.makeListOpt wattr.typ,wattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],fixed_attr),battr)]
          (* special case _ = a when a is not simple value *)
-         | StmtBind(LWild(wattr), e,battr) when not (Typ.isSimpleOpType wattr.typ) ->
+         | StmtBind(LWild(wattr), e,battr) when returnRefTypeOpt wattr.typ ->
             let i,state' = Env.tick state in
             let tmp_name = "_unused_" ^ (string_of_int i) in
             state', [StmtVal(LId([tmp_name],Typ.makeListOpt wattr.typ,wattr),None,battr);StmtBind(LId([tmp_name],Typ.makeListOpt wattr.typ,wattr), e,battr)]
          | StmtBind(_,PCall(_, _, _, _), _) ->
             state, [stmt]
-         | StmtVal(LId(lhs,Some(typ),lattr),Some(PCall(inst,name,args,attr)),battr) when not (Typ.isSimpleType (Typ.first typ)) ->
+         | StmtVal(LId(lhs,Some(typ),lattr),Some(PCall(inst,name,args,attr)),battr) when returnRefType (Typ.first typ) ->
             let arg = PId(lhs,lattr) in
             let fixed_attr = unitAttr attr in
             state, [StmtVal(LId(lhs,Some(typ),lattr),None,battr);StmtBind(LWild(fixed_attr),PCall(inst,name,args@[arg],fixed_attr),battr)]
@@ -124,7 +131,7 @@ module ReturnReferences = struct
             state, [stmt]
          | StmtReturn(e,attr) ->
             let eattr = GetAttr.fromExp e in
-            if not (Typ.isSimpleOpType eattr.typ) then
+            if returnRefTypeOpt eattr.typ then
                let stmt' = StmtBind(LId(["_output_"],Typ.makeListOpt eattr.typ,eattr), e,attr) in
                reapply state, [stmt';StmtReturn(PUnit(unitAttr eattr),attr)]
             else

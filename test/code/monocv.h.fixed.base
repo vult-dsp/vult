@@ -139,6 +139,9 @@ uint8_t Monocv_mono_isGateOn(Monocv__ctx_type_0 &_ctx);
 
 typedef struct Monocv__ctx_type_1 {
    fix16_t vel;
+   fix16_t process_ret_2;
+   fix16_t process_ret_1;
+   fix16_t process_ret_0;
    Monocv__ctx_type_0 notes;
    fix16_t gate;
    fix16_t cv;
@@ -153,7 +156,25 @@ void Monocv__ctx_type_1_init(Monocv__ctx_type_1 &_output_);
 
 void Monocv_process_init(Monocv__ctx_type_1 &_output_);
 
-void Monocv_process(Monocv__ctx_type_1 &_ctx, int c, _tuple___real_real_real__ &_output_);
+void Monocv_process(Monocv__ctx_type_1 &_ctx, int c);
+
+typedef Monocv__ctx_type_1 Monocv_process_ret_0_type;
+
+void Monocv_process_ret_0_init(Monocv__ctx_type_1 &_output_);
+
+fix16_t Monocv_process_ret_0(Monocv__ctx_type_1 &_ctx);
+
+typedef Monocv__ctx_type_1 Monocv_process_ret_1_type;
+
+void Monocv_process_ret_1_init(Monocv__ctx_type_1 &_output_);
+
+fix16_t Monocv_process_ret_1(Monocv__ctx_type_1 &_ctx);
+
+typedef Monocv__ctx_type_1 Monocv_process_ret_2_type;
+
+void Monocv_process_ret_2_init(Monocv__ctx_type_1 &_output_);
+
+fix16_t Monocv_process_ret_2(Monocv__ctx_type_1 &_ctx);
 
 typedef Monocv__ctx_type_1 Monocv_noteOn_type;
 

@@ -296,6 +296,8 @@ this.Ahr__ctx_type_0_init = function(){
    _ctx.rate = 0.; 
    _ctx.out = 0.; 
    _ctx.hold_phase = 0.; 
+   _ctx.do_ret_1 = 0.; 
+   _ctx.do_ret_0 = 0.; 
    _ctx._inst70 = this.Util__ctx_type_0_init(); 
    _ctx._inst68 = this.Util__ctx_type_0_init(); 
    return _ctx; 
@@ -341,11 +343,18 @@ this.Ahr_do = function(_ctx,gate,a,h,r){
       _ctx.target = 0.; 
    }
    _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.005)); 
-   var _tuple_95 = { field_0 : this.clip((_ctx.out * 0.0009766),0.,1.), field_1 : resetting }; 
-   return _tuple_95; 
+   _ctx.do_ret_0 = this.clip((_ctx.out * 0.0009766),0.,1.); 
+   _ctx.do_ret_1 = resetting; 
+   return ; 
 }
+this.Ahr_do_ret_0_init = function() { return this.Ahr__ctx_type_0_init(); }
+this.Ahr_do_ret_0 = function(_ctx) { return _ctx.do_ret_0; }
+this.Ahr_do_ret_1_init = function() { return this.Ahr__ctx_type_0_init(); }
+this.Ahr_do_ret_1 = function(_ctx) { return _ctx.do_ret_1; }
 this.Ahr__ctx_type_1_init = function(){
    var _ctx = {}; 
+   _ctx.process_ret_1 = 0.; 
+   _ctx.process_ret_0 = 0.; 
    _ctx.knob3 = 0.; 
    _ctx.knob2 = 0.; 
    _ctx.knob1 = 0.; 
@@ -354,9 +363,15 @@ this.Ahr__ctx_type_1_init = function(){
 }
 this.Ahr_process_init = function() { return this.Ahr__ctx_type_1_init(); }
 this.Ahr_process = function(_ctx,gate){
-   var _call_98 = this.Ahr_do(_ctx._inst79,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3); 
-   return _call_98; 
+   this.Ahr_do(_ctx._inst79,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
+   _ctx.process_ret_0 = this.Ahr_do_ret_0(_ctx._inst79); 
+   _ctx.process_ret_1 = this.Ahr_do_ret_1(_ctx._inst79); 
+   return ; 
 }
+this.Ahr_process_ret_0_init = function() { return this.Ahr__ctx_type_1_init(); }
+this.Ahr_process_ret_0 = function(_ctx) { return _ctx.process_ret_0; }
+this.Ahr_process_ret_1_init = function() { return this.Ahr__ctx_type_1_init(); }
+this.Ahr_process_ret_1 = function(_ctx) { return _ctx.process_ret_1; }
 this.Ahr_noteOn_init = function() { return this.Ahr__ctx_type_1_init(); }
 this.Ahr_noteOn = function(_ctx,note,velocity,channel){
 }
@@ -383,26 +398,28 @@ this.Ahr_default = function(_ctx){
 }
 this.Kick__ctx_type_0_init = function(){
    var _ctx = {}; 
-   _ctx._inst116 = this.Noise__ctx_type_1_init(); 
-   _ctx._inst115 = this.Ahr__ctx_type_0_init(); 
-   _ctx._inst114 = this.Tricore__ctx_type_0_init(); 
-   _ctx._inst113 = this.Swept__ctx_type_0_init(); 
-   _ctx._inst112 = this.Ahr__ctx_type_0_init(); 
+   _ctx._inst106 = this.Noise__ctx_type_1_init(); 
+   _ctx._inst105 = this.Ahr__ctx_type_0_init(); 
+   _ctx._inst104 = this.Tricore__ctx_type_0_init(); 
+   _ctx._inst103 = this.Swept__ctx_type_0_init(); 
+   _ctx._inst102 = this.Ahr__ctx_type_0_init(); 
    return _ctx; 
 }
 this.Kick_do_init = function() { return this.Kick__ctx_type_0_init(); }
 this.Kick_do = function(_ctx,gate,odecay,pitch,swept,noise){
    var osc_env = 0.0; 
    var env_reset = 0.0; 
-   var _call_127 = this.Ahr_do(_ctx._inst112,gate,0.005,(0.1 + odecay),(odecay + 0.01)); 
-   osc_env = _call_127.field_0; env_reset = _call_127.field_1; 
-   var cv = this.Swept_process(_ctx._inst113,(1. + (- env_reset)),(pitch + (swept * 0.4)),pitch,0.1); 
-   var osc = this.Tricore_process(_ctx._inst114,cv,0.,env_reset); 
+   this.Ahr_do(_ctx._inst102,gate,0.005,(0.1 + odecay),(odecay + 0.01));
+   osc_env = this.Ahr_do_ret_0(_ctx._inst102); 
+   env_reset = this.Ahr_do_ret_1(_ctx._inst102); 
+   var cv = this.Swept_process(_ctx._inst103,(1. + (- env_reset)),(pitch + (swept * 0.4)),pitch,0.1); 
+   var osc = this.Tricore_process(_ctx._inst104,cv,0.,env_reset); 
    var osc_sat = this.Saturate_process((1.5 * osc)); 
    var noise_env = 0.0; 
-   var _call_128 = this.Ahr_do(_ctx._inst115,gate,0.001,0.01,((noise * 0.01) + 0.001)); 
-   noise_env = _call_128.field_0; 
-   var noise_osc = (noise * this.Noise_process(_ctx._inst116,1.) * 0.3333334); 
+   this.Ahr_do(_ctx._inst105,gate,0.001,0.01,((noise * 0.01) + 0.001));
+   noise_env = this.Ahr_do_ret_0(_ctx._inst105); 
+   this.Ahr_do_ret_1(_ctx._inst105);
+   var noise_osc = (noise * this.Noise_process(_ctx._inst106,1.) * 0.3333334); 
    return ((osc_env * osc_sat) + (noise_env * noise_osc)); 
 }
 this.Kick__ctx_type_1_init = function(){
@@ -411,12 +428,12 @@ this.Kick__ctx_type_1_init = function(){
    _ctx.pitch = 0.; 
    _ctx.odecay = 0.; 
    _ctx.noise = 0.; 
-   _ctx._inst118 = this.Kick__ctx_type_0_init(); 
+   _ctx._inst108 = this.Kick__ctx_type_0_init(); 
    return _ctx; 
 }
 this.Kick_process_init = function() { return this.Kick__ctx_type_1_init(); }
 this.Kick_process = function(_ctx,gate){
-   return this.Kick_do(_ctx._inst118,gate,_ctx.odecay,_ctx.pitch,_ctx.swept,_ctx.noise); 
+   return this.Kick_do(_ctx._inst108,gate,_ctx.odecay,_ctx.pitch,_ctx.swept,_ctx.noise); 
 }
 this.Kick_noteOn_init = function() { return this.Kick__ctx_type_1_init(); }
 this.Kick_noteOn = function(_ctx,note,velocity,channel){

@@ -6,6 +6,11 @@
 #include <math.h>
 #include "vultin.h"
 
+typedef struct _tuple___real_real__ {
+   fix16_t field_0;
+   fix16_t field_1;
+} _tuple___real_real__;
+
 typedef struct Util__ctx_type_0 {
    uint8_t pre;
 } Util__ctx_type_0;
@@ -111,6 +116,8 @@ typedef struct Ahr__ctx_type_0 {
    fix16_t rate;
    fix16_t out;
    fix16_t hold_phase;
+   fix16_t do_ret_1;
+   fix16_t do_ret_0;
    Util__ctx_type_0 _inst25;
    Util__ctx_type_0 _inst23;
 } Ahr__ctx_type_0;
@@ -121,9 +128,23 @@ void Ahr__ctx_type_0_init(Ahr__ctx_type_0 &_output_);
 
 void Ahr_do_init(Ahr__ctx_type_0 &_output_);
 
-void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r, _tuple___real_real__ &_output_);
+void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r);
+
+typedef Ahr__ctx_type_0 Ahr_do_ret_0_type;
+
+void Ahr_do_ret_0_init(Ahr__ctx_type_0 &_output_);
+
+fix16_t Ahr_do_ret_0(Ahr__ctx_type_0 &_ctx);
+
+typedef Ahr__ctx_type_0 Ahr_do_ret_1_type;
+
+void Ahr_do_ret_1_init(Ahr__ctx_type_0 &_output_);
+
+fix16_t Ahr_do_ret_1(Ahr__ctx_type_0 &_ctx);
 
 typedef struct Ahr__ctx_type_1 {
+   fix16_t process_ret_1;
+   fix16_t process_ret_0;
    fix16_t knob3;
    fix16_t knob2;
    fix16_t knob1;
@@ -136,7 +157,19 @@ void Ahr__ctx_type_1_init(Ahr__ctx_type_1 &_output_);
 
 void Ahr_process_init(Ahr__ctx_type_1 &_output_);
 
-void Ahr_process(Ahr__ctx_type_1 &_ctx, fix16_t gate, _tuple___real_real__ &_output_);
+void Ahr_process(Ahr__ctx_type_1 &_ctx, fix16_t gate);
+
+typedef Ahr__ctx_type_1 Ahr_process_ret_0_type;
+
+void Ahr_process_ret_0_init(Ahr__ctx_type_1 &_output_);
+
+fix16_t Ahr_process_ret_0(Ahr__ctx_type_1 &_ctx);
+
+typedef Ahr__ctx_type_1 Ahr_process_ret_1_type;
+
+void Ahr_process_ret_1_init(Ahr__ctx_type_1 &_output_);
+
+fix16_t Ahr_process_ret_1(Ahr__ctx_type_1 &_ctx);
 
 typedef Ahr__ctx_type_1 Ahr_noteOn_type;
 

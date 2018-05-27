@@ -59,28 +59,7 @@ module Templates = struct
          |}
          *)
       {pla|
-class _tuple___real_real__ {
-   public double field_0;
-   public double field_1;
-
-   public _tuple___real_real__() {
-      this.field_0 = 0.0f;
-      this.field_1 = 0.0f;
-   }
-
-   public _tuple___real_real__(double field_0, double field_1) {
-      this.field_0 = field_0;
-      this.field_1 = field_1;
-   }
-};
-
-_tuple___real_real__ split(double x) {
-   double integer = Math.floor(x);
-   double fractional = x - integer;
-   return new _tuple___real_real__((double)integer, (double)fractional);
-}
-
-int clip(int x, int minv, int maxv) {
+static int clip(int x, int minv, int maxv) {
    if(x > maxv)
       return maxv;
    else if(x < minv)
@@ -88,7 +67,7 @@ int clip(int x, int minv, int maxv) {
    else return x;
 }
 
-double clip(double x, double minv, double maxv) {
+static double clip(double x, double minv, double maxv) {
    if(x > maxv)
       return maxv;
    else if(x < minv)
@@ -108,11 +87,11 @@ double[] makeArray(int size, double init) {
    return a;
 }
 
-boolean not(boolean x) {
+static boolean not(boolean x) {
    return !x;
 }
 
-double int_to_float(int x) {
+static double int_to_float(int x) {
    return (double)x;
 }
 
@@ -433,9 +412,9 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       else begin
          match printStmt params body with
          | Some(tbody) ->
-            Some({pla|<#ret#> <#name#s>(<#targs#>)<#tbody#><#>|pla})
+            Some({pla|final <#ret#> <#name#s>(<#targs#>)<#tbody#><#>|pla})
          (* Covers the case when the body is empty *)
-         | None -> Some({pla|<#ret#> <#name#s>(<#targs#>){}<#>|pla})
+         | None -> Some({pla|final <#ret#> <#name#s>(<#targs#>){}<#>|pla})
       end
    (* Function declarations cotaining a single statement *)
    | CSFunction(ntype, name, args, body) ->
@@ -446,7 +425,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
          None
       else
          let tbody = CCOpt.get_or ~default:Pla.unit (printStmt params body) in
-         Some({pla|<#ret#> <#name#s>(<#targs#>){<#tbody#>}<#>|pla})
+         Some({pla|final <#ret#> <#name#s>(<#targs#>){<#tbody#>}<#>|pla})
 
    (* Prints return x *)
    | CSReturn(e1) ->

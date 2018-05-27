@@ -207,6 +207,8 @@ function this.Ahr__ctx_type_0_init()
    _ctx.rate = 0.; 
    _ctx.out = 0.; 
    _ctx.hold_phase = 0.; 
+   _ctx.do_ret_1 = 0.; 
+   _ctx.do_ret_0 = 0.; 
    _ctx._inst25 = this.Util__ctx_type_0_init(); 
    _ctx._inst23 = this.Util__ctx_type_0_init(); 
    return _ctx; 
@@ -268,13 +270,32 @@ function this.Ahr_do(_ctx,gate,a,h,r)
 
    end
    _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.005)); 
-   local _tuple_50 = { field_0 = this.clip((_ctx.out * 0.0009766),0.,1.), field_1 = resetting }; 
-   return _tuple_50; 
+   _ctx.do_ret_0 = this.clip((_ctx.out * 0.0009766),0.,1.); 
+   _ctx.do_ret_1 = resetting; 
+   return ; 
 
+end
+
+function this.Ahr_do_ret_0_init()
+   return this.Ahr__ctx_type_0_init(); 
+end
+
+function this.Ahr_do_ret_0(_ctx)
+   return _ctx.do_ret_0; 
+end
+
+function this.Ahr_do_ret_1_init()
+   return this.Ahr__ctx_type_0_init(); 
+end
+
+function this.Ahr_do_ret_1(_ctx)
+   return _ctx.do_ret_1; 
 end
 
 function this.Ahr__ctx_type_1_init()
    local _ctx = {}; 
+   _ctx.process_ret_1 = 0.; 
+   _ctx.process_ret_0 = 0.; 
    _ctx.knob3 = 0.; 
    _ctx.knob2 = 0.; 
    _ctx.knob1 = 0.; 
@@ -288,9 +309,27 @@ function this.Ahr_process_init()
 end
 
 function this.Ahr_process(_ctx,gate)
-   local _call_53 = this.Ahr_do(_ctx._inst34,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3); 
-   return _call_53; 
+   this.Ahr_do(_ctx._inst34,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
+   _ctx.process_ret_0 = this.Ahr_do_ret_0(_ctx._inst34); 
+   _ctx.process_ret_1 = this.Ahr_do_ret_1(_ctx._inst34); 
+   return ; 
 
+end
+
+function this.Ahr_process_ret_0_init()
+   return this.Ahr__ctx_type_1_init(); 
+end
+
+function this.Ahr_process_ret_0(_ctx)
+   return _ctx.process_ret_0; 
+end
+
+function this.Ahr_process_ret_1_init()
+   return this.Ahr__ctx_type_1_init(); 
+end
+
+function this.Ahr_process_ret_1(_ctx)
+   return _ctx.process_ret_1; 
 end
 
 function this.Ahr_noteOn_init()

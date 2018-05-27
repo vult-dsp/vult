@@ -110,13 +110,37 @@ static const float Util_cvTokHz_c1[33] = {0.2257192f,0.2122933f,0.1791694f,0.117
 static const float Util_cvTokHz_c2[33] = {0.8763378f,1.088287f,1.3514976f,1.6783679f,2.0842943f,2.5883971f,3.2144212f,3.991854f,4.9573151f,6.1562805f,7.645225f,9.4942823f,11.7905487f,14.642185f,18.1835118f,22.5813362f,28.0428087f,34.8251811f,43.2479231f,53.7077712f,66.6974152f,82.8287061f,102.8614758f,127.7393272f,158.6340814f,197.0009732f,244.6471976f,303.8170335f,377.2975565f,468.549918f,581.872376f,722.6027558f,897.3698773f};
 float Util_cvTokHz(float cv);
 
-void Sawcore_ptr_w2(float phase, float rate, _tuple___bool_real__ &_output_);
+typedef struct Sawcore__ctx_type_0 {
+   float ptr_w2_ret_1;
+   uint8_t ptr_w2_ret_0;
+} Sawcore__ctx_type_0;
+
+typedef Sawcore__ctx_type_0 Sawcore_ptr_w2_type;
+
+void Sawcore__ctx_type_0_init(Sawcore__ctx_type_0 &_output_);
+
+void Sawcore_ptr_w2_init(Sawcore__ctx_type_0 &_output_);
+
+void Sawcore_ptr_w2(Sawcore__ctx_type_0 &_ctx, float phase, float rate);
+
+typedef Sawcore__ctx_type_0 Sawcore_ptr_w2_ret_0_type;
+
+void Sawcore_ptr_w2_ret_0_init(Sawcore__ctx_type_0 &_output_);
+
+uint8_t Sawcore_ptr_w2_ret_0(Sawcore__ctx_type_0 &_ctx);
+
+typedef Sawcore__ctx_type_0 Sawcore_ptr_w2_ret_1_type;
+
+void Sawcore_ptr_w2_ret_1_init(Sawcore__ctx_type_0 &_output_);
+
+float Sawcore_ptr_w2_ret_1(Sawcore__ctx_type_0 &_ctx);
 
 typedef struct Sawcore__ctx_type_1 {
    uint8_t reset_state;
    float reset_phase;
    float rate;
    float phase;
+   Sawcore__ctx_type_0 _inst33;
    Util__ctx_type_0 _inst30;
    Util__ctx_type_1 _inst28;
 } Sawcore__ctx_type_1;

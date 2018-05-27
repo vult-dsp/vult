@@ -260,24 +260,27 @@ module MakeTables = struct
       Mapper.makeExpander "MakeTables.stmt_x" @@ fun state stmt ->
       match stmt with
       | StmtFun(name, args, _, ret, attr) ->
-         begin
-            let params = Tags.["size", Int; "min", Real; "max", Real] in
-            let msg    = "The attribute 'table' requires specific parameters. e.g. 'table(size=128,min=0.0,max=1.0)'" in
-            match Tags.getTableParams "table" params msg attr.tags with
-            | None -> state, [stmt]
-            | Some(_, [PInt(size, _); PReal(min, _); PReal(max, _)]) when checkRealReturn ret ->
-               let var    = checkInputVariables attr.loc args in
-               let env           = getInterpEnv state in
-               let Id.Path(path) = Env.currentScope state in
-               let full_path     = path@name in
-               let result        = calculateTables env attr full_path size min max in
-               let attr'         = { attr with tags = Tags.removeAttrFunc "table" attr.tags } in
-               let body'         = makeNewBody full_path size min max var in
-               reapply state, result @ [StmtFun(name, args, body', ret, attr')]
-            | Some(loc, _) ->
-               let msg = "This attribute can only be applied to functions returning 'real'" in
-               Error.raiseError msg loc
-         end
+         let data = Env.get state in
+         if data.PassData.args.tables then
+            begin
+               let params = Tags.["size", Int; "min", Real; "max", Real] in
+               let msg    = "The attribute 'table' requires specific parameters. e.g. 'table(size=128,min=0.0,max=1.0)'" in
+               match Tags.getTableParams "table" params msg attr.tags with
+               | None -> state, [stmt]
+               | Some(_, [PInt(size, _); PReal(min, _); PReal(max, _)]) when checkRealReturn ret ->
+                  let var    = checkInputVariables attr.loc args in
+                  let env           = getInterpEnv state in
+                  let Id.Path(path) = Env.currentScope state in
+                  let full_path     = path@name in
+                  let result        = calculateTables env attr full_path size min max in
+                  let attr'         = { attr with tags = Tags.removeAttrFunc "table" attr.tags } in
+                  let body'         = makeNewBody full_path size min max var in
+                  reapply state, result @ [StmtFun(name, args, body', ret, attr')]
+               | Some(loc, _) ->
+                  let msg = "This attribute can only be applied to functions returning 'real'" in
+                  Error.raiseError msg loc
+            end
+         else state, [stmt]
       | _ -> state, [stmt]
 
    let mapper = Mapper.{ default_mapper with stmt_x }

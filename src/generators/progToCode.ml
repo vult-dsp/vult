@@ -279,6 +279,14 @@ let rec convertType (p:parameters) (tp:Typ.t) : type_descr =
    | Typ.TExpAlt _ ->
       failwith ("ProgToCode.convertType: unsupported type in c code generation: " ^ PrintProg.typeStr tp)
 
+let convertTypeMakeTupleUnit (p:parameters) (tp:Typ.t) : type_descr =
+   match !tp with
+   | Typ.TComposed(["tuple"], _, _) ->
+      let new_type = Replacements.getType p.repl "unit" in
+      CTSimple(new_type)
+   | _ -> convertType p tp
+
+
 let convertTypeList (p:parameters) (tp:Typ.t list) : type_descr list =
    List.map (convertType p) tp
 
@@ -551,7 +559,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let arg_names = List.map (convertTypedId p) args in
       let body' = convertStmt p body in
       let fname = convertId p name in
-      CSFunction(convertType p ret, fname, arg_names, collectStmt p body')
+      CSFunction(convertTypeMakeTupleUnit p ret, fname, arg_names, collectStmt p body')
    (* special case for c/c++ to replace the makeArray function *)
    | StmtBind(LWild(_) , PCall(None, ["makeArray"], [size;init;var], attr), _) when p.code = CCode ->
       let init' = convertExp p init in
@@ -559,6 +567,14 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let init_typ  = expType p init in
       let init_func = getInitArrayFunction p init_typ in
       let var'  = convertExp p var in
+      CSBind(CLWild, CECall(init_func, [size';init';var'], attrType p attr))
+   (* special case for c/c++ to replace the makeArray function *)
+   | StmtBind(LId(var,_,vattr) , PCall(None, ["makeArray"], [size;init], attr), _) when p.code = CCode ->
+      let init' = convertExp p init in
+      let size' = convertExp p size in
+      let init_typ  = expType p init in
+      let init_func = getInitArrayFunction p init_typ in
+      let var'  = convertExp p (PId(var, vattr)) in
       CSBind(CLWild, CECall(init_func, [size';init';var'], attrType p attr))
    (* special case to bind tuples in c/c++ It expands tuple assigns *)
    | StmtBind(LId(_, _, _) as lhs, PTuple(elems, _), attr) when p.code = CCode ->

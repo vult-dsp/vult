@@ -29,14 +29,21 @@
       this.Afi_fi__ctx_type_0_init = function(){
    var _ctx = {}; 
    _ctx.x = ((0|0)|0); 
+   _ctx.process_ret_1 = ((0|0)|0); 
+   _ctx.process_ret_0 = 0.; 
    return _ctx; 
 }
 this.Afi_fi_process_init = function() { return this.Afi_fi__ctx_type_0_init(); }
 this.Afi_fi_process = function(_ctx,a,b){
    _ctx.x = ((_ctx.x + (1|0))|0); 
-   var _tuple_5 = { field_0 : a, field_1 : b }; 
-   return _tuple_5; 
+   _ctx.process_ret_0 = a; 
+   _ctx.process_ret_1 = (b|0); 
+   return ; 
 }
+this.Afi_fi_process_ret_0_init = function() { return this.Afi_fi__ctx_type_0_init(); }
+this.Afi_fi_process_ret_0 = function(_ctx) { return _ctx.process_ret_0; }
+this.Afi_fi_process_ret_1_init = function() { return this.Afi_fi__ctx_type_0_init(); }
+this.Afi_fi_process_ret_1 = function(_ctx) { return _ctx.process_ret_1; }
 this.Afi_fi_noteOn_init = function() { return this.Afi_fi__ctx_type_0_init(); }
 this.Afi_fi_noteOn = function(_ctx,note,velocity,channel){
 }
