@@ -326,7 +326,7 @@ function this.Ahr_noteOn_init()
 end
 
 function this.Ahr_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Ahr_noteOff_init()
@@ -334,7 +334,7 @@ function this.Ahr_noteOff_init()
 end
 
 function this.Ahr_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Ahr_controlChange_init()

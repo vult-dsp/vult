@@ -247,7 +247,7 @@ function this.Saw_r_noteOn_init()
 end
 
 function this.Saw_r_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Saw_r_noteOff_init()
@@ -255,7 +255,7 @@ function this.Saw_r_noteOff_init()
 end
 
 function this.Saw_r_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Saw_r_controlChange_init()
@@ -263,7 +263,7 @@ function this.Saw_r_controlChange_init()
 end
 
 function this.Saw_r_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Saw_r_default_init()

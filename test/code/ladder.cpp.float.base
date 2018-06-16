@@ -349,7 +349,6 @@ void Ladder_noteOn_init(Ladder__ctx_type_5 &_output_){
 }
 
 void Ladder_noteOn(Ladder__ctx_type_5 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Ladder_noteOff_init(Ladder__ctx_type_5 &_output_){
@@ -358,7 +357,6 @@ void Ladder_noteOff_init(Ladder__ctx_type_5 &_output_){
 }
 
 void Ladder_noteOff(Ladder__ctx_type_5 &_ctx, int note, int channel){
-
 }
 
 void Ladder_controlChange_init(Ladder__ctx_type_5 &_output_){
@@ -367,7 +365,6 @@ void Ladder_controlChange_init(Ladder__ctx_type_5 &_output_){
 }
 
 void Ladder_controlChange(Ladder__ctx_type_5 &_ctx, int control, int value, int channel){
-
 }
 
 void Ladder_default_init(Ladder__ctx_type_5 &_output_){
@@ -376,7 +373,6 @@ void Ladder_default_init(Ladder__ctx_type_5 &_output_){
 }
 
 void Ladder_default(Ladder__ctx_type_5 &_ctx){
-
 }
 
 

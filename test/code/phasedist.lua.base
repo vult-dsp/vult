@@ -129,7 +129,7 @@ function this.Phasedist_noteOff_init()
 end
 
 function this.Phasedist_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Phasedist_controlChange_init()

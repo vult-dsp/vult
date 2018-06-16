@@ -16,7 +16,11 @@ this.Bitcrush_process = function(_ctx,i,cv){
    }
    return out; 
 }
-this.Bitcrush_noteOn = function(note,velocity,channel) { ;}
-this.Bitcrush_noteOff = function(note,channel) { ;}
-this.Bitcrush_controlChange = function(control,value,channel) { ;}
-this.Bitcrush_default = function() { ;}
+this.Bitcrush_noteOn = function(_ctx,note,velocity,channel){
+}
+this.Bitcrush_noteOff = function(_ctx,note,channel){
+}
+this.Bitcrush_controlChange = function(_ctx,control,value,channel){
+}
+this.Bitcrush_default = function(_ctx){
+}

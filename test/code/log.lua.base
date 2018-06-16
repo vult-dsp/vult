@@ -33,20 +33,20 @@ function this.Log_process(input)
    return input; 
 end
 
-function this.Log_noteOn(note,velocity,channel)
-   ;
+function this.Log_noteOn(_ctx,note,velocity,channel)
+
 end
 
-function this.Log_noteOff(note,channel)
-   ;
+function this.Log_noteOff(_ctx,note,channel)
+
 end
 
-function this.Log_controlChange(control,value,channel)
-   ;
+function this.Log_controlChange(_ctx,control,value,channel)
+
 end
 
-function this.Log_default()
-   ;
+function this.Log_default(_ctx)
+
 end
 
 

@@ -255,7 +255,6 @@ void Tricore_noteOn_init(Tricore__ctx_type_0 &_output_){
 }
 
 void Tricore_noteOn(Tricore__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Tricore_noteOff_init(Tricore__ctx_type_0 &_output_){
@@ -264,7 +263,6 @@ void Tricore_noteOff_init(Tricore__ctx_type_0 &_output_){
 }
 
 void Tricore_noteOff(Tricore__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Tricore_controlChange_init(Tricore__ctx_type_0 &_output_){
@@ -273,7 +271,6 @@ void Tricore_controlChange_init(Tricore__ctx_type_0 &_output_){
 }
 
 void Tricore_controlChange(Tricore__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Tricore_default_init(Tricore__ctx_type_0 &_output_){

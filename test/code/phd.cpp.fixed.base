@@ -200,7 +200,6 @@ void Phase_noteOn_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_noteOn(Phase__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Phase_noteOff_init(Phase__ctx_type_0 &_output_){
@@ -209,7 +208,6 @@ void Phase_noteOff_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_noteOff(Phase__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Phase_controlChange_init(Phase__ctx_type_0 &_output_){
@@ -218,7 +216,6 @@ void Phase_controlChange_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_controlChange(Phase__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Phase_default_init(Phase__ctx_type_0 &_output_){
@@ -272,7 +269,6 @@ void Phd_noteOn_init(Phd__ctx_type_0 &_output_){
 }
 
 void Phd_noteOn(Phd__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Phd_noteOff_init(Phd__ctx_type_0 &_output_){
@@ -281,7 +277,6 @@ void Phd_noteOff_init(Phd__ctx_type_0 &_output_){
 }
 
 void Phd_noteOff(Phd__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Phd_controlChange_init(Phd__ctx_type_0 &_output_){
@@ -290,7 +285,6 @@ void Phd_controlChange_init(Phd__ctx_type_0 &_output_){
 }
 
 void Phd_controlChange(Phd__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Phd_default_init(Phd__ctx_type_0 &_output_){
@@ -299,7 +293,6 @@ void Phd_default_init(Phd__ctx_type_0 &_output_){
 }
 
 void Phd_default(Phd__ctx_type_0 &_ctx){
-
 }
 
 

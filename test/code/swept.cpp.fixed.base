@@ -192,7 +192,6 @@ void Swept_noteOn_init(Swept__ctx_type_0 &_output_){
 }
 
 void Swept_noteOn(Swept__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Swept_noteOff_init(Swept__ctx_type_0 &_output_){
@@ -201,7 +200,6 @@ void Swept_noteOff_init(Swept__ctx_type_0 &_output_){
 }
 
 void Swept_noteOff(Swept__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Swept_controlChange_init(Swept__ctx_type_0 &_output_){
@@ -210,7 +208,6 @@ void Swept_controlChange_init(Swept__ctx_type_0 &_output_){
 }
 
 void Swept_controlChange(Swept__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Swept_default_init(Swept__ctx_type_0 &_output_){
@@ -219,7 +216,6 @@ void Swept_default_init(Swept__ctx_type_0 &_output_){
 }
 
 void Swept_default(Swept__ctx_type_0 &_ctx){
-
 }
 
 

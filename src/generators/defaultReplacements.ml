@@ -206,8 +206,9 @@ module Java = struct
 
    let fun_to_fun = Replacements.makeFunctions
          [
-         (*
             ("abs", "double"),   "Math.abs";
+            ("abs", "float"),   "Math.abs";
+         (*
             ("max", "double"),   "Math.max";
             ("min", "double"),   "Math.min";
             ("sin", "double"),   "Math.sin";

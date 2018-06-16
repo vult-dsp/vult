@@ -38,7 +38,7 @@ type parameters =
 
 let makeSingleBlock stmts =
    match stmts with
-   | [] -> CSEmpty
+   | [] -> CSBlock([])
    | [stmt] -> stmt
    | _ -> CSBlock(stmts)
 
@@ -597,7 +597,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let arg_names = List.map (convertTypedId p) args in
       let body' = convertStmt p body in
       let body' = collectStmt p body' in
-      let body' = makeSwitch p body' in
+      let body' = if p.code <> LuaCode then makeSwitch p body' else body' in
       let fname = convertId p name in
       CSFunction(convertTypeMakeTupleUnit p ret, fname, arg_names, body')
    (* special case for c/c++ to replace the makeArray function *)

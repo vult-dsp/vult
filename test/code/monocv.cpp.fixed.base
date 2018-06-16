@@ -334,7 +334,6 @@ void Monocv_controlChange_init(Monocv__ctx_type_1 &_output_){
 }
 
 void Monocv_controlChange(Monocv__ctx_type_1 &_ctx, int control, int value, int channel){
-
 }
 
 void Monocv_default_init(Monocv__ctx_type_1 &_output_){
@@ -343,7 +342,6 @@ void Monocv_default_init(Monocv__ctx_type_1 &_output_){
 }
 
 void Monocv_default(Monocv__ctx_type_1 &_ctx){
-
 }
 
 

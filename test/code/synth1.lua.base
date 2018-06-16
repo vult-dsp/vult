@@ -200,23 +200,32 @@ function this.Synth1_noteOn_init()
 end
 
 function this.Synth1_noteOn(_ctx,note,velocity,channel)
-   switch(_ctx.count {case 0:
+   if (_ctx.count == 0) then
       _ctx.n1 = note; 
       _ctx.pitch = this.real(note); 
-   break;
-   case 1:
-      _ctx.n2 = note; 
-      _ctx.pitch = this.real(note); 
-   break;
-   case 2:
-      _ctx.n3 = note; 
-      _ctx.pitch = this.real(note); 
-   break;
-   case 3:
-      _ctx.n4 = note; 
-      _ctx.pitch = this.real(note); 
-   break;
-    })
+
+   else
+
+      if (_ctx.count == 1) then
+         _ctx.n2 = note; 
+         _ctx.pitch = this.real(note); 
+
+      else
+
+         if (_ctx.count == 2) then
+            _ctx.n3 = note; 
+            _ctx.pitch = this.real(note); 
+
+         else
+
+            if (_ctx.count == 3) then
+               _ctx.n4 = note; 
+               _ctx.pitch = this.real(note); 
+
+            end
+         end
+      end
+   end
    if (_ctx.count <= 4) then
       _ctx.count = (_ctx.count + 1); 
    end

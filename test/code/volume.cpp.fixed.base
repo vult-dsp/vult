@@ -42,7 +42,6 @@ void Volume_noteOn_init(Volume__ctx_type_1 &_output_){
 }
 
 void Volume_noteOn(Volume__ctx_type_1 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Volume_noteOff_init(Volume__ctx_type_1 &_output_){
@@ -51,7 +50,6 @@ void Volume_noteOff_init(Volume__ctx_type_1 &_output_){
 }
 
 void Volume_noteOff(Volume__ctx_type_1 &_ctx, int note, int channel){
-
 }
 
 void Volume_controlChange_init(Volume__ctx_type_1 &_output_){

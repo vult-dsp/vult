@@ -155,9 +155,11 @@ this.Adsr__ctx_type_1_init = function(){
 this.Adsr_process_init = function() { return this.Adsr__ctx_type_1_init(); }
 this.Adsr_process = function(_ctx,gate) { return this.Adsr_do(_ctx._inst30,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4); }
 this.Adsr_noteOn_init = function() { return this.Adsr__ctx_type_1_init(); }
-this.Adsr_noteOn = function(_ctx,note,velocity,channel) { ;}
+this.Adsr_noteOn = function(_ctx,note,velocity,channel){
+}
 this.Adsr_noteOff_init = function() { return this.Adsr__ctx_type_1_init(); }
-this.Adsr_noteOff = function(_ctx,note,channel) { ;}
+this.Adsr_noteOff = function(_ctx,note,channel){
+}
 this.Adsr_controlChange_init = function() { return this.Adsr__ctx_type_1_init(); }
 this.Adsr_controlChange = function(_ctx,control,value,channel){
    if((control == (1|0)))_ctx.knob1 = (this.real(value) * 0.0078741); 

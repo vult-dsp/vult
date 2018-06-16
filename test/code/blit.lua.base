@@ -229,7 +229,7 @@ function this.Phase_noteOn_init()
 end
 
 function this.Phase_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Phase_noteOff_init()
@@ -237,7 +237,7 @@ function this.Phase_noteOff_init()
 end
 
 function this.Phase_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Phase_controlChange_init()
@@ -245,7 +245,7 @@ function this.Phase_controlChange_init()
 end
 
 function this.Phase_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Phase_default_init()
@@ -391,7 +391,7 @@ function this.Blit_noteOn_init()
 end
 
 function this.Blit_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Blit_noteOff_init()
@@ -399,7 +399,7 @@ function this.Blit_noteOff_init()
 end
 
 function this.Blit_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Blit_controlChange_init()
@@ -407,7 +407,7 @@ function this.Blit_controlChange_init()
 end
 
 function this.Blit_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Blit_default_init()
@@ -415,7 +415,7 @@ function this.Blit_default_init()
 end
 
 function this.Blit_default(_ctx)
-   ;
+
 end
 
 

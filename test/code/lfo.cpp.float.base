@@ -250,7 +250,6 @@ void Lfo_noteOn_init(Lfo__ctx_type_1 &_output_){
 }
 
 void Lfo_noteOn(Lfo__ctx_type_1 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Lfo_noteOff_init(Lfo__ctx_type_1 &_output_){
@@ -259,7 +258,6 @@ void Lfo_noteOff_init(Lfo__ctx_type_1 &_output_){
 }
 
 void Lfo_noteOff(Lfo__ctx_type_1 &_ctx, int note, int channel){
-
 }
 
 void Lfo_controlChange_init(Lfo__ctx_type_1 &_output_){
@@ -268,7 +266,6 @@ void Lfo_controlChange_init(Lfo__ctx_type_1 &_output_){
 }
 
 void Lfo_controlChange(Lfo__ctx_type_1 &_ctx, int control, int value, int channel){
-
 }
 
 void Lfo_default_init(Lfo__ctx_type_1 &_output_){
@@ -277,7 +274,6 @@ void Lfo_default_init(Lfo__ctx_type_1 &_output_){
 }
 
 void Lfo_default(Lfo__ctx_type_1 &_ctx){
-
 }
 
 

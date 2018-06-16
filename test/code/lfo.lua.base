@@ -271,7 +271,7 @@ function this.Lfo_noteOn_init()
 end
 
 function this.Lfo_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Lfo_noteOff_init()
@@ -279,7 +279,7 @@ function this.Lfo_noteOff_init()
 end
 
 function this.Lfo_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Lfo_controlChange_init()
@@ -287,7 +287,7 @@ function this.Lfo_controlChange_init()
 end
 
 function this.Lfo_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Lfo_default_init()
@@ -295,7 +295,7 @@ function this.Lfo_default_init()
 end
 
 function this.Lfo_default(_ctx)
-   ;
+
 end
 
 

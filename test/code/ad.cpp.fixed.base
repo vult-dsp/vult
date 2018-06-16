@@ -228,7 +228,6 @@ void Ad_noteOn_init(Ad__ctx_type_1 &_output_){
 }
 
 void Ad_noteOn(Ad__ctx_type_1 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Ad_noteOff_init(Ad__ctx_type_1 &_output_){
@@ -237,7 +236,6 @@ void Ad_noteOff_init(Ad__ctx_type_1 &_output_){
 }
 
 void Ad_noteOff(Ad__ctx_type_1 &_ctx, int note, int channel){
-
 }
 
 void Ad_controlChange_init(Ad__ctx_type_1 &_output_){

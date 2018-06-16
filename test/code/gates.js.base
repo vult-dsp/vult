@@ -107,6 +107,8 @@ this.Gates_noteOn = function(_ctx,note,velocity,channel) { if((_ctx.channel_in =
 this.Gates_noteOff_init = function() { return this.Gates__ctx_type_2_init(); }
 this.Gates_noteOff = function(_ctx,note,channel) { if((_ctx.channel_in == channel))this.Gates_gates_noteOff(_ctx.gates,note);}
 this.Gates_controlChange_init = function() { return this.Gates__ctx_type_2_init(); }
-this.Gates_controlChange = function(_ctx,control,value,channel) { ;}
+this.Gates_controlChange = function(_ctx,control,value,channel){
+}
 this.Gates_default_init = function() { return this.Gates__ctx_type_2_init(); }
-this.Gates_default = function(_ctx) { ;}
+this.Gates_default = function(_ctx){
+}

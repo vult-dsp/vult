@@ -282,7 +282,7 @@ function this.Tricore_noteOn_init()
 end
 
 function this.Tricore_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Tricore_noteOff_init()
@@ -290,7 +290,7 @@ function this.Tricore_noteOff_init()
 end
 
 function this.Tricore_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Tricore_controlChange_init()
@@ -298,7 +298,7 @@ function this.Tricore_controlChange_init()
 end
 
 function this.Tricore_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Tricore_default_init()
@@ -323,19 +323,19 @@ function this.Saturate_soft_process(x)
 end
 
 function this.Saturate_soft_noteOn(note,velocity,channel)
-   ;
+
 end
 
 function this.Saturate_soft_noteOff(note,channel)
-   ;
+
 end
 
 function this.Saturate_soft_controlChange(control,value,channel)
-   ;
+
 end
 
 function this.Saturate_soft_default()
-   ;
+
 end
 
 local Svf_calc_g_c0 = {0.0023298,0.0023299,0.0023305,0.0023319,0.0023345,0.0023388,0.0023454,0.0023547,0.0023674,0.0023844,0.0024063,0.0024343,0.0024691,0.0025121,0.0025644,0.0026275,0.0027029,0.0027922,0.0028973,0.0030203,0.0031634,0.003329,0.0035199,0.0037389,0.0039893,0.0042746,0.0045986,0.0049655,0.0053797,0.0058464,0.0063707,0.0069586,0.0076164,0.008351,0.0091698,0.0100809,0.0110932,0.012216,0.0134597,0.0148355,0.0163553,0.0180322,0.0198803,0.0219148,0.0241521,0.0266101,0.0293079,0.0322662,0.0355074,0.0390557,0.042937,0.0471796,0.0518139,0.0568725,0.0623909,0.0684072,0.0749628,0.0821021,0.0898732,0.0983282,0.1075233,0.1175193,0.1283819,0.1401825,0.1529982,0.1669129,0.1820174,0.1984106,0.2161998,0.2355022,0.2564455,0.279169,0.3038253,0.3305814,0.359621,0.3911457,0.425378,0.4625636,0.5029746,0.5469131,0.5947151,0.6467559,0.7034553,0.7652847,0.8327749,0.9065253,0.9872156,1.0756185,1.1726159,1.2792176,1.3965844,1.5260556,1.6691821,1.8277671,2.0039155,2.2000944,2.4192078,2.6646889,2.9406147,3.2518495,3.6042257,4.0047718,4.4620034,4.9862963,5.5903689,6.2899103,7.1044061,8.0582333,9.1821272,10.515167,12.1074948,14.0240863,16.3500498,19.1981826,22.7199238,27.1215061,32.6882462,39.821863,49.0992003,61.3671398,77.9007262,100.6758491,132.8585016,179.724089,250.4813468,362.1346267,548.3402911,881.8452138,1539.1806237}; 
@@ -380,14 +380,22 @@ function this.Svf_process(_ctx,x,cv,q,sel)
    _ctx.z1 = ((_ctx.g * high) + band); 
    _ctx.z2 = ((_ctx.g * band) + low); 
    local output = 0.0; 
-   switch(sel {case 0:
-      output = low; break;
-   case 1:
-      output = high; break;
-   case 2:
-      output = band; break;
-    default 
-      output = notch; })
+   if (sel == 0) then
+      output = low; 
+   else
+
+      if (sel == 1) then
+         output = high; 
+      else
+
+         if (sel == 2) then
+            output = band; 
+         else
+
+            output = notch; 
+         end
+      end
+   end
    return this.Saturate_soft_process(output); 
 
 end
@@ -397,7 +405,7 @@ function this.Svf_noteOn_init()
 end
 
 function this.Svf_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Svf_noteOff_init()
@@ -405,7 +413,7 @@ function this.Svf_noteOff_init()
 end
 
 function this.Svf_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Svf_controlChange_init()
@@ -413,7 +421,7 @@ function this.Svf_controlChange_init()
 end
 
 function this.Svf_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Svf_default_init()
@@ -441,19 +449,19 @@ function this.Saturate_process(x)
 end
 
 function this.Saturate_noteOn(note,velocity,channel)
-   ;
+
 end
 
 function this.Saturate_noteOff(note,channel)
-   ;
+
 end
 
 function this.Saturate_controlChange(control,value,channel)
-   ;
+
 end
 
 function this.Saturate_default()
-   ;
+
 end
 
 function this.Lfo__ctx_type_0_init()
@@ -535,7 +543,7 @@ function this.Lfo_noteOn_init()
 end
 
 function this.Lfo_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Lfo_noteOff_init()
@@ -543,7 +551,7 @@ function this.Lfo_noteOff_init()
 end
 
 function this.Lfo_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Lfo_controlChange_init()
@@ -551,7 +559,7 @@ function this.Lfo_controlChange_init()
 end
 
 function this.Lfo_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Lfo_default_init()
@@ -559,7 +567,7 @@ function this.Lfo_default_init()
 end
 
 function this.Lfo_default(_ctx)
-   ;
+
 end
 
 local Tables_nsine_c0 = {-0.,(-5.9e-05),(-0.0002943),(-0.0008206),(-0.0017482),(-0.0031817),(-0.0052181),(-0.0079453),(-0.0114405),(-0.0157689),(-0.020982),(-0.0271169),(-0.0341943),(-0.0422181),(-0.0511738),(-0.061028),(-0.0717278),(-0.0831993),(-0.0953483),(-0.1080587),(-0.1211932),(-0.1345928),(-0.1480768),(-0.1614433),(-0.1744692),(-0.186911),(-0.1985054),(-0.2089699),(-0.218004),(-0.2252904),(-0.2304958),(-0.2332728),(-0.2332612),(-0.2300896),(-0.2233773),(-0.2127363),(-0.197773),(-0.1780907),(-0.1532916),(-0.122979),(-0.0867602),(-0.0442482),0.0049352,0.0611569,0.1247704,0.1961126,0.2755014,0.3632331,0.4595799,0.5647871,0.6790705,0.8026144,0.9355685,1.0780459,1.230121,1.3918269,1.5631537,1.7440465,1.9344036,2.1340748,2.3428599,2.5605077,2.7867145,3.0211234,3.2633234,3.5128493,3.7691807,4.0317427,4.2999053,4.5729845,4.8502422,5.1308878,5.4140787,5.698922,5.984476,6.2697522,6.5537169,6.8352944,7.1133686,7.3867869,7.6543621,7.9148768,8.167086,8.4097215,8.6414953,8.8611041,9.0672334,9.2585621,9.433767,9.5915276,9.7305311,9.8494774,9.9470842,10.0220922,10.0732703,10.0994211,10.0993863,10.0720517,10.0163531,9.9312811,9.8158869,9.6692872,9.4906693,9.2792966,9.0345129,8.7557476,8.4425203,8.0944449,7.7112342,7.2927034,6.8387746,6.3494795,5.824963,5.2654862,4.6714286,4.0432908,3.3816961,2.6873922,1.9612525,1.2042765,0.4175907,(-0.3975519),(-1.2397716),(-2.1075637),(-2.9992988),(-3.9132254),(-4.8474712),(-5.8000465),(-6.7688468)}; 
@@ -608,7 +616,7 @@ function this.Phase_noteOn_init()
 end
 
 function this.Phase_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Phase_noteOff_init()
@@ -616,7 +624,7 @@ function this.Phase_noteOff_init()
 end
 
 function this.Phase_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Phase_controlChange_init()
@@ -624,7 +632,7 @@ function this.Phase_controlChange_init()
 end
 
 function this.Phase_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Phase_default_init()
@@ -761,7 +769,7 @@ function this.Blit_noteOn_init()
 end
 
 function this.Blit_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Blit_noteOff_init()
@@ -769,7 +777,7 @@ function this.Blit_noteOff_init()
 end
 
 function this.Blit_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Blit_controlChange_init()
@@ -777,7 +785,7 @@ function this.Blit_controlChange_init()
 end
 
 function this.Blit_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Blit_default_init()
@@ -785,7 +793,7 @@ function this.Blit_default_init()
 end
 
 function this.Blit_default(_ctx)
-   ;
+
 end
 
 function this.Adsr__ctx_type_0_init()
@@ -868,7 +876,7 @@ function this.Adsr_noteOn_init()
 end
 
 function this.Adsr_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Adsr_noteOff_init()
@@ -876,7 +884,7 @@ function this.Adsr_noteOff_init()
 end
 
 function this.Adsr_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Adsr_controlChange_init()
@@ -970,7 +978,7 @@ function this.Voice_4_noteOn_init()
 end
 
 function this.Voice_4_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Voice_4_noteOff_init()
@@ -978,7 +986,7 @@ function this.Voice_4_noteOff_init()
 end
 
 function this.Voice_4_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Voice_4_controlChange_init()
@@ -1062,7 +1070,7 @@ function this.Voice_4_default_init()
 end
 
 function this.Voice_4_default(_ctx)
-   ;
+
 end
 
 

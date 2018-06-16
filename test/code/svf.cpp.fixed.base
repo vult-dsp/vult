@@ -172,19 +172,15 @@ fix16_t Saturate_soft_process(fix16_t x){
 }
 
 void Saturate_soft_noteOn(int note, int velocity, int channel){
-
 }
 
 void Saturate_soft_noteOff(int note, int channel){
-
 }
 
 void Saturate_soft_controlChange(int control, int value, int channel){
-
 }
 
 void Saturate_soft_default(){
-
 }
 
 fix16_t Svf_calc_g(fix16_t cv){
@@ -252,7 +248,6 @@ void Svf_noteOn_init(Svf__ctx_type_1 &_output_){
 }
 
 void Svf_noteOn(Svf__ctx_type_1 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Svf_noteOff_init(Svf__ctx_type_1 &_output_){
@@ -261,7 +256,6 @@ void Svf_noteOff_init(Svf__ctx_type_1 &_output_){
 }
 
 void Svf_noteOff(Svf__ctx_type_1 &_ctx, int note, int channel){
-
 }
 
 void Svf_controlChange_init(Svf__ctx_type_1 &_output_){
@@ -270,7 +264,6 @@ void Svf_controlChange_init(Svf__ctx_type_1 &_output_){
 }
 
 void Svf_controlChange(Svf__ctx_type_1 &_ctx, int control, int value, int channel){
-
 }
 
 void Svf_default_init(Svf__ctx_type_1 &_output_){

@@ -257,7 +257,7 @@ function this.Ad_noteOn_init()
 end
 
 function this.Ad_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Ad_noteOff_init()
@@ -265,7 +265,7 @@ function this.Ad_noteOff_init()
 end
 
 function this.Ad_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Ad_controlChange_init()

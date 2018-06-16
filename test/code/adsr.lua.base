@@ -272,7 +272,7 @@ function this.Adsr_noteOn_init()
 end
 
 function this.Adsr_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Adsr_noteOff_init()
@@ -280,7 +280,7 @@ function this.Adsr_noteOff_init()
 end
 
 function this.Adsr_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Adsr_controlChange_init()

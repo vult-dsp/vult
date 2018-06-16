@@ -26,19 +26,15 @@ fix16_t Bitcrush_process(fix16_t i, fix16_t cv){
 }
 
 void Bitcrush_noteOn(int note, int velocity, int channel){
-
 }
 
 void Bitcrush_noteOff(int note, int channel){
-
 }
 
 void Bitcrush_controlChange(int control, int value, int channel){
-
 }
 
 void Bitcrush_default(){
-
 }
 
 

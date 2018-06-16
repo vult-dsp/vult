@@ -150,10 +150,14 @@ this.Lfo_process = function(_ctx,cv,shape,reset){
    return this.Lfo_soft(_ctx._inst25,o); 
 }
 this.Lfo_noteOn_init = function() { return this.Lfo__ctx_type_1_init(); }
-this.Lfo_noteOn = function(_ctx,note,velocity,channel) { ;}
+this.Lfo_noteOn = function(_ctx,note,velocity,channel){
+}
 this.Lfo_noteOff_init = function() { return this.Lfo__ctx_type_1_init(); }
-this.Lfo_noteOff = function(_ctx,note,channel) { ;}
+this.Lfo_noteOff = function(_ctx,note,channel){
+}
 this.Lfo_controlChange_init = function() { return this.Lfo__ctx_type_1_init(); }
-this.Lfo_controlChange = function(_ctx,control,value,channel) { ;}
+this.Lfo_controlChange = function(_ctx,control,value,channel){
+}
 this.Lfo_default_init = function() { return this.Lfo__ctx_type_1_init(); }
-this.Lfo_default = function(_ctx) { ;}
+this.Lfo_default = function(_ctx){
+}

@@ -13,19 +13,15 @@ float Saturate_soft_process(float x){
 }
 
 void Saturate_soft_noteOn(int note, int velocity, int channel){
-
 }
 
 void Saturate_soft_noteOff(int note, int channel){
-
 }
 
 void Saturate_soft_controlChange(int control, int value, int channel){
-
 }
 
 void Saturate_soft_default(){
-
 }
 
 void Util__ctx_type_0_init(Util__ctx_type_0 &_output_){
@@ -281,7 +277,6 @@ void Rescomb_noteOn_init(Rescomb__ctx_type_3 &_output_){
 }
 
 void Rescomb_noteOn(Rescomb__ctx_type_3 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Rescomb_noteOff_init(Rescomb__ctx_type_3 &_output_){
@@ -290,7 +285,6 @@ void Rescomb_noteOff_init(Rescomb__ctx_type_3 &_output_){
 }
 
 void Rescomb_noteOff(Rescomb__ctx_type_3 &_ctx, int note, int channel){
-
 }
 
 void Rescomb_controlChange_init(Rescomb__ctx_type_3 &_output_){
@@ -299,7 +293,6 @@ void Rescomb_controlChange_init(Rescomb__ctx_type_3 &_output_){
 }
 
 void Rescomb_controlChange(Rescomb__ctx_type_3 &_ctx, int control, int value, int channel){
-
 }
 
 void Rescomb_default_init(Rescomb__ctx_type_3 &_output_){
@@ -308,7 +301,6 @@ void Rescomb_default_init(Rescomb__ctx_type_3 &_output_){
 }
 
 void Rescomb_default(Rescomb__ctx_type_3 &_ctx){
-
 }
 
 

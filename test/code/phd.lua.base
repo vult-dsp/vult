@@ -229,7 +229,7 @@ function this.Phase_noteOn_init()
 end
 
 function this.Phase_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Phase_noteOff_init()
@@ -237,7 +237,7 @@ function this.Phase_noteOff_init()
 end
 
 function this.Phase_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Phase_controlChange_init()
@@ -245,7 +245,7 @@ function this.Phase_controlChange_init()
 end
 
 function this.Phase_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Phase_default_init()
@@ -295,7 +295,7 @@ function this.Phd_noteOn_init()
 end
 
 function this.Phd_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Phd_noteOff_init()
@@ -303,7 +303,7 @@ function this.Phd_noteOff_init()
 end
 
 function this.Phd_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Phd_controlChange_init()
@@ -311,7 +311,7 @@ function this.Phd_controlChange_init()
 end
 
 function this.Phd_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Phd_default_init()
@@ -319,7 +319,7 @@ function this.Phd_default_init()
 end
 
 function this.Phd_default(_ctx)
-   ;
+
 end
 
 

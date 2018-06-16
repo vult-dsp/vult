@@ -274,6 +274,8 @@ this.Polycv_poly_noteOff(_ctx.poly,note);}
 this.Polycv_noteOff_init = function() { return this.Polycv__ctx_type_3_init(); }
 this.Polycv_noteOff = function(_ctx,note,channel) { if((_ctx.channel_in == channel))this.Polycv_poly_noteOff(_ctx.poly,note);}
 this.Polycv_controlChange_init = function() { return this.Polycv__ctx_type_3_init(); }
-this.Polycv_controlChange = function(_ctx,control,value,channel) { ;}
+this.Polycv_controlChange = function(_ctx,control,value,channel){
+}
 this.Polycv_default_init = function() { return this.Polycv__ctx_type_3_init(); }
-this.Polycv_default = function(_ctx) { ;}
+this.Polycv_default = function(_ctx){
+}

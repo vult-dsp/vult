@@ -357,7 +357,7 @@ function this.Monocv_controlChange_init()
 end
 
 function this.Monocv_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Monocv_default_init()
@@ -365,7 +365,7 @@ function this.Monocv_default_init()
 end
 
 function this.Monocv_default(_ctx)
-   ;
+
 end
 
 

@@ -220,7 +220,7 @@ function this.Swept_noteOn_init()
 end
 
 function this.Swept_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Swept_noteOff_init()
@@ -228,7 +228,7 @@ function this.Swept_noteOff_init()
 end
 
 function this.Swept_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Swept_controlChange_init()
@@ -236,7 +236,7 @@ function this.Swept_controlChange_init()
 end
 
 function this.Swept_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Swept_default_init()
@@ -244,7 +244,7 @@ function this.Swept_default_init()
 end
 
 function this.Swept_default(_ctx)
-   ;
+
 end
 
 

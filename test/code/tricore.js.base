@@ -163,10 +163,13 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
    return (out * 0.0009766); 
 }
 this.Tricore_noteOn_init = function() { return this.Tricore__ctx_type_0_init(); }
-this.Tricore_noteOn = function(_ctx,note,velocity,channel) { ;}
+this.Tricore_noteOn = function(_ctx,note,velocity,channel){
+}
 this.Tricore_noteOff_init = function() { return this.Tricore__ctx_type_0_init(); }
-this.Tricore_noteOff = function(_ctx,note,channel) { ;}
+this.Tricore_noteOff = function(_ctx,note,channel){
+}
 this.Tricore_controlChange_init = function() { return this.Tricore__ctx_type_0_init(); }
-this.Tricore_controlChange = function(_ctx,control,value,channel) { ;}
+this.Tricore_controlChange = function(_ctx,control,value,channel){
+}
 this.Tricore_default_init = function() { return this.Tricore__ctx_type_0_init(); }
 this.Tricore_default = function(_ctx) { _ctx.rate = 0.7593668; }

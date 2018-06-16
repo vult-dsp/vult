@@ -260,14 +260,22 @@ function this.Synth2_svf_step(_ctx,input,g,q,sel)
    _ctx.dband = this.clip(band,(-1.),1.); 
    _ctx.dlow = this.clip(low,(-1.),1.); 
    local output = 0.0; 
-   switch(sel {case 0:
-      output = low; break;
-   case 1:
-      output = high; break;
-   case 2:
-      output = band; break;
-    default 
-      output = notch; })
+   if (sel == 0) then
+      output = low; 
+   else
+
+      if (sel == 1) then
+         output = high; 
+      else
+
+         if (sel == 2) then
+            output = band; 
+         else
+
+            output = notch; 
+         end
+      end
+   end
    return output; 
 
 end

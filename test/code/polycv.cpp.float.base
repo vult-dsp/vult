@@ -574,7 +574,6 @@ void Polycv_controlChange_init(Polycv__ctx_type_3 &_output_){
 }
 
 void Polycv_controlChange(Polycv__ctx_type_3 &_ctx, int control, int value, int channel){
-
 }
 
 void Polycv_default_init(Polycv__ctx_type_3 &_output_){
@@ -583,7 +582,6 @@ void Polycv_default_init(Polycv__ctx_type_3 &_output_){
 }
 
 void Polycv_default(Polycv__ctx_type_3 &_ctx){
-
 }
 
 

@@ -14,19 +14,15 @@ float Log_process(float input){
 }
 
 void Log_noteOn(int note, int velocity, int channel){
-
 }
 
 void Log_noteOff(int note, int channel){
-
 }
 
 void Log_controlChange(int control, int value, int channel){
-
 }
 
 void Log_default(){
-
 }
 
 

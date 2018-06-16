@@ -68,7 +68,6 @@ void Wav_file_noteOn_init(Wav_file__ctx_type_4 &_output_){
 }
 
 void Wav_file_noteOn(Wav_file__ctx_type_4 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Wav_file_noteOff_init(Wav_file__ctx_type_4 &_output_){
@@ -77,7 +76,6 @@ void Wav_file_noteOff_init(Wav_file__ctx_type_4 &_output_){
 }
 
 void Wav_file_noteOff(Wav_file__ctx_type_4 &_ctx, int note, int channel){
-
 }
 
 void Wav_file_controlChange_init(Wav_file__ctx_type_4 &_output_){
@@ -86,7 +84,6 @@ void Wav_file_controlChange_init(Wav_file__ctx_type_4 &_output_){
 }
 
 void Wav_file_controlChange(Wav_file__ctx_type_4 &_ctx, int control, int value, int channel){
-
 }
 
 void Wav_file_default_init(Wav_file__ctx_type_4 &_output_){
@@ -95,7 +92,6 @@ void Wav_file_default_init(Wav_file__ctx_type_4 &_output_){
 }
 
 void Wav_file_default(Wav_file__ctx_type_4 &_ctx){
-
 }
 
 

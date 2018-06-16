@@ -182,9 +182,11 @@ this.Ahr_process_ret_0 = function(_ctx) { return _ctx.process_ret_0; }
 this.Ahr_process_ret_1_init = function() { return this.Ahr__ctx_type_1_init(); }
 this.Ahr_process_ret_1 = function(_ctx) { return _ctx.process_ret_1; }
 this.Ahr_noteOn_init = function() { return this.Ahr__ctx_type_1_init(); }
-this.Ahr_noteOn = function(_ctx,note,velocity,channel) { ;}
+this.Ahr_noteOn = function(_ctx,note,velocity,channel){
+}
 this.Ahr_noteOff_init = function() { return this.Ahr__ctx_type_1_init(); }
-this.Ahr_noteOff = function(_ctx,note,channel) { ;}
+this.Ahr_noteOff = function(_ctx,note,channel){
+}
 this.Ahr_controlChange_init = function() { return this.Ahr__ctx_type_1_init(); }
 this.Ahr_controlChange = function(_ctx,control,value,channel){
    if((control == (1|0)))_ctx.knob1 = (this.real(value) * 0.0078741); 

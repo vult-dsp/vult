@@ -37,13 +37,17 @@ this.Af_f_process = function(_ctx,input){
    return (input * input); 
 }
 this.Af_f_noteOn_init = function() { return this.Af_f__ctx_type_0_init(); }
-this.Af_f_noteOn = function(_ctx,note,velocity,channel) { ;}
+this.Af_f_noteOn = function(_ctx,note,velocity,channel){
+}
 this.Af_f_noteOff_init = function() { return this.Af_f__ctx_type_0_init(); }
-this.Af_f_noteOff = function(_ctx,note,channel) { ;}
+this.Af_f_noteOff = function(_ctx,note,channel){
+}
 this.Af_f_controlChange_init = function() { return this.Af_f__ctx_type_0_init(); }
-this.Af_f_controlChange = function(_ctx,control,value,channel) { ;}
+this.Af_f_controlChange = function(_ctx,control,value,channel){
+}
 this.Af_f_default_init = function() { return this.Af_f__ctx_type_0_init(); }
-this.Af_f_default = function(_ctx) { ;}
+this.Af_f_default = function(_ctx){
+}
 
       this.context = this.Af_f_process_init();
       };

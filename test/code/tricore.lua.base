@@ -282,7 +282,7 @@ function this.Tricore_noteOn_init()
 end
 
 function this.Tricore_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Tricore_noteOff_init()
@@ -290,7 +290,7 @@ function this.Tricore_noteOff_init()
 end
 
 function this.Tricore_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Tricore_controlChange_init()
@@ -298,7 +298,7 @@ function this.Tricore_controlChange_init()
 end
 
 function this.Tricore_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Tricore_default_init()

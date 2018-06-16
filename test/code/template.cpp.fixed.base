@@ -7,19 +7,15 @@ fix16_t Template_process(fix16_t input){
 }
 
 void Template_noteOn(int note, int velocity, int channel){
-
 }
 
 void Template_noteOff(int note, int channel){
-
 }
 
 void Template_controlChange(int control, int value, int channel){
-
 }
 
 void Template_default(){
-
 }
 
 

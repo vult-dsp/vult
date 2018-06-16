@@ -6,10 +6,14 @@ this.Saturate_tanh_table = function(x){
    return (Saturate_tanh_table_c0[index] + (x * (Saturate_tanh_table_c1[index] + (Saturate_tanh_table_c2[index] * x)))); 
 }
 this.Saturate_process = function(x) { return this.Saturate_tanh_table(x); }
-this.Saturate_noteOn = function(note,velocity,channel) { ;}
-this.Saturate_noteOff = function(note,channel) { ;}
-this.Saturate_controlChange = function(control,value,channel) { ;}
-this.Saturate_default = function() { ;}
+this.Saturate_noteOn = function(note,velocity,channel){
+}
+this.Saturate_noteOff = function(note,channel){
+}
+this.Saturate_controlChange = function(control,value,channel){
+}
+this.Saturate_default = function(){
+}
 this.Short_delay__ctx_type_0_init = function(){
    var _ctx = {}; 
    _ctx.x4 = 0.; 
@@ -62,10 +66,14 @@ this.Short_delay__ctx_type_2_init = function(){
 this.Short_delay_process_init = function() { return this.Short_delay__ctx_type_2_init(); }
 this.Short_delay_process = function(_ctx,x,time,feedback) { return this.Short_delay_do(_ctx._inst10,x,this.Short_delay_soft(_ctx._inst9,time),feedback); }
 this.Short_delay_noteOn_init = function() { return this.Short_delay__ctx_type_2_init(); }
-this.Short_delay_noteOn = function(_ctx,note,velocity,channel) { ;}
+this.Short_delay_noteOn = function(_ctx,note,velocity,channel){
+}
 this.Short_delay_noteOff_init = function() { return this.Short_delay__ctx_type_2_init(); }
-this.Short_delay_noteOff = function(_ctx,note,channel) { ;}
+this.Short_delay_noteOff = function(_ctx,note,channel){
+}
 this.Short_delay_controlChange_init = function() { return this.Short_delay__ctx_type_2_init(); }
-this.Short_delay_controlChange = function(_ctx,control,value,channel) { ;}
+this.Short_delay_controlChange = function(_ctx,control,value,channel){
+}
 this.Short_delay_default_init = function() { return this.Short_delay__ctx_type_2_init(); }
-this.Short_delay_default = function(_ctx) { ;}
+this.Short_delay_default = function(_ctx){
+}

@@ -27,10 +27,14 @@ function vultProcess() {
            this.Sf_f_process_init = null;
            this.Sf_f_default = null;
            this.Sf_f_process = function(input) { return (input * input); }
-this.Sf_f_noteOn = function(note,velocity,channel) { ;}
-this.Sf_f_noteOff = function(note,channel) { ;}
-this.Sf_f_controlChange = function(control,value,channel) { ;}
-this.Sf_f_default = function() { ;}
+this.Sf_f_noteOn = function(_ctx,note,velocity,channel){
+}
+this.Sf_f_noteOff = function(_ctx,note,channel){
+}
+this.Sf_f_controlChange = function(_ctx,control,value,channel){
+}
+this.Sf_f_default = function(_ctx){
+}
 
            if(this.Sf_f_process_init)  this.context =  this.Sf_f_process_init(); else this.context = {};
            if(this.Sf_f_default)      this.Sf_f_default(this.context);

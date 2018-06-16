@@ -119,10 +119,14 @@ this.Swept_process = function(_ctx,gate,start,end,rate){
    return (_ctx.out * 0.0009766); 
 }
 this.Swept_noteOn_init = function() { return this.Swept__ctx_type_0_init(); }
-this.Swept_noteOn = function(_ctx,note,velocity,channel) { ;}
+this.Swept_noteOn = function(_ctx,note,velocity,channel){
+}
 this.Swept_noteOff_init = function() { return this.Swept__ctx_type_0_init(); }
-this.Swept_noteOff = function(_ctx,note,channel) { ;}
+this.Swept_noteOff = function(_ctx,note,channel){
+}
 this.Swept_controlChange_init = function() { return this.Swept__ctx_type_0_init(); }
-this.Swept_controlChange = function(_ctx,control,value,channel) { ;}
+this.Swept_controlChange = function(_ctx,control,value,channel){
+}
 this.Swept_default_init = function() { return this.Swept__ctx_type_0_init(); }
-this.Swept_default = function(_ctx) { ;}
+this.Swept_default = function(_ctx){
+}

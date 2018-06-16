@@ -206,19 +206,19 @@ function this.Saturate_soft_process(x)
 end
 
 function this.Saturate_soft_noteOn(note,velocity,channel)
-   ;
+
 end
 
 function this.Saturate_soft_noteOff(note,channel)
-   ;
+
 end
 
 function this.Saturate_soft_controlChange(control,value,channel)
-   ;
+
 end
 
 function this.Saturate_soft_default()
-   ;
+
 end
 
 local Svf_calc_g_c0 = {0.0023298,0.0023299,0.0023305,0.0023319,0.0023345,0.0023388,0.0023454,0.0023547,0.0023674,0.0023844,0.0024063,0.0024343,0.0024691,0.0025121,0.0025644,0.0026275,0.0027029,0.0027922,0.0028973,0.0030203,0.0031634,0.003329,0.0035199,0.0037389,0.0039893,0.0042746,0.0045986,0.0049655,0.0053797,0.0058464,0.0063707,0.0069586,0.0076164,0.008351,0.0091698,0.0100809,0.0110932,0.012216,0.0134597,0.0148355,0.0163553,0.0180322,0.0198803,0.0219148,0.0241521,0.0266101,0.0293079,0.0322662,0.0355074,0.0390557,0.042937,0.0471796,0.0518139,0.0568725,0.0623909,0.0684072,0.0749628,0.0821021,0.0898732,0.0983282,0.1075233,0.1175193,0.1283819,0.1401825,0.1529982,0.1669129,0.1820174,0.1984106,0.2161998,0.2355022,0.2564455,0.279169,0.3038253,0.3305814,0.359621,0.3911457,0.425378,0.4625636,0.5029746,0.5469131,0.5947151,0.6467559,0.7034553,0.7652847,0.8327749,0.9065253,0.9872156,1.0756185,1.1726159,1.2792176,1.3965844,1.5260556,1.6691821,1.8277671,2.0039155,2.2000944,2.4192078,2.6646889,2.9406147,3.2518495,3.6042257,4.0047718,4.4620034,4.9862963,5.5903689,6.2899103,7.1044061,8.0582333,9.1821272,10.515167,12.1074948,14.0240863,16.3500498,19.1981826,22.7199238,27.1215061,32.6882462,39.821863,49.0992003,61.3671398,77.9007262,100.6758491,132.8585016,179.724089,250.4813468,362.1346267,548.3402911,881.8452138,1539.1806237}; 
@@ -263,14 +263,22 @@ function this.Svf_process(_ctx,x,cv,q,sel)
    _ctx.z1 = ((_ctx.g * high) + band); 
    _ctx.z2 = ((_ctx.g * band) + low); 
    local output = 0.0; 
-   switch(sel {case 0:
-      output = low; break;
-   case 1:
-      output = high; break;
-   case 2:
-      output = band; break;
-    default 
-      output = notch; })
+   if (sel == 0) then
+      output = low; 
+   else
+
+      if (sel == 1) then
+         output = high; 
+      else
+
+         if (sel == 2) then
+            output = band; 
+         else
+
+            output = notch; 
+         end
+      end
+   end
    return this.Saturate_soft_process(output); 
 
 end
@@ -280,7 +288,7 @@ function this.Svf_noteOn_init()
 end
 
 function this.Svf_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Svf_noteOff_init()
@@ -288,7 +296,7 @@ function this.Svf_noteOff_init()
 end
 
 function this.Svf_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Svf_controlChange_init()
@@ -296,7 +304,7 @@ function this.Svf_controlChange_init()
 end
 
 function this.Svf_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Svf_default_init()

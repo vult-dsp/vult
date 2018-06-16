@@ -243,7 +243,6 @@ void Adsr_noteOn_init(Adsr__ctx_type_1 &_output_){
 }
 
 void Adsr_noteOn(Adsr__ctx_type_1 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Adsr_noteOff_init(Adsr__ctx_type_1 &_output_){
@@ -252,7 +251,6 @@ void Adsr_noteOff_init(Adsr__ctx_type_1 &_output_){
 }
 
 void Adsr_noteOff(Adsr__ctx_type_1 &_ctx, int note, int channel){
-
 }
 
 void Adsr_controlChange_init(Adsr__ctx_type_1 &_output_){

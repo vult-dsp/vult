@@ -47,7 +47,6 @@ void Afi_fi_noteOn_init(Afi_fi__ctx_type_0 &_output_){
 }
 
 void Afi_fi_noteOn(Afi_fi__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Afi_fi_noteOff_init(Afi_fi__ctx_type_0 &_output_){
@@ -56,7 +55,6 @@ void Afi_fi_noteOff_init(Afi_fi__ctx_type_0 &_output_){
 }
 
 void Afi_fi_noteOff(Afi_fi__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Afi_fi_controlChange_init(Afi_fi__ctx_type_0 &_output_){
@@ -65,7 +63,6 @@ void Afi_fi_controlChange_init(Afi_fi__ctx_type_0 &_output_){
 }
 
 void Afi_fi_controlChange(Afi_fi__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Afi_fi_default_init(Afi_fi__ctx_type_0 &_output_){
@@ -74,7 +71,6 @@ void Afi_fi_default_init(Afi_fi__ctx_type_0 &_output_){
 }
 
 void Afi_fi_default(Afi_fi__ctx_type_0 &_ctx){
-
 }
 
 

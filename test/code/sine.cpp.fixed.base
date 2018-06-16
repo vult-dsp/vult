@@ -200,7 +200,6 @@ void Phase_noteOn_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_noteOn(Phase__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Phase_noteOff_init(Phase__ctx_type_0 &_output_){
@@ -209,7 +208,6 @@ void Phase_noteOff_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_noteOff(Phase__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Phase_controlChange_init(Phase__ctx_type_0 &_output_){
@@ -218,7 +216,6 @@ void Phase_controlChange_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_controlChange(Phase__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Phase_default_init(Phase__ctx_type_0 &_output_){
@@ -269,7 +266,6 @@ void Sine_noteOn_init(Sine__ctx_type_0 &_output_){
 }
 
 void Sine_noteOn(Sine__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Sine_noteOff_init(Sine__ctx_type_0 &_output_){
@@ -278,7 +274,6 @@ void Sine_noteOff_init(Sine__ctx_type_0 &_output_){
 }
 
 void Sine_noteOff(Sine__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Sine_controlChange_init(Sine__ctx_type_0 &_output_){
@@ -287,7 +282,6 @@ void Sine_controlChange_init(Sine__ctx_type_0 &_output_){
 }
 
 void Sine_controlChange(Sine__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Sine_default_init(Sine__ctx_type_0 &_output_){
@@ -296,7 +290,6 @@ void Sine_default_init(Sine__ctx_type_0 &_output_){
 }
 
 void Sine_default(Sine__ctx_type_0 &_ctx){
-
 }
 
 

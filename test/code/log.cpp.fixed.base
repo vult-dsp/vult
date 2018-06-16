@@ -14,19 +14,15 @@ fix16_t Log_process(fix16_t input){
 }
 
 void Log_noteOn(int note, int velocity, int channel){
-
 }
 
 void Log_noteOff(int note, int channel){
-
 }
 
 void Log_controlChange(int control, int value, int channel){
-
 }
 
 void Log_default(){
-
 }
 
 

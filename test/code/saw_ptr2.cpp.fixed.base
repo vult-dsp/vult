@@ -215,7 +215,6 @@ void Saw_ptr2_noteOn_init(Saw_ptr2__ctx_type_0 &_output_){
 }
 
 void Saw_ptr2_noteOn(Saw_ptr2__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Saw_ptr2_noteOff_init(Saw_ptr2__ctx_type_0 &_output_){
@@ -224,7 +223,6 @@ void Saw_ptr2_noteOff_init(Saw_ptr2__ctx_type_0 &_output_){
 }
 
 void Saw_ptr2_noteOff(Saw_ptr2__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Saw_ptr2_controlChange_init(Saw_ptr2__ctx_type_0 &_output_){
@@ -233,7 +231,6 @@ void Saw_ptr2_controlChange_init(Saw_ptr2__ctx_type_0 &_output_){
 }
 
 void Saw_ptr2_controlChange(Saw_ptr2__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Saw_ptr2_default_init(Saw_ptr2__ctx_type_0 &_output_){

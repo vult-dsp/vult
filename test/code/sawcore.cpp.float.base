@@ -300,7 +300,6 @@ void Sawcore_noteOn_init(Sawcore__ctx_type_1 &_output_){
 }
 
 void Sawcore_noteOn(Sawcore__ctx_type_1 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Sawcore_noteOff_init(Sawcore__ctx_type_1 &_output_){
@@ -309,7 +308,6 @@ void Sawcore_noteOff_init(Sawcore__ctx_type_1 &_output_){
 }
 
 void Sawcore_noteOff(Sawcore__ctx_type_1 &_ctx, int note, int channel){
-
 }
 
 void Sawcore_controlChange_init(Sawcore__ctx_type_1 &_output_){
@@ -318,7 +316,6 @@ void Sawcore_controlChange_init(Sawcore__ctx_type_1 &_output_){
 }
 
 void Sawcore_controlChange(Sawcore__ctx_type_1 &_ctx, int control, int value, int channel){
-
 }
 
 void Sawcore_default_init(Sawcore__ctx_type_1 &_output_){

@@ -67,7 +67,6 @@ void Noise_noteOn_init(Noise__ctx_type_1 &_output_){
 }
 
 void Noise_noteOn(Noise__ctx_type_1 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Noise_noteOff_init(Noise__ctx_type_1 &_output_){
@@ -76,7 +75,6 @@ void Noise_noteOff_init(Noise__ctx_type_1 &_output_){
 }
 
 void Noise_noteOff(Noise__ctx_type_1 &_ctx, int note, int channel){
-
 }
 
 void Noise_controlChange_init(Noise__ctx_type_1 &_output_){
@@ -85,7 +83,6 @@ void Noise_controlChange_init(Noise__ctx_type_1 &_output_){
 }
 
 void Noise_controlChange(Noise__ctx_type_1 &_ctx, int control, int value, int channel){
-
 }
 
 void Noise_default_init(Noise__ctx_type_1 &_output_){
@@ -94,7 +91,6 @@ void Noise_default_init(Noise__ctx_type_1 &_output_){
 }
 
 void Noise_default(Noise__ctx_type_1 &_ctx){
-
 }
 
 void Util__ctx_type_0_init(Util__ctx_type_0 &_output_){
@@ -350,7 +346,6 @@ void Tricore_noteOn_init(Tricore__ctx_type_0 &_output_){
 }
 
 void Tricore_noteOn(Tricore__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Tricore_noteOff_init(Tricore__ctx_type_0 &_output_){
@@ -359,7 +354,6 @@ void Tricore_noteOff_init(Tricore__ctx_type_0 &_output_){
 }
 
 void Tricore_noteOff(Tricore__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Tricore_controlChange_init(Tricore__ctx_type_0 &_output_){
@@ -368,7 +362,6 @@ void Tricore_controlChange_init(Tricore__ctx_type_0 &_output_){
 }
 
 void Tricore_controlChange(Tricore__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Tricore_default_init(Tricore__ctx_type_0 &_output_){
@@ -411,7 +404,6 @@ void Swept_noteOn_init(Swept__ctx_type_0 &_output_){
 }
 
 void Swept_noteOn(Swept__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Swept_noteOff_init(Swept__ctx_type_0 &_output_){
@@ -420,7 +412,6 @@ void Swept_noteOff_init(Swept__ctx_type_0 &_output_){
 }
 
 void Swept_noteOff(Swept__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Swept_controlChange_init(Swept__ctx_type_0 &_output_){
@@ -429,7 +420,6 @@ void Swept_controlChange_init(Swept__ctx_type_0 &_output_){
 }
 
 void Swept_controlChange(Swept__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Swept_default_init(Swept__ctx_type_0 &_output_){
@@ -438,7 +428,6 @@ void Swept_default_init(Swept__ctx_type_0 &_output_){
 }
 
 void Swept_default(Swept__ctx_type_0 &_ctx){
-
 }
 
 fix16_t Saturate_tanh_table(fix16_t x){
@@ -452,19 +441,15 @@ fix16_t Saturate_process(fix16_t x){
 }
 
 void Saturate_noteOn(int note, int velocity, int channel){
-
 }
 
 void Saturate_noteOff(int note, int channel){
-
 }
 
 void Saturate_controlChange(int control, int value, int channel){
-
 }
 
 void Saturate_default(){
-
 }
 
 void Ahr__ctx_type_0_init(Ahr__ctx_type_0 &_output_){
@@ -608,7 +593,6 @@ void Ahr_noteOn_init(Ahr__ctx_type_1 &_output_){
 }
 
 void Ahr_noteOn(Ahr__ctx_type_1 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Ahr_noteOff_init(Ahr__ctx_type_1 &_output_){
@@ -617,7 +601,6 @@ void Ahr_noteOff_init(Ahr__ctx_type_1 &_output_){
 }
 
 void Ahr_noteOff(Ahr__ctx_type_1 &_ctx, int note, int channel){
-
 }
 
 void Ahr_controlChange_init(Ahr__ctx_type_1 &_output_){
@@ -711,7 +694,6 @@ void Kick_noteOn_init(Kick__ctx_type_1 &_output_){
 }
 
 void Kick_noteOn(Kick__ctx_type_1 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Kick_noteOff_init(Kick__ctx_type_1 &_output_){
@@ -720,7 +702,6 @@ void Kick_noteOff_init(Kick__ctx_type_1 &_output_){
 }
 
 void Kick_noteOff(Kick__ctx_type_1 &_ctx, int note, int channel){
-
 }
 
 void Kick_controlChange_init(Kick__ctx_type_1 &_output_){
@@ -749,7 +730,6 @@ void Kick_default_init(Kick__ctx_type_1 &_output_){
 }
 
 void Kick_default(Kick__ctx_type_1 &_ctx){
-
 }
 
 

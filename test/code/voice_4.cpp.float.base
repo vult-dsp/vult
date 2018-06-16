@@ -255,7 +255,6 @@ void Tricore_noteOn_init(Tricore__ctx_type_0 &_output_){
 }
 
 void Tricore_noteOn(Tricore__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Tricore_noteOff_init(Tricore__ctx_type_0 &_output_){
@@ -264,7 +263,6 @@ void Tricore_noteOff_init(Tricore__ctx_type_0 &_output_){
 }
 
 void Tricore_noteOff(Tricore__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Tricore_controlChange_init(Tricore__ctx_type_0 &_output_){
@@ -273,7 +271,6 @@ void Tricore_controlChange_init(Tricore__ctx_type_0 &_output_){
 }
 
 void Tricore_controlChange(Tricore__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Tricore_default_init(Tricore__ctx_type_0 &_output_){
@@ -296,19 +293,15 @@ float Saturate_soft_process(float x){
 }
 
 void Saturate_soft_noteOn(int note, int velocity, int channel){
-
 }
 
 void Saturate_soft_noteOff(int note, int channel){
-
 }
 
 void Saturate_soft_controlChange(int control, int value, int channel){
-
 }
 
 void Saturate_soft_default(){
-
 }
 
 float Svf_calc_g(float cv){
@@ -376,7 +369,6 @@ void Svf_noteOn_init(Svf__ctx_type_1 &_output_){
 }
 
 void Svf_noteOn(Svf__ctx_type_1 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Svf_noteOff_init(Svf__ctx_type_1 &_output_){
@@ -385,7 +377,6 @@ void Svf_noteOff_init(Svf__ctx_type_1 &_output_){
 }
 
 void Svf_noteOff(Svf__ctx_type_1 &_ctx, int note, int channel){
-
 }
 
 void Svf_controlChange_init(Svf__ctx_type_1 &_output_){
@@ -394,7 +385,6 @@ void Svf_controlChange_init(Svf__ctx_type_1 &_output_){
 }
 
 void Svf_controlChange(Svf__ctx_type_1 &_ctx, int control, int value, int channel){
-
 }
 
 void Svf_default_init(Svf__ctx_type_1 &_output_){
@@ -419,19 +409,15 @@ float Saturate_process(float x){
 }
 
 void Saturate_noteOn(int note, int velocity, int channel){
-
 }
 
 void Saturate_noteOff(int note, int channel){
-
 }
 
 void Saturate_controlChange(int control, int value, int channel){
-
 }
 
 void Saturate_default(){
-
 }
 
 void Lfo__ctx_type_0_init(Lfo__ctx_type_0 &_output_){
@@ -523,7 +509,6 @@ void Lfo_noteOn_init(Lfo__ctx_type_1 &_output_){
 }
 
 void Lfo_noteOn(Lfo__ctx_type_1 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Lfo_noteOff_init(Lfo__ctx_type_1 &_output_){
@@ -532,7 +517,6 @@ void Lfo_noteOff_init(Lfo__ctx_type_1 &_output_){
 }
 
 void Lfo_noteOff(Lfo__ctx_type_1 &_ctx, int note, int channel){
-
 }
 
 void Lfo_controlChange_init(Lfo__ctx_type_1 &_output_){
@@ -541,7 +525,6 @@ void Lfo_controlChange_init(Lfo__ctx_type_1 &_output_){
 }
 
 void Lfo_controlChange(Lfo__ctx_type_1 &_ctx, int control, int value, int channel){
-
 }
 
 void Lfo_default_init(Lfo__ctx_type_1 &_output_){
@@ -550,7 +533,6 @@ void Lfo_default_init(Lfo__ctx_type_1 &_output_){
 }
 
 void Lfo_default(Lfo__ctx_type_1 &_ctx){
-
 }
 
 float Tables_nsine(float x){
@@ -598,7 +580,6 @@ void Phase_noteOn_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_noteOn(Phase__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Phase_noteOff_init(Phase__ctx_type_0 &_output_){
@@ -607,7 +588,6 @@ void Phase_noteOff_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_noteOff(Phase__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Phase_controlChange_init(Phase__ctx_type_0 &_output_){
@@ -616,7 +596,6 @@ void Phase_controlChange_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_controlChange(Phase__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Phase_default_init(Phase__ctx_type_0 &_output_){
@@ -769,7 +748,6 @@ void Blit_noteOn_init(Blit__ctx_type_2 &_output_){
 }
 
 void Blit_noteOn(Blit__ctx_type_2 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Blit_noteOff_init(Blit__ctx_type_2 &_output_){
@@ -778,7 +756,6 @@ void Blit_noteOff_init(Blit__ctx_type_2 &_output_){
 }
 
 void Blit_noteOff(Blit__ctx_type_2 &_ctx, int note, int channel){
-
 }
 
 void Blit_controlChange_init(Blit__ctx_type_2 &_output_){
@@ -787,7 +764,6 @@ void Blit_controlChange_init(Blit__ctx_type_2 &_output_){
 }
 
 void Blit_controlChange(Blit__ctx_type_2 &_ctx, int control, int value, int channel){
-
 }
 
 void Blit_default_init(Blit__ctx_type_2 &_output_){
@@ -796,7 +772,6 @@ void Blit_default_init(Blit__ctx_type_2 &_output_){
 }
 
 void Blit_default(Blit__ctx_type_2 &_ctx){
-
 }
 
 void Adsr__ctx_type_0_init(Adsr__ctx_type_0 &_output_){
@@ -881,7 +856,6 @@ void Adsr_noteOn_init(Adsr__ctx_type_1 &_output_){
 }
 
 void Adsr_noteOn(Adsr__ctx_type_1 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Adsr_noteOff_init(Adsr__ctx_type_1 &_output_){
@@ -890,7 +864,6 @@ void Adsr_noteOff_init(Adsr__ctx_type_1 &_output_){
 }
 
 void Adsr_noteOff(Adsr__ctx_type_1 &_ctx, int note, int channel){
-
 }
 
 void Adsr_controlChange_init(Adsr__ctx_type_1 &_output_){
@@ -996,7 +969,6 @@ void Voice_4_noteOn_init(Voice_4__ctx_type_0 &_output_){
 }
 
 void Voice_4_noteOn(Voice_4__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Voice_4_noteOff_init(Voice_4__ctx_type_0 &_output_){
@@ -1005,7 +977,6 @@ void Voice_4_noteOff_init(Voice_4__ctx_type_0 &_output_){
 }
 
 void Voice_4_noteOff(Voice_4__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Voice_4_controlChange_init(Voice_4__ctx_type_0 &_output_){
@@ -1091,7 +1062,6 @@ void Voice_4_default_init(Voice_4__ctx_type_0 &_output_){
 }
 
 void Voice_4_default(Voice_4__ctx_type_0 &_ctx){
-
 }
 
 

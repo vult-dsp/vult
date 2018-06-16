@@ -200,7 +200,6 @@ void Saw_eptr_noteOn_init(Saw_eptr__ctx_type_0 &_output_){
 }
 
 void Saw_eptr_noteOn(Saw_eptr__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Saw_eptr_noteOff_init(Saw_eptr__ctx_type_0 &_output_){
@@ -209,7 +208,6 @@ void Saw_eptr_noteOff_init(Saw_eptr__ctx_type_0 &_output_){
 }
 
 void Saw_eptr_noteOff(Saw_eptr__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Saw_eptr_controlChange_init(Saw_eptr__ctx_type_0 &_output_){
@@ -218,7 +216,6 @@ void Saw_eptr_controlChange_init(Saw_eptr__ctx_type_0 &_output_){
 }
 
 void Saw_eptr_controlChange(Saw_eptr__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Saw_eptr_default_init(Saw_eptr__ctx_type_0 &_output_){

@@ -134,10 +134,13 @@ this.Saw_ptr2_process = function(_ctx,cv){
    return out; 
 }
 this.Saw_ptr2_noteOn_init = function() { return this.Saw_ptr2__ctx_type_0_init(); }
-this.Saw_ptr2_noteOn = function(_ctx,note,velocity,channel) { ;}
+this.Saw_ptr2_noteOn = function(_ctx,note,velocity,channel){
+}
 this.Saw_ptr2_noteOff_init = function() { return this.Saw_ptr2__ctx_type_0_init(); }
-this.Saw_ptr2_noteOff = function(_ctx,note,channel) { ;}
+this.Saw_ptr2_noteOff = function(_ctx,note,channel){
+}
 this.Saw_ptr2_controlChange_init = function() { return this.Saw_ptr2__ctx_type_0_init(); }
-this.Saw_ptr2_controlChange = function(_ctx,control,value,channel) { ;}
+this.Saw_ptr2_controlChange = function(_ctx,control,value,channel){
+}
 this.Saw_ptr2_default_init = function() { return this.Saw_ptr2__ctx_type_0_init(); }
 this.Saw_ptr2_default = function(_ctx) { _ctx.rate = 0.0007416; }

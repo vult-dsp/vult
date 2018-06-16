@@ -117,12 +117,20 @@ float tan(float x) {
    return (float)Math.tan(x);
 }
 
+float tanh(float x) {
+   return (float)Math.tanh(x);
+}
+
 float sqrt(float x) {
    return (float)Math.sqrt(x);
 }
 
 float pow(float x, float y) {
    return (float)Math.pow(x, y);
+}
+
+float exp(float x) {
+   return (float)Math.exp(x);
 }
 
 |pla}

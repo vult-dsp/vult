@@ -310,7 +310,7 @@ function this.Sawcore_noteOn_init()
 end
 
 function this.Sawcore_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Sawcore_noteOff_init()
@@ -318,7 +318,7 @@ function this.Sawcore_noteOff_init()
 end
 
 function this.Sawcore_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Sawcore_controlChange_init()
@@ -326,7 +326,7 @@ function this.Sawcore_controlChange_init()
 end
 
 function this.Sawcore_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Sawcore_default_init()

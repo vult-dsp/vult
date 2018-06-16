@@ -26,19 +26,15 @@ float Bitcrush_process(float i, float cv){
 }
 
 void Bitcrush_noteOn(int note, int velocity, int channel){
-
 }
 
 void Bitcrush_noteOff(int note, int channel){
-
 }
 
 void Bitcrush_controlChange(int control, int value, int channel){
-
 }
 
 void Bitcrush_default(){
-
 }
 
 

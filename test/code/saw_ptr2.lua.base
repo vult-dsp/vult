@@ -241,7 +241,7 @@ function this.Saw_ptr2_noteOn_init()
 end
 
 function this.Saw_ptr2_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Saw_ptr2_noteOff_init()
@@ -249,7 +249,7 @@ function this.Saw_ptr2_noteOff_init()
 end
 
 function this.Saw_ptr2_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Saw_ptr2_controlChange_init()
@@ -257,7 +257,7 @@ function this.Saw_ptr2_controlChange_init()
 end
 
 function this.Saw_ptr2_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Saw_ptr2_default_init()

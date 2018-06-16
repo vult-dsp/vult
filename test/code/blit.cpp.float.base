@@ -200,7 +200,6 @@ void Phase_noteOn_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_noteOn(Phase__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Phase_noteOff_init(Phase__ctx_type_0 &_output_){
@@ -209,7 +208,6 @@ void Phase_noteOff_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_noteOff(Phase__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Phase_controlChange_init(Phase__ctx_type_0 &_output_){
@@ -218,7 +216,6 @@ void Phase_controlChange_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_controlChange(Phase__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Phase_default_init(Phase__ctx_type_0 &_output_){
@@ -377,7 +374,6 @@ void Blit_noteOn_init(Blit__ctx_type_2 &_output_){
 }
 
 void Blit_noteOn(Blit__ctx_type_2 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Blit_noteOff_init(Blit__ctx_type_2 &_output_){
@@ -386,7 +382,6 @@ void Blit_noteOff_init(Blit__ctx_type_2 &_output_){
 }
 
 void Blit_noteOff(Blit__ctx_type_2 &_ctx, int note, int channel){
-
 }
 
 void Blit_controlChange_init(Blit__ctx_type_2 &_output_){
@@ -395,7 +390,6 @@ void Blit_controlChange_init(Blit__ctx_type_2 &_output_){
 }
 
 void Blit_controlChange(Blit__ctx_type_2 &_ctx, int control, int value, int channel){
-
 }
 
 void Blit_default_init(Blit__ctx_type_2 &_output_){
@@ -404,7 +398,6 @@ void Blit_default_init(Blit__ctx_type_2 &_output_){
 }
 
 void Blit_default(Blit__ctx_type_2 &_ctx){
-
 }
 
 

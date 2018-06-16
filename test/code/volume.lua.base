@@ -59,7 +59,7 @@ function this.Volume_noteOn_init()
 end
 
 function this.Volume_noteOn(_ctx,note,velocity,channel)
-   ;
+
 end
 
 function this.Volume_noteOff_init()
@@ -67,7 +67,7 @@ function this.Volume_noteOff_init()
 end
 
 function this.Volume_noteOff(_ctx,note,channel)
-   ;
+
 end
 
 function this.Volume_controlChange_init()

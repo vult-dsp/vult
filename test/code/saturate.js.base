@@ -6,7 +6,11 @@ this.Saturate_tanh_table = function(x){
    return (Saturate_tanh_table_c0[index] + (x * (Saturate_tanh_table_c1[index] + (Saturate_tanh_table_c2[index] * x)))); 
 }
 this.Saturate_process = function(x) { return this.Saturate_tanh_table(x); }
-this.Saturate_noteOn = function(note,velocity,channel) { ;}
-this.Saturate_noteOff = function(note,channel) { ;}
-this.Saturate_controlChange = function(control,value,channel) { ;}
-this.Saturate_default = function() { ;}
+this.Saturate_noteOn = function(_ctx,note,velocity,channel){
+}
+this.Saturate_noteOff = function(_ctx,note,channel){
+}
+this.Saturate_controlChange = function(_ctx,control,value,channel){
+}
+this.Saturate_default = function(_ctx){
+}

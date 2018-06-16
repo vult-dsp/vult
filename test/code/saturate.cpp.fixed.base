@@ -13,19 +13,15 @@ fix16_t Saturate_process(fix16_t x){
 }
 
 void Saturate_noteOn(int note, int velocity, int channel){
-
 }
 
 void Saturate_noteOff(int note, int channel){
-
 }
 
 void Saturate_controlChange(int control, int value, int channel){
-
 }
 
 void Saturate_default(){
-
 }
 
 

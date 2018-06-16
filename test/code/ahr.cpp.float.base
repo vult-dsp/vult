@@ -302,7 +302,6 @@ void Ahr_noteOn_init(Ahr__ctx_type_1 &_output_){
 }
 
 void Ahr_noteOn(Ahr__ctx_type_1 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Ahr_noteOff_init(Ahr__ctx_type_1 &_output_){
@@ -311,7 +310,6 @@ void Ahr_noteOff_init(Ahr__ctx_type_1 &_output_){
 }
 
 void Ahr_noteOff(Ahr__ctx_type_1 &_ctx, int note, int channel){
-
 }
 
 void Ahr_controlChange_init(Ahr__ctx_type_1 &_output_){

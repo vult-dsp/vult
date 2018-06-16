@@ -46,7 +46,6 @@ void Aff_ff_noteOn_init(Aff_ff__ctx_type_0 &_output_){
 }
 
 void Aff_ff_noteOn(Aff_ff__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Aff_ff_noteOff_init(Aff_ff__ctx_type_0 &_output_){
@@ -55,7 +54,6 @@ void Aff_ff_noteOff_init(Aff_ff__ctx_type_0 &_output_){
 }
 
 void Aff_ff_noteOff(Aff_ff__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Aff_ff_controlChange_init(Aff_ff__ctx_type_0 &_output_){
@@ -64,7 +62,6 @@ void Aff_ff_controlChange_init(Aff_ff__ctx_type_0 &_output_){
 }
 
 void Aff_ff_controlChange(Aff_ff__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Aff_ff_default_init(Aff_ff__ctx_type_0 &_output_){
@@ -73,7 +70,6 @@ void Aff_ff_default_init(Aff_ff__ctx_type_0 &_output_){
 }
 
 void Aff_ff_default(Aff_ff__ctx_type_0 &_ctx){
-
 }
 
 

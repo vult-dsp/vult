@@ -13,19 +13,15 @@ fix16_t Saturate_soft_process(fix16_t x){
 }
 
 void Saturate_soft_noteOn(int note, int velocity, int channel){
-
 }
 
 void Saturate_soft_noteOff(int note, int channel){
-
 }
 
 void Saturate_soft_controlChange(int control, int value, int channel){
-
 }
 
 void Saturate_soft_default(){
-
 }
 
 

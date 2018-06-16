@@ -563,7 +563,7 @@ function this.Polycv_controlChange_init()
 end
 
 function this.Polycv_controlChange(_ctx,control,value,channel)
-   ;
+
 end
 
 function this.Polycv_default_init()
@@ -571,7 +571,7 @@ function this.Polycv_default_init()
 end
 
 function this.Polycv_default(_ctx)
-   ;
+
 end
 
 

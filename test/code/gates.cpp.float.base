@@ -287,7 +287,6 @@ void Gates_controlChange_init(Gates__ctx_type_2 &_output_){
 }
 
 void Gates_controlChange(Gates__ctx_type_2 &_ctx, int control, int value, int channel){
-
 }
 
 void Gates_default_init(Gates__ctx_type_2 &_output_){
@@ -296,7 +295,6 @@ void Gates_default_init(Gates__ctx_type_2 &_output_){
 }
 
 void Gates_default(Gates__ctx_type_2 &_ctx){
-
 }
 
 

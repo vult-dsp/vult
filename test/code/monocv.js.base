@@ -191,6 +191,8 @@ _ctx.active_note = (this.Monocv_mono_noteOff(_ctx.notes,note)|0); }
 this.Monocv_noteOff_init = function() { return this.Monocv__ctx_type_1_init(); }
 this.Monocv_noteOff = function(_ctx,note,channel) { if((_ctx.channel_in == channel))_ctx.active_note = (this.Monocv_mono_noteOff(_ctx.notes,note)|0); }
 this.Monocv_controlChange_init = function() { return this.Monocv__ctx_type_1_init(); }
-this.Monocv_controlChange = function(_ctx,control,value,channel) { ;}
+this.Monocv_controlChange = function(_ctx,control,value,channel){
+}
 this.Monocv_default_init = function() { return this.Monocv__ctx_type_1_init(); }
-this.Monocv_default = function(_ctx) { ;}
+this.Monocv_default = function(_ctx){
+}

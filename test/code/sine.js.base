@@ -123,11 +123,14 @@ this.Phase_process = function(_ctx,cv,reset){
    return (_ctx.phase * 0.0009766); 
 }
 this.Phase_noteOn_init = function() { return this.Phase__ctx_type_0_init(); }
-this.Phase_noteOn = function(_ctx,note,velocity,channel) { ;}
+this.Phase_noteOn = function(_ctx,note,velocity,channel){
+}
 this.Phase_noteOff_init = function() { return this.Phase__ctx_type_0_init(); }
-this.Phase_noteOff = function(_ctx,note,channel) { ;}
+this.Phase_noteOff = function(_ctx,note,channel){
+}
 this.Phase_controlChange_init = function() { return this.Phase__ctx_type_0_init(); }
-this.Phase_controlChange = function(_ctx,control,value,channel) { ;}
+this.Phase_controlChange = function(_ctx,control,value,channel){
+}
 this.Phase_default_init = function() { return this.Phase__ctx_type_0_init(); }
 this.Phase_default = function(_ctx) { _ctx.rate = 0.7593668; }
 var Tables_nsine_c0 = [-0.,(-5.9e-05),(-0.0002943),(-0.0008206),(-0.0017482),(-0.0031817),(-0.0052181),(-0.0079453),(-0.0114405),(-0.0157689),(-0.020982),(-0.0271169),(-0.0341943),(-0.0422181),(-0.0511738),(-0.061028),(-0.0717278),(-0.0831993),(-0.0953483),(-0.1080587),(-0.1211932),(-0.1345928),(-0.1480768),(-0.1614433),(-0.1744692),(-0.186911),(-0.1985054),(-0.2089699),(-0.218004),(-0.2252904),(-0.2304958),(-0.2332728),(-0.2332612),(-0.2300896),(-0.2233773),(-0.2127363),(-0.197773),(-0.1780907),(-0.1532916),(-0.122979),(-0.0867602),(-0.0442482),0.0049352,0.0611569,0.1247704,0.1961126,0.2755014,0.3632331,0.4595799,0.5647871,0.6790705,0.8026144,0.9355685,1.0780459,1.230121,1.3918269,1.5631537,1.7440465,1.9344036,2.1340748,2.3428599,2.5605077,2.7867145,3.0211234,3.2633234,3.5128493,3.7691807,4.0317427,4.2999053,4.5729845,4.8502422,5.1308878,5.4140787,5.698922,5.984476,6.2697522,6.5537169,6.8352944,7.1133686,7.3867869,7.6543621,7.9148768,8.167086,8.4097215,8.6414953,8.8611041,9.0672334,9.2585621,9.433767,9.5915276,9.7305311,9.8494774,9.9470842,10.0220922,10.0732703,10.0994211,10.0993863,10.0720517,10.0163531,9.9312811,9.8158869,9.6692872,9.4906693,9.2792966,9.0345129,8.7557476,8.4425203,8.0944449,7.7112342,7.2927034,6.8387746,6.3494795,5.824963,5.2654862,4.6714286,4.0432908,3.3816961,2.6873922,1.9612525,1.2042765,0.4175907,(-0.3975519),(-1.2397716),(-2.1075637),(-2.9992988),(-3.9132254),(-4.8474712),(-5.8000465),(-6.7688468)]; 
@@ -155,10 +158,14 @@ this.Sine_process = function(_ctx,cv,reset){
    return this.Tables_nsine(phase); 
 }
 this.Sine_noteOn_init = function() { return this.Sine__ctx_type_0_init(); }
-this.Sine_noteOn = function(_ctx,note,velocity,channel) { ;}
+this.Sine_noteOn = function(_ctx,note,velocity,channel){
+}
 this.Sine_noteOff_init = function() { return this.Sine__ctx_type_0_init(); }
-this.Sine_noteOff = function(_ctx,note,channel) { ;}
+this.Sine_noteOff = function(_ctx,note,channel){
+}
 this.Sine_controlChange_init = function() { return this.Sine__ctx_type_0_init(); }
-this.Sine_controlChange = function(_ctx,control,value,channel) { ;}
+this.Sine_controlChange = function(_ctx,control,value,channel){
+}
 this.Sine_default_init = function() { return this.Sine__ctx_type_0_init(); }
-this.Sine_default = function(_ctx) { ;}
+this.Sine_default = function(_ctx){
+}

@@ -33,10 +33,14 @@ this.Noise_process = function(_ctx,color){
    return (2. * out); 
 }
 this.Noise_noteOn_init = function() { return this.Noise__ctx_type_1_init(); }
-this.Noise_noteOn = function(_ctx,note,velocity,channel) { ;}
+this.Noise_noteOn = function(_ctx,note,velocity,channel){
+}
 this.Noise_noteOff_init = function() { return this.Noise__ctx_type_1_init(); }
-this.Noise_noteOff = function(_ctx,note,channel) { ;}
+this.Noise_noteOff = function(_ctx,note,channel){
+}
 this.Noise_controlChange_init = function() { return this.Noise__ctx_type_1_init(); }
-this.Noise_controlChange = function(_ctx,control,value,channel) { ;}
+this.Noise_controlChange = function(_ctx,control,value,channel){
+}
 this.Noise_default_init = function() { return this.Noise__ctx_type_1_init(); }
-this.Noise_default = function(_ctx) { ;}
+this.Noise_default = function(_ctx){
+}

@@ -178,10 +178,13 @@ this.Sawcore_process = function(_ctx,cv,reset){
    return ((0.0019532 * out) + (-1.)); 
 }
 this.Sawcore_noteOn_init = function() { return this.Sawcore__ctx_type_1_init(); }
-this.Sawcore_noteOn = function(_ctx,note,velocity,channel) { ;}
+this.Sawcore_noteOn = function(_ctx,note,velocity,channel){
+}
 this.Sawcore_noteOff_init = function() { return this.Sawcore__ctx_type_1_init(); }
-this.Sawcore_noteOff = function(_ctx,note,channel) { ;}
+this.Sawcore_noteOff = function(_ctx,note,channel){
+}
 this.Sawcore_controlChange_init = function() { return this.Sawcore__ctx_type_1_init(); }
-this.Sawcore_controlChange = function(_ctx,control,value,channel) { ;}
+this.Sawcore_controlChange = function(_ctx,control,value,channel){
+}
 this.Sawcore_default_init = function() { return this.Sawcore__ctx_type_1_init(); }
 this.Sawcore_default = function(_ctx) { _ctx.rate = 0.7593668; }

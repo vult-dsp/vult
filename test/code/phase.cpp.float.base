@@ -200,7 +200,6 @@ void Phase_noteOn_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_noteOn(Phase__ctx_type_0 &_ctx, int note, int velocity, int channel){
-
 }
 
 void Phase_noteOff_init(Phase__ctx_type_0 &_output_){
@@ -209,7 +208,6 @@ void Phase_noteOff_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_noteOff(Phase__ctx_type_0 &_ctx, int note, int channel){
-
 }
 
 void Phase_controlChange_init(Phase__ctx_type_0 &_output_){
@@ -218,7 +216,6 @@ void Phase_controlChange_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_controlChange(Phase__ctx_type_0 &_ctx, int control, int value, int channel){
-
 }
 
 void Phase_default_init(Phase__ctx_type_0 &_output_){
