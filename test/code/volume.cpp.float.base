@@ -42,6 +42,7 @@ void Volume_noteOn_init(Volume__ctx_type_1 &_output_){
 }
 
 void Volume_noteOn(Volume__ctx_type_1 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Volume_noteOff_init(Volume__ctx_type_1 &_output_){
@@ -50,6 +51,7 @@ void Volume_noteOff_init(Volume__ctx_type_1 &_output_){
 }
 
 void Volume_noteOff(Volume__ctx_type_1 &_ctx, int note, int channel){
+
 }
 
 void Volume_controlChange_init(Volume__ctx_type_1 &_output_){
@@ -58,9 +60,7 @@ void Volume_controlChange_init(Volume__ctx_type_1 &_output_){
 }
 
 void Volume_controlChange(Volume__ctx_type_1 &_ctx, int control, int value, int channel){
-   uint8_t _cond_8;
-   _cond_8 = (control == 30);
-   if(_cond_8){
+   if(control == 30){
       _ctx.volume = (int_to_float(value) * 0.0078741f);
    }
 }

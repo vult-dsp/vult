@@ -59,7 +59,6 @@ end
 
 function this.Util_map(x,x0,x1,y0,y1)
    return ((((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))) + y0); 
-
 end
 
 function this.Util__ctx_type_3_init()
@@ -120,20 +119,15 @@ end
 function this.Util_cubic_clipper(x)
    if (x <= (-0.6666666)) then
       return (-0.6666666); 
-
    else
 
       if (x >= 0.6666667) then
          return 0.6666667; 
-
       else
 
          return (x + ((-0.3333333) * x * x * x)); 
-
       end
-
    end
-
 end
 
 local Util_pitchToRate_1024_c0 = {0.1898417,0.1913259,0.1986886,0.2194246,0.2656772,0.3564378,0.5206507,0.8015597,1.2627581,1.9965621,3.135544,4.8683456,7.4612795,11.2877251,16.8680071,24.9233293,36.4485185,52.8098903,75.8766039,108.1965793,153.2316185,215.6710565,301.8494285,420.3017178,582.500346,803.8319419,1104.890093,1513.1840318,2065.3942521,2810.3465753,3812.9290693,5159.2451728,6963.3862256}; 
@@ -156,7 +150,6 @@ end
 
 function this.Util_cvToPitch(cv)
    return ((cv * 120.) + 24.); 
-
 end
 
 local Util_cvToRate_1024_c0 = {0.7593668,0.7628769,0.7797366,0.8256516,0.9246484,1.1123985,1.4406875,1.9833925,2.8444342,4.1683106,6.1539936,9.073195,13.2942978,19.3136143,27.7961018,39.6282634,55.9867165,78.4268778,108.9974326,150.3878036,206.1177981,280.7810906,380.3573327,512.6116485,687.6052678,918.3473603,1221.6260803,1619.0668426,2138.4784521,2815.5635571,3696.0898222,4838.643251,6318.1165156}; 
@@ -179,7 +172,6 @@ end
 
 function this.Util_pitchToCv(pitch)
    return (0.0083334 * ((-24.) + pitch)); 
-
 end
 
 local Util_cvToperiod_c0 = {674.2460348,671.5538378,662.7617819,646.759522,623.7994278,594.871802,561.2982769,524.4769422,485.7313693,446.2293824,406.9474404,368.6637744,331.9686831,297.2841558,264.8876665,234.9368568,207.4931244,182.5430159,160.0169068,139.8048318,121.7695566,105.757117,91.6051156,79.1490884,68.227249,58.6838946,50.3717336,43.153355,36.902033,31.5020248,26.8484943,22.8471657,19.4137945}; 
@@ -211,23 +203,22 @@ end
 
 function this.Saturate_soft_process(x)
    return this.Saturate_soft_tanh_table(x); 
-
 end
 
 function this.Saturate_soft_noteOn(note,velocity,channel)
-
+   ;
 end
 
 function this.Saturate_soft_noteOff(note,channel)
-
+   ;
 end
 
 function this.Saturate_soft_controlChange(control,value,channel)
-
+   ;
 end
 
 function this.Saturate_soft_default()
-
+   ;
 end
 
 local Svf_calc_g_c0 = {0.0023298,0.0023299,0.0023305,0.0023319,0.0023345,0.0023388,0.0023454,0.0023547,0.0023674,0.0023844,0.0024063,0.0024343,0.0024691,0.0025121,0.0025644,0.0026275,0.0027029,0.0027922,0.0028973,0.0030203,0.0031634,0.003329,0.0035199,0.0037389,0.0039893,0.0042746,0.0045986,0.0049655,0.0053797,0.0058464,0.0063707,0.0069586,0.0076164,0.008351,0.0091698,0.0100809,0.0110932,0.012216,0.0134597,0.0148355,0.0163553,0.0180322,0.0198803,0.0219148,0.0241521,0.0266101,0.0293079,0.0322662,0.0355074,0.0390557,0.042937,0.0471796,0.0518139,0.0568725,0.0623909,0.0684072,0.0749628,0.0821021,0.0898732,0.0983282,0.1075233,0.1175193,0.1283819,0.1401825,0.1529982,0.1669129,0.1820174,0.1984106,0.2161998,0.2355022,0.2564455,0.279169,0.3038253,0.3305814,0.359621,0.3911457,0.425378,0.4625636,0.5029746,0.5469131,0.5947151,0.6467559,0.7034553,0.7652847,0.8327749,0.9065253,0.9872156,1.0756185,1.1726159,1.2792176,1.3965844,1.5260556,1.6691821,1.8277671,2.0039155,2.2000944,2.4192078,2.6646889,2.9406147,3.2518495,3.6042257,4.0047718,4.4620034,4.9862963,5.5903689,6.2899103,7.1044061,8.0582333,9.1821272,10.515167,12.1074948,14.0240863,16.3500498,19.1981826,22.7199238,27.1215061,32.6882462,39.821863,49.0992003,61.3671398,77.9007262,100.6758491,132.8585016,179.724089,250.4813468,362.1346267,548.3402911,881.8452138,1539.1806237}; 
@@ -245,8 +236,8 @@ function this.Svf__ctx_type_1_init()
    _ctx.z1 = 0.; 
    _ctx.inv_den = 0.; 
    _ctx.g = 0.; 
-   _ctx._inst31 = this.Util__ctx_type_1_init(); 
-   _ctx._inst30 = this.Util__ctx_type_1_init(); 
+   _ctx._inst28 = this.Util__ctx_type_1_init(); 
+   _ctx._inst27 = this.Util__ctx_type_1_init(); 
    _ctx.R = 0.; 
    this.Svf_default(_ctx);
    return _ctx; 
@@ -259,7 +250,7 @@ end
 
 function this.Svf_process(_ctx,x,cv,q,sel)
    q = (q + 0.5); 
-   if (this.Util_change(_ctx._inst30,cv) or this.Util_change(_ctx._inst31,q)) then
+   if (this.Util_change(_ctx._inst27,cv) or this.Util_change(_ctx._inst28,q)) then
       _ctx.g = this.Svf_calc_g(cv); 
       _ctx.R = (1. / (2. * (q + 1e-07))); 
       _ctx.inv_den = (1. / (1. + (2. * _ctx.R * _ctx.g) + (_ctx.g * _ctx.g))); 
@@ -272,24 +263,14 @@ function this.Svf_process(_ctx,x,cv,q,sel)
    _ctx.z1 = ((_ctx.g * high) + band); 
    _ctx.z2 = ((_ctx.g * band) + low); 
    local output = 0.0; 
-   if (sel == 0) then
-      output = low; 
-   else
-
-      if (sel == 1) then
-         output = high; 
-      else
-
-         if (sel == 2) then
-            output = band; 
-         else
-
-            output = notch; 
-         end
-
-      end
-
-   end
+   switch(sel {case 0:
+      output = low; break;
+   case 1:
+      output = high; break;
+   case 2:
+      output = band; break;
+    default 
+      output = notch; })
    return this.Saturate_soft_process(output); 
 
 end
@@ -299,7 +280,7 @@ function this.Svf_noteOn_init()
 end
 
 function this.Svf_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Svf_noteOff_init()
@@ -307,7 +288,7 @@ function this.Svf_noteOff_init()
 end
 
 function this.Svf_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Svf_controlChange_init()
@@ -315,7 +296,7 @@ function this.Svf_controlChange_init()
 end
 
 function this.Svf_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Svf_default_init()

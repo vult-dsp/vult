@@ -4,7 +4,7 @@
 
 void Util__ctx_type_0_init(Util__ctx_type_0 &_output_){
    Util__ctx_type_0 _ctx;
-   _ctx.pre = 0;
+   _ctx.pre = false;
    _output_ = _ctx;
    return ;
 }
@@ -102,16 +102,12 @@ float Util_average2(Util__ctx_type_5 &_ctx, float x1){
 }
 
 float Util_cubic_clipper(float x){
-   uint8_t _cond_21;
-   _cond_21 = (x <= -0.6666666f);
-   if(_cond_21){
+   if(x <= -0.6666666f){
       return -0.6666666f;
    }
    else
    {
-      uint8_t _cond_20;
-      _cond_20 = (x >= 0.6666667f);
-      if(_cond_20){
+      if(x >= 0.6666667f){
          return 0.6666667f;
       }
       else
@@ -176,15 +172,19 @@ float Saturate_soft_process(float x){
 }
 
 void Saturate_soft_noteOn(int note, int velocity, int channel){
+
 }
 
 void Saturate_soft_noteOff(int note, int channel){
+
 }
 
 void Saturate_soft_controlChange(int control, int value, int channel){
+
 }
 
 void Saturate_soft_default(){
+
 }
 
 float Svf_calc_g(float cv){
@@ -199,8 +199,8 @@ void Svf__ctx_type_1_init(Svf__ctx_type_1 &_output_){
    _ctx.z1 = 0.f;
    _ctx.inv_den = 0.f;
    _ctx.g = 0.f;
-   Util__ctx_type_1_init(_ctx._inst31);
-   Util__ctx_type_1_init(_ctx._inst30);
+   Util__ctx_type_1_init(_ctx._inst28);
+   Util__ctx_type_1_init(_ctx._inst27);
    _ctx.R = 0.f;
    Svf_default(_ctx);
    _output_ = _ctx;
@@ -214,9 +214,7 @@ void Svf_process_init(Svf__ctx_type_1 &_output_){
 
 float Svf_process(Svf__ctx_type_1 &_ctx, float x, float cv, float q, int sel){
    q = (q + 0.5f);
-   uint8_t _cond_37;
-   _cond_37 = (Util_change(_ctx._inst30,cv) || Util_change(_ctx._inst31,q));
-   if(_cond_37){
+   if(Util_change(_ctx._inst27,cv) || Util_change(_ctx._inst28,q)){
       _ctx.g = Svf_calc_g(cv);
       _ctx.R = (1.f / (2.f * (q + 1e-07f)));
       _ctx.inv_den = (1.f / (1.f + (2.f * _ctx.R * _ctx.g) + (_ctx.g * _ctx.g)));
@@ -232,22 +230,18 @@ float Svf_process(Svf__ctx_type_1 &_ctx, float x, float cv, float q, int sel){
    _ctx.z1 = ((_ctx.g * high) + band);
    _ctx.z2 = ((_ctx.g * band) + low);
    float output;
-   uint8_t _cond_38;
-   _cond_38 = (sel == 0);
-   if(_cond_38){ output = low; }
-   else
-   {
-      uint8_t _cond_39;
-      _cond_39 = (sel == 1);
-      if(_cond_39){ output = high; }
-      else
-      {
-         uint8_t _cond_40;
-         _cond_40 = (sel == 2);
-         if(_cond_40){ output = band; }
-         else
-         { output = notch; }
-      }
+   switch(sel) {
+      case 0:
+         output = low;
+      break;
+      case 1:
+         output = high;
+      break;
+      case 2:
+         output = band;
+      break;
+    default: 
+      output = notch;
    }
    return Saturate_soft_process(output);
 }
@@ -258,6 +252,7 @@ void Svf_noteOn_init(Svf__ctx_type_1 &_output_){
 }
 
 void Svf_noteOn(Svf__ctx_type_1 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Svf_noteOff_init(Svf__ctx_type_1 &_output_){
@@ -266,6 +261,7 @@ void Svf_noteOff_init(Svf__ctx_type_1 &_output_){
 }
 
 void Svf_noteOff(Svf__ctx_type_1 &_ctx, int note, int channel){
+
 }
 
 void Svf_controlChange_init(Svf__ctx_type_1 &_output_){
@@ -274,6 +270,7 @@ void Svf_controlChange_init(Svf__ctx_type_1 &_output_){
 }
 
 void Svf_controlChange(Svf__ctx_type_1 &_ctx, int control, int value, int channel){
+
 }
 
 void Svf_default_init(Svf__ctx_type_1 &_output_){

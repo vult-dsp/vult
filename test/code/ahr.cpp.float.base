@@ -4,7 +4,7 @@
 
 void Util__ctx_type_0_init(Util__ctx_type_0 &_output_){
    Util__ctx_type_0 _ctx;
-   _ctx.pre = 0;
+   _ctx.pre = false;
    _output_ = _ctx;
    return ;
 }
@@ -102,16 +102,12 @@ float Util_average2(Util__ctx_type_5 &_ctx, float x1){
 }
 
 float Util_cubic_clipper(float x){
-   uint8_t _cond_21;
-   _cond_21 = (x <= -0.6666666f);
-   if(_cond_21){
+   if(x <= -0.6666666f){
       return -0.6666666f;
    }
    else
    {
-      uint8_t _cond_20;
-      _cond_20 = (x >= 0.6666667f);
-      if(_cond_20){
+      if(x >= 0.6666667f){
          return 0.6666667f;
       }
       else
@@ -174,8 +170,8 @@ void Ahr__ctx_type_0_init(Ahr__ctx_type_0 &_output_){
    _ctx.hold_phase = 0.f;
    _ctx.do_ret_1 = 0.f;
    _ctx.do_ret_0 = 0.f;
-   Util__ctx_type_0_init(_ctx._inst25);
-   Util__ctx_type_0_init(_ctx._inst23);
+   Util__ctx_type_0_init(_ctx._inst22);
+   Util__ctx_type_0_init(_ctx._inst20);
    _output_ = _ctx;
    return ;
 }
@@ -196,55 +192,41 @@ void Ahr_do(Ahr__ctx_type_0 &_ctx, float gate, float a, float h, float r){
    reset = 3;
    uint8_t bgate;
    bgate = (gate > 0.f);
-   uint8_t _cond_42;
-   _cond_42 = Util_edge(_ctx._inst23,bgate);
-   if(_cond_42){
+   if(Util_edge(_ctx._inst20,bgate)){
       _ctx.state = reset;
    }
    float resetting;
-   uint8_t _cond_51;
-   _cond_51 = (_ctx.state == reset);
-   if(_cond_51){ resetting = 1.f; }
+   if(_ctx.state == reset){
+      resetting = 1.f;
+   }
    else
-   { resetting = 0.f; }
-   uint8_t _cond_43;
-   _cond_43 = Util_edge(_ctx._inst25,(_ctx.out > 1024.f));
-   if(_cond_43){
+   {
+      resetting = 0.f;
+   }
+   if(Util_edge(_ctx._inst22,(_ctx.out > 1024.f))){
       _ctx.hold_phase = 0.f;
       _ctx.state = hold;
    }
-   uint8_t _cond_44;
-   _cond_44 = ((_ctx.out < 10.f) && (_ctx.state == reset));
-   if(_cond_44){
+   if((_ctx.out < 10.f) && (_ctx.state == reset)){
       _ctx.state = attack;
    }
-   uint8_t _cond_45;
-   _cond_45 = ((_ctx.hold_phase > 100.f) && (_ctx.state == hold));
-   if(_cond_45){
+   if((_ctx.hold_phase > 100.f) && (_ctx.state == hold)){
       _ctx.state = release;
    }
-   uint8_t _cond_46;
-   _cond_46 = (_ctx.state == reset);
-   if(_cond_46){
+   if(_ctx.state == reset){
       _ctx.rate = 0.9900991f;
       _ctx.target = 0.f;
    }
-   uint8_t _cond_47;
-   _cond_47 = (_ctx.state == attack);
-   if(_cond_47){
+   if(_ctx.state == attack){
       _ctx.rate = (1.f / ((100.f * a) + 0.01f));
       _ctx.target = 1228.8f;
    }
-   uint8_t _cond_48;
-   _cond_48 = (_ctx.state == hold);
-   if(_cond_48){
+   if(_ctx.state == hold){
       float hrate;
       hrate = (1.f / ((100.f * h) + 0.01f));
       _ctx.hold_phase = (_ctx.hold_phase + hrate);
    }
-   uint8_t _cond_49;
-   _cond_49 = (_ctx.state == release);
-   if(_cond_49){
+   if(_ctx.state == release){
       _ctx.rate = (1.f / ((100.f * r) + 0.01f));
       _ctx.target = 0.f;
    }
@@ -259,14 +241,18 @@ void Ahr_do_ret_0_init(Ahr__ctx_type_0 &_output_){
    return ;
 }
 
-float Ahr_do_ret_0(Ahr__ctx_type_0 &_ctx){return _ctx.do_ret_0;}
+float Ahr_do_ret_0(Ahr__ctx_type_0 &_ctx){
+   return _ctx.do_ret_0;
+}
 
 void Ahr_do_ret_1_init(Ahr__ctx_type_0 &_output_){
    Ahr__ctx_type_0_init(_output_);
    return ;
 }
 
-float Ahr_do_ret_1(Ahr__ctx_type_0 &_ctx){return _ctx.do_ret_1;}
+float Ahr_do_ret_1(Ahr__ctx_type_0 &_ctx){
+   return _ctx.do_ret_1;
+}
 
 void Ahr__ctx_type_1_init(Ahr__ctx_type_1 &_output_){
    Ahr__ctx_type_1 _ctx;
@@ -275,7 +261,7 @@ void Ahr__ctx_type_1_init(Ahr__ctx_type_1 &_output_){
    _ctx.knob3 = 0.f;
    _ctx.knob2 = 0.f;
    _ctx.knob1 = 0.f;
-   Ahr__ctx_type_0_init(_ctx._inst34);
+   Ahr__ctx_type_0_init(_ctx._inst31);
    _output_ = _ctx;
    return ;
 }
@@ -286,9 +272,9 @@ void Ahr_process_init(Ahr__ctx_type_1 &_output_){
 }
 
 void Ahr_process(Ahr__ctx_type_1 &_ctx, float gate){
-   Ahr_do(_ctx._inst34,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
-   _ctx.process_ret_0 = Ahr_do_ret_0(_ctx._inst34);
-   _ctx.process_ret_1 = Ahr_do_ret_1(_ctx._inst34);
+   Ahr_do(_ctx._inst31,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
+   _ctx.process_ret_0 = Ahr_do_ret_0(_ctx._inst31);
+   _ctx.process_ret_1 = Ahr_do_ret_1(_ctx._inst31);
    return ;
 }
 
@@ -297,14 +283,18 @@ void Ahr_process_ret_0_init(Ahr__ctx_type_1 &_output_){
    return ;
 }
 
-float Ahr_process_ret_0(Ahr__ctx_type_1 &_ctx){return _ctx.process_ret_0;}
+float Ahr_process_ret_0(Ahr__ctx_type_1 &_ctx){
+   return _ctx.process_ret_0;
+}
 
 void Ahr_process_ret_1_init(Ahr__ctx_type_1 &_output_){
    Ahr__ctx_type_1_init(_output_);
    return ;
 }
 
-float Ahr_process_ret_1(Ahr__ctx_type_1 &_ctx){return _ctx.process_ret_1;}
+float Ahr_process_ret_1(Ahr__ctx_type_1 &_ctx){
+   return _ctx.process_ret_1;
+}
 
 void Ahr_noteOn_init(Ahr__ctx_type_1 &_output_){
    Ahr__ctx_type_1_init(_output_);
@@ -312,6 +302,7 @@ void Ahr_noteOn_init(Ahr__ctx_type_1 &_output_){
 }
 
 void Ahr_noteOn(Ahr__ctx_type_1 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Ahr_noteOff_init(Ahr__ctx_type_1 &_output_){
@@ -320,6 +311,7 @@ void Ahr_noteOff_init(Ahr__ctx_type_1 &_output_){
 }
 
 void Ahr_noteOff(Ahr__ctx_type_1 &_ctx, int note, int channel){
+
 }
 
 void Ahr_controlChange_init(Ahr__ctx_type_1 &_output_){
@@ -328,19 +320,13 @@ void Ahr_controlChange_init(Ahr__ctx_type_1 &_output_){
 }
 
 void Ahr_controlChange(Ahr__ctx_type_1 &_ctx, int control, int value, int channel){
-   uint8_t _cond_53;
-   _cond_53 = (control == 1);
-   if(_cond_53){
+   if(control == 1){
       _ctx.knob1 = (int_to_float(value) * 0.0078741f);
    }
-   uint8_t _cond_54;
-   _cond_54 = (control == 2);
-   if(_cond_54){
+   if(control == 2){
       _ctx.knob2 = (int_to_float(value) * 0.0078741f);
    }
-   uint8_t _cond_55;
-   _cond_55 = (control == 3);
-   if(_cond_55){
+   if(control == 3){
       _ctx.knob3 = (int_to_float(value) * 0.0078741f);
    }
 }

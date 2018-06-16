@@ -52,7 +52,6 @@ end
 
 function this.Volume_process(_ctx,input)
    return (input * this.Volume_smooth(_ctx._inst2,_ctx.volume)); 
-
 end
 
 function this.Volume_noteOn_init()
@@ -60,7 +59,7 @@ function this.Volume_noteOn_init()
 end
 
 function this.Volume_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Volume_noteOff_init()
@@ -68,7 +67,7 @@ function this.Volume_noteOff_init()
 end
 
 function this.Volume_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Volume_controlChange_init()
@@ -78,9 +77,7 @@ end
 function this.Volume_controlChange(_ctx,control,value,channel)
    if (control == 30) then
       _ctx.volume = (this.real(value) * 0.0078741); 
-
    end
-
 end
 
 function this.Volume_default_init()
@@ -89,7 +86,6 @@ end
 
 function this.Volume_default(_ctx)
    _ctx.volume = 0.; 
-
 end
 
 

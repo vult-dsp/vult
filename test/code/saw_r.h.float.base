@@ -108,7 +108,7 @@ float Util_cvTokHz(float cv);
 typedef struct Saw_r__ctx_type_0 {
    float phase;
    float inc;
-   Util__ctx_type_1 _inst23;
+   Util__ctx_type_1 _inst20;
 } Saw_r__ctx_type_0;
 
 typedef Saw_r__ctx_type_0 Saw_r_process_type;

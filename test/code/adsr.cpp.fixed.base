@@ -4,7 +4,7 @@
 
 void Util__ctx_type_0_init(Util__ctx_type_0 &_output_){
    Util__ctx_type_0 _ctx;
-   _ctx.pre = 0;
+   _ctx.pre = false;
    _output_ = _ctx;
    return ;
 }
@@ -102,16 +102,12 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
 }
 
 fix16_t Util_cubic_clipper(fix16_t x){
-   uint8_t _cond_21;
-   _cond_21 = (x <= -0xaaaa /* -0.666667 */);
-   if(_cond_21){
+   if(x <= -0xaaaa /* -0.666667 */){
       return -0xaaaa /* -0.666667 */;
    }
    else
    {
-      uint8_t _cond_20;
-      _cond_20 = (x >= 0xaaaa /* 0.666667 */);
-      if(_cond_20){
+      if(x >= 0xaaaa /* 0.666667 */){
          return 0xaaaa /* 0.666667 */;
       }
       else
@@ -172,8 +168,8 @@ void Adsr__ctx_type_0_init(Adsr__ctx_type_0 &_output_){
    _ctx.scale = 0x0 /* 0.000000 */;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.out = 0x0 /* 0.000000 */;
-   Util__ctx_type_4_init(_ctx._inst31);
-   Util__ctx_type_0_init(_ctx._inst24);
+   Util__ctx_type_4_init(_ctx._inst28);
+   Util__ctx_type_0_init(_ctx._inst21);
    _output_ = _ctx;
    return ;
 }
@@ -193,46 +189,32 @@ fix16_t Adsr_do(Adsr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t d, fix1
    _ctx.out = (_ctx.out + fix_mul(fix_mul((_ctx.target + (- _ctx.out)),_ctx.rate),0x106 /* 0.004000 */));
    uint8_t bgate;
    bgate = (gate > 0x0 /* 0.000000 */);
-   uint8_t _cond_43;
-   _cond_43 = (_ctx.state == 0);
-   if(_cond_43){
-      uint8_t _cond_42;
-      _cond_42 = Util_edge(_ctx._inst24,bgate);
-      if(_cond_42){
+   if(_ctx.state == 0){
+      if(Util_edge(_ctx._inst21,bgate)){
          _ctx.state = 1;
          _ctx.scale = fix_mul(gate,0x3333 /* 0.200000 */);
       }
       _ctx.rate = r_rate;
       _ctx.target = 0x0 /* 0.000000 */;
    }
-   uint8_t _cond_46;
-   _cond_46 = (_ctx.state == 1);
-   if(_cond_46){
-      uint8_t _cond_44;
-      _cond_44 = bool_not(bgate);
-      if(_cond_44){
+   if(_ctx.state == 1){
+      if(bool_not(bgate)){
          _ctx.state = 0;
       }
-      uint8_t _cond_45;
-      _cond_45 = (_ctx.out > 0x4000000 /* 1024.000000 */);
-      if(_cond_45){
+      if(_ctx.out > 0x4000000 /* 1024.000000 */){
          _ctx.state = 2;
       }
       _ctx.rate = a_rate;
       _ctx.target = 0x4cccccc /* 1228.800000 */;
    }
-   uint8_t _cond_48;
-   _cond_48 = (_ctx.state == 2);
-   if(_cond_48){
-      uint8_t _cond_47;
-      _cond_47 = bool_not(bgate);
-      if(_cond_47){
+   if(_ctx.state == 2){
+      if(bool_not(bgate)){
          _ctx.state = 0;
       }
       _ctx.rate = d_rate;
       _ctx.target = (s << 10);
    }
-   return fix_mul(Util_smooth(_ctx._inst31,_ctx.scale),fix_clip((_ctx.out >> 10),0x0 /* 0.000000 */,0x10000 /* 1.000000 */));
+   return fix_mul(Util_smooth(_ctx._inst28,_ctx.scale),fix_clip((_ctx.out >> 10),0x0 /* 0.000000 */,0x10000 /* 1.000000 */));
 }
 
 void Adsr__ctx_type_1_init(Adsr__ctx_type_1 &_output_){
@@ -241,7 +223,7 @@ void Adsr__ctx_type_1_init(Adsr__ctx_type_1 &_output_){
    _ctx.knob3 = 0x0 /* 0.000000 */;
    _ctx.knob2 = 0x0 /* 0.000000 */;
    _ctx.knob1 = 0x0 /* 0.000000 */;
-   Adsr__ctx_type_0_init(_ctx._inst33);
+   Adsr__ctx_type_0_init(_ctx._inst30);
    _output_ = _ctx;
    return ;
 }
@@ -252,7 +234,7 @@ void Adsr_process_init(Adsr__ctx_type_1 &_output_){
 }
 
 fix16_t Adsr_process(Adsr__ctx_type_1 &_ctx, fix16_t gate){
-   return Adsr_do(_ctx._inst33,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4);
+   return Adsr_do(_ctx._inst30,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4);
 }
 
 void Adsr_noteOn_init(Adsr__ctx_type_1 &_output_){
@@ -261,6 +243,7 @@ void Adsr_noteOn_init(Adsr__ctx_type_1 &_output_){
 }
 
 void Adsr_noteOn(Adsr__ctx_type_1 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Adsr_noteOff_init(Adsr__ctx_type_1 &_output_){
@@ -269,6 +252,7 @@ void Adsr_noteOff_init(Adsr__ctx_type_1 &_output_){
 }
 
 void Adsr_noteOff(Adsr__ctx_type_1 &_ctx, int note, int channel){
+
 }
 
 void Adsr_controlChange_init(Adsr__ctx_type_1 &_output_){
@@ -277,24 +261,16 @@ void Adsr_controlChange_init(Adsr__ctx_type_1 &_output_){
 }
 
 void Adsr_controlChange(Adsr__ctx_type_1 &_ctx, int control, int value, int channel){
-   uint8_t _cond_49;
-   _cond_49 = (control == 1);
-   if(_cond_49){
+   if(control == 1){
       _ctx.knob1 = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    }
-   uint8_t _cond_50;
-   _cond_50 = (control == 2);
-   if(_cond_50){
+   if(control == 2){
       _ctx.knob2 = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    }
-   uint8_t _cond_51;
-   _cond_51 = (control == 3);
-   if(_cond_51){
+   if(control == 3){
       _ctx.knob3 = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    }
-   uint8_t _cond_52;
-   _cond_52 = (control == 4);
-   if(_cond_52){
+   if(control == 4){
       _ctx.knob4 = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
    }
 }

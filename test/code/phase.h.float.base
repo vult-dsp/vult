@@ -108,8 +108,8 @@ float Util_cvTokHz(float cv);
 typedef struct Phase__ctx_type_0 {
    float rate;
    float phase;
-   Util__ctx_type_0 _inst25;
-   Util__ctx_type_1 _inst23;
+   Util__ctx_type_0 _inst22;
+   Util__ctx_type_1 _inst20;
 } Phase__ctx_type_0;
 
 typedef Phase__ctx_type_0 Phase_process_type;

@@ -28,14 +28,18 @@ void Afi_fi_process_ret_0_init(Afi_fi__ctx_type_0 &_output_){
    return ;
 }
 
-float Afi_fi_process_ret_0(Afi_fi__ctx_type_0 &_ctx){return _ctx.process_ret_0;}
+float Afi_fi_process_ret_0(Afi_fi__ctx_type_0 &_ctx){
+   return _ctx.process_ret_0;
+}
 
 void Afi_fi_process_ret_1_init(Afi_fi__ctx_type_0 &_output_){
    Afi_fi__ctx_type_0_init(_output_);
    return ;
 }
 
-int Afi_fi_process_ret_1(Afi_fi__ctx_type_0 &_ctx){return _ctx.process_ret_1;}
+int Afi_fi_process_ret_1(Afi_fi__ctx_type_0 &_ctx){
+   return _ctx.process_ret_1;
+}
 
 void Afi_fi_noteOn_init(Afi_fi__ctx_type_0 &_output_){
    Afi_fi__ctx_type_0_init(_output_);
@@ -43,6 +47,7 @@ void Afi_fi_noteOn_init(Afi_fi__ctx_type_0 &_output_){
 }
 
 void Afi_fi_noteOn(Afi_fi__ctx_type_0 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Afi_fi_noteOff_init(Afi_fi__ctx_type_0 &_output_){
@@ -51,6 +56,7 @@ void Afi_fi_noteOff_init(Afi_fi__ctx_type_0 &_output_){
 }
 
 void Afi_fi_noteOff(Afi_fi__ctx_type_0 &_ctx, int note, int channel){
+
 }
 
 void Afi_fi_controlChange_init(Afi_fi__ctx_type_0 &_output_){
@@ -59,6 +65,7 @@ void Afi_fi_controlChange_init(Afi_fi__ctx_type_0 &_output_){
 }
 
 void Afi_fi_controlChange(Afi_fi__ctx_type_0 &_ctx, int control, int value, int channel){
+
 }
 
 void Afi_fi_default_init(Afi_fi__ctx_type_0 &_output_){
@@ -67,6 +74,7 @@ void Afi_fi_default_init(Afi_fi__ctx_type_0 &_output_){
 }
 
 void Afi_fi_default(Afi_fi__ctx_type_0 &_ctx){
+
 }
 
 

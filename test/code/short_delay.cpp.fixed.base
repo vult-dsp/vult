@@ -13,15 +13,19 @@ fix16_t Saturate_process(fix16_t x){
 }
 
 void Saturate_noteOn(int note, int velocity, int channel){
+
 }
 
 void Saturate_noteOff(int note, int channel){
+
 }
 
 void Saturate_controlChange(int control, int value, int channel){
+
 }
 
 void Saturate_default(){
+
 }
 
 void Short_delay__ctx_type_0_init(Short_delay__ctx_type_0 &_output_){
@@ -76,11 +80,13 @@ fix16_t Short_delay_do(Short_delay__ctx_type_1 &_ctx, fix16_t x, fix16_t time, f
    int delta;
    delta = (_ctx.write_pos + (- index_i));
    int read_pos;
-   uint8_t _cond_16;
-   _cond_16 = (delta < 0);
-   if(_cond_16){ read_pos = (22050 + delta); }
+   if(delta < 0){
+      read_pos = (22050 + delta);
+   }
    else
-   { read_pos = delta; }
+   {
+      read_pos = delta;
+   }
    fix16_t decimal;
    decimal = (index_r + (- int_to_fix(index_i)));
    fix16_t x1;
@@ -117,6 +123,7 @@ void Short_delay_noteOn_init(Short_delay__ctx_type_2 &_output_){
 }
 
 void Short_delay_noteOn(Short_delay__ctx_type_2 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Short_delay_noteOff_init(Short_delay__ctx_type_2 &_output_){
@@ -125,6 +132,7 @@ void Short_delay_noteOff_init(Short_delay__ctx_type_2 &_output_){
 }
 
 void Short_delay_noteOff(Short_delay__ctx_type_2 &_ctx, int note, int channel){
+
 }
 
 void Short_delay_controlChange_init(Short_delay__ctx_type_2 &_output_){
@@ -133,6 +141,7 @@ void Short_delay_controlChange_init(Short_delay__ctx_type_2 &_output_){
 }
 
 void Short_delay_controlChange(Short_delay__ctx_type_2 &_ctx, int control, int value, int channel){
+
 }
 
 void Short_delay_default_init(Short_delay__ctx_type_2 &_output_){
@@ -141,6 +150,7 @@ void Short_delay_default_init(Short_delay__ctx_type_2 &_output_){
 }
 
 void Short_delay_default(Short_delay__ctx_type_2 &_ctx){
+
 }
 
 

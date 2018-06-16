@@ -143,7 +143,7 @@ fix16_t Ladder_euler(Ladder__ctx_type_2 &_ctx, fix16_t input, fix16_t fh, fix16_
 typedef struct Ladder__ctx_type_3 {
    fix16_t fh;
    Ladder__ctx_type_2 e;
-   Util__ctx_type_1 _inst26;
+   Util__ctx_type_1 _inst23;
 } Ladder__ctx_type_3;
 
 typedef Ladder__ctx_type_3 Ladder_process_euler_type;
@@ -157,7 +157,7 @@ fix16_t Ladder_process_euler(Ladder__ctx_type_3 &_ctx, fix16_t input, fix16_t cu
 typedef struct Ladder__ctx_type_4 {
    Ladder__ctx_type_1 h;
    fix16_t fh;
-   Util__ctx_type_1 _inst29;
+   Util__ctx_type_1 _inst26;
 } Ladder__ctx_type_4;
 
 typedef Ladder__ctx_type_4 Ladder_process_heun_type;
@@ -169,7 +169,7 @@ void Ladder_process_heun_init(Ladder__ctx_type_4 &_output_);
 fix16_t Ladder_process_heun(Ladder__ctx_type_4 &_ctx, fix16_t input, fix16_t cut, fix16_t res);
 
 typedef struct Ladder__ctx_type_5 {
-   Ladder__ctx_type_4 _inst32;
+   Ladder__ctx_type_4 _inst29;
 } Ladder__ctx_type_5;
 
 typedef Ladder__ctx_type_5 Ladder_process_type;

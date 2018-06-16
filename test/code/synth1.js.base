@@ -41,9 +41,7 @@ this.Synth1_each = function(_ctx,n){
    _ctx.count = (((_ctx.count + (1|0)) % n)|0); 
    return ret; 
 }
-this.Synth1_pitchToRate = function(d){
-   return (0.0001854 * this.exp((0.0577623 * d))); 
-}
+this.Synth1_pitchToRate = function(d) { return (0.0001854 * this.exp((0.0577623 * d))); }
 this.Synth1__ctx_type_5_init = function(){
    var _ctx = {}; 
    _ctx.rate = 0.; 
@@ -53,9 +51,7 @@ this.Synth1__ctx_type_5_init = function(){
 }
 this.Synth1_phasor_init = function() { return this.Synth1__ctx_type_5_init(); }
 this.Synth1_phasor = function(_ctx,pitch,reset){
-   if(this.Synth1_change(_ctx._inst6,pitch)){
-      _ctx.rate = this.Synth1_pitchToRate(pitch); 
-   }
+   if(this.Synth1_change(_ctx._inst6,pitch))_ctx.rate = this.Synth1_pitchToRate(pitch); 
    if(reset)_ctx.phase = 0.; 
    else
    _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.); 
@@ -70,13 +66,9 @@ this.Synth1__ctx_type_6_init = function(){
 this.Synth1_lfo_init = function() { return this.Synth1__ctx_type_6_init(); }
 this.Synth1_lfo = function(_ctx,f,gate){
    var rate = (0.0002268 * f); 
-   if(this.Synth1_edge(_ctx._inst9,gate)){
-      _ctx.phase = 0.; 
-   }
+   if(this.Synth1_edge(_ctx._inst9,gate))_ctx.phase = 0.; 
    _ctx.phase = (_ctx.phase + rate); 
-   if((_ctx.phase > 1.)){
-      _ctx.phase = (_ctx.phase + (-1.)); 
-   }
+   if((_ctx.phase > 1.))_ctx.phase = (_ctx.phase + (-1.)); 
    return (this.sin((6.2831854 * _ctx.phase)) + (-0.5)); 
 }
 this.Synth1__ctx_type_7_init = function(){
@@ -118,34 +110,34 @@ this.Synth1_process = function(_ctx,input){
 }
 this.Synth1_noteOn_init = function() { return this.Synth1__ctx_type_7_init(); }
 this.Synth1_noteOn = function(_ctx,note,velocity,channel){
-   if((_ctx.count == (0|0))){
-      _ctx.n1 = (note|0); 
-      _ctx.pitch = this.real(note); 
-   }
-   else
-   {
-      if((_ctx.count == (1|0))){
-         _ctx.n2 = (note|0); 
-         _ctx.pitch = this.real(note); 
-      }
-      else
-      {
-         if((_ctx.count == (2|0))){
+   switch(_ctx.count) {
+      case (0|0):
+         {
+            _ctx.n1 = (note|0); 
+            _ctx.pitch = this.real(note); 
+         }
+      break;
+      case (1|0):
+         {
+            _ctx.n2 = (note|0); 
+            _ctx.pitch = this.real(note); 
+         }
+      break;
+      case (2|0):
+         {
             _ctx.n3 = (note|0); 
             _ctx.pitch = this.real(note); 
          }
-         else
+      break;
+      case (3|0):
          {
-            if((_ctx.count == (3|0))){
-               _ctx.n4 = (note|0); 
-               _ctx.pitch = this.real(note); 
-            }
+            _ctx.n4 = (note|0); 
+            _ctx.pitch = this.real(note); 
          }
-      }
+      break;
+    
    }
-   if((_ctx.count <= (4|0))){
-      _ctx.count = ((_ctx.count + (1|0))|0); 
-   }
+   if((_ctx.count <= (4|0)))_ctx.count = ((_ctx.count + (1|0))|0); 
    if((_ctx.count > (0|0)))_ctx.gate = ((1|0)|0); 
    else
    _ctx.gate = ((0|0)|0); 
@@ -163,61 +155,35 @@ this.Synth1_noteOff = function(_ctx,note,channel){
       found = true; 
    }
    else
-   {
-      if((note == _ctx.n2)){
-         var _tmp_58_0 = (_ctx.n3|0); 
-         var _tmp_58_1 = (_ctx.n4|0); 
-         _ctx.n2 = (_tmp_58_0|0); 
-         _ctx.n3 = (_tmp_58_1|0); 
-         found = true; 
-      }
-      else
-      {
-         if((note == _ctx.n3)){
-            _ctx.n3 = (_ctx.n4|0); 
-            found = true; 
-         }
-         else
-         {
-            if((note == _ctx.n4)){
-               found = true; 
-            }
-         }
-      }
+   if((note == _ctx.n2)){
+      var _tmp_58_0 = (_ctx.n3|0); 
+      var _tmp_58_1 = (_ctx.n4|0); 
+      _ctx.n2 = (_tmp_58_0|0); 
+      _ctx.n3 = (_tmp_58_1|0); 
+      found = true; 
    }
-   if((found && (_ctx.count > (0|0)))){
-      _ctx.count = ((_ctx.count + (-1|0))|0); 
+   else
+   if((note == _ctx.n3)){
+      _ctx.n3 = (_ctx.n4|0); 
+      found = true; 
    }
+   else
+   if((note == _ctx.n4))found = true; 
+   if((found && (_ctx.count > (0|0))))_ctx.count = ((_ctx.count + (-1|0))|0); 
    if((_ctx.count > (0|0)))_ctx.gate = ((1|0)|0); 
    else
    _ctx.gate = ((0|0)|0); 
-   if((_ctx.count == (1|0))){
-      _ctx.pitch = this.real(_ctx.n1); 
-   }
-   if((_ctx.count == (2|0))){
-      _ctx.pitch = this.real(_ctx.n2); 
-   }
-   if((_ctx.count == (3|0))){
-      _ctx.pitch = this.real(_ctx.n3); 
-   }
-   if((_ctx.count == (4|0))){
-      _ctx.pitch = this.real(_ctx.n4); 
-   }
+   if((_ctx.count == (1|0)))_ctx.pitch = this.real(_ctx.n1); 
+   if((_ctx.count == (2|0)))_ctx.pitch = this.real(_ctx.n2); 
+   if((_ctx.count == (3|0)))_ctx.pitch = this.real(_ctx.n3); 
+   if((_ctx.count == (4|0)))_ctx.pitch = this.real(_ctx.n4); 
 }
 this.Synth1_controlChange_init = function() { return this.Synth1__ctx_type_7_init(); }
 this.Synth1_controlChange = function(_ctx,control,value,channel){
-   if((control == (30|0))){
-      _ctx.volume = (value * 0.0078741); 
-   }
-   if((control == (31|0))){
-      _ctx.detune = (value * 0.0078741); 
-   }
-   if((control == (32|0))){
-      _ctx.lfo_rate = (value * 0.0078741); 
-   }
-   if((control == (33|0))){
-      _ctx.lfo_amt = (2. * ((value * 0.0078741) + (-0.5))); 
-   }
+   if((control == (30|0)))_ctx.volume = (value * 0.0078741); 
+   if((control == (31|0)))_ctx.detune = (value * 0.0078741); 
+   if((control == (32|0)))_ctx.lfo_rate = (value * 0.0078741); 
+   if((control == (33|0)))_ctx.lfo_amt = (2. * ((value * 0.0078741) + (-0.5))); 
 }
 this.Synth1_default_init = function() { return this.Synth1__ctx_type_7_init(); }
 this.Synth1_default = function(_ctx){

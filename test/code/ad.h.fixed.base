@@ -111,7 +111,7 @@ typedef struct Ad__ctx_type_0 {
    fix16_t scale;
    fix16_t rate;
    fix16_t out;
-   Util__ctx_type_0 _inst24;
+   Util__ctx_type_0 _inst21;
 } Ad__ctx_type_0;
 
 typedef Ad__ctx_type_0 Ad_do_type;
@@ -125,7 +125,7 @@ fix16_t Ad_do(Ad__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t d);
 typedef struct Ad__ctx_type_1 {
    fix16_t knob2;
    fix16_t knob1;
-   Ad__ctx_type_0 _inst29;
+   Ad__ctx_type_0 _inst26;
 } Ad__ctx_type_1;
 
 typedef Ad__ctx_type_1 Ad_process_type;

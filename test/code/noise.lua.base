@@ -77,7 +77,7 @@ function this.Noise_noteOn_init()
 end
 
 function this.Noise_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Noise_noteOff_init()
@@ -85,7 +85,7 @@ function this.Noise_noteOff_init()
 end
 
 function this.Noise_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Noise_controlChange_init()
@@ -93,7 +93,7 @@ function this.Noise_controlChange_init()
 end
 
 function this.Noise_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Noise_default_init()
@@ -101,7 +101,7 @@ function this.Noise_default_init()
 end
 
 function this.Noise_default(_ctx)
-
+   ;
 end
 
 

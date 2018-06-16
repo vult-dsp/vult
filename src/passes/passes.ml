@@ -87,6 +87,18 @@ let inferPass (name:Id.t) (state,stmts) =
    let state' = Env.exit state' in
    state', stmts
 
+let foldPassAll pass state (results:parser_results list) =
+   let state, rev =
+      List.fold_left
+         (fun (state, acc) result ->
+             let name = [moduleName result.file] in
+             let state, presult = pass name (state, result.presult) in
+             state, { result with presult } :: acc)
+         (state, [])
+         results
+   in
+   state, List.rev rev
+
 let interPass (name:Id.t) (state,stmts) =
    let data = Env.get state in
    Interpreter.Env.addModule data.PassData.interp_env name;
@@ -94,59 +106,79 @@ let interPass (name:Id.t) (state,stmts) =
    Interpreter.loadStmts env' stmts;
    state, stmts
 
-
-let rec applyPassRepeat name apply pass pass_name (state,stmts) =
+let rec applyPassLog apply pass pass_name (state,stmts) =
    if Mapper.log then print_endline ("Running "^pass_name);
    if apply then
-      let state',stmts' = Mapper.map_stmt_list pass state stmts in
-      if shouldReapply state' then
-         applyPassRepeat name apply pass pass_name (reset state',stmts')
-      else
-         state',stmts'
+      Mapper.map_stmt_list pass state stmts
    else
       state,stmts
 
 let applyPass name apply pass pass_name (state,stmts) =
    let state' = Env.enter Scope.Module state name emptyAttr in
-   let state', stmts' = applyPassRepeat name apply pass pass_name (state',stmts) in
+   let state', stmts' = applyPassLog apply pass pass_name (state',stmts) in
    let state' = Env.exit state' in
    state',stmts'
 
-let passes (name:Id.t) (options:pass_options) (env,stmts) =
-   (env,stmts)
-   |> inferPass name
-   |> applyPass name options.pass1 Pass1.run "pass 1"
-   |> interPass name (* loads the functions in the interpreter *)
-   |> applyPass name options.pass2 Pass2.run "pass 2"
-   |> applyPass name options.pass3 Pass3.run "pass 3"
-   |> applyPass name options.pass4 Pass4.run "pass 4"
-   |> applyPass name options.pass5 Pass5.run "pass 5"
+let inferPassAll = foldPassAll inferPass
 
-let apply env options (results:parser_results) =
-   let module_name = [moduleName results.file] in
-   passes module_name options (env,results.presult)
+let pass1All options =
+   foldPassAll
+      (fun name (state, stmts) ->
+          applyPass name options.pass1 Pass1.run "pass 1" (state, stmts))
 
+let pass2All options =
+   foldPassAll
+      (fun name (state, stmts) ->
+          applyPass name options.pass2 Pass2.run "pass 2" (state, stmts))
+
+let pass3All options =
+   foldPassAll
+      (fun name (state, stmts) ->
+          applyPass name options.pass3 Pass3.run "pass 3" (state, stmts))
+
+let pass4All options =
+   foldPassAll
+      (fun name (state, stmts) ->
+          applyPass name options.pass4 Pass4.run "pass 4" (state, stmts))
+
+let pass5All options =
+   foldPassAll
+      (fun name (state, stmts) ->
+          applyPass name options.pass5 Pass5.run "pass 5" (state, stmts))
+
+let interAll =
+   foldPassAll
+      (fun name (state, stmts) ->
+          interPass name  (state, stmts))
+
+let rec exhaustPass pass =
+   fun (env, results) ->
+      let env, results = pass env results in
+      if shouldReapply env then
+         exhaustPass pass (reset env, results)
+      else env, results
+
+let passesAll args ?(options=default_options) results =
+   let env = Env.empty (PassData.empty args) in
+   (env, results)
+   |> exhaustPass inferPassAll
+   |> exhaustPass (pass1All options)
+   |> exhaustPass interAll
+   |> exhaustPass (pass2All options)
+   |> exhaustPass (pass3All options)
+   |> exhaustPass (pass4All options)
+   |> exhaustPass (pass5All options)
 
 let applyTransformations args ?(options=default_options) (results:parser_results list) =
-   let env = Env.empty (PassData.empty args) in
-   let env, stmts_list =
-      List.fold_left
-         (fun (env,acc) stmts ->
-             let env', stmts' = apply env options stmts in
-             let result' = { stmts with presult = stmts' } in
-             env', result'::acc
-         )
-         (env, [])
-         results
-   in
+   let env, stmts_list = passesAll args ~options results in
    if options.tuples then
       let tuples = { presult = CreateTupleTypes.run env; file = "" } in
-      tuples :: List.rev stmts_list
+      tuples :: stmts_list
    else
-      List.rev stmts_list
+      stmts_list
 
 let applyTransformationsSingle args ?(options=default_options) (results:parser_results) =
-   let env = Env.empty (PassData.empty args) in
-   let env, stmts' = apply env options results in
+   let env, stmts' = passesAll args ~options [results] in
+   let stmts' = List.map (fun a -> a.presult) stmts' |> List.flatten in
    let tuples = CreateTupleTypes.run env in
    { results with presult = tuples@stmts' }

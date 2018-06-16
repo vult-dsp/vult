@@ -193,7 +193,29 @@ let rec getInitValue (descr:type_descr) : Pla.t =
          {pla|this.makeArray(<#size#i>,<#init#>)|pla}
    | _ -> Pla.string "{}"
 
-let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
+let rec printSwitchStmt params e cases def =
+   let e_t = printExp params e in
+   let cases_t =
+      Pla.map_sep_all
+         Pla.newline
+         (fun (v,stmt) ->
+             let v_t = printExp params v in
+             let stmt_t = CCOpt.get_or ~default:Pla.unit(printStmt params stmt)  in
+             {pla|case <#v_t#>:<#stmt_t#+>break;|pla})
+         cases
+   in
+   let def_t =
+      match def with
+      | None -> Pla.unit
+      | Some s ->
+         match printStmt params s with
+         | None -> Pla.unit
+         | Some s ->
+            {pla|default <#s#+>|pla}
+   in
+   Some {pla|switch(<#e_t#> {<#cases_t#> <#def_t#>})|pla}
+
+and printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
    | CSVar(CLWild, None) -> None
 
@@ -288,6 +310,9 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let then_t = CCOpt.get_or ~default:Pla.semi (printStmt params then_) in
       let else_t = CCOpt.get_or ~default:Pla.semi (printStmt params else_) in
       Some({pla|if <#cond_t#> then<#then_t#+><#>else<#><#else_t#+><#>end|pla})
+
+   | CSSwitch(e, cases, def) -> printSwitchStmt params e cases def
+
 
    | CSEmpty -> None
 

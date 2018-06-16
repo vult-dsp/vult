@@ -1,11 +1,5 @@
-this.Template_process = function(_ctx,input){
-   return input; 
-}
-this.Template_noteOn = function(_ctx,note,velocity,channel){
-}
-this.Template_noteOff = function(_ctx,note,channel){
-}
-this.Template_controlChange = function(_ctx,control,value,channel){
-}
-this.Template_default = function(_ctx){
-}
+this.Template_process = function(input) { return input; }
+this.Template_noteOn = function(note,velocity,channel) { ;}
+this.Template_noteOff = function(note,channel) { ;}
+this.Template_controlChange = function(control,value,channel) { ;}
+this.Template_default = function() { ;}

@@ -4,7 +4,7 @@
 
 void Util__ctx_type_0_init(Util__ctx_type_0 &_output_){
    Util__ctx_type_0 _ctx;
-   _ctx.pre = 0;
+   _ctx.pre = false;
    _output_ = _ctx;
    return ;
 }
@@ -102,16 +102,12 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
 }
 
 fix16_t Util_cubic_clipper(fix16_t x){
-   uint8_t _cond_21;
-   _cond_21 = (x <= -0xaaaa /* -0.666667 */);
-   if(_cond_21){
+   if(x <= -0xaaaa /* -0.666667 */){
       return -0xaaaa /* -0.666667 */;
    }
    else
    {
-      uint8_t _cond_20;
-      _cond_20 = (x >= 0xaaaa /* 0.666667 */);
-      if(_cond_20){
+      if(x >= 0xaaaa /* 0.666667 */){
          return 0xaaaa /* 0.666667 */;
       }
       else
@@ -198,9 +194,9 @@ void Lfo__ctx_type_1_init(Lfo__ctx_type_1 &_output_){
    Lfo__ctx_type_1 _ctx;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
-   Lfo__ctx_type_0_init(_ctx._inst28);
-   Util__ctx_type_0_init(_ctx._inst26);
-   Util__ctx_type_1_init(_ctx._inst24);
+   Lfo__ctx_type_0_init(_ctx._inst25);
+   Util__ctx_type_0_init(_ctx._inst23);
+   Util__ctx_type_1_init(_ctx._inst21);
    _output_ = _ctx;
    return ;
 }
@@ -211,43 +207,41 @@ void Lfo_process_init(Lfo__ctx_type_1 &_output_){
 }
 
 fix16_t Lfo_process(Lfo__ctx_type_1 &_ctx, fix16_t cv, fix16_t shape, fix16_t reset){
-   uint8_t _cond_34;
-   _cond_34 = Util_change(_ctx._inst24,cv);
-   if(_cond_34){
+   if(Util_change(_ctx._inst21,cv)){
       _ctx.rate = Util_cvToRate((cv + -0x4ccc /* -0.300000 */));
    }
    _ctx.phase = (_ctx.phase + _ctx.rate);
-   uint8_t _cond_36;
-   _cond_36 = (_ctx.phase > 0x20000 /* 2.000000 */);
-   if(_cond_36){ _ctx.phase = (_ctx.phase + -0x20000 /* -2.000000 */); }
+   if(_ctx.phase > 0x20000 /* 2.000000 */){
+      _ctx.phase = (_ctx.phase + -0x20000 /* -2.000000 */);
+   }
    uint8_t breset;
    breset = (reset > 0x0 /* 0.000000 */);
-   uint8_t _cond_35;
-   _cond_35 = Util_edge(_ctx._inst26,breset);
-   if(_cond_35){
+   if(Util_edge(_ctx._inst23,breset)){
       _ctx.phase = 0x0 /* 0.000000 */;
    }
    fix16_t tmp;
    tmp = (_ctx.phase + -0x10000 /* -1.000000 */);
    fix16_t o;
-   uint8_t _cond_37;
-   _cond_37 = (shape < 0x10000 /* 1.000000 */);
-   if(_cond_37){ o = tmp; }
+   if(shape < 0x10000 /* 1.000000 */){
+      o = tmp;
+   }
    else
    {
-      uint8_t _cond_38;
-      _cond_38 = (shape < 0x20000 /* 2.000000 */);
-      if(_cond_38){ o = ((fix_abs(tmp) << 1) + -0x10000 /* -1.000000 */); }
+      if(shape < 0x20000 /* 2.000000 */){
+         o = ((fix_abs(tmp) << 1) + -0x10000 /* -1.000000 */);
+      }
       else
       {
-         uint8_t _cond_39;
-         _cond_39 = (tmp > 0x0 /* 0.000000 */);
-         if(_cond_39){ o = 0x10000 /* 1.000000 */; }
+         if(tmp > 0x0 /* 0.000000 */){
+            o = 0x10000 /* 1.000000 */;
+         }
          else
-         { o = 0x0 /* 0.000000 */; }
+         {
+            o = 0x0 /* 0.000000 */;
+         }
       }
    }
-   return Lfo_soft(_ctx._inst28,o);
+   return Lfo_soft(_ctx._inst25,o);
 }
 
 void Lfo_noteOn_init(Lfo__ctx_type_1 &_output_){
@@ -256,6 +250,7 @@ void Lfo_noteOn_init(Lfo__ctx_type_1 &_output_){
 }
 
 void Lfo_noteOn(Lfo__ctx_type_1 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Lfo_noteOff_init(Lfo__ctx_type_1 &_output_){
@@ -264,6 +259,7 @@ void Lfo_noteOff_init(Lfo__ctx_type_1 &_output_){
 }
 
 void Lfo_noteOff(Lfo__ctx_type_1 &_ctx, int note, int channel){
+
 }
 
 void Lfo_controlChange_init(Lfo__ctx_type_1 &_output_){
@@ -272,6 +268,7 @@ void Lfo_controlChange_init(Lfo__ctx_type_1 &_output_){
 }
 
 void Lfo_controlChange(Lfo__ctx_type_1 &_ctx, int control, int value, int channel){
+
 }
 
 void Lfo_default_init(Lfo__ctx_type_1 &_output_){
@@ -280,6 +277,7 @@ void Lfo_default_init(Lfo__ctx_type_1 &_output_){
 }
 
 void Lfo_default(Lfo__ctx_type_1 &_ctx){
+
 }
 
 

@@ -111,9 +111,9 @@ typedef struct Tricore__ctx_type_0 {
    float rate;
    float phase;
    uint8_t direction;
-   Util__ctx_type_0 _inst26;
-   Util__ctx_type_0 _inst25;
-   Util__ctx_type_1 _inst23;
+   Util__ctx_type_0 _inst23;
+   Util__ctx_type_0 _inst22;
+   Util__ctx_type_1 _inst20;
 } Tricore__ctx_type_0;
 
 typedef Tricore__ctx_type_0 Tricore_process_type;

@@ -32,23 +32,22 @@ end
 
 function this.Saturate_process(x)
    return this.Saturate_tanh_table(x); 
-
 end
 
 function this.Saturate_noteOn(note,velocity,channel)
-
+   ;
 end
 
 function this.Saturate_noteOff(note,channel)
-
+   ;
 end
 
 function this.Saturate_controlChange(control,value,channel)
-
+   ;
 end
 
 function this.Saturate_default()
-
+   ;
 end
 
 function this.Short_delay__ctx_type_0_init()
@@ -125,7 +124,6 @@ end
 
 function this.Short_delay_process(_ctx,x,time,feedback)
    return this.Short_delay_do(_ctx._inst10,x,this.Short_delay_soft(_ctx._inst9,time),feedback); 
-
 end
 
 function this.Short_delay_noteOn_init()
@@ -133,7 +131,7 @@ function this.Short_delay_noteOn_init()
 end
 
 function this.Short_delay_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Short_delay_noteOff_init()
@@ -141,7 +139,7 @@ function this.Short_delay_noteOff_init()
 end
 
 function this.Short_delay_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Short_delay_controlChange_init()
@@ -149,7 +147,7 @@ function this.Short_delay_controlChange_init()
 end
 
 function this.Short_delay_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Short_delay_default_init()
@@ -157,7 +155,7 @@ function this.Short_delay_default_init()
 end
 
 function this.Short_delay_default(_ctx)
-
+   ;
 end
 
 

@@ -111,8 +111,8 @@ typedef struct Adsr__ctx_type_0 {
    float scale;
    float rate;
    float out;
-   Util__ctx_type_4 _inst31;
-   Util__ctx_type_0 _inst24;
+   Util__ctx_type_4 _inst28;
+   Util__ctx_type_0 _inst21;
 } Adsr__ctx_type_0;
 
 typedef Adsr__ctx_type_0 Adsr_do_type;
@@ -128,7 +128,7 @@ typedef struct Adsr__ctx_type_1 {
    float knob3;
    float knob2;
    float knob1;
-   Adsr__ctx_type_0 _inst33;
+   Adsr__ctx_type_0 _inst30;
 } Adsr__ctx_type_1;
 
 typedef Adsr__ctx_type_1 Adsr_process_type;

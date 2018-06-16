@@ -107,7 +107,7 @@ let rec printExp (params:params) (e:cexp) : Pla.t =
          Pla.parenthesize (Pla.int n)
       else
          Pla.int n
-   | CEBool(v) -> Pla.int (if v then 1 else 0)
+   | CEBool(v) -> Pla.string (if v then "true" else "false")
 
    | CEString(s) -> Pla.string_quoted s
 
@@ -194,8 +194,30 @@ let printFunArg (ntype, name) : Pla.t =
       let tdescr = printTypeDescr typ in
       {pla|<#tdescr#> &<#name#s>|pla}
 
+let rec printSwitchStmt params e cases def =
+   let e_t = printExp params e in
+   let cases_t =
+      Pla.map_sep_all
+         Pla.newline
+         (fun (v,stmt) ->
+             let v_t = printExp params v in
+             let stmt_t = CCOpt.get_or ~default:Pla.unit(printStmt params stmt)  in
+             {pla|case <#v_t#>:<#stmt_t#+><#>break;|pla})
+         cases
+   in
+   let def_t =
+      match def with
+      | None -> Pla.unit
+      | Some s ->
+         match printStmt params s with
+         | None -> Pla.unit
+         | Some s ->
+            {pla|default: <#s#+>|pla}
+   in
+   Some {pla|switch(<#e_t#>) {<#cases_t#+> <#def_t#><#>}|pla}
+
 (** Print a statement *)
-let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
+and printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
    (* Strange case '_' *)
    | CSVar(CLWild, None) -> None
@@ -275,7 +297,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
          Some({pla|<#ret#> <#name#s>(<#targs#>);<#>|pla})
       else
          let tbody = CCOpt.get_or ~default:Pla.unit (printStmt params body) in
-         Some({pla|<#ret#> <#name#s>(<#targs#>){<#tbody#>}<#>|pla})
+         Some({pla|<#ret#> <#name#s>(<#targs#>){<#tbody#+><#>}<#>|pla})
 
    (* Prints return x *)
    | CSReturn(e1) ->
@@ -286,7 +308,7 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSWhile(cond, body) ->
       let tcond = printExp params cond in
       let tcond = if isSimple cond then Pla.parenthesize tcond else tcond in
-      let tbody = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
+      let tbody = CCOpt.get_or ~default:Pla.semi (wrapStmtIfNotBlock params body) in
       Some({pla|while<#tcond#><#tbody#>|pla})
 
    (* Prints a block of statements*)
@@ -342,6 +364,8 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
 
    | CSEmpty -> None
 
+   | CSSwitch(e, cases, def) -> printSwitchStmt params e cases def
+
 and printStmtList (params:params) (stmts:cstmt list) : Pla.t =
    (* Prints the statements and removes all elements that are None *)
    let tstmts = CCList.filter_map (printStmt params) stmts in
@@ -352,7 +376,7 @@ and wrapStmtIfNotBlock params stmt =
    | CSBlock _ -> printStmt params stmt
    | _ ->
       match printStmt params stmt with
-      | Some(t) -> Some(Pla.wrap (Pla.string "{ ") (Pla.string " }") t)
+      | Some(t) -> Some {pla|{<#t#+><#>}|pla}
       | _ -> None
 
 (** Generates the .c and .h file contents for the given parsed files *)

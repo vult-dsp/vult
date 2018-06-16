@@ -33,7 +33,14 @@ type parameters =
    {
       repl : Replacements.t;
       code : Args.code;
+      cleanup : bool;
    }
+
+let makeSingleBlock stmts =
+   match stmts with
+   | [] -> CSEmpty
+   | [stmt] -> stmt
+   | _ -> CSBlock(stmts)
 
 module Atomic = struct
    type s = { tick : int }
@@ -178,12 +185,6 @@ module Atomic = struct
       in
       s', List.concat (List.rev pre_rev), List.rev elems_rev
 
-   let makeSingleStmt stmts =
-      match stmts with
-      | [] -> CSEmpty
-      | [stmt] -> stmt
-      | _ -> CSBlock(stmts)
-
 
    let rec makeStmtAtomic p (s:s) (stmt:cstmt) =
       match stmt with
@@ -214,26 +215,28 @@ module Atomic = struct
       | CSWhile(cond, body) ->
          let s, pre, cond' = makeExpAtomic p s Temp cond in
          let s, body' = makeStmtAtomic p s body in
-         s, pre @ [CSWhile(cond', makeSingleStmt body')]
+         s, pre @ [CSWhile(cond', makeSingleBlock body')]
 
       | CSIf(cond, then_, Some(else_)) ->
          let s, pre, cond' = makeExpAtomic p s Temp cond in
          let s, then_' = makeStmtAtomic p s then_ in
          let s, else_' = makeStmtAtomic p s else_ in
-         s, pre @ [CSIf(cond', makeSingleStmt then_', Some(makeSingleStmt else_'))]
+         s, pre @ [CSIf(cond', makeSingleBlock then_', Some(makeSingleBlock else_'))]
 
       | CSIf(cond, then_, None) ->
          let s, pre, cond' = makeExpAtomic p s Temp cond in
          let s, then_' = makeStmtAtomic p s then_ in
-         s, pre @ [CSIf(cond', makeSingleStmt then_', None)]
+         s, pre @ [CSIf(cond', makeSingleBlock then_', None)]
 
       | CSFunction(ts, name, args, body) ->
          let s, body' = makeStmtAtomic p s body in
-         s, [CSFunction(ts, name, args, makeSingleStmt body')]
+         s, [CSFunction(ts, name, args, makeSingleBlock body')]
 
       | CSBlock(stmts) ->
          let s, stmts' = makeStmtListAtomic p s stmts in
-         s, [CSBlock(stmts')]
+         s, [makeSingleBlock stmts']
+
+      | CSSwitch _ -> failwith "makeStmtAtomic: switch not implemented yet"
 
       | CSEmpty -> s, [stmt]
 
@@ -248,6 +251,44 @@ module Atomic = struct
       in
       s, List.concat (List.rev stmt_rev)
 end
+
+let rec loop id cases next =
+   match next with
+   | None -> Some (List.rev cases, None)
+   | Some (CSIf(CEOp("==",[CEVar(nid,_); CEInt _ as i],_), stmt, next)) ->
+      if id = nid  then
+         loop id ((i, stmt) :: cases) next
+      else None
+   | Some def ->
+      Some (List.rev cases, Some def)
+
+
+let tryMakeSwitch e =
+   match e with
+   | CSIf(CEOp("==",[CEVar(id,_) as var; CEInt _ as i],_),stmt, next ) ->
+      begin match loop id [i, stmt] next with
+         | Some ((_ :: _ :: _) as cases, def) -> CSSwitch(var, cases, def)
+         | _ -> e
+      end
+   | _ -> e
+
+let rec makeSwitch p block =
+   match block with
+   | CSBlock stmts ->
+      let stmts = makeSwitchList p stmts in
+      makeSingleBlock stmts
+   | CSIf _ ->
+      tryMakeSwitch block
+   | CSWhile(cond, body)  ->
+      CSWhile(cond, makeSwitch p body)
+   | _ -> block
+
+and makeSwitchList p stmts =
+   match stmts with
+   | [] -> []
+   | h :: t ->
+      makeSwitch p h ::  makeSwitchList p t
+
 
 let convertId (p:parameters) (id:Id.t) : string =
    String.concat "_" id |> Replacements.getKeyword p.repl
@@ -361,13 +402,6 @@ let convertFunction (p:parameters) (name:Id.t) (typ:type_descr) (elems:cexp list
       begin match getFunctionSetType elem_typs with
          | CTSimple(typ_t) ->
             let fn = Replacements.getFunction p.repl "set" typ_t in
-            CECall(fn, elems, typ)
-         | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
-      end
-   | ["split"] ->
-      begin match getFunctionFirstArgType elem_typs with
-         | CTSimple(typ_t) ->
-            let fn = Replacements.getFunction p.repl "split" typ_t in
             CECall(fn, elems, typ)
          | _ -> failwith ("Invalid array type "^ (show_type_descr typ))
       end
@@ -495,32 +529,35 @@ let getRecordField (name:lhs_exp) (index:int) (typ:Typ.t option) : lhs_exp =
       LId(id @ [field], ftyp, { attr with typ })
    | _ -> failwith "ProgToCode.getRecordFiled: Invalid input"
 
-let rec collectVarBind stmts =
+let rec collectVarBind p stmts =
    match stmts with
    | [] -> []
-   | CSVar(lhs1, None)::CSBind(lhs2, rhs) :: t when lhs1 = lhs2 ->
-      collectVarBind (CSVar(lhs1, Some(rhs)) ::  t)
+   | CSVar(CLId(_, lhs), None) :: CSBind(CLId(_, lhs2), rhs) :: CSIf(CEVar(cond, _), then_, else_) :: t when lhs = cond && lhs2 = cond ->
+      collectVarBind p (CSIf(rhs, then_, else_) :: t)
+   | CSVar(lhs1, None)::CSBind(lhs2, rhs) :: t when lhs1 = lhs2 && p.code <> CCode ->
+      collectVarBind p (CSVar(lhs1, Some(rhs)) ::  t)
    | CSVar(CLId(_, lhs), Some(rhs)) :: CSIf(CEVar(cond, _), then_, else_) :: t when lhs = cond ->
-      collectVarBind (CSIf(rhs, then_, else_) :: t)
+      collectVarBind p (CSIf(rhs, then_, else_) :: t)
    | CSVar(lhs1, None) :: CSBind(lhs2, rhs) :: t  ->
-      CSVar(lhs1, None) :: CSBind(lhs2, rhs) :: collectVarBind t
-   | h :: t -> collectVarBindBlock h :: collectVarBind t
+      CSVar(lhs1, None) :: CSBind(lhs2, rhs) :: collectVarBind p t
+   | h :: t -> collectVarBindBlock p h :: collectVarBind p t
 
-and collectVarBindBlock block =
+and collectVarBindBlock p block =
    match block with
    | CSBlock stmts ->
-      let stmts = collectVarBind stmts in
-      CSBlock stmts
+      let stmts = collectVarBind p stmts in
+      makeSingleBlock stmts
    | CSIf(cond, then_, else_)  ->
-      CSIf(cond, collectVarBindBlock then_, CCOpt.map collectVarBindBlock else_)
+      CSIf(cond, collectVarBindBlock p then_, CCOpt.map (collectVarBindBlock p) else_)
    | CSWhile(cond, body)  ->
-      CSWhile(cond, collectVarBindBlock body)
+      CSWhile(cond, collectVarBindBlock p body)
    | _ -> block
 
 
 let collectStmt (p:parameters) stmt =
    match stmt with
-   | CSBlock(stmts) when p.code = JSCode || p.code = LuaCode || p.code = JavaCode -> CSBlock(collectVarBind stmts)
+   | CSBlock(stmts) ->
+      makeSingleBlock (collectVarBind p stmts)
    | _ -> stmt
 
 let rec convertStmt (p:parameters) (s:stmt) : cstmt =
@@ -555,11 +592,14 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let else_' = convertStmt p else_ in
       CSIf(cond', then_', Some(else_'))
    | StmtFun(_, _, _, None, _) -> failwith "CodeC.convertStmt: everything should have types"
+   | StmtFun(_, _, _, _, attr) when p.cleanup && not attr.root -> CSEmpty
    | StmtFun(name, args, body, Some(ret), _) ->
       let arg_names = List.map (convertTypedId p) args in
       let body' = convertStmt p body in
+      let body' = collectStmt p body' in
+      let body' = makeSwitch p body' in
       let fname = convertId p name in
-      CSFunction(convertTypeMakeTupleUnit p ret, fname, arg_names, collectStmt p body')
+      CSFunction(convertTypeMakeTupleUnit p ret, fname, arg_names, body')
    (* special case for c/c++ to replace the makeArray function *)
    | StmtBind(LWild(_) , PCall(None, ["makeArray"], [size;init;var], attr), _) when p.code = CCode ->
       let init' = convertExp p init in
@@ -582,7 +622,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
          List.mapi (fun i e ->
                let etype = (GetAttr.fromExp e).typ in
                convertStmt p (StmtBind(getRecordField lhs i etype, e, attr))) elems in
-      CSBlock(stmts)
+      makeSingleBlock stmts
    (* special for c/c++ initialize array variables *)
    | StmtBind(LId(lhs, Some atyp, _), PArray(elems, _), _) when p.code = CCode ->
       let elems' = convertExpArray p elems in
@@ -590,7 +630,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let lhs' = convertVarId p lhs in
       let typ = convertType p atype in
       let stmts = List.mapi (fun i e -> CSBind(CLIndex([typ], lhs', CEInt(i)), e)) elems' in
-      CSBlock(stmts)
+      makeSingleBlock stmts
    (* special for c/c++ to copy array variables *)
    | StmtBind(LId(lhs, _, { typ = Some(typ)}), rhs, _) when p.code = CCode && Typ.isArray typ ->
       let rhs' = convertExp p rhs in
@@ -604,7 +644,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       CSBind(lhs', rhs')
    | StmtBlock(_, stmts, _) ->
       let stmts' = convertStmtList p stmts in
-      CSBlock(stmts')
+      makeSingleBlock stmts'
    | StmtType(name, members, _) ->
       let type_name =
          match convertType p name with

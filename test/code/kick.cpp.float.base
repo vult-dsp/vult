@@ -51,11 +51,13 @@ float Noise_process(Noise__ctx_type_1 &_ctx, float color){
    float y2;
    y2 = (int_to_float(_ctx.x2) * 3.06e-05f);
    float out;
-   uint8_t _cond_7;
-   _cond_7 = (color > 0.5f);
-   if(_cond_7){ out = Noise_pinker(_ctx._inst2,(y1 + (- y2))); }
+   if(color > 0.5f){
+      out = Noise_pinker(_ctx._inst2,(y1 + (- y2)));
+   }
    else
-   { out = (y1 + (- y2)); }
+   {
+      out = (y1 + (- y2));
+   }
    return (2.f * out);
 }
 
@@ -65,6 +67,7 @@ void Noise_noteOn_init(Noise__ctx_type_1 &_output_){
 }
 
 void Noise_noteOn(Noise__ctx_type_1 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Noise_noteOff_init(Noise__ctx_type_1 &_output_){
@@ -73,6 +76,7 @@ void Noise_noteOff_init(Noise__ctx_type_1 &_output_){
 }
 
 void Noise_noteOff(Noise__ctx_type_1 &_ctx, int note, int channel){
+
 }
 
 void Noise_controlChange_init(Noise__ctx_type_1 &_output_){
@@ -81,6 +85,7 @@ void Noise_controlChange_init(Noise__ctx_type_1 &_output_){
 }
 
 void Noise_controlChange(Noise__ctx_type_1 &_ctx, int control, int value, int channel){
+
 }
 
 void Noise_default_init(Noise__ctx_type_1 &_output_){
@@ -89,11 +94,12 @@ void Noise_default_init(Noise__ctx_type_1 &_output_){
 }
 
 void Noise_default(Noise__ctx_type_1 &_ctx){
+
 }
 
 void Util__ctx_type_0_init(Util__ctx_type_0 &_output_){
    Util__ctx_type_0 _ctx;
-   _ctx.pre = 0;
+   _ctx.pre = false;
    _output_ = _ctx;
    return ;
 }
@@ -191,16 +197,12 @@ float Util_average2(Util__ctx_type_5 &_ctx, float x1){
 }
 
 float Util_cubic_clipper(float x){
-   uint8_t _cond_29;
-   _cond_29 = (x <= -0.6666666f);
-   if(_cond_29){
+   if(x <= -0.6666666f){
       return -0.6666666f;
    }
    else
    {
-      uint8_t _cond_28;
-      _cond_28 = (x >= 0.6666667f);
-      if(_cond_28){
+      if(x >= 0.6666667f){
          return 0.6666667f;
       }
       else
@@ -256,14 +258,14 @@ float Util_cvTokHz(float cv){
 
 void Tricore__ctx_type_0_init(Tricore__ctx_type_0 &_output_){
    Tricore__ctx_type_0 _ctx;
-   _ctx.reset_state = 0;
+   _ctx.reset_state = false;
    _ctx.reset_phase = 0.f;
    _ctx.rate = 0.f;
    _ctx.phase = 0.f;
-   _ctx.direction = 0;
-   Util__ctx_type_0_init(_ctx._inst34);
-   Util__ctx_type_0_init(_ctx._inst33);
-   Util__ctx_type_1_init(_ctx._inst31);
+   _ctx.direction = false;
+   Util__ctx_type_0_init(_ctx._inst30);
+   Util__ctx_type_0_init(_ctx._inst29);
+   Util__ctx_type_1_init(_ctx._inst27);
    Tricore_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -277,60 +279,64 @@ void Tricore_process_init(Tricore__ctx_type_0 &_output_){
 float Tricore_process(Tricore__ctx_type_0 &_ctx, float cv, float reset, float disable){
    float out;
    out = 0.f;
-   uint8_t _cond_46;
-   _cond_46 = Util_change(_ctx._inst31,cv);
-   if(_cond_46){
+   if(Util_change(_ctx._inst27,cv)){
       _ctx.rate = (4.f * Util_cvToRate_1024(cv));
    }
    float new_phase;
-   float _if_47;
-   if(_ctx.direction){ _if_47 = _ctx.rate; }
-   else
-   { _if_47 = (- _ctx.rate); }
-   new_phase = (_ctx.phase + _if_47);
-   uint8_t bdisable;
-   bdisable = (disable > 0.5f);
-   uint8_t _cond_48;
-   _cond_48 = (Util_edge(_ctx._inst33,(reset > 0.f)) || Util_edge(_ctx._inst34,bdisable));
-   if(_cond_48){
-      _ctx.reset_phase = _ctx.phase;
-      _ctx.reset_state = 1;
-      new_phase = 0.f;
-   }
-   uint8_t _cond_50;
-   _cond_50 = (new_phase > 1024.f);
-   if(_cond_50){
-      new_phase = (1024.f + (- (new_phase + -1024.f)));
-      _ctx.direction = 0;
+   float _if_96;
+   if(_ctx.direction){
+      _if_96 = _ctx.rate;
    }
    else
    {
-      uint8_t _cond_49;
-      _cond_49 = (new_phase < -1024.f);
-      if(_cond_49){
-         _ctx.direction = 1;
+      _if_96 = (- _ctx.rate);
+   }
+   new_phase = (_ctx.phase + _if_96);
+   uint8_t bdisable;
+   bdisable = (disable > 0.5f);
+   if(Util_edge(_ctx._inst29,(reset > 0.f)) || Util_edge(_ctx._inst30,bdisable)){
+      _ctx.reset_phase = _ctx.phase;
+      _ctx.reset_state = true;
+      new_phase = 0.f;
+   }
+   if(new_phase > 1024.f){
+      new_phase = (1024.f + (- (new_phase + -1024.f)));
+      _ctx.direction = false;
+   }
+   else
+   {
+      if(new_phase < -1024.f){
+         _ctx.direction = true;
       }
    }
-   if(bdisable){ _ctx.phase = 0.f; }
+   if(bdisable){
+      _ctx.phase = 0.f;
+   }
    else
-   { _ctx.phase = new_phase; }
+   {
+      _ctx.phase = new_phase;
+   }
    if(_ctx.reset_state){
-      uint8_t _cond_52;
-      _cond_52 = ((fabsf(_ctx.reset_phase) > 10.f) || bdisable);
-      if(_cond_52){
+      if((fabsf(_ctx.reset_phase) > 10.f) || bdisable){
          float reset_speed;
-         if(bdisable){ reset_speed = 0.01f; }
+         if(bdisable){
+            reset_speed = 0.01f;
+         }
          else
-         { reset_speed = 0.5f; }
+         {
+            reset_speed = 0.5f;
+         }
          _ctx.reset_phase = (_ctx.reset_phase + (- (_ctx.reset_phase * reset_speed)));
       }
       else
       {
-         uint8_t _cond_51;
-         _cond_51 = (_ctx.reset_phase > 10.f);
-         if(bool_not(_cond_51)){ _ctx.reset_phase = 0.f; }
-         _ctx.reset_state = 0;
-         _ctx.direction = 1;
+         uint8_t _cond_100;
+         _cond_100 = (_ctx.reset_phase > 10.f);
+         if(bool_not(_cond_100)){
+            _ctx.reset_phase = 0.f;
+         }
+         _ctx.reset_state = false;
+         _ctx.direction = true;
       }
       out = _ctx.reset_phase;
    }
@@ -344,6 +350,7 @@ void Tricore_noteOn_init(Tricore__ctx_type_0 &_output_){
 }
 
 void Tricore_noteOn(Tricore__ctx_type_0 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Tricore_noteOff_init(Tricore__ctx_type_0 &_output_){
@@ -352,6 +359,7 @@ void Tricore_noteOff_init(Tricore__ctx_type_0 &_output_){
 }
 
 void Tricore_noteOff(Tricore__ctx_type_0 &_ctx, int note, int channel){
+
 }
 
 void Tricore_controlChange_init(Tricore__ctx_type_0 &_output_){
@@ -360,6 +368,7 @@ void Tricore_controlChange_init(Tricore__ctx_type_0 &_output_){
 }
 
 void Tricore_controlChange(Tricore__ctx_type_0 &_ctx, int control, int value, int channel){
+
 }
 
 void Tricore_default_init(Tricore__ctx_type_0 &_output_){
@@ -374,7 +383,7 @@ void Tricore_default(Tricore__ctx_type_0 &_ctx){
 void Swept__ctx_type_0_init(Swept__ctx_type_0 &_output_){
    Swept__ctx_type_0 _ctx;
    _ctx.out = 0.f;
-   Util__ctx_type_0_init(_ctx._inst54);
+   Util__ctx_type_0_init(_ctx._inst43);
    _output_ = _ctx;
    return ;
 }
@@ -390,9 +399,7 @@ float Swept_process(Swept__ctx_type_0 &_ctx, float gate, float start, float end,
    uint8_t bgate;
    bgate = (gate > 0.5f);
    _ctx.out = (_ctx.out + (((end * 1024.f) + (- _ctx.out)) * rate * 0.004f));
-   uint8_t _cond_60;
-   _cond_60 = Util_edge(_ctx._inst54,bgate);
-   if(_cond_60){
+   if(Util_edge(_ctx._inst43,bgate)){
       _ctx.out = (start * 1024.f);
    }
    return (_ctx.out * 0.0009766f);
@@ -404,6 +411,7 @@ void Swept_noteOn_init(Swept__ctx_type_0 &_output_){
 }
 
 void Swept_noteOn(Swept__ctx_type_0 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Swept_noteOff_init(Swept__ctx_type_0 &_output_){
@@ -412,6 +420,7 @@ void Swept_noteOff_init(Swept__ctx_type_0 &_output_){
 }
 
 void Swept_noteOff(Swept__ctx_type_0 &_ctx, int note, int channel){
+
 }
 
 void Swept_controlChange_init(Swept__ctx_type_0 &_output_){
@@ -420,6 +429,7 @@ void Swept_controlChange_init(Swept__ctx_type_0 &_output_){
 }
 
 void Swept_controlChange(Swept__ctx_type_0 &_ctx, int control, int value, int channel){
+
 }
 
 void Swept_default_init(Swept__ctx_type_0 &_output_){
@@ -428,6 +438,7 @@ void Swept_default_init(Swept__ctx_type_0 &_output_){
 }
 
 void Swept_default(Swept__ctx_type_0 &_ctx){
+
 }
 
 float Saturate_tanh_table(float x){
@@ -441,15 +452,19 @@ float Saturate_process(float x){
 }
 
 void Saturate_noteOn(int note, int velocity, int channel){
+
 }
 
 void Saturate_noteOff(int note, int channel){
+
 }
 
 void Saturate_controlChange(int control, int value, int channel){
+
 }
 
 void Saturate_default(){
+
 }
 
 void Ahr__ctx_type_0_init(Ahr__ctx_type_0 &_output_){
@@ -461,8 +476,8 @@ void Ahr__ctx_type_0_init(Ahr__ctx_type_0 &_output_){
    _ctx.hold_phase = 0.f;
    _ctx.do_ret_1 = 0.f;
    _ctx.do_ret_0 = 0.f;
-   Util__ctx_type_0_init(_ctx._inst70);
-   Util__ctx_type_0_init(_ctx._inst68);
+   Util__ctx_type_0_init(_ctx._inst58);
+   Util__ctx_type_0_init(_ctx._inst56);
    _output_ = _ctx;
    return ;
 }
@@ -483,55 +498,41 @@ void Ahr_do(Ahr__ctx_type_0 &_ctx, float gate, float a, float h, float r){
    reset = 3;
    uint8_t bgate;
    bgate = (gate > 0.f);
-   uint8_t _cond_87;
-   _cond_87 = Util_edge(_ctx._inst68,bgate);
-   if(_cond_87){
+   if(Util_edge(_ctx._inst56,bgate)){
       _ctx.state = reset;
    }
    float resetting;
-   uint8_t _cond_96;
-   _cond_96 = (_ctx.state == reset);
-   if(_cond_96){ resetting = 1.f; }
+   if(_ctx.state == reset){
+      resetting = 1.f;
+   }
    else
-   { resetting = 0.f; }
-   uint8_t _cond_88;
-   _cond_88 = Util_edge(_ctx._inst70,(_ctx.out > 1024.f));
-   if(_cond_88){
+   {
+      resetting = 0.f;
+   }
+   if(Util_edge(_ctx._inst58,(_ctx.out > 1024.f))){
       _ctx.hold_phase = 0.f;
       _ctx.state = hold;
    }
-   uint8_t _cond_89;
-   _cond_89 = ((_ctx.out < 10.f) && (_ctx.state == reset));
-   if(_cond_89){
+   if((_ctx.out < 10.f) && (_ctx.state == reset)){
       _ctx.state = attack;
    }
-   uint8_t _cond_90;
-   _cond_90 = ((_ctx.hold_phase > 100.f) && (_ctx.state == hold));
-   if(_cond_90){
+   if((_ctx.hold_phase > 100.f) && (_ctx.state == hold)){
       _ctx.state = release;
    }
-   uint8_t _cond_91;
-   _cond_91 = (_ctx.state == reset);
-   if(_cond_91){
+   if(_ctx.state == reset){
       _ctx.rate = 0.9900991f;
       _ctx.target = 0.f;
    }
-   uint8_t _cond_92;
-   _cond_92 = (_ctx.state == attack);
-   if(_cond_92){
+   if(_ctx.state == attack){
       _ctx.rate = (1.f / ((100.f * a) + 0.01f));
       _ctx.target = 1228.8f;
    }
-   uint8_t _cond_93;
-   _cond_93 = (_ctx.state == hold);
-   if(_cond_93){
+   if(_ctx.state == hold){
       float hrate;
       hrate = (1.f / ((100.f * h) + 0.01f));
       _ctx.hold_phase = (_ctx.hold_phase + hrate);
    }
-   uint8_t _cond_94;
-   _cond_94 = (_ctx.state == release);
-   if(_cond_94){
+   if(_ctx.state == release){
       _ctx.rate = (1.f / ((100.f * r) + 0.01f));
       _ctx.target = 0.f;
    }
@@ -546,14 +547,18 @@ void Ahr_do_ret_0_init(Ahr__ctx_type_0 &_output_){
    return ;
 }
 
-float Ahr_do_ret_0(Ahr__ctx_type_0 &_ctx){return _ctx.do_ret_0;}
+float Ahr_do_ret_0(Ahr__ctx_type_0 &_ctx){
+   return _ctx.do_ret_0;
+}
 
 void Ahr_do_ret_1_init(Ahr__ctx_type_0 &_output_){
    Ahr__ctx_type_0_init(_output_);
    return ;
 }
 
-float Ahr_do_ret_1(Ahr__ctx_type_0 &_ctx){return _ctx.do_ret_1;}
+float Ahr_do_ret_1(Ahr__ctx_type_0 &_ctx){
+   return _ctx.do_ret_1;
+}
 
 void Ahr__ctx_type_1_init(Ahr__ctx_type_1 &_output_){
    Ahr__ctx_type_1 _ctx;
@@ -562,7 +567,7 @@ void Ahr__ctx_type_1_init(Ahr__ctx_type_1 &_output_){
    _ctx.knob3 = 0.f;
    _ctx.knob2 = 0.f;
    _ctx.knob1 = 0.f;
-   Ahr__ctx_type_0_init(_ctx._inst79);
+   Ahr__ctx_type_0_init(_ctx._inst67);
    _output_ = _ctx;
    return ;
 }
@@ -573,9 +578,9 @@ void Ahr_process_init(Ahr__ctx_type_1 &_output_){
 }
 
 void Ahr_process(Ahr__ctx_type_1 &_ctx, float gate){
-   Ahr_do(_ctx._inst79,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
-   _ctx.process_ret_0 = Ahr_do_ret_0(_ctx._inst79);
-   _ctx.process_ret_1 = Ahr_do_ret_1(_ctx._inst79);
+   Ahr_do(_ctx._inst67,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
+   _ctx.process_ret_0 = Ahr_do_ret_0(_ctx._inst67);
+   _ctx.process_ret_1 = Ahr_do_ret_1(_ctx._inst67);
    return ;
 }
 
@@ -584,14 +589,18 @@ void Ahr_process_ret_0_init(Ahr__ctx_type_1 &_output_){
    return ;
 }
 
-float Ahr_process_ret_0(Ahr__ctx_type_1 &_ctx){return _ctx.process_ret_0;}
+float Ahr_process_ret_0(Ahr__ctx_type_1 &_ctx){
+   return _ctx.process_ret_0;
+}
 
 void Ahr_process_ret_1_init(Ahr__ctx_type_1 &_output_){
    Ahr__ctx_type_1_init(_output_);
    return ;
 }
 
-float Ahr_process_ret_1(Ahr__ctx_type_1 &_ctx){return _ctx.process_ret_1;}
+float Ahr_process_ret_1(Ahr__ctx_type_1 &_ctx){
+   return _ctx.process_ret_1;
+}
 
 void Ahr_noteOn_init(Ahr__ctx_type_1 &_output_){
    Ahr__ctx_type_1_init(_output_);
@@ -599,6 +608,7 @@ void Ahr_noteOn_init(Ahr__ctx_type_1 &_output_){
 }
 
 void Ahr_noteOn(Ahr__ctx_type_1 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Ahr_noteOff_init(Ahr__ctx_type_1 &_output_){
@@ -607,6 +617,7 @@ void Ahr_noteOff_init(Ahr__ctx_type_1 &_output_){
 }
 
 void Ahr_noteOff(Ahr__ctx_type_1 &_ctx, int note, int channel){
+
 }
 
 void Ahr_controlChange_init(Ahr__ctx_type_1 &_output_){
@@ -615,19 +626,13 @@ void Ahr_controlChange_init(Ahr__ctx_type_1 &_output_){
 }
 
 void Ahr_controlChange(Ahr__ctx_type_1 &_ctx, int control, int value, int channel){
-   uint8_t _cond_98;
-   _cond_98 = (control == 1);
-   if(_cond_98){
+   if(control == 1){
       _ctx.knob1 = (int_to_float(value) * 0.0078741f);
    }
-   uint8_t _cond_99;
-   _cond_99 = (control == 2);
-   if(_cond_99){
+   if(control == 2){
       _ctx.knob2 = (int_to_float(value) * 0.0078741f);
    }
-   uint8_t _cond_100;
-   _cond_100 = (control == 3);
-   if(_cond_100){
+   if(control == 3){
       _ctx.knob3 = (int_to_float(value) * 0.0078741f);
    }
 }
@@ -645,11 +650,11 @@ void Ahr_default(Ahr__ctx_type_1 &_ctx){
 
 void Kick__ctx_type_0_init(Kick__ctx_type_0 &_output_){
    Kick__ctx_type_0 _ctx;
-   Noise__ctx_type_1_init(_ctx._inst106);
-   Ahr__ctx_type_0_init(_ctx._inst105);
-   Tricore__ctx_type_0_init(_ctx._inst104);
-   Swept__ctx_type_0_init(_ctx._inst103);
-   Ahr__ctx_type_0_init(_ctx._inst102);
+   Noise__ctx_type_1_init(_ctx._inst80);
+   Ahr__ctx_type_0_init(_ctx._inst79);
+   Tricore__ctx_type_0_init(_ctx._inst78);
+   Swept__ctx_type_0_init(_ctx._inst77);
+   Ahr__ctx_type_0_init(_ctx._inst76);
    _output_ = _ctx;
    return ;
 }
@@ -662,21 +667,21 @@ void Kick_do_init(Kick__ctx_type_0 &_output_){
 float Kick_do(Kick__ctx_type_0 &_ctx, float gate, float odecay, float pitch, float swept, float noise){
    float osc_env;
    float env_reset;
-   Ahr_do(_ctx._inst102,gate,0.005f,(0.1f + odecay),(odecay + 0.01f));
-   osc_env = Ahr_do_ret_0(_ctx._inst102);
-   env_reset = Ahr_do_ret_1(_ctx._inst102);
+   Ahr_do(_ctx._inst76,gate,0.005f,(0.1f + odecay),(odecay + 0.01f));
+   osc_env = Ahr_do_ret_0(_ctx._inst76);
+   env_reset = Ahr_do_ret_1(_ctx._inst76);
    float cv;
-   cv = Swept_process(_ctx._inst103,(1.f + (- env_reset)),(pitch + (swept * 0.4f)),pitch,0.1f);
+   cv = Swept_process(_ctx._inst77,(1.f + (- env_reset)),(pitch + (swept * 0.4f)),pitch,0.1f);
    float osc;
-   osc = Tricore_process(_ctx._inst104,cv,0.f,env_reset);
+   osc = Tricore_process(_ctx._inst78,cv,0.f,env_reset);
    float osc_sat;
    osc_sat = Saturate_process((1.5f * osc));
    float noise_env;
-   Ahr_do(_ctx._inst105,gate,0.001f,0.01f,((noise * 0.01f) + 0.001f));
-   noise_env = Ahr_do_ret_0(_ctx._inst105);
-   Ahr_do_ret_1(_ctx._inst105);
+   Ahr_do(_ctx._inst79,gate,0.001f,0.01f,((noise * 0.01f) + 0.001f));
+   noise_env = Ahr_do_ret_0(_ctx._inst79);
+   Ahr_do_ret_1(_ctx._inst79);
    float noise_osc;
-   noise_osc = (noise * Noise_process(_ctx._inst106,1.f) * 0.3333334f);
+   noise_osc = (noise * Noise_process(_ctx._inst80,1.f) * 0.3333334f);
    return ((osc_env * osc_sat) + (noise_env * noise_osc));
 }
 
@@ -686,7 +691,7 @@ void Kick__ctx_type_1_init(Kick__ctx_type_1 &_output_){
    _ctx.pitch = 0.f;
    _ctx.odecay = 0.f;
    _ctx.noise = 0.f;
-   Kick__ctx_type_0_init(_ctx._inst108);
+   Kick__ctx_type_0_init(_ctx._inst82);
    _output_ = _ctx;
    return ;
 }
@@ -697,7 +702,7 @@ void Kick_process_init(Kick__ctx_type_1 &_output_){
 }
 
 float Kick_process(Kick__ctx_type_1 &_ctx, float gate){
-   return Kick_do(_ctx._inst108,gate,_ctx.odecay,_ctx.pitch,_ctx.swept,_ctx.noise);
+   return Kick_do(_ctx._inst82,gate,_ctx.odecay,_ctx.pitch,_ctx.swept,_ctx.noise);
 }
 
 void Kick_noteOn_init(Kick__ctx_type_1 &_output_){
@@ -706,6 +711,7 @@ void Kick_noteOn_init(Kick__ctx_type_1 &_output_){
 }
 
 void Kick_noteOn(Kick__ctx_type_1 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Kick_noteOff_init(Kick__ctx_type_1 &_output_){
@@ -714,6 +720,7 @@ void Kick_noteOff_init(Kick__ctx_type_1 &_output_){
 }
 
 void Kick_noteOff(Kick__ctx_type_1 &_ctx, int note, int channel){
+
 }
 
 void Kick_controlChange_init(Kick__ctx_type_1 &_output_){
@@ -722,24 +729,16 @@ void Kick_controlChange_init(Kick__ctx_type_1 &_output_){
 }
 
 void Kick_controlChange(Kick__ctx_type_1 &_ctx, int control, int value, int channel){
-   uint8_t _cond_119;
-   _cond_119 = (control == 30);
-   if(_cond_119){
+   if(control == 30){
       _ctx.odecay = (int_to_float(value) * 0.0078741f);
    }
-   uint8_t _cond_120;
-   _cond_120 = (control == 31);
-   if(_cond_120){
+   if(control == 31){
       _ctx.pitch = Util_map(int_to_float(value),0.f,127.f,0.f,0.1f);
    }
-   uint8_t _cond_121;
-   _cond_121 = (control == 32);
-   if(_cond_121){
+   if(control == 32){
       _ctx.swept = (int_to_float(value) * 0.0078741f);
    }
-   uint8_t _cond_122;
-   _cond_122 = (control == 33);
-   if(_cond_122){
+   if(control == 33){
       _ctx.noise = (int_to_float(value) * 0.0078741f);
    }
 }
@@ -750,6 +749,7 @@ void Kick_default_init(Kick__ctx_type_1 &_output_){
 }
 
 void Kick_default(Kick__ctx_type_1 &_ctx){
+
 }
 
 

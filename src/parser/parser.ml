@@ -810,6 +810,11 @@ let parseExp (s:string) : exp =
    let buffer = Stream.fromString s in
    expression 0 buffer
 
+(** Parses an id given a string *)
+let parseId (s:string) : Id.t =
+   let buffer = Stream.fromString s in
+   id buffer
+
 (** Parses an type given a string *)
 let parseType (s:string) : Typ.t =
    let buffer = Stream.fromString s in

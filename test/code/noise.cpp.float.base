@@ -51,11 +51,13 @@ float Noise_process(Noise__ctx_type_1 &_ctx, float color){
    float y2;
    y2 = (int_to_float(_ctx.x2) * 3.06e-05f);
    float out;
-   uint8_t _cond_7;
-   _cond_7 = (color > 0.5f);
-   if(_cond_7){ out = Noise_pinker(_ctx._inst2,(y1 + (- y2))); }
+   if(color > 0.5f){
+      out = Noise_pinker(_ctx._inst2,(y1 + (- y2)));
+   }
    else
-   { out = (y1 + (- y2)); }
+   {
+      out = (y1 + (- y2));
+   }
    return (2.f * out);
 }
 
@@ -65,6 +67,7 @@ void Noise_noteOn_init(Noise__ctx_type_1 &_output_){
 }
 
 void Noise_noteOn(Noise__ctx_type_1 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Noise_noteOff_init(Noise__ctx_type_1 &_output_){
@@ -73,6 +76,7 @@ void Noise_noteOff_init(Noise__ctx_type_1 &_output_){
 }
 
 void Noise_noteOff(Noise__ctx_type_1 &_ctx, int note, int channel){
+
 }
 
 void Noise_controlChange_init(Noise__ctx_type_1 &_output_){
@@ -81,6 +85,7 @@ void Noise_controlChange_init(Noise__ctx_type_1 &_output_){
 }
 
 void Noise_controlChange(Noise__ctx_type_1 &_ctx, int control, int value, int channel){
+
 }
 
 void Noise_default_init(Noise__ctx_type_1 &_output_){
@@ -89,6 +94,7 @@ void Noise_default_init(Noise__ctx_type_1 &_output_){
 }
 
 void Noise_default(Noise__ctx_type_1 &_ctx){
+
 }
 
 

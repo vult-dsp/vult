@@ -11,9 +11,7 @@ fix16_t Bitcrush_factor(fix16_t cv){
 fix16_t Bitcrush_process(fix16_t i, fix16_t cv){
    fix16_t out;
    out = i;
-   uint8_t _cond_8;
-   _cond_8 = (cv == 0x0 /* 0.000000 */);
-   if(_cond_8){
+   if(cv == 0x0 /* 0.000000 */){
       out = i;
    }
    else
@@ -28,15 +26,19 @@ fix16_t Bitcrush_process(fix16_t i, fix16_t cv){
 }
 
 void Bitcrush_noteOn(int note, int velocity, int channel){
+
 }
 
 void Bitcrush_noteOff(int note, int channel){
+
 }
 
 void Bitcrush_controlChange(int control, int value, int channel){
+
 }
 
 void Bitcrush_default(){
+
 }
 
 

@@ -26,6 +26,7 @@ open PassCommon
 open Env
 open Prog
 open Common
+open Maps
 
 
 module CollectTuples = struct
@@ -183,7 +184,45 @@ module SimplifyFixed = struct
 
 end
 
+module MarkUsedFunctions = struct
+
+   module MarkAllCalls = struct
+      let exp : ('a Env.t,exp) Mapper.mapper_func =
+         Mapper.make "MarkUsedFunctions.MarkAllCalls.exp" @@ fun state exp ->
+         match exp with
+         | PCall(_, name, _, _)->
+            let data = Env.get state in
+            let data = PassData.addRoot data name in
+            let state = { state with data } in
+            state, exp
+         | _ -> state, exp
+
+      let mapper = Mapper.{ default_mapper with exp }
+
+   end
+
+   let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
+      Mapper.make "MarkUsedFunctions.stmt" @@ fun state stmt ->
+      match stmt with
+      | StmtFun(name, args, body, ret, attr) ->
+         let data = Env.get state in
+         begin match IdMap.find name data.PassData.used_code with
+            | true -> state, stmt
+            | false ->
+               let state, body = Mapper.map_stmt MarkAllCalls.mapper state body in
+               let data = PassData.markRoot (Env.get state) name in
+               let state = { state with data } in
+               reapply state, StmtFun(name, args, body, ret, { attr with root = true })
+            | exception Not_found -> state, stmt
+         end
+      | _ -> state, stmt
+
+   let mapper = Mapper.{ default_mapper with stmt }
+
+end
+
 let run =
    CollectTuples.mapper
    |> Mapper.seq ReportUnsupportedTypes.mapper
    |> Mapper.seq SimplifyFixed.mapper
+   |> Mapper.seq MarkUsedFunctions.mapper

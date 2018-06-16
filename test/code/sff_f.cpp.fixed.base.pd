@@ -7,15 +7,19 @@ fix16_t Sff_f_process(fix16_t a, fix16_t b){
 }
 
 void Sff_f_noteOn(int note, int velocity, int channel){
+
 }
 
 void Sff_f_noteOff(int note, int channel){
+
 }
 
 void Sff_f_controlChange(int control, int value, int channel){
+
 }
 
 void Sff_f_default(){
+
 }
 
 

@@ -94,7 +94,6 @@ end
 
 function this.Synth1_pitchToRate(d)
    return (0.0001854 * this.exp((0.0577623 * d))); 
-
 end
 
 function this.Synth1__ctx_type_5_init()
@@ -113,7 +112,6 @@ end
 function this.Synth1_phasor(_ctx,pitch,reset)
    if this.Synth1_change(_ctx._inst6,pitch) then
       _ctx.rate = this.Synth1_pitchToRate(pitch); 
-
    end
    if reset then
       _ctx.phase = 0.; 
@@ -141,12 +139,10 @@ function this.Synth1_lfo(_ctx,f,gate)
    local rate = (0.0002268 * f); 
    if this.Synth1_edge(_ctx._inst9,gate) then
       _ctx.phase = 0.; 
-
    end
    _ctx.phase = (_ctx.phase + rate); 
    if (_ctx.phase > 1.) then
       _ctx.phase = (_ctx.phase + (-1.)); 
-
    end
    return (this.sin((6.2831854 * _ctx.phase)) + (-0.5)); 
 
@@ -204,38 +200,25 @@ function this.Synth1_noteOn_init()
 end
 
 function this.Synth1_noteOn(_ctx,note,velocity,channel)
-   if (_ctx.count == 0) then
+   switch(_ctx.count {case 0:
       _ctx.n1 = note; 
       _ctx.pitch = this.real(note); 
-
-   else
-
-      if (_ctx.count == 1) then
-         _ctx.n2 = note; 
-         _ctx.pitch = this.real(note); 
-
-      else
-
-         if (_ctx.count == 2) then
-            _ctx.n3 = note; 
-            _ctx.pitch = this.real(note); 
-
-         else
-
-            if (_ctx.count == 3) then
-               _ctx.n4 = note; 
-               _ctx.pitch = this.real(note); 
-
-            end
-
-         end
-
-      end
-
-   end
+   break;
+   case 1:
+      _ctx.n2 = note; 
+      _ctx.pitch = this.real(note); 
+   break;
+   case 2:
+      _ctx.n3 = note; 
+      _ctx.pitch = this.real(note); 
+   break;
+   case 3:
+      _ctx.n4 = note; 
+      _ctx.pitch = this.real(note); 
+   break;
+    })
    if (_ctx.count <= 4) then
       _ctx.count = (_ctx.count + 1); 
-
    end
    if (_ctx.count > 0) then
       _ctx.gate = 1; 
@@ -280,17 +263,12 @@ function this.Synth1_noteOff(_ctx,note,channel)
 
             if (note == _ctx.n4) then
                found = true; 
-
             end
-
          end
-
       end
-
    end
    if (found and (_ctx.count > 0)) then
       _ctx.count = (_ctx.count + -1); 
-
    end
    if (_ctx.count > 0) then
       _ctx.gate = 1; 
@@ -300,19 +278,15 @@ function this.Synth1_noteOff(_ctx,note,channel)
    end
    if (_ctx.count == 1) then
       _ctx.pitch = this.real(_ctx.n1); 
-
    end
    if (_ctx.count == 2) then
       _ctx.pitch = this.real(_ctx.n2); 
-
    end
    if (_ctx.count == 3) then
       _ctx.pitch = this.real(_ctx.n3); 
-
    end
    if (_ctx.count == 4) then
       _ctx.pitch = this.real(_ctx.n4); 
-
    end
 
 end
@@ -324,19 +298,15 @@ end
 function this.Synth1_controlChange(_ctx,control,value,channel)
    if (control == 30) then
       _ctx.volume = (value * 0.0078741); 
-
    end
    if (control == 31) then
       _ctx.detune = (value * 0.0078741); 
-
    end
    if (control == 32) then
       _ctx.lfo_rate = (value * 0.0078741); 
-
    end
    if (control == 33) then
       _ctx.lfo_amt = (2. * ((value * 0.0078741) + (-0.5))); 
-
    end
 
 end

@@ -35,6 +35,7 @@ type attr =
    {
       loc     : Loc.t;
       fun_and : bool;
+      root    : bool;
       active  : bool;
       bound   : bool;
       const   : bool;
@@ -203,6 +204,7 @@ type parser_results =
 let makeAttr (loc:Loc.t) : attr =
    {
       loc     = loc;
+      root    = false;
       fun_and = false;
       active  = false;
       bound   = false;
@@ -218,6 +220,7 @@ let emptyAttr =
    {
       loc     = Loc.default;
       fun_and = false;
+      root    = false;
       active  = false;
       bound   = false;
       typ     = None;

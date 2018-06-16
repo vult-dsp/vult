@@ -5,14 +5,8 @@ this.Saturate_soft_tanh_table = function(x){
    var index = (this.clip(this.int((5. * (x + 24.))),(0|0),(240|0))|0); 
    return (Saturate_soft_tanh_table_c0[index] + (x * (Saturate_soft_tanh_table_c1[index] + (Saturate_soft_tanh_table_c2[index] * x)))); 
 }
-this.Saturate_soft_process = function(_ctx,x){
-   return this.Saturate_soft_tanh_table(x); 
-}
-this.Saturate_soft_noteOn = function(_ctx,note,velocity,channel){
-}
-this.Saturate_soft_noteOff = function(_ctx,note,channel){
-}
-this.Saturate_soft_controlChange = function(_ctx,control,value,channel){
-}
-this.Saturate_soft_default = function(_ctx){
-}
+this.Saturate_soft_process = function(x) { return this.Saturate_soft_tanh_table(x); }
+this.Saturate_soft_noteOn = function(note,velocity,channel) { ;}
+this.Saturate_soft_noteOff = function(note,channel) { ;}
+this.Saturate_soft_controlChange = function(control,value,channel) { ;}
+this.Saturate_soft_default = function() { ;}

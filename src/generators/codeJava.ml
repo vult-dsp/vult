@@ -30,34 +30,6 @@ module Templates = struct
    let none code = [ code, FileKind.ExtOnly "java"]
 
    let runtime : Pla.t =
-      (*
-      Pla.string
-         {| // Vult runtime functions
-            this.random = function()         { return Math.random(); };
-            this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
-            this.eps  = function()           { return 1e-18 };
-            this.pi   = function()           { return 3.1415926535897932384; }
-            this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
-            this.not  = function(x)          { return x==0?1:0; };
-            this.real = function(x)          { return x; };
-            this.int  = function(x)          { return x|0; };
-            this.sin  = function(x)          { return Math.sin(x); };
-            this.cos  = function(x)          { return Math.cos(x); };
-            this.abs  = function(x)          { return Math.abs(x); };
-            this.exp  = function(x)          { return Math.exp(x); };
-            this.floor= function(x)          { return Math.floor(x); };
-            this.tan  = function(x)          { return Math.tan(x); };
-            this.tanh = function(x)          { return Math.tanh(x); };
-            this.sqrt = function(x)          { return x; };
-            this.set  = function(a, i, v)    { a[i]=v; };
-            this.get  = function(a, i)       { return a[i]; };
-            this.int_to_float = function(i)  { return i; };
-            this.float_to_int = function(i)  { return Math.floor(i); };
-            this.makeArray = function(size, v){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
-            this.wrap_array = function(a) { return a; }
-            this.log = function(x) { console.log(x); }
-         |}
-         *)
       {pla|
 static int clip(int x, int minv, int maxv) {
    if(x > maxv)
@@ -67,7 +39,7 @@ static int clip(int x, int minv, int maxv) {
    else return x;
 }
 
-static double clip(double x, double minv, double maxv) {
+static float clip(float x, float minv, float maxv) {
    if(x > maxv)
       return maxv;
    else if(x < minv)
@@ -81,8 +53,8 @@ int[] makeArray(int size, int init) {
    return a;
 }
 
-double[] makeArray(int size, double init) {
-   double a[] = new double[size];
+float[] makeArray(int size, float init) {
+   float a[] = new float[size];
    Arrays.fill(a, init);
    return a;
 }
@@ -91,29 +63,29 @@ static boolean not(boolean x) {
    return !x;
 }
 
-static double int_to_float(int x) {
-   return (double)x;
+static float int_to_float(int x) {
+   return (float)x;
 }
 
-int float_to_int(double x) {
+int float_to_int(float x) {
    return (int)x;
 }
 
-double floor(double x) {
-   return (double)Math.floor(x);
+float floor(float x) {
+   return (float)Math.floor(x);
 }
 
 static Random rand = new Random();
 
-double random() {
+float random() {
    return rand.nextFloat();
 }
 
-double get(double[] a, int i) {
+float get(float[] a, int i) {
    return a[i];
 }
 
-void set(double[] a, int i, double val) {
+void set(float[] a, int i, float val) {
    a[i] = val;
 }
 
@@ -125,12 +97,32 @@ void set(int[] a, int i, int val) {
    a[i] = val;
 }
 
-double[] wrap_array(double x[]) {
+float[] wrap_array(float x[]) {
    return x;
 }
 
 int[] wrap_array(int x[]) {
    return x;
+}
+
+float cosh(float x) {
+   return (float)Math.cosh(x);
+}
+
+float sinh(float x) {
+   return (float)Math.sinh(x);
+}
+
+float tan(float x) {
+   return (float)Math.tan(x);
+}
+
+float sqrt(float x) {
+   return (float)Math.sqrt(x);
+}
+
+float pow(float x, float y) {
+   return (float)Math.pow(x, y);
 }
 
 |pla}
@@ -339,8 +331,29 @@ let printFunArg (ntype, name) : Pla.t =
       let tdescr = printTypeDescr typ in
       {pla|<#tdescr#> <#name#s>|pla}
 
-(** Print a statement *)
-let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
+let rec printSwitchStmt params e cases def =
+   let e_t = printExp params e in
+   let cases_t =
+      Pla.map_sep_all
+         Pla.newline
+         (fun (v,stmt) ->
+             let v_t = printExp params v in
+             let stmt_t = CCOpt.get_or ~default:Pla.unit(printStmt params stmt)  in
+             {pla|case <#v_t#>:<#stmt_t#+><#>break;|pla})
+         cases
+   in
+   let def_t =
+      match def with
+      | None -> Pla.unit
+      | Some s ->
+         match printStmt params s with
+         | None -> Pla.unit
+         | Some s ->
+            {pla|default: <#s#+>|pla}
+   in
+   Some {pla|switch(<#e_t#>) {<#cases_t#+> <#def_t#><#>}|pla}
+
+and printStmt (params:params) (stmt:cstmt) : Pla.t option =
    match stmt with
    (* Strange case '_' *)
    | CSVar(CLWild, None) -> None
@@ -510,6 +523,9 @@ let rec printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSExtFunc _ -> None
 
    | CSEmpty -> None
+
+   | CSSwitch(e, cases, def) -> printSwitchStmt params e cases def
+
 
 and printStmtList (params:params) (stmts:cstmt list) : Pla.t =
    (* Prints the statements and removes all elements that are None *)

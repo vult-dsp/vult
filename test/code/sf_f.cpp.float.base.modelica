@@ -7,15 +7,19 @@ float Sf_f_process(float input){
 }
 
 void Sf_f_noteOn(int note, int velocity, int channel){
+
 }
 
 void Sf_f_noteOff(int note, int channel){
+
 }
 
 void Sf_f_controlChange(int control, int value, int channel){
+
 }
 
 void Sf_f_default(){
+
 }
 
 

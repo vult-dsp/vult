@@ -108,8 +108,8 @@ float Util_cvTokHz(float cv);
 typedef struct Phase__ctx_type_0 {
    float rate;
    float phase;
-   Util__ctx_type_0 _inst25;
-   Util__ctx_type_1 _inst23;
+   Util__ctx_type_0 _inst22;
+   Util__ctx_type_1 _inst20;
 } Phase__ctx_type_0;
 
 typedef Phase__ctx_type_0 Phase_process_type;
@@ -152,7 +152,7 @@ float Tables_nsine(float x);
 typedef struct Sine__ctx_type_0 {
    uint8_t trig;
    Phase__ctx_type_0 p;
-   Util__ctx_type_0 _inst35;
+   Util__ctx_type_0 _inst29;
 } Sine__ctx_type_0;
 
 typedef Sine__ctx_type_0 Sine_process_type;

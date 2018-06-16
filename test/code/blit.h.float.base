@@ -108,8 +108,8 @@ float Util_cvTokHz(float cv);
 typedef struct Phase__ctx_type_0 {
    float rate;
    float phase;
-   Util__ctx_type_0 _inst25;
-   Util__ctx_type_1 _inst23;
+   Util__ctx_type_0 _inst22;
+   Util__ctx_type_1 _inst20;
 } Phase__ctx_type_0;
 
 typedef Phase__ctx_type_0 Phase_process_type;
@@ -152,7 +152,7 @@ float Tables_nsine(float x);
 typedef struct Blit__ctx_type_0 {
    float scale;
    int m;
-   Util__ctx_type_1 _inst35;
+   Util__ctx_type_1 _inst29;
 } Blit__ctx_type_0;
 
 typedef Blit__ctx_type_0 Blit_pulse_train_type;
@@ -174,11 +174,11 @@ typedef struct Blit__ctx_type_1 {
    float state_pulse;
    float rate;
    float output;
-   Util__ctx_type_3 _inst51;
-   Blit__ctx_type_0 _inst48;
-   Blit__ctx_type_0 _inst47;
-   Phase__ctx_type_0 _inst45;
-   Util__ctx_type_1 _inst43;
+   Util__ctx_type_3 _inst45;
+   Blit__ctx_type_0 _inst42;
+   Blit__ctx_type_0 _inst41;
+   Phase__ctx_type_0 _inst39;
+   Util__ctx_type_1 _inst37;
 } Blit__ctx_type_1;
 
 typedef Blit__ctx_type_1 Blit_osc_blit_type;
@@ -196,7 +196,7 @@ void Blit_init_init(Blit__ctx_type_1 &_output_);
 void Blit_init(Blit__ctx_type_1 &_ctx);
 
 typedef struct Blit__ctx_type_2 {
-   Blit__ctx_type_1 _inst54;
+   Blit__ctx_type_1 _inst48;
 } Blit__ctx_type_2;
 
 typedef Blit__ctx_type_2 Blit_process_type;

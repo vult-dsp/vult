@@ -19,9 +19,7 @@ this.Phasedist_change = function(_ctx,x){
    _ctx.pre_x = x; 
    return v; 
 }
-this.Phasedist_pitchToRate = function(d){
-   return (0.0001854 * this.exp((0.0577623 * d))); 
-}
+this.Phasedist_pitchToRate = function(d) { return (0.0001854 * this.exp((0.0577623 * d))); }
 this.Phasedist__ctx_type_3_init = function(){
    var _ctx = {}; 
    _ctx.rate = 0.; 
@@ -31,9 +29,7 @@ this.Phasedist__ctx_type_3_init = function(){
 }
 this.Phasedist_phasor_init = function() { return this.Phasedist__ctx_type_3_init(); }
 this.Phasedist_phasor = function(_ctx,pitch,reset){
-   if(this.Phasedist_change(_ctx._inst4,pitch)){
-      _ctx.rate = this.Phasedist_pitchToRate(pitch); 
-   }
+   if(this.Phasedist_change(_ctx._inst4,pitch))_ctx.rate = this.Phasedist_pitchToRate(pitch); 
    if(reset)_ctx.phase = 0.; 
    if((_ctx.phase > 1.))_ctx.phase = (_ctx.phase + (-1.)); 
    return _ctx.phase; 
@@ -61,20 +57,13 @@ this.Phasedist_process = function(_ctx,input){
    return (this.Phasedist_smooth(_ctx._inst10,_ctx.volume) * sine * comp); 
 }
 this.Phasedist_noteOn_init = function() { return this.Phasedist__ctx_type_4_init(); }
-this.Phasedist_noteOn = function(_ctx,note,velocity,channel){
-   _ctx.pitch = this.real(note); 
-}
+this.Phasedist_noteOn = function(_ctx,note,velocity,channel) { _ctx.pitch = this.real(note); }
 this.Phasedist_noteOff_init = function() { return this.Phasedist__ctx_type_4_init(); }
-this.Phasedist_noteOff = function(_ctx,note,channel){
-}
+this.Phasedist_noteOff = function(_ctx,note,channel) { ;}
 this.Phasedist_controlChange_init = function() { return this.Phasedist__ctx_type_4_init(); }
 this.Phasedist_controlChange = function(_ctx,control,value,channel){
-   if((control == (30|0))){
-      _ctx.volume = (this.real(value) * 0.0078741); 
-   }
-   if((control == (31|0))){
-      _ctx.detune = (this.real(value) * 0.0078741); 
-   }
+   if((control == (30|0)))_ctx.volume = (this.real(value) * 0.0078741); 
+   if((control == (31|0)))_ctx.detune = (this.real(value) * 0.0078741); 
 }
 this.Phasedist_default_init = function() { return this.Phasedist__ctx_type_4_init(); }
 this.Phasedist_default = function(_ctx){

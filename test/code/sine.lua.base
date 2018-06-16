@@ -59,7 +59,6 @@ end
 
 function this.Util_map(x,x0,x1,y0,y1)
    return ((((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))) + y0); 
-
 end
 
 function this.Util__ctx_type_3_init()
@@ -120,20 +119,15 @@ end
 function this.Util_cubic_clipper(x)
    if (x <= (-0.6666666)) then
       return (-0.6666666); 
-
    else
 
       if (x >= 0.6666667) then
          return 0.6666667; 
-
       else
 
          return (x + ((-0.3333333) * x * x * x)); 
-
       end
-
    end
-
 end
 
 local Util_pitchToRate_1024_c0 = {0.1898417,0.1913259,0.1986886,0.2194246,0.2656772,0.3564378,0.5206507,0.8015597,1.2627581,1.9965621,3.135544,4.8683456,7.4612795,11.2877251,16.8680071,24.9233293,36.4485185,52.8098903,75.8766039,108.1965793,153.2316185,215.6710565,301.8494285,420.3017178,582.500346,803.8319419,1104.890093,1513.1840318,2065.3942521,2810.3465753,3812.9290693,5159.2451728,6963.3862256}; 
@@ -156,7 +150,6 @@ end
 
 function this.Util_cvToPitch(cv)
    return ((cv * 120.) + 24.); 
-
 end
 
 local Util_cvToRate_1024_c0 = {0.7593668,0.7628769,0.7797366,0.8256516,0.9246484,1.1123985,1.4406875,1.9833925,2.8444342,4.1683106,6.1539936,9.073195,13.2942978,19.3136143,27.7961018,39.6282634,55.9867165,78.4268778,108.9974326,150.3878036,206.1177981,280.7810906,380.3573327,512.6116485,687.6052678,918.3473603,1221.6260803,1619.0668426,2138.4784521,2815.5635571,3696.0898222,4838.643251,6318.1165156}; 
@@ -179,7 +172,6 @@ end
 
 function this.Util_pitchToCv(pitch)
    return (0.0083334 * ((-24.) + pitch)); 
-
 end
 
 local Util_cvToperiod_c0 = {674.2460348,671.5538378,662.7617819,646.759522,623.7994278,594.871802,561.2982769,524.4769422,485.7313693,446.2293824,406.9474404,368.6637744,331.9686831,297.2841558,264.8876665,234.9368568,207.4931244,182.5430159,160.0169068,139.8048318,121.7695566,105.757117,91.6051156,79.1490884,68.227249,58.6838946,50.3717336,43.153355,36.902033,31.5020248,26.8484943,22.8471657,19.4137945}; 
@@ -204,8 +196,8 @@ function this.Phase__ctx_type_0_init()
    local _ctx = {}; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst25 = this.Util__ctx_type_0_init(); 
-   _ctx._inst23 = this.Util__ctx_type_1_init(); 
+   _ctx._inst22 = this.Util__ctx_type_0_init(); 
+   _ctx._inst20 = this.Util__ctx_type_1_init(); 
    this.Phase_default(_ctx);
    return _ctx; 
 
@@ -216,11 +208,10 @@ function this.Phase_process_init()
 end
 
 function this.Phase_process(_ctx,cv,reset)
-   if this.Util_change(_ctx._inst23,cv) then
+   if this.Util_change(_ctx._inst20,cv) then
       _ctx.rate = this.Util_cvToRate_1024(cv); 
-
    end
-   if this.Util_edge(_ctx._inst25,(reset > 0.5)) then
+   if this.Util_edge(_ctx._inst22,(reset > 0.5)) then
       _ctx.phase = 0.; 
    else
 
@@ -238,7 +229,7 @@ function this.Phase_noteOn_init()
 end
 
 function this.Phase_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Phase_noteOff_init()
@@ -246,7 +237,7 @@ function this.Phase_noteOff_init()
 end
 
 function this.Phase_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Phase_controlChange_init()
@@ -254,7 +245,7 @@ function this.Phase_controlChange_init()
 end
 
 function this.Phase_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Phase_default_init()
@@ -263,7 +254,6 @@ end
 
 function this.Phase_default(_ctx)
    _ctx.rate = 0.7593668; 
-
 end
 
 local Tables_nsine_c0 = {-0.,(-5.9e-05),(-0.0002943),(-0.0008206),(-0.0017482),(-0.0031817),(-0.0052181),(-0.0079453),(-0.0114405),(-0.0157689),(-0.020982),(-0.0271169),(-0.0341943),(-0.0422181),(-0.0511738),(-0.061028),(-0.0717278),(-0.0831993),(-0.0953483),(-0.1080587),(-0.1211932),(-0.1345928),(-0.1480768),(-0.1614433),(-0.1744692),(-0.186911),(-0.1985054),(-0.2089699),(-0.218004),(-0.2252904),(-0.2304958),(-0.2332728),(-0.2332612),(-0.2300896),(-0.2233773),(-0.2127363),(-0.197773),(-0.1780907),(-0.1532916),(-0.122979),(-0.0867602),(-0.0442482),0.0049352,0.0611569,0.1247704,0.1961126,0.2755014,0.3632331,0.4595799,0.5647871,0.6790705,0.8026144,0.9355685,1.0780459,1.230121,1.3918269,1.5631537,1.7440465,1.9344036,2.1340748,2.3428599,2.5605077,2.7867145,3.0211234,3.2633234,3.5128493,3.7691807,4.0317427,4.2999053,4.5729845,4.8502422,5.1308878,5.4140787,5.698922,5.984476,6.2697522,6.5537169,6.8352944,7.1133686,7.3867869,7.6543621,7.9148768,8.167086,8.4097215,8.6414953,8.8611041,9.0672334,9.2585621,9.433767,9.5915276,9.7305311,9.8494774,9.9470842,10.0220922,10.0732703,10.0994211,10.0993863,10.0720517,10.0163531,9.9312811,9.8158869,9.6692872,9.4906693,9.2792966,9.0345129,8.7557476,8.4425203,8.0944449,7.7112342,7.2927034,6.8387746,6.3494795,5.824963,5.2654862,4.6714286,4.0432908,3.3816961,2.6873922,1.9612525,1.2042765,0.4175907,(-0.3975519),(-1.2397716),(-2.1075637),(-2.9992988),(-3.9132254),(-4.8474712),(-5.8000465),(-6.7688468)}; 
@@ -279,7 +269,7 @@ function this.Sine__ctx_type_0_init()
    local _ctx = {}; 
    _ctx.trig = false; 
    _ctx.p = this.Phase__ctx_type_0_init(); 
-   _ctx._inst35 = this.Util__ctx_type_0_init(); 
+   _ctx._inst29 = this.Util__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -289,9 +279,8 @@ function this.Sine_process_init()
 end
 
 function this.Sine_process(_ctx,cv,reset)
-   if this.Util_edge(_ctx._inst35,(reset > 0.5)) then
+   if this.Util_edge(_ctx._inst29,(reset > 0.5)) then
       _ctx.trig = true; 
-
    end
    local phase = this.Phase_process(_ctx.p,cv,0.); 
    if ((phase < 1e-07) and _ctx.trig) then
@@ -308,7 +297,7 @@ function this.Sine_noteOn_init()
 end
 
 function this.Sine_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Sine_noteOff_init()
@@ -316,7 +305,7 @@ function this.Sine_noteOff_init()
 end
 
 function this.Sine_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Sine_controlChange_init()
@@ -324,7 +313,7 @@ function this.Sine_controlChange_init()
 end
 
 function this.Sine_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Sine_default_init()
@@ -332,7 +321,7 @@ function this.Sine_default_init()
 end
 
 function this.Sine_default(_ctx)
-
+   ;
 end
 
 

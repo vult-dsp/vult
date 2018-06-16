@@ -26,17 +26,11 @@
             this.wrap_array = function(a) { return a; }
             this.log = function(x) { console.log(x); }
          
-      this.Sff_f_process = function(_ctx,a,b){
-   return (a * b); 
-}
-this.Sff_f_noteOn = function(_ctx,note,velocity,channel){
-}
-this.Sff_f_noteOff = function(_ctx,note,channel){
-}
-this.Sff_f_controlChange = function(_ctx,control,value,channel){
-}
-this.Sff_f_default = function(_ctx){
-}
+      this.Sff_f_process = function(a,b) { return (a * b); }
+this.Sff_f_noteOn = function(note,velocity,channel) { ;}
+this.Sff_f_noteOff = function(note,channel) { ;}
+this.Sff_f_controlChange = function(control,value,channel) { ;}
+this.Sff_f_default = function() { ;}
 
       this.context = this.Sff_f_process_init();
       };

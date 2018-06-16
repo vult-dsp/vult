@@ -27,9 +27,7 @@ void Gates_gates_noteOn_init(Gates__ctx_type_1 &_output_){
 }
 
 void Gates_gates_noteOn(Gates__ctx_type_1 &_ctx, int note, int velocity){
-   uint8_t _cond_13;
-   _cond_13 = ((note >= 36) && (note <= 43));
-   if(_cond_13){
+   if((note >= 36) && (note <= 43)){
       int n;
       n = (note + (-36));
       int_set(_ctx.vel,n,velocity);
@@ -42,9 +40,7 @@ void Gates_gates_noteOff_init(Gates__ctx_type_1 &_output_){
 }
 
 void Gates_gates_noteOff(Gates__ctx_type_1 &_ctx, int note){
-   uint8_t _cond_14;
-   _cond_14 = ((note >= 36) && (note <= 43));
-   if(_cond_14){
+   if((note >= 36) && (note <= 43)){
       int n;
       n = (note + (-36));
       int_set(_ctx.vel,n,0);
@@ -89,56 +85,72 @@ void Gates_gates_state_ret_0_init(Gates__ctx_type_1 &_output_){
    return ;
 }
 
-float Gates_gates_state_ret_0(Gates__ctx_type_1 &_ctx){return _ctx.gates_state_ret_0;}
+float Gates_gates_state_ret_0(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_0;
+}
 
 void Gates_gates_state_ret_1_init(Gates__ctx_type_1 &_output_){
    Gates__ctx_type_1_init(_output_);
    return ;
 }
 
-float Gates_gates_state_ret_1(Gates__ctx_type_1 &_ctx){return _ctx.gates_state_ret_1;}
+float Gates_gates_state_ret_1(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_1;
+}
 
 void Gates_gates_state_ret_2_init(Gates__ctx_type_1 &_output_){
    Gates__ctx_type_1_init(_output_);
    return ;
 }
 
-float Gates_gates_state_ret_2(Gates__ctx_type_1 &_ctx){return _ctx.gates_state_ret_2;}
+float Gates_gates_state_ret_2(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_2;
+}
 
 void Gates_gates_state_ret_3_init(Gates__ctx_type_1 &_output_){
    Gates__ctx_type_1_init(_output_);
    return ;
 }
 
-float Gates_gates_state_ret_3(Gates__ctx_type_1 &_ctx){return _ctx.gates_state_ret_3;}
+float Gates_gates_state_ret_3(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_3;
+}
 
 void Gates_gates_state_ret_4_init(Gates__ctx_type_1 &_output_){
    Gates__ctx_type_1_init(_output_);
    return ;
 }
 
-float Gates_gates_state_ret_4(Gates__ctx_type_1 &_ctx){return _ctx.gates_state_ret_4;}
+float Gates_gates_state_ret_4(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_4;
+}
 
 void Gates_gates_state_ret_5_init(Gates__ctx_type_1 &_output_){
    Gates__ctx_type_1_init(_output_);
    return ;
 }
 
-float Gates_gates_state_ret_5(Gates__ctx_type_1 &_ctx){return _ctx.gates_state_ret_5;}
+float Gates_gates_state_ret_5(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_5;
+}
 
 void Gates_gates_state_ret_6_init(Gates__ctx_type_1 &_output_){
    Gates__ctx_type_1_init(_output_);
    return ;
 }
 
-float Gates_gates_state_ret_6(Gates__ctx_type_1 &_ctx){return _ctx.gates_state_ret_6;}
+float Gates_gates_state_ret_6(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_6;
+}
 
 void Gates_gates_state_ret_7_init(Gates__ctx_type_1 &_output_){
    Gates__ctx_type_1_init(_output_);
    return ;
 }
 
-float Gates_gates_state_ret_7(Gates__ctx_type_1 &_ctx){return _ctx.gates_state_ret_7;}
+float Gates_gates_state_ret_7(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_7;
+}
 
 void Gates__ctx_type_2_init(Gates__ctx_type_2 &_output_){
    Gates__ctx_type_2 _ctx;
@@ -180,56 +192,72 @@ void Gates_process_ret_0_init(Gates__ctx_type_2 &_output_){
    return ;
 }
 
-float Gates_process_ret_0(Gates__ctx_type_2 &_ctx){return _ctx.process_ret_0;}
+float Gates_process_ret_0(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_0;
+}
 
 void Gates_process_ret_1_init(Gates__ctx_type_2 &_output_){
    Gates__ctx_type_2_init(_output_);
    return ;
 }
 
-float Gates_process_ret_1(Gates__ctx_type_2 &_ctx){return _ctx.process_ret_1;}
+float Gates_process_ret_1(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_1;
+}
 
 void Gates_process_ret_2_init(Gates__ctx_type_2 &_output_){
    Gates__ctx_type_2_init(_output_);
    return ;
 }
 
-float Gates_process_ret_2(Gates__ctx_type_2 &_ctx){return _ctx.process_ret_2;}
+float Gates_process_ret_2(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_2;
+}
 
 void Gates_process_ret_3_init(Gates__ctx_type_2 &_output_){
    Gates__ctx_type_2_init(_output_);
    return ;
 }
 
-float Gates_process_ret_3(Gates__ctx_type_2 &_ctx){return _ctx.process_ret_3;}
+float Gates_process_ret_3(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_3;
+}
 
 void Gates_process_ret_4_init(Gates__ctx_type_2 &_output_){
    Gates__ctx_type_2_init(_output_);
    return ;
 }
 
-float Gates_process_ret_4(Gates__ctx_type_2 &_ctx){return _ctx.process_ret_4;}
+float Gates_process_ret_4(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_4;
+}
 
 void Gates_process_ret_5_init(Gates__ctx_type_2 &_output_){
    Gates__ctx_type_2_init(_output_);
    return ;
 }
 
-float Gates_process_ret_5(Gates__ctx_type_2 &_ctx){return _ctx.process_ret_5;}
+float Gates_process_ret_5(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_5;
+}
 
 void Gates_process_ret_6_init(Gates__ctx_type_2 &_output_){
    Gates__ctx_type_2_init(_output_);
    return ;
 }
 
-float Gates_process_ret_6(Gates__ctx_type_2 &_ctx){return _ctx.process_ret_6;}
+float Gates_process_ret_6(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_6;
+}
 
 void Gates_process_ret_7_init(Gates__ctx_type_2 &_output_){
    Gates__ctx_type_2_init(_output_);
    return ;
 }
 
-float Gates_process_ret_7(Gates__ctx_type_2 &_ctx){return _ctx.process_ret_7;}
+float Gates_process_ret_7(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_7;
+}
 
 void Gates_noteOn_init(Gates__ctx_type_2 &_output_){
    Gates__ctx_type_2_init(_output_);
@@ -237,9 +265,7 @@ void Gates_noteOn_init(Gates__ctx_type_2 &_output_){
 }
 
 void Gates_noteOn(Gates__ctx_type_2 &_ctx, int note, int velocity, int channel){
-   uint8_t _cond_17;
-   _cond_17 = (_ctx.channel_in == channel);
-   if(_cond_17){
+   if(_ctx.channel_in == channel){
       Gates_gates_noteOn(_ctx.gates,note,velocity);
    }
 }
@@ -250,9 +276,7 @@ void Gates_noteOff_init(Gates__ctx_type_2 &_output_){
 }
 
 void Gates_noteOff(Gates__ctx_type_2 &_ctx, int note, int channel){
-   uint8_t _cond_18;
-   _cond_18 = (_ctx.channel_in == channel);
-   if(_cond_18){
+   if(_ctx.channel_in == channel){
       Gates_gates_noteOff(_ctx.gates,note);
    }
 }
@@ -263,6 +287,7 @@ void Gates_controlChange_init(Gates__ctx_type_2 &_output_){
 }
 
 void Gates_controlChange(Gates__ctx_type_2 &_ctx, int control, int value, int channel){
+
 }
 
 void Gates_default_init(Gates__ctx_type_2 &_output_){
@@ -271,6 +296,7 @@ void Gates_default_init(Gates__ctx_type_2 &_output_){
 }
 
 void Gates_default(Gates__ctx_type_2 &_ctx){
+
 }
 
 

@@ -94,7 +94,6 @@ end
 
 function this.Delay_pitchToRate(d)
    return (0.0001854 * this.exp((0.0577623 * d))); 
-
 end
 
 function this.Delay__ctx_type_5_init()
@@ -113,7 +112,6 @@ end
 function this.Delay_phasor(_ctx,pitch,reset)
    if this.Delay_change(_ctx._inst6,pitch) then
       _ctx.rate = this.Delay_pitchToRate(pitch); 
-
    end
    if reset then
       _ctx.phase = 0.; 
@@ -141,12 +139,10 @@ function this.Delay_lfo(_ctx,f,gate)
    local rate = (0.0002268 * f); 
    if this.Delay_edge(_ctx._inst9,gate) then
       _ctx.phase = 0.; 
-
    end
    _ctx.phase = (_ctx.phase + rate); 
    if (_ctx.phase > 1.) then
       _ctx.phase = (_ctx.phase + (-1.)); 
-
    end
    return (this.sin((6.2831854 * _ctx.phase)) + (-0.5)); 
 
@@ -231,7 +227,6 @@ function this.Delay_mono_noteOn(_ctx,n)
       _ctx.pre = n; 
       if (_ctx.count < 4) then
          _ctx.count = (_ctx.count + 1); 
-
       end
 
    end
@@ -249,7 +244,6 @@ function this.Delay_mono_noteOff(_ctx,n)
    local i = 0; 
    if (_ctx.count == 0) then
       return _ctx.pre; 
-
    end
    while ((i < 4) and (found == false)) do
       if (this.get(_ctx.notes,i) == n) then
@@ -282,7 +276,6 @@ end
 
 function this.Delay_mono_isGateOn(_ctx)
    return (_ctx.count > 0); 
-
 end
 
 function this.Delay__ctx_type_10_init()
@@ -334,7 +327,6 @@ end
 
 function this.Delay_noteOn(_ctx,note,velocity,channel)
    _ctx.pitch = this.real(this.Delay_mono_noteOn(_ctx.notes,note)); 
-
 end
 
 function this.Delay_noteOff_init()
@@ -343,7 +335,6 @@ end
 
 function this.Delay_noteOff(_ctx,note,channel)
    _ctx.pitch = this.real(this.Delay_mono_noteOff(_ctx.notes,note)); 
-
 end
 
 function this.Delay_controlChange_init()
@@ -353,27 +344,21 @@ end
 function this.Delay_controlChange(_ctx,control,value,channel)
    if (control == 30) then
       _ctx.volume = (value * 0.0078741); 
-
    end
    if (control == 31) then
       _ctx.detune = (value * 0.0078741); 
-
    end
    if (control == 32) then
       _ctx.lfo_rate = (value * 0.0078741); 
-
    end
    if (control == 33) then
       _ctx.lfo_amt = (2. * ((value * 0.0078741) + (-0.5))); 
-
    end
    if (control == 34) then
       _ctx.time = (value * 0.0078741); 
-
    end
    if (control == 35) then
       _ctx.feedback = (value * 0.0078741); 
-
    end
 
 end

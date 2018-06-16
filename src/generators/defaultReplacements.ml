@@ -134,7 +134,6 @@ module Default = struct
             ("log",  "int"),     "int_print";
             ("log",  "uint8_t"), "bool_print";
             ("log",  "string"),  "string_print";
-            ("split", "float"), "float_split";
          ]
 
    let array_init = Replacements.makeArrayInitializations
@@ -182,7 +181,7 @@ module Java = struct
 
    let types = Replacements.makeTypes
          [
-            "real", "double";
+            "real", "float";
             "unit", "void";
             "bool", "boolean";
             "int",  "int";
@@ -190,8 +189,8 @@ module Java = struct
 
    let cast = Replacements.makeCasts
          [
-            ("double", "int"), "float_to_int";
-            ("int", "double"), "int_to_float";
+            ("float", "int"), "float_to_int";
+            ("int", "float"), "int_to_float";
          ]
 
    let op_to_fun = Replacements.makeOperators
@@ -200,13 +199,14 @@ module Java = struct
 
    let op_to_op = Replacements.makeOperators
          [
-            ("<>", "double"),   "!=";
+            ("<>", "float"),   "!=";
             ("<>", "int"),     "!=";
             ("<>", "boolean"), "!=";
          ]
 
    let fun_to_fun = Replacements.makeFunctions
          [
+         (*
             ("abs", "double"),   "Math.abs";
             ("max", "double"),   "Math.max";
             ("min", "double"),   "Math.min";
@@ -220,30 +220,31 @@ module Java = struct
             ("sqrt", "double"),  "Math.sqrt";
             ("pow", "double"),   "Math.pow";
             ("floor", "double"), "Math.floor";
-            ("log",  "double"),  "float_print";
+            *)
+            ("log",  "float"),  "float_print";
             ("log",  "int"),     "int_print";
             ("log",  "uint8_t"), "bool_print";
             ("log",  "string"),  "string_print";
-            ("samplerate", "double"),  "External.samplerate";
+            ("samplerate", "float"),  "External.samplerate";
          ]
 
    let array_init = Replacements.makeArrayInitializations
          [
-            "double",   "float_init_array";
+            "float",   "float_init_array";
             "int",     "int_init_array";
             "uint8_t", "bool_init_array";
          ]
 
    let array_copy = Replacements.makeArrayCopy
          [
-            "double",   "float_copy_array";
+            "float",   "float_copy_array";
             "int",     "int_copy_array";
             "uint8_t", "bool_copy_array";
          ]
 
    let real_string = Replacements.makeRealToString
          [
-            "double", (fun f -> (Float.to_string f) ^ "f")
+            "float", (fun f -> (Float.to_string f) ^ "f")
          ]
 
    (* This is the default selection of replacements *)

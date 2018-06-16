@@ -4,7 +4,7 @@
 
 void Util__ctx_type_0_init(Util__ctx_type_0 &_output_){
    Util__ctx_type_0 _ctx;
-   _ctx.pre = 0;
+   _ctx.pre = false;
    _output_ = _ctx;
    return ;
 }
@@ -102,16 +102,12 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
 }
 
 fix16_t Util_cubic_clipper(fix16_t x){
-   uint8_t _cond_21;
-   _cond_21 = (x <= -0xaaaa /* -0.666667 */);
-   if(_cond_21){
+   if(x <= -0xaaaa /* -0.666667 */){
       return -0xaaaa /* -0.666667 */;
    }
    else
    {
-      uint8_t _cond_20;
-      _cond_20 = (x >= 0xaaaa /* 0.666667 */);
-      if(_cond_20){
+      if(x >= 0xaaaa /* 0.666667 */){
          return 0xaaaa /* 0.666667 */;
       }
       else
@@ -169,7 +165,7 @@ void Saw_ptr2__ctx_type_0_init(Saw_ptr2__ctx_type_0 &_output_){
    Saw_ptr2__ctx_type_0 _ctx;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
-   Util__ctx_type_1_init(_ctx._inst23);
+   Util__ctx_type_1_init(_ctx._inst20);
    Saw_ptr2_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -181,9 +177,7 @@ void Saw_ptr2_process_init(Saw_ptr2__ctx_type_0 &_output_){
 }
 
 fix16_t Saw_ptr2_process(Saw_ptr2__ctx_type_0 &_ctx, fix16_t cv){
-   uint8_t _cond_33;
-   _cond_33 = Util_change(_ctx._inst23,cv);
-   if(_cond_33){
+   if(Util_change(_ctx._inst20,cv)){
       _ctx.rate = Util_cvToRate(cv);
    }
    fix16_t out;
@@ -192,21 +186,17 @@ fix16_t Saw_ptr2_process(Saw_ptr2__ctx_type_0 &_ctx, fix16_t cv){
    fix16_t s2;
    s2 = (s1 + _ctx.rate);
    _ctx.phase = (_ctx.phase + _ctx.rate);
-   uint8_t _cond_36;
-   _cond_36 = (_ctx.phase > 0x10000 /* 1.000000 */);
-   if(_cond_36){ _ctx.phase = (_ctx.phase + -0x10000 /* -1.000000 */); }
-   uint8_t _cond_35;
-   _cond_35 = (_ctx.phase < s1);
-   if(_cond_35){
+   if(_ctx.phase > 0x10000 /* 1.000000 */){
+      _ctx.phase = (_ctx.phase + -0x10000 /* -1.000000 */);
+   }
+   if(_ctx.phase < s1){
       fix16_t d;
       d = fix_div(_ctx.phase,_ctx.rate);
       out = (0x10000 /* 1.000000 */ + fix_mul(d,((- d) + s2)));
    }
    else
    {
-      uint8_t _cond_34;
-      _cond_34 = (_ctx.phase < s2);
-      if(_cond_34){
+      if(_ctx.phase < s2){
          fix16_t d;
          d = fix_div(_ctx.phase,_ctx.rate);
          out = (0x30000 /* 3.000000 */ + fix_mul(d,(-0x40000 /* -4.000000 */ + d + s2)));
@@ -225,6 +215,7 @@ void Saw_ptr2_noteOn_init(Saw_ptr2__ctx_type_0 &_output_){
 }
 
 void Saw_ptr2_noteOn(Saw_ptr2__ctx_type_0 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Saw_ptr2_noteOff_init(Saw_ptr2__ctx_type_0 &_output_){
@@ -233,6 +224,7 @@ void Saw_ptr2_noteOff_init(Saw_ptr2__ctx_type_0 &_output_){
 }
 
 void Saw_ptr2_noteOff(Saw_ptr2__ctx_type_0 &_ctx, int note, int channel){
+
 }
 
 void Saw_ptr2_controlChange_init(Saw_ptr2__ctx_type_0 &_output_){
@@ -241,6 +233,7 @@ void Saw_ptr2_controlChange_init(Saw_ptr2__ctx_type_0 &_output_){
 }
 
 void Saw_ptr2_controlChange(Saw_ptr2__ctx_type_0 &_ctx, int control, int value, int channel){
+
 }
 
 void Saw_ptr2_default_init(Saw_ptr2__ctx_type_0 &_output_){

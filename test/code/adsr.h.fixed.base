@@ -111,8 +111,8 @@ typedef struct Adsr__ctx_type_0 {
    fix16_t scale;
    fix16_t rate;
    fix16_t out;
-   Util__ctx_type_4 _inst31;
-   Util__ctx_type_0 _inst24;
+   Util__ctx_type_4 _inst28;
+   Util__ctx_type_0 _inst21;
 } Adsr__ctx_type_0;
 
 typedef Adsr__ctx_type_0 Adsr_do_type;
@@ -128,7 +128,7 @@ typedef struct Adsr__ctx_type_1 {
    fix16_t knob3;
    fix16_t knob2;
    fix16_t knob1;
-   Adsr__ctx_type_0 _inst33;
+   Adsr__ctx_type_0 _inst30;
 } Adsr__ctx_type_1;
 
 typedef Adsr__ctx_type_1 Adsr_process_type;

@@ -23,7 +23,6 @@ function this.makeArray(size, v) local a = {}; for i=1,size do a[i]=v end return
 function this.wrap_array(a)      return a; end
 function this.Synth2_minFixed()
    return 1.53e-05; 
-
 end
 
 function this.Synth2__ctx_type_1_init()
@@ -100,7 +99,6 @@ end
 
 function this.Synth2_near_zero(x)
    return (this.abs(x) < 0.02); 
-
 end
 
 function this.Synth2__ctx_type_6_init()
@@ -160,7 +158,6 @@ end
 
 function this.Synth2_pitchToRate(d)
    return (0.0001854 * this.exp((0.0577623 * d))); 
-
 end
 
 function this.Synth2_pulse_train(m,phase)
@@ -169,7 +166,6 @@ function this.Synth2_pulse_train(m,phase)
    local tmp1 = 0.; 
    if this.Synth2_near_zero(denominator1) then
       tmp1 = 1.; 
-
    else
 
       tmp1 = this.sin((m * pi_phase)); 
@@ -203,11 +199,9 @@ function this.Synth2_osc(_ctx,pitch,pw,wave)
    local fixed_pitch = 0.; 
    if (wave < 0.6666667) then
       fixed_pitch = pitch; 
-
    else
 
       fixed_pitch = (pitch + 12.); 
-
    end
    if this.Synth2_change(_ctx._inst16,fixed_pitch) then
       _ctx.rate = this.Synth2_pitchToRate(fixed_pitch); 
@@ -220,32 +214,26 @@ function this.Synth2_osc(_ctx,pitch,pw,wave)
    local shift = (_ctx.phase + shift05); 
    if (shift > 1.) then
       shift = (shift + (-1.)); 
-
    end
    local tmp1 = this.Synth2_pulse_train(_ctx.m,_ctx.phase); 
    local tmp2 = this.Synth2_pulse_train(_ctx.m,shift); 
    _ctx.phase = (_ctx.phase + _ctx.rate); 
    if (_ctx.phase > 1.) then
       _ctx.phase = (_ctx.phase + (-1.)); 
-
    end
    _ctx.state_pulse = this.clip(((_ctx.state_pulse * 0.9995) + tmp1 + (- tmp2)),(-1.),1.); 
    _ctx.state_saw = this.clip(((_ctx.state_saw * 0.9995) + (((tmp1 + tmp2 + ((-2.) * _ctx.rate)) / shift05) * 0.5)),(-1.),1.); 
    _ctx.state_triang = this.clip(((_ctx.state_triang * 0.9995) + (2. * _ctx.state_pulse * _ctx.rate)),(-1.),1.); 
    if (wave < 0.3333334) then
       _ctx.output = _ctx.state_pulse; 
-
    else
 
       if (wave < 0.6666667) then
          _ctx.output = (2. * _ctx.state_saw); 
-
       else
 
          _ctx.output = (2. * _ctx.state_triang * (1. + pw)); 
-
       end
-
    end
    _ctx.output = this.Synth2_dcblock(_ctx._inst24,_ctx.output); 
    return this.clip((_ctx.output * 0.25),(-1.),1.); 
@@ -272,24 +260,14 @@ function this.Synth2_svf_step(_ctx,input,g,q,sel)
    _ctx.dband = this.clip(band,(-1.),1.); 
    _ctx.dlow = this.clip(low,(-1.),1.); 
    local output = 0.0; 
-   if (sel == 0) then
-      output = low; 
-   else
-
-      if (sel == 1) then
-         output = high; 
-      else
-
-         if (sel == 2) then
-            output = band; 
-         else
-
-            output = notch; 
-         end
-
-      end
-
-   end
+   switch(sel {case 0:
+      output = low; break;
+   case 1:
+      output = high; break;
+   case 2:
+      output = band; break;
+    default 
+      output = notch; })
    return output; 
 
 end
@@ -313,7 +291,6 @@ function this.Synth2_svf(_ctx,input,fc,q,sel)
    local fix_q = (2. * (1. + (- q))); 
    if this.Synth2_change(_ctx._inst27,fc) then
       _ctx.g = (fc * 0.5); 
-
    end
    local x1 = this.Synth2_svf_step(_ctx.step,input,_ctx.g,fix_q,sel); 
    local x2 = this.Synth2_svf_step(_ctx.step,input,_ctx.g,fix_q,sel); 
@@ -338,15 +315,12 @@ function this.Synth2_lfo(_ctx,f,gate)
    local rate = ((0.0015259 * f) + 1.53e-05); 
    if this.Synth2_edge(_ctx._inst30,gate) then
       _ctx.phase = 0.; 
-
    end
    if this.Synth2_each(_ctx._inst32,4) then
       _ctx.phase = (_ctx.phase + rate); 
-
    end
    if (_ctx.phase > 1.) then
       _ctx.phase = (_ctx.phase + (-1.)); 
-
    end
    return (this.sin((6.2831854 * _ctx.phase)) + 0.5); 
 
@@ -371,7 +345,6 @@ function this.Synth2_mono_noteOn(_ctx,n)
       _ctx.pre = n; 
       if (_ctx.count < 4) then
          _ctx.count = (_ctx.count + 1); 
-
       end
 
    end
@@ -389,7 +362,6 @@ function this.Synth2_mono_noteOff(_ctx,n)
    local i = 0; 
    if (_ctx.count == 0) then
       return _ctx.pre; 
-
    end
    while ((i < 4) and (found == false)) do
       if (this.get(_ctx.notes,i) == n) then
@@ -422,7 +394,6 @@ end
 
 function this.Synth2_mono_isGateOn(_ctx)
    return (_ctx.count > 0); 
-
 end
 
 function this.Synth2__ctx_type_16_init()
@@ -474,7 +445,6 @@ end
 
 function this.Synth2_noteOn(_ctx,note,velocity,channel)
    _ctx.pitch = this.real(this.Synth2_mono_noteOn(_ctx.monoin,note)); 
-
 end
 
 function this.Synth2_noteOff_init()
@@ -483,7 +453,6 @@ end
 
 function this.Synth2_noteOff(_ctx,note,channel)
    _ctx.pitch = this.real(this.Synth2_mono_noteOff(_ctx.monoin,note)); 
-
 end
 
 function this.Synth2_controlChange_init()
@@ -495,31 +464,24 @@ function this.Synth2_controlChange(_ctx,control,value,channel)
    local value_m1_1 = ((value_0_1 * 2.) + (-1.)); 
    if (control == 30) then
       _ctx.volume = value_0_1; 
-
    end
    if (control == 31) then
       _ctx.wave = value_0_1; 
-
    end
    if (control == 32) then
       _ctx.pw = value_0_1; 
-
    end
    if (control == 33) then
       _ctx.lfo_rate = value_0_1; 
-
    end
    if (control == 34) then
       _ctx.lfo_amt = value_m1_1; 
-
    end
    if (control == 35) then
       _ctx.cut = value_0_1; 
-
    end
    if (control == 36) then
       _ctx.res = value_0_1; 
-
    end
 
 end

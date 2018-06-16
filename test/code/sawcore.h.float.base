@@ -140,9 +140,9 @@ typedef struct Sawcore__ctx_type_1 {
    float reset_phase;
    float rate;
    float phase;
-   Sawcore__ctx_type_0 _inst33;
-   Util__ctx_type_0 _inst30;
-   Util__ctx_type_1 _inst28;
+   Sawcore__ctx_type_0 _inst30;
+   Util__ctx_type_0 _inst27;
+   Util__ctx_type_1 _inst25;
 } Sawcore__ctx_type_1;
 
 typedef Sawcore__ctx_type_1 Sawcore_process_type;

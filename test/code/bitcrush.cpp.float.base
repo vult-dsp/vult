@@ -11,9 +11,7 @@ float Bitcrush_factor(float cv){
 float Bitcrush_process(float i, float cv){
    float out;
    out = i;
-   uint8_t _cond_8;
-   _cond_8 = (cv == 0.f);
-   if(_cond_8){
+   if(cv == 0.f){
       out = i;
    }
    else
@@ -28,15 +26,19 @@ float Bitcrush_process(float i, float cv){
 }
 
 void Bitcrush_noteOn(int note, int velocity, int channel){
+
 }
 
 void Bitcrush_noteOff(int note, int channel){
+
 }
 
 void Bitcrush_controlChange(int control, int value, int channel){
+
 }
 
 void Bitcrush_default(){
+
 }
 
 

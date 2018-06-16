@@ -111,7 +111,7 @@ typedef struct Ad__ctx_type_0 {
    float scale;
    float rate;
    float out;
-   Util__ctx_type_0 _inst24;
+   Util__ctx_type_0 _inst21;
 } Ad__ctx_type_0;
 
 typedef Ad__ctx_type_0 Ad_do_type;
@@ -125,7 +125,7 @@ float Ad_do(Ad__ctx_type_0 &_ctx, float gate, float a, float d);
 typedef struct Ad__ctx_type_1 {
    float knob2;
    float knob1;
-   Ad__ctx_type_0 _inst29;
+   Ad__ctx_type_0 _inst26;
 } Ad__ctx_type_1;
 
 typedef Ad__ctx_type_1 Ad_process_type;

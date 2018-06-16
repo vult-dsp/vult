@@ -108,7 +108,7 @@ fix16_t Util_cvTokHz(fix16_t cv);
 typedef struct Saw_ptr2__ctx_type_0 {
    fix16_t rate;
    fix16_t phase;
-   Util__ctx_type_1 _inst23;
+   Util__ctx_type_1 _inst20;
 } Saw_ptr2__ctx_type_0;
 
 typedef Saw_ptr2__ctx_type_0 Saw_ptr2_process_type;

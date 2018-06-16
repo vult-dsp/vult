@@ -130,8 +130,8 @@ typedef struct Svf__ctx_type_1 {
    float z1;
    float inv_den;
    float g;
-   Util__ctx_type_1 _inst31;
-   Util__ctx_type_1 _inst30;
+   Util__ctx_type_1 _inst28;
+   Util__ctx_type_1 _inst27;
    float R;
 } Svf__ctx_type_1;
 

@@ -130,8 +130,8 @@ typedef struct Svf__ctx_type_1 {
    fix16_t z1;
    fix16_t inv_den;
    fix16_t g;
-   Util__ctx_type_1 _inst31;
-   Util__ctx_type_1 _inst30;
+   Util__ctx_type_1 _inst28;
+   Util__ctx_type_1 _inst27;
    fix16_t R;
 } Svf__ctx_type_1;
 

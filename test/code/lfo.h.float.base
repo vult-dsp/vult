@@ -122,9 +122,9 @@ float Lfo_soft(Lfo__ctx_type_0 &_ctx, float x1);
 typedef struct Lfo__ctx_type_1 {
    float rate;
    float phase;
-   Lfo__ctx_type_0 _inst28;
-   Util__ctx_type_0 _inst26;
-   Util__ctx_type_1 _inst24;
+   Lfo__ctx_type_0 _inst25;
+   Util__ctx_type_0 _inst23;
+   Util__ctx_type_1 _inst21;
 } Lfo__ctx_type_1;
 
 typedef Lfo__ctx_type_1 Lfo_process_type;

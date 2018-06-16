@@ -95,14 +95,16 @@ void Synth1_phasor_init(Synth1__ctx_type_5 &_output_){
 }
 
 fix16_t Synth1_phasor(Synth1__ctx_type_5 &_ctx, fix16_t pitch, uint8_t reset){
-   uint8_t _cond_47;
-   _cond_47 = Synth1_change(_ctx._inst6,pitch);
-   if(_cond_47){
+   if(Synth1_change(_ctx._inst6,pitch)){
       _ctx.rate = Synth1_pitchToRate(pitch);
    }
-   if(reset){ _ctx.phase = 0x0 /* 0.000000 */; }
+   if(reset){
+      _ctx.phase = 0x0 /* 0.000000 */;
+   }
    else
-   { _ctx.phase = ((_ctx.phase + _ctx.rate) % 0x10000 /* 1.000000 */); }
+   {
+      _ctx.phase = ((_ctx.phase + _ctx.rate) % 0x10000 /* 1.000000 */);
+   }
    return _ctx.phase;
 }
 
@@ -122,15 +124,11 @@ void Synth1_lfo_init(Synth1__ctx_type_6 &_output_){
 fix16_t Synth1_lfo(Synth1__ctx_type_6 &_ctx, fix16_t f, int gate){
    fix16_t rate;
    rate = fix_mul(0xe /* 0.000227 */,f);
-   uint8_t _cond_48;
-   _cond_48 = Synth1_edge(_ctx._inst9,gate);
-   if(_cond_48){
+   if(Synth1_edge(_ctx._inst9,gate)){
       _ctx.phase = 0x0 /* 0.000000 */;
    }
    _ctx.phase = (_ctx.phase + rate);
-   uint8_t _cond_49;
-   _cond_49 = (_ctx.phase > 0x10000 /* 1.000000 */);
-   if(_cond_49){
+   if(_ctx.phase > 0x10000 /* 1.000000 */){
       _ctx.phase = (_ctx.phase + -0x10000 /* -1.000000 */);
    }
    return (fix_sin(fix_mul(0x6487e /* 6.283185 */,_ctx.phase)) + -0x8000 /* -0.500000 */);
@@ -169,7 +167,7 @@ fix16_t Synth1_process(Synth1__ctx_type_7 &_ctx, fix16_t input){
    fix16_t lfo_val;
    lfo_val = fix_mul(Synth1_lfo(_ctx._inst13,_ctx.lfo_rate,_ctx.gate),_ctx.lfo_amt);
    fix16_t phase1;
-   phase1 = Synth1_phasor(_ctx._inst14,_ctx.pitch,0);
+   phase1 = Synth1_phasor(_ctx._inst14,_ctx.pitch,false);
    fix16_t comp;
    comp = (0x10000 /* 1.000000 */ + (- phase1));
    uint8_t reset;
@@ -180,11 +178,13 @@ fix16_t Synth1_process(Synth1__ctx_type_7 &_ctx, fix16_t input){
    fix16_t sine;
    sine = fix_sin(fix_mul(0x6487e /* 6.283185 */,phase2));
    fix16_t gate_value;
-   uint8_t _cond_50;
-   _cond_50 = (_ctx.gate > 0);
-   if(_cond_50){ gate_value = 0x10000 /* 1.000000 */; }
+   if(_ctx.gate > 0){
+      gate_value = 0x10000 /* 1.000000 */;
+   }
    else
-   { gate_value = 0x0 /* 0.000000 */; }
+   {
+      gate_value = 0x0 /* 0.000000 */;
+   }
    return fix_mul(fix_mul(fix_mul(Synth1_smooth(_ctx._inst17,_ctx.volume),sine),comp),Synth1_smooth(_ctx._inst18,gate_value));
 }
 
@@ -194,49 +194,43 @@ void Synth1_noteOn_init(Synth1__ctx_type_7 &_output_){
 }
 
 void Synth1_noteOn(Synth1__ctx_type_7 &_ctx, int note, int velocity, int channel){
-   uint8_t _cond_54;
-   _cond_54 = (_ctx.count == 0);
-   if(_cond_54){
-      _ctx.n1 = note;
-      _ctx.pitch = int_to_fix(note);
-   }
-   else
-   {
-      uint8_t _cond_53;
-      _cond_53 = (_ctx.count == 1);
-      if(_cond_53){
-         _ctx.n2 = note;
-         _ctx.pitch = int_to_fix(note);
-      }
-      else
-      {
-         uint8_t _cond_52;
-         _cond_52 = (_ctx.count == 2);
-         if(_cond_52){
+   switch(_ctx.count) {
+      case 0:
+         {
+            _ctx.n1 = note;
+            _ctx.pitch = int_to_fix(note);
+         }
+      break;
+      case 1:
+         {
+            _ctx.n2 = note;
+            _ctx.pitch = int_to_fix(note);
+         }
+      break;
+      case 2:
+         {
             _ctx.n3 = note;
             _ctx.pitch = int_to_fix(note);
          }
-         else
+      break;
+      case 3:
          {
-            uint8_t _cond_51;
-            _cond_51 = (_ctx.count == 3);
-            if(_cond_51){
-               _ctx.n4 = note;
-               _ctx.pitch = int_to_fix(note);
-            }
+            _ctx.n4 = note;
+            _ctx.pitch = int_to_fix(note);
          }
-      }
+      break;
+    
    }
-   uint8_t _cond_55;
-   _cond_55 = (_ctx.count <= 4);
-   if(_cond_55){
+   if(_ctx.count <= 4){
       _ctx.count = (_ctx.count + 1);
    }
-   uint8_t _cond_56;
-   _cond_56 = (_ctx.count > 0);
-   if(_cond_56){ _ctx.gate = 1; }
+   if(_ctx.count > 0){
+      _ctx.gate = 1;
+   }
    else
-   { _ctx.gate = 0; }
+   {
+      _ctx.gate = 0;
+   }
 }
 
 void Synth1_noteOff_init(Synth1__ctx_type_7 &_output_){
@@ -246,10 +240,8 @@ void Synth1_noteOff_init(Synth1__ctx_type_7 &_output_){
 
 void Synth1_noteOff(Synth1__ctx_type_7 &_ctx, int note, int channel){
    uint8_t found;
-   found = 0;
-   uint8_t _cond_62;
-   _cond_62 = (note == _ctx.n1);
-   if(_cond_62){
+   found = false;
+   if(note == _ctx.n1){
       int _tmp_57_0;
       _tmp_57_0 = _ctx.n2;
       int _tmp_57_1;
@@ -259,67 +251,53 @@ void Synth1_noteOff(Synth1__ctx_type_7 &_ctx, int note, int channel){
       _ctx.n1 = _tmp_57_0;
       _ctx.n2 = _tmp_57_1;
       _ctx.n3 = _tmp_57_2;
-      found = 1;
+      found = true;
    }
    else
    {
-      uint8_t _cond_61;
-      _cond_61 = (note == _ctx.n2);
-      if(_cond_61){
+      if(note == _ctx.n2){
          int _tmp_58_0;
          _tmp_58_0 = _ctx.n3;
          int _tmp_58_1;
          _tmp_58_1 = _ctx.n4;
          _ctx.n2 = _tmp_58_0;
          _ctx.n3 = _tmp_58_1;
-         found = 1;
+         found = true;
       }
       else
       {
-         uint8_t _cond_60;
-         _cond_60 = (note == _ctx.n3);
-         if(_cond_60){
+         if(note == _ctx.n3){
             _ctx.n3 = _ctx.n4;
-            found = 1;
+            found = true;
          }
          else
          {
-            uint8_t _cond_59;
-            _cond_59 = (note == _ctx.n4);
-            if(_cond_59){
-               found = 1;
+            if(note == _ctx.n4){
+               found = true;
             }
          }
       }
    }
-   uint8_t _cond_63;
-   _cond_63 = (found && (_ctx.count > 0));
-   if(_cond_63){
+   if(found && (_ctx.count > 0)){
       _ctx.count = (_ctx.count + (-1));
    }
-   uint8_t _cond_68;
-   _cond_68 = (_ctx.count > 0);
-   if(_cond_68){ _ctx.gate = 1; }
+   if(_ctx.count > 0){
+      _ctx.gate = 1;
+   }
    else
-   { _ctx.gate = 0; }
-   uint8_t _cond_64;
-   _cond_64 = (_ctx.count == 1);
-   if(_cond_64){
+   {
+      _ctx.gate = 0;
+   }
+   if(_ctx.count == 1){
       _ctx.pitch = int_to_fix(_ctx.n1);
    }
-   uint8_t _cond_65;
-   _cond_65 = (_ctx.count == 2);
-   if(_cond_65){
+   if(_ctx.count == 2){
       _ctx.pitch = int_to_fix(_ctx.n2);
    }
-   uint8_t _cond_66;
-   _cond_66 = (_ctx.count == 3);
-   if(_cond_66){
+   if(_ctx.count == 3){
       _ctx.pitch = int_to_fix(_ctx.n3);
    }
-   uint8_t _cond_67;
-   _cond_67 = (_ctx.count == 4);
-   if(_cond_67){
+   if(_ctx.count == 4){
       _ctx.pitch = int_to_fix(_ctx.n4);
    }
 }
@@ -330,24 +308,16 @@ void Synth1_controlChange_init(Synth1__ctx_type_7 &_output_){
 }
 
 void Synth1_controlChange(Synth1__ctx_type_7 &_ctx, int control, fix16_t value, int channel){
-   uint8_t _cond_69;
-   _cond_69 = (control == 30);
-   if(_cond_69){
+   if(control == 30){
       _ctx.volume = fix_mul(value,0x204 /* 0.007874 */);
    }
-   uint8_t _cond_70;
-   _cond_70 = (control == 31);
-   if(_cond_70){
+   if(control == 31){
       _ctx.detune = fix_mul(value,0x204 /* 0.007874 */);
    }
-   uint8_t _cond_71;
-   _cond_71 = (control == 32);
-   if(_cond_71){
+   if(control == 32){
       _ctx.lfo_rate = fix_mul(value,0x204 /* 0.007874 */);
    }
-   uint8_t _cond_72;
-   _cond_72 = (control == 33);
-   if(_cond_72){
+   if(control == 33){
       _ctx.lfo_amt = ((fix_mul(value,0x204 /* 0.007874 */) + -0x8000 /* -0.500000 */) << 1);
    }
 }

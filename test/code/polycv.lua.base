@@ -59,7 +59,6 @@ end
 
 function this.Util_map(x,x0,x1,y0,y1)
    return ((((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))) + y0); 
-
 end
 
 function this.Util__ctx_type_3_init()
@@ -120,20 +119,15 @@ end
 function this.Util_cubic_clipper(x)
    if (x <= (-0.6666666)) then
       return (-0.6666666); 
-
    else
 
       if (x >= 0.6666667) then
          return 0.6666667; 
-
       else
 
          return (x + ((-0.3333333) * x * x * x)); 
-
       end
-
    end
-
 end
 
 local Util_pitchToRate_1024_c0 = {0.1898417,0.1913259,0.1986886,0.2194246,0.2656772,0.3564378,0.5206507,0.8015597,1.2627581,1.9965621,3.135544,4.8683456,7.4612795,11.2877251,16.8680071,24.9233293,36.4485185,52.8098903,75.8766039,108.1965793,153.2316185,215.6710565,301.8494285,420.3017178,582.500346,803.8319419,1104.890093,1513.1840318,2065.3942521,2810.3465753,3812.9290693,5159.2451728,6963.3862256}; 
@@ -156,7 +150,6 @@ end
 
 function this.Util_cvToPitch(cv)
    return ((cv * 120.) + 24.); 
-
 end
 
 local Util_cvToRate_1024_c0 = {0.7593668,0.7628769,0.7797366,0.8256516,0.9246484,1.1123985,1.4406875,1.9833925,2.8444342,4.1683106,6.1539936,9.073195,13.2942978,19.3136143,27.7961018,39.6282634,55.9867165,78.4268778,108.9974326,150.3878036,206.1177981,280.7810906,380.3573327,512.6116485,687.6052678,918.3473603,1221.6260803,1619.0668426,2138.4784521,2815.5635571,3696.0898222,4838.643251,6318.1165156}; 
@@ -179,7 +172,6 @@ end
 
 function this.Util_pitchToCv(pitch)
    return (0.0083334 * ((-24.) + pitch)); 
-
 end
 
 local Util_cvToperiod_c0 = {674.2460348,671.5538378,662.7617819,646.759522,623.7994278,594.871802,561.2982769,524.4769422,485.7313693,446.2293824,406.9474404,368.6637744,331.9686831,297.2841558,264.8876665,234.9368568,207.4931244,182.5430159,160.0169068,139.8048318,121.7695566,105.757117,91.6051156,79.1490884,68.227249,58.6838946,50.3717336,43.153355,36.902033,31.5020248,26.8484943,22.8471657,19.4137945}; 
@@ -202,7 +194,6 @@ end
 
 function this.Polycv_velToCV(vel)
    return (this.real(vel) * 0.0078741); 
-
 end
 
 function this.Polycv_velToGate(vel)
@@ -550,15 +541,11 @@ function this.Polycv_noteOn(_ctx,note,velocity,channel)
    if (_ctx.channel_in == channel) then
       if (velocity > 0) then
          this.Polycv_poly_noteOn(_ctx.poly,note,velocity);
-
       else
 
          this.Polycv_poly_noteOff(_ctx.poly,note);
-
       end
-
    end
-
 end
 
 function this.Polycv_noteOff_init()
@@ -568,9 +555,7 @@ end
 function this.Polycv_noteOff(_ctx,note,channel)
    if (_ctx.channel_in == channel) then
       this.Polycv_poly_noteOff(_ctx.poly,note);
-
    end
-
 end
 
 function this.Polycv_controlChange_init()
@@ -578,7 +563,7 @@ function this.Polycv_controlChange_init()
 end
 
 function this.Polycv_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Polycv_default_init()
@@ -586,7 +571,7 @@ function this.Polycv_default_init()
 end
 
 function this.Polycv_default(_ctx)
-
+   ;
 end
 
 

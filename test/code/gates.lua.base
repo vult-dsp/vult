@@ -23,7 +23,6 @@ function this.makeArray(size, v) local a = {}; for i=1,size do a[i]=v end return
 function this.wrap_array(a)      return a; end
 function this.Gates_velToCV(vel)
    return (this.real(vel) * 0.0078741); 
-
 end
 
 function this.Gates__ctx_type_1_init()
@@ -51,7 +50,6 @@ function this.Gates_gates_noteOn(_ctx,note,velocity)
       this.set(_ctx.vel,n,velocity);
 
    end
-
 end
 
 function this.Gates_gates_noteOff_init()
@@ -64,7 +62,6 @@ function this.Gates_gates_noteOff(_ctx,note)
       this.set(_ctx.vel,n,0);
 
    end
-
 end
 
 function this.Gates_gates_state_init()
@@ -262,9 +259,7 @@ end
 function this.Gates_noteOn(_ctx,note,velocity,channel)
    if (_ctx.channel_in == channel) then
       this.Gates_gates_noteOn(_ctx.gates,note,velocity);
-
    end
-
 end
 
 function this.Gates_noteOff_init()
@@ -274,9 +269,7 @@ end
 function this.Gates_noteOff(_ctx,note,channel)
    if (_ctx.channel_in == channel) then
       this.Gates_gates_noteOff(_ctx.gates,note);
-
    end
-
 end
 
 function this.Gates_controlChange_init()
@@ -284,7 +277,7 @@ function this.Gates_controlChange_init()
 end
 
 function this.Gates_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Gates_default_init()
@@ -292,7 +285,7 @@ function this.Gates_default_init()
 end
 
 function this.Gates_default(_ctx)
-
+   ;
 end
 
 

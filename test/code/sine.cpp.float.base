@@ -4,7 +4,7 @@
 
 void Util__ctx_type_0_init(Util__ctx_type_0 &_output_){
    Util__ctx_type_0 _ctx;
-   _ctx.pre = 0;
+   _ctx.pre = false;
    _output_ = _ctx;
    return ;
 }
@@ -102,16 +102,12 @@ float Util_average2(Util__ctx_type_5 &_ctx, float x1){
 }
 
 float Util_cubic_clipper(float x){
-   uint8_t _cond_21;
-   _cond_21 = (x <= -0.6666666f);
-   if(_cond_21){
+   if(x <= -0.6666666f){
       return -0.6666666f;
    }
    else
    {
-      uint8_t _cond_20;
-      _cond_20 = (x >= 0.6666667f);
-      if(_cond_20){
+      if(x >= 0.6666667f){
          return 0.6666667f;
       }
       else
@@ -169,8 +165,8 @@ void Phase__ctx_type_0_init(Phase__ctx_type_0 &_output_){
    Phase__ctx_type_0 _ctx;
    _ctx.rate = 0.f;
    _ctx.phase = 0.f;
-   Util__ctx_type_0_init(_ctx._inst25);
-   Util__ctx_type_1_init(_ctx._inst23);
+   Util__ctx_type_0_init(_ctx._inst22);
+   Util__ctx_type_1_init(_ctx._inst20);
    Phase_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -182,19 +178,19 @@ void Phase_process_init(Phase__ctx_type_0 &_output_){
 }
 
 float Phase_process(Phase__ctx_type_0 &_ctx, float cv, float reset){
-   uint8_t _cond_30;
-   _cond_30 = Util_change(_ctx._inst23,cv);
-   if(_cond_30){
+   if(Util_change(_ctx._inst20,cv)){
       _ctx.rate = Util_cvToRate_1024(cv);
    }
-   uint8_t _cond_31;
-   _cond_31 = Util_edge(_ctx._inst25,(reset > 0.5f));
-   if(_cond_31){ _ctx.phase = 0.f; }
+   if(Util_edge(_ctx._inst22,(reset > 0.5f))){
+      _ctx.phase = 0.f;
+   }
    else
-   { _ctx.phase = (_ctx.phase + _ctx.rate); }
-   uint8_t _cond_32;
-   _cond_32 = (_ctx.phase > 1024.f);
-   if(_cond_32){ _ctx.phase = (_ctx.phase + -1024.f); }
+   {
+      _ctx.phase = (_ctx.phase + _ctx.rate);
+   }
+   if(_ctx.phase > 1024.f){
+      _ctx.phase = (_ctx.phase + -1024.f);
+   }
    return (_ctx.phase * 0.0009766f);
 }
 
@@ -204,6 +200,7 @@ void Phase_noteOn_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_noteOn(Phase__ctx_type_0 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Phase_noteOff_init(Phase__ctx_type_0 &_output_){
@@ -212,6 +209,7 @@ void Phase_noteOff_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_noteOff(Phase__ctx_type_0 &_ctx, int note, int channel){
+
 }
 
 void Phase_controlChange_init(Phase__ctx_type_0 &_output_){
@@ -220,6 +218,7 @@ void Phase_controlChange_init(Phase__ctx_type_0 &_output_){
 }
 
 void Phase_controlChange(Phase__ctx_type_0 &_ctx, int control, int value, int channel){
+
 }
 
 void Phase_default_init(Phase__ctx_type_0 &_output_){
@@ -239,9 +238,9 @@ float Tables_nsine(float x){
 
 void Sine__ctx_type_0_init(Sine__ctx_type_0 &_output_){
    Sine__ctx_type_0 _ctx;
-   _ctx.trig = 0;
+   _ctx.trig = false;
    Phase__ctx_type_0_init(_ctx.p);
-   Util__ctx_type_0_init(_ctx._inst35);
+   Util__ctx_type_0_init(_ctx._inst29);
    _output_ = _ctx;
    return ;
 }
@@ -252,17 +251,13 @@ void Sine_process_init(Sine__ctx_type_0 &_output_){
 }
 
 float Sine_process(Sine__ctx_type_0 &_ctx, float cv, float reset){
-   uint8_t _cond_42;
-   _cond_42 = Util_edge(_ctx._inst35,(reset > 0.5f));
-   if(_cond_42){
-      _ctx.trig = 1;
+   if(Util_edge(_ctx._inst29,(reset > 0.5f))){
+      _ctx.trig = true;
    }
    float phase;
    phase = Phase_process(_ctx.p,cv,0.f);
-   uint8_t _cond_43;
-   _cond_43 = ((phase < 1e-07f) && _ctx.trig);
-   if(_cond_43){
-      _ctx.trig = 0;
+   if((phase < 1e-07f) && _ctx.trig){
+      _ctx.trig = false;
       Phase_process(_ctx.p,cv,0.f);
    }
    return Tables_nsine(phase);
@@ -274,6 +269,7 @@ void Sine_noteOn_init(Sine__ctx_type_0 &_output_){
 }
 
 void Sine_noteOn(Sine__ctx_type_0 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Sine_noteOff_init(Sine__ctx_type_0 &_output_){
@@ -282,6 +278,7 @@ void Sine_noteOff_init(Sine__ctx_type_0 &_output_){
 }
 
 void Sine_noteOff(Sine__ctx_type_0 &_ctx, int note, int channel){
+
 }
 
 void Sine_controlChange_init(Sine__ctx_type_0 &_output_){
@@ -290,6 +287,7 @@ void Sine_controlChange_init(Sine__ctx_type_0 &_output_){
 }
 
 void Sine_controlChange(Sine__ctx_type_0 &_ctx, int control, int value, int channel){
+
 }
 
 void Sine_default_init(Sine__ctx_type_0 &_output_){
@@ -298,6 +296,7 @@ void Sine_default_init(Sine__ctx_type_0 &_output_){
 }
 
 void Sine_default(Sine__ctx_type_0 &_ctx){
+
 }
 
 

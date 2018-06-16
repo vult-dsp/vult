@@ -623,6 +623,7 @@ let suite =
       RandomCompileTest.get test_random_code "float";
 
       (*Interpret.get perf_files;*)
+
    ]
 
 

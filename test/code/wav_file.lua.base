@@ -64,7 +64,6 @@ end
 
 function this.Wav_file_osc_wave(_ctx,cv)
    return this.Wav_file_ext_wave(0,this.Wav_file_index(_ctx._inst2)); 
-
 end
 
 function this.Wav_file__ctx_type_4_init()
@@ -80,7 +79,6 @@ end
 
 function this.Wav_file_process(_ctx,cv)
    return this.Wav_file_osc_wave(_ctx._inst4,cv); 
-
 end
 
 function this.Wav_file_noteOn_init()
@@ -88,7 +86,7 @@ function this.Wav_file_noteOn_init()
 end
 
 function this.Wav_file_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Wav_file_noteOff_init()
@@ -96,7 +94,7 @@ function this.Wav_file_noteOff_init()
 end
 
 function this.Wav_file_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Wav_file_controlChange_init()
@@ -104,7 +102,7 @@ function this.Wav_file_controlChange_init()
 end
 
 function this.Wav_file_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Wav_file_default_init()
@@ -112,7 +110,7 @@ function this.Wav_file_default_init()
 end
 
 function this.Wav_file_default(_ctx)
-
+   ;
 end
 
 

@@ -45,17 +45,13 @@ this.Afi_fi_process_ret_0 = function(_ctx) { return _ctx.process_ret_0; }
 this.Afi_fi_process_ret_1_init = function() { return this.Afi_fi__ctx_type_0_init(); }
 this.Afi_fi_process_ret_1 = function(_ctx) { return _ctx.process_ret_1; }
 this.Afi_fi_noteOn_init = function() { return this.Afi_fi__ctx_type_0_init(); }
-this.Afi_fi_noteOn = function(_ctx,note,velocity,channel){
-}
+this.Afi_fi_noteOn = function(_ctx,note,velocity,channel) { ;}
 this.Afi_fi_noteOff_init = function() { return this.Afi_fi__ctx_type_0_init(); }
-this.Afi_fi_noteOff = function(_ctx,note,channel){
-}
+this.Afi_fi_noteOff = function(_ctx,note,channel) { ;}
 this.Afi_fi_controlChange_init = function() { return this.Afi_fi__ctx_type_0_init(); }
-this.Afi_fi_controlChange = function(_ctx,control,value,channel){
-}
+this.Afi_fi_controlChange = function(_ctx,control,value,channel) { ;}
 this.Afi_fi_default_init = function() { return this.Afi_fi__ctx_type_0_init(); }
-this.Afi_fi_default = function(_ctx){
-}
+this.Afi_fi_default = function(_ctx) { ;}
 
       this.context = this.Afi_fi_process_init();
       };

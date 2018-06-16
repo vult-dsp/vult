@@ -59,7 +59,6 @@ end
 
 function this.Util_map(x,x0,x1,y0,y1)
    return ((((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))) + y0); 
-
 end
 
 function this.Util__ctx_type_3_init()
@@ -120,20 +119,15 @@ end
 function this.Util_cubic_clipper(x)
    if (x <= (-0.6666666)) then
       return (-0.6666666); 
-
    else
 
       if (x >= 0.6666667) then
          return 0.6666667; 
-
       else
 
          return (x + ((-0.3333333) * x * x * x)); 
-
       end
-
    end
-
 end
 
 local Util_pitchToRate_1024_c0 = {0.1898417,0.1913259,0.1986886,0.2194246,0.2656772,0.3564378,0.5206507,0.8015597,1.2627581,1.9965621,3.135544,4.8683456,7.4612795,11.2877251,16.8680071,24.9233293,36.4485185,52.8098903,75.8766039,108.1965793,153.2316185,215.6710565,301.8494285,420.3017178,582.500346,803.8319419,1104.890093,1513.1840318,2065.3942521,2810.3465753,3812.9290693,5159.2451728,6963.3862256}; 
@@ -156,7 +150,6 @@ end
 
 function this.Util_cvToPitch(cv)
    return ((cv * 120.) + 24.); 
-
 end
 
 local Util_cvToRate_1024_c0 = {0.7593668,0.7628769,0.7797366,0.8256516,0.9246484,1.1123985,1.4406875,1.9833925,2.8444342,4.1683106,6.1539936,9.073195,13.2942978,19.3136143,27.7961018,39.6282634,55.9867165,78.4268778,108.9974326,150.3878036,206.1177981,280.7810906,380.3573327,512.6116485,687.6052678,918.3473603,1221.6260803,1619.0668426,2138.4784521,2815.5635571,3696.0898222,4838.643251,6318.1165156}; 
@@ -179,7 +172,6 @@ end
 
 function this.Util_pitchToCv(pitch)
    return (0.0083334 * ((-24.) + pitch)); 
-
 end
 
 local Util_cvToperiod_c0 = {674.2460348,671.5538378,662.7617819,646.759522,623.7994278,594.871802,561.2982769,524.4769422,485.7313693,446.2293824,406.9474404,368.6637744,331.9686831,297.2841558,264.8876665,234.9368568,207.4931244,182.5430159,160.0169068,139.8048318,121.7695566,105.757117,91.6051156,79.1490884,68.227249,58.6838946,50.3717336,43.153355,36.902033,31.5020248,26.8484943,22.8471657,19.4137945}; 
@@ -207,9 +199,9 @@ function this.Tricore__ctx_type_0_init()
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
    _ctx.direction = false; 
-   _ctx._inst26 = this.Util__ctx_type_0_init(); 
-   _ctx._inst25 = this.Util__ctx_type_0_init(); 
-   _ctx._inst23 = this.Util__ctx_type_1_init(); 
+   _ctx._inst23 = this.Util__ctx_type_0_init(); 
+   _ctx._inst22 = this.Util__ctx_type_0_init(); 
+   _ctx._inst20 = this.Util__ctx_type_1_init(); 
    this.Tricore_default(_ctx);
    return _ctx; 
 
@@ -221,21 +213,20 @@ end
 
 function this.Tricore_process(_ctx,cv,reset,disable)
    local out = 0.; 
-   if this.Util_change(_ctx._inst23,cv) then
+   if this.Util_change(_ctx._inst20,cv) then
       _ctx.rate = (4. * this.Util_cvToRate_1024(cv)); 
-
    end
    local new_phase = 0.0; 
-   local _if_39 = 0.0; 
+   local _if_158 = 0.0; 
    if _ctx.direction then
-      _if_39 = _ctx.rate; 
+      _if_158 = _ctx.rate; 
    else
 
-      _if_39 = (- _ctx.rate); 
+      _if_158 = (- _ctx.rate); 
    end
-   new_phase = (_ctx.phase + _if_39); 
+   new_phase = (_ctx.phase + _if_158); 
    local bdisable = (disable > 0.5); 
-   if (this.Util_edge(_ctx._inst25,(reset > 0.)) or this.Util_edge(_ctx._inst26,bdisable)) then
+   if (this.Util_edge(_ctx._inst22,(reset > 0.)) or this.Util_edge(_ctx._inst23,bdisable)) then
       _ctx.reset_phase = _ctx.phase; 
       _ctx.reset_state = true; 
       new_phase = 0.; 
@@ -249,9 +240,7 @@ function this.Tricore_process(_ctx,cv,reset,disable)
 
       if (new_phase < (-1024.)) then
          _ctx.direction = true; 
-
       end
-
    end
    if bdisable then
       _ctx.phase = 0.; 
@@ -272,8 +261,8 @@ function this.Tricore_process(_ctx,cv,reset,disable)
 
       else
 
-         local _cond_43 = (_ctx.reset_phase > 10.); 
-         if (not _cond_43) then
+         local _cond_162 = (_ctx.reset_phase > 10.); 
+         if (not _cond_162) then
             _ctx.reset_phase = 0.; 
          end
          _ctx.reset_state = false; 
@@ -293,7 +282,7 @@ function this.Tricore_noteOn_init()
 end
 
 function this.Tricore_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Tricore_noteOff_init()
@@ -301,7 +290,7 @@ function this.Tricore_noteOff_init()
 end
 
 function this.Tricore_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Tricore_controlChange_init()
@@ -309,7 +298,7 @@ function this.Tricore_controlChange_init()
 end
 
 function this.Tricore_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Tricore_default_init()
@@ -318,7 +307,6 @@ end
 
 function this.Tricore_default(_ctx)
    _ctx.rate = 0.7593668; 
-
 end
 
 local Saturate_soft_tanh_table_c0 = {(-4.1979167),(-4.080173),(-3.9627942),(-3.8458326),(-3.7293411),(-3.6133738),(-3.4979851),(-3.3832307),(-3.2691665),(-3.1558494),(-3.0433367),(-2.9316863),(-2.8209565),(-2.7112061),(-2.6024941),(-2.4948797),(-2.3884225),(-2.2831818),(-2.1792172),(-2.076588),(-1.9753533),(-1.875572),(-1.7773024),(-1.6806024),(-1.585529),(-1.4921389),(-1.4004874),(-1.3106291),(-1.2226172),(-1.136504),(-1.0523399),(-0.9701742),(-0.8900543),(-0.8120258),(-0.7361322),(-0.6624152),(-0.5909141),(-0.5216657),(-0.4547045),(-0.3900621),(-0.3277676),(-0.2678468),(-0.2103227),(-0.1552151),(-0.1025404),(-0.0523116),(-0.0045381),0.0407742,0.0836234,0.1240111,0.1619432,0.1974293,0.230483,0.2611223,0.2893692,0.3152498,0.3387943,0.3600374,0.3790175,0.3957776,0.4103645,0.422829,0.433226,0.4416141,0.4480557,0.4526167,0.4553666,0.4563781,0.4557268,0.4534916,0.4497538,0.4445971,0.4381076,0.4303731,0.4214831,0.4115287,0.4006016,0.3887945,0.3762006,0.3629128,0.349024,0.3346264,0.3198112,0.3046682,0.2892855,0.2737493,0.2581432,0.2425481,0.2270419,0.2116991,0.1965904,0.1817826,0.1673379,0.1533144,0.1397651,0.126738,0.114276,0.1024167,0.0911919,0.080628,0.0707457,0.0615599,0.0530798,0.0453088,0.0382445,0.0318792,0.0261994,0.0211865,0.0168166,0.0130609,0.009886,0.007254,0.005123,0.0034471,0.0021773,0.0012613,0.0006443,0.0002692,7.71e-05,7.8e-06,-0.,(-7.7e-06),(-7.7e-05),(-0.0002691),(-0.0006442),(-0.0012612),(-0.0021772),(-0.003447),(-0.0051229),(-0.0072539),(-0.0098859),(-0.0130608),(-0.0168165),(-0.0211864),(-0.0261993),(-0.0318791),(-0.0382444),(-0.0453087),(-0.0530797),(-0.0615598),(-0.0707456),(-0.0806279),(-0.0911918),(-0.1024166),(-0.1142759),(-0.1267379),(-0.139765),(-0.1533143),(-0.1673378),(-0.1817825),(-0.1965903),(-0.211699),(-0.2270418),(-0.242548),(-0.2581431),(-0.2737492),(-0.2892854),(-0.3046681),(-0.3198111),(-0.3346263),(-0.3490239),(-0.3629127),(-0.3762005),(-0.3887944),(-0.4006015),(-0.4115286),(-0.421483),(-0.430373),(-0.4381075),(-0.444597),(-0.4497537),(-0.4534915),(-0.4557267),(-0.456378),(-0.4553665),(-0.4526166),(-0.4480556),(-0.441614),(-0.4332259),(-0.4228289),(-0.4103644),(-0.3957775),(-0.3790174),(-0.3600373),(-0.3387942),(-0.3152497),(-0.2893691),(-0.2611222),(-0.2304829),(-0.1974292),(-0.1619431),(-0.124011),(-0.0836233),(-0.0407741),0.0045382,0.0523117,0.1025405,0.1552152,0.2103228,0.2678469,0.3277677,0.3900622,0.4547046,0.5216658,0.5909142,0.6624153,0.7361323,0.8120259,0.8900544,0.9701743,1.05234,1.1365041,1.2226173,1.3106292,1.4004875,1.492139,1.5855291,1.6806025,1.7773025,1.8755721,1.9753534,2.0765881,2.1792173,2.2831819,2.3884226,2.4948798,2.6024942,2.7112062,2.8209566,2.9316864,3.0433368,3.1558495,3.2691666,3.3832308,3.4979852,3.6133739,3.7293412,3.8458327,3.9627943,4.0801731,4.1979168,4.3159744}; 
@@ -332,23 +320,22 @@ end
 
 function this.Saturate_soft_process(x)
    return this.Saturate_soft_tanh_table(x); 
-
 end
 
 function this.Saturate_soft_noteOn(note,velocity,channel)
-
+   ;
 end
 
 function this.Saturate_soft_noteOff(note,channel)
-
+   ;
 end
 
 function this.Saturate_soft_controlChange(control,value,channel)
-
+   ;
 end
 
 function this.Saturate_soft_default()
-
+   ;
 end
 
 local Svf_calc_g_c0 = {0.0023298,0.0023299,0.0023305,0.0023319,0.0023345,0.0023388,0.0023454,0.0023547,0.0023674,0.0023844,0.0024063,0.0024343,0.0024691,0.0025121,0.0025644,0.0026275,0.0027029,0.0027922,0.0028973,0.0030203,0.0031634,0.003329,0.0035199,0.0037389,0.0039893,0.0042746,0.0045986,0.0049655,0.0053797,0.0058464,0.0063707,0.0069586,0.0076164,0.008351,0.0091698,0.0100809,0.0110932,0.012216,0.0134597,0.0148355,0.0163553,0.0180322,0.0198803,0.0219148,0.0241521,0.0266101,0.0293079,0.0322662,0.0355074,0.0390557,0.042937,0.0471796,0.0518139,0.0568725,0.0623909,0.0684072,0.0749628,0.0821021,0.0898732,0.0983282,0.1075233,0.1175193,0.1283819,0.1401825,0.1529982,0.1669129,0.1820174,0.1984106,0.2161998,0.2355022,0.2564455,0.279169,0.3038253,0.3305814,0.359621,0.3911457,0.425378,0.4625636,0.5029746,0.5469131,0.5947151,0.6467559,0.7034553,0.7652847,0.8327749,0.9065253,0.9872156,1.0756185,1.1726159,1.2792176,1.3965844,1.5260556,1.6691821,1.8277671,2.0039155,2.2000944,2.4192078,2.6646889,2.9406147,3.2518495,3.6042257,4.0047718,4.4620034,4.9862963,5.5903689,6.2899103,7.1044061,8.0582333,9.1821272,10.515167,12.1074948,14.0240863,16.3500498,19.1981826,22.7199238,27.1215061,32.6882462,39.821863,49.0992003,61.3671398,77.9007262,100.6758491,132.8585016,179.724089,250.4813468,362.1346267,548.3402911,881.8452138,1539.1806237}; 
@@ -366,8 +353,8 @@ function this.Svf__ctx_type_1_init()
    _ctx.z1 = 0.; 
    _ctx.inv_den = 0.; 
    _ctx.g = 0.; 
-   _ctx._inst54 = this.Util__ctx_type_1_init(); 
-   _ctx._inst53 = this.Util__ctx_type_1_init(); 
+   _ctx._inst44 = this.Util__ctx_type_1_init(); 
+   _ctx._inst43 = this.Util__ctx_type_1_init(); 
    _ctx.R = 0.; 
    this.Svf_default(_ctx);
    return _ctx; 
@@ -380,7 +367,7 @@ end
 
 function this.Svf_process(_ctx,x,cv,q,sel)
    q = (q + 0.5); 
-   if (this.Util_change(_ctx._inst53,cv) or this.Util_change(_ctx._inst54,q)) then
+   if (this.Util_change(_ctx._inst43,cv) or this.Util_change(_ctx._inst44,q)) then
       _ctx.g = this.Svf_calc_g(cv); 
       _ctx.R = (1. / (2. * (q + 1e-07))); 
       _ctx.inv_den = (1. / (1. + (2. * _ctx.R * _ctx.g) + (_ctx.g * _ctx.g))); 
@@ -393,24 +380,14 @@ function this.Svf_process(_ctx,x,cv,q,sel)
    _ctx.z1 = ((_ctx.g * high) + band); 
    _ctx.z2 = ((_ctx.g * band) + low); 
    local output = 0.0; 
-   if (sel == 0) then
-      output = low; 
-   else
-
-      if (sel == 1) then
-         output = high; 
-      else
-
-         if (sel == 2) then
-            output = band; 
-         else
-
-            output = notch; 
-         end
-
-      end
-
-   end
+   switch(sel {case 0:
+      output = low; break;
+   case 1:
+      output = high; break;
+   case 2:
+      output = band; break;
+    default 
+      output = notch; })
    return this.Saturate_soft_process(output); 
 
 end
@@ -420,7 +397,7 @@ function this.Svf_noteOn_init()
 end
 
 function this.Svf_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Svf_noteOff_init()
@@ -428,7 +405,7 @@ function this.Svf_noteOff_init()
 end
 
 function this.Svf_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Svf_controlChange_init()
@@ -436,7 +413,7 @@ function this.Svf_controlChange_init()
 end
 
 function this.Svf_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Svf_default_init()
@@ -461,23 +438,22 @@ end
 
 function this.Saturate_process(x)
    return this.Saturate_tanh_table(x); 
-
 end
 
 function this.Saturate_noteOn(note,velocity,channel)
-
+   ;
 end
 
 function this.Saturate_noteOff(note,channel)
-
+   ;
 end
 
 function this.Saturate_controlChange(control,value,channel)
-
+   ;
 end
 
 function this.Saturate_default()
-
+   ;
 end
 
 function this.Lfo__ctx_type_0_init()
@@ -495,12 +471,12 @@ end
 
 function this.Lfo_soft(_ctx,x1)
    local o = ((x1 + _ctx.x2 + _ctx.x3 + _ctx.x4) * 0.25); 
-   local _tmp_81_0 = x1; 
-   local _tmp_81_1 = _ctx.x2; 
-   local _tmp_81_2 = _ctx.x3; 
-   _ctx.x2 = _tmp_81_0; 
-   _ctx.x3 = _tmp_81_1; 
-   _ctx.x4 = _tmp_81_2; 
+   local _tmp_166_0 = x1; 
+   local _tmp_166_1 = _ctx.x2; 
+   local _tmp_166_2 = _ctx.x3; 
+   _ctx.x2 = _tmp_166_0; 
+   _ctx.x3 = _tmp_166_1; 
+   _ctx.x4 = _tmp_166_2; 
    return o; 
 
 end
@@ -509,9 +485,9 @@ function this.Lfo__ctx_type_1_init()
    local _ctx = {}; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst76 = this.Lfo__ctx_type_0_init(); 
-   _ctx._inst74 = this.Util__ctx_type_0_init(); 
-   _ctx._inst72 = this.Util__ctx_type_1_init(); 
+   _ctx._inst62 = this.Lfo__ctx_type_0_init(); 
+   _ctx._inst60 = this.Util__ctx_type_0_init(); 
+   _ctx._inst58 = this.Util__ctx_type_1_init(); 
    return _ctx; 
 
 end
@@ -521,18 +497,16 @@ function this.Lfo_process_init()
 end
 
 function this.Lfo_process(_ctx,cv,shape,reset)
-   if this.Util_change(_ctx._inst72,cv) then
+   if this.Util_change(_ctx._inst58,cv) then
       _ctx.rate = this.Util_cvToRate((cv + (-0.3))); 
-
    end
    _ctx.phase = (_ctx.phase + _ctx.rate); 
    if (_ctx.phase > 2.) then
       _ctx.phase = (_ctx.phase + (-2.)); 
    end
    local breset = (reset > 0.); 
-   if this.Util_edge(_ctx._inst74,breset) then
+   if this.Util_edge(_ctx._inst60,breset) then
       _ctx.phase = 0.; 
-
    end
    local tmp = (_ctx.phase + (-1.)); 
    local o = 0.0; 
@@ -550,11 +524,9 @@ function this.Lfo_process(_ctx,cv,shape,reset)
 
             o = 0.; 
          end
-
       end
-
    end
-   return this.Lfo_soft(_ctx._inst76,o); 
+   return this.Lfo_soft(_ctx._inst62,o); 
 
 end
 
@@ -563,7 +535,7 @@ function this.Lfo_noteOn_init()
 end
 
 function this.Lfo_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Lfo_noteOff_init()
@@ -571,7 +543,7 @@ function this.Lfo_noteOff_init()
 end
 
 function this.Lfo_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Lfo_controlChange_init()
@@ -579,7 +551,7 @@ function this.Lfo_controlChange_init()
 end
 
 function this.Lfo_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Lfo_default_init()
@@ -587,7 +559,7 @@ function this.Lfo_default_init()
 end
 
 function this.Lfo_default(_ctx)
-
+   ;
 end
 
 local Tables_nsine_c0 = {-0.,(-5.9e-05),(-0.0002943),(-0.0008206),(-0.0017482),(-0.0031817),(-0.0052181),(-0.0079453),(-0.0114405),(-0.0157689),(-0.020982),(-0.0271169),(-0.0341943),(-0.0422181),(-0.0511738),(-0.061028),(-0.0717278),(-0.0831993),(-0.0953483),(-0.1080587),(-0.1211932),(-0.1345928),(-0.1480768),(-0.1614433),(-0.1744692),(-0.186911),(-0.1985054),(-0.2089699),(-0.218004),(-0.2252904),(-0.2304958),(-0.2332728),(-0.2332612),(-0.2300896),(-0.2233773),(-0.2127363),(-0.197773),(-0.1780907),(-0.1532916),(-0.122979),(-0.0867602),(-0.0442482),0.0049352,0.0611569,0.1247704,0.1961126,0.2755014,0.3632331,0.4595799,0.5647871,0.6790705,0.8026144,0.9355685,1.0780459,1.230121,1.3918269,1.5631537,1.7440465,1.9344036,2.1340748,2.3428599,2.5605077,2.7867145,3.0211234,3.2633234,3.5128493,3.7691807,4.0317427,4.2999053,4.5729845,4.8502422,5.1308878,5.4140787,5.698922,5.984476,6.2697522,6.5537169,6.8352944,7.1133686,7.3867869,7.6543621,7.9148768,8.167086,8.4097215,8.6414953,8.8611041,9.0672334,9.2585621,9.433767,9.5915276,9.7305311,9.8494774,9.9470842,10.0220922,10.0732703,10.0994211,10.0993863,10.0720517,10.0163531,9.9312811,9.8158869,9.6692872,9.4906693,9.2792966,9.0345129,8.7557476,8.4425203,8.0944449,7.7112342,7.2927034,6.8387746,6.3494795,5.824963,5.2654862,4.6714286,4.0432908,3.3816961,2.6873922,1.9612525,1.2042765,0.4175907,(-0.3975519),(-1.2397716),(-2.1075637),(-2.9992988),(-3.9132254),(-4.8474712),(-5.8000465),(-6.7688468)}; 
@@ -603,8 +575,8 @@ function this.Phase__ctx_type_0_init()
    local _ctx = {}; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst92 = this.Util__ctx_type_0_init(); 
-   _ctx._inst90 = this.Util__ctx_type_1_init(); 
+   _ctx._inst71 = this.Util__ctx_type_0_init(); 
+   _ctx._inst69 = this.Util__ctx_type_1_init(); 
    this.Phase_default(_ctx);
    return _ctx; 
 
@@ -615,11 +587,10 @@ function this.Phase_process_init()
 end
 
 function this.Phase_process(_ctx,cv,reset)
-   if this.Util_change(_ctx._inst90,cv) then
+   if this.Util_change(_ctx._inst69,cv) then
       _ctx.rate = this.Util_cvToRate_1024(cv); 
-
    end
-   if this.Util_edge(_ctx._inst92,(reset > 0.5)) then
+   if this.Util_edge(_ctx._inst71,(reset > 0.5)) then
       _ctx.phase = 0.; 
    else
 
@@ -637,7 +608,7 @@ function this.Phase_noteOn_init()
 end
 
 function this.Phase_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Phase_noteOff_init()
@@ -645,7 +616,7 @@ function this.Phase_noteOff_init()
 end
 
 function this.Phase_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Phase_controlChange_init()
@@ -653,7 +624,7 @@ function this.Phase_controlChange_init()
 end
 
 function this.Phase_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Phase_default_init()
@@ -662,14 +633,13 @@ end
 
 function this.Phase_default(_ctx)
    _ctx.rate = 0.7593668; 
-
 end
 
 function this.Blit__ctx_type_0_init()
    local _ctx = {}; 
    _ctx.scale = 0.; 
    _ctx.m = 0; 
-   _ctx._inst101 = this.Util__ctx_type_1_init(); 
+   _ctx._inst77 = this.Util__ctx_type_1_init(); 
    this.Blit_pulse_start(_ctx);
    return _ctx; 
 
@@ -680,7 +650,7 @@ function this.Blit_pulse_train_init()
 end
 
 function this.Blit_pulse_train(_ctx,cv,phase)
-   if this.Util_change(_ctx._inst101,cv) then
+   if this.Util_change(_ctx._inst77,cv) then
       _ctx.m = ((2 * this.int(this.Util_cvToperiod(cv))) + 1); 
       _ctx.scale = (2. * this.Util_cvToperiod(cv)); 
 
@@ -690,7 +660,6 @@ function this.Blit_pulse_train(_ctx,cv,phase)
    local out = 0.; 
    if (denominator <= 1e-07) then
       out = 1.; 
-
    else
 
       local m_phase = ((this.real(_ctx.m) * pi_phase) % 1.); 
@@ -718,11 +687,11 @@ function this.Blit__ctx_type_1_init()
    _ctx.state_pulse = 0.; 
    _ctx.rate = 0.; 
    _ctx.output = 0.; 
-   _ctx._inst117 = this.Util__ctx_type_3_init(); 
-   _ctx._inst114 = this.Blit__ctx_type_0_init(); 
-   _ctx._inst113 = this.Blit__ctx_type_0_init(); 
-   _ctx._inst111 = this.Phase__ctx_type_0_init(); 
-   _ctx._inst109 = this.Util__ctx_type_1_init(); 
+   _ctx._inst93 = this.Util__ctx_type_3_init(); 
+   _ctx._inst90 = this.Blit__ctx_type_0_init(); 
+   _ctx._inst89 = this.Blit__ctx_type_0_init(); 
+   _ctx._inst87 = this.Phase__ctx_type_0_init(); 
+   _ctx._inst85 = this.Util__ctx_type_1_init(); 
    this.Blit_init(_ctx);
    return _ctx; 
 
@@ -736,36 +705,30 @@ function this.Blit_osc_blit(_ctx,cv,pw,wave)
    local fixed_cv = 0.; 
    if (wave < 1.) then
       fixed_cv = cv; 
-
    else
 
       fixed_cv = (cv + (-0.1)); 
-
    end
-   if this.Util_change(_ctx._inst109,fixed_cv) then
+   if this.Util_change(_ctx._inst85,fixed_cv) then
       _ctx.rate = this.Util_cvToRate(fixed_cv); 
-
    end
-   local phase = this.Phase_process(_ctx._inst111,fixed_cv,0.); 
+   local phase = this.Phase_process(_ctx._inst87,fixed_cv,0.); 
    local shift05 = (0.5 + (pw * 0.49)); 
    local shift = (phase + shift05); 
    if (shift > 1.) then
       shift = (shift + (-1.)); 
-
    end
-   local pulse1 = this.Blit_pulse_train(_ctx._inst113,fixed_cv,phase); 
-   local pulse2 = this.Blit_pulse_train(_ctx._inst114,fixed_cv,shift); 
+   local pulse1 = this.Blit_pulse_train(_ctx._inst89,fixed_cv,phase); 
+   local pulse2 = this.Blit_pulse_train(_ctx._inst90,fixed_cv,shift); 
    _ctx.state_pulse = ((_ctx.state_pulse * 0.9995) + pulse1 + (- pulse2)); 
    _ctx.state_saw = ((_ctx.state_saw * 0.9995) + (((pulse1 + pulse2 + ((-2.) * _ctx.rate)) / shift05) * 0.5)); 
    if (wave < 1.) then
       _ctx.output = _ctx.state_pulse; 
-
    else
 
       _ctx.output = (2. * _ctx.state_saw); 
-
    end
-   _ctx.output = this.Util_dcblock(_ctx._inst117,_ctx.output); 
+   _ctx.output = this.Util_dcblock(_ctx._inst93,_ctx.output); 
    return _ctx.output; 
 
 end
@@ -776,12 +739,11 @@ end
 
 function this.Blit_init(_ctx)
    _ctx.rate = 0.0007416; 
-
 end
 
 function this.Blit__ctx_type_2_init()
    local _ctx = {}; 
-   _ctx._inst120 = this.Blit__ctx_type_1_init(); 
+   _ctx._inst96 = this.Blit__ctx_type_1_init(); 
    return _ctx; 
 
 end
@@ -791,8 +753,7 @@ function this.Blit_process_init()
 end
 
 function this.Blit_process(_ctx,cv,pw,wave)
-   return this.Blit_osc_blit(_ctx._inst120,cv,pw,wave); 
-
+   return this.Blit_osc_blit(_ctx._inst96,cv,pw,wave); 
 end
 
 function this.Blit_noteOn_init()
@@ -800,7 +761,7 @@ function this.Blit_noteOn_init()
 end
 
 function this.Blit_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Blit_noteOff_init()
@@ -808,7 +769,7 @@ function this.Blit_noteOff_init()
 end
 
 function this.Blit_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Blit_controlChange_init()
@@ -816,7 +777,7 @@ function this.Blit_controlChange_init()
 end
 
 function this.Blit_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Blit_default_init()
@@ -824,7 +785,7 @@ function this.Blit_default_init()
 end
 
 function this.Blit_default(_ctx)
-
+   ;
 end
 
 function this.Adsr__ctx_type_0_init()
@@ -834,8 +795,8 @@ function this.Adsr__ctx_type_0_init()
    _ctx.scale = 0.; 
    _ctx.rate = 0.; 
    _ctx.out = 0.; 
-   _ctx._inst140 = this.Util__ctx_type_4_init(); 
-   _ctx._inst133 = this.Util__ctx_type_0_init(); 
+   _ctx._inst110 = this.Util__ctx_type_4_init(); 
+   _ctx._inst103 = this.Util__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -851,7 +812,7 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
    _ctx.out = (_ctx.out + ((_ctx.target + (- _ctx.out)) * _ctx.rate * 0.004)); 
    local bgate = (gate > 0.); 
    if (_ctx.state == 0) then
-      if this.Util_edge(_ctx._inst133,bgate) then
+      if this.Util_edge(_ctx._inst103,bgate) then
          _ctx.state = 1; 
          _ctx.scale = (gate * 0.2); 
 
@@ -863,11 +824,9 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
    if (_ctx.state == 1) then
       if (bgate == false) then
          _ctx.state = 0; 
-
       end
       if (_ctx.out > 1024.) then
          _ctx.state = 2; 
-
       end
       _ctx.rate = a_rate; 
       _ctx.target = 1228.8; 
@@ -876,13 +835,12 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
    if (_ctx.state == 2) then
       if (bgate == false) then
          _ctx.state = 0; 
-
       end
       _ctx.rate = d_rate; 
       _ctx.target = (s * 1024.); 
 
    end
-   return (this.Util_smooth(_ctx._inst140,_ctx.scale) * this.clip((_ctx.out * 0.0009766),0.,1.)); 
+   return (this.Util_smooth(_ctx._inst110,_ctx.scale) * this.clip((_ctx.out * 0.0009766),0.,1.)); 
 
 end
 
@@ -892,7 +850,7 @@ function this.Adsr__ctx_type_1_init()
    _ctx.knob3 = 0.; 
    _ctx.knob2 = 0.; 
    _ctx.knob1 = 0.; 
-   _ctx._inst142 = this.Adsr__ctx_type_0_init(); 
+   _ctx._inst112 = this.Adsr__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -902,8 +860,7 @@ function this.Adsr_process_init()
 end
 
 function this.Adsr_process(_ctx,gate)
-   return this.Adsr_do(_ctx._inst142,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4); 
-
+   return this.Adsr_do(_ctx._inst112,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4); 
 end
 
 function this.Adsr_noteOn_init()
@@ -911,7 +868,7 @@ function this.Adsr_noteOn_init()
 end
 
 function this.Adsr_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Adsr_noteOff_init()
@@ -919,7 +876,7 @@ function this.Adsr_noteOff_init()
 end
 
 function this.Adsr_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Adsr_controlChange_init()
@@ -929,19 +886,15 @@ end
 function this.Adsr_controlChange(_ctx,control,value,channel)
    if (control == 1) then
       _ctx.knob1 = (this.real(value) * 0.0078741); 
-
    end
    if (control == 2) then
       _ctx.knob2 = (this.real(value) * 0.0078741); 
-
    end
    if (control == 3) then
       _ctx.knob3 = (this.real(value) * 0.0078741); 
-
    end
    if (control == 4) then
       _ctx.knob4 = (this.real(value) * 0.0078741); 
-
    end
 
 end
@@ -981,13 +934,13 @@ function this.Voice_4__ctx_type_0_init()
    _ctx.flt_cut = 0.; 
    _ctx.decay = 0.; 
    _ctx.attack = 0.; 
-   _ctx._inst169 = this.Adsr__ctx_type_0_init(); 
-   _ctx._inst168 = this.Svf__ctx_type_1_init(); 
-   _ctx._inst167 = this.Tricore__ctx_type_0_init(); 
-   _ctx._inst166 = this.Blit__ctx_type_2_init(); 
-   _ctx._inst165 = this.Blit__ctx_type_2_init(); 
-   _ctx._inst164 = this.Blit__ctx_type_2_init(); 
-   _ctx._inst163 = this.Lfo__ctx_type_1_init(); 
+   _ctx._inst128 = this.Adsr__ctx_type_0_init(); 
+   _ctx._inst127 = this.Svf__ctx_type_1_init(); 
+   _ctx._inst126 = this.Tricore__ctx_type_0_init(); 
+   _ctx._inst125 = this.Blit__ctx_type_2_init(); 
+   _ctx._inst124 = this.Blit__ctx_type_2_init(); 
+   _ctx._inst123 = this.Blit__ctx_type_2_init(); 
+   _ctx._inst122 = this.Lfo__ctx_type_1_init(); 
    return _ctx; 
 
 end
@@ -997,17 +950,17 @@ function this.Voice_4_process_init()
 end
 
 function this.Voice_4_process(_ctx,cv,vel,gate)
-   local lfo = this.Lfo_process(_ctx._inst163,_ctx.lfo_rate,_ctx.lfo_shape,(gate * _ctx.lfo_reset)); 
+   local lfo = this.Lfo_process(_ctx._inst122,_ctx.lfo_rate,_ctx.lfo_shape,(gate * _ctx.lfo_reset)); 
    local mod_pw = (_ctx.lfo_pw * lfo); 
    local mod_cv = (_ctx.lfo_cv * lfo); 
    local mod_flt = (_ctx.lfo_flt * lfo); 
-   local o1 = this.Blit_process(_ctx._inst164,(cv + 0.0001 + mod_cv),(_ctx.pw1 + mod_pw),0.); 
-   local o2 = this.Blit_process(_ctx._inst165,(cv + 0.0002 + mod_cv),(_ctx.pw2 + mod_pw),1.); 
-   local o3 = this.Blit_process(_ctx._inst166,(cv + _ctx.pw3 + mod_cv),(_ctx.pw1 + mod_pw),0.); 
-   local sub = this.Saturate_process((((5. * _ctx.pw4) + 2.) * this.Tricore_process(_ctx._inst167,(cv + mod_cv),0.,1.))); 
+   local o1 = this.Blit_process(_ctx._inst123,(cv + 0.0001 + mod_cv),(_ctx.pw1 + mod_pw),0.); 
+   local o2 = this.Blit_process(_ctx._inst124,(cv + 0.0002 + mod_cv),(_ctx.pw2 + mod_pw),1.); 
+   local o3 = this.Blit_process(_ctx._inst125,(cv + _ctx.pw3 + mod_cv),(_ctx.pw1 + mod_pw),0.); 
+   local sub = this.Saturate_process((((5. * _ctx.pw4) + 2.) * this.Tricore_process(_ctx._inst126,(cv + mod_cv),0.,1.))); 
    local o = ((_ctx.level1 * o1) + (_ctx.level2 * o2) + (_ctx.level3 * o3) + (_ctx.level4 * sub)); 
-   local f = this.Svf_process(_ctx._inst168,o,(_ctx.flt_cut + mod_flt),_ctx.flt_res,_ctx.flt_shape); 
-   local env = this.Adsr_do(_ctx._inst169,gate,_ctx.attack,_ctx.decay,_ctx.sustain,_ctx.release); 
+   local f = this.Svf_process(_ctx._inst127,o,(_ctx.flt_cut + mod_flt),_ctx.flt_res,_ctx.flt_shape); 
+   local env = this.Adsr_do(_ctx._inst128,gate,_ctx.attack,_ctx.decay,_ctx.sustain,_ctx.release); 
    return (env * f); 
 
 end
@@ -1017,7 +970,7 @@ function this.Voice_4_noteOn_init()
 end
 
 function this.Voice_4_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Voice_4_noteOff_init()
@@ -1025,7 +978,7 @@ function this.Voice_4_noteOff_init()
 end
 
 function this.Voice_4_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Voice_4_controlChange_init()
@@ -1035,55 +988,42 @@ end
 function this.Voice_4_controlChange(_ctx,control,value,channel)
    if (control == 30) then
       _ctx.level1 = (this.real(value) * 0.0078741); 
-
    end
    if (control == 31) then
       _ctx.level2 = (this.real(value) * 0.0078741); 
-
    end
    if (control == 32) then
       _ctx.level3 = (this.real(value) * 0.0078741); 
-
    end
    if (control == 33) then
       _ctx.level4 = (this.real(value) * 0.0078741); 
-
    end
    if (control == 34) then
       _ctx.pw1 = (this.real(value) * 0.0078741); 
-
    end
    if (control == 35) then
       _ctx.pw2 = (this.real(value) * 0.0078741); 
-
    end
    if (control == 36) then
       _ctx.pw3 = (0.0007875 * this.real(value)); 
-
    end
    if (control == 37) then
       _ctx.pw4 = (this.real(value) * 0.0078741); 
-
    end
    if (control == 38) then
       _ctx.lfo_rate = this.Util_map(this.real(value),0.,127.,(-0.4),0.1); 
-
    end
    if (control == 39) then
       _ctx.lfo_shape = (0.0236221 * this.real(value)); 
-
    end
    if (control == 40) then
       _ctx.lfo_pw = this.Util_map(this.real(value),0.,127.,(-1.),1.); 
-
    end
    if (control == 41) then
       _ctx.lfo_cv = this.Util_map(this.real(value),0.,127.,(-0.1),0.1); 
-
    end
    if (control == 42) then
       _ctx.lfo_flt = this.Util_map(this.real(value),0.,127.,(-0.3),0.3); 
-
    end
    if (control == 43) then
       if (value > 0) then
@@ -1092,35 +1032,27 @@ function this.Voice_4_controlChange(_ctx,control,value,channel)
 
          _ctx.lfo_reset = 0.; 
       end
-
    end
    if (control == 44) then
       _ctx.flt_cut = this.Util_map(this.real(value),0.,127.,(-0.2),0.5); 
-
    end
    if (control == 45) then
       _ctx.flt_res = (this.real(value) * 0.0078741); 
-
    end
    if (control == 46) then
       _ctx.flt_shape = ((value * 4) / 127); 
-
    end
    if (control == 47) then
       _ctx.attack = (this.real(value) * 0.0078741); 
-
    end
    if (control == 48) then
       _ctx.decay = (this.real(value) * 0.0078741); 
-
    end
    if (control == 49) then
       _ctx.sustain = (this.real(value) * 0.0078741); 
-
    end
    if (control == 50) then
       _ctx.release = (this.real(value) * 0.0078741); 
-
    end
 
 end
@@ -1130,7 +1062,7 @@ function this.Voice_4_default_init()
 end
 
 function this.Voice_4_default(_ctx)
-
+   ;
 end
 
 

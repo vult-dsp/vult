@@ -77,7 +77,7 @@ function this.Noise_noteOn_init()
 end
 
 function this.Noise_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Noise_noteOff_init()
@@ -85,7 +85,7 @@ function this.Noise_noteOff_init()
 end
 
 function this.Noise_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Noise_controlChange_init()
@@ -93,7 +93,7 @@ function this.Noise_controlChange_init()
 end
 
 function this.Noise_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Noise_default_init()
@@ -101,7 +101,7 @@ function this.Noise_default_init()
 end
 
 function this.Noise_default(_ctx)
-
+   ;
 end
 
 function this.Util__ctx_type_0_init()
@@ -142,7 +142,6 @@ end
 
 function this.Util_map(x,x0,x1,y0,y1)
    return ((((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))) + y0); 
-
 end
 
 function this.Util__ctx_type_3_init()
@@ -203,20 +202,15 @@ end
 function this.Util_cubic_clipper(x)
    if (x <= (-0.6666666)) then
       return (-0.6666666); 
-
    else
 
       if (x >= 0.6666667) then
          return 0.6666667; 
-
       else
 
          return (x + ((-0.3333333) * x * x * x)); 
-
       end
-
    end
-
 end
 
 local Util_pitchToRate_1024_c0 = {0.1898417,0.1913259,0.1986886,0.2194246,0.2656772,0.3564378,0.5206507,0.8015597,1.2627581,1.9965621,3.135544,4.8683456,7.4612795,11.2877251,16.8680071,24.9233293,36.4485185,52.8098903,75.8766039,108.1965793,153.2316185,215.6710565,301.8494285,420.3017178,582.500346,803.8319419,1104.890093,1513.1840318,2065.3942521,2810.3465753,3812.9290693,5159.2451728,6963.3862256}; 
@@ -239,7 +233,6 @@ end
 
 function this.Util_cvToPitch(cv)
    return ((cv * 120.) + 24.); 
-
 end
 
 local Util_cvToRate_1024_c0 = {0.7593668,0.7628769,0.7797366,0.8256516,0.9246484,1.1123985,1.4406875,1.9833925,2.8444342,4.1683106,6.1539936,9.073195,13.2942978,19.3136143,27.7961018,39.6282634,55.9867165,78.4268778,108.9974326,150.3878036,206.1177981,280.7810906,380.3573327,512.6116485,687.6052678,918.3473603,1221.6260803,1619.0668426,2138.4784521,2815.5635571,3696.0898222,4838.643251,6318.1165156}; 
@@ -262,7 +255,6 @@ end
 
 function this.Util_pitchToCv(pitch)
    return (0.0083334 * ((-24.) + pitch)); 
-
 end
 
 local Util_cvToperiod_c0 = {674.2460348,671.5538378,662.7617819,646.759522,623.7994278,594.871802,561.2982769,524.4769422,485.7313693,446.2293824,406.9474404,368.6637744,331.9686831,297.2841558,264.8876665,234.9368568,207.4931244,182.5430159,160.0169068,139.8048318,121.7695566,105.757117,91.6051156,79.1490884,68.227249,58.6838946,50.3717336,43.153355,36.902033,31.5020248,26.8484943,22.8471657,19.4137945}; 
@@ -290,9 +282,9 @@ function this.Tricore__ctx_type_0_init()
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
    _ctx.direction = false; 
-   _ctx._inst34 = this.Util__ctx_type_0_init(); 
-   _ctx._inst33 = this.Util__ctx_type_0_init(); 
-   _ctx._inst31 = this.Util__ctx_type_1_init(); 
+   _ctx._inst30 = this.Util__ctx_type_0_init(); 
+   _ctx._inst29 = this.Util__ctx_type_0_init(); 
+   _ctx._inst27 = this.Util__ctx_type_1_init(); 
    this.Tricore_default(_ctx);
    return _ctx; 
 
@@ -304,21 +296,20 @@ end
 
 function this.Tricore_process(_ctx,cv,reset,disable)
    local out = 0.; 
-   if this.Util_change(_ctx._inst31,cv) then
+   if this.Util_change(_ctx._inst27,cv) then
       _ctx.rate = (4. * this.Util_cvToRate_1024(cv)); 
-
    end
    local new_phase = 0.0; 
-   local _if_47 = 0.0; 
+   local _if_96 = 0.0; 
    if _ctx.direction then
-      _if_47 = _ctx.rate; 
+      _if_96 = _ctx.rate; 
    else
 
-      _if_47 = (- _ctx.rate); 
+      _if_96 = (- _ctx.rate); 
    end
-   new_phase = (_ctx.phase + _if_47); 
+   new_phase = (_ctx.phase + _if_96); 
    local bdisable = (disable > 0.5); 
-   if (this.Util_edge(_ctx._inst33,(reset > 0.)) or this.Util_edge(_ctx._inst34,bdisable)) then
+   if (this.Util_edge(_ctx._inst29,(reset > 0.)) or this.Util_edge(_ctx._inst30,bdisable)) then
       _ctx.reset_phase = _ctx.phase; 
       _ctx.reset_state = true; 
       new_phase = 0.; 
@@ -332,9 +323,7 @@ function this.Tricore_process(_ctx,cv,reset,disable)
 
       if (new_phase < (-1024.)) then
          _ctx.direction = true; 
-
       end
-
    end
    if bdisable then
       _ctx.phase = 0.; 
@@ -355,8 +344,8 @@ function this.Tricore_process(_ctx,cv,reset,disable)
 
       else
 
-         local _cond_51 = (_ctx.reset_phase > 10.); 
-         if (not _cond_51) then
+         local _cond_100 = (_ctx.reset_phase > 10.); 
+         if (not _cond_100) then
             _ctx.reset_phase = 0.; 
          end
          _ctx.reset_state = false; 
@@ -376,7 +365,7 @@ function this.Tricore_noteOn_init()
 end
 
 function this.Tricore_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Tricore_noteOff_init()
@@ -384,7 +373,7 @@ function this.Tricore_noteOff_init()
 end
 
 function this.Tricore_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Tricore_controlChange_init()
@@ -392,7 +381,7 @@ function this.Tricore_controlChange_init()
 end
 
 function this.Tricore_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Tricore_default_init()
@@ -401,13 +390,12 @@ end
 
 function this.Tricore_default(_ctx)
    _ctx.rate = 0.7593668; 
-
 end
 
 function this.Swept__ctx_type_0_init()
    local _ctx = {}; 
    _ctx.out = 0.; 
-   _ctx._inst54 = this.Util__ctx_type_0_init(); 
+   _ctx._inst43 = this.Util__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -420,9 +408,8 @@ function this.Swept_process(_ctx,gate,start,end_,rate)
    local a_rate = (1. / ((100. * rate) + 0.01)); 
    local bgate = (gate > 0.5); 
    _ctx.out = (_ctx.out + (((end_ * 1024.) + (- _ctx.out)) * rate * 0.004)); 
-   if this.Util_edge(_ctx._inst54,bgate) then
+   if this.Util_edge(_ctx._inst43,bgate) then
       _ctx.out = (start * 1024.); 
-
    end
    return (_ctx.out * 0.0009766); 
 
@@ -433,7 +420,7 @@ function this.Swept_noteOn_init()
 end
 
 function this.Swept_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Swept_noteOff_init()
@@ -441,7 +428,7 @@ function this.Swept_noteOff_init()
 end
 
 function this.Swept_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Swept_controlChange_init()
@@ -449,7 +436,7 @@ function this.Swept_controlChange_init()
 end
 
 function this.Swept_controlChange(_ctx,control,value,channel)
-
+   ;
 end
 
 function this.Swept_default_init()
@@ -457,7 +444,7 @@ function this.Swept_default_init()
 end
 
 function this.Swept_default(_ctx)
-
+   ;
 end
 
 local Saturate_tanh_table_c0 = {(-0.9999999),(-1.),(-0.9999999),(-0.9999999),(-1.),(-1.),(-1.),(-1.),(-1.),(-0.9999999),(-1.),(-0.9999999),(-1.),(-1.),(-1.),(-1.),(-0.9999999),(-0.9999999),(-1.),(-1.),(-1.),(-0.9999999),(-1.),(-0.9999999),(-0.9999999),(-0.9999999),(-1.),(-1.),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-1.),(-1.),(-0.9999999),(-1.),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999999),(-0.9999998),(-0.9999998),(-0.9999997),(-0.9999996),(-0.9999995),(-0.9999993),(-0.999999),(-0.9999985),(-0.9999979),(-0.9999971),(-0.9999958),(-0.999994),(-0.9999915),(-0.9999879),(-0.9999828),(-0.9999755),(-0.9999652),(-0.9999506),(-0.99993),(-0.9999008),(-0.9998596),(-0.9998016),(-0.99972),(-0.9996054),(-0.9994448),(-0.9992201),(-0.9989064),(-0.9984693),(-0.9978619),(-0.9970196),(-0.9958548),(-0.9942488),(-0.9920414),(-0.9890177),(-0.9848912),(-0.979283),(-0.971696),(-0.9614848),(-0.9478218),(-0.9296621),(-0.9057134),(-0.8744205),(-0.8339839),(-0.7824421),(-0.7178658),(-0.6387281),(-0.5445268),(-0.4367078),(-0.3198224),(-0.2025515),(-0.0977039),(-0.0197582),0.0211021,0.0266707,0.0132848,0.0017885,-0.,(-0.0017884),(-0.0132847),(-0.0266706),(-0.021102),0.0197583,0.097704,0.2025516,0.3198225,0.4367079,0.5445269,0.6387282,0.7178659,0.7824422,0.833984,0.8744206,0.9057135,0.9296622,0.9478219,0.9614849,0.9716961,0.9792831,0.9848913,0.9890178,0.9920415,0.9942489,0.9958549,0.9970197,0.997862,0.9984694,0.9989065,0.9992202,0.9994449,0.9996055,0.9997201,0.9998017,0.9998597,0.9999009,0.9999301,0.9999507,0.9999653,0.9999756,0.9999829,0.999988,0.9999916,0.9999941,0.9999959,0.9999972,0.999998,0.9999986,0.9999991,0.9999994,0.9999996,0.9999997,0.9999998,0.9999999,0.9999999,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.,1.0000001,1.,1.,1.0000001,1.,1.,1.,1.0000001,1.0000001,1.0000001,1.0000001,1.,1.0000001,1.,1.,1.0000001,1.0000001,1.0000001,1.,1.0000001,1.0000001,1.0000001,1.0000001,1.,1.,1.,1.0000001,1.0000001,1.,1.0000001,1.0000001,1.,1.0000001,1.0000001,1.0000001,1.0000001,1.0000001}; 
@@ -471,23 +458,22 @@ end
 
 function this.Saturate_process(x)
    return this.Saturate_tanh_table(x); 
-
 end
 
 function this.Saturate_noteOn(note,velocity,channel)
-
+   ;
 end
 
 function this.Saturate_noteOff(note,channel)
-
+   ;
 end
 
 function this.Saturate_controlChange(control,value,channel)
-
+   ;
 end
 
 function this.Saturate_default()
-
+   ;
 end
 
 function this.Ahr__ctx_type_0_init()
@@ -499,8 +485,8 @@ function this.Ahr__ctx_type_0_init()
    _ctx.hold_phase = 0.; 
    _ctx.do_ret_1 = 0.; 
    _ctx.do_ret_0 = 0.; 
-   _ctx._inst70 = this.Util__ctx_type_0_init(); 
-   _ctx._inst68 = this.Util__ctx_type_0_init(); 
+   _ctx._inst58 = this.Util__ctx_type_0_init(); 
+   _ctx._inst56 = this.Util__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -515,9 +501,8 @@ function this.Ahr_do(_ctx,gate,a,h,r)
    local hold = 2; 
    local reset = 3; 
    local bgate = (gate > 0.); 
-   if this.Util_edge(_ctx._inst68,bgate) then
+   if this.Util_edge(_ctx._inst56,bgate) then
       _ctx.state = reset; 
-
    end
    local resetting = 0.0; 
    if (_ctx.state == reset) then
@@ -526,18 +511,16 @@ function this.Ahr_do(_ctx,gate,a,h,r)
 
       resetting = 0.; 
    end
-   if this.Util_edge(_ctx._inst70,(_ctx.out > 1024.)) then
+   if this.Util_edge(_ctx._inst58,(_ctx.out > 1024.)) then
       _ctx.hold_phase = 0.; 
       _ctx.state = hold; 
 
    end
    if ((_ctx.out < 10.) and (_ctx.state == reset)) then
       _ctx.state = attack; 
-
    end
    if ((_ctx.hold_phase > 100.) and (_ctx.state == hold)) then
       _ctx.state = release; 
-
    end
    if (_ctx.state == reset) then
       _ctx.rate = 0.9900991; 
@@ -589,7 +572,7 @@ function this.Ahr__ctx_type_1_init()
    _ctx.knob3 = 0.; 
    _ctx.knob2 = 0.; 
    _ctx.knob1 = 0.; 
-   _ctx._inst79 = this.Ahr__ctx_type_0_init(); 
+   _ctx._inst67 = this.Ahr__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -599,9 +582,9 @@ function this.Ahr_process_init()
 end
 
 function this.Ahr_process(_ctx,gate)
-   this.Ahr_do(_ctx._inst79,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
-   _ctx.process_ret_0 = this.Ahr_do_ret_0(_ctx._inst79); 
-   _ctx.process_ret_1 = this.Ahr_do_ret_1(_ctx._inst79); 
+   this.Ahr_do(_ctx._inst67,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
+   _ctx.process_ret_0 = this.Ahr_do_ret_0(_ctx._inst67); 
+   _ctx.process_ret_1 = this.Ahr_do_ret_1(_ctx._inst67); 
    return ; 
 
 end
@@ -627,7 +610,7 @@ function this.Ahr_noteOn_init()
 end
 
 function this.Ahr_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Ahr_noteOff_init()
@@ -635,7 +618,7 @@ function this.Ahr_noteOff_init()
 end
 
 function this.Ahr_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Ahr_controlChange_init()
@@ -645,15 +628,12 @@ end
 function this.Ahr_controlChange(_ctx,control,value,channel)
    if (control == 1) then
       _ctx.knob1 = (this.real(value) * 0.0078741); 
-
    end
    if (control == 2) then
       _ctx.knob2 = (this.real(value) * 0.0078741); 
-
    end
    if (control == 3) then
       _ctx.knob3 = (this.real(value) * 0.0078741); 
-
    end
 
 end
@@ -671,11 +651,11 @@ end
 
 function this.Kick__ctx_type_0_init()
    local _ctx = {}; 
-   _ctx._inst106 = this.Noise__ctx_type_1_init(); 
-   _ctx._inst105 = this.Ahr__ctx_type_0_init(); 
-   _ctx._inst104 = this.Tricore__ctx_type_0_init(); 
-   _ctx._inst103 = this.Swept__ctx_type_0_init(); 
-   _ctx._inst102 = this.Ahr__ctx_type_0_init(); 
+   _ctx._inst80 = this.Noise__ctx_type_1_init(); 
+   _ctx._inst79 = this.Ahr__ctx_type_0_init(); 
+   _ctx._inst78 = this.Tricore__ctx_type_0_init(); 
+   _ctx._inst77 = this.Swept__ctx_type_0_init(); 
+   _ctx._inst76 = this.Ahr__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -687,17 +667,17 @@ end
 function this.Kick_do(_ctx,gate,odecay,pitch,swept,noise)
    local osc_env = 0.0; 
    local env_reset = 0.0; 
-   this.Ahr_do(_ctx._inst102,gate,0.005,(0.1 + odecay),(odecay + 0.01));
-   osc_env = this.Ahr_do_ret_0(_ctx._inst102); 
-   env_reset = this.Ahr_do_ret_1(_ctx._inst102); 
-   local cv = this.Swept_process(_ctx._inst103,(1. + (- env_reset)),(pitch + (swept * 0.4)),pitch,0.1); 
-   local osc = this.Tricore_process(_ctx._inst104,cv,0.,env_reset); 
+   this.Ahr_do(_ctx._inst76,gate,0.005,(0.1 + odecay),(odecay + 0.01));
+   osc_env = this.Ahr_do_ret_0(_ctx._inst76); 
+   env_reset = this.Ahr_do_ret_1(_ctx._inst76); 
+   local cv = this.Swept_process(_ctx._inst77,(1. + (- env_reset)),(pitch + (swept * 0.4)),pitch,0.1); 
+   local osc = this.Tricore_process(_ctx._inst78,cv,0.,env_reset); 
    local osc_sat = this.Saturate_process((1.5 * osc)); 
    local noise_env = 0.0; 
-   this.Ahr_do(_ctx._inst105,gate,0.001,0.01,((noise * 0.01) + 0.001));
-   noise_env = this.Ahr_do_ret_0(_ctx._inst105); 
-   this.Ahr_do_ret_1(_ctx._inst105);
-   local noise_osc = (noise * this.Noise_process(_ctx._inst106,1.) * 0.3333334); 
+   this.Ahr_do(_ctx._inst79,gate,0.001,0.01,((noise * 0.01) + 0.001));
+   noise_env = this.Ahr_do_ret_0(_ctx._inst79); 
+   this.Ahr_do_ret_1(_ctx._inst79);
+   local noise_osc = (noise * this.Noise_process(_ctx._inst80,1.) * 0.3333334); 
    return ((osc_env * osc_sat) + (noise_env * noise_osc)); 
 
 end
@@ -708,7 +688,7 @@ function this.Kick__ctx_type_1_init()
    _ctx.pitch = 0.; 
    _ctx.odecay = 0.; 
    _ctx.noise = 0.; 
-   _ctx._inst108 = this.Kick__ctx_type_0_init(); 
+   _ctx._inst82 = this.Kick__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -718,8 +698,7 @@ function this.Kick_process_init()
 end
 
 function this.Kick_process(_ctx,gate)
-   return this.Kick_do(_ctx._inst108,gate,_ctx.odecay,_ctx.pitch,_ctx.swept,_ctx.noise); 
-
+   return this.Kick_do(_ctx._inst82,gate,_ctx.odecay,_ctx.pitch,_ctx.swept,_ctx.noise); 
 end
 
 function this.Kick_noteOn_init()
@@ -727,7 +706,7 @@ function this.Kick_noteOn_init()
 end
 
 function this.Kick_noteOn(_ctx,note,velocity,channel)
-
+   ;
 end
 
 function this.Kick_noteOff_init()
@@ -735,7 +714,7 @@ function this.Kick_noteOff_init()
 end
 
 function this.Kick_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Kick_controlChange_init()
@@ -745,19 +724,15 @@ end
 function this.Kick_controlChange(_ctx,control,value,channel)
    if (control == 30) then
       _ctx.odecay = (this.real(value) * 0.0078741); 
-
    end
    if (control == 31) then
       _ctx.pitch = this.Util_map(this.real(value),0.,127.,0.,0.1); 
-
    end
    if (control == 32) then
       _ctx.swept = (this.real(value) * 0.0078741); 
-
    end
    if (control == 33) then
       _ctx.noise = (this.real(value) * 0.0078741); 
-
    end
 
 end
@@ -767,7 +742,7 @@ function this.Kick_default_init()
 end
 
 function this.Kick_default(_ctx)
-
+   ;
 end
 
 

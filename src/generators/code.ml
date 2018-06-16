@@ -74,5 +74,6 @@ type cstmt =
    | CSType     of string * (type_descr * string) list
    | CSAlias    of string * type_descr
    | CSExtFunc  of type_descr * string * (arg_type * string) list
+   | CSSwitch   of cexp * (cexp * cstmt) list * cstmt option
    | CSEmpty
 [@@deriving show, eq, ord]

@@ -29,25 +29,24 @@ function this.Log_test_print()
 
 end
 
-function this.Log_process(_ctx,input)
+function this.Log_process(input)
    return input; 
-
 end
 
-function this.Log_noteOn(_ctx,note,velocity,channel)
-
+function this.Log_noteOn(note,velocity,channel)
+   ;
 end
 
-function this.Log_noteOff(_ctx,note,channel)
-
+function this.Log_noteOff(note,channel)
+   ;
 end
 
-function this.Log_controlChange(_ctx,control,value,channel)
-
+function this.Log_controlChange(control,value,channel)
+   ;
 end
 
-function this.Log_default(_ctx)
-
+function this.Log_default()
+   ;
 end
 
 

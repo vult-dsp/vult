@@ -141,9 +141,9 @@ float Rescomb_toneCurve(float tone);
 typedef struct Rescomb__ctx_type_2 {
    float stone;
    float output;
-   Rescomb__ctx_type_0 _inst34;
-   Util__ctx_type_3 _inst33;
-   Util__ctx_type_1 _inst31;
+   Rescomb__ctx_type_0 _inst31;
+   Util__ctx_type_3 _inst30;
+   Util__ctx_type_1 _inst28;
 } Rescomb__ctx_type_2;
 
 typedef Rescomb__ctx_type_2 Rescomb_do_type;
@@ -155,7 +155,7 @@ void Rescomb_do_init(Rescomb__ctx_type_2 &_output_);
 float Rescomb_do(Rescomb__ctx_type_2 &_ctx, float in, float cv, float tone, float res);
 
 typedef struct Rescomb__ctx_type_3 {
-   Rescomb__ctx_type_2 _inst36;
+   Rescomb__ctx_type_2 _inst33;
 } Rescomb__ctx_type_3;
 
 typedef Rescomb__ctx_type_3 Rescomb_process_type;

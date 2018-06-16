@@ -34,7 +34,6 @@ function this.Bitcrush_process(_ctx,i,cv)
    local out = i; 
    if (cv == 0.) then
       out = i; 
-
    else
 
       local b = this.Bitcrush_factor(cv); 
@@ -46,20 +45,20 @@ function this.Bitcrush_process(_ctx,i,cv)
 
 end
 
-function this.Bitcrush_noteOn(_ctx,note,velocity,channel)
-
+function this.Bitcrush_noteOn(note,velocity,channel)
+   ;
 end
 
-function this.Bitcrush_noteOff(_ctx,note,channel)
-
+function this.Bitcrush_noteOff(note,channel)
+   ;
 end
 
-function this.Bitcrush_controlChange(_ctx,control,value,channel)
-
+function this.Bitcrush_controlChange(control,value,channel)
+   ;
 end
 
-function this.Bitcrush_default(_ctx)
-
+function this.Bitcrush_default()
+   ;
 end
 
 

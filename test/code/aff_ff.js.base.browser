@@ -45,17 +45,13 @@ this.Aff_ff_process_ret_0 = function(_ctx) { return _ctx.process_ret_0; }
 this.Aff_ff_process_ret_1_init = function() { return this.Aff_ff__ctx_type_0_init(); }
 this.Aff_ff_process_ret_1 = function(_ctx) { return _ctx.process_ret_1; }
 this.Aff_ff_noteOn_init = function() { return this.Aff_ff__ctx_type_0_init(); }
-this.Aff_ff_noteOn = function(_ctx,note,velocity,channel){
-}
+this.Aff_ff_noteOn = function(_ctx,note,velocity,channel) { ;}
 this.Aff_ff_noteOff_init = function() { return this.Aff_ff__ctx_type_0_init(); }
-this.Aff_ff_noteOff = function(_ctx,note,channel){
-}
+this.Aff_ff_noteOff = function(_ctx,note,channel) { ;}
 this.Aff_ff_controlChange_init = function() { return this.Aff_ff__ctx_type_0_init(); }
-this.Aff_ff_controlChange = function(_ctx,control,value,channel){
-}
+this.Aff_ff_controlChange = function(_ctx,control,value,channel) { ;}
 this.Aff_ff_default_init = function() { return this.Aff_ff__ctx_type_0_init(); }
-this.Aff_ff_default = function(_ctx){
-}
+this.Aff_ff_default = function(_ctx) { ;}
 
            if(this.Aff_ff_process_init)  this.context =  this.Aff_ff_process_init(); else this.context = {};
            if(this.Aff_ff_default)      this.Aff_ff_default(this.context);

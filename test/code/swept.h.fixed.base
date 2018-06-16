@@ -107,7 +107,7 @@ fix16_t Util_cvTokHz(fix16_t cv);
 
 typedef struct Swept__ctx_type_0 {
    fix16_t out;
-   Util__ctx_type_0 _inst23;
+   Util__ctx_type_0 _inst20;
 } Swept__ctx_type_0;
 
 typedef Swept__ctx_type_0 Swept_process_type;

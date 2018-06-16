@@ -609,8 +609,6 @@ let builtin_table =
 
       ["log"], Scope.Function, Typ.Const.a_a (), false;
 
-      ["split"], Scope.Function, Typ.Const.real_tuple_real_real(), false;
-
    ]
 
 let builtin_functions = List.map (fun (a, _, _, _)-> a ) builtin_table |> IdSet.of_list

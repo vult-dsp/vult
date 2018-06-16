@@ -107,7 +107,7 @@ float Util_cvTokHz(float cv);
 
 typedef struct Swept__ctx_type_0 {
    float out;
-   Util__ctx_type_0 _inst23;
+   Util__ctx_type_0 _inst20;
 } Swept__ctx_type_0;
 
 typedef Swept__ctx_type_0 Swept_process_type;

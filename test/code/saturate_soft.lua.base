@@ -30,25 +30,24 @@ function this.Saturate_soft_tanh_table(x)
 
 end
 
-function this.Saturate_soft_process(_ctx,x)
+function this.Saturate_soft_process(x)
    return this.Saturate_soft_tanh_table(x); 
-
 end
 
-function this.Saturate_soft_noteOn(_ctx,note,velocity,channel)
-
+function this.Saturate_soft_noteOn(note,velocity,channel)
+   ;
 end
 
-function this.Saturate_soft_noteOff(_ctx,note,channel)
-
+function this.Saturate_soft_noteOff(note,channel)
+   ;
 end
 
-function this.Saturate_soft_controlChange(_ctx,control,value,channel)
-
+function this.Saturate_soft_controlChange(control,value,channel)
+   ;
 end
 
-function this.Saturate_soft_default(_ctx)
-
+function this.Saturate_soft_default()
+   ;
 end
 
 

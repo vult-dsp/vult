@@ -58,7 +58,6 @@ end
 
 function this.Phasedist_pitchToRate(d)
    return (0.0001854 * this.exp((0.0577623 * d))); 
-
 end
 
 function this.Phasedist__ctx_type_3_init()
@@ -77,7 +76,6 @@ end
 function this.Phasedist_phasor(_ctx,pitch,reset)
    if this.Phasedist_change(_ctx._inst4,pitch) then
       _ctx.rate = this.Phasedist_pitchToRate(pitch); 
-
    end
    if reset then
       _ctx.phase = 0.; 
@@ -124,7 +122,6 @@ end
 
 function this.Phasedist_noteOn(_ctx,note,velocity,channel)
    _ctx.pitch = this.real(note); 
-
 end
 
 function this.Phasedist_noteOff_init()
@@ -132,7 +129,7 @@ function this.Phasedist_noteOff_init()
 end
 
 function this.Phasedist_noteOff(_ctx,note,channel)
-
+   ;
 end
 
 function this.Phasedist_controlChange_init()
@@ -142,11 +139,9 @@ end
 function this.Phasedist_controlChange(_ctx,control,value,channel)
    if (control == 30) then
       _ctx.volume = (this.real(value) * 0.0078741); 
-
    end
    if (control == 31) then
       _ctx.detune = (this.real(value) * 0.0078741); 
-
    end
 
 end

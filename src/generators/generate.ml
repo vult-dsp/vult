@@ -182,34 +182,34 @@ let rec getMainModule (parser_results:parser_results list) : string =
 
 (* Generates the C/C++ code if the flag was passed *)
 let generateC (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
-   let cparams     = ProgToCode.{ repl = params.repl; code = args.code} in
+   let cparams     = ProgToCode.{ repl = params.repl; code = args.code; cleanup = args.roots <> [] } in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeC.print params clike_stmts
 
 (* Generates the C/C++ code if the flag was passed *)
 let generateJava (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
-   let cparams     = ProgToCode.{ repl = params.repl; code = args.code} in
+   let cparams     = ProgToCode.{ repl = params.repl; code = args.code; cleanup = args.roots <> [] } in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeJava.print params clike_stmts
 
 let generateLLVM (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
-   let cparams     = ProgToCode.{ repl = params.repl; code = args.code } in
+   let cparams     = ProgToCode.{ repl = params.repl; code = args.code; cleanup = args.roots <> [] } in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeLLVM.print params clike_stmts
 
 (* Generates the JS code if the flag was passed *)
 let generateJS (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
-   let cparams     = ProgToCode.{ repl = params.repl; code = args.code } in
+   let cparams     = ProgToCode.{ repl = params.repl; code = args.code; cleanup = args.roots <> [] } in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeJs.print params clike_stmts
 
 (* Generates the JS code if the flag was passed *)
 let generateLua (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
-   let cparams     = ProgToCode.{ repl = params.repl; code = args.code } in
+   let cparams     = ProgToCode.{ repl = params.repl; code = args.code; cleanup = args.roots <> [] } in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeLua.print params clike_stmts

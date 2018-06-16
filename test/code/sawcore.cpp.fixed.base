@@ -4,7 +4,7 @@
 
 void Util__ctx_type_0_init(Util__ctx_type_0 &_output_){
    Util__ctx_type_0 _ctx;
-   _ctx.pre = 0;
+   _ctx.pre = false;
    _output_ = _ctx;
    return ;
 }
@@ -102,16 +102,12 @@ fix16_t Util_average2(Util__ctx_type_5 &_ctx, fix16_t x1){
 }
 
 fix16_t Util_cubic_clipper(fix16_t x){
-   uint8_t _cond_21;
-   _cond_21 = (x <= -0xaaaa /* -0.666667 */);
-   if(_cond_21){
+   if(x <= -0xaaaa /* -0.666667 */){
       return -0xaaaa /* -0.666667 */;
    }
    else
    {
-      uint8_t _cond_20;
-      _cond_20 = (x >= 0xaaaa /* 0.666667 */);
-      if(_cond_20){
+      if(x >= 0xaaaa /* 0.666667 */){
          return 0xaaaa /* 0.666667 */;
       }
       else
@@ -168,7 +164,7 @@ fix16_t Util_cvTokHz(fix16_t cv){
 void Sawcore__ctx_type_0_init(Sawcore__ctx_type_0 &_output_){
    Sawcore__ctx_type_0 _ctx;
    _ctx.ptr_w2_ret_1 = 0x0 /* 0.000000 */;
-   _ctx.ptr_w2_ret_0 = 0;
+   _ctx.ptr_w2_ret_0 = false;
    _output_ = _ctx;
    return ;
 }
@@ -184,38 +180,32 @@ void Sawcore_ptr_w2(Sawcore__ctx_type_0 &_ctx, fix16_t phase, fix16_t rate){
    s1 = rate;
    fix16_t s2;
    s2 = (s1 + rate);
-   uint8_t _cond_47;
-   _cond_47 = (phase < s1);
-   if(_cond_47){
+   if(phase < s1){
       fix16_t d;
       d = fix_div(phase,rate);
       fix16_t t2;
       t2 = (s2 >> 10);
       {
-         out.field_0 = 0;
+         out.field_0 = false;
          out.field_1 = (0x10000 /* 1.000000 */ + fix_mul(d,((- d) + t2)));
       }
    }
    else
    {
-      uint8_t _cond_46;
-      _cond_46 = (phase < s2);
-      if(_cond_46){
+      if(phase < s2){
          fix16_t d;
          d = fix_div(phase,rate);
          fix16_t t2;
          t2 = (s2 >> 10);
          {
-            out.field_0 = 0;
+            out.field_0 = false;
             out.field_1 = (0x30000 /* 3.000000 */ + fix_mul(d,(-0x40000 /* -4.000000 */ + d + t2)));
          }
       }
       else
       {
-         {
-            out.field_0 = 1;
-            out.field_1 = 0x0 /* 0.000000 */;
-         }
+         out.field_0 = true;
+         out.field_1 = 0x0 /* 0.000000 */;
       }
    }
    _ctx.ptr_w2_ret_0 = out.field_0;_ctx.ptr_w2_ret_1 = out.field_1;
@@ -227,24 +217,28 @@ void Sawcore_ptr_w2_ret_0_init(Sawcore__ctx_type_0 &_output_){
    return ;
 }
 
-uint8_t Sawcore_ptr_w2_ret_0(Sawcore__ctx_type_0 &_ctx){return _ctx.ptr_w2_ret_0;}
+uint8_t Sawcore_ptr_w2_ret_0(Sawcore__ctx_type_0 &_ctx){
+   return _ctx.ptr_w2_ret_0;
+}
 
 void Sawcore_ptr_w2_ret_1_init(Sawcore__ctx_type_0 &_output_){
    Sawcore__ctx_type_0_init(_output_);
    return ;
 }
 
-fix16_t Sawcore_ptr_w2_ret_1(Sawcore__ctx_type_0 &_ctx){return _ctx.ptr_w2_ret_1;}
+fix16_t Sawcore_ptr_w2_ret_1(Sawcore__ctx_type_0 &_ctx){
+   return _ctx.ptr_w2_ret_1;
+}
 
 void Sawcore__ctx_type_1_init(Sawcore__ctx_type_1 &_output_){
    Sawcore__ctx_type_1 _ctx;
-   _ctx.reset_state = 0;
+   _ctx.reset_state = false;
    _ctx.reset_phase = 0x0 /* 0.000000 */;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
-   Sawcore__ctx_type_0_init(_ctx._inst33);
-   Util__ctx_type_0_init(_ctx._inst30);
-   Util__ctx_type_1_init(_ctx._inst28);
+   Sawcore__ctx_type_0_init(_ctx._inst30);
+   Util__ctx_type_0_init(_ctx._inst27);
+   Util__ctx_type_1_init(_ctx._inst25);
    Sawcore_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -260,37 +254,37 @@ fix16_t Sawcore_process(Sawcore__ctx_type_1 &_ctx, fix16_t cv, fix16_t reset){
    transition = 0x0 /* 0.000000 */;
    fix16_t out;
    out = 0x0 /* 0.000000 */;
-   uint8_t _cond_48;
-   _cond_48 = Util_change(_ctx._inst28,cv);
-   if(_cond_48){
+   if(Util_change(_ctx._inst25,cv)){
       _ctx.rate = Util_cvToRate_1024(cv);
    }
    fix16_t new_phase;
    new_phase = (_ctx.phase + _ctx.rate);
    uint8_t do_reset;
-   do_reset = Util_edge(_ctx._inst30,(reset > 0x0 /* 0.000000 */));
+   do_reset = Util_edge(_ctx._inst27,(reset > 0x0 /* 0.000000 */));
    uint8_t do_wrap;
    do_wrap = (new_phase > 0x4000000 /* 1024.000000 */);
-   uint8_t _cond_49;
-   _cond_49 = (do_reset || do_wrap);
-   if(_cond_49){
+   if(do_reset || do_wrap){
       _ctx.reset_phase = _ctx.phase;
-      if(do_wrap){ new_phase = (new_phase + -0x4000000 /* -1024.000000 */); }
+      if(do_wrap){
+         new_phase = (new_phase + -0x4000000 /* -1024.000000 */);
+      }
       else
-      { new_phase = 0x0 /* 0.000000 */; }
-      _ctx.reset_state = 1;
+      {
+         new_phase = 0x0 /* 0.000000 */;
+      }
+      _ctx.reset_state = true;
    }
    _ctx.phase = new_phase;
    out = _ctx.phase;
    if(_ctx.reset_state){
       uint8_t done;
       fix16_t ptr;
-      Sawcore_ptr_w2(_ctx._inst33,_ctx.phase,_ctx.rate);
-      done = Sawcore_ptr_w2_ret_0(_ctx._inst33);
-      ptr = Sawcore_ptr_w2_ret_1(_ctx._inst33);
+      Sawcore_ptr_w2(_ctx._inst30,_ctx.phase,_ctx.rate);
+      done = Sawcore_ptr_w2_ret_0(_ctx._inst30);
+      ptr = Sawcore_ptr_w2_ret_1(_ctx._inst30);
       transition = (fix_mul((ptr + 0x10000 /* 1.000000 */),_ctx.reset_phase) >> 1);
       if(done){
-         _ctx.reset_state = 0;
+         _ctx.reset_state = false;
       }
       else
       {
@@ -306,6 +300,7 @@ void Sawcore_noteOn_init(Sawcore__ctx_type_1 &_output_){
 }
 
 void Sawcore_noteOn(Sawcore__ctx_type_1 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Sawcore_noteOff_init(Sawcore__ctx_type_1 &_output_){
@@ -314,6 +309,7 @@ void Sawcore_noteOff_init(Sawcore__ctx_type_1 &_output_){
 }
 
 void Sawcore_noteOff(Sawcore__ctx_type_1 &_ctx, int note, int channel){
+
 }
 
 void Sawcore_controlChange_init(Sawcore__ctx_type_1 &_output_){
@@ -322,6 +318,7 @@ void Sawcore_controlChange_init(Sawcore__ctx_type_1 &_output_){
 }
 
 void Sawcore_controlChange(Sawcore__ctx_type_1 &_ctx, int control, int value, int channel){
+
 }
 
 void Sawcore_default_init(Sawcore__ctx_type_1 &_output_){

@@ -25,14 +25,18 @@ void Sff_ff_process_ret_0_init(Sff_ff__ctx_type_0 &_output_){
    return ;
 }
 
-fix16_t Sff_ff_process_ret_0(Sff_ff__ctx_type_0 &_ctx){return _ctx.process_ret_0;}
+fix16_t Sff_ff_process_ret_0(Sff_ff__ctx_type_0 &_ctx){
+   return _ctx.process_ret_0;
+}
 
 void Sff_ff_process_ret_1_init(Sff_ff__ctx_type_0 &_output_){
    Sff_ff__ctx_type_0_init(_output_);
    return ;
 }
 
-fix16_t Sff_ff_process_ret_1(Sff_ff__ctx_type_0 &_ctx){return _ctx.process_ret_1;}
+fix16_t Sff_ff_process_ret_1(Sff_ff__ctx_type_0 &_ctx){
+   return _ctx.process_ret_1;
+}
 
 void Sff_ff_noteOn_init(Sff_ff__ctx_type_0 &_output_){
    Sff_ff__ctx_type_0_init(_output_);
@@ -40,6 +44,7 @@ void Sff_ff_noteOn_init(Sff_ff__ctx_type_0 &_output_){
 }
 
 void Sff_ff_noteOn(Sff_ff__ctx_type_0 &_ctx, int note, int velocity, int channel){
+
 }
 
 void Sff_ff_noteOff_init(Sff_ff__ctx_type_0 &_output_){
@@ -48,6 +53,7 @@ void Sff_ff_noteOff_init(Sff_ff__ctx_type_0 &_output_){
 }
 
 void Sff_ff_noteOff(Sff_ff__ctx_type_0 &_ctx, int note, int channel){
+
 }
 
 void Sff_ff_controlChange_init(Sff_ff__ctx_type_0 &_output_){
@@ -56,6 +62,7 @@ void Sff_ff_controlChange_init(Sff_ff__ctx_type_0 &_output_){
 }
 
 void Sff_ff_controlChange(Sff_ff__ctx_type_0 &_ctx, int control, int value, int channel){
+
 }
 
 void Sff_ff_default_init(Sff_ff__ctx_type_0 &_output_){
@@ -64,6 +71,7 @@ void Sff_ff_default_init(Sff_ff__ctx_type_0 &_output_){
 }
 
 void Sff_ff_default(Sff_ff__ctx_type_0 &_ctx){
+
 }
 
 
