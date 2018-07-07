@@ -511,6 +511,7 @@ let builtinFunctions env =
          "floor", Env.Builtin(real_real floor);
          "tanh", Env.Builtin(real_real tanh);
          "cosh", Env.Builtin(real_real cosh);
+         "sinh", Env.Builtin(real_real sinh);
          "tan",  Env.Builtin(real_real tan);
          "sqrt", Env.Builtin(real_real sqrt);
          "clip", Env.Builtin(clip);

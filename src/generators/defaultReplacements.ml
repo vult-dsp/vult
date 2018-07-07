@@ -80,14 +80,14 @@ module Default = struct
             "real", "float";
             "unit", "void";
             "bool", "uint8_t";
-            "int",  "int";
+            "int",  "int32_t";
             "abstract",  "void*";
          ]
 
    let cast = Replacements.makeCasts
          [
-            ("float", "int"), "float_to_int";
-            ("int", "float"), "int_to_float";
+            ("float", "int32_t"), "float_to_int";
+            ("int32_t", "float"), "int_to_float";
          ]
 
    let op_to_fun = Replacements.makeOperators
@@ -98,7 +98,7 @@ module Default = struct
    let op_to_op = Replacements.makeOperators
          [
             ("<>", "float"),   "!=";
-            ("<>", "int"),     "!=";
+            ("<>", "int32_t"), "!=";
             ("<>", "uint8_t"), "!=";
          ]
 
@@ -117,12 +117,12 @@ module Default = struct
             ("sinh", "float"),  "sinhf";
             ("sqrt", "float"),  "sqrtf";
             ("clip", "float"),  "float_clip";
-            ("clip", "int"),    "int_clip";
+            ("clip", "int32_t"), "int_clip";
             ("set",  "float"),  "float_set";
-            ("set",  "int"),    "int_set";
+            ("set",  "int32_t"), "int_set";
             ("set",  "uint8_t"), "bool_set";
             ("get",  "float"),  "float_get";
-            ("get",  "int"),    "int_get";
+            ("get",  "int32_t"), "int_get";
             ("get",  "uint8_t"), "bool_get";
             ("not",  "uint8_t"), "bool_not";
             ("eps",  "float"),   "float_eps";
@@ -131,7 +131,7 @@ module Default = struct
             ("samplerate", "float"), "float_samplerate";
             ("wrap_array",  "float"), "float_wrap_array";
             ("log",  "float"),   "float_print";
-            ("log",  "int"),     "int_print";
+            ("log",  "int32_t"), "int_print";
             ("log",  "uint8_t"), "bool_print";
             ("log",  "string"),  "string_print";
          ]
@@ -139,14 +139,14 @@ module Default = struct
    let array_init = Replacements.makeArrayInitializations
          [
             "float",   "float_init_array";
-            "int",     "int_init_array";
+            "int32_t", "int_init_array";
             "uint8_t", "bool_init_array";
          ]
 
    let array_copy = Replacements.makeArrayCopy
          [
             "float",   "float_copy_array";
-            "int",     "int_copy_array";
+            "int32_t", "int_copy_array";
             "uint8_t", "bool_copy_array";
          ]
 
