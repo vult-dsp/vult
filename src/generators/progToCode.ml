@@ -562,6 +562,11 @@ let collectStmt (p:parameters) stmt =
       makeSingleBlock (collectVarBind p stmts)
    | _ -> stmt
 
+let isSmall exp =
+   match exp with
+   | PInt(i, _) when i < 1000 -> true
+   | _ -> false
+
 let rec convertStmt (p:parameters) (s:stmt) : cstmt =
    match s with
    | StmtVal(lhs, None, _) ->
@@ -609,7 +614,11 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let init_typ  = expType p init in
       let init_func = getInitArrayFunction p init_typ in
       let var'  = convertExp p var in
-      CSBind(CLWild, CECall(init_func, [size';init';var'], attrType p attr))
+      if isSmall size then
+         CSBind(CLWild, CECall(init_func, [size';init';var'], attrType p attr))
+      else
+         CSBind(CLWild, CEEmpty)
+
    (* special case for c/c++ to replace the makeArray function *)
    | StmtBind(LId(var,_,vattr) , PCall(None, ["makeArray"], [size;init], attr), _) when p.code = CCode ->
       let init' = convertExp p init in
@@ -617,7 +626,10 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let init_typ  = expType p init in
       let init_func = getInitArrayFunction p init_typ in
       let var'  = convertExp p (PId(var, vattr)) in
-      CSBind(CLWild, CECall(init_func, [size';init';var'], attrType p attr))
+      if isSmall size then
+         CSBind(CLWild, CECall(init_func, [size';init';var'], attrType p attr))
+      else
+         CSBind(CLWild, CEEmpty)
    (* special case to bind tuples in c/c++ It expands tuple assigns *)
    | StmtBind(LId(_, _, _) as lhs, PTuple(elems, _), attr) when p.code = CCode ->
       let stmts =
