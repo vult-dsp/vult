@@ -56,7 +56,7 @@ fix16_t Short_delay_soft(Short_delay__ctx_type_0 &_ctx, fix16_t x1){
 void Short_delay__ctx_type_1_init(Short_delay__ctx_type_1 &_output_){
    Short_delay__ctx_type_1 _ctx;
    _ctx.write_pos = 0;
-   fix_init_array(22050,0x0 /* 0.000000 */,_ctx.buffer);
+   ;
    _output_ = _ctx;
    return ;
 }

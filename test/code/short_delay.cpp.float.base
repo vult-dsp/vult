@@ -56,7 +56,7 @@ float Short_delay_soft(Short_delay__ctx_type_0 &_ctx, float x1){
 void Short_delay__ctx_type_1_init(Short_delay__ctx_type_1 &_output_){
    Short_delay__ctx_type_1 _ctx;
    _ctx.write_pos = 0;
-   float_init_array(22050,0.f,_ctx.buffer);
+   ;
    _output_ = _ctx;
    return ;
 }

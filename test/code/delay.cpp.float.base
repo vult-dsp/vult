@@ -167,7 +167,7 @@ float Delay_phd_osc(Delay__ctx_type_7 &_ctx, float pitch, float detune){
 void Delay__ctx_type_8_init(Delay__ctx_type_8 &_output_){
    Delay__ctx_type_8 _ctx;
    _ctx.write_pos = 0;
-   float_init_array(30000,0.f,_ctx.buffer);
+   ;
    _output_ = _ctx;
    return ;
 }
