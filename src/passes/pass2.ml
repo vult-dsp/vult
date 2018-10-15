@@ -268,7 +268,7 @@ module MakeTables = struct
                match Tags.getTableParams "table" params msg attr.tags with
                | None -> state, [stmt]
                | Some(_, [PInt(size, _); PReal(min, _); PReal(max, _)]) when checkRealReturn ret ->
-                  let var    = checkInputVariables attr.loc args in
+                  let var           = checkInputVariables attr.loc args in
                   let env           = getInterpEnv state in
                   let Id.Path(path) = Env.currentScope state in
                   let full_path     = path@name in
@@ -388,8 +388,74 @@ module EmbedWavFile = struct
 
 end
 
+module EmbedWaveTable = struct
+
+
+   let wrapGet data index =
+      if index >= (Array.length data) then
+         Array.get data (index - (Array.length data))
+      else if index < 0 then
+         Array.get data ((Array.length data) - index)
+      else Array.get data index
+
+   let rec fitData data index acc0 acc1 acc2 =
+      if index < 0 then
+         acc0, acc1, acc2
+      else
+         let p1 = wrapGet data index in
+         let p2 = wrapGet data (index + 1) in
+         let p3 = wrapGet data (index + 2) in
+         let x = [ fst p1; fst p2; fst p3] in
+         let y = [ snd p1; snd p2; snd p3] in
+         let c0, c1, c2 = Fitting.lagrange x y |> MakeTables.getCoefficients in
+         fitData data (index-1) (c0::acc0) (c1::acc1) (c2::acc2)
+
+   let calculateTables data attr name =
+      let acc0, acc1, acc2 = fitData data ((Array.length data) - 1) [] [] [] in
+      [
+         Tables.makeDecl attr name ["c0"] acc0;
+         Tables.makeDecl attr name ["c1"] acc1;
+         Tables.makeDecl attr name ["c2"] acc2
+      ]
+
+   let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
+      Mapper.makeExpander "MakeTables.stmt_x" @@ fun state stmt ->
+      match stmt with
+      | StmtExternal(name, args, ret, _, attr) ->
+         begin
+            let params = Tags.["file", String] in
+            let msg    = "The attribute 'wave' requires specific parameters. e.g. 'wavetable(file=\"file.wav\")'" in
+            match Tags.getTableParams "wavetable" params msg attr.tags with
+            | None -> state, [stmt]
+            | Some(loc, [PString(file, _)]) when Typ.isRealType ret ->
+               let var           = MakeTables.checkInputVariables attr.loc args in
+               let Id.Path(path) = Env.currentScope state in
+               let full_path  = path @ name in
+               let includes   = (Env.get state).PassData.args.includes in
+               let wave       = EmbedWavFile.readFile loc includes file in
+               let ()         = EmbedWavFile.checkNumberOfChannels loc 1 wave in
+               let data       = Array.get wave.data 0 in
+               let size_n     = Array.length data in
+               let size       = float_of_int size_n in
+               let data       = Array.mapi (fun x y -> float_of_int x /. (size -. 1.0), y) data in
+               let tables     = calculateTables data attr full_path in
+               let body       = MakeTables.makeNewBody full_path size_n 0.0 1.0 var in
+               let attr'      = { attr with tags = Tags.removeAttrFunc "wavetable" attr.tags; ext_fn = None } in
+               reapply state, tables  @ [StmtFun(full_path, args, body, Some ret, attr')]
+
+            | Some (loc, _) ->
+               let msg = "This attribute can only be applied to functions returning 'real'" in
+               Error.raiseError msg loc
+         end
+      | _ -> state, [stmt]
+
+
+   let mapper = Mapper.{ default_mapper with stmt_x }
+end
+
 let run =
    Pass1.Simplify.mapper
    |> Mapper.seq Evaluate.mapper
    |> Mapper.seq MakeTables.mapper
    |> Mapper.seq EmbedWavFile.mapper
+   |> Mapper.seq EmbedWaveTable.mapper
