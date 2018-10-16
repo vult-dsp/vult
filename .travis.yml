@@ -3,7 +3,7 @@ sudo: required
 dist: trusty
 script: bash -ex .travis-vult.sh
 env:
-- OCAML_VERSION=4.04
+- OCAML_VERSION=4.06
 os:
 - linux
 - osx
