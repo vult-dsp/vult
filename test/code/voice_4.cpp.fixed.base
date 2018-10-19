@@ -117,10 +117,34 @@ fix16_t Util_cubic_clipper(fix16_t x){
    }
 }
 
+fix16_t Util_pitchToRate_1024_raw_c0(int index){
+   return Util_pitchToRate_1024_c0[index];
+}
+
+fix16_t Util_pitchToRate_1024_raw_c1(int index){
+   return Util_pitchToRate_1024_c1[index];
+}
+
+fix16_t Util_pitchToRate_1024_raw_c2(int index){
+   return Util_pitchToRate_1024_c2[index];
+}
+
 fix16_t Util_pitchToRate_1024(fix16_t pitch){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
    return (fix_wrap_array(Util_pitchToRate_1024_c0)[index] + fix_mul(pitch,(fix_wrap_array(Util_pitchToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_pitchToRate_1024_c2)[index],pitch))));
+}
+
+fix16_t Util_pitchToRate_raw_c0(int index){
+   return Util_pitchToRate_c0[index];
+}
+
+fix16_t Util_pitchToRate_raw_c1(int index){
+   return Util_pitchToRate_c1[index];
+}
+
+fix16_t Util_pitchToRate_raw_c2(int index){
+   return Util_pitchToRate_c2[index];
 }
 
 fix16_t Util_pitchToRate(fix16_t pitch){
@@ -133,10 +157,34 @@ fix16_t Util_cvToPitch(fix16_t cv){
    return (fix_mul(cv,0x780000 /* 120.000000 */) + 0x180000 /* 24.000000 */);
 }
 
+fix16_t Util_cvToRate_1024_raw_c0(int index){
+   return Util_cvToRate_1024_c0[index];
+}
+
+fix16_t Util_cvToRate_1024_raw_c1(int index){
+   return Util_cvToRate_1024_c1[index];
+}
+
+fix16_t Util_cvToRate_1024_raw_c2(int index){
+   return Util_cvToRate_1024_c2[index];
+}
+
 fix16_t Util_cvToRate_1024(fix16_t cv){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444445 */,cv)),0,31);
    return (fix_wrap_array(Util_cvToRate_1024_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_1024_c2)[index],cv))));
+}
+
+fix16_t Util_cvToRate_raw_c0(int index){
+   return Util_cvToRate_c0[index];
+}
+
+fix16_t Util_cvToRate_raw_c1(int index){
+   return Util_cvToRate_c1[index];
+}
+
+fix16_t Util_cvToRate_raw_c2(int index){
+   return Util_cvToRate_c2[index];
 }
 
 fix16_t Util_cvToRate(fix16_t cv){
@@ -149,10 +197,34 @@ fix16_t Util_pitchToCv(fix16_t pitch){
    return fix_mul(0x222 /* 0.008333 */,(-0x180000 /* -24.000000 */ + pitch));
 }
 
+fix16_t Util_cvToperiod_raw_c0(int index){
+   return Util_cvToperiod_c0[index];
+}
+
+fix16_t Util_cvToperiod_raw_c1(int index){
+   return Util_cvToperiod_c1[index];
+}
+
+fix16_t Util_cvToperiod_raw_c2(int index){
+   return Util_cvToperiod_c2[index];
+}
+
 fix16_t Util_cvToperiod(fix16_t cv){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x1f0000 /* 31.000000 */,cv)),0,31);
    return (fix_wrap_array(Util_cvToperiod_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToperiod_c1)[index] + fix_mul(fix_wrap_array(Util_cvToperiod_c2)[index],cv))));
+}
+
+fix16_t Util_cvTokHz_raw_c0(int index){
+   return Util_cvTokHz_c0[index];
+}
+
+fix16_t Util_cvTokHz_raw_c1(int index){
+   return Util_cvTokHz_c1[index];
+}
+
+fix16_t Util_cvTokHz_raw_c2(int index){
+   return Util_cvTokHz_c2[index];
 }
 
 fix16_t Util_cvTokHz(fix16_t cv){
@@ -282,6 +354,18 @@ void Tricore_default(Tricore__ctx_type_0 &_ctx){
    _ctx.rate = 0xc265 /* 0.759367 */;
 }
 
+fix16_t Saturate_soft_tanh_table_raw_c0(int index){
+   return Saturate_soft_tanh_table_c0[index];
+}
+
+fix16_t Saturate_soft_tanh_table_raw_c1(int index){
+   return Saturate_soft_tanh_table_c1[index];
+}
+
+fix16_t Saturate_soft_tanh_table_raw_c2(int index){
+   return Saturate_soft_tanh_table_c2[index];
+}
+
 fix16_t Saturate_soft_tanh_table(fix16_t x){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x50000 /* 5.000000 */,(x + 0x180000 /* 24.000000 */))),0,240);
@@ -304,14 +388,26 @@ void Saturate_soft_controlChange(int control, int value, int channel){
 void Saturate_soft_default(){
 }
 
+fix16_t Svf_calc_g_raw_c0(int index){
+   return Svf_calc_g_c0[index];
+}
+
+fix16_t Svf_calc_g_raw_c1(int index){
+   return Svf_calc_g_c1[index];
+}
+
+fix16_t Svf_calc_g_raw_c2(int index){
+   return Svf_calc_g_c2[index];
+}
+
 fix16_t Svf_calc_g(fix16_t cv){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x8d1c71 /* 141.111111 */,cv)),0,127);
    return (fix_wrap_array(Svf_calc_g_c0)[index] + fix_mul(cv,(fix_wrap_array(Svf_calc_g_c1)[index] + fix_mul(fix_wrap_array(Svf_calc_g_c2)[index],cv))));
 }
 
-void Svf__ctx_type_1_init(Svf__ctx_type_1 &_output_){
-   Svf__ctx_type_1 _ctx;
+void Svf__ctx_type_4_init(Svf__ctx_type_4 &_output_){
+   Svf__ctx_type_4 _ctx;
    _ctx.z2 = 0x0 /* 0.000000 */;
    _ctx.z1 = 0x0 /* 0.000000 */;
    _ctx.inv_den = 0x0 /* 0.000000 */;
@@ -324,12 +420,12 @@ void Svf__ctx_type_1_init(Svf__ctx_type_1 &_output_){
    return ;
 }
 
-void Svf_process_init(Svf__ctx_type_1 &_output_){
-   Svf__ctx_type_1_init(_output_);
+void Svf_process_init(Svf__ctx_type_4 &_output_){
+   Svf__ctx_type_4_init(_output_);
    return ;
 }
 
-fix16_t Svf_process(Svf__ctx_type_1 &_ctx, fix16_t x, fix16_t cv, fix16_t q, int sel){
+fix16_t Svf_process(Svf__ctx_type_4 &_ctx, fix16_t x, fix16_t cv, fix16_t q, int sel){
    q = (q + 0x8000 /* 0.500000 */);
    if(Util_change(_ctx._inst43,cv) || Util_change(_ctx._inst44,q)){
       _ctx.g = Svf_calc_g(cv);
@@ -363,39 +459,51 @@ fix16_t Svf_process(Svf__ctx_type_1 &_ctx, fix16_t x, fix16_t cv, fix16_t q, int
    return Saturate_soft_process(output);
 }
 
-void Svf_noteOn_init(Svf__ctx_type_1 &_output_){
-   Svf__ctx_type_1_init(_output_);
+void Svf_noteOn_init(Svf__ctx_type_4 &_output_){
+   Svf__ctx_type_4_init(_output_);
    return ;
 }
 
-void Svf_noteOn(Svf__ctx_type_1 &_ctx, int note, int velocity, int channel){
+void Svf_noteOn(Svf__ctx_type_4 &_ctx, int note, int velocity, int channel){
 }
 
-void Svf_noteOff_init(Svf__ctx_type_1 &_output_){
-   Svf__ctx_type_1_init(_output_);
+void Svf_noteOff_init(Svf__ctx_type_4 &_output_){
+   Svf__ctx_type_4_init(_output_);
    return ;
 }
 
-void Svf_noteOff(Svf__ctx_type_1 &_ctx, int note, int channel){
+void Svf_noteOff(Svf__ctx_type_4 &_ctx, int note, int channel){
 }
 
-void Svf_controlChange_init(Svf__ctx_type_1 &_output_){
-   Svf__ctx_type_1_init(_output_);
+void Svf_controlChange_init(Svf__ctx_type_4 &_output_){
+   Svf__ctx_type_4_init(_output_);
    return ;
 }
 
-void Svf_controlChange(Svf__ctx_type_1 &_ctx, int control, int value, int channel){
+void Svf_controlChange(Svf__ctx_type_4 &_ctx, int control, int value, int channel){
 }
 
-void Svf_default_init(Svf__ctx_type_1 &_output_){
-   Svf__ctx_type_1_init(_output_);
+void Svf_default_init(Svf__ctx_type_4 &_output_){
+   Svf__ctx_type_4_init(_output_);
    return ;
 }
 
-void Svf_default(Svf__ctx_type_1 &_ctx){
+void Svf_default(Svf__ctx_type_4 &_ctx){
    _ctx.g = 0x98 /* 0.002330 */;
    _ctx.R = 0x10000 /* 1.000000 */;
    _ctx.inv_den = fix_div(0x10000 /* 1.000000 */,(0x10000 /* 1.000000 */ + fix_mul(_ctx.g,_ctx.g)));
+}
+
+fix16_t Saturate_tanh_table_raw_c0(int index){
+   return Saturate_tanh_table_c0[index];
+}
+
+fix16_t Saturate_tanh_table_raw_c1(int index){
+   return Saturate_tanh_table_c1[index];
+}
+
+fix16_t Saturate_tanh_table_raw_c2(int index){
+   return Saturate_tanh_table_c2[index];
 }
 
 fix16_t Saturate_tanh_table(fix16_t x){
@@ -533,6 +641,18 @@ void Lfo_default_init(Lfo__ctx_type_1 &_output_){
 }
 
 void Lfo_default(Lfo__ctx_type_1 &_ctx){
+}
+
+fix16_t Tables_nsine_raw_c0(int index){
+   return Tables_nsine_c0[index];
+}
+
+fix16_t Tables_nsine_raw_c1(int index){
+   return Tables_nsine_c1[index];
+}
+
+fix16_t Tables_nsine_raw_c2(int index){
+   return Tables_nsine_c2[index];
 }
 
 fix16_t Tables_nsine(fix16_t x){
@@ -922,7 +1042,7 @@ void Voice_4__ctx_type_0_init(Voice_4__ctx_type_0 &_output_){
    _ctx.decay = 0x0 /* 0.000000 */;
    _ctx.attack = 0x0 /* 0.000000 */;
    Adsr__ctx_type_0_init(_ctx._inst128);
-   Svf__ctx_type_1_init(_ctx._inst127);
+   Svf__ctx_type_4_init(_ctx._inst127);
    Tricore__ctx_type_0_init(_ctx._inst126);
    Blit__ctx_type_2_init(_ctx._inst125);
    Blit__ctx_type_2_init(_ctx._inst124);

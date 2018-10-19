@@ -49,6 +49,10 @@ let prefix (id:t) (pre:string) : t =
 let joinSep (sep:string) (fname:t) (var:t) : t =
    [String.concat sep (fname @ var)]
 
+(** Takes two identifier and makes one (with a single name) seperated by the given character. *)
+let concat (sep:string) (name:t) : t =
+   [String.concat sep name]
+
 let join (id1:t) (id2:t) : t =
    id1 @ id2
 

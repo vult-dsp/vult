@@ -117,10 +117,34 @@ fix16_t Util_cubic_clipper(fix16_t x){
    }
 }
 
+fix16_t Util_pitchToRate_1024_raw_c0(int index){
+   return Util_pitchToRate_1024_c0[index];
+}
+
+fix16_t Util_pitchToRate_1024_raw_c1(int index){
+   return Util_pitchToRate_1024_c1[index];
+}
+
+fix16_t Util_pitchToRate_1024_raw_c2(int index){
+   return Util_pitchToRate_1024_c2[index];
+}
+
 fix16_t Util_pitchToRate_1024(fix16_t pitch){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
    return (fix_wrap_array(Util_pitchToRate_1024_c0)[index] + fix_mul(pitch,(fix_wrap_array(Util_pitchToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_pitchToRate_1024_c2)[index],pitch))));
+}
+
+fix16_t Util_pitchToRate_raw_c0(int index){
+   return Util_pitchToRate_c0[index];
+}
+
+fix16_t Util_pitchToRate_raw_c1(int index){
+   return Util_pitchToRate_c1[index];
+}
+
+fix16_t Util_pitchToRate_raw_c2(int index){
+   return Util_pitchToRate_c2[index];
 }
 
 fix16_t Util_pitchToRate(fix16_t pitch){
@@ -133,10 +157,34 @@ fix16_t Util_cvToPitch(fix16_t cv){
    return (fix_mul(cv,0x780000 /* 120.000000 */) + 0x180000 /* 24.000000 */);
 }
 
+fix16_t Util_cvToRate_1024_raw_c0(int index){
+   return Util_cvToRate_1024_c0[index];
+}
+
+fix16_t Util_cvToRate_1024_raw_c1(int index){
+   return Util_cvToRate_1024_c1[index];
+}
+
+fix16_t Util_cvToRate_1024_raw_c2(int index){
+   return Util_cvToRate_1024_c2[index];
+}
+
 fix16_t Util_cvToRate_1024(fix16_t cv){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444445 */,cv)),0,31);
    return (fix_wrap_array(Util_cvToRate_1024_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_1024_c2)[index],cv))));
+}
+
+fix16_t Util_cvToRate_raw_c0(int index){
+   return Util_cvToRate_c0[index];
+}
+
+fix16_t Util_cvToRate_raw_c1(int index){
+   return Util_cvToRate_c1[index];
+}
+
+fix16_t Util_cvToRate_raw_c2(int index){
+   return Util_cvToRate_c2[index];
 }
 
 fix16_t Util_cvToRate(fix16_t cv){
@@ -149,10 +197,34 @@ fix16_t Util_pitchToCv(fix16_t pitch){
    return fix_mul(0x222 /* 0.008333 */,(-0x180000 /* -24.000000 */ + pitch));
 }
 
+fix16_t Util_cvToperiod_raw_c0(int index){
+   return Util_cvToperiod_c0[index];
+}
+
+fix16_t Util_cvToperiod_raw_c1(int index){
+   return Util_cvToperiod_c1[index];
+}
+
+fix16_t Util_cvToperiod_raw_c2(int index){
+   return Util_cvToperiod_c2[index];
+}
+
 fix16_t Util_cvToperiod(fix16_t cv){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x1f0000 /* 31.000000 */,cv)),0,31);
    return (fix_wrap_array(Util_cvToperiod_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToperiod_c1)[index] + fix_mul(fix_wrap_array(Util_cvToperiod_c2)[index],cv))));
+}
+
+fix16_t Util_cvTokHz_raw_c0(int index){
+   return Util_cvTokHz_c0[index];
+}
+
+fix16_t Util_cvTokHz_raw_c1(int index){
+   return Util_cvTokHz_c1[index];
+}
+
+fix16_t Util_cvTokHz_raw_c2(int index){
+   return Util_cvTokHz_c2[index];
 }
 
 fix16_t Util_cvTokHz(fix16_t cv){
@@ -225,6 +297,18 @@ void Phase_default_init(Phase__ctx_type_0 &_output_){
 
 void Phase_default(Phase__ctx_type_0 &_ctx){
    _ctx.rate = 0xc265 /* 0.759367 */;
+}
+
+fix16_t Tables_nsine_raw_c0(int index){
+   return Tables_nsine_c0[index];
+}
+
+fix16_t Tables_nsine_raw_c1(int index){
+   return Tables_nsine_c1[index];
+}
+
+fix16_t Tables_nsine_raw_c2(int index){
+   return Tables_nsine_c2[index];
 }
 
 fix16_t Tables_nsine(fix16_t x){

@@ -256,6 +256,17 @@ module MakeTables = struct
          let msg = "This attribute requires the function to have only one argument:\n\"fun foo(x:real) : real\"" in
          Error.raiseError msg loc
 
+   let generateRawAccessFunction name full_name c attr =
+      let n             = string_of_int c in
+      let table_name    = Id.concat "_" (Id.postfix full_name ("_c" ^ n)) in
+      let function_name = Id.concat "_" (Id.postfix name ("_raw_c" ^ n)) in
+      let attr_real     = { attr with typ = Some (Typ.Const.real_type) } in
+      let attr_int      = { attr with typ = Some (Typ.Const.int_type) } in
+      let r             = PIndex(PId(table_name, attr_real),PId(["index"], attr_int), attr_real) in
+      let body          = StmtReturn(r, attr) in
+      let args          = [TypedId(["index"], [Typ.Const.int_type], InputArg, attr)] in
+      StmtFun(function_name, args, body, Some (Typ.Const.real_type), attr)
+
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "MakeTables.stmt_x" @@ fun state stmt ->
       match stmt with
@@ -275,7 +286,10 @@ module MakeTables = struct
                   let result        = calculateTables env attr full_path size min max in
                   let attr'         = { attr with tags = Tags.removeAttrFunc "table" attr.tags } in
                   let body'         = makeNewBody full_path size min max var in
-                  reapply state, result @ [StmtFun(name, args, body', ret, attr')]
+                  let c0            = generateRawAccessFunction name full_path 0 attr' in
+                  let c1            = generateRawAccessFunction name full_path 1 attr' in
+                  let c2            = generateRawAccessFunction name full_path 2 attr' in
+                  reapply state, result @ [c0; c1; c2] @ [StmtFun(name, args, body', ret, attr')]
                | Some(loc, _) ->
                   let msg = "This attribute can only be applied to functions returning 'real'" in
                   Error.raiseError msg loc
@@ -441,7 +455,10 @@ module EmbedWaveTable = struct
                let tables     = calculateTables data attr full_path in
                let body       = MakeTables.makeNewBody full_path size_n 0.0 1.0 var in
                let attr'      = { attr with tags = Tags.removeAttrFunc "wavetable" attr.tags; ext_fn = None } in
-               reapply state, tables  @ [StmtFun(full_path, args, body, Some ret, attr')]
+               let c0         = MakeTables.generateRawAccessFunction name full_path 0 attr in
+               let c1         = MakeTables.generateRawAccessFunction name full_path 1 attr in
+               let c2         = MakeTables.generateRawAccessFunction name full_path 2 attr in
+               reapply state, tables @ [c0; c1; c2] @ [StmtFun(full_path, args, body, Some ret, attr')]
 
             | Some (loc, _) ->
                let msg = "This attribute can only be applied to functions returning 'real'" in
@@ -451,6 +468,7 @@ module EmbedWaveTable = struct
 
 
    let mapper = Mapper.{ default_mapper with stmt_x }
+
 end
 
 let run =
