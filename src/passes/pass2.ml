@@ -458,7 +458,8 @@ module EmbedWaveTable = struct
                let c0         = MakeTables.generateRawAccessFunction name full_path 0 attr in
                let c1         = MakeTables.generateRawAccessFunction name full_path 1 attr in
                let c2         = MakeTables.generateRawAccessFunction name full_path 2 attr in
-               reapply state, tables @ [c0; c1; c2] @ [StmtFun(full_path, args, body, Some ret, attr')]
+               let size_fun   = EmbedWavFile.makeSizeFunction name attr' wave.WavFile.samples in
+               reapply state, tables @ [c0; c1; c2; size_fun] @ [StmtFun(full_path, args, body, Some ret, attr')]
 
             | Some (loc, _) ->
                let msg = "This attribute can only be applied to functions returning 'real'" in

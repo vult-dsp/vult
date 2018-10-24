@@ -309,10 +309,12 @@ let registerGeneratedFunctions name attr env =
       let raw_c0 = Id.postfix name "_raw_c0" in
       let raw_c1 = Id.postfix name "_raw_c1" in
       let raw_c2 = Id.postfix name "_raw_c2" in
+      let size_name = Id.postfix name "_samples" in
       let attr = { attr with ext_fn = None } in
       let env, attr = registerSpecialFunction env raw_c0 [TypedId(["index"], [Typ.Const.int_type], InputArg, attr)] Typ.Const.real_type attr, attr in
       let env, attr = registerSpecialFunction env raw_c1 [TypedId(["index"], [Typ.Const.int_type], InputArg, attr)] Typ.Const.real_type attr, attr in
       let env, attr = registerSpecialFunction env raw_c2 [TypedId(["index"], [Typ.Const.int_type], InputArg, attr)] Typ.Const.real_type attr, attr in
+      let env, attr = registerSpecialFunction env size_name [] Typ.Const.int_type attr, attr in
       env, attr
    | _ when Tags.has attr.tags ["table"] ->
       let raw_c0 = Id.postfix name "_raw_c0" in
