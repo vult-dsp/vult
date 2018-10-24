@@ -20,12 +20,12 @@ fi
 npm install vult -g
 vultc --help
 # compile the examples
-cd examples
-mkdir build
-cd build
-cmake ../
-make
-cd ..
-cd ..
+#cd examples
+#mkdir build
+#cd build
+#cmake ../
+#make
+#cd ..
+#cd ..
 # runs the performance tests
 make perf
