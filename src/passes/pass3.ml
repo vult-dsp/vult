@@ -172,7 +172,7 @@ module CreateInitFunction = struct
                 (name, [tp], emptyAttr) :: acc
             ) member_set []
       in
-      StmtType(ref (Typ.TId(ctx,None)),members,emptyAttr)
+      StmtType(ref (Typ.TId(ctx,None)), members, emptyAttr)
 
    let generateInitFunctionWrapper (state:'a Env.t) (name:Id.t) : stmt =
       let ctx_path = Env.getContext state name in

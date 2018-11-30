@@ -274,7 +274,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSConst _ -> failwith "printStmt: invalid constant declaration"
 
    (* Function declarations cotaining more than one statement *)
-   | CSFunction(ntype, name, args, (CSBlock(_) as body)) ->
+   | CSFunction(ntype, name, args, (CSBlock(_) as body), _) ->
       let ret   = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
       (* if we are printing a header, skip the body *)
@@ -289,7 +289,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
          | None -> Some({pla|<#ret#> <#name#s>(<#targs#>){};<#>|pla})
       end
    (* Function declarations cotaining a single statement *)
-   | CSFunction(ntype, name, args, body) ->
+   | CSFunction(ntype, name, args, body, _) ->
       let ret = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
       (* if we are printing a header, skip the body *)
@@ -332,7 +332,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
       Some({pla|if<#tcond#><#tthen#><#>else<#><#telse#>|pla})
 
    (* Type declaration (only in headers) *)
-   | CSType(name, members) when params.is_header ->
+   | CSType(name, members, _) when params.is_header ->
       let tmembers =
          Pla.map_sep_all Pla.newline
             (fun (typ, name) ->
@@ -343,7 +343,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
       Some({pla|typedef struct <#name#s> {<#tmembers#+>} <#name#s>;<#>|pla})
 
    (* Do not print type delcarations in implementation file *)
-   | CSType(_, _) -> None
+   | CSType(_, _, _) -> None
 
    (* Type declaration aliases (only in headers) *)
    | CSAlias(t1, t2) when params.is_header ->

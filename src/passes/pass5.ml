@@ -192,7 +192,7 @@ module MarkUsedFunctions = struct
          match exp with
          | PCall(_, name, _, _)->
             let data = Env.get state in
-            let data = PassData.addRoot data name in
+            let data = PassData.markAsUsed data name NotRoot in
             let state = { state with data } in
             state, exp
          | _ -> state, exp
@@ -201,18 +201,44 @@ module MarkUsedFunctions = struct
 
    end
 
+   let markType state name root =
+      try
+         let Id.Path ctx = Env.getContext state name in
+         let data  = PassData.markAsUsed (Env.get state) ctx root in
+         let state = { state with data } in
+         state
+      with
+      | Not_found ->
+         state
+
+
    let stmt : (PassData.t Env.t,stmt) Mapper.mapper_func =
       Mapper.make "MarkUsedFunctions.stmt" @@ fun state stmt ->
       match stmt with
       | StmtFun(name, args, body, ret, attr) ->
          let data = Env.get state in
          begin match IdMap.find name data.PassData.used_code with
-            | true -> state, stmt
-            | false ->
+            | Keep _ | NotUsed -> state, stmt
+            | Used root ->
                let state, body = Mapper.map_stmt MarkAllCalls.mapper state body in
-               let data = PassData.markRoot (Env.get state) name in
+               let data  = PassData.markToKeep (Env.get state) name root in
                let state = { state with data } in
-               reapply state, StmtFun(name, args, body, ret, { attr with root = true })
+               let state = markType state name root in
+               reapply state, StmtFun(name, args, body, ret, { attr with used = Keep root })
+            | exception Not_found -> state, stmt
+         end
+
+      | StmtType({ contents = TId (name, _)} as lhs, rhs, attr) ->
+         let data = Env.get state in
+         begin match IdMap.find name data.PassData.used_code with
+            | Keep _ | NotUsed -> state, stmt
+            | Used root ->
+               (*let state, body = Mapper.map_stmt MarkAllCalls.mapper state body in
+                 let data  = PassData.markToKeep (Env.get state) name root in
+                 let state = { state with data } in*)
+               let data  = PassData.markToKeep (Env.get state) name root in
+               let state = { state with data } in
+               reapply state, StmtType(lhs, rhs, { attr with used = Keep root })
             | exception Not_found -> state, stmt
          end
       | _ -> state, stmt

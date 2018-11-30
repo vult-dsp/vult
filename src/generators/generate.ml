@@ -180,36 +180,39 @@ let rec getMainModule (parser_results:parser_results list) : string =
    | [h] -> moduleName h.file
    | _ :: t -> getMainModule t
 
+let makeParams (args:args) (params:params) (used:used_function Maps.IdMap.t) =
+   ProgToCode.{ repl = params.repl; code = args.code; cleanup = args.roots <> []; table = NameTable.make (); shorten = args.shorten; used }
+
 (* Generates the C/C++ code if the flag was passed *)
-let generateC (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
-   let cparams     = ProgToCode.{ repl = params.repl; code = args.code; cleanup = args.roots <> [] } in
+let generateC (args:args) (params:params) (used:used_function Maps.IdMap.t) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
+   let cparams     = makeParams args params used in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeC.print params clike_stmts
 
 (* Generates the C/C++ code if the flag was passed *)
-let generateJava (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
-   let cparams     = ProgToCode.{ repl = params.repl; code = args.code; cleanup = args.roots <> [] } in
+let generateJava (args:args) (params:params) (used:used_function Maps.IdMap.t) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
+   let cparams     = makeParams args params used in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeJava.print params clike_stmts
 
-let generateLLVM (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
-   let cparams     = ProgToCode.{ repl = params.repl; code = args.code; cleanup = args.roots <> [] } in
+let generateLLVM (args:args) (params:params) (used:used_function Maps.IdMap.t) (stmts:Prog.stmt list)  : (Pla.t * FileKind.t) list=
+   let cparams     = makeParams args params used in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeLLVM.print params clike_stmts
 
 (* Generates the JS code if the flag was passed *)
-let generateJS (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
-   let cparams     = ProgToCode.{ repl = params.repl; code = args.code; cleanup = args.roots <> [] } in
+let generateJS (args:args) (params:params) (used:used_function Maps.IdMap.t) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
+   let cparams     = makeParams args params used in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeJs.print params clike_stmts
 
 (* Generates the JS code if the flag was passed *)
-let generateLua (args:args) (params:params) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
-   let cparams     = ProgToCode.{ repl = params.repl; code = args.code; cleanup = args.roots <> [] } in
+let generateLua (args:args) (params:params) (used:used_function Maps.IdMap.t) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
+   let cparams     = makeParams args params used in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeLua.print params clike_stmts
@@ -263,7 +266,7 @@ let generateCode (parser_results:parser_results list) (args:args) : (Pla.t * Fil
       (* Checks the 'real' argument is valid *)
       let ()          = checkRealType args.real in
       (* Applies all passes to the statements *)
-      let stmts       = Passes.applyTransformations args parser_results in
+      let stmts, used = Passes.applyTransformations args parser_results in
       let params_c    = createParameters stmts args in
       let params_js   = createParameters stmts { args with real = "js" } in
       let params_lua  = createParameters stmts { args with real = "lua" } in
@@ -271,11 +274,11 @@ let generateCode (parser_results:parser_results list) (args:args) : (Pla.t * Fil
       let all_stmts   = List.flatten (List.map (fun a -> a.presult) stmts) in
       match args.code with
       | NoCode -> []
-      | CCode -> generateC args params_c all_stmts
-      | JavaCode -> generateJava args params_c all_stmts
-      | JSCode -> generateJS args params_js all_stmts
-      | LuaCode -> generateLua args params_lua all_stmts
-      | LLVMCode -> generateLLVM args params_c all_stmts
+      | CCode -> generateC args params_c used all_stmts
+      | JavaCode -> generateJava args params_c used all_stmts
+      | JSCode -> generateJS args params_js used all_stmts
+      | LuaCode -> generateLua args params_lua used all_stmts
+      | LLVMCode -> generateLLVM args params_c used all_stmts
    else []
 
 

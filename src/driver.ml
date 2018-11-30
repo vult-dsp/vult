@@ -37,6 +37,7 @@ let dumpParsedFiles (args:args) (parser_results:parser_results list) : output li
    if args.dparse then
       parser_results
       |> Passes.applyTransformations args
+      |> fst
       |> List.map (fun a -> PrintProg.stmtListStr a.presult)
       |> String.concat "\n"
       |> (fun a -> [ParsedCode a])
@@ -51,6 +52,7 @@ let runFiles (args:args) (parser_results:parser_results list) : output list =
    in
    if args.eval then
       Passes.applyTransformations args ~options:PassCommon.interpreter_options parser_results
+      |> fst
       |> Interpreter.eval
       |> List.map print_val
       |> List.flatten

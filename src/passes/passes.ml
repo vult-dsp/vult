@@ -171,11 +171,13 @@ let passesAll args ?(options=default_options) results =
 
 let applyTransformations args ?(options=default_options) (results:parser_results list) =
    let env, stmts_list = passesAll args ~options results in
+   let data = Env.get env in
+   let used = data.used_code in
    if options.tuples then
       let tuples = { presult = CreateTupleTypes.run env; file = "" } in
-      tuples :: stmts_list
+      tuples :: stmts_list, used
    else
-      stmts_list
+      stmts_list, used
 
 let applyTransformationsSingle args ?(options=default_options) (results:parser_results) =
    let env, stmts' = passesAll args ~options [results] in

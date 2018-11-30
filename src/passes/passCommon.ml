@@ -69,7 +69,7 @@ module PassData = struct
          repeat       : bool;
          args         : args;
          interp_env   : Interpreter.Env.env;
-         used_code    : bool IdMap.t;
+         used_code    : Prog.used_function IdMap.t;
       }
 
    let hasInitFunction (t:t) (path:Id.path) : bool =
@@ -99,11 +99,12 @@ module PassData = struct
    let getTuples (t:t) : TypeSet.t =
       t.used_tuples
 
-   let addRoot (t:t) (id:Id.t) : t =
-      { t with used_code = IdMap.add id false t.used_code }
+   let markAsUsed (t:t) (id:Id.t) root : t =
+      { t with used_code = IdMap.add id (Prog.Used root) t.used_code }
 
-   let markRoot (t:t) (id:Id.t) : t =
-      { t with used_code = IdMap.add id true t.used_code }
+   let markToKeep (t:t) (id:Id.t) root : t =
+      { t with used_code = IdMap.add id (Prog.Keep root) t.used_code }
+
 
    let empty args =
       let roots =
@@ -111,7 +112,7 @@ module PassData = struct
          List.map
             (fun a ->
                 let id = Parser.parseId a in
-                [id, false; Id.postfix id "_init", false])
+                [id, (Prog.Used Root); Id.postfix id "_init", (Prog.Used Root)])
             args.roots
       in
       {

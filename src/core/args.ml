@@ -63,6 +63,7 @@ type args =
       mutable fs      : float option;
       mutable tables  : bool;
       mutable roots   : string list;
+      mutable shorten : bool;
    }
 [@@deriving show,eq,ord]
 
@@ -83,4 +84,5 @@ let default_arguments : args =
       fs = None;
       tables = true;
       roots = [];
+      shorten = false;
    }

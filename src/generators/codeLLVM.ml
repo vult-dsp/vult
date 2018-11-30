@@ -169,10 +169,10 @@ let printBody s (stmt:cstmt) : 'state * Pla.t =
 
 let printTopLevel s (stmt:cstmt) : 'state * Pla.t =
    match stmt with
-   | CSFunction(_ntype, _name, _args, body) ->
+   | CSFunction(_ntype, _name, _args, body, _) ->
       printBody s body
 
-   | CSType (name, fields) ->
+   | CSType (name, fields, _) ->
       let record_fields, _ = List.fold_left (fun (m, i) (_typ,name) -> Table.add name i m, i + 1) (Table.empty, 0) fields in
       let s = { s with records = Table.add name record_fields s.records } in
       let types = Pla.map_sep Pla.comma (fun (typ, _) -> printTypeDescr typ) fields in

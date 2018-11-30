@@ -31,11 +31,20 @@ type tag =
    | TReal   of string * Loc.t
    | TString of string * Loc.t
 
+type root =
+   | NotRoot
+   | Root
+
+type used_function =
+   | NotUsed
+   | Used of root
+   | Keep of root
+
 type attr =
    {
       loc     : Loc.t;
       fun_and : bool;
-      root    : bool;
+      used    : used_function;
       active  : bool;
       bound   : bool;
       const   : bool;
@@ -204,7 +213,7 @@ type parser_results =
 let makeAttr (loc:Loc.t) : attr =
    {
       loc     = loc;
-      root    = false;
+      used    = NotUsed;
       fun_and = false;
       active  = false;
       bound   = false;
@@ -220,7 +229,7 @@ let emptyAttr =
    {
       loc     = Loc.default;
       fun_and = false;
-      root    = false;
+      used    = NotUsed;
       active  = false;
       bound   = false;
       typ     = None;

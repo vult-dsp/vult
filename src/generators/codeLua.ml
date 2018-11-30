@@ -275,14 +275,14 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let index = printExp params index in
       Some({pla|<#name#>[<#index#>+1] = <#value_t#>; |pla})
 
-   | CSFunction(_, name, args, (CSBlock(_) as body)) ->
+   | CSFunction(_, name, args, (CSBlock(_) as body), _) ->
       (* if the function has any of the special names add the ctx argument *)
       let args = fixContext (isSpecial params name) args in
       let args_t = Pla.map_sep Pla.comma (fun (_, a) -> Pla.string a) args in
       let body_t = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
       Some({pla|function this.<#name#s>(<#args_t#>)<#body_t#+><#>end<#>|pla})
 
-   | CSFunction(_, name, args, body) ->
+   | CSFunction(_, name, args, body, _) ->
       let args_t = Pla.map_sep Pla.comma (fun (_, a) -> Pla.string a) args in
       let body_t = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
       Some({pla|function this.<#name#s>(<#args_t#>)<#body_t#+><#>end<#>|pla})

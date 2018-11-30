@@ -339,15 +339,27 @@ let printFunArg (ntype, name) : Pla.t =
       let tdescr = printTypeDescr typ in
       {pla|<#tdescr#> <#name#s>|pla}
 
+let rec isLastReturn stmt =
+   match stmt with
+   | CSReturn _ -> true
+   | CSBlock stmts -> isLastReturnList stmts
+   | _ -> false
+and isLastReturnList stmts =
+   match stmts with
+   | [s] -> isLastReturn s
+   | _ :: t -> isLastReturnList t
+   | _ -> false
+
 let rec printSwitchStmt params e cases def =
    let e_t = printExp params e in
    let cases_t =
       Pla.map_sep_all
          Pla.newline
-         (fun (v,stmt) ->
+         (fun (v, stmt) ->
              let v_t = printExp params v in
              let stmt_t = CCOpt.get_or ~default:Pla.unit(printStmt params stmt)  in
-             {pla|case <#v_t#>:<#stmt_t#+><#>break;|pla})
+             let break = if isLastReturn stmt then Pla.unit else Pla.string "break;" in
+             {pla|case <#v_t#>:<#stmt_t#+><#><#break#>|pla})
          cases
    in
    let def_t =
@@ -411,8 +423,15 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let index = printExp params index in
       Some({pla|<#name#>[<#index#>] = <#te#>;|pla})
 
+
+   | CSConst(lhs, ((CEArray _ ) as value)) ->
+      if params.is_header then
+         let tlhs = printLhsExp params true lhs in
+         Some({pla|static <#tlhs#>;|pla})
+      else None
+
    (* Prints const x = ... *)
-   | CSConst(lhs, ((CEInt _ | CEFloat _ | CEBool _ | CEArray _ ) as value)) ->
+   | CSConst(lhs, ((CEInt _ | CEFloat _ | CEBool _ ) as value)) ->
       if params.is_header then
          let tlhs = printLhsExp params true lhs in
          let te = printExp params value in
@@ -423,7 +442,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSConst _ -> failwith "printStmt: invalid constant declaration"
 
    (* Function declarations cotaining more than one statement *)
-   | CSFunction(ntype, name, args, (CSBlock(_) as body)) ->
+   | CSFunction(ntype, name, args, (CSBlock(_) as body), attr) ->
       let ret   = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
       (* if we are printing a header, skip the body *)
@@ -431,22 +450,24 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
          None
       end
       else begin
+         let scope = if attr.is_root then Pla.string "public" else Pla.string "private" in
          match printStmt params body with
          | Some(tbody) ->
-            Some({pla|private <#ret#> <#name#s>(<#targs#>)<#tbody#><#>|pla})
+            Some({pla|<#scope#> <#ret#> <#name#s>(<#targs#>)<#tbody#><#>|pla})
          (* Covers the case when the body is empty *)
-         | None -> Some({pla|private <#ret#> <#name#s>(<#targs#>){}<#>|pla})
+         | None -> Some({pla|<#scope#> <#ret#> <#name#s>(<#targs#>){}<#>|pla})
       end
    (* Function declarations cotaining a single statement *)
-   | CSFunction(ntype, name, args, body) ->
+   | CSFunction(ntype, name, args, body, attr) ->
       let ret = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
       (* if we are printing a header, skip the body *)
       if params.is_header then
          None
       else
+         let scope = if attr.is_root then Pla.string "public" else Pla.string "private" in
          let tbody = CCOpt.get_or ~default:Pla.unit (printStmt params body) in
-         Some({pla|private <#ret#> <#name#s>(<#targs#>){<#tbody#>}<#>|pla})
+         Some({pla|<#scope#> <#ret#> <#name#s>(<#targs#>){<#tbody#>}<#>|pla})
 
    (* Prints return x *)
    | CSReturn(e1) ->
@@ -481,7 +502,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
       Some({pla|if<#tcond#><#tthen#><#>else<#><#telse#>|pla})
 
    (* Type declaration (only in headers) *)
-   | CSType(name, members) when params.is_header ->
+   | CSType(name, members, attr) when params.is_header ->
       let tmembers =
          Pla.map_sep_all Pla.newline
             (fun (typ, name) ->
@@ -506,10 +527,11 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
          in
          {pla|<#name#s>(){ <#init#> }|pla}
       in
-      Some({pla|private class <#name#s> {<#tmembers#+> <#constructor_default#+> <#constructor#+> }<#>|pla})
+      let scope = if attr.is_root then Pla.string "public" else Pla.string "private" in
+      Some({pla|<#scope#> class <#name#s> {<#tmembers#+> <#constructor_default#+> <#constructor#+> }<#>|pla})
 
    (* Do not print type delcarations in implementation file *)
-   | CSType(_, _) -> None
+   | CSType(_, _, _) -> None
 
    (* Type declaration aliases (only in headers) *)
    | CSAlias(_t1, _t2) when params.is_header ->

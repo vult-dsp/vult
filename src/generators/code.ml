@@ -24,6 +24,12 @@ THE SOFTWARE.
 
 (** Intermedia representation for the target languages *)
 
+type cattr =
+   {
+      is_root : bool ;
+   }
+[@@deriving show, eq, ord]
+
 (** Description of types *)
 type type_descr =
    | CTSimple of string
@@ -66,12 +72,12 @@ type cstmt =
    | CSVar      of clhsexp * cexp option
    | CSConst    of clhsexp * cexp
    | CSBind     of clhsexp * cexp
-   | CSFunction of type_descr * string * (arg_type * string) list * cstmt
+   | CSFunction of type_descr * string * (arg_type * string) list * cstmt * cattr
    | CSReturn   of cexp
    | CSWhile    of cexp * cstmt
    | CSBlock    of cstmt list
    | CSIf       of cexp * cstmt * cstmt option
-   | CSType     of string * (type_descr * string) list
+   | CSType     of string * (type_descr * string) list * cattr
    | CSAlias    of string * type_descr
    | CSExtFunc  of type_descr * string * (arg_type * string) list
    | CSSwitch   of cexp * (cexp * cstmt) list * cstmt option

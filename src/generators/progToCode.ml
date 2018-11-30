@@ -34,6 +34,9 @@ type parameters =
       repl : Replacements.t;
       code : Args.code;
       cleanup : bool;
+      shorten : bool;
+      used : used_function Maps.IdMap.t;
+      table : NameTable.t;
    }
 
 let makeSingleBlock stmts =
@@ -228,9 +231,9 @@ module Atomic = struct
          let s, then_' = makeStmtAtomic p s then_ in
          s, pre @ [CSIf(cond', makeSingleBlock then_', None)]
 
-      | CSFunction(ts, name, args, body) ->
+      | CSFunction(ts, name, args, body, attr) ->
          let s, body' = makeStmtAtomic p s body in
-         s, [CSFunction(ts, name, args, makeSingleBlock body')]
+         s, [CSFunction(ts, name, args, makeSingleBlock body', attr)]
 
       | CSBlock(stmts) ->
          let s, stmts' = makeStmtListAtomic p s stmts in
@@ -289,9 +292,18 @@ and makeSwitchList p stmts =
    | h :: t ->
       makeSwitch p h ::  makeSwitchList p t
 
-
 let convertId (p:parameters) (id:Id.t) : string =
    String.concat "_" id |> Replacements.getKeyword p.repl
+
+let convertFunctionName (p:parameters) (id:Id.t) : string =
+   let name = String.concat "_" id |> Replacements.getKeyword p.repl in
+   if p.shorten then
+      match Maps.IdMap.find_opt id p.used with
+      | Some Keep Root ->
+         NameTable.registerName p.table name
+      | _ ->
+         NameTable.generateName p.table name
+   else name
 
 let convertVarId (p:parameters) (id:Id.t) : string list =
    List.map (Replacements.getKeyword p.repl) id
@@ -412,7 +424,7 @@ let convertFunction (p:parameters) (name:Id.t) (typ:type_descr) (elems:cexp list
             CECall(fn, elems, typ)
          | _ -> CECall(convertId p name, elems, typ)
       end
-   | _ -> CECall(convertId p name, elems, typ)
+   | _ -> CECall(convertFunctionName p name, elems, typ)
 
 
 let attrType (p:parameters) (attr:attr) : type_descr =
@@ -567,6 +579,16 @@ let isSmall exp =
    | PInt(i, _) when i < 1000 -> true
    | _ -> false
 
+let removeFunction used =
+   match used with
+   | Keep _ -> false
+   | _ -> true
+
+let isRoot used =
+   match used with
+   | Keep Root | Used Root -> true
+   | _ -> false
+
 let rec convertStmt (p:parameters) (s:stmt) : cstmt =
    match s with
    | StmtVal(lhs, None, _) ->
@@ -599,14 +621,15 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let else_' = convertStmt p else_ in
       CSIf(cond', then_', Some(else_'))
    | StmtFun(_, _, _, None, _) -> failwith "CodeC.convertStmt: everything should have types"
-   | StmtFun(_, _, _, _, attr) when p.cleanup && not attr.root -> CSEmpty
-   | StmtFun(name, args, body, Some(ret), _) ->
+   | StmtFun(_, _, _, _, attr) when p.cleanup && removeFunction attr.used -> CSEmpty
+   | StmtFun(name, args, body, Some(ret), attr) ->
       let arg_names = List.map (convertTypedId p) args in
       let body' = convertStmt p body in
       let body' = collectStmt p body' in
       let body' = if p.code <> LuaCode then makeSwitch p body' else body' in
-      let fname = convertId p name in
-      CSFunction(convertTypeMakeTupleUnit p ret, fname, arg_names, body')
+      let fname = convertFunctionName p name in
+      let attr  = { is_root = isRoot attr.used } in
+      CSFunction(convertTypeMakeTupleUnit p ret, fname, arg_names, body', attr)
    (* special case for c/c++ to replace the makeArray function *)
    | StmtBind(LWild(_) , PCall(None, ["makeArray"], [size;init;var], attr), _) when p.code = CCode ->
       let init' = convertExp p init in
@@ -659,14 +682,15 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
    | StmtBlock(_, stmts, _) ->
       let stmts' = convertStmtList p stmts in
       makeSingleBlock stmts'
-   | StmtType(name, members, _) ->
+   | StmtType(name, members, attr) ->
       let type_name =
          match convertType p name with
          | CTSimple(t) -> t
          | _ -> failwith "CodeC.convertStmt: invalid alias type"
       in
       let member_pairs = List.map (fun (id, typ, _) -> convertType p (List.hd typ), convertSingleVarId p id) members in
-      CSType(type_name, member_pairs)
+      let attr  = { is_root = isRoot attr.used } in
+      CSType(type_name, member_pairs, attr)
    | StmtAliasType(t1, t2, _) ->
       let t1_name   = convertType p t1 in
       let type_name =
