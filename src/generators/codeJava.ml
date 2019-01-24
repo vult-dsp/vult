@@ -424,10 +424,10 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
       Some({pla|<#name#>[<#index#>] = <#te#>;|pla})
 
 
-   | CSConst(lhs, ((CEArray _ ) as value)) ->
+   | CSConst((CLId(_, _) as lhs), (CEArray (_, _) )) ->
       if params.is_header then
          let tlhs = printLhsExp params true lhs in
-         Some({pla|static <#tlhs#>;|pla})
+         Some({pla|<#tlhs#>;|pla})
       else None
 
    (* Prints const x = ... *)
@@ -570,8 +570,26 @@ and wrapStmtIfNotBlock params stmt =
       | Some(t) -> Some(Pla.wrap (Pla.string "{ ") (Pla.string " }") t)
       | _ -> None
 
+let getBinarizedFloat elem =
+   Pla.string @@
+   match elem with
+   | CEFloat (_, n) -> Binarize.float_to_bin_string n
+   | CEInt n -> Binarize.float_to_bin_string (float_of_int n)
+   | _ -> raise (Invalid_argument "not a numeric value")
+
+let rec generateTableData (params:params) (stmts:cstmt list) =
+   match stmts with
+   | [] -> []
+   | CSConst(CLId(_, name), (CEArray (elems, _))) :: rest ->
+      let table_name = (String.concat "_" name) ^ ".table" in
+      let telems = Pla.map_join getBinarizedFloat elems in
+      (telems, FileKind.ExtOnly table_name) :: generateTableData params rest
+   | _ :: rest -> generateTableData params rest
+
 (** Generates the .c and .h file contents for the given parsed files *)
 let print (params:params) (stmts:Code.cstmt list) : (Pla.t * FileKind.t) list =
    let h   = printStmtList { params with is_header = true } stmts in
    let cpp = printStmtList { params with is_header = false } stmts in
-   Templates.apply params params.module_name params.template (Pla.join [h; cpp])
+   let tables = generateTableData params stmts in
+   let files = Templates.apply params params.module_name params.template (Pla.join [h; cpp]) in
+   tables @ files
