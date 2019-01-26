@@ -36,8 +36,13 @@ type parameters =
       cleanup : bool;
       shorten : bool;
       used : used_function Maps.IdMap.t;
-      table : NameTable.t;
+      functions : NameTable.t;
+      variables : NameTable.t;
    }
+
+type lhs_kind =
+   | Declaration
+   | Other
 
 let makeSingleBlock stmts =
    match stmts with
@@ -300,14 +305,20 @@ let convertFunctionName (p:parameters) (id:Id.t) : string =
    if p.shorten then
       match Maps.IdMap.find_opt id p.used with
       | Some Keep Root ->
-         NameTable.registerName p.table name
+         NameTable.registerName p.functions name
       | _ ->
-         NameTable.generateName p.table name
+         NameTable.generateName p.functions name
    else name
 
-let convertVarId (p:parameters) (id:Id.t) : string list =
-   List.map (Replacements.getKeyword p.repl) id
-
+let convertVarId (p:parameters) (is_val:lhs_kind) (id:Id.t) : string list =
+   let name = List.map (Replacements.getKeyword p.repl) id in
+   if p.shorten then
+      if is_val = Declaration then
+         List.map (NameTable.generateName p.variables) name
+      else
+         List.map (NameTable.getOrRegister p.variables) name
+   else
+      name
 let convertSingleVarId (p:parameters) (id:Id.t) : string =
    match id with
    | [name] ->
@@ -343,14 +354,14 @@ let convertTypeMakeTupleUnit (p:parameters) (tp:Typ.t) : type_descr =
 let convertTypeList (p:parameters) (tp:Typ.t list) : type_descr list =
    List.map (convertType p) tp
 
-let convertTypedId (p:parameters) (e:typed_id) : arg_type * string =
+let convertTypedId (p:parameters) (is_val:lhs_kind) (e:typed_id) : arg_type * string =
    match e with
    | SimpleId(_, _, _)  -> failwith "ProgToCode.convertTypedId: everything should have types"
    | TypedId(id, typ, _, _) ->
       let ftype = Typ.first typ in
       let typ_c = convertType p ftype in
       let typ_ref = if Typ.isSimpleType ftype then Var(typ_c) else Ref(typ_c) in
-      let ids = convertVarId p id in
+      let ids = convertVarId p is_val id in
       typ_ref, String.concat "." ids
 
 let getCast (p:parameters) (from_type:type_descr) (to_type:type_descr) : string =
@@ -447,7 +458,7 @@ let rec convertExp (p:parameters) (e:exp) : cexp =
       let s = Replacements.getRealToString p.repl (Float.crop v) "real" in
       CEFloat(s, Float.crop v)
    | PId(id, attr) ->
-      CEVar(convertVarId p id, [typ attr])
+      CEVar(convertVarId p Other id, [typ attr])
    | PIndex(e, index, attr) ->
       let e' = convertExp p e in
       let index' = convertExp p index in
@@ -500,10 +511,10 @@ and convertExpList (p:parameters) (e:exp list) : cexp list =
 and convertExpArray (p:parameters) (e:exp array) : cexp list =
    Array.map (convertExp p) e |> Array.to_list
 
-and convertLhsExp (is_val:bool) (p:parameters) (e:lhs_exp) : clhsexp =
+and convertLhsExp (is_val:lhs_kind) (p:parameters) (e:lhs_exp) : clhsexp =
    match e with
    | LId(id, Some typ, _) ->
-      let new_id = convertVarId p id in
+      let new_id = convertVarId p is_val id in
       let typl = convertTypeList p typ in
       CLId(typl, new_id)
    | LId(_, None, _)   -> failwith "ProgToCode.convertLhsExp: everything should have types"
@@ -515,13 +526,13 @@ and convertLhsExp (is_val:bool) (p:parameters) (e:lhs_exp) : clhsexp =
    | LGroup(e, _) -> convertLhsExp is_val p e
    | LIndex (_, None, _, _) -> failwith "ProgToCode.convertLhsExp: everything should have types"
    | LIndex (id, Some(typ), index, _) ->
-      let new_id = convertVarId p id in
+      let new_id = convertVarId p is_val id in
       let index = convertExp p index in
       let typl = convertTypeList p typ in
       CLIndex (typl, new_id, index)
 
 
-and convertLhsExpList (is_val:bool) (p:parameters) (lhsl:lhs_exp list) : clhsexp list =
+and convertLhsExpList (is_val:lhs_kind) (p:parameters) (lhsl:lhs_exp list) : clhsexp list =
    List.fold_left
       (fun acc lhs ->
           (convertLhsExp is_val p lhs) :: acc)
@@ -589,17 +600,22 @@ let isRoot used =
    | Keep Root | Used Root -> true
    | _ -> false
 
+let refreshTable (p:parameters) =
+   { p with variables = NameTable.make () }
+
 let rec convertStmt (p:parameters) (s:stmt) : cstmt =
    match s with
    | StmtVal(lhs, None, _) ->
-      let lhs' = convertLhsExp true p lhs in
+      let lhs' = convertLhsExp Declaration p lhs in
       CSVar(lhs', None)
+   | StmtVal(_, _, attr) when attr.const && p.cleanup && removeFunction attr.used ->
+      CSEmpty
    | StmtVal(lhs, Some(rhs), attr) when attr.const ->
-      let lhs' = convertLhsExp false p lhs in
+      let lhs' = convertLhsExp Other p lhs in
       let rhs' = convertExp p rhs in
       CSConst(lhs', rhs')
    | StmtVal(lhs, Some(rhs), attr) when attr.const ->
-      let lhs' = convertLhsExp false p lhs in
+      let lhs' = convertLhsExp Other p lhs in
       let rhs' = convertExp p rhs in
       CSVar(lhs', Some(rhs'))
    | StmtVal(_, Some(_), _) -> failwith "ProgToCode.convertStmt: val should not have initializations"
@@ -623,12 +639,15 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
    | StmtFun(_, _, _, None, _) -> failwith "CodeC.convertStmt: everything should have types"
    | StmtFun(_, _, _, _, attr) when p.cleanup && removeFunction attr.used -> CSEmpty
    | StmtFun(name, args, body, Some(ret), attr) ->
-      let arg_names = List.map (convertTypedId p) args in
+      let p = refreshTable p in
+      let is_root = isRoot attr.used in
+      let is_var = if is_root then Other else Declaration in
+      let arg_names = List.map (convertTypedId p is_var) args in
       let body' = convertStmt p body in
       let body' = collectStmt p body' in
       let body' = if p.code <> LuaCode then makeSwitch p body' else body' in
       let fname = convertFunctionName p name in
-      let attr  = { is_root = isRoot attr.used } in
+      let attr  = { is_root } in
       CSFunction(convertTypeMakeTupleUnit p ret, fname, arg_names, body', attr)
    (* special case for c/c++ to replace the makeArray function *)
    | StmtBind(LWild(_) , PCall(None, ["makeArray"], [size;init;var], attr), _) when p.code = CCode ->
@@ -664,7 +683,7 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
    | StmtBind(LId(lhs, Some atyp, _), PArray(elems, _), _) when p.code = CCode ->
       let elems' = convertExpArray p elems in
       let atype, _ = Typ.arrayTypeAndSize (Typ.first atyp) in
-      let lhs' = convertVarId p lhs in
+      let lhs' = convertVarId p Other lhs in
       let typ = convertType p atype in
       let stmts = List.mapi (fun i e -> CSBind(CLIndex([typ], lhs', CEInt(i)), e)) elems' in
       makeSingleBlock stmts
@@ -674,9 +693,9 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
       let atyp, size = Typ.arrayTypeAndSize typ in
       let atyp' = convertType p atyp in
       let copy_fn = getCopyArrayFunction p atyp' in
-      CSBind(CLWild, CECall(copy_fn, [CEInt(size);CEVar(convertVarId p lhs, [atyp']);rhs'], unit_typ))
+      CSBind(CLWild, CECall(copy_fn, [CEInt(size);CEVar(convertVarId p Other lhs, [atyp']);rhs'], unit_typ))
    | StmtBind(lhs, rhs, _) ->
-      let lhs' = convertLhsExp false p lhs in
+      let lhs' = convertLhsExp Other p lhs in
       let rhs' = convertExp p rhs in
       CSBind(lhs', rhs')
    | StmtBlock(_, stmts, _) ->
@@ -699,12 +718,18 @@ let rec convertStmt (p:parameters) (s:stmt) : cstmt =
          | _ -> failwith "CodeC.convertStmt: invalid alias type"
       in
       CSAlias(type_name, t1_name)
-   | StmtExternal(_, args, ret, Some link_name, _) ->
-      let arg_names = List.map (convertTypedId p) args in
+   | StmtExternal(_, args, ret, Some link_name, attr) ->
+      let p = refreshTable p in
+      let is_root = isRoot attr.used in
+      let is_var = if is_root then Other else Declaration in
+      let arg_names = List.map (convertTypedId p is_var) args in
       CSExtFunc(convertType p ret, link_name, arg_names)
-   | StmtExternal(name, args, ret, None, _) ->
+   | StmtExternal(name, args, ret, None, attr) ->
+      let p = refreshTable p in
+      let is_root = isRoot attr.used in
+      let is_var = if is_root then Other else Declaration in
       let fname = convertId p name in
-      let arg_names = List.map (convertTypedId p) args in
+      let arg_names = List.map (convertTypedId p is_var) args in
       CSExtFunc(convertType p ret, fname, arg_names)
    | StmtEmpty -> CSEmpty
 

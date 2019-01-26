@@ -181,7 +181,14 @@ let rec getMainModule (parser_results:parser_results list) : string =
    | _ :: t -> getMainModule t
 
 let makeParams (args:args) (params:params) (used:used_function Maps.IdMap.t) =
-   ProgToCode.{ repl = params.repl; code = args.code; cleanup = args.roots <> []; table = NameTable.make (); shorten = args.shorten; used }
+   ProgToCode.{
+      repl = params.repl;
+      code = args.code;
+      cleanup = args.roots <> [];
+      functions = NameTable.make ();
+      variables = NameTable.make ();
+      shorten = args.shorten; used
+   }
 
 (* Generates the C/C++ code if the flag was passed *)
 let generateC (args:args) (params:params) (used:used_function Maps.IdMap.t) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=

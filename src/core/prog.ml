@@ -53,6 +53,7 @@ type attr =
       tags    : tag list;
       evaluated : bool;
       no_inline : bool;
+      fun_src : Id.t option;
    }
 
 let pp_attr = fun fmt _ -> Format.pp_print_string fmt "attr"
@@ -223,6 +224,7 @@ let makeAttr (loc:Loc.t) : attr =
       const   = false;
       evaluated = false;
       no_inline = false;
+      fun_src = None;
    }
 
 let emptyAttr =
@@ -238,6 +240,7 @@ let emptyAttr =
       const   = false;
       evaluated = false;
       no_inline = false;
+      fun_src = None;
    }
 
 let moduleName (file:string) : string =

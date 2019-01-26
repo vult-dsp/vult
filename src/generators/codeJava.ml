@@ -424,10 +424,16 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
       Some({pla|<#name#>[<#index#>] = <#te#>;|pla})
 
 
-   | CSConst((CLId(_, _) as lhs), (CEArray (_, _) )) ->
+   | CSConst((CLId(_, name) as lhs), (CEArray (elems, _) )) ->
       if params.is_header then
+         let size = List.length elems in
+         let name = dot name in
          let tlhs = printLhsExp params true lhs in
-         Some({pla|<#tlhs#>;|pla})
+         Some({pla|<#tlhs#>;
+         public void set_<#name#>(java.nio.FloatBuffer buffer){
+            <#name#> = new float[<#size#i>];
+            buffer.get(<#name#>);
+            }|pla})
       else None
 
    (* Prints const x = ... *)

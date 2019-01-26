@@ -150,7 +150,7 @@ module Tables = struct
       let size = List.length data in
       let atype = real_array_type size in
       let arr = PArray((CCList.map (makeFloat attr.loc) data |> Array.of_list), { attr with typ = Some(atype) }) in
-      StmtVal(LId(varname, Some [atype], attr_array size), Some(arr), { emptyAttr with const = true})
+      StmtVal(LId(varname, Some [atype], attr_array size), Some(arr), { emptyAttr with const = true; fun_src = Some fname})
 
 end
 
