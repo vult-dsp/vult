@@ -2,7 +2,8 @@ language: c
 sudo: required
 dist: trusty
 script: bash -ex .travis-vult.sh
-
+env:
+- OCAML_VERSION=4.06
 os:
 - linux
 - osx
