@@ -225,7 +225,20 @@ module MarkUsedFunctions = struct
                let state = { state with data } in
                let state = markType state name root in
                reapply state, StmtFun(name, args, body, ret, { attr with used = Keep root })
-            | exception Not_found -> state, stmt
+            | exception Not_found ->
+               begin match Env.getContext state name with
+                  | Id.Path ctx ->
+                     begin match IdMap.find ctx data.PassData.used_code with
+                        | Used used ->
+                           let state, body = Mapper.map_stmt MarkAllCalls.mapper state body in
+                           let data  = PassData.markToKeep (Env.get state) name used in
+                           let state = { state with data } in
+                           reapply state, StmtFun(name, args, body, ret, { attr with used = Keep used })
+                        | _-> state, stmt
+                        | exception Not_found -> state, stmt
+                     end
+                  | exception Not_found -> state, stmt
+               end
          end
 
       | StmtType({ contents = TId (name, _)} as lhs, rhs, attr) ->
