@@ -109,6 +109,14 @@ float cosh(float x) {
    return (float)Math.cosh(x);
 }
 
+float cos(float x) {
+   return (float)Math.cos(x);
+}
+
+float sin(float x) {
+   return (float)Math.sin(x);
+}
+
 float sinh(float x) {
    return (float)Math.sinh(x);
 }
