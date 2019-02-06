@@ -12,7 +12,9 @@ let generateName (t:t) id =
    match Hashtbl.find_opt t.table id with
    | Some name -> name
    | None ->
+      let is_generated = String.get id 0 = '_' in
       let name = String.init 12 (fun _ -> Char.chr (97 + (Random.State.int t.n 26))) in
+      let name = if is_generated then "_" ^ name else name in
       let () = Hashtbl.add t.table id name in
       name
 

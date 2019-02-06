@@ -81,20 +81,20 @@ let makeExpander (name:string) (mapper:'data -> 'kind -> 'data * 'kind list) : (
 (** Makes a chain of mappers. E.g. foo |-> bar will apply first foo then bar. *)
 let (|->) : ('data,'value) mapper_func -> ('data,'value) mapper_func -> ('data,'value) mapper_func =
    fun mapper1 mapper2 ->
-      let mapper3 =
-         fun state exp ->
-            let state', exp' = apply mapper1 state exp in
-            apply mapper2 state' exp'
-      in Some("", mapper3)
+   let mapper3 =
+      fun state exp ->
+         let state', exp' = apply mapper1 state exp in
+         apply mapper2 state' exp'
+   in Some("", mapper3)
 
 let (|*>) : ('data,'value) expand_func -> ('data,'value) expand_func -> ('data,'value) expand_func =
    fun mapper1 mapper2 ->
-      let mapper3 =
-         fun state exp ->
-            let state', exp_list  = applyExpander mapper1 state exp in
-            let state', exp_list' = applyExpanderList mapper2 state' exp_list in
-            state', exp_list'
-      in Some("", mapper3)
+   let mapper3 =
+      fun state exp ->
+         let state', exp_list  = applyExpander mapper1 state exp in
+         let state', exp_list' = applyExpanderList mapper2 state' exp_list in
+         state', exp_list'
+   in Some("", mapper3)
 
 type 'a mapper =
    {
@@ -155,35 +155,35 @@ let seq (b:'a mapper) (a:'a mapper) : 'a mapper =
 (** Applies any mapper to a list *)
 let mapper_list mapper_app =
    fun mapper state el ->
-      let state', rev_el =
-         List.fold_left
-            (fun (s, acc) e ->
-                let s', e' = mapper_app mapper s e in
-                s', e' :: acc)
-            (state, []) el
-      in state', (List.rev rev_el)
+   let state', rev_el =
+      List.fold_left
+         (fun (s, acc) e ->
+             let s', e' = mapper_app mapper s e in
+             s', e' :: acc)
+         (state, []) el
+   in state', (List.rev rev_el)
 
 (** Applies any mapper to an array *)
 let mapper_array mapper_app =
    fun mapper state el ->
-      let ret = Array.copy el in
-      let state', _ =
-         Array.fold_left
-            (fun (s, i) e ->
-                let s', e' = mapper_app mapper s e in
-                Array.set ret i e';
-                s', i+1)
-            (state, 0) el
-      in state', ret
+   let ret = Array.copy el in
+   let state', _ =
+      Array.fold_left
+         (fun (s, i) e ->
+             let s', e' = mapper_app mapper s e in
+             Array.set ret i e';
+             s', i+1)
+         (state, 0) el
+   in state', ret
 
 (** Applies any mapper to an option value *)
 let mapper_opt mapper_app =
    fun mapper state e_opt ->
-      match e_opt with
-      | None    -> state, None
-      | Some(e) ->
-         let state', e' = mapper_app mapper state e in
-         state', Some(e')
+   match e_opt with
+   | None    -> state, None
+   | Some(e) ->
+      let state', e' = mapper_app mapper state e in
+      state', Some(e')
 
 let map_id (mapper:'a mapper) (state:'a) (id:Id.t) : 'a * Id.t =
    apply mapper.id state id
@@ -235,6 +235,14 @@ let rec map_typed_id (mapper:'a mapper) (state:'a) (t:typed_id) : 'a * typed_id 
       let state', tp'   = map_type_list mapper state' tp in
       let state', attr' = map_attr mapper state' attr in
       apply mapper.typed_id state' (TypedId(id', tp', kind, attr'))
+
+let  map_instance (mapper:'state mapper) (state:'state) (inst:instance) : 'state * instance =
+   match inst with
+   | NoInst -> state, inst
+   | This -> state, inst
+   | Named id ->
+      let state, id = map_id mapper state id in
+      state, Named id
 
 let rec map_lhs_exp (mapper:'state mapper) (state:'state) (exp:lhs_exp) : 'state * lhs_exp =
    let map_lhs_exp_list = mapper_list map_lhs_exp in
@@ -317,7 +325,7 @@ and map_exp (mapper:'state mapper) (state:'state) (exp:exp) : 'state * exp =
       let state', attr' = map_attr mapper state' attr in
       apply mapper.exp state' (POp(op, args', attr'))
    | PCall(inst, name, args, attr) ->
-      let state', inst' = (mapper_opt map_id) mapper state inst in
+      let state', inst' = map_instance mapper state inst in
       let state', name' = map_id mapper state' name in
       let state', args' = map_exp_list mapper state' args in
       let state', attr' = map_attr mapper state' attr in

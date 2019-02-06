@@ -374,8 +374,8 @@ and exp_nud (buffer:Stream.stream) (token:'kind token) : exp =
             let exp_call = expression 100 buffer in
             begin
                match exp_call with
-               | PCall(None, fname, args, attr) ->
-                  PCall(Some(id), fname, args, attr)
+               | PCall(NoInst, fname, args, attr) ->
+                  PCall(Named id, fname, args, attr)
                | _ ->
                   let loc   = (GetAttr.fromExp exp_call).loc in
                   let error = Error.PointedError(Loc.getNext loc, "After ':' you can only have a function call e.g. foo()") in
@@ -477,7 +477,7 @@ and functionCall (buffer:Stream.stream) (token:'kind token) (id:Id.t) : exp =
    in
    let _    = Stream.consume buffer RPAREN in
    let attr = makeAttr token.loc in
-   PCall(None, id, args, attr)
+   PCall(NoInst, id, args, attr)
 
 (** <unaryOp> := OP <expression> *)
 and unaryOp (buffer:Stream.stream) (token:'kind token) : exp =

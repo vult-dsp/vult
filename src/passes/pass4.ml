@@ -150,14 +150,14 @@ module DummySimplifications = struct
    let exp : (PassData.t Env.t,exp) Mapper.mapper_func =
       Mapper.make "DummySimplifications.exp" @@ fun state exp ->
       match exp with
-      | PCall(None, ["wrap_array"], [e], _) ->
+      | PCall(NoInst, ["wrap_array"], [e], _) ->
          let args = (Env.get state).PassData.args in
          if args.code = JSCode || args.code = LuaCode then
             state, e
          else
             state, exp
 
-      | PCall(None, ["not"], [e], attr) ->
+      | PCall(NoInst, ["not"], [e], attr) ->
          let args = (Env.get state).PassData.args in
          if args.code = JSCode || args.code = LuaCode then
             state, POp("==", [e; PBool(false, attr)], attr)
@@ -174,7 +174,7 @@ module DummySimplifications = struct
          state, StmtIf(cond, then_, None, attr)
       | StmtIf(cond, StmtBlock(_, [], _), Some(else_), attr) ->
          let cod_attr = GetAttr.fromExp cond in
-         state, StmtIf(PCall(None, ["not"], [cond], cod_attr), else_, None, attr)
+         state, StmtIf(PCall(NoInst, ["not"], [cond], cod_attr), else_, None, attr)
 
       | _ -> state, stmt
 

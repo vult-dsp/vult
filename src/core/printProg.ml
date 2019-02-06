@@ -64,6 +64,15 @@ let rec typeExpressionBuff buffer (tp:Typ.t) =
 and typeExpressionListBuff buffer expl =
    printList buffer typeExpressionBuff ", " expl
 
+let instanceBuff buffer inst =
+   match inst with
+   | NoInst -> ()
+   | Named id ->
+      identifierBuff buffer id;
+      append buffer ":"
+   | This ->
+      append buffer "this:"
+
 let rec lhsExpressionBuff buffer (lhs:lhs_exp) =
    match lhs with
    | LWild({typ=Some(tp)}) ->
@@ -156,9 +165,7 @@ and expressionBuff buffer (exp:exp) =
       expressionBuff buffer e;
       append buffer ")"
    | PCall(id, fname, args, _) ->
-      CCOpt.iter (fun a ->
-            identifierBuff buffer a;
-            append buffer ":") id;
+      instanceBuff buffer id;
       identifierBuff buffer fname;
       append buffer "(";
       expressionListBuff buffer args;

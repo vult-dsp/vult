@@ -53,14 +53,14 @@ module Evaluate = struct
    let exp : ('a Env.t, exp) Mapper.mapper_func =
       Mapper.make "Simplify.exp" @@ fun state exp ->
       match exp with
-      | PCall(None, ["samplerate"], [], attr) ->
+      | PCall(NoInst, ["samplerate"], [], attr) ->
          let data = Env.get state in
          begin match data.PassData.args.fs with
             | None -> state, exp
             | Some fs -> state, PReal(fs, attr)
          end
 
-      | PCall(None, name, args, attr) when
+      | PCall(NoInst, name, args, attr) when
            not attr.evaluated
            && List.for_all isConst args
            && not (IdSet.mem name avoid) ->
@@ -109,7 +109,7 @@ module Inline = struct
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make "Simplify.exp" @@ fun state exp ->
       match exp with
-      | PCall(None, name, args, attr) when not (Env.isBuiltin name) ->
+      | PCall(NoInst, name, args, attr) when not (Env.isBuiltin name) ->
          let env = getInterpEnv state in
          let _ = Env.lookupRaise Scope.Function state name attr.loc in
          let exp =
@@ -118,7 +118,7 @@ module Inline = struct
                let prefix = makePrefix attr in
                let r = inline prefix args fargs in
                PSeq(None, StmtBlock(None, r, attr), attr)
-            | _ -> PCall(None, name, args, { attr with no_inline = true })
+            | _ -> PCall(NoInst, name, args, { attr with no_inline = true })
          in
          state, exp
 
@@ -180,7 +180,7 @@ module MakeTables = struct
       let lindex = LId(["index"],Some [Tables.int_type], Tables.attr_int) in
       let rindex = PId(["index"], Tables.attr_int) in
       let getCoeff a =
-         let arr = PCall(None, ["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array size)], Tables.attr_real) in
+         let arr = PCall(NoInst, ["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array size)], Tables.attr_real) in
          PIndex(arr, rindex, Tables.attr_real)
       in
       let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), Tables.attr_real) in
@@ -189,9 +189,9 @@ module MakeTables = struct
          [
             StmtVal(lindex,None,emptyAttr);
             StmtBind(lindex,
-                     PCall(None, ["clip"],
+                     PCall(NoInst, ["clip"],
                            [
-                              PCall(None, ["int"],
+                              PCall(NoInst, ["int"],
                                     [POp("*",
                                          [
                                             initial_index;
@@ -215,7 +215,7 @@ module MakeTables = struct
    let evaluateFunction env (name:Id.t) (x:float) =
       match Id.getNameNoModule name with
       | Some fname ->
-         let exp = PCall(None, [fname], [PReal(x, emptyAttr)], emptyAttr) in
+         let exp = PCall(NoInst, [fname], [PReal(x, emptyAttr)], emptyAttr) in
          let value = Interpreter.evalExp env exp in
          getFloat value
       | _ -> failwith "evaluateFunction: the function should be a full path"
@@ -345,7 +345,7 @@ module EmbedWavFile = struct
       let attr_real  = { emptyAttr with typ = Some(Typ.Const.real_type) } in
       let attr_int   = { emptyAttr with typ = Some(Typ.Const.int_type) } in
       let table_name = Id.joinSep "_" fname ["chan_" ^ (string_of_int i)] in
-      let table      = PCall(None, ["wrap_array"], [PId(table_name, Tables.attr_array samples)], attr_real) in
+      let table      = PCall(NoInst, ["wrap_array"], [PId(table_name, Tables.attr_array samples)], attr_real) in
       let i          = PInt(i, Tables.attr_int) in
       let samples_e  = PInt(samples, Tables.attr_int) in
       StmtIf(

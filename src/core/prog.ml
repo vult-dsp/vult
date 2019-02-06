@@ -34,11 +34,13 @@ type tag =
 type root =
    | NotRoot
    | Root
+[@@deriving show, eq,ord]
 
 type used_function =
    | NotUsed
    | Used of root
    | Keep of root
+[@@deriving show, eq,ord]
 
 type attr =
    {
@@ -71,6 +73,12 @@ type typed_id =
    | TypedId  of Id.t * Typ.t list * arg_type * attr
 [@@deriving show,eq,ord]
 
+type instance =
+   | NoInst
+   | Named of Id.t
+   | This
+[@@deriving show,eq,ord]
+
 type lhs_exp =
    | LWild  of attr
    | LId    of Id.t * Typ.t list option * attr
@@ -82,120 +90,120 @@ type lhs_exp =
 
 (** Parser syntax tree *)
 and exp =
-    | PUnit
-   of attr
-  | PBool
-    of bool
-       *  attr
-  | PInt
-    of int
-       *  attr
-  | PReal
-    of float
-       *  attr
-  | PString
-    of string
-       *  attr
+   | PUnit
+      of attr
+   | PBool
+      of bool
+         *  attr
+   | PInt
+      of int
+         *  attr
+   | PReal
+      of float
+         *  attr
+   | PString
+      of string
+         *  attr
 
-  | PId
-    of Id.t    (* name *)
-       *  attr
+   | PId
+      of Id.t    (* name *)
+         *  attr
 
-  | PIndex
-    of exp
-       *  exp
-       *  attr
+   | PIndex
+      of exp
+         *  exp
+         *  attr
 
-  | PArray
-    of exp array
-       * attr
-  | PUnOp
-    of string      (* operator *)
-       *  exp
-       *  attr
-  | POp
-    of string      (* operator *)
-       *  exp list
-       *  attr
-  | PCall
-    of Id.t option    (* name/instance *)
-       *  Id.t        (* type/function name *)
-       *  exp list  (* arguments *)
-       *  attr
-  | PIf
-    of exp    (* condition *)
-       *  exp (* then *)
-       *  exp (* else *)
-       *  attr
-  | PGroup
-    of exp
-       *  attr
-  | PTuple
-    of exp list
-       *  attr
-  | PSeq
-    of Id.t option (* Scope name *)
-       *  stmt
-       *  attr
-  | PEmpty
+   | PArray
+      of exp array
+         * attr
+   | PUnOp
+      of string      (* operator *)
+         *  exp
+         *  attr
+   | POp
+      of string      (* operator *)
+         *  exp list
+         *  attr
+   | PCall
+      of instance    (* name/instance *)
+         *  Id.t        (* type/function name *)
+         *  exp list  (* arguments *)
+         *  attr
+   | PIf
+      of exp    (* condition *)
+         *  exp (* then *)
+         *  exp (* else *)
+         *  attr
+   | PGroup
+      of exp
+         *  attr
+   | PTuple
+      of exp list
+         *  attr
+   | PSeq
+      of Id.t option (* Scope name *)
+         *  stmt
+         *  attr
+   | PEmpty
 [@@deriving show,eq,ord]
 
 and stmt =
-    | StmtVal
-   of lhs_exp        (* names/lhs *)
-      *  exp option  (* rhs *)
-      *  attr
-  | StmtMem
-    of lhs_exp        (* names/lhs *)
-       *  exp option  (* rhs *)
-       *  attr
-  | StmtWhile
-    of exp            (* condition*)
-       *  stmt        (* statements *)
-       *  attr
-  | StmtReturn
-    of exp
-       *  attr
-  | StmtIf
-    of exp            (* condition *)
-       *  stmt        (* then *)
-       *  stmt option (* else *)
-       *  attr
-  | StmtFun
-    of Id.t               (* name *)
-       *  typed_id list   (* arguments *)
-       *  stmt            (* body *)
-       *  Typ.t option    (* return type *)
-       *  attr
-  | StmtExternal
-    of Id.t              (* name *)
-       *  typed_id list  (* arguments *)
-       *  Typ.t          (* return type *)
-       *  string option  (* linking name *)
-       *  attr
-  | StmtBind
-    of lhs_exp        (* lhs *)
-       *  exp         (* rhs *)
-       *  attr
-  | StmtBlock
-    of Id.t option      (* scope name *)
-       *  stmt list
-       *  attr
-  | StmtType
-    of Typ.t          (* name *)
-       *  val_decl list (* members *)
-       *  attr
-  | StmtAliasType
-    of Typ.t          (* name *)
-       *  Typ.t       (* alias type *)
-       *  attr
-  | StmtEmpty
+   | StmtVal
+      of lhs_exp        (* names/lhs *)
+         *  exp option  (* rhs *)
+         *  attr
+   | StmtMem
+      of lhs_exp        (* names/lhs *)
+         *  exp option  (* rhs *)
+         *  attr
+   | StmtWhile
+      of exp            (* condition*)
+         *  stmt        (* statements *)
+         *  attr
+   | StmtReturn
+      of exp
+         *  attr
+   | StmtIf
+      of exp            (* condition *)
+         *  stmt        (* then *)
+         *  stmt option (* else *)
+         *  attr
+   | StmtFun
+      of Id.t               (* name *)
+         *  typed_id list   (* arguments *)
+         *  stmt            (* body *)
+         *  Typ.t option    (* return type *)
+         *  attr
+   | StmtExternal
+      of Id.t              (* name *)
+         *  typed_id list  (* arguments *)
+         *  Typ.t          (* return type *)
+         *  string option  (* linking name *)
+         *  attr
+   | StmtBind
+      of lhs_exp        (* lhs *)
+         *  exp         (* rhs *)
+         *  attr
+   | StmtBlock
+      of Id.t option      (* scope name *)
+         *  stmt list
+         *  attr
+   | StmtType
+      of Typ.t          (* name *)
+         *  val_decl list (* members *)
+         *  attr
+   | StmtAliasType
+      of Typ.t          (* name *)
+         *  Typ.t       (* alias type *)
+         *  attr
+   | StmtEmpty
 [@@deriving show,eq,ord]
 
 and val_decl =
-    Id.t         (* name *)
-    * Typ.t list (* type *)
-    * attr
+   Id.t         (* name *)
+   * Typ.t list (* type *)
+   * attr
 [@@deriving show,eq,ord]
 
 type exp_list = exp list

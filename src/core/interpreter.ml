@@ -643,7 +643,7 @@ and evalExp (env:Env.env) (exp:exp) : exp =
 
    | PSeq(_, stmt, _) -> evalStmt env stmt
 
-   | PCall(Some(inst), name, args, attr) ->
+   | PCall(Named inst, name, args, attr) ->
       let args' = List.map (evalExp env) args in
       begin match Env.lookupFunction env name with
          | Some (t, fn) ->
@@ -654,7 +654,7 @@ and evalExp (env:Env.env) (exp:exp) : exp =
             end
          | None -> exp
       end
-   | PCall(None, name, args, attr) ->
+   | PCall(NoInst, name, args, attr) ->
       let args' = List.map (evalExp env) args in
       begin match Env.lookupFunction env name with
          | Some (t, fn) ->
@@ -666,6 +666,8 @@ and evalExp (env:Env.env) (exp:exp) : exp =
             end
          | None -> raise Abort
       end
+   | PCall(This, _, _, _) -> failwith "Self calls not yet implemented"
+
 
 and evalFunction (env:Env.env) (fn:Env.fun_body) (attr:Prog.attr) (args:exp list) : exp option =
    match fn with

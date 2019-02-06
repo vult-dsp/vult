@@ -100,10 +100,18 @@ module PassData = struct
       t.used_tuples
 
    let markAsUsed (t:t) (id:Id.t) root : t =
-      { t with used_code = IdMap.add id (Prog.Used root) t.used_code }
+      match IdMap.find_opt id t.used_code with
+      | Some _ -> t
+      | None ->
+         { t with used_code = IdMap.add id (Prog.Used root) t.used_code }
 
    let markToKeep (t:t) (id:Id.t) root : t =
-      { t with used_code = IdMap.add id (Prog.Keep root) t.used_code }
+      match IdMap.find_opt id t.used_code with
+      | Some Prog.Keep NotRoot ->
+         { t with used_code = IdMap.add id (Prog.Keep root) t.used_code }
+      | Some Prog.Keep Root -> t
+      | _ ->
+         { t with used_code = IdMap.add id (Prog.Keep root) t.used_code }
 
 
    let empty args =

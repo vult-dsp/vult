@@ -262,12 +262,12 @@ let rec newExp state typ =
             let state' = decr_nest state in
             let elem = newExp state' typ in
             let fn = newBuiltinFun state' in
-            PCall(None, [fn], [elem], emptyAttr));
+            PCall(NoInst, [fn], [elem], emptyAttr));
       (* call real builtin no args *)
       (isReal typ), nest_p, (fun state ->
             let state' = decr_nest state in
             let fn = newBuiltinFunNoArgs state' in
-            PCall(None, [fn], [], emptyAttr));
+            PCall(NoInst, [fn], [], emptyAttr));
       (* call to get array*)
       (hasArrayType typ), nest_p, (fun state ->
             let array_type, var = pickArrayVar state typ in

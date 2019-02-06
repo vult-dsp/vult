@@ -498,7 +498,7 @@ module ProcessArrays = struct
    let exp : (PassData.t Env.t,exp) Mapper.mapper_func =
       Mapper.make "ProcessArrays.exp" @@ fun state exp ->
       match exp with
-      | PCall(None, ["size"], [arr],attr) ->
+      | PCall(NoInst, ["size"], [arr],attr) ->
          let arr_attr = GetAttr.fromExp arr in
          let size = getArraySize arr_attr.typ in
          state, PInt(size,attr)

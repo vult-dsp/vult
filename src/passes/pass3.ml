@@ -61,11 +61,17 @@ module InsertContext = struct
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make "InsertContext.exp" @@ fun state exp ->
       match exp with
-      | PCall(Some(id), kind, args, attr) ->
+      | PCall(Named id, kind, args, attr) ->
          let Id.Path(fn_name) = Env.currentScope state in
          let Id.Path(context) = Env.getContext state fn_name in
          let typ = ref (Typ.TId(context, None)) in
-         state, PCall(None, kind, PId("_ctx" :: id, { attr with typ = Some(typ) }) :: args, attr)
+         state, PCall(NoInst, kind, PId("_ctx" :: id, { attr with typ = Some(typ) }) :: args, attr)
+      | PCall(This, kind, args, attr) ->
+         let Id.Path(fn_name) = Env.currentScope state in
+         let Id.Path(context) = Env.getContext state fn_name in
+         let typ = ref (Typ.TId(context, None)) in
+         state, PCall(NoInst, kind, PId(["_ctx"], { attr with typ = Some(typ) }) :: args, attr)
+
       | PId(id, attr) when Env.isLocalInstanceOrMem state id ->
          state, PId("_ctx" :: id, attr)
       | _ -> state, exp
@@ -113,11 +119,11 @@ module CreateInitFunction = struct
       | Typ.TId(["int"], _)  -> PInt(0,typedAttr)
       | Typ.TId(["abstract"], _) -> PInt(0,typedAttr)
       | Typ.TId(["bool"], _) -> PBool(false,typedAttr)
-      | Typ.TId(name, _)     -> PCall(None,getInitFunctioName name, [],typedAttr)
+      | Typ.TId(name, _)     -> PCall(NoInst, getInitFunctioName name, [],typedAttr)
       | Typ.TComposed(["array"], [sub; { contents = Typ.TInt(size, _) }], _) ->
          let sub_init    = getInitValue sub in
          let intTypeAttr = {emptyAttr with typ = Some(Typ.Const.int_type)} in
-         PCall(None, ["makeArray"], [PInt(size,intTypeAttr);sub_init],typedAttr)
+         PCall(NoInst, ["makeArray"], [PInt(size,intTypeAttr);sub_init],typedAttr)
       | Typ.TComposed(["tuple"],types, _) ->
          let elems = List.map getInitValue types in
          PTuple(elems,typedAttr)
@@ -156,7 +162,7 @@ module CreateInitFunction = struct
          match init_fun with
          | Some(init_fun_name) ->
             let unitAttr = { emptyAttr with typ=Some(Typ.Const.unit_type)} in
-            let callExp  = PCall(None,init_fun_name, [ctx_lid],unitAttr) in
+            let callExp  = PCall(NoInst,init_fun_name, [ctx_lid],unitAttr) in
             [StmtBind(LWild(emptyAttr),callExp,emptyAttr)]
          | None -> []
       in
@@ -181,7 +187,7 @@ module CreateInitFunction = struct
       let attr = { emptyAttr with typ = Some(typ) } in
       StmtFun(getInitFunctioName name,
               [],
-              StmtReturn(PCall(None,getInitFunctioName ctx, [],attr),attr),
+              StmtReturn(PCall(NoInst,getInitFunctioName ctx, [],attr),attr),
               Some(typ), emptyAttr)
 
    let generateTypeAlias (state:'a Env.t) (name:Id.t) : stmt =
