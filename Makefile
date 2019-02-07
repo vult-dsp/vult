@@ -44,7 +44,7 @@ coverage: compiler jscompiler
 
 version :
 			@echo "let version = \"" > src/version.ml
-			@git describe --abbrev=0 >> src/version.ml
+			@git describe --all --abbrev=0 >> src/version.ml
 			@echo "\"" >> src/version.ml
 
 all: 		compiler js test web jscompiler
