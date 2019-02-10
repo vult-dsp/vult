@@ -172,7 +172,7 @@ this.Blit__ctx_type_0_init = function(){
 this.Blit_pulse_train_init = function() { return this.Blit__ctx_type_0_init(); }
 this.Blit_pulse_train = function(_ctx,cv,phase){
    if(this.Util_change(_ctx._inst29,cv)){
-      _ctx.m = ((((2|0) * this.int(this.Util_cvToperiod(cv))) + (1|0))|0); 
+      _ctx.m = (((this.int(this.Util_cvToperiod(cv)) << (1|0)) + (1|0))|0); 
       _ctx.scale = (2. * this.Util_cvToperiod(cv)); 
    }
    var pi_phase = (phase * 0.5); 

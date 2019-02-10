@@ -74,7 +74,7 @@ let getTypedParam (args:(Id.t * tag) list) (id, typ) =
    let lattr loc = { emptyAttr with loc} in
    match getParam [] args id with
    | r, Some(TReal(value, loc)) when typ = Real ->
-      r, Some(PReal(float_of_string value, lattr loc))
+      r, Some(PReal(float_of_string value, Float,lattr loc))
    | r, Some(TInt(value, loc)) when typ = Int ->
       r, Some(PInt(int_of_string value, lattr loc))
    | r, Some(TId(value, loc)) when typ = Id ->

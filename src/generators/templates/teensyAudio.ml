@@ -130,6 +130,8 @@ let castOutput params typ value =
       {pla|fix_to_short(<#value#>)|pla}
    | OReal ->
       {pla|<#value#>|pla}
+   | OFix16  ->
+      {pla|fix_to_short(<#value#>)|pla}
    | OBool ->
       {pla|<#value#>|pla}
    | OInt ->

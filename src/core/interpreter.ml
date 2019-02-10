@@ -365,7 +365,8 @@ let makeInstName (fn:Id.t) (attr:attr) : Id.t =
 let rec getInitValue (tp:Typ.t) : exp =
    match !tp with
    | Typ.TId(["unit"], _) -> PUnit(emptyAttr)
-   | Typ.TId(["real"], _) -> PReal(0.0, emptyAttr)
+   | Typ.TId(["real"], _) -> PReal(0.0, Float, emptyAttr)
+   | Typ.TId(["fix16"], _) -> PReal(0.0, Fix16, emptyAttr)
    | Typ.TId(["int"], _)  -> PInt(0, emptyAttr)
    | Typ.TId(["abstract"], _)  -> PInt(0, emptyAttr)
    | Typ.TId(["bool"], _) -> PBool(false, emptyAttr)
@@ -390,33 +391,33 @@ let getInitExp (lhs:lhs_exp) : exp =
 let evalUop (op:string) (exp:exp) : exp =
    match op, exp with
    | "-", PInt(v, attr) -> PInt(-v, attr)
-   | "-", PReal(v, attr) -> PReal(-.v, attr)
+   | "-", PReal(v, precision, attr) -> PReal(-.v, precision, attr)
    | _ -> PUnOp(op, exp, emptyAttr)
 
 (** Evaluates binary operations *)
 let evalOp (op:string) (e1:exp) (e2:exp) : exp =
    match op, e1, e2 with
-   | "+", PReal(v1, attr), PReal(v2, _)  -> PReal(v1 +. v2, attr)
+   | "+", PReal(v1, p1, attr), PReal(v2, p2, _) when p1 = p2  -> PReal(v1 +. v2, p1, attr)
    | "+", PInt(v1, attr),  PInt(v2, _)   -> PInt(v1 + v2, attr)
-   | "-", PReal(v1, attr), PReal(v2, _)  -> PReal(v1 -. v2, attr)
+   | "-", PReal(v1, p1, attr), PReal(v2, p2, _) when p1 = p2  -> PReal(v1 -. v2, p1, attr)
    | "-", PInt(v1, attr),  PInt(v2 , _)   -> PInt(v1 - v2, attr)
-   | "*", PReal(v1, attr), PReal(v2, _)  -> PReal(v1 *. v2, attr)
+   | "*", PReal(v1, p1, attr), PReal(v2, p2, _) when p1 = p2 -> PReal(v1 *. v2, p1, attr)
    | "*", PInt(v1, attr),  PInt(v2, _)   -> PInt(v1 * v2, attr)
-   | "/", PReal(v1, attr), PReal(v2, _)  -> PReal(v1  /. v2, attr)
+   | "/", PReal(v1, p1, attr), PReal(v2, p2, _) when p1 = p2  -> PReal(v1  /. v2, p1, attr)
    | "/", PInt(v1, attr),  PInt(v2, _)    -> PInt(v1 / v2, attr)
-   | "%", PReal(v1, attr), PReal(v2, _)  -> PReal(mod_float  v1  v2, attr)
+   | "%", PReal(v1, p1, attr), PReal(v2, p2, _) when p1 = p2  -> PReal(mod_float  v1  v2, p1, attr)
    | "%", PInt(v1, attr),  PInt(v2, _)   -> PInt(v1 mod v2, attr)
-   | "==", PReal(v1, attr), PReal(v2, _) -> PBool(v1 = v2, attr)
+   | "==", PReal(v1, p1, attr), PReal(v2, p2, _) when p1 = p2 -> PBool(v1 = v2, attr)
    | "==", PInt(v1, attr),  PInt(v2, _)  -> PBool(v1 = v2, attr)
-   | "<>", PReal(v1, attr), PReal(v2, _) -> PBool(v1 <> v2, attr)
+   | "<>", PReal(v1, p1, attr), PReal(v2, p2, _) when p1 = p2 -> PBool(v1 <> v2, attr)
    | "<>", PInt(v1, attr),  PInt(v2, _)  -> PBool(v1 <> v2, attr)
-   | ">", PReal(v1, attr), PReal(v2, _)  -> PBool(v1 > v2, attr)
+   | ">", PReal(v1, p1, attr), PReal(v2, p2, _) when p1 = p2 -> PBool(v1 > v2, attr)
    | ">", PInt(v1, attr),  PInt(v2, _)   -> PBool(v1 > v2, attr)
-   | "<", PReal(v1, attr), PReal(v2, _)  -> PBool(v1 < v2, attr)
+   | "<", PReal(v1, p1, attr), PReal(v2, p2, _) when p1 = p2 -> PBool(v1 < v2, attr)
    | "<", PInt(v1, attr),  PInt(v2, _)   -> PBool(v1 < v2, attr)
-   | ">=", PReal(v1, attr), PReal(v2, _) -> PBool(v1 >= v2, attr)
+   | ">=", PReal(v1, p1, attr), PReal(v2, p2, _) when p1 = p2 -> PBool(v1 >= v2, attr)
    | ">=", PInt(v1, attr),  PInt(v2, _)  -> PBool(v1 >= v2, attr)
-   | "<=", PReal(v1, attr), PReal(v2, _) -> PBool(v1 <= v2, attr)
+   | "<=", PReal(v1, p1, attr), PReal(v2, p2, _) when p1 = p2 -> PBool(v1 <= v2, attr)
    | "<=", PInt(v1, attr),  PInt(v2, _)  -> PBool(v1 <= v2, attr)
    | "&&", PBool(v1, attr),  PBool(v2, _)  -> PBool(v1 && v2, attr)
    | "||", PBool(v1, attr),  PBool(v2, _)  -> PBool(v1 || v2, attr)
@@ -434,27 +435,27 @@ let foldOp (op:string) (args:exp list) : exp =
 let builtinFunctions env =
    let real_real f attr args : exp =
       match args with
-      | [PReal(v, _)] -> PReal(f v, attr)
+      | [PReal(v, p, _)] -> PReal(f v, p, attr)
       | _ -> failwith "invalid arguments"
    in
    let clip attr args =
       match args with
-      | [PReal(v, _); PReal(mi, _); PReal(ma, _)] -> PReal(max mi (min ma v) , attr)
+      | [PReal(v, p, _); PReal(mi, _,_); PReal(ma, _, _)] -> PReal(max mi (min ma v), p, attr)
       | [PInt(v, _); PInt(mi, _); PInt(ma, _)] -> PInt(max mi (min ma v) , attr)
       | _ -> failwith "clip: invalid arguments"
    in
    let int attr args =
       match args with
-      | [PReal(v, _)] -> PInt(int_of_float v, attr)
+      | [PReal(v, _, _)] -> PInt(int_of_float v, attr)
       | [PInt(v, _)]  -> PInt(v, attr)
       | [PBool(v, _)] -> PInt((if v then 1 else 0), attr)
       | _ -> failwith "int: invalid arguments"
    in
    let real attr args =
       match args with
-      | [PReal(v, _)] -> PReal(v, attr)
-      | [PInt(v, _)]  -> PReal(float_of_int v, attr)
-      | [PBool(v, _)] -> PReal((if v then 1.0 else 0.0), attr)
+      | [PReal(v, p, _)] -> PReal(v, p, attr)
+      | [PInt(v, _)]  -> PReal(float_of_int v, Float, attr)
+      | [PBool(v, _)] -> PReal((if v then 1.0 else 0.0), Float, attr)
       | _ -> failwith "real: invalid arguments"
    in
    let not attr args =
@@ -464,12 +465,12 @@ let builtinFunctions env =
    in
    let eps attr args =
       match args with
-      | [] -> PReal(1e-18, attr)
+      | [] -> PReal(1e-18, Float, attr)
       | _ -> failwith "eps: invalid arguments"
    in
    let pi attr args =
       match args with
-      | [] -> PReal(3.1415926535897932384, attr)
+      | [] -> PReal(3.1415926535897932384, Float, attr)
       | _ -> failwith "pi: invalid arguments"
    in
    (*let random attr args =

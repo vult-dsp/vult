@@ -66,6 +66,20 @@ THE SOFTWARE.
 
 *)
 
+let toFixed (n:float) : string =
+   let () =
+      if (n > 32767.0 || n < -32768.0) then
+         let msg = Printf.sprintf "This value '%f' cannot be represented with fixed-point numbers" n in
+         (*Error.raiseError msg (attr.loc)*)
+         print_endline msg
+   in
+   if n < 0.0 then
+      let value = Int32.of_float ((-. n) *. (float_of_int 0x10000)) in
+      Printf.sprintf "-0x%lx /* %f */" value n
+   else
+      let value = Int32.of_float (n *. (float_of_int 0x10000)) in
+      Printf.sprintf "0x%lx /* %f */" value n
+
 (* This module contains the default replacements that turn the 'real' type into 'float' *)
 module Default = struct
 
@@ -82,23 +96,31 @@ module Default = struct
             "bool", "uint8_t";
             "int",  "int";
             "abstract",  "void*";
+            "fix16", "fix16_t";
          ]
 
    let cast = Replacements.makeCasts
          [
             ("float", "int"), "float_to_int";
             ("int", "float"), "int_to_float";
+            ("fix16_t", "int"),     "fix_to_int";
+            ("fix16_t", "float"),   "fix_to_float";
+            ("int",     "fix16_t"), "int_to_fix";
+            ("float",   "fix16_t"), "float_to_fix";
          ]
 
    let op_to_fun = Replacements.makeOperators
          [
             ("%", "float"), "fmodf";
+            ("*", "fix16_t"), "fix_mul";
+            ("/", "fix16_t"), "fix_div";
          ]
 
    let op_to_op = Replacements.makeOperators
          [
+            ("<>", "fix16_t"), "!=";
             ("<>", "float"),   "!=";
-            ("<>", "int"), "!=";
+            ("<>", "int"),     "!=";
             ("<>", "uint8_t"), "!=";
          ]
 
@@ -134,6 +156,26 @@ module Default = struct
             ("log",  "int"), "int_print";
             ("log",  "uint8_t"), "bool_print";
             ("log",  "string"),  "string_print";
+
+            ("abs", "fix16_t"),   "fix_abs";
+            ("exp", "fix16_t"),   "fix_exp";
+            ("floor", "fix16_t"), "fix_floor";
+            ("max", "fix16_t"),   "fix_max";
+            ("min", "fix16_t"),   "fix_min";
+            ("sin", "fix16_t"),   "fix_sin";
+            ("cos", "fix16_t"),   "fix_cos";
+            ("tan", "fix16_t"),   "fix_tan";
+            ("tanh", "fix16_t"),  "fix_tanh";
+            ("sqrt", "fix16_t"),  "fix_sqrt";
+            ("clip", "fix16_t"),  "fix_clip";
+            ("set",  "fix16_t"),  "fix_set";
+            ("get",  "fix16_t"),  "fix_get";
+            ("eps",  "fix16_t"),  "fix_eps";
+            ("pi",  "fix16_t"),  "fix_pi";
+            ("random", "fix16_t"),  "fix_random";
+            ("samplerate", "fix16_t"),  "fix_samplerate";
+            ("wrap_array", "fix16_t"), "fix_wrap_array";
+            ("log", "fix16_t"), "fix_print";
          ]
 
    let array_init = Replacements.makeArrayInitializations
@@ -141,6 +183,7 @@ module Default = struct
             "float",   "float_init_array";
             "int", "int_init_array";
             "uint8_t", "bool_init_array";
+            "fix16_t",   "fix_init_array";
          ]
 
    let array_copy = Replacements.makeArrayCopy
@@ -148,11 +191,13 @@ module Default = struct
             "float",   "float_copy_array";
             "int", "int_copy_array";
             "uint8_t", "bool_copy_array";
+            "fix16_t",   "fix_copy_array";
          ]
 
    let real_string = Replacements.makeRealToString
          [
-            "float", (fun f -> (Float.to_string f) ^ "f")
+            "float", (fun f -> (Float.to_string f) ^ "f");
+            "fix16_t", toFixed
          ]
 
    (* This is the default selection of replacements *)
@@ -324,20 +369,6 @@ module FixedPoint = struct
          [
             "fix16_t",   "fix_copy_array";
          ]
-
-   let toFixed (n:float) : string =
-      let () =
-         if (n > 32767.0 || n < -32768.0) then
-            let msg = Printf.sprintf "This value '%f' cannot be represented with fixed-point numbers" n in
-            (*Error.raiseError msg (attr.loc)*)
-            print_endline msg
-      in
-      if n < 0.0 then
-         let value = Int32.of_float ((-. n) *. (float_of_int 0x10000)) in
-         Printf.sprintf "-0x%lx /* %f */" value n
-      else
-         let value = Int32.of_float (n *. (float_of_int 0x10000)) in
-         Printf.sprintf "0x%lx /* %f */" value n
 
    let real_string = Replacements.makeRealToString
          [

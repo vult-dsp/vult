@@ -160,13 +160,13 @@ module Simplify = struct
    let isZero (e:exp) : bool =
       match e with
       | PInt(0, _)
-      | PReal(0.0, _) -> true
+      | PReal(0.0, _, _) -> true
       | _ -> false
 
    let isOne (e:exp) : bool =
       match e with
       | PInt(1, _)
-      | PReal(1.0, _) -> true
+      | PReal(1.0, _, _) -> true
       | _ -> false
 
    let isTrue (e:exp) : bool =
@@ -182,15 +182,16 @@ module Simplify = struct
    let minusOne attr (typ:Typ.t) : exp =
       match !typ with
       | Typ.TId(["int"], _) -> PInt(-1,attr)
-      | Typ.TId(["real"], _) -> PReal(-1.0,attr)
+      | Typ.TId(["real"], _) -> PReal(-1.0, Float, attr)
+      | Typ.TId(["fix16"], _) -> PReal(-1.0, Fix16, attr)
       | _ -> failwith "Simplify.minusOne: invalid numeric value"
 
    let applyOp (op:string) (e1:exp) (e2:exp) : exp =
       match op,e1,e2 with
-      | "+",PInt(n1,attr),PInt(n2, _) -> PInt(n1+n2,attr)
-      | "*",PInt(n1,attr),PInt(n2, _) -> PInt(n1*n2,attr)
-      | "+",PReal(n1,attr),PReal(n2, _) -> PReal(n1+.n2,attr)
-      | "*",PReal(n1,attr),PReal(n2, _) -> PReal(n1*.n2,attr)
+      | "+",PInt(n1,attr), PInt(n2, _) -> PInt(n1+n2,attr)
+      | "*",PInt(n1,attr), PInt(n2, _) -> PInt(n1*n2,attr)
+      | "+",PReal(n1, p1, attr), PReal(n2, p2, _) when p1 = p2 -> PReal(n1+.n2, p1, attr)
+      | "*",PReal(n1, p1, attr), PReal(n2, p2, _) when p1 = p2  -> PReal(n1*.n2, p1, attr)
       | "||",PBool(n1,attr),PBool(n2, _) -> PBool(n1 || n2,attr)
       | "&&",PBool(n1,attr),PBool(n2, _) -> PBool(n1 && n2,attr)
       | _ -> failwith "Simplify.applyOp: invalid operation on"
@@ -213,15 +214,15 @@ module Simplify = struct
 
    let negNum (e:exp) : exp =
       match e with
-      | PInt(value,attr) -> PInt(-value,attr)
-      | PReal(value,attr) -> PReal(-.value,attr)
+      | PInt(value, attr) -> PInt(-value, attr)
+      | PReal(value, p, attr) -> PReal(-.value, p, attr)
       | _ -> failwith "Simplify.negNum: not a number"
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make "Simplify.exp" @@ fun state exp ->
       match exp with
-      | POp("/", [e1;PReal(value,attr)],attr2) ->
-         reapply state, POp("*", [e1;PReal(1.0 /. value,attr)],attr2)
+      | POp("/", [e1; PReal(value, p, attr)],attr2) ->
+         reapply state, POp("*", [e1;PReal(1.0 /. value, p, attr)],attr2)
       | POp("-", [e1;e2],attr) when isNum e2 ->
          reapply state, POp("+", [e1;negNum e2],attr)
       | POp("-", [e1; (PUnOp("-",e2, _))],attr) ->
@@ -536,6 +537,19 @@ module ChangeTupleReturnCalls = struct
 
 end
 
+module ApplyFixCast = struct
+
+   let exp : (PassData.t Env.t,exp) Mapper.mapper_func =
+      Mapper.make "ApplyFixCast.exp" @@ fun state exp ->
+      match exp with
+      | PCall(_, ["fix16"], [PReal(n, Float, fattr)], _) ->
+         state, PReal(n, Fix16, fattr)
+      | _ ->
+         state, exp
+
+   let mapper = Mapper.{ default_mapper with exp }
+end
+
 let run =
    UnlinkTypes.mapper
    |> Mapper.seq ReportUnboundTypes.mapper
@@ -546,3 +560,4 @@ let run =
    |> Mapper.seq BindComplexExpressions.mapper
    |> Mapper.seq ProcessArrays.mapper
    |> Mapper.seq ConflictingDeclarations.mapper
+   |> Mapper.seq ApplyFixCast.mapper

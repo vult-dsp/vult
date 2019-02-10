@@ -66,6 +66,7 @@ module Configuration = struct
    (** Checks that the output is a numeric or a tuple of numbers *)
    let rec getOutputs (loc:Loc.t) (typ:Typ.t) : Config.output list =
       match !typ with
+      | Typ.TId(["fix16"], _) -> [Config.OFix16]
       | Typ.TId(["real"], _) -> [Config.OReal]
       | Typ.TId(["int"], _) -> [Config.OInt]
       | Typ.TComposed(["tuple"], elems, _) ->

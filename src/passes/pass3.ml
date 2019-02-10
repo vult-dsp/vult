@@ -115,7 +115,8 @@ module CreateInitFunction = struct
    let rec getInitValue (tp:Typ.t) : exp =
       let typedAttr = { emptyAttr with typ = Some(tp)} in
       match !tp with
-      | Typ.TId(["real"], _) -> PReal(0.0,typedAttr)
+      | Typ.TId(["real"], _) -> PReal(0.0, Float, typedAttr)
+      | Typ.TId(["fix16"], _) -> PReal(0.0, Fix16, typedAttr)
       | Typ.TId(["int"], _)  -> PInt(0,typedAttr)
       | Typ.TId(["abstract"], _) -> PInt(0,typedAttr)
       | Typ.TId(["bool"], _) -> PBool(false,typedAttr)
@@ -243,14 +244,14 @@ module OtherErrors = struct
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make "OtherErrors.exp" @@ fun state exp ->
       match exp with
-      | PReal(v,attr) ->
+      | PReal(v, p, attr) ->
          let () =
             let data = Env.get state in
-            if (v > 32767.0 || v < -32768.0) && data.PassData.args.real = "fixed" then
+            if (v > 32767.0 || v < -32768.0) && (data.PassData.args.real = "fixed" || p = Fix16) then
                let msg = Printf.sprintf "This value '%f' cannot be represented with fixed-point numbers" v in
                Error.raiseError msg (attr.loc)
          in
-         state,PReal(v,attr)
+         state, PReal(v, p, attr)
       | _ -> state, exp
 
    let mapper = { Mapper.default_mapper with Mapper.exp = exp }

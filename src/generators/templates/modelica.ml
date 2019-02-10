@@ -31,6 +31,7 @@ let modelicaOutputType m =
    | OReal -> "double"
    | OInt -> "int"
    | OBool -> "int"
+   | OFix16 -> "int"
 
 let modelicaInputType m =
    match m with

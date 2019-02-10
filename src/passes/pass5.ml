@@ -102,7 +102,7 @@ module SimplifyFixed = struct
       if sign then
          match e with
          | PInt(value,attr) -> PInt(-value,attr)
-         | PReal(value,attr) -> PReal(-.value,attr)
+         | PReal(value, p, attr) -> PReal(-.value, p, attr)
          | _ -> PUnOp("-", e,GetAttr.fromExp e)
       else e
 
@@ -138,7 +138,7 @@ module SimplifyFixed = struct
       | PBool _ -> true
       | _ -> false
 
-   let rec find e acc attr =
+   let rec find is_fixed e acc attr =
       match e with
       | [] -> false, makeMult acc attr
       (* multiply / divide by an int power of two *)
@@ -147,37 +147,41 @@ module SimplifyFixed = struct
          let nn = abs n in
          begin match isPowerOfTwo 2 (float_of_int nn) with
             | Some p -> true, fixSign sign (POp("<<", [(makeMult (acc @ t) attr); PInt(p, iattr)], attr))
-            | None -> find t (h::acc) attr
+            | None -> find is_fixed t (h::acc) attr
          end
       (* multiply / divide by an int power of two *)
-      | (PReal(n, iattr) as h) :: t ->
-         let sign = n < 0.0 in
-         let div = abs_float n < 1.0 in
-         let nn = if div then 1.0 /. (abs_float n) else abs_float n in
-         begin match isPowerOfTwo 2 nn with
-            | Some p ->
-               let op = if div then ">>" else "<<" in
-               true, fixSign sign (POp(op, [(makeMult (acc @ t) attr); PInt(p, iattr)], attr))
-            | None -> find t (h::acc) attr
-         end
-      | h :: t -> find t (h::acc) attr
+      | (PReal(n, p, iattr) as h) :: t ->
+         if is_fixed || p = Fix16 then
+            let sign = n < 0.0 in
+            let div = abs_float n < 1.0 in
+            let nn = if div then 1.0 /. (abs_float n) else abs_float n in
+            begin match isPowerOfTwo 2 nn with
+               | Some p ->
+                  let op = if div then ">>" else "<<" in
+                  true, fixSign sign (POp(op, [(makeMult (acc @ t) attr); PInt(p, iattr)], attr))
+               | None -> find is_fixed t (h::acc) attr
+            end
+         else
+            find is_fixed t (h::acc) attr
+      | h :: t -> find is_fixed t (h::acc) attr
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make "Simplify.exp" @@ fun state exp ->
-      let data = Env.get state in
-      let args = data.PassData.args in
-      if args.Args.real = "fixed" then
-         match exp with
-         | POp("*", elems, attr) ->
+      match exp with
+      | POp("*", elems, attr) ->
+         let data = Env.get state in
+         let args = data.PassData.args in
+         if args.code <> LuaCode then
+            let is_fixed = args.Args.real = "fixed" in
             let constants, other = List.partition isNum elems in
-            let found, new_exp = find constants other attr in
+            let found, new_exp = find is_fixed constants other attr in
             if found then
                reapply state, new_exp
             else
                state, exp
-         | _ -> state, exp
-      else
-         state, exp
+         else
+            state, exp
+      | _ -> state, exp
 
 
    let mapper = Mapper.{ default_mapper with exp }

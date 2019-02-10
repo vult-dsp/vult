@@ -444,9 +444,12 @@ and inferExp (env:'a Env.t) (e:exp) : exp * ('a Env.t) * Typ.t =
    | PInt(v, attr) ->
       let typ = Typ.Const.int_type in
       PInt(v, { attr with typ = Some(typ) }), env, typ
-   | PReal(v, attr) ->
+   | PReal(v, Float, attr) ->
       let typ = Typ.Const.real_type in
-      PReal(v, { attr with typ = Some(typ) }), env, typ
+      PReal(v, Float, { attr with typ = Some(typ) }), env, typ
+   | PReal(v, Fix16, attr) ->
+      let typ = Typ.Const.real_type in
+      PReal(v, Fix16, { attr with typ = Some(typ) }), env, typ
    | PString(s, attr) ->
       let typ = Typ.Const.string_type in
       PString(s, { attr with typ = Some(typ) }), env, typ

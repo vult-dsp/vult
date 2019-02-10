@@ -99,7 +99,7 @@ module GetAttr = struct
       | PUnit(attr)
       | PBool(_, attr)
       | PInt(_, attr)
-      | PReal(_, attr)
+      | PReal(_, _, attr)
       | PString(_, attr)
       | PId(_, attr)
       | PIndex(_, _, attr)

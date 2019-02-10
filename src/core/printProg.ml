@@ -133,13 +133,21 @@ and typedArgBuff buffer id =
       append buffer ":";
       typeExpressionBuff buffer (Typ.first id_type)
 
+and floatWihPrecision buffer p s =
+   match p with
+   | Float -> append buffer (Float.to_string s)
+   | Fix16 ->
+      append buffer "fix16(";
+      append buffer (Float.to_string s);
+      append buffer ")"
+
 (** Adds to the print buffer an expression *)
 and expressionBuff buffer (exp:exp) =
    match exp with
    | PId(s, _)   ->
       identifierBuff buffer s
    | PInt(s, _)  -> append buffer (string_of_int s)
-   | PReal(s, _) -> append buffer (Float.to_string s)
+   | PReal(s, p, _) -> floatWihPrecision buffer p s
    | PString(s, _) ->
       append buffer "\"";
       append buffer s;

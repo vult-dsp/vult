@@ -403,7 +403,7 @@ this.Blit__ctx_type_0_init = function(){
 this.Blit_pulse_train_init = function() { return this.Blit__ctx_type_0_init(); }
 this.Blit_pulse_train = function(_ctx,cv,phase){
    if(this.Util_change(_ctx._inst77,cv)){
-      _ctx.m = ((((2|0) * this.int(this.Util_cvToperiod(cv))) + (1|0))|0); 
+      _ctx.m = (((this.int(this.Util_cvToperiod(cv)) << (1|0)) + (1|0))|0); 
       _ctx.scale = (2. * this.Util_cvToperiod(cv)); 
    }
    var pi_phase = (phase * 0.5); 
@@ -622,7 +622,7 @@ this.Voice_4_controlChange = function(_ctx,control,value,channel){
    _ctx.lfo_reset = 0.; 
    if((control == (44|0)))_ctx.flt_cut = this.Util_map(this.real(value),0.,127.,(-0.2),0.5); 
    if((control == (45|0)))_ctx.flt_res = (this.real(value) * 0.0078741); 
-   if((control == (46|0)))_ctx.flt_shape = (((value * (4|0)) / (127|0))|0); 
+   if((control == (46|0)))_ctx.flt_shape = (((value << (2|0)) / (127|0))|0); 
    if((control == (47|0)))_ctx.attack = (this.real(value) * 0.0078741); 
    if((control == (48|0)))_ctx.decay = (this.real(value) * 0.0078741); 
    if((control == (49|0)))_ctx.sustain = (this.real(value) * 0.0078741); 

@@ -57,7 +57,7 @@ module Evaluate = struct
          let data = Env.get state in
          begin match data.PassData.args.fs with
             | None -> state, exp
-            | Some fs -> state, PReal(fs, attr)
+            | Some fs -> state, PReal(fs, Float, attr)
          end
 
       | PCall(NoInst, name, args, attr) when
@@ -71,13 +71,13 @@ module Evaluate = struct
             | exception Interpreter.Abort ->
                state, markAsEvaluated exp
          end
-      | PReal(v, attr) ->
+      | PReal(v, p, attr) ->
          begin
             match classify_float v with
             | FP_normal -> state, exp
             | FP_subnormal -> state, exp
             | FP_zero -> state, exp
-            | FP_infinite -> state, PReal(3.40282347E+38, attr)
+            | FP_infinite -> state, PReal(3.40282347E+38, p, attr)
             | FP_nan ->
                let msg = "The number is NaN, this can be the result of a simplification" in
                Error.raiseError msg attr.loc
@@ -142,14 +142,14 @@ module Tables = struct
    let attr_array size =
       { emptyAttr with typ = Some(real_array_type size) }
 
-   let makeFloat loc x =
-      PReal(x, { emptyAttr with loc })
+   let makeFloat loc precision x =
+      PReal(x, precision, { emptyAttr with loc })
 
-   let makeDecl attr fname name data =
+   let makeDecl attr fname name precision data =
       let varname = Id.joinSep "_" fname name in
       let size = List.length data in
       let atype = real_array_type size in
-      let arr = PArray((CCList.map (makeFloat attr.loc) data |> Array.of_list), { attr with typ = Some(atype) }) in
+      let arr = PArray((CCList.map (makeFloat attr.loc precision) data |> Array.of_list), { attr with typ = Some(atype) }) in
       StmtVal(LId(varname, Some [atype], attr_array size), Some(arr), { emptyAttr with const = true; fun_src = Some fname})
 
 end
@@ -158,7 +158,7 @@ module MakeTables = struct
 
    let getFloat x =
       match x with
-      | PReal(value, _) -> value
+      | PReal(value, _, _) -> value
       | _ -> failwith "The result of the evaluation is not a float"
 
    let getCoefficients l =
@@ -176,14 +176,14 @@ module MakeTables = struct
       | SimpleId(id, _, _)
       | TypedId(id, _, _, _) -> PId(id,Tables.attr_real)
 
-   let makeNewBody fname size min max input =
+   let makeNewBody fname size precision min max input =
       let lindex = LId(["index"],Some [Tables.int_type], Tables.attr_int) in
       let rindex = PId(["index"], Tables.attr_int) in
       let getCoeff a =
          let arr = PCall(NoInst, ["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array size)], Tables.attr_real) in
          PIndex(arr, rindex, Tables.attr_real)
       in
-      let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), Tables.attr_real) in
+      let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), precision, Tables.attr_real) in
       StmtBlock(
          None,
          [
@@ -195,7 +195,7 @@ module MakeTables = struct
                                     [POp("*",
                                          [
                                             initial_index;
-                                            POp("-", [input; PReal(min,Tables.attr_real)], Tables.attr_real)
+                                            POp("-", [input; PReal(min, precision, Tables.attr_real)], Tables.attr_real)
                                          ], Tables.attr_real)], Tables.attr_int);
                               PInt(0, Tables.attr_int);
                               PInt(size-1, Tables.attr_int);
@@ -212,10 +212,10 @@ module MakeTables = struct
                         Tables.attr_real)], Tables.attr_real),emptyAttr)
          ], emptyAttr)
 
-   let evaluateFunction env (name:Id.t) (x:float) =
+   let evaluateFunction env (name:Id.t) precision (x:float) =
       match Id.getNameNoModule name with
       | Some fname ->
-         let exp = PCall(NoInst, [fname], [PReal(x, emptyAttr)], emptyAttr) in
+         let exp = PCall(NoInst, [fname], [PReal(x, precision, emptyAttr)], emptyAttr) in
          let value = Interpreter.evalExp env exp in
          getFloat value
       | _ -> failwith "evaluateFunction: the function should be a full path"
@@ -232,21 +232,21 @@ module MakeTables = struct
          let c0, c1, c2 = Fitting.lagrange x y |> getCoefficients in
          fitData data (index-1) (c0::acc0) (c1::acc1) (c2::acc2)
 
-   let calculateTables env attr name size min max =
+   let calculateTables env attr name size min max precision =
       let map x x0 x1 y0 y1 = (x -. x0) *. (y1 -. y0) /. (x1 -. x0) +. y0 in
       let map_x x = map x 0. (float_of_int size) min max in
       let data =
          Array.init ((size * 2) + 4)
             (fun i ->
                 let x = map_x ((float_of_int i) /. 2.0) in
-                x, evaluateFunction env name x
+                x, evaluateFunction env name precision x
             )
       in
       let acc0, acc1, acc2 = fitData data size [] [] [] in
       [
-         Tables.makeDecl attr name ["c0"] acc0;
-         Tables.makeDecl attr name ["c1"] acc1;
-         Tables.makeDecl attr name ["c2"] acc2
+         Tables.makeDecl attr name ["c0"] precision acc0;
+         Tables.makeDecl attr name ["c1"] precision acc1;
+         Tables.makeDecl attr name ["c2"] precision acc2
       ]
 
    let checkInputVariables loc args =
@@ -278,14 +278,14 @@ module MakeTables = struct
                let msg    = "The attribute 'table' requires specific parameters. e.g. 'table(size=128,min=0.0,max=1.0)'" in
                match Tags.getTableParams "table" params msg attr.tags with
                | None -> state, [stmt]
-               | Some(_, [PInt(size, _); PReal(min, _); PReal(max, _)]) when checkRealReturn ret ->
+               | Some(_, [PInt(size, _); PReal(min, precision,_); PReal(max, _, _)]) when checkRealReturn ret ->
                   let var           = checkInputVariables attr.loc args in
                   let env           = getInterpEnv state in
                   let Id.Path(path) = Env.currentScope state in
                   let full_path     = path@name in
-                  let result        = calculateTables env attr full_path size min max in
+                  let result        = calculateTables env attr full_path size min max precision in
                   let attr'         = { attr with tags = Tags.removeAttrFunc "table" attr.tags } in
-                  let body'         = makeNewBody full_path size min max var in
+                  let body'         = makeNewBody full_path size precision min max var in
                   let c0            = generateRawAccessFunction name full_path 0 attr' in
                   let c1            = generateRawAccessFunction name full_path 1 attr' in
                   let c2            = generateRawAccessFunction name full_path 2 attr' in
@@ -323,9 +323,9 @@ module EmbedWavFile = struct
          Error.raiseError msg loc
 
 
-   let getDeclarations (attr:attr) (name:Id.t) (wav_data:WavFile.wave) : stmt list =
+   let getDeclarations (attr:attr) (name:Id.t) (wav_data:WavFile.wave) precision : stmt list =
       Array.mapi
-         (fun i v -> Tables.makeDecl attr name ["chan_" ^ (string_of_int i)] (Array.to_list v))
+         (fun i v -> Tables.makeDecl attr name ["chan_" ^ (string_of_int i)] precision (Array.to_list v))
          wav_data.WavFile.data
       |> Array.to_list
 
@@ -356,11 +356,11 @@ module EmbedWavFile = struct
 
 
    (** Generates the function that access the data of the wave file *)
-   let makeNewBody (fname:Id.t) (attr:attr) (args:typed_id list) (wave:WavFile.wave) : stmt =
+   let makeNewBody (fname:Id.t) (attr:attr) (args:typed_id list) (wave:WavFile.wave) precision : stmt =
       let attr_real  = { emptyAttr with typ = Some(Typ.Const.real_type) } in
       let channel, index = checkInputVariables attr.loc args in
       let stmts   = CCList.init wave.WavFile.channels (accessChannel fname attr channel index  wave.WavFile.samples) in
-      let default = StmtReturn( PReal(0.0,attr_real),attr) in
+      let default = StmtReturn( PReal(0.0, precision, attr_real),attr) in
       StmtBlock(None, stmts @ [default], attr)
 
 
@@ -377,17 +377,18 @@ module EmbedWavFile = struct
       | StmtExternal(name, args, ret, _, attr) ->
          begin
             let params = Tags.["channels", Int; "file", String] in
-            let msg    = "The attribute 'wave' requires specific parameters. e.g. 'wave(channels=1,file=\"file.wav\")'" in
+            let msg    = "The attribute 'wave' requires specific parameters. e.g. 'wave(channels=1, file=\"file.wav\")'" in
             match Tags.getTableParams "wave" params msg attr.tags with
             | None -> state, [stmt]
             | Some(loc, [PInt(channels, _); PString(file, _)]) when Typ.isRealType ret ->
+               let precision  =  Float in
                let Id.Path(path) = Env.currentScope state in
                let full_path  = path @ name in
                let includes   = (Env.get state).PassData.args.includes in
                let wave       = readFile loc includes file in
                let ()         = checkNumberOfChannels loc channels wave in
-               let result     = getDeclarations attr full_path wave in
-               let body       = makeNewBody full_path attr args wave in
+               let result     = getDeclarations attr full_path wave precision in
+               let body       = makeNewBody full_path attr args wave precision in
                let attr'      = { attr with tags = Tags.removeAttrFunc "wave" attr.tags; ext_fn = None } in
                let size_fun   = makeSizeFunction name attr wave.WavFile.samples in
                reapply state, result @ [size_fun; StmtFun(full_path, args, body, Some ret, attr')]
@@ -424,12 +425,12 @@ module EmbedWaveTable = struct
          let c0, c1, c2 = Fitting.lagrange x y |> MakeTables.getCoefficients in
          fitData data (index-1) (c0::acc0) (c1::acc1) (c2::acc2)
 
-   let calculateTables data attr name =
+   let calculateTables data attr name precision =
       let acc0, acc1, acc2 = fitData data ((Array.length data) - 1) [] [] [] in
       [
-         Tables.makeDecl attr name ["c0"] acc0;
-         Tables.makeDecl attr name ["c1"] acc1;
-         Tables.makeDecl attr name ["c2"] acc2
+         Tables.makeDecl attr name ["c0"] precision acc0 ;
+         Tables.makeDecl attr name ["c1"] precision acc1;
+         Tables.makeDecl attr name ["c2"] precision acc2
       ]
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
@@ -442,6 +443,7 @@ module EmbedWaveTable = struct
             match Tags.getTableParams "wavetable" params msg attr.tags with
             | None -> state, [stmt]
             | Some(loc, [PString(file, _)]) when Typ.isRealType ret ->
+               let precision  = Float in
                let var           = MakeTables.checkInputVariables attr.loc args in
                let Id.Path(path) = Env.currentScope state in
                let full_path  = path @ name in
@@ -452,8 +454,8 @@ module EmbedWaveTable = struct
                let size_n     = Array.length data in
                let size       = float_of_int size_n in
                let data       = Array.mapi (fun x y -> float_of_int x /. (size -. 1.0), y) data in
-               let tables     = calculateTables data attr full_path in
-               let body       = MakeTables.makeNewBody full_path size_n 0.0 1.0 var in
+               let tables     = calculateTables data attr full_path precision in
+               let body       = MakeTables.makeNewBody full_path size_n precision 0.0 1.0 var in
                let attr'      = { attr with tags = Tags.removeAttrFunc "wavetable" attr.tags; ext_fn = None } in
                let c0         = MakeTables.generateRawAccessFunction name full_path 0 attr in
                let c1         = MakeTables.generateRawAccessFunction name full_path 1 attr in

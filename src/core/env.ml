@@ -557,6 +557,7 @@ let builtin_table =
       ["unit"] , Scope.Type, Typ.Const.type_type, true;
       ["string"], Scope.Type, Typ.Const.type_type, true;
       ["abstract"], Scope.Type, Typ.Const.type_type, true;
+      ["fix16"], Scope.Type, Typ.Const.type_type, true;
 
       ["wrap_array"] , Scope.Function, Typ.Const.wrap_array (), true;
 
@@ -580,6 +581,7 @@ let builtin_table =
 
       ["int"]  , Scope.Function, Typ.Const.num_int (), false;
       ["real"] , Scope.Function, Typ.Const.num_real (), false;
+      ["fix16"] , Scope.Function, Typ.Const.num_fix16 (), false;
 
       ["|-|"] , Scope.Operator, Typ.Const.num_num (), false;
       ["+"]  , Scope.Operator, Typ.Const.num_num_num (), false;

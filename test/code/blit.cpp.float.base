@@ -334,7 +334,7 @@ void Blit_pulse_train_init(Blit__ctx_type_0 &_output_){
 
 float Blit_pulse_train(Blit__ctx_type_0 &_ctx, float cv, float phase){
    if(Util_change(_ctx._inst29,cv)){
-      _ctx.m = ((2 * float_to_int(Util_cvToperiod(cv))) + 1);
+      _ctx.m = ((float_to_int(Util_cvToperiod(cv)) << 1) + 1);
       _ctx.scale = (2.f * Util_cvToperiod(cv));
    }
    float pi_phase;

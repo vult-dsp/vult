@@ -744,7 +744,7 @@ void Blit_pulse_train_init(Blit__ctx_type_0 &_output_){
 
 float Blit_pulse_train(Blit__ctx_type_0 &_ctx, float cv, float phase){
    if(Util_change(_ctx._inst77,cv)){
-      _ctx.m = ((2 * float_to_int(Util_cvToperiod(cv))) + 1);
+      _ctx.m = ((float_to_int(Util_cvToperiod(cv)) << 1) + 1);
       _ctx.scale = (2.f * Util_cvToperiod(cv));
    }
    float pi_phase;
@@ -1160,7 +1160,7 @@ void Voice_4_controlChange(Voice_4__ctx_type_0 &_ctx, int control, int value, in
       _ctx.flt_res = (int_to_float(value) * 0.0078741f);
    }
    if(control == 46){
-      _ctx.flt_shape = ((value * 4) / 127);
+      _ctx.flt_shape = ((value << 2) / 127);
    }
    if(control == 47){
       _ctx.attack = (int_to_float(value) * 0.0078741f);

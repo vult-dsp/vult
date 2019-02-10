@@ -454,8 +454,11 @@ let rec convertExp (p:parameters) (e:exp) : cexp =
    | PBool(v, _)  -> CEBool(v)
    | PInt(n, _)   -> CEInt(n)
    | PString(s, _)   -> CEString(s)
-   | PReal(v, _)  ->
+   | PReal(v, Float, _)  ->
       let s = Replacements.getRealToString p.repl (Float.crop v) "real" in
+      CEFloat(s, Float.crop v)
+   | PReal(v, Fix16, _)  ->
+      let s = Replacements.getRealToString p.repl (Float.crop v) "fix16" in
       CEFloat(s, Float.crop v)
    | PId(id, attr) ->
       CEVar(convertVarId p Other id, [typ attr])

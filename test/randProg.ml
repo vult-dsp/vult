@@ -249,7 +249,7 @@ let newBuiltinFunNoArgs state =
 let rec newExp state typ =
    pick_one state [
       (isInt typ), normal_p,  (fun state -> PInt((Random.int state.max_int)+1, emptyAttr));
-      (isReal typ), normal_p, (fun state -> PReal((Random.float state.max_real)+.1.0, emptyAttr));
+      (isReal typ), normal_p, (fun state -> PReal((Random.float state.max_real)+.1.0, Float, emptyAttr));
       (isBool typ), low_p,    (fun _     -> PBool(Random.bool (), emptyAttr));
       (hasType typ), high_p, (fun state  -> PId(pickVar state typ, emptyAttr) );
       (* literal array *)

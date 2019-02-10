@@ -79,6 +79,11 @@ type instance =
    | This
 [@@deriving show,eq,ord]
 
+type precision =
+   | Float
+   | Fix16
+[@@deriving show,eq,ord]
+
 type lhs_exp =
    | LWild  of attr
    | LId    of Id.t * Typ.t list option * attr
@@ -100,6 +105,7 @@ and exp =
          *  attr
    | PReal
       of float
+         * precision
          *  attr
    | PString
       of string

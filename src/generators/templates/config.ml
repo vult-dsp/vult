@@ -29,6 +29,7 @@ type input =
    | IBool of string
 
 type output =
+   | OFix16
    | OReal
    | OInt
    | OBool
@@ -81,6 +82,7 @@ let outputTypeString (m:output) : string =
    | OReal -> "real"
    | OInt -> "int"
    | OBool -> "bool"
+   | OFix16 -> "fix16"
 
 let countInputsNoCtx (inputs:input list) : int =
    List.fold_left (fun s a -> match a with IContext -> s | _ -> s + 1) 0 inputs

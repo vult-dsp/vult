@@ -296,9 +296,9 @@ and map_exp (mapper:'state mapper) (state:'state) (exp:exp) : 'state * exp =
    | PInt(i, attr) ->
       let state', attr' = map_attr mapper state attr in
       apply mapper.exp state' (PInt(i, attr'))
-   | PReal(r, attr) ->
+   | PReal(r, precision, attr) ->
       let state', attr' = map_attr mapper state attr in
-      apply mapper.exp state' (PReal(r, attr'))
+      apply mapper.exp state' (PReal(r, precision, attr'))
    | PString(s, attr) ->
       let state', attr' = map_attr mapper state attr in
       apply mapper.exp state' (PString(s, attr'))

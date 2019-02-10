@@ -306,6 +306,7 @@ let isTuple typ =
 let isSimpleType (typ:t) : bool =
    match !typ with
    | TId(["real"], _) -> true
+   | TId(["fix16"], _) -> true
    | TId(["int"], _) -> true
    | TId(["bool"], _) -> true
    | TId(["unit"], _) -> true
@@ -317,6 +318,7 @@ let isSimpleType (typ:t) : bool =
 let isRealType (typ:t) : bool =
    match !typ with
    | TId(["real"], _) -> true
+   | TId(["fix16"], _) -> true
    | _ -> false
 
 let isSimpleOpType (typ:t option) : bool =
@@ -352,8 +354,9 @@ module Const = struct
    let int_type    = ref (TId(["int"], None))
    let real_type   = ref (TId(["real"], None))
    let string_type = ref (TId(["string"], None))
+   let fix16_type = ref (TId(["fix16"], None))
 
-   let num_type    () = ref (TExpAlt([real_type; int_type]))
+   let num_type    () = ref (TExpAlt([real_type; int_type; fix16_type]))
 
    let real_real () =
       real_type |-> real_type
@@ -407,6 +410,9 @@ module Const = struct
 
    let num_real () =
       num_type () |-> real_type
+
+   let num_fix16 () =
+      num_type () |-> fix16_type
 
    let array_size () =
       let a = ref (TUnbound("'a", None, None)) in
