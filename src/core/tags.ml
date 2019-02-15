@@ -88,39 +88,31 @@ let getTypedParam (args:(Id.t * tag) list) (id, typ) =
       Error.raiseError msg loc
    | r, None -> r, None
 
-let getParameterList (loc:Loc.t) (args:(Id.t * tag) list) (params: (string * t) list) : (Id.t * tag) list * exp list =
+let getParameterList (args:(Id.t * tag) list) (params: (string * t) list) : (Id.t * tag) list * exp option list =
    let rec loop remaning found params =
       match params with
       | [] -> remaning, List.rev found
       | h :: t ->
-         match getTypedParam remaning h with
-         | remaning', Some(value) ->
-            loop remaning' (value :: found) t
-         | _, None ->
-            let name, typ = h in
-            let msg = Printf.sprintf "The tag was expected to have a parameter with name '%s' and type '%s'" name (getTypeLiteral typ) in
-            Error.raiseError msg loc
+         let remaining, value = getTypedParam remaning h in
+         loop remaining (value :: found) t
+
    in loop args [] params
 
 
-let getTableIndividualParams (loc:Loc.t) params msg args =
-   let remaining, found = getParameterList loc args params in
+let getTableIndividualParams (loc:Loc.t) params args =
+   let remaining, found = getParameterList args params in
    match remaining with
    | _ :: _ ->
       let params_s =  List.map (fun (id, _) -> PrintProg.identifierStr id) remaining |> String.concat ", " in
       let msg = "The following arguments are unknown for the current tag: "^ params_s in
       Error.raiseError msg loc
-   | [] ->
-      if List.length found = List.length params then
-         found
-      else
-         Error.raiseError msg loc
+   | [] -> found
 
 let rec getTableParams (fname:string) (params:(string * t) list) (msg:string) (attr:tag list) =
    match attr with
    | [] -> None
    | TFun(name, args, loc) :: _ when name = [fname] ->
-      Some(loc, getTableIndividualParams loc params msg args)
+      Some(loc, getTableIndividualParams loc params args)
    | _ :: t -> getTableParams fname params msg t
 
 let rec removeAttrFunc (fname:string) (attr:tag list) : tag list =
