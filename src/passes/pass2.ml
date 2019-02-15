@@ -313,7 +313,7 @@ module MakeTables = struct
                let msg    = "The attribute 'table' requires specific parameters. e.g. 'table(size=128,min=0.0,max=1.0,[order=2])'" in
                match Tags.getTableParams "table" params msg attr.tags with
                | None -> state, [stmt]
-               | Some(_, [Some PInt(size, _); Some PReal(min, _,_); Some PReal(max, _, _); Some PInt(1, _)]) when checkRealReturn ret ->
+               | Some(_, [Some (PInt(size, _)); Some (PReal(min, _,_)); Some (PReal(max, _, _)); Some (PInt(1, _))]) when checkRealReturn ret ->
                   let precision     = getPrecision ret in
                   let var           = checkInputVariables attr.loc precision args in
                   let env           = getInterpEnv state in
@@ -326,7 +326,7 @@ module MakeTables = struct
                   let c1            = generateRawAccessFunction name full_path 1 attr' in
                   reapply state, result @ [c0; c1] @ [StmtFun(name, args, body', ret, attr')]
 
-               | Some(_, [Some PInt(size, _); Some PReal(min, _,_); Some PReal(max, _, _); (None | Some PInt(2, _) )]) when checkRealReturn ret ->
+               | Some(_, [Some (PInt(size, _)); Some (PReal(min, _,_)); Some (PReal(max, _, _)); (None | Some (PInt(2, _)))]) when checkRealReturn ret ->
                   let precision     = getPrecision ret in
                   let var           = checkInputVariables attr.loc precision args in
                   let env           = getInterpEnv state in
