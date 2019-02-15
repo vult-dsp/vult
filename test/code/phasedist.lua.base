@@ -33,7 +33,7 @@ function this.Phasedist_smooth_init()
 end
 
 function this.Phasedist_smooth(_ctx,input)
-   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005)); 
+   _ctx.x = (_ctx.x + (0.005 * (input + (- _ctx.x)))); 
    return _ctx.x; 
 
 end
@@ -81,7 +81,7 @@ function this.Phasedist_phasor(_ctx,pitch,reset)
       _ctx.phase = 0.; 
    end
    if (_ctx.phase > 1.) then
-      _ctx.phase = (_ctx.phase + (-1.)); 
+      _ctx.phase = ((-1.) + _ctx.phase); 
    end
    return _ctx.phase; 
 
@@ -110,9 +110,9 @@ function this.Phasedist_process(_ctx,input)
    local comp = (1. + (- phase1)); 
    local reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5); 
    _ctx.pre_phase1 = phase1; 
-   local phase2 = this.Phasedist_phasor(_ctx._inst9,(_ctx.pitch + (this.Phasedist_smooth(_ctx._inst8,_ctx.detune) * 32.)),reset); 
+   local phase2 = this.Phasedist_phasor(_ctx._inst9,(_ctx.pitch + (32. * this.Phasedist_smooth(_ctx._inst8,_ctx.detune))),reset); 
    local sine = this.sin((6.2831854 * phase2)); 
-   return (this.Phasedist_smooth(_ctx._inst10,_ctx.volume) * sine * comp); 
+   return (comp * sine * this.Phasedist_smooth(_ctx._inst10,_ctx.volume)); 
 
 end
 
@@ -138,10 +138,10 @@ end
 
 function this.Phasedist_controlChange(_ctx,control,value,channel)
    if (control == 30) then
-      _ctx.volume = (this.real(value) * 0.0078741); 
+      _ctx.volume = (0.0078741 * this.real(value)); 
    end
    if (control == 31) then
-      _ctx.detune = (this.real(value) * 0.0078741); 
+      _ctx.detune = (0.0078741 * this.real(value)); 
    end
 
 end

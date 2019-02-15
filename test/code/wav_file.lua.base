@@ -46,7 +46,7 @@ function this.Wav_file_index_init()
 end
 
 function this.Wav_file_index(_ctx)
-   _ctx.i = ((_ctx.i + 1) % this.Wav_file_ext_wave_samples()); 
+   _ctx.i = ((1 + _ctx.i) % this.Wav_file_ext_wave_samples()); 
    return _ctx.i; 
 
 end

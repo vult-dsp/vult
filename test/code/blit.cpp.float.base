@@ -41,7 +41,7 @@ uint8_t Util_change(Util__ctx_type_1 &_ctx, float x){
 }
 
 float Util_map(float x, float x0, float x1, float y0, float y1){
-   return ((((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))) + y0);
+   return (y0 + (((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))));
 }
 
 void Util__ctx_type_3_init(Util__ctx_type_3 &_output_){
@@ -59,7 +59,7 @@ void Util_dcblock_init(Util__ctx_type_3 &_output_){
 
 float Util_dcblock(Util__ctx_type_3 &_ctx, float x0){
    float y0;
-   y0 = (x0 + (- _ctx.x1) + (_ctx.y1 * 0.995f));
+   y0 = (x0 + (- _ctx.x1) + (0.995f * _ctx.y1));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
@@ -78,7 +78,7 @@ void Util_smooth_init(Util__ctx_type_4 &_output_){
 }
 
 float Util_smooth(Util__ctx_type_4 &_ctx, float input){
-   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005f));
+   _ctx.x = (_ctx.x + (0.005f * (input + (- _ctx.x))));
    return _ctx.x;
 }
 
@@ -96,7 +96,7 @@ void Util_average2_init(Util__ctx_type_5 &_output_){
 
 float Util_average2(Util__ctx_type_5 &_ctx, float x1){
    float result;
-   result = ((_ctx.x0 + x1) * 0.5f);
+   result = (0.5f * (_ctx.x0 + x1));
    _ctx.x0 = x1;
    return result;
 }
@@ -132,7 +132,7 @@ float Util_pitchToRate_1024_raw_c2(int index){
 float Util_pitchToRate_1024(float pitch){
    int index;
    index = int_clip(float_to_int((0.2440945f * pitch)),0,31);
-   return (float_wrap_array(Util_pitchToRate_1024_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_1024_c1)[index] + (float_wrap_array(Util_pitchToRate_1024_c2)[index] * pitch))));
+   return (float_wrap_array(Util_pitchToRate_1024_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_1024_c1)[index] + (pitch * float_wrap_array(Util_pitchToRate_1024_c2)[index]))));
 }
 
 float Util_pitchToRate_raw_c0(int index){
@@ -150,11 +150,11 @@ float Util_pitchToRate_raw_c2(int index){
 float Util_pitchToRate(float pitch){
    int index;
    index = int_clip(float_to_int((0.2440945f * pitch)),0,31);
-   return (float_wrap_array(Util_pitchToRate_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_c1)[index] + (float_wrap_array(Util_pitchToRate_c2)[index] * pitch))));
+   return (float_wrap_array(Util_pitchToRate_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_c1)[index] + (pitch * float_wrap_array(Util_pitchToRate_c2)[index]))));
 }
 
 float Util_cvToPitch(float cv){
-   return ((cv * 120.f) + 24.f);
+   return (24.f + (120.f * cv));
 }
 
 float Util_cvToRate_1024_raw_c0(int index){
@@ -172,7 +172,7 @@ float Util_cvToRate_1024_raw_c2(int index){
 float Util_cvToRate_1024(float cv){
    int index;
    index = int_clip(float_to_int((34.4444445f * cv)),0,31);
-   return (float_wrap_array(Util_cvToRate_1024_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_1024_c1)[index] + (float_wrap_array(Util_cvToRate_1024_c2)[index] * cv))));
+   return (float_wrap_array(Util_cvToRate_1024_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_1024_c1)[index] + (cv * float_wrap_array(Util_cvToRate_1024_c2)[index]))));
 }
 
 float Util_cvToRate_raw_c0(int index){
@@ -190,7 +190,7 @@ float Util_cvToRate_raw_c2(int index){
 float Util_cvToRate(float cv){
    int index;
    index = int_clip(float_to_int((141.1111112f * cv)),0,127);
-   return (float_wrap_array(Util_cvToRate_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_c1)[index] + (float_wrap_array(Util_cvToRate_c2)[index] * cv))));
+   return (float_wrap_array(Util_cvToRate_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_c1)[index] + (cv * float_wrap_array(Util_cvToRate_c2)[index]))));
 }
 
 float Util_pitchToCv(float pitch){
@@ -212,7 +212,7 @@ float Util_cvToperiod_raw_c2(int index){
 float Util_cvToperiod(float cv){
    int index;
    index = int_clip(float_to_int((31.f * cv)),0,31);
-   return (float_wrap_array(Util_cvToperiod_c0)[index] + (cv * (float_wrap_array(Util_cvToperiod_c1)[index] + (float_wrap_array(Util_cvToperiod_c2)[index] * cv))));
+   return (float_wrap_array(Util_cvToperiod_c0)[index] + (cv * (float_wrap_array(Util_cvToperiod_c1)[index] + (cv * float_wrap_array(Util_cvToperiod_c2)[index]))));
 }
 
 float Util_cvTokHz_raw_c0(int index){
@@ -230,7 +230,7 @@ float Util_cvTokHz_raw_c2(int index){
 float Util_cvTokHz(float cv){
    int index;
    index = int_clip(float_to_int((31.f * cv)),0,31);
-   return (float_wrap_array(Util_cvTokHz_c0)[index] + (cv * (float_wrap_array(Util_cvTokHz_c1)[index] + (float_wrap_array(Util_cvTokHz_c2)[index] * cv))));
+   return (float_wrap_array(Util_cvTokHz_c0)[index] + (cv * (float_wrap_array(Util_cvTokHz_c1)[index] + (cv * float_wrap_array(Util_cvTokHz_c2)[index]))));
 }
 
 void Phase__ctx_type_0_init(Phase__ctx_type_0 &_output_){
@@ -261,9 +261,9 @@ float Phase_process(Phase__ctx_type_0 &_ctx, float cv, float reset){
       _ctx.phase = (_ctx.phase + _ctx.rate);
    }
    if(_ctx.phase > 1024.f){
-      _ctx.phase = (_ctx.phase + -1024.f);
+      _ctx.phase = (-1024.f + _ctx.phase);
    }
-   return (_ctx.phase * 0.0009766f);
+   return (0.0009766f * _ctx.phase);
 }
 
 void Phase_noteOn_init(Phase__ctx_type_0 &_output_){
@@ -314,7 +314,7 @@ float Tables_nsine_raw_c2(int index){
 float Tables_nsine(float x){
    int index;
    index = int_clip(float_to_int((127.f * x)),0,127);
-   return (float_wrap_array(Tables_nsine_c0)[index] + (x * (float_wrap_array(Tables_nsine_c1)[index] + (float_wrap_array(Tables_nsine_c2)[index] * x))));
+   return (float_wrap_array(Tables_nsine_c0)[index] + (x * (float_wrap_array(Tables_nsine_c1)[index] + (x * float_wrap_array(Tables_nsine_c2)[index]))));
 }
 
 void Blit__ctx_type_0_init(Blit__ctx_type_0 &_output_){
@@ -334,11 +334,11 @@ void Blit_pulse_train_init(Blit__ctx_type_0 &_output_){
 
 float Blit_pulse_train(Blit__ctx_type_0 &_ctx, float cv, float phase){
    if(Util_change(_ctx._inst29,cv)){
-      _ctx.m = ((float_to_int(Util_cvToperiod(cv)) << 1) + 1);
+      _ctx.m = (1 + (float_to_int(Util_cvToperiod(cv)) << 1));
       _ctx.scale = (2.f * Util_cvToperiod(cv));
    }
    float pi_phase;
-   pi_phase = (phase * 0.5f);
+   pi_phase = (0.5f * phase);
    float denominator;
    denominator = Tables_nsine(pi_phase);
    float out;
@@ -349,7 +349,7 @@ float Blit_pulse_train(Blit__ctx_type_0 &_ctx, float cv, float phase){
    else
    {
       float m_phase;
-      m_phase = fmodf((int_to_float(_ctx.m) * pi_phase),1.f);
+      m_phase = fmodf((pi_phase * int_to_float(_ctx.m)),1.f);
       float numerator;
       numerator = Tables_nsine(m_phase);
       out = (numerator / (_ctx.scale * denominator));
@@ -396,7 +396,7 @@ float Blit_osc_blit(Blit__ctx_type_1 &_ctx, float cv, float pw, float wave){
    }
    else
    {
-      fixed_cv = (cv + -0.1f);
+      fixed_cv = (-0.1f + cv);
    }
    if(Util_change(_ctx._inst37,fixed_cv)){
       _ctx.rate = Util_cvToRate(fixed_cv);
@@ -404,18 +404,18 @@ float Blit_osc_blit(Blit__ctx_type_1 &_ctx, float cv, float pw, float wave){
    float phase;
    phase = Phase_process(_ctx._inst39,fixed_cv,0.f);
    float shift05;
-   shift05 = (0.5f + (pw * 0.49f));
+   shift05 = (0.5f + (0.49f * pw));
    float shift;
    shift = (phase + shift05);
    if(shift > 1.f){
-      shift = (shift + -1.f);
+      shift = (-1.f + shift);
    }
    float pulse1;
    pulse1 = Blit_pulse_train(_ctx._inst41,fixed_cv,phase);
    float pulse2;
    pulse2 = Blit_pulse_train(_ctx._inst42,fixed_cv,shift);
-   _ctx.state_pulse = ((_ctx.state_pulse * 0.9995f) + pulse1 + (- pulse2));
-   _ctx.state_saw = ((_ctx.state_saw * 0.9995f) + (((pulse1 + pulse2 + (-2.f * _ctx.rate)) / shift05) * 0.5f));
+   _ctx.state_pulse = (pulse1 + (- pulse2) + (0.9995f * _ctx.state_pulse));
+   _ctx.state_saw = ((0.5f * ((pulse1 + pulse2 + (-2.f * _ctx.rate)) / shift05)) + (0.9995f * _ctx.state_saw));
    if(wave < 1.f){
       _ctx.output = _ctx.state_pulse;
    }

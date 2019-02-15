@@ -16,8 +16,8 @@ fix16_t Saturate_soft_tanh_table_raw_c2(int index){
 
 fix16_t Saturate_soft_tanh_table(fix16_t x){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x50000 /* 5.000000 */,(x + 0x180000 /* 24.000000 */))),0,240);
-   return (fix_wrap_array(Saturate_soft_tanh_table_c0)[index] + fix_mul(x,(fix_wrap_array(Saturate_soft_tanh_table_c1)[index] + fix_mul(fix_wrap_array(Saturate_soft_tanh_table_c2)[index],x))));
+   index = int_clip(fix_to_int(fix_mul(0x50000 /* 5.000000 */,(0x180000 /* 24.000000 */ + x))),0,240);
+   return (fix_wrap_array(Saturate_soft_tanh_table_c0)[index] + fix_mul(x,(fix_wrap_array(Saturate_soft_tanh_table_c1)[index] + fix_mul(x,fix_wrap_array(Saturate_soft_tanh_table_c2)[index]))));
 }
 
 fix16_t Saturate_soft_process(fix16_t x){
@@ -75,7 +75,7 @@ uint8_t Util_change(Util__ctx_type_1 &_ctx, fix16_t x){
 }
 
 fix16_t Util_map(fix16_t x, fix16_t x0, fix16_t x1, fix16_t y0, fix16_t y1){
-   return (fix_div(fix_mul((x + (- x0)),(y1 + (- y0))),(x1 + (- x0))) + y0);
+   return (y0 + fix_div(fix_mul((x + (- x0)),(y1 + (- y0))),(x1 + (- x0))));
 }
 
 void Util__ctx_type_3_init(Util__ctx_type_3 &_output_){
@@ -93,7 +93,7 @@ void Util_dcblock_init(Util__ctx_type_3 &_output_){
 
 fix16_t Util_dcblock(Util__ctx_type_3 &_ctx, fix16_t x0){
    fix16_t y0;
-   y0 = (x0 + (- _ctx.x1) + fix_mul(_ctx.y1,0xfeb8 /* 0.995000 */));
+   y0 = (x0 + (- _ctx.x1) + fix_mul(0xfeb8 /* 0.995000 */,_ctx.y1));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
@@ -112,7 +112,7 @@ void Util_smooth_init(Util__ctx_type_4 &_output_){
 }
 
 fix16_t Util_smooth(Util__ctx_type_4 &_ctx, fix16_t input){
-   _ctx.x = (_ctx.x + fix_mul((input + (- _ctx.x)),0x147 /* 0.005000 */));
+   _ctx.x = (_ctx.x + fix_mul(0x147 /* 0.005000 */,(input + (- _ctx.x))));
    return _ctx.x;
 }
 
@@ -166,7 +166,7 @@ fix16_t Util_pitchToRate_1024_raw_c2(int index){
 fix16_t Util_pitchToRate_1024(fix16_t pitch){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
-   return (fix_wrap_array(Util_pitchToRate_1024_c0)[index] + fix_mul(pitch,(fix_wrap_array(Util_pitchToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_pitchToRate_1024_c2)[index],pitch))));
+   return (fix_wrap_array(Util_pitchToRate_1024_c0)[index] + fix_mul(pitch,(fix_wrap_array(Util_pitchToRate_1024_c1)[index] + fix_mul(pitch,fix_wrap_array(Util_pitchToRate_1024_c2)[index]))));
 }
 
 fix16_t Util_pitchToRate_raw_c0(int index){
@@ -184,11 +184,11 @@ fix16_t Util_pitchToRate_raw_c2(int index){
 fix16_t Util_pitchToRate(fix16_t pitch){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x3e7c /* 0.244094 */,pitch)),0,31);
-   return (fix_wrap_array(Util_pitchToRate_c0)[index] + fix_mul(pitch,(fix_wrap_array(Util_pitchToRate_c1)[index] + fix_mul(fix_wrap_array(Util_pitchToRate_c2)[index],pitch))));
+   return (fix_wrap_array(Util_pitchToRate_c0)[index] + fix_mul(pitch,(fix_wrap_array(Util_pitchToRate_c1)[index] + fix_mul(pitch,fix_wrap_array(Util_pitchToRate_c2)[index]))));
 }
 
 fix16_t Util_cvToPitch(fix16_t cv){
-   return (fix_mul(cv,0x780000 /* 120.000000 */) + 0x180000 /* 24.000000 */);
+   return (0x180000 /* 24.000000 */ + fix_mul(0x780000 /* 120.000000 */,cv));
 }
 
 fix16_t Util_cvToRate_1024_raw_c0(int index){
@@ -206,7 +206,7 @@ fix16_t Util_cvToRate_1024_raw_c2(int index){
 fix16_t Util_cvToRate_1024(fix16_t cv){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x2271c7 /* 34.444445 */,cv)),0,31);
-   return (fix_wrap_array(Util_cvToRate_1024_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_1024_c2)[index],cv))));
+   return (fix_wrap_array(Util_cvToRate_1024_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_1024_c1)[index] + fix_mul(cv,fix_wrap_array(Util_cvToRate_1024_c2)[index]))));
 }
 
 fix16_t Util_cvToRate_raw_c0(int index){
@@ -224,7 +224,7 @@ fix16_t Util_cvToRate_raw_c2(int index){
 fix16_t Util_cvToRate(fix16_t cv){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x8d1c71 /* 141.111111 */,cv)),0,127);
-   return (fix_wrap_array(Util_cvToRate_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_c2)[index],cv))));
+   return (fix_wrap_array(Util_cvToRate_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToRate_c1)[index] + fix_mul(cv,fix_wrap_array(Util_cvToRate_c2)[index]))));
 }
 
 fix16_t Util_pitchToCv(fix16_t pitch){
@@ -246,7 +246,7 @@ fix16_t Util_cvToperiod_raw_c2(int index){
 fix16_t Util_cvToperiod(fix16_t cv){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x1f0000 /* 31.000000 */,cv)),0,31);
-   return (fix_wrap_array(Util_cvToperiod_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToperiod_c1)[index] + fix_mul(fix_wrap_array(Util_cvToperiod_c2)[index],cv))));
+   return (fix_wrap_array(Util_cvToperiod_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvToperiod_c1)[index] + fix_mul(cv,fix_wrap_array(Util_cvToperiod_c2)[index]))));
 }
 
 fix16_t Util_cvTokHz_raw_c0(int index){
@@ -264,7 +264,7 @@ fix16_t Util_cvTokHz_raw_c2(int index){
 fix16_t Util_cvTokHz(fix16_t cv){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x1f0000 /* 31.000000 */,cv)),0,31);
-   return (fix_wrap_array(Util_cvTokHz_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvTokHz_c1)[index] + fix_mul(fix_wrap_array(Util_cvTokHz_c2)[index],cv))));
+   return (fix_wrap_array(Util_cvTokHz_c0)[index] + fix_mul(cv,(fix_wrap_array(Util_cvTokHz_c1)[index] + fix_mul(cv,fix_wrap_array(Util_cvTokHz_c2)[index]))));
 }
 
 void Rescomb__ctx_type_0_init(Rescomb__ctx_type_0 &_output_){
@@ -281,19 +281,19 @@ void Rescomb_delay_init(Rescomb__ctx_type_0 &_output_){
 }
 
 fix16_t Rescomb_delay(Rescomb__ctx_type_0 &_ctx, fix16_t x, fix16_t cv){
-   _ctx.write_pos = ((_ctx.write_pos + 1) % 675);
+   _ctx.write_pos = ((1 + _ctx.write_pos) % 675);
    fix_set(_ctx.buffer,_ctx.write_pos,x);
    fix16_t r_size;
    r_size = 0x2a30000 /* 675.000000 */;
    fix16_t r_index;
-   r_index = ((int_to_fix(_ctx.write_pos) + (- Util_cvToperiod(cv))) % r_size);
+   r_index = (((- Util_cvToperiod(cv)) + int_to_fix(_ctx.write_pos)) % r_size);
    if(r_index < 0x0 /* 0.000000 */){
-      r_index = (r_size + r_index);
+      r_index = (r_index + r_size);
    }
    int t1;
    t1 = (fix_to_int(fix_floor(r_index)) % 675);
    int t2;
-   t2 = ((t1 + 1) % 675);
+   t2 = ((1 + t1) % 675);
    fix16_t decimal;
    decimal = (r_index + (- int_to_fix(t1)));
    fix16_t x1;
@@ -301,7 +301,7 @@ fix16_t Rescomb_delay(Rescomb__ctx_type_0 &_ctx, fix16_t x, fix16_t cv){
    fix16_t x2;
    x2 = fix_get(_ctx.buffer,t2);
    fix16_t ret;
-   ret = (fix_mul((x2 + (- x1)),decimal) + x1);
+   ret = (x1 + fix_mul(decimal,(x2 + (- x1))));
    return ret;
 }
 
@@ -319,8 +319,8 @@ fix16_t Rescomb_toneCurve_raw_c2(int index){
 
 fix16_t Rescomb_toneCurve(fix16_t tone){
    int index;
-   index = int_clip(fix_to_int(fix_mul(0x1a4000 /* 26.250000 */,(tone + 0x13333 /* 1.200000 */))),0,63);
-   return (fix_wrap_array(Rescomb_toneCurve_c0)[index] + fix_mul(tone,(fix_wrap_array(Rescomb_toneCurve_c1)[index] + fix_mul(fix_wrap_array(Rescomb_toneCurve_c2)[index],tone))));
+   index = int_clip(fix_to_int(fix_mul(0x1a4000 /* 26.250000 */,(0x13333 /* 1.200000 */ + tone))),0,63);
+   return (fix_wrap_array(Rescomb_toneCurve_c0)[index] + fix_mul(tone,(fix_wrap_array(Rescomb_toneCurve_c1)[index] + fix_mul(tone,fix_wrap_array(Rescomb_toneCurve_c2)[index]))));
 }
 
 void Rescomb__ctx_type_5_init(Rescomb__ctx_type_5 &_output_){
@@ -346,8 +346,8 @@ fix16_t Rescomb_do(Rescomb__ctx_type_5 &_ctx, fix16_t in, fix16_t cv, fix16_t to
    fix16_t feedback;
    feedback = Util_dcblock(_ctx._inst30,fix_mul(_ctx.output,res));
    fix16_t saturated_input;
-   saturated_input = Saturate_soft_process((in + feedback));
-   _ctx.output = (fix_mul(_ctx.stone,Rescomb_delay(_ctx._inst31,saturated_input,cv)) + in);
+   saturated_input = Saturate_soft_process((feedback + in));
+   _ctx.output = (in + fix_mul(_ctx.stone,Rescomb_delay(_ctx._inst31,saturated_input,cv)));
    return Saturate_soft_process(_ctx.output);
 }
 

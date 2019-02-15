@@ -101,8 +101,8 @@ module Default = struct
 
    let cast = Replacements.makeCasts
          [
-            ("float", "int"), "float_to_int";
-            ("int", "float"), "int_to_float";
+            ("float",   "int"),     "float_to_int";
+            ("int",     "float"),   "int_to_float";
             ("fix16_t", "int"),     "fix_to_int";
             ("fix16_t", "float"),   "fix_to_float";
             ("int",     "fix16_t"), "int_to_fix";
@@ -126,6 +126,8 @@ module Default = struct
 
    let fun_to_fun = Replacements.makeFunctions
          [
+            ("mac", "float"),   "float_mac";
+            ("msu", "float"),   "float_msu";
             ("abs", "float"),   "fabsf";
             ("exp", "float"),   "expf";
             ("floor", "float"), "floorf";
@@ -157,6 +159,8 @@ module Default = struct
             ("log",  "uint8_t"), "bool_print";
             ("log",  "string"),  "string_print";
 
+            ("mac", "fix16_t"),   "fix_mac";
+            ("msu", "fix16_t"),   "fix_msu";
             ("abs", "fix16_t"),   "fix_abs";
             ("exp", "fix16_t"),   "fix_exp";
             ("floor", "fix16_t"), "fix_floor";

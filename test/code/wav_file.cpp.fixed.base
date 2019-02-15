@@ -26,7 +26,7 @@ void Wav_file_index_init(Wav_file__ctx_type_2 &_output_){
 }
 
 int Wav_file_index(Wav_file__ctx_type_2 &_ctx){
-   _ctx.i = ((_ctx.i + 1) % Wav_file_ext_wave_samples());
+   _ctx.i = ((1 + _ctx.i) % Wav_file_ext_wave_samples());
    return _ctx.i;
 }
 

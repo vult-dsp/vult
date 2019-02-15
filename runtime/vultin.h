@@ -92,6 +92,14 @@ static_inline fix16_t fix_div(fix16_t a, fix16_t b) {
    return result;
 }
 
+static_inline fix16_t fix_mac(fix16_t x, fix16_t y, fix16_t z) {
+   return x + fix_mul(y, z);
+}
+
+static_inline fix16_t fix_msu(fix16_t x, fix16_t y, fix16_t z) {
+   return -x + fix_mul(y, z);
+}
+
 static_inline fix16_t fix_minus(fix16_t x) { return -x; }
 
 static_inline fix16_t fix_abs(fix16_t x) { return x < 0 ? (-x) : x; }
@@ -115,6 +123,14 @@ static_inline fix16_t fix_eps() { return 1; }
 static_inline float float_pi() { return 3.1415926535897932384f; }
 
 static_inline fix16_t fix_pi() { return 205887; }
+
+static_inline float float_mac(float x, float y, float z) {
+   return x + (y * z);
+}
+
+static_inline float float_msu(float x, float y, float z) {
+   return -x + (y * z);
+}
 
 fix16_t fix_exp(fix16_t inValue);
 

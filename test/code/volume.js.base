@@ -5,7 +5,7 @@ this.Volume__ctx_type_0_init = function(){
 }
 this.Volume_smooth_init = function() { return this.Volume__ctx_type_0_init(); }
 this.Volume_smooth = function(_ctx,input){
-   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005)); 
+   _ctx.x = (_ctx.x + (0.005 * (input + (- _ctx.x)))); 
    return _ctx.x; 
 }
 this.Volume__ctx_type_1_init = function(){
@@ -23,6 +23,6 @@ this.Volume_noteOff_init = function() { return this.Volume__ctx_type_1_init(); }
 this.Volume_noteOff = function(_ctx,note,channel){
 }
 this.Volume_controlChange_init = function() { return this.Volume__ctx_type_1_init(); }
-this.Volume_controlChange = function(_ctx,control,value,channel) { if((control == (30|0)))_ctx.volume = (this.real(value) * 0.0078741); }
+this.Volume_controlChange = function(_ctx,control,value,channel) { if((control == (30|0)))_ctx.volume = (0.0078741 * this.real(value)); }
 this.Volume_default_init = function() { return this.Volume__ctx_type_1_init(); }
 this.Volume_default = function(_ctx) { _ctx.volume = 0.; }

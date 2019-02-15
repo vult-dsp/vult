@@ -9,7 +9,7 @@
       mem (x:int); 
       (x:int) = 0; 
       mem (y:int); 
-      (y:int) = (y + 1); 
+      (y:int) = (1 + y); 
       mem ((a:int), (b:int)); 
       (a:int) = 1; 
       (b:int) = 2; 

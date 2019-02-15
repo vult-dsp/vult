@@ -453,10 +453,17 @@ let builtinFunctions env =
    in
    let real attr args =
       match args with
-      | [PReal(v, p, _)] -> PReal(v, p, attr)
+      | [PReal(v, _, _)] -> PReal(v, Float, attr)
       | [PInt(v, _)]  -> PReal(float_of_int v, Float, attr)
       | [PBool(v, _)] -> PReal((if v then 1.0 else 0.0), Float, attr)
       | _ -> failwith "real: invalid arguments"
+   in
+   let fix16 attr args =
+      match args with
+      | [PReal(v, _, _)] -> PReal(v, Fix16, attr)
+      | [PInt(v, _)]  -> PReal(float_of_int v, Fix16, attr)
+      | [PBool(v, _)] -> PReal((if v then 1.0 else 0.0), Fix16, attr)
+      | _ -> failwith "fix16: invalid arguments"
    in
    let not attr args =
       match args with
@@ -519,6 +526,7 @@ let builtinFunctions env =
 
          "int", Env.Builtin(int);
          "real", Env.Builtin(real);
+         "fix16", Env.Builtin(fix16);
 
          "not", Env.Builtin(not);
          "eps", Env.Builtin(eps);

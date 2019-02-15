@@ -35,7 +35,7 @@ function vultProcess() {
 }
 this.Afi_fi_process_init = function() { return this.Afi_fi__ctx_type_0_init(); }
 this.Afi_fi_process = function(_ctx,a,b){
-   _ctx.x = ((_ctx.x + (1|0))|0); 
+   _ctx.x = (((1|0) + _ctx.x)|0); 
    _ctx.process_ret_0 = a; 
    _ctx.process_ret_1 = (b|0); 
    return ; 

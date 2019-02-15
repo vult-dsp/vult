@@ -566,17 +566,17 @@ let builtin_table =
       ["size"] ,     Scope.Function, Typ.Const.array_size (), false;
       ["makeArray"], Scope.Function, Typ.Const.array_make (), false;
 
-      ["abs"]  , Scope.Function, Typ.Const.real_real (), false;
-      ["exp"]  , Scope.Function, Typ.Const.real_real (), false;
-      ["sin"]  , Scope.Function, Typ.Const.real_real (), false;
-      ["cos"]  , Scope.Function, Typ.Const.real_real (), false;
-      ["floor"], Scope.Function, Typ.Const.real_real (), false;
-      ["tanh"] , Scope.Function, Typ.Const.real_real (), false;
+      ["abs"]  , Scope.Function, Typ.Const.freal_freal (), false;
+      ["exp"]  , Scope.Function, Typ.Const.freal_freal (), false;
+      ["sin"]  , Scope.Function, Typ.Const.freal_freal (), false;
+      ["cos"]  , Scope.Function, Typ.Const.freal_freal (), false;
+      ["floor"], Scope.Function, Typ.Const.freal_freal (), false;
+      ["tanh"] , Scope.Function, Typ.Const.freal_freal (), false;
       ["pow"]  , Scope.Function, Typ.Const.real_real_real (), false;
-      ["cosh"] , Scope.Function, Typ.Const.real_real (), false;
-      ["sinh"] , Scope.Function, Typ.Const.real_real (), false;
-      ["tan"]  , Scope.Function, Typ.Const.real_real (), false;
-      ["sqrt"] , Scope.Function, Typ.Const.real_real (), false;
+      ["cosh"] , Scope.Function, Typ.Const.freal_freal (), false;
+      ["sinh"] , Scope.Function, Typ.Const.freal_freal (), false;
+      ["tan"]  , Scope.Function, Typ.Const.freal_freal (), false;
+      ["sqrt"] , Scope.Function, Typ.Const.freal_freal (), false;
       ["clip"] , Scope.Function, Typ.Const.a_a_a_a (), false;
 
       ["int"]  , Scope.Function, Typ.Const.num_int (), false;

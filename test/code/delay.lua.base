@@ -33,7 +33,7 @@ function this.Delay_smooth_init()
 end
 
 function this.Delay_smooth(_ctx,input)
-   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005)); 
+   _ctx.x = (_ctx.x + (0.005 * (input + (- _ctx.x)))); 
    return _ctx.x; 
 
 end
@@ -87,7 +87,7 @@ end
 
 function this.Delay_each(_ctx,n)
    local ret = (_ctx.count == 0); 
-   _ctx.count = ((_ctx.count + 1) % n); 
+   _ctx.count = ((1 + _ctx.count) % n); 
    return ret; 
 
 end
@@ -142,9 +142,9 @@ function this.Delay_lfo(_ctx,f,gate)
    end
    _ctx.phase = (_ctx.phase + rate); 
    if (_ctx.phase > 1.) then
-      _ctx.phase = (_ctx.phase + (-1.)); 
+      _ctx.phase = ((-1.) + _ctx.phase); 
    end
-   return (this.sin((6.2831854 * _ctx.phase)) + (-0.5)); 
+   return ((-0.5) + this.sin((6.2831854 * _ctx.phase))); 
 
 end
 
@@ -167,9 +167,9 @@ function this.Delay_phd_osc(_ctx,pitch,detune)
    local comp = (1. + (- phase1)); 
    local reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5); 
    _ctx.pre_phase1 = phase1; 
-   local phase2 = this.Delay_phasor(_ctx._inst15,(pitch + (this.Delay_smooth(_ctx._inst14,detune) * 32.)),reset); 
+   local phase2 = this.Delay_phasor(_ctx._inst15,(pitch + (32. * this.Delay_smooth(_ctx._inst14,detune))),reset); 
    local sine = this.sin((6.2831854 * phase2)); 
-   return (sine * comp); 
+   return (comp * sine); 
 
 end
 
@@ -200,9 +200,9 @@ function this.Delay_delay(_ctx,x,time,feedback)
    end
    local decimal = (index_r + (- this.real(index_i))); 
    local x1 = this.get(_ctx.buffer,read_pos); 
-   local x2 = this.get(_ctx.buffer,((read_pos + 1) % 30000)); 
-   local ret = (((x2 + (- x1)) * decimal) + x1); 
-   _ctx.write_pos = ((_ctx.write_pos + 1) % 30000); 
+   local x2 = this.get(_ctx.buffer,((1 + read_pos) % 30000)); 
+   local ret = (x1 + (decimal * (x2 + (- x1)))); 
+   _ctx.write_pos = ((1 + _ctx.write_pos) % 30000); 
    this.set(_ctx.buffer,_ctx.write_pos,this.clip((x + (feedback * ret)),(-1.),1.));
    return ret; 
 
@@ -226,7 +226,7 @@ function this.Delay_mono_noteOn(_ctx,n)
       this.set(_ctx.notes,_ctx.count,n);
       _ctx.pre = n; 
       if (_ctx.count < 4) then
-         _ctx.count = (_ctx.count + 1); 
+         _ctx.count = (1 + _ctx.count); 
       end
 
    end
@@ -251,17 +251,17 @@ function this.Delay_mono_noteOff(_ctx,n)
          found = true; 
 
       end
-      i = (i + 1); 
+      i = (1 + i); 
    end
    if found then
-      local k = (pos + 1); 
+      local k = (1 + pos); 
       while (k < 4) do
-         this.set(_ctx.notes,(k + -1),this.get(_ctx.notes,k));
-         k = (k + 1); 
+         this.set(_ctx.notes,(-1 + k),this.get(_ctx.notes,k));
+         k = (1 + k); 
       end
       if (found and (_ctx.count > 0)) then
-         _ctx.count = (_ctx.count + -1); 
-         _ctx.pre = this.get(_ctx.notes,(_ctx.count + -1)); 
+         _ctx.count = (-1 + _ctx.count); 
+         _ctx.pre = this.get(_ctx.notes,(-1 + _ctx.count)); 
 
       end
 
@@ -304,7 +304,7 @@ end
 
 function this.Delay_process(_ctx,input)
    local gate = this.Delay_mono_isGateOn(_ctx.notes); 
-   local lfo_val = (this.Delay_lfo(_ctx._inst29,_ctx.lfo_rate,gate) * _ctx.lfo_amt); 
+   local lfo_val = (_ctx.lfo_amt * this.Delay_lfo(_ctx._inst29,_ctx.lfo_rate,gate)); 
    local o1 = this.Delay_phd_osc(_ctx._inst30,_ctx.pitch,(_ctx.detune + lfo_val)); 
    local amp = 0.0; 
    local _if_54 = 0.0; 
@@ -315,9 +315,9 @@ function this.Delay_process(_ctx,input)
       _if_54 = 0.; 
    end
    amp = this.Delay_smooth(_ctx._inst31,_if_54); 
-   local osc_out = (o1 * amp); 
+   local osc_out = (amp * o1); 
    local delay_out = this.Delay_delay(_ctx._inst34,osc_out,this.Delay_smooth(_ctx._inst32,_ctx.time),this.Delay_smooth(_ctx._inst33,_ctx.feedback)); 
-   return (_ctx.volume * (osc_out + delay_out) * 0.5); 
+   return (0.5 * _ctx.volume * (delay_out + osc_out)); 
 
 end
 
@@ -343,22 +343,22 @@ end
 
 function this.Delay_controlChange(_ctx,control,value,channel)
    if (control == 30) then
-      _ctx.volume = (value * 0.0078741); 
+      _ctx.volume = (0.0078741 * value); 
    end
    if (control == 31) then
-      _ctx.detune = (value * 0.0078741); 
+      _ctx.detune = (0.0078741 * value); 
    end
    if (control == 32) then
-      _ctx.lfo_rate = (value * 0.0078741); 
+      _ctx.lfo_rate = (0.0078741 * value); 
    end
    if (control == 33) then
-      _ctx.lfo_amt = (2. * ((value * 0.0078741) + (-0.5))); 
+      _ctx.lfo_amt = (2. * ((-0.5) + (0.0078741 * value))); 
    end
    if (control == 34) then
-      _ctx.time = (value * 0.0078741); 
+      _ctx.time = (0.0078741 * value); 
    end
    if (control == 35) then
-      _ctx.feedback = (value * 0.0078741); 
+      _ctx.feedback = (0.0078741 * value); 
    end
 
 end

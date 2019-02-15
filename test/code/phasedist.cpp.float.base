@@ -15,7 +15,7 @@ void Phasedist_smooth_init(Phasedist__ctx_type_0 &_output_){
 }
 
 float Phasedist_smooth(Phasedist__ctx_type_0 &_ctx, float input){
-   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005f));
+   _ctx.x = (_ctx.x + (0.005f * (input + (- _ctx.x))));
    return _ctx.x;
 }
 
@@ -64,7 +64,7 @@ float Phasedist_phasor(Phasedist__ctx_type_3 &_ctx, float pitch, uint8_t reset){
       _ctx.phase = 0.f;
    }
    if(_ctx.phase > 1.f){
-      _ctx.phase = (_ctx.phase + -1.f);
+      _ctx.phase = (-1.f + _ctx.phase);
    }
    return _ctx.phase;
 }
@@ -97,10 +97,10 @@ float Phasedist_process(Phasedist__ctx_type_4 &_ctx, float input){
    reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5f);
    _ctx.pre_phase1 = phase1;
    float phase2;
-   phase2 = Phasedist_phasor(_ctx._inst9,(_ctx.pitch + (Phasedist_smooth(_ctx._inst8,_ctx.detune) * 32.f)),reset);
+   phase2 = Phasedist_phasor(_ctx._inst9,(_ctx.pitch + (32.f * Phasedist_smooth(_ctx._inst8,_ctx.detune))),reset);
    float sine;
    sine = sinf((6.2831854f * phase2));
-   return (Phasedist_smooth(_ctx._inst10,_ctx.volume) * sine * comp);
+   return (comp * sine * Phasedist_smooth(_ctx._inst10,_ctx.volume));
 }
 
 void Phasedist_noteOn_init(Phasedist__ctx_type_4 &_output_){
@@ -127,10 +127,10 @@ void Phasedist_controlChange_init(Phasedist__ctx_type_4 &_output_){
 
 void Phasedist_controlChange(Phasedist__ctx_type_4 &_ctx, int control, int value, int channel){
    if(control == 30){
-      _ctx.volume = (int_to_float(value) * 0.0078741f);
+      _ctx.volume = (0.0078741f * int_to_float(value));
    }
    if(control == 31){
-      _ctx.detune = (int_to_float(value) * 0.0078741f);
+      _ctx.detune = (0.0078741f * int_to_float(value));
    }
 }
 

@@ -15,7 +15,7 @@ void Volume_smooth_init(Volume__ctx_type_0 &_output_){
 }
 
 fix16_t Volume_smooth(Volume__ctx_type_0 &_ctx, fix16_t input){
-   _ctx.x = (_ctx.x + fix_mul((input + (- _ctx.x)),0x147 /* 0.005000 */));
+   _ctx.x = (_ctx.x + fix_mul(0x147 /* 0.005000 */,(input + (- _ctx.x))));
    return _ctx.x;
 }
 
@@ -59,7 +59,7 @@ void Volume_controlChange_init(Volume__ctx_type_1 &_output_){
 
 void Volume_controlChange(Volume__ctx_type_1 &_ctx, int control, int value, int channel){
    if(control == 30){
-      _ctx.volume = fix_mul(int_to_fix(value),0x204 /* 0.007874 */);
+      _ctx.volume = fix_mul(0x204 /* 0.007874 */,int_to_fix(value));
    }
 }
 

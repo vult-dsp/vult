@@ -33,7 +33,7 @@ function this.Volume_smooth_init()
 end
 
 function this.Volume_smooth(_ctx,input)
-   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005)); 
+   _ctx.x = (_ctx.x + (0.005 * (input + (- _ctx.x)))); 
    return _ctx.x; 
 
 end
@@ -76,7 +76,7 @@ end
 
 function this.Volume_controlChange(_ctx,control,value,channel)
    if (control == 30) then
-      _ctx.volume = (this.real(value) * 0.0078741); 
+      _ctx.volume = (0.0078741 * this.real(value)); 
    end
 end
 

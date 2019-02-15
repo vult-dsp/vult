@@ -30,4 +30,9 @@ let lagrange (x_points:float list) (y_points:float list) : float list =
       let c1 = (x3 *. x3 *. (y1 -. y2) +. x1 *. x1 *. (y2 -. y3) +. x2 *. x2 *. (y3 -. y1)) /. den in
       let c2 = (x3 *. (y2 -. y1) +. x2 *. (y1 -. y3) +. x1 *. (y3 -. y2)) /. den in
       [c0; c1; c2]
+   | [x0; x1], [y0; y1] ->
+      let den = x0 -. x1 in
+      let c0 = (x0 *. y1 -. x1 *. y0) /. den in
+      let c1 = (y0 -. y1) /. den in
+      [c0; c1]
    | _ -> failwith "Fitting.lagrange: invalid input"

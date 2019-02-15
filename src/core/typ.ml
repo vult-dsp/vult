@@ -358,6 +358,12 @@ module Const = struct
 
    let num_type    () = ref (TExpAlt([real_type; int_type; fix16_type]))
 
+   let freal_type () = ref (TExpAlt([real_type; fix16_type]))
+
+   let freal_freal () =
+      let t = freal_type () in
+      t |-> t
+
    let real_real () =
       real_type |-> real_type
 

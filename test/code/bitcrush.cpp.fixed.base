@@ -17,7 +17,7 @@ fix16_t Bitcrush_factor_raw_c2(int index){
 fix16_t Bitcrush_factor(fix16_t cv){
    int index;
    index = int_clip(fix_to_int(fix_mul(0x7f0000 /* 127.000000 */,cv)),0,127);
-   return (fix_wrap_array(Bitcrush_factor_c0)[index] + fix_mul(cv,(fix_wrap_array(Bitcrush_factor_c1)[index] + fix_mul(fix_wrap_array(Bitcrush_factor_c2)[index],cv))));
+   return (fix_wrap_array(Bitcrush_factor_c0)[index] + fix_mul(cv,(fix_wrap_array(Bitcrush_factor_c1)[index] + fix_mul(cv,fix_wrap_array(Bitcrush_factor_c2)[index]))));
 }
 
 fix16_t Bitcrush_process(fix16_t i, fix16_t cv){
@@ -31,7 +31,7 @@ fix16_t Bitcrush_process(fix16_t i, fix16_t cv){
       fix16_t b;
       b = Bitcrush_factor(cv);
       int x;
-      x = fix_to_int(fix_mul(i,b));
+      x = fix_to_int(fix_mul(b,i));
       out = fix_div(int_to_fix(x),b);
    }
    return out;

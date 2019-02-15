@@ -22,9 +22,9 @@ float Noise_pinker(Noise__ctx_type_0 &_ctx, float x){
    float a1;
    a1 = -0.944574f;
    float w0;
-   w0 = (x + (- (a1 * _ctx.w1)));
+   w0 = (x + (- (_ctx.w1 * a1)));
    float y0;
-   y0 = ((b0 * w0) + (b1 * _ctx.w1));
+   y0 = ((_ctx.w1 * b1) + (b0 * w0));
    _ctx.w1 = w0;
    return y0;
 }
@@ -44,12 +44,12 @@ void Noise_process_init(Noise__ctx_type_1 &_output_){
 }
 
 float Noise_process(Noise__ctx_type_1 &_ctx, float color){
-   _ctx.x1 = (((_ctx.x1 * 17389) + 7919) % 32768);
+   _ctx.x1 = ((7919 + (17389 * _ctx.x1)) % 32768);
    float y1;
-   y1 = (int_to_float(_ctx.x1) * 3.06e-05f);
-   _ctx.x2 = (((_ctx.x2 * 27449) + 12553) % 32768);
+   y1 = (3.06e-05f * int_to_float(_ctx.x1));
+   _ctx.x2 = ((12553 + (27449 * _ctx.x2)) % 32768);
    float y2;
-   y2 = (int_to_float(_ctx.x2) * 3.06e-05f);
+   y2 = (3.06e-05f * int_to_float(_ctx.x2));
    float out;
    if(color > 0.5f){
       out = Noise_pinker(_ctx._inst2,(y1 + (- y2)));

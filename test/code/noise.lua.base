@@ -36,8 +36,8 @@ function this.Noise_pinker(_ctx,x)
    local b0 = 0.027713; 
    local b1 = 0.027713; 
    local a1 = (-0.944574); 
-   local w0 = (x + (- (a1 * _ctx.w1))); 
-   local y0 = ((b0 * w0) + (b1 * _ctx.w1)); 
+   local w0 = (x + (- (_ctx.w1 * a1))); 
+   local y0 = ((_ctx.w1 * b1) + (b0 * w0)); 
    _ctx.w1 = w0; 
    return y0; 
 
@@ -57,10 +57,10 @@ function this.Noise_process_init()
 end
 
 function this.Noise_process(_ctx,color)
-   _ctx.x1 = (((_ctx.x1 * 17389) + 7919) % 32768); 
-   local y1 = (this.real(_ctx.x1) * 3.06e-05); 
-   _ctx.x2 = (((_ctx.x2 * 27449) + 12553) % 32768); 
-   local y2 = (this.real(_ctx.x2) * 3.06e-05); 
+   _ctx.x1 = ((7919 + (17389 * _ctx.x1)) % 32768); 
+   local y1 = (3.06e-05 * this.real(_ctx.x1)); 
+   _ctx.x2 = ((12553 + (27449 * _ctx.x2)) % 32768); 
+   local y2 = (3.06e-05 * this.real(_ctx.x2)); 
    local out = 0.0; 
    if (color > 0.5) then
       out = this.Noise_pinker(_ctx._inst2,(y1 + (- y2))); 

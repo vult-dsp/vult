@@ -8,8 +8,8 @@ this.Noise_pinker = function(_ctx,x){
    var b0 = 0.027713; 
    var b1 = 0.027713; 
    var a1 = (-0.944574); 
-   var w0 = (x + (- (a1 * _ctx.w1))); 
-   var y0 = ((b0 * w0) + (b1 * _ctx.w1)); 
+   var w0 = (x + (- (_ctx.w1 * a1))); 
+   var y0 = ((_ctx.w1 * b1) + (b0 * w0)); 
    _ctx.w1 = w0; 
    return y0; 
 }
@@ -22,10 +22,10 @@ this.Noise__ctx_type_1_init = function(){
 }
 this.Noise_process_init = function() { return this.Noise__ctx_type_1_init(); }
 this.Noise_process = function(_ctx,color){
-   _ctx.x1 = ((((_ctx.x1 * (17389|0)) + (7919|0)) % (32768|0))|0); 
-   var y1 = (this.real(_ctx.x1) * 3.06e-05); 
-   _ctx.x2 = ((((_ctx.x2 * (27449|0)) + (12553|0)) % (32768|0))|0); 
-   var y2 = (this.real(_ctx.x2) * 3.06e-05); 
+   _ctx.x1 = ((((7919|0) + ((17389|0) * _ctx.x1)) % (32768|0))|0); 
+   var y1 = (3.06e-05 * this.real(_ctx.x1)); 
+   _ctx.x2 = ((((12553|0) + ((27449|0) * _ctx.x2)) % (32768|0))|0); 
+   var y2 = (3.06e-05 * this.real(_ctx.x2)); 
    var out = 0.0; 
    if((color > 0.5))out = this.Noise_pinker(_ctx._inst2,(y1 + (- y2))); 
    else

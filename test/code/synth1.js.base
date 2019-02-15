@@ -5,7 +5,7 @@ this.Synth1__ctx_type_0_init = function(){
 }
 this.Synth1_smooth_init = function() { return this.Synth1__ctx_type_0_init(); }
 this.Synth1_smooth = function(_ctx,input){
-   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005)); 
+   _ctx.x = (_ctx.x + (0.005 * (input + (- _ctx.x)))); 
    return _ctx.x; 
 }
 this.Synth1__ctx_type_1_init = function(){
@@ -38,7 +38,7 @@ this.Synth1__ctx_type_3_init = function(){
 this.Synth1_each_init = function() { return this.Synth1__ctx_type_3_init(); }
 this.Synth1_each = function(_ctx,n){
    var ret = (_ctx.count == (0|0)); 
-   _ctx.count = (((_ctx.count + (1|0)) % n)|0); 
+   _ctx.count = ((((1|0) + _ctx.count) % n)|0); 
    return ret; 
 }
 this.Synth1_pitchToRate = function(d) { return (0.0001854 * this.exp((0.0577623 * d))); }
@@ -68,8 +68,8 @@ this.Synth1_lfo = function(_ctx,f,gate){
    var rate = (0.0002268 * f); 
    if(this.Synth1_edge(_ctx._inst9,gate))_ctx.phase = 0.; 
    _ctx.phase = (_ctx.phase + rate); 
-   if((_ctx.phase > 1.))_ctx.phase = (_ctx.phase + (-1.)); 
-   return (this.sin((6.2831854 * _ctx.phase)) + (-0.5)); 
+   if((_ctx.phase > 1.))_ctx.phase = ((-1.) + _ctx.phase); 
+   return ((-0.5) + this.sin((6.2831854 * _ctx.phase))); 
 }
 this.Synth1__ctx_type_7_init = function(){
    var _ctx = {}; 
@@ -95,18 +95,18 @@ this.Synth1__ctx_type_7_init = function(){
 }
 this.Synth1_process_init = function() { return this.Synth1__ctx_type_7_init(); }
 this.Synth1_process = function(_ctx,input){
-   var lfo_val = (this.Synth1_lfo(_ctx._inst13,_ctx.lfo_rate,_ctx.gate) * _ctx.lfo_amt); 
+   var lfo_val = (_ctx.lfo_amt * this.Synth1_lfo(_ctx._inst13,_ctx.lfo_rate,_ctx.gate)); 
    var phase1 = this.Synth1_phasor(_ctx._inst14,_ctx.pitch,false); 
    var comp = (1. + (- phase1)); 
    var reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5); 
    _ctx.pre_phase1 = phase1; 
-   var phase2 = this.Synth1_phasor(_ctx._inst16,(_ctx.pitch + (this.Synth1_smooth(_ctx._inst15,(_ctx.detune + lfo_val)) * 32.)),reset); 
+   var phase2 = this.Synth1_phasor(_ctx._inst16,(_ctx.pitch + (32. * this.Synth1_smooth(_ctx._inst15,(_ctx.detune + lfo_val)))),reset); 
    var sine = this.sin((6.2831854 * phase2)); 
    var gate_value = 0.0; 
    if((_ctx.gate > (0|0)))gate_value = 1.; 
    else
    gate_value = 0.; 
-   return (this.Synth1_smooth(_ctx._inst17,_ctx.volume) * sine * comp * this.Synth1_smooth(_ctx._inst18,gate_value)); 
+   return (comp * sine * this.Synth1_smooth(_ctx._inst17,_ctx.volume) * this.Synth1_smooth(_ctx._inst18,gate_value)); 
 }
 this.Synth1_noteOn_init = function() { return this.Synth1__ctx_type_7_init(); }
 this.Synth1_noteOn = function(_ctx,note,velocity,channel){
@@ -137,7 +137,7 @@ this.Synth1_noteOn = function(_ctx,note,velocity,channel){
       break;
     
    }
-   if((_ctx.count <= (4|0)))_ctx.count = ((_ctx.count + (1|0))|0); 
+   if((_ctx.count <= (4|0)))_ctx.count = (((1|0) + _ctx.count)|0); 
    if((_ctx.count > (0|0)))_ctx.gate = ((1|0)|0); 
    else
    _ctx.gate = ((0|0)|0); 
@@ -169,7 +169,7 @@ this.Synth1_noteOff = function(_ctx,note,channel){
    }
    else
    if((note == _ctx.n4))found = true; 
-   if((found && (_ctx.count > (0|0))))_ctx.count = ((_ctx.count + (-1|0))|0); 
+   if((found && (_ctx.count > (0|0))))_ctx.count = (((-1|0) + _ctx.count)|0); 
    if((_ctx.count > (0|0)))_ctx.gate = ((1|0)|0); 
    else
    _ctx.gate = ((0|0)|0); 
@@ -180,10 +180,10 @@ this.Synth1_noteOff = function(_ctx,note,channel){
 }
 this.Synth1_controlChange_init = function() { return this.Synth1__ctx_type_7_init(); }
 this.Synth1_controlChange = function(_ctx,control,value,channel){
-   if((control == (30|0)))_ctx.volume = (value * 0.0078741); 
-   if((control == (31|0)))_ctx.detune = (value * 0.0078741); 
-   if((control == (32|0)))_ctx.lfo_rate = (value * 0.0078741); 
-   if((control == (33|0)))_ctx.lfo_amt = (2. * ((value * 0.0078741) + (-0.5))); 
+   if((control == (30|0)))_ctx.volume = (0.0078741 * value); 
+   if((control == (31|0)))_ctx.detune = (0.0078741 * value); 
+   if((control == (32|0)))_ctx.lfo_rate = (0.0078741 * value); 
+   if((control == (33|0)))_ctx.lfo_amt = (2. * ((-0.5) + (0.0078741 * value))); 
 }
 this.Synth1_default_init = function() { return this.Synth1__ctx_type_7_init(); }
 this.Synth1_default = function(_ctx){

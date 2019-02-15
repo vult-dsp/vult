@@ -477,7 +477,7 @@ let rec convertExp (p:parameters) (e:exp) : cexp =
       let elems' = convertExpList p elems in
       let typ    = attrType p attr in
       convertOperator p op typ elems'
-   | PCall(_, [name], [arg], attr) when name="real" || name="int" || name="bool" ->
+   | PCall(_, [name], [arg], attr) when name="real" || name="int" || name="bool" || name="fix16" ->
       let arg'     = convertExp p arg in
       let from_typ = expType p arg in
       let to_type  = attrType p attr in

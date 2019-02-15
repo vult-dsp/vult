@@ -15,7 +15,7 @@ void Aff_f_process_init(Aff_f__ctx_type_0 &_output_){
 }
 
 float Aff_f_process(Aff_f__ctx_type_0 &_ctx, float a, float b){
-   _ctx.x = (_ctx.x + 1);
+   _ctx.x = (1 + _ctx.x);
    return (a * b);
 }
 

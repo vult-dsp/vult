@@ -3,7 +3,7 @@
 #include "gates.h"
 
 float Gates_velToCV(int vel){
-   return (int_to_float(vel) * 0.0078741f);
+   return (0.0078741f * int_to_float(vel));
 }
 
 void Gates__ctx_type_1_init(Gates__ctx_type_1 &_output_){
@@ -29,7 +29,7 @@ void Gates_gates_noteOn_init(Gates__ctx_type_1 &_output_){
 void Gates_gates_noteOn(Gates__ctx_type_1 &_ctx, int note, int velocity){
    if((note >= 36) && (note <= 43)){
       int n;
-      n = (note + (-36));
+      n = ((-36) + note);
       int_set(_ctx.vel,n,velocity);
    }
 }
@@ -42,7 +42,7 @@ void Gates_gates_noteOff_init(Gates__ctx_type_1 &_output_){
 void Gates_gates_noteOff(Gates__ctx_type_1 &_ctx, int note){
    if((note >= 36) && (note <= 43)){
       int n;
-      n = (note + (-36));
+      n = ((-36) + note);
       int_set(_ctx.vel,n,0);
    }
 }

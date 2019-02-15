@@ -33,7 +33,7 @@ function this.Synth1_smooth_init()
 end
 
 function this.Synth1_smooth(_ctx,input)
-   _ctx.x = (_ctx.x + ((input + (- _ctx.x)) * 0.005)); 
+   _ctx.x = (_ctx.x + (0.005 * (input + (- _ctx.x)))); 
    return _ctx.x; 
 
 end
@@ -87,7 +87,7 @@ end
 
 function this.Synth1_each(_ctx,n)
    local ret = (_ctx.count == 0); 
-   _ctx.count = ((_ctx.count + 1) % n); 
+   _ctx.count = ((1 + _ctx.count) % n); 
    return ret; 
 
 end
@@ -142,9 +142,9 @@ function this.Synth1_lfo(_ctx,f,gate)
    end
    _ctx.phase = (_ctx.phase + rate); 
    if (_ctx.phase > 1.) then
-      _ctx.phase = (_ctx.phase + (-1.)); 
+      _ctx.phase = ((-1.) + _ctx.phase); 
    end
-   return (this.sin((6.2831854 * _ctx.phase)) + (-0.5)); 
+   return ((-0.5) + this.sin((6.2831854 * _ctx.phase))); 
 
 end
 
@@ -177,12 +177,12 @@ function this.Synth1_process_init()
 end
 
 function this.Synth1_process(_ctx,input)
-   local lfo_val = (this.Synth1_lfo(_ctx._inst13,_ctx.lfo_rate,_ctx.gate) * _ctx.lfo_amt); 
+   local lfo_val = (_ctx.lfo_amt * this.Synth1_lfo(_ctx._inst13,_ctx.lfo_rate,_ctx.gate)); 
    local phase1 = this.Synth1_phasor(_ctx._inst14,_ctx.pitch,false); 
    local comp = (1. + (- phase1)); 
    local reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5); 
    _ctx.pre_phase1 = phase1; 
-   local phase2 = this.Synth1_phasor(_ctx._inst16,(_ctx.pitch + (this.Synth1_smooth(_ctx._inst15,(_ctx.detune + lfo_val)) * 32.)),reset); 
+   local phase2 = this.Synth1_phasor(_ctx._inst16,(_ctx.pitch + (32. * this.Synth1_smooth(_ctx._inst15,(_ctx.detune + lfo_val)))),reset); 
    local sine = this.sin((6.2831854 * phase2)); 
    local gate_value = 0.0; 
    if (_ctx.gate > 0) then
@@ -191,7 +191,7 @@ function this.Synth1_process(_ctx,input)
 
       gate_value = 0.; 
    end
-   return (this.Synth1_smooth(_ctx._inst17,_ctx.volume) * sine * comp * this.Synth1_smooth(_ctx._inst18,gate_value)); 
+   return (comp * sine * this.Synth1_smooth(_ctx._inst17,_ctx.volume) * this.Synth1_smooth(_ctx._inst18,gate_value)); 
 
 end
 
@@ -227,7 +227,7 @@ function this.Synth1_noteOn(_ctx,note,velocity,channel)
       end
    end
    if (_ctx.count <= 4) then
-      _ctx.count = (_ctx.count + 1); 
+      _ctx.count = (1 + _ctx.count); 
    end
    if (_ctx.count > 0) then
       _ctx.gate = 1; 
@@ -277,7 +277,7 @@ function this.Synth1_noteOff(_ctx,note,channel)
       end
    end
    if (found and (_ctx.count > 0)) then
-      _ctx.count = (_ctx.count + -1); 
+      _ctx.count = (-1 + _ctx.count); 
    end
    if (_ctx.count > 0) then
       _ctx.gate = 1; 
@@ -306,16 +306,16 @@ end
 
 function this.Synth1_controlChange(_ctx,control,value,channel)
    if (control == 30) then
-      _ctx.volume = (value * 0.0078741); 
+      _ctx.volume = (0.0078741 * value); 
    end
    if (control == 31) then
-      _ctx.detune = (value * 0.0078741); 
+      _ctx.detune = (0.0078741 * value); 
    end
    if (control == 32) then
-      _ctx.lfo_rate = (value * 0.0078741); 
+      _ctx.lfo_rate = (0.0078741 * value); 
    end
    if (control == 33) then
-      _ctx.lfo_amt = (2. * ((value * 0.0078741) + (-0.5))); 
+      _ctx.lfo_amt = (2. * ((-0.5) + (0.0078741 * value))); 
    end
 
 end

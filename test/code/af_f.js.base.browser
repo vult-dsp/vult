@@ -33,7 +33,7 @@ function vultProcess() {
 }
 this.Af_f_process_init = function() { return this.Af_f__ctx_type_0_init(); }
 this.Af_f_process = function(_ctx,input){
-   _ctx.x = ((_ctx.x + (1|0))|0); 
+   _ctx.x = (((1|0) + _ctx.x)|0); 
    return (input * input); 
 }
 this.Af_f_noteOn_init = function() { return this.Af_f__ctx_type_0_init(); }

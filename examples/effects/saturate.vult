@@ -6,7 +6,7 @@ Copyright (c) 2017 Leonardo Laguna Ruiz
 Tanh satuation
 */
 
-fun tanh_table(x) @[table(min = -24.0, max = 24.0, size = 241)]{
+fun tanh_table(x:real) @[table(min = -24.0, max = 24.0, size = 241)]{
   return tanh(x);
 }
 

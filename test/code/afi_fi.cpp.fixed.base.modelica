@@ -17,7 +17,7 @@ void Afi_fi_process_init(Afi_fi__ctx_type_0 &_output_){
 }
 
 void Afi_fi_process(Afi_fi__ctx_type_0 &_ctx, fix16_t a, int b){
-   _ctx.x = (_ctx.x + 1);
+   _ctx.x = (1 + _ctx.x);
    _ctx.process_ret_0 = a;
    _ctx.process_ret_1 = b;
    return ;

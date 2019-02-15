@@ -33,7 +33,7 @@
 }
 this.Aff_f_process_init = function() { return this.Aff_f__ctx_type_0_init(); }
 this.Aff_f_process = function(_ctx,a,b){
-   _ctx.x = ((_ctx.x + (1|0))|0); 
+   _ctx.x = (((1|0) + _ctx.x)|0); 
    return (a * b); 
 }
 this.Aff_f_noteOn_init = function() { return this.Aff_f__ctx_type_0_init(); }

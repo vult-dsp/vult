@@ -35,7 +35,7 @@
 }
 this.Aff_ff_process_init = function() { return this.Aff_ff__ctx_type_0_init(); }
 this.Aff_ff_process = function(_ctx,a,b){
-   _ctx.x = ((_ctx.x + (1|0))|0); 
+   _ctx.x = (((1|0) + _ctx.x)|0); 
    _ctx.process_ret_0 = (a + b); 
    _ctx.process_ret_1 = (a + (- b)); 
    return ; 

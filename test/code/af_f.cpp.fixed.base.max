@@ -15,7 +15,7 @@ void Af_f_process_init(Af_f__ctx_type_0 &_output_){
 }
 
 fix16_t Af_f_process(Af_f__ctx_type_0 &_ctx, fix16_t input){
-   _ctx.x = (_ctx.x + 1);
+   _ctx.x = (1 + _ctx.x);
    return fix_mul(input,input);
 }
 
