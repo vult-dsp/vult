@@ -25,6 +25,28 @@ THE SOFTWARE.
 open Code
 open Config
 
+
+let rec getBodyCost body =
+   match body with
+   | CSVar _ -> 1
+   | CSConst _ -> 1
+   | CSBind _ -> 1
+   | CSFunction (_,_,_,body,_) -> 1 + getBodyCost body
+   | CSReturn _ -> 1
+   | CSWhile (_, body) -> 1 + getBodyCost body
+   | CSBlock body -> List.fold_left (fun acc e -> acc + getBodyCost e) 1 body
+   | CSIf(_, t, None) -> 1 + getBodyCost t
+   | CSIf(_, t, Some e) -> 1 + getBodyCost t + getBodyCost e
+   | CSType _ -> 0
+   | CSExtFunc _ -> 0
+   | CSAlias _ -> 0
+   | CSEmpty -> 0
+   | CSSwitch(_, cases, Some d) ->
+      List.fold_left (fun acc (_, e) -> acc + getBodyCost e) (1 + getBodyCost d) cases
+   | CSSwitch(_, cases, None) ->
+      List.fold_left (fun acc (_, e) -> acc + getBodyCost e) 1 cases
+
+
 let dot = Pla.map_sep (Pla.string ".") Pla.string
 
 (** Returns true if the expression is simple and does not need parenthesis *)
@@ -277,7 +299,18 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSFunction(ntype, name, args, (CSBlock(_) as body), _) ->
       let ret   = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
+      let cost = getBodyCost body in
       (* if we are printing a header, skip the body *)
+      if cost < 6 then
+         if params.is_header then begin
+            match printStmt params body with
+            | Some(tbody) ->
+               Some({pla|static_inline <#ret#> <#name#s>(<#targs#>)<#tbody#><#>|pla})
+            (* Covers the case when the body is empty *)
+            | None -> Some({pla|static_inline <#ret#> <#name#s>(<#targs#>){};<#>|pla})
+         end
+         else None
+      else
       if params.is_header then begin
          Some({pla|<#ret#> <#name#s>(<#targs#>);<#>|pla})
       end
@@ -288,16 +321,37 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
          (* Covers the case when the body is empty *)
          | None -> Some({pla|<#ret#> <#name#s>(<#targs#>){};<#>|pla})
       end
+
+   (* Function declarations cotaining a single return *)
+   | CSFunction(ntype, name, args, (CSReturn(_) as body), _) ->
+      let ret = printTypeDescr ntype in
+      let targs = Pla.map_sep Pla.commaspace printFunArg args in
+      (* if we are printing a header, skip the body *)
+      if params.is_header then
+         let tbody = CCOpt.get_or ~default:Pla.unit (printStmt params body) in
+         Some({pla|static_inline <#ret#> <#name#s>(<#targs#>){<#tbody#+><#>};<#>|pla})
+      else
+         None
+
    (* Function declarations cotaining a single statement *)
    | CSFunction(ntype, name, args, body, _) ->
       let ret = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
       (* if we are printing a header, skip the body *)
+      let cost = getBodyCost body in
+      if cost < 6 then
+         if params.is_header then
+            let tbody = CCOpt.get_or ~default:Pla.unit (printStmt params body) in
+            Some({pla|static_inline <#ret#> <#name#s>(<#targs#>){<#tbody#+><#>};<#>|pla})
+         else
+            None
+      else
       if params.is_header then
          Some({pla|<#ret#> <#name#s>(<#targs#>);<#>|pla})
       else
          let tbody = CCOpt.get_or ~default:Pla.unit (printStmt params body) in
          Some({pla|<#ret#> <#name#s>(<#targs#>){<#tbody#+><#>}<#>|pla})
+
 
    (* Prints return x *)
    | CSReturn(e1) ->

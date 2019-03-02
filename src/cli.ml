@@ -42,6 +42,7 @@ let processArguments () : args =
       "-eval",      (Arg.Unit   (fun () -> result.eval       <- true)),   " Runs the code (default: off)";
       "-tables",    (Arg.Bool   (fun b -> result.tables     <- b)),       " Create lookup tables (default: on)";
       "-shorten",   (Arg.Unit   (fun () -> result.shorten     <- true)),   " Creates short function names (default: off)";
+      "-mac",       (Arg.Unit   (fun () -> result.mac         <- true)),   " Generates mac() function calls (default: off)";
       "-i",         (Arg.String (fun path -> result.includes <- path :: result.includes)), "path Adds the given path to the list of places to look for modules";
       "-root",      (Arg.String (fun id -> result.roots <- id :: result.roots)), "id Performs code cleanup keeping as roots the specified functions";
       "-version",   (Arg.Unit   (fun () -> result.show_version <- true)), " Show the version of vult";

@@ -123,6 +123,13 @@ and exp =
    | PArray
       of exp array
          * attr
+
+   | PCall
+      of instance    (* name/instance *)
+         *  Id.t        (* type/function name *)
+         *  exp list  (* arguments *)
+         *  attr
+
    | PUnOp
       of string      (* operator *)
          *  exp
@@ -130,11 +137,6 @@ and exp =
    | POp
       of string      (* operator *)
          *  exp list
-         *  attr
-   | PCall
-      of instance    (* name/instance *)
-         *  Id.t        (* type/function name *)
-         *  exp list  (* arguments *)
          *  attr
    | PIf
       of exp    (* condition *)

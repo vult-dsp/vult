@@ -272,8 +272,8 @@ module MarkUsedFunctions = struct
    let mapper = Mapper.{ default_mapper with stmt }
 
 end
-(*
-  module MakeMac = struct
+
+module MakeMac = struct
 
 
    let isRealAttr attr : bool =
@@ -283,28 +283,37 @@ end
 
    let exp : ('a Env.t,exp) Mapper.mapper_func =
       Mapper.make "MakeMac.exp" @@ fun state exp ->
-      match exp with
-      | POp("+",[POp("*",[a; b], _); PUnOp("-", c, _)], attr) when isRealAttr attr ->
-         reapply state, PCall(NoInst,["msu"],[c; a; b], attr)
-      | POp("+",[PUnOp("-", c, _); POp("*",[a; b], _)], attr) when isRealAttr attr ->
-         reapply state, PCall(NoInst,["msu"],[c; a; b], attr)
+      let data = Env.get state in
+      if data.PassData.args.mac then
+         match exp with
+         (*
+         | POp("+",[PUnOp("-", c, _); POp("*",[a; b], _)], attr) when isRealAttr attr ->
+            reapply state, PCall(NoInst,["msu"],[c; a; b], attr)
+         | POp("+",[POp("*",[a; b], _); PUnOp("-", c, _)], attr) when isRealAttr attr ->
+            reapply state, PCall(NoInst,["msu"],[c; a; b], attr)
 
-      | POp("+", POp("*",[a; b], _) :: PUnOp("-", c, _) :: rest, attr) when isRealAttr attr ->
-         reapply state, POp("+", PCall(NoInst,["msu"],[c; a; b], attr) :: rest, attr)
-      | POp("+", PUnOp("-", c, _) :: POp("*",[a; b], _) :: rest, attr) when isRealAttr attr ->
-         reapply state, POp("+", PCall(NoInst,["msu"],[c; a; b], attr) :: rest, attr)
+         | POp("+", PUnOp("-", c, _) :: POp("*",[a; b], _) :: rest, attr) when isRealAttr attr ->
+            reapply state, POp("+", PCall(NoInst,["msu"],[c; a; b], attr) :: rest, attr)
+         | POp("+", POp("*",[a; b], _) :: PUnOp("-", c, _) :: rest, attr) when isRealAttr attr ->
+            reapply state, POp("+", PCall(NoInst,["msu"],[c; a; b], attr) :: rest, attr)
+         *)
 
-      | POp("+",[POp("*",[a; b], _); c], attr) when isRealAttr attr ->
-         reapply state, PCall(NoInst,["mac"],[c; a; b], attr)
-      | POp("+",[c; POp("*",[a; b], _)], attr) when isRealAttr attr ->
-         reapply state, PCall(NoInst,["mac"],[c; a; b], attr)
+         | POp("+", c :: POp("*",[a; b], _) :: rest, attr) when isRealAttr attr ->
+            reapply state, POp("+", PCall(NoInst,["mac"],[c; a; b], attr) :: rest, attr)
+         | POp("+", POp("*",[a; b], _) ::  c :: rest, attr) when isRealAttr attr ->
+            reapply state, POp("+", PCall(NoInst,["mac"],[c; a; b], attr) :: rest, attr)
 
-      | _ -> state, exp
+         | POp("+",[c; POp("*",[a; b], _)], attr) when isRealAttr attr ->
+            reapply state, PCall(NoInst,["mac"],[c; a; b], attr)
+         | POp("+",[POp("*",[a; b], _); c], attr) when isRealAttr attr ->
+            reapply state, PCall(NoInst,["mac"],[c; a; b], attr)
+
+         | _ -> state, exp
+      else state, exp
 
    let mapper = Mapper.{ default_mapper with exp }
 
-  end
-*)
+end
 
 module SortExp = struct
 
@@ -325,4 +334,4 @@ let run =
    |> Mapper.seq SimplifyFixed.mapper
    |> Mapper.seq MarkUsedFunctions.mapper
    |> Mapper.seq SortExp.mapper
-(*|> Mapper.seq MakeMac.mapper*)
+   |> Mapper.seq MakeMac.mapper

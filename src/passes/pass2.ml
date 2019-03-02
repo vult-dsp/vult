@@ -213,6 +213,23 @@ module MakeTables = struct
                    ], rattr), emptyAttr)
          ], emptyAttr)
 
+   let makeNewBodyRaw1 fname size precision input =
+      let rattr = Tables.attr_real precision in
+      let rindex = PId(["index"], Tables.attr_int) in
+      let getCoeff a =
+         let arr = PCall(NoInst, ["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array precision size)], rattr) in
+         PIndex(arr, rindex, rattr)
+      in
+      StmtBlock(
+         None,
+         [
+            StmtReturn(
+               POp("+",
+                   [getCoeff "c0";
+                    POp("*", [input; getCoeff "c1"], rattr)
+                   ], rattr), emptyAttr)
+         ], emptyAttr)
+
    let evaluateFunction env (name:Id.t) precision (x:float) =
       match Id.getNameNoModule name with
       | Some fname ->

@@ -64,6 +64,7 @@ type args =
       mutable tables  : bool;
       mutable roots   : string list;
       mutable shorten : bool;
+      mutable mac     : bool;
    }
 [@@deriving show,eq,ord]
 
@@ -85,4 +86,5 @@ let default_arguments : args =
       tables = true;
       roots = [];
       shorten = false;
+      mac = false;
    }
