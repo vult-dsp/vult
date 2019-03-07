@@ -12,9 +12,17 @@ typedef struct Noise__ctx_type_0 {
 
 typedef Noise__ctx_type_0 Noise_pinker_type;
 
-void Noise__ctx_type_0_init(Noise__ctx_type_0 &_output_);
+static_inline void Noise__ctx_type_0_init(Noise__ctx_type_0 &_output_){
+   Noise__ctx_type_0 _ctx;
+   _ctx.w1 = 0x0 /* 0.000000 */;
+   _output_ = _ctx;
+   return ;
+}
 
-void Noise_pinker_init(Noise__ctx_type_0 &_output_);
+static_inline void Noise_pinker_init(Noise__ctx_type_0 &_output_){
+   Noise__ctx_type_0_init(_output_);
+   return ;
+}
 
 fix16_t Noise_pinker(Noise__ctx_type_0 &_ctx, fix16_t x);
 
@@ -28,33 +36,52 @@ typedef Noise__ctx_type_1 Noise_process_type;
 
 void Noise__ctx_type_1_init(Noise__ctx_type_1 &_output_);
 
-void Noise_process_init(Noise__ctx_type_1 &_output_);
+static_inline void Noise_process_init(Noise__ctx_type_1 &_output_){
+   Noise__ctx_type_1_init(_output_);
+   return ;
+}
 
 fix16_t Noise_process(Noise__ctx_type_1 &_ctx, fix16_t color);
 
 typedef Noise__ctx_type_1 Noise_noteOn_type;
 
-void Noise_noteOn_init(Noise__ctx_type_1 &_output_);
+static_inline void Noise_noteOn_init(Noise__ctx_type_1 &_output_){
+   Noise__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Noise_noteOn(Noise__ctx_type_1 &_ctx, int note, int velocity, int channel);
+static_inline void Noise_noteOn(Noise__ctx_type_1 &_ctx, int note, int velocity, int channel){
+}
 
 typedef Noise__ctx_type_1 Noise_noteOff_type;
 
-void Noise_noteOff_init(Noise__ctx_type_1 &_output_);
+static_inline void Noise_noteOff_init(Noise__ctx_type_1 &_output_){
+   Noise__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Noise_noteOff(Noise__ctx_type_1 &_ctx, int note, int channel);
+static_inline void Noise_noteOff(Noise__ctx_type_1 &_ctx, int note, int channel){
+}
 
 typedef Noise__ctx_type_1 Noise_controlChange_type;
 
-void Noise_controlChange_init(Noise__ctx_type_1 &_output_);
+static_inline void Noise_controlChange_init(Noise__ctx_type_1 &_output_){
+   Noise__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Noise_controlChange(Noise__ctx_type_1 &_ctx, int control, int value, int channel);
+static_inline void Noise_controlChange(Noise__ctx_type_1 &_ctx, int control, int value, int channel){
+}
 
 typedef Noise__ctx_type_1 Noise_default_type;
 
-void Noise_default_init(Noise__ctx_type_1 &_output_);
+static_inline void Noise_default_init(Noise__ctx_type_1 &_output_){
+   Noise__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Noise_default(Noise__ctx_type_1 &_ctx);
+static_inline void Noise_default(Noise__ctx_type_1 &_ctx){
+}
 
 
 

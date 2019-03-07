@@ -6,15 +6,21 @@
 #include <math.h>
 #include "vultin.h"
 
-float Template_process(float input);
+static_inline float Template_process(float input){
+   return input;
+};
 
-void Template_noteOn(int note, int velocity, int channel);
+static_inline void Template_noteOn(int note, int velocity, int channel){
+}
 
-void Template_noteOff(int note, int channel);
+static_inline void Template_noteOff(int note, int channel){
+}
 
-void Template_controlChange(int control, int value, int channel);
+static_inline void Template_controlChange(int control, int value, int channel){
+}
 
-void Template_default();
+static_inline void Template_default(){
+}
 
 
 

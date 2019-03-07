@@ -13,35 +13,62 @@ typedef struct Af_f__ctx_type_0 {
 
 typedef Af_f__ctx_type_0 Af_f_process_type;
 
-void Af_f__ctx_type_0_init(Af_f__ctx_type_0 &_output_);
+static_inline void Af_f__ctx_type_0_init(Af_f__ctx_type_0 &_output_){
+   Af_f__ctx_type_0 _ctx;
+   _ctx.x = 0;
+   _output_ = _ctx;
+   return ;
+}
 
-void Af_f_process_init(Af_f__ctx_type_0 &_output_);
+static_inline void Af_f_process_init(Af_f__ctx_type_0 &_output_){
+   Af_f__ctx_type_0_init(_output_);
+   return ;
+}
 
-float Af_f_process(Af_f__ctx_type_0 &_ctx, float input);
+static_inline float Af_f_process(Af_f__ctx_type_0 &_ctx, float input){
+   _ctx.x = (1 + _ctx.x);
+   return (input * input);
+}
 
 typedef Af_f__ctx_type_0 Af_f_noteOn_type;
 
-void Af_f_noteOn_init(Af_f__ctx_type_0 &_output_);
+static_inline void Af_f_noteOn_init(Af_f__ctx_type_0 &_output_){
+   Af_f__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Af_f_noteOn(Af_f__ctx_type_0 &_ctx, int note, int velocity, int channel);
+static_inline void Af_f_noteOn(Af_f__ctx_type_0 &_ctx, int note, int velocity, int channel){
+}
 
 typedef Af_f__ctx_type_0 Af_f_noteOff_type;
 
-void Af_f_noteOff_init(Af_f__ctx_type_0 &_output_);
+static_inline void Af_f_noteOff_init(Af_f__ctx_type_0 &_output_){
+   Af_f__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Af_f_noteOff(Af_f__ctx_type_0 &_ctx, int note, int channel);
+static_inline void Af_f_noteOff(Af_f__ctx_type_0 &_ctx, int note, int channel){
+}
 
 typedef Af_f__ctx_type_0 Af_f_controlChange_type;
 
-void Af_f_controlChange_init(Af_f__ctx_type_0 &_output_);
+static_inline void Af_f_controlChange_init(Af_f__ctx_type_0 &_output_){
+   Af_f__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Af_f_controlChange(Af_f__ctx_type_0 &_ctx, int control, int value, int channel);
+static_inline void Af_f_controlChange(Af_f__ctx_type_0 &_ctx, int control, int value, int channel){
+}
 
 typedef Af_f__ctx_type_0 Af_f_default_type;
 
-void Af_f_default_init(Af_f__ctx_type_0 &_output_);
+static_inline void Af_f_default_init(Af_f__ctx_type_0 &_output_){
+   Af_f__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Af_f_default(Af_f__ctx_type_0 &_ctx);
+static_inline void Af_f_default(Af_f__ctx_type_0 &_ctx){
+}
 
 
 

@@ -10,15 +10,21 @@
 #include "ext_obex.h"
 #include "z_dsp.h"
 
-float Sff_f_process(float a, float b);
+static_inline float Sff_f_process(float a, float b){
+   return (a * b);
+};
 
-void Sff_f_noteOn(int note, int velocity, int channel);
+static_inline void Sff_f_noteOn(int note, int velocity, int channel){
+}
 
-void Sff_f_noteOff(int note, int channel);
+static_inline void Sff_f_noteOff(int note, int channel){
+}
 
-void Sff_f_controlChange(int control, int value, int channel);
+static_inline void Sff_f_controlChange(int control, int value, int channel){
+}
 
-void Sff_f_default();
+static_inline void Sff_f_default(){
+}
 
 
 

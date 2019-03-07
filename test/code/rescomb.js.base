@@ -152,7 +152,7 @@ this.Rescomb_delay = function(_ctx,x,cv){
    _ctx.write_pos = ((((1|0) + _ctx.write_pos) % (675|0))|0); 
    this.set(_ctx.buffer,_ctx.write_pos,x);
    var r_size = 675.; 
-   var r_index = (((- this.Util_cvToperiod(cv)) + this.real(_ctx.write_pos)) % r_size); 
+   var r_index = ((this.real(_ctx.write_pos) + (- this.Util_cvToperiod(cv))) % r_size); 
    if((r_index < 0.))r_index = (r_index + r_size); 
    var t1 = ((this.int(this.floor(r_index)) % (675|0))|0); 
    var t2 = ((((1|0) + t1) % (675|0))|0); 

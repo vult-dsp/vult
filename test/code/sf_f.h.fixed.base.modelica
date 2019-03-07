@@ -7,15 +7,21 @@
 #include <math.h>
 #include "vultin.h"
 
-fix16_t Sf_f_process(fix16_t input);
+static_inline fix16_t Sf_f_process(fix16_t input){
+   return fix_mul(input,input);
+};
 
-void Sf_f_noteOn(int note, int velocity, int channel);
+static_inline void Sf_f_noteOn(int note, int velocity, int channel){
+}
 
-void Sf_f_noteOff(int note, int channel);
+static_inline void Sf_f_noteOff(int note, int channel){
+}
 
-void Sf_f_controlChange(int control, int value, int channel);
+static_inline void Sf_f_controlChange(int control, int value, int channel){
+}
 
-void Sf_f_default();
+static_inline void Sf_f_default(){
+}
 
 
 

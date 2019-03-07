@@ -22,45 +22,79 @@ typedef Aff_ff__ctx_type_0 Aff_ff_process_type;
 
 void Aff_ff__ctx_type_0_init(Aff_ff__ctx_type_0 &_output_);
 
-void Aff_ff_process_init(Aff_ff__ctx_type_0 &_output_);
+static_inline void Aff_ff_process_init(Aff_ff__ctx_type_0 &_output_){
+   Aff_ff__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Aff_ff_process(Aff_ff__ctx_type_0 &_ctx, float a, float b);
+static_inline void Aff_ff_process(Aff_ff__ctx_type_0 &_ctx, float a, float b){
+   _ctx.x = (1 + _ctx.x);
+   _ctx.process_ret_0 = (a + b);
+   _ctx.process_ret_1 = (a + (- b));
+   return ;
+}
 
 typedef Aff_ff__ctx_type_0 Aff_ff_process_ret_0_type;
 
-void Aff_ff_process_ret_0_init(Aff_ff__ctx_type_0 &_output_);
+static_inline void Aff_ff_process_ret_0_init(Aff_ff__ctx_type_0 &_output_){
+   Aff_ff__ctx_type_0_init(_output_);
+   return ;
+}
 
-float Aff_ff_process_ret_0(Aff_ff__ctx_type_0 &_ctx);
+static_inline float Aff_ff_process_ret_0(Aff_ff__ctx_type_0 &_ctx){
+   return _ctx.process_ret_0;
+};
 
 typedef Aff_ff__ctx_type_0 Aff_ff_process_ret_1_type;
 
-void Aff_ff_process_ret_1_init(Aff_ff__ctx_type_0 &_output_);
+static_inline void Aff_ff_process_ret_1_init(Aff_ff__ctx_type_0 &_output_){
+   Aff_ff__ctx_type_0_init(_output_);
+   return ;
+}
 
-float Aff_ff_process_ret_1(Aff_ff__ctx_type_0 &_ctx);
+static_inline float Aff_ff_process_ret_1(Aff_ff__ctx_type_0 &_ctx){
+   return _ctx.process_ret_1;
+};
 
 typedef Aff_ff__ctx_type_0 Aff_ff_noteOn_type;
 
-void Aff_ff_noteOn_init(Aff_ff__ctx_type_0 &_output_);
+static_inline void Aff_ff_noteOn_init(Aff_ff__ctx_type_0 &_output_){
+   Aff_ff__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Aff_ff_noteOn(Aff_ff__ctx_type_0 &_ctx, int note, int velocity, int channel);
+static_inline void Aff_ff_noteOn(Aff_ff__ctx_type_0 &_ctx, int note, int velocity, int channel){
+}
 
 typedef Aff_ff__ctx_type_0 Aff_ff_noteOff_type;
 
-void Aff_ff_noteOff_init(Aff_ff__ctx_type_0 &_output_);
+static_inline void Aff_ff_noteOff_init(Aff_ff__ctx_type_0 &_output_){
+   Aff_ff__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Aff_ff_noteOff(Aff_ff__ctx_type_0 &_ctx, int note, int channel);
+static_inline void Aff_ff_noteOff(Aff_ff__ctx_type_0 &_ctx, int note, int channel){
+}
 
 typedef Aff_ff__ctx_type_0 Aff_ff_controlChange_type;
 
-void Aff_ff_controlChange_init(Aff_ff__ctx_type_0 &_output_);
+static_inline void Aff_ff_controlChange_init(Aff_ff__ctx_type_0 &_output_){
+   Aff_ff__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Aff_ff_controlChange(Aff_ff__ctx_type_0 &_ctx, int control, int value, int channel);
+static_inline void Aff_ff_controlChange(Aff_ff__ctx_type_0 &_ctx, int control, int value, int channel){
+}
 
 typedef Aff_ff__ctx_type_0 Aff_ff_default_type;
 
-void Aff_ff_default_init(Aff_ff__ctx_type_0 &_output_);
+static_inline void Aff_ff_default_init(Aff_ff__ctx_type_0 &_output_){
+   Aff_ff__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Aff_ff_default(Aff_ff__ctx_type_0 &_ctx);
+static_inline void Aff_ff_default(Aff_ff__ctx_type_0 &_ctx){
+}
 
 
 

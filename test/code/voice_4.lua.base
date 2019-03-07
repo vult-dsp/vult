@@ -1085,7 +1085,7 @@ function this.Voice_4_process(_ctx,cv,vel,gate)
    local o1 = this.Blit_process(_ctx._inst123,(0.0001 + cv + mod_cv),(_ctx.pw1 + mod_pw),0.); 
    local o2 = this.Blit_process(_ctx._inst124,(0.0002 + cv + mod_cv),(_ctx.pw2 + mod_pw),1.); 
    local o3 = this.Blit_process(_ctx._inst125,(_ctx.pw3 + cv + mod_cv),(_ctx.pw1 + mod_pw),0.); 
-   local sub = this.Saturate_process(((2. + (5. * _ctx.pw4)) * this.Tricore_process(_ctx._inst126,(cv + mod_cv),0.,1.))); 
+   local sub = this.Saturate_process((this.Tricore_process(_ctx._inst126,(cv + mod_cv),0.,1.) * (2. + (5. * _ctx.pw4)))); 
    local o = ((_ctx.level1 * o1) + (_ctx.level2 * o2) + (_ctx.level3 * o3) + (_ctx.level4 * sub)); 
    local f = this.Svf_process(_ctx._inst127,o,(_ctx.flt_cut + mod_flt),_ctx.flt_res,_ctx.flt_shape); 
    local env = this.Adsr_do(_ctx._inst128,gate,_ctx.attack,_ctx.decay,_ctx.sustain,_ctx.release); 

@@ -12,11 +12,22 @@ typedef struct Volume__ctx_type_0 {
 
 typedef Volume__ctx_type_0 Volume_smooth_type;
 
-void Volume__ctx_type_0_init(Volume__ctx_type_0 &_output_);
+static_inline void Volume__ctx_type_0_init(Volume__ctx_type_0 &_output_){
+   Volume__ctx_type_0 _ctx;
+   _ctx.x = 0x0 /* 0.000000 */;
+   _output_ = _ctx;
+   return ;
+}
 
-void Volume_smooth_init(Volume__ctx_type_0 &_output_);
+static_inline void Volume_smooth_init(Volume__ctx_type_0 &_output_){
+   Volume__ctx_type_0_init(_output_);
+   return ;
+}
 
-fix16_t Volume_smooth(Volume__ctx_type_0 &_ctx, fix16_t input);
+static_inline fix16_t Volume_smooth(Volume__ctx_type_0 &_ctx, fix16_t input){
+   _ctx.x = (_ctx.x + fix_mul(0x147 /* 0.005000 */,(input + (- _ctx.x))));
+   return _ctx.x;
+}
 
 typedef struct Volume__ctx_type_1 {
    fix16_t volume;
@@ -27,33 +38,58 @@ typedef Volume__ctx_type_1 Volume_process_type;
 
 void Volume__ctx_type_1_init(Volume__ctx_type_1 &_output_);
 
-void Volume_process_init(Volume__ctx_type_1 &_output_);
+static_inline void Volume_process_init(Volume__ctx_type_1 &_output_){
+   Volume__ctx_type_1_init(_output_);
+   return ;
+}
 
-fix16_t Volume_process(Volume__ctx_type_1 &_ctx, fix16_t input);
+static_inline fix16_t Volume_process(Volume__ctx_type_1 &_ctx, fix16_t input){
+   return fix_mul(input,Volume_smooth(_ctx._inst2,_ctx.volume));
+};
 
 typedef Volume__ctx_type_1 Volume_noteOn_type;
 
-void Volume_noteOn_init(Volume__ctx_type_1 &_output_);
+static_inline void Volume_noteOn_init(Volume__ctx_type_1 &_output_){
+   Volume__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Volume_noteOn(Volume__ctx_type_1 &_ctx, int note, int velocity, int channel);
+static_inline void Volume_noteOn(Volume__ctx_type_1 &_ctx, int note, int velocity, int channel){
+}
 
 typedef Volume__ctx_type_1 Volume_noteOff_type;
 
-void Volume_noteOff_init(Volume__ctx_type_1 &_output_);
+static_inline void Volume_noteOff_init(Volume__ctx_type_1 &_output_){
+   Volume__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Volume_noteOff(Volume__ctx_type_1 &_ctx, int note, int channel);
+static_inline void Volume_noteOff(Volume__ctx_type_1 &_ctx, int note, int channel){
+}
 
 typedef Volume__ctx_type_1 Volume_controlChange_type;
 
-void Volume_controlChange_init(Volume__ctx_type_1 &_output_);
+static_inline void Volume_controlChange_init(Volume__ctx_type_1 &_output_){
+   Volume__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Volume_controlChange(Volume__ctx_type_1 &_ctx, int control, int value, int channel);
+static_inline void Volume_controlChange(Volume__ctx_type_1 &_ctx, int control, int value, int channel){
+   if(control == 30){
+      _ctx.volume = fix_mul(0x204 /* 0.007874 */,int_to_fix(value));
+   }
+};
 
 typedef Volume__ctx_type_1 Volume_default_type;
 
-void Volume_default_init(Volume__ctx_type_1 &_output_);
+static_inline void Volume_default_init(Volume__ctx_type_1 &_output_){
+   Volume__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Volume_default(Volume__ctx_type_1 &_ctx);
+static_inline void Volume_default(Volume__ctx_type_1 &_ctx){
+   _ctx.volume = 0x0 /* 0.000000 */;
+};
 
 
 

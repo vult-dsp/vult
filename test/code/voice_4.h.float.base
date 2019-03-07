@@ -12,11 +12,24 @@ typedef struct Util__ctx_type_0 {
 
 typedef Util__ctx_type_0 Util_edge_type;
 
-void Util__ctx_type_0_init(Util__ctx_type_0 &_output_);
+static_inline void Util__ctx_type_0_init(Util__ctx_type_0 &_output_){
+   Util__ctx_type_0 _ctx;
+   _ctx.pre = false;
+   _output_ = _ctx;
+   return ;
+}
 
-void Util_edge_init(Util__ctx_type_0 &_output_);
+static_inline void Util_edge_init(Util__ctx_type_0 &_output_){
+   Util__ctx_type_0_init(_output_);
+   return ;
+}
 
-uint8_t Util_edge(Util__ctx_type_0 &_ctx, uint8_t x);
+static_inline uint8_t Util_edge(Util__ctx_type_0 &_ctx, uint8_t x){
+   uint8_t ret;
+   ret = (x && bool_not(_ctx.pre));
+   _ctx.pre = x;
+   return ret;
+}
 
 typedef struct Util__ctx_type_1 {
    float pre_x;
@@ -24,13 +37,28 @@ typedef struct Util__ctx_type_1 {
 
 typedef Util__ctx_type_1 Util_change_type;
 
-void Util__ctx_type_1_init(Util__ctx_type_1 &_output_);
+static_inline void Util__ctx_type_1_init(Util__ctx_type_1 &_output_){
+   Util__ctx_type_1 _ctx;
+   _ctx.pre_x = 0.f;
+   _output_ = _ctx;
+   return ;
+}
 
-void Util_change_init(Util__ctx_type_1 &_output_);
+static_inline void Util_change_init(Util__ctx_type_1 &_output_){
+   Util__ctx_type_1_init(_output_);
+   return ;
+}
 
-uint8_t Util_change(Util__ctx_type_1 &_ctx, float x);
+static_inline uint8_t Util_change(Util__ctx_type_1 &_ctx, float x){
+   uint8_t v;
+   v = (_ctx.pre_x != x);
+   _ctx.pre_x = x;
+   return v;
+}
 
-float Util_map(float x, float x0, float x1, float y0, float y1);
+static_inline float Util_map(float x, float x0, float x1, float y0, float y1){
+   return (y0 + (((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))));
+};
 
 typedef struct Util__ctx_type_3 {
    float y1;
@@ -41,7 +69,10 @@ typedef Util__ctx_type_3 Util_dcblock_type;
 
 void Util__ctx_type_3_init(Util__ctx_type_3 &_output_);
 
-void Util_dcblock_init(Util__ctx_type_3 &_output_);
+static_inline void Util_dcblock_init(Util__ctx_type_3 &_output_){
+   Util__ctx_type_3_init(_output_);
+   return ;
+}
 
 float Util_dcblock(Util__ctx_type_3 &_ctx, float x0);
 
@@ -51,11 +82,22 @@ typedef struct Util__ctx_type_4 {
 
 typedef Util__ctx_type_4 Util_smooth_type;
 
-void Util__ctx_type_4_init(Util__ctx_type_4 &_output_);
+static_inline void Util__ctx_type_4_init(Util__ctx_type_4 &_output_){
+   Util__ctx_type_4 _ctx;
+   _ctx.x = 0.f;
+   _output_ = _ctx;
+   return ;
+}
 
-void Util_smooth_init(Util__ctx_type_4 &_output_);
+static_inline void Util_smooth_init(Util__ctx_type_4 &_output_){
+   Util__ctx_type_4_init(_output_);
+   return ;
+}
 
-float Util_smooth(Util__ctx_type_4 &_ctx, float input);
+static_inline float Util_smooth(Util__ctx_type_4 &_ctx, float input){
+   _ctx.x = (_ctx.x + (0.005f * (input + (- _ctx.x))));
+   return _ctx.x;
+}
 
 typedef struct Util__ctx_type_5 {
    float x0;
@@ -63,83 +105,174 @@ typedef struct Util__ctx_type_5 {
 
 typedef Util__ctx_type_5 Util_average2_type;
 
-void Util__ctx_type_5_init(Util__ctx_type_5 &_output_);
+static_inline void Util__ctx_type_5_init(Util__ctx_type_5 &_output_){
+   Util__ctx_type_5 _ctx;
+   _ctx.x0 = 0.f;
+   _output_ = _ctx;
+   return ;
+}
 
-void Util_average2_init(Util__ctx_type_5 &_output_);
+static_inline void Util_average2_init(Util__ctx_type_5 &_output_){
+   Util__ctx_type_5_init(_output_);
+   return ;
+}
 
-float Util_average2(Util__ctx_type_5 &_ctx, float x1);
+static_inline float Util_average2(Util__ctx_type_5 &_ctx, float x1){
+   float result;
+   result = (0.5f * (_ctx.x0 + x1));
+   _ctx.x0 = x1;
+   return result;
+}
 
-float Util_cubic_clipper(float x);
+static_inline float Util_cubic_clipper(float x){
+   if(x <= -0.6666666f){
+      return -0.6666666f;
+   }
+   else
+   {
+      if(x >= 0.6666667f){
+         return 0.6666667f;
+      }
+      else
+      {
+         return (x + (-0.3333333f * x * x * x));
+      }
+   }
+};
 
 static const float Util_pitchToRate_1024_c0[32] = {0.1898417f,0.1913259f,0.1986886f,0.2194246f,0.2656772f,0.3564378f,0.5206507f,0.8015597f,1.2627581f,1.9965621f,3.135544f,4.8683456f,7.4612795f,11.2877251f,16.8680071f,24.9233293f,36.4485185f,52.8098903f,75.8766039f,108.1965793f,153.2316185f,215.6710565f,301.8494285f,420.3017178f,582.500346f,803.8319419f,1104.890093f,1513.1840318f,2065.3942521f,2810.3465753f,3812.9290693f,5159.2451728f};
 static const float Util_pitchToRate_1024_c1[32] = {0.0109134f,0.0101758f,0.0083338f,0.004867f,-0.0009394f,-0.0100609f,-0.0238203f,-0.0440021f,-0.0730021f,-0.1140249f,-0.1713405f,-0.2506214f,-0.3593814f,-0.5075483f,-0.7082084f,-0.9785757f,-1.3412496f,-1.8258479f,-2.4711225f,-3.3277005f,-4.4616308f,-5.9589702f,-7.9317091f,-10.5254219f,-13.9291388f,-18.3880749f,-24.2200334f,-31.8365325f,-41.7699993f,-54.7087564f,-71.5420103f,-93.4176738f};
 static const float Util_pitchToRate_1024_c2[32] = {0.0003556f,0.0004472f,0.0005624f,0.0007073f,0.0008895f,0.0011187f,0.0014069f,0.0017694f,0.0022253f,0.0027986f,0.0035197f,0.0044265f,0.005567f,0.0070013f,0.0088052f,0.0110738f,0.013927f,0.0175152f,0.022028f,0.0277035f,0.0348413f,0.043818f,0.0551077f,0.0693061f,0.0871628f,0.1096201f,0.1378636f,0.173384f,0.2180562f,0.2742381f,0.3448952f,0.4337571f};
-float Util_pitchToRate_1024_raw_c0(int index);
+static_inline float Util_pitchToRate_1024_raw_c0(int index){
+   return Util_pitchToRate_1024_c0[index];
+};
 
-float Util_pitchToRate_1024_raw_c1(int index);
+static_inline float Util_pitchToRate_1024_raw_c1(int index){
+   return Util_pitchToRate_1024_c1[index];
+};
 
-float Util_pitchToRate_1024_raw_c2(int index);
+static_inline float Util_pitchToRate_1024_raw_c2(int index){
+   return Util_pitchToRate_1024_c2[index];
+};
 
-float Util_pitchToRate_1024(float pitch);
+static_inline float Util_pitchToRate_1024(float pitch){
+   int index;
+   index = int_clip(float_to_int((0.2440945f * pitch)),0,31);
+   return (float_wrap_array(Util_pitchToRate_1024_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_1024_c1)[index] + (pitch * float_wrap_array(Util_pitchToRate_1024_c2)[index]))));
+}
 
 static const float Util_pitchToRate_c0[32] = {0.0001854f,0.0001869f,0.0001941f,0.0002143f,0.0002595f,0.0003481f,0.0005085f,0.0007828f,0.0012332f,0.0019498f,0.0030621f,0.0047543f,0.0072865f,0.0110232f,0.0164727f,0.0243392f,0.0355943f,0.0515722f,0.0740983f,0.1056608f,0.1496403f,0.2106163f,0.2947749f,0.4104509f,0.568848f,0.7849922f,1.0789943f,1.4777188f,2.0169866f,2.7444791f,3.7235636f,5.0383254f};
 static const float Util_pitchToRate_c1[32] = {1.07e-05f,1e-05f,8.2e-06f,4.8e-06f,-9e-07f,-9.8e-06f,-2.32e-05f,-4.29e-05f,-7.12e-05f,-0.0001113f,-0.0001673f,-0.0002447f,-0.0003509f,-0.0004956f,-0.0006916f,-0.0009556f,-0.0013098f,-0.001783f,-0.0024132f,-0.0032497f,-0.004357f,-0.0058193f,-0.0077458f,-0.0102787f,-0.0136026f,-0.0179571f,-0.0236523f,-0.0310903f,-0.040791f,-0.0534265f,-0.0698652f,-0.0912281f};
 static const float Util_pitchToRate_c2[32] = {4e-07f,5e-07f,6e-07f,7e-07f,9e-07f,1.1e-06f,1.4e-06f,1.8e-06f,2.2e-06f,2.8e-06f,3.5e-06f,4.4e-06f,5.5e-06f,6.9e-06f,8.6e-06f,1.09e-05f,1.37e-05f,1.72e-05f,2.16e-05f,2.71e-05f,3.41e-05f,4.28e-05f,5.39e-05f,6.77e-05f,8.52e-05f,0.0001071f,0.0001347f,0.0001694f,0.000213f,0.0002679f,0.0003369f,0.0004236f};
-float Util_pitchToRate_raw_c0(int index);
+static_inline float Util_pitchToRate_raw_c0(int index){
+   return Util_pitchToRate_c0[index];
+};
 
-float Util_pitchToRate_raw_c1(int index);
+static_inline float Util_pitchToRate_raw_c1(int index){
+   return Util_pitchToRate_c1[index];
+};
 
-float Util_pitchToRate_raw_c2(int index);
+static_inline float Util_pitchToRate_raw_c2(int index){
+   return Util_pitchToRate_c2[index];
+};
 
-float Util_pitchToRate(float pitch);
+static_inline float Util_pitchToRate(float pitch){
+   int index;
+   index = int_clip(float_to_int((0.2440945f * pitch)),0,31);
+   return (float_wrap_array(Util_pitchToRate_c0)[index] + (pitch * (float_wrap_array(Util_pitchToRate_c1)[index] + (pitch * float_wrap_array(Util_pitchToRate_c2)[index]))));
+}
 
-float Util_cvToPitch(float cv);
+static_inline float Util_cvToPitch(float cv){
+   return (24.f + (120.f * cv));
+};
 
 static const float Util_cvToRate_1024_c0[32] = {0.7593668f,0.7628769f,0.7797366f,0.8256516f,0.9246484f,1.1123985f,1.4406875f,1.9833925f,2.8444342f,4.1683106f,6.1539936f,9.073195f,13.2942978f,19.3136143f,27.7961018f,39.6282634f,55.9867165f,78.4268778f,108.9974326f,150.3878036f,206.1177981f,280.7810906f,380.3573327f,512.6116485f,687.6052678f,918.3473603f,1221.6260803f,1619.0668426f,2138.4784521f,2815.5635571f,3696.0898222f,4838.643251f};
 static const float Util_cvToRate_1024_c1[32] = {5.2455831f,4.9989426f,4.4030893f,3.3191161f,1.5644968f,-1.0992562f,-4.9822262f,-10.4858642f,-18.1279556f,-28.574102f,-42.6773652f,-61.5281299f,-86.516746f,-119.4121434f,-162.4603915f,-218.5081483f,-291.1571467f,-384.9573613f,-505.6483473f,-660.4605419f,-858.49116f,-1111.1728348f,-1432.8575168f,-1841.543534f,-2359.7803917f,-3015.7941424f,-3844.8863585f,-4891.1723528f,-6209.7398756f,-7869.328765f,-9955.6558052f,-12575.5383972f};
 static const float Util_cvToRate_1024_c2[32] = {20.1255919f,24.4575724f,29.7220002f,36.1195823f,43.8942271f,53.3423435f,64.8241421f,78.7773676f,95.733988f,116.3404762f,141.3824565f,171.814657f,208.7973083f,253.7403777f,308.3573241f,374.730424f,455.3901585f,553.4116878f,672.5320926f,817.29285f,993.2129783f,1206.9994498f,1466.8028948f,1782.5283455f,2166.212866f,2632.4844665f,3199.1197981f,3887.7218889f,4724.5437618f,5741.4893336f,6977.329755f,8479.1815645f};
-float Util_cvToRate_1024_raw_c0(int index);
+static_inline float Util_cvToRate_1024_raw_c0(int index){
+   return Util_cvToRate_1024_c0[index];
+};
 
-float Util_cvToRate_1024_raw_c1(int index);
+static_inline float Util_cvToRate_1024_raw_c1(int index){
+   return Util_cvToRate_1024_c1[index];
+};
 
-float Util_cvToRate_1024_raw_c2(int index);
+static_inline float Util_cvToRate_1024_raw_c2(int index){
+   return Util_cvToRate_1024_c2[index];
+};
 
-float Util_cvToRate_1024(float cv);
+static_inline float Util_cvToRate_1024(float cv){
+   int index;
+   index = int_clip(float_to_int((34.4444445f * cv)),0,31);
+   return (float_wrap_array(Util_cvToRate_1024_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_1024_c1)[index] + (cv * float_wrap_array(Util_cvToRate_1024_c2)[index]))));
+}
 
 static const float Util_cvToRate_c0[128] = {0.0007416f,0.0007417f,0.0007419f,0.0007423f,0.0007431f,0.0007445f,0.0007466f,0.0007495f,0.0007536f,0.000759f,0.000766f,0.0007749f,0.000786f,0.0007997f,0.0008163f,0.0008364f,0.0008604f,0.0008888f,0.0009222f,0.0009614f,0.0010069f,0.0010596f,0.0011203f,0.00119f,0.0012697f,0.0013604f,0.0014635f,0.0015802f,0.001712f,0.0018604f,0.0020271f,0.0022141f,0.0024232f,0.0026568f,0.0029171f,0.0032067f,0.0035283f,0.0038851f,0.0042802f,0.0047172f,0.0051998f,0.0057321f,0.0063187f,0.0069642f,0.0076738f,0.0084532f,0.0093082f,0.0102454f,0.0112717f,0.0123946f,0.0136222f,0.0149632f,0.0164269f,0.0180234f,0.0197635f,0.0216588f,0.0237217f,0.0259657f,0.0284052f,0.0310556f,0.0339336f,0.0370567f,0.0404443f,0.0441167f,0.0480959f,0.0524055f,0.0570705f,0.0621181f,0.0675771f,0.0734786f,0.0798558f,0.0867441f,0.0941815f,0.1022089f,0.1108697f,0.1202104f,0.1302809f,0.1411344f,0.1528279f,0.1654223f,0.1789825f,0.1935781f,0.2092834f,0.2261777f,0.2443458f,0.2638781f,0.2848713f,0.3074285f,0.3316599f,0.357683f,0.3856233f,0.4156144f,0.4477993f,0.4823303f,0.5193697f,0.5590908f,0.6016783f,0.6473293f,0.6962535f,0.7486748f,0.8048318f,0.8649786f,0.929386f,0.9983426f,1.0721558f,1.1511531f,1.2356831f,1.3261173f,1.4228512f,1.5263058f,1.6369296f,1.7551997f,1.8816241f,2.0167435f,2.1611333f,2.3154058f,2.4802125f,2.6562464f,2.8442451f,3.0449928f,3.2593239f,3.4881257f,3.7323419f,3.9929758f,4.2710944f,4.5678321f,4.8843948f,5.2220646f};
 static const float Util_cvToRate_c1[128] = {0.0051392f,0.0051263f,0.0050994f,0.0050569f,0.0049975f,0.0049196f,0.0048214f,0.0047011f,0.0045567f,0.0043863f,0.0041874f,0.0039577f,0.0036947f,0.0033955f,0.0030572f,0.0026766f,0.0022504f,0.001775f,0.0012464f,0.0006606f,1.32e-05f,-0.0007005f,-0.0014856f,-0.0023473f,-0.0032914f,-0.0043239f,-0.0054514f,-0.0066807f,-0.0080191f,-0.0094747f,-0.0110556f,-0.0127708f,-0.0146297f,-0.0166425f,-0.0188198f,-0.0211731f,-0.0237146f,-0.0264571f,-0.0294143f,-0.032601f,-0.0360326f,-0.0397257f,-0.0436977f,-0.0479675f,-0.0525547f,-0.0574805f,-0.0627673f,-0.0684387f,-0.0745201f,-0.0810382f,-0.0880216f,-0.0955003f,-0.1035065f,-0.1120742f,-0.1212396f,-0.1310409f,-0.1415188f,-0.1527165f,-0.1646796f,-0.1774569f,-0.1910996f,-0.2056624f,-0.2212032f,-0.2377833f,-0.2554678f,-0.2743257f,-0.29443f,-0.3158582f,-0.3386924f,-0.3630195f,-0.3889319f,-0.416527f,-0.4459084f,-0.4771857f,-0.510475f,-0.5458991f,-0.5835884f,-0.6236806f,-0.6663219f,-0.7116669f,-0.7598792f,-0.8111321f,-0.8656092f,-0.9235045f,-0.9850238f,-1.0503845f,-1.1198169f,-1.1935646f,-1.2718857f,-1.3550528f,-1.4433547f,-1.5370969f,-1.6366025f,-1.7422134f,-1.8542912f,-1.9732184f,-2.0993997f,-2.233263f,-2.3752609f,-2.5258721f,-2.6856026f,-2.8549877f,-3.0345935f,-3.2250182f,-3.4268945f,-3.6408914f,-3.867716f,-4.1081157f,-4.3628809f,-4.6328468f,-4.9188962f,-5.2219624f,-5.5430316f,-5.883146f,-6.2434073f,-6.6249794f,-7.0290924f,-7.4570461f,-7.9102138f,-8.3900467f,-8.898078f,-9.4359272f,-10.0053059f,-10.6080216f,-11.2459841f,-11.9212107f,-12.6358324f,-13.3921f};
 static const float Util_cvToRate_c2[128] = {0.0182549f,0.0191666f,0.0201238f,0.0211289f,0.0221841f,0.0232921f,0.0244554f,0.0256768f,0.0269592f,0.0283057f,0.0297194f,0.0312037f,0.0327621f,0.0343984f,0.0361164f,0.0379202f,0.0398141f,0.0418025f,0.0438903f,0.0460824f,0.0483839f,0.0508004f,0.0533376f,0.0560015f,0.0587984f,0.061735f,0.0648183f,0.0680556f,0.0714546f,0.0750233f,0.0787703f,0.0827044f,0.086835f,0.0911719f,0.0957254f,0.1005063f,0.105526f,0.1107964f,0.11633f,0.12214f,0.1282402f,0.134645f,0.1413697f,0.1484303f,0.1558435f,0.163627f,0.1717992f,0.1803795f,0.1893884f,0.1988473f,0.2087785f,0.2192058f,0.2301538f,0.2416486f,0.2537175f,0.2663892f,0.2796938f,0.2936628f,0.3083295f,0.3237288f,0.3398971f,0.356873f,0.3746966f,0.3934105f,0.413059f,0.4336889f,0.4553491f,0.4780911f,0.5019689f,0.5270393f,0.5533618f,0.5809989f,0.6100164f,0.6404831f,0.6724714f,0.7060574f,0.7413208f,0.7783454f,0.8172191f,0.8580344f,0.9008881f,0.9458821f,0.9931234f,1.042724f,1.0948019f,1.1494808f,1.2068905f,1.2671676f,1.3304551f,1.3969035f,1.4666705f,1.539922f,1.616832f,1.6975832f,1.7823675f,1.8713862f,1.9648508f,2.0629835f,2.1660173f,2.2741971f,2.3877798f,2.5070353f,2.6322469f,2.763712f,2.9017431f,3.046668f,3.198831f,3.3585937f,3.5263356f,3.7024552f,3.8873709f,4.0815221f,4.28537f,4.4993989f,4.7241173f,4.960059f,5.2077846f,5.4678826f,5.740971f,6.0276986f,6.3287465f,6.6448299f,6.9766999f,7.3251448f,7.6909924f,8.075112f,8.4784161f,8.9018628f};
-float Util_cvToRate_raw_c0(int index);
+static_inline float Util_cvToRate_raw_c0(int index){
+   return Util_cvToRate_c0[index];
+};
 
-float Util_cvToRate_raw_c1(int index);
+static_inline float Util_cvToRate_raw_c1(int index){
+   return Util_cvToRate_c1[index];
+};
 
-float Util_cvToRate_raw_c2(int index);
+static_inline float Util_cvToRate_raw_c2(int index){
+   return Util_cvToRate_c2[index];
+};
 
-float Util_cvToRate(float cv);
+static_inline float Util_cvToRate(float cv){
+   int index;
+   index = int_clip(float_to_int((141.1111112f * cv)),0,127);
+   return (float_wrap_array(Util_cvToRate_c0)[index] + (cv * (float_wrap_array(Util_cvToRate_c1)[index] + (cv * float_wrap_array(Util_cvToRate_c2)[index]))));
+}
 
-float Util_pitchToCv(float pitch);
+static_inline float Util_pitchToCv(float pitch){
+   return (0.0083334f * (-24.f + pitch));
+};
 
 static const float Util_cvToperiod_c0[32] = {674.2460348f,671.5538378f,662.7617819f,646.759522f,623.7994278f,594.871802f,561.2982769f,524.4769422f,485.7313693f,446.2293824f,406.9474404f,368.6637744f,331.9686831f,297.2841558f,264.8876665f,234.9368568f,207.4931244f,182.5430159f,160.0169068f,139.8048318f,121.7695566f,105.757117f,91.6051156f,79.1490884f,68.227249f,58.6838946f,50.3717336f,43.153355f,36.902033f,31.5020248f,26.8484943f,22.8471657f};
 static const float Util_cvToperiod_c1[32] = {-4656.6563108f,-4481.960579f,-4198.6861325f,-3855.7515427f,-3487.1394548f,-3115.8588213f,-2756.9303187f,-2419.6251411f,-2109.1347532f,-1827.8083337f,-1576.062963f,-1353.0470918f,-1157.1188644f,-986.1862501f,-837.9446649f,-710.0391128f,-600.1712335f,-506.1665656f,-426.0134627f,-357.8821512f,-300.1301898f,-251.2989043f,-210.1041049f,-175.4234501f,-146.2821135f,-121.837895f,-101.3665365f,-84.2477263f,-69.9520817f,-58.0292593f,-48.0972479f,-39.8328333f};
 static const float Util_cvToperiod_c2[32] = {14548.8231621f,11715.3695219f,9433.7446751f,7596.4772967f,6117.0266216f,4925.7061172f,3966.4010399f,3193.9252637f,2571.8928791f,2071.0043083f,1667.666208f,1342.8801524f,1081.3477513f,870.7500494f,701.1672681f,564.6115532f,454.6507239f,366.1052976f,294.8045211f,237.3899156f,191.157082f,153.9283162f,123.9500325f,99.8101645f,80.3716525f,64.7188847f,52.114569f,41.9650048f,33.7921173f,27.2109391f,21.9114772f,17.6441111f};
-float Util_cvToperiod_raw_c0(int index);
+static_inline float Util_cvToperiod_raw_c0(int index){
+   return Util_cvToperiod_c0[index];
+};
 
-float Util_cvToperiod_raw_c1(int index);
+static_inline float Util_cvToperiod_raw_c1(int index){
+   return Util_cvToperiod_c1[index];
+};
 
-float Util_cvToperiod_raw_c2(int index);
+static_inline float Util_cvToperiod_raw_c2(int index){
+   return Util_cvToperiod_c2[index];
+};
 
-float Util_cvToperiod(float cv);
+static_inline float Util_cvToperiod(float cv){
+   int index;
+   index = int_clip(float_to_int((31.f * cv)),0,31);
+   return (float_wrap_array(Util_cvToperiod_c0)[index] + (cv * (float_wrap_array(Util_cvToperiod_c1)[index] + (cv * float_wrap_array(Util_cvToperiod_c2)[index]))));
+}
 
 static const float Util_cvTokHz_c0[32] = {0.0327032f,0.0329158f,0.0339579f,0.0368567f,0.0432422f,0.055616f,0.0777238f,0.115069f,0.1756143f,0.2707394f,0.4165374f,0.6355669f,0.9592072f,1.4308178f,2.1099596f,3.078021f,4.4456974f,6.3629088f,9.0319219f,12.7246767f,17.805619f,24.7617347f,34.2419904f,47.1090422f,64.5069279f,87.9495574f,119.436234f,161.6022735f,217.9151479f,292.9296186f,392.6192398f,524.8066449f};
 static const float Util_cvTokHz_c1[32] = {0.2257192f,0.2122933f,0.1791694f,0.117605f,0.0157802f,-0.142178f,-0.3774662f,-0.7182503f,-1.2017969f,-1.8772284f,-2.8090773f,-4.0818673f,-5.8060081f,-8.1253731f,-11.2270275f,-15.3537053f,-20.8197945f,-28.0317982f,-37.5145028f,-49.9444141f,-66.1924493f,-87.3784044f,-114.9403964f,-150.7233371f,-197.0915838f,-257.0722838f,-334.5376738f,-434.4367882f,-563.0898166f,-728.5618575f,-941.1372579f,-1213.9213282f};
 static const float Util_cvTokHz_c2[32] = {0.8763378f,1.088287f,1.3514976f,1.6783679f,2.0842943f,2.5883971f,3.2144212f,3.991854f,4.9573151f,6.1562805f,7.645225f,9.4942823f,11.7905487f,14.642185f,18.1835118f,22.5813362f,28.0428087f,34.8251811f,43.2479231f,53.7077712f,66.6974152f,82.8287061f,102.8614758f,127.7393272f,158.6340814f,197.0009732f,244.6471976f,303.8170335f,377.2975565f,468.549918f,581.872376f,722.6027558f};
-float Util_cvTokHz_raw_c0(int index);
+static_inline float Util_cvTokHz_raw_c0(int index){
+   return Util_cvTokHz_c0[index];
+};
 
-float Util_cvTokHz_raw_c1(int index);
+static_inline float Util_cvTokHz_raw_c1(int index){
+   return Util_cvTokHz_c1[index];
+};
 
-float Util_cvTokHz_raw_c2(int index);
+static_inline float Util_cvTokHz_raw_c2(int index){
+   return Util_cvTokHz_c2[index];
+};
 
-float Util_cvTokHz(float cv);
+static_inline float Util_cvTokHz(float cv){
+   int index;
+   index = int_clip(float_to_int((31.f * cv)),0,31);
+   return (float_wrap_array(Util_cvTokHz_c0)[index] + (cv * (float_wrap_array(Util_cvTokHz_c1)[index] + (cv * float_wrap_array(Util_cvTokHz_c2)[index]))));
+}
 
 typedef struct Tricore__ctx_type_0 {
    uint8_t reset_state;
@@ -156,65 +289,111 @@ typedef Tricore__ctx_type_0 Tricore_process_type;
 
 void Tricore__ctx_type_0_init(Tricore__ctx_type_0 &_output_);
 
-void Tricore_process_init(Tricore__ctx_type_0 &_output_);
+static_inline void Tricore_process_init(Tricore__ctx_type_0 &_output_){
+   Tricore__ctx_type_0_init(_output_);
+   return ;
+}
 
 float Tricore_process(Tricore__ctx_type_0 &_ctx, float cv, float reset, float disable);
 
 typedef Tricore__ctx_type_0 Tricore_noteOn_type;
 
-void Tricore_noteOn_init(Tricore__ctx_type_0 &_output_);
+static_inline void Tricore_noteOn_init(Tricore__ctx_type_0 &_output_){
+   Tricore__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Tricore_noteOn(Tricore__ctx_type_0 &_ctx, int note, int velocity, int channel);
+static_inline void Tricore_noteOn(Tricore__ctx_type_0 &_ctx, int note, int velocity, int channel){
+}
 
 typedef Tricore__ctx_type_0 Tricore_noteOff_type;
 
-void Tricore_noteOff_init(Tricore__ctx_type_0 &_output_);
+static_inline void Tricore_noteOff_init(Tricore__ctx_type_0 &_output_){
+   Tricore__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Tricore_noteOff(Tricore__ctx_type_0 &_ctx, int note, int channel);
+static_inline void Tricore_noteOff(Tricore__ctx_type_0 &_ctx, int note, int channel){
+}
 
 typedef Tricore__ctx_type_0 Tricore_controlChange_type;
 
-void Tricore_controlChange_init(Tricore__ctx_type_0 &_output_);
+static_inline void Tricore_controlChange_init(Tricore__ctx_type_0 &_output_){
+   Tricore__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Tricore_controlChange(Tricore__ctx_type_0 &_ctx, int control, int value, int channel);
+static_inline void Tricore_controlChange(Tricore__ctx_type_0 &_ctx, int control, int value, int channel){
+}
 
 typedef Tricore__ctx_type_0 Tricore_default_type;
 
-void Tricore_default_init(Tricore__ctx_type_0 &_output_);
+static_inline void Tricore_default_init(Tricore__ctx_type_0 &_output_){
+   Tricore__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Tricore_default(Tricore__ctx_type_0 &_ctx);
+static_inline void Tricore_default(Tricore__ctx_type_0 &_ctx){
+   _ctx.rate = 0.7593668f;
+};
 
 static const float Saturate_soft_tanh_table_c0[241] = {-4.1979167f,-4.080173f,-3.9627942f,-3.8458326f,-3.7293411f,-3.6133738f,-3.4979851f,-3.3832307f,-3.2691665f,-3.1558494f,-3.0433367f,-2.9316863f,-2.8209565f,-2.7112061f,-2.6024941f,-2.4948797f,-2.3884225f,-2.2831818f,-2.1792172f,-2.076588f,-1.9753533f,-1.875572f,-1.7773024f,-1.6806024f,-1.585529f,-1.4921389f,-1.4004874f,-1.3106291f,-1.2226172f,-1.136504f,-1.0523399f,-0.9701742f,-0.8900543f,-0.8120258f,-0.7361322f,-0.6624152f,-0.5909141f,-0.5216657f,-0.4547045f,-0.3900621f,-0.3277676f,-0.2678468f,-0.2103227f,-0.1552151f,-0.1025404f,-0.0523116f,-0.0045381f,0.0407742f,0.0836234f,0.1240111f,0.1619432f,0.1974293f,0.230483f,0.2611223f,0.2893692f,0.3152498f,0.3387943f,0.3600374f,0.3790175f,0.3957776f,0.4103645f,0.422829f,0.433226f,0.4416141f,0.4480557f,0.4526167f,0.4553666f,0.4563781f,0.4557268f,0.4534916f,0.4497538f,0.4445971f,0.4381076f,0.4303731f,0.4214831f,0.4115287f,0.4006016f,0.3887945f,0.3762006f,0.3629128f,0.349024f,0.3346264f,0.3198112f,0.3046682f,0.2892855f,0.2737493f,0.2581432f,0.2425481f,0.2270419f,0.2116991f,0.1965904f,0.1817826f,0.1673379f,0.1533144f,0.1397651f,0.126738f,0.114276f,0.1024167f,0.0911919f,0.080628f,0.0707457f,0.0615599f,0.0530798f,0.0453088f,0.0382445f,0.0318792f,0.0261994f,0.0211865f,0.0168166f,0.0130609f,0.009886f,0.007254f,0.005123f,0.0034471f,0.0021773f,0.0012613f,0.0006443f,0.0002692f,7.71e-05f,7.8e-06f,-0.f,-7.7e-06f,-7.7e-05f,-0.0002691f,-0.0006442f,-0.0012612f,-0.0021772f,-0.003447f,-0.0051229f,-0.0072539f,-0.0098859f,-0.0130608f,-0.0168165f,-0.0211864f,-0.0261993f,-0.0318791f,-0.0382444f,-0.0453087f,-0.0530797f,-0.0615598f,-0.0707456f,-0.0806279f,-0.0911918f,-0.1024166f,-0.1142759f,-0.1267379f,-0.139765f,-0.1533143f,-0.1673378f,-0.1817825f,-0.1965903f,-0.211699f,-0.2270418f,-0.242548f,-0.2581431f,-0.2737492f,-0.2892854f,-0.3046681f,-0.3198111f,-0.3346263f,-0.3490239f,-0.3629127f,-0.3762005f,-0.3887944f,-0.4006015f,-0.4115286f,-0.421483f,-0.430373f,-0.4381075f,-0.444597f,-0.4497537f,-0.4534915f,-0.4557267f,-0.456378f,-0.4553665f,-0.4526166f,-0.4480556f,-0.441614f,-0.4332259f,-0.4228289f,-0.4103644f,-0.3957775f,-0.3790174f,-0.3600373f,-0.3387942f,-0.3152497f,-0.2893691f,-0.2611222f,-0.2304829f,-0.1974292f,-0.1619431f,-0.124011f,-0.0836233f,-0.0407741f,0.0045382f,0.0523117f,0.1025405f,0.1552152f,0.2103228f,0.2678469f,0.3277677f,0.3900622f,0.4547046f,0.5216658f,0.5909142f,0.6624153f,0.7361323f,0.8120259f,0.8900544f,0.9701743f,1.05234f,1.1365041f,1.2226173f,1.3106292f,1.4004875f,1.492139f,1.5855291f,1.6806025f,1.7773025f,1.8755721f,1.9753534f,2.0765881f,2.1792173f,2.2831819f,2.3884226f,2.4948798f,2.6024942f,2.7112062f,2.8209566f,2.9316864f,3.0433368f,3.1558495f,3.2691666f,3.3832308f,3.4979852f,3.6133739f,3.7293412f,3.8458327f,3.9627943f,4.0801731f,4.1979168f};
 static const float Saturate_soft_tanh_table_c1[241] = {0.6763382f,0.6862324f,0.6961791f,0.7061748f,0.7162158f,0.7262982f,0.7364178f,0.7465706f,0.7567519f,0.7669573f,0.7771819f,0.7874208f,0.7976689f,0.8079209f,0.8181712f,0.8284141f,0.8386439f,0.8488545f,0.8590397f,0.8691931f,0.8793082f,0.8893783f,0.8993965f,0.9093558f,0.9192491f,0.9290689f,0.9388079f,0.9484585f,0.9580129f,0.9674634f,0.976802f,0.9860208f,0.9951116f,1.0040663f,1.0128766f,1.0215344f,1.0300313f,1.038359f,1.0465092f,1.0544738f,1.0622444f,1.0698129f,1.0771713f,1.0843115f,1.0912256f,1.097906f,1.1043452f,1.1105357f,1.1164704f,1.1221424f,1.1275451f,1.1326721f,1.1375173f,1.1420752f,1.1463403f,1.1503078f,1.1539731f,1.1573321f,1.1603813f,1.1631177f,1.1655385f,1.1676418f,1.1694261f,1.1708907f,1.1720352f,1.1728601f,1.1733664f,1.1735559f,1.173431f,1.1729947f,1.1722511f,1.1712046f,1.1698606f,1.168225f,1.1663048f,1.1641075f,1.1616413f,1.1589152f,1.1559391f,1.1527235f,1.1492794f,1.1456187f,1.1417541f,1.1376987f,1.1334662f,1.129071f,1.1245282f,1.1198531f,1.1150616f,1.11017f,1.1051952f,1.1001542f,1.0950643f,1.0899432f,1.0848084f,1.079678f,1.0745699f,1.0695018f,1.0644918f,1.0595575f,1.0547164f,1.0499857f,1.0453824f,1.0409229f,1.0366233f,1.0324992f,1.0285655f,1.0248365f,1.0213257f,1.018046f,1.0150095f,1.0122272f,1.0097095f,1.0074655f,1.0055036f,1.0038311f,1.0024542f,1.0013779f,1.0006062f,1.000142f,0.9999871f,1.000142f,1.0006062f,1.0013779f,1.0024542f,1.0038311f,1.0055036f,1.0074655f,1.0097095f,1.0122272f,1.0150095f,1.018046f,1.0213257f,1.0248365f,1.0285655f,1.0324992f,1.0366233f,1.0409229f,1.0453824f,1.0499857f,1.0547164f,1.0595575f,1.0644918f,1.0695018f,1.0745699f,1.079678f,1.0848084f,1.0899432f,1.0950643f,1.1001542f,1.1051952f,1.11017f,1.1150616f,1.1198531f,1.1245282f,1.129071f,1.1334662f,1.1376987f,1.1417541f,1.1456187f,1.1492794f,1.1527235f,1.1559391f,1.1589152f,1.1616413f,1.1641075f,1.1663048f,1.168225f,1.1698606f,1.1712046f,1.1722511f,1.1729947f,1.173431f,1.1735559f,1.1733664f,1.1728601f,1.1720352f,1.1708907f,1.1694261f,1.1676418f,1.1655385f,1.1631177f,1.1603813f,1.1573321f,1.1539731f,1.1503078f,1.1463403f,1.1420752f,1.1375173f,1.1326721f,1.1275451f,1.1221424f,1.1164704f,1.1105357f,1.1043452f,1.097906f,1.0912256f,1.0843115f,1.0771713f,1.0698129f,1.0622444f,1.0544738f,1.0465092f,1.038359f,1.0300313f,1.0215344f,1.0128766f,1.0040663f,0.9951116f,0.9860208f,0.976802f,0.9674634f,0.9580129f,0.9484585f,0.9388079f,0.9290689f,0.9192491f,0.9093558f,0.8993965f,0.8893783f,0.8793082f,0.8691931f,0.8590397f,0.8488545f,0.8386439f,0.8284141f,0.8181712f,0.8079209f,0.7976689f,0.7874208f,0.7771819f,0.7669573f,0.7567519f,0.7465706f,0.7364178f,0.7262982f,0.7162158f,0.7061748f,0.6961791f,0.6862324f,0.6763382f};
 static const float Saturate_soft_tanh_table_c2[241] = {0.0103258f,0.0105337f,0.0107444f,0.010958f,0.0111744f,0.0113935f,0.0116154f,0.0118399f,0.0120671f,0.0122969f,0.0125292f,0.0127639f,0.0130011f,0.0132405f,0.0134821f,0.0137258f,0.0139716f,0.0142192f,0.0144687f,0.0147198f,0.0149725f,0.0152266f,0.0154819f,0.0157383f,0.0159957f,0.0162538f,0.0165126f,0.0167717f,0.017031f,0.0172903f,0.0175493f,0.0178079f,0.0180658f,0.0183227f,0.0185784f,0.0188326f,0.019085f,0.0193354f,0.0195834f,0.0198287f,0.020071f,0.02031f,0.0205453f,0.0207766f,0.0210035f,0.0212256f,0.0214426f,0.021654f,0.0218595f,0.0220587f,0.0222511f,0.0224362f,0.0226138f,0.0227833f,0.0229443f,0.0230964f,0.023239f,0.0233718f,0.0234943f,0.023606f,0.0237064f,0.0237951f,0.0238717f,0.0239356f,0.0239864f,0.0240237f,0.024047f,0.0240559f,0.0240499f,0.0240286f,0.0239917f,0.0239386f,0.023869f,0.0237825f,0.0236788f,0.0235576f,0.0234184f,0.0232611f,0.0230852f,0.0228907f,0.0226772f,0.0224445f,0.0221925f,0.0219209f,0.0216298f,0.021319f,0.0209884f,0.020638f,0.0202678f,0.019878f,0.0194685f,0.0190394f,0.018591f,0.0181235f,0.017637f,0.0171319f,0.0166084f,0.016067f,0.015508f,0.0149318f,0.0143389f,0.0137298f,0.0131051f,0.0124653f,0.0118111f,0.0111431f,0.010462f,0.0097685f,0.0090633f,0.0083473f,0.0076213f,0.006886f,0.0061423f,0.0053912f,0.0046334f,0.00387f,0.0031017f,0.0023297f,0.0015547f,0.0007779f,-0.f,-0.0007778f,-0.0015546f,-0.0023296f,-0.0031016f,-0.0038699f,-0.0046333f,-0.0053911f,-0.0061422f,-0.0068859f,-0.0076212f,-0.0083472f,-0.0090632f,-0.0097684f,-0.0104619f,-0.011143f,-0.011811f,-0.0124652f,-0.013105f,-0.0137297f,-0.0143388f,-0.0149317f,-0.0155079f,-0.0160669f,-0.0166083f,-0.0171318f,-0.0176369f,-0.0181234f,-0.0185909f,-0.0190393f,-0.0194684f,-0.0198779f,-0.0202677f,-0.0206379f,-0.0209883f,-0.0213189f,-0.0216297f,-0.0219208f,-0.0221924f,-0.0224444f,-0.0226771f,-0.0228906f,-0.0230851f,-0.023261f,-0.0234183f,-0.0235575f,-0.0236787f,-0.0237824f,-0.0238689f,-0.0239385f,-0.0239916f,-0.0240285f,-0.0240498f,-0.0240558f,-0.0240469f,-0.0240236f,-0.0239863f,-0.0239355f,-0.0238716f,-0.023795f,-0.0237063f,-0.0236059f,-0.0234942f,-0.0233717f,-0.0232389f,-0.0230963f,-0.0229442f,-0.0227832f,-0.0226137f,-0.0224361f,-0.022251f,-0.0220586f,-0.0218594f,-0.0216539f,-0.0214425f,-0.0212255f,-0.0210034f,-0.0207765f,-0.0205452f,-0.0203099f,-0.0200709f,-0.0198286f,-0.0195833f,-0.0193353f,-0.0190849f,-0.0188325f,-0.0185783f,-0.0183226f,-0.0180657f,-0.0178078f,-0.0175492f,-0.0172902f,-0.0170309f,-0.0167716f,-0.0165125f,-0.0162537f,-0.0159956f,-0.0157382f,-0.0154818f,-0.0152265f,-0.0149724f,-0.0147197f,-0.0144686f,-0.0142191f,-0.0139715f,-0.0137257f,-0.013482f,-0.0132404f,-0.013001f,-0.0127638f,-0.0125291f,-0.0122968f,-0.012067f,-0.0118398f,-0.0116153f,-0.0113934f,-0.0111743f,-0.0109579f,-0.0107443f,-0.0105336f,-0.0103257f};
-float Saturate_soft_tanh_table_raw_c0(int index);
+static_inline float Saturate_soft_tanh_table_raw_c0(int index){
+   return Saturate_soft_tanh_table_c0[index];
+};
 
-float Saturate_soft_tanh_table_raw_c1(int index);
+static_inline float Saturate_soft_tanh_table_raw_c1(int index){
+   return Saturate_soft_tanh_table_c1[index];
+};
 
-float Saturate_soft_tanh_table_raw_c2(int index);
+static_inline float Saturate_soft_tanh_table_raw_c2(int index){
+   return Saturate_soft_tanh_table_c2[index];
+};
 
-float Saturate_soft_tanh_table(float x);
+static_inline float Saturate_soft_tanh_table(float x){
+   int index;
+   index = int_clip(float_to_int((5.f * (24.f + x))),0,240);
+   return (float_wrap_array(Saturate_soft_tanh_table_c0)[index] + (x * (float_wrap_array(Saturate_soft_tanh_table_c1)[index] + (x * float_wrap_array(Saturate_soft_tanh_table_c2)[index]))));
+}
 
-float Saturate_soft_process(float x);
+static_inline float Saturate_soft_process(float x){
+   return Saturate_soft_tanh_table(x);
+};
 
-void Saturate_soft_noteOn(int note, int velocity, int channel);
+static_inline void Saturate_soft_noteOn(int note, int velocity, int channel){
+}
 
-void Saturate_soft_noteOff(int note, int channel);
+static_inline void Saturate_soft_noteOff(int note, int channel){
+}
 
-void Saturate_soft_controlChange(int control, int value, int channel);
+static_inline void Saturate_soft_controlChange(int control, int value, int channel){
+}
 
-void Saturate_soft_default();
+static_inline void Saturate_soft_default(){
+}
 
 static const float Svf_calc_g_c0[128] = {0.0023298f,0.0023299f,0.0023305f,0.0023319f,0.0023345f,0.0023388f,0.0023454f,0.0023547f,0.0023674f,0.0023844f,0.0024063f,0.0024343f,0.0024691f,0.0025121f,0.0025644f,0.0026275f,0.0027029f,0.0027922f,0.0028973f,0.0030203f,0.0031634f,0.003329f,0.0035199f,0.0037389f,0.0039893f,0.0042746f,0.0045986f,0.0049655f,0.0053797f,0.0058464f,0.0063707f,0.0069586f,0.0076164f,0.008351f,0.0091698f,0.0100809f,0.0110932f,0.012216f,0.0134597f,0.0148355f,0.0163553f,0.0180322f,0.0198803f,0.0219148f,0.0241521f,0.0266101f,0.0293079f,0.0322662f,0.0355074f,0.0390557f,0.042937f,0.0471796f,0.0518139f,0.0568725f,0.0623909f,0.0684072f,0.0749628f,0.0821021f,0.0898732f,0.0983282f,0.1075233f,0.1175193f,0.1283819f,0.1401825f,0.1529982f,0.1669129f,0.1820174f,0.1984106f,0.2161998f,0.2355022f,0.2564455f,0.279169f,0.3038253f,0.3305814f,0.359621f,0.3911457f,0.425378f,0.4625636f,0.5029746f,0.5469131f,0.5947151f,0.6467559f,0.7034553f,0.7652847f,0.8327749f,0.9065253f,0.9872156f,1.0756185f,1.1726159f,1.2792176f,1.3965844f,1.5260556f,1.6691821f,1.8277671f,2.0039155f,2.2000944f,2.4192078f,2.6646889f,2.9406147f,3.2518495f,3.6042257f,4.0047718f,4.4620034f,4.9862963f,5.5903689f,6.2899103f,7.1044061f,8.0582333f,9.1821272f,10.515167f,12.1074948f,14.0240863f,16.3500498f,19.1981826f,22.7199238f,27.1215061f,32.6882462f,39.821863f,49.0992003f,61.3671398f,77.9007262f,100.6758491f,132.8585016f,179.724089f,250.4813468f,362.1346267f,548.3402911f,881.8452138f};
 static const float Svf_calc_g_c1[128] = {0.0161452f,0.0161048f,0.0160201f,0.0158867f,0.0157001f,0.0154552f,0.0151466f,0.0147687f,0.0143153f,0.0137796f,0.0131548f,0.0124332f,0.0116067f,0.0106665f,0.0096035f,0.0084077f,0.0070684f,0.0055743f,0.0039133f,0.0020725f,3.79e-05f,-0.0022052f,-0.0046725f,-0.0073809f,-0.0103484f,-0.013594f,-0.0171382f,-0.0210028f,-0.0252109f,-0.0297874f,-0.0347585f,-0.0401523f,-0.0459988f,-0.0523299f,-0.0591794f,-0.0665835f,-0.0745807f,-0.083212f,-0.092521f,-0.1025541f,-0.1133609f,-0.1249939f,-0.1375091f,-0.1509663f,-0.165429f,-0.1809647f,-0.1976455f,-0.2155481f,-0.234754f,-0.2553503f,-0.2774296f,-0.3010907f,-0.3264389f,-0.3535863f,-0.3826526f,-0.4137657f,-0.4470619f,-0.4826869f,-0.5207962f,-0.5615564f,-0.6051456f,-0.6517546f,-0.7015878f,-0.7548646f,-0.8118206f,-0.8727091f,-0.9378028f,-1.0073956f,-1.0818046f,-1.1613728f,-1.2464715f,-1.3375034f,-1.4349064f,-1.5391569f,-1.6507752f,-1.77033f,-1.898445f,-2.0358054f,-2.1831664f,-2.3413623f,-2.5113172f,-2.6940582f,-2.8907299f,-3.1026118f,-3.3311389f,-3.5779259f,-3.8447955f,-4.1338123f,-4.4473233f,-4.7880054f,-5.1589232f,-5.5635981f,-6.0060908f,-6.491103f,-7.0240987f,-7.6114543f,-8.2606407f,-8.9804497f,-9.7812725f,-10.6754475f,-11.6776957f,-12.8056693f,-14.080648f,-15.5284283f,-17.1804687f,-19.0753758f,-21.2608496f,-23.7962547f,-26.75605f,-30.2344163f,-34.3515694f,-39.262482f,-45.169098f,-52.337689f,-61.1239181f,-72.0096757f,-85.6582763f,-102.9989632f,-125.3594154f,-154.6791711f,-193.8639536f,-247.3945731f,-322.4156691f,-430.7743755f,-593.051114f,-847.0657344f,-1267.3153483f,-2014.0521537f};
 static const float Svf_calc_g_c2[128] = {0.0573502f,0.0602146f,0.0632221f,0.0663798f,0.0696952f,0.0731763f,0.0768312f,0.0806687f,0.0846979f,0.0889284f,0.0933703f,0.098034f,0.1029308f,0.1080721f,0.1134704f,0.1191384f,0.1250896f,0.1313382f,0.137899f,0.1447877f,0.1520207f,0.1596152f,0.1675893f,0.175962f,0.1847533f,0.1939842f,0.2036766f,0.2138538f,0.22454f,0.2357607f,0.2475429f,0.2599147f,0.2729057f,0.2865471f,0.3008715f,0.3159135f,0.3317091f,0.3482964f,0.3657153f,0.3840079f,0.4032185f,0.4233934f,0.4445818f,0.466835f,0.4902074f,0.514756f,0.540541f,0.5676258f,0.5960772f,0.6259657f,0.6573654f,0.6903549f,0.725017f,0.7614391f,0.7997136f,0.8399383f,0.8822169f,0.9266588f,0.9733804f,1.0225049f,1.0741635f,1.1284953f,1.1856488f,1.2457818f,1.3090631f,1.3756729f,1.4458041f,1.5196635f,1.5974731f,1.6794718f,1.7659172f,1.8570873f,1.9532833f,2.0548316f,2.1620874f,2.2754378f,2.395306f,2.5221553f,2.6564953f,2.7988872f,2.9499512f,3.1103748f,3.2809221f,3.4624455f,3.6558984f,3.8623508f,4.0830073f,4.3192291f,4.5725585f,4.84475f,5.1378057f,5.4540183f,5.7960232f,6.1668603f,6.5700494f,7.0096819f,7.4905322f,8.0181951f,8.5992546f,9.2414938f,9.9541564f,10.748275f,11.6370865f,12.6365602f,13.7660758f,15.0492996f,16.515328f,18.2001925f,20.1488614f,22.4179295f,25.0792768f,28.2251039f,31.97496f,36.4856955f,41.9657845f,48.6963026f,57.0622534f,67.6003656f,81.0737846f,98.5919682f,121.8090595f,153.2636333f,196.9841182f,259.618609f,352.6611447f,497.1338911f,734.2503701f,1152.2470547f};
-float Svf_calc_g_raw_c0(int index);
+static_inline float Svf_calc_g_raw_c0(int index){
+   return Svf_calc_g_c0[index];
+};
 
-float Svf_calc_g_raw_c1(int index);
+static_inline float Svf_calc_g_raw_c1(int index){
+   return Svf_calc_g_c1[index];
+};
 
-float Svf_calc_g_raw_c2(int index);
+static_inline float Svf_calc_g_raw_c2(int index){
+   return Svf_calc_g_c2[index];
+};
 
-float Svf_calc_g(float cv);
+static_inline float Svf_calc_g(float cv){
+   int index;
+   index = int_clip(float_to_int((141.1111112f * cv)),0,127);
+   return (float_wrap_array(Svf_calc_g_c0)[index] + (cv * (float_wrap_array(Svf_calc_g_c1)[index] + (cv * float_wrap_array(Svf_calc_g_c2)[index]))));
+}
 
 typedef struct Svf__ctx_type_4 {
    float z2;
@@ -230,54 +409,92 @@ typedef Svf__ctx_type_4 Svf_process_type;
 
 void Svf__ctx_type_4_init(Svf__ctx_type_4 &_output_);
 
-void Svf_process_init(Svf__ctx_type_4 &_output_);
+static_inline void Svf_process_init(Svf__ctx_type_4 &_output_){
+   Svf__ctx_type_4_init(_output_);
+   return ;
+}
 
 float Svf_process(Svf__ctx_type_4 &_ctx, float x, float cv, float q, int sel);
 
 typedef Svf__ctx_type_4 Svf_noteOn_type;
 
-void Svf_noteOn_init(Svf__ctx_type_4 &_output_);
+static_inline void Svf_noteOn_init(Svf__ctx_type_4 &_output_){
+   Svf__ctx_type_4_init(_output_);
+   return ;
+}
 
-void Svf_noteOn(Svf__ctx_type_4 &_ctx, int note, int velocity, int channel);
+static_inline void Svf_noteOn(Svf__ctx_type_4 &_ctx, int note, int velocity, int channel){
+}
 
 typedef Svf__ctx_type_4 Svf_noteOff_type;
 
-void Svf_noteOff_init(Svf__ctx_type_4 &_output_);
+static_inline void Svf_noteOff_init(Svf__ctx_type_4 &_output_){
+   Svf__ctx_type_4_init(_output_);
+   return ;
+}
 
-void Svf_noteOff(Svf__ctx_type_4 &_ctx, int note, int channel);
+static_inline void Svf_noteOff(Svf__ctx_type_4 &_ctx, int note, int channel){
+}
 
 typedef Svf__ctx_type_4 Svf_controlChange_type;
 
-void Svf_controlChange_init(Svf__ctx_type_4 &_output_);
+static_inline void Svf_controlChange_init(Svf__ctx_type_4 &_output_){
+   Svf__ctx_type_4_init(_output_);
+   return ;
+}
 
-void Svf_controlChange(Svf__ctx_type_4 &_ctx, int control, int value, int channel);
+static_inline void Svf_controlChange(Svf__ctx_type_4 &_ctx, int control, int value, int channel){
+}
 
 typedef Svf__ctx_type_4 Svf_default_type;
 
-void Svf_default_init(Svf__ctx_type_4 &_output_);
+static_inline void Svf_default_init(Svf__ctx_type_4 &_output_){
+   Svf__ctx_type_4_init(_output_);
+   return ;
+}
 
-void Svf_default(Svf__ctx_type_4 &_ctx);
+static_inline void Svf_default(Svf__ctx_type_4 &_ctx){
+   _ctx.g = 0.0023298f;
+   _ctx.R = 1.f;
+   _ctx.inv_den = (1.f / (1.f + (_ctx.g * _ctx.g)));
+}
 
 static const float Saturate_tanh_table_c0[241] = {-0.9999999f,-1.f,-0.9999999f,-0.9999999f,-1.f,-1.f,-1.f,-1.f,-1.f,-0.9999999f,-1.f,-0.9999999f,-1.f,-1.f,-1.f,-1.f,-0.9999999f,-0.9999999f,-1.f,-1.f,-1.f,-0.9999999f,-1.f,-0.9999999f,-0.9999999f,-0.9999999f,-1.f,-1.f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-1.f,-1.f,-0.9999999f,-1.f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999999f,-0.9999998f,-0.9999998f,-0.9999997f,-0.9999996f,-0.9999995f,-0.9999993f,-0.999999f,-0.9999985f,-0.9999979f,-0.9999971f,-0.9999958f,-0.999994f,-0.9999915f,-0.9999879f,-0.9999828f,-0.9999755f,-0.9999652f,-0.9999506f,-0.99993f,-0.9999008f,-0.9998596f,-0.9998016f,-0.99972f,-0.9996054f,-0.9994448f,-0.9992201f,-0.9989064f,-0.9984693f,-0.9978619f,-0.9970196f,-0.9958548f,-0.9942488f,-0.9920414f,-0.9890177f,-0.9848912f,-0.979283f,-0.971696f,-0.9614848f,-0.9478218f,-0.9296621f,-0.9057134f,-0.8744205f,-0.8339839f,-0.7824421f,-0.7178658f,-0.6387281f,-0.5445268f,-0.4367078f,-0.3198224f,-0.2025515f,-0.0977039f,-0.0197582f,0.0211021f,0.0266707f,0.0132848f,0.0017885f,-0.f,-0.0017884f,-0.0132847f,-0.0266706f,-0.021102f,0.0197583f,0.097704f,0.2025516f,0.3198225f,0.4367079f,0.5445269f,0.6387282f,0.7178659f,0.7824422f,0.833984f,0.8744206f,0.9057135f,0.9296622f,0.9478219f,0.9614849f,0.9716961f,0.9792831f,0.9848913f,0.9890178f,0.9920415f,0.9942489f,0.9958549f,0.9970197f,0.997862f,0.9984694f,0.9989065f,0.9992202f,0.9994449f,0.9996055f,0.9997201f,0.9998017f,0.9998597f,0.9999009f,0.9999301f,0.9999507f,0.9999653f,0.9999756f,0.9999829f,0.999988f,0.9999916f,0.9999941f,0.9999959f,0.9999972f,0.999998f,0.9999986f,0.9999991f,0.9999994f,0.9999996f,0.9999997f,0.9999998f,0.9999999f,0.9999999f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.f,1.0000001f,1.f,1.f,1.0000001f,1.f,1.f,1.f,1.0000001f,1.0000001f,1.0000001f,1.0000001f,1.f,1.0000001f,1.f,1.f,1.0000001f,1.0000001f,1.0000001f,1.f,1.0000001f,1.0000001f,1.0000001f,1.0000001f,1.f,1.f,1.f,1.0000001f,1.0000001f,1.f,1.0000001f,1.0000001f,1.f,1.0000001f,1.0000001f,1.0000001f,1.0000001f};
 static const float Saturate_tanh_table_c1[241] = {-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,1e-07f,-0.f,-0.f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,2e-07f,2e-07f,3e-07f,5e-07f,6e-07f,9e-07f,1.3e-06f,1.9e-06f,2.7e-06f,3.9e-06f,5.7e-06f,8.2e-06f,1.19e-05f,1.73e-05f,2.51e-05f,3.65e-05f,5.29e-05f,7.67e-05f,0.000111f,0.0001607f,0.0002324f,0.0003358f,0.0004847f,0.0006989f,0.0010067f,0.0014485f,0.0020815f,0.0029872f,0.0042806f,0.0061243f,0.0087467f,0.0124675f,0.0177325f,0.0251587f,0.0355936f,0.0501902f,0.0704952f,0.0985456f,0.1369519f,0.1889258f,0.258165f,0.3484412f,0.46265f,0.6010234f,0.7583267f,0.9204895f,1.0626907f,1.1532138f,1.1678153f,1.1121236f,1.0333692f,0.9967074f,1.0333692f,1.1121236f,1.1678153f,1.1532138f,1.0626907f,0.9204895f,0.7583267f,0.6010234f,0.46265f,0.3484412f,0.258165f,0.1889258f,0.1369519f,0.0985456f,0.0704952f,0.0501902f,0.0355936f,0.0251587f,0.0177325f,0.0124675f,0.0087467f,0.0061243f,0.0042806f,0.0029872f,0.0020815f,0.0014485f,0.0010067f,0.0006989f,0.0004847f,0.0003358f,0.0002324f,0.0001607f,0.000111f,7.67e-05f,5.29e-05f,3.65e-05f,2.51e-05f,1.73e-05f,1.19e-05f,8.2e-06f,5.7e-06f,3.9e-06f,2.7e-06f,1.9e-06f,1.3e-06f,9e-07f,6e-07f,5e-07f,3e-07f,2e-07f,2e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,-0.f,-0.f,1e-07f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f};
 static const float Saturate_tanh_table_c2[241] = {0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,0.f,1e-07f,0.f,0.f,1e-07f,1e-07f,1e-07f,-0.f,1e-07f,-0.f,1e-07f,1e-07f,-0.f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,1e-07f,2e-07f,3e-07f,4e-07f,5e-07f,8e-07f,1.1e-06f,1.6e-06f,2.4e-06f,3.6e-06f,5.3e-06f,7.9e-06f,1.17e-05f,1.75e-05f,2.6e-05f,3.86e-05f,5.75e-05f,8.57e-05f,0.0001276f,0.0001899f,0.0002828f,0.0004211f,0.0006271f,0.0009336f,0.0013898f,0.0020685f,0.0030776f,0.0045766f,0.0068007f,0.0100946f,0.0149591f,0.0221137f,0.0325713f,0.047716f,0.0693446f,0.0995888f,0.1405415f,0.1932917f,0.2559939f,0.3208506f,0.3709848f,0.3804716f,0.3226146f,0.1878104f,-0.f,-0.1878103f,-0.3226145f,-0.3804715f,-0.3709847f,-0.3208505f,-0.2559938f,-0.1932916f,-0.1405414f,-0.0995887f,-0.0693445f,-0.0477159f,-0.0325712f,-0.0221136f,-0.014959f,-0.0100945f,-0.0068006f,-0.0045765f,-0.0030775f,-0.0020684f,-0.0013897f,-0.0009335f,-0.000627f,-0.000421f,-0.0002827f,-0.0001898f,-0.0001275f,-8.56e-05f,-5.74e-05f,-3.85e-05f,-2.59e-05f,-1.74e-05f,-1.16e-05f,-7.8e-06f,-5.2e-06f,-3.5e-06f,-2.3e-06f,-1.5e-06f,-1e-06f,-7e-07f,-4e-07f,-3e-07f,-2e-07f,-1e-07f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f,-0.f};
-float Saturate_tanh_table_raw_c0(int index);
+static_inline float Saturate_tanh_table_raw_c0(int index){
+   return Saturate_tanh_table_c0[index];
+};
 
-float Saturate_tanh_table_raw_c1(int index);
+static_inline float Saturate_tanh_table_raw_c1(int index){
+   return Saturate_tanh_table_c1[index];
+};
 
-float Saturate_tanh_table_raw_c2(int index);
+static_inline float Saturate_tanh_table_raw_c2(int index){
+   return Saturate_tanh_table_c2[index];
+};
 
-float Saturate_tanh_table(float x);
+static_inline float Saturate_tanh_table(float x){
+   int index;
+   index = int_clip(float_to_int((5.f * (24.f + x))),0,240);
+   return (float_wrap_array(Saturate_tanh_table_c0)[index] + (x * (float_wrap_array(Saturate_tanh_table_c1)[index] + (x * float_wrap_array(Saturate_tanh_table_c2)[index]))));
+}
 
-float Saturate_process(float x);
+static_inline float Saturate_process(float x){
+   return Saturate_tanh_table(x);
+};
 
-void Saturate_noteOn(int note, int velocity, int channel);
+static_inline void Saturate_noteOn(int note, int velocity, int channel){
+}
 
-void Saturate_noteOff(int note, int channel);
+static_inline void Saturate_noteOff(int note, int channel){
+}
 
-void Saturate_controlChange(int control, int value, int channel);
+static_inline void Saturate_controlChange(int control, int value, int channel){
+}
 
-void Saturate_default();
+static_inline void Saturate_default(){
+}
 
 typedef struct Lfo__ctx_type_0 {
    float x4;
@@ -289,7 +506,10 @@ typedef Lfo__ctx_type_0 Lfo_soft_type;
 
 void Lfo__ctx_type_0_init(Lfo__ctx_type_0 &_output_);
 
-void Lfo_soft_init(Lfo__ctx_type_0 &_output_);
+static_inline void Lfo_soft_init(Lfo__ctx_type_0 &_output_){
+   Lfo__ctx_type_0_init(_output_);
+   return ;
+}
 
 float Lfo_soft(Lfo__ctx_type_0 &_ctx, float x1);
 
@@ -305,44 +525,73 @@ typedef Lfo__ctx_type_1 Lfo_process_type;
 
 void Lfo__ctx_type_1_init(Lfo__ctx_type_1 &_output_);
 
-void Lfo_process_init(Lfo__ctx_type_1 &_output_);
+static_inline void Lfo_process_init(Lfo__ctx_type_1 &_output_){
+   Lfo__ctx_type_1_init(_output_);
+   return ;
+}
 
 float Lfo_process(Lfo__ctx_type_1 &_ctx, float cv, float shape, float reset);
 
 typedef Lfo__ctx_type_1 Lfo_noteOn_type;
 
-void Lfo_noteOn_init(Lfo__ctx_type_1 &_output_);
+static_inline void Lfo_noteOn_init(Lfo__ctx_type_1 &_output_){
+   Lfo__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Lfo_noteOn(Lfo__ctx_type_1 &_ctx, int note, int velocity, int channel);
+static_inline void Lfo_noteOn(Lfo__ctx_type_1 &_ctx, int note, int velocity, int channel){
+}
 
 typedef Lfo__ctx_type_1 Lfo_noteOff_type;
 
-void Lfo_noteOff_init(Lfo__ctx_type_1 &_output_);
+static_inline void Lfo_noteOff_init(Lfo__ctx_type_1 &_output_){
+   Lfo__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Lfo_noteOff(Lfo__ctx_type_1 &_ctx, int note, int channel);
+static_inline void Lfo_noteOff(Lfo__ctx_type_1 &_ctx, int note, int channel){
+}
 
 typedef Lfo__ctx_type_1 Lfo_controlChange_type;
 
-void Lfo_controlChange_init(Lfo__ctx_type_1 &_output_);
+static_inline void Lfo_controlChange_init(Lfo__ctx_type_1 &_output_){
+   Lfo__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Lfo_controlChange(Lfo__ctx_type_1 &_ctx, int control, int value, int channel);
+static_inline void Lfo_controlChange(Lfo__ctx_type_1 &_ctx, int control, int value, int channel){
+}
 
 typedef Lfo__ctx_type_1 Lfo_default_type;
 
-void Lfo_default_init(Lfo__ctx_type_1 &_output_);
+static_inline void Lfo_default_init(Lfo__ctx_type_1 &_output_){
+   Lfo__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Lfo_default(Lfo__ctx_type_1 &_ctx);
+static_inline void Lfo_default(Lfo__ctx_type_1 &_ctx){
+}
 
 static const float Tables_nsine_c0[128] = {-0.f,-5.9e-05f,-0.0002943f,-0.0008206f,-0.0017482f,-0.0031817f,-0.0052181f,-0.0079453f,-0.0114405f,-0.0157689f,-0.020982f,-0.0271169f,-0.0341943f,-0.0422181f,-0.0511738f,-0.061028f,-0.0717278f,-0.0831993f,-0.0953483f,-0.1080587f,-0.1211932f,-0.1345928f,-0.1480768f,-0.1614433f,-0.1744692f,-0.186911f,-0.1985054f,-0.2089699f,-0.218004f,-0.2252904f,-0.2304958f,-0.2332728f,-0.2332612f,-0.2300896f,-0.2233773f,-0.2127363f,-0.197773f,-0.1780907f,-0.1532916f,-0.122979f,-0.0867602f,-0.0442482f,0.0049352f,0.0611569f,0.1247704f,0.1961126f,0.2755014f,0.3632331f,0.4595799f,0.5647871f,0.6790705f,0.8026144f,0.9355685f,1.0780459f,1.230121f,1.3918269f,1.5631537f,1.7440465f,1.9344036f,2.1340748f,2.3428599f,2.5605077f,2.7867145f,3.0211234f,3.2633234f,3.5128493f,3.7691807f,4.0317427f,4.2999053f,4.5729845f,4.8502422f,5.1308878f,5.4140787f,5.698922f,5.984476f,6.2697522f,6.5537169f,6.8352944f,7.1133686f,7.3867869f,7.6543621f,7.9148768f,8.167086f,8.4097215f,8.6414953f,8.8611041f,9.0672334f,9.2585621f,9.433767f,9.5915276f,9.7305311f,9.8494774f,9.9470842f,10.0220922f,10.0732703f,10.0994211f,10.0993863f,10.0720517f,10.0163531f,9.9312811f,9.8158869f,9.6692872f,9.4906693f,9.2792966f,9.0345129f,8.7557476f,8.4425203f,8.0944449f,7.7112342f,7.2927034f,6.8387746f,6.3494795f,5.824963f,5.2654862f,4.6714286f,4.0432908f,3.3816961f,2.6873922f,1.9612525f,1.2042765f,0.4175907f,-0.3975519f,-1.2397716f,-2.1075637f,-2.9992988f,-3.9132254f,-4.8474712f,-5.8000465f};
 static const float Tables_nsine_c1[128] = {6.2844467f,6.2995637f,6.3296884f,6.3746026f,6.4339801f,6.5073881f,6.5942887f,6.6940414f,6.8059055f,6.9290429f,7.0625219f,7.2053206f,7.3563313f,7.5143648f,7.6781557f,7.8463667f,8.0175952f,8.1903781f,8.3631986f,8.5344919f,8.7026522f,8.8660392f,9.0229852f,9.1718019f,9.3107879f,9.438236f,9.5524404f,9.6517044f,9.7343479f,9.7987148f,9.8431806f,9.8661598f,9.8661134f,9.8415559f,9.7910627f,9.7132771f,9.606917f,9.4707818f,9.3037583f,9.1048274f,8.8730696f,8.6076708f,8.3079275f,7.9732517f,7.6031754f,7.1973551f,6.7555752f,6.2777517f,5.7639349f,5.2143124f,4.6292105f,4.0090964f,3.3545791f,2.6664101f,1.9454836f,1.192836f,0.4096453f,-0.40277f,-1.2429534f,-2.109312f,-3.0001195f,-3.9135197f,-4.8475302f,-5.8000465f,-6.7688468f,-7.751597f,-8.7458569f,-9.7490855f,-10.758648f,-11.7718225f,-12.7858071f,-13.797728f,-14.8046468f,-15.8035692f,-16.7914537f,-17.7652201f,-18.7217587f,-19.65794f,-20.5706235f,-21.4566682f,-22.3129418f,-23.1363312f,-23.9237521f,-24.672159f,-25.3785559f,-26.0400058f,-26.653641f,-27.2166732f,-27.726403f,-28.18023f,-28.5756623f,-28.9103255f,-29.1819726f,-29.388492f,-29.5279169f,-29.5984329f,-29.5983864f,-29.5262921f,-29.3808399f,-29.1609018f,-28.8655382f,-28.4940037f,-28.0457523f,-27.5204425f,-26.9179409f,-26.2383266f,-25.4818941f,-24.6491554f,-23.7408426f,-22.7579086f,-21.7015283f,-20.5730983f,-19.3742364f,-18.1067802f,-16.7727856f,-15.3745239f,-13.9144786f,-12.395342f,-10.8200099f,-9.1915772f,-7.5133319f,-5.7887484f,-4.021481f,-2.215356f,-0.3743635f,1.4973512f,3.395497f,5.3156465f};
 static const float Tables_nsine_c2[128] = {-0.4844001f,-1.4520333f,-2.4161685f,-3.374483f,-4.324668f,-5.2644345f,-6.1915185f,-7.1036866f,-7.9987413f,-8.8745264f,-9.7289319f,-10.5598996f,-11.3654275f,-12.1435752f,-12.8924679f,-13.6103015f,-14.2953467f,-14.9459532f,-15.5605535f,-16.1376672f,-16.6759037f,-17.1739666f,-17.6306559f,-18.0448713f,-18.4156151f,-18.7419941f,-19.023222f,-19.2586212f,-19.4476248f,-19.5897773f,-19.6847363f,-19.7322731f,-19.7322731f,-19.6847363f,-19.5897773f,-19.4476248f,-19.2586212f,-19.023222f,-18.7419941f,-18.4156151f,-18.0448713f,-17.6306559f,-17.1739666f,-16.6759037f,-16.1376672f,-15.5605535f,-14.9459532f,-14.2953467f,-13.6103015f,-12.8924679f,-12.1435752f,-11.3654275f,-10.5598996f,-9.7289319f,-8.8745264f,-7.9987413f,-7.1036866f,-6.1915185f,-5.2644345f,-4.324668f,-3.374483f,-2.4161685f,-1.4520333f,-0.4844001f,0.4844002f,1.4520334f,2.4161686f,3.3744831f,4.3246681f,5.2644346f,6.1915186f,7.1036867f,7.9987414f,8.8745265f,9.728932f,10.5598997f,11.3654276f,12.1435753f,12.892468f,13.6103016f,14.2953468f,14.9459533f,15.5605536f,16.1376673f,16.6759038f,17.1739667f,17.630656f,18.0448714f,18.4156152f,18.7419942f,19.0232221f,19.2586213f,19.4476249f,19.5897774f,19.6847364f,19.7322732f,19.7322732f,19.6847364f,19.5897774f,19.4476249f,19.2586213f,19.0232221f,18.7419942f,18.4156152f,18.0448714f,17.630656f,17.1739667f,16.6759038f,16.1376673f,15.5605536f,14.9459533f,14.2953468f,13.6103016f,12.892468f,12.1435753f,11.3654276f,10.5598997f,9.728932f,8.8745265f,7.9987414f,7.1036867f,6.1915186f,5.2644346f,4.3246681f,3.3744831f,2.4161686f,1.4520334f,0.4844002f};
-float Tables_nsine_raw_c0(int index);
+static_inline float Tables_nsine_raw_c0(int index){
+   return Tables_nsine_c0[index];
+};
 
-float Tables_nsine_raw_c1(int index);
+static_inline float Tables_nsine_raw_c1(int index){
+   return Tables_nsine_c1[index];
+};
 
-float Tables_nsine_raw_c2(int index);
+static_inline float Tables_nsine_raw_c2(int index){
+   return Tables_nsine_c2[index];
+};
 
-float Tables_nsine(float x);
+static_inline float Tables_nsine(float x){
+   int index;
+   index = int_clip(float_to_int((127.f * x)),0,127);
+   return (float_wrap_array(Tables_nsine_c0)[index] + (x * (float_wrap_array(Tables_nsine_c1)[index] + (x * float_wrap_array(Tables_nsine_c2)[index]))));
+}
 
 typedef struct Phase__ctx_type_0 {
    float rate;
@@ -355,33 +604,53 @@ typedef Phase__ctx_type_0 Phase_process_type;
 
 void Phase__ctx_type_0_init(Phase__ctx_type_0 &_output_);
 
-void Phase_process_init(Phase__ctx_type_0 &_output_);
+static_inline void Phase_process_init(Phase__ctx_type_0 &_output_){
+   Phase__ctx_type_0_init(_output_);
+   return ;
+}
 
 float Phase_process(Phase__ctx_type_0 &_ctx, float cv, float reset);
 
 typedef Phase__ctx_type_0 Phase_noteOn_type;
 
-void Phase_noteOn_init(Phase__ctx_type_0 &_output_);
+static_inline void Phase_noteOn_init(Phase__ctx_type_0 &_output_){
+   Phase__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Phase_noteOn(Phase__ctx_type_0 &_ctx, int note, int velocity, int channel);
+static_inline void Phase_noteOn(Phase__ctx_type_0 &_ctx, int note, int velocity, int channel){
+}
 
 typedef Phase__ctx_type_0 Phase_noteOff_type;
 
-void Phase_noteOff_init(Phase__ctx_type_0 &_output_);
+static_inline void Phase_noteOff_init(Phase__ctx_type_0 &_output_){
+   Phase__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Phase_noteOff(Phase__ctx_type_0 &_ctx, int note, int channel);
+static_inline void Phase_noteOff(Phase__ctx_type_0 &_ctx, int note, int channel){
+}
 
 typedef Phase__ctx_type_0 Phase_controlChange_type;
 
-void Phase_controlChange_init(Phase__ctx_type_0 &_output_);
+static_inline void Phase_controlChange_init(Phase__ctx_type_0 &_output_){
+   Phase__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Phase_controlChange(Phase__ctx_type_0 &_ctx, int control, int value, int channel);
+static_inline void Phase_controlChange(Phase__ctx_type_0 &_ctx, int control, int value, int channel){
+}
 
 typedef Phase__ctx_type_0 Phase_default_type;
 
-void Phase_default_init(Phase__ctx_type_0 &_output_);
+static_inline void Phase_default_init(Phase__ctx_type_0 &_output_){
+   Phase__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Phase_default(Phase__ctx_type_0 &_ctx);
+static_inline void Phase_default(Phase__ctx_type_0 &_ctx){
+   _ctx.rate = 0.7593668f;
+};
 
 typedef struct Blit__ctx_type_0 {
    float scale;
@@ -393,15 +662,24 @@ typedef Blit__ctx_type_0 Blit_pulse_train_type;
 
 void Blit__ctx_type_0_init(Blit__ctx_type_0 &_output_);
 
-void Blit_pulse_train_init(Blit__ctx_type_0 &_output_);
+static_inline void Blit_pulse_train_init(Blit__ctx_type_0 &_output_){
+   Blit__ctx_type_0_init(_output_);
+   return ;
+}
 
 float Blit_pulse_train(Blit__ctx_type_0 &_ctx, float cv, float phase);
 
 typedef Blit__ctx_type_0 Blit_pulse_start_type;
 
-void Blit_pulse_start_init(Blit__ctx_type_0 &_output_);
+static_inline void Blit_pulse_start_init(Blit__ctx_type_0 &_output_){
+   Blit__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Blit_pulse_start(Blit__ctx_type_0 &_ctx);
+static_inline void Blit_pulse_start(Blit__ctx_type_0 &_ctx){
+   _ctx.m = 1349;
+   _ctx.scale = 1349.4920696f;
+}
 
 typedef struct Blit__ctx_type_1 {
    float state_saw;
@@ -419,15 +697,23 @@ typedef Blit__ctx_type_1 Blit_osc_blit_type;
 
 void Blit__ctx_type_1_init(Blit__ctx_type_1 &_output_);
 
-void Blit_osc_blit_init(Blit__ctx_type_1 &_output_);
+static_inline void Blit_osc_blit_init(Blit__ctx_type_1 &_output_){
+   Blit__ctx_type_1_init(_output_);
+   return ;
+}
 
 float Blit_osc_blit(Blit__ctx_type_1 &_ctx, float cv, float pw, float wave);
 
 typedef Blit__ctx_type_1 Blit_init_type;
 
-void Blit_init_init(Blit__ctx_type_1 &_output_);
+static_inline void Blit_init_init(Blit__ctx_type_1 &_output_){
+   Blit__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Blit_init(Blit__ctx_type_1 &_ctx);
+static_inline void Blit_init(Blit__ctx_type_1 &_ctx){
+   _ctx.rate = 0.0007416f;
+};
 
 typedef struct Blit__ctx_type_2 {
    Blit__ctx_type_1 _inst96;
@@ -435,35 +721,61 @@ typedef struct Blit__ctx_type_2 {
 
 typedef Blit__ctx_type_2 Blit_process_type;
 
-void Blit__ctx_type_2_init(Blit__ctx_type_2 &_output_);
+static_inline void Blit__ctx_type_2_init(Blit__ctx_type_2 &_output_){
+   Blit__ctx_type_2 _ctx;
+   Blit__ctx_type_1_init(_ctx._inst96);
+   _output_ = _ctx;
+   return ;
+}
 
-void Blit_process_init(Blit__ctx_type_2 &_output_);
+static_inline void Blit_process_init(Blit__ctx_type_2 &_output_){
+   Blit__ctx_type_2_init(_output_);
+   return ;
+}
 
-float Blit_process(Blit__ctx_type_2 &_ctx, float cv, float pw, float wave);
+static_inline float Blit_process(Blit__ctx_type_2 &_ctx, float cv, float pw, float wave){
+   return Blit_osc_blit(_ctx._inst96,cv,pw,wave);
+};
 
 typedef Blit__ctx_type_2 Blit_noteOn_type;
 
-void Blit_noteOn_init(Blit__ctx_type_2 &_output_);
+static_inline void Blit_noteOn_init(Blit__ctx_type_2 &_output_){
+   Blit__ctx_type_2_init(_output_);
+   return ;
+}
 
-void Blit_noteOn(Blit__ctx_type_2 &_ctx, int note, int velocity, int channel);
+static_inline void Blit_noteOn(Blit__ctx_type_2 &_ctx, int note, int velocity, int channel){
+}
 
 typedef Blit__ctx_type_2 Blit_noteOff_type;
 
-void Blit_noteOff_init(Blit__ctx_type_2 &_output_);
+static_inline void Blit_noteOff_init(Blit__ctx_type_2 &_output_){
+   Blit__ctx_type_2_init(_output_);
+   return ;
+}
 
-void Blit_noteOff(Blit__ctx_type_2 &_ctx, int note, int channel);
+static_inline void Blit_noteOff(Blit__ctx_type_2 &_ctx, int note, int channel){
+}
 
 typedef Blit__ctx_type_2 Blit_controlChange_type;
 
-void Blit_controlChange_init(Blit__ctx_type_2 &_output_);
+static_inline void Blit_controlChange_init(Blit__ctx_type_2 &_output_){
+   Blit__ctx_type_2_init(_output_);
+   return ;
+}
 
-void Blit_controlChange(Blit__ctx_type_2 &_ctx, int control, int value, int channel);
+static_inline void Blit_controlChange(Blit__ctx_type_2 &_ctx, int control, int value, int channel){
+}
 
 typedef Blit__ctx_type_2 Blit_default_type;
 
-void Blit_default_init(Blit__ctx_type_2 &_output_);
+static_inline void Blit_default_init(Blit__ctx_type_2 &_output_){
+   Blit__ctx_type_2_init(_output_);
+   return ;
+}
 
-void Blit_default(Blit__ctx_type_2 &_ctx);
+static_inline void Blit_default(Blit__ctx_type_2 &_ctx){
+}
 
 typedef struct Adsr__ctx_type_0 {
    float target;
@@ -479,7 +791,10 @@ typedef Adsr__ctx_type_0 Adsr_do_type;
 
 void Adsr__ctx_type_0_init(Adsr__ctx_type_0 &_output_);
 
-void Adsr_do_init(Adsr__ctx_type_0 &_output_);
+static_inline void Adsr_do_init(Adsr__ctx_type_0 &_output_){
+   Adsr__ctx_type_0_init(_output_);
+   return ;
+}
 
 float Adsr_do(Adsr__ctx_type_0 &_ctx, float gate, float a, float d, float s, float r);
 
@@ -495,33 +810,57 @@ typedef Adsr__ctx_type_1 Adsr_process_type;
 
 void Adsr__ctx_type_1_init(Adsr__ctx_type_1 &_output_);
 
-void Adsr_process_init(Adsr__ctx_type_1 &_output_);
+static_inline void Adsr_process_init(Adsr__ctx_type_1 &_output_){
+   Adsr__ctx_type_1_init(_output_);
+   return ;
+}
 
-float Adsr_process(Adsr__ctx_type_1 &_ctx, float gate);
+static_inline float Adsr_process(Adsr__ctx_type_1 &_ctx, float gate){
+   return Adsr_do(_ctx._inst112,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4);
+};
 
 typedef Adsr__ctx_type_1 Adsr_noteOn_type;
 
-void Adsr_noteOn_init(Adsr__ctx_type_1 &_output_);
+static_inline void Adsr_noteOn_init(Adsr__ctx_type_1 &_output_){
+   Adsr__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Adsr_noteOn(Adsr__ctx_type_1 &_ctx, int note, int velocity, int channel);
+static_inline void Adsr_noteOn(Adsr__ctx_type_1 &_ctx, int note, int velocity, int channel){
+}
 
 typedef Adsr__ctx_type_1 Adsr_noteOff_type;
 
-void Adsr_noteOff_init(Adsr__ctx_type_1 &_output_);
+static_inline void Adsr_noteOff_init(Adsr__ctx_type_1 &_output_){
+   Adsr__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Adsr_noteOff(Adsr__ctx_type_1 &_ctx, int note, int channel);
+static_inline void Adsr_noteOff(Adsr__ctx_type_1 &_ctx, int note, int channel){
+}
 
 typedef Adsr__ctx_type_1 Adsr_controlChange_type;
 
-void Adsr_controlChange_init(Adsr__ctx_type_1 &_output_);
+static_inline void Adsr_controlChange_init(Adsr__ctx_type_1 &_output_){
+   Adsr__ctx_type_1_init(_output_);
+   return ;
+}
 
 void Adsr_controlChange(Adsr__ctx_type_1 &_ctx, int control, int value, int channel);
 
 typedef Adsr__ctx_type_1 Adsr_default_type;
 
-void Adsr_default_init(Adsr__ctx_type_1 &_output_);
+static_inline void Adsr_default_init(Adsr__ctx_type_1 &_output_){
+   Adsr__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Adsr_default(Adsr__ctx_type_1 &_ctx);
+static_inline void Adsr_default(Adsr__ctx_type_1 &_ctx){
+   _ctx.knob1 = 0.f;
+   _ctx.knob2 = 0.5f;
+   _ctx.knob3 = 1.f;
+   _ctx.knob4 = 0.5f;
+}
 
 typedef struct Voice_4__ctx_type_0 {
    float sustain;
@@ -558,33 +897,51 @@ typedef Voice_4__ctx_type_0 Voice_4_process_type;
 
 void Voice_4__ctx_type_0_init(Voice_4__ctx_type_0 &_output_);
 
-void Voice_4_process_init(Voice_4__ctx_type_0 &_output_);
+static_inline void Voice_4_process_init(Voice_4__ctx_type_0 &_output_){
+   Voice_4__ctx_type_0_init(_output_);
+   return ;
+}
 
 float Voice_4_process(Voice_4__ctx_type_0 &_ctx, float cv, float vel, float gate);
 
 typedef Voice_4__ctx_type_0 Voice_4_noteOn_type;
 
-void Voice_4_noteOn_init(Voice_4__ctx_type_0 &_output_);
+static_inline void Voice_4_noteOn_init(Voice_4__ctx_type_0 &_output_){
+   Voice_4__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Voice_4_noteOn(Voice_4__ctx_type_0 &_ctx, int note, int velocity, int channel);
+static_inline void Voice_4_noteOn(Voice_4__ctx_type_0 &_ctx, int note, int velocity, int channel){
+}
 
 typedef Voice_4__ctx_type_0 Voice_4_noteOff_type;
 
-void Voice_4_noteOff_init(Voice_4__ctx_type_0 &_output_);
+static_inline void Voice_4_noteOff_init(Voice_4__ctx_type_0 &_output_){
+   Voice_4__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Voice_4_noteOff(Voice_4__ctx_type_0 &_ctx, int note, int channel);
+static_inline void Voice_4_noteOff(Voice_4__ctx_type_0 &_ctx, int note, int channel){
+}
 
 typedef Voice_4__ctx_type_0 Voice_4_controlChange_type;
 
-void Voice_4_controlChange_init(Voice_4__ctx_type_0 &_output_);
+static_inline void Voice_4_controlChange_init(Voice_4__ctx_type_0 &_output_){
+   Voice_4__ctx_type_0_init(_output_);
+   return ;
+}
 
 void Voice_4_controlChange(Voice_4__ctx_type_0 &_ctx, int control, int value, int channel);
 
 typedef Voice_4__ctx_type_0 Voice_4_default_type;
 
-void Voice_4_default_init(Voice_4__ctx_type_0 &_output_);
+static_inline void Voice_4_default_init(Voice_4__ctx_type_0 &_output_){
+   Voice_4__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Voice_4_default(Voice_4__ctx_type_0 &_ctx);
+static_inline void Voice_4_default(Voice_4__ctx_type_0 &_ctx){
+}
 
 
 

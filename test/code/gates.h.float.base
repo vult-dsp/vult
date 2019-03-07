@@ -17,7 +17,9 @@ typedef struct _tuple___real_real_real_real_real_real_real_real__ {
    float field_7;
 } _tuple___real_real_real_real_real_real_real_real__;
 
-float Gates_velToCV(int vel);
+static_inline float Gates_velToCV(int vel){
+   return (0.0078741f * int_to_float(vel));
+};
 
 typedef struct Gates__ctx_type_1 {
    int vel[8];
@@ -35,69 +37,130 @@ typedef Gates__ctx_type_1 Gates_gates_noteOn_type;
 
 void Gates__ctx_type_1_init(Gates__ctx_type_1 &_output_);
 
-void Gates_gates_noteOn_init(Gates__ctx_type_1 &_output_);
+static_inline void Gates_gates_noteOn_init(Gates__ctx_type_1 &_output_){
+   Gates__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Gates_gates_noteOn(Gates__ctx_type_1 &_ctx, int note, int velocity);
+static_inline void Gates_gates_noteOn(Gates__ctx_type_1 &_ctx, int note, int velocity){
+   if((note >= 36) && (note <= 43)){
+      int n;
+      n = ((-36) + note);
+      int_set(_ctx.vel,n,velocity);
+   }
+};
 
 typedef Gates__ctx_type_1 Gates_gates_noteOff_type;
 
-void Gates_gates_noteOff_init(Gates__ctx_type_1 &_output_);
+static_inline void Gates_gates_noteOff_init(Gates__ctx_type_1 &_output_){
+   Gates__ctx_type_1_init(_output_);
+   return ;
+}
 
-void Gates_gates_noteOff(Gates__ctx_type_1 &_ctx, int note);
+static_inline void Gates_gates_noteOff(Gates__ctx_type_1 &_ctx, int note){
+   if((note >= 36) && (note <= 43)){
+      int n;
+      n = ((-36) + note);
+      int_set(_ctx.vel,n,0);
+   }
+};
 
 typedef Gates__ctx_type_1 Gates_gates_state_type;
 
-void Gates_gates_state_init(Gates__ctx_type_1 &_output_);
+static_inline void Gates_gates_state_init(Gates__ctx_type_1 &_output_){
+   Gates__ctx_type_1_init(_output_);
+   return ;
+}
 
 void Gates_gates_state(Gates__ctx_type_1 &_ctx);
 
 typedef Gates__ctx_type_1 Gates_gates_state_ret_0_type;
 
-void Gates_gates_state_ret_0_init(Gates__ctx_type_1 &_output_);
+static_inline void Gates_gates_state_ret_0_init(Gates__ctx_type_1 &_output_){
+   Gates__ctx_type_1_init(_output_);
+   return ;
+}
 
-float Gates_gates_state_ret_0(Gates__ctx_type_1 &_ctx);
+static_inline float Gates_gates_state_ret_0(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_0;
+};
 
 typedef Gates__ctx_type_1 Gates_gates_state_ret_1_type;
 
-void Gates_gates_state_ret_1_init(Gates__ctx_type_1 &_output_);
+static_inline void Gates_gates_state_ret_1_init(Gates__ctx_type_1 &_output_){
+   Gates__ctx_type_1_init(_output_);
+   return ;
+}
 
-float Gates_gates_state_ret_1(Gates__ctx_type_1 &_ctx);
+static_inline float Gates_gates_state_ret_1(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_1;
+};
 
 typedef Gates__ctx_type_1 Gates_gates_state_ret_2_type;
 
-void Gates_gates_state_ret_2_init(Gates__ctx_type_1 &_output_);
+static_inline void Gates_gates_state_ret_2_init(Gates__ctx_type_1 &_output_){
+   Gates__ctx_type_1_init(_output_);
+   return ;
+}
 
-float Gates_gates_state_ret_2(Gates__ctx_type_1 &_ctx);
+static_inline float Gates_gates_state_ret_2(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_2;
+};
 
 typedef Gates__ctx_type_1 Gates_gates_state_ret_3_type;
 
-void Gates_gates_state_ret_3_init(Gates__ctx_type_1 &_output_);
+static_inline void Gates_gates_state_ret_3_init(Gates__ctx_type_1 &_output_){
+   Gates__ctx_type_1_init(_output_);
+   return ;
+}
 
-float Gates_gates_state_ret_3(Gates__ctx_type_1 &_ctx);
+static_inline float Gates_gates_state_ret_3(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_3;
+};
 
 typedef Gates__ctx_type_1 Gates_gates_state_ret_4_type;
 
-void Gates_gates_state_ret_4_init(Gates__ctx_type_1 &_output_);
+static_inline void Gates_gates_state_ret_4_init(Gates__ctx_type_1 &_output_){
+   Gates__ctx_type_1_init(_output_);
+   return ;
+}
 
-float Gates_gates_state_ret_4(Gates__ctx_type_1 &_ctx);
+static_inline float Gates_gates_state_ret_4(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_4;
+};
 
 typedef Gates__ctx_type_1 Gates_gates_state_ret_5_type;
 
-void Gates_gates_state_ret_5_init(Gates__ctx_type_1 &_output_);
+static_inline void Gates_gates_state_ret_5_init(Gates__ctx_type_1 &_output_){
+   Gates__ctx_type_1_init(_output_);
+   return ;
+}
 
-float Gates_gates_state_ret_5(Gates__ctx_type_1 &_ctx);
+static_inline float Gates_gates_state_ret_5(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_5;
+};
 
 typedef Gates__ctx_type_1 Gates_gates_state_ret_6_type;
 
-void Gates_gates_state_ret_6_init(Gates__ctx_type_1 &_output_);
+static_inline void Gates_gates_state_ret_6_init(Gates__ctx_type_1 &_output_){
+   Gates__ctx_type_1_init(_output_);
+   return ;
+}
 
-float Gates_gates_state_ret_6(Gates__ctx_type_1 &_ctx);
+static_inline float Gates_gates_state_ret_6(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_6;
+};
 
 typedef Gates__ctx_type_1 Gates_gates_state_ret_7_type;
 
-void Gates_gates_state_ret_7_init(Gates__ctx_type_1 &_output_);
+static_inline void Gates_gates_state_ret_7_init(Gates__ctx_type_1 &_output_){
+   Gates__ctx_type_1_init(_output_);
+   return ;
+}
 
-float Gates_gates_state_ret_7(Gates__ctx_type_1 &_ctx);
+static_inline float Gates_gates_state_ret_7(Gates__ctx_type_1 &_ctx){
+   return _ctx.gates_state_ret_7;
+};
 
 typedef struct Gates__ctx_type_2 {
    float process_ret_7;
@@ -116,81 +179,146 @@ typedef Gates__ctx_type_2 Gates_process_type;
 
 void Gates__ctx_type_2_init(Gates__ctx_type_2 &_output_);
 
-void Gates_process_init(Gates__ctx_type_2 &_output_);
+static_inline void Gates_process_init(Gates__ctx_type_2 &_output_){
+   Gates__ctx_type_2_init(_output_);
+   return ;
+}
 
 void Gates_process(Gates__ctx_type_2 &_ctx, int c);
 
 typedef Gates__ctx_type_2 Gates_process_ret_0_type;
 
-void Gates_process_ret_0_init(Gates__ctx_type_2 &_output_);
+static_inline void Gates_process_ret_0_init(Gates__ctx_type_2 &_output_){
+   Gates__ctx_type_2_init(_output_);
+   return ;
+}
 
-float Gates_process_ret_0(Gates__ctx_type_2 &_ctx);
+static_inline float Gates_process_ret_0(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_0;
+};
 
 typedef Gates__ctx_type_2 Gates_process_ret_1_type;
 
-void Gates_process_ret_1_init(Gates__ctx_type_2 &_output_);
+static_inline void Gates_process_ret_1_init(Gates__ctx_type_2 &_output_){
+   Gates__ctx_type_2_init(_output_);
+   return ;
+}
 
-float Gates_process_ret_1(Gates__ctx_type_2 &_ctx);
+static_inline float Gates_process_ret_1(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_1;
+};
 
 typedef Gates__ctx_type_2 Gates_process_ret_2_type;
 
-void Gates_process_ret_2_init(Gates__ctx_type_2 &_output_);
+static_inline void Gates_process_ret_2_init(Gates__ctx_type_2 &_output_){
+   Gates__ctx_type_2_init(_output_);
+   return ;
+}
 
-float Gates_process_ret_2(Gates__ctx_type_2 &_ctx);
+static_inline float Gates_process_ret_2(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_2;
+};
 
 typedef Gates__ctx_type_2 Gates_process_ret_3_type;
 
-void Gates_process_ret_3_init(Gates__ctx_type_2 &_output_);
+static_inline void Gates_process_ret_3_init(Gates__ctx_type_2 &_output_){
+   Gates__ctx_type_2_init(_output_);
+   return ;
+}
 
-float Gates_process_ret_3(Gates__ctx_type_2 &_ctx);
+static_inline float Gates_process_ret_3(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_3;
+};
 
 typedef Gates__ctx_type_2 Gates_process_ret_4_type;
 
-void Gates_process_ret_4_init(Gates__ctx_type_2 &_output_);
+static_inline void Gates_process_ret_4_init(Gates__ctx_type_2 &_output_){
+   Gates__ctx_type_2_init(_output_);
+   return ;
+}
 
-float Gates_process_ret_4(Gates__ctx_type_2 &_ctx);
+static_inline float Gates_process_ret_4(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_4;
+};
 
 typedef Gates__ctx_type_2 Gates_process_ret_5_type;
 
-void Gates_process_ret_5_init(Gates__ctx_type_2 &_output_);
+static_inline void Gates_process_ret_5_init(Gates__ctx_type_2 &_output_){
+   Gates__ctx_type_2_init(_output_);
+   return ;
+}
 
-float Gates_process_ret_5(Gates__ctx_type_2 &_ctx);
+static_inline float Gates_process_ret_5(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_5;
+};
 
 typedef Gates__ctx_type_2 Gates_process_ret_6_type;
 
-void Gates_process_ret_6_init(Gates__ctx_type_2 &_output_);
+static_inline void Gates_process_ret_6_init(Gates__ctx_type_2 &_output_){
+   Gates__ctx_type_2_init(_output_);
+   return ;
+}
 
-float Gates_process_ret_6(Gates__ctx_type_2 &_ctx);
+static_inline float Gates_process_ret_6(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_6;
+};
 
 typedef Gates__ctx_type_2 Gates_process_ret_7_type;
 
-void Gates_process_ret_7_init(Gates__ctx_type_2 &_output_);
+static_inline void Gates_process_ret_7_init(Gates__ctx_type_2 &_output_){
+   Gates__ctx_type_2_init(_output_);
+   return ;
+}
 
-float Gates_process_ret_7(Gates__ctx_type_2 &_ctx);
+static_inline float Gates_process_ret_7(Gates__ctx_type_2 &_ctx){
+   return _ctx.process_ret_7;
+};
 
 typedef Gates__ctx_type_2 Gates_noteOn_type;
 
-void Gates_noteOn_init(Gates__ctx_type_2 &_output_);
+static_inline void Gates_noteOn_init(Gates__ctx_type_2 &_output_){
+   Gates__ctx_type_2_init(_output_);
+   return ;
+}
 
-void Gates_noteOn(Gates__ctx_type_2 &_ctx, int note, int velocity, int channel);
+static_inline void Gates_noteOn(Gates__ctx_type_2 &_ctx, int note, int velocity, int channel){
+   if(_ctx.channel_in == channel){
+      Gates_gates_noteOn(_ctx.gates,note,velocity);
+   }
+};
 
 typedef Gates__ctx_type_2 Gates_noteOff_type;
 
-void Gates_noteOff_init(Gates__ctx_type_2 &_output_);
+static_inline void Gates_noteOff_init(Gates__ctx_type_2 &_output_){
+   Gates__ctx_type_2_init(_output_);
+   return ;
+}
 
-void Gates_noteOff(Gates__ctx_type_2 &_ctx, int note, int channel);
+static_inline void Gates_noteOff(Gates__ctx_type_2 &_ctx, int note, int channel){
+   if(_ctx.channel_in == channel){
+      Gates_gates_noteOff(_ctx.gates,note);
+   }
+};
 
 typedef Gates__ctx_type_2 Gates_controlChange_type;
 
-void Gates_controlChange_init(Gates__ctx_type_2 &_output_);
+static_inline void Gates_controlChange_init(Gates__ctx_type_2 &_output_){
+   Gates__ctx_type_2_init(_output_);
+   return ;
+}
 
-void Gates_controlChange(Gates__ctx_type_2 &_ctx, int control, int value, int channel);
+static_inline void Gates_controlChange(Gates__ctx_type_2 &_ctx, int control, int value, int channel){
+}
 
 typedef Gates__ctx_type_2 Gates_default_type;
 
-void Gates_default_init(Gates__ctx_type_2 &_output_);
+static_inline void Gates_default_init(Gates__ctx_type_2 &_output_){
+   Gates__ctx_type_2_init(_output_);
+   return ;
+}
 
-void Gates_default(Gates__ctx_type_2 &_ctx);
+static_inline void Gates_default(Gates__ctx_type_2 &_ctx){
+}
 
 
 

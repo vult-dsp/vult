@@ -6,17 +6,28 @@
 #include <math.h>
 #include "vultin.h"
 
-void Log_test_print();
+static_inline void Log_test_print(){
+   int_print(1);
+   float_print(2.f);
+   string_print("leonardo");
+   bool_print(true);
+}
 
-float Log_process(float input);
+static_inline float Log_process(float input){
+   return input;
+};
 
-void Log_noteOn(int note, int velocity, int channel);
+static_inline void Log_noteOn(int note, int velocity, int channel){
+}
 
-void Log_noteOff(int note, int channel);
+static_inline void Log_noteOff(int note, int channel){
+}
 
-void Log_controlChange(int control, int value, int channel);
+static_inline void Log_controlChange(int control, int value, int channel){
+}
 
-void Log_default();
+static_inline void Log_default(){
+}
 
 
 

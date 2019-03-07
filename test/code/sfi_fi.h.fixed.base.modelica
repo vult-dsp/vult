@@ -21,45 +21,78 @@ typedef Sfi_fi__ctx_type_0 Sfi_fi_process_type;
 
 void Sfi_fi__ctx_type_0_init(Sfi_fi__ctx_type_0 &_output_);
 
-void Sfi_fi_process_init(Sfi_fi__ctx_type_0 &_output_);
+static_inline void Sfi_fi_process_init(Sfi_fi__ctx_type_0 &_output_){
+   Sfi_fi__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Sfi_fi_process(Sfi_fi__ctx_type_0 &_ctx, fix16_t a, int b);
+static_inline void Sfi_fi_process(Sfi_fi__ctx_type_0 &_ctx, fix16_t a, int b){
+   _ctx.process_ret_0 = a;
+   _ctx.process_ret_1 = b;
+   return ;
+}
 
 typedef Sfi_fi__ctx_type_0 Sfi_fi_process_ret_0_type;
 
-void Sfi_fi_process_ret_0_init(Sfi_fi__ctx_type_0 &_output_);
+static_inline void Sfi_fi_process_ret_0_init(Sfi_fi__ctx_type_0 &_output_){
+   Sfi_fi__ctx_type_0_init(_output_);
+   return ;
+}
 
-fix16_t Sfi_fi_process_ret_0(Sfi_fi__ctx_type_0 &_ctx);
+static_inline fix16_t Sfi_fi_process_ret_0(Sfi_fi__ctx_type_0 &_ctx){
+   return _ctx.process_ret_0;
+};
 
 typedef Sfi_fi__ctx_type_0 Sfi_fi_process_ret_1_type;
 
-void Sfi_fi_process_ret_1_init(Sfi_fi__ctx_type_0 &_output_);
+static_inline void Sfi_fi_process_ret_1_init(Sfi_fi__ctx_type_0 &_output_){
+   Sfi_fi__ctx_type_0_init(_output_);
+   return ;
+}
 
-int Sfi_fi_process_ret_1(Sfi_fi__ctx_type_0 &_ctx);
+static_inline int Sfi_fi_process_ret_1(Sfi_fi__ctx_type_0 &_ctx){
+   return _ctx.process_ret_1;
+};
 
 typedef Sfi_fi__ctx_type_0 Sfi_fi_noteOn_type;
 
-void Sfi_fi_noteOn_init(Sfi_fi__ctx_type_0 &_output_);
+static_inline void Sfi_fi_noteOn_init(Sfi_fi__ctx_type_0 &_output_){
+   Sfi_fi__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Sfi_fi_noteOn(Sfi_fi__ctx_type_0 &_ctx, int note, int velocity, int channel);
+static_inline void Sfi_fi_noteOn(Sfi_fi__ctx_type_0 &_ctx, int note, int velocity, int channel){
+}
 
 typedef Sfi_fi__ctx_type_0 Sfi_fi_noteOff_type;
 
-void Sfi_fi_noteOff_init(Sfi_fi__ctx_type_0 &_output_);
+static_inline void Sfi_fi_noteOff_init(Sfi_fi__ctx_type_0 &_output_){
+   Sfi_fi__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Sfi_fi_noteOff(Sfi_fi__ctx_type_0 &_ctx, int note, int channel);
+static_inline void Sfi_fi_noteOff(Sfi_fi__ctx_type_0 &_ctx, int note, int channel){
+}
 
 typedef Sfi_fi__ctx_type_0 Sfi_fi_controlChange_type;
 
-void Sfi_fi_controlChange_init(Sfi_fi__ctx_type_0 &_output_);
+static_inline void Sfi_fi_controlChange_init(Sfi_fi__ctx_type_0 &_output_){
+   Sfi_fi__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Sfi_fi_controlChange(Sfi_fi__ctx_type_0 &_ctx, int control, int value, int channel);
+static_inline void Sfi_fi_controlChange(Sfi_fi__ctx_type_0 &_ctx, int control, int value, int channel){
+}
 
 typedef Sfi_fi__ctx_type_0 Sfi_fi_default_type;
 
-void Sfi_fi_default_init(Sfi_fi__ctx_type_0 &_output_);
+static_inline void Sfi_fi_default_init(Sfi_fi__ctx_type_0 &_output_){
+   Sfi_fi__ctx_type_0_init(_output_);
+   return ;
+}
 
-void Sfi_fi_default(Sfi_fi__ctx_type_0 &_ctx);
+static_inline void Sfi_fi_default(Sfi_fi__ctx_type_0 &_ctx){
+}
 
 
 

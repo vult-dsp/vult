@@ -8,15 +8,21 @@
 #include "vultin.h"
 #include <m_pd.h>
 
-fix16_t Sff_f_process(fix16_t a, fix16_t b);
+static_inline fix16_t Sff_f_process(fix16_t a, fix16_t b){
+   return fix_mul(a,b);
+};
 
-void Sff_f_noteOn(int note, int velocity, int channel);
+static_inline void Sff_f_noteOn(int note, int velocity, int channel){
+}
 
-void Sff_f_noteOff(int note, int channel);
+static_inline void Sff_f_noteOff(int note, int channel){
+}
 
-void Sff_f_controlChange(int control, int value, int channel);
+static_inline void Sff_f_controlChange(int control, int value, int channel){
+}
 
-void Sff_f_default();
+static_inline void Sff_f_default(){
+}
 
 
 

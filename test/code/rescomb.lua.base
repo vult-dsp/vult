@@ -321,7 +321,7 @@ function this.Rescomb_delay(_ctx,x,cv)
    _ctx.write_pos = ((1 + _ctx.write_pos) % 675); 
    this.set(_ctx.buffer,_ctx.write_pos,x);
    local r_size = 675.; 
-   local r_index = (((- this.Util_cvToperiod(cv)) + this.real(_ctx.write_pos)) % r_size); 
+   local r_index = ((this.real(_ctx.write_pos) + (- this.Util_cvToperiod(cv))) % r_size); 
    if (r_index < 0.) then
       r_index = (r_index + r_size); 
    end

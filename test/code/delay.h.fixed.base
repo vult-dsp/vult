@@ -12,11 +12,22 @@ typedef struct Delay__ctx_type_0 {
 
 typedef Delay__ctx_type_0 Delay_smooth_type;
 
-void Delay__ctx_type_0_init(Delay__ctx_type_0 &_output_);
+static_inline void Delay__ctx_type_0_init(Delay__ctx_type_0 &_output_){
+   Delay__ctx_type_0 _ctx;
+   _ctx.x = 0x0 /* 0.000000 */;
+   _output_ = _ctx;
+   return ;
+}
 
-void Delay_smooth_init(Delay__ctx_type_0 &_output_);
+static_inline void Delay_smooth_init(Delay__ctx_type_0 &_output_){
+   Delay__ctx_type_0_init(_output_);
+   return ;
+}
 
-fix16_t Delay_smooth(Delay__ctx_type_0 &_ctx, fix16_t input);
+static_inline fix16_t Delay_smooth(Delay__ctx_type_0 &_ctx, fix16_t input){
+   _ctx.x = (_ctx.x + fix_mul(0x147 /* 0.005000 */,(input + (- _ctx.x))));
+   return _ctx.x;
+}
 
 typedef struct Delay__ctx_type_1 {
    fix16_t pre_x;
@@ -24,11 +35,24 @@ typedef struct Delay__ctx_type_1 {
 
 typedef Delay__ctx_type_1 Delay_change_type;
 
-void Delay__ctx_type_1_init(Delay__ctx_type_1 &_output_);
+static_inline void Delay__ctx_type_1_init(Delay__ctx_type_1 &_output_){
+   Delay__ctx_type_1 _ctx;
+   _ctx.pre_x = 0x0 /* 0.000000 */;
+   _output_ = _ctx;
+   return ;
+}
 
-void Delay_change_init(Delay__ctx_type_1 &_output_);
+static_inline void Delay_change_init(Delay__ctx_type_1 &_output_){
+   Delay__ctx_type_1_init(_output_);
+   return ;
+}
 
-uint8_t Delay_change(Delay__ctx_type_1 &_ctx, fix16_t x);
+static_inline uint8_t Delay_change(Delay__ctx_type_1 &_ctx, fix16_t x){
+   uint8_t v;
+   v = (_ctx.pre_x != x);
+   _ctx.pre_x = x;
+   return v;
+}
 
 typedef struct Delay__ctx_type_2 {
    uint8_t pre_x;
@@ -36,11 +60,24 @@ typedef struct Delay__ctx_type_2 {
 
 typedef Delay__ctx_type_2 Delay_edge_type;
 
-void Delay__ctx_type_2_init(Delay__ctx_type_2 &_output_);
+static_inline void Delay__ctx_type_2_init(Delay__ctx_type_2 &_output_){
+   Delay__ctx_type_2 _ctx;
+   _ctx.pre_x = false;
+   _output_ = _ctx;
+   return ;
+}
 
-void Delay_edge_init(Delay__ctx_type_2 &_output_);
+static_inline void Delay_edge_init(Delay__ctx_type_2 &_output_){
+   Delay__ctx_type_2_init(_output_);
+   return ;
+}
 
-uint8_t Delay_edge(Delay__ctx_type_2 &_ctx, uint8_t x);
+static_inline uint8_t Delay_edge(Delay__ctx_type_2 &_ctx, uint8_t x){
+   uint8_t v;
+   v = ((_ctx.pre_x != x) && (_ctx.pre_x == false));
+   _ctx.pre_x = x;
+   return v;
+}
 
 typedef struct Delay__ctx_type_3 {
    int count;
@@ -48,13 +85,28 @@ typedef struct Delay__ctx_type_3 {
 
 typedef Delay__ctx_type_3 Delay_each_type;
 
-void Delay__ctx_type_3_init(Delay__ctx_type_3 &_output_);
+static_inline void Delay__ctx_type_3_init(Delay__ctx_type_3 &_output_){
+   Delay__ctx_type_3 _ctx;
+   _ctx.count = 0;
+   _output_ = _ctx;
+   return ;
+}
 
-void Delay_each_init(Delay__ctx_type_3 &_output_);
+static_inline void Delay_each_init(Delay__ctx_type_3 &_output_){
+   Delay__ctx_type_3_init(_output_);
+   return ;
+}
 
-uint8_t Delay_each(Delay__ctx_type_3 &_ctx, int n);
+static_inline uint8_t Delay_each(Delay__ctx_type_3 &_ctx, int n){
+   uint8_t ret;
+   ret = (_ctx.count == 0);
+   _ctx.count = ((1 + _ctx.count) % n);
+   return ret;
+}
 
-fix16_t Delay_pitchToRate(fix16_t d);
+static_inline fix16_t Delay_pitchToRate(fix16_t d){
+   return fix_mul(0xc /* 0.000185 */,fix_exp(fix_mul(0xec9 /* 0.057762 */,d)));
+};
 
 typedef struct Delay__ctx_type_5 {
    fix16_t rate;
@@ -66,7 +118,10 @@ typedef Delay__ctx_type_5 Delay_phasor_type;
 
 void Delay__ctx_type_5_init(Delay__ctx_type_5 &_output_);
 
-void Delay_phasor_init(Delay__ctx_type_5 &_output_);
+static_inline void Delay_phasor_init(Delay__ctx_type_5 &_output_){
+   Delay__ctx_type_5_init(_output_);
+   return ;
+}
 
 fix16_t Delay_phasor(Delay__ctx_type_5 &_ctx, fix16_t pitch, uint8_t reset);
 
@@ -79,7 +134,10 @@ typedef Delay__ctx_type_6 Delay_lfo_type;
 
 void Delay__ctx_type_6_init(Delay__ctx_type_6 &_output_);
 
-void Delay_lfo_init(Delay__ctx_type_6 &_output_);
+static_inline void Delay_lfo_init(Delay__ctx_type_6 &_output_){
+   Delay__ctx_type_6_init(_output_);
+   return ;
+}
 
 fix16_t Delay_lfo(Delay__ctx_type_6 &_ctx, fix16_t f, uint8_t gate);
 
@@ -94,7 +152,10 @@ typedef Delay__ctx_type_7 Delay_phd_osc_type;
 
 void Delay__ctx_type_7_init(Delay__ctx_type_7 &_output_);
 
-void Delay_phd_osc_init(Delay__ctx_type_7 &_output_);
+static_inline void Delay_phd_osc_init(Delay__ctx_type_7 &_output_){
+   Delay__ctx_type_7_init(_output_);
+   return ;
+}
 
 fix16_t Delay_phd_osc(Delay__ctx_type_7 &_ctx, fix16_t pitch, fix16_t detune);
 
@@ -107,7 +168,10 @@ typedef Delay__ctx_type_8 Delay_delay_type;
 
 void Delay__ctx_type_8_init(Delay__ctx_type_8 &_output_);
 
-void Delay_delay_init(Delay__ctx_type_8 &_output_);
+static_inline void Delay_delay_init(Delay__ctx_type_8 &_output_){
+   Delay__ctx_type_8_init(_output_);
+   return ;
+}
 
 fix16_t Delay_delay(Delay__ctx_type_8 &_ctx, fix16_t x, fix16_t time, fix16_t feedback);
 
@@ -121,21 +185,32 @@ typedef Delay__ctx_type_9 Delay_mono_noteOn_type;
 
 void Delay__ctx_type_9_init(Delay__ctx_type_9 &_output_);
 
-void Delay_mono_noteOn_init(Delay__ctx_type_9 &_output_);
+static_inline void Delay_mono_noteOn_init(Delay__ctx_type_9 &_output_){
+   Delay__ctx_type_9_init(_output_);
+   return ;
+}
 
 int Delay_mono_noteOn(Delay__ctx_type_9 &_ctx, int n);
 
 typedef Delay__ctx_type_9 Delay_mono_noteOff_type;
 
-void Delay_mono_noteOff_init(Delay__ctx_type_9 &_output_);
+static_inline void Delay_mono_noteOff_init(Delay__ctx_type_9 &_output_){
+   Delay__ctx_type_9_init(_output_);
+   return ;
+}
 
 int Delay_mono_noteOff(Delay__ctx_type_9 &_ctx, int n);
 
 typedef Delay__ctx_type_9 Delay_mono_isGateOn_type;
 
-void Delay_mono_isGateOn_init(Delay__ctx_type_9 &_output_);
+static_inline void Delay_mono_isGateOn_init(Delay__ctx_type_9 &_output_){
+   Delay__ctx_type_9_init(_output_);
+   return ;
+}
 
-uint8_t Delay_mono_isGateOn(Delay__ctx_type_9 &_ctx);
+static_inline uint8_t Delay_mono_isGateOn(Delay__ctx_type_9 &_ctx){
+   return (_ctx.count > 0);
+};
 
 typedef struct Delay__ctx_type_10 {
    fix16_t volume;
@@ -158,31 +233,50 @@ typedef Delay__ctx_type_10 Delay_process_type;
 
 void Delay__ctx_type_10_init(Delay__ctx_type_10 &_output_);
 
-void Delay_process_init(Delay__ctx_type_10 &_output_);
+static_inline void Delay_process_init(Delay__ctx_type_10 &_output_){
+   Delay__ctx_type_10_init(_output_);
+   return ;
+}
 
 fix16_t Delay_process(Delay__ctx_type_10 &_ctx, fix16_t input);
 
 typedef Delay__ctx_type_10 Delay_noteOn_type;
 
-void Delay_noteOn_init(Delay__ctx_type_10 &_output_);
+static_inline void Delay_noteOn_init(Delay__ctx_type_10 &_output_){
+   Delay__ctx_type_10_init(_output_);
+   return ;
+}
 
-void Delay_noteOn(Delay__ctx_type_10 &_ctx, int note, int velocity, int channel);
+static_inline void Delay_noteOn(Delay__ctx_type_10 &_ctx, int note, int velocity, int channel){
+   _ctx.pitch = int_to_fix(Delay_mono_noteOn(_ctx.notes,note));
+};
 
 typedef Delay__ctx_type_10 Delay_noteOff_type;
 
-void Delay_noteOff_init(Delay__ctx_type_10 &_output_);
+static_inline void Delay_noteOff_init(Delay__ctx_type_10 &_output_){
+   Delay__ctx_type_10_init(_output_);
+   return ;
+}
 
-void Delay_noteOff(Delay__ctx_type_10 &_ctx, int note, int channel);
+static_inline void Delay_noteOff(Delay__ctx_type_10 &_ctx, int note, int channel){
+   _ctx.pitch = int_to_fix(Delay_mono_noteOff(_ctx.notes,note));
+};
 
 typedef Delay__ctx_type_10 Delay_controlChange_type;
 
-void Delay_controlChange_init(Delay__ctx_type_10 &_output_);
+static_inline void Delay_controlChange_init(Delay__ctx_type_10 &_output_){
+   Delay__ctx_type_10_init(_output_);
+   return ;
+}
 
 void Delay_controlChange(Delay__ctx_type_10 &_ctx, int control, fix16_t value, int channel);
 
 typedef Delay__ctx_type_10 Delay_default_type;
 
-void Delay_default_init(Delay__ctx_type_10 &_output_);
+static_inline void Delay_default_init(Delay__ctx_type_10 &_output_){
+   Delay__ctx_type_10_init(_output_);
+   return ;
+}
 
 void Delay_default(Delay__ctx_type_10 &_ctx);
 
