@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "vultin.h"
+#include "noise.tables.h"
 
 typedef struct Noise__ctx_type_0 {
    fix16_t w1;

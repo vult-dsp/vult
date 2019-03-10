@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "vultin.h"
+#include "template.tables.h"
 
 static_inline float Template_process(float input){
    return input;

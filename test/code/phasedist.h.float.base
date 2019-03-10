@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "vultin.h"
+#include "phasedist.tables.h"
 
 typedef struct Phasedist__ctx_type_0 {
    float x;

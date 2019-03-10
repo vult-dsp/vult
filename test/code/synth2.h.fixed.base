@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "vultin.h"
+#include "synth2.tables.h"
 
 static_inline fix16_t Synth2_minFixed(){
    return 0x1 /* 0.000015 */;

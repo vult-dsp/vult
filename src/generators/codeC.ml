@@ -286,7 +286,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
 
    (* Prints const x = ... *)
    | CSConst(lhs, ((CEInt _ | CEFloat _ | CEBool _ | CEArray _ ) as value)) ->
-      if params.is_header then
+      if params.target_file = Tables then
          let tlhs = printLhsExp params true lhs in
          let te = printExp params value in
          Some({pla|static const <#tlhs#> = <#te#>;|pla})
@@ -302,7 +302,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let cost = getBodyCost body in
       (* if we are printing a header, skip the body *)
       if cost < 6 then
-         if params.is_header then begin
+         if params.target_file = Header then begin
             match printStmt params body with
             | Some(tbody) ->
                Some({pla|static_inline <#ret#> <#name#s>(<#targs#>)<#tbody#><#>|pla})
@@ -311,23 +311,23 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
          end
          else None
       else
-      if params.is_header then begin
+      if params.target_file = Header then
          Some({pla|<#ret#> <#name#s>(<#targs#>);<#>|pla})
-      end
-      else begin
-         match printStmt params body with
-         | Some(tbody) ->
-            Some({pla|<#ret#> <#name#s>(<#targs#>)<#tbody#><#>|pla})
-         (* Covers the case when the body is empty *)
-         | None -> Some({pla|<#ret#> <#name#s>(<#targs#>){};<#>|pla})
-      end
+      else if params.target_file = Implementation then
+         begin match printStmt params body with
+            | Some(tbody) ->
+               Some({pla|<#ret#> <#name#s>(<#targs#>)<#tbody#><#>|pla})
+            (* Covers the case when the body is empty *)
+            | None -> Some({pla|<#ret#> <#name#s>(<#targs#>){};<#>|pla})
+         end
+      else None
 
    (* Function declarations cotaining a single return *)
    | CSFunction(ntype, name, args, (CSReturn(_) as body), _) ->
       let ret = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
       (* if we are printing a header, skip the body *)
-      if params.is_header then
+      if params.target_file = Header then
          let tbody = CCOpt.get_or ~default:Pla.unit (printStmt params body) in
          Some({pla|static_inline <#ret#> <#name#s>(<#targs#>){<#tbody#+><#>};<#>|pla})
       else
@@ -340,17 +340,18 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
       (* if we are printing a header, skip the body *)
       let cost = getBodyCost body in
       if cost < 6 then
-         if params.is_header then
+         if params.target_file = Header then
             let tbody = CCOpt.get_or ~default:Pla.unit (printStmt params body) in
             Some({pla|static_inline <#ret#> <#name#s>(<#targs#>){<#tbody#+><#>};<#>|pla})
          else
             None
       else
-      if params.is_header then
+      if params.target_file = Header then
          Some({pla|<#ret#> <#name#s>(<#targs#>);<#>|pla})
-      else
+      else if params.target_file = Implementation then
          let tbody = CCOpt.get_or ~default:Pla.unit (printStmt params body) in
          Some({pla|<#ret#> <#name#s>(<#targs#>){<#tbody#+><#>}<#>|pla})
+      else None
 
 
    (* Prints return x *)
@@ -386,7 +387,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
       Some({pla|if<#tcond#><#tthen#><#>else<#><#telse#>|pla})
 
    (* Type declaration (only in headers) *)
-   | CSType(name, members, _) when params.is_header ->
+   | CSType(name, members, _) when params.target_file = Header ->
       let tmembers =
          Pla.map_sep_all Pla.newline
             (fun (typ, name) ->
@@ -400,7 +401,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSType(_, _, _) -> None
 
    (* Type declaration aliases (only in headers) *)
-   | CSAlias(t1, t2) when params.is_header ->
+   | CSAlias(t1, t2) when params.target_file = Header ->
       let tdescr = printTypeDescr t2 in
       Some({pla|typedef <#t1#s> <#tdescr#>;<#>|pla})
 
@@ -408,7 +409,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSAlias(_, _) -> None
 
    (* External function definitions (only in headers) *)
-   | CSExtFunc(ntype, name, args) when params.is_header ->
+   | CSExtFunc(ntype, name, args) when params.target_file = Header ->
       let ret = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
       Some({pla|extern <#ret#> <#name#s>(<#targs#>);|pla})
@@ -435,6 +436,7 @@ and wrapStmtIfNotBlock params stmt =
 
 (** Generates the .c and .h file contents for the given parsed files *)
 let print (params:params) (stmts:Code.cstmt list) : (Pla.t * FileKind.t) list =
-   let h   = printStmtList { params with is_header = true } stmts in
-   let cpp = printStmtList { params with is_header = false } stmts in
-   Templates.apply params h cpp
+   let h      = printStmtList { params with target_file = Header } stmts in
+   let cpp    = printStmtList { params with target_file = Implementation } stmts in
+   let tables = printStmtList { params with target_file = Tables } stmts in
+   Templates.apply params h cpp tables

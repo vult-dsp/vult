@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "vultin.h"
+#include "sff_ff.tables.h"
 
 typedef struct _tuple___real_real__ {
    fix16_t field_0;

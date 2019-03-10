@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "vultin.h"
+#include "sff_ff.tables.h"
 #include "AudioStream.h"
 
 typedef struct _tuple___real_real__ {

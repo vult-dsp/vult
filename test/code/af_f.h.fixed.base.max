@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "vultin.h"
+#include "af_f.tables.h"
 #include "ext.h"
 #include "ext_obex.h"
 #include "z_dsp.h"

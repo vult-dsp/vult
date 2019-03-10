@@ -7,6 +7,7 @@
 #include <math.h>
 #include "vultin.h"
 #include <m_pd.h>
+#include "sff_ff.tables.h"
 
 typedef struct _tuple___real_real__ {
    float field_0;

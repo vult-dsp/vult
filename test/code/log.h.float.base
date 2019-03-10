@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "vultin.h"
+#include "log.tables.h"
 
 static_inline void Log_test_print(){
    int_print(1);

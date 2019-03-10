@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "vultin.h"
+#include "gates.tables.h"
 
 typedef struct _tuple___real_real_real_real_real_real_real_real__ {
    float field_0;

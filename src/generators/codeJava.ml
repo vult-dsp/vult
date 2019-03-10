@@ -433,7 +433,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
 
 
    | CSConst((CLId(_, name) as lhs), (CEArray (elems, _) )) ->
-      if params.is_header then
+      if params.target_file = Header then
          let size = List.length elems in
          let name = dot name in
          let tlhs = printLhsExp params true lhs in
@@ -446,7 +446,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
 
    (* Prints const x = ... *)
    | CSConst(lhs, ((CEInt _ | CEFloat _ | CEBool _ ) as value)) ->
-      if params.is_header then
+      if params.target_file = Header then
          let tlhs = printLhsExp params true lhs in
          let te = printExp params value in
          Some({pla|static <#tlhs#> = <#te#>;|pla})
@@ -460,7 +460,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let ret   = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
       (* if we are printing a header, skip the body *)
-      if params.is_header then begin
+      if params.target_file = Header then begin
          None
       end
       else begin
@@ -476,7 +476,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
       let ret = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
       (* if we are printing a header, skip the body *)
-      if params.is_header then
+      if params.target_file = Header then
          None
       else
          let scope = if attr.is_root then Pla.string "public" else Pla.string "private" in
@@ -516,7 +516,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
       Some({pla|if<#tcond#><#tthen#><#>else<#><#telse#>|pla})
 
    (* Type declaration (only in headers) *)
-   | CSType(name, members, attr) when params.is_header ->
+   | CSType(name, members, attr) when params.target_file = Header ->
       let tmembers =
          Pla.map_sep_all Pla.newline
             (fun (typ, name) ->
@@ -548,7 +548,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSType(_, _, _) -> None
 
    (* Type declaration aliases (only in headers) *)
-   | CSAlias(_t1, _t2) when params.is_header ->
+   | CSAlias(_t1, _t2) when params.target_file = Header ->
       (*let tdescr = printTypeDescr t2 in
         Some({pla|class <#tdescr#> extends <#t1#s>{}<#>|pla})*)
       None
@@ -557,7 +557,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSAlias(_, _) -> None
 
    (* External function definitions (only in headers) *)
-   | CSExtFunc(_ntype, _name, _args) when params.is_header ->
+   | CSExtFunc(_ntype, _name, _args) when params.target_file = Header ->
       (*let ret = printTypeDescr ntype in
         let targs = Pla.map_sep Pla.commaspace printFunArg args in
         Some({pla|extern <#ret#> <#name#s>(<#targs#>);|pla})*)
@@ -602,8 +602,8 @@ let rec generateTableData (params:params) (stmts:cstmt list) =
 
 (** Generates the .c and .h file contents for the given parsed files *)
 let print (params:params) (stmts:Code.cstmt list) : (Pla.t * FileKind.t) list =
-   let h   = printStmtList { params with is_header = true } stmts in
-   let cpp = printStmtList { params with is_header = false } stmts in
+   let h   = printStmtList { params with target_file = Header } stmts in
+   let cpp = printStmtList { params with target_file = Implementation } stmts in
    let tables = generateTableData params stmts in
    let files = Templates.apply params params.module_name params.template (Pla.join [h; cpp]) in
    tables @ files

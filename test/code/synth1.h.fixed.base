@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "vultin.h"
+#include "synth1.tables.h"
 
 typedef struct Synth1__ctx_type_0 {
    fix16_t x;

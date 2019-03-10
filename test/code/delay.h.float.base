@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "vultin.h"
+#include "delay.tables.h"
 
 typedef struct Delay__ctx_type_0 {
    float x;

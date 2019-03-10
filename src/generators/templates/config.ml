@@ -46,12 +46,17 @@ type config =
       default_inputs  : input list;
    }
 
+type target_file =
+   | Implementation
+   | Header
+   | Tables
+
 (** Represents the parameters used during code generation *)
 type params =
    {
       real        : string;         (** 'Real' number representation *)
       template    : string;         (** Used template *)
-      is_header   : bool;           (** Set to true if it should generate a C/C++ header *)
+      target_file : target_file;    (** Defines which part of the code we are generating *)
       output      : string;         (** Argument given via '-o' *)
       repl        : Replacements.t; (** Replacements used during Vult -> Code conversion *)
       module_name : string;         (** Name of the main mudule *)

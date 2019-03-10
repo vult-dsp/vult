@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "vultin.h"
+#include "volume.tables.h"
 
 typedef struct Volume__ctx_type_0 {
    fix16_t x;

@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "vultin.h"
+#include "sff_f.tables.h"
 
 static_inline float Sff_f_process(float a, float b){
    return (a * b);

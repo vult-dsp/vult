@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <math.h>
 #include "vultin.h"
+#include "sf_f.tables.h"
 
 static_inline fix16_t Sf_f_process(fix16_t input){
    return fix_mul(input,input);

@@ -265,7 +265,7 @@ let createParameters (results:parser_results list) (args:args) : params =
    let ()          = checkConfig config args in
    (* Defines the name of the output module *)
    let output      = if args.output = "" then "Vult" else Filename.basename args.output in
-   { real = args.real; template = args.template; is_header = false; output; repl; module_name; config }
+   { real = args.real; template = args.template; target_file = Implementation; output; repl; module_name; config }
 
 let generateCode (parser_results:parser_results list) (args:args) : (Pla.t * FileKind.t) list =
    if args.code <> NoCode && parser_results <> [] then

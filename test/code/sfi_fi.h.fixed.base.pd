@@ -7,6 +7,7 @@
 #include <math.h>
 #include "vultin.h"
 #include <m_pd.h>
+#include "sfi_fi.tables.h"
 
 typedef struct _tuple___real_int__ {
    fix16_t field_0;

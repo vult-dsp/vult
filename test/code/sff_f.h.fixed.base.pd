@@ -7,6 +7,7 @@
 #include <math.h>
 #include "vultin.h"
 #include <m_pd.h>
+#include "sff_f.tables.h"
 
 static_inline fix16_t Sff_f_process(fix16_t a, fix16_t b){
    return fix_mul(a,b);
