@@ -67,40 +67,40 @@ nx.onload = function () {
    keyboard_input.init();
 
    CC30.on('*', function (data) {
-      sendControlChange(30, Math.floor(127 * data.value))
+      sendControlChange(30, Math.floor(127 * data.value), 0)
    });
    CC31.on('*', function (data) {
-      sendControlChange(31, Math.floor(127 * data.value))
+      sendControlChange(31, Math.floor(127 * data.value), 0)
    });
    CC32.on('*', function (data) {
-      sendControlChange(32, Math.floor(127 * data.value))
+      sendControlChange(32, Math.floor(127 * data.value), 0)
    });
    CC33.on('*', function (data) {
-      sendControlChange(33, Math.floor(127 * data.value))
+      sendControlChange(33, Math.floor(127 * data.value), 0)
    });
    CC34.on('*', function (data) {
-      sendControlChange(34, Math.floor(127 * data.value))
+      sendControlChange(34, Math.floor(127 * data.value), 0)
    });
    CC35.on('*', function (data) {
-      sendControlChange(35, Math.floor(127 * data.value))
+      sendControlChange(35, Math.floor(127 * data.value), 0)
    });
    CC36.on('*', function (data) {
-      sendControlChange(36, Math.floor(127 * data.value))
+      sendControlChange(36, Math.floor(127 * data.value), 0)
    });
    CC37.on('*', function (data) {
-      sendControlChange(37, Math.floor(127 * data.value))
+      sendControlChange(37, Math.floor(127 * data.value), 0)
    });
    CC38.on('*', function (data) {
-      sendControlChange(38, Math.floor(127 * data.value))
+      sendControlChange(38, Math.floor(127 * data.value), 0)
    });
    CC39.on('*', function (data) {
-      sendControlChange(39, Math.floor(127 * data.value))
+      sendControlChange(39, Math.floor(127 * data.value), 0)
    });
    CC40.on('*', function (data) {
-      sendControlChange(40, Math.floor(127 * data.value))
+      sendControlChange(40, Math.floor(127 * data.value), 0)
    });
    CC41.on('*', function (data) {
-      sendControlChange(41, Math.floor(127 * data.value))
+      sendControlChange(41, Math.floor(127 * data.value), 0)
    });
 
    keyboard_input.on('*', function (data) {

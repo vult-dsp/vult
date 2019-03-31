@@ -1,18 +1,18 @@
 function setAudioStatus(msg) {
-   var label = document.getElementById("audio_status");
-   label.textContent = "Audio: " + msg;
+   var label = document.getElementById('audio_status');
+   label.textContent = 'Audio: ' + msg;
 }
 
 function setCodeStatus(msg) {
-   var label = document.getElementById("code_status");
-   label.textContent = "Code: " + msg;
+   var label = document.getElementById('code_status');
+   label.textContent = 'Code: ' + msg;
 }
 
 var audioContext = null;
 var audioStatus = false;
 var vult_object = null;
 var control_values = [];
-var generated_code = "";
+var generated_code = '';
 
 function sendNoteOn(note, velocity, channel) {
    if (vult_object != null) {
@@ -20,7 +20,7 @@ function sendNoteOn(note, velocity, channel) {
          vult_object.liveNoteOn(note, velocity, channel);
       }
    }
-   console.log("noteOn(" + note + "," + velocity + "," + channel + ")");
+   console.log('noteOn(' + note + ',' + velocity + ',' + channel + ')');
 }
 
 function sendNoteOff(note, channel) {
@@ -29,7 +29,7 @@ function sendNoteOff(note, channel) {
          vult_object.liveNoteOff(note, channel);
       }
    }
-   console.log("noteOff(" + note + "," + channel + ")");
+   console.log('noteOff(' + note + ',' + channel + ')');
 }
 
 function sendControlChange(control, value, channel) {
@@ -39,34 +39,36 @@ function sendControlChange(control, value, channel) {
          vult_object.liveControlChange(control, value, channel);
       }
    }
-   console.log("controlChange(" + control + "," + value + "," + channel + ")");
+   console.log('controlChange(' + control + ',' + value + ',' + channel + ')');
 }
 
 function restoreControls() {
    for (var i = 0; i < 128; i++) {
       var value = control_values[i];
       if (value) {
-         sendControlChange(i, value);
+         sendControlChange(i, value, 0);
       }
    }
 }
 
 function updateProgram() {
-   var editor = ace.edit("editor");
+   var editor = ace.edit('editor');
    var new_vult_object = null;
    try {
-      generated_code = vult.generateJSCode(editor.getValue()) + " new vultProcess()";
+      generated_code =
+         vult.generateJSCode(editor.getValue()) + ' new vultProcess()';
       console.log(generated_code);
       new_vult_object = eval(generated_code);
    } catch (err) {
-      console.log("Bad error");
-      setCodeStatus("Error when compiling: " ^ err);
+      console.log('Bad error');
+      setCodeStatus('Error when compiling: ' ^ err);
    }
    if (new_vult_object) {
       vult_object = new_vult_object;
       restoreControls();
-      setCodeStatus("Ok");
-   } else setCodeStatus("Error when compiling " + generated_code);
+      setCodeStatus('Ok');
+   } else
+      setCodeStatus('Error when compiling ' + generated_code);
 }
 
 function getGeneratedProgram() {
@@ -76,7 +78,6 @@ function getGeneratedProgram() {
 var effect = null;
 
 function setAudioOn() {
-
    if (audioContext == null && audioStatus == false) {
       audioContext = new AudioContext();
       source = audioContext.createBufferSource();
@@ -104,12 +105,12 @@ function setAudioOn() {
       oscillator.connect(effect);
       effect.connect(audioContext.destination);
       oscillator.start(0);
-      setAudioStatus("On");
+      setAudioStatus('On');
       audioStatus = true;
-      //console.log("Turning audio On");
+      // console.log("Turning audio On");
       updateProgram();
    } else if (audioContext != null && audioStatus) {
-      //console.log("Updating");
+      // console.log("Updating");
       updateProgram();
    }
 }
@@ -117,10 +118,9 @@ function setAudioOn() {
 function setAudioOff() {
    if (audioContext) {
       effect.disconnect();
-      if (audioContext.close)
-         audioContext.close();
+      if (audioContext.close) audioContext.close();
       audioContext = null;
-      setAudioStatus("Off");
+      setAudioStatus('Off');
       audioStatus = false;
    }
 }
@@ -128,18 +128,18 @@ function setAudioOff() {
 
 
 // All the presets
-var template = "";
-var volume1 = "";
-var phasedist = "";
-var synth1 = "";
-var synth2 = "";
-var delay = "";
-var premapped = "";
-var demo1 = "";
+var template = '';
+var volume1 = '';
+var phasedist = '';
+var synth1 = '';
+var synth2 = '';
+var delay = '';
+var premapped = '';
+var demo1 = '';
 
 
 function loadPreset(n) {
-   console.log("Loading " + n)
+   console.log('Loading ' + n)
    var code;
    switch (n) {
       case 0:
@@ -167,11 +167,11 @@ function loadPreset(n) {
          code = demo1;
          break;
       default:
-         print("Not found")
+         print('Not found')
          code = template;
          break;
    }
-   var editor = ace.edit("editor");
+   var editor = ace.edit('editor');
    editor.setValue(code);
    editor.clearSelection();
    editor.gotoLine(0);
@@ -191,28 +191,44 @@ function loadFile(url, set_fun) {
    request.send();
 }
 
-loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/template.vult', function (txt) {
-   template = txt;
-   loadPreset(0);
-});
-loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/delay.vult', function (txt) {
-   delay = txt;
-});
-loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/phasedist.vult', function (txt) {
-   phasedist = txt;
-});
-loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/synth1.vult', function (txt) {
-   synth1 = txt;
-});
-loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/synth2.vult', function (txt) {
-   synth2 = txt;
-});
-loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/volume.vult', function (txt) {
-   volume1 = txt;
-});
-loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/premaped.vult', function (txt) {
-   premapped = txt;
-});
-loadFile('https://raw.githubusercontent.com/modlfo/vult/master/examples/web/demo1.vult', function (txt) {
-   demo1 = txt;
-});
+loadFile(
+   'https://raw.githubusercontent.com/modlfo/vult/master/examples/web/template.vult',
+   function (txt) {
+      template = txt;
+      loadPreset(0);
+   });
+loadFile(
+   'https://raw.githubusercontent.com/modlfo/vult/master/examples/web/delay.vult',
+   function (txt) {
+      delay = txt;
+   });
+loadFile(
+   'https://raw.githubusercontent.com/modlfo/vult/master/examples/web/phasedist.vult',
+   function (txt) {
+      phasedist = txt;
+   });
+loadFile(
+   'https://raw.githubusercontent.com/modlfo/vult/master/examples/web/synth1.vult',
+   function (txt) {
+      synth1 = txt;
+   });
+loadFile(
+   'https://raw.githubusercontent.com/modlfo/vult/master/examples/web/synth2.vult',
+   function (txt) {
+      synth2 = txt;
+   });
+loadFile(
+   'https://raw.githubusercontent.com/modlfo/vult/master/examples/web/volume.vult',
+   function (txt) {
+      volume1 = txt;
+   });
+loadFile(
+   'https://raw.githubusercontent.com/modlfo/vult/master/examples/web/premaped.vult',
+   function (txt) {
+      premapped = txt;
+   });
+loadFile(
+   'https://raw.githubusercontent.com/modlfo/vult/master/examples/web/demo1.vult',
+   function (txt) {
+      demo1 = txt;
+   });
