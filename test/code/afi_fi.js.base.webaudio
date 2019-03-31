@@ -73,9 +73,9 @@ this.Afi_fi_default = function(_ctx){
    var out_1 = e.outputBuffer.getChannelData(1); 
 
    for (var n = 0; n < e.inputBuffer.length; n++) {
-             var ret = processor.Afi_fi_process(processor.context,in_0[n],in_1[n],ret); 
-   out_0[n] = ret.field_0; 
-   out_1[n] = ret.field_1; 
+             var ret = processor.Afi_fi_process(processor.context,in_0[n],in_1[n]); 
+   out_0[n] = Afi_fi_process_ret_0(processor.context); 
+   out_1[n] = Afi_fi_process_ret_1(processor.context); 
     
    }
    }

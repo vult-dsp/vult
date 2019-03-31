@@ -18,7 +18,6 @@ let performFunctionCall module_name (config:config) =
    let args =
       List.fold_left inputName (0, []) config.process_inputs
       |> snd |> List.rev
-      |> (fun a -> if List.length config.process_outputs > 1 then a @ [Pla.string "ret"] else a)
       |> Pla.join_sep Pla.comma
    in
    (* declares the return variable and copies the values to the output buffers *)
@@ -31,7 +30,7 @@ let performFunctionCall module_name (config:config) =
       | o ->
          List.mapi
             (fun i _ ->
-                let value = {pla|ret.field_<#i#i>|pla} in
+                let value = {pla|<#module_name#s>_process_ret_<#i#i>(processor.context)|pla} in
                 {pla|out_<#i#i>[n] = <#value#>; |pla}) o
          |> Pla.join_sep_all Pla.newline
    in
