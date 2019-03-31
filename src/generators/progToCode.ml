@@ -747,8 +747,4 @@ and convertStmtList (p:parameters) (stmts:stmt list) : cstmt list =
 
 let convert (p:parameters) (stmts:stmt list) : cstmt list =
    let cstmts = convertStmtList p stmts in
-   if p.code = LLVMCode then
-      let _ , ctmts = Atomic.makeStmtListAtomic p { Atomic.tick = 0 } cstmts in
-      ctmts
-   else
-      cstmts
+   cstmts

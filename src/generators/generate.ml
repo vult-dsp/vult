@@ -208,12 +208,6 @@ let generateJava (args:args) (params:params) (used:used_function Maps.IdMap.t) (
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeJava.print params clike_stmts
 
-let generateLLVM (args:args) (params:params) (used:used_function Maps.IdMap.t) (stmts:Prog.stmt list)  : (Pla.t * FileKind.t) list=
-   let cparams     = makeParams args params used in
-   (* Converts the statements to Code form *)
-   let clike_stmts = ProgToCode.convert cparams stmts in
-   CodeLLVM.print params clike_stmts
-
 (* Generates the JS code if the flag was passed *)
 let generateJS (args:args) (params:params) (used:used_function Maps.IdMap.t) (stmts:Prog.stmt list) : (Pla.t * FileKind.t) list=
    let cparams     = makeParams args params used in
@@ -287,7 +281,6 @@ let generateCode (parser_results:parser_results list) (args:args) : (Pla.t * Fil
       | JavaCode -> generateJava args params_c used all_stmts
       | JSCode -> generateJS args params_js used all_stmts
       | LuaCode -> generateLua args params_lua used all_stmts
-      | LLVMCode -> generateLLVM args params_c used all_stmts
    else []
 
 

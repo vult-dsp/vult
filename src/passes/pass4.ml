@@ -86,7 +86,7 @@ module ReturnReferences = struct
       Mapper.make "ReturnReferences.stmt" @@ fun state stmt ->
       let data = Env.get state in
       let args = data.PassData.args in
-      if args.code = CCode || args.code = LLVMCode then
+      if args.code = CCode then
          match stmt with
          | StmtFun(name, args, body, Some(rettype), attr) when returnRefType rettype ->
             let output = TypedId(["_output_"], [rettype], OutputArg,emptyAttr) in
@@ -100,7 +100,7 @@ module ReturnReferences = struct
       Mapper.makeExpander "ReturnReferences.stmt_x" @@ fun state stmt ->
       let data = Env.get state in
       let args = data.PassData.args in
-      if not (args.code = CCode || args.code = LLVMCode) then
+      if not (args.code = CCode) then
          state, [stmt]
       else
          match stmt with

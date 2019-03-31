@@ -139,7 +139,6 @@ let convertCodeName code =
    | "c" -> CCode
    | "js" -> JSCode
    | "lua" -> LuaCode
-   | "llvm" -> LLVMCode
    | _ -> failwith (Printf.sprintf "unknow code generator '%s'" code)
 
 (** Returns the Vult [arguments] based on the arguments object passed from js *)

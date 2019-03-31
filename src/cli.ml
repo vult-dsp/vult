@@ -34,7 +34,6 @@ let processArguments () : args =
       "-check",     (Arg.Unit   (fun () -> result.check    <-true)),      " Checks the code without generating any code (default: off)";
       "-jscode",    (Arg.Unit   (fun () -> result.code     <-JSCode)),    " Converts the code to javascript (default: off)";
       "-luacode",   (Arg.Unit   (fun () -> result.code     <-LuaCode)),   " Converts the code to lua (default: off)";
-      "-llvmcode",  (Arg.Unit   (fun () -> result.code     <-LLVMCode)),  " Converts the code to LLVM IR (default: off)";
       "-o",         (Arg.String (fun output -> result.output <- output)), "output Defines the prefix of the output files";
       "-real",      (Arg.String (fun real -> result.real   <- real)),     " Defines the numeric type for the generated code: double, fixed";
       "-samplerate",(Arg.Float  (fun fs -> result.fs <- Some fs)),         "number When set, the function samplerate() is evaluated";

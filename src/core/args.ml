@@ -42,7 +42,6 @@ type code =
    | CCode
    | JSCode
    | LuaCode
-   | LLVMCode
    | JavaCode
 [@@deriving show,eq,ord]
 
