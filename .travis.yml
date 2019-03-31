@@ -14,6 +14,8 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install luajit ; fi
 
 deploy:
+  skip_cleanup: true
+  overwrite: true
   provider: releases
   api_key:
     secure: azunLJrBO9ikRhocPcgJkzFw4sDqJEtDHnLpKiRyHfYvYMOwzEEiqN7C3kVwAx6JywNoPFd2UZptFIxB9GtdxExem7GJ/kaw+uJlsK7coNNsjAJwWC/qSs36WOoTQbxi0EA6o/hva/gTqHfa4xSOnrhc71NSdeT2Kd4VuZ9uOytS5s42M+PqORyS8dvM4vQDZYF0wEqh2F87S0tS/sdahWRV2FOv/p+uxSBrYM0DU1nJ0hACMEn2H0aJ4C0QDfQyTH5Z4toSrN1abK8J1EYK3nxIiin1qUcNgN0Rq062WnjIxpxqulXJP/Tq43eyMkMzEno1idH4QKs3gxbeo5ZNVGD7oGCNmH+CZY0mIZiA5CmYuSe4DX8hhpo5NLcVy8vCduszmuTenRG37K1JL1u+Lgw03Ki0bcUcFVbDIGiTbLO7z9CK05uoA9ZhkTEE4SkmKyk43n0dB1ZNkZuO7pB7VAPOCnTLgmPC/kG6PRR3AaDfblks6SWpCXQ9sh0fV79BlVqrxpWC+Uxhl8ZZr1LdupV918tSgD27fuhinfuKHwQuC9fol9ZtJVX/nxcoJNdR2UpG6kMmO2uhs025NKaM2n61kLFwQBI1oUukgiTiVIkIv6eDstdq/lOgY9q3zJdIMJPSQRQwFFzha4mI/GU0DzEIFGSEgaXLGcsgn2Dz3mk=
