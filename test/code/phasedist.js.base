@@ -31,6 +31,8 @@ this.Phasedist_phasor_init = function() { return this.Phasedist__ctx_type_3_init
 this.Phasedist_phasor = function(_ctx,pitch,reset){
    if(this.Phasedist_change(_ctx._inst4,pitch))_ctx.rate = this.Phasedist_pitchToRate(pitch); 
    if(reset)_ctx.phase = 0.; 
+   else
+   _ctx.phase = (_ctx.phase + _ctx.rate); 
    if((_ctx.phase > 1.))_ctx.phase = ((-1.) + _ctx.phase); 
    return _ctx.phase; 
 }

@@ -22,7 +22,7 @@ fun phasor(pitch,reset){
     mem rate,phase;
     if(change(pitch))
         rate = pitchToRate(pitch);
-    phase = if reset then 0.0 else phase;
+    phase = if reset then 0.0 else phase + rate;
     phase = if phase > 1.0 then phase - 1.0 else phase;
     return phase;
 }

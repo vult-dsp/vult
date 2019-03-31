@@ -18,6 +18,10 @@ fix16_t Phasedist_phasor(Phasedist__ctx_type_3 &_ctx, fix16_t pitch, uint8_t res
    if(reset){
       _ctx.phase = 0x0 /* 0.000000 */;
    }
+   else
+   {
+      _ctx.phase = (_ctx.phase + _ctx.rate);
+   }
    if(_ctx.phase > 0x10000 /* 1.000000 */){
       _ctx.phase = (-0x10000 /* -1.000000 */ + _ctx.phase);
    }
