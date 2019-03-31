@@ -23,11 +23,11 @@ void afi_fi::update(void)
 
       int in1 = block1->data[i];
       fix16_t in0 = short_to_fix(block0->data[i]);
-      _tuple___real_int__ out; 
+      
       out = Afi_fi_process(data);
 
-   block0->data[i] = fix_to_short(ret.field_0); 
-   block1->data[i] = ret.field_1; 
+   block0->data[i] = fix_to_short(Afi_fi_process_ret_0(data)); 
+   block1->data[i] = Afi_fi_process_ret_1(data); 
 
    }
 

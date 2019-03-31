@@ -22,11 +22,11 @@ void sff_ff::update(void)
 
       fix16_t in1 = short_to_fix(block1->data[i]);
       fix16_t in0 = short_to_fix(block0->data[i]);
-      _tuple___real_real__ out; 
+      
       out = Sff_ff_process(data);
 
-   block0->data[i] = fix_to_short(ret.field_0); 
-   block1->data[i] = fix_to_short(ret.field_1); 
+   block0->data[i] = fix_to_short(Sff_ff_process_ret_0(data)); 
+   block1->data[i] = fix_to_short(Sff_ff_process_ret_1(data)); 
 
    }
 

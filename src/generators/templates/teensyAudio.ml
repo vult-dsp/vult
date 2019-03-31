@@ -161,8 +161,7 @@ let declareInputs params =
    |> Pla.indent |> Pla.indent
 
 let declReturn params =
-   let output_pla a = Pla.string (Config.outputTypeString a) in
-   let underscore = Pla.string "_" in
+   let module_name = params.module_name in
    match params.config.process_outputs with
    | []  -> Pla.unit, Pla.unit
    | [o] ->
@@ -172,16 +171,15 @@ let declReturn params =
       let copy = {pla|block0->data[i] = <#value#>; |pla} in
       decl, copy
    | o ->
-      let decl = Pla.(string "_tuple___" ++ map_sep underscore output_pla o ++ string "__ out; ") in
       let copy =
          List.mapi
             (fun i o ->
-                let value = castOutput params o {pla|ret.field_<#i#i>|pla} in
+                let value = castOutput params o {pla|<#module_name#s>_process_ret_<#i#i>(data)|pla} in
                 {pla|block<#i#i>->data[i] = <#value#>; |pla}) o
          |> Pla.join_sep_all Pla.newline
          |> Pla.indent
       in
-      decl, copy
+      Pla.unit, copy
 
 (** Implementation function *)
 let implementation (params:params) (code:Pla.t) : Pla.t =
