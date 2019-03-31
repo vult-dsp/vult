@@ -41,9 +41,9 @@ void sff_ff_tilde_perform(t_sff_ff_tilde *x, t_object *dsp64, double **ins, long
    float in_0_value = x->in0_connected? *(in_0++): x->in0_value;
    float in_1_value = x->in1_connected? *(in_1++): x->in1_value;
    
-   _tuple___real_real__ ret;  Sff_ff_process(x->data,float_to_fix(in_0_value),float_to_fix(in_1_value),ret);
-   *(out_0++) = fix_to_float(ret.field_0);
-   *(out_1++) = fix_to_float(ret.field_1);
+    Sff_ff_process(x->data,float_to_fix(in_0_value),float_to_fix(in_1_value));
+   *(out_0++) = fix_to_float(Sff_ff_process_ret_0(x->data)); 
+   *(out_1++) = fix_to_float(Sff_ff_process_ret_1(x->data)); 
 
    }
 }

@@ -146,13 +146,10 @@ let tildePerformFunctionCall module_name (params:params) (config:config) =
    let args =
       List.fold_left (inputName params) (0, []) config.process_inputs
       |> snd |> List.rev
-      |> (fun a -> if List.length config.process_outputs > 1 then a @ [Pla.string "ret"] else a)
       |> Pla.join_sep Pla.comma
    in
    (* declares the return variable and copies the values to the output buffers *)
    let ret, copy =
-      let output_pla a = Pla.string (Config.outputTypeString a) in
-      let underscore = Pla.string "_" in
       match config.process_outputs with
       | []  -> Pla.unit, Pla.unit
       | [o] ->
@@ -162,15 +159,14 @@ let tildePerformFunctionCall module_name (params:params) (config:config) =
          let copy = {pla|*(out_0++) = <#value#>;|pla} in
          decl, copy
       | o ->
-         let decl = Pla.(string "_tuple___" ++ map_sep underscore output_pla o ++ string "__ ret; ") in
          let copy =
             List.mapi
                (fun i o ->
-                   let value = castOutput params o {pla|ret.field_<#i#i>|pla} in
-                   {pla|*(out_<#i#i>++) = <#value#>;|pla}) o
+                   let value = castOutput params o {pla|<#module_name#s>_process_ret_<#i#i>(x->data)|pla} in
+                   {pla|*(out_<#i#i>++) = <#value#>; |pla}) o
             |> Pla.join_sep_all Pla.newline
          in
-         decl, copy
+         Pla.unit, copy
    in
    {pla|<#ret#> <#module_name#s>_process(<#args#>);<#><#copy#>|pla}
 

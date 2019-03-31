@@ -35,9 +35,9 @@ t_int *afi_fi_tilde_perform(t_int *w)
    int n = (int)(w[6]); 
 
    while (n--) {
-   _tuple___real_int__ ret;  Afi_fi_process(x->data,(float) *(in_0++),float_to_int(*(in_1++)),ret); 
-   *(out_0++) = (float) ret.field_0; 
-   *(out_1++) = int_to_float(ret.field_1); 
+    Afi_fi_process(x->data,(float) *(in_0++),float_to_int(*(in_1++))); 
+   *(out_0++) = (float) Afi_fi_process_ret_0(x->data); 
+   *(out_1++) = int_to_float(Afi_fi_process_ret_1(x->data)); 
 
    }
 

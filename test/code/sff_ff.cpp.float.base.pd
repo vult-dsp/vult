@@ -34,9 +34,9 @@ t_int *sff_ff_tilde_perform(t_int *w)
    int n = (int)(w[6]); 
 
    while (n--) {
-   _tuple___real_real__ ret;  Sff_ff_process(x->data,(float) *(in_0++),(float) *(in_1++),ret); 
-   *(out_0++) = (float) ret.field_0; 
-   *(out_1++) = (float) ret.field_1; 
+    Sff_ff_process(x->data,(float) *(in_0++),(float) *(in_1++)); 
+   *(out_0++) = (float) Sff_ff_process_ret_0(x->data); 
+   *(out_1++) = (float) Sff_ff_process_ret_1(x->data); 
 
    }
 
