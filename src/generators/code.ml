@@ -61,10 +61,10 @@ type cexp =
 
 (** Description of expressions (lhs) *)
 and clhsexp =
-    | CLWild
-  | CLId    of type_descr list * string list
-  | CLTuple of clhsexp list
-  | CLIndex of type_descr list * string list * cexp
+   | CLWild
+   | CLId    of type_descr list * string list
+   | CLTuple of clhsexp list
+   | CLIndex of type_descr list * string list * cexp
 [@@deriving show, eq, ord]
 
 (** Description of statements *)

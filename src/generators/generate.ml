@@ -27,6 +27,9 @@ open Config
 open Env
 open Args
 
+(* Initialize the replacements *)
+let ()          = DefaultReplacements.initialize ()
+
 (** Reports an error if the 'real' argument is invalid *)
 let checkRealType (real:string) : unit =
    match real with
@@ -269,8 +272,6 @@ let createParameters (results:parser_results list) (args:args) : params =
 
 let generateCode (parser_results:parser_results list) (args:args) : (Pla.t * FileKind.t) list =
    if args.code <> NoCode && parser_results <> [] then
-      (* Initialize the replacements *)
-      let ()          = DefaultReplacements.initialize () in
       (* Checks the 'real' argument is valid *)
       let ()          = checkRealType args.real in
       (* Applies all passes to the statements *)
