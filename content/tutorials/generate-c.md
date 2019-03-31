@@ -10,7 +10,7 @@ layout = "tutorial"
 
 Once we have some Vult code written it's time to generate some C/C++ code and run it on a target.
 
-If you have followed the installation steps show in https://github.com/modlfo/vult you will have an executable called `vultc` (most probably `vultc.native` or `vultc.byte`). This is a simple command line application that we will use to generate the code.
+If you have followed the installation steps show in https://github.com/modlfo/vult you will have an executable called `vultc` (if you compiled it by yourself it will be `vultc.native` or `vultc.byte`). This is a simple command line application that we will use to generate the code.
 
 Here is the full code of the oversampled lowpass filter which we are gonna save in a file called `filter.vult`.
 
@@ -60,16 +60,16 @@ fun lowpass_2x(x,w0,q) {
 Next we are gonna call the Vult compiler as follows:
 
 ```
-$ ./vultc.native -ccode filter.vult
+$ ./vultc -ccode filter.vult
 ```
 
 The compiler receives the flag `-ccode` which instruct the compiler to generate C/C++ code. This command will print to the standard output the generated code. If we want to save it to a file we have to call the compiler as follows:
 
 ```
-$ ./vultc.native -ccode filter.vult -o filter
+$ ./vultc -ccode filter.vult -o filter
 ```
 
-This will generate two files: `filter.h` and `filter.cpp`. Vult generates many auxiliary functions and types. For each function with memory (for example a function called `foo` in the file `Bar.vult`) there's gonna be:
+This will generate three files: `filter.h`, `filter.cpp` and `filter_tables.h`. Vult generates many auxiliary functions and types. For each function with memory (for example a function called `foo` in the file `Bar.vult`) there's gonna be:
 
 - a type with the name `Bar_foo_type`
 - a initialization function with the name `Bar_foo_init`
@@ -145,14 +145,43 @@ float Example_foo1(float x);
 float Example_bar1(Example__ctx_type_1 &_ctx, float x);
 
 // multiple value return, no memory
-void Example_foo2(float x, _tuple_real_real &_output_);
+void Example_foo2(Example__ctx_type_2 &_ctx, float x);
 
 // multiple value return, with memory
-void Example_bar2(Example__ctx_type_3 &_ctx, float x,
-   _tuple_real_real &_output_);
+void Example_bar2(Example__ctx_type_3 &_ctx, float x);
 </div>
 
-In the examples above you can see that Vult adds an extra argument at the end that is used to return multiple values.
+In the case of functions returning multiple values, the context type is always generated. In order to get the values from the context we can use the generated functions ending with `_ret_X` where `X` is the position of the returned value. For example, the functions returning multiple values show above generate:
+
+<div class="c_code" id="tut5-4.1">
+// Gets the first returned value of function Example_foo2
+float Example_foo2_ret_0(Example__ctx_type_2 &_ctx);
+
+// Gets the second returned value of function Example_foo2
+float Example_foo2_ret_1(Example__ctx_type_2 &_ctx);
+
+// Gets the first returned value of function Example_bar2
+float Example_bar2_ret_0(Example__ctx_type_3 &_ctx);
+
+// Gets the second returned value of function Example_bar2
+float Example_bar2_ret_1(Example__ctx_type_3 &_ctx);
+</div>
+
+To call the function `Example_foo2` from C++ you have to write:
+
+<div class="c_code" id="tut5-4.2">
+// Declare and initialize the instance
+Example_foo2_type inst;
+Example_foo2_init(inst);
+
+// Call the function
+Example_foo2(inst, 0.0);
+
+// Retrieve the result
+float value0 = Example_foo2_ret_0(inst);
+float value1 = Example_foo2_ret_1(inst);
+
+</div>
 
 
 ## Generating fixed-point code
@@ -166,7 +195,7 @@ Vult can generate all operations with real numbers as fixed-point with the forma
 To generate code with fixed-point numbers we need to call Vult as follows:
 
 ```
-$ ./vultc.native -ccode -real fixed filter.vult -o filter
+$ ./vultc -ccode -real fixed filter.vult -o filter
 ```
 
 This command will generate use the type `fix16_t` instead of `float`. For example, the declaration of the function `lowpass_2x` changes to:

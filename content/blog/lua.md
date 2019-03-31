@@ -37,7 +37,7 @@ Recently I implemented a prototype of code generation Vult -> Lua in order to ch
 To generate Lua code you need to call Vult as follows:
 
 ```
-$ ./vultc.native -luacode code.vult -o code
+$ ./vultc -luacode code.vult -o code
 ```
 
 In order to check the performance I took one of the examples I have in Vult and made a test rendering 1000 s of audio. Here are the results:
