@@ -66,6 +66,17 @@ THE SOFTWARE.
 
 *)
 
+let toFloat (n:float) : string =
+   match classify_float n with
+   | FP_normal ->
+      if abs_float n < 1e-45 then
+         "0.0f"
+      else
+         (Float.to_string n) ^ "f"
+   | FP_subnormal -> "0.0f"
+   | FP_zero -> "0.0f"
+   | _ -> Float.to_string n
+
 let toFixed (n:float) : string =
    let () =
       if (n > 32767.0 || n < -32768.0) then
@@ -200,7 +211,7 @@ module Default = struct
 
    let real_string = Replacements.makeRealToString
          [
-            "float", (fun f -> (Float.to_string f) ^ "f");
+            "float", toFloat;
             "fix16_t", toFixed
          ]
 
@@ -294,7 +305,7 @@ module Java = struct
 
    let real_string = Replacements.makeRealToString
          [
-            "float", (fun f -> (Float.to_string f) ^ "f")
+            "float", toFloat
          ]
 
    (* This is the default selection of replacements *)
