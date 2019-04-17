@@ -412,7 +412,7 @@ and printStmt (params:params) (stmt:cstmt) : Pla.t option =
    | CSExtFunc(ntype, name, args) when params.target_file = Header ->
       let ret = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
-      Some({pla|extern <#ret#> <#name#s>(<#targs#>);|pla})
+      Some({pla|extern "C" <#ret#> <#name#s>(<#targs#>);|pla})
 
    (* Do not print external function delcarations in implementation file *)
    | CSExtFunc _ -> None
