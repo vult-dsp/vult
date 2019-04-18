@@ -18,7 +18,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 *)
 
-open Js
+open Js_of_ocaml
 
 (** Main file when running Vult with node. It replaces the FileIO functions to have access to the file system.
 *)
@@ -26,37 +26,37 @@ open Js
 (* declares the node.js object 'process' *)
 class type process = object
    (* returns the current working directory *)
-   method cwd : js_string t meth
+   method cwd : Js.js_string Js.t Js.meth
 end
 
 (* declares the node.js object 'buffer' *)
 class type buffer = object
    (* converts the buffer object to string *)
-   method toString : js_string t -> js_string t meth
+   method toString : Js.js_string Js.t -> Js.js_string Js.t Js.meth
    method length : int Js.readonly_prop
 end
 
 (* declares the node.js object 'fs' *)
 class type fs = object
    (* returns the contents of a file *)
-   method readFileSync : js_string t -> buffer t meth
+   method readFileSync : Js.js_string Js.t -> buffer Js.t Js.meth
    (* writes a string to a file *)
-   method writeFileSync : js_string t -> js_string t -> unit t meth
+   method writeFileSync : Js.js_string Js.t -> Js.js_string Js.t -> unit Js.t Js.meth
    (* checks if a file exists *)
-   method existsSync : js_string t -> bool t meth
+   method existsSync : Js.js_string Js.t -> bool Js.t Js.meth
 end
 
 (* declares the variable 'fs' as: fs = require('fs') *)
-let fs : fs t = Unsafe.fun_call (Unsafe.js_expr "require") [|Unsafe.inject (string "fs")|]
+let fs : fs Js.t = Js.Unsafe.fun_call (Js.Unsafe.js_expr "require") [|Js.Unsafe.inject (Js.string "fs")|]
 
 (* declares the variable 'process' as: process = require('process') *)
-let process : process t = Unsafe.js_expr "process"
+let process : process Js.t = Js.Unsafe.js_expr "process"
 
 let rec copyData size bytes array index =
    if index > size then
       bytes
    else
-      match Optdef.to_option (array_get array index) with
+      match Js.Optdef.to_option (Js.array_get array index) with
       | Some value ->
          Bytes.set bytes index value;
          copyData size bytes array (index+1)
@@ -67,11 +67,11 @@ let rec copyData size bytes array index =
 
 (* This is a wrapper that allows calling the node.js function from ocaml *)
 let read_bytes_fn (path:string) : Buffer.t option =
-   let exist    = fs##existsSync (string path) in
-   if to_bool exist then
-      let buffer     = fs##readFileSync (string path) in
+   let exist    = fs##existsSync (Js.string path) in
+   if Js.to_bool exist then
+      let buffer     = fs##readFileSync (Js.string path) in
       let size       = buffer##.length in
-      let array      = Unsafe.coerce buffer in
+      let array      = Js.Unsafe.coerce buffer in
       let bytes      = Bytes.create size in
       let contents   = copyData size bytes array 0 in
       let buffer     = Buffer.create size in
@@ -83,26 +83,26 @@ let read_bytes_fn (path:string) : Buffer.t option =
 
 (* This is a wrapper that allows calling the node.js function from ocaml *)
 let read_fn (path:string) : string option =
-   let exist = fs##existsSync (string path) in
-   if to_bool exist then
-      let buffer  = fs##readFileSync (string path) in
+   let exist = fs##existsSync (Js.string path) in
+   if Js.to_bool exist then
+      let buffer  = fs##readFileSync (Js.string path) in
       let contents = buffer##toString (Js.string "ascii") in
-      Some(to_string contents)
+      Some(Js.to_string contents)
    else
       None
 
 (* This is a wrapper that allows calling the node.js function from ocaml *)
 let write_fn (path:string) (text:string) : bool =
-   let _ = fs##writeFileSync (string path) (string text) in
-   to_bool (fs##existsSync (string path))
+   let _ = fs##writeFileSync (Js.string path) (Js.string text) in
+   Js.to_bool (fs##existsSync (Js.string path))
 
 (* This is a wrapper that allows calling the node.js function from ocaml *)
 let exists_fn (path:string)  : bool =
-   to_bool (fs##existsSync (string path))
+   Js.to_bool (fs##existsSync (Js.string path))
 
 (* This is a wrapper that allows calling the node.js function from ocaml *)
 let cwd_fn ()  : string =
-   to_string (process##cwd)
+   Js.to_string (process##cwd)
 
 (* replaces all the native functions for the node.js versions *)
 let replaceFunctions () =

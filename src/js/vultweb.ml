@@ -23,6 +23,7 @@ THE SOFTWARE.
 *)
 
 open Args
+open Js_of_ocaml
 
 let generateJSCode s =
    let args = { default_arguments with code = JSCode; real = "js"; template = "browser"; files = [Code("live.vult", (Js.to_string s))]} in

@@ -28,7 +28,7 @@ THE SOFTWARE.
 *)
 
 open Args
-
+open Js_of_ocaml
 
 (** Js object to represent the errors *)
 class type error = object
