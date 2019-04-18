@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 
+export CYGWIN='winsymlinks:native'
+
 # removes the cygwin link because has the same name as the Visual C++ link
 rm /usr/bin/link.exe
 
@@ -10,7 +12,7 @@ tar -xf 'opam64.tar.xz'
 opam init default "https://github.com/fdopen/opam-repository-mingw.git#opam2" -c "ocaml-variants.4.07.1+mingw64" --no-setup --disable-sandboxing
 eval $(ocaml-env cygwin)
 
-opam install pla containers ppx_deriving ounit yojson menhir result
+opam install pla containers ppx_deriving ounit yojson menhir result -y
 # build vult
 cd $APPVEYOR_BUILD_FOLDER
 ls
