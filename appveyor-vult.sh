@@ -5,7 +5,7 @@ rm /usr/bin/link.exe
 
 wget https://github.com/fdopen/opam-repository-mingw/releases/download/0.0.0.2/opam64.tar.xz
 tar -xf 'opam64.tar.xz'
-bash opam32/install.sh
+./opam64/install.sh
 
 opam init default "https://github.com/fdopen/opam-repository-mingw.git#opam2" -c "ocaml-variants.4.07.1+mingw64" --disable-sandboxing
 eval $(ocaml-env cygwin)
