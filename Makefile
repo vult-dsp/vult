@@ -1,3 +1,5 @@
+PREFIX ?= /usr/local/bin
+
 OCB = ocamlbuild -j 4 -use-ocamlfind
 
 compiler: version
@@ -44,7 +46,7 @@ coverage: compiler jscompiler
 
 version :
 			@echo "let version = \"" > src/version.ml
-			@git describe --tags >> src/version.ml
+			@git describe --tags --abbrev=0 >> src/version.ml
 			@echo "\"" >> src/version.ml
 
 all: 		compiler js test web jscompiler
@@ -54,5 +56,8 @@ clean:
 			rm -f vultc.js vultweb.js vultlib.js
 			rm -f bisect*.out
 			rm -rf bisect_coverage
+
+install: compiler
+	      cp vultc.native $(PREFIX)/vultc
 
 .PHONY: 	all clean compiler js test
