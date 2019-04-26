@@ -432,7 +432,7 @@ let foldOp (op:string) (args:exp list) : exp =
       List.fold_left (evalOp op) h t
 
 (** Adds all the builtin functions to the scope *)
-let builtinFunctions env =
+let builtinFunctions (a:Args.args) env =
    let real_real f attr args : exp =
       match args with
       | [PReal(v, p, _)] -> PReal(f v, p, attr)
@@ -510,6 +510,11 @@ let builtinFunctions env =
          PUnit(attr)
       | _ -> failwith "get: invalid arguments"
    in
+   let samplerate (a:Args.args) attr args =
+      match args, a.fs with
+      | [], Some n -> PReal(n, Float, attr)
+      | _ -> failwith "samplerate cannot be evaluated"
+   in
    let functions =
       [
          "abs", Env.Builtin(real_real abs_float);
@@ -537,9 +542,11 @@ let builtinFunctions env =
          "log", Env.Builtin(log);
          "get", Env.Builtin(get);
          "set", Env.Builtin(set);
+
+         "samplerate", Env.Builtin(samplerate a);
       ]
    in
-   List.iter (fun (name, body) ->Env.addFunction env [name] body) functions
+   List.iter (fun (name, body) -> Env.addFunction env [name] body) functions
 
 (** Defines which type of bind is performed *)
 type bind_kind =
@@ -798,9 +805,9 @@ let evalModule (env:Env.env) (results:parser_results) =
    evalStmts env' results.presult
 
 (** Loads the functions without evaluating the top level statements *)
-let load (results:parser_results list) : Env.env =
+let load (a:Args.args) (results:parser_results list) : Env.env =
    let env = Env.top () in
-   builtinFunctions env;
+   builtinFunctions a env;
    let _ =
       results
       |> Inference.infer
@@ -809,14 +816,14 @@ let load (results:parser_results list) : Env.env =
    env
 
 (** Main function to evaluate the statements. *)
-let eval (results:parser_results list) =
+let eval (a:Args.args) (results:parser_results list) =
    let env = Env.top () in
-   builtinFunctions env;
+   builtinFunctions a env;
    results
    |> Inference.infer
    |> List.map (evalModule env)
 
-let getEnv () =
+let getEnv (a:Args.args) =
    let env  = Env.top () in
-   builtinFunctions env;
+   builtinFunctions a env;
    env

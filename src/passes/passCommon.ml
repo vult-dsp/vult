@@ -129,7 +129,7 @@ module PassData = struct
          add_ctx      = PathSet.empty;
          used_tuples  = TypeSet.empty;
          args         = args;
-         interp_env   = Interpreter.getEnv ();
+         interp_env   = Interpreter.getEnv args;
          used_code    = IdMap.of_list roots;
       }
 

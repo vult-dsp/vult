@@ -53,7 +53,7 @@ let runFiles (args:args) (parser_results:parser_results list) : output list =
    if args.eval then
       Passes.applyTransformations args ~options:PassCommon.interpreter_options parser_results
       |> fst
-      |> Interpreter.eval
+      |> Interpreter.eval args
       |> List.map print_val
       |> List.flatten
       |> (fun a -> [Interpret (String.concat "\n" a)])
