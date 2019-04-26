@@ -57,7 +57,7 @@ clean:
 			rm -f bisect*.out
 			rm -rf bisect_coverage
 
-install: compiler
+install:
 	      cp vultc.native $(PREFIX)/vultc
 
 .PHONY: 	all clean compiler js test
