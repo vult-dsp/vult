@@ -513,7 +513,7 @@ let builtinFunctions (a:Args.args) env =
    let samplerate (a:Args.args) attr args =
       match args, a.fs with
       | [], Some n -> PReal(n, Float, attr)
-      | _ -> failwith "samplerate cannot be evaluated"
+      | _ -> raise Abort
    in
    let functions =
       [
