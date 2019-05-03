@@ -27,14 +27,13 @@ open Args
 let processArguments () : args =
    let result = { default_arguments with files = [] }  in
    let opts = [
-      "-dparse",    (Arg.Unit   (fun () -> result.dparse   <-true)),      " Dumps the parse tree (default: off)";
-      "-deps",      (Arg.Unit   (fun () -> result.deps     <-true)),      " Prints all file dependencies";
       "-ccode",     (Arg.Unit   (fun () -> result.code     <-CCode)),     " Converts the code to c (default: off)";
       "-javacode",  (Arg.Unit   (fun () -> result.code     <-JavaCode)),  " Converts the code to java (default: off)";
-      "-check",     (Arg.Unit   (fun () -> result.check    <-true)),      " Checks the code without generating any code (default: off)";
       "-jscode",    (Arg.Unit   (fun () -> result.code     <-JSCode)),    " Converts the code to javascript (default: off)";
       "-luacode",   (Arg.Unit   (fun () -> result.code     <-LuaCode)),   " Converts the code to lua (default: off)";
+      "-check",     (Arg.Unit   (fun () -> result.check    <-true)),      " Checks the code without generating any code (default: off)";
       "-o",         (Arg.String (fun output -> result.output <- output)), "output Defines the prefix of the output files";
+      "-force-write",(Arg.Unit  (fun () -> result.force_write <-true)),   " Writes the generated files even if they are the same (default: off)";
       "-real",      (Arg.String (fun real -> result.real   <- real)),     " Defines the numeric type for the generated code: double, fixed";
       "-samplerate",(Arg.Float  (fun fs -> result.fs <- Some fs)),         "number When set, the function samplerate() is evaluated";
       "-template",  (Arg.String (fun temp -> result.template <- temp)),   "name Defines the template used to generate code (ccode only): pd, teensy";
@@ -44,8 +43,10 @@ let processArguments () : args =
       "-mac",       (Arg.Unit   (fun () -> result.mac         <- true)),   " Generates mac() function calls (default: off)";
       "-i",         (Arg.String (fun path -> result.includes <- path :: result.includes)), "path Adds the given path to the list of places to look for modules";
       "-root",      (Arg.String (fun id -> result.roots <- id :: result.roots)), "id Performs code cleanup keeping as roots the specified functions";
-      "-version",   (Arg.Unit   (fun () -> result.show_version <- true)), " Show the version of vult";
       "-test",      (Arg.Unit   (fun () -> Float.reduce_precision := true)), " Enters a special mode useful only for testing (default: off)";
+      "-dparse",    (Arg.Unit   (fun () -> result.dparse   <-true)),      " Dumps the parse tree (default: off)";
+      "-deps",      (Arg.Unit   (fun () -> result.deps     <-true)),      " Prints all file dependencies";
+      "-version",   (Arg.Unit   (fun () -> result.show_version <- true)), " Show the version of vult";
    ]
       |> Arg.align
    in
@@ -66,7 +67,15 @@ let showResult (args:args) (output:output) =
    | Dependencies deps -> String.concat " " deps |> print_endline
    | ParsedCode v -> print_endline v
    | GeneratedCode files when args.output <> "" ->
-      List.iter (fun (text, file) -> FileIO.writeIfDifferent (getFile args file) (Pla.print text) |> ignore) files
+      List.iter
+         (fun (text, file) ->
+             let filename = getFile args file in
+             let code = Pla.print text in
+             if args.force_write then
+                FileIO.write filename code |> ignore
+             else
+                FileIO.writeIfDifferent filename code |> ignore)
+         files
    | GeneratedCode files ->
       List.iter (fun (text, _) -> print_endline (Pla.print text)) files
    | Interpret v -> print_endline v
