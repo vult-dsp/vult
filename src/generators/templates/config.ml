@@ -60,6 +60,7 @@ type params =
       output      : string;         (** Argument given via '-o' *)
       repl        : Replacements.t; (** Replacements used during Vult -> Code conversion *)
       module_name : string;         (** Name of the main mudule *)
+      prefix      : string;         (** Prefix given to java code *)
       config      : config;         (** Pluggin configuration *)
    }
 

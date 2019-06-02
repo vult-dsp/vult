@@ -28,7 +28,7 @@ let processArguments () : args =
    let result = { default_arguments with files = [] }  in
    let opts = [
       "-ccode",     (Arg.Unit   (fun () -> result.code     <-CCode)),     " Converts the code to c (default: off)";
-      "-javacode",  (Arg.Unit   (fun () -> result.code     <-JavaCode)),  " Converts the code to java (default: off)";
+      "-javacode",  (Arg.String (fun prefix -> result.code <- JavaCode; result.prefix <- prefix)),  "prefix Converts the code to java (default: off). Requires prefix to name the package. e.g. 'com.company'";
       "-jscode",    (Arg.Unit   (fun () -> result.code     <-JSCode)),    " Converts the code to javascript (default: off)";
       "-luacode",   (Arg.Unit   (fun () -> result.code     <-LuaCode)),   " Converts the code to lua (default: off)";
       "-check",     (Arg.Unit   (fun () -> result.check    <-true)),      " Checks the code without generating any code (default: off)";

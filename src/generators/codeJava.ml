@@ -143,20 +143,24 @@ float exp(float x) {
 
 |pla}
 
-   let common module_name code =
-      [{pla|
+   let common package_prefix class_name code =
+      let package_name = String.lowercase_ascii class_name in
+      [{pla|package <#package_prefix#s>.<#package_name#s>;
+
 import java.util.Arrays;
 import java.util.Random;
+import <#package_prefix#s>.external.*;
 
-class <#module_name#s> {
+public class <#class_name#s> {
 <#runtime#>
 <#code#>
 }|pla},
        FileKind.ExtOnly "java"]
 
-   let apply (_params:params) (module_name:string) (template:string) (code:Pla.t) : (Pla.t * FileKind.t) list =
+   let apply (params:params) (template:string) (code:Pla.t) : (Pla.t * FileKind.t) list =
+      let class_name = Filename.basename params.output in
       match template with
-      | _ -> common module_name code
+      | _ -> common params.prefix class_name code
 
 end
 
@@ -605,5 +609,5 @@ let print (params:params) (stmts:Code.cstmt list) : (Pla.t * FileKind.t) list =
    let h   = printStmtList { params with target_file = Header } stmts in
    let cpp = printStmtList { params with target_file = Implementation } stmts in
    let tables = generateTableData params stmts in
-   let files = Templates.apply params params.module_name params.template (Pla.join [h; cpp]) in
+   let files = Templates.apply params params.template (Pla.join [h; cpp]) in
    tables @ files

@@ -65,6 +65,7 @@ type args =
       mutable shorten : bool;
       mutable mac     : bool;
       mutable force_write : bool;
+      mutable prefix : string;
    }
 [@@deriving show,eq,ord]
 
@@ -88,4 +89,5 @@ let default_arguments : args =
       shorten = false;
       mac = false;
       force_write = false;
+      prefix = "";
    }
