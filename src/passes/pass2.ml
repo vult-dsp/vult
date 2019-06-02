@@ -139,10 +139,21 @@ module MakeTables = struct
       | None -> failwith "the type is not defined"
       | Some(t) -> Typ.isRealType t
 
-   let getInputVar precision arg =
+   let getPrecision (ret:Typ.t option) =
+      match ret with
+      | Some ({ contents = (TId(["fix16"], _))}) -> Fix16
+      | Some ({ contents = (TId(["real"], _))}) -> Float
+      | _ -> failwith "The type is not real"
+
+   let getInputVar (arg:Prog.typed_id) : Prog.exp =
       match arg with
-      | SimpleId(id, _, _)
-      | TypedId(id, _, _, _) -> PId(id, Tables.attr_real precision)
+      | TypedId (id, [typ], _, attr) -> PId(id, { attr with typ = Some typ})
+      | _ -> failwith "getInputVar: the variable does not have a type"
+
+   let getInputPrecision (args:Prog.typed_id list) : Prog.precision =
+      match args with
+      | [TypedId (_, [typ], _, _)] -> getPrecision (Some typ)
+      | _ -> failwith "getInputVar: the variable does not have a type"
 
    let getIndex bound_check size value =
       let lindex = LId(["index"], Some [Tables.int_type], Tables.attr_int) in
@@ -156,15 +167,17 @@ module MakeTables = struct
          StmtBind(lindex, clip_call (int_call value), emptyAttr);
       ]
 
-   let makeNewBody2 fname size precision min max input =
-      let rattr = Tables.attr_real precision in
+   let makeNewBody2 fname size precisions min max input =
+      let in_precision, out_precision = precisions in
+      let r_out_attr = Tables.attr_real out_precision in
+      let r_in_attr = Tables.attr_real in_precision in
       let rindex = PId(["index"], Tables.attr_int) in
       let getCoeff a =
-         let arr = PCall(NoInst, ["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array precision size)], rattr) in
-         PIndex(arr, rindex, rattr)
+         let arr = PCall(NoInst, ["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array out_precision size)], r_out_attr) in
+         PIndex(arr, rindex, r_out_attr)
       in
-      let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), precision, rattr) in
-      let value = POp("*", [initial_index; POp("-", [input; PReal(min, precision, rattr)], rattr)], rattr) in
+      let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), in_precision, r_in_attr) in
+      let value = POp("*", [initial_index; POp("-", [input; PReal(min, in_precision, r_in_attr)], r_in_attr)], r_in_attr) in
       let index_stmts = getIndex true size value in
       StmtBlock(
          None,
@@ -174,20 +187,22 @@ module MakeTables = struct
                    [getCoeff "c0";
                     POp("*", [input;
                               (POp("+",
-                                   [getCoeff "c1"; POp("*",[getCoeff "c2";input], rattr)], rattr))],
-                        rattr)], rattr),emptyAttr)
+                                   [getCoeff "c1"; POp("*",[getCoeff "c2";input], r_out_attr)], r_out_attr))],
+                        r_out_attr)], r_out_attr),emptyAttr)
          ], emptyAttr)
 
 
-   let makeNewBody1 fname size precision min max input =
-      let rattr = Tables.attr_real precision in
+   let makeNewBody1 fname size precisions min max input =
+      let in_precision, out_precision = precisions in
+      let r_out_attr = Tables.attr_real out_precision in
+      let r_in_attr = Tables.attr_real in_precision in
       let rindex = PId(["index"], Tables.attr_int) in
       let getCoeff a =
-         let arr = PCall(NoInst, ["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array precision size)], rattr) in
-         PIndex(arr, rindex, rattr)
+         let arr = PCall(NoInst, ["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array out_precision size)], r_out_attr) in
+         PIndex(arr, rindex, r_out_attr)
       in
-      let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), precision, rattr) in
-      let value = POp("*", [ initial_index; POp("-", [input; PReal(min, precision, rattr)], rattr)], rattr) in
+      let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), in_precision, r_in_attr) in
+      let value = POp("*", [ initial_index; POp("-", [input; PReal(min, in_precision, r_in_attr)], r_in_attr)], r_in_attr) in
       let index_stmts = getIndex true size value in
       StmtBlock(
          None,
@@ -195,8 +210,8 @@ module MakeTables = struct
             StmtReturn (
                POp("+",
                    [getCoeff "c0";
-                    POp("*", [input; getCoeff "c1"], rattr)
-                   ], rattr), emptyAttr)
+                    POp("*", [input; getCoeff "c1"], r_out_attr)
+                   ], r_out_attr), emptyAttr)
          ], emptyAttr)
 
    let evaluateFunction env (name:Id.t) precision (x:float) =
@@ -264,9 +279,9 @@ module MakeTables = struct
          Tables.makeDecl attr name ["c1"] precision acc1;
       ]
 
-   let checkInputVariables loc precision args =
+   let checkInputVariables (loc:Loc.t) args : Prog.exp =
       match args with
-      | [ var ] -> getInputVar precision var
+      | [ var ] -> getInputVar var
       | _ ->
          let msg = "This attribute requires the function to have only one argument:\n\"fun foo(x:real) : real\"" in
          Error.raiseError msg loc
@@ -282,12 +297,6 @@ module MakeTables = struct
       let args          = [TypedId(["index"], [Typ.Const.int_type], InputArg, attr)] in
       StmtFun(function_name, args, body, Some (Typ.Const.real_type), attr)
 
-   let getPrecision (ret:Typ.t option) =
-      match ret with
-      | Some ({ contents = (TId(["fix16"], _))}) -> Fix16
-      | Some ({ contents = (TId(["real"], _))}) -> Float
-      | _ -> failwith "The type is not real"
-
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
       Mapper.makeExpander "MakeTables.stmt_x" @@ fun state stmt ->
       match stmt with
@@ -300,27 +309,29 @@ module MakeTables = struct
                match Tags.getTableParams "table" params msg attr.tags with
                | None -> state, [stmt]
                | Some(_, [Some (PInt(size, _)); Some (PReal(min, _,_)); Some (PReal(max, _, _)); Some (PInt(1, _))]) when checkRealReturn ret ->
-                  let precision     = getPrecision ret in
-                  let var           = checkInputVariables attr.loc precision args in
+                  let out_precision = getPrecision ret in
+                  let var           = checkInputVariables attr.loc args in
+                  let in_precision  = getInputPrecision args in
                   let env           = getInterpEnv state in
                   let Id.Path(path) = Env.currentScope state in
                   let full_path     = path@name in
-                  let result        = calculateTablesOrder1 env attr full_path size min max precision in
+                  let result        = calculateTablesOrder1 env attr full_path size min max out_precision in
                   let attr'         = { attr with tags = Tags.removeAttrFunc "table" attr.tags } in
-                  let body'         = makeNewBody1 full_path size precision min max var in
+                  let body'         = makeNewBody1 full_path size (in_precision, out_precision) min max var in
                   let c0            = generateRawAccessFunction name full_path 0 attr' in
                   let c1            = generateRawAccessFunction name full_path 1 attr' in
                   reapply state, result @ [c0; c1] @ [StmtFun(name, args, body', ret, attr')]
 
                | Some(_, [Some (PInt(size, _)); Some (PReal(min, _,_)); Some (PReal(max, _, _)); (None | Some (PInt(2, _)))]) when checkRealReturn ret ->
-                  let precision     = getPrecision ret in
-                  let var           = checkInputVariables attr.loc precision args in
+                  let out_precision = getPrecision ret in
+                  let var           = checkInputVariables attr.loc args in
+                  let in_precision  = getInputPrecision args in
                   let env           = getInterpEnv state in
                   let Id.Path(path) = Env.currentScope state in
                   let full_path     = path @ name in
-                  let result        = calculateTablesOrder2 env attr full_path size min max precision in
+                  let result        = calculateTablesOrder2 env attr full_path size min max out_precision in
                   let attr'         = { attr with tags = Tags.removeAttrFunc "table" attr.tags } in
-                  let body'         = makeNewBody2 full_path size precision min max var in
+                  let body'         = makeNewBody2 full_path size (in_precision, out_precision) min max var in
                   let c0            = generateRawAccessFunction name full_path 0 attr' in
                   let c1            = generateRawAccessFunction name full_path 1 attr' in
                   let c2            = generateRawAccessFunction name full_path 2 attr' in
@@ -366,9 +377,9 @@ module EmbedWavFile = struct
 
 
    (** Verifies that the arguments of the attribute correspond to the necessary *)
-   let checkInputVariables (loc:Loc.t) precision (args:typed_id list) : exp * exp =
+   let checkInputVariables (loc:Loc.t) (args:typed_id list) : exp * exp =
       match args with
-      | [ channel ; index ] -> MakeTables.getInputVar precision channel, MakeTables.getInputVar precision index
+      | [ channel ; index ] -> MakeTables.getInputVar channel, MakeTables.getInputVar index
       | _ ->
          let msg = "This attribute requires the function to have the following arguments:\n\"external wave(channel:int, index:int) : real\"" in
          Error.raiseError msg loc
@@ -393,7 +404,7 @@ module EmbedWavFile = struct
    (** Generates the function that access the data of the wave file *)
    let makeNewBody (fname:Id.t) (attr:attr) (args:typed_id list) (wave:WavFile.wave) precision : stmt =
       let attr_real  = { emptyAttr with typ = Some(Typ.Const.real_type) } in
-      let channel, index = checkInputVariables attr.loc precision args in
+      let channel, index = checkInputVariables attr.loc args in
       let stmts   = CCList.init wave.WavFile.channels (accessChannel fname attr channel index wave.WavFile.samples precision) in
       let default = StmtReturn( PReal(0.0, precision, attr_real),attr) in
       StmtBlock(None, stmts @ [default], attr)
@@ -460,12 +471,12 @@ module EmbedWaveTable = struct
          let c0, c1, c2 = Fitting.lagrange x y |> MakeTables.getCoefficients2 in
          fitData data (index-1) (c0::acc0) (c1::acc1) (c2::acc2)
 
-   let calculateTablesOrder2 data attr name precision =
+   let calculateTablesOrder2 data attr name out_precision =
       let acc0, acc1, acc2 = fitData data ((Array.length data) - 1) [] [] [] in
       [
-         Tables.makeDecl attr name ["c0"] precision acc0 ;
-         Tables.makeDecl attr name ["c1"] precision acc1;
-         Tables.makeDecl attr name ["c2"] precision acc2
+         Tables.makeDecl attr name ["c0"] out_precision acc0 ;
+         Tables.makeDecl attr name ["c1"] out_precision acc1;
+         Tables.makeDecl attr name ["c2"] out_precision acc2
       ]
 
    let stmt_x : ('a Env.t,stmt) Mapper.expand_func =
@@ -478,8 +489,9 @@ module EmbedWaveTable = struct
             match Tags.getTableParams "wavetable" params msg attr.tags with
             | None -> state, [stmt]
             | Some(loc, [Some PString(file, _)]) when Typ.isRealType ret ->
-               let precision  = MakeTables.getPrecision (Some ret) in
-               let var           = MakeTables.checkInputVariables attr.loc precision args in
+               let out_precision = MakeTables.getPrecision (Some ret) in
+               let var           = MakeTables.checkInputVariables attr.loc args in
+               let in_precision = MakeTables.getInputPrecision args in
                let Id.Path(path) = Env.currentScope state in
                let full_path  = path @ name in
                let includes   = (Env.get state).PassData.args.includes in
@@ -489,8 +501,8 @@ module EmbedWaveTable = struct
                let size_n     = Array.length data in
                let size       = float_of_int size_n in
                let data       = Array.mapi (fun x y -> float_of_int x /. (size -. 1.0), y) data in
-               let tables     = calculateTablesOrder2 data attr full_path precision in
-               let body       = MakeTables.makeNewBody2 full_path size_n precision 0.0 1.0 var in
+               let tables     = calculateTablesOrder2 data attr full_path out_precision in
+               let body       = MakeTables.makeNewBody2 full_path size_n (in_precision, out_precision) 0.0 1.0 var in
                let attr'      = { attr with tags = Tags.removeAttrFunc "wavetable" attr.tags; ext_fn = None } in
                let c0         = MakeTables.generateRawAccessFunction name full_path 0 attr in
                let c1         = MakeTables.generateRawAccessFunction name full_path 1 attr in
