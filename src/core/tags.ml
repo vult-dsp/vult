@@ -25,6 +25,7 @@ THE SOFTWARE.
 open Prog
 
 type t =
+   | Bool
    | Int
    | Real
    | Id
@@ -42,22 +43,25 @@ let is_empty (tags:tag list) =
 
 let getLocation (attr:tag) : Loc.t =
    match attr with
-   | TInt(_, loc)   -> loc
-   | TId(_, loc)    -> loc
-   | TReal(_, loc)  -> loc
+   | TBool(_, loc)   -> loc
+   | TInt(_, loc)    -> loc
+   | TId(_, loc)     -> loc
+   | TReal(_, loc)   -> loc
    | TFun(_, _, loc) -> loc
    | TString(_, loc) -> loc
 
 let getType (attr:tag) : string =
    match attr with
-   | TInt(_, _)   -> "integer"
-   | TId(_, _)    -> "identifier"
-   | TReal(_, _)  -> "real"
+   | TBool(_, _)   -> "integer"
+   | TInt(_, _)    -> "integer"
+   | TId(_, _)     -> "identifier"
+   | TReal(_, _)   -> "real"
    | TFun(_, _, _) -> "tag"
    | TString(_, _) -> "string"
 
 let getTypeLiteral (t:t) : string =
    match t with
+   | Bool  -> "bool"
    | Int  -> "integer"
    | Real -> "real"
    | Id   -> "identifier"
@@ -77,6 +81,9 @@ let getTypedParam (args:(Id.t * tag) list) (id, typ) =
       r, Some(PReal(float_of_string value, Float,lattr loc))
    | r, Some(TInt(value, loc)) when typ = Int ->
       r, Some(PInt(int_of_string value, lattr loc))
+   | r, Some(TBool(value, loc)) when typ = Bool ->
+      let v = value = "true" in
+      r, Some(PBool(v, lattr loc))
    | r, Some(TId(value, loc)) when typ = Id ->
       r, Some(PId(value, lattr loc))
    | r, Some(TString(value, loc)) when typ = String ->

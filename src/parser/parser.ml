@@ -170,9 +170,11 @@ and tag_nud (buffer:Stream.stream) (token:'kind token) : tag =
          | _ ->
             TId(id, token.loc)
       end
-   | OP, "-" -> tag_unaryOp buffer token
-   | INT, _ -> TInt(token.value, token.loc)
-   | REAL, _ -> TReal(token.value, token.loc)
+   | OP, "-"   -> tag_unaryOp buffer token
+   | INT, _    -> TInt(token.value, token.loc)
+   | TRUE, _   -> TBool(token.value, token.loc)
+   | FALSE, _  -> TBool(token.value, token.loc)
+   | REAL, _   -> TReal(token.value, token.loc)
    | STRING, _ -> TString(token.value, token.loc)
    | _ ->
       let message = Stream.notExpectedError token in

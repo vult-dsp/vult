@@ -29,6 +29,7 @@ type tag =
    | TFun    of Id.t * (Id.t * tag) list * Loc.t
    | TInt    of string * Loc.t
    | TReal   of string * Loc.t
+   | TBool   of string * Loc.t
    | TString of string * Loc.t
 
 type root =

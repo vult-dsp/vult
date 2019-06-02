@@ -167,7 +167,7 @@ module MakeTables = struct
          StmtBind(lindex, clip_call (int_call value), emptyAttr);
       ]
 
-   let makeNewBody2 fname size precisions min max input =
+   let makeNewBody2 bound_check fname size precisions min max input =
       let in_precision, out_precision = precisions in
       let r_out_attr = Tables.attr_real out_precision in
       let r_in_attr = Tables.attr_real in_precision in
@@ -178,7 +178,7 @@ module MakeTables = struct
       in
       let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), in_precision, r_in_attr) in
       let value = POp("*", [initial_index; POp("-", [input; PReal(min, in_precision, r_in_attr)], r_in_attr)], r_in_attr) in
-      let index_stmts = getIndex true size value in
+      let index_stmts = getIndex bound_check size value in
       StmtBlock(
          None,
          index_stmts @ [
@@ -192,7 +192,7 @@ module MakeTables = struct
          ], emptyAttr)
 
 
-   let makeNewBody1 fname size precisions min max input =
+   let makeNewBody1 bound_check fname size precisions min max input =
       let in_precision, out_precision = precisions in
       let r_out_attr = Tables.attr_real out_precision in
       let r_in_attr = Tables.attr_real in_precision in
@@ -203,7 +203,7 @@ module MakeTables = struct
       in
       let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), in_precision, r_in_attr) in
       let value = POp("*", [ initial_index; POp("-", [input; PReal(min, in_precision, r_in_attr)], r_in_attr)], r_in_attr) in
-      let index_stmts = getIndex true size value in
+      let index_stmts = getIndex bound_check size value in
       StmtBlock(
          None,
          index_stmts @ [
@@ -286,6 +286,12 @@ module MakeTables = struct
          let msg = "This attribute requires the function to have only one argument:\n\"fun foo(x:real) : real\"" in
          Error.raiseError msg loc
 
+   let getBoundCheckValue t =
+      match t with
+      | Some (PBool(v, _)) -> v
+      | None -> true
+      | _ -> failwith "Invalid value of 'bound_check' tag"
+
    let generateRawAccessFunction name full_name c attr =
       let n             = string_of_int c in
       let table_name    = Id.concat "_" (Id.postfix full_name ("_c" ^ n)) in
@@ -304,11 +310,12 @@ module MakeTables = struct
          let data = Env.get state in
          if data.PassData.args.tables then
             begin
-               let params = Tags.["size", Int; "min", Real; "max", Real; "order", Int] in
+               let params = Tags.["size", Int; "min", Real; "max", Real; "order", Int; "bound_check", Bool] in
                let msg    = "The attribute 'table' requires specific parameters. e.g. 'table(size=128,min=0.0,max=1.0,[order=2])'" in
                match Tags.getTableParams "table" params msg attr.tags with
                | None -> state, [stmt]
-               | Some(_, [Some (PInt(size, _)); Some (PReal(min, _,_)); Some (PReal(max, _, _)); Some (PInt(1, _))]) when checkRealReturn ret ->
+               | Some(_, [Some (PInt(size, _)); Some (PReal(min, _,_)); Some (PReal(max, _, _)); Some (PInt(1, _)); bound_check]) when checkRealReturn ret ->
+                  let bound_check   = getBoundCheckValue bound_check in
                   let out_precision = getPrecision ret in
                   let var           = checkInputVariables attr.loc args in
                   let in_precision  = getInputPrecision args in
@@ -317,12 +324,13 @@ module MakeTables = struct
                   let full_path     = path@name in
                   let result        = calculateTablesOrder1 env attr full_path size min max out_precision in
                   let attr'         = { attr with tags = Tags.removeAttrFunc "table" attr.tags } in
-                  let body'         = makeNewBody1 full_path size (in_precision, out_precision) min max var in
+                  let body'         = makeNewBody1 bound_check full_path size (in_precision, out_precision) min max var in
                   let c0            = generateRawAccessFunction name full_path 0 attr' in
                   let c1            = generateRawAccessFunction name full_path 1 attr' in
                   reapply state, result @ [c0; c1] @ [StmtFun(name, args, body', ret, attr')]
 
-               | Some(_, [Some (PInt(size, _)); Some (PReal(min, _,_)); Some (PReal(max, _, _)); (None | Some (PInt(2, _)))]) when checkRealReturn ret ->
+               | Some(_, [Some (PInt(size, _)); Some (PReal(min, _,_)); Some (PReal(max, _, _)); (None | Some (PInt(2, _))); bound_check]) when checkRealReturn ret ->
+                  let bound_check   = getBoundCheckValue bound_check in
                   let out_precision = getPrecision ret in
                   let var           = checkInputVariables attr.loc args in
                   let in_precision  = getInputPrecision args in
@@ -331,7 +339,7 @@ module MakeTables = struct
                   let full_path     = path @ name in
                   let result        = calculateTablesOrder2 env attr full_path size min max out_precision in
                   let attr'         = { attr with tags = Tags.removeAttrFunc "table" attr.tags } in
-                  let body'         = makeNewBody2 full_path size (in_precision, out_precision) min max var in
+                  let body'         = makeNewBody2 bound_check full_path size (in_precision, out_precision) min max var in
                   let c0            = generateRawAccessFunction name full_path 0 attr' in
                   let c1            = generateRawAccessFunction name full_path 1 attr' in
                   let c2            = generateRawAccessFunction name full_path 2 attr' in
@@ -484,11 +492,12 @@ module EmbedWaveTable = struct
       match stmt with
       | StmtExternal(name, args, ret, _, attr) ->
          begin
-            let params = Tags.["file", String] in
+            let params = Tags.["file", String; "bound_check", Bool] in
             let msg    = "The attribute 'wave' requires specific parameters. e.g. 'wavetable(file=\"file.wav\")'" in
             match Tags.getTableParams "wavetable" params msg attr.tags with
             | None -> state, [stmt]
-            | Some(loc, [Some PString(file, _)]) when Typ.isRealType ret ->
+            | Some(loc, [Some PString(file, _); bound_check]) when Typ.isRealType ret ->
+               let bound_check = MakeTables.getBoundCheckValue bound_check in
                let out_precision = MakeTables.getPrecision (Some ret) in
                let var           = MakeTables.checkInputVariables attr.loc args in
                let in_precision = MakeTables.getInputPrecision args in
@@ -502,7 +511,7 @@ module EmbedWaveTable = struct
                let size       = float_of_int size_n in
                let data       = Array.mapi (fun x y -> float_of_int x /. (size -. 1.0), y) data in
                let tables     = calculateTablesOrder2 data attr full_path out_precision in
-               let body       = MakeTables.makeNewBody2 full_path size_n (in_precision, out_precision) 0.0 1.0 var in
+               let body       = MakeTables.makeNewBody2 bound_check full_path size_n (in_precision, out_precision) 0.0 1.0 var in
                let attr'      = { attr with tags = Tags.removeAttrFunc "wavetable" attr.tags; ext_fn = None } in
                let c0         = MakeTables.generateRawAccessFunction name full_path 0 attr in
                let c1         = MakeTables.generateRawAccessFunction name full_path 1 attr in
