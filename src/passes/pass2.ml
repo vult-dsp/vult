@@ -142,34 +142,33 @@ module MakeTables = struct
    let getInputVar precision arg =
       match arg with
       | SimpleId(id, _, _)
-      | TypedId(id, _, _, _) -> PId(id,Tables.attr_real precision)
+      | TypedId(id, _, _, _) -> PId(id, Tables.attr_real precision)
+
+   let getIndex bound_check size value =
+      let lindex = LId(["index"], Some [Tables.int_type], Tables.attr_int) in
+      let clip_call i =
+         if bound_check then PCall(NoInst, ["clip"], [ i; PInt(0, Tables.attr_int); PInt(size - 1, Tables.attr_int) ], Tables.attr_int)
+         else i
+      in
+      let int_call i = PCall(NoInst, ["int"], [i], Tables.attr_int) in
+      [
+         StmtVal(lindex, None, emptyAttr);
+         StmtBind(lindex, clip_call (int_call value), emptyAttr);
+      ]
 
    let makeNewBody2 fname size precision min max input =
       let rattr = Tables.attr_real precision in
-      let lindex = LId(["index"],Some [Tables.int_type], Tables.attr_int) in
       let rindex = PId(["index"], Tables.attr_int) in
       let getCoeff a =
          let arr = PCall(NoInst, ["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array precision size)], rattr) in
          PIndex(arr, rindex, rattr)
       in
       let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), precision, rattr) in
+      let value = POp("*", [initial_index; POp("-", [input; PReal(min, precision, rattr)], rattr)], rattr) in
+      let index_stmts = getIndex true size value in
       StmtBlock(
          None,
-         [
-            StmtVal(lindex,None,emptyAttr);
-            StmtBind(lindex,
-                     PCall(NoInst, ["clip"],
-                           [
-                              PCall(NoInst, ["int"],
-                                    [POp("*",
-                                         [
-                                            initial_index;
-                                            POp("-", [input; PReal(min, precision, rattr)], rattr)
-                                         ], rattr)], Tables.attr_int);
-                              PInt(0, Tables.attr_int);
-                              PInt(size-1, Tables.attr_int);
-                           ], Tables.attr_int),
-                     emptyAttr);
+         index_stmts @ [
             StmtReturn(
                POp("+",
                    [getCoeff "c0";
@@ -182,48 +181,18 @@ module MakeTables = struct
 
    let makeNewBody1 fname size precision min max input =
       let rattr = Tables.attr_real precision in
-      let lindex = LId(["index"],Some [Tables.int_type], Tables.attr_int) in
       let rindex = PId(["index"], Tables.attr_int) in
       let getCoeff a =
          let arr = PCall(NoInst, ["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array precision size)], rattr) in
          PIndex(arr, rindex, rattr)
       in
       let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), precision, rattr) in
+      let value = POp("*", [ initial_index; POp("-", [input; PReal(min, precision, rattr)], rattr)], rattr) in
+      let index_stmts = getIndex true size value in
       StmtBlock(
          None,
-         [
-            StmtVal(lindex,None,emptyAttr);
-            StmtBind(lindex,
-                     PCall(NoInst, ["clip"],
-                           [
-                              PCall(NoInst, ["int"],
-                                    [POp("*",
-                                         [
-                                            initial_index;
-                                            POp("-", [input; PReal(min, precision, rattr)], rattr)
-                                         ], rattr)], Tables.attr_int);
-                              PInt(0, Tables.attr_int);
-                              PInt(size-1, Tables.attr_int);
-                           ], Tables.attr_int),
-                     emptyAttr);
-            StmtReturn(
-               POp("+",
-                   [getCoeff "c0";
-                    POp("*", [input; getCoeff "c1"], rattr)
-                   ], rattr), emptyAttr)
-         ], emptyAttr)
-
-   let makeNewBodyRaw1 fname size precision input =
-      let rattr = Tables.attr_real precision in
-      let rindex = PId(["index"], Tables.attr_int) in
-      let getCoeff a =
-         let arr = PCall(NoInst, ["wrap_array"], [PId(Id.joinSep "_" fname [a], Tables.attr_array precision size)], rattr) in
-         PIndex(arr, rindex, rattr)
-      in
-      StmtBlock(
-         None,
-         [
-            StmtReturn(
+         index_stmts @ [
+            StmtReturn (
                POp("+",
                    [getCoeff "c0";
                     POp("*", [input; getCoeff "c1"], rattr)
@@ -348,7 +317,7 @@ module MakeTables = struct
                   let var           = checkInputVariables attr.loc precision args in
                   let env           = getInterpEnv state in
                   let Id.Path(path) = Env.currentScope state in
-                  let full_path     = path@name in
+                  let full_path     = path @ name in
                   let result        = calculateTablesOrder2 env attr full_path size min max precision in
                   let attr'         = { attr with tags = Tags.removeAttrFunc "table" attr.tags } in
                   let body'         = makeNewBody2 full_path size precision min max var in
