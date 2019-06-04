@@ -155,6 +155,13 @@ module MakeTables = struct
       | [TypedId (_, [typ], _, _)] -> getPrecision (Some typ)
       | _ -> failwith "getInputVar: the variable does not have a type"
 
+   let castInputVarPrecision (in_precision:Prog.precision) (out_precision:Prog.precision) (input:Prog.exp) : Prog.exp =
+      match in_precision, out_precision with
+      | Float, Float -> input
+      | Fix16, Fix16 -> input
+      | Float, Fix16 -> PCall(NoInst, ["fix16"], [input], Tables.attr_real out_precision)
+      | Fix16, Float -> PCall(NoInst, ["real"], [input], Tables.attr_real out_precision)
+
    let getIndex bound_check size value =
       let lindex = LId(["index"], Some [Tables.int_type], Tables.attr_int) in
       let clip_call i =
@@ -179,6 +186,7 @@ module MakeTables = struct
       let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), in_precision, r_in_attr) in
       let value = POp("*", [initial_index; POp("-", [input; PReal(min, in_precision, r_in_attr)], r_in_attr)], r_in_attr) in
       let index_stmts = getIndex bound_check size value in
+      let input = castInputVarPrecision in_precision out_precision input in
       StmtBlock(
          None,
          index_stmts @ [
@@ -204,6 +212,7 @@ module MakeTables = struct
       let initial_index = PReal(((float_of_int size) -. 1.0) /. (max -. min), in_precision, r_in_attr) in
       let value = POp("*", [ initial_index; POp("-", [input; PReal(min, in_precision, r_in_attr)], r_in_attr)], r_in_attr) in
       let index_stmts = getIndex bound_check size value in
+      let input = castInputVarPrecision in_precision out_precision input in
       StmtBlock(
          None,
          index_stmts @ [
