@@ -165,6 +165,27 @@ let rec compileExp env exp =
    | PSeq _ -> failwith ""
 *)
 
+module SimpleMap = struct
+
+   module IdMap = Map.Make(struct type t = Id.t let compare = Id.compare end)
+
+   type 'value t = 'value IdMap.t ref
+
+   let create (_size:int) : 'value t = ref IdMap.empty
+
+   let [@inline always] mem (t:'value t) (key:'key) : bool =
+      IdMap.mem key !t
+
+   let [@inline always] find (t:'value t) (key:'key) : 'value =
+      IdMap.find key !t
+
+   let [@inline always] add (t:'value t) (key:'key) (value:'value) : unit =
+      t := IdMap.add key value !t
+
+   let replace = add
+
+end
+
 module Env = struct
 
    type fun_body =
@@ -174,11 +195,12 @@ module Env = struct
 
    type t =
       {
-         locals    : (Id.t, exp) Hashtbl.t list;
-         context   : (Id.t, exp) Hashtbl.t;
-         instances : (Id.t, t) Hashtbl.t;
-         functions : (Id.t, fun_body) Hashtbl.t;
-         modules   : (Id.t, t) Hashtbl.t;
+         locals    : exp SimpleMap.t list;
+         context   : exp SimpleMap.t;
+         instances : t SimpleMap.t;
+         functions : fun_body SimpleMap.t;
+         modules   : t SimpleMap.t;
+         tick      : int;
       }
 
    (** Non empty list of 't' *)
@@ -186,11 +208,12 @@ module Env = struct
 
    let new_t () =
       {
-         locals    = [Hashtbl.create 32];
-         context   = Hashtbl.create 32;
-         instances = Hashtbl.create 32;
-         functions = Hashtbl.create 32;
-         modules   = Hashtbl.create 32;
+         locals    = [SimpleMap.create 4];
+         context   = SimpleMap.create 4;
+         instances = SimpleMap.create 4;
+         functions = SimpleMap.create 4;
+         modules   = SimpleMap.create 4;
+         tick      = 0;
       }
 
    let top () : env = [new_t ()]
@@ -206,12 +229,12 @@ module Env = struct
       match id with
       | [] -> None
       | name1::name2 ->
-         if name2 = [] && Hashtbl.mem t.functions [name1] then
+         if name2 = [] && SimpleMap.mem t.functions [name1] then
             (* exists in the functions table and it's a single name *)
-            Some (t, Hashtbl.find t.functions [name1])
-         else if name2 <> [] && Hashtbl.mem t.modules [name1] then
+            Some (t, SimpleMap.find t.functions [name1])
+         else if name2 <> [] && SimpleMap.mem t.modules [name1] then
             (* exists in the modules table and it is not a single name *)
-            let t' = Hashtbl.find t.modules [name1] in
+            let t' = SimpleMap.find t.modules [name1] in
             lookupFunction_loop t' env name2
          else
             (* not found, go one level up *)
@@ -232,7 +255,7 @@ module Env = struct
       match locals with
       | [] -> raise Not_found
       | h :: t ->
-         match Hashtbl.find h id with
+         match SimpleMap.find h id with
          | value -> value
          | exception Not_found ->
             lookupVar_loop t id
@@ -240,7 +263,7 @@ module Env = struct
    let lookupVar (env:env) (id:Id.t) : exp =
       let t = first env in
       (* first try to find the variable in the context *)
-      match Hashtbl.find t.context id with
+      match SimpleMap.find t.context id with
       | value -> value
       | exception Not_found ->
          (* if is not in the context then look in the locals *)
@@ -252,7 +275,7 @@ module Env = struct
       | _ -> ()
       | exception Not_found ->
          let t = first env in
-         Hashtbl.add t.context id value
+         SimpleMap.add t.context id value
 
    (** Adds a local variable to the current scope, if the variable exists, it does nothing *)
    let declareVal (env:env) (id:Id.t) (value:exp) : unit =
@@ -261,7 +284,7 @@ module Env = struct
       | exception Not_found ->
          let t = first env in
          match t.locals with
-         | h :: _ -> Hashtbl.replace h id value
+         | h :: _ -> SimpleMap.replace h id value
          | [] -> failwith "invalid env"
 
    (** Used by updateVar to iterate all local scopes *)
@@ -269,16 +292,16 @@ module Env = struct
       match locals with
       | [] -> failwith ("unknow variable: " ^ (PrintProg.identifierStr id))
       | h :: t ->
-         match Hashtbl.mem h id with
-         | _ -> Hashtbl.replace h id value
+         match SimpleMap.mem h id with
+         | _ -> SimpleMap.replace h id value
          | exception Not_found ->
             updateVar_loop t id value
 
    (** Looks for an existing variable and updates its value *)
    let updateVar (env:env) (id:Id.t) (value:exp) : unit =
       let t = first env in
-      match Hashtbl.mem t.context id with
-      | _ -> Hashtbl.replace t.context id value
+      match SimpleMap.mem t.context id with
+      | _ -> SimpleMap.replace t.context id value
       | exception Not_found ->
          updateVar_loop t.locals id value
 
@@ -287,7 +310,7 @@ module Env = struct
       match locals with
       | [] -> failwith ("unknow variable: " ^ (PrintProg.identifierStr id))
       | h :: t ->
-         match Hashtbl.find h id, index with
+         match SimpleMap.find h id, index with
          | PArray(elems, _), PInt(index, _) ->
             Array.set elems index value
          | _ -> failwith "cannot update array"
@@ -297,7 +320,7 @@ module Env = struct
    (** Looks for an existing variable and updates its value *)
    let updateArrayVar (env:env) (id:Id.t) (index:exp) (value:exp) : unit =
       let t = first env in
-      match Hashtbl.find t.context id, index with
+      match SimpleMap.find t.context id, index with
       | PArray(elems, _), PInt(index, _) ->
          Array.set elems index value
       | _ -> failwith "cannot update array"
@@ -307,17 +330,17 @@ module Env = struct
    (** Adds a function to the scope *)
    let addFunction env id (stmt:fun_body) =
       let t = first env in
-      Hashtbl.add t.functions id stmt
+      SimpleMap.add t.functions id stmt
 
    (** Adds a module to the scope *)
    let addModule (env:env) (id:Id.t) : unit =
       let t = first env in
-      Hashtbl.add t.modules id (new_t ())
+      SimpleMap.add t.modules id (new_t ())
 
    (** Enters to the scope of a module *)
    let enterModule (env:env) (id:Id.t) : env =
       let t = first env in
-      match Hashtbl.find t.modules id with
+      match SimpleMap.find t.modules id with
       | module_t -> module_t :: env
       | exception Not_found -> failwith ("unknown module: " ^ (PrintProg.identifierStr id))
 
@@ -325,11 +348,11 @@ module Env = struct
    let enterLocal (env:env) : env =
       match env with
       | [t] ->
-         let locals = (Hashtbl.create 32) :: t.locals in
+         let locals = (SimpleMap.create 4) :: t.locals in
          let t' = { t with locals } in
          [t']
       | t :: l ->
-         let locals = (Hashtbl.create 32) :: t.locals in
+         let locals = (SimpleMap.create 4) :: t.locals in
          let t' = { t with locals } in
          t' :: l
       | [] -> failwith "invalid env"
@@ -337,11 +360,11 @@ module Env = struct
    (** Gets the context of a function call *)
    let enterInstance (env:env) (id:Id.t) : env =
       let t = first env in
-      match Hashtbl.find t.instances id with
+      match SimpleMap.find t.instances id with
       | inst -> inst :: env
       | exception Not_found ->
          let inst = new_t () in
-         Hashtbl.add t.instances id inst;
+         SimpleMap.add t.instances id inst;
          inst :: env
 
 
@@ -354,11 +377,12 @@ let ret_unit = PUnit(emptyAttr)
 
 (** Returns a context name for the a funtion call based on its location *)
 let makeInstName (fn:Id.t) (attr:attr) : Id.t =
-   let line = Loc.line attr.loc |> string_of_int in
-   let col  = Loc.startColumn attr.loc  |> string_of_int in
+   let line = Loc.line attr.loc  in
+   let col  = Loc.startColumn attr.loc  in
+   let n = string_of_int (line + col) in
    match fn with
-   | [id] -> [id ^ "_"^line ^ "_"^col]
-   | [pack; id] -> [pack ^ "_"^id ^ "_"^line ^ "_"^col]
+   | [id] -> [id ^ "_" ^ n]
+   | [pack; id] -> [pack ^ "_" ^ id ^ "_" ^ n]
    | _ -> failwith "invalid function name"
 
 (** Returns the initial value given the type of an expression *)
