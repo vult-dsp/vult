@@ -40,7 +40,7 @@ typedef Util__ctx_type_1 Util_change_type;
 
 static_inline void Util__ctx_type_1_init(Util__ctx_type_1 &_output_){
    Util__ctx_type_1 _ctx;
-   _ctx.pre_x = 0.f;
+   _ctx.pre_x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -85,7 +85,7 @@ typedef Util__ctx_type_4 Util_smooth_type;
 
 static_inline void Util__ctx_type_4_init(Util__ctx_type_4 &_output_){
    Util__ctx_type_4 _ctx;
-   _ctx.x = 0.f;
+   _ctx.x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -108,7 +108,7 @@ typedef Util__ctx_type_5 Util_average2_type;
 
 static_inline void Util__ctx_type_5_init(Util__ctx_type_5 &_output_){
    Util__ctx_type_5 _ctx;
-   _ctx.x0 = 0.f;
+   _ctx.x0 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -314,7 +314,7 @@ float Ladder_euler(Ladder__ctx_type_5 &_ctx, float input, float fh, float res);
 typedef struct Ladder__ctx_type_6 {
    float fh;
    Ladder__ctx_type_5 e;
-   Util__ctx_type_1 _inst23;
+   Util__ctx_type_1 _inst159;
 } Ladder__ctx_type_6;
 
 typedef Ladder__ctx_type_6 Ladder_process_euler_type;
@@ -331,7 +331,7 @@ float Ladder_process_euler(Ladder__ctx_type_6 &_ctx, float input, float cut, flo
 typedef struct Ladder__ctx_type_7 {
    Ladder__ctx_type_4 h;
    float fh;
-   Util__ctx_type_1 _inst26;
+   Util__ctx_type_1 _inst159;
 } Ladder__ctx_type_7;
 
 typedef Ladder__ctx_type_7 Ladder_process_heun_type;
@@ -346,14 +346,14 @@ static_inline void Ladder_process_heun_init(Ladder__ctx_type_7 &_output_){
 float Ladder_process_heun(Ladder__ctx_type_7 &_ctx, float input, float cut, float res);
 
 typedef struct Ladder__ctx_type_8 {
-   Ladder__ctx_type_7 _inst29;
+   Ladder__ctx_type_7 _inst118;
 } Ladder__ctx_type_8;
 
 typedef Ladder__ctx_type_8 Ladder_process_type;
 
 static_inline void Ladder__ctx_type_8_init(Ladder__ctx_type_8 &_output_){
    Ladder__ctx_type_8 _ctx;
-   Ladder__ctx_type_7_init(_ctx._inst29);
+   Ladder__ctx_type_7_init(_ctx._inst118);
    _output_ = _ctx;
    return ;
 }
@@ -364,7 +364,7 @@ static_inline void Ladder_process_init(Ladder__ctx_type_8 &_output_){
 }
 
 static_inline float Ladder_process(Ladder__ctx_type_8 &_ctx, float input, float cut, float res){
-   return Ladder_process_heun(_ctx._inst29,input,cut,res);
+   return Ladder_process_heun(_ctx._inst118,input,cut,res);
 };
 
 typedef Ladder__ctx_type_8 Ladder_noteOn_type;

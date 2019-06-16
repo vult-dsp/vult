@@ -15,7 +15,7 @@ typedef Delay__ctx_type_0 Delay_smooth_type;
 
 static_inline void Delay__ctx_type_0_init(Delay__ctx_type_0 &_output_){
    Delay__ctx_type_0 _ctx;
-   _ctx.x = 0.f;
+   _ctx.x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -38,7 +38,7 @@ typedef Delay__ctx_type_1 Delay_change_type;
 
 static_inline void Delay__ctx_type_1_init(Delay__ctx_type_1 &_output_){
    Delay__ctx_type_1 _ctx;
-   _ctx.pre_x = 0.f;
+   _ctx.pre_x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -112,7 +112,7 @@ static_inline float Delay_pitchToRate(float d){
 typedef struct Delay__ctx_type_5 {
    float rate;
    float phase;
-   Delay__ctx_type_1 _inst6;
+   Delay__ctx_type_1 _inst113;
 } Delay__ctx_type_5;
 
 typedef Delay__ctx_type_5 Delay_phasor_type;
@@ -128,7 +128,7 @@ float Delay_phasor(Delay__ctx_type_5 &_ctx, float pitch, uint8_t reset);
 
 typedef struct Delay__ctx_type_6 {
    float phase;
-   Delay__ctx_type_2 _inst9;
+   Delay__ctx_type_2 _inst162;
 } Delay__ctx_type_6;
 
 typedef Delay__ctx_type_6 Delay_lfo_type;
@@ -144,9 +144,9 @@ float Delay_lfo(Delay__ctx_type_6 &_ctx, float f, uint8_t gate);
 
 typedef struct Delay__ctx_type_7 {
    float pre_phase1;
-   Delay__ctx_type_5 _inst15;
-   Delay__ctx_type_0 _inst14;
-   Delay__ctx_type_5 _inst13;
+   Delay__ctx_type_5 _inst3125;
+   Delay__ctx_type_0 _inst2149;
+   Delay__ctx_type_5 _inst1125;
 } Delay__ctx_type_7;
 
 typedef Delay__ctx_type_7 Delay_phd_osc_type;
@@ -222,12 +222,12 @@ typedef struct Delay__ctx_type_10 {
    float lfo_amt;
    float feedback;
    float detune;
-   Delay__ctx_type_8 _inst34;
-   Delay__ctx_type_0 _inst33;
-   Delay__ctx_type_0 _inst32;
-   Delay__ctx_type_0 _inst31;
-   Delay__ctx_type_7 _inst30;
-   Delay__ctx_type_6 _inst29;
+   Delay__ctx_type_8 _inst6134;
+   Delay__ctx_type_0 _inst5149;
+   Delay__ctx_type_0 _inst4149;
+   Delay__ctx_type_0 _inst3149;
+   Delay__ctx_type_7 _inst2186;
+   Delay__ctx_type_6 _inst194;
 } Delay__ctx_type_10;
 
 typedef Delay__ctx_type_10 Delay_process_type;

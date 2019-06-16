@@ -5,8 +5,8 @@
 void Aff_ff__ctx_type_0_init(Aff_ff__ctx_type_0 &_output_){
    Aff_ff__ctx_type_0 _ctx;
    _ctx.x = 0;
-   _ctx.process_ret_1 = 0.f;
-   _ctx.process_ret_0 = 0.f;
+   _ctx.process_ret_1 = 0.0f;
+   _ctx.process_ret_0 = 0.0f;
    _output_ = _ctx;
    return ;
 }

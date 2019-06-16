@@ -4,8 +4,8 @@
 
 void Util__ctx_type_3_init(Util__ctx_type_3 &_output_){
    Util__ctx_type_3 _ctx;
-   _ctx.y1 = 0.f;
-   _ctx.x1 = 0.f;
+   _ctx.y1 = 0.0f;
+   _ctx.x1 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -21,13 +21,13 @@ float Util_dcblock(Util__ctx_type_3 &_ctx, float x0){
 void Tricore__ctx_type_0_init(Tricore__ctx_type_0 &_output_){
    Tricore__ctx_type_0 _ctx;
    _ctx.reset_state = false;
-   _ctx.reset_phase = 0.f;
-   _ctx.rate = 0.f;
-   _ctx.phase = 0.f;
+   _ctx.reset_phase = 0.0f;
+   _ctx.rate = 0.0f;
+   _ctx.phase = 0.0f;
    _ctx.direction = false;
-   Util__ctx_type_0_init(_ctx._inst23);
-   Util__ctx_type_0_init(_ctx._inst22);
-   Util__ctx_type_1_init(_ctx._inst20);
+   Util__ctx_type_0_init(_ctx._inst481);
+   Util__ctx_type_0_init(_ctx._inst381);
+   Util__ctx_type_1_init(_ctx._inst159);
    Tricore_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -35,26 +35,26 @@ void Tricore__ctx_type_0_init(Tricore__ctx_type_0 &_output_){
 
 float Tricore_process(Tricore__ctx_type_0 &_ctx, float cv, float reset, float disable){
    float out;
-   out = 0.f;
-   if(Util_change(_ctx._inst20,cv)){
+   out = 0.0f;
+   if(Util_change(_ctx._inst159,cv)){
       _ctx.rate = (4.f * Util_cvToRate_1024(cv));
    }
    float new_phase;
-   float _if_39;
+   float _if_13;
    if(_ctx.direction){
-      _if_39 = _ctx.rate;
+      _if_13 = _ctx.rate;
    }
    else
    {
-      _if_39 = (- _ctx.rate);
+      _if_13 = (- _ctx.rate);
    }
-   new_phase = (_ctx.phase + _if_39);
+   new_phase = (_ctx.phase + _if_13);
    uint8_t bdisable;
    bdisable = (disable > 0.5f);
-   if(Util_edge(_ctx._inst22,(reset > 0.f)) || Util_edge(_ctx._inst23,bdisable)){
+   if(Util_edge(_ctx._inst381,(reset > 0.0f)) || Util_edge(_ctx._inst481,bdisable)){
       _ctx.reset_phase = _ctx.phase;
       _ctx.reset_state = true;
-      new_phase = 0.f;
+      new_phase = 0.0f;
    }
    if(new_phase > 1024.f){
       new_phase = (1024.f + (- (-1024.f + new_phase)));
@@ -67,7 +67,7 @@ float Tricore_process(Tricore__ctx_type_0 &_ctx, float cv, float reset, float di
       }
    }
    if(bdisable){
-      _ctx.phase = 0.f;
+      _ctx.phase = 0.0f;
    }
    else
    {
@@ -87,10 +87,10 @@ float Tricore_process(Tricore__ctx_type_0 &_ctx, float cv, float reset, float di
       }
       else
       {
-         uint8_t _cond_43;
-         _cond_43 = (_ctx.reset_phase > 10.f);
-         if(bool_not(_cond_43)){
-            _ctx.reset_phase = 0.f;
+         uint8_t _cond_17;
+         _cond_17 = (_ctx.reset_phase > 10.f);
+         if(bool_not(_cond_17)){
+            _ctx.reset_phase = 0.0f;
          }
          _ctx.reset_state = false;
          _ctx.direction = true;

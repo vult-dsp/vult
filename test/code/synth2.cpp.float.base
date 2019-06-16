@@ -4,8 +4,8 @@
 
 void Synth2__ctx_type_6_init(Synth2__ctx_type_6 &_output_){
    Synth2__ctx_type_6 _ctx;
-   _ctx.y1 = 0.f;
-   _ctx.x1 = 0.f;
+   _ctx.y1 = 0.0f;
+   _ctx.x1 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -24,7 +24,7 @@ float Synth2_pulse_train(float m, float phase){
    float denominator1;
    denominator1 = sinf(pi_phase);
    float tmp1;
-   tmp1 = 0.f;
+   tmp1 = 0.0f;
    if(Synth2_near_zero(denominator1)){
       tmp1 = 1.f;
    }
@@ -38,22 +38,22 @@ float Synth2_pulse_train(float m, float phase){
 
 void Synth2__ctx_type_11_init(Synth2__ctx_type_11 &_output_){
    Synth2__ctx_type_11 _ctx;
-   _ctx.state_triang = 0.f;
-   _ctx.state_saw = 0.f;
-   _ctx.state_pulse = 0.f;
-   _ctx.rate = 0.f;
-   _ctx.phase = 0.f;
-   _ctx.output = 0.f;
-   _ctx.m = 0.f;
-   Synth2__ctx_type_6_init(_ctx._inst24);
-   Synth2__ctx_type_1_init(_ctx._inst16);
+   _ctx.state_triang = 0.0f;
+   _ctx.state_saw = 0.0f;
+   _ctx.state_pulse = 0.0f;
+   _ctx.rate = 0.0f;
+   _ctx.phase = 0.0f;
+   _ctx.output = 0.0f;
+   _ctx.m = 0.0f;
+   Synth2__ctx_type_1_init(_ctx._inst3138);
+   Synth2__ctx_type_6_init(_ctx._inst1183);
    _output_ = _ctx;
    return ;
 }
 
 float Synth2_osc(Synth2__ctx_type_11 &_ctx, float pitch, float pw, float wave){
    float fixed_pitch;
-   fixed_pitch = 0.f;
+   fixed_pitch = 0.0f;
    if(wave < 0.6666667f){
       fixed_pitch = pitch;
    }
@@ -61,7 +61,7 @@ float Synth2_osc(Synth2__ctx_type_11 &_ctx, float pitch, float pw, float wave){
    {
       fixed_pitch = (12.f + pitch);
    }
-   if(Synth2_change(_ctx._inst16,fixed_pitch)){
+   if(Synth2_change(_ctx._inst3138,fixed_pitch)){
       _ctx.rate = Synth2_pitchToRate(fixed_pitch);
       float p;
       p = (1.f / _ctx.rate);
@@ -100,14 +100,14 @@ float Synth2_osc(Synth2__ctx_type_11 &_ctx, float pitch, float pw, float wave){
          _ctx.output = (2.f * _ctx.state_triang * (1.f + pw));
       }
    }
-   _ctx.output = Synth2_dcblock(_ctx._inst24,_ctx.output);
+   _ctx.output = Synth2_dcblock(_ctx._inst1183,_ctx.output);
    return float_clip((0.25f * _ctx.output),-1.f,1.f);
 }
 
 void Synth2__ctx_type_12_init(Synth2__ctx_type_12 &_output_){
    Synth2__ctx_type_12 _ctx;
-   _ctx.dlow = 0.f;
-   _ctx.dband = 0.f;
+   _ctx.dlow = 0.0f;
+   _ctx.dband = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -143,18 +143,18 @@ float Synth2_svf_step(Synth2__ctx_type_12 &_ctx, float input, float g, float q, 
 void Synth2__ctx_type_13_init(Synth2__ctx_type_13 &_output_){
    Synth2__ctx_type_13 _ctx;
    Synth2__ctx_type_12_init(_ctx.step);
-   _ctx.g = 0.f;
-   Synth2__ctx_type_1_init(_ctx._inst27);
+   _ctx.g = 0.0f;
+   Synth2__ctx_type_1_init(_ctx._inst1138);
    _output_ = _ctx;
    return ;
 }
 
 float Synth2_svf(Synth2__ctx_type_13 &_ctx, float input, float fc, float q, int sel){
-   fc = float_clip(fc,0.f,1.f);
-   q = float_clip(q,0.f,1.f);
+   fc = float_clip(fc,0.0f,1.f);
+   q = float_clip(q,0.0f,1.f);
    float fix_q;
    fix_q = (2.f * (1.f + (- q)));
-   if(Synth2_change(_ctx._inst27,fc)){
+   if(Synth2_change(_ctx._inst1138,fc)){
       _ctx.g = (0.5f * fc);
    }
    float x1;
@@ -166,9 +166,9 @@ float Synth2_svf(Synth2__ctx_type_13 &_ctx, float input, float fc, float q, int 
 
 void Synth2__ctx_type_14_init(Synth2__ctx_type_14 &_output_){
    Synth2__ctx_type_14 _ctx;
-   _ctx.phase = 0.f;
-   Synth2__ctx_type_4_init(_ctx._inst32);
-   Synth2__ctx_type_3_init(_ctx._inst30);
+   _ctx.phase = 0.0f;
+   Synth2__ctx_type_4_init(_ctx._inst3242);
+   Synth2__ctx_type_3_init(_ctx._inst1148);
    _output_ = _ctx;
    return ;
 }
@@ -176,10 +176,10 @@ void Synth2__ctx_type_14_init(Synth2__ctx_type_14 &_output_){
 float Synth2_lfo(Synth2__ctx_type_14 &_ctx, float f, uint8_t gate){
    float rate;
    rate = (1.53e-05f + (0.0015259f * f));
-   if(Synth2_edge(_ctx._inst30,gate)){
-      _ctx.phase = 0.f;
+   if(Synth2_edge(_ctx._inst1148,gate)){
+      _ctx.phase = 0.0f;
    }
-   if(Synth2_each(_ctx._inst32,4)){
+   if(Synth2_each(_ctx._inst3242,4)){
       _ctx.phase = (_ctx.phase + rate);
    }
    if(_ctx.phase > 1.f){
@@ -241,20 +241,20 @@ int Synth2_mono_noteOff(Synth2__ctx_type_15 &_ctx, int n){
 
 void Synth2__ctx_type_16_init(Synth2__ctx_type_16 &_output_){
    Synth2__ctx_type_16 _ctx;
-   _ctx.wave = 0.f;
-   _ctx.volume = 0.f;
-   _ctx.res = 0.f;
-   _ctx.pw = 0.f;
-   _ctx.pitch = 0.f;
+   _ctx.wave = 0.0f;
+   _ctx.volume = 0.0f;
+   _ctx.res = 0.0f;
+   _ctx.pw = 0.0f;
+   _ctx.pitch = 0.0f;
    Synth2__ctx_type_15_init(_ctx.monoin);
-   _ctx.lfo_rate = 0.f;
-   _ctx.lfo_amt = 0.f;
-   _ctx.cut = 0.f;
-   _ctx.amp_s = 0.f;
-   Synth2__ctx_type_13_init(_ctx._inst50);
-   Synth2__ctx_type_7_init(_ctx._inst49);
-   Synth2__ctx_type_11_init(_ctx._inst48);
-   Synth2__ctx_type_14_init(_ctx._inst47);
+   _ctx.lfo_rate = 0.0f;
+   _ctx.lfo_amt = 0.0f;
+   _ctx.cut = 0.0f;
+   _ctx.amp_s = 0.0f;
+   Synth2__ctx_type_13_init(_ctx._inst418);
+   Synth2__ctx_type_7_init(_ctx._inst3244);
+   Synth2__ctx_type_11_init(_ctx._inst297);
+   Synth2__ctx_type_14_init(_ctx._inst1106);
    Synth2_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -264,21 +264,21 @@ float Synth2_process(Synth2__ctx_type_16 &_ctx, float i){
    uint8_t gate;
    gate = Synth2_mono_isGateOn(_ctx.monoin);
    float lfo1;
-   lfo1 = (_ctx.lfo_amt * Synth2_lfo(_ctx._inst47,_ctx.lfo_rate,gate));
+   lfo1 = (_ctx.lfo_amt * Synth2_lfo(_ctx._inst1106,_ctx.lfo_rate,gate));
    float o1;
-   o1 = Synth2_osc(_ctx._inst48,_ctx.pitch,(_ctx.pw + lfo1),_ctx.wave);
+   o1 = Synth2_osc(_ctx._inst297,_ctx.pitch,(_ctx.pw + lfo1),_ctx.wave);
    float amp_env;
-   float _if_80;
+   float _if_5;
    if(gate){
-      _if_80 = 1.f;
+      _if_5 = 1.f;
    }
    else
    {
-      _if_80 = 0.f;
+      _if_5 = 0.0f;
    }
-   amp_env = Synth2_smooth(_ctx._inst49,_if_80);
+   amp_env = Synth2_smooth(_ctx._inst3244,_if_5);
    float output;
-   output = (amp_env * Synth2_svf(_ctx._inst50,o1,_ctx.cut,_ctx.res,0));
+   output = (amp_env * Synth2_svf(_ctx._inst418,o1,_ctx.cut,_ctx.res,0));
    return (_ctx.volume * output);
 }
 
@@ -312,13 +312,13 @@ void Synth2_controlChange(Synth2__ctx_type_16 &_ctx, int control, int value, int
 
 void Synth2_default(Synth2__ctx_type_16 &_ctx){
    _ctx.volume = 1.f;
-   _ctx.pw = 0.f;
+   _ctx.pw = 0.0f;
    _ctx.pitch = 42.f;
    _ctx.cut = 1.f;
-   _ctx.res = 0.f;
+   _ctx.res = 0.0f;
    _ctx.amp_s = 1.f;
    _ctx.lfo_amt = 0.5f;
-   _ctx.lfo_rate = 0.f;
+   _ctx.lfo_rate = 0.0f;
 }
 
 

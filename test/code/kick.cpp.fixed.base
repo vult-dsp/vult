@@ -21,7 +21,7 @@ void Noise__ctx_type_1_init(Noise__ctx_type_1 &_output_){
    Noise__ctx_type_1 _ctx;
    _ctx.x2 = 0;
    _ctx.x1 = 0;
-   Noise__ctx_type_0_init(_ctx._inst2);
+   Noise__ctx_type_0_init(_ctx._inst1144);
    _output_ = _ctx;
    return ;
 }
@@ -35,7 +35,7 @@ fix16_t Noise_process(Noise__ctx_type_1 &_ctx, fix16_t color){
    y2 = fix_mul(0x2 /* 0.000031 */,int_to_fix(_ctx.x2));
    fix16_t out;
    if(color > 0x8000 /* 0.500000 */){
-      out = Noise_pinker(_ctx._inst2,(y1 + (- y2)));
+      out = Noise_pinker(_ctx._inst1144,(y1 + (- y2)));
    }
    else
    {
@@ -67,9 +67,9 @@ void Tricore__ctx_type_0_init(Tricore__ctx_type_0 &_output_){
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
    _ctx.direction = false;
-   Util__ctx_type_0_init(_ctx._inst30);
-   Util__ctx_type_0_init(_ctx._inst29);
-   Util__ctx_type_1_init(_ctx._inst27);
+   Util__ctx_type_0_init(_ctx._inst481);
+   Util__ctx_type_0_init(_ctx._inst381);
+   Util__ctx_type_1_init(_ctx._inst159);
    Tricore_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -78,22 +78,22 @@ void Tricore__ctx_type_0_init(Tricore__ctx_type_0 &_output_){
 fix16_t Tricore_process(Tricore__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset, fix16_t disable){
    fix16_t out;
    out = 0x0 /* 0.000000 */;
-   if(Util_change(_ctx._inst27,cv)){
+   if(Util_change(_ctx._inst159,cv)){
       _ctx.rate = (Util_cvToRate_1024(cv) << 2);
    }
    fix16_t new_phase;
-   fix16_t _if_96;
+   fix16_t _if_13;
    if(_ctx.direction){
-      _if_96 = _ctx.rate;
+      _if_13 = _ctx.rate;
    }
    else
    {
-      _if_96 = (- _ctx.rate);
+      _if_13 = (- _ctx.rate);
    }
-   new_phase = (_ctx.phase + _if_96);
+   new_phase = (_ctx.phase + _if_13);
    uint8_t bdisable;
    bdisable = (disable > 0x8000 /* 0.500000 */);
-   if(Util_edge(_ctx._inst29,(reset > 0x0 /* 0.000000 */)) || Util_edge(_ctx._inst30,bdisable)){
+   if(Util_edge(_ctx._inst381,(reset > 0x0 /* 0.000000 */)) || Util_edge(_ctx._inst481,bdisable)){
       _ctx.reset_phase = _ctx.phase;
       _ctx.reset_state = true;
       new_phase = 0x0 /* 0.000000 */;
@@ -129,9 +129,9 @@ fix16_t Tricore_process(Tricore__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset, fi
       }
       else
       {
-         uint8_t _cond_100;
-         _cond_100 = (_ctx.reset_phase > 0xa0000 /* 10.000000 */);
-         if(bool_not(_cond_100)){
+         uint8_t _cond_17;
+         _cond_17 = (_ctx.reset_phase > 0xa0000 /* 10.000000 */);
+         if(bool_not(_cond_17)){
             _ctx.reset_phase = 0x0 /* 0.000000 */;
          }
          _ctx.reset_state = false;
@@ -146,7 +146,7 @@ fix16_t Tricore_process(Tricore__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset, fi
 void Swept__ctx_type_0_init(Swept__ctx_type_0 &_output_){
    Swept__ctx_type_0 _ctx;
    _ctx.out = 0x0 /* 0.000000 */;
-   Util__ctx_type_0_init(_ctx._inst43);
+   Util__ctx_type_0_init(_ctx._inst181);
    _output_ = _ctx;
    return ;
 }
@@ -157,7 +157,7 @@ fix16_t Swept_process(Swept__ctx_type_0 &_ctx, fix16_t gate, fix16_t start, fix1
    uint8_t bgate;
    bgate = (gate > 0x8000 /* 0.500000 */);
    _ctx.out = (_ctx.out + fix_mul(fix_mul(0x106 /* 0.004000 */,rate),((- _ctx.out) + (end << 10))));
-   if(Util_edge(_ctx._inst43,bgate)){
+   if(Util_edge(_ctx._inst181,bgate)){
       _ctx.out = (start << 10);
    }
    return (_ctx.out >> 10);
@@ -172,8 +172,8 @@ void Ahr__ctx_type_0_init(Ahr__ctx_type_0 &_output_){
    _ctx.hold_phase = 0x0 /* 0.000000 */;
    _ctx.do_ret_1 = 0x0 /* 0.000000 */;
    _ctx.do_ret_0 = 0x0 /* 0.000000 */;
-   Util__ctx_type_0_init(_ctx._inst58);
-   Util__ctx_type_0_init(_ctx._inst56);
+   Util__ctx_type_0_init(_ctx._inst381);
+   Util__ctx_type_0_init(_ctx._inst181);
    _output_ = _ctx;
    return ;
 }
@@ -189,7 +189,7 @@ void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r
    reset = 3;
    uint8_t bgate;
    bgate = (gate > 0x0 /* 0.000000 */);
-   if(Util_edge(_ctx._inst56,bgate)){
+   if(Util_edge(_ctx._inst181,bgate)){
       _ctx.state = reset;
    }
    fix16_t resetting;
@@ -200,7 +200,7 @@ void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r
    {
       resetting = 0x0 /* 0.000000 */;
    }
-   if(Util_edge(_ctx._inst58,(_ctx.out > 0x4000000 /* 1024.000000 */))){
+   if(Util_edge(_ctx._inst381,(_ctx.out > 0x4000000 /* 1024.000000 */))){
       _ctx.hold_phase = 0x0 /* 0.000000 */;
       _ctx.state = hold;
    }
@@ -240,7 +240,7 @@ void Ahr__ctx_type_1_init(Ahr__ctx_type_1 &_output_){
    _ctx.knob3 = 0x0 /* 0.000000 */;
    _ctx.knob2 = 0x0 /* 0.000000 */;
    _ctx.knob1 = 0x0 /* 0.000000 */;
-   Ahr__ctx_type_0_init(_ctx._inst67);
+   Ahr__ctx_type_0_init(_ctx._inst171);
    _output_ = _ctx;
    return ;
 }
@@ -259,11 +259,11 @@ void Ahr_controlChange(Ahr__ctx_type_1 &_ctx, int control, int value, int channe
 
 void Kick__ctx_type_0_init(Kick__ctx_type_0 &_output_){
    Kick__ctx_type_0 _ctx;
-   Noise__ctx_type_1_init(_ctx._inst80);
-   Ahr__ctx_type_0_init(_ctx._inst79);
-   Tricore__ctx_type_0_init(_ctx._inst78);
-   Swept__ctx_type_0_init(_ctx._inst77);
-   Ahr__ctx_type_0_init(_ctx._inst76);
+   Noise__ctx_type_1_init(_ctx._inst5171);
+   Ahr__ctx_type_0_init(_ctx._inst471);
+   Tricore__ctx_type_0_init(_ctx._inst365);
+   Swept__ctx_type_0_init(_ctx._inst2235);
+   Ahr__ctx_type_0_init(_ctx._inst171);
    _output_ = _ctx;
    return ;
 }
@@ -271,21 +271,21 @@ void Kick__ctx_type_0_init(Kick__ctx_type_0 &_output_){
 fix16_t Kick_do(Kick__ctx_type_0 &_ctx, fix16_t gate, fix16_t odecay, fix16_t pitch, fix16_t swept, fix16_t noise){
    fix16_t osc_env;
    fix16_t env_reset;
-   Ahr_do(_ctx._inst76,gate,0x147 /* 0.005000 */,(0x1999 /* 0.100000 */ + odecay),(0x28f /* 0.010000 */ + odecay));
-   osc_env = Ahr_do_ret_0(_ctx._inst76);
-   env_reset = Ahr_do_ret_1(_ctx._inst76);
+   Ahr_do(_ctx._inst171,gate,0x147 /* 0.005000 */,(0x1999 /* 0.100000 */ + odecay),(0x28f /* 0.010000 */ + odecay));
+   osc_env = Ahr_do_ret_0(_ctx._inst171);
+   env_reset = Ahr_do_ret_1(_ctx._inst171);
    fix16_t cv;
-   cv = Swept_process(_ctx._inst77,(0x10000 /* 1.000000 */ + (- env_reset)),(pitch + fix_mul(0x6666 /* 0.400000 */,swept)),pitch,0x1999 /* 0.100000 */);
+   cv = Swept_process(_ctx._inst2235,(0x10000 /* 1.000000 */ + (- env_reset)),(pitch + fix_mul(0x6666 /* 0.400000 */,swept)),pitch,0x1999 /* 0.100000 */);
    fix16_t osc;
-   osc = Tricore_process(_ctx._inst78,cv,0x0 /* 0.000000 */,env_reset);
+   osc = Tricore_process(_ctx._inst365,cv,0x0 /* 0.000000 */,env_reset);
    fix16_t osc_sat;
    osc_sat = Saturate_process(fix_mul(0x18000 /* 1.500000 */,osc));
    fix16_t noise_env;
-   Ahr_do(_ctx._inst79,gate,0x41 /* 0.001000 */,0x28f /* 0.010000 */,(0x41 /* 0.001000 */ + fix_mul(0x28f /* 0.010000 */,noise)));
-   noise_env = Ahr_do_ret_0(_ctx._inst79);
-   Ahr_do_ret_1(_ctx._inst79);
+   Ahr_do(_ctx._inst471,gate,0x41 /* 0.001000 */,0x28f /* 0.010000 */,(0x41 /* 0.001000 */ + fix_mul(0x28f /* 0.010000 */,noise)));
+   noise_env = Ahr_do_ret_0(_ctx._inst471);
+   Ahr_do_ret_1(_ctx._inst471);
    fix16_t noise_osc;
-   noise_osc = fix_mul(fix_mul(0x5555 /* 0.333333 */,noise),Noise_process(_ctx._inst80,0x10000 /* 1.000000 */));
+   noise_osc = fix_mul(fix_mul(0x5555 /* 0.333333 */,noise),Noise_process(_ctx._inst5171,0x10000 /* 1.000000 */));
    return (fix_mul(noise_env,noise_osc) + fix_mul(osc_env,osc_sat));
 }
 
@@ -295,7 +295,7 @@ void Kick__ctx_type_1_init(Kick__ctx_type_1 &_output_){
    _ctx.pitch = 0x0 /* 0.000000 */;
    _ctx.odecay = 0x0 /* 0.000000 */;
    _ctx.noise = 0x0 /* 0.000000 */;
-   Kick__ctx_type_0_init(_ctx._inst82);
+   Kick__ctx_type_0_init(_ctx._inst132);
    _output_ = _ctx;
    return ;
 }

@@ -4,8 +4,8 @@
 
 void Sff_ff__ctx_type_0_init(Sff_ff__ctx_type_0 &_output_){
    Sff_ff__ctx_type_0 _ctx;
-   _ctx.process_ret_1 = 0.f;
-   _ctx.process_ret_0 = 0.f;
+   _ctx.process_ret_1 = 0.0f;
+   _ctx.process_ret_0 = 0.0f;
    _output_ = _ctx;
    return ;
 }

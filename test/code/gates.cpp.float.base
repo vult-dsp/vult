@@ -5,14 +5,14 @@
 void Gates__ctx_type_1_init(Gates__ctx_type_1 &_output_){
    Gates__ctx_type_1 _ctx;
    int_init_array(8,0,_ctx.vel);
-   _ctx.gates_state_ret_7 = 0.f;
-   _ctx.gates_state_ret_6 = 0.f;
-   _ctx.gates_state_ret_5 = 0.f;
-   _ctx.gates_state_ret_4 = 0.f;
-   _ctx.gates_state_ret_3 = 0.f;
-   _ctx.gates_state_ret_2 = 0.f;
-   _ctx.gates_state_ret_1 = 0.f;
-   _ctx.gates_state_ret_0 = 0.f;
+   _ctx.gates_state_ret_7 = 0.0f;
+   _ctx.gates_state_ret_6 = 0.0f;
+   _ctx.gates_state_ret_5 = 0.0f;
+   _ctx.gates_state_ret_4 = 0.0f;
+   _ctx.gates_state_ret_3 = 0.0f;
+   _ctx.gates_state_ret_2 = 0.0f;
+   _ctx.gates_state_ret_1 = 0.0f;
+   _ctx.gates_state_ret_0 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -47,14 +47,14 @@ void Gates_gates_state(Gates__ctx_type_1 &_ctx){
 
 void Gates__ctx_type_2_init(Gates__ctx_type_2 &_output_){
    Gates__ctx_type_2 _ctx;
-   _ctx.process_ret_7 = 0.f;
-   _ctx.process_ret_6 = 0.f;
-   _ctx.process_ret_5 = 0.f;
-   _ctx.process_ret_4 = 0.f;
-   _ctx.process_ret_3 = 0.f;
-   _ctx.process_ret_2 = 0.f;
-   _ctx.process_ret_1 = 0.f;
-   _ctx.process_ret_0 = 0.f;
+   _ctx.process_ret_7 = 0.0f;
+   _ctx.process_ret_6 = 0.0f;
+   _ctx.process_ret_5 = 0.0f;
+   _ctx.process_ret_4 = 0.0f;
+   _ctx.process_ret_3 = 0.0f;
+   _ctx.process_ret_2 = 0.0f;
+   _ctx.process_ret_1 = 0.0f;
+   _ctx.process_ret_0 = 0.0f;
    Gates__ctx_type_1_init(_ctx.gates);
    _ctx.channel_in = 0;
    _output_ = _ctx;

@@ -4,8 +4,8 @@
 
 void Util__ctx_type_3_init(Util__ctx_type_3 &_output_){
    Util__ctx_type_3 _ctx;
-   _ctx.y1 = 0.f;
-   _ctx.x1 = 0.f;
+   _ctx.y1 = 0.0f;
+   _ctx.x1 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -20,9 +20,9 @@ float Util_dcblock(Util__ctx_type_3 &_ctx, float x0){
 
 void Lfo__ctx_type_0_init(Lfo__ctx_type_0 &_output_){
    Lfo__ctx_type_0 _ctx;
-   _ctx.x4 = 0.f;
-   _ctx.x3 = 0.f;
-   _ctx.x2 = 0.f;
+   _ctx.x4 = 0.0f;
+   _ctx.x3 = 0.0f;
+   _ctx.x2 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -30,31 +30,31 @@ void Lfo__ctx_type_0_init(Lfo__ctx_type_0 &_output_){
 float Lfo_soft(Lfo__ctx_type_0 &_ctx, float x1){
    float o;
    o = (0.25f * (_ctx.x2 + _ctx.x3 + _ctx.x4 + x1));
-   float _tmp_33_0;
-   _tmp_33_0 = x1;
-   float _tmp_33_1;
-   _tmp_33_1 = _ctx.x2;
-   float _tmp_33_2;
-   _tmp_33_2 = _ctx.x3;
-   _ctx.x2 = _tmp_33_0;
-   _ctx.x3 = _tmp_33_1;
-   _ctx.x4 = _tmp_33_2;
+   float _tmp_1_0;
+   _tmp_1_0 = x1;
+   float _tmp_1_1;
+   _tmp_1_1 = _ctx.x2;
+   float _tmp_1_2;
+   _tmp_1_2 = _ctx.x3;
+   _ctx.x2 = _tmp_1_0;
+   _ctx.x3 = _tmp_1_1;
+   _ctx.x4 = _tmp_1_2;
    return o;
 }
 
 void Lfo__ctx_type_1_init(Lfo__ctx_type_1 &_output_){
    Lfo__ctx_type_1 _ctx;
-   _ctx.rate = 0.f;
-   _ctx.phase = 0.f;
-   Lfo__ctx_type_0_init(_ctx._inst25);
-   Util__ctx_type_0_init(_ctx._inst23);
-   Util__ctx_type_1_init(_ctx._inst21);
+   _ctx.rate = 0.0f;
+   _ctx.phase = 0.0f;
+   Lfo__ctx_type_0_init(_ctx._inst5155);
+   Util__ctx_type_0_init(_ctx._inst381);
+   Util__ctx_type_1_init(_ctx._inst159);
    _output_ = _ctx;
    return ;
 }
 
 float Lfo_process(Lfo__ctx_type_1 &_ctx, float cv, float shape, float reset){
-   if(Util_change(_ctx._inst21,cv)){
+   if(Util_change(_ctx._inst159,cv)){
       _ctx.rate = Util_cvToRate((-0.3f + cv));
    }
    _ctx.phase = (_ctx.phase + _ctx.rate);
@@ -62,9 +62,9 @@ float Lfo_process(Lfo__ctx_type_1 &_ctx, float cv, float shape, float reset){
       _ctx.phase = (-2.f + _ctx.phase);
    }
    uint8_t breset;
-   breset = (reset > 0.f);
-   if(Util_edge(_ctx._inst23,breset)){
-      _ctx.phase = 0.f;
+   breset = (reset > 0.0f);
+   if(Util_edge(_ctx._inst381,breset)){
+      _ctx.phase = 0.0f;
    }
    float tmp;
    tmp = (-1.f + _ctx.phase);
@@ -79,16 +79,16 @@ float Lfo_process(Lfo__ctx_type_1 &_ctx, float cv, float shape, float reset){
       }
       else
       {
-         if(tmp > 0.f){
+         if(tmp > 0.0f){
             o = 1.f;
          }
          else
          {
-            o = 0.f;
+            o = 0.0f;
          }
       }
    }
-   return Lfo_soft(_ctx._inst25,o);
+   return Lfo_soft(_ctx._inst5155,o);
 }
 
 

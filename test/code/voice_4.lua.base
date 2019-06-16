@@ -271,9 +271,9 @@ function this.Tricore__ctx_type_0_init()
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
    _ctx.direction = false; 
-   _ctx._inst23 = this.Util__ctx_type_0_init(); 
-   _ctx._inst22 = this.Util__ctx_type_0_init(); 
-   _ctx._inst20 = this.Util__ctx_type_1_init(); 
+   _ctx._inst481 = this.Util__ctx_type_0_init(); 
+   _ctx._inst381 = this.Util__ctx_type_0_init(); 
+   _ctx._inst159 = this.Util__ctx_type_1_init(); 
    this.Tricore_default(_ctx);
    return _ctx; 
 
@@ -285,20 +285,20 @@ end
 
 function this.Tricore_process(_ctx,cv,reset,disable)
    local out = 0.; 
-   if this.Util_change(_ctx._inst20,cv) then
+   if this.Util_change(_ctx._inst159,cv) then
       _ctx.rate = (4. * this.Util_cvToRate_1024(cv)); 
    end
    local new_phase = 0.0; 
-   local _if_158 = 0.0; 
+   local _if_13 = 0.0; 
    if _ctx.direction then
-      _if_158 = _ctx.rate; 
+      _if_13 = _ctx.rate; 
    else
 
-      _if_158 = (- _ctx.rate); 
+      _if_13 = (- _ctx.rate); 
    end
-   new_phase = (_ctx.phase + _if_158); 
+   new_phase = (_ctx.phase + _if_13); 
    local bdisable = (disable > 0.5); 
-   if (this.Util_edge(_ctx._inst22,(reset > 0.)) or this.Util_edge(_ctx._inst23,bdisable)) then
+   if (this.Util_edge(_ctx._inst381,(reset > 0.)) or this.Util_edge(_ctx._inst481,bdisable)) then
       _ctx.reset_phase = _ctx.phase; 
       _ctx.reset_state = true; 
       new_phase = 0.; 
@@ -333,8 +333,8 @@ function this.Tricore_process(_ctx,cv,reset,disable)
 
       else
 
-         local _cond_162 = (_ctx.reset_phase > 10.); 
-         if (not _cond_162) then
+         local _cond_17 = (_ctx.reset_phase > 10.); 
+         if (not _cond_17) then
             _ctx.reset_phase = 0.; 
          end
          _ctx.reset_state = false; 
@@ -449,8 +449,8 @@ function this.Svf__ctx_type_4_init()
    _ctx.z1 = 0.; 
    _ctx.inv_den = 0.; 
    _ctx.g = 0.; 
-   _ctx._inst44 = this.Util__ctx_type_1_init(); 
-   _ctx._inst43 = this.Util__ctx_type_1_init(); 
+   _ctx._inst259 = this.Util__ctx_type_1_init(); 
+   _ctx._inst159 = this.Util__ctx_type_1_init(); 
    _ctx.R = 0.; 
    this.Svf_default(_ctx);
    return _ctx; 
@@ -463,7 +463,7 @@ end
 
 function this.Svf_process(_ctx,x,cv,q,sel)
    q = (0.5 + q); 
-   if (this.Util_change(_ctx._inst43,cv) or this.Util_change(_ctx._inst44,q)) then
+   if (this.Util_change(_ctx._inst159,cv) or this.Util_change(_ctx._inst259,q)) then
       _ctx.g = this.Svf_calc_g(cv); 
       _ctx.R = (1. / (2. * (1e-07 + q))); 
       _ctx.inv_den = (1. / (1. + (2. * _ctx.R * _ctx.g) + (_ctx.g * _ctx.g))); 
@@ -587,12 +587,12 @@ end
 
 function this.Lfo_soft(_ctx,x1)
    local o = (0.25 * (_ctx.x2 + _ctx.x3 + _ctx.x4 + x1)); 
-   local _tmp_166_0 = x1; 
-   local _tmp_166_1 = _ctx.x2; 
-   local _tmp_166_2 = _ctx.x3; 
-   _ctx.x2 = _tmp_166_0; 
-   _ctx.x3 = _tmp_166_1; 
-   _ctx.x4 = _tmp_166_2; 
+   local _tmp_1_0 = x1; 
+   local _tmp_1_1 = _ctx.x2; 
+   local _tmp_1_2 = _ctx.x3; 
+   _ctx.x2 = _tmp_1_0; 
+   _ctx.x3 = _tmp_1_1; 
+   _ctx.x4 = _tmp_1_2; 
    return o; 
 
 end
@@ -601,9 +601,9 @@ function this.Lfo__ctx_type_1_init()
    local _ctx = {}; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst62 = this.Lfo__ctx_type_0_init(); 
-   _ctx._inst60 = this.Util__ctx_type_0_init(); 
-   _ctx._inst58 = this.Util__ctx_type_1_init(); 
+   _ctx._inst5155 = this.Lfo__ctx_type_0_init(); 
+   _ctx._inst381 = this.Util__ctx_type_0_init(); 
+   _ctx._inst159 = this.Util__ctx_type_1_init(); 
    return _ctx; 
 
 end
@@ -613,7 +613,7 @@ function this.Lfo_process_init()
 end
 
 function this.Lfo_process(_ctx,cv,shape,reset)
-   if this.Util_change(_ctx._inst58,cv) then
+   if this.Util_change(_ctx._inst159,cv) then
       _ctx.rate = this.Util_cvToRate(((-0.3) + cv)); 
    end
    _ctx.phase = (_ctx.phase + _ctx.rate); 
@@ -621,7 +621,7 @@ function this.Lfo_process(_ctx,cv,shape,reset)
       _ctx.phase = ((-2.) + _ctx.phase); 
    end
    local breset = (reset > 0.); 
-   if this.Util_edge(_ctx._inst60,breset) then
+   if this.Util_edge(_ctx._inst381,breset) then
       _ctx.phase = 0.; 
    end
    local tmp = ((-1.) + _ctx.phase); 
@@ -642,7 +642,7 @@ function this.Lfo_process(_ctx,cv,shape,reset)
          end
       end
    end
-   return this.Lfo_soft(_ctx._inst62,o); 
+   return this.Lfo_soft(_ctx._inst5155,o); 
 
 end
 
@@ -703,8 +703,8 @@ function this.Phase__ctx_type_0_init()
    local _ctx = {}; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst71 = this.Util__ctx_type_0_init(); 
-   _ctx._inst69 = this.Util__ctx_type_1_init(); 
+   _ctx._inst381 = this.Util__ctx_type_0_init(); 
+   _ctx._inst159 = this.Util__ctx_type_1_init(); 
    this.Phase_default(_ctx);
    return _ctx; 
 
@@ -715,10 +715,10 @@ function this.Phase_process_init()
 end
 
 function this.Phase_process(_ctx,cv,reset)
-   if this.Util_change(_ctx._inst69,cv) then
+   if this.Util_change(_ctx._inst159,cv) then
       _ctx.rate = this.Util_cvToRate_1024(cv); 
    end
-   if this.Util_edge(_ctx._inst71,(reset > 0.5)) then
+   if this.Util_edge(_ctx._inst381,(reset > 0.5)) then
       _ctx.phase = 0.; 
    else
 
@@ -767,7 +767,7 @@ function this.Blit__ctx_type_0_init()
    local _ctx = {}; 
    _ctx.scale = 0.; 
    _ctx.m = 0; 
-   _ctx._inst77 = this.Util__ctx_type_1_init(); 
+   _ctx._inst159 = this.Util__ctx_type_1_init(); 
    this.Blit_pulse_start(_ctx);
    return _ctx; 
 
@@ -778,7 +778,7 @@ function this.Blit_pulse_train_init()
 end
 
 function this.Blit_pulse_train(_ctx,cv,phase)
-   if this.Util_change(_ctx._inst77,cv) then
+   if this.Util_change(_ctx._inst159,cv) then
       _ctx.m = (1 + (2 * this.int(this.Util_cvToperiod(cv)))); 
       _ctx.scale = (2. * this.Util_cvToperiod(cv)); 
 
@@ -815,11 +815,11 @@ function this.Blit__ctx_type_1_init()
    _ctx.state_pulse = 0.; 
    _ctx.rate = 0.; 
    _ctx.output = 0.; 
-   _ctx._inst93 = this.Util__ctx_type_3_init(); 
-   _ctx._inst90 = this.Blit__ctx_type_0_init(); 
-   _ctx._inst89 = this.Blit__ctx_type_0_init(); 
-   _ctx._inst87 = this.Phase__ctx_type_0_init(); 
-   _ctx._inst85 = this.Util__ctx_type_1_init(); 
+   _ctx._inst870 = this.Blit__ctx_type_0_init(); 
+   _ctx._inst770 = this.Blit__ctx_type_0_init(); 
+   _ctx._inst5205 = this.Phase__ctx_type_0_init(); 
+   _ctx._inst359 = this.Util__ctx_type_1_init(); 
+   _ctx._inst11125 = this.Util__ctx_type_3_init(); 
    this.Blit_init(_ctx);
    return _ctx; 
 
@@ -837,17 +837,17 @@ function this.Blit_osc_blit(_ctx,cv,pw,wave)
 
       fixed_cv = ((-0.1) + cv); 
    end
-   if this.Util_change(_ctx._inst85,fixed_cv) then
+   if this.Util_change(_ctx._inst359,fixed_cv) then
       _ctx.rate = this.Util_cvToRate(fixed_cv); 
    end
-   local phase = this.Phase_process(_ctx._inst87,fixed_cv,0.); 
+   local phase = this.Phase_process(_ctx._inst5205,fixed_cv,0.); 
    local shift05 = (0.5 + (0.49 * pw)); 
    local shift = (phase + shift05); 
    if (shift > 1.) then
       shift = ((-1.) + shift); 
    end
-   local pulse1 = this.Blit_pulse_train(_ctx._inst89,fixed_cv,phase); 
-   local pulse2 = this.Blit_pulse_train(_ctx._inst90,fixed_cv,shift); 
+   local pulse1 = this.Blit_pulse_train(_ctx._inst770,fixed_cv,phase); 
+   local pulse2 = this.Blit_pulse_train(_ctx._inst870,fixed_cv,shift); 
    _ctx.state_pulse = (pulse1 + (- pulse2) + (0.9995 * _ctx.state_pulse)); 
    _ctx.state_saw = ((0.5 * ((pulse1 + pulse2 + ((-2.) * _ctx.rate)) / shift05)) + (0.9995 * _ctx.state_saw)); 
    if (wave < 1.) then
@@ -856,7 +856,7 @@ function this.Blit_osc_blit(_ctx,cv,pw,wave)
 
       _ctx.output = (2. * _ctx.state_saw); 
    end
-   _ctx.output = this.Util_dcblock(_ctx._inst93,_ctx.output); 
+   _ctx.output = this.Util_dcblock(_ctx._inst11125,_ctx.output); 
    return _ctx.output; 
 
 end
@@ -871,7 +871,7 @@ end
 
 function this.Blit__ctx_type_2_init()
    local _ctx = {}; 
-   _ctx._inst96 = this.Blit__ctx_type_1_init(); 
+   _ctx._inst176 = this.Blit__ctx_type_1_init(); 
    return _ctx; 
 
 end
@@ -881,7 +881,7 @@ function this.Blit_process_init()
 end
 
 function this.Blit_process(_ctx,cv,pw,wave)
-   return this.Blit_osc_blit(_ctx._inst96,cv,pw,wave); 
+   return this.Blit_osc_blit(_ctx._inst176,cv,pw,wave); 
 end
 
 function this.Blit_noteOn_init()
@@ -923,8 +923,8 @@ function this.Adsr__ctx_type_0_init()
    _ctx.scale = 0.; 
    _ctx.rate = 0.; 
    _ctx.out = 0.; 
-   _ctx._inst110 = this.Util__ctx_type_4_init(); 
-   _ctx._inst103 = this.Util__ctx_type_0_init(); 
+   _ctx._inst985 = this.Util__ctx_type_4_init(); 
+   _ctx._inst281 = this.Util__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -940,7 +940,7 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
    _ctx.out = (_ctx.out + (0.004 * _ctx.rate * (_ctx.target + (- _ctx.out)))); 
    local bgate = (gate > 0.); 
    if (_ctx.state == 0) then
-      if this.Util_edge(_ctx._inst103,bgate) then
+      if this.Util_edge(_ctx._inst281,bgate) then
          _ctx.state = 1; 
          _ctx.scale = (0.2 * gate); 
 
@@ -968,7 +968,7 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
       _ctx.target = (1024. * s); 
 
    end
-   return (this.Util_smooth(_ctx._inst110,_ctx.scale) * this.clip((0.0009766 * _ctx.out),0.,1.)); 
+   return (this.Util_smooth(_ctx._inst985,_ctx.scale) * this.clip((0.0009766 * _ctx.out),0.,1.)); 
 
 end
 
@@ -978,7 +978,7 @@ function this.Adsr__ctx_type_1_init()
    _ctx.knob3 = 0.; 
    _ctx.knob2 = 0.; 
    _ctx.knob1 = 0.; 
-   _ctx._inst112 = this.Adsr__ctx_type_0_init(); 
+   _ctx._inst16 = this.Adsr__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -988,7 +988,7 @@ function this.Adsr_process_init()
 end
 
 function this.Adsr_process(_ctx,gate)
-   return this.Adsr_do(_ctx._inst112,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4); 
+   return this.Adsr_do(_ctx._inst16,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4); 
 end
 
 function this.Adsr_noteOn_init()
@@ -1062,13 +1062,13 @@ function this.Voice_4__ctx_type_0_init()
    _ctx.flt_cut = 0.; 
    _ctx.decay = 0.; 
    _ctx.attack = 0.; 
-   _ctx._inst128 = this.Adsr__ctx_type_0_init(); 
-   _ctx._inst127 = this.Svf__ctx_type_4_init(); 
-   _ctx._inst126 = this.Tricore__ctx_type_0_init(); 
-   _ctx._inst125 = this.Blit__ctx_type_2_init(); 
-   _ctx._inst124 = this.Blit__ctx_type_2_init(); 
-   _ctx._inst123 = this.Blit__ctx_type_2_init(); 
-   _ctx._inst122 = this.Lfo__ctx_type_1_init(); 
+   _ctx._inst76 = this.Adsr__ctx_type_0_init(); 
+   _ctx._inst618 = this.Svf__ctx_type_4_init(); 
+   _ctx._inst565 = this.Tricore__ctx_type_0_init(); 
+   _ctx._inst479 = this.Blit__ctx_type_2_init(); 
+   _ctx._inst379 = this.Blit__ctx_type_2_init(); 
+   _ctx._inst279 = this.Blit__ctx_type_2_init(); 
+   _ctx._inst15 = this.Lfo__ctx_type_1_init(); 
    return _ctx; 
 
 end
@@ -1078,17 +1078,17 @@ function this.Voice_4_process_init()
 end
 
 function this.Voice_4_process(_ctx,cv,vel,gate)
-   local lfo = this.Lfo_process(_ctx._inst122,_ctx.lfo_rate,_ctx.lfo_shape,(_ctx.lfo_reset * gate)); 
+   local lfo = this.Lfo_process(_ctx._inst15,_ctx.lfo_rate,_ctx.lfo_shape,(_ctx.lfo_reset * gate)); 
    local mod_pw = (_ctx.lfo_pw * lfo); 
    local mod_cv = (_ctx.lfo_cv * lfo); 
    local mod_flt = (_ctx.lfo_flt * lfo); 
-   local o1 = this.Blit_process(_ctx._inst123,(0.0001 + cv + mod_cv),(_ctx.pw1 + mod_pw),0.); 
-   local o2 = this.Blit_process(_ctx._inst124,(0.0002 + cv + mod_cv),(_ctx.pw2 + mod_pw),1.); 
-   local o3 = this.Blit_process(_ctx._inst125,(_ctx.pw3 + cv + mod_cv),(_ctx.pw1 + mod_pw),0.); 
-   local sub = this.Saturate_process((this.Tricore_process(_ctx._inst126,(cv + mod_cv),0.,1.) * (2. + (5. * _ctx.pw4)))); 
+   local o1 = this.Blit_process(_ctx._inst279,(0.0001 + cv + mod_cv),(_ctx.pw1 + mod_pw),0.); 
+   local o2 = this.Blit_process(_ctx._inst379,(0.0002 + cv + mod_cv),(_ctx.pw2 + mod_pw),1.); 
+   local o3 = this.Blit_process(_ctx._inst479,(_ctx.pw3 + cv + mod_cv),(_ctx.pw1 + mod_pw),0.); 
+   local sub = this.Saturate_process((this.Tricore_process(_ctx._inst565,(cv + mod_cv),0.,1.) * (2. + (5. * _ctx.pw4)))); 
    local o = ((_ctx.level1 * o1) + (_ctx.level2 * o2) + (_ctx.level3 * o3) + (_ctx.level4 * sub)); 
-   local f = this.Svf_process(_ctx._inst127,o,(_ctx.flt_cut + mod_flt),_ctx.flt_res,_ctx.flt_shape); 
-   local env = this.Adsr_do(_ctx._inst128,gate,_ctx.attack,_ctx.decay,_ctx.sustain,_ctx.release); 
+   local f = this.Svf_process(_ctx._inst618,o,(_ctx.flt_cut + mod_flt),_ctx.flt_res,_ctx.flt_shape); 
+   local env = this.Adsr_do(_ctx._inst76,gate,_ctx.attack,_ctx.decay,_ctx.sustain,_ctx.release); 
    return (env * f); 
 
 end

@@ -40,7 +40,7 @@ typedef Util__ctx_type_1 Util_change_type;
 
 static_inline void Util__ctx_type_1_init(Util__ctx_type_1 &_output_){
    Util__ctx_type_1 _ctx;
-   _ctx.pre_x = 0.f;
+   _ctx.pre_x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -85,7 +85,7 @@ typedef Util__ctx_type_4 Util_smooth_type;
 
 static_inline void Util__ctx_type_4_init(Util__ctx_type_4 &_output_){
    Util__ctx_type_4 _ctx;
-   _ctx.x = 0.f;
+   _ctx.x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -108,7 +108,7 @@ typedef Util__ctx_type_5 Util_average2_type;
 
 static_inline void Util__ctx_type_5_init(Util__ctx_type_5 &_output_){
    Util__ctx_type_5 _ctx;
-   _ctx.x0 = 0.f;
+   _ctx.x0 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -314,8 +314,8 @@ typedef struct Svf__ctx_type_4 {
    float z1;
    float inv_den;
    float g;
-   Util__ctx_type_1 _inst28;
-   Util__ctx_type_1 _inst27;
+   Util__ctx_type_1 _inst259;
+   Util__ctx_type_1 _inst159;
    float R;
 } Svf__ctx_type_4;
 

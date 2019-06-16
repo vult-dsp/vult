@@ -32,7 +32,7 @@ static_inline fix16_t Volume_smooth(Volume__ctx_type_0 &_ctx, fix16_t input){
 
 typedef struct Volume__ctx_type_1 {
    fix16_t volume;
-   Volume__ctx_type_0 _inst2;
+   Volume__ctx_type_0 _inst1115;
 } Volume__ctx_type_1;
 
 typedef Volume__ctx_type_1 Volume_process_type;
@@ -45,7 +45,7 @@ static_inline void Volume_process_init(Volume__ctx_type_1 &_output_){
 }
 
 static_inline fix16_t Volume_process(Volume__ctx_type_1 &_ctx, fix16_t input){
-   return fix_mul(input,Volume_smooth(_ctx._inst2,_ctx.volume));
+   return fix_mul(input,Volume_smooth(_ctx._inst1115,_ctx.volume));
 };
 
 typedef Volume__ctx_type_1 Volume_noteOn_type;

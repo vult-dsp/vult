@@ -4,8 +4,8 @@
 
 void Util__ctx_type_3_init(Util__ctx_type_3 &_output_){
    Util__ctx_type_3 _ctx;
-   _ctx.y1 = 0.f;
-   _ctx.x1 = 0.f;
+   _ctx.y1 = 0.0f;
+   _ctx.x1 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -71,16 +71,16 @@ int Monocv_mono_noteOff(Monocv__ctx_type_0 &_ctx, int n){
 
 void Monocv__ctx_type_1_init(Monocv__ctx_type_1 &_output_){
    Monocv__ctx_type_1 _ctx;
-   _ctx.vel = 0.f;
-   _ctx.process_ret_2 = 0.f;
-   _ctx.process_ret_1 = 0.f;
-   _ctx.process_ret_0 = 0.f;
+   _ctx.vel = 0.0f;
+   _ctx.process_ret_2 = 0.0f;
+   _ctx.process_ret_1 = 0.0f;
+   _ctx.process_ret_0 = 0.0f;
    Monocv__ctx_type_0_init(_ctx.notes);
-   _ctx.gate = 0.f;
-   _ctx.cv = 0.f;
+   _ctx.gate = 0.0f;
+   _ctx.cv = 0.0f;
    _ctx.channel_in = 0;
    _ctx.active_note = 0;
-   Util__ctx_type_1_init(_ctx._inst31);
+   Util__ctx_type_1_init(_ctx._inst159);
    _output_ = _ctx;
    return ;
 }
@@ -92,11 +92,11 @@ void Monocv_process(Monocv__ctx_type_1 &_ctx, int c){
    }
    else
    {
-      _ctx.gate = 0.f;
+      _ctx.gate = 0.0f;
    }
    float note;
    note = int_to_float(_ctx.active_note);
-   if(Util_change(_ctx._inst31,note)){
+   if(Util_change(_ctx._inst159,note)){
       _ctx.cv = Util_pitchToCv(note);
    }
    _ctx.process_ret_0 = _ctx.cv;

@@ -15,7 +15,7 @@ typedef Phasedist__ctx_type_0 Phasedist_smooth_type;
 
 static_inline void Phasedist__ctx_type_0_init(Phasedist__ctx_type_0 &_output_){
    Phasedist__ctx_type_0 _ctx;
-   _ctx.x = 0.f;
+   _ctx.x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -38,7 +38,7 @@ typedef Phasedist__ctx_type_1 Phasedist_change_type;
 
 static_inline void Phasedist__ctx_type_1_init(Phasedist__ctx_type_1 &_output_){
    Phasedist__ctx_type_1 _ctx;
-   _ctx.pre_x = 0.f;
+   _ctx.pre_x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -62,7 +62,7 @@ static_inline float Phasedist_pitchToRate(float d){
 typedef struct Phasedist__ctx_type_3 {
    float rate;
    float phase;
-   Phasedist__ctx_type_1 _inst4;
+   Phasedist__ctx_type_1 _inst126;
 } Phasedist__ctx_type_3;
 
 typedef Phasedist__ctx_type_3 Phasedist_phasor_type;
@@ -81,10 +81,10 @@ typedef struct Phasedist__ctx_type_4 {
    float pre_phase1;
    float pitch;
    float detune;
-   Phasedist__ctx_type_3 _inst9;
-   Phasedist__ctx_type_0 _inst8;
-   Phasedist__ctx_type_3 _inst7;
-   Phasedist__ctx_type_0 _inst10;
+   Phasedist__ctx_type_0 _inst4182;
+   Phasedist__ctx_type_3 _inst357;
+   Phasedist__ctx_type_0 _inst2182;
+   Phasedist__ctx_type_3 _inst157;
 } Phasedist__ctx_type_4;
 
 typedef Phasedist__ctx_type_4 Phasedist_process_type;
@@ -145,7 +145,7 @@ static_inline void Phasedist_default_init(Phasedist__ctx_type_4 &_output_){
 static_inline void Phasedist_default(Phasedist__ctx_type_4 &_ctx){
    _ctx.volume = 1.f;
    _ctx.pitch = 45.f;
-   _ctx.detune = 0.f;
+   _ctx.detune = 0.0f;
 }
 
 

@@ -40,7 +40,7 @@ typedef Util__ctx_type_1 Util_change_type;
 
 static_inline void Util__ctx_type_1_init(Util__ctx_type_1 &_output_){
    Util__ctx_type_1 _ctx;
-   _ctx.pre_x = 0.f;
+   _ctx.pre_x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -85,7 +85,7 @@ typedef Util__ctx_type_4 Util_smooth_type;
 
 static_inline void Util__ctx_type_4_init(Util__ctx_type_4 &_output_){
    Util__ctx_type_4 _ctx;
-   _ctx.x = 0.f;
+   _ctx.x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -108,7 +108,7 @@ typedef Util__ctx_type_5 Util_average2_type;
 
 static_inline void Util__ctx_type_5_init(Util__ctx_type_5 &_output_){
    Util__ctx_type_5 _ctx;
-   _ctx.x0 = 0.f;
+   _ctx.x0 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -260,8 +260,8 @@ static_inline float Util_cvTokHz(float cv){
 typedef struct Phase__ctx_type_0 {
    float rate;
    float phase;
-   Util__ctx_type_0 _inst22;
-   Util__ctx_type_1 _inst20;
+   Util__ctx_type_0 _inst381;
+   Util__ctx_type_1 _inst159;
 } Phase__ctx_type_0;
 
 typedef Phase__ctx_type_0 Phase_process_type;
@@ -337,7 +337,7 @@ static_inline float Tables_nsine(float x){
 typedef struct Blit__ctx_type_0 {
    float scale;
    int m;
-   Util__ctx_type_1 _inst29;
+   Util__ctx_type_1 _inst159;
 } Blit__ctx_type_0;
 
 typedef Blit__ctx_type_0 Blit_pulse_train_type;
@@ -368,11 +368,11 @@ typedef struct Blit__ctx_type_1 {
    float state_pulse;
    float rate;
    float output;
-   Util__ctx_type_3 _inst45;
-   Blit__ctx_type_0 _inst42;
-   Blit__ctx_type_0 _inst41;
-   Phase__ctx_type_0 _inst39;
-   Util__ctx_type_1 _inst37;
+   Blit__ctx_type_0 _inst870;
+   Blit__ctx_type_0 _inst770;
+   Phase__ctx_type_0 _inst5205;
+   Util__ctx_type_1 _inst359;
+   Util__ctx_type_3 _inst11125;
 } Blit__ctx_type_1;
 
 typedef Blit__ctx_type_1 Blit_osc_blit_type;
@@ -398,14 +398,14 @@ static_inline void Blit_init(Blit__ctx_type_1 &_ctx){
 };
 
 typedef struct Blit__ctx_type_2 {
-   Blit__ctx_type_1 _inst48;
+   Blit__ctx_type_1 _inst176;
 } Blit__ctx_type_2;
 
 typedef Blit__ctx_type_2 Blit_process_type;
 
 static_inline void Blit__ctx_type_2_init(Blit__ctx_type_2 &_output_){
    Blit__ctx_type_2 _ctx;
-   Blit__ctx_type_1_init(_ctx._inst48);
+   Blit__ctx_type_1_init(_ctx._inst176);
    _output_ = _ctx;
    return ;
 }
@@ -416,7 +416,7 @@ static_inline void Blit_process_init(Blit__ctx_type_2 &_output_){
 }
 
 static_inline float Blit_process(Blit__ctx_type_2 &_ctx, float cv, float pw, float wave){
-   return Blit_osc_blit(_ctx._inst48,cv,pw,wave);
+   return Blit_osc_blit(_ctx._inst176,cv,pw,wave);
 };
 
 typedef Blit__ctx_type_2 Blit_noteOn_type;

@@ -25,9 +25,9 @@ void Tricore__ctx_type_0_init(Tricore__ctx_type_0 &_output_){
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
    _ctx.direction = false;
-   Util__ctx_type_0_init(_ctx._inst23);
-   Util__ctx_type_0_init(_ctx._inst22);
-   Util__ctx_type_1_init(_ctx._inst20);
+   Util__ctx_type_0_init(_ctx._inst481);
+   Util__ctx_type_0_init(_ctx._inst381);
+   Util__ctx_type_1_init(_ctx._inst159);
    Tricore_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -36,22 +36,22 @@ void Tricore__ctx_type_0_init(Tricore__ctx_type_0 &_output_){
 fix16_t Tricore_process(Tricore__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset, fix16_t disable){
    fix16_t out;
    out = 0x0 /* 0.000000 */;
-   if(Util_change(_ctx._inst20,cv)){
+   if(Util_change(_ctx._inst159,cv)){
       _ctx.rate = (Util_cvToRate_1024(cv) << 2);
    }
    fix16_t new_phase;
-   fix16_t _if_39;
+   fix16_t _if_13;
    if(_ctx.direction){
-      _if_39 = _ctx.rate;
+      _if_13 = _ctx.rate;
    }
    else
    {
-      _if_39 = (- _ctx.rate);
+      _if_13 = (- _ctx.rate);
    }
-   new_phase = (_ctx.phase + _if_39);
+   new_phase = (_ctx.phase + _if_13);
    uint8_t bdisable;
    bdisable = (disable > 0x8000 /* 0.500000 */);
-   if(Util_edge(_ctx._inst22,(reset > 0x0 /* 0.000000 */)) || Util_edge(_ctx._inst23,bdisable)){
+   if(Util_edge(_ctx._inst381,(reset > 0x0 /* 0.000000 */)) || Util_edge(_ctx._inst481,bdisable)){
       _ctx.reset_phase = _ctx.phase;
       _ctx.reset_state = true;
       new_phase = 0x0 /* 0.000000 */;
@@ -87,9 +87,9 @@ fix16_t Tricore_process(Tricore__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset, fi
       }
       else
       {
-         uint8_t _cond_43;
-         _cond_43 = (_ctx.reset_phase > 0xa0000 /* 10.000000 */);
-         if(bool_not(_cond_43)){
+         uint8_t _cond_17;
+         _cond_17 = (_ctx.reset_phase > 0xa0000 /* 10.000000 */);
+         if(bool_not(_cond_17)){
             _ctx.reset_phase = 0x0 /* 0.000000 */;
          }
          _ctx.reset_state = false;

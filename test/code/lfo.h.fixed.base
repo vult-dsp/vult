@@ -277,9 +277,9 @@ fix16_t Lfo_soft(Lfo__ctx_type_0 &_ctx, fix16_t x1);
 typedef struct Lfo__ctx_type_1 {
    fix16_t rate;
    fix16_t phase;
-   Lfo__ctx_type_0 _inst25;
-   Util__ctx_type_0 _inst23;
-   Util__ctx_type_1 _inst21;
+   Lfo__ctx_type_0 _inst5155;
+   Util__ctx_type_0 _inst381;
+   Util__ctx_type_1 _inst159;
 } Lfo__ctx_type_1;
 
 typedef Lfo__ctx_type_1 Lfo_process_type;

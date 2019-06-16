@@ -263,8 +263,8 @@ typedef struct Adsr__ctx_type_0 {
    fix16_t scale;
    fix16_t rate;
    fix16_t out;
-   Util__ctx_type_4 _inst28;
-   Util__ctx_type_0 _inst21;
+   Util__ctx_type_4 _inst985;
+   Util__ctx_type_0 _inst281;
 } Adsr__ctx_type_0;
 
 typedef Adsr__ctx_type_0 Adsr_do_type;
@@ -283,7 +283,7 @@ typedef struct Adsr__ctx_type_1 {
    fix16_t knob3;
    fix16_t knob2;
    fix16_t knob1;
-   Adsr__ctx_type_0 _inst30;
+   Adsr__ctx_type_0 _inst16;
 } Adsr__ctx_type_1;
 
 typedef Adsr__ctx_type_1 Adsr_process_type;
@@ -296,7 +296,7 @@ static_inline void Adsr_process_init(Adsr__ctx_type_1 &_output_){
 }
 
 static_inline fix16_t Adsr_process(Adsr__ctx_type_1 &_ctx, fix16_t gate){
-   return Adsr_do(_ctx._inst30,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4);
+   return Adsr_do(_ctx._inst16,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4);
 };
 
 typedef Adsr__ctx_type_1 Adsr_noteOn_type;

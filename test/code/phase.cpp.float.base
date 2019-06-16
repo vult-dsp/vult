@@ -4,8 +4,8 @@
 
 void Util__ctx_type_3_init(Util__ctx_type_3 &_output_){
    Util__ctx_type_3 _ctx;
-   _ctx.y1 = 0.f;
-   _ctx.x1 = 0.f;
+   _ctx.y1 = 0.0f;
+   _ctx.x1 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -20,21 +20,21 @@ float Util_dcblock(Util__ctx_type_3 &_ctx, float x0){
 
 void Phase__ctx_type_0_init(Phase__ctx_type_0 &_output_){
    Phase__ctx_type_0 _ctx;
-   _ctx.rate = 0.f;
-   _ctx.phase = 0.f;
-   Util__ctx_type_0_init(_ctx._inst22);
-   Util__ctx_type_1_init(_ctx._inst20);
+   _ctx.rate = 0.0f;
+   _ctx.phase = 0.0f;
+   Util__ctx_type_0_init(_ctx._inst381);
+   Util__ctx_type_1_init(_ctx._inst159);
    Phase_default(_ctx);
    _output_ = _ctx;
    return ;
 }
 
 float Phase_process(Phase__ctx_type_0 &_ctx, float cv, float reset){
-   if(Util_change(_ctx._inst20,cv)){
+   if(Util_change(_ctx._inst159,cv)){
       _ctx.rate = Util_cvToRate_1024(cv);
    }
-   if(Util_edge(_ctx._inst22,(reset > 0.5f))){
-      _ctx.phase = 0.f;
+   if(Util_edge(_ctx._inst381,(reset > 0.5f))){
+      _ctx.phase = 0.0f;
    }
    else
    {

@@ -267,7 +267,7 @@ end
 function this.Swept__ctx_type_0_init()
    local _ctx = {}; 
    _ctx.out = 0.; 
-   _ctx._inst20 = this.Util__ctx_type_0_init(); 
+   _ctx._inst181 = this.Util__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -280,7 +280,7 @@ function this.Swept_process(_ctx,gate,start,end_,rate)
    local a_rate = (1. / (0.01 + (100. * rate))); 
    local bgate = (gate > 0.5); 
    _ctx.out = (_ctx.out + (0.004 * rate * ((- _ctx.out) + (1024. * end_)))); 
-   if this.Util_edge(_ctx._inst20,bgate) then
+   if this.Util_edge(_ctx._inst181,bgate) then
       _ctx.out = (1024. * start); 
    end
    return (0.0009766 * _ctx.out); 

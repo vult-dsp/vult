@@ -260,8 +260,8 @@ static_inline fix16_t Util_cvTokHz(fix16_t cv){
 typedef struct Phase__ctx_type_0 {
    fix16_t rate;
    fix16_t phase;
-   Util__ctx_type_0 _inst22;
-   Util__ctx_type_1 _inst20;
+   Util__ctx_type_0 _inst381;
+   Util__ctx_type_1 _inst159;
 } Phase__ctx_type_0;
 
 typedef Phase__ctx_type_0 Phase_process_type;
@@ -336,9 +336,9 @@ static_inline fix16_t Tables_nsine(fix16_t x){
 
 typedef struct Phd__ctx_type_0 {
    fix16_t pre_phase1;
-   Phase__ctx_type_0 _inst31;
-   Util__ctx_type_4 _inst30;
-   Phase__ctx_type_0 _inst29;
+   Phase__ctx_type_0 _inst3205;
+   Util__ctx_type_4 _inst285;
+   Phase__ctx_type_0 _inst1205;
 } Phd__ctx_type_0;
 
 typedef Phd__ctx_type_0 Phd_process_type;

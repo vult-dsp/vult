@@ -319,6 +319,7 @@ let convertVarId (p:parameters) (is_val:lhs_kind) (id:Id.t) : string list =
          List.map (NameTable.getOrRegister p.variables) name
    else
       name
+
 let convertSingleVarId (p:parameters) (id:Id.t) : string =
    match id with
    | [name] ->

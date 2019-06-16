@@ -41,7 +41,7 @@ end
 function this.Volume__ctx_type_1_init()
    local _ctx = {}; 
    _ctx.volume = 0.; 
-   _ctx._inst2 = this.Volume__ctx_type_0_init(); 
+   _ctx._inst1115 = this.Volume__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -51,7 +51,7 @@ function this.Volume_process_init()
 end
 
 function this.Volume_process(_ctx,input)
-   return (input * this.Volume_smooth(_ctx._inst2,_ctx.volume)); 
+   return (input * this.Volume_smooth(_ctx._inst1115,_ctx.volume)); 
 end
 
 function this.Volume_noteOn_init()

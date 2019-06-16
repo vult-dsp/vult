@@ -15,7 +15,7 @@ typedef Synth1__ctx_type_0 Synth1_smooth_type;
 
 static_inline void Synth1__ctx_type_0_init(Synth1__ctx_type_0 &_output_){
    Synth1__ctx_type_0 _ctx;
-   _ctx.x = 0.f;
+   _ctx.x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -38,7 +38,7 @@ typedef Synth1__ctx_type_1 Synth1_change_type;
 
 static_inline void Synth1__ctx_type_1_init(Synth1__ctx_type_1 &_output_){
    Synth1__ctx_type_1 _ctx;
-   _ctx.pre_x = 0.f;
+   _ctx.pre_x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -112,7 +112,7 @@ static_inline float Synth1_pitchToRate(float d){
 typedef struct Synth1__ctx_type_5 {
    float rate;
    float phase;
-   Synth1__ctx_type_1 _inst6;
+   Synth1__ctx_type_1 _inst1113;
 } Synth1__ctx_type_5;
 
 typedef Synth1__ctx_type_5 Synth1_phasor_type;
@@ -128,7 +128,7 @@ float Synth1_phasor(Synth1__ctx_type_5 &_ctx, float pitch, uint8_t reset);
 
 typedef struct Synth1__ctx_type_6 {
    float phase;
-   Synth1__ctx_type_2 _inst9;
+   Synth1__ctx_type_2 _inst1146;
 } Synth1__ctx_type_6;
 
 typedef Synth1__ctx_type_6 Synth1_lfo_type;
@@ -155,12 +155,12 @@ typedef struct Synth1__ctx_type_7 {
    int gate;
    float detune;
    int count;
-   Synth1__ctx_type_0 _inst18;
-   Synth1__ctx_type_0 _inst17;
-   Synth1__ctx_type_5 _inst16;
-   Synth1__ctx_type_0 _inst15;
-   Synth1__ctx_type_5 _inst14;
-   Synth1__ctx_type_6 _inst13;
+   Synth1__ctx_type_0 _inst6201;
+   Synth1__ctx_type_0 _inst5201;
+   Synth1__ctx_type_5 _inst4162;
+   Synth1__ctx_type_0 _inst3201;
+   Synth1__ctx_type_5 _inst2162;
+   Synth1__ctx_type_6 _inst1200;
 } Synth1__ctx_type_7;
 
 typedef Synth1__ctx_type_7 Synth1_process_type;

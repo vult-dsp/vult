@@ -124,11 +124,11 @@ this.Util_cvTokHz = function(cv){
 }
 this.Polycv_velToCV = function(vel) { return (0.0078741 * this.real(vel)); }
 this.Polycv_velToGate = function(vel){
-   var _if_40 = 0.0; 
-   if((vel > (0|0)))_if_40 = (0.0078741 * this.real(vel)); 
+   var _if_1 = 0.0; 
+   if((vel > (0|0)))_if_1 = (0.0078741 * this.real(vel)); 
    else
-   _if_40 = 0.; 
-   return _if_40; 
+   _if_1 = 0.; 
+   return _if_1; 
 }
 this.Polycv__ctx_type_2_init = function(){
    var _ctx = {}; 

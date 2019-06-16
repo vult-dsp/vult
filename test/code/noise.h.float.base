@@ -15,7 +15,7 @@ typedef Noise__ctx_type_0 Noise_pinker_type;
 
 static_inline void Noise__ctx_type_0_init(Noise__ctx_type_0 &_output_){
    Noise__ctx_type_0 _ctx;
-   _ctx.w1 = 0.f;
+   _ctx.w1 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -30,7 +30,7 @@ float Noise_pinker(Noise__ctx_type_0 &_ctx, float x);
 typedef struct Noise__ctx_type_1 {
    int x2;
    int x1;
-   Noise__ctx_type_0 _inst2;
+   Noise__ctx_type_0 _inst1144;
 } Noise__ctx_type_1;
 
 typedef Noise__ctx_type_1 Noise_process_type;

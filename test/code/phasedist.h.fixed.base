@@ -62,7 +62,7 @@ static_inline fix16_t Phasedist_pitchToRate(fix16_t d){
 typedef struct Phasedist__ctx_type_3 {
    fix16_t rate;
    fix16_t phase;
-   Phasedist__ctx_type_1 _inst4;
+   Phasedist__ctx_type_1 _inst126;
 } Phasedist__ctx_type_3;
 
 typedef Phasedist__ctx_type_3 Phasedist_phasor_type;
@@ -81,10 +81,10 @@ typedef struct Phasedist__ctx_type_4 {
    fix16_t pre_phase1;
    fix16_t pitch;
    fix16_t detune;
-   Phasedist__ctx_type_3 _inst9;
-   Phasedist__ctx_type_0 _inst8;
-   Phasedist__ctx_type_3 _inst7;
-   Phasedist__ctx_type_0 _inst10;
+   Phasedist__ctx_type_0 _inst4182;
+   Phasedist__ctx_type_3 _inst357;
+   Phasedist__ctx_type_0 _inst2182;
+   Phasedist__ctx_type_3 _inst157;
 } Phasedist__ctx_type_4;
 
 typedef Phasedist__ctx_type_4 Phasedist_process_type;

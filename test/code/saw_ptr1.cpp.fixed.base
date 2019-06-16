@@ -22,14 +22,14 @@ void Saw_ptr1__ctx_type_0_init(Saw_ptr1__ctx_type_0 &_output_){
    Saw_ptr1__ctx_type_0 _ctx;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
-   Util__ctx_type_1_init(_ctx._inst20);
+   Util__ctx_type_1_init(_ctx._inst159);
    Saw_ptr1_default(_ctx);
    _output_ = _ctx;
    return ;
 }
 
 fix16_t Saw_ptr1_process(Saw_ptr1__ctx_type_0 &_ctx, fix16_t cv){
-   if(Util_change(_ctx._inst20,cv)){
+   if(Util_change(_ctx._inst159,cv)){
       _ctx.rate = Util_cvToRate(cv);
    }
    fix16_t out;

@@ -4,9 +4,9 @@
 
 void Short_delay__ctx_type_0_init(Short_delay__ctx_type_0 &_output_){
    Short_delay__ctx_type_0 _ctx;
-   _ctx.x4 = 0.f;
-   _ctx.x3 = 0.f;
-   _ctx.x2 = 0.f;
+   _ctx.x4 = 0.0f;
+   _ctx.x3 = 0.0f;
+   _ctx.x2 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -14,15 +14,15 @@ void Short_delay__ctx_type_0_init(Short_delay__ctx_type_0 &_output_){
 float Short_delay_soft(Short_delay__ctx_type_0 &_ctx, float x1){
    float o;
    o = (0.25f * (_ctx.x2 + _ctx.x3 + _ctx.x4 + x1));
-   float _tmp_15_0;
-   _tmp_15_0 = x1;
-   float _tmp_15_1;
-   _tmp_15_1 = _ctx.x2;
-   float _tmp_15_2;
-   _tmp_15_2 = _ctx.x3;
-   _ctx.x2 = _tmp_15_0;
-   _ctx.x3 = _tmp_15_1;
-   _ctx.x4 = _tmp_15_2;
+   float _tmp_1_0;
+   _tmp_1_0 = x1;
+   float _tmp_1_1;
+   _tmp_1_1 = _ctx.x2;
+   float _tmp_1_2;
+   _tmp_1_2 = _ctx.x3;
+   _ctx.x2 = _tmp_1_0;
+   _ctx.x3 = _tmp_1_1;
+   _ctx.x4 = _tmp_1_2;
    return o;
 }
 
@@ -35,8 +35,8 @@ void Short_delay__ctx_type_1_init(Short_delay__ctx_type_1 &_output_){
 }
 
 float Short_delay_do(Short_delay__ctx_type_1 &_ctx, float x, float time, float feedback){
-   time = float_clip(time,0.f,1.f);
-   feedback = float_clip(feedback,0.f,1.f);
+   time = float_clip(time,0.0f,1.f);
+   feedback = float_clip(feedback,0.0f,1.f);
    float index_r;
    index_r = (22050.f * time);
    int index_i;
@@ -66,8 +66,8 @@ float Short_delay_do(Short_delay__ctx_type_1 &_ctx, float x, float time, float f
 
 void Short_delay__ctx_type_2_init(Short_delay__ctx_type_2 &_output_){
    Short_delay__ctx_type_2 _ctx;
-   Short_delay__ctx_type_0_init(_ctx._inst9);
-   Short_delay__ctx_type_1_init(_ctx._inst10);
+   Short_delay__ctx_type_1_init(_ctx._inst2227);
+   Short_delay__ctx_type_0_init(_ctx._inst1128);
    _output_ = _ctx;
    return ;
 }

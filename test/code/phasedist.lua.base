@@ -64,7 +64,7 @@ function this.Phasedist__ctx_type_3_init()
    local _ctx = {}; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst4 = this.Phasedist__ctx_type_1_init(); 
+   _ctx._inst126 = this.Phasedist__ctx_type_1_init(); 
    return _ctx; 
 
 end
@@ -74,7 +74,7 @@ function this.Phasedist_phasor_init()
 end
 
 function this.Phasedist_phasor(_ctx,pitch,reset)
-   if this.Phasedist_change(_ctx._inst4,pitch) then
+   if this.Phasedist_change(_ctx._inst126,pitch) then
       _ctx.rate = this.Phasedist_pitchToRate(pitch); 
    end
    if reset then
@@ -96,10 +96,10 @@ function this.Phasedist__ctx_type_4_init()
    _ctx.pre_phase1 = 0.; 
    _ctx.pitch = 0.; 
    _ctx.detune = 0.; 
-   _ctx._inst9 = this.Phasedist__ctx_type_3_init(); 
-   _ctx._inst8 = this.Phasedist__ctx_type_0_init(); 
-   _ctx._inst7 = this.Phasedist__ctx_type_3_init(); 
-   _ctx._inst10 = this.Phasedist__ctx_type_0_init(); 
+   _ctx._inst4182 = this.Phasedist__ctx_type_0_init(); 
+   _ctx._inst357 = this.Phasedist__ctx_type_3_init(); 
+   _ctx._inst2182 = this.Phasedist__ctx_type_0_init(); 
+   _ctx._inst157 = this.Phasedist__ctx_type_3_init(); 
    return _ctx; 
 
 end
@@ -109,13 +109,13 @@ function this.Phasedist_process_init()
 end
 
 function this.Phasedist_process(_ctx,input)
-   local phase1 = this.Phasedist_phasor(_ctx._inst7,_ctx.pitch,false); 
+   local phase1 = this.Phasedist_phasor(_ctx._inst157,_ctx.pitch,false); 
    local comp = (1. + (- phase1)); 
    local reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5); 
    _ctx.pre_phase1 = phase1; 
-   local phase2 = this.Phasedist_phasor(_ctx._inst9,(_ctx.pitch + (32. * this.Phasedist_smooth(_ctx._inst8,_ctx.detune))),reset); 
+   local phase2 = this.Phasedist_phasor(_ctx._inst357,(_ctx.pitch + (32. * this.Phasedist_smooth(_ctx._inst2182,_ctx.detune))),reset); 
    local sine = this.sin((6.2831854 * phase2)); 
-   return (comp * sine * this.Phasedist_smooth(_ctx._inst10,_ctx.volume)); 
+   return (comp * sine * this.Phasedist_smooth(_ctx._inst4182,_ctx.volume)); 
 
 end
 

@@ -4,8 +4,8 @@
 
 void Util__ctx_type_3_init(Util__ctx_type_3 &_output_){
    Util__ctx_type_3 _ctx;
-   _ctx.y1 = 0.f;
-   _ctx.x1 = 0.f;
+   _ctx.y1 = 0.0f;
+   _ctx.x1 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -20,10 +20,10 @@ float Util_dcblock(Util__ctx_type_3 &_ctx, float x0){
 
 void Ladder__ctx_type_4_init(Ladder__ctx_type_4 &_output_){
    Ladder__ctx_type_4 _ctx;
-   _ctx.p3 = 0.f;
-   _ctx.p2 = 0.f;
-   _ctx.p1 = 0.f;
-   _ctx.p0 = 0.f;
+   _ctx.p3 = 0.0f;
+   _ctx.p2 = 0.0f;
+   _ctx.p1 = 0.0f;
+   _ctx.p0 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -82,10 +82,10 @@ float Ladder_heun(Ladder__ctx_type_4 &_ctx, float input, float fh, float res){
 
 void Ladder__ctx_type_5_init(Ladder__ctx_type_5 &_output_){
    Ladder__ctx_type_5 _ctx;
-   _ctx.p3 = 0.f;
-   _ctx.p2 = 0.f;
-   _ctx.p1 = 0.f;
-   _ctx.p0 = 0.f;
+   _ctx.p3 = 0.0f;
+   _ctx.p2 = 0.0f;
+   _ctx.p1 = 0.0f;
+   _ctx.p0 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -118,15 +118,15 @@ float Ladder_euler(Ladder__ctx_type_5 &_ctx, float input, float fh, float res){
 
 void Ladder__ctx_type_6_init(Ladder__ctx_type_6 &_output_){
    Ladder__ctx_type_6 _ctx;
-   _ctx.fh = 0.f;
+   _ctx.fh = 0.0f;
    Ladder__ctx_type_5_init(_ctx.e);
-   Util__ctx_type_1_init(_ctx._inst23);
+   Util__ctx_type_1_init(_ctx._inst159);
    _output_ = _ctx;
    return ;
 }
 
 float Ladder_process_euler(Ladder__ctx_type_6 &_ctx, float input, float cut, float res){
-   if(Util_change(_ctx._inst23,cut)){
+   if(Util_change(_ctx._inst159,cut)){
       _ctx.fh = Ladder_tune(cut);
    }
    Ladder_euler(_ctx.e,input,_ctx.fh,res);
@@ -140,14 +140,14 @@ float Ladder_process_euler(Ladder__ctx_type_6 &_ctx, float input, float cut, flo
 void Ladder__ctx_type_7_init(Ladder__ctx_type_7 &_output_){
    Ladder__ctx_type_7 _ctx;
    Ladder__ctx_type_4_init(_ctx.h);
-   _ctx.fh = 0.f;
-   Util__ctx_type_1_init(_ctx._inst26);
+   _ctx.fh = 0.0f;
+   Util__ctx_type_1_init(_ctx._inst159);
    _output_ = _ctx;
    return ;
 }
 
 float Ladder_process_heun(Ladder__ctx_type_7 &_ctx, float input, float cut, float res){
-   if(Util_change(_ctx._inst26,cut)){
+   if(Util_change(_ctx._inst159,cut)){
       _ctx.fh = Ladder_tune(cut);
    }
    Ladder_heun(_ctx.h,input,_ctx.fh,res);

@@ -24,8 +24,8 @@ void Svf__ctx_type_4_init(Svf__ctx_type_4 &_output_){
    _ctx.z1 = 0x0 /* 0.000000 */;
    _ctx.inv_den = 0x0 /* 0.000000 */;
    _ctx.g = 0x0 /* 0.000000 */;
-   Util__ctx_type_1_init(_ctx._inst28);
-   Util__ctx_type_1_init(_ctx._inst27);
+   Util__ctx_type_1_init(_ctx._inst259);
+   Util__ctx_type_1_init(_ctx._inst159);
    _ctx.R = 0x0 /* 0.000000 */;
    Svf_default(_ctx);
    _output_ = _ctx;
@@ -34,7 +34,7 @@ void Svf__ctx_type_4_init(Svf__ctx_type_4 &_output_){
 
 fix16_t Svf_process(Svf__ctx_type_4 &_ctx, fix16_t x, fix16_t cv, fix16_t q, int sel){
    q = (0x8000 /* 0.500000 */ + q);
-   if(Util_change(_ctx._inst27,cv) || Util_change(_ctx._inst28,q)){
+   if(Util_change(_ctx._inst159,cv) || Util_change(_ctx._inst259,q)){
       _ctx.g = Svf_calc_g(cv);
       _ctx.R = fix_div(0x10000 /* 1.000000 */,((0x0 /* 0.000000 */ + q) << 1));
       _ctx.inv_den = fix_div(0x10000 /* 1.000000 */,(0x10000 /* 1.000000 */ + fix_mul(_ctx.g,_ctx.g) + (fix_mul(_ctx.R,_ctx.g) << 1)));

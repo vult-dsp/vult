@@ -19,15 +19,15 @@ fix16_t Util_dcblock(Util__ctx_type_3 &_ctx, fix16_t x0){
 }
 
 fix16_t Polycv_velToGate(int vel){
-   fix16_t _if_40;
+   fix16_t _if_1;
    if(vel > 0){
-      _if_40 = fix_mul(0x204 /* 0.007874 */,int_to_fix(vel));
+      _if_1 = fix_mul(0x204 /* 0.007874 */,int_to_fix(vel));
    }
    else
    {
-      _if_40 = 0x0 /* 0.000000 */;
+      _if_1 = 0x0 /* 0.000000 */;
    }
-   return _if_40;
+   return _if_1;
 }
 
 void Polycv__ctx_type_2_init(Polycv__ctx_type_2 &_output_){

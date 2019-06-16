@@ -324,9 +324,9 @@ function this.Sawcore__ctx_type_1_init()
    _ctx.reset_phase = 0.; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst30 = this.Sawcore__ctx_type_0_init(); 
-   _ctx._inst27 = this.Util__ctx_type_0_init(); 
-   _ctx._inst25 = this.Util__ctx_type_1_init(); 
+   _ctx._inst634 = this.Sawcore__ctx_type_0_init(); 
+   _ctx._inst381 = this.Util__ctx_type_0_init(); 
+   _ctx._inst159 = this.Util__ctx_type_1_init(); 
    this.Sawcore_default(_ctx);
    return _ctx; 
 
@@ -339,11 +339,11 @@ end
 function this.Sawcore_process(_ctx,cv,reset)
    local transition = 0.; 
    local out = 0.; 
-   if this.Util_change(_ctx._inst25,cv) then
+   if this.Util_change(_ctx._inst159,cv) then
       _ctx.rate = this.Util_cvToRate_1024(cv); 
    end
    local new_phase = (_ctx.phase + _ctx.rate); 
-   local do_reset = this.Util_edge(_ctx._inst27,(reset > 0.)); 
+   local do_reset = this.Util_edge(_ctx._inst381,(reset > 0.)); 
    local do_wrap = (new_phase > 1024.); 
    if (do_reset or do_wrap) then
       _ctx.reset_phase = _ctx.phase; 
@@ -361,9 +361,9 @@ function this.Sawcore_process(_ctx,cv,reset)
    if _ctx.reset_state then
       local done = false; 
       local ptr = 0.0; 
-      this.Sawcore_ptr_w2(_ctx._inst30,_ctx.phase,_ctx.rate);
-      done = this.Sawcore_ptr_w2_ret_0(_ctx._inst30); 
-      ptr = this.Sawcore_ptr_w2_ret_1(_ctx._inst30); 
+      this.Sawcore_ptr_w2(_ctx._inst634,_ctx.phase,_ctx.rate);
+      done = this.Sawcore_ptr_w2_ret_0(_ctx._inst634); 
+      ptr = this.Sawcore_ptr_w2_ret_1(_ctx._inst634); 
       transition = (0.5 * _ctx.reset_phase * (1. + ptr)); 
       if done then
          _ctx.reset_state = false; 

@@ -40,7 +40,7 @@ typedef Util__ctx_type_1 Util_change_type;
 
 static_inline void Util__ctx_type_1_init(Util__ctx_type_1 &_output_){
    Util__ctx_type_1 _ctx;
-   _ctx.pre_x = 0.f;
+   _ctx.pre_x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -85,7 +85,7 @@ typedef Util__ctx_type_4 Util_smooth_type;
 
 static_inline void Util__ctx_type_4_init(Util__ctx_type_4 &_output_){
    Util__ctx_type_4 _ctx;
-   _ctx.x = 0.f;
+   _ctx.x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -108,7 +108,7 @@ typedef Util__ctx_type_5 Util_average2_type;
 
 static_inline void Util__ctx_type_5_init(Util__ctx_type_5 &_output_){
    Util__ctx_type_5 _ctx;
-   _ctx.x0 = 0.f;
+   _ctx.x0 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -263,9 +263,9 @@ typedef struct Tricore__ctx_type_0 {
    float rate;
    float phase;
    uint8_t direction;
-   Util__ctx_type_0 _inst23;
-   Util__ctx_type_0 _inst22;
-   Util__ctx_type_1 _inst20;
+   Util__ctx_type_0 _inst481;
+   Util__ctx_type_0 _inst381;
+   Util__ctx_type_1 _inst159;
 } Tricore__ctx_type_0;
 
 typedef Tricore__ctx_type_0 Tricore_process_type;
@@ -377,8 +377,8 @@ typedef struct Svf__ctx_type_4 {
    float z1;
    float inv_den;
    float g;
-   Util__ctx_type_1 _inst44;
-   Util__ctx_type_1 _inst43;
+   Util__ctx_type_1 _inst259;
+   Util__ctx_type_1 _inst159;
    float R;
 } Svf__ctx_type_4;
 
@@ -490,9 +490,9 @@ float Lfo_soft(Lfo__ctx_type_0 &_ctx, float x1);
 typedef struct Lfo__ctx_type_1 {
    float rate;
    float phase;
-   Lfo__ctx_type_0 _inst62;
-   Util__ctx_type_0 _inst60;
-   Util__ctx_type_1 _inst58;
+   Lfo__ctx_type_0 _inst5155;
+   Util__ctx_type_0 _inst381;
+   Util__ctx_type_1 _inst159;
 } Lfo__ctx_type_1;
 
 typedef Lfo__ctx_type_1 Lfo_process_type;
@@ -567,8 +567,8 @@ static_inline float Tables_nsine(float x){
 typedef struct Phase__ctx_type_0 {
    float rate;
    float phase;
-   Util__ctx_type_0 _inst71;
-   Util__ctx_type_1 _inst69;
+   Util__ctx_type_0 _inst381;
+   Util__ctx_type_1 _inst159;
 } Phase__ctx_type_0;
 
 typedef Phase__ctx_type_0 Phase_process_type;
@@ -626,7 +626,7 @@ static_inline void Phase_default(Phase__ctx_type_0 &_ctx){
 typedef struct Blit__ctx_type_0 {
    float scale;
    int m;
-   Util__ctx_type_1 _inst77;
+   Util__ctx_type_1 _inst159;
 } Blit__ctx_type_0;
 
 typedef Blit__ctx_type_0 Blit_pulse_train_type;
@@ -657,11 +657,11 @@ typedef struct Blit__ctx_type_1 {
    float state_pulse;
    float rate;
    float output;
-   Util__ctx_type_3 _inst93;
-   Blit__ctx_type_0 _inst90;
-   Blit__ctx_type_0 _inst89;
-   Phase__ctx_type_0 _inst87;
-   Util__ctx_type_1 _inst85;
+   Blit__ctx_type_0 _inst870;
+   Blit__ctx_type_0 _inst770;
+   Phase__ctx_type_0 _inst5205;
+   Util__ctx_type_1 _inst359;
+   Util__ctx_type_3 _inst11125;
 } Blit__ctx_type_1;
 
 typedef Blit__ctx_type_1 Blit_osc_blit_type;
@@ -687,14 +687,14 @@ static_inline void Blit_init(Blit__ctx_type_1 &_ctx){
 };
 
 typedef struct Blit__ctx_type_2 {
-   Blit__ctx_type_1 _inst96;
+   Blit__ctx_type_1 _inst176;
 } Blit__ctx_type_2;
 
 typedef Blit__ctx_type_2 Blit_process_type;
 
 static_inline void Blit__ctx_type_2_init(Blit__ctx_type_2 &_output_){
    Blit__ctx_type_2 _ctx;
-   Blit__ctx_type_1_init(_ctx._inst96);
+   Blit__ctx_type_1_init(_ctx._inst176);
    _output_ = _ctx;
    return ;
 }
@@ -705,7 +705,7 @@ static_inline void Blit_process_init(Blit__ctx_type_2 &_output_){
 }
 
 static_inline float Blit_process(Blit__ctx_type_2 &_ctx, float cv, float pw, float wave){
-   return Blit_osc_blit(_ctx._inst96,cv,pw,wave);
+   return Blit_osc_blit(_ctx._inst176,cv,pw,wave);
 };
 
 typedef Blit__ctx_type_2 Blit_noteOn_type;
@@ -754,8 +754,8 @@ typedef struct Adsr__ctx_type_0 {
    float scale;
    float rate;
    float out;
-   Util__ctx_type_4 _inst110;
-   Util__ctx_type_0 _inst103;
+   Util__ctx_type_4 _inst985;
+   Util__ctx_type_0 _inst281;
 } Adsr__ctx_type_0;
 
 typedef Adsr__ctx_type_0 Adsr_do_type;
@@ -774,7 +774,7 @@ typedef struct Adsr__ctx_type_1 {
    float knob3;
    float knob2;
    float knob1;
-   Adsr__ctx_type_0 _inst112;
+   Adsr__ctx_type_0 _inst16;
 } Adsr__ctx_type_1;
 
 typedef Adsr__ctx_type_1 Adsr_process_type;
@@ -787,7 +787,7 @@ static_inline void Adsr_process_init(Adsr__ctx_type_1 &_output_){
 }
 
 static_inline float Adsr_process(Adsr__ctx_type_1 &_ctx, float gate){
-   return Adsr_do(_ctx._inst112,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4);
+   return Adsr_do(_ctx._inst16,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3,_ctx.knob4);
 };
 
 typedef Adsr__ctx_type_1 Adsr_noteOn_type;
@@ -827,7 +827,7 @@ static_inline void Adsr_default_init(Adsr__ctx_type_1 &_output_){
 }
 
 static_inline void Adsr_default(Adsr__ctx_type_1 &_ctx){
-   _ctx.knob1 = 0.f;
+   _ctx.knob1 = 0.0f;
    _ctx.knob2 = 0.5f;
    _ctx.knob3 = 1.f;
    _ctx.knob4 = 0.5f;
@@ -855,13 +855,13 @@ typedef struct Voice_4__ctx_type_0 {
    float flt_cut;
    float decay;
    float attack;
-   Adsr__ctx_type_0 _inst128;
-   Svf__ctx_type_4 _inst127;
-   Tricore__ctx_type_0 _inst126;
-   Blit__ctx_type_2 _inst125;
-   Blit__ctx_type_2 _inst124;
-   Blit__ctx_type_2 _inst123;
-   Lfo__ctx_type_1 _inst122;
+   Adsr__ctx_type_0 _inst76;
+   Svf__ctx_type_4 _inst618;
+   Tricore__ctx_type_0 _inst565;
+   Blit__ctx_type_2 _inst479;
+   Blit__ctx_type_2 _inst379;
+   Blit__ctx_type_2 _inst279;
+   Lfo__ctx_type_1 _inst15;
 } Voice_4__ctx_type_0;
 
 typedef Voice_4__ctx_type_0 Voice_4_process_type;

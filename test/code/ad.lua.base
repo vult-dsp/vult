@@ -271,7 +271,7 @@ function this.Ad__ctx_type_0_init()
    _ctx.scale = 0.; 
    _ctx.rate = 0.; 
    _ctx.out = 0.; 
-   _ctx._inst21 = this.Util__ctx_type_0_init(); 
+   _ctx._inst281 = this.Util__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -286,7 +286,7 @@ function this.Ad_do(_ctx,gate,a,d)
    local bgate = (gate > 0.); 
    _ctx.out = (_ctx.out + (0.004 * _ctx.rate * (_ctx.target + (- _ctx.out)))); 
    if (_ctx.state == 0) then
-      if this.Util_edge(_ctx._inst21,bgate) then
+      if this.Util_edge(_ctx._inst281,bgate) then
          _ctx.state = 1; 
          _ctx.scale = (0.2 * gate); 
 
@@ -311,7 +311,7 @@ function this.Ad__ctx_type_1_init()
    local _ctx = {}; 
    _ctx.knob2 = 0.; 
    _ctx.knob1 = 0.; 
-   _ctx._inst26 = this.Ad__ctx_type_0_init(); 
+   _ctx._inst115 = this.Ad__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -321,7 +321,7 @@ function this.Ad_process_init()
 end
 
 function this.Ad_process(_ctx,gate)
-   return this.Ad_do(_ctx._inst26,gate,_ctx.knob1,_ctx.knob2); 
+   return this.Ad_do(_ctx._inst115,gate,_ctx.knob1,_ctx.knob2); 
 end
 
 function this.Ad_noteOn_init()

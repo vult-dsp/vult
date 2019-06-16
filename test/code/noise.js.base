@@ -17,7 +17,7 @@ this.Noise__ctx_type_1_init = function(){
    var _ctx = {}; 
    _ctx.x2 = ((0|0)|0); 
    _ctx.x1 = ((0|0)|0); 
-   _ctx._inst2 = this.Noise__ctx_type_0_init(); 
+   _ctx._inst1144 = this.Noise__ctx_type_0_init(); 
    return _ctx; 
 }
 this.Noise_process_init = function() { return this.Noise__ctx_type_1_init(); }
@@ -27,7 +27,7 @@ this.Noise_process = function(_ctx,color){
    _ctx.x2 = ((((12553|0) + ((27449|0) * _ctx.x2)) % (32768|0))|0); 
    var y2 = (3.06e-05 * this.real(_ctx.x2)); 
    var out = 0.0; 
-   if((color > 0.5))out = this.Noise_pinker(_ctx._inst2,(y1 + (- y2))); 
+   if((color > 0.5))out = this.Noise_pinker(_ctx._inst1144,(y1 + (- y2))); 
    else
    out = (y1 + (- y2)); 
    return (2. * out); 

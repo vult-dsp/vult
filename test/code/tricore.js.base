@@ -129,24 +129,24 @@ this.Tricore__ctx_type_0_init = function(){
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
    _ctx.direction = false; 
-   _ctx._inst23 = this.Util__ctx_type_0_init(); 
-   _ctx._inst22 = this.Util__ctx_type_0_init(); 
-   _ctx._inst20 = this.Util__ctx_type_1_init(); 
+   _ctx._inst481 = this.Util__ctx_type_0_init(); 
+   _ctx._inst381 = this.Util__ctx_type_0_init(); 
+   _ctx._inst159 = this.Util__ctx_type_1_init(); 
    this.Tricore_default(_ctx);
    return _ctx; 
 }
 this.Tricore_process_init = function() { return this.Tricore__ctx_type_0_init(); }
 this.Tricore_process = function(_ctx,cv,reset,disable){
    var out = 0.; 
-   if(this.Util_change(_ctx._inst20,cv))_ctx.rate = (4. * this.Util_cvToRate_1024(cv)); 
+   if(this.Util_change(_ctx._inst159,cv))_ctx.rate = (4. * this.Util_cvToRate_1024(cv)); 
    var new_phase = 0.0; 
-   var _if_39 = 0.0; 
-   if(_ctx.direction)_if_39 = _ctx.rate; 
+   var _if_13 = 0.0; 
+   if(_ctx.direction)_if_13 = _ctx.rate; 
    else
-   _if_39 = (- _ctx.rate); 
-   new_phase = (_ctx.phase + _if_39); 
+   _if_13 = (- _ctx.rate); 
+   new_phase = (_ctx.phase + _if_13); 
    var bdisable = (disable > 0.5); 
-   if((this.Util_edge(_ctx._inst22,(reset > 0.)) || this.Util_edge(_ctx._inst23,bdisable))){
+   if((this.Util_edge(_ctx._inst381,(reset > 0.)) || this.Util_edge(_ctx._inst481,bdisable))){
       _ctx.reset_phase = _ctx.phase; 
       _ctx.reset_state = true; 
       new_phase = 0.; 
@@ -170,8 +170,8 @@ this.Tricore_process = function(_ctx,cv,reset,disable){
       }
       else
       {
-         var _cond_43 = (_ctx.reset_phase > 10.); 
-         if(this.not(_cond_43))_ctx.reset_phase = 0.; 
+         var _cond_17 = (_ctx.reset_phase > 10.); 
+         if(this.not(_cond_17))_ctx.reset_phase = 0.; 
          _ctx.reset_state = false; 
          _ctx.direction = true; 
       }

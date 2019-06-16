@@ -269,14 +269,14 @@ function this.Polycv_velToCV(vel)
 end
 
 function this.Polycv_velToGate(vel)
-   local _if_40 = 0.0; 
+   local _if_1 = 0.0; 
    if (vel > 0) then
-      _if_40 = (0.0078741 * this.real(vel)); 
+      _if_1 = (0.0078741 * this.real(vel)); 
    else
 
-      _if_40 = 0.; 
+      _if_1 = 0.; 
    end
-   return _if_40; 
+   return _if_1; 
 
 end
 

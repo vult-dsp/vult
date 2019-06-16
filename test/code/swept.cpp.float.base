@@ -4,8 +4,8 @@
 
 void Util__ctx_type_3_init(Util__ctx_type_3 &_output_){
    Util__ctx_type_3 _ctx;
-   _ctx.y1 = 0.f;
-   _ctx.x1 = 0.f;
+   _ctx.y1 = 0.0f;
+   _ctx.x1 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -20,8 +20,8 @@ float Util_dcblock(Util__ctx_type_3 &_ctx, float x0){
 
 void Swept__ctx_type_0_init(Swept__ctx_type_0 &_output_){
    Swept__ctx_type_0 _ctx;
-   _ctx.out = 0.f;
-   Util__ctx_type_0_init(_ctx._inst20);
+   _ctx.out = 0.0f;
+   Util__ctx_type_0_init(_ctx._inst181);
    _output_ = _ctx;
    return ;
 }
@@ -32,7 +32,7 @@ float Swept_process(Swept__ctx_type_0 &_ctx, float gate, float start, float end,
    uint8_t bgate;
    bgate = (gate > 0.5f);
    _ctx.out = (_ctx.out + (0.004f * rate * ((- _ctx.out) + (1024.f * end))));
-   if(Util_edge(_ctx._inst20,bgate)){
+   if(Util_edge(_ctx._inst181,bgate)){
       _ctx.out = (1024.f * start);
    }
    return (0.0009766f * _ctx.out);

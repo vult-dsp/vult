@@ -177,7 +177,7 @@ this.Monocv__ctx_type_1_init = function(){
    _ctx.cv = 0.; 
    _ctx.channel_in = ((0|0)|0); 
    _ctx.active_note = ((0|0)|0); 
-   _ctx._inst31 = this.Util__ctx_type_1_init(); 
+   _ctx._inst159 = this.Util__ctx_type_1_init(); 
    return _ctx; 
 }
 this.Monocv_process_init = function() { return this.Monocv__ctx_type_1_init(); }
@@ -187,7 +187,7 @@ this.Monocv_process = function(_ctx,c){
    else
    _ctx.gate = 0.; 
    var note = this.real(_ctx.active_note); 
-   if(this.Util_change(_ctx._inst31,note))_ctx.cv = this.Util_pitchToCv(note); 
+   if(this.Util_change(_ctx._inst159,note))_ctx.cv = this.Util_pitchToCv(note); 
    _ctx.process_ret_0 = _ctx.cv; 
    _ctx.process_ret_1 = _ctx.vel; 
    _ctx.process_ret_2 = _ctx.gate; 

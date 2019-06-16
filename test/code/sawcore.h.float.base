@@ -45,7 +45,7 @@ typedef Util__ctx_type_1 Util_change_type;
 
 static_inline void Util__ctx_type_1_init(Util__ctx_type_1 &_output_){
    Util__ctx_type_1 _ctx;
-   _ctx.pre_x = 0.f;
+   _ctx.pre_x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -90,7 +90,7 @@ typedef Util__ctx_type_4 Util_smooth_type;
 
 static_inline void Util__ctx_type_4_init(Util__ctx_type_4 &_output_){
    Util__ctx_type_4 _ctx;
-   _ctx.x = 0.f;
+   _ctx.x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -113,7 +113,7 @@ typedef Util__ctx_type_5 Util_average2_type;
 
 static_inline void Util__ctx_type_5_init(Util__ctx_type_5 &_output_){
    Util__ctx_type_5 _ctx;
-   _ctx.x0 = 0.f;
+   _ctx.x0 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -305,9 +305,9 @@ typedef struct Sawcore__ctx_type_1 {
    float reset_phase;
    float rate;
    float phase;
-   Sawcore__ctx_type_0 _inst30;
-   Util__ctx_type_0 _inst27;
-   Util__ctx_type_1 _inst25;
+   Sawcore__ctx_type_0 _inst634;
+   Util__ctx_type_0 _inst381;
+   Util__ctx_type_1 _inst159;
 } Sawcore__ctx_type_1;
 
 typedef Sawcore__ctx_type_1 Sawcore_process_type;

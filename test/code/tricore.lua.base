@@ -271,9 +271,9 @@ function this.Tricore__ctx_type_0_init()
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
    _ctx.direction = false; 
-   _ctx._inst23 = this.Util__ctx_type_0_init(); 
-   _ctx._inst22 = this.Util__ctx_type_0_init(); 
-   _ctx._inst20 = this.Util__ctx_type_1_init(); 
+   _ctx._inst481 = this.Util__ctx_type_0_init(); 
+   _ctx._inst381 = this.Util__ctx_type_0_init(); 
+   _ctx._inst159 = this.Util__ctx_type_1_init(); 
    this.Tricore_default(_ctx);
    return _ctx; 
 
@@ -285,20 +285,20 @@ end
 
 function this.Tricore_process(_ctx,cv,reset,disable)
    local out = 0.; 
-   if this.Util_change(_ctx._inst20,cv) then
+   if this.Util_change(_ctx._inst159,cv) then
       _ctx.rate = (4. * this.Util_cvToRate_1024(cv)); 
    end
    local new_phase = 0.0; 
-   local _if_39 = 0.0; 
+   local _if_13 = 0.0; 
    if _ctx.direction then
-      _if_39 = _ctx.rate; 
+      _if_13 = _ctx.rate; 
    else
 
-      _if_39 = (- _ctx.rate); 
+      _if_13 = (- _ctx.rate); 
    end
-   new_phase = (_ctx.phase + _if_39); 
+   new_phase = (_ctx.phase + _if_13); 
    local bdisable = (disable > 0.5); 
-   if (this.Util_edge(_ctx._inst22,(reset > 0.)) or this.Util_edge(_ctx._inst23,bdisable)) then
+   if (this.Util_edge(_ctx._inst381,(reset > 0.)) or this.Util_edge(_ctx._inst481,bdisable)) then
       _ctx.reset_phase = _ctx.phase; 
       _ctx.reset_state = true; 
       new_phase = 0.; 
@@ -333,8 +333,8 @@ function this.Tricore_process(_ctx,cv,reset,disable)
 
       else
 
-         local _cond_43 = (_ctx.reset_phase > 10.); 
-         if (not _cond_43) then
+         local _cond_17 = (_ctx.reset_phase > 10.); 
+         if (not _cond_17) then
             _ctx.reset_phase = 0.; 
          end
          _ctx.reset_state = false; 

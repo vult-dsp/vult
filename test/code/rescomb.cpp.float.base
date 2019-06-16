@@ -4,8 +4,8 @@
 
 void Util__ctx_type_3_init(Util__ctx_type_3 &_output_){
    Util__ctx_type_3 _ctx;
-   _ctx.y1 = 0.f;
-   _ctx.x1 = 0.f;
+   _ctx.y1 = 0.0f;
+   _ctx.x1 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -21,7 +21,7 @@ float Util_dcblock(Util__ctx_type_3 &_ctx, float x0){
 void Rescomb__ctx_type_0_init(Rescomb__ctx_type_0 &_output_){
    Rescomb__ctx_type_0 _ctx;
    _ctx.write_pos = 0;
-   float_init_array(675,0.f,_ctx.buffer);
+   float_init_array(675,0.0f,_ctx.buffer);
    _output_ = _ctx;
    return ;
 }
@@ -33,7 +33,7 @@ float Rescomb_delay(Rescomb__ctx_type_0 &_ctx, float x, float cv){
    r_size = 675.f;
    float r_index;
    r_index = fmodf((int_to_float(_ctx.write_pos) + (- Util_cvToperiod(cv))),r_size);
-   if(r_index < 0.f){
+   if(r_index < 0.0f){
       r_index = (r_index + r_size);
    }
    int t1;
@@ -53,24 +53,24 @@ float Rescomb_delay(Rescomb__ctx_type_0 &_ctx, float x, float cv){
 
 void Rescomb__ctx_type_5_init(Rescomb__ctx_type_5 &_output_){
    Rescomb__ctx_type_5 _ctx;
-   _ctx.stone = 0.f;
-   _ctx.output = 0.f;
-   Rescomb__ctx_type_0_init(_ctx._inst31);
-   Util__ctx_type_3_init(_ctx._inst30);
-   Util__ctx_type_1_init(_ctx._inst28);
+   _ctx.stone = 0.0f;
+   _ctx.output = 0.0f;
+   Rescomb__ctx_type_0_init(_ctx._inst4122);
+   Util__ctx_type_3_init(_ctx._inst3125);
+   Util__ctx_type_1_init(_ctx._inst159);
    _output_ = _ctx;
    return ;
 }
 
 float Rescomb_do(Rescomb__ctx_type_5 &_ctx, float in, float cv, float tone, float res){
-   if(Util_change(_ctx._inst28,tone)){
+   if(Util_change(_ctx._inst159,tone)){
       _ctx.stone = Rescomb_toneCurve(tone);
    }
    float feedback;
-   feedback = Util_dcblock(_ctx._inst30,(_ctx.output * res));
+   feedback = Util_dcblock(_ctx._inst3125,(_ctx.output * res));
    float saturated_input;
    saturated_input = Saturate_soft_process((feedback + in));
-   _ctx.output = (in + (_ctx.stone * Rescomb_delay(_ctx._inst31,saturated_input,cv)));
+   _ctx.output = (in + (_ctx.stone * Rescomb_delay(_ctx._inst4122,saturated_input,cv)));
    return Saturate_soft_process(_ctx.output);
 }
 

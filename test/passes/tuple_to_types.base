@@ -25,7 +25,7 @@
 
    and foo_ret_2() : int return foo_ret_2; 
 
-   fun bar() : tuple(real, int, bool) /* scope_1 */
+   fun bar() : tuple(real, int, bool) /* scope_0 */
    {
       (bar_ret_0:real) = 1.; 
       (bar_ret_1:int) = 2; 

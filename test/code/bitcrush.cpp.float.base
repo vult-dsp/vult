@@ -5,7 +5,7 @@
 float Bitcrush_process(float i, float cv){
    float out;
    out = i;
-   if(cv == 0.f){
+   if(cv == 0.0f){
       out = i;
    }
    else

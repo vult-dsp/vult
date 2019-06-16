@@ -299,7 +299,9 @@ let addInstance (env:'a Env.t) (isactive:bool) (name:instance) fpath (typ:Typ.t)
             env', name
          | NoInst ->
             let n, env' = Env.tick env in
-            let inst_name = [("_inst" ^ (string_of_int n))] in
+            let inst_tick = "_inst" ^ (string_of_int n) in
+            let number = Printf.sprintf "%x" (0xFF land (Hashtbl.hash (Id.concat "_" fpath))) in
+            let inst_name = [inst_tick ^ number] in
             let env' = Env.addInstance env' inst_name typ attr in
             env', Named(inst_name)
    else

@@ -74,7 +74,7 @@ typedef Util__ctx_type_1 Util_change_type;
 
 static_inline void Util__ctx_type_1_init(Util__ctx_type_1 &_output_){
    Util__ctx_type_1 _ctx;
-   _ctx.pre_x = 0.f;
+   _ctx.pre_x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -119,7 +119,7 @@ typedef Util__ctx_type_4 Util_smooth_type;
 
 static_inline void Util__ctx_type_4_init(Util__ctx_type_4 &_output_){
    Util__ctx_type_4 _ctx;
-   _ctx.x = 0.f;
+   _ctx.x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -142,7 +142,7 @@ typedef Util__ctx_type_5 Util_average2_type;
 
 static_inline void Util__ctx_type_5_init(Util__ctx_type_5 &_output_){
    Util__ctx_type_5 _ctx;
-   _ctx.x0 = 0.f;
+   _ctx.x0 = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -328,9 +328,9 @@ static_inline float Rescomb_toneCurve(float tone){
 typedef struct Rescomb__ctx_type_5 {
    float stone;
    float output;
-   Rescomb__ctx_type_0 _inst31;
-   Util__ctx_type_3 _inst30;
-   Util__ctx_type_1 _inst28;
+   Rescomb__ctx_type_0 _inst4122;
+   Util__ctx_type_3 _inst3125;
+   Util__ctx_type_1 _inst159;
 } Rescomb__ctx_type_5;
 
 typedef Rescomb__ctx_type_5 Rescomb_do_type;
@@ -345,14 +345,14 @@ static_inline void Rescomb_do_init(Rescomb__ctx_type_5 &_output_){
 float Rescomb_do(Rescomb__ctx_type_5 &_ctx, float in, float cv, float tone, float res);
 
 typedef struct Rescomb__ctx_type_6 {
-   Rescomb__ctx_type_5 _inst33;
+   Rescomb__ctx_type_5 _inst1121;
 } Rescomb__ctx_type_6;
 
 typedef Rescomb__ctx_type_6 Rescomb_process_type;
 
 static_inline void Rescomb__ctx_type_6_init(Rescomb__ctx_type_6 &_output_){
    Rescomb__ctx_type_6 _ctx;
-   Rescomb__ctx_type_5_init(_ctx._inst33);
+   Rescomb__ctx_type_5_init(_ctx._inst1121);
    _output_ = _ctx;
    return ;
 }
@@ -363,7 +363,7 @@ static_inline void Rescomb_process_init(Rescomb__ctx_type_6 &_output_){
 }
 
 static_inline float Rescomb_process(Rescomb__ctx_type_6 &_ctx, float in, float cv, float tone, float res){
-   return Rescomb_do(_ctx._inst33,in,cv,tone,res);
+   return Rescomb_do(_ctx._inst1121,in,cv,tone,res);
 };
 
 typedef Rescomb__ctx_type_6 Rescomb_noteOn_type;

@@ -305,9 +305,9 @@ typedef struct Sawcore__ctx_type_1 {
    fix16_t reset_phase;
    fix16_t rate;
    fix16_t phase;
-   Sawcore__ctx_type_0 _inst30;
-   Util__ctx_type_0 _inst27;
-   Util__ctx_type_1 _inst25;
+   Sawcore__ctx_type_0 _inst634;
+   Util__ctx_type_0 _inst381;
+   Util__ctx_type_1 _inst159;
 } Sawcore__ctx_type_1;
 
 typedef Sawcore__ctx_type_1 Sawcore_process_type;

@@ -70,9 +70,9 @@ void Sawcore__ctx_type_1_init(Sawcore__ctx_type_1 &_output_){
    _ctx.reset_phase = 0x0 /* 0.000000 */;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
-   Sawcore__ctx_type_0_init(_ctx._inst30);
-   Util__ctx_type_0_init(_ctx._inst27);
-   Util__ctx_type_1_init(_ctx._inst25);
+   Sawcore__ctx_type_0_init(_ctx._inst634);
+   Util__ctx_type_0_init(_ctx._inst381);
+   Util__ctx_type_1_init(_ctx._inst159);
    Sawcore_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -83,13 +83,13 @@ fix16_t Sawcore_process(Sawcore__ctx_type_1 &_ctx, fix16_t cv, fix16_t reset){
    transition = 0x0 /* 0.000000 */;
    fix16_t out;
    out = 0x0 /* 0.000000 */;
-   if(Util_change(_ctx._inst25,cv)){
+   if(Util_change(_ctx._inst159,cv)){
       _ctx.rate = Util_cvToRate_1024(cv);
    }
    fix16_t new_phase;
    new_phase = (_ctx.phase + _ctx.rate);
    uint8_t do_reset;
-   do_reset = Util_edge(_ctx._inst27,(reset > 0x0 /* 0.000000 */));
+   do_reset = Util_edge(_ctx._inst381,(reset > 0x0 /* 0.000000 */));
    uint8_t do_wrap;
    do_wrap = (new_phase > 0x4000000 /* 1024.000000 */);
    if(do_reset || do_wrap){
@@ -108,9 +108,9 @@ fix16_t Sawcore_process(Sawcore__ctx_type_1 &_ctx, fix16_t cv, fix16_t reset){
    if(_ctx.reset_state){
       uint8_t done;
       fix16_t ptr;
-      Sawcore_ptr_w2(_ctx._inst30,_ctx.phase,_ctx.rate);
-      done = Sawcore_ptr_w2_ret_0(_ctx._inst30);
-      ptr = Sawcore_ptr_w2_ret_1(_ctx._inst30);
+      Sawcore_ptr_w2(_ctx._inst634,_ctx.phase,_ctx.rate);
+      done = Sawcore_ptr_w2_ret_0(_ctx._inst634);
+      ptr = Sawcore_ptr_w2_ret_1(_ctx._inst634);
       transition = (fix_mul(_ctx.reset_phase,(0x10000 /* 1.000000 */ + ptr)) >> 1);
       if(done){
          _ctx.reset_state = false;

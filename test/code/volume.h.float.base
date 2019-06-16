@@ -15,7 +15,7 @@ typedef Volume__ctx_type_0 Volume_smooth_type;
 
 static_inline void Volume__ctx_type_0_init(Volume__ctx_type_0 &_output_){
    Volume__ctx_type_0 _ctx;
-   _ctx.x = 0.f;
+   _ctx.x = 0.0f;
    _output_ = _ctx;
    return ;
 }
@@ -32,7 +32,7 @@ static_inline float Volume_smooth(Volume__ctx_type_0 &_ctx, float input){
 
 typedef struct Volume__ctx_type_1 {
    float volume;
-   Volume__ctx_type_0 _inst2;
+   Volume__ctx_type_0 _inst1115;
 } Volume__ctx_type_1;
 
 typedef Volume__ctx_type_1 Volume_process_type;
@@ -45,7 +45,7 @@ static_inline void Volume_process_init(Volume__ctx_type_1 &_output_){
 }
 
 static_inline float Volume_process(Volume__ctx_type_1 &_ctx, float input){
-   return (input * Volume_smooth(_ctx._inst2,_ctx.volume));
+   return (input * Volume_smooth(_ctx._inst1115,_ctx.volume));
 };
 
 typedef Volume__ctx_type_1 Volume_noteOn_type;
@@ -89,7 +89,7 @@ static_inline void Volume_default_init(Volume__ctx_type_1 &_output_){
 }
 
 static_inline void Volume_default(Volume__ctx_type_1 &_ctx){
-   _ctx.volume = 0.f;
+   _ctx.volume = 0.0f;
 };
 
 

@@ -75,8 +75,8 @@ static_inline void Short_delay_do_init(Short_delay__ctx_type_1 &_output_){
 float Short_delay_do(Short_delay__ctx_type_1 &_ctx, float x, float time, float feedback);
 
 typedef struct Short_delay__ctx_type_2 {
-   Short_delay__ctx_type_0 _inst9;
-   Short_delay__ctx_type_1 _inst10;
+   Short_delay__ctx_type_1 _inst2227;
+   Short_delay__ctx_type_0 _inst1128;
 } Short_delay__ctx_type_2;
 
 typedef Short_delay__ctx_type_2 Short_delay_process_type;
@@ -89,7 +89,7 @@ static_inline void Short_delay_process_init(Short_delay__ctx_type_2 &_output_){
 }
 
 static_inline float Short_delay_process(Short_delay__ctx_type_2 &_ctx, float x, float time, float feedback){
-   return Short_delay_do(_ctx._inst10,x,Short_delay_soft(_ctx._inst9,time),feedback);
+   return Short_delay_do(_ctx._inst2227,x,Short_delay_soft(_ctx._inst1128,time),feedback);
 };
 
 typedef Short_delay__ctx_type_2 Short_delay_noteOn_type;

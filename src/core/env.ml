@@ -222,7 +222,12 @@ module Scope = struct
       match IdMap.find name (getTable t kind) with
       | found -> found
       | exception Not_found ->
-         { (create kind t.tick) with name = name } |> setOptLoc loc |> setOptType typ
+         let tick =
+            match kind with
+            | Module | Function  -> ref 0
+            | _ -> t.tick
+         in
+         { (create kind tick) with name = name } |> setOptLoc loc |> setOptType typ
 
    let enterBlock (t:t) : t =
       t.locals := IdMap.empty :: !(t.locals);
@@ -438,7 +443,8 @@ module Scope = struct
    let addFunction (t:t) (name:Id.t) (attr:attr) : t =
       let add_it () =
          let new_symbol =
-            let sub = { (create Function t.tick) with name = name} in
+            let tick = if attr.fun_and then t.tick else ref 0 in
+            let sub = { (create Function tick) with name = name} in
             sub.loc := attr.loc;
             sub.ext_fn := attr.ext_fn;
             sub
@@ -596,6 +602,9 @@ let builtin_table =
       ["<>"]  , Scope.Operator, Typ.Const.a_a_bool (), false;
       [">="]  , Scope.Operator, Typ.Const.num_num_bool (), false;
       ["<="]  , Scope.Operator, Typ.Const.num_num_bool (), false;
+
+      ["|"]  , Scope.Operator, Typ.Const.int_int_int (), false;
+      ["&"]  , Scope.Operator, Typ.Const.int_int_int (), false;
 
       ["not"] , Scope.Function, Typ.Const.bool_bool (), false;
       ["||"]  , Scope.Operator, Typ.Const.bool_bool_bool (), false;

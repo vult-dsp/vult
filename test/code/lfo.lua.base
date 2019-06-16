@@ -279,12 +279,12 @@ end
 
 function this.Lfo_soft(_ctx,x1)
    local o = (0.25 * (_ctx.x2 + _ctx.x3 + _ctx.x4 + x1)); 
-   local _tmp_33_0 = x1; 
-   local _tmp_33_1 = _ctx.x2; 
-   local _tmp_33_2 = _ctx.x3; 
-   _ctx.x2 = _tmp_33_0; 
-   _ctx.x3 = _tmp_33_1; 
-   _ctx.x4 = _tmp_33_2; 
+   local _tmp_1_0 = x1; 
+   local _tmp_1_1 = _ctx.x2; 
+   local _tmp_1_2 = _ctx.x3; 
+   _ctx.x2 = _tmp_1_0; 
+   _ctx.x3 = _tmp_1_1; 
+   _ctx.x4 = _tmp_1_2; 
    return o; 
 
 end
@@ -293,9 +293,9 @@ function this.Lfo__ctx_type_1_init()
    local _ctx = {}; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst25 = this.Lfo__ctx_type_0_init(); 
-   _ctx._inst23 = this.Util__ctx_type_0_init(); 
-   _ctx._inst21 = this.Util__ctx_type_1_init(); 
+   _ctx._inst5155 = this.Lfo__ctx_type_0_init(); 
+   _ctx._inst381 = this.Util__ctx_type_0_init(); 
+   _ctx._inst159 = this.Util__ctx_type_1_init(); 
    return _ctx; 
 
 end
@@ -305,7 +305,7 @@ function this.Lfo_process_init()
 end
 
 function this.Lfo_process(_ctx,cv,shape,reset)
-   if this.Util_change(_ctx._inst21,cv) then
+   if this.Util_change(_ctx._inst159,cv) then
       _ctx.rate = this.Util_cvToRate(((-0.3) + cv)); 
    end
    _ctx.phase = (_ctx.phase + _ctx.rate); 
@@ -313,7 +313,7 @@ function this.Lfo_process(_ctx,cv,shape,reset)
       _ctx.phase = ((-2.) + _ctx.phase); 
    end
    local breset = (reset > 0.); 
-   if this.Util_edge(_ctx._inst23,breset) then
+   if this.Util_edge(_ctx._inst381,breset) then
       _ctx.phase = 0.; 
    end
    local tmp = ((-1.) + _ctx.phase); 
@@ -334,7 +334,7 @@ function this.Lfo_process(_ctx,cv,shape,reset)
          end
       end
    end
-   return this.Lfo_soft(_ctx._inst25,o); 
+   return this.Lfo_soft(_ctx._inst5155,o); 
 
 end
 
