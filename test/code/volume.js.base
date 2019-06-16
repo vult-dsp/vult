@@ -11,11 +11,11 @@ this.Volume_smooth = function(_ctx,input){
 this.Volume__ctx_type_1_init = function(){
    var _ctx = {}; 
    _ctx.volume = 0.; 
-   _ctx._inst1115 = this.Volume__ctx_type_0_init(); 
+   _ctx._inst173 = this.Volume__ctx_type_0_init(); 
    return _ctx; 
 }
 this.Volume_process_init = function() { return this.Volume__ctx_type_1_init(); }
-this.Volume_process = function(_ctx,input) { return (input * this.Volume_smooth(_ctx._inst1115,_ctx.volume)); }
+this.Volume_process = function(_ctx,input) { return (input * this.Volume_smooth(_ctx._inst173,_ctx.volume)); }
 this.Volume_noteOn_init = function() { return this.Volume__ctx_type_1_init(); }
 this.Volume_noteOn = function(_ctx,note,velocity,channel){
 }

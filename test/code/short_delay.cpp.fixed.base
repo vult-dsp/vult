@@ -66,8 +66,8 @@ fix16_t Short_delay_do(Short_delay__ctx_type_1 &_ctx, fix16_t x, fix16_t time, f
 
 void Short_delay__ctx_type_2_init(Short_delay__ctx_type_2 &_output_){
    Short_delay__ctx_type_2 _ctx;
-   Short_delay__ctx_type_1_init(_ctx._inst2227);
-   Short_delay__ctx_type_0_init(_ctx._inst1128);
+   Short_delay__ctx_type_1_init(_ctx._inst2e3);
+   Short_delay__ctx_type_0_init(_ctx._inst180);
    _output_ = _ctx;
    return ;
 }

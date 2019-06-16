@@ -314,8 +314,8 @@ typedef struct Svf__ctx_type_4 {
    fix16_t z1;
    fix16_t inv_den;
    fix16_t g;
-   Util__ctx_type_1 _inst259;
-   Util__ctx_type_1 _inst159;
+   Util__ctx_type_1 _inst23b;
+   Util__ctx_type_1 _inst13b;
    fix16_t R;
 } Svf__ctx_type_4;
 

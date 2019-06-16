@@ -314,8 +314,8 @@ typedef struct Svf__ctx_type_4 {
    float z1;
    float inv_den;
    float g;
-   Util__ctx_type_1 _inst259;
-   Util__ctx_type_1 _inst159;
+   Util__ctx_type_1 _inst23b;
+   Util__ctx_type_1 _inst13b;
    float R;
 } Svf__ctx_type_4;
 

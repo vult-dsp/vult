@@ -24,8 +24,8 @@ void Svf__ctx_type_4_init(Svf__ctx_type_4 &_output_){
    _ctx.z1 = 0.0f;
    _ctx.inv_den = 0.0f;
    _ctx.g = 0.0f;
-   Util__ctx_type_1_init(_ctx._inst259);
-   Util__ctx_type_1_init(_ctx._inst159);
+   Util__ctx_type_1_init(_ctx._inst23b);
+   Util__ctx_type_1_init(_ctx._inst13b);
    _ctx.R = 0.0f;
    Svf_default(_ctx);
    _output_ = _ctx;
@@ -34,7 +34,7 @@ void Svf__ctx_type_4_init(Svf__ctx_type_4 &_output_){
 
 float Svf_process(Svf__ctx_type_4 &_ctx, float x, float cv, float q, int sel){
    q = (0.5f + q);
-   if(Util_change(_ctx._inst159,cv) || Util_change(_ctx._inst259,q)){
+   if(Util_change(_ctx._inst13b,cv) || Util_change(_ctx._inst23b,q)){
       _ctx.g = Svf_calc_g(cv);
       _ctx.R = (1.f / (2.f * (1e-07f + q)));
       _ctx.inv_den = (1.f / (1.f + (2.f * _ctx.R * _ctx.g) + (_ctx.g * _ctx.g)));

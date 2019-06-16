@@ -5,7 +5,7 @@
 void Volume__ctx_type_1_init(Volume__ctx_type_1 &_output_){
    Volume__ctx_type_1 _ctx;
    _ctx.volume = 0x0 /* 0.000000 */;
-   Volume__ctx_type_0_init(_ctx._inst1115);
+   Volume__ctx_type_0_init(_ctx._inst173);
    _output_ = _ctx;
    return ;
 }

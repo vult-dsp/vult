@@ -25,7 +25,7 @@ void Ad__ctx_type_0_init(Ad__ctx_type_0 &_output_){
    _ctx.scale = 0x0 /* 0.000000 */;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.out = 0x0 /* 0.000000 */;
-   Util__ctx_type_0_init(_ctx._inst281);
+   Util__ctx_type_0_init(_ctx._inst251);
    _output_ = _ctx;
    return ;
 }
@@ -39,7 +39,7 @@ fix16_t Ad_do(Ad__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t d){
    bgate = (gate > 0x0 /* 0.000000 */);
    _ctx.out = (_ctx.out + fix_mul(fix_mul(0x106 /* 0.004000 */,_ctx.rate),(_ctx.target + (- _ctx.out))));
    if(_ctx.state == 0){
-      if(Util_edge(_ctx._inst281,bgate)){
+      if(Util_edge(_ctx._inst251,bgate)){
          _ctx.state = 1;
          _ctx.scale = fix_mul(0x3333 /* 0.200000 */,gate);
       }
@@ -60,7 +60,7 @@ void Ad__ctx_type_1_init(Ad__ctx_type_1 &_output_){
    Ad__ctx_type_1 _ctx;
    _ctx.knob2 = 0x0 /* 0.000000 */;
    _ctx.knob1 = 0x0 /* 0.000000 */;
-   Ad__ctx_type_0_init(_ctx._inst115);
+   Ad__ctx_type_0_init(_ctx._inst1f);
    _output_ = _ctx;
    return ;
 }

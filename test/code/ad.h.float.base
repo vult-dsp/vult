@@ -263,7 +263,7 @@ typedef struct Ad__ctx_type_0 {
    float scale;
    float rate;
    float out;
-   Util__ctx_type_0 _inst281;
+   Util__ctx_type_0 _inst251;
 } Ad__ctx_type_0;
 
 typedef Ad__ctx_type_0 Ad_do_type;
@@ -280,7 +280,7 @@ float Ad_do(Ad__ctx_type_0 &_ctx, float gate, float a, float d);
 typedef struct Ad__ctx_type_1 {
    float knob2;
    float knob1;
-   Ad__ctx_type_0 _inst115;
+   Ad__ctx_type_0 _inst1f;
 } Ad__ctx_type_1;
 
 typedef Ad__ctx_type_1 Ad_process_type;
@@ -293,7 +293,7 @@ static_inline void Ad_process_init(Ad__ctx_type_1 &_output_){
 }
 
 static_inline float Ad_process(Ad__ctx_type_1 &_ctx, float gate){
-   return Ad_do(_ctx._inst115,gate,_ctx.knob1,_ctx.knob2);
+   return Ad_do(_ctx._inst1f,gate,_ctx.knob1,_ctx.knob2);
 };
 
 typedef Ad__ctx_type_1 Ad_noteOn_type;

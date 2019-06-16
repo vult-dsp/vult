@@ -80,7 +80,7 @@ void Monocv__ctx_type_1_init(Monocv__ctx_type_1 &_output_){
    _ctx.cv = 0x0 /* 0.000000 */;
    _ctx.channel_in = 0;
    _ctx.active_note = 0;
-   Util__ctx_type_1_init(_ctx._inst159);
+   Util__ctx_type_1_init(_ctx._inst13b);
    _output_ = _ctx;
    return ;
 }
@@ -96,7 +96,7 @@ void Monocv_process(Monocv__ctx_type_1 &_ctx, int c){
    }
    fix16_t note;
    note = int_to_fix(_ctx.active_note);
-   if(Util_change(_ctx._inst159,note)){
+   if(Util_change(_ctx._inst13b,note)){
       _ctx.cv = Util_pitchToCv(note);
    }
    _ctx.process_ret_0 = _ctx.cv;

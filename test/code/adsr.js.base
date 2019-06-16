@@ -129,8 +129,8 @@ this.Adsr__ctx_type_0_init = function(){
    _ctx.scale = 0.; 
    _ctx.rate = 0.; 
    _ctx.out = 0.; 
-   _ctx._inst985 = this.Util__ctx_type_4_init(); 
-   _ctx._inst281 = this.Util__ctx_type_0_init(); 
+   _ctx._inst955 = this.Util__ctx_type_4_init(); 
+   _ctx._inst251 = this.Util__ctx_type_0_init(); 
    return _ctx; 
 }
 this.Adsr_do_init = function() { return this.Adsr__ctx_type_0_init(); }
@@ -141,7 +141,7 @@ this.Adsr_do = function(_ctx,gate,a,d,s,r){
    _ctx.out = (_ctx.out + (0.004 * _ctx.rate * (_ctx.target + (- _ctx.out)))); 
    var bgate = (gate > 0.); 
    if((_ctx.state == (0|0))){
-      if(this.Util_edge(_ctx._inst281,bgate)){
+      if(this.Util_edge(_ctx._inst251,bgate)){
          _ctx.state = ((1|0)|0); 
          _ctx.scale = (0.2 * gate); 
       }
@@ -159,7 +159,7 @@ this.Adsr_do = function(_ctx,gate,a,d,s,r){
       _ctx.rate = d_rate; 
       _ctx.target = (1024. * s); 
    }
-   return (this.Util_smooth(_ctx._inst985,_ctx.scale) * this.clip((0.0009766 * _ctx.out),0.,1.)); 
+   return (this.Util_smooth(_ctx._inst955,_ctx.scale) * this.clip((0.0009766 * _ctx.out),0.,1.)); 
 }
 this.Adsr__ctx_type_1_init = function(){
    var _ctx = {}; 

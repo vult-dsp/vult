@@ -268,8 +268,8 @@ function this.Phase__ctx_type_0_init()
    local _ctx = {}; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst381 = this.Util__ctx_type_0_init(); 
-   _ctx._inst159 = this.Util__ctx_type_1_init(); 
+   _ctx._inst351 = this.Util__ctx_type_0_init(); 
+   _ctx._inst13b = this.Util__ctx_type_1_init(); 
    this.Phase_default(_ctx);
    return _ctx; 
 
@@ -280,10 +280,10 @@ function this.Phase_process_init()
 end
 
 function this.Phase_process(_ctx,cv,reset)
-   if this.Util_change(_ctx._inst159,cv) then
+   if this.Util_change(_ctx._inst13b,cv) then
       _ctx.rate = this.Util_cvToRate_1024(cv); 
    end
-   if this.Util_edge(_ctx._inst381,(reset > 0.5)) then
+   if this.Util_edge(_ctx._inst351,(reset > 0.5)) then
       _ctx.phase = 0.; 
    else
 
@@ -352,9 +352,9 @@ end
 function this.Phd__ctx_type_0_init()
    local _ctx = {}; 
    _ctx.pre_phase1 = 0.; 
-   _ctx._inst3205 = this.Phase__ctx_type_0_init(); 
-   _ctx._inst285 = this.Util__ctx_type_4_init(); 
-   _ctx._inst1205 = this.Phase__ctx_type_0_init(); 
+   _ctx._inst3cd = this.Phase__ctx_type_0_init(); 
+   _ctx._inst255 = this.Util__ctx_type_4_init(); 
+   _ctx._inst1cd = this.Phase__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -364,11 +364,11 @@ function this.Phd_process_init()
 end
 
 function this.Phd_process(_ctx,cv,detune)
-   local phase1 = this.Phase_process(_ctx._inst1205,cv,0.); 
+   local phase1 = this.Phase_process(_ctx._inst1cd,cv,0.); 
    local comp = (1. + (- phase1)); 
    local reset = (_ctx.pre_phase1 + (- phase1)); 
    _ctx.pre_phase1 = phase1; 
-   local phase2 = this.Phase_process(_ctx._inst3205,(cv + this.Util_smooth(_ctx._inst285,(0.5 * detune))),reset); 
+   local phase2 = this.Phase_process(_ctx._inst3cd,(cv + this.Util_smooth(_ctx._inst255,(0.5 * detune))),reset); 
    local sine = this.Tables_nsine(phase2); 
    return (comp * sine); 
 

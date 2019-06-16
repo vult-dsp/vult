@@ -268,8 +268,8 @@ function this.Phase__ctx_type_0_init()
    local _ctx = {}; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst381 = this.Util__ctx_type_0_init(); 
-   _ctx._inst159 = this.Util__ctx_type_1_init(); 
+   _ctx._inst351 = this.Util__ctx_type_0_init(); 
+   _ctx._inst13b = this.Util__ctx_type_1_init(); 
    this.Phase_default(_ctx);
    return _ctx; 
 
@@ -280,10 +280,10 @@ function this.Phase_process_init()
 end
 
 function this.Phase_process(_ctx,cv,reset)
-   if this.Util_change(_ctx._inst159,cv) then
+   if this.Util_change(_ctx._inst13b,cv) then
       _ctx.rate = this.Util_cvToRate_1024(cv); 
    end
-   if this.Util_edge(_ctx._inst381,(reset > 0.5)) then
+   if this.Util_edge(_ctx._inst351,(reset > 0.5)) then
       _ctx.phase = 0.; 
    else
 
@@ -353,7 +353,7 @@ function this.Blit__ctx_type_0_init()
    local _ctx = {}; 
    _ctx.scale = 0.; 
    _ctx.m = 0; 
-   _ctx._inst159 = this.Util__ctx_type_1_init(); 
+   _ctx._inst13b = this.Util__ctx_type_1_init(); 
    this.Blit_pulse_start(_ctx);
    return _ctx; 
 
@@ -364,7 +364,7 @@ function this.Blit_pulse_train_init()
 end
 
 function this.Blit_pulse_train(_ctx,cv,phase)
-   if this.Util_change(_ctx._inst159,cv) then
+   if this.Util_change(_ctx._inst13b,cv) then
       _ctx.m = (1 + (2 * this.int(this.Util_cvToperiod(cv)))); 
       _ctx.scale = (2. * this.Util_cvToperiod(cv)); 
 
@@ -401,11 +401,11 @@ function this.Blit__ctx_type_1_init()
    _ctx.state_pulse = 0.; 
    _ctx.rate = 0.; 
    _ctx.output = 0.; 
-   _ctx._inst870 = this.Blit__ctx_type_0_init(); 
-   _ctx._inst770 = this.Blit__ctx_type_0_init(); 
-   _ctx._inst5205 = this.Phase__ctx_type_0_init(); 
-   _ctx._inst359 = this.Util__ctx_type_1_init(); 
-   _ctx._inst11125 = this.Util__ctx_type_3_init(); 
+   _ctx._inst846 = this.Blit__ctx_type_0_init(); 
+   _ctx._inst746 = this.Blit__ctx_type_0_init(); 
+   _ctx._inst5cd = this.Phase__ctx_type_0_init(); 
+   _ctx._inst33b = this.Util__ctx_type_1_init(); 
+   _ctx._inst117d = this.Util__ctx_type_3_init(); 
    this.Blit_init(_ctx);
    return _ctx; 
 
@@ -423,17 +423,17 @@ function this.Blit_osc_blit(_ctx,cv,pw,wave)
 
       fixed_cv = ((-0.1) + cv); 
    end
-   if this.Util_change(_ctx._inst359,fixed_cv) then
+   if this.Util_change(_ctx._inst33b,fixed_cv) then
       _ctx.rate = this.Util_cvToRate(fixed_cv); 
    end
-   local phase = this.Phase_process(_ctx._inst5205,fixed_cv,0.); 
+   local phase = this.Phase_process(_ctx._inst5cd,fixed_cv,0.); 
    local shift05 = (0.5 + (0.49 * pw)); 
    local shift = (phase + shift05); 
    if (shift > 1.) then
       shift = ((-1.) + shift); 
    end
-   local pulse1 = this.Blit_pulse_train(_ctx._inst770,fixed_cv,phase); 
-   local pulse2 = this.Blit_pulse_train(_ctx._inst870,fixed_cv,shift); 
+   local pulse1 = this.Blit_pulse_train(_ctx._inst746,fixed_cv,phase); 
+   local pulse2 = this.Blit_pulse_train(_ctx._inst846,fixed_cv,shift); 
    _ctx.state_pulse = (pulse1 + (- pulse2) + (0.9995 * _ctx.state_pulse)); 
    _ctx.state_saw = ((0.5 * ((pulse1 + pulse2 + ((-2.) * _ctx.rate)) / shift05)) + (0.9995 * _ctx.state_saw)); 
    if (wave < 1.) then
@@ -442,7 +442,7 @@ function this.Blit_osc_blit(_ctx,cv,pw,wave)
 
       _ctx.output = (2. * _ctx.state_saw); 
    end
-   _ctx.output = this.Util_dcblock(_ctx._inst11125,_ctx.output); 
+   _ctx.output = this.Util_dcblock(_ctx._inst117d,_ctx.output); 
    return _ctx.output; 
 
 end
@@ -457,7 +457,7 @@ end
 
 function this.Blit__ctx_type_2_init()
    local _ctx = {}; 
-   _ctx._inst176 = this.Blit__ctx_type_1_init(); 
+   _ctx._inst14c = this.Blit__ctx_type_1_init(); 
    return _ctx; 
 
 end
@@ -467,7 +467,7 @@ function this.Blit_process_init()
 end
 
 function this.Blit_process(_ctx,cv,pw,wave)
-   return this.Blit_osc_blit(_ctx._inst176,cv,pw,wave); 
+   return this.Blit_osc_blit(_ctx._inst14c,cv,pw,wave); 
 end
 
 function this.Blit_noteOn_init()

@@ -45,8 +45,8 @@ void Synth2__ctx_type_11_init(Synth2__ctx_type_11 &_output_){
    _ctx.phase = 0x0 /* 0.000000 */;
    _ctx.output = 0x0 /* 0.000000 */;
    _ctx.m = 0x0 /* 0.000000 */;
-   Synth2__ctx_type_1_init(_ctx._inst3138);
-   Synth2__ctx_type_6_init(_ctx._inst1183);
+   Synth2__ctx_type_1_init(_ctx._inst38a);
+   Synth2__ctx_type_6_init(_ctx._inst1153);
    _output_ = _ctx;
    return ;
 }
@@ -61,7 +61,7 @@ fix16_t Synth2_osc(Synth2__ctx_type_11 &_ctx, fix16_t pitch, fix16_t pw, fix16_t
    {
       fixed_pitch = (0xc0000 /* 12.000000 */ + pitch);
    }
-   if(Synth2_change(_ctx._inst3138,fixed_pitch)){
+   if(Synth2_change(_ctx._inst38a,fixed_pitch)){
       _ctx.rate = Synth2_pitchToRate(fixed_pitch);
       fix16_t p;
       p = fix_div(0x10000 /* 1.000000 */,_ctx.rate);
@@ -100,7 +100,7 @@ fix16_t Synth2_osc(Synth2__ctx_type_11 &_ctx, fix16_t pitch, fix16_t pw, fix16_t
          _ctx.output = (fix_mul(_ctx.state_triang,(0x10000 /* 1.000000 */ + pw)) << 1);
       }
    }
-   _ctx.output = Synth2_dcblock(_ctx._inst1183,_ctx.output);
+   _ctx.output = Synth2_dcblock(_ctx._inst1153,_ctx.output);
    return fix_clip((_ctx.output >> 2),-0x10000 /* -1.000000 */,0x10000 /* 1.000000 */);
 }
 
@@ -144,7 +144,7 @@ void Synth2__ctx_type_13_init(Synth2__ctx_type_13 &_output_){
    Synth2__ctx_type_13 _ctx;
    Synth2__ctx_type_12_init(_ctx.step);
    _ctx.g = 0x0 /* 0.000000 */;
-   Synth2__ctx_type_1_init(_ctx._inst1138);
+   Synth2__ctx_type_1_init(_ctx._inst18a);
    _output_ = _ctx;
    return ;
 }
@@ -154,7 +154,7 @@ fix16_t Synth2_svf(Synth2__ctx_type_13 &_ctx, fix16_t input, fix16_t fc, fix16_t
    q = fix_clip(q,0x0 /* 0.000000 */,0x10000 /* 1.000000 */);
    fix16_t fix_q;
    fix_q = ((0x10000 /* 1.000000 */ + (- q)) << 1);
-   if(Synth2_change(_ctx._inst1138,fc)){
+   if(Synth2_change(_ctx._inst18a,fc)){
       _ctx.g = (fc >> 1);
    }
    fix16_t x1;
@@ -167,8 +167,8 @@ fix16_t Synth2_svf(Synth2__ctx_type_13 &_ctx, fix16_t input, fix16_t fc, fix16_t
 void Synth2__ctx_type_14_init(Synth2__ctx_type_14 &_output_){
    Synth2__ctx_type_14 _ctx;
    _ctx.phase = 0x0 /* 0.000000 */;
-   Synth2__ctx_type_4_init(_ctx._inst3242);
-   Synth2__ctx_type_3_init(_ctx._inst1148);
+   Synth2__ctx_type_4_init(_ctx._inst3f2);
+   Synth2__ctx_type_3_init(_ctx._inst194);
    _output_ = _ctx;
    return ;
 }
@@ -176,10 +176,10 @@ void Synth2__ctx_type_14_init(Synth2__ctx_type_14 &_output_){
 fix16_t Synth2_lfo(Synth2__ctx_type_14 &_ctx, fix16_t f, uint8_t gate){
    fix16_t rate;
    rate = (0x1 /* 0.000015 */ + fix_mul(0x64 /* 0.001526 */,f));
-   if(Synth2_edge(_ctx._inst1148,gate)){
+   if(Synth2_edge(_ctx._inst194,gate)){
       _ctx.phase = 0x0 /* 0.000000 */;
    }
-   if(Synth2_each(_ctx._inst3242,4)){
+   if(Synth2_each(_ctx._inst3f2,4)){
       _ctx.phase = (_ctx.phase + rate);
    }
    if(_ctx.phase > 0x10000 /* 1.000000 */){
@@ -251,10 +251,10 @@ void Synth2__ctx_type_16_init(Synth2__ctx_type_16 &_output_){
    _ctx.lfo_amt = 0x0 /* 0.000000 */;
    _ctx.cut = 0x0 /* 0.000000 */;
    _ctx.amp_s = 0x0 /* 0.000000 */;
-   Synth2__ctx_type_13_init(_ctx._inst418);
-   Synth2__ctx_type_7_init(_ctx._inst3244);
-   Synth2__ctx_type_11_init(_ctx._inst297);
-   Synth2__ctx_type_14_init(_ctx._inst1106);
+   Synth2__ctx_type_13_init(_ctx._inst412);
+   Synth2__ctx_type_7_init(_ctx._inst3f4);
+   Synth2__ctx_type_11_init(_ctx._inst261);
+   Synth2__ctx_type_14_init(_ctx._inst16a);
    Synth2_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -264,9 +264,9 @@ fix16_t Synth2_process(Synth2__ctx_type_16 &_ctx, fix16_t i){
    uint8_t gate;
    gate = Synth2_mono_isGateOn(_ctx.monoin);
    fix16_t lfo1;
-   lfo1 = fix_mul(_ctx.lfo_amt,Synth2_lfo(_ctx._inst1106,_ctx.lfo_rate,gate));
+   lfo1 = fix_mul(_ctx.lfo_amt,Synth2_lfo(_ctx._inst16a,_ctx.lfo_rate,gate));
    fix16_t o1;
-   o1 = Synth2_osc(_ctx._inst297,_ctx.pitch,(_ctx.pw + lfo1),_ctx.wave);
+   o1 = Synth2_osc(_ctx._inst261,_ctx.pitch,(_ctx.pw + lfo1),_ctx.wave);
    fix16_t amp_env;
    fix16_t _if_5;
    if(gate){
@@ -276,9 +276,9 @@ fix16_t Synth2_process(Synth2__ctx_type_16 &_ctx, fix16_t i){
    {
       _if_5 = 0x0 /* 0.000000 */;
    }
-   amp_env = Synth2_smooth(_ctx._inst3244,_if_5);
+   amp_env = Synth2_smooth(_ctx._inst3f4,_if_5);
    fix16_t output;
-   output = fix_mul(amp_env,Synth2_svf(_ctx._inst418,o1,_ctx.cut,_ctx.res,0));
+   output = fix_mul(amp_env,Synth2_svf(_ctx._inst412,o1,_ctx.cut,_ctx.res,0));
    return fix_mul(_ctx.volume,output);
 }
 

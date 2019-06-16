@@ -124,8 +124,8 @@ end
 
 function this.Short_delay__ctx_type_2_init()
    local _ctx = {}; 
-   _ctx._inst2227 = this.Short_delay__ctx_type_1_init(); 
-   _ctx._inst1128 = this.Short_delay__ctx_type_0_init(); 
+   _ctx._inst2e3 = this.Short_delay__ctx_type_1_init(); 
+   _ctx._inst180 = this.Short_delay__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -135,7 +135,7 @@ function this.Short_delay_process_init()
 end
 
 function this.Short_delay_process(_ctx,x,time,feedback)
-   return this.Short_delay_do(_ctx._inst2227,x,this.Short_delay_soft(_ctx._inst1128,time),feedback); 
+   return this.Short_delay_do(_ctx._inst2e3,x,this.Short_delay_soft(_ctx._inst180,time),feedback); 
 end
 
 function this.Short_delay_noteOn_init()

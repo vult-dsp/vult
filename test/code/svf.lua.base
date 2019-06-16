@@ -332,8 +332,8 @@ function this.Svf__ctx_type_4_init()
    _ctx.z1 = 0.; 
    _ctx.inv_den = 0.; 
    _ctx.g = 0.; 
-   _ctx._inst259 = this.Util__ctx_type_1_init(); 
-   _ctx._inst159 = this.Util__ctx_type_1_init(); 
+   _ctx._inst23b = this.Util__ctx_type_1_init(); 
+   _ctx._inst13b = this.Util__ctx_type_1_init(); 
    _ctx.R = 0.; 
    this.Svf_default(_ctx);
    return _ctx; 
@@ -346,7 +346,7 @@ end
 
 function this.Svf_process(_ctx,x,cv,q,sel)
    q = (0.5 + q); 
-   if (this.Util_change(_ctx._inst159,cv) or this.Util_change(_ctx._inst259,q)) then
+   if (this.Util_change(_ctx._inst13b,cv) or this.Util_change(_ctx._inst23b,q)) then
       _ctx.g = this.Svf_calc_g(cv); 
       _ctx.R = (1. / (2. * (1e-07 + q))); 
       _ctx.inv_den = (1. / (1. + (2. * _ctx.R * _ctx.g) + (_ctx.g * _ctx.g))); 

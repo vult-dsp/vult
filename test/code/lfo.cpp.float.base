@@ -46,15 +46,15 @@ void Lfo__ctx_type_1_init(Lfo__ctx_type_1 &_output_){
    Lfo__ctx_type_1 _ctx;
    _ctx.rate = 0.0f;
    _ctx.phase = 0.0f;
-   Lfo__ctx_type_0_init(_ctx._inst5155);
-   Util__ctx_type_0_init(_ctx._inst381);
-   Util__ctx_type_1_init(_ctx._inst159);
+   Lfo__ctx_type_0_init(_ctx._inst59b);
+   Util__ctx_type_0_init(_ctx._inst351);
+   Util__ctx_type_1_init(_ctx._inst13b);
    _output_ = _ctx;
    return ;
 }
 
 float Lfo_process(Lfo__ctx_type_1 &_ctx, float cv, float shape, float reset){
-   if(Util_change(_ctx._inst159,cv)){
+   if(Util_change(_ctx._inst13b,cv)){
       _ctx.rate = Util_cvToRate((-0.3f + cv));
    }
    _ctx.phase = (_ctx.phase + _ctx.rate);
@@ -63,7 +63,7 @@ float Lfo_process(Lfo__ctx_type_1 &_ctx, float cv, float shape, float reset){
    }
    uint8_t breset;
    breset = (reset > 0.0f);
-   if(Util_edge(_ctx._inst381,breset)){
+   if(Util_edge(_ctx._inst351,breset)){
       _ctx.phase = 0.0f;
    }
    float tmp;
@@ -88,7 +88,7 @@ float Lfo_process(Lfo__ctx_type_1 &_ctx, float cv, float shape, float reset){
          }
       }
    }
-   return Lfo_soft(_ctx._inst5155,o);
+   return Lfo_soft(_ctx._inst59b,o);
 }
 
 

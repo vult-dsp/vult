@@ -131,8 +131,8 @@ this.Ahr__ctx_type_0_init = function(){
    _ctx.hold_phase = 0.; 
    _ctx.do_ret_1 = 0.; 
    _ctx.do_ret_0 = 0.; 
-   _ctx._inst381 = this.Util__ctx_type_0_init(); 
-   _ctx._inst181 = this.Util__ctx_type_0_init(); 
+   _ctx._inst351 = this.Util__ctx_type_0_init(); 
+   _ctx._inst151 = this.Util__ctx_type_0_init(); 
    return _ctx; 
 }
 this.Ahr_do_init = function() { return this.Ahr__ctx_type_0_init(); }
@@ -142,12 +142,12 @@ this.Ahr_do = function(_ctx,gate,a,h,r){
    var hold = ((2|0)|0); 
    var reset = ((3|0)|0); 
    var bgate = (gate > 0.); 
-   if(this.Util_edge(_ctx._inst181,bgate))_ctx.state = (reset|0); 
+   if(this.Util_edge(_ctx._inst151,bgate))_ctx.state = (reset|0); 
    var resetting = 0.0; 
    if((_ctx.state == reset))resetting = 1.; 
    else
    resetting = 0.; 
-   if(this.Util_edge(_ctx._inst381,(_ctx.out > 1024.))){
+   if(this.Util_edge(_ctx._inst351,(_ctx.out > 1024.))){
       _ctx.hold_phase = 0.; 
       _ctx.state = (hold|0); 
    }
@@ -185,14 +185,14 @@ this.Ahr__ctx_type_1_init = function(){
    _ctx.knob3 = 0.; 
    _ctx.knob2 = 0.; 
    _ctx.knob1 = 0.; 
-   _ctx._inst171 = this.Ahr__ctx_type_0_init(); 
+   _ctx._inst147 = this.Ahr__ctx_type_0_init(); 
    return _ctx; 
 }
 this.Ahr_process_init = function() { return this.Ahr__ctx_type_1_init(); }
 this.Ahr_process = function(_ctx,gate){
-   this.Ahr_do(_ctx._inst171,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
-   _ctx.process_ret_0 = this.Ahr_do_ret_0(_ctx._inst171); 
-   _ctx.process_ret_1 = this.Ahr_do_ret_1(_ctx._inst171); 
+   this.Ahr_do(_ctx._inst147,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
+   _ctx.process_ret_0 = this.Ahr_do_ret_0(_ctx._inst147); 
+   _ctx.process_ret_1 = this.Ahr_do_ret_1(_ctx._inst147); 
    return ; 
 }
 this.Ahr_process_ret_0_init = function() { return this.Ahr__ctx_type_1_init(); }

@@ -100,7 +100,7 @@ function this.Synth1__ctx_type_5_init()
    local _ctx = {}; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst1113 = this.Synth1__ctx_type_1_init(); 
+   _ctx._inst171 = this.Synth1__ctx_type_1_init(); 
    return _ctx; 
 
 end
@@ -110,7 +110,7 @@ function this.Synth1_phasor_init()
 end
 
 function this.Synth1_phasor(_ctx,pitch,reset)
-   if this.Synth1_change(_ctx._inst1113,pitch) then
+   if this.Synth1_change(_ctx._inst171,pitch) then
       _ctx.rate = this.Synth1_pitchToRate(pitch); 
    end
    if reset then
@@ -126,7 +126,7 @@ end
 function this.Synth1__ctx_type_6_init()
    local _ctx = {}; 
    _ctx.phase = 0.; 
-   _ctx._inst1146 = this.Synth1__ctx_type_2_init(); 
+   _ctx._inst192 = this.Synth1__ctx_type_2_init(); 
    return _ctx; 
 
 end
@@ -137,7 +137,7 @@ end
 
 function this.Synth1_lfo(_ctx,f,gate)
    local rate = (0.0002268 * f); 
-   if this.Synth1_edge(_ctx._inst1146,gate) then
+   if this.Synth1_edge(_ctx._inst192,gate) then
       _ctx.phase = 0.; 
    end
    _ctx.phase = (_ctx.phase + rate); 
@@ -162,12 +162,12 @@ function this.Synth1__ctx_type_7_init()
    _ctx.gate = 0; 
    _ctx.detune = 0.; 
    _ctx.count = 0; 
-   _ctx._inst6201 = this.Synth1__ctx_type_0_init(); 
-   _ctx._inst5201 = this.Synth1__ctx_type_0_init(); 
-   _ctx._inst4162 = this.Synth1__ctx_type_5_init(); 
-   _ctx._inst3201 = this.Synth1__ctx_type_0_init(); 
-   _ctx._inst2162 = this.Synth1__ctx_type_5_init(); 
-   _ctx._inst1200 = this.Synth1__ctx_type_6_init(); 
+   _ctx._inst6c9 = this.Synth1__ctx_type_0_init(); 
+   _ctx._inst5c9 = this.Synth1__ctx_type_0_init(); 
+   _ctx._inst4a2 = this.Synth1__ctx_type_5_init(); 
+   _ctx._inst3c9 = this.Synth1__ctx_type_0_init(); 
+   _ctx._inst2a2 = this.Synth1__ctx_type_5_init(); 
+   _ctx._inst1c8 = this.Synth1__ctx_type_6_init(); 
    return _ctx; 
 
 end
@@ -177,12 +177,12 @@ function this.Synth1_process_init()
 end
 
 function this.Synth1_process(_ctx,input)
-   local lfo_val = (_ctx.lfo_amt * this.Synth1_lfo(_ctx._inst1200,_ctx.lfo_rate,_ctx.gate)); 
-   local phase1 = this.Synth1_phasor(_ctx._inst2162,_ctx.pitch,false); 
+   local lfo_val = (_ctx.lfo_amt * this.Synth1_lfo(_ctx._inst1c8,_ctx.lfo_rate,_ctx.gate)); 
+   local phase1 = this.Synth1_phasor(_ctx._inst2a2,_ctx.pitch,false); 
    local comp = (1. + (- phase1)); 
    local reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5); 
    _ctx.pre_phase1 = phase1; 
-   local phase2 = this.Synth1_phasor(_ctx._inst4162,(_ctx.pitch + (32. * this.Synth1_smooth(_ctx._inst3201,(_ctx.detune + lfo_val)))),reset); 
+   local phase2 = this.Synth1_phasor(_ctx._inst4a2,(_ctx.pitch + (32. * this.Synth1_smooth(_ctx._inst3c9,(_ctx.detune + lfo_val)))),reset); 
    local sine = this.sin((6.2831854 * phase2)); 
    local gate_value = 0.0; 
    if (_ctx.gate > 0) then
@@ -191,7 +191,7 @@ function this.Synth1_process(_ctx,input)
 
       gate_value = 0.; 
    end
-   return (comp * sine * this.Synth1_smooth(_ctx._inst5201,_ctx.volume) * this.Synth1_smooth(_ctx._inst6201,gate_value)); 
+   return (comp * sine * this.Synth1_smooth(_ctx._inst5c9,_ctx.volume) * this.Synth1_smooth(_ctx._inst6c9,gate_value)); 
 
 end
 

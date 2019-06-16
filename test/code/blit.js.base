@@ -126,15 +126,15 @@ this.Phase__ctx_type_0_init = function(){
    var _ctx = {}; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst381 = this.Util__ctx_type_0_init(); 
-   _ctx._inst159 = this.Util__ctx_type_1_init(); 
+   _ctx._inst351 = this.Util__ctx_type_0_init(); 
+   _ctx._inst13b = this.Util__ctx_type_1_init(); 
    this.Phase_default(_ctx);
    return _ctx; 
 }
 this.Phase_process_init = function() { return this.Phase__ctx_type_0_init(); }
 this.Phase_process = function(_ctx,cv,reset){
-   if(this.Util_change(_ctx._inst159,cv))_ctx.rate = this.Util_cvToRate_1024(cv); 
-   if(this.Util_edge(_ctx._inst381,(reset > 0.5)))_ctx.phase = 0.; 
+   if(this.Util_change(_ctx._inst13b,cv))_ctx.rate = this.Util_cvToRate_1024(cv); 
+   if(this.Util_edge(_ctx._inst351,(reset > 0.5)))_ctx.phase = 0.; 
    else
    _ctx.phase = (_ctx.phase + _ctx.rate); 
    if((_ctx.phase > 1024.))_ctx.phase = ((-1024.) + _ctx.phase); 
@@ -165,13 +165,13 @@ this.Blit__ctx_type_0_init = function(){
    var _ctx = {}; 
    _ctx.scale = 0.; 
    _ctx.m = ((0|0)|0); 
-   _ctx._inst159 = this.Util__ctx_type_1_init(); 
+   _ctx._inst13b = this.Util__ctx_type_1_init(); 
    this.Blit_pulse_start(_ctx);
    return _ctx; 
 }
 this.Blit_pulse_train_init = function() { return this.Blit__ctx_type_0_init(); }
 this.Blit_pulse_train = function(_ctx,cv,phase){
-   if(this.Util_change(_ctx._inst159,cv)){
+   if(this.Util_change(_ctx._inst13b,cv)){
       _ctx.m = (((1|0) + (this.int(this.Util_cvToperiod(cv)) << (1|0)))|0); 
       _ctx.scale = (2. * this.Util_cvToperiod(cv)); 
    }
@@ -198,11 +198,11 @@ this.Blit__ctx_type_1_init = function(){
    _ctx.state_pulse = 0.; 
    _ctx.rate = 0.; 
    _ctx.output = 0.; 
-   _ctx._inst870 = this.Blit__ctx_type_0_init(); 
-   _ctx._inst770 = this.Blit__ctx_type_0_init(); 
-   _ctx._inst5205 = this.Phase__ctx_type_0_init(); 
-   _ctx._inst359 = this.Util__ctx_type_1_init(); 
-   _ctx._inst11125 = this.Util__ctx_type_3_init(); 
+   _ctx._inst846 = this.Blit__ctx_type_0_init(); 
+   _ctx._inst746 = this.Blit__ctx_type_0_init(); 
+   _ctx._inst5cd = this.Phase__ctx_type_0_init(); 
+   _ctx._inst33b = this.Util__ctx_type_1_init(); 
+   _ctx._inst117d = this.Util__ctx_type_3_init(); 
    this.Blit_init(_ctx);
    return _ctx; 
 }
@@ -212,30 +212,30 @@ this.Blit_osc_blit = function(_ctx,cv,pw,wave){
    if((wave < 1.))fixed_cv = cv; 
    else
    fixed_cv = ((-0.1) + cv); 
-   if(this.Util_change(_ctx._inst359,fixed_cv))_ctx.rate = this.Util_cvToRate(fixed_cv); 
-   var phase = this.Phase_process(_ctx._inst5205,fixed_cv,0.); 
+   if(this.Util_change(_ctx._inst33b,fixed_cv))_ctx.rate = this.Util_cvToRate(fixed_cv); 
+   var phase = this.Phase_process(_ctx._inst5cd,fixed_cv,0.); 
    var shift05 = (0.5 + (0.49 * pw)); 
    var shift = (phase + shift05); 
    if((shift > 1.))shift = ((-1.) + shift); 
-   var pulse1 = this.Blit_pulse_train(_ctx._inst770,fixed_cv,phase); 
-   var pulse2 = this.Blit_pulse_train(_ctx._inst870,fixed_cv,shift); 
+   var pulse1 = this.Blit_pulse_train(_ctx._inst746,fixed_cv,phase); 
+   var pulse2 = this.Blit_pulse_train(_ctx._inst846,fixed_cv,shift); 
    _ctx.state_pulse = (pulse1 + (- pulse2) + (0.9995 * _ctx.state_pulse)); 
    _ctx.state_saw = ((0.5 * ((pulse1 + pulse2 + ((-2.) * _ctx.rate)) / shift05)) + (0.9995 * _ctx.state_saw)); 
    if((wave < 1.))_ctx.output = _ctx.state_pulse; 
    else
    _ctx.output = (2. * _ctx.state_saw); 
-   _ctx.output = this.Util_dcblock(_ctx._inst11125,_ctx.output); 
+   _ctx.output = this.Util_dcblock(_ctx._inst117d,_ctx.output); 
    return _ctx.output; 
 }
 this.Blit_init_init = function() { return this.Blit__ctx_type_1_init(); }
 this.Blit_init = function(_ctx) { _ctx.rate = 0.0007416; }
 this.Blit__ctx_type_2_init = function(){
    var _ctx = {}; 
-   _ctx._inst176 = this.Blit__ctx_type_1_init(); 
+   _ctx._inst14c = this.Blit__ctx_type_1_init(); 
    return _ctx; 
 }
 this.Blit_process_init = function() { return this.Blit__ctx_type_2_init(); }
-this.Blit_process = function(_ctx,cv,pw,wave) { return this.Blit_osc_blit(_ctx._inst176,cv,pw,wave); }
+this.Blit_process = function(_ctx,cv,pw,wave) { return this.Blit_osc_blit(_ctx._inst14c,cv,pw,wave); }
 this.Blit_noteOn_init = function() { return this.Blit__ctx_type_2_init(); }
 this.Blit_noteOn = function(_ctx,note,velocity,channel){
 }

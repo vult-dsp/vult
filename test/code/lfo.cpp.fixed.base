@@ -46,15 +46,15 @@ void Lfo__ctx_type_1_init(Lfo__ctx_type_1 &_output_){
    Lfo__ctx_type_1 _ctx;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
-   Lfo__ctx_type_0_init(_ctx._inst5155);
-   Util__ctx_type_0_init(_ctx._inst381);
-   Util__ctx_type_1_init(_ctx._inst159);
+   Lfo__ctx_type_0_init(_ctx._inst59b);
+   Util__ctx_type_0_init(_ctx._inst351);
+   Util__ctx_type_1_init(_ctx._inst13b);
    _output_ = _ctx;
    return ;
 }
 
 fix16_t Lfo_process(Lfo__ctx_type_1 &_ctx, fix16_t cv, fix16_t shape, fix16_t reset){
-   if(Util_change(_ctx._inst159,cv)){
+   if(Util_change(_ctx._inst13b,cv)){
       _ctx.rate = Util_cvToRate((-0x4ccc /* -0.300000 */ + cv));
    }
    _ctx.phase = (_ctx.phase + _ctx.rate);
@@ -63,7 +63,7 @@ fix16_t Lfo_process(Lfo__ctx_type_1 &_ctx, fix16_t cv, fix16_t shape, fix16_t re
    }
    uint8_t breset;
    breset = (reset > 0x0 /* 0.000000 */);
-   if(Util_edge(_ctx._inst381,breset)){
+   if(Util_edge(_ctx._inst351,breset)){
       _ctx.phase = 0x0 /* 0.000000 */;
    }
    fix16_t tmp;
@@ -88,7 +88,7 @@ fix16_t Lfo_process(Lfo__ctx_type_1 &_ctx, fix16_t cv, fix16_t shape, fix16_t re
          }
       }
    }
-   return Lfo_soft(_ctx._inst5155,o);
+   return Lfo_soft(_ctx._inst59b,o);
 }
 
 

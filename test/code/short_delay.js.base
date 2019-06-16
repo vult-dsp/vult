@@ -62,12 +62,12 @@ this.Short_delay_do = function(_ctx,x,time,feedback){
 }
 this.Short_delay__ctx_type_2_init = function(){
    var _ctx = {}; 
-   _ctx._inst2227 = this.Short_delay__ctx_type_1_init(); 
-   _ctx._inst1128 = this.Short_delay__ctx_type_0_init(); 
+   _ctx._inst2e3 = this.Short_delay__ctx_type_1_init(); 
+   _ctx._inst180 = this.Short_delay__ctx_type_0_init(); 
    return _ctx; 
 }
 this.Short_delay_process_init = function() { return this.Short_delay__ctx_type_2_init(); }
-this.Short_delay_process = function(_ctx,x,time,feedback) { return this.Short_delay_do(_ctx._inst2227,x,this.Short_delay_soft(_ctx._inst1128,time),feedback); }
+this.Short_delay_process = function(_ctx,x,time,feedback) { return this.Short_delay_do(_ctx._inst2e3,x,this.Short_delay_soft(_ctx._inst180,time),feedback); }
 this.Short_delay_noteOn_init = function() { return this.Short_delay__ctx_type_2_init(); }
 this.Short_delay_noteOn = function(_ctx,note,velocity,channel){
 }

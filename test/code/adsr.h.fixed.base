@@ -263,8 +263,8 @@ typedef struct Adsr__ctx_type_0 {
    fix16_t scale;
    fix16_t rate;
    fix16_t out;
-   Util__ctx_type_4 _inst985;
-   Util__ctx_type_0 _inst281;
+   Util__ctx_type_4 _inst955;
+   Util__ctx_type_0 _inst251;
 } Adsr__ctx_type_0;
 
 typedef Adsr__ctx_type_0 Adsr_do_type;

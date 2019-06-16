@@ -55,22 +55,22 @@ void Rescomb__ctx_type_5_init(Rescomb__ctx_type_5 &_output_){
    Rescomb__ctx_type_5 _ctx;
    _ctx.stone = 0.0f;
    _ctx.output = 0.0f;
-   Rescomb__ctx_type_0_init(_ctx._inst4122);
-   Util__ctx_type_3_init(_ctx._inst3125);
-   Util__ctx_type_1_init(_ctx._inst159);
+   Rescomb__ctx_type_0_init(_ctx._inst47a);
+   Util__ctx_type_3_init(_ctx._inst37d);
+   Util__ctx_type_1_init(_ctx._inst13b);
    _output_ = _ctx;
    return ;
 }
 
 float Rescomb_do(Rescomb__ctx_type_5 &_ctx, float in, float cv, float tone, float res){
-   if(Util_change(_ctx._inst159,tone)){
+   if(Util_change(_ctx._inst13b,tone)){
       _ctx.stone = Rescomb_toneCurve(tone);
    }
    float feedback;
-   feedback = Util_dcblock(_ctx._inst3125,(_ctx.output * res));
+   feedback = Util_dcblock(_ctx._inst37d,(_ctx.output * res));
    float saturated_input;
    saturated_input = Saturate_soft_process((feedback + in));
-   _ctx.output = (in + (_ctx.stone * Rescomb_delay(_ctx._inst4122,saturated_input,cv)));
+   _ctx.output = (in + (_ctx.stone * Rescomb_delay(_ctx._inst47a,saturated_input,cv)));
    return Saturate_soft_process(_ctx.output);
 }
 

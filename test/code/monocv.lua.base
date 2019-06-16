@@ -345,7 +345,7 @@ function this.Monocv__ctx_type_1_init()
    _ctx.cv = 0.; 
    _ctx.channel_in = 0; 
    _ctx.active_note = 0; 
-   _ctx._inst159 = this.Util__ctx_type_1_init(); 
+   _ctx._inst13b = this.Util__ctx_type_1_init(); 
    return _ctx; 
 
 end
@@ -363,7 +363,7 @@ function this.Monocv_process(_ctx,c)
       _ctx.gate = 0.; 
    end
    local note = this.real(_ctx.active_note); 
-   if this.Util_change(_ctx._inst159,note) then
+   if this.Util_change(_ctx._inst13b,note) then
       _ctx.cv = this.Util_pitchToCv(note); 
    end
    _ctx.process_ret_0 = _ctx.cv; 

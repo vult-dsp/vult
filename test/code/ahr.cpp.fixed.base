@@ -27,8 +27,8 @@ void Ahr__ctx_type_0_init(Ahr__ctx_type_0 &_output_){
    _ctx.hold_phase = 0x0 /* 0.000000 */;
    _ctx.do_ret_1 = 0x0 /* 0.000000 */;
    _ctx.do_ret_0 = 0x0 /* 0.000000 */;
-   Util__ctx_type_0_init(_ctx._inst381);
-   Util__ctx_type_0_init(_ctx._inst181);
+   Util__ctx_type_0_init(_ctx._inst351);
+   Util__ctx_type_0_init(_ctx._inst151);
    _output_ = _ctx;
    return ;
 }
@@ -44,7 +44,7 @@ void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r
    reset = 3;
    uint8_t bgate;
    bgate = (gate > 0x0 /* 0.000000 */);
-   if(Util_edge(_ctx._inst181,bgate)){
+   if(Util_edge(_ctx._inst151,bgate)){
       _ctx.state = reset;
    }
    fix16_t resetting;
@@ -55,7 +55,7 @@ void Ahr_do(Ahr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r
    {
       resetting = 0x0 /* 0.000000 */;
    }
-   if(Util_edge(_ctx._inst381,(_ctx.out > 0x4000000 /* 1024.000000 */))){
+   if(Util_edge(_ctx._inst351,(_ctx.out > 0x4000000 /* 1024.000000 */))){
       _ctx.hold_phase = 0x0 /* 0.000000 */;
       _ctx.state = hold;
    }
@@ -95,7 +95,7 @@ void Ahr__ctx_type_1_init(Ahr__ctx_type_1 &_output_){
    _ctx.knob3 = 0x0 /* 0.000000 */;
    _ctx.knob2 = 0x0 /* 0.000000 */;
    _ctx.knob1 = 0x0 /* 0.000000 */;
-   Ahr__ctx_type_0_init(_ctx._inst171);
+   Ahr__ctx_type_0_init(_ctx._inst147);
    _output_ = _ctx;
    return ;
 }

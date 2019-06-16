@@ -144,18 +144,18 @@ this.Lfo__ctx_type_1_init = function(){
    var _ctx = {}; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst5155 = this.Lfo__ctx_type_0_init(); 
-   _ctx._inst381 = this.Util__ctx_type_0_init(); 
-   _ctx._inst159 = this.Util__ctx_type_1_init(); 
+   _ctx._inst59b = this.Lfo__ctx_type_0_init(); 
+   _ctx._inst351 = this.Util__ctx_type_0_init(); 
+   _ctx._inst13b = this.Util__ctx_type_1_init(); 
    return _ctx; 
 }
 this.Lfo_process_init = function() { return this.Lfo__ctx_type_1_init(); }
 this.Lfo_process = function(_ctx,cv,shape,reset){
-   if(this.Util_change(_ctx._inst159,cv))_ctx.rate = this.Util_cvToRate(((-0.3) + cv)); 
+   if(this.Util_change(_ctx._inst13b,cv))_ctx.rate = this.Util_cvToRate(((-0.3) + cv)); 
    _ctx.phase = (_ctx.phase + _ctx.rate); 
    if((_ctx.phase > 2.))_ctx.phase = ((-2.) + _ctx.phase); 
    var breset = (reset > 0.); 
-   if(this.Util_edge(_ctx._inst381,breset))_ctx.phase = 0.; 
+   if(this.Util_edge(_ctx._inst351,breset))_ctx.phase = 0.; 
    var tmp = ((-1.) + _ctx.phase); 
    var o = 0.0; 
    if((shape < 1.))o = tmp; 
@@ -165,7 +165,7 @@ this.Lfo_process = function(_ctx,cv,shape,reset){
    if((tmp > 0.))o = 1.; 
    else
    o = 0.; 
-   return this.Lfo_soft(_ctx._inst5155,o); 
+   return this.Lfo_soft(_ctx._inst59b,o); 
 }
 this.Lfo_noteOn_init = function() { return this.Lfo__ctx_type_1_init(); }
 this.Lfo_noteOn = function(_ctx,note,velocity,channel){

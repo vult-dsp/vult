@@ -310,7 +310,7 @@ typedef struct Monocv__ctx_type_1 {
    float cv;
    int channel_in;
    int active_note;
-   Util__ctx_type_1 _inst159;
+   Util__ctx_type_1 _inst13b;
 } Monocv__ctx_type_1;
 
 typedef Monocv__ctx_type_1 Monocv_process_type;

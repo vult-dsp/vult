@@ -22,7 +22,7 @@ void Saw_eptr__ctx_type_0_init(Saw_eptr__ctx_type_0 &_output_){
    Saw_eptr__ctx_type_0 _ctx;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
-   Util__ctx_type_1_init(_ctx._inst159);
+   Util__ctx_type_1_init(_ctx._inst13b);
    Saw_eptr_default(_ctx);
    _output_ = _ctx;
    return ;
@@ -31,7 +31,7 @@ void Saw_eptr__ctx_type_0_init(Saw_eptr__ctx_type_0 &_output_){
 fix16_t Saw_eptr_process(Saw_eptr__ctx_type_0 &_ctx, fix16_t cv){
    fix16_t y;
    y = 0x0 /* 0.000000 */;
-   if(Util_change(_ctx._inst159,cv)){
+   if(Util_change(_ctx._inst13b,cv)){
       _ctx.rate = Util_cvToRate(cv);
    }
    _ctx.phase = (_ctx.phase + (_ctx.rate << 1));

@@ -268,7 +268,7 @@ function this.Saw_ptr2__ctx_type_0_init()
    local _ctx = {}; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst159 = this.Util__ctx_type_1_init(); 
+   _ctx._inst13b = this.Util__ctx_type_1_init(); 
    this.Saw_ptr2_default(_ctx);
    return _ctx; 
 
@@ -279,7 +279,7 @@ function this.Saw_ptr2_process_init()
 end
 
 function this.Saw_ptr2_process(_ctx,cv)
-   if this.Util_change(_ctx._inst159,cv) then
+   if this.Util_change(_ctx._inst13b,cv) then
       _ctx.rate = this.Util_cvToRate(cv); 
    end
    local out = 0.0; 

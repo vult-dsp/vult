@@ -22,18 +22,18 @@ void Phase__ctx_type_0_init(Phase__ctx_type_0 &_output_){
    Phase__ctx_type_0 _ctx;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.phase = 0x0 /* 0.000000 */;
-   Util__ctx_type_0_init(_ctx._inst381);
-   Util__ctx_type_1_init(_ctx._inst159);
+   Util__ctx_type_0_init(_ctx._inst351);
+   Util__ctx_type_1_init(_ctx._inst13b);
    Phase_default(_ctx);
    _output_ = _ctx;
    return ;
 }
 
 fix16_t Phase_process(Phase__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset){
-   if(Util_change(_ctx._inst159,cv)){
+   if(Util_change(_ctx._inst13b,cv)){
       _ctx.rate = Util_cvToRate_1024(cv);
    }
-   if(Util_edge(_ctx._inst381,(reset > 0x8000 /* 0.500000 */))){
+   if(Util_edge(_ctx._inst351,(reset > 0x8000 /* 0.500000 */))){
       _ctx.phase = 0x0 /* 0.000000 */;
    }
    else
@@ -49,23 +49,23 @@ fix16_t Phase_process(Phase__ctx_type_0 &_ctx, fix16_t cv, fix16_t reset){
 void Phd__ctx_type_0_init(Phd__ctx_type_0 &_output_){
    Phd__ctx_type_0 _ctx;
    _ctx.pre_phase1 = 0x0 /* 0.000000 */;
-   Phase__ctx_type_0_init(_ctx._inst3205);
-   Util__ctx_type_4_init(_ctx._inst285);
-   Phase__ctx_type_0_init(_ctx._inst1205);
+   Phase__ctx_type_0_init(_ctx._inst3cd);
+   Util__ctx_type_4_init(_ctx._inst255);
+   Phase__ctx_type_0_init(_ctx._inst1cd);
    _output_ = _ctx;
    return ;
 }
 
 fix16_t Phd_process(Phd__ctx_type_0 &_ctx, fix16_t cv, fix16_t detune){
    fix16_t phase1;
-   phase1 = Phase_process(_ctx._inst1205,cv,0x0 /* 0.000000 */);
+   phase1 = Phase_process(_ctx._inst1cd,cv,0x0 /* 0.000000 */);
    fix16_t comp;
    comp = (0x10000 /* 1.000000 */ + (- phase1));
    fix16_t reset;
    reset = (_ctx.pre_phase1 + (- phase1));
    _ctx.pre_phase1 = phase1;
    fix16_t phase2;
-   phase2 = Phase_process(_ctx._inst3205,(cv + Util_smooth(_ctx._inst285,(detune >> 1))),reset);
+   phase2 = Phase_process(_ctx._inst3cd,(cv + Util_smooth(_ctx._inst255,(detune >> 1))),reset);
    fix16_t sine;
    sine = Tables_nsine(phase2);
    return fix_mul(comp,sine);

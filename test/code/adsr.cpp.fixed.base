@@ -25,8 +25,8 @@ void Adsr__ctx_type_0_init(Adsr__ctx_type_0 &_output_){
    _ctx.scale = 0x0 /* 0.000000 */;
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.out = 0x0 /* 0.000000 */;
-   Util__ctx_type_4_init(_ctx._inst985);
-   Util__ctx_type_0_init(_ctx._inst281);
+   Util__ctx_type_4_init(_ctx._inst955);
+   Util__ctx_type_0_init(_ctx._inst251);
    _output_ = _ctx;
    return ;
 }
@@ -42,7 +42,7 @@ fix16_t Adsr_do(Adsr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t d, fix1
    uint8_t bgate;
    bgate = (gate > 0x0 /* 0.000000 */);
    if(_ctx.state == 0){
-      if(Util_edge(_ctx._inst281,bgate)){
+      if(Util_edge(_ctx._inst251,bgate)){
          _ctx.state = 1;
          _ctx.scale = fix_mul(0x3333 /* 0.200000 */,gate);
       }
@@ -66,7 +66,7 @@ fix16_t Adsr_do(Adsr__ctx_type_0 &_ctx, fix16_t gate, fix16_t a, fix16_t d, fix1
       _ctx.rate = d_rate;
       _ctx.target = (s << 10);
    }
-   return fix_mul(Util_smooth(_ctx._inst985,_ctx.scale),fix_clip((_ctx.out >> 10),0x0 /* 0.000000 */,0x10000 /* 1.000000 */));
+   return fix_mul(Util_smooth(_ctx._inst955,_ctx.scale),fix_clip((_ctx.out >> 10),0x0 /* 0.000000 */,0x10000 /* 1.000000 */));
 }
 
 void Adsr__ctx_type_1_init(Adsr__ctx_type_1 &_output_){

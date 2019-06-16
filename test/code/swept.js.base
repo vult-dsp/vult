@@ -125,7 +125,7 @@ this.Util_cvTokHz = function(cv){
 this.Swept__ctx_type_0_init = function(){
    var _ctx = {}; 
    _ctx.out = 0.; 
-   _ctx._inst181 = this.Util__ctx_type_0_init(); 
+   _ctx._inst151 = this.Util__ctx_type_0_init(); 
    return _ctx; 
 }
 this.Swept_process_init = function() { return this.Swept__ctx_type_0_init(); }
@@ -133,7 +133,7 @@ this.Swept_process = function(_ctx,gate,start,end,rate){
    var a_rate = (1. / (0.01 + (100. * rate))); 
    var bgate = (gate > 0.5); 
    _ctx.out = (_ctx.out + (0.004 * rate * ((- _ctx.out) + (1024. * end)))); 
-   if(this.Util_edge(_ctx._inst181,bgate))_ctx.out = (1024. * start); 
+   if(this.Util_edge(_ctx._inst151,bgate))_ctx.out = (1024. * start); 
    return (0.0009766 * _ctx.out); 
 }
 this.Swept_noteOn_init = function() { return this.Swept__ctx_type_0_init(); }

@@ -6,13 +6,13 @@ void Synth1__ctx_type_5_init(Synth1__ctx_type_5 &_output_){
    Synth1__ctx_type_5 _ctx;
    _ctx.rate = 0.0f;
    _ctx.phase = 0.0f;
-   Synth1__ctx_type_1_init(_ctx._inst1113);
+   Synth1__ctx_type_1_init(_ctx._inst171);
    _output_ = _ctx;
    return ;
 }
 
 float Synth1_phasor(Synth1__ctx_type_5 &_ctx, float pitch, uint8_t reset){
-   if(Synth1_change(_ctx._inst1113,pitch)){
+   if(Synth1_change(_ctx._inst171,pitch)){
       _ctx.rate = Synth1_pitchToRate(pitch);
    }
    if(reset){
@@ -28,7 +28,7 @@ float Synth1_phasor(Synth1__ctx_type_5 &_ctx, float pitch, uint8_t reset){
 void Synth1__ctx_type_6_init(Synth1__ctx_type_6 &_output_){
    Synth1__ctx_type_6 _ctx;
    _ctx.phase = 0.0f;
-   Synth1__ctx_type_2_init(_ctx._inst1146);
+   Synth1__ctx_type_2_init(_ctx._inst192);
    _output_ = _ctx;
    return ;
 }
@@ -36,7 +36,7 @@ void Synth1__ctx_type_6_init(Synth1__ctx_type_6 &_output_){
 float Synth1_lfo(Synth1__ctx_type_6 &_ctx, float f, int gate){
    float rate;
    rate = (0.0002268f * f);
-   if(Synth1_edge(_ctx._inst1146,gate)){
+   if(Synth1_edge(_ctx._inst192,gate)){
       _ctx.phase = 0.0f;
    }
    _ctx.phase = (_ctx.phase + rate);
@@ -60,28 +60,28 @@ void Synth1__ctx_type_7_init(Synth1__ctx_type_7 &_output_){
    _ctx.gate = 0;
    _ctx.detune = 0.0f;
    _ctx.count = 0;
-   Synth1__ctx_type_0_init(_ctx._inst6201);
-   Synth1__ctx_type_0_init(_ctx._inst5201);
-   Synth1__ctx_type_5_init(_ctx._inst4162);
-   Synth1__ctx_type_0_init(_ctx._inst3201);
-   Synth1__ctx_type_5_init(_ctx._inst2162);
-   Synth1__ctx_type_6_init(_ctx._inst1200);
+   Synth1__ctx_type_0_init(_ctx._inst6c9);
+   Synth1__ctx_type_0_init(_ctx._inst5c9);
+   Synth1__ctx_type_5_init(_ctx._inst4a2);
+   Synth1__ctx_type_0_init(_ctx._inst3c9);
+   Synth1__ctx_type_5_init(_ctx._inst2a2);
+   Synth1__ctx_type_6_init(_ctx._inst1c8);
    _output_ = _ctx;
    return ;
 }
 
 float Synth1_process(Synth1__ctx_type_7 &_ctx, float input){
    float lfo_val;
-   lfo_val = (_ctx.lfo_amt * Synth1_lfo(_ctx._inst1200,_ctx.lfo_rate,_ctx.gate));
+   lfo_val = (_ctx.lfo_amt * Synth1_lfo(_ctx._inst1c8,_ctx.lfo_rate,_ctx.gate));
    float phase1;
-   phase1 = Synth1_phasor(_ctx._inst2162,_ctx.pitch,false);
+   phase1 = Synth1_phasor(_ctx._inst2a2,_ctx.pitch,false);
    float comp;
    comp = (1.f + (- phase1));
    uint8_t reset;
    reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5f);
    _ctx.pre_phase1 = phase1;
    float phase2;
-   phase2 = Synth1_phasor(_ctx._inst4162,(_ctx.pitch + (32.f * Synth1_smooth(_ctx._inst3201,(_ctx.detune + lfo_val)))),reset);
+   phase2 = Synth1_phasor(_ctx._inst4a2,(_ctx.pitch + (32.f * Synth1_smooth(_ctx._inst3c9,(_ctx.detune + lfo_val)))),reset);
    float sine;
    sine = sinf((6.2831854f * phase2));
    float gate_value;
@@ -92,7 +92,7 @@ float Synth1_process(Synth1__ctx_type_7 &_ctx, float input){
    {
       gate_value = 0.0f;
    }
-   return (comp * sine * Synth1_smooth(_ctx._inst5201,_ctx.volume) * Synth1_smooth(_ctx._inst6201,gate_value));
+   return (comp * sine * Synth1_smooth(_ctx._inst5c9,_ctx.volume) * Synth1_smooth(_ctx._inst6c9,gate_value));
 }
 
 void Synth1_noteOn(Synth1__ctx_type_7 &_ctx, int note, int velocity, int channel){

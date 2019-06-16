@@ -176,26 +176,26 @@ this.Rescomb__ctx_type_5_init = function(){
    var _ctx = {}; 
    _ctx.stone = 0.; 
    _ctx.output = 0.; 
-   _ctx._inst4122 = this.Rescomb__ctx_type_0_init(); 
-   _ctx._inst3125 = this.Util__ctx_type_3_init(); 
-   _ctx._inst159 = this.Util__ctx_type_1_init(); 
+   _ctx._inst47a = this.Rescomb__ctx_type_0_init(); 
+   _ctx._inst37d = this.Util__ctx_type_3_init(); 
+   _ctx._inst13b = this.Util__ctx_type_1_init(); 
    return _ctx; 
 }
 this.Rescomb_do_init = function() { return this.Rescomb__ctx_type_5_init(); }
 this.Rescomb_do = function(_ctx,in_,cv,tone,res){
-   if(this.Util_change(_ctx._inst159,tone))_ctx.stone = this.Rescomb_toneCurve(tone); 
-   var feedback = this.Util_dcblock(_ctx._inst3125,(_ctx.output * res)); 
+   if(this.Util_change(_ctx._inst13b,tone))_ctx.stone = this.Rescomb_toneCurve(tone); 
+   var feedback = this.Util_dcblock(_ctx._inst37d,(_ctx.output * res)); 
    var saturated_input = this.Saturate_soft_process((feedback + in_)); 
-   _ctx.output = (in_ + (_ctx.stone * this.Rescomb_delay(_ctx._inst4122,saturated_input,cv))); 
+   _ctx.output = (in_ + (_ctx.stone * this.Rescomb_delay(_ctx._inst47a,saturated_input,cv))); 
    return this.Saturate_soft_process(_ctx.output); 
 }
 this.Rescomb__ctx_type_6_init = function(){
    var _ctx = {}; 
-   _ctx._inst1121 = this.Rescomb__ctx_type_5_init(); 
+   _ctx._inst179 = this.Rescomb__ctx_type_5_init(); 
    return _ctx; 
 }
 this.Rescomb_process_init = function() { return this.Rescomb__ctx_type_6_init(); }
-this.Rescomb_process = function(_ctx,in_,cv,tone,res) { return this.Rescomb_do(_ctx._inst1121,in_,cv,tone,res); }
+this.Rescomb_process = function(_ctx,in_,cv,tone,res) { return this.Rescomb_do(_ctx._inst179,in_,cv,tone,res); }
 this.Rescomb_noteOn_init = function() { return this.Rescomb__ctx_type_6_init(); }
 this.Rescomb_noteOn = function(_ctx,note,velocity,channel){
 }

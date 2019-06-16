@@ -47,7 +47,7 @@ function this.Noise__ctx_type_1_init()
    local _ctx = {}; 
    _ctx.x2 = 0; 
    _ctx.x1 = 0; 
-   _ctx._inst1144 = this.Noise__ctx_type_0_init(); 
+   _ctx._inst190 = this.Noise__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -63,7 +63,7 @@ function this.Noise_process(_ctx,color)
    local y2 = (3.06e-05 * this.real(_ctx.x2)); 
    local out = 0.0; 
    if (color > 0.5) then
-      out = this.Noise_pinker(_ctx._inst1144,(y1 + (- y2))); 
+      out = this.Noise_pinker(_ctx._inst190,(y1 + (- y2))); 
    else
 
       out = (y1 + (- y2)); 

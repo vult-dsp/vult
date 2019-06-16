@@ -42,14 +42,14 @@ static_inline int Wav_file_index(Wav_file__ctx_type_2 &_ctx){
 }
 
 typedef struct Wav_file__ctx_type_3 {
-   Wav_file__ctx_type_2 _inst1119;
+   Wav_file__ctx_type_2 _inst177;
 } Wav_file__ctx_type_3;
 
 typedef Wav_file__ctx_type_3 Wav_file_osc_wave_type;
 
 static_inline void Wav_file__ctx_type_3_init(Wav_file__ctx_type_3 &_output_){
    Wav_file__ctx_type_3 _ctx;
-   Wav_file__ctx_type_2_init(_ctx._inst1119);
+   Wav_file__ctx_type_2_init(_ctx._inst177);
    _output_ = _ctx;
    return ;
 }
@@ -60,18 +60,18 @@ static_inline void Wav_file_osc_wave_init(Wav_file__ctx_type_3 &_output_){
 }
 
 static_inline fix16_t Wav_file_osc_wave(Wav_file__ctx_type_3 &_ctx, fix16_t cv){
-   return Wav_file_ext_wave(0,Wav_file_index(_ctx._inst1119));
+   return Wav_file_ext_wave(0,Wav_file_index(_ctx._inst177));
 };
 
 typedef struct Wav_file__ctx_type_4 {
-   Wav_file__ctx_type_3 _inst1161;
+   Wav_file__ctx_type_3 _inst1a1;
 } Wav_file__ctx_type_4;
 
 typedef Wav_file__ctx_type_4 Wav_file_process_type;
 
 static_inline void Wav_file__ctx_type_4_init(Wav_file__ctx_type_4 &_output_){
    Wav_file__ctx_type_4 _ctx;
-   Wav_file__ctx_type_3_init(_ctx._inst1161);
+   Wav_file__ctx_type_3_init(_ctx._inst1a1);
    _output_ = _ctx;
    return ;
 }
@@ -82,7 +82,7 @@ static_inline void Wav_file_process_init(Wav_file__ctx_type_4 &_output_){
 }
 
 static_inline fix16_t Wav_file_process(Wav_file__ctx_type_4 &_ctx, fix16_t cv){
-   return Wav_file_osc_wave(_ctx._inst1161,cv);
+   return Wav_file_osc_wave(_ctx._inst1a1,cv);
 };
 
 typedef Wav_file__ctx_type_4 Wav_file_noteOn_type;

@@ -260,7 +260,7 @@ static_inline float Util_cvTokHz(float cv){
 typedef struct Saw_ptr2__ctx_type_0 {
    float rate;
    float phase;
-   Util__ctx_type_1 _inst159;
+   Util__ctx_type_1 _inst13b;
 } Saw_ptr2__ctx_type_0;
 
 typedef Saw_ptr2__ctx_type_0 Saw_ptr2_process_type;

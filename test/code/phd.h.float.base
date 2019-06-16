@@ -260,8 +260,8 @@ static_inline float Util_cvTokHz(float cv){
 typedef struct Phase__ctx_type_0 {
    float rate;
    float phase;
-   Util__ctx_type_0 _inst381;
-   Util__ctx_type_1 _inst159;
+   Util__ctx_type_0 _inst351;
+   Util__ctx_type_1 _inst13b;
 } Phase__ctx_type_0;
 
 typedef Phase__ctx_type_0 Phase_process_type;
@@ -336,9 +336,9 @@ static_inline float Tables_nsine(float x){
 
 typedef struct Phd__ctx_type_0 {
    float pre_phase1;
-   Phase__ctx_type_0 _inst3205;
-   Util__ctx_type_4 _inst285;
-   Phase__ctx_type_0 _inst1205;
+   Phase__ctx_type_0 _inst3cd;
+   Util__ctx_type_4 _inst255;
+   Phase__ctx_type_0 _inst1cd;
 } Phd__ctx_type_0;
 
 typedef Phd__ctx_type_0 Phd_process_type;

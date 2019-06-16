@@ -30,7 +30,7 @@ fix16_t Noise_pinker(Noise__ctx_type_0 &_ctx, fix16_t x);
 typedef struct Noise__ctx_type_1 {
    int x2;
    int x1;
-   Noise__ctx_type_0 _inst1144;
+   Noise__ctx_type_0 _inst190;
 } Noise__ctx_type_1;
 
 typedef Noise__ctx_type_1 Noise_process_type;

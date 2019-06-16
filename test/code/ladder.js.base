@@ -199,12 +199,12 @@ this.Ladder__ctx_type_6_init = function(){
    var _ctx = {}; 
    _ctx.fh = 0.; 
    _ctx.e = this.Ladder__ctx_type_5_init(); 
-   _ctx._inst159 = this.Util__ctx_type_1_init(); 
+   _ctx._inst13b = this.Util__ctx_type_1_init(); 
    return _ctx; 
 }
 this.Ladder_process_euler_init = function() { return this.Ladder__ctx_type_6_init(); }
 this.Ladder_process_euler = function(_ctx,input,cut,res){
-   if(this.Util_change(_ctx._inst159,cut))_ctx.fh = this.Ladder_tune(cut); 
+   if(this.Util_change(_ctx._inst13b,cut))_ctx.fh = this.Ladder_tune(cut); 
    this.Ladder_euler(_ctx.e,input,_ctx.fh,res);
    this.Ladder_euler(_ctx.e,input,_ctx.fh,res);
    this.Ladder_euler(_ctx.e,input,_ctx.fh,res);
@@ -215,12 +215,12 @@ this.Ladder__ctx_type_7_init = function(){
    var _ctx = {}; 
    _ctx.h = this.Ladder__ctx_type_4_init(); 
    _ctx.fh = 0.; 
-   _ctx._inst159 = this.Util__ctx_type_1_init(); 
+   _ctx._inst13b = this.Util__ctx_type_1_init(); 
    return _ctx; 
 }
 this.Ladder_process_heun_init = function() { return this.Ladder__ctx_type_7_init(); }
 this.Ladder_process_heun = function(_ctx,input,cut,res){
-   if(this.Util_change(_ctx._inst159,cut))_ctx.fh = this.Ladder_tune(cut); 
+   if(this.Util_change(_ctx._inst13b,cut))_ctx.fh = this.Ladder_tune(cut); 
    this.Ladder_heun(_ctx.h,input,_ctx.fh,res);
    this.Ladder_heun(_ctx.h,input,_ctx.fh,res);
    this.Ladder_heun(_ctx.h,input,_ctx.fh,res);
@@ -229,11 +229,11 @@ this.Ladder_process_heun = function(_ctx,input,cut,res){
 }
 this.Ladder__ctx_type_8_init = function(){
    var _ctx = {}; 
-   _ctx._inst118 = this.Ladder__ctx_type_7_init(); 
+   _ctx._inst112 = this.Ladder__ctx_type_7_init(); 
    return _ctx; 
 }
 this.Ladder_process_init = function() { return this.Ladder__ctx_type_8_init(); }
-this.Ladder_process = function(_ctx,input,cut,res) { return this.Ladder_process_heun(_ctx._inst118,input,cut,res); }
+this.Ladder_process = function(_ctx,input,cut,res) { return this.Ladder_process_heun(_ctx._inst112,input,cut,res); }
 this.Ladder_noteOn_init = function() { return this.Ladder__ctx_type_8_init(); }
 this.Ladder_noteOn = function(_ctx,note,velocity,channel){
 }

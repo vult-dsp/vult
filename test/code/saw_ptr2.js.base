@@ -126,13 +126,13 @@ this.Saw_ptr2__ctx_type_0_init = function(){
    var _ctx = {}; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst159 = this.Util__ctx_type_1_init(); 
+   _ctx._inst13b = this.Util__ctx_type_1_init(); 
    this.Saw_ptr2_default(_ctx);
    return _ctx; 
 }
 this.Saw_ptr2_process_init = function() { return this.Saw_ptr2__ctx_type_0_init(); }
 this.Saw_ptr2_process = function(_ctx,cv){
-   if(this.Util_change(_ctx._inst159,cv))_ctx.rate = this.Util_cvToRate(cv); 
+   if(this.Util_change(_ctx._inst13b,cv))_ctx.rate = this.Util_cvToRate(cv); 
    var out = 0.0; 
    var s1 = _ctx.rate; 
    var s2 = (_ctx.rate + s1); 

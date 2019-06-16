@@ -126,15 +126,15 @@ this.Phase__ctx_type_0_init = function(){
    var _ctx = {}; 
    _ctx.rate = 0.; 
    _ctx.phase = 0.; 
-   _ctx._inst381 = this.Util__ctx_type_0_init(); 
-   _ctx._inst159 = this.Util__ctx_type_1_init(); 
+   _ctx._inst351 = this.Util__ctx_type_0_init(); 
+   _ctx._inst13b = this.Util__ctx_type_1_init(); 
    this.Phase_default(_ctx);
    return _ctx; 
 }
 this.Phase_process_init = function() { return this.Phase__ctx_type_0_init(); }
 this.Phase_process = function(_ctx,cv,reset){
-   if(this.Util_change(_ctx._inst159,cv))_ctx.rate = this.Util_cvToRate_1024(cv); 
-   if(this.Util_edge(_ctx._inst381,(reset > 0.5)))_ctx.phase = 0.; 
+   if(this.Util_change(_ctx._inst13b,cv))_ctx.rate = this.Util_cvToRate_1024(cv); 
+   if(this.Util_edge(_ctx._inst351,(reset > 0.5)))_ctx.phase = 0.; 
    else
    _ctx.phase = (_ctx.phase + _ctx.rate); 
    if((_ctx.phase > 1024.))_ctx.phase = ((-1024.) + _ctx.phase); 

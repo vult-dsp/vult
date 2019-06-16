@@ -271,8 +271,8 @@ function this.Adsr__ctx_type_0_init()
    _ctx.scale = 0.; 
    _ctx.rate = 0.; 
    _ctx.out = 0.; 
-   _ctx._inst985 = this.Util__ctx_type_4_init(); 
-   _ctx._inst281 = this.Util__ctx_type_0_init(); 
+   _ctx._inst955 = this.Util__ctx_type_4_init(); 
+   _ctx._inst251 = this.Util__ctx_type_0_init(); 
    return _ctx; 
 
 end
@@ -288,7 +288,7 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
    _ctx.out = (_ctx.out + (0.004 * _ctx.rate * (_ctx.target + (- _ctx.out)))); 
    local bgate = (gate > 0.); 
    if (_ctx.state == 0) then
-      if this.Util_edge(_ctx._inst281,bgate) then
+      if this.Util_edge(_ctx._inst251,bgate) then
          _ctx.state = 1; 
          _ctx.scale = (0.2 * gate); 
 
@@ -316,7 +316,7 @@ function this.Adsr_do(_ctx,gate,a,d,s,r)
       _ctx.target = (1024. * s); 
 
    end
-   return (this.Util_smooth(_ctx._inst985,_ctx.scale) * this.clip((0.0009766 * _ctx.out),0.,1.)); 
+   return (this.Util_smooth(_ctx._inst955,_ctx.scale) * this.clip((0.0009766 * _ctx.out),0.,1.)); 
 
 end
 

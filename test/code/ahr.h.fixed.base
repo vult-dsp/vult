@@ -270,8 +270,8 @@ typedef struct Ahr__ctx_type_0 {
    fix16_t hold_phase;
    fix16_t do_ret_1;
    fix16_t do_ret_0;
-   Util__ctx_type_0 _inst381;
-   Util__ctx_type_0 _inst181;
+   Util__ctx_type_0 _inst351;
+   Util__ctx_type_0 _inst151;
 } Ahr__ctx_type_0;
 
 typedef Ahr__ctx_type_0 Ahr_do_type;
@@ -313,7 +313,7 @@ typedef struct Ahr__ctx_type_1 {
    fix16_t knob3;
    fix16_t knob2;
    fix16_t knob1;
-   Ahr__ctx_type_0 _inst171;
+   Ahr__ctx_type_0 _inst147;
 } Ahr__ctx_type_1;
 
 typedef Ahr__ctx_type_1 Ahr_process_type;
@@ -326,9 +326,9 @@ static_inline void Ahr_process_init(Ahr__ctx_type_1 &_output_){
 }
 
 static_inline void Ahr_process(Ahr__ctx_type_1 &_ctx, fix16_t gate){
-   Ahr_do(_ctx._inst171,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
-   _ctx.process_ret_0 = Ahr_do_ret_0(_ctx._inst171);
-   _ctx.process_ret_1 = Ahr_do_ret_1(_ctx._inst171);
+   Ahr_do(_ctx._inst147,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
+   _ctx.process_ret_0 = Ahr_do_ret_0(_ctx._inst147);
+   _ctx.process_ret_1 = Ahr_do_ret_1(_ctx._inst147);
    return ;
 }
 

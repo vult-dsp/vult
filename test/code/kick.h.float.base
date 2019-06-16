@@ -35,7 +35,7 @@ float Noise_pinker(Noise__ctx_type_0 &_ctx, float x);
 typedef struct Noise__ctx_type_1 {
    int x2;
    int x1;
-   Noise__ctx_type_0 _inst1144;
+   Noise__ctx_type_0 _inst190;
 } Noise__ctx_type_1;
 
 typedef Noise__ctx_type_1 Noise_process_type;
@@ -345,9 +345,9 @@ typedef struct Tricore__ctx_type_0 {
    float rate;
    float phase;
    uint8_t direction;
-   Util__ctx_type_0 _inst481;
-   Util__ctx_type_0 _inst381;
-   Util__ctx_type_1 _inst159;
+   Util__ctx_type_0 _inst451;
+   Util__ctx_type_0 _inst351;
+   Util__ctx_type_1 _inst13b;
 } Tricore__ctx_type_0;
 
 typedef Tricore__ctx_type_0 Tricore_process_type;
@@ -404,7 +404,7 @@ static_inline void Tricore_default(Tricore__ctx_type_0 &_ctx){
 
 typedef struct Swept__ctx_type_0 {
    float out;
-   Util__ctx_type_0 _inst181;
+   Util__ctx_type_0 _inst151;
 } Swept__ctx_type_0;
 
 typedef Swept__ctx_type_0 Swept_process_type;
@@ -500,8 +500,8 @@ typedef struct Ahr__ctx_type_0 {
    float hold_phase;
    float do_ret_1;
    float do_ret_0;
-   Util__ctx_type_0 _inst381;
-   Util__ctx_type_0 _inst181;
+   Util__ctx_type_0 _inst351;
+   Util__ctx_type_0 _inst151;
 } Ahr__ctx_type_0;
 
 typedef Ahr__ctx_type_0 Ahr_do_type;
@@ -543,7 +543,7 @@ typedef struct Ahr__ctx_type_1 {
    float knob3;
    float knob2;
    float knob1;
-   Ahr__ctx_type_0 _inst171;
+   Ahr__ctx_type_0 _inst147;
 } Ahr__ctx_type_1;
 
 typedef Ahr__ctx_type_1 Ahr_process_type;
@@ -556,9 +556,9 @@ static_inline void Ahr_process_init(Ahr__ctx_type_1 &_output_){
 }
 
 static_inline void Ahr_process(Ahr__ctx_type_1 &_ctx, float gate){
-   Ahr_do(_ctx._inst171,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
-   _ctx.process_ret_0 = Ahr_do_ret_0(_ctx._inst171);
-   _ctx.process_ret_1 = Ahr_do_ret_1(_ctx._inst171);
+   Ahr_do(_ctx._inst147,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
+   _ctx.process_ret_0 = Ahr_do_ret_0(_ctx._inst147);
+   _ctx.process_ret_1 = Ahr_do_ret_1(_ctx._inst147);
    return ;
 }
 
@@ -627,11 +627,11 @@ static_inline void Ahr_default(Ahr__ctx_type_1 &_ctx){
 }
 
 typedef struct Kick__ctx_type_0 {
-   Noise__ctx_type_1 _inst5171;
-   Ahr__ctx_type_0 _inst471;
-   Tricore__ctx_type_0 _inst365;
-   Swept__ctx_type_0 _inst2235;
-   Ahr__ctx_type_0 _inst171;
+   Noise__ctx_type_1 _inst5ab;
+   Ahr__ctx_type_0 _inst447;
+   Tricore__ctx_type_0 _inst341;
+   Swept__ctx_type_0 _inst2eb;
+   Ahr__ctx_type_0 _inst147;
 } Kick__ctx_type_0;
 
 typedef Kick__ctx_type_0 Kick_do_type;
@@ -650,7 +650,7 @@ typedef struct Kick__ctx_type_1 {
    float pitch;
    float odecay;
    float noise;
-   Kick__ctx_type_0 _inst132;
+   Kick__ctx_type_0 _inst120;
 } Kick__ctx_type_1;
 
 typedef Kick__ctx_type_1 Kick_process_type;
@@ -663,7 +663,7 @@ static_inline void Kick_process_init(Kick__ctx_type_1 &_output_){
 }
 
 static_inline float Kick_process(Kick__ctx_type_1 &_ctx, float gate){
-   return Kick_do(_ctx._inst132,gate,_ctx.odecay,_ctx.pitch,_ctx.swept,_ctx.noise);
+   return Kick_do(_ctx._inst120,gate,_ctx.odecay,_ctx.pitch,_ctx.swept,_ctx.noise);
 };
 
 typedef Kick__ctx_type_1 Kick_noteOn_type;

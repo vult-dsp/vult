@@ -53,7 +53,7 @@ end
 
 function this.Wav_file__ctx_type_3_init()
    local _ctx = {}; 
-   _ctx._inst1119 = this.Wav_file__ctx_type_2_init(); 
+   _ctx._inst177 = this.Wav_file__ctx_type_2_init(); 
    return _ctx; 
 
 end
@@ -63,12 +63,12 @@ function this.Wav_file_osc_wave_init()
 end
 
 function this.Wav_file_osc_wave(_ctx,cv)
-   return this.Wav_file_ext_wave(0,this.Wav_file_index(_ctx._inst1119)); 
+   return this.Wav_file_ext_wave(0,this.Wav_file_index(_ctx._inst177)); 
 end
 
 function this.Wav_file__ctx_type_4_init()
    local _ctx = {}; 
-   _ctx._inst1161 = this.Wav_file__ctx_type_3_init(); 
+   _ctx._inst1a1 = this.Wav_file__ctx_type_3_init(); 
    return _ctx; 
 
 end
@@ -78,7 +78,7 @@ function this.Wav_file_process_init()
 end
 
 function this.Wav_file_process(_ctx,cv)
-   return this.Wav_file_osc_wave(_ctx._inst1161,cv); 
+   return this.Wav_file_osc_wave(_ctx._inst1a1,cv); 
 end
 
 function this.Wav_file_noteOn_init()

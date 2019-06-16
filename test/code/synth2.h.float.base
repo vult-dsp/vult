@@ -193,8 +193,8 @@ typedef struct Synth2__ctx_type_11 {
    float phase;
    float output;
    float m;
-   Synth2__ctx_type_1 _inst3138;
-   Synth2__ctx_type_6 _inst1183;
+   Synth2__ctx_type_1 _inst38a;
+   Synth2__ctx_type_6 _inst1153;
 } Synth2__ctx_type_11;
 
 typedef Synth2__ctx_type_11 Synth2_osc_type;
@@ -227,7 +227,7 @@ float Synth2_svf_step(Synth2__ctx_type_12 &_ctx, float input, float g, float q, 
 typedef struct Synth2__ctx_type_13 {
    Synth2__ctx_type_12 step;
    float g;
-   Synth2__ctx_type_1 _inst1138;
+   Synth2__ctx_type_1 _inst18a;
 } Synth2__ctx_type_13;
 
 typedef Synth2__ctx_type_13 Synth2_svf_type;
@@ -243,8 +243,8 @@ float Synth2_svf(Synth2__ctx_type_13 &_ctx, float input, float fc, float q, int 
 
 typedef struct Synth2__ctx_type_14 {
    float phase;
-   Synth2__ctx_type_4 _inst3242;
-   Synth2__ctx_type_3 _inst1148;
+   Synth2__ctx_type_4 _inst3f2;
+   Synth2__ctx_type_3 _inst194;
 } Synth2__ctx_type_14;
 
 typedef Synth2__ctx_type_14 Synth2_lfo_type;
@@ -306,10 +306,10 @@ typedef struct Synth2__ctx_type_16 {
    float lfo_amt;
    float cut;
    float amp_s;
-   Synth2__ctx_type_13 _inst418;
-   Synth2__ctx_type_7 _inst3244;
-   Synth2__ctx_type_11 _inst297;
-   Synth2__ctx_type_14 _inst1106;
+   Synth2__ctx_type_13 _inst412;
+   Synth2__ctx_type_7 _inst3f4;
+   Synth2__ctx_type_11 _inst261;
+   Synth2__ctx_type_14 _inst16a;
 } Synth2__ctx_type_16;
 
 typedef Synth2__ctx_type_16 Synth2_process_type;

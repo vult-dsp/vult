@@ -25,8 +25,8 @@ void Adsr__ctx_type_0_init(Adsr__ctx_type_0 &_output_){
    _ctx.scale = 0.0f;
    _ctx.rate = 0.0f;
    _ctx.out = 0.0f;
-   Util__ctx_type_4_init(_ctx._inst985);
-   Util__ctx_type_0_init(_ctx._inst281);
+   Util__ctx_type_4_init(_ctx._inst955);
+   Util__ctx_type_0_init(_ctx._inst251);
    _output_ = _ctx;
    return ;
 }
@@ -42,7 +42,7 @@ float Adsr_do(Adsr__ctx_type_0 &_ctx, float gate, float a, float d, float s, flo
    uint8_t bgate;
    bgate = (gate > 0.0f);
    if(_ctx.state == 0){
-      if(Util_edge(_ctx._inst281,bgate)){
+      if(Util_edge(_ctx._inst251,bgate)){
          _ctx.state = 1;
          _ctx.scale = (0.2f * gate);
       }
@@ -66,7 +66,7 @@ float Adsr_do(Adsr__ctx_type_0 &_ctx, float gate, float a, float d, float s, flo
       _ctx.rate = d_rate;
       _ctx.target = (1024.f * s);
    }
-   return (Util_smooth(_ctx._inst985,_ctx.scale) * float_clip((0.0009766f * _ctx.out),0.0f,1.f));
+   return (Util_smooth(_ctx._inst955,_ctx.scale) * float_clip((0.0009766f * _ctx.out),0.0f,1.f));
 }
 
 void Adsr__ctx_type_1_init(Adsr__ctx_type_1 &_output_){

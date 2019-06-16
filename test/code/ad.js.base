@@ -129,7 +129,7 @@ this.Ad__ctx_type_0_init = function(){
    _ctx.scale = 0.; 
    _ctx.rate = 0.; 
    _ctx.out = 0.; 
-   _ctx._inst281 = this.Util__ctx_type_0_init(); 
+   _ctx._inst251 = this.Util__ctx_type_0_init(); 
    return _ctx; 
 }
 this.Ad_do_init = function() { return this.Ad__ctx_type_0_init(); }
@@ -139,7 +139,7 @@ this.Ad_do = function(_ctx,gate,a,d){
    var bgate = (gate > 0.); 
    _ctx.out = (_ctx.out + (0.004 * _ctx.rate * (_ctx.target + (- _ctx.out)))); 
    if((_ctx.state == (0|0))){
-      if(this.Util_edge(_ctx._inst281,bgate)){
+      if(this.Util_edge(_ctx._inst251,bgate)){
          _ctx.state = ((1|0)|0); 
          _ctx.scale = (0.2 * gate); 
       }
@@ -157,11 +157,11 @@ this.Ad__ctx_type_1_init = function(){
    var _ctx = {}; 
    _ctx.knob2 = 0.; 
    _ctx.knob1 = 0.; 
-   _ctx._inst115 = this.Ad__ctx_type_0_init(); 
+   _ctx._inst1f = this.Ad__ctx_type_0_init(); 
    return _ctx; 
 }
 this.Ad_process_init = function() { return this.Ad__ctx_type_1_init(); }
-this.Ad_process = function(_ctx,gate) { return this.Ad_do(_ctx._inst115,gate,_ctx.knob1,_ctx.knob2); }
+this.Ad_process = function(_ctx,gate) { return this.Ad_do(_ctx._inst1f,gate,_ctx.knob1,_ctx.knob2); }
 this.Ad_noteOn_init = function() { return this.Ad__ctx_type_1_init(); }
 this.Ad_noteOn = function(_ctx,note,velocity,channel){
 }
