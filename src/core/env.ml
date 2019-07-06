@@ -606,6 +606,9 @@ let builtin_table =
       ["|"]  , Scope.Operator, Typ.Const.int_int_int (), false;
       ["&"]  , Scope.Operator, Typ.Const.int_int_int (), false;
 
+      [">>"]  , Scope.Operator, Typ.Const.int_int_int (), false;
+      ["<<"]  , Scope.Operator, Typ.Const.int_int_int (), false;
+
       ["not"] , Scope.Function, Typ.Const.bool_bool (), false;
       ["||"]  , Scope.Operator, Typ.Const.bool_bool_bool (), false;
       ["&&"]  , Scope.Operator, Typ.Const.bool_bool_bool (), false;
