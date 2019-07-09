@@ -425,7 +425,9 @@ and inferLhsExp mem_var (env:'a Env.t) (e:lhs_exp) : lhs_exp * Typ.t =
          match Env.lookupVariable env id, otyp with
          | Some(var), _ -> var.Scope.typ
          | _, Some typ -> Typ.first typ
-         | _ -> Typ.newvar ()
+         | _ ->
+            let msg = Printf.sprintf "The symbol '%s' is not defined" (Id.show id) in
+            Error.raiseError msg attr.loc
       in
       let index', _, index_typ = inferExp env index in
       let a = ref (Typ.TUnbound("'a", None, None)) in
