@@ -59,6 +59,34 @@ float[] makeArray(int size, float init) {
    return a;
 }
 
+int int_to_fix16(int a) { return a * 0x00010000; }
+
+int fix16_to_int(int a) { return (a >> 16); }
+
+int fix16_add(int x, int y) { return x + y; }
+
+int fix16_sub(int x, int y) { return x - y; }
+
+int fix16_minus(int x) { return -x; }
+
+float fix16_to_float(int a) { return (float)a / 0x00010000; }
+int float_to_fix16(float a) {
+   float temp = a * 0x00010000;
+   return (int)temp;
+}
+
+int fix16_mul(int x, int y) {
+   long res = (long)x * (long)y;
+   return (int)(res >> 16);
+}
+
+int fix16_div(int a, int b) {
+   if (b == 0)
+      return 0;
+   int result = (int)(((long)a << 16) / b);
+   return result;
+}
+
 static boolean not(boolean x) {
    return !x;
 }
@@ -79,6 +107,10 @@ static Random rand = new Random();
 
 float random() {
    return rand.nextFloat();
+}
+
+int irandom() {
+   return rand.nextInt();
 }
 
 float get(float[] a, int i) {
@@ -178,10 +210,15 @@ let isSimple (e:cexp) : bool =
    | CEVar _ -> true
    | _ -> false
 
+let replaceFixed name =
+   match name with
+   | "fix16" -> "int"
+   | _ -> name
+
 (** Returns the base type name and a list of its sizes *)
 let rec simplifyArray (typ:type_descr) : string * string list =
    match typ with
-   | CTSimple(name) -> name, []
+   | CTSimple(name) -> replaceFixed name, []
    | CTArray(sub, size) ->
       let name, sub_size = simplifyArray sub in
       name, sub_size @ [string_of_int size]
@@ -197,6 +234,7 @@ let printTypeDescr (typ:type_descr) : Pla.t =
 let rec getInitValue (descr:type_descr) : Pla.t =
    match descr with
    | CTSimple("int") -> Pla.string "0"
+   | CTSimple("fix16") -> Pla.string "0"
    | CTSimple("abstract") -> Pla.string "0"
    | CTSimple("float") -> Pla.string  "0.0f"
    | CTSimple("double") -> Pla.string  "0.0"

@@ -251,6 +251,10 @@ module Java = struct
          [
             ("float", "int"), "float_to_int";
             ("int", "float"), "int_to_float";
+            ("fix16", "float"), "fix16_to_float";
+            ("fix16", "int"), "fix16_to_int";
+            ("float", "fix16"), "float_to_fix16";
+            ("int", "fix16"), "int_to_fix16";
          ]
 
    let op_to_fun = Replacements.makeOperators
@@ -262,6 +266,7 @@ module Java = struct
             ("<>", "float"),   "!=";
             ("<>", "int"),     "!=";
             ("<>", "boolean"), "!=";
+            ("<>", "fix16"), "!=";
          ]
 
    let fun_to_fun = Replacements.makeFunctions
