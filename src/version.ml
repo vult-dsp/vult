@@ -1,3 +1,1 @@
-let version = "
-v0.4.4
-"
+let version = "\nv0.4.4\n"
