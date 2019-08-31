@@ -1,0 +1,17 @@
+profile=sparse
+margin=120
+parens-tuple=multi-line-only
+nested-match=align
+match-indent-nested=always
+break-infix=fit-or-vertical
+break-fun-sig=fit-or-vertical
+break-fun-decl=fit-or-vertical
+align-variants-decl=true
+align-constructors-decl=true
+cases-matching-exp-indent=normal
+exp-grouping=preserve
+if-then-else=fit-or-vertical
+break-cases=all
+comment-check=false
+wrap-comments=false
+doc-comments-padding=3

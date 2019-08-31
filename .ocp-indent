@@ -40,6 +40,14 @@ with = 0
 # the default is 2, which aligns the pattern and the expression
 match_clause = 3 # this is non-default
 
+# Indentation for items inside extension nodes:
+#    [%% id.id
+#    ^^^^contents ]
+#    [@@id
+#    ^^^^foo
+#    ]
+ppx_stritem_ext = 3
+
 # When nesting expressions on the same line, their indentation are in
 # some cases stacked, so that it remains correct if you close them one
 # at a line. This may lead to large indents in complex code though, so
@@ -52,7 +60,7 @@ match_clause = 3 # this is non-default
 #          x)                      #        x)
 #        )                         #      )
 #      )                           #    )
-max_indent = 6
+max_indent = 12
 
 
 #
@@ -69,7 +77,7 @@ max_indent = 6
 # For example, the following is not indented if set to `always`:
 #    let f = function
 #    ^^| Foo -> bar
-strict_with = never
+strict_with = auto
 
 # Controls indentation after the `else` keyword. `always` indents after the
 # `else` keyword normally, like after `then`.
@@ -90,7 +98,7 @@ strict_else = always
 # Ocp-indent will normally try to preserve your in-comment indentation, as long
 # as it respects the left-margin or starts with `(*\n`. Setting this to `true`
 # forces alignment within comments.
-strict_comments = false
+strict_comments = true
 
 # Toggles preference of column-alignment over line indentation for most
 # of the common operators and after mid-line opening parentheses.

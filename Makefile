@@ -1,8 +1,26 @@
 PREFIX ?= /usr/local/bin
 
+VULT_SRC = $(wildcard src/*.ml) $(wildcard src/core/*.ml) $(wildcard src/generators/*.ml) $(wildcard src/js/*.ml) $(wildcard src/parser/*.ml) $(wildcard src/passes/*.ml) $(wildcard src/util/*.ml) $(wildcard test/*.ml)
+
 OCB = ocamlbuild -j 4 -use-ocamlfind
 
-compiler: version
+ifeq (, $(shell which ocamlformat))
+OCAMLFORMAT = echo
+else
+OCAMLFORMAT = ocamlformat
+endif
+
+ifeq (, $(shell which ocp-indent))
+OCPINDENT = echo
+else
+OCPINDENT = ocp-indent
+endif
+
+format: $(VULT_SRC)
+	@$(OCAMLFORMAT) -i --enable-outside-detected-project $(VULT_SRC)
+	@$(OCPINDENT) -i $(VULT_SRC)
+
+compiler: version format
 			$(OCB) src/vultc.native src/vultc.byte
 
 js: jscompiler
