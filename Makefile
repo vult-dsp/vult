@@ -16,12 +16,12 @@ else
 OCPINDENT = ocp-indent
 endif
 
+compiler: version format
+			$(OCB) src/vultc.native src/vultc.byte
+
 format: $(VULT_SRC)
 	@$(OCAMLFORMAT) -i --enable-outside-detected-project $(VULT_SRC)
 	@$(OCPINDENT) -i $(VULT_SRC)
-
-compiler: version format
-			$(OCB) src/vultc.native src/vultc.byte
 
 js: jscompiler
 			$(OCB) src/js/vultlib.byte
