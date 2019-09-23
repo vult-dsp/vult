@@ -45,6 +45,8 @@ Vult is maintained by: Leonardo Laguna Ruiz with the help of Carl Jönsson and J
 
 Logo design by: John Klimt https://www.facebook.com/JohnKlimt
 
+The Vult logo is property of Leonardo Laguna Ruiz, all rights reserved.
+
 ## Contact
 
 If you want to receive notifications for future development of this project you can join to the google group http://groups.google.com/d/forum/vult
