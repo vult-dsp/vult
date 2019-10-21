@@ -128,6 +128,7 @@ module Default = struct
          ; ("msu", "float"), "float_msu"
          ; ("abs", "float"), "fabsf"
          ; ("exp", "float"), "expf"
+         ; ("log10", "float"), "log10f"
          ; ("floor", "float"), "floorf"
          ; ("max", "float"), "fmax"
          ; ("min", "float"), "fmin"

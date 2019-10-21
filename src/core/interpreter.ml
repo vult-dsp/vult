@@ -547,6 +547,7 @@ let builtinFunctions (a : Args.args) env =
    in
    let functions =
       [ "abs", Env.Builtin (real_real abs_float)
+      ; "log10", Env.Builtin (real_real log10)
       ; "exp", Env.Builtin (real_real exp)
       ; "sin", Env.Builtin (real_real sin)
       ; "cos", Env.Builtin (real_real cos)

@@ -585,6 +585,7 @@ let builtin_table =
    ; [ "makeArray" ], Scope.Function, Typ.Const.array_make (), false
    ; [ "abs" ], Scope.Function, Typ.Const.freal_freal (), false
    ; [ "exp" ], Scope.Function, Typ.Const.freal_freal (), false
+   ; [ "log10" ], Scope.Function, Typ.Const.freal_freal (), false
    ; [ "sin" ], Scope.Function, Typ.Const.freal_freal (), false
    ; [ "cos" ], Scope.Function, Typ.Const.freal_freal (), false
    ; [ "floor" ], Scope.Function, Typ.Const.freal_freal (), false
