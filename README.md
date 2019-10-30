@@ -105,7 +105,7 @@ https://github.com/modlfo/vult-webaudio
 - [Optional] js_of_ocaml >= 3.0 (to build the web functions)
 
 ### Installing the tools
- The simplest way to instal the requirements is with OPAM (https://opam.ocaml.org/)
+ The simplest way to install the requirements is with OPAM (https://opam.ocaml.org/)
 ```
 $ opam switch 4.04.2
 $ opam install containers ppx_deriving pla result
