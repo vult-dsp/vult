@@ -47,12 +47,6 @@ Logo design by: John Klimt https://www.facebook.com/JohnKlimt
 
 The Vult logo is property of Leonardo Laguna Ruiz, all rights reserved.
 
-## Contact
-
-If you want to receive notifications for future development of this project you can join to the google group http://groups.google.com/d/forum/vult
-
-E-mail: modlfo@gmail.com
-
 ## Installing
 
 There are three flavors the Vult compiler:
