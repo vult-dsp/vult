@@ -1,6 +1,6 @@
 {
   type token =
-    | Int of int
+    | Int of Int64.t
     | Float of float
     | Id of string
     | Hex of int
@@ -27,7 +27,7 @@ rule read =
   parse
   | white    { read lexbuf }
   | newline  { read lexbuf }
-  | int      { Int (int_of_string (Lexing.lexeme lexbuf)) }
+  | int      { Int (Int64.of_string (Lexing.lexeme lexbuf)) }
   | float    { Float (float_of_string (Lexing.lexeme lexbuf)) }
   | id       { Id (Lexing.lexeme lexbuf) }
   | hex      { Hex (int_of_string (Lexing.lexeme lexbuf)) }

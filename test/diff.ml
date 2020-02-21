@@ -11,7 +11,7 @@
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
-   all copies or substantial portions of the Software.
+   all copies or substantial 95portions of the Software.
 
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -92,7 +92,7 @@ let tokenString t =
    let open BaseTok in
    match t with
    | Id s -> s
-   | Int i -> string_of_int i
+   | Int i -> Int64.to_string i
    | Float f -> string_of_float f
    | Other s -> s
    | Hex i -> string_of_int i
