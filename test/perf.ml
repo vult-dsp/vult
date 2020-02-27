@@ -67,9 +67,7 @@ let showError e =
 
 let compileFile (file : string) =
    let basename = Filename.chop_extension (Filename.basename file) in
-   let cmd =
-      Printf.sprintf "gcc -ffast-math -Werror -I. -I%s -O3 -c %s -o %s.o" (in_proj_dir "runtime") file basename
-   in
+   let cmd = Printf.sprintf "gcc -ffast-math -Werror -I. -I%s -O3 -c %s -o %s.o" (in_proj_dir "runtime") file basename in
    if Sys.command cmd <> 0 then
       failwith ("Failed to compile " ^ file)
 
@@ -83,14 +81,7 @@ let linkFiles (output : string) (files : string list) =
 
 let generateC (filename : string) (output : string) (real : string) : unit =
    let args =
-      { default_arguments with
-        files = [ File filename ]
-      ; code = CCode
-      ; output
-      ; real
-      ; template = "performance"
-      ; includes
-      }
+      { default_arguments with files = [ File filename ]; code = CCode; output; real; template = "performance"; includes }
    in
    let parser_results = Loader.loadFiles args [ File filename ] in
    let gen = Generate.generateCode parser_results args in

@@ -58,10 +58,7 @@ let unifyRaise (loc : Loc.t Lazy.t) (t1 : Typ.t) (t2 : Typ.t) : unit =
    let raise = true in
    if not (Typ.unify t1 t2) then
       let msg =
-         Printf.sprintf
-            "This expression has type '%s' but '%s' was expected"
-            (PrintProg.typeStr t2)
-            (PrintProg.typeStr t1)
+         Printf.sprintf "This expression has type '%s' but '%s' was expected" (PrintProg.typeStr t2) (PrintProg.typeStr t1)
       in
       if raise then
          Error.raiseError msg (Lazy.force loc)
@@ -729,8 +726,7 @@ and inferStmtList (env : 'a Env.t) (ret_type_in : return_type) (stmts : stmt lis
    List.rev stmts', env', ret_type'
 
 
-and inferOptStmt (env : 'a Env.t) (ret_type : return_type) (stmt : stmt option) : stmt option * 'a Env.t * return_type
-   =
+and inferOptStmt (env : 'a Env.t) (ret_type : return_type) (stmt : stmt option) : stmt option * 'a Env.t * return_type =
    match stmt with
    | None -> None, env, ret_type
    | Some s ->

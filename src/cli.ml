@@ -36,9 +36,7 @@ let processArguments () : args =
         , "prefix Converts the code to java (default: off). Requires prefix to name the package. e.g. 'com.company'" )
       ; "-jscode", Arg.Unit (fun () -> result.code <- JSCode), " Converts the code to javascript (default: off)"
       ; "-luacode", Arg.Unit (fun () -> result.code <- LuaCode), " Converts the code to lua (default: off)"
-      ; ( "-check"
-        , Arg.Unit (fun () -> result.check <- true)
-        , " Checks the code without generating any code (default: off)" )
+      ; "-check", Arg.Unit (fun () -> result.check <- true), " Checks the code without generating any code (default: off)"
       ; "-o", Arg.String (fun output -> result.output <- output), "output Defines the prefix of the output files"
       ; ( "-force-write"
         , Arg.Unit (fun () -> result.force_write <- true)

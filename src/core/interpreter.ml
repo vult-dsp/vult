@@ -26,146 +26,6 @@
 open Prog
 open Common
 
-(*
-   type value =
-   | Unit
-   | Int of int
-   | Bool of bool
-   | Real of float
-   | String of string
-   | Array of value array
-   | Tuple of value list
-
-   type ienv =
-   {
-   mutable ctx_values : (Id.t * int) list;
-   mutable locals : (Id.t * int) list list;
-   }
-
-   type ctx =
-   {
-   mem : value array;
-   locals : value array;
-   }
-
-   let findInCtx (env:ienv) (name:Id.t) : int option =
-   CCList.assoc_opt name env.ctx_values
-
-   let findInLocal (env:ienv) (name:Id.t) : int option =
-   let rec loop locals =
-   match locals with
-   | [] -> None
-   | h :: t ->
-   match CCList.assoc_opt name h with
-   | Some _  as result -> result
-   | _ -> loop t
-   in
-   loop env.locals
-
-   let findVar (env:ienv) (name:Id.t) : int option =
-   match findInCtx env name with
-   | Some _  as result -> result
-   | _ -> findInLocal env name
-
-   let getValue ctx i =
-   if i > 1000 then Array.get ctx.locals (i - 1000)
-   else Array.get ctx.mem i
-
-   let getArrayValue v i =
-   match v, i with
-   | Array a, Int index -> Array.get a index
-   | _ -> failwith "getArrayValue"
-
-   let applyOp (op:string) (e1:value) (e2:value) : value =
-   match op, e1, e2 with
-   | "+", Real(v1), Real(v2)  -> Real(v1 +. v2)
-   | "+", Int(v1),  Int(v2)   -> Int(v1 + v2)
-   | "-", Real(v1), Real(v2)  -> Real(v1 -. v2)
-   | "-", Int(v1),  Int(v2 )   -> Int(v1 - v2)
-   | "*", Real(v1), Real(v2)  -> Real(v1 *. v2)
-   | "*", Int(v1),  Int(v2)   -> Int(v1 * v2)
-   | "/", Real(v1), Real(v2)  -> Real(v1  /. v2)
-   | "/", Int(v1),  Int(v2)    -> Int(v1 / v2)
-   | "%", Real(v1), Real(v2)  -> Real(mod_float  v1  v2)
-   | "%", Int(v1),  Int(v2)   -> Int(v1 mod v2)
-   | "==", Real(v1), Real(v2) -> Bool(v1 = v2)
-   | "==", Int(v1),  Int(v2)  -> Bool(v1 = v2)
-   | "<>", Real(v1), Real(v2) -> Bool(v1 <> v2)
-   | "<>", Int(v1),  Int(v2)  -> Bool(v1 <> v2)
-   | ">", Real(v1), Real(v2)  -> Bool(v1 > v2)
-   | ">", Int(v1),  Int(v2)   -> Bool(v1 > v2)
-   | "<", Real(v1), Real(v2)  -> Bool(v1 < v2)
-   | "<", Int(v1),  Int(v2)   -> Bool(v1 < v2)
-   | ">=", Real(v1), Real(v2) -> Bool(v1 >= v2)
-   | ">=", Int(v1),  Int(v2)  -> Bool(v1 >= v2)
-   | "<=", Real(v1), Real(v2) -> Bool(v1 <= v2)
-   | "<=", Int(v1),  Int(v2)  -> Bool(v1 <= v2)
-   | "&&", Bool(v1),  Bool(v2)  -> Bool(v1 && v2)
-   | "||", Bool(v1),  Bool(v2)  -> Bool(v1 || v2)
-   | _ -> failwith "invalid operation"
-
-   let applyUnOp (op:string) (e1:value) : value =
-   match op, e1 with
-   | "-", Real(v) -> Real(-. v)
-   | "-", Int(v) -> Int(- v)
-   | _ -> failwith "invalid unary operation"
-
-   let foldOperations op args =
-   match args with
-   | [] -> failwith "no arguments"
-   | [s; a] -> applyOp op s a
-   | h :: t ->
-   List.fold_left (fun s a -> applyOp op s a) h t
-
-   let rec compileExp env exp =
-   match exp with
-   | PUnit _        -> (fun _ -> Unit)
-   | PBool (v, _)   -> (fun _ -> Bool v)
-   | PInt (v, _)    -> (fun _   -> Int v)
-   | PReal (v, _)   -> (fun _ -> Real v)
-   | PString (v, _) -> (fun _ -> String v)
-   | PId (id, _)    ->
-   begin match findVar env id with
-   | Some i -> (fun ctx -> getValue ctx i)
-   | None -> failwith "Cannot find variable"
-   end
-   | PIndex(v, i, _) ->
-   let v = compileExp env v in
-   let i = compileExp env i in
-   (fun ctx -> getArrayValue (v ctx) (i ctx))
-
-   | PArray(v, _) ->
-   let v = Array.map (compileExp env) v in
-   (fun ctx -> Array (Array.map (fun a -> a ctx) v))
-
-   | PIf(cond, then_, else_, _) ->
-   let cond = compileExp env cond in
-   (fun ctx ->
-   match cond ctx with
-   | Bool true -> (compileExp env then_) ctx
-   | Bool false -> (compileExp env else_) ctx
-   | _ -> failwith "invalid if expression")
-
-
-   | PGroup (e, _) -> compileExp env e
-   | PTuple (e, _) ->
-   let e = List.map (compileExp env) e in
-   (fun ctx -> Tuple (List.map (fun a -> a ctx) e))
-
-   | POp(op, args, _) ->
-   let args = List.map (compileExp env) args in
-   (fun ctx -> foldOperations op (List.map (fun a -> a ctx) args))
-
-   | PUnOp(op, e, _) ->
-   let e = compileExp env e in
-   (fun ctx -> applyUnOp op (e ctx))
-
-   | PCall(name, f, args , _) -> failwith ""
-
-   | PEmpty -> failwith ""
-   | PSeq _ -> failwith ""
-*)
-
 module SimpleMap = struct
    module IdMap = Map.Make (struct
          type t = Id.t
@@ -469,6 +329,11 @@ let builtinFunctions (a : Args.args) env =
       | [ PReal (v, p, _) ] -> PReal (f v, p, attr)
       | _ -> failwith "invalid arguments"
    in
+   let real_real_real f attr args : exp =
+      match args with
+      | [ PReal (v1, p, _); PReal (v2, _, _) ] -> PReal (f v1 v2, p, attr)
+      | _ -> failwith "invalid arguments"
+   in
    let clip attr args =
       match args with
       | [ PReal (v, p, _); PReal (mi, _, _); PReal (ma, _, _) ] -> PReal (max mi (min ma v), p, attr)
@@ -557,6 +422,7 @@ let builtinFunctions (a : Args.args) env =
       ; "sinh", Env.Builtin (real_real sinh)
       ; "tan", Env.Builtin (real_real tan)
       ; "sqrt", Env.Builtin (real_real sqrt)
+      ; "pow", Env.Builtin (real_real_real ( ** ))
       ; "clip", Env.Builtin clip
       ; "int", Env.Builtin int
       ; "real", Env.Builtin real

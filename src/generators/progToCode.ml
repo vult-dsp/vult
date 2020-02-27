@@ -557,8 +557,7 @@ let getRecordField (name : lhs_exp) (index : int) (typ : Typ.t option) : lhs_exp
 let rec collectVarBind p stmts =
    match stmts with
    | [] -> []
-   | CSVar (CLId (_, [ lhs ]), None)
-     :: CSBind (CLId (_, [ lhs2 ]), rhs) :: CSIf (CEVar ([ cond ], _), then_, else_) :: t
+   | CSVar (CLId (_, [ lhs ]), None) :: CSBind (CLId (_, [ lhs2 ]), rhs) :: CSIf (CEVar ([ cond ], _), then_, else_) :: t
       when lhs = cond && lhs2 = cond && cond.[0] = '_' ->
       collectVarBind p (CSIf (rhs, then_, else_) :: t)
    | CSVar (lhs1, None) :: CSBind (lhs2, rhs) :: t when lhs1 = lhs2 && p.code <> CCode ->

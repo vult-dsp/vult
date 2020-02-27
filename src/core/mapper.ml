@@ -58,8 +58,8 @@ let applyExpander (mapper : ('data, 'kind) expand_func) (data : 'data) (kind : '
    | None -> data, [ kind ]
 
 
-let applyExpanderList (mapper : ('data, 'kind) expand_func) (data : 'data) (kind_list : 'kind list) :
-   'data * 'kind list =
+let applyExpanderList (mapper : ('data, 'kind) expand_func) (data : 'data) (kind_list : 'kind list) : 'data * 'kind list
+   =
    let state', rev_exp_list =
       List.fold_left
          (fun (s, acc) k ->

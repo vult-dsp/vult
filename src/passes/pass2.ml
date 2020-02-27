@@ -589,9 +589,7 @@ module EmbedWaveTable = struct
               let size = float_of_int size_n in
               let data = Array.mapi (fun x y -> float_of_int x /. (size -. 1.0), y) data in
               let tables = calculateTablesOrder2 data attr full_path out_precision in
-              let body =
-                 MakeTables.makeNewBody2 bound_check full_path size_n (in_precision, out_precision) 0.0 1.0 var
-              in
+              let body = MakeTables.makeNewBody2 bound_check full_path size_n (in_precision, out_precision) 0.0 1.0 var in
               let attr' = { attr with tags = Tags.removeAttrFunc "wavetable" attr.tags; ext_fn = None } in
               let c0 = MakeTables.generateRawAccessFunction name full_path 0 attr in
               let c1 = MakeTables.generateRawAccessFunction name full_path 1 attr in

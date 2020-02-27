@@ -667,9 +667,7 @@ module Env = struct
 
 
    (** Returns the full path of a function. *)
-   let lookup kind (state : 'a t) (name : Id.t) : (Id.path * Typ.t * Scope.t) option =
-      Scope.lookup kind state.scope name
-
+   let lookup kind (state : 'a t) (name : Id.t) : (Id.path * Typ.t * Scope.t) option = Scope.lookup kind state.scope name
 
    (** Returns the full path of a function. Raises an error if it cannot be found *)
    let lookupRaise kind (state : 'a t) (name : Id.t) (loc : Loc.t) : Id.path * Typ.t * Scope.t =

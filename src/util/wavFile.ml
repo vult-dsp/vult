@@ -143,8 +143,8 @@ let getReadSampleFunction (bits : int32) : (buffer -> float, string) result =
 
 
 (** Reads the given number of samples into the data arrays *)
-let readSamples (buffer : buffer) (channels : int) (size : int) (data : float array array) (read_fn : buffer -> float)
-   : int =
+let readSamples (buffer : buffer) (channels : int) (size : int) (data : float array array) (read_fn : buffer -> float) :
+   int =
    (* iterates reading the channels *)
    let rec loop_channels index channel =
       if channel >= channels then
