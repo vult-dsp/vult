@@ -391,7 +391,7 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
          | LPAREN -> functionCall buffer token id
          | LBRACK ->
             let _ = Stream.skip buffer in
-            let index = expression 100 buffer in
+            let index = expression 0 buffer in
             let _ = Stream.consume buffer RBRACK in
             let attr = makeAttr token.loc in
             PIndex (PId (id, attr), index, attr)
