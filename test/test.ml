@@ -68,6 +68,7 @@ let parser_files =
    ; "exp_tuples.vult"
    ; "types_basic.vult"
    ; "array_syntax.vult"
+   ; "mem_tag.vult"
    ]
 
 

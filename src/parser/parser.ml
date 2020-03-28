@@ -601,13 +601,15 @@ and stmtMem (buffer : Stream.stream) : stmt =
    | EQUAL ->
       let _ = Stream.skip buffer in
       let rhs = expression 0 buffer in
+      let tags = optTagExpressions buffer in
       let _ = Stream.consume buffer SEMI in
       let attr = makeAttr start_loc in
-      StmtMem (lhs, Some rhs, attr)
+      StmtMem (lhs, Some rhs, { attr with tags })
    | _ ->
+      let tags = optTagExpressions buffer in
       let _ = Stream.consume buffer SEMI in
       let attr = makeAttr start_loc in
-      StmtMem (lhs, None, attr)
+      StmtMem (lhs, None, { attr with tags })
 
 
 (** <statement> := | 'return' <expression> ';' *)
