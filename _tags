@@ -3,6 +3,7 @@
 <src> : include
 <src/*> : include
 <src/generators/*> : include
+<src/*>: coverage
 
 # Link libraries and ppx common for all targets
 <**/*.ml> : package(containers), package(pla), package(ppx_deriving), package(ppx_deriving.std), package(pla.ppx), package(result)
@@ -10,7 +11,7 @@
 
 # Link libraries for the Test executable
 <test/*.ml> : package(oUnit)
-<test/*.byte> or <test/*.d.byte> or <test/*.native> : package(oUnit), package(str)
+<test/*.byte> or <test/*.d.byte> or <test/*.native> : package(oUnit), package(str), coverage
 
 # Link libraries and ppx for Js (js_of_ocaml) files
 <src/js/*.byte> : package(js_of_ocaml)

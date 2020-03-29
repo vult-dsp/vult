@@ -2,7 +2,7 @@ PREFIX ?= /usr/local/bin
 
 VULT_SRC = $(wildcard src/*.ml) $(wildcard src/core/*.ml) $(wildcard src/generators/*.ml) $(wildcard src/js/*.ml) $(wildcard src/parser/*.ml) $(wildcard src/passes/*.ml) $(wildcard src/util/*.ml) $(wildcard test/*.ml)
 
-OCB = ocamlbuild -j 4 -use-ocamlfind
+OCB = ocamlbuild -j 4 -use-ocamlfind -plugin-tag 'package(bisect_ppx-ocamlbuild)'
 
 ifeq (, $(shell which ocamlformat))
 OCAMLFORMAT = echo
