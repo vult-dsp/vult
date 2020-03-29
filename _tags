@@ -4,6 +4,7 @@
 <src/*> : include
 <src/generators/*> : include
 <src/**>: coverage
+<src/parser/lexer.ml>: -coverage
 
 # Link libraries and ppx common for all targets
 <**/*.ml> : package(containers), package(pla), package(ppx_deriving), package(ppx_deriving.std), package(pla.ppx), package(result)
