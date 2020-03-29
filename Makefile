@@ -60,7 +60,7 @@ coverage: compiler jscompiler
 			BISECT_COVERAGE=YES $(OCB) test/perf.native
 			BISECT_FILE=_build/coverage ./test.native -runner sequential -shards 1
 			BISECT_FILE=_build/coverage ./perf.native
-			ocveralls --prefix _build _build/coverage*.out --send
+			bisect-ppx-report send-to Coveralls
 
 version :
 			@echo "let version = \"" > src/version.ml
