@@ -1,0 +1,42 @@
+this.Defined_types_dot_init = function(){
+   var _ctx = {}; 
+   _ctx.y = 0.; 
+   _ctx.x = 0.; 
+   return _ctx; 
+}
+this.Defined_types_micro_init = function(){
+   var _ctx = {}; 
+   _ctx.dot_1 = this.Defined_types_dot_init(); 
+   _ctx.dot_0 = this.Defined_types_dot_init(); 
+   return _ctx; 
+}
+this.Defined_types__ctx_type_0_init = function(){
+   var _ctx = {}; 
+   _ctx.p1 = this.Defined_types_dot_init(); 
+   return _ctx; 
+}
+this.Defined_types_foo_init = function() { return this.Defined_types__ctx_type_0_init(); }
+this.Defined_types_foo = function(_ctx){
+}
+this.Defined_types__ctx_type_1_init = function(){
+   var _ctx = {}; 
+   _ctx._inst18b = this.Defined_types__ctx_type_0_init(); 
+   return _ctx; 
+}
+this.Defined_types_process_init = function() { return this.Defined_types__ctx_type_1_init(); }
+this.Defined_types_process = function(_ctx,input){
+   this.Defined_types_foo(_ctx._inst18b);
+   return input; 
+}
+this.Defined_types_noteOn_init = function() { return this.Defined_types__ctx_type_1_init(); }
+this.Defined_types_noteOn = function(_ctx,note,velocity,channel){
+}
+this.Defined_types_noteOff_init = function() { return this.Defined_types__ctx_type_1_init(); }
+this.Defined_types_noteOff = function(_ctx,note,channel){
+}
+this.Defined_types_controlChange_init = function() { return this.Defined_types__ctx_type_1_init(); }
+this.Defined_types_controlChange = function(_ctx,control,value,channel){
+}
+this.Defined_types_default_init = function() { return this.Defined_types__ctx_type_1_init(); }
+this.Defined_types_default = function(_ctx){
+}

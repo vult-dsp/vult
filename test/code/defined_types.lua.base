@@ -1,0 +1,112 @@
+
+local this = {}
+local ffi = require("ffi")
+function this.ternary(cond,then_,else_) if cond then return then_ else return else_ end end
+function this.eps()              return 1e-18; end
+function this.pi()               return 3.1415926535897932384; end
+function this.random()           return math.random(); end
+function this.irandom()          return math.floor(math.random() * 4294967296); end
+function this.clip(x,low,high)   return (this.ternary(x<low, low, this.ternary(x>high, high, x))); end
+function this.real(x)            return x; end
+function this.int(x)             local int_part,_ = math.modf(x) return int_part; end
+function this.sin(x)             return math.sin(x); end
+function this.cos(x)             return math.cos(x); end
+function this.abs(x)             return math.abs(x); end
+function this.exp(x)             return math.exp(x); end
+function this.floor(x)           return math.floor(x); end
+function this.tan(x)             return math.tan(x); end
+function this.tanh(x)            return math.tanh(x); end
+function this.sqrt(x)            return x; end
+function this.set(a, i, v)       a[i+1]=v; end
+function this.get(a, i)          return a[i+1]; end
+function this.makeArray(size, v) local a = {}; for i=1,size do a[i]=v end return a; end
+function this.wrap_array(a)      return a; end
+function this.Defined_types_dot_init()
+   local _ctx = {}; 
+   _ctx.y = 0.; 
+   _ctx.x = 0.; 
+   return _ctx; 
+
+end
+
+function this.Defined_types_micro_init()
+   local _ctx = {}; 
+   _ctx.dot_1 = this.Defined_types_dot_init(); 
+   _ctx.dot_0 = this.Defined_types_dot_init(); 
+   return _ctx; 
+
+end
+
+function this.Defined_types__ctx_type_0_init()
+   local _ctx = {}; 
+   _ctx.p1 = this.Defined_types_dot_init(); 
+   return _ctx; 
+
+end
+
+function this.Defined_types_foo_init()
+   return this.Defined_types__ctx_type_0_init(); 
+end
+
+function this.Defined_types_foo(_ctx)
+
+end
+
+function this.Defined_types__ctx_type_1_init()
+   local _ctx = {}; 
+   _ctx._inst18b = this.Defined_types__ctx_type_0_init(); 
+   return _ctx; 
+
+end
+
+function this.Defined_types_process_init()
+   return this.Defined_types__ctx_type_1_init(); 
+end
+
+function this.Defined_types_process(_ctx,input)
+   this.Defined_types_foo(_ctx._inst18b);
+   return input; 
+
+end
+
+function this.Defined_types_noteOn_init()
+   return this.Defined_types__ctx_type_1_init(); 
+end
+
+function this.Defined_types_noteOn(_ctx,note,velocity,channel)
+
+end
+
+function this.Defined_types_noteOff_init()
+   return this.Defined_types__ctx_type_1_init(); 
+end
+
+function this.Defined_types_noteOff(_ctx,note,channel)
+
+end
+
+function this.Defined_types_controlChange_init()
+   return this.Defined_types__ctx_type_1_init(); 
+end
+
+function this.Defined_types_controlChange(_ctx,control,value,channel)
+
+end
+
+function this.Defined_types_default_init()
+   return this.Defined_types__ctx_type_1_init(); 
+end
+
+function this.Defined_types_default(_ctx)
+
+end
+
+
+function this.process(ctx,input) return this.Defined_types_process(ctx,input) end
+function this.noteOn(ctx,note,velocity,channel) return this.Defined_types_noteOn(ctx,note,velocity,channel) end
+function this.noteOff(ctx,note,channel) return this.Defined_types_noteOff(ctx,note,channel) end
+function this.controlChange(ctx,control,value,channel) return this.Defined_types_controlChange(ctx,control,value,channel) end
+function this.init() return this.Defined_types_process_init() end
+function this.default(ctx) return this.Defined_types_default(ctx) end
+this.config = { inputs = 2, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+return this

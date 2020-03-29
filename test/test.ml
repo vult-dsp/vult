@@ -180,6 +180,7 @@ let all_files =
    ; "osc/tricore.vult"
    ; "units/kick.vult"
    ; "units/voice_4.vult"
+   ; "../test/compile/defined_types.vult"
    ]
 
 

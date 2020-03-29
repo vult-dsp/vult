@@ -1,0 +1,23 @@
+
+type dot {
+   val x : real;
+   val y : real;
+}
+
+type micro {
+   val dot_0 : dot;
+   val dot_1 : dot;
+}
+
+fun foo() {
+   mem p1 : dot;
+}
+
+fun process(input:real){
+   val _ = foo();
+   return input;
+}
+and noteOn(note:int, velocity:int, channel:int){ }
+and noteOff(note:int, channel:int){ }
+and controlChange(control:int, value:int, channel:int){ }
+and default(){ }

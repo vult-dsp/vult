@@ -248,6 +248,26 @@ module CreateInitFunction = struct
                state', [ type_def; type_fn; init_funct; init_fn; stmt ]
          else
             state, [ stmt ]
+      | StmtType ({ contents = TId (name, _) }, members, attr) ->
+         let data = Env.get state in
+         let path, _, _ = Env.lookupRaise Scope.Type state name attr.loc in
+         if not (PassData.hasInitFunction data path) then
+            let member_set =
+               List.fold_left
+                  (fun acc (name, tp, _) ->
+                      let context = getContextIfPossible state tp in
+                      let member = name, context in
+                      IdTypeSet.add member acc)
+                  IdTypeSet.empty
+                  members
+            in
+            let init_fun = Env.getInitFunction state name in
+            let init_funct = generateInitFunction name init_fun member_set in
+            let data' = PassData.markInitFunction data path in
+            let state' = Env.set state data' in
+            state', [ stmt; init_funct ]
+         else
+            state, [ stmt ]
       | _ -> state, [ stmt ]
 
 
