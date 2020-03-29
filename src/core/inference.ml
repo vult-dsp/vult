@@ -593,6 +593,7 @@ and inferExp (env : 'a Env.t) (e : exp) : exp * 'a Env.t * Typ.t =
       let stmt', _, ret_type = inferStmt env NoType stmt in
       let typ = getReturnType ret_type in
       PSeq (name, makeBlock stmt', { attr with typ = Some typ }), env, typ
+   | PAccess _ -> failwith "Access not implemented"
    | PEmpty -> PEmpty, env, Typ.Const.unit_type
 
 

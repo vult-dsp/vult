@@ -112,6 +112,7 @@ and exp =
    | PGroup  of exp * attr
    | PTuple  of exp list * attr
    | PSeq    of Id.t option (* Scope name *) * stmt * attr
+   | PAccess of exp * string * attr
    | PEmpty
 [@@deriving show, eq, ord]
 

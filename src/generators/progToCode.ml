@@ -509,6 +509,7 @@ let rec convertExp (p : parameters) (e : exp) : cexp =
       CETuple (elems', typ attr)
    | PSeq _ -> failwith "ProgToCode.convertExp: Sequences are not yet supported for js"
    | PEmpty -> failwith "ProgToCode.convertExp: Empty expressions are not allowed"
+   | PAccess _ -> failwith "Access not implemented"
 
 
 and convertExpList (p : parameters) (e : exp list) : cexp list = List.map (convertExp p) e

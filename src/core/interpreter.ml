@@ -570,6 +570,7 @@ and evalExp (env : Env.env) (exp : exp) : exp =
          | None -> raise Abort
       end
    | PCall (This, _, _, _) -> failwith "Self calls not yet implemented"
+   | PAccess _ -> failwith "Access not implemented"
 
 
 and evalFunction (env : Env.env) (fn : Env.fun_body) (attr : Prog.attr) (args : exp list) : exp option =

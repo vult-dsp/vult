@@ -115,7 +115,8 @@ module GetAttr = struct
       |PIf (_, _, _, attr)
       |PGroup (_, attr)
       |PTuple (_, attr)
-      |PSeq (_, _, attr) ->
+      |PSeq (_, _, attr)
+      |PAccess (_, _, attr) ->
          attr
       | PEmpty -> emptyAttr
 

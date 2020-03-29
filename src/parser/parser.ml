@@ -48,6 +48,16 @@ module Stream = TokenStream (TokenKind)
 
 let splitOnDot s = CCString.Split.list_cpy "." s
 
+let makeAccess (id : string list) attr =
+   let rec loop l =
+      match l with
+      | [] -> failwith "Invalid input"
+      | [ _ ] -> PId (l, attr)
+      | h :: t -> PAccess (loop t, h, attr)
+   in
+   loop (List.rev id)
+
+
 (** Consumes tokens until it finds the begining of a new statememt or the end of the current *)
 let rec moveToNextStatement (buffer : Stream.stream) : unit =
    match Stream.peek buffer with
@@ -394,13 +404,19 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
             let index = expression 0 buffer in
             let _ = Stream.consume buffer RBRACK in
             let attr = makeAttr token.loc in
-            PIndex (PId (id, attr), index, attr)
+            let e = makeAccess id attr in
+            PIndex (e, index, attr)
          | COLON ->
             let _ = Stream.skip buffer in
             let exp_call = expression 100 buffer in
             begin
-               match exp_call with
-               | PCall (NoInst, fname, args, attr) -> PCall (Named id, fname, args, attr)
+               match exp_call, id with
+               | _, _ :: _ :: _ ->
+                  let error =
+                     Error.PointedError (token.loc, "Instance identifiers can only be simple names (without dots)")
+                  in
+                  raise (ParserError error)
+               | PCall (NoInst, fname, args, attr), _ -> PCall (Named id, fname, args, attr)
                | _ ->
                   let loc = (GetAttr.fromExp exp_call).loc in
                   let error =
@@ -408,7 +424,9 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
                   in
                   raise (ParserError error)
             end
-         | _ -> PId (id, makeAttr token.loc)
+         | _ ->
+            let attr = makeAttr token.loc in
+            makeAccess id attr
       end
    | LPAREN, _ ->
       let start_loc = token.loc in

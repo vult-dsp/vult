@@ -194,6 +194,10 @@ and expressionBuff buffer (exp : exp) =
    | PSeq (name, stmts, _) ->
       commentedId buffer name ;
       pseqListBuff buffer stmts
+   | PAccess (e, m, _) ->
+      expressionBuff buffer e ;
+      append buffer "." ;
+      append buffer m
    | PEmpty -> append buffer "Empty"
 
 

@@ -360,6 +360,10 @@ and map_exp (mapper : 'state mapper) (state : 'state) (exp : exp) : 'state * exp
       let state', e' = map_exp mapper state e in
       let state', attr' = map_attr mapper state' attr in
       apply mapper.exp state' (PGroup (e', attr'))
+   | PAccess (e, m, attr) ->
+      let state', e' = map_exp mapper state e in
+      let state', attr' = map_attr mapper state' attr in
+      apply mapper.exp state' (PAccess (e', m, attr'))
    | PTuple (el, attr) ->
       let state', el' = map_exp_list mapper state el in
       let state', attr' = map_attr mapper state' attr in
