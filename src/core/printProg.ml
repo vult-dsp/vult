@@ -84,7 +84,7 @@ let rec lhsExpressionBuff buffer (lhs : lhs_exp) =
       append buffer "(" ;
       identifierBuff buffer id ;
       append buffer ":" ;
-      typeExpressionBuff buffer (Typ.first tp) ;
+      typeExpressionBuff buffer tp ;
       append buffer ")"
    | LTuple (elems, _) ->
       append buffer "(" ;
@@ -112,7 +112,7 @@ let rec lhsExpressionBuff buffer (lhs : lhs_exp) =
       expressionBuff buffer index ;
       append buffer "]" ;
       append buffer ":" ;
-      typeExpressionBuff buffer (Typ.first tp) ;
+      typeExpressionBuff buffer tp ;
       append buffer ")"
 
 

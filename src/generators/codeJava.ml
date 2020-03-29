@@ -264,9 +264,9 @@ let rec getInitValue (descr : type_descr) : Pla.t =
 
 
 (** Used to print declarations and rebindings of lhs variables *)
-let printTypeAndName (is_decl : bool) (typ : type_descr list) (name : string list) : Pla.t =
+let printTypeAndName (is_decl : bool) (typ : type_descr) (name : string list) : Pla.t =
    match typ, name with
-   | [ typ ], [ name ] ->
+   | typ, [ name ] ->
       let kind, sizes = simplifyArray typ in
       begin
          match is_decl, sizes with
@@ -287,7 +287,7 @@ let printLhsExpTuple (var : string list) (is_var : bool) (i : int) (e : clhsexp)
    let var = dot var in
    match e with
    (* Assigning to a simple variable *)
-   | CLId (CTSimple typ :: _, name) ->
+   | CLId (CTSimple typ, name) ->
       let name_ = dot name in
       if is_var then (* with declaration *)
          {pla|<#typ#s> <#name_#> = <#var#>.field_<#i#i>;|pla}
@@ -356,15 +356,15 @@ and printLhsExp params (is_var : bool) (e : clhsexp) : Pla.t =
    | CLId (typ, name) -> printTypeAndName is_var typ name
    (* if it was an '_' do not print anything *)
    | CLWild -> Pla.unit
-   | CLIndex ([ CTSimple typ ], [ name ], index) when is_var ->
+   | CLIndex (CTSimple typ, [ name ], index) when is_var ->
       let index = printExp params index in
       {pla|<#typ#s> <#name#s>[<#index#>]|pla}
-   | CLIndex (typ :: _, name, _) when is_var ->
+   | CLIndex (typ, name, _) when is_var ->
       let name = dot name in
       let typ, sizes = simplifyArray typ in
       let sizes_t = Pla.map_join (fun i -> {pla|[<#i#s>]|pla}) sizes in
       {pla|<#typ#s> <#name#><#sizes_t#>|pla}
-   | CLIndex ([ CTSimple _ ], [ name ], index) ->
+   | CLIndex (CTSimple _, [ name ], index) ->
       let index = printExp params index in
       {pla|<#name#s>[<#index#>]|pla}
    | _ -> failwith "uncovered case"
@@ -435,7 +435,7 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
    (* Prints type x; *)
    | CSVar (((CLId (tdescr, _) | CLIndex (tdescr, _, _)) as lhs), None) ->
       let tlhs = printLhsExp params true lhs in
-      let init = getInitValue (List.hd tdescr) in
+      let init = getInitValue tdescr in
       Some {pla|<#tlhs#> = <#init#>; |pla}
    | CSVar (lhs, Some value) ->
       let value_t = printExp params value in
@@ -547,7 +547,7 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
          Pla.map_sep_all
             Pla.newline
             (fun (typ, name) ->
-                let tmember = printTypeAndName true [ typ ] [ name ] in
+                let tmember = printTypeAndName true typ [ name ] in
                 {pla|public <#tmember#>;|pla})
             members
       in
@@ -556,7 +556,7 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
             Pla.map_sep
                Pla.comma
                (fun (typ, name) ->
-                   let tmember = printTypeAndName true [ typ ] [ name ] in
+                   let tmember = printTypeAndName true typ [ name ] in
                    {pla|<#tmember#>|pla})
                members
          in

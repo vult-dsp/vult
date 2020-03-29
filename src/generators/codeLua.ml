@@ -228,11 +228,11 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
    match stmt with
    | CSVar (CLWild, None) -> None
    | CSVar (CLId (typ, name), None) ->
-      let init = getInitValue (List.hd typ) in
+      let init = getInitValue typ in
       let name = dot name in
       Some {pla|local <#name#> = <#init#>; |pla}
    | CSVar (CLIndex (typ, name, _), None) ->
-      let init = getInitValue (List.hd typ) in
+      let init = getInitValue typ in
       let name = dot name in
       Some {pla|local <#name#> = <#init#>; |pla}
    | CSVar (CLTuple _, _) -> failwith "printStmt: invalid tuple assign"

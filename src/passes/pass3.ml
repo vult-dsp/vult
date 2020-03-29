@@ -82,9 +82,7 @@ module InsertContext = struct
       Mapper.make "InsertContext.lhs_exp"
       @@ fun state exp ->
       match exp with
-      | LId (id, Some tp, attr) when Env.isLocalInstanceOrMem state id ->
-         let ctx_typ = getContextType state in
-         state, LId ("_ctx" :: id, Some (tp @ [ ctx_typ ]), attr)
+      | LId (id, Some tp, attr) when Env.isLocalInstanceOrMem state id -> state, LId ("_ctx" :: id, Some tp, attr)
       | LIndex (id, tp, index, attr) when Env.isLocalInstanceOrMem state id ->
          state, LIndex ("_ctx" :: id, tp, index, attr)
       | _ -> state, exp
@@ -165,7 +163,7 @@ module CreateInitFunction = struct
          IdTypeSet.fold
             (fun (name, tp) acc ->
                 let typedAttr = { emptyAttr with typ = Some tp } in
-                let lhs = LId (ctx_name @ name, Some [ tp; ctx_typ ], typedAttr) in
+                let lhs = LId (ctx_name @ name, Some tp, typedAttr) in
                 let new_stmt = StmtBind (lhs, getInitValue tp, emptyAttr) in
                 StmtSet.add new_stmt acc)
             member_set
@@ -182,7 +180,7 @@ module CreateInitFunction = struct
          | None -> []
       in
       let return_stmt = StmtReturn (PId (ctx_name, attr), emptyAttr) in
-      let ctx_decl = StmtVal (LId (ctx_name, Some [ ctx_typ ], attr), None, emptyAttr) in
+      let ctx_decl = StmtVal (LId (ctx_name, Some ctx_typ, attr), None, emptyAttr) in
       let stmts = StmtSet.fold (fun a acc -> a :: acc) new_stmts_set (init_fun_call @ [ return_stmt ]) in
       StmtFun (getInitFunctioName ctx, [], StmtBlock (None, ctx_decl :: stmts, emptyAttr), Some ctx_typ, emptyAttr)
 

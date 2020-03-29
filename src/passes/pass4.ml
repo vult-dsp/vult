@@ -113,8 +113,7 @@ module ReturnReferences = struct
       else
          match stmt with
          (* regular case a = foo() *)
-         | StmtBind (LId (lhs, Some typ, lattr), PCall (inst, name, args, attr), battr) when returnRefType (Typ.first typ)
-            ->
+         | StmtBind (LId (lhs, Some typ, lattr), PCall (inst, name, args, attr), battr) when returnRefType typ ->
             let arg = PId (lhs, lattr) in
             let fixed_attr = unitAttr attr in
             state, [ StmtBind (LWild fixed_attr, PCall (inst, name, args @ [ arg ], fixed_attr), battr) ]
@@ -125,7 +124,7 @@ module ReturnReferences = struct
             let arg = PId ([ tmp_name ], wattr) in
             let fixed_attr = unitAttr attr in
             ( state'
-            , [ StmtVal (LId ([ tmp_name ], Typ.makeListOpt wattr.typ, wattr), None, battr)
+            , [ StmtVal (LId ([ tmp_name ], wattr.typ, wattr), None, battr)
               ; StmtBind (LWild fixed_attr, PCall (inst, name, args @ [ arg ], fixed_attr), battr)
               ] )
          (* special case _ = a when a is not simple value *)
@@ -133,12 +132,11 @@ module ReturnReferences = struct
             let i, state' = Env.tick state in
             let tmp_name = "_unused_" ^ string_of_int i in
             ( state'
-            , [ StmtVal (LId ([ tmp_name ], Typ.makeListOpt wattr.typ, wattr), None, battr)
-              ; StmtBind (LId ([ tmp_name ], Typ.makeListOpt wattr.typ, wattr), e, battr)
+            , [ StmtVal (LId ([ tmp_name ], wattr.typ, wattr), None, battr)
+              ; StmtBind (LId ([ tmp_name ], wattr.typ, wattr), e, battr)
               ] )
          | StmtBind (_, PCall (_, _, _, _), _) -> state, [ stmt ]
-         | StmtVal (LId (lhs, Some typ, lattr), Some (PCall (inst, name, args, attr)), battr)
-            when returnRefType (Typ.first typ) ->
+         | StmtVal (LId (lhs, Some typ, lattr), Some (PCall (inst, name, args, attr)), battr) when returnRefType typ ->
             let arg = PId (lhs, lattr) in
             let fixed_attr = unitAttr attr in
             ( state
@@ -149,7 +147,7 @@ module ReturnReferences = struct
          | StmtReturn (e, attr) ->
             let eattr = GetAttr.fromExp e in
             if returnRefTypeOpt eattr.typ then
-               let stmt' = StmtBind (LId ([ "_output_" ], Typ.makeListOpt eattr.typ, eattr), e, attr) in
+               let stmt' = StmtBind (LId ([ "_output_" ], eattr.typ, eattr), e, attr) in
                reapply state, [ stmt'; StmtReturn (PUnit (unitAttr eattr), attr) ]
             else
                state, [ stmt ]

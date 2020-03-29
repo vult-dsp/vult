@@ -109,17 +109,13 @@ let rec unifyListSameType (args : exp list) (types : Typ.t list) (common_type : 
 let rec addLhsToEnv mem_var (env : 'a Env.t) (lhs : lhs_exp) : 'a Env.t =
    match lhs with
    | LWild _ -> env
-   | LId (id, Some typ, attr) ->
-      let ftyp = Typ.first typ in
-      if mem_var = `Mem then Env.addMem env id ftyp attr else Env.addVar env id ftyp attr
+   | LId (id, Some typ, attr) -> if mem_var = `Mem then Env.addMem env id typ attr else Env.addVar env id typ attr
    | LId (_, None, _) -> env
    | LTuple (elems, _) -> List.fold_left (fun e a -> addLhsToEnv mem_var e a) env elems
    | LTyped (e, _, _) -> addLhsToEnv mem_var env e
    | LGroup (e, _) -> addLhsToEnv mem_var env e
    | LIndex (_, None, _, _) -> env
-   | LIndex (id, Some typ, _, attr) ->
-      let ftyp = Typ.first typ in
-      if mem_var = `Mem then Env.addMem env id ftyp attr else Env.addVar env id ftyp attr
+   | LIndex (id, Some typ, _, attr) -> if mem_var = `Mem then Env.addMem env id typ attr else Env.addVar env id typ attr
 
 
 let rec addArgsToEnv (env : 'a Env.t) (args : typed_id list) : typed_id list * Typ.t list * 'a Env.t =
@@ -264,7 +260,7 @@ let createLhsTuple fname typ_list =
       List.mapi
          (fun i typ ->
              let id = varReturnName fname i in
-             LId (id, Some [ typ ], emptyAttr))
+             LId (id, Some typ, emptyAttr))
          typ_list
    in
    LTuple (elems, emptyAttr)
@@ -435,10 +431,8 @@ and inferLhsExp mem_var (env : 'a Env.t) (e : lhs_exp) : lhs_exp * Typ.t =
                let msg = Printf.sprintf "The symbol '%s' is not defined" (Id.show id) in
                Error.raiseError msg attr.loc
       in
-      LId (id, Some [ typ ], { attr with typ = Some typ }), typ
-   | LId (id, Some typ, attr) ->
-      let ftyp = Typ.first typ in
-      LId (id, Some typ, { attr with typ = Some ftyp }), ftyp
+      LId (id, Some typ, { attr with typ = Some typ }), typ
+   | LId (id, Some typ, attr) -> LId (id, Some typ, { attr with typ = Some typ }), typ
    | LTuple (elems, attr) ->
       let elems', tpl =
          List.fold_left
@@ -468,14 +462,14 @@ and inferLhsExp mem_var (env : 'a Env.t) (e : lhs_exp) : lhs_exp * Typ.t =
       let typ =
          match Env.lookupVariable env id, otyp with
          | Some var, _ -> var.Scope.typ
-         | _, Some typ -> Typ.first typ
+         | _, Some typ -> typ
          | _ -> Typ.newvar ()
       in
       let a = ref (Typ.TUnbound ("'a", None, None)) in
       let size_t = ref (Typ.TInt (size, None)) in
       let arr_type = ref (Typ.TComposed ([ "array" ], [ a; size_t ], None)) in
       unifyRaise (attrLoc attr) typ arr_type ;
-      LIndex (id, Some [ typ ], PInt (size, sattr), { attr with typ = Some arr_type }), arr_type
+      LIndex (id, Some typ, PInt (size, sattr), { attr with typ = Some arr_type }), arr_type
    | LIndex (_, _, index, _) when mem_var = `Val || mem_var = `Mem ->
       let msg =
          Printf.sprintf
@@ -487,7 +481,7 @@ and inferLhsExp mem_var (env : 'a Env.t) (e : lhs_exp) : lhs_exp * Typ.t =
       let typ =
          match Env.lookupVariable env id, otyp with
          | Some var, _ -> var.Scope.typ
-         | _, Some typ -> Typ.first typ
+         | _, Some typ -> typ
          | _ ->
             let msg = Printf.sprintf "The symbol '%s' is not defined" (Id.show id) in
             Error.raiseError msg attr.loc
@@ -498,7 +492,7 @@ and inferLhsExp mem_var (env : 'a Env.t) (e : lhs_exp) : lhs_exp * Typ.t =
       let arr_type = ref (Typ.TComposed ([ "array" ], [ a; size ], None)) in
       unifyRaise (attrLoc attr) typ arr_type ;
       unifyRaise (expLoc index) index_typ Typ.Const.int_type ;
-      LIndex (id, Some [ typ ], index', { attr with typ = Some a }), a
+      LIndex (id, Some typ, index', { attr with typ = Some a }), a
 
 
 and inferExp (env : 'a Env.t) (e : exp) : exp * 'a Env.t * Typ.t =

@@ -120,7 +120,7 @@ module Tables = struct
          PArray (CCList.map (makeFloat attr.loc precision) data |> Array.of_list, { attr with typ = Some atype })
       in
       StmtVal
-         ( LId (varname, Some [ atype ], attr_array precision size)
+         ( LId (varname, Some atype, attr_array precision size)
          , Some arr
          , { emptyAttr with const = true; fun_src = Some fname } )
 end
@@ -179,7 +179,7 @@ module MakeTables = struct
 
 
    let getIndex bound_check size value =
-      let lindex = LId ([ "index" ], Some [ Tables.int_type ], Tables.attr_int) in
+      let lindex = LId ([ "index" ], Some Tables.int_type, Tables.attr_int) in
       let clip_call i =
          if bound_check then
             PCall (NoInst, [ "clip" ], [ i; PInt (0, Tables.attr_int); PInt (size - 1, Tables.attr_int) ], Tables.attr_int)

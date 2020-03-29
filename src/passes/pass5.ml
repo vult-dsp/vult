@@ -66,7 +66,7 @@ module ReportUnsupportedTypes = struct
       Mapper.make "ReportUnsupportedTypes.lhs_exp"
       @@ fun state exp ->
       match exp with
-      | LId (id, Some t, attr) when isComplexArray (Typ.first t) -> reportUnsupportedArray (Typ.first t) id attr
+      | LId (id, Some t, attr) when isComplexArray t -> reportUnsupportedArray t id attr
       | _ -> state, exp
 
 

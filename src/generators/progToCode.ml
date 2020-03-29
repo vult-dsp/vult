@@ -74,8 +74,7 @@ module Atomic = struct
       | CEString _ ->
          let new_type = Replacements.getType p.repl "string" in
          CTSimple new_type
-      | CEVar (_, ts :: _) -> ts
-      | CEVar (_, []) -> failwith "Atomic.cexpType: invalid type"
+      | CEVar (_, ts) -> ts
       | CEArray (_, ts)
       |CECall (_, _, ts)
       |CEUnOp (_, _, ts)
@@ -108,9 +107,9 @@ module Atomic = struct
       | _ ->
          let s', name = makeTemp s in
          let ts = cexpType p exp in
-         let lhs = CLId ([ ts ], [ name ]) in
+         let lhs = CLId (ts, [ name ]) in
          let stmt = [ CSVar (lhs, None); CSBind (lhs, exp) ] in
-         s', stmt, CEVar ([ name ], [ ts ])
+         s', stmt, CEVar ([ name ], ts)
 
 
    let rec makeOpAtomic p s (bind : bind_type) (op : string) (ts : type_descr) (elems : cexp list) :
@@ -173,9 +172,9 @@ module Atomic = struct
          s, pre @ pre1, ret
       | CEIf (cond, then_, else_, ts) ->
          let s, tmp = makeTemp s in
-         let ltmp = CLId ([ ts ], [ tmp ]) in
+         let ltmp = CLId (ts, [ tmp ]) in
          let if_stmt = CSIf (cond, CSBind (ltmp, then_), Some (CSBind (ltmp, else_))) in
-         s, [ CSVar (ltmp, None); if_stmt ], CEVar ([ tmp ], [ ts ])
+         s, [ CSVar (ltmp, None); if_stmt ], CEVar ([ tmp ], ts)
       | CEOp (op, elems, ts) ->
          let s, pre, ret = makeOpAtomic p s bind op ts elems in
          s, pre, ret
@@ -463,7 +462,7 @@ let rec convertExp (p : parameters) (e : exp) : cexp =
    | PReal (v, Fix16, _) ->
       let s = Replacements.getRealToString p.repl (Float.crop v) "fix16" in
       CEFloat (s, Float.crop v)
-   | PId (id, attr) -> CEVar (convertVarId p Other id, [ typ attr ])
+   | PId (id, attr) -> CEVar (convertVarId p Other id, typ attr)
    | PIndex (e, index, attr) ->
       let e' = convertExp p e in
       let index' = convertExp p index in
@@ -520,7 +519,7 @@ and convertLhsExp (is_val : lhs_kind) (p : parameters) (e : lhs_exp) : clhsexp =
    match e with
    | LId (id, Some typ, _) ->
       let new_id = convertVarId p is_val id in
-      let typl = convertTypeList p typ in
+      let typl = convertType p typ in
       CLId (typl, new_id)
    | LId (_, None, _) -> failwith "ProgToCode.convertLhsExp: everything should have types"
    | LTyped (e1, _, _) -> convertLhsExp is_val p e1
@@ -533,7 +532,7 @@ and convertLhsExp (is_val : lhs_kind) (p : parameters) (e : lhs_exp) : clhsexp =
    | LIndex (id, Some typ, index, _) ->
       let new_id = convertVarId p is_val id in
       let index = convertExp p index in
-      let typl = convertTypeList p typ in
+      let typl = convertType p typ in
       CLIndex (typl, new_id, index)
 
 
@@ -545,13 +544,7 @@ let getRecordField (name : lhs_exp) (index : int) (typ : Typ.t option) : lhs_exp
    match name with
    | LId (id, _, attr) ->
       let field = "field_" ^ string_of_int index in
-      let ftyp =
-         (* possible future bug, the descr does not match the actual type *)
-         match typ with
-         | Some t -> Some [ t ]
-         | None -> None
-      in
-      LId (id @ [ field ], ftyp, { attr with typ })
+      LId (id @ [ field ], typ, { attr with typ })
    | _ -> failwith "ProgToCode.getRecordFiled: Invalid input"
 
 
@@ -689,10 +682,10 @@ let rec convertStmt (p : parameters) (s : stmt) : cstmt =
    (* special for c/c++ initialize array variables *)
    | StmtBind (LId (lhs, Some atyp, _), PArray (elems, _), _) when p.code = CCode ->
       let elems' = convertExpArray p elems in
-      let atype, _ = Typ.arrayTypeAndSize (Typ.first atyp) in
+      let atype, _ = Typ.arrayTypeAndSize atyp in
       let lhs' = convertVarId p Other lhs in
       let typ = convertType p atype in
-      let stmts = List.mapi (fun i e -> CSBind (CLIndex ([ typ ], lhs', CEInt i), e)) elems' in
+      let stmts = List.mapi (fun i e -> CSBind (CLIndex (typ, lhs', CEInt i), e)) elems' in
       makeSingleBlock stmts
    (* special for c/c++ to copy array variables *)
    | StmtBind (LId (lhs, _, { typ = Some typ }), rhs, _) when p.code = CCode && Typ.isArray typ ->
@@ -700,7 +693,7 @@ let rec convertStmt (p : parameters) (s : stmt) : cstmt =
       let atyp, size = Typ.arrayTypeAndSize typ in
       let atyp' = convertType p atyp in
       let copy_fn = getCopyArrayFunction p atyp' in
-      CSBind (CLWild, CECall (copy_fn, [ CEInt size; CEVar (convertVarId p Other lhs, [ atyp' ]); rhs' ], unit_typ))
+      CSBind (CLWild, CECall (copy_fn, [ CEInt size; CEVar (convertVarId p Other lhs, atyp'); rhs' ], unit_typ))
    | StmtBind (lhs, rhs, _) ->
       let lhs' = convertLhsExp Other p lhs in
       let rhs' = convertExp p rhs in

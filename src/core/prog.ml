@@ -88,11 +88,11 @@ type precision =
 
 type lhs_exp =
    | LWild  of attr
-   | LId    of Id.t * Typ.t list option * attr
+   | LId    of Id.t * Typ.t option * attr
    | LTuple of lhs_exp list * attr
    | LTyped of lhs_exp * Typ.t * attr
    | LGroup of lhs_exp * attr
-   | LIndex of Id.t * Typ.t list option * exp * attr
+   | LIndex of Id.t * Typ.t option * exp * attr
 [@@deriving show, eq, ord]
 
 (** Parser syntax tree *)

@@ -48,7 +48,7 @@ type cexp =
    | CECall   of string * cexp list * type_descr
    | CEUnOp   of string * cexp * type_descr
    | CEOp     of string * cexp list * type_descr
-   | CEVar    of string list * type_descr list
+   | CEVar    of string list * type_descr
    | CEIndex  of cexp * cexp * type_descr
    | CEIf     of cexp * cexp * cexp * type_descr
    | CETuple  of (string * cexp) list * type_descr
@@ -58,9 +58,9 @@ type cexp =
 (** Description of expressions (lhs) *)
 and clhsexp =
    | CLWild
-   | CLId    of type_descr list * string list
+   | CLId    of type_descr * string list
    | CLTuple of clhsexp list
-   | CLIndex of type_descr list * string list * cexp
+   | CLIndex of type_descr * string list * cexp
 [@@deriving show, eq, ord]
 
 (** Description of statements *)
