@@ -299,7 +299,7 @@ and map_lhs_exp_list mapper state exp = (mapper_list map_lhs_exp) mapper state e
 and map_val_decl (mapper : 'state mapper) (state : 'state) (v : val_decl) : 'state * val_decl =
    let id, tp, attr = v in
    let state', id' = map_id mapper state id in
-   let state', tp' = map_type_list mapper state' tp in
+   let state', tp' = map_vtype mapper state' tp in
    let state', attr' = map_attr mapper state' attr in
    state', (id', tp', attr')
 

@@ -714,7 +714,7 @@ let rec convertStmt (p : parameters) (s : stmt) : cstmt =
          | CTSimple t -> t
          | _ -> failwith "CodeC.convertStmt: invalid alias type"
       in
-      let member_pairs = List.map (fun (id, typ, _) -> convertType p (List.hd typ), convertSingleVarId p id) members in
+      let member_pairs = List.map (fun (id, typ, _) -> convertType p typ, convertSingleVarId p id) members in
       let attr = { is_root = isRoot attr.used } in
       CSType (type_name, member_pairs, attr)
    | StmtAliasType (t1, t2, _) ->

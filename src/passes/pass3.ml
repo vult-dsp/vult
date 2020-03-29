@@ -188,7 +188,7 @@ module CreateInitFunction = struct
 
 
    let generateContextType (ctx : Id.t) (member_set : IdTypeSet.t) : stmt =
-      let members = IdTypeSet.fold (fun (name, tp) acc -> (name, [ tp ], emptyAttr) :: acc) member_set [] in
+      let members = IdTypeSet.fold (fun (name, tp) acc -> (name, tp, emptyAttr) :: acc) member_set [] in
       StmtType (ref (Typ.TId (ctx, None)), members, emptyAttr)
 
 

@@ -357,7 +357,7 @@ and valDecl buffer val_decl =
    append buffer "val " ;
    identifierBuff buffer id ;
    append buffer " : " ;
-   typeExpressionBuff buffer (Typ.first e) ;
+   typeExpressionBuff buffer e ;
    append buffer "; " ;
    newline buffer
 

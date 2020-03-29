@@ -139,7 +139,7 @@ and stmt =
    | StmtEmpty
 [@@deriving show, eq, ord]
 
-and val_decl = Id.t (* name *) * Typ.t list (* type *) * attr [@@deriving show, eq, ord]
+and val_decl = Id.t (* name *) * Typ.t (* type *) * attr [@@deriving show, eq, ord]
 
 type exp_list = exp list [@@deriving show, eq, ord]
 

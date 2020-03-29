@@ -782,7 +782,7 @@ and valDecl (buffer : Stream.stream) : val_decl =
    let id = id buffer in
    let _ = Stream.consume buffer COLON in
    let val_type = typeExpression 10 buffer in
-   id, [ val_type ], makeAttr start_loc
+   id, val_type, makeAttr start_loc
 
 
 (** 'while' (<expression>) <stmtList> *)
