@@ -1,0 +1,564 @@
+package .delay;
+
+import java.util.Arrays;
+import java.util.Random;
+import .external.*;
+
+public class delay {
+
+static int clip(int x, int minv, int maxv) {
+   if(x > maxv)
+      return maxv;
+   else if(x < minv)
+      return minv;
+   else return x;
+}
+
+static float clip(float x, float minv, float maxv) {
+   if(x > maxv)
+      return maxv;
+   else if(x < minv)
+      return minv;
+   else return x;
+}
+
+int[] makeArray(int size, int init) {
+   int a[] = new int[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+float[] makeArray(int size, float init) {
+   float a[] = new float[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+boolean[] makeArray(int size, boolean init) {
+   boolean a[] = new boolean[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+int int_to_fix16(int a) { return a * 0x00010000; }
+
+int fix16_to_int(int a) { return (a >> 16); }
+
+int fix16_add(int x, int y) { return x + y; }
+
+int fix16_sub(int x, int y) { return x - y; }
+
+int fix16_minus(int x) { return -x; }
+
+float fix16_to_float(int a) { return (float)a / 0x00010000; }
+int float_to_fix16(float a) {
+   float temp = a * 0x00010000;
+   return (int)temp;
+}
+
+int fix16_mul(int x, int y) {
+   long res = (long)x * (long)y;
+   return (int)(res >> 16);
+}
+
+int fix16_div(int a, int b) {
+   if (b == 0)
+      return 0;
+   int result = (int)(((long)a << 16) / b);
+   return result;
+}
+
+static boolean not(boolean x) {
+   return !x;
+}
+
+static float int_to_float(int x) {
+   return (float)x;
+}
+
+int float_to_int(float x) {
+   return (int)x;
+}
+
+float floor(float x) {
+   return (float)Math.floor(x);
+}
+
+static Random rand = new Random();
+
+float random() {
+   return rand.nextFloat();
+}
+
+int irandom() {
+   return rand.nextInt();
+}
+
+float get(float[] a, int i) {
+   return a[i];
+}
+
+void set(float[] a, int i, float val) {
+   a[i] = val;
+}
+
+int get(int[] a, int i) {
+   return a[i];
+}
+
+void set(int[] a, int i, int val) {
+   a[i] = val;
+}
+
+float[] wrap_array(float x[]) {
+   return x;
+}
+
+int[] wrap_array(int x[]) {
+   return x;
+}
+
+float cosh(float x) {
+   return (float)Math.cosh(x);
+}
+
+float cos(float x) {
+   return (float)Math.cos(x);
+}
+
+float sin(float x) {
+   return (float)Math.sin(x);
+}
+
+float sinh(float x) {
+   return (float)Math.sinh(x);
+}
+
+float tan(float x) {
+   return (float)Math.tan(x);
+}
+
+float tanh(float x) {
+   return (float)Math.tanh(x);
+}
+
+float sqrt(float x) {
+   return (float)Math.sqrt(x);
+}
+
+float pow(float x, float y) {
+   return (float)Math.pow(x, y);
+}
+
+float exp(float x) {
+   return (float)Math.exp(x);
+}
+
+
+private class Delay__ctx_type_0 {
+   public float x;
+ 
+   Delay__ctx_type_0(){ this.x = 0.0f;
+    } 
+   Delay__ctx_type_0(float x){ this.x = x;
+    } }
+
+private class Delay__ctx_type_1 {
+   public float pre_x;
+ 
+   Delay__ctx_type_1(){ this.pre_x = 0.0f;
+    } 
+   Delay__ctx_type_1(float pre_x){ this.pre_x = pre_x;
+    } }
+
+private class Delay__ctx_type_2 {
+   public boolean pre_x;
+ 
+   Delay__ctx_type_2(){ this.pre_x = false;
+    } 
+   Delay__ctx_type_2(boolean pre_x){ this.pre_x = pre_x;
+    } }
+
+private class Delay__ctx_type_3 {
+   public int count;
+ 
+   Delay__ctx_type_3(){ this.count = 0;
+    } 
+   Delay__ctx_type_3(int count){ this.count = count;
+    } }
+
+private class Delay__ctx_type_5 {
+   public float rate;
+   public float phase;
+   public Delay__ctx_type_1 _inst1d;
+ 
+   Delay__ctx_type_5(){ this.rate = 0.0f;
+   this.phase = 0.0f;
+   this._inst1d = new Delay__ctx_type_1();
+    } 
+   Delay__ctx_type_5(float rate,float phase,Delay__ctx_type_1 _inst1d){ this.rate = rate;
+   this.phase = phase;
+   this._inst1d = _inst1d;
+    } }
+
+private class Delay__ctx_type_6 {
+   public float phase;
+   public Delay__ctx_type_2 _inst13e;
+ 
+   Delay__ctx_type_6(){ this.phase = 0.0f;
+   this._inst13e = new Delay__ctx_type_2();
+    } 
+   Delay__ctx_type_6(float phase,Delay__ctx_type_2 _inst13e){ this.phase = phase;
+   this._inst13e = _inst13e;
+    } }
+
+private class Delay__ctx_type_7 {
+   public float pre_phase1;
+   public Delay__ctx_type_5 _inst37d;
+   public Delay__ctx_type_0 _inst295;
+   public Delay__ctx_type_5 _inst17d;
+ 
+   Delay__ctx_type_7(){ this.pre_phase1 = 0.0f;
+   this._inst37d = new Delay__ctx_type_5();
+   this._inst295 = new Delay__ctx_type_0();
+   this._inst17d = new Delay__ctx_type_5();
+    } 
+   Delay__ctx_type_7(float pre_phase1,Delay__ctx_type_5 _inst37d,Delay__ctx_type_0 _inst295,Delay__ctx_type_5 _inst17d){ this.pre_phase1 = pre_phase1;
+   this._inst37d = _inst37d;
+   this._inst295 = _inst295;
+   this._inst17d = _inst17d;
+    } }
+
+private class Delay__ctx_type_8 {
+   public int write_pos;
+   public float buffer[];
+ 
+   Delay__ctx_type_8(){ this.write_pos = 0;
+   this.buffer = makeArray(30000,0.0f);
+    } 
+   Delay__ctx_type_8(int write_pos,float buffer[]){ this.write_pos = write_pos;
+   this.buffer = buffer;
+    } }
+
+private class Delay__ctx_type_9 {
+   public int pre;
+   public int notes[];
+   public int count;
+ 
+   Delay__ctx_type_9(){ this.pre = 0;
+   this.notes = new int[]{0,0,0,0};
+   this.count = 0;
+    } 
+   Delay__ctx_type_9(int pre,int notes[],int count){ this.pre = pre;
+   this.notes = notes;
+   this.count = count;
+    } }
+
+private class Delay__ctx_type_10 {
+   public float volume;
+   public float time;
+   public float pitch;
+   public Delay__ctx_type_9 notes;
+   public float lfo_rate;
+   public float lfo_amt;
+   public float feedback;
+   public float detune;
+   public Delay__ctx_type_8 _inst686;
+   public Delay__ctx_type_0 _inst595;
+   public Delay__ctx_type_0 _inst495;
+   public Delay__ctx_type_0 _inst395;
+   public Delay__ctx_type_7 _inst2ba;
+   public Delay__ctx_type_6 _inst15e;
+ 
+   Delay__ctx_type_10(){ this.volume = 0.0f;
+   this.time = 0.0f;
+   this.pitch = 0.0f;
+   this.notes = new Delay__ctx_type_9();
+   this.lfo_rate = 0.0f;
+   this.lfo_amt = 0.0f;
+   this.feedback = 0.0f;
+   this.detune = 0.0f;
+   this._inst686 = new Delay__ctx_type_8();
+   this._inst595 = new Delay__ctx_type_0();
+   this._inst495 = new Delay__ctx_type_0();
+   this._inst395 = new Delay__ctx_type_0();
+   this._inst2ba = new Delay__ctx_type_7();
+   this._inst15e = new Delay__ctx_type_6();
+    } 
+   Delay__ctx_type_10(float volume,float time,float pitch,Delay__ctx_type_9 notes,float lfo_rate,float lfo_amt,float feedback,float detune,Delay__ctx_type_8 _inst686,Delay__ctx_type_0 _inst595,Delay__ctx_type_0 _inst495,Delay__ctx_type_0 _inst395,Delay__ctx_type_7 _inst2ba,Delay__ctx_type_6 _inst15e){ this.volume = volume;
+   this.time = time;
+   this.pitch = pitch;
+   this.notes = notes;
+   this.lfo_rate = lfo_rate;
+   this.lfo_amt = lfo_amt;
+   this.feedback = feedback;
+   this.detune = detune;
+   this._inst686 = _inst686;
+   this._inst595 = _inst595;
+   this._inst495 = _inst495;
+   this._inst395 = _inst395;
+   this._inst2ba = _inst2ba;
+   this._inst15e = _inst15e;
+    } }
+
+private Delay__ctx_type_0 Delay__ctx_type_0_init(){
+   Delay__ctx_type_0 _ctx = new Delay__ctx_type_0(); 
+   _ctx.x = 0.0f;
+   return _ctx;
+}
+
+private Delay__ctx_type_0 Delay_smooth_init(){return Delay__ctx_type_0_init();}
+
+private float Delay_smooth(Delay__ctx_type_0 _ctx, float input){
+   _ctx.x = (_ctx.x + (0.005f * (input + (- _ctx.x))));
+   return _ctx.x;
+}
+
+private Delay__ctx_type_1 Delay__ctx_type_1_init(){
+   Delay__ctx_type_1 _ctx = new Delay__ctx_type_1(); 
+   _ctx.pre_x = 0.0f;
+   return _ctx;
+}
+
+private Delay__ctx_type_1 Delay_change_init(){return Delay__ctx_type_1_init();}
+
+private boolean Delay_change(Delay__ctx_type_1 _ctx, float x){
+   boolean v = (_ctx.pre_x != x); 
+   _ctx.pre_x = x;
+   return v;
+}
+
+private Delay__ctx_type_2 Delay__ctx_type_2_init(){
+   Delay__ctx_type_2 _ctx = new Delay__ctx_type_2(); 
+   _ctx.pre_x = false;
+   return _ctx;
+}
+
+private Delay__ctx_type_2 Delay_edge_init(){return Delay__ctx_type_2_init();}
+
+private boolean Delay_edge(Delay__ctx_type_2 _ctx, boolean x){
+   boolean v = ((_ctx.pre_x != x) && (_ctx.pre_x == false)); 
+   _ctx.pre_x = x;
+   return v;
+}
+
+private Delay__ctx_type_3 Delay__ctx_type_3_init(){
+   Delay__ctx_type_3 _ctx = new Delay__ctx_type_3(); 
+   _ctx.count = 0;
+   return _ctx;
+}
+
+private Delay__ctx_type_3 Delay_each_init(){return Delay__ctx_type_3_init();}
+
+private boolean Delay_each(Delay__ctx_type_3 _ctx, int n){
+   boolean ret = (_ctx.count == 0); 
+   _ctx.count = ((1 + _ctx.count) % n);
+   return ret;
+}
+
+private float Delay_pitchToRate(float d){return (0.0001854f * exp((0.0577623f * d)));}
+
+private Delay__ctx_type_5 Delay__ctx_type_5_init(){
+   Delay__ctx_type_5 _ctx = new Delay__ctx_type_5(); 
+   _ctx.rate = 0.0f;
+   _ctx.phase = 0.0f;
+   _ctx._inst1d = Delay__ctx_type_1_init();
+   return _ctx;
+}
+
+private Delay__ctx_type_5 Delay_phasor_init(){return Delay__ctx_type_5_init();}
+
+private float Delay_phasor(Delay__ctx_type_5 _ctx, float pitch, boolean reset){
+   if(Delay_change(_ctx._inst1d,pitch)){ _ctx.rate = Delay_pitchToRate(pitch); }
+   if(reset){ _ctx.phase = 0.0f; }
+   else
+   { _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.f); }
+   return _ctx.phase;
+}
+
+private Delay__ctx_type_6 Delay__ctx_type_6_init(){
+   Delay__ctx_type_6 _ctx = new Delay__ctx_type_6(); 
+   _ctx.phase = 0.0f;
+   _ctx._inst13e = Delay__ctx_type_2_init();
+   return _ctx;
+}
+
+private Delay__ctx_type_6 Delay_lfo_init(){return Delay__ctx_type_6_init();}
+
+private float Delay_lfo(Delay__ctx_type_6 _ctx, float f, boolean gate){
+   float rate = (0.0002268f * f); 
+   if(Delay_edge(_ctx._inst13e,gate)){ _ctx.phase = 0.0f; }
+   _ctx.phase = (_ctx.phase + rate);
+   if(_ctx.phase > 1.f){ _ctx.phase = (-1.f + _ctx.phase); }
+   return (-0.5f + sin((6.2831854f * _ctx.phase)));
+}
+
+private Delay__ctx_type_7 Delay__ctx_type_7_init(){
+   Delay__ctx_type_7 _ctx = new Delay__ctx_type_7(); 
+   _ctx.pre_phase1 = 0.0f;
+   _ctx._inst37d = Delay__ctx_type_5_init();
+   _ctx._inst295 = Delay__ctx_type_0_init();
+   _ctx._inst17d = Delay__ctx_type_5_init();
+   return _ctx;
+}
+
+private Delay__ctx_type_7 Delay_phd_osc_init(){return Delay__ctx_type_7_init();}
+
+private float Delay_phd_osc(Delay__ctx_type_7 _ctx, float pitch, float detune){
+   float phase1 = Delay_phasor(_ctx._inst17d,pitch,false); 
+   float comp = (1.f + (- phase1)); 
+   boolean reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5f); 
+   _ctx.pre_phase1 = phase1;
+   float phase2 = Delay_phasor(_ctx._inst37d,(pitch + (32.f * Delay_smooth(_ctx._inst295,detune))),reset); 
+   float sine = sin((6.2831854f * phase2)); 
+   return (comp * sine);
+}
+
+private Delay__ctx_type_8 Delay__ctx_type_8_init(){
+   Delay__ctx_type_8 _ctx = new Delay__ctx_type_8(); 
+   _ctx.write_pos = 0;
+   _ctx.buffer = makeArray(30000,0.0f);
+   return _ctx;
+}
+
+private Delay__ctx_type_8 Delay_delay_init(){return Delay__ctx_type_8_init();}
+
+private float Delay_delay(Delay__ctx_type_8 _ctx, float x, float time, float feedback){
+   time = clip(time,0.0f,1.f);
+   feedback = clip(feedback,0.0f,1.f);
+   float index_r = (30000.f * time); 
+   int index_i = float_to_int(floor(index_r)); 
+   int delta = (_ctx.write_pos + (- index_i)); 
+   int read_pos = 0; 
+   if(delta < 0){ read_pos = (30000 + delta); }
+   else
+   { read_pos = delta; }
+   float decimal = (index_r + (- int_to_float(index_i))); 
+   float x1 = get(_ctx.buffer,read_pos); 
+   float x2 = get(_ctx.buffer,((1 + read_pos) % 30000)); 
+   float ret = (x1 + (decimal * (x2 + (- x1)))); 
+   _ctx.write_pos = ((1 + _ctx.write_pos) % 30000);
+   set(_ctx.buffer,_ctx.write_pos,clip((x + (feedback * ret)),-1.f,1.f));
+   return ret;
+}
+
+private Delay__ctx_type_9 Delay__ctx_type_9_init(){
+   Delay__ctx_type_9 _ctx = new Delay__ctx_type_9(); 
+   _ctx.pre = 0;
+   _ctx.notes = makeArray(4,0);
+   _ctx.count = 0;
+   return _ctx;
+}
+
+private Delay__ctx_type_9 Delay_mono_noteOn_init(){return Delay__ctx_type_9_init();}
+
+private int Delay_mono_noteOn(Delay__ctx_type_9 _ctx, int n){
+   if(_ctx.count < 4){
+      set(_ctx.notes,_ctx.count,n);
+      _ctx.pre = n;
+      if(_ctx.count < 4){ _ctx.count = (1 + _ctx.count); }
+   }
+   return _ctx.pre;
+}
+
+private Delay__ctx_type_9 Delay_mono_noteOff_init(){return Delay__ctx_type_9_init();}
+
+private int Delay_mono_noteOff(Delay__ctx_type_9 _ctx, int n){
+   boolean found = false; 
+   int pos = 0; 
+   int i = 0; 
+   if(_ctx.count == 0){ return _ctx.pre; }
+   while((i < 4) && not(found)){
+      if(get(_ctx.notes,i) == n){
+         pos = i;
+         found = true;
+      }
+      i = (1 + i);
+   }
+   if(found){
+      int k = (1 + pos); 
+      while(k < 4){
+         set(_ctx.notes,((-1) + k),get(_ctx.notes,k));
+         k = (1 + k);
+      }
+      if(found && (_ctx.count > 0)){
+         _ctx.count = ((-1) + _ctx.count);
+         _ctx.pre = get(_ctx.notes,((-1) + _ctx.count));
+      }
+   }
+   return _ctx.pre;
+}
+
+private Delay__ctx_type_9 Delay_mono_isGateOn_init(){return Delay__ctx_type_9_init();}
+
+private boolean Delay_mono_isGateOn(Delay__ctx_type_9 _ctx){return (_ctx.count > 0);}
+
+private Delay__ctx_type_10 Delay__ctx_type_10_init(){
+   Delay__ctx_type_10 _ctx = new Delay__ctx_type_10(); 
+   _ctx.volume = 0.0f;
+   _ctx.time = 0.0f;
+   _ctx.pitch = 0.0f;
+   _ctx.notes = Delay__ctx_type_9_init();
+   _ctx.lfo_rate = 0.0f;
+   _ctx.lfo_amt = 0.0f;
+   _ctx.feedback = 0.0f;
+   _ctx.detune = 0.0f;
+   _ctx._inst686 = Delay__ctx_type_8_init();
+   _ctx._inst595 = Delay__ctx_type_0_init();
+   _ctx._inst495 = Delay__ctx_type_0_init();
+   _ctx._inst395 = Delay__ctx_type_0_init();
+   _ctx._inst2ba = Delay__ctx_type_7_init();
+   _ctx._inst15e = Delay__ctx_type_6_init();
+   return _ctx;
+}
+
+private Delay__ctx_type_10 Delay_process_init(){return Delay__ctx_type_10_init();}
+
+private float Delay_process(Delay__ctx_type_10 _ctx, float input){
+   boolean gate = Delay_mono_isGateOn(_ctx.notes); 
+   float lfo_val = (_ctx.lfo_amt * Delay_lfo(_ctx._inst15e,_ctx.lfo_rate,gate)); 
+   float o1 = Delay_phd_osc(_ctx._inst2ba,_ctx.pitch,(_ctx.detune + lfo_val)); 
+   float amp = 0.0f; 
+   float _if_7 = 0.0f; 
+   if(gate){ _if_7 = 1.f; }
+   else
+   { _if_7 = 0.0f; }
+   amp = Delay_smooth(_ctx._inst395,_if_7);
+   float osc_out = (amp * o1); 
+   float delay_out = Delay_delay(_ctx._inst686,osc_out,Delay_smooth(_ctx._inst495,_ctx.time),Delay_smooth(_ctx._inst595,_ctx.feedback)); 
+   return (0.5f * _ctx.volume * (delay_out + osc_out));
+}
+
+private Delay__ctx_type_10 Delay_noteOn_init(){return Delay__ctx_type_10_init();}
+
+private void Delay_noteOn(Delay__ctx_type_10 _ctx, int note, int velocity, int channel){_ctx.pitch = int_to_float(Delay_mono_noteOn(_ctx.notes,note));}
+
+private Delay__ctx_type_10 Delay_noteOff_init(){return Delay__ctx_type_10_init();}
+
+private void Delay_noteOff(Delay__ctx_type_10 _ctx, int note, int channel){_ctx.pitch = int_to_float(Delay_mono_noteOff(_ctx.notes,note));}
+
+private Delay__ctx_type_10 Delay_controlChange_init(){return Delay__ctx_type_10_init();}
+
+private void Delay_controlChange(Delay__ctx_type_10 _ctx, int control, float value, int channel){
+   if(control == 30){ _ctx.volume = (0.0078741f * value); }
+   if(control == 31){ _ctx.detune = (0.0078741f * value); }
+   if(control == 32){ _ctx.lfo_rate = (0.0078741f * value); }
+   if(control == 33){ _ctx.lfo_amt = (2.f * (-0.5f + (0.0078741f * value))); }
+   if(control == 34){ _ctx.time = (0.0078741f * value); }
+   if(control == 35){ _ctx.feedback = (0.0078741f * value); }
+}
+
+private Delay__ctx_type_10 Delay_default_init(){return Delay__ctx_type_10_init();}
+
+private void Delay_default(Delay__ctx_type_10 _ctx){
+   _ctx.volume = 1.f;
+   _ctx.pitch = 45.f;
+   _ctx.detune = 0.8f;
+   _ctx.lfo_rate = 0.0700001f;
+   _ctx.lfo_amt = -0.8f;
+   _ctx.time = 0.5f;
+   _ctx.feedback = 0.5f;
+}
+
+
+}

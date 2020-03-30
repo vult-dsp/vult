@@ -152,7 +152,7 @@ let rec printExp (params : params) (e : cexp) : Pla.t =
       let op_t = {pla| <#op#s> |pla} in
       let elems_t = Pla.map_sep op_t (printExp params) elems in
       {pla|(<#elems_t#>)|pla}
-   | CEVar (name, _) -> dot name
+   | CEVar (name, _) -> Pla.string name
    | CEIndex (e, index, _) ->
       let index = printExp params index in
       let e = printExp params e in
@@ -165,6 +165,12 @@ let rec printExp (params : params) (e : cexp) : Pla.t =
    | CETuple (elems, _) ->
       let elems_t = Pla.map_sep Pla.commaspace (printJsField params) elems in
       {pla|{ <#elems_t#> }|pla}
+   | CEAccess (((CEVar _ | CEAccess _) as e), n) ->
+      let e = printExp params e in
+      {pla|<#e#>.<#n#s>|pla}
+   | CEAccess (e, n) ->
+      let e = printExp params e in
+      {pla|(<#e#>).<#n#s>|pla}
 
 
 and printJsField (params : params) (name, value) : Pla.t =
@@ -172,8 +178,7 @@ and printJsField (params : params) (name, value) : Pla.t =
    {pla|<#name#s> = <#value_t#>|pla}
 
 
-let printLhsExpTuple (var : string list) (is_var : bool) (i : int) (e : clhsexp) : Pla.t =
-   let var = Pla.map_sep (Pla.string ".") Pla.string var in
+let printLhsExpTuple (var : Pla.t) (is_var : bool) (i : int) (e : clhsexp) : Pla.t =
    match e with
    | CLId (_, name) ->
       let name = dot name in
@@ -235,7 +240,7 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
       let init = getInitValue typ in
       let name = dot name in
       Some {pla|local <#name#> = <#init#>; |pla}
-   | CSVar (CLTuple _, _) -> failwith "printStmt: invalid tuple assign"
+   | CSVar (CLTuple _, _) -> failwith "CodeLua.printStmt: invalid tuple assign"
    | CSVar (CLId (_, name), Some value) ->
       let value_t = printExp params value in
       let name = dot name in
@@ -248,13 +253,15 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
    | CSConst (CLWild, value) ->
       let value_t = printExp params value in
       Some {pla|<#value_t#>; |pla}
-   | CSConst (CLTuple elems, CEVar (name, _)) ->
-      List.mapi (printLhsExpTuple name true) elems |> Pla.join |> fun a -> Some a
+   | CSConst (CLTuple elems, ((CEVar _ | CEAccess _) as rhs)) ->
+      let rhs = printExp params rhs in
+      List.mapi (printLhsExpTuple rhs true) elems |> Pla.join |> fun a -> Some a
    | CSConst _ -> failwith "printStmt: invalid constant assign"
    | CSBind (CLWild, value) -> Some Pla.(printExp params value ++ semi)
-   | CSBind (CLTuple elems, CEVar (name, _)) ->
-      List.mapi (printLhsExpTuple name false) elems |> Pla.join |> fun a -> Some a
-   | CSBind (CLTuple _, _) -> failwith "printStmt: invalid tuple assign"
+   | CSBind (CLTuple elems, ((CEVar _ | CEAccess _) as rhs)) ->
+      let rhs = printExp params rhs in
+      List.mapi (printLhsExpTuple rhs false) elems |> Pla.join |> fun a -> Some a
+   | CSBind (CLTuple _, _) -> failwith "CodeLua.printStmt: invalid tuple assign"
    | CSBind (CLId (_, name), value) ->
       let value_t = printExp params value in
       let name = dot name in

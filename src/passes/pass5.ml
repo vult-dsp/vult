@@ -44,32 +44,6 @@ module CollectTuples = struct
 end
 
 module ReportUnsupportedTypes = struct
-   let reportUnsupportedArray (typ : Typ.t) (name : Id.t) (attr : attr) =
-      let msg =
-         Printf.sprintf
-            "The type '%s' of variable '%s' is not supported. Arrays can only contain basic types."
-            (PrintProg.typeStr typ)
-            (Id.show name)
-      in
-      Error.raiseError msg attr.loc
-
-
-   let isComplexArray typ =
-      if Typ.isArray typ then
-         let t, _ = Typ.arrayTypeAndSize typ in
-         not (Typ.isSimpleType t)
-      else
-         false
-
-
-   let lhs_exp : ('a Env.t, lhs_exp) Mapper.mapper_func =
-      Mapper.make "ReportUnsupportedTypes.lhs_exp"
-      @@ fun state exp ->
-      match exp with
-      | LId (id, Some t, attr) when isComplexArray t -> reportUnsupportedArray t id attr
-      | _ -> state, exp
-
-
    let exp : ('a Env.t, exp) Mapper.mapper_func =
       Mapper.make "ReportUnsupportedTypes.exp"
       @@ fun state exp ->
@@ -78,25 +52,10 @@ module ReportUnsupportedTypes = struct
       | Some t when Typ.isUnbound t ->
          let msg = Printf.sprintf "The type of this expression could not be inferred. Add a type annotation." in
          Error.raiseError msg attr.loc
-      | Some t when isComplexArray t ->
-         let msg =
-            Printf.sprintf
-               "The type '%s' of this expression is not supported. Arrays can only contain basic types."
-               (PrintProg.typeStr t)
-         in
-         Error.raiseError msg attr.loc
       | _ -> state, exp
 
 
-   let typed_id : ('a Env.t, typed_id) Mapper.mapper_func =
-      Mapper.make "ReportUnsupportedTypes.typed_id"
-      @@ fun state t ->
-      match t with
-      | TypedId (id, typ, _, attr) when isComplexArray (Typ.first typ) -> reportUnsupportedArray (Typ.first typ) id attr
-      | _ -> state, t
-
-
-   let mapper = Mapper.{ default_mapper with lhs_exp; exp; typed_id }
+   let mapper = Mapper.{ default_mapper with exp }
 end
 
 module SimplifyFixed = struct

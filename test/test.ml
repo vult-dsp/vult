@@ -83,8 +83,6 @@ let errors_files =
    ; "error8.vult"
    ; "error9.vult"
    ; "error10.vult"
-   ; "error11.vult"
-   ; "error12.vult"
    ; "error13.vult"
    ; "error14.vult"
    ; "error15.vult"
@@ -181,6 +179,7 @@ let all_files =
    ; "units/kick.vult"
    ; "units/voice_4.vult"
    ; "../test/compile/defined_types.vult"
+   ; "../test/compile/array_defined_type.vult"
    ]
 
 
@@ -442,6 +441,7 @@ module CliTest = struct
          | "float" -> "-ccode", [ ".cpp", ".cpp.float.base"; ".h", ".h.float.base" ]
          | "js" -> "-jscode", [ ".js", ".js.base" ]
          | "lua" -> "-luacode", [ ".lua", ".lua.base" ]
+         | "java" -> "-javacode vult.com", [ ".java", ".java.base" ]
          | _ -> failwith "Unknown target to run test"
       in
       let includes_flags = List.map (fun a -> "-i " ^ a) includes |> String.concat " " in
@@ -475,6 +475,7 @@ module CliTest = struct
          | "float" -> { args with code = CCode }, [ ".cpp", ".cpp.float.base"; ".h", ".h.float.base" ]
          | "js" -> { args with code = JSCode }, [ ".js", ".js.base" ]
          | "lua" -> { args with code = LuaCode }, [ ".lua", ".lua.base" ]
+         | "java" -> { args with code = JavaCode }, [ ".java", ".java.base" ]
          | _ -> failwith "Unknown target to run test"
       in
       let args = { args with output = basefile; files = [ File fullfile ] } in
@@ -533,6 +534,9 @@ module Templates = struct
          | "float" ->
             ( { args with template; code = CCode }
             , [ ".cpp", ".cpp.float.base." ^ template; ".h", ".h.float.base." ^ template ] )
+         | "java" ->
+            ( { args with template; code = JavaCode }
+            , [ ".java", ".java.base." ^ template ] )
          | "js" -> { args with template; code = JSCode }, [ ".js", ".js.base." ^ template ]
          | "lua" -> { args with template; code = LuaCode }, [ ".lua", ".lua.base." ^ template ]
          | _ -> failwith "Unknown target to run test"
@@ -629,6 +633,7 @@ let suite =
         ; CliTest.get all_files Native "fixed"
         ; CliTest.get all_files Native "js"
         ; CliTest.get all_files Native "lua"
+        ; CliTest.get all_files Native "java"
         ; CliTest.get all_files Node "float"
         ; CliTest.get all_files Node "fixed"
         ; CliTest.get all_files Node "js"

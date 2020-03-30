@@ -587,7 +587,16 @@ and inferExp (env : 'a Env.t) (e : exp) : exp * 'a Env.t * Typ.t =
       let stmt', _, ret_type = inferStmt env NoType stmt in
       let typ = getReturnType ret_type in
       PSeq (name, makeBlock stmt', { attr with typ = Some typ }), env, typ
-   | PAccess _ -> failwith "Access not implemented"
+   | PAccess (e, m, attr) ->
+      let e', env, e_type = inferExp env e in
+      begin
+         match !(Typ.unlink e_type) with
+         | TId (id, _) ->
+            let _, _, type_scope = Env.lookupRaise Scope.Type env id attr.loc in
+            let var = Scope.lookupVariableRaise type_scope [ m ] attr.loc in
+            PAccess (e', m, attr), env, var.typ
+         | _ -> failwith "the type needs to be known"
+      end
    | PEmpty -> PEmpty, env, Typ.Const.unit_type
 
 
@@ -694,7 +703,12 @@ and inferStmt (env : 'a Env.t) (ret_type : return_type) (stmt : stmt) : stmt lis
       unifyRaise (expLoc cond') Typ.Const.bool_type cond_type ;
       let body', env', ret_type' = inferStmt env' ret_type body in
       [ StmtWhile (cond', makeBlock body', attr) ], env', ret_type'
-   | StmtType (name, members, attr) -> [ StmtType (name, members, attr) ], env, ret_type
+   | StmtType (({ contents = TId (name, _) } as id), members, attr) ->
+      let env = Env.enter Scope.Type env name attr in
+      let env = List.fold_left (fun env (name, typ, attr) -> Env.addVar env name typ attr) env members in
+      let env = Env.exit env in
+      [ StmtType (id, members, attr) ], env, ret_type
+   | StmtType _ -> failwith "Complex types are not implemented"
    | StmtAliasType (name, alias, attr) -> [ StmtAliasType (name, alias, attr) ], env, ret_type
    | StmtExternal (name, args, fun_ret_type, linkname, attr) ->
       let env' = Env.addFunction env name attr in

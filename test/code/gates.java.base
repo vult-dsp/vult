@@ -1,0 +1,420 @@
+package .gates;
+
+import java.util.Arrays;
+import java.util.Random;
+import .external.*;
+
+public class gates {
+
+static int clip(int x, int minv, int maxv) {
+   if(x > maxv)
+      return maxv;
+   else if(x < minv)
+      return minv;
+   else return x;
+}
+
+static float clip(float x, float minv, float maxv) {
+   if(x > maxv)
+      return maxv;
+   else if(x < minv)
+      return minv;
+   else return x;
+}
+
+int[] makeArray(int size, int init) {
+   int a[] = new int[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+float[] makeArray(int size, float init) {
+   float a[] = new float[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+boolean[] makeArray(int size, boolean init) {
+   boolean a[] = new boolean[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+int int_to_fix16(int a) { return a * 0x00010000; }
+
+int fix16_to_int(int a) { return (a >> 16); }
+
+int fix16_add(int x, int y) { return x + y; }
+
+int fix16_sub(int x, int y) { return x - y; }
+
+int fix16_minus(int x) { return -x; }
+
+float fix16_to_float(int a) { return (float)a / 0x00010000; }
+int float_to_fix16(float a) {
+   float temp = a * 0x00010000;
+   return (int)temp;
+}
+
+int fix16_mul(int x, int y) {
+   long res = (long)x * (long)y;
+   return (int)(res >> 16);
+}
+
+int fix16_div(int a, int b) {
+   if (b == 0)
+      return 0;
+   int result = (int)(((long)a << 16) / b);
+   return result;
+}
+
+static boolean not(boolean x) {
+   return !x;
+}
+
+static float int_to_float(int x) {
+   return (float)x;
+}
+
+int float_to_int(float x) {
+   return (int)x;
+}
+
+float floor(float x) {
+   return (float)Math.floor(x);
+}
+
+static Random rand = new Random();
+
+float random() {
+   return rand.nextFloat();
+}
+
+int irandom() {
+   return rand.nextInt();
+}
+
+float get(float[] a, int i) {
+   return a[i];
+}
+
+void set(float[] a, int i, float val) {
+   a[i] = val;
+}
+
+int get(int[] a, int i) {
+   return a[i];
+}
+
+void set(int[] a, int i, int val) {
+   a[i] = val;
+}
+
+float[] wrap_array(float x[]) {
+   return x;
+}
+
+int[] wrap_array(int x[]) {
+   return x;
+}
+
+float cosh(float x) {
+   return (float)Math.cosh(x);
+}
+
+float cos(float x) {
+   return (float)Math.cos(x);
+}
+
+float sin(float x) {
+   return (float)Math.sin(x);
+}
+
+float sinh(float x) {
+   return (float)Math.sinh(x);
+}
+
+float tan(float x) {
+   return (float)Math.tan(x);
+}
+
+float tanh(float x) {
+   return (float)Math.tanh(x);
+}
+
+float sqrt(float x) {
+   return (float)Math.sqrt(x);
+}
+
+float pow(float x, float y) {
+   return (float)Math.pow(x, y);
+}
+
+float exp(float x) {
+   return (float)Math.exp(x);
+}
+
+
+private class _tuple___real_real_real_real_real_real_real_real__ {
+   public float field_0;
+   public float field_1;
+   public float field_2;
+   public float field_3;
+   public float field_4;
+   public float field_5;
+   public float field_6;
+   public float field_7;
+ 
+   _tuple___real_real_real_real_real_real_real_real__(){ this.field_0 = 0.0f;
+   this.field_1 = 0.0f;
+   this.field_2 = 0.0f;
+   this.field_3 = 0.0f;
+   this.field_4 = 0.0f;
+   this.field_5 = 0.0f;
+   this.field_6 = 0.0f;
+   this.field_7 = 0.0f;
+    } 
+   _tuple___real_real_real_real_real_real_real_real__(float field_0,float field_1,float field_2,float field_3,float field_4,float field_5,float field_6,float field_7){ this.field_0 = field_0;
+   this.field_1 = field_1;
+   this.field_2 = field_2;
+   this.field_3 = field_3;
+   this.field_4 = field_4;
+   this.field_5 = field_5;
+   this.field_6 = field_6;
+   this.field_7 = field_7;
+    } }
+
+private class Gates__ctx_type_1 {
+   public int vel[];
+   public float gates_state_ret_7;
+   public float gates_state_ret_6;
+   public float gates_state_ret_5;
+   public float gates_state_ret_4;
+   public float gates_state_ret_3;
+   public float gates_state_ret_2;
+   public float gates_state_ret_1;
+   public float gates_state_ret_0;
+ 
+   Gates__ctx_type_1(){ this.vel = new int[]{0,0,0,0,0,0,0,0};
+   this.gates_state_ret_7 = 0.0f;
+   this.gates_state_ret_6 = 0.0f;
+   this.gates_state_ret_5 = 0.0f;
+   this.gates_state_ret_4 = 0.0f;
+   this.gates_state_ret_3 = 0.0f;
+   this.gates_state_ret_2 = 0.0f;
+   this.gates_state_ret_1 = 0.0f;
+   this.gates_state_ret_0 = 0.0f;
+    } 
+   Gates__ctx_type_1(int vel[],float gates_state_ret_7,float gates_state_ret_6,float gates_state_ret_5,float gates_state_ret_4,float gates_state_ret_3,float gates_state_ret_2,float gates_state_ret_1,float gates_state_ret_0){ this.vel = vel;
+   this.gates_state_ret_7 = gates_state_ret_7;
+   this.gates_state_ret_6 = gates_state_ret_6;
+   this.gates_state_ret_5 = gates_state_ret_5;
+   this.gates_state_ret_4 = gates_state_ret_4;
+   this.gates_state_ret_3 = gates_state_ret_3;
+   this.gates_state_ret_2 = gates_state_ret_2;
+   this.gates_state_ret_1 = gates_state_ret_1;
+   this.gates_state_ret_0 = gates_state_ret_0;
+    } }
+
+private class Gates__ctx_type_2 {
+   public float process_ret_7;
+   public float process_ret_6;
+   public float process_ret_5;
+   public float process_ret_4;
+   public float process_ret_3;
+   public float process_ret_2;
+   public float process_ret_1;
+   public float process_ret_0;
+   public Gates__ctx_type_1 gates;
+   public int channel_in;
+ 
+   Gates__ctx_type_2(){ this.process_ret_7 = 0.0f;
+   this.process_ret_6 = 0.0f;
+   this.process_ret_5 = 0.0f;
+   this.process_ret_4 = 0.0f;
+   this.process_ret_3 = 0.0f;
+   this.process_ret_2 = 0.0f;
+   this.process_ret_1 = 0.0f;
+   this.process_ret_0 = 0.0f;
+   this.gates = new Gates__ctx_type_1();
+   this.channel_in = 0;
+    } 
+   Gates__ctx_type_2(float process_ret_7,float process_ret_6,float process_ret_5,float process_ret_4,float process_ret_3,float process_ret_2,float process_ret_1,float process_ret_0,Gates__ctx_type_1 gates,int channel_in){ this.process_ret_7 = process_ret_7;
+   this.process_ret_6 = process_ret_6;
+   this.process_ret_5 = process_ret_5;
+   this.process_ret_4 = process_ret_4;
+   this.process_ret_3 = process_ret_3;
+   this.process_ret_2 = process_ret_2;
+   this.process_ret_1 = process_ret_1;
+   this.process_ret_0 = process_ret_0;
+   this.gates = gates;
+   this.channel_in = channel_in;
+    } }
+
+private float Gates_velToCV(int vel){return (0.0078741f * int_to_float(vel));}
+
+private Gates__ctx_type_1 Gates__ctx_type_1_init(){
+   Gates__ctx_type_1 _ctx = new Gates__ctx_type_1(); 
+   _ctx.vel = makeArray(8,0);
+   _ctx.gates_state_ret_7 = 0.0f;
+   _ctx.gates_state_ret_6 = 0.0f;
+   _ctx.gates_state_ret_5 = 0.0f;
+   _ctx.gates_state_ret_4 = 0.0f;
+   _ctx.gates_state_ret_3 = 0.0f;
+   _ctx.gates_state_ret_2 = 0.0f;
+   _ctx.gates_state_ret_1 = 0.0f;
+   _ctx.gates_state_ret_0 = 0.0f;
+   return _ctx;
+}
+
+private Gates__ctx_type_1 Gates_gates_noteOn_init(){return Gates__ctx_type_1_init();}
+
+private void Gates_gates_noteOn(Gates__ctx_type_1 _ctx, int note, int velocity){if((note >= 36) && (note <= 43)){
+   int n = ((-36) + note); 
+   set(_ctx.vel,n,velocity);
+}}
+
+private Gates__ctx_type_1 Gates_gates_noteOff_init(){return Gates__ctx_type_1_init();}
+
+private void Gates_gates_noteOff(Gates__ctx_type_1 _ctx, int note){if((note >= 36) && (note <= 43)){
+   int n = ((-36) + note); 
+   set(_ctx.vel,n,0);
+}}
+
+private Gates__ctx_type_1 Gates_gates_state_init(){return Gates__ctx_type_1_init();}
+
+private void Gates_gates_state(Gates__ctx_type_1 _ctx){
+   float vel1 = Gates_velToCV(get(_ctx.vel,0)); 
+   float vel2 = Gates_velToCV(get(_ctx.vel,1)); 
+   float vel3 = Gates_velToCV(get(_ctx.vel,2)); 
+   float vel4 = Gates_velToCV(get(_ctx.vel,3)); 
+   float vel5 = Gates_velToCV(get(_ctx.vel,4)); 
+   float vel6 = Gates_velToCV(get(_ctx.vel,5)); 
+   float vel7 = Gates_velToCV(get(_ctx.vel,6)); 
+   float vel8 = Gates_velToCV(get(_ctx.vel,7)); 
+   _ctx.gates_state_ret_0 = vel1;
+   _ctx.gates_state_ret_1 = vel2;
+   _ctx.gates_state_ret_2 = vel3;
+   _ctx.gates_state_ret_3 = vel4;
+   _ctx.gates_state_ret_4 = vel5;
+   _ctx.gates_state_ret_5 = vel6;
+   _ctx.gates_state_ret_6 = vel7;
+   _ctx.gates_state_ret_7 = vel8;
+   return ;
+}
+
+private Gates__ctx_type_1 Gates_gates_state_ret_0_init(){return Gates__ctx_type_1_init();}
+
+private float Gates_gates_state_ret_0(Gates__ctx_type_1 _ctx){return _ctx.gates_state_ret_0;}
+
+private Gates__ctx_type_1 Gates_gates_state_ret_1_init(){return Gates__ctx_type_1_init();}
+
+private float Gates_gates_state_ret_1(Gates__ctx_type_1 _ctx){return _ctx.gates_state_ret_1;}
+
+private Gates__ctx_type_1 Gates_gates_state_ret_2_init(){return Gates__ctx_type_1_init();}
+
+private float Gates_gates_state_ret_2(Gates__ctx_type_1 _ctx){return _ctx.gates_state_ret_2;}
+
+private Gates__ctx_type_1 Gates_gates_state_ret_3_init(){return Gates__ctx_type_1_init();}
+
+private float Gates_gates_state_ret_3(Gates__ctx_type_1 _ctx){return _ctx.gates_state_ret_3;}
+
+private Gates__ctx_type_1 Gates_gates_state_ret_4_init(){return Gates__ctx_type_1_init();}
+
+private float Gates_gates_state_ret_4(Gates__ctx_type_1 _ctx){return _ctx.gates_state_ret_4;}
+
+private Gates__ctx_type_1 Gates_gates_state_ret_5_init(){return Gates__ctx_type_1_init();}
+
+private float Gates_gates_state_ret_5(Gates__ctx_type_1 _ctx){return _ctx.gates_state_ret_5;}
+
+private Gates__ctx_type_1 Gates_gates_state_ret_6_init(){return Gates__ctx_type_1_init();}
+
+private float Gates_gates_state_ret_6(Gates__ctx_type_1 _ctx){return _ctx.gates_state_ret_6;}
+
+private Gates__ctx_type_1 Gates_gates_state_ret_7_init(){return Gates__ctx_type_1_init();}
+
+private float Gates_gates_state_ret_7(Gates__ctx_type_1 _ctx){return _ctx.gates_state_ret_7;}
+
+private Gates__ctx_type_2 Gates__ctx_type_2_init(){
+   Gates__ctx_type_2 _ctx = new Gates__ctx_type_2(); 
+   _ctx.process_ret_7 = 0.0f;
+   _ctx.process_ret_6 = 0.0f;
+   _ctx.process_ret_5 = 0.0f;
+   _ctx.process_ret_4 = 0.0f;
+   _ctx.process_ret_3 = 0.0f;
+   _ctx.process_ret_2 = 0.0f;
+   _ctx.process_ret_1 = 0.0f;
+   _ctx.process_ret_0 = 0.0f;
+   _ctx.gates = Gates__ctx_type_1_init();
+   _ctx.channel_in = 0;
+   return _ctx;
+}
+
+private Gates__ctx_type_2 Gates_process_init(){return Gates__ctx_type_2_init();}
+
+private void Gates_process(Gates__ctx_type_2 _ctx, int c){
+   _ctx.channel_in = c;
+   Gates_gates_state(_ctx.gates);
+   _ctx.process_ret_0 = Gates_gates_state_ret_0(_ctx.gates);
+   _ctx.process_ret_1 = Gates_gates_state_ret_1(_ctx.gates);
+   _ctx.process_ret_2 = Gates_gates_state_ret_2(_ctx.gates);
+   _ctx.process_ret_3 = Gates_gates_state_ret_3(_ctx.gates);
+   _ctx.process_ret_4 = Gates_gates_state_ret_4(_ctx.gates);
+   _ctx.process_ret_5 = Gates_gates_state_ret_5(_ctx.gates);
+   _ctx.process_ret_6 = Gates_gates_state_ret_6(_ctx.gates);
+   _ctx.process_ret_7 = Gates_gates_state_ret_7(_ctx.gates);
+   return ;
+}
+
+private Gates__ctx_type_2 Gates_process_ret_0_init(){return Gates__ctx_type_2_init();}
+
+private float Gates_process_ret_0(Gates__ctx_type_2 _ctx){return _ctx.process_ret_0;}
+
+private Gates__ctx_type_2 Gates_process_ret_1_init(){return Gates__ctx_type_2_init();}
+
+private float Gates_process_ret_1(Gates__ctx_type_2 _ctx){return _ctx.process_ret_1;}
+
+private Gates__ctx_type_2 Gates_process_ret_2_init(){return Gates__ctx_type_2_init();}
+
+private float Gates_process_ret_2(Gates__ctx_type_2 _ctx){return _ctx.process_ret_2;}
+
+private Gates__ctx_type_2 Gates_process_ret_3_init(){return Gates__ctx_type_2_init();}
+
+private float Gates_process_ret_3(Gates__ctx_type_2 _ctx){return _ctx.process_ret_3;}
+
+private Gates__ctx_type_2 Gates_process_ret_4_init(){return Gates__ctx_type_2_init();}
+
+private float Gates_process_ret_4(Gates__ctx_type_2 _ctx){return _ctx.process_ret_4;}
+
+private Gates__ctx_type_2 Gates_process_ret_5_init(){return Gates__ctx_type_2_init();}
+
+private float Gates_process_ret_5(Gates__ctx_type_2 _ctx){return _ctx.process_ret_5;}
+
+private Gates__ctx_type_2 Gates_process_ret_6_init(){return Gates__ctx_type_2_init();}
+
+private float Gates_process_ret_6(Gates__ctx_type_2 _ctx){return _ctx.process_ret_6;}
+
+private Gates__ctx_type_2 Gates_process_ret_7_init(){return Gates__ctx_type_2_init();}
+
+private float Gates_process_ret_7(Gates__ctx_type_2 _ctx){return _ctx.process_ret_7;}
+
+private Gates__ctx_type_2 Gates_noteOn_init(){return Gates__ctx_type_2_init();}
+
+private void Gates_noteOn(Gates__ctx_type_2 _ctx, int note, int velocity, int channel){if(_ctx.channel_in == channel){ Gates_gates_noteOn(_ctx.gates,note,velocity); }}
+
+private Gates__ctx_type_2 Gates_noteOff_init(){return Gates__ctx_type_2_init();}
+
+private void Gates_noteOff(Gates__ctx_type_2 _ctx, int note, int channel){if(_ctx.channel_in == channel){ Gates_gates_noteOff(_ctx.gates,note); }}
+
+private Gates__ctx_type_2 Gates_controlChange_init(){return Gates__ctx_type_2_init();}
+
+private void Gates_controlChange(Gates__ctx_type_2 _ctx, int control, int value, int channel){
+}
+
+private Gates__ctx_type_2 Gates_default_init(){return Gates__ctx_type_2_init();}
+
+private void Gates_default(Gates__ctx_type_2 _ctx){
+}
+
+
+}

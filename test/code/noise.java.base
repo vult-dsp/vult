@@ -1,0 +1,241 @@
+package .noise;
+
+import java.util.Arrays;
+import java.util.Random;
+import .external.*;
+
+public class noise {
+
+static int clip(int x, int minv, int maxv) {
+   if(x > maxv)
+      return maxv;
+   else if(x < minv)
+      return minv;
+   else return x;
+}
+
+static float clip(float x, float minv, float maxv) {
+   if(x > maxv)
+      return maxv;
+   else if(x < minv)
+      return minv;
+   else return x;
+}
+
+int[] makeArray(int size, int init) {
+   int a[] = new int[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+float[] makeArray(int size, float init) {
+   float a[] = new float[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+boolean[] makeArray(int size, boolean init) {
+   boolean a[] = new boolean[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+int int_to_fix16(int a) { return a * 0x00010000; }
+
+int fix16_to_int(int a) { return (a >> 16); }
+
+int fix16_add(int x, int y) { return x + y; }
+
+int fix16_sub(int x, int y) { return x - y; }
+
+int fix16_minus(int x) { return -x; }
+
+float fix16_to_float(int a) { return (float)a / 0x00010000; }
+int float_to_fix16(float a) {
+   float temp = a * 0x00010000;
+   return (int)temp;
+}
+
+int fix16_mul(int x, int y) {
+   long res = (long)x * (long)y;
+   return (int)(res >> 16);
+}
+
+int fix16_div(int a, int b) {
+   if (b == 0)
+      return 0;
+   int result = (int)(((long)a << 16) / b);
+   return result;
+}
+
+static boolean not(boolean x) {
+   return !x;
+}
+
+static float int_to_float(int x) {
+   return (float)x;
+}
+
+int float_to_int(float x) {
+   return (int)x;
+}
+
+float floor(float x) {
+   return (float)Math.floor(x);
+}
+
+static Random rand = new Random();
+
+float random() {
+   return rand.nextFloat();
+}
+
+int irandom() {
+   return rand.nextInt();
+}
+
+float get(float[] a, int i) {
+   return a[i];
+}
+
+void set(float[] a, int i, float val) {
+   a[i] = val;
+}
+
+int get(int[] a, int i) {
+   return a[i];
+}
+
+void set(int[] a, int i, int val) {
+   a[i] = val;
+}
+
+float[] wrap_array(float x[]) {
+   return x;
+}
+
+int[] wrap_array(int x[]) {
+   return x;
+}
+
+float cosh(float x) {
+   return (float)Math.cosh(x);
+}
+
+float cos(float x) {
+   return (float)Math.cos(x);
+}
+
+float sin(float x) {
+   return (float)Math.sin(x);
+}
+
+float sinh(float x) {
+   return (float)Math.sinh(x);
+}
+
+float tan(float x) {
+   return (float)Math.tan(x);
+}
+
+float tanh(float x) {
+   return (float)Math.tanh(x);
+}
+
+float sqrt(float x) {
+   return (float)Math.sqrt(x);
+}
+
+float pow(float x, float y) {
+   return (float)Math.pow(x, y);
+}
+
+float exp(float x) {
+   return (float)Math.exp(x);
+}
+
+
+private class Noise__ctx_type_0 {
+   public float w1;
+ 
+   Noise__ctx_type_0(){ this.w1 = 0.0f;
+    } 
+   Noise__ctx_type_0(float w1){ this.w1 = w1;
+    } }
+
+private class Noise__ctx_type_1 {
+   public int x2;
+   public int x1;
+   public Noise__ctx_type_0 _inst190;
+ 
+   Noise__ctx_type_1(){ this.x2 = 0;
+   this.x1 = 0;
+   this._inst190 = new Noise__ctx_type_0();
+    } 
+   Noise__ctx_type_1(int x2,int x1,Noise__ctx_type_0 _inst190){ this.x2 = x2;
+   this.x1 = x1;
+   this._inst190 = _inst190;
+    } }
+
+private Noise__ctx_type_0 Noise__ctx_type_0_init(){
+   Noise__ctx_type_0 _ctx = new Noise__ctx_type_0(); 
+   _ctx.w1 = 0.0f;
+   return _ctx;
+}
+
+private Noise__ctx_type_0 Noise_pinker_init(){return Noise__ctx_type_0_init();}
+
+private float Noise_pinker(Noise__ctx_type_0 _ctx, float x){
+   float b0 = 0.027713f; 
+   float b1 = 0.027713f; 
+   float a1 = -0.944574f; 
+   float w0 = (x + (- (_ctx.w1 * a1))); 
+   float y0 = ((_ctx.w1 * b1) + (b0 * w0)); 
+   _ctx.w1 = w0;
+   return y0;
+}
+
+private Noise__ctx_type_1 Noise__ctx_type_1_init(){
+   Noise__ctx_type_1 _ctx = new Noise__ctx_type_1(); 
+   _ctx.x2 = 0;
+   _ctx.x1 = 0;
+   _ctx._inst190 = Noise__ctx_type_0_init();
+   return _ctx;
+}
+
+private Noise__ctx_type_1 Noise_process_init(){return Noise__ctx_type_1_init();}
+
+private float Noise_process(Noise__ctx_type_1 _ctx, float color){
+   _ctx.x1 = ((7919 + (17389 * _ctx.x1)) % 32768);
+   float y1 = (3.06e-05f * int_to_float(_ctx.x1)); 
+   _ctx.x2 = ((12553 + (27449 * _ctx.x2)) % 32768);
+   float y2 = (3.06e-05f * int_to_float(_ctx.x2)); 
+   float out = 0.0f; 
+   if(color > 0.5f){ out = Noise_pinker(_ctx._inst190,(y1 + (- y2))); }
+   else
+   { out = (y1 + (- y2)); }
+   return (2.f * out);
+}
+
+private Noise__ctx_type_1 Noise_noteOn_init(){return Noise__ctx_type_1_init();}
+
+private void Noise_noteOn(Noise__ctx_type_1 _ctx, int note, int velocity, int channel){
+}
+
+private Noise__ctx_type_1 Noise_noteOff_init(){return Noise__ctx_type_1_init();}
+
+private void Noise_noteOff(Noise__ctx_type_1 _ctx, int note, int channel){
+}
+
+private Noise__ctx_type_1 Noise_controlChange_init(){return Noise__ctx_type_1_init();}
+
+private void Noise_controlChange(Noise__ctx_type_1 _ctx, int control, int value, int channel){
+}
+
+private Noise__ctx_type_1 Noise_default_init(){return Noise__ctx_type_1_init();}
+
+private void Noise_default(Noise__ctx_type_1 _ctx){
+}
+
+
+}

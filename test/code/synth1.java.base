@@ -1,0 +1,500 @@
+package .synth1;
+
+import java.util.Arrays;
+import java.util.Random;
+import .external.*;
+
+public class synth1 {
+
+static int clip(int x, int minv, int maxv) {
+   if(x > maxv)
+      return maxv;
+   else if(x < minv)
+      return minv;
+   else return x;
+}
+
+static float clip(float x, float minv, float maxv) {
+   if(x > maxv)
+      return maxv;
+   else if(x < minv)
+      return minv;
+   else return x;
+}
+
+int[] makeArray(int size, int init) {
+   int a[] = new int[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+float[] makeArray(int size, float init) {
+   float a[] = new float[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+boolean[] makeArray(int size, boolean init) {
+   boolean a[] = new boolean[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+int int_to_fix16(int a) { return a * 0x00010000; }
+
+int fix16_to_int(int a) { return (a >> 16); }
+
+int fix16_add(int x, int y) { return x + y; }
+
+int fix16_sub(int x, int y) { return x - y; }
+
+int fix16_minus(int x) { return -x; }
+
+float fix16_to_float(int a) { return (float)a / 0x00010000; }
+int float_to_fix16(float a) {
+   float temp = a * 0x00010000;
+   return (int)temp;
+}
+
+int fix16_mul(int x, int y) {
+   long res = (long)x * (long)y;
+   return (int)(res >> 16);
+}
+
+int fix16_div(int a, int b) {
+   if (b == 0)
+      return 0;
+   int result = (int)(((long)a << 16) / b);
+   return result;
+}
+
+static boolean not(boolean x) {
+   return !x;
+}
+
+static float int_to_float(int x) {
+   return (float)x;
+}
+
+int float_to_int(float x) {
+   return (int)x;
+}
+
+float floor(float x) {
+   return (float)Math.floor(x);
+}
+
+static Random rand = new Random();
+
+float random() {
+   return rand.nextFloat();
+}
+
+int irandom() {
+   return rand.nextInt();
+}
+
+float get(float[] a, int i) {
+   return a[i];
+}
+
+void set(float[] a, int i, float val) {
+   a[i] = val;
+}
+
+int get(int[] a, int i) {
+   return a[i];
+}
+
+void set(int[] a, int i, int val) {
+   a[i] = val;
+}
+
+float[] wrap_array(float x[]) {
+   return x;
+}
+
+int[] wrap_array(int x[]) {
+   return x;
+}
+
+float cosh(float x) {
+   return (float)Math.cosh(x);
+}
+
+float cos(float x) {
+   return (float)Math.cos(x);
+}
+
+float sin(float x) {
+   return (float)Math.sin(x);
+}
+
+float sinh(float x) {
+   return (float)Math.sinh(x);
+}
+
+float tan(float x) {
+   return (float)Math.tan(x);
+}
+
+float tanh(float x) {
+   return (float)Math.tanh(x);
+}
+
+float sqrt(float x) {
+   return (float)Math.sqrt(x);
+}
+
+float pow(float x, float y) {
+   return (float)Math.pow(x, y);
+}
+
+float exp(float x) {
+   return (float)Math.exp(x);
+}
+
+
+private class Synth1__ctx_type_0 {
+   public float x;
+ 
+   Synth1__ctx_type_0(){ this.x = 0.0f;
+    } 
+   Synth1__ctx_type_0(float x){ this.x = x;
+    } }
+
+private class Synth1__ctx_type_1 {
+   public float pre_x;
+ 
+   Synth1__ctx_type_1(){ this.pre_x = 0.0f;
+    } 
+   Synth1__ctx_type_1(float pre_x){ this.pre_x = pre_x;
+    } }
+
+private class Synth1__ctx_type_2 {
+   public int pre_x;
+ 
+   Synth1__ctx_type_2(){ this.pre_x = 0;
+    } 
+   Synth1__ctx_type_2(int pre_x){ this.pre_x = pre_x;
+    } }
+
+private class Synth1__ctx_type_3 {
+   public int count;
+ 
+   Synth1__ctx_type_3(){ this.count = 0;
+    } 
+   Synth1__ctx_type_3(int count){ this.count = count;
+    } }
+
+private class Synth1__ctx_type_5 {
+   public float rate;
+   public float phase;
+   public Synth1__ctx_type_1 _inst171;
+ 
+   Synth1__ctx_type_5(){ this.rate = 0.0f;
+   this.phase = 0.0f;
+   this._inst171 = new Synth1__ctx_type_1();
+    } 
+   Synth1__ctx_type_5(float rate,float phase,Synth1__ctx_type_1 _inst171){ this.rate = rate;
+   this.phase = phase;
+   this._inst171 = _inst171;
+    } }
+
+private class Synth1__ctx_type_6 {
+   public float phase;
+   public Synth1__ctx_type_2 _inst192;
+ 
+   Synth1__ctx_type_6(){ this.phase = 0.0f;
+   this._inst192 = new Synth1__ctx_type_2();
+    } 
+   Synth1__ctx_type_6(float phase,Synth1__ctx_type_2 _inst192){ this.phase = phase;
+   this._inst192 = _inst192;
+    } }
+
+private class Synth1__ctx_type_7 {
+   public float volume;
+   public float pre_phase1;
+   public float pitch;
+   public int n4;
+   public int n3;
+   public int n2;
+   public int n1;
+   public float lfo_rate;
+   public float lfo_amt;
+   public int gate;
+   public float detune;
+   public int count;
+   public Synth1__ctx_type_0 _inst6c9;
+   public Synth1__ctx_type_0 _inst5c9;
+   public Synth1__ctx_type_5 _inst4a2;
+   public Synth1__ctx_type_0 _inst3c9;
+   public Synth1__ctx_type_5 _inst2a2;
+   public Synth1__ctx_type_6 _inst1c8;
+ 
+   Synth1__ctx_type_7(){ this.volume = 0.0f;
+   this.pre_phase1 = 0.0f;
+   this.pitch = 0.0f;
+   this.n4 = 0;
+   this.n3 = 0;
+   this.n2 = 0;
+   this.n1 = 0;
+   this.lfo_rate = 0.0f;
+   this.lfo_amt = 0.0f;
+   this.gate = 0;
+   this.detune = 0.0f;
+   this.count = 0;
+   this._inst6c9 = new Synth1__ctx_type_0();
+   this._inst5c9 = new Synth1__ctx_type_0();
+   this._inst4a2 = new Synth1__ctx_type_5();
+   this._inst3c9 = new Synth1__ctx_type_0();
+   this._inst2a2 = new Synth1__ctx_type_5();
+   this._inst1c8 = new Synth1__ctx_type_6();
+    } 
+   Synth1__ctx_type_7(float volume,float pre_phase1,float pitch,int n4,int n3,int n2,int n1,float lfo_rate,float lfo_amt,int gate,float detune,int count,Synth1__ctx_type_0 _inst6c9,Synth1__ctx_type_0 _inst5c9,Synth1__ctx_type_5 _inst4a2,Synth1__ctx_type_0 _inst3c9,Synth1__ctx_type_5 _inst2a2,Synth1__ctx_type_6 _inst1c8){ this.volume = volume;
+   this.pre_phase1 = pre_phase1;
+   this.pitch = pitch;
+   this.n4 = n4;
+   this.n3 = n3;
+   this.n2 = n2;
+   this.n1 = n1;
+   this.lfo_rate = lfo_rate;
+   this.lfo_amt = lfo_amt;
+   this.gate = gate;
+   this.detune = detune;
+   this.count = count;
+   this._inst6c9 = _inst6c9;
+   this._inst5c9 = _inst5c9;
+   this._inst4a2 = _inst4a2;
+   this._inst3c9 = _inst3c9;
+   this._inst2a2 = _inst2a2;
+   this._inst1c8 = _inst1c8;
+    } }
+
+private Synth1__ctx_type_0 Synth1__ctx_type_0_init(){
+   Synth1__ctx_type_0 _ctx = new Synth1__ctx_type_0(); 
+   _ctx.x = 0.0f;
+   return _ctx;
+}
+
+private Synth1__ctx_type_0 Synth1_smooth_init(){return Synth1__ctx_type_0_init();}
+
+private float Synth1_smooth(Synth1__ctx_type_0 _ctx, float input){
+   _ctx.x = (_ctx.x + (0.005f * (input + (- _ctx.x))));
+   return _ctx.x;
+}
+
+private Synth1__ctx_type_1 Synth1__ctx_type_1_init(){
+   Synth1__ctx_type_1 _ctx = new Synth1__ctx_type_1(); 
+   _ctx.pre_x = 0.0f;
+   return _ctx;
+}
+
+private Synth1__ctx_type_1 Synth1_change_init(){return Synth1__ctx_type_1_init();}
+
+private boolean Synth1_change(Synth1__ctx_type_1 _ctx, float x){
+   boolean v = (_ctx.pre_x != x); 
+   _ctx.pre_x = x;
+   return v;
+}
+
+private Synth1__ctx_type_2 Synth1__ctx_type_2_init(){
+   Synth1__ctx_type_2 _ctx = new Synth1__ctx_type_2(); 
+   _ctx.pre_x = 0;
+   return _ctx;
+}
+
+private Synth1__ctx_type_2 Synth1_edge_init(){return Synth1__ctx_type_2_init();}
+
+private boolean Synth1_edge(Synth1__ctx_type_2 _ctx, int x){
+   boolean v = ((_ctx.pre_x != x) && (_ctx.pre_x == 0)); 
+   _ctx.pre_x = x;
+   return v;
+}
+
+private Synth1__ctx_type_3 Synth1__ctx_type_3_init(){
+   Synth1__ctx_type_3 _ctx = new Synth1__ctx_type_3(); 
+   _ctx.count = 0;
+   return _ctx;
+}
+
+private Synth1__ctx_type_3 Synth1_each_init(){return Synth1__ctx_type_3_init();}
+
+private boolean Synth1_each(Synth1__ctx_type_3 _ctx, int n){
+   boolean ret = (_ctx.count == 0); 
+   _ctx.count = ((1 + _ctx.count) % n);
+   return ret;
+}
+
+private float Synth1_pitchToRate(float d){return (0.0001854f * exp((0.0577623f * d)));}
+
+private Synth1__ctx_type_5 Synth1__ctx_type_5_init(){
+   Synth1__ctx_type_5 _ctx = new Synth1__ctx_type_5(); 
+   _ctx.rate = 0.0f;
+   _ctx.phase = 0.0f;
+   _ctx._inst171 = Synth1__ctx_type_1_init();
+   return _ctx;
+}
+
+private Synth1__ctx_type_5 Synth1_phasor_init(){return Synth1__ctx_type_5_init();}
+
+private float Synth1_phasor(Synth1__ctx_type_5 _ctx, float pitch, boolean reset){
+   if(Synth1_change(_ctx._inst171,pitch)){ _ctx.rate = Synth1_pitchToRate(pitch); }
+   if(reset){ _ctx.phase = 0.0f; }
+   else
+   { _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.f); }
+   return _ctx.phase;
+}
+
+private Synth1__ctx_type_6 Synth1__ctx_type_6_init(){
+   Synth1__ctx_type_6 _ctx = new Synth1__ctx_type_6(); 
+   _ctx.phase = 0.0f;
+   _ctx._inst192 = Synth1__ctx_type_2_init();
+   return _ctx;
+}
+
+private Synth1__ctx_type_6 Synth1_lfo_init(){return Synth1__ctx_type_6_init();}
+
+private float Synth1_lfo(Synth1__ctx_type_6 _ctx, float f, int gate){
+   float rate = (0.0002268f * f); 
+   if(Synth1_edge(_ctx._inst192,gate)){ _ctx.phase = 0.0f; }
+   _ctx.phase = (_ctx.phase + rate);
+   if(_ctx.phase > 1.f){ _ctx.phase = (-1.f + _ctx.phase); }
+   return (-0.5f + sin((6.2831854f * _ctx.phase)));
+}
+
+private Synth1__ctx_type_7 Synth1__ctx_type_7_init(){
+   Synth1__ctx_type_7 _ctx = new Synth1__ctx_type_7(); 
+   _ctx.volume = 0.0f;
+   _ctx.pre_phase1 = 0.0f;
+   _ctx.pitch = 0.0f;
+   _ctx.n4 = 0;
+   _ctx.n3 = 0;
+   _ctx.n2 = 0;
+   _ctx.n1 = 0;
+   _ctx.lfo_rate = 0.0f;
+   _ctx.lfo_amt = 0.0f;
+   _ctx.gate = 0;
+   _ctx.detune = 0.0f;
+   _ctx.count = 0;
+   _ctx._inst6c9 = Synth1__ctx_type_0_init();
+   _ctx._inst5c9 = Synth1__ctx_type_0_init();
+   _ctx._inst4a2 = Synth1__ctx_type_5_init();
+   _ctx._inst3c9 = Synth1__ctx_type_0_init();
+   _ctx._inst2a2 = Synth1__ctx_type_5_init();
+   _ctx._inst1c8 = Synth1__ctx_type_6_init();
+   return _ctx;
+}
+
+private Synth1__ctx_type_7 Synth1_process_init(){return Synth1__ctx_type_7_init();}
+
+private float Synth1_process(Synth1__ctx_type_7 _ctx, float input){
+   float lfo_val = (_ctx.lfo_amt * Synth1_lfo(_ctx._inst1c8,_ctx.lfo_rate,_ctx.gate)); 
+   float phase1 = Synth1_phasor(_ctx._inst2a2,_ctx.pitch,false); 
+   float comp = (1.f + (- phase1)); 
+   boolean reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5f); 
+   _ctx.pre_phase1 = phase1;
+   float phase2 = Synth1_phasor(_ctx._inst4a2,(_ctx.pitch + (32.f * Synth1_smooth(_ctx._inst3c9,(_ctx.detune + lfo_val)))),reset); 
+   float sine = sin((6.2831854f * phase2)); 
+   float gate_value = 0.0f; 
+   if(_ctx.gate > 0){ gate_value = 1.f; }
+   else
+   { gate_value = 0.0f; }
+   return (comp * sine * Synth1_smooth(_ctx._inst5c9,_ctx.volume) * Synth1_smooth(_ctx._inst6c9,gate_value));
+}
+
+private Synth1__ctx_type_7 Synth1_noteOn_init(){return Synth1__ctx_type_7_init();}
+
+private void Synth1_noteOn(Synth1__ctx_type_7 _ctx, int note, int velocity, int channel){
+   switch(_ctx.count) {
+      case 0:
+         {
+            _ctx.n1 = note;
+            _ctx.pitch = int_to_float(note);
+         }
+      break;
+      case 1:
+         {
+            _ctx.n2 = note;
+            _ctx.pitch = int_to_float(note);
+         }
+      break;
+      case 2:
+         {
+            _ctx.n3 = note;
+            _ctx.pitch = int_to_float(note);
+         }
+      break;
+      case 3:
+         {
+            _ctx.n4 = note;
+            _ctx.pitch = int_to_float(note);
+         }
+      break;
+    
+   }
+   if(_ctx.count <= 4){ _ctx.count = (1 + _ctx.count); }
+   if(_ctx.count > 0){ _ctx.gate = 1; }
+   else
+   { _ctx.gate = 0; }
+}
+
+private Synth1__ctx_type_7 Synth1_noteOff_init(){return Synth1__ctx_type_7_init();}
+
+private void Synth1_noteOff(Synth1__ctx_type_7 _ctx, int note, int channel){
+   boolean found = false; 
+   if(note == _ctx.n1){
+      int _tmp_34_0 = _ctx.n2; 
+      int _tmp_34_1 = _ctx.n3; 
+      int _tmp_34_2 = _ctx.n4; 
+      _ctx.n1 = _tmp_34_0;
+      _ctx.n2 = _tmp_34_1;
+      _ctx.n3 = _tmp_34_2;
+      found = true;
+   }
+   else
+   { if(note == _ctx.n2){
+      int _tmp_35_0 = _ctx.n3; 
+      int _tmp_35_1 = _ctx.n4; 
+      _ctx.n2 = _tmp_35_0;
+      _ctx.n3 = _tmp_35_1;
+      found = true;
+   }
+   else
+   { if(note == _ctx.n3){
+      _ctx.n3 = _ctx.n4;
+      found = true;
+   }
+   else
+   { if(note == _ctx.n4){ found = true; } } } }
+   if(found && (_ctx.count > 0)){ _ctx.count = ((-1) + _ctx.count); }
+   if(_ctx.count > 0){ _ctx.gate = 1; }
+   else
+   { _ctx.gate = 0; }
+   if(_ctx.count == 1){ _ctx.pitch = int_to_float(_ctx.n1); }
+   if(_ctx.count == 2){ _ctx.pitch = int_to_float(_ctx.n2); }
+   if(_ctx.count == 3){ _ctx.pitch = int_to_float(_ctx.n3); }
+   if(_ctx.count == 4){ _ctx.pitch = int_to_float(_ctx.n4); }
+}
+
+private Synth1__ctx_type_7 Synth1_controlChange_init(){return Synth1__ctx_type_7_init();}
+
+private void Synth1_controlChange(Synth1__ctx_type_7 _ctx, int control, float value, int channel){
+   if(control == 30){ _ctx.volume = (0.0078741f * value); }
+   if(control == 31){ _ctx.detune = (0.0078741f * value); }
+   if(control == 32){ _ctx.lfo_rate = (0.0078741f * value); }
+   if(control == 33){ _ctx.lfo_amt = (2.f * (-0.5f + (0.0078741f * value))); }
+}
+
+private Synth1__ctx_type_7 Synth1_default_init(){return Synth1__ctx_type_7_init();}
+
+private void Synth1_default(Synth1__ctx_type_7 _ctx){
+   _ctx.volume = 1.f;
+   _ctx.pitch = 45.f;
+   _ctx.detune = 0.8f;
+   _ctx.lfo_rate = 0.0700001f;
+   _ctx.lfo_amt = -0.8f;
+}
+
+
+}

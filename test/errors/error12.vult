@@ -1,4 +1,0 @@
-
-fun foo() {
-   val x : array(tuple(int, int), 3);
-}

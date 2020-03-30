@@ -50,210 +50,12 @@ let makeSingleBlock stmts =
    | _ -> CSBlock stmts
 
 
-module Atomic = struct
-   type s = { tick : int }
-
-   let is_unit ts =
-      match ts with
-      | CTSimple "unit" -> true
-      | CTSimple "void" -> true
-      | _ -> false
-
-
-   let cexpType (p : parameters) e =
-      match e with
-      | CEInt _ ->
-         let new_type = Replacements.getType p.repl "int" in
-         CTSimple new_type
-      | CEFloat _ ->
-         let new_type = Replacements.getType p.repl "real" in
-         CTSimple new_type
-      | CEBool _ ->
-         let new_type = Replacements.getType p.repl "bool" in
-         CTSimple new_type
-      | CEString _ ->
-         let new_type = Replacements.getType p.repl "string" in
-         CTSimple new_type
-      | CEVar (_, ts) -> ts
-      | CEArray (_, ts)
-      |CECall (_, _, ts)
-      |CEUnOp (_, _, ts)
-      |CEOp (_, _, ts)
-      |CEIndex (_, _, ts)
-      |CEIf (_, _, _, ts)
-      |CETuple (_, ts) ->
-         ts
-      | CEEmpty -> unit_typ
-
-
-   let makeTemp s =
-      let name = "$r" ^ string_of_int s.tick in
-      { tick = s.tick + 1 }, name
-
-
-   type bind_type =
-      | Temp
-      | Bind   of clhsexp
-      | NoBind
-
-   let bindToTemp p (s : s) (bind : bind_type) (exp : cexp) : s * cstmt list * cexp =
-      match bind with
-      | Bind (CLId (ts, var) as lhs) ->
-         let stmt = [ CSBind (lhs, exp) ] in
-         s, stmt, CEVar (var, ts)
-      | NoBind ->
-         let stmt = [ CSBind (CLWild, exp) ] in
-         s, stmt, CEEmpty
-      | _ ->
-         let s', name = makeTemp s in
-         let ts = cexpType p exp in
-         let lhs = CLId (ts, [ name ]) in
-         let stmt = [ CSVar (lhs, None); CSBind (lhs, exp) ] in
-         s', stmt, CEVar ([ name ], ts)
-
-
-   let rec makeOpAtomic p s (bind : bind_type) (op : string) (ts : type_descr) (elems : cexp list) :
-      s * cstmt list * cexp =
-      match elems with
-      | [] -> failwith "makeOpAtomic: invalid input"
-      | [ e ] -> failwith (Printf.sprintf "makeOpAtomic: invalid input '%s' expression '%s'" op (Code.show_cexp e))
-      | [ e1; e2 ] ->
-         let s, pre1, e1' = makeExpAtomic p s Temp e1 in
-         let s, pre2, e2' = makeExpAtomic p s Temp e2 in
-         let s, pre3, a = bindToTemp p s bind (CEOp (op, [ e1'; e2' ], ts)) in
-         s, pre1 @ pre2 @ pre3, a
-      | h :: t ->
-         let s, pre1, h' = makeExpAtomic p s Temp h in
-         let s, pre2, a = makeOpAtomic p s Temp op ts t in
-         let s, pre3, b = bindToTemp p s bind (CEOp (op, [ h'; a ], ts)) in
-         s, pre1 @ pre2 @ pre3, b
-
-
-   and makeExpAtomic (p : parameters) (s : s) (bind : bind_type) (exp : cexp) : s * cstmt list * cexp =
-      match exp with
-      | CEInt _
-      |CEFloat _
-      |CEBool _
-      |CEString _
-         when bind <> Temp ->
-         let s, pre, e = bindToTemp p s bind exp in
-         s, pre, e
-      | CEVar _ when bind <> Temp ->
-         let s, pre, e = bindToTemp p s bind exp in
-         s, pre, e
-      | CEInt _
-      |CEFloat _
-      |CEBool _
-      |CEString _ ->
-         s, [], exp
-      | CEVar _ ->
-         let s, pre, e = bindToTemp p s bind exp in
-         s, pre, e
-      | CEIndex _ ->
-         let s, pre, e = bindToTemp p s bind exp in
-         s, pre, e
-      | CEArray (elems, ts) ->
-         let s, pre, elems' = makeExpListAtomic p s elems in
-         let s, pre1, ret = bindToTemp p s bind (CEArray (elems', ts)) in
-         s, pre @ pre1, ret
-      | CECall (name, args, ts) ->
-         let s, pre, args' = makeExpListAtomic p s args in
-         let s, pre1, ret = bindToTemp p s bind (CECall (name, args', ts)) in
-         s, pre @ pre1, ret
-      | CEUnOp (op, arg, ts) ->
-         let s, pre, arg' = makeExpAtomic p s Temp arg in
-         let s, pre1, ret = bindToTemp p s bind (CEUnOp (op, arg', ts)) in
-         s, pre @ pre1, ret
-      | CETuple (elems, ts) ->
-         let labels, expl = List.split elems in
-         let s, pre, expl' = makeExpListAtomic p s expl in
-         let elems' = List.combine labels expl' in
-         let s, pre1, ret = bindToTemp p s bind (CETuple (elems', ts)) in
-         s, pre @ pre1, ret
-      | CEIf (cond, then_, else_, ts) ->
-         let s, tmp = makeTemp s in
-         let ltmp = CLId (ts, [ tmp ]) in
-         let if_stmt = CSIf (cond, CSBind (ltmp, then_), Some (CSBind (ltmp, else_))) in
-         s, [ CSVar (ltmp, None); if_stmt ], CEVar ([ tmp ], ts)
-      | CEOp (op, elems, ts) ->
-         let s, pre, ret = makeOpAtomic p s bind op ts elems in
-         s, pre, ret
-      | CEEmpty -> s, [], CEEmpty
-
-
-   and makeExpListAtomic p (s : s) (elems : cexp list) : s * cstmt list * cexp list =
-      let s', pre_rev, elems_rev =
-         List.fold_left
-            (fun (s, pre, acc) exp ->
-                let s', p, e' = makeExpAtomic p s Temp exp in
-                s', p :: pre, e' :: acc)
-            (s, [], [])
-            elems
-      in
-      s', List.concat (List.rev pre_rev), List.rev elems_rev
-
-
-   let rec makeStmtAtomic p (s : s) (stmt : cstmt) =
-      match stmt with
-      | CSVar (_, None)
-      |CSType _
-      |CSAlias _
-      |CSExtFunc _ ->
-         s, [ stmt ]
-      | CSVar (lhs, Some rhs) ->
-         let s, pre, rhs' = makeExpAtomic p s Temp rhs in
-         s, pre @ [ CSVar (lhs, None); CSBind (lhs, rhs') ]
-      | CSBind (CLWild, rhs) ->
-         let s, pre, _ = makeExpAtomic p s NoBind rhs in
-         s, pre
-      | CSBind (lhs, rhs) ->
-         let s, pre, rhs' = makeExpAtomic p s Temp rhs in
-         s, pre @ [ CSBind (lhs, rhs') ]
-      | CSConst (lhs, rhs) -> s, [ CSConst (lhs, rhs) ]
-      | CSReturn e ->
-         let s, pre, e' = makeExpAtomic p s Temp e in
-         s, pre @ [ CSReturn e' ]
-      | CSWhile (cond, body) ->
-         let s, pre, cond' = makeExpAtomic p s Temp cond in
-         let s, body' = makeStmtAtomic p s body in
-         s, pre @ [ CSWhile (cond', makeSingleBlock body') ]
-      | CSIf (cond, then_, Some else_) ->
-         let s, pre, cond' = makeExpAtomic p s Temp cond in
-         let s, then_' = makeStmtAtomic p s then_ in
-         let s, else_' = makeStmtAtomic p s else_ in
-         s, pre @ [ CSIf (cond', makeSingleBlock then_', Some (makeSingleBlock else_')) ]
-      | CSIf (cond, then_, None) ->
-         let s, pre, cond' = makeExpAtomic p s Temp cond in
-         let s, then_' = makeStmtAtomic p s then_ in
-         s, pre @ [ CSIf (cond', makeSingleBlock then_', None) ]
-      | CSFunction (ts, name, args, body, attr) ->
-         let s, body' = makeStmtAtomic p s body in
-         s, [ CSFunction (ts, name, args, makeSingleBlock body', attr) ]
-      | CSBlock stmts ->
-         let s, stmts' = makeStmtListAtomic p s stmts in
-         s, [ makeSingleBlock stmts' ]
-      | CSSwitch _ -> failwith "makeStmtAtomic: switch not implemented yet"
-      | CSEmpty -> s, [ stmt ]
-
-
-   and makeStmtListAtomic p (s : s) (stmts : cstmt list) =
-      let s, stmt_rev =
-         List.fold_left
-            (fun (s, acc) stmt ->
-                let s, stmt' = makeStmtAtomic p s stmt in
-                s, stmt' :: acc)
-            (s, [])
-            stmts
-      in
-      s, List.concat (List.rev stmt_rev)
-end
-
-let rec loop id cases next =
+let rec tryMakeSwitchLoop id cases next =
    match next with
    | None -> Some (List.rev cases, None)
-   | Some (CSIf (CEOp ("==", [ CEVar (nid, _); (CEInt _ as i) ], _), stmt, next)) ->
-      if id = nid then
-         loop id ((i, stmt) :: cases) next
+   | Some (CSIf (CEOp ("==", [ nid; (CEInt _ as i) ], _), stmt, next)) ->
+      if Code.compare_cexp id nid = 0 then
+         tryMakeSwitchLoop id ((i, stmt) :: cases) next
       else
          None
    | Some def -> Some (List.rev cases, Some def)
@@ -261,9 +63,9 @@ let rec loop id cases next =
 
 let tryMakeSwitch e =
    match e with
-   | CSIf (CEOp ("==", [ (CEVar (id, _) as var); (CEInt _ as i) ], _), stmt, next) ->
+   | CSIf (CEOp ("==", [ var; (CEInt _ as i) ], _), stmt, next) ->
       begin
-         match loop id [ i, stmt ] next with
+         match tryMakeSwitchLoop var [ i, stmt ] next with
          | Some ((_ :: _ :: _ as cases), def) -> CSSwitch (var, cases, def)
          | _ -> e
       end
@@ -307,6 +109,17 @@ let convertVarId (p : parameters) (is_val : lhs_kind) (id : Id.t) : string list 
          List.map (NameTable.getOrRegister p.variables) name
    else
       name
+
+
+let convertExpId (p : parameters) (is_val : lhs_kind) (id : Id.t) =
+   let l = convertVarId p is_val id in
+   let rec loop l =
+      match l with
+      | [] -> failwith ""
+      | [ n ] -> CEVar (n, CTSimple "none")
+      | h :: t -> CEAccess (loop t, h)
+   in
+   loop (List.rev l)
 
 
 let convertSingleVarId (p : parameters) (id : Id.t) : string =
@@ -396,15 +209,41 @@ let getFunctionFirstArgType (elem_typs : type_descr list) : type_descr =
    | _ -> failwith "ProgToCode.getFunctionFirstArgType: this is not a call to 'split'"
 
 
-let getInitArrayFunction (p : parameters) (typ : type_descr) : string =
+let createWhileLoopInit size init lhs =
+   let il = CLId (CTSimple "int", [ "i" ]) in
+   let i = CEVar ("i", CTSimple "int") in
+   let decl = CSVar (il, None) in
+   let init_decl = CSBind (il, CEInt 0) in
+   let assign = CSBind (CLIndex (CTSimple "any", lhs, i), init) in
+   let incr = CSBind (il, CEOp ("+", [ i; CEInt 1 ], CTSimple "int")) in
+   let loop = CSWhile (CEOp ("<", [ i; size ], CTSimple "bool"), CSBlock [ assign; incr ]) in
+   CSBlock [ decl; init_decl; loop ]
+
+
+let inlineArrayInit size init var =
+   match var with
+   | CEVar (name, _) -> createWhileLoopInit size init [ name ]
+   | CEAccess _ ->
+      (* convert access to a list of names *)
+      let rec loop e =
+         match e with
+         | CEAccess (e, n) -> loop e @ [ n ]
+         | CEVar (name, _) -> [ name ]
+         | _ -> failwith "inlineArrayInit: Cannot convert access expression"
+      in
+      createWhileLoopInit size init (loop var)
+   | _ -> failwith "inlineArrayInit"
+
+
+let getInitArrayFunction (p : parameters) (typ : type_descr) : string option =
    match typ with
    | CTSimple typ_t ->
       begin
          match Replacements.getArrayInit p.repl typ_t with
-         | Some fn -> fn
-         | _ -> failwith ("Invalid array type " ^ show_type_descr typ)
+         | Some fn -> Some fn
+         | _ -> None
       end
-   | _ -> failwith ("Invalid array type " ^ show_type_descr typ)
+   | _ -> None
 
 
 let getCopyArrayFunction (p : parameters) (typ : type_descr) : string =
@@ -413,9 +252,9 @@ let getCopyArrayFunction (p : parameters) (typ : type_descr) : string =
       begin
          match Replacements.getArrayCopy p.repl typ_t with
          | Some fn -> fn
-         | _ -> failwith ("Invalid array type " ^ show_type_descr typ)
+         | _ -> failwith ("getCopyArrayFunction: Invalid array type " ^ show_type_descr typ)
       end
-   | _ -> failwith ("Invalid array type " ^ show_type_descr typ)
+   | _ -> failwith ("getCopyArrayFunction: Invalid array type " ^ show_type_descr typ)
 
 
 let convertFunction (p : parameters) (name : Id.t) (typ : type_descr) (elems : cexp list) (elem_typs : type_descr list)
@@ -428,7 +267,7 @@ let convertFunction (p : parameters) (name : Id.t) (typ : type_descr) (elems : c
          | CTSimple typ_t ->
             let fn = Replacements.getFunction p.repl "set" typ_t in
             CECall (fn, elems, typ)
-         | _ -> failwith ("Invalid array type " ^ show_type_descr typ)
+         | _ -> failwith ("convertFunction: Invalid array type " ^ show_type_descr typ)
       end
    | [ fname ] ->
       begin
@@ -462,7 +301,8 @@ let rec convertExp (p : parameters) (e : exp) : cexp =
    | PReal (v, Fix16, _) ->
       let s = Replacements.getRealToString p.repl (Float.crop v) "fix16" in
       CEFloat (s, Float.crop v)
-   | PId (id, attr) -> CEVar (convertVarId p Other id, typ attr)
+   | PId (([ _ ] as id), attr) -> CEVar (convertSingleVarId p id, typ attr)
+   | PId (id, _) -> convertExpId p Other id
    | PIndex (e, index, attr) ->
       let e' = convertExp p e in
       let index' = convertExp p index in
@@ -506,9 +346,11 @@ let rec convertExp (p : parameters) (e : exp) : cexp =
             elems
       in
       CETuple (elems', typ attr)
+   | PAccess (e, n, _) ->
+      let e' = convertExp p e in
+      CEAccess (e', n)
    | PSeq _ -> failwith "ProgToCode.convertExp: Sequences are not yet supported for js"
    | PEmpty -> failwith "ProgToCode.convertExp: Empty expressions are not allowed"
-   | PAccess _ -> failwith "Access not implemented"
 
 
 and convertExpList (p : parameters) (e : exp list) : cexp list = List.map (convertExp p) e
@@ -551,13 +393,13 @@ let getRecordField (name : lhs_exp) (index : int) (typ : Typ.t option) : lhs_exp
 let rec collectVarBind p stmts =
    match stmts with
    | [] -> []
-   | CSVar (CLId (_, [ lhs ]), None) :: CSBind (CLId (_, [ lhs2 ]), rhs) :: CSIf (CEVar ([ cond ], _), then_, else_) :: t
+   | CSVar (CLId (_, [ lhs ]), None) :: CSBind (CLId (_, [ lhs2 ]), rhs) :: CSIf (CEVar (cond, _), then_, else_) :: t
       when lhs = cond && lhs2 = cond && cond.[0] = '_' ->
       collectVarBind p (CSIf (rhs, then_, else_) :: t)
    | CSVar (lhs1, None) :: CSBind (lhs2, rhs) :: t when lhs1 = lhs2 && p.code <> CCode ->
       collectVarBind p (CSVar (lhs1, Some rhs) :: t)
-   | CSVar (CLId (_, [ lhs ]), Some rhs) :: CSIf (CEVar ([ cond ], _), then_, else_) :: t
-      when lhs = cond && cond.[0] = '_' ->
+   | CSVar (CLId (_, [ lhs ]), Some rhs) :: CSIf (CEVar (cond, _), then_, else_) :: t when lhs = cond && cond.[0] = '_'
+      ->
       collectVarBind p (CSIf (rhs, then_, else_) :: t)
    | CSVar (lhs1, None) :: CSBind (lhs2, rhs) :: t -> CSVar (lhs1, None) :: CSBind (lhs2, rhs) :: collectVarBind p t
    | h :: t -> collectVarBindBlock p h :: collectVarBind p t
@@ -652,23 +494,31 @@ let rec convertStmt (p : parameters) (s : stmt) : cstmt =
       let init' = convertExp p init in
       let size' = convertExp p size in
       let init_typ = expType p init in
-      let init_func = getInitArrayFunction p init_typ in
       let var' = convertExp p var in
-      if isSmall size then
-         CSBind (CLWild, CECall (init_func, [ size'; init'; var' ], attrType p attr))
-      else
-         CSBind (CLWild, CEEmpty)
+      begin
+         match getInitArrayFunction p init_typ with
+         | Some init_func ->
+            if isSmall size then
+               CSBind (CLWild, CECall (init_func, [ size'; init'; var' ], attrType p attr))
+            else
+               CSBind (CLWild, CEEmpty)
+         | None -> inlineArrayInit size' init' var'
+      end
    (* special case for c/c++ to replace the makeArray function *)
    | StmtBind (LId (var, _, vattr), PCall (NoInst, [ "makeArray" ], [ size; init ], attr), _) when p.code = CCode ->
       let init' = convertExp p init in
       let size' = convertExp p size in
       let init_typ = expType p init in
-      let init_func = getInitArrayFunction p init_typ in
       let var' = convertExp p (PId (var, vattr)) in
-      if isSmall size then
-         CSBind (CLWild, CECall (init_func, [ size'; init'; var' ], attrType p attr))
-      else
-         CSBind (CLWild, CEEmpty)
+      begin
+         match getInitArrayFunction p init_typ with
+         | Some init_func ->
+            if isSmall size then
+               CSBind (CLWild, CECall (init_func, [ size'; init'; var' ], attrType p attr))
+            else
+               CSBind (CLWild, CEEmpty)
+         | None -> inlineArrayInit size' init' var'
+      end
    (* special case to bind tuples in c/c++ It expands tuple assigns *)
    | StmtBind ((LId (_, _, _) as lhs), PTuple (elems, _), attr) when p.code = CCode ->
       let stmts =
@@ -693,7 +543,7 @@ let rec convertStmt (p : parameters) (s : stmt) : cstmt =
       let atyp, size = Typ.arrayTypeAndSize typ in
       let atyp' = convertType p atyp in
       let copy_fn = getCopyArrayFunction p atyp' in
-      CSBind (CLWild, CECall (copy_fn, [ CEInt size; CEVar (convertVarId p Other lhs, atyp'); rhs' ], unit_typ))
+      CSBind (CLWild, CECall (copy_fn, [ CEInt size; CEVar (convertSingleVarId p lhs, atyp'); rhs' ], unit_typ))
    | StmtBind (lhs, rhs, _) ->
       let lhs' = convertLhsExp Other p lhs in
       let rhs' = convertExp p rhs in

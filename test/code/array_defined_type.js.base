@@ -1,0 +1,36 @@
+this.Array_defined_type_dot_init = function(){
+   var _ctx = {}; 
+   _ctx.y = 0.; 
+   _ctx.x = 0.; 
+   return _ctx; 
+}
+this.Array_defined_type__ctx_type_0_init = function(){
+   var _ctx = {}; 
+   _ctx.p1 = this.makeArray((12|0),this.Array_defined_type_dot_init()); 
+   return _ctx; 
+}
+this.Array_defined_type_foo_init = function() { return this.Array_defined_type__ctx_type_0_init(); }
+this.Array_defined_type_foo = function(_ctx){
+}
+this.Array_defined_type__ctx_type_1_init = function(){
+   var _ctx = {}; 
+   _ctx._inst1b1 = this.Array_defined_type__ctx_type_0_init(); 
+   return _ctx; 
+}
+this.Array_defined_type_process_init = function() { return this.Array_defined_type__ctx_type_1_init(); }
+this.Array_defined_type_process = function(_ctx,input){
+   this.Array_defined_type_foo(_ctx._inst1b1);
+   return input; 
+}
+this.Array_defined_type_noteOn_init = function() { return this.Array_defined_type__ctx_type_1_init(); }
+this.Array_defined_type_noteOn = function(_ctx,note,velocity,channel){
+}
+this.Array_defined_type_noteOff_init = function() { return this.Array_defined_type__ctx_type_1_init(); }
+this.Array_defined_type_noteOff = function(_ctx,note,channel){
+}
+this.Array_defined_type_controlChange_init = function() { return this.Array_defined_type__ctx_type_1_init(); }
+this.Array_defined_type_controlChange = function(_ctx,control,value,channel){
+}
+this.Array_defined_type_default_init = function() { return this.Array_defined_type__ctx_type_1_init(); }
+this.Array_defined_type_default = function(_ctx){
+}

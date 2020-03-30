@@ -1,0 +1,624 @@
+package .ahr;
+
+import java.util.Arrays;
+import java.util.Random;
+import .external.*;
+
+public class ahr {
+
+static int clip(int x, int minv, int maxv) {
+   if(x > maxv)
+      return maxv;
+   else if(x < minv)
+      return minv;
+   else return x;
+}
+
+static float clip(float x, float minv, float maxv) {
+   if(x > maxv)
+      return maxv;
+   else if(x < minv)
+      return minv;
+   else return x;
+}
+
+int[] makeArray(int size, int init) {
+   int a[] = new int[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+float[] makeArray(int size, float init) {
+   float a[] = new float[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+boolean[] makeArray(int size, boolean init) {
+   boolean a[] = new boolean[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+int int_to_fix16(int a) { return a * 0x00010000; }
+
+int fix16_to_int(int a) { return (a >> 16); }
+
+int fix16_add(int x, int y) { return x + y; }
+
+int fix16_sub(int x, int y) { return x - y; }
+
+int fix16_minus(int x) { return -x; }
+
+float fix16_to_float(int a) { return (float)a / 0x00010000; }
+int float_to_fix16(float a) {
+   float temp = a * 0x00010000;
+   return (int)temp;
+}
+
+int fix16_mul(int x, int y) {
+   long res = (long)x * (long)y;
+   return (int)(res >> 16);
+}
+
+int fix16_div(int a, int b) {
+   if (b == 0)
+      return 0;
+   int result = (int)(((long)a << 16) / b);
+   return result;
+}
+
+static boolean not(boolean x) {
+   return !x;
+}
+
+static float int_to_float(int x) {
+   return (float)x;
+}
+
+int float_to_int(float x) {
+   return (int)x;
+}
+
+float floor(float x) {
+   return (float)Math.floor(x);
+}
+
+static Random rand = new Random();
+
+float random() {
+   return rand.nextFloat();
+}
+
+int irandom() {
+   return rand.nextInt();
+}
+
+float get(float[] a, int i) {
+   return a[i];
+}
+
+void set(float[] a, int i, float val) {
+   a[i] = val;
+}
+
+int get(int[] a, int i) {
+   return a[i];
+}
+
+void set(int[] a, int i, int val) {
+   a[i] = val;
+}
+
+float[] wrap_array(float x[]) {
+   return x;
+}
+
+int[] wrap_array(int x[]) {
+   return x;
+}
+
+float cosh(float x) {
+   return (float)Math.cosh(x);
+}
+
+float cos(float x) {
+   return (float)Math.cos(x);
+}
+
+float sin(float x) {
+   return (float)Math.sin(x);
+}
+
+float sinh(float x) {
+   return (float)Math.sinh(x);
+}
+
+float tan(float x) {
+   return (float)Math.tan(x);
+}
+
+float tanh(float x) {
+   return (float)Math.tanh(x);
+}
+
+float sqrt(float x) {
+   return (float)Math.sqrt(x);
+}
+
+float pow(float x, float y) {
+   return (float)Math.pow(x, y);
+}
+
+float exp(float x) {
+   return (float)Math.exp(x);
+}
+
+
+private class _tuple___real_real__ {
+   public float field_0;
+   public float field_1;
+ 
+   _tuple___real_real__(){ this.field_0 = 0.0f;
+   this.field_1 = 0.0f;
+    } 
+   _tuple___real_real__(float field_0,float field_1){ this.field_0 = field_0;
+   this.field_1 = field_1;
+    } }
+
+private class Util__ctx_type_0 {
+   public boolean pre;
+ 
+   Util__ctx_type_0(){ this.pre = false;
+    } 
+   Util__ctx_type_0(boolean pre){ this.pre = pre;
+    } }
+
+private class Util__ctx_type_1 {
+   public float pre_x;
+ 
+   Util__ctx_type_1(){ this.pre_x = 0.0f;
+    } 
+   Util__ctx_type_1(float pre_x){ this.pre_x = pre_x;
+    } }
+
+private class Util__ctx_type_3 {
+   public float y1;
+   public float x1;
+ 
+   Util__ctx_type_3(){ this.y1 = 0.0f;
+   this.x1 = 0.0f;
+    } 
+   Util__ctx_type_3(float y1,float x1){ this.y1 = y1;
+   this.x1 = x1;
+    } }
+
+private class Util__ctx_type_4 {
+   public float x;
+ 
+   Util__ctx_type_4(){ this.x = 0.0f;
+    } 
+   Util__ctx_type_4(float x){ this.x = x;
+    } }
+
+private class Util__ctx_type_5 {
+   public float x0;
+ 
+   Util__ctx_type_5(){ this.x0 = 0.0f;
+    } 
+   Util__ctx_type_5(float x0){ this.x0 = x0;
+    } }
+
+float Util_pitchToRate_1024_c0[];
+         public void set_Util_pitchToRate_1024_c0(java.nio.FloatBuffer buffer){
+            Util_pitchToRate_1024_c0 = new float[32];
+            buffer.get(Util_pitchToRate_1024_c0);
+            }
+float Util_pitchToRate_1024_c1[];
+         public void set_Util_pitchToRate_1024_c1(java.nio.FloatBuffer buffer){
+            Util_pitchToRate_1024_c1 = new float[32];
+            buffer.get(Util_pitchToRate_1024_c1);
+            }
+float Util_pitchToRate_1024_c2[];
+         public void set_Util_pitchToRate_1024_c2(java.nio.FloatBuffer buffer){
+            Util_pitchToRate_1024_c2 = new float[32];
+            buffer.get(Util_pitchToRate_1024_c2);
+            }
+float Util_pitchToRate_c0[];
+         public void set_Util_pitchToRate_c0(java.nio.FloatBuffer buffer){
+            Util_pitchToRate_c0 = new float[32];
+            buffer.get(Util_pitchToRate_c0);
+            }
+float Util_pitchToRate_c1[];
+         public void set_Util_pitchToRate_c1(java.nio.FloatBuffer buffer){
+            Util_pitchToRate_c1 = new float[32];
+            buffer.get(Util_pitchToRate_c1);
+            }
+float Util_pitchToRate_c2[];
+         public void set_Util_pitchToRate_c2(java.nio.FloatBuffer buffer){
+            Util_pitchToRate_c2 = new float[32];
+            buffer.get(Util_pitchToRate_c2);
+            }
+float Util_cvToRate_1024_c0[];
+         public void set_Util_cvToRate_1024_c0(java.nio.FloatBuffer buffer){
+            Util_cvToRate_1024_c0 = new float[32];
+            buffer.get(Util_cvToRate_1024_c0);
+            }
+float Util_cvToRate_1024_c1[];
+         public void set_Util_cvToRate_1024_c1(java.nio.FloatBuffer buffer){
+            Util_cvToRate_1024_c1 = new float[32];
+            buffer.get(Util_cvToRate_1024_c1);
+            }
+float Util_cvToRate_1024_c2[];
+         public void set_Util_cvToRate_1024_c2(java.nio.FloatBuffer buffer){
+            Util_cvToRate_1024_c2 = new float[32];
+            buffer.get(Util_cvToRate_1024_c2);
+            }
+float Util_cvToRate_c0[];
+         public void set_Util_cvToRate_c0(java.nio.FloatBuffer buffer){
+            Util_cvToRate_c0 = new float[128];
+            buffer.get(Util_cvToRate_c0);
+            }
+float Util_cvToRate_c1[];
+         public void set_Util_cvToRate_c1(java.nio.FloatBuffer buffer){
+            Util_cvToRate_c1 = new float[128];
+            buffer.get(Util_cvToRate_c1);
+            }
+float Util_cvToRate_c2[];
+         public void set_Util_cvToRate_c2(java.nio.FloatBuffer buffer){
+            Util_cvToRate_c2 = new float[128];
+            buffer.get(Util_cvToRate_c2);
+            }
+float Util_cvToperiod_c0[];
+         public void set_Util_cvToperiod_c0(java.nio.FloatBuffer buffer){
+            Util_cvToperiod_c0 = new float[32];
+            buffer.get(Util_cvToperiod_c0);
+            }
+float Util_cvToperiod_c1[];
+         public void set_Util_cvToperiod_c1(java.nio.FloatBuffer buffer){
+            Util_cvToperiod_c1 = new float[32];
+            buffer.get(Util_cvToperiod_c1);
+            }
+float Util_cvToperiod_c2[];
+         public void set_Util_cvToperiod_c2(java.nio.FloatBuffer buffer){
+            Util_cvToperiod_c2 = new float[32];
+            buffer.get(Util_cvToperiod_c2);
+            }
+float Util_cvTokHz_c0[];
+         public void set_Util_cvTokHz_c0(java.nio.FloatBuffer buffer){
+            Util_cvTokHz_c0 = new float[32];
+            buffer.get(Util_cvTokHz_c0);
+            }
+float Util_cvTokHz_c1[];
+         public void set_Util_cvTokHz_c1(java.nio.FloatBuffer buffer){
+            Util_cvTokHz_c1 = new float[32];
+            buffer.get(Util_cvTokHz_c1);
+            }
+float Util_cvTokHz_c2[];
+         public void set_Util_cvTokHz_c2(java.nio.FloatBuffer buffer){
+            Util_cvTokHz_c2 = new float[32];
+            buffer.get(Util_cvTokHz_c2);
+            }
+private class Ahr__ctx_type_0 {
+   public float target;
+   public int state;
+   public float rate;
+   public float out;
+   public float hold_phase;
+   public float do_ret_1;
+   public float do_ret_0;
+   public Util__ctx_type_0 _inst351;
+   public Util__ctx_type_0 _inst151;
+ 
+   Ahr__ctx_type_0(){ this.target = 0.0f;
+   this.state = 0;
+   this.rate = 0.0f;
+   this.out = 0.0f;
+   this.hold_phase = 0.0f;
+   this.do_ret_1 = 0.0f;
+   this.do_ret_0 = 0.0f;
+   this._inst351 = new Util__ctx_type_0();
+   this._inst151 = new Util__ctx_type_0();
+    } 
+   Ahr__ctx_type_0(float target,int state,float rate,float out,float hold_phase,float do_ret_1,float do_ret_0,Util__ctx_type_0 _inst351,Util__ctx_type_0 _inst151){ this.target = target;
+   this.state = state;
+   this.rate = rate;
+   this.out = out;
+   this.hold_phase = hold_phase;
+   this.do_ret_1 = do_ret_1;
+   this.do_ret_0 = do_ret_0;
+   this._inst351 = _inst351;
+   this._inst151 = _inst151;
+    } }
+
+private class Ahr__ctx_type_1 {
+   public float process_ret_1;
+   public float process_ret_0;
+   public float knob3;
+   public float knob2;
+   public float knob1;
+   public Ahr__ctx_type_0 _inst147;
+ 
+   Ahr__ctx_type_1(){ this.process_ret_1 = 0.0f;
+   this.process_ret_0 = 0.0f;
+   this.knob3 = 0.0f;
+   this.knob2 = 0.0f;
+   this.knob1 = 0.0f;
+   this._inst147 = new Ahr__ctx_type_0();
+    } 
+   Ahr__ctx_type_1(float process_ret_1,float process_ret_0,float knob3,float knob2,float knob1,Ahr__ctx_type_0 _inst147){ this.process_ret_1 = process_ret_1;
+   this.process_ret_0 = process_ret_0;
+   this.knob3 = knob3;
+   this.knob2 = knob2;
+   this.knob1 = knob1;
+   this._inst147 = _inst147;
+    } }
+
+private Util__ctx_type_0 Util__ctx_type_0_init(){
+   Util__ctx_type_0 _ctx = new Util__ctx_type_0(); 
+   _ctx.pre = false;
+   return _ctx;
+}
+
+private Util__ctx_type_0 Util_edge_init(){return Util__ctx_type_0_init();}
+
+private boolean Util_edge(Util__ctx_type_0 _ctx, boolean x){
+   boolean ret = (x && not(_ctx.pre)); 
+   _ctx.pre = x;
+   return ret;
+}
+
+private Util__ctx_type_1 Util__ctx_type_1_init(){
+   Util__ctx_type_1 _ctx = new Util__ctx_type_1(); 
+   _ctx.pre_x = 0.0f;
+   return _ctx;
+}
+
+private Util__ctx_type_1 Util_change_init(){return Util__ctx_type_1_init();}
+
+private boolean Util_change(Util__ctx_type_1 _ctx, float x){
+   boolean v = (_ctx.pre_x != x); 
+   _ctx.pre_x = x;
+   return v;
+}
+
+private float Util_map(float x, float x0, float x1, float y0, float y1){return (y0 + (((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))));}
+
+private Util__ctx_type_3 Util__ctx_type_3_init(){
+   Util__ctx_type_3 _ctx = new Util__ctx_type_3(); 
+   _ctx.y1 = 0.0f;
+   _ctx.x1 = 0.0f;
+   return _ctx;
+}
+
+private Util__ctx_type_3 Util_dcblock_init(){return Util__ctx_type_3_init();}
+
+private float Util_dcblock(Util__ctx_type_3 _ctx, float x0){
+   float y0 = (x0 + (- _ctx.x1) + (0.995f * _ctx.y1)); 
+   _ctx.x1 = x0;
+   _ctx.y1 = y0;
+   return y0;
+}
+
+private Util__ctx_type_4 Util__ctx_type_4_init(){
+   Util__ctx_type_4 _ctx = new Util__ctx_type_4(); 
+   _ctx.x = 0.0f;
+   return _ctx;
+}
+
+private Util__ctx_type_4 Util_smooth_init(){return Util__ctx_type_4_init();}
+
+private float Util_smooth(Util__ctx_type_4 _ctx, float input){
+   _ctx.x = (_ctx.x + (0.005f * (input + (- _ctx.x))));
+   return _ctx.x;
+}
+
+private Util__ctx_type_5 Util__ctx_type_5_init(){
+   Util__ctx_type_5 _ctx = new Util__ctx_type_5(); 
+   _ctx.x0 = 0.0f;
+   return _ctx;
+}
+
+private Util__ctx_type_5 Util_average2_init(){return Util__ctx_type_5_init();}
+
+private float Util_average2(Util__ctx_type_5 _ctx, float x1){
+   float result = (0.5f * (_ctx.x0 + x1)); 
+   _ctx.x0 = x1;
+   return result;
+}
+
+private float Util_cubic_clipper(float x){if(x <= -0.6666666f){ return -0.6666666f; }
+else
+{ if(x >= 0.6666667f){ return 0.6666667f; }
+else
+{ return (x + (-0.3333333f * x * x * x)); } }}
+
+private float Util_pitchToRate_1024_raw_c0(int index){return Util_pitchToRate_1024_c0[index];}
+
+private float Util_pitchToRate_1024_raw_c1(int index){return Util_pitchToRate_1024_c1[index];}
+
+private float Util_pitchToRate_1024_raw_c2(int index){return Util_pitchToRate_1024_c2[index];}
+
+private float Util_pitchToRate_1024(float pitch){
+   int index = clip(float_to_int((0.2440945f * pitch)),0,31); 
+   return (wrap_array(Util_pitchToRate_1024_c0)[index] + (pitch * (wrap_array(Util_pitchToRate_1024_c1)[index] + (pitch * wrap_array(Util_pitchToRate_1024_c2)[index]))));
+}
+
+private float Util_pitchToRate_raw_c0(int index){return Util_pitchToRate_c0[index];}
+
+private float Util_pitchToRate_raw_c1(int index){return Util_pitchToRate_c1[index];}
+
+private float Util_pitchToRate_raw_c2(int index){return Util_pitchToRate_c2[index];}
+
+private float Util_pitchToRate(float pitch){
+   int index = clip(float_to_int((0.2440945f * pitch)),0,31); 
+   return (wrap_array(Util_pitchToRate_c0)[index] + (pitch * (wrap_array(Util_pitchToRate_c1)[index] + (pitch * wrap_array(Util_pitchToRate_c2)[index]))));
+}
+
+private float Util_cvToPitch(float cv){return (24.f + (120.f * cv));}
+
+private float Util_cvToRate_1024_raw_c0(int index){return Util_cvToRate_1024_c0[index];}
+
+private float Util_cvToRate_1024_raw_c1(int index){return Util_cvToRate_1024_c1[index];}
+
+private float Util_cvToRate_1024_raw_c2(int index){return Util_cvToRate_1024_c2[index];}
+
+private float Util_cvToRate_1024(float cv){
+   int index = clip(float_to_int((34.4444445f * cv)),0,31); 
+   return (wrap_array(Util_cvToRate_1024_c0)[index] + (cv * (wrap_array(Util_cvToRate_1024_c1)[index] + (cv * wrap_array(Util_cvToRate_1024_c2)[index]))));
+}
+
+private float Util_cvToRate_raw_c0(int index){return Util_cvToRate_c0[index];}
+
+private float Util_cvToRate_raw_c1(int index){return Util_cvToRate_c1[index];}
+
+private float Util_cvToRate_raw_c2(int index){return Util_cvToRate_c2[index];}
+
+private float Util_cvToRate(float cv){
+   int index = clip(float_to_int((141.1111112f * cv)),0,127); 
+   return (wrap_array(Util_cvToRate_c0)[index] + (cv * (wrap_array(Util_cvToRate_c1)[index] + (cv * wrap_array(Util_cvToRate_c2)[index]))));
+}
+
+private float Util_pitchToCv(float pitch){return (0.0083334f * (-24.f + pitch));}
+
+private float Util_cvToperiod_raw_c0(int index){return Util_cvToperiod_c0[index];}
+
+private float Util_cvToperiod_raw_c1(int index){return Util_cvToperiod_c1[index];}
+
+private float Util_cvToperiod_raw_c2(int index){return Util_cvToperiod_c2[index];}
+
+private float Util_cvToperiod(float cv){
+   int index = clip(float_to_int((31.f * cv)),0,31); 
+   return (wrap_array(Util_cvToperiod_c0)[index] + (cv * (wrap_array(Util_cvToperiod_c1)[index] + (cv * wrap_array(Util_cvToperiod_c2)[index]))));
+}
+
+private float Util_cvTokHz_raw_c0(int index){return Util_cvTokHz_c0[index];}
+
+private float Util_cvTokHz_raw_c1(int index){return Util_cvTokHz_c1[index];}
+
+private float Util_cvTokHz_raw_c2(int index){return Util_cvTokHz_c2[index];}
+
+private float Util_cvTokHz(float cv){
+   int index = clip(float_to_int((31.f * cv)),0,31); 
+   return (wrap_array(Util_cvTokHz_c0)[index] + (cv * (wrap_array(Util_cvTokHz_c1)[index] + (cv * wrap_array(Util_cvTokHz_c2)[index]))));
+}
+
+private Ahr__ctx_type_0 Ahr__ctx_type_0_init(){
+   Ahr__ctx_type_0 _ctx = new Ahr__ctx_type_0(); 
+   _ctx.target = 0.0f;
+   _ctx.state = 0;
+   _ctx.rate = 0.0f;
+   _ctx.out = 0.0f;
+   _ctx.hold_phase = 0.0f;
+   _ctx.do_ret_1 = 0.0f;
+   _ctx.do_ret_0 = 0.0f;
+   _ctx._inst351 = Util__ctx_type_0_init();
+   _ctx._inst151 = Util__ctx_type_0_init();
+   return _ctx;
+}
+
+private Ahr__ctx_type_0 Ahr_do_init(){return Ahr__ctx_type_0_init();}
+
+private void Ahr_do(Ahr__ctx_type_0 _ctx, float gate, float a, float h, float r){
+   int release = 0; 
+   int attack = 1; 
+   int hold = 2; 
+   int reset = 3; 
+   boolean bgate = (gate > 0.0f); 
+   if(Util_edge(_ctx._inst151,bgate)){ _ctx.state = reset; }
+   float resetting = 0.0f; 
+   if(_ctx.state == reset){ resetting = 1.f; }
+   else
+   { resetting = 0.0f; }
+   if(Util_edge(_ctx._inst351,(_ctx.out > 1024.f))){
+      _ctx.hold_phase = 0.0f;
+      _ctx.state = hold;
+   }
+   if((_ctx.out < 10.f) && (_ctx.state == reset)){ _ctx.state = attack; }
+   if((_ctx.hold_phase > 100.f) && (_ctx.state == hold)){ _ctx.state = release; }
+   if(_ctx.state == reset){
+      _ctx.rate = 0.9900991f;
+      _ctx.target = 0.0f;
+   }
+   if(_ctx.state == attack){
+      _ctx.rate = (1.f / (0.01f + (100.f * a)));
+      _ctx.target = 1228.8f;
+   }
+   if(_ctx.state == hold){
+      float hrate = (1.f / (0.01f + (100.f * h))); 
+      _ctx.hold_phase = (_ctx.hold_phase + hrate);
+   }
+   if(_ctx.state == release){
+      _ctx.rate = (1.f / (0.01f + (100.f * r)));
+      _ctx.target = 0.0f;
+   }
+   _ctx.out = (_ctx.out + (0.005f * _ctx.rate * (_ctx.target + (- _ctx.out))));
+   _ctx.do_ret_0 = clip((0.0009766f * _ctx.out),0.0f,1.f);
+   _ctx.do_ret_1 = resetting;
+   return ;
+}
+
+private Ahr__ctx_type_0 Ahr_do_ret_0_init(){return Ahr__ctx_type_0_init();}
+
+private float Ahr_do_ret_0(Ahr__ctx_type_0 _ctx){return _ctx.do_ret_0;}
+
+private Ahr__ctx_type_0 Ahr_do_ret_1_init(){return Ahr__ctx_type_0_init();}
+
+private float Ahr_do_ret_1(Ahr__ctx_type_0 _ctx){return _ctx.do_ret_1;}
+
+private Ahr__ctx_type_1 Ahr__ctx_type_1_init(){
+   Ahr__ctx_type_1 _ctx = new Ahr__ctx_type_1(); 
+   _ctx.process_ret_1 = 0.0f;
+   _ctx.process_ret_0 = 0.0f;
+   _ctx.knob3 = 0.0f;
+   _ctx.knob2 = 0.0f;
+   _ctx.knob1 = 0.0f;
+   _ctx._inst147 = Ahr__ctx_type_0_init();
+   return _ctx;
+}
+
+private Ahr__ctx_type_1 Ahr_process_init(){return Ahr__ctx_type_1_init();}
+
+private void Ahr_process(Ahr__ctx_type_1 _ctx, float gate){
+   Ahr_do(_ctx._inst147,gate,_ctx.knob1,_ctx.knob2,_ctx.knob3);
+   _ctx.process_ret_0 = Ahr_do_ret_0(_ctx._inst147);
+   _ctx.process_ret_1 = Ahr_do_ret_1(_ctx._inst147);
+   return ;
+}
+
+private Ahr__ctx_type_1 Ahr_process_ret_0_init(){return Ahr__ctx_type_1_init();}
+
+private float Ahr_process_ret_0(Ahr__ctx_type_1 _ctx){return _ctx.process_ret_0;}
+
+private Ahr__ctx_type_1 Ahr_process_ret_1_init(){return Ahr__ctx_type_1_init();}
+
+private float Ahr_process_ret_1(Ahr__ctx_type_1 _ctx){return _ctx.process_ret_1;}
+
+private Ahr__ctx_type_1 Ahr_noteOn_init(){return Ahr__ctx_type_1_init();}
+
+private void Ahr_noteOn(Ahr__ctx_type_1 _ctx, int note, int velocity, int channel){
+}
+
+private Ahr__ctx_type_1 Ahr_noteOff_init(){return Ahr__ctx_type_1_init();}
+
+private void Ahr_noteOff(Ahr__ctx_type_1 _ctx, int note, int channel){
+}
+
+private Ahr__ctx_type_1 Ahr_controlChange_init(){return Ahr__ctx_type_1_init();}
+
+private void Ahr_controlChange(Ahr__ctx_type_1 _ctx, int control, int value, int channel){
+   if(control == 1){ _ctx.knob1 = (0.0078741f * int_to_float(value)); }
+   if(control == 2){ _ctx.knob2 = (0.0078741f * int_to_float(value)); }
+   if(control == 3){ _ctx.knob3 = (0.0078741f * int_to_float(value)); }
+}
+
+private Ahr__ctx_type_1 Ahr_default_init(){return Ahr__ctx_type_1_init();}
+
+private void Ahr_default(Ahr__ctx_type_1 _ctx){
+   _ctx.knob1 = 0.0f;
+   _ctx.knob2 = 0.5f;
+   _ctx.knob3 = 0.5f;
+}
+
+
+}

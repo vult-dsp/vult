@@ -283,8 +283,7 @@ let printTypeAndName (is_decl : bool) (typ : type_descr) (name : string list) : 
 
 
 (** Used to print assignments of a tuple field to a variable *)
-let printLhsExpTuple (var : string list) (is_var : bool) (i : int) (e : clhsexp) : Pla.t =
-   let var = dot var in
+let printLhsExpTuple (var : Pla.t) (is_var : bool) (i : int) (e : clhsexp) : Pla.t =
    match e with
    (* Assigning to a simple variable *)
    | CLId (CTSimple typ, name) ->
@@ -326,7 +325,7 @@ let rec printExp (params : params) (e : cexp) : Pla.t =
       let sop = {pla| <#op#s> |pla} in
       let telems = Pla.map_sep sop (printExp params) elems in
       {pla|(<#telems#>)|pla}
-   | CEVar (name, _) -> dot name
+   | CEVar (name, _) -> Pla.string name
    | CEIndex (e, index, _) ->
       let index = printExp params index in
       let e = printExp params e in
@@ -340,6 +339,12 @@ let rec printExp (params : params) (e : cexp) : Pla.t =
       let telems = Pla.map_sep Pla.comma (printChField params) elems in
       {pla|new <#name#s>(<#telems#>)|pla}
    | CETuple _ -> failwith "invalid tuple"
+   | CEAccess (((CEVar _ | CEAccess _) as e), n) ->
+      let e = printExp params e in
+      {pla|<#e#>.<#n#s>|pla}
+   | CEAccess (e, n) ->
+      let e = printExp params e in
+      {pla|(<#e#>).<#n#s>|pla}
 
 
 (** Used to print the elements of a tuple *)
@@ -442,17 +447,18 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
       let tlhs = printLhsExp params true lhs in
       Some {pla|<#tlhs#> = <#value_t#>; |pla}
    (* All other cases of assigning tuples will be wrong *)
-   | CSVar (CLTuple _, None) -> failwith "printStmt: invalid tuple assign"
+   | CSVar (CLTuple _, None) -> failwith "CodeJava.printStmt: invalid tuple assign"
    (* Prints _ = ... *)
    | CSBind (CLWild, value) ->
       let te = printExp params value in
       Some {pla|<#te#>;|pla}
    (* Print (x, y, z) = ... *)
-   | CSBind (CLTuple elems, CEVar (name, _)) ->
-      let t = List.mapi (printLhsExpTuple name false) elems |> Pla.join in
+   | CSBind (CLTuple elems, ((CEVar _ | CEAccess _) as rhs)) ->
+      let rhs = printExp params rhs in
+      let t = List.mapi (printLhsExpTuple rhs false) elems |> Pla.join in
       Some t
    (* All other cases of assigning tuples will be wrong *)
-   | CSBind (CLTuple _, _) -> failwith "printStmt: invalid tuple assign"
+   | CSBind (CLTuple _, _) -> failwith "CodeJava.printStmt: invalid tuple assign"
    (* Prints x = [ ... ] *)
    | CSBind (CLId (_, name), CEArray (elems, _)) ->
       let t = List.mapi (printArrayBinding params name) elems |> Pla.join in

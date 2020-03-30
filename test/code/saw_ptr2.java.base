@@ -1,0 +1,506 @@
+package .saw_ptr2;
+
+import java.util.Arrays;
+import java.util.Random;
+import .external.*;
+
+public class saw_ptr2 {
+
+static int clip(int x, int minv, int maxv) {
+   if(x > maxv)
+      return maxv;
+   else if(x < minv)
+      return minv;
+   else return x;
+}
+
+static float clip(float x, float minv, float maxv) {
+   if(x > maxv)
+      return maxv;
+   else if(x < minv)
+      return minv;
+   else return x;
+}
+
+int[] makeArray(int size, int init) {
+   int a[] = new int[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+float[] makeArray(int size, float init) {
+   float a[] = new float[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+boolean[] makeArray(int size, boolean init) {
+   boolean a[] = new boolean[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+int int_to_fix16(int a) { return a * 0x00010000; }
+
+int fix16_to_int(int a) { return (a >> 16); }
+
+int fix16_add(int x, int y) { return x + y; }
+
+int fix16_sub(int x, int y) { return x - y; }
+
+int fix16_minus(int x) { return -x; }
+
+float fix16_to_float(int a) { return (float)a / 0x00010000; }
+int float_to_fix16(float a) {
+   float temp = a * 0x00010000;
+   return (int)temp;
+}
+
+int fix16_mul(int x, int y) {
+   long res = (long)x * (long)y;
+   return (int)(res >> 16);
+}
+
+int fix16_div(int a, int b) {
+   if (b == 0)
+      return 0;
+   int result = (int)(((long)a << 16) / b);
+   return result;
+}
+
+static boolean not(boolean x) {
+   return !x;
+}
+
+static float int_to_float(int x) {
+   return (float)x;
+}
+
+int float_to_int(float x) {
+   return (int)x;
+}
+
+float floor(float x) {
+   return (float)Math.floor(x);
+}
+
+static Random rand = new Random();
+
+float random() {
+   return rand.nextFloat();
+}
+
+int irandom() {
+   return rand.nextInt();
+}
+
+float get(float[] a, int i) {
+   return a[i];
+}
+
+void set(float[] a, int i, float val) {
+   a[i] = val;
+}
+
+int get(int[] a, int i) {
+   return a[i];
+}
+
+void set(int[] a, int i, int val) {
+   a[i] = val;
+}
+
+float[] wrap_array(float x[]) {
+   return x;
+}
+
+int[] wrap_array(int x[]) {
+   return x;
+}
+
+float cosh(float x) {
+   return (float)Math.cosh(x);
+}
+
+float cos(float x) {
+   return (float)Math.cos(x);
+}
+
+float sin(float x) {
+   return (float)Math.sin(x);
+}
+
+float sinh(float x) {
+   return (float)Math.sinh(x);
+}
+
+float tan(float x) {
+   return (float)Math.tan(x);
+}
+
+float tanh(float x) {
+   return (float)Math.tanh(x);
+}
+
+float sqrt(float x) {
+   return (float)Math.sqrt(x);
+}
+
+float pow(float x, float y) {
+   return (float)Math.pow(x, y);
+}
+
+float exp(float x) {
+   return (float)Math.exp(x);
+}
+
+
+private class Util__ctx_type_0 {
+   public boolean pre;
+ 
+   Util__ctx_type_0(){ this.pre = false;
+    } 
+   Util__ctx_type_0(boolean pre){ this.pre = pre;
+    } }
+
+private class Util__ctx_type_1 {
+   public float pre_x;
+ 
+   Util__ctx_type_1(){ this.pre_x = 0.0f;
+    } 
+   Util__ctx_type_1(float pre_x){ this.pre_x = pre_x;
+    } }
+
+private class Util__ctx_type_3 {
+   public float y1;
+   public float x1;
+ 
+   Util__ctx_type_3(){ this.y1 = 0.0f;
+   this.x1 = 0.0f;
+    } 
+   Util__ctx_type_3(float y1,float x1){ this.y1 = y1;
+   this.x1 = x1;
+    } }
+
+private class Util__ctx_type_4 {
+   public float x;
+ 
+   Util__ctx_type_4(){ this.x = 0.0f;
+    } 
+   Util__ctx_type_4(float x){ this.x = x;
+    } }
+
+private class Util__ctx_type_5 {
+   public float x0;
+ 
+   Util__ctx_type_5(){ this.x0 = 0.0f;
+    } 
+   Util__ctx_type_5(float x0){ this.x0 = x0;
+    } }
+
+float Util_pitchToRate_1024_c0[];
+         public void set_Util_pitchToRate_1024_c0(java.nio.FloatBuffer buffer){
+            Util_pitchToRate_1024_c0 = new float[32];
+            buffer.get(Util_pitchToRate_1024_c0);
+            }
+float Util_pitchToRate_1024_c1[];
+         public void set_Util_pitchToRate_1024_c1(java.nio.FloatBuffer buffer){
+            Util_pitchToRate_1024_c1 = new float[32];
+            buffer.get(Util_pitchToRate_1024_c1);
+            }
+float Util_pitchToRate_1024_c2[];
+         public void set_Util_pitchToRate_1024_c2(java.nio.FloatBuffer buffer){
+            Util_pitchToRate_1024_c2 = new float[32];
+            buffer.get(Util_pitchToRate_1024_c2);
+            }
+float Util_pitchToRate_c0[];
+         public void set_Util_pitchToRate_c0(java.nio.FloatBuffer buffer){
+            Util_pitchToRate_c0 = new float[32];
+            buffer.get(Util_pitchToRate_c0);
+            }
+float Util_pitchToRate_c1[];
+         public void set_Util_pitchToRate_c1(java.nio.FloatBuffer buffer){
+            Util_pitchToRate_c1 = new float[32];
+            buffer.get(Util_pitchToRate_c1);
+            }
+float Util_pitchToRate_c2[];
+         public void set_Util_pitchToRate_c2(java.nio.FloatBuffer buffer){
+            Util_pitchToRate_c2 = new float[32];
+            buffer.get(Util_pitchToRate_c2);
+            }
+float Util_cvToRate_1024_c0[];
+         public void set_Util_cvToRate_1024_c0(java.nio.FloatBuffer buffer){
+            Util_cvToRate_1024_c0 = new float[32];
+            buffer.get(Util_cvToRate_1024_c0);
+            }
+float Util_cvToRate_1024_c1[];
+         public void set_Util_cvToRate_1024_c1(java.nio.FloatBuffer buffer){
+            Util_cvToRate_1024_c1 = new float[32];
+            buffer.get(Util_cvToRate_1024_c1);
+            }
+float Util_cvToRate_1024_c2[];
+         public void set_Util_cvToRate_1024_c2(java.nio.FloatBuffer buffer){
+            Util_cvToRate_1024_c2 = new float[32];
+            buffer.get(Util_cvToRate_1024_c2);
+            }
+float Util_cvToRate_c0[];
+         public void set_Util_cvToRate_c0(java.nio.FloatBuffer buffer){
+            Util_cvToRate_c0 = new float[128];
+            buffer.get(Util_cvToRate_c0);
+            }
+float Util_cvToRate_c1[];
+         public void set_Util_cvToRate_c1(java.nio.FloatBuffer buffer){
+            Util_cvToRate_c1 = new float[128];
+            buffer.get(Util_cvToRate_c1);
+            }
+float Util_cvToRate_c2[];
+         public void set_Util_cvToRate_c2(java.nio.FloatBuffer buffer){
+            Util_cvToRate_c2 = new float[128];
+            buffer.get(Util_cvToRate_c2);
+            }
+float Util_cvToperiod_c0[];
+         public void set_Util_cvToperiod_c0(java.nio.FloatBuffer buffer){
+            Util_cvToperiod_c0 = new float[32];
+            buffer.get(Util_cvToperiod_c0);
+            }
+float Util_cvToperiod_c1[];
+         public void set_Util_cvToperiod_c1(java.nio.FloatBuffer buffer){
+            Util_cvToperiod_c1 = new float[32];
+            buffer.get(Util_cvToperiod_c1);
+            }
+float Util_cvToperiod_c2[];
+         public void set_Util_cvToperiod_c2(java.nio.FloatBuffer buffer){
+            Util_cvToperiod_c2 = new float[32];
+            buffer.get(Util_cvToperiod_c2);
+            }
+float Util_cvTokHz_c0[];
+         public void set_Util_cvTokHz_c0(java.nio.FloatBuffer buffer){
+            Util_cvTokHz_c0 = new float[32];
+            buffer.get(Util_cvTokHz_c0);
+            }
+float Util_cvTokHz_c1[];
+         public void set_Util_cvTokHz_c1(java.nio.FloatBuffer buffer){
+            Util_cvTokHz_c1 = new float[32];
+            buffer.get(Util_cvTokHz_c1);
+            }
+float Util_cvTokHz_c2[];
+         public void set_Util_cvTokHz_c2(java.nio.FloatBuffer buffer){
+            Util_cvTokHz_c2 = new float[32];
+            buffer.get(Util_cvTokHz_c2);
+            }
+private class Saw_ptr2__ctx_type_0 {
+   public float rate;
+   public float phase;
+   public Util__ctx_type_1 _inst13b;
+ 
+   Saw_ptr2__ctx_type_0(){ this.rate = 0.0f;
+   this.phase = 0.0f;
+   this._inst13b = new Util__ctx_type_1();
+    } 
+   Saw_ptr2__ctx_type_0(float rate,float phase,Util__ctx_type_1 _inst13b){ this.rate = rate;
+   this.phase = phase;
+   this._inst13b = _inst13b;
+    } }
+
+private Util__ctx_type_0 Util__ctx_type_0_init(){
+   Util__ctx_type_0 _ctx = new Util__ctx_type_0(); 
+   _ctx.pre = false;
+   return _ctx;
+}
+
+private Util__ctx_type_0 Util_edge_init(){return Util__ctx_type_0_init();}
+
+private boolean Util_edge(Util__ctx_type_0 _ctx, boolean x){
+   boolean ret = (x && not(_ctx.pre)); 
+   _ctx.pre = x;
+   return ret;
+}
+
+private Util__ctx_type_1 Util__ctx_type_1_init(){
+   Util__ctx_type_1 _ctx = new Util__ctx_type_1(); 
+   _ctx.pre_x = 0.0f;
+   return _ctx;
+}
+
+private Util__ctx_type_1 Util_change_init(){return Util__ctx_type_1_init();}
+
+private boolean Util_change(Util__ctx_type_1 _ctx, float x){
+   boolean v = (_ctx.pre_x != x); 
+   _ctx.pre_x = x;
+   return v;
+}
+
+private float Util_map(float x, float x0, float x1, float y0, float y1){return (y0 + (((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))));}
+
+private Util__ctx_type_3 Util__ctx_type_3_init(){
+   Util__ctx_type_3 _ctx = new Util__ctx_type_3(); 
+   _ctx.y1 = 0.0f;
+   _ctx.x1 = 0.0f;
+   return _ctx;
+}
+
+private Util__ctx_type_3 Util_dcblock_init(){return Util__ctx_type_3_init();}
+
+private float Util_dcblock(Util__ctx_type_3 _ctx, float x0){
+   float y0 = (x0 + (- _ctx.x1) + (0.995f * _ctx.y1)); 
+   _ctx.x1 = x0;
+   _ctx.y1 = y0;
+   return y0;
+}
+
+private Util__ctx_type_4 Util__ctx_type_4_init(){
+   Util__ctx_type_4 _ctx = new Util__ctx_type_4(); 
+   _ctx.x = 0.0f;
+   return _ctx;
+}
+
+private Util__ctx_type_4 Util_smooth_init(){return Util__ctx_type_4_init();}
+
+private float Util_smooth(Util__ctx_type_4 _ctx, float input){
+   _ctx.x = (_ctx.x + (0.005f * (input + (- _ctx.x))));
+   return _ctx.x;
+}
+
+private Util__ctx_type_5 Util__ctx_type_5_init(){
+   Util__ctx_type_5 _ctx = new Util__ctx_type_5(); 
+   _ctx.x0 = 0.0f;
+   return _ctx;
+}
+
+private Util__ctx_type_5 Util_average2_init(){return Util__ctx_type_5_init();}
+
+private float Util_average2(Util__ctx_type_5 _ctx, float x1){
+   float result = (0.5f * (_ctx.x0 + x1)); 
+   _ctx.x0 = x1;
+   return result;
+}
+
+private float Util_cubic_clipper(float x){if(x <= -0.6666666f){ return -0.6666666f; }
+else
+{ if(x >= 0.6666667f){ return 0.6666667f; }
+else
+{ return (x + (-0.3333333f * x * x * x)); } }}
+
+private float Util_pitchToRate_1024_raw_c0(int index){return Util_pitchToRate_1024_c0[index];}
+
+private float Util_pitchToRate_1024_raw_c1(int index){return Util_pitchToRate_1024_c1[index];}
+
+private float Util_pitchToRate_1024_raw_c2(int index){return Util_pitchToRate_1024_c2[index];}
+
+private float Util_pitchToRate_1024(float pitch){
+   int index = clip(float_to_int((0.2440945f * pitch)),0,31); 
+   return (wrap_array(Util_pitchToRate_1024_c0)[index] + (pitch * (wrap_array(Util_pitchToRate_1024_c1)[index] + (pitch * wrap_array(Util_pitchToRate_1024_c2)[index]))));
+}
+
+private float Util_pitchToRate_raw_c0(int index){return Util_pitchToRate_c0[index];}
+
+private float Util_pitchToRate_raw_c1(int index){return Util_pitchToRate_c1[index];}
+
+private float Util_pitchToRate_raw_c2(int index){return Util_pitchToRate_c2[index];}
+
+private float Util_pitchToRate(float pitch){
+   int index = clip(float_to_int((0.2440945f * pitch)),0,31); 
+   return (wrap_array(Util_pitchToRate_c0)[index] + (pitch * (wrap_array(Util_pitchToRate_c1)[index] + (pitch * wrap_array(Util_pitchToRate_c2)[index]))));
+}
+
+private float Util_cvToPitch(float cv){return (24.f + (120.f * cv));}
+
+private float Util_cvToRate_1024_raw_c0(int index){return Util_cvToRate_1024_c0[index];}
+
+private float Util_cvToRate_1024_raw_c1(int index){return Util_cvToRate_1024_c1[index];}
+
+private float Util_cvToRate_1024_raw_c2(int index){return Util_cvToRate_1024_c2[index];}
+
+private float Util_cvToRate_1024(float cv){
+   int index = clip(float_to_int((34.4444445f * cv)),0,31); 
+   return (wrap_array(Util_cvToRate_1024_c0)[index] + (cv * (wrap_array(Util_cvToRate_1024_c1)[index] + (cv * wrap_array(Util_cvToRate_1024_c2)[index]))));
+}
+
+private float Util_cvToRate_raw_c0(int index){return Util_cvToRate_c0[index];}
+
+private float Util_cvToRate_raw_c1(int index){return Util_cvToRate_c1[index];}
+
+private float Util_cvToRate_raw_c2(int index){return Util_cvToRate_c2[index];}
+
+private float Util_cvToRate(float cv){
+   int index = clip(float_to_int((141.1111112f * cv)),0,127); 
+   return (wrap_array(Util_cvToRate_c0)[index] + (cv * (wrap_array(Util_cvToRate_c1)[index] + (cv * wrap_array(Util_cvToRate_c2)[index]))));
+}
+
+private float Util_pitchToCv(float pitch){return (0.0083334f * (-24.f + pitch));}
+
+private float Util_cvToperiod_raw_c0(int index){return Util_cvToperiod_c0[index];}
+
+private float Util_cvToperiod_raw_c1(int index){return Util_cvToperiod_c1[index];}
+
+private float Util_cvToperiod_raw_c2(int index){return Util_cvToperiod_c2[index];}
+
+private float Util_cvToperiod(float cv){
+   int index = clip(float_to_int((31.f * cv)),0,31); 
+   return (wrap_array(Util_cvToperiod_c0)[index] + (cv * (wrap_array(Util_cvToperiod_c1)[index] + (cv * wrap_array(Util_cvToperiod_c2)[index]))));
+}
+
+private float Util_cvTokHz_raw_c0(int index){return Util_cvTokHz_c0[index];}
+
+private float Util_cvTokHz_raw_c1(int index){return Util_cvTokHz_c1[index];}
+
+private float Util_cvTokHz_raw_c2(int index){return Util_cvTokHz_c2[index];}
+
+private float Util_cvTokHz(float cv){
+   int index = clip(float_to_int((31.f * cv)),0,31); 
+   return (wrap_array(Util_cvTokHz_c0)[index] + (cv * (wrap_array(Util_cvTokHz_c1)[index] + (cv * wrap_array(Util_cvTokHz_c2)[index]))));
+}
+
+private Saw_ptr2__ctx_type_0 Saw_ptr2__ctx_type_0_init(){
+   Saw_ptr2__ctx_type_0 _ctx = new Saw_ptr2__ctx_type_0(); 
+   _ctx.rate = 0.0f;
+   _ctx.phase = 0.0f;
+   _ctx._inst13b = Util__ctx_type_1_init();
+   Saw_ptr2_default(_ctx);
+   return _ctx;
+}
+
+private Saw_ptr2__ctx_type_0 Saw_ptr2_process_init(){return Saw_ptr2__ctx_type_0_init();}
+
+private float Saw_ptr2_process(Saw_ptr2__ctx_type_0 _ctx, float cv){
+   if(Util_change(_ctx._inst13b,cv)){ _ctx.rate = Util_cvToRate(cv); }
+   float out = 0.0f; 
+   float s1 = _ctx.rate; 
+   float s2 = (_ctx.rate + s1); 
+   _ctx.phase = (_ctx.phase + _ctx.rate);
+   if(_ctx.phase > 1.f){ _ctx.phase = (-1.f + _ctx.phase); }
+   if(_ctx.phase < s1){
+      float d = (_ctx.phase / _ctx.rate); 
+      out = (1.f + (d * (s2 + (- d))));
+   }
+   else
+   { if(_ctx.phase < s2){
+      float d = (_ctx.phase / _ctx.rate); 
+      out = (3.f + (d * (-4.f + d + s2)));
+   }
+   else
+   { out = (-1.f + (2.f * _ctx.phase)); } }
+   return out;
+}
+
+private Saw_ptr2__ctx_type_0 Saw_ptr2_noteOn_init(){return Saw_ptr2__ctx_type_0_init();}
+
+private void Saw_ptr2_noteOn(Saw_ptr2__ctx_type_0 _ctx, int note, int velocity, int channel){
+}
+
+private Saw_ptr2__ctx_type_0 Saw_ptr2_noteOff_init(){return Saw_ptr2__ctx_type_0_init();}
+
+private void Saw_ptr2_noteOff(Saw_ptr2__ctx_type_0 _ctx, int note, int channel){
+}
+
+private Saw_ptr2__ctx_type_0 Saw_ptr2_controlChange_init(){return Saw_ptr2__ctx_type_0_init();}
+
+private void Saw_ptr2_controlChange(Saw_ptr2__ctx_type_0 _ctx, int control, int value, int channel){
+}
+
+private Saw_ptr2__ctx_type_0 Saw_ptr2_default_init(){return Saw_ptr2__ctx_type_0_init();}
+
+private void Saw_ptr2_default(Saw_ptr2__ctx_type_0 _ctx){_ctx.rate = 0.0007416f;}
+
+
+}

@@ -1,0 +1,199 @@
+package .saturate_soft;
+
+import java.util.Arrays;
+import java.util.Random;
+import .external.*;
+
+public class saturate_soft {
+
+static int clip(int x, int minv, int maxv) {
+   if(x > maxv)
+      return maxv;
+   else if(x < minv)
+      return minv;
+   else return x;
+}
+
+static float clip(float x, float minv, float maxv) {
+   if(x > maxv)
+      return maxv;
+   else if(x < minv)
+      return minv;
+   else return x;
+}
+
+int[] makeArray(int size, int init) {
+   int a[] = new int[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+float[] makeArray(int size, float init) {
+   float a[] = new float[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+boolean[] makeArray(int size, boolean init) {
+   boolean a[] = new boolean[size];
+   Arrays.fill(a, init);
+   return a;
+}
+
+int int_to_fix16(int a) { return a * 0x00010000; }
+
+int fix16_to_int(int a) { return (a >> 16); }
+
+int fix16_add(int x, int y) { return x + y; }
+
+int fix16_sub(int x, int y) { return x - y; }
+
+int fix16_minus(int x) { return -x; }
+
+float fix16_to_float(int a) { return (float)a / 0x00010000; }
+int float_to_fix16(float a) {
+   float temp = a * 0x00010000;
+   return (int)temp;
+}
+
+int fix16_mul(int x, int y) {
+   long res = (long)x * (long)y;
+   return (int)(res >> 16);
+}
+
+int fix16_div(int a, int b) {
+   if (b == 0)
+      return 0;
+   int result = (int)(((long)a << 16) / b);
+   return result;
+}
+
+static boolean not(boolean x) {
+   return !x;
+}
+
+static float int_to_float(int x) {
+   return (float)x;
+}
+
+int float_to_int(float x) {
+   return (int)x;
+}
+
+float floor(float x) {
+   return (float)Math.floor(x);
+}
+
+static Random rand = new Random();
+
+float random() {
+   return rand.nextFloat();
+}
+
+int irandom() {
+   return rand.nextInt();
+}
+
+float get(float[] a, int i) {
+   return a[i];
+}
+
+void set(float[] a, int i, float val) {
+   a[i] = val;
+}
+
+int get(int[] a, int i) {
+   return a[i];
+}
+
+void set(int[] a, int i, int val) {
+   a[i] = val;
+}
+
+float[] wrap_array(float x[]) {
+   return x;
+}
+
+int[] wrap_array(int x[]) {
+   return x;
+}
+
+float cosh(float x) {
+   return (float)Math.cosh(x);
+}
+
+float cos(float x) {
+   return (float)Math.cos(x);
+}
+
+float sin(float x) {
+   return (float)Math.sin(x);
+}
+
+float sinh(float x) {
+   return (float)Math.sinh(x);
+}
+
+float tan(float x) {
+   return (float)Math.tan(x);
+}
+
+float tanh(float x) {
+   return (float)Math.tanh(x);
+}
+
+float sqrt(float x) {
+   return (float)Math.sqrt(x);
+}
+
+float pow(float x, float y) {
+   return (float)Math.pow(x, y);
+}
+
+float exp(float x) {
+   return (float)Math.exp(x);
+}
+
+
+float Saturate_soft_tanh_table_c0[];
+         public void set_Saturate_soft_tanh_table_c0(java.nio.FloatBuffer buffer){
+            Saturate_soft_tanh_table_c0 = new float[241];
+            buffer.get(Saturate_soft_tanh_table_c0);
+            }
+float Saturate_soft_tanh_table_c1[];
+         public void set_Saturate_soft_tanh_table_c1(java.nio.FloatBuffer buffer){
+            Saturate_soft_tanh_table_c1 = new float[241];
+            buffer.get(Saturate_soft_tanh_table_c1);
+            }
+float Saturate_soft_tanh_table_c2[];
+         public void set_Saturate_soft_tanh_table_c2(java.nio.FloatBuffer buffer){
+            Saturate_soft_tanh_table_c2 = new float[241];
+            buffer.get(Saturate_soft_tanh_table_c2);
+            }
+private float Saturate_soft_tanh_table_raw_c0(int index){return Saturate_soft_tanh_table_c0[index];}
+
+private float Saturate_soft_tanh_table_raw_c1(int index){return Saturate_soft_tanh_table_c1[index];}
+
+private float Saturate_soft_tanh_table_raw_c2(int index){return Saturate_soft_tanh_table_c2[index];}
+
+private float Saturate_soft_tanh_table(float x){
+   int index = clip(float_to_int((5.f * (24.f + x))),0,240); 
+   return (wrap_array(Saturate_soft_tanh_table_c0)[index] + (x * (wrap_array(Saturate_soft_tanh_table_c1)[index] + (x * wrap_array(Saturate_soft_tanh_table_c2)[index]))));
+}
+
+private float Saturate_soft_process(float x){return Saturate_soft_tanh_table(x);}
+
+private void Saturate_soft_noteOn(int note, int velocity, int channel){
+}
+
+private void Saturate_soft_noteOff(int note, int channel){
+}
+
+private void Saturate_soft_controlChange(int control, int value, int channel){
+}
+
+private void Saturate_soft_default(){
+}
+
+
+}

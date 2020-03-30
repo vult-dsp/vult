@@ -1,0 +1,17 @@
+type dot {
+   val x : real;
+   val y : real;
+}
+
+fun foo() {
+   mem p1 : array(dot, 12);
+}
+
+fun process(input:real){
+   val _ = foo();
+   return input;
+}
+and noteOn(note:int, velocity:int, channel:int){ }
+and noteOff(note:int, channel:int){ }
+and controlChange(control:int, value:int, channel:int){ }
+and default(){ }
