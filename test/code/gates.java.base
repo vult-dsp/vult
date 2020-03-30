@@ -1,8 +1,8 @@
-package .gates;
+package vult.com.gates;
 
 import java.util.Arrays;
 import java.util.Random;
-import .external.*;
+import vult.com.external.*;
 
 public class gates {
 

@@ -475,7 +475,7 @@ module CliTest = struct
          | "float" -> { args with code = CCode }, [ ".cpp", ".cpp.float.base"; ".h", ".h.float.base" ]
          | "js" -> { args with code = JSCode }, [ ".js", ".js.base" ]
          | "lua" -> { args with code = LuaCode }, [ ".lua", ".lua.base" ]
-         | "java" -> { args with code = JavaCode }, [ ".java", ".java.base" ]
+         | "java" -> { args with code = JavaCode; prefix = "vult.com" }, [ ".java", ".java.base" ]
          | _ -> failwith "Unknown target to run test"
       in
       let args = { args with output = basefile; files = [ File fullfile ] } in
@@ -534,9 +534,7 @@ module Templates = struct
          | "float" ->
             ( { args with template; code = CCode }
             , [ ".cpp", ".cpp.float.base." ^ template; ".h", ".h.float.base." ^ template ] )
-         | "java" ->
-            ( { args with template; code = JavaCode }
-            , [ ".java", ".java.base." ^ template ] )
+         | "java" -> { args with template; code = JavaCode; prefix = "vult.com" }, [ ".java", ".java.base." ^ template ]
          | "js" -> { args with template; code = JSCode }, [ ".js", ".js.base." ^ template ]
          | "lua" -> { args with template; code = LuaCode }, [ ".lua", ".lua.base." ^ template ]
          | _ -> failwith "Unknown target to run test"

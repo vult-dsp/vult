@@ -1,8 +1,8 @@
-package .volume;
+package vult.com.volume;
 
 import java.util.Arrays;
 import java.util.Random;
-import .external.*;
+import vult.com.external.*;
 
 public class volume {
 

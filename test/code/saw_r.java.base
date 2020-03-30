@@ -1,8 +1,8 @@
-package .saw_r;
+package vult.com.saw_r;
 
 import java.util.Arrays;
 import java.util.Random;
-import .external.*;
+import vult.com.external.*;
 
 public class saw_r {
 

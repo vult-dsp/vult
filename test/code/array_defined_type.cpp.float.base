@@ -16,7 +16,7 @@ void Array_defined_type__ctx_type_0_init(Array_defined_type__ctx_type_0 &_output
       int i;
       i = 0;
       while(i < 12){
-         _ctx.p1[i] = Array_defined_type_dot_init();
+         Array_defined_type_dot_init(_ctx.p1[i]);
          i = (i + 1);
       }
    }

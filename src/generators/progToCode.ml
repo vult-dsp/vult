@@ -210,28 +210,25 @@ let getFunctionFirstArgType (elem_typs : type_descr list) : type_descr =
 
 
 let createWhileLoopInit size init lhs =
-   let il = CLId (CTSimple "int", [ "i" ]) in
-   let i = CEVar ("i", CTSimple "int") in
-   let decl = CSVar (il, None) in
-   let init_decl = CSBind (il, CEInt 0) in
-   let assign = CSBind (CLIndex (CTSimple "any", lhs, i), init) in
-   let incr = CSBind (il, CEOp ("+", [ i; CEInt 1 ], CTSimple "int")) in
-   let loop = CSWhile (CEOp ("<", [ i; size ], CTSimple "bool"), CSBlock [ assign; incr ]) in
-   CSBlock [ decl; init_decl; loop ]
+   match init with
+   | CECall (name, [], descr) ->
+      let il = CLId (CTSimple "int", [ "i" ]) in
+      let i = CEVar ("i", CTSimple "int") in
+      let decl = CSVar (il, None) in
+      let init_decl = CSBind (il, CEInt 0) in
+      let indexed = CEIndex (lhs, i, CTSimple "any") in
+      let assign = CSBind (CLWild, CECall (name, [ indexed ], descr)) in
+      let incr = CSBind (il, CEOp ("+", [ i; CEInt 1 ], CTSimple "int")) in
+      let loop = CSWhile (CEOp ("<", [ i; size ], CTSimple "bool"), CSBlock [ assign; incr ]) in
+      CSBlock [ decl; init_decl; loop ]
+   | _ -> failwith "createWhileLoopInit"
 
 
 let inlineArrayInit size init var =
    match var with
-   | CEVar (name, _) -> createWhileLoopInit size init [ name ]
-   | CEAccess _ ->
-      (* convert access to a list of names *)
-      let rec loop e =
-         match e with
-         | CEAccess (e, n) -> loop e @ [ n ]
-         | CEVar (name, _) -> [ name ]
-         | _ -> failwith "inlineArrayInit: Cannot convert access expression"
-      in
-      createWhileLoopInit size init (loop var)
+   | CEVar _
+   |CEAccess _ ->
+      createWhileLoopInit size init var
    | _ -> failwith "inlineArrayInit"
 
 
