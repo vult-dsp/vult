@@ -126,6 +126,7 @@ let getLbp (token : 'kind token) : int =
    | OP, "*" -> 60
    | OP, "/" -> 60
    | OP, "%" -> 60
+   | DOT, _ -> 80
    | _ -> 0
 
 
@@ -490,6 +491,20 @@ and exp_led (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
       (* Binary operators *)
       binaryOp buffer token left
    | COMMA, _ -> pair buffer token left
+   | DOT, _ -> access buffer token left
+   | _ ->
+      let message = Error.PointedError (token.loc, "Invalid expression") in
+      raise (ParserError message)
+
+
+(** <access> :=  <expression>  '.' <id> [ '.' <id> ] *)
+and access (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
+   let right = expression (getLbp token) buffer in
+   match right with
+   | PAccess (PId ([ id ], _), n, attr) -> PAccess (PAccess (left, id, attr), n, attr)
+   | PIndex (PAccess (PId ([ id ], _), n, attr), i, iattr) ->
+      PIndex (PAccess (PAccess (left, id, attr), n, attr), i, iattr)
+   | PId ([ id ], attr) -> PAccess (left, id, attr)
    | _ ->
       let message = Error.PointedError (token.loc, "Invalid expression") in
       raise (ParserError message)

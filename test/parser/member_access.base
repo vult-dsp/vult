@@ -1,0 +1,34 @@
+{
+   type other {
+      val k : real; 
+   }
+
+   type pair {
+      val a : real; 
+      val b : array(real, 3); 
+      val c : array(other, 3); 
+   }
+
+   type point {
+      val x : real; 
+      val y : pair; 
+   }
+
+   type micro {
+      val m : array(point, 12); 
+   }
+
+   fun foo(i) {
+      val (x:micro); 
+      val y = x.m[i].y.a; 
+      val z = x.m[i].y.b[0]; 
+      val r = x.m[i].y.c[0].k; 
+      return y; 
+   }
+
+   fun bar(a:int) {
+      val y = foo(a); 
+      return y; 
+   }
+
+}

@@ -69,6 +69,7 @@ let parser_files =
    ; "types_basic.vult"
    ; "array_syntax.vult"
    ; "mem_tag.vult"
+   ; "member_access.vult"
    ]
 
 
