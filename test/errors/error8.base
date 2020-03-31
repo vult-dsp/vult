@@ -1,4 +1,0 @@
-Invalid statement. All statements should be in the forms: "a = b; " or "_ = b(); " 
-fun foo() {
-   bar();
-       ^ 

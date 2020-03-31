@@ -81,7 +81,6 @@ let errors_files =
    ; "error5.vult"
    ; "error6.vult"
    ; "error7.vult"
-   ; "error8.vult"
    ; "error9.vult"
    ; "error10.vult"
    ; "error13.vult"

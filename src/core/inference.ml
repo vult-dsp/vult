@@ -654,6 +654,19 @@ and inferStmt (env : 'a Env.t) (ret_type : return_type) (stmt : stmt) : stmt lis
       let e', env', typ = inferExp env e in
       let ret_type' = unifyReturn (expLoc e) ret_type (ReturnType typ) in
       [ StmtReturn (e', attr) ], env', ret_type'
+   | StmtBind (LTuple ([], _), rhs, attr) ->
+      let rhs', env', rhs_typ = inferExp env rhs in
+      if Typ.unify Typ.Const.unit_type rhs_typ then
+         [ StmtBind (LWild attr, rhs', attr) ], env', ret_type
+      else
+         let msg =
+            Printf.sprintf
+               "This function call is expected to not return a value but it returns a type '%s'. To explicitly discard \
+                the value, bind the function call as follows: _ = foo()"
+               (PrintProg.typeStr rhs_typ)
+         in
+         let loc = Lazy.force (expLoc rhs') in
+         Error.raiseError msg loc
    | StmtBind (lhs, rhs, attr) ->
       let lhs', lhs_typ = inferLhsExp `None env lhs in
       let rhs', env', rhs_typ = inferExp env rhs in

@@ -44,6 +44,8 @@ module TokenKind = struct
    let getEOF = EOF
 end
 
+exception LCall of Id.t * exp list * attr
+
 module Stream = TokenStream (TokenKind)
 
 let splitOnDot s = CCString.Split.list_cpy "." s
@@ -341,6 +343,22 @@ and lhs_nud (buffer : Stream.stream) (token : 'kind token) : lhs_exp =
             let _ = Stream.consume buffer RBRACK in
             let attr = makeAttr token.loc in
             LIndex (id, None, index, attr)
+         (* Special case to parse function calls that do not return arguments *)
+         | LPAREN ->
+            let attr = makeAttr token.loc in
+            let _ = Stream.skip buffer in
+            begin
+               match Stream.peek buffer with
+               | RPAREN ->
+                  let _ = Stream.skip buffer in
+                  let _ = Stream.consume buffer SEMI in
+                  raise (LCall (id, [], attr))
+               | _ ->
+                  let index = expressionList buffer in
+                  let _ = Stream.consume buffer RPAREN in
+                  let _ = Stream.consume buffer SEMI in
+                  raise (LCall (id, index, attr))
+            end
          | _ -> LId (id, None, makeAttr token.loc)
       end
    | LPAREN ->
@@ -655,19 +673,23 @@ and stmtReturn (buffer : Stream.stream) : stmt =
 
 
 and stmtBind (buffer : Stream.stream) : stmt =
-   let e1 = lhs_expression 0 buffer in
-   let start_loc = getLhsExpLocation e1 in
-   match Stream.peek buffer with
-   | EQUAL ->
-      let _ = Stream.consume buffer EQUAL in
-      let e2 = expression 0 buffer in
-      let _ = Stream.consume buffer SEMI in
-      StmtBind (e1, e2, makeAttr start_loc)
-   | _ ->
-      let message =
-         Printf.sprintf "Invalid statement. All statements should be in the forms: \"a = b; \" or \"_ = b(); \" "
-      in
-      raise (ParserError (Stream.makeError buffer message))
+   match lhs_expression 0 buffer with
+   | e1 ->
+      let start_loc = getLhsExpLocation e1 in
+      begin
+         match Stream.peek buffer with
+         | EQUAL ->
+            let _ = Stream.consume buffer EQUAL in
+            let e2 = expression 0 buffer in
+            let _ = Stream.consume buffer SEMI in
+            StmtBind (e1, e2, makeAttr start_loc)
+         | _ ->
+            let message =
+               Printf.sprintf "Invalid statement. All statements should be in the forms: \"a = b; \" or \"_ = b(); \" "
+            in
+            raise (ParserError (Stream.makeError buffer message))
+      end
+   | exception LCall (name, args, attr) -> StmtBind (LTuple ([], attr), PCall (NoInst, name, args, attr), attr)
 
 
 (** <statement> := 'if' '(' <expression> ')' <statementList> ['else' <statementList> ]*)

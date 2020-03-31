@@ -52,6 +52,26 @@ module TokenStream (S : TokenKindSig) = struct
       }
    (** Type containing the stream of tokens *)
 
+   let backup (s : stream) =
+      let lexbuf =
+         Lexing.
+            { refill_buff = s.lexbuf.refill_buff
+            ; lex_buffer = s.lexbuf.lex_buffer
+            ; lex_buffer_len = s.lexbuf.lex_buffer_len
+            ; lex_abs_pos = s.lexbuf.lex_abs_pos
+            ; lex_start_pos = s.lexbuf.lex_start_pos
+            ; lex_curr_pos = s.lexbuf.lex_curr_pos
+            ; lex_last_pos = s.lexbuf.lex_last_pos
+            ; lex_last_action = s.lexbuf.lex_last_action
+            ; lex_eof_reached = s.lexbuf.lex_eof_reached
+            ; lex_mem = s.lexbuf.lex_mem
+            ; lex_start_p = s.lexbuf.lex_start_p
+            ; lex_curr_p = s.lexbuf.lex_curr_p
+            }
+      in
+      { lexbuf; has_errors = s.has_errors; errors = s.errors; peeked = s.peeked; prev = s.prev; source = s.source }
+
+
    (** Skips one token *)
    let skip (buffer : stream) : unit =
       buffer.prev <- buffer.peeked ;
