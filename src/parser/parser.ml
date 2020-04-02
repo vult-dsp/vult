@@ -384,6 +384,13 @@ and lhs_led (buffer : Stream.stream) (token : 'kind token) (left : lhs_exp) : lh
       let vtype = typeExpression 0 buffer in
       LTyped (left, vtype, makeAttr token.loc)
    | COMMA -> lhs_pair buffer token left
+   | DOT ->
+      let message =
+         Error.PointedError
+            ( token.loc
+            , "For now, the assignments like 'a[0].b = 0' need to be split into two statements 'val c = a[0]; c.b = 0;" )
+      in
+      raise (ParserError message)
    | _ ->
       let message = Error.PointedError (token.loc, "Invalid left hand side of assignment") in
       raise (ParserError message)

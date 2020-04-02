@@ -415,24 +415,44 @@ let rec attachReturnTupleFunctions name elems env =
    env, fns
 
 
+and inferMembers env attr typ names =
+   match names with
+   | [] -> typ
+   | h :: t ->
+      match !(Typ.unlink typ) with
+      | TId (id, _) ->
+         let _, _, type_scope = Env.lookupRaise Scope.Type env id attr.loc in
+         let var = Scope.lookupVariableRaise type_scope [ h ] attr.loc in
+         inferMembers env attr var.typ t
+      | _ ->
+         let msg = Printf.sprintf "The type of the member '%s' needs to be explicitly set" h in
+         Error.raiseError msg attr.loc
+
+
 and inferLhsExp mem_var (env : 'a Env.t) (e : lhs_exp) : lhs_exp * Typ.t =
    match e with
    | LWild attr ->
       let typ = Typ.newvar () in
       LWild { attr with typ = Some typ }, typ
-   | LId (id, None, attr) ->
+   | LId ([ id ], typ_opt, attr) when mem_var = `Mem || mem_var = `Val ->
       let typ =
-         match Env.lookupVariable env id with
+         match Env.lookupVariable env [ id ], typ_opt with
+         | Some var, _ -> var.typ
+         | _, Some typ -> typ
+         | _ -> Typ.newvar ()
+      in
+      LId ([ id ], Some typ, { attr with typ = Some typ }), typ
+   | LId ((h :: t as id), _, attr) ->
+      let e_type =
+         match Env.lookupVariable env [ h ] with
          | Some var -> var.Scope.typ
          | _ ->
-            if mem_var = `Mem || mem_var = `Val then
-               Typ.newvar ()
-            else
-               let msg = Printf.sprintf "The symbol '%s' is not defined" (Id.show id) in
-               Error.raiseError msg attr.loc
+            let msg = Printf.sprintf "The symbol '%s' is not defined" h in
+            Error.raiseError msg attr.loc
       in
-      LId (id, Some typ, { attr with typ = Some typ }), typ
-   | LId (id, Some typ, attr) -> LId (id, Some typ, { attr with typ = Some typ }), typ
+      let final_type = inferMembers env attr e_type t in
+      LId (id, Some final_type, { attr with typ = Some final_type }), final_type
+   | LId _ -> failwith ""
    | LTuple (elems, attr) ->
       let elems', tpl =
          List.fold_left
@@ -595,7 +615,9 @@ and inferExp (env : 'a Env.t) (e : exp) : exp * 'a Env.t * Typ.t =
             let _, _, type_scope = Env.lookupRaise Scope.Type env id attr.loc in
             let var = Scope.lookupVariableRaise type_scope [ m ] attr.loc in
             PAccess (e', m, attr), env, var.typ
-         | _ -> failwith "the type needs to be known"
+         | _ ->
+            let msg = Printf.sprintf "The type of this expression is unknown." in
+            Error.raiseError msg attr.loc
       end
    | PEmpty -> PEmpty, env, Typ.Const.unit_type
 
