@@ -23,131 +23,131 @@
 *)
 
 let rec join_buff (buff : Buffer.t) (sep : string) (l : string list) : unit =
-   match l with
-   | [] -> ()
-   | [ h ] -> Buffer.add_string buff h
-   | h :: t ->
+  match l with
+  | [] -> ()
+  | [ h ] -> Buffer.add_string buff h
+  | h :: t ->
       Buffer.add_string buff h ;
       Buffer.add_string buff sep ;
       join_buff buff sep t
 
 
 let stringJoin (l : string list) : string =
-   let buff = Buffer.create 128 in
-   join_buff buff "" l ;
-   Buffer.contents buff
+  let buff = Buffer.create 128 in
+  join_buff buff "" l ;
+  Buffer.contents buff
 
 
 let stringJoinWith (sep : string) (l : string list) : string =
-   let buff = Buffer.create 128 in
-   join_buff buff sep l ;
-   Buffer.contents buff
+  let buff = Buffer.create 128 in
+  join_buff buff sep l ;
+  Buffer.contents buff
 
 
 let stringSplit (sep : string) (s : string) : string list = Str.split (Str.regexp_string sep) s
 
 (** Longest Common Sequence *)
 let lcs xs' ys' =
-   let longest xs ys = if List.length xs > List.length ys then xs else ys in
-   let xs = Array.of_list xs'
-   and ys = Array.of_list ys' in
-   let n = Array.length xs
-   and m = Array.length ys in
-   let a = Array.make_matrix (n + 1) (m + 1) [] in
-   for i = n - 1 downto 0 do
-      for j = m - 1 downto 0 do
-         a.(i).(j) <-
-            ( if xs.(i) = ys.(j) then
-                 xs.(i) :: a.(i + 1).(j + 1)
-              else
-                 longest a.(i).(j + 1) a.(i + 1).(j) )
-      done
-   done ;
-   a.(0).(0)
+  let longest xs ys = if List.length xs > List.length ys then xs else ys in
+  let xs = Array.of_list xs'
+  and ys = Array.of_list ys' in
+  let n = Array.length xs
+  and m = Array.length ys in
+  let a = Array.make_matrix (n + 1) (m + 1) [] in
+  for i = n - 1 downto 0 do
+    for j = m - 1 downto 0 do
+      a.(i).(j) <-
+        ( if xs.(i) = ys.(j) then
+            xs.(i) :: a.(i + 1).(j + 1)
+        else
+          longest a.(i).(j + 1) a.(i + 1).(j) )
+    done
+  done ;
+  a.(0).(0)
 
 
 let rec interleaveLineDiff a b l =
-   match a, b, l with
-   | _, _, [] -> List.map (fun x -> "- " ^ x) a @ List.map (fun x -> "+ " ^ x) b
-   | [], _, _ :: _
+  match a, b, l with
+  | _, _, [] -> List.map (fun x -> "- " ^ x) a @ List.map (fun x -> "+ " ^ x) b
+  | [], _, _ :: _
    |_, [], _ :: _ ->
       failwith "Diff.interleaveLineDiff: The results obtained from 'Diff.lcs' function are incorrect"
-   | ah :: at, bh :: bt, lh :: lt ->
-      match ah = lh, bh = lh with
-      | true, true -> lh :: interleaveLineDiff at bt lt
-      | true, false -> ("+ " ^ bh) :: interleaveLineDiff a bt l
-      | false, true -> ("- " ^ ah) :: interleaveLineDiff at b l
-      | false, false -> ("+ " ^ bh) :: ("- " ^ ah) :: interleaveLineDiff at bt l
+  | ah :: at, bh :: bt, lh :: lt ->
+  match ah = lh, bh = lh with
+  | true, true -> lh :: interleaveLineDiff at bt lt
+  | true, false -> ("+ " ^ bh) :: interleaveLineDiff a bt l
+  | false, true -> ("- " ^ ah) :: interleaveLineDiff at b l
+  | false, false -> ("+ " ^ bh) :: ("- " ^ ah) :: interleaveLineDiff at bt l
 
 
 let lineDiff str1 str2 =
-   let lines1 = stringSplit "\n" str1 in
-   let lines2 = stringSplit "\n" str2 in
-   let lseq = lcs lines1 lines2 in
-   let final_seq = interleaveLineDiff lines1 lines2 lseq in
-   stringJoinWith "\n" final_seq
+  let lines1 = stringSplit "\n" str1 in
+  let lines2 = stringSplit "\n" str2 in
+  let lseq = lcs lines1 lines2 in
+  let final_seq = interleaveLineDiff lines1 lines2 lseq in
+  stringJoinWith "\n" final_seq
 
 
 let tokenString t =
-   let open BaseTok in
-   match t with
-   | Id s -> s
-   | Int i -> Int64.to_string i
-   | Float f -> string_of_float f
-   | Other s -> s
-   | Hex i -> string_of_int i
-   | EOF -> ""
+  let open BaseTok in
+  match t with
+  | Id s -> s
+  | Int i -> Int64.to_string i
+  | Float f -> string_of_float f
+  | Other s -> s
+  | Hex i -> string_of_int i
+  | EOF -> ""
 
 
 let tokenizeLine line =
-   let stream = Lexing.from_string line in
-   let tokens = ref [] in
-   let () =
-      let rec loop () =
-         match BaseTok.read stream with
-         | BaseTok.EOF -> ()
-         | t ->
-            tokens := t :: !tokens ;
-            loop ()
-      in
-      loop ()
-   in
-   List.rev !tokens
+  let stream = Lexing.from_string line in
+  let tokens = ref [] in
+  let () =
+    let rec loop () =
+      match BaseTok.read stream with
+      | BaseTok.EOF -> ()
+      | t ->
+          tokens := t :: !tokens ;
+          loop ()
+    in
+    loop ()
+  in
+  List.rev !tokens
 
 
 let rec equalToken t1 t2 =
-   let open BaseTok in
-   match t1, t2 with
-   | Float f1, Float f2 ->
+  let open BaseTok in
+  match t1, t2 with
+  | Float f1, Float f2 ->
       let result =
-         if abs_float f2 < 1e-6 && abs_float f1 < 1e-6 then
-            true
-         else
-            let delta = abs_float (f1 -. f2) in
-            delta < 1e-6
+        if abs_float f2 < 1e-6 && abs_float f1 < 1e-6 then
+          true
+        else
+          let delta = abs_float (f1 -. f2) in
+          delta < 1e-6
       in
       let () = if not result then Printf.printf "diff %f %f\n" f1 f2 in
       result
-   | Int n1, Int n2 when n1 = n2 -> true
-   | Hex n1, Hex n2 -> abs (n1 - n2) <= 1
-   | Id n1, Id n2 when n1 = n2 -> true
-   | Other n1, Other n2 when n1 = n2 -> true
-   | EOF, EOF -> true
-   | _ ->
+  | Int n1, Int n2 when n1 = n2 -> true
+  | Hex n1, Hex n2 -> abs (n1 - n2) <= 1
+  | Id n1, Id n2 when n1 = n2 -> true
+  | Other n1, Other n2 when n1 = n2 -> true
+  | EOF, EOF -> true
+  | _ ->
       let msg = Printf.sprintf "%s <> %s" (tokenString t1) (tokenString t2) in
       prerr_endline msg ;
       false
 
 
 let compareLine line1 line2 =
-   let s1 = tokenizeLine line1 in
-   let s2 = tokenizeLine line2 in
-   try List.for_all2 equalToken s1 s2 with
-   | Invalid_argument _ -> false
+  let s1 = tokenizeLine line1 in
+  let s2 = tokenizeLine line2 in
+  try List.for_all2 equalToken s1 s2 with
+  | Invalid_argument _ -> false
 
 
 let compare str1 str2 =
-   let lines1 = stringSplit "\n" str1 in
-   let lines2 = stringSplit "\n" str2 in
-   try List.for_all2 compareLine lines1 lines2 with
-   | Invalid_argument _ -> false
+  let lines1 = stringSplit "\n" str1 in
+  let lines2 = stringSplit "\n" str2 in
+  try List.for_all2 compareLine lines1 lines2 with
+  | Invalid_argument _ -> false

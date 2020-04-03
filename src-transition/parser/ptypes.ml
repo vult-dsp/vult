@@ -23,65 +23,65 @@
 *)
 
 type lexed_lines =
-  { current_line : Buffer.t
-  ; mutable all_lines : string list
-  }
+   { current_line : Buffer.t
+   ; mutable all_lines : string list
+   }
 
 (** Tokens *)
 type token_enum =
-  | EOF
-  | INT
-  | REAL
-  | ID
-  | STRING
-  | FUN
-  | MEM
-  | VAL
-  | RET
-  | IF
-  | THEN
-  | ELSE
-  | LBRACE
-  | RBRACE
-  | LBRACK
-  | RBRACK
-  | LPAREN
-  | RPAREN
-  | LSEQ
-  | RSEQ
-  | COLON
-  | SEMI
-  | COMMA
-  | EQUAL
-  | OP
-  | AT
-  | DOT
-  | WHILE
-  | TYPE
-  | LARR
-  | RARR
-  | TRUE
-  | FALSE
-  | AND
-  | WILD
-  | EXTERNAL
-  | TICK
-  | ARROW
-  | BANG
-  | TABLE
+   | EOF
+   | INT
+   | REAL
+   | ID
+   | STRING
+   | FUN
+   | MEM
+   | VAL
+   | RET
+   | IF
+   | THEN
+   | ELSE
+   | LBRACE
+   | RBRACE
+   | LBRACK
+   | RBRACK
+   | LPAREN
+   | RPAREN
+   | LSEQ
+   | RSEQ
+   | COLON
+   | SEMI
+   | COMMA
+   | EQUAL
+   | OP
+   | AT
+   | DOT
+   | WHILE
+   | TYPE
+   | LARR
+   | RARR
+   | TRUE
+   | FALSE
+   | AND
+   | WILD
+   | EXTERNAL
+   | TICK
+   | ARROW
+   | BANG
+   | TABLE
 
 type 'kind token =
-  { kind : 'kind
-  ; value : string
-  ; loc : Loc.t
-  }
+   { kind : 'kind
+   ; value : string
+   ; loc : Loc.t
+   }
 
 type 'kind stream =
-  { lexbuf : Lexing.lexbuf
-  ; mutable has_errors : bool
-  ; mutable errors : Error.t list
-  ; mutable peeked : 'kind token
-  ; mutable prev : 'kind token
-  ; lines : lexed_lines
-  }
+   { lexbuf : Lexing.lexbuf
+   ; mutable has_errors : bool
+   ; mutable errors : Error.t list
+   ; mutable peeked : 'kind token
+   ; mutable prev : 'kind token
+   ; lines : lexed_lines
+   }
 (** Type containing the stream of tokens *)

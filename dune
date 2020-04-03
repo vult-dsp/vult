@@ -1,0 +1,7 @@
+(include_subdirs unqualified)
+(dirs :standard \ src-transition test)
+
+(executable
+   (name vultc)
+   (libraries containers)
+)

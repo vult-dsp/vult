@@ -25,53 +25,53 @@
 (** Represents the different types of errors *)
 
 type t =
-  | PointedError of Loc.t * string
-  | SimpleError  of string
+   | PointedError of Loc.t * string
+   | SimpleError  of string
 
 exception Errors of t list
 
 (** Takes a location and returns a string in the format "Error in file: file: line l col:c1-c2" *)
 let errorLocationMessage (location : Loc.t) : string =
-  let col_start = Loc.startColumn location in
-  let col_end = Loc.endColumn location in
-  Printf.sprintf "Error: %s:%i:%i-%i: " (Loc.file location) (Loc.line location) col_start col_end
+   let col_start = Loc.startColumn location in
+   let col_end = Loc.endColumn location in
+   Printf.sprintf "Error: %s:%i:%i-%i: " (Loc.file location) (Loc.line location) col_start col_end
 
 
 (** Takes the current line and a location returns a string pointing to the
     location *)
 let errorLocationIndicator (line : string) (location : Loc.t) : string =
-  let col_start = max (Loc.startColumn location) 0 in
-  let col_end = max (Loc.endColumn location) 0 in
-  let pointer = if col_end - col_start <> 0 then String.make (col_end - col_start) '^' else " ^ " in
-  Printf.sprintf "%s\n%s%s\n" line (String.make col_start ' ') pointer
+   let col_start = max (Loc.startColumn location) 0 in
+   let col_end = max (Loc.endColumn location) 0 in
+   let pointer = if col_end - col_start <> 0 then String.make (col_end - col_start) '^' else " ^ " in
+   Printf.sprintf "%s\n%s%s\n" line (String.make col_start ' ') pointer
 
 
 (** Returns the lines corresponding to the given location *)
 let getErrorLines (location : Loc.t) : string =
-  let lines =
-    match location.Loc.source with
-    | Loc.File filename ->
-        begin
-          match FileIO.read filename with
-          | Some contents -> CCString.lines contents
-          | _ -> failwith ("Could not open the file " ^ filename)
-        end
-    | Loc.Text code -> CCString.lines code
-  in
-  let result =
-    match Loc.line location, lines with
-    | _, [] -> ""
-    | (0 | 1), _ -> List.nth lines 0
-    | n, _ -> List.nth lines (n - 2) ^ "\n" ^ List.nth lines (n - 1)
-  in
-  CCString.replace ~sub:"\t" ~by:" " result
+   let lines =
+      match location.Loc.source with
+      | Loc.File filename ->
+         begin
+            match FileIO.read filename with
+            | Some contents -> CCString.lines contents
+            | _ -> failwith ("Could not open the file " ^ filename)
+         end
+      | Loc.Text code -> CCString.lines code
+   in
+   let result =
+      match Loc.line location, lines with
+      | _, [] -> ""
+      | (0 | 1), _ -> List.nth lines 0
+      | n, _ -> List.nth lines (n - 2) ^ "\n" ^ List.nth lines (n - 1)
+   in
+   CCString.replace ~sub:"\t" ~by:" " result
 
 
 (** Takes an error and the lines of the code and returns an error message *)
 let reportErrorString (error : t) : string =
-  match error with
-  | SimpleError msg -> msg ^ "\n"
-  | PointedError (location, msg) ->
+   match error with
+   | SimpleError msg -> msg ^ "\n"
+   | PointedError (location, msg) ->
       let loc = errorLocationMessage location in
       let line = getErrorLines location in
       let indicator = errorLocationIndicator line location in
@@ -82,14 +82,14 @@ let reportErrors (errors : t list) : string = List.map reportErrorString errors 
 
 (** Returns a tuple with the error an all its information *)
 let reportErrorStringNoLoc (error : t) : string * string * int * int =
-  match error with
-  | PointedError (location, msg) ->
+   match error with
+   | PointedError (location, msg) ->
       let col_start = Loc.startColumn location in
       let line = getErrorLines location in
       let indicator = errorLocationIndicator line location in
       let full_msg = msg ^ "\n" ^ indicator in
       full_msg, Loc.file location, Loc.line location, col_start
-  | SimpleError msg -> msg, "-", 0, 0
+   | SimpleError msg -> msg, "-", 0, 0
 
 
 (** Joins two errors *)
@@ -97,12 +97,12 @@ let joinErrors : t list -> t list -> t list = List.append
 
 (** Joins two optional errors *)
 let joinErrorOptions : t list option -> t list option -> t list option =
- fun maybeErr1 maybeErr2 ->
-  match maybeErr1, maybeErr2 with
-  | (Some _ as ret), None -> ret
-  | None, (Some _ as ret) -> ret
-  | Some err1, Some err2 -> Some (joinErrors err1 err2)
-  | None, None -> None
+   fun maybeErr1 maybeErr2 ->
+   match maybeErr1, maybeErr2 with
+   | (Some _ as ret), None -> ret
+   | None, (Some _ as ret) -> ret
+   | Some err1, Some err2 -> Some (joinErrors err1 err2)
+   | None, None -> None
 
 
 (** Joins a list of optional errors *)

@@ -19,4 +19,4 @@ ls
 pwd
 make
 # install vultc from npm
-npm install -g vult
+#npm install -g vult

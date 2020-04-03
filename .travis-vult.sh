@@ -4,8 +4,8 @@ eval $(opam config env)
 # installs all dependencies
 opam install containers ppx_deriving ounit js_of_ocaml js_of_ocaml-ppx pla ocveralls bisect_ppx result
 # run the coverage
-make coverage
-make clean
+#make coverage
+#make clean
 # builds the release version
 make all
 # prepare to package
@@ -17,8 +17,8 @@ else
    tar -cvzf vult-osx.tar.gz vultc runtime/vultin.h runtime/vultin.cpp
 fi
 # test the instalation of vulc from npm and check it runs
-npm install vult -g
-vultc --help
+#npm install vult -g
+#vultc --help
 # compile the examples
 #cd examples
 #mkdir build
@@ -28,4 +28,4 @@ vultc --help
 #cd ..
 #cd ..
 # runs the performance tests
-make perf
+#make perf

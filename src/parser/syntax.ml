@@ -1,7 +1,7 @@
 (*
    The MIT License (MIT)
 
-   Copyright (c) 2014 Leonardo Laguna Ruiz, Carl Jönsson
+   Copyright (c) 2014 Leonardo Laguna Ruizn
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,67 +21,3 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 *)
-
-type lexed_lines =
-  { current_line : Buffer.t
-  ; mutable all_lines : string list
-  }
-
-(** Tokens *)
-type token_enum =
-  | EOF
-  | INT
-  | REAL
-  | ID
-  | STRING
-  | FUN
-  | MEM
-  | VAL
-  | RET
-  | IF
-  | THEN
-  | ELSE
-  | LBRACE
-  | RBRACE
-  | LBRACK
-  | RBRACK
-  | LPAREN
-  | RPAREN
-  | LSEQ
-  | RSEQ
-  | COLON
-  | SEMI
-  | COMMA
-  | EQUAL
-  | OP
-  | AT
-  | DOT
-  | WHILE
-  | TYPE
-  | LARR
-  | RARR
-  | TRUE
-  | FALSE
-  | AND
-  | WILD
-  | EXTERNAL
-  | TICK
-  | ARROW
-  | BANG
-  | TABLE
-
-type 'kind token =
-  { kind : 'kind
-  ; value : string
-  ; loc : Loc.t
-  }
-
-type 'kind stream =
-  { lexbuf : Lexing.lexbuf
-  ; mutable has_errors : bool
-  ; mutable errors : Error.t list
-  ; mutable peeked : 'kind token
-  ; mutable prev : 'kind token
-  ; lines : lexed_lines
-  }
-(** Type containing the stream of tokens *)
