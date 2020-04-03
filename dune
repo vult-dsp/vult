@@ -1,4 +1,6 @@
+;; automatically include the directories
 (include_subdirs unqualified)
+;; exclude the directories with no relevan sources
 (dirs :standard \ src-transition test examples other runtime scripts)
 
 (executable

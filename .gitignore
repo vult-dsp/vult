@@ -9,3 +9,4 @@ vultc.js
 .vscode/.browse.VC.db
 .vscode/launch.json
 /vultlib.js
+*.merlin
