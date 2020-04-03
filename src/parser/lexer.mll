@@ -1,7 +1,7 @@
 (*
 The MIT License (MIT)
 
-Copyright (c) 2014 Leonardo Laguna Ruiz, Carl Jönsson
+Copyright (c) 2020 Leonardo Laguna Ruiz, Carl Jönsson
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -96,8 +96,6 @@ let kindToString kind =
    | THEN  -> "'then'"
    | ELSE  -> "'else'"
    | WHILE -> "'while'"
-   | LSEQ -> "'{|'"
-   | RSEQ -> "'|}'"
    | LBRACE -> "'{'"
    | RBRACE -> "'}'"
    | LBRACK -> "'['"
@@ -147,7 +145,7 @@ let blank = [' ' '\009' '\012']
 let lowercase = ['a'-'z']
 let uppercase = ['A'-'Z']
 let startid = ['A'-'Z' 'a'-'z' '_' '$']
-let idchar = ['A'-'Z' 'a'-'z' '_' '0'-'9' '.' '$']
+let idchar = ['A'-'Z' 'a'-'z' '_' '0'-'9' '$']
 let int = ['0'-'9']+
 let xint = "0x" ['0'-'9' 'A'-'F' 'a'-'f']+
 let float =
@@ -170,8 +168,6 @@ rule next_token source = parse
   | '['         { makeToken source LBRACK lexbuf }
   | '}'         { makeToken source RBRACE lexbuf }
   | ']'         { makeToken source RBRACK lexbuf }
-  | "{|"        { makeToken source LSEQ lexbuf }
-  | "|}"        { makeToken source RSEQ lexbuf }
   | "[|"        { makeToken source LARR lexbuf }
   | "|]"        { makeToken source RARR lexbuf }
   | ':'         { makeToken source COLON lexbuf }

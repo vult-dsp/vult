@@ -1,7 +1,10 @@
 (include_subdirs unqualified)
-(dirs :standard \ src-transition test)
+(dirs :standard \ src-transition test examples other runtime scripts)
 
 (executable
    (name vultc)
-   (libraries containers)
+   (libraries containers ppx_deriving)
+   (preprocess (pps ppx_deriving.std))
+   (modes byte exe)
+   (flags -w -30)
 )

@@ -1,7 +1,7 @@
 (*
    The MIT License (MIT)
 
-   Copyright (c) 2014 Leonardo Laguna Ruiz, Carl Jönsson
+   Copyright (c) 2020 Leonardo Laguna Ruiz, Carl Jönsson
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -47,8 +47,6 @@ type token_enum =
   | RBRACK
   | LPAREN
   | RPAREN
-  | LSEQ
-  | RSEQ
   | COLON
   | SEMI
   | COMMA

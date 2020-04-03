@@ -1,7 +1,7 @@
 (*
    The MIT License (MIT)
 
-   Copyright (c) 2014 Leonardo Laguna Ruizn
+   Copyright (c) 2020 Leonardo Laguna Ruiz
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,3 +21,126 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 *)
+
+type attr = { loc : Loc.t } [@@deriving show, eq, ord]
+
+type path =
+  { id : string
+  ; n : path option
+  ; attr : attr
+  }
+[@@deriving show, eq, ord]
+
+type type_d =
+  | STId       of path
+  | STInt      of int
+  | STComposed of path * type_ list
+[@@deriving show, eq, ord]
+
+and type_ =
+  { t : type_d
+  ; attr : attr
+  }
+[@@deriving show, eq, ord]
+
+type exp_d =
+  | SEUnit
+  | SEBool   of bool
+  | SEInt    of int
+  | SEReal   of float
+  | SEString of string
+  | SEId     of string
+  | SEIndex  of
+      { e : exp
+      ; index : exp
+      }
+  | SEArray  of exp array
+  | SECall   of
+      { instance : string option
+      ; path : path
+      ; args : exp list
+      }
+  | SEUnOp   of string * exp
+  | SEOp     of string * exp * exp
+  | SEIf     of
+      { cond : exp
+      ; then_ : exp
+      ; else_ : exp
+      }
+  | SETuple  of exp list
+  | SEMember of exp * string
+  | SEGroup  of exp
+[@@deriving show, eq, ord]
+
+and exp =
+  { e : exp_d
+  ; attr : attr
+  }
+[@@deriving show, eq, ord]
+
+and lexp_d =
+  | SLWild
+  | SLId     of string
+  | SLMember of lexp * string
+  | SLIndex  of
+      { e : lexp
+      ; index : exp
+      }
+  | SLGroup  of lexp
+  | SLTuple  of lexp list
+[@@deriving show, eq, ord]
+
+and lexp =
+  { l : lexp_d
+  ; attr : attr
+  }
+[@@deriving show, eq, ord]
+
+type dexp_d =
+  | SDId    of string * int option
+  | SDTuple of dexp list
+  | SDGroup of dexp
+  | SDTyped of dexp * type_
+[@@deriving show, eq, ord]
+
+and dexp =
+  { d : dexp_d
+  ; attr : attr
+  }
+[@@deriving show, eq, ord]
+
+type arg = string * type_ option * attr [@@deriving show, eq, ord]
+
+type function_def =
+  { name : string
+  ; args : arg list
+  ; type_ : type_ option
+  ; body : stmt
+  ; next : function_def option
+  ; attr : attr
+  }
+[@@deriving show, eq, ord]
+
+and stmt_d =
+  | SStmtEmpty
+  | SStmtVal      of dexp * exp option
+  | SStmtMem      of dexp * exp option
+  | SStmtBind     of lexp * exp
+  | SStmtReturn   of exp
+  | SStmtBlock    of stmt list
+  | SStmtIf       of exp * stmt * stmt option
+  | SStmtWhile    of exp * stmt
+  | SStmtExternal of
+      { name : string
+      ; args : arg list
+      ; type_ : type_
+      ; link_name : string option
+      }
+  | SStmtFunction of function_def
+[@@deriving show, eq, ord]
+
+and stmt =
+  { s : stmt_d
+  ; attr : attr
+  }
+[@@deriving show, eq, ord]

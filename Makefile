@@ -17,10 +17,13 @@ OCPINDENT = ocp-indent
 endif
 
 compiler: version format
-	dune build
+	dune build vultc.bc vultc.exe
 
 format: $(VULT_SRC)
 	@$(OCAMLFORMAT) -i --enable-outside-detected-project $(VULT_SRC)
+
+run: compiler
+	./_build/default/vultc.bc
 
 #js: jscompiler
 #	$(OCB) src/js/vultlib.byte
