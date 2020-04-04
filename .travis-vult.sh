@@ -9,7 +9,7 @@ opam install containers ppx_deriving ounit js_of_ocaml js_of_ocaml-ppx pla ocver
 # builds the release version
 make all
 # prepare to package
-cp ./_build/src/vultc.native ./vultc
+cp _build/default/vultc.exe ./vultc
 if [ $TRAVIS_OS_NAME == linux ];
 then
    tar -cvzf vult-linux.tar.gz vultc runtime/vultin.h runtime/vultin.cpp

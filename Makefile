@@ -78,6 +78,6 @@ clean:
 	rm -rf bisect_coverage
 
 install:
-	      cp vultc.native $(PREFIX)/vultc
+	      cp _build/default/vultc.exe $(PREFIX)/vultc
 
 .PHONY: 	all clean compiler js test
