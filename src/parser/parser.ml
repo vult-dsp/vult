@@ -50,6 +50,7 @@ module Stream = TokenStream (TokenKind)
 
 type parsed_file =
   { file : string
+  ; name : string
   ; stmts : stmt list
   }
 
@@ -73,7 +74,7 @@ let attr (loc : Loc.t) : attr = { loc }
 let rec expToPath error (exp : exp) : path =
   match exp with
   | { e = SEId id; attr } -> { id; n = None; attr }
-  | { e = SEMember (e, id); attr } -> { id; n = Some (expToPath error e); attr }
+  | { e = SEMember ({ e = SEId e }, id); attr } -> { id; n = Some e; attr }
   | _ -> error ()
 
 
@@ -160,6 +161,7 @@ let commaSepList parser buffer =
 let id_name (buffer : Stream.stream) : string * Loc.t =
   let () = Stream.expect buffer ID in
   let token = Stream.current buffer in
+  let () = Stream.skip buffer in
   token.value, token.loc
 
 
@@ -264,7 +266,7 @@ and type_led (buffer : Stream.stream) (token : 'kind token) (left : type_) : typ
 and type_member (buffer : Stream.stream) (token : 'kind token) (left : type_) : type_ =
   let right = type_ (getExpLbp token) buffer in
   match right.t, left.t with
-  | STId rpath, STId lpath -> { right with t = STId { rpath with n = Some lpath } }
+  | STId rpath, STId { id; n = None } -> { right with t = STId { rpath with n = Some id } }
   | _ ->
       let message = Error.PointedError (token.loc, "Invalid expression") in
       raise (ParserError message)
@@ -475,13 +477,13 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
         | RBRACK ->
             let attr = attr start_loc in
             let _ = Stream.consume buffer RBRACK in
-            { e = SEArray [||]; attr }
+            { e = SEArray []; attr }
         | _ ->
             let start_loc = token.loc in
             let elems = expressionList buffer in
             let _ = Stream.consume buffer RBRACK in
             let attr = attr start_loc in
-            { e = SEArray (Array.of_list elems); attr }
+            { e = SEArray elems; attr }
       end
   | _ ->
       let message = Error.PointedError (token.loc, "Invalid expression") in
@@ -916,6 +918,8 @@ let parseStmtList (s : string) : stmt =
 
 let parseDumpStmtList (s : string) : string = Syntax.show_stmt (parseStmtList s)
 
+let moduleName file = file |> Filename.basename |> Filename.chop_extension |> String.capitalize_ascii
+
 (** Parses a buffer containing a list of statements and returns the results *)
 let parseBuffer (file : string) (buffer : Stream.stream) =
   try
@@ -928,7 +932,8 @@ let parseBuffer (file : string) (buffer : Stream.stream) =
     if Stream.hasErrors buffer then
       raise (Error.Errors (List.rev (Stream.getErrors buffer)))
     else
-      { stmts; file }
+      let name = moduleName file in
+      { stmts; file; name }
   with
   | ParserError error -> raise (Error.Errors [ error ])
   | Error.Errors _ as e -> raise e

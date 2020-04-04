@@ -5,8 +5,8 @@
 
 (executable
    (name vultc)
-   (libraries containers ppx_deriving)
-   (preprocess (pps ppx_deriving.std))
+   (libraries containers ppx_deriving pla)
+   (preprocess (pps ppx_deriving.std pla.ppx))
    (modes byte exe)
    (flags -w -30)
 )

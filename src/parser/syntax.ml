@@ -26,7 +26,7 @@ type attr = { loc : Loc.t } [@@deriving show, eq, ord]
 
 type path =
   { id : string
-  ; n : path option
+  ; n : string option
   ; attr : attr
   }
 [@@deriving show, eq, ord]
@@ -72,7 +72,7 @@ type exp_d =
       { e : exp
       ; index : exp
       }
-  | SEArray  of exp array
+  | SEArray  of exp list
   | SECall   of
       { instance : string option
       ; path : path
@@ -169,3 +169,5 @@ and stmt =
   ; attr : attr
   }
 [@@deriving show, eq, ord]
+
+type stmts = stmt list [@@deriving show, eq, ord]

@@ -1,7 +1,7 @@
 (*
    The MIT License (MIT)
 
-   Copyright (c) 2020 Leonardo Laguna Ruizn
+   Copyright (c) 2017 Leonardo Laguna Ruiz
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,5 +22,13 @@
    THE SOFTWARE.
 *)
 
-;;
-Cli.main ()
+let reduce_precision = ref false
+
+let to_string (f : float) = string_of_float f
+
+let crop (f : float) =
+  if !reduce_precision then
+    let ff = f *. 10000000.0 in
+    ceil ff /. 10000000.0
+  else
+    f

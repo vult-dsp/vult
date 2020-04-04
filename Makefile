@@ -69,7 +69,7 @@ version :
 	@git describe --tags --abbrev=0 >> src/version.ml
 	@echo "\"" >> src/version.ml
 
-#all: 		compiler js test web jscompiler
+all: compiler js test web jscompiler
 
 clean:
 	dune clean
