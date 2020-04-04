@@ -48,7 +48,11 @@ exception LCall of Id.t * exp list * attr
 *)
 module Stream = TokenStream (TokenKind)
 
-(** Consumes tokens until it finds the begining of a new statememt or the end of the current *)
+type parsed_file =
+  { file : string
+  ; stmts : stmt list
+  }
+
 let rec moveToNextStatement (buffer : Stream.stream) : unit =
   match Stream.peek buffer with
   | SEMI -> Stream.skip buffer
@@ -153,18 +157,22 @@ let commaSepList parser buffer =
   loop []
 
 
-(*
+let id_name (buffer : Stream.stream) : string * Loc.t =
+  let () = Stream.expect buffer ID in
+  let token = Stream.current buffer in
+  token.value, token.loc
+
 
 (** Parses tag expressions *)
-let rec tagExpression (rbp : int) (buffer : Stream.stream) : tag = prattParser rbp buffer getLbp tag_nud tag_led
+let rec tag (rbp : int) (buffer : Stream.stream) : tag = prattParser rbp buffer getExpLbp tag_nud tag_led
 
-and tagExpressionList (buffer : Stream.stream) : tag list = commaSepList tagExpression buffer
+and tagExpressionList (buffer : Stream.stream) : tag list = commaSepList tag buffer
 
 and tag_nud (buffer : Stream.stream) (token : 'kind token) : tag =
+  let attr = attr token.loc in
   match token.kind, token.value with
-  | ID, _
-   |TABLE, _ ->
-      let id = identifierToken token in
+  | ID, _ ->
+      let name = token.value in
       begin
         match Stream.peek buffer with
         | LPAREN ->
@@ -173,30 +181,30 @@ and tag_nud (buffer : Stream.stream) (token : 'kind token) : tag =
               match Stream.peek buffer with
               | RPAREN ->
                   let _ = Stream.skip buffer in
-                  TId (id, token.loc)
+                  { g = SGId name; attr }
               | _ ->
-                  let values = tagPairList buffer in
+                  let args = tag_pair_list buffer in
                   let _ = Stream.consume buffer RPAREN in
-                  TFun (id, values, token.loc)
+                  { g = SGCall { name; args }; attr }
             end
-        | _ -> TId (id, token.loc)
+        | _ -> { g = SGId name; attr }
       end
-  | OP, "-" -> tag_unaryOp buffer token
-  | INT, _ -> TInt (token.value, token.loc)
-  | TRUE, _ -> TBool (token.value, token.loc)
-  | FALSE, _ -> TBool (token.value, token.loc)
-  | REAL, _ -> TReal (token.value, token.loc)
-  | STRING, _ -> TString (token.value, token.loc)
+  | OP, "-" -> tag_unary_op buffer token
+  | INT, _ -> { g = SGInt (int_of_string token.value); attr }
+  | TRUE, _ -> { g = SGBool true; attr }
+  | FALSE, _ -> { g = SGBool false; attr }
+  | REAL, _ -> { g = SGReal (float_of_string token.value); attr }
+  | STRING, _ -> { g = SGString token.value; attr }
   | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError message)
 
 
-and tag_unaryOp (buffer : Stream.stream) (token : 'kind token) : tag =
-  let right = tagExpression 70 buffer in
-  match right with
-  | TInt (value, loc) -> TInt ("-" ^ value, loc)
-  | TReal (value, loc) -> TReal ("-" ^ value, loc)
+and tag_unary_op (buffer : Stream.stream) (token : 'kind token) : tag =
+  let right = tag 70 buffer in
+  match right.g with
+  | SGInt value -> { right with g = SGInt (-value) }
+  | SGReal value -> { right with g = SGReal (-.value) }
   | _ -> Error.raiseError "invalid value" token.loc
 
 
@@ -207,17 +215,16 @@ and tag_led (_ : Stream.stream) (token : 'kind token) (_ : tag) : tag =
       raise (ParserError message)
 
 
-and tagPair (bp : int) (buffer : Stream.stream) : Id.t * tag =
-  let id = identifierToken (Stream.current buffer) in
-  let _ = Stream.skip buffer in
+and tag_pair (bp : int) (buffer : Stream.stream) : string * tag * attr =
+  let id, loc = id_name buffer in
   let _ = Stream.consume buffer EQUAL in
-  let value = tagExpression bp buffer in
-  id, value
+  let value = tag bp buffer in
+  id, value, attr loc
 
 
-and tagPairList (buffer : Stream.stream) : (Id.t * tag) list = commaSepList tagPair buffer
+and tag_pair_list (buffer : Stream.stream) : (string * tag * attr) list = commaSepList tag_pair buffer
 
-let optTagExpressions (buffer : Stream.stream) : tag list =
+let optional_tag (buffer : Stream.stream) : tag list =
   match Stream.peek buffer with
   | AT ->
       let _ = Stream.consume buffer AT in
@@ -227,7 +234,7 @@ let optTagExpressions (buffer : Stream.stream) : tag list =
       attr
   | _ -> []
 
-*)
+
 let rec type_ (rbp : int) (buffer : Stream.stream) : type_ = prattParser rbp buffer getExpLbp type_nud type_led
 
 (** Nud function for the Pratt parser *)
@@ -609,15 +616,15 @@ and stmtMem (buffer : Stream.stream) : stmt =
   | EQUAL ->
       let _ = Stream.skip buffer in
       let rhs = expression 0 buffer in
-      (*let tags = optTagExpressions buffer in*)
+      let tags = optional_tag buffer in
       let _ = Stream.consume buffer SEMI in
       let attr = attr start_loc in
-      { s = SStmtMem (lhs, Some rhs); attr }
+      { s = SStmtMem (lhs, Some rhs, tags); attr }
   | _ ->
-      (*let tags = optTagExpressions buffer in*)
+      let tags = optional_tag buffer in
       let _ = Stream.consume buffer SEMI in
       let attr = attr start_loc in
-      { s = SStmtMem (lhs, None); attr }
+      { s = SStmtMem (lhs, None, tags); attr }
 
 
 and stmtReturn (buffer : Stream.stream) : stmt =
@@ -631,7 +638,6 @@ and stmtReturn (buffer : Stream.stream) : stmt =
 
 and stmtBind (buffer : Stream.stream) : stmt =
   match lexp_expression 0 buffer with
-  (*| exception LCall (name, args, attr) -> StmtBind (LTuple ([], attr), PCall (NoInst, name, args, attr), attr)*)
   | e1 ->
       let start_loc = e1.attr.loc in
       begin
@@ -709,8 +715,7 @@ and argList arg_parser (buffer : Stream.stream) =
 
 and stmtExternal (buffer : Stream.stream) : stmt =
   let _ = Stream.skip buffer in
-  let token = Stream.current buffer in
-  let name = token.value in
+  let name, start_loc = id_name buffer in
   let _ = Stream.consume buffer LPAREN in
   let args =
     match Stream.peek buffer with
@@ -724,26 +729,23 @@ and stmtExternal (buffer : Stream.stream) : stmt =
     match Stream.peek buffer with
     | STRING ->
         let link_name = string buffer in
-        (*let tag_exp = optTagExpressions buffer in*)
-        Some link_name, []
+        let tags = optional_tag buffer in
+        Some link_name, tags
     | AT ->
-        (*let tag = optTagExpressions buffer in*)
-        None, []
+        let tags = optional_tag buffer in
+        None, tags
     | _ ->
         let message = Printf.sprintf "Expecting a string with a link name or a tag" in
         raise (ParserError (Stream.makeError buffer message))
   in
   let _ = Stream.consume buffer SEMI in
-  let start_loc = token.loc in
   let attr = attr start_loc in
-  { s = SStmtExternal { name; args; type_; link_name }; attr }
+  { s = SStmtExternal { name; args; type_; link_name; tags }; attr }
 
 
 and stmtFunctionDecl (buffer : Stream.stream) : function_def * attr =
   let _ = Stream.skip buffer in
-  let token = Stream.current buffer in
-  let start_loc = token.loc in
-  let name = token.value in
+  let name, start_loc = id_name buffer in
   let _ = Stream.consume buffer LPAREN in
   let args =
     match Stream.peek buffer with
@@ -758,7 +760,7 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * attr =
         Some (type_ 0 buffer)
     | _ -> None
   in
-  (*let tags = optTagExpressions buffer in*)
+  let tags = optional_tag buffer in
   let body = stmtList buffer in
   let next =
     match Stream.peek buffer with
@@ -766,7 +768,7 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * attr =
     | _ -> None
   in
   let attr = attr start_loc in
-  { name; args; body; type_; next; attr }, attr
+  { name; args; body; type_; next; tags; attr }, attr
 
 
 and stmtFunction (buffer : Stream.stream) : stmt =
@@ -774,24 +776,20 @@ and stmtFunction (buffer : Stream.stream) : stmt =
   { s = SStmtFunction def; attr }
 
 
-(*
-(** 'type' <id> '(' <typedArgList> ')' <valDeclList> *)
 and stmtType (buffer : Stream.stream) : stmt =
   let _ = Stream.consume buffer TYPE in
-  let token = Stream.current buffer in
-  let start_loc = token.loc in
-  let type_name = typeExpression 10 buffer in
+  let name, start_loc = id_name buffer in
   match Stream.peek buffer with
   | COLON ->
       let _ = Stream.skip buffer in
-      let vtype = typeExpression 10 buffer in
+      let type_ = type_ 10 buffer in
       let _ = Stream.optConsume buffer SEMI in
-      StmtAliasType (type_name, vtype, attr start_loc)
+      { s = SStmtTypeAlias (name, type_); attr = attr start_loc }
   | LBRACE ->
       let _ = Stream.skip buffer in
-      let val_decl = valDeclList buffer in
+      let members = type_member_list buffer in
       let _ = Stream.consume buffer RBRACE in
-      StmtType (type_name, val_decl, attr start_loc)
+      { s = SStmtType { name; members }; attr = attr start_loc }
   | _ ->
       let got = tokenToString (Stream.current buffer) in
       let message =
@@ -799,11 +797,12 @@ and stmtType (buffer : Stream.stream) : stmt =
       in
       raise (ParserError (Stream.makeError buffer message))
 
-and valDeclList (buffer : Stream.stream) : val_decl list =
+
+and type_member_list (buffer : Stream.stream) =
   let rec loop acc =
     match Stream.peek buffer with
     | VAL ->
-        let decl = valDecl buffer in
+        let decl = type_member buffer in
         let _ = Stream.consume buffer SEMI in
         loop (decl :: acc)
     | _ -> List.rev acc
@@ -811,16 +810,14 @@ and valDeclList (buffer : Stream.stream) : val_decl list =
   loop []
 
 
-and valDecl (buffer : Stream.stream) : arg =
+and type_member (buffer : Stream.stream) =
   let _ = Stream.expect buffer VAL in
-  let token = Stream.current buffer in
-  let start_loc = token.loc in
-  let _ = Stream.skip buffer in
-  let id = id buffer in
+  let name, start_loc = id_name buffer in
   let _ = Stream.consume buffer COLON in
-  let val_type = typeExpression 10 buffer in
-  id, val_type, attr start_loc
-*)
+  let type_ = type_ 10 buffer in
+  name, type_, attr start_loc
+
+
 and stmtWhile (buffer : Stream.stream) : stmt =
   let start_loc = Stream.location buffer in
   let _ = Stream.consume buffer WHILE in
@@ -840,7 +837,7 @@ and stmt (buffer : Stream.stream) : stmt =
     | IF -> stmtIf buffer
     | WHILE -> stmtWhile buffer
     | FUN -> stmtFunction buffer
-    (*| TYPE -> stmtType buffer*)
+    | TYPE -> stmtType buffer
     | EXTERNAL -> stmtExternal buffer
     | _ -> stmtBind buffer
   with
@@ -892,19 +889,16 @@ let parseType (s : string) : type_ = type_ 0 (Stream.fromString s)
 
 let parseDumpType (s : string) : string = Syntax.show_type_ (parseType s)
 
-(*
-(** Parses an id given a string *)
-let parseId (s : string) : Id.t =
+let parseId (s : string) : string =
   let buffer = Stream.fromString s in
-  id buffer
+  fst (id_name buffer)
 
 
 (** Parses an type given a string *)
-let parseType (s : string) : Typ.t =
+let parseType (s : string) : type_ =
   let buffer = Stream.fromString s in
-  typeExpression 0 buffer
+  type_ 0 buffer
 
-*)
 
 (** Parses an statement given a string *)
 let parseStmt (s : string) : stmt =
@@ -922,28 +916,26 @@ let parseStmtList (s : string) : stmt =
 
 let parseDumpStmtList (s : string) : string = Syntax.show_stmt (parseStmtList s)
 
-(*
-
 (** Parses a buffer containing a list of statements and returns the results *)
-let parseBuffer (file : string) (buffer : Stream.stream) : parser_results =
+let parseBuffer (file : string) (buffer : Stream.stream) =
   try
     let rec loop acc =
       match Stream.peek buffer with
       | EOF -> List.rev acc
       | _ -> loop (stmt buffer :: acc)
     in
-    let result = loop [] in
+    let stmts = loop [] in
     if Stream.hasErrors buffer then
       raise (Error.Errors (List.rev (Stream.getErrors buffer)))
     else
-      { presult = result; file }
+      { stmts; file }
   with
   | ParserError error -> raise (Error.Errors [ error ])
   | Error.Errors _ as e -> raise e
 
 
 (** Parses a file containing a list of statements and returns the results *)
-let parseFile (filename : string) : parser_results =
+let parseFile (filename : string) =
   match FileIO.read filename with
   | Some contents ->
       let buffer = Stream.fromString ~file:filename contents in
@@ -953,7 +945,7 @@ let parseFile (filename : string) : parser_results =
 
 
 (** Parses a string containing a list of statements and returns the results *)
-let parseString (file : string option) (text : string) : parser_results =
+let parseString (file : string option) (text : string) =
   let buffer =
     match file with
     | Some f -> Stream.fromString ~file:f text
@@ -961,4 +953,3 @@ let parseString (file : string option) (text : string) : parser_results =
   in
   let result = parseBuffer "live.vult" buffer in
   result
-*)

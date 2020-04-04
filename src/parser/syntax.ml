@@ -43,6 +43,24 @@ and type_ =
   }
 [@@deriving show, eq, ord]
 
+type tag_d =
+  | SGId     of string
+  | SGInt    of int
+  | SGBool   of bool
+  | SGReal   of float
+  | SGString of string
+  | SGCall   of
+      { name : string
+      ; args : (string * tag * attr) list
+      }
+[@@deriving show, eq, ord]
+
+and tag =
+  { g : tag_d
+  ; attr : attr
+  }
+[@@deriving show, eq, ord]
+
 type exp_d =
   | SEUnit
   | SEBool   of bool
@@ -118,25 +136,32 @@ type function_def =
   ; body : stmt
   ; next : function_def option
   ; attr : attr
+  ; tags : tag list
   }
 [@@deriving show, eq, ord]
 
 and stmt_d =
   | SStmtEmpty
-  | SStmtVal      of dexp * exp option
-  | SStmtMem      of dexp * exp option
-  | SStmtBind     of lexp * exp
-  | SStmtReturn   of exp
-  | SStmtBlock    of stmt list
-  | SStmtIf       of exp * stmt * stmt option
-  | SStmtWhile    of exp * stmt
-  | SStmtExternal of
+  | SStmtVal       of dexp * exp option
+  | SStmtMem       of dexp * exp option * tag list
+  | SStmtBind      of lexp * exp
+  | SStmtReturn    of exp
+  | SStmtBlock     of stmt list
+  | SStmtIf        of exp * stmt * stmt option
+  | SStmtWhile     of exp * stmt
+  | SStmtExternal  of
       { name : string
       ; args : arg list
       ; type_ : type_
       ; link_name : string option
+      ; tags : tag list
       }
-  | SStmtFunction of function_def
+  | SStmtFunction  of function_def
+  | SStmtTypeAlias of string * type_
+  | SStmtType      of
+      { name : string
+      ; members : (string * type_ * attr) list
+      }
 [@@deriving show, eq, ord]
 
 and stmt =
