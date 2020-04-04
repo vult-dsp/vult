@@ -10,12 +10,6 @@ else
 OCAMLFORMAT = ocamlformat
 endif
 
-ifeq (, $(shell which ocp-indent))
-OCPINDENT = echo
-else
-OCPINDENT = ocp-indent
-endif
-
 compiler: version format
 	dune build vultc.bc vultc.exe
 
@@ -69,7 +63,7 @@ version :
 	@git describe --tags --abbrev=0 >> src/version.ml
 	@echo "\"" >> src/version.ml
 
-all: compiler js test web jscompiler
+all: compiler #js test web jscompiler
 
 clean:
 	dune clean
@@ -78,6 +72,6 @@ clean:
 	rm -rf bisect_coverage
 
 install:
-	      cp _build/default/vultc.exe $(PREFIX)/vultc
+	cp _build/default/vultc.exe $(PREFIX)/vultc
 
 .PHONY: 	all clean compiler js test

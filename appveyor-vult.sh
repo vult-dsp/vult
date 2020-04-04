@@ -12,7 +12,7 @@ tar -xf 'opam64.tar.xz'
 opam init default "https://github.com/fdopen/opam-repository-mingw.git#opam2" -c "ocaml-variants.4.07.1+mingw64" --no-setup --disable-sandboxing
 eval $(ocaml-env cygwin)
 
-opam install pla containers ppx_deriving ounit yojson menhir result -y
+opam install pla containers ppx_deriving ounit yojson menhir result ocamlformat -y
 # build vult
 cd $APPVEYOR_BUILD_FOLDER
 ls
