@@ -17,7 +17,7 @@ opam install pla containers ppx_deriving ounit yojson menhir result -y
 cd $APPVEYOR_BUILD_FOLDER
 ls
 pwd
-make
+make all
 cp _build/default/vultc.exe vultc.exe
 # install vultc from npm
 #npm install -g vult
