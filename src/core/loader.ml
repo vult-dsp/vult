@@ -97,7 +97,7 @@ module Dependencies = struct
 
   and stmt set s =
     match s.s with
-    | SStmtEmpty -> set
+    | SStmtError -> set
     | SStmtVal (d, e) -> option exp (dexp set d) e
     | SStmtMem (d, e, _) -> option exp (dexp set d) e
     | SStmtBind (_, e) -> exp set e
@@ -105,13 +105,18 @@ module Dependencies = struct
     | SStmtBlock elems -> list stmt set elems
     | SStmtIf (cond, then_, else_) -> option stmt (stmt (exp set cond) then_) else_
     | SStmtWhile (cond, s) -> stmt (exp set cond) s
-    | SStmtExternal { args; type_ = t } -> list arg (type_ set t) args
-    | SStmtFunction def -> function_def set def
-    | SStmtTypeAlias (_, t) -> type_ set t
-    | SStmtType { members } -> list (fun set (_, t, _) -> type_ set t) set members
 
 
-  let get s = Set.to_list (list stmt Set.empty s)
+  and top_stmt set s =
+    match s.top with
+    | STopError -> set
+    | STopExternal { args; type_ = t } -> list arg (type_ set t) args
+    | STopFunction def -> function_def set def
+    | STopTypeAlias (_, t) -> type_ set t
+    | STopType { members } -> list (fun set (_, t, _) -> type_ set t) set members
+
+
+  let get s = Set.to_list (list top_stmt Set.empty s)
 end
 
 (** Given a module name, it looks for a matching file in all include directories *)

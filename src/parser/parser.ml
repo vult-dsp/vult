@@ -51,15 +51,26 @@ module Stream = TokenStream (TokenKind)
 type parsed_file =
   { file : string
   ; name : string
-  ; stmts : stmt list
+  ; stmts : top_stmt list
   }
+
+let rec moveToNextTopStatement (buffer : Stream.stream) : unit =
+  match Stream.peek buffer with
+  | EOF -> ()
+  | FUN
+   |TYPE
+   |EXTERNAL ->
+      ()
+  | _ ->
+      let _ = Stream.skip buffer in
+      moveToNextTopStatement buffer
+
 
 let rec moveToNextStatement (buffer : Stream.stream) : unit =
   match Stream.peek buffer with
   | SEMI -> Stream.skip buffer
   | EOF -> ()
-  | FUN
-   |VAL
+  | VAL
    |IF
    |RET ->
       ()
@@ -718,7 +729,7 @@ and argList arg_parser (buffer : Stream.stream) =
   | _ -> []
 
 
-and stmtExternal (buffer : Stream.stream) : stmt =
+and stmtExternal (buffer : Stream.stream) : top_stmt =
   let _ = Stream.skip buffer in
   let name, start_loc = id_name buffer in
   let _ = Stream.consume buffer LPAREN in
@@ -745,7 +756,7 @@ and stmtExternal (buffer : Stream.stream) : stmt =
   in
   let _ = Stream.consume buffer SEMI in
   let attr = attr start_loc in
-  { s = SStmtExternal { name; args; type_; link_name; tags }; attr }
+  { top = STopExternal { name; args; type_; link_name; tags }; attr }
 
 
 and stmtFunctionDecl (buffer : Stream.stream) : function_def * attr =
@@ -776,12 +787,12 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * attr =
   { name; args; body; type_; next; tags; attr }, attr
 
 
-and stmtFunction (buffer : Stream.stream) : stmt =
+and stmtFunction (buffer : Stream.stream) : top_stmt =
   let def, attr = stmtFunctionDecl buffer in
-  { s = SStmtFunction def; attr }
+  { top = STopFunction def; attr }
 
 
-and stmtType (buffer : Stream.stream) : stmt =
+and stmtType (buffer : Stream.stream) : top_stmt =
   let _ = Stream.consume buffer TYPE in
   let name, start_loc = id_name buffer in
   match Stream.peek buffer with
@@ -789,12 +800,12 @@ and stmtType (buffer : Stream.stream) : stmt =
       let _ = Stream.skip buffer in
       let type_ = type_ 10 buffer in
       let _ = Stream.optConsume buffer SEMI in
-      { s = SStmtTypeAlias (name, type_); attr = attr start_loc }
+      { top = STopTypeAlias (name, type_); attr = attr start_loc }
   | LBRACE ->
       let _ = Stream.skip buffer in
       let members = type_member_list buffer in
       let _ = Stream.consume buffer RBRACE in
-      { s = SStmtType { name; members }; attr = attr start_loc }
+      { top = STopType { name; members }; attr = attr start_loc }
   | _ ->
       let got = tokenToString (Stream.current buffer) in
       let message =
@@ -841,16 +852,13 @@ and stmt (buffer : Stream.stream) : stmt =
     | RET -> stmtReturn buffer
     | IF -> stmtIf buffer
     | WHILE -> stmtWhile buffer
-    | FUN -> stmtFunction buffer
-    | TYPE -> stmtType buffer
-    | EXTERNAL -> stmtExternal buffer
     | _ -> stmtBind buffer
   with
   | ParserError error ->
       let _ = Stream.appendError buffer error in
       let _ = moveToNextStatement buffer in
       let _ = Stream.setErrors buffer true in
-      { s = SStmtEmpty; attr = attr Loc.default }
+      { s = SStmtError; attr = attr Loc.default }
 
 
 and stmtList (buffer : Stream.stream) : stmt =
@@ -876,6 +884,34 @@ and stmtList (buffer : Stream.stream) : stmt =
   | _ ->
       let s = stmt buffer in
       { s = SStmtBlock [ s ]; attr = attr s.attr.loc }
+
+
+and topStmt (buffer : Stream.stream) : top_stmt =
+  try
+    match Stream.peek buffer with
+    | FUN -> stmtFunction buffer
+    | TYPE -> stmtType buffer
+    | EXTERNAL -> stmtExternal buffer
+    | _ ->
+        let message = Printf.sprintf "Expecting a function or type declaration" in
+        raise (ParserError (Stream.makeError buffer message))
+  with
+  | ParserError error ->
+      let _ = Stream.appendError buffer error in
+      let _ = moveToNextTopStatement buffer in
+      let _ = Stream.setErrors buffer true in
+      { top = STopError; attr = attr Loc.default }
+
+
+and topstmtList (buffer : Stream.stream) : top_stmt list =
+  let rec loop acc =
+    match Stream.peek buffer with
+    | EOF -> []
+    | _ ->
+        let s = topStmt buffer in
+        loop (s :: acc)
+  in
+  List.rev (loop [])
 
 
 let parseDExp (s : string) : dexp = dexp_expression 0 (Stream.fromString s)
@@ -929,7 +965,7 @@ let parseBuffer (file : string) (buffer : Stream.stream) =
     let rec loop acc =
       match Stream.peek buffer with
       | EOF -> List.rev acc
-      | _ -> loop (stmt buffer :: acc)
+      | _ -> loop (topStmt buffer :: acc)
     in
     let stmts = loop [] in
     if Stream.hasErrors buffer then

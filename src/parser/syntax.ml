@@ -142,27 +142,14 @@ type function_def =
 [@@deriving show, eq, ord]
 
 and stmt_d =
-  | SStmtEmpty
-  | SStmtVal       of dexp * exp option
-  | SStmtMem       of dexp * exp option * tag list
-  | SStmtBind      of lexp * exp
-  | SStmtReturn    of exp
-  | SStmtBlock     of stmt list
-  | SStmtIf        of exp * stmt * stmt option
-  | SStmtWhile     of exp * stmt
-  | SStmtExternal  of
-      { name : string
-      ; args : arg list
-      ; type_ : type_
-      ; link_name : string option
-      ; tags : tag list
-      }
-  | SStmtFunction  of function_def
-  | SStmtTypeAlias of string * type_
-  | SStmtType      of
-      { name : string
-      ; members : (string * type_ * attr) list
-      }
+  | SStmtError
+  | SStmtVal    of dexp * exp option
+  | SStmtMem    of dexp * exp option * tag list
+  | SStmtBind   of lexp * exp
+  | SStmtReturn of exp
+  | SStmtBlock  of stmt list
+  | SStmtIf     of exp * stmt * stmt option
+  | SStmtWhile  of exp * stmt
 [@@deriving show, eq, ord]
 
 and stmt =
@@ -171,4 +158,27 @@ and stmt =
   }
 [@@deriving show, eq, ord]
 
-type stmts = stmt list [@@deriving show, eq, ord]
+type top_stmt_d =
+  | STopError
+  | STopExternal  of
+      { name : string
+      ; args : arg list
+      ; type_ : type_
+      ; link_name : string option
+      ; tags : tag list
+      }
+  | STopFunction  of function_def
+  | STopTypeAlias of string * type_
+  | STopType      of
+      { name : string
+      ; members : (string * type_ * attr) list
+      }
+[@@deriving show, eq, ord]
+
+and top_stmt =
+  { top : top_stmt_d
+  ; attr : attr
+  }
+[@@deriving show, eq, ord]
+
+type stmts = top_stmt list [@@deriving show, eq, ord]
