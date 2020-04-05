@@ -73,6 +73,7 @@ module Dependencies = struct
 
   let rec dexp set d =
     match d.d with
+    | SDWild -> set
     | SDId _ -> set
     | SDTuple elems -> list dexp set elems
     | SDGroup e -> dexp set e

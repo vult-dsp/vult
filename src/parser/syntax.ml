@@ -115,6 +115,7 @@ and lexp =
 [@@deriving show, eq, ord]
 
 type dexp_d =
+  | SDWild
   | SDId    of string * int option
   | SDTuple of dexp list
   | SDGroup of dexp

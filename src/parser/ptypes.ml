@@ -66,7 +66,6 @@ type token_enum =
   | TICK
   | ARROW
   | BANG
-  | TABLE
 
 type 'kind token =
   { kind : 'kind

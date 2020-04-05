@@ -51,7 +51,6 @@ let keyword_table =
       "false",FALSE;
       "and",AND;
       "external",EXTERNAL;
-      "table", TABLE;
    ] in
    let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
    table
@@ -119,7 +118,6 @@ let kindToString kind =
    | TICK  -> "'''"
    | ARROW -> "'->'"
    | BANG  -> "'!'"
-   | TABLE  -> "'table'"
 
 (** Returns a string representation of the token *)
 let tokenToString l =

@@ -165,6 +165,13 @@ let id_name (buffer : Stream.stream) : string * Loc.t =
   token.value, token.loc
 
 
+let int_value (buffer : Stream.stream) : int * Loc.t =
+  let () = Stream.expect buffer INT in
+  let token = Stream.current buffer in
+  let () = Stream.skip buffer in
+  int_of_string token.value, token.loc
+
+
 (** Parses tag expressions *)
 let rec tag (rbp : int) (buffer : Stream.stream) : tag = prattParser rbp buffer getExpLbp tag_nud tag_led
 
@@ -296,6 +303,7 @@ let rec dexp_expression (rbp : int) (buffer : Stream.stream) : dexp =
 
 and dexp_nud (buffer : Stream.stream) (token : 'kind token) : dexp =
   match token.kind with
+  | WILD -> { d = SDWild; attr = attr token.loc }
   | ID ->
       let id = token.value in
       { d = SDId (id, None); attr = attr token.loc }
@@ -344,13 +352,8 @@ and dtyped (buffer : Stream.stream) (token : 'kind token) (left : dexp) : dexp =
 
 
 and darray (buffer : Stream.stream) (token : 'kind token) (left : dexp) : dexp =
-  let size =
-    match Stream.peek buffer with
-    | INT ->
-        let token = Stream.current buffer in
-        int_of_string token.value
-    | _ -> failwith "This must be a dimmesion"
-  in
+  let size, _ = int_value buffer in
+  let () = Stream.consume buffer RBRACK in
   match left with
   | { d = SDId (id, None) } ->
       let attr = attr token.loc in
