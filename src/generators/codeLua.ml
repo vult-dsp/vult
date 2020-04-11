@@ -41,39 +41,28 @@ module Templates = struct
 
    let none code = code
 
-   let default (config : config) module_name code =
-      let get_args inputs =
-         inputs
-         |> List.map (fun s ->
-                     match s with
-                     | IContext -> "ctx"
-                     | IReal name
-                     |IInt name
-                     |IBool name ->
-                        name)
-         |> Pla.map_sep Pla.comma Pla.string
-      in
-      let process_inputs = get_args config.process_inputs in
-      let noteon_inputs = get_args config.noteon_inputs in
-      let noteoff_inputs = get_args config.noteoff_inputs in
-      let controlchange_inputs = get_args config.controlchange_inputs in
-      let nprocess_inputs = List.length config.process_inputs in
-      let nprocess_outputs = List.length config.process_outputs in
-      let nnoteon_inputs = List.length config.noteon_inputs in
-      let nnoteoff_inputs = List.length config.noteoff_inputs in
-      let ncontrolchange_inputs = List.length config.controlchange_inputs in
-      let pass_data =
-         if List.exists (fun a -> a = IContext) config.process_inputs then Pla.string "true" else Pla.string "false"
-      in
+   let get_args inputs =
+      inputs
+      |> List.map (fun s ->
+                  match s with
+                  | IContext -> "ctx"
+                  | IReal name
+                  |IInt name
+                  |IBool name ->
+                     name)
+      |> Pla.map_sep Pla.comma Pla.string
+
+
+   let env =
       {pla|
 local this = {}
-local ffi = require("ffi")
-function this.ternary(cond,then_,else_) if cond then return then_ else return else_ end end
+function this.ternary(cond,then_,else_) if cond then return then_() else return else_() end end
+function this.ternary_value(cond,then_,else_) if cond then return then_ else return else_ end end
 function this.eps()              return 1e-18; end
 function this.pi()               return 3.1415926535897932384; end
 function this.random()           return math.random(); end
 function this.irandom()          return math.floor(math.random() * 4294967296); end
-function this.clip(x,low,high)   return (this.ternary(x<low, low, this.ternary(x>high, high, x))); end
+function this.clip(x,low,high)   return (this.ternary_value(x<low, low, this.ternary(x>high, high, x))); end
 function this.real(x)            return x; end
 function this.int(x)             local int_part,_ = math.modf(x) return int_part; end
 function this.sin(x)             return math.sin(x); end
@@ -88,6 +77,24 @@ function this.set(a, i, v)       a[i+1]=v; end
 function this.get(a, i)          return a[i+1]; end
 function this.makeArray(size, v) local a = {}; for i=1,size do a[i]=v end return a; end
 function this.wrap_array(a)      return a; end
+|pla}
+
+
+   let default (config : config) module_name code =
+      let process_inputs = get_args config.process_inputs in
+      let noteon_inputs = get_args config.noteon_inputs in
+      let noteoff_inputs = get_args config.noteoff_inputs in
+      let controlchange_inputs = get_args config.controlchange_inputs in
+      let nprocess_inputs = List.length config.process_inputs in
+      let nprocess_outputs = List.length config.process_outputs in
+      let nnoteon_inputs = List.length config.noteon_inputs in
+      let nnoteoff_inputs = List.length config.noteoff_inputs in
+      let ncontrolchange_inputs = List.length config.controlchange_inputs in
+      let pass_data =
+         if List.exists (fun a -> a = IContext) config.process_inputs then Pla.string "true" else Pla.string "false"
+      in
+      {pla|
+<#env#>
 <#code#>
 function this.process(<#process_inputs#>) return this.<#module_name#s>_process(<#process_inputs#>) end
 function this.noteOn(<#noteon_inputs#>) return this.<#module_name#s>_noteOn(<#noteon_inputs#>) end
@@ -100,10 +107,80 @@ return this
 |pla}
 
 
+   let vcv (config : config) module_name code =
+      let readInputs inputs =
+         match inputs with
+         | [] -> Pla.string "processor"
+         | IContext :: args ->
+            let args =
+               Pla.string "processor"
+               :: List.mapi
+                  (fun i _ ->
+                      let i = i + 1 in
+                      {pla|(block.inputs[<#i#i>][i] / 10.0)|pla})
+                  args
+            in
+            Pla.join_sep Pla.comma args
+         | _ ->
+            let args =
+               List.mapi
+                  (fun i _ ->
+                      let i = i + 1 in
+                      {pla|(block.inputs[<#i#i>][i] / 10.0)|pla})
+                  inputs
+            in
+            Pla.join_sep Pla.comma args
+      in
+
+      let bindOutputs outputs =
+         match outputs with
+         | [] -> Pla.unit, Pla.unit
+         | [ _ ] -> {pla|block.outputs[1][i] = 10.0 * |pla}, Pla.unit
+         | _ ->
+            let bindings =
+               List.mapi
+                  (fun i _ ->
+                      let i = i + 1 in
+                      {pla|      block.outputs[<#i#i>][i] = 10.0 * processor.process_ret_<#i#i>|pla})
+                  outputs
+            in
+            Pla.unit, Pla.join_sep_all Pla.newline bindings
+      in
+      let setParameters module_name =
+         List.init 6 (fun i ->
+                     let i = i + 1 in
+                     {pla|   this.<#module_name#s>_controlChange(processor, <#i#i>, block.knobs[<#i#i>], 0)|pla})
+         |> Pla.join_sep_all Pla.newline
+      in
+      let process_inputs = readInputs config.process_inputs in
+      let process_lhs, bindings = bindOutputs config.process_outputs in
+      let set_parameters = setParameters module_name in
+      {pla|
+<#env#>
+<#code#>
+
+config.frameDivider = 1
+config.bufferSize = 32
+
+local processor = this.<#module_name#s>_process_init()
+
+function process(block)
+<#set_parameters#>
+
+   for i=1,block.bufferSize do
+      <#process_lhs#>this.<#module_name#s>_process(<#process_inputs#>)
+<#bindings#>
+   end
+end
+
+|pla}
+
+
    let apply params (module_name : string) (template : string) (code : Pla.t) : (Pla.t * FileKind.t) list =
       match template with
       | "default" -> [ default params.config module_name code, FileKind.ExtOnly "lua" ]
       | "performance" -> Performance.getLua params (default params.config module_name code)
+      | "vcv" -> [ vcv params.config module_name code, FileKind.ExtOnly "lua" ]
       | _ -> [ none code, FileKind.ExtOnly "lua" ]
 end
 
@@ -125,6 +202,16 @@ let fixContext (is_special : bool) args =
       | t -> (Ref (CTSimple "any"), "_ctx") :: t
    else
       args
+
+
+let isSimpleExp e =
+   match e with
+   | CEInt _
+   |CEFloat _
+   |CEBool _
+   |CEString _ ->
+      true
+   | _ -> false
 
 
 let rec printExp (params : params) (e : cexp) : Pla.t =
@@ -157,11 +244,16 @@ let rec printExp (params : params) (e : cexp) : Pla.t =
       let index = printExp params index in
       let e = printExp params e in
       {pla|<#e#>[<#index#>+1]|pla}
+   | CEIf (cond, then_, else_, _) when isSimpleExp then_ && isSimpleExp else_ ->
+      let cond_t = printExp params cond in
+      let then_t = printExp params then_ in
+      let else_t = printExp params else_ in
+      {pla|(ternary_value(<#cond_t#>, <#then_t#>, <#else_t#>)|pla}
    | CEIf (cond, then_, else_, _) ->
       let cond_t = printExp params cond in
       let then_t = printExp params then_ in
       let else_t = printExp params else_ in
-      {pla|(ternary(<#cond_t#>, <#then_t#>, <#else_t#>)|pla}
+      {pla|(ternary(<#cond_t#>, (function () <#then_t#> end), (function () <#else_t#> end))|pla}
    | CETuple (elems, _) ->
       let elems_t = Pla.map_sep Pla.commaspace (printJsField params) elems in
       {pla|{ <#elems_t#> }|pla}
