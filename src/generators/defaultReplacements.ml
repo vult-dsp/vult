@@ -445,7 +445,15 @@ module Lua = struct
 
    let cast = Replacements.makeCasts []
 
-   let op_to_fun = Replacements.makeOperators []
+   let op_to_fun =
+      Replacements.makeOperators
+         [ ("^", "int"), "bit.bxor"
+         ; ("&", "int"), "bit.band"
+         ; ("|", "int"), "bit.bor"
+         ; ("<<", "int"), "bit.lshift"
+         ; (">>", "int"), "bit.rshift"
+         ]
+
 
    let op_to_op =
       Replacements.makeOperators

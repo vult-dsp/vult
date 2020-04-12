@@ -612,6 +612,7 @@ let builtin_table =
    ; [ ">=" ], Scope.Operator, Typ.Const.num_num_bool (), false
    ; [ "<=" ], Scope.Operator, Typ.Const.num_num_bool (), false
    ; [ "|" ], Scope.Operator, Typ.Const.int_int_int (), false
+   ; [ "^" ], Scope.Operator, Typ.Const.int_int_int (), false
    ; [ "&" ], Scope.Operator, Typ.Const.int_int_int (), false
    ; [ ">>" ], Scope.Operator, Typ.Const.int_int_int (), false
    ; [ "<<" ], Scope.Operator, Typ.Const.int_int_int (), false

@@ -133,10 +133,7 @@ let rec equalToken t1 t2 =
    | Id n1, Id n2 when n1 = n2 -> true
    | Other n1, Other n2 when n1 = n2 -> true
    | EOF, EOF -> true
-   | _ ->
-      let msg = Printf.sprintf "%s <> %s" (tokenString t1) (tokenString t2) in
-      prerr_endline msg ;
-      false
+   | _ -> false
 
 
 let compareLine line1 line2 =

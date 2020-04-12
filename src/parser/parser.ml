@@ -125,6 +125,7 @@ let getLbp (token : 'kind token) : int =
    | OP, "|" -> 50
    | OP, "-" -> 50
    | OP, "&" -> 60
+   | OP, "^" -> 60
    | OP, "*" -> 60
    | OP, "/" -> 60
    | OP, "%" -> 60
