@@ -1,392 +1,389 @@
 
 
-local this = {}
-function this.ternary(cond,then_,else_) if cond then return then_() else return else_() end end
-function this.ternary_value(cond,then_,else_) if cond then return then_ else return else_ end end
-function this.eps()              return 1e-18; end
-function this.pi()               return 3.1415926535897932384; end
-function this.random()           return math.random(); end
-function this.irandom()          return math.floor(math.random() * 4294967296); end
-function this.clip(x,low,high)   return (this.ternary_value(x<low, low, this.ternary_value(x>high, high, x))); end
-function this.real(x)            return x; end
-function this.int(x)             local int_part,_ = math.modf(x) return int_part; end
-function this.sin(x)             return math.sin(x); end
-function this.cos(x)             return math.cos(x); end
-function this.abs(x)             return math.abs(x); end
-function this.exp(x)             return math.exp(x); end
-function this.floor(x)           return math.floor(x); end
-function this.tan(x)             return math.tan(x); end
-function this.tanh(x)            return math.tanh(x); end
-function this.sqrt(x)            return x; end
-function this.set(a, i, v)       a[i+1]=v; end
-function this.get(a, i)          return a[i+1]; end
-function this.makeArray(size, v) local a = {}; for i=1,size do a[i]=v end return a; end
-function this.wrap_array(a)      return a; end
-this.bit = bit
+function ternary(cond,then_,else_) if cond then return then_() else return else_() end end
+function ternary_value(cond,then_,else_) if cond then return then_ else return else_ end end
+function eps()              return 1e-18; end
+function pi()               return 3.1415926535897932384; end
+function random()           return math.random(); end
+function irandom()          return math.floor(math.random() * 4294967296); end
+function clip(x,low,high)   if x < low then return low else if x > high then return high else return x end end end
+function real(x)            return x; end
+function int(x)             local int_part,_ = math.modf(x) return int_part; end
+function sin(x)             return math.sin(x); end
+function cos(x)             return math.cos(x); end
+function abs(x)             return math.abs(x); end
+function exp(x)             return math.exp(x); end
+function floor(x)           return math.floor(x); end
+function tan(x)             return math.tan(x); end
+function tanh(x)            return math.tanh(x); end
+function sqrt(x)            return x; end
+function set(a, i, v)       a[i+1]=v; end
+function get(a, i)          return a[i+1]; end
+function makeArray(size, v) local a = {}; for i=1,size do a[i]=v end return a; end
+function wrap_array(a)      return a; end
 
-function this.Delay__ctx_type_0_init()
-   local _ctx = {}; 
-   _ctx.x = 0.; 
-   return _ctx; 
+function Delay__ctx_type_0_init()
+   local _ctx = {};
+   _ctx.x = 0.;
+   return _ctx;
 
 end
 
-function this.Delay_smooth_init()
-   return this.Delay__ctx_type_0_init(); 
+function Delay_smooth_init()
+   return Delay__ctx_type_0_init();
 end
 
-function this.Delay_smooth(_ctx,input)
-   _ctx.x = (_ctx.x + (0.005 * (input + (- _ctx.x)))); 
-   return _ctx.x; 
-
-end
-
-function this.Delay__ctx_type_1_init()
-   local _ctx = {}; 
-   _ctx.pre_x = 0.; 
-   return _ctx; 
+function Delay_smooth(_ctx,input)
+   _ctx.x = (_ctx.x + (0.005 * (input + (- _ctx.x))));
+   return _ctx.x;
 
 end
 
-function this.Delay_change_init()
-   return this.Delay__ctx_type_1_init(); 
-end
-
-function this.Delay_change(_ctx,x)
-   local v = (_ctx.pre_x ~= x); 
-   _ctx.pre_x = x; 
-   return v; 
+function Delay__ctx_type_1_init()
+   local _ctx = {};
+   _ctx.pre_x = 0.;
+   return _ctx;
 
 end
 
-function this.Delay__ctx_type_2_init()
-   local _ctx = {}; 
-   _ctx.pre_x = false; 
-   return _ctx; 
+function Delay_change_init()
+   return Delay__ctx_type_1_init();
+end
+
+function Delay_change(_ctx,x)
+   local v = (_ctx.pre_x ~= x);
+   _ctx.pre_x = x;
+   return v;
 
 end
 
-function this.Delay_edge_init()
-   return this.Delay__ctx_type_2_init(); 
-end
-
-function this.Delay_edge(_ctx,x)
-   local v = ((_ctx.pre_x ~= x) and (_ctx.pre_x == false)); 
-   _ctx.pre_x = x; 
-   return v; 
+function Delay__ctx_type_2_init()
+   local _ctx = {};
+   _ctx.pre_x = false;
+   return _ctx;
 
 end
 
-function this.Delay__ctx_type_3_init()
-   local _ctx = {}; 
-   _ctx.count = 0; 
-   return _ctx; 
+function Delay_edge_init()
+   return Delay__ctx_type_2_init();
+end
+
+function Delay_edge(_ctx,x)
+   local v = ((_ctx.pre_x ~= x) and (_ctx.pre_x == false));
+   _ctx.pre_x = x;
+   return v;
 
 end
 
-function this.Delay_each_init()
-   return this.Delay__ctx_type_3_init(); 
-end
-
-function this.Delay_each(_ctx,n)
-   local ret = (_ctx.count == 0); 
-   _ctx.count = ((1 + _ctx.count) % n); 
-   return ret; 
+function Delay__ctx_type_3_init()
+   local _ctx = {};
+   _ctx.count = 0;
+   return _ctx;
 
 end
 
-function this.Delay_pitchToRate(d)
-   return (0.0001854 * this.exp((0.0577623 * d))); 
+function Delay_each_init()
+   return Delay__ctx_type_3_init();
 end
 
-function this.Delay__ctx_type_5_init()
-   local _ctx = {}; 
-   _ctx.rate = 0.; 
-   _ctx.phase = 0.; 
-   _ctx._inst1d = this.Delay__ctx_type_1_init(); 
-   return _ctx; 
+function Delay_each(_ctx,n)
+   local ret = (_ctx.count == 0);
+   _ctx.count = ((1 + _ctx.count) % n);
+   return ret;
 
 end
 
-function this.Delay_phasor_init()
-   return this.Delay__ctx_type_5_init(); 
+function Delay_pitchToRate(d)
+   return (0.0001854 * exp((0.0577623 * d)));
 end
 
-function this.Delay_phasor(_ctx,pitch,reset)
-   if this.Delay_change(_ctx._inst1d,pitch) then
-      _ctx.rate = this.Delay_pitchToRate(pitch); 
+function Delay__ctx_type_5_init()
+   local _ctx = {};
+   _ctx.rate = 0.;
+   _ctx.phase = 0.;
+   _ctx._inst1d = Delay__ctx_type_1_init();
+   return _ctx;
+
+end
+
+function Delay_phasor_init()
+   return Delay__ctx_type_5_init();
+end
+
+function Delay_phasor(_ctx,pitch,reset)
+   if Delay_change(_ctx._inst1d,pitch) then
+      _ctx.rate = Delay_pitchToRate(pitch);
    end
    if reset then
-      _ctx.phase = 0.; 
+      _ctx.phase = 0.;
    else
 
-      _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.); 
+      _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.);
    end
-   return _ctx.phase; 
+   return _ctx.phase;
 
 end
 
-function this.Delay__ctx_type_6_init()
-   local _ctx = {}; 
-   _ctx.phase = 0.; 
-   _ctx._inst13e = this.Delay__ctx_type_2_init(); 
-   return _ctx; 
+function Delay__ctx_type_6_init()
+   local _ctx = {};
+   _ctx.phase = 0.;
+   _ctx._inst13e = Delay__ctx_type_2_init();
+   return _ctx;
 
 end
 
-function this.Delay_lfo_init()
-   return this.Delay__ctx_type_6_init(); 
+function Delay_lfo_init()
+   return Delay__ctx_type_6_init();
 end
 
-function this.Delay_lfo(_ctx,f,gate)
-   local rate = (0.0002268 * f); 
-   if this.Delay_edge(_ctx._inst13e,gate) then
-      _ctx.phase = 0.; 
+function Delay_lfo(_ctx,f,gate)
+   local rate = (0.0002268 * f);
+   if Delay_edge(_ctx._inst13e,gate) then
+      _ctx.phase = 0.;
    end
-   _ctx.phase = (_ctx.phase + rate); 
+   _ctx.phase = (_ctx.phase + rate);
    if (_ctx.phase > 1.) then
-      _ctx.phase = ((-1.) + _ctx.phase); 
+      _ctx.phase = ((-1.) + _ctx.phase);
    end
-   return ((-0.5) + this.sin((6.2831854 * _ctx.phase))); 
+   return ((-0.5) + sin((6.2831854 * _ctx.phase)));
 
 end
 
-function this.Delay__ctx_type_7_init()
-   local _ctx = {}; 
-   _ctx.pre_phase1 = 0.; 
-   _ctx._inst37d = this.Delay__ctx_type_5_init(); 
-   _ctx._inst295 = this.Delay__ctx_type_0_init(); 
-   _ctx._inst17d = this.Delay__ctx_type_5_init(); 
-   return _ctx; 
+function Delay__ctx_type_7_init()
+   local _ctx = {};
+   _ctx.pre_phase1 = 0.;
+   _ctx._inst37d = Delay__ctx_type_5_init();
+   _ctx._inst295 = Delay__ctx_type_0_init();
+   _ctx._inst17d = Delay__ctx_type_5_init();
+   return _ctx;
 
 end
 
-function this.Delay_phd_osc_init()
-   return this.Delay__ctx_type_7_init(); 
+function Delay_phd_osc_init()
+   return Delay__ctx_type_7_init();
 end
 
-function this.Delay_phd_osc(_ctx,pitch,detune)
-   local phase1 = this.Delay_phasor(_ctx._inst17d,pitch,false); 
-   local comp = (1. + (- phase1)); 
-   local reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5); 
-   _ctx.pre_phase1 = phase1; 
-   local phase2 = this.Delay_phasor(_ctx._inst37d,(pitch + (32. * this.Delay_smooth(_ctx._inst295,detune))),reset); 
-   local sine = this.sin((6.2831854 * phase2)); 
-   return (comp * sine); 
-
-end
-
-function this.Delay__ctx_type_8_init()
-   local _ctx = {}; 
-   _ctx.write_pos = 0; 
-   _ctx.buffer = this.makeArray(30000,0.); 
-   return _ctx; 
+function Delay_phd_osc(_ctx,pitch,detune)
+   local phase1 = Delay_phasor(_ctx._inst17d,pitch,false);
+   local comp = (1. + (- phase1));
+   local reset = ((_ctx.pre_phase1 + (- phase1)) > 0.5);
+   _ctx.pre_phase1 = phase1;
+   local phase2 = Delay_phasor(_ctx._inst37d,(pitch + (32. * Delay_smooth(_ctx._inst295,detune))),reset);
+   local sine = sin((6.2831854 * phase2));
+   return (comp * sine);
 
 end
 
-function this.Delay_delay_init()
-   return this.Delay__ctx_type_8_init(); 
+function Delay__ctx_type_8_init()
+   local _ctx = {};
+   _ctx.write_pos = 0;
+   _ctx.buffer = makeArray(30000,0.);
+   return _ctx;
+
 end
 
-function this.Delay_delay(_ctx,x,time,feedback)
-   time = this.clip(time,0.,1.); 
-   feedback = this.clip(feedback,0.,1.); 
-   local index_r = (30000. * time); 
-   local index_i = this.int(this.floor(index_r)); 
-   local delta = (_ctx.write_pos + (- index_i)); 
-   local read_pos = 0; 
+function Delay_delay_init()
+   return Delay__ctx_type_8_init();
+end
+
+function Delay_delay(_ctx,x,time,feedback)
+   time = clip(time,0.,1.);
+   feedback = clip(feedback,0.,1.);
+   local index_r = (30000. * time);
+   local index_i = int(floor(index_r));
+   local delta = (_ctx.write_pos + (- index_i));
+   local read_pos = 0;
    if (delta < 0) then
-      read_pos = (30000 + delta); 
+      read_pos = (30000 + delta);
    else
 
-      read_pos = delta; 
+      read_pos = delta;
    end
-   local decimal = (index_r + (- this.real(index_i))); 
-   local x1 = this.get(_ctx.buffer,read_pos); 
-   local x2 = this.get(_ctx.buffer,((1 + read_pos) % 30000)); 
-   local ret = (x1 + (decimal * (x2 + (- x1)))); 
-   _ctx.write_pos = ((1 + _ctx.write_pos) % 30000); 
-   this.set(_ctx.buffer,_ctx.write_pos,this.clip((x + (feedback * ret)),(-1.),1.));
-   return ret; 
+   local decimal = (index_r + (- real(index_i)));
+   local x1 = get(_ctx.buffer,read_pos);
+   local x2 = get(_ctx.buffer,((1 + read_pos) % 30000));
+   local ret = (x1 + (decimal * (x2 + (- x1))));
+   _ctx.write_pos = ((1 + _ctx.write_pos) % 30000);
+   set(_ctx.buffer,_ctx.write_pos,clip((x + (feedback * ret)),(-1.),1.));
+   return ret;
 
 end
 
-function this.Delay__ctx_type_9_init()
-   local _ctx = {}; 
-   _ctx.pre = 0; 
-   _ctx.notes = this.makeArray(4,0); 
-   _ctx.count = 0; 
-   return _ctx; 
+function Delay__ctx_type_9_init()
+   local _ctx = {};
+   _ctx.pre = 0;
+   _ctx.notes = makeArray(4,0);
+   _ctx.count = 0;
+   return _ctx;
 
 end
 
-function this.Delay_mono_noteOn_init()
-   return this.Delay__ctx_type_9_init(); 
+function Delay_mono_noteOn_init()
+   return Delay__ctx_type_9_init();
 end
 
-function this.Delay_mono_noteOn(_ctx,n)
+function Delay_mono_noteOn(_ctx,n)
    if (_ctx.count < 4) then
-      this.set(_ctx.notes,_ctx.count,n);
-      _ctx.pre = n; 
+      set(_ctx.notes,_ctx.count,n);
+      _ctx.pre = n;
       if (_ctx.count < 4) then
-         _ctx.count = (1 + _ctx.count); 
+         _ctx.count = (1 + _ctx.count);
       end
 
    end
-   return _ctx.pre; 
+   return _ctx.pre;
 
 end
 
-function this.Delay_mono_noteOff_init()
-   return this.Delay__ctx_type_9_init(); 
+function Delay_mono_noteOff_init()
+   return Delay__ctx_type_9_init();
 end
 
-function this.Delay_mono_noteOff(_ctx,n)
-   local found = false; 
-   local pos = 0; 
-   local i = 0; 
+function Delay_mono_noteOff(_ctx,n)
+   local found = false;
+   local pos = 0;
+   local i = 0;
    if (_ctx.count == 0) then
-      return _ctx.pre; 
+      return _ctx.pre;
    end
    while ((i < 4) and (found == false)) do
-      if (this.get(_ctx.notes,i) == n) then
-         pos = i; 
-         found = true; 
+      if (get(_ctx.notes,i) == n) then
+         pos = i;
+         found = true;
 
       end
-      i = (1 + i); 
+      i = (1 + i);
    end
    if found then
-      local k = (1 + pos); 
+      local k = (1 + pos);
       while (k < 4) do
-         this.set(_ctx.notes,(-1 + k),this.get(_ctx.notes,k));
-         k = (1 + k); 
+         set(_ctx.notes,(-1 + k),get(_ctx.notes,k));
+         k = (1 + k);
       end
       if (found and (_ctx.count > 0)) then
-         _ctx.count = (-1 + _ctx.count); 
-         _ctx.pre = this.get(_ctx.notes,(-1 + _ctx.count)); 
+         _ctx.count = (-1 + _ctx.count);
+         _ctx.pre = get(_ctx.notes,(-1 + _ctx.count));
 
       end
 
    end
-   return _ctx.pre; 
+   return _ctx.pre;
 
 end
 
-function this.Delay_mono_isGateOn_init()
-   return this.Delay__ctx_type_9_init(); 
+function Delay_mono_isGateOn_init()
+   return Delay__ctx_type_9_init();
 end
 
-function this.Delay_mono_isGateOn(_ctx)
-   return (_ctx.count > 0); 
+function Delay_mono_isGateOn(_ctx)
+   return (_ctx.count > 0);
 end
 
-function this.Delay__ctx_type_10_init()
-   local _ctx = {}; 
-   _ctx.volume = 0.; 
-   _ctx.time = 0.; 
-   _ctx.pitch = 0.; 
-   _ctx.notes = this.Delay__ctx_type_9_init(); 
-   _ctx.lfo_rate = 0.; 
-   _ctx.lfo_amt = 0.; 
-   _ctx.feedback = 0.; 
-   _ctx.detune = 0.; 
-   _ctx._inst686 = this.Delay__ctx_type_8_init(); 
-   _ctx._inst595 = this.Delay__ctx_type_0_init(); 
-   _ctx._inst495 = this.Delay__ctx_type_0_init(); 
-   _ctx._inst395 = this.Delay__ctx_type_0_init(); 
-   _ctx._inst2ba = this.Delay__ctx_type_7_init(); 
-   _ctx._inst15e = this.Delay__ctx_type_6_init(); 
-   return _ctx; 
+function Delay__ctx_type_10_init()
+   local _ctx = {};
+   _ctx.volume = 0.;
+   _ctx.time = 0.;
+   _ctx.pitch = 0.;
+   _ctx.notes = Delay__ctx_type_9_init();
+   _ctx.lfo_rate = 0.;
+   _ctx.lfo_amt = 0.;
+   _ctx.feedback = 0.;
+   _ctx.detune = 0.;
+   _ctx._inst686 = Delay__ctx_type_8_init();
+   _ctx._inst595 = Delay__ctx_type_0_init();
+   _ctx._inst495 = Delay__ctx_type_0_init();
+   _ctx._inst395 = Delay__ctx_type_0_init();
+   _ctx._inst2ba = Delay__ctx_type_7_init();
+   _ctx._inst15e = Delay__ctx_type_6_init();
+   return _ctx;
 
 end
 
-function this.Delay_process_init()
-   return this.Delay__ctx_type_10_init(); 
+function Delay_process_init()
+   return Delay__ctx_type_10_init();
 end
 
-function this.Delay_process(_ctx,input)
-   local gate = this.Delay_mono_isGateOn(_ctx.notes); 
-   local lfo_val = (_ctx.lfo_amt * this.Delay_lfo(_ctx._inst15e,_ctx.lfo_rate,gate)); 
-   local o1 = this.Delay_phd_osc(_ctx._inst2ba,_ctx.pitch,(_ctx.detune + lfo_val)); 
-   local amp = 0.0; 
-   local _if_7 = 0.0; 
+function Delay_process(_ctx,input)
+   local gate = Delay_mono_isGateOn(_ctx.notes);
+   local lfo_val = (_ctx.lfo_amt * Delay_lfo(_ctx._inst15e,_ctx.lfo_rate,gate));
+   local o1 = Delay_phd_osc(_ctx._inst2ba,_ctx.pitch,(_ctx.detune + lfo_val));
+   local amp = 0.0;
+   local _if_7 = 0.0;
    if gate then
-      _if_7 = 1.; 
+      _if_7 = 1.;
    else
 
-      _if_7 = 0.; 
+      _if_7 = 0.;
    end
-   amp = this.Delay_smooth(_ctx._inst395,_if_7); 
-   local osc_out = (amp * o1); 
-   local delay_out = this.Delay_delay(_ctx._inst686,osc_out,this.Delay_smooth(_ctx._inst495,_ctx.time),this.Delay_smooth(_ctx._inst595,_ctx.feedback)); 
-   return (0.5 * _ctx.volume * (delay_out + osc_out)); 
+   amp = Delay_smooth(_ctx._inst395,_if_7);
+   local osc_out = (amp * o1);
+   local delay_out = Delay_delay(_ctx._inst686,osc_out,Delay_smooth(_ctx._inst495,_ctx.time),Delay_smooth(_ctx._inst595,_ctx.feedback));
+   return (0.5 * _ctx.volume * (delay_out + osc_out));
 
 end
 
-function this.Delay_noteOn_init()
-   return this.Delay__ctx_type_10_init(); 
+function Delay_noteOn_init()
+   return Delay__ctx_type_10_init();
 end
 
-function this.Delay_noteOn(_ctx,note,velocity,channel)
-   _ctx.pitch = this.real(this.Delay_mono_noteOn(_ctx.notes,note)); 
+function Delay_noteOn(_ctx,note,velocity,channel)
+   _ctx.pitch = real(Delay_mono_noteOn(_ctx.notes,note));
 end
 
-function this.Delay_noteOff_init()
-   return this.Delay__ctx_type_10_init(); 
+function Delay_noteOff_init()
+   return Delay__ctx_type_10_init();
 end
 
-function this.Delay_noteOff(_ctx,note,channel)
-   _ctx.pitch = this.real(this.Delay_mono_noteOff(_ctx.notes,note)); 
+function Delay_noteOff(_ctx,note,channel)
+   _ctx.pitch = real(Delay_mono_noteOff(_ctx.notes,note));
 end
 
-function this.Delay_controlChange_init()
-   return this.Delay__ctx_type_10_init(); 
+function Delay_controlChange_init()
+   return Delay__ctx_type_10_init();
 end
 
-function this.Delay_controlChange(_ctx,control,value,channel)
+function Delay_controlChange(_ctx,control,value,channel)
    if (control == 30) then
-      _ctx.volume = (0.0078741 * value); 
+      _ctx.volume = (0.0078741 * value);
    end
    if (control == 31) then
-      _ctx.detune = (0.0078741 * value); 
+      _ctx.detune = (0.0078741 * value);
    end
    if (control == 32) then
-      _ctx.lfo_rate = (0.0078741 * value); 
+      _ctx.lfo_rate = (0.0078741 * value);
    end
    if (control == 33) then
-      _ctx.lfo_amt = (2. * ((-0.5) + (0.0078741 * value))); 
+      _ctx.lfo_amt = (2. * ((-0.5) + (0.0078741 * value)));
    end
    if (control == 34) then
-      _ctx.time = (0.0078741 * value); 
+      _ctx.time = (0.0078741 * value);
    end
    if (control == 35) then
-      _ctx.feedback = (0.0078741 * value); 
+      _ctx.feedback = (0.0078741 * value);
    end
 
 end
 
-function this.Delay_default_init()
-   return this.Delay__ctx_type_10_init(); 
+function Delay_default_init()
+   return Delay__ctx_type_10_init();
 end
 
-function this.Delay_default(_ctx)
-   _ctx.volume = 1.; 
-   _ctx.pitch = 45.; 
-   _ctx.detune = 0.8; 
-   _ctx.lfo_rate = 0.0700001; 
-   _ctx.lfo_amt = (-0.8); 
-   _ctx.time = 0.5; 
-   _ctx.feedback = 0.5; 
+function Delay_default(_ctx)
+   _ctx.volume = 1.;
+   _ctx.pitch = 45.;
+   _ctx.detune = 0.8;
+   _ctx.lfo_rate = 0.0700001;
+   _ctx.lfo_amt = (-0.8);
+   _ctx.time = 0.5;
+   _ctx.feedback = 0.5;
 
 end
 
 
-function this.process(ctx,input) return this.Delay_process(ctx,input) end
-function this.noteOn(ctx,note,velocity,channel) return this.Delay_noteOn(ctx,note,velocity,channel) end
-function this.noteOff(ctx,note,channel) return this.Delay_noteOff(ctx,note,channel) end
-function this.controlChange(ctx,control,value,channel) return this.Delay_controlChange(ctx,control,value,channel) end
-function this.init() return this.Delay_process_init() end
-function this.default(ctx) return this.Delay_default(ctx) end
-this.config = { inputs = 2, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
-return this
+function process(ctx,input) return Delay_process(ctx,input) end
+function noteOn(ctx,note,velocity,channel) return Delay_noteOn(ctx,note,velocity,channel) end
+function noteOff(ctx,note,channel) return Delay_noteOff(ctx,note,channel) end
+function controlChange(ctx,control,value,channel) return Delay_controlChange(ctx,control,value,channel) end
+function init() return Delay_process_init() end
+function default(ctx) return Delay_default(ctx) end
+config = { inputs = 2, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }

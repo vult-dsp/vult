@@ -55,29 +55,27 @@ module Templates = struct
 
    let env =
       {pla|
-local this = {}
-function this.ternary(cond,then_,else_) if cond then return then_() else return else_() end end
-function this.ternary_value(cond,then_,else_) if cond then return then_ else return else_ end end
-function this.eps()              return 1e-18; end
-function this.pi()               return 3.1415926535897932384; end
-function this.random()           return math.random(); end
-function this.irandom()          return math.floor(math.random() * 4294967296); end
-function this.clip(x,low,high)   return (this.ternary_value(x<low, low, this.ternary_value(x>high, high, x))); end
-function this.real(x)            return x; end
-function this.int(x)             local int_part,_ = math.modf(x) return int_part; end
-function this.sin(x)             return math.sin(x); end
-function this.cos(x)             return math.cos(x); end
-function this.abs(x)             return math.abs(x); end
-function this.exp(x)             return math.exp(x); end
-function this.floor(x)           return math.floor(x); end
-function this.tan(x)             return math.tan(x); end
-function this.tanh(x)            return math.tanh(x); end
-function this.sqrt(x)            return x; end
-function this.set(a, i, v)       a[i+1]=v; end
-function this.get(a, i)          return a[i+1]; end
-function this.makeArray(size, v) local a = {}; for i=1,size do a[i]=v end return a; end
-function this.wrap_array(a)      return a; end
-this.bit = bit
+function ternary(cond,then_,else_) if cond then return then_() else return else_() end end
+function ternary_value(cond,then_,else_) if cond then return then_ else return else_ end end
+function eps()              return 1e-18; end
+function pi()               return 3.1415926535897932384; end
+function random()           return math.random(); end
+function irandom()          return math.floor(math.random() * 4294967296); end
+function clip(x,low,high)   if x < low then return low else if x > high then return high else return x end end end
+function real(x)            return x; end
+function int(x)             local int_part,_ = math.modf(x) return int_part; end
+function sin(x)             return math.sin(x); end
+function cos(x)             return math.cos(x); end
+function abs(x)             return math.abs(x); end
+function exp(x)             return math.exp(x); end
+function floor(x)           return math.floor(x); end
+function tan(x)             return math.tan(x); end
+function tanh(x)            return math.tanh(x); end
+function sqrt(x)            return x; end
+function set(a, i, v)       a[i+1]=v; end
+function get(a, i)          return a[i+1]; end
+function makeArray(size, v) local a = {}; for i=1,size do a[i]=v end return a; end
+function wrap_array(a)      return a; end
 |pla}
 
 
@@ -97,14 +95,13 @@ this.bit = bit
       {pla|
 <#env#>
 <#code#>
-function this.process(<#process_inputs#>) return this.<#module_name#s>_process(<#process_inputs#>) end
-function this.noteOn(<#noteon_inputs#>) return this.<#module_name#s>_noteOn(<#noteon_inputs#>) end
-function this.noteOff(<#noteoff_inputs#>) return this.<#module_name#s>_noteOff(<#noteoff_inputs#>) end
-function this.controlChange(<#controlchange_inputs#>) return this.<#module_name#s>_controlChange(<#controlchange_inputs#>) end
-function this.init() return this.<#module_name#s>_process_init() end
-function this.default(ctx) return this.<#module_name#s>_default(ctx) end
-this.config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, noteon_inputs = <#nnoteon_inputs#i>, noteoff_inputs = <#nnoteoff_inputs#i>, controlchange_inputs = <#ncontrolchange_inputs#i>, is_active = <#pass_data#> }
-return this
+function process(<#process_inputs#>) return <#module_name#s>_process(<#process_inputs#>) end
+function noteOn(<#noteon_inputs#>) return <#module_name#s>_noteOn(<#noteon_inputs#>) end
+function noteOff(<#noteoff_inputs#>) return <#module_name#s>_noteOff(<#noteoff_inputs#>) end
+function controlChange(<#controlchange_inputs#>) return <#module_name#s>_controlChange(<#controlchange_inputs#>) end
+function init() return <#module_name#s>_process_init() end
+function default(ctx) return <#module_name#s>_default(ctx) end
+config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, noteon_inputs = <#nnoteon_inputs#i>, noteoff_inputs = <#nnoteoff_inputs#i>, controlchange_inputs = <#ncontrolchange_inputs#i>, is_active = <#pass_data#> }
 |pla}
 
 
@@ -150,7 +147,7 @@ return this
       let setParameters module_name =
          List.init 6 (fun i ->
                      let i = i + 1 in
-                     {pla|   this.<#module_name#s>_controlChange(processor, <#i#i>, block.knobs[<#i#i>], 0)|pla})
+                     {pla|   <#module_name#s>_controlChange(processor, <#i#i>, block.knobs[<#i#i>], 0)|pla})
          |> Pla.join_sep_all Pla.newline
       in
       let process_inputs = readInputs config.process_inputs in
@@ -163,13 +160,13 @@ return this
 config.frameDivider = 1
 config.bufferSize = 32
 
-local processor = this.<#module_name#s>_process_init()
+local processor = <#module_name#s>_process_init()
 
 function process(block)
 <#set_parameters#>
 
    for i=1,block.bufferSize do
-      <#process_lhs#>this.<#module_name#s>_process(<#process_inputs#>)
+      <#process_lhs#><#module_name#s>_process(<#process_inputs#>)
 <#bindings#>
    end
 end
@@ -232,7 +229,7 @@ let rec printExp (params : params) (e : cexp) : Pla.t =
       {pla|(not <#arg_t#>)|pla}
    | CECall (name, args, _) ->
       let args_t = Pla.map_sep Pla.comma (printExp params) args in
-      {pla|this.<#name#s>(<#args_t#>)|pla}
+      {pla|<#name#s>(<#args_t#>)|pla}
    | CEUnOp (op, e, _) ->
       let e_t = printExp params e in
       {pla|(<#op#s> <#e_t#>)|pla}
@@ -276,9 +273,9 @@ let printLhsExpTuple (var : Pla.t) (is_var : bool) (i : int) (e : clhsexp) : Pla
    | CLId (_, name) ->
       let name = dot name in
       if is_var then
-         {pla|local <#name#> = <#var#>.field_<#i#i>; |pla}
+         {pla|local <#name#> = <#var#>.field_<#i#i>;|pla}
       else
-         {pla|<#name#> = <#var#>.field_<#i#i>; |pla}
+         {pla|<#name#> = <#var#>.field_<#i#i>;|pla}
    | CLWild -> Pla.unit
    | _ -> failwith "printLhsExp: All other cases should be already covered"
 
@@ -296,7 +293,7 @@ let rec getInitValue (descr : type_descr) : Pla.t =
          let elems = CCList.init size (fun _ -> init) |> Pla.join_sep Pla.comma in
          {pla|{<#elems#>}|pla}
       else
-         {pla|this.makeArray(<#size#i>,<#init#>)|pla}
+         {pla|makeArray(<#size#i>,<#init#>)|pla}
    | _ -> Pla.string "{}"
 
 
@@ -328,24 +325,24 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
    | CSVar (CLId (typ, name), None) ->
       let init = getInitValue typ in
       let name = dot name in
-      Some {pla|local <#name#> = <#init#>; |pla}
+      Some {pla|local <#name#> = <#init#>;|pla}
    | CSVar (CLIndex (typ, name, _), None) ->
       let init = getInitValue typ in
       let name = dot name in
-      Some {pla|local <#name#> = <#init#>; |pla}
+      Some {pla|local <#name#> = <#init#>;|pla}
    | CSVar (CLTuple _, _) -> failwith "CodeLua.printStmt: invalid tuple assign"
    | CSVar (CLId (_, name), Some value) ->
       let value_t = printExp params value in
       let name = dot name in
-      Some {pla|local <#name#> = <#value_t#>; |pla}
+      Some {pla|local <#name#> = <#value_t#>;|pla}
    | CSVar (_, _) -> failwith "printStmt: invalid variable declaration"
    | CSConst (CLId (_, name), value) ->
       let value_t = printExp params value in
       let name = dot name in
-      Some {pla|local <#name#> = <#value_t#>; |pla}
+      Some {pla|local <#name#> = <#value_t#>;|pla}
    | CSConst (CLWild, value) ->
       let value_t = printExp params value in
-      Some {pla|<#value_t#>; |pla}
+      Some {pla|<#value_t#>;|pla}
    | CSConst (CLTuple elems, ((CEVar _ | CEAccess _) as rhs)) ->
       let rhs = printExp params rhs in
       List.mapi (printLhsExpTuple rhs true) elems |> Pla.join |> fun a -> Some a
@@ -358,25 +355,25 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
    | CSBind (CLId (_, name), value) ->
       let value_t = printExp params value in
       let name = dot name in
-      Some {pla|<#name#> = <#value_t#>; |pla}
+      Some {pla|<#name#> = <#value_t#>;|pla}
    | CSBind (CLIndex (_, name, index), value) ->
       let value_t = printExp params value in
       let name = dot name in
       let index = printExp params index in
-      Some {pla|<#name#>[<#index#>+1] = <#value_t#>; |pla}
+      Some {pla|<#name#>[<#index#>+1] = <#value_t#>;|pla}
    | CSFunction (_, name, args, (CSBlock _ as body), _) ->
       (* if the function has any of the special names add the ctx argument *)
       let args = fixContext (isSpecial params name) args in
       let args_t = Pla.map_sep Pla.comma (fun (_, a) -> Pla.string a) args in
       let body_t = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
-      Some {pla|function this.<#name#s>(<#args_t#>)<#body_t#+><#>end<#>|pla}
+      Some {pla|function <#name#s>(<#args_t#>)<#body_t#+><#>end<#>|pla}
    | CSFunction (_, name, args, body, _) ->
       let args_t = Pla.map_sep Pla.comma (fun (_, a) -> Pla.string a) args in
       let body_t = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
-      Some {pla|function this.<#name#s>(<#args_t#>)<#body_t#+><#>end<#>|pla}
+      Some {pla|function <#name#s>(<#args_t#>)<#body_t#+><#>end<#>|pla}
    | CSReturn e1 ->
       let e_t = printExp params e1 in
-      Some {pla|return <#e_t#>; |pla}
+      Some {pla|return <#e_t#>;|pla}
    | CSWhile (cond, body) ->
       let cond_t = printExp params cond in
       let body_t = CCOpt.get_or ~default:Pla.semi (printStmt params body) in

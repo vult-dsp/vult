@@ -1,63 +1,60 @@
 
 
-local this = {}
-function this.ternary(cond,then_,else_) if cond then return then_() else return else_() end end
-function this.ternary_value(cond,then_,else_) if cond then return then_ else return else_ end end
-function this.eps()              return 1e-18; end
-function this.pi()               return 3.1415926535897932384; end
-function this.random()           return math.random(); end
-function this.irandom()          return math.floor(math.random() * 4294967296); end
-function this.clip(x,low,high)   return (this.ternary_value(x<low, low, this.ternary_value(x>high, high, x))); end
-function this.real(x)            return x; end
-function this.int(x)             local int_part,_ = math.modf(x) return int_part; end
-function this.sin(x)             return math.sin(x); end
-function this.cos(x)             return math.cos(x); end
-function this.abs(x)             return math.abs(x); end
-function this.exp(x)             return math.exp(x); end
-function this.floor(x)           return math.floor(x); end
-function this.tan(x)             return math.tan(x); end
-function this.tanh(x)            return math.tanh(x); end
-function this.sqrt(x)            return x; end
-function this.set(a, i, v)       a[i+1]=v; end
-function this.get(a, i)          return a[i+1]; end
-function this.makeArray(size, v) local a = {}; for i=1,size do a[i]=v end return a; end
-function this.wrap_array(a)      return a; end
-this.bit = bit
+function ternary(cond,then_,else_) if cond then return then_() else return else_() end end
+function ternary_value(cond,then_,else_) if cond then return then_ else return else_ end end
+function eps()              return 1e-18; end
+function pi()               return 3.1415926535897932384; end
+function random()           return math.random(); end
+function irandom()          return math.floor(math.random() * 4294967296); end
+function clip(x,low,high)   if x < low then return low else if x > high then return high else return x end end end
+function real(x)            return x; end
+function int(x)             local int_part,_ = math.modf(x) return int_part; end
+function sin(x)             return math.sin(x); end
+function cos(x)             return math.cos(x); end
+function abs(x)             return math.abs(x); end
+function exp(x)             return math.exp(x); end
+function floor(x)           return math.floor(x); end
+function tan(x)             return math.tan(x); end
+function tanh(x)            return math.tanh(x); end
+function sqrt(x)            return x; end
+function set(a, i, v)       a[i+1]=v; end
+function get(a, i)          return a[i+1]; end
+function makeArray(size, v) local a = {}; for i=1,size do a[i]=v end return a; end
+function wrap_array(a)      return a; end
 
-function this.Log_test_print()
-   this.log(1);
-   this.log(2.);
-   this.log("leonardo");
-   this.log(true);
+function Log_test_print()
+   log(1);
+   log(2.);
+   log("leonardo");
+   log(true);
 
 end
 
-function this.Log_process(input)
-   return input; 
+function Log_process(input)
+   return input;
 end
 
-function this.Log_noteOn(_ctx,note,velocity,channel)
-
-end
-
-function this.Log_noteOff(_ctx,note,channel)
+function Log_noteOn(_ctx,note,velocity,channel)
 
 end
 
-function this.Log_controlChange(_ctx,control,value,channel)
+function Log_noteOff(_ctx,note,channel)
 
 end
 
-function this.Log_default(_ctx)
+function Log_controlChange(_ctx,control,value,channel)
+
+end
+
+function Log_default(_ctx)
 
 end
 
 
-function this.process(input) return this.Log_process(input) end
-function this.noteOn(note,velocity,channel) return this.Log_noteOn(note,velocity,channel) end
-function this.noteOff(note,channel) return this.Log_noteOff(note,channel) end
-function this.controlChange(control,value,channel) return this.Log_controlChange(control,value,channel) end
-function this.init() return this.Log_process_init() end
-function this.default(ctx) return this.Log_default(ctx) end
-this.config = { inputs = 1, outputs = 1, noteon_inputs = 3, noteoff_inputs = 2, controlchange_inputs = 3, is_active = false }
-return this
+function process(input) return Log_process(input) end
+function noteOn(note,velocity,channel) return Log_noteOn(note,velocity,channel) end
+function noteOff(note,channel) return Log_noteOff(note,channel) end
+function controlChange(control,value,channel) return Log_controlChange(control,value,channel) end
+function init() return Log_process_init() end
+function default(ctx) return Log_default(ctx) end
+config = { inputs = 1, outputs = 1, noteon_inputs = 3, noteoff_inputs = 2, controlchange_inputs = 3, is_active = false }
