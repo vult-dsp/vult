@@ -81,15 +81,14 @@ let reportErrorString (error : t) : string =
 let reportErrors (errors : t list) : string = List.map reportErrorString errors |> String.concat "\n"
 
 (** Returns a tuple with the error an all its information *)
-let reportErrorStringNoLoc (error : t) : string * string * int * int =
+let reportErrorStringNoLoc (error : t) : string * string * string * int * int =
    match error with
    | PointedError (location, msg) ->
       let col_start = Loc.startColumn location in
       let line = getErrorLines location in
       let indicator = errorLocationIndicator line location in
-      let full_msg = msg ^ "\n" ^ indicator in
-      full_msg, Loc.file location, Loc.line location, col_start
-   | SimpleError msg -> msg, "-", 0, 0
+      msg, indicator, Loc.file location, Loc.line location, col_start
+   | SimpleError msg -> msg, "", "-", 0, 0
 
 
 (** Joins two errors *)

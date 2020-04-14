@@ -297,8 +297,8 @@ module ErrorTest = struct
              | Errors e ->
                 List.map
                    (fun a ->
-                       let msg, _, _, _ = Error.reportErrorStringNoLoc a in
-                       msg)
+                       let msg, indicator, _, _, _ = Error.reportErrorStringNoLoc a in
+                       msg ^ "\n" ^ indicator)
                    e
                 @ s
              | _ -> s)

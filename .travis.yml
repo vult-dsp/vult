@@ -24,6 +24,7 @@ deploy:
     - vultweb.js
     - vultlib.js
     - vultc.js
+    - vultc.h
   on:
     repo: modlfo/vult
     tags: true

@@ -40,8 +40,8 @@ let generateJSCode s =
       let error_strings =
          List.map
             (fun error ->
-                let msg, _, _, _ = Error.reportErrorStringNoLoc error in
-                msg)
+                let msg, indicator, _, _, _ = Error.reportErrorStringNoLoc error in
+                msg ^ "\n" ^ indicator)
             errors
          |> String.concat "\n"
       in
@@ -50,9 +50,9 @@ let generateJSCode s =
 
 
 let makeAceError (e : Error.t) =
-   let msg, _, line, col = Error.reportErrorStringNoLoc e in
+   let msg, indicator, _, line, col = Error.reportErrorStringNoLoc e in
    Js.Unsafe.obj
-      [| "text", Js.Unsafe.inject (Js.string msg)
+      [| "text", Js.Unsafe.inject (Js.string (msg ^ "\n" ^ indicator))
        ; "row", Js.Unsafe.inject (Js.string (string_of_int (line - 1)))
        ; "column", Js.Unsafe.inject (Js.string (string_of_int (col - 1)))
        ; "type", Js.Unsafe.inject (Js.string "error")

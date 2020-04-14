@@ -42,7 +42,7 @@ module VM = struct
 
    let show_instr i =
       match i with
-      | PushReal v -> string_of_float v ^ "f -> $"
+      | PushReal v -> Float.to_string v ^ "f -> $"
       | PushInt v -> string_of_int v ^ " -> $"
       | PushBool v -> (if v then "true" else "false") ^ " -> $"
       | PushString v -> "\"" ^ v ^ "\" -> $"
@@ -115,7 +115,7 @@ module VM = struct
 
    let show_value value =
       match value with
-      | Real n -> string_of_float n
+      | Real n -> Float.to_string n
       | Bool n -> if n then "true" else "false"
       | Int n -> string_of_int n
       | String n -> "'" ^ n ^ "'"

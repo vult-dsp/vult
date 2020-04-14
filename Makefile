@@ -1,6 +1,6 @@
 PREFIX ?= /usr/local/bin
 
-VULT_SRC = $(wildcard src/*.ml) $(wildcard src/core/*.ml) $(wildcard src/generators/*.ml) $(wildcard src/js/*.ml) $(wildcard src/parser/*.ml) $(wildcard src/passes/*.ml) $(wildcard src/util/*.ml) $(wildcard test/*.ml)
+VULT_SRC := $(shell find src -type f -name "*.ml") $(shell find test -type f -name "*.ml")
 
 OCB = ocamlbuild -j 4 -use-ocamlfind
 
@@ -37,6 +37,10 @@ web:
 			js_of_ocaml vultweb.byte
 			sed -i -e "s/this.fs=require(..)/this.fs=null/g" vultweb.js
 
+vultc_h: web
+			$(OCB) src/util/make_h.native
+			./make_h.native vultweb.js vultc.h
+
 test: compiler jscompiler
 			$(OCB) test/test.native
 			./test.native -runner sequential -shards 1
@@ -67,11 +71,11 @@ version :
 			@git describe --tags --abbrev=0 >> src/version.ml
 			@echo "\"" >> src/version.ml
 
-all: 		compiler js test web jscompiler
+all: 		compiler js test web vultc_h jscompiler
 
 clean:
 			$(OCB) -clean
-			rm -f vultc.js vultweb.js vultlib.js
+			rm -f vultc.js vultweb.js vultlib.js vultc.h
 			rm -f bisect*.out
 			rm -rf bisect_coverage
 

@@ -93,7 +93,7 @@ let tokenString t =
    match t with
    | Id s -> s
    | Int i -> Int64.to_string i
-   | Float f -> string_of_float f
+   | Float f -> Float.to_string f
    | Other s -> s
    | Hex i -> string_of_int i
    | EOF -> ""

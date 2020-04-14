@@ -149,7 +149,7 @@ module Configuration = struct
       | StmtFun ([ cname; "process" ], args, _, Some rettype, attr) when conf.module_name = cname ->
          let process_inputs, process_outputs = List.map (getType repl) args |> passData in
          let process_outputs = getOutputsOrDefault process_outputs attr.loc rettype in
-         let state' = Env.set state ({ conf with process_inputs; process_outputs }, repl) in
+         let state' = Env.set state ({ conf with process_inputs; process_outputs; process_found = true }, repl) in
          state', stmt
       | StmtFun ([ cname; "noteOn" ], args, _, _, attr) when conf.module_name = cname ->
          let noteon_inputs, _ = List.map (getType repl) args |> passData in
@@ -170,6 +170,11 @@ module Configuration = struct
          let default_inputs, _ = List.map (getType repl) args |> passData in
          let () = checkDefault attr.loc default_inputs in
          let state' = Env.set state ({ conf with default_inputs }, repl) in
+         state', stmt
+      | StmtFun ([ cname; "update" ], args, _, Some rettype, attr) when conf.module_name = cname ->
+         let update_inputs, update_outputs = List.map (getType repl) args |> passData in
+         let update_outputs = getOutputsOrDefault update_outputs attr.loc rettype in
+         let state' = Env.set state ({ conf with update_inputs; update_outputs; update_found = true }, repl) in
          state', stmt
       | _ -> state, stmt
 
@@ -240,10 +245,57 @@ let generateLua (args : args) (params : params) (used : used_function Maps.IdMap
    CodeLua.print params clike_stmts
 
 
+let checksForVCVPrototype (config : config) (args : args) =
+   let removeContext inputs =
+      match inputs with
+      | IContext :: t -> t
+      | t -> t
+   in
+   if args.code = LuaCode && args.template = "vcv-prototype" then
+      let () =
+         if not config.process_found then
+            let msg = "The script requires the functions:\nfun process() { } \nand update() { }" in
+            Error.raiseErrorMsg msg
+      in
+      let () =
+         if List.length config.process_outputs > 6 then
+            let msg = "The 'process' function can have at most 6 outputs" in
+            Error.raiseErrorMsg msg
+      in
+      let () =
+         let inputs = removeContext config.process_inputs in
+         if List.length inputs > 6 then
+            let msg = "The 'process' function can have at most 6 inputs" in
+            Error.raiseErrorMsg msg
+      in
+      let () =
+         if not config.update_found then
+            let msg = "The script requires the functions:\nfun process() { } \nand update() { }" in
+            Error.raiseErrorMsg msg
+      in
+      let () =
+         if List.length config.update_outputs > 0 then
+            let msg = "The 'update' function should not return any value" in
+            Error.raiseErrorMsg msg
+      in
+      let () =
+         let inputs = removeContext config.update_inputs in
+         if List.length inputs > 0 then
+            let msg = "The 'update' function should not take any input" in
+            Error.raiseErrorMsg msg
+      in
+      ()
+
+
 let checkConfig (config : config) (args : args) =
-   if (args.code = CCode && args.template <> "default") || args.code = LuaCode || args.code = JSCode then
+   let () = checksForVCVPrototype config args in
+   if
+      (args.code = CCode && args.template <> "default")
+      || (args.code = LuaCode && args.template <> "vcv-prototype")
+      || args.code = JSCode
+   then
       if
-         config.process_outputs = []
+         config.process_found = false
          || config.noteon_inputs = []
          || config.noteoff_inputs = []
          || config.controlchange_inputs = []

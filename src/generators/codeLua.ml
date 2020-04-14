@@ -106,6 +106,11 @@ config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, noteo
 
 
    let vcv (config : config) module_name code =
+      let init_processor =
+         match config.process_inputs with
+         | IContext :: _ -> {pla|local processor = <#module_name#s>_process_init()|pla}
+         | _ -> Pla.unit
+      in
       let readInputs inputs =
          match inputs with
          | [] -> Pla.string "processor"
@@ -144,26 +149,69 @@ config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, noteo
             in
             Pla.unit, Pla.join_sep_all Pla.newline bindings
       in
-      let setParameters module_name =
-         List.init 6 (fun i ->
-                     let i = i + 1 in
-                     {pla|   <#module_name#s>_controlChange(processor, <#i#i>, block.knobs[<#i#i>], 0)|pla})
-         |> Pla.join_sep_all Pla.newline
-      in
       let process_inputs = readInputs config.process_inputs in
       let process_lhs, bindings = bindOutputs config.process_outputs in
-      let set_parameters = setParameters module_name in
       {pla|
+local global_block = {}
+
+function stringAppend(s1, s2)
+  return s1 .. s2
+end
+
+function string(n)
+   return tostring(n)
+end
+
+function getKnob(i)
+  if i > 6 or i < 1 then
+    return 0.0
+  else
+    return global_block.knobs[i]
+  end
+end
+
+function getSwitch(i)
+  if i > 6 or i < 1 then
+    return false
+  else
+    return global_block.switch[i]
+  end
+end
+
+function setLight(i, r, g ,b)
+  if not(i > 6 or i < 1) then
+    global_block.lights[i][1] = r
+    global_block.lights[i][2] = g
+    global_block.lights[i][3] = b
+  end
+end
+
+function setSwitchLight(i, r, g ,b)
+  if not(i > 6 or i < 1) then
+    global_block.switchLights[i][1] = r
+    global_block.switchLights[i][2] = g
+    global_block.switchLights[i][3] = b
+  end
+end
+
+function samplerate()
+  return global_block.sampleRate
+end
+
+function sampletime()
+  return global_block.sampleTime
+end
+
 <#env#>
 <#code#>
 
 config.frameDivider = 1
 config.bufferSize = 32
 
-local processor = <#module_name#s>_process_init()
+<#init_processor#>
 
 function process(block)
-<#set_parameters#>
+   global_block = block
 
    for i=1,block.bufferSize do
       <#process_lhs#><#module_name#s>_process(<#process_inputs#>)
@@ -178,18 +226,21 @@ end
       match template with
       | "default" -> [ default params.config module_name code, FileKind.ExtOnly "lua" ]
       | "performance" -> Performance.getLua params (default params.config module_name code)
-      | "vcv" -> [ vcv params.config module_name code, FileKind.ExtOnly "lua" ]
+      | "vcv-prototype" -> [ vcv params.config module_name code, FileKind.ExtOnly "lua" ]
       | _ -> [ none code, FileKind.ExtOnly "lua" ]
 end
 
 let isSpecial (params : params) (name : string) : bool =
-   match name with
-   | _ when name = params.module_name ^ "_process" -> true
-   | _ when name = params.module_name ^ "_noteOn" -> true
-   | _ when name = params.module_name ^ "_noteOff" -> true
-   | _ when name = params.module_name ^ "_controlChange" -> true
-   | _ when name = params.module_name ^ "_default" -> true
-   | _ -> false
+   if params.template <> "vcv-prototype" then
+      match name with
+      | _ when name = params.module_name ^ "_process" -> true
+      | _ when name = params.module_name ^ "_noteOn" -> true
+      | _ when name = params.module_name ^ "_noteOff" -> true
+      | _ when name = params.module_name ^ "_controlChange" -> true
+      | _ when name = params.module_name ^ "_default" -> true
+      | _ -> false
+   else
+      false
 
 
 let fixContext (is_special : bool) args =

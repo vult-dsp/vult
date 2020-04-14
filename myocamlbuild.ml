@@ -25,24 +25,25 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  * For more information, please refer to <http://unlicense.org/>
- *)
+*)
 
 open Ocamlbuild_plugin
 
 let _environment_variable = "BISECT_COVERAGE"
+
 let _enable = "YES"
 
 let handle_coverage () =
    if getenv ~default:"" _environment_variable <> _enable then
       ()
    else begin
-      print_endline "Building for coverage";
-      flag ["ocaml"; "compile"] (S [A "-package"; A "bisect_ppx"]);
-      flag ["ocaml"; "link"] (S [A "-package"; A "bisect_ppx"])
+      print_endline "Building for coverage" ;
+      flag [ "ocaml"; "compile" ] (S [ A "-package"; A "bisect_ppx" ]) ;
+      flag [ "ocaml"; "link" ] (S [ A "-package"; A "bisect_ppx" ])
    end
-;;
 
-dispatch
-   (function
-      | After_rules -> handle_coverage ()
-      | _ -> ())
+
+;;
+dispatch (function
+            | After_rules -> handle_coverage ()
+            | _ -> ())

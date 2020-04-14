@@ -149,8 +149,15 @@ let rec exhaustPass pass (env, results) =
       env, results
 
 
+let getExtensions (args : Args.args) =
+   match args with
+   | { code = LuaCode; template = "vcv-prototype" } -> Some `VCVPrototype
+   | _ -> None
+
+
 let passesAll args ?(options = default_options) results =
-   let env = Env.empty (PassData.empty args) in
+   let extensions = getExtensions args in
+   let env = Env.empty ~extensions (PassData.empty args) in
    (env, results)
    |> exhaustPass inferPassAll
    |> exhaustPass (pass1All options)

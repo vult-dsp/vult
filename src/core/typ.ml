@@ -441,6 +441,8 @@ module Const = struct
 
    let num_fix16 () = num_type () |-> fix16_type
 
+   let num_string () = num_type () |-> string_type
+
    let array_size () =
       let a = ref (TUnbound ("'a", None, None)) in
       let size = ref (TUnbound ("'size", None, None)) in

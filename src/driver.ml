@@ -73,30 +73,6 @@ let checkCode (args : args) (parser_results : parser_results list) : output list
       []
 
 
-(*
-   let generateLuaCode (files:string list) : string =
-   let args = { default_arguments with files; luacode = true } in
-   let parsed = Loader.loadFiles args files in
-   match Generate.generateCode parsed args with
-   | [code_tpl, _] ->
-   let code = Pla.print code_tpl |> String.escaped in
-   Pla.print [%pla{|return { error = {}, code = "<#code#s>" } |}]
-   | _ ->
-   Pla.print  [%pla{|return { error = {}, code = "" }|}]
-   | exception Error.Errors(errors) ->
-   let makeErrorObject error =
-   let msg, file, line, col = Error.reportErrorStringNoLoc error in
-   let msg = String.escaped msg in
-   [%pla{|{ msg = "<#msg#s>", file = "<#file#s>", line = <#line#i>, col = <#col#i>}|}]
-   in
-   let error =
-   Pla.map_sep Pla.comma makeErrorObject errors
-   |> Pla.wrap (Pla.string "{") (Pla.string "}")
-   in
-   Pla.print  [%pla{|return { error = <#error#>, code = "" }|}]
-
-*)
-
 let version = String.sub Version.version 1 (String.length Version.version - 2)
 
 let main (args : args) : output list =

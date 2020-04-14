@@ -35,6 +35,8 @@ class type error =
    object
       method msg : Js.js_string Js.t Js.readonly_prop
 
+      method indicator : Js.js_string Js.t Js.readonly_prop
+
       method file : Js.js_string Js.t Js.readonly_prop
 
       method line : int Js.readonly_prop
@@ -94,9 +96,11 @@ let new_object () = Js.Unsafe.coerce (object%js end)
 (** Converts the Vult errors to a Js form *)
 let convertOutputErrors errors =
    let makeErrorObject error : error Js.t =
-      let msg, file, line, col = Error.reportErrorStringNoLoc error in
+      let msg, indicator, file, line, col = Error.reportErrorStringNoLoc error in
       object%js
          val msg = Js.string msg
+
+         val indicator = Js.string indicator
 
          val file = Js.string file
 

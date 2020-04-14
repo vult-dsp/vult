@@ -9,3 +9,5 @@ vultc.js
 .vscode/.browse.VC.db
 .vscode/launch.json
 /vultlib.js
+/vultc_h.h
+/vultc.h

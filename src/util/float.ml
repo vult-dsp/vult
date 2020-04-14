@@ -24,7 +24,7 @@
 
 let reduce_precision = ref false
 
-let to_string (f : float) = string_of_float f
+let to_string (f : float) = CCString.map (fun c -> if c = ',' then '.' else c) (string_of_float f)
 
 let crop (f : float) =
    if !reduce_precision then

@@ -21,20 +21,21 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 *)
-open Lexing
+
 (** Type to hold the location *)
+open Lexing
 
 (** Source of the code *)
 type source =
    | File of string
    | Text of string
 
+(** Location information *)
 type t =
    { start_pos : position
    ; end_pos : position
    ; source : source
    }
-(** Location information *)
 
 let pp fmt _ = Format.pp_print_string fmt "loc"
 

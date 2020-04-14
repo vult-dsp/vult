@@ -570,65 +570,86 @@ module Scope = struct
    let insideIf (t : t) : bool = !(t.in_if)
 end
 
-let builtin_table =
-   [ [ "int" ], Scope.Type, Typ.Const.type_type, true
-   ; [ "real" ], Scope.Type, Typ.Const.type_type, true
-   ; [ "bool" ], Scope.Type, Typ.Const.type_type, true
-   ; [ "unit" ], Scope.Type, Typ.Const.type_type, true
-   ; [ "string" ], Scope.Type, Typ.Const.type_type, true
-   ; [ "abstract" ], Scope.Type, Typ.Const.type_type, true
-   ; [ "fix16" ], Scope.Type, Typ.Const.type_type, true
-   ; [ "wrap_array" ], Scope.Function, Typ.Const.wrap_array (), true
-   ; [ "set" ], Scope.Function, Typ.Const.array_set (), false
-   ; [ "get" ], Scope.Function, Typ.Const.array_get (), false
-   ; [ "size" ], Scope.Function, Typ.Const.array_size (), false
-   ; [ "makeArray" ], Scope.Function, Typ.Const.array_make (), false
-   ; [ "abs" ], Scope.Function, Typ.Const.freal_freal (), false
-   ; [ "exp" ], Scope.Function, Typ.Const.freal_freal (), false
-   ; [ "log10" ], Scope.Function, Typ.Const.freal_freal (), false
-   ; [ "sin" ], Scope.Function, Typ.Const.freal_freal (), false
-   ; [ "cos" ], Scope.Function, Typ.Const.freal_freal (), false
-   ; [ "floor" ], Scope.Function, Typ.Const.freal_freal (), false
-   ; [ "tanh" ], Scope.Function, Typ.Const.freal_freal (), false
-   ; [ "pow" ], Scope.Function, Typ.Const.real_real_real (), false
-   ; [ "cosh" ], Scope.Function, Typ.Const.freal_freal (), false
-   ; [ "sinh" ], Scope.Function, Typ.Const.freal_freal (), false
-   ; [ "tan" ], Scope.Function, Typ.Const.freal_freal (), false
-   ; [ "sqrt" ], Scope.Function, Typ.Const.freal_freal (), false
-   ; [ "clip" ], Scope.Function, Typ.Const.a_a_a_a (), false
-   ; [ "int" ], Scope.Function, Typ.Const.num_int (), false
-   ; [ "real" ], Scope.Function, Typ.Const.num_real (), false
-   ; [ "fix16" ], Scope.Function, Typ.Const.num_fix16 (), false
-   ; [ "|-|" ], Scope.Operator, Typ.Const.num_num (), false
-   ; [ "+" ], Scope.Operator, Typ.Const.num_num_num (), false
-   ; [ "-" ], Scope.Operator, Typ.Const.num_num_num (), false
-   ; [ "*" ], Scope.Operator, Typ.Const.num_num_num (), false
-   ; [ "/" ], Scope.Operator, Typ.Const.num_num_num (), false
-   ; [ "%" ], Scope.Operator, Typ.Const.num_num_num (), false
-   ; [ ">" ], Scope.Operator, Typ.Const.num_num_bool (), false
-   ; [ "<" ], Scope.Operator, Typ.Const.num_num_bool (), false
-   ; [ "==" ], Scope.Operator, Typ.Const.a_a_bool (), false
-   ; [ "<>" ], Scope.Operator, Typ.Const.a_a_bool (), false
-   ; [ ">=" ], Scope.Operator, Typ.Const.num_num_bool (), false
-   ; [ "<=" ], Scope.Operator, Typ.Const.num_num_bool (), false
-   ; [ "|" ], Scope.Operator, Typ.Const.int_int_int (), false
-   ; [ "^" ], Scope.Operator, Typ.Const.int_int_int (), false
-   ; [ "&" ], Scope.Operator, Typ.Const.int_int_int (), false
-   ; [ ">>" ], Scope.Operator, Typ.Const.int_int_int (), false
-   ; [ "<<" ], Scope.Operator, Typ.Const.int_int_int (), false
-   ; [ "not" ], Scope.Function, Typ.Const.bool_bool (), false
-   ; [ "||" ], Scope.Operator, Typ.Const.bool_bool_bool (), false
-   ; [ "&&" ], Scope.Operator, Typ.Const.bool_bool_bool (), false
-   ; [ "eps" ], Scope.Function, Typ.Const.real_type, false
-   ; [ "pi" ], Scope.Function, Typ.Const.real_type, false
-   ; [ "random" ], Scope.Function, Typ.Const.real_type, false
-   ; [ "irandom" ], Scope.Function, Typ.Const.int_type, false
-   ; [ "samplerate" ], Scope.Function, Typ.Const.real_type, false
-   ; [ "log" ], Scope.Function, Typ.Const.a_a (), false
-   ]
+let builtin_table extensions =
+   let ext_builtins =
+      match extensions with
+      | None -> []
+      (* Builtin functions used only in the VCV-Prototype plugin *)
+      | Some `VCVPrototype ->
+         [ [ "sampletime" ], Scope.Function, Typ.Const.real_type, false
+         ; [ "display" ], Scope.Function, Typ.Const.(string_type |-> unit_type), false
+         ; [ "stringAppend" ], Scope.Function, Typ.Const.(string_type |-> (string_type |-> string_type)), false
+         ; [ "getKnob" ], Scope.Function, Typ.Const.(int_type |-> real_type), false
+         ; [ "getSwitch" ], Scope.Function, Typ.Const.(int_type |-> bool_type), false
+         ; ( [ "setLight" ]
+           , Scope.Function
+           , Typ.Const.(int_type |-> (real_type |-> (real_type |-> (real_type |-> unit_type))))
+           , false )
+         ; ( [ "setSwitchLight" ]
+           , Scope.Function
+           , Typ.Const.(int_type |-> (real_type |-> (real_type |-> (real_type |-> unit_type))))
+           , false )
+         ]
+      | _ -> []
+   in
+   ext_builtins
+   @ [ [ "int" ], Scope.Type, Typ.Const.type_type, true
+     ; [ "real" ], Scope.Type, Typ.Const.type_type, true
+     ; [ "bool" ], Scope.Type, Typ.Const.type_type, true
+     ; [ "unit" ], Scope.Type, Typ.Const.type_type, true
+     ; [ "string" ], Scope.Type, Typ.Const.type_type, true
+     ; [ "abstract" ], Scope.Type, Typ.Const.type_type, true
+     ; [ "fix16" ], Scope.Type, Typ.Const.type_type, true
+     ; [ "wrap_array" ], Scope.Function, Typ.Const.wrap_array (), true
+     ; [ "set" ], Scope.Function, Typ.Const.array_set (), false
+     ; [ "get" ], Scope.Function, Typ.Const.array_get (), false
+     ; [ "size" ], Scope.Function, Typ.Const.array_size (), false
+     ; [ "makeArray" ], Scope.Function, Typ.Const.array_make (), false
+     ; [ "abs" ], Scope.Function, Typ.Const.freal_freal (), false
+     ; [ "exp" ], Scope.Function, Typ.Const.freal_freal (), false
+     ; [ "log10" ], Scope.Function, Typ.Const.freal_freal (), false
+     ; [ "sin" ], Scope.Function, Typ.Const.freal_freal (), false
+     ; [ "cos" ], Scope.Function, Typ.Const.freal_freal (), false
+     ; [ "floor" ], Scope.Function, Typ.Const.freal_freal (), false
+     ; [ "tanh" ], Scope.Function, Typ.Const.freal_freal (), false
+     ; [ "pow" ], Scope.Function, Typ.Const.real_real_real (), false
+     ; [ "cosh" ], Scope.Function, Typ.Const.freal_freal (), false
+     ; [ "sinh" ], Scope.Function, Typ.Const.freal_freal (), false
+     ; [ "tan" ], Scope.Function, Typ.Const.freal_freal (), false
+     ; [ "sqrt" ], Scope.Function, Typ.Const.freal_freal (), false
+     ; [ "clip" ], Scope.Function, Typ.Const.a_a_a_a (), false
+     ; [ "int" ], Scope.Function, Typ.Const.num_int (), false
+     ; [ "real" ], Scope.Function, Typ.Const.num_real (), false
+     ; [ "fix16" ], Scope.Function, Typ.Const.num_fix16 (), false
+     ; [ "string" ], Scope.Function, Typ.Const.num_string (), false
+     ; [ "|-|" ], Scope.Operator, Typ.Const.num_num (), false
+     ; [ "+" ], Scope.Operator, Typ.Const.num_num_num (), false
+     ; [ "-" ], Scope.Operator, Typ.Const.num_num_num (), false
+     ; [ "*" ], Scope.Operator, Typ.Const.num_num_num (), false
+     ; [ "/" ], Scope.Operator, Typ.Const.num_num_num (), false
+     ; [ "%" ], Scope.Operator, Typ.Const.num_num_num (), false
+     ; [ ">" ], Scope.Operator, Typ.Const.num_num_bool (), false
+     ; [ "<" ], Scope.Operator, Typ.Const.num_num_bool (), false
+     ; [ "==" ], Scope.Operator, Typ.Const.a_a_bool (), false
+     ; [ "<>" ], Scope.Operator, Typ.Const.a_a_bool (), false
+     ; [ ">=" ], Scope.Operator, Typ.Const.num_num_bool (), false
+     ; [ "<=" ], Scope.Operator, Typ.Const.num_num_bool (), false
+     ; [ "|" ], Scope.Operator, Typ.Const.int_int_int (), false
+     ; [ "^" ], Scope.Operator, Typ.Const.int_int_int (), false
+     ; [ "&" ], Scope.Operator, Typ.Const.int_int_int (), false
+     ; [ ">>" ], Scope.Operator, Typ.Const.int_int_int (), false
+     ; [ "<<" ], Scope.Operator, Typ.Const.int_int_int (), false
+     ; [ "not" ], Scope.Function, Typ.Const.bool_bool (), false
+     ; [ "||" ], Scope.Operator, Typ.Const.bool_bool_bool (), false
+     ; [ "&&" ], Scope.Operator, Typ.Const.bool_bool_bool (), false
+     ; [ "eps" ], Scope.Function, Typ.Const.real_type, false
+     ; [ "pi" ], Scope.Function, Typ.Const.real_type, false
+     ; [ "random" ], Scope.Function, Typ.Const.real_type, false
+     ; [ "irandom" ], Scope.Function, Typ.Const.int_type, false
+     ; [ "samplerate" ], Scope.Function, Typ.Const.real_type, false
+     ; [ "log" ], Scope.Function, Typ.Const.a_a (), false
+     ]
 
-
-let builtin_functions = List.map (fun (a, _, _, _) -> a) builtin_table |> IdSet.of_list
 
 module Env = struct
    type 'a t =
@@ -695,9 +716,6 @@ module Env = struct
    (** Returns true if the function is active *)
    let isActive (state : 'a t) (name : Id.t) : bool = Scope.isActiveFunction state.scope name
 
-   (** Checks if the id s a builtin function*)
-   let isBuiltin (name : Id.t) : bool = IdSet.mem name builtin_functions
-
    (** Returns true if the id is a mem or an instance *)
    let isLocalInstanceOrMem (state : 'a t) (name : Id.t) : bool = Scope.isMemOrInstance state.scope name
 
@@ -724,10 +742,15 @@ module Env = struct
 
 
    (** Adds the builtin functions to the given context *)
-   let initialize (s : 'a t) : 'a t = List.fold_left (fun s a -> addBuiltin s a) s builtin_table
+   let initialize ~extensions (s : 'a t) : 'a t =
+      let table = builtin_table extensions in
+      List.fold_left (fun s a -> addBuiltin s a) s table
+
 
    (** Creates an empty module context *)
-   let empty data : 'a t = { data; scope = Scope.create Scope.Module (ref 0) } |> initialize
+   let empty ?(extensions = None) data : 'a t =
+      { data; scope = Scope.create Scope.Module (ref 0) } |> initialize ~extensions
+
 
    let get (state : 'a t) : 'a = state.data
 
