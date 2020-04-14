@@ -213,6 +213,8 @@ config.bufferSize = 32
 function process(block)
    global_block = block
 
+   <#module_name#s>_update()
+
    for i=1,block.bufferSize do
       <#process_lhs#><#module_name#s>_process(<#process_inputs#>)
 <#bindings#>
