@@ -612,7 +612,7 @@ let builtin_table extensions =
      ; [ "cos" ], Scope.Function, Typ.Const.freal_freal (), false
      ; [ "floor" ], Scope.Function, Typ.Const.freal_freal (), false
      ; [ "tanh" ], Scope.Function, Typ.Const.freal_freal (), false
-     ; [ "pow" ], Scope.Function, Typ.Const.real_real_real (), false
+     ; [ "pow" ], Scope.Function, Typ.Const.freal_freal_freal (), false
      ; [ "cosh" ], Scope.Function, Typ.Const.freal_freal (), false
      ; [ "sinh" ], Scope.Function, Typ.Const.freal_freal (), false
      ; [ "tan" ], Scope.Function, Typ.Const.freal_freal (), false

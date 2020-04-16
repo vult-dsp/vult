@@ -385,6 +385,11 @@ module Const = struct
       t |-> t
 
 
+   let freal_freal_freal () =
+      let t = freal_type () in
+      t |-> (t |-> t)
+
+
    let real_real () = real_type |-> real_type
 
    let real_real_real () = real_type |-> (real_type |-> real_type)

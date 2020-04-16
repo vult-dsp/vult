@@ -139,6 +139,7 @@ module Default = struct
          ; ("cosh", "float"), "coshf"
          ; ("sinh", "float"), "sinhf"
          ; ("sqrt", "float"), "sqrtf"
+         ; ("pow", "float"), "powf"
          ; ("clip", "float"), "float_clip"
          ; ("clip", "int"), "int_clip"
          ; ("set", "float"), "float_set"

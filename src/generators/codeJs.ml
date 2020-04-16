@@ -48,6 +48,7 @@ module Templates = struct
             this.floor= function(x)          { return Math.floor(x); };
             this.tan  = function(x)          { return Math.tan(x); };
             this.tanh = function(x)          { return Math.tanh(x); };
+            this.pow = function(a,b)         { return Math.pow(a,b); };
             this.sqrt = function(x)          { return x; };
             this.set  = function(a, i, v)    { a[i]=v; };
             this.get  = function(a, i)       { return a[i]; };

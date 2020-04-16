@@ -71,6 +71,7 @@ function exp(x)             return math.exp(x); end
 function floor(x)           return math.floor(x); end
 function tan(x)             return math.tan(x); end
 function tanh(x)            return math.tanh(x); end
+function pow(a,b)           return math.pow(a,b); end
 function sqrt(x)            return x; end
 function set(a, i, v)       a[i+1]=v; end
 function get(a, i)          return a[i+1]; end
@@ -113,7 +114,7 @@ config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, noteo
       in
       let readInputs inputs =
          match inputs with
-         | [] -> Pla.string "processor"
+         | [] -> Pla.unit
          | IContext :: args ->
             let args =
                Pla.string "processor"
@@ -143,14 +144,16 @@ config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, noteo
             let bindings =
                List.mapi
                   (fun i _ ->
-                      let i = i + 1 in
-                      {pla|      block.outputs[<#i#i>][i] = 10.0 * processor.process_ret_<#i#i>|pla})
+                      let li = i + 1 in
+                      {pla|      block.outputs[<#li#i>][i] = 10.0 * processor.process_ret_<#i#i>|pla})
                   outputs
             in
             Pla.unit, Pla.join_sep_all Pla.newline bindings
       in
       let process_inputs = readInputs config.process_inputs in
       let process_lhs, bindings = bindOutputs config.process_outputs in
+      let update_inputs = readInputs config.update_inputs in
+
       {pla|
 local global_block = {}
 
@@ -213,7 +216,7 @@ config.bufferSize = 32
 function process(block)
    global_block = block
 
-   <#module_name#s>_update()
+   <#module_name#s>_update(<#update_inputs#>)
 
    for i=1,block.bufferSize do
       <#process_lhs#><#module_name#s>_process(<#process_inputs#>)
