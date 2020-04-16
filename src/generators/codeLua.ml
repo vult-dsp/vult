@@ -96,13 +96,15 @@ function wrap_array(a)      return a; end
       {pla|
 <#env#>
 <#code#>
-function process(<#process_inputs#>) return <#module_name#s>_process(<#process_inputs#>) end
-function noteOn(<#noteon_inputs#>) return <#module_name#s>_noteOn(<#noteon_inputs#>) end
-function noteOff(<#noteoff_inputs#>) return <#module_name#s>_noteOff(<#noteoff_inputs#>) end
-function controlChange(<#controlchange_inputs#>) return <#module_name#s>_controlChange(<#controlchange_inputs#>) end
-function init() return <#module_name#s>_process_init() end
-function default(ctx) return <#module_name#s>_default(ctx) end
-config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, noteon_inputs = <#nnoteon_inputs#i>, noteoff_inputs = <#nnoteoff_inputs#i>, controlchange_inputs = <#ncontrolchange_inputs#i>, is_active = <#pass_data#> }
+local this = {}
+function this.process(<#process_inputs#>) return <#module_name#s>_process(<#process_inputs#>) end
+function this.noteOn(<#noteon_inputs#>) return <#module_name#s>_noteOn(<#noteon_inputs#>) end
+function this.noteOff(<#noteoff_inputs#>) return <#module_name#s>_noteOff(<#noteoff_inputs#>) end
+function this.controlChange(<#controlchange_inputs#>) return <#module_name#s>_controlChange(<#controlchange_inputs#>) end
+function this.init() return <#module_name#s>_process_init() end
+function this.default(ctx) return <#module_name#s>_default(ctx) end
+this.config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, noteon_inputs = <#nnoteon_inputs#i>, noteoff_inputs = <#nnoteoff_inputs#i>, controlchange_inputs = <#ncontrolchange_inputs#i>, is_active = <#pass_data#> }
+return this
 |pla}
 
 

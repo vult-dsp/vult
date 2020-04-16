@@ -148,13 +148,13 @@ let mainLua (params : params) =
    let module_name = params.module_name in
    {pla|
    vult = loadfile("./<#output#s>.lua")()
-   data = vult.<#module_name#s>_process_init()
-   vult.<#module_name#s>_default(data)
+   data = <#module_name#s>_process_init()
+   <#module_name#s>_default(data)
    time = <#time#f>
    samples = 44100 * time
    local start = os.clock()
    while samples > 0 do
-      vult.<#module_name#s>_process(data, 0.0)
+      <#module_name#s>_process(data, 0.0)
       samples = samples -1
    end
    local finish = (os.clock() - start) * 1000.0
