@@ -30,6 +30,8 @@ module type TSig = sig
   type t
 
   val convert : Typed.ext_type -> t
+
+  val convert_function_type : Typed.ext_type list * Typed.ext_type -> t list * t
 end
 
 type var_kind =
@@ -108,7 +110,7 @@ module Env (T : TSig) = struct
 
   type f =
     { path : Syntax.path
-    ; t : T.t
+    ; t : T.t list * T.t
     ; mems : var_n Map.t
     ; mutable locals : var_n Map.t list
     ; mutable active : bool
@@ -127,7 +129,7 @@ module Env (T : TSig) = struct
 
   type in_top =
     { modules : m Map.t
-    ; builtin_functions : (unit -> Typed.ext_type) Map.t
+    ; builtin_functions : (unit -> Typed.ext_fun_type) Map.t
     ; builtin_types : t Map.t
     }
 
@@ -174,14 +176,14 @@ module Env (T : TSig) = struct
         | Some found -> found
         | None ->
             ( match Map.find id t.builtin_functions with
-            | Some f -> makeFunction id (T.convert (f ()))
+            | Some f -> makeFunction id (T.convert_function_type (f ()))
             | None -> reportNotFound None ) )
 
 
   let lookOperator (env : in_func) (op : string) : f =
     let t, _, _ = env in
     match Map.find op t.builtin_functions with
-    | Some found -> makeFunction op (T.convert (found ()))
+    | Some found -> makeFunction op (T.convert_function_type (found ()))
     | None -> failwith ("operator not found " ^ op)
 
 
@@ -236,13 +238,30 @@ module Env (T : TSig) = struct
         env
 
 
-  let enterFunction (env : in_module) (name : string) (t : T.t) loc : in_func =
+  let registerArguments (args : (string * T.t * Loc.t) list) =
+    let locals = Map.empty () in
+    let report _ = failwith "duplicate argument" in
+    let rev_args =
+      List.fold_left
+        (fun acc (name, t, loc) ->
+          let () = Map.update report name { kind = Val; name; t } locals in
+          t :: acc)
+        []
+        args
+    in
+    locals, List.rev rev_args
+
+
+  let enterFunction (env : in_module) (name : string) (args : (string * T.t * Loc.t) list) (ret : T.t) loc :
+      in_func * 'a =
     let top, m = env in
     let report _ = failwith "function exitst" in
     let path : Syntax.path = { id = name; n = Some m.name; loc } in
-    let f : f = { path; t; mems = Map.empty (); locals = [ Map.empty () ]; active = false } in
+    let locals, args_t = registerArguments args in
+    let t = args_t, ret in
+    let f : f = { path; t; mems = Map.empty (); locals = [ locals ]; active = false } in
     let _ = Map.update report name f m.functions in
-    top, m, f
+    (top, m, f), t
 
 
   let exitFunction (env : in_func) : in_module =
@@ -281,4 +300,6 @@ module EnvX = Env (struct
   type t = Typed.ext_type
 
   let convert t = t
+
+  let convert_function_type (args, ret) = args, ret
 end)

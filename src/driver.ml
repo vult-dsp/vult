@@ -28,9 +28,8 @@ open Args
 open Parser
 
 let stage2 (args : args) (parsed : parsed_file list) : output list =
-  let _, typed = Inference.infer parsed in
-  let s = Typed.PX.show_program typed in
-  [ ParsedCode s ]
+  let _, _typed = Inference.infer parsed in
+  []
 
 
 (*

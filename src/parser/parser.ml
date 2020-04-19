@@ -554,7 +554,7 @@ and call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let path = expToPath error left in
   let args =
     match Stream.peek buffer with
-    | RPAREN -> []
+    | RPAREN -> [ { e = SEUnit; loc = token.loc } ]
     | _ -> expressionList buffer
   in
   let _ = Stream.consume buffer RPAREN in

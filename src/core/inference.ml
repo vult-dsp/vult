@@ -32,17 +32,15 @@ and unify (t1 : ext_type) (t2 : ext_type) =
   | TEId t1, TEId t2 -> Syntax.compare_path t1 t2 = 0
   | TESize t1, TESize t2 -> t1 = t2
   | TELink tlink, _ -> unify t2 tlink
-  | _, TELink tlink -> unify t1 tlink
   | TEUnbound _, _ -> linkType t2 t1
-  | _, TEUnbound _ -> linkType t1 t2
-  | TEComposed (n1, e1), TEComposed (n2, e2) when n1 = n2 && List.length e1 = List.length e2 ->
-      List.for_all2 unify e1 e2
-  | TEArrow (a1, b1), TEArrow (a2, b2) -> unify a1 a2 && unify b1 b2
   | TEOption l, _ -> pickOption t1 l t2
   | _, TEOption l -> pickOption t2 l t1
+  | _, TEUnbound _ -> linkType t1 t2
+  | _, TELink tlink -> unify t1 tlink
+  | TEComposed (n1, e1), TEComposed (n2, e2) when n1 = n2 && List.length e1 = List.length e2 ->
+      List.for_all2 unify e1 e2
   | TEId _, _ -> false
   | TESize _, _ -> false
-  | TEArrow _, _ -> false
   | TEComposed _, _ -> false
 
 
@@ -68,17 +66,17 @@ let rec type_ (t : Syntax.type_) =
       { tx = TEComposed (name, l); loc }
 
 
-let applyFunction (f : EnvX.f) (args : PX.exp list) =
-  let rec loop ft args =
-    match args, ft.tx with
-    | [], TEArrow (t1, t2) -> failwith "missing arguments"
-    | [], _ -> ft
-    | (h : PX.exp) :: t, TEArrow (t1, t2) ->
-        unifyRaise h.loc t1 h.t ;
-        loop t2 t
-    | _ :: _, _ -> failwith "excess of arguments"
+let applyFunction (args_t : ext_type list) (ret : ext_type) (args : PX.exp list) =
+  let rec loop args_t args =
+    match args_t, args with
+    | [], _ :: _ -> failwith "missing arguments"
+    | _ :: _, [] -> failwith "excess of arguments "
+    | [], [] -> ret
+    | h :: args_t, (ht : PX.exp) :: args ->
+        unifyRaise ht.loc h ht.t ;
+        loop args_t args
   in
-  loop f.t args
+  loop args_t args
 
 
 let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * PX.exp =
@@ -139,18 +137,21 @@ let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * PX.exp =
   | { e = SECall { instance; path; args }; loc } ->
       let env, args = exp_list env args in
       let f = EnvX.lookFunctionCall env path in
-      let t = applyFunction f args in
+      let args_t, ret = f.t in
+      let t = applyFunction args_t ret args in
       env, { e = ECall { instance; path = f.path; args }; t; loc }
   | { e = SEOp (op, e1, e2); loc } ->
       let env, e1 = exp env e1 in
       let env, e2 = exp env e2 in
       let f = EnvX.lookOperator env op in
-      let t = applyFunction f [ e1; e2 ] in
+      let args_t, ret = f.t in
+      let t = applyFunction args_t ret [ e1; e2 ] in
       env, { e = EOp (op, e1, e2); t; loc }
   | { e = SEUnOp (op, e); loc } ->
       let env, e = exp env e in
       let f = EnvX.lookOperator env ("u" ^ op) in
-      let t = applyFunction f [ e ] in
+      let args_t, ret = f.t in
+      let t = applyFunction args_t ret [ e ] in
       env, { e = EUnOp (op, e); t; loc }
   | { e = SEMember (e, m); loc } ->
       let env, e = exp env e in
@@ -320,24 +321,16 @@ let getOptType loc (t : Syntax.type_ option) =
   | Some t -> type_ t
 
 
-let registerArguments (env : EnvX.in_func) (args : Syntax.arg list) =
-  let rec loop env args acc =
-    match args with
-    | [] -> env, acc
-    | (name, t, loc) :: rest ->
-        let t = getOptType loc t in
-        let env = EnvX.addVar env name t Val in
-        loop env rest ((name, t, loc) :: acc)
-  in
-  loop env (List.rev args) []
+let convertArguments (args : Syntax.arg list) : PX.arg list =
+  List.map (fun (name, t, loc) -> name, getOptType loc t, loc) args
 
 
 let rec function_def (env : EnvX.in_module) ((def : Syntax.function_def), (body : Syntax.stmt)) :
     EnvX.in_module * (PX.function_def * PX.stmt) =
-  let t = getOptType def.loc def.t in
-  let env = EnvX.enterFunction env def.name t def.loc in
-  let env, args = registerArguments env def.args in
-  let env, body = stmt env t body in
+  let ret = getOptType def.loc def.t in
+  let args = convertArguments def.args in
+  let env, t = EnvX.enterFunction env def.name args ret def.loc in
+  let env, body = stmt env ret body in
   let env = EnvX.exitFunction env in
   let env, next = function_def_opt env def.next in
   env, ({ name = def.name; args; t; loc = def.loc; tags = def.tags; next }, body)
@@ -353,9 +346,9 @@ and function_def_opt (env : EnvX.in_module) def_opt =
 
 let rec ext_function (env : EnvX.in_module) ((def : Syntax.function_def), (link_name : string option)) :
     EnvX.in_module * (PX.function_def * string) =
-  let t = getOptType def.loc def.t in
-  let env = EnvX.enterFunction env def.name t def.loc in
-  let env, args = registerArguments env def.args in
+  let ret = getOptType def.loc def.t in
+  let args = convertArguments def.args in
+  let env, t = EnvX.enterFunction env def.name args ret def.loc in
   let env = EnvX.exitFunction env in
   let env, next = function_def_opt env def.next in
   let link_name = CCOpt.get_or ~default:def.name link_name in

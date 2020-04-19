@@ -28,7 +28,6 @@ type type_d =
   | TId       of path
   | TSize     of int
   | TComposed of path * type_ list
-  | TArrow    of type_ * type_
 [@@deriving show, eq, ord]
 
 and type_ =
@@ -44,7 +43,6 @@ type ext_type_d =
   | TELink     of ext_type
   | TEOption   of ext_type list
   | TEComposed of string * ext_type list
-  | TEArrow    of ext_type * ext_type
 [@@deriving show, eq, ord]
 
 and ext_type =
@@ -52,6 +50,8 @@ and ext_type =
   ; mutable loc : Loc.t
   }
 [@@deriving show, eq, ord]
+
+type ext_fun_type = ext_type list * ext_type
 
 module type TSig = sig
   type t [@@deriving show, eq, ord]
@@ -147,7 +147,7 @@ module Prog (T : TSig) = struct
   and function_def =
     { name : string
     ; args : arg list
-    ; t : T.t
+    ; t : T.t list * T.t
     ; next : (function_def * stmt) option
     ; loc : Loc.t
     ; tags : tag list
@@ -198,130 +198,128 @@ module TX = struct
 
   let tuple ?(loc = Loc.default) l = { tx = TEComposed ("tuple", l); loc }
 
-  let ( |-> ) ?(loc = Loc.default) a b = { tx = TEArrow (a, b); loc }
-
   let freal_type () =
     let loc = Loc.default in
     { tx = TEOption [ real loc; fix16 loc ]; loc }
 
 
-  let array_set () =
+  let array_set () : ext_fun_type =
     let loc = Loc.default in
     let a = unbound loc in
     let a_array = array a in
-    a_array |-> (int loc |-> (a |-> unit loc))
+    [ a_array; int loc; a ], unit loc
 
 
-  let array_get () =
+  let array_get () : ext_fun_type =
     let loc = Loc.default in
     let a = unbound loc in
     let a_array = array a in
-    a_array |-> (int loc |-> a)
+    [ a_array; int loc ], a
 
 
-  let array_size () =
+  let array_size () : ext_fun_type =
     let loc = Loc.default in
     let a = unbound loc in
     let a_array = array a in
-    a_array |-> int loc
+    [ a_array ], int loc
 
 
-  let array_make () =
+  let array_make () : ext_fun_type =
     let loc = Loc.default in
     let a = unbound loc in
     let a_array = array a in
-    int loc |-> (a |-> a_array)
+    [ int loc; a ], a_array
 
 
-  let wrap_array () =
+  let wrap_array () : ext_fun_type =
     let loc = Loc.default in
     let a = unbound loc in
     let array_type = array a in
-    array_type |-> array_type
+    [ array_type ], array_type
 
 
-  let freal_freal () =
+  let freal_freal () : ext_fun_type =
     let t = freal_type () in
-    t |-> t
+    [ t ], t
 
 
-  let real_real_real () =
+  let real_real_real () : ext_fun_type =
     let loc = Loc.default in
     let t = real loc in
-    t |-> (t |-> t)
+    [ t; t ], t
 
 
-  let clip () =
+  let clip () : ext_fun_type =
     let loc = Loc.default in
     let t = unbound loc in
-    t |-> (t |-> (t |-> t))
+    [ t; t; t ], t
 
 
-  let num_int () =
+  let num_int () : ext_fun_type =
     let loc = Loc.default in
-    num loc |-> int loc
+    [ num loc ], int loc
 
 
-  let num_real () =
+  let num_real () : ext_fun_type =
     let loc = Loc.default in
-    num loc |-> real loc
+    [ num loc ], real loc
 
 
-  let num_fix16 () =
+  let num_fix16 () : ext_fun_type =
     let loc = Loc.default in
-    num loc |-> fix16 loc
+    [ num loc ], fix16 loc
 
 
-  let num_num () =
-    let loc = Loc.default in
-    let t = num loc in
-    t |-> t
-
-
-  let num_num_num () =
+  let num_num () : ext_fun_type =
     let loc = Loc.default in
     let t = num loc in
-    t |-> (t |-> t)
+    [ t ], t
 
 
-  let int_int_int () =
+  let num_num_num () : ext_fun_type =
+    let loc = Loc.default in
+    let t = num loc in
+    [ t; t ], t
+
+
+  let int_int_int () : ext_fun_type =
     let loc = Loc.default in
     let t = int loc in
-    t |-> (t |-> t)
+    [ t; t ], t
 
 
-  let num_num_bool () =
+  let num_num_bool () : ext_fun_type =
     let loc = Loc.default in
     let t = num loc in
-    t |-> (t |-> bool loc)
+    [ t; t ], bool loc
 
 
-  let a_a_bool () =
+  let a_a_bool () : ext_fun_type =
     let loc = Loc.default in
     let t = unbound loc in
-    t |-> (t |-> bool loc)
+    [ t; t ], bool loc
 
 
-  let bool_bool () =
+  let bool_bool () : ext_fun_type =
     let loc = Loc.default in
     let t = bool loc in
-    t |-> t
+    [ t ], t
 
 
-  let bool_bool_bool () =
+  let bool_bool_bool () : ext_fun_type =
     let loc = Loc.default in
     let t = bool loc in
-    t |-> (t |-> t)
+    [ t; t ], t
 
 
-  let unit_int () =
+  let unit_int () : ext_fun_type =
     let loc = Loc.default in
-    unit loc |-> int loc
+    [ unit loc ], int loc
 
 
-  let unit_real () =
+  let unit_real () : ext_fun_type =
     let loc = Loc.default in
-    unit loc |-> real loc
+    [ unit loc ], real loc
 end
 
 module PX = Prog (struct
