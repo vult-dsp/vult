@@ -27,18 +27,23 @@
 open Args
 open Parser
 
-(*
-let generateCode (args : args) (parser_results : parser_results list) : output list =
-  match Generate.generateCode parser_results args with
-  | [] -> []
-  | results -> [ GeneratedCode results ]
+let stage2 (args : args) (parsed : parsed_file list) : output list =
+  let _, typed = Inference.infer parsed in
+  let s = Typed.PX.show_program typed in
+  [ ParsedCode s ]
 
+
+(*
+   let generateCode (args : args) (parsed : parsed_file list) : output list =
+   match Generate.generateCode parsed args with
+   | [] -> []
+   | results -> [ GeneratedCode results ]
 *)
 
 (** Prints the parsed files if -dparse was passed as argument *)
-let dumpParsedFiles (args : args) (parser_results : parsed_file list) : output list =
+let dumpParsedFiles (args : args) (parsed : parsed_file list) : output list =
   if args.dparse then
-    parser_results |> List.map (fun a -> Syntax.show_stmts a.stmts) |> String.concat "\n" |> fun a -> [ ParsedCode a ]
+    parsed |> List.map (fun a -> Syntax.show_stmts a.stmts) |> String.concat "\n" |> fun a -> [ ParsedCode a ]
   else
     []
 
@@ -46,14 +51,14 @@ let dumpParsedFiles (args : args) (parser_results : parsed_file list) : output l
 (*
 
 (** Prints the parsed files if -dparse was passed as argument *)
-let runFiles (args : args) (parser_results : parser_results list) : output list =
+let runFiles (args : args) (parsed : parsed list) : output list =
   let print_val e =
     match e with
     | PUnit _ -> []
     | _ -> [ PrintProg.expressionStr e ]
   in
   if args.eval then
-    Passes.applyTransformations args ~options:PassCommon.interpreter_options parser_results
+    Passes.applyTransformations args ~options:PassCommon.interpreter_options parsed
     |> fst
     |> Interpreter.eval args
     |> List.map print_val
@@ -64,9 +69,9 @@ let runFiles (args : args) (parser_results : parser_results list) : output list 
 
 
 (** Checks the code and returns a list with the errors *)
-let checkCode (args : args) (parser_results : parser_results list) : output list =
+let checkCode (args : args) (parsed : parsed list) : output list =
   if args.check then
-    try parser_results |> Passes.applyTransformations args |> fun _ -> [ CheckOk ] with
+    try parsed |> Passes.applyTransformations args |> fun _ -> [ CheckOk ] with
     | Error.Errors errors -> [ Errors errors ]
   else
     []
@@ -83,13 +88,12 @@ let main (args : args) : output list =
       match args.files with
       | [] -> [ Message ("vult " ^ version ^ " - https://github.com/modlfo/vult\nno input files") ]
       | _ ->
-          let parser_results = Loader.loadFiles args args.files in
+          let parsed = Loader.loadFiles args args.files in
           if args.deps then
-            List.map (fun r -> r.file) parser_results |> fun s -> [ Dependencies s ]
+            List.map (fun r -> r.file) parsed |> fun s -> [ Dependencies s ]
           else
-            dumpParsedFiles args parser_results
-    (*      @ generateCode args parser_results
-            @ runFiles args parser_results
-            @ checkCode args parser_results*)
+            dumpParsedFiles args parsed @ stage2 args parsed
+    (*      @ runFiles args parsed
+            @ checkCode args parsed*)
   with
   | Error.Errors errors -> [ Errors errors ]

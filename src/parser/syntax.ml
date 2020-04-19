@@ -22,24 +22,22 @@
    THE SOFTWARE.
 *)
 
-type attr = { loc : Loc.t } [@@deriving show, eq, ord]
-
 type path =
   { id : string
   ; n : string option
-  ; attr : attr
+  ; loc : Loc.t [@compare fun _ _ -> 0]
   }
 [@@deriving show, eq, ord]
 
 type type_d =
   | STId       of path
-  | STInt      of int
-  | STComposed of path * type_ list
+  | STSize     of int
+  | STComposed of string * type_ list
 [@@deriving show, eq, ord]
 
 and type_ =
   { t : type_d
-  ; attr : attr
+  ; loc : Loc.t
   }
 [@@deriving show, eq, ord]
 
@@ -51,13 +49,13 @@ type tag_d =
   | SGString of string
   | SGCall   of
       { name : string
-      ; args : (string * tag * attr) list
+      ; args : (string * tag * Loc.t) list
       }
 [@@deriving show, eq, ord]
 
 and tag =
   { g : tag_d
-  ; attr : attr
+  ; loc : Loc.t
   }
 [@@deriving show, eq, ord]
 
@@ -92,7 +90,7 @@ type exp_d =
 
 and exp =
   { e : exp_d
-  ; attr : attr
+  ; loc : Loc.t
   }
 [@@deriving show, eq, ord]
 
@@ -110,7 +108,7 @@ and lexp_d =
 
 and lexp =
   { l : lexp_d
-  ; attr : attr
+  ; loc : Loc.t
   }
 [@@deriving show, eq, ord]
 
@@ -124,22 +122,11 @@ type dexp_d =
 
 and dexp =
   { d : dexp_d
-  ; attr : attr
+  ; loc : Loc.t
   }
 [@@deriving show, eq, ord]
 
-type arg = string * type_ option * attr [@@deriving show, eq, ord]
-
-type function_def =
-  { name : string
-  ; args : arg list
-  ; type_ : type_ option
-  ; body : stmt
-  ; next : function_def option
-  ; attr : attr
-  ; tags : tag list
-  }
-[@@deriving show, eq, ord]
+type arg = string * type_ option * Loc.t [@@deriving show, eq, ord]
 
 and stmt_d =
   | SStmtError
@@ -154,30 +141,34 @@ and stmt_d =
 
 and stmt =
   { s : stmt_d
-  ; attr : attr
+  ; loc : Loc.t
+  }
+[@@deriving show, eq, ord]
+
+and function_def =
+  { name : string
+  ; args : arg list
+  ; t : type_ option
+  ; next : (function_def * stmt) option
+  ; loc : Loc.t
+  ; tags : tag list
   }
 [@@deriving show, eq, ord]
 
 type top_stmt_d =
   | STopError
-  | STopExternal  of
+  | STopExternal of function_def * string option
+  | STopFunction of function_def * stmt
+  (*| STopTypeAlias of string * type_*)
+  | STopType     of
       { name : string
-      ; args : arg list
-      ; type_ : type_
-      ; link_name : string option
-      ; tags : tag list
-      }
-  | STopFunction  of function_def
-  | STopTypeAlias of string * type_
-  | STopType      of
-      { name : string
-      ; members : (string * type_ * attr) list
+      ; members : (string * type_ * Loc.t) list
       }
 [@@deriving show, eq, ord]
 
 and top_stmt =
   { top : top_stmt_d
-  ; attr : attr
+  ; loc : Loc.t
   }
 [@@deriving show, eq, ord]
 

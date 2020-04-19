@@ -73,11 +73,11 @@ let rec interleaveLineDiff a b l =
    |_, [], _ :: _ ->
       failwith "Diff.interleaveLineDiff: The results obtained from 'Diff.lcs' function are incorrect"
   | ah :: at, bh :: bt, lh :: lt ->
-  match ah = lh, bh = lh with
-  | true, true -> lh :: interleaveLineDiff at bt lt
-  | true, false -> ("+ " ^ bh) :: interleaveLineDiff a bt l
-  | false, true -> ("- " ^ ah) :: interleaveLineDiff at b l
-  | false, false -> ("+ " ^ bh) :: ("- " ^ ah) :: interleaveLineDiff at bt l
+      ( match ah = lh, bh = lh with
+      | true, true -> lh :: interleaveLineDiff at bt lt
+      | true, false -> ("+ " ^ bh) :: interleaveLineDiff a bt l
+      | false, true -> ("- " ^ ah) :: interleaveLineDiff at b l
+      | false, false -> ("+ " ^ bh) :: ("- " ^ ah) :: interleaveLineDiff at bt l )
 
 
 let lineDiff str1 str2 =

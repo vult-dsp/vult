@@ -80,12 +80,10 @@ let rec moveToNextStatement (buffer : Stream.stream) : unit =
       moveToNextStatement buffer
 
 
-let attr (loc : Loc.t) : attr = { loc }
-
 let rec expToPath error (exp : exp) : path =
   match exp with
-  | { e = SEId id; attr } -> { id; n = None; attr }
-  | { e = SEMember ({ e = SEId e }, id); attr } -> { id; n = Some e; attr }
+  | { e = SEId id; loc } -> { id; n = None; loc }
+  | { e = SEMember ({ e = SEId e }, id); loc } -> { id; n = Some e; loc }
   | _ -> error ()
 
 
@@ -189,7 +187,7 @@ let rec tag (rbp : int) (buffer : Stream.stream) : tag = prattParser rbp buffer 
 and tagExpressionList (buffer : Stream.stream) : tag list = commaSepList tag buffer
 
 and tag_nud (buffer : Stream.stream) (token : 'kind token) : tag =
-  let attr = attr token.loc in
+  let loc = token.loc in
   match token.kind, token.value with
   | ID, _ ->
       let name = token.value in
@@ -201,20 +199,20 @@ and tag_nud (buffer : Stream.stream) (token : 'kind token) : tag =
               match Stream.peek buffer with
               | RPAREN ->
                   let _ = Stream.skip buffer in
-                  { g = SGId name; attr }
+                  { g = SGId name; loc }
               | _ ->
                   let args = tag_pair_list buffer in
                   let _ = Stream.consume buffer RPAREN in
-                  { g = SGCall { name; args }; attr }
+                  { g = SGCall { name; args }; loc }
             end
-        | _ -> { g = SGId name; attr }
+        | _ -> { g = SGId name; loc }
       end
   | OP, "-" -> tag_unary_op buffer token
-  | INT, _ -> { g = SGInt (int_of_string token.value); attr }
-  | TRUE, _ -> { g = SGBool true; attr }
-  | FALSE, _ -> { g = SGBool false; attr }
-  | REAL, _ -> { g = SGReal (float_of_string token.value); attr }
-  | STRING, _ -> { g = SGString token.value; attr }
+  | INT, _ -> { g = SGInt (int_of_string token.value); loc }
+  | TRUE, _ -> { g = SGBool true; loc }
+  | FALSE, _ -> { g = SGBool false; loc }
+  | REAL, _ -> { g = SGReal (float_of_string token.value); loc }
+  | STRING, _ -> { g = SGString token.value; loc }
   | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError message)
@@ -235,14 +233,14 @@ and tag_led (_ : Stream.stream) (token : 'kind token) (_ : tag) : tag =
       raise (ParserError message)
 
 
-and tag_pair (bp : int) (buffer : Stream.stream) : string * tag * attr =
+and tag_pair (bp : int) (buffer : Stream.stream) : string * tag * Loc.t =
   let id, loc = id_name buffer in
   let _ = Stream.consume buffer EQUAL in
   let value = tag bp buffer in
-  id, value, attr loc
+  id, value, loc
 
 
-and tag_pair_list (buffer : Stream.stream) : (string * tag * attr) list = commaSepList tag_pair buffer
+and tag_pair_list (buffer : Stream.stream) : (string * tag * Loc.t) list = commaSepList tag_pair buffer
 
 let optional_tag (buffer : Stream.stream) : tag list =
   match Stream.peek buffer with
@@ -262,11 +260,11 @@ and type_nud (buffer : Stream.stream) (token : 'kind token) : type_ =
   match token.kind, token.value with
   | ID, _ ->
       let id = token.value in
-      let attr = attr token.loc in
-      { t = STId { id; n = None; attr }; attr }
+      let loc = token.loc in
+      { t = STId { id; n = None; loc }; loc }
   | INT, _ ->
-      let attr = attr token.loc in
-      { t = STInt (int_of_string token.value); attr }
+      let loc = token.loc in
+      { t = STSize (int_of_string token.value); loc }
   | _ ->
       let message = Error.PointedError (token.loc, "Invalid type") in
       raise (ParserError message)
@@ -293,7 +291,7 @@ and type_member (buffer : Stream.stream) (token : 'kind token) (left : type_) : 
 and type_call (buffer : Stream.stream) (token : 'kind token) (left : type_) : type_ =
   let path =
     match left.t with
-    | STId path -> path
+    | STId { id } -> id
     | _ -> failwith "invalid composed type"
   in
   let args =
@@ -302,8 +300,8 @@ and type_call (buffer : Stream.stream) (token : 'kind token) (left : type_) : ty
     | _ -> type_list buffer
   in
   let _ = Stream.consume buffer RPAREN in
-  let attr = attr token.loc in
-  { t = STComposed (path, args); attr }
+  let loc = token.loc in
+  { t = STComposed (path, args); loc }
 
 
 and type_list (buffer : Stream.stream) : type_ list = commaSepList type_ buffer
@@ -314,10 +312,10 @@ let rec dexp_expression (rbp : int) (buffer : Stream.stream) : dexp =
 
 and dexp_nud (buffer : Stream.stream) (token : 'kind token) : dexp =
   match token.kind with
-  | WILD -> { d = SDWild; attr = attr token.loc }
+  | WILD -> { d = SDWild; loc = token.loc }
   | ID ->
       let id = token.value in
-      { d = SDId (id, None); attr = attr token.loc }
+      { d = SDId (id, None); loc = token.loc }
   | LPAREN ->
       begin
         match Stream.peek buffer with
@@ -327,8 +325,8 @@ and dexp_nud (buffer : Stream.stream) (token : 'kind token) : dexp =
         | _ ->
             let e = dexp_expression 0 buffer in
             let _ = Stream.consume buffer RPAREN in
-            let attr = attr token.loc in
-            { d = SDGroup e; attr }
+            let loc = token.loc in
+            { d = SDGroup e; loc }
       end
   | _ ->
       let message = Error.PointedError (token.loc, "Invalid left hand side of assignment") in
@@ -354,21 +352,19 @@ and dpair (buffer : Stream.stream) (token : 'kind token) (left : dexp) : dexp =
   in
   let elems1 = left |> getElems in
   let elems2 = right |> getElems in
-  { d = SDTuple (elems1 @ elems2); attr = attr left.attr.loc }
+  { d = SDTuple (elems1 @ elems2); loc = left.loc }
 
 
 and dtyped (buffer : Stream.stream) (token : 'kind token) (left : dexp) : dexp =
   let right = type_ 0 buffer in
-  { d = SDTyped (left, right); attr = attr token.loc }
+  { d = SDTyped (left, right); loc = token.loc }
 
 
 and darray (buffer : Stream.stream) (token : 'kind token) (left : dexp) : dexp =
   let size, _ = int_value buffer in
   let () = Stream.consume buffer RBRACK in
   match left with
-  | { d = SDId (id, None) } ->
-      let attr = attr token.loc in
-      { d = SDId (id, Some size); attr }
+  | { d = SDId (id, None) } -> { d = SDId (id, Some size); loc = token.loc }
   | { d = SDId (_, Some _) } -> failwith "double dimmensions"
   | _ -> failwith "cannot apply dimmensions to this declaration"
 
@@ -379,10 +375,10 @@ let rec lexp_expression (rbp : int) (buffer : Stream.stream) : lexp =
 
 and lexp_nud (buffer : Stream.stream) (token : 'kind token) : lexp =
   match token.kind with
-  | WILD -> { l = SLWild; attr = attr token.loc }
+  | WILD -> { l = SLWild; loc = token.loc }
   | ID ->
       let id = token.value in
-      { l = SLId id; attr = attr token.loc }
+      { l = SLId id; loc = token.loc }
   | LPAREN ->
       begin
         match Stream.peek buffer with
@@ -392,8 +388,7 @@ and lexp_nud (buffer : Stream.stream) (token : 'kind token) : lexp =
         | _ ->
             let e = lexp_expression 0 buffer in
             let _ = Stream.consume buffer RPAREN in
-            let attr = attr token.loc in
-            { l = SLGroup e; attr }
+            { l = SLGroup e; loc = token.loc }
       end
   | _ ->
       let message = Error.PointedError (token.loc, "Invalid left hand side of assignment") in
@@ -429,75 +424,58 @@ and lhs_pair (buffer : Stream.stream) (token : 'kind token) (left : lexp) : lexp
   in
   let elems1 = left |> getElems in
   let elems2 = right |> getElems in
-  { l = SLTuple (elems1 @ elems2); attr = attr left.attr.loc }
+  { l = SLTuple (elems1 @ elems2); loc = left.loc }
 
 
 and lexp_index (buffer : Stream.stream) (token : 'kind token) (left : lexp) : lexp =
   let index = expression 0 buffer in
   let _ = Stream.consume buffer RBRACK in
-  let attr = attr token.loc in
-  { l = SLIndex { e = left; index }; attr }
+  { l = SLIndex { e = left; index }; loc = token.loc }
 
 
 and expression (rbp : int) (buffer : Stream.stream) : exp = prattParser rbp buffer getExpLbp exp_nud exp_led
 
 (** Nud function for the Pratt parser *)
 and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
+  let loc = token.loc in
   match token.kind, token.value with
   | OP, "-" -> unaryOp buffer token
   | ID, _ ->
       let id = token.value in
-      let attr = attr token.loc in
-      { e = SEId id; attr }
+      { e = SEId id; loc }
   | LPAREN, _ ->
-      let start_loc = token.loc in
       begin
         match Stream.peek buffer with
         | RPAREN ->
             let _ = Stream.skip buffer in
-            { e = SEUnit; attr = attr start_loc }
+            { e = SEUnit; loc }
         | _ ->
             let e = expression 0 buffer in
             let _ = Stream.consume buffer RPAREN in
-            { e = SEGroup e; attr = e.attr }
+            { e = SEGroup e; loc }
       end
-  | INT, _ ->
-      let attr = attr token.loc in
-      { e = SEInt (int_of_string token.value); attr }
-  | REAL, _ ->
-      let attr = attr token.loc in
-      { e = SEReal (float_of_string token.value); attr }
-  | STRING, _ ->
-      let attr = attr token.loc in
-      { e = SEString token.value; attr }
-  | TRUE, _ ->
-      let attr = attr token.loc in
-      { e = SEBool true; attr }
-  | FALSE, _ ->
-      let attr = attr token.loc in
-      { e = SEBool false; attr }
+  | INT, _ -> { e = SEInt (int_of_string token.value); loc }
+  | REAL, _ -> { e = SEReal (float_of_string token.value); loc }
+  | STRING, _ -> { e = SEString token.value; loc }
+  | TRUE, _ -> { e = SEBool true; loc }
+  | FALSE, _ -> { e = SEBool false; loc }
   | IF, _ ->
       let cond = expression 0 buffer in
       let _ = Stream.consume buffer THEN in
       let then_ = expression 0 buffer in
       let _ = Stream.consume buffer ELSE in
       let else_ = expression 0 buffer in
-      let attr = attr token.loc in
-      { e = SEIf { cond; then_; else_ }; attr }
+      { e = SEIf { cond; then_; else_ }; loc }
   | LBRACK, _ ->
-      let start_loc = token.loc in
       begin
         match Stream.peek buffer with
         | RBRACK ->
-            let attr = attr start_loc in
             let _ = Stream.consume buffer RBRACK in
-            { e = SEArray []; attr }
+            { e = SEArray []; loc }
         | _ ->
-            let start_loc = token.loc in
             let elems = expressionList buffer in
             let _ = Stream.consume buffer RBRACK in
-            let attr = attr start_loc in
-            { e = SEArray elems; attr }
+            { e = SEArray elems; loc }
       end
   | _ ->
       let message = Error.PointedError (token.loc, "Invalid expression") in
@@ -536,9 +514,7 @@ and pair (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   in
   let elems1 = left |> getElems in
   let elems2 = right |> getElems in
-  let start_loc = left.attr.loc in
-  let attr = attr start_loc in
-  { e = SETuple (elems1 @ elems2); attr }
+  { e = SETuple (elems1 @ elems2); loc = left.loc }
 
 
 and named_call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
@@ -547,21 +523,21 @@ and named_call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp
   | { e = SEId name; _ }, { e = SECall ({ instance = None; _ } as call); _ } ->
       { right with e = SECall { call with instance = Some name } }
   | { e = SEId _; _ }, _ ->
-      let loc = right.attr.loc in
+      let loc = right.loc in
       let error = Error.PointedError (Loc.getNext loc, "After ':' you can only have a function call e.g. name:foo()") in
       raise (ParserError error)
   | _, { e = SECall { instance = None; _ }; _ } ->
-      let loc = left.attr.loc in
+      let loc = left.loc in
       let error =
         Error.PointedError (Loc.getNext loc, "Instance names for functions must be simple identifier e.g. name:foo()")
       in
       raise (ParserError error)
   | _, { e = SECall { instance = Some _; _ }; _ } ->
-      let loc = left.attr.loc in
+      let loc = left.loc in
       let error = Error.PointedError (Loc.getNext loc, "This cannot be applied to an already named function") in
       raise (ParserError error)
   | _ ->
-      let loc = Loc.merge left.attr.loc right.attr.loc in
+      let loc = Loc.merge left.loc right.loc in
       let error =
         Error.PointedError
           ( Loc.getNext loc
@@ -572,7 +548,7 @@ and named_call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp
 
 and call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let error () =
-    let message = Error.PointedError (left.attr.loc, "This is not a valid function name") in
+    let message = Error.PointedError (left.loc, "This is not a valid function name") in
     raise (ParserError message)
   in
   let path = expToPath error left in
@@ -582,33 +558,29 @@ and call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
     | _ -> expressionList buffer
   in
   let _ = Stream.consume buffer RPAREN in
-  let attr = attr token.loc in
-  { e = SECall { instance = None; path; args }; attr }
+  { e = SECall { instance = None; path; args }; loc = token.loc }
 
 
 and exp_index (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let index = expression 0 buffer in
   let _ = Stream.consume buffer RBRACK in
-  let attr = attr token.loc in
-  { e = SEIndex { e = left; index }; attr }
+  { e = SEIndex { e = left; index }; loc = token.loc }
 
 
 and unaryOp (buffer : Stream.stream) (token : 'kind token) : exp =
   let right = expression 70 buffer in
-  let attr = attr token.loc in
-  { e = SEUnOp (token.value, right); attr }
+  { e = SEUnOp (token.value, right); loc = token.loc }
 
 
 and binary_op (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let right = expression (getExpLbp token) buffer in
-  let attr = attr token.loc in
-  { e = SEOp (token.value, left, right); attr }
+  { e = SEOp (token.value, left, right); loc = token.loc }
 
 
 and expressionList (buffer : Stream.stream) : exp list = commaSepList expression buffer
 
 and stmtVal (buffer : Stream.stream) : stmt =
-  let start_loc = Stream.location buffer in
+  let loc = Stream.location buffer in
   let _ = Stream.consume buffer VAL in
   let lhs = dexp_expression 0 buffer in
   match Stream.peek buffer with
@@ -616,16 +588,14 @@ and stmtVal (buffer : Stream.stream) : stmt =
       let _ = Stream.skip buffer in
       let rhs = expression 0 buffer in
       let _ = Stream.consume buffer SEMI in
-      let attr = attr start_loc in
-      { s = SStmtVal (lhs, Some rhs); attr }
+      { s = SStmtVal (lhs, Some rhs); loc }
   | _ ->
       let _ = Stream.consume buffer SEMI in
-      let attr = attr start_loc in
-      { s = SStmtVal (lhs, None); attr }
+      { s = SStmtVal (lhs, None); loc }
 
 
 and stmtMem (buffer : Stream.stream) : stmt =
-  let start_loc = Stream.location buffer in
+  let loc = Stream.location buffer in
   let _ = Stream.consume buffer MEM in
   let lhs = dexp_expression 0 buffer in
   match Stream.peek buffer with
@@ -634,36 +604,32 @@ and stmtMem (buffer : Stream.stream) : stmt =
       let rhs = expression 0 buffer in
       let tags = optional_tag buffer in
       let _ = Stream.consume buffer SEMI in
-      let attr = attr start_loc in
-      { s = SStmtMem (lhs, Some rhs, tags); attr }
+      { s = SStmtMem (lhs, Some rhs, tags); loc }
   | _ ->
       let tags = optional_tag buffer in
       let _ = Stream.consume buffer SEMI in
-      let attr = attr start_loc in
-      { s = SStmtMem (lhs, None, tags); attr }
+      { s = SStmtMem (lhs, None, tags); loc }
 
 
 and stmtReturn (buffer : Stream.stream) : stmt =
-  let start_loc = Stream.location buffer in
+  let loc = Stream.location buffer in
   let _ = Stream.consume buffer RET in
   let e = expression 0 buffer in
   let _ = Stream.consume buffer SEMI in
-  let attr = attr start_loc in
-  { s = SStmtReturn e; attr }
+  { s = SStmtReturn e; loc }
 
 
 and stmtBind (buffer : Stream.stream) : stmt =
   match lexp_expression 0 buffer with
   | e1 ->
-      let start_loc = e1.attr.loc in
+      let loc = e1.loc in
       begin
         match Stream.peek buffer with
         | EQUAL ->
             let _ = Stream.consume buffer EQUAL in
             let e2 = expression 0 buffer in
             let _ = Stream.consume buffer SEMI in
-            let attr = attr start_loc in
-            { s = SStmtBind (e1, e2); attr }
+            { s = SStmtBind (e1, e2); loc }
         | _ ->
             let message =
               Printf.sprintf "Invalid statement. All statements should be in the forms: \"a = b; \" or \"_ = b(); \" "
@@ -678,16 +644,13 @@ and stmtIf (buffer : Stream.stream) : stmt =
   let cond = expression 0 buffer in
   let _ = Stream.consume buffer RPAREN in
   let tstm = stmtList buffer in
-  let start_loc = cond.attr.loc in
+  let loc = cond.loc in
   match Stream.peek buffer with
   | ELSE ->
       let _ = Stream.consume buffer ELSE in
       let fstm = stmtList buffer in
-      let attr = attr start_loc in
-      { s = SStmtIf (cond, tstm, Some fstm); attr }
-  | _ ->
-      let attr = attr start_loc in
-      { s = SStmtIf (cond, tstm, None); attr }
+      { s = SStmtIf (cond, tstm, Some fstm); loc }
+  | _ -> { s = SStmtIf (cond, tstm, None); loc }
 
 
 and typedArgOpt (buffer : Stream.stream) =
@@ -698,11 +661,8 @@ and typedArgOpt (buffer : Stream.stream) =
   | COLON ->
       let _ = Stream.skip buffer in
       let e = type_ 20 buffer in
-      let attr = attr token.loc in
-      token.value, Some e, attr
-  | _ ->
-      let attr = attr token.loc in
-      token.value, None, attr
+      token.value, Some e, token.loc
+  | _ -> token.value, None, token.loc
 
 
 and typedArg (buffer : Stream.stream) =
@@ -711,8 +671,7 @@ and typedArg (buffer : Stream.stream) =
   let _ = Stream.skip buffer in
   let _ = Stream.consume buffer COLON in
   let e = type_ 20 buffer in
-  let attr = attr token.loc in
-  token.value, Some e, attr
+  token.value, Some e, token.loc
 
 
 and argList arg_parser (buffer : Stream.stream) =
@@ -731,7 +690,7 @@ and argList arg_parser (buffer : Stream.stream) =
 
 and stmtExternal (buffer : Stream.stream) : top_stmt =
   let _ = Stream.skip buffer in
-  let name, start_loc = id_name buffer in
+  let name, loc = id_name buffer in
   let _ = Stream.consume buffer LPAREN in
   let args =
     match Stream.peek buffer with
@@ -755,13 +714,12 @@ and stmtExternal (buffer : Stream.stream) : top_stmt =
         raise (ParserError (Stream.makeError buffer message))
   in
   let _ = Stream.consume buffer SEMI in
-  let attr = attr start_loc in
-  { top = STopExternal { name; args; type_; link_name; tags }; attr }
+  { top = STopExternal ({ name; args; t = Some type_; tags; next = None; loc }, link_name); loc }
 
 
-and stmtFunctionDecl (buffer : Stream.stream) : function_def * attr =
+and stmtFunctionDecl (buffer : Stream.stream) : function_def * stmt * Loc.t =
   let _ = Stream.skip buffer in
-  let name, start_loc = id_name buffer in
+  let name, loc = id_name buffer in
   let _ = Stream.consume buffer LPAREN in
   let args =
     match Stream.peek buffer with
@@ -769,7 +727,7 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * attr =
     | _ -> argList typedArgOpt buffer
   in
   let _ = Stream.consume buffer RPAREN in
-  let type_ =
+  let t =
     match Stream.peek buffer with
     | COLON ->
         let _ = Stream.skip buffer in
@@ -780,32 +738,35 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * attr =
   let body = stmtList buffer in
   let next =
     match Stream.peek buffer with
-    | AND -> Some (fst (stmtFunctionDecl buffer))
+    | AND ->
+        let def, body, _ = stmtFunctionDecl buffer in
+        Some (def, body)
     | _ -> None
   in
-  let attr = attr start_loc in
-  { name; args; body; type_; next; tags; attr }, attr
+  { name; args; t; next; tags; loc }, body, loc
 
 
 and stmtFunction (buffer : Stream.stream) : top_stmt =
-  let def, attr = stmtFunctionDecl buffer in
-  { top = STopFunction def; attr }
+  let def, body, loc = stmtFunctionDecl buffer in
+  { top = STopFunction (def, body); loc }
 
 
 and stmtType (buffer : Stream.stream) : top_stmt =
   let _ = Stream.consume buffer TYPE in
-  let name, start_loc = id_name buffer in
+  let name, loc = id_name buffer in
   match Stream.peek buffer with
+  (*
   | COLON ->
       let _ = Stream.skip buffer in
       let type_ = type_ 10 buffer in
       let _ = Stream.optConsume buffer SEMI in
-      { top = STopTypeAlias (name, type_); attr = attr start_loc }
+      { top = STopTypeAlias (name, type_); loc }
+  *)
   | LBRACE ->
       let _ = Stream.skip buffer in
       let members = type_member_list buffer in
       let _ = Stream.consume buffer RBRACE in
-      { top = STopType { name; members }; attr = attr start_loc }
+      { top = STopType { name; members }; loc }
   | _ ->
       let got = tokenToString (Stream.current buffer) in
       let message =
@@ -828,20 +789,20 @@ and type_member_list (buffer : Stream.stream) =
 
 and type_member (buffer : Stream.stream) =
   let _ = Stream.expect buffer VAL in
-  let name, start_loc = id_name buffer in
+  let name, loc = id_name buffer in
   let _ = Stream.consume buffer COLON in
   let type_ = type_ 10 buffer in
-  name, type_, attr start_loc
+  name, type_, loc
 
 
 and stmtWhile (buffer : Stream.stream) : stmt =
-  let start_loc = Stream.location buffer in
+  let loc = Stream.location buffer in
   let _ = Stream.consume buffer WHILE in
   let _ = Stream.consume buffer LPAREN in
   let cond = expression 0 buffer in
   let _ = Stream.consume buffer RPAREN in
   let tstm = stmtList buffer in
-  { s = SStmtWhile (cond, tstm); attr = attr start_loc }
+  { s = SStmtWhile (cond, tstm); loc }
 
 
 and stmt (buffer : Stream.stream) : stmt =
@@ -858,7 +819,7 @@ and stmt (buffer : Stream.stream) : stmt =
       let _ = Stream.appendError buffer error in
       let _ = moveToNextStatement buffer in
       let _ = Stream.setErrors buffer true in
-      { s = SStmtError; attr = attr Loc.default }
+      { s = SStmtError; loc = Loc.default }
 
 
 and stmtList (buffer : Stream.stream) : stmt =
@@ -869,10 +830,10 @@ and stmtList (buffer : Stream.stream) : stmt =
         let end_loc = Stream.location buffer in
         let loc = Loc.merge start_loc end_loc in
         let _ = Stream.skip buffer in
-        { s = SStmtBlock (List.rev acc); attr = attr loc }
+        { s = SStmtBlock (List.rev acc); loc }
     | EOF ->
         let _ = Stream.expect buffer RBRACE in
-        { s = SStmtBlock []; attr = attr start_loc }
+        { s = SStmtBlock []; loc = start_loc }
     | _ ->
         let s = stmt buffer in
         loop (s :: acc)
@@ -883,7 +844,7 @@ and stmtList (buffer : Stream.stream) : stmt =
       loop []
   | _ ->
       let s = stmt buffer in
-      { s = SStmtBlock [ s ]; attr = attr s.attr.loc }
+      { s = SStmtBlock [ s ]; loc = s.loc }
 
 
 and topStmt (buffer : Stream.stream) : top_stmt =
@@ -900,7 +861,7 @@ and topStmt (buffer : Stream.stream) : top_stmt =
       let _ = Stream.appendError buffer error in
       let _ = moveToNextTopStatement buffer in
       let _ = Stream.setErrors buffer true in
-      { top = STopError; attr = attr Loc.default }
+      { top = STopError; loc = Loc.default }
 
 
 and topstmtList (buffer : Stream.stream) : top_stmt list =

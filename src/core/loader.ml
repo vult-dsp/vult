@@ -45,11 +45,11 @@ module Dependencies = struct
     | None -> set
 
 
-  let rec type_ set t =
+  let rec type_ set (t : Syntax.type_) =
     match t.t with
     | STId p -> path set p
-    | STInt _ -> set
-    | STComposed (p, subs) -> list type_ (path set p) subs
+    | STSize _ -> set
+    | STComposed (_, subs) -> list type_ set subs
 
 
   let rec exp set e =
@@ -86,12 +86,12 @@ module Dependencies = struct
     | Some t -> type_ set t
 
 
-  let rec function_def set def =
+  let rec function_def set (def, body) =
     match def with
-    | { args; type_ = t; body; next } ->
+    | { args; t; next } ->
+        let set = stmt set body in
         let set = list arg set args in
         let set = option type_ set t in
-        let set = stmt set body in
         option function_def set next
 
 
@@ -110,9 +110,9 @@ module Dependencies = struct
   and top_stmt set s =
     match s.top with
     | STopError -> set
-    | STopExternal { args; type_ = t } -> list arg (type_ set t) args
-    | STopFunction def -> function_def set def
-    | STopTypeAlias (_, t) -> type_ set t
+    | STopExternal (def, _) -> function_def set (def, { s = SStmtError; loc = s.loc })
+    | STopFunction (def, body) -> function_def set (def, body)
+    (*| STopTypeAlias (_, t) -> type_ set t*)
     | STopType { members } -> list (fun set (_, t, _) -> type_ set t) set members
 
 
