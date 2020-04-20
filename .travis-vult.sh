@@ -4,8 +4,12 @@ eval $(opam config env)
 # installs all dependencies
 opam install containers ppx_deriving ounit js_of_ocaml js_of_ocaml-ppx pla bisect_ppx result
 # run the coverage
-make coverage
-make clean
+if [ $TRAVIS_OS_NAME == linux ];
+then
+   make coverage
+   make clean
+fi
+
 # builds the release version
 make all
 # prepare to package
