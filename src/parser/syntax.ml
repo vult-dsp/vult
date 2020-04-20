@@ -41,24 +41,6 @@ and type_ =
   }
 [@@deriving show, eq, ord]
 
-type tag_d =
-  | SGId     of string
-  | SGInt    of int
-  | SGBool   of bool
-  | SGReal   of float
-  | SGString of string
-  | SGCall   of
-      { name : string
-      ; args : (string * tag * Loc.t) list
-      }
-[@@deriving show, eq, ord]
-
-and tag =
-  { g : tag_d
-  ; loc : Loc.t
-  }
-[@@deriving show, eq, ord]
-
 type exp_d =
   | SEUnit
   | SEBool   of bool
@@ -131,7 +113,7 @@ type arg = string * type_ option * Loc.t [@@deriving show, eq, ord]
 and stmt_d =
   | SStmtError
   | SStmtVal    of dexp * exp option
-  | SStmtMem    of dexp * exp option * tag list
+  | SStmtMem    of dexp * exp option * Tags.tag list
   | SStmtBind   of lexp * exp
   | SStmtReturn of exp
   | SStmtBlock  of stmt list
@@ -151,7 +133,7 @@ and function_def =
   ; t : type_ option
   ; next : (function_def * stmt) option
   ; loc : Loc.t
-  ; tags : tag list
+  ; tags : Tags.tag list
   }
 [@@deriving show, eq, ord]
 

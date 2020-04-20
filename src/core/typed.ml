@@ -22,43 +22,58 @@
    THE SOFTWARE.
 *)
 
-type path = Syntax.path [@@deriving show, eq, ord]
+type path = Syntax.path
 
+(*
 type type_d =
   | TId       of path
   | TSize     of int
   | TComposed of path * type_ list
-[@@deriving show, eq, ord]
 
 and type_ =
   { t : type_d
-  ; loc : Loc.t [@compare fun _ _ -> 0]
+  ; loc : Loc.t
   }
-[@@deriving show, eq, ord]
+*)
 
 type ext_type_d =
-  | TEUnbound  of string
+  | TEUnbound  of int
   | TEId       of path
   | TESize     of int
   | TELink     of ext_type
   | TEOption   of ext_type list
   | TEComposed of string * ext_type list
-[@@deriving show, eq, ord]
 
 and ext_type =
   { mutable tx : ext_type_d
   ; mutable loc : Loc.t
   }
-[@@deriving show, eq, ord]
 
 type ext_fun_type = ext_type list * ext_type
 
+let rec compare_ext_type (a : ext_type) (b : ext_type) =
+  if a == b then
+    0
+  else
+    match a.tx, b.tx with
+    | TELink a, _ -> compare_ext_type a b
+    | _, TELink b -> compare_ext_type a b
+    | TEId p1, TEId p2 -> Syntax.compare_path p1 p2
+    | TESize p1, TESize p2 -> compare p1 p2
+    | TEComposed (n1, e1), TEComposed (n2, e2) -> CCOrd.(string n1 n2 <?> (compare_ext_type_list, e1, e2))
+    | TEOption e1, TEOption e2 -> compare_ext_type_list e1 e2
+    | TEUnbound n1, TEUnbound n2 -> compare n1 n2
+    | _ -> compare a.tx b.tx
+
+
+and compare_ext_type_list a b = CCOrd.list compare_ext_type a b
+
 module type TSig = sig
-  type t [@@deriving show, eq, ord]
+  type t
 end
 
 module Prog (T : TSig) = struct
-  type tag = Syntax.tag [@@deriving show, eq, ord]
+  type tag = Tags.tag
 
   type exp_d =
     | EUnit
@@ -86,14 +101,12 @@ module Prog (T : TSig) = struct
         }
     | ETuple  of exp list
     | EMember of exp * string
-  [@@deriving show, eq, ord]
 
   and exp =
     { e : exp_d
     ; loc : Loc.t
     ; t : T.t
     }
-  [@@deriving show, eq, ord]
 
   and lexp_d =
     | LWild
@@ -104,29 +117,25 @@ module Prog (T : TSig) = struct
         ; index : exp
         }
     | LTuple  of lexp list
-  [@@deriving show, eq, ord]
 
   and lexp =
     { l : lexp_d
     ; loc : Loc.t
     ; t : T.t
     }
-  [@@deriving show, eq, ord]
 
   type dexp_d =
     | DWild
     | DId    of string * int option
     | DTuple of dexp list
-  [@@deriving show, eq, ord]
 
   and dexp =
     { d : dexp_d
     ; loc : Loc.t
     ; t : T.t
     }
-  [@@deriving show, eq, ord]
 
-  type arg = string * T.t * Loc.t [@@deriving show, eq, ord]
+  type arg = string * T.t * Loc.t
 
   and stmt_d =
     | StmtVal    of dexp * exp option
@@ -136,13 +145,11 @@ module Prog (T : TSig) = struct
     | StmtBlock  of stmt list
     | StmtIf     of exp * stmt * stmt option
     | StmtWhile  of exp * stmt
-  [@@deriving show, eq, ord]
 
   and stmt =
     { s : stmt_d
     ; loc : Loc.t
     }
-  [@@deriving show, eq, ord]
 
   and function_def =
     { name : string
@@ -152,7 +159,6 @@ module Prog (T : TSig) = struct
     ; loc : Loc.t
     ; tags : tag list
     }
-  [@@deriving show, eq, ord]
 
   type top_stmt_d =
     | TopExternal  of function_def * string
@@ -162,21 +168,24 @@ module Prog (T : TSig) = struct
         { name : string
         ; members : (string * T.t * Loc.t) list
         }
-  [@@deriving show, eq, ord]
 
   and top_stmt =
     { top : top_stmt_d
     ; loc : Loc.t
     }
-  [@@deriving show, eq, ord]
 
-  type program = top_stmt list [@@deriving show, eq, ord]
+  type program = top_stmt list
 end
 
 module TX = struct
+  let tick = ref 0
+
   let makeId loc id = { tx = TEId { id; n = None; loc }; loc }
 
-  let unbound loc = { tx = TEUnbound ""; loc }
+  let unbound loc =
+    incr tick ;
+    { tx = TEUnbound !tick; loc }
+
 
   let unit ~loc = makeId loc "unit"
 
@@ -314,14 +323,14 @@ module TX = struct
 
   let unit_int () : ext_fun_type =
     let loc = Loc.default in
-    [ unit loc ], int loc
+    [], int loc
 
 
   let unit_real () : ext_fun_type =
     let loc = Loc.default in
-    [ unit loc ], real loc
+    [], real loc
 end
 
 module PX = Prog (struct
-  type t = ext_type [@@deriving show, eq, ord]
+  type t = ext_type
 end)

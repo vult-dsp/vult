@@ -182,11 +182,11 @@ let int_value (buffer : Stream.stream) : int * Loc.t =
 
 
 (** Parses tag expressions *)
-let rec tag (rbp : int) (buffer : Stream.stream) : tag = prattParser rbp buffer getExpLbp tag_nud tag_led
+let rec tag (rbp : int) (buffer : Stream.stream) : Tags.tag = prattParser rbp buffer getExpLbp tag_nud tag_led
 
-and tagExpressionList (buffer : Stream.stream) : tag list = commaSepList tag buffer
+and tagExpressionList (buffer : Stream.stream) : Tags.tag list = commaSepList tag buffer
 
-and tag_nud (buffer : Stream.stream) (token : 'kind token) : tag =
+and tag_nud (buffer : Stream.stream) (token : 'kind token) : Tags.tag =
   let loc = token.loc in
   match token.kind, token.value with
   | ID, _ ->
@@ -199,50 +199,50 @@ and tag_nud (buffer : Stream.stream) (token : 'kind token) : tag =
               match Stream.peek buffer with
               | RPAREN ->
                   let _ = Stream.skip buffer in
-                  { g = SGId name; loc }
+                  { g = TagId name; loc }
               | _ ->
                   let args = tag_pair_list buffer in
                   let _ = Stream.consume buffer RPAREN in
-                  { g = SGCall { name; args }; loc }
+                  { g = TagCall { name; args }; loc }
             end
-        | _ -> { g = SGId name; loc }
+        | _ -> { g = TagId name; loc }
       end
   | OP, "-" -> tag_unary_op buffer token
-  | INT, _ -> { g = SGInt (int_of_string token.value); loc }
-  | TRUE, _ -> { g = SGBool true; loc }
-  | FALSE, _ -> { g = SGBool false; loc }
-  | REAL, _ -> { g = SGReal (float_of_string token.value); loc }
-  | STRING, _ -> { g = SGString token.value; loc }
+  | INT, _ -> { g = TagInt (int_of_string token.value); loc }
+  | TRUE, _ -> { g = TagBool true; loc }
+  | FALSE, _ -> { g = TagBool false; loc }
+  | REAL, _ -> { g = TagReal (float_of_string token.value); loc }
+  | STRING, _ -> { g = TagString token.value; loc }
   | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError message)
 
 
-and tag_unary_op (buffer : Stream.stream) (token : 'kind token) : tag =
+and tag_unary_op (buffer : Stream.stream) (token : 'kind token) : Tags.tag =
   let right = tag 70 buffer in
   match right.g with
-  | SGInt value -> { right with g = SGInt (-value) }
-  | SGReal value -> { right with g = SGReal (-.value) }
+  | TagInt value -> { right with g = TagInt (-value) }
+  | TagReal value -> { right with g = TagReal (-.value) }
   | _ -> Error.raiseError "invalid value" token.loc
 
 
-and tag_led (_ : Stream.stream) (token : 'kind token) (_ : tag) : tag =
+and tag_led (_ : Stream.stream) (token : 'kind token) (_ : Tags.tag) : Tags.tag =
   match token.kind with
   | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError message)
 
 
-and tag_pair (bp : int) (buffer : Stream.stream) : string * tag * Loc.t =
+and tag_pair (bp : int) (buffer : Stream.stream) : string * Tags.tag * Loc.t =
   let id, loc = id_name buffer in
   let _ = Stream.consume buffer EQUAL in
   let value = tag bp buffer in
   id, value, loc
 
 
-and tag_pair_list (buffer : Stream.stream) : (string * tag * Loc.t) list = commaSepList tag_pair buffer
+and tag_pair_list (buffer : Stream.stream) : (string * Tags.tag * Loc.t) list = commaSepList tag_pair buffer
 
-let optional_tag (buffer : Stream.stream) : tag list =
+let optional_tag (buffer : Stream.stream) : Tags.tag list =
   match Stream.peek buffer with
   | AT ->
       let _ = Stream.consume buffer AT in
@@ -554,7 +554,7 @@ and call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let path = expToPath error left in
   let args =
     match Stream.peek buffer with
-    | RPAREN -> [ { e = SEUnit; loc = token.loc } ]
+    | RPAREN -> []
     | _ -> expressionList buffer
   in
   let _ = Stream.consume buffer RPAREN in
@@ -746,6 +746,27 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * stmt * Loc.t =
   { name; args; t; next; tags; loc }, body, loc
 
 
+and stmtFunctionSpec (buffer : Stream.stream) : function_def =
+  let _ = Stream.consume buffer FUN in
+  let name, loc = id_name buffer in
+  let _ = Stream.consume buffer LPAREN in
+  let args =
+    match Stream.peek buffer with
+    | RPAREN -> []
+    | _ -> argList typedArg buffer
+  in
+  let _ = Stream.consume buffer RPAREN in
+  let t =
+    match Stream.peek buffer with
+    | COLON ->
+        let _ = Stream.skip buffer in
+        Some (type_ 0 buffer)
+    | _ -> None
+  in
+  let tags = optional_tag buffer in
+  { name; args; t; next = None; tags; loc }
+
+
 and stmtFunction (buffer : Stream.stream) : top_stmt =
   let def, body, loc = stmtFunctionDecl buffer in
   { top = STopFunction (def, body); loc }
@@ -769,9 +790,7 @@ and stmtType (buffer : Stream.stream) : top_stmt =
       { top = STopType { name; members }; loc }
   | _ ->
       let got = tokenToString (Stream.current buffer) in
-      let message =
-        Printf.sprintf "Expecting a list of value declarations '{ val x:... }' or a type alias ': type' but got %s" got
-      in
+      let message = Printf.sprintf "Expecting a list of value declarations '{ val x:... }' but got %s" got in
       raise (ParserError (Stream.makeError buffer message))
 
 
@@ -914,6 +933,11 @@ let parseStmtList (s : string) : stmt =
   let buffer = Stream.fromString s in
   let result = stmtList buffer in
   result
+
+
+let parseFunctionSpec (s : string) : function_def =
+  let buffer = Stream.fromString s in
+  stmtFunctionSpec buffer
 
 
 let parseDumpStmtList (s : string) : string = Syntax.show_stmt (parseStmtList s)

@@ -1,3 +1,27 @@
+(*
+   The MIT License (MIT)
+
+   Copyright (c) 2020 Leonardo Laguna Ruiz
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+*)
+
 module StringMap = CCMap.Make (String)
 
 module Map = struct
@@ -5,16 +29,16 @@ module Map = struct
 
   let empty () = ref StringMap.empty
 
-  let update report key value t =
+  let update (report : 'a -> unit) (key : string) (value : 'a) (t : 'a t) : unit =
     t :=
       StringMap.update
         key
-        (fun found ->
-          match found with
+        (fun a ->
+          match a with
           | None -> Some value
-          | Some found ->
-              let () = report found in
-              None)
+          | Some b ->
+              report b ;
+              Some b)
         !t
 
 
@@ -101,24 +125,28 @@ let builtin_functions =
   |> Map.of_list
 
 
+type path = Syntax.path
+
 module Env (T : TSig) = struct
-  type var_n =
+  type var =
     { name : string
     ; t : T.t
-    ; kind : var_kind
-    }
-
-  type f =
-    { path : Syntax.path
-    ; t : T.t list * T.t
-    ; mems : var_n Map.t
-    ; mutable locals : var_n Map.t list
-    ; mutable active : bool
+    ; loc : Loc.t
     }
 
   type t =
-    { path : Syntax.path
-    ; members : (string * T.t * Loc.t) list
+    { path : path
+    ; members : var Map.t
+    }
+
+  type context = (path * t) option
+
+  type f =
+    { path : path
+    ; t : T.t list * T.t
+    ; context : context
+    ; mutable locals : var Map.t list
+    ; mutable active : bool
     }
 
   type m =
@@ -133,108 +161,125 @@ module Env (T : TSig) = struct
     ; builtin_types : t Map.t
     }
 
-  type in_func = in_top * m * f
+  type in_module =
+    { top : in_top
+    ; m : m
+    }
 
-  type in_module = in_top * m
+  type in_context =
+    { top : in_top
+    ; m : m
+    ; context : context
+    }
 
-  let makeFunction name t : f =
-    { path = { id = name; n = None; loc = Loc.default }; t; mems = Map.empty (); locals = []; active = false }
+  type in_func =
+    { top : in_top
+    ; m : m
+    ; f : f
+    }
+
+  let makeFunctionForBuiltin name t : f =
+    { path = { id = name; n = None; loc = Loc.default }; t; context = None; locals = []; active = false }
 
 
-  let lookVar (env : in_func) (name : string) : var_n =
-    let _, _, f = env in
-    match Map.find name f.mems with
+  let rec lookVarInScopes (scopes : var Map.t list) name : var option =
+    match scopes with
+    | [] -> None
+    | h :: t ->
+        ( match Map.find name h with
+        | Some found -> Some found
+        | None -> lookVarInScopes t name )
+
+
+  let lookVarInContext (context : context) name : var option =
+    match context with
+    | Some (_, { members }) -> Map.find name members
+    | None -> None
+
+
+  let lookVar (env : in_func) (name : string) : var =
+    match lookVarInContext env.f.context name with
     | Some found -> found
     | None ->
-        let rec loop (scopes : var_n Map.t list) =
-          match scopes with
-          | [] -> failwith "Not found"
-          | h :: t ->
-              ( match Map.find name h with
-              | Some found -> found
-              | None -> loop t )
-        in
-        loop f.locals
+        ( match lookVarInScopes env.f.locals name with
+        | Some found -> found
+        | None -> failwith "var not found" )
 
 
-  let lookFunctionCall (env : in_func) (path : Syntax.path) : f =
+  let lookFunctionCall (env : in_func) (path : path) : f =
     let reportNotFound result =
       match result with
       | Some found -> found
       | None -> failwith "function not found"
     in
-    let t, m, _ = env in
     match path with
     | { id; n = Some n } ->
         begin
-          match Map.find n t.modules with
+          match Map.find n env.top.modules with
           | None -> failwith "module not found"
           | Some m -> reportNotFound (Map.find id m.functions)
         end
     | { id } ->
-        ( match Map.find id m.functions with
+        ( match Map.find id env.m.functions with
         | Some found -> found
         | None ->
-            ( match Map.find id t.builtin_functions with
-            | Some f -> makeFunction id (T.convert_function_type (f ()))
+            ( match Map.find id env.top.builtin_functions with
+            | Some f -> makeFunctionForBuiltin id (T.convert_function_type (f ()))
             | None -> reportNotFound None ) )
 
 
   let lookOperator (env : in_func) (op : string) : f =
-    let t, _, _ = env in
-    match Map.find op t.builtin_functions with
-    | Some found -> makeFunction op (T.convert_function_type (found ()))
+    match Map.find op env.top.builtin_functions with
+    | Some found -> makeFunctionForBuiltin op (T.convert_function_type (found ()))
     | None -> failwith ("operator not found " ^ op)
 
 
-  let rec lookType (env : in_func) (path : Syntax.path) : t =
+  let rec lookType (env : in_func) (path : path) : t =
     let reportNotFound result =
       match result with
       | Some found -> found
       | None -> failwith "type not found"
     in
-    let t, m, _ = env in
     match path with
     | { id; n = Some n } ->
         begin
-          match Map.find n t.modules with
+          match Map.find n env.top.modules with
           | None -> failwith "module not found"
           | Some m -> reportNotFound (Map.find id m.types)
         end
     | { id } ->
-        ( match Map.find id m.types with
+        ( match Map.find id env.m.types with
         | Some _ as found -> reportNotFound found
-        | None -> reportNotFound (Map.find id t.builtin_types) )
+        | None -> reportNotFound (Map.find id env.top.builtin_types) )
 
 
-  let addVar (env : in_func) (name : string) (t : T.t) (kind : var_kind) : in_func =
-    let _, _, f = env in
-    let report _found = failwith "duplicated declaration" in
-    match kind with
-    | Mem ->
-        let () = f.active <- true in
-        Map.update report name { name; t; kind } f.mems ;
+  let addVar (env : in_func) (name : string) (t : T.t) (kind : var_kind) loc : in_func =
+    let report_mem _ = () in
+    match kind, env.f.context with
+    | Mem, Some (_, context) ->
+        let () = env.f.active <- true in
+        Map.update report_mem name { name; t; loc } context.members ;
         env
-    | Val ->
-        ( match f.locals with
+    | Mem, None -> failwith "Internal error: cannot add mem to functions with no context"
+    | Val, _ ->
+        let report _found = failwith "duplicated declaration" in
+        ( match env.f.locals with
         | [] -> failwith "no local scope"
         | h :: _ ->
-            Map.update report name { name; t; kind } h ;
+            Map.update report name { name; t; loc } h ;
             env )
 
 
   let pushScope (env : in_func) : in_func =
-    let _, _, f = env in
-    f.locals <- Map.empty () :: f.locals ;
+    env.f.locals <- Map.empty () :: env.f.locals ;
     env
 
 
   let popScope (env : in_func) : in_func =
-    let _, _, f = env in
-    match f.locals with
+    match env.f.locals with
     | [] -> failwith "invalid scope"
     | _ :: t ->
-        f.locals <- t ;
+        env.f.locals <- t ;
         env
 
 
@@ -244,7 +289,7 @@ module Env (T : TSig) = struct
     let rev_args =
       List.fold_left
         (fun acc (name, t, loc) ->
-          let () = Map.update report name { kind = Val; name; t } locals in
+          let () = Map.update report name { name; t; loc } locals in
           t :: acc)
         []
         args
@@ -252,46 +297,53 @@ module Env (T : TSig) = struct
     locals, List.rev rev_args
 
 
-  let enterFunction (env : in_module) (name : string) (args : (string * T.t * Loc.t) list) (ret : T.t) loc :
-      in_func * 'a =
-    let top, m = env in
+  let getPath m name loc : path = { id = name; n = Some m.name; loc }
+
+  let createContextForFunction (env : in_module) name loc : in_context =
     let report _ = failwith "function exitst" in
-    let path : Syntax.path = { id = name; n = Some m.name; loc } in
+    let type_name = name ^ "_type" in
+    let path = getPath env.m type_name loc in
+    let t = { members = Map.empty (); path } in
+    let _ = Map.update report type_name t env.m.types in
+    { top = env.top; m = env.m; context = Some (path, t) }
+
+
+  let createContextForExternal (env : in_module) name loc : in_context = { top = env.top; m = env.m; context = None }
+
+  let exitContext (env : in_context) : in_module = { top = env.top; m = env.m }
+
+  let enterFunction (env : in_context) (name : string) (args : (string * T.t * Loc.t) list) (ret : T.t) loc :
+      in_func * 'a =
+    let report _ = failwith "function exitst" in
+    let path = getPath env.m name loc in
     let locals, args_t = registerArguments args in
     let t = args_t, ret in
-    let f : f = { path; t; mems = Map.empty (); locals = [ locals ]; active = false } in
-    let _ = Map.update report name f m.functions in
-    (top, m, f), t
+    let f : f = { path; t; context = env.context; locals = [ locals ]; active = false } in
+    let _ = Map.update report name f env.m.functions in
+    { top = env.top; m = env.m; f }, t
 
 
-  let exitFunction (env : in_func) : in_module =
-    let t, m, _ = env in
-    t, m
-
+  let exitFunction (env : in_func) : in_context = { top = env.top; m = env.m; context = env.f.context }
 
   let addType (env : in_module) (name : string) members loc : in_module =
-    let top, m = env in
     let report _ = failwith "type exitst" in
-    let path : Syntax.path = { id = name; n = Some m.name; loc } in
+    let path = getPath env.m name loc in
     let t = { members; path } in
-    let _ = Map.update report name t m.types in
-    top, m
+    let _ = Map.update report name t env.m.types in
+    { top = env.top; m = env.m }
 
 
   let enterModule (env : in_top) (name : string) : in_module =
     match Map.find name env.modules with
-    | Some m -> env, m
+    | Some m -> { top = env; m }
     | None ->
-        let report _ = failwith "duplicate module" in
+        let report _ = failwith ("duplicate module: " ^ name) in
         let m : m = { name; functions = Map.empty (); types = Map.empty () } in
         let () = Map.update report name m env.modules in
-        env, m
+        { top = env; m }
 
 
-  let exitModule (env : in_module) : in_top =
-    let top, _ = env in
-    top
-
+  let exitModule (env : in_module) : in_top = env.top
 
   let empty () = { modules = Map.empty (); builtin_functions; builtin_types = Map.empty () }
 end

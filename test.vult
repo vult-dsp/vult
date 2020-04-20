@@ -1,3 +1,0 @@
-fun foo(x) {
-   return 1 + x;
-}
