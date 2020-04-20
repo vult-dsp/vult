@@ -22,20 +22,20 @@
    THE SOFTWARE.
 *)
 
-(** Type to hold the location *)
 open Lexing
+(** Type to hold the location *)
 
 (** Source of the code *)
 type source =
    | File of string
    | Text of string
 
-(** Location information *)
 type t =
    { start_pos : position
    ; end_pos : position
    ; source : source
    }
+(** Location information *)
 
 let pp fmt _ = Format.pp_print_string fmt "loc"
 

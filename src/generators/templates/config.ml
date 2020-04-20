@@ -34,7 +34,6 @@ type output =
    | OInt
    | OBool
 
-(** Represents the 'plugin' configuration *)
 type config =
    { module_name : string
    ; process_inputs : input list
@@ -48,13 +47,13 @@ type config =
    ; update_outputs : output list
    ; update_found : bool
    }
+(** Represents the 'plugin' configuration *)
 
 type target_file =
    | Implementation
    | Header
    | Tables
 
-(** Represents the parameters used during code generation *)
 type params =
    { real : string   (** 'Real' number representation *)
    ; template : string   (** Used template *)
@@ -65,6 +64,7 @@ type params =
    ; prefix : string   (** Prefix given to java code *)
    ; config : config   (** Plugin configuration *)
    }
+(** Represents the parameters used during code generation *)
 
 (** Empty default configuration *)
 let empty_conf module_name =

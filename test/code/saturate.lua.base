@@ -65,10 +65,12 @@ function Saturate_default(_ctx)
 end
 
 
-function process(x) return Saturate_process(x) end
-function noteOn(note,velocity,channel) return Saturate_noteOn(note,velocity,channel) end
-function noteOff(note,channel) return Saturate_noteOff(note,channel) end
-function controlChange(control,value,channel) return Saturate_controlChange(control,value,channel) end
-function init() return Saturate_process_init() end
-function default(ctx) return Saturate_default(ctx) end
-config = { inputs = 1, outputs = 1, noteon_inputs = 3, noteoff_inputs = 2, controlchange_inputs = 3, is_active = false }
+local this = {}
+function this.process(x) return Saturate_process(x) end
+function this.noteOn(note,velocity,channel) return Saturate_noteOn(note,velocity,channel) end
+function this.noteOff(note,channel) return Saturate_noteOff(note,channel) end
+function this.controlChange(control,value,channel) return Saturate_controlChange(control,value,channel) end
+function this.init() return Saturate_process_init() end
+function this.default(ctx) return Saturate_default(ctx) end
+this.config = { inputs = 1, outputs = 1, noteon_inputs = 3, noteoff_inputs = 2, controlchange_inputs = 3, is_active = false }
+return this

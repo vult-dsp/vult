@@ -322,10 +322,12 @@ function Swept_default(_ctx)
 end
 
 
-function process(ctx,gate,start,end_,rate) return Swept_process(ctx,gate,start,end_,rate) end
-function noteOn(ctx,note,velocity,channel) return Swept_noteOn(ctx,note,velocity,channel) end
-function noteOff(ctx,note,channel) return Swept_noteOff(ctx,note,channel) end
-function controlChange(ctx,control,value,channel) return Swept_controlChange(ctx,control,value,channel) end
-function init() return Swept_process_init() end
-function default(ctx) return Swept_default(ctx) end
-config = { inputs = 5, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+local this = {}
+function this.process(ctx,gate,start,end_,rate) return Swept_process(ctx,gate,start,end_,rate) end
+function this.noteOn(ctx,note,velocity,channel) return Swept_noteOn(ctx,note,velocity,channel) end
+function this.noteOff(ctx,note,channel) return Swept_noteOff(ctx,note,channel) end
+function this.controlChange(ctx,control,value,channel) return Swept_controlChange(ctx,control,value,channel) end
+function this.init() return Swept_process_init() end
+function this.default(ctx) return Swept_default(ctx) end
+this.config = { inputs = 5, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+return this

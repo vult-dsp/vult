@@ -1,10 +1,10 @@
-(** String buffer with a few useful functions *)
 type print_buffer =
    { buffer : Buffer.t
    ; mutable indent : int
    ; mutable space : string
    ; mutable insert : bool
    }
+(** String buffer with a few useful functions *)
 
 (** Creates a print buffer *)
 let makePrintBuffer () = { buffer = Buffer.create 100; indent = 0; space = ""; insert = false }

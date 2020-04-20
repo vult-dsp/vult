@@ -291,10 +291,12 @@ function Gates_default(_ctx)
 end
 
 
-function process(ctx,c) return Gates_process(ctx,c) end
-function noteOn(ctx,note,velocity,channel) return Gates_noteOn(ctx,note,velocity,channel) end
-function noteOff(ctx,note,channel) return Gates_noteOff(ctx,note,channel) end
-function controlChange(ctx,control,value,channel) return Gates_controlChange(ctx,control,value,channel) end
-function init() return Gates_process_init() end
-function default(ctx) return Gates_default(ctx) end
-config = { inputs = 2, outputs = 8, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+local this = {}
+function this.process(ctx,c) return Gates_process(ctx,c) end
+function this.noteOn(ctx,note,velocity,channel) return Gates_noteOn(ctx,note,velocity,channel) end
+function this.noteOff(ctx,note,channel) return Gates_noteOff(ctx,note,channel) end
+function this.controlChange(ctx,control,value,channel) return Gates_controlChange(ctx,control,value,channel) end
+function this.init() return Gates_process_init() end
+function this.default(ctx) return Gates_default(ctx) end
+this.config = { inputs = 2, outputs = 8, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+return this

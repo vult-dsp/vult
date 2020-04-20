@@ -417,10 +417,12 @@ function Svf_default(_ctx)
 end
 
 
-function process(ctx,x,cv,q,sel) return Svf_process(ctx,x,cv,q,sel) end
-function noteOn(ctx,note,velocity,channel) return Svf_noteOn(ctx,note,velocity,channel) end
-function noteOff(ctx,note,channel) return Svf_noteOff(ctx,note,channel) end
-function controlChange(ctx,control,value,channel) return Svf_controlChange(ctx,control,value,channel) end
-function init() return Svf_process_init() end
-function default(ctx) return Svf_default(ctx) end
-config = { inputs = 5, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+local this = {}
+function this.process(ctx,x,cv,q,sel) return Svf_process(ctx,x,cv,q,sel) end
+function this.noteOn(ctx,note,velocity,channel) return Svf_noteOn(ctx,note,velocity,channel) end
+function this.noteOff(ctx,note,channel) return Svf_noteOff(ctx,note,channel) end
+function this.controlChange(ctx,control,value,channel) return Svf_controlChange(ctx,control,value,channel) end
+function this.init() return Svf_process_init() end
+function this.default(ctx) return Svf_default(ctx) end
+this.config = { inputs = 5, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+return this

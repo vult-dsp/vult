@@ -104,10 +104,12 @@ function Defined_types_default(_ctx)
 end
 
 
-function process(ctx,input) return Defined_types_process(ctx,input) end
-function noteOn(ctx,note,velocity,channel) return Defined_types_noteOn(ctx,note,velocity,channel) end
-function noteOff(ctx,note,channel) return Defined_types_noteOff(ctx,note,channel) end
-function controlChange(ctx,control,value,channel) return Defined_types_controlChange(ctx,control,value,channel) end
-function init() return Defined_types_process_init() end
-function default(ctx) return Defined_types_default(ctx) end
-config = { inputs = 2, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+local this = {}
+function this.process(ctx,input) return Defined_types_process(ctx,input) end
+function this.noteOn(ctx,note,velocity,channel) return Defined_types_noteOn(ctx,note,velocity,channel) end
+function this.noteOff(ctx,note,channel) return Defined_types_noteOff(ctx,note,channel) end
+function this.controlChange(ctx,control,value,channel) return Defined_types_controlChange(ctx,control,value,channel) end
+function this.init() return Defined_types_process_init() end
+function this.default(ctx) return Defined_types_default(ctx) end
+this.config = { inputs = 2, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+return this

@@ -22,8 +22,8 @@
    THE SOFTWARE.
 *)
 
-(** Template for the Teensy Audio library *)
 open Config
+(** Template for the Teensy Audio library *)
 
 let inputsArray n_inputs =
    if n_inputs > 0 then

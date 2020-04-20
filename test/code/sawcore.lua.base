@@ -412,10 +412,12 @@ function Sawcore_default(_ctx)
 end
 
 
-function process(ctx,cv,reset) return Sawcore_process(ctx,cv,reset) end
-function noteOn(ctx,note,velocity,channel) return Sawcore_noteOn(ctx,note,velocity,channel) end
-function noteOff(ctx,note,channel) return Sawcore_noteOff(ctx,note,channel) end
-function controlChange(ctx,control,value,channel) return Sawcore_controlChange(ctx,control,value,channel) end
-function init() return Sawcore_process_init() end
-function default(ctx) return Sawcore_default(ctx) end
-config = { inputs = 3, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+local this = {}
+function this.process(ctx,cv,reset) return Sawcore_process(ctx,cv,reset) end
+function this.noteOn(ctx,note,velocity,channel) return Sawcore_noteOn(ctx,note,velocity,channel) end
+function this.noteOff(ctx,note,channel) return Sawcore_noteOff(ctx,note,channel) end
+function this.controlChange(ctx,control,value,channel) return Sawcore_controlChange(ctx,control,value,channel) end
+function this.init() return Sawcore_process_init() end
+function this.default(ctx) return Sawcore_default(ctx) end
+this.config = { inputs = 3, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+return this

@@ -173,10 +173,12 @@ function Short_delay_default(_ctx)
 end
 
 
-function process(ctx,x,time,feedback) return Short_delay_process(ctx,x,time,feedback) end
-function noteOn(ctx,note,velocity,channel) return Short_delay_noteOn(ctx,note,velocity,channel) end
-function noteOff(ctx,note,channel) return Short_delay_noteOff(ctx,note,channel) end
-function controlChange(ctx,control,value,channel) return Short_delay_controlChange(ctx,control,value,channel) end
-function init() return Short_delay_process_init() end
-function default(ctx) return Short_delay_default(ctx) end
-config = { inputs = 4, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+local this = {}
+function this.process(ctx,x,time,feedback) return Short_delay_process(ctx,x,time,feedback) end
+function this.noteOn(ctx,note,velocity,channel) return Short_delay_noteOn(ctx,note,velocity,channel) end
+function this.noteOff(ctx,note,channel) return Short_delay_noteOff(ctx,note,channel) end
+function this.controlChange(ctx,control,value,channel) return Short_delay_controlChange(ctx,control,value,channel) end
+function this.init() return Short_delay_process_init() end
+function this.default(ctx) return Short_delay_default(ctx) end
+this.config = { inputs = 4, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+return this

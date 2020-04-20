@@ -44,10 +44,12 @@ function Template_default(_ctx)
 end
 
 
-function process(input) return Template_process(input) end
-function noteOn(note,velocity,channel) return Template_noteOn(note,velocity,channel) end
-function noteOff(note,channel) return Template_noteOff(note,channel) end
-function controlChange(control,value,channel) return Template_controlChange(control,value,channel) end
-function init() return Template_process_init() end
-function default(ctx) return Template_default(ctx) end
-config = { inputs = 1, outputs = 1, noteon_inputs = 3, noteoff_inputs = 2, controlchange_inputs = 3, is_active = false }
+local this = {}
+function this.process(input) return Template_process(input) end
+function this.noteOn(note,velocity,channel) return Template_noteOn(note,velocity,channel) end
+function this.noteOff(note,channel) return Template_noteOff(note,channel) end
+function this.controlChange(control,value,channel) return Template_controlChange(control,value,channel) end
+function this.init() return Template_process_init() end
+function this.default(ctx) return Template_default(ctx) end
+this.config = { inputs = 1, outputs = 1, noteon_inputs = 3, noteoff_inputs = 2, controlchange_inputs = 3, is_active = false }
+return this

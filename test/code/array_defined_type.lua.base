@@ -96,10 +96,12 @@ function Array_defined_type_default(_ctx)
 end
 
 
-function process(ctx,input) return Array_defined_type_process(ctx,input) end
-function noteOn(ctx,note,velocity,channel) return Array_defined_type_noteOn(ctx,note,velocity,channel) end
-function noteOff(ctx,note,channel) return Array_defined_type_noteOff(ctx,note,channel) end
-function controlChange(ctx,control,value,channel) return Array_defined_type_controlChange(ctx,control,value,channel) end
-function init() return Array_defined_type_process_init() end
-function default(ctx) return Array_defined_type_default(ctx) end
-config = { inputs = 2, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+local this = {}
+function this.process(ctx,input) return Array_defined_type_process(ctx,input) end
+function this.noteOn(ctx,note,velocity,channel) return Array_defined_type_noteOn(ctx,note,velocity,channel) end
+function this.noteOff(ctx,note,channel) return Array_defined_type_noteOff(ctx,note,channel) end
+function this.controlChange(ctx,control,value,channel) return Array_defined_type_controlChange(ctx,control,value,channel) end
+function this.init() return Array_defined_type_process_init() end
+function this.default(ctx) return Array_defined_type_default(ctx) end
+this.config = { inputs = 2, outputs = 1, noteon_inputs = 4, noteoff_inputs = 3, controlchange_inputs = 4, is_active = true }
+return this
