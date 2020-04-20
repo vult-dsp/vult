@@ -2,7 +2,7 @@ sh .travis-ocaml.sh
 export OPAMYES=1
 eval $(opam config env)
 # installs all dependencies
-opam install containers ppx_deriving ounit js_of_ocaml js_of_ocaml-ppx pla ocveralls bisect_ppx result
+opam install containers ppx_deriving ounit js_of_ocaml js_of_ocaml-ppx pla bisect_ppx result
 # run the coverage
 make coverage
 make clean
