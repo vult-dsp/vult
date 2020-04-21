@@ -48,14 +48,16 @@ module Map = struct
 
 
   let find key t = StringMap.find_opt key !t
+
+  let is_empty (t : 'a t) : bool = StringMap.is_empty !t
 end
 
 module type TSig = sig
   type t
 
-  val convert : Typed.ext_type -> t
+  val convert : Typed.ExtendedType.type_ -> t
 
-  val convert_function_type : Typed.ext_type list * Typed.ext_type -> t list * t
+  val convert_function_type : Typed.ExtendedType.type_ list * Typed.ExtendedType.type_ -> t list * t
 end
 
 type var_kind =
@@ -131,6 +133,7 @@ module Env (T : TSig) = struct
   type var =
     { name : string
     ; t : T.t
+    ; kind : var_kind
     ; loc : Loc.t
     }
 
@@ -146,7 +149,6 @@ module Env (T : TSig) = struct
     ; t : T.t list * T.t
     ; context : context
     ; mutable locals : var Map.t list
-    ; mutable active : bool
     }
 
   type m =
@@ -157,7 +159,7 @@ module Env (T : TSig) = struct
 
   type in_top =
     { modules : m Map.t
-    ; builtin_functions : (unit -> Typed.ext_fun_type) Map.t
+    ; builtin_functions : (unit -> Typed.ExtendedType.fun_type) Map.t
     ; builtin_types : t Map.t
     }
 
@@ -179,7 +181,7 @@ module Env (T : TSig) = struct
     }
 
   let makeFunctionForBuiltin name t : f =
-    { path = { id = name; n = None; loc = Loc.default }; t; context = None; locals = []; active = false }
+    { path = { id = name; n = None; loc = Loc.default }; t; context = None; locals = [] }
 
 
   let rec lookVarInScopes (scopes : var Map.t list) name : var option =
@@ -257,8 +259,7 @@ module Env (T : TSig) = struct
     let report_mem _ = () in
     match kind, env.f.context with
     | Mem, Some (_, context) ->
-        let () = env.f.active <- true in
-        Map.update report_mem name { name; t; loc } context.members ;
+        Map.update report_mem name { name; t; kind; loc } context.members ;
         env
     | Mem, None -> failwith "Internal error: cannot add mem to functions with no context"
     | Val, _ ->
@@ -266,7 +267,7 @@ module Env (T : TSig) = struct
         ( match env.f.locals with
         | [] -> failwith "no local scope"
         | h :: _ ->
-            Map.update report name { name; t; loc } h ;
+            Map.update report name { name; t; kind; loc } h ;
             env )
 
 
@@ -289,7 +290,7 @@ module Env (T : TSig) = struct
     let rev_args =
       List.fold_left
         (fun acc (name, t, loc) ->
-          let () = Map.update report name { name; t; loc } locals in
+          let () = Map.update report name { name; t; kind = Val; loc } locals in
           t :: acc)
         []
         args
@@ -312,15 +313,33 @@ module Env (T : TSig) = struct
 
   let exitContext (env : in_context) : in_module = { top = env.top; m = env.m }
 
+  let getContext (env : in_func) : path =
+    match env.f.context with
+    | Some (p, _) -> p
+    | None -> failwith "trying to get the context of a function without one"
+
+
+  let getFunctionContext (f : f) : path =
+    match f.context with
+    | Some (p, _) -> p
+    | None -> failwith "trying to get the context of a function without one"
+
+
   let enterFunction (env : in_context) (name : string) (args : (string * T.t * Loc.t) list) (ret : T.t) loc :
-      in_func * 'a =
+      in_func * path * 'a =
     let report _ = failwith "function exitst" in
     let path = getPath env.m name loc in
     let locals, args_t = registerArguments args in
     let t = args_t, ret in
-    let f : f = { path; t; context = env.context; locals = [ locals ]; active = false } in
+    let f : f = { path; t; context = env.context; locals = [ locals ] } in
     let _ = Map.update report name f env.m.functions in
-    { top = env.top; m = env.m; f }, t
+    { top = env.top; m = env.m; f }, path, t
+
+
+  let isFunctionActive (f : f) =
+    match f.context with
+    | Some (_, t) -> not (Map.is_empty t.members)
+    | None -> false
 
 
   let exitFunction (env : in_func) : in_context = { top = env.top; m = env.m; context = env.f.context }
@@ -349,7 +368,7 @@ module Env (T : TSig) = struct
 end
 
 module EnvX = Env (struct
-  type t = Typed.ext_type
+  type t = Typed.ExtendedType.type_
 
   let convert t = t
 

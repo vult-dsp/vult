@@ -1,1 +1,1 @@
-let version = "\nv0.4.5\n"
+let version = String.trim " v0.4.5 "

@@ -4,17 +4,8 @@ VULT_SRC = $(wildcard src/*.ml) $(wildcard src/core/*.ml) $(wildcard src/generat
 
 OCB = ocamlbuild -j 4 -use-ocamlfind
 
-ifeq (, $(shell which ocamlformat))
-OCAMLFORMAT = echo
-else
-OCAMLFORMAT = ocamlformat
-endif
-
-compiler: version format
-	dune build vultc.bc vultc.exe
-
-format: $(VULT_SRC)
-	@$(OCAMLFORMAT) -i --enable-outside-detected-project $(VULT_SRC)
+compiler:
+	dune build vultc.bc vultc.exe @fmt --auto-promote
 
 run: compiler
 	./_build/default/vultc.bc
@@ -58,12 +49,12 @@ run: compiler
 #	BISECT_FILE=_build/coverage ./perf.native
 #	bisect-ppx-report send-to Coveralls --source-path _build
 
-version :
-	@echo "let version = \"" > src/version.ml
-	@git describe --tags --abbrev=0 >> src/version.ml
-	@echo "\"" >> src/version.ml
+VERSION:=$(shell git describe --tags --abbrev=0)
 
-all: compiler #js test web jscompiler
+version :
+	@echo "let version = String.trim \"" $(VERSION) "\"" > src/version.ml
+
+all: version compiler #js test web jscompiler
 
 clean:
 	dune clean

@@ -24,8 +24,11 @@
 
 open Env
 open Typed
+open ExtendedType
 
-let pickLoc (t1 : ext_type) (t2 : ext_type) : unit =
+let context_name = "_ctx"
+
+let pickLoc (t1 : type_) (t2 : type_) : unit =
   if t1.loc == Loc.default then
     t1.loc <- t2.loc
   else if t2.loc == Loc.default then
@@ -39,9 +42,9 @@ let linkType ~from ~into =
 
 
 let constrainOption l1 l2 =
-  let l2 = List.filter (fun e2 -> List.exists (fun e1 -> Typed.compare_ext_type e1 e2 = 0) l1) l2 in
-  let l1 = List.filter (fun e1 -> List.exists (fun e2 -> Typed.compare_ext_type e2 e1 = 0) l2) l1 in
-  match l1 with
+  let l2_ = List.filter (fun e2 -> List.exists (fun e1 -> compare_type_ e1 e2 = 0) l1) l2 in
+  let l1_ = List.filter (fun e1 -> List.exists (fun e2 -> compare_type_ e2 e1 = 0) l2_) l1 in
+  match l1_ with
   | [] -> failwith "cannot unify the two options"
   | [ t ] -> t
   | l -> { tx = TEOption l; loc = Loc.default }
@@ -60,7 +63,7 @@ let rec pickOption original l tt =
   loop l
 
 
-and unify (t1 : ext_type) (t2 : ext_type) =
+and unify (t1 : type_) (t2 : type_) =
   if t1 == t2 then
     true
   else
@@ -72,6 +75,8 @@ and unify (t1 : ext_type) (t2 : ext_type) =
     (* follow the links *)
     | TELink tlink, _ -> unify tlink t2
     | _, TELink tlink -> unify t1 tlink
+    | TENoReturn, _ -> linkType t2 t1
+    | _, TENoReturn -> linkType t1 t2
     (* replace any unbound *)
     | TEUnbound _, _ -> linkType t2 t1
     | _, TEUnbound _ -> linkType t1 t2
@@ -87,12 +92,12 @@ and unify (t1 : ext_type) (t2 : ext_type) =
     | TEComposed _, _ -> false
 
 
-let unifyRaise (loc : Loc.t) (t1 : ext_type) (t2 : ext_type) : unit =
+let unifyRaise (loc : Loc.t) (t1 : type_) (t2 : type_) : unit =
   let raise = true in
   if not (unify t1 t2) then
     let msg =
-      let t1 = Print.ext_type t1 in
-      let t2 = Print.ext_type t2 in
+      let t1 = print_type_ t1 in
+      let t2 = print_type_ t2 in
       Pla.print {pla|"This expression has type '<#t2#>' but '<#t1#>' was expected"|pla}
     in
     if raise then
@@ -111,7 +116,7 @@ let rec type_ (t : Syntax.type_) =
       { tx = TEComposed (name, l); loc }
 
 
-let applyFunction (args_t : ext_type list) (ret : ext_type) (args : PX.exp list) =
+let applyFunction (args_t : type_ list) (ret : type_) (args : PX.exp list) =
   let rec loop args_t args =
     match args_t, args with
     | [], _ :: _ -> failwith "missing arguments"
@@ -122,6 +127,24 @@ let applyFunction (args_t : ext_type list) (ret : ext_type) (args : PX.exp list)
         loop args_t args
   in
   loop args_t args
+
+
+let getInstanceName instance =
+  match instance with
+  | Some i -> "$" ^ i
+  | None -> "$"
+
+
+let addContextArg (env : EnvX.in_func) instance (f : EnvX.f) args loc =
+  if EnvX.isFunctionActive f then
+    let cpath = EnvX.getContext env in
+    let fpath = EnvX.getFunctionContext f in
+    let t = TX.path loc fpath in
+    let instance = if Syntax.compare_path cpath fpath = 0 then context_name else instance in
+    let e = PX.{ e = EId instance; loc; t } in
+    e :: args
+  else
+    args
 
 
 let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * PX.exp =
@@ -145,7 +168,15 @@ let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * PX.exp =
   | { e = SEId name; loc } ->
       let var = EnvX.lookVar env name in
       let t = var.t in
-      env, { e = EId name; t; loc }
+      let e =
+        match var.kind with
+        | Val -> PX.{ e = EId name; t; loc }
+        | Mem ->
+            let ctx = EnvX.getContext env in
+            let ctx_t = TX.path loc ctx in
+            { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); t; loc }
+      in
+      env, e
   | { e = SEIndex { e; index }; loc } ->
       let env, e = exp env e in
       let env, index = exp env index in
@@ -184,7 +215,9 @@ let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * PX.exp =
       let f = EnvX.lookFunctionCall env path in
       let args_t, ret = f.t in
       let t = applyFunction args_t ret args in
-      env, { e = ECall { instance; path = f.path; args }; t; loc }
+      let instance = getInstanceName instance in
+      let args = addContextArg env instance f args loc in
+      env, { e = ECall { instance = None; path = f.path; args }; t; loc }
   | { e = SEOp (op, e1, e2); loc } ->
       let env, e1 = exp env e1 in
       let env, e2 = exp env e2 in
@@ -226,12 +259,20 @@ and exp_list (env : EnvX.in_func) (l : Syntax.exp list) : EnvX.in_func * PX.exp 
 and lexp (env : EnvX.in_func) (e : Syntax.lexp) : EnvX.in_func * PX.lexp =
   match e with
   | { l = SLWild; loc } ->
-      let t = TX.unbound loc in
+      let t = TX.noreturn loc in
       env, { l = LWild; t; loc }
   | { l = SLId name; loc } ->
       let var = EnvX.lookVar env name in
       let t = var.t in
-      env, { l = LId name; t; loc }
+      let e =
+        match var.kind with
+        | Val -> PX.{ l = LId name; t; loc }
+        | Mem ->
+            let ctx = EnvX.getContext env in
+            let ctx_t = TX.path loc ctx in
+            { l = LMember ({ l = LId context_name; t = ctx_t; loc }, name); t; loc }
+      in
+      env, e
   | { l = SLGroup e } -> lexp env e
   | { l = SLTuple elems; loc } ->
       let env, elems =
@@ -242,7 +283,7 @@ and lexp (env : EnvX.in_func) (e : Syntax.lexp) : EnvX.in_func * PX.lexp =
           (env, [])
           (List.rev elems)
       in
-      let t_elems = List.init (List.length elems) (fun _ -> TX.unbound Loc.default) in
+      let t_elems = List.map (fun (e : PX.lexp) -> e.t) elems in
       let t = TX.tuple ~loc t_elems in
       env, { l = LTuple elems; t; loc }
   | { l = SLIndex { e; index }; loc } ->
@@ -268,7 +309,7 @@ and lexp (env : EnvX.in_func) (e : Syntax.lexp) : EnvX.in_func * PX.lexp =
 and dexp (env : EnvX.in_func) (e : Syntax.dexp) (kind : var_kind) : EnvX.in_func * PX.dexp =
   match e with
   | { d = SDWild; loc } ->
-      let t = TX.unbound loc in
+      let t = TX.noreturn loc in
       env, { d = DWild; t; loc }
   | { d = SDTuple l; loc } ->
       let env, l =
@@ -297,7 +338,7 @@ and dexp (env : EnvX.in_func) (e : Syntax.dexp) (kind : var_kind) : EnvX.in_func
       env, { d = DId (name, dims); t; loc }
 
 
-let rec stmt (env : EnvX.in_func) (return : ext_type) (s : Syntax.stmt) : EnvX.in_func * PX.stmt =
+let rec stmt (env : EnvX.in_func) (return : type_) (s : Syntax.stmt) : EnvX.in_func * PX.stmt =
   match s with
   | { s = SStmtError } -> failwith "There was an error parsing "
   | { s = SStmtBlock stmts; loc } ->
@@ -378,20 +419,26 @@ let getOptType loc (t : Syntax.type_ option) =
   | Some t -> type_ t
 
 
+let getReturnType loc (t : Syntax.type_ option) =
+  match t with
+  | None -> TX.noreturn loc
+  | Some t -> type_ t
+
+
 let convertArguments (args : Syntax.arg list) : PX.arg list =
   List.map (fun (name, t, loc) -> name, getOptType loc t, loc) args
 
 
 let rec function_def (env : EnvX.in_context) ((def : Syntax.function_def), (body : Syntax.stmt)) :
     EnvX.in_context * (PX.function_def * PX.stmt) =
-  let ret = getOptType def.loc def.t in
+  let ret = getReturnType def.loc def.t in
   let args = convertArguments def.args in
-  let env, t = EnvX.enterFunction env def.name args ret def.loc in
+  let env, path, t = EnvX.enterFunction env def.name args ret def.loc in
   let env, body = stmt env ret body in
   let env = EnvX.exitFunction env in
   let next = addGeneratedFunctions def.tags def.name def.next in
   let env, next = function_def_opt env next in
-  env, ({ name = def.name; args; t; loc = def.loc; tags = def.tags; next }, body)
+  env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next }, body)
 
 
 and function_def_opt (env : EnvX.in_context) def_opt =
@@ -406,12 +453,12 @@ let rec ext_function (env : EnvX.in_context) ((def : Syntax.function_def), (link
     EnvX.in_context * (PX.function_def * string) =
   let ret = getOptType def.loc def.t in
   let args = convertArguments def.args in
-  let env, t = EnvX.enterFunction env def.name args ret def.loc in
+  let env, path, t = EnvX.enterFunction env def.name args ret def.loc in
   let env = EnvX.exitFunction env in
   let link_name = CCOpt.get_or ~default:def.name link_name in
   let next = addGeneratedFunctions def.tags def.name def.next in
   let env, next = function_def_opt env next in
-  env, ({ name = def.name; args; t; loc = def.loc; tags = def.tags; next = None }, link_name)
+  env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next = None }, link_name)
 
 
 let rec top_stmt (env : EnvX.in_module) (s : Syntax.top_stmt) : EnvX.in_module * PX.top_stmt =
