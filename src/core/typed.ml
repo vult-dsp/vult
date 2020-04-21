@@ -267,25 +267,25 @@ module Prog (T : TSig) = struct
     match s.s with
     | StmtVal (lhs, None) ->
         let lhs = print_dexp lhs in
-        {pla|val <#lhs#>|pla}
+        {pla|val <#lhs#>;|pla}
     | StmtVal (lhs, Some rhs) ->
         let lhs = print_dexp lhs in
         let rhs = print_exp rhs in
-        {pla|val <#lhs#> = <#rhs#>|pla}
+        {pla|val <#lhs#> = <#rhs#>;|pla}
     | StmtMem (lhs, None, _) ->
         let lhs = print_dexp lhs in
-        {pla|mem <#lhs#>|pla}
+        {pla|mem <#lhs#>;|pla}
     | StmtMem (lhs, Some rhs, _) ->
         let lhs = print_dexp lhs in
         let rhs = print_exp rhs in
-        {pla|mem <#lhs#> = <#rhs#>|pla}
+        {pla|mem <#lhs#> = <#rhs#>;|pla}
     | StmtBind (lhs, rhs) ->
         let lhs = print_lexp lhs in
         let rhs = print_exp rhs in
-        {pla|<#lhs#> = <#rhs#>|pla}
+        {pla|<#lhs#> = <#rhs#>;|pla}
     | StmtReturn e ->
         let e = print_exp e in
-        {pla|return <#e#>|pla}
+        {pla|return <#e#>;|pla}
     | StmtIf (cond, then_, None) ->
         let e = print_exp cond in
         let then_ = print_stmt then_ in
@@ -300,7 +300,7 @@ module Prog (T : TSig) = struct
         let stmt = print_stmt stmt in
         {pla|while (<#cond#>)<#stmt#+>|pla}
     | StmtBlock stmts ->
-        let stmt = Pla.map_sep_all {pla|;<#>|pla} print_stmt stmts in
+        let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
         {pla|{<#stmt#+>}|pla}
 
 

@@ -129,19 +129,22 @@ let applyFunction (args_t : type_ list) (ret : type_) (args : PX.exp list) =
   loop args_t args
 
 
-let getInstanceName instance =
-  match instance with
-  | Some i -> "$" ^ i
-  | None -> "$"
-
-
 let addContextArg (env : EnvX.in_func) instance (f : EnvX.f) args loc =
   if EnvX.isFunctionActive f then
     let cpath = EnvX.getContext env in
     let fpath = EnvX.getFunctionContext f in
+    let instance =
+      let number = Printf.sprintf "%.2x" (0xFF land Hashtbl.hash cpath) in
+      match instance with
+      | Some i -> i ^ "_" ^ number
+      | None ->
+          let n = EnvX.getFunctionTick env in
+          "inst_" ^ string_of_int n ^ number
+    in
     let t = TX.path loc fpath in
     let instance = if Syntax.compare_path cpath fpath = 0 then context_name else instance in
-    let e = PX.{ e = EId instance; loc; t } in
+    let ctx_t = TX.path loc cpath in
+    let e = PX.{ e = EMember ({ e = EId context_name; t = ctx_t; loc }, instance); loc; t } in
     e :: args
   else
     args
@@ -215,7 +218,6 @@ let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * PX.exp =
       let f = EnvX.lookFunctionCall env path in
       let args_t, ret = f.t in
       let t = applyFunction args_t ret args in
-      let instance = getInstanceName instance in
       let args = addContextArg env instance f args loc in
       env, { e = ECall { instance = None; path = f.path; args }; t; loc }
   | { e = SEOp (op, e1, e2); loc } ->
@@ -334,7 +336,7 @@ and dexp (env : EnvX.in_func) (e : Syntax.dexp) (kind : var_kind) : EnvX.in_func
         | Some size -> TX.array ~loc ~size:(TX.size ~loc size) (TX.unbound loc)
         | None -> TX.unbound loc
       in
-      let env = EnvX.addVar env name t kind loc in
+      let env = EnvX.addVar env unify name t kind loc in
       env, { d = DId (name, dims); t; loc }
 
 

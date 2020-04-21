@@ -149,6 +149,7 @@ module Env (T : TSig) = struct
     ; t : T.t list * T.t
     ; context : context
     ; mutable locals : var Map.t list
+    ; mutable tick : int
     }
 
   type m =
@@ -181,7 +182,7 @@ module Env (T : TSig) = struct
     }
 
   let makeFunctionForBuiltin name t : f =
-    { path = { id = name; n = None; loc = Loc.default }; t; context = None; locals = [] }
+    { path = { id = name; n = None; loc = Loc.default }; t; context = None; locals = []; tick = 0 }
 
 
   let rec lookVarInScopes (scopes : var Map.t list) name : var option =
@@ -255,8 +256,13 @@ module Env (T : TSig) = struct
         | None -> reportNotFound (Map.find id env.top.builtin_types) )
 
 
-  let addVar (env : in_func) (name : string) (t : T.t) (kind : var_kind) loc : in_func =
-    let report_mem _ = () in
+  let addVar (env : in_func) unify (name : string) (t : T.t) (kind : var_kind) loc : in_func =
+    let report_mem (found : var) =
+      if unify found.t t then
+        ()
+      else
+        failwith "type changed"
+    in
     match kind, env.f.context with
     | Mem, Some (_, context) ->
         Map.update report_mem name { name; t; kind; loc } context.members ;
@@ -313,6 +319,12 @@ module Env (T : TSig) = struct
 
   let exitContext (env : in_context) : in_module = { top = env.top; m = env.m }
 
+  let getFunctionTick (env : in_func) : int =
+    let n = env.f.tick + 1 in
+    env.f.tick <- n ;
+    n
+
+
   let getContext (env : in_func) : path =
     match env.f.context with
     | Some (p, _) -> p
@@ -331,7 +343,7 @@ module Env (T : TSig) = struct
     let path = getPath env.m name loc in
     let locals, args_t = registerArguments args in
     let t = args_t, ret in
-    let f : f = { path; t; context = env.context; locals = [ locals ] } in
+    let f : f = { path; t; context = env.context; locals = [ locals ]; tick = 0 } in
     let _ = Map.update report name f env.m.functions in
     { top = env.top; m = env.m; f }, path, t
 
