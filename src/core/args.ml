@@ -49,6 +49,7 @@ type code =
   | JavaCode
 [@@deriving show, eq, ord]
 
+(** Stores the options passed to the command line *)
 type args =
   { mutable files : input list
   ; mutable dparse : bool
@@ -70,7 +71,6 @@ type args =
   ; mutable prefix : string
   }
 [@@deriving show, eq, ord]
-(** Stores the options passed to the command line *)
 
 let default_arguments : args =
   { files = []

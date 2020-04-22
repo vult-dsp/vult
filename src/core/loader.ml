@@ -201,13 +201,21 @@ let rec checkComponents (comps : string list list) : unit =
       Error.raiseErrorMsg msg
 
 
+module C = Components.Make (struct
+  type key = string
+
+  type data = string
+
+  let get s = s
+end)
+
 (* Given a list of files, finds and parses all the dependencies and returns the parsed contents in order *)
 let loadFiles (arguments : args) (files : input list) =
   let includes = getIncludes arguments files in
   arguments.includes <- includes ;
   let dependencies, parsed = loadFiles_loop includes (Hashtbl.create 8) (Hashtbl.create 8) (Hashtbl.create 8) files in
   let dep_list = Hashtbl.fold (fun a b acc -> (a, b) :: acc) dependencies [] in
-  let comps = Components.components dep_list in
+  let comps = C.calculate dep_list in
   let () = checkComponents comps in
   let sorted_deps = List.map List.hd comps in
   CCList.filter_map

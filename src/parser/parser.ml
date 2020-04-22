@@ -896,19 +896,11 @@ and topstmtList (buffer : Stream.stream) : top_stmt list =
 
 let parseDExp (s : string) : dexp = dexp_expression 0 (Stream.fromString s)
 
-let parseDumpDExp (s : string) : string = Syntax.show_dexp (parseDExp s)
-
 let parseLhsExp (s : string) : lexp = lexp_expression 0 (Stream.fromString s)
-
-let parseDumpLhsExp (s : string) : string = Syntax.show_lexp (parseLhsExp s)
 
 let parseExp (s : string) : exp = expression 0 (Stream.fromString s)
 
-let parseDumpExp (s : string) : string = Syntax.show_exp (parseExp s)
-
 let parseType (s : string) : type_ = type_ 0 (Stream.fromString s)
-
-let parseDumpType (s : string) : string = Syntax.show_type_ (parseType s)
 
 let parseId (s : string) : string =
   let buffer = Stream.fromString s in
@@ -939,8 +931,6 @@ let parseFunctionSpec (s : string) : function_def =
   let buffer = Stream.fromString s in
   stmtFunctionSpec buffer
 
-
-let parseDumpStmtList (s : string) : string = Syntax.show_stmt (parseStmtList s)
 
 let moduleName file = file |> Filename.basename |> Filename.chop_extension |> String.capitalize_ascii
 

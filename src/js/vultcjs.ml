@@ -1,7 +1,7 @@
 (*
    The MIT License (MIT)
 
-   Copyright (c) 2020 Leonardo Laguna Ruiz, Carl Jönsson
+   Copyright (c) 2014 Leonardo Laguna Ruiz, Carl Jönsson
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,64 +21,10 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 *)
+(* replaces all the native functions for the node.js versions *)
 
-type lexed_lines =
-  { current_line : Buffer.t
-  ; mutable all_lines : string list
-  }
+;;
+NodeIO.replaceFunctions ()
 
-(** Tokens *)
-type token_enum =
-  | EOF
-  | INT
-  | REAL
-  | ID
-  | STRING
-  | FUN
-  | MEM
-  | VAL
-  | RET
-  | IF
-  | THEN
-  | ELSE
-  | LBRACE
-  | RBRACE
-  | LBRACK
-  | RBRACK
-  | LPAREN
-  | RPAREN
-  | COLON
-  | SEMI
-  | COMMA
-  | EQUAL
-  | OP
-  | AT
-  | DOT
-  | WHILE
-  | TYPE
-  | LARR
-  | RARR
-  | TRUE
-  | FALSE
-  | AND
-  | WILD
-  | EXTERNAL
-  | TICK
-  | ARROW
-  | BANG
-
-type 'kind token =
-  { kind : 'kind
-  ; value : string
-  ; loc : Loc.t
-  }
-
-(** Type containing the stream of tokens *)
-type 'kind stream =
-  { lexbuf : Lexing.lexbuf
-  ; mutable has_errors : bool
-  ; mutable errors : Error.t list
-  ; mutable peeked : 'kind token
-  ; mutable prev : 'kind token
-  ; lines : lexed_lines
-  }
+;;
+Cli.main ()

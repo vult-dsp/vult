@@ -43,7 +43,7 @@ let rec print_tag t : Pla.t =
   match t.g with
   | TagId id -> Pla.string id
   | TagInt i -> Pla.int i
-  | TagBool b -> Pla.bool b
+  | TagBool b -> Pla.string (if b then "true" else "false")
   | TagReal f -> Pla.float f
   | TagString s -> Pla.string_quoted s
   | TagCall { name; args } ->

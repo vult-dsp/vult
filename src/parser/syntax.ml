@@ -25,21 +25,18 @@
 type path =
   { id : string
   ; n : string option
-  ; loc : Loc.t [@compare fun _ _ -> 0]
+  ; loc : Loc.t
   }
-[@@deriving show, eq, ord]
 
 type type_d =
   | STId       of path
   | STSize     of int
   | STComposed of string * type_ list
-[@@deriving show, eq, ord]
 
 and type_ =
   { t : type_d
   ; loc : Loc.t
   }
-[@@deriving show, eq, ord]
 
 type exp_d =
   | SEUnit
@@ -68,13 +65,11 @@ type exp_d =
   | SETuple  of exp list
   | SEMember of exp * string
   | SEGroup  of exp
-[@@deriving show, eq, ord]
 
 and exp =
   { e : exp_d
   ; loc : Loc.t
   }
-[@@deriving show, eq, ord]
 
 and lexp_d =
   | SLWild
@@ -86,13 +81,11 @@ and lexp_d =
       }
   | SLGroup  of lexp
   | SLTuple  of lexp list
-[@@deriving show, eq, ord]
 
 and lexp =
   { l : lexp_d
   ; loc : Loc.t
   }
-[@@deriving show, eq, ord]
 
 type dexp_d =
   | SDWild
@@ -100,15 +93,13 @@ type dexp_d =
   | SDTuple of dexp list
   | SDGroup of dexp
   | SDTyped of dexp * type_
-[@@deriving show, eq, ord]
 
 and dexp =
   { d : dexp_d
   ; loc : Loc.t
   }
-[@@deriving show, eq, ord]
 
-type arg = string * type_ option * Loc.t [@@deriving show, eq, ord]
+type arg = string * type_ option * Loc.t
 
 and stmt_d =
   | SStmtError
@@ -119,13 +110,11 @@ and stmt_d =
   | SStmtBlock  of stmt list
   | SStmtIf     of exp * stmt * stmt option
   | SStmtWhile  of exp * stmt
-[@@deriving show, eq, ord]
 
 and stmt =
   { s : stmt_d
   ; loc : Loc.t
   }
-[@@deriving show, eq, ord]
 
 and function_def =
   { name : string
@@ -135,7 +124,6 @@ and function_def =
   ; loc : Loc.t
   ; tags : Tags.tag list
   }
-[@@deriving show, eq, ord]
 
 type top_stmt_d =
   | STopError
@@ -146,12 +134,18 @@ type top_stmt_d =
       { name : string
       ; members : (string * type_ * Loc.t) list
       }
-[@@deriving show, eq, ord]
 
 and top_stmt =
   { top : top_stmt_d
   ; loc : Loc.t
   }
-[@@deriving show, eq, ord]
 
-type stmts = top_stmt list [@@deriving show, eq, ord]
+type stmts = top_stmt list
+
+let compare_path (p1 : path) (p2 : path) =
+  match p1, p2 with
+  | { id = id1; n = Some n1 }, { id = id2; n = Some n2 } ->
+      let ret = String.compare id1 id2 in
+      if ret = 0 then String.compare n1 n2 else ret
+  | { id = id1; n = None }, { id = id2; n = None } -> String.compare id1 id2
+  | _ -> compare p1 p2

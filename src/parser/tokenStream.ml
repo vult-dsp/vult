@@ -41,6 +41,7 @@ module type TokenKindSig = sig
 end
 
 module TokenStream (S : TokenKindSig) = struct
+  (** Type containing the stream of tokens *)
   type stream =
     { lexbuf : Lexing.lexbuf
     ; mutable has_errors : bool
@@ -49,7 +50,6 @@ module TokenStream (S : TokenKindSig) = struct
     ; mutable prev : S.kind token
     ; source : Loc.source
     }
-  (** Type containing the stream of tokens *)
 
   let backup (s : stream) =
     let lexbuf =

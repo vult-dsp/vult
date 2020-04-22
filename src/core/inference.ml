@@ -134,7 +134,7 @@ let addContextArg (env : EnvX.in_func) instance (f : EnvX.f) args loc =
     let cpath = EnvX.getContext env in
     let fpath = EnvX.getFunctionContext f in
     let instance =
-      let number = Printf.sprintf "%.2x" (0xFF land Hashtbl.hash cpath) in
+      let number = Printf.sprintf "%.2x%.2x" (0xFF land Hashtbl.hash fpath) (0xFF land Hashtbl.hash cpath) in
       match instance with
       | Some i -> i ^ "_" ^ number
       | None ->
@@ -142,12 +142,13 @@ let addContextArg (env : EnvX.in_func) instance (f : EnvX.f) args loc =
           "inst_" ^ string_of_int n ^ number
     in
     let t = TX.path loc fpath in
-    let instance = if Syntax.compare_path cpath fpath = 0 then context_name else instance in
     let ctx_t = TX.path loc cpath in
+    let instance = if Syntax.compare_path cpath fpath = 0 then context_name else instance in
+    let env = EnvX.addVar env unify instance t Inst loc in
     let e = PX.{ e = EMember ({ e = EId context_name; t = ctx_t; loc }, instance); loc; t } in
-    e :: args
+    env, e :: args
   else
-    args
+    env, args
 
 
 let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * PX.exp =
@@ -174,7 +175,8 @@ let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * PX.exp =
       let e =
         match var.kind with
         | Val -> PX.{ e = EId name; t; loc }
-        | Mem ->
+        | Mem
+         |Inst ->
             let ctx = EnvX.getContext env in
             let ctx_t = TX.path loc ctx in
             { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); t; loc }
@@ -218,7 +220,7 @@ let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * PX.exp =
       let f = EnvX.lookFunctionCall env path in
       let args_t, ret = f.t in
       let t = applyFunction args_t ret args in
-      let args = addContextArg env instance f args loc in
+      let env, args = addContextArg env instance f args loc in
       env, { e = ECall { instance = None; path = f.path; args }; t; loc }
   | { e = SEOp (op, e1, e2); loc } ->
       let env, e1 = exp env e1 in
@@ -269,7 +271,8 @@ and lexp (env : EnvX.in_func) (e : Syntax.lexp) : EnvX.in_func * PX.lexp =
       let e =
         match var.kind with
         | Val -> PX.{ l = LId name; t; loc }
-        | Mem ->
+        | Mem
+         |Inst ->
             let ctx = EnvX.getContext env in
             let ctx_t = TX.path loc ctx in
             { l = LMember ({ l = LId context_name; t = ctx_t; loc }, name); t; loc }
@@ -463,12 +466,39 @@ let rec ext_function (env : EnvX.in_context) ((def : Syntax.function_def), (link
   env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next = None }, link_name)
 
 
+let getContextArgument (context : EnvX.context) loc : PX.arg option =
+  match context with
+  | Some (p, c) ->
+      if Map.is_empty c.members then
+        None
+      else
+        let ctx_t = TX.path loc p in
+        Some (context_name, ctx_t, loc)
+  | None -> None
+
+
+let insertContextArgument (env : EnvX.in_context) (def : PX.function_def) : PX.function_def =
+  match getContextArgument env.context def.loc with
+  | None -> def
+  | Some arg ->
+      let rec loop next =
+        match next with
+        | Some (def, body) ->
+            let next = loop def.PX.next in
+            Some (PX.{ def with args = arg :: def.args; next }, body)
+        | None -> None
+      in
+      let next = loop def.next in
+      PX.{ def with args = arg :: def.args; next }
+
+
 let rec top_stmt (env : EnvX.in_module) (s : Syntax.top_stmt) : EnvX.in_module * PX.top_stmt =
   match s with
   | { top = STopError } -> failwith "Parser error"
   | { top = STopFunction (def, body) } ->
       let env = EnvX.createContextForFunction env def.name def.loc in
       let env, (def, body) = function_def env (def, body) in
+      let def = insertContextArgument env def in
       let env = EnvX.exitContext env in
       env, { top = TopFunction (def, body); loc = def.loc }
   | { top = STopExternal (def, link_name) } ->
@@ -478,7 +508,8 @@ let rec top_stmt (env : EnvX.in_module) (s : Syntax.top_stmt) : EnvX.in_module *
       env, { top = TopExternal (def, link_name); loc = def.loc }
   | { top = STopType { name; members }; loc } ->
       let members = List.map (fun (name, t, loc) -> name, type_ t, loc) members in
-      env, { top = TopType { name; members }; loc }
+      let path = EnvX.getPath env.m name loc in
+      env, { top = TopType { path; members }; loc }
 
 
 and top_stmt_list (env : EnvX.in_module) (s : Syntax.top_stmt list) : EnvX.in_module * PX.top_stmt list =
@@ -493,15 +524,45 @@ and top_stmt_list (env : EnvX.in_module) (s : Syntax.top_stmt list) : EnvX.in_mo
   env, rev_s
 
 
-let rec infer (parsed : Parser.parsed_file list) : 'a * Typed.PX.program =
+let getTypesFromModule m =
+  Map.fold
+    (fun _ t s ->
+      if Map.is_empty t.EnvX.members then
+        s
+      else
+        t :: s)
+    []
+    m.EnvX.types
+
+
+let createTypes (env : EnvX.in_top) =
+  let types =
+    Map.fold
+      (fun _ m s ->
+        let types = getTypesFromModule m in
+        types @ s)
+      []
+      env.modules
+  in
+  (* sort the types *)
+  let types = List.sort (fun (a : EnvX.t) b -> compare a.index b.index) types in
+  List.map
+    (fun (t : EnvX.t) ->
+      let members = Map.fold (fun _ (var : EnvX.var) s -> (var.name, var.t, var.loc) :: s) [] t.members in
+      PX.{ top = TopType { path = t.path; members }; loc = t.loc })
+    types
+
+
+let rec infer (parsed : Parser.parsed_file list) : Typed.PX.program =
   let env, stmts =
     List.fold_left
       (fun (env, acc) (h : Parser.parsed_file) ->
         let env = EnvX.enterModule env h.name in
         let env, stmt = top_stmt_list env h.stmts in
         let env = EnvX.exitModule env in
-        env, acc @ stmt)
+        env, stmt @ acc)
       (EnvX.empty (), [])
       parsed
   in
-  env, List.rev stmts
+  let types = createTypes env in
+  types @ List.rev stmts

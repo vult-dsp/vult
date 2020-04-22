@@ -50,6 +50,8 @@ module Map = struct
   let find key t = StringMap.find_opt key !t
 
   let is_empty (t : 'a t) : bool = StringMap.is_empty !t
+
+  let fold (f : string -> 'a -> 'b -> 'b) (s : 'b) (t : 'a t) : 'b = StringMap.fold f !t s
 end
 
 module type TSig = sig
@@ -63,6 +65,7 @@ end
 type var_kind =
   | Mem
   | Val
+  | Inst
 
 (*
 
@@ -140,6 +143,8 @@ module Env (T : TSig) = struct
   type t =
     { path : path
     ; members : var Map.t
+    ; index : int
+    ; loc : Loc.t
     }
 
   type context = (path * t) option
@@ -167,6 +172,7 @@ module Env (T : TSig) = struct
   type in_module =
     { top : in_top
     ; m : m
+    ; mutable tick : int
     }
 
   type in_context =
@@ -261,13 +267,13 @@ module Env (T : TSig) = struct
       if unify found.t t then
         ()
       else
-        failwith "type changed"
+        failwith ("type changed: " ^ found.name)
     in
     match kind, env.f.context with
-    | Mem, Some (_, context) ->
+    | (Mem | Inst), Some (_, context) ->
         Map.update report_mem name { name; t; kind; loc } context.members ;
         env
-    | Mem, None -> failwith "Internal error: cannot add mem to functions with no context"
+    | (Mem | Inst), None -> failwith "Internal error: cannot add mem to functions with no context"
     | Val, _ ->
         let report _found = failwith "duplicated declaration" in
         ( match env.f.locals with
@@ -306,18 +312,25 @@ module Env (T : TSig) = struct
 
   let getPath m name loc : path = { id = name; n = Some m.name; loc }
 
+  let getModuleTick (env : in_module) : int =
+    let n = env.tick + 1 in
+    env.tick <- n ;
+    n
+
+
   let createContextForFunction (env : in_module) name loc : in_context =
     let report _ = failwith "function exitst" in
     let type_name = name ^ "_type" in
     let path = getPath env.m type_name loc in
-    let t = { members = Map.empty (); path } in
+    let index = getModuleTick env in
+    let t = { members = Map.empty (); path; index; loc } in
     let _ = Map.update report type_name t env.m.types in
     { top = env.top; m = env.m; context = Some (path, t) }
 
 
   let createContextForExternal (env : in_module) name loc : in_context = { top = env.top; m = env.m; context = None }
 
-  let exitContext (env : in_context) : in_module = { top = env.top; m = env.m }
+  let exitContext (env : in_context) : in_module = { top = env.top; m = env.m; tick = 0 }
 
   let getFunctionTick (env : in_func) : int =
     let n = env.f.tick + 1 in
@@ -359,19 +372,20 @@ module Env (T : TSig) = struct
   let addType (env : in_module) (name : string) members loc : in_module =
     let report _ = failwith "type exitst" in
     let path = getPath env.m name loc in
-    let t = { members; path } in
+    let index = getModuleTick env in
+    let t = { members; path; index; loc } in
     let _ = Map.update report name t env.m.types in
-    { top = env.top; m = env.m }
+    { env with top = env.top; m = env.m }
 
 
   let enterModule (env : in_top) (name : string) : in_module =
     match Map.find name env.modules with
-    | Some m -> { top = env; m }
+    | Some m -> { top = env; m; tick = 0 }
     | None ->
         let report _ = failwith ("duplicate module: " ^ name) in
         let m : m = { name; functions = Map.empty (); types = Map.empty () } in
         let () = Map.update report name m env.modules in
-        { top = env; m }
+        { top = env; m; tick = 0 }
 
 
   let exitModule (env : in_module) : in_top = env.top

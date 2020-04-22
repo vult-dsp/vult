@@ -187,7 +187,7 @@ module Prog (T : TSig) = struct
     | TopExternal of function_def * string
     | TopFunction of function_def * stmt
     | TopType     of
-        { name : string
+        { path : path
         ; members : (string * T.type_ * Loc.t) list
         }
 
@@ -339,11 +339,19 @@ module Prog (T : TSig) = struct
     | Some (def, body) -> print_function_def (next_kind kind) def (`Body body)
 
 
+  let print_member (name, t, _) =
+    let t = T.print_type_ t in
+    {pla|<#name#s> : <#t#>;|pla}
+
+
   let print_top_stmt t =
     match t.top with
     | TopFunction (def, body) -> print_function_def "fun" def (`Body body)
     | TopExternal (def, linkname) -> print_function_def "external" def (`LinkName linkname)
-    | TopType { name; members } -> {pla|type <#name#s>|pla}
+    | TopType { path = p; members } ->
+        let p = print_path p in
+        let members = Pla.map_sep_all Pla.newline print_member members in
+        {pla|type <#p#> {<#members#+>}<#>|pla}
 
 
   let print_prog prog = Pla.map_sep_all Pla.newline print_top_stmt prog

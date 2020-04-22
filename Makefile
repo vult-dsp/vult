@@ -4,8 +4,14 @@ VULT_SRC = $(wildcard src/*.ml) $(wildcard src/core/*.ml) $(wildcard src/generat
 
 OCB = ocamlbuild -j 4 -use-ocamlfind
 
+ifeq (, $(shell which ocamlformat))
+	FORMAT =
+else
+	FORMAT = @fmt --auto-promote
+endif
+
 compiler:
-	dune build vultc.bc vultc.exe @fmt --auto-promote
+	dune build vultc.bc vultc.exe $(FORMAT)
 
 run: compiler
 	./_build/default/vultc.bc

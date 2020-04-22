@@ -28,7 +28,7 @@ open Args
 open Parser
 
 let stage2 (args : args) (parsed : parsed_file list) : output list =
-  let _, typed = Inference.infer parsed in
+  let typed = Inference.infer parsed in
   [ ParsedCode (Pla.print (Typed.PX.print_prog typed)) ]
 
 
@@ -42,7 +42,7 @@ let stage2 (args : args) (parsed : parsed_file list) : output list =
 (** Prints the parsed files if -dparse was passed as argument *)
 let dumpParsedFiles (args : args) (parsed : parsed_file list) : output list =
   if args.dparse then
-    parsed |> List.map (fun a -> Syntax.show_stmts a.stmts) |> String.concat "\n" |> fun a -> [ ParsedCode a ]
+    [ ParsedCode "not implemented" ]
   else
     []
 

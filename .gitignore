@@ -10,3 +10,5 @@ vultc.js
 .vscode/launch.json
 /vultlib.js
 *.merlin
+/out.vult
+/test.vult
