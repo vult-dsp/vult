@@ -21,17 +21,16 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
-
+    
+    - name: Set up OCaml
+      uses: avsm/setup-ocaml@v1.0.1
+      with:
+        # Version of the OCaml compiler to initialise
+          ocaml-version: 4.08.1
     # Runs a single command using the runners shell
     - name: Install OCaml
-      run: |
-        sudo apt update
-        sudo apt install opam ocaml -y
-        opam init --no-setup
-        opam install containers ppx_deriving pla result ounit js_of_ocaml js_of_ocaml-ppx
+      run: opam install containers ppx_deriving pla result ounit js_of_ocaml js_of_ocaml-ppx
 
     # Runs a set of commands using the runners shell
     - name: Build Vult
-      run: |
-        cd $GITHUB_WORKSPACE
-        make all
+      run: make all
