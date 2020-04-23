@@ -75,6 +75,7 @@ module InsertContext = struct
          let typ = ref (Typ.TId (context, None)) in
          state, PCall (NoInst, kind, PId ([ "_ctx" ], { attr with typ = Some typ }) :: args, attr)
       | PId (id, attr) when Env.isLocalInstanceOrMem state id -> state, PId ("_ctx" :: id, attr)
+      | PAccess _ -> state, exp
       | _ -> state, exp
 
 
@@ -83,6 +84,8 @@ module InsertContext = struct
       @@ fun state exp ->
       match exp with
       | LId (id, Some tp, attr) when Env.isLocalInstanceOrMem state id -> state, LId ("_ctx" :: id, Some tp, attr)
+      | LId ((var :: _ as id), Some tp, attr) when Env.isLocalInstanceOrMem state [ var ] ->
+         state, LId ("_ctx" :: id, Some tp, attr)
       | LIndex (id, tp, index, attr) when Env.isLocalInstanceOrMem state id ->
          state, LIndex ("_ctx" :: id, tp, index, attr)
       | _ -> state, exp

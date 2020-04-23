@@ -814,7 +814,15 @@ and valDeclList (buffer : Stream.stream) : val_decl list =
          let decl = valDecl buffer in
          let _ = Stream.consume buffer SEMI in
          loop (decl :: acc)
-      | _ -> List.rev acc
+      | RBRACE -> List.rev acc
+      | _ ->
+         let got = tokenToString (Stream.current buffer) in
+         let message =
+            Printf.sprintf
+               "Expecting a list of value declarations '{ val x:... }' or a type alias ': type' but got %s"
+               got
+         in
+         raise (ParserError (Stream.makeError buffer message))
    in
    loop []
 

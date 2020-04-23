@@ -415,7 +415,7 @@ let rec attachReturnTupleFunctions name elems env =
    env, fns
 
 
-and inferMembers env attr typ names =
+and inferMembers env attr typ first names =
    match names with
    | [] -> typ
    | h :: t ->
@@ -423,9 +423,11 @@ and inferMembers env attr typ names =
       | TId (id, _) ->
          let _, _, type_scope = Env.lookupRaise Scope.Type env id attr.loc in
          let var = Scope.lookupVariableRaise type_scope [ h ] attr.loc in
-         inferMembers env attr var.typ t
+         inferMembers env attr var.typ first t
       | _ ->
-         let msg = Printf.sprintf "The type of the member '%s' needs to be explicitly set" h in
+         let msg =
+            Printf.sprintf "The type of variable '%s' needs to be explicitly set before accesing the members" first
+         in
          Error.raiseError msg attr.loc
 
 
@@ -450,7 +452,7 @@ and inferLhsExp mem_var (env : 'a Env.t) (e : lhs_exp) : lhs_exp * Typ.t =
             let msg = Printf.sprintf "The symbol '%s' is not defined" h in
             Error.raiseError msg attr.loc
       in
-      let final_type = inferMembers env attr e_type t in
+      let final_type = inferMembers env attr e_type h t in
       LId (id, Some final_type, { attr with typ = Some final_type }), final_type
    | LId _ -> failwith ""
    | LTuple (elems, attr) ->
@@ -614,7 +616,7 @@ and inferExp (env : 'a Env.t) (e : exp) : exp * 'a Env.t * Typ.t =
          | TId (id, _) ->
             let _, _, type_scope = Env.lookupRaise Scope.Type env id attr.loc in
             let var = Scope.lookupVariableRaise type_scope [ m ] attr.loc in
-            PAccess (e', m, attr), env, var.typ
+            PAccess (e', m, { attr with typ = Some var.typ }), env, var.typ
          | _ ->
             let msg = Printf.sprintf "The type of this expression is unknown." in
             Error.raiseError msg attr.loc
