@@ -22,8 +22,8 @@
    THE SOFTWARE.
 *)
 
-open Config
 (** Template for the Teensy Audio library *)
+open Config
 
 let tables (params : params) (code : Pla.t) : Pla.t =
    let file = String.uppercase params.output in

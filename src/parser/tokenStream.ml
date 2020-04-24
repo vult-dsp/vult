@@ -24,8 +24,8 @@
 
 open Ptypes
 
-exception ParserError of Error.t
 (** Parsing exception *)
+exception ParserError of Error.t
 
 module type TokenKindSig = sig
    type kind
@@ -42,6 +42,7 @@ module type TokenKindSig = sig
 end
 
 module TokenStream (S : TokenKindSig) = struct
+   (** Type containing the stream of tokens *)
    type stream =
       { lexbuf : Lexing.lexbuf
       ; mutable has_errors : bool
@@ -50,7 +51,6 @@ module TokenStream (S : TokenKindSig) = struct
       ; mutable prev : S.kind token
       ; source : Loc.source
       }
-   (** Type containing the stream of tokens *)
 
    let backup (s : stream) =
       let lexbuf =

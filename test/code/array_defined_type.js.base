@@ -6,7 +6,7 @@ this.Array_defined_type_dot_init = function(){
 }
 this.Array_defined_type__ctx_type_0_init = function(){
    var _ctx = {}; 
-   _ctx.p1 = this.makeArray((12|0),this.Array_defined_type_dot_init()); 
+   _ctx.p1 = this.makeComplexArray((12|0),this.Array_defined_type_dot_init()); 
    return _ctx; 
 }
 this.Array_defined_type_foo_init = function() { return this.Array_defined_type__ctx_type_0_init(); }

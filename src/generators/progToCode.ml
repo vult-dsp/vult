@@ -487,7 +487,8 @@ let rec convertStmt (p : parameters) (s : stmt) : cstmt =
       let attr = { is_root } in
       CSFunction (convertTypeMakeTupleUnit p ret, fname, arg_names, body', attr)
    (* special case for c/c++ to replace the makeArray function *)
-   | StmtBind (LWild _, PCall (NoInst, [ "makeArray" ], [ size; init; var ], attr), _) when p.code = CCode ->
+   | StmtBind (LWild _, PCall (NoInst, [ ("makeArray" | "makeComplexArray") ], [ size; init; var ], attr), _)
+      when p.code = CCode ->
       let init' = convertExp p init in
       let size' = convertExp p size in
       let init_typ = expType p init in

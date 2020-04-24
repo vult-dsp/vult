@@ -61,8 +61,8 @@ module Env = struct
       ; tick : int
       }
 
-   type env = t list
    (** Non empty list of 't' *)
+   type env = t list
 
    let new_t () =
       { locals = [ SimpleMap.create 4 ]

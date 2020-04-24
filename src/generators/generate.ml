@@ -291,7 +291,7 @@ let checkConfig (config : config) (args : args) =
    let () = checksForVCVPrototype config args in
    if
       (args.code = CCode && args.template <> "default")
-      || (args.code = LuaCode && args.template <> "vcv-prototype")
+      || (args.code = LuaCode && args.template = "default")
       || args.code = JSCode
    then
       if

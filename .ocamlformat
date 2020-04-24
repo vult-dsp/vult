@@ -15,3 +15,4 @@ break-cases=all
 comment-check=false
 wrap-comments=false
 doc-comments-padding=3
+doc-comments=before

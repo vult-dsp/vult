@@ -133,9 +133,14 @@ module CreateInitFunction = struct
       | Typ.TId ([ "bool" ], _) -> PBool (false, typedAttr)
       | Typ.TId (name, _) -> PCall (NoInst, getInitFunctioName name, [], typedAttr)
       | Typ.TComposed ([ "array" ], [ sub; { contents = Typ.TInt (size, _) } ], _) ->
-         let sub_init = getInitValue sub in
+         let init_sub = getInitValue sub in
          let intTypeAttr = { emptyAttr with typ = Some Typ.Const.int_type } in
-         PCall (NoInst, [ "makeArray" ], [ PInt (size, intTypeAttr); sub_init ], typedAttr)
+         let make_function =
+            match init_sub with
+            | PCall _ -> "makeComplexArray"
+            | _ -> "makeArray"
+         in
+         PCall (NoInst, [ make_function ], [ PInt (size, intTypeAttr); init_sub ], typedAttr)
       | Typ.TComposed ([ "tuple" ], types, _) ->
          let elems = List.map getInitValue types in
          PTuple (elems, typedAttr)

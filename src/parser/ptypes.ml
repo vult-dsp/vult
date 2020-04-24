@@ -76,6 +76,7 @@ type 'kind token =
    ; loc : Loc.t
    }
 
+(** Type containing the stream of tokens *)
 type 'kind stream =
    { lexbuf : Lexing.lexbuf
    ; mutable has_errors : bool
@@ -84,4 +85,3 @@ type 'kind stream =
    ; mutable prev : 'kind token
    ; lines : lexed_lines
    }
-(** Type containing the stream of tokens *)

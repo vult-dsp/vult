@@ -76,6 +76,7 @@ function sqrt(x)            return x; end
 function set(a, i, v)       a[i+1]=v; end
 function get(a, i)          return a[i+1]; end
 function makeArray(size, v) local a = {}; for i=1,size do a[i]=v end return a; end
+function makeComplexArray(size, f) local a = {}; for i=1,size do a[i]=f() end return a; end
 function wrap_array(a)      return a; end
 |pla}
 
@@ -229,16 +230,22 @@ end
 |pla}
 
 
+   let simple (_ : config) _ code = {pla|
+<#env#>
+<#code#>
+|pla}
+
    let apply params (module_name : string) (template : string) (code : Pla.t) : (Pla.t * FileKind.t) list =
       match template with
       | "default" -> [ default params.config module_name code, FileKind.ExtOnly "lua" ]
       | "performance" -> Performance.getLua params (default params.config module_name code)
       | "vcv-prototype" -> [ vcv params.config module_name code, FileKind.ExtOnly "lua" ]
+      | "simple" -> [ simple params.config module_name code, FileKind.ExtOnly "lua" ]
       | _ -> [ none code, FileKind.ExtOnly "lua" ]
 end
 
 let isSpecial (params : params) (name : string) : bool =
-   if params.template <> "vcv-prototype" then
+   if params.template = "default" then
       match name with
       | _ when name = params.module_name ^ "_process" -> true
       | _ when name = params.module_name ^ "_noteOn" -> true
@@ -379,6 +386,10 @@ let rec printSwitchStmt params e cases def =
 
 and printStmt (params : params) (stmt : cstmt) : Pla.t option =
    match stmt with
+   | CSBind (CLId (_, name), CECall ("makeComplexArray", [ size; CECall (init, [], _) ], _)) ->
+      let name = dot name in
+      let size_t = printExp params size in
+      Some {pla|<#name#> = makeComplexArray(<#size_t#>,<#init#s>);|pla}
    | CSVar (CLWild, None) -> None
    | CSVar (CLId (typ, name), None) ->
       let init = getInitValue typ in

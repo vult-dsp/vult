@@ -21,6 +21,7 @@ function sqrt(x)            return x; end
 function set(a, i, v)       a[i+1]=v; end
 function get(a, i)          return a[i+1]; end
 function makeArray(size, v) local a = {}; for i=1,size do a[i]=v end return a; end
+function makeComplexArray(size, f) local a = {}; for i=1,size do a[i]=f() end return a; end
 function wrap_array(a)      return a; end
 
 function Gates_velToCV(vel)

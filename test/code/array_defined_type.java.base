@@ -191,7 +191,7 @@ private Array_defined_type_dot Array_defined_type_dot_init(){
 
 private Array_defined_type__ctx_type_0 Array_defined_type__ctx_type_0_init(){
    Array_defined_type__ctx_type_0 _ctx = new Array_defined_type__ctx_type_0(); 
-   _ctx.p1 = makeArray(12,Array_defined_type_dot_init());
+   _ctx.p1 = makeComplexArray(12,Array_defined_type_dot_init());
    return _ctx;
 }
 

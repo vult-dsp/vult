@@ -605,6 +605,7 @@ let builtin_table extensions =
      ; [ "get" ], Scope.Function, Typ.Const.array_get (), false
      ; [ "size" ], Scope.Function, Typ.Const.array_size (), false
      ; [ "makeArray" ], Scope.Function, Typ.Const.array_make (), false
+     ; [ "makeComplexArray" ], Scope.Function, Typ.Const.array_make (), false
      ; [ "abs" ], Scope.Function, Typ.Const.freal_freal (), false
      ; [ "exp" ], Scope.Function, Typ.Const.freal_freal (), false
      ; [ "log10" ], Scope.Function, Typ.Const.freal_freal (), false
