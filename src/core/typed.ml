@@ -63,19 +63,6 @@ let rec compare_type_ (a : type_) (b : type_) =
 
 and compare_type_list_ a b = CCOrd.list compare_type_ a b
 
-let rec print_type_ (t : type_) : Pla.t =
-  match t.tx with
-  | TENoReturn -> Pla.string "noreturn"
-  | TELink t -> print_type_ t
-  | TEUnbound i -> {pla|'unbound(<#i#i>)|pla}
-  | TEId p -> print_path p
-  | TESize n -> Pla.int n
-  | TEOption alt -> Pla.parenthesize @@ Pla.map_sep (Pla.string "|") print_type_ alt
-  | TEComposed (name, elems) ->
-      let elems = Pla.map_sep Pla.commaspace print_type_ elems in
-      {pla|<#name#s>(<#elems#>)|pla}
-
-
 type tag = Tags.tag
 
 type exp_d =
@@ -177,6 +164,19 @@ and top_stmt =
   }
 
 type program = top_stmt list
+
+let rec print_type_ (t : type_) : Pla.t =
+  match t.tx with
+  | TENoReturn -> Pla.string "noreturn"
+  | TELink t -> print_type_ t
+  | TEUnbound i -> {pla|'unbound(<#i#i>)|pla}
+  | TEId p -> print_path p
+  | TESize n -> Pla.int n
+  | TEOption alt -> Pla.parenthesize @@ Pla.map_sep (Pla.string "|") print_type_ alt
+  | TEComposed (name, elems) ->
+      let elems = Pla.map_sep Pla.commaspace print_type_ elems in
+      {pla|<#name#s>(<#elems#>)|pla}
+
 
 let rec print_exp e =
   match e.e with

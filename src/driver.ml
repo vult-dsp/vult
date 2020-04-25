@@ -28,8 +28,9 @@ open Args
 open Parser
 
 let stage2 (args : args) (parsed : parsed_file list) : output list =
-  let typed = Inference.infer parsed in
-  [ ParsedCode (Pla.print (Typed.print_prog typed)) ]
+  let env, typed = Inference.infer parsed in
+  let stmts = Prog.convert env typed in
+  [ ParsedCode (Pla.print (Prog.print_prog stmts)) ]
 
 
 (*

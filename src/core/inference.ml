@@ -128,29 +128,33 @@ let applyFunction (args_t : type_ list) (ret : type_) (args : exp list) =
   loop args_t args
 
 
-let addContextArg (env : EnvX.in_func) instance (f : EnvX.f) args loc =
-  if EnvX.isFunctionActive f then
-    let cpath = EnvX.getContext env in
-    let fpath = EnvX.getFunctionContext f in
-    let instance =
-      let number = Printf.sprintf "%.2x%.2x" (0xFF land Hashtbl.hash fpath) (0xFF land Hashtbl.hash cpath) in
-      match instance with
-      | Some i -> i ^ "_" ^ number
-      | None ->
-          let n = EnvX.getFunctionTick env in
-          "inst_" ^ string_of_int n ^ number
-    in
-    let t = C.path loc fpath in
-    let ctx_t = C.path loc cpath in
-    let instance = if Syntax.compare_path cpath fpath = 0 then context_name else instance in
-    let env = EnvX.addVar env unify instance t Inst loc in
-    let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, instance); loc; t } in
-    env, e :: args
+let addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
+  if Env.isFunctionActive f then
+    let cpath = Env.getContext env in
+    let fpath = Env.getFunctionContext f in
+    if Syntax.compare_path cpath fpath = 0 then
+      let t = C.path loc fpath in
+      let e = { e = EId context_name; t; loc } in
+      env, e :: args
+    else
+      let instance =
+        let number = Printf.sprintf "%.2x%.2x" (0xFF land Hashtbl.hash fpath) (0xFF land Hashtbl.hash cpath) in
+        match instance with
+        | Some i -> i ^ "_" ^ number
+        | None ->
+            let n = Env.getFunctionTick env in
+            "inst_" ^ string_of_int n ^ number
+      in
+      let t = C.path loc fpath in
+      let ctx_t = C.path loc cpath in
+      let env = Env.addVar env unify instance t Inst loc in
+      let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, instance); loc; t } in
+      env, e :: args
   else
     env, args
 
 
-let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * exp =
+let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
   match e with
   | { e = SEUnit; loc } ->
       let t = C.unit ~loc in
@@ -169,14 +173,14 @@ let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * exp =
       env, { e = EString value; t; loc }
   | { e = SEGroup e } -> exp env e
   | { e = SEId name; loc } ->
-      let var = EnvX.lookVar env name in
+      let var = Env.lookVar env name in
       let t = var.t in
       let e =
         match var.kind with
         | Val -> { e = EId name; t; loc }
         | Mem
          |Inst ->
-            let ctx = EnvX.getContext env in
+            let ctx = Env.getContext env in
             let ctx_t = C.path loc ctx in
             { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); t; loc }
       in
@@ -216,7 +220,7 @@ let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * exp =
       env, { e = EIf { cond; then_; else_ }; t; loc }
   | { e = SECall { instance; path; args }; loc } ->
       let env, args = exp_list env args in
-      let f = EnvX.lookFunctionCall env path in
+      let f = Env.lookFunctionCall env path in
       let args_t, ret = f.t in
       let t = applyFunction args_t ret args in
       let env, args = addContextArg env instance f args loc in
@@ -224,13 +228,13 @@ let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * exp =
   | { e = SEOp (op, e1, e2); loc } ->
       let env, e1 = exp env e1 in
       let env, e2 = exp env e2 in
-      let f = EnvX.lookOperator env op in
+      let f = Env.lookOperator env op in
       let args_t, ret = f.t in
       let t = applyFunction args_t ret [ e1; e2 ] in
       env, { e = EOp (op, e1, e2); t; loc }
   | { e = SEUnOp (op, e); loc } ->
       let env, e = exp env e in
-      let f = EnvX.lookOperator env ("u" ^ op) in
+      let f = Env.lookOperator env ("u" ^ op) in
       let args_t, ret = f.t in
       let t = applyFunction args_t ret [ e ] in
       env, { e = EUnOp (op, e); t; loc }
@@ -238,7 +242,7 @@ let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * exp =
       let env, e = exp env e in
       ( match e.t.tx with
       | TEId path ->
-          let def = EnvX.lookType env path in
+          let def = Env.lookType env path in
           begin
             match Map.find m def.members with
             | None -> failwith "member not found"
@@ -247,7 +251,7 @@ let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * exp =
       | _ -> failwith "invalid access to type" )
 
 
-and exp_list (env : EnvX.in_func) (l : Syntax.exp list) : EnvX.in_func * exp list =
+and exp_list (env : Env.in_func) (l : Syntax.exp list) : Env.in_func * exp list =
   let env, rev_l =
     List.fold_left
       (fun (env, acc) e ->
@@ -259,20 +263,20 @@ and exp_list (env : EnvX.in_func) (l : Syntax.exp list) : EnvX.in_func * exp lis
   env, List.rev rev_l
 
 
-and lexp (env : EnvX.in_func) (e : Syntax.lexp) : EnvX.in_func * lexp =
+and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
   match e with
   | { l = SLWild; loc } ->
       let t = C.noreturn loc in
       env, { l = LWild; t; loc }
   | { l = SLId name; loc } ->
-      let var = EnvX.lookVar env name in
+      let var = Env.lookVar env name in
       let t = var.t in
       let e =
         match var.kind with
         | Val -> { l = LId name; t; loc }
         | Mem
          |Inst ->
-            let ctx = EnvX.getContext env in
+            let ctx = Env.getContext env in
             let ctx_t = C.path loc ctx in
             { l = LMember ({ l = LId context_name; t = ctx_t; loc }, name); t; loc }
       in
@@ -301,7 +305,7 @@ and lexp (env : EnvX.in_func) (e : Syntax.lexp) : EnvX.in_func * lexp =
       let env, e = lexp env e in
       ( match e.t.tx with
       | TEId path ->
-          let def = EnvX.lookType env path in
+          let def = Env.lookType env path in
           begin
             match Map.find m def.members with
             | None -> failwith "member not found"
@@ -310,7 +314,7 @@ and lexp (env : EnvX.in_func) (e : Syntax.lexp) : EnvX.in_func * lexp =
       | _ -> failwith "invalid access to type" )
 
 
-and dexp (env : EnvX.in_func) (e : Syntax.dexp) (kind : var_kind) : EnvX.in_func * dexp =
+and dexp (env : Env.in_func) (e : Syntax.dexp) (kind : var_kind) : Env.in_func * dexp =
   match e with
   | { d = SDWild; loc } ->
       let t = C.noreturn loc in
@@ -338,17 +342,17 @@ and dexp (env : EnvX.in_func) (e : Syntax.dexp) (kind : var_kind) : EnvX.in_func
         | Some size -> C.array ~loc ~size:(C.size ~loc size) (C.unbound loc)
         | None -> C.unbound loc
       in
-      let env = EnvX.addVar env unify name t kind loc in
+      let env = Env.addVar env unify name t kind loc in
       env, { d = DId (name, dims); t; loc }
 
 
-let rec stmt (env : EnvX.in_func) (return : type_) (s : Syntax.stmt) : EnvX.in_func * stmt =
+let rec stmt (env : Env.in_func) (return : type_) (s : Syntax.stmt) : Env.in_func * stmt =
   match s with
   | { s = SStmtError } -> failwith "There was an error parsing "
   | { s = SStmtBlock stmts; loc } ->
-      let env = EnvX.pushScope env in
+      let env = Env.pushScope env in
       let env, stmts = stmt_list env return stmts in
-      let env = EnvX.popScope env in
+      let env = Env.popScope env in
       env, { s = StmtBlock stmts; loc }
   | { s = SStmtVal (lhs, None); loc } ->
       let env, lhs = dexp env lhs Val in
@@ -433,19 +437,19 @@ let convertArguments (args : Syntax.arg list) : arg list =
   List.map (fun (name, t, loc) -> name, getOptType loc t, loc) args
 
 
-let rec function_def (env : EnvX.in_context) ((def : Syntax.function_def), (body : Syntax.stmt)) :
-    EnvX.in_context * (function_def * stmt) =
+let rec function_def (env : Env.in_context) ((def : Syntax.function_def), (body : Syntax.stmt)) :
+    Env.in_context * (function_def * stmt) =
   let ret = getReturnType def.loc def.t in
   let args = convertArguments def.args in
-  let env, path, t = EnvX.enterFunction env def.name args ret def.loc in
+  let env, path, t = Env.enterFunction env def.name args ret def.loc in
   let env, body = stmt env ret body in
-  let env = EnvX.exitFunction env in
+  let env = Env.exitFunction env in
   let next = addGeneratedFunctions def.tags def.name def.next in
   let env, next = function_def_opt env next in
   env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next }, body)
 
 
-and function_def_opt (env : EnvX.in_context) def_opt =
+and function_def_opt (env : Env.in_context) def_opt =
   match def_opt with
   | None -> env, None
   | Some def_body ->
@@ -453,19 +457,19 @@ and function_def_opt (env : EnvX.in_context) def_opt =
       env, Some def_body
 
 
-let rec ext_function (env : EnvX.in_context) ((def : Syntax.function_def), (link_name : string option)) :
-    EnvX.in_context * (function_def * string) =
+let rec ext_function (env : Env.in_context) ((def : Syntax.function_def), (link_name : string option)) :
+    Env.in_context * (function_def * string) =
   let ret = getOptType def.loc def.t in
   let args = convertArguments def.args in
-  let env, path, t = EnvX.enterFunction env def.name args ret def.loc in
-  let env = EnvX.exitFunction env in
+  let env, path, t = Env.enterFunction env def.name args ret def.loc in
+  let env = Env.exitFunction env in
   let link_name = CCOpt.get_or ~default:def.name link_name in
   let next = addGeneratedFunctions def.tags def.name def.next in
   let env, next = function_def_opt env next in
   env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next = None }, link_name)
 
 
-let getContextArgument (context : EnvX.context) loc : arg option =
+let getContextArgument (context : Env.context) loc : arg option =
   match context with
   | Some (p, c) ->
       if Map.is_empty c.members then
@@ -476,7 +480,7 @@ let getContextArgument (context : EnvX.context) loc : arg option =
   | None -> None
 
 
-let insertContextArgument (env : EnvX.in_context) (def : function_def) : function_def =
+let insertContextArgument (env : Env.in_context) (def : function_def) : function_def =
   match getContextArgument env.context def.loc with
   | None -> def
   | Some arg ->
@@ -491,27 +495,27 @@ let insertContextArgument (env : EnvX.in_context) (def : function_def) : functio
       { def with args = arg :: def.args; next }
 
 
-let rec top_stmt (env : EnvX.in_module) (s : Syntax.top_stmt) : EnvX.in_module * top_stmt =
+let rec top_stmt (env : Env.in_module) (s : Syntax.top_stmt) : Env.in_module * top_stmt =
   match s with
   | { top = STopError } -> failwith "Parser error"
   | { top = STopFunction (def, body) } ->
-      let env = EnvX.createContextForFunction env def.name def.loc in
+      let env = Env.createContextForFunction env def.name def.loc in
       let env, (def, body) = function_def env (def, body) in
       let def = insertContextArgument env def in
-      let env = EnvX.exitContext env in
+      let env = Env.exitContext env in
       env, { top = TopFunction (def, body); loc = def.loc }
   | { top = STopExternal (def, link_name) } ->
-      let env = EnvX.createContextForExternal env def.name def.loc in
+      let env = Env.createContextForExternal env def.name def.loc in
       let env, (def, link_name) = ext_function env (def, link_name) in
-      let env = EnvX.exitContext env in
+      let env = Env.exitContext env in
       env, { top = TopExternal (def, link_name); loc = def.loc }
   | { top = STopType { name; members }; loc } ->
       let members = List.map (fun (name, t, loc) -> name, type_ t, loc) members in
-      let path = EnvX.getPath env.m name loc in
+      let path = Env.getPath env.m name loc in
       env, { top = TopType { path; members }; loc }
 
 
-and top_stmt_list (env : EnvX.in_module) (s : Syntax.top_stmt list) : EnvX.in_module * top_stmt list =
+and top_stmt_list (env : Env.in_module) (s : Syntax.top_stmt list) : Env.in_module * top_stmt list =
   let env, rev_s =
     List.fold_left
       (fun (env, acc) s ->
@@ -526,15 +530,15 @@ and top_stmt_list (env : EnvX.in_module) (s : Syntax.top_stmt list) : EnvX.in_mo
 let getTypesFromModule m =
   Map.fold
     (fun _ t s ->
-      if Map.is_empty t.EnvX.members then
+      if Map.is_empty t.Env.members then
         s
       else
         t :: s)
     []
-    m.EnvX.types
+    m.Env.types
 
 
-let createTypes (env : EnvX.in_top) =
+let createTypes (env : Env.in_top) =
   let types =
     Map.fold
       (fun _ m s ->
@@ -544,24 +548,24 @@ let createTypes (env : EnvX.in_top) =
       env.modules
   in
   (* sort the types *)
-  let types = List.sort (fun (a : EnvX.t) b -> compare a.index b.index) types in
+  let types = List.sort (fun (a : Env.t) b -> compare a.index b.index) types in
   List.map
-    (fun (t : EnvX.t) ->
-      let members = Map.fold (fun _ (var : EnvX.var) s -> (var.name, var.t, var.loc) :: s) [] t.members in
+    (fun (t : Env.t) ->
+      let members = Map.fold (fun _ (var : Env.var) s -> (var.name, var.t, var.loc) :: s) [] t.members in
       { top = TopType { path = t.path; members }; loc = t.loc })
     types
 
 
-let rec infer (parsed : Parser.parsed_file list) : Typed.program =
+let rec infer (parsed : Parser.parsed_file list) : Env.in_top * Typed.program =
   let env, stmts =
     List.fold_left
       (fun (env, acc) (h : Parser.parsed_file) ->
-        let env = EnvX.enterModule env h.name in
+        let env = Env.enterModule env h.name in
         let env, stmt = top_stmt_list env h.stmts in
-        let env = EnvX.exitModule env in
+        let env = Env.exitModule env in
         env, stmt @ acc)
-      (EnvX.empty (), [])
+      (Env.empty (), [])
       parsed
   in
   let types = createTypes env in
-  types @ List.rev stmts
+  env, types @ List.rev stmts
