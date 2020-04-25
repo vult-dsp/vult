@@ -11,7 +11,7 @@ else
 endif
 
 compiler:
-	dune build vultc.bc vultc.exe $(FORMAT)
+	dune build src/vult.bc src/vult.exe $(FORMAT)
 
 run: compiler
 	./_build/default/vultc.bc
@@ -20,10 +20,10 @@ run: compiler
 #	$(OCB) src/js/vultlib.byte
 #	js_of_ocaml vultlib.byte
 
-#jscompiler:
-#	$(OCB) src/js/vultcjs.byte
-#	js_of_ocaml --custom-header="#!/usr/bin/env node" vultcjs.byte -o vultc.js
-#	chmod +x vultc.js
+jscompiler:
+	dune build src/vultjs.bc $(FORMAT)
+	js_of_ocaml --custom-header="#!/usr/bin/env node" _build/default/src/vultjs.bc -o vultc.js
+	chmod +x vultc.js
 
 #web:
 #	$(OCB) src/js/vultweb.byte
@@ -58,7 +58,7 @@ run: compiler
 VERSION:=$(shell git describe --tags --abbrev=0)
 
 version :
-	@echo "let version = String.trim \"" $(VERSION) "\"" > src/version.ml
+	@echo "let version = String.trim \"" $(VERSION) "\"" > src/driver/version.ml
 
 all: version compiler #js test web jscompiler
 

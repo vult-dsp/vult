@@ -25,6 +25,7 @@ THE SOFTWARE.
    (** Vult Lexer based on ocamllex *)
 open Lexing
 open Ptypes
+open Util
 
 (** Updates the location of the lexbuf*)
 let updateLocation lexbuf (line:int) (chars:int) : unit =

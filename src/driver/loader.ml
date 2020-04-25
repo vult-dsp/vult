@@ -24,6 +24,8 @@
 
 (** This module contains routines used to automatically load a vult file and all it's depdendencies *)
 
+open Parser
+open Util
 open Syntax
 open Args
 
@@ -112,7 +114,6 @@ module Dependencies = struct
     | STopError -> set
     | STopExternal (def, _) -> function_def set (def, { s = SStmtError; loc = s.loc })
     | STopFunction (def, body) -> function_def set (def, body)
-    (*| STopTypeAlias (_, t) -> type_ set t*)
     | STopType { members } -> list (fun set (_, t, _) -> type_ set t) set members
 
 
@@ -125,7 +126,7 @@ let rec findModule (includes : string list) (module_name : string) : string opti
   | [] -> None
   | h :: t ->
       (* first checks an uncapitalized file *)
-      let file1 = Filename.concat h (String.capitalize_ascii module_name ^ ".vult") in
+      let file1 = Filename.concat h (String.uncapitalize_ascii module_name ^ ".vult") in
       if FileIO.exists file1 then
         Some file1
       else (* then checks a file with the same name as the module *)
@@ -168,13 +169,13 @@ let rec loadFiles_loop (includes : string list) dependencies parsed visited (fil
   | [] -> dependencies, parsed
   | ((File h | Code (h, _)) as input) :: t ->
       (* check that the file has not been visited before *)
-      let h_module = Parser.moduleName h in
+      let h_module = Parse.moduleName h in
       if not (Hashtbl.mem visited h_module) then
         let () = Hashtbl.add visited h_module true in
         let h_parsed =
           match input with
-          | File _ -> Parser.parseFile h
-          | Code (_, txt) -> Parser.parseString None txt
+          | File _ -> Parse.parseFile h
+          | Code (_, txt) -> Parse.parseString None txt
         in
         let () = Hashtbl.add parsed h_module h_parsed in
         (* gets the depencies based on the modules used *)

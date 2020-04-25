@@ -1,15 +1,3 @@
-;; automatically include the directories
-
-(include_subdirs unqualified)
-
 ;; exclude the directories with no relevan sources
 
 (dirs :standard \ src-transition test examples other runtime scripts)
-
-(executable
- (name vultc)
- (libraries containers ppx_deriving pla js_of_ocaml)
- (preprocess
-  (pps ppx_deriving.std pla.ppx js_of_ocaml-ppx))
- (modes byte exe)
- (flags -w -30))

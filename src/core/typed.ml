@@ -21,6 +21,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 *)
+open Util
+open Parser
 
 type path = Syntax.path
 

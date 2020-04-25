@@ -21,6 +21,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 *)
+open Util
 
 type tag_d =
   | TagId     of string

@@ -1,0 +1,7 @@
+(library
+ (name core)
+ (modules Typed Prog Inference Env)
+ (libraries util parser pla)
+ (preprocess
+  (pps ppx_deriving.std pla.ppx))
+ (flags -w -30))

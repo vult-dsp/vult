@@ -21,66 +21,59 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 *)
-
-(** Contains top level functions to perform common tasks *)
-
 open Args
+open Util
 open Parser
+open Core
+open Generators
 
-let stage2 (args : args) (parsed : parsed_file list) : output list =
+let getFile (args : args) (ext : Args.file_path) : string =
+  match ext with
+  | ExtOnly e -> args.output ^ "." ^ e
+  | FullName n -> Filename.concat (Filename.dirname args.output) n
+
+
+let showResult (args : args) (output : output) =
+  match output with
+  | Version v -> print_endline v
+  | Message v -> print_endline v
+  | Dependencies deps -> String.concat " " deps |> print_endline
+  | ParsedCode v -> print_endline v
+  | GeneratedCode files when args.output <> "" ->
+      List.iter
+        (fun (text, file) ->
+          let filename = getFile args file in
+          let code = Pla.print text in
+          if args.force_write then
+            FileIO.write filename code |> ignore
+          else
+            FileIO.writeIfDifferent filename code |> ignore)
+        files
+  | GeneratedCode files -> List.iter (fun (text, _) -> print_endline (Pla.print text)) files
+  | Interpret v -> print_endline v
+  | CheckOk -> ()
+  | Errors errors ->
+      let error_strings = Error.reportErrors errors in
+      prerr_endline error_strings
+
+
+let generateCode (args : args) (parsed : Parse.parsed_file list) : output list =
   let env, typed = Inference.infer parsed in
   let stmts = Prog.convert env typed in
-  [ ParsedCode (Pla.print (Prog.print_prog stmts)) ]
+  [ ParsedCode (Lua.generate stmts) ]
 
-
-(*
-   let generateCode (args : args) (parsed : parsed_file list) : output list =
-   match Generate.generateCode parsed args with
-   | [] -> []
-   | results -> [ GeneratedCode results ]
-*)
 
 (** Prints the parsed files if -dparse was passed as argument *)
-let dumpParsedFiles (args : args) (parsed : parsed_file list) : output list =
+let dumpParsedFiles (args : args) (parsed : Parse.parsed_file list) : output list =
   if args.dparse then
     [ ParsedCode "not implemented" ]
   else
     []
 
 
-(*
-
-(** Prints the parsed files if -dparse was passed as argument *)
-let runFiles (args : args) (parsed : parsed list) : output list =
-  let print_val e =
-    match e with
-    | PUnit _ -> []
-    | _ -> [ PrintProg.expressionStr e ]
-  in
-  if args.eval then
-    Passes.applyTransformations args ~options:PassCommon.interpreter_options parsed
-    |> fst
-    |> Interpreter.eval args
-    |> List.map print_val
-    |> List.flatten
-    |> fun a -> [ Interpret (String.concat "\n" a) ]
-  else
-    []
-
-
-(** Checks the code and returns a list with the errors *)
-let checkCode (args : args) (parsed : parsed list) : output list =
-  if args.check then
-    try parsed |> Passes.applyTransformations args |> fun _ -> [ CheckOk ] with
-    | Error.Errors errors -> [ Errors errors ]
-  else
-    []
-
-*)
-
 let version = String.sub Version.version 1 (String.length Version.version - 2)
 
-let main (args : args) : output list =
+let driver (args : args) : output list =
   try
     if args.show_version then
       [ Version version ]
@@ -90,10 +83,15 @@ let main (args : args) : output list =
       | _ ->
           let parsed = Loader.loadFiles args args.files in
           if args.deps then
-            List.map (fun r -> r.file) parsed |> fun s -> [ Dependencies s ]
+            List.map (fun r -> r.Parse.file) parsed |> fun s -> [ Dependencies s ]
           else
-            dumpParsedFiles args parsed @ stage2 args parsed
-    (*      @ runFiles args parsed
-            @ checkCode args parsed*)
+            dumpParsedFiles args parsed @ generateCode args parsed
   with
   | Error.Errors errors -> [ Errors errors ]
+
+
+let main () =
+  let args = processArguments () in
+  let results = driver args in
+  List.iter (showResult args) results ;
+  exit 0

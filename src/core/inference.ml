@@ -21,7 +21,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 *)
-
+open Util
+open Parser
 open Env
 open Typed
 
@@ -67,7 +68,7 @@ and unify (t1 : type_) (t2 : type_) =
     true
   else
     match t1.tx, t2.tx with
-    | TEId t1, TEId t2 -> Syntax.compare_path t1 t2 = 0
+    | TEId t1, TEId t2 -> Parser.Syntax.compare_path t1 t2 = 0
     | TESize t1, TESize t2 -> t1 = t2
     | TEComposed (n1, e1), TEComposed (n2, e2) when n1 = n2 && List.length e1 = List.length e2 ->
         List.for_all2 unify e1 e2
@@ -415,7 +416,7 @@ and stmt_list env return l =
 let addGeneratedFunctions tags name next =
   if Tags.has tags "wave" || Tags.has tags "wavetable" then
     let code = Pla.print {pla|fun <#name#s>_samples() : int|pla} in
-    let def = Parser.parseFunctionSpec code in
+    let def = Parse.parseFunctionSpec code in
     Some ({ def with next }, Syntax.{ s = SStmtBlock []; loc = Loc.default })
   else
     next
@@ -556,10 +557,10 @@ let createTypes (env : Env.in_top) =
     types
 
 
-let rec infer (parsed : Parser.parsed_file list) : Env.in_top * Typed.program =
+let rec infer (parsed : Parse.parsed_file list) : Env.in_top * Typed.program =
   let env, stmts =
     List.fold_left
-      (fun (env, acc) (h : Parser.parsed_file) ->
+      (fun (env, acc) (h : Parse.parsed_file) ->
         let env = Env.enterModule env h.name in
         let env, stmt = top_stmt_list env h.stmts in
         let env = Env.exitModule env in

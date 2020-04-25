@@ -1,0 +1,6 @@
+(library
+ (name node)
+ (modules NodeIO)
+ (libraries util js_of_ocaml)
+ (preprocess
+  (pps ppx_deriving.std pla.ppx js_of_ocaml-ppx)))

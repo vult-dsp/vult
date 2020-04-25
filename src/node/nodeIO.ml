@@ -19,6 +19,7 @@
 *)
 
 open Js_of_ocaml
+open Util
 
 (** Main file when running Vult with node. It replaces the FileIO functions to have access to the file system.
 *)

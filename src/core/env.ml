@@ -21,7 +21,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 *)
-
+open Util
 module StringMap = CCMap.Make (String)
 
 module Map = struct
@@ -120,7 +120,7 @@ let builtin_functions =
   |> Map.of_list
 
 
-type path = Syntax.path
+type path = Typed.path
 
 type var =
   { name : string
@@ -214,7 +214,7 @@ let lookFunctionCall (env : in_func) (path : path) : f =
   | { id; n = Some n } ->
       begin
         match Map.find n env.top.modules with
-        | None -> failwith "module not found"
+        | None -> failwith ("module not found " ^ n)
         | Some m -> reportNotFound (Map.find id m.functions)
       end
   | { id } ->
@@ -237,7 +237,7 @@ let rec getType (env : in_top) (path : path) : t option =
   | { id; n = Some n } ->
       begin
         match Map.find n env.modules with
-        | None -> failwith "module not found"
+        | None -> failwith ("module not found " ^ n)
         | Some m -> Map.find id m.types
       end
   | { id } -> None
@@ -253,7 +253,7 @@ let rec lookType (env : in_func) (path : path) : t =
   | { id; n = Some n } ->
       begin
         match Map.find n env.top.modules with
-        | None -> failwith "module not found"
+        | None -> failwith ("module not found " ^ n)
         | Some m -> reportNotFound (Map.find id m.types)
       end
   | { id } ->

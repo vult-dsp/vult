@@ -23,6 +23,7 @@
 *)
 
 open Ptypes
+open Util
 
 exception ParserError of Error.t
 

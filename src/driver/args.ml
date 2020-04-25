@@ -1,7 +1,7 @@
 (*
    The MIT License (MIT)
 
-   Copyright (c) 2014 Leonardo Laguna Ruiz, Carl Jönsson
+   Copyright (c) 2017 Leonardo Laguna Ruiz
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,80 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 *)
-open Args
+
+open Util
+
+type file_path =
+  | ExtOnly  of string
+  | FullName of string
+
+type input =
+  | File of string
+  | Code of string * string
+[@@deriving show, eq, ord]
+
+type output =
+  | Version       of string
+  | Message       of string
+  | Dependencies  of string list
+  | ParsedCode    of string
+  | GeneratedCode of (Pla.t * file_path) list
+  | Interpret     of string
+  | CheckOk
+  | Errors        of Error.t list
+
+type code =
+  | NoCode
+  | CCode
+  | JSCode
+  | LuaCode
+  | JavaCode
+[@@deriving show, eq, ord]
+
+(** Stores the options passed to the command line *)
+type args =
+  { mutable files : input list
+  ; mutable dparse : bool
+  ; mutable eval : bool
+  ; mutable check : bool
+  ; mutable code : code
+  ; mutable output : string
+  ; mutable real : string
+  ; mutable template : string
+  ; mutable show_version : bool
+  ; mutable includes : string list
+  ; mutable deps : bool
+  ; mutable fs : float option
+  ; mutable tables : bool
+  ; mutable roots : string list
+  ; mutable shorten : bool
+  ; mutable mac : bool
+  ; mutable force_write : bool
+  ; mutable prefix : string
+  }
+[@@deriving show, eq, ord]
+
+let default_arguments : args =
+  { files = []
+  ; dparse = false
+  ; code = NoCode
+  ; eval = false
+  ; check = false
+  ; output = ""
+  ; real = "float"
+  ; template = "default"
+  ; show_version = false
+  ; includes = []
+  ; deps = false
+  ; fs = None
+  ; tables = true
+  ; roots = []
+  ; shorten = false
+  ; mac = false
+  ; force_write = false
+  ; prefix = ""
+  }
+
 
 type flags =
   { flag : string
@@ -121,40 +194,3 @@ let processArguments () : args =
   in
   let () = result.files <- List.rev result.files in
   result
-
-
-let getFile (args : args) (ext : Args.file_path) : string =
-  match ext with
-  | ExtOnly e -> args.output ^ "." ^ e
-  | FullName n -> Filename.concat (Filename.dirname args.output) n
-
-
-let showResult (args : args) (output : output) =
-  match output with
-  | Version v -> print_endline v
-  | Message v -> print_endline v
-  | Dependencies deps -> String.concat " " deps |> print_endline
-  | ParsedCode v -> print_endline v
-  | GeneratedCode files when args.output <> "" ->
-      List.iter
-        (fun (text, file) ->
-          let filename = getFile args file in
-          let code = Pla.print text in
-          if args.force_write then
-            FileIO.write filename code |> ignore
-          else
-            FileIO.writeIfDifferent filename code |> ignore)
-        files
-  | GeneratedCode files -> List.iter (fun (text, _) -> print_endline (Pla.print text)) files
-  | Interpret v -> print_endline v
-  | CheckOk -> ()
-  | Errors errors ->
-      let error_strings = Error.reportErrors errors in
-      prerr_endline error_strings
-
-
-let main () =
-  let args = processArguments () in
-  let results = Driver.main args in
-  List.iter (showResult args) results ;
-  exit 0

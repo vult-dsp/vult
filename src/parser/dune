@@ -1,1 +1,9 @@
 (ocamllex lexer)
+
+(library
+ (name parser)
+ (modules Parse Ptypes Syntax TokenStream Lexer Tags)
+ (libraries util pla)
+ (preprocess
+  (pps ppx_deriving.std pla.ppx))
+ (flags -w -30))

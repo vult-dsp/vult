@@ -1,0 +1,11 @@
+(executable
+ (name vult)
+ (modules Vult)
+ (modes byte exe)
+ (libraries driver))
+
+(executable
+ (name vultjs)
+ (modules vultjs)
+ (modes byte)
+ (libraries node driver))

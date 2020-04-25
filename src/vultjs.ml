@@ -24,7 +24,7 @@
 (* replaces all the native functions for the node.js versions *)
 
 ;;
-NodeIO.replaceFunctions ()
+Node.NodeIO.replaceFunctions ()
 
 ;;
-Cli.main ()
+Driver.Cli.main ()

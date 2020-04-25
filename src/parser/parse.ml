@@ -28,6 +28,7 @@ open Lexer
 open Ptypes
 open TokenStream
 open Syntax
+open Util
 
 module TokenKind = struct
   type kind = token_enum

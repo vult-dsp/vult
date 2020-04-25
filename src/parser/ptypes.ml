@@ -22,6 +22,8 @@
    THE SOFTWARE.
 *)
 
+open Util
+
 type lexed_lines =
   { current_line : Buffer.t
   ; mutable all_lines : string list
