@@ -24,7 +24,6 @@
 
 open Env
 open Typed
-open ExtendedType
 
 let context_name = "_ctx"
 
@@ -116,13 +115,13 @@ let rec type_ (t : Syntax.type_) =
       { tx = TEComposed (name, l); loc }
 
 
-let applyFunction (args_t : type_ list) (ret : type_) (args : PX.exp list) =
+let applyFunction (args_t : type_ list) (ret : type_) (args : exp list) =
   let rec loop args_t args =
     match args_t, args with
     | [], _ :: _ -> failwith "missing arguments"
     | _ :: _, [] -> failwith "excess of arguments "
     | [], [] -> ret
-    | h :: args_t, (ht : PX.exp) :: args ->
+    | h :: args_t, (ht : exp) :: args ->
         unifyRaise ht.loc h ht.t ;
         loop args_t args
   in
@@ -141,32 +140,32 @@ let addContextArg (env : EnvX.in_func) instance (f : EnvX.f) args loc =
           let n = EnvX.getFunctionTick env in
           "inst_" ^ string_of_int n ^ number
     in
-    let t = TX.path loc fpath in
-    let ctx_t = TX.path loc cpath in
+    let t = C.path loc fpath in
+    let ctx_t = C.path loc cpath in
     let instance = if Syntax.compare_path cpath fpath = 0 then context_name else instance in
     let env = EnvX.addVar env unify instance t Inst loc in
-    let e = PX.{ e = EMember ({ e = EId context_name; t = ctx_t; loc }, instance); loc; t } in
+    let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, instance); loc; t } in
     env, e :: args
   else
     env, args
 
 
-let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * PX.exp =
+let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * exp =
   match e with
   | { e = SEUnit; loc } ->
-      let t = TX.unit ~loc in
+      let t = C.unit ~loc in
       env, { e = EUnit; t; loc }
   | { e = SEBool value; loc } ->
-      let t = TX.bool ~loc in
+      let t = C.bool ~loc in
       env, { e = EBool value; t; loc }
   | { e = SEInt value; loc } ->
-      let t = TX.int ~loc in
+      let t = C.int ~loc in
       env, { e = EInt value; t; loc }
   | { e = SEReal value; loc } ->
-      let t = TX.real ~loc in
+      let t = C.real ~loc in
       env, { e = EReal value; t; loc }
   | { e = SEString value; loc } ->
-      let t = TX.string ~loc in
+      let t = C.string ~loc in
       env, { e = EString value; t; loc }
   | { e = SEGroup e } -> exp env e
   | { e = SEId name; loc } ->
@@ -174,20 +173,20 @@ let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * PX.exp =
       let t = var.t in
       let e =
         match var.kind with
-        | Val -> PX.{ e = EId name; t; loc }
+        | Val -> { e = EId name; t; loc }
         | Mem
          |Inst ->
             let ctx = EnvX.getContext env in
-            let ctx_t = TX.path loc ctx in
+            let ctx_t = C.path loc ctx in
             { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); t; loc }
       in
       env, e
   | { e = SEIndex { e; index }; loc } ->
       let env, e = exp env e in
       let env, index = exp env index in
-      let t = TX.unbound Loc.default in
-      unifyRaise e.loc (TX.array t) e.t ;
-      unifyRaise index.loc (TX.int ~loc:Loc.default) index.t ;
+      let t = C.unbound Loc.default in
+      unifyRaise e.loc (C.array t) e.t ;
+      unifyRaise index.loc (C.int ~loc:Loc.default) index.t ;
       env, { e = EIndex { e; index }; t; loc }
   | { e = SEArray [] } -> failwith "empty array"
   | { e = SEArray (h :: t); loc } ->
@@ -201,18 +200,18 @@ let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * PX.exp =
           (env, [], 1)
           t
       in
-      let t = TX.array ~size:(TX.size ~loc size) h.t in
+      let t = C.array ~size:(C.size ~loc size) h.t in
       env, { e = EArray (h :: List.rev t_rev); t; loc }
   | { e = SETuple l; loc } ->
       let env, l = exp_list env l in
-      let t = TX.tuple ~loc (List.map (fun (e : PX.exp) -> e.t) l) in
+      let t = C.tuple ~loc (List.map (fun (e : exp) -> e.t) l) in
       env, { e = ETuple l; t; loc }
   | { e = SEIf { cond; then_; else_ }; loc } ->
       let env, cond = exp env cond in
       let env, then_ = exp env then_ in
       let env, else_ = exp env else_ in
       let t = then_.t in
-      unifyRaise cond.loc (TX.bool ~loc) cond.t ;
+      unifyRaise cond.loc (C.bool ~loc) cond.t ;
       unifyRaise else_.loc then_.t else_.t ;
       env, { e = EIf { cond; then_; else_ }; t; loc }
   | { e = SECall { instance; path; args }; loc } ->
@@ -248,7 +247,7 @@ let rec exp (env : EnvX.in_func) (e : Syntax.exp) : EnvX.in_func * PX.exp =
       | _ -> failwith "invalid access to type" )
 
 
-and exp_list (env : EnvX.in_func) (l : Syntax.exp list) : EnvX.in_func * PX.exp list =
+and exp_list (env : EnvX.in_func) (l : Syntax.exp list) : EnvX.in_func * exp list =
   let env, rev_l =
     List.fold_left
       (fun (env, acc) e ->
@@ -260,21 +259,21 @@ and exp_list (env : EnvX.in_func) (l : Syntax.exp list) : EnvX.in_func * PX.exp 
   env, List.rev rev_l
 
 
-and lexp (env : EnvX.in_func) (e : Syntax.lexp) : EnvX.in_func * PX.lexp =
+and lexp (env : EnvX.in_func) (e : Syntax.lexp) : EnvX.in_func * lexp =
   match e with
   | { l = SLWild; loc } ->
-      let t = TX.noreturn loc in
+      let t = C.noreturn loc in
       env, { l = LWild; t; loc }
   | { l = SLId name; loc } ->
       let var = EnvX.lookVar env name in
       let t = var.t in
       let e =
         match var.kind with
-        | Val -> PX.{ l = LId name; t; loc }
+        | Val -> { l = LId name; t; loc }
         | Mem
          |Inst ->
             let ctx = EnvX.getContext env in
-            let ctx_t = TX.path loc ctx in
+            let ctx_t = C.path loc ctx in
             { l = LMember ({ l = LId context_name; t = ctx_t; loc }, name); t; loc }
       in
       env, e
@@ -288,15 +287,15 @@ and lexp (env : EnvX.in_func) (e : Syntax.lexp) : EnvX.in_func * PX.lexp =
           (env, [])
           (List.rev elems)
       in
-      let t_elems = List.map (fun (e : PX.lexp) -> e.t) elems in
-      let t = TX.tuple ~loc t_elems in
+      let t_elems = List.map (fun (e : lexp) -> e.t) elems in
+      let t = C.tuple ~loc t_elems in
       env, { l = LTuple elems; t; loc }
   | { l = SLIndex { e; index }; loc } ->
       let env, e = lexp env e in
       let env, index = exp env index in
-      let t = TX.unbound loc in
-      unifyRaise index.loc (TX.int ~loc) index.t ;
-      unifyRaise e.loc (TX.array ~loc t) e.t ;
+      let t = C.unbound loc in
+      unifyRaise index.loc (C.int ~loc) index.t ;
+      unifyRaise e.loc (C.array ~loc t) e.t ;
       env, { l = LIndex { e; index }; t; loc }
   | { l = SLMember (e, m); loc } ->
       let env, e = lexp env e in
@@ -311,10 +310,10 @@ and lexp (env : EnvX.in_func) (e : Syntax.lexp) : EnvX.in_func * PX.lexp =
       | _ -> failwith "invalid access to type" )
 
 
-and dexp (env : EnvX.in_func) (e : Syntax.dexp) (kind : var_kind) : EnvX.in_func * PX.dexp =
+and dexp (env : EnvX.in_func) (e : Syntax.dexp) (kind : var_kind) : EnvX.in_func * dexp =
   match e with
   | { d = SDWild; loc } ->
-      let t = TX.noreturn loc in
+      let t = C.noreturn loc in
       env, { d = DWild; t; loc }
   | { d = SDTuple l; loc } ->
       let env, l =
@@ -325,7 +324,7 @@ and dexp (env : EnvX.in_func) (e : Syntax.dexp) (kind : var_kind) : EnvX.in_func
           (env, [])
           (List.rev l)
       in
-      let t = TX.tuple ~loc (List.map (fun (e : PX.dexp) -> e.t) l) in
+      let t = C.tuple ~loc (List.map (fun (e : dexp) -> e.t) l) in
       env, { d = DTuple l; t; loc }
   | { d = SDGroup e } -> dexp env e kind
   | { d = SDTyped (e, t); loc } ->
@@ -336,14 +335,14 @@ and dexp (env : EnvX.in_func) (e : Syntax.dexp) (kind : var_kind) : EnvX.in_func
   | { d = SDId (name, dims); loc } ->
       let t =
         match dims with
-        | Some size -> TX.array ~loc ~size:(TX.size ~loc size) (TX.unbound loc)
-        | None -> TX.unbound loc
+        | Some size -> C.array ~loc ~size:(C.size ~loc size) (C.unbound loc)
+        | None -> C.unbound loc
       in
       let env = EnvX.addVar env unify name t kind loc in
       env, { d = DId (name, dims); t; loc }
 
 
-let rec stmt (env : EnvX.in_func) (return : type_) (s : Syntax.stmt) : EnvX.in_func * PX.stmt =
+let rec stmt (env : EnvX.in_func) (return : type_) (s : Syntax.stmt) : EnvX.in_func * stmt =
   match s with
   | { s = SStmtError } -> failwith "There was an error parsing "
   | { s = SStmtBlock stmts; loc } ->
@@ -378,13 +377,13 @@ let rec stmt (env : EnvX.in_func) (return : type_) (s : Syntax.stmt) : EnvX.in_f
       env, { s = StmtReturn e; loc }
   | { s = SStmtIf (cond, then_, else_); loc } ->
       let env, cond = exp env cond in
-      unifyRaise cond.loc (TX.bool ~loc) cond.t ;
+      unifyRaise cond.loc (C.bool ~loc) cond.t ;
       let env, then_ = stmt env return then_ in
       let env, else_ = stmt_opt env return else_ in
       env, { s = StmtIf (cond, then_, else_); loc }
   | { s = SStmtWhile (cond, s); loc } ->
       let env, cond = exp env cond in
-      unifyRaise cond.loc (TX.bool ~loc) cond.t ;
+      unifyRaise cond.loc (C.bool ~loc) cond.t ;
       let env, s = stmt env return s in
       env, { s = StmtWhile (cond, s); loc }
 
@@ -420,22 +419,22 @@ let addGeneratedFunctions tags name next =
 
 let getOptType loc (t : Syntax.type_ option) =
   match t with
-  | None -> TX.unbound loc
+  | None -> C.unbound loc
   | Some t -> type_ t
 
 
 let getReturnType loc (t : Syntax.type_ option) =
   match t with
-  | None -> TX.noreturn loc
+  | None -> C.noreturn loc
   | Some t -> type_ t
 
 
-let convertArguments (args : Syntax.arg list) : PX.arg list =
+let convertArguments (args : Syntax.arg list) : arg list =
   List.map (fun (name, t, loc) -> name, getOptType loc t, loc) args
 
 
 let rec function_def (env : EnvX.in_context) ((def : Syntax.function_def), (body : Syntax.stmt)) :
-    EnvX.in_context * (PX.function_def * PX.stmt) =
+    EnvX.in_context * (function_def * stmt) =
   let ret = getReturnType def.loc def.t in
   let args = convertArguments def.args in
   let env, path, t = EnvX.enterFunction env def.name args ret def.loc in
@@ -455,7 +454,7 @@ and function_def_opt (env : EnvX.in_context) def_opt =
 
 
 let rec ext_function (env : EnvX.in_context) ((def : Syntax.function_def), (link_name : string option)) :
-    EnvX.in_context * (PX.function_def * string) =
+    EnvX.in_context * (function_def * string) =
   let ret = getOptType def.loc def.t in
   let args = convertArguments def.args in
   let env, path, t = EnvX.enterFunction env def.name args ret def.loc in
@@ -466,33 +465,33 @@ let rec ext_function (env : EnvX.in_context) ((def : Syntax.function_def), (link
   env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next = None }, link_name)
 
 
-let getContextArgument (context : EnvX.context) loc : PX.arg option =
+let getContextArgument (context : EnvX.context) loc : arg option =
   match context with
   | Some (p, c) ->
       if Map.is_empty c.members then
         None
       else
-        let ctx_t = TX.path loc p in
+        let ctx_t = C.path loc p in
         Some (context_name, ctx_t, loc)
   | None -> None
 
 
-let insertContextArgument (env : EnvX.in_context) (def : PX.function_def) : PX.function_def =
+let insertContextArgument (env : EnvX.in_context) (def : function_def) : function_def =
   match getContextArgument env.context def.loc with
   | None -> def
   | Some arg ->
       let rec loop next =
         match next with
         | Some (def, body) ->
-            let next = loop def.PX.next in
-            Some (PX.{ def with args = arg :: def.args; next }, body)
+            let next = loop def.next in
+            Some ({ def with args = arg :: def.args; next }, body)
         | None -> None
       in
       let next = loop def.next in
-      PX.{ def with args = arg :: def.args; next }
+      { def with args = arg :: def.args; next }
 
 
-let rec top_stmt (env : EnvX.in_module) (s : Syntax.top_stmt) : EnvX.in_module * PX.top_stmt =
+let rec top_stmt (env : EnvX.in_module) (s : Syntax.top_stmt) : EnvX.in_module * top_stmt =
   match s with
   | { top = STopError } -> failwith "Parser error"
   | { top = STopFunction (def, body) } ->
@@ -512,7 +511,7 @@ let rec top_stmt (env : EnvX.in_module) (s : Syntax.top_stmt) : EnvX.in_module *
       env, { top = TopType { path; members }; loc }
 
 
-and top_stmt_list (env : EnvX.in_module) (s : Syntax.top_stmt list) : EnvX.in_module * PX.top_stmt list =
+and top_stmt_list (env : EnvX.in_module) (s : Syntax.top_stmt list) : EnvX.in_module * top_stmt list =
   let env, rev_s =
     List.fold_left
       (fun (env, acc) s ->
@@ -549,11 +548,11 @@ let createTypes (env : EnvX.in_top) =
   List.map
     (fun (t : EnvX.t) ->
       let members = Map.fold (fun _ (var : EnvX.var) s -> (var.name, var.t, var.loc) :: s) [] t.members in
-      PX.{ top = TopType { path = t.path; members }; loc = t.loc })
+      { top = TopType { path = t.path; members }; loc = t.loc })
     types
 
 
-let rec infer (parsed : Parser.parsed_file list) : Typed.PX.program =
+let rec infer (parsed : Parser.parsed_file list) : Typed.program =
   let env, stmts =
     List.fold_left
       (fun (env, acc) (h : Parser.parsed_file) ->

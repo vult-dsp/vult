@@ -795,15 +795,22 @@ and stmtType (buffer : Stream.stream) : top_stmt =
 
 
 and type_member_list (buffer : Stream.stream) =
-  let rec loop acc =
-    match Stream.peek buffer with
-    | VAL ->
-        let decl = type_member buffer in
-        let _ = Stream.consume buffer SEMI in
-        loop (decl :: acc)
-    | _ -> List.rev acc
-  in
-  loop []
+  match Stream.peek buffer with
+  | RBRACE -> failwith "empty type"
+  | VAL ->
+      let rec loop acc =
+        match Stream.peek buffer with
+        | VAL ->
+            let decl = type_member buffer in
+            let _ = Stream.consume buffer SEMI in
+            loop (decl :: acc)
+        | _ -> List.rev acc
+      in
+      loop []
+  | _ ->
+      let got = tokenToString (Stream.current buffer) in
+      let message = Printf.sprintf "Expecting a list of value declarations '{ val x:... }' but got %s" got in
+      raise (ParserError (Stream.makeError buffer message))
 
 
 and type_member (buffer : Stream.stream) =

@@ -57,9 +57,9 @@ end
 module type TSig = sig
   type t
 
-  val convert : Typed.ExtendedType.type_ -> t
+  val convert : Typed.type_ -> t
 
-  val convert_function_type : Typed.ExtendedType.type_ list * Typed.ExtendedType.type_ -> t list * t
+  val convert_function_type : Typed.type_ list * Typed.type_ -> t list * t
 end
 
 type var_kind =
@@ -67,65 +67,53 @@ type var_kind =
   | Val
   | Inst
 
-(*
-
-  "int", Scope.Type, TX.type_type, true
-  ; "real", Scope.Type, TX.type_type, true
-  ; "bool", Scope.Type, TX.type_type, true
-  ; "unit", Scope.Type, TX.type_type, true
-  ; "string", Scope.Type, TX.type_type, true
-  ; "abstract", Scope.Type, TX.type_type, true
-  ; "fix16", Scope.Type, TX.type_type, true
-
-*)
-
 let builtin_functions =
   Typed.
-    [ "set", TX.array_set
-    ; "get", TX.array_get
-    ; "size", TX.array_size
-    ; "makeArray", TX.array_make
-    ; "abs", TX.freal_freal
-    ; "exp", TX.freal_freal
-    ; "log10", TX.freal_freal
-    ; "sin", TX.freal_freal
-    ; "cos", TX.freal_freal
-    ; "floor", TX.freal_freal
-    ; "tanh", TX.freal_freal
-    ; "pow", TX.real_real_real
-    ; "cosh", TX.freal_freal
-    ; "sinh", TX.freal_freal
-    ; "tan", TX.freal_freal
-    ; "sqrt", TX.freal_freal
-    ; "clip", TX.clip
-    ; "int", TX.num_int
-    ; "real", TX.num_real
-    ; "fix16", TX.num_fix16
-    ; "u-", TX.num_num
-    ; "+", TX.num_num_num
-    ; "-", TX.num_num_num
-    ; "*", TX.num_num_num
-    ; "/", TX.num_num_num
-    ; "%", TX.num_num_num
-    ; ">", TX.num_num_bool
-    ; "<", TX.num_num_bool
-    ; "==", TX.a_a_bool
-    ; "<>", TX.a_a_bool
-    ; ">=", TX.num_num_bool
-    ; "<=", TX.num_num_bool
-    ; "|", TX.int_int_int
-    ; "&", TX.int_int_int
-    ; ">>", TX.int_int_int
-    ; "<<", TX.int_int_int
-    ; "not", TX.bool_bool
-    ; "||", TX.bool_bool_bool
-    ; "&&", TX.bool_bool_bool
-    ; "eps", TX.unit_real
-    ; "pi", TX.unit_real
-    ; "random", TX.unit_real
-    ; "irandom", TX.unit_int
-    ; "samplerate", TX.unit_real
-    ; "wrap_array", TX.wrap_array
+    [ "set", C.array_set
+    ; "get", C.array_get
+    ; "size", C.array_size
+    ; "makeArray", C.array_make
+    ; "abs", C.freal_freal
+    ; "exp", C.freal_freal
+    ; "log10", C.freal_freal
+    ; "sin", C.freal_freal
+    ; "cos", C.freal_freal
+    ; "floor", C.freal_freal
+    ; "tanh", C.freal_freal
+    ; "pow", C.real_real_real
+    ; "cosh", C.freal_freal
+    ; "sinh", C.freal_freal
+    ; "tan", C.freal_freal
+    ; "sqrt", C.freal_freal
+    ; "clip", C.clip
+    ; "int", C.num_int
+    ; "real", C.num_real
+    ; "fix16", C.num_fix16
+    ; "u-", C.num_num
+    ; "+", C.num_num_num
+    ; "-", C.num_num_num
+    ; "*", C.num_num_num
+    ; "/", C.num_num_num
+    ; "%", C.num_num_num
+    ; ">", C.num_num_bool
+    ; "<", C.num_num_bool
+    ; "==", C.a_a_bool
+    ; "<>", C.a_a_bool
+    ; ">=", C.num_num_bool
+    ; "<=", C.num_num_bool
+    ; "|", C.int_int_int
+    ; "&", C.int_int_int
+    ; ">>", C.int_int_int
+    ; "<<", C.int_int_int
+    ; "not", C.bool_bool
+    ; "||", C.bool_bool_bool
+    ; "&&", C.bool_bool_bool
+    ; "eps", C.unit_real
+    ; "pi", C.unit_real
+    ; "random", C.unit_real
+    ; "irandom", C.unit_int
+    ; "samplerate", C.unit_real
+    ; "wrap_array", C.wrap_array
     ]
   |> Map.of_list
 
@@ -165,7 +153,7 @@ module Env (T : TSig) = struct
 
   type in_top =
     { modules : m Map.t
-    ; builtin_functions : (unit -> Typed.ExtendedType.fun_type) Map.t
+    ; builtin_functions : (unit -> Typed.fun_type) Map.t
     ; builtin_types : t Map.t
     }
 
@@ -394,7 +382,7 @@ module Env (T : TSig) = struct
 end
 
 module EnvX = Env (struct
-  type t = Typed.ExtendedType.type_
+  type t = Typed.type_
 
   let convert t = t
 
