@@ -71,7 +71,7 @@ let has (tags : tag list) n =
   List.exists
     (fun t ->
       match t.g with
-      | TagCall { name } -> name = n
+      | TagCall { name; _ } -> name = n
       | TagId name -> name = n
       | _ -> false)
     tags

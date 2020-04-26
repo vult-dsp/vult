@@ -56,7 +56,7 @@ let rec pickOption original l tt =
     | [] -> failwith "does not match a ny type"
     | h :: t ->
         if unify h tt then
-          linkType tt original
+          linkType ~from:tt ~into:original
         else
           loop t
   in
@@ -75,16 +75,16 @@ and unify (t1 : type_) (t2 : type_) =
     (* follow the links *)
     | TELink tlink, _ -> unify tlink t2
     | _, TELink tlink -> unify t1 tlink
-    | TENoReturn, _ -> linkType t2 t1
-    | _, TENoReturn -> linkType t1 t2
+    | TENoReturn, _ -> linkType ~from:t2 ~into:t1
+    | _, TENoReturn -> linkType ~from:t1 ~into:t2
     (* replace any unbound *)
-    | TEUnbound _, _ -> linkType t2 t1
-    | _, TEUnbound _ -> linkType t1 t2
+    | TEUnbound _, _ -> linkType ~from:t2 ~into:t1
+    | _, TEUnbound _ -> linkType ~from:t1 ~into:t2
     (* types with alternatives *)
     | TEOption l1, TEOption l2 ->
         let t3 = constrainOption l1 l2 in
-        let _ = linkType t3 t2 in
-        linkType t3 t1
+        let _ = linkType ~from:t3 ~into:t2 in
+        linkType ~from:t3 ~into:t1
     | TEOption l, _ -> pickOption t1 l t2
     | _, TEOption l -> pickOption t2 l t1
     | TEId _, _ -> false
@@ -172,7 +172,7 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
   | { e = SEString value; loc } ->
       let t = C.string ~loc in
       env, { e = EString value; t; loc }
-  | { e = SEGroup e } -> exp env e
+  | { e = SEGroup e; _ } -> exp env e
   | { e = SEId name; loc } ->
       let var = Env.lookVar env name in
       let t = var.t in
@@ -193,7 +193,7 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
       unifyRaise e.loc (C.array t) e.t ;
       unifyRaise index.loc (C.int ~loc:Loc.default) index.t ;
       env, { e = EIndex { e; index }; t; loc }
-  | { e = SEArray [] } -> failwith "empty array"
+  | { e = SEArray []; _ } -> failwith "empty array"
   | { e = SEArray (h :: t); loc } ->
       let env, h = exp env h in
       let env, t_rev, size =
@@ -247,7 +247,7 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
           begin
             match Map.find m def.members with
             | None -> failwith "member not found"
-            | Some { t } -> env, { e = EMember (e, m); t; loc }
+            | Some { t; _ } -> env, { e = EMember (e, m); t; loc }
           end
       | _ -> failwith "invalid access to type" )
 
@@ -282,7 +282,7 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
             { l = LMember ({ l = LId context_name; t = ctx_t; loc }, name); t; loc }
       in
       env, e
-  | { l = SLGroup e } -> lexp env e
+  | { l = SLGroup e; _ } -> lexp env e
   | { l = SLTuple elems; loc } ->
       let env, elems =
         List.fold_left
@@ -310,7 +310,7 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
           begin
             match Map.find m def.members with
             | None -> failwith "member not found"
-            | Some { t } -> env, { l = LMember (e, m); t; loc }
+            | Some { t; _ } -> env, { l = LMember (e, m); t; loc }
           end
       | _ -> failwith "invalid access to type" )
 
@@ -331,8 +331,8 @@ and dexp (env : Env.in_func) (e : Syntax.dexp) (kind : var_kind) : Env.in_func *
       in
       let t = C.tuple ~loc (List.map (fun (e : dexp) -> e.t) l) in
       env, { d = DTuple l; t; loc }
-  | { d = SDGroup e } -> dexp env e kind
-  | { d = SDTyped (e, t); loc } ->
+  | { d = SDGroup e; _ } -> dexp env e kind
+  | { d = SDTyped (e, t); _ } ->
       let env, e = dexp env e kind in
       let t = type_ t in
       unifyRaise e.loc t e.t ;
@@ -349,7 +349,7 @@ and dexp (env : Env.in_func) (e : Syntax.dexp) (kind : var_kind) : Env.in_func *
 
 let rec stmt (env : Env.in_func) (return : type_) (s : Syntax.stmt) : Env.in_func * stmt =
   match s with
-  | { s = SStmtError } -> failwith "There was an error parsing "
+  | { s = SStmtError; _ } -> failwith "There was an error parsing "
   | { s = SStmtBlock stmts; loc } ->
       let env = Env.pushScope env in
       let env, stmts = stmt_list env return stmts in
@@ -458,7 +458,7 @@ and function_def_opt (env : Env.in_context) def_opt =
       env, Some def_body
 
 
-let rec ext_function (env : Env.in_context) ((def : Syntax.function_def), (link_name : string option)) :
+let ext_function (env : Env.in_context) ((def : Syntax.function_def), (link_name : string option)) :
     Env.in_context * (function_def * string) =
   let ret = getOptType def.loc def.t in
   let args = convertArguments def.args in
@@ -467,7 +467,7 @@ let rec ext_function (env : Env.in_context) ((def : Syntax.function_def), (link_
   let link_name = CCOpt.get_or ~default:def.name link_name in
   let next = addGeneratedFunctions def.tags def.name def.next in
   let env, next = function_def_opt env next in
-  env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next = None }, link_name)
+  env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next }, link_name)
 
 
 let getContextArgument (context : Env.context) loc : arg option =
@@ -498,15 +498,15 @@ let insertContextArgument (env : Env.in_context) (def : function_def) : function
 
 let rec top_stmt (env : Env.in_module) (s : Syntax.top_stmt) : Env.in_module * top_stmt =
   match s with
-  | { top = STopError } -> failwith "Parser error"
-  | { top = STopFunction (def, body) } ->
+  | { top = STopError; _ } -> failwith "Parser error"
+  | { top = STopFunction (def, body); _ } ->
       let env = Env.createContextForFunction env def.name def.loc in
       let env, (def, body) = function_def env (def, body) in
       let def = insertContextArgument env def in
       let env = Env.exitContext env in
       env, { top = TopFunction (def, body); loc = def.loc }
-  | { top = STopExternal (def, link_name) } ->
-      let env = Env.createContextForExternal env def.name def.loc in
+  | { top = STopExternal (def, link_name); _ } ->
+      let env = Env.createContextForExternal env in
       let env, (def, link_name) = ext_function env (def, link_name) in
       let env = Env.exitContext env in
       env, { top = TopExternal (def, link_name); loc = def.loc }
@@ -557,7 +557,7 @@ let createTypes (env : Env.in_top) =
     types
 
 
-let rec infer (parsed : Parse.parsed_file list) : Env.in_top * Typed.program =
+let infer (parsed : Parse.parsed_file list) : Env.in_top * Typed.program =
   let env, stmts =
     List.fold_left
       (fun (env, acc) (h : Parse.parsed_file) ->

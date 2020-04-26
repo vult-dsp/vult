@@ -145,8 +145,8 @@ type stmts = top_stmt list
 
 let compare_path (p1 : path) (p2 : path) =
   match p1, p2 with
-  | { id = id1; n = Some n1 }, { id = id2; n = Some n2 } ->
+  | { id = id1; n = Some n1; _ }, { id = id2; n = Some n2; _ } ->
       let ret = String.compare id1 id2 in
       if ret = 0 then String.compare n1 n2 else ret
-  | { id = id1; n = None }, { id = id2; n = None } -> String.compare id1 id2
+  | { id = id1; n = None; _ }, { id = id2; n = None; _ } -> String.compare id1 id2
   | _ -> compare p1 p2

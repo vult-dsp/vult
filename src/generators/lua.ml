@@ -1,7 +1,7 @@
 (*
    The MIT License (MIT)
 
-   Copyright (c) 2020 Leonardo Laguna Ruiznnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+   Copyright (c) 2020 Leonardo Laguna Ruiz
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -166,7 +166,7 @@ let rec print_stmt s =
 
 let print_arg (n, _, _) = {pla|<#n#s>|pla}
 
-let rec print_function_def (def : function_def) =
+let print_function_def (def : function_def) =
   let name = def.name in
   let args = Pla.map_sep Pla.commaspace print_arg def.args in
   {pla|function <#name#s>(<#args#>)|pla}
@@ -188,7 +188,7 @@ let print_top_stmt t =
       let def = print_function_def def in
       let body = print_body body in
       {pla|<#def#> <#body#><#><#>|pla}
-  | TopExternal (def, link) -> Pla.unit
+  | TopExternal _ -> Pla.unit
   | TopType _ -> Pla.unit
 
 

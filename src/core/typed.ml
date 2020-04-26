@@ -28,8 +28,8 @@ type path = Syntax.path
 
 let print_path (p : path) =
   match p with
-  | { id; n = None } -> Pla.string id
-  | { id; n = Some m } -> {pla|<#m#s>.<#id#s>|pla}
+  | { id; n = None; _ } -> Pla.string id
+  | { id; n = Some m; _ } -> {pla|<#m#s>.<#id#s>|pla}
 
 
 type type_d_ =
@@ -364,7 +364,7 @@ module C = struct
 
   let fix16 ~loc = makeId loc "fix16"
 
-  let num loc = { tx = TEOption [ real loc; int loc; fix16 loc ]; loc }
+  let num loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc ]; loc }
 
   let size ?(loc = Loc.default) n = { tx = TESize n; loc }
 
@@ -374,35 +374,35 @@ module C = struct
 
   let freal_type () =
     let loc = Loc.default in
-    { tx = TEOption [ real loc; fix16 loc ]; loc }
+    { tx = TEOption [ real ~loc; fix16 ~loc ]; loc }
 
 
   let array_set () : fun_type =
     let loc = Loc.default in
     let a = unbound loc in
     let a_array = array a in
-    [ a_array; int loc; a ], unit loc
+    [ a_array; int ~loc; a ], unit ~loc
 
 
   let array_get () : fun_type =
     let loc = Loc.default in
     let a = unbound loc in
     let a_array = array a in
-    [ a_array; int loc ], a
+    [ a_array; int ~loc ], a
 
 
   let array_size () : fun_type =
     let loc = Loc.default in
     let a = unbound loc in
     let a_array = array a in
-    [ a_array ], int loc
+    [ a_array ], int ~loc
 
 
   let array_make () : fun_type =
     let loc = Loc.default in
     let a = unbound loc in
     let a_array = array a in
-    [ int loc; a ], a_array
+    [ int ~loc; a ], a_array
 
 
   let wrap_array () : fun_type =
@@ -419,7 +419,7 @@ module C = struct
 
   let real_real_real () : fun_type =
     let loc = Loc.default in
-    let t = real loc in
+    let t = real ~loc in
     [ t; t ], t
 
 
@@ -431,17 +431,17 @@ module C = struct
 
   let num_int () : fun_type =
     let loc = Loc.default in
-    [ num loc ], int loc
+    [ num loc ], int ~loc
 
 
   let num_real () : fun_type =
     let loc = Loc.default in
-    [ num loc ], real loc
+    [ num loc ], real ~loc
 
 
   let num_fix16 () : fun_type =
     let loc = Loc.default in
-    [ num loc ], fix16 loc
+    [ num loc ], fix16 ~loc
 
 
   let num_num () : fun_type =
@@ -458,40 +458,40 @@ module C = struct
 
   let int_int_int () : fun_type =
     let loc = Loc.default in
-    let t = int loc in
+    let t = int ~loc in
     [ t; t ], t
 
 
   let num_num_bool () : fun_type =
     let loc = Loc.default in
     let t = num loc in
-    [ t; t ], bool loc
+    [ t; t ], bool ~loc
 
 
   let a_a_bool () : fun_type =
     let loc = Loc.default in
     let t = unbound loc in
-    [ t; t ], bool loc
+    [ t; t ], bool ~loc
 
 
   let bool_bool () : fun_type =
     let loc = Loc.default in
-    let t = bool loc in
+    let t = bool ~loc in
     [ t ], t
 
 
   let bool_bool_bool () : fun_type =
     let loc = Loc.default in
-    let t = bool loc in
+    let t = bool ~loc in
     [ t; t ], t
 
 
   let unit_int () : fun_type =
     let loc = Loc.default in
-    [], int loc
+    [], int ~loc
 
 
   let unit_real () : fun_type =
     let loc = Loc.default in
-    [], real loc
+    [], real ~loc
 end

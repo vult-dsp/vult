@@ -151,7 +151,7 @@ let rec print_type_ (t : type_) : Pla.t =
   | TArray (dim, t) ->
       let t = print_type_ t in
       {pla|<#t#>[<#dim#i>]|pla}
-  | TStruct { path } -> {pla|struct <#path#s>|pla}
+  | TStruct { path; _ } -> {pla|struct <#path#s>|pla}
 
 
 let rec print_exp e =
@@ -256,7 +256,7 @@ let print_arg (n, t, _) =
   {pla|<#n#s> : <#t#>|pla}
 
 
-let rec print_function_def kind (def : function_def) =
+let print_function_def kind (def : function_def) =
   let name = def.name in
   let args = Pla.map_sep Pla.commaspace print_arg def.args in
   let tags = Tags.print_tags def.tags in
@@ -304,8 +304,8 @@ module TypedToProg = struct
 
   let path (p : Syntax.path) : string =
     match p with
-    | { id; n = None } -> id
-    | { id; n = Some n } -> n ^ "_" ^ id
+    | { id; n = None; _ } -> id
+    | { id; n = Some n; _ } -> n ^ "_" ^ id
 
 
   let list mapper (env : Env.in_top) (state : state) (l : 'a list) =
@@ -324,7 +324,7 @@ module TypedToProg = struct
     match l with
     | None -> state, None
     | Some l ->
-        let state, l = mapper env state in
+        let state, l = mapper env state l in
         state, Some l
 
 
@@ -341,11 +341,11 @@ module TypedToProg = struct
     | T.TENoReturn -> state, { t = TVoid; loc }
     | T.TEUnbound _ -> failwith "untyped"
     | T.TEOption _ -> failwith "undecided type"
-    | T.TEId { id = "int"; n = None } -> state, { t = TInt; loc }
-    | T.TEId { id = "real"; n = None } -> state, { t = TReal; loc }
-    | T.TEId { id = "fix16"; n = None } -> state, { t = TFixed; loc }
-    | T.TEId { id = "string"; n = None } -> state, { t = TString; loc }
-    | T.TEId { id = "bool"; n = None } -> state, { t = TBool; loc }
+    | T.TEId { id = "int"; n = None; _ } -> state, { t = TInt; loc }
+    | T.TEId { id = "real"; n = None; _ } -> state, { t = TReal; loc }
+    | T.TEId { id = "fix16"; n = None; _ } -> state, { t = TFixed; loc }
+    | T.TEId { id = "string"; n = None; _ } -> state, { t = TString; loc }
+    | T.TEId { id = "bool"; n = None; _ } -> state, { t = TBool; loc }
     | T.TEId p ->
         let ps = path p in
         begin
@@ -354,7 +354,7 @@ module TypedToProg = struct
           | None ->
               ( match Env.getType env p with
               | None -> failwith "unknown type"
-              | Some { members } ->
+              | Some { members; _ } ->
                   let members =
                     List.map (fun (name, (var : Env.var)) -> name, var.t, var.loc) (Env.Map.to_list members)
                   in
@@ -401,7 +401,7 @@ module TypedToProg = struct
     | EArray l ->
         let state, l = list exp env state l in
         state, { e = EArray l; t; loc }
-    | ECall { path = p; args } ->
+    | ECall { path = p; args; _ } ->
         let p = path p in
         let state, args = list exp env state args in
         state, { e = ECall { path = p; args }; t; loc }
@@ -501,7 +501,7 @@ module TypedToProg = struct
         let state, stmts = list stmt env state stmts in
         ( match List.flatten stmts with
         | [] -> state, [ { s = StmtBlock []; loc } ]
-        | [ { s = StmtBlock subs } ] -> state, [ { s = StmtBlock subs; loc } ]
+        | [ { s = StmtBlock subs; _ } ] -> state, [ { s = StmtBlock subs; loc } ]
         | [ s ] -> state, [ s ]
         | subs -> state, [ { s = StmtBlock subs; loc } ] )
 
@@ -535,7 +535,7 @@ module TypedToProg = struct
     | Some (def, body) -> function_def env state def body
 
 
-  let rec ext_function_def (env : Env.in_top) (state : state) (def : Typed.function_def) linkname =
+  let ext_function_def (env : Env.in_top) (state : state) (def : Typed.function_def) =
     let name = path def.name in
     let state, args = list arg env state def.args in
     let state, t = function_type env state def.t in
@@ -550,7 +550,7 @@ module TypedToProg = struct
         let functions = List.map (fun (def, body, loc) -> { top = TopFunction (def, body); loc }) functions in
         state, functions
     | TopExternal (def, linkname) ->
-        let state, (def, loc) = ext_function_def env state def linkname in
+        let state, (def, loc) = ext_function_def env state def in
         state, [ { top = TopExternal (def, linkname); loc } ]
     | TopType { path = p; members } ->
         let p = path p in

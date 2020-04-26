@@ -3,5 +3,4 @@
  (modules Components Error FileIO Float Loc)
  (libraries containers)
  (preprocess
-  (pps ppx_deriving.std pla.ppx js_of_ocaml-ppx))
- (flags -w -30))
+  (pps pla.ppx)))

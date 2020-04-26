@@ -191,7 +191,7 @@ let rec lookVarInScopes (scopes : var Map.t list) name : var option =
 
 let lookVarInContext (context : context) name : var option =
   match context with
-  | Some (_, { members }) -> Map.find name members
+  | Some (_, { members; _ }) -> Map.find name members
   | None -> None
 
 
@@ -211,13 +211,13 @@ let lookFunctionCall (env : in_func) (path : path) : f =
     | None -> failwith "function not found"
   in
   match path with
-  | { id; n = Some n } ->
+  | { id; n = Some n; _ } ->
       begin
         match Map.find n env.top.modules with
         | None -> failwith ("module not found " ^ n)
         | Some m -> reportNotFound (Map.find id m.functions)
       end
-  | { id } ->
+  | { id; _ } ->
       ( match Map.find id env.m.functions with
       | Some found -> found
       | None ->
@@ -232,31 +232,31 @@ let lookOperator (env : in_func) (op : string) : f =
   | None -> failwith ("operator not found " ^ op)
 
 
-let rec getType (env : in_top) (path : path) : t option =
+let getType (env : in_top) (path : path) : t option =
   match path with
-  | { id; n = Some n } ->
+  | { id; n = Some n; _ } ->
       begin
         match Map.find n env.modules with
         | None -> failwith ("module not found " ^ n)
         | Some m -> Map.find id m.types
       end
-  | { id } -> None
+  | _ -> None
 
 
-let rec lookType (env : in_func) (path : path) : t =
+let lookType (env : in_func) (path : path) : t =
   let reportNotFound result =
     match result with
     | Some found -> found
     | None -> failwith "type not found"
   in
   match path with
-  | { id; n = Some n } ->
+  | { id; n = Some n; _ } ->
       begin
         match Map.find n env.top.modules with
         | None -> failwith ("module not found " ^ n)
         | Some m -> reportNotFound (Map.find id m.types)
       end
-  | { id } ->
+  | { id; _ } ->
       ( match Map.find id env.m.types with
       | Some _ as found -> reportNotFound found
       | None -> reportNotFound (Map.find id env.top.builtin_types) )
@@ -328,7 +328,7 @@ let createContextForFunction (env : in_module) name loc : in_context =
   { top = env.top; m = env.m; context = Some (path, t) }
 
 
-let createContextForExternal (env : in_module) name loc : in_context = { top = env.top; m = env.m; context = None }
+let createContextForExternal (env : in_module) : in_context = { top = env.top; m = env.m; context = None }
 
 let exitContext (env : in_context) : in_module = { top = env.top; m = env.m; tick = 0 }
 

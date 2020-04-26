@@ -2,8 +2,9 @@
 
 (library
  (name parser)
- (modules Parse Ptypes Syntax TokenStream Lexer Tags)
+ (modules Parse Types Syntax Stream Lexer Tags)
  (libraries util pla)
+ (flags
+  (:standard -w -30))
  (preprocess
-  (pps ppx_deriving.std pla.ppx))
- (flags -w -30))
+  (pps pla.ppx)))

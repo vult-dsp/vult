@@ -25,8 +25,8 @@
 (** Vult Parser *)
 
 open Lexer
-open Ptypes
-open TokenStream
+open Types
+open Stream
 open Syntax
 open Util
 
@@ -81,10 +81,10 @@ let rec moveToNextStatement (buffer : Stream.stream) : unit =
       moveToNextStatement buffer
 
 
-let rec expToPath error (exp : exp) : path =
+let expToPath error (exp : exp) : path =
   match exp with
   | { e = SEId id; loc } -> { id; n = None; loc }
-  | { e = SEMember ({ e = SEId e }, id); loc } -> { id; n = Some e; loc }
+  | { e = SEMember ({ e = SEId e; _ }, id); loc } -> { id; n = Some e; loc }
   | _ -> error ()
 
 
@@ -257,7 +257,7 @@ let optional_tag (buffer : Stream.stream) : Tags.tag list =
 let rec type_ (rbp : int) (buffer : Stream.stream) : type_ = prattParser rbp buffer getExpLbp type_nud type_led
 
 (** Nud function for the Pratt parser *)
-and type_nud (buffer : Stream.stream) (token : 'kind token) : type_ =
+and type_nud (_ : Stream.stream) (token : 'kind token) : type_ =
   match token.kind, token.value with
   | ID, _ ->
       let id = token.value in
@@ -283,7 +283,7 @@ and type_led (buffer : Stream.stream) (token : 'kind token) (left : type_) : typ
 and type_member (buffer : Stream.stream) (token : 'kind token) (left : type_) : type_ =
   let right = type_ (getExpLbp token) buffer in
   match right.t, left.t with
-  | STId rpath, STId { id; n = None } -> { right with t = STId { rpath with n = Some id } }
+  | STId rpath, STId { id; n = None; _ } -> { right with t = STId { rpath with n = Some id } }
   | _ ->
       let message = Error.PointedError (token.loc, "Invalid expression") in
       raise (ParserError message)
@@ -292,7 +292,7 @@ and type_member (buffer : Stream.stream) (token : 'kind token) (left : type_) : 
 and type_call (buffer : Stream.stream) (token : 'kind token) (left : type_) : type_ =
   let path =
     match left.t with
-    | STId { id } -> id
+    | STId { id; _ } -> id
     | _ -> failwith "invalid composed type"
   in
   let args =
@@ -365,8 +365,8 @@ and darray (buffer : Stream.stream) (token : 'kind token) (left : dexp) : dexp =
   let size, _ = int_value buffer in
   let () = Stream.consume buffer RBRACK in
   match left with
-  | { d = SDId (id, None) } -> { d = SDId (id, Some size); loc = token.loc }
-  | { d = SDId (_, Some _) } -> failwith "double dimmensions"
+  | { d = SDId (id, None); _ } -> { d = SDId (id, Some size); loc = token.loc }
+  | { d = SDId (_, Some _); _ } -> failwith "double dimmensions"
   | _ -> failwith "cannot apply dimmensions to this declaration"
 
 
@@ -907,8 +907,6 @@ let parseDExp (s : string) : dexp = dexp_expression 0 (Stream.fromString s)
 let parseLhsExp (s : string) : lexp = lexp_expression 0 (Stream.fromString s)
 
 let parseExp (s : string) : exp = expression 0 (Stream.fromString s)
-
-let parseType (s : string) : type_ = type_ 0 (Stream.fromString s)
 
 let parseId (s : string) : string =
   let buffer = Stream.fromString s in

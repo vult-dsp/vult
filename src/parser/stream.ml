@@ -22,7 +22,7 @@
    THE SOFTWARE.
 *)
 
-open Ptypes
+open Types
 open Util
 
 exception ParserError of Error.t

@@ -3,5 +3,4 @@
  (modules Lua)
  (libraries core pla)
  (preprocess
-  (pps ppx_deriving.std pla.ppx))
- (flags -w -30))
+  (pps pla.ppx)))
