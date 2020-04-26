@@ -14,7 +14,7 @@ compiler:
 	dune build src/vult.bc src/vult.exe $(FORMAT)
 
 run: compiler
-	./_build/default/vultc.bc
+	./_build/default/src/vult.exe
 
 #js: jscompiler
 #	$(OCB) src/js/vultlib.byte
@@ -69,6 +69,6 @@ clean:
 	rm -rf bisect_coverage
 
 install:
-	cp _build/default/vultc.exe $(PREFIX)/vultc
+	cp _build/default/src/vult.exe $(PREFIX)/vult
 
 .PHONY: 	all clean compiler js test
