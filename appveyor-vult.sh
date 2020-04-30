@@ -18,6 +18,6 @@ cd $APPVEYOR_BUILD_FOLDER
 ls
 pwd
 make all
-cp _build/default/vultc.exe vultc.exe
+cp _build/default/src/vult.exe vultc.exe
 # install vultc from npm
 #npm install -g vult
