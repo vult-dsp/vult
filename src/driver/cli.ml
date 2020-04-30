@@ -57,10 +57,25 @@ let showResult (args : args) (output : output) =
       prerr_endline error_strings
 
 
+let generate stmts = [ ParsedCode (Lua.generate stmts) ]
+
 let generateCode (args : args) (parsed : Parse.parsed_file list) : output list =
   let env, typed = Inference.infer parsed in
   let stmts = Prog.convert env typed in
-  [ ParsedCode (Lua.generate stmts) ]
+  let code =
+    if args.code <> NoCode then
+      generate stmts
+    else
+      []
+  in
+  let run =
+    if args.eval then
+      let _ = Interpreter.load stmts in
+      []
+    else
+      []
+  in
+  code @ run
 
 
 (** Prints the parsed files if -dparse was passed as argument *)

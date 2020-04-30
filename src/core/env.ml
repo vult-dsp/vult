@@ -67,7 +67,7 @@ end
 type var_kind =
   | Mem
   | Inst
-  | Val  of bool
+  | Val
 
 let builtin_functions =
   Typed.
@@ -127,7 +127,6 @@ type var =
   ; t : Typed.type_
   ; kind : var_kind
   ; loc : Loc.t
-  ; mutable initialized : bool
   }
 
 type t =
@@ -143,7 +142,7 @@ type f =
   { path : path
   ; t : Typed.type_ list * Typed.type_
   ; context : context
-  ; mutable locals : var Map.t
+  ; mutable locals : var Map.t list
   ; mutable tick : int
   }
 
@@ -178,7 +177,16 @@ type in_func =
   }
 
 let makeFunctionForBuiltin name t : f =
-  { path = { id = name; n = None; loc = Loc.default }; t; context = None; locals = Map.empty (); tick = 0 }
+  { path = { id = name; n = None; loc = Loc.default }; t; context = None; locals = []; tick = 0 }
+
+
+let rec lookVarInScopes (scopes : var Map.t list) name : var option =
+  match scopes with
+  | [] -> None
+  | h :: t ->
+      ( match Map.find name h with
+      | Some found -> Some found
+      | None -> lookVarInScopes t name )
 
 
 let lookVarInContext (context : context) name : var option =
@@ -191,7 +199,7 @@ let lookVar (env : in_func) (name : string) : var =
   match lookVarInContext env.f.context name with
   | Some found -> found
   | None ->
-      ( match Map.find name env.f.locals with
+      ( match lookVarInScopes env.f.locals name with
       | Some found -> found
       | None -> failwith "var not found" )
 
@@ -263,12 +271,28 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
   in
   match kind, env.f.context with
   | (Mem | Inst), Some (_, context) ->
-      Map.update report_mem name { name; t; kind; loc; initialized = true } context.members ;
+      Map.update report_mem name { name; t; kind; loc } context.members ;
       env
   | (Mem | Inst), None -> failwith "Internal error: cannot add mem to functions with no context"
-  | Val initialized, _ ->
+  | Val, _ ->
       let report _found = failwith "duplicated declaration" in
-      Map.update report name { name; t; kind; loc; initialized } env.f.locals ;
+      ( match env.f.locals with
+      | [] -> failwith "no local scope"
+      | h :: _ ->
+          Map.update report name { name; t; kind; loc } h ;
+          env )
+
+
+let pushScope (env : in_func) : in_func =
+  env.f.locals <- Map.empty () :: env.f.locals ;
+  env
+
+
+let popScope (env : in_func) : in_func =
+  match env.f.locals with
+  | [] -> failwith "invalid scope"
+  | _ :: t ->
+      env.f.locals <- t ;
       env
 
 
@@ -278,7 +302,7 @@ let registerArguments (args : (string * Typed.type_ * Loc.t) list) =
   let rev_args =
     List.fold_left
       (fun acc (name, t, loc) ->
-        let () = Map.update report name { name; t; kind = Val true; loc; initialized = true } locals in
+        let () = Map.update report name { name; t; kind = Val; loc } locals in
         t :: acc)
       []
       args
@@ -336,7 +360,7 @@ let enterFunction
   let path = getPath env.m name loc in
   let locals, args_t = registerArguments args in
   let t = args_t, ret in
-  let f : f = { path; t; context = env.context; locals; tick = 0 } in
+  let f : f = { path; t; context = env.context; locals = [ locals ]; tick = 0 } in
   let _ = Map.update report name f env.m.functions in
   { top = env.top; m = env.m; f }, path, t
 
