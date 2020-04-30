@@ -177,10 +177,11 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
       let var = Env.lookVar env name in
       let t = var.t in
       let e =
-        match var.kind with
-        | Val -> { e = EId name; t; loc }
-        | Mem
-         |Inst ->
+        match var.kind, var.initialized with
+        | Val _, false -> failwith "variable not initialized"
+        | Val _, _ -> { e = EId name; t; loc }
+        | Mem, _
+         |Inst, _ ->
             let ctx = Env.getContext env in
             let ctx_t = C.path loc ctx in
             { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); t; loc }
@@ -274,7 +275,9 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
       let t = var.t in
       let e =
         match var.kind with
-        | Val -> { l = LId name; t; loc }
+        | Val _ ->
+            var.initialized <- true ;
+            { l = LId name; t; loc }
         | Mem
          |Inst ->
             let ctx = Env.getContext env in
@@ -351,15 +354,13 @@ let rec stmt (env : Env.in_func) (return : type_) (s : Syntax.stmt) : Env.in_fun
   match s with
   | { s = SStmtError; _ } -> failwith "There was an error parsing "
   | { s = SStmtBlock stmts; loc } ->
-      let env = Env.pushScope env in
       let env, stmts = stmt_list env return stmts in
-      let env = Env.popScope env in
       env, { s = StmtBlock stmts; loc }
   | { s = SStmtVal (lhs, None); loc } ->
-      let env, lhs = dexp env lhs Val in
+      let env, lhs = dexp env lhs (Val false) in
       env, { s = StmtVal (lhs, None); loc }
   | { s = SStmtVal (lhs, Some rhs); loc } ->
-      let env, lhs = dexp env lhs Val in
+      let env, lhs = dexp env lhs (Val true) in
       let env, rhs = exp env rhs in
       unifyRaise rhs.loc lhs.t rhs.t ;
       env, { s = StmtVal (lhs, Some rhs); loc }

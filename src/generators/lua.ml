@@ -63,6 +63,34 @@ let isValue (e : exp) =
   | _ -> false
 
 
+let operator op =
+  match op with
+  | OpAdd -> Pla.string "+"
+  | OpSub -> Pla.string "-"
+  | OpMul -> Pla.string "*"
+  | OpDiv -> Pla.string "/"
+  | OpMod -> Pla.string "%"
+  | OpLand -> Pla.string "&&"
+  | OpLor -> Pla.string "||"
+  | OpBor -> Pla.string "|"
+  | OpBand -> Pla.string "&"
+  | OpBxor -> Pla.string "^"
+  | OpLsh -> Pla.string "<<"
+  | OpRsh -> Pla.string ">>"
+  | OpEq -> Pla.string "=="
+  | OpNe -> Pla.string "<>"
+  | OpLt -> Pla.string "<"
+  | OpLe -> Pla.string "<="
+  | OpGt -> Pla.string ">"
+  | OpGe -> Pla.string ">="
+
+
+let uoperator op =
+  match op with
+  | UOpNeg -> Pla.string "-"
+  | UOpNot -> Pla.string "not"
+
+
 let rec print_exp e =
   match e.e with
   | EUnit -> Pla.string ""
@@ -81,11 +109,13 @@ let rec print_exp e =
       {pla|<#path#s>(<#args#>)|pla}
   | EUnOp (op, e) ->
       let e = print_exp e in
-      {pla|(<#op#s><#e#>)|pla}
+      let op = uoperator op in
+      {pla|(<#op#><#e#>)|pla}
   | EOp (op, e1, e2) ->
       let e1 = print_exp e1 in
+      let op = operator op in
       let e2 = print_exp e2 in
-      {pla|(<#e1#> <#op#s> <#e2#>)|pla}
+      {pla|(<#e1#> <#op#> <#e2#>)|pla}
   | EIf { cond; then_; else_ } when isValue then_ && isValue else_ ->
       let cond = print_exp cond in
       let then_ = print_exp then_ in

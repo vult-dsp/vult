@@ -48,6 +48,30 @@ and type_ =
 
 type fun_type = type_ list * type_
 
+type operator =
+  | OpAdd
+  | OpSub
+  | OpMul
+  | OpDiv
+  | OpMod
+  | OpLand
+  | OpLor
+  | OpBor
+  | OpBand
+  | OpBxor
+  | OpLsh
+  | OpRsh
+  | OpEq
+  | OpNe
+  | OpLt
+  | OpLe
+  | OpGt
+  | OpGe
+
+type uoperator =
+  | UOpNeg
+  | UOpNot
+
 type exp_d =
   | EUnit
   | EBool   of bool
@@ -64,8 +88,8 @@ type exp_d =
       { path : string
       ; args : exp list
       }
-  | EUnOp   of string * exp
-  | EOp     of string * exp * exp
+  | EUnOp   of uoperator * exp
+  | EOp     of operator * exp * exp
   | EIf     of
       { cond : exp
       ; then_ : exp
@@ -154,6 +178,34 @@ let rec print_type_ (t : type_) : Pla.t =
   | TStruct { path; _ } -> {pla|struct <#path#s>|pla}
 
 
+let print_operator op =
+  match op with
+  | OpAdd -> Pla.string "+"
+  | OpSub -> Pla.string "-"
+  | OpMul -> Pla.string "*"
+  | OpDiv -> Pla.string "/"
+  | OpMod -> Pla.string "%"
+  | OpLand -> Pla.string "&&"
+  | OpLor -> Pla.string "||"
+  | OpBor -> Pla.string "|"
+  | OpBand -> Pla.string "&"
+  | OpBxor -> Pla.string "^"
+  | OpLsh -> Pla.string "<<"
+  | OpRsh -> Pla.string ">>"
+  | OpEq -> Pla.string "=="
+  | OpNe -> Pla.string "<>"
+  | OpLt -> Pla.string "<"
+  | OpLe -> Pla.string "<="
+  | OpGt -> Pla.string ">"
+  | OpGe -> Pla.string ">="
+
+
+let print_uoperator op =
+  match op with
+  | UOpNeg -> Pla.string "-"
+  | UOpNot -> Pla.string "not"
+
+
 let rec print_exp e =
   match e.e with
   | EUnit -> Pla.string "()"
@@ -172,11 +224,13 @@ let rec print_exp e =
       {pla|<#path#s>(<#args#>)|pla}
   | EUnOp (op, e) ->
       let e = print_exp e in
-      {pla|(<#op#s><#e#>)|pla}
+      let op = print_uoperator op in
+      {pla|(<#op#><#e#>)|pla}
   | EOp (op, e1, e2) ->
       let e1 = print_exp e1 in
       let e2 = print_exp e2 in
-      {pla|(<#e1#> <#op#s> <#e2#>)|pla}
+      let op = print_operator op in
+      {pla|(<#e1#> <#op#> <#e2#>)|pla}
   | EIf { cond; then_; else_ } ->
       let cond = print_exp cond in
       let then_ = print_exp then_ in
@@ -384,6 +438,36 @@ module TypedToProg = struct
     list mapper env state l
 
 
+  let operator op =
+    match op with
+    | "+" -> OpAdd
+    | "-" -> OpSub
+    | "*" -> OpMul
+    | "/" -> OpDiv
+    | "%" -> OpMod
+    | "&&" -> OpLand
+    | "||" -> OpLor
+    | "|" -> OpBor
+    | "&" -> OpBand
+    | "^" -> OpBxor
+    | "<<" -> OpLsh
+    | ">>" -> OpRsh
+    | "==" -> OpEq
+    | "<>" -> OpNe
+    | "<" -> OpLt
+    | "<=" -> OpLe
+    | ">" -> OpGt
+    | ">=" -> OpGe
+    | _ -> failwith "unknown operator"
+
+
+  let uoperator op =
+    match op with
+    | "-" -> UOpNeg
+    | "not" -> UOpNot
+    | _ -> failwith "unknown uoperator"
+
+
   let rec exp (env : Env.in_top) (state : state) (e : Typed.exp) =
     let loc = e.loc in
     let state, t = type_ env state e.t in
@@ -406,11 +490,13 @@ module TypedToProg = struct
         let state, args = list exp env state args in
         state, { e = ECall { path = p; args }; t; loc }
     | EUnOp (op, e) ->
+        let op = uoperator op in
         let state, e = exp env state e in
         state, { e = EUnOp (op, e); t; loc }
     | EOp (op, e1, e2) ->
         let state, e1 = exp env state e1 in
         let state, e2 = exp env state e2 in
+        let op = operator op in
         state, { e = EOp (op, e1, e2); t; loc }
     | EIf { cond; then_; else_ } ->
         let state, cond = exp env state cond in
@@ -526,7 +612,8 @@ module TypedToProg = struct
     let state, body = stmt env state body in
     let body = block body in
     let state, next = next_def env state def.next in
-    state, ({ name; args; t; loc = def.loc; tags = def.tags }, body, def.loc) :: next
+    let stmt = { top = TopFunction ({ name; args; t; loc = def.loc; tags = def.tags }, body); loc = def.loc } in
+    state, stmt :: next
 
 
   and next_def env state def_opt =
@@ -535,23 +622,23 @@ module TypedToProg = struct
     | Some (def, body) -> function_def env state def body
 
 
-  let ext_function_def (env : Env.in_top) (state : state) (def : Typed.function_def) =
+  let ext_function_def (env : Env.in_top) (state : state) (def : Typed.function_def) linkname =
     let name = path def.name in
     let state, args = list arg env state def.args in
     let state, t = function_type env state def.t in
-    let () = if def.next <> None then failwith "external with next" in
-    state, ({ name; args; t; loc = def.loc; tags = def.tags }, def.loc)
+    let state, next = next_def env state def.next in
+    let stmt = { top = TopExternal ({ name; args; t; loc = def.loc; tags = def.tags }, linkname); loc = def.loc } in
+    state, stmt :: next
 
 
   let top_stmt (env : Env.in_top) (state : state) (t : Typed.top_stmt) =
     match t.top with
     | TopFunction (def, body) ->
         let state, functions = function_def env state def body in
-        let functions = List.map (fun (def, body, loc) -> { top = TopFunction (def, body); loc }) functions in
         state, functions
     | TopExternal (def, linkname) ->
-        let state, (def, loc) = ext_function_def env state def in
-        state, [ { top = TopExternal (def, linkname); loc } ]
+        let state, functions = ext_function_def env state def linkname in
+        state, functions
     | TopType { path = p; members } ->
         let p = path p in
         let state, members = type_list env state members in
