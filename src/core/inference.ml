@@ -557,6 +557,13 @@ let createTypes (env : Env.in_top) =
     types
 
 
+let infer_single (env : Env.in_top) (h : Parse.parsed_file) : Env.in_top * Typed.program =
+  let env = Env.enterModule env h.name in
+  let env, stmt = top_stmt_list env h.stmts in
+  let env = Env.exitModule env in
+  env, stmt
+
+
 let infer (parsed : Parse.parsed_file list) : Env.in_top * Typed.program =
   let env, stmts =
     List.fold_left

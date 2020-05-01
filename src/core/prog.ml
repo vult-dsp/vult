@@ -35,6 +35,7 @@ type type_d_ =
   | TFixed
   | TArray  of int * type_
   | TStruct of struct_descr
+  | TTuple  of type_ list
 
 and struct_descr =
   { path : string
@@ -176,6 +177,9 @@ let rec print_type_ (t : type_) : Pla.t =
       let t = print_type_ t in
       {pla|<#t#>[<#dim#i>]|pla}
   | TStruct { path; _ } -> {pla|struct <#path#s>|pla}
+  | TTuple elems ->
+      let elems = Pla.map_sep Pla.commaspace print_type_ elems in
+      {pla|(<#elems#>)|pla}
 
 
 let print_operator op =
@@ -423,9 +427,8 @@ module TypedToProg = struct
         let dim = getDim dim in
         state, { t = TArray (dim, t); loc }
     | T.TEComposed ("tuple", elems) ->
-        let members = List.mapi (fun i t -> "field_" ^ string_of_int i, t, loc) elems in
-        let state, members = type_list env state members in
-        state, { t = TStruct { path = ""; members }; loc }
+        let state, elems = list type_ env state elems in
+        state, { t = TTuple elems; loc }
     | T.TEComposed _ -> failwith "unknown composed"
     | T.TESize _ -> failwith "invalid input"
 

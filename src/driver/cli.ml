@@ -69,11 +69,11 @@ let generateCode (args : args) (parsed : Parse.parsed_file list) : output list =
       []
   in
   let run =
-    if args.eval then
-      let _ = Interpreter.load stmts in
-      []
-    else
-      []
+    match args.eval with
+    | Some e ->
+        let s = Interpreter.run env stmts e in
+        [ ParsedCode s ]
+    | None -> []
   in
   code @ run
 

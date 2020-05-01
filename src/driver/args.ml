@@ -55,7 +55,7 @@ type code =
 type args =
   { mutable files : input list
   ; mutable dparse : bool
-  ; mutable eval : bool
+  ; mutable eval : string option
   ; mutable check : bool
   ; mutable code : code
   ; mutable output : string
@@ -78,7 +78,7 @@ let default_arguments : args =
   { files = []
   ; dparse = false
   ; code = NoCode
-  ; eval = false
+  ; eval = None
   ; check = false
   ; output = ""
   ; real = "float"
@@ -148,7 +148,7 @@ let flags result =
     ; action = Arg.String (fun temp -> result.template <- temp)
     ; comment = "name Defines the template used to generate code (ccode only): pd, teensy"
     }
-  ; { flag = "-eval"; action = Arg.Unit (fun () -> result.eval <- true); comment = " Runs the code (default: off)" }
+  ; { flag = "-eval"; action = Arg.String (fun s -> result.eval <- Some s); comment = " Runs the code (default: off)" }
   ; { flag = "-tables"
     ; action = Arg.Bool (fun b -> result.tables <- b)
     ; comment = " Create lookup tables (default: on)"
