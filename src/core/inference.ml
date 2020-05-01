@@ -347,50 +347,69 @@ and dexp (env : Env.in_func) (e : Syntax.dexp) (kind : var_kind) : Env.in_func *
       env, { d = DId (name, dims); t; loc }
 
 
-let rec stmt (env : Env.in_func) (return : type_) (s : Syntax.stmt) : Env.in_func * stmt =
+let rec dexp_to_lexp (d : Syntax.dexp) : Syntax.lexp =
+  let loc = d.loc in
+  match d.d with
+  | SDTuple l ->
+      let l = List.map dexp_to_lexp l in
+      { l = SLTuple l; loc }
+  | SDWild -> { l = SLWild; loc }
+  | SDId (name, _) -> { l = SLId name; loc }
+  | SDGroup e -> dexp_to_lexp e
+  | SDTyped (e, _) -> dexp_to_lexp e
+
+
+let stmt_block (stmts : stmt list) =
+  match stmts with
+  | [ s ] -> s
+  | _ -> { s = StmtBlock stmts; loc = Loc.default }
+
+
+let rec stmt (env : Env.in_func) (return : type_) (s : Syntax.stmt) : Env.in_func * stmt list =
   match s with
-  | { s = SStmtError; _ } -> failwith "There was an error parsing "
+  | { s = SStmtError; _ } -> env, []
   | { s = SStmtBlock stmts; loc } ->
       let env = Env.pushScope env in
       let env, stmts = stmt_list env return stmts in
       let env = Env.popScope env in
-      env, { s = StmtBlock stmts; loc }
+      env, [ { s = StmtBlock stmts; loc } ]
   | { s = SStmtVal (lhs, None); loc } ->
       let env, lhs = dexp env lhs Val in
-      env, { s = StmtVal (lhs, None); loc }
+      env, [ { s = StmtVal (lhs, None); loc } ]
   | { s = SStmtVal (lhs, Some rhs); loc } ->
       let env, lhs = dexp env lhs Val in
       let env, rhs = exp env rhs in
       unifyRaise rhs.loc lhs.t rhs.t ;
-      env, { s = StmtVal (lhs, Some rhs); loc }
+      env, [ { s = StmtVal (lhs, Some rhs); loc } ]
   | { s = SStmtMem (lhs, None, tag); loc } ->
       let env, lhs = dexp env lhs Mem in
-      env, { s = StmtMem (lhs, None, tag); loc }
+      env, [ { s = StmtMem (lhs, None, tag); loc } ]
   | { s = SStmtMem (lhs, Some rhs, tag); loc } ->
-      let env, lhs = dexp env lhs Mem in
+      let env, dlhs = dexp env lhs Mem in
+      let env, lhs = lexp env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
       unifyRaise rhs.loc lhs.t rhs.t ;
-      env, { s = StmtMem (lhs, Some rhs, tag); loc }
+      env, [ { s = StmtMem (dlhs, None, tag); loc }; { s = StmtBind (lhs, rhs); loc } ]
   | { s = SStmtBind (lhs, rhs); loc } ->
       let env, lhs = lexp env lhs in
       let env, rhs = exp env rhs in
       unifyRaise rhs.loc lhs.t rhs.t ;
-      env, { s = StmtBind (lhs, rhs); loc }
+      env, [ { s = StmtBind (lhs, rhs); loc } ]
   | { s = SStmtReturn e; loc } ->
       let env, e = exp env e in
       unifyRaise e.loc return e.t ;
-      env, { s = StmtReturn e; loc }
+      env, [ { s = StmtReturn e; loc } ]
   | { s = SStmtIf (cond, then_, else_); loc } ->
       let env, cond = exp env cond in
       unifyRaise cond.loc (C.bool ~loc) cond.t ;
       let env, then_ = stmt env return then_ in
       let env, else_ = stmt_opt env return else_ in
-      env, { s = StmtIf (cond, then_, else_); loc }
+      env, [ { s = StmtIf (cond, stmt_block then_, else_); loc } ]
   | { s = SStmtWhile (cond, s); loc } ->
       let env, cond = exp env cond in
       unifyRaise cond.loc (C.bool ~loc) cond.t ;
       let env, s = stmt env return s in
-      env, { s = StmtWhile (cond, s); loc }
+      env, [ { s = StmtWhile (cond, stmt_block s); loc } ]
 
 
 and stmt_opt env return s =
@@ -398,7 +417,7 @@ and stmt_opt env return s =
   | None -> env, None
   | Some s ->
       let env, s = stmt env return s in
-      env, Some s
+      env, Some (stmt_block s)
 
 
 and stmt_list env return l =
@@ -410,7 +429,7 @@ and stmt_list env return l =
       (env, [])
       l
   in
-  env, List.rev l_rev
+  env, List.flatten (List.rev l_rev)
 
 
 let addGeneratedFunctions tags name next =
@@ -447,7 +466,7 @@ let rec function_def (env : Env.in_context) ((def : Syntax.function_def), (body 
   let env = Env.exitFunction env in
   let next = addGeneratedFunctions def.tags def.name def.next in
   let env, next = function_def_opt env next in
-  env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next }, body)
+  env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next }, stmt_block body)
 
 
 and function_def_opt (env : Env.in_context) def_opt =

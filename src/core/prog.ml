@@ -165,191 +165,193 @@ and top_stmt =
   ; loc : Loc.t
   }
 
-let rec print_type_ (t : type_) : Pla.t =
-  match t.t with
-  | TVoid -> Pla.string "void"
-  | TInt -> Pla.string "int"
-  | TReal -> Pla.string "real"
-  | TString -> Pla.string "string"
-  | TBool -> Pla.string "bool"
-  | TFixed -> Pla.string "fixed"
-  | TArray (dim, t) ->
-      let t = print_type_ t in
-      {pla|<#t#>[<#dim#i>]|pla}
-  | TStruct { path; _ } -> {pla|struct <#path#s>|pla}
-  | TTuple elems ->
-      let elems = Pla.map_sep Pla.commaspace print_type_ elems in
-      {pla|(<#elems#>)|pla}
+module Print = struct
+  let rec print_type_ (t : type_) : Pla.t =
+    match t.t with
+    | TVoid -> Pla.string "void"
+    | TInt -> Pla.string "int"
+    | TReal -> Pla.string "real"
+    | TString -> Pla.string "string"
+    | TBool -> Pla.string "bool"
+    | TFixed -> Pla.string "fixed"
+    | TArray (dim, t) ->
+        let t = print_type_ t in
+        {pla|<#t#>[<#dim#i>]|pla}
+    | TStruct { path; _ } -> {pla|struct <#path#s>|pla}
+    | TTuple elems ->
+        let elems = Pla.map_sep Pla.commaspace print_type_ elems in
+        {pla|(<#elems#>)|pla}
 
 
-let print_operator op =
-  match op with
-  | OpAdd -> Pla.string "+"
-  | OpSub -> Pla.string "-"
-  | OpMul -> Pla.string "*"
-  | OpDiv -> Pla.string "/"
-  | OpMod -> Pla.string "%"
-  | OpLand -> Pla.string "&&"
-  | OpLor -> Pla.string "||"
-  | OpBor -> Pla.string "|"
-  | OpBand -> Pla.string "&"
-  | OpBxor -> Pla.string "^"
-  | OpLsh -> Pla.string "<<"
-  | OpRsh -> Pla.string ">>"
-  | OpEq -> Pla.string "=="
-  | OpNe -> Pla.string "<>"
-  | OpLt -> Pla.string "<"
-  | OpLe -> Pla.string "<="
-  | OpGt -> Pla.string ">"
-  | OpGe -> Pla.string ">="
+  let print_operator op =
+    match op with
+    | OpAdd -> Pla.string "+"
+    | OpSub -> Pla.string "-"
+    | OpMul -> Pla.string "*"
+    | OpDiv -> Pla.string "/"
+    | OpMod -> Pla.string "%"
+    | OpLand -> Pla.string "&&"
+    | OpLor -> Pla.string "||"
+    | OpBor -> Pla.string "|"
+    | OpBand -> Pla.string "&"
+    | OpBxor -> Pla.string "^"
+    | OpLsh -> Pla.string "<<"
+    | OpRsh -> Pla.string ">>"
+    | OpEq -> Pla.string "=="
+    | OpNe -> Pla.string "<>"
+    | OpLt -> Pla.string "<"
+    | OpLe -> Pla.string "<="
+    | OpGt -> Pla.string ">"
+    | OpGe -> Pla.string ">="
 
 
-let print_uoperator op =
-  match op with
-  | UOpNeg -> Pla.string "-"
-  | UOpNot -> Pla.string "not"
+  let print_uoperator op =
+    match op with
+    | UOpNeg -> Pla.string "-"
+    | UOpNot -> Pla.string "not"
 
 
-let rec print_exp e =
-  match e.e with
-  | EUnit -> Pla.string "()"
-  | EBool v -> Pla.string (if v then "true" else "false")
-  | EInt n -> Pla.int n
-  | EReal n -> Pla.float n
-  | EString s -> Pla.string_quoted s
-  | EId id -> Pla.string id
-  | EIndex { e; index } ->
-      let e = print_exp e in
-      let index = print_exp index in
-      {pla|<#e#>[<#index#>]|pla}
-  | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
-  | ECall { path; args } ->
-      let args = Pla.map_sep Pla.commaspace print_exp args in
-      {pla|<#path#s>(<#args#>)|pla}
-  | EUnOp (op, e) ->
-      let e = print_exp e in
-      let op = print_uoperator op in
-      {pla|(<#op#><#e#>)|pla}
-  | EOp (op, e1, e2) ->
-      let e1 = print_exp e1 in
-      let e2 = print_exp e2 in
-      let op = print_operator op in
-      {pla|(<#e1#> <#op#> <#e2#>)|pla}
-  | EIf { cond; then_; else_ } ->
-      let cond = print_exp cond in
-      let then_ = print_exp then_ in
-      let else_ = print_exp else_ in
-      {pla|(if <#cond#> then <#then_#> else <#else_#>)|pla}
-  | ETuple l ->
-      let l = Pla.map_sep Pla.commaspace print_exp l in
-      {pla|(<#l#>)|pla}
-  | EMember (e, m) ->
-      let e = print_exp e in
-      {pla|<#e#>.<#m#s>|pla}
+  let rec print_exp e =
+    match e.e with
+    | EUnit -> Pla.string "()"
+    | EBool v -> Pla.string (if v then "true" else "false")
+    | EInt n -> Pla.int n
+    | EReal n -> Pla.float n
+    | EString s -> Pla.string_quoted s
+    | EId id -> Pla.string id
+    | EIndex { e; index } ->
+        let e = print_exp e in
+        let index = print_exp index in
+        {pla|<#e#>[<#index#>]|pla}
+    | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
+    | ECall { path; args } ->
+        let args = Pla.map_sep Pla.commaspace print_exp args in
+        {pla|<#path#s>(<#args#>)|pla}
+    | EUnOp (op, e) ->
+        let e = print_exp e in
+        let op = print_uoperator op in
+        {pla|(<#op#><#e#>)|pla}
+    | EOp (op, e1, e2) ->
+        let e1 = print_exp e1 in
+        let e2 = print_exp e2 in
+        let op = print_operator op in
+        {pla|(<#e1#> <#op#> <#e2#>)|pla}
+    | EIf { cond; then_; else_ } ->
+        let cond = print_exp cond in
+        let then_ = print_exp then_ in
+        let else_ = print_exp else_ in
+        {pla|(if <#cond#> then <#then_#> else <#else_#>)|pla}
+    | ETuple l ->
+        let l = Pla.map_sep Pla.commaspace print_exp l in
+        {pla|(<#l#>)|pla}
+    | EMember (e, m) ->
+        let e = print_exp e in
+        {pla|<#e#>.<#m#s>|pla}
 
 
-let rec print_lexp e =
-  match e.l with
-  | LWild -> Pla.string "_"
-  | LId s -> Pla.string s
-  | LMember (e, m) ->
-      let e = print_lexp e in
-      {pla|<#e#>.<#m#s>|pla}
-  | LIndex { e; index } ->
-      let e = print_lexp e in
-      let index = print_exp index in
-      {pla|<#e#>[<#index#>]|pla}
-  | LTuple l ->
-      let l = Pla.map_sep Pla.commaspace print_lexp l in
-      {pla|(<#l#>)|pla}
+  let rec print_lexp e =
+    match e.l with
+    | LWild -> Pla.string "_"
+    | LId s -> Pla.string s
+    | LMember (e, m) ->
+        let e = print_lexp e in
+        {pla|<#e#>.<#m#s>|pla}
+    | LIndex { e; index } ->
+        let e = print_lexp e in
+        let index = print_exp index in
+        {pla|<#e#>[<#index#>]|pla}
+    | LTuple l ->
+        let l = Pla.map_sep Pla.commaspace print_lexp l in
+        {pla|(<#l#>)|pla}
 
 
-let rec print_dexp (e : dexp) =
-  let t = print_type_ e.t in
-  match e.d with
-  | DWild -> {pla|_ : <#t#>|pla}
-  | DId (id, None) -> {pla|<#id#s> : <#t#>|pla}
-  | DId (id, Some dim) -> {pla|<#id#s>[<#dim#i>] : <#t#>|pla}
-  | DTuple l ->
-      let l = Pla.map_sep Pla.commaspace print_dexp l in
-      {pla|(<#l#>) : <#t#>|pla}
+  let rec print_dexp (e : dexp) =
+    let t = print_type_ e.t in
+    match e.d with
+    | DWild -> {pla|_ : <#t#>|pla}
+    | DId (id, None) -> {pla|<#id#s> : <#t#>|pla}
+    | DId (id, Some dim) -> {pla|<#id#s>[<#dim#i>] : <#t#>|pla}
+    | DTuple l ->
+        let l = Pla.map_sep Pla.commaspace print_dexp l in
+        {pla|(<#l#>) : <#t#>|pla}
 
 
-let rec print_stmt s =
-  match s.s with
-  | StmtDecl (lhs, None) ->
-      let lhs = print_dexp lhs in
-      {pla|val <#lhs#>;|pla}
-  | StmtDecl (lhs, Some rhs) ->
-      let lhs = print_dexp lhs in
-      let rhs = print_exp rhs in
-      {pla|val <#lhs#> = <#rhs#>;|pla}
-  | StmtBind (lhs, rhs) ->
-      let lhs = print_lexp lhs in
-      let rhs = print_exp rhs in
-      {pla|<#lhs#> = <#rhs#>;|pla}
-  | StmtReturn e ->
-      let e = print_exp e in
-      {pla|return <#e#>;|pla}
-  | StmtIf (cond, then_, None) ->
-      let e = print_exp cond in
-      let then_ = print_stmt then_ in
-      {pla|if (<#e#>) <#then_#>|pla}
-  | StmtIf (cond, then_, Some else_) ->
-      let cond = print_exp cond in
-      let then_ = print_stmt then_ in
-      let else_ = print_stmt else_ in
-      {pla|if (<#cond#>) <#then_#><#>else <#else_#>|pla}
-  | StmtWhile (cond, stmt) ->
-      let cond = print_exp cond in
-      let stmt = print_stmt stmt in
-      {pla|while (<#cond#>)<#stmt#+>|pla}
-  | StmtBlock stmts ->
-      let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
-      {pla|{<#stmt#+>}|pla}
+  let rec print_stmt s =
+    match s.s with
+    | StmtDecl (lhs, None) ->
+        let lhs = print_dexp lhs in
+        {pla|val <#lhs#>;|pla}
+    | StmtDecl (lhs, Some rhs) ->
+        let lhs = print_dexp lhs in
+        let rhs = print_exp rhs in
+        {pla|val <#lhs#> = <#rhs#>;|pla}
+    | StmtBind (lhs, rhs) ->
+        let lhs = print_lexp lhs in
+        let rhs = print_exp rhs in
+        {pla|<#lhs#> = <#rhs#>;|pla}
+    | StmtReturn e ->
+        let e = print_exp e in
+        {pla|return <#e#>;|pla}
+    | StmtIf (cond, then_, None) ->
+        let e = print_exp cond in
+        let then_ = print_stmt then_ in
+        {pla|if (<#e#>) <#then_#>|pla}
+    | StmtIf (cond, then_, Some else_) ->
+        let cond = print_exp cond in
+        let then_ = print_stmt then_ in
+        let else_ = print_stmt else_ in
+        {pla|if (<#cond#>) <#then_#><#>else <#else_#>|pla}
+    | StmtWhile (cond, stmt) ->
+        let cond = print_exp cond in
+        let stmt = print_stmt stmt in
+        {pla|while (<#cond#>)<#stmt#+>|pla}
+    | StmtBlock stmts ->
+        let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
+        {pla|{<#stmt#+>}|pla}
 
 
-let print_arg (n, t, _) =
-  let t = print_type_ t in
-  {pla|<#n#s> : <#t#>|pla}
+  let print_arg (n, t, _) =
+    let t = print_type_ t in
+    {pla|<#n#s> : <#t#>|pla}
 
 
-let print_function_def kind (def : function_def) =
-  let name = def.name in
-  let args = Pla.map_sep Pla.commaspace print_arg def.args in
-  let tags = Tags.print_tags def.tags in
-  let t = print_type_ (snd def.t) in
-  {pla|<#kind#s> <#name#s>(<#args#>) : <#t#> <#tags#>|pla}
+  let print_function_def kind (def : function_def) =
+    let name = def.name in
+    let args = Pla.map_sep Pla.commaspace print_arg def.args in
+    let tags = Tags.print_tags def.tags in
+    let t = print_type_ (snd def.t) in
+    {pla|<#kind#s> <#name#s>(<#args#>) : <#t#> <#tags#>|pla}
 
 
-let print_member (name, t, _) =
-  let t = print_type_ t in
-  {pla|<#name#s> : <#t#>;|pla}
+  let print_member (name, t, _) =
+    let t = print_type_ t in
+    {pla|<#name#s> : <#t#>;|pla}
 
 
-let print_body body =
-  match body.s with
-  | StmtBlock _ -> print_stmt body
-  | _ ->
-      let stmt = print_stmt body in
-      {pla|{<#stmt#+><#>}|pla}
+  let print_body body =
+    match body.s with
+    | StmtBlock _ -> print_stmt body
+    | _ ->
+        let stmt = print_stmt body in
+        {pla|{<#stmt#+><#>}|pla}
 
 
-let print_top_stmt t =
-  match t.top with
-  | TopFunction (def, body) ->
-      let def = print_function_def "fun" def in
-      let body = print_body body in
-      {pla|<#def#> <#body#><#>|pla}
-  | TopExternal (def, link) ->
-      let def = print_function_def "external" def in
-      {pla|<#def#> "<#link#s>"<#>|pla}
-  | TopType { path = p; members } ->
-      let members = Pla.map_sep_all Pla.newline print_member members in
-      {pla|struct <#p#s> {<#members#+>}<#>|pla}
+  let print_top_stmt t =
+    match t.top with
+    | TopFunction (def, body) ->
+        let def = print_function_def "fun" def in
+        let body = print_body body in
+        {pla|<#def#> <#body#><#>|pla}
+    | TopExternal (def, link) ->
+        let def = print_function_def "external" def in
+        {pla|<#def#> "<#link#s>"<#>|pla}
+    | TopType { path = p; members } ->
+        let members = Pla.map_sep_all Pla.newline print_member members in
+        {pla|struct <#p#s> {<#members#+>}<#>|pla}
 
 
-let print_prog t = Pla.map_sep_all Pla.newline print_top_stmt t
+  let print_prog t = Pla.map_sep_all Pla.newline print_top_stmt t
+end
 
 module TypedToProg = struct
   module T = Typed

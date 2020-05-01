@@ -119,7 +119,7 @@ type compiled =
   ; code : segment array
   }
 
-let print_rvalue r : Pla.t =
+let rec print_rvalue r : Pla.t =
   match r.r with
   | RVoid -> Pla.string "()"
   | RInt n -> Pla.int n
@@ -127,6 +127,12 @@ let print_rvalue r : Pla.t =
   | RBool v -> Pla.string (if v then "true" else "false")
   | RString s -> Pla.string_quoted s
   | RRef n -> {pla|ref(<#n#i>)|pla}
+  | RStruct elems ->
+      let elems = Pla.map_sep Pla.commaspace print_rvalue (Array.to_list elems) in
+      {pla|{ <#elems#> }|pla}
+  | RTuple elems ->
+      let elems = Pla.map_sep Pla.commaspace print_rvalue elems in
+      {pla|{ <#elems#> }|pla}
   | _ -> Pla.string "Not a value"
 
 
@@ -140,7 +146,6 @@ let print_rvalue r : Pla.t =
   | RMember of rvalue * int
   | RCall   of int * rvalue list
   | RIndex  of rvalue * rvalue
-  | RStruct of rvalue array
   *)
 
 let list f (env : 'env) (l : 'e) =
@@ -255,8 +260,11 @@ and compile_exp (env : env) e : rvalue =
       end
   | ECall { path; args } ->
       let args = List.map (compile_exp env) args in
-      let index = Map.find path env.functions in
-      { r = RCall (index, args); t; loc }
+      ( match Map.find_opt path env.functions with
+      | Some index -> { r = RCall (index, args); t; loc }
+      | None ->
+          print_endline ("Function not found " ^ path) ;
+          { r = RVoid; t; loc } )
 
 
 and makeOp op e1 e2 =
