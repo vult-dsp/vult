@@ -25,125 +25,94 @@ open Prog
 open Util
 module Map = CCMap.Make (String)
 
-type env =
-  { functions : int Map.t
-  ; locals : int Map.t
-  ; lcount : int
-  ; fcount : int
-  }
-
-let default_env = { locals = Map.empty; lcount = 0; functions = Map.empty; fcount = 0 }
-
-let addLocal env name = { env with locals = Map.add name env.lcount env.locals; lcount = env.lcount + 1 }
-
-type op =
-  | OpAdd
-  | OpSub
-  | OpDiv
-  | OpMul
-  | OpMod
-  | OpLand
-  | OpLor
-  | OpBor
-  | OpBand
-  | OpBxor
-  | OpLsh
-  | OpRsh
-  | OpEq
-  | OpNe
-  | OpLt
-  | OpLe
-  | OpGt
-  | OpGe
-
-type rvalue_d =
-  | RVoid
-  | RInt    of int
-  | RReal   of float
-  | RBool   of bool
-  | RString of string
-  | RRef    of int
-  | RObject of rvalue array
-  | ROp     of op * rvalue * rvalue
-  | RNot    of rvalue
-  | RNeg    of rvalue
-  | RIf     of rvalue * rvalue * rvalue
-  | RMember of rvalue * int
-  | RCall   of int * rvalue list
-  | RIndex  of rvalue * rvalue
-
-and rvalue =
-  { r : rvalue_d
-  ; t : type_
-  ; loc : Loc.t
-  }
-
-type lvalue_d =
-  | LVoid
-  | LRef    of int
-  | LTuple  of lvalue array
-  | LMember of lvalue * int
-  | LIndex  of lvalue * rvalue
-
-and lvalue =
-  { l : lvalue_d
-  ; t : type_
-  ; loc : Loc.t
-  }
-
-type instr_d =
-  | Store  of lvalue * rvalue
-  | Return of rvalue
-  | If     of rvalue * instr list * instr list
-  | While  of rvalue * instr list
-
-and instr =
-  { i : instr_d
-  ; loc : Loc.t
-  }
-
-type segment =
-  | External
-  | Function of
-      { name : string
-      ; body : instr list
-      ; locals : int
-      ; index : int
-      ; outputs : int
-      }
-
-type compiled =
-  { table : int Map.t
-  ; code : segment array
-  }
-
-let rec print_rvalue r : Pla.t =
-  match r.r with
-  | RVoid -> Pla.string "()"
-  | RInt n -> Pla.int n
-  | RReal n -> Pla.float n
-  | RBool v -> Pla.string (if v then "true" else "false")
-  | RString s -> Pla.string_quoted s
-  | RRef n -> {pla|ref(<#n#i>)|pla}
-  | RObject elems ->
-      let elems = Pla.map_sep Pla.commaspace print_rvalue (Array.to_list elems) in
-      {pla|( <#elems#> )|pla}
-  | _ -> Pla.string "Not a value"
-
-
-(*
-  | ROp     of op * rvalue * rvalue
-  | RNot    of rvalue
-  | RNeg    of rvalue
-  | RIf     of rvalue * rvalue * rvalue
-  | RTuple  of rvalue list
-  | RArray  of rvalue array
-  | RMember of rvalue * int
-  | RCall   of int * rvalue list
-  | RIndex  of rvalue * rvalue
-  *)
-
 module Compile = struct
+  type env =
+    { functions : int Map.t
+    ; locals : int Map.t
+    ; lcount : int
+    ; fcount : int
+    }
+
+  let default_env = { locals = Map.empty; lcount = 0; functions = Map.empty; fcount = 0 }
+
+  let addLocal env name = { env with locals = Map.add name env.lcount env.locals; lcount = env.lcount + 1 }
+
+  type op =
+    | OpAdd
+    | OpSub
+    | OpDiv
+    | OpMul
+    | OpMod
+    | OpLand
+    | OpLor
+    | OpBor
+    | OpBand
+    | OpBxor
+    | OpLsh
+    | OpRsh
+    | OpEq
+    | OpNe
+    | OpLt
+    | OpLe
+    | OpGt
+    | OpGe
+
+  type rvalue_d =
+    | RVoid
+    | RInt    of int
+    | RReal   of float
+    | RBool   of bool
+    | RString of string
+    | RRef    of int
+    | RObject of rvalue array
+    | ROp     of op * rvalue * rvalue
+    | RNot    of rvalue
+    | RNeg    of rvalue
+    | RIf     of rvalue * rvalue * rvalue
+    | RMember of rvalue * int
+    | RCall   of int * rvalue list
+    | RIndex  of rvalue * rvalue
+
+  and rvalue =
+    { r : rvalue_d
+    ; loc : Loc.t
+    }
+
+  type lvalue_d =
+    | LVoid
+    | LRef    of int
+    | LTuple  of lvalue array
+    | LMember of lvalue * int
+    | LIndex  of lvalue * rvalue
+
+  and lvalue =
+    { l : lvalue_d
+    ; loc : Loc.t
+    }
+
+  type instr_d =
+    | Store  of lvalue * rvalue
+    | Return of rvalue
+    | If     of rvalue * instr list * instr list
+    | While  of rvalue * instr list
+
+  and instr =
+    { i : instr_d
+    ; loc : Loc.t
+    }
+
+  type segment =
+    | External
+    | Function of
+        { body : instr list
+        ; locals : int
+        }
+
+  type compiled =
+    { table : int Map.t
+    ; code : segment array
+    }
+
   let list f (env : 'env) (l : 'e) =
     let env, i_rev =
       List.fold_left
@@ -186,83 +155,81 @@ module Compile = struct
 
   let rec compile_lexp (env : env) (l : lexp) : lvalue =
     let loc = l.loc in
-    let t = l.t in
     match l.l with
-    | LWild -> { l = LVoid; t; loc }
+    | LWild -> { l = LVoid; loc }
     | LId name ->
         let index = Map.find name env.locals in
-        { l = LRef index; t; loc }
+        { l = LRef index; loc }
     | LTuple l ->
         let l = List.map (compile_lexp env) l |> Array.of_list in
-        { l = LTuple l; t; loc }
+        { l = LTuple l; loc }
     | LMember (e, s) ->
         begin
           match e.t.t with
           | TStruct descr ->
               let index = getIndex s descr.members in
               let e = compile_lexp env e in
-              { l = LMember (e, index); t; loc }
+              { l = LMember (e, index); loc }
           | _ -> failwith "type error"
         end
     | LIndex { e; index } ->
         let e = compile_lexp env e in
         let index = compile_exp env index in
-        { l = LIndex (e, index); t; loc }
+        { l = LIndex (e, index); loc }
 
 
   and compile_exp (env : env) e : rvalue =
     let loc = e.loc in
-    let t = e.t in
     match e.e with
-    | EUnit -> { r = RVoid; t; loc }
-    | EBool v -> { r = RBool v; t; loc }
-    | EInt v -> { r = RInt v; t; loc }
-    | EReal v -> { r = RReal v; t; loc }
-    | EString v -> { r = RString v; t; loc }
+    | EUnit -> { r = RVoid; loc }
+    | EBool v -> { r = RBool v; loc }
+    | EInt v -> { r = RInt v; loc }
+    | EReal v -> { r = RReal v; loc }
+    | EString v -> { r = RString v; loc }
     | EId id ->
         let index = Map.find id env.locals in
-        { r = RRef index; t; loc }
+        { r = RRef index; loc }
     | EOp (op, e1, e2) ->
         let e1 = compile_exp env e1 in
         let e2 = compile_exp env e2 in
-        { r = makeOp op e1 e2; t; loc }
+        { r = makeOp op e1 e2; loc }
     | EIndex { e; index } ->
         let e1 = compile_exp env e in
         let e2 = compile_exp env index in
-        { r = RIndex (e1, e2); t; loc }
+        { r = RIndex (e1, e2); loc }
     | EUnOp (UOpNeg, e) ->
         let e = compile_exp env e in
-        { r = RNeg e; t; loc }
+        { r = RNeg e; loc }
     | EUnOp (UOpNot, e) ->
         let e = compile_exp env e in
-        { r = RNot e; t; loc }
+        { r = RNot e; loc }
     | EIf { cond; then_; else_ } ->
         let cond = compile_exp env cond in
         let then_ = compile_exp env then_ in
         let else_ = compile_exp env else_ in
-        { r = RIf (cond, then_, else_); t; loc }
+        { r = RIf (cond, then_, else_); loc }
     | ETuple elems ->
         let elems = List.map (compile_exp env) elems in
-        { r = RObject (Array.of_list elems); t; loc }
+        { r = RObject (Array.of_list elems); loc }
     | EArray elems ->
         let elems = List.map (compile_exp env) elems in
-        { r = RObject (Array.of_list elems); t; loc }
+        { r = RObject (Array.of_list elems); loc }
     | EMember (e, m) ->
         begin
           match e.t.t with
           | TStruct descr ->
               let index = getIndex m descr.members in
               let e = compile_exp env e in
-              { r = RMember (e, index); t; loc }
+              { r = RMember (e, index); loc }
           | _ -> failwith "type error"
         end
     | ECall { path; args } ->
         let args = List.map (compile_exp env) args in
         ( match Map.find_opt path env.functions with
-        | Some index -> { r = RCall (index, args); t; loc }
+        | Some index -> { r = RCall (index, args); loc }
         | None ->
             print_endline ("Function not found " ^ path) ;
-            { r = RVoid; t; loc } )
+            { r = RVoid; loc } )
 
 
   and makeOp op e1 e2 =
@@ -340,74 +307,84 @@ module Compile = struct
         let env = { env with functions; fcount = env.fcount + 1 } in
         env, [ External ]
     | TopType _ -> env, []
-    | TopFunction ({ name; args; t = _, ret; _ }, body) ->
+    | TopFunction ({ name; args; _ }, body) ->
         let index = env.fcount in
         let functions = Map.add name index env.functions in
         let env = { locals = Map.empty; lcount = 0; functions; fcount = env.fcount + 1 } in
         let env = List.fold_left (fun env (n, _, _) -> addLocal env n) env args in
         let env, body = compile_stmt env body in
-        let outputs = getNOutputs ret in
-        env, [ Function { name; body; locals = env.lcount; index; outputs } ]
+        env, [ Function { body; locals = env.lcount } ]
 
 
   let compile stmts = list compile_top default_env stmts
 end
 
 module Eval = struct
+  type rvalue =
+    | Void
+    | Int    of int
+    | Real   of float
+    | Bool   of bool
+    | String of string
+    | Ref    of int
+    | Object of rvalue array
+
+  type lvalue =
+    | LVoid
+    | LRef    of int
+    | LTuple  of lvalue array
+    | LMember of lvalue * int
+    | LIndex  of lvalue * rvalue
+
   type vm =
     { stack : rvalue array
     ; mutable sp : int
     ; mutable frame : int
     ; table : int Map.t
-    ; code : segment array
+    ; code : Compile.segment array
     }
 
-  let new_vm (compiled : compiled) =
-    { stack = Array.init 1024 (fun _ -> { r = RVoid; t = { t = TVoid; loc = Loc.default }; loc = Loc.default })
-    ; sp = 0
-    ; frame = 0
-    ; table = compiled.table
-    ; code = compiled.code
-    }
+  let new_vm (compiled : Compile.compiled) =
+    { stack = Array.init 1024 (fun _ -> Void); sp = 0; frame = 0; table = compiled.table; code = compiled.code }
 
 
-  let numeric i f e1 e2 : rvalue_d =
-    match e1.r, e2.r with
-    | RInt n1, RInt n2 -> RInt (i n1 n2)
-    | RReal n1, RReal n2 -> RReal (f n1 n2)
+  let numeric i f e1 e2 : rvalue =
+    match e1, e2 with
+    | Int n1, Int n2 -> Int (i n1 n2)
+    | Real n1, Real n2 -> Real (f n1 n2)
     | _ -> failwith "numeric: argument mismatch"
 
 
-  let relation i f e1 e2 : rvalue_d =
-    match e1.r, e2.r with
-    | RInt n1, RInt n2 -> RBool (i n1 n2)
-    | RReal n1, RReal n2 -> RBool (f n1 n2)
+  let relation i f e1 e2 : rvalue =
+    match e1, e2 with
+    | Int n1, Int n2 -> Bool (i n1 n2)
+    | Real n1, Real n2 -> Bool (f n1 n2)
     | _ -> failwith "relation: argument mismatch"
 
 
-  let logic f e1 e2 : rvalue_d =
-    match e1.r, e2.r with
-    | RBool n1, RBool n2 -> RBool (f n1 n2)
+  let logic f e1 e2 : rvalue =
+    match e1, e2 with
+    | Bool n1, Bool n2 -> Bool (f n1 n2)
     | _ -> failwith "logic: argument mismatch"
 
 
-  let bitwise f e1 e2 : rvalue_d =
-    match e1.r, e2.r with
-    | RInt n1, RInt n2 -> RInt (f n1 n2)
+  let bitwise f e1 e2 : rvalue =
+    match e1, e2 with
+    | Int n1, Int n2 -> Int (f n1 n2)
     | _ -> failwith "bitwise: argument mismatch"
 
 
-  let not e : rvalue_d =
-    match e.r with
-    | RInt n -> RInt (lnot n)
-    | RBool n -> RBool (not n)
+  let not e : rvalue =
+    match e with
+    | Int n -> Int (lnot n)
+    | Bool n -> Bool (not n)
     | _ -> failwith "not: argument mismatch"
 
 
-  let neg e : rvalue_d =
-    match e.r with
-    | RInt n -> RInt (-n)
-    | RReal n -> RReal (-.n)
+  let neg e : rvalue =
+    match e with
+    | Int n -> Int (-n)
+    | Real n -> Real (-.n)
     | _ -> failwith "not: argument mismatch"
 
 
@@ -428,7 +405,7 @@ module Eval = struct
 
   let storeRefObject (vm : vm) n i v =
     match vm.stack.(vm.frame + n) with
-    | { r = RObject elems; _ } -> elems.(i) <- v
+    | Object elems -> elems.(i) <- v
     | _ -> failwith "storeRefMember: invalid input"
 
 
@@ -436,7 +413,7 @@ module Eval = struct
 
   let allocate (vm : vm) n = vm.sp <- vm.sp + n
 
-  let eval_op (op : op) =
+  let eval_op (op : Compile.op) =
     match op with
     | OpAdd -> numeric ( + ) ( +. )
     | OpSub -> numeric ( - ) ( -. )
@@ -460,47 +437,44 @@ module Eval = struct
 
   let isTrue (cond : rvalue) =
     match cond with
-    | { r = RBool true; _ } -> true
-    | { r = RBool false; _ } -> false
+    | Bool true -> true
+    | Bool false -> false
     | _ -> failwith "invalid condition"
 
 
-  let rec eval_rvalue (vm : vm) (r : rvalue) : rvalue =
+  let rec eval_rvalue (vm : vm) (r : Compile.rvalue) : rvalue =
     match r.r with
-    | RVoid
-     |RInt _
-     |RReal _
-     |RBool _
-     |RString _ ->
-        r
+    | RVoid -> Void
+    | RInt n -> Int n
+    | RReal n -> Real n
+    | RBool n -> Bool n
+    | RString s -> String s
     | RRef n -> loadRef vm n
     | ROp (op, e1, e2) ->
         let e1 = eval_rvalue vm e1 in
         let e2 = eval_rvalue vm e2 in
-        { r with r = (eval_op op) e1 e2 }
+        (eval_op op) e1 e2
     | RNeg e ->
         let e = eval_rvalue vm e in
-        { r with r = neg e }
+        neg e
     | RNot e ->
         let e = eval_rvalue vm e in
-        { r with r = not e }
+        not e
     | RIf (cond, then_, else_) ->
         let cond = eval_rvalue vm cond in
-        begin
-          match cond.r with
-          | RBool true -> eval_rvalue vm then_
-          | RBool false -> eval_rvalue vm else_
-          | _ -> failwith "invaid if-condition"
-        end
+        if isTrue cond then
+          eval_rvalue vm then_
+        else
+          eval_rvalue vm else_
     | RObject elems ->
         let elems = Array.map (eval_rvalue vm) elems in
-        { r with r = RObject elems }
+        Object elems
     | RIndex (e, index) ->
         let e = eval_rvalue vm e in
         let index = eval_rvalue vm index in
         begin
           match e, index with
-          | { r = RObject elems; _ }, { r = RInt index; _ } -> elems.(index)
+          | Object elems, Int index -> elems.(index)
           | _ -> failwith "index not evaluated correctly"
         end
     | RCall (index, args) ->
@@ -509,31 +483,31 @@ module Eval = struct
     | RMember (e, index) ->
         let e = eval_rvalue vm e in
         begin
-          match e.r with
-          | RObject elems -> elems.(index)
+          match e with
+          | Object elems -> elems.(index)
           | _ -> failwith "not a struct"
         end
 
 
-  and eval_lvalue (vm : vm) (l : lvalue) : lvalue =
+  and eval_lvalue (vm : vm) (l : Compile.lvalue) : lvalue =
     match l.l with
-    | LVoid -> l
-    | LRef _ -> l
+    | LVoid -> LVoid
+    | LRef n -> LRef n
     | LTuple elems ->
         let elems = Array.map (eval_lvalue vm) elems in
-        { l with l = LTuple elems }
+        LTuple elems
     | LMember (e, m) ->
         let e = eval_lvalue vm e in
-        { l with l = LMember (e, m) }
+        LMember (e, m)
     | LIndex (e, i) ->
         let e = eval_lvalue vm e in
         let i = eval_rvalue vm i in
-        { l with l = LIndex (e, i) }
+        LIndex (e, i)
 
 
   and eval_call (vm : vm) findex (args : rvalue list) =
     match vm.code.(findex) with
-    | Function { body; locals; _ } ->
+    | Function { body; locals } ->
         vm.frame <- vm.sp + 1 ;
         pushArgs vm args ;
         allocate vm locals ;
@@ -544,7 +518,7 @@ module Eval = struct
     | External -> failwith ""
 
 
-  and eval_instr (vm : vm) (instr : instr list) =
+  and eval_instr (vm : vm) (instr : Compile.instr list) =
     match instr with
     | [] -> ()
     | { i = Return e; _ } :: _ ->
@@ -576,18 +550,33 @@ module Eval = struct
 
 
   and store (vm : vm) (l : lvalue) (r : rvalue) =
-    match l.l, r.r with
+    match l, r with
     | LVoid, _ -> ()
     | LRef n, _ -> storeRef vm n r
-    | LMember ({ l = LRef n; _ }, m), _ -> storeRefObject vm n m r
-    | LIndex ({ l = LRef n; _ }, { r = RInt i; _ }), _ -> storeRefObject vm n i r
-    | LTuple l_elems, RObject r_elems -> Array.iter2 (store vm) l_elems r_elems
+    | LMember (LRef n, m), _ -> storeRefObject vm n m r
+    | LIndex (LRef n, Int i), _ -> storeRefObject vm n i r
+    | LTuple l_elems, Object r_elems -> Array.iter2 (store vm) l_elems r_elems
     | _ -> failwith "invalid store"
+
+
+  let rec print_value r : Pla.t =
+    match r with
+    | Void -> Pla.string "()"
+    | Int n -> Pla.int n
+    | Real n -> Pla.float n
+    | Bool v -> Pla.string (if v then "true" else "false")
+    | String s -> Pla.string_quoted s
+    | Ref n -> {pla|ref(<#n#i>)|pla}
+    | Object elems ->
+        let elems = Pla.map_sep Pla.commaspace print_value (Array.to_list elems) in
+        {pla|( <#elems#> )|pla}
 end
 
-let compile stmts =
+type bytecode = Compile.compiled
+
+let compile stmts : bytecode =
   let env, functions = Compile.compile stmts in
-  { table = env.functions; code = Array.of_list functions }
+  Compile.{ table = env.functions; code = Array.of_list functions }
 
 
 let run (env : Env.in_top) (prog : top_stmt list) (exp : string) =
@@ -599,5 +588,5 @@ let run (env : Env.in_top) (prog : top_stmt list) (exp : string) =
   let vm = Eval.new_vm compiled in
   let findex = Map.find "Main___main_" vm.table in
   let result = Eval.eval_call vm findex [] in
-  let str = Pla.print (print_rvalue result) in
+  let str = Pla.print (Eval.print_value result) in
   str
