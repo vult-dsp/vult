@@ -58,12 +58,20 @@ let rec print_type_ (t : type_) =
   | TStruct { path; _ } -> Pla.string path
 
 
-let print_type_arg (t : type_) =
+let isReference (t : type_) =
   match t.t with
-  | TStruct _ ->
-      let t = print_type_ t in
-      {pla|&mut <#t#>|pla}
-  | _ -> print_type_ t
+  | TStruct _
+   |TArray _ ->
+      true
+  | _ -> false
+
+
+let print_type_arg (t : type_) =
+  if isReference t then
+    let t = print_type_ t in
+    {pla|&mut <#t#>|pla}
+  else
+    print_type_ t
 
 
 let operator op =
@@ -110,15 +118,18 @@ and print_exp e =
   match e.e with
   | EUnit -> Pla.string ""
   | EBool v -> Pla.string (if v then "true" else "false")
-  | EInt n -> Pla.int n
+  | EInt n -> {pla|<#n#i>i32|pla}
   | EReal n -> Pla.float n
   | EString s -> Pla.string_quoted s
   | EId id -> Pla.string id
   | EIndex { e; index } ->
       let e = print_exp e in
       let index = print_exp index in
-      {pla|<#e#>[<#index#>]|pla}
+      {pla|<#e#>[(<#index#>) as usize]|pla}
   | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
+  | ECall { path = "not"; args = [ e1 ] } ->
+      let e1 = print_exp e1 in
+      {pla|!<#e1#>|pla}
   | ECall { path; args } ->
       let args = Pla.map_sep Pla.commaspace call_arg args in
       let path = function_name path in
@@ -155,7 +166,7 @@ let rec print_lexp e =
   | LIndex { e; index } ->
       let e = print_lexp e in
       let index = print_exp index in
-      {pla|<#e#>[<#index#>]|pla}
+      {pla|<#e#>[(<#index#>) as usize]|pla}
   | LTuple l ->
       let l = Pla.map_sep Pla.commaspace print_lexp l in
       {pla|(<#l#>)|pla}
@@ -171,6 +182,13 @@ let rec print_dexp (e : dexp) =
       {pla|(<#l#>)|pla}
 
 
+and prefixWithType (t : type_) n : Pla.t =
+  if isReference t then
+    {pla|&mut <#n#>|pla}
+  else
+    n
+
+
 let rec print_stmt s =
   match s.s with
   | StmtDecl (lhs, None) ->
@@ -178,19 +196,18 @@ let rec print_stmt s =
       let lhs = print_dexp lhs in
       {pla|let <#lhs#> : <#t#>;|pla}
   | StmtDecl (lhs, Some rhs) ->
-      let t = print_type_ lhs.t in
       let lhs = print_dexp lhs in
-      let rhs = print_exp rhs in
-      {pla|let <#lhs#> : <#t#> = <#rhs#>;|pla}
+      let rhs = prefixWithType rhs.t (print_exp rhs) in
+      {pla|let <#lhs#> = <#rhs#>;|pla}
   | StmtBind ({ l = LWild; _ }, rhs) ->
-      let rhs = print_exp rhs in
+      let rhs = prefixWithType rhs.t (print_exp rhs) in
       {pla|let _ = <#rhs#>;|pla}
   | StmtBind (lhs, rhs) ->
       let lhs = print_lexp lhs in
-      let rhs = print_exp rhs in
+      let rhs = prefixWithType rhs.t (print_exp rhs) in
       {pla|<#lhs#> = <#rhs#>;|pla}
   | StmtReturn e ->
-      let e = print_exp e in
+      let e = prefixWithType e.t (print_exp e) in
       {pla|return <#e#>;|pla}
   | StmtIf (cond, then_, None) ->
       let e = print_exp cond in
@@ -220,21 +237,43 @@ and print_block body =
       {pla|{<#stmt#+><#>}|pla}
 
 
-let print_arg (n, t, _) =
-  let t = print_type_arg t in
-  {pla|<#n#s> : <#t#>|pla}
-
-
 let print_member (n, t, _) =
   let t = print_type_ t in
   {pla|<#n#s> : <#t#>|pla}
 
 
+let addLifetime (args, t) = isReference t || List.exists isReference args
+
+let print_type_life b t =
+  if b && isReference t then
+    let t = print_type_ t in
+    {pla|&'a mut <#t#>|pla}
+  else if isReference t then
+    let t = print_type_ t in
+    {pla|&mut <#t#>|pla}
+  else
+    print_type_ t
+
+
+let print_fn_type_arg life (t : type_) =
+  if isReference t then
+    print_type_life life t
+  else
+    print_type_ t
+
+
+let print_arg life (n, t, _) =
+  let t = print_fn_type_arg life t in
+  {pla|<#n#s> : <#t#>|pla}
+
+
 let print_function_def (def : function_def) =
   let name = function_name def.name in
-  let args = Pla.map_sep Pla.commaspace print_arg def.args in
-  let ret = print_type_arg (snd def.t) in
-  {pla|fn <#name#>(<#args#>) -> <#ret#>|pla}
+  let life = addLifetime def.t in
+  let lifetime = if life then {pla|<'a>|pla} else Pla.unit in
+  let args = Pla.map_sep Pla.commaspace (print_arg life) def.args in
+  let ret = (print_type_life life) (snd def.t) in
+  {pla|fn <#name#><#lifetime#>(<#args#>) -> <#ret#>|pla}
 
 
 let print_top_stmt t =

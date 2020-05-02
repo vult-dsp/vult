@@ -69,6 +69,63 @@ type var_kind =
   | Inst
   | Val
 
+type path = Typed.path
+
+type var =
+  { name : string
+  ; t : Typed.type_
+  ; kind : var_kind
+  ; loc : Loc.t
+  }
+
+type t =
+  { path : path
+  ; members : var Map.t
+  ; index : int
+  ; loc : Loc.t
+  ; generated : bool
+  }
+
+type context = (path * t) option
+
+type f =
+  { path : path
+  ; t : Typed.type_ list * Typed.type_
+  ; context : context
+  ; mutable locals : var Map.t list
+  ; mutable tick : int
+  }
+
+type m =
+  { name : string
+  ; functions : f Map.t
+  ; types : t Map.t
+  }
+
+type in_top =
+  { modules : m Map.t
+  ; builtin_functions : (unit -> Typed.fun_type) Map.t
+  ; builtin_types : t Map.t
+  }
+
+type in_module =
+  { top : in_top
+  ; m : m
+  ; mutable tick : int
+  }
+
+type in_context =
+  { top : in_top
+  ; m : m
+  ; context : context
+  }
+
+type in_func =
+  { top : in_top
+  ; m : m
+  ; f : f
+  }
+
 let builtin_functions =
   Typed.
     [ "set", C.array_set
@@ -120,61 +177,18 @@ let builtin_functions =
   |> Map.of_list
 
 
-type path = Typed.path
+let builtin_types =
+  [ "int"; "real"; "fix16"; "bool"; "string" ]
+  |> List.map (fun n ->
+         ( n
+         , { path = Parser.Syntax.{ id = n; n = None; loc = Loc.default }
+           ; members = Map.empty ()
+           ; index = 0
+           ; loc = Loc.default
+           ; generated = false
+           } ))
+  |> Map.of_list
 
-type var =
-  { name : string
-  ; t : Typed.type_
-  ; kind : var_kind
-  ; loc : Loc.t
-  }
-
-type t =
-  { path : path
-  ; members : var Map.t
-  ; index : int
-  ; loc : Loc.t
-  }
-
-type context = (path * t) option
-
-type f =
-  { path : path
-  ; t : Typed.type_ list * Typed.type_
-  ; context : context
-  ; mutable locals : var Map.t list
-  ; mutable tick : int
-  }
-
-type m =
-  { name : string
-  ; functions : f Map.t
-  ; types : t Map.t
-  }
-
-type in_top =
-  { modules : m Map.t
-  ; builtin_functions : (unit -> Typed.fun_type) Map.t
-  ; builtin_types : t Map.t
-  }
-
-type in_module =
-  { top : in_top
-  ; m : m
-  ; mutable tick : int
-  }
-
-type in_context =
-  { top : in_top
-  ; m : m
-  ; context : context
-  }
-
-type in_func =
-  { top : in_top
-  ; m : m
-  ; f : f
-  }
 
 let makeFunctionForBuiltin name t : f =
   { path = { id = name; n = None; loc = Loc.default }; t; context = None; locals = []; tick = 0 }
@@ -262,6 +276,25 @@ let lookType (env : in_func) (path : path) : t =
       | None -> reportNotFound (Map.find id env.top.builtin_types) )
 
 
+let lookTypeInModule (env : in_module) (path : path) : t =
+  let reportNotFound result =
+    match result with
+    | Some found -> found
+    | None -> failwith "type not found"
+  in
+  match path with
+  | { id; n = Some n; _ } ->
+      begin
+        match Map.find n env.top.modules with
+        | None -> failwith ("module not found " ^ n)
+        | Some m -> reportNotFound (Map.find id m.types)
+      end
+  | { id; _ } ->
+      ( match Map.find id env.m.types with
+      | Some _ as found -> reportNotFound found
+      | None -> reportNotFound (Map.find id env.top.builtin_types) )
+
+
 let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_kind) loc : in_func =
   let report_mem (found : var) =
     if unify found.t t then
@@ -323,9 +356,29 @@ let createContextForFunction (env : in_module) name loc : in_context =
   let type_name = name ^ "_type" in
   let path = getPath env.m type_name loc in
   let index = getModuleTick env in
-  let t = { members = Map.empty (); path; index; loc } in
+  let t = { members = Map.empty (); path; index; loc; generated = true } in
   let _ = Map.update report type_name t env.m.types in
   { top = env.top; m = env.m; context = Some (path, t) }
+
+
+let addMemberVariables members =
+  let report _ = failwith "duplicated member of type" in
+  List.fold_left
+    (fun m (name, t, loc) ->
+      Map.update report name { name; t; kind = Val; loc } m ;
+      m)
+    (Map.empty ())
+    members
+
+
+let addType (env : in_module) type_name members loc : in_module =
+  let report _ = failwith "type exitst" in
+  let index = getModuleTick env in
+  let path = getPath env.m type_name loc in
+  let members = addMemberVariables members in
+  let t = { path; members; loc; index; generated = false } in
+  let _ = Map.update report type_name t env.m.types in
+  env
 
 
 let createContextForExternal (env : in_module) : in_context = { top = env.top; m = env.m; context = None }
@@ -373,15 +426,6 @@ let isFunctionActive (f : f) =
 
 let exitFunction (env : in_func) : in_context = { top = env.top; m = env.m; context = env.f.context }
 
-let addType (env : in_module) (name : string) members loc : in_module =
-  let report _ = failwith "type exitst" in
-  let path = getPath env.m name loc in
-  let index = getModuleTick env in
-  let t = { members; path; index; loc } in
-  let _ = Map.update report name t env.m.types in
-  { env with top = env.top; m = env.m }
-
-
 let enterModule (env : in_top) (name : string) : in_module =
   match Map.find name env.modules with
   | Some m -> { top = env; m; tick = 0 }
@@ -394,4 +438,4 @@ let enterModule (env : in_top) (name : string) : in_module =
 
 let exitModule (env : in_module) : in_top = env.top
 
-let empty () = { modules = Map.empty (); builtin_functions; builtin_types = Map.empty () }
+let empty () = { modules = Map.empty (); builtin_functions; builtin_types }

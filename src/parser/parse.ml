@@ -777,13 +777,6 @@ and stmtType (buffer : Stream.stream) : top_stmt =
   let _ = Stream.consume buffer TYPE in
   let name, loc = id_name buffer in
   match Stream.peek buffer with
-  (*
-  | COLON ->
-      let _ = Stream.skip buffer in
-      let type_ = type_ 10 buffer in
-      let _ = Stream.optConsume buffer SEMI in
-      { top = STopTypeAlias (name, type_); loc }
-  *)
   | LBRACE ->
       let _ = Stream.skip buffer in
       let members = type_member_list buffer in
@@ -802,7 +795,7 @@ and type_member_list (buffer : Stream.stream) =
       let rec loop acc =
         match Stream.peek buffer with
         | VAL ->
-            let decl = type_member buffer in
+            let decl = type_elem buffer in
             let _ = Stream.consume buffer SEMI in
             loop (decl :: acc)
         | _ -> List.rev acc
@@ -814,8 +807,8 @@ and type_member_list (buffer : Stream.stream) =
       raise (ParserError (Stream.makeError buffer message))
 
 
-and type_member (buffer : Stream.stream) =
-  let _ = Stream.expect buffer VAL in
+and type_elem (buffer : Stream.stream) =
+  let _ = Stream.consume buffer VAL in
   let name, loc = id_name buffer in
   let _ = Stream.consume buffer COLON in
   let type_ = type_ 10 buffer in

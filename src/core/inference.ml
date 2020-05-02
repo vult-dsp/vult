@@ -41,6 +41,12 @@ let linkType ~from ~into =
   true
 
 
+let rec unlink (t : type_) =
+  match t.tx with
+  | TELink t -> unlink t
+  | _ -> t
+
+
 let constrainOption l1 l2 =
   let l2_ = List.filter (fun e2 -> List.exists (fun e1 -> compare_type_ e1 e2 = 0) l1) l2 in
   let l1_ = List.filter (fun e1 -> List.exists (fun e2 -> compare_type_ e2 e1 = 0) l2_) l1 in
@@ -107,14 +113,20 @@ let unifyRaise (loc : Loc.t) (t1 : type_) (t2 : type_) : unit =
       print_endline msg )
 
 
-let rec type_ (t : Syntax.type_) =
+let rec type_in_m (env : in_module) (t : Syntax.type_) =
   match t with
-  | { t = STId path; loc } -> { tx = TEId path; loc }
+  | { t = STId path; loc } ->
+      let found = Env.lookTypeInModule env path in
+      { tx = TEId found.path; loc }
   | { t = STSize n; loc } -> { tx = TESize n; loc }
   | { t = STComposed (name, l); loc } ->
-      let l = List.map type_ l in
+      let l = List.map (type_in_m env) l in
       { tx = TEComposed (name, l); loc }
 
+
+let type_in_c (env : Env.in_context) (t : Syntax.type_) = type_in_m (Env.exitContext env) t
+
+let type_in_f (env : Env.in_func) (t : Syntax.type_) = type_in_c (Env.exitFunction env) t
 
 let applyFunction (args_t : type_ list) (ret : type_) (args : exp list) =
   let rec loop args_t args =
@@ -241,7 +253,7 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
       env, { e = EUnOp (op, e); t; loc }
   | { e = SEMember (e, m); loc } ->
       let env, e = exp env e in
-      ( match e.t.tx with
+      ( match (unlink e.t).tx with
       | TEId path ->
           let def = Env.lookType env path in
           begin
@@ -249,7 +261,7 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
             | None -> failwith "member not found"
             | Some { t; _ } -> env, { e = EMember (e, m); t; loc }
           end
-      | _ -> failwith "invalid access to type" )
+      | _ -> failwith "exp: invalid access to type" )
 
 
 and exp_list (env : Env.in_func) (l : Syntax.exp list) : Env.in_func * exp list =
@@ -304,7 +316,7 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
       env, { l = LIndex { e; index }; t; loc }
   | { l = SLMember (e, m); loc } ->
       let env, e = lexp env e in
-      ( match e.t.tx with
+      ( match (unlink e.t).tx with
       | TEId path ->
           let def = Env.lookType env path in
           begin
@@ -312,7 +324,7 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
             | None -> failwith "member not found"
             | Some { t; _ } -> env, { l = LMember (e, m); t; loc }
           end
-      | _ -> failwith "invalid access to type" )
+      | _ -> failwith "lexp: invalid access to type" )
 
 
 and dexp (env : Env.in_func) (e : Syntax.dexp) (kind : var_kind) : Env.in_func * dexp =
@@ -334,7 +346,7 @@ and dexp (env : Env.in_func) (e : Syntax.dexp) (kind : var_kind) : Env.in_func *
   | { d = SDGroup e; _ } -> dexp env e kind
   | { d = SDTyped (e, t); _ } ->
       let env, e = dexp env e kind in
-      let t = type_ t in
+      let t = type_in_f env t in
       unifyRaise e.loc t e.t ;
       env, e
   | { d = SDId (name, dims); loc } ->
@@ -441,26 +453,26 @@ let addGeneratedFunctions tags name next =
     next
 
 
-let getOptType loc (t : Syntax.type_ option) =
+let getOptType env loc (t : Syntax.type_ option) =
   match t with
   | None -> C.unbound loc
-  | Some t -> type_ t
+  | Some t -> type_in_c env t
 
 
-let getReturnType loc (t : Syntax.type_ option) =
+let getReturnType env loc (t : Syntax.type_ option) =
   match t with
   | None -> C.noreturn loc
-  | Some t -> type_ t
+  | Some t -> type_in_c env t
 
 
-let convertArguments (args : Syntax.arg list) : arg list =
-  List.map (fun (name, t, loc) -> name, getOptType loc t, loc) args
+let convertArguments env (args : Syntax.arg list) : arg list =
+  List.map (fun (name, t, loc) -> name, getOptType env loc t, loc) args
 
 
 let rec function_def (env : Env.in_context) ((def : Syntax.function_def), (body : Syntax.stmt)) :
     Env.in_context * (function_def * stmt) =
-  let ret = getReturnType def.loc def.t in
-  let args = convertArguments def.args in
+  let ret = getReturnType env def.loc def.t in
+  let args = convertArguments env def.args in
   let env, path, t = Env.enterFunction env def.name args ret def.loc in
   let env, body = stmt env ret body in
   let env = Env.exitFunction env in
@@ -479,8 +491,8 @@ and function_def_opt (env : Env.in_context) def_opt =
 
 let ext_function (env : Env.in_context) ((def : Syntax.function_def), (link_name : string option)) :
     Env.in_context * (function_def * string) =
-  let ret = getOptType def.loc def.t in
-  let args = convertArguments def.args in
+  let ret = getOptType env def.loc def.t in
+  let args = convertArguments env def.args in
   let env, path, t = Env.enterFunction env def.name args ret def.loc in
   let env = Env.exitFunction env in
   let link_name = CCOpt.get_or ~default:def.name link_name in
@@ -530,7 +542,8 @@ let rec top_stmt (env : Env.in_module) (s : Syntax.top_stmt) : Env.in_module * t
       let env = Env.exitContext env in
       env, { top = TopExternal (def, link_name); loc = def.loc }
   | { top = STopType { name; members }; loc } ->
-      let members = List.map (fun (name, t, loc) -> name, type_ t, loc) members in
+      let members = List.map (fun (name, t, loc) -> name, type_in_m env t, loc) members in
+      let env = Env.addType env name members loc in
       let path = Env.getPath env.m name loc in
       env, { top = TopType { path; members }; loc }
 
@@ -568,7 +581,9 @@ let createTypes (env : Env.in_top) =
       env.modules
   in
   (* sort the types *)
-  let types = List.sort (fun (a : Env.t) b -> compare a.index b.index) types in
+  let types =
+    types |> List.filter (fun (t : Env.t) -> t.generated) |> List.sort (fun (a : Env.t) b -> compare a.index b.index)
+  in
   List.map
     (fun (t : Env.t) ->
       let members = Map.fold (fun _ (var : Env.var) s -> (var.name, var.t, var.loc) :: s) [] t.members in

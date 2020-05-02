@@ -211,7 +211,7 @@ module Print = struct
     | UOpNot -> Pla.string "not"
 
 
-  let rec print_exp e =
+  let rec print_exp (e : exp) =
     match e.e with
     | EUnit -> Pla.string "()"
     | EBool v -> Pla.string (if v then "true" else "false")
