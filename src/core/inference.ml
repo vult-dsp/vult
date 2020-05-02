@@ -544,6 +544,7 @@ let rec top_stmt (env : Env.in_module) (s : Syntax.top_stmt) : Env.in_module * t
       env, { top = TopExternal (def, link_name); loc = def.loc }
   | { top = STopType { name; members }; loc } ->
       let members = List.map (fun (name, t, loc) -> name, type_in_m env t, loc) members in
+      let members = List.sort (fun (n1, _, _) (n2, _, _) -> compare n1 n2) members in
       let env = Env.addType env name members loc in
       let path = Env.getPath env.m name loc in
       env, { top = TopType { path; members }; loc }
@@ -588,15 +589,40 @@ let createTypes (env : Env.in_top) =
   List.map
     (fun (t : Env.t) ->
       let members = Map.fold (fun _ (var : Env.var) s -> (var.name, var.t, var.loc) :: s) [] t.members in
+      let members = List.sort (fun (n1, _, _) (n2, _, _) -> compare n1 n2) members in
       { top = TopType { path = t.path; members }; loc = t.loc })
     types
 
 
+module Set = Set.Make (struct
+  type t = path
+
+  let compare = Syntax.compare_path
+end)
+
+let rec createExistingTypeSet stmts : Set.t =
+  match stmts with
+  | [] -> Set.empty
+  | { top = TopType { path; _ }; _ } :: t -> Set.add path (createExistingTypeSet t)
+  | _ :: t -> createExistingTypeSet t
+
+
+let removeExistingTypes set types =
+  let f s =
+    match s with
+    | { top = TopType { path; _ }; _ } when Set.mem path set -> false
+    | _ -> true
+  in
+  List.filter f types
+
+
 let infer_single (env : Env.in_top) (h : Parse.parsed_file) : Env.in_top * Typed.program =
+  let set = createExistingTypeSet (createTypes env) in
   let env = Env.enterModule env h.name in
   let env, stmt = top_stmt_list env h.stmts in
   let env = Env.exitModule env in
-  env, stmt
+  let types = removeExistingTypes set (createTypes env) in
+  env, stmt @ types
 
 
 let infer (parsed : Parse.parsed_file list) : Env.in_top * Typed.program =

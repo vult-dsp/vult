@@ -485,7 +485,7 @@ module Eval = struct
         begin
           match e with
           | Object elems -> elems.(index)
-          | _ -> failwith "not a struct"
+          | _ -> failwith "member: not a struct"
         end
 
 
@@ -579,14 +579,51 @@ let compile stmts : bytecode =
   Compile.{ table = env.functions; code = Array.of_list functions }
 
 
+let main_path = "Main___main__type"
+
+let rec getTypes stmts =
+  match stmts with
+  | [] -> []
+  | { top = TopType descr; _ } :: t -> descr :: getTypes t
+  | _ :: t -> getTypes t
+
+
+let rec valueOfDescr (d : struct_descr) : Eval.rvalue =
+  let elems = List.map (fun (_, t, _) -> valueOfType t) d.members in
+  Object (Array.of_list elems)
+
+
+and valueOfType (t : type_) : Eval.rvalue =
+  match t.t with
+  | TVoid -> Void
+  | TInt -> Int 0
+  | TReal -> Real 0.0
+  | TFixed -> Real 0.0
+  | TBool -> Bool false
+  | TString -> String ""
+  | TArray (dim, t) ->
+      let elems = Array.init dim (fun _ -> valueOfType t) in
+      Object elems
+  | TTuple elems ->
+      let elems = List.map valueOfType elems in
+      Object (Array.of_list elems)
+  | TStruct descr -> valueOfDescr descr
+
+
+let createArgument stmts =
+  let types = getTypes stmts in
+  match List.find_opt (fun (s : struct_descr) -> s.path = main_path) types with
+  | Some d -> [ valueOfDescr d ]
+  | None -> []
+
+
 let run (env : Env.in_top) (prog : top_stmt list) (exp : string) =
-  let wrapper = Pla.print {pla| fun _main_() return <#exp#s>; |pla} in
-  let e = Parser.Parse.parseString (Some "Main_.vult") wrapper in
-  let env, stmts = Inference.infer_single env e in
-  let stmts = Prog.convert env stmts in
-  let compiled = compile (prog @ stmts) in
-  let vm = Eval.new_vm compiled in
+  let e = Parser.Parse.parseString (Some "Main_.vult") (Pla.print {pla|fun _main_() return <#exp#s>;|pla}) in
+  let env, main = Inference.infer_single env e in
+  let main = Prog.convert env main in
+  let vm = Eval.new_vm (compile (prog @ main)) in
   let findex = Map.find "Main___main_" vm.table in
-  let result = Eval.eval_call vm findex [] in
+  let args = createArgument main in
+  let result = Eval.eval_call vm findex args in
   let str = Pla.print (Eval.print_value result) in
   str

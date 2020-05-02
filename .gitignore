@@ -12,3 +12,4 @@ vultc.js
 *.merlin
 /out.vult
 /test.vult
+/vult.js

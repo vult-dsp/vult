@@ -22,8 +22,8 @@ run: compiler
 
 jscompiler:
 	dune build src/vultjs.bc $(FORMAT)
-	js_of_ocaml --custom-header="#!/usr/bin/env node" _build/default/src/vultjs.bc -o vultc.js
-	chmod +x vultc.js
+	js_of_ocaml --custom-header="#!/usr/bin/env node" _build/default/src/vultjs.bc -o vult.js
+	chmod +x vult.js
 
 #web:
 #	$(OCB) src/js/vultweb.byte
@@ -64,7 +64,7 @@ all: version compiler #js test web jscompiler
 
 clean:
 	dune clean
-	rm -f vultc.js vultweb.js vultlib.js
+	rm -f vult.js vultweb.js vultlib.js
 	rm -f bisect*.out
 	rm -rf bisect_coverage
 
