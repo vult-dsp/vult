@@ -63,16 +63,14 @@ type rvalue_d =
   | RBool   of bool
   | RString of string
   | RRef    of int
+  | RObject of rvalue array
   | ROp     of op * rvalue * rvalue
   | RNot    of rvalue
   | RNeg    of rvalue
   | RIf     of rvalue * rvalue * rvalue
-  | RTuple  of rvalue list
-  | RArray  of rvalue array
   | RMember of rvalue * int
   | RCall   of int * rvalue list
   | RIndex  of rvalue * rvalue
-  | RStruct of rvalue array
 
 and rvalue =
   { r : rvalue_d
@@ -83,7 +81,7 @@ and rvalue =
 type lvalue_d =
   | LVoid
   | LRef    of int
-  | LTuple  of lvalue list
+  | LTuple  of lvalue array
   | LMember of lvalue * int
   | LIndex  of lvalue * rvalue
 
@@ -127,12 +125,9 @@ let rec print_rvalue r : Pla.t =
   | RBool v -> Pla.string (if v then "true" else "false")
   | RString s -> Pla.string_quoted s
   | RRef n -> {pla|ref(<#n#i>)|pla}
-  | RStruct elems ->
+  | RObject elems ->
       let elems = Pla.map_sep Pla.commaspace print_rvalue (Array.to_list elems) in
-      {pla|{ <#elems#> }|pla}
-  | RTuple elems ->
-      let elems = Pla.map_sep Pla.commaspace print_rvalue elems in
-      {pla|{ <#elems#> }|pla}
+      {pla|( <#elems#> )|pla}
   | _ -> Pla.string "Not a value"
 
 
@@ -197,7 +192,9 @@ module Compile = struct
     | LId name ->
         let index = Map.find name env.locals in
         { l = LRef index; t; loc }
-    | LTuple l -> { l = LTuple (List.map (compile_lexp env) l); t; loc }
+    | LTuple l ->
+        let l = List.map (compile_lexp env) l |> Array.of_list in
+        { l = LTuple l; t; loc }
     | LMember (e, s) ->
         begin
           match e.t.t with
@@ -246,10 +243,10 @@ module Compile = struct
         { r = RIf (cond, then_, else_); t; loc }
     | ETuple elems ->
         let elems = List.map (compile_exp env) elems in
-        { r = RTuple elems; t; loc }
+        { r = RObject (Array.of_list elems); t; loc }
     | EArray elems ->
         let elems = List.map (compile_exp env) elems in
-        { r = RArray (Array.of_list elems); t; loc }
+        { r = RObject (Array.of_list elems); t; loc }
     | EMember (e, m) ->
         begin
           match e.t.t with
@@ -429,23 +426,15 @@ module Eval = struct
 
   let storeRef (vm : vm) n v = vm.stack.(vm.frame + n) <- v
 
+  let storeRefObject (vm : vm) n i v =
+    match vm.stack.(vm.frame + n) with
+    | { r = RObject elems; _ } -> elems.(i) <- v
+    | _ -> failwith "storeRefMember: invalid input"
+
+
   let pushArgs (vm : vm) (args : rvalue list) = List.iter (fun v -> push vm v) args
 
   let allocate (vm : vm) n = vm.sp <- vm.sp + n
-
-  let tupleFromStack (vm : vm) n : rvalue =
-    let rec loop n acc =
-      if n > 0 then
-        { r = RTuple (List.rev acc); t = { t = TVoid; loc = Loc.default }; loc = Loc.default }
-      else
-        let h = pop vm in
-        loop (n - 1) (h :: acc)
-    in
-    if n > 1 then
-      loop n []
-    else
-      pop vm
-
 
   let eval_op (op : op) =
     match op with
@@ -503,18 +492,15 @@ module Eval = struct
           | RBool false -> eval_rvalue vm else_
           | _ -> failwith "invaid if-condition"
         end
-    | RArray elems ->
+    | RObject elems ->
         let elems = Array.map (eval_rvalue vm) elems in
-        { r with r = RArray elems }
-    | RTuple elems ->
-        let elems = List.map (eval_rvalue vm) elems in
-        { r with r = RTuple elems }
+        { r with r = RObject elems }
     | RIndex (e, index) ->
         let e = eval_rvalue vm e in
         let index = eval_rvalue vm index in
         begin
           match e, index with
-          | { r = RArray elems; _ }, { r = RInt index; _ } -> elems.(index)
+          | { r = RObject elems; _ }, { r = RInt index; _ } -> elems.(index)
           | _ -> failwith "index not evaluated correctly"
         end
     | RCall (index, args) ->
@@ -524,12 +510,9 @@ module Eval = struct
         let e = eval_rvalue vm e in
         begin
           match e.r with
-          | RStruct elems -> elems.(index)
+          | RObject elems -> elems.(index)
           | _ -> failwith "not a struct"
         end
-    | RStruct elems ->
-        let elems = Array.map (eval_rvalue vm) elems in
-        { r with r = RStruct elems }
 
 
   and eval_lvalue (vm : vm) (l : lvalue) : lvalue =
@@ -537,7 +520,7 @@ module Eval = struct
     | LVoid -> l
     | LRef _ -> l
     | LTuple elems ->
-        let elems = List.map (eval_lvalue vm) elems in
+        let elems = Array.map (eval_lvalue vm) elems in
         { l with l = LTuple elems }
     | LMember (e, m) ->
         let e = eval_lvalue vm e in
@@ -550,12 +533,12 @@ module Eval = struct
 
   and eval_call (vm : vm) findex (args : rvalue list) =
     match vm.code.(findex) with
-    | Function { body; locals; outputs; _ } ->
+    | Function { body; locals; _ } ->
         vm.frame <- vm.sp + 1 ;
         pushArgs vm args ;
         allocate vm locals ;
         eval_instr vm body ;
-        let ret = tupleFromStack vm outputs in
+        let ret = pop vm in
         vm.sp <- vm.frame ;
         ret
     | External -> failwith ""
@@ -594,8 +577,12 @@ module Eval = struct
 
   and store (vm : vm) (l : lvalue) (r : rvalue) =
     match l.l, r.r with
+    | LVoid, _ -> ()
     | LRef n, _ -> storeRef vm n r
-    | _ -> failwith "store not implemented"
+    | LMember ({ l = LRef n; _ }, m), _ -> storeRefObject vm n m r
+    | LIndex ({ l = LRef n; _ }, { r = RInt i; _ }), _ -> storeRefObject vm n i r
+    | LTuple l_elems, RObject r_elems -> Array.iter2 (store vm) l_elems r_elems
+    | _ -> failwith "invalid store"
 end
 
 let compile stmts =
