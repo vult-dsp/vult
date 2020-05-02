@@ -133,7 +133,7 @@ and dexp =
   }
 
 and stmt_d =
-  | StmtDecl   of dexp * exp option
+  | StmtDecl   of dexp
   | StmtBind   of lexp * exp
   | StmtReturn of exp
   | StmtBlock  of stmt list
@@ -278,13 +278,9 @@ module Print = struct
 
   let rec print_stmt s =
     match s.s with
-    | StmtDecl (lhs, None) ->
+    | StmtDecl lhs ->
         let lhs = print_dexp lhs in
         {pla|val <#lhs#>;|pla}
-    | StmtDecl (lhs, Some rhs) ->
-        let lhs = print_dexp lhs in
-        let rhs = print_exp rhs in
-        {pla|val <#lhs#> = <#rhs#>;|pla}
     | StmtBind (lhs, rhs) ->
         let lhs = print_lexp lhs in
         let rhs = print_exp rhs in
@@ -556,18 +552,10 @@ module TypedToProg = struct
   let rec stmt (env : Env.in_top) (state : state) (s : Typed.stmt) =
     let loc = s.loc in
     match s.s with
-    | StmtVal (lhs, None) ->
+    | StmtVal lhs ->
         let state, lhs = dexp env state lhs in
-        state, [ { s = StmtDecl (lhs, None); loc } ]
-    | StmtVal (lhs, Some rhs) ->
-        let state, lhs = dexp env state lhs in
-        let state, rhs = exp env state rhs in
-        state, [ { s = StmtDecl (lhs, Some rhs); loc } ]
-    | StmtMem (_, None, _) -> state, []
-    | StmtMem (lhs, Some rhs, _) ->
-        let state, lhs = dexp env state lhs in
-        let state, rhs = exp env state rhs in
-        state, [ { s = StmtDecl (lhs, Some rhs); loc } ]
+        state, [ { s = StmtDecl lhs; loc } ]
+    | StmtMem (_, _) -> state, []
     | StmtBind (lhs, rhs) ->
         let state, lhs = lexp env state lhs in
         let state, rhs = exp env state rhs in

@@ -387,21 +387,22 @@ let rec stmt (env : Env.in_func) (return : type_) (s : Syntax.stmt) : Env.in_fun
       env, [ { s = StmtBlock stmts; loc } ]
   | { s = SStmtVal (lhs, None); loc } ->
       let env, lhs = dexp env lhs Val in
-      env, [ { s = StmtVal (lhs, None); loc } ]
+      env, [ { s = StmtVal lhs; loc } ]
   | { s = SStmtVal (lhs, Some rhs); loc } ->
-      let env, lhs = dexp env lhs Val in
+      let env, dlhs = dexp env lhs Val in
+      let env, lhs = lexp env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
-      unifyRaise rhs.loc lhs.t rhs.t ;
-      env, [ { s = StmtVal (lhs, Some rhs); loc } ]
+      unifyRaise rhs.loc dlhs.t rhs.t ;
+      env, [ { s = StmtVal dlhs; loc }; { s = StmtBind (lhs, rhs); loc } ]
   | { s = SStmtMem (lhs, None, tag); loc } ->
       let env, lhs = dexp env lhs Mem in
-      env, [ { s = StmtMem (lhs, None, tag); loc } ]
+      env, [ { s = StmtMem (lhs, tag); loc } ]
   | { s = SStmtMem (lhs, Some rhs, tag); loc } ->
       let env, dlhs = dexp env lhs Mem in
       let env, lhs = lexp env (dexp_to_lexp lhs) in
       let env, rhs = exp env rhs in
       unifyRaise rhs.loc lhs.t rhs.t ;
-      env, [ { s = StmtMem (dlhs, None, tag); loc }; { s = StmtBind (lhs, rhs); loc } ]
+      env, [ { s = StmtMem (dlhs, tag); loc }; { s = StmtBind (lhs, rhs); loc } ]
   | { s = SStmtBind (lhs, rhs); loc } ->
       let env, lhs = lexp env lhs in
       let env, rhs = exp env rhs in

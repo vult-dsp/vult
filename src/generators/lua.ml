@@ -32,7 +32,7 @@ function eps()              return 1e-18 end
 function pi()               return 3.1415926535897932384 end
 function random()           return math.random() end
 function irandom()          return math.floor(math.random() * 4294967296) end
-function clip(x,low,high)   if x > high then return high else if x < low then return low else x end end end
+function clip(x,low,high)   if x > high then return high else if x < low then return low else return x end end end
 function real(x)            return x end
 function int(x)             local int_part,_ = math.modf(x) return int_part end
 function sin(x)             return math.sin(x) end
@@ -162,13 +162,9 @@ let rec print_dexp (e : dexp) =
 
 let rec print_stmt s =
   match s.s with
-  | StmtDecl (lhs, None) ->
+  | StmtDecl lhs ->
       let lhs = print_dexp lhs in
       {pla|local <#lhs#> = {};|pla}
-  | StmtDecl (lhs, Some rhs) ->
-      let lhs = print_dexp lhs in
-      let rhs = print_exp rhs in
-      {pla|local <#lhs#> = <#rhs#>;|pla}
   | StmtBind (lhs, rhs) ->
       let lhs = print_lexp lhs in
       let rhs = print_exp rhs in

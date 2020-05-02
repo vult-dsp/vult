@@ -128,8 +128,8 @@ and dexp =
   }
 
 and stmt_d =
-  | StmtVal    of dexp * exp option
-  | StmtMem    of dexp * exp option * tag list
+  | StmtVal    of dexp
+  | StmtMem    of dexp * tag list
   | StmtBind   of lexp * exp
   | StmtReturn of exp
   | StmtBlock  of stmt list
@@ -247,20 +247,12 @@ let rec print_dexp (e : dexp) =
 
 let rec print_stmt s =
   match s.s with
-  | StmtVal (lhs, None) ->
+  | StmtVal lhs ->
       let lhs = print_dexp lhs in
       {pla|val <#lhs#>;|pla}
-  | StmtVal (lhs, Some rhs) ->
-      let lhs = print_dexp lhs in
-      let rhs = print_exp rhs in
-      {pla|val <#lhs#> = <#rhs#>;|pla}
-  | StmtMem (lhs, None, _) ->
+  | StmtMem (lhs, _) ->
       let lhs = print_dexp lhs in
       {pla|mem <#lhs#>;|pla}
-  | StmtMem (lhs, Some rhs, _) ->
-      let lhs = print_dexp lhs in
-      let rhs = print_exp rhs in
-      {pla|mem <#lhs#> = <#rhs#>;|pla}
   | StmtBind (lhs, rhs) ->
       let lhs = print_lexp lhs in
       let rhs = print_exp rhs in

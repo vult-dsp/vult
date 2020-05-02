@@ -191,14 +191,10 @@ and prefixWithType (t : type_) n : Pla.t =
 
 let rec print_stmt s =
   match s.s with
-  | StmtDecl (lhs, None) ->
+  | StmtDecl lhs ->
       let t = print_type_ lhs.t in
       let lhs = print_dexp lhs in
       {pla|let <#lhs#> : <#t#>;|pla}
-  | StmtDecl (lhs, Some rhs) ->
-      let lhs = print_dexp lhs in
-      let rhs = prefixWithType rhs.t (print_exp rhs) in
-      {pla|let <#lhs#> = <#rhs#>;|pla}
   | StmtBind ({ l = LWild; _ }, rhs) ->
       let rhs = prefixWithType rhs.t (print_exp rhs) in
       {pla|let _ = <#rhs#>;|pla}
