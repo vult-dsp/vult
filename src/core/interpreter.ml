@@ -546,30 +546,63 @@ module Eval = struct
     | _ -> failwith "not: argument mismatch"
 
 
-  let push (vm : vm) (value : rvalue) =
+  let push (vm : vm) (value : rvalue) : vm =
     vm.sp <- vm.sp + 1 ;
-    vm.stack.(vm.sp) <- value
+    vm.stack.(vm.sp) <- value ;
+    vm
 
 
-  let pop (vm : vm) : rvalue =
+  let pop (vm : vm) : vm * rvalue =
     let ret = vm.stack.(vm.sp) in
     vm.sp <- vm.sp - 1 ;
-    ret
+    vm, ret
 
 
   let loadRef (vm : vm) n : rvalue = vm.stack.(vm.frame + n)
 
-  let storeRef (vm : vm) n v = vm.stack.(vm.frame + n) <- v
+  let storeRef (vm : vm) n v : vm =
+    vm.stack.(vm.frame + n) <- v ;
+    vm
 
-  let storeRefObject (vm : vm) n i v =
+
+  let storeRefObject (vm : vm) n i v : vm =
     match vm.stack.(vm.frame + n) with
-    | Object elems -> elems.(i) <- v
+    | Object elems ->
+        elems.(i) <- v ;
+        vm
     | _ -> failwith "storeRefMember: invalid input"
 
 
-  let pushArgs (vm : vm) (args : rvalue list) = List.iter (fun v -> push vm v) args
+  let pushValues (vm : vm) (args : rvalue list) : vm = List.fold_left (fun vm v -> push vm v) vm args
 
-  let allocate (vm : vm) n = vm.sp <- vm.sp + n
+  let allocate (vm : vm) n : vm =
+    vm.sp <- vm.sp + n ;
+    vm
+
+
+  let newFrame (vm : vm) : vm * int =
+    let frame = vm.frame in
+    vm.frame <- vm.sp + 1 ;
+    vm, frame
+
+
+  let restoreFrame (vm : vm) frame : vm =
+    vm.sp <- vm.frame - 1 ;
+    vm.frame <- frame ;
+    vm
+
+
+  and eval_array f (vm : vm) (a : 'b array) : vm * 'value array =
+    let vm, a =
+      Array.fold_left
+        (fun (vm, acc) a ->
+          let vm, a = f vm a in
+          vm, a :: acc)
+        (vm, [])
+        a
+    in
+    vm, Array.of_list (List.rev a)
+
 
   let eval_op (op : Compile.op) =
     match op with
@@ -600,85 +633,95 @@ module Eval = struct
     | _ -> failwith "invalid condition"
 
 
-  let rec eval_rvalue (vm : vm) (r : Compile.rvalue) : rvalue =
+  let rec eval_rvalue (vm : vm) (r : Compile.rvalue) : vm * rvalue =
     match r.r with
-    | RVoid -> Void
-    | RInt n -> Int n
-    | RReal n -> Real n
-    | RBool n -> Bool n
-    | RString s -> String s
-    | RRef (n, _) -> loadRef vm n
+    | RVoid -> vm, Void
+    | RInt n -> vm, Int n
+    | RReal n -> vm, Real n
+    | RBool n -> vm, Bool n
+    | RString s -> vm, String s
+    | RRef (n, _) -> vm, loadRef vm n
     | ROp (op, e1, e2) ->
-        let e1 = eval_rvalue vm e1 in
-        let e2 = eval_rvalue vm e2 in
-        (eval_op op) e1 e2
+        let vm, e1 = eval_rvalue vm e1 in
+        let vm, e2 = eval_rvalue vm e2 in
+        vm, (eval_op op) e1 e2
     | RNeg e ->
-        let e = eval_rvalue vm e in
-        neg e
+        let vm, e = eval_rvalue vm e in
+        vm, neg e
     | RNot e ->
-        let e = eval_rvalue vm e in
-        not e
+        let vm, e = eval_rvalue vm e in
+        vm, not e
     | RIf (cond, then_, else_) ->
-        let cond = eval_rvalue vm cond in
+        let vm, cond = eval_rvalue vm cond in
         if isTrue cond then
           eval_rvalue vm then_
         else
           eval_rvalue vm else_
     | RObject elems ->
-        let elems = Array.map (eval_rvalue vm) elems in
-        Object elems
+        let vm, elems = eval_array eval_rvalue vm elems in
+        vm, Object elems
     | RIndex (e, index) ->
-        let e = eval_rvalue vm e in
-        let index = eval_rvalue vm index in
+        let vm, e = eval_rvalue vm e in
+        let vm, index = eval_rvalue vm index in
         begin
           match e, index with
-          | Object elems, Int index -> elems.(index)
+          | Object elems, Int index -> vm, elems.(index)
           | _ -> failwith "index not evaluated correctly"
         end
     | RCall (index, _, args) ->
-        let args = List.map (eval_rvalue vm) args in
+        let vm, args = eval_rvalue_list vm args in
         eval_call vm index args
     | RMember (e, index, _) ->
-        let e = eval_rvalue vm e in
+        let vm, e = eval_rvalue vm e in
         begin
           match e with
-          | Object elems -> elems.(index)
+          | Object elems -> vm, elems.(index)
           | _ -> failwith "member: not a struct"
         end
 
 
-  and eval_lvalue (vm : vm) (l : Compile.lvalue) : lvalue =
+  and eval_rvalue_list vm a =
+    let vm, a =
+      List.fold_left
+        (fun (vm, acc) a ->
+          let vm, a = eval_rvalue vm a in
+          vm, a :: acc)
+        (vm, [])
+        a
+    in
+    vm, List.rev a
+
+
+  and eval_lvalue (vm : vm) (l : Compile.lvalue) : vm * lvalue =
     match l.l with
-    | LVoid -> LVoid
-    | LRef (n, _) -> LRef n
+    | LVoid -> vm, LVoid
+    | LRef (n, _) -> vm, LRef n
     | LTuple elems ->
-        let elems = Array.map (eval_lvalue vm) elems in
-        LTuple elems
+        let vm, elems = eval_array eval_lvalue vm elems in
+        vm, LTuple elems
     | LMember (e, m, _) ->
-        let e = eval_lvalue vm e in
-        LMember (e, m)
+        let vm, e = eval_lvalue vm e in
+        vm, LMember (e, m)
     | LIndex (e, i) ->
-        let e = eval_lvalue vm e in
-        let i = eval_rvalue vm i in
-        LIndex (e, i)
+        let vm, e = eval_lvalue vm e in
+        let vm, i = eval_rvalue vm i in
+        vm, LIndex (e, i)
 
 
-  and eval_call (vm : vm) findex (args : rvalue list) =
+  and eval_call (vm : vm) findex (args : rvalue list) : vm * rvalue =
     match vm.code.(findex) with
     | Function { body; locals; _ } ->
-        let pre_frame = vm.frame in
-        vm.frame <- vm.sp + 1 ;
-        pushArgs vm args ;
-        allocate vm locals ;
-        eval_instr vm body ;
-        let ret = pop vm in
-        vm.sp <- vm.frame - 1 ;
-        vm.frame <- pre_frame ;
-        ret
+        let vm, frame = newFrame vm in
+        let vm = pushValues vm args in
+        let vm = allocate vm locals in
+        let vm = eval_instr vm body in
+        let vm, ret = pop vm in
+        let vm = restoreFrame vm frame in
+        vm, ret
     | External -> failwith ""
 
 
-  and eval_instr (vm : vm) (instr : Compile.instr list) =
+  and eval_instr (vm : vm) (instr : Compile.instr list) : vm =
     let trace vm i =
       if false then begin
         print_stack vm ;
@@ -686,46 +729,47 @@ module Eval = struct
       end
     in
     match instr with
-    | [] -> ()
+    | [] -> vm
     | ({ i = Return e; _ } as h) :: _ ->
         trace vm h ;
-        let e = eval_rvalue vm e in
+        let vm, e = eval_rvalue vm e in
         push vm e
     | ({ i = If (cond, then_, else_); _ } as h) :: t ->
         trace vm h ;
-        let cond = eval_rvalue vm cond in
+        let vm, cond = eval_rvalue vm cond in
         if isTrue cond then
-          let () = eval_instr vm then_ in
+          let vm = eval_instr vm then_ in
           eval_instr vm t
         else
-          let () = eval_instr vm else_ in
+          let vm = eval_instr vm else_ in
           eval_instr vm t
     | ({ i = While (cond, body); _ } as h) :: t ->
         trace vm h ;
-        let rec loop () =
-          let result = eval_rvalue vm cond in
+        let rec loop vm =
+          let vm, result = eval_rvalue vm cond in
           if isTrue result then
-            let () = eval_instr vm body in
-            loop ()
+            let vm = eval_instr vm body in
+            loop vm
           else
             eval_instr vm t
         in
-        loop ()
+        loop vm
     | ({ i = Store (l, r); _ } as h) :: t ->
         trace vm h ;
-        let l = eval_lvalue vm l in
-        let r = eval_rvalue vm r in
-        store vm l r ;
+        let vm, l = eval_lvalue vm l in
+        let vm, r = eval_rvalue vm r in
+        let vm = store vm l r in
         eval_instr vm t
 
 
-  and store (vm : vm) (l : lvalue) (r : rvalue) =
+  and store (vm : vm) (l : lvalue) (r : rvalue) : vm =
     match l, r with
-    | LVoid, _ -> ()
+    | LVoid, _ -> vm
     | LRef n, _ -> storeRef vm n r
     | LMember (LRef n, m), _ -> storeRefObject vm n m r
     | LIndex (LRef n, Int i), _ -> storeRefObject vm n i r
-    | LTuple l_elems, Object r_elems -> Array.iter2 (store vm) l_elems r_elems
+    | LTuple l_elems, Object r_elems ->
+        List.fold_left2 (fun vm l r -> store vm l r) vm (Array.to_list l_elems) (Array.to_list r_elems)
     | _ -> failwith "invalid store"
 end
 
@@ -782,6 +826,6 @@ let run (env : Env.in_top) (prog : top_stmt list) (exp : string) =
   let vm = Eval.new_vm bytecode in
   let findex = Map.find "Main___main_" vm.table in
   let args = createArgument main in
-  let result = Eval.eval_call vm findex args in
+  let _, result = Eval.eval_call vm findex args in
   let str = Pla.print (Eval.print_value result) in
   str
