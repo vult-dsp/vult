@@ -63,14 +63,14 @@ module Compile = struct
     | RReal   of float
     | RBool   of bool
     | RString of string
-    | RRef    of int
+    | RRef    of int * string
     | RObject of rvalue array
     | ROp     of op * rvalue * rvalue
     | RNot    of rvalue
     | RNeg    of rvalue
     | RIf     of rvalue * rvalue * rvalue
-    | RMember of rvalue * int
-    | RCall   of int * rvalue list
+    | RMember of rvalue * int * string
+    | RCall   of int * string * rvalue list
     | RIndex  of rvalue * rvalue
 
   and rvalue =
@@ -80,9 +80,9 @@ module Compile = struct
 
   type lvalue_d =
     | LVoid
-    | LRef    of int
+    | LRef    of int * string
     | LTuple  of lvalue array
-    | LMember of lvalue * int
+    | LMember of lvalue * int * string
     | LIndex  of lvalue * rvalue
 
   and lvalue =
@@ -104,13 +104,17 @@ module Compile = struct
   type segment =
     | External
     | Function of
-        { body : instr list
+        { name : string
+        ; body : instr list
         ; locals : int
+        ; n_args : int
         }
 
-  type compiled =
+  type segments = segment array [@@deriving show]
+
+  type bytecode =
     { table : int Map.t
-    ; code : segment array
+    ; code : segments
     }
 
   let list f (env : 'env) (l : 'e) =
@@ -159,7 +163,7 @@ module Compile = struct
     | LWild -> { l = LVoid; loc }
     | LId name ->
         let index = Map.find name env.locals in
-        { l = LRef index; loc }
+        { l = LRef (index, name); loc }
     | LTuple l ->
         let l = List.map (compile_lexp env) l |> Array.of_list in
         { l = LTuple l; loc }
@@ -169,7 +173,7 @@ module Compile = struct
           | TStruct descr ->
               let index = getIndex s descr.members in
               let e = compile_lexp env e in
-              { l = LMember (e, index); loc }
+              { l = LMember (e, index, s); loc }
           | _ -> failwith "type error"
         end
     | LIndex { e; index } ->
@@ -188,7 +192,7 @@ module Compile = struct
     | EString v -> { r = RString v; loc }
     | EId id ->
         let index = Map.find id env.locals in
-        { r = RRef index; loc }
+        { r = RRef (index, id); loc }
     | EOp (op, e1, e2) ->
         let e1 = compile_exp env e1 in
         let e2 = compile_exp env e2 in
@@ -220,13 +224,13 @@ module Compile = struct
           | TStruct descr ->
               let index = getIndex m descr.members in
               let e = compile_exp env e in
-              { r = RMember (e, index); loc }
+              { r = RMember (e, index, m); loc }
           | _ -> failwith "type error"
         end
     | ECall { path; args } ->
         let args = List.map (compile_exp env) args in
         ( match Map.find_opt path env.functions with
-        | Some index -> { r = RCall (index, args); loc }
+        | Some index -> { r = RCall (index, path, args); loc }
         | None ->
             print_endline ("Function not found " ^ path) ;
             { r = RVoid; loc } )
@@ -313,10 +317,131 @@ module Compile = struct
         let env = { locals = Map.empty; lcount = 0; functions; fcount = env.fcount + 1 } in
         let env = List.fold_left (fun env (n, _, _) -> addLocal env n) env args in
         let env, body = compile_stmt env body in
-        env, [ Function { body; locals = env.lcount } ]
+        let n_args = List.length args in
+        env, [ Function { name; body; locals = env.lcount - n_args; n_args } ]
 
 
   let compile stmts = list compile_top default_env stmts
+
+  let print_op op =
+    match op with
+    | OpAdd -> Pla.string "+"
+    | OpSub -> Pla.string "-"
+    | OpMul -> Pla.string "*"
+    | OpDiv -> Pla.string "/"
+    | OpMod -> Pla.string "%"
+    | OpLand -> Pla.string "&&"
+    | OpLor -> Pla.string "||"
+    | OpBor -> Pla.string "|"
+    | OpBand -> Pla.string "&"
+    | OpBxor -> Pla.string "^"
+    | OpLsh -> Pla.string "<<"
+    | OpRsh -> Pla.string ">>"
+    | OpEq -> Pla.string "=="
+    | OpNe -> Pla.string "<>"
+    | OpLt -> Pla.string "<"
+    | OpLe -> Pla.string "<="
+    | OpGt -> Pla.string ">"
+    | OpGe -> Pla.string ">="
+
+
+  let rec print_rvalue r =
+    match r.r with
+    | RVoid -> Pla.string "()"
+    | RInt n -> Pla.int n
+    | RReal n -> Pla.float n
+    | RBool n -> Pla.string (if n then "true" else "false")
+    | RString s -> Pla.string_quoted s
+    | RRef (n, s) -> {pla|[<#n#i>:<#s#s>]|pla}
+    | RObject elems ->
+        let elems = Pla.map_sep Pla.commaspace print_rvalue (Array.to_list elems) in
+        {pla|{ <#elems#> }|pla}
+    | RIndex (e, i) ->
+        let e = print_rvalue e in
+        let i = print_rvalue i in
+        {pla|<#e#>[<#i#>]|pla}
+    | RCall (i, s, args) ->
+        let args = Pla.map_sep Pla.commaspace print_rvalue args in
+        {pla|<#i#i>:<#s#s>(<#args#>)|pla}
+    | RMember (e, i, s) ->
+        let e = print_rvalue e in
+        {pla|<#e#>.[<#i#i>:<#s#s>]|pla}
+    | RNot e ->
+        let e = print_rvalue e in
+        {pla|not(<#e#>)|pla}
+    | RNeg e ->
+        let e = print_rvalue e in
+        {pla|(-<#e#>)|pla}
+    | RIf (cond, then_, else_) ->
+        let cond = print_rvalue cond in
+        let then_ = print_rvalue then_ in
+        let else_ = print_rvalue else_ in
+        {pla|(if <#cond#> then <#then_#> else <#else_#>)|pla}
+    | ROp (op, e1, e2) ->
+        let e1 = print_rvalue e1 in
+        let e2 = print_rvalue e2 in
+        let op = print_op op in
+        {pla|<#e1#> <#op#> <#e2#>|pla}
+
+
+  let rec print_lvalue (l : lvalue) =
+    match l.l with
+    | LVoid -> Pla.string "_"
+    | LRef (n, s) -> {pla|[<#n#i>:<#s#s>]|pla}
+    | LTuple elems ->
+        let elems = Pla.map_sep Pla.commaspace print_lvalue (Array.to_list elems) in
+        {pla|{ <#elems#> }|pla}
+    | LMember (e, i, s) ->
+        let e = print_lvalue e in
+        {pla|<#e#>.[<#i#i>:<#s#s>]|pla}
+    | LIndex (e, i) ->
+        let e = print_lvalue e in
+        let i = print_rvalue i in
+        {pla|<#e#>[<#i#>]|pla}
+
+
+  let rec print_instr (i : instr) =
+    match i.i with
+    | Store (lvalue, rvalue) ->
+        let lvalue = print_lvalue lvalue in
+        let rvalue = print_rvalue rvalue in
+        {pla|<#lvalue#> <- <#rvalue#>|pla}
+    | Return rvalue ->
+        let rvalue = print_rvalue rvalue in
+        {pla|return <#rvalue#>|pla}
+    | If (cond, then_, else_) ->
+        let cond = print_rvalue cond in
+        let then_ = print_instr_list then_ in
+        let else_ = print_instr_list else_ in
+        {pla|if <#cond#><#then_#+>else<#else_#+>|pla}
+    | While (cond, body) ->
+        let cond = print_rvalue cond in
+        let body = print_instr_list body in
+        {pla|while <#cond#><#body#+>|pla}
+
+
+  and print_instr_list stmts = Pla.map_sep_all Pla.newline print_instr stmts
+
+  let print_segment (s : segment) =
+    match s with
+    | Function { name; body; locals; n_args } ->
+        let body = print_instr_list body in
+        {pla|function <#name#s> : args = <#n_args#i>, locals = <#locals#i><#body#+>|pla}
+    | External -> Pla.string "external"
+
+
+  let print_segments s = Pla.map_sep_all Pla.newline print_segment (Array.to_list s)
+
+  let print_table t =
+    let f (n, i) = {pla|<#i#i>: <#n#s>|pla} in
+    let elems = List.sort (fun (_, n1) (_, n2) -> compare n1 n2) (Map.to_list t) in
+    Pla.map_sep_all Pla.newline f elems
+
+
+  let print_bytecode b =
+    let table = print_table b.table in
+    let segments = print_segments b.code in
+    {pla|<#table#><#><#segments#>|pla}
 end
 
 module Eval = struct
@@ -344,8 +469,41 @@ module Eval = struct
     ; code : Compile.segment array
     }
 
-  let new_vm (compiled : Compile.compiled) =
-    { stack = Array.init 1024 (fun _ -> Void); sp = 0; frame = 0; table = compiled.table; code = compiled.code }
+  let rec print_value r : Pla.t =
+    match r with
+    | Void -> Pla.string "#"
+    | Int n -> Pla.int n
+    | Real n -> Pla.float n
+    | Bool v -> Pla.string (if v then "true" else "false")
+    | String s -> Pla.string_quoted s
+    | Ref n -> {pla|ref(<#n#i>)|pla}
+    | Object elems ->
+        let elems =
+          List.mapi
+            (fun i e ->
+              let e = print_value e in
+              {pla|'<#i#i>': <#e#>|pla})
+            (Array.to_list elems)
+        in
+        let elems = Pla.join_sep Pla.commaspace elems in
+        {pla|{ <#elems#> }|pla}
+
+
+  let print_stack (vm : vm) =
+    let rec loop n =
+      if n <= vm.sp then begin
+        if vm.frame = n then print_string "->" else print_string "  " ;
+        print_int n ;
+        print_string " : " ;
+        print_endline (Pla.print (print_value vm.stack.(n))) ;
+        loop (n + 1)
+      end
+    in
+    loop 0
+
+
+  let new_vm (compiled : Compile.bytecode) =
+    { stack = Array.init 1024 (fun _ -> Void); sp = -1; frame = 0; table = compiled.table; code = compiled.code }
 
 
   let numeric i f e1 e2 : rvalue =
@@ -449,7 +607,7 @@ module Eval = struct
     | RReal n -> Real n
     | RBool n -> Bool n
     | RString s -> String s
-    | RRef n -> loadRef vm n
+    | RRef (n, _) -> loadRef vm n
     | ROp (op, e1, e2) ->
         let e1 = eval_rvalue vm e1 in
         let e2 = eval_rvalue vm e2 in
@@ -477,10 +635,10 @@ module Eval = struct
           | Object elems, Int index -> elems.(index)
           | _ -> failwith "index not evaluated correctly"
         end
-    | RCall (index, args) ->
+    | RCall (index, _, args) ->
         let args = List.map (eval_rvalue vm) args in
         eval_call vm index args
-    | RMember (e, index) ->
+    | RMember (e, index, _) ->
         let e = eval_rvalue vm e in
         begin
           match e with
@@ -492,11 +650,11 @@ module Eval = struct
   and eval_lvalue (vm : vm) (l : Compile.lvalue) : lvalue =
     match l.l with
     | LVoid -> LVoid
-    | LRef n -> LRef n
+    | LRef (n, _) -> LRef n
     | LTuple elems ->
         let elems = Array.map (eval_lvalue vm) elems in
         LTuple elems
-    | LMember (e, m) ->
+    | LMember (e, m, _) ->
         let e = eval_lvalue vm e in
         LMember (e, m)
     | LIndex (e, i) ->
@@ -507,13 +665,15 @@ module Eval = struct
 
   and eval_call (vm : vm) findex (args : rvalue list) =
     match vm.code.(findex) with
-    | Function { body; locals } ->
+    | Function { body; locals; _ } ->
+        let pre_frame = vm.frame in
         vm.frame <- vm.sp + 1 ;
         pushArgs vm args ;
         allocate vm locals ;
         eval_instr vm body ;
         let ret = pop vm in
-        vm.sp <- vm.frame ;
+        vm.sp <- vm.frame - 1 ;
+        vm.frame <- pre_frame ;
         ret
     | External -> failwith ""
 
@@ -557,22 +717,9 @@ module Eval = struct
     | LIndex (LRef n, Int i), _ -> storeRefObject vm n i r
     | LTuple l_elems, Object r_elems -> Array.iter2 (store vm) l_elems r_elems
     | _ -> failwith "invalid store"
-
-
-  let rec print_value r : Pla.t =
-    match r with
-    | Void -> Pla.string "()"
-    | Int n -> Pla.int n
-    | Real n -> Pla.float n
-    | Bool v -> Pla.string (if v then "true" else "false")
-    | String s -> Pla.string_quoted s
-    | Ref n -> {pla|ref(<#n#i>)|pla}
-    | Object elems ->
-        let elems = Pla.map_sep Pla.commaspace print_value (Array.to_list elems) in
-        {pla|( <#elems#> )|pla}
 end
 
-type bytecode = Compile.compiled
+type bytecode = Compile.bytecode
 
 let compile stmts : bytecode =
   let env, functions = Compile.compile stmts in
@@ -621,7 +768,8 @@ let run (env : Env.in_top) (prog : top_stmt list) (exp : string) =
   let e = Parser.Parse.parseString (Some "Main_.vult") (Pla.print {pla|fun _main_() return <#exp#s>;|pla}) in
   let env, main = Inference.infer_single env e in
   let main = Prog.convert env main in
-  let vm = Eval.new_vm (compile (prog @ main)) in
+  let bytecode = compile (prog @ main) in
+  let vm = Eval.new_vm bytecode in
   let findex = Map.find "Main___main_" vm.table in
   let args = createArgument main in
   let result = Eval.eval_call vm findex args in
