@@ -239,7 +239,7 @@ module Compile = struct
   and makeOp op e1 e2 =
     match op with
     | OpAdd -> ROp (OpAdd, e1, e2)
-    | OpSub -> ROp (OpAdd, e1, e2)
+    | OpSub -> ROp (OpSub, e1, e2)
     | OpMul -> ROp (OpMul, e1, e2)
     | OpDiv -> ROp (OpDiv, e1, e2)
     | OpMod -> ROp (OpMod, e1, e2)
@@ -679,12 +679,20 @@ module Eval = struct
 
 
   and eval_instr (vm : vm) (instr : Compile.instr list) =
+    let trace vm i =
+      if false then begin
+        print_stack vm ;
+        print_endline (Pla.print (Compile.print_instr i))
+      end
+    in
     match instr with
     | [] -> ()
-    | { i = Return e; _ } :: _ ->
+    | ({ i = Return e; _ } as h) :: _ ->
+        trace vm h ;
         let e = eval_rvalue vm e in
         push vm e
-    | { i = If (cond, then_, else_); _ } :: t ->
+    | ({ i = If (cond, then_, else_); _ } as h) :: t ->
+        trace vm h ;
         let cond = eval_rvalue vm cond in
         if isTrue cond then
           let () = eval_instr vm then_ in
@@ -692,7 +700,8 @@ module Eval = struct
         else
           let () = eval_instr vm else_ in
           eval_instr vm t
-    | { i = While (cond, body); _ } :: t ->
+    | ({ i = While (cond, body); _ } as h) :: t ->
+        trace vm h ;
         let rec loop () =
           let result = eval_rvalue vm cond in
           if isTrue result then
@@ -702,7 +711,8 @@ module Eval = struct
             eval_instr vm t
         in
         loop ()
-    | { i = Store (l, r); _ } :: t ->
+    | ({ i = Store (l, r); _ } as h) :: t ->
+        trace vm h ;
         let l = eval_lvalue vm l in
         let r = eval_rvalue vm r in
         store vm l r ;
