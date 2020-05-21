@@ -124,7 +124,12 @@ let convertExpId (p : parameters) (is_val : lhs_kind) (id : Id.t) =
 
 let convertSingleVarId (p : parameters) (id : Id.t) : string =
    match id with
-   | [ name ] -> Replacements.getKeyword p.repl name
+   | [ name ] ->
+      let name = Replacements.getKeyword p.repl name in
+      if p.shorten then
+         NameTable.getOrRegister p.variables name
+      else
+         name
    | _ -> failwith "ProgToCode.convertSingleVarId: this should be a single identifier"
 
 

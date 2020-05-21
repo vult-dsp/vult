@@ -206,7 +206,7 @@ end
 let dot = Pla.map_sep (Pla.string ".") Pla.string
 
 (** Returns true if the expression is simple and does not need parenthesis *)
-let isSimple (e : cexp) : bool =
+let rec isSimple (e : cexp) : bool =
    match e with
    | CEInt _
    |CEFloat _
@@ -216,6 +216,7 @@ let isSimple (e : cexp) : bool =
    |CEIndex _
    |CEVar _ ->
       true
+   | CEAccess (e, _) -> isSimple e
    | _ -> false
 
 
