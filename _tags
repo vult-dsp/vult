@@ -14,7 +14,7 @@
 
 # Link libraries and ppx for Js (js_of_ocaml) files
 <src/js/*.byte> : package(js_of_ocaml)
-<src/js/*.ml> : package(js_of_ocaml), package(js_of_ocaml.ppx)
+<src/js/*.ml> : package(js_of_ocaml), package(js_of_ocaml-ppx)
 
 # Makes the bytecode debuggable and linking the custom runtime
 true : bin_annot,custom,debug

@@ -554,7 +554,7 @@ private float Sawcore_process(Sawcore__ctx_type_1 _ctx, float cv, float reset){
    }
    _ctx.phase = new_phase;
    out = _ctx.phase;
-   if_ctx.reset_state{
+   if(_ctx.reset_state){
       boolean done = false; 
       float ptr = 0.0f; 
       Sawcore_ptr_w2(_ctx._inst622,_ctx.phase,_ctx.rate);

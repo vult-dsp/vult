@@ -813,7 +813,7 @@ private float Tricore_process(Tricore__ctx_type_0 _ctx, float cv, float reset, f
    if(Util_change(_ctx._inst13b,cv)){ _ctx.rate = (4.f * Util_cvToRate_1024(cv)); }
    float new_phase = 0.0f; 
    float _if_13 = 0.0f; 
-   if_ctx.direction{ _if_13 = _ctx.rate; }
+   if(_ctx.direction){ _if_13 = _ctx.rate; }
    else
    { _if_13 = (- _ctx.rate); }
    new_phase = (_ctx.phase + _if_13);
@@ -832,7 +832,7 @@ private float Tricore_process(Tricore__ctx_type_0 _ctx, float cv, float reset, f
    if(bdisable){ _ctx.phase = 0.0f; }
    else
    { _ctx.phase = new_phase; }
-   if_ctx.reset_state{
+   if(_ctx.reset_state){
       if((Math.abs(_ctx.reset_phase) > 10.f) || bdisable){
          float reset_speed = 0.0f; 
          if(bdisable){ reset_speed = 0.01f; }
