@@ -1,6 +1,6 @@
 (library
  (name generators)
- (modules Lua Rust)
+ (modules Lua Rust C)
  (libraries core pla)
  (preprocess
   (pps pla.ppx)))

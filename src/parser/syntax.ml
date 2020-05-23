@@ -150,3 +150,9 @@ let compare_path (p1 : path) (p2 : path) =
       if ret = 0 then String.compare n1 n2 else ret
   | { id = id1; n = None; _ }, { id = id2; n = None; _ } -> String.compare id1 id2
   | _ -> compare p1 p2
+
+
+let print_path (p : path) =
+  match p with
+  | { id; n = None; _ } -> Pla.string id
+  | { id; n = Some m; _ } -> {pla|<#m#s>.<#id#s>|pla}

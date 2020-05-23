@@ -178,7 +178,7 @@ let builtin_functions =
 
 
 let builtin_types =
-  [ "int"; "real"; "fix16"; "bool"; "string" ]
+  [ "int"; "real"; "fix16"; "bool"; "string"; "unit" ]
   |> List.map (fun n ->
          ( n
          , { path = Parser.Syntax.{ id = n; n = None; loc = Loc.default }
@@ -261,7 +261,9 @@ let lookType (env : in_func) (path : path) : t =
   let reportNotFound result =
     match result with
     | Some found -> found
-    | None -> failwith "type not found"
+    | None ->
+        let path = Pla.print (Parser.Syntax.print_path path) in
+        failwith ("lookType: type not found " ^ path)
   in
   match path with
   | { id; n = Some n; _ } ->
@@ -280,7 +282,9 @@ let lookTypeInModule (env : in_module) (path : path) : t =
   let reportNotFound result =
     match result with
     | Some found -> found
-    | None -> failwith "type not found"
+    | None ->
+        let path = Pla.print (Parser.Syntax.print_path path) in
+        failwith ("lookTypeInModule: type not found " ^ path)
   in
   match path with
   | { id; n = Some n; _ } ->

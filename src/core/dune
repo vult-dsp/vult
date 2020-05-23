@@ -1,6 +1,6 @@
 (library
  (name core)
- (modules Typed Prog Inference Env Interpreter)
+ (modules Typed Prog Inference Env Passes)
  (libraries util parser pla)
  (flags
   (:standard -w -30))

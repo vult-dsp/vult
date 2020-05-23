@@ -57,7 +57,7 @@ let showResult (args : args) (output : output) =
       prerr_endline error_strings
 
 
-let generate stmts = [ ParsedCode (Rust.generate stmts) ]
+let generate stmts = [ ParsedCode (C.generate stmts) ]
 
 let generateCode (args : args) (parsed : Parse.parsed_file list) : output list =
   let env, typed = Inference.infer parsed in
@@ -71,7 +71,7 @@ let generateCode (args : args) (parsed : Parse.parsed_file list) : output list =
   let run =
     match args.eval with
     | Some e ->
-        let s = Interpreter.run env stmts e in
+        let s = Vm.Interpreter.run env stmts e in
         [ ParsedCode s ]
     | None -> []
   in

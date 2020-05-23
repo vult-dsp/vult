@@ -26,11 +26,7 @@ open Parser
 
 type path = Syntax.path
 
-let print_path (p : path) =
-  match p with
-  | { id; n = None; _ } -> Pla.string id
-  | { id; n = Some m; _ } -> {pla|<#m#s>.<#id#s>|pla}
-
+let print_path (p : path) = Syntax.print_path p
 
 type type_d_ =
   | TENoReturn

@@ -39,8 +39,10 @@ type type_d_ =
 
 and struct_descr =
   { path : string
-  ; members : (string * type_ * Loc.t) list
+  ; members : param list
   }
+
+and param = string * type_ * Loc.t
 
 and type_ =
   { t : type_d_
@@ -145,11 +147,9 @@ and stmt =
   ; loc : Loc.t
   }
 
-type arg = string * type_ * Loc.t
-
 and function_def =
   { name : string
-  ; args : arg list
+  ; args : param list
   ; t : type_ list * type_
   ; loc : Loc.t
   ; tags : tag list
@@ -397,6 +397,7 @@ module TypedToProg = struct
     | T.TENoReturn -> state, { t = TVoid; loc }
     | T.TEUnbound _ -> failwith "untyped"
     | T.TEOption _ -> failwith "undecided type"
+    | T.TEId { id = "unit"; n = None; _ } -> state, { t = TVoid; loc }
     | T.TEId { id = "int"; n = None; _ } -> state, { t = TInt; loc }
     | T.TEId { id = "real"; n = None; _ } -> state, { t = TReal; loc }
     | T.TEId { id = "fix16"; n = None; _ } -> state, { t = TFixed; loc }
