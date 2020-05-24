@@ -411,14 +411,16 @@ module TypedToProg = struct
           | None ->
               ( match Env.getType env p with
               | None -> failwith "unknown type"
-              | Some { members; _ } ->
+              | Some { descr = Enum _; _ } -> state, { t = TInt; loc }
+              | Some { descr = Record members; _ } ->
                   let members =
                     List.map (fun (name, (var : Env.var)) -> name, var.t, var.loc) (Env.Map.to_list members)
                   in
                   let state, members = type_list env state members in
                   let t = { t = TStruct { path = ps; members }; loc } in
                   let types = Cache.add ps t state.types in
-                  { state with types }, t )
+                  { state with types }, t
+              | Some { descr = Simple; _ } -> failwith "Type does not have members" )
         end
     | T.TELink t -> type_ env state t
     | T.TEComposed ("array", [ t; dim ]) ->
@@ -640,6 +642,7 @@ module TypedToProg = struct
         let t = { t = TStruct struct_descr; loc = t.loc } in
         let types = Cache.add p t state.types in
         { state with types }, [ { top = TopType struct_descr; loc = t.loc } ]
+    | TopEnum _ -> state, []
 
 
   let top_stmt_list (env : Env.in_top) (state : state) (t : Typed.top_stmt list) = list top_stmt env state t

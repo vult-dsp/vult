@@ -46,6 +46,7 @@ type exp_d =
   | SEReal   of float
   | SEString of string
   | SEId     of string
+  | SEEnum   of path
   | SEIndex  of
       { e : exp
       ; index : exp
@@ -130,10 +131,13 @@ type top_stmt_d =
   | STopError
   | STopExternal of function_def * string option
   | STopFunction of function_def * stmt
-  (*| STopTypeAlias of string * type_*)
   | STopType     of
       { name : string
       ; members : (string * type_ * Loc.t) list
+      }
+  | STopEnum     of
+      { name : string
+      ; members : (string * Loc.t) list
       }
 
 and top_stmt =

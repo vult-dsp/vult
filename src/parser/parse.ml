@@ -60,7 +60,8 @@ let rec moveToNextTopStatement (buffer : Stream.stream) : unit =
   | EOF -> ()
   | FUN
    |TYPE
-   |EXTERNAL ->
+   |EXTERNAL
+   |ENUM ->
       ()
   | _ ->
       let _ = Stream.skip buffer in
@@ -443,7 +444,10 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
   | OP, "-" -> unaryOp buffer token
   | ID, _ ->
       let id = token.value in
-      { e = SEId id; loc }
+      if String.capitalize_ascii id = id then
+        { e = SEEnum { id; n = None; loc }; loc }
+      else
+        { e = SEId id; loc }
   | LPAREN, _ ->
       begin
         match Stream.peek buffer with
@@ -501,6 +505,14 @@ and exp_member (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp
   match right.e with
   | SEMember (({ e = SEId id; _ } as i), n) -> { right with e = SEMember ({ i with e = SEMember (left, id) }, n) }
   | SEId id -> { right with e = SEMember (left, id) }
+  | SEEnum { id; n = None; loc } ->
+      begin
+        match left.e with
+        | SEId n -> { right with e = SEEnum { id; n = Some n; loc } }
+        | _ ->
+            let message = Error.PointedError (token.loc, "Invalid expression") in
+            raise (ParserError message)
+      end
   | _ ->
       let message = Error.PointedError (token.loc, "Invalid expression") in
       raise (ParserError message)
@@ -815,6 +827,54 @@ and type_elem (buffer : Stream.stream) =
   name, type_, loc
 
 
+and stmtEnum (buffer : Stream.stream) : top_stmt =
+  let _ = Stream.consume buffer ENUM in
+  let name, loc = id_name buffer in
+  match Stream.peek buffer with
+  | LBRACE ->
+      let _ = Stream.skip buffer in
+      let members = enum_member_type buffer in
+      let _ = Stream.consume buffer RBRACE in
+      { top = STopEnum { name; members }; loc }
+  | _ ->
+      let got = tokenToString (Stream.current buffer) in
+      let message = Printf.sprintf "Expecting a list of value declarations '{ val x:... }' but got %s" got in
+      raise (ParserError (Stream.makeError buffer message))
+
+
+and enum_member_type (buffer : Stream.stream) =
+  match Stream.peek buffer with
+  | RBRACE -> failwith "empty type"
+  | ID ->
+      let rec loop acc =
+        match Stream.peek buffer with
+        | ID ->
+            let decl = enum_name buffer in
+            begin
+              match Stream.peek buffer with
+              | COMMA ->
+                  let _ = Stream.consume buffer COMMA in
+                  loop (decl :: acc)
+              | RBRACE -> List.rev acc
+              | _ -> failwith "Expecting an enum identifier"
+            end
+        | _ -> List.rev acc
+      in
+      loop []
+  | _ ->
+      let got = tokenToString (Stream.current buffer) in
+      let message = Printf.sprintf "Expecting a list of value declarations '{ val x:... }' but got %s" got in
+      raise (ParserError (Stream.makeError buffer message))
+
+
+and enum_name (buffer : Stream.stream) =
+  let name, loc = id_name buffer in
+  if String.capitalize_ascii name = name then
+    name, loc
+  else
+    failwith "Enum names should start with uppercase"
+
+
 and stmtWhile (buffer : Stream.stream) : stmt =
   let loc = Stream.location buffer in
   let _ = Stream.consume buffer WHILE in
@@ -873,6 +933,7 @@ and topStmt (buffer : Stream.stream) : top_stmt =
     | FUN -> stmtFunction buffer
     | TYPE -> stmtType buffer
     | EXTERNAL -> stmtExternal buffer
+    | ENUM -> stmtEnum buffer
     | _ ->
         let message = Printf.sprintf "Expecting a function or type declaration" in
         raise (ParserError (Stream.makeError buffer message))

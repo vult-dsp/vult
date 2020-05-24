@@ -155,6 +155,10 @@ type top_stmt_d =
       { path : path
       ; members : (string * type_ * Loc.t) list
       }
+  | TopEnum     of
+      { path : path
+      ; members : (string * Loc.t) list
+      }
 
 and top_stmt =
   { top : top_stmt_d
@@ -309,10 +313,12 @@ and print_next_function_def kind next =
   | Some (def, body) -> print_function_def (next_kind kind) def (`Body body)
 
 
-let print_member (name, t, _) =
+let print_record_member (name, t, _) =
   let t = print_type_ t in
   {pla|<#name#s> : <#t#>;|pla}
 
+
+let print_enum_member (name, _) = {pla|<#name#s>|pla}
 
 let print_top_stmt t =
   match t.top with
@@ -320,8 +326,12 @@ let print_top_stmt t =
   | TopExternal (def, linkname) -> print_function_def "external" def (`LinkName linkname)
   | TopType { path = p; members } ->
       let p = print_path p in
-      let members = Pla.map_sep_all Pla.newline print_member members in
+      let members = Pla.map_sep_all Pla.newline print_record_member members in
       {pla|type <#p#> {<#members#+>}<#>|pla}
+  | TopEnum { path = p; members } ->
+      let p = print_path p in
+      let members = Pla.map_sep Pla.commaspace print_enum_member members in
+      {pla|enum <#p#> {<#members#+>}<#>|pla}
 
 
 let print_prog prog = Pla.map_sep_all Pla.newline print_top_stmt prog

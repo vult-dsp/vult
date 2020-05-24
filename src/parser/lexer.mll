@@ -48,6 +48,7 @@ let keyword_table =
       "return",RET;
       "while",WHILE;
       "type",TYPE;
+      "enum",ENUM;
       "true",TRUE;
       "false",FALSE;
       "and",AND;
@@ -91,6 +92,7 @@ let kindToString kind =
    | MEM   -> "'mem'"
    | VAL   -> "'val'"
    | TYPE  -> "'type'"
+   | ENUM  -> "'enum'"
    | RET   -> "'return'"
    | IF    -> "'if'"
    | THEN  -> "'then'"

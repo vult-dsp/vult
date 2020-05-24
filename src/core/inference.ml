@@ -59,7 +59,7 @@ let constrainOption l1 l2 =
 let rec pickOption original l tt =
   let rec loop l =
     match l with
-    | [] -> failwith "does not match a ny type"
+    | [] -> failwith "does not match any type"
     | h :: t ->
         if unify h tt then
           linkType ~from:tt ~into:original
@@ -255,13 +255,21 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
       let env, e = exp env e in
       ( match (unlink e.t).tx with
       | TEId path ->
-          let def = Env.lookType env path in
           begin
-            match Map.find m def.members with
-            | None -> failwith "member not found"
-            | Some { t; _ } -> env, { e = EMember (e, m); t; loc }
+            match Env.lookType env path with
+            | { descr = Record members; _ } ->
+                begin
+                  match Map.find m members with
+                  | None -> failwith "member not found"
+                  | Some { t; _ } -> env, { e = EMember (e, m); t; loc }
+                end
+            | _ -> failwith "Not a record type"
           end
       | _ -> failwith "exp: invalid access to type" )
+  | { e = SEEnum path; loc } ->
+      let type_path, tloc, index = Env.lookEnum env path in
+      let t = C.path tloc type_path in
+      env, { e = EInt index; t; loc }
 
 
 and exp_list (env : Env.in_func) (l : Syntax.exp list) : Env.in_func * exp list =
@@ -318,11 +326,15 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
       let env, e = lexp env e in
       ( match (unlink e.t).tx with
       | TEId path ->
-          let def = Env.lookType env path in
           begin
-            match Map.find m def.members with
-            | None -> failwith "member not found"
-            | Some { t; _ } -> env, { l = LMember (e, m); t; loc }
+            match Env.lookType env path with
+            | { descr = Record members; _ } ->
+                begin
+                  match Map.find m members with
+                  | None -> failwith "member not found"
+                  | Some { t; _ } -> env, { l = LMember (e, m); t; loc }
+                end
+            | _ -> failwith "Not a record type"
           end
       | _ -> failwith "lexp: invalid access to type" )
 
@@ -504,13 +516,13 @@ let ext_function (env : Env.in_context) ((def : Syntax.function_def), (link_name
 
 let getContextArgument (context : Env.context) loc : arg option =
   match context with
-  | Some (p, c) ->
-      if Map.is_empty c.members then
+  | Some (p, { descr = Record members; _ }) ->
+      if Map.is_empty members then
         None
       else
         let ctx_t = C.path loc p in
         Some (context_name, ctx_t, loc)
-  | None -> None
+  | _ -> None
 
 
 let insertContextArgument (env : Env.in_context) (def : function_def) : function_def =
@@ -548,6 +560,10 @@ let rec top_stmt (env : Env.in_module) (s : Syntax.top_stmt) : Env.in_module * t
       let env = Env.addType env name members loc in
       let path = Env.getPath env.m name loc in
       env, { top = TopType { path; members }; loc }
+  | { top = STopEnum { name; members }; loc } ->
+      let env = Env.addEnum env name members loc in
+      let path = Env.getPath env.m name loc in
+      env, { top = TopEnum { path; members }; loc }
 
 
 and top_stmt_list (env : Env.in_module) (s : Syntax.top_stmt list) : Env.in_module * top_stmt list =
@@ -565,10 +581,12 @@ and top_stmt_list (env : Env.in_module) (s : Syntax.top_stmt list) : Env.in_modu
 let getTypesFromModule m =
   Map.fold
     (fun _ t s ->
-      if Map.is_empty t.Env.members then
-        s
-      else
-        t :: s)
+      match t.descr with
+      | Record members when Map.is_empty members -> s
+      | Record _ -> t :: s
+      | Simple
+       |Enum _ ->
+          s)
     []
     m.Env.types
 
@@ -588,9 +606,14 @@ let createTypes (env : Env.in_top) =
   in
   List.map
     (fun (t : Env.t) ->
-      let members = Map.fold (fun _ (var : Env.var) s -> (var.name, var.t, var.loc) :: s) [] t.members in
-      let members = List.sort (fun (n1, _, _) (n2, _, _) -> compare n1 n2) members in
-      { top = TopType { path = t.path; members }; loc = t.loc })
+      match t.descr with
+      | Record members ->
+          let members = Map.fold (fun _ (var : Env.var) s -> (var.name, var.t, var.loc) :: s) [] members in
+          let members = List.sort (fun (n1, _, _) (n2, _, _) -> compare n1 n2) members in
+          { top = TopType { path = t.path; members }; loc = t.loc }
+      | Enum _
+       |Simple ->
+          failwith "There should not be other than records here")
     types
 
 

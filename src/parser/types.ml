@@ -58,6 +58,7 @@ type token_enum =
   | DOT
   | WHILE
   | TYPE
+  | ENUM
   | LARR
   | RARR
   | TRUE

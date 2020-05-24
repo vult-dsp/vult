@@ -71,6 +71,7 @@ module Dependencies = struct
     | SETuple elems -> list exp set elems
     | SEMember (e, _) -> exp set e
     | SEGroup e -> exp set e
+    | SEEnum p -> path set p
 
 
   let rec dexp set d =
@@ -115,6 +116,7 @@ module Dependencies = struct
     | STopExternal (def, _) -> function_def set (def, { s = SStmtError; loc = s.loc })
     | STopFunction (def, body) -> function_def set (def, body)
     | STopType { members } -> list (fun set (_, t, _) -> type_ set t) set members
+    | STopEnum _ -> set
 
 
   let get s = Set.to_list (list top_stmt Set.empty s)

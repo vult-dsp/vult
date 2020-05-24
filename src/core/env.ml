@@ -78,9 +78,14 @@ type var =
   ; loc : Loc.t
   }
 
+type type_descr =
+  | Simple
+  | Record of var Map.t
+  | Enum   of (string * int * Loc.t) Map.t
+
 type t =
   { path : path
-  ; members : var Map.t
+  ; descr : type_descr
   ; index : int
   ; loc : Loc.t
   ; generated : bool
@@ -100,6 +105,7 @@ type m =
   { name : string
   ; functions : f Map.t
   ; types : t Map.t
+  ; enums : t Map.t
   }
 
 type in_top =
@@ -182,7 +188,7 @@ let builtin_types =
   |> List.map (fun n ->
          ( n
          , { path = Parser.Syntax.{ id = n; n = None; loc = Loc.default }
-           ; members = Map.empty ()
+           ; descr = Simple
            ; index = 0
            ; loc = Loc.default
            ; generated = false
@@ -205,8 +211,8 @@ let rec lookVarInScopes (scopes : var Map.t list) name : var option =
 
 let lookVarInContext (context : context) name : var option =
   match context with
-  | Some (_, { members; _ }) -> Map.find name members
-  | None -> None
+  | Some (_, { descr = Record members; _ }) -> Map.find name members
+  | _ -> None
 
 
 let lookVar (env : in_func) (name : string) : var =
@@ -216,6 +222,27 @@ let lookVar (env : in_func) (name : string) : var =
       ( match lookVarInScopes env.f.locals name with
       | Some found -> found
       | None -> failwith "var not found" )
+
+
+let lookEnum (env : in_func) (path : path) =
+  let findEnumInModule enums id =
+    match Map.find id enums with
+    | Some ({ descr = Enum members; _ } as t) ->
+        begin
+          match Map.find id members with
+          | Some (_, index, _) -> t.path, t.loc, index
+          | None -> failwith "Enum not found"
+        end
+    | _ -> failwith "Enum not found"
+  in
+  match path with
+  | { id; n = None; _ } -> findEnumInModule env.m.enums id
+  | { id; n = Some n; _ } ->
+      begin
+        match Map.find n env.top.modules with
+        | Some m -> findEnumInModule m.enums id
+        | None -> failwith "Module"
+      end
 
 
 let lookFunctionCall (env : in_func) (path : path) : f =
@@ -307,8 +334,8 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
       failwith ("type changed: " ^ found.name)
   in
   match kind, env.f.context with
-  | (Mem | Inst), Some (_, context) ->
-      Map.update report_mem name { name; t; kind; loc } context.members ;
+  | (Mem | Inst), Some (_, { descr = Record members; _ }) ->
+      Map.update report_mem name { name; t; kind; loc } members ;
       env
   | (Mem | Inst), None -> failwith "Internal error: cannot add mem to functions with no context"
   | Val, _ ->
@@ -318,6 +345,7 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
       | h :: _ ->
           Map.update report name { name; t; kind; loc } h ;
           env )
+  | _, Some _ -> failwith "Not a record"
 
 
 let pushScope (env : in_func) : in_func =
@@ -360,28 +388,61 @@ let createContextForFunction (env : in_module) name loc : in_context =
   let type_name = name ^ "_type" in
   let path = getPath env.m type_name loc in
   let index = getModuleTick env in
-  let t = { members = Map.empty (); path; index; loc; generated = true } in
+  let t = { descr = Record (Map.empty ()); path; index; loc; generated = true } in
   let _ = Map.update report type_name t env.m.types in
   { top = env.top; m = env.m; context = Some (path, t) }
 
 
-let addMemberVariables members =
+let addRecordMember members =
   let report _ = failwith "duplicated member of type" in
-  List.fold_left
-    (fun m (name, t, loc) ->
-      Map.update report name { name; t; kind = Val; loc } m ;
-      m)
-    (Map.empty ())
-    members
+  let members =
+    List.fold_left
+      (fun m (name, t, loc) ->
+        Map.update report name { name; t; kind = Val; loc } m ;
+        m)
+      (Map.empty ())
+      members
+  in
+  Record members
 
 
 let addType (env : in_module) type_name members loc : in_module =
   let report _ = failwith "type exitst" in
   let index = getModuleTick env in
   let path = getPath env.m type_name loc in
-  let members = addMemberVariables members in
-  let t = { path; members; loc; index; generated = false } in
+  let descr = addRecordMember members in
+  let t = { path; descr; loc; index; generated = false } in
   let _ = Map.update report type_name t env.m.types in
+  env
+
+
+let addEnumMember members =
+  let report _ = failwith "duplicated enum type" in
+  let members, _ =
+    List.fold_left
+      (fun (m, i) (name, loc) ->
+        Map.update report name (name, i, loc) m ;
+        m, i + 1)
+      (Map.empty (), 0)
+      members
+  in
+  Enum members
+
+
+let addEnumToModule (env : in_module) members t =
+  let report _ = failwith "the enum exitst" in
+  let () = List.iter (fun (name, _) -> Map.update report name t env.m.enums) members in
+  env
+
+
+let addEnum (env : in_module) type_name members loc : in_module =
+  let report _ = failwith "type exitst" in
+  let index = getModuleTick env in
+  let path = getPath env.m type_name loc in
+  let descr = addEnumMember members in
+  let t = { path; descr; loc; index; generated = false } in
+  let _ = Map.update report type_name t env.m.types in
+  let env = addEnumToModule env members t in
   env
 
 
@@ -424,8 +485,8 @@ let enterFunction
 
 let isFunctionActive (f : f) =
   match f.context with
-  | Some (_, t) -> not (Map.is_empty t.members)
-  | None -> false
+  | Some (_, { descr = Record members; _ }) -> not (Map.is_empty members)
+  | _ -> false
 
 
 let exitFunction (env : in_func) : in_context = { top = env.top; m = env.m; context = env.f.context }
@@ -435,7 +496,7 @@ let enterModule (env : in_top) (name : string) : in_module =
   | Some m -> { top = env; m; tick = 0 }
   | None ->
       let report _ = failwith ("duplicate module: " ^ name) in
-      let m : m = { name; functions = Map.empty (); types = Map.empty () } in
+      let m : m = { name; functions = Map.empty (); types = Map.empty (); enums = Map.empty () } in
       let () = Map.update report name m env.modules in
       { top = env; m; tick = 0 }
 
