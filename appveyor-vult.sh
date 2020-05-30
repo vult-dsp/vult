@@ -12,12 +12,12 @@ tar -xf 'opam64.tar.xz'
 opam init default "https://github.com/fdopen/opam-repository-mingw.git#opam2" -c "ocaml-variants.4.07.1+mingw64" --no-setup --disable-sandboxing
 eval $(ocaml-env cygwin)
 
-opam install pla containers ppx_deriving ounit yojson menhir result ocamlformat -y
+opam install pla containers ppx_deriving ounit yojson menhir result ocamlformat ocamlbuild -y
 # build vult
 cd $APPVEYOR_BUILD_FOLDER
 ls
 pwd
 make all
-cp _build/default/src/vult.exe vultc.exe
+cp _build/default/src/vult.exe vult.exe
 # install vultc from npm
 #npm install -g vult
