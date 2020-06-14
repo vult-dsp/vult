@@ -43,7 +43,7 @@ module Simplify = struct
   let mapper = { Mapper.identity with exp }
 end
 
-let mapper = Mapper.identity
+let mapper = Simplify.mapper
 
 let run (prog : prog) : prog =
   let _state, prog = Mapper.prog mapper default_env default_state prog in
