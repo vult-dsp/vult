@@ -49,8 +49,6 @@ and type_ =
   ; loc : Loc.t
   }
 
-type fun_type = type_ list * type_
-
 type operator =
   | OpAdd
   | OpSub
@@ -164,6 +162,8 @@ and top_stmt =
   { top : top_stmt_d
   ; loc : Loc.t
   }
+
+type prog = top_stmt list
 
 module Print = struct
   let rec print_type_ (t : type_) : Pla.t =

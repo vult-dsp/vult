@@ -236,8 +236,6 @@ let print_member (n, (t : type_), _) =
       {pla|<#t#> <#n#s>;|pla}
 
 
-let addLifetime (args, t) = isReference t || List.exists isReference args
-
 let print_fn_type_arg (t : type_) = print_type_ t
 
 let print_arg (n, (t : type_), _) =
