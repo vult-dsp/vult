@@ -165,6 +165,69 @@ and top_stmt =
 
 type prog = top_stmt list
 
+let getInitRHS (t : type_) =
+  match t with
+  | { t = TVoid; loc } -> { e = EUnit; t; loc }
+  | { t = TInt; loc } -> { e = EInt 0; t; loc }
+  | { t = TReal; loc } -> { e = EReal 0.0; t; loc }
+  | { t = TFixed; loc } -> { e = EReal 0.0; t; loc }
+  | { t = TString; loc } -> { e = EString ""; t; loc }
+  | { t = TBool; loc } -> { e = EBool false; t; loc }
+  | { t = TStruct { path; _ }; loc } -> { e = ECall { path = path ^ "_init"; args = [] }; t; loc }
+  | _ -> failwith "Not a simple type"
+
+
+let initStatement ctx var (t : type_) =
+  let lhs = { l = LMember (ctx, var); t; loc = t.loc } in
+  match t with
+  | { t = TVoid; loc } ->
+      let rhs = getInitRHS t in
+      { s = StmtBind (lhs, rhs); loc }
+  | { t = TInt; loc } ->
+      let rhs = getInitRHS t in
+      { s = StmtBind (lhs, rhs); loc }
+  | { t = TReal; loc } ->
+      let rhs = getInitRHS t in
+      { s = StmtBind (lhs, rhs); loc }
+  | { t = TFixed; loc } ->
+      let rhs = getInitRHS t in
+      { s = StmtBind (lhs, rhs); loc }
+  | { t = TString; loc } ->
+      let rhs = getInitRHS t in
+      { s = StmtBind (lhs, rhs); loc }
+  | { t = TBool; loc } ->
+      let rhs = getInitRHS t in
+      { s = StmtBind (lhs, rhs); loc }
+  | { t = TTuple _; _ } -> failwith "tuples"
+  | { t = TStruct _; loc } ->
+      let rhs = getInitRHS t in
+      { s = StmtBind (lhs, rhs); loc }
+  | { t = TArray (size, subt); loc } ->
+      let index = { e = EId "i"; t = { t = TInt; loc }; loc } in
+      let rhs = getInitRHS subt in
+      let cond = { e = EOp (OpLt, index, { e = EInt size; t = { t = TInt; loc }; loc }); t; loc } in
+      let bind = { s = StmtBind ({ l = LIndex { e = lhs; index }; t = subt; loc }, rhs); loc } in
+      let loop = { s = StmtWhile (cond, bind); loc } in
+      let decl = { s = StmtDecl { d = DId ("i", None); t = { t = TInt; loc }; loc }; loc } in
+      let init =
+        { s = StmtBind ({ l = LId "i"; t = { t = TInt; loc }; loc }, { e = EInt 0; t = { t = TInt; loc }; loc }); loc }
+      in
+      { s = StmtBlock [ decl; init; loop ]; loc }
+
+
+let createInitFunction stmt =
+  match stmt with
+  | { top = TopType struct_t; loc } ->
+      let name = struct_t.path ^ "_init" in
+      let this_type = { t = TStruct struct_t; loc = Loc.default } in
+      let ctx = { l = LId "ctx"; t = { t = TInt; loc }; loc } in
+      let stmts = List.map (fun (var, t, _) -> initStatement ctx var t) struct_t.members in
+      let body = { s = StmtBlock stmts; loc } in
+      let args, t = [], ([], this_type) in
+      { top = TopFunction ({ name; args; t; loc; tags = [] }, body); loc }
+  | _ -> failwith "not a type"
+
+
 module Print = struct
   let rec print_type_ (t : type_) : Pla.t =
     match t.t with
@@ -653,4 +716,14 @@ module TypedToProg = struct
     List.flatten t
 end
 
-let convert = TypedToProg.convert
+let isType s =
+  match s with
+  | { top = TopType _; _ } -> true
+  | _ -> false
+
+
+let convert env stmts =
+  let stmts = TypedToProg.convert env stmts in
+  let types, functions = List.partition isType stmts in
+  let initializers = CCList.map createInitFunction types in
+  types @ initializers @ functions

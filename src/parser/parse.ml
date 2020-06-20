@@ -86,6 +86,7 @@ let expToPath error (exp : exp) : path =
   match exp with
   | { e = SEId id; loc } -> { id; n = None; loc }
   | { e = SEMember ({ e = SEId e; _ }, id); loc } -> { id; n = Some e; loc }
+  | { e = SEMember ({ e = SEEnum { id = e; n = None; _ }; _ }, id); loc } -> { id; n = Some e; loc }
   | _ -> error ()
 
 
@@ -508,7 +509,7 @@ and exp_member (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp
   | SEEnum { id; n = None; loc } ->
       begin
         match left.e with
-        | SEId n -> { right with e = SEEnum { id; n = Some n; loc } }
+        | SEEnum { id = m; n = None; _ } -> { right with e = SEEnum { id; n = Some m; loc } }
         | _ ->
             let message = Error.PointedError (token.loc, "Invalid expression") in
             raise (ParserError message)

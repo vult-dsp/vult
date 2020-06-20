@@ -231,9 +231,9 @@ let lookEnum (env : in_func) (path : path) =
         begin
           match Map.find id members with
           | Some (_, index, _) -> t.path, t.loc, index
-          | None -> failwith "Enum not found"
+          | None -> failwith ("Enum not found " ^ id)
         end
-    | _ -> failwith "Enum not found"
+    | _ -> failwith ("Enum not found " ^ id)
   in
   match path with
   | { id; n = None; _ } -> findEnumInModule env.m.enums id
