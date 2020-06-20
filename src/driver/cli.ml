@@ -57,7 +57,7 @@ let showResult (args : args) (output : output) =
       prerr_endline error_strings
 
 
-let generate stmts = [ ParsedCode (C.generate stmts) ]
+let generate stmts = [ ParsedCode (Lua.generate stmts) ]
 
 let generateCode (args : args) (parsed : Parse.parsed_file list) : output list =
   let env, typed = Inference.infer parsed in

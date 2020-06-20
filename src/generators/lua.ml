@@ -125,7 +125,7 @@ let rec print_exp e =
       let cond = print_exp cond in
       let then_ = print_exp then_ in
       let else_ = print_exp else_ in
-      {pla|ifExpression(<#cond#>, (function () return <#then_#> end), (function () return <#else_#> end)|pla}
+      {pla|ifExpression(<#cond#>, (function () return <#then_#> end), (function () return <#else_#> end))|pla}
   | ETuple l ->
       let l = Pla.map_sep Pla.commaspace print_exp l in
       {pla|(<#l#>)|pla}
@@ -165,6 +165,9 @@ let rec print_stmt s =
   | StmtDecl lhs ->
       let lhs = print_dexp lhs in
       {pla|local <#lhs#> = {};|pla}
+  | StmtBind ({ l = LWild; _ }, rhs) ->
+      let rhs = print_exp rhs in
+      {pla|<#rhs#>;|pla}
   | StmtBind (lhs, rhs) ->
       let lhs = print_lexp lhs in
       let rhs = print_exp rhs in
@@ -180,7 +183,7 @@ let rec print_stmt s =
       let cond = print_exp cond in
       let then_ = print_stmt then_ in
       let else_ = print_stmt else_ in
-      {pla|if <#cond#> then<#then_#+><#>else <#else_#+><#>end|pla}
+      {pla|if <#cond#> then<#then_#+><#>else<#else_#+><#>end|pla}
   | StmtWhile (cond, stmt) ->
       let cond = print_exp cond in
       let stmt = print_stmt stmt in
@@ -213,7 +216,7 @@ let print_top_stmt t =
   | TopFunction (def, body) ->
       let def = print_function_def def in
       let body = print_body body in
-      {pla|<#def#> <#body#><#><#>|pla}
+      {pla|<#def#><#body#><#><#>|pla}
   | TopExternal _ -> Pla.unit
   | TopType _ -> Pla.unit
 
