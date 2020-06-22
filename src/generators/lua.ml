@@ -50,7 +50,7 @@ function makeArray(size, v) local a = {} for i=1,size do a[i]=v end return a end
 |pla}
 
 
-let isValue (e : exp) =
+let rec isValueOrIf (e : exp) =
   match e.e with
   | EUnit
    |EBool _
@@ -60,6 +60,8 @@ let isValue (e : exp) =
    |EId _
    |EMember _ ->
       true
+  | EUnOp (_, e) -> isValueOrIf e
+  | EIf { then_; else_; _ } -> isValueOrIf then_ && isValueOrIf else_
   | _ -> false
 
 
@@ -116,7 +118,7 @@ let rec print_exp e =
       let op = operator op in
       let e2 = print_exp e2 in
       {pla|(<#e1#> <#op#> <#e2#>)|pla}
-  | EIf { cond; then_; else_ } when isValue then_ && isValue else_ ->
+  | EIf { cond; then_; else_ } when isValueOrIf then_ && isValueOrIf else_ ->
       let cond = print_exp cond in
       let then_ = print_exp then_ in
       let else_ = print_exp else_ in

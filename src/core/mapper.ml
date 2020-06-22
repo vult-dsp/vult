@@ -43,6 +43,19 @@ let applyExpander (mapper : ('env, 'state, 'kind) expand_func) (env : 'env) (dat
   | None -> data, [ kind ]
 
 
+let applyExpanderList (mapper : ('env, 'state, 'kind) expand_func) (env : 'env) (data : 'data) (kind_list : 'kind list)
+    : 'data * 'kind list =
+  let state', rev_exp_list =
+    List.fold_left
+      (fun (s, acc) k ->
+        let s', kl = applyExpander mapper env s k in
+        s', kl :: acc)
+      (data, [])
+      kind_list
+  in
+  state', rev_exp_list |> List.rev |> List.flatten
+
+
 let enter (env_func : ('env, 'kind) env_func) (env : 'env) (kind : 'kind) : 'env =
   match env_func with
   | None -> env
@@ -51,15 +64,11 @@ let enter (env_func : ('env, 'kind) env_func) (env : 'env) (kind : 'kind) : 'env
 
 let make (mapper : 'env -> 'state -> 'kind -> 'state * 'kind) : ('env, 'state, 'kind) mapper_func = Some mapper
 
-let ( |-> ) :
-    ('env, 'state, 'value) mapper_func -> ('env, 'state, 'value) mapper_func -> ('env, 'state, 'value) mapper_func =
- fun mapper1 mapper2 ->
-  let mapper3 env state exp =
-    let state', exp' = apply mapper1 env state exp in
-    apply mapper2 env state' exp'
-  in
-  Some mapper3
+let makeExpander (mapper : 'env -> 'state -> 'kind -> 'state * 'kind list) : ('env, 'state, 'kind) expand_func =
+  Some mapper
 
+
+let makeEnv (f : 'env -> 'kind -> 'env) : ('env, 'kind) env_func = Some f
 
 let list mapper_app mapper env state el =
   let state', rev_el =
@@ -113,6 +122,69 @@ let identity =
   ; stmt_env = None
   ; function_def_env = None
   ; top_stmt_env = None
+  }
+
+
+let seqMapperFunc a b =
+  if a = None then
+    b
+  else if b = None then
+    a
+  else
+    let c env state exp =
+      let state, exp = apply a env state exp in
+      apply b env state exp
+    in
+    Some c
+
+
+let seqEnvFunc (a : ('env, 'kind) env_func) (b : ('env, 'kind) env_func) : ('env, 'kind) env_func =
+  if a = None then
+    b
+  else if b = None then
+    a
+  else
+    let mapper3 env exp =
+      let env = enter a env exp in
+      enter b env exp
+    in
+    Some mapper3
+
+
+let seqExpandFunc a b =
+  if a = None then
+    b
+  else if b = None then
+    a
+  else
+    let c env state exp =
+      let state, exp_list = applyExpander a env state exp in
+      let state, exp_list = applyExpanderList b env state exp_list in
+      state, exp_list
+    in
+    Some c
+
+
+(** Merges two mappers *)
+let seq b a =
+  { type_ = seqMapperFunc a.type_ b.type_
+  ; exp = seqMapperFunc a.exp b.exp
+  ; lexp = seqMapperFunc a.lexp b.lexp
+  ; dexp = seqMapperFunc a.dexp b.dexp
+  ; param = seqMapperFunc a.param b.param
+  ; struct_descr = seqMapperFunc a.struct_descr b.struct_descr
+  ; stmt = seqExpandFunc a.stmt b.stmt
+  ; function_def = seqMapperFunc a.function_def b.function_def
+  ; top_stmt = seqExpandFunc a.top_stmt b.top_stmt
+  ; type__env = seqEnvFunc a.type__env b.type__env
+  ; exp_env = seqEnvFunc a.exp_env b.exp_env
+  ; lexp_env = seqEnvFunc a.lexp_env b.lexp_env
+  ; dexp_env = seqEnvFunc a.dexp_env b.dexp_env
+  ; param_env = seqEnvFunc a.param_env b.param_env
+  ; struct_descr_env = seqEnvFunc a.struct_descr_env b.struct_descr_env
+  ; stmt_env = seqEnvFunc a.stmt_env b.stmt_env
+  ; function_def_env = seqEnvFunc a.function_def_env b.function_def_env
+  ; top_stmt_env = seqEnvFunc a.top_stmt_env b.top_stmt_env
   }
 
 

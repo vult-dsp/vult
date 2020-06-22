@@ -250,8 +250,8 @@ let createInitFunction cstyle stmt =
   | { top = TopType struct_t; loc } ->
       let name = struct_t.path ^ "_init" in
       let this_type = { t = TStruct struct_t; loc = Loc.default } in
-      let lctx = { l = LId "ctx"; t = { t = TInt; loc }; loc } in
-      let ectx = { e = EId "ctx"; t = { t = TInt; loc }; loc } in
+      let lctx = { l = LId "ctx"; t = this_type; loc } in
+      let ectx = { e = EId "ctx"; t = this_type; loc } in
       let stmts =
         List.map
           (fun (var, (t : type_), _) ->
@@ -261,7 +261,8 @@ let createInitFunction cstyle stmt =
           struct_t.members
       in
       let new_ctx = { s = StmtDecl { d = DId ("ctx", None); t = this_type; loc }; loc } in
-      let body = { s = StmtBlock (new_ctx :: stmts); loc } in
+      let return = { s = StmtReturn ectx; loc } in
+      let body = { s = StmtBlock ((new_ctx :: stmts) @ [ return ]); loc } in
       let args, t = [], ([], this_type) in
       { top = TopFunction ({ name; args; t; loc; tags = [] }, body); loc }
   | _ -> failwith "not a type"
@@ -764,5 +765,5 @@ let isType s =
 let convert env stmts =
   let stmts = TypedToProg.convert env stmts in
   let types, functions = List.partition isType stmts in
-  let initializers = CCList.map (createInitFunction false) types in
-  types @ initializers @ functions
+  let _initializers = CCList.map (createInitFunction false) types in
+  types @ functions

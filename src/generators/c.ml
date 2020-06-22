@@ -89,7 +89,7 @@ let operator op =
   | OpLsh -> Pla.string "<<"
   | OpRsh -> Pla.string ">>"
   | OpEq -> Pla.string "=="
-  | OpNe -> Pla.string "<>"
+  | OpNe -> Pla.string "!="
   | OpLt -> Pla.string "<"
   | OpLe -> Pla.string "<="
   | OpGt -> Pla.string ">"
