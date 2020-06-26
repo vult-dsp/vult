@@ -21,17 +21,11 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 *)
-open Args
 open Util
+open Util.Args
 open Parser
 open Core
 open Generators
-
-let getFile (args : args) (ext : Args.file_path) : string =
-  match ext with
-  | ExtOnly e -> args.output ^ "." ^ e
-  | FullName n -> Filename.concat (Filename.dirname args.output) n
-
 
 let showResult (args : args) (output : output) =
   match output with
@@ -39,10 +33,9 @@ let showResult (args : args) (output : output) =
   | Message v -> print_endline v
   | Dependencies deps -> String.concat " " deps |> print_endline
   | ParsedCode v -> print_endline v
-  | GeneratedCode files when args.output <> "" ->
+  | GeneratedCode files when args.output <> None ->
       List.iter
-        (fun (text, file) ->
-          let filename = getFile args file in
+        (fun (text, filename) ->
           let code = Pla.print text in
           if args.force_write then
             FileIO.write filename code |> ignore
@@ -57,18 +50,24 @@ let showResult (args : args) (output : output) =
       prerr_endline error_strings
 
 
-let generate stmts = [ ParsedCode (C.generate stmts) ]
+let generate args stmts =
+  let cstmts = Code.Convert.prog stmts in
+  let code =
+    match args.code with
+    | NoCode -> []
+    | CCode -> Cpp.generate args.output args.template cstmts
+    | LuaCode -> Lua.generate args.output args.template stmts
+    | JSCode -> failwith "Javascript generator not implemented yet"
+    | JavaCode -> failwith "Javascript generator not implemented yet"
+  in
+  GeneratedCode code
+
 
 let generateCode (args : args) (parsed : Parse.parsed_file list) : output list =
   let env, typed = Inference.infer parsed in
   let stmts = Prog.convert env typed in
-  let stmts = Passes.run stmts in
-  let code =
-    if args.code <> NoCode then
-      generate stmts
-    else
-      []
-  in
+  let stmts = Passes.run args stmts in
+  let code = generate args stmts in
   let run =
     match args.eval with
     | Some e ->
@@ -76,7 +75,7 @@ let generateCode (args : args) (parsed : Parse.parsed_file list) : output list =
         [ ParsedCode s ]
     | None -> []
   in
-  code @ run
+  code :: run
 
 
 (** Prints the parsed files if -dparse was passed as argument *)

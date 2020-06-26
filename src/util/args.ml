@@ -22,23 +22,16 @@
    THE SOFTWARE.
 *)
 
-open Util
-
-type file_path =
-  | ExtOnly  of string
-  | FullName of string
-
 type input =
   | File of string
   | Code of string * string
-[@@deriving show, eq, ord]
 
 type output =
   | Version       of string
   | Message       of string
   | Dependencies  of string list
   | ParsedCode    of string
-  | GeneratedCode of (Pla.t * file_path) list
+  | GeneratedCode of (Pla.t * string) list
   | Interpret     of string
   | CheckOk
   | Errors        of Error.t list
@@ -49,7 +42,6 @@ type code =
   | JSCode
   | LuaCode
   | JavaCode
-[@@deriving show, eq, ord]
 
 (** Stores the options passed to the command line *)
 type args =
@@ -58,9 +50,9 @@ type args =
   ; mutable eval : string option
   ; mutable check : bool
   ; mutable code : code
-  ; mutable output : string
+  ; mutable output : string option
   ; mutable real : string
-  ; mutable template : string
+  ; mutable template : string option
   ; mutable show_version : bool
   ; mutable includes : string list
   ; mutable deps : bool
@@ -70,9 +62,8 @@ type args =
   ; mutable shorten : bool
   ; mutable mac : bool
   ; mutable force_write : bool
-  ; mutable prefix : string
+  ; mutable prefix : string option
   }
-[@@deriving show, eq, ord]
 
 let default_arguments : args =
   { files = []
@@ -80,9 +71,9 @@ let default_arguments : args =
   ; code = NoCode
   ; eval = None
   ; check = false
-  ; output = ""
+  ; output = None
   ; real = "float"
-  ; template = "default"
+  ; template = None
   ; show_version = false
   ; includes = []
   ; deps = false
@@ -92,7 +83,7 @@ let default_arguments : args =
   ; shorten = false
   ; mac = false
   ; force_write = false
-  ; prefix = ""
+  ; prefix = None
   }
 
 
@@ -112,7 +103,7 @@ let flags result =
         Arg.String
           (fun prefix ->
             result.code <- JavaCode ;
-            result.prefix <- prefix)
+            result.prefix <- Some prefix)
     ; comment =
         "prefix Converts the code to java (default: off). Requires prefix to name the package. e.g. 'com.company'"
     }
@@ -129,7 +120,7 @@ let flags result =
     ; comment = " Checks the code without generating any code (default: off)"
     }
   ; { flag = "-o"
-    ; action = Arg.String (fun output -> result.output <- output)
+    ; action = Arg.String (fun output -> result.output <- Some output)
     ; comment = "output Defines the prefix of the output files"
     }
   ; { flag = "-force-write"
@@ -145,7 +136,7 @@ let flags result =
     ; comment = "number When set, the function samplerate() is evaluated"
     }
   ; { flag = "-template"
-    ; action = Arg.String (fun temp -> result.template <- temp)
+    ; action = Arg.String (fun template -> result.template <- Some template)
     ; comment = "name Defines the template used to generate code (ccode only): pd, teensy"
     }
   ; { flag = "-eval"; action = Arg.String (fun s -> result.eval <- Some s); comment = " Runs the code (default: off)" }

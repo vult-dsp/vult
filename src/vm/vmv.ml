@@ -1,3 +1,5 @@
+open Util.Maps
+
 type rvalue =
   | Void
   | Int    of int
@@ -67,7 +69,7 @@ module Mutable : VM = struct
     { stack : rvalue array
     ; mutable sp : int
     ; mutable frame : int
-    ; table : int Compile.Table.t
+    ; table : int Map.t
     ; code : Compile.segment array
     }
 
@@ -121,7 +123,7 @@ module Mutable : VM = struct
     vm
 
 
-  let findSegment (vm : t) (name : string) : int = Compile.Table.find name vm.table
+  let findSegment (vm : t) (name : string) : int = Map.find name vm.table
 
   let printStack (vm : t) =
     let rec loop n =

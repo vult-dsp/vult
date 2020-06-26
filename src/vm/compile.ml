@@ -1,18 +1,18 @@
 open Core
 open Prog
 open Util
-module Table = CCMap.Make (String)
+open Maps
 
 type env =
-  { functions : int Table.t
-  ; locals : int Table.t
+  { functions : int Map.t
+  ; locals : int Map.t
   ; lcount : int
   ; fcount : int
   }
 
-let default_env = { locals = Table.empty; lcount = 0; functions = Table.empty; fcount = 0 }
+let default_env = { locals = Map.empty; lcount = 0; functions = Map.empty; fcount = 0 }
 
-let addLocal env name = { env with locals = Table.add name env.lcount env.locals; lcount = env.lcount + 1 }
+let addLocal env name = { env with locals = Map.add name env.lcount env.locals; lcount = env.lcount + 1 }
 
 type op =
   | OpAdd
@@ -90,7 +90,7 @@ type segment =
 type segments = segment array [@@deriving show]
 
 type bytecode =
-  { table : int Table.t
+  { table : int Map.t
   ; code : segments
   }
 
@@ -139,7 +139,7 @@ let rec compile_lexp (env : env) (l : lexp) : lvalue =
   match l.l with
   | LWild -> { l = LVoid; loc }
   | LId name ->
-      let index = Table.find name env.locals in
+      let index = Map.find name env.locals in
       { l = LRef (index, name); loc }
   | LTuple l ->
       let l = List.map (compile_lexp env) l |> Array.of_list in
@@ -168,7 +168,7 @@ and compile_exp (env : env) e : rvalue =
   | EReal v -> { r = RReal v; loc }
   | EString v -> { r = RString v; loc }
   | EId id ->
-      let index = Table.find id env.locals in
+      let index = Map.find id env.locals in
       { r = RRef (index, id); loc }
   | EOp (op, e1, e2) ->
       let e1 = compile_exp env e1 in
@@ -206,7 +206,7 @@ and compile_exp (env : env) e : rvalue =
       end
   | ECall { path; args } ->
       let args = List.map (compile_exp env) args in
-      ( match Table.find_opt path env.functions with
+      ( match Map.find_opt path env.functions with
       | Some index -> { r = RCall (index, path, args); loc }
       | None ->
           print_endline ("Function not found " ^ path) ;
@@ -284,14 +284,14 @@ let compile_top (env : env) (s : top_stmt) =
   match s.top with
   | TopExternal ({ name; _ }, _) ->
       let index = env.fcount in
-      let functions = Table.add name index env.functions in
+      let functions = Map.add name index env.functions in
       let env = { env with functions; fcount = env.fcount + 1 } in
       env, [ External ]
   | TopType _ -> env, []
   | TopFunction ({ name; args; _ }, body) ->
       let index = env.fcount in
-      let functions = Table.add name index env.functions in
-      let env = { locals = Table.empty; lcount = 0; functions; fcount = env.fcount + 1 } in
+      let functions = Map.add name index env.functions in
+      let env = { locals = Map.empty; lcount = 0; functions; fcount = env.fcount + 1 } in
       let env = List.fold_left (fun env (n, _, _) -> addLocal env n) env args in
       let env, body = compile_stmt env body in
       let n_args = List.length args in
@@ -411,7 +411,7 @@ let print_segments s = Pla.map_sep_all Pla.newline print_segment (Array.to_list 
 
 let print_table t =
   let f (n, i) = {pla|<#i#i>: <#n#s>|pla} in
-  let elems = List.sort (fun (_, n1) (_, n2) -> compare n1 n2) (Table.to_list t) in
+  let elems = List.sort (fun (_, n1) (_, n2) -> compare n1 n2) (Map.to_list t) in
   Pla.map_sep_all Pla.newline f elems
 
 

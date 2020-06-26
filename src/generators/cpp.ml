@@ -72,8 +72,25 @@ let rec print_type_ (t : type_) =
       {pla|(<#l#>)|pla}
   | Array (_, t) ->
       let t = print_type_ t in
-      {pla|<#t#>*|pla}
-  | Struct { path; _ } -> {pla|<#path#s>*|pla}
+      {pla|<#t#>|pla}
+  | Struct { path; _ } -> {pla|<#path#s>|pla}
+
+
+let rec print_type_member (t : type_) =
+  match t with
+  | Void -> Pla.string "void"
+  | Int -> Pla.string "int32_t"
+  | Real -> Pla.string "float"
+  | Bool -> Pla.string "uint8_t"
+  | String -> Pla.string "char*"
+  | Fixed -> Pla.string "int32_t"
+  | Tuple l ->
+      let l = Pla.map_sep Pla.commaspace print_type_member l in
+      {pla|(<#l#>)|pla}
+  | Array (_, t) ->
+      let t = print_type_member t in
+      {pla|<#t#>|pla}
+  | Struct { path; _ } -> {pla|<#path#s>|pla}
 
 
 let operator op =
@@ -104,7 +121,7 @@ let uoperator op =
   | Not -> Pla.string "not"
 
 
-let rec print_exp e =
+let rec print_exp (e : exp) =
   match e.e with
   | Unit -> Pla.string ""
   | Bool v -> Pla.string (if v then "1" else "0")
@@ -142,7 +159,7 @@ let rec print_exp e =
       {pla|(<#l#>)|pla}
   | Member (e, m) ->
       let e = print_exp e in
-      {pla|<#e#>-><#m#s>|pla}
+      {pla|<#e#>.<#m#s>|pla}
 
 
 let rec print_lexp e =
@@ -151,7 +168,7 @@ let rec print_lexp e =
   | LId s -> Pla.string s
   | LMember (e, m) ->
       let e = print_lexp e in
-      {pla|<#e#>-><#m#s>|pla}
+      {pla|<#e#>.<#m#s>|pla}
   | LIndex (e, index) ->
       let e = print_lexp e in
       let index = print_exp index in
@@ -164,17 +181,46 @@ let print_dexp (e : dexp) =
   | DId (id, Some dim) -> {pla|<#id#s>[<#dim#i>]|pla}
 
 
-let rec print_stmt s =
+let print_member (n, (t : type_)) =
+  match t with
+  | Array (dim, sub) ->
+      let sub = print_type_member sub in
+      {pla|<#sub#> <#n#s>[<#dim#i>];|pla}
+  | _ ->
+      let t = print_type_member t in
+      {pla|<#t#> <#n#s>;|pla}
+
+
+let print_arg (n, (t : type_)) =
+  match t with
+  | Array (_, Array _) -> failwith "array of arrays are not implemented"
+  | Array (dim, (Struct _ as sub)) ->
+      let sub = print_type_ sub in
+      {pla|<#sub#> (&<#n#s>)[<#dim#i>]|pla}
+  | Array (dim, sub) ->
+      let sub = print_type_ sub in
+      {pla|<#sub#> (<#n#s>)[<#dim#i>]|pla}
+  | Struct { path; _ } -> {pla|<#path#s>& <#n#s>|pla}
+  | _ ->
+      let t = print_type_ t in
+      {pla|<#t#> <#n#s>|pla}
+
+
+let rec parenthesize e =
+  match e with
+  | { e = Op (Eq, _, _); _ } -> print_exp e
+  | _ -> Pla.parenthesize (print_exp e)
+
+
+and print_stmt s =
   match s with
-  | StmtDecl (lhs, None) ->
-      let t = print_type_ lhs.t in
-      let lhs = print_dexp lhs in
-      {pla|<#t#> <#lhs#>;|pla}
-  | StmtDecl (lhs, Some rhs) ->
-      let t = print_type_ lhs.t in
-      let lhs = print_dexp lhs in
+  | StmtDecl ({ d = DId (n, _); t; _ }, None) ->
+      let t = print_arg (n, t) in
+      {pla|<#t#>;|pla}
+  | StmtDecl ({ d = DId (n, _); t; _ }, Some rhs) ->
+      let t = print_arg (n, t) in
       let rhs = print_exp rhs in
-      {pla|<#t#> <#lhs#> = <#rhs#>;|pla}
+      {pla|<#t#> = <#rhs#>;|pla}
   | StmtBind ({ l = LWild; _ }, rhs) ->
       let rhs = print_exp rhs in
       {pla|<#rhs#>;|pla}
@@ -186,14 +232,14 @@ let rec print_stmt s =
       let e = print_exp e in
       {pla|return <#e#>;|pla}
   | StmtIf (cond, then_, None) ->
-      let e = print_exp cond in
+      let cond = parenthesize cond in
       let then_ = print_block then_ in
-      {pla|if (<#e#>) <#then_#>|pla}
+      {pla|if <#cond#> <#then_#>|pla}
   | StmtIf (cond, then_, Some else_) ->
-      let cond = print_exp cond in
+      let cond = parenthesize cond in
       let then_ = print_block then_ in
       let else_ = print_block else_ in
-      {pla|if (<#cond#>) <#then_#><#>else <#else_#>|pla}
+      {pla|if <#cond#> <#then_#><#>else <#else_#>|pla}
   | StmtWhile (cond, stmt) ->
       let cond = print_exp cond in
       let stmt = print_block stmt in
@@ -211,26 +257,6 @@ and print_block body =
   | _ ->
       let stmt = print_stmt body in
       {pla|{<#stmt#+><#>}|pla}
-
-
-let print_member (n, (t : type_)) =
-  match t with
-  | Array (dim, sub) ->
-      let sub = print_type_ sub in
-      {pla|<#sub#> <#n#s>[<#dim#i>];|pla}
-  | _ ->
-      let t = print_type_ t in
-      {pla|<#t#> <#n#s>;|pla}
-
-
-let print_arg (n, (t : type_)) =
-  match t with
-  | Array (_, sub) ->
-      let sub = print_type_ sub in
-      {pla|<#sub#> *<#n#s>|pla}
-  | _ ->
-      let t = print_type_ t in
-      {pla|<#t#> <#n#s>|pla}
 
 
 let print_function_def (def : function_def) =
@@ -272,29 +298,22 @@ let legend = Common.legend
 
 let makeIfdef file =
   let def = CCString.replace ~sub:"." ~by:"_" (String.uppercase_ascii (Filename.basename file)) in
-  ( {pla|
+  {pla|
 #ifndef <#def#s>
 #define <#def#s>
-#ifdef __cplusplus
-extern "C" {
-#endif
-|pla}
-  , {pla|
-#ifdef __cplusplus
-}
-#endif
+|pla}, {pla|
 #endif // <#def#s>
-|pla} )
+|pla}
 
 
-let generate output _template (stmts : Code.top_stmt list) =
+let generate output _template (stmts : top_stmt list) =
   let header = print_prog Header stmts in
   let implementation = print_prog Implementation stmts in
   let tables = print_prog Tables stmts in
 
   let header_file = Common.setExt ".h" output in
   let tables_file = Common.setExt ".tables.h" output in
-  let impl_file = Common.setExt ".c" output in
+  let impl_file = Common.setExt ".cpp" output in
 
   let header_file_base = Filename.basename header_file in
   let tables_file_base = Filename.basename tables_file in

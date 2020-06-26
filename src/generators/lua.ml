@@ -225,6 +225,6 @@ let print_top_stmt t =
 
 let print_prog t = Pla.map_join print_top_stmt t
 
-let generate (stmts : top_stmt list) : string =
+let generate _output _template (stmts : top_stmt list) =
   let code = print_prog stmts in
-  Pla.print {pla|<#runtime#><#code#>|pla}
+  [ {pla|<#runtime#><#code#>|pla}, "file" ]

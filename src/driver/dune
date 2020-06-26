@@ -1,6 +1,6 @@
 (library
  (name driver)
- (modules Args Loader Cli Version)
+ (modules Loader Cli)
  (libraries vm generators util parser core pla)
  (preprocess
   (pps ppx_deriving.std pla.ppx))

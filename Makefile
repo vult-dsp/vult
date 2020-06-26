@@ -10,7 +10,7 @@ else
 	FORMAT = @fmt --auto-promote
 endif
 
-compiler:
+compiler: version
 	dune build src/vult.bc src/vult.exe $(FORMAT)
 
 run: compiler
@@ -58,7 +58,7 @@ jscompiler:
 VERSION:=$(shell git describe --tags --abbrev=0)
 
 version :
-	@echo "let version = String.trim \"" $(VERSION) "\"" > src/driver/version.ml
+	@echo "let version = String.trim \"" $(VERSION) "\"" > src/core/version.ml
 
 all: version compiler #js test web jscompiler
 

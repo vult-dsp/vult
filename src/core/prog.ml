@@ -132,7 +132,7 @@ and dexp =
   ; t : type_
   }
 
-and stmt_d =
+type stmt_d =
   | StmtDecl   of dexp
   | StmtBind   of lexp * exp
   | StmtReturn of exp
@@ -165,108 +165,132 @@ and top_stmt =
 
 type prog = top_stmt list
 
-let getInitRHS (t : type_) =
-  match t with
-  | { t = TVoid; loc } -> { e = EUnit; t; loc }
-  | { t = TInt; loc } -> { e = EInt 0; t; loc }
-  | { t = TReal; loc } -> { e = EReal 0.0; t; loc }
-  | { t = TFixed; loc } -> { e = EReal 0.0; t; loc }
-  | { t = TString; loc } -> { e = EString ""; t; loc }
-  | { t = TBool; loc } -> { e = EBool false; t; loc }
-  | { t = TStruct { path; _ }; loc } -> { e = ECall { path = path ^ "_init"; args = [] }; t; loc }
-  | _ -> failwith "Not a simple type"
+module Initializers = struct
+  let getInitRHS (t : type_) =
+    match t with
+    | { t = TVoid; loc } -> { e = EUnit; t; loc }
+    | { t = TInt; loc } -> { e = EInt 0; t; loc }
+    | { t = TReal; loc } -> { e = EReal 0.0; t; loc }
+    | { t = TFixed; loc } -> { e = EReal 0.0; t; loc }
+    | { t = TString; loc } -> { e = EString ""; t; loc }
+    | { t = TBool; loc } -> { e = EBool false; t; loc }
+    | { t = TStruct { path; _ }; loc } -> { e = ECall { path = path ^ "_init"; args = [] }; t; loc }
+    | _ -> failwith "Not a simple type"
 
 
-let rec initStatement cstyle lhs rhs (t : type_) =
-  match t with
-  | { t = TVoid; loc } ->
-      let rhs = getInitRHS t in
-      { s = StmtBind (lhs, rhs); loc }
-  | { t = TInt; loc } ->
-      let rhs = getInitRHS t in
-      { s = StmtBind (lhs, rhs); loc }
-  | { t = TReal; loc } ->
-      let rhs = getInitRHS t in
-      { s = StmtBind (lhs, rhs); loc }
-  | { t = TFixed; loc } ->
-      let rhs = getInitRHS t in
-      { s = StmtBind (lhs, rhs); loc }
-  | { t = TString; loc } ->
-      let rhs = getInitRHS t in
-      { s = StmtBind (lhs, rhs); loc }
-  | { t = TBool; loc } ->
-      let rhs = getInitRHS t in
-      { s = StmtBind (lhs, rhs); loc }
-  | { t = TTuple _; _ } -> failwith "tuples"
-  | { t = TStruct { path; _ }; loc } when cstyle ->
-      let rhs = { e = ECall { path = path ^ "_init"; args = [ rhs ] }; t; loc } in
-      { s = StmtBind ({ l = LWild; loc; t = { t = TVoid; loc = Loc.default } }, rhs); loc }
-  | { t = TStruct { path; _ }; loc } ->
-      let rhs = { e = ECall { path = path ^ "_init"; args = [] }; t; loc } in
-      { s = StmtBind (lhs, rhs); loc }
-  | { t = TArray (size, subt); loc } ->
-      let int_t = { t = TInt; loc } in
-      let index = { e = EId "i"; t = int_t; loc } in
-      let one = { e = EInt 1; t = int_t; loc } in
-      let cond = { e = EOp (OpLt, index, { e = EInt size; t = int_t; loc }); t; loc } in
-      let rhs_temp = { e = EId "temp"; t; loc } in
-      let lhs_temp = { l = LId "temp"; t; loc } in
-      let bind =
-        let lhs = { l = LIndex { e = lhs_temp; index }; t = subt; loc } in
-        let rhs = { e = EIndex { e = rhs_temp; index }; t = subt; loc } in
-        initStatement cstyle lhs rhs subt
-      in
-      let plus_one = { e = EOp (OpAdd, index, one); t = int_t; loc } in
-      let incr = { s = StmtBind ({ l = LId "i"; t = int_t; loc }, plus_one); loc } in
-      let body = { s = StmtBlock [ bind; incr ]; loc } in
-      let loop = { s = StmtWhile (cond, body); loc } in
-      let decl = { s = StmtDecl { d = DId ("i", None); t = int_t; loc }; loc } in
-      let decl_array = { s = StmtDecl { d = DId ("temp", None); t; loc }; loc } in
-      let init = { s = StmtBind ({ l = LId "i"; t = int_t; loc }, { e = EInt 0; t = int_t; loc }); loc } in
-      let transfer = { s = StmtBind (lhs, rhs_temp); loc } in
-      { s = StmtBlock [ decl_array; decl; init; loop; transfer ]; loc }
+  type cstyle =
+    | NewObject
+    | RefObject
+
+  let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
+    match t with
+    | { t = TVoid; loc } ->
+        let rhs = getInitRHS t in
+        { s = StmtBind (lhs, rhs); loc }
+    | { t = TInt; loc } ->
+        let rhs = getInitRHS t in
+        { s = StmtBind (lhs, rhs); loc }
+    | { t = TReal; loc } ->
+        let rhs = getInitRHS t in
+        { s = StmtBind (lhs, rhs); loc }
+    | { t = TFixed; loc } ->
+        let rhs = getInitRHS t in
+        { s = StmtBind (lhs, rhs); loc }
+    | { t = TString; loc } ->
+        let rhs = getInitRHS t in
+        { s = StmtBind (lhs, rhs); loc }
+    | { t = TBool; loc } ->
+        let rhs = getInitRHS t in
+        { s = StmtBind (lhs, rhs); loc }
+    | { t = TTuple _; _ } -> failwith "tuples"
+    | { t = TStruct { path; _ }; loc } when cstyle = RefObject ->
+        let rhs = { e = ECall { path = path ^ "_init"; args = [ rhs ] }; t; loc } in
+        { s = StmtBind ({ l = LWild; loc; t = { t = TVoid; loc = Loc.default } }, rhs); loc }
+    | { t = TStruct { path; _ }; loc } ->
+        let rhs = { e = ECall { path = path ^ "_init"; args = [] }; t; loc } in
+        { s = StmtBind (lhs, rhs); loc }
+    | { t = TArray (size, subt); loc } when cstyle = RefObject ->
+        let i = "i_" ^ Loc.hashString loc in
+        let int_t = { t = TInt; loc } in
+        let index = { e = EId i; t = int_t; loc } in
+        let one = { e = EInt 1; t = int_t; loc } in
+        let cond = { e = EOp (OpLt, index, { e = EInt size; t = int_t; loc }); t; loc } in
+        let bind =
+          let lhs = { l = LIndex { e = lhs; index }; t = subt; loc } in
+          let rhs = { e = EIndex { e = rhs; index }; t = subt; loc } in
+          initStatement cstyle lhs rhs subt
+        in
+        let plus_one = { e = EOp (OpAdd, index, one); t = int_t; loc } in
+        let incr = { s = StmtBind ({ l = LId i; t = int_t; loc }, plus_one); loc } in
+        let body = { s = StmtBlock [ bind; incr ]; loc } in
+        let loop = { s = StmtWhile (cond, body); loc } in
+        let decl = { s = StmtDecl { d = DId (i, None); t = int_t; loc }; loc } in
+        let init = { s = StmtBind ({ l = LId i; t = int_t; loc }, { e = EInt 0; t = int_t; loc }); loc } in
+        { s = StmtBlock [ decl; init; loop ]; loc }
+    | { t = TArray (size, subt); loc } ->
+        let i = "i_" ^ Loc.hashString loc in
+        let int_t = { t = TInt; loc } in
+        let index = { e = EId i; t = int_t; loc } in
+        let one = { e = EInt 1; t = int_t; loc } in
+        let cond = { e = EOp (OpLt, index, { e = EInt size; t = int_t; loc }); t; loc } in
+        let rhs_temp = { e = EId "temp"; t; loc } in
+        let lhs_temp = { l = LId "temp"; t; loc } in
+        let bind =
+          let lhs = { l = LIndex { e = lhs_temp; index }; t = subt; loc } in
+          let rhs = { e = EIndex { e = rhs_temp; index }; t = subt; loc } in
+          initStatement cstyle lhs rhs subt
+        in
+        let plus_one = { e = EOp (OpAdd, index, one); t = int_t; loc } in
+        let incr = { s = StmtBind ({ l = LId i; t = int_t; loc }, plus_one); loc } in
+        let body = { s = StmtBlock [ bind; incr ]; loc } in
+        let loop = { s = StmtWhile (cond, body); loc } in
+        let decl = { s = StmtDecl { d = DId (i, None); t = int_t; loc }; loc } in
+        let decl_array = { s = StmtDecl { d = DId ("temp", None); t; loc }; loc } in
+        let init = { s = StmtBind ({ l = LId i; t = int_t; loc }, { e = EInt 0; t = int_t; loc }); loc } in
+        let transfer = { s = StmtBind (lhs, rhs_temp); loc } in
+        { s = StmtBlock [ decl_array; decl; init; loop; transfer ]; loc }
 
 
-let createInitFunction cstyle stmt =
-  match stmt with
-  (* generation for c-style code using pointers *)
-  | { top = TopType struct_t; loc } when cstyle ->
-      let name = struct_t.path ^ "_init" in
-      let this_type = { t = TStruct struct_t; loc = Loc.default } in
-      let void_type = { t = TVoid; loc = Loc.default } in
-      let lctx = { l = LId "ctx"; t = { t = TInt; loc }; loc } in
-      let ectx = { e = EId "ctx"; t = { t = TInt; loc }; loc } in
-      let stmts =
-        List.map
-          (fun (var, (t : type_), _) ->
-            let lhs = { l = LMember (lctx, var); t; loc = t.loc } in
-            let rhs = { e = EMember (ectx, var); t; loc = t.loc } in
-            initStatement cstyle lhs rhs t)
-          struct_t.members
-      in
-      let body = { s = StmtBlock stmts; loc } in
-      let args, t = [ "ctx", this_type, loc ], ([ this_type ], void_type) in
-      { top = TopFunction ({ name; args; t; loc; tags = [] }, body); loc }
-  | { top = TopType struct_t; loc } ->
-      let name = struct_t.path ^ "_init" in
-      let this_type = { t = TStruct struct_t; loc = Loc.default } in
-      let lctx = { l = LId "ctx"; t = this_type; loc } in
-      let ectx = { e = EId "ctx"; t = this_type; loc } in
-      let stmts =
-        List.map
-          (fun (var, (t : type_), _) ->
-            let lhs = { l = LMember (lctx, var); t; loc = t.loc } in
-            let rhs = { e = EMember (ectx, var); t; loc = t.loc } in
-            initStatement cstyle lhs rhs t)
-          struct_t.members
-      in
-      let new_ctx = { s = StmtDecl { d = DId ("ctx", None); t = this_type; loc }; loc } in
-      let return = { s = StmtReturn ectx; loc } in
-      let body = { s = StmtBlock ((new_ctx :: stmts) @ [ return ]); loc } in
-      let args, t = [], ([], this_type) in
-      { top = TopFunction ({ name; args; t; loc; tags = [] }, body); loc }
-  | _ -> failwith "not a type"
-
+  let createInitFunction (cstyle : cstyle) stmt =
+    match stmt with
+    (* generation for c-style code using pointers *)
+    | { top = TopType struct_t; loc } when cstyle = RefObject ->
+        let name = struct_t.path ^ "_init" in
+        let this_type = { t = TStruct struct_t; loc = Loc.default } in
+        let void_type = { t = TVoid; loc = Loc.default } in
+        let lctx = { l = LId "ctx"; t = { t = TInt; loc }; loc } in
+        let ectx = { e = EId "ctx"; t = { t = TInt; loc }; loc } in
+        let stmts =
+          List.map
+            (fun (var, (t : type_), _) ->
+              let lhs = { l = LMember (lctx, var); t; loc = t.loc } in
+              let rhs = { e = EMember (ectx, var); t; loc = t.loc } in
+              initStatement cstyle lhs rhs t)
+            struct_t.members
+        in
+        let body = { s = StmtBlock stmts; loc } in
+        let args, t = [ "ctx", this_type, loc ], ([ this_type ], void_type) in
+        { top = TopFunction ({ name; args; t; loc; tags = [] }, body); loc }
+    | { top = TopType struct_t; loc } ->
+        let name = struct_t.path ^ "_init" in
+        let this_type = { t = TStruct struct_t; loc = Loc.default } in
+        let lctx = { l = LId "ctx"; t = this_type; loc } in
+        let ectx = { e = EId "ctx"; t = this_type; loc } in
+        let stmts =
+          List.map
+            (fun (var, (t : type_), _) ->
+              let lhs = { l = LMember (lctx, var); t; loc = t.loc } in
+              let rhs = { e = EMember (ectx, var); t; loc = t.loc } in
+              initStatement cstyle lhs rhs t)
+            struct_t.members
+        in
+        let new_ctx = { s = StmtDecl { d = DId ("ctx", None); t = this_type; loc }; loc } in
+        let return = { s = StmtReturn ectx; loc } in
+        let body = { s = StmtBlock ((new_ctx :: stmts) @ [ return ]); loc } in
+        let args, t = [], ([], this_type) in
+        { top = TopFunction ({ name; args; t; loc; tags = [] }, body); loc }
+    | _ -> failwith "not a type"
+end
 
 module Print = struct
   let rec print_type_ (t : type_) : Pla.t =
@@ -454,10 +478,10 @@ end
 
 module TypedToProg = struct
   module T = Typed
-  module Cache = CCMap.Make (String)
+  open Util.Maps
 
   type state =
-    { types : type_ Cache.t
+    { types : type_ Map.t
     ; dummy : int
     }
 
@@ -509,7 +533,7 @@ module TypedToProg = struct
     | T.TEId p ->
         let ps = path p in
         begin
-          match Cache.find_opt ps state.types with
+          match Map.find_opt ps state.types with
           | Some t -> state, t
           | None ->
               ( match Env.getType env p with
@@ -521,7 +545,7 @@ module TypedToProg = struct
                   in
                   let state, members = type_list env state members in
                   let t = { t = TStruct { path = ps; members }; loc } in
-                  let types = Cache.add ps t state.types in
+                  let types = Map.add ps t state.types in
                   { state with types }, t
               | Some { descr = Simple; _ } -> failwith "Type does not have members" )
         end
@@ -743,7 +767,7 @@ module TypedToProg = struct
         let state, members = type_list env state members in
         let struct_descr = { path = p; members } in
         let t = { t = TStruct struct_descr; loc = t.loc } in
-        let types = Cache.add p t state.types in
+        let types = Map.add p t state.types in
         { state with types }, [ { top = TopType struct_descr; loc = t.loc } ]
     | TopEnum _ -> state, []
 
@@ -751,7 +775,7 @@ module TypedToProg = struct
   let top_stmt_list (env : Env.in_top) (state : state) (t : Typed.top_stmt list) = list top_stmt env state t
 
   let convert env stmts =
-    let state = { types = Cache.empty; dummy = 0 } in
+    let state = { types = Map.empty; dummy = 0 } in
     let _, t = top_stmt_list env state stmts in
     List.flatten t
 end
@@ -765,5 +789,5 @@ let isType s =
 let convert env stmts =
   let stmts = TypedToProg.convert env stmts in
   let types, functions = List.partition isType stmts in
-  let _initializers = CCList.map (createInitFunction false) types in
-  types @ functions
+  let initializers = CCList.map Initializers.(createInitFunction RefObject) types in
+  types @ initializers @ functions

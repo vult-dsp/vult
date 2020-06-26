@@ -47,6 +47,12 @@ let rec unlink (t : type_) =
   | _ -> t
 
 
+let path_string (p : Syntax.path) : string =
+  match p with
+  | { id; n = None; _ } -> id
+  | { id; n = Some n; _ } -> n ^ "_" ^ id
+
+
 let constrainOption l1 l2 =
   let l2_ = List.filter (fun e2 -> List.exists (fun e1 -> compare_type_ e1 e2 = 0) l1) l2 in
   let l1_ = List.filter (fun e1 -> List.exists (fun e2 -> compare_type_ e2 e1 = 0) l2_) l1 in
@@ -482,6 +488,15 @@ let convertArguments env (args : Syntax.arg list) : arg list =
   List.map (fun (name, t, loc) -> name, getOptType env loc t, loc) args
 
 
+let registerMultiReturnMem (env : Env.in_context) name t loc =
+  let _, ret = t in
+  match unlink ret with
+  | { tx = TEComposed ("tuple", elems); _ } ->
+      let names = List.mapi (fun i t -> path_string name ^ "_ret_" ^ string_of_int i, t) elems in
+      List.fold_left (fun env (name, t) -> Env.addReturnVar env name t loc) env names
+  | _ -> env
+
+
 let rec function_def (env : Env.in_context) ((def : Syntax.function_def), (body : Syntax.stmt)) :
     Env.in_context * (function_def * stmt) =
   let ret = getReturnType env def.loc def.t in
@@ -491,6 +506,7 @@ let rec function_def (env : Env.in_context) ((def : Syntax.function_def), (body 
   let env = Env.exitFunction env in
   let next = addGeneratedFunctions def.tags def.name def.next in
   let env, next = function_def_opt env next in
+  let env = registerMultiReturnMem env path t def.loc in
   env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next }, stmt_block body)
 
 

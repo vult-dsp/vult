@@ -22,16 +22,24 @@
    THE SOFTWARE.
 *)
 open Util
-module StringMap = CCMap.Make (String)
+open Maps
+
+let global_tick = ref 0
+
+let getGlobalTick () =
+  let n = !global_tick in
+  incr global_tick ;
+  n
+
 
 module Map = struct
-  type 'a t = 'a StringMap.t ref
+  type 'a t = 'a Map.t ref
 
-  let empty () = ref StringMap.empty
+  let empty () = ref Map.empty
 
   let update (report : 'a -> unit) (key : string) (value : 'a) (t : 'a t) : unit =
     t :=
-      StringMap.update
+      Map.update
         key
         (fun a ->
           match a with
@@ -43,17 +51,17 @@ module Map = struct
 
 
   let of_list elems : 'a t =
-    let m = List.fold_left (fun m (key, value) -> StringMap.add key value m) StringMap.empty elems in
+    let m = List.fold_left (fun m (key, value) -> Map.add key value m) Map.empty elems in
     ref m
 
 
-  let to_list (t : 'a t) = StringMap.to_list !t
+  let to_list (t : 'a t) = Map.to_list !t
 
-  let find key t = StringMap.find_opt key !t
+  let find key t = Map.find_opt key !t
 
-  let is_empty (t : 'a t) : bool = StringMap.is_empty !t
+  let is_empty (t : 'a t) : bool = Map.is_empty !t
 
-  let fold (f : string -> 'a -> 'b -> 'b) (s : 'b) (t : 'a t) : 'b = StringMap.fold f !t s
+  let fold (f : string -> 'a -> 'b -> 'b) (s : 'b) (t : 'a t) : 'b = Map.fold f !t s
 end
 
 module type TSig = sig
@@ -117,7 +125,6 @@ type in_top =
 type in_module =
   { top : in_top
   ; m : m
-  ; mutable tick : int
   }
 
 type in_context =
@@ -348,6 +355,16 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
   | _, Some _ -> failwith "Not a record"
 
 
+let addReturnVar (env : in_context) (name : string) (t : Typed.type_) loc : in_context =
+  let report_mem _ = () in
+  match env.context with
+  | Some (_, { descr = Record members; _ }) ->
+      Map.update report_mem name { name; t; kind = Mem; loc } members ;
+      env
+  | None -> failwith "Internal error: cannot add mem to functions with no context"
+  | Some _ -> failwith "Not a record"
+
+
 let pushScope (env : in_func) : in_func =
   env.f.locals <- Map.empty () :: env.f.locals ;
   env
@@ -377,17 +394,11 @@ let registerArguments (args : (string * Typed.type_ * Loc.t) list) =
 
 let getPath m name loc : path = { id = name; n = Some m.name; loc }
 
-let getModuleTick (env : in_module) : int =
-  let n = env.tick + 1 in
-  env.tick <- n ;
-  n
-
-
 let createContextForFunction (env : in_module) name loc : in_context =
   let report _ = failwith "function exitst" in
   let type_name = name ^ "_type" in
   let path = getPath env.m type_name loc in
-  let index = getModuleTick env in
+  let index = getGlobalTick () in
   let t = { descr = Record (Map.empty ()); path; index; loc; generated = true } in
   let _ = Map.update report type_name t env.m.types in
   { top = env.top; m = env.m; context = Some (path, t) }
@@ -408,7 +419,7 @@ let addRecordMember members =
 
 let addType (env : in_module) type_name members loc : in_module =
   let report _ = failwith "type exitst" in
-  let index = getModuleTick env in
+  let index = getGlobalTick () in
   let path = getPath env.m type_name loc in
   let descr = addRecordMember members in
   let t = { path; descr; loc; index; generated = false } in
@@ -437,7 +448,7 @@ let addEnumToModule (env : in_module) members t =
 
 let addEnum (env : in_module) type_name members loc : in_module =
   let report _ = failwith "type exitst" in
-  let index = getModuleTick env in
+  let index = getGlobalTick () in
   let path = getPath env.m type_name loc in
   let descr = addEnumMember members in
   let t = { path; descr; loc; index; generated = false } in
@@ -448,7 +459,7 @@ let addEnum (env : in_module) type_name members loc : in_module =
 
 let createContextForExternal (env : in_module) : in_context = { top = env.top; m = env.m; context = None }
 
-let exitContext (env : in_context) : in_module = { top = env.top; m = env.m; tick = 0 }
+let exitContext (env : in_context) : in_module = { top = env.top; m = env.m }
 
 let getFunctionTick (env : in_func) : int =
   let n = env.f.tick + 1 in
@@ -493,12 +504,12 @@ let exitFunction (env : in_func) : in_context = { top = env.top; m = env.m; cont
 
 let enterModule (env : in_top) (name : string) : in_module =
   match Map.find name env.modules with
-  | Some m -> { top = env; m; tick = 0 }
+  | Some m -> { top = env; m }
   | None ->
       let report _ = failwith ("duplicate module: " ^ name) in
       let m : m = { name; functions = Map.empty (); types = Map.empty (); enums = Map.empty () } in
       let () = Map.update report name m env.modules in
-      { top = env; m; tick = 0 }
+      { top = env; m }
 
 
 let exitModule (env : in_module) : in_top = env.top
