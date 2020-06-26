@@ -166,6 +166,16 @@ and top_stmt =
 type prog = top_stmt list
 
 module Initializers = struct
+  let index_tick = ref 0
+
+  let resetTick () = index_tick := 0
+
+  let getTick () =
+    let n = !index_tick in
+    let () = incr index_tick in
+    n
+
+
   let getInitRHS (t : type_) =
     match t with
     | { t = TVoid; loc } -> { e = EUnit; t; loc }
@@ -210,7 +220,7 @@ module Initializers = struct
         let rhs = { e = ECall { path = path ^ "_init"; args = [] }; t; loc } in
         { s = StmtBind (lhs, rhs); loc }
     | { t = TArray (size, subt); loc } when cstyle = RefObject ->
-        let i = "i_" ^ Loc.hashString loc in
+        let i = "i_" ^ string_of_int (getTick ()) in
         let int_t = { t = TInt; loc } in
         let index = { e = EId i; t = int_t; loc } in
         let one = { e = EInt 1; t = int_t; loc } in
@@ -228,7 +238,7 @@ module Initializers = struct
         let init = { s = StmtBind ({ l = LId i; t = int_t; loc }, { e = EInt 0; t = int_t; loc }); loc } in
         { s = StmtBlock [ decl; init; loop ]; loc }
     | { t = TArray (size, subt); loc } ->
-        let i = "i_" ^ Loc.hashString loc in
+        let i = "i_" ^ string_of_int (getTick ()) in
         let int_t = { t = TInt; loc } in
         let index = { e = EId i; t = int_t; loc } in
         let one = { e = EInt 1; t = int_t; loc } in
@@ -252,6 +262,7 @@ module Initializers = struct
 
 
   let createInitFunction (cstyle : cstyle) stmt =
+    let () = resetTick () in
     match stmt with
     (* generation for c-style code using pointers *)
     | { top = TopType struct_t; loc } when cstyle = RefObject ->

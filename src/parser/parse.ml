@@ -856,7 +856,7 @@ and enum_member_type (buffer : Stream.stream) =
               | COMMA ->
                   let _ = Stream.consume buffer COMMA in
                   loop (decl :: acc)
-              | RBRACE -> List.rev acc
+              | RBRACE -> List.rev (decl :: acc)
               | _ -> failwith "Expecting an enum identifier"
             end
         | _ -> List.rev acc
