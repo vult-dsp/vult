@@ -224,13 +224,13 @@ let lookVarInContext (context : context) name : var option =
   | _ -> None
 
 
-let lookVar (env : in_func) (name : string) : var =
+let lookVar (env : in_func) (name : string) (loc : Loc.t) : var =
   match lookVarInContext env.f.context name with
   | Some found -> found
   | None ->
       ( match lookVarInScopes env.f.locals name with
       | Some found -> found
-      | None -> failwith "var not found" )
+      | None -> Error.raiseError ("An enumeration with the name '" ^ name ^ "' could not be found") loc )
 
 
 let lookEnum (env : in_func) (path : path) (loc : Loc.t) =

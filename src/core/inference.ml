@@ -198,7 +198,7 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
       env, { e = EString value; t; loc }
   | { e = SEGroup e; _ } -> exp env e
   | { e = SEId name; loc } ->
-      let var = Env.lookVar env name in
+      let var = Env.lookVar env name loc in
       let t = var.t in
       let e =
         match var.kind with
@@ -269,10 +269,11 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
       | TEId path ->
           begin
             match Env.lookType env path with
-            | { descr = Record members; _ } ->
+            | { path; descr = Record members; _ } ->
                 begin
                   match Map.find m members with
-                  | None -> failwith "member not found"
+                  | None ->
+                      Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
                   | Some { t; _ } -> env, { e = EMember (e, m); t; loc }
                 end
             | _ -> failwith "Not a record type"
@@ -302,7 +303,7 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
       let t = C.noreturn loc in
       env, { l = LWild; t; loc }
   | { l = SLId name; loc } ->
-      let var = Env.lookVar env name in
+      let var = Env.lookVar env name loc in
       let t = var.t in
       let e =
         match var.kind with
@@ -340,10 +341,11 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
       | TEId path ->
           begin
             match Env.lookType env path with
-            | { descr = Record members; _ } ->
+            | { path; descr = Record members; _ } ->
                 begin
                   match Map.find m members with
-                  | None -> failwith "member not found"
+                  | None ->
+                      Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
                   | Some { t; _ } -> env, { l = LMember (e, m); t; loc }
                 end
             | _ -> failwith "Not a record type"
