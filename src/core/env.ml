@@ -32,6 +32,8 @@ let getGlobalTick () =
   n
 
 
+let pathString p = Pla.print (Parser.Syntax.print_path p)
+
 module Map = struct
   type 'a t = 'a Map.t ref
 
@@ -231,16 +233,17 @@ let lookVar (env : in_func) (name : string) : var =
       | None -> failwith "var not found" )
 
 
-let lookEnum (env : in_func) (path : path) =
+let lookEnum (env : in_func) (path : path) (loc : Loc.t) =
+  let error () = Error.raiseError ("An enumeration with the name '" ^ pathString path ^ "' could not be found") loc in
   let findEnumInModule enums id =
     match Map.find id enums with
     | Some ({ descr = Enum members; _ } as t) ->
         begin
           match Map.find id members with
           | Some (_, index, _) -> t.path, t.loc, index
-          | None -> failwith ("Enum not found " ^ id)
+          | None -> error ()
         end
-    | _ -> failwith ("Enum not found " ^ id)
+    | _ -> error ()
   in
   match path with
   | { id; n = None; _ } -> findEnumInModule env.m.enums id
@@ -252,11 +255,11 @@ let lookEnum (env : in_func) (path : path) =
       end
 
 
-let lookFunctionCall (env : in_func) (path : path) : f =
+let lookFunctionCall (env : in_func) (path : path) (loc : Loc.t) : f =
   let reportNotFound result =
     match result with
     | Some found -> found
-    | None -> failwith "function not found"
+    | None -> Error.raiseError ("A function with the name '" ^ pathString path ^ "' could not be found") loc
   in
   match path with
   | { id; n = Some n; _ } ->
@@ -312,13 +315,11 @@ let lookType (env : in_func) (path : path) : t =
       | None -> reportNotFound (Map.find id env.top.builtin_types) )
 
 
-let lookTypeInModule (env : in_module) (path : path) : t =
+let lookTypeInModule (env : in_module) (path : path) (loc : Loc.t) : t =
   let reportNotFound result =
     match result with
     | Some found -> found
-    | None ->
-        let path = Pla.print (Parser.Syntax.print_path path) in
-        failwith ("lookTypeInModule: type not found " ^ path)
+    | None -> Error.raiseError ("A type with the name '" ^ pathString path ^ "' could not be found") loc
   in
   match path with
   | { id; n = Some n; _ } ->

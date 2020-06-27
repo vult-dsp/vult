@@ -105,6 +105,7 @@ and unify (t1 : type_) (t2 : type_) =
 
 
 let unifyRaise (loc : Loc.t) (t1 : type_) (t2 : type_) : unit =
+  (* TODO: improve unify error reporting for tuples *)
   let raise = true in
   if not (unify t1 t2) then
     let msg =
@@ -122,7 +123,7 @@ let unifyRaise (loc : Loc.t) (t1 : type_) (t2 : type_) : unit =
 let rec type_in_m (env : in_module) (t : Syntax.type_) =
   match t with
   | { t = STId path; loc } ->
-      let found = Env.lookTypeInModule env path in
+      let found = Env.lookTypeInModule env path loc in
       { tx = TEId found.path; loc }
   | { t = STSize n; loc } -> { tx = TESize n; loc }
   | { t = STComposed (name, l); loc } ->
@@ -157,7 +158,12 @@ let addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
       env, e :: args
     else
       let instance =
-        let number = Printf.sprintf "%.2x%.2x" (0xFF land Hashtbl.hash fpath) (0xFF land Hashtbl.hash cpath) in
+        let number =
+          Printf.sprintf
+            "%.2x%.2x"
+            (0xFF land Hashtbl.hash (path_string fpath))
+            (0xFF land Hashtbl.hash (path_string cpath))
+        in
         match instance with
         | Some i -> i ^ "_" ^ number
         | None ->
@@ -239,7 +245,7 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
       env, { e = EIf { cond; then_; else_ }; t; loc }
   | { e = SECall { instance; path; args }; loc } ->
       let env, args = exp_list env args in
-      let f = Env.lookFunctionCall env path in
+      let f = Env.lookFunctionCall env path loc in
       let args_t, ret = f.t in
       let t = applyFunction args_t ret args in
       let env, args = addContextArg env instance f args loc in
@@ -273,7 +279,7 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
           end
       | _ -> failwith "exp: invalid access to type" )
   | { e = SEEnum path; loc } ->
-      let type_path, tloc, index = Env.lookEnum env path in
+      let type_path, tloc, index = Env.lookEnum env path loc in
       let t = C.path tloc type_path in
       env, { e = EInt index; t; loc }
 
