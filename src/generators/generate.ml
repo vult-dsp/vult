@@ -202,8 +202,8 @@ let makeParams (args : args) (params : params) (used : used_function Maps.IdMap.
       { repl = params.repl
       ; code = args.code
       ; cleanup = args.roots <> []
-      ; functions = NameTable.make ()
-      ; variables = NameTable.make ()
+      ; functions = NameTable.make 0
+      ; variables = NameTable.make 1
       ; shorten = args.shorten
       ; used
       }

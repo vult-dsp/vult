@@ -3,7 +3,7 @@ type t =
    ; table : (string, string) Hashtbl.t
    }
 
-let make () = { n = Random.State.make [| 0 |]; table = Hashtbl.create 128 }
+let make seed = { n = Random.State.make [| seed |]; table = Hashtbl.create 128 }
 
 let generateChar t _ =
    let base = if Random.State.bool t.n then 97 else 65 in

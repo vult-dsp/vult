@@ -443,7 +443,7 @@ let isRoot used =
    | _ -> false
 
 
-let refreshTable (p : parameters) = { p with variables = NameTable.make () }
+let refreshTable (p : parameters) = { p with variables = NameTable.make 1 }
 
 let rec convertStmt (p : parameters) (s : stmt) : cstmt =
    match s with
