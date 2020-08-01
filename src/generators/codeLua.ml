@@ -180,7 +180,7 @@ function getSwitch(i)
   if i > 6 or i < 1 then
     return false
   else
-    return global_block.switch[i]
+    return global_block.switches[i]
   end
 end
 
