@@ -161,7 +161,7 @@ let builtin_functions =
     ; "sqrt", C.freal_freal
     ; "clip", C.clip
     ; "int", C.num_int
-    ; "real", C.num_real
+    ; "real", C.num_bool_real
     ; "fix16", C.num_fix16
     ; "u-", C.num_num
     ; "+", C.num_num_num

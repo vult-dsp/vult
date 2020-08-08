@@ -65,6 +65,8 @@ static_inline float short_to_float(int16_t x) { return (float)x / 0x00010000; }
 
 static_inline float int_to_float(int a) { return (float)a; }
 
+static_inline float bool_to_float(bool a) { return a ? 1.0 : 0.0; }
+
 static_inline int float_to_int(float a) { return (int)a; }
 
 static_inline fix16_t int_to_fix(int a) { return a * 0x00010000; }

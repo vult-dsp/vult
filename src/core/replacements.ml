@@ -7,6 +7,8 @@ module C = struct
     | "random", [], { t = TReal; _ } -> Some "float_random"
     (* cast *)
     | "int", [ { t = TReal; _ } ], _ -> Some "float_to_int"
+    | "real", [ { t = TInt; _ } ], _ -> Some "int_to_float"
+    | "real", [ { t = TBool; _ } ], _ -> Some "bool_to_float"
     | _ -> None
 end
 

@@ -364,6 +364,8 @@ module C = struct
 
   let num loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc ]; loc }
 
+  let num_bool loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc }
+
   let size ?(loc = Loc.default) n = { tx = TESize n; loc }
 
   let array ?(loc = Loc.default) ?(size = unbound loc) t = { tx = TEComposed ("array", [ t; size ]); loc }
@@ -435,6 +437,11 @@ module C = struct
   let num_real () : fun_type =
     let loc = Loc.default in
     [ num loc ], real ~loc
+
+
+  let num_bool_real () : fun_type =
+    let loc = Loc.default in
+    [ num_bool loc ], real ~loc
 
 
   let num_fix16 () : fun_type =
