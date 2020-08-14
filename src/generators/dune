@@ -1,7 +1,7 @@
 (library
  (name generators)
- (modules Lua Rust C Cpp Common Code)
- (libraries core pla)
+ (modules Lua Rust C Cpp Common Code Tables)
+ (libraries core pla vm)
  (flags
   (:standard -w -30))
  (preprocess

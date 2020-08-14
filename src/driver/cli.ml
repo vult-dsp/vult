@@ -51,7 +51,9 @@ let showResult (args : args) (output : output) =
 
 
 let generate args stmts =
+  let vm = Vm.Interpreter.createVm stmts in
   let cstmts = Code.Convert.prog stmts in
+  let cstmts = Tables.create vm cstmts in
   let code =
     match args.code with
     | NoCode -> []

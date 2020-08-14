@@ -301,6 +301,18 @@ let createArgument stmts =
   | None -> []
 
 
+let createVm prog =
+  let env, functions = Compile.compile prog in
+  let bytecode = Compile.{ table = env.functions; code = Array.of_list functions } in
+  VMV.newVM bytecode
+
+
+let callFunction vm name args =
+  let findex = VMV.findSegment vm name in
+  let _, result = VMV.eval_call vm findex args in
+  result
+
+
 let run (env : Env.in_top) (prog : top_stmt list) (exp : string) =
   let e = Parser.Parse.parseString (Some "Main_.vult") (Pla.print {pla|fun _main_() return <#exp#s>;|pla}) in
   let env, main = Inference.infer_single env e in

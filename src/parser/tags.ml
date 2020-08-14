@@ -23,6 +23,20 @@
 *)
 open Util
 
+type tag_type =
+  | TypeInt
+  | TypeBool
+  | TypeReal
+  | TypeString
+  | TypeId
+
+type value =
+  | Int    of int
+  | Bool   of bool
+  | Real   of float
+  | String of string
+  | Id     of string
+
 type tag_d =
   | TagId     of string
   | TagInt    of int
@@ -75,3 +89,71 @@ let has (tags : tag list) n =
       | TagId name -> name = n
       | _ -> false)
     tags
+
+
+let getType (tag : tag) : string =
+  match tag.g with
+  | TagBool _ -> "integer"
+  | TagInt _ -> "integer"
+  | TagId _ -> "identifier"
+  | TagReal _ -> "real"
+  | TagCall _ -> "tag"
+  | TagString _ -> "string"
+
+
+let getTypeLiteral t : string =
+  match t with
+  | TypeBool -> "bool"
+  | TypeInt -> "integer"
+  | TypeReal -> "real"
+  | TypeId -> "identifier"
+  | TypeString -> "string"
+
+
+let rec getParam (remaining : (string * tag * Loc.t) list) (args : (string * tag * Loc.t) list) (id : string) =
+  match args with
+  | [] -> remaining, None
+  | (name, value, _) :: t when name = id -> remaining @ t, Some value
+  | h :: t -> getParam (h :: remaining) t id
+
+
+let getTypedParam (args : (string * tag * Loc.t) list) (id, typ) =
+  match getParam [] args id with
+  | r, Some { g = TagReal value; _ } when typ = TypeReal -> r, Some (Real value)
+  | r, Some { g = TagInt value; _ } when typ = TypeInt -> r, Some (Int value)
+  | r, Some { g = TagBool value; _ } when typ = TypeBool -> r, Some (Bool value)
+  | r, Some { g = TagId value; _ } when typ = TypeId -> r, Some (Id value)
+  | r, Some { g = TagString value; _ } when typ = TypeString -> r, Some (String value)
+  | _, Some tag ->
+      let msg =
+        Printf.sprintf
+          "The parameter '%s' was expected to be of type '%s' but it is '%s'"
+          id
+          (getTypeLiteral typ)
+          (getType tag)
+      in
+      Error.raiseError msg tag.loc
+  | r, None -> r, None
+
+
+let getArguments tags n =
+  CCList.find_map
+    (fun t ->
+      match t.g with
+      | TagCall { name; args } when name = n -> Some args
+      | TagId name when name = n -> Some []
+      | _ -> None)
+    tags
+
+
+let getParameterList tags name (params : (string * tag_type) list) : value option list =
+  let rec loop remaning found params =
+    match params with
+    | [] -> List.rev found
+    | h :: t ->
+        let remaining, value = getTypedParam remaning h in
+        loop remaining (value :: found) t
+  in
+  match getArguments tags name with
+  | Some args -> loop args [] params
+  | None -> []

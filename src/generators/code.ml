@@ -24,6 +24,8 @@
 open Core
 open Util.Maps
 
+type tag = Prog.tag
+
 type type_ =
   | Void
   | Int
@@ -127,6 +129,7 @@ and function_def =
   { name : string
   ; args : param list
   ; t : type_ list * type_
+  ; tags : tag list
   }
 
 type top_stmt =
@@ -383,7 +386,8 @@ module Convert = struct
     let args_t, ret_t = def.t in
     let ret_t = type_ ret_t in
     let args_t = List.map type_ args_t in
-    { name; args; t = args_t, ret_t }
+    let tags = def.tags in
+    { name; args; t = args_t, ret_t; tags }
 
 
   let top_stmt (top : Prog.top_stmt) : top_stmt =
