@@ -886,6 +886,18 @@ and stmtWhile (buffer : Stream.stream) : stmt =
   { s = SStmtWhile (cond, tstm); loc }
 
 
+and stmtIter (buffer : Stream.stream) : stmt =
+  let loc = Stream.location buffer in
+  let _ = Stream.consume buffer ITER in
+  let _ = Stream.consume buffer LPAREN in
+  let name, id_loc = id_name buffer in
+  let _ = Stream.consume buffer COMMA in
+  let value = expression 0 buffer in
+  let _ = Stream.consume buffer RPAREN in
+  let body = stmtList buffer in
+  { s = SStmtIter { id = name, id_loc; value; body }; loc }
+
+
 and stmt (buffer : Stream.stream) : stmt =
   try
     match Stream.peek buffer with
@@ -894,6 +906,7 @@ and stmt (buffer : Stream.stream) : stmt =
     | RET -> stmtReturn buffer
     | IF -> stmtIf buffer
     | WHILE -> stmtWhile buffer
+    | ITER -> stmtIter buffer
     | _ -> stmtBind buffer
   with
   | ParserError error ->

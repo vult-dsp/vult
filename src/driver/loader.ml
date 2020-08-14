@@ -108,6 +108,7 @@ module Dependencies = struct
     | SStmtBlock elems -> list stmt set elems
     | SStmtIf (cond, then_, else_) -> option stmt (stmt (exp set cond) then_) else_
     | SStmtWhile (cond, s) -> stmt (exp set cond) s
+    | SStmtIter { value; body } -> stmt (exp set value) body
 
 
   and top_stmt set s =

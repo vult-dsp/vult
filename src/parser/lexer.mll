@@ -47,6 +47,7 @@ let keyword_table =
       "else",ELSE;
       "return",RET;
       "while",WHILE;
+      "iter", ITER;
       "type",TYPE;
       "enum",ENUM;
       "true",TRUE;
@@ -98,6 +99,7 @@ let kindToString kind =
    | THEN  -> "'then'"
    | ELSE  -> "'else'"
    | WHILE -> "'while'"
+   | ITER  -> "'iter'"
    | LBRACE -> "'{'"
    | RBRACE -> "'}'"
    | LBRACK -> "'['"

@@ -57,6 +57,7 @@ type token_enum =
   | AT
   | DOT
   | WHILE
+  | ITER
   | TYPE
   | ENUM
   | LARR

@@ -112,6 +112,11 @@ and stmt_d =
   | SStmtBlock  of stmt list
   | SStmtIf     of exp * stmt * stmt option
   | SStmtWhile  of exp * stmt
+  | SStmtIter   of
+      { id : string * Loc.t
+      ; value : exp
+      ; body : stmt
+      }
 
 and stmt =
   { s : stmt_d
