@@ -3,14 +3,57 @@ open Prog
 open Util
 open Maps
 
+type builtin =
+  | Set
+  | Get
+  | Size
+  | Abs
+  | Exp
+  | Log10
+  | Sin
+  | Cos
+  | Tan
+  | Sinh
+  | Cosh
+  | Tanh
+  | Sqrt
+  | Floor
+  | Clip
+  | Pow
+
+type f =
+  | F of int
+  | B of builtin
+
 type env =
-  { functions : int Map.t
+  { functions : f Map.t
   ; locals : int Map.t
   ; lcount : int
   ; fcount : int
   }
 
-let default_env = { locals = Map.empty; lcount = 0; functions = Map.empty; fcount = 0 }
+let functions =
+  [ "set", B Set
+  ; "get", B Get
+  ; "size", B Size
+  ; "abs", B Abs
+  ; "exp", B Exp
+  ; "log10", B Log10
+  ; "sin", B Sin
+  ; "cos", B Cos
+  ; "tan", B Tan
+  ; "sinh", B Sinh
+  ; "cosh", B Cosh
+  ; "tanh", B Tanh
+  ; "sqrt", B Sqrt
+  ; "floor", B Floor
+  ; "clip", B Clip
+  ; "pow", B Pow
+  ]
+  |> Map.of_list
+
+
+let default_env = { locals = Map.empty; lcount = 0; functions; fcount = 0 }
 
 let addLocal env name = { env with locals = Map.add name env.lcount env.locals; lcount = env.lcount + 1 }
 
@@ -47,7 +90,7 @@ type rvalue_d =
   | RNeg    of rvalue
   | RIf     of rvalue * rvalue * rvalue
   | RMember of rvalue * int * string
-  | RCall   of int * string * rvalue list
+  | RCall   of f * string * rvalue list
   | RIndex  of rvalue * rvalue
 
 and rvalue =
@@ -90,7 +133,7 @@ type segment =
 type segments = segment array [@@deriving show]
 
 type bytecode =
-  { table : int Map.t
+  { table : f Map.t
   ; code : segments
   }
 
@@ -145,14 +188,12 @@ let rec compile_lexp (env : env) (l : lexp) : lvalue =
       let l = List.map (compile_lexp env) l |> Array.of_list in
       { l = LTuple l; loc }
   | LMember (e, s) ->
-      begin
-        match e.t.t with
-        | TStruct descr ->
-            let index = getIndex s descr.members in
-            let e = compile_lexp env e in
-            { l = LMember (e, index, s); loc }
-        | _ -> failwith "type error"
-      end
+      ( match e.t.t with
+      | TStruct descr ->
+          let index = getIndex s descr.members in
+          let e = compile_lexp env e in
+          { l = LMember (e, index, s); loc }
+      | _ -> failwith "type error" )
   | LIndex { e; index } ->
       let e = compile_lexp env e in
       let index = compile_exp env index in
@@ -196,14 +237,12 @@ and compile_exp (env : env) e : rvalue =
       let elems = List.map (compile_exp env) elems in
       { r = RObject (Array.of_list elems); loc }
   | EMember (e, m) ->
-      begin
-        match e.t.t with
-        | TStruct descr ->
-            let index = getIndex m descr.members in
-            let e = compile_exp env e in
-            { r = RMember (e, index, m); loc }
-        | _ -> failwith "type error"
-      end
+      ( match e.t.t with
+      | TStruct descr ->
+          let index = getIndex m descr.members in
+          let e = compile_exp env e in
+          { r = RMember (e, index, m); loc }
+      | _ -> failwith "type error" )
   | ECall { path; args } ->
       let args = List.map (compile_exp env) args in
       ( match Map.find_opt path env.functions with
@@ -284,13 +323,13 @@ let compile_top (env : env) (s : top_stmt) =
   match s.top with
   | TopExternal ({ name; _ }, _) ->
       let index = env.fcount in
-      let functions = Map.add name index env.functions in
+      let functions = Map.add name (F index) env.functions in
       let env = { env with functions; fcount = env.fcount + 1 } in
       env, [ External ]
   | TopType _ -> env, []
   | TopFunction ({ name; args; _ }, body) ->
       let index = env.fcount in
-      let functions = Map.add name index env.functions in
+      let functions = Map.add name (F index) env.functions in
       let env = { locals = Map.empty; lcount = 0; functions; fcount = env.fcount + 1 } in
       let env = List.fold_left (fun env (n, _, _) -> addLocal env n) env args in
       let env, body = compile_stmt env body in
@@ -298,7 +337,7 @@ let compile_top (env : env) (s : top_stmt) =
       env, [ Function { name; body; locals = env.lcount - n_args; n_args } ]
 
 
-let compile stmts = list compile_top default_env stmts
+let compile stmts : env * segment list = list compile_top default_env stmts
 
 let print_op op =
   match op with
@@ -322,6 +361,32 @@ let print_op op =
   | OpGe -> Pla.string ">="
 
 
+let builtin b =
+  match b with
+  | Set -> "set"
+  | Get -> "get"
+  | Size -> "size"
+  | Abs -> "abs"
+  | Exp -> "exp"
+  | Log10 -> "log10"
+  | Sin -> "sin"
+  | Cos -> "cos"
+  | Tan -> "tan"
+  | Sinh -> "sinh"
+  | Cosh -> "cosh"
+  | Tanh -> "tanh"
+  | Sqrt -> "sqrt"
+  | Floor -> "floor"
+  | Clip -> "clip"
+  | Pow -> "pow"
+
+
+let f f =
+  match f with
+  | F i -> Pla.int i
+  | B i -> Pla.string (builtin i)
+
+
 let rec print_rvalue r =
   match r.r with
   | RVoid -> Pla.string "()"
@@ -339,7 +404,8 @@ let rec print_rvalue r =
       {pla|<#e#>[<#i#>]|pla}
   | RCall (i, s, args) ->
       let args = Pla.map_sep Pla.commaspace print_rvalue args in
-      {pla|<#i#i>:<#s#s>(<#args#>)|pla}
+      let i = f i in
+      {pla|<#i#>:<#s#s>(<#args#>)|pla}
   | RMember (e, i, s) ->
       let e = print_rvalue e in
       {pla|<#e#>.[<#i#i>:<#s#s>]|pla}
@@ -410,7 +476,10 @@ let print_segment (s : segment) =
 let print_segments s = Pla.map_sep_all Pla.newline print_segment (Array.to_list s)
 
 let print_table t =
-  let f (n, i) = {pla|<#i#i>: <#n#s>|pla} in
+  let f (n, i) =
+    let i = f i in
+    {pla|<#i#>: <#n#s>|pla}
+  in
   let elems = List.sort (fun (_, n1) (_, n2) -> compare n1 n2) (Map.to_list t) in
   Pla.map_sep_all Pla.newline f elems
 

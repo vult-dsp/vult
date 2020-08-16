@@ -146,7 +146,6 @@ let builtin_functions =
     [ "set", C.array_set
     ; "get", C.array_get
     ; "size", C.array_size
-    ; "makeArray", C.array_make
     ; "abs", C.freal_freal
     ; "exp", C.freal_freal
     ; "log10", C.freal_freal
@@ -238,21 +237,17 @@ let lookEnum (env : in_func) (path : path) (loc : Loc.t) =
   let findEnumInModule enums id =
     match Map.find id enums with
     | Some ({ descr = Enum members; _ } as t) ->
-        begin
-          match Map.find id members with
-          | Some (_, index, _) -> t.path, t.loc, index
-          | None -> error ()
-        end
+        ( match Map.find id members with
+        | Some (_, index, _) -> t.path, t.loc, index
+        | None -> error () )
     | _ -> error ()
   in
   match path with
   | { id; n = None; _ } -> findEnumInModule env.m.enums id
   | { id; n = Some n; _ } ->
-      begin
-        match Map.find n env.top.modules with
-        | Some m -> findEnumInModule m.enums id
-        | None -> failwith "Module"
-      end
+      ( match Map.find n env.top.modules with
+      | Some m -> findEnumInModule m.enums id
+      | None -> failwith "Module" )
 
 
 let lookFunctionCall (env : in_func) (path : path) (loc : Loc.t) : f =
@@ -263,11 +258,9 @@ let lookFunctionCall (env : in_func) (path : path) (loc : Loc.t) : f =
   in
   match path with
   | { id; n = Some n; _ } ->
-      begin
-        match Map.find n env.top.modules with
-        | None -> failwith ("module not found " ^ n)
-        | Some m -> reportNotFound (Map.find id m.functions)
-      end
+      ( match Map.find n env.top.modules with
+      | None -> failwith ("module not found " ^ n)
+      | Some m -> reportNotFound (Map.find id m.functions) )
   | { id; _ } ->
       ( match Map.find id env.m.functions with
       | Some found -> found
@@ -286,11 +279,9 @@ let lookOperator (env : in_func) (op : string) : f =
 let getType (env : in_top) (path : path) : t option =
   match path with
   | { id; n = Some n; _ } ->
-      begin
-        match Map.find n env.modules with
-        | None -> failwith ("module not found " ^ n)
-        | Some m -> Map.find id m.types
-      end
+      ( match Map.find n env.modules with
+      | None -> failwith ("module not found " ^ n)
+      | Some m -> Map.find id m.types )
   | _ -> None
 
 
@@ -304,11 +295,9 @@ let lookType (env : in_func) (path : path) : t =
   in
   match path with
   | { id; n = Some n; _ } ->
-      begin
-        match Map.find n env.top.modules with
-        | None -> failwith ("module not found " ^ n)
-        | Some m -> reportNotFound (Map.find id m.types)
-      end
+      ( match Map.find n env.top.modules with
+      | None -> failwith ("module not found " ^ n)
+      | Some m -> reportNotFound (Map.find id m.types) )
   | { id; _ } ->
       ( match Map.find id env.m.types with
       | Some _ as found -> reportNotFound found
@@ -323,11 +312,9 @@ let lookTypeInModule (env : in_module) (path : path) (loc : Loc.t) : t =
   in
   match path with
   | { id; n = Some n; _ } ->
-      begin
-        match Map.find n env.top.modules with
-        | None -> failwith ("module not found " ^ n)
-        | Some m -> reportNotFound (Map.find id m.types)
-      end
+      ( match Map.find n env.top.modules with
+      | None -> failwith ("module not found " ^ n)
+      | Some m -> reportNotFound (Map.find id m.types) )
   | { id; _ } ->
       ( match Map.find id env.m.types with
       | Some _ as found -> reportNotFound found

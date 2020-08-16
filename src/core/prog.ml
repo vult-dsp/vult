@@ -543,23 +543,21 @@ module TypedToProg = struct
     | T.TEId { id = "bool"; n = None; _ } -> state, { t = TBool; loc }
     | T.TEId p ->
         let ps = path p in
-        begin
-          match Map.find_opt ps state.types with
-          | Some t -> state, t
-          | None ->
-              ( match Env.getType env p with
-              | None -> failwith "unknown type"
-              | Some { descr = Enum _; _ } -> state, { t = TInt; loc }
-              | Some { descr = Record members; _ } ->
-                  let members =
-                    List.map (fun (name, (var : Env.var)) -> name, var.t, var.loc) (Env.Map.to_list members)
-                  in
-                  let state, members = type_list env state members in
-                  let t = { t = TStruct { path = ps; members }; loc } in
-                  let types = Map.add ps t state.types in
-                  { state with types }, t
-              | Some { descr = Simple; _ } -> failwith "Type does not have members" )
-        end
+        ( match Map.find_opt ps state.types with
+        | Some t -> state, t
+        | None ->
+            ( match Env.getType env p with
+            | None -> failwith "unknown type"
+            | Some { descr = Enum _; _ } -> state, { t = TInt; loc }
+            | Some { descr = Record members; _ } ->
+                let members =
+                  List.map (fun (name, (var : Env.var)) -> name, var.t, var.loc) (Env.Map.to_list members)
+                in
+                let state, members = type_list env state members in
+                let t = { t = TStruct { path = ps; members }; loc } in
+                let types = Map.add ps t state.types in
+                { state with types }, t
+            | Some { descr = Simple; _ } -> failwith "Type does not have members" ) )
     | T.TELink t -> type_ env state t
     | T.TEComposed ("array", [ t; dim ]) ->
         let state, t = type_ env state t in

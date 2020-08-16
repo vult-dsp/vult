@@ -61,7 +61,7 @@ module type VM = sig
 
   val printStack : t -> unit
 
-  val findSegment : t -> string -> int
+  val findSegment : t -> string -> Compile.f
 end
 
 module Mutable : VM = struct
@@ -69,7 +69,7 @@ module Mutable : VM = struct
     { stack : rvalue array
     ; mutable sp : int
     ; mutable frame : int
-    ; table : int Map.t
+    ; table : Compile.f Map.t
     ; code : Compile.segment array
     }
 
@@ -123,17 +123,16 @@ module Mutable : VM = struct
     vm
 
 
-  let findSegment (vm : t) (name : string) : int = Map.find name vm.table
+  let findSegment (vm : t) (name : string) : Compile.f = Map.find name vm.table
 
   let printStack (vm : t) =
     let rec loop n =
-      if n <= vm.sp then begin
+      if n <= vm.sp then (
         if vm.frame = n then print_string "->" else print_string "  " ;
         print_int n ;
         print_string " : " ;
         print_endline (Pla.print (print_value vm.stack.(n))) ;
-        loop (n + 1)
-      end
+        loop (n + 1) )
     in
     loop 0
 end

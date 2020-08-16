@@ -310,19 +310,15 @@ module Convert = struct
   let rec getLDecl (env : env) (l : lexp) =
     match l with
     | { l = LId n; _ } ->
-        begin
-          match findRemove env n with
-          | env, Some (dim, t) -> env, Initialize (n, dim, t)
-          | env, None -> env, Nothing
-        end
+        ( match findRemove env n with
+        | env, Some (dim, t) -> env, Initialize (n, dim, t)
+        | env, None -> env, Nothing )
     | { l = LWild; _ } -> env, Nothing
     | { l = LMember (l, _); _ }
      |{ l = LIndex (l, _); _ } ->
-        begin
-          match getLDecl env l with
-          | env, Initialize (n, dim, t) -> env, Declare (n, dim, t)
-          | env, ret -> env, ret
-        end
+        ( match getLDecl env l with
+        | env, Initialize (n, dim, t) -> env, Declare (n, dim, t)
+        | env, ret -> env, ret )
 
 
   let makeBlock stmts =
@@ -345,12 +341,10 @@ module Convert = struct
     | { s = StmtBind (lhs, rhs); _ } ->
         let lhs = lexp lhs in
         let rhs = exp rhs in
-        begin
-          match getLDecl env lhs with
-          | env, Nothing -> env, [ StmtBind (lhs, rhs) ]
-          | env, Initialize (n, dim, t) -> env, [ StmtDecl ({ d = DId (n, dim); t }, Some rhs) ]
-          | env, Declare (n, dim, t) -> env, [ StmtDecl ({ d = DId (n, dim); t }, getInitRHS t); StmtBind (lhs, rhs) ]
-        end
+        ( match getLDecl env lhs with
+        | env, Nothing -> env, [ StmtBind (lhs, rhs) ]
+        | env, Initialize (n, dim, t) -> env, [ StmtDecl ({ d = DId (n, dim); t }, Some rhs) ]
+        | env, Declare (n, dim, t) -> env, [ StmtDecl ({ d = DId (n, dim); t }, getInitRHS t); StmtBind (lhs, rhs) ] )
     | { s = StmtReturn e; _ } ->
         let e = exp e in
         env, [ StmtReturn e ]

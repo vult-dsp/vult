@@ -267,17 +267,12 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
       let env, e = exp env e in
       ( match (unlink e.t).tx with
       | TEId path ->
-          begin
-            match Env.lookType env path with
-            | { path; descr = Record members; _ } ->
-                begin
-                  match Map.find m members with
-                  | None ->
-                      Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
-                  | Some { t; _ } -> env, { e = EMember (e, m); t; loc }
-                end
-            | _ -> failwith "Not a record type"
-          end
+          ( match Env.lookType env path with
+          | { path; descr = Record members; _ } ->
+              ( match Map.find m members with
+              | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
+              | Some { t; _ } -> env, { e = EMember (e, m); t; loc } )
+          | _ -> failwith "Not a record type" )
       | _ -> failwith "exp: invalid access to type" )
   | { e = SEEnum path; loc } ->
       let type_path, tloc, index = Env.lookEnum env path loc in
@@ -339,17 +334,12 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
       let env, e = lexp env e in
       ( match (unlink e.t).tx with
       | TEId path ->
-          begin
-            match Env.lookType env path with
-            | { path; descr = Record members; _ } ->
-                begin
-                  match Map.find m members with
-                  | None ->
-                      Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
-                  | Some { t; _ } -> env, { l = LMember (e, m); t; loc }
-                end
-            | _ -> failwith "Not a record type"
-          end
+          ( match Env.lookType env path with
+          | { path; descr = Record members; _ } ->
+              ( match Map.find m members with
+              | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
+              | Some { t; _ } -> env, { l = LMember (e, m); t; loc } )
+          | _ -> failwith "Not a record type" )
       | _ -> failwith "lexp: invalid access to type" )
 
 

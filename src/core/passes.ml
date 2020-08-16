@@ -85,11 +85,9 @@ module SimpleReplacements = struct
     match e with
     | { e = ECall { path; args }; t; _ } ->
         let args_t = List.map (fun (e : exp) -> e.t) args in
-        begin
-          match (Replacements.getFunToFun env.args.code) path args_t t with
-          | None -> state, e
-          | Some path -> state, { e with e = ECall { path; args } }
-        end
+        ( match (Replacements.getFunToFun env.args.code) path args_t t with
+        | None -> state, e
+        | Some path -> state, { e with e = ECall { path; args } } )
     | _ -> state, e
 
 
@@ -133,13 +131,11 @@ module CollectDependencies = struct
     @@ fun env state (e : exp) ->
     match e with
     | { e = ECall { path; _ }; _ } ->
-        begin
-          match env.current_function with
-          | None -> state, e
-          | Some def ->
-              let state = addFunctionDep state def.name path in
-              state, e
-        end
+        ( match env.current_function with
+        | None -> state, e
+        | Some def ->
+            let state = addFunctionDep state def.name path in
+            state, e )
     | _ -> state, e
 
 
@@ -148,13 +144,11 @@ module CollectDependencies = struct
     @@ fun env state (p : type_) ->
     match p with
     | { t = TStruct { path; _ }; _ } ->
-        begin
-          match env.current_type with
-          | None -> state, p
-          | Some { path = name; _ } ->
-              let state = addTypeDep state name path in
-              state, p
-        end
+        ( match env.current_type with
+        | None -> state, p
+        | Some { path = name; _ } ->
+            let state = addTypeDep state name path in
+            state, p )
     | _ -> state, p
 
 

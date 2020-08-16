@@ -45,7 +45,6 @@ function tanh(x)            return math.tanh(x) end
 function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
-function makeArray(size, v) local a = {} for i=1,size do a[i]=v end return a end
 
 |pla}
 

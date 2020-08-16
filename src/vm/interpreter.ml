@@ -139,21 +139,17 @@ module MakeVM (VM : VM) = struct
     | RIndex (e, index) ->
         let vm, e = eval_rvalue vm e in
         let vm, index = eval_rvalue vm index in
-        begin
-          match e, index with
-          | Object elems, Int index -> vm, elems.(index)
-          | _ -> failwith "index not evaluated correctly"
-        end
+        ( match e, index with
+        | Object elems, Int index -> vm, elems.(index)
+        | _ -> failwith "index not evaluated correctly" )
     | RCall (index, _, args) ->
         let vm, args = eval_rvalue_list vm args in
         eval_call vm index args
     | RMember (e, index, _) ->
         let vm, e = eval_rvalue vm e in
-        begin
-          match e with
-          | Object elems -> vm, elems.(index)
-          | _ -> failwith "member: not a struct"
-        end
+        ( match e with
+        | Object elems -> vm, elems.(index)
+        | _ -> failwith "member: not a struct" )
 
 
   and eval_rvalue_list vm a =
@@ -185,24 +181,63 @@ module MakeVM (VM : VM) = struct
 
 
   and eval_call (vm : VM.t) findex (args : rvalue list) : VM.t * rvalue =
-    match VM.code vm findex with
-    | Function { body; locals; _ } ->
-        let vm, frame = VM.newFrame vm in
-        let vm = pushValues vm args in
-        let vm = VM.allocate vm locals in
-        let vm = eval_instr vm body in
-        let vm, ret = VM.pop vm in
-        let vm = VM.restoreFrame vm frame in
-        vm, ret
-    | External -> failwith ""
+    match findex with
+    | F findex ->
+        ( match VM.code vm findex with
+        | Function { body; locals; _ } ->
+            let vm, frame = VM.newFrame vm in
+            let vm = pushValues vm args in
+            let vm = VM.allocate vm locals in
+            let vm = eval_instr vm body in
+            let vm, ret = VM.pop vm in
+            let vm = VM.restoreFrame vm frame in
+            vm, ret
+        | External -> failwith "" )
+    | B f ->
+        ( match f, args with
+        | Exp, [ Real x ] -> vm, Real (exp x)
+        | Exp, _ -> failwith "invalid arguments to 'exp' function"
+        | Sin, [ Real x ] -> vm, Real (sin x)
+        | Sin, _ -> failwith "invalid arguments to 'sin' function"
+        | Cos, [ Real x ] -> vm, Real (cos x)
+        | Cos, _ -> failwith "invalid arguments to 'cos' function"
+        | Tan, [ Real x ] -> vm, Real (tan x)
+        | Tan, _ -> failwith "invalid arguments to 'tan' function"
+        | Sinh, [ Real x ] -> vm, Real (sinh x)
+        | Sinh, _ -> failwith "invalid arguments to 'sinh' function"
+        | Cosh, [ Real x ] -> vm, Real (cosh x)
+        | Cosh, _ -> failwith "invalid arguments to 'cosh' function"
+        | Tanh, [ Real x ] -> vm, Real (tanh x)
+        | Tanh, _ -> failwith "invalid arguments to 'tanh' function"
+        | Sqrt, [ Real x ] -> vm, Real (sqrt x)
+        | Sqrt, _ -> failwith "invalid arguments to 'sqrt' function"
+        | Abs, [ Real x ] -> vm, Real (abs_float x)
+        | Abs, [ Int x ] -> vm, Int (abs x)
+        | Abs, _ -> failwith "invalid arguments to 'abs' function"
+        | Log10, [ Real x ] -> vm, Real (log10 x)
+        | Log10, _ -> failwith "invalid arguments to 'log10' function"
+        | Floor, [ Real x ] -> vm, Real (floor x)
+        | Floor, _ -> failwith "invalid arguments to 'floor' function"
+        | Clip, [ Real x; Real min_v; Real max_v ] -> vm, Real (min (max x min_v) max_v)
+        | Clip, [ Int x; Int min_v; Int max_v ] -> vm, Int (min (max x min_v) max_v)
+        | Clip, _ -> failwith "invalid arguments to 'clip' function"
+        | Pow, [ Real x; Real y ] -> vm, Real (x ** y)
+        | Pow, _ -> failwith "invalid arguments to 'pow' function"
+        | Size, [ Object x ] -> vm, Int (Array.length x)
+        | Size, _ -> failwith "invalid arguments to 'size' function"
+        | Get, [ Object x; Int n ] -> vm, x.(n)
+        | Get, _ -> failwith "invalid arguments to 'get' function"
+        | Set, [ Object x; Int n; v ] ->
+            x.(n) <- v ;
+            vm, Void
+        | Set, _ -> failwith "invalid arguments to 'set' function" )
 
 
   and eval_instr (vm : VM.t) (instr : Compile.instr list) : VM.t =
     let trace vm i =
-      if false then begin
+      if false then (
         VM.printStack vm ;
-        print_endline (Pla.print (Compile.print_instr i))
-      end
+        print_endline (Pla.print (Compile.print_instr i)) )
     in
     match instr with
     | [] -> vm
@@ -259,8 +294,8 @@ module VMV = MakeVM (Mutable)
 type bytecode = Compile.bytecode
 
 let compile stmts : bytecode =
-  let env, functions = Compile.compile stmts in
-  Compile.{ table = env.functions; code = Array.of_list functions }
+  let env, segments = Compile.compile stmts in
+  Compile.{ table = env.functions; code = Array.of_list segments }
 
 
 let main_path = "Main___main__type"
@@ -302,8 +337,8 @@ let createArgument stmts =
 
 
 let createVm prog =
-  let env, functions = Compile.compile prog in
-  let bytecode = Compile.{ table = env.functions; code = Array.of_list functions } in
+  let env, segments = Compile.compile prog in
+  let bytecode = Compile.{ table = env.functions; code = Array.of_list segments } in
   VMV.newVM bytecode
 
 
