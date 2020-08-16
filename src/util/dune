@@ -1,6 +1,6 @@
 (library
  (name util)
- (modules Components Error FileIO Float Loc Args Maps)
+ (modules Components Error FileIO Float Loc Args Maps Fitting)
  (libraries containers pla)
  (preprocess
   (pps pla.ppx)))

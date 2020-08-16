@@ -130,12 +130,14 @@ and function_def =
   ; args : param list
   ; t : type_ list * type_
   ; tags : tag list
+  ; loc : Util.Loc.t
   }
 
 type top_stmt =
   | TopExternal of function_def * string
   | TopFunction of function_def * stmt
   | TopType     of struct_descr
+  | TopDecl     of dexp * exp
 
 type code = top_stmt list
 
@@ -386,8 +388,7 @@ module Convert = struct
     let args_t, ret_t = def.t in
     let ret_t = type_ ret_t in
     let args_t = List.map type_ args_t in
-    let tags = def.tags in
-    { name; args; t = args_t, ret_t; tags }
+    { name; args; t = args_t, ret_t; tags = def.tags; loc = def.loc }
 
 
   let top_stmt (top : Prog.top_stmt) : top_stmt =

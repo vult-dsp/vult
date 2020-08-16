@@ -264,6 +264,12 @@ let print_top_stmt (target : target) t =
       let members = Pla.map_sep {pla|<#>|pla} print_member members in
       {pla|typedef struct <#path#s> {<#members#+><#>} <#path#s>;<#><#>|pla}
   | TopType _, _ -> Pla.unit
+  | TopDecl (lhs, rhs), Tables ->
+      let t = print_type_ lhs.t in
+      let lhs = print_dexp lhs in
+      let rhs = print_exp rhs in
+      {pla|static const <#t#> <#lhs#> = <#rhs#>;<#>|pla}
+  | TopDecl _, _ -> Pla.unit
 
 
 let print_prog target t = Pla.map_join (print_top_stmt target) t

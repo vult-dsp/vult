@@ -14,5 +14,8 @@
    "[ocaml]": {
       "editor.tabSize": 3,
       "editor.insertSpaces": true
+   },
+   "ocaml.sandbox": {
+      "kind": "global"
    }
 }
