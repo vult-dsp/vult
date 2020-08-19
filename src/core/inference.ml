@@ -65,7 +65,7 @@ let constrainOption l1 l2 =
 let rec pickOption original l tt =
   let rec loop l =
     match l with
-    | [] -> failwith "does not match any type"
+    | [] -> false
     | h :: t ->
         if unify h tt then
           linkType ~from:tt ~into:original

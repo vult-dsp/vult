@@ -168,12 +168,12 @@ let builtin_functions =
     ; "*", C.num_num_num
     ; "/", C.num_num_num
     ; "%", C.num_num_num
-    ; ">", C.num_num_bool
-    ; "<", C.num_num_bool
+    ; ">", C.a_a_bool
+    ; "<", C.a_a_bool
     ; "==", C.a_a_bool
     ; "<>", C.a_a_bool
-    ; ">=", C.num_num_bool
-    ; "<=", C.num_num_bool
+    ; ">=", C.a_a_bool
+    ; "<=", C.a_a_bool
     ; "|", C.int_int_int
     ; "&", C.int_int_int
     ; ">>", C.int_int_int

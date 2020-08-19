@@ -200,10 +200,95 @@ let makeTable vm (def : function_def) =
       failwith ""
 
 
-let replaceFunction vm stmt =
+let readFile (loc : Loc.t) (includes : string list) (file : string) : WaveFile.wave =
+  match FileIO.findFile includes file with
+  | Some filename ->
+      begin
+        match WaveFile.read filename with
+        | Ok wave -> wave
+        | Error read_msg ->
+            let msg = "Failed to read the wav file '" ^ file ^ "': " ^ read_msg in
+            Error.raiseError msg loc
+      end
+  | None ->
+      let msg = "The file '" ^ file ^ "' was not found in any of the include locations" in
+      Error.raiseError msg loc
+
+
+let checkNumberOfChannels (loc : Loc.t) (channels : int) (wave : WaveFile.wave) : unit =
+  if wave.WaveFile.channels <> channels then
+    let msg =
+      "The given number of channels ("
+      ^ string_of_int channels
+      ^ ") does not match the actual number of the channels in the file ("
+      ^ string_of_int wave.WaveFile.channels
+      ^ ")"
+    in
+    Error.raiseError msg loc
+
+
+let getDeclarations name (wav_data : WaveFile.wave) precision : top_stmt list =
+  Array.mapi (fun i v -> makeDecl name ("chan_" ^ string_of_int i) precision (Array.to_list v)) wav_data.WaveFile.data
+  |> Array.to_list
+
+
+let checkWaveInputVariables (loc : Loc.t) (args : param list) : exp * exp =
+  match args with
+  | [ (channel, channel_t); (index, index_t) ] -> { e = Id channel; t = channel_t }, { e = Id index; t = index_t }
+  | _ ->
+      let msg =
+        "This attribute requires the function to have the following arguments:\n\
+         \"external wave(channel:int, index:int) : real\""
+      in
+      Error.raiseError msg loc
+
+
+let accessChannel (fname : string) (channel : exp) (index : exp) (samples : int) t (i : int) : stmt =
+  let table_name = fname ^ "_" ^ "chan_" ^ string_of_int i in
+  let table = { e = Call { path = "wrap_array"; args = [ { e = Id table_name; t } ] }; t } in
+  let i = { e = Int i; t = Int } in
+  let samples_e = { e = Int samples; t = Int } in
+  let cond = { e = Op (Eq, channel, i); t = Bool } in
+  let ret = { e = Index { e = table; index = { e = Op (Mod, index, samples_e); t = Int } }; t } in
+  StmtIf (cond, StmtReturn ret, None)
+
+
+let makeNewBody (def : function_def) (wave : WaveFile.wave) precision : stmt =
+  let channel, index = checkWaveInputVariables def.loc def.args in
+  let stmts =
+    CCList.init wave.WaveFile.channels (accessChannel def.name channel index wave.WaveFile.samples precision)
+  in
+  let default = StmtReturn { e = Real 0.0; t = Real } in
+  StmtBlock (stmts @ [ default ])
+
+
+let makeSizeFunction (def : function_def) (size : int) : top_stmt =
+  let size_name = def.name ^ "_samples" in
+  let body = StmtReturn { e = Int size; t = Int } in
+  TopFunction ({ name = size_name; args = []; t = [], Int; tags = []; loc = def.loc }, body)
+
+
+let makeWave (args : Args.args) _vm (def : function_def) =
+  let params = Tags.[ "channels", TypeInt; "file", TypeString ] in
+  match Tags.getParameterList def.tags "wave" params with
+  | [ Some (Int channels); Some (String file) ] ->
+      let precision = snd def.t in
+      let wave = readFile def.loc args.includes file in
+      let () = checkNumberOfChannels def.loc channels wave in
+      let result = getDeclarations def.name wave precision in
+      let body = makeNewBody def wave precision in
+      let size_fun = makeSizeFunction def wave.WaveFile.samples in
+      result @ [ size_fun; TopFunction (def, body) ]
+  | _ ->
+      let msg = "The attribute 'wave' requires specific parameters. e.g. 'wave(channels=1, file=\"file.wav\")'" in
+      failwith msg
+
+
+let replaceFunction (args : Args.args) vm stmt =
   match stmt with
   | TopFunction (def, _) when Tags.has def.tags "table" -> makeTable vm def
+  | TopExternal (def, _) when Tags.has def.tags "wave" -> makeWave args vm def
   | _ -> [ stmt ]
 
 
-let create vm stmts = CCList.flat_map (replaceFunction vm) stmts
+let create (args : Args.args) vm stmts = CCList.flat_map (replaceFunction args vm) stmts
