@@ -269,8 +269,8 @@ module Initializers = struct
         let name = struct_t.path ^ "_init" in
         let this_type = { t = TStruct struct_t; loc = Loc.default } in
         let void_type = { t = TVoid; loc = Loc.default } in
-        let lctx = { l = LId "ctx"; t = { t = TInt; loc }; loc } in
-        let ectx = { e = EId "ctx"; t = { t = TInt; loc }; loc } in
+        let lctx = { l = LId "ctx"; t = this_type; loc } in
+        let ectx = { e = EId "ctx"; t = this_type; loc } in
         let stmts =
           List.map
             (fun (var, (t : type_), _) ->
