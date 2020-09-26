@@ -149,7 +149,6 @@ let all_files =
    ; "web/volume.vult"
    ; "web/delay.vult"
    ; "../test/passes/wav_file.vult"
-   ; "../test/other/log.vult"
    ; "effects/bitcrush.vult"
    ; "effects/short_delay.vult"
    ; "effects/saturate_soft.vult"

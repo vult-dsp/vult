@@ -129,6 +129,7 @@ module Default = struct
          ; ("abs", "float"), "fabsf"
          ; ("exp", "float"), "expf"
          ; ("log10", "float"), "log10f"
+         ; ("log", "float"), "logf"
          ; ("floor", "float"), "floorf"
          ; ("max", "float"), "fmax"
          ; ("min", "float"), "fmin"
@@ -154,10 +155,6 @@ module Default = struct
          ; ("random", "float"), "float_random"
          ; ("samplerate", "float"), "float_samplerate"
          ; ("wrap_array", "float"), "float_wrap_array"
-         ; ("log", "float"), "float_print"
-         ; ("log", "int"), "int_print"
-         ; ("log", "uint8_t"), "bool_print"
-         ; ("log", "string"), "string_print"
          ; ("mac", "fix16_t"), "fix_mac"
          ; ("msu", "fix16_t"), "fix_msu"
          ; ("abs", "fix16_t"), "fix_abs"
@@ -178,7 +175,6 @@ module Default = struct
          ; ("random", "fix16_t"), "fix_random"
          ; ("samplerate", "fix16_t"), "fix_samplerate"
          ; ("wrap_array", "fix16_t"), "fix_wrap_array"
-         ; ("log", "fix16_t"), "fix_print"
          ]
 
 
@@ -234,24 +230,22 @@ module Java = struct
       Replacements.makeFunctions
          [ ("abs", "double"), "Math.abs"
          ; ("abs", "float"), "Math.abs"
-         ; (*
-              ("max", "double"),   "Math.max";
-              ("min", "double"),   "Math.min";
-              ("sin", "double"),   "Math.sin";
-              ("cos", "double"),   "Math.cos";
-              ("tan", "double"),   "Math.tan";
-              ("tanh", "double"),  "Math.tanh";
-              ("sinh", "double"),  "Math.sinh";
-              ("cosh", "double"),  "Math.cosh";
-              ("exp", "double"),   "Math.exp";
-              ("sqrt", "double"),  "Math.sqrt";
-              ("pow", "double"),   "Math.pow";
-              ("floor", "double"), "Math.floor";
-           *)
-           ("log", "float"), "float_print"
-         ; ("log", "int"), "int_print"
-         ; ("log", "uint8_t"), "bool_print"
-         ; ("log", "string"), "string_print"
+         ; ("log", "float"), "Math.log"
+         ; ("log10", "float"), "Math.log10"
+        (*
+            ("max", "double"),   "Math.max";
+            ("min", "double"),   "Math.min";
+            ("sin", "double"),   "Math.sin";
+            ("cos", "double"),   "Math.cos";
+            ("tan", "double"),   "Math.tan";
+            ("tanh", "double"),  "Math.tanh";
+            ("sinh", "double"),  "Math.sinh";
+            ("cosh", "double"),  "Math.cosh";
+            ("exp", "double"),   "Math.exp";
+            ("sqrt", "double"),  "Math.sqrt";
+            ("pow", "double"),   "Math.pow";
+            ("floor", "double"), "Math.floor";
+         *)
          ; ("samplerate", "float"), "External.samplerate"
          ]
 
@@ -310,7 +304,6 @@ module FixedPoint = struct
          ; ("random", "fix16_t"), "fix_random"
          ; ("samplerate", "fix16_t"), "fix_samplerate"
          ; ("wrap_array", "fix16_t"), "fix_wrap_array"
-         ; ("log", "fix16_t"), "fix_print"
          ]
 
 

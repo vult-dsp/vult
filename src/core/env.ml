@@ -609,6 +609,7 @@ let builtin_table extensions =
      ; [ "abs" ], Scope.Function, Typ.Const.freal_freal (), false
      ; [ "exp" ], Scope.Function, Typ.Const.freal_freal (), false
      ; [ "log10" ], Scope.Function, Typ.Const.freal_freal (), false
+     ; [ "log" ], Scope.Function, Typ.Const.freal_freal (), false
      ; [ "sin" ], Scope.Function, Typ.Const.freal_freal (), false
      ; [ "cos" ], Scope.Function, Typ.Const.freal_freal (), false
      ; [ "floor" ], Scope.Function, Typ.Const.freal_freal (), false
@@ -648,7 +649,6 @@ let builtin_table extensions =
      ; [ "random" ], Scope.Function, Typ.Const.real_type, false
      ; [ "irandom" ], Scope.Function, Typ.Const.int_type, false
      ; [ "samplerate" ], Scope.Function, Typ.Const.real_type, false
-     ; [ "log" ], Scope.Function, Typ.Const.a_a (), false
      ]
 
 
