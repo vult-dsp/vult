@@ -37,6 +37,7 @@ type parameters =
    ; used : used_function Maps.IdMap.t
    ; functions : NameTable.t
    ; variables : NameTable.t
+   ; output_prefix : string option
    }
 
 type lhs_kind =
@@ -90,23 +91,52 @@ and makeSwitchList p stmts =
 
 let convertId (p : parameters) (id : Id.t) : string = String.concat "_" id |> Replacements.getKeyword p.repl
 
+let applyOutputPrefix (p : parameters) name =
+   match p.output_prefix with
+   | None -> name
+   | Some p -> p ^ name
+
+
+let applyOutputPrefixToId (p : parameters) id =
+   match p.output_prefix with
+   | None -> id
+   | Some p ->
+      match id with
+      | [ _ ] -> id
+      | [ m; n ] -> [ p ^ m; n ]
+      | _ -> failwith "applyOutputPrefixToId"
+
+
 let convertFunctionName (p : parameters) (id : Id.t) : string =
    let name = String.concat "_" id |> Replacements.getKeyword p.repl in
-   if p.shorten then
-      match Maps.IdMap.find_opt id p.used with
-      | Some (Keep Root) -> NameTable.registerName p.functions name
-      | _ -> NameTable.generateName p.functions name
-   else
-      name
+   applyOutputPrefix
+      p
+      ( if p.shorten then
+           match Maps.IdMap.find_opt id p.used with
+           | Some (Keep Root) -> NameTable.registerName p.functions name
+           | _ -> NameTable.generateName p.functions name
+        else
+           name )
 
 
 let convertVarId (p : parameters) (is_val : lhs_kind) (id : Id.t) : string list =
+   let should_prefix =
+      match id with
+      | [ m; _ ] -> m.[0] <> '_' && String.capitalize_ascii m = m
+      | _ -> false
+   in
    let name = List.map (Replacements.getKeyword p.repl) id in
-   if p.shorten then
-      if is_val = Declaration then
-         List.map (NameTable.generateName p.variables) name
+   let name =
+      if p.shorten then
+         if is_val = Declaration then
+            List.map (NameTable.generateName p.variables) name
+         else
+            List.map (NameTable.getOrRegister p.variables) name
       else
-         List.map (NameTable.getOrRegister p.variables) name
+         name
+   in
+   if should_prefix then
+      [ applyOutputPrefix p (String.concat "_" name) ]
    else
       name
 
@@ -138,8 +168,13 @@ let rec convertType (p : parameters) (tp : Typ.t) : type_descr =
    | Typ.TId ([ typ ], _) ->
       let new_type = Replacements.getType p.repl typ in
       CTSimple new_type
-   | Typ.TId (id, _) -> CTSimple (convertId p id)
-   | Typ.TComposed ([ "tuple" ], _, _) -> CTSimple (Typ.getTupleName tp)
+   | Typ.TId ([ m; typ ], _) ->
+      let new_type = Replacements.getType p.repl typ in
+      CTSimple (applyOutputPrefix p m ^ "_" ^ new_type)
+   | Typ.TId _ -> failwith "invalid name"
+   | Typ.TComposed ([ "tuple" ], _, _) ->
+      let name = applyOutputPrefix p (Typ.getTupleName tp) in
+      CTSimple name
    | Typ.TComposed ([ "array" ], [ kind; { contents = Typ.TInt (n, _) } ], _) ->
       let sub = convertType p kind in
       CTArray (sub, n)
@@ -450,16 +485,17 @@ let rec convertStmt (p : parameters) (s : stmt) : cstmt =
    | StmtVal (lhs, None, _) ->
       let lhs' = convertLhsExp Declaration p lhs in
       CSVar (lhs', None)
-   | StmtVal (_, _, attr) when attr.const && p.cleanup && removeFunction attr.used -> CSEmpty
-   | StmtVal (lhs, Some rhs, attr) when attr.const ->
-      let lhs' = convertLhsExp Other p lhs in
-      let rhs' = convertExp p rhs in
-      CSConst (lhs', rhs')
-   | StmtVal (lhs, Some rhs, attr) when attr.const ->
+   | StmtVal (_, _, attr) when p.cleanup && removeFunction attr.used -> CSEmpty
+   | StmtVal (lhs, Some rhs, _) ->
       let lhs' = convertLhsExp Other p lhs in
       let rhs' = convertExp p rhs in
       CSVar (lhs', Some rhs')
-   | StmtVal (_, Some _, _) -> failwith "ProgToCode.convertStmt: val should not have initializations"
+   | StmtConst (LId ([ name ], Some typ, _), rhs, _) ->
+      let typl = convertType p typ in
+      let lhs' = CLId (typl, [ applyOutputPrefix p name ]) in
+      let rhs' = convertExp p rhs in
+      CSConst (lhs', rhs')
+   | StmtConst (_, _, _) -> failwith "ProgToCode.convertStmt: const should not have initializations"
    | StmtMem _ -> CSEmpty
    | StmtWhile (cond, stmt, _) ->
       let cond' = convertExp p cond in

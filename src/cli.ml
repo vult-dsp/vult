@@ -53,6 +53,9 @@ let processArguments () : args =
       ; "-eval", Arg.Unit (fun () -> result.eval <- true), " Runs the code (default: off)"
       ; "-tables", Arg.Bool (fun b -> result.tables <- b), " Create lookup tables (default: on)"
       ; "-shorten", Arg.Unit (fun () -> result.shorten <- true), " Creates short function names (default: off)"
+      ; ( "-output-prefix"
+        , Arg.String (fun s -> result.output_prefix <- Some s)
+        , " Creates short function names (default: off)" )
       ; "-mac", Arg.Unit (fun () -> result.mac <- true), " Generates mac() function calls (default: off)"
       ; ( "-i"
         , Arg.String (fun path -> result.includes <- path :: result.includes)

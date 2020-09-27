@@ -591,6 +591,10 @@ and evalStmt (env : Env.env) (stmt : stmt) =
    | StmtVal (lhs, None, _) ->
       bind DeclareVal env lhs None ;
       ret_unit
+   | StmtConst (lhs, rhs, _) ->
+      let rhs' = evalExp env rhs in
+      bind Update env lhs (Some rhs') ;
+      ret_unit
    | StmtMem (lhs, Some rhs, _) ->
       let rhs' = evalExp env rhs in
       bind Update env lhs (Some rhs') ;

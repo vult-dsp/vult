@@ -7,12 +7,14 @@
    "editor.insertSpaces": true,
    "editor.detectIndentation": false,
    "files.trimTrailingWhitespace": true,
-   "editor.formatOnSave": true,
    "files.associations": {
       "*.ml": "ocaml"
    },
    "[ocaml]": {
       "editor.tabSize": 3,
       "editor.insertSpaces": true
+   },
+   "ocaml.sandbox": {
+      "kind": "global"
    }
 }

@@ -49,7 +49,6 @@ type attr =
    ; used : used_function
    ; active : bool
    ; bound : bool
-   ; const : bool
    ; ext_fn : string option
    ; typ : Typ.t option
    ; tags : tag list
@@ -117,6 +116,7 @@ and exp =
 [@@deriving show, eq, ord]
 
 and stmt =
+   | StmtConst     of lhs_exp (* names/lhs *) * exp (* rhs *) * attr
    | StmtVal       of lhs_exp (* names/lhs *) * exp option (* rhs *) * attr
    | StmtMem       of lhs_exp (* names/lhs *) * exp option (* rhs *) * attr
    | StmtWhile     of exp (* condition*) * stmt (* statements *) * attr
@@ -161,7 +161,6 @@ let makeAttr (loc : Loc.t) : attr =
    ; typ = None
    ; ext_fn = None
    ; tags = []
-   ; const = false
    ; evaluated = false
    ; no_inline = false
    ; fun_src = None
@@ -177,7 +176,6 @@ let emptyAttr =
    ; typ = None
    ; ext_fn = None
    ; tags = []
-   ; const = false
    ; evaluated = false
    ; no_inline = false
    ; fun_src = None

@@ -90,7 +90,8 @@ let getLhsExpLocation (e : lhs_exp) : Loc.t =
 (** Returns the location of an statement *)
 let getStmtLocation (s : stmt) : Loc.t =
    match s with
-   | StmtVal (_, _, attr)
+   | StmtConst (_, _, attr)
+   |StmtVal (_, _, attr)
    |StmtMem (_, _, attr)
    |StmtReturn (_, attr)
    |StmtIf (_, _, _, attr)
@@ -857,7 +858,7 @@ and stmtTable (buffer : Stream.stream) : stmt =
       let _ = Stream.consume buffer EQUAL in
       let e2 = expression 0 buffer in
       let _ = Stream.consume buffer SEMI in
-      StmtBind (e1, e2, { (makeAttr start_loc) with const = true })
+      StmtConst (e1, e2, makeAttr start_loc)
    | _ ->
       let message =
          Printf.sprintf "Invalid statement. All statements should be in the forms: \"a = b; \" or \"_ = b(); \" "

@@ -206,6 +206,7 @@ let makeParams (args : args) (params : params) (used : used_function Maps.IdMap.
       ; variables = NameTable.make 1
       ; shorten = args.shorten
       ; used
+      ; output_prefix = args.output_prefix
       }
 
 

@@ -386,6 +386,11 @@ and map_stmt (mapper : 'state mapper) (state : 'state) (stmt : stmt) : 'state * 
       let state', rhs' = (mapper_opt map_exp) mapper state' rhs in
       let state', attr' = map_attr mapper state' attr in
       apply mapper.stmt state' (StmtVal (lhs', rhs', attr')) |> map_stmt_subs mapper |> map_stmt_x mapper
+   | StmtConst (lhs, rhs, attr) ->
+      let state', lhs' = map_lhs_exp mapper state lhs in
+      let state', rhs' = map_exp mapper state' rhs in
+      let state', attr' = map_attr mapper state' attr in
+      apply mapper.stmt state' (StmtConst (lhs', rhs', attr')) |> map_stmt_subs mapper |> map_stmt_x mapper
    | StmtMem (lhs, rhs, attr) ->
       let state', lhs' = map_lhs_exp mapper state lhs in
       let state', rhs' = (mapper_opt map_exp) mapper state' rhs in
@@ -481,6 +486,7 @@ and map_stmt_x mapper (state, stmt) =
 and map_stmt_subs (mapper : 'state mapper) ((state, stmt) : 'state * stmt) : 'state * stmt =
    match stmt with
    | StmtVal _
+   |StmtConst _
    |StmtMem _
    |StmtReturn _
    |StmtBind _

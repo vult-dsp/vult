@@ -242,13 +242,13 @@ module MarkUsedFunctions = struct
                reapply state, StmtType (lhs, rhs, { attr with used = Keep root })
             | exception Not_found -> state, stmt
          end
-      | StmtVal (lhs, rhs, ({ const = true; fun_src = Some fname } as attr)) ->
+      | StmtConst (lhs, rhs, ({ fun_src = Some fname } as attr)) ->
          let data = Env.get state in
          begin
             match IdMap.find fname data.PassData.used_code with
             | Used _
             |Keep _ ->
-               state, StmtVal (lhs, rhs, { attr with used = Keep NotRoot })
+               state, StmtConst (lhs, rhs, { attr with used = Keep NotRoot })
             | NotUsed -> state, stmt
             | exception Not_found -> state, stmt
          end

@@ -213,6 +213,12 @@ and stmtBuff buffer (s : stmt) =
       append buffer "val " ;
       lhsExpressionBuff buffer e1 ;
       append buffer "; "
+   | StmtConst (e1, e2, _) ->
+      append buffer "table " ;
+      lhsExpressionBuff buffer e1 ;
+      append buffer " = " ;
+      expressionBuff buffer e2 ;
+      append buffer "; "
    | StmtMem (e1, e3, _) ->
       append buffer "mem " ;
       lhsExpressionBuff buffer e1 ;

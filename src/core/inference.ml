@@ -668,6 +668,12 @@ and inferStmt (env : 'a Env.t) (ret_type : return_type) (stmt : stmt) : stmt lis
       unifyRaise (expOptLoc rhs) lhs_typ rhs_typ ;
       let env' = addLhsToEnv `Val env' lhs' in
       [ StmtVal (lhs', rhs', attr) ], env', ret_type
+   | StmtConst (lhs, rhs, attr) ->
+      let lhs', lhs_typ = inferLhsExp `Val env lhs in
+      let rhs', env', rhs_typ = inferExp env rhs in
+      unifyRaise (expLoc rhs) lhs_typ rhs_typ ;
+      let env' = addLhsToEnv `Val env' lhs' in
+      [ StmtConst (lhs', rhs', attr) ], env', ret_type
    | StmtMem (lhs, rhs, attr) ->
       let lhs', lhs_typ = inferLhsExp `Mem env lhs in
       let env' = addLhsToEnv `Mem env lhs' in

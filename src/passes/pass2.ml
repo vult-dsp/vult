@@ -119,10 +119,7 @@ module Tables = struct
       let arr =
          PArray (CCList.map (makeFloat attr.loc precision) data |> Array.of_list, { attr with typ = Some atype })
       in
-      StmtVal
-         ( LId (varname, Some atype, attr_array precision size)
-         , Some arr
-         , { emptyAttr with const = true; fun_src = Some fname } )
+      StmtConst (LId (varname, Some atype, attr_array precision size), arr, { emptyAttr with fun_src = Some fname })
 end
 
 module MakeTables = struct
@@ -200,7 +197,7 @@ module MakeTables = struct
             PCall
                ( NoInst
                , [ "wrap_array" ]
-               , [ PId (Id.joinSep "_" fname [ a ], Tables.attr_array out_precision size) ]
+               , [ PId (Id.postfix fname ("_" ^ a), Tables.attr_array out_precision size) ]
                , r_out_attr )
          in
          PIndex (arr, rindex, r_out_attr)
@@ -241,7 +238,7 @@ module MakeTables = struct
             PCall
                ( NoInst
                , [ "wrap_array" ]
-               , [ PId (Id.joinSep "_" fname [ a ], Tables.attr_array out_precision size) ]
+               , [ PId (Id.postfix fname ("_" ^ a), Tables.attr_array out_precision size) ]
                , r_out_attr )
          in
          PIndex (arr, rindex, r_out_attr)
@@ -341,7 +338,7 @@ module MakeTables = struct
 
    let generateRawAccessFunction name full_name c attr =
       let n = string_of_int c in
-      let table_name = Id.concat "_" (Id.postfix full_name ("_c" ^ n)) in
+      let table_name = Id.postfix full_name ("_c" ^ n) in
       let function_name = Id.concat "_" (Id.postfix name ("_raw_c" ^ n)) in
       let attr_real = { attr with typ = Some Typ.Const.real_type } in
       let attr_int = { attr with typ = Some Typ.Const.int_type } in
@@ -473,7 +470,7 @@ module EmbedWavFile = struct
       let attr_bool = { emptyAttr with typ = Some Typ.Const.bool_type } in
       let attr_real = { emptyAttr with typ = Some Typ.Const.real_type } in
       let attr_int = { emptyAttr with typ = Some Typ.Const.int_type } in
-      let table_name = Id.joinSep "_" fname [ "chan_" ^ string_of_int i ] in
+      let table_name = Id.postfix fname ("_chan_" ^ string_of_int i) in
       let table =
          PCall (NoInst, [ "wrap_array" ], [ PId (table_name, Tables.attr_array precision samples) ], attr_real)
       in

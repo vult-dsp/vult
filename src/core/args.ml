@@ -65,6 +65,7 @@ type args =
    ; mutable mac : bool
    ; mutable force_write : bool
    ; mutable prefix : string
+   ; mutable output_prefix : string option
    }
 [@@deriving show, eq, ord]
 
@@ -87,4 +88,5 @@ let default_arguments : args =
    ; mac = false
    ; force_write = false
    ; prefix = ""
+   ; output_prefix = None
    }
