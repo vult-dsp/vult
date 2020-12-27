@@ -1,5 +1,5 @@
-<h1>{{ .Title }}</h1>
-<em><time>{{ with .Site.Params.dateFormat }}{{ $.Date.Format . }}{{ else }}{{ .Date.Format "02 Jan 2006" }}{{ end }}</time></em>
 <hr>
+
+<h1>{{ .Title }}</h1>
 <p> {{ .Summary }} </p>
 <button type="button" class="btn btn-default"><a href="{{ .Permalink }}">Read more</a></button>
