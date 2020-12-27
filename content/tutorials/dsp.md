@@ -31,7 +31,7 @@ We can implement these equations in Vult as follows.
 
 The variables `w1` and `w2` represent the terms `w[n-1]` and `w[n-2]`. The variables `y0` and `x0` represent `y[n]` and `x[n]`. The coefficients of the filter are `b0`, `b1`, `b2`, `a0` and `a2` which are calculated depending on the filter. We can see that `w1` and `w2` are declared as `mem` variables since we want them to keep their value every time the function is called.
 
-Now that we have the architecture of the biquad, we can design filters. In order to design a filter we need to calculate the coefficients. Here we are gonna follow the formulae show in the Audio-EQ-Cookbook (http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt). The code for the filter is the following:
+Now that we have the architecture of the biquad, we can design filters. In order to design a filter we need to calculate the coefficients. Here we are gonna follow the formulae show in the [Audio-EQ-Cookbook](/pages/audio-eq-cookbook.html). The code for the filter is the following:
 
 <div class="vult_code" id="tut3-2">fun lowpass(x,w0,q) {
     val cos_w = cos(w0);
