@@ -490,6 +490,7 @@ let rec convertStmt (p : parameters) (s : stmt) : cstmt =
       let lhs' = convertLhsExp Other p lhs in
       let rhs' = convertExp p rhs in
       CSVar (lhs', Some rhs')
+   | StmtConst (_, _, attr) when p.cleanup && removeFunction attr.used -> CSEmpty
    | StmtConst (LId ([ name ], Some typ, _), rhs, _) ->
       let typl = convertType p typ in
       let lhs' = CLId (typl, [ applyOutputPrefix p name ]) in
