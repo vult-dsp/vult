@@ -1,0 +1,143 @@
+ <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://kit.fontawesome.com/aeb7435d58.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../../css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="../../javascripts/bootstrap.min.js"></script>
+<link rel="shortcut icon" href="../../images/favicon.ico" />
+<script async src="https://ackee.vultiverse.com/tracker.js" data-ackee-server="https://ackee.vultiverse.com" data-ackee-domain-id="6210aaa1-0604-47ae-beba-65b0dca88fc2"></script>
+
+<nav class="navbar navbar-inverse">
+   <div class="container-fluid top-menu">
+      <a class="navbar-brand" href="../../"><img src="../../images/Vult-icon.png" alt="Vult" title="Vult" style="height:20px;"></a>
+
+      
+      <div class="navbar-header">
+         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+            aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      </div>
+
+      
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
+         <ul class="nav navbar-nav">
+            <li><a href="../../"><i class='fa fa-home'></i> Home</a></li>
+            <li><a href="../../overview"><i class='fa fa-bullseye'></i> Overview</a></li>
+            <li><a href="../../tutorials"><i class='fa fa-book'></i> Docs</a></li>
+            <li><a href="../../blog"><i class='fa fa-newspaper-o'></i> Blog</a></li>
+            <li><a href="../../demo"><i class='fa fa-code'></i>Demo</a></li>
+            <li><a href="https://github.com/modlfo/vult"><i class='fa fa-code-fork'></i>Source</a></li>
+            <li><a href="https://www.npmjs.com/package/vult"><i class='fa fa-download'></i>Install</a></li>
+            <li><a href="https://vult-dsp.com"><i class="fas fa-microchip"></i> Store</a></li>
+
+         </ul>
+      </div>
+      
+   </div>
+   
+</nav>
+
+<div class="container">
+   <div class="row">
+      <div class="col-md-2"> </div>
+      <div class="col-md-8 col-md-auto">
+         <h2>Performance Tips: the cost of allocation</h2>
+         <p>Looking at the performance results of algorithms using arrays I noticed something very drastic. LuaJIT was terribly slow compared to the other languages.</p>
+
+<p></p>
+
+<table class="table">
+<thead>
+   <tr> <th> Algorithm </th> <th> C++ float </th> <th> C++ fixed</th> <th> LuaJIT</th> <th> JavaScript</th> </tr>
+</thead>
+<tbody>
+   <tr> <td> Ladder Euler </td> <td> 4.160 ms/s  </td> <td> 5.600 ms/s </td> <td> <b>306.951</b> ms/s </td> <td>  20.63 ms/s </td> </tr>
+   <tr> <td> Ladder Heun</td> <td> 6.480 ms/s  </td> <td> 10.210 ms/s </td> <td> <b>855.072</b> ms/s </td> <td> 64.650 ms/s </td> </tr>
+   <tr> <td> Rescomb</td> <td> 2.840 ms/s  </td> <td> 1.870 ms/s </td> <td> 2.286 ms/s </td> <td> 9.01 ms/s </td> </tr>
+   <tr> <td> Delay</td> <td> 2.210 ms/s  </td> <td> 9.340 ms/s </td> <td> 3.130 ms/s </td> <td> 6.370 ms/s </td> </tr>
+</tbody>
+</table>
+
+<p>All these examples use arrays. The main difference is that the <code>Ladder</code> examples use small local arrays to functions, while the other examples use large arrays as <code>mem</code> variables. Here&rsquo;s a snippet of the code:</p>
+
+<div class="vult_code" id="snipet-1">fun euler(input, cut, res) {
+   mem fh;
+   mem p[4];
+   val dpt[4];  /// local array
+   if(Util.change(cut)) {
+      fh = tune(cut);
+   }
+   _ = ladder_step(input, fh, res, p, dpt);
+   p[0] = p[0] + dpt[0];
+   p[1] = p[1] + dpt[1];
+   p[2] = p[2] + dpt[2];
+   p[3] = p[3] + dpt[3];
+   return p[3];
+}
+</div>
+
+<p>The Lua code uses the LuaJIT FFI to create C arrays. The motivation of using it was because, as show <a href="http://luajit.org/ext_ffi.html">here</a>, you can get better performance with C arrays compares to Lua arrays. This is because Lua does not have native arrays, they are tables indexed with integers.</p>
+
+<p>For the line <code>val dpt[4];</code> the generated Lua code looks as follows:</p>
+
+<pre><code>dpt = ffi.new(&quot;double[?]&quot;,4)
+</code></pre>
+
+<p>It looks like every time a local array is used, even for the simplest thing, a new object is allocated. When the object is not used, the memory needs to be collected. In comparison to C++, the code will look as follows:</p>
+
+<pre><code>double dpt[4];
+</code></pre>
+
+<p>The first thing I tried was changing the Lua code to use regular Lua arrays instead of the FFI.</p>
+
+<table class="table">
+<thead>
+   <tr> <th> Algorithm </th> <th> LuaJIT FFI arrays</th> <th> LuaJIT regular arrays</th>  </tr>
+</thead>
+<tbody>
+   <tr> <td> Ladder Euler </td> <td> 306.951 ms/s  </td> <td> 3.541 ms/s </td> </tr>
+   <tr> <td> Ladder Heun</td> <td> 855.072 ms/s  </td> <td> 7.193 ms/s </td> </tr>
+   <tr> <td> Rescomb</td> <td> 2.286 ms/s </td> <td> 3.794 ms/s </td> </tr>
+   <tr> <td> Delay</td> <td> 3.130 ms/s  </td> <td> 3.715 ms/s </td> </tr>
+</tbody>
+</table>
+
+<p>Even though for large arrays the performance we pay a little bit in performance, the overall gain is bigger.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>When using LuaJIT, allocating small and short lived objects using FFI has very large impact in the performance of the code.</p>
+
+<script type="text/javascript" src="../../javascripts/external/ace/ace.js"></script>
+<script type="text/javascript" src="../../javascripts/main.js"></script> <div id="disqus_thread"></div>
+<script type="text/javascript">
+   (function () {
+      
+      
+      if (window.location.hostname == "localhost")
+         return;
+
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      var disqus_shortname = 'vult-dsp';
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+   })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+      </div>
+   </div>
+</div>
+
+
+<link rel="stylesheet" type="text/css" href="../../css/vult.css">
+<div class="container footer">Check our hardware at the <a href="https://vult-dsp.com/"> Vult-DSP </a> site</div>

@@ -1,0 +1,138 @@
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://kit.fontawesome.com/aeb7435d58.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../../css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="../../javascripts/bootstrap.min.js"></script>
+<link rel="shortcut icon" href="../../images/favicon.ico" />
+<script async src="https://ackee.vultiverse.com/tracker.js" data-ackee-server="https://ackee.vultiverse.com" data-ackee-domain-id="6210aaa1-0604-47ae-beba-65b0dca88fc2"></script>
+
+<nav class="navbar navbar-inverse">
+   <div class="container-fluid top-menu">
+      <a class="navbar-brand" href="../../"><img src="../../images/Vult-icon.png" alt="Vult" title="Vult" style="height:20px;"></a>
+
+      
+      <div class="navbar-header">
+         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+            aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      </div>
+
+      
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
+         <ul class="nav navbar-nav">
+            <li><a href="../../"><i class='fa fa-home'></i> Home</a></li>
+            <li><a href="../../overview"><i class='fa fa-bullseye'></i> Overview</a></li>
+            <li><a href="../../tutorials"><i class='fa fa-book'></i> Docs</a></li>
+            <li><a href="../../blog"><i class='fa fa-newspaper-o'></i> Blog</a></li>
+            <li><a href="../../demo"><i class='fa fa-code'></i>Demo</a></li>
+            <li><a href="https://github.com/modlfo/vult"><i class='fa fa-code-fork'></i>Source</a></li>
+            <li><a href="https://www.npmjs.com/package/vult"><i class='fa fa-download'></i>Install</a></li>
+            <li><a href="https://vult-dsp.com"><i class="fas fa-microchip"></i> Store</a></li>
+
+         </ul>
+      </div>
+      
+   </div>
+   
+</nav>
+
+<div class="container">
+   <div class="row">
+      <div class="col-md-2"> </div>
+      <div class="col-md-8 col-md-auto">
+         <h2>Vult Language Basics</h2>
+         <p>Vult has syntax that may resemble languages like C/C++, Python or JavaScript. In order to declare a function you can use the keyword <code>fun</code> as follows:</p>
+
+<div class="vult_code" id="tut1-0">fun foo() return 0;
+</div>
+
+<p>This functions takes no arguments and returns the integer value zero. If you have more than one statement you can use the curly braces <code>{}</code> to delimit the function body.</p>
+
+<div class="vult_code" id="tut1-1">fun foo(x) {
+   val y = 1 + x;
+   return y;
+}
+</div>
+
+<p>As you may have seen, you can declare variables with the keyword <code>val</code>.</p>
+
+<p>Vult is a static language, this means that every variable has concrete type. Since Vult is focused on numeric computations there are two main types available: <code>real</code> and <code>int</code>. You can specify the type of the variables with colon <code>:</code> as follows:</p>
+
+<div class="vult_code" id="tut1-2">fun foo(x : int) : int {
+   val y : int = 1 + x;
+   return y;
+}
+</div>
+
+<p>This specifies that the function receives an argument <code>x</code> of type <code>int</code> and returns a value of type <code>int</code>.</p>
+
+<p>The type annotations are not strictly necessary. Vult has type inference which means that it will try to automatically determine every type based on the use of the variables. We will cover more about the type inference in a different tutorial.</p>
+
+<p>Function in Vult can return multiple values separated by commas. The values can be assigned to multiple variables in a similar way.</p>
+
+<div class="vult_code" id="tut1-3">fun foo() {
+   return 1, 2;
+}
+
+fun bar(){
+   val a, b = foo();
+}
+</div>
+
+<p>As mentioned before, Vult is static and strict. It is not possible to mix operations between reals and integers without making an explicit cast. The following operation is invalid:</p>
+
+<div class="vult_code" id="tut1-4">fun foo() {
+   val x = 1;
+   val y = 2.1;
+   return x + y; // invalid operation
+}
+</div>
+
+<p>The problem here is that the values have different type. The number <code>1</code> is of type <code>int</code> and the number <code>2.1</code> is of type <code>real</code>. In order to perform operations, you need to explicitly cast the values. For example:</p>
+
+<div class="vult_code" id="tut1-5">fun foo() {
+   val x = 1;
+   val y = 2.1;
+   val z = x + int(y);  // z = 3
+   val w = real(x) + y; // w = 3.1
+   return w;
+}
+</div>
+
+<p>By not making automatic conversion of types Vult gives you a more control on the kind of operation you want to perform.</p>
+
+<p>In the following tutorials we will cover more advanced aspects of Vult.</p>
+
+<script type="text/javascript" src="../../javascripts/external/ace/ace.js"></script>
+<script type="text/javascript" src="../../javascripts/main.js"></script>
+ <div id="disqus_thread"></div>
+<script type="text/javascript">
+   (function () {
+      
+      
+      if (window.location.hostname == "localhost")
+         return;
+
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      var disqus_shortname = 'vult-dsp';
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+   })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+      </div>
+   </div>
+</div>
+
+<link rel="stylesheet" type="text/css" href="../../css/vult.css">
+<div class="container footer">Check our hardware at the <a href="https://vult-dsp.com/"> Vult-DSP </a> site</div>

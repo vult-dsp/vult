@@ -1,0 +1,153 @@
+ <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://kit.fontawesome.com/aeb7435d58.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../../css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="../../javascripts/bootstrap.min.js"></script>
+<link rel="shortcut icon" href="../../images/favicon.ico" />
+<script async src="https://ackee.vultiverse.com/tracker.js" data-ackee-server="https://ackee.vultiverse.com" data-ackee-domain-id="6210aaa1-0604-47ae-beba-65b0dca88fc2"></script>
+
+<nav class="navbar navbar-inverse">
+   <div class="container-fluid top-menu">
+      <a class="navbar-brand" href="../../"><img src="../../images/Vult-icon.png" alt="Vult" title="Vult" style="height:20px;"></a>
+
+      
+      <div class="navbar-header">
+         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+            aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      </div>
+
+      
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
+         <ul class="nav navbar-nav">
+            <li><a href="../../"><i class='fa fa-home'></i> Home</a></li>
+            <li><a href="../../overview"><i class='fa fa-bullseye'></i> Overview</a></li>
+            <li><a href="../../tutorials"><i class='fa fa-book'></i> Docs</a></li>
+            <li><a href="../../blog"><i class='fa fa-newspaper-o'></i> Blog</a></li>
+            <li><a href="../../demo"><i class='fa fa-code'></i>Demo</a></li>
+            <li><a href="https://github.com/modlfo/vult"><i class='fa fa-code-fork'></i>Source</a></li>
+            <li><a href="https://www.npmjs.com/package/vult"><i class='fa fa-download'></i>Install</a></li>
+            <li><a href="https://vult-dsp.com"><i class="fas fa-microchip"></i> Store</a></li>
+
+         </ul>
+      </div>
+      
+   </div>
+   
+</nav>
+
+<div class="container">
+   <div class="row">
+      <div class="col-md-2"> </div>
+      <div class="col-md-8 col-md-auto">
+         <h2>Compile-time creation of tables</h2>
+         <script type="text/javascript"
+   src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+<p>This is one of the features that has been in the TODO list since the creation of Vult. When generating code, now is possible to annotate a function and Vult will automatically create a table-based implementation which will be faster. This is specially useful when generating code for microcontrollers.</p>
+
+<p></p>
+
+<p>As an example, take the function used to convert from pitch (MIDI note number) to frequency.</p>
+
+<div>$$f = 440 \cdot 2^{ \frac {d - 69} {12}} $$</div>
+
+<p>Using that formula, we can calculate the <code>rate</code> of increment for a saw wave at a certain sampling frequency. For example, to produce a saw wave with pitch <code>d</code> at a sampling rate of 44100 Hz, you need to increment a counter at a <code>rate</code> to reach a value of <code>1.0</code>. Here&rsquo;s the formula:</p>
+
+<div>$$rate = \frac {440 \cdot 2^{ \frac {d - 69} {12}}} {44100} $$</div>
+
+<p>This formula can be simplified (using Mathematica) to:</p>
+
+<div>$$rate = 0.00018539226566085504 \cdot e^{0.057762265046662105 \cdot d} $$</div>
+
+<p>We can see that the formula uses an exponential. Calculating an exponential every sample can be quite heavy in a microntroller (for example when making modulations). To alleviate that problem, we can annotate the function in Vult as follows:</p>
+
+<div class="vult_code" id="snipet-1">fun pitchToRate(d) @[table(size=127,min=0.0,max=127.0)] {
+   return 0.00018539226566085504 * exp(0.057762265046662105 * d);
+}
+</div>
+
+<p>The tag <code>@[table(size=128,min=0.0,max=127.0)]</code> specifies that the function needs to be converted to a table of size <code>128</code>, with a minimum value of <code>0.0</code> and a maximum of <code>127.0</code>. In this case Vult will split the range of the function into 128 segments and for each segment a second order polynomial that fits the values is calculated. All the coefficients are precalculated. The above function will be replaced by the following code (for a size 8 table):</p>
+
+<div class="vult_code" id="snipet-2">
+// Precalculated Coefficients
+val pitchToRate_c0 = [0.000185392265661,0.000552833927475,0.00450645672882,0.0293666851807,0.154117332865,0.706561261141,2.96582942265,11.7094517663];
+val pitchToRate_c1 = [9.2285157274e-06,-2.89774227687e-05,-0.000240335947519,-0.0011351335136,-0.00451980896512,-0.0165475723334,-0.0576226599653,-0.194080429312];
+val pitchToRate_c2 = [5.34353264823e-07,1.52390239335e-06,4.34596110343e-06,1.2394086389e-05,3.53462384489e-05,0.000100802635463,0.000287475325559,0.000819840280938];
+// function with the new body
+fun pitchToRate(d){
+   val index = clip(int(0.0551181102362 * d),0,127);
+   return get(pitchToRate_c0,index) + d * (get(pitchToRate_c1,index) + get(pitchToRate_c2,index) * d);
+}
+</div>
+
+<p>This new function is much faster that the one using the exponential. Thanks to this optimization I can run more complex code in the Teensy.</p>
+
+<p>One cool thing is about this feature is that it can convert any function of one input and one output to a table. For example, in the following program the function <code>wave_table</code> is replaced by a table avoiding calculating three <code>sine</code> functions.</p>
+
+<div class="vult_code" id="snipet-3">fun pitchToRate(d) @[table(size=127,min=0.0,max=127.0)] {
+   return 0.00018539226566085504 * exp(0.057762265046662105 * d);
+}
+
+fun phasor(pitch){
+    mem phase;
+    val rate = pitchToRate(pitch);
+    phase = (phase + rate) % 1.0;
+    return phase;
+}
+
+fun wave_table(x) @[table(size=127,min=0.0,max=4.0)] {
+    val pi = 3.14159265359;
+    return (sin(2.0*pi*x) + sin(2.0*pi*x*2.0) + sin(2.0*pi*x*4.0))/3.0;
+}
+</div>
+
+<p>This feature works as well with fixed-point code. In one of the benchmarks that I ran I got the following results:</p>
+
+<table class="table">
+<thead>
+   <tr> <th> Representation </th> <th> No tables </th> <th> With tables </th> </tr>
+</thead>
+<tbody>
+   <tr> <td> Floating-point </td> <td> 1.57 s  </td> <td> 1.11 s </td> </tr>
+   <tr> <td> Fixed-point </td> <td> 3.10 s  </td> <td> 0.94 s </td> </tr>
+</tbody>
+</table>
+
+<p>We can see that for fixed-point it really had a impact in the performance. The benchmark now runs 3 times faster.</p>
+
+<script type="text/javascript" src="../../javascripts/external/ace/ace.js"></script>
+<script type="text/javascript" src="../../javascripts/main.js"></script> <div id="disqus_thread"></div>
+<script type="text/javascript">
+   (function () {
+      
+      
+      if (window.location.hostname == "localhost")
+         return;
+
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      var disqus_shortname = 'vult-dsp';
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+   })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+      </div>
+   </div>
+</div>
+
+
+<link rel="stylesheet" type="text/css" href="../../css/vult.css">
+<div class="container footer">Check our hardware at the <a href="https://vult-dsp.com/"> Vult-DSP </a> site</div>

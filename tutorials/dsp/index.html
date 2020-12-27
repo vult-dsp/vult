@@ -1,0 +1,186 @@
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://kit.fontawesome.com/aeb7435d58.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../../css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="../../javascripts/bootstrap.min.js"></script>
+<link rel="shortcut icon" href="../../images/favicon.ico" />
+<script async src="https://ackee.vultiverse.com/tracker.js" data-ackee-server="https://ackee.vultiverse.com" data-ackee-domain-id="6210aaa1-0604-47ae-beba-65b0dca88fc2"></script>
+
+<nav class="navbar navbar-inverse">
+   <div class="container-fluid top-menu">
+      <a class="navbar-brand" href="../../"><img src="../../images/Vult-icon.png" alt="Vult" title="Vult" style="height:20px;"></a>
+
+      
+      <div class="navbar-header">
+         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+            aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      </div>
+
+      
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
+         <ul class="nav navbar-nav">
+            <li><a href="../../"><i class='fa fa-home'></i> Home</a></li>
+            <li><a href="../../overview"><i class='fa fa-bullseye'></i> Overview</a></li>
+            <li><a href="../../tutorials"><i class='fa fa-book'></i> Docs</a></li>
+            <li><a href="../../blog"><i class='fa fa-newspaper-o'></i> Blog</a></li>
+            <li><a href="../../demo"><i class='fa fa-code'></i>Demo</a></li>
+            <li><a href="https://github.com/modlfo/vult"><i class='fa fa-code-fork'></i>Source</a></li>
+            <li><a href="https://www.npmjs.com/package/vult"><i class='fa fa-download'></i>Install</a></li>
+            <li><a href="https://vult-dsp.com"><i class="fas fa-microchip"></i> Store</a></li>
+
+         </ul>
+      </div>
+      
+   </div>
+   
+</nav>
+
+<div class="container">
+   <div class="row">
+      <div class="col-md-2"> </div>
+      <div class="col-md-8 col-md-auto">
+         <h2>Easy DSP with Vult</h2>
+         <p>Functions with memory simplify writing Digital Signal Processing (DSP) code since a <code>mem</code> variable can be used to as a single sample delay <code>z^1</code>. I order to implement the Digital Biquad Filter (direct form 2) we can take the equations directly from Wikipedia: <a href="https://en.wikipedia.org/wiki/Digital_biquad_filter">https://en.wikipedia.org/wiki/Digital_biquad_filter</a>.</p>
+
+<p>We can see the architecture and the equations here:</p>
+
+<p>
+<figure >
+    
+        <img src="../../images/biquad-df2-eq1.svg" />
+    
+    
+</figure>
+
+
+<figure >
+    
+        <img src="../../images/biquad-df2-eq2.svg" />
+    
+    
+</figure>
+</p>
+
+
+<figure >
+    
+        <img src="../../images/biquad-df2-image.png" />
+    
+    
+</figure>
+
+
+<p>We can implement these equations in Vult as follows.</p>
+
+<div class="vult_code" id="tut3-1">fun biquad(x0, b0, b1, b2 ,a1 ,a2) : real {
+    mem w1, w2;
+    val w0 = x0 - a1*w1 - a2*w2;
+    val y0 = b0*w0 + b1*w1 + b2*w2;
+    w2, w1 = w1, w0;
+    return y0;
+}
+</div>
+
+<p>The variables <code>w1</code> and <code>w2</code> represent the terms <code>w[n-1]</code> and <code>w[n-2]</code>. The variables <code>y0</code> and <code>x0</code> represent <code>y[n]</code> and <code>x[n]</code>. The coefficients of the filter are <code>b0</code>, <code>b1</code>, <code>b2</code>, <code>a0</code> and <code>a2</code> which are calculated depending on the filter. We can see that <code>w1</code> and <code>w2</code> are declared as <code>mem</code> variables since we want them to keep their value every time the function is called.</p>
+
+<p>Now that we have the architecture of the biquad, we can design filters. In order to design a filter we need to calculate the coefficients. Here we are gonna follow the formulae show in the <a href="../../pages/audio-eq-cookbook.html">Audio-EQ-Cookbook</a>. The code for the filter is the following:</p>
+
+<div class="vult_code" id="tut3-2">fun lowpass(x,w0,q) {
+    val cos_w = cos(w0);
+    val alpha = sin(w0)/(2.0*q);
+    val den =  1.0 + alpha;
+    val a1 =  (-2.0*cos_w)/den;
+    val a2 =  (1.0 - alpha)/den;
+    val b0 = ((1.0 - cos_w)/(2.0*den));
+    val b1 = (1.0 - cos_w)/den;
+    val b2 = ((1.0 - cos_w)/(2.0*den));
+    return biquad(x,b0,b1,b2,a1,a2);
+}
+</div>
+
+<p>In the code, <code>x</code> is the input signal <code>w0</code> is the cut frequency (in radians) and <code>q</code> controls the resonance. This filter is variable and we can adjust the cut frequency and the resonance. In order to achieve that we need to calculate the coefficients every time the cut or resonance changes. We can see in the above code that the implementation is not very efficient since it calculates the coefficients every sample. To improve it can use the function <code>change</code> that we defined in the <code>Functions with Memory</code> tutorial.</p>
+
+<div class="vult_code" id="tut3-3"> // returns true when the input changes
+fun change(current:real) : bool {
+    mem previous;
+    val result = current <> previous;
+    previous = current;
+    return result;
+}
+
+fun lowpass(x,w0,q) {
+    mem b0,b1,b2,a1,a2;
+    if(change(w0) || change(q)) {
+        val cos_w = cos(w0);
+        val alpha = sin(w0)/(2.0*q);
+        val den =  1.0 + alpha;
+        a1 =  (-2.0*cos_w)/den;
+        a2 =  (1.0 - alpha)/den;
+        b0 = ((1.0 - cos_w)/(2.0*den));
+        b1 = (1.0 - cos_w)/den;
+        b2 = ((1.0 - cos_w)/(2.0*den));
+    }
+    return biquad(x,b0,b1,b2,a1,a2);
+}
+</div>
+
+<p>In the example above, we have changed the declaration of the coefficients to <code>mem</code> variables because we want to remember the previous values. By wrapping the calculation inside the <code>if-statement</code> we recalculate the coefficients every time the values of <code>fc</code> and <code>q</code> change.</p>
+
+<p>Now that we have the filter, we can use it as part of a bigger program. For example:</p>
+
+<div class="vult_code" id="tut3-4">
+fun process(x) : real {
+
+   ... // some other here
+
+   val s_1 = ...; // generate a signal
+   val s_2 = ...; // generate a signal
+
+   // the first filter is controlled by control_1 and control_2
+   val s_1_filtered = lowpass(s_1, control_1, control_2);
+
+   // the second filter is controlled by control_3 and control_4
+   val s_2_filtered = lowpass(s_2, control_3, control_4);
+
+   return s_1_filtered + s_2_filtered;
+}
+</div>
+
+<p>Just for you to remember, every time you call the function <code>lowpass</code> and independent memory space is generated. Therefore, the filter for signal <code>s_1</code> and <code>s_2</code> do not interfere each other.</p>
+
+<p>In the next tutorial we are gonna create a state-variable filter and we are gonna show how easy is to do oversampling in Vult.</p>
+
+<script type="text/javascript" src="../../javascripts/external/ace/ace.js"></script>
+<script type="text/javascript" src="../../javascripts/main.js"></script>
+ <div id="disqus_thread"></div>
+<script type="text/javascript">
+   (function () {
+      
+      
+      if (window.location.hostname == "localhost")
+         return;
+
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      var disqus_shortname = 'vult-dsp';
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+   })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+      </div>
+   </div>
+</div>
+
+<link rel="stylesheet" type="text/css" href="../../css/vult.css">
+<div class="container footer">Check our hardware at the <a href="https://vult-dsp.com/"> Vult-DSP </a> site</div>

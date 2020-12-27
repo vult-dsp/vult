@@ -1,0 +1,143 @@
+ <meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://kit.fontawesome.com/aeb7435d58.js" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../../css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="../../javascripts/bootstrap.min.js"></script>
+<link rel="shortcut icon" href="../../images/favicon.ico" />
+<script async src="https://ackee.vultiverse.com/tracker.js" data-ackee-server="https://ackee.vultiverse.com" data-ackee-domain-id="6210aaa1-0604-47ae-beba-65b0dca88fc2"></script>
+
+<nav class="navbar navbar-inverse">
+   <div class="container-fluid top-menu">
+      <a class="navbar-brand" href="../../"><img src="../../images/Vult-icon.png" alt="Vult" title="Vult" style="height:20px;"></a>
+
+      
+      <div class="navbar-header">
+         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1"
+            aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      </div>
+
+      
+      <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+
+         <ul class="nav navbar-nav">
+            <li><a href="../../"><i class='fa fa-home'></i> Home</a></li>
+            <li><a href="../../overview"><i class='fa fa-bullseye'></i> Overview</a></li>
+            <li><a href="../../tutorials"><i class='fa fa-book'></i> Docs</a></li>
+            <li><a href="../../blog"><i class='fa fa-newspaper-o'></i> Blog</a></li>
+            <li><a href="../../demo"><i class='fa fa-code'></i>Demo</a></li>
+            <li><a href="https://github.com/modlfo/vult"><i class='fa fa-code-fork'></i>Source</a></li>
+            <li><a href="https://www.npmjs.com/package/vult"><i class='fa fa-download'></i>Install</a></li>
+            <li><a href="https://vult-dsp.com"><i class="fas fa-microchip"></i> Store</a></li>
+
+         </ul>
+      </div>
+      
+   </div>
+   
+</nav>
+
+<div class="container">
+   <div class="row">
+      <div class="col-md-2"> </div>
+      <div class="col-md-8 col-md-auto">
+         <h2>Now Vult can be installed from npm</h2>
+         <p>In the last months I have been making many improvements to the Vult compiler. These improvements cannot be easily tried by the users due to the fact that for me creating binaries for all the platforms is very time consuming. Therefore, in order for the users to try the latests changes they need to compile Vult from the source code. Even though the process is well documented in the repository, this can be time consuming and difficult for people unfamiliar with the OCaml tools.</p>
+
+<p></p>
+
+<p>I have been using <code>js_of_ocaml</code> for quite some time to convert parts of the Vult compiler to JavaScript that runs in the live demo page <a href="http://modlfo.github.io/vult/demo/">http://modlfo.github.io/vult/demo/</a> however the code there does not perform any I/O to disk since it&rsquo;s intended to run in the web browser.</p>
+
+<p>I tried to convert the whole application to JavaScript to see if it could run (as it is) with the latest improvements of <code>js_of_ocaml</code>. That way I can distribute a JavaScript version that can be run with node.js. Node.js has many advantages, for example:</p>
+
+<ul>
+<li>runs in most platforms</li>
+<li>easy to install</li>
+<li>it has a good package manager</li>
+</ul>
+
+<p>Fortunately, the only thing that did not work was the file I/O (which seems reasonable). In order to make it work I made a small hack that allowed me to switch the functions that read and write files. That way I can declare bindings for the node.js functions and replace them. Here&rsquo;s the code:</p>
+
+<pre><code class="language-ocaml">(** Declares a 'buffer' object *)
+class type buffer = object
+   method toString : js_string t meth
+end
+
+(** Declares a 'fs' object *)
+class type fs = object
+   method readFileSync : js_string t -&gt; buffer t meth
+   method writeFileSync : js_string t -&gt; js_string t -&gt; unit t meth
+end
+
+(* var fs = require('fs') *)
+let fs : fs t =
+   Unsafe.fun_call (Unsafe.js_expr &quot;require&quot;)
+      [|Unsafe.inject (string &quot;fs&quot;)|]
+
+let read_fn (path:string) : string option =
+   let buffer   = fs##readFileSync (string path) in
+   let contents = to_string (buffer##toString ()) in
+   Some(contents)
+
+let write_fn (path:string) (text:string) : bool =
+   let _ = fs##writeFileSync ((string path),(string text)) in
+   true
+;;
+</code></pre>
+
+<p>Then I replace the functions as follows:</p>
+
+<pre><code class="language-ocaml">FileIO.setRead read_fn ;;
+FileIO.setWrite write_fn ;;
+
+</code></pre>
+
+<p>With those changes it&rsquo;s possible to compile the bytecode and convert it to JavaScript. Now it&rsquo;s possible to run the Vult compiler as follows:</p>
+
+<pre><code>$ node vultjs.js arguments
+</code></pre>
+
+<p>Thanks to the npm it is even easier to install Vult an run it.</p>
+
+<pre><code>$ npm install vult -g
+</code></pre>
+
+<p>This command will give you an &ldquo;executable&rdquo; that can be called simply as <code>vultc</code>, for example:</p>
+
+<pre><code>$ vultc -ccode infile.vult -o outfile
+</code></pre>
+
+<p>This is the repository for the package <a href="https://github.com/modlfo/vultjs">https://github.com/modlfo/vultjs</a> and this is the main page of the npm package <a href="https://www.npmjs.com/package/vult">https://www.npmjs.com/package/vult</a></p>
+
+<p>I will update the source code every time I think the changes in trunk are useful.</p> <div id="disqus_thread"></div>
+<script type="text/javascript">
+   (function () {
+      
+      
+      if (window.location.hostname == "localhost")
+         return;
+
+      var dsq = document.createElement('script');
+      dsq.type = 'text/javascript';
+      dsq.async = true;
+      var disqus_shortname = 'vult-dsp';
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+   })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+      </div>
+   </div>
+</div>
+
+
+<link rel="stylesheet" type="text/css" href="../../css/vult.css">
+<div class="container footer">Check our hardware at the <a href="https://vult-dsp.com/"> Vult-DSP </a> site</div>
