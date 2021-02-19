@@ -11,11 +11,12 @@ then
 fi
 
 # builds the release version
-make all
+make
 # prepare to package
 cp ./_build/src/vultc.native ./vultc
 if [ $TRAVIS_OS_NAME == linux ];
 then
+   make all
    tar -cvzf vult-linux.tar.gz vultc runtime/vultin.h runtime/vultin.cpp
 else
    tar -cvzf vult-osx.tar.gz vultc runtime/vultin.h runtime/vultin.cpp
@@ -32,4 +33,4 @@ vultc --help
 #cd ..
 #cd ..
 # runs the performance tests
-make perf
+#make perf
