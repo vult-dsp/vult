@@ -34,5 +34,13 @@ $ cd build
 $ cmake ../
 $ make
 ```
+On Windows
+```
+$ cd examples
+$ mkdir build
+$ cd build
+$ cmake ../ -G “NMake Makefiles”
+$ nmake
+```
 
 After building, all the PD externals will be available in the `build` directory. To use them with PD you need to include this directory in the start path of PD.
