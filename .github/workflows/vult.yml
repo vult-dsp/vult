@@ -32,6 +32,8 @@ jobs:
 
       - run: opam install ocamlbuild containers ppx_deriving ounit js_of_ocaml js_of_ocaml-ppx pla bisect_ppx result
 
+      - run: eval $(opam env)
+    
       - run: make
       
       - run: make test-fast
