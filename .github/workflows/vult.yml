@@ -42,5 +42,21 @@ jobs:
       
       - name: Run tests ${{ runner.os }}     
         if: runner.os == 'Linux'
-        run: opam exec make test-fast
+        run: opam exec make all
+        
+      - name: Package the files for Linux
+        if: runner.os == 'Linux'
+        run: |
+          cp ./_build/src/vultc.native ./vultc
+          tar -cvzf vult-linux.tar.gz vultc runtime/vultin.h runtime/vultin.cpp
+      - name: Package the files for Mac
+        if: runner.os == 'macOS'
+        run: |
+          cp ./_build/src/vultc.native ./vultc
+          tar -cvzf vult-osx.tar.gz vultc runtime/vultin.h runtime/vultin.cpp
+      - name: Package the files for Windows
+        if: runner.os == 'Windows'
+        run: |
+          cp ./_build/src/vultc.native ./vultc.exe
+          7z a vult-win.zip vultc.exe runtime/vultin.h runtime/vultin.cpp
 
