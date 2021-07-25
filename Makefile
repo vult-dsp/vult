@@ -68,7 +68,7 @@ coverage: compiler jscompiler
 
 version :
 			@echo "let version = \"" > src/version.ml
-			@git describe --tags --abbrev=0 >> src/version.ml
+			@git describe --tags --abbrev=0 --always >> src/version.ml
 			@echo "\"" >> src/version.ml
 
 all: 		compiler js test web vultc_h jscompiler
