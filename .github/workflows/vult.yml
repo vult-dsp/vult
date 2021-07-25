@@ -112,6 +112,7 @@ jobs:
   pre-release:
     name: "Pre Release"
     runs-on: "ubuntu-latest"
+    needs: build
 
     steps:
       - name: Download all workflow run artifacts
