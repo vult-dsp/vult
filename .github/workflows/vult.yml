@@ -30,8 +30,7 @@ jobs:
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
 
-      - run: containers ppx_deriving ounit js_of_ocaml js_of_ocaml-ppx pla bisect_ppx result
-
+      - run: opam install containers ppx_deriving ounit js_of_ocaml js_of_ocaml-ppx pla bisect_ppx result
 
       - run: make
       
