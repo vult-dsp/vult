@@ -61,49 +61,49 @@ jobs:
           7z a vult-win.zip vultc.exe runtime/vultin.h runtime/vultin.cpp
           
       - name: Save Linux Artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         if: runner.os == 'Linux'
         with:
           name: vult-linux.tar.gz
           path: vult-linux.tar.gz
           
       - name: Save Js Vultweb Artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         if: runner.os == 'Linux'
         with:
           name: vultweb.js
           path: vultweb.js
           
       - name: Save Js Vultlib Artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         if: runner.os == 'Linux'
         with:
           name: vultlib.js
           path: vultlib.js
           
       - name: Save Js VultcJs Artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         if: runner.os == 'Linux'
         with:
           name: vultc.js
           path: vultc.js
           
       - name: Save Js VultcH Artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         if: runner.os == 'Linux'
         with:
           name: vultc.h
           path: vultc.h
 
       - name: Save Mac Artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         if: runner.os == 'macOS'
         with:
           name: vult-osx.tar.gz
           path: vult-osx.tar.gz
 
       - name: Save Windows Artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         if: runner.os == 'Windows'
         with:
           name: vult-win.zip
