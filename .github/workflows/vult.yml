@@ -29,9 +29,18 @@ jobs:
         uses: ocaml/setup-ocaml@v2
         with:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
+      
+      - name: Install requirements ${{ runner.os }}     
+        if: runner.os == 'Linux'
+        run: |
+           sudo apt-get update
+           sudo apt-get install luajit nodejs
 
       - run: opam install ocamlbuild containers ppx_deriving ounit js_of_ocaml js_of_ocaml-ppx pla bisect_ppx result
- 
+      
       - run: opam exec make
       
-      - run: opam exec make test-fast
+      - name: Run tests ${{ runner.os }}     
+        if: runner.os == 'Linux'
+        run: opam exec make test-fast
+
