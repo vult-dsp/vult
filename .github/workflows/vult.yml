@@ -108,4 +108,26 @@ jobs:
         with:
           name: vult-win.zip
           path: vult-win.zip
+  
+  pre-release:
+    name: "Pre Release"
+    runs-on: "ubuntu-latest"
 
+    steps:
+      - name: Download all workflow run artifacts
+        uses: actions/download-artifact@v2
+    
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            vult-linux.tar.gz
+            vult-osx.tar.gz
+            vult-win.zip
+            vultweb.js
+            vultlib.js
+            vultc.js
+            vultc.h
