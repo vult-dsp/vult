@@ -31,9 +31,7 @@ jobs:
           ocaml-compiler: ${{ matrix.ocaml-compiler }}
 
       - run: opam install ocamlbuild containers ppx_deriving ounit js_of_ocaml js_of_ocaml-ppx pla bisect_ppx result
-
-      - run: eval $(opam env)
-    
-      - run: make
+ 
+      - run: opam exec make
       
-      - run: make test-fast
+      - run: opam exec make test-fast
