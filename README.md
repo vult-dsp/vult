@@ -87,26 +87,14 @@ https://github.com/modlfo/vult-webaudio
 
 ### Requirements
 
-- Ocaml compiler >= 4.03
-
-#### Ocaml Libraries
-
-- containers >= 1.2
-- ppx_deriving >= 4.1
-- pla >= 1.1
-- result >= 0.99
-- [Optional] ounit >= 2.0 (to run the tests)
-- [Optional] js_of_ocaml >= 3.0 (to build the web functions)
+- Ocaml >= 4.03
+- Opam >= 1.2    https://opam.ocaml.org/
 
 ### Installing the tools
- The simplest way to install the requirements is with OPAM (https://opam.ocaml.org/)
+ The simplest way to install the requirements is with Opam
 ```
-$ opam switch 4.04.2
-$ opam install containers ppx_deriving pla result
-```
-Optionally to run the tests and building the web functions:
-```
-$ opam install ounit js_of_ocaml js_of_ocaml-ppx
+$ opam switch 4.07.1
+$ opam install ocamlbuild containers ppx_deriving pla result ounit js_of_ocaml js_of_ocaml-ppx
 ```
 ### Compiling Vult
 

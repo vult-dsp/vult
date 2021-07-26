@@ -1,0 +1,7 @@
+fun process(x) @[process] {
+   return x;
+}
+and noteOn(note:int,velocity:int,channel:int) @[noteOn]{ }
+and noteOff(note:int,channel:int) @[noteOff] { }
+and controlChange(control:int,value:int,channel:int) @[controlChange] { }
+and default() @[init] { }

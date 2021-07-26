@@ -72,6 +72,35 @@ let instanceBuff buffer inst =
    | This -> append buffer "this:"
 
 
+let rec tagBuff buffer (tag : tag) =
+   match tag with
+   | TInt (n, _) -> append buffer n
+   | TId (s, _) -> identifierBuff buffer s
+   | TReal (n, _) -> append buffer n
+   | TBool (b, _) -> append buffer b
+   | TString (s, _) -> append buffer s
+   | TFun (id, args, _) ->
+      identifierBuff buffer id ;
+      append buffer "(" ;
+      printList buffer tagArgBuff ", " args ;
+      append buffer ")"
+
+
+and tagArgBuff buffer (id, tag) =
+   identifierBuff buffer id ;
+   append buffer " = " ;
+   tagBuff buffer tag
+
+
+let tagsBuff buffer tags =
+   match tags with
+   | [] -> ()
+   | _ ->
+      append buffer "@[" ;
+      printList buffer tagBuff ", " tags ;
+      append buffer "]"
+
+
 let rec lhsExpressionBuff buffer (lhs : lhs_exp) =
    match lhs with
    | LWild { typ = Some tp } ->
@@ -219,7 +248,7 @@ and stmtBuff buffer (s : stmt) =
       append buffer " = " ;
       expressionBuff buffer e2 ;
       append buffer "; "
-   | StmtMem (e1, e3, _) ->
+   | StmtMem (e1, e3, { tags }) ->
       append buffer "mem " ;
       lhsExpressionBuff buffer e1 ;
       CCOpt.iter
@@ -227,6 +256,7 @@ and stmtBuff buffer (s : stmt) =
              append buffer " = " ;
              expressionBuff buffer a)
          e3 ;
+      tagsBuff buffer tags ;
       append buffer "; "
    | StmtReturn (e, _) ->
       append buffer "return " ;
@@ -263,6 +293,8 @@ and stmtBuff buffer (s : stmt) =
              typeExpressionBuff buffer a ;
              append buffer " ")
          vtype ;
+      tagsBuff buffer attr.tags ;
+      if attr.tags <> [] then append buffer " " ;
       stmtBuff buffer body ;
       newline buffer
    | StmtExternal (name, args, vtype, link_name, _) ->
