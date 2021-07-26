@@ -584,14 +584,14 @@ module Interpret = struct
       let fullfile = checkFile (in_test_directory ("perf/" ^ file)) in
       let module_name = moduleName fullfile in
       let code =
-         {pla|
+         [%pla{|
       val sample = 0;
       val out = 0.0;
       while (sample < 100) {
          out = <#module_name#s>.process(0.0);
          sample = sample + 1;
       }
-      return out;|pla}
+      return out;|}]
          |> Pla.print
       in
       let args =

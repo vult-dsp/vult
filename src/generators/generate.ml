@@ -303,14 +303,14 @@ let checkConfig (config : config) (args : args) =
       then
          let msg =
             Pla.print
-               {pla|
+               [%pla{|
 Required functions are not defined or have incorrect inputs or outputs. Here's a template you can use:
 
 fun process(input:real){ return input; }
 and noteOn(note:int, velocity:int, channel:int){ }
 and noteOff(note:int, channel:int){ }
 and controlChange(control:int, value:int, channel:int){ }
-and default(){ }|pla}
+and default(){ }|}]
          in
          Error.raiseErrorMsg msg
 
