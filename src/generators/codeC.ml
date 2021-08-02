@@ -116,6 +116,16 @@ let printLhsExpTuple (var : Pla.t) (is_var : bool) (i : int) (e : clhsexp) : Pla
    | _ -> failwith ("printLhsExpTuple: All other cases should be already covered\n" ^ Code.show_clhsexp e)
 
 
+let splitArray into elems =
+   let rec loop current acc count elems =
+      match elems with
+      | [] -> List.rev acc
+      | h :: t when count < into -> loop (h :: current) acc (count + 1) t
+      | h :: t -> loop [ h ] (List.rev current :: acc) 0 t
+   in
+   loop [] [] 0 elems
+
+
 (** Returns a template the print the expression *)
 let rec printExp (params : params) (e : cexp) : Pla.t =
    match e with
@@ -130,7 +140,13 @@ let rec printExp (params : params) (e : cexp) : Pla.t =
    | CEBool v -> Pla.string (if v then "true" else "false")
    | CEString s -> Pla.string_quoted s
    | CEArray (elems, _) ->
-      let telems = Pla.map_sep Pla.comma (printExp params) elems in
+      let elems = splitArray 50 elems in
+      let telems =
+         Pla.map_sep
+            Pla.comma
+            (fun elems -> Pla.append (Pla.map_sep Pla.comma (printExp params) elems) Pla.newline)
+            elems
+      in
       [%pla {|{<#telems#>}|}]
    | CECall (name, args, _) ->
       let targs = Pla.map_sep Pla.comma (printExp params) args in
