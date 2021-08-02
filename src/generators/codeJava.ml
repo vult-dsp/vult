@@ -29,7 +29,8 @@ module Templates = struct
    let none code = [ code, FileKind.ExtOnly "java" ]
 
    let runtime : Pla.t =
-      [%pla{|
+      [%pla
+         {|
 static int clip(int x, int minv, int maxv) {
    if(x > maxv)
       return maxv;
@@ -183,7 +184,8 @@ float exp(float x) {
 
    let common package_prefix class_name code =
       let package_name = String.lowercase_ascii class_name in
-      [ ( [%pla{|package <#package_prefix#s>.<#package_name#s>;
+      [ ( [%pla
+           {|package <#package_prefix#s>.<#package_name#s>;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -240,7 +242,7 @@ let printTypeDescr (typ : type_descr) : Pla.t =
    let kind, sizes = simplifyArray typ in
    match sizes with
    | [] -> Pla.string kind
-   | _ -> [%pla{|<#kind#s>[]|}]
+   | _ -> [%pla {|<#kind#s>[]|}]
 
 
 let rec getInitValue (descr : type_descr) : Pla.t =
@@ -258,10 +260,10 @@ let rec getInitValue (descr : type_descr) : Pla.t =
       let typ_t = printTypeDescr typ in
       if size < 32 then
          let elems = CCList.init size (fun _ -> init) |> Pla.join_sep Pla.comma in
-         [%pla{|new <#typ_t#>[]{<#elems#>}|}]
+         [%pla {|new <#typ_t#>[]{<#elems#>}|}]
       else
-         [%pla{|makeArray(<#size#i>,<#init#>)|}]
-   | CTSimple name -> [%pla{|new <#name#s>()|}]
+         [%pla {|makeArray(<#size#i>,<#init#>)|}]
+   | CTSimple name -> [%pla {|new <#name#s>()|}]
 
 
 (** Used to print declarations and rebindings of lhs variables *)
@@ -272,13 +274,13 @@ let printTypeAndName (is_decl : bool) (typ : type_descr) (name : string list) : 
       begin
          match is_decl, sizes with
          (* Simple varible declaration (no sizes) *)
-         | true, [] -> [%pla{|<#kind#s> <#name#s>|}]
+         | true, [] -> [%pla {|<#kind#s> <#name#s>|}]
          (* Array declarations (with sizes) *)
          | true, _ ->
             (*let t_sizes = Pla.map_sep Pla.comma Pla.string sizes in*)
-            [%pla{|<#kind#s> <#name#s>[]|}]
+            [%pla {|<#kind#s> <#name#s>[]|}]
          (* Simple rebinding (no declaration) *)
-         | _, _ -> [%pla{|<#name#s>|}]
+         | _, _ -> [%pla {|<#name#s>|}]
       end
    | _ -> failwith "CodeC.printTypeAndName: invalid input"
 
@@ -290,12 +292,12 @@ let printLhsExpTuple (var : Pla.t) (is_var : bool) (i : int) (e : clhsexp) : Pla
    | CLId (CTSimple typ, name) ->
       let name_ = dot name in
       if is_var then (* with declaration *)
-         [%pla{|<#typ#s> <#name_#> = <#var#>.field_<#i#i>;|}]
+         [%pla {|<#typ#s> <#name_#> = <#var#>.field_<#i#i>;|}]
       else (* with no declaration *)
-         [%pla{|<#name_#> = <#var#>.field_<#i#i>;|}]
+         [%pla {|<#name_#> = <#var#>.field_<#i#i>;|}]
    | CLId (typ, name) ->
       let tdecl = printTypeAndName is_var typ name in
-      [%pla{|<#tdecl#> = <#var#>.field_<#i#i>;|}]
+      [%pla {|<#tdecl#> = <#var#>.field_<#i#i>;|}]
    | CLWild -> Pla.unit
    | _ -> failwith ("printLhsExpTuple: All other cases should be already covered\n" ^ Code.show_clhsexp e)
 
@@ -315,37 +317,37 @@ let rec printExp (params : params) (e : cexp) : Pla.t =
    | CEString s -> Pla.string_quoted s
    | CEArray (elems, _) ->
       let telems = Pla.map_sep Pla.comma (printExp params) elems in
-      [%pla{|{<#telems#>}|}]
+      [%pla {|{<#telems#>}|}]
    | CECall (name, args, _) ->
       let targs = Pla.map_sep Pla.comma (printExp params) args in
-      [%pla{|<#name#s>(<#targs#>)|}]
+      [%pla {|<#name#s>(<#targs#>)|}]
    | CEUnOp (op, e, _) ->
       let te = printExp params e in
-      [%pla{|(<#op#s> <#te#>)|}]
+      [%pla {|(<#op#s> <#te#>)|}]
    | CEOp (op, elems, _) ->
-      let sop = [%pla{| <#op#s> |}] in
+      let sop = [%pla {| <#op#s> |}] in
       let telems = Pla.map_sep sop (printExp params) elems in
-      [%pla{|(<#telems#>)|}]
+      [%pla {|(<#telems#>)|}]
    | CEVar (name, _) -> Pla.string name
    | CEIndex (e, index, _) ->
       let index = printExp params index in
       let e = printExp params e in
-      [%pla{|<#e#>[<#index#>]|}]
+      [%pla {|<#e#>[<#index#>]|}]
    | CEIf (cond, then_, else_, _) ->
       let tcond = printExp params cond in
       let tthen = printExp params then_ in
       let telse = printExp params else_ in
-      [%pla{|(<#tcond#>?<#tthen#>:<#telse#>)|}]
+      [%pla {|(<#tcond#>?<#tthen#>:<#telse#>)|}]
    | CETuple (elems, CTSimple name) ->
       let telems = Pla.map_sep Pla.comma (printChField params) elems in
-      [%pla{|new <#name#s>(<#telems#>)|}]
+      [%pla {|new <#name#s>(<#telems#>)|}]
    | CETuple _ -> failwith "invalid tuple"
    | CEAccess (((CEVar _ | CEAccess _) as e), n) ->
       let e = printExp params e in
-      [%pla{|<#e#>.<#n#s>|}]
+      [%pla {|<#e#>.<#n#s>|}]
    | CEAccess (e, n) ->
       let e = printExp params e in
-      [%pla{|(<#e#>).<#n#s>|}]
+      [%pla {|(<#e#>).<#n#s>|}]
 
 
 (** Used to print the elements of a tuple *)
@@ -353,7 +355,7 @@ let rec printExp (params : params) (e : cexp) : Pla.t =
 (** Used to print the elements of a tuple *)
 and printChField (params : params) ((_name : string), (value : cexp)) =
    let tval = printExp params value in
-   [%pla{|<#tval#>|}]
+   [%pla {|<#tval#>|}]
 
 
 (** Prints lhs values with and without declaration *)
@@ -364,15 +366,15 @@ and printLhsExp params (is_var : bool) (e : clhsexp) : Pla.t =
    | CLWild -> Pla.unit
    | CLIndex (CTSimple typ, [ name ], index) when is_var ->
       let index = printExp params index in
-      [%pla{|<#typ#s> <#name#s>[<#index#>]|}]
+      [%pla {|<#typ#s> <#name#s>[<#index#>]|}]
    | CLIndex (typ, name, _) when is_var ->
       let name = dot name in
       let typ, sizes = simplifyArray typ in
-      let sizes_t = Pla.map_join (fun i -> [%pla{|[<#i#s>]|}]) sizes in
-      [%pla{|<#typ#s> <#name#><#sizes_t#>|}]
+      let sizes_t = Pla.map_join (fun i -> [%pla {|[<#i#s>]|}]) sizes in
+      [%pla {|<#typ#s> <#name#><#sizes_t#>|}]
    | CLIndex (CTSimple _, [ name ], index) ->
       let index = printExp params index in
-      [%pla{|<#name#s>[<#index#>]|}]
+      [%pla {|<#name#s>[<#index#>]|}]
    | _ -> failwith "uncovered case"
 
 
@@ -380,7 +382,7 @@ and printLhsExp params (is_var : bool) (e : clhsexp) : Pla.t =
 let printArrayBinding params (var : string list) (i : int) (e : cexp) : Pla.t =
    let te = printExp params e in
    let var = dot var in
-   [%pla{|<#var#>[<#i#i>] = <#te#>; |}]
+   [%pla {|<#var#>[<#i#i>] = <#te#>; |}]
 
 
 (** Prints arguments to functions either pass by value or reference *)
@@ -388,13 +390,13 @@ let printFunArg (ntype, name) : Pla.t =
    match ntype with
    | Var typ ->
       let tdescr = printTypeDescr typ in
-      [%pla{|<#tdescr#> <#name#s>|}]
+      [%pla {|<#tdescr#> <#name#s>|}]
    | Ref (CTArray (typ, _)) ->
       let tdescr = printTypeDescr typ in
-      [%pla{|<#tdescr#> <#name#s>[]|}]
+      [%pla {|<#tdescr#> <#name#s>[]|}]
    | Ref typ ->
       let tdescr = printTypeDescr typ in
-      [%pla{|<#tdescr#> <#name#s>|}]
+      [%pla {|<#tdescr#> <#name#s>|}]
 
 
 let rec isLastReturn stmt =
@@ -420,7 +422,7 @@ let rec printSwitchStmt params e cases def =
              let v_t = printExp params v in
              let stmt_t = CCOpt.get_or ~default:Pla.unit (printStmt params stmt) in
              let break = if isLastReturn stmt then Pla.unit else Pla.string "break;" in
-             [%pla{|case <#v_t#>:<#stmt_t#+><#><#break#>|}])
+             [%pla {|case <#v_t#>:<#stmt_t#+><#><#break#>|}])
          cases
    in
    let def_t =
@@ -429,9 +431,9 @@ let rec printSwitchStmt params e cases def =
       | Some s ->
          match printStmt params s with
          | None -> Pla.unit
-         | Some s -> [%pla{|default: <#s#+>|}]
+         | Some s -> [%pla {|default: <#s#+>|}]
    in
-   Some [%pla{|switch(<#e_t#>) {<#cases_t#+> <#def_t#><#>}|}]
+   Some [%pla {|switch(<#e_t#>) {<#cases_t#+> <#def_t#><#>}|}]
 
 
 and printStmt (params : params) (stmt : cstmt) : Pla.t option =
@@ -442,17 +444,17 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
    | CSVar (((CLId (tdescr, _) | CLIndex (tdescr, _, _)) as lhs), None) ->
       let tlhs = printLhsExp params true lhs in
       let init = getInitValue tdescr in
-      Some [%pla{|<#tlhs#> = <#init#>; |}]
+      Some [%pla {|<#tlhs#> = <#init#>; |}]
    | CSVar (lhs, Some value) ->
       let value_t = printExp params value in
       let tlhs = printLhsExp params true lhs in
-      Some [%pla{|<#tlhs#> = <#value_t#>; |}]
+      Some [%pla {|<#tlhs#> = <#value_t#>; |}]
    (* All other cases of assigning tuples will be wrong *)
    | CSVar (CLTuple _, None) -> failwith "CodeJava.printStmt: invalid tuple assign"
    (* Prints _ = ... *)
    | CSBind (CLWild, value) ->
       let te = printExp params value in
-      Some [%pla{|<#te#>;|}]
+      Some [%pla {|<#te#>;|}]
    (* Print (x, y, z) = ... *)
    | CSBind (CLTuple elems, ((CEVar _ | CEAccess _) as rhs)) ->
       let rhs = printExp params rhs in
@@ -468,19 +470,20 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
    | CSBind (CLId (_, name), value) ->
       let te = printExp params value in
       let name = dot name in
-      Some [%pla{|<#name#> = <#te#>;|}]
+      Some [%pla {|<#name#> = <#te#>;|}]
    | CSBind (CLIndex (_, name, index), value) ->
       let te = printExp params value in
       let name = dot name in
       let index = printExp params index in
-      Some [%pla{|<#name#>[<#index#>] = <#te#>;|}]
+      Some [%pla {|<#name#>[<#index#>] = <#te#>;|}]
    | CSConst ((CLId (_, name) as lhs), CEArray (elems, _)) ->
       if params.target_file = Header then
          let size = List.length elems in
          let name = dot name in
          let tlhs = printLhsExp params true lhs in
          Some
-            [%pla{|<#tlhs#>;
+            [%pla
+               {|<#tlhs#>;
          public void set_<#name#>(java.nio.FloatBuffer buffer){
             <#name#> = new float[<#size#i>];
             buffer.get(<#name#>);
@@ -492,7 +495,7 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
       if params.target_file = Header then
          let tlhs = printLhsExp params true lhs in
          let te = printExp params value in
-         Some [%pla{|static <#tlhs#> = <#te#>;|}]
+         Some [%pla {|static <#tlhs#> = <#te#>;|}]
       else
          None
    (* All other cases should be errors *)
@@ -507,9 +510,9 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
       else
          let scope = if attr.is_root then Pla.string "public" else Pla.string "private" in
          ( match printStmt params body with
-           | Some tbody -> Some [%pla{|<#scope#> <#ret#> <#name#s>(<#targs#>)<#tbody#><#>|}]
+           | Some tbody -> Some [%pla {|<#scope#> <#ret#> <#name#s>(<#targs#>)<#tbody#><#>|}]
            (* Covers the case when the body is empty *)
-           | None -> Some [%pla{|<#scope#> <#ret#> <#name#s>(<#targs#>){}<#>|}] )
+           | None -> Some [%pla {|<#scope#> <#ret#> <#name#s>(<#targs#>){}<#>|}] )
    (* Function declarations cotaining a single statement *)
    | CSFunction (ntype, name, args, body, attr) ->
       let ret = printTypeDescr ntype in
@@ -520,34 +523,34 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
       else
          let scope = if attr.is_root then Pla.string "public" else Pla.string "private" in
          let tbody = CCOpt.get_or ~default:Pla.unit (printStmt params body) in
-         Some [%pla{|<#scope#> <#ret#> <#name#s>(<#targs#>){<#tbody#>}<#>|}]
+         Some [%pla {|<#scope#> <#ret#> <#name#s>(<#targs#>){<#tbody#>}<#>|}]
    (* Prints return x *)
    | CSReturn e1 ->
       let te = printExp params e1 in
-      Some [%pla{|return <#te#>;|}]
+      Some [%pla {|return <#te#>;|}]
    (* Printf while(cond) ... *)
    | CSWhile (cond, body) ->
       let tcond = printExp params cond in
       let tcond = if isSimple cond then Pla.parenthesize tcond else tcond in
       let tbody = CCOpt.get_or ~default:Pla.semi (printStmt params body) in
-      Some [%pla{|while<#tcond#><#tbody#>|}]
+      Some [%pla {|while<#tcond#><#tbody#>|}]
    (* Prints a block of statements*)
    | CSBlock elems ->
       let telems = printStmtList params elems in
-      Some [%pla{|{<#telems#+>}|}]
+      Some [%pla {|{<#telems#+>}|}]
    (* If-statement without an else*)
    | CSIf (cond, then_, None) ->
       let tcond = printExp params cond in
       let tcond = if isSimple cond then Pla.wrap (Pla.string "(") (Pla.string ")") tcond else tcond in
       let tthen = CCOpt.get_or ~default:Pla.semi (wrapStmtIfNotBlock params then_) in
-      Some [%pla{|if<#tcond#><#tthen#>|}]
+      Some [%pla {|if<#tcond#><#tthen#>|}]
    (* If-statement with else*)
    | CSIf (cond, then_, Some else_) ->
       let tcond = printExp params cond in
       let tcond = if isSimple cond then Pla.wrap (Pla.string "(") (Pla.string ")") tcond else tcond in
       let tthen = CCOpt.get_or ~default:Pla.semi (wrapStmtIfNotBlock params then_) in
       let telse = CCOpt.get_or ~default:Pla.semi (wrapStmtIfNotBlock params else_) in
-      Some [%pla{|if<#tcond#><#tthen#><#>else<#><#telse#>|}]
+      Some [%pla {|if<#tcond#><#tthen#><#>else<#><#telse#>|}]
    (* Type declaration (only in headers) *)
    | CSType (name, members, attr) when params.target_file = Header ->
       let tmembers =
@@ -555,7 +558,7 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
             Pla.newline
             (fun (typ, name) ->
                 let tmember = printTypeAndName true typ [ name ] in
-                [%pla{|public <#tmember#>;|}])
+                [%pla {|public <#tmember#>;|}])
             members
       in
       let constructor =
@@ -564,11 +567,11 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
                Pla.comma
                (fun (typ, name) ->
                    let tmember = printTypeAndName true typ [ name ] in
-                   [%pla{|<#tmember#>|}])
+                   [%pla {|<#tmember#>|}])
                members
          in
-         let init = Pla.map_sep_all Pla.newline (fun (_, name) -> [%pla{|this.<#name#s> = <#name#s>;|}]) members in
-         [%pla{|<#name#s>(<#args#>){ <#init#> }|}]
+         let init = Pla.map_sep_all Pla.newline (fun (_, name) -> [%pla {|this.<#name#s> = <#name#s>;|}]) members in
+         [%pla {|<#name#s>(<#args#>){ <#init#> }|}]
       in
       let constructor_default =
          let init =
@@ -576,13 +579,13 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
                Pla.newline
                (fun (type_, name) ->
                    let value = getInitValue type_ in
-                   [%pla{|this.<#name#s> = <#value#>;|}])
+                   [%pla {|this.<#name#s> = <#value#>;|}])
                members
          in
-         [%pla{|<#name#s>(){ <#init#> }|}]
+         [%pla {|<#name#s>(){ <#init#> }|}]
       in
       let scope = if attr.is_root then Pla.string "public" else Pla.string "private" in
-      Some [%pla{|<#scope#> class <#name#s> {<#tmembers#+> <#constructor_default#+> <#constructor#+> }<#>|}]
+      Some [%pla {|<#scope#> class <#name#s> {<#tmembers#+> <#constructor_default#+> <#constructor#+> }<#>|}]
    (* Do not print type delcarations in implementation file *)
    | CSType (_, _, _) -> None
    (* Type declaration aliases (only in headers) *)

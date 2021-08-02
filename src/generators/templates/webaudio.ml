@@ -12,7 +12,7 @@ let inputString (m : input) : Pla.t =
 let inputName (i, acc) s =
    match s with
    | IContext -> i, Pla.string "processor.context" :: acc
-   | _ -> i + 1, [%pla{|in_<#i#i>[n]|}] :: acc
+   | _ -> i + 1, [%pla {|in_<#i#i>[n]|}] :: acc
 
 
 let performFunctionCall module_name (config : config) =
@@ -24,16 +24,17 @@ let performFunctionCall module_name (config : config) =
       | [] -> Pla.unit
       | [ _ ] ->
          let value = Pla.string "ret" in
-         [%pla{|out_0[n] = <#value#>; |}]
+         [%pla {|out_0[n] = <#value#>; |}]
       | o ->
          List.mapi
             (fun i _ ->
-                let value = [%pla{|<#module_name#s>_process_ret_<#i#i>(processor.context)|}] in
-                [%pla{|out_<#i#i>[n] = <#value#>; |}])
+                let value = [%pla {|<#module_name#s>_process_ret_<#i#i>(processor.context)|}] in
+                [%pla {|out_<#i#i>[n] = <#value#>; |}])
             o
          |> Pla.join_sep_all Pla.newline
    in
-   [%pla{|for (var n = 0; n < e.inputBuffer.length; n++) {
+   [%pla
+      {|for (var n = 0; n < e.inputBuffer.length; n++) {
           var ret = processor.<#module_name#s>_process(<#args#>); <#><#copy#> <#>}|}]
 
 
@@ -41,12 +42,13 @@ let noteFunctions (params : params) =
    let module_name = params.module_name in
    let on_args = Pla.map_sep Pla.comma inputString params.config.noteon_inputs in
    let off_args = Pla.map_sep Pla.comma inputString params.config.noteoff_inputs in
-   ( [%pla{|
+   ( [%pla
+      {|
    node.noteOn = function(note, velocity, channel){
       if(velocity > 0) processor.<#module_name#s>_noteOn(<#on_args#>);
       else processor.<#module_name#s>_noteOff(<#off_args#>);
    }|}]
-   , [%pla{|
+   , [%pla {|
    node.noteOff = function(note, channel) {
       processor.<#module_name#s>_noteOff(<#off_args#>);
    }|}]
@@ -56,7 +58,8 @@ let noteFunctions (params : params) =
 let controlChangeFunction (params : params) =
    let module_name = params.module_name in
    let ctrl_args = Pla.map_sep Pla.comma inputString params.config.controlchange_inputs in
-   [%pla{|
+   [%pla
+      {|
    node.controlChange = function(control, value, channel) {
       processor.<#module_name#s>_controlChange(<#ctrl_args#>);
    }|}]
@@ -75,18 +78,19 @@ let get (params : params) runtime code : (Pla.t * FileKind.t) list =
    let nprocess_inputs = List.length inputs in
    let nprocess_outputs = List.length config.process_outputs in
    let input_var =
-      List.mapi (fun i _ -> [%pla{|var in_<#i#i> = e.inputBuffer.getChannelData(<#i#i>); |}]) inputs
+      List.mapi (fun i _ -> [%pla {|var in_<#i#i> = e.inputBuffer.getChannelData(<#i#i>); |}]) inputs
       |> Pla.join_sep Pla.newline
    in
    let output_var =
-      List.mapi (fun i _ -> [%pla{|var out_<#i#i> = e.outputBuffer.getChannelData(<#i#i>); |}]) config.process_outputs
+      List.mapi (fun i _ -> [%pla {|var out_<#i#i> = e.outputBuffer.getChannelData(<#i#i>); |}]) config.process_outputs
       |> Pla.join_sep Pla.newline
    in
    let process_call = performFunctionCall params.module_name params.config in
    let note_on, note_off = noteFunctions params in
    let control_change = controlChangeFunction params in
    let text =
-      [%pla{|
+      [%pla
+         {|
 (function(audioContext) {
    var code = function () {
       <#runtime#>
