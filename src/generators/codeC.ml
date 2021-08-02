@@ -119,7 +119,7 @@ let printLhsExpTuple (var : Pla.t) (is_var : bool) (i : int) (e : clhsexp) : Pla
 let splitArray into elems =
    let rec loop current acc count elems =
       match elems with
-      | [] -> List.rev acc
+      | [] -> List.rev (List.rev current :: acc)
       | h :: t when count < into -> loop (h :: current) acc (count + 1) t
       | h :: t -> loop [ h ] (List.rev current :: acc) 0 t
    in
