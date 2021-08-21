@@ -472,6 +472,10 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
    | REAL, _ ->
       let attr = makeAttr token.loc in
       PReal (float_of_string token.value, Float, attr)
+   | FIXED, _ ->
+      let attr = makeAttr token.loc in
+      let value = String.sub token.value 0 (String.length token.value - 1) in
+      PReal (float_of_string value, Fix16, attr)
    | STRING, _ ->
       let attr = makeAttr token.loc in
       PString (token.value, attr)

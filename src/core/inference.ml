@@ -532,7 +532,7 @@ and inferExp (env : 'a Env.t) (e : exp) : exp * 'a Env.t * Typ.t =
       let typ = Typ.Const.real_type in
       PReal (v, Float, { attr with typ = Some typ }), env, typ
    | PReal (v, Fix16, attr) ->
-      let typ = Typ.Const.real_type in
+      let typ = Typ.Const.fix16_type in
       PReal (v, Fix16, { attr with typ = Some typ }), env, typ
    | PString (s, attr) ->
       let typ = Typ.Const.string_type in

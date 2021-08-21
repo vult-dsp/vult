@@ -648,6 +648,7 @@ let builtin_table extensions =
      ; [ "pi" ], Scope.Function, Typ.Const.real_type, false
      ; [ "random" ], Scope.Function, Typ.Const.real_type, false
      ; [ "irandom" ], Scope.Function, Typ.Const.int_type, false
+     ; [ "frandom" ], Scope.Function, Typ.Const.fix16_type, false
      ; [ "samplerate" ], Scope.Function, Typ.Const.real_type, false
      ]
 

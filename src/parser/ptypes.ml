@@ -32,6 +32,7 @@ type token_enum =
    | EOF
    | INT
    | REAL
+   | FIXED
    | ID
    | STRING
    | FUN

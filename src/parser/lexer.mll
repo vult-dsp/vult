@@ -85,6 +85,7 @@ let kindToString kind =
    | EOF   -> "'eof'"
    | INT   -> "'int'"
    | REAL  -> "'real'"
+   | FIXED  -> "'fixed'"
    | ID    -> "'id'"
    | STRING-> "'string'"
    | FUN   -> "'fun'"
@@ -155,6 +156,8 @@ let float =
   ('.' ['0'-'9']* )?
   (['e' 'E'] ['+' '-']? ['0'-'9']+)?
 
+let fixed = float 'x'
+
 rule next_token source = parse
   | newline
     { let _ = updateLocation lexbuf 1 0 in (* Increases the line *)
@@ -198,6 +201,7 @@ rule next_token source = parse
   | int         { makeToken source INT lexbuf }
   | xint        { makeToken source INT lexbuf }
   | float       { makeToken source REAL lexbuf }
+  | fixed       { makeToken source FIXED lexbuf }
   | startid idchar *
                 { makeIdToken source lexbuf }
   |  '"'        {

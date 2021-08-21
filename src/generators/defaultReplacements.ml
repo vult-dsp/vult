@@ -173,6 +173,7 @@ module Default = struct
          ; ("eps", "fix16_t"), "fix_eps"
          ; ("pi", "fix16_t"), "fix_pi"
          ; ("random", "fix16_t"), "fix_random"
+         ; ("frandom", "fix16_t"), "fix_random"
          ; ("samplerate", "fix16_t"), "fix_samplerate"
          ; ("wrap_array", "fix16_t"), "fix_wrap_array"
          ]
