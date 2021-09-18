@@ -307,11 +307,9 @@ let generate output _template (stmts : Code.top_stmt list) =
 
   let header =
     let ifdef, endif = makeIfdef header_file in
-    {pla|<#legend#><#ifdef#><#>#include "vultin.h"<#><#><#header#><#endif#>|pla}
+    {pla|<#legend#><#ifdef#><#>#include "vultin.h"<#>#include "<#tables_file_base#s>"<#><#><#header#><#endif#>|pla}
   in
-  let implementation =
-    {pla|<#legend#><#><#>#include "<#header_file_base#s>"<#>#include "<#tables_file_base#s>"<#><#><#implementation#>|pla}
-  in
+  let implementation = {pla|<#legend#><#><#>#include "<#header_file_base#s>"<#><#><#implementation#>|pla} in
   let tables =
     let ifdef, endif = makeIfdef tables_file in
     {pla|<#legend#><#ifdef#><#tables#><#endif#>|pla}

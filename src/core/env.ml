@@ -146,7 +146,7 @@ let builtin_functions =
     [ "set", C.array_set
     ; "get", C.array_get
     ; "size", C.array_size
-    ; "abs", C.freal_freal
+    ; "abs", C.num_num
     ; "exp", C.freal_freal
     ; "log10", C.freal_freal
     ; "sin", C.freal_freal
@@ -229,7 +229,7 @@ let lookVar (env : in_func) (name : string) (loc : Loc.t) : var =
   | None ->
       ( match lookVarInScopes env.f.locals name with
       | Some found -> found
-      | None -> Error.raiseError ("An enumeration with the name '" ^ name ^ "' could not be found") loc )
+      | None -> Error.raiseError ("The variable '" ^ name ^ "' could not be found") loc )
 
 
 let lookEnum (env : in_func) (path : path) (loc : Loc.t) =

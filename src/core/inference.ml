@@ -135,17 +135,23 @@ let type_in_c (env : Env.in_context) (t : Syntax.type_) = type_in_m (Env.exitCon
 
 let type_in_f (env : Env.in_func) (t : Syntax.type_) = type_in_c (Env.exitFunction env) t
 
-let applyFunction (args_t : type_ list) (ret : type_) (args : exp list) =
-  let rec loop args_t args =
+let applyFunction loc (args_t_in : type_ list) (ret : type_) (args : exp list) =
+  let rec loop (args_t : type_ list) args =
     match args_t, args with
-    | [], _ :: _ -> failwith "missing arguments"
-    | _ :: _, [] -> failwith "excess of arguments "
+    | [], _ :: _ ->
+        let required = Pla.map_sep Pla.commaspace print_type_ args_t_in in
+        let msg = Pla.print {pla|Extra arguments in function call. Expecting: (<#required#>)|pla} in
+        Error.raiseError msg loc
+    | _ :: _, [] ->
+        let required = Pla.map_sep Pla.commaspace print_type_ args_t_in in
+        let msg = Pla.print {pla|Missing arguments in function call. Expecting: (<#required#>)|pla} in
+        Error.raiseError msg loc
     | [], [] -> ret
     | h :: args_t, (ht : exp) :: args ->
         unifyRaise ht.loc h ht.t ;
         loop args_t args
   in
-  loop args_t args
+  loop args_t_in args
 
 
 let addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
@@ -247,7 +253,7 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
       let env, args = exp_list env args in
       let f = Env.lookFunctionCall env path loc in
       let args_t, ret = f.t in
-      let t = applyFunction args_t ret args in
+      let t = applyFunction e.loc args_t ret args in
       let env, args = addContextArg env instance f args loc in
       env, { e = ECall { instance = None; path = f.path; args }; t; loc }
   | { e = SEOp (op, e1, e2); loc } ->
@@ -255,13 +261,13 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
       let env, e2 = exp env e2 in
       let f = Env.lookOperator env op in
       let args_t, ret = f.t in
-      let t = applyFunction args_t ret [ e1; e2 ] in
+      let t = applyFunction e.loc args_t ret [ e1; e2 ] in
       env, { e = EOp (op, e1, e2); t; loc }
   | { e = SEUnOp (op, e); loc } ->
       let env, e = exp env e in
       let f = Env.lookOperator env ("u" ^ op) in
       let args_t, ret = f.t in
-      let t = applyFunction args_t ret [ e ] in
+      let t = applyFunction e.loc args_t ret [ e ] in
       env, { e = EUnOp (op, e); t; loc }
   | { e = SEMember (e, m); loc } ->
       let env, e = exp env e in

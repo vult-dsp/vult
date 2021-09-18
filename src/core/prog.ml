@@ -526,15 +526,15 @@ module TypedToProg = struct
     match t.tx with
     | T.TELink t -> getDim t
     | T.TESize dim -> dim
-    | _ -> failwith "invalid dimmension"
+    | _ -> Error.raiseError "The size of the array could not be inferred. Please add type annotation." t.loc
 
 
   let rec type_ (env : Env.in_top) (state : state) (t : Typed.type_) =
     let loc = t.loc in
     match t.tx with
     | T.TENoReturn -> state, { t = TVoid; loc }
-    | T.TEUnbound _ -> failwith "untyped"
-    | T.TEOption _ -> failwith "undecided type"
+    | T.TEUnbound _ -> Error.raiseError "The type could not be infered. Please add type annotation." t.loc
+    | T.TEOption _ -> Error.raiseError "undecided type" t.loc
     | T.TEId { id = "unit"; n = None; _ } -> state, { t = TVoid; loc }
     | T.TEId { id = "int"; n = None; _ } -> state, { t = TInt; loc }
     | T.TEId { id = "real"; n = None; _ } -> state, { t = TReal; loc }
