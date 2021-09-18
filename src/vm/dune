@@ -1,7 +1,7 @@
 (library
  (name vm)
  (modules Interpreter Compile Vmv)
- (libraries core util parser pla)
+ (libraries core util pparser pla)
  (flags
   (:standard -w -30))
  (preprocess

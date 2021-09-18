@@ -1,7 +1,7 @@
 open Code
 open Util
 open Vm
-module Tags = Parser.Tags
+module Tags = Pparser.Ptags
 
 let makeFloat (t : type_) x : exp = { e = Real x; t }
 

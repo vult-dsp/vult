@@ -21,10 +21,10 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 *)
-open Parser
+open Pparser
 open Util
 
-type tag = Tags.tag
+type tag = Ptags.tag
 
 type type_d_ =
   | TVoid
@@ -452,7 +452,7 @@ module Print = struct
   let print_function_def kind (def : function_def) =
     let name = def.name in
     let args = Pla.map_sep Pla.commaspace print_arg def.args in
-    let tags = Tags.print_tags def.tags in
+    let tags = Ptags.print_tags def.tags in
     let t = print_type_ (snd def.t) in
     {pla|<#kind#s> <#name#s>(<#args#>) : <#t#> <#tags#>|pla}
 

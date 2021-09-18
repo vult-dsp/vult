@@ -22,7 +22,7 @@
    THE SOFTWARE.
 *)
 open Util
-open Parser
+open Pparser
 
 type path = Syntax.path
 
@@ -61,7 +61,7 @@ let rec compare_type_ (a : type_) (b : type_) =
 
 and compare_type_list_ a b = CCOrd.list compare_type_ a b
 
-type tag = Tags.tag
+type tag = Ptags.tag
 
 type exp_d =
   | EUnit
@@ -300,7 +300,7 @@ let print_body_linkname body_linkname =
 let rec print_function_def kind (def : function_def) body_linkname =
   let name = print_path def.name in
   let args = Pla.map_sep Pla.commaspace print_arg def.args in
-  let tags = Tags.print_tags def.tags in
+  let tags = Ptags.print_tags def.tags in
   let t = print_type_ (snd def.t) in
   let body = print_body_linkname body_linkname in
   let next = print_next_function_def kind def.next in

@@ -185,11 +185,11 @@ let int_value (buffer : Stream.stream) : int * Loc.t =
 
 
 (** Parses tag expressions *)
-let rec tag (rbp : int) (buffer : Stream.stream) : Tags.tag = prattParser rbp buffer getExpLbp tag_nud tag_led
+let rec tag (rbp : int) (buffer : Stream.stream) : Ptags.tag = prattParser rbp buffer getExpLbp tag_nud tag_led
 
-and tagExpressionList (buffer : Stream.stream) : Tags.tag list = commaSepList tag buffer
+and tagExpressionList (buffer : Stream.stream) : Ptags.tag list = commaSepList tag buffer
 
-and tag_nud (buffer : Stream.stream) (token : 'kind token) : Tags.tag =
+and tag_nud (buffer : Stream.stream) (token : 'kind token) : Ptags.tag =
   let loc = token.loc in
   match token.kind, token.value with
   | ID, _ ->
@@ -217,7 +217,7 @@ and tag_nud (buffer : Stream.stream) (token : 'kind token) : Tags.tag =
       raise (ParserError message)
 
 
-and tag_unary_op (buffer : Stream.stream) (token : 'kind token) : Tags.tag =
+and tag_unary_op (buffer : Stream.stream) (token : 'kind token) : Ptags.tag =
   let right = tag 70 buffer in
   match right.g with
   | TagInt value -> { right with g = TagInt (-value) }
@@ -225,23 +225,23 @@ and tag_unary_op (buffer : Stream.stream) (token : 'kind token) : Tags.tag =
   | _ -> Error.raiseError "invalid value" token.loc
 
 
-and tag_led (_ : Stream.stream) (token : 'kind token) (_ : Tags.tag) : Tags.tag =
+and tag_led (_ : Stream.stream) (token : 'kind token) (_ : Ptags.tag) : Ptags.tag =
   match token.kind with
   | _ ->
       let message = Stream.notExpectedError token in
       raise (ParserError message)
 
 
-and tag_pair (bp : int) (buffer : Stream.stream) : string * Tags.tag * Loc.t =
+and tag_pair (bp : int) (buffer : Stream.stream) : string * Ptags.tag * Loc.t =
   let id, loc = id_name buffer in
   let _ = Stream.consume buffer EQUAL in
   let value = tag bp buffer in
   id, value, loc
 
 
-and tag_pair_list (buffer : Stream.stream) : (string * Tags.tag * Loc.t) list = commaSepList tag_pair buffer
+and tag_pair_list (buffer : Stream.stream) : (string * Ptags.tag * Loc.t) list = commaSepList tag_pair buffer
 
-let optional_tag (buffer : Stream.stream) : Tags.tag list =
+let optional_tag (buffer : Stream.stream) : Ptags.tag list =
   match Stream.peek buffer with
   | AT ->
       let _ = Stream.consume buffer AT in

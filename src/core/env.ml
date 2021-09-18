@@ -32,7 +32,7 @@ let getGlobalTick () =
   n
 
 
-let pathString p = Pla.print (Parser.Syntax.print_path p)
+let pathString p = Pla.print (Pparser.Syntax.print_path p)
 
 module Map = struct
   type 'a t = 'a Map.t ref
@@ -195,7 +195,7 @@ let builtin_types =
   [ "int"; "real"; "fix16"; "bool"; "string"; "unit" ]
   |> List.map (fun n ->
          ( n
-         , { path = Parser.Syntax.{ id = n; n = None; loc = Loc.default }
+         , { path = Pparser.Syntax.{ id = n; n = None; loc = Loc.default }
            ; descr = Simple
            ; index = 0
            ; loc = Loc.default
@@ -290,7 +290,7 @@ let lookType (env : in_func) (path : path) : t =
     match result with
     | Some found -> found
     | None ->
-        let path = Pla.print (Parser.Syntax.print_path path) in
+        let path = Pla.print (Pparser.Syntax.print_path path) in
         failwith ("lookType: type not found " ^ path)
   in
   match path with

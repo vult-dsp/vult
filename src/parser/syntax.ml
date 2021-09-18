@@ -106,7 +106,7 @@ type arg = string * type_ option * Loc.t
 and stmt_d =
   | SStmtError
   | SStmtVal    of dexp * exp option
-  | SStmtMem    of dexp * exp option * Tags.tag list
+  | SStmtMem    of dexp * exp option * Ptags.tag list
   | SStmtBind   of lexp * exp
   | SStmtReturn of exp
   | SStmtBlock  of stmt list
@@ -129,7 +129,7 @@ and function_def =
   ; t : type_ option
   ; next : (function_def * stmt) option
   ; loc : Loc.t
-  ; tags : Tags.tag list
+  ; tags : Ptags.tag list
   }
 
 type top_stmt_d =

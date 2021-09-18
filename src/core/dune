@@ -1,7 +1,7 @@
 (library
  (name core)
  (modules Typed Prog Inference Env Mapper Passes Version Replacements)
- (libraries util parser pla)
+ (libraries util pparser pla)
  (flags
   (:standard -w -30))
  (preprocess

@@ -1,8 +1,8 @@
 (ocamllex lexer)
 
 (library
- (name parser)
- (modules Parse Types Syntax Stream Lexer Tags)
+ (name pparser)
+ (modules Parse Types Syntax Stream Lexer Ptags)
  (libraries util pla)
  (flags
   (:standard -w -30))

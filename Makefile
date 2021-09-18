@@ -67,6 +67,7 @@ clean:
 	rm -f vult.js vultweb.js vultlib.js
 	rm -f bisect*.out
 	rm -rf bisect_coverage
+	rm -rf _build
 
 install:
 	cp _build/default/src/vult.exe $(PREFIX)/vult

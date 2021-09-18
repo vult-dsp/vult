@@ -1,7 +1,7 @@
 (library
  (name driver)
  (modules Loader Cli)
- (libraries vm generators util parser core pla)
+ (libraries vm generators util pparser core pla)
  (preprocess
   (pps ppx_deriving.std pla.ppx))
  (flags -w -30))

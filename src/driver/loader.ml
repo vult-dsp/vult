@@ -24,7 +24,7 @@
 
 (** This module contains routines used to automatically load a vult file and all it's depdendencies *)
 
-open Parser
+open Pparser
 open Util
 open Syntax
 open Args
