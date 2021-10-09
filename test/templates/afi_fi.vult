@@ -3,9 +3,3 @@ fun process(a:real, b:int) {
    mem x = x + 1;
    return a, b;
 }
-and noteOn(note:int,velocity:int,channel:int){ }
-and noteOff(note:int,channel:int){ }
-and controlChange(control:int,value:int,channel:int){ }
-and default(){ }
-
-

@@ -107,6 +107,10 @@ let flags result =
     ; comment =
         "prefix Converts the code to java (default: off). Requires prefix to name the package. e.g. 'com.company'"
     }
+  ; { flag = "-prefix"
+    ; action = Arg.String (fun prefix -> result.prefix <- Some prefix)
+    ; comment = "name Used to pass additional information to the code generator."
+    }
   ; { flag = "-jscode"
     ; action = Arg.Unit (fun () -> result.code <- JSCode)
     ; comment = " Converts the code to javascript (default: off)"

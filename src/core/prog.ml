@@ -269,8 +269,8 @@ module Initializers = struct
         let name = struct_t.path ^ "_init" in
         let this_type = { t = TStruct struct_t; loc = Loc.default } in
         let void_type = { t = TVoid; loc = Loc.default } in
-        let lctx = { l = LId "ctx"; t = this_type; loc } in
-        let ectx = { e = EId "ctx"; t = this_type; loc } in
+        let lctx = { l = LId "_ctx"; t = this_type; loc } in
+        let ectx = { e = EId "_ctx"; t = this_type; loc } in
         let stmts =
           List.map
             (fun (var, (t : type_), _) ->
@@ -280,13 +280,13 @@ module Initializers = struct
             struct_t.members
         in
         let body = { s = StmtBlock stmts; loc } in
-        let args, t = [ "ctx", this_type, loc ], ([ this_type ], void_type) in
+        let args, t = [ "_ctx", this_type, loc ], ([ this_type ], void_type) in
         { top = TopFunction ({ name; args; t; loc; tags = [] }, body); loc }
     | { top = TopType struct_t; loc } ->
         let name = struct_t.path ^ "_init" in
         let this_type = { t = TStruct struct_t; loc = Loc.default } in
-        let lctx = { l = LId "ctx"; t = this_type; loc } in
-        let ectx = { e = EId "ctx"; t = this_type; loc } in
+        let lctx = { l = LId "_ctx"; t = this_type; loc } in
+        let ectx = { e = EId "_ctx"; t = this_type; loc } in
         let stmts =
           List.map
             (fun (var, (t : type_), _) ->
@@ -295,7 +295,7 @@ module Initializers = struct
               initStatement cstyle lhs rhs t)
             struct_t.members
         in
-        let new_ctx = { s = StmtDecl { d = DId ("ctx", None); t = this_type; loc }; loc } in
+        let new_ctx = { s = StmtDecl { d = DId ("_ctx", None); t = this_type; loc }; loc } in
         let return = { s = StmtReturn ectx; loc } in
         let body = { s = StmtBlock ((new_ctx :: stmts) @ [ return ]); loc } in
         let args, t = [], ([], this_type) in

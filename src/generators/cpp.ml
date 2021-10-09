@@ -312,10 +312,25 @@ let makeIfdef file =
 |pla}
 
 
-let generate output _template (stmts : top_stmt list) =
+let getTemplateCode (name : string option) (prefix : string) (stmts : top_stmt list) =
+  match name with
+  | Some "pd" -> T_pd.generate prefix stmts
+  | None -> Pla.unit, Pla.unit
+  | Some name -> Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
+
+
+let getLibName output =
+  match output with
+  | None -> "MyLib"
+  | Some name -> Filename.basename name
+
+
+let generate output template (stmts : top_stmt list) =
   let header = print_prog Header stmts in
   let implementation = print_prog Implementation stmts in
   let tables = print_prog Tables stmts in
+
+  let t_impl, t_header = getTemplateCode template (getLibName output) stmts in
 
   let header_file = Common.setExt ".h" output in
   let tables_file = Common.setExt ".tables.h" output in
@@ -333,5 +348,4 @@ let generate output _template (stmts : top_stmt list) =
     let ifdef, endif = makeIfdef tables_file in
     {pla|<#legend#><#ifdef#><#tables#><#endif#>|pla}
   in
-
-  [ header, header_file; implementation, impl_file; tables, tables_file ]
+  Pla.[ append header t_header, header_file; append implementation t_impl, impl_file; tables, tables_file ]

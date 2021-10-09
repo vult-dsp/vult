@@ -1,6 +1,6 @@
 (library
  (name generators)
- (modules Lua Rust C Cpp Common Code Tables)
+ (modules Lua C Cpp Common Code Tables T_pd)
  (libraries core pla vm)
  (flags
   (:standard -w -30))
