@@ -66,14 +66,14 @@ let generate args stmts =
 
 
 let generateCode (args : args) (parsed : Parse.parsed_file list) : output list =
-  let env, typed = Inference.infer parsed in
+  let env, typed = Inference.infer args parsed in
   let stmts = Prog.convert env typed in
   let stmts = Passes.run args stmts in
   let code = generate args stmts in
   let run =
     match args.eval with
     | Some e ->
-        let s = Vm.Interpreter.run env stmts e in
+        let s = Vm.Interpreter.run args env stmts e in
         [ ParsedCode s ]
     | None -> []
   in

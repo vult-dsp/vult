@@ -146,6 +146,7 @@ and function_def =
   ; next : (function_def * stmt) option
   ; loc : Loc.t
   ; tags : tag list
+  ; is_root : bool
   }
 
 type top_stmt_d =

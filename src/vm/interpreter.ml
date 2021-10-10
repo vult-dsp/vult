@@ -348,9 +348,9 @@ let callFunction vm name args =
   result
 
 
-let run (env : Env.in_top) (prog : top_stmt list) (exp : string) =
+let run (iargs : Util.Args.args) (env : Env.in_top) (prog : top_stmt list) (exp : string) =
   let e = Pparser.Parse.parseString (Some "Main_.vult") (Pla.print {pla|fun _main_() return <#exp#s>;|pla}) in
-  let env, main = Inference.infer_single env e in
+  let env, main = Inference.infer_single iargs env e in
   let main = Prog.convert env main in
   let bytecode = compile (prog @ main) in
   let vm = VMV.newVM bytecode in

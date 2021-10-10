@@ -343,11 +343,11 @@ let function_def (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) 
     'state * function_def =
   let sub_env = enter mapper.function_def_env env f in
   match f with
-  | { name; args; t = t_args, ret; loc; tags } ->
+  | { name; args; t = t_args, ret; loc; tags; info } ->
       let state, args = list param mapper sub_env state args in
       let state, t_args = list type_ mapper sub_env state t_args in
       let state, ret = type_ mapper sub_env state ret in
-      apply mapper.function_def env state { name; args; t = t_args, ret; loc; tags }
+      apply mapper.function_def env state { name; args; t = t_args, ret; loc; tags; info }
 
 
 let top_stmt (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (s : top_stmt) : 'state * top_stmt list =

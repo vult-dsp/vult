@@ -518,7 +518,12 @@ let registerMultiReturnMem (env : Env.in_context) name t loc =
   | _ -> env
 
 
-let rec function_def (env : Env.in_context) ((def : Syntax.function_def), (body : Syntax.stmt)) :
+let isRoot (args : Args.args) path =
+  let s_path = Pla.print (Syntax.print_path path) in
+  List.mem s_path args.roots
+
+
+let rec function_def (iargs : Args.args) (env : Env.in_context) ((def : Syntax.function_def), (body : Syntax.stmt)) :
     Env.in_context * (function_def * stmt) =
   let ret = getReturnType env def.loc def.t in
   let args = convertArguments env def.args in
@@ -526,20 +531,21 @@ let rec function_def (env : Env.in_context) ((def : Syntax.function_def), (body 
   let env, body = stmt env ret body in
   let env = Env.exitFunction env in
   let next = addGeneratedFunctions def.tags def.name def.next in
-  let env, next = function_def_opt env next in
+  let env, next = function_def_opt iargs env next in
   let env = registerMultiReturnMem env path t def.loc in
-  env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next }, stmt_block body)
+  let is_root = isRoot iargs path in
+  env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next; is_root }, stmt_block body)
 
 
-and function_def_opt (env : Env.in_context) def_opt =
+and function_def_opt (iargs : Args.args) (env : Env.in_context) def_opt =
   match def_opt with
   | None -> env, None
   | Some def_body ->
-      let env, def_body = function_def env def_body in
+      let env, def_body = function_def iargs env def_body in
       env, Some def_body
 
 
-let ext_function (env : Env.in_context) ((def : Syntax.function_def), (link_name : string option)) :
+let ext_function (iargs : Args.args) (env : Env.in_context) ((def : Syntax.function_def), (link_name : string option)) :
     Env.in_context * (function_def * string) =
   let ret = getOptType env def.loc def.t in
   let args = convertArguments env def.args in
@@ -547,8 +553,8 @@ let ext_function (env : Env.in_context) ((def : Syntax.function_def), (link_name
   let env = Env.exitFunction env in
   let link_name = CCOpt.get_or ~default:def.name link_name in
   let next = addGeneratedFunctions def.tags def.name def.next in
-  let env, next = function_def_opt env next in
-  env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next }, link_name)
+  let env, next = function_def_opt iargs env next in
+  env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next; is_root = false }, link_name)
 
 
 let getContextArgument (context : Env.context) loc : arg option =
@@ -577,18 +583,18 @@ let insertContextArgument (env : Env.in_context) (def : function_def) : function
       { def with args = arg :: def.args; next }
 
 
-let rec top_stmt (env : Env.in_module) (s : Syntax.top_stmt) : Env.in_module * top_stmt =
+let rec top_stmt (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt) : Env.in_module * top_stmt =
   match s with
   | { top = STopError; _ } -> failwith "Parser error"
   | { top = STopFunction (def, body); _ } ->
       let env = Env.createContextForFunction env def.name def.loc in
-      let env, (def, body) = function_def env (def, body) in
+      let env, (def, body) = function_def iargs env (def, body) in
       let def = insertContextArgument env def in
       let env = Env.exitContext env in
       env, { top = TopFunction (def, body); loc = def.loc }
   | { top = STopExternal (def, link_name); _ } ->
       let env = Env.createContextForExternal env in
-      let env, (def, link_name) = ext_function env (def, link_name) in
+      let env, (def, link_name) = ext_function iargs env (def, link_name) in
       let env = Env.exitContext env in
       env, { top = TopExternal (def, link_name); loc = def.loc }
   | { top = STopType { name; members }; loc } ->
@@ -603,11 +609,11 @@ let rec top_stmt (env : Env.in_module) (s : Syntax.top_stmt) : Env.in_module * t
       env, { top = TopEnum { path; members }; loc }
 
 
-and top_stmt_list (env : Env.in_module) (s : Syntax.top_stmt list) : Env.in_module * top_stmt list =
+and top_stmt_list (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt list) : Env.in_module * top_stmt list =
   let env, rev_s =
     List.fold_left
       (fun (env, acc) s ->
-        let env, s = top_stmt env s in
+        let env, s = top_stmt iargs env s in
         env, s :: acc)
       (env, [])
       s
@@ -676,21 +682,21 @@ let removeExistingTypes set types =
   List.filter f types
 
 
-let infer_single (env : Env.in_top) (h : Parse.parsed_file) : Env.in_top * Typed.program =
+let infer_single (iargs : Args.args) (env : Env.in_top) (h : Parse.parsed_file) : Env.in_top * Typed.program =
   let set = createExistingTypeSet (createTypes env) in
   let env = Env.enterModule env h.name in
-  let env, stmt = top_stmt_list env h.stmts in
+  let env, stmt = top_stmt_list iargs env h.stmts in
   let env = Env.exitModule env in
   let types = removeExistingTypes set (createTypes env) in
   env, stmt @ types
 
 
-let infer (parsed : Parse.parsed_file list) : Env.in_top * Typed.program =
+let infer (iargs : Args.args) (parsed : Parse.parsed_file list) : Env.in_top * Typed.program =
   let env, stmts =
     List.fold_left
       (fun (env, acc) (h : Parse.parsed_file) ->
         let env = Env.enterModule env h.name in
-        let env, stmt = top_stmt_list env h.stmts in
+        let env, stmt = top_stmt_list iargs env h.stmts in
         let env = Env.exitModule env in
         env, stmt @ acc)
       (Env.empty (), [])

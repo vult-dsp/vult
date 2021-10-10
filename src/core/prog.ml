@@ -132,6 +132,11 @@ and dexp =
   ; t : type_
   }
 
+type function_info =
+  { original_name : string option
+  ; is_root : bool
+  }
+
 type stmt_d =
   | StmtDecl   of dexp
   | StmtBind   of lexp * exp
@@ -151,6 +156,7 @@ and function_def =
   ; t : type_ list * type_
   ; loc : Loc.t
   ; tags : tag list
+  ; info : function_info
   }
 
 type top_stmt_d =
@@ -164,6 +170,8 @@ and top_stmt =
   }
 
 type prog = top_stmt list
+
+let default_info = { original_name = None; is_root = false }
 
 module Initializers = struct
   let index_tick = ref 0
@@ -281,7 +289,7 @@ module Initializers = struct
         in
         let body = { s = StmtBlock stmts; loc } in
         let args, t = [ "_ctx", this_type, loc ], ([ this_type ], void_type) in
-        { top = TopFunction ({ name; args; t; loc; tags = [] }, body); loc }
+        { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
     | { top = TopType struct_t; loc } ->
         let name = struct_t.path ^ "_init" in
         let this_type = { t = TStruct struct_t; loc = Loc.default } in
@@ -299,7 +307,7 @@ module Initializers = struct
         let return = { s = StmtReturn ectx; loc } in
         let body = { s = StmtBlock ((new_ctx :: stmts) @ [ return ]); loc } in
         let args, t = [], ([], this_type) in
-        { top = TopFunction ({ name; args; t; loc; tags = [] }, body); loc }
+        { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
     | _ -> failwith "not a type"
 end
 
@@ -744,7 +752,9 @@ module TypedToProg = struct
     let state, body = stmt env state body in
     let body = block body in
     let state, next = next_def env state def.next in
-    let stmt = { top = TopFunction ({ name; args; t; loc = def.loc; tags = def.tags }, body); loc = def.loc } in
+    let original_name = Some (Pla.print (Syntax.print_path def.name)) in
+    let info = { original_name; is_root = def.is_root } in
+    let stmt = { top = TopFunction ({ name; args; t; loc = def.loc; tags = def.tags; info }, body); loc = def.loc } in
     state, stmt :: next
 
 
@@ -759,7 +769,11 @@ module TypedToProg = struct
     let state, args = list arg env state def.args in
     let state, t = function_type env state def.t in
     let state, next = next_def env state def.next in
-    let stmt = { top = TopExternal ({ name; args; t; loc = def.loc; tags = def.tags }, linkname); loc = def.loc } in
+    let original_name = Some (Pla.print (Syntax.print_path def.name)) in
+    let info = { original_name; is_root = false } in
+    let stmt =
+      { top = TopExternal ({ name; args; t; loc = def.loc; tags = def.tags; info }, linkname); loc = def.loc }
+    in
     state, stmt :: next
 
 

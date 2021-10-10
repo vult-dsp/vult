@@ -117,6 +117,11 @@ and dexp =
   ; t : type_
   }
 
+type function_info =
+  { original_name : string option
+  ; is_root : bool
+  }
+
 type stmt =
   | StmtDecl   of dexp * exp option
   | StmtBind   of lexp * exp
@@ -131,6 +136,7 @@ and function_def =
   ; t : type_ list * type_
   ; tags : tag list
   ; loc : Util.Loc.t
+  ; info : function_info
   }
 
 type top_stmt =
@@ -376,13 +382,17 @@ module Convert = struct
         env, List.flatten (List.rev stmts)
 
 
+  let function_info (info : Prog.function_info) : function_info =
+    { original_name = info.original_name; is_root = info.is_root }
+
+
   let function_def (def : Prog.function_def) : function_def =
     let name = def.name in
     let args = List.map (fun (name, t, _) -> name, type_ t) def.args in
     let args_t, ret_t = def.t in
     let ret_t = type_ ret_t in
     let args_t = List.map type_ args_t in
-    { name; args; t = args_t, ret_t; tags = def.tags; loc = def.loc }
+    { name; args; t = args_t, ret_t; tags = def.tags; loc = def.loc; info = function_info def.info }
 
 
   let top_stmt (top : Prog.top_stmt) : top_stmt =
