@@ -25,7 +25,8 @@
 open Core.Prog
 
 let runtime =
-  {pla|
+  [%pla
+    {|
 function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
 function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end
 function eps()              return 1e-18 end
@@ -46,7 +47,7 @@ function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 
-|pla}
+|}]
 
 
 let rec isValueOrIf (e : exp) =
@@ -103,36 +104,36 @@ let rec print_exp e =
   | EIndex { e; index } ->
       let e = print_exp e in
       let index = print_exp index in
-      {pla|<#e#>[<#index#>]|pla}
+      [%pla {|<#e#>[<#index#>]|}]
   | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
   | ECall { path; args } ->
       let args = Pla.map_sep Pla.commaspace print_exp args in
-      {pla|<#path#s>(<#args#>)|pla}
+      [%pla {|<#path#s>(<#args#>)|}]
   | EUnOp (op, e) ->
       let e = print_exp e in
       let op = uoperator op in
-      {pla|(<#op#><#e#>)|pla}
+      [%pla {|(<#op#><#e#>)|}]
   | EOp (op, e1, e2) ->
       let e1 = print_exp e1 in
       let op = operator op in
       let e2 = print_exp e2 in
-      {pla|(<#e1#> <#op#> <#e2#>)|pla}
+      [%pla {|(<#e1#> <#op#> <#e2#>)|}]
   | EIf { cond; then_; else_ } when isValueOrIf then_ && isValueOrIf else_ ->
       let cond = print_exp cond in
       let then_ = print_exp then_ in
       let else_ = print_exp else_ in
-      {pla|ifExpressionValue(<#cond#>, <#then_#>, <#else_#>)|pla}
+      [%pla {|ifExpressionValue(<#cond#>, <#then_#>, <#else_#>)|}]
   | EIf { cond; then_; else_ } ->
       let cond = print_exp cond in
       let then_ = print_exp then_ in
       let else_ = print_exp else_ in
-      {pla|ifExpression(<#cond#>, (function () return <#then_#> end), (function () return <#else_#> end))|pla}
+      [%pla {|ifExpression(<#cond#>, (function () return <#then_#> end), (function () return <#else_#> end))|}]
   | ETuple l ->
       let l = Pla.map_sep Pla.commaspace print_exp l in
-      {pla|(<#l#>)|pla}
+      [%pla {|(<#l#>)|}]
   | EMember (e, m) ->
       let e = print_exp e in
-      {pla|<#e#>.<#m#s>|pla}
+      [%pla {|<#e#>.<#m#s>|}]
 
 
 let rec print_lexp e =
@@ -141,75 +142,75 @@ let rec print_lexp e =
   | LId s -> Pla.string s
   | LMember (e, m) ->
       let e = print_lexp e in
-      {pla|<#e#>.<#m#s>|pla}
+      [%pla {|<#e#>.<#m#s>|}]
   | LIndex { e; index } ->
       let e = print_lexp e in
       let index = print_exp index in
-      {pla|<#e#>[<#index#>]|pla}
+      [%pla {|<#e#>[<#index#>]|}]
   | LTuple l ->
       let l = Pla.map_sep Pla.commaspace print_lexp l in
-      {pla|(<#l#>)|pla}
+      [%pla {|(<#l#>)|}]
 
 
 let rec print_dexp (e : dexp) =
   match e.d with
-  | DWild -> {pla|_wild|pla}
-  | DId (id, None) -> {pla|<#id#s>|pla}
-  | DId (id, Some dim) -> {pla|<#id#s>[<#dim#i>]|pla}
+  | DWild -> [%pla {|_wild|}]
+  | DId (id, None) -> [%pla {|<#id#s>|}]
+  | DId (id, Some dim) -> [%pla {|<#id#s>[<#dim#i>]|}]
   | DTuple l ->
       let l = Pla.map_sep Pla.commaspace print_dexp l in
-      {pla|(<#l#>)|pla}
+      [%pla {|(<#l#>)|}]
 
 
 let rec print_stmt s =
   match s.s with
   | StmtDecl lhs ->
       let lhs = print_dexp lhs in
-      {pla|local <#lhs#> = {};|pla}
+      [%pla {|local <#lhs#> = {};|}]
   | StmtBind ({ l = LWild; _ }, rhs) ->
       let rhs = print_exp rhs in
-      {pla|<#rhs#>;|pla}
+      [%pla {|<#rhs#>;|}]
   | StmtBind (lhs, rhs) ->
       let lhs = print_lexp lhs in
       let rhs = print_exp rhs in
-      {pla|<#lhs#> = <#rhs#>;|pla}
+      [%pla {|<#lhs#> = <#rhs#>;|}]
   | StmtReturn e ->
       let e = print_exp e in
-      {pla|return <#e#>;|pla}
+      [%pla {|return <#e#>;|}]
   | StmtIf (cond, then_, None) ->
       let e = print_exp cond in
       let then_ = print_stmt then_ in
-      {pla|if <#e#> then<#then_#+><#>end|pla}
+      [%pla {|if <#e#> then<#then_#+><#>end|}]
   | StmtIf (cond, then_, Some else_) ->
       let cond = print_exp cond in
       let then_ = print_stmt then_ in
       let else_ = print_stmt else_ in
-      {pla|if <#cond#> then<#then_#+><#>else<#else_#+><#>end|pla}
+      [%pla {|if <#cond#> then<#then_#+><#>else<#else_#+><#>end|}]
   | StmtWhile (cond, stmt) ->
       let cond = print_exp cond in
       let stmt = print_stmt stmt in
-      {pla|while <#cond#> do<#stmt#+><#>end|pla}
+      [%pla {|while <#cond#> do<#stmt#+><#>end|}]
   | StmtBlock stmts ->
       let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
-      {pla|do<#stmt#+>end|pla}
+      [%pla {|do<#stmt#+>end|}]
 
 
-let print_arg (n, _, _) = {pla|<#n#s>|pla}
+let print_arg (n, _, _) = [%pla {|<#n#s>|}]
 
 let print_function_def (def : function_def) =
   let name = def.name in
   let args = Pla.map_sep Pla.commaspace print_arg def.args in
-  {pla|function <#name#s>(<#args#>)|pla}
+  [%pla {|function <#name#s>(<#args#>)|}]
 
 
 let print_body body =
   match body.s with
   | StmtBlock stmts ->
       let stmts = Pla.map_sep_all Pla.newline print_stmt stmts in
-      {pla|<#stmts#+>end|pla}
+      [%pla {|<#stmts#+>end|}]
   | _ ->
       let stmt = print_stmt body in
-      {pla|<#stmt#+><#>end|pla}
+      [%pla {|<#stmt#+><#>end|}]
 
 
 let print_top_stmt t =
@@ -217,7 +218,7 @@ let print_top_stmt t =
   | TopFunction (def, body) ->
       let def = print_function_def def in
       let body = print_body body in
-      {pla|<#def#><#body#><#><#>|pla}
+      [%pla {|<#def#><#body#><#><#>|}]
   | TopExternal _ -> Pla.unit
   | TopType _ -> Pla.unit
 
@@ -226,4 +227,4 @@ let print_prog t = Pla.map_join print_top_stmt t
 
 let generate _output _template (stmts : top_stmt list) =
   let code = print_prog stmts in
-  [ {pla|<#runtime#><#code#>|pla}, "file" ]
+  [ [%pla {|<#runtime#><#code#>|}], "file" ]

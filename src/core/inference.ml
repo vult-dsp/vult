@@ -111,7 +111,7 @@ let unifyRaise (loc : Loc.t) (t1 : type_) (t2 : type_) : unit =
     let msg =
       let t1 = print_type_ t1 in
       let t2 = print_type_ t2 in
-      Pla.print {pla|"This expression has type '<#t2#>' but '<#t1#>' was expected"|pla}
+      Pla.print [%pla {|"This expression has type '<#t2#>' but '<#t1#>' was expected"|}]
     in
     if raise then
       Error.raiseError msg loc
@@ -140,11 +140,11 @@ let applyFunction loc (args_t_in : type_ list) (ret : type_) (args : exp list) =
     match args_t, args with
     | [], _ :: _ ->
         let required = Pla.map_sep Pla.commaspace print_type_ args_t_in in
-        let msg = Pla.print {pla|Extra arguments in function call. Expecting: (<#required#>)|pla} in
+        let msg = Pla.print [%pla {|Extra arguments in function call. Expecting: (<#required#>)|}] in
         Error.raiseError msg loc
     | _ :: _, [] ->
         let required = Pla.map_sep Pla.commaspace print_type_ args_t_in in
-        let msg = Pla.print {pla|Missing arguments in function call. Expecting: (<#required#>)|pla} in
+        let msg = Pla.print [%pla {|Missing arguments in function call. Expecting: (<#required#>)|}] in
         Error.raiseError msg loc
     | [], [] -> ret
     | h :: args_t, (ht : exp) :: args ->
@@ -486,7 +486,7 @@ and stmt_list env return l =
 
 let addGeneratedFunctions tags name next =
   if Ptags.has tags "wave" then
-    let code = Pla.print {pla|fun <#name#s>_samples() : int|pla} in
+    let code = Pla.print [%pla {|fun <#name#s>_samples() : int|}] in
     let def = Parse.parseFunctionSpec code in
     Some ({ def with next }, Syntax.{ s = SStmtBlock []; loc = Loc.default })
   else

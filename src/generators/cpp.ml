@@ -69,11 +69,11 @@ let rec print_type_ (t : type_) =
   | Fixed -> Pla.string "int32_t"
   | Tuple l ->
       let l = Pla.map_sep Pla.commaspace print_type_ l in
-      {pla|(<#l#>)|pla}
+      [%pla {|(<#l#>)|}]
   | Array (_, t) ->
       let t = print_type_ t in
-      {pla|<#t#>|pla}
-  | Struct { path; _ } -> {pla|<#path#s>|pla}
+      [%pla {|<#t#>|}]
+  | Struct { path; _ } -> [%pla {|<#path#s>|}]
 
 
 let rec print_type_member (t : type_) =
@@ -86,11 +86,11 @@ let rec print_type_member (t : type_) =
   | Fixed -> Pla.string "int32_t"
   | Tuple l ->
       let l = Pla.map_sep Pla.commaspace print_type_member l in
-      {pla|(<#l#>)|pla}
+      [%pla {|(<#l#>)|}]
   | Array (_, t) ->
       let t = print_type_member t in
-      {pla|<#t#>|pla}
-  | Struct { path; _ } -> {pla|<#path#s>|pla}
+      [%pla {|<#t#>|}]
+  | Struct { path; _ } -> [%pla {|<#path#s>|}]
 
 
 let operator op =
@@ -132,48 +132,48 @@ let rec print_exp (e : exp) =
   match e.e with
   | Unit -> Pla.string ""
   | Bool v -> Pla.string (if v then "1" else "0")
-  | Int n -> {pla|<#n#i>|pla}
-  | Real n -> {pla|<#n#f>f|pla}
+  | Int n -> [%pla {|<#n#i>|}]
+  | Real n -> [%pla {|<#n#f>f|}]
   | String s -> Pla.string_quoted s
   | Id id -> Pla.string id
   | Index { e; index } ->
       let e = print_exp e in
       let index = print_exp index in
-      {pla|<#e#>[<#index#>]|pla}
+      [%pla {|<#e#>[<#index#>]|}]
   | Array l ->
       let rows = Common.splitArray 100 l in
-      let l = Pla.map_sep {pla|,<#>|pla} (Pla.map_sep Pla.commaspace print_exp) rows in
+      let l = Pla.map_sep [%pla {|,<#>|}] (Pla.map_sep Pla.commaspace print_exp) rows in
       Pla.wrap (Pla.string "{") (Pla.string "}") l
   | Call { path = "not"; args = [ e1 ] } ->
       let e1 = print_exp e1 in
-      {pla|!<#e1#>|pla}
+      [%pla {|!<#e1#>|}]
   | Call { path; args } ->
       let path = getReplacement path args e.t in
       let args = Pla.map_sep Pla.commaspace print_exp args in
-      {pla|<#path#s>(<#args#>)|pla}
+      [%pla {|<#path#s>(<#args#>)|}]
   | UnOp (op, e) ->
       let e = print_exp e in
       let op = uoperator op in
-      {pla|(<#op#><#e#>)|pla}
+      [%pla {|(<#op#><#e#>)|}]
   | Op (op, e1, e2) ->
       let se1 = print_exp e1 in
       let se2 = print_exp e2 in
       ( match Replacements.C.op_to_fun op e1.t e2.t e.t with
-      | Some path -> {pla|<#path#s>(<#se1#>,<#se2#>)|pla}
+      | Some path -> [%pla {|<#path#s>(<#se1#>,<#se2#>)|}]
       | None ->
           let op = operator op in
-          {pla|(<#se1#> <#op#> <#se2#>)|pla} )
+          [%pla {|(<#se1#> <#op#> <#se2#>)|}] )
   | If { cond; then_; else_ } ->
       let cond = print_exp cond in
       let then_ = print_exp then_ in
       let else_ = print_exp else_ in
-      {pla|(<#cond#> ? <#then_#> : <#else_#>)|pla}
+      [%pla {|(<#cond#> ? <#then_#> : <#else_#>)|}]
   | Tuple l ->
       let l = Pla.map_sep Pla.commaspace print_exp l in
-      {pla|(<#l#>)|pla}
+      [%pla {|(<#l#>)|}]
   | Member (e, m) ->
       let e = print_exp e in
-      {pla|<#e#>.<#m#s>|pla}
+      [%pla {|<#e#>.<#m#s>|}]
 
 
 let rec print_lexp e =
@@ -182,27 +182,27 @@ let rec print_lexp e =
   | LId s -> Pla.string s
   | LMember (e, m) ->
       let e = print_lexp e in
-      {pla|<#e#>.<#m#s>|pla}
+      [%pla {|<#e#>.<#m#s>|}]
   | LIndex (e, index) ->
       let e = print_lexp e in
       let index = print_exp index in
-      {pla|<#e#>[<#index#>]|pla}
+      [%pla {|<#e#>[<#index#>]|}]
 
 
 let print_dexp (e : dexp) =
   match e.d with
-  | DId (id, None) -> {pla|<#id#s>|pla}
-  | DId (id, Some dim) -> {pla|<#id#s>[<#dim#i>]|pla}
+  | DId (id, None) -> [%pla {|<#id#s>|}]
+  | DId (id, Some dim) -> [%pla {|<#id#s>[<#dim#i>]|}]
 
 
 let print_member (n, (t : type_)) =
   match t with
   | Array (dim, sub) ->
       let sub = print_type_member sub in
-      {pla|<#sub#> <#n#s>[<#dim#i>];|pla}
+      [%pla {|<#sub#> <#n#s>[<#dim#i>];|}]
   | _ ->
       let t = print_type_member t in
-      {pla|<#t#> <#n#s>;|pla}
+      [%pla {|<#t#> <#n#s>;|}]
 
 
 let print_arg (n, (t : type_)) =
@@ -210,14 +210,14 @@ let print_arg (n, (t : type_)) =
   | Array (_, Array _) -> failwith "array of arrays are not implemented"
   | Array (dim, (Struct _ as sub)) ->
       let sub = print_type_ sub in
-      {pla|<#sub#> (&<#n#s>)[<#dim#i>]|pla}
+      [%pla {|<#sub#> (&<#n#s>)[<#dim#i>]|}]
   | Array (dim, sub) ->
       let sub = print_type_ sub in
-      {pla|<#sub#> (<#n#s>)[<#dim#i>]|pla}
-  | Struct { path; _ } -> {pla|<#path#s>& <#n#s>|pla}
+      [%pla {|<#sub#> (<#n#s>)[<#dim#i>]|}]
+  | Struct { path; _ } -> [%pla {|<#path#s>& <#n#s>|}]
   | _ ->
       let t = print_type_ t in
-      {pla|<#t#> <#n#s>|pla}
+      [%pla {|<#t#> <#n#s>|}]
 
 
 let rec parenthesize e =
@@ -230,54 +230,54 @@ and print_stmt s =
   match s with
   | StmtDecl ({ d = DId (n, _); t; _ }, None) ->
       let t = print_arg (n, t) in
-      {pla|<#t#>;|pla}
+      [%pla {|<#t#>;|}]
   | StmtDecl ({ d = DId (n, _); t; _ }, Some rhs) ->
       let t = print_arg (n, t) in
       let rhs = print_exp rhs in
-      {pla|<#t#> = <#rhs#>;|pla}
+      [%pla {|<#t#> = <#rhs#>;|}]
   | StmtBind ({ l = LWild; _ }, rhs) ->
       let rhs = print_exp rhs in
-      {pla|<#rhs#>;|pla}
+      [%pla {|<#rhs#>;|}]
   | StmtBind (lhs, rhs) ->
       let lhs = print_lexp lhs in
       let rhs = print_exp rhs in
-      {pla|<#lhs#> = <#rhs#>;|pla}
+      [%pla {|<#lhs#> = <#rhs#>;|}]
   | StmtReturn e ->
       let e = print_exp e in
-      {pla|return <#e#>;|pla}
+      [%pla {|return <#e#>;|}]
   | StmtIf (cond, then_, None) ->
       let cond = parenthesize cond in
       let then_ = print_block then_ in
-      {pla|if <#cond#> <#then_#>|pla}
+      [%pla {|if <#cond#> <#then_#>|}]
   | StmtIf (cond, then_, Some else_) ->
       let cond = parenthesize cond in
       let then_ = print_block then_ in
       let else_ = print_block else_ in
-      {pla|if <#cond#> <#then_#><#>else <#else_#>|pla}
+      [%pla {|if <#cond#> <#then_#><#>else <#else_#>|}]
   | StmtWhile (cond, stmt) ->
       let cond = print_exp cond in
       let stmt = print_block stmt in
-      {pla|while (<#cond#>) <#stmt#>|pla}
+      [%pla {|while (<#cond#>) <#stmt#>|}]
   | StmtBlock stmts ->
       let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
-      {pla|{<#stmt#+>}|pla}
+      [%pla {|{<#stmt#+>}|}]
 
 
 and print_block body =
   match body with
   | StmtBlock stmts ->
       let stmts = Pla.map_sep_all Pla.newline print_stmt stmts in
-      {pla|{<#stmts#+>}|pla}
+      [%pla {|{<#stmts#+>}|}]
   | _ ->
       let stmt = print_stmt body in
-      {pla|{<#stmt#+><#>}|pla}
+      [%pla {|{<#stmt#+><#>}|}]
 
 
 let print_function_def (def : function_def) =
   let name = Pla.string def.name in
   let args = Pla.map_sep Pla.commaspace print_arg def.args in
   let ret = print_type_ (snd def.t) in
-  {pla|<#ret#> <#name#>(<#args#>)|pla}
+  [%pla {|<#ret#> <#name#>(<#args#>)|}]
 
 
 let print_top_stmt (target : target) t =
@@ -287,9 +287,9 @@ let print_top_stmt (target : target) t =
       let def = print_function_def def in
       if inline then
         let body = print_block body in
-        {pla|static_inline <#def#> <#body#><#><#>|pla}
+        [%pla {|static_inline <#def#> <#body#><#><#>|}]
       else
-        {pla|<#def#>;<#><#>|pla}
+        [%pla {|<#def#>;<#><#>|}]
   | TopFunction (def, body), Implementation ->
       let inline = isSmall [ body ] in
       if inline then
@@ -297,25 +297,25 @@ let print_top_stmt (target : target) t =
       else
         let def = print_function_def def in
         let body = print_block body in
-        {pla|<#def#> <#body#><#><#>|pla}
+        [%pla {|<#def#> <#body#><#><#>|}]
   | TopFunction _, _ -> Pla.unit
   | TopExternal (def, None), Header ->
       let def = print_function_def def in
-      {pla|extern <#def#>;<#>|pla}
+      [%pla {|extern <#def#>;<#>|}]
   | TopExternal (def, Some link_name), Header ->
       let args = Pla.map_sep Pla.commaspace print_arg def.args in
       let ret = print_type_ (snd def.t) in
-      {pla|extern <#ret#> <#link_name#s>(<#args#>);<#>|pla}
+      [%pla {|extern <#ret#> <#link_name#s>(<#args#>);<#>|}]
   | TopExternal _, _ -> Pla.unit
   | TopType { path; members }, Header ->
-      let members = Pla.map_sep {pla|<#>|pla} print_member members in
-      {pla|typedef struct <#path#s> {<#members#+><#>} <#path#s>;<#><#>|pla}
+      let members = Pla.map_sep [%pla {|<#>|}] print_member members in
+      [%pla {|typedef struct <#path#s> {<#members#+><#>} <#path#s>;<#><#>|}]
   | TopType _, _ -> Pla.unit
   | TopDecl (lhs, rhs), Tables ->
       let t = print_type_ lhs.t in
       let lhs = print_dexp lhs in
       let rhs = print_exp rhs in
-      {pla|static const <#t#> <#lhs#> = <#rhs#>;<#>|pla}
+      [%pla {|static const <#t#> <#lhs#> = <#rhs#>;<#>|}]
   | TopDecl _, _ -> Pla.unit
 
 
@@ -325,12 +325,12 @@ let legend = Common.legend
 
 let makeIfdef file =
   let def = CCString.replace ~sub:"." ~by:"_" (String.uppercase_ascii (Filename.basename file)) in
-  {pla|
+  [%pla {|
 #ifndef <#def#s>
 #define <#def#s>
-|pla}, {pla|
+|}], [%pla {|
 #endif // <#def#s>
-|pla}
+|}]
 
 
 let getTemplateCode (name : string option) (prefix : string) impl header (stmts : top_stmt list) =
@@ -362,11 +362,11 @@ let generate output template (stmts : top_stmt list) =
 
   let header =
     let ifdef, endif = makeIfdef header_file in
-    {pla|<#legend#><#ifdef#><#>#include "vultin.h"<#>#include "<#tables_file_base#s>"<#><#><#header#><#endif#>|pla}
+    [%pla {|<#legend#><#ifdef#><#>#include "vultin.h"<#>#include "<#tables_file_base#s>"<#><#><#header#><#endif#>|}]
   in
-  let impl = {pla|<#legend#><#><#>#include "<#header_file_base#s>"<#><#><#impl#>|pla} in
+  let impl = [%pla {|<#legend#><#><#>#include "<#header_file_base#s>"<#><#><#impl#>|}] in
   let tables =
     let ifdef, endif = makeIfdef tables_file in
-    {pla|<#legend#><#ifdef#><#tables#><#endif#>|pla}
+    [%pla {|<#legend#><#ifdef#><#tables#><#endif#>|}]
   in
   [ header, header_file; impl, impl_file; tables, tables_file ]

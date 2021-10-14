@@ -23,17 +23,17 @@ let rec print_value r : Pla.t =
   | Real n -> Pla.float n
   | Bool v -> Pla.string (if v then "true" else "false")
   | String s -> Pla.string_quoted s
-  | Ref n -> {pla|ref(<#n#i>)|pla}
+  | Ref n -> [%pla {|ref(<#n#i>)|}]
   | Object elems ->
       let elems =
         List.mapi
           (fun i e ->
             let e = print_value e in
-            {pla|'<#i#i>': <#e#>|pla})
+            [%pla {|'<#i#i>': <#e#>|}])
           (Array.to_list elems)
       in
       let elems = Pla.join_sep Pla.commaspace elems in
-      {pla|{ <#elems#> }|pla}
+      [%pla {|{ <#elems#> }|}]
 
 
 module type VM = sig

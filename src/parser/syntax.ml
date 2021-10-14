@@ -164,4 +164,4 @@ let compare_path (p1 : path) (p2 : path) =
 let print_path (p : path) =
   match p with
   | { id; n = None; _ } -> Pla.string id
-  | { id; n = Some m; _ } -> {pla|<#m#s>.<#id#s>|pla}
+  | { id; n = Some m; _ } -> [%pla {|<#m#s>.<#id#s>|}]
