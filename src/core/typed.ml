@@ -150,7 +150,7 @@ and function_def =
   }
 
 type top_stmt_d =
-  | TopExternal of function_def * string
+  | TopExternal of function_def * string option
   | TopFunction of function_def * stmt
   | TopType     of
       { path : path
@@ -296,6 +296,7 @@ let print_body_linkname body_linkname =
   match body_linkname with
   | `Body stmt -> print_stmt stmt
   | `LinkName name -> {pla| "<#name#s>"|pla}
+  | `NoLinkName -> Pla.unit
 
 
 let rec print_function_def kind (def : function_def) body_linkname =
@@ -324,7 +325,8 @@ let print_enum_member (name, _) = {pla|<#name#s>|pla}
 let print_top_stmt t =
   match t.top with
   | TopFunction (def, body) -> print_function_def "fun" def (`Body body)
-  | TopExternal (def, linkname) -> print_function_def "external" def (`LinkName linkname)
+  | TopExternal (def, Some linkname) -> print_function_def "external" def (`LinkName linkname)
+  | TopExternal (def, None) -> print_function_def "external" def `NoLinkName
   | TopType { path = p; members } ->
       let p = print_path p in
       let members = Pla.map_sep_all Pla.newline print_record_member members in

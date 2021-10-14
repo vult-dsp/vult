@@ -27,7 +27,7 @@ open Util
 type tag = Ptags.tag
 
 type type_d_ =
-  | TVoid
+  | TVoid   of type_ list option (* used to keep the original return type *)
   | TInt
   | TReal
   | TString
@@ -160,7 +160,7 @@ and function_def =
   }
 
 type top_stmt_d =
-  | TopExternal of function_def * string
+  | TopExternal of function_def * string option
   | TopFunction of function_def * stmt
   | TopType     of struct_descr
 
@@ -186,7 +186,7 @@ module Initializers = struct
 
   let getInitRHS (t : type_) =
     match t with
-    | { t = TVoid; loc } -> { e = EUnit; t; loc }
+    | { t = TVoid _; loc } -> { e = EUnit; t; loc }
     | { t = TInt; loc } -> { e = EInt 0; t; loc }
     | { t = TReal; loc } -> { e = EReal 0.0; t; loc }
     | { t = TFixed; loc } -> { e = EReal 0.0; t; loc }
@@ -202,7 +202,7 @@ module Initializers = struct
 
   let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
     match t with
-    | { t = TVoid; loc } ->
+    | { t = TVoid _; loc } ->
         let rhs = getInitRHS t in
         { s = StmtBind (lhs, rhs); loc }
     | { t = TInt; loc } ->
@@ -223,7 +223,7 @@ module Initializers = struct
     | { t = TTuple _; _ } -> failwith "tuples"
     | { t = TStruct { path; _ }; loc } when cstyle = RefObject ->
         let rhs = { e = ECall { path = path ^ "_init"; args = [ rhs ] }; t; loc } in
-        { s = StmtBind ({ l = LWild; loc; t = { t = TVoid; loc = Loc.default } }, rhs); loc }
+        { s = StmtBind ({ l = LWild; loc; t = { t = TVoid None; loc = Loc.default } }, rhs); loc }
     | { t = TStruct { path; _ }; loc } ->
         let rhs = { e = ECall { path = path ^ "_init"; args = [] }; t; loc } in
         { s = StmtBind (lhs, rhs); loc }
@@ -276,7 +276,7 @@ module Initializers = struct
     | { top = TopType struct_t; loc } when cstyle = RefObject ->
         let name = struct_t.path ^ "_init" in
         let this_type = { t = TStruct struct_t; loc = Loc.default } in
-        let void_type = { t = TVoid; loc = Loc.default } in
+        let void_type = { t = TVoid None; loc = Loc.default } in
         let lctx = { l = LId "_ctx"; t = this_type; loc } in
         let ectx = { e = EId "_ctx"; t = this_type; loc } in
         let stmts =
@@ -314,7 +314,7 @@ end
 module Print = struct
   let rec print_type_ (t : type_) : Pla.t =
     match t.t with
-    | TVoid -> Pla.string "void"
+    | TVoid _ -> Pla.string "void"
     | TInt -> Pla.string "int"
     | TReal -> Pla.string "real"
     | TString -> Pla.string "string"
@@ -484,9 +484,12 @@ module Print = struct
         let def = print_function_def "fun" def in
         let body = print_body body in
         {pla|<#def#> <#body#><#>|pla}
-    | TopExternal (def, link) ->
+    | TopExternal (def, Some link) ->
         let def = print_function_def "external" def in
         {pla|<#def#> "<#link#s>"<#>|pla}
+    | TopExternal (def, None) ->
+        let def = print_function_def "external" def in
+        {pla|<#def#><#>|pla}
     | TopType { path = p; members } ->
         let members = Pla.map_sep_all Pla.newline print_member members in
         {pla|struct <#p#s> {<#members#+>}<#>|pla}
@@ -540,10 +543,10 @@ module TypedToProg = struct
   let rec type_ (env : Env.in_top) (state : state) (t : Typed.type_) =
     let loc = t.loc in
     match t.tx with
-    | T.TENoReturn -> state, { t = TVoid; loc }
+    | T.TENoReturn -> state, { t = TVoid None; loc }
     | T.TEUnbound _ -> Error.raiseError "The type could not be infered. Please add type annotation." t.loc
     | T.TEOption _ -> Error.raiseError "undecided type" t.loc
-    | T.TEId { id = "unit"; n = None; _ } -> state, { t = TVoid; loc }
+    | T.TEId { id = "unit"; n = None; _ } -> state, { t = TVoid None; loc }
     | T.TEId { id = "int"; n = None; _ } -> state, { t = TInt; loc }
     | T.TEId { id = "real"; n = None; _ } -> state, { t = TReal; loc }
     | T.TEId { id = "fix16"; n = None; _ } -> state, { t = TFixed; loc }
@@ -764,7 +767,7 @@ module TypedToProg = struct
     | Some (def, body) -> function_def env state def body
 
 
-  let ext_function_def (env : Env.in_top) (state : state) (def : Typed.function_def) linkname =
+  let ext_function_def (env : Env.in_top) (state : state) (def : Typed.function_def) (linkname : string option) =
     let name = path def.name in
     let state, args = list arg env state def.args in
     let state, t = function_type env state def.t in

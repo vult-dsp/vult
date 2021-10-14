@@ -32,7 +32,10 @@ module MakeVM (VM : VM) = struct
     match e1, e2 with
     | Int n1, Int n2 -> Int (i n1 n2)
     | Real n1, Real n2 -> Real (f n1 n2)
-    | _ -> failwith "numeric: argument mismatch"
+    | _ ->
+        let se1 = Pla.print (print_value e1) in
+        let se2 = Pla.print (print_value e2) in
+        failwith ("numeric: argument mismatch: " ^ se1 ^ " op " ^ se2)
 
 
   let relation i f e1 e2 : rvalue =
@@ -195,6 +198,24 @@ module MakeVM (VM : VM) = struct
         | External -> failwith "" )
     | B f ->
         ( match f, args with
+        | Pi, [] -> vm, Real Float.pi
+        | Pi, _ -> failwith "invalid arguments to 'pi' function"
+        | Eps, [] -> vm, Real 1e-18
+        | Eps, _ -> failwith "invalid arguments to 'eps' function"
+        | Random, [] -> vm, Real (Random.float 1.0)
+        | Random, _ -> failwith "invalid arguments to 'random' function"
+        | Real, [ Int n ] -> vm, Real (float_of_int n)
+        | Real, [ Real n ] -> vm, Real n
+        | Real, [ Bool n ] -> vm, Real (if n then 1.0 else 0.0)
+        | Real, _ -> failwith "invalid arguments to 'real' function"
+        | Fixed, [ Int n ] -> vm, Real (float_of_int n)
+        | Fixed, [ Real n ] -> vm, Real n
+        | Fixed, [ Bool n ] -> vm, Real (if n then 1.0 else 0.0)
+        | Fixed, _ -> failwith "invalid arguments to 'fixed' function"
+        | Int, [ Int n ] -> vm, Int n
+        | Int, [ Real n ] -> vm, Int (int_of_float n)
+        | Int, [ Bool n ] -> vm, Int (if n then 1 else 0)
+        | Int, _ -> failwith "invalid arguments to 'int' function"
         | Exp, [ Real x ] -> vm, Real (exp x)
         | Exp, _ -> failwith "invalid arguments to 'exp' function"
         | Sin, [ Real x ] -> vm, Real (sin x)
@@ -230,7 +251,8 @@ module MakeVM (VM : VM) = struct
         | Set, [ Object x; Int n; v ] ->
             x.(n) <- v ;
             vm, Void
-        | Set, _ -> failwith "invalid arguments to 'set' function" )
+        | Set, _ -> failwith "invalid arguments to 'set' function"
+        | Samplerate, _ -> failwith "samplerate() not implemented in the interpreter" )
 
 
   and eval_instr (vm : VM.t) (instr : Compile.instr list) : VM.t =
@@ -314,7 +336,7 @@ let rec valueOfDescr (d : struct_descr) : rvalue =
 
 and valueOfType (t : type_) : rvalue =
   match t.t with
-  | TVoid -> Void
+  | TVoid _ -> Void
   | TInt -> Int 0
   | TReal -> Real 0.0
   | TFixed -> Real 0.0
@@ -344,8 +366,13 @@ let createVm prog =
 
 let callFunction vm name args =
   let findex = VMV.findSegment vm name in
-  let _, result = VMV.eval_call vm findex args in
-  result
+  try
+    let _, result = VMV.eval_call vm findex args in
+    result
+  with
+  | e ->
+      print_endline ("Failed to evaluate function:" ^ name) ;
+      raise e
 
 
 let run (iargs : Util.Args.args) (env : Env.in_top) (prog : top_stmt list) (exp : string) =

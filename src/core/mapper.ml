@@ -192,7 +192,10 @@ let rec type_ (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (t 
   let sub_env = enter mapper.type__env env t in
   let loc = t.loc in
   match t with
-  | { t = TVoid; _ } -> apply mapper.type_ env state { t = TVoid; loc }
+  | { t = TVoid None; _ } -> apply mapper.type_ env state { t = TVoid None; loc }
+  | { t = TVoid (Some elems); _ } ->
+      let state, elems = (list type_) mapper sub_env state elems in
+      apply mapper.type_ env state { t = TVoid (Some elems); loc }
   | { t = TInt; _ } -> apply mapper.type_ env state { t = TInt; loc }
   | { t = TReal; _ } -> apply mapper.type_ env state { t = TReal; loc }
   | { t = TString; _ } -> apply mapper.type_ env state { t = TString; loc }

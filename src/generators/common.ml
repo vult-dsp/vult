@@ -7,3 +7,13 @@ let setExt ext output =
   match output with
   | None -> "output" ^ ext
   | Some file -> file ^ ext
+
+
+let splitArray into elems =
+  let rec loop current acc count elems =
+    match elems with
+    | [] -> List.rev (List.rev current :: acc)
+    | h :: t when count < into -> loop (h :: current) acc (count + 1) t
+    | h :: t -> loop [ h ] (List.rev current :: acc) 0 t
+  in
+  loop [] [] 0 elems

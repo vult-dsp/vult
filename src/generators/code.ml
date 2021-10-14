@@ -27,7 +27,7 @@ open Util.Maps
 type tag = Prog.tag
 
 type type_ =
-  | Void
+  | Void   of type_ list option
   | Int
   | Real
   | String
@@ -140,7 +140,7 @@ and function_def =
   }
 
 type top_stmt =
-  | TopExternal of function_def * string
+  | TopExternal of function_def * string option
   | TopFunction of function_def * stmt
   | TopType     of struct_descr
   | TopDecl     of dexp * exp
@@ -157,7 +157,10 @@ let default_env = { decl = Map.empty; dummy = 0 }
 module Convert = struct
   let rec type_ (t : Prog.type_) =
     match t with
-    | { t = TVoid; _ } -> Void
+    | { t = TVoid None; _ } -> Void None
+    | { t = TVoid (Some elems); _ } ->
+        let elems = List.map type_ elems in
+        Void (Some elems)
     | { t = TInt; _ } -> Int
     | { t = TReal; _ } -> Real
     | { t = TString; _ } -> String
@@ -205,7 +208,13 @@ module Convert = struct
     | UOpNot -> Not
 
 
-  let rec exp_d (e : Prog.exp_d) : exp_d =
+  let getCallName context name =
+    match Map.find_opt name context with
+    | Some name -> name
+    | _ -> name
+
+
+  let rec exp_d context (e : Prog.exp_d) : exp_d =
     match e with
     | EUnit -> Unit
     | EBool v -> Bool v
@@ -214,60 +223,60 @@ module Convert = struct
     | EString s -> String s
     | EId id -> Id id
     | EIndex { e; index } ->
-        let e = exp e in
-        let index = exp index in
+        let e = exp context e in
+        let index = exp context index in
         Index { e; index }
     | EArray elems ->
-        let elems = List.map exp elems in
+        let elems = List.map (exp context) elems in
         Array elems
     | ECall { path; args } ->
-        let args = List.map exp args in
-        Call { path; args }
+        let args = List.map (exp context) args in
+        Call { path = getCallName context path; args }
     | EUnOp (op, e) ->
         let op = uoperator op in
-        let e = exp e in
+        let e = exp context e in
         UnOp (op, e)
     | EOp (op, e1, e2) ->
         let op = operator op in
-        let e1 = exp e1 in
-        let e2 = exp e2 in
+        let e1 = exp context e1 in
+        let e2 = exp context e2 in
         Op (op, e1, e2)
     | EIf { cond; then_; else_ } ->
-        let cond = exp cond in
-        let then_ = exp then_ in
-        let else_ = exp else_ in
+        let cond = exp context cond in
+        let then_ = exp context then_ in
+        let else_ = exp context else_ in
         If { cond; then_; else_ }
     | ETuple elems ->
-        let elems = List.map exp elems in
+        let elems = List.map (exp context) elems in
         Tuple elems
     | EMember (e, n) ->
-        let e = exp e in
+        let e = exp context e in
         Member (e, n)
 
 
-  and exp (e : Prog.exp) : exp =
+  and exp context (e : Prog.exp) : exp =
     let t = type_ e.t in
-    let e = exp_d e.e in
+    let e = exp_d context e.e in
     { e; t }
 
 
-  let rec lexp_d (l : Prog.lexp_d) : lexp_d =
+  let rec lexp_d context (l : Prog.lexp_d) : lexp_d =
     match l with
     | LWild -> LWild
     | LId id -> LId id
     | LMember (le, n) ->
-        let le = lexp le in
+        let le = lexp context le in
         LMember (le, n)
     | LIndex { e; index } ->
-        let e = lexp e in
-        let index = exp index in
+        let e = lexp context e in
+        let index = exp context index in
         LIndex (e, index)
     | LTuple _ -> failwith "lhs tuple"
 
 
-  and lexp (l : Prog.lexp) : lexp =
+  and lexp context (l : Prog.lexp) : lexp =
     let t = type_ l.t in
-    let l = lexp_d l.l in
+    let l = lexp_d context l.l in
     { l; t }
 
 
@@ -299,7 +308,7 @@ module Convert = struct
 
   let getInitRHS (t : type_) =
     match t with
-    | Void -> Some { e = Unit; t }
+    | Void _ -> Some { e = Unit; t }
     | Int -> Some { e = Int 0; t }
     | Real -> Some { e = Real 0.0; t }
     | Fixed -> Some { e = Real 0.0; t }
@@ -334,7 +343,7 @@ module Convert = struct
     | _ -> StmtBlock stmts
 
 
-  let rec stmt (env : env) (s : Prog.stmt) =
+  let rec stmt context (env : env) (s : Prog.stmt) =
     match s with
     | { s = StmtDecl { d = DId (n, dim); t; _ }; _ } ->
         let t = type_ t in
@@ -342,39 +351,39 @@ module Convert = struct
         { env with decl }, []
     | { s = StmtDecl _; _ } -> failwith "there should not be tuples or wild"
     | { s = StmtBind ({ l = LWild; _ }, rhs); _ } ->
-        let rhs = exp rhs in
-        env, [ StmtBind ({ l = LWild; t = Void }, rhs) ]
+        let rhs = exp context rhs in
+        env, [ StmtBind ({ l = LWild; t = Void None }, rhs) ]
     | { s = StmtBind (lhs, rhs); _ } ->
-        let lhs = lexp lhs in
-        let rhs = exp rhs in
+        let lhs = lexp context lhs in
+        let rhs = exp context rhs in
         ( match getLDecl env lhs with
         | env, Nothing -> env, [ StmtBind (lhs, rhs) ]
         | env, Initialize (n, dim, t) -> env, [ StmtDecl ({ d = DId (n, dim); t }, Some rhs) ]
         | env, Declare (n, dim, t) -> env, [ StmtDecl ({ d = DId (n, dim); t }, getInitRHS t); StmtBind (lhs, rhs) ] )
     | { s = StmtReturn e; _ } ->
-        let e = exp e in
+        let e = exp context e in
         env, [ StmtReturn e ]
     | { s = StmtIf (cond, then_, Some else_); _ } ->
         let env, stmts = getPendingDeclarations env in
-        let cond = exp cond in
-        let env, then_ = stmt env then_ in
-        let env, else_ = stmt env else_ in
+        let cond = exp context cond in
+        let env, then_ = stmt context env then_ in
+        let env, else_ = stmt context env else_ in
         env, stmts @ [ StmtIf (cond, makeBlock then_, Some (makeBlock else_)) ]
     | { s = StmtIf (cond, then_, None); _ } ->
         let env, stmts = getPendingDeclarations env in
-        let cond = exp cond in
-        let env, then_ = stmt env then_ in
+        let cond = exp context cond in
+        let env, then_ = stmt context env then_ in
         env, stmts @ [ StmtIf (cond, makeBlock then_, None) ]
     | { s = StmtWhile (cond, body); _ } ->
         let env, stmts = getPendingDeclarations env in
-        let cond = exp cond in
-        let env, body = stmt env body in
+        let cond = exp context cond in
+        let env, body = stmt context env body in
         env, stmts @ [ StmtWhile (cond, makeBlock body) ]
     | { s = StmtBlock body; _ } ->
         let env, stmts =
           List.fold_left
             (fun (env, acc) s ->
-              let env, stmts = stmt env s in
+              let env, stmts = stmt context env s in
               env, stmts :: acc)
             (env, [])
             body
@@ -395,10 +404,10 @@ module Convert = struct
     { name; args; t = args_t, ret_t; tags = def.tags; loc = def.loc; info = function_info def.info }
 
 
-  let top_stmt (top : Prog.top_stmt) : top_stmt =
+  let top_stmt context (top : Prog.top_stmt) : top_stmt =
     match top with
     | { top = TopFunction (def, body); _ } ->
-        let _, body = stmt default_env body in
+        let _, body = stmt context default_env body in
         let def = function_def def in
         TopFunction (def, makeBlock body)
     | { top = TopType descr; _ } ->
@@ -409,5 +418,17 @@ module Convert = struct
         TopExternal (def, name)
 
 
-  let prog stmts = List.map top_stmt stmts
+  let registerExternalNames (stmts : Prog.top_stmt list) =
+    List.fold_left
+      (fun acc s ->
+        match s with
+        | Prog.{ top = TopExternal (def, Some name); _ } -> Map.add def.name name acc
+        | _ -> acc)
+      Map.empty
+      stmts
+
+
+  let prog stmts =
+    let context = registerExternalNames stmts in
+    List.map (top_stmt context) stmts
 end

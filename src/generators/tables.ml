@@ -111,11 +111,9 @@ let castInputVarPrecision (in_precision : type_) (out_precision : type_) (input 
   match in_precision, out_precision with
   | Real, Real -> input
   | Fixed, Fixed -> input
-  | _ ->
-      (*| Real, Fixed -> PCall (NoInst, [ "Fixed" ], [ input ], Tables.attr_real out_precision)
-           | Fixed, Real -> PCall (NoInst, [ "real" ], [ input ], Tables.attr_real out_precision)
-      *)
-      failwith "castInputVarPrecision: invalid input"
+  | Real, Fixed -> { e = Call { path = "float_to_fix"; args = [ input ] }; t = Fixed }
+  | Fixed, Real -> { e = Call { path = "fix_to_float"; args = [ input ] }; t = Real }
+  | _ -> failwith "castInputVarPrecision: invalid input"
 
 
 let getWrapArrayName (t : type_) =
@@ -206,10 +204,10 @@ let makeTable vm (def : function_def) =
           let c2 = generateRawAccessFunction def.name 2 out_precision def.loc in
           result @ [ c0; c1; c2 ] @ [ TopFunction (def, new_body) ] )
   | _ ->
-      let _msg =
+      let msg =
         "The attribute 'table' requires specific parameters. e.g. 'table(size=128,min=0.0,max=1.0,[order=2])'"
       in
-      failwith ""
+      Util.Error.raiseError msg def.loc
 
 
 let readFile (loc : Loc.t) (includes : string list) (file : string) : WaveFile.wave =
@@ -294,13 +292,66 @@ let makeWave (args : Args.args) _vm (def : function_def) =
       result @ [ size_fun; TopFunction (def, body) ]
   | _ ->
       let msg = "The attribute 'wave' requires specific parameters. e.g. 'wave(channels=1, file=\"file.wav\")'" in
-      failwith msg
+      Util.Error.raiseError msg def.loc
+
+
+let wrapGet data index =
+  if index >= Array.length data then
+    data.(index - Array.length data)
+  else if index < 0 then
+    data.(Array.length data - index)
+  else
+    data.(index)
+
+
+let rec fitWavetableData data index acc0 acc1 acc2 =
+  if index < 0 then
+    acc0, acc1, acc2
+  else
+    let p1 = wrapGet data index in
+    let p2 = wrapGet data (index + 1) in
+    let p3 = wrapGet data (index + 2) in
+    let x = [ fst p1; fst p2; fst p3 ] in
+    let y = [ snd p1; snd p2; snd p3 ] in
+    let c0, c1, c2 = Fitting.lagrange x y |> getCoefficients2 in
+    fitWavetableData data (index - 1) (c0 :: acc0) (c1 :: acc1) (c2 :: acc2)
+
+
+let makeWavetableOrder2 name size precision data =
+  let acc0, acc1, acc2 = fitWavetableData data size [] [] [] in
+  [ makeDecl name "c0" precision acc0; makeDecl name "c1" precision acc1; makeDecl name "c2" precision acc2 ]
+
+
+let makeWavetable (args : Args.args) _vm (def : function_def) =
+  let params = Tags.[ "file", TypeString; "bound_check", TypeBool ] in
+  match Tags.getParameterList def.tags "wavetable" params with
+  | [ Some (String file); bound_check ] ->
+      let bound_check = getBoundCheckValue bound_check in
+      let out_precision = snd def.t in
+      let var = checkInputVariables def.loc def.args in
+      let in_precision = var.t in
+      let wave = readFile def.loc args.includes file in
+      let () = checkNumberOfChannels def.loc 1 wave in
+      let data = wave.data.(0) in
+      let size_n = Array.length data in
+      let size = float_of_int size_n in
+      let data = Array.mapi (fun x y -> float_of_int x /. (size -. 1.0), y) data in
+      let result = makeWavetableOrder2 def.name size_n out_precision data in
+      let new_body = makeNewBody2 bound_check def.name size_n in_precision out_precision 0.0 1.0 var in
+      let c0 = generateRawAccessFunction def.name 0 out_precision def.loc in
+      let c1 = generateRawAccessFunction def.name 1 out_precision def.loc in
+      let c2 = generateRawAccessFunction def.name 2 out_precision def.loc in
+      result @ [ c0; c1; c2 ] @ [ TopFunction (def, new_body) ]
+  | _ ->
+      let msg = "This attribute can only be applied to functions returning 'real'" in
+      Util.Error.raiseError msg def.loc
 
 
 let replaceFunction (args : Args.args) vm stmt =
   match stmt with
   | TopFunction (def, _) when Tags.has def.tags "table" -> makeTable vm def
   | TopExternal (def, _) when Tags.has def.tags "wave" -> makeWave args vm def
+  | TopExternal (def, _) when Tags.has def.tags "wavetable" -> makeWavetable args vm def
   | _ -> [ stmt ]
 
 

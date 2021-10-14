@@ -20,6 +20,13 @@ type builtin =
   | Floor
   | Clip
   | Pow
+  | Pi
+  | Samplerate
+  | Real
+  | Fixed
+  | Int
+  | Eps
+  | Random
 
 type f =
   | F of int
@@ -49,6 +56,13 @@ let functions =
   ; "floor", B Floor
   ; "clip", B Clip
   ; "pow", B Pow
+  ; "real", B Real
+  ; "pi", B Pi
+  ; "samplerate", B Samplerate
+  ; "int", B Int
+  ; "random", B Random
+  ; "eps", B Eps
+  ; "fix16", B Fixed
   ]
   |> Map.of_list
 
@@ -307,7 +321,7 @@ let rec compile_stmt (env : env) (stmt : stmt) =
 
 let getNOutputs (t : type_) =
   match t.t with
-  | TVoid
+  | TVoid _
    |TInt
    |TReal
    |TString
@@ -379,6 +393,13 @@ let builtin b =
   | Floor -> "floor"
   | Clip -> "clip"
   | Pow -> "pow"
+  | Samplerate -> "samplerate"
+  | Pi -> "pi"
+  | Real -> "real"
+  | Fixed -> "fix16"
+  | Int -> "int"
+  | Random -> "random"
+  | Eps -> "eps"
 
 
 let f f =

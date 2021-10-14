@@ -61,7 +61,7 @@ let isSmall stmts =
 
 let rec print_type_ (t : type_) =
   match t with
-  | Void -> Pla.string "void"
+  | Void _ -> Pla.string "void"
   | Int -> Pla.string "int32_t"
   | Real -> Pla.string "float"
   | Bool -> Pla.string "uint8_t"

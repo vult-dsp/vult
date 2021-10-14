@@ -9,7 +9,8 @@ let getFunctionInfo (f : Code.function_def) =
   let outputs =
     match f.t with
     | _, Tuple elems -> elems
-    | _, Void -> []
+    | _, Void (Some elems) -> elems
+    | _, Void None -> []
     | _, t -> [ t ]
   in
   let has_ctx, inputs =
@@ -91,7 +92,7 @@ let tildePerformFunctionCall (f : function_info) =
         let copy =
           List.mapi
             (fun i o ->
-              let value = castOutput o [%pla {|<#fname#s>_ret_<#i#i>(x->data)|}] in
+              let value = castOutput o [%pla {|x->data.<#fname#s>_ret_<#i#i>|}] in
               [%pla {|*(out_<#i#i>++) = <#value#>; |}])
             o
           |> Pla.join_sep_all Pla.newline
@@ -226,9 +227,13 @@ let lib_impl lib_name (functions : function_info list) =
         [%pla {|<#fname#s>_tilde_setup();|}])
       functions
   in
-  [%pla {|void <#lib_name#s>_setup() {
+  [%pla {|float samplerate() {
+  return sys_getsr();
+}
+
+void <#lib_name#s>_setup() {
 <#calls#+>
-   }|}]
+}|}]
 
 
 let lib_header lib_name : Pla.t =
@@ -237,6 +242,8 @@ let lib_header lib_name : Pla.t =
  #include <stdint.h>
  #include <math.h>
  #include <m_pd.h>
+
+ float samplerate();
 
  #if defined(_MSC_VER)
      //  Microsoft VC++
@@ -257,12 +264,12 @@ let getStmtInfo (s : Code.top_stmt) =
   match s with
   | TopFunction (def, _) ->
       ( match getFunctionInfo def with
-      | Some f -> Some f
-      | None -> None )
+      | Some f when def.info.is_root -> Some f
+      | _ -> None )
   | _ -> None
 
 
-let generate prefix (stmts : Code.top_stmt list) =
+let generate prefix code_impl code_head (stmts : Code.top_stmt list) =
   let functions = List.filter_map getStmtInfo stmts in
   let impl = List.map func_imp functions in
   let headers = List.map func_header functions in
@@ -270,4 +277,4 @@ let generate prefix (stmts : Code.top_stmt list) =
   let f_header = Pla.join_sep_all Pla.newline headers in
   let header = lib_header prefix in
   let lib = lib_impl prefix functions in
-  Pla.(append f_impl lib, append f_header header)
+  Pla.(join [ f_impl; code_impl; lib ], join [ header; f_header; code_head ])

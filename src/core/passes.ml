@@ -78,22 +78,6 @@ let getTick (env : env) (state : state) =
       n
 
 
-module SimpleReplacements = struct
-  let exp =
-    Mapper.make
-    @@ fun env state (e : exp) ->
-    match e with
-    | { e = ECall { path; args }; t; _ } ->
-        let args_t = List.map (fun (e : exp) -> e.t) args in
-        ( match (Replacements.getFunToFun env.args.code) path args_t t with
-        | None -> state, e
-        | Some path -> state, { e with e = ECall { path; args } } )
-    | _ -> state, e
-
-
-  let mapper = { Mapper.identity with exp }
-end
-
 module CollectDependencies = struct
   let initializeDeps map name =
     let set =
@@ -339,7 +323,7 @@ module Tuples = struct
               { s = StmtBind (l, r); loc })
             elems
         in
-        let s = { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid; loc = rloc } }); loc } in
+        let s = { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid None; loc = rloc } }); loc } in
         reapply state, s :: bindings
     | { s = StmtReturn { e = ETuple elems; loc = eloc; _ }; loc } ->
         let name, ctx_name, ctx_t = currentFunction env in
@@ -351,7 +335,7 @@ module Tuples = struct
               { s = StmtBind (l, r); loc })
             elems
         in
-        let s = { s = StmtReturn { e = EUnit; t = { t = TVoid; loc }; loc = eloc }; loc } in
+        let s = { s = StmtReturn { e = EUnit; t = { t = TVoid None; loc }; loc = eloc }; loc } in
         reapply state, bindings @ [ s ]
     | _ -> state, [ s ]
 
@@ -360,8 +344,8 @@ module Tuples = struct
     Mapper.makeExpander
     @@ fun _env state (top : top_stmt) ->
     match top with
-    | { top = TopFunction (({ t = args_t, { t = TTuple _; loc = tloc }; _ } as def), body); loc } ->
-        let def = { def with t = args_t, { t = TVoid; loc = tloc } } in
+    | { top = TopFunction (({ t = args_t, { t = TTuple elems; loc = tloc }; _ } as def), body); loc } ->
+        let def = { def with t = args_t, { t = TVoid (Some elems); loc = tloc } } in
         state, [ { top = TopFunction (def, body); loc } ]
     | _ -> state, [ top ]
 
@@ -469,7 +453,6 @@ let passes =
   |> Mapper.seq Tuples.mapper
   |> Mapper.seq Simplify.mapper
   |> Mapper.seq PrependStmts.mapper
-  |> Mapper.seq SimpleReplacements.mapper
 
 
 let apply env state prog =

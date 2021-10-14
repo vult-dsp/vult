@@ -485,7 +485,7 @@ and stmt_list env return l =
 
 
 let addGeneratedFunctions tags name next =
-  if Ptags.has tags "wave" || Ptags.has tags "wavetable" then
+  if Ptags.has tags "wave" then
     let code = Pla.print {pla|fun <#name#s>_samples() : int|pla} in
     let def = Parse.parseFunctionSpec code in
     Some ({ def with next }, Syntax.{ s = SStmtBlock []; loc = Loc.default })
@@ -545,16 +545,15 @@ and function_def_opt (iargs : Args.args) (env : Env.in_context) def_opt =
       env, Some def_body
 
 
-let ext_function (iargs : Args.args) (env : Env.in_context) ((def : Syntax.function_def), (link_name : string option)) :
-    Env.in_context * (function_def * string) =
+let ext_function (iargs : Args.args) (env : Env.in_context) (def : Syntax.function_def) : Env.in_context * function_def
+    =
   let ret = getOptType env def.loc def.t in
   let args = convertArguments env def.args in
   let env, path, t = Env.enterFunction env def.name args ret def.loc in
   let env = Env.exitFunction env in
-  let link_name = CCOpt.get_or ~default:def.name link_name in
   let next = addGeneratedFunctions def.tags def.name def.next in
   let env, next = function_def_opt iargs env next in
-  env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next; is_root = false }, link_name)
+  env, { name = path; args; t; loc = def.loc; tags = def.tags; next; is_root = false }
 
 
 let getContextArgument (context : Env.context) loc : arg option =
@@ -594,7 +593,7 @@ let rec top_stmt (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt)
       env, { top = TopFunction (def, body); loc = def.loc }
   | { top = STopExternal (def, link_name); _ } ->
       let env = Env.createContextForExternal env in
-      let env, (def, link_name) = ext_function iargs env (def, link_name) in
+      let env, def = ext_function iargs env def in
       let env = Env.exitContext env in
       env, { top = TopExternal (def, link_name); loc = def.loc }
   | { top = STopType { name; members }; loc } ->

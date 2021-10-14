@@ -61,7 +61,7 @@ let isSmall stmts =
 
 let rec print_type_ (t : type_) =
   match t with
-  | Void -> Pla.string "void"
+  | Void _ -> Pla.string "void"
   | Int -> Pla.string "int32_t"
   | Real -> Pla.string "float"
   | Bool -> Pla.string "uint8_t"
@@ -78,7 +78,7 @@ let rec print_type_ (t : type_) =
 
 let rec print_type_member (t : type_) =
   match t with
-  | Void -> Pla.string "void"
+  | Void _ -> Pla.string "void"
   | Int -> Pla.string "int32_t"
   | Real -> Pla.string "float"
   | Bool -> Pla.string "uint8_t"
@@ -121,6 +121,13 @@ let uoperator op =
   | Not -> Pla.string "not"
 
 
+let getReplacement name (args : exp list) ret =
+  let args_t = List.map (fun (e : exp) -> e.t) args in
+  match Replacements.C.fun_to_fun name args_t ret with
+  | Some path -> path
+  | None -> name
+
+
 let rec print_exp (e : exp) =
   match e.e with
   | Unit -> Pla.string ""
@@ -133,11 +140,15 @@ let rec print_exp (e : exp) =
       let e = print_exp e in
       let index = print_exp index in
       {pla|<#e#>[<#index#>]|pla}
-  | Array l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
+  | Array l ->
+      let rows = Common.splitArray 100 l in
+      let l = Pla.map_sep {pla|,<#>|pla} (Pla.map_sep Pla.commaspace print_exp) rows in
+      Pla.wrap (Pla.string "{") (Pla.string "}") l
   | Call { path = "not"; args = [ e1 ] } ->
       let e1 = print_exp e1 in
       {pla|!<#e1#>|pla}
   | Call { path; args } ->
+      let path = getReplacement path args e.t in
       let args = Pla.map_sep Pla.commaspace print_exp args in
       {pla|<#path#s>(<#args#>)|pla}
   | UnOp (op, e) ->
@@ -145,10 +156,13 @@ let rec print_exp (e : exp) =
       let op = uoperator op in
       {pla|(<#op#><#e#>)|pla}
   | Op (op, e1, e2) ->
-      let e1 = print_exp e1 in
-      let op = operator op in
-      let e2 = print_exp e2 in
-      {pla|(<#e1#> <#op#> <#e2#>)|pla}
+      let se1 = print_exp e1 in
+      let se2 = print_exp e2 in
+      ( match Replacements.C.op_to_fun op e1.t e2.t e.t with
+      | Some path -> {pla|<#path#s>(<#se1#>,<#se2#>)|pla}
+      | None ->
+          let op = operator op in
+          {pla|(<#se1#> <#op#> <#se2#>)|pla} )
   | If { cond; then_; else_ } ->
       let cond = print_exp cond in
       let then_ = print_exp then_ in
@@ -285,6 +299,13 @@ let print_top_stmt (target : target) t =
         let body = print_block body in
         {pla|<#def#> <#body#><#><#>|pla}
   | TopFunction _, _ -> Pla.unit
+  | TopExternal (def, None), Header ->
+      let def = print_function_def def in
+      {pla|extern <#def#>;<#>|pla}
+  | TopExternal (def, Some link_name), Header ->
+      let args = Pla.map_sep Pla.commaspace print_arg def.args in
+      let ret = print_type_ (snd def.t) in
+      {pla|extern <#ret#> <#link_name#s>(<#args#>);<#>|pla}
   | TopExternal _, _ -> Pla.unit
   | TopType { path; members }, Header ->
       let members = Pla.map_sep {pla|<#>|pla} print_member members in
@@ -312,10 +333,10 @@ let makeIfdef file =
 |pla}
 
 
-let getTemplateCode (name : string option) (prefix : string) (stmts : top_stmt list) =
+let getTemplateCode (name : string option) (prefix : string) impl header (stmts : top_stmt list) =
   match name with
-  | Some "pd" -> T_pd.generate prefix stmts
-  | None -> Pla.unit, Pla.unit
+  | Some "pd" -> T_pd.generate prefix impl header stmts
+  | None -> impl, header
   | Some name -> Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
 
 
@@ -327,10 +348,10 @@ let getLibName output =
 
 let generate output template (stmts : top_stmt list) =
   let header = print_prog Header stmts in
-  let implementation = print_prog Implementation stmts in
+  let impl = print_prog Implementation stmts in
   let tables = print_prog Tables stmts in
 
-  let t_impl, t_header = getTemplateCode template (getLibName output) stmts in
+  let impl, header = getTemplateCode template (getLibName output) impl header stmts in
 
   let header_file = Common.setExt ".h" output in
   let tables_file = Common.setExt ".tables.h" output in
@@ -343,9 +364,9 @@ let generate output template (stmts : top_stmt list) =
     let ifdef, endif = makeIfdef header_file in
     {pla|<#legend#><#ifdef#><#>#include "vultin.h"<#>#include "<#tables_file_base#s>"<#><#><#header#><#endif#>|pla}
   in
-  let implementation = {pla|<#legend#><#><#>#include "<#header_file_base#s>"<#><#><#implementation#>|pla} in
+  let impl = {pla|<#legend#><#><#>#include "<#header_file_base#s>"<#><#><#impl#>|pla} in
   let tables =
     let ifdef, endif = makeIfdef tables_file in
     {pla|<#legend#><#ifdef#><#tables#><#endif#>|pla}
   in
-  Pla.[ append header t_header, header_file; append implementation t_impl, impl_file; tables, tables_file ]
+  [ header, header_file; impl, impl_file; tables, tables_file ]
