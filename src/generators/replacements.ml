@@ -25,5 +25,9 @@ module C = struct
   let op_to_fun (op : operator) (e1 : type_) (e2 : type_) (ret : type_) =
     match op, e1, e2, ret with
     | Mod, Real, Real, Real -> Some "fmodf"
+    | Mul, Fixed, Fixed, Fixed -> Some "fix_mul"
+    | Add, Fixed, Fixed, Fixed -> Some "fix_add"
+    | Sub, Fixed, Fixed, Fixed -> Some "fix_sub"
+    | Div, Fixed, Fixed, Fixed -> Some "fix_div"
     | _ -> None
 end

@@ -96,14 +96,21 @@ let calculateTablesOrder2 vm name size min max precision =
   [ makeDecl name "c0" precision acc0; makeDecl name "c1" precision acc1; makeDecl name "c2" precision acc2 ]
 
 
-let getIndex bound_check size value =
+let getCastIndexFunction in_precision =
+  match in_precision with
+  | Fixed -> "fix_to_int"
+  | Real -> "float_to_int"
+  | _ -> failwith "invalid input precision"
+
+
+let getIndex in_precision bound_check size value =
   let clip_call i =
     if bound_check then
       { e = Call { path = "int_clip"; args = [ i; { e = Int 0; t = Int }; { e = Int (size - 1); t = Int } ] }; t = Int }
     else
       i
   in
-  let int_call i = { e = Call { path = "int"; args = [ i ] }; t = Int } in
+  let int_call i = { e = Call { path = getCastIndexFunction in_precision; args = [ i ] }; t = Int } in
   [ StmtDecl ({ d = DId ("index", None); t = Int }, Some (clip_call (int_call value))) ]
 
 
@@ -123,6 +130,27 @@ let getWrapArrayName (t : type_) =
   | _ -> Util.Error.raiseErrorMsg "Type not supported for array creation"
 
 
+let makeNuber t v =
+  match t with
+  | Fixed -> { e = Int (int_of_float (float_of_int 0x00010000 *. v)); t }
+  | Real -> { e = Real v; t }
+  | _ -> failwith "invalid input precision"
+
+
+let makeSub t e1 e2 =
+  if e2 = 0.0 then
+    e1
+  else
+    { e = Op (Sub, e1, makeNuber t e2); t }
+
+
+let makeMul t e1 e2 =
+  if e2 = 1.0 then
+    e1
+  else
+    { e = Op (Mul, e1, makeNuber t e2); t }
+
+
 let makeNewBody1 bound_check fname size in_precision t min max input =
   let atype = makeArrayType t size in
   let rindex = { e = Id "index"; t = Int } in
@@ -132,9 +160,9 @@ let makeNewBody1 bound_check fname size in_precision t min max input =
     in
     { e = Index { e = arr; index = rindex }; t }
   in
-  let initial_index = { e = Real ((float_of_int size -. 1.0) /. (max -. min)); t = in_precision } in
-  let value = { e = Op (Mul, initial_index, { e = Op (Sub, input, { e = Real min; t }); t }); t } in
-  let index_stmts = getIndex bound_check size value in
+  let initial_index = (float_of_int size -. 1.0) /. (max -. min) in
+  let value = makeMul in_precision (makeSub in_precision input min) initial_index in
+  let index_stmts = getIndex in_precision bound_check size value in
   let input = castInputVarPrecision in_precision t input in
   let return = StmtReturn { e = Op (Add, getCoeff "c0", { e = Op (Mul, input, getCoeff "c1"); t }); t } in
   StmtBlock (index_stmts @ [ return ])
@@ -149,9 +177,9 @@ let makeNewBody2 bound_check fname size in_precision t min max input =
     in
     { e = Index { e = arr; index = rindex }; t }
   in
-  let initial_index = { e = Real ((float_of_int size -. 1.0) /. (max -. min)); t = in_precision } in
-  let value = { e = Op (Mul, initial_index, { e = Op (Sub, input, { e = Real min; t }); t }); t } in
-  let index_stmts = getIndex bound_check size value in
+  let initial_index = (float_of_int size -. 1.0) /. (max -. min) in
+  let value = makeMul in_precision (makeSub in_precision input min) initial_index in
+  let index_stmts = getIndex in_precision bound_check size value in
   let input = castInputVarPrecision in_precision t input in
   let k2 = { e = Op (Mul, getCoeff "c2", input); t } in
   let k1 = { e = Op (Mul, input, { e = Op (Add, getCoeff "c1", k2); t }); t } in

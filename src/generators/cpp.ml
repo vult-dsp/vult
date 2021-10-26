@@ -66,7 +66,7 @@ let rec print_type_ (t : type_) =
   | Real -> Pla.string "float"
   | Bool -> Pla.string "uint8_t"
   | String -> Pla.string "char*"
-  | Fixed -> Pla.string "int32_t"
+  | Fixed -> Pla.string "fix16_t"
   | Tuple l ->
       let l = Pla.map_sep Pla.commaspace print_type_ l in
       [%pla {|(<#l#>)|}]
@@ -83,7 +83,7 @@ let rec print_type_member (t : type_) =
   | Real -> Pla.string "float"
   | Bool -> Pla.string "uint8_t"
   | String -> Pla.string "char*"
-  | Fixed -> Pla.string "int32_t"
+  | Fixed -> Pla.string "fix16_t"
   | Tuple l ->
       let l = Pla.map_sep Pla.commaspace print_type_member l in
       [%pla {|(<#l#>)|}]
