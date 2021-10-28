@@ -115,7 +115,7 @@ let tokenizeLine line =
   List.rev !tokens
 
 
-let rec equalToken t1 t2 =
+let equalToken t1 t2 =
   let open BaseTok in
   match t1, t2 with
   | Float f1, Float f2 ->

@@ -1,0 +1,6 @@
+(ocamllex baseTok)
+
+(executable
+ (name test)
+ (modules Test Tcommon Diff BaseTok)
+ (libraries core util driver pparser ounit str))

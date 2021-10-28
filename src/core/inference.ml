@@ -111,7 +111,7 @@ let unifyRaise (loc : Loc.t) (t1 : type_) (t2 : type_) : unit =
     let msg =
       let t1 = print_type_ t1 in
       let t2 = print_type_ t2 in
-      Pla.print [%pla {|"This expression has type '<#t2#>' but '<#t1#>' was expected"|}]
+      Pla.print [%pla {|This expression has type '<#t2#>' but '<#t1#>' was expected|}]
     in
     if raise then
       Error.raiseError msg loc
@@ -545,13 +545,12 @@ and function_def_opt (iargs : Args.args) (env : Env.in_context) def_opt =
       env, Some def_body
 
 
-let ext_function (iargs : Args.args) (env : Env.in_context) (def : Syntax.function_def) : Env.in_context * function_def
-    =
+let ext_function (iargs : Args.args) (env : Env.in_context) (def : Syntax.ext_def) : Env.in_context * function_def =
   let ret = getOptType env def.loc def.t in
   let args = convertArguments env def.args in
   let env, path, t = Env.enterFunction env def.name args ret def.loc in
   let env = Env.exitFunction env in
-  let next = addGeneratedFunctions def.tags def.name def.next in
+  let next = addGeneratedFunctions def.tags def.name None in
   let env, next = function_def_opt iargs env next in
   env, { name = path; args; t; loc = def.loc; tags = def.tags; next; is_root = false }
 

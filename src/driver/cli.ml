@@ -83,7 +83,7 @@ let generateCode (args : args) (parsed : Parse.parsed_file list) : output list =
 (** Prints the parsed files if -dparse was passed as argument *)
 let dumpParsedFiles (args : args) (parsed : Parse.parsed_file list) : output list =
   if args.dparse then
-    [ ParsedCode "not implemented" ]
+    List.map (fun (r : Parse.parsed_file) -> ParsedCode (Syntax.Print.print r.stmts)) parsed
   else
     []
 

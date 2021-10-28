@@ -38,13 +38,13 @@ jscompiler:
 #	$(OCB) test/perf.native
 #	./perf.native
 
-#test-fast:
-#	$(OCB) test/test.native
-#	./test.native -runner sequential -shards 1 -internal true
+test-fast:
+	dune build test/test.exe $(FORMAT)
+	./_build/default/test/test.exe -runner sequential -shards 1 -internal true
 
-#test-update:
-#	$(OCB) test/test.native
-#	./test.native -runner sequential -update true -shards 1 -internal true
+test-update:
+	dune build test/test.exe $(FORMAT)
+	./_build/default/test/test.exe  -runner sequential -update true -shards 1 -internal true
 
 #coverage: compiler jscompiler
 #	$(OCB) -clean

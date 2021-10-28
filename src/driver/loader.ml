@@ -98,6 +98,14 @@ module Dependencies = struct
         option function_def set next
 
 
+  and ext_def set (def, body) =
+    match def with
+    | { args; t } ->
+        let set = stmt set body in
+        let set = list arg set args in
+        option type_ set t
+
+
   and stmt set s =
     match s.s with
     | SStmtError -> set
@@ -114,7 +122,7 @@ module Dependencies = struct
   and top_stmt set s =
     match s.top with
     | STopError -> set
-    | STopExternal (def, _) -> function_def set (def, { s = SStmtError; loc = s.loc })
+    | STopExternal (def, _) -> ext_def set (def, { s = SStmtError; loc = s.loc })
     | STopFunction (def, body) -> function_def set (def, body)
     | STopType { members } -> list (fun set (_, t, _) -> type_ set t) set members
     | STopEnum _ -> set

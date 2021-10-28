@@ -22,12 +22,14 @@
    THE SOFTWARE.
 *)
 open OUnit2
-open Prog
-open Args
+
+(*open Core.Prog*)
+
+open Util
 open Tcommon
 
 ;;
-Float.reduce_precision := true
+Util.Float.reduce_precision := true
 
 let test_directory = Filename.concat initial_dir "test"
 
@@ -124,6 +126,7 @@ let perf_files =
   ]
 
 
+(*
 let no_context = PassCommon.{ default_options with pass4 = false; pass3 = false; pass2 = false }
 
 let no_eval = PassCommon.{ default_options with pass2 = false }
@@ -139,7 +142,7 @@ let passes_files =
   ; "external_calls.vult", no_eval
   ; "output_references.vult", no_eval
   ]
-
+*)
 
 let all_files =
   [ "web/phasedist.vult"
@@ -263,11 +266,11 @@ let checkFile (filename : string) : string =
     assert_failure (Printf.sprintf "The file '%s' does not exits" filename)
 
 
-let showResults result : string = PrintProg.stmtListStr result.presult
+let showResults (result : Pparser.Parse.parsed_file) : string = Pparser.Syntax.Print.print result.stmts
 
 (** Module to perform parsing tests *)
 module ParserTest = struct
-  let process (fullfile : string) : string = Parser.parseFile fullfile |> fun a -> showResults a
+  let process (fullfile : string) : string = Pparser.Parse.parseFile fullfile |> fun a -> showResults a
 
   let run (file : string) context =
     let folder = "parser" in
@@ -288,13 +291,13 @@ end
 module ErrorTest = struct
   let process (fullfile : string) =
     let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
-    let args = { default_arguments with includes; check = true } in
-    let args = { args with output = basefile; files = [ File fullfile ] } in
-    let results = Driver.main args in
+    let args = Args.{ default_arguments with includes; check = true } in
+    let args = { args with output = Some basefile; files = [ File fullfile ] } in
+    let results = Driver.Cli.driver args in
     List.fold_left
       (fun s a ->
         match a with
-        | Errors e ->
+        | Args.Errors e ->
             List.map
               (fun a ->
                 let msg, _, _, _ = Error.reportErrorStringNoLoc a in
@@ -323,6 +326,7 @@ module ErrorTest = struct
   let get files = "errors" >::: List.map (fun file -> Filename.basename file >:: run file) files
 end
 
+(*
 (** Module to perform transformation tests *)
 module PassesTest = struct
   let process options (fullfile : string) : string =
@@ -613,32 +617,33 @@ module Interpret = struct
 
   let get files = "run" >::: List.map (fun file -> Filename.basename file >:: run file) files
 end
+*)
 
 let suite =
   "vult"
   >::: [ ErrorTest.get errors_files
        ; ParserTest.get parser_files
-       ; PassesTest.get passes_files
-       ; Templates.get template_files "pd" "float"
-       ; Templates.get template_files "pd" "fixed"
-       ; Templates.get template_files "max" "float"
-       ; Templates.get template_files "max" "fixed"
-       ; Templates.get template_files "modelica" "float"
-       ; Templates.get template_files "modelica" "fixed"
-       ; Templates.get template_files "teensy" "fixed"
-       ; Templates.get template_files "webaudio" "js"
-       ; Templates.get template_files "browser" "js"
-       ; CliTest.get all_files Native "float"
-       ; CliTest.get all_files Native "fixed"
-       ; CliTest.get all_files Native "js"
-       ; CliTest.get all_files Native "lua"
-       ; CliTest.get all_files Native "java"
-       ; CliTest.get all_files Node "float"
-       ; CliTest.get all_files Node "fixed"
-       ; CliTest.get all_files Node "js"
-       ; CliTest.get all_files Node "lua"
-       ; RandomCompileTest.get test_random_code "float"
-         (*Interpret.get perf_files;*)
+         (*; PassesTest.get passes_files
+           ; Templates.get template_files "pd" "float"
+           ; Templates.get template_files "pd" "fixed"
+           ; Templates.get template_files "max" "float"
+           ; Templates.get template_files "max" "fixed"
+           ; Templates.get template_files "modelica" "float"
+           ; Templates.get template_files "modelica" "fixed"
+           ; Templates.get template_files "teensy" "fixed"
+           ; Templates.get template_files "webaudio" "js"
+           ; Templates.get template_files "browser" "js"
+           ; CliTest.get all_files Native "float"
+           ; CliTest.get all_files Native "fixed"
+           ; CliTest.get all_files Native "js"
+           ; CliTest.get all_files Native "lua"
+           ; CliTest.get all_files Native "java"
+           ; CliTest.get all_files Node "float"
+           ; CliTest.get all_files Node "fixed"
+           ; CliTest.get all_files Node "js"
+           ; CliTest.get all_files Node "lua"
+           ; RandomCompileTest.get test_random_code "float"
+             (*Interpret.get perf_files;*)*)
        ]
 
 

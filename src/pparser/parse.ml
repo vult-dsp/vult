@@ -710,7 +710,7 @@ and stmtExternal (buffer : Stream.stream) : top_stmt =
         raise (ParserError (Stream.makeError buffer message))
   in
   let _ = Stream.consume buffer SEMI in
-  { top = STopExternal ({ name; args; t = Some type_; tags; next = None; loc }, link_name); loc }
+  { top = STopExternal ({ name; args; t = Some type_; tags; loc }, link_name); loc }
 
 
 and stmtFunctionDecl (buffer : Stream.stream) : function_def * stmt * Loc.t =
