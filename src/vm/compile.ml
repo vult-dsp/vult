@@ -196,7 +196,11 @@ let rec compile_lexp (env : env) (l : lexp) : lvalue =
   match l.l with
   | LWild -> { l = LVoid; loc }
   | LId name ->
-      let index = Map.find name env.locals in
+      let index =
+        match Map.find_opt name env.locals with
+        | Some index -> index
+        | None -> failwith name
+      in
       { l = LRef (index, name); loc }
   | LTuple l ->
       let l = List.map (compile_lexp env) l |> Array.of_list in
@@ -223,7 +227,11 @@ and compile_exp (env : env) e : rvalue =
   | EReal v -> { r = RReal v; loc }
   | EString v -> { r = RString v; loc }
   | EId id ->
-      let index = Map.find id env.locals in
+      let index =
+        match Map.find_opt id env.locals with
+        | Some index -> index
+        | None -> failwith id
+      in
       { r = RRef (index, id); loc }
   | EOp (op, e1, e2) ->
       let e1 = compile_exp env e1 in

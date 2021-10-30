@@ -11,23 +11,23 @@ fun calc_g(cv) @[table(size=128, min=0.0, max=0.9)]{
    val f = 8.175798915643707*exp(0.057762265046662105*pitch);
    val pi = 3.141592653589793;
    val wd = 2.0*pi*f;
-	val T  = 1.0/44100.0;
-	val wa = (2.0/T)*tan(wd*T/2.0);
-	val g  = wa*T/2.0;
+	val t  = 1.0/44100.0;
+	val wa = (2.0/t)*tan(wd*t/2.0);
+	val g  = wa*t/2.0;
    return g;
 }
 
 fun process(x, cv, q, sel) {
     mem z1, z2;
-   mem g,inv_den, R;
+   mem g,inv_den, r;
    q = q + 0.5;
    if(Util.change(cv) || Util.change(q)) {
       g = calc_g(cv);
-      R = 1.0/(2.0*(q+eps()));
-      inv_den = 1.0/(1.0 + 2.0*R*g + g*g);
+      r = 1.0/(2.0*(q+eps()));
+      inv_den = 1.0/(1.0 + 2.0*r*g + g*g);
    }
 
-   val high  = (x - (2.0*R + g)*z1 - z2) * inv_den;
+   val high  = (x - (2.0*r + g)*z1 - z2) * inv_den;
 	val band  = g*high + z1;
 	val low   = g*band + z2;
    val notch = low + high;
@@ -47,6 +47,6 @@ and noteOff(note:int,channel:int){ }
 and controlChange(control:int,value:int,channel:int){ }
 and default() @[init] {
    g = calc_g(0.0);
-   R = 1.0/(2.0*0.5);
+   r = 1.0/(2.0*0.5);
    inv_den = 1.0/(1.0 + 2.0*0.0*g + g*g);
  }

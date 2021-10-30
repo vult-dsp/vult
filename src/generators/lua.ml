@@ -22,7 +22,7 @@
    THE SOFTWARE.
 *)
 
-open Core.Prog
+open Code
 
 let runtime =
   [%pla
@@ -52,86 +52,86 @@ function get(a, i)          return a[i+1] end
 
 let rec isValueOrIf (e : exp) =
   match e.e with
-  | EUnit
-   |EBool _
-   |EInt _
-   |EReal _
-   |EString _
-   |EId _
-   |EMember _ ->
+  | Unit
+   |Bool _
+   |Int _
+   |Real _
+   |String _
+   |Id _
+   |Member _ ->
       true
-  | EUnOp (_, e) -> isValueOrIf e
-  | EIf { then_; else_; _ } -> isValueOrIf then_ && isValueOrIf else_
+  | UnOp (_, e) -> isValueOrIf e
+  | If { then_; else_; _ } -> isValueOrIf then_ && isValueOrIf else_
   | _ -> false
 
 
 let operator op =
   match op with
-  | OpAdd -> Pla.string "+"
-  | OpSub -> Pla.string "-"
-  | OpMul -> Pla.string "*"
-  | OpDiv -> Pla.string "/"
-  | OpMod -> Pla.string "%"
-  | OpLand -> Pla.string "&&"
-  | OpLor -> Pla.string "||"
-  | OpBor -> Pla.string "|"
-  | OpBand -> Pla.string "&"
-  | OpBxor -> Pla.string "^"
-  | OpLsh -> Pla.string "<<"
-  | OpRsh -> Pla.string ">>"
-  | OpEq -> Pla.string "=="
-  | OpNe -> Pla.string "<>"
-  | OpLt -> Pla.string "<"
-  | OpLe -> Pla.string "<="
-  | OpGt -> Pla.string ">"
-  | OpGe -> Pla.string ">="
+  | Add -> Pla.string "+"
+  | Sub -> Pla.string "-"
+  | Mul -> Pla.string "*"
+  | Div -> Pla.string "/"
+  | Mod -> Pla.string "%"
+  | Land -> Pla.string "&&"
+  | Lor -> Pla.string "||"
+  | Bor -> Pla.string "|"
+  | Band -> Pla.string "&"
+  | Bxor -> Pla.string "^"
+  | Lsh -> Pla.string "<<"
+  | Rsh -> Pla.string ">>"
+  | Eq -> Pla.string "=="
+  | Ne -> Pla.string "<>"
+  | Lt -> Pla.string "<"
+  | Le -> Pla.string "<="
+  | Gt -> Pla.string ">"
+  | Ge -> Pla.string ">="
 
 
 let uoperator op =
   match op with
-  | UOpNeg -> Pla.string "-"
-  | UOpNot -> Pla.string "not"
+  | Neg -> Pla.string "-"
+  | Not -> Pla.string "not"
 
 
 let rec print_exp e =
   match e.e with
-  | EUnit -> Pla.string ""
-  | EBool v -> Pla.string (if v then "true" else "false")
-  | EInt n -> Pla.int n
-  | EReal n -> Pla.float n
-  | EString s -> Pla.string_quoted s
-  | EId id -> Pla.string id
-  | EIndex { e; index } ->
+  | Unit -> Pla.string ""
+  | Bool v -> Pla.string (if v then "true" else "false")
+  | Int n -> Pla.int n
+  | Real n -> Pla.float n
+  | String s -> Pla.string_quoted s
+  | Id id -> Pla.string id
+  | Index { e; index } ->
       let e = print_exp e in
       let index = print_exp index in
       [%pla {|<#e#>[<#index#>]|}]
-  | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
-  | ECall { path; args } ->
+  | Array l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
+  | Call { path; args } ->
       let args = Pla.map_sep Pla.commaspace print_exp args in
       [%pla {|<#path#s>(<#args#>)|}]
-  | EUnOp (op, e) ->
+  | UnOp (op, e) ->
       let e = print_exp e in
       let op = uoperator op in
       [%pla {|(<#op#><#e#>)|}]
-  | EOp (op, e1, e2) ->
+  | Op (op, e1, e2) ->
       let e1 = print_exp e1 in
       let op = operator op in
       let e2 = print_exp e2 in
       [%pla {|(<#e1#> <#op#> <#e2#>)|}]
-  | EIf { cond; then_; else_ } when isValueOrIf then_ && isValueOrIf else_ ->
+  | If { cond; then_; else_ } when isValueOrIf then_ && isValueOrIf else_ ->
       let cond = print_exp cond in
       let then_ = print_exp then_ in
       let else_ = print_exp else_ in
       [%pla {|ifExpressionValue(<#cond#>, <#then_#>, <#else_#>)|}]
-  | EIf { cond; then_; else_ } ->
+  | If { cond; then_; else_ } ->
       let cond = print_exp cond in
       let then_ = print_exp then_ in
       let else_ = print_exp else_ in
       [%pla {|ifExpression(<#cond#>, (function () return <#then_#> end), (function () return <#else_#> end))|}]
-  | ETuple l ->
+  | Tuple l ->
       let l = Pla.map_sep Pla.commaspace print_exp l in
       [%pla {|(<#l#>)|}]
-  | EMember (e, m) ->
+  | Member (e, m) ->
       let e = print_exp e in
       [%pla {|<#e#>.<#m#s>|}]
 
@@ -143,30 +143,27 @@ let rec print_lexp e =
   | LMember (e, m) ->
       let e = print_lexp e in
       [%pla {|<#e#>.<#m#s>|}]
-  | LIndex { e; index } ->
+  | LIndex (e, index) ->
       let e = print_lexp e in
       let index = print_exp index in
       [%pla {|<#e#>[<#index#>]|}]
-  | LTuple l ->
-      let l = Pla.map_sep Pla.commaspace print_lexp l in
-      [%pla {|(<#l#>)|}]
 
 
-let rec print_dexp (e : dexp) =
+let print_dexp (e : dexp) =
   match e.d with
-  | DWild -> [%pla {|_wild|}]
   | DId (id, None) -> [%pla {|<#id#s>|}]
   | DId (id, Some dim) -> [%pla {|<#id#s>[<#dim#i>]|}]
-  | DTuple l ->
-      let l = Pla.map_sep Pla.commaspace print_dexp l in
-      [%pla {|(<#l#>)|}]
 
 
 let rec print_stmt s =
-  match s.s with
-  | StmtDecl lhs ->
+  match s with
+  | StmtDecl (lhs, None) ->
       let lhs = print_dexp lhs in
-      [%pla {|local <#lhs#> = {};|}]
+      [%pla {|local <#lhs#>;|}]
+  | StmtDecl (lhs, Some rhs) ->
+      let lhs = print_dexp lhs in
+      let rhs = print_exp rhs in
+      [%pla {|local <#lhs#> = <#rhs#>;|}]
   | StmtBind ({ l = LWild; _ }, rhs) ->
       let rhs = print_exp rhs in
       [%pla {|<#rhs#>;|}]
@@ -195,7 +192,7 @@ let rec print_stmt s =
       [%pla {|do<#stmt#+>end|}]
 
 
-let print_arg (n, _, _) = [%pla {|<#n#s>|}]
+let print_arg (n, _) = [%pla {|<#n#s>|}]
 
 let print_function_def (def : function_def) =
   let name = def.name in
@@ -204,7 +201,7 @@ let print_function_def (def : function_def) =
 
 
 let print_body body =
-  match body.s with
+  match body with
   | StmtBlock stmts ->
       let stmts = Pla.map_sep_all Pla.newline print_stmt stmts in
       [%pla {|<#stmts#+>end|}]
@@ -214,17 +211,22 @@ let print_body body =
 
 
 let print_top_stmt t =
-  match t.top with
+  match t with
   | TopFunction (def, body) ->
       let def = print_function_def def in
       let body = print_body body in
       [%pla {|<#def#><#body#><#><#>|}]
   | TopExternal _ -> Pla.unit
   | TopType _ -> Pla.unit
+  | TopDecl (lhs, rhs) ->
+      let lhs = print_dexp lhs in
+      let rhs = print_exp rhs in
+      [%pla {|local <#lhs#> = <#rhs#>;|}]
 
 
 let print_prog t = Pla.map_join print_top_stmt t
 
-let generate _output _template (stmts : top_stmt list) =
+let generate output _template (stmts : top_stmt list) =
+  let file = Common.setExt ".lua" output in
   let code = print_prog stmts in
-  [ [%pla {|<#runtime#><#code#>|}], "file" ]
+  [ [%pla {|<#runtime#><#code#>|}], file ]

@@ -152,7 +152,6 @@ let all_files =
   ; "web/volume.vult"
   ; "web/delay.vult"
   ; "../test/passes/wav_file.vult"
-  ; "../test/other/log.vult"
   ; "effects/bitcrush.vult"
   ; "effects/short_delay.vult"
   ; "effects/saturate_soft.vult"
@@ -349,6 +348,7 @@ module PassesTest = struct
 
   let get files = "passes" >::: List.map (fun (file, options) -> Filename.basename file >:: run options file) files
 end
+*)
 
 (** Tries to compile all the examples *)
 module RandomCompileTest = struct
@@ -367,12 +367,15 @@ module RandomCompileTest = struct
 
 
   let generateCPP (filename : string) (output : string) (real_type : string) : unit =
-    let args = { default_arguments with files = [ File filename ]; code = CCode; output; real = real_type } in
+    let args =
+      Args.{ default_arguments with files = [ File filename ]; code = CppCode; output = Some output; real = real_type }
+    in
     let seed = Hashtbl.hash filename in
     let code = RandProg.run seed in
     write filename code ;
-    let parser_results = Parser.parseString (Some filename) code in
-    let gen = Generate.generateCode [ parser_results ] args in
+    let parser_results = Pparser.Parse.parseString (Some filename) code in
+    let stmts, vm, _ = Driver.Cli.compileCode args ([ parser_results ], []) in
+    let gen = Driver.Cli.generateCode args (stmts, vm, []) in
     writeFiles args gen
 
 
@@ -437,17 +440,19 @@ module CliTest = struct
     Sys.chdir initial_dir
 
 
+  let getFlags code_type =
+    match code_type with
+    | "fixed" -> "-code cpp -real fixed", [ ".cpp", ".cpp.fixed.base"; ".h", ".h.fixed.base" ]
+    | "float" -> "-code cpp", [ ".cpp", ".cpp.float.base"; ".h", ".h.float.base" ]
+    | "js" -> "-code js", [ ".js", ".js.base" ]
+    | "lua" -> "-code lua", [ ".lua", ".lua.base" ]
+    | "java" -> "-code java -prefix vult.com", [ ".java", ".java.base" ]
+    | _ -> failwith "Unknown target to run test"
+
+
   let callVultCli (compiler : compiler) (fullfile : string) code_type =
     let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
-    let flags, ext =
-      match code_type with
-      | "fixed" -> "-ccode -real fixed", [ ".cpp", ".cpp.fixed.base"; ".h", ".h.fixed.base" ]
-      | "float" -> "-ccode", [ ".cpp", ".cpp.float.base"; ".h", ".h.float.base" ]
-      | "js" -> "-jscode", [ ".js", ".js.base" ]
-      | "lua" -> "-luacode", [ ".lua", ".lua.base" ]
-      | "java" -> "-javacode vult.com", [ ".java", ".java.base" ]
-      | _ -> failwith "Unknown target to run test"
-    in
+    let flags, ext = getFlags code_type in
     let includes_flags = List.map (fun a -> "-i " ^ a) includes |> String.concat " " in
     let flags = flags ^ " " ^ includes_flags in
     let vultc = if compiler = Node then "node ./vultc.js" else "./vultc.native" in
@@ -472,19 +477,19 @@ module CliTest = struct
 
   let callVultInternal (_ : compiler) (fullfile : string) code_type =
     let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
-    let args = { default_arguments with includes } in
+    let args = Args.{ default_arguments with includes } in
     let args, ext =
       match code_type with
-      | "fixed" -> { args with code = CCode; real = "fixed" }, [ ".cpp", ".cpp.fixed.base"; ".h", ".h.fixed.base" ]
-      | "float" -> { args with code = CCode }, [ ".cpp", ".cpp.float.base"; ".h", ".h.float.base" ]
+      | "fixed" -> { args with code = CppCode; real = "fixed" }, [ ".cpp", ".cpp.fixed.base"; ".h", ".h.fixed.base" ]
+      | "float" -> { args with code = CppCode }, [ ".cpp", ".cpp.float.base"; ".h", ".h.float.base" ]
       | "js" -> { args with code = JSCode }, [ ".js", ".js.base" ]
       | "lua" -> { args with code = LuaCode }, [ ".lua", ".lua.base" ]
-      | "java" -> { args with code = JavaCode; prefix = "vult.com" }, [ ".java", ".java.base" ]
+      | "java" -> { args with code = JavaCode; prefix = Some "vult.com" }, [ ".java", ".java.base" ]
       | _ -> failwith "Unknown target to run test"
     in
-    let args = { args with output = basefile; files = [ File fullfile ] } in
-    let results = Driver.main args in
-    let () = List.iter (Cli.showResult args) results in
+    let args = { args with output = Some basefile; files = [ File fullfile ] } in
+    let results = Driver.Cli.driver args in
+    let () = List.iter (Driver.Cli.showResult args) results in
     let generated_files = List.map (fun e -> basefile ^ fst e, basefile ^ snd e) ext in
     generated_files
 
@@ -526,6 +531,7 @@ module CliTest = struct
     "cli" >::: List.map (fun file -> Filename.basename file ^ "." ^ real_type >:: run file use_node real_type) files
 end
 
+(*
 module Templates = struct
   let callVult template (fullfile : string) code_type =
     let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
@@ -621,8 +627,8 @@ end
 
 let suite =
   "vult"
-  >::: [ ErrorTest.get errors_files
-       ; ParserTest.get parser_files
+  >::: [ (* ErrorTest.get errors_files *)
+         (* ; ParserTest.get parser_files *)
          (*; PassesTest.get passes_files
            ; Templates.get template_files "pd" "float"
            ; Templates.get template_files "pd" "fixed"
@@ -632,18 +638,18 @@ let suite =
            ; Templates.get template_files "modelica" "fixed"
            ; Templates.get template_files "teensy" "fixed"
            ; Templates.get template_files "webaudio" "js"
-           ; Templates.get template_files "browser" "js"
-           ; CliTest.get all_files Native "float"
-           ; CliTest.get all_files Native "fixed"
-           ; CliTest.get all_files Native "js"
-           ; CliTest.get all_files Native "lua"
-           ; CliTest.get all_files Native "java"
+           ; Templates.get template_files "browser" "js"*)
+         CliTest.get all_files Native "float"
+         (*; CliTest.get all_files Native "fixed"
+           ; CliTest.get all_files Native "js"*)
+       ; CliTest.get all_files Native "lua"
+         (*; CliTest.get all_files Native "java"
            ; CliTest.get all_files Node "float"
            ; CliTest.get all_files Node "fixed"
            ; CliTest.get all_files Node "js"
-           ; CliTest.get all_files Node "lua"
-           ; RandomCompileTest.get test_random_code "float"
-             (*Interpret.get perf_files;*)*)
+           ; CliTest.get all_files Node "lua"*)
+         (*RandomCompileTest.get test_random_code "float"*)
+         (*Interpret.get perf_files;*)
        ]
 
 

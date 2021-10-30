@@ -1,7 +1,7 @@
 (*
    The MIT License (MIT)
 
-   Copyright (c) 2014 Leonardo Laguna Ruiz, Carl Jönsson
+   Copyright (c) 2021 Leonardo Laguna Ruiz, Carl Jönsson
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,8 @@ let showResult (args : args) (output : output) =
   | Message v -> print_endline v
   | Dependencies deps -> String.concat " " deps |> print_endline
   | ParsedCode v -> print_endline v
+  | Byte v -> print_endline v
+  | Prog v -> print_endline v
   | GeneratedCode files when args.output <> None ->
       List.iter
         (fun (text, filename) ->
@@ -50,26 +52,29 @@ let showResult (args : args) (output : output) =
       prerr_endline error_strings
 
 
-let generate args stmts =
-  let vm = Vm.Interpreter.createVm stmts in
-  let cstmts = Code.Convert.prog stmts in
-  let cstmts = Tables.create args vm cstmts in
-  let code =
-    match args.code with
-    | NoCode -> []
-    | CCode -> Cpp.generate args.output args.template cstmts
-    | LuaCode -> Lua.generate args.output args.template stmts
-    | JSCode -> failwith "Javascript generator not implemented yet"
-    | JavaCode -> failwith "Javascript generator not implemented yet"
-  in
-  GeneratedCode code
+let generateCode args (stmts, vm, acc) =
+  if args.code <> NoCode then
+    let cstmts = Code.Convert.prog stmts in
+    let cstmts = Tables.create args vm cstmts in
+    let code =
+      match args.code with
+      | NoCode -> []
+      | CppCode -> Cpp.generate args.output args.template cstmts
+      | LuaCode -> Lua.generate args.output args.template cstmts
+      | JSCode -> failwith "Javascript generator not implemented yet"
+      | JavaCode -> failwith "Javascript generator not implemented yet"
+    in
+    GeneratedCode code :: acc
+  else
+    acc
 
 
-let generateCode (args : args) (parsed : Parse.parsed_file list) : output list =
-  let env, typed = Inference.infer args parsed in
-  let stmts = Prog.convert env typed in
+let compileCode (args : args) (parsed, acc) =
+  let env, stmts = Inference.infer args parsed in
   let stmts = Passes.run args stmts in
-  let code = generate args stmts in
+  let prog_out = if args.dprog then [ Prog (Pla.print (Prog.Print.print_prog stmts)) ] else [] in
+  let vm, bytecode = Vm.Interpreter.createVm stmts in
+  let bc_out = if args.dbytecode then [ Byte (Pla.print (Vm.Compile.print_bytecode bytecode)) ] else [] in
   let run =
     match args.eval with
     | Some e ->
@@ -77,15 +82,15 @@ let generateCode (args : args) (parsed : Parse.parsed_file list) : output list =
         [ ParsedCode s ]
     | None -> []
   in
-  code :: run
+  stmts, vm, run @ bc_out @ prog_out @ acc
 
 
 (** Prints the parsed files if -dparse was passed as argument *)
-let dumpParsedFiles (args : args) (parsed : Parse.parsed_file list) : output list =
+let dumpParsedFiles (args : args) (parsed : Parse.parsed_file list) =
   if args.dparse then
-    List.map (fun (r : Parse.parsed_file) -> ParsedCode (Syntax.Print.print r.stmts)) parsed
+    parsed, List.map (fun (r : Parse.parsed_file) -> ParsedCode (Syntax.Print.print r.stmts)) parsed
   else
-    []
+    parsed, []
 
 
 let version = String.sub Version.version 1 (String.length Version.version - 2)
@@ -102,7 +107,7 @@ let driver (args : args) : output list =
           if args.deps then
             List.map (fun r -> r.Parse.file) parsed |> fun s -> [ Dependencies s ]
           else
-            dumpParsedFiles args parsed @ generateCode args parsed
+            parsed |> dumpParsedFiles args |> compileCode args |> generateCode args
   with
   | Error.Errors errors -> [ Errors errors ]
 

@@ -25,7 +25,7 @@
 (** Vult Parser *)
 
 open Lexer
-open Types
+open Tokens
 open Stream
 open Syntax
 open Util

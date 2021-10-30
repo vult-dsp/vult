@@ -22,7 +22,7 @@
    THE SOFTWARE.
 *)
 
-(*open Util.Args*)
+open Util.Args
 
 let initial_dir = Sys.getcwd ()
 
@@ -62,11 +62,17 @@ let tryToRun cmd =
   Sys.chdir initial_dir ;
   result
 
-(*let getFile (args : args) (ext : FileKind.t) : string =
-  match ext with
-  | FileKind.ExtOnly e -> args.output ^ "." ^ e
-  | FileKind.FullName n -> Filename.concat (Filename.dirname args.output) n*)
 
-(*let writeFiles args files =
-  List.iter (fun (text, file) -> Util.FileIO.write (getFile args file) (Pla.print text) |> ignore) files
-*)
+let getFile (args : args) ext : string =
+  match args.output with
+  | Some output -> output ^ "." ^ ext
+  | None -> "temp." ^ ext
+
+
+let writeFiles (_args : args) (files : output list) =
+  List.iter
+    (fun output ->
+      match output with
+      | GeneratedCode files -> List.iter (fun (text, ext) -> Util.FileIO.write ext (Pla.print text) |> ignore) files
+      | _ -> ())
+    files

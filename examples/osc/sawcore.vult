@@ -7,23 +7,23 @@ Saw oscillator with hard-sync using PTR W=2
 */
 
 fun ptr_w2(phase, rate) {
-    val out;
+    val out1, out2;
     val s1 = rate;
     val s2 = s1 + rate;
     if(phase < s1) {
       val d = phase / rate;
       val t2 = s2 / 1024.0;
-      out = false, 1.0 + d * (-d + t2);
+      out1, out2 = false, 1.0 + d * (-d + t2);
     }
     else if (phase < s2) {
       val d = phase / rate;
       val t2 = s2 / 1024.0;
-      out = false, 3.0 + d * (-4.0 + d + t2);
+      out1, out2 = false, 3.0 + d * (-4.0 + d + t2);
     }
     else {
-      out = true, 0.0;
+      out1, out2 = true, 0.0;
     }
-    return out;
+    return out1, out2;
 }
 
 fun process(cv, reset) {

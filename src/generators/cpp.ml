@@ -64,7 +64,7 @@ let rec print_type_ (t : type_) =
   | Void _ -> Pla.string "void"
   | Int -> Pla.string "int32_t"
   | Real -> Pla.string "float"
-  | Bool -> Pla.string "uint8_t"
+  | Bool -> Pla.string "bool"
   | String -> Pla.string "char*"
   | Fixed -> Pla.string "fix16_t"
   | Tuple l ->
@@ -81,7 +81,7 @@ let rec print_type_member (t : type_) =
   | Void _ -> Pla.string "void"
   | Int -> Pla.string "int32_t"
   | Real -> Pla.string "float"
-  | Bool -> Pla.string "uint8_t"
+  | Bool -> Pla.string "bool"
   | String -> Pla.string "char*"
   | Fixed -> Pla.string "fix16_t"
   | Tuple l ->
@@ -131,7 +131,7 @@ let getReplacement name (args : exp list) ret =
 let rec print_exp (e : exp) =
   match e.e with
   | Unit -> Pla.string ""
-  | Bool v -> Pla.string (if v then "1" else "0")
+  | Bool v -> Pla.string (if v then "true" else "false")
   | Int n -> [%pla {|<#n#i>|}]
   | Real n -> [%pla {|<#n#f>f|}]
   | String s -> Pla.string_quoted s

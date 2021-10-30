@@ -38,7 +38,7 @@ jscompiler:
 #	$(OCB) test/perf.native
 #	./perf.native
 
-test-fast:
+test-fast: compiler
 	dune build test/test.exe $(FORMAT)
 	./_build/default/test/test.exe -runner sequential -shards 1 -internal true
 

@@ -24,7 +24,7 @@ THE SOFTWARE.
 {
    (** Vult Lexer based on ocamllex *)
 open Lexing
-open Types
+open Tokens
 open Util
 
 (** Updates the location of the lexbuf*)

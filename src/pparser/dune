@@ -2,7 +2,7 @@
 
 (library
  (name pparser)
- (modules Parse Types Syntax Stream Lexer Ptags)
+ (modules Parse Tokens Syntax Stream Lexer Ptags)
  (libraries util pla)
  (flags
   (:standard -w -30))

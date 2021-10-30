@@ -32,13 +32,15 @@ type output =
   | Dependencies  of string list
   | ParsedCode    of string
   | GeneratedCode of (Pla.t * string) list
+  | Byte          of string
+  | Prog          of string
   | Interpret     of string
   | CheckOk
   | Errors        of Error.t list
 
 type code =
   | NoCode
-  | CCode
+  | CppCode
   | JSCode
   | LuaCode
   | JavaCode
@@ -47,6 +49,8 @@ type code =
 type args =
   { mutable files : input list
   ; mutable dparse : bool
+  ; mutable dbytecode : bool
+  ; mutable dprog : bool
   ; mutable eval : string option
   ; mutable check : bool
   ; mutable code : code
@@ -68,6 +72,8 @@ type args =
 let default_arguments : args =
   { files = []
   ; dparse = false
+  ; dbytecode = false
+  ; dprog = false
   ; code = NoCode
   ; eval = None
   ; check = false
@@ -94,30 +100,22 @@ type flags =
   }
 
 let flags result =
-  [ { flag = "-ccode"
-    ; action = Arg.Unit (fun () -> result.code <- CCode)
-    ; comment = " Converts the code to c (default: off)"
-    }
-  ; { flag = "-javacode"
+  [ { flag = "-code"
     ; action =
         Arg.String
-          (fun prefix ->
-            result.code <- JavaCode ;
-            result.prefix <- Some prefix)
-    ; comment =
-        "prefix Converts the code to java (default: off). Requires prefix to name the package. e.g. 'com.company'"
+          (fun s ->
+            result.code <-
+              ( match s with
+              | "cpp" -> CppCode
+              | "lua" -> LuaCode
+              | "java" -> JavaCode
+              | "js" -> JSCode
+              | _ -> Error.raiseErrorMsg ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js)") ))
+    ; comment = "language Generate code for the specified language (cpp, lua, java, js)"
     }
   ; { flag = "-prefix"
     ; action = Arg.String (fun prefix -> result.prefix <- Some prefix)
     ; comment = "name Used to pass additional information to the code generator."
-    }
-  ; { flag = "-jscode"
-    ; action = Arg.Unit (fun () -> result.code <- JSCode)
-    ; comment = " Converts the code to javascript (default: off)"
-    }
-  ; { flag = "-luacode"
-    ; action = Arg.Unit (fun () -> result.code <- LuaCode)
-    ; comment = " Converts the code to lua (default: off)"
     }
   ; { flag = "-check"
     ; action = Arg.Unit (fun () -> result.check <- true)
@@ -171,6 +169,14 @@ let flags result =
   ; { flag = "-dparse"
     ; action = Arg.Unit (fun () -> result.dparse <- true)
     ; comment = " Dumps the parse tree (default: off)"
+    }
+  ; { flag = "-dbytecode"
+    ; action = Arg.Unit (fun () -> result.dbytecode <- true)
+    ; comment = " Dumps the bytecode (default: off)"
+    }
+  ; { flag = "-dprog"
+    ; action = Arg.Unit (fun () -> result.dprog <- true)
+    ; comment = " Dumps the processed program (default: off)"
     }
   ; { flag = "-deps"; action = Arg.Unit (fun () -> result.deps <- true); comment = " Prints all file dependencies" }
   ; { flag = "-version"

@@ -2,5 +2,5 @@
 
 (executable
  (name test)
- (modules Test Tcommon Diff BaseTok)
+ (modules Test Tcommon Diff BaseTok RandProg)
  (libraries core util driver pparser ounit str))

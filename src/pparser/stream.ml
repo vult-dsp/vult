@@ -22,7 +22,7 @@
    THE SOFTWARE.
 *)
 
-open Types
+open Tokens
 open Util
 
 exception ParserError of Error.t
