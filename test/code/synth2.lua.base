@@ -20,366 +20,366 @@ function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 
 function Synth2_change_type_init(_ctx)
-   _ctx.pre_x = 0.0;
+   _ctx.pre_x = 0.0
 end
 
 function Synth2_bchange_type_init(_ctx)
-   _ctx.pre_x = false;
+   _ctx.pre_x = false
 end
 
 function Synth2_edge_type_init(_ctx)
-   _ctx.pre_x = false;
+   _ctx.pre_x = false
 end
 
 function Synth2_each_type_init(_ctx)
-   _ctx.count = 0;
+   _ctx.count = 0
 end
 
 function Synth2_dcblock_type_init(_ctx)
-   _ctx.x1 = 0.0;
-   _ctx.y1 = 0.0;
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
 end
 
 function Synth2_smooth_type_init(_ctx)
-   _ctx.x = 0.0;
+   _ctx.x = 0.0
 end
 
 function Synth2_lpfilter_type_init(_ctx)
-   _ctx.pre_x = 0.0;
+   _ctx.pre_x = 0.0
 end
 
 function Synth2_osc_type_init(_ctx)
-   Synth2_change_type_init(_ctx.inst_177e5);
-   Synth2_dcblock_type_init(_ctx.inst_24fe5);
-   _ctx.m = 0.0;
-   _ctx.output = 0.0;
-   _ctx.phase = 0.0;
-   _ctx.rate = 0.0;
-   _ctx.state_pulse = 0.0;
-   _ctx.state_saw = 0.0;
-   _ctx.state_triang = 0.0;
+   Synth2_change_type_init(_ctx.inst_177e5)
+   Synth2_dcblock_type_init(_ctx.inst_24fe5)
+   _ctx.m = 0.0
+   _ctx.output = 0.0
+   _ctx.phase = 0.0
+   _ctx.rate = 0.0
+   _ctx.state_pulse = 0.0
+   _ctx.state_saw = 0.0
+   _ctx.state_triang = 0.0
 end
 
 function Synth2_svf_step_type_init(_ctx)
-   _ctx.dband = 0.0;
-   _ctx.dlow = 0.0;
+   _ctx.dband = 0.0
+   _ctx.dlow = 0.0
 end
 
 function Synth2_svf_type_init(_ctx)
-   _ctx.g = 0.0;
-   Synth2_change_type_init(_ctx.inst_177a7);
-   Synth2_svf_step_type_init(_ctx.step_1ba7);
+   _ctx.g = 0.0
+   Synth2_change_type_init(_ctx.inst_177a7)
+   Synth2_svf_step_type_init(_ctx.step_1ba7)
 end
 
 function Synth2_lfo_type_init(_ctx)
-   Synth2_edge_type_init(_ctx.inst_1445f);
-   Synth2_each_type_init(_ctx.inst_2cb5f);
-   _ctx.phase = 0.0;
+   Synth2_edge_type_init(_ctx.inst_1445f)
+   Synth2_each_type_init(_ctx.inst_2cb5f)
+   _ctx.phase = 0.0
 end
 
 function Synth2_mono_noteOn_type_init(_ctx)
-   _ctx.count = 0;
-   local i_0 = 0;
+   _ctx.count = 0
+   local i_0 = 0
    while (i_0 < 4) do
       do
-         _ctx.notes[i_0] = 0;
-         i_0 = (i_0 + 1);
+         _ctx.notes[i_0] = 0
+         i_0 = (i_0 + 1)
       end
    end
-   _ctx.pre = 0;
+   _ctx.pre = 0
 end
 
 function Synth2_process_type_init(_ctx)
-   _ctx.amp_s = 0.0;
-   _ctx.cut = 0.0;
-   Synth2_lfo_type_init(_ctx.inst_15fb7);
-   Synth2_osc_type_init(_ctx.inst_2e5b7);
-   Synth2_smooth_type_init(_ctx.inst_3dfb7);
-   Synth2_svf_type_init(_ctx.inst_4a7b7);
-   _ctx.lfo_amt = 0.0;
-   _ctx.lfo_rate = 0.0;
-   Synth2_mono_noteOn_type_init(_ctx.monoin_02b7);
-   _ctx.pitch = 0.0;
-   _ctx.pw = 0.0;
-   _ctx.res = 0.0;
-   _ctx.volume = 0.0;
-   _ctx.wave = 0.0;
+   _ctx.amp_s = 0.0
+   _ctx.cut = 0.0
+   Synth2_lfo_type_init(_ctx.inst_15fb7)
+   Synth2_osc_type_init(_ctx.inst_2e5b7)
+   Synth2_smooth_type_init(_ctx.inst_3dfb7)
+   Synth2_svf_type_init(_ctx.inst_4a7b7)
+   _ctx.lfo_amt = 0.0
+   _ctx.lfo_rate = 0.0
+   Synth2_mono_noteOn_type_init(_ctx.monoin_02b7)
+   _ctx.pitch = 0.0
+   _ctx.pw = 0.0
+   _ctx.res = 0.0
+   _ctx.volume = 0.0
+   _ctx.wave = 0.0
 end
 
 function Synth2_minFixed()
-   return 1.52588e-05;
+   return 1.52588e-05
 end
 
 function Synth2_change(_ctx, x)
-   local v = (_ctx.pre_x <> x);
-   _ctx.pre_x = x;
-   return v;
+   local v = (_ctx.pre_x ~= x)
+   _ctx.pre_x = x
+   return v
 end
 
 function Synth2_bchange(_ctx, x)
-   local v = (_ctx.pre_x <> x);
-   _ctx.pre_x = x;
-   return v;
+   local v = (_ctx.pre_x ~= x)
+   _ctx.pre_x = x
+   return v
 end
 
 function Synth2_edge(_ctx, x)
-   local v = ((_ctx.pre_x <> x) && (_ctx.pre_x == true));
-   _ctx.pre_x = x;
-   return v;
+   local v = ((_ctx.pre_x ~= x) and (_ctx.pre_x == true))
+   _ctx.pre_x = x
+   return v
 end
 
 function Synth2_each(_ctx, n)
-   local ret = (_ctx.count == 0);
-   _ctx.count = ((_ctx.count + 1) % n);
-   return ret;
+   local ret = (_ctx.count == 0)
+   _ctx.count = ((_ctx.count + 1) % n)
+   return ret
 end
 
 function Synth2_near_zero(x)
-   return (abs(x) < 0.02);
+   return (abs(x) < 0.02)
 end
 
 function Synth2_dcblock(_ctx, x0)
-   local y0 = ((x0 - _ctx.x1) + (_ctx.y1 * 0.995));
-   _ctx.x1 = x0;
-   _ctx.y1 = y0;
-   return y0;
+   local y0 = ((x0 - _ctx.x1) + (_ctx.y1 * 0.995))
+   _ctx.x1 = x0
+   _ctx.y1 = y0
+   return y0
 end
 
 function Synth2_smooth(_ctx, input)
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005));
-   return _ctx.x;
+   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005))
+   return _ctx.x
 end
 
 function Synth2_lpfilter(_ctx, x)
-   local ret = ((x + _ctx.pre_x) / 2.0);
-   _ctx.pre_x = x;
-   return ret;
+   local ret = ((x + _ctx.pre_x) / 2.0)
+   _ctx.pre_x = x
+   return ret
 end
 
 function Synth2_pitchToRate(d)
-   return ((8.1758 * exp((0.0577623 * d))) / 44100.0);
+   return ((8.1758 * exp((0.0577623 * d))) / 44100.0)
 end
 
 function Synth2_pulse_train(m, phase)
-   local pi_phase = (phase * 3.14159265359);
-   local denominator1 = sin(pi_phase);
-   local tmp1 = 0.0;
+   local pi_phase = (phase * 3.14159265359)
+   local denominator1 = sin(pi_phase)
+   local tmp1 = 0.0
    if Synth2_near_zero(denominator1) then
-      tmp1 = 1.0;
+      tmp1 = 1.0
    else
       do
-         tmp1 = sin((m * pi_phase));
-         tmp1 = (tmp1 / (m * denominator1));
+         tmp1 = sin((m * pi_phase))
+         tmp1 = (tmp1 / (m * denominator1))
       end
    end
-   return tmp1;
+   return tmp1
 end
 
 function Synth2_osc(_ctx, pitch, pw, wave)
-   local fixed_pitch = 0.0;
+   local fixed_pitch = 0.0
    if (wave < (2.0 / 3.0)) then
-      fixed_pitch = pitch;
+      fixed_pitch = pitch
    else
-      fixed_pitch = (pitch + 12.0);
+      fixed_pitch = (pitch + 12.0)
    end
    if Synth2_change(_ctx.inst_177e5, fixed_pitch) then
       do
-         _ctx.rate = Synth2_pitchToRate(fixed_pitch);
-         local p = (1.0 / _ctx.rate);
-         local maxHarmonics = floor((p / 2.0));
-         _ctx.m = ((2.0 * maxHarmonics) + 1.0);
+         _ctx.rate = Synth2_pitchToRate(fixed_pitch)
+         local p = (1.0 / _ctx.rate)
+         local maxHarmonics = floor((p / 2.0))
+         _ctx.m = ((2.0 * maxHarmonics) + 1.0)
       end
    end
-   local shift05 = (0.5 + (pw * 0.49));
-   local shift = (_ctx.phase + shift05);
+   local shift05 = (0.5 + (pw * 0.49))
+   local shift = (_ctx.phase + shift05)
    if (shift > 1.0) then
-      shift = (shift - 1.0);
+      shift = (shift - 1.0)
    end
-   local tmp1 = Synth2_pulse_train(_ctx.m, _ctx.phase);
-   local tmp2 = Synth2_pulse_train(_ctx.m, shift);
-   _ctx.phase = (_ctx.phase + _ctx.rate);
+   local tmp1 = Synth2_pulse_train(_ctx.m, _ctx.phase)
+   local tmp2 = Synth2_pulse_train(_ctx.m, shift)
+   _ctx.phase = (_ctx.phase + _ctx.rate)
    if (_ctx.phase > 1.0) then
-      _ctx.phase = (_ctx.phase - 1.0);
+      _ctx.phase = (_ctx.phase - 1.0)
    end
-   _ctx.state_pulse = clip((((_ctx.state_pulse * 0.9995) + tmp1) - tmp2), (-1.0), 1.0);
-   _ctx.state_saw = clip(((_ctx.state_saw * 0.9995) + ((((tmp1 + tmp2) - (2.0 * _ctx.rate)) / shift05) / 2.0)), (-1.0), 1.0);
-   _ctx.state_triang = clip(((_ctx.state_triang * 0.9995) + ((2.0 * _ctx.state_pulse) * _ctx.rate)), (-1.0), 1.0);
+   _ctx.state_pulse = clip((((_ctx.state_pulse * 0.9995) + tmp1) - tmp2), (-1.0), 1.0)
+   _ctx.state_saw = clip(((_ctx.state_saw * 0.9995) + ((((tmp1 + tmp2) - (2.0 * _ctx.rate)) / shift05) / 2.0)), (-1.0), 1.0)
+   _ctx.state_triang = clip(((_ctx.state_triang * 0.9995) + ((2.0 * _ctx.state_pulse) * _ctx.rate)), (-1.0), 1.0)
    if (wave < (1.0 / 3.0)) then
-      _ctx.output = _ctx.state_pulse;
+      _ctx.output = _ctx.state_pulse
    else
       if (wave < (2.0 / 3.0)) then
-         _ctx.output = (2.0 * _ctx.state_saw);
+         _ctx.output = (2.0 * _ctx.state_saw)
       else
-         _ctx.output = ((2.0 * _ctx.state_triang) * (1.0 + pw));
+         _ctx.output = ((2.0 * _ctx.state_triang) * (1.0 + pw))
       end
    end
-   _ctx.output = Synth2_dcblock(_ctx.inst_24fe5, _ctx.output);
-   return clip((_ctx.output / 4.0), (-1.0), 1.0);
+   _ctx.output = Synth2_dcblock(_ctx.inst_24fe5, _ctx.output)
+   return clip((_ctx.output / 4.0), (-1.0), 1.0)
 end
 
 function Synth2_svf_step(_ctx, input, g, q, sel)
-   local low = (_ctx.dlow + (g * _ctx.dband));
-   local high = ((input - low) - (q * _ctx.dband));
-   local band = ((g * high) + _ctx.dband);
-   local notch = (high + low);
-   _ctx.dband = clip(band, (-1.0), 1.0);
-   _ctx.dlow = clip(low, (-1.0), 1.0);
-   local output = 0.0;
+   local low = (_ctx.dlow + (g * _ctx.dband))
+   local high = ((input - low) - (q * _ctx.dband))
+   local band = ((g * high) + _ctx.dband)
+   local notch = (high + low)
+   _ctx.dband = clip(band, (-1.0), 1.0)
+   _ctx.dlow = clip(low, (-1.0), 1.0)
+   local output = 0.0
    if (sel == 0) then
-      output = low;
+      output = low
    else
       if (sel == 1) then
-         output = high;
+         output = high
       else
          if (sel == 2) then
-            output = band;
+            output = band
          else
-            output = notch;
+            output = notch
          end
       end
    end
-   return output;
+   return output
 end
 
 function Synth2_svf(_ctx, input, fc, q, sel)
-   fc = clip(fc, 0.0, 1.0);
-   q = clip(q, 0.0, 1.0);
-   local fix_q = (2.0 * (1.0 - q));
+   fc = clip(fc, 0.0, 1.0)
+   q = clip(q, 0.0, 1.0)
+   local fix_q = (2.0 * (1.0 - q))
    if Synth2_change(_ctx.inst_177a7, fc) then
-      _ctx.g = (fc / 2.0);
+      _ctx.g = (fc / 2.0)
    end
-   local x1 = Synth2_svf_step(_ctx.step_1ba7, input, _ctx.g, fix_q, sel);
-   local x2 = Synth2_svf_step(_ctx.step_1ba7, input, _ctx.g, fix_q, sel);
-   return ((x1 + x2) / 2.0);
+   local x1 = Synth2_svf_step(_ctx.step_1ba7, input, _ctx.g, fix_q, sel)
+   local x2 = Synth2_svf_step(_ctx.step_1ba7, input, _ctx.g, fix_q, sel)
+   return ((x1 + x2) / 2.0)
 end
 
 function Synth2_lfo(_ctx, f, gate)
-   local rate = (((f * 100.0) * Synth2_minFixed()) + Synth2_minFixed());
+   local rate = (((f * 100.0) * Synth2_minFixed()) + Synth2_minFixed())
    if Synth2_edge(_ctx.inst_1445f, gate) then
-      _ctx.phase = 0.0;
+      _ctx.phase = 0.0
    end
    if Synth2_each(_ctx.inst_2cb5f, 4) then
-      _ctx.phase = (_ctx.phase + rate);
+      _ctx.phase = (_ctx.phase + rate)
    end
    if (_ctx.phase > 1.0) then
-      _ctx.phase = (_ctx.phase - 1.0);
+      _ctx.phase = (_ctx.phase - 1.0)
    end
-   return (sin(((_ctx.phase * 2.0) * 3.14159265359)) + 0.5);
+   return (sin(((_ctx.phase * 2.0) * 3.14159265359)) + 0.5)
 end
 
 function Synth2_mono_noteOn(_ctx, n)
    if (_ctx.count < 4) then
       do
-         set(_ctx.notes, _ctx.count, n);
-         _ctx.pre = n;
+         set(_ctx.notes, _ctx.count, n)
+         _ctx.pre = n
          if (_ctx.count < 4) then
-            _ctx.count = (_ctx.count + 1);
+            _ctx.count = (_ctx.count + 1)
          end
       end
    end
-   return _ctx.pre;
+   return _ctx.pre
 end
 
 function Synth2_mono_noteOff(_ctx, n)
-   local found = false;
-   local i = 0;
-   local pos = 0;
+   local found = false
+   local i = 0
+   local pos = 0
    if (_ctx.count == 0) then
-      return _ctx.pre;
+      return _ctx.pre
    end
-   while ((i < 4) && (found == false)) do
+   while ((i < 4) and (found == false)) do
       do
          if (get(_ctx.notes, i) == n) then
             do
-               pos = i;
-               found = true;
+               pos = i
+               found = true
             end
          end
-         i = (i + 1);
+         i = (i + 1)
       end
    end
    if found then
       do
-         local k = (pos + 1);
+         local k = (pos + 1)
          while (k < 4) do
             do
-               set(_ctx.notes, (k - 1), get(_ctx.notes, k));
-               k = (k + 1);
+               set(_ctx.notes, (k - 1), get(_ctx.notes, k))
+               k = (k + 1)
             end
          end
-         if (found && (_ctx.count > 0)) then
+         if (found and (_ctx.count > 0)) then
             do
-               _ctx.count = (_ctx.count - 1);
-               _ctx.pre = get(_ctx.notes, (_ctx.count - 1));
+               _ctx.count = (_ctx.count - 1)
+               _ctx.pre = get(_ctx.notes, (_ctx.count - 1))
             end
          end
       end
    end
-   return _ctx.pre;
+   return _ctx.pre
 end
 
 function Synth2_mono_isGateOn(_ctx)
-   return (_ctx.count > 0);
+   return (_ctx.count > 0)
 end
 
 function Synth2_process(_ctx, i)
-   local gate = Synth2_mono_isGateOn(_ctx.monoin_02b7);
-   local lfo1 = (Synth2_lfo(_ctx.inst_15fb7, _ctx.lfo_rate, gate) * _ctx.lfo_amt);
-   local o1 = Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, (_ctx.pw + lfo1), _ctx.wave);
-   local amp_env = 0.0;
-   local _if_temp_1 = 0.0;
+   local gate = Synth2_mono_isGateOn(_ctx.monoin_02b7)
+   local lfo1 = (Synth2_lfo(_ctx.inst_15fb7, _ctx.lfo_rate, gate) * _ctx.lfo_amt)
+   local o1 = Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, (_ctx.pw + lfo1), _ctx.wave)
+   local amp_env = 0.0
+   local _if_temp_0 = 0.0
    if gate then
-      _if_temp_1 = 1.0;
+      _if_temp_0 = 1.0
    else
-      _if_temp_1 = 0.0;
+      _if_temp_0 = 0.0
    end
-   amp_env = Synth2_smooth(_ctx.inst_3dfb7, _if_temp_1);
-   local output = (amp_env * Synth2_svf(_ctx.inst_4a7b7, o1, _ctx.cut, _ctx.res, 0));
-   return (_ctx.volume * output);
+   amp_env = Synth2_smooth(_ctx.inst_3dfb7, _if_temp_0)
+   local output = (amp_env * Synth2_svf(_ctx.inst_4a7b7, o1, _ctx.cut, _ctx.res, 0))
+   return (_ctx.volume * output)
 end
 
 function Synth2_noteOn(_ctx, note, velocity, channel)
-   _ctx.pitch = real(Synth2_mono_noteOn(_ctx.monoin_02b7, note));
+   _ctx.pitch = real(Synth2_mono_noteOn(_ctx.monoin_02b7, note))
 end
 
 function Synth2_noteOff(_ctx, note, channel)
-   _ctx.pitch = real(Synth2_mono_noteOff(_ctx.monoin_02b7, note));
+   _ctx.pitch = real(Synth2_mono_noteOff(_ctx.monoin_02b7, note))
 end
 
 function Synth2_controlChange(_ctx, control, value, channel)
-   local value_0_1 = (real(value) / 127.0);
-   local value_m1_1 = ((value_0_1 * 2.0) - 1.0);
+   local value_0_1 = (real(value) / 127.0)
+   local value_m1_1 = ((value_0_1 * 2.0) - 1.0)
    if (control == 30) then
-      _ctx.volume = value_0_1;
+      _ctx.volume = value_0_1
    end
    if (control == 31) then
-      _ctx.wave = value_0_1;
+      _ctx.wave = value_0_1
    end
    if (control == 32) then
-      _ctx.pw = value_0_1;
+      _ctx.pw = value_0_1
    end
    if (control == 33) then
-      _ctx.lfo_rate = value_0_1;
+      _ctx.lfo_rate = value_0_1
    end
    if (control == 34) then
-      _ctx.lfo_amt = value_m1_1;
+      _ctx.lfo_amt = value_m1_1
    end
    if (control == 35) then
-      _ctx.cut = value_0_1;
+      _ctx.cut = value_0_1
    end
    if (control == 36) then
-      _ctx.res = value_0_1;
+      _ctx.res = value_0_1
    end
 end
 
 function Synth2_default(_ctx)
-   _ctx.volume = 1.0;
-   _ctx.pw = 0.0;
-   _ctx.pitch = 42.0;
-   _ctx.cut = 1.0;
-   _ctx.res = 0.0;
-   _ctx.amp_s = 1.0;
-   _ctx.lfo_amt = 0.5;
-   _ctx.lfo_rate = 0.0;
+   _ctx.volume = 1.0
+   _ctx.pw = 0.0
+   _ctx.pitch = 42.0
+   _ctx.cut = 1.0
+   _ctx.res = 0.0
+   _ctx.amp_s = 1.0
+   _ctx.lfo_amt = 0.5
+   _ctx.lfo_rate = 0.0
 end
 

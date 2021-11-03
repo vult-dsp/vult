@@ -472,12 +472,12 @@ static_inline void Saturate_default() {
 
 static_inline float Lfo_soft(Lfo_soft_type& _ctx, float x1) {
    float o = ((((x1 + _ctx.x2) + _ctx.x3) + _ctx.x4) / 4.0f);
-   float _t_temp_3 = x1;
-   float _t_temp_4 = _ctx.x2;
-   float _t_temp_5 = _ctx.x3;
-   _ctx.x2 = _t_temp_3;
-   _ctx.x3 = _t_temp_4;
-   _ctx.x4 = _t_temp_5;
+   float _t_temp_0 = x1;
+   float _t_temp_1 = _ctx.x2;
+   float _t_temp_2 = _ctx.x3;
+   _ctx.x2 = _t_temp_0;
+   _ctx.x3 = _t_temp_1;
+   _ctx.x4 = _t_temp_2;
    return o;
 }
 

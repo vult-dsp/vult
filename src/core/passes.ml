@@ -25,10 +25,9 @@
 open Prog
 open Util.Maps
 
-type state =
+type data =
   { repeat : bool
   ; ticks : (string, int) Hashtbl.t
-  ; stmt_acc : stmt list
   ; function_deps : Set.t Map.t
   ; type_deps : Set.t Map.t
   }
@@ -42,19 +41,18 @@ type env =
   ; args : Util.Args.args
   }
 
-let default_state : state =
-  { repeat = false; ticks = Hashtbl.create 16; stmt_acc = []; function_deps = Map.empty; type_deps = Map.empty }
+let default_data () : data =
+  { repeat = false; ticks = Hashtbl.create 16; function_deps = Map.empty; type_deps = Map.empty }
 
 
 let default_env args : env =
   { args; in_if_exp = false; bound_if = false; current_function = None; bound_call = false; current_type = None }
 
 
-let reapply state = { state with repeat = true }
+let reapply (state : data Mapper.state) =
+  let data = Mapper.getData state in
+  Mapper.setData state { data with repeat = true }
 
-let setStmts (state : state) stmts = { state with stmt_acc = stmts @ state.stmt_acc }
-
-let getStmts (state : state) = { state with stmt_acc = [] }, state.stmt_acc
 
 let currentFunction env =
   match env.current_function with
@@ -63,18 +61,19 @@ let currentFunction env =
   | Some _ -> failwith "function has no context"
 
 
-let getTick (env : env) (state : state) =
+let getTick (env : env) (state : data Mapper.state) =
   let name =
     match env.current_function with
     | None -> ""
     | Some def -> def.name
   in
-  match Hashtbl.find_opt state.ticks name with
+  let data = Mapper.getData state in
+  match Hashtbl.find_opt data.ticks name with
   | None ->
-      Hashtbl.add state.ticks name 1 ;
+      Hashtbl.add data.ticks name 1 ;
       0
   | Some n ->
-      Hashtbl.replace state.ticks name (n + 1) ;
+      Hashtbl.replace data.ticks name (n + 1) ;
       n
 
 
@@ -88,26 +87,30 @@ module CollectDependencies = struct
     Map.add name set map
 
 
-  let addFunctionDep (state : state) name dep =
+  let addFunctionDep (state : data Mapper.state) name dep =
+    let data = Mapper.getData state in
     let set =
-      match Map.find_opt name state.function_deps with
+      match Map.find_opt name data.function_deps with
       | None -> Set.empty
       | Some set -> set
     in
     let set = Set.add dep set in
-    let function_deps = Map.add name set state.function_deps in
-    { state with function_deps }
+    let function_deps = Map.add name set data.function_deps in
+    let data = { data with function_deps } in
+    Mapper.setData state data
 
 
-  let addTypeDep (state : state) name dep =
+  let addTypeDep (state : data Mapper.state) name dep =
+    let data = Mapper.getData state in
     let set =
-      match Map.find_opt name state.type_deps with
+      match Map.find_opt name data.type_deps with
       | None -> Set.empty
       | Some set -> set
     in
     let set = Set.add dep set in
-    let type_deps = Map.add name set state.type_deps in
-    { state with type_deps }
+    let type_deps = Map.add name set data.type_deps in
+    let data = { data with type_deps } in
+    Mapper.setData state data
 
 
   let exp =
@@ -139,13 +142,16 @@ module CollectDependencies = struct
   let top_stmt =
     Mapper.makeExpander
     @@ fun _env state (top : top_stmt) ->
+    let data = Mapper.getData state in
     match top with
     | { top = TopType { path; _ }; _ } ->
-        let type_deps = initializeDeps state.type_deps path in
-        { state with type_deps }, [ top ]
+        let type_deps = initializeDeps data.type_deps path in
+        let data = { data with type_deps } in
+        Mapper.setData state data, [ top ]
     | { top = TopFunction ({ name; _ }, _); _ } ->
-        let function_deps = initializeDeps state.function_deps name in
-        { state with function_deps }, [ top ]
+        let function_deps = initializeDeps data.function_deps name in
+        let data = { data with function_deps } in
+        Mapper.setData state data, [ top ]
     | _ -> state, [ top ]
 
 
@@ -155,30 +161,34 @@ end
 module GetVariables = struct
   let exp =
     Mapper.make
-    @@ fun _env (state : Set.t) (e : exp) ->
+    @@ fun _env (state : Set.t Mapper.state) (e : exp) ->
     match e with
-    | { e = EId name; _ } -> Set.add name state, e
+    | { e = EId name; _ } ->
+        let data = Mapper.getData state in
+        Mapper.setData state (Set.add name data), e
     | _ -> state, e
 
 
   let lexp =
     Mapper.make
-    @@ fun _env (state : Set.t) (e : lexp) ->
+    @@ fun _env (state : Set.t Mapper.state) (e : lexp) ->
     match e with
-    | { l = LId name; _ } -> Set.add name state, e
+    | { l = LId name; _ } ->
+        let data = Mapper.getData state in
+        Mapper.setData state (Set.add name data), e
     | _ -> state, e
 
 
   let mapper = { Mapper.identity with exp; lexp }
 
   let in_exp (e : exp) =
-    let state, _ = Mapper.exp mapper () Set.empty e in
-    state
+    let state, _ = Mapper.exp mapper () (Mapper.defaultState Set.empty) e in
+    Mapper.getData state
 
 
   let in_lexp (e : lexp) =
-    let state, _ = Mapper.lexp mapper () Set.empty e in
-    state
+    let state, _ = Mapper.lexp mapper () (Mapper.defaultState Set.empty) e in
+    Mapper.getData state
 end
 
 module Location = struct
@@ -231,6 +241,7 @@ module IfExpressions = struct
     Mapper.make
     @@ fun env state (e : exp) ->
     match e with
+    | { e = EIf { cond = { e = EBool cond; _ }; then_; else_ }; _ } -> reapply state, if cond then then_ else else_
     (* Bind if-expressions to a variable *)
     | { e = EIf _; t; loc } when (not env.in_if_exp) && not env.bound_if ->
         let tick = getTick env state in
@@ -238,7 +249,7 @@ module IfExpressions = struct
         let temp_e = { e = EId temp; t; loc } in
         let decl_stmt = { s = StmtDecl { d = DId (temp, None); t; loc }; loc } in
         let bind_stmt = { s = StmtBind ({ l = LId temp; t; loc }, e); loc } in
-        let state = setStmts state [ decl_stmt; bind_stmt ] in
+        let state = Mapper.pushStmts state [ decl_stmt; bind_stmt ] in
         reapply state, temp_e
     | _ -> state, e
 
@@ -272,7 +283,7 @@ module Tuples = struct
         let decl_stmt = List.map (fun (name, t) -> { s = StmtDecl { d = DId (name, None); t; loc }; loc }) temp in
         let temp_l = List.map (fun (name, t) -> { l = LId name; t; loc }) temp in
         let bind_stmt = { s = StmtBind ({ l = LTuple temp_l; t; loc }, e); loc } in
-        let state = setStmts state (decl_stmt @ [ bind_stmt ]) in
+        let state = Mapper.pushStmts state (decl_stmt @ [ bind_stmt ]) in
         let temp_e = List.map (fun (name, t) -> { e = EId name; t; loc }) temp in
         reapply state, { e = ETuple temp_e; t; loc }
     | _ -> state, e
@@ -368,6 +379,19 @@ module Builtin = struct
   let mapper = { Mapper.identity with exp }
 end
 
+module Cast = struct
+  let exp =
+    Mapper.make
+    @@ fun _env state (e : exp) ->
+    match e with
+    | { e = ECall { path = "real"; args = [ ({ t = { t = TReal; _ }; _ } as e1) ] }; _ } -> reapply state, e1
+    | { e = ECall { path = "int"; args = [ ({ t = { t = TInt; _ }; _ } as e1) ] }; _ } -> reapply state, e1
+    | _ -> state, e
+
+
+  let mapper = { Mapper.identity with exp }
+end
+
 module Simplify = struct
   let exp =
     Mapper.make
@@ -377,19 +401,6 @@ module Simplify = struct
 
 
   let mapper = { Mapper.identity with exp }
-end
-
-module PrependStmts = struct
-  let stmt =
-    Mapper.makeExpander
-    @@ fun _env state (s : stmt) ->
-    match s with
-    | _ ->
-        let state, pre = getStmts state in
-        state, pre @ [ s ]
-
-
-  let mapper = { Mapper.identity with stmt }
 end
 
 module Sort = struct
@@ -432,8 +443,9 @@ module Sort = struct
 
 
   let getDependencies args prog =
-    let state, _ = Mapper.prog dependencies (default_env args) default_state prog in
-    state.type_deps, state.function_deps
+    let state, _ = Mapper.prog dependencies (default_env args) (Mapper.defaultState (default_data ())) prog in
+    let data = Mapper.getData state in
+    data.type_deps, data.function_deps
 
 
   let run args prog =
@@ -452,7 +464,7 @@ let passes =
   |> Mapper.seq IfExpressions.mapper
   |> Mapper.seq Tuples.mapper
   |> Mapper.seq Simplify.mapper
-  |> Mapper.seq PrependStmts.mapper
+  |> Mapper.seq Cast.mapper
 
 
 let apply env state prog =
@@ -461,8 +473,10 @@ let apply env state prog =
       prog
     else
       let state, prog = Mapper.prog passes env state prog in
-      if state.repeat then
-        loop { state with repeat = false } prog (n + 1)
+      let data = Mapper.getData state in
+      if data.repeat then
+        let data = { data with repeat = false } in
+        loop (Mapper.setData state data) prog (n + 1)
       else
         prog
   in
@@ -470,6 +484,6 @@ let apply env state prog =
 
 
 let run args (prog : prog) : prog =
-  let prog = apply (default_env args) default_state prog in
+  let prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog in
   let prog = Sort.run args prog in
   prog

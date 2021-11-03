@@ -27,7 +27,7 @@ void Monocv_process_type_init(Monocv_process_type& _ctx) {
 
 int32_t Monocv_mono_noteOn(Monocv_mono_noteOn_type& _ctx, int32_t n) {
    if ((_ctx.count < 4)) {
-      set(_ctx.notes, _ctx.count, n);
+      int_set(_ctx.notes, _ctx.count, n);
       _ctx.pre = n;
       if ((_ctx.count < 4)) {
          _ctx.count = (_ctx.count + 1);
@@ -44,7 +44,7 @@ int32_t Monocv_mono_noteOff(Monocv_mono_noteOn_type& _ctx, int32_t n) {
       return _ctx.pre;
    }
    while (((i < 4) && (found == false))) {
-      if (get(_ctx.notes, i) == n) {
+      if (int_get(_ctx.notes, i) == n) {
          pos = i;
          found = true;
       }
@@ -53,12 +53,12 @@ int32_t Monocv_mono_noteOff(Monocv_mono_noteOn_type& _ctx, int32_t n) {
    if (found) {
       int32_t k = (pos + 1);
       while ((k < 4)) {
-         set(_ctx.notes, (k - 1), get(_ctx.notes, k));
+         int_set(_ctx.notes, (k - 1), int_get(_ctx.notes, k));
          k = (k + 1);
       }
       if ((found && (_ctx.count > 0))) {
          _ctx.count = (_ctx.count - 1);
-         _ctx.pre = get(_ctx.notes, (_ctx.count - 1));
+         _ctx.pre = int_get(_ctx.notes, (_ctx.count - 1));
       }
    }
    return _ctx.pre;

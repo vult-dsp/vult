@@ -68,17 +68,17 @@ float Delay_delay(Delay_delay_type& _ctx, float x, float time, float feedback) {
       read_pos = delta;
    }
    float decimal = (index_r - int_to_float(index_i));
-   float x1 = get(_ctx.buffer, read_pos);
-   float x2 = get(_ctx.buffer, ((read_pos + 1) % 30000));
+   float x1 = float_get(_ctx.buffer, read_pos);
+   float x2 = float_get(_ctx.buffer, ((read_pos + 1) % 30000));
    float ret = (((x2 - x1) * decimal) + x1);
    _ctx.write_pos = ((_ctx.write_pos + 1) % 30000);
-   set(_ctx.buffer, _ctx.write_pos, float_clip((x + (feedback * ret)), (-1.0f), 1.0f));
+   float_set(_ctx.buffer, _ctx.write_pos, float_clip((x + (feedback * ret)), (-1.0f), 1.0f));
    return ret;
 }
 
 int32_t Delay_mono_noteOn(Delay_mono_noteOn_type& _ctx, int32_t n) {
    if ((_ctx.count < 4)) {
-      set(_ctx.notes, _ctx.count, n);
+      int_set(_ctx.notes, _ctx.count, n);
       _ctx.pre = n;
       if ((_ctx.count < 4)) {
          _ctx.count = (_ctx.count + 1);
@@ -95,7 +95,7 @@ int32_t Delay_mono_noteOff(Delay_mono_noteOn_type& _ctx, int32_t n) {
       return _ctx.pre;
    }
    while (((i < 4) && (found == false))) {
-      if (get(_ctx.notes, i) == n) {
+      if (int_get(_ctx.notes, i) == n) {
          pos = i;
          found = true;
       }
@@ -104,12 +104,12 @@ int32_t Delay_mono_noteOff(Delay_mono_noteOn_type& _ctx, int32_t n) {
    if (found) {
       int32_t k = (pos + 1);
       while ((k < 4)) {
-         set(_ctx.notes, (k - 1), get(_ctx.notes, k));
+         int_set(_ctx.notes, (k - 1), int_get(_ctx.notes, k));
          k = (k + 1);
       }
       if ((found && (_ctx.count > 0))) {
          _ctx.count = (_ctx.count - 1);
-         _ctx.pre = get(_ctx.notes, (_ctx.count - 1));
+         _ctx.pre = int_get(_ctx.notes, (_ctx.count - 1));
       }
    }
    return _ctx.pre;
@@ -126,7 +126,7 @@ void Delay_controlChange(Delay_process_type& _ctx, int32_t control, float value,
       _ctx.lfo_rate = (value / 127.0f);
    }
    if (control == 33) {
-      _ctx.lfo_amt = (2.0f * ((real(value) / 127.0f) - 0.5f));
+      _ctx.lfo_amt = (2.0f * ((value / 127.0f) - 0.5f));
    }
    if (control == 34) {
       _ctx.time = (value / 127.0f);

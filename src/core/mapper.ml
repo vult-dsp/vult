@@ -24,26 +24,42 @@
 
 open Prog
 
-type ('env, 'state, 'kind) mapper_func = ('env -> 'state -> 'kind -> 'state * 'kind) option
+type 'data state =
+  { data : 'data
+  ; pre_stmts : stmt list
+  }
 
-type ('env, 'state, 'kind) expand_func = ('env -> 'state -> 'kind -> 'state * 'kind list) option
+type ('env, 'data, 'kind) mapper_func = ('env -> 'data state -> 'kind -> 'data state * 'kind) option
+
+type ('env, 'data, 'kind) expand_func = ('env -> 'data state -> 'kind -> 'data state * 'kind list) option
 
 type ('env, 'kind) env_func = ('env -> 'kind -> 'env) option
 
-let apply (mapper : ('env, 'state, 'kind) mapper_func) (env : 'env) (data : 'state) (kind : 'kind) : 'state * 'kind =
+let defaultState data = { data; pre_stmts = [] }
+
+let getData (state : 'data state) = state.data
+
+let setData (state : 'data state) data = { state with data }
+
+let pushStmts (state : 'data state) stmts = { state with pre_stmts = state.pre_stmts @ stmts }
+
+let getStmts (state : 'data state) = { state with pre_stmts = [] }, state.pre_stmts
+
+let apply (mapper : ('env, 'data, 'kind) mapper_func) (env : 'env) (data : 'data state) (kind : 'kind) :
+    'data state * 'kind =
   match mapper with
   | Some f -> f env data kind
   | None -> data, kind
 
 
-let applyExpander (mapper : ('env, 'state, 'kind) expand_func) (env : 'env) (data : 'state) (kind : 'kind) :
-    'state * 'kind list =
+let applyExpander (mapper : ('env, 'data, 'kind) expand_func) (env : 'env) (data : 'data state) (kind : 'kind) :
+    'data state * 'kind list =
   match mapper with
   | Some f -> f env data kind
   | None -> data, [ kind ]
 
 
-let applyExpanderList (mapper : ('env, 'state, 'kind) expand_func) (env : 'env) (data : 'data) (kind_list : 'kind list)
+let applyExpanderList (mapper : ('env, 'datas, 'kind) expand_func) (env : 'env) (data : 'data) (kind_list : 'kind list)
     : 'data * 'kind list =
   let state', rev_exp_list =
     List.fold_left
@@ -62,9 +78,10 @@ let enter (env_func : ('env, 'kind) env_func) (env : 'env) (kind : 'kind) : 'env
   | Some f -> f env kind
 
 
-let make (mapper : 'env -> 'state -> 'kind -> 'state * 'kind) : ('env, 'state, 'kind) mapper_func = Some mapper
+let make (mapper : 'env -> 'data state -> 'kind -> 'data state * 'kind) : ('env, 'data, 'kind) mapper_func = Some mapper
 
-let makeExpander (mapper : 'env -> 'state -> 'kind -> 'state * 'kind list) : ('env, 'state, 'kind) expand_func =
+let makeExpander (mapper : 'env -> 'data state -> 'kind -> 'data state * 'kind list) : ('env, 'data, 'kind) expand_func
+    =
   Some mapper
 
 
@@ -82,16 +99,16 @@ let list mapper_app mapper env state el =
   state', List.rev rev_el
 
 
-type ('env, 'state) mapper =
-  { type_ : ('env, 'state, type_) mapper_func
-  ; exp : ('env, 'state, exp) mapper_func
-  ; lexp : ('env, 'state, lexp) mapper_func
-  ; dexp : ('env, 'state, dexp) mapper_func
-  ; param : ('env, 'state, param) mapper_func
-  ; struct_descr : ('env, 'state, struct_descr) mapper_func
-  ; stmt : ('env, 'state, stmt) expand_func
-  ; function_def : ('env, 'state, function_def) mapper_func
-  ; top_stmt : ('env, 'state, top_stmt) expand_func
+type ('env, 'data) mapper =
+  { type_ : ('env, 'data, type_) mapper_func
+  ; exp : ('env, 'data, exp) mapper_func
+  ; lexp : ('env, 'data, lexp) mapper_func
+  ; dexp : ('env, 'data, dexp) mapper_func
+  ; param : ('env, 'data, param) mapper_func
+  ; struct_descr : ('env, 'data, struct_descr) mapper_func
+  ; stmt : ('env, 'data, stmt) expand_func
+  ; function_def : ('env, 'data, function_def) mapper_func
+  ; top_stmt : ('env, 'data, top_stmt) expand_func
   ; type__env : ('env, type_) env_func
   ; exp_env : ('env, exp) env_func
   ; lexp_env : ('env, lexp) env_func
@@ -188,7 +205,7 @@ let seq b a =
   }
 
 
-let rec type_ (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (t : type_) : 'state * type_ =
+let rec type_ (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (t : type_) : 'data state * type_ =
   let sub_env = enter mapper.type__env env t in
   let loc = t.loc in
   match t with
@@ -212,8 +229,8 @@ let rec type_ (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (t 
       apply mapper.type_ env state { t = TStruct s; loc }
 
 
-and struct_descr (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (s : struct_descr) :
-    'state * struct_descr =
+and struct_descr (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (s : struct_descr) :
+    'data state * struct_descr =
   let sub_env = enter mapper.struct_descr_env env s in
   match s with
   | { path; members } ->
@@ -221,14 +238,14 @@ and struct_descr (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) 
       apply mapper.struct_descr env state { path; members }
 
 
-and param (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (p : param) : 'state * param =
+and param (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (p : param) : 'data state * param =
   let name, t, loc = p in
   let sub_env = enter mapper.param_env env p in
   let state, t = type_ mapper sub_env state t in
   apply mapper.param env state (name, t, loc)
 
 
-let rec exp (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (e : exp) : 'state * exp =
+let rec exp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (e : exp) : 'data state * exp =
   let loc = e.loc in
   let sub_env = enter mapper.exp_env env e in
   let state, t = type_ mapper sub_env state e.t in
@@ -269,7 +286,7 @@ let rec exp (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (e : 
       apply mapper.exp env state { e = EMember (e1, n); t; loc }
 
 
-let rec lexp (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (e : lexp) : 'state * lexp =
+let rec lexp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (e : lexp) : 'data state * lexp =
   let loc = e.loc in
   let sub_env = enter mapper.lexp_env env e in
   let state, t = type_ mapper env state e.t in
@@ -288,7 +305,7 @@ let rec lexp (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (e :
       apply mapper.lexp env state { l = LTuple elems; t; loc }
 
 
-let rec dexp (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (e : dexp) : 'state * dexp =
+let rec dexp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (e : dexp) : 'data state * dexp =
   let loc = e.loc in
   let sub_env = enter mapper.dexp_env env e in
   let state, t = type_ mapper env state e.t in
@@ -307,43 +324,54 @@ let block stmts loc =
   | _ -> { s = StmtBlock stmts; loc }
 
 
-let rec stmt (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (s : stmt) : 'state * stmt list =
+let applyStmtExpander mapper env state pre s =
+  let s = block (pre @ [ s ]) s.loc in
+  applyExpander mapper env state s
+
+
+let rec stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (s : stmt) : 'data state * stmt list =
   let loc = s.loc in
   let sub_env = enter mapper.stmt_env env s in
   match s with
   | { s = StmtDecl d; _ } ->
       let state, d = dexp mapper sub_env state d in
-      applyExpander mapper.stmt env state { s = StmtDecl d; loc }
+      let state, pre = getStmts state in
+      applyStmtExpander mapper.stmt env state pre { s = StmtDecl d; loc }
   | { s = StmtBind (lhs, rhs); _ } ->
       let state, lhs = lexp mapper sub_env state lhs in
       let state, rhs = exp mapper sub_env state rhs in
-      applyExpander mapper.stmt env state { s = StmtBind (lhs, rhs); loc }
+      let state, pre = getStmts state in
+      applyStmtExpander mapper.stmt env state pre { s = StmtBind (lhs, rhs); loc }
   | { s = StmtReturn e; _ } ->
       let state, e = exp mapper sub_env state e in
-      applyExpander mapper.stmt env state { s = StmtReturn e; loc }
+      let state, pre = getStmts state in
+      applyStmtExpander mapper.stmt env state pre { s = StmtReturn e; loc }
   | { s = StmtWhile (cond, body); _ } ->
       let state, cond = exp mapper sub_env state cond in
+      let state, pre = getStmts state in
       let state, body_l = stmt mapper sub_env state body in
-      applyExpander mapper.stmt env state { s = StmtWhile (cond, block body_l body.loc); loc }
+      applyStmtExpander mapper.stmt env state pre { s = StmtWhile (cond, block body_l body.loc); loc }
   | { s = StmtIf (cond, then_, None); _ } ->
       let state, cond = exp mapper sub_env state cond in
+      let state, pre = getStmts state in
       let state, then_l = stmt mapper sub_env state then_ in
       let then_ = block then_l then_.loc in
-      applyExpander mapper.stmt env state { s = StmtIf (cond, then_, None); loc }
+      applyStmtExpander mapper.stmt env state pre { s = StmtIf (cond, then_, None); loc }
   | { s = StmtIf (cond, then_, Some else_); _ } ->
       let state, cond = exp mapper sub_env state cond in
+      let state, pre = getStmts state in
       let state, then_l = stmt mapper sub_env state then_ in
       let state, else_l = stmt mapper sub_env state else_ in
       let then_ = block then_l then_.loc in
       let else_ = block else_l else_.loc in
-      applyExpander mapper.stmt env state { s = StmtIf (cond, then_, Some else_); loc }
+      applyStmtExpander mapper.stmt env state pre { s = StmtIf (cond, then_, Some else_); loc }
   | { s = StmtBlock stmts; _ } ->
       let state, stmts = list stmt mapper sub_env state stmts in
       applyExpander mapper.stmt env state { s = StmtBlock (List.flatten stmts); loc }
 
 
-let function_def (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (f : function_def) :
-    'state * function_def =
+let function_def (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (f : function_def) :
+    'data state * function_def =
   let sub_env = enter mapper.function_def_env env f in
   match f with
   | { name; args; t = t_args, ret; loc; tags; info } ->
@@ -353,7 +381,8 @@ let function_def (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) 
       apply mapper.function_def env state { name; args; t = t_args, ret; loc; tags; info }
 
 
-let top_stmt (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (s : top_stmt) : 'state * top_stmt list =
+let top_stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (s : top_stmt) :
+    'data state * top_stmt list =
   let loc = s.loc in
   let sub_env = enter mapper.top_stmt_env env s in
   match s with
@@ -369,6 +398,6 @@ let top_stmt (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (s :
       applyExpander mapper.top_stmt env state { top = TopType descr; loc }
 
 
-let prog (mapper : ('env, 'state) mapper) (env : 'env) (state : 'state) (p : prog) : 'state * prog =
+let prog (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (p : prog) : 'data state * prog =
   let state, p = list top_stmt mapper env state p in
   state, List.flatten p

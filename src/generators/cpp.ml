@@ -220,6 +220,15 @@ let print_arg (n, (t : type_)) =
       [%pla {|<#t#> <#n#s>|}]
 
 
+let arrayCopyFunction (t : type_) =
+  match t with
+  | Real -> "float_copy_array"
+  | Int -> "int_copy_array"
+  | Fixed -> "fix_copy_array"
+  | Bool -> "bool_copy_array"
+  | _ -> failwith "not a valid array copy"
+
+
 let rec parenthesize e =
   match e with
   | { e = Op (Eq, _, _); _ } -> print_exp e
@@ -238,6 +247,11 @@ and print_stmt s =
   | StmtBind ({ l = LWild; _ }, rhs) ->
       let rhs = print_exp rhs in
       [%pla {|<#rhs#>;|}]
+  | StmtBind (({ t = Array (n, t); _ } as lhs), ({ t = Array (_, _); _ } as rhs)) ->
+      let lhs = print_lexp lhs in
+      let rhs = print_exp rhs in
+      let f = arrayCopyFunction t in
+      [%pla {|<#f#s>(<#n#i>, <#lhs#>, <#rhs#>);|}]
   | StmtBind (lhs, rhs) ->
       let lhs = print_lexp lhs in
       let rhs = print_exp rhs in

@@ -1,8 +1,8 @@
-{
-   fun foo(a:int, b:int, c:int, d:int) : int /* scope_0 */
-   return (-1 + a + b + c + d); 
-
-   fun bar() : int /* scope_0 */
-   return -2; 
-
+fun Simplify_foo(a : int, b : int, c : int, d : int) : int  {
+   return (((((-1) + a) + b) + c) + d);
 }
+
+fun Simplify_bar() : int  {
+   return (((-1) + 2) - 3);
+}
+

@@ -126,23 +126,19 @@ let perf_files =
   ]
 
 
-(*
-let no_context = PassCommon.{ default_options with pass4 = false; pass3 = false; pass2 = false }
-
-let no_eval = PassCommon.{ default_options with pass2 = false }
-
 let passes_files =
-  [ "split_mem.vult", no_context
-  ; "tuple_assign.vult", no_context
-  ; "if_to_stmt.vult", no_context
-  ; "context_simple.vult", no_eval
-  ; "context_nested.vult", no_eval
-  ; "tuple_to_types.vult", no_context
-  ; "simplify.vult", no_context
-  ; "external_calls.vult", no_eval
-  ; "output_references.vult", no_eval
+  [ "split_mem.vult"
+  ; "tuple_assign.vult"
+  ; "if_to_stmt.vult"
+  ; "context_simple.vult"
+  ; "context_nested.vult"
+  ; "tuple_to_types.vult"
+  ; "simplify.vult"
+  ; "external_calls.vult"
+  ; "output_references.vult"
+  ; "nested_if.vult"
   ]
-*)
+
 
 let all_files =
   [ "web/phasedist.vult"
@@ -197,7 +193,7 @@ let test_random_code =
     else
       []
   in
-  loop 10
+  loop 1
 
 
 (** Flags that defines if a baseline should be created for tests *)
@@ -233,11 +229,11 @@ let readOutputAndReference (create : bool) (outdir : string) (output, reference)
   in
   let reference = Filename.concat outdir (Filename.basename reference) in
   let reference_txt =
-    if Sys.file_exists reference then
-      read reference
-    else if create then
+    if create then
       let () = write reference output_txt in
       output_txt
+    else if Sys.file_exists reference then
+      read reference
     else
       assert_failure (Printf.sprintf "The file '%s' has no reference data" reference)
   in
@@ -325,18 +321,23 @@ module ErrorTest = struct
   let get files = "errors" >::: List.map (fun file -> Filename.basename file >:: run file) files
 end
 
-(*
 (** Module to perform transformation tests *)
 module PassesTest = struct
-  let process options (fullfile : string) : string =
-    let args = { default_arguments with code = CCode } in
-    Parser.parseFile fullfile |> Passes.applyTransformationsSingle args ~options |> showResults
+  let show o =
+    match o with
+    | Args.Prog s -> s
+    | _ -> ""
 
 
-  let run options (file : string) context =
+  let process (fullfile : string) : string =
+    let args = Args.{ default_arguments with dprog = true; files = [ File fullfile ] } in
+    Driver.Cli.driver args |> List.map show |> String.concat "\n"
+
+
+  let run (file : string) context =
     let folder = "passes" in
     let fullfile = checkFile (in_test_directory (folder ^ "/" ^ file)) in
-    let current = process options fullfile in
+    let current = process fullfile in
     let reference = readReference (update_test context) "base" current fullfile (in_test_directory folder) in
     assert_equal
       ~cmp:Diff.compare
@@ -346,9 +347,8 @@ module PassesTest = struct
       current
 
 
-  let get files = "passes" >::: List.map (fun (file, options) -> Filename.basename file >:: run options file) files
+  let get files = "passes" >::: List.map (fun file -> Filename.basename file >:: run file) files
 end
-*)
 
 (** Tries to compile all the examples *)
 module RandomCompileTest = struct
@@ -455,7 +455,7 @@ module CliTest = struct
     let flags, ext = getFlags code_type in
     let includes_flags = List.map (fun a -> "-i " ^ a) includes |> String.concat " " in
     let flags = flags ^ " " ^ includes_flags in
-    let vultc = if compiler = Node then "node ./vultc.js" else "./vultc.native" in
+    let vultc = if compiler = Node then "node ./vultc.js" else "./_build/default/src/vult.exe" in
     let cmd = vultc ^ " -test " ^ flags ^ " -o " ^ basefile ^ " " ^ fullfile in
     let generated_files =
       match Sys.command cmd with
@@ -629,26 +629,26 @@ let suite =
   "vult"
   >::: [ (* ErrorTest.get errors_files *)
          (* ; ParserTest.get parser_files *)
-         (*; PassesTest.get passes_files
-           ; Templates.get template_files "pd" "float"
-           ; Templates.get template_files "pd" "fixed"
-           ; Templates.get template_files "max" "float"
-           ; Templates.get template_files "max" "fixed"
-           ; Templates.get template_files "modelica" "float"
-           ; Templates.get template_files "modelica" "fixed"
-           ; Templates.get template_files "teensy" "fixed"
-           ; Templates.get template_files "webaudio" "js"
-           ; Templates.get template_files "browser" "js"*)
-         CliTest.get all_files Native "float"
+         PassesTest.get passes_files
+         (* ; Templates.get template_files "pd" "float"
+            ; Templates.get template_files "pd" "fixed"
+            ; Templates.get template_files "max" "float"
+            ; Templates.get template_files "max" "fixed"
+            ; Templates.get template_files "modelica" "float"
+            ; Templates.get template_files "modelica" "fixed"
+            ; Templates.get template_files "teensy" "fixed"
+            ; Templates.get template_files "webaudio" "js"
+            ; Templates.get template_files "browser" "js"*)
+       ; CliTest.get all_files Native "float"
          (*; CliTest.get all_files Native "fixed"
            ; CliTest.get all_files Native "js"*)
        ; CliTest.get all_files Native "lua"
-         (*; CliTest.get all_files Native "java"
-           ; CliTest.get all_files Node "float"
-           ; CliTest.get all_files Node "fixed"
-           ; CliTest.get all_files Node "js"
-           ; CliTest.get all_files Node "lua"*)
-         (*RandomCompileTest.get test_random_code "float"*)
+         (*; CliTest.get all_files Node "float"*)
+         (* ; CliTest.get all_files Native "java"
+            ; CliTest.get all_files Node "fixed"
+            ; CliTest.get all_files Node "js"
+            ; CliTest.get all_files Node "lua"*)
+       ; RandomCompileTest.get test_random_code "float"
          (*Interpret.get perf_files;*)
        ]
 

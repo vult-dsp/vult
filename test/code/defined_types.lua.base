@@ -20,29 +20,29 @@ function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 
 function Defined_types_dot_init(_ctx)
-   _ctx.x = 0.0;
-   _ctx.y = 0.0;
+   _ctx.x = 0.0
+   _ctx.y = 0.0
 end
 
 function Defined_types_foo_type_init(_ctx)
-   Defined_types_dot_init(_ctx.p1);
+   Defined_types_dot_init(_ctx.p1)
 end
 
 function Defined_types_process_type_init(_ctx)
-   Defined_types_foo_type_init(_ctx.inst_1a5d1);
+   Defined_types_foo_type_init(_ctx.inst_1a5d1)
 end
 
 function Defined_types_micro_init(_ctx)
-   Defined_types_dot_init(_ctx.dot_0);
-   Defined_types_dot_init(_ctx.dot_1);
+   Defined_types_dot_init(_ctx.dot_0)
+   Defined_types_dot_init(_ctx.dot_1)
 end
 
 function Defined_types_foo(_ctx)
 end
 
 function Defined_types_process(_ctx, input)
-   Defined_types_foo(_ctx.inst_1a5d1);
-   return input;
+   Defined_types_foo(_ctx.inst_1a5d1)
+   return input
 end
 
 function Defined_types_noteOn(_ctx, note, velocity, channel)

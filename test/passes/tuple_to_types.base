@@ -1,42 +1,38 @@
-{
-   type tuple(real, int, bool) {
-      val field_0 : real; 
-      val field_1 : int; 
-      val field_2 : bool; 
-   }
-
-   type tuple(int, int, int) {
-      val field_0 : int; 
-      val field_1 : int; 
-      val field_2 : int; 
-   }
-
-   fun foo() : tuple(int, int, int) /* scope_0 */
-   {
-      (foo_ret_0:int) = 1; 
-      (foo_ret_1:int) = 2; 
-      (foo_ret_2:int) = 3; 
-      return (); 
-   }
-
-   and foo_ret_0() : int return foo_ret_0; 
-
-   and foo_ret_1() : int return foo_ret_1; 
-
-   and foo_ret_2() : int return foo_ret_2; 
-
-   fun bar() : tuple(real, int, bool) /* scope_0 */
-   {
-      (bar_ret_0:real) = 1.; 
-      (bar_ret_1:int) = 2; 
-      (bar_ret_2:bool) = false; 
-      return (); 
-   }
-
-   and bar_ret_0() : real return bar_ret_0; 
-
-   and bar_ret_1() : int return bar_ret_1; 
-
-   and bar_ret_2() : bool return bar_ret_2; 
-
+struct Tuple_to_types_foo_type {
+   Tuple_to_types_foo_ret_0 : int;
+   Tuple_to_types_foo_ret_1 : int;
+   Tuple_to_types_foo_ret_2 : int;
 }
+
+struct Tuple_to_types_bar_type {
+   Tuple_to_types_bar_ret_0 : real;
+   Tuple_to_types_bar_ret_1 : int;
+   Tuple_to_types_bar_ret_2 : bool;
+}
+
+fun Tuple_to_types_foo_type_init(_ctx : struct Tuple_to_types_foo_type) : void  {
+   _ctx.Tuple_to_types_foo_ret_0 = 0;
+   _ctx.Tuple_to_types_foo_ret_1 = 0;
+   _ctx.Tuple_to_types_foo_ret_2 = 0;
+}
+
+fun Tuple_to_types_bar_type_init(_ctx : struct Tuple_to_types_bar_type) : void  {
+   _ctx.Tuple_to_types_bar_ret_0 = 0.0;
+   _ctx.Tuple_to_types_bar_ret_1 = 0;
+   _ctx.Tuple_to_types_bar_ret_2 = false;
+}
+
+fun Tuple_to_types_foo(_ctx : struct Tuple_to_types_foo_type) : void  {
+   _ctx.Tuple_to_types_foo_ret_0 = 1;
+   _ctx.Tuple_to_types_foo_ret_1 = 2;
+   _ctx.Tuple_to_types_foo_ret_2 = 3;
+   return ();
+}
+
+fun Tuple_to_types_bar(_ctx : struct Tuple_to_types_bar_type) : void  {
+   _ctx.Tuple_to_types_bar_ret_0 = 1.0;
+   _ctx.Tuple_to_types_bar_ret_1 = 2;
+   _ctx.Tuple_to_types_bar_ret_2 = false;
+   return ();
+}
+

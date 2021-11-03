@@ -1,60 +1,72 @@
-{
-   type tuple(int, int, int) {
-      val field_0 : int; 
-      val field_1 : int; 
-      val field_2 : int; 
-   }
-
-   fun foo() : tuple(int, int, int) /* scope_0 */
-   {
-      (foo_ret_0:int) = 0; 
-      (foo_ret_1:int) = 1; 
-      (foo_ret_2:int) = 2; 
-      return (); 
-   }
-
-   and foo_ret_0() : int return foo_ret_0; 
-
-   and foo_ret_1() : int return foo_ret_1; 
-
-   and foo_ret_2() : int return foo_ret_2; 
-
-   fun bar() : unit /* scope_0 */
-   {
-      val (x:int); 
-      val (y:int); 
-      val (z:int); 
-      val (w:int); 
-      _ = _inst197:foo(); 
-      (x:int) = _inst197:foo_ret_0(); 
-      (y:int) = _inst197:foo_ret_1(); 
-      (z:int) = _inst197:foo_ret_2(); 
-      (w:int) = 3; 
-      val (a:int); 
-      val (b:int); 
-      val (c:int); 
-      val (d:int); 
-      (a:int) = 0; 
-      (b:int) = 1; 
-      (c:int) = 2; 
-      (d:int) = 3; 
-      val (r:int); 
-      val (t:int); 
-      (r:int) = 0; 
-      (t:int) = 1; 
-      val (_tmp_5_0:int); 
-      (_tmp_5_0:int) = t; 
-      val (_tmp_5_1:int); 
-      (_tmp_5_1:int) = r; 
-      val (_tmp_5_2:int); 
-      (_tmp_5_2:int) = 0; 
-      (r:int) = _tmp_5_0; 
-      (t:int) = _tmp_5_1; 
-      (_:int) = _tmp_5_2; 
-      val (t1:int); 
-      val (t2:int); 
-      (t1:int) = 3; 
-      (t2:int) = 6; 
-   }
-
+struct Tuple_assign_foo_type {
+   Tuple_assign_foo_ret_0 : int;
+   Tuple_assign_foo_ret_1 : int;
+   Tuple_assign_foo_ret_2 : int;
 }
+
+struct Tuple_assign_bar_type {
+   inst_1735d : struct Tuple_assign_foo_type;
+}
+
+fun Tuple_assign_foo_type_init(_ctx : struct Tuple_assign_foo_type) : void  {
+   _ctx.Tuple_assign_foo_ret_0 = 0;
+   _ctx.Tuple_assign_foo_ret_1 = 0;
+   _ctx.Tuple_assign_foo_ret_2 = 0;
+}
+
+fun Tuple_assign_bar_type_init(_ctx : struct Tuple_assign_bar_type) : void  {
+   _ = Tuple_assign_foo_type_init(_ctx.inst_1735d);
+}
+
+fun Tuple_assign_foo(_ctx : struct Tuple_assign_foo_type) : void  {
+   _ctx.Tuple_assign_foo_ret_0 = 0;
+   _ctx.Tuple_assign_foo_ret_1 = 1;
+   _ctx.Tuple_assign_foo_ret_2 = 2;
+   return ();
+}
+
+fun Tuple_assign_bar(_ctx : struct Tuple_assign_bar_type) : void  {
+   val x : int;
+   val y : int;
+   val z : int;
+   val w : int;
+   {
+      val _call_temp_0 : int;
+      val _call_temp_1 : int;
+      val _call_temp_2 : int;
+      _ = Tuple_assign_foo(_ctx.inst_1735d);
+      _call_temp_0 = _ctx.inst_1735d.Tuple_assign_foo_ret_0;
+      _call_temp_1 = _ctx.inst_1735d.Tuple_assign_foo_ret_1;
+      _call_temp_2 = _ctx.inst_1735d.Tuple_assign_foo_ret_2;
+      x = _call_temp_0;
+      y = _call_temp_1;
+      z = _call_temp_2;
+      w = 3;
+   }
+   val a : int;
+   val b : int;
+   val c : int;
+   val d : int;
+   a = 0;
+   b = 1;
+   c = 2;
+   d = 3;
+   val r : int;
+   val t : int;
+   r = 0;
+   t = 1;
+   val _t_temp_3 : int;
+   val _t_temp_4 : int;
+   val _t_temp_5 : int;
+   _t_temp_3 = t;
+   _t_temp_4 = r;
+   _t_temp_5 = 0;
+   r = _t_temp_3;
+   t = _t_temp_4;
+   _ = _t_temp_5;
+   val t1 : int;
+   val t2 : int;
+   t1 = 3;
+   t2 = 6;
+}
+

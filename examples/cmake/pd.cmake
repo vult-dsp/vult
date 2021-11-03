@@ -29,7 +29,7 @@ macro(add_pd_object name files)
    target_link_libraries(${name} ${LINK_LIBRARIES})
 endmacro(add_pd_object)
 
-find_program(VULT NAMES vultc.native vultc HINTS ${CMAKE_CURRENT_LIST_DIR}/../../)
+find_program(VULT NAMES ./_build/default/src/vult.exe vult  HINTS ${CMAKE_CURRENT_LIST_DIR}/../../)
 message(STATUS "Vult compiler found in ${VULT}")
 
 function(vult_pd output source includes)

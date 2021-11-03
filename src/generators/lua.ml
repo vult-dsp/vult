@@ -50,6 +50,13 @@ function get(a, i)          return a[i+1] end
 |}]
 
 
+let fix_id name =
+  if Util.Maps.Set.mem name Replacements.Lua.keywords then
+    name ^ "_"
+  else
+    name
+
+
 let rec isValueOrIf (e : exp) =
   match e.e with
   | Unit
@@ -72,15 +79,15 @@ let operator op =
   | Mul -> Pla.string "*"
   | Div -> Pla.string "/"
   | Mod -> Pla.string "%"
-  | Land -> Pla.string "&&"
-  | Lor -> Pla.string "||"
+  | Land -> Pla.string "and"
+  | Lor -> Pla.string "or"
   | Bor -> Pla.string "|"
   | Band -> Pla.string "&"
   | Bxor -> Pla.string "^"
   | Lsh -> Pla.string "<<"
   | Rsh -> Pla.string ">>"
   | Eq -> Pla.string "=="
-  | Ne -> Pla.string "<>"
+  | Ne -> Pla.string "~="
   | Lt -> Pla.string "<"
   | Le -> Pla.string "<="
   | Gt -> Pla.string ">"
@@ -100,7 +107,7 @@ let rec print_exp e =
   | Int n -> Pla.int n
   | Real n -> Pla.float n
   | String s -> Pla.string_quoted s
-  | Id id -> Pla.string id
+  | Id id -> Pla.string (fix_id id)
   | Index { e; index } ->
       let e = print_exp e in
       let index = print_exp index in
@@ -139,7 +146,7 @@ let rec print_exp e =
 let rec print_lexp e =
   match e.l with
   | LWild -> Pla.string "_wild"
-  | LId s -> Pla.string s
+  | LId s -> Pla.string (fix_id s)
   | LMember (e, m) ->
       let e = print_lexp e in
       [%pla {|<#e#>.<#m#s>|}]
@@ -151,29 +158,33 @@ let rec print_lexp e =
 
 let print_dexp (e : dexp) =
   match e.d with
-  | DId (id, None) -> [%pla {|<#id#s>|}]
-  | DId (id, Some dim) -> [%pla {|<#id#s>[<#dim#i>]|}]
+  | DId (id, None) ->
+      let id = fix_id id in
+      [%pla {|<#id#s>|}]
+  | DId (id, Some dim) ->
+      let id = fix_id id in
+      [%pla {|<#id#s>[<#dim#i>]|}]
 
 
 let rec print_stmt s =
   match s with
   | StmtDecl (lhs, None) ->
       let lhs = print_dexp lhs in
-      [%pla {|local <#lhs#>;|}]
+      [%pla {|local <#lhs#>|}]
   | StmtDecl (lhs, Some rhs) ->
       let lhs = print_dexp lhs in
       let rhs = print_exp rhs in
-      [%pla {|local <#lhs#> = <#rhs#>;|}]
+      [%pla {|local <#lhs#> = <#rhs#>|}]
   | StmtBind ({ l = LWild; _ }, rhs) ->
       let rhs = print_exp rhs in
-      [%pla {|<#rhs#>;|}]
+      [%pla {|<#rhs#>|}]
   | StmtBind (lhs, rhs) ->
       let lhs = print_lexp lhs in
       let rhs = print_exp rhs in
-      [%pla {|<#lhs#> = <#rhs#>;|}]
+      [%pla {|<#lhs#> = <#rhs#>|}]
   | StmtReturn e ->
       let e = print_exp e in
-      [%pla {|return <#e#>;|}]
+      [%pla {|return <#e#>|}]
   | StmtIf (cond, then_, None) ->
       let e = print_exp cond in
       let then_ = print_stmt then_ in
@@ -192,7 +203,10 @@ let rec print_stmt s =
       [%pla {|do<#stmt#+>end|}]
 
 
-let print_arg (n, _) = [%pla {|<#n#s>|}]
+let print_arg (n, _) =
+  let n = fix_id n in
+  [%pla {|<#n#s>|}]
+
 
 let print_function_def (def : function_def) =
   let name = def.name in
@@ -218,10 +232,9 @@ let print_top_stmt t =
       [%pla {|<#def#><#body#><#><#>|}]
   | TopExternal _ -> Pla.unit
   | TopType _ -> Pla.unit
-  | TopDecl (lhs, rhs) ->
-      let lhs = print_dexp lhs in
+  | TopDecl ({ d = DId (name, _); _ }, rhs) ->
       let rhs = print_exp rhs in
-      [%pla {|local <#lhs#> = <#rhs#>;|}]
+      [%pla {|local <#name#s> = <#rhs#><#>|}]
 
 
 let print_prog t = Pla.map_join print_top_stmt t

@@ -147,7 +147,7 @@ void Synth1_controlChange(Synth1_process_type& _ctx, int32_t control, float valu
       _ctx.lfo_rate = (value / 127.0f);
    }
    if (control == 33) {
-      _ctx.lfo_amt = (2.0f * ((real(value) / 127.0f) - 0.5f));
+      _ctx.lfo_amt = (2.0f * ((value / 127.0f) - 0.5f));
    }
 }
 

@@ -20,235 +20,235 @@ function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 
 function Synth1_smooth_type_init(_ctx)
-   _ctx.x = 0.0;
+   _ctx.x = 0.0
 end
 
 function Synth1_change_type_init(_ctx)
-   _ctx.pre_x = 0.0;
+   _ctx.pre_x = 0.0
 end
 
 function Synth1_edge_type_init(_ctx)
-   _ctx.pre_x = 0;
+   _ctx.pre_x = 0
 end
 
 function Synth1_each_type_init(_ctx)
-   _ctx.count = 0;
+   _ctx.count = 0
 end
 
 function Synth1_phasor_type_init(_ctx)
-   Synth1_change_type_init(_ctx.inst_1be86);
-   _ctx.phase = 0.0;
-   _ctx.rate = 0.0;
+   Synth1_change_type_init(_ctx.inst_1be86)
+   _ctx.phase = 0.0
+   _ctx.rate = 0.0
 end
 
 function Synth1_lfo_type_init(_ctx)
-   Synth1_edge_type_init(_ctx.inst_11e7d);
-   _ctx.phase = 0.0;
+   Synth1_edge_type_init(_ctx.inst_11e7d)
+   _ctx.phase = 0.0
 end
 
 function Synth1_process_type_init(_ctx)
-   _ctx.count = 0;
-   _ctx.detune = 0.0;
-   _ctx.gate = 0;
-   Synth1_lfo_type_init(_ctx.inst_17d3d);
-   Synth1_phasor_type_init(_ctx.inst_2863d);
-   Synth1_smooth_type_init(_ctx.inst_3dc3d);
-   Synth1_phasor_type_init(_ctx.inst_4863d);
-   Synth1_smooth_type_init(_ctx.inst_5dc3d);
-   Synth1_smooth_type_init(_ctx.inst_6dc3d);
-   _ctx.lfo_amt = 0.0;
-   _ctx.lfo_rate = 0.0;
-   _ctx.n1 = 0;
-   _ctx.n2 = 0;
-   _ctx.n3 = 0;
-   _ctx.n4 = 0;
-   _ctx.pitch = 0.0;
-   _ctx.pre_phase1 = 0.0;
-   _ctx.volume = 0.0;
+   _ctx.count = 0
+   _ctx.detune = 0.0
+   _ctx.gate = 0
+   Synth1_lfo_type_init(_ctx.inst_17d3d)
+   Synth1_phasor_type_init(_ctx.inst_2863d)
+   Synth1_smooth_type_init(_ctx.inst_3dc3d)
+   Synth1_phasor_type_init(_ctx.inst_4863d)
+   Synth1_smooth_type_init(_ctx.inst_5dc3d)
+   Synth1_smooth_type_init(_ctx.inst_6dc3d)
+   _ctx.lfo_amt = 0.0
+   _ctx.lfo_rate = 0.0
+   _ctx.n1 = 0
+   _ctx.n2 = 0
+   _ctx.n3 = 0
+   _ctx.n4 = 0
+   _ctx.pitch = 0.0
+   _ctx.pre_phase1 = 0.0
+   _ctx.volume = 0.0
 end
 
 function Synth1_smooth(_ctx, input)
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005));
-   return _ctx.x;
+   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005))
+   return _ctx.x
 end
 
 function Synth1_change(_ctx, x)
-   local v = (_ctx.pre_x <> x);
-   _ctx.pre_x = x;
-   return v;
+   local v = (_ctx.pre_x ~= x)
+   _ctx.pre_x = x
+   return v
 end
 
 function Synth1_edge(_ctx, x)
-   local v = ((_ctx.pre_x <> x) && (_ctx.pre_x == 0));
-   _ctx.pre_x = x;
-   return v;
+   local v = ((_ctx.pre_x ~= x) and (_ctx.pre_x == 0))
+   _ctx.pre_x = x
+   return v
 end
 
 function Synth1_each(_ctx, n)
-   local ret = (_ctx.count == 0);
-   _ctx.count = ((_ctx.count + 1) % n);
-   return ret;
+   local ret = (_ctx.count == 0)
+   _ctx.count = ((_ctx.count + 1) % n)
+   return ret
 end
 
 function Synth1_pitchToRate(d)
-   return ((8.1758 * exp((0.0577623 * d))) / 44100.0);
+   return ((8.1758 * exp((0.0577623 * d))) / 44100.0)
 end
 
 function Synth1_phasor(_ctx, pitch, reset)
    if Synth1_change(_ctx.inst_1be86, pitch) then
-      _ctx.rate = Synth1_pitchToRate(pitch);
+      _ctx.rate = Synth1_pitchToRate(pitch)
    end
    if reset then
-      _ctx.phase = 0.0;
+      _ctx.phase = 0.0
    else
-      _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.0);
+      _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.0)
    end
-   return _ctx.phase;
+   return _ctx.phase
 end
 
 function Synth1_lfo(_ctx, f, gate)
-   local rate = ((f * 10.0) / 44100.0);
+   local rate = ((f * 10.0) / 44100.0)
    if Synth1_edge(_ctx.inst_11e7d, gate) then
-      _ctx.phase = 0.0;
+      _ctx.phase = 0.0
    end
-   _ctx.phase = (_ctx.phase + rate);
+   _ctx.phase = (_ctx.phase + rate)
    if (_ctx.phase > 1.0) then
-      _ctx.phase = (_ctx.phase - 1.0);
+      _ctx.phase = (_ctx.phase - 1.0)
    end
-   return (sin(((_ctx.phase * 2.0) * 3.14159265359)) - 0.5);
+   return (sin(((_ctx.phase * 2.0) * 3.14159265359)) - 0.5)
 end
 
 function Synth1_process(_ctx, input)
-   local lfo_val = (Synth1_lfo(_ctx.inst_17d3d, _ctx.lfo_rate, _ctx.gate) * _ctx.lfo_amt);
-   local phase1 = Synth1_phasor(_ctx.inst_2863d, _ctx.pitch, false);
-   local comp = (1.0 - phase1);
-   local reset = ((_ctx.pre_phase1 - phase1) > 0.5);
-   _ctx.pre_phase1 = phase1;
-   local phase2 = Synth1_phasor(_ctx.inst_4863d, (_ctx.pitch + (Synth1_smooth(_ctx.inst_3dc3d, (_ctx.detune + lfo_val)) * 32.0)), reset);
-   local sine = sin(((2.0 * 3.14159265359) * phase2));
-   local gate_value = 0.0;
+   local lfo_val = (Synth1_lfo(_ctx.inst_17d3d, _ctx.lfo_rate, _ctx.gate) * _ctx.lfo_amt)
+   local phase1 = Synth1_phasor(_ctx.inst_2863d, _ctx.pitch, false)
+   local comp = (1.0 - phase1)
+   local reset = ((_ctx.pre_phase1 - phase1) > 0.5)
+   _ctx.pre_phase1 = phase1
+   local phase2 = Synth1_phasor(_ctx.inst_4863d, (_ctx.pitch + (Synth1_smooth(_ctx.inst_3dc3d, (_ctx.detune + lfo_val)) * 32.0)), reset)
+   local sine = sin(((2.0 * 3.14159265359) * phase2))
+   local gate_value = 0.0
    if (_ctx.gate > 0) then
-      gate_value = 1.0;
+      gate_value = 1.0
    else
-      gate_value = 0.0;
+      gate_value = 0.0
    end
-   return ((Synth1_smooth(_ctx.inst_5dc3d, _ctx.volume) * (sine * comp)) * Synth1_smooth(_ctx.inst_6dc3d, gate_value));
+   return ((Synth1_smooth(_ctx.inst_5dc3d, _ctx.volume) * (sine * comp)) * Synth1_smooth(_ctx.inst_6dc3d, gate_value))
 end
 
 function Synth1_noteOn(_ctx, note, velocity, channel)
    if (_ctx.count == 0) then
       do
-         _ctx.n1 = note;
-         _ctx.pitch = real(note);
+         _ctx.n1 = note
+         _ctx.pitch = real(note)
       end
    else
       if (_ctx.count == 1) then
          do
-            _ctx.n2 = note;
-            _ctx.pitch = real(note);
+            _ctx.n2 = note
+            _ctx.pitch = real(note)
          end
       else
          if (_ctx.count == 2) then
             do
-               _ctx.n3 = note;
-               _ctx.pitch = real(note);
+               _ctx.n3 = note
+               _ctx.pitch = real(note)
             end
          else
             if (_ctx.count == 3) then
                do
-                  _ctx.n4 = note;
-                  _ctx.pitch = real(note);
+                  _ctx.n4 = note
+                  _ctx.pitch = real(note)
                end
             end
          end
       end
    end
    if (_ctx.count <= 4) then
-      _ctx.count = (_ctx.count + 1);
+      _ctx.count = (_ctx.count + 1)
    end
    if (_ctx.count > 0) then
-      _ctx.gate = 1;
+      _ctx.gate = 1
    else
-      _ctx.gate = 0;
+      _ctx.gate = 0
    end
 end
 
 function Synth1_noteOff(_ctx, note, channel)
-   local found = false;
+   local found = false
    if (note == _ctx.n1) then
       do
-         local _t_temp_5 = _ctx.n2;
-         local _t_temp_6 = _ctx.n3;
-         local _t_temp_7 = _ctx.n4;
-         _ctx.n1 = _t_temp_5;
-         _ctx.n2 = _t_temp_6;
-         _ctx.n3 = _t_temp_7;
-         found = true;
+         local _t_temp_0 = _ctx.n2
+         local _t_temp_1 = _ctx.n3
+         local _t_temp_2 = _ctx.n4
+         _ctx.n1 = _t_temp_0
+         _ctx.n2 = _t_temp_1
+         _ctx.n3 = _t_temp_2
+         found = true
       end
    else
       if (note == _ctx.n2) then
          do
-            local _t_temp_8 = _ctx.n3;
-            local _t_temp_9 = _ctx.n4;
-            _ctx.n2 = _t_temp_8;
-            _ctx.n3 = _t_temp_9;
-            found = true;
+            local _t_temp_3 = _ctx.n3
+            local _t_temp_4 = _ctx.n4
+            _ctx.n2 = _t_temp_3
+            _ctx.n3 = _t_temp_4
+            found = true
          end
       else
          if (note == _ctx.n3) then
             do
-               _ctx.n3 = _ctx.n4;
-               found = true;
+               _ctx.n3 = _ctx.n4
+               found = true
             end
          else
             if (note == _ctx.n4) then
-               found = true;
+               found = true
             end
          end
       end
    end
-   if (found && (_ctx.count > 0)) then
-      _ctx.count = (_ctx.count - 1);
+   if (found and (_ctx.count > 0)) then
+      _ctx.count = (_ctx.count - 1)
    end
    if (_ctx.count > 0) then
-      _ctx.gate = 1;
+      _ctx.gate = 1
    else
-      _ctx.gate = 0;
+      _ctx.gate = 0
    end
    if (_ctx.count == 1) then
-      _ctx.pitch = real(_ctx.n1);
+      _ctx.pitch = real(_ctx.n1)
    end
    if (_ctx.count == 2) then
-      _ctx.pitch = real(_ctx.n2);
+      _ctx.pitch = real(_ctx.n2)
    end
    if (_ctx.count == 3) then
-      _ctx.pitch = real(_ctx.n3);
+      _ctx.pitch = real(_ctx.n3)
    end
    if (_ctx.count == 4) then
-      _ctx.pitch = real(_ctx.n4);
+      _ctx.pitch = real(_ctx.n4)
    end
 end
 
 function Synth1_controlChange(_ctx, control, value, channel)
    if (control == 30) then
-      _ctx.volume = (value / 127.0);
+      _ctx.volume = (value / 127.0)
    end
    if (control == 31) then
-      _ctx.detune = (value / 127.0);
+      _ctx.detune = (value / 127.0)
    end
    if (control == 32) then
-      _ctx.lfo_rate = (value / 127.0);
+      _ctx.lfo_rate = (value / 127.0)
    end
    if (control == 33) then
-      _ctx.lfo_amt = (2.0 * ((real(value) / 127.0) - 0.5));
+      _ctx.lfo_amt = (2.0 * ((value / 127.0) - 0.5))
    end
 end
 
 function Synth1_default(_ctx)
-   _ctx.volume = 1.0;
-   _ctx.pitch = 45.0;
-   _ctx.detune = 0.8;
-   _ctx.lfo_rate = 0.07;
-   _ctx.lfo_amt = (-0.8);
+   _ctx.volume = 1.0
+   _ctx.pitch = 45.0
+   _ctx.detune = 0.8
+   _ctx.lfo_rate = 0.07
+   _ctx.lfo_amt = (-0.8)
 end
 

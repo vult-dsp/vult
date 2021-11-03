@@ -40,9 +40,6 @@ static_inline void Wav_file_process_type_init(Wav_file_process_type& _ctx) {
    Wav_file_osc_wave_type_init(_ctx.inst_19a53);
 }
 
-static_inline int32_t Wav_file_ext_wave_samples() {
-}
-
 static_inline int32_t Wav_file_index(Wav_file_index_type& _ctx) {
    _ctx.i = ((_ctx.i + 1) % Wav_file_ext_wave_samples());
    return _ctx.i;

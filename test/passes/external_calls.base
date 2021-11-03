@@ -1,10 +1,8 @@
-{
-   external foo(x:int) : int "actual_foo"; 
-   fun External_calls.bar() : int /* scope_0 */
-   {
-      val (x:int); 
-      (x:int) = actual_foo(0); 
-      return x; 
-   }
+external External_calls_foo(x : int) : int  "actual_foo"
 
+fun External_calls_bar() : int  {
+   val x : int;
+   x = External_calls_foo(0);
+   return x;
 }
+

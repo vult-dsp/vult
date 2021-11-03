@@ -1,110 +1,50 @@
-{
-   type tuple(real, real) {
-      val field_0 : real; 
-      val field_1 : real; 
-   }
-
-   type Output_references._ctx_type_0 {
-      val foo_ret_1 : real; 
-      val foo_ret_0 : real; 
-   }
-
-   type Output_references.foo_type : Output_references._ctx_type_0; 
-   fun Output_references._ctx_type_0_init(_output_:Output_references._ctx_type_0) : unit {
-      val (_ctx:Output_references._ctx_type_0); 
-      (_ctx.foo_ret_1:real) = 0.; 
-      (_ctx.foo_ret_0:real) = 0.; 
-      (_output_:Output_references._ctx_type_0) = _ctx; 
-      return (); 
-   }
-
-   fun Output_references.foo_init(_output_:Output_references._ctx_type_0) : unit {
-      (_:unit) = Output_references._ctx_type_0_init(_output_); 
-      return (); 
-   }
-
-   fun Output_references.foo(_ctx:Output_references._ctx_type_0, x:int) : tuple(real, real) /* scope_0 */
-   {
-      val (_cond_5:bool); 
-      (_cond_5:bool) = (x > 0); 
-      if(_cond_5)
-         /* scope_1 */
-         {
-            (_ctx.foo_ret_0:real) = 0.; 
-            (_ctx.foo_ret_1:real) = 0.; 
-            return (); 
-         }
-      else
-         /* scope_2 */
-         {
-            (_ctx.foo_ret_0:real) = 1.; 
-            (_ctx.foo_ret_1:real) = 1.; 
-            return (); 
-         }
-   }
-
-   type Output_references.foo_ret_0_type : Output_references._ctx_type_0; 
-   fun Output_references.foo_ret_0_init(_output_:Output_references._ctx_type_0) : unit {
-      (_:unit) = Output_references._ctx_type_0_init(_output_); 
-      return (); 
-   }
-
-   and Output_references.foo_ret_0(_ctx:Output_references._ctx_type_0) : real return _ctx.foo_ret_0; 
-
-   type Output_references.foo_ret_1_type : Output_references._ctx_type_0; 
-   fun Output_references.foo_ret_1_init(_output_:Output_references._ctx_type_0) : unit {
-      (_:unit) = Output_references._ctx_type_0_init(_output_); 
-      return (); 
-   }
-
-   and Output_references.foo_ret_1(_ctx:Output_references._ctx_type_0) : real return _ctx.foo_ret_1; 
-
-   type Output_references._ctx_type_1 {
-      val bar_ret_1 : real; 
-      val bar_ret_0 : real; 
-      val _inst156 : Output_references._ctx_type_0; 
-   }
-
-   type Output_references.bar_type : Output_references._ctx_type_1; 
-   fun Output_references._ctx_type_1_init(_output_:Output_references._ctx_type_1) : unit {
-      val (_ctx:Output_references._ctx_type_1); 
-      (_ctx.bar_ret_1:real) = 0.; 
-      (_ctx.bar_ret_0:real) = 0.; 
-      (_:unit) = Output_references._ctx_type_0_init(_ctx._inst156); 
-      (_output_:Output_references._ctx_type_1) = _ctx; 
-      return (); 
-   }
-
-   fun Output_references.bar_init(_output_:Output_references._ctx_type_1) : unit {
-      (_:unit) = Output_references._ctx_type_1_init(_output_); 
-      return (); 
-   }
-
-   fun Output_references.bar(_ctx:Output_references._ctx_type_1) : tuple(real, real) /* scope_0 */
-   {
-      val (x:tuple(real, real)); 
-      val (y:int); 
-      _ = Output_references.foo(_ctx._inst156, 1); 
-      (x:tuple(real, real)) = (Output_references.foo_ret_0(_ctx._inst156), Output_references.foo_ret_1(_ctx._inst156)); 
-      (y:int) = 1; 
-      ((_ctx.bar_ret_0:real), (_ctx.bar_ret_1:real)) = x; 
-      return (); 
-   }
-
-   type Output_references.bar_ret_0_type : Output_references._ctx_type_1; 
-   fun Output_references.bar_ret_0_init(_output_:Output_references._ctx_type_1) : unit {
-      (_:unit) = Output_references._ctx_type_1_init(_output_); 
-      return (); 
-   }
-
-   and Output_references.bar_ret_0(_ctx:Output_references._ctx_type_1) : real return _ctx.bar_ret_0; 
-
-   type Output_references.bar_ret_1_type : Output_references._ctx_type_1; 
-   fun Output_references.bar_ret_1_init(_output_:Output_references._ctx_type_1) : unit {
-      (_:unit) = Output_references._ctx_type_1_init(_output_); 
-      return (); 
-   }
-
-   and Output_references.bar_ret_1(_ctx:Output_references._ctx_type_1) : real return _ctx.bar_ret_1; 
-
+struct Output_references_foo_type {
+   Output_references_foo_ret_0 : real;
+   Output_references_foo_ret_1 : real;
 }
+
+struct Output_references_bar_type {
+   Output_references_bar_ret_0 : real;
+   Output_references_bar_ret_1 : real;
+   inst_1e3f4 : struct Output_references_foo_type;
+}
+
+fun Output_references_foo_type_init(_ctx : struct Output_references_foo_type) : void  {
+   _ctx.Output_references_foo_ret_0 = 0.0;
+   _ctx.Output_references_foo_ret_1 = 0.0;
+}
+
+fun Output_references_bar_type_init(_ctx : struct Output_references_bar_type) : void  {
+   _ctx.Output_references_bar_ret_0 = 0.0;
+   _ctx.Output_references_bar_ret_1 = 0.0;
+   _ = Output_references_foo_type_init(_ctx.inst_1e3f4);
+}
+
+fun Output_references_foo(_ctx : struct Output_references_foo_type, x : int) : void  {
+   if ((x > 0)) {
+      _ctx.Output_references_foo_ret_0 = 0.0;
+      _ctx.Output_references_foo_ret_1 = 0.0;
+      return ();
+   }
+   else {
+      _ctx.Output_references_foo_ret_0 = 1.0;
+      _ctx.Output_references_foo_ret_1 = 1.0;
+      return ();
+   }
+}
+
+fun Output_references_bar(_ctx : struct Output_references_bar_type) : void  {
+   val x : (real, real);
+   val y : int;
+   {
+      val _call_temp_0 : real;
+      val _call_temp_1 : real;
+      _ = Output_references_foo(_ctx.inst_1e3f4, 1);
+      _call_temp_0 = _ctx.inst_1e3f4.Output_references_foo_ret_0;
+      _call_temp_1 = _ctx.inst_1e3f4.Output_references_foo_ret_1;
+      x = (_call_temp_0, _call_temp_1);
+      y = 1;
+   }
+   return x;
+}
+

@@ -1,78 +1,46 @@
-{
-   type Context_simple._ctx_type_0 {
-      val pre : real; 
-   }
-
-   type Context_simple.change_type : Context_simple._ctx_type_0; 
-   fun Context_simple._ctx_type_0_init(_output_:Context_simple._ctx_type_0) : unit {
-      val (_ctx:Context_simple._ctx_type_0); 
-      (_ctx.pre:real) = 0.; 
-      (_output_:Context_simple._ctx_type_0) = _ctx; 
-      return (); 
-   }
-
-   fun Context_simple.change_init(_output_:Context_simple._ctx_type_0) : unit {
-      (_:unit) = Context_simple._ctx_type_0_init(_output_); 
-      return (); 
-   }
-
-   fun Context_simple.change(_ctx:Context_simple._ctx_type_0, x:real) : bool /* scope_0 */
-   {
-      val (ret:bool); 
-      (ret:bool) = (x <> _ctx.pre); 
-      (_ctx.pre:real) = x; 
-      return ret; 
-   }
-
-   type Context_simple.reset_type : Context_simple._ctx_type_0; 
-   fun Context_simple.reset_init(_output_:Context_simple._ctx_type_0) : unit {
-      (_:unit) = Context_simple._ctx_type_0_init(_output_); 
-      return (); 
-   }
-
-   and Context_simple.reset(_ctx:Context_simple._ctx_type_0) : unit /* scope_0 */
-   (_ctx.pre:real) = 0.; 
-
-   type Context_simple.set_type : Context_simple._ctx_type_0; 
-   fun Context_simple.set_init(_output_:Context_simple._ctx_type_0) : unit {
-      (_:unit) = Context_simple._ctx_type_0_init(_output_); 
-      return (); 
-   }
-
-   and Context_simple.set(_ctx:Context_simple._ctx_type_0, x:real) : unit /* scope_1 */
-   (_ctx.pre:real) = x; 
-
-   type Context_simple._ctx_type_1 {
-      val c : Context_simple._ctx_type_0; 
-      val _inst2ef : Context_simple._ctx_type_0; 
-      val _inst1ef : Context_simple._ctx_type_0; 
-   }
-
-   type Context_simple.foo_type : Context_simple._ctx_type_1; 
-   fun Context_simple._ctx_type_1_init(_output_:Context_simple._ctx_type_1) : unit {
-      val (_ctx:Context_simple._ctx_type_1); 
-      (_:unit) = Context_simple._ctx_type_0_init(_ctx.c); 
-      (_:unit) = Context_simple._ctx_type_0_init(_ctx._inst2ef); 
-      (_:unit) = Context_simple._ctx_type_0_init(_ctx._inst1ef); 
-      (_output_:Context_simple._ctx_type_1) = _ctx; 
-      return (); 
-   }
-
-   fun Context_simple.foo_init(_output_:Context_simple._ctx_type_1) : unit {
-      (_:unit) = Context_simple._ctx_type_1_init(_output_); 
-      return (); 
-   }
-
-   fun Context_simple.foo(_ctx:Context_simple._ctx_type_1, x:real) : unit /* scope_0 */
-   {
-      val (v1:bool); 
-      (v1:bool) = Context_simple.change(_ctx._inst1ef, x); 
-      val (v2:bool); 
-      (v2:bool) = Context_simple.change(_ctx._inst2ef, x); 
-      val (v3:bool); 
-      (v3:bool) = Context_simple.change(_ctx.c, x); 
-      (_:unit) = Context_simple.reset(_ctx.c); 
-      (_:unit) = Context_simple.set(_ctx.c, 0.); 
-   }
-
+struct Context_simple_change_type {
+   pre : real;
 }
+
+struct Context_simple_foo_type {
+   c_e8dd : struct Context_simple_change_type;
+   inst_1e8dd : struct Context_simple_change_type;
+   inst_2e8dd : struct Context_simple_change_type;
+}
+
+fun Context_simple_change_type_init(_ctx : struct Context_simple_change_type) : void  {
+   _ctx.pre = 0.0;
+}
+
+fun Context_simple_foo_type_init(_ctx : struct Context_simple_foo_type) : void  {
+   _ = Context_simple_change_type_init(_ctx.c_e8dd);
+   _ = Context_simple_change_type_init(_ctx.inst_1e8dd);
+   _ = Context_simple_change_type_init(_ctx.inst_2e8dd);
+}
+
+fun Context_simple_change(_ctx : struct Context_simple_change_type, x : real) : bool  {
+   val ret : bool;
+   ret = (x <> _ctx.pre);
+   _ctx.pre = x;
+   return ret;
+}
+
+fun Context_simple_reset(_ctx : struct Context_simple_change_type) : void  {
+   _ctx.pre = 0.0;
+}
+
+fun Context_simple_set(_ctx : struct Context_simple_change_type, x : real) : void  {
+   _ctx.pre = x;
+}
+
+fun Context_simple_foo(_ctx : struct Context_simple_foo_type, x : real) : void  {
+   val v1 : bool;
+   v1 = Context_simple_change(_ctx.inst_1e8dd, x);
+   val v2 : bool;
+   v2 = Context_simple_change(_ctx.inst_2e8dd, x);
+   val v3 : bool;
+   v3 = Context_simple_change(_ctx.c_e8dd, x);
+   _ = Context_simple_reset(_ctx.c_e8dd);
+   _ = Context_simple_set(_ctx.c_e8dd, 0.0);
+}
+

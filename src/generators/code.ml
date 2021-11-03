@@ -350,9 +350,10 @@ module Convert = struct
         let decl = Map.add n (dim, t) env.decl in
         { env with decl }, []
     | { s = StmtDecl _; _ } -> failwith "there should not be tuples or wild"
-    | { s = StmtBind ({ l = LWild; _ }, rhs); _ } ->
+    | { s = StmtBind ({ l = LWild; _ }, ({ e = ECall _; _ } as rhs)); _ } ->
         let rhs = exp context rhs in
         env, [ StmtBind ({ l = LWild; t = Void None }, rhs) ]
+    | { s = StmtBind ({ l = LWild; _ }, _); _ } -> env, []
     | { s = StmtBind (lhs, rhs); _ } ->
         let lhs = lexp context lhs in
         let rhs = exp context rhs in
@@ -404,18 +405,19 @@ module Convert = struct
     { name; args; t = args_t, ret_t; tags = def.tags; loc = def.loc; info = function_info def.info }
 
 
-  let top_stmt context (top : Prog.top_stmt) : top_stmt =
+  let top_stmt context (top : Prog.top_stmt) : top_stmt option =
     match top with
+    | { top = TopFunction (def, _); _ } when Pparser.Ptags.has def.tags "placeholder" -> None
     | { top = TopFunction (def, body); _ } ->
         let _, body = stmt context default_env body in
         let def = function_def def in
-        TopFunction (def, makeBlock body)
+        Some (TopFunction (def, makeBlock body))
     | { top = TopType descr; _ } ->
         let descr = struct_descr descr in
-        TopType descr
+        Some (TopType descr)
     | { top = TopExternal (def, name); _ } ->
         let def = function_def def in
-        TopExternal (def, name)
+        Some (TopExternal (def, name))
 
 
   let registerExternalNames (stmts : Prog.top_stmt list) =
@@ -430,5 +432,5 @@ module Convert = struct
 
   let prog stmts =
     let context = registerExternalNames stmts in
-    List.map (top_stmt context) stmts
+    List.filter_map (top_stmt context) stmts
 end

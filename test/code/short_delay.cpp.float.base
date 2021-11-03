@@ -16,11 +16,11 @@ float Short_delay_do(Short_delay_do_type& _ctx, float x, float time, float feedb
       read_pos = delta;
    }
    float decimal = (index_r - int_to_float(index_i));
-   float x1 = get(_ctx.buffer, read_pos);
-   float x2 = get(_ctx.buffer, ((read_pos + 1) % 22050));
+   float x1 = float_get(_ctx.buffer, read_pos);
+   float x2 = float_get(_ctx.buffer, ((read_pos + 1) % 22050));
    float ret = (((x2 - x1) * decimal) + x1);
    _ctx.write_pos = ((_ctx.write_pos + 1) % 22050);
-   set(_ctx.buffer, _ctx.write_pos, Saturate_process((x + (feedback * ret))));
+   float_set(_ctx.buffer, _ctx.write_pos, Saturate_process((x + (feedback * ret))));
    return ret;
 }
 

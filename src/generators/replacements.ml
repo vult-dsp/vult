@@ -19,6 +19,14 @@ module C = struct
     | "real", [ Fixed ], _ -> Some "fix_to_float"
     | "fix16", [ Real ], _ -> Some "float_to_fix"
     | "fix16", [ Int ], _ -> Some "int_to_fix"
+    (* get *)
+    | "get", [ Array (_, Real); Int ], Real -> Some "float_get"
+    | "get", [ Array (_, Fixed); Int ], Real -> Some "fix_get"
+    | "get", [ Array (_, Int); Int ], Int -> Some "int_get"
+    (* set *)
+    | "set", [ Array (_, Real); Int; Real ], Void None -> Some "float_set"
+    | "set", [ Array (_, Fixed); Int; Fixed ], Void None -> Some "fix_set"
+    | "set", [ Array (_, Int); Int; Int ], Void None -> Some "int_set"
     | _ -> None
 
 
@@ -30,4 +38,24 @@ module C = struct
     | Sub, Fixed, Fixed, Fixed -> Some "fix_sub"
     | Div, Fixed, Fixed, Fixed -> Some "fix_div"
     | _ -> None
+end
+
+module Lua = struct
+  let keywords =
+    [ "and"
+    ; "break"
+    ; "do"
+    ; "elseif"
+    ; "end"
+    ; "for"
+    ; "function"
+    ; "in"
+    ; "local"
+    ; "nil"
+    ; "or"
+    ; "repeat"
+    ; "return"
+    ; "until"
+    ]
+    |> Util.Maps.Set.of_list
 end

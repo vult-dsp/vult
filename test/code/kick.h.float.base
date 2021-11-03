@@ -391,10 +391,10 @@ void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r);
 
 static_inline void Ahr_process(Ahr_process_type& _ctx, float gate) {
    Ahr_do(_ctx.inst_1d84b, gate, _ctx.knob1, _ctx.knob2, _ctx.knob3);
-   float _call_temp_2 = _ctx.inst_1d84b.Ahr_do_ret_0;
-   float _call_temp_3 = _ctx.inst_1d84b.Ahr_do_ret_1;
-   _ctx.Ahr_process_ret_0 = _call_temp_2;
-   _ctx.Ahr_process_ret_1 = _call_temp_3;
+   float _call_temp_0 = _ctx.inst_1d84b.Ahr_do_ret_0;
+   float _call_temp_1 = _ctx.inst_1d84b.Ahr_do_ret_1;
+   _ctx.Ahr_process_ret_0 = _call_temp_0;
+   _ctx.Ahr_process_ret_1 = _call_temp_1;
    return ;
 }
 
@@ -421,7 +421,6 @@ static_inline float Kick_do(Kick_do_type& _ctx, float gate, float odecay, float 
    float osc_sat = Saturate_process((1.5f * osc));
    Ahr_do(_ctx.inst_4d863, gate, 0.001f, 0.01f, ((noise * 0.01f) + 0.001f));
    float noise_env = _ctx.inst_4d863.Ahr_do_ret_0;
-   _ctx.inst_4d863.Ahr_do_ret_1;
    float noise_osc = ((noise * Noise_process(_ctx.inst_53d63, 1.0f)) / 3.0f);
    return ((osc_env * osc_sat) + (noise_env * noise_osc));
 }

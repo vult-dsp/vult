@@ -20,269 +20,269 @@ function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 
 function Delay_smooth_type_init(_ctx)
-   _ctx.x = 0.0;
+   _ctx.x = 0.0
 end
 
 function Delay_change_type_init(_ctx)
-   _ctx.pre_x = 0.0;
+   _ctx.pre_x = 0.0
 end
 
 function Delay_edge_type_init(_ctx)
-   _ctx.pre_x = false;
+   _ctx.pre_x = false
 end
 
 function Delay_each_type_init(_ctx)
-   _ctx.count = 0;
+   _ctx.count = 0
 end
 
 function Delay_phasor_type_init(_ctx)
-   Delay_change_type_init(_ctx.inst_18071);
-   _ctx.phase = 0.0;
-   _ctx.rate = 0.0;
+   Delay_change_type_init(_ctx.inst_18071)
+   _ctx.phase = 0.0
+   _ctx.rate = 0.0
 end
 
 function Delay_lfo_type_init(_ctx)
-   Delay_edge_type_init(_ctx.inst_11461);
-   _ctx.phase = 0.0;
+   Delay_edge_type_init(_ctx.inst_11461)
+   _ctx.phase = 0.0
 end
 
 function Delay_phd_osc_type_init(_ctx)
-   Delay_phasor_type_init(_ctx.inst_171c4);
-   Delay_smooth_type_init(_ctx.inst_277c4);
-   Delay_phasor_type_init(_ctx.inst_371c4);
-   _ctx.pre_phase1 = 0.0;
+   Delay_phasor_type_init(_ctx.inst_171c4)
+   Delay_smooth_type_init(_ctx.inst_277c4)
+   Delay_phasor_type_init(_ctx.inst_371c4)
+   _ctx.pre_phase1 = 0.0
 end
 
 function Delay_delay_type_init(_ctx)
-   local i_0 = 0;
+   local i_0 = 0
    while (i_0 < 30000) do
       do
-         _ctx.buffer[i_0] = 0.0;
-         i_0 = (i_0 + 1);
+         _ctx.buffer[i_0] = 0.0
+         i_0 = (i_0 + 1)
       end
    end
-   _ctx.write_pos = 0;
+   _ctx.write_pos = 0
 end
 
 function Delay_mono_noteOn_type_init(_ctx)
-   _ctx.count = 0;
-   local i_0 = 0;
+   _ctx.count = 0
+   local i_0 = 0
    while (i_0 < 4) do
       do
-         _ctx.notes[i_0] = 0;
-         i_0 = (i_0 + 1);
+         _ctx.notes[i_0] = 0
+         i_0 = (i_0 + 1)
       end
    end
-   _ctx.pre = 0;
+   _ctx.pre = 0
 end
 
 function Delay_process_type_init(_ctx)
-   _ctx.detune = 0.0;
-   _ctx.feedback = 0.0;
-   Delay_lfo_type_init(_ctx.inst_16101);
-   Delay_phd_osc_type_init(_ctx.inst_2c401);
-   Delay_smooth_type_init(_ctx.inst_37701);
-   Delay_smooth_type_init(_ctx.inst_47701);
-   Delay_smooth_type_init(_ctx.inst_57701);
-   Delay_delay_type_init(_ctx.inst_68e01);
-   _ctx.lfo_amt = 0.0;
-   _ctx.lfo_rate = 0.0;
-   Delay_mono_noteOn_type_init(_ctx.notes_5901);
-   _ctx.pitch = 0.0;
-   _ctx.time = 0.0;
-   _ctx.volume = 0.0;
+   _ctx.detune = 0.0
+   _ctx.feedback = 0.0
+   Delay_lfo_type_init(_ctx.inst_16101)
+   Delay_phd_osc_type_init(_ctx.inst_2c401)
+   Delay_smooth_type_init(_ctx.inst_37701)
+   Delay_smooth_type_init(_ctx.inst_47701)
+   Delay_smooth_type_init(_ctx.inst_57701)
+   Delay_delay_type_init(_ctx.inst_68e01)
+   _ctx.lfo_amt = 0.0
+   _ctx.lfo_rate = 0.0
+   Delay_mono_noteOn_type_init(_ctx.notes_5901)
+   _ctx.pitch = 0.0
+   _ctx.time = 0.0
+   _ctx.volume = 0.0
 end
 
 function Delay_smooth(_ctx, input)
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005));
-   return _ctx.x;
+   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005))
+   return _ctx.x
 end
 
 function Delay_change(_ctx, x)
-   local v = (_ctx.pre_x <> x);
-   _ctx.pre_x = x;
-   return v;
+   local v = (_ctx.pre_x ~= x)
+   _ctx.pre_x = x
+   return v
 end
 
 function Delay_edge(_ctx, x)
-   local v = ((_ctx.pre_x <> x) && (_ctx.pre_x == false));
-   _ctx.pre_x = x;
-   return v;
+   local v = ((_ctx.pre_x ~= x) and (_ctx.pre_x == false))
+   _ctx.pre_x = x
+   return v
 end
 
 function Delay_each(_ctx, n)
-   local ret = (_ctx.count == 0);
-   _ctx.count = ((_ctx.count + 1) % n);
-   return ret;
+   local ret = (_ctx.count == 0)
+   _ctx.count = ((_ctx.count + 1) % n)
+   return ret
 end
 
 function Delay_pitchToRate(d)
-   return ((8.1758 * exp((0.0577623 * d))) / 44100.0);
+   return ((8.1758 * exp((0.0577623 * d))) / 44100.0)
 end
 
 function Delay_phasor(_ctx, pitch, reset)
    if Delay_change(_ctx.inst_18071, pitch) then
-      _ctx.rate = Delay_pitchToRate(pitch);
+      _ctx.rate = Delay_pitchToRate(pitch)
    end
    if reset then
-      _ctx.phase = 0.0;
+      _ctx.phase = 0.0
    else
-      _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.0);
+      _ctx.phase = ((_ctx.phase + _ctx.rate) % 1.0)
    end
-   return _ctx.phase;
+   return _ctx.phase
 end
 
 function Delay_lfo(_ctx, f, gate)
-   local rate = ((f * 10.0) / 44100.0);
+   local rate = ((f * 10.0) / 44100.0)
    if Delay_edge(_ctx.inst_11461, gate) then
-      _ctx.phase = 0.0;
+      _ctx.phase = 0.0
    end
-   _ctx.phase = (_ctx.phase + rate);
+   _ctx.phase = (_ctx.phase + rate)
    if (_ctx.phase > 1.0) then
-      _ctx.phase = (_ctx.phase - 1.0);
+      _ctx.phase = (_ctx.phase - 1.0)
    end
-   return (sin(((_ctx.phase * 2.0) * 3.14159265359)) - 0.5);
+   return (sin(((_ctx.phase * 2.0) * 3.14159265359)) - 0.5)
 end
 
 function Delay_phd_osc(_ctx, pitch, detune)
-   local phase1 = Delay_phasor(_ctx.inst_171c4, pitch, false);
-   local comp = (1.0 - phase1);
-   local reset = ((_ctx.pre_phase1 - phase1) > 0.5);
-   _ctx.pre_phase1 = phase1;
-   local phase2 = Delay_phasor(_ctx.inst_371c4, (pitch + (Delay_smooth(_ctx.inst_277c4, detune) * 32.0)), reset);
-   local sine = sin(((2.0 * 3.14159265359) * phase2));
-   return (sine * comp);
+   local phase1 = Delay_phasor(_ctx.inst_171c4, pitch, false)
+   local comp = (1.0 - phase1)
+   local reset = ((_ctx.pre_phase1 - phase1) > 0.5)
+   _ctx.pre_phase1 = phase1
+   local phase2 = Delay_phasor(_ctx.inst_371c4, (pitch + (Delay_smooth(_ctx.inst_277c4, detune) * 32.0)), reset)
+   local sine = sin(((2.0 * 3.14159265359) * phase2))
+   return (sine * comp)
 end
 
 function Delay_delay(_ctx, x, time, feedback)
-   time = clip(time, 0.0, 1.0);
-   feedback = clip(feedback, 0.0, 1.0);
-   local index_r = (real(30000) * time);
-   local index_i = int(floor(index_r));
-   local delta = (_ctx.write_pos - index_i);
-   local read_pos = 0;
+   time = clip(time, 0.0, 1.0)
+   feedback = clip(feedback, 0.0, 1.0)
+   local index_r = (real(30000) * time)
+   local index_i = int(floor(index_r))
+   local delta = (_ctx.write_pos - index_i)
+   local read_pos = 0
    if (delta < 0) then
-      read_pos = (30000 + delta);
+      read_pos = (30000 + delta)
    else
-      read_pos = delta;
+      read_pos = delta
    end
-   local decimal = (index_r - real(index_i));
-   local x1 = get(_ctx.buffer, read_pos);
-   local x2 = get(_ctx.buffer, ((read_pos + 1) % 30000));
-   local ret = (((x2 - x1) * decimal) + x1);
-   _ctx.write_pos = ((_ctx.write_pos + 1) % 30000);
-   set(_ctx.buffer, _ctx.write_pos, clip((x + (feedback * ret)), (-1.0), 1.0));
-   return ret;
+   local decimal = (index_r - real(index_i))
+   local x1 = get(_ctx.buffer, read_pos)
+   local x2 = get(_ctx.buffer, ((read_pos + 1) % 30000))
+   local ret = (((x2 - x1) * decimal) + x1)
+   _ctx.write_pos = ((_ctx.write_pos + 1) % 30000)
+   set(_ctx.buffer, _ctx.write_pos, clip((x + (feedback * ret)), (-1.0), 1.0))
+   return ret
 end
 
 function Delay_mono_noteOn(_ctx, n)
    if (_ctx.count < 4) then
       do
-         set(_ctx.notes, _ctx.count, n);
-         _ctx.pre = n;
+         set(_ctx.notes, _ctx.count, n)
+         _ctx.pre = n
          if (_ctx.count < 4) then
-            _ctx.count = (_ctx.count + 1);
+            _ctx.count = (_ctx.count + 1)
          end
       end
    end
-   return _ctx.pre;
+   return _ctx.pre
 end
 
 function Delay_mono_noteOff(_ctx, n)
-   local found = false;
-   local i = 0;
-   local pos = 0;
+   local found = false
+   local i = 0
+   local pos = 0
    if (_ctx.count == 0) then
-      return _ctx.pre;
+      return _ctx.pre
    end
-   while ((i < 4) && (found == false)) do
+   while ((i < 4) and (found == false)) do
       do
          if (get(_ctx.notes, i) == n) then
             do
-               pos = i;
-               found = true;
+               pos = i
+               found = true
             end
          end
-         i = (i + 1);
+         i = (i + 1)
       end
    end
    if found then
       do
-         local k = (pos + 1);
+         local k = (pos + 1)
          while (k < 4) do
             do
-               set(_ctx.notes, (k - 1), get(_ctx.notes, k));
-               k = (k + 1);
+               set(_ctx.notes, (k - 1), get(_ctx.notes, k))
+               k = (k + 1)
             end
          end
-         if (found && (_ctx.count > 0)) then
+         if (found and (_ctx.count > 0)) then
             do
-               _ctx.count = (_ctx.count - 1);
-               _ctx.pre = get(_ctx.notes, (_ctx.count - 1));
+               _ctx.count = (_ctx.count - 1)
+               _ctx.pre = get(_ctx.notes, (_ctx.count - 1))
             end
          end
       end
    end
-   return _ctx.pre;
+   return _ctx.pre
 end
 
 function Delay_mono_isGateOn(_ctx)
-   return (_ctx.count > 0);
+   return (_ctx.count > 0)
 end
 
 function Delay_process(_ctx, input)
-   local gate = Delay_mono_isGateOn(_ctx.notes_5901);
-   local lfo_val = (Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate) * _ctx.lfo_amt);
-   local o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, (_ctx.detune + lfo_val));
-   local amp = 0.0;
-   local _if_temp_1 = 0.0;
+   local gate = Delay_mono_isGateOn(_ctx.notes_5901)
+   local lfo_val = (Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate) * _ctx.lfo_amt)
+   local o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, (_ctx.detune + lfo_val))
+   local amp = 0.0
+   local _if_temp_0 = 0.0
    if gate then
-      _if_temp_1 = 1.0;
+      _if_temp_0 = 1.0
    else
-      _if_temp_1 = 0.0;
+      _if_temp_0 = 0.0
    end
-   amp = Delay_smooth(_ctx.inst_37701, _if_temp_1);
-   local osc_out = (o1 * amp);
-   local delay_out = Delay_delay(_ctx.inst_68e01, osc_out, Delay_smooth(_ctx.inst_47701, _ctx.time), Delay_smooth(_ctx.inst_57701, _ctx.feedback));
-   return ((_ctx.volume * (osc_out + delay_out)) / 2.0);
+   amp = Delay_smooth(_ctx.inst_37701, _if_temp_0)
+   local osc_out = (o1 * amp)
+   local delay_out = Delay_delay(_ctx.inst_68e01, osc_out, Delay_smooth(_ctx.inst_47701, _ctx.time), Delay_smooth(_ctx.inst_57701, _ctx.feedback))
+   return ((_ctx.volume * (osc_out + delay_out)) / 2.0)
 end
 
 function Delay_noteOn(_ctx, note, velocity, channel)
-   _ctx.pitch = real(Delay_mono_noteOn(_ctx.notes_5901, note));
+   _ctx.pitch = real(Delay_mono_noteOn(_ctx.notes_5901, note))
 end
 
 function Delay_noteOff(_ctx, note, channel)
-   _ctx.pitch = real(Delay_mono_noteOff(_ctx.notes_5901, note));
+   _ctx.pitch = real(Delay_mono_noteOff(_ctx.notes_5901, note))
 end
 
 function Delay_controlChange(_ctx, control, value, channel)
    if (control == 30) then
-      _ctx.volume = (value / 127.0);
+      _ctx.volume = (value / 127.0)
    end
    if (control == 31) then
-      _ctx.detune = (value / 127.0);
+      _ctx.detune = (value / 127.0)
    end
    if (control == 32) then
-      _ctx.lfo_rate = (value / 127.0);
+      _ctx.lfo_rate = (value / 127.0)
    end
    if (control == 33) then
-      _ctx.lfo_amt = (2.0 * ((real(value) / 127.0) - 0.5));
+      _ctx.lfo_amt = (2.0 * ((value / 127.0) - 0.5))
    end
    if (control == 34) then
-      _ctx.time = (value / 127.0);
+      _ctx.time = (value / 127.0)
    end
    if (control == 35) then
-      _ctx.feedback = (value / 127.0);
+      _ctx.feedback = (value / 127.0)
    end
 end
 
 function Delay_default(_ctx)
-   _ctx.volume = 1.0;
-   _ctx.pitch = 45.0;
-   _ctx.detune = 0.8;
-   _ctx.lfo_rate = 0.07;
-   _ctx.lfo_amt = (-0.8);
-   _ctx.time = 0.5;
-   _ctx.feedback = 0.5;
+   _ctx.volume = 1.0
+   _ctx.pitch = 45.0
+   _ctx.detune = 0.8
+   _ctx.lfo_rate = 0.07
+   _ctx.lfo_amt = (-0.8)
+   _ctx.time = 0.5
+   _ctx.feedback = 0.5
 end
 

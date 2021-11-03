@@ -20,37 +20,37 @@ function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 
 function Noise_pinker_type_init(_ctx)
-   _ctx.w1 = 0.0;
+   _ctx.w1 = 0.0
 end
 
 function Noise_process_type_init(_ctx)
-   Noise_pinker_type_init(_ctx.inst_16d3d);
-   _ctx.x1 = 0;
-   _ctx.x2 = 0;
+   Noise_pinker_type_init(_ctx.inst_16d3d)
+   _ctx.x1 = 0
+   _ctx.x2 = 0
 end
 
 function Noise_pinker(_ctx, x)
-   local b0 = 0.0277129863191;
-   local b1 = 0.0277129863191;
-   local a1 = (-0.944574027362);
-   local w0 = (x - (a1 * _ctx.w1));
-   local y0 = ((b0 * w0) + (b1 * _ctx.w1));
-   _ctx.w1 = w0;
-   return y0;
+   local b0 = 0.0277129863191
+   local b1 = 0.0277129863191
+   local a1 = (-0.944574027362)
+   local w0 = (x - (a1 * _ctx.w1))
+   local y0 = ((b0 * w0) + (b1 * _ctx.w1))
+   _ctx.w1 = w0
+   return y0
 end
 
 function Noise_process(_ctx, color)
-   _ctx.x1 = (((_ctx.x1 * 17389) + 7919) % 32768);
-   local y1 = (real(_ctx.x1) / 32768.0);
-   _ctx.x2 = (((_ctx.x2 * 27449) + 12553) % 32768);
-   local y2 = (real(_ctx.x2) / 32768.0);
-   local out = 0.0;
+   _ctx.x1 = (((_ctx.x1 * 17389) + 7919) % 32768)
+   local y1 = (real(_ctx.x1) / 32768.0)
+   _ctx.x2 = (((_ctx.x2 * 27449) + 12553) % 32768)
+   local y2 = (real(_ctx.x2) / 32768.0)
+   local out = 0.0
    if (color > 0.5) then
-      out = Noise_pinker(_ctx.inst_16d3d, (y1 - y2));
+      out = Noise_pinker(_ctx.inst_16d3d, (y1 - y2))
    else
-      out = (y1 - y2);
+      out = (y1 - y2)
    end
-   return (2.0 * out);
+   return (2.0 * out)
 end
 
 function Noise_noteOn(_ctx, note, velocity, channel)

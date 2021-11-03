@@ -800,7 +800,7 @@ and stmt_list env return l =
 
 let addGeneratedFunctions tags name next =
   if Ptags.has tags "wave" then
-    let code = Pla.print [%pla {|fun <#name#s>_samples() : int|}] in
+    let code = Pla.print [%pla {|fun <#name#s>_samples() @[placeholder] : int|}] in
     let def = Parse.parseFunctionSpec code in
     Some ({ def with next }, Syntax.{ s = SStmtBlock []; loc = Loc.default })
   else
