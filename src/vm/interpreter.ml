@@ -38,10 +38,11 @@ module MakeVM (VM : VM) = struct
         failwith ("numeric: argument mismatch: " ^ se1 ^ " op " ^ se2)
 
 
-  let relation i f e1 e2 : rvalue =
+  let relation i f b e1 e2 : rvalue =
     match e1, e2 with
     | Int n1, Int n2 -> Bool (i n1 n2)
     | Real n1, Real n2 -> Bool (f n1 n2)
+    | Bool n1, Bool n2 -> Bool (b n1 n2)
     | _ -> failwith "relation: argument mismatch"
 
 
@@ -90,12 +91,12 @@ module MakeVM (VM : VM) = struct
     | OpDiv -> numeric ( / ) ( /. )
     | OpMul -> numeric ( * ) ( *. )
     | OpMod -> numeric ( mod ) mod_float
-    | OpEq -> relation ( = ) ( = )
-    | OpNe -> relation ( <> ) ( <> )
-    | OpLt -> relation ( < ) ( < )
-    | OpGt -> relation ( > ) ( > )
-    | OpLe -> relation ( <= ) ( <= )
-    | OpGe -> relation ( >= ) ( >= )
+    | OpEq -> relation ( = ) ( = ) ( = )
+    | OpNe -> relation ( <> ) ( <> ) ( <> )
+    | OpLt -> relation ( < ) ( < ) ( < )
+    | OpGt -> relation ( > ) ( > ) ( > )
+    | OpLe -> relation ( <= ) ( <= ) ( <= )
+    | OpGe -> relation ( >= ) ( >= ) ( >= )
     | OpLand -> logic ( && )
     | OpLor -> logic ( || )
     | OpBor -> bitwise ( lor )

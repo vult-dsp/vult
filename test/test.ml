@@ -651,7 +651,7 @@ let suite =
             ; CliTest.get all_files Node "js"
             ; CliTest.get all_files Node "lua"*)
        ; RandomCompileTest.get test_random_code "float"
-         (* ; Interpret.get perf_files*)
+       ; Interpret.get perf_files
        ]
 
 
