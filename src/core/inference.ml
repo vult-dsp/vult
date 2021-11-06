@@ -84,6 +84,7 @@ module ToProg = struct
             | Some { descr = Record members; _ } ->
                 let members =
                   List.map (fun (name, (var : Env.var)) -> name, var.t, var.loc) (Env.Map.to_list members)
+                  |> List.sort (fun (n1, _, _) (n2, _, _) -> compare n1 n2)
                 in
                 let state, members = type_list env state members in
                 let t = { t = TStruct { path = ps; members }; loc } in
