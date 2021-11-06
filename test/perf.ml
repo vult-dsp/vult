@@ -151,9 +151,9 @@ let main () =
       runC "float" f ;
       runC "fixed" f ;
       runLua f ;
-      runJs f)
+      runJs f )
     files
 
-
 ;;
+
 main ()

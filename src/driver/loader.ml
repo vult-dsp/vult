@@ -158,7 +158,7 @@ let getIncludes (arguments : args) (files : input list) : string list =
         match input with
         | File f
          |Code (f, _) ->
-            Filename.dirname f)
+            Filename.dirname f )
       files
   in
   (* these are the extra include paths passed in the arguments *)
@@ -168,7 +168,7 @@ let getIncludes (arguments : args) (files : input list) : string list =
         if Filename.is_relative a then
           Filename.concat current a
         else
-          a)
+          a )
       arguments.includes
   in
   List.sort_uniq compare ((current :: implicit_dirs) @ explicit_dir)
@@ -186,7 +186,7 @@ let rec loadFiles_loop (includes : string list) dependencies parsed visited (fil
         let h_parsed =
           match input with
           | File _ -> Parse.parseFile h
-          | Code (_, txt) -> Parse.parseString None txt
+          | Code (file, txt) -> Parse.parseString (Some file) txt
         in
         let () = Hashtbl.add parsed h_module h_parsed in
         (* gets the depencies based on the modules used *)
@@ -234,5 +234,5 @@ let loadFiles (arguments : args) (files : input list) =
     (fun module_name ->
       match Hashtbl.find parsed module_name with
       | found -> Some found
-      | exception Not_found -> None)
+      | exception Not_found -> None )
     sorted_deps

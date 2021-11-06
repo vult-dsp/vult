@@ -53,7 +53,7 @@ let getErrorLines (location : Loc.t) : string =
     | Loc.File filename ->
         ( match FileIO.read filename with
         | Some contents -> CCString.lines contents
-        | _ -> failwith ("Could not open the file " ^ filename) )
+        | _ -> [] )
     | Loc.Text code -> CCString.lines code
   in
   let result =

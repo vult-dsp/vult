@@ -47,7 +47,7 @@ module ToProg = struct
       List.fold_left
         (fun (state, acc) e ->
           let state, e = mapper env state e in
-          state, e :: acc)
+          state, e :: acc )
         (state, [])
         l
     in
@@ -545,7 +545,7 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
           (fun (env, acc, size) e ->
             let env, e = exp env e in
             unifyRaise e.loc h.t e.t ;
-            env, e :: acc, size + 1)
+            env, e :: acc, size + 1 )
           (env, [], 1)
           t
       in
@@ -605,7 +605,7 @@ and exp_list (env : Env.in_func) (l : Syntax.exp list) : Env.in_func * exp list 
     List.fold_left
       (fun (env, acc) e ->
         let env, e = exp env e in
-        env, e :: acc)
+        env, e :: acc )
       (env, [])
       l
   in
@@ -636,7 +636,7 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
         List.fold_left
           (fun (env, acc) e ->
             let env, e = lexp env e in
-            env, e :: acc)
+            env, e :: acc )
           (env, [])
           (List.rev elems)
       in
@@ -673,7 +673,7 @@ and dexp (env : Env.in_func) (e : Syntax.dexp) (kind : var_kind) : Env.in_func *
         List.fold_left
           (fun (env, acc) e ->
             let env, e = dexp env e kind in
-            env, e :: acc)
+            env, e :: acc )
           (env, [])
           (List.rev l)
       in
@@ -791,7 +791,7 @@ and stmt_list env return l =
     List.fold_left
       (fun (env, acc) s ->
         let env, s = stmt env return s in
-        env, s :: acc)
+        env, s :: acc )
       (env, [])
       l
   in
@@ -926,7 +926,7 @@ and top_stmt_list (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt
     List.fold_left
       (fun (env, acc) s ->
         let env, s = top_stmt iargs env s in
-        env, s :: acc)
+        env, s :: acc )
       (env, [])
       s
   in
@@ -941,7 +941,7 @@ let getTypesFromModule m =
       | Record _ -> t :: s
       | Simple
        |Enum _ ->
-          s)
+          s )
     []
     m.Env.types
 
@@ -951,7 +951,7 @@ let createTypes (env : Env.in_top) =
     Map.fold
       (fun _ m s ->
         let types = getTypesFromModule m in
-        types @ s)
+        types @ s )
       []
       env.modules
   in
@@ -968,7 +968,7 @@ let createTypes (env : Env.in_top) =
           { top = TopType { path = t.path; members }; loc = t.loc }
       | Enum _
        |Simple ->
-          failwith "There should not be other than records here")
+          failwith "There should not be other than records here" )
     types
 
 
@@ -1010,7 +1010,7 @@ let infer (iargs : Args.args) (parsed : Parse.parsed_file list) : Env.in_top * P
         let env = Env.enterModule env h.name in
         let env, stmt = top_stmt_list iargs env h.stmts in
         let env = Env.exitModule env in
-        env, stmt @ acc)
+        env, stmt @ acc )
       (Env.empty (), [])
       parsed
   in

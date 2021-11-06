@@ -3,4 +3,6 @@
 (executable
  (name test)
  (modules Test Tcommon Diff BaseTok RandProg)
- (libraries core util driver pparser ounit str))
+ (libraries core util driver pparser ounit str pla)
+ (preprocess
+  (pps pla.ppx)))

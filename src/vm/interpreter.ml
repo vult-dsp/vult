@@ -76,7 +76,7 @@ module MakeVM (VM : VM) = struct
       Array.fold_left
         (fun (vm, acc) a ->
           let vm, a = f vm a in
-          vm, a :: acc)
+          vm, a :: acc )
         (vm, [])
         a
     in
@@ -160,7 +160,7 @@ module MakeVM (VM : VM) = struct
       List.fold_left
         (fun (vm, acc) a ->
           let vm, a = eval_rvalue vm a in
-          vm, a :: acc)
+          vm, a :: acc )
         (vm, [])
         a
     in

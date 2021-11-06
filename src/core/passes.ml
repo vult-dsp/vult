@@ -277,7 +277,7 @@ module Tuples = struct
           List.map
             (fun (t : type_) ->
               let tick = getTick env state in
-              "_call_temp_" ^ string_of_int tick, t)
+              "_call_temp_" ^ string_of_int tick, t )
             elems
         in
         let decl_stmt = List.map (fun (name, t) -> { s = StmtDecl { d = DId (name, None); t; loc }; loc }) temp in
@@ -331,7 +331,7 @@ module Tuples = struct
           List.mapi
             (fun i (l : lexp) ->
               let r = { e = EMember (ctx, path ^ "_ret_" ^ string_of_int i); t = l.t; loc = l.loc } in
-              { s = StmtBind (l, r); loc })
+              { s = StmtBind (l, r); loc } )
             elems
         in
         let s = { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid None; loc = rloc } }); loc } in
@@ -343,7 +343,7 @@ module Tuples = struct
           List.mapi
             (fun i (r : exp) ->
               let l = { l = LMember (ctx, name ^ "_ret_" ^ string_of_int i); t = r.t; loc = r.loc } in
-              { s = StmtBind (l, r); loc })
+              { s = StmtBind (l, r); loc } )
             elems
         in
         let s = { s = StmtReturn { e = EUnit; t = { t = TVoid None; loc }; loc = eloc }; loc } in

@@ -42,7 +42,7 @@ let showResult (args : args) (output : output) =
           if args.force_write then
             FileIO.write filename code |> ignore
           else
-            FileIO.writeIfDifferent filename code |> ignore)
+            FileIO.writeIfDifferent filename code |> ignore )
         files
   | GeneratedCode files -> List.iter (fun (text, _) -> print_endline (Pla.print text)) files
   | Interpret v -> print_endline v

@@ -156,7 +156,7 @@ let list f (env : 'env) (l : 'e) =
     List.fold_left
       (fun (env, instr) d ->
         let env, i = f env d in
-        env, i :: instr)
+        env, i :: instr )
       (env, [])
       l
   in

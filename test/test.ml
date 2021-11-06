@@ -26,9 +26,8 @@ open OUnit2
 (*open Core.Prog*)
 
 open Util
-open Tcommon
+open Tcommon;;
 
-;;
 Util.Float.reduce_precision := true
 
 let test_directory = Filename.concat initial_dir "test"
@@ -296,10 +295,10 @@ module ErrorTest = struct
             List.map
               (fun a ->
                 let msg, _, _, _ = Error.reportErrorStringNoLoc a in
-                msg)
+                msg )
               e
             @ s
-        | _ -> s)
+        | _ -> s )
       []
       results
     |> String.concat "\n"
@@ -523,7 +522,7 @@ module CliTest = struct
           ~msg:("Generating file " ^ fullfile)
           ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b))
           reference
-          current)
+          current )
       files_content
 
 
@@ -588,42 +587,45 @@ module Templates = struct
            (fun file -> Filename.basename file ^ "." ^ real_type ^ "_" ^ template >:: run file template real_type)
            files
 end
+*)
 
 module Interpret = struct
   let run file _context =
     let fullfile = checkFile (in_test_directory ("perf/" ^ file)) in
+    let moduleName file = Filename.basename file |> Filename.chop_extension |> String.capitalize_ascii in
     let module_name = moduleName fullfile in
     let code =
       [%pla
-        {|
-      val sample = 0;
-      val out = 0.0;
-      while (sample < 100) {
-         out = <#module_name#s>.process(0.0);
-         sample = sample + 1;
-      }
-      return out;|}]
+        {|fun run() {
+   val sample = 0;
+   val out = 0.0;
+   while (sample < 100) {
+      out = <#module_name#s>.process(0.0);
+      sample = sample + 1;
+   }
+   return out;
+}|}]
       |> Pla.print
     in
     let args =
-      { default_arguments with
-        files = [ Code ("intepret.vult", code) ]
-      ; eval = true
-      ; includes = in_test_directory "perf" :: includes
-      }
+      Args.
+        { default_arguments with
+          files = [ Code ("intepret.vult", code) ]
+        ; eval = Some "Intepret.run()"
+        ; includes = in_test_directory "perf" :: includes
+        }
     in
-    let results = Driver.main args in
+    let results = Driver.Cli.driver args in
     List.iter
       (fun result ->
         match result with
-        | Errors errors -> assert_failure (Error.reportErrors errors)
-        | _ -> ())
+        | Args.Errors errors -> assert_failure (Error.reportErrors errors)
+        | _ -> () )
       results
 
 
   let get files = "run" >::: List.map (fun file -> Filename.basename file >:: run file) files
 end
-*)
 
 let suite =
   "vult"
@@ -649,7 +651,7 @@ let suite =
             ; CliTest.get all_files Node "js"
             ; CliTest.get all_files Node "lua"*)
        ; RandomCompileTest.get test_random_code "float"
-         (*Interpret.get perf_files;*)
+         (* ; Interpret.get perf_files*)
        ]
 
 

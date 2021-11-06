@@ -65,7 +65,7 @@ let applyExpanderList (mapper : ('env, 'datas, 'kind) expand_func) (env : 'env) 
     List.fold_left
       (fun (s, acc) k ->
         let s', kl = applyExpander mapper env s k in
-        s', kl :: acc)
+        s', kl :: acc )
       (data, [])
       kind_list
   in
@@ -92,7 +92,7 @@ let list mapper_app mapper env state el =
     List.fold_left
       (fun (s, acc) e ->
         let s', e' = mapper_app mapper env s e in
-        s', e' :: acc)
+        s', e' :: acc )
       (state, [])
       el
   in

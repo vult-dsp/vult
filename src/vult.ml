@@ -22,5 +22,4 @@
    THE SOFTWARE.
 *)
 
-;;
 Driver.Cli.main ()

@@ -93,7 +93,7 @@ let tildePerformFunctionCall (f : function_info) =
           List.mapi
             (fun i o ->
               let value = castOutput o [%pla {|x->data.<#fname#s>_ret_<#i#i>|}] in
-              [%pla {|*(out_<#i#i>++) = <#value#>; |}])
+              [%pla {|*(out_<#i#i>++) = <#value#>; |}] )
             o
           |> Pla.join_sep_all Pla.newline
         in
@@ -111,7 +111,7 @@ let tildePerformFunctionVector (f : function_info) : int * Pla.t =
     List.fold_left
       (fun (s, count, index) _ ->
         let t = decl_templ "in" index count in
-        t :: s, count + 1, index + 1)
+        t :: s, count + 1, index + 1 )
       ([], 2, 0)
       f.inputs
   in
@@ -120,7 +120,7 @@ let tildePerformFunctionVector (f : function_info) : int * Pla.t =
     List.fold_left
       (fun (s, count, index) _ ->
         let t = decl_templ "out" index count in
-        t :: s, count + 1, index + 1)
+        t :: s, count + 1, index + 1 )
       (decl1, count, 0)
       f.outputs
   in
@@ -224,7 +224,7 @@ let lib_impl lib_name (functions : function_info list) =
       Pla.newline
       (fun f ->
         let fname = f.name in
-        [%pla {|<#fname#s>_tilde_setup();|}])
+        [%pla {|<#fname#s>_tilde_setup();|}] )
       functions
   in
   [%pla {|float samplerate() {

@@ -76,7 +76,7 @@ let calculateTablesOrder1 vm name size min max precision =
   let data =
     Array.init (size + 1) (fun i ->
         let x = map_x (float_of_int i) in
-        x, evaluateFunction vm name x)
+        x, evaluateFunction vm name x )
   in
   let acc0, acc1 = fitDataOrder1 data (size - 1) [] [] in
   [ makeDecl name "c0" precision acc0; makeDecl name "c1" precision acc1 ]
@@ -90,7 +90,7 @@ let calculateTablesOrder2 vm name size min max precision =
       ((size * 2) + 2)
       (fun i ->
         let x = map_x (float_of_int i /. 2.0) in
-        x, evaluateFunction vm name x)
+        x, evaluateFunction vm name x )
   in
   let acc0, acc1, acc2 = fitDataOrder2 data (size - 1) [] [] [] in
   [ makeDecl name "c0" precision acc0; makeDecl name "c1" precision acc1; makeDecl name "c2" precision acc2 ]

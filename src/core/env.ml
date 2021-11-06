@@ -48,7 +48,7 @@ module Map = struct
           | None -> Some value
           | Some b ->
               report b ;
-              Some b)
+              Some b )
         !t
 
 
@@ -200,7 +200,7 @@ let builtin_types =
            ; index = 0
            ; loc = Loc.default
            ; generated = false
-           } ))
+           } ) )
   |> Map.of_list
 
 
@@ -373,7 +373,7 @@ let registerArguments (args : (string * Typed.type_ * Loc.t) list) =
     List.fold_left
       (fun acc (name, t, loc) ->
         let () = Map.update report name { name; t; kind = Val; loc } locals in
-        t :: acc)
+        t :: acc )
       []
       args
   in
@@ -398,7 +398,7 @@ let addRecordMember members =
     List.fold_left
       (fun m (name, t, loc) ->
         Map.update report name { name; t; kind = Val; loc } m ;
-        m)
+        m )
       (Map.empty ())
       members
   in
@@ -421,7 +421,7 @@ let addEnumMember members =
     List.fold_left
       (fun (m, i) (name, loc) ->
         Map.update report name (name, i, loc) m ;
-        m, i + 1)
+        m, i + 1 )
       (Map.empty (), 0)
       members
   in

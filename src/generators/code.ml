@@ -385,7 +385,7 @@ module Convert = struct
           List.fold_left
             (fun (env, acc) s ->
               let env, stmts = stmt context env s in
-              env, stmts :: acc)
+              env, stmts :: acc )
             (env, [])
             body
         in
@@ -425,7 +425,7 @@ module Convert = struct
       (fun acc s ->
         match s with
         | Prog.{ top = TopExternal (def, Some name); _ } -> Map.add def.name name acc
-        | _ -> acc)
+        | _ -> acc )
       Map.empty
       stmts
 

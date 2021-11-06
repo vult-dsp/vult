@@ -74,5 +74,5 @@ let writeFiles (_args : args) (files : output list) =
     (fun output ->
       match output with
       | GeneratedCode files -> List.iter (fun (text, ext) -> Util.FileIO.write ext (Pla.print text) |> ignore) files
-      | _ -> ())
+      | _ -> () )
     files

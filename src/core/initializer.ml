@@ -135,7 +135,7 @@ let createInitFunction (cstyle : cstyle) stmt =
           (fun (var, (t : type_), _) ->
             let lhs = { l = LMember (lctx, var); t; loc = t.loc } in
             let rhs = { e = EMember (ectx, var); t; loc = t.loc } in
-            initStatement cstyle lhs rhs t)
+            initStatement cstyle lhs rhs t )
           struct_t.members
       in
       let body = { s = StmtBlock stmts; loc } in
@@ -151,7 +151,7 @@ let createInitFunction (cstyle : cstyle) stmt =
           (fun (var, (t : type_), _) ->
             let lhs = { l = LMember (lctx, var); t; loc = t.loc } in
             let rhs = { e = EMember (ectx, var); t; loc = t.loc } in
-            initStatement cstyle lhs rhs t)
+            initStatement cstyle lhs rhs t )
           struct_t.members
       in
       let new_ctx = { s = StmtDecl { d = DId ("_ctx", None); t = this_type; loc }; loc } in

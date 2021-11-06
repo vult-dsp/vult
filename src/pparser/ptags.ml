@@ -67,7 +67,7 @@ let rec print_tag t : Pla.t =
           Pla.commaspace
           (fun (n, tag, _) ->
             let tag = print_tag tag in
-            [%pla {|<#n#s> = <#tag#>|}])
+            [%pla {|<#n#s> = <#tag#>|}] )
           args
       in
       [%pla {|<#name#s>(<#args#>)|}]
@@ -87,7 +87,7 @@ let has (tags : tag list) n =
       match t.g with
       | TagCall { name; _ } -> name = n
       | TagId name -> name = n
-      | _ -> false)
+      | _ -> false )
     tags
 
 
@@ -142,7 +142,7 @@ let getArguments tags n =
       match t.g with
       | TagCall { name; args } when name = n -> Some args
       | TagId name when name = n -> Some []
-      | _ -> None)
+      | _ -> None )
     tags
 
 

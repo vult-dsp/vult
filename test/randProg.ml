@@ -404,7 +404,7 @@ let rec newDExpDecl state typ =
             List.fold_left
               (fun (s, acc) t ->
                 let t', s' = newDExpDecl s t in
-                s', t' :: acc)
+                s', t' :: acc )
               (state, [])
               types
           in
@@ -432,7 +432,7 @@ let rec newLExpBind state typ =
             List.fold_left
               (fun (s, acc) t ->
                 let t', s' = newLExpBind s t in
-                s', t' :: acc)
+                s', t' :: acc )
               (state, [])
               types
           in

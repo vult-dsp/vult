@@ -29,7 +29,7 @@ let rec print_value r : Pla.t =
         List.mapi
           (fun i e ->
             let e = print_value e in
-            [%pla {|'<#i#i>': <#e#>|}])
+            [%pla {|'<#i#i>': <#e#>|}] )
           (Array.to_list elems)
       in
       let elems = Pla.join_sep Pla.commaspace elems in

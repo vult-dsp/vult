@@ -110,7 +110,8 @@ let flags result =
               | "lua" -> LuaCode
               | "java" -> JavaCode
               | "js" -> JSCode
-              | _ -> Error.raiseErrorMsg ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js)") ))
+              | _ -> Error.raiseErrorMsg ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js)") )
+            )
     ; comment = "language Generate code for the specified language (cpp, lua, java, js)"
     }
   ; { flag = "-prefix"

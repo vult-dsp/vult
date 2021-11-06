@@ -92,7 +92,7 @@ module G (T : GESig) = struct
       List.iter
         (fun (v, deps) ->
           addVertex g v ;
-          List.iter (addEdge g v) deps)
+          List.iter (addEdge g v) deps )
         e
     in
     g

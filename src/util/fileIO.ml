@@ -49,7 +49,7 @@ let read_fun =
             close_in file ;
             Some (Buffer.contents buffer) )
       else
-        None)
+        None )
 
 
 (** ref holding the read_bytes file function.
@@ -71,7 +71,7 @@ let read_bytes_fun =
             close_in file ;
             Some buffer )
       else
-        None)
+        None )
 
 
 (** ref holding the read file function.
@@ -85,7 +85,7 @@ let write_fun =
         close_out file ;
         true
       with
-      | _ -> false)
+      | _ -> false )
 
 
 (** ref holding the file exists.
