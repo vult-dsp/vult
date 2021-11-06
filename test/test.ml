@@ -356,7 +356,7 @@ module RandomCompileTest = struct
     let cmd =
       Printf.sprintf
         "gcc -Wno-return-type -Wno-div-by-zero -Wno-narrowing -Wno-constant-logical-operand -Wno-division-by-zero \
-         -Wno-unused-value -Wno-tautological-compare -I%s -c %s -o %s"
+         -Wno-unused-value -Wno-tautological-compare -Wconversion -I%s -c %s -o %s"
         (in_test_directory "../runtime")
         file
         basename
@@ -403,7 +403,11 @@ module CliTest = struct
   let callCompiler (file : string) : unit =
     let basename = Filename.chop_extension (Filename.basename file) in
     let cmd =
-      Printf.sprintf "gcc -Werror -Wno-write-strings -I%s -c %s -o %s" (in_test_directory "../runtime") file basename
+      Printf.sprintf
+        "gcc -Werror -Wno-write-strings -Wconversion -I%s -c %s -o %s"
+        (in_test_directory "../runtime")
+        file
+        basename
     in
     if Sys.command cmd <> 0 then
       assert_failure ("Failed to compile " ^ file)
@@ -530,27 +534,28 @@ module CliTest = struct
     "cli" >::: List.map (fun file -> Filename.basename file ^ "." ^ real_type >:: run file use_node real_type) files
 end
 
-(*
 module Templates = struct
   let callVult template (fullfile : string) code_type =
     let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
-    let args = { default_arguments with includes } in
+    let args = Args.{ default_arguments with includes } in
     let args, ext =
       match code_type with
       | "fixed" ->
-          ( { args with template; code = CCode; real = "fixed" }
+          ( { args with template = Some template; code = CppCode; real = "fixed" }
           , [ ".cpp", ".cpp.fixed.base." ^ template; ".h", ".h.fixed.base." ^ template ] )
       | "float" ->
-          ( { args with template; code = CCode }
+          ( { args with template = Some template; code = CppCode }
           , [ ".cpp", ".cpp.float.base." ^ template; ".h", ".h.float.base." ^ template ] )
-      | "java" -> { args with template; code = JavaCode; prefix = "vult.com" }, [ ".java", ".java.base." ^ template ]
-      | "js" -> { args with template; code = JSCode }, [ ".js", ".js.base." ^ template ]
-      | "lua" -> { args with template; code = LuaCode }, [ ".lua", ".lua.base." ^ template ]
+      | "java" ->
+          ( { args with template = Some template; code = JavaCode; prefix = Some "vult.com" }
+          , [ ".java", ".java.base." ^ template ] )
+      | "js" -> { args with template = Some template; code = JSCode }, [ ".js", ".js.base." ^ template ]
+      | "lua" -> { args with template = Some template; code = LuaCode }, [ ".lua", ".lua.base." ^ template ]
       | _ -> failwith "Unknown target to run test"
     in
-    let args = { args with output = basefile; files = [ File fullfile ] } in
-    let results = Driver.main args in
-    let () = List.iter (Cli.showResult args) results in
+    let args = { args with output = Some basefile; files = [ File fullfile ] } in
+    let results = Driver.Cli.driver args in
+    let () = List.iter (Driver.Cli.showResult args) results in
     let generated_files = List.map (fun e -> basefile ^ fst e, basefile ^ snd e) ext in
     generated_files
 
@@ -577,7 +582,7 @@ module Templates = struct
           ~msg:("Generating file " ^ fullfile)
           ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b))
           reference
-          current)
+          current )
       files_content
 
 
@@ -587,7 +592,6 @@ module Templates = struct
            (fun file -> Filename.basename file ^ "." ^ real_type ^ "_" ^ template >:: run file template real_type)
            files
 end
-*)
 
 module Interpret = struct
   let run file _context =
@@ -632,8 +636,8 @@ let suite =
   >::: [ (* ErrorTest.get errors_files *)
          (* ; ParserTest.get parser_files *)
          PassesTest.get passes_files
-         (* ; Templates.get template_files "pd" "float"
-            ; Templates.get template_files "pd" "fixed"
+       ; Templates.get template_files "pd" "float"
+         (* ; Templates.get template_files "pd" "fixed"
             ; Templates.get template_files "max" "float"
             ; Templates.get template_files "max" "fixed"
             ; Templates.get template_files "modelica" "float"

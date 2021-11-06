@@ -54,11 +54,11 @@ static_inline fix16_t float_to_fix(float a) {
 }
 
 static_inline fix16_t short_to_fix(int16_t x) {
-   return 0x8000 & x ? 0xFFFF0000 | x : x;
+   return 0x8000 & x ? (int16_t)0xFFFF0000 | x : x;
 }
 
 static_inline int16_t fix_to_short(fix16_t x) {
-   return (x >= 0x00010000 ? 0x00010000 - 1 : x) / 2;
+   return (int16_t)((x >= (int32_t)0x00010000 ? (int32_t)0x00010000 - 1 : x) / (int32_t)2);
 }
 
 static_inline float short_to_float(int16_t x) { return (float)x / 0x00010000; }
@@ -90,7 +90,7 @@ static_inline fix16_t fix_mul(fix16_t x, fix16_t y) {
 static_inline fix16_t fix_div(fix16_t a, fix16_t b) {
    if (b == 0)
       return 0;
-   fix16_t result = (((int64_t)a) << 16) / ((int64_t)b);
+   fix16_t result = (fix16_t)(((int64_t)a) << 16) / ((int64_t)b);
    return result;
 }
 
@@ -114,7 +114,7 @@ static_inline fix16_t fix_clip(fix16_t v, fix16_t minv, fix16_t maxv) {
    return v > maxv ? maxv : (v < minv ? minv : v);
 }
 
-static_inline fix16_t fix_floor(fix16_t x) { return (x & 0xFFFF0000); }
+static_inline fix16_t fix_floor(fix16_t x) { return (x & (fix16_t)0xFFFF0000); }
 
 static_inline fix16_t fix_not(fix16_t x) { return ~x; }
 

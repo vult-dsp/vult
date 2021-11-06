@@ -63,15 +63,15 @@ fix16_t fix_sin(fix16_t x0) {
    uint8_t sign = (x1 > 0x3243f /* 3.141593 */);
    fix16_t x2 = (x1 % 0x3243f /* 3.141593 */);
    fix16_t x3;
-   if (x2 > 0x1921f /* 1.570796 */)
+   if (x2 > (fix16_t)0x1921f /* 1.570796 */)
       x3 = fix_add(0x3243f /* 3.141593 */, (-x2));
    else
       x3 = x2;
    fix16_t xp2 = fix_mul(x3, x3);
    fix16_t acc =
-       fix_mul(x3, fix_add(0x10000 /* 1.000000 */,
-                           fix_mul(fix_add((0xffffd556 /* -0.166667 */),
-                                           fix_mul(0x222 /* 0.008333 */, xp2)),
+       fix_mul(x3, fix_add((fix16_t)0x10000 /* 1.000000 */,
+                           fix_mul(fix_add(((fix16_t)0xffffd556 /* -0.166667 */),
+                                           fix_mul((fix16_t)0x222 /* 0.008333 */, xp2)),
                                    xp2)));
    return (sign ? (-acc) : acc);
 }
@@ -98,7 +98,7 @@ fix16_t fix_tanh(fix16_t inAngle) {
 
 fix16_t fix_sqrt(fix16_t inValue) {
    uint8_t neg = (inValue < 0);
-   uint32_t num = (neg ? -inValue : inValue);
+   uint32_t num = (uint32_t)(neg ? -inValue : inValue);
    uint32_t result = 0;
    uint32_t bit;
    uint8_t n;
