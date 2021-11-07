@@ -392,11 +392,58 @@ module Cast = struct
   let mapper = { Mapper.identity with exp }
 end
 
+module Canonize = struct
+  let compare_exp e1 e2 =
+    match e1.e, e2.e with
+    | EInt n1, EInt n2 -> compare n1 n2
+    | EInt _, _ -> -1
+    | EBool n1, EBool n2 -> compare n1 n2
+    | EBool _, _ -> -1
+    | EReal n1, EReal n2 -> compare n1 n2
+    | EReal _, _ -> -1
+    | _ -> compare e1 e2
+
+
+  let exp =
+    Mapper.make
+    @@ fun _env state e ->
+    match e with
+    (* (e1 op e2) op n3 -> (e1 op (e2 op n3)) *)
+    | { e = EOp (op1, { e = EOp (op2, e1, e2); _ }, n3); _ } when (op1 = OpAdd || op1 = OpMul) && op1 = op2 ->
+        let loc2 = Util.Loc.merge e2.loc n3.loc in
+        let loc1 = Util.Loc.merge e1.loc n3.loc in
+        let n2 = { e = EOp (op1, e2, n3); t = e2.t; loc = loc2 } in
+        let n1 = { e = EOp (op1, e1, n2); t = e1.t; loc = loc1 } in
+        reapply state, n1
+    (* (e2 op (e1 op n3)) -> (e1 op (e2 op n3)) *)
+    | { e = EOp (op1, e2, ({ e = EOp (op2, e1, e3); _ } as n2)); _ } when (op1 = OpAdd || op1 = OpMul) && op1 = op2 ->
+        if compare_exp e2 e1 > 0 then
+          let n2 = { n2 with e = EOp (op2, e2, e3) } in
+          reapply state, { e with e = EOp (op1, e1, n2) }
+        else
+          state, e
+    | { e = EOp (op, e1, e2); _ } when op = OpAdd || op = OpMul ->
+        if compare_exp e1 e2 > 0 then
+          reapply state, { e with e = EOp (op, e2, e1) }
+        else
+          state, e
+    | _ -> state, e
+
+
+  let mapper = { Mapper.identity with exp }
+end
+
 module Simplify = struct
   let exp =
     Mapper.make
     @@ fun _env state e ->
     match e with
+    (* -(n) -> -n *)
+    | { e = EUnOp (UOpNeg, ({ e = EReal n; _ } as e1)); _ } -> reapply state, { e1 with e = EReal (-.n) }
+    | { e = EUnOp (UOpNeg, ({ e = EInt n; _ } as e1)); _ } -> reapply state, { e1 with e = EInt (-n) }
+    (* sorting *)
+    | { e = EOp (OpDiv, e1, ({ e = EReal n; _ } as e2)); _ } ->
+        reapply state, { e with e = EOp (OpMul, e1, { e2 with e = EReal (1.0 /. n) }) }
     | _ -> state, e
 
 
@@ -460,6 +507,7 @@ end
 
 let passes =
   Location.mapper
+  |> Mapper.seq Canonize.mapper
   |> Mapper.seq Builtin.mapper
   |> Mapper.seq IfExpressions.mapper
   |> Mapper.seq Tuples.mapper

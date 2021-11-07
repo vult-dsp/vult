@@ -46,7 +46,7 @@ function Bitcrush_process(i, cv)
    else
       do
          local b = Bitcrush_factor(cv)
-         local x = int((i * b))
+         local x = int((b * i))
          out = (real(x) / b)
       end
    end

@@ -5,7 +5,7 @@
 float Short_delay_do(Short_delay_do_type& _ctx, float x, float time, float feedback) {
    time = float_clip(time, 0.0f, 1.0f);
    feedback = float_clip(feedback, 0.0f, 1.0f);
-   float index_r = (int_to_float(22050) * time);
+   float index_r = (time * int_to_float(22050));
    int32_t index_i = float_to_int(floor(index_r));
    int32_t delta = (_ctx.write_pos - index_i);
    int32_t read_pos = 0;
@@ -17,9 +17,9 @@ float Short_delay_do(Short_delay_do_type& _ctx, float x, float time, float feedb
    }
    float decimal = (index_r - int_to_float(index_i));
    float x1 = float_get(_ctx.buffer, read_pos);
-   float x2 = float_get(_ctx.buffer, ((read_pos + 1) % 22050));
-   float ret = (((x2 - x1) * decimal) + x1);
-   _ctx.write_pos = ((_ctx.write_pos + 1) % 22050);
+   float x2 = float_get(_ctx.buffer, ((1 + read_pos) % 22050));
+   float ret = (x1 + (decimal * (x2 - x1)));
+   _ctx.write_pos = ((1 + _ctx.write_pos) % 22050);
    float_set(_ctx.buffer, _ctx.write_pos, Saturate_process((x + (feedback * ret))));
    return ret;
 }

@@ -138,7 +138,7 @@ void Kick_process_type_init(Kick_process_type& _ctx);
 static_inline float Noise_pinker(Noise_pinker_type& _ctx, float x) {
    float b0 = 0.0277129863191f;
    float b1 = 0.0277129863191f;
-   float a1 = (-0.944574027362f);
+   float a1 = -0.944574027362f;
    float w0 = (x - (a1 * _ctx.w1));
    float y0 = ((b0 * w0) + (b1 * _ctx.w1));
    _ctx.w1 = w0;
@@ -172,37 +172,37 @@ static_inline bool Util_change(Util_change_type& _ctx, float x) {
 }
 
 static_inline float Util_map(float x, float x0, float x1, float y0, float y1) {
-   return ((((x - x0) * (y1 - y0)) / (x1 - x0)) + y0);
+   return (y0 + (((x - x0) * (y1 - y0)) / (x1 - x0)));
 }
 
 static_inline float Util_dcblock(Util_dcblock_type& _ctx, float x0) {
-   float y0 = ((x0 - _ctx.x1) + (_ctx.y1 * 0.995f));
+   float y0 = ((x0 - _ctx.x1) + (0.995f * _ctx.y1));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
 }
 
 static_inline float Util_smooth(Util_smooth_type& _ctx, float input) {
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005f));
+   _ctx.x = ((0.005f * (input - _ctx.x)) + _ctx.x);
    return _ctx.x;
 }
 
 static_inline float Util_average2(Util_average2_type& _ctx, float x1) {
-   float result = ((_ctx.x0 + x1) / 2.0f);
+   float result = (0.5f * (x1 + _ctx.x0));
    _ctx.x0 = x1;
    return result;
 }
 
 static_inline float Util_cubic_clipper(float x) {
-   if ((x <= ((-2.0f) / 3.0f))) {
-      return ((-2.0f) / 3.0f);
+   if ((x <= (-2.0f * 0.333333333333f))) {
+      return (-2.0f * 0.333333333333f);
    }
    else {
-      if ((x >= (2.0f / 3.0f))) {
-         return (2.0f / 3.0f);
+      if ((x >= (0.333333333333f * 2.0f))) {
+         return (0.333333333333f * 2.0f);
       }
       else {
-         return (x - (((x * x) * x) / 3.0f));
+         return (x - (0.333333333333f * (x * (x * x))));
       }
    }
 }
@@ -242,7 +242,7 @@ static_inline float Util_pitchToRate(float pitch) {
 }
 
 static_inline float Util_cvToPitch(float cv) {
-   return ((cv * 120.0f) + 24.0f);
+   return (24.0f + (120.0f * cv));
 }
 
 static_inline float Util_cvToRate_1024_raw_c0(int32_t index) {
@@ -280,7 +280,7 @@ static_inline float Util_cvToRate(float cv) {
 }
 
 static_inline float Util_pitchToCv(float pitch) {
-   return ((1.0f / 120.0f) * ((-24.0f) + pitch));
+   return (0.00833333333333f * (1.0f * (-24.0f + pitch)));
 }
 
 static_inline float Util_cvToperiod_raw_c0(int32_t index) {
@@ -333,13 +333,13 @@ static_inline void Tricore_default(Tricore_process_type& _ctx) {
 }
 
 static_inline float Swept_process(Swept_process_type& _ctx, float gate, float start, float end, float rate) {
-   float a_rate = (1.0f / ((100.0f * rate) + 0.01f));
+   float a_rate = (1.0f / (0.01f + (100.0f * rate)));
    bool bgate = (gate > 0.5f);
-   _ctx.out = (_ctx.out + ((((end * 1024.0f) - _ctx.out) * rate) * 0.004f));
+   _ctx.out = ((0.004f * (rate * ((1024.0f * end) - _ctx.out))) + _ctx.out);
    if (Util_edge(_ctx.inst_10402, bgate)) {
-      _ctx.out = (start * 1024.0f);
+      _ctx.out = (1024.0f * start);
    }
-   return (_ctx.out / 1024.0f);
+   return (0.0009765625f * _ctx.out);
 }
 
 static_inline void Swept_noteOn(Swept_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
@@ -413,16 +413,16 @@ static_inline void Ahr_default(Ahr_process_type& _ctx) {
 }
 
 static_inline float Kick_do(Kick_do_type& _ctx, float gate, float odecay, float pitch, float swept, float noise) {
-   Ahr_do(_ctx.inst_1d863, gate, 0.005f, (0.1f + odecay), (odecay + 0.01f));
+   Ahr_do(_ctx.inst_1d863, gate, 0.005f, (0.1f + odecay), (0.01f + odecay));
    float osc_env = _ctx.inst_1d863.Ahr_do_ret_0;
    float env_reset = _ctx.inst_1d863.Ahr_do_ret_1;
-   float cv = Swept_process(_ctx.inst_20263, (1.0f - env_reset), (pitch + (swept * 0.4f)), pitch, 0.1f);
+   float cv = Swept_process(_ctx.inst_20263, (1.0f - env_reset), (pitch + (0.4f * swept)), pitch, 0.1f);
    float osc = Tricore_process(_ctx.inst_33c63, cv, 0.0f, env_reset);
    float osc_sat = Saturate_process((1.5f * osc));
-   Ahr_do(_ctx.inst_4d863, gate, 0.001f, 0.01f, ((noise * 0.01f) + 0.001f));
+   Ahr_do(_ctx.inst_4d863, gate, 0.001f, 0.01f, (0.001f + (0.01f * noise)));
    float noise_env = _ctx.inst_4d863.Ahr_do_ret_0;
-   float noise_osc = ((noise * Noise_process(_ctx.inst_53d63, 1.0f)) / 3.0f);
-   return ((osc_env * osc_sat) + (noise_env * noise_osc));
+   float noise_osc = (0.333333333333f * (noise * Noise_process(_ctx.inst_53d63, 1.0f)));
+   return ((noise_env * noise_osc) + (osc_env * osc_sat));
 }
 
 static_inline float Kick_process(Kick_process_type& _ctx, float gate) {

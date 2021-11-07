@@ -105,7 +105,7 @@ static_inline void Delay_delay_type_init(Delay_delay_type& _ctx) {
    int32_t i_0 = 0;
    while ((i_0 < 30000)) {
       _ctx.buffer[i_0] = 0.0f;
-      i_0 = (i_0 + 1);
+      i_0 = (1 + i_0);
    }
    _ctx.write_pos = 0;
 }
@@ -115,7 +115,7 @@ void Delay_mono_noteOn_type_init(Delay_mono_noteOn_type& _ctx);
 void Delay_process_type_init(Delay_process_type& _ctx);
 
 static_inline float Delay_smooth(Delay_smooth_type& _ctx, float input) {
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005f));
+   _ctx.x = ((0.005f * (input - _ctx.x)) + _ctx.x);
    return _ctx.x;
 }
 
@@ -133,12 +133,12 @@ static_inline bool Delay_edge(Delay_edge_type& _ctx, bool x) {
 
 static_inline bool Delay_each(Delay_each_type& _ctx, int32_t n) {
    bool ret = (_ctx.count == 0);
-   _ctx.count = ((_ctx.count + 1) % n);
+   _ctx.count = ((1 + _ctx.count) % n);
    return ret;
 }
 
 static_inline float Delay_pitchToRate(float d) {
-   return ((8.1758f * exp((0.0577623f * d))) / 44100.0f);
+   return (2.26757369615e-05f * (8.1758f * exp((0.0577623f * d))));
 }
 
 float Delay_phasor(Delay_phasor_type& _ctx, float pitch, bool reset);
@@ -150,9 +150,9 @@ static_inline float Delay_phd_osc(Delay_phd_osc_type& _ctx, float pitch, float d
    float comp = (1.0f - phase1);
    bool reset = ((_ctx.pre_phase1 - phase1) > 0.5f);
    _ctx.pre_phase1 = phase1;
-   float phase2 = Delay_phasor(_ctx.inst_371c4, (pitch + (Delay_smooth(_ctx.inst_277c4, detune) * 32.0f)), reset);
-   float sine = sin(((2.0f * 3.14159265359f) * phase2));
-   return (sine * comp);
+   float phase2 = Delay_phasor(_ctx.inst_371c4, (pitch + (32.0f * Delay_smooth(_ctx.inst_277c4, detune))), reset);
+   float sine = sin((2.0f * (3.14159265359f * phase2)));
+   return (comp * sine);
 }
 
 float Delay_delay(Delay_delay_type& _ctx, float x, float time, float feedback);
@@ -168,7 +168,7 @@ static_inline bool Delay_mono_isGateOn(Delay_mono_noteOn_type& _ctx) {
 static_inline float Delay_process(Delay_process_type& _ctx, float input) {
    bool gate = Delay_mono_isGateOn(_ctx.notes_5901);
    float lfo_val = (Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate) * _ctx.lfo_amt);
-   float o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, (_ctx.detune + lfo_val));
+   float o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, (lfo_val + _ctx.detune));
    float amp = 0.0f;
    float _if_temp_0 = 0.0f;
    if (gate) {
@@ -178,9 +178,9 @@ static_inline float Delay_process(Delay_process_type& _ctx, float input) {
       _if_temp_0 = 0.0f;
    }
    amp = Delay_smooth(_ctx.inst_37701, _if_temp_0);
-   float osc_out = (o1 * amp);
+   float osc_out = (amp * o1);
    float delay_out = Delay_delay(_ctx.inst_68e01, osc_out, Delay_smooth(_ctx.inst_47701, _ctx.time), Delay_smooth(_ctx.inst_57701, _ctx.feedback));
-   return ((_ctx.volume * (osc_out + delay_out)) / 2.0f);
+   return (0.5f * ((delay_out + osc_out) * _ctx.volume));
 }
 
 static_inline void Delay_noteOn(Delay_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {

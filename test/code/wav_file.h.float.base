@@ -41,7 +41,7 @@ static_inline void Wav_file_process_type_init(Wav_file_process_type& _ctx) {
 }
 
 static_inline int32_t Wav_file_index(Wav_file_index_type& _ctx) {
-   _ctx.i = ((_ctx.i + 1) % Wav_file_ext_wave_samples());
+   _ctx.i = ((1 + _ctx.i) % Wav_file_ext_wave_samples());
    return _ctx.i;
 }
 

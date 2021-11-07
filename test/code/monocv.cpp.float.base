@@ -7,7 +7,7 @@ void Monocv_mono_noteOn_type_init(Monocv_mono_noteOn_type& _ctx) {
    int32_t i_0 = 0;
    while ((i_0 < 4)) {
       _ctx.notes[i_0] = 0;
-      i_0 = (i_0 + 1);
+      i_0 = (1 + i_0);
    }
    _ctx.pre = 0;
 }
@@ -30,7 +30,7 @@ int32_t Monocv_mono_noteOn(Monocv_mono_noteOn_type& _ctx, int32_t n) {
       int_set(_ctx.notes, _ctx.count, n);
       _ctx.pre = n;
       if ((_ctx.count < 4)) {
-         _ctx.count = (_ctx.count + 1);
+         _ctx.count = (1 + _ctx.count);
       }
    }
    return _ctx.pre;
@@ -48,13 +48,13 @@ int32_t Monocv_mono_noteOff(Monocv_mono_noteOn_type& _ctx, int32_t n) {
          pos = i;
          found = true;
       }
-      i = (i + 1);
+      i = (1 + i);
    }
    if (found) {
-      int32_t k = (pos + 1);
+      int32_t k = (1 + pos);
       while ((k < 4)) {
          int_set(_ctx.notes, (k - 1), int_get(_ctx.notes, k));
-         k = (k + 1);
+         k = (1 + k);
       }
       if ((found && (_ctx.count > 0))) {
          _ctx.count = (_ctx.count - 1);
@@ -86,7 +86,7 @@ void Monocv_noteOn(Monocv_process_type& _ctx, int32_t note, int32_t velocity, in
    if (_ctx.channel_in == channel) {
       if ((velocity > 0)) {
          _ctx.active_note = Monocv_mono_noteOn(_ctx.notes_a7d6, note);
-         _ctx.vel = (int_to_float(velocity) / 127.0f);
+         _ctx.vel = (0.00787401574803f * int_to_float(velocity));
       }
       else {
          _ctx.active_note = Monocv_mono_noteOff(_ctx.notes_a7d6, note);

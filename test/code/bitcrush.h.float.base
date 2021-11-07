@@ -29,7 +29,7 @@ static_inline float Bitcrush_process(float i, float cv) {
    }
    else {
       float b = Bitcrush_factor(cv);
-      int32_t x = float_to_int((i * b));
+      int32_t x = float_to_int((b * i));
       out = (int_to_float(x) / b);
    }
    return out;

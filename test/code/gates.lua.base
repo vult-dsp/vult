@@ -32,7 +32,7 @@ function Gates_gates_noteOn_type_init(_ctx)
    while (i_0 < 8) do
       do
          _ctx.vel[i_0] = 0
-         i_0 = (i_0 + 1)
+         i_0 = (1 + i_0)
       end
    end
 end
@@ -51,7 +51,7 @@ function Gates_process_type_init(_ctx)
 end
 
 function Gates_velToCV(vel)
-   return (real(vel) / 127.0)
+   return (0.00787401574803 * real(vel))
 end
 
 function Gates_gates_noteOn(_ctx, note, velocity)

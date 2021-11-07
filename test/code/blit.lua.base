@@ -82,35 +82,35 @@ function Util_change(_ctx, x)
 end
 
 function Util_map(x, x0, x1, y0, y1)
-   return ((((x - x0) * (y1 - y0)) / (x1 - x0)) + y0)
+   return (y0 + (((x - x0) * (y1 - y0)) / (x1 - x0)))
 end
 
 function Util_dcblock(_ctx, x0)
-   local y0 = ((x0 - _ctx.x1) + (_ctx.y1 * 0.995))
+   local y0 = ((x0 - _ctx.x1) + (0.995 * _ctx.y1))
    _ctx.x1 = x0
    _ctx.y1 = y0
    return y0
 end
 
 function Util_smooth(_ctx, input)
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005))
+   _ctx.x = ((0.005 * (input - _ctx.x)) + _ctx.x)
    return _ctx.x
 end
 
 function Util_average2(_ctx, x1)
-   local result = ((_ctx.x0 + x1) / 2.0)
+   local result = (0.5 * (x1 + _ctx.x0))
    _ctx.x0 = x1
    return result
 end
 
 function Util_cubic_clipper(x)
-   if (x <= ((-2.0) / 3.0)) then
-      return ((-2.0) / 3.0)
+   if (x <= (-2.0 * 0.333333333333)) then
+      return (-2.0 * 0.333333333333)
    else
-      if (x >= (2.0 / 3.0)) then
-         return (2.0 / 3.0)
+      if (x >= (0.333333333333 * 2.0)) then
+         return (0.333333333333 * 2.0)
       else
-         return (x - (((x * x) * x) / 3.0))
+         return (x - (0.333333333333 * (x * (x * x))))
       end
    end
 end
@@ -156,7 +156,7 @@ function Util_pitchToRate(pitch)
 end
 
 function Util_cvToPitch(cv)
-   return ((cv * 120.0) + 24.0)
+   return (24.0 + (120.0 * cv))
 end
 
 local Util_cvToRate_1024_c0 = {0.759366720147, 0.76287682088, 0.779736591588, 0.825651541507, 0.924648365574, 1.11239844076, 1.44068747323, 1.98339245203, 2.84443411428, 4.16831053404, 6.15399353807, 9.07319497637, 13.2942977908, 19.3136142247, 27.7961017498, 39.6282633198, 55.9867164023, 78.426877799, 108.997432572, 150.387803507, 206.117798077, 280.781090515, 380.357332635, 512.611648457, 687.605267777, 918.347360286, 1221.62608022, 1619.06684253, 2138.47845209, 2815.56355702, 3696.08982219, 4838.64325098}
@@ -200,7 +200,7 @@ function Util_cvToRate(cv)
 end
 
 function Util_pitchToCv(pitch)
-   return ((1.0 / 120.0) * ((-24.0) + pitch))
+   return (0.00833333333333 * (1.0 * (-24.0 + pitch)))
 end
 
 local Util_cvToperiod_c0 = {674.246034776, 671.553837727, 662.76178188, 646.759521901, 623.799427712, 594.871801992, 561.298276875, 524.476942143, 485.731369226, 446.229382316, 406.94744034, 368.66377436, 331.968683025, 297.284155733, 264.887666444, 234.936856737, 207.493124397, 182.543015866, 160.016906779, 139.804831794, 121.769556579, 105.757116937, 91.6051155071, 79.149088394, 68.2272489259, 58.6838945702, 50.371733558, 43.1533549488, 36.902032908, 31.5020247862, 26.8484942477, 22.8471656705}
@@ -257,7 +257,7 @@ function Phase_process(_ctx, cv, reset)
    else
       _ctx.phase = _ctx.phase
    end
-   return (_ctx.phase / 1024.0)
+   return (0.0009765625 * _ctx.phase)
 end
 
 function Phase_noteOn(_ctx, note, velocity, channel)
@@ -296,28 +296,28 @@ end
 function Blit_pulse_train(_ctx, cv, phase)
    if Util_change(_ctx.inst_1b05e, cv) then
       do
-         _ctx.m = ((2 * int(Util_cvToperiod(cv))) + 1)
+         _ctx.m = (1 + (2 * int(Util_cvToperiod(cv))))
          _ctx.scale = (2.0 * Util_cvToperiod(cv))
       end
    end
-   local pi_phase = (phase / 2.0)
+   local pi_phase = (0.5 * phase)
    local denominator = Tables_nsine(pi_phase)
    local out = 0.0
    if (denominator <= eps()) then
       out = 1.0
    else
       do
-         local m_phase = ((real(_ctx.m) * pi_phase) % 1.0)
+         local m_phase = ((pi_phase * real(_ctx.m)) % 1.0)
          local numerator = Tables_nsine(m_phase)
-         out = (numerator / (_ctx.scale * denominator))
+         out = (numerator / (denominator * _ctx.scale))
       end
    end
    return out
 end
 
 function Blit_pulse_start(_ctx)
-   _ctx.m = ((2 * int(Util_cvToperiod(0.0))) + 1)
-   _ctx.scale = ((2.0 * Util_cvToperiod(0.0)) + 1.0)
+   _ctx.m = (1 + (2 * int(Util_cvToperiod(0.0))))
+   _ctx.scale = (1.0 + (2.0 * Util_cvToperiod(0.0)))
 end
 
 function Blit_osc_blit(_ctx, cv, pw, wave)
@@ -331,15 +331,15 @@ function Blit_osc_blit(_ctx, cv, pw, wave)
       _ctx.rate = Util_cvToRate(fixed_cv)
    end
    local phase = Phase_process(_ctx.inst_28a26, fixed_cv, 0.0)
-   local shift05 = (0.5 + (pw * 0.49))
+   local shift05 = (0.5 + (0.49 * pw))
    local shift = (phase + shift05)
    if (shift > 1.0) then
       shift = (shift - 1.0)
    end
    local pulse1 = Blit_pulse_train(_ctx.inst_35e26, fixed_cv, phase)
    local pulse2 = Blit_pulse_train(_ctx.inst_45e26, fixed_cv, shift)
-   _ctx.state_pulse = (((_ctx.state_pulse * 0.9995) + pulse1) - pulse2)
-   _ctx.state_saw = ((_ctx.state_saw * 0.9995) + ((((pulse1 + pulse2) - (2.0 * _ctx.rate)) / shift05) / 2.0))
+   _ctx.state_pulse = ((pulse1 + (0.9995 * _ctx.state_pulse)) - pulse2)
+   _ctx.state_saw = ((0.5 * (((pulse1 + pulse2) - (2.0 * _ctx.rate)) / shift05)) + (0.9995 * _ctx.state_saw))
    if (wave < 1.0) then
       _ctx.output = _ctx.state_pulse
    else

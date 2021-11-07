@@ -37,15 +37,15 @@ float Synth1_phasor(Synth1_phasor_type& _ctx, float pitch, bool reset) {
 }
 
 float Synth1_lfo(Synth1_lfo_type& _ctx, float f, int32_t gate) {
-   float rate = ((f * 10.0f) / 44100.0f);
+   float rate = (2.26757369615e-05f * (10.0f * f));
    if (Synth1_edge(_ctx.inst_11e7d, gate)) {
       _ctx.phase = 0.0f;
    }
-   _ctx.phase = (_ctx.phase + rate);
+   _ctx.phase = (rate + _ctx.phase);
    if ((_ctx.phase > 1.0f)) {
       _ctx.phase = (_ctx.phase - 1.0f);
    }
-   return (sin(((_ctx.phase * 2.0f) * 3.14159265359f)) - 0.5f);
+   return (sin((2.0f * (3.14159265359f * _ctx.phase))) - 0.5f);
 }
 
 void Synth1_noteOn(Synth1_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
@@ -72,7 +72,7 @@ void Synth1_noteOn(Synth1_process_type& _ctx, int32_t note, int32_t velocity, in
       }
    }
    if ((_ctx.count <= 4)) {
-      _ctx.count = (_ctx.count + 1);
+      _ctx.count = (1 + _ctx.count);
    }
    if ((_ctx.count > 0)) {
       _ctx.gate = 1;
@@ -138,16 +138,16 @@ void Synth1_noteOff(Synth1_process_type& _ctx, int32_t note, int32_t channel) {
 
 void Synth1_controlChange(Synth1_process_type& _ctx, int32_t control, float value, int32_t channel) {
    if (control == 30) {
-      _ctx.volume = (value / 127.0f);
+      _ctx.volume = (0.00787401574803f * value);
    }
    if (control == 31) {
-      _ctx.detune = (value / 127.0f);
+      _ctx.detune = (0.00787401574803f * value);
    }
    if (control == 32) {
-      _ctx.lfo_rate = (value / 127.0f);
+      _ctx.lfo_rate = (0.00787401574803f * value);
    }
    if (control == 33) {
-      _ctx.lfo_amt = (2.0f * ((value / 127.0f) - 0.5f));
+      _ctx.lfo_amt = (2.0f * ((0.00787401574803f * value) - 0.5f));
    }
 }
 
@@ -156,6 +156,6 @@ void Synth1_default(Synth1_process_type& _ctx) {
    _ctx.pitch = 45.0f;
    _ctx.detune = 0.8f;
    _ctx.lfo_rate = 0.07f;
-   _ctx.lfo_amt = (-0.8f);
+   _ctx.lfo_amt = -0.8f;
 }
 

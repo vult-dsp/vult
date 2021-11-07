@@ -47,7 +47,7 @@ static_inline void Phasedist_phasor_type_init(Phasedist_phasor_type& _ctx) {
 void Phasedist_process_type_init(Phasedist_process_type& _ctx);
 
 static_inline float Phasedist_smooth(Phasedist_smooth_type& _ctx, float input) {
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005f));
+   _ctx.x = ((0.005f * (input - _ctx.x)) + _ctx.x);
    return _ctx.x;
 }
 
@@ -58,7 +58,7 @@ static_inline bool Phasedist_change(Phasedist_change_type& _ctx, float x) {
 }
 
 static_inline float Phasedist_pitchToRate(float d) {
-   return ((8.1758f * exp((0.0577623f * d))) / 44100.0f);
+   return (2.26757369615e-05f * (8.1758f * exp((0.0577623f * d))));
 }
 
 float Phasedist_phasor(Phasedist_phasor_type& _ctx, float pitch, bool reset);
@@ -68,9 +68,9 @@ static_inline float Phasedist_process(Phasedist_process_type& _ctx, float input)
    float comp = (1.0f - phase1);
    bool reset = ((_ctx.pre_phase1 - phase1) > 0.5f);
    _ctx.pre_phase1 = phase1;
-   float phase2 = Phasedist_phasor(_ctx.inst_317e9, (_ctx.pitch + (Phasedist_smooth(_ctx.inst_275e9, _ctx.detune) * 32.0f)), reset);
-   float sine = sin(((2.0f * 3.14159265359f) * phase2));
-   return (Phasedist_smooth(_ctx.inst_475e9, _ctx.volume) * (sine * comp));
+   float phase2 = Phasedist_phasor(_ctx.inst_317e9, ((32.0f * Phasedist_smooth(_ctx.inst_275e9, _ctx.detune)) + _ctx.pitch), reset);
+   float sine = sin((2.0f * (3.14159265359f * phase2)));
+   return (comp * (sine * Phasedist_smooth(_ctx.inst_475e9, _ctx.volume)));
 }
 
 static_inline void Phasedist_noteOn(Phasedist_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
@@ -82,10 +82,10 @@ static_inline void Phasedist_noteOff(Phasedist_process_type& _ctx, int32_t note,
 
 static_inline void Phasedist_controlChange(Phasedist_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    if (control == 30) {
-      _ctx.volume = (int_to_float(value) / 127.0f);
+      _ctx.volume = (0.00787401574803f * int_to_float(value));
    }
    if (control == 31) {
-      _ctx.detune = (int_to_float(value) / 127.0f);
+      _ctx.detune = (0.00787401574803f * int_to_float(value));
    }
 }
 

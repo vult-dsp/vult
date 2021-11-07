@@ -106,7 +106,7 @@ end
 function Noise_pinker(_ctx, x)
    local b0 = 0.0277129863191
    local b1 = 0.0277129863191
-   local a1 = (-0.944574027362)
+   local a1 = -0.944574027362
    local w0 = (x - (a1 * _ctx.w1))
    local y0 = ((b0 * w0) + (b1 * _ctx.w1))
    _ctx.w1 = w0
@@ -114,10 +114,10 @@ function Noise_pinker(_ctx, x)
 end
 
 function Noise_process(_ctx, color)
-   _ctx.x1 = (((_ctx.x1 * 17389) + 7919) % 32768)
-   local y1 = (real(_ctx.x1) / 32768.0)
-   _ctx.x2 = (((_ctx.x2 * 27449) + 12553) % 32768)
-   local y2 = (real(_ctx.x2) / 32768.0)
+   _ctx.x1 = ((7919 + (17389 * _ctx.x1)) % 32768)
+   local y1 = (3.0517578125e-05 * real(_ctx.x1))
+   _ctx.x2 = ((12553 + (27449 * _ctx.x2)) % 32768)
+   local y2 = (3.0517578125e-05 * real(_ctx.x2))
    local out = 0.0
    if (color > 0.5) then
       out = Noise_pinker(_ctx.inst_16d3d, (y1 - y2))
@@ -152,35 +152,35 @@ function Util_change(_ctx, x)
 end
 
 function Util_map(x, x0, x1, y0, y1)
-   return ((((x - x0) * (y1 - y0)) / (x1 - x0)) + y0)
+   return (y0 + (((x - x0) * (y1 - y0)) / (x1 - x0)))
 end
 
 function Util_dcblock(_ctx, x0)
-   local y0 = ((x0 - _ctx.x1) + (_ctx.y1 * 0.995))
+   local y0 = ((x0 - _ctx.x1) + (0.995 * _ctx.y1))
    _ctx.x1 = x0
    _ctx.y1 = y0
    return y0
 end
 
 function Util_smooth(_ctx, input)
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005))
+   _ctx.x = ((0.005 * (input - _ctx.x)) + _ctx.x)
    return _ctx.x
 end
 
 function Util_average2(_ctx, x1)
-   local result = ((_ctx.x0 + x1) / 2.0)
+   local result = (0.5 * (x1 + _ctx.x0))
    _ctx.x0 = x1
    return result
 end
 
 function Util_cubic_clipper(x)
-   if (x <= ((-2.0) / 3.0)) then
-      return ((-2.0) / 3.0)
+   if (x <= (-2.0 * 0.333333333333)) then
+      return (-2.0 * 0.333333333333)
    else
-      if (x >= (2.0 / 3.0)) then
-         return (2.0 / 3.0)
+      if (x >= (0.333333333333 * 2.0)) then
+         return (0.333333333333 * 2.0)
       else
-         return (x - (((x * x) * x) / 3.0))
+         return (x - (0.333333333333 * (x * (x * x))))
       end
    end
 end
@@ -226,7 +226,7 @@ function Util_pitchToRate(pitch)
 end
 
 function Util_cvToPitch(cv)
-   return ((cv * 120.0) + 24.0)
+   return (24.0 + (120.0 * cv))
 end
 
 local Util_cvToRate_1024_c0 = {0.759366720147, 0.76287682088, 0.779736591588, 0.825651541507, 0.924648365574, 1.11239844076, 1.44068747323, 1.98339245203, 2.84443411428, 4.16831053404, 6.15399353807, 9.07319497637, 13.2942977908, 19.3136142247, 27.7961017498, 39.6282633198, 55.9867164023, 78.426877799, 108.997432572, 150.387803507, 206.117798077, 280.781090515, 380.357332635, 512.611648457, 687.605267777, 918.347360286, 1221.62608022, 1619.06684253, 2138.47845209, 2815.56355702, 3696.08982219, 4838.64325098}
@@ -270,7 +270,7 @@ function Util_cvToRate(cv)
 end
 
 function Util_pitchToCv(pitch)
-   return ((1.0 / 120.0) * ((-24.0) + pitch))
+   return (0.00833333333333 * (1.0 * (-24.0 + pitch)))
 end
 
 local Util_cvToperiod_c0 = {674.246034776, 671.553837727, 662.76178188, 646.759521901, 623.799427712, 594.871801992, 561.298276875, 524.476942143, 485.731369226, 446.229382316, 406.94744034, 368.66377436, 331.968683025, 297.284155733, 264.887666444, 234.936856737, 207.493124397, 182.543015866, 160.016906779, 139.804831794, 121.769556579, 105.757116937, 91.6051155071, 79.149088394, 68.2272489259, 58.6838945702, 50.371733558, 43.1533549488, 36.902032908, 31.5020247862, 26.8484942477, 22.8471656705}
@@ -325,7 +325,7 @@ function Tricore_process(_ctx, cv, reset, disable)
    else
       _if_temp_0 = (-_ctx.rate)
    end
-   new_phase = (_ctx.phase + _if_temp_0)
+   new_phase = (_if_temp_0 + _ctx.phase)
    local bdisable = (disable > 0.5)
    if (Util_edge(_ctx.inst_2043c, (reset > 0.0)) or Util_edge(_ctx.inst_3043c, bdisable)) then
       do
@@ -340,10 +340,10 @@ function Tricore_process(_ctx, cv, reset, disable)
          _ctx.direction = false
       end
    else
-      if (new_phase < (-1024.0)) then
+      if (new_phase < -1024.0) then
          do
             _ctx.direction = true
-            new_phase = ((-1024.0) + (new_phase + 1024.0))
+            new_phase = (-1024.0 + (1024.0 + new_phase))
          end
       end
    end
@@ -362,7 +362,7 @@ function Tricore_process(_ctx, cv, reset, disable)
                else
                   reset_speed = 0.5
                end
-               _ctx.reset_phase = (_ctx.reset_phase - (_ctx.reset_phase * reset_speed))
+               _ctx.reset_phase = (_ctx.reset_phase - (reset_speed * _ctx.reset_phase))
             end
          else
             do
@@ -379,7 +379,7 @@ function Tricore_process(_ctx, cv, reset, disable)
       end
    end
    out = (out + _ctx.phase)
-   return (out / 1024.0)
+   return (0.0009765625 * out)
 end
 
 function Tricore_noteOn(_ctx, note, velocity, channel)
@@ -396,13 +396,13 @@ function Tricore_default(_ctx)
 end
 
 function Swept_process(_ctx, gate, start, end_, rate)
-   local a_rate = (1.0 / ((100.0 * rate) + 0.01))
+   local a_rate = (1.0 / (0.01 + (100.0 * rate)))
    local bgate = (gate > 0.5)
-   _ctx.out = (_ctx.out + ((((end_ * 1024.0) - _ctx.out) * rate) * 0.004))
+   _ctx.out = ((0.004 * (rate * ((1024.0 * end_) - _ctx.out))) + _ctx.out)
    if Util_edge(_ctx.inst_10402, bgate) then
-      _ctx.out = (start * 1024.0)
+      _ctx.out = (1024.0 * start)
    end
-   return (_ctx.out / 1024.0)
+   return (0.0009765625 * _ctx.out)
 end
 
 function Swept_noteOn(_ctx, note, velocity, channel)
@@ -482,30 +482,30 @@ function Ahr_do(_ctx, gate, a, h, r)
    end
    if (_ctx.state == reset) then
       do
-         _ctx.rate = (1.0 / ((100.0 * 0.01) + 0.01))
+         _ctx.rate = (1.0 / (0.01 + (0.01 * 100.0)))
          _ctx.target = 0.0
       end
    end
    if (_ctx.state == attack) then
       do
-         _ctx.rate = (1.0 / ((100.0 * a) + 0.01))
+         _ctx.rate = (1.0 / (0.01 + (100.0 * a)))
          _ctx.target = (1.2 * 1024.0)
       end
    end
    if (_ctx.state == hold) then
       do
-         local hrate = (1.0 / ((100.0 * h) + 0.01))
-         _ctx.hold_phase = (_ctx.hold_phase + hrate)
+         local hrate = (1.0 / (0.01 + (100.0 * h)))
+         _ctx.hold_phase = (hrate + _ctx.hold_phase)
       end
    end
    if (_ctx.state == release) then
       do
-         _ctx.rate = (1.0 / ((100.0 * r) + 0.01))
+         _ctx.rate = (1.0 / (0.01 + (100.0 * r)))
          _ctx.target = 0.0
       end
    end
-   _ctx.out = (_ctx.out + (((_ctx.target - _ctx.out) * _ctx.rate) * 0.005))
-   _ctx.Ahr_do_ret_0 = clip((_ctx.out / 1024.0), 0.0, 1.0)
+   _ctx.out = ((0.005 * ((_ctx.target - _ctx.out) * _ctx.rate)) + _ctx.out)
+   _ctx.Ahr_do_ret_0 = clip((0.0009765625 * _ctx.out), 0.0, 1.0)
    _ctx.Ahr_do_ret_1 = resetting
    return 
 end
@@ -527,13 +527,13 @@ end
 
 function Ahr_controlChange(_ctx, control, value, channel)
    if (control == 1) then
-      _ctx.knob1 = (real(value) / 127.0)
+      _ctx.knob1 = (0.00787401574803 * real(value))
    end
    if (control == 2) then
-      _ctx.knob2 = (real(value) / 127.0)
+      _ctx.knob2 = (0.00787401574803 * real(value))
    end
    if (control == 3) then
-      _ctx.knob3 = (real(value) / 127.0)
+      _ctx.knob3 = (0.00787401574803 * real(value))
    end
 end
 
@@ -544,16 +544,16 @@ function Ahr_default(_ctx)
 end
 
 function Kick_do(_ctx, gate, odecay, pitch, swept, noise)
-   Ahr_do(_ctx.inst_1d863, gate, 0.005, (0.1 + odecay), (odecay + 0.01))
+   Ahr_do(_ctx.inst_1d863, gate, 0.005, (0.1 + odecay), (0.01 + odecay))
    local osc_env = _ctx.inst_1d863.Ahr_do_ret_0
    local env_reset = _ctx.inst_1d863.Ahr_do_ret_1
-   local cv = Swept_process(_ctx.inst_20263, (1.0 - env_reset), (pitch + (swept * 0.4)), pitch, 0.1)
+   local cv = Swept_process(_ctx.inst_20263, (1.0 - env_reset), (pitch + (0.4 * swept)), pitch, 0.1)
    local osc = Tricore_process(_ctx.inst_33c63, cv, 0.0, env_reset)
    local osc_sat = Saturate_process((1.5 * osc))
-   Ahr_do(_ctx.inst_4d863, gate, 0.001, 0.01, ((noise * 0.01) + 0.001))
+   Ahr_do(_ctx.inst_4d863, gate, 0.001, 0.01, (0.001 + (0.01 * noise)))
    local noise_env = _ctx.inst_4d863.Ahr_do_ret_0
-   local noise_osc = ((noise * Noise_process(_ctx.inst_53d63, 1.0)) / 3.0)
-   return ((osc_env * osc_sat) + (noise_env * noise_osc))
+   local noise_osc = (0.333333333333 * (noise * Noise_process(_ctx.inst_53d63, 1.0)))
+   return ((noise_env * noise_osc) + (osc_env * osc_sat))
 end
 
 function Kick_process(_ctx, gate)
@@ -568,16 +568,16 @@ end
 
 function Kick_controlChange(_ctx, control, value, channel)
    if (control == 30) then
-      _ctx.odecay = (real(value) / 127.0)
+      _ctx.odecay = (0.00787401574803 * real(value))
    end
    if (control == 31) then
       _ctx.pitch = Util_map(real(value), 0.0, 127.0, 0.0, 0.1)
    end
    if (control == 32) then
-      _ctx.swept = (real(value) / 127.0)
+      _ctx.swept = (0.00787401574803 * real(value))
    end
    if (control == 33) then
-      _ctx.noise = (real(value) / 127.0)
+      _ctx.noise = (0.00787401574803 * real(value))
    end
 end
 

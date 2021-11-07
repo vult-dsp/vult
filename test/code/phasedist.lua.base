@@ -45,7 +45,7 @@ function Phasedist_process_type_init(_ctx)
 end
 
 function Phasedist_smooth(_ctx, input)
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005))
+   _ctx.x = ((0.005 * (input - _ctx.x)) + _ctx.x)
    return _ctx.x
 end
 
@@ -56,7 +56,7 @@ function Phasedist_change(_ctx, x)
 end
 
 function Phasedist_pitchToRate(d)
-   return ((8.1758 * exp((0.0577623 * d))) / 44100.0)
+   return (2.26757369615e-05 * (8.1758 * exp((0.0577623 * d))))
 end
 
 function Phasedist_phasor(_ctx, pitch, reset)
@@ -81,9 +81,9 @@ function Phasedist_process(_ctx, input)
    local comp = (1.0 - phase1)
    local reset = ((_ctx.pre_phase1 - phase1) > 0.5)
    _ctx.pre_phase1 = phase1
-   local phase2 = Phasedist_phasor(_ctx.inst_317e9, (_ctx.pitch + (Phasedist_smooth(_ctx.inst_275e9, _ctx.detune) * 32.0)), reset)
-   local sine = sin(((2.0 * 3.14159265359) * phase2))
-   return (Phasedist_smooth(_ctx.inst_475e9, _ctx.volume) * (sine * comp))
+   local phase2 = Phasedist_phasor(_ctx.inst_317e9, ((32.0 * Phasedist_smooth(_ctx.inst_275e9, _ctx.detune)) + _ctx.pitch), reset)
+   local sine = sin((2.0 * (3.14159265359 * phase2)))
+   return (comp * (sine * Phasedist_smooth(_ctx.inst_475e9, _ctx.volume)))
 end
 
 function Phasedist_noteOn(_ctx, note, velocity, channel)
@@ -95,10 +95,10 @@ end
 
 function Phasedist_controlChange(_ctx, control, value, channel)
    if (control == 30) then
-      _ctx.volume = (real(value) / 127.0)
+      _ctx.volume = (0.00787401574803 * real(value))
    end
    if (control == 31) then
-      _ctx.detune = (real(value) / 127.0)
+      _ctx.detune = (0.00787401574803 * real(value))
    end
 end
 

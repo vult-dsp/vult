@@ -18,7 +18,7 @@ fun Split_mem_foo_type_init(_ctx : struct Split_mem_foo_type) : void  {
 
 fun Split_mem_foo(_ctx : struct Split_mem_foo_type) : void  {
    _ctx.x = 0;
-   _ctx.y = (_ctx.y + 1);
+   _ctx.y = (1 + _ctx.y);
    _ctx.a = 1;
    _ctx.b = 2;
    val _t_temp_0 : int;

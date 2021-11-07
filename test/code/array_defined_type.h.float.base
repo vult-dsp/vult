@@ -27,7 +27,7 @@ static_inline void Array_defined_type_foo_type_init(Array_defined_type_foo_type&
    int32_t i_0 = 0;
    while ((i_0 < 12)) {
       Array_defined_type_dot_init(_ctx.p1[i_0]);
-      i_0 = (i_0 + 1);
+      i_0 = (1 + i_0);
    }
 }
 

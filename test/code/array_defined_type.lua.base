@@ -29,7 +29,7 @@ function Array_defined_type_foo_type_init(_ctx)
    while (i_0 < 12) do
       do
          Array_defined_type_dot_init(_ctx.p1[i_0])
-         i_0 = (i_0 + 1)
+         i_0 = (1 + i_0)
       end
    end
 end

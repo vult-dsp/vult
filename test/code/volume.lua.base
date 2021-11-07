@@ -29,7 +29,7 @@ function Volume_process_type_init(_ctx)
 end
 
 function Volume_smooth(_ctx, input)
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005))
+   _ctx.x = ((0.005 * (input - _ctx.x)) + _ctx.x)
    return _ctx.x
 end
 
@@ -45,7 +45,7 @@ end
 
 function Volume_controlChange(_ctx, control, value, channel)
    if (control == 30) then
-      _ctx.volume = (real(value) / 127.0)
+      _ctx.volume = (0.00787401574803 * real(value))
    end
 end
 

@@ -50,36 +50,36 @@ void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r) {
       _ctx.state = release;
    }
    if (_ctx.state == reset) {
-      _ctx.rate = (1.0f / ((100.0f * 0.01f) + 0.01f));
+      _ctx.rate = (1.0f / (0.01f + (0.01f * 100.0f)));
       _ctx.target = 0.0f;
    }
    if (_ctx.state == attack) {
-      _ctx.rate = (1.0f / ((100.0f * a) + 0.01f));
+      _ctx.rate = (1.0f / (0.01f + (100.0f * a)));
       _ctx.target = (1.2f * 1024.0f);
    }
    if (_ctx.state == hold) {
-      float hrate = (1.0f / ((100.0f * h) + 0.01f));
-      _ctx.hold_phase = (_ctx.hold_phase + hrate);
+      float hrate = (1.0f / (0.01f + (100.0f * h)));
+      _ctx.hold_phase = (hrate + _ctx.hold_phase);
    }
    if (_ctx.state == release) {
-      _ctx.rate = (1.0f / ((100.0f * r) + 0.01f));
+      _ctx.rate = (1.0f / (0.01f + (100.0f * r)));
       _ctx.target = 0.0f;
    }
-   _ctx.out = (_ctx.out + (((_ctx.target - _ctx.out) * _ctx.rate) * 0.005f));
-   _ctx.Ahr_do_ret_0 = float_clip((_ctx.out / 1024.0f), 0.0f, 1.0f);
+   _ctx.out = ((0.005f * ((_ctx.target - _ctx.out) * _ctx.rate)) + _ctx.out);
+   _ctx.Ahr_do_ret_0 = float_clip((0.0009765625f * _ctx.out), 0.0f, 1.0f);
    _ctx.Ahr_do_ret_1 = resetting;
    return ;
 }
 
 void Ahr_controlChange(Ahr_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    if (control == 1) {
-      _ctx.knob1 = (int_to_float(value) / 127.0f);
+      _ctx.knob1 = (0.00787401574803f * int_to_float(value));
    }
    if (control == 2) {
-      _ctx.knob2 = (int_to_float(value) / 127.0f);
+      _ctx.knob2 = (0.00787401574803f * int_to_float(value));
    }
    if (control == 3) {
-      _ctx.knob3 = (int_to_float(value) / 127.0f);
+      _ctx.knob3 = (0.00787401574803f * int_to_float(value));
    }
 }
 

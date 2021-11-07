@@ -38,7 +38,7 @@ static_inline void Afi_fi_process_type_init(Afi_fi_process_type& _ctx) {
 }
 
 static_inline void Afi_fi_process(Afi_fi_process_type& _ctx, float a, int32_t b) {
-   _ctx.x = (_ctx.x + 1);
+   _ctx.x = (1 + _ctx.x);
    _ctx.Afi_fi_process_ret_0 = a;
    _ctx.Afi_fi_process_ret_1 = b;
    return ;

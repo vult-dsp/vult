@@ -24,7 +24,7 @@ static_inline void Volume_process_type_init(Volume_process_type& _ctx) {
 }
 
 static_inline float Volume_smooth(Volume_smooth_type& _ctx, float input) {
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005f));
+   _ctx.x = ((0.005f * (input - _ctx.x)) + _ctx.x);
    return _ctx.x;
 }
 
@@ -40,7 +40,7 @@ static_inline void Volume_noteOff(Volume_process_type& _ctx, int32_t note, int32
 
 static_inline void Volume_controlChange(Volume_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    if (control == 30) {
-      _ctx.volume = (int_to_float(value) / 127.0f);
+      _ctx.volume = (0.00787401574803f * int_to_float(value));
    }
 }
 

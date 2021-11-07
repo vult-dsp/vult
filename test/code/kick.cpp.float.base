@@ -51,10 +51,10 @@ void Kick_process_type_init(Kick_process_type& _ctx) {
 }
 
 float Noise_process(Noise_process_type& _ctx, float color) {
-   _ctx.x1 = (((_ctx.x1 * 17389) + 7919) % 32768);
-   float y1 = (int_to_float(_ctx.x1) / 32768.0f);
-   _ctx.x2 = (((_ctx.x2 * 27449) + 12553) % 32768);
-   float y2 = (int_to_float(_ctx.x2) / 32768.0f);
+   _ctx.x1 = ((7919 + (17389 * _ctx.x1)) % 32768);
+   float y1 = (3.0517578125e-05f * int_to_float(_ctx.x1));
+   _ctx.x2 = ((12553 + (27449 * _ctx.x2)) % 32768);
+   float y2 = (3.0517578125e-05f * int_to_float(_ctx.x2));
    float out = 0.0f;
    if ((color > 0.5f)) {
       out = Noise_pinker(_ctx.inst_16d3d, (y1 - y2));
@@ -78,7 +78,7 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
    else {
       _if_temp_0 = (-_ctx.rate);
    }
-   new_phase = (_ctx.phase + _if_temp_0);
+   new_phase = (_if_temp_0 + _ctx.phase);
    bool bdisable = (disable > 0.5f);
    if ((Util_edge(_ctx.inst_2043c, (reset > 0.0f)) || Util_edge(_ctx.inst_3043c, bdisable))) {
       _ctx.reset_phase = _ctx.phase;
@@ -90,9 +90,9 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
       _ctx.direction = false;
    }
    else {
-      if ((new_phase < (-1024.0f))) {
+      if ((new_phase < -1024.0f)) {
          _ctx.direction = true;
-         new_phase = ((-1024.0f) + (new_phase + 1024.0f));
+         new_phase = (-1024.0f + (1024.0f + new_phase));
       }
    }
    if (bdisable) {
@@ -110,7 +110,7 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
          else {
             reset_speed = 0.5f;
          }
-         _ctx.reset_phase = (_ctx.reset_phase - (_ctx.reset_phase * reset_speed));
+         _ctx.reset_phase = (_ctx.reset_phase - (reset_speed * _ctx.reset_phase));
       }
       else {
          if ((_ctx.reset_phase > 10.0f)) {
@@ -125,7 +125,7 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
       out = _ctx.reset_phase;
    }
    out = (out + _ctx.phase);
-   return (out / 1024.0f);
+   return (0.0009765625f * out);
 }
 
 void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r) {
@@ -155,51 +155,51 @@ void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r) {
       _ctx.state = release;
    }
    if (_ctx.state == reset) {
-      _ctx.rate = (1.0f / ((100.0f * 0.01f) + 0.01f));
+      _ctx.rate = (1.0f / (0.01f + (0.01f * 100.0f)));
       _ctx.target = 0.0f;
    }
    if (_ctx.state == attack) {
-      _ctx.rate = (1.0f / ((100.0f * a) + 0.01f));
+      _ctx.rate = (1.0f / (0.01f + (100.0f * a)));
       _ctx.target = (1.2f * 1024.0f);
    }
    if (_ctx.state == hold) {
-      float hrate = (1.0f / ((100.0f * h) + 0.01f));
-      _ctx.hold_phase = (_ctx.hold_phase + hrate);
+      float hrate = (1.0f / (0.01f + (100.0f * h)));
+      _ctx.hold_phase = (hrate + _ctx.hold_phase);
    }
    if (_ctx.state == release) {
-      _ctx.rate = (1.0f / ((100.0f * r) + 0.01f));
+      _ctx.rate = (1.0f / (0.01f + (100.0f * r)));
       _ctx.target = 0.0f;
    }
-   _ctx.out = (_ctx.out + (((_ctx.target - _ctx.out) * _ctx.rate) * 0.005f));
-   _ctx.Ahr_do_ret_0 = float_clip((_ctx.out / 1024.0f), 0.0f, 1.0f);
+   _ctx.out = ((0.005f * ((_ctx.target - _ctx.out) * _ctx.rate)) + _ctx.out);
+   _ctx.Ahr_do_ret_0 = float_clip((0.0009765625f * _ctx.out), 0.0f, 1.0f);
    _ctx.Ahr_do_ret_1 = resetting;
    return ;
 }
 
 void Ahr_controlChange(Ahr_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    if (control == 1) {
-      _ctx.knob1 = (int_to_float(value) / 127.0f);
+      _ctx.knob1 = (0.00787401574803f * int_to_float(value));
    }
    if (control == 2) {
-      _ctx.knob2 = (int_to_float(value) / 127.0f);
+      _ctx.knob2 = (0.00787401574803f * int_to_float(value));
    }
    if (control == 3) {
-      _ctx.knob3 = (int_to_float(value) / 127.0f);
+      _ctx.knob3 = (0.00787401574803f * int_to_float(value));
    }
 }
 
 void Kick_controlChange(Kick_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    if (control == 30) {
-      _ctx.odecay = (int_to_float(value) / 127.0f);
+      _ctx.odecay = (0.00787401574803f * int_to_float(value));
    }
    if (control == 31) {
       _ctx.pitch = Util_map(int_to_float(value), 0.0f, 127.0f, 0.0f, 0.1f);
    }
    if (control == 32) {
-      _ctx.swept = (int_to_float(value) / 127.0f);
+      _ctx.swept = (0.00787401574803f * int_to_float(value));
    }
    if (control == 33) {
-      _ctx.noise = (int_to_float(value) / 127.0f);
+      _ctx.noise = (0.00787401574803f * int_to_float(value));
    }
 }
 

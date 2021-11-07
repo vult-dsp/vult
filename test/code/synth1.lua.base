@@ -68,7 +68,7 @@ function Synth1_process_type_init(_ctx)
 end
 
 function Synth1_smooth(_ctx, input)
-   _ctx.x = (_ctx.x + ((input - _ctx.x) * 0.005))
+   _ctx.x = ((0.005 * (input - _ctx.x)) + _ctx.x)
    return _ctx.x
 end
 
@@ -86,12 +86,12 @@ end
 
 function Synth1_each(_ctx, n)
    local ret = (_ctx.count == 0)
-   _ctx.count = ((_ctx.count + 1) % n)
+   _ctx.count = ((1 + _ctx.count) % n)
    return ret
 end
 
 function Synth1_pitchToRate(d)
-   return ((8.1758 * exp((0.0577623 * d))) / 44100.0)
+   return (2.26757369615e-05 * (8.1758 * exp((0.0577623 * d))))
 end
 
 function Synth1_phasor(_ctx, pitch, reset)
@@ -107,15 +107,15 @@ function Synth1_phasor(_ctx, pitch, reset)
 end
 
 function Synth1_lfo(_ctx, f, gate)
-   local rate = ((f * 10.0) / 44100.0)
+   local rate = (2.26757369615e-05 * (10.0 * f))
    if Synth1_edge(_ctx.inst_11e7d, gate) then
       _ctx.phase = 0.0
    end
-   _ctx.phase = (_ctx.phase + rate)
+   _ctx.phase = (rate + _ctx.phase)
    if (_ctx.phase > 1.0) then
       _ctx.phase = (_ctx.phase - 1.0)
    end
-   return (sin(((_ctx.phase * 2.0) * 3.14159265359)) - 0.5)
+   return (sin((2.0 * (3.14159265359 * _ctx.phase))) - 0.5)
 end
 
 function Synth1_process(_ctx, input)
@@ -124,15 +124,15 @@ function Synth1_process(_ctx, input)
    local comp = (1.0 - phase1)
    local reset = ((_ctx.pre_phase1 - phase1) > 0.5)
    _ctx.pre_phase1 = phase1
-   local phase2 = Synth1_phasor(_ctx.inst_4863d, (_ctx.pitch + (Synth1_smooth(_ctx.inst_3dc3d, (_ctx.detune + lfo_val)) * 32.0)), reset)
-   local sine = sin(((2.0 * 3.14159265359) * phase2))
+   local phase2 = Synth1_phasor(_ctx.inst_4863d, ((32.0 * Synth1_smooth(_ctx.inst_3dc3d, (lfo_val + _ctx.detune))) + _ctx.pitch), reset)
+   local sine = sin((2.0 * (3.14159265359 * phase2)))
    local gate_value = 0.0
    if (_ctx.gate > 0) then
       gate_value = 1.0
    else
       gate_value = 0.0
    end
-   return ((Synth1_smooth(_ctx.inst_5dc3d, _ctx.volume) * (sine * comp)) * Synth1_smooth(_ctx.inst_6dc3d, gate_value))
+   return (comp * (sine * (Synth1_smooth(_ctx.inst_5dc3d, _ctx.volume) * Synth1_smooth(_ctx.inst_6dc3d, gate_value))))
 end
 
 function Synth1_noteOn(_ctx, note, velocity, channel)
@@ -164,7 +164,7 @@ function Synth1_noteOn(_ctx, note, velocity, channel)
       end
    end
    if (_ctx.count <= 4) then
-      _ctx.count = (_ctx.count + 1)
+      _ctx.count = (1 + _ctx.count)
    end
    if (_ctx.count > 0) then
       _ctx.gate = 1
@@ -231,16 +231,16 @@ end
 
 function Synth1_controlChange(_ctx, control, value, channel)
    if (control == 30) then
-      _ctx.volume = (value / 127.0)
+      _ctx.volume = (0.00787401574803 * value)
    end
    if (control == 31) then
-      _ctx.detune = (value / 127.0)
+      _ctx.detune = (0.00787401574803 * value)
    end
    if (control == 32) then
-      _ctx.lfo_rate = (value / 127.0)
+      _ctx.lfo_rate = (0.00787401574803 * value)
    end
    if (control == 33) then
-      _ctx.lfo_amt = (2.0 * ((value / 127.0) - 0.5))
+      _ctx.lfo_amt = (2.0 * ((0.00787401574803 * value) - 0.5))
    end
 end
 
@@ -249,6 +249,6 @@ function Synth1_default(_ctx)
    _ctx.pitch = 45.0
    _ctx.detune = 0.8
    _ctx.lfo_rate = 0.07
-   _ctx.lfo_amt = (-0.8)
+   _ctx.lfo_amt = -0.8
 end
 

@@ -21,15 +21,15 @@ void Adsr_process_type_init(Adsr_process_type& _ctx) {
 }
 
 float Adsr_do(Adsr_do_type& _ctx, float gate, float a, float d, float s, float r) {
-   float a_rate = (1.0f / ((100.0f * a) + 0.01f));
-   float d_rate = (1.0f / ((100.0f * d) + 0.01f));
-   float r_rate = (1.0f / ((100.0f * r) + 0.01f));
-   _ctx.out = (_ctx.out + (((_ctx.target - _ctx.out) * _ctx.rate) * 0.004f));
+   float a_rate = (1.0f / (0.01f + (100.0f * a)));
+   float d_rate = (1.0f / (0.01f + (100.0f * d)));
+   float r_rate = (1.0f / (0.01f + (100.0f * r)));
+   _ctx.out = ((0.004f * ((_ctx.target - _ctx.out) * _ctx.rate)) + _ctx.out);
    bool bgate = (gate > 0.0f);
    if (_ctx.state == 0) {
       if (Util_edge(_ctx.inst_104a0, bgate)) {
          _ctx.state = 1;
-         _ctx.scale = (gate / 5.0f);
+         _ctx.scale = (0.2f * gate);
       }
       _ctx.rate = r_rate;
       _ctx.target = 0.0f;
@@ -49,23 +49,23 @@ float Adsr_do(Adsr_do_type& _ctx, float gate, float a, float d, float s, float r
          _ctx.state = 0;
       }
       _ctx.rate = d_rate;
-      _ctx.target = (s * 1024.0f);
+      _ctx.target = (1024.0f * s);
    }
-   return (Util_smooth(_ctx.inst_295a0, _ctx.scale) * float_clip((_ctx.out / 1024.0f), 0.0f, 1.0f));
+   return (Util_smooth(_ctx.inst_295a0, _ctx.scale) * float_clip((0.0009765625f * _ctx.out), 0.0f, 1.0f));
 }
 
 void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    if (control == 1) {
-      _ctx.knob1 = (int_to_float(value) / 127.0f);
+      _ctx.knob1 = (0.00787401574803f * int_to_float(value));
    }
    if (control == 2) {
-      _ctx.knob2 = (int_to_float(value) / 127.0f);
+      _ctx.knob2 = (0.00787401574803f * int_to_float(value));
    }
    if (control == 3) {
-      _ctx.knob3 = (int_to_float(value) / 127.0f);
+      _ctx.knob3 = (0.00787401574803f * int_to_float(value));
    }
    if (control == 4) {
-      _ctx.knob4 = (int_to_float(value) / 127.0f);
+      _ctx.knob4 = (0.00787401574803f * int_to_float(value));
    }
 }
 

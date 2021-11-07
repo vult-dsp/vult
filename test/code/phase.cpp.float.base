@@ -18,6 +18,6 @@ float Phase_process(Phase_process_type& _ctx, float cv, float reset) {
    else {
       _ctx.phase = _ctx.phase;
    }
-   return (_ctx.phase / 1024.0f);
+   return (0.0009765625f * _ctx.phase);
 }
 

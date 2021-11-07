@@ -80,6 +80,8 @@ type exp_d =
   | EReal   of float
   | EString of string
   | EId     of string
+  | EUnOp   of uoperator * exp
+  | EOp     of operator * exp * exp
   | EIndex  of
       { e : exp
       ; index : exp
@@ -89,8 +91,6 @@ type exp_d =
       { path : string
       ; args : exp list
       }
-  | EUnOp   of uoperator * exp
-  | EOp     of operator * exp * exp
   | EIf     of
       { cond : exp
       ; then_ : exp

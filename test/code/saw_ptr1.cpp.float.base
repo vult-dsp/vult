@@ -7,7 +7,7 @@ float Saw_ptr1_process(Saw_ptr1_process_type& _ctx, float cv) {
       _ctx.rate = Util_cvToRate(cv);
    }
    float s1 = _ctx.rate;
-   float dc = (-1.0f);
+   float dc = -1.0f;
    _ctx.phase = (_ctx.phase + _ctx.rate);
    float out = 0.0f;
    if ((_ctx.phase > 1.0f)) {
@@ -18,7 +18,7 @@ float Saw_ptr1_process(Saw_ptr1_process_type& _ctx, float cv) {
    }
    if ((_ctx.phase < s1)) {
       float d = (_ctx.phase / _ctx.rate);
-      out = ((((-2.0f) * d) + 2.0f) + dc);
+      out = (2.0f + (dc + (-2.0f * d)));
    }
    else {
       out = ((2.0f * _ctx.phase) - dc);

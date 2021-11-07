@@ -31,7 +31,7 @@ static_inline void Short_delay_do_type_init(Short_delay_do_type& _ctx) {
    int32_t i_0 = 0;
    while ((i_0 < 22050)) {
       _ctx.buffer[i_0] = 0.0f;
-      i_0 = (i_0 + 1);
+      i_0 = (1 + i_0);
    }
    _ctx.write_pos = 0;
 }
@@ -75,7 +75,7 @@ static_inline void Saturate_default() {
 }
 
 static_inline float Short_delay_soft(Short_delay_soft_type& _ctx, float x1) {
-   float o = ((((x1 + _ctx.x2) + _ctx.x3) + _ctx.x4) / 4.0f);
+   float o = (0.25f * (x1 + (_ctx.x2 + (_ctx.x3 + _ctx.x4))));
    float _t_temp_0 = x1;
    float _t_temp_1 = _ctx.x2;
    float _t_temp_2 = _ctx.x3;

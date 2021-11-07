@@ -18,12 +18,12 @@ void Polycv_poly_noteOn_type_init(Polycv_poly_noteOn_type& _ctx) {
    int32_t i_0 = 0;
    while ((i_0 < 4)) {
       _ctx.notes[i_0] = 0;
-      i_0 = (i_0 + 1);
+      i_0 = (1 + i_0);
    }
    int32_t i_1 = 0;
    while ((i_1 < 4)) {
       _ctx.vel[i_1] = 0;
-      i_1 = (i_1 + 1);
+      i_1 = (1 + i_1);
    }
 }
 
@@ -53,7 +53,7 @@ void Polycv_poly_noteOn(Polycv_poly_noteOn_type& _ctx, int32_t note, int32_t vel
          int_set(_ctx.vel, i, velocity);
          found = true;
       }
-      i = (i + 1);
+      i = (1 + i);
    }
 }
 
@@ -65,7 +65,7 @@ void Polycv_poly_noteOff(Polycv_poly_noteOn_type& _ctx, int32_t note) {
          int_set(_ctx.vel, i, 0);
          found = true;
       }
-      i = (i + 1);
+      i = (1 + i);
    }
 }
 
