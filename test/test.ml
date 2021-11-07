@@ -415,7 +415,6 @@ let callCompiler (file : string) : unit =
 
 let compileCppFile (file : string) : unit =
   let output = Filename.chop_extension (Filename.basename file) in
-  let () = print_endline output in
   Sys.chdir tmp_dir ;
   assert_bool "No code generated" (Sys.file_exists (output ^ ".cpp")) ;
   callCompiler (output ^ ".cpp") ;
@@ -460,7 +459,7 @@ module CliTest = struct
     let flags, ext = getFlags code_type in
     let includes_flags = List.map (fun a -> "-i " ^ a) includes |> String.concat " " in
     let flags = flags ^ " " ^ includes_flags in
-    let vultc = if compiler = Node then "node ./vultc.js" else "./_build/default/src/vult.exe" in
+    let vultc = if compiler = Node then "node ./vult.js" else "./_build/default/src/vult.exe" in
     let cmd = vultc ^ " -test " ^ flags ^ " -o " ^ basefile ^ " " ^ fullfile in
     let generated_files =
       match Sys.command cmd with
@@ -660,11 +659,11 @@ let suite =
          (*; CliTest.get all_files Native "fixed"
            ; CliTest.get all_files Native "js"*)
        ; CliTest.get all_files Native "lua"
-         (*; CliTest.get all_files Node "float"*)
+       ; CliTest.get all_files Node "float"
          (* ; CliTest.get all_files Native "java"
             ; CliTest.get all_files Node "fixed"
-            ; CliTest.get all_files Node "js"
-            ; CliTest.get all_files Node "lua"*)
+            ; CliTest.get all_files Node "js" *)
+       ; CliTest.get all_files Node "lua"
        ; RandomCompileTest.get test_random_code "float"
        ; Interpret.get perf_files
        ]
