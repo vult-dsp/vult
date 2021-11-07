@@ -17,3 +17,22 @@ let splitArray into elems =
     | h :: t -> loop [ h ] (List.rev current :: acc) 0 t
   in
   loop [] [] 0 elems
+
+
+let cast ~(from : Code.type_) ~(to_ : Code.type_) (value : Pla.t) =
+  match from, to_ with
+  | Int, Real -> [%pla {|(float)<#value#>|}]
+  | Int, Bool -> [%pla {|(bool)<#value#>|}]
+  | Int, Fixed -> [%pla {|int_to_fix(<#value#>)|}]
+  | Real, Int -> [%pla {|(int)<#value#>|}]
+  | Real, Bool -> [%pla {|(<#value#> != 0.0f)|}]
+  | Real, Fixed -> [%pla {|float_to_fix(<#value#>)|}]
+  | Bool, Int -> [%pla {|(int)<#value#>|}]
+  | Bool, Real -> [%pla {|(<#value#> ? 1.0f : 0.0f)|}]
+  | Bool, Fixed -> [%pla {|(<#value#> ? int_to_fix(1) : int_to_fix(0))|}]
+  (* no cast *)
+  | Real, Real -> value
+  | Int, Int -> value
+  | Bool, Bool -> value
+  | Fixed, Fixed -> value
+  | _ -> failwith "Unknown cast"

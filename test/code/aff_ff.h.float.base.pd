@@ -24,7 +24,8 @@
  EXPORT void aff_ff_setup(void);
  }
 
- typedef struct Aff_ff_process_type {
+ extern "C" void Aff_ff_process_tilde_setup(void);
+typedef struct Aff_ff_process_type {
    float Aff_ff_process_ret_0;
    float Aff_ff_process_ret_1;
    int32_t x;

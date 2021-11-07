@@ -2,11 +2,79 @@
 
 #include "sf_f.h"
 
+
+extern "C" {
+
+static t_class *Sf_f_process_tilde_class;
+
+typedef struct _Sf_f_process_tilde {
+   t_object  x_obj;
+   float dummy;
+   float data;
+} t_Sf_f_process_tilde;
+
+t_int *Sf_f_process_tilde_perform(t_int *w)
+{
+   t_Sf_f_process_tilde *x = (t_Sf_f_process_tilde *)(w[1]);
+
+   t_sample *in_0 = (t_sample *)(w[2]); 
+   t_sample *out_0 = (t_sample *)(w[3]); 
+
+   int n = (int)(w[4]); 
+
+   while (n--) {
+   float ret =  Sf_f_process(*(in_0++)); 
+   *(out_0++) = ret; 
+   }
+
+   return (w+5);
+}
+
+void Sf_f_process_tilde_dsp(t_Sf_f_process_tilde *x, t_signal **sp)
+{
+   dsp_add(Sf_f_process_tilde_perform, 4,
+   x, 
+   sp[0]->s_vec, 
+   sp[1]->s_vec, 
+
+   sp[0]->s_n);
+}
+
+void *Sf_f_process_tilde_new()
+{
+   t_Sf_f_process_tilde *x = (t_Sf_f_process_tilde *)pd_new(Sf_f_process_tilde_class);
+
+   
+
+
+   outlet_new(&x->x_obj, &s_signal); 
+
+   return (void *)x;
+}
+
+void Sf_f_process_tilde_delete(t_Sf_f_process_tilde *x){
+
+}
+
+void Sf_f_process_tilde_setup(void) {
+   Sf_f_process_tilde_class = class_new(gensym("Sf_f_process~"),
+      (t_newmethod)Sf_f_process_tilde_new, // constructor function
+      (t_method)Sf_f_process_tilde_delete, // destructor function
+      sizeof(t_Sf_f_process_tilde), // size of the object
+      CLASS_DEFAULT, // type of object
+      A_NULL); // arguments passed
+
+   class_addmethod(Sf_f_process_tilde_class, (t_method)Sf_f_process_tilde_dsp, gensym("dsp"), A_NULL);
+   CLASS_MAINSIGNALIN(Sf_f_process_tilde_class, t_Sf_f_process_tilde, dummy);
+}
+
+} // extern "C"
+
 float samplerate() {
   return sys_getsr();
 }
 
 void sf_f_setup() {
 
-
+   Sf_f_process_tilde_setup();
 }

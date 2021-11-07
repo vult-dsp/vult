@@ -24,7 +24,8 @@
  EXPORT void afi_fi_setup(void);
  }
 
- typedef struct Afi_fi_process_type {
+ extern "C" void Afi_fi_process_tilde_setup(void);
+typedef struct Afi_fi_process_type {
    float Afi_fi_process_ret_0;
    int32_t Afi_fi_process_ret_1;
    int32_t x;

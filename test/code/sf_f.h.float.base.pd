@@ -24,7 +24,8 @@
  EXPORT void sf_f_setup(void);
  }
 
- static_inline float Sf_f_process(float input) {
+ extern "C" void Sf_f_process_tilde_setup(void);
+static_inline float Sf_f_process(float input) {
    return (input * input);
 }
 

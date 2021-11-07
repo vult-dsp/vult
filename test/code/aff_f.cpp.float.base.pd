@@ -2,11 +2,82 @@
 
 #include "aff_f.h"
 
+
+extern "C" {
+
+static t_class *Aff_f_process_tilde_class;
+
+typedef struct _Aff_f_process_tilde {
+   t_object  x_obj;
+   float dummy;
+   Aff_f_process_type data;
+} t_Aff_f_process_tilde;
+
+t_int *Aff_f_process_tilde_perform(t_int *w)
+{
+   t_Aff_f_process_tilde *x = (t_Aff_f_process_tilde *)(w[1]);
+
+   t_sample *in_0 = (t_sample *)(w[2]); 
+   t_sample *in_1 = (t_sample *)(w[3]); 
+   t_sample *out_0 = (t_sample *)(w[4]); 
+
+   int n = (int)(w[5]); 
+
+   while (n--) {
+   float ret =  Aff_f_process(x->data, *(in_0++), *(in_1++)); 
+   *(out_0++) = ret; 
+   }
+
+   return (w+6);
+}
+
+void Aff_f_process_tilde_dsp(t_Aff_f_process_tilde *x, t_signal **sp)
+{
+   dsp_add(Aff_f_process_tilde_perform, 5,
+   x, 
+   sp[0]->s_vec, 
+   sp[1]->s_vec, 
+   sp[2]->s_vec, 
+
+   sp[0]->s_n);
+}
+
+void *Aff_f_process_tilde_new()
+{
+   t_Aff_f_process_tilde *x = (t_Aff_f_process_tilde *)pd_new(Aff_f_process_tilde_class);
+
+   Aff_f_process_type_init(x->data); 
+
+   inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal); 
+
+   outlet_new(&x->x_obj, &s_signal); 
+
+   return (void *)x;
+}
+
+void Aff_f_process_tilde_delete(t_Aff_f_process_tilde *x){
+
+}
+
+void Aff_f_process_tilde_setup(void) {
+   Aff_f_process_tilde_class = class_new(gensym("Aff_f_process~"),
+      (t_newmethod)Aff_f_process_tilde_new, // constructor function
+      (t_method)Aff_f_process_tilde_delete, // destructor function
+      sizeof(t_Aff_f_process_tilde), // size of the object
+      CLASS_DEFAULT, // type of object
+      A_NULL); // arguments passed
+
+   class_addmethod(Aff_f_process_tilde_class, (t_method)Aff_f_process_tilde_dsp, gensym("dsp"), A_NULL);
+   CLASS_MAINSIGNALIN(Aff_f_process_tilde_class, t_Aff_f_process_tilde, dummy);
+}
+
+} // extern "C"
+
 float samplerate() {
   return sys_getsr();
 }
 
 void aff_f_setup() {
 
-
+   Aff_f_process_tilde_setup();
 }

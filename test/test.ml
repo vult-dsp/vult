@@ -536,8 +536,10 @@ end
 
 module Templates = struct
   let callVult template (fullfile : string) code_type =
-    let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
-    let args = Args.{ default_arguments with includes } in
+    let basefile = Filename.chop_extension (Filename.basename fullfile) in
+    let moduleName = String.capitalize_ascii basefile in
+    let output = in_tmp_dir basefile in
+    let args = Args.{ default_arguments with includes; roots = [ moduleName ^ ".process" ] } in
     let args, ext =
       match code_type with
       | "fixed" ->
@@ -553,10 +555,10 @@ module Templates = struct
       | "lua" -> { args with template = Some template; code = LuaCode }, [ ".lua", ".lua.base." ^ template ]
       | _ -> failwith "Unknown target to run test"
     in
-    let args = { args with output = Some basefile; files = [ File fullfile ] } in
+    let args = { args with output = Some output; files = [ File fullfile ] } in
     let results = Driver.Cli.driver args in
     let () = List.iter (Driver.Cli.showResult args) results in
-    let generated_files = List.map (fun e -> basefile ^ fst e, basefile ^ snd e) ext in
+    let generated_files = List.map (fun e -> output ^ fst e, output ^ snd e) ext in
     generated_files
 
 

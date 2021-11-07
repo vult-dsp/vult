@@ -51,17 +51,9 @@ let tildeNewFunction (f : function_info) : int * Pla.t =
   dsp_nargs + 2, vec_decl
 
 
-let castType (cast : Code.type_) (value : Pla.t) : Pla.t =
-  match cast with
-  | Real -> [%pla {|(float) <#value#>|}]
-  | Int -> [%pla {|(int) <#value#>|}]
-  | Bool -> [%pla {|(bool) <#value#>|}]
-  | _ -> failwith "Not a nummeric type"
+let castInput (typ : Code.type_) (value : Pla.t) : Pla.t = Common.cast ~from:Code.Real ~to_:typ value
 
-
-let castInput (typ : Code.type_) (value : Pla.t) : Pla.t = castType typ value
-
-let castOutput (typ : Code.type_) (value : Pla.t) : Pla.t = castType typ value
+let castOutput (typ : Code.type_) (value : Pla.t) : Pla.t = Common.cast ~from:typ ~to_:Code.Real value
 
 let inputName (i, acc) (_, t) = i + 1, castInput t [%pla {|*(in_<#i#i>++)|}] :: acc
 
@@ -77,7 +69,7 @@ let tildePerformFunctionCall (f : function_info) =
   let fname = f.name in
   (* generates the aguments for the process call *)
   let args = List.fold_left inputName (0, []) f.inputs |> snd |> List.rev in
-  let args = Pla.join_sep Pla.comma (if f.has_ctx then Pla.string "x->data" :: args else args) in
+  let args = Pla.join_sep Pla.commaspace (if f.has_ctx then Pla.string "x->data" :: args else args) in
   (* declares the return variable and copies the values to the output buffers *)
   let ret, copy =
     match f.outputs with
