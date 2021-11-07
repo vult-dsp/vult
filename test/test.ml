@@ -399,29 +399,31 @@ type compiler =
   | Node
   | Native
 
+let callCompiler (file : string) : unit =
+  let basename = Filename.chop_extension (Filename.basename file) in
+  let cmd =
+    Printf.sprintf
+      "gcc -Werror -Wno-write-strings -Wconversion -I%s -I%s -c %s -o %s"
+      (in_test_directory "../runtime")
+      (in_test_directory "../examples/cmake/pd-deps")
+      file
+      basename
+  in
+  if Sys.command cmd <> 0 then
+    assert_failure ("Failed to compile " ^ file)
+
+
+let compileCppFile (file : string) : unit =
+  let output = Filename.chop_extension (Filename.basename file) in
+  let () = print_endline output in
+  Sys.chdir tmp_dir ;
+  assert_bool "No code generated" (Sys.file_exists (output ^ ".cpp")) ;
+  callCompiler (output ^ ".cpp") ;
+  callCompiler (in_test_directory "../runtime/vultin.cpp") ;
+  Sys.chdir initial_dir
+
+
 module CliTest = struct
-  let callCompiler (file : string) : unit =
-    let basename = Filename.chop_extension (Filename.basename file) in
-    let cmd =
-      Printf.sprintf
-        "gcc -Werror -Wno-write-strings -Wconversion -I%s -c %s -o %s"
-        (in_test_directory "../runtime")
-        file
-        basename
-    in
-    if Sys.command cmd <> 0 then
-      assert_failure ("Failed to compile " ^ file)
-
-
-  let compileCppFile (file : string) : unit =
-    let output = Filename.chop_extension (Filename.basename file) in
-    Sys.chdir tmp_dir ;
-    assert_bool "No code generated" (Sys.file_exists (output ^ ".cpp")) ;
-    callCompiler (output ^ ".cpp") ;
-    callCompiler (in_test_directory "../runtime/vultin.cpp") ;
-    Sys.chdir initial_dir
-
-
   let checkJsFile (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
     Sys.chdir tmp_dir ;
@@ -535,6 +537,12 @@ module CliTest = struct
 end
 
 module Templates = struct
+  let tryCompile (args : Args.args) generated_files =
+    match args.template, args.code, generated_files with
+    | Some "pd", CppCode, (filename, _) :: _ -> compileCppFile filename
+    | _ -> ()
+
+
   let callVult template (fullfile : string) code_type =
     let basefile = Filename.chop_extension (Filename.basename fullfile) in
     let moduleName = String.capitalize_ascii basefile in
@@ -559,6 +567,7 @@ module Templates = struct
     let results = Driver.Cli.driver args in
     let () = List.iter (Driver.Cli.showResult args) results in
     let generated_files = List.map (fun e -> output ^ fst e, output ^ snd e) ext in
+    let () = tryCompile args generated_files in
     generated_files
 
 
