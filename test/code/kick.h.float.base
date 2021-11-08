@@ -139,7 +139,7 @@ static_inline float Noise_pinker(Noise_pinker_type& _ctx, float x) {
    float b0 = 0.0277129863191f;
    float b1 = 0.0277129863191f;
    float a1 = -0.944574027362f;
-   float w0 = (x - (a1 * _ctx.w1));
+   float w0 = (x + (-(a1 * _ctx.w1)));
    float y0 = ((b0 * w0) + (b1 * _ctx.w1));
    _ctx.w1 = w0;
    return y0;
@@ -172,18 +172,18 @@ static_inline bool Util_change(Util_change_type& _ctx, float x) {
 }
 
 static_inline float Util_map(float x, float x0, float x1, float y0, float y1) {
-   return (y0 + (((x - x0) * (y1 - y0)) / (x1 - x0)));
+   return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))));
 }
 
 static_inline float Util_dcblock(Util_dcblock_type& _ctx, float x0) {
-   float y0 = ((x0 - _ctx.x1) + (0.995f * _ctx.y1));
+   float y0 = (x0 + ((-_ctx.x1) + (0.995f * _ctx.y1)));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
 }
 
 static_inline float Util_smooth(Util_smooth_type& _ctx, float input) {
-   _ctx.x = ((0.005f * (input - _ctx.x)) + _ctx.x);
+   _ctx.x = ((0.005f * (input + (-_ctx.x))) + _ctx.x);
    return _ctx.x;
 }
 
@@ -194,15 +194,15 @@ static_inline float Util_average2(Util_average2_type& _ctx, float x1) {
 }
 
 static_inline float Util_cubic_clipper(float x) {
-   if ((x <= (-2.0f * 0.333333333333f))) {
-      return (-2.0f * 0.333333333333f);
+   if ((x <= -0.666666666667f)) {
+      return -0.666666666667f;
    }
    else {
-      if ((x >= (0.333333333333f * 2.0f))) {
-         return (0.333333333333f * 2.0f);
+      if ((x >= 0.666666666667f)) {
+         return 0.666666666667f;
       }
       else {
-         return (x - (0.333333333333f * (x * (x * x))));
+         return (x + (-0.333333333333f * (x * (x * x))));
       }
    }
 }
@@ -280,7 +280,7 @@ static_inline float Util_cvToRate(float cv) {
 }
 
 static_inline float Util_pitchToCv(float pitch) {
-   return (0.00833333333333f * (1.0f * (-24.0f + pitch)));
+   return (0.00833333333333f * (-24.0f + pitch));
 }
 
 static_inline float Util_cvToperiod_raw_c0(int32_t index) {
@@ -335,7 +335,7 @@ static_inline void Tricore_default(Tricore_process_type& _ctx) {
 static_inline float Swept_process(Swept_process_type& _ctx, float gate, float start, float end, float rate) {
    float a_rate = (1.0f / (0.01f + (100.0f * rate)));
    bool bgate = (gate > 0.5f);
-   _ctx.out = ((0.004f * (rate * ((1024.0f * end) - _ctx.out))) + _ctx.out);
+   _ctx.out = ((0.004f * (rate * ((-_ctx.out) + (1024.0f * end)))) + _ctx.out);
    if (Util_edge(_ctx.inst_10402, bgate)) {
       _ctx.out = (1024.0f * start);
    }
@@ -416,7 +416,7 @@ static_inline float Kick_do(Kick_do_type& _ctx, float gate, float odecay, float 
    Ahr_do(_ctx.inst_1d863, gate, 0.005f, (0.1f + odecay), (0.01f + odecay));
    float osc_env = _ctx.inst_1d863.Ahr_do_ret_0;
    float env_reset = _ctx.inst_1d863.Ahr_do_ret_1;
-   float cv = Swept_process(_ctx.inst_20263, (1.0f - env_reset), (pitch + (0.4f * swept)), pitch, 0.1f);
+   float cv = Swept_process(_ctx.inst_20263, (1.0f + (-env_reset)), (pitch + (0.4f * swept)), pitch, 0.1f);
    float osc = Tricore_process(_ctx.inst_33c63, cv, 0.0f, env_reset);
    float osc_sat = Saturate_process((1.5f * osc));
    Ahr_do(_ctx.inst_4d863, gate, 0.001f, 0.01f, (0.001f + (0.01f * noise)));

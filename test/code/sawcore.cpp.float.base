@@ -52,7 +52,7 @@ float Sawcore_process(Sawcore_process_type& _ctx, float cv, float reset) {
    if ((do_reset || do_wrap)) {
       _ctx.reset_phase = _ctx.phase;
       if (do_wrap) {
-         new_phase = (new_phase - 1024.0f);
+         new_phase = (-1024.0f + new_phase);
       }
       else {
          new_phase = 0.0f;
@@ -73,6 +73,6 @@ float Sawcore_process(Sawcore_process_type& _ctx, float cv, float reset) {
          out = transition;
       }
    }
-   return ((0.0009765625f * (2.0f * out)) - 1.0f);
+   return (-1.0f + (0.001953125f * out));
 }
 

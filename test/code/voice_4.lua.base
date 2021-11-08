@@ -166,18 +166,18 @@ function Util_change(_ctx, x)
 end
 
 function Util_map(x, x0, x1, y0, y1)
-   return (y0 + (((x - x0) * (y1 - y0)) / (x1 - x0)))
+   return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))
 end
 
 function Util_dcblock(_ctx, x0)
-   local y0 = ((x0 - _ctx.x1) + (0.995 * _ctx.y1))
+   local y0 = (x0 + ((-_ctx.x1) + (0.995 * _ctx.y1)))
    _ctx.x1 = x0
    _ctx.y1 = y0
    return y0
 end
 
 function Util_smooth(_ctx, input)
-   _ctx.x = ((0.005 * (input - _ctx.x)) + _ctx.x)
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
    return _ctx.x
 end
 
@@ -188,13 +188,13 @@ function Util_average2(_ctx, x1)
 end
 
 function Util_cubic_clipper(x)
-   if (x <= (-2.0 * 0.333333333333)) then
-      return (-2.0 * 0.333333333333)
+   if (x <= -0.666666666667) then
+      return -0.666666666667
    else
-      if (x >= (0.333333333333 * 2.0)) then
-         return (0.333333333333 * 2.0)
+      if (x >= 0.666666666667) then
+         return 0.666666666667
       else
-         return (x - (0.333333333333 * (x * (x * x))))
+         return (x + (-0.333333333333 * (x * (x * x))))
       end
    end
 end
@@ -284,7 +284,7 @@ function Util_cvToRate(cv)
 end
 
 function Util_pitchToCv(pitch)
-   return (0.00833333333333 * (1.0 * (-24.0 + pitch)))
+   return (0.00833333333333 * (-24.0 + pitch))
 end
 
 local Util_cvToperiod_c0 = {674.246034776, 671.553837727, 662.76178188, 646.759521901, 623.799427712, 594.871801992, 561.298276875, 524.476942143, 485.731369226, 446.229382316, 406.94744034, 368.66377436, 331.968683025, 297.284155733, 264.887666444, 234.936856737, 207.493124397, 182.543015866, 160.016906779, 139.804831794, 121.769556579, 105.757116937, 91.6051155071, 79.149088394, 68.2272489259, 58.6838945702, 50.371733558, 43.1533549488, 36.902032908, 31.5020247862, 26.8484942477, 22.8471656705}
@@ -350,14 +350,14 @@ function Tricore_process(_ctx, cv, reset, disable)
    end
    if (new_phase > 1024.0) then
       do
-         new_phase = (1024.0 - (new_phase - 1024.0))
+         new_phase = (2048.0 + (-new_phase))
          _ctx.direction = false
       end
    else
       if (new_phase < -1024.0) then
          do
             _ctx.direction = true
-            new_phase = (-1024.0 + (1024.0 + new_phase))
+            new_phase = (0.0 + new_phase)
          end
       end
    end
@@ -376,7 +376,7 @@ function Tricore_process(_ctx, cv, reset, disable)
                else
                   reset_speed = 0.5
                end
-               _ctx.reset_phase = (_ctx.reset_phase - (reset_speed * _ctx.reset_phase))
+               _ctx.reset_phase = ((-(reset_speed * _ctx.reset_phase)) + _ctx.reset_phase)
             end
          else
             do
@@ -474,7 +474,7 @@ function Svf_process(_ctx, x, cv, q, sel)
          _ctx.inv_den = (1.0 / (1.0 + ((2.0 * (_ctx.r * _ctx.g)) + (_ctx.g * _ctx.g))))
       end
    end
-   local high = (((x - (((2.0 * _ctx.r) + _ctx.g) * _ctx.z1)) - _ctx.z2) * _ctx.inv_den)
+   local high = ((x + ((-(((2.0 * _ctx.r) + _ctx.g) * _ctx.z1)) + (-_ctx.z2))) * _ctx.inv_den)
    local band = ((high * _ctx.g) + _ctx.z1)
    local low = ((band * _ctx.g) + _ctx.z2)
    local notch = (high + low)
@@ -508,8 +508,8 @@ end
 
 function Svf_default(_ctx)
    _ctx.g = Svf_calc_g(0.0)
-   _ctx.r = (1.0 / (0.5 * 2.0))
-   _ctx.inv_den = (1.0 / (1.0 + ((0.0 * (2.0 * _ctx.g)) + (_ctx.g * _ctx.g))))
+   _ctx.r = 1.0
+   _ctx.inv_den = (1.0 / (1.0 + ((0.0 * _ctx.g) + (_ctx.g * _ctx.g))))
 end
 
 local Saturate_tanh_table_c0 = {-0.999999999997, -1.00000000001, -0.999999999997, -0.999999999997, -1.0, -1.0, -1.0, -1.0, -1.0, -0.999999999997, -1.0, -0.999999999994, -1.0, -1.0, -1.0, -1.0, -0.999999999997, -0.999999999997, -1.0, -1.0, -1.0, -0.999999999997, -1.0, -0.999999999997, -0.999999999997, -0.999999999997, -1.0, -1.0, -0.999999999997, -0.999999999997, -0.999999999997, -0.999999999997, -1.0, -1.0, -0.999999999995, -1.0, -0.999999999999, -0.999999999997, -0.999999999997, -0.999999999994, -0.999999999988, -0.999999999977, -0.999999999965, -0.999999999956, -0.999999999927, -0.999999999902, -0.999999999851, -0.999999999785, -0.99999999969, -0.999999999555, -0.999999999346, -0.999999999056, -0.999999998636, -0.999999998022, -0.999999997141, -0.999999995866, -0.999999994018, -0.999999991363, -0.999999987522, -0.999999981986, -0.999999974009, -0.999999962514, -0.99999994597, -0.99999992216, -0.999999887929, -0.999999838733, -0.99999976808, -0.999999666681, -0.999999521258, -0.999999312852, -0.9999990144, -0.999998587338, -0.999997976745, -0.999997104493, -0.999995859554, -0.999994084334, -0.999991555413, -0.999987956431, -0.999982840035, -0.999975574507, -0.999965269101, -0.999950669783, -0.999930013967, -0.999900828606, -0.999859650259, -0.999801638058, -0.999720040171, -0.999605460715, -0.999444856034, -0.999220165743, -0.998906453716, -0.998469395542, -0.997861900902, -0.997019600469, -0.995854857304, -0.994248884102, -0.992041465289, -0.989017708666, -0.984891207544, -0.979283022499, -0.971696063447, -0.961484889131, -0.947821842616, -0.929662129669, -0.90571342178, -0.874420561407, -0.833983940339, -0.782442143682, -0.717865836239, -0.63872814745, -0.544526816711, -0.436707847777, -0.319822453429, -0.202551570965, -0.0977039508554, -0.019758230215, 0.0211020337687, 0.0266706341736, 0.0132847925228, 0.00178842066124, -0.0, -0.00178842066124, -0.0132847925228, -0.0266706341736, -0.0211020337687, 0.019758230215, 0.0977039508554, 0.202551570965, 0.319822453429, 0.436707847777, 0.544526816711, 0.63872814745, 0.717865836239, 0.782442143682, 0.833983940339, 0.874420561407, 0.90571342178, 0.929662129669, 0.947821842616, 0.961484889131, 0.971696063447, 0.979283022499, 0.984891207544, 0.989017708666, 0.992041465289, 0.994248884102, 0.995854857305, 0.997019600469, 0.997861900902, 0.998469395542, 0.998906453716, 0.999220165743, 0.999444856034, 0.999605460715, 0.999720040171, 0.999801638058, 0.999859650259, 0.999900828606, 0.999930013967, 0.999950669783, 0.999965269101, 0.999975574507, 0.999982840035, 0.999987956431, 0.999991555414, 0.999994084334, 0.999995859556, 0.999997104492, 0.999997976747, 0.999998587339, 0.999999014399, 0.99999931285, 0.999999521258, 0.999999666681, 0.999999768081, 0.999999838734, 0.99999988793, 0.999999922162, 0.999999945968, 0.999999962516, 0.999999974009, 0.999999981985, 0.999999987524, 0.999999991361, 0.99999999402, 0.999999995864, 0.999999997141, 0.999999998024, 0.999999998634, 0.99999999906, 0.999999999346, 0.999999999555, 0.99999999969, 0.999999999787, 0.999999999853, 0.999999999898, 0.999999999931, 0.99999999995, 0.999999999963, 0.999999999976, 0.999999999988, 0.999999999994, 0.999999999995, 0.999999999995, 0.999999999994, 1.0, 0.999999999997, 0.999999999995, 1.0, 0.999999999997, 0.999999999999, 0.999999999997, 1.0, 1.0, 1.0, 1.0, 0.999999999997, 1.0, 0.999999999997, 0.999999999997, 1.0, 1.0, 1.00000000001, 0.999999999997, 1.0, 1.0, 1.0, 1.0, 0.999999999997, 0.999999999997, 0.999999999997, 1.0, 1.0, 0.999999999997, 1.0, 1.00000000001, 0.999999999994, 1.0, 1.0, 1.0, 1.0}
@@ -561,11 +561,11 @@ end
 
 function Lfo_process(_ctx, cv, shape, reset)
    if Util_change(_ctx.inst_1b0d6, cv) then
-      _ctx.rate = Util_cvToRate((cv - 0.3))
+      _ctx.rate = Util_cvToRate((-0.3 + cv))
    end
    _ctx.phase = (_ctx.phase + _ctx.rate)
    if (_ctx.phase > 2.0) then
-      _ctx.phase = (_ctx.phase - 2.0)
+      _ctx.phase = (-2.0 + _ctx.phase)
    else
       _ctx.phase = _ctx.phase
    end
@@ -573,13 +573,13 @@ function Lfo_process(_ctx, cv, shape, reset)
    if Util_edge(_ctx.inst_204d6, breset) then
       _ctx.phase = 0.0
    end
-   local tmp = (_ctx.phase - 1.0)
+   local tmp = (-1.0 + _ctx.phase)
    local o = 0.0
    if (shape < 1.0) then
       o = tmp
    else
       if (shape < 2.0) then
-         o = ((2.0 * abs(tmp)) - 1.0)
+         o = (-1.0 + (2.0 * abs(tmp)))
       else
          if (tmp > 0.0) then
             o = 1.0
@@ -633,7 +633,7 @@ function Phase_process(_ctx, cv, reset)
       _ctx.phase = (_ctx.phase + _ctx.rate)
    end
    if (_ctx.phase > 1024.0) then
-      _ctx.phase = (_ctx.phase - 1024.0)
+      _ctx.phase = (-1024.0 + _ctx.phase)
    else
       _ctx.phase = _ctx.phase
    end
@@ -685,7 +685,7 @@ function Blit_osc_blit(_ctx, cv, pw, wave)
    if (wave < 1.0) then
       fixed_cv = cv
    else
-      fixed_cv = (cv - 0.1)
+      fixed_cv = (-0.1 + cv)
    end
    if Util_change(_ctx.inst_1b026, fixed_cv) then
       _ctx.rate = Util_cvToRate(fixed_cv)
@@ -694,12 +694,12 @@ function Blit_osc_blit(_ctx, cv, pw, wave)
    local shift05 = (0.5 + (0.49 * pw))
    local shift = (phase + shift05)
    if (shift > 1.0) then
-      shift = (shift - 1.0)
+      shift = (-1.0 + shift)
    end
    local pulse1 = Blit_pulse_train(_ctx.inst_35e26, fixed_cv, phase)
    local pulse2 = Blit_pulse_train(_ctx.inst_45e26, fixed_cv, shift)
-   _ctx.state_pulse = ((pulse1 + (0.9995 * _ctx.state_pulse)) - pulse2)
-   _ctx.state_saw = ((0.5 * (((pulse1 + pulse2) - (2.0 * _ctx.rate)) / shift05)) + (0.9995 * _ctx.state_saw))
+   _ctx.state_pulse = (pulse1 + ((-pulse2) + (0.9995 * _ctx.state_pulse)))
+   _ctx.state_saw = ((0.5 * ((pulse1 + (pulse2 + (-2.0 * _ctx.rate))) / shift05)) + (0.9995 * _ctx.state_saw))
    if (wave < 1.0) then
       _ctx.output = _ctx.state_pulse
    else
@@ -733,7 +733,7 @@ function Adsr_do(_ctx, gate, a, d, s, r)
    local a_rate = (1.0 / (0.01 + (100.0 * a)))
    local d_rate = (1.0 / (0.01 + (100.0 * d)))
    local r_rate = (1.0 / (0.01 + (100.0 * r)))
-   _ctx.out = ((0.004 * ((_ctx.target - _ctx.out) * _ctx.rate)) + _ctx.out)
+   _ctx.out = ((0.004 * (((-_ctx.out) + _ctx.target) * _ctx.rate)) + _ctx.out)
    local bgate = (gate > 0.0)
    if (_ctx.state == 0) then
       do
@@ -756,7 +756,7 @@ function Adsr_do(_ctx, gate, a, d, s, r)
             _ctx.state = 2
          end
          _ctx.rate = a_rate
-         _ctx.target = (1.2 * 1024.0)
+         _ctx.target = 1228.8
       end
    end
    if (_ctx.state == 2) then
@@ -844,7 +844,7 @@ function Voice_4_controlChange(_ctx, control, value, channel)
       _ctx.pw2 = (0.00787401574803 * real(value))
    end
    if (control == 36) then
-      _ctx.pw3 = (0.00787401574803 * (0.1 * real(value)))
+      _ctx.pw3 = (0.000787401574803 * real(value))
    end
    if (control == 37) then
       _ctx.pw4 = (0.00787401574803 * real(value))
@@ -853,7 +853,7 @@ function Voice_4_controlChange(_ctx, control, value, channel)
       _ctx.lfo_rate = Util_map(real(value), 0.0, 127.0, -0.4, 0.1)
    end
    if (control == 39) then
-      _ctx.lfo_shape = (0.00787401574803 * (3.0 * real(value)))
+      _ctx.lfo_shape = (0.0236220472441 * real(value))
    end
    if (control == 40) then
       _ctx.lfo_pw = Util_map(real(value), 0.0, 127.0, -1.0, 1.0)

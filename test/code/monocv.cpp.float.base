@@ -53,12 +53,12 @@ int32_t Monocv_mono_noteOff(Monocv_mono_noteOn_type& _ctx, int32_t n) {
    if (found) {
       int32_t k = (1 + pos);
       while ((k < 4)) {
-         int_set(_ctx.notes, (k - 1), int_get(_ctx.notes, k));
+         int_set(_ctx.notes, (-1 + k), int_get(_ctx.notes, k));
          k = (1 + k);
       }
       if ((found && (_ctx.count > 0))) {
-         _ctx.count = (_ctx.count - 1);
-         _ctx.pre = int_get(_ctx.notes, (_ctx.count - 1));
+         _ctx.count = (-1 + _ctx.count);
+         _ctx.pre = int_get(_ctx.notes, (-1 + _ctx.count));
       }
    }
    return _ctx.pre;

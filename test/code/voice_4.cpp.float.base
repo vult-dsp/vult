@@ -113,13 +113,13 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
       new_phase = 0.0f;
    }
    if ((new_phase > 1024.0f)) {
-      new_phase = (1024.0f - (new_phase - 1024.0f));
+      new_phase = (2048.0f + (-new_phase));
       _ctx.direction = false;
    }
    else {
       if ((new_phase < -1024.0f)) {
          _ctx.direction = true;
-         new_phase = (-1024.0f + (1024.0f + new_phase));
+         new_phase = (0.0f + new_phase);
       }
    }
    if (bdisable) {
@@ -137,7 +137,7 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
          else {
             reset_speed = 0.5f;
          }
-         _ctx.reset_phase = (_ctx.reset_phase - (reset_speed * _ctx.reset_phase));
+         _ctx.reset_phase = ((-(reset_speed * _ctx.reset_phase)) + _ctx.reset_phase);
       }
       else {
          if ((_ctx.reset_phase > 10.0f)) {
@@ -162,7 +162,7 @@ float Svf_process(Svf_process_type& _ctx, float x, float cv, float q, int32_t se
       _ctx.r = (1.0f / (2.0f * (q + float_eps())));
       _ctx.inv_den = (1.0f / (1.0f + ((2.0f * (_ctx.r * _ctx.g)) + (_ctx.g * _ctx.g))));
    }
-   float high = (((x - (((2.0f * _ctx.r) + _ctx.g) * _ctx.z1)) - _ctx.z2) * _ctx.inv_den);
+   float high = ((x + ((-(((2.0f * _ctx.r) + _ctx.g) * _ctx.z1)) + (-_ctx.z2))) * _ctx.inv_den);
    float band = ((high * _ctx.g) + _ctx.z1);
    float low = ((band * _ctx.g) + _ctx.z2);
    float notch = (high + low);
@@ -190,11 +190,11 @@ float Svf_process(Svf_process_type& _ctx, float x, float cv, float q, int32_t se
 
 float Lfo_process(Lfo_process_type& _ctx, float cv, float shape, float reset) {
    if (Util_change(_ctx.inst_1b0d6, cv)) {
-      _ctx.rate = Util_cvToRate((cv - 0.3f));
+      _ctx.rate = Util_cvToRate((-0.3f + cv));
    }
    _ctx.phase = (_ctx.phase + _ctx.rate);
    if ((_ctx.phase > 2.0f)) {
-      _ctx.phase = (_ctx.phase - 2.0f);
+      _ctx.phase = (-2.0f + _ctx.phase);
    }
    else {
       _ctx.phase = _ctx.phase;
@@ -203,14 +203,14 @@ float Lfo_process(Lfo_process_type& _ctx, float cv, float shape, float reset) {
    if (Util_edge(_ctx.inst_204d6, breset)) {
       _ctx.phase = 0.0f;
    }
-   float tmp = (_ctx.phase - 1.0f);
+   float tmp = (-1.0f + _ctx.phase);
    float o = 0.0f;
    if ((shape < 1.0f)) {
       o = tmp;
    }
    else {
       if ((shape < 2.0f)) {
-         o = ((2.0f * abs(tmp)) - 1.0f);
+         o = (-1.0f + (2.0f * abs(tmp)));
       }
       else {
          if ((tmp > 0.0f)) {
@@ -235,7 +235,7 @@ float Phase_process(Phase_process_type& _ctx, float cv, float reset) {
       _ctx.phase = (_ctx.phase + _ctx.rate);
    }
    if ((_ctx.phase > 1024.0f)) {
-      _ctx.phase = (_ctx.phase - 1024.0f);
+      _ctx.phase = (-1024.0f + _ctx.phase);
    }
    else {
       _ctx.phase = _ctx.phase;
@@ -268,7 +268,7 @@ float Blit_osc_blit(Blit_osc_blit_type& _ctx, float cv, float pw, float wave) {
       fixed_cv = cv;
    }
    else {
-      fixed_cv = (cv - 0.1f);
+      fixed_cv = (-0.1f + cv);
    }
    if (Util_change(_ctx.inst_1b026, fixed_cv)) {
       _ctx.rate = Util_cvToRate(fixed_cv);
@@ -277,12 +277,12 @@ float Blit_osc_blit(Blit_osc_blit_type& _ctx, float cv, float pw, float wave) {
    float shift05 = (0.5f + (0.49f * pw));
    float shift = (phase + shift05);
    if ((shift > 1.0f)) {
-      shift = (shift - 1.0f);
+      shift = (-1.0f + shift);
    }
    float pulse1 = Blit_pulse_train(_ctx.inst_35e26, fixed_cv, phase);
    float pulse2 = Blit_pulse_train(_ctx.inst_45e26, fixed_cv, shift);
-   _ctx.state_pulse = ((pulse1 + (0.9995f * _ctx.state_pulse)) - pulse2);
-   _ctx.state_saw = ((0.5f * (((pulse1 + pulse2) - (2.0f * _ctx.rate)) / shift05)) + (0.9995f * _ctx.state_saw));
+   _ctx.state_pulse = (pulse1 + ((-pulse2) + (0.9995f * _ctx.state_pulse)));
+   _ctx.state_saw = ((0.5f * ((pulse1 + (pulse2 + (-2.0f * _ctx.rate))) / shift05)) + (0.9995f * _ctx.state_saw));
    if ((wave < 1.0f)) {
       _ctx.output = _ctx.state_pulse;
    }
@@ -297,7 +297,7 @@ float Adsr_do(Adsr_do_type& _ctx, float gate, float a, float d, float s, float r
    float a_rate = (1.0f / (0.01f + (100.0f * a)));
    float d_rate = (1.0f / (0.01f + (100.0f * d)));
    float r_rate = (1.0f / (0.01f + (100.0f * r)));
-   _ctx.out = ((0.004f * ((_ctx.target - _ctx.out) * _ctx.rate)) + _ctx.out);
+   _ctx.out = ((0.004f * (((-_ctx.out) + _ctx.target) * _ctx.rate)) + _ctx.out);
    bool bgate = (gate > 0.0f);
    if (_ctx.state == 0) {
       if (Util_edge(_ctx.inst_104a0, bgate)) {
@@ -315,7 +315,7 @@ float Adsr_do(Adsr_do_type& _ctx, float gate, float a, float d, float s, float r
          _ctx.state = 2;
       }
       _ctx.rate = a_rate;
-      _ctx.target = (1.2f * 1024.0f);
+      _ctx.target = 1228.8f;
    }
    if (_ctx.state == 2) {
       if (bgate == false) {
@@ -362,7 +362,7 @@ void Voice_4_controlChange(Voice_4_process_type& _ctx, int32_t control, int32_t 
       _ctx.pw2 = (0.00787401574803f * int_to_float(value));
    }
    if (control == 36) {
-      _ctx.pw3 = (0.00787401574803f * (0.1f * int_to_float(value)));
+      _ctx.pw3 = (0.000787401574803f * int_to_float(value));
    }
    if (control == 37) {
       _ctx.pw4 = (0.00787401574803f * int_to_float(value));
@@ -371,7 +371,7 @@ void Voice_4_controlChange(Voice_4_process_type& _ctx, int32_t control, int32_t 
       _ctx.lfo_rate = Util_map(int_to_float(value), 0.0f, 127.0f, -0.4f, 0.1f);
    }
    if (control == 39) {
-      _ctx.lfo_shape = (0.00787401574803f * (3.0f * int_to_float(value)));
+      _ctx.lfo_shape = (0.0236220472441f * int_to_float(value));
    }
    if (control == 40) {
       _ctx.lfo_pw = Util_map(int_to_float(value), 0.0f, 127.0f, -1.0f, 1.0f);

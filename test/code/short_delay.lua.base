@@ -93,17 +93,17 @@ function Short_delay_do(_ctx, x, time, feedback)
    feedback = clip(feedback, 0.0, 1.0)
    local index_r = (time * real(22050))
    local index_i = int(floor(index_r))
-   local delta = (_ctx.write_pos - index_i)
+   local delta = ((-index_i) + _ctx.write_pos)
    local read_pos = 0
    if (delta < 0) then
       read_pos = (22050 + delta)
    else
       read_pos = delta
    end
-   local decimal = (index_r - real(index_i))
+   local decimal = (index_r + (-real(index_i)))
    local x1 = get(_ctx.buffer, read_pos)
    local x2 = get(_ctx.buffer, ((1 + read_pos) % 22050))
-   local ret = (x1 + (decimal * (x2 - x1)))
+   local ret = (x1 + (decimal * (x2 + (-x1))))
    _ctx.write_pos = ((1 + _ctx.write_pos) % 22050)
    set(_ctx.buffer, _ctx.write_pos, Saturate_process((x + (feedback * ret))))
    return ret

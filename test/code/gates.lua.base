@@ -57,7 +57,7 @@ end
 function Gates_gates_noteOn(_ctx, note, velocity)
    if ((note >= 36) and (note <= 43)) then
       do
-         local n = (note - 36)
+         local n = (-36 + note)
          set(_ctx.vel, n, velocity)
       end
    end
@@ -66,7 +66,7 @@ end
 function Gates_gates_noteOff(_ctx, note)
    if ((note >= 36) and (note <= 43)) then
       do
-         local n = (note - 36)
+         local n = (-36 + note)
          set(_ctx.vel, n, 0)
       end
    end

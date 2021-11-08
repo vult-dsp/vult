@@ -47,7 +47,7 @@ static_inline void Phasedist_phasor_type_init(Phasedist_phasor_type& _ctx) {
 void Phasedist_process_type_init(Phasedist_process_type& _ctx);
 
 static_inline float Phasedist_smooth(Phasedist_smooth_type& _ctx, float input) {
-   _ctx.x = ((0.005f * (input - _ctx.x)) + _ctx.x);
+   _ctx.x = ((0.005f * (input + (-_ctx.x))) + _ctx.x);
    return _ctx.x;
 }
 
@@ -58,18 +58,18 @@ static_inline bool Phasedist_change(Phasedist_change_type& _ctx, float x) {
 }
 
 static_inline float Phasedist_pitchToRate(float d) {
-   return (2.26757369615e-05f * (8.1758f * exp((0.0577623f * d))));
+   return (0.000185392290249f * exp((0.0577623f * d)));
 }
 
 float Phasedist_phasor(Phasedist_phasor_type& _ctx, float pitch, bool reset);
 
 static_inline float Phasedist_process(Phasedist_process_type& _ctx, float input) {
    float phase1 = Phasedist_phasor(_ctx.inst_117e9, _ctx.pitch, false);
-   float comp = (1.0f - phase1);
-   bool reset = ((_ctx.pre_phase1 - phase1) > 0.5f);
+   float comp = (1.0f + (-phase1));
+   bool reset = (((-phase1) + _ctx.pre_phase1) > 0.5f);
    _ctx.pre_phase1 = phase1;
    float phase2 = Phasedist_phasor(_ctx.inst_317e9, ((32.0f * Phasedist_smooth(_ctx.inst_275e9, _ctx.detune)) + _ctx.pitch), reset);
-   float sine = sin((2.0f * (3.14159265359f * phase2)));
+   float sine = sin((6.28318530718f * phase2));
    return (comp * (sine * Phasedist_smooth(_ctx.inst_475e9, _ctx.volume)));
 }
 

@@ -61,6 +61,15 @@ let currentFunction env =
   | Some _ -> failwith "function has no context"
 
 
+let isValue (e : exp) =
+  match e.e with
+  | EReal _
+   |EInt _
+   |EBool _ ->
+      true
+  | _ -> false
+
+
 let getTick (env : env) (state : data Mapper.state) =
   let name =
     match env.current_function with
@@ -427,6 +436,17 @@ module Canonize = struct
           reapply state, { e with e = EOp (op, e2, e1) }
         else
           state, e
+    (* e1 - e2 -> e1 + (-e2) *)
+    | { e = EOp (OpSub, e1, e2); _ } ->
+        reapply state, { e with e = EOp (OpAdd, e1, { e2 with e = EUnOp (UOpNeg, e2) }) }
+    (* - (e1 * e2) -> (-e1) * e2 *)
+    | { e = EUnOp (UOpNeg, { e = EOp (OpMul, e1, e2); _ }); _ } when isValue e1 ->
+        reapply state, { e with e = EOp (OpMul, { e1 with e = EUnOp (UOpNeg, e1) }, e2) }
+    (* - (e1 + e2) -> (-e1) + (-e2) *)
+    | { e = EUnOp (UOpNeg, { e = EOp (OpAdd, e1, e2); _ }); _ } ->
+        let e1 = { e1 with e = EUnOp (UOpNeg, e1) } in
+        let e2 = { e2 with e = EUnOp (UOpNeg, e2) } in
+        reapply state, { e with e = EOp (OpAdd, e1, e2) }
     | _ -> state, e
 
 
@@ -434,16 +454,43 @@ module Canonize = struct
 end
 
 module Simplify = struct
+  let evaluate op e1 e2 =
+    match e1, e2 with
+    | { e = EReal n1; _ }, { e = EReal n2; _ } ->
+        ( match op with
+        | OpAdd -> Some { e = EReal (n1 +. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
+        | OpMul -> Some { e = EReal (n1 *. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
+        | OpSub -> Some { e = EReal (n1 -. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
+        | OpDiv -> Some { e = EReal (n1 /. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
+        | _ -> None )
+    | { e = EInt n1; _ }, { e = EInt n2; _ } ->
+        ( match op with
+        | OpAdd -> Some { e = EInt (n1 + n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
+        | OpMul -> Some { e = EInt (n1 * n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
+        | OpSub -> Some { e = EInt (n1 - n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
+        | OpDiv -> Some { e = EInt (n1 / n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
+        | _ -> None )
+    | _ -> None
+
+
   let exp =
     Mapper.make
     @@ fun _env state e ->
     match e with
     (* -(n) -> -n *)
     | { e = EUnOp (UOpNeg, ({ e = EReal n; _ } as e1)); _ } -> reapply state, { e1 with e = EReal (-.n) }
-    | { e = EUnOp (UOpNeg, ({ e = EInt n; _ } as e1)); _ } -> reapply state, { e1 with e = EInt (-n) }
-    (* sorting *)
+    | { e = EUnOp (UOpNeg, ({ e = EInt n; _ } as e1)); _ } ->
+        reapply state, { e1 with e = EInt (-n) } (* e1 / e2 -> e1 * (1.0 / e2) *)
     | { e = EOp (OpDiv, e1, ({ e = EReal n; _ } as e2)); _ } ->
         reapply state, { e with e = EOp (OpMul, e1, { e2 with e = EReal (1.0 /. n) }) }
+    | { e = EOp (op1, e1, { e = EOp (op2, e2, e3); _ }); _ } when op1 = op2 ->
+        ( match evaluate op1 e1 e2 with
+        | Some en -> reapply state, { e with e = EOp (op1, en, e3) }
+        | None -> state, e )
+    | { e = EOp (op, e1, e2); _ } ->
+        ( match evaluate op e1 e2 with
+        | Some e -> reapply state, e
+        | None -> state, e )
     | _ -> state, e
 
 
@@ -507,11 +554,11 @@ end
 
 let passes =
   Location.mapper
+  |> Mapper.seq Simplify.mapper
   |> Mapper.seq Canonize.mapper
   |> Mapper.seq Builtin.mapper
   |> Mapper.seq IfExpressions.mapper
   |> Mapper.seq Tuples.mapper
-  |> Mapper.seq Simplify.mapper
   |> Mapper.seq Cast.mapper
 
 

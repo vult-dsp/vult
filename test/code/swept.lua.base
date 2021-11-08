@@ -58,18 +58,18 @@ function Util_change(_ctx, x)
 end
 
 function Util_map(x, x0, x1, y0, y1)
-   return (y0 + (((x - x0) * (y1 - y0)) / (x1 - x0)))
+   return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))
 end
 
 function Util_dcblock(_ctx, x0)
-   local y0 = ((x0 - _ctx.x1) + (0.995 * _ctx.y1))
+   local y0 = (x0 + ((-_ctx.x1) + (0.995 * _ctx.y1)))
    _ctx.x1 = x0
    _ctx.y1 = y0
    return y0
 end
 
 function Util_smooth(_ctx, input)
-   _ctx.x = ((0.005 * (input - _ctx.x)) + _ctx.x)
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
    return _ctx.x
 end
 
@@ -80,13 +80,13 @@ function Util_average2(_ctx, x1)
 end
 
 function Util_cubic_clipper(x)
-   if (x <= (-2.0 * 0.333333333333)) then
-      return (-2.0 * 0.333333333333)
+   if (x <= -0.666666666667) then
+      return -0.666666666667
    else
-      if (x >= (0.333333333333 * 2.0)) then
-         return (0.333333333333 * 2.0)
+      if (x >= 0.666666666667) then
+         return 0.666666666667
       else
-         return (x - (0.333333333333 * (x * (x * x))))
+         return (x + (-0.333333333333 * (x * (x * x))))
       end
    end
 end
@@ -176,7 +176,7 @@ function Util_cvToRate(cv)
 end
 
 function Util_pitchToCv(pitch)
-   return (0.00833333333333 * (1.0 * (-24.0 + pitch)))
+   return (0.00833333333333 * (-24.0 + pitch))
 end
 
 local Util_cvToperiod_c0 = {674.246034776, 671.553837727, 662.76178188, 646.759521901, 623.799427712, 594.871801992, 561.298276875, 524.476942143, 485.731369226, 446.229382316, 406.94744034, 368.66377436, 331.968683025, 297.284155733, 264.887666444, 234.936856737, 207.493124397, 182.543015866, 160.016906779, 139.804831794, 121.769556579, 105.757116937, 91.6051155071, 79.149088394, 68.2272489259, 58.6838945702, 50.371733558, 43.1533549488, 36.902032908, 31.5020247862, 26.8484942477, 22.8471656705}
@@ -222,7 +222,7 @@ end
 function Swept_process(_ctx, gate, start, end_, rate)
    local a_rate = (1.0 / (0.01 + (100.0 * rate)))
    local bgate = (gate > 0.5)
-   _ctx.out = ((0.004 * (rate * ((1024.0 * end_) - _ctx.out))) + _ctx.out)
+   _ctx.out = ((0.004 * (rate * ((-_ctx.out) + (1024.0 * end_)))) + _ctx.out)
    if Util_edge(_ctx.inst_10402, bgate) then
       _ctx.out = (1024.0 * start)
    end

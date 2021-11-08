@@ -68,7 +68,7 @@ function Synth1_process_type_init(_ctx)
 end
 
 function Synth1_smooth(_ctx, input)
-   _ctx.x = ((0.005 * (input - _ctx.x)) + _ctx.x)
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
    return _ctx.x
 end
 
@@ -91,7 +91,7 @@ function Synth1_each(_ctx, n)
 end
 
 function Synth1_pitchToRate(d)
-   return (2.26757369615e-05 * (8.1758 * exp((0.0577623 * d))))
+   return (0.000185392290249 * exp((0.0577623 * d)))
 end
 
 function Synth1_phasor(_ctx, pitch, reset)
@@ -107,25 +107,25 @@ function Synth1_phasor(_ctx, pitch, reset)
 end
 
 function Synth1_lfo(_ctx, f, gate)
-   local rate = (2.26757369615e-05 * (10.0 * f))
+   local rate = (0.000226757369615 * f)
    if Synth1_edge(_ctx.inst_11e7d, gate) then
       _ctx.phase = 0.0
    end
    _ctx.phase = (rate + _ctx.phase)
    if (_ctx.phase > 1.0) then
-      _ctx.phase = (_ctx.phase - 1.0)
+      _ctx.phase = (-1.0 + _ctx.phase)
    end
-   return (sin((2.0 * (3.14159265359 * _ctx.phase))) - 0.5)
+   return (-0.5 + sin((6.28318530718 * _ctx.phase)))
 end
 
 function Synth1_process(_ctx, input)
    local lfo_val = (Synth1_lfo(_ctx.inst_17d3d, _ctx.lfo_rate, _ctx.gate) * _ctx.lfo_amt)
    local phase1 = Synth1_phasor(_ctx.inst_2863d, _ctx.pitch, false)
-   local comp = (1.0 - phase1)
-   local reset = ((_ctx.pre_phase1 - phase1) > 0.5)
+   local comp = (1.0 + (-phase1))
+   local reset = (((-phase1) + _ctx.pre_phase1) > 0.5)
    _ctx.pre_phase1 = phase1
    local phase2 = Synth1_phasor(_ctx.inst_4863d, ((32.0 * Synth1_smooth(_ctx.inst_3dc3d, (lfo_val + _ctx.detune))) + _ctx.pitch), reset)
-   local sine = sin((2.0 * (3.14159265359 * phase2)))
+   local sine = sin((6.28318530718 * phase2))
    local gate_value = 0.0
    if (_ctx.gate > 0) then
       gate_value = 1.0
@@ -208,7 +208,7 @@ function Synth1_noteOff(_ctx, note, channel)
       end
    end
    if (found and (_ctx.count > 0)) then
-      _ctx.count = (_ctx.count - 1)
+      _ctx.count = (-1 + _ctx.count)
    end
    if (_ctx.count > 0) then
       _ctx.gate = 1
@@ -240,7 +240,7 @@ function Synth1_controlChange(_ctx, control, value, channel)
       _ctx.lfo_rate = (0.00787401574803 * value)
    end
    if (control == 33) then
-      _ctx.lfo_amt = (2.0 * ((0.00787401574803 * value) - 0.5))
+      _ctx.lfo_amt = (2.0 * (-0.5 + (0.00787401574803 * value)))
    end
 end
 

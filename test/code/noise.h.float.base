@@ -29,7 +29,7 @@ static_inline float Noise_pinker(Noise_pinker_type& _ctx, float x) {
    float b0 = 0.0277129863191f;
    float b1 = 0.0277129863191f;
    float a1 = -0.944574027362f;
-   float w0 = (x - (a1 * _ctx.w1));
+   float w0 = (x + (-(a1 * _ctx.w1)));
    float y0 = ((b0 * w0) + (b1 * _ctx.w1));
    _ctx.w1 = w0;
    return y0;

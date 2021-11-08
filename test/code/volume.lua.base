@@ -29,7 +29,7 @@ function Volume_process_type_init(_ctx)
 end
 
 function Volume_smooth(_ctx, input)
-   _ctx.x = ((0.005 * (input - _ctx.x)) + _ctx.x)
+   _ctx.x = ((0.005 * (input + (-_ctx.x))) + _ctx.x)
    return _ctx.x
 end
 

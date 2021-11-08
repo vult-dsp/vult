@@ -3,6 +3,6 @@ fun Simplify_foo(a : int, b : int, c : int, d : int) : int  {
 }
 
 fun Simplify_bar() : int  {
-   return ((-1 + 2) - 3);
+   return -2;
 }
 

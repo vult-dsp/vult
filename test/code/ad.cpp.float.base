@@ -15,7 +15,7 @@ float Ad_do(Ad_do_type& _ctx, float gate, float a, float d) {
    float a_rate = (1.0f / (0.01f + (100.0f * a)));
    float d_rate = (1.0f / (0.01f + (100.0f * d)));
    bool bgate = (gate > 0.0f);
-   _ctx.out = ((0.004f * ((_ctx.target - _ctx.out) * _ctx.rate)) + _ctx.out);
+   _ctx.out = ((0.004f * (((-_ctx.out) + _ctx.target) * _ctx.rate)) + _ctx.out);
    if (_ctx.state == 0) {
       if (Util_edge(_ctx.inst_10452, bgate)) {
          _ctx.state = 1;
@@ -29,7 +29,7 @@ float Ad_do(Ad_do_type& _ctx, float gate, float a, float d) {
          _ctx.state = 0;
       }
       _ctx.rate = a_rate;
-      _ctx.target = (1.2f * 1024.0f);
+      _ctx.target = 1228.8f;
    }
    return (float_clip((0.0009765625f * _ctx.out), 0.0f, 1.0f) * _ctx.scale);
 }

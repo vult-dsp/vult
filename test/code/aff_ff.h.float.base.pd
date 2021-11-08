@@ -40,7 +40,7 @@ static_inline void Aff_ff_process_type_init(Aff_ff_process_type& _ctx) {
 static_inline void Aff_ff_process(Aff_ff_process_type& _ctx, float a, float b) {
    _ctx.x = (1 + _ctx.x);
    _ctx.Aff_ff_process_ret_0 = (a + b);
-   _ctx.Aff_ff_process_ret_1 = (a - b);
+   _ctx.Aff_ff_process_ret_1 = (a + (-b));
    return ;
 }
 

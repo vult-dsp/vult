@@ -125,18 +125,18 @@ static_inline bool Util_change(Util_change_type& _ctx, float x) {
 }
 
 static_inline float Util_map(float x, float x0, float x1, float y0, float y1) {
-   return (y0 + (((x - x0) * (y1 - y0)) / (x1 - x0)));
+   return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))));
 }
 
 static_inline float Util_dcblock(Util_dcblock_type& _ctx, float x0) {
-   float y0 = ((x0 - _ctx.x1) + (0.995f * _ctx.y1));
+   float y0 = (x0 + ((-_ctx.x1) + (0.995f * _ctx.y1)));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
 }
 
 static_inline float Util_smooth(Util_smooth_type& _ctx, float input) {
-   _ctx.x = ((0.005f * (input - _ctx.x)) + _ctx.x);
+   _ctx.x = ((0.005f * (input + (-_ctx.x))) + _ctx.x);
    return _ctx.x;
 }
 
@@ -147,15 +147,15 @@ static_inline float Util_average2(Util_average2_type& _ctx, float x1) {
 }
 
 static_inline float Util_cubic_clipper(float x) {
-   if ((x <= (-2.0f * 0.333333333333f))) {
-      return (-2.0f * 0.333333333333f);
+   if ((x <= -0.666666666667f)) {
+      return -0.666666666667f;
    }
    else {
-      if ((x >= (0.333333333333f * 2.0f))) {
-         return (0.333333333333f * 2.0f);
+      if ((x >= 0.666666666667f)) {
+         return 0.666666666667f;
       }
       else {
-         return (x - (0.333333333333f * (x * (x * x))));
+         return (x + (-0.333333333333f * (x * (x * x))));
       }
    }
 }
@@ -233,7 +233,7 @@ static_inline float Util_cvToRate(float cv) {
 }
 
 static_inline float Util_pitchToCv(float pitch) {
-   return (0.00833333333333f * (1.0f * (-24.0f + pitch)));
+   return (0.00833333333333f * (-24.0f + pitch));
 }
 
 static_inline float Util_cvToperiod_raw_c0(int32_t index) {
