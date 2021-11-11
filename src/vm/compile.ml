@@ -225,6 +225,7 @@ and compile_exp (env : env) e : rvalue =
   | EBool v -> { r = RBool v; loc }
   | EInt v -> { r = RInt v; loc }
   | EReal v -> { r = RReal v; loc }
+  | EFixed v -> { r = RReal v; loc }
   | EString v -> { r = RString v; loc }
   | EId id ->
       let index =

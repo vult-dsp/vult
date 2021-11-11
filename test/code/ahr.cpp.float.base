@@ -65,7 +65,7 @@ void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r) {
       _ctx.rate = (1.0f / (0.01f + (100.0f * r)));
       _ctx.target = 0.0f;
    }
-   _ctx.out = ((0.005f * (((-_ctx.out) + _ctx.target) * _ctx.rate)) + _ctx.out);
+   _ctx.out = ((0.005f * (((- _ctx.out) + _ctx.target) * _ctx.rate)) + _ctx.out);
    _ctx.Ahr_do_ret_0 = float_clip((0.0009765625f * _ctx.out), 0.0f, 1.0f);
    _ctx.Ahr_do_ret_1 = resetting;
    return ;

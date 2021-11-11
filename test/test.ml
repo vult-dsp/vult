@@ -365,10 +365,8 @@ module RandomCompileTest = struct
       assert_failure ("Failed to compile " ^ file)
 
 
-  let generateCPP (filename : string) (output : string) (real_type : string) : unit =
-    let args =
-      Args.{ default_arguments with files = [ File filename ]; code = CppCode; output = Some output; real = real_type }
-    in
+  let generateCPP (filename : string) (output : string) : unit =
+    let args = Args.{ default_arguments with files = [ File filename ]; code = CppCode; output = Some output } in
     let seed = Hashtbl.hash filename in
     let code = RandProg.run seed in
     write filename code ;
@@ -378,10 +376,10 @@ module RandomCompileTest = struct
     writeFiles args gen
 
 
-  let run (real_type : string) (file : string) _ =
+  let run (file : string) _ =
     let output = Filename.chop_extension (Filename.basename file) in
     Sys.chdir tmp_dir ;
-    generateCPP file output real_type ;
+    generateCPP file output ;
     assert_bool "No code generated" (Sys.file_exists (output ^ ".cpp")) ;
     compileFile (output ^ ".cpp") ;
     Sys.remove (output ^ ".cpp") ;
@@ -391,8 +389,7 @@ module RandomCompileTest = struct
     Sys.chdir initial_dir
 
 
-  let get files real_type =
-    "compile" >::: List.map (fun file -> Filename.basename file ^ "." ^ real_type >:: run real_type file) files
+  let get files = "compile" >::: List.map (fun file -> Filename.basename file ^ ".float" >:: run file) files
 end
 
 type compiler =
@@ -413,11 +410,11 @@ let callCompiler (file : string) : unit =
     assert_failure ("Failed to compile " ^ file)
 
 
-let compileCppFile (file : string) : unit =
+let compileCppFile ext (file : string) : unit =
   let output = Filename.chop_extension (Filename.basename file) in
   Sys.chdir tmp_dir ;
-  assert_bool "No code generated" (Sys.file_exists (output ^ ".cpp")) ;
-  callCompiler (output ^ ".cpp") ;
+  assert_bool "No code generated" (Sys.file_exists (output ^ ext)) ;
+  callCompiler (output ^ ext) ;
   callCompiler (in_test_directory "../runtime/vultin.cpp") ;
   Sys.chdir initial_dir
 
@@ -448,6 +445,7 @@ module CliTest = struct
     match code_type with
     | "fixed" -> "-code cpp -real fixed", [ ".cpp", ".cpp.fixed.base"; ".h", ".h.fixed.base" ]
     | "float" -> "-code cpp", [ ".cpp", ".cpp.float.base"; ".h", ".h.float.base" ]
+    | "c" -> "-code c", [ ".c", ".c.float.base"; ".h", ".h.float.base" ]
     | "js" -> "-code js", [ ".js", ".js.base" ]
     | "lua" -> "-code lua", [ ".lua", ".lua.base" ]
     | "java" -> "-code java -prefix vult.com", [ ".java", ".java.base" ]
@@ -471,7 +469,8 @@ module CliTest = struct
       match code_type with
       | "fixed"
        |"float" ->
-          compileCppFile fullfile
+          compileCppFile ".cpp" fullfile
+      | "c" -> compileCppFile ".c" fullfile
       | "js" -> if has_node then checkJsFile fullfile
       | "lua" -> if has_lua then checkLuaFile fullfile
       | _ -> ()
@@ -484,7 +483,8 @@ module CliTest = struct
     let args = Args.{ default_arguments with includes } in
     let args, ext =
       match code_type with
-      | "fixed" -> { args with code = CppCode; real = "fixed" }, [ ".cpp", ".cpp.fixed.base"; ".h", ".h.fixed.base" ]
+      | "c" -> { args with code = CCode }, [ ".c", ".c.base"; ".h", ".h.base" ]
+      | "fixed" -> { args with code = CppCode; real = Fixed }, [ ".cpp", ".cpp.fixed.base"; ".h", ".h.fixed.base" ]
       | "float" -> { args with code = CppCode }, [ ".cpp", ".cpp.float.base"; ".h", ".h.float.base" ]
       | "js" -> { args with code = JSCode }, [ ".js", ".js.base" ]
       | "lua" -> { args with code = LuaCode }, [ ".lua", ".lua.base" ]
@@ -538,7 +538,7 @@ end
 module Templates = struct
   let tryCompile (args : Args.args) generated_files =
     match args.template, args.code, generated_files with
-    | Some "pd", CppCode, (filename, _) :: _ -> compileCppFile filename
+    | Some "pd", CppCode, (filename, _) :: _ -> compileCppFile ".cpp" filename
     | _ -> ()
 
 
@@ -550,11 +550,14 @@ module Templates = struct
     let args, ext =
       match code_type with
       | "fixed" ->
-          ( { args with template = Some template; code = CppCode; real = "fixed" }
+          ( { args with template = Some template; code = CppCode; real = Fixed }
           , [ ".cpp", ".cpp.fixed.base." ^ template; ".h", ".h.fixed.base." ^ template ] )
       | "float" ->
           ( { args with template = Some template; code = CppCode }
           , [ ".cpp", ".cpp.float.base." ^ template; ".h", ".h.float.base." ^ template ] )
+      | "c" ->
+          ( { args with template = Some template; code = CCode }
+          , [ ".c", ".c.float.base." ^ template; ".h", ".h.float.base." ^ template ] )
       | "java" ->
           ( { args with template = Some template; code = JavaCode; prefix = Some "vult.com" }
           , [ ".java", ".java.base." ^ template ] )
@@ -655,16 +658,15 @@ let suite =
             ; Templates.get template_files "teensy" "fixed"
             ; Templates.get template_files "webaudio" "js"
             ; Templates.get template_files "browser" "js"*)
-       ; CliTest.get all_files Native "float"
-         (*; CliTest.get all_files Native "fixed"
-           ; CliTest.get all_files Native "js"*)
+       ; CliTest.get all_files Native "float" (*; CliTest.get all_files Native "c"*)
+       ; CliTest.get all_files Native "fixed" (* ; CliTest.get all_files Native "js"*)
        ; CliTest.get all_files Native "lua"
        ; CliTest.get all_files Node "float"
          (* ; CliTest.get all_files Native "java"
             ; CliTest.get all_files Node "fixed"
             ; CliTest.get all_files Node "js" *)
        ; CliTest.get all_files Node "lua"
-       ; RandomCompileTest.get test_random_code "float"
+       ; RandomCompileTest.get test_random_code
        ; Interpret.get perf_files
        ]
 

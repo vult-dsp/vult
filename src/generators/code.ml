@@ -73,6 +73,7 @@ type exp_d =
   | Bool   of bool
   | Int    of int
   | Real   of float
+  | Fixed  of float
   | String of string
   | Id     of string
   | Index  of
@@ -155,28 +156,34 @@ type env =
 let default_env = { decl = Map.empty; dummy = 0 }
 
 module Convert = struct
-  let rec type_ (t : Prog.type_) =
+  type context =
+    { ext_names : string Map.t
+    ; args : Util.Args.args
+    }
+
+  let rec type_ (context : context) (t : Prog.type_) =
     match t with
     | { t = TVoid None; _ } -> Void None
     | { t = TVoid (Some elems); _ } ->
-        let elems = List.map type_ elems in
+        let elems = List.map (type_ context) elems in
         Void (Some elems)
     | { t = TInt; _ } -> Int
+    | { t = TReal; _ } when context.args.real = Fixed -> Fixed
     | { t = TReal; _ } -> Real
     | { t = TString; _ } -> String
     | { t = TBool; _ } -> Bool
     | { t = TFixed; _ } -> Fixed
     | { t = TArray (dim, sub); _ } ->
-        let sub = type_ sub in
+        let sub = type_ context sub in
         Array (dim, sub)
     | { t = TStruct descr; _ } ->
-        let descr = struct_descr descr in
+        let descr = struct_descr context descr in
         Struct descr
     | { t = TTuple _; _ } -> failwith "no tuples"
 
 
-  and struct_descr (d : Prog.struct_descr) : struct_descr =
-    let members = List.map (fun (name, t, _) -> name, type_ t) d.members in
+  and struct_descr (context : context) (d : Prog.struct_descr) : struct_descr =
+    let members = List.map (fun (name, t, _) -> name, type_ context t) d.members in
     { path = d.path; members }
 
 
@@ -208,18 +215,20 @@ module Convert = struct
     | UOpNot -> Not
 
 
-  let getCallName context name =
-    match Map.find_opt name context with
+  let getCallName (context : context) name =
+    match Map.find_opt name context.ext_names with
     | Some name -> name
     | _ -> name
 
 
-  let rec exp_d context (e : Prog.exp_d) : exp_d =
+  let rec exp_d (context : context) (e : Prog.exp_d) : exp_d =
     match e with
     | EUnit -> Unit
     | EBool v -> Bool v
     | EInt v -> Int v
+    | EReal v when context.args.real = Fixed -> Fixed v
     | EReal v -> Real v
+    | EFixed v -> Fixed v
     | EString s -> String s
     | EId id -> Id id
     | EIndex { e; index } ->
@@ -254,13 +263,13 @@ module Convert = struct
         Member (e, n)
 
 
-  and exp context (e : Prog.exp) : exp =
-    let t = type_ e.t in
+  and exp (context : context) (e : Prog.exp) : exp =
+    let t = type_ context e.t in
     let e = exp_d context e.e in
     { e; t }
 
 
-  let rec lexp_d context (l : Prog.lexp_d) : lexp_d =
+  let rec lexp_d (context : context) (l : Prog.lexp_d) : lexp_d =
     match l with
     | LWild -> LWild
     | LId id -> LId id
@@ -274,8 +283,8 @@ module Convert = struct
     | LTuple _ -> failwith "lhs tuple"
 
 
-  and lexp context (l : Prog.lexp) : lexp =
-    let t = type_ l.t in
+  and lexp (context : context) (l : Prog.lexp) : lexp =
+    let t = type_ context l.t in
     let l = lexp_d context l.l in
     { l; t }
 
@@ -287,8 +296,8 @@ module Convert = struct
     | DTuple _ -> failwith "There should not be tuple declarations"
 
 
-  and dexp (d : Prog.dexp) : dexp =
-    let t = type_ d.t in
+  and dexp (context : context) (d : Prog.dexp) : dexp =
+    let t = type_ context d.t in
     let d = dexp_d d.d in
     { d; t }
 
@@ -343,10 +352,10 @@ module Convert = struct
     | _ -> StmtBlock stmts
 
 
-  let rec stmt context (env : env) (s : Prog.stmt) =
+  let rec stmt (context : context) (env : env) (s : Prog.stmt) =
     match s with
     | { s = StmtDecl { d = DId (n, dim); t; _ }; _ } ->
-        let t = type_ t in
+        let t = type_ context t in
         let decl = Map.add n (dim, t) env.decl in
         { env with decl }, []
     | { s = StmtDecl _; _ } -> failwith "there should not be tuples or wild"
@@ -396,27 +405,27 @@ module Convert = struct
     { original_name = info.original_name; is_root = info.is_root }
 
 
-  let function_def (def : Prog.function_def) : function_def =
+  let function_def (context : context) (def : Prog.function_def) : function_def =
     let name = def.name in
-    let args = List.map (fun (name, t, _) -> name, type_ t) def.args in
+    let args = List.map (fun (name, t, _) -> name, type_ context t) def.args in
     let args_t, ret_t = def.t in
-    let ret_t = type_ ret_t in
-    let args_t = List.map type_ args_t in
+    let ret_t = type_ context ret_t in
+    let args_t = List.map (type_ context) args_t in
     { name; args; t = args_t, ret_t; tags = def.tags; loc = def.loc; info = function_info def.info }
 
 
-  let top_stmt context (top : Prog.top_stmt) : top_stmt option =
+  let top_stmt (context : context) (top : Prog.top_stmt) : top_stmt option =
     match top with
     | { top = TopFunction (def, _); _ } when Pparser.Ptags.has def.tags "placeholder" -> None
     | { top = TopFunction (def, body); _ } ->
         let _, body = stmt context default_env body in
-        let def = function_def def in
+        let def = function_def context def in
         Some (TopFunction (def, makeBlock body))
     | { top = TopType descr; _ } ->
-        let descr = struct_descr descr in
+        let descr = struct_descr context descr in
         Some (TopType descr)
     | { top = TopExternal (def, name); _ } ->
-        let def = function_def def in
+        let def = function_def context def in
         Some (TopExternal (def, name))
 
 
@@ -430,7 +439,8 @@ module Convert = struct
       stmts
 
 
-  let prog stmts =
-    let context = registerExternalNames stmts in
+  let prog args stmts =
+    let ext_names = registerExternalNames stmts in
+    let context = { args; ext_names } in
     List.filter_map (top_stmt context) stmts
 end

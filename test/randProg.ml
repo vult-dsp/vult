@@ -282,7 +282,7 @@ let rec newExp state typ : exp =
   pick_one
     state
     [ (isInt typ, normal_p, fun state -> { e = SEInt (Random.int state.max_int + 1); loc })
-    ; (isReal typ, normal_p, fun state -> { e = SEReal (Random.float state.max_real +. 1.0); loc })
+    ; (isReal typ, normal_p, fun state -> { e = SEReal (string_of_float (Random.float state.max_real +. 1.0)); loc })
     ; (isBool typ, low_p, fun _ -> { e = SEBool (Random.bool ()); loc })
     ; (hasType typ, high_p, fun state -> { e = SEId (pickVar state typ); loc })
     ; (* literal array *)

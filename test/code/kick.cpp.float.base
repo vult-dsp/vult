@@ -57,10 +57,10 @@ float Noise_process(Noise_process_type& _ctx, float color) {
    float y2 = (3.0517578125e-05f * int_to_float(_ctx.x2));
    float out = 0.0f;
    if ((color > 0.5f)) {
-      out = Noise_pinker(_ctx.inst_16d3d, (y1 + (-y2)));
+      out = Noise_pinker(_ctx.inst_16d3d, (y1 + (- y2)));
    }
    else {
-      out = (y1 + (-y2));
+      out = (y1 + (- y2));
    }
    return (2.0f * out);
 }
@@ -76,7 +76,7 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
       _if_temp_0 = _ctx.rate;
    }
    else {
-      _if_temp_0 = (-_ctx.rate);
+      _if_temp_0 = (- _ctx.rate);
    }
    new_phase = (_if_temp_0 + _ctx.phase);
    bool bdisable = (disable > 0.5f);
@@ -86,7 +86,7 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
       new_phase = 0.0f;
    }
    if ((new_phase > 1024.0f)) {
-      new_phase = (2048.0f + (-new_phase));
+      new_phase = (2048.0f + (- new_phase));
       _ctx.direction = false;
    }
    else {
@@ -110,7 +110,7 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
          else {
             reset_speed = 0.5f;
          }
-         _ctx.reset_phase = ((-(reset_speed * _ctx.reset_phase)) + _ctx.reset_phase);
+         _ctx.reset_phase = ((- (reset_speed * _ctx.reset_phase)) + _ctx.reset_phase);
       }
       else {
          if ((_ctx.reset_phase > 10.0f)) {
@@ -170,7 +170,7 @@ void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r) {
       _ctx.rate = (1.0f / (0.01f + (100.0f * r)));
       _ctx.target = 0.0f;
    }
-   _ctx.out = ((0.005f * (((-_ctx.out) + _ctx.target) * _ctx.rate)) + _ctx.out);
+   _ctx.out = ((0.005f * (((- _ctx.out) + _ctx.target) * _ctx.rate)) + _ctx.out);
    _ctx.Ahr_do_ret_0 = float_clip((0.0009765625f * _ctx.out), 0.0f, 1.0f);
    _ctx.Ahr_do_ret_1 = resetting;
    return ;

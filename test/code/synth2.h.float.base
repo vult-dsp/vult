@@ -171,14 +171,14 @@ static_inline bool Synth2_near_zero(float x) {
 }
 
 static_inline float Synth2_dcblock(Synth2_dcblock_type& _ctx, float x0) {
-   float y0 = (x0 + ((-_ctx.x1) + (0.995f * _ctx.y1)));
+   float y0 = (x0 + ((- _ctx.x1) + (0.995f * _ctx.y1)));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
 }
 
 static_inline float Synth2_smooth(Synth2_smooth_type& _ctx, float input) {
-   _ctx.x = ((0.005f * (input + (-_ctx.x))) + _ctx.x);
+   _ctx.x = ((0.005f * (input + (- _ctx.x))) + _ctx.x);
    return _ctx.x;
 }
 
@@ -213,7 +213,7 @@ float Synth2_svf_step(Synth2_svf_step_type& _ctx, float input, float g, float q,
 static_inline float Synth2_svf(Synth2_svf_type& _ctx, float input, float fc, float q, int32_t sel) {
    fc = float_clip(fc, 0.0f, 1.0f);
    q = float_clip(q, 0.0f, 1.0f);
-   float fix_q = (2.0f * (1.0f + (-q)));
+   float fix_q = (2.0f * (1.0f + (- q)));
    if (Synth2_change(_ctx.inst_177a7, fc)) {
       _ctx.g = (0.5f * fc);
    }

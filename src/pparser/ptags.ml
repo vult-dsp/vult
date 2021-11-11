@@ -77,7 +77,7 @@ let print_tags tags =
   match tags with
   | [] -> Pla.unit
   | _ ->
-      let tags = Pla.map_sep Pla.comma print_tag tags in
+      let tags = Pla.map_sep Pla.commaspace print_tag tags in
       [%pla {|@[<#tags#>]|}]
 
 

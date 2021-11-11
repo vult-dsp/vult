@@ -24,7 +24,7 @@ float Adsr_do(Adsr_do_type& _ctx, float gate, float a, float d, float s, float r
    float a_rate = (1.0f / (0.01f + (100.0f * a)));
    float d_rate = (1.0f / (0.01f + (100.0f * d)));
    float r_rate = (1.0f / (0.01f + (100.0f * r)));
-   _ctx.out = ((0.004f * (((-_ctx.out) + _ctx.target) * _ctx.rate)) + _ctx.out);
+   _ctx.out = ((0.004f * (((- _ctx.out) + _ctx.target) * _ctx.rate)) + _ctx.out);
    bool bgate = (gate > 0.0f);
    if (_ctx.state == 0) {
       if (Util_edge(_ctx.inst_104a0, bgate)) {

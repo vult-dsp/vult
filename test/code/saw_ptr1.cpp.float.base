@@ -21,7 +21,7 @@ float Saw_ptr1_process(Saw_ptr1_process_type& _ctx, float cv) {
       out = (2.0f + (dc + (-2.0f * d)));
    }
    else {
-      out = ((-dc) + (2.0f * _ctx.phase));
+      out = ((- dc) + (2.0f * _ctx.phase));
    }
    return out;
 }

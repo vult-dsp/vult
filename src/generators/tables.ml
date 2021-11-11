@@ -3,7 +3,12 @@ open Util
 open Vm
 module Tags = Pparser.Ptags
 
-let makeFloat (t : type_) x : exp = { e = Real x; t }
+let makeFloat (t : type_) x : exp =
+  match t with
+  | Real -> { e = Real x; t }
+  | Fixed -> { e = Fixed x; t }
+  | _ -> failwith "invalid type"
+
 
 let makeArrayType precision size : type_ = Array (size, precision)
 
@@ -96,7 +101,7 @@ let calculateTablesOrder2 vm name size min max precision =
   [ makeDecl name "c0" precision acc0; makeDecl name "c1" precision acc1; makeDecl name "c2" precision acc2 ]
 
 
-let getCastIndexFunction in_precision =
+let getCastIndexFunction (in_precision : type_) =
   match in_precision with
   | Fixed -> "fix_to_int"
   | Real -> "float_to_int"
@@ -130,7 +135,7 @@ let getWrapArrayName (t : type_) =
   | _ -> Util.Error.raiseErrorMsg "Type not supported for array creation"
 
 
-let makeNuber t v =
+let makeNuber (t : type_) v =
   match t with
   | Fixed -> { e = Int (int_of_float (float_of_int 0x00010000 *. v)); t }
   | Real -> { e = Real v; t }

@@ -254,6 +254,7 @@ let rec exp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (
   | { e = EBool b; _ } -> apply mapper.exp env state { e = EBool b; t; loc }
   | { e = EInt n; _ } -> apply mapper.exp env state { e = EInt n; t; loc }
   | { e = EReal n; _ } -> apply mapper.exp env state { e = EReal n; t; loc }
+  | { e = EFixed n; _ } -> apply mapper.exp env state { e = EFixed n; t; loc }
   | { e = EString n; _ } -> apply mapper.exp env state { e = EString n; t; loc }
   | { e = EId n; _ } -> apply mapper.exp env state { e = EId n; t; loc }
   | { e = EIndex { e; index }; _ } ->

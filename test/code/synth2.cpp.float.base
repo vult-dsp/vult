@@ -66,7 +66,7 @@ float Synth2_osc(Synth2_osc_type& _ctx, float pitch, float pw, float wave) {
    if ((_ctx.phase > 1.0f)) {
       _ctx.phase = (-1.0f + _ctx.phase);
    }
-   _ctx.state_pulse = float_clip((tmp1 + ((-tmp2) + (0.9995f * _ctx.state_pulse))), -1.0f, 1.0f);
+   _ctx.state_pulse = float_clip((tmp1 + ((- tmp2) + (0.9995f * _ctx.state_pulse))), -1.0f, 1.0f);
    _ctx.state_saw = float_clip(((0.5f * ((tmp1 + (tmp2 + (-2.0f * _ctx.rate))) / shift05)) + (0.9995f * _ctx.state_saw)), -1.0f, 1.0f);
    _ctx.state_triang = float_clip(((0.9995f * _ctx.state_triang) + (2.0f * (_ctx.state_pulse * _ctx.rate))), -1.0f, 1.0f);
    if ((wave < 0.333333333333f)) {
@@ -86,7 +86,7 @@ float Synth2_osc(Synth2_osc_type& _ctx, float pitch, float pw, float wave) {
 
 float Synth2_svf_step(Synth2_svf_step_type& _ctx, float input, float g, float q, int32_t sel) {
    float low = ((g * _ctx.dband) + _ctx.dlow);
-   float high = (input + ((-low) + (-(q * _ctx.dband))));
+   float high = (input + ((- low) + (- (q * _ctx.dband))));
    float band = ((g * high) + _ctx.dband);
    float notch = (high + low);
    _ctx.dband = float_clip(band, -1.0f, 1.0f);

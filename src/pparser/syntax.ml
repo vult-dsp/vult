@@ -43,7 +43,8 @@ type exp_d =
   | SEUnit
   | SEBool   of bool
   | SEInt    of int
-  | SEReal   of float
+  | SEReal   of string
+  | SEFixed  of string
   | SEString of string
   | SEId     of string
   | SEEnum   of path
@@ -206,7 +207,8 @@ module Print = struct
     | SEUnit -> Pla.string "()"
     | SEBool b -> Pla.string (if b then "true" else "false")
     | SEInt i -> Pla.int i
-    | SEReal f -> Pla.float f
+    | SEReal f -> Pla.string f
+    | SEFixed f -> Pla.string f
     | SEString s -> Pla.string_quoted s
     | SEId s -> Pla.string s
     | SEEnum p -> path p

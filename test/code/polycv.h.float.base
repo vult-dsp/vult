@@ -98,18 +98,18 @@ static_inline bool Util_change(Util_change_type& _ctx, float x) {
 }
 
 static_inline float Util_map(float x, float x0, float x1, float y0, float y1) {
-   return (y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))));
+   return (y0 + (((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))));
 }
 
 static_inline float Util_dcblock(Util_dcblock_type& _ctx, float x0) {
-   float y0 = (x0 + ((-_ctx.x1) + (0.995f * _ctx.y1)));
+   float y0 = (x0 + ((- _ctx.x1) + (0.995f * _ctx.y1)));
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
 }
 
 static_inline float Util_smooth(Util_smooth_type& _ctx, float input) {
-   _ctx.x = ((0.005f * (input + (-_ctx.x))) + _ctx.x);
+   _ctx.x = ((0.005f * (input + (- _ctx.x))) + _ctx.x);
    return _ctx.x;
 }
 

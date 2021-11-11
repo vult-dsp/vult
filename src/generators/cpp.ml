@@ -134,6 +134,9 @@ let rec print_exp (e : exp) =
   | Bool v -> Pla.string (if v then "true" else "false")
   | Int n -> [%pla {|<#n#i>|}]
   | Real n -> [%pla {|<#n#f>f|}]
+  | Fixed n ->
+      let n = Common.toFixed n in
+      [%pla {|<#n#s>|}]
   | String s -> Pla.string_quoted s
   | Id id -> Pla.string id
   | Index { e; index } ->
@@ -154,12 +157,12 @@ let rec print_exp (e : exp) =
   | UnOp (op, e) ->
       let e = print_exp e in
       let op = uoperator op in
-      [%pla {|(<#op#><#e#>)|}]
+      [%pla {|(<#op#> <#e#>)|}]
   | Op (op, e1, e2) ->
       let se1 = print_exp e1 in
       let se2 = print_exp e2 in
       ( match Replacements.C.op_to_fun op e1.t e2.t e.t with
-      | Some path -> [%pla {|<#path#s>(<#se1#>,<#se2#>)|}]
+      | Some path -> [%pla {|<#path#s>(<#se1#>, <#se2#>)|}]
       | None ->
           let op = operator op in
           [%pla {|(<#se1#> <#op#> <#se2#>)|}] )

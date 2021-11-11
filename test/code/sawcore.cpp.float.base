@@ -21,7 +21,7 @@ void Sawcore_ptr_w2(Sawcore_ptr_w2_type& _ctx, float phase, float rate) {
       float d = (phase / rate);
       float t2 = (0.0009765625f * s2);
       out1 = false;
-      out2 = (1.0f + (d * (t2 + (-d))));
+      out2 = (1.0f + (d * (t2 + (- d))));
    }
    else {
       if ((phase < s2)) {

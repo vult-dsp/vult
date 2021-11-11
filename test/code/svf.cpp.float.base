@@ -19,7 +19,7 @@ float Svf_process(Svf_process_type& _ctx, float x, float cv, float q, int32_t se
       _ctx.r = (1.0f / (2.0f * (q + float_eps())));
       _ctx.inv_den = (1.0f / (1.0f + ((2.0f * (_ctx.r * _ctx.g)) + (_ctx.g * _ctx.g))));
    }
-   float high = ((x + ((-(((2.0f * _ctx.r) + _ctx.g) * _ctx.z1)) + (-_ctx.z2))) * _ctx.inv_den);
+   float high = ((x + ((- (((2.0f * _ctx.r) + _ctx.g) * _ctx.z1)) + (- _ctx.z2))) * _ctx.inv_den);
    float band = ((high * _ctx.g) + _ctx.z1);
    float low = ((band * _ctx.g) + _ctx.z2);
    float notch = (high + low);

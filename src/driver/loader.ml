@@ -60,6 +60,7 @@ module Dependencies = struct
     | SEBool _ -> set
     | SEInt _ -> set
     | SEReal _ -> set
+    | SEFixed _ -> set
     | SEString _ -> set
     | SEId _ -> set
     | SEIndex { e; index } -> exp (exp set e) index

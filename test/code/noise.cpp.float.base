@@ -9,10 +9,10 @@ float Noise_process(Noise_process_type& _ctx, float color) {
    float y2 = (3.0517578125e-05f * int_to_float(_ctx.x2));
    float out = 0.0f;
    if ((color > 0.5f)) {
-      out = Noise_pinker(_ctx.inst_16d3d, (y1 + (-y2)));
+      out = Noise_pinker(_ctx.inst_16d3d, (y1 + (- y2)));
    }
    else {
-      out = (y1 + (-y2));
+      out = (y1 + (- y2));
    }
    return (2.0f * out);
 }

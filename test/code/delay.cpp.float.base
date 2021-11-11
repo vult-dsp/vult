@@ -37,7 +37,7 @@ float Delay_phasor(Delay_phasor_type& _ctx, float pitch, bool reset) {
       _ctx.phase = 0.0f;
    }
    else {
-      _ctx.phase = fmodf((_ctx.phase + _ctx.rate),1.0f);
+      _ctx.phase = fmodf((_ctx.phase + _ctx.rate), 1.0f);
    }
    return _ctx.phase;
 }
@@ -59,7 +59,7 @@ float Delay_delay(Delay_delay_type& _ctx, float x, float time, float feedback) {
    feedback = float_clip(feedback, 0.0f, 1.0f);
    float index_r = (time * int_to_float(30000));
    int32_t index_i = float_to_int(floor(index_r));
-   int32_t delta = ((-index_i) + _ctx.write_pos);
+   int32_t delta = ((- index_i) + _ctx.write_pos);
    int32_t read_pos = 0;
    if ((delta < 0)) {
       read_pos = (30000 + delta);
@@ -67,10 +67,10 @@ float Delay_delay(Delay_delay_type& _ctx, float x, float time, float feedback) {
    else {
       read_pos = delta;
    }
-   float decimal = (index_r + (-int_to_float(index_i)));
+   float decimal = (index_r + (- int_to_float(index_i)));
    float x1 = float_get(_ctx.buffer, read_pos);
    float x2 = float_get(_ctx.buffer, ((1 + read_pos) % 30000));
-   float ret = (x1 + (decimal * (x2 + (-x1))));
+   float ret = (x1 + (decimal * (x2 + (- x1))));
    _ctx.write_pos = ((1 + _ctx.write_pos) % 30000);
    float_set(_ctx.buffer, _ctx.write_pos, float_clip((x + (feedback * ret)), -1.0f, 1.0f));
    return ret;

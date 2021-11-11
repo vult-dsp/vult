@@ -78,6 +78,7 @@ type exp_d =
   | EBool   of bool
   | EInt    of int
   | EReal   of float
+  | EFixed  of float
   | EString of string
   | EId     of string
   | EUnOp   of uoperator * exp
@@ -225,6 +226,7 @@ module Print = struct
     | EBool v -> Pla.string (if v then "true" else "false")
     | EInt n -> Pla.int n
     | EReal n -> Pla.float n
+    | EFixed n -> [%pla {|<#n#f>x|}]
     | EString s -> Pla.string_quoted s
     | EId id -> Pla.string id
     | EIndex { e; index } ->

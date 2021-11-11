@@ -54,11 +54,12 @@ let showResult (args : args) (output : output) =
 
 let generateCode args (stmts, vm, acc) =
   if args.code <> NoCode then
-    let cstmts = Code.Convert.prog stmts in
+    let cstmts = Code.Convert.prog args stmts in
     let cstmts = Tables.create args vm cstmts in
     let code =
       match args.code with
       | NoCode -> []
+      | CCode -> C.generate args.output args.template cstmts
       | CppCode -> Cpp.generate args.output args.template cstmts
       | LuaCode -> Lua.generate args.output args.template cstmts
       | JSCode -> failwith "Javascript generator not implemented yet"
@@ -109,7 +110,7 @@ let driver (args : args) : output list =
           else
             parsed |> dumpParsedFiles args |> compileCode args |> generateCode args
   with
-  | Error.Errors errors -> [ Errors errors ]
+  | Error.Errors errors when args.debug = false -> [ Errors errors ]
 
 
 let main () =

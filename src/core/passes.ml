@@ -65,7 +65,8 @@ let isValue (e : exp) =
   match e.e with
   | EReal _
    |EInt _
-   |EBool _ ->
+   |EBool _
+   |EFixed _ ->
       true
   | _ -> false
 

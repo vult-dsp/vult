@@ -41,9 +41,14 @@ type output =
 type code =
   | NoCode
   | CppCode
+  | CCode
   | JSCode
   | LuaCode
   | JavaCode
+
+type real_format =
+  | Float
+  | Fixed
 
 (** Stores the options passed to the command line *)
 type args =
@@ -55,7 +60,7 @@ type args =
   ; mutable check : bool
   ; mutable code : code
   ; mutable output : string option
-  ; mutable real : string
+  ; mutable real : real_format
   ; mutable template : string option
   ; mutable show_version : bool
   ; mutable includes : string list
@@ -67,6 +72,7 @@ type args =
   ; mutable mac : bool
   ; mutable force_write : bool
   ; mutable prefix : string option
+  ; mutable debug : bool
   }
 
 let default_arguments : args =
@@ -78,7 +84,7 @@ let default_arguments : args =
   ; eval = None
   ; check = false
   ; output = None
-  ; real = "float"
+  ; real = Float
   ; template = None
   ; show_version = false
   ; includes = []
@@ -90,6 +96,7 @@ let default_arguments : args =
   ; mac = false
   ; force_write = false
   ; prefix = None
+  ; debug = false
   }
 
 
@@ -106,6 +113,7 @@ let flags result =
           (fun s ->
             result.code <-
               ( match s with
+              | "c" -> CCode
               | "cpp" -> CppCode
               | "lua" -> LuaCode
               | "java" -> JavaCode
@@ -131,7 +139,14 @@ let flags result =
     ; comment = " Writes the generated files even if they are the same (default: off)"
     }
   ; { flag = "-real"
-    ; action = Arg.String (fun real -> result.real <- real)
+    ; action =
+        Arg.String
+          (fun real ->
+            result.real <-
+              ( match real with
+              | "float" -> Float
+              | "fixed" -> Fixed
+              | _ -> Error.raiseErrorMsg ("Unknown numeric formmat: " ^ real) ) )
     ; comment = " Defines the numeric type for the generated code: double, fixed"
     }
   ; { flag = "-samplerate"
@@ -184,6 +199,7 @@ let flags result =
     ; action = Arg.Unit (fun () -> result.show_version <- true)
     ; comment = " Show the version of vult"
     }
+  ; { flag = "-debug"; action = Arg.Unit (fun () -> result.debug <- true); comment = "" }
   ]
 
 

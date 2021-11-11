@@ -106,6 +106,9 @@ let rec print_exp e =
   | Bool v -> Pla.string (if v then "true" else "false")
   | Int n -> Pla.int n
   | Real n -> Pla.float n
+  | Fixed n ->
+      let n = Common.toFixed n in
+      Pla.string n
   | String s -> Pla.string_quoted s
   | Id id -> Pla.string (fix_id id)
   | Index { e; index } ->
