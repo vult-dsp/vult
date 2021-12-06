@@ -16,50 +16,50 @@ set(VULT_INCLUDES util osc midi env filters effects)
 
 # OSCILLATORS
 
-vult_pd(phase osc/phase.vult VULT_INCLUDES)
-vult_pd(blit osc/blit.vult VULT_INCLUDES)
-vult_pd(saw_blit osc/saw_blit.vult VULT_INCLUDES)
-vult_pd(noise osc/noise.vult VULT_INCLUDES)
-vult_pd(phd osc/phd.vult VULT_INCLUDES)
-vult_pd(saw_eptr osc/saw_eptr.vult VULT_INCLUDES)
-vult_pd(saw_ptr1 osc/saw_ptr1.vult VULT_INCLUDES)
-vult_pd(saw_ptr2 osc/saw_ptr2.vult VULT_INCLUDES)
-vult_pd(saw_r osc/saw_r.vult VULT_INCLUDES)
-vult_pd(sawcore osc/sawcore.vult VULT_INCLUDES)
-vult_pd(sine osc/sine.vult VULT_INCLUDES)
-vult_pd(tricore osc/tricore.vult VULT_INCLUDES)
-vult_pd(minblep osc/minblep.vult VULT_INCLUDES)
+vult_pd(phase    ${CMAKE_CURRENT_SOURCE_DIR}/osc/phase.vult VULT_INCLUDES)
+vult_pd(blit     ${CMAKE_CURRENT_SOURCE_DIR}/osc/blit.vult VULT_INCLUDES)
+vult_pd(saw_blit ${CMAKE_CURRENT_SOURCE_DIR}/osc/saw_blit.vult VULT_INCLUDES)
+vult_pd(noise    ${CMAKE_CURRENT_SOURCE_DIR}/osc/noise.vult VULT_INCLUDES)
+vult_pd(phd      ${CMAKE_CURRENT_SOURCE_DIR}/osc/phd.vult VULT_INCLUDES)
+vult_pd(saw_eptr ${CMAKE_CURRENT_SOURCE_DIR}/osc/saw_eptr.vult VULT_INCLUDES)
+vult_pd(saw_ptr1 ${CMAKE_CURRENT_SOURCE_DIR}/osc/saw_ptr1.vult VULT_INCLUDES)
+vult_pd(saw_ptr2 ${CMAKE_CURRENT_SOURCE_DIR}/osc/saw_ptr2.vult VULT_INCLUDES)
+vult_pd(saw_r    ${CMAKE_CURRENT_SOURCE_DIR}/osc/saw_r.vult VULT_INCLUDES)
+vult_pd(sawcore  ${CMAKE_CURRENT_SOURCE_DIR}/osc/sawcore.vult VULT_INCLUDES)
+vult_pd(sine     ${CMAKE_CURRENT_SOURCE_DIR}/osc/sine.vult VULT_INCLUDES)
+vult_pd(tricore  ${CMAKE_CURRENT_SOURCE_DIR}/osc/tricore.vult VULT_INCLUDES)
+vult_pd(minblep  ${CMAKE_CURRENT_SOURCE_DIR}/osc/minblep.vult VULT_INCLUDES)
 
 # MIDI
 
-vult_pd(gates midi/gates.vult VULT_INCLUDES)
-vult_pd(monocv midi/monocv.vult VULT_INCLUDES)
-vult_pd(polycv midi/monocv.vult VULT_INCLUDES)
+vult_pd(gates  ${CMAKE_CURRENT_SOURCE_DIR}/midi/gates.vult VULT_INCLUDES)
+vult_pd(monocv ${CMAKE_CURRENT_SOURCE_DIR}/midi/monocv.vult VULT_INCLUDES)
+vult_pd(polycv ${CMAKE_CURRENT_SOURCE_DIR}/midi/monocv.vult VULT_INCLUDES)
 
 #ENVELOPES
 
-vult_pd(ad env/ad.vult VULT_INCLUDES)
-vult_pd(adsr env/adsr.vult VULT_INCLUDES)
-vult_pd(ahr env/ahr.vult VULT_INCLUDES)
-vult_pd(lfo env/lfo.vult VULT_INCLUDES)
-vult_pd(swept env/swept.vult VULT_INCLUDES)
+vult_pd(ad    ${CMAKE_CURRENT_SOURCE_DIR}/env/ad.vult VULT_INCLUDES)
+vult_pd(adsr  ${CMAKE_CURRENT_SOURCE_DIR}/env/adsr.vult VULT_INCLUDES)
+vult_pd(ahr   ${CMAKE_CURRENT_SOURCE_DIR}/env/ahr.vult VULT_INCLUDES)
+vult_pd(lfo   ${CMAKE_CURRENT_SOURCE_DIR}/env/lfo.vult VULT_INCLUDES)
+vult_pd(swept ${CMAKE_CURRENT_SOURCE_DIR}/env/swept.vult VULT_INCLUDES)
 
 # FILTERS
 
-vult_pd(ladder filters/ladder.vult VULT_INCLUDES)
-vult_pd(svf filters/svf.vult VULT_INCLUDES)
+vult_pd(ladder ${CMAKE_CURRENT_SOURCE_DIR}/filters/ladder.vult VULT_INCLUDES)
+vult_pd(svf    ${CMAKE_CURRENT_SOURCE_DIR}/filters/svf.vult VULT_INCLUDES)
 
 # EFFECTS
 
-vult_pd(saturate effects/saturate.vult VULT_INCLUDES)
-vult_pd(saturate_soft effects/saturate_soft.vult VULT_INCLUDES)
-vult_pd(short_delay effects/short_delay.vult VULT_INCLUDES)
-vult_pd(bitcrush effects/bitcrush.vult VULT_INCLUDES)
-vult_pd(rescomb effects/rescomb.vult VULT_INCLUDES)
-vult_pd(clipper effects/clipper.vult VULT_INCLUDES)
-vult_pd(fold effects/fold.vult VULT_INCLUDES)
+vult_pd(saturate      ${CMAKE_CURRENT_SOURCE_DIR}/effects/saturate.vult VULT_INCLUDES)
+vult_pd(saturate_soft ${CMAKE_CURRENT_SOURCE_DIR}/effects/saturate_soft.vult VULT_INCLUDES)
+vult_pd(short_delay   ${CMAKE_CURRENT_SOURCE_DIR}/effects/short_delay.vult VULT_INCLUDES)
+vult_pd(bitcrush      ${CMAKE_CURRENT_SOURCE_DIR}/effects/bitcrush.vult VULT_INCLUDES)
+vult_pd(rescomb       ${CMAKE_CURRENT_SOURCE_DIR}/effects/rescomb.vult VULT_INCLUDES)
+vult_pd(clipper       ${CMAKE_CURRENT_SOURCE_DIR}/effects/clipper.vult VULT_INCLUDES)
+vult_pd(fold          ${CMAKE_CURRENT_SOURCE_DIR}/effects/fold.vult VULT_INCLUDES)
 
 # UNITS
 
-vult_pd(kick units/kick.vult VULT_INCLUDES)
-vult_pd(voice_4 units/voice_4.vult VULT_INCLUDES)
+vult_pd(kick    ${CMAKE_CURRENT_SOURCE_DIR}/units/kick.vult VULT_INCLUDES)
+vult_pd(voice_4 ${CMAKE_CURRENT_SOURCE_DIR}/units/voice_4.vult VULT_INCLUDES)
