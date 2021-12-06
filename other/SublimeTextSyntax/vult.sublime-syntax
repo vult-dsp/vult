@@ -1,0 +1,53 @@
+%YAML 1.2
+---
+# http://www.sublimetext.com/docs/syntax.html
+name: Vult
+file_extensions:
+  - vult
+scope: source.Vult
+contexts:
+  main:
+    - match: '(fun|and|external)\s+([a-zA-Z_]\w*)'
+      scope: meta.function.source.Vult
+      captures:
+        1: keyword.control.source.Vult
+        2: entity.name.function.source.Vult
+    - match: \b(fun|val|mem|return|if|else|while|then|type|table|external)\b
+      scope: keyword.source.Vult
+    - match: '\b((([0-9]+\.?[0-9]*)|(\.[0-9]+))((e|E)(\+|-)?[0-9]+)?)\b'
+      scope: constant.numeric.source.Vult
+    - match: \b(int|real|num|bool)\b
+      scope: storage.type.source.Vult
+    - match: '\b([a-zA-Z_]\w*)\b(\()'
+      scope: storage.type.source.Vult
+      captures:
+        1: storage.type.source.Vult
+        2: constant.character.source.Vult
+    - match: (//).*$\n?
+      scope: comment.line.double-slash.source.Vult
+    - match: '"'
+      captures:
+        0: punctuation.definition.string.begin.source.Vult
+      push:
+        - meta_scope: string.quoted.double.source.Vult
+        - match: '"'
+          captures:
+            0: punctuation.definition.string.end.source.Vult
+          pop: true
+        - match: \\.
+          scope: constant.character.escape.source.Vult
+    - match: /\*
+      captures:
+        0: comment.block.begin.source.Vult
+      push:
+        - meta_scope: comment.block.source.Vult
+        - match: \*/
+          captures:
+            0: comment.block.end.source.Vult
+          pop: true
+        - match: \\.
+          scope: constant.character.escape.source.Vult
+    - match: '(=|:|;|<|>|,|!=|\+|\*|/|-|\||&|\(|\)|{|})'
+      scope: constant.character.source.Vult
+    - match: (true|false)
+      scope: constant.language.source.Vult
