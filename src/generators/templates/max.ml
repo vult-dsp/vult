@@ -172,7 +172,7 @@ let tildePerformFunctionCall module_name (params : params) (config : config) =
             List.mapi
                (fun i o ->
                    let value = castOutput params o [%pla {|<#module_name#s>_process_ret_<#i#i>(x->data)|}] in
-                   [%pla {|*(out_<#i#i>++) = <#value#>; |}])
+                   [%pla {|*(out_<#i#i>++) = <#value#>; |}] )
                o
             |> Pla.join_sep_all Pla.newline
          in

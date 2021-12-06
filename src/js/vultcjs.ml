@@ -23,8 +23,6 @@
 *)
 (* replaces all the native functions for the node.js versions *)
 
-;;
-NodeIO.replaceFunctions ()
+NodeIO.replaceFunctions ();;
 
-;;
 Cli.main ()

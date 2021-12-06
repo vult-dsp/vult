@@ -157,7 +157,7 @@ let tildePerformFunctionCall module_name (params : params) (config : config) =
             List.mapi
                (fun i o ->
                    let value = castOutput params o [%pla {|<#module_name#s>_process_ret_<#i#i>(x->data)|}] in
-                   [%pla {|*(out_<#i#i>++) = <#value#>; |}])
+                   [%pla {|*(out_<#i#i>++) = <#value#>; |}] )
                o
             |> Pla.join_sep_all Pla.newline
          in
@@ -175,7 +175,7 @@ let tildePerformFunctionVector (config : config) : int * Pla.t =
       List.fold_left
          (fun (s, count, index) _ ->
              let t = decl_templ "in" index count in
-             t :: s, count + 1, index + 1)
+             t :: s, count + 1, index + 1 )
          ([], 2, 0)
          (removeContext config.process_inputs)
    in
@@ -184,7 +184,7 @@ let tildePerformFunctionVector (config : config) : int * Pla.t =
       List.fold_left
          (fun (s, count, index) _ ->
              let t = decl_templ "out" index count in
-             t :: s, count + 1, index + 1)
+             t :: s, count + 1, index + 1 )
          (decl1, count, 0)
          config.process_outputs
    in

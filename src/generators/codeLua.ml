@@ -49,7 +49,7 @@ module Templates = struct
                   | IReal name
                   |IInt name
                   |IBool name ->
-                     name)
+                     name )
       |> Pla.map_sep Pla.comma Pla.string
 
 
@@ -128,7 +128,7 @@ return this
                :: List.mapi
                   (fun i _ ->
                       let i = i + 1 in
-                      [%pla {|(block.inputs[<#i#i>][i] / 10.0)|}])
+                      [%pla {|(block.inputs[<#i#i>][i] / 10.0)|}] )
                   args
             in
             Pla.join_sep Pla.comma args
@@ -137,7 +137,7 @@ return this
                List.mapi
                   (fun i _ ->
                       let i = i + 1 in
-                      [%pla {|(block.inputs[<#i#i>][i] / 10.0)|}])
+                      [%pla {|(block.inputs[<#i#i>][i] / 10.0)|}] )
                   inputs
             in
             Pla.join_sep Pla.comma args
@@ -152,7 +152,7 @@ return this
                List.mapi
                   (fun i _ ->
                       let li = i + 1 in
-                      [%pla {|      block.outputs[<#li#i>][i] = 10.0 * processor.process_ret_<#i#i>|}])
+                      [%pla {|      block.outputs[<#li#i>][i] = 10.0 * processor.process_ret_<#i#i>|}] )
                   outputs
             in
             Pla.unit, Pla.join_sep_all Pla.newline bindings
@@ -375,7 +375,7 @@ let rec printSwitchStmt params e cases def =
          (fun (v, stmt) ->
              let v_t = printExp params v in
              let stmt_t = CCOpt.get_or ~default:Pla.unit (printStmt params stmt) in
-             [%pla {|case <#v_t#>:<#stmt_t#+>break;|}])
+             [%pla {|case <#v_t#>:<#stmt_t#+>break;|}] )
          cases
    in
    let def_t =

@@ -254,7 +254,7 @@ and stmtBuff buffer (s : stmt) =
       CCOpt.iter
          (fun a ->
              append buffer " = " ;
-             expressionBuff buffer a)
+             expressionBuff buffer a )
          e3 ;
       tagsBuff buffer tags ;
       append buffer "; "
@@ -291,7 +291,7 @@ and stmtBuff buffer (s : stmt) =
          (fun a ->
              append buffer ": " ;
              typeExpressionBuff buffer a ;
-             append buffer " ")
+             append buffer " " )
          vtype ;
       tagsBuff buffer attr.tags ;
       if attr.tags <> [] then append buffer " " ;

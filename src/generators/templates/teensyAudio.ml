@@ -174,7 +174,7 @@ let declReturn params =
          List.mapi
             (fun i o ->
                 let value = castOutput params o [%pla {|<#module_name#s>_process_ret_<#i#i>(data)|}] in
-                [%pla {|block<#i#i>->data[i] = <#value#>; |}])
+                [%pla {|block<#i#i>->data[i] = <#value#>; |}] )
             o
          |> Pla.join_sep_all Pla.newline
          |> Pla.indent

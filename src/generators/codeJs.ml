@@ -211,7 +211,7 @@ let rec printSwitchStmt params e cases def =
          (fun (v, stmt) ->
              let v_t = printExp params v in
              let stmt_t = CCOpt.get_or ~default:Pla.unit (printStmt params stmt) in
-             [%pla {|case <#v_t#>:<#stmt_t#+><#>break;|}])
+             [%pla {|case <#v_t#>:<#stmt_t#+><#>break;|}] )
          cases
    in
    let def_t =

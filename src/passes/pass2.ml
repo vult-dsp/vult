@@ -300,7 +300,7 @@ module MakeTables = struct
             ((size * 2) + 2)
             (fun i ->
                 let x = map_x (float_of_int i /. 2.0) in
-                x, evaluateFunction env name precision x)
+                x, evaluateFunction env name precision x )
       in
       let acc0, acc1, acc2 = fitDataOrder2 data (size - 1) [] [] [] in
       [ Tables.makeDecl attr name [ "c0" ] precision acc0
@@ -315,7 +315,7 @@ module MakeTables = struct
       let data =
          Array.init (size + 1) (fun i ->
                      let x = map_x (float_of_int i) in
-                     x, evaluateFunction env name precision x)
+                     x, evaluateFunction env name precision x )
       in
       let acc0, acc1 = fitDataOrder1 data (size - 1) [] [] in
       [ Tables.makeDecl attr name [ "c0" ] precision acc0; Tables.makeDecl attr name [ "c1" ] precision acc1 ]

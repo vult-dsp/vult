@@ -92,7 +92,7 @@ module PassData = struct
          @@ List.map
             (fun a ->
                 let id = Parser.parseId a in
-                [ id, Prog.Used Root; Id.postfix id "_init", Prog.Used Root ])
+                [ id, Prog.Used Root; Id.postfix id "_init", Prog.Used Root ] )
             args.roots
       in
       { gen_init_ctx = PathSet.empty

@@ -32,7 +32,7 @@ let processArguments () : args =
         , Arg.String
               (fun prefix ->
                   result.code <- JavaCode ;
-                  result.prefix <- prefix)
+                  result.prefix <- prefix )
         , "prefix Converts the code to java (default: off). Requires prefix to name the package. e.g. 'com.company'" )
       ; "-jscode", Arg.Unit (fun () -> result.code <- JSCode), " Converts the code to javascript (default: off)"
       ; "-luacode", Arg.Unit (fun () -> result.code <- LuaCode), " Converts the code to lua (default: off)"
@@ -100,7 +100,7 @@ let showResult (args : args) (output : output) =
              if args.force_write then
                 FileIO.write filename code |> ignore
              else
-                FileIO.writeIfDifferent filename code |> ignore)
+                FileIO.writeIfDifferent filename code |> ignore )
          files
    | GeneratedCode files -> List.iter (fun (text, _) -> print_endline (Pla.print text)) files
    | Interpret v -> print_endline v

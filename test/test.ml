@@ -24,9 +24,8 @@
 open OUnit2
 open Prog
 open Args
-open Tcommon
+open Tcommon;;
 
-;;
 Float.reduce_precision := true
 
 let test_directory = Filename.concat initial_dir "test"
@@ -298,10 +297,10 @@ module ErrorTest = struct
                 List.map
                    (fun a ->
                        let msg, indicator, _, _, _ = Error.reportErrorStringNoLoc a in
-                       msg ^ "\n" ^ indicator)
+                       msg ^ "\n" ^ indicator )
                    e
                 @ s
-             | _ -> s)
+             | _ -> s )
          []
          results
       |> String.concat "\n"
@@ -514,7 +513,7 @@ module CliTest = struct
                 ~msg:("Generating file " ^ fullfile)
                 ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b))
                 reference
-                current)
+                current )
          files_content
 
 
@@ -568,7 +567,7 @@ module Templates = struct
                 ~msg:("Generating file " ^ fullfile)
                 ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b))
                 reference
-                current)
+                current )
          files_content
 
 
@@ -607,7 +606,7 @@ module Interpret = struct
          (fun result ->
              match result with
              | Errors errors -> assert_failure (Error.reportErrors errors)
-             | _ -> ())
+             | _ -> () )
          results
 
 

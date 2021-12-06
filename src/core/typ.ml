@@ -129,7 +129,7 @@ let newinst (t : t) : t =
          List.fold_left
             (fun (ol, table) t ->
                 let o, table' = copy table t in
-                o :: ol, table')
+                o :: ol, table' )
             ([], table)
             l
       in
@@ -164,7 +164,7 @@ and fixTypeList table tl =
       List.fold_left
          (fun (ol, table) t ->
              let o, table' = fixType table t in
-             o :: ol, table')
+             o :: ol, table' )
          ([], table)
          tl
    in

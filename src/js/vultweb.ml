@@ -41,7 +41,7 @@ let generateJSCode s =
          List.map
             (fun error ->
                 let msg, indicator, _, _, _ = Error.reportErrorStringNoLoc error in
-                msg ^ "\n" ^ indicator)
+                msg ^ "\n" ^ indicator )
             errors
          |> String.concat "\n"
       in
@@ -86,4 +86,4 @@ let _ =
          method checkCode = checkCode
 
          method generateJSCode = generateJSCode
-      end)
+      end )

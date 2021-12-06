@@ -422,7 +422,7 @@ let rec printSwitchStmt params e cases def =
              let v_t = printExp params v in
              let stmt_t = CCOpt.get_or ~default:Pla.unit (printStmt params stmt) in
              let break = if isLastReturn stmt then Pla.unit else Pla.string "break;" in
-             [%pla {|case <#v_t#>:<#stmt_t#+><#><#break#>|}])
+             [%pla {|case <#v_t#>:<#stmt_t#+><#><#break#>|}] )
          cases
    in
    let def_t =
@@ -558,7 +558,7 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
             Pla.newline
             (fun (typ, name) ->
                 let tmember = printTypeAndName true typ [ name ] in
-                [%pla {|public <#tmember#>;|}])
+                [%pla {|public <#tmember#>;|}] )
             members
       in
       let constructor =
@@ -567,7 +567,7 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
                Pla.comma
                (fun (typ, name) ->
                    let tmember = printTypeAndName true typ [ name ] in
-                   [%pla {|<#tmember#>|}])
+                   [%pla {|<#tmember#>|}] )
                members
          in
          let init = Pla.map_sep_all Pla.newline (fun (_, name) -> [%pla {|this.<#name#s> = <#name#s>;|}]) members in
@@ -579,7 +579,7 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
                Pla.newline
                (fun (type_, name) ->
                    let value = getInitValue type_ in
-                   [%pla {|this.<#name#s> = <#value#>;|}])
+                   [%pla {|this.<#name#s> = <#value#>;|}] )
                members
          in
          [%pla {|<#name#s>(){ <#init#> }|}]

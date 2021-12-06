@@ -63,7 +63,6 @@
    Groups of replacements can be extended by using the function Replacements.extendReplacements.
    In this file we extend the default replacements with functions and types for fixed point
    operations. See the definition of FixedPoint.replacements.
-
 *)
 
 let toFloat (n : float) : string =

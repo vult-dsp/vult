@@ -377,14 +377,14 @@ module BindComplexExpressions = struct
             List.mapi
                (fun i a ->
                    let attr = GetAttr.fromExp a in
-                   makeValBind (LId (makeTmp tick i, attr.typ, attr)) a)
+                   makeValBind (LId (makeTmp tick i, attr.typ, attr)) a )
                rhs
          in
          let stmts2 =
             List.mapi
                (fun i a ->
                    let attr = GetAttr.fromLhsExp a in
-                   kind a (PId (makeTmp tick i, attr)))
+                   kind a (PId (makeTmp tick i, attr)) )
                lhs
          in
          stmts1 @ stmts2
@@ -506,7 +506,7 @@ module ChangeTupleReturnCalls = struct
             List.mapi
                (fun i typ ->
                    let id = Inference.varReturnName fname i in
-                   PCall (inst, id, [], { emptyAttr with typ = Some typ }))
+                   PCall (inst, id, [], { emptyAttr with typ = Some typ }) )
                elems
          in
          PTuple (telems, { emptyAttr with typ = Some typ })

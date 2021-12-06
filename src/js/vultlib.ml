@@ -283,4 +283,4 @@ let _ =
          method generateC = generateC
 
          method generateLua = generateLua
-      end)
+      end )

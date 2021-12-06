@@ -234,7 +234,7 @@ let rec printSwitchStmt params e cases def =
          (fun (v, stmt) ->
              let v_t = printExp params v in
              let stmt_t = CCOpt.get_or ~default:Pla.unit (printStmt params stmt) in
-             [%pla {|case <#v_t#>:<#stmt_t#+><#>break;|}])
+             [%pla {|case <#v_t#>:<#stmt_t#+><#>break;|}] )
          cases
    in
    let def_t =
@@ -381,7 +381,7 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
             Pla.newline
             (fun (typ, name) ->
                 let tmember = printTypeAndName true typ [ name ] in
-                [%pla {|<#tmember#>;|}])
+                [%pla {|<#tmember#>;|}] )
             members
       in
       Some [%pla {|typedef struct <#name#s> {<#tmembers#+>} <#name#s>;<#>|}]

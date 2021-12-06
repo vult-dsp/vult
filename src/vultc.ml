@@ -22,5 +22,4 @@
    THE SOFTWARE.
 *)
 
-;;
 Cli.main ()

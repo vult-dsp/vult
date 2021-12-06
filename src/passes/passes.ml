@@ -87,7 +87,7 @@ let foldPassAll pass state (results : parser_results list) =
          (fun (state, acc) result ->
              let name = [ moduleName result.file ] in
              let state, presult = pass name (state, result.presult) in
-             state, { result with presult } :: acc)
+             state, { result with presult } :: acc )
          (state, [])
          results
    in

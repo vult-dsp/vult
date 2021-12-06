@@ -191,7 +191,7 @@ let processFunctionCall module_name (params : params) (config : config) =
             List.mapi
                (fun i o ->
                    let value = castOutput params o [%pla {|ret.field_<#i#i>|}] in
-                   [%pla {|out_<#i#i> = <#value#>; |}])
+                   [%pla {|out_<#i#i> = <#value#>; |}] )
                o
             |> Pla.join_sep_all Pla.newline
          in
@@ -338,7 +338,7 @@ let process_input_output_decl (f : 'a -> string) (kind : string) (names : string
    List.map2
       (fun name typ ->
           let motype = f typ in
-          [%pla {|<#kind#s> <#motype#s> <#name#s>;|}])
+          [%pla {|<#kind#s> <#motype#s> <#name#s>;|}] )
       names
       types
    |> Pla.join_sep Pla.newline

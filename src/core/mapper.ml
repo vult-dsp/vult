@@ -69,7 +69,7 @@ let applyExpanderList (mapper : ('data, 'kind) expand_func) (data : 'data) (kind
                 | [ StmtBlock (None, kl', _) ] -> kl'
                 | _ -> kl
              in
-             s', kl' :: acc)
+             s', kl' :: acc )
          (data, [])
          kind_list
    in
@@ -167,7 +167,7 @@ let mapper_list mapper_app mapper state el =
       List.fold_left
          (fun (s, acc) e ->
              let s', e' = mapper_app mapper s e in
-             s', e' :: acc)
+             s', e' :: acc )
          (state, [])
          el
    in
@@ -182,7 +182,7 @@ let mapper_array mapper_app mapper state el =
          (fun (s, i) e ->
              let s', e' = mapper_app mapper s e in
              ret.(i) <- e' ;
-             s', i + 1)
+             s', i + 1 )
          (state, 0)
          el
    in

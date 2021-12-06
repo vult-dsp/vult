@@ -340,7 +340,7 @@ module Scope = struct
          List.fold_left
             (fun s a ->
                 try IdMap.find a !(parent.func) :: s with
-                | _ -> s)
+                | _ -> s )
             [ t ]
             contexts
       | _ -> [ t ]

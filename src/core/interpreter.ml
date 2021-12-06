@@ -95,8 +95,7 @@ module Env = struct
             (* exists in the modules table and it is not a single name *)
             let t' = SimpleMap.find t.modules [ name1 ] in
             lookupFunction_loop t' env name2
-         else (
-            (* not found, go one level up *)
+         else ( (* not found, go one level up *)
             match env with
             | t' :: env' -> lookupFunction_loop t' env' id
             | [] ->

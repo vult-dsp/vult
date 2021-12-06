@@ -103,7 +103,7 @@ let countInputsNoCtx (inputs : input list) : int =
       (fun s a ->
           match a with
           | IContext -> s
-          | _ -> s + 1)
+          | _ -> s + 1 )
       0
       inputs
 

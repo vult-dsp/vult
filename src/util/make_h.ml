@@ -17,7 +17,7 @@ let main () =
                      |'\\'
                      |' ' ->
                         '_'
-                     | _ -> c)
+                     | _ -> c )
       in
       Buffer.add_string buffer "static const int " ;
       Buffer.add_string buffer name ;
@@ -36,6 +36,6 @@ let main () =
          print_endline "Failed to write the output file" ;
       exit (-1)
 
-
 ;;
+
 main ()

@@ -247,7 +247,7 @@ let addMemForReturnTuple fname typ env =
          List.fold_left
             (fun (env, i) typ ->
                 let id = varReturnName fname i in
-                Env.addMem env id typ attr, i + 1)
+                Env.addMem env id typ attr, i + 1 )
             (env, 0)
             elems
       in
@@ -260,7 +260,7 @@ let createLhsTuple fname typ_list =
       List.mapi
          (fun i typ ->
              let id = varReturnName fname i in
-             LId (id, Some typ, emptyAttr))
+             LId (id, Some typ, emptyAttr) )
          typ_list
    in
    LTuple (elems, emptyAttr)
@@ -408,7 +408,7 @@ let rec attachReturnTupleFunctions name elems env =
              let fname, args, body, ret, attr = createReturnTupleFunction name elem i in
              let stmt = StmtFun (fname, args, body, ret, attr) in
              let _body, env, _ = inferStmt env (GivenType elem) stmt in
-             env, i + 1, stmt :: acc)
+             env, i + 1, stmt :: acc )
          (env, 0, [])
          elems
    in
@@ -460,7 +460,7 @@ and inferLhsExp mem_var (env : 'a Env.t) (e : lhs_exp) : lhs_exp * Typ.t =
          List.fold_left
             (fun (elems, tpl) a ->
                 let a', typ = inferLhsExp mem_var env a in
-                a' :: elems, typ :: tpl)
+                a' :: elems, typ :: tpl )
             ([], [])
             elems
       in
@@ -629,7 +629,7 @@ and inferExpList (env : 'a Env.t) (elems : exp list) : exp list * 'a Env.t * Typ
       List.fold_left
          (fun (elems, env, types) a ->
              let a', env', typ = inferExp env a in
-             a' :: elems, env', typ :: types)
+             a' :: elems, env', typ :: types )
          ([], env, [])
          elems
    in
@@ -645,7 +645,7 @@ and inferArrayElems (env : 'a Env.t) (elems : exp array) : exp array * 'a Env.t 
              let a', env', typ = inferExp env a in
              unifyArrayElem (expLoc a') atype typ ;
              ret.(i) <- a' ;
-             env', i + 1)
+             env', i + 1 )
          (env, 0)
          elems
    in
@@ -771,7 +771,7 @@ and inferStmtList (env : 'a Env.t) (ret_type_in : return_type) (stmts : stmt lis
       List.fold_left
          (fun (stmts, env, ret_type) stmt ->
              let stmt', env', ret_type' = inferStmt env ret_type stmt in
-             stmt' @ stmts, env', ret_type')
+             stmt' @ stmts, env', ret_type' )
          ([], env, ret_type_in)
          stmts
    in
@@ -800,7 +800,7 @@ let infer (results : parser_results list) : parser_results list =
       List.fold_left
          (fun (state, acc) result ->
              let state', result' = inferFile state result in
-             state', result' :: acc)
+             state', result' :: acc )
          (state, [])
          results
    in

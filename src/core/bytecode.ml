@@ -362,7 +362,7 @@ module VM = struct
       List.iteri
          (fun i v ->
              let s = show_value v in
-             Printf.printf "%i: %s\n" i s)
+             Printf.printf "%i: %s\n" i s )
          state.stack
 end
 
@@ -572,6 +572,6 @@ let main () =
    *)
    ()
 
-
 ;;
+
 main ()

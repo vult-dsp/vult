@@ -379,7 +379,7 @@ let rec convertExp (p : parameters) (e : exp) : cexp =
          List.mapi
             (fun i a ->
                 let a' = convertExp p a in
-                "field_" ^ string_of_int i, a')
+                "field_" ^ string_of_int i, a' )
             elems
       in
       CETuple (elems', typ attr)
@@ -565,7 +565,7 @@ let rec convertStmt (p : parameters) (s : stmt) : cstmt =
          List.mapi
             (fun i e ->
                 let etype = (GetAttr.fromExp e).typ in
-                convertStmt p (StmtBind (getRecordField lhs i etype, e, attr)))
+                convertStmt p (StmtBind (getRecordField lhs i etype, e, attr)) )
             elems
       in
       makeSingleBlock stmts

@@ -29,7 +29,7 @@ let performFunctionCall module_name (config : config) =
          List.mapi
             (fun i _ ->
                 let value = [%pla {|<#module_name#s>_process_ret_<#i#i>(processor.context)|}] in
-                [%pla {|out_<#i#i>[n] = <#value#>; |}])
+                [%pla {|out_<#i#i>[n] = <#value#>; |}] )
             o
          |> Pla.join_sep_all Pla.newline
    in

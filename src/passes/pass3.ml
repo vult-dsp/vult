@@ -173,7 +173,7 @@ module CreateInitFunction = struct
                 let typedAttr = { emptyAttr with typ = Some tp } in
                 let lhs = LId (ctx_name @ name, Some tp, typedAttr) in
                 let new_stmt = StmtBind (lhs, getInitValue tp, emptyAttr) in
-                StmtSet.add new_stmt acc)
+                StmtSet.add new_stmt acc )
             member_set
             StmtSet.empty
       in
@@ -241,7 +241,7 @@ module CreateInitFunction = struct
                      (fun (name, tp) acc ->
                          let context = getContextIfPossible state tp in
                          let member = name, context in
-                         IdTypeSet.add member acc)
+                         IdTypeSet.add member acc )
                      mem_inst
                      IdTypeSet.empty
                in
@@ -263,7 +263,7 @@ module CreateInitFunction = struct
                   (fun acc (name, tp, _) ->
                       let context = getContextIfPossible state tp in
                       let member = name, context in
-                      IdTypeSet.add member acc)
+                      IdTypeSet.add member acc )
                   IdTypeSet.empty
                   members
             in
