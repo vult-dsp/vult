@@ -54,7 +54,6 @@ There are three flavors the Vult compiler:
 - [node.js library](https://www.npmjs.com/package/vultlib)
 - [web browser library](https://github.com/modlfo/vult/releases)
 
-
 ### Installing with npm
 
 You need to have `node.js` and `npm` installed.
@@ -83,7 +82,19 @@ For an example check:
 
 https://github.com/modlfo/vult-webaudio
 
-## Compile from Source
+## Text editor support
+
+### SublimeText
+
+Put the [syntax file](https://github.com/modlfo/vult/raw/master/other/SublimeTextSyntax/vult.sublime-syntax) in the corresponding Sublime Text `User` packages.
+
+In Mac, the path is the following `$HOME/Library/Application Support/Sublime Text 3/Packages/User/vult.sublime-syntax`.
+
+### Visual Studio Code
+
+Install the extension `vult` available in the [marketplace](https://marketplace.visualstudio.com/items?itemName=modlfo.vult).
+
+## Compile from source
 
 ### Requirements
 
