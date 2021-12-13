@@ -18,8 +18,8 @@ fun calc_g(cv) @[table(size=128, min=0.0, max=0.9)]{
 }
 
 fun process(x, cv, q, sel) {
-    mem z1, z2;
-   mem g,inv_den, R;
+   mem z1, z2;
+   mem g, inv_den, R;
    q = q + 0.5;
    if(Util.change(cv) || Util.change(q)) {
       g = calc_g(cv);
