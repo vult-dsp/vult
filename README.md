@@ -1,5 +1,3 @@
-## This repository has been moved to https://github.com/vult-dsp/vult
-
 ![Vult](/other/Images/Vult.png?raw=true "Vult")
 
 [![Build Status](https://travis-ci.org/modlfo/vult.svg?branch=master)](https://travis-ci.org/modlfo/vult) [![Build status](https://ci.appveyor.com/api/projects/status/07x9yqby88bh3q8j?svg=true)](https://ci.appveyor.com/project/modlfo/vult) [![Coverage Status](https://coveralls.io/repos/github/modlfo/vult/badge.svg?branch=master)](https://coveralls.io/github/modlfo/vult?branch=master)
