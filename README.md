@@ -6,7 +6,7 @@ Vult is a simple and powerful language to program high-performance algorithms th
 
 The Vult compiler is a transcompiler, which takes Vult code and produces plain C/C++ code that can be compiled in any platform with a C/C++ compiler, for example: Arduino or Teensy boards. Vult can also generate JavaScript that can be run directly in the browser or C/C++ that can be compiled as Pure Data externals. Code written in Vult has freedom.
 
-Check out the documentation and tutorial in http://modlfo.github.io/vult/ or take a look at the [Wiki](https://github.com/modlfo/vult/wiki).
+Check out the documentation and tutorial in http://modlfo.github.io/vult/ or take a look at the [Wiki](https://github.com/vult-dsp/vult/wiki).
 
 ### Basics
 
@@ -30,14 +30,14 @@ Vult provides a few templates; for example to generate objects compatible with t
 You can check these repositories for examples:
 
 - WebAudio https://github.com/modlfo/vult-webaudio
-- PureData https://github.com/modlfo/vult/tree/master/examples
+- PureData https://github.com/vult-dsp/vult/tree/master/examples
 - Teensy Audio https://github.com/modlfo/teensy-vult-example
 
 In the Wiki
 
-- [Language Reference](https://github.com/modlfo/vult/wiki/Language-Reference)
-- [Command Line Options](https://github.com/modlfo/vult/wiki/Command-Line-Options)
-- [Videos and Examples](https://github.com/modlfo/vult/wiki/Videos-and-Examples)
+- [Language Reference](https://github.com/vult-dsp/vult/wiki/Language-Reference)
+- [Command Line Options](https://github.com/vult-dsp/vult/wiki/Command-Line-Options)
+- [Videos and Examples](https://github.com/vult-dsp/vult/wiki/Videos-and-Examples)
 
 ## Credits
 
@@ -50,9 +50,9 @@ The Vult logo is property of Leonardo Laguna Ruiz, all rights reserved.
 ## Installing
 
 There are three flavors the Vult compiler:
-- command line ([native executables](https://github.com/modlfo/vult/releases) and [node.js version](https://www.npmjs.com/package/vult))
+- command line ([native executables](https://github.com/vult-dsp/vult/releases) and [node.js version](https://www.npmjs.com/package/vult))
 - [node.js library](https://www.npmjs.com/package/vultlib)
-- [web browser library](https://github.com/modlfo/vult/releases)
+- [web browser library](https://github.com/vult-dsp/vult/releases)
 
 ### Installing with npm
 
@@ -64,7 +64,7 @@ $ npm install vult -g
 
 This will install provide `vultc` command in your path. Vult is updated frequently, you can use the same command to update Vult.
 
-The native executables can be downloaded from the [releases page](https://github.com/modlfo/vult/releases).
+The native executables can be downloaded from the [releases page](https://github.com/vult-dsp/vult/releases).
 
 To install the node.js library use:
 ```
@@ -86,7 +86,7 @@ https://github.com/modlfo/vult-webaudio
 
 ### SublimeText
 
-Put the [syntax file](https://github.com/modlfo/vult/raw/master/other/SublimeTextSyntax/vult.sublime-syntax) in the corresponding Sublime Text `User` packages.
+Put the [syntax file](https://github.com/vult-dsp/vult/raw/master/other/SublimeTextSyntax/vult.sublime-syntax) in the corresponding Sublime Text `User` packages.
 
 In Mac, the path is the following `$HOME/Library/Application Support/Sublime Text 3/Packages/User/vult.sublime-syntax`.
 
