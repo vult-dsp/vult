@@ -22,6 +22,6 @@ Using those scripts I could get the AppVeyor continuous integration working. Her
 
 Once I got the things working. I started a long run of commits to get the CI services to deploy automatically every tag as a Github release. More than 30 commits later I got it working. You can see the releases here:
 
-- https://github.com/modlfo/vult/releases
+- https://github.com/vult-dsp/vult/releases
 
 You can find there binaries for Windows, OSX and Linux.

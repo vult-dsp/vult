@@ -10,7 +10,7 @@ layout = "tutorial"
 
 Once we have some Vult code written it's time to generate some C/C++ code and run it on a target.
 
-If you have followed the installation steps show in https://github.com/modlfo/vult you will have an executable called `vultc` (if you compiled it by yourself it will be `vultc.native` or `vultc.byte`). This is a simple command line application that we will use to generate the code.
+If you have followed the installation steps show in https://github.com/vult-dsp/vult you will have an executable called `vultc` (if you compiled it by yourself it will be `vultc.native` or `vultc.byte`). This is a simple command line application that we will use to generate the code.
 
 Here is the full code of the oversampled lowpass filter which we are gonna save in a file called `filter.vult`.
 

@@ -24,5 +24,5 @@ One characteristic of these examples is that all of them can be directly compile
 
 The examples folder contains as well a build system based on CMake that generates the PureData externals.
 
-You can check the examples [here](https://github.com/modlfo/vult/tree/master/examples).
+You can check the examples [here](https://github.com/vult-dsp/vult/tree/master/examples).
 

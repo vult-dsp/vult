@@ -51,4 +51,4 @@ Solving this problem is in fact very easy. When a file is loaded first it's nece
 
 The actual implementation uses the [Strongly Connected Components](http://www.geeksforgeeks.org/strongly-connected-components/) algorithm. The reason of using this instead of simple [Topological sorting](https://en.wikipedia.org/wiki/Topological_sorting) is that the Strongly Connected Components algorithm will tell us if there are any cyclical dependencies, which is an error in Vult.
 
-You can find the complete implementation in OCaml in the file [src/util/components.ml](https://github.com/modlfo/vult/blob/master/src/util/components.ml). The actual implementation of the Kosaraju's algorithm is very compact, less than 40 lines of code.
+You can find the complete implementation in OCaml in the file [src/util/components.ml](https://github.com/vult-dsp/vult/blob/master/src/util/components.ml). The actual implementation of the Kosaraju's algorithm is very compact, less than 40 lines of code.
