@@ -6,7 +6,6 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="../../javascripts/bootstrap.min.js"></script>
 <link rel="shortcut icon" href="../../images/favicon.ico" />
-<script async src="https://ackee.vultiverse.com/tracker.js" data-ackee-server="https://ackee.vultiverse.com" data-ackee-domain-id="6210aaa1-0604-47ae-beba-65b0dca88fc2"></script>
 
 <nav class="navbar navbar-inverse">
    <div class="container-fluid top-menu">
@@ -27,12 +26,12 @@
       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 
          <ul class="nav navbar-nav">
-            <li><a href="../../"><i class='fa fa-home'></i> Home</a></li>
-            <li><a href="../../overview"><i class='fa fa-bullseye'></i> Overview</a></li>
-            <li><a href="../../tutorials"><i class='fa fa-book'></i> Docs</a></li>
-            <li><a href="../../blog"><i class='fa fa-newspaper-o'></i> Blog</a></li>
-            <li><a href="../../demo"><i class='fa fa-code'></i>Demo</a></li>
-            <li><a href="https://github.com/modlfo/vult"><i class='fa fa-code-fork'></i>Source</a></li>
+            <li><a href="https://vult-dsp.github.io/vult/"><i class='fa fa-home'></i> Home</a></li>
+            <li><a href="https://vult-dsp.github.io/vult/overview/"><i class='fa fa-bullseye'></i> Overview</a></li>
+            <li><a href="https://vult-dsp.github.io/vult/tutorials/"><i class='fa fa-book'></i> Docs</a></li>
+            <li><a href="https://vult-dsp.github.io/vult/blog/"><i class='fa fa-newspaper-o'></i> Blog</a></li>
+            <li><a href="https://vult-dsp.github.io/vult/demo/"><i class='fa fa-code'></i>Demo</a></li>
+            <li><a href="https://github.com/vult-dsp/vult"><i class='fa fa-code-fork'></i>Source</a></li>
             <li><a href="https://www.npmjs.com/package/vult"><i class='fa fa-download'></i>Install</a></li>
             <li><a href="https://vult-dsp.com"><i class="fas fa-microchip"></i> Store</a></li>
 
@@ -49,63 +48,23 @@
       <div class="col-md-8 col-md-auto">
          <h2>Automatic loading of Vult files</h2>
          <p>Recently I implemented simpler way to call the Vult compiler with multiple files. Previously Vult required that you passed every file in a correct order. For example:</p>
-
-<p></p>
-
-<pre><code>$ vultc -ccode file1.vult file2.vult
-</code></pre>
-
-<p>In this case the <code>file2.vult</code> used functions from the <code>file1.vult</code>. As the number of files increased it also increased the complexity of the call to the compiler.</p>
-
+<pre tabindex="0"><code>$ vultc -ccode file1.vult file2.vult
+</code></pre><p>In this case the <code>file2.vult</code> used functions from the <code>file1.vult</code>. As the number of files increased it also increased the complexity of the call to the compiler.</p>
 <p>Compiling code now is easier. With the latest Vult compiler you just have to pass as argument your top file. In the previous example the call would be:</p>
-
-<pre><code>$ vultc -ccode file2.vult
-</code></pre>
-
-<p>Based on the dependencies Vult will look for the corresponding files matching the convention that every module name  (for example <code>Util</code>) has a corresponding file called <code>util.vult</code>. Vult will look for the matching files in all the directories of the input files. For example the call:</p>
-
-<pre><code>$ vultc /home/leonardo/dir1/file1.vult /home/leonardo/dir2/file2.vult
-</code></pre>
-
-<p>will look for dependencies in the directories:</p>
-
-<pre><code>/home/leonardo/dir1/
+<pre tabindex="0"><code>$ vultc -ccode file2.vult
+</code></pre><p>Based on the dependencies Vult will look for the corresponding files matching the convention that every module name  (for example <code>Util</code>) has a corresponding file called <code>util.vult</code>. Vult will look for the matching files in all the directories of the input files. For example the call:</p>
+<pre tabindex="0"><code>$ vultc /home/leonardo/dir1/file1.vult /home/leonardo/dir2/file2.vult
+</code></pre><p>will look for dependencies in the directories:</p>
+<pre tabindex="0"><code>/home/leonardo/dir1/
 /home/leonardo/dir2/
-</code></pre>
-
-<p>One important thing to notice is that the file order does not matter anymore.</p>
-
+</code></pre><p>One important thing to notice is that the file order does not matter anymore.</p>
 <p>Vult will also look for files in the current working directory.</p>
-
 <p>If you want to add more directories to the search you can use the flag <code>-i</code>. For example:</p>
-
-<pre><code>$ vultc file1.vult -i /home/leonardo/dir2
-</code></pre>
-
-<h3 id="implementation">Implementation</h3>
-
+<pre tabindex="0"><code>$ vultc file1.vult -i /home/leonardo/dir2
+</code></pre><h3 id="implementation">Implementation</h3>
 <p>Solving this problem is in fact very easy. When a file is loaded first it&rsquo;s necessary to get all its dependencies. Once the dependencies are detected, we need to look for the matching files in the implicit and explicit search locations. The same process is repeated until every file has been loaded. At this point, we have a list of all the necessary files. Now we have to load every file in the correct order because Vult does not support forward declarations of functions. To determine the order we can use topological sorting of the dependency graph.</p>
-
 <p>The actual implementation uses the <a href="http://www.geeksforgeeks.org/strongly-connected-components/">Strongly Connected Components</a> algorithm. The reason of using this instead of simple <a href="https://en.wikipedia.org/wiki/Topological_sorting">Topological sorting</a> is that the Strongly Connected Components algorithm will tell us if there are any cyclical dependencies, which is an error in Vult.</p>
-
-<p>You can find the complete implementation in OCaml in the file <a href="https://github.com/modlfo/vult/blob/master/src/util/components.ml">src/util/components.ml</a>. The actual implementation of the Kosaraju&rsquo;s algorithm is very compact, less than 40 lines of code.</p> <div id="disqus_thread"></div>
-<script type="text/javascript">
-   (function () {
-      
-      
-      if (window.location.hostname == "localhost")
-         return;
-
-      var dsq = document.createElement('script');
-      dsq.type = 'text/javascript';
-      dsq.async = true;
-      var disqus_shortname = 'vult-dsp';
-      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-   })();
-</script>
-<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+<p>You can find the complete implementation in OCaml in the file <a href="https://github.com/vult-dsp/vult/blob/master/src/util/components.ml">src/util/components.ml</a>. The actual implementation of the Kosaraju&rsquo;s algorithm is very compact, less than 40 lines of code.</p> 
 
       </div>
    </div>
@@ -113,4 +72,4 @@
 
 
 <link rel="stylesheet" type="text/css" href="../../css/vult.css">
-<div class="container footer">Check our hardware at the <a href="https://vult-dsp.com/"> Vult-DSP </a> site</div>
+<div class="container footer">Check our main <a href="https://vult-dsp.com/"> Vult-DSP </a> site</div>

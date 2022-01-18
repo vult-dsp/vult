@@ -6,7 +6,6 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script src="../../javascripts/bootstrap.min.js"></script>
 <link rel="shortcut icon" href="../../images/favicon.ico" />
-<script async src="https://ackee.vultiverse.com/tracker.js" data-ackee-server="https://ackee.vultiverse.com" data-ackee-domain-id="6210aaa1-0604-47ae-beba-65b0dca88fc2"></script>
 
 <nav class="navbar navbar-inverse">
    <div class="container-fluid top-menu">
@@ -27,12 +26,12 @@
       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 
          <ul class="nav navbar-nav">
-            <li><a href="../../"><i class='fa fa-home'></i> Home</a></li>
-            <li><a href="../../overview"><i class='fa fa-bullseye'></i> Overview</a></li>
-            <li><a href="../../tutorials"><i class='fa fa-book'></i> Docs</a></li>
-            <li><a href="../../blog"><i class='fa fa-newspaper-o'></i> Blog</a></li>
-            <li><a href="../../demo"><i class='fa fa-code'></i>Demo</a></li>
-            <li><a href="https://github.com/modlfo/vult"><i class='fa fa-code-fork'></i>Source</a></li>
+            <li><a href="https://vult-dsp.github.io/vult/"><i class='fa fa-home'></i> Home</a></li>
+            <li><a href="https://vult-dsp.github.io/vult/overview/"><i class='fa fa-bullseye'></i> Overview</a></li>
+            <li><a href="https://vult-dsp.github.io/vult/tutorials/"><i class='fa fa-book'></i> Docs</a></li>
+            <li><a href="https://vult-dsp.github.io/vult/blog/"><i class='fa fa-newspaper-o'></i> Blog</a></li>
+            <li><a href="https://vult-dsp.github.io/vult/demo/"><i class='fa fa-code'></i>Demo</a></li>
+            <li><a href="https://github.com/vult-dsp/vult"><i class='fa fa-code-fork'></i>Source</a></li>
             <li><a href="https://www.npmjs.com/package/vult"><i class='fa fa-download'></i>Install</a></li>
             <li><a href="https://vult-dsp.com"><i class="fas fa-microchip"></i> Store</a></li>
 
@@ -49,100 +48,33 @@
       <div class="col-md-8 col-md-auto">
          <h2>Functions with Memory</h2>
          <p>Vult has two types of functions: passive and active. Passive functions are like the examples that we saw in the Vult Language Basics, for example:</p>
-
-<div class="vult_code" id="tut2-0">fun square(x) {
-   return x * x;
-}
-</div>
-
+<!-- raw HTML omitted -->
 <p>These functions simply receive arguments, perform computations and return a value.</p>
-
 <p>One of the most useful features of Vult are the active functions. These functions have the characteristic that have internal and independent memory variables. The memory variables are declared with the keyword <code>mem</code>. For example, if we would like to make a counter in Vult we could write the following function:</p>
-
-<div class="vult_code" id="tut2-1">fun counter(n) {
-   mem count;         // our memory variable
-   count = count + n; // increases the value by 'n' and updates it
-   return count;      // returns the new count
-}
-
-fun loop() {
-   val x = counter(1); // every time count is called the value increases 1
-}
-</div>
-
+<!-- raw HTML omitted -->
+<p>fun loop() {
+val x = counter(1); // every time count is called the value increases 1
+}</p>
+<!-- raw HTML omitted -->
 <p>In the code shown above, let&rsquo;s assume that an external function calls repeatedly the function <code>loop</code>. Every time the function <code>loop</code> is called, the function <code>counter</code> is called and increases the value of the memory variable <code>count</code>.</p>
-
 <p><em>One very important thing to note is that every call to an active function creates a new context.</em></p>
-
 <p>For example, if we have the following code:</p>
-
-<div class="vult_code" id="tut2-3">fun loop() {
-   val first = counter(1);   // first counter, increases by 1
-   val second = counter(10); // second counter, increases by 10
-}
-</div>
-
+<!-- raw HTML omitted -->
 <p>the first call to <code>counter</code> creates it&rsquo;s own <code>count</code> variable and is not affected by the second call. So the values of <code>first</code> will be <code>1, 2, 3 ...</code> while the values of <code>second</code> will be <code>10, 20, 30, ...</code></p>
-
 <p>Another example of using functions with memory is the following:</p>
-
-<div class="vult_code" id="tut2-4">// Returns 'true' every 'n' calls
-fun every(n) {
-   // increments the variable and returns it to 0 when larger than n
-   mem count = (count + 1) % n;
-   // Return true if the variable is zero
-   return (count == 0);
-}
-</div>
-
+<!-- raw HTML omitted -->
 <p>This function returns <code>true</code> every <code>n</code> times is called. This can be used to limit the number of times an expensive computation is performed. For example:</p>
-
-<div class="vult_code" id="tut2-5">
-fun loop(){
-   if(every(10)) {
-      .... // perform an expensive computation
-   }
-}
-</div>
-
+<!-- raw HTML omitted -->
 <p>Other function that can be very useful is:</p>
-
-<div class="vult_code" id="tut2-6">// Returns 'true' if the input value changes
-fun change(current) {
-   mem previous;
-   val result = current <> previous;
-   previous = current;
-   return result;
-}
-</div>
-
+<!-- raw HTML omitted -->
 <p>In this case, the function returns <code>true</code> every time it&rsquo;s value changes compared to its previous value.</p>
-
 <p>In the following tutorial we will see more advanced use cases focusing on a DSP application.</p>
-
-<script type="text/javascript" src="../../javascripts/external/ace/ace.js"></script>
-<script type="text/javascript" src="../../javascripts/main.js"></script>
- <div id="disqus_thread"></div>
-<script type="text/javascript">
-   (function () {
-      
-      
-      if (window.location.hostname == "localhost")
-         return;
-
-      var dsq = document.createElement('script');
-      dsq.type = 'text/javascript';
-      dsq.async = true;
-      var disqus_shortname = 'vult-dsp';
-      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-   })();
-</script>
-<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+<!-- raw HTML omitted -->
+<!-- raw HTML omitted -->
+ 
       </div>
    </div>
 </div>
 
 <link rel="stylesheet" type="text/css" href="../../css/vult.css">
-<div class="container footer">Check our hardware at the <a href="https://vult-dsp.com/"> Vult-DSP </a> site</div>
+<div class="container footer">Check our main <a href="https://vult-dsp.com/"> Vult-DSP </a> site</div>

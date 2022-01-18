@@ -1,56 +1,53 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Tutorials on Vult by modlfo</title>
-    <link>http://modlfo.github.io/vult/tutorials/</link>
-    <description>Recent content in Tutorials on Vult by modlfo</description>
+    <title>Tutorials on Vult Language</title>
+    <link>http://vult-dsp.github.io/vult/tutorials/</link>
+    <description>Recent content in Tutorials on Vult Language</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 01 Dec 2016 00:00:00 +0000</lastBuildDate>
-    
-	<atom:link href="http://modlfo.github.io/vult/tutorials/index.xml" rel="self" type="application/rss+xml" />
-    
-    
+    <lastBuildDate>Thu, 01 Dec 2016 00:00:00 +0000</lastBuildDate><atom:link href="http://vult-dsp.github.io/vult/tutorials/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Vult Language Basics</title>
-      <link>http://modlfo.github.io/vult/tutorials/basics/</link>
+      <link>http://vult-dsp.github.io/vult/tutorials/basics/</link>
       <pubDate>Thu, 01 Dec 2016 00:00:00 +0000</pubDate>
       
-      <guid>http://modlfo.github.io/vult/tutorials/basics/</guid>
+      <guid>http://vult-dsp.github.io/vult/tutorials/basics/</guid>
       <description>Vult has syntax that may resemble languages like C/C++, Python or JavaScript. In order to declare a function you can use the keyword fun as follows:
-fun foo() return 0;  This functions takes no arguments and returns the integer value zero. If you have more than one statement you can use the curly braces {} to delimit the function body.
-fun foo(x) { val y = 1 + x; return y; }  As you may have seen, you can declare variables with the keyword val.</description>
+This functions takes no arguments and returns the integer value zero. If you have more than one statement you can use the curly braces {} to delimit the function body.
+As you may have seen, you can declare variables with the keyword val.
+Vult is a static language, this means that every variable has concrete type.</description>
     </item>
     
     <item>
       <title>Functions with Memory</title>
-      <link>http://modlfo.github.io/vult/tutorials/functions/</link>
+      <link>http://vult-dsp.github.io/vult/tutorials/functions/</link>
       <pubDate>Tue, 01 Nov 2016 00:00:00 +0000</pubDate>
       
-      <guid>http://modlfo.github.io/vult/tutorials/functions/</guid>
+      <guid>http://vult-dsp.github.io/vult/tutorials/functions/</guid>
       <description>Vult has two types of functions: passive and active. Passive functions are like the examples that we saw in the Vult Language Basics, for example:
-fun square(x) { return x * x; }  These functions simply receive arguments, perform computations and return a value.
-One of the most useful features of Vult are the active functions. These functions have the characteristic that have internal and independent memory variables. The memory variables are declared with the keyword mem.</description>
+These functions simply receive arguments, perform computations and return a value.
+One of the most useful features of Vult are the active functions. These functions have the characteristic that have internal and independent memory variables. The memory variables are declared with the keyword mem. For example, if we would like to make a counter in Vult we could write the following function:</description>
     </item>
     
     <item>
       <title>Easy DSP with Vult</title>
-      <link>http://modlfo.github.io/vult/tutorials/dsp/</link>
+      <link>http://vult-dsp.github.io/vult/tutorials/dsp/</link>
       <pubDate>Sat, 01 Oct 2016 00:00:00 +0000</pubDate>
       
-      <guid>http://modlfo.github.io/vult/tutorials/dsp/</guid>
+      <guid>http://vult-dsp.github.io/vult/tutorials/dsp/</guid>
       <description>Functions with memory simplify writing Digital Signal Processing (DSP) code since a mem variable can be used to as a single sample delay z^1. I order to implement the Digital Biquad Filter (direct form 2) we can take the equations directly from Wikipedia: https://en.wikipedia.org/wiki/Digital_biquad_filter.
 We can see the architecture and the equations here:
-    We can implement these equations in Vult as follows.
-fun biquad(x0, b0, b1, b2 ,a1 ,a2) : real { mem w1, w2; val w0 = x0 - a1*w1 - a2*w2; val y0 = b0*w0 + b1*w1 + b2*w2; w2, w1 = w1, w0; return y0; }  The variables w1 and w2 represent the terms w[n-1] and w[n-2].</description>
+   We can implement these equations in Vult as follows.
+The variables w1 and w2 represent the terms w[n-1] and w[n-2].</description>
     </item>
     
     <item>
       <title>Oversampling</title>
-      <link>http://modlfo.github.io/vult/tutorials/oversampling/</link>
+      <link>http://vult-dsp.github.io/vult/tutorials/oversampling/</link>
       <pubDate>Thu, 01 Sep 2016 00:00:00 +0000</pubDate>
       
-      <guid>http://modlfo.github.io/vult/tutorials/oversampling/</guid>
+      <guid>http://vult-dsp.github.io/vult/tutorials/oversampling/</guid>
       <description>One common technique in Digital Signal Processing is Oversampling. Oversampling is often necessary when modeling filters that come from electric circuits or that present nonlinearities or that can become unstable for certain parameters.
 In order to oversample a filter we need for every sample perform N steps. I a language like Vult, that hides the internal memory of a function, oversampling may seem not very obvious.
 In order to perform oversampling, we are gonna use a feature of Vult that allow us to name and reuse the memory created by a function.</description>
@@ -58,12 +55,12 @@ In order to perform oversampling, we are gonna use a feature of Vult that allow 
     
     <item>
       <title>Generating C/C&#43;&#43;</title>
-      <link>http://modlfo.github.io/vult/tutorials/generate-c/</link>
+      <link>http://vult-dsp.github.io/vult/tutorials/generate-c/</link>
       <pubDate>Sun, 12 Jul 2015 21:24:58 +0200</pubDate>
       
-      <guid>http://modlfo.github.io/vult/tutorials/generate-c/</guid>
+      <guid>http://vult-dsp.github.io/vult/tutorials/generate-c/</guid>
       <description>Once we have some Vult code written it&amp;rsquo;s time to generate some C/C++ code and run it on a target.
-If you have followed the installation steps show in https://github.com/modlfo/vult you will have an executable called vultc (if you compiled it by yourself it will be vultc.native or vultc.byte). This is a simple command line application that we will use to generate the code.
+If you have followed the installation steps show in https://github.com/vult-dsp/vult you will have an executable called vultc (if you compiled it by yourself it will be vultc.native or vultc.byte). This is a simple command line application that we will use to generate the code.
 Here is the full code of the oversampled lowpass filter which we are gonna save in a file called filter.</description>
     </item>
     
