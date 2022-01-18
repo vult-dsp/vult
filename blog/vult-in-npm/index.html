@@ -56,36 +56,35 @@
 <li>it has a good package manager</li>
 </ul>
 <p>Fortunately, the only thing that did not work was the file I/O (which seems reasonable). In order to make it work I made a small hack that allowed me to switch the functions that read and write files. That way I can declare bindings for the node.js functions and replace them. Here&rsquo;s the code:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#75715e">(** Declares a &#39;buffer&#39; object *)</span>
-<span style="color:#66d9ef">class</span> <span style="color:#66d9ef">type</span> buffer <span style="color:#f92672">=</span> <span style="color:#66d9ef">object</span>
-   <span style="color:#66d9ef">method</span> toString <span style="color:#f92672">:</span> js_string t meth
-<span style="color:#66d9ef">end</span>
-
-<span style="color:#75715e">(** Declares a &#39;fs&#39; object *)</span>
-<span style="color:#66d9ef">class</span> <span style="color:#66d9ef">type</span> fs <span style="color:#f92672">=</span> <span style="color:#66d9ef">object</span>
-   <span style="color:#66d9ef">method</span> readFileSync <span style="color:#f92672">:</span> js_string t <span style="color:#f92672">-&gt;</span> buffer t meth
-   <span style="color:#66d9ef">method</span> writeFileSync <span style="color:#f92672">:</span> js_string t <span style="color:#f92672">-&gt;</span> js_string t <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">unit</span> t meth
-<span style="color:#66d9ef">end</span>
-
-<span style="color:#75715e">(* var fs = require(&#39;fs&#39;) *)</span>
-<span style="color:#66d9ef">let</span> fs <span style="color:#f92672">:</span> fs t <span style="color:#f92672">=</span>
-   Unsafe.fun_call <span style="color:#f92672">(</span>Unsafe.js_expr <span style="color:#e6db74">&#34;require&#34;</span><span style="color:#f92672">)</span>
-      <span style="color:#f92672">[|</span>Unsafe.inject <span style="color:#f92672">(</span><span style="color:#66d9ef">string</span> <span style="color:#e6db74">&#34;fs&#34;</span><span style="color:#f92672">)|]</span>
-
-<span style="color:#66d9ef">let</span> read_fn <span style="color:#f92672">(</span>path<span style="color:#f92672">:</span><span style="color:#66d9ef">string</span><span style="color:#f92672">)</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span> option <span style="color:#f92672">=</span>
-   <span style="color:#66d9ef">let</span> buffer   <span style="color:#f92672">=</span> fs<span style="color:#f92672">##</span>readFileSync <span style="color:#f92672">(</span><span style="color:#66d9ef">string</span> path<span style="color:#f92672">)</span> <span style="color:#66d9ef">in</span>
-   <span style="color:#66d9ef">let</span> contents <span style="color:#f92672">=</span> to_string <span style="color:#f92672">(</span>buffer<span style="color:#f92672">##</span>toString ()<span style="color:#f92672">)</span> <span style="color:#66d9ef">in</span>
-   <span style="color:#a6e22e">Some</span><span style="color:#f92672">(</span>contents<span style="color:#f92672">)</span>
-
-<span style="color:#66d9ef">let</span> write_fn <span style="color:#f92672">(</span>path<span style="color:#f92672">:</span><span style="color:#66d9ef">string</span><span style="color:#f92672">)</span> <span style="color:#f92672">(</span>text<span style="color:#f92672">:</span><span style="color:#66d9ef">string</span><span style="color:#f92672">)</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">bool</span> <span style="color:#f92672">=</span>
-   <span style="color:#66d9ef">let</span> <span style="color:#f92672">_</span> <span style="color:#f92672">=</span> fs<span style="color:#f92672">##</span>writeFileSync <span style="color:#f92672">((</span><span style="color:#66d9ef">string</span> path<span style="color:#f92672">),(</span><span style="color:#66d9ef">string</span> text<span style="color:#f92672">))</span> <span style="color:#66d9ef">in</span>
-   true
-<span style="color:#f92672">;;</span>
-</code></pre></div><p>Then I replace the functions as follows:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml">FileIO.setRead read_fn <span style="color:#f92672">;;</span>
-FileIO.setWrite write_fn <span style="color:#f92672">;;</span>
-
-</code></pre></div><p>With those changes it&rsquo;s possible to compile the bytecode and convert it to JavaScript. Now it&rsquo;s possible to run the Vult compiler as follows:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-ocaml" data-lang="ocaml"><span style="display:flex;"><span><span style="color:#75715e">(** Declares a &#39;buffer&#39; object *)</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#66d9ef">type</span> buffer <span style="color:#f92672">=</span> <span style="color:#66d9ef">object</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#66d9ef">method</span> toString <span style="color:#f92672">:</span> js_string t meth
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">(** Declares a &#39;fs&#39; object *)</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#66d9ef">type</span> fs <span style="color:#f92672">=</span> <span style="color:#66d9ef">object</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#66d9ef">method</span> readFileSync <span style="color:#f92672">:</span> js_string t <span style="color:#f92672">-&gt;</span> buffer t meth
+</span></span><span style="display:flex;"><span>   <span style="color:#66d9ef">method</span> writeFileSync <span style="color:#f92672">:</span> js_string t <span style="color:#f92672">-&gt;</span> js_string t <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">unit</span> t meth
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">end</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">(* var fs = require(&#39;fs&#39;) *)</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> fs <span style="color:#f92672">:</span> fs t <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>   Unsafe.fun_call <span style="color:#f92672">(</span>Unsafe.js_expr <span style="color:#e6db74">&#34;require&#34;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">[|</span>Unsafe.inject <span style="color:#f92672">(</span><span style="color:#66d9ef">string</span> <span style="color:#e6db74">&#34;fs&#34;</span><span style="color:#f92672">)|]</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> read_fn <span style="color:#f92672">(</span>path<span style="color:#f92672">:</span><span style="color:#66d9ef">string</span><span style="color:#f92672">)</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span> option <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#66d9ef">let</span> buffer   <span style="color:#f92672">=</span> fs<span style="color:#f92672">##</span>readFileSync <span style="color:#f92672">(</span><span style="color:#66d9ef">string</span> path<span style="color:#f92672">)</span> <span style="color:#66d9ef">in</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#66d9ef">let</span> contents <span style="color:#f92672">=</span> to_string <span style="color:#f92672">(</span>buffer<span style="color:#f92672">##</span>toString ()<span style="color:#f92672">)</span> <span style="color:#66d9ef">in</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#a6e22e">Some</span><span style="color:#f92672">(</span>contents<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">let</span> write_fn <span style="color:#f92672">(</span>path<span style="color:#f92672">:</span><span style="color:#66d9ef">string</span><span style="color:#f92672">)</span> <span style="color:#f92672">(</span>text<span style="color:#f92672">:</span><span style="color:#66d9ef">string</span><span style="color:#f92672">)</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">bool</span> <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>   <span style="color:#66d9ef">let</span> <span style="color:#f92672">_</span> <span style="color:#f92672">=</span> fs<span style="color:#f92672">##</span>writeFileSync <span style="color:#f92672">((</span><span style="color:#66d9ef">string</span> path<span style="color:#f92672">),(</span><span style="color:#66d9ef">string</span> text<span style="color:#f92672">))</span> <span style="color:#66d9ef">in</span>
+</span></span><span style="display:flex;"><span>   true
+</span></span><span style="display:flex;"><span><span style="color:#f92672">;;</span>
+</span></span></code></pre></div><p>Then I replace the functions as follows:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-ocaml" data-lang="ocaml"><span style="display:flex;"><span>FileIO.setRead read_fn <span style="color:#f92672">;;</span>
+</span></span><span style="display:flex;"><span>FileIO.setWrite write_fn <span style="color:#f92672">;;</span>
+</span></span></code></pre></div><p>With those changes it&rsquo;s possible to compile the bytecode and convert it to JavaScript. Now it&rsquo;s possible to run the Vult compiler as follows:</p>
 <pre tabindex="0"><code>$ node vultjs.js arguments
 </code></pre><p>Thanks to the npm it is even easier to install Vult an run it.</p>
 <pre tabindex="0"><code>$ npm install vult -g

@@ -77,7 +77,7 @@
 </div>
 <p>The Lua code uses the LuaJIT FFI to create C arrays. The motivation of using it was because, as show <a href="http://luajit.org/ext_ffi.html">here</a>, you can get better performance with C arrays compares to Lua arrays. This is because Lua does not have native arrays, they are tables indexed with integers.</p>
 <p>For the line <code>val dpt[4];</code> the generated Lua code looks as follows:</p>
-<pre tabindex="0"><code>dpt = ffi.new(&quot;double[?]&quot;,4)
+<pre tabindex="0"><code>dpt = ffi.new(&#34;double[?]&#34;,4)
 </code></pre><p>It looks like every time a local array is used, even for the simplest thing, a new object is allocated. When the object is not used, the memory needs to be collected. In comparison to C++, the code will look as follows:</p>
 <pre tabindex="0"><code>double dpt[4];
 </code></pre><p>The first thing I tried was changing the Lua code to use regular Lua arrays instead of the FFI.</p>
