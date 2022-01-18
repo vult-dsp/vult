@@ -6,7 +6,7 @@ Vult is a simple and powerful language to program high-performance algorithms th
 
 The Vult compiler is a transcompiler, which takes Vult code and produces plain C/C++ code that can be compiled in any platform with a C/C++ compiler, for example: Arduino or Teensy boards. Vult can also generate JavaScript that can be run directly in the browser or C/C++ that can be compiled as Pure Data externals. Code written in Vult has freedom.
 
-Check out the documentation and tutorial in http://modlfo.github.io/vult/ or take a look at the [Wiki](https://github.com/vult-dsp/vult/wiki).
+Check out the documentation and tutorial in http://vult-dsp.github.io/vult/ or take a look at the [Wiki](https://github.com/vult-dsp/vult/wiki).
 
 ### Basics
 
