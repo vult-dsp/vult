@@ -41,7 +41,7 @@ module C = struct
     | "set", [ Array (_, Fixed); Int; Fixed ], Void None -> Some "fix_set"
     | "set", [ Array (_, Int); Int; Int ], Void None -> Some "int_set"
     | _ -> None
-
+  ;;
 
   let op_to_fun (op : operator) (e1 : type_) (e2 : type_) (ret : type_) =
     match op, e1, e2, ret with
@@ -51,6 +51,7 @@ module C = struct
       | Sub, Fixed, Fixed, Fixed -> Some "fix_sub"*)
     | Div, Fixed, Fixed, Fixed -> Some "fix_div"
     | _ -> None
+  ;;
 end
 
 module Lua = struct
@@ -71,4 +72,5 @@ module Lua = struct
     ; "until"
     ]
     |> Util.Maps.Set.of_list
+  ;;
 end

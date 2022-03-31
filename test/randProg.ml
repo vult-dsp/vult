@@ -23,9 +23,7 @@ type state =
   }
 
 type condition = state -> bool
-
 type probability = state -> float
-
 type 'a creator = state -> 'a
 
 let default_state =
@@ -41,48 +39,37 @@ let default_state =
   ; get_if_exp = true
   ; return_type = None
   }
-
+;;
 
 let rec fold_init f s n =
-  if n > 0 then
+  if n > 0
+  then (
     let s', e = f s in
     let s', e' = fold_init f s' (n - 1) in
-    s', e :: e'
-  else
-    s, []
-
+    s', e :: e')
+  else s, []
+;;
 
 let rec get_elem state min max (n : float) (elems : (condition * probability * 'a creator) list) =
   match elems with
-  | h :: ((_, p, _) :: _ as t) ->
-      if n >= min && n <= max then
-        h
-      else
-        get_elem state max (max +. p state) n t
-  | h :: _ ->
-      if n >= min && n <= max then
-        h
-      else
-        failwith "get_elem: invalid input"
+  | h :: ((_, p, _) :: _ as t) -> if n >= min && n <= max then h else get_elem state max (max +. p state) n t
+  | h :: _ -> if n >= min && n <= max then h else failwith "get_elem: invalid input"
   | [] -> failwith "get_elem: invalid input"
-
+;;
 
 let rec filter_count state acc l =
   match l with
   | [] ->
-      let n, e = acc in
-      n, List.rev e
+    let n, e = acc in
+    n, List.rev e
   | ((c, p, _) as h) :: t ->
-      let n, e = acc in
-      if c state then
-        let prob = p state in
-        if prob > 0.0 then
-          filter_count state (n +. prob, h :: e) t
-        else
-          filter_count state acc t
-      else
-        filter_count state acc t
-
+    let n, e = acc in
+    if c state
+    then (
+      let prob = p state in
+      if prob > 0.0 then filter_count state (n +. prob, h :: e) t else filter_count state acc t)
+    else filter_count state acc t
+;;
 
 let pick_one state (elems : (condition * probability * 'a creator) list) : 'a =
   let total, elems' = filter_count state (0.0, []) elems in
@@ -90,46 +77,30 @@ let pick_one state (elems : (condition * probability * 'a creator) list) : 'a =
   let _, first_p, _ = List.hd elems' in
   let _, _, f = get_elem state 0.0 (first_p state) n elems' in
   f state
-
+;;
 
 let makeArray state t =
   let n = Random.int (state.max_array_size - 1) + 1 in
   let size = { t = STSize n; loc } in
   { t = STComposed ("array", [ t; size ]); loc }
-
+;;
 
 let int_type = { t = STId { id = "int"; n = None; loc }; loc }
-
 let real_type = { t = STId { id = "real"; n = None; loc }; loc }
-
 let bool_type = { t = STId { id = "bool"; n = None; loc }; loc }
-
 let makeTuple elems = { t = STComposed ("tuple", elems); loc }
-
 let normal_p _ = 1.0
-
 let high_p _ = 2.0
-
 let low_p _ = 0.3
-
 let nest_p state = state.nest_prob
-
 let always _ = true
-
 let with_array state = state.get_array_type
-
 let with_if_exp state = state.get_if_exp
-
 let with_tuple state = state.get_tuple_type && state.max_type_levels > 0
-
 let no_array state = { state with get_array_type = false }
-
 let no_tuple state = { state with get_tuple_type = false }
-
 let no_if_exp state = { state with get_if_exp = false }
-
 let decr_level state = { state with max_type_levels = state.max_type_levels - 1 }
-
 let decr_nest state = { state with nest_prob = state.nest_prob *. 0.5 }
 
 let rec newType state =
@@ -155,61 +126,51 @@ let rec newType state =
             makeTuple t )*)
     ]
 
-
-and newTypeList n state =
-  if n = 0 then
-    []
-  else
-    newType state :: newTypeList (n - 1) state
-
+and newTypeList n state = if n = 0 then [] else newType state :: newTypeList (n - 1) state
 
 let isInt typ _ = compare int_type typ = 0
-
 let isReal typ _ = compare real_type typ = 0
-
 let isBool typ _ = compare bool_type typ = 0
-
 let isNum typ state = isReal typ state || isInt typ state
 
 let isArray (typ : type_) _ =
   match typ with
   | { t = STComposed ("array", _); _ } -> true
   | _ -> false
-
+;;
 
 let arrayTypeAndSize (typ : type_) =
   match typ with
   | { t = STComposed ("array", [ t; { t = STSize n; _ } ]); _ } -> t, n
   | _ -> failwith "not an array"
-
+;;
 
 let isArrayOfType (subtype : type_) (typ : type_) =
   match typ with
   | { t = STComposed ("array", [ t1; { t = STSize _; _ } ]); _ } -> compare subtype t1 = 0
   | _ -> false
-
+;;
 
 let isTuple (typ : type_) _ =
   match typ with
   | { t = STComposed ("tuple", _); _ } -> true
   | _ -> false
-
+;;
 
 let tupleTypes (typ : type_) =
   match typ with
   | { t = STComposed ("tuple", elems); _ } -> elems
   | _ -> failwith "tupleTypes: invalid input"
-
+;;
 
 let pickVar state typ =
   let elems = TypeMap.find typ state.vars in
   let size = List.length elems in
   let n = Random.int size in
   List.nth elems n
-
+;;
 
 let hasType typ state = TypeMap.mem typ state.vars
-
 let hasArrayType typ state = TypeMap.exists (fun key _ -> isArrayOfType typ key) state.vars
 
 let pickArrayVar state typ =
@@ -219,19 +180,19 @@ let pickArrayVar state typ =
   |> List.flatten
   |> List.map (fun x -> always, normal_p, fun _ -> x)
   |> pick_one state
-
+;;
 
 let hasVar state name = TypeMap.exists (fun _ names -> List.exists (fun n -> n = name) names) state.vars
 
 let addVar state var typ =
   match TypeMap.find typ state.vars with
   | elems ->
-      let vars = TypeMap.add typ (var :: elems) state.vars in
-      { state with vars }
+    let vars = TypeMap.add typ (var :: elems) state.vars in
+    { state with vars }
   | exception Not_found ->
-      let vars = TypeMap.add typ [ var ] state.vars in
-      { state with vars }
-
+    let vars = TypeMap.add typ [ var ] state.vars in
+    { state with vars }
+;;
 
 let newNumBiOp state =
   pick_one
@@ -242,7 +203,7 @@ let newNumBiOp state =
     ; (always, normal_p, fun _ -> "/")
     ; (always, normal_p, fun _ -> "%")
     ]
-
+;;
 
 let newBoolBiOp state = pick_one state [ (always, normal_p, fun _ -> "&&"); (always, normal_p, fun _ -> "||") ]
 
@@ -256,7 +217,7 @@ let newLogicBiOp state =
     ; (always, normal_p, fun _ -> "==")
     ; (always, normal_p, fun _ -> "<>")
     ]
-
+;;
 
 let newBuiltinFun state =
   pick_one
@@ -268,7 +229,7 @@ let newBuiltinFun state =
     ; (always, normal_p, fun _ -> { id = "floor"; n = None; loc })
     ; (always, normal_p, fun _ -> { id = "tanh"; n = None; loc })
     ]
-
+;;
 
 let newBuiltinFunNoArgs state =
   pick_one
@@ -276,7 +237,7 @@ let newBuiltinFunNoArgs state =
     [ (always, normal_p, fun _ -> { id = "eps"; n = None; loc })
     ; (always, normal_p, fun _ -> { id = "pi"; n = None; loc })
     ]
-
+;;
 
 let rec newExp state typ : exp =
   pick_one
@@ -344,13 +305,13 @@ let rec newExp state typ : exp =
       , fun state ->
           let state' = decr_nest state in
           let t = newType state' in
-          if isNum t state then
+          if isNum t state
+          then (
             let e1 = newExp state' t in
             let e2 = newExp state' t in
             let op = newLogicBiOp state' in
-            { e = SEGroup { e = SEOp (op, e1, e2); loc }; loc }
-          else
-            newExp state typ )
+            { e = SEGroup { e = SEOp (op, e1, e2); loc }; loc })
+          else newExp state typ )
     ; (* if-expression *)
       ( with_if_exp
       , nest_p
@@ -362,13 +323,7 @@ let rec newExp state typ : exp =
           { e = SEGroup { e = SEIf { cond; then_; else_ }; loc }; loc } )
     ]
 
-
-and newExpList n state typ =
-  if n = 0 then
-    []
-  else
-    newExp state typ :: newExpList (n - 1) state typ
-
+and newExpList n state typ = if n = 0 then [] else newExp state typ :: newExpList (n - 1) state typ
 
 let rec getName state =
   let random_char _ =
@@ -377,11 +332,8 @@ let rec getName state =
   in
   let number = String.init 10 random_char in
   let name = "tmp_" ^ number in
-  if hasVar state name then
-    getName state
-  else
-    name
-
+  if hasVar state name then getName state else name
+;;
 
 let rec newDExpDecl state typ =
   pick_one
@@ -404,13 +356,13 @@ let rec newDExpDecl state typ =
             List.fold_left
               (fun (s, acc) t ->
                 let t', s' = newDExpDecl s t in
-                s', t' :: acc )
+                s', t' :: acc)
               (state, [])
               types
           in
           { d = SDGroup { d = SDTuple (List.rev lhs_elems); loc }; loc }, state' )
     ]
-
+;;
 
 let rec newLExpBind state typ =
   pick_one
@@ -432,22 +384,22 @@ let rec newLExpBind state typ =
             List.fold_left
               (fun (s, acc) t ->
                 let t', s' = newLExpBind s t in
-                s', t' :: acc )
+                s', t' :: acc)
               (state, [])
               types
           in
           { l = SLGroup { l = SLTuple (List.rev lhs_elems); loc }; loc }, state' )
     ]
-
+;;
 
 let returnType state =
   match state.return_type with
   | Some t -> state, t
   | _ ->
-      let t = newType state in
-      let state' = { state with return_type = Some t } in
-      state', t
-
+    let t = newType state in
+    let state' = { state with return_type = Some t } in
+    state', t
+;;
 
 let restoreVars new_vars old = { new_vars with vars = old.vars }
 
@@ -493,13 +445,13 @@ let rec newStmt state =
       , normal_p
       , fun state ->
           let t = newType state in
-          if hasType t state then
+          if hasType t state
+          then (
             let lhs, state' = newLExpBind state t in
             (* here use the new state to make possible picking the new variable *)
             let rhs = newExp state' t in
-            state', { s = SStmtBind (lhs, rhs); loc }
-          else
-            newStmt state )
+            state', { s = SStmtBind (lhs, rhs); loc })
+          else newStmt state )
     ; (* return *)
       ( always
       , low_p
@@ -532,7 +484,6 @@ let rec newStmt state =
           state', { s = SStmtWhile (cond, { s = SStmtBlock e1; loc }); loc } )
     ]
 
-
 and newStmtList n state : state * stmt list = fold_init newStmt state n
 
 let newFunction () =
@@ -541,13 +492,13 @@ let newFunction () =
   let def = { next = None; name; args = []; t = None; loc; tags = [] } in
   let body = { s = SStmtBlock stmts; loc } in
   { top = STopFunction (def, body); loc }
-
+;;
 
 let test seed =
-  Random.init seed ;
+  Random.init seed;
   let stmts = [ newFunction () ] in
   let code = Print.print stmts in
   code
-
+;;
 
 let run seed = test seed

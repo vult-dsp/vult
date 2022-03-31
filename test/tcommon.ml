@@ -25,7 +25,6 @@
 open Util.Args
 
 let initial_dir = Sys.getcwd ()
-
 let tmp_dir = Filename.get_temp_dir_name ()
 
 let call_uname () =
@@ -33,46 +32,43 @@ let call_uname () =
   let uname = input_line ic in
   let () = close_in ic in
   uname
-
+;;
 
 let os : string =
   match Sys.os_type with
-  | "Win32"
-   |"Cygwin" ->
-      "Windows"
+  | "Win32" | "Cygwin" -> "Windows"
   | "Unix" ->
-      begin
-        match call_uname () with
-        | "Linux" -> "Linux"
-        | "Darwin" -> "OSX"
-        | _ -> failwith "cannot get os"
-        | exception _ -> failwith "cannot get os"
-      end
+    (match call_uname () with
+    | "Linux" -> "Linux"
+    | "Darwin" -> "OSX"
+    | _ -> failwith "cannot get os"
+    | exception _ -> failwith "cannot get os")
   | _ -> failwith "cannot get os"
-
+;;
 
 let tryToRun cmd =
-  Sys.chdir tmp_dir ;
+  Sys.chdir tmp_dir;
   let result =
     match Sys.command cmd with
     | 0 -> true
     | _ -> false
     | exception _ -> false
   in
-  Sys.chdir initial_dir ;
+  Sys.chdir initial_dir;
   result
-
+;;
 
 let getFile (args : args) ext : string =
   match args.output with
   | Some output -> output ^ "." ^ ext
   | None -> "temp." ^ ext
-
+;;
 
 let writeFiles (_args : args) (files : output list) =
   List.iter
     (fun output ->
       match output with
       | GeneratedCode files -> List.iter (fun (text, ext) -> Util.FileIO.write ext (Pla.print text) |> ignore) files
-      | _ -> () )
+      | _ -> ())
     files
+;;

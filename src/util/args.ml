@@ -27,16 +27,16 @@ type input =
   | Code of string * string
 
 type output =
-  | Version       of string
-  | Message       of string
-  | Dependencies  of string list
-  | ParsedCode    of string
+  | Version of string
+  | Message of string
+  | Dependencies of string list
+  | ParsedCode of string
   | GeneratedCode of (Pla.t * string) list
-  | Byte          of string
-  | Prog          of string
-  | Interpret     of string
+  | Byte of string
+  | Prog of string
+  | Interpret of string
   | CheckOk
-  | Errors        of Error.t list
+  | Errors of Error.t list
 
 type code =
   | NoCode
@@ -98,7 +98,7 @@ let default_arguments : args =
   ; prefix = None
   ; debug = false
   }
-
+;;
 
 type flags =
   { flag : string
@@ -111,15 +111,14 @@ let flags result =
     ; action =
         Arg.String
           (fun s ->
-            result.code <-
-              ( match s with
-              | "c" -> CCode
-              | "cpp" -> CppCode
-              | "lua" -> LuaCode
-              | "java" -> JavaCode
-              | "js" -> JSCode
-              | _ -> Error.raiseErrorMsg ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js)") )
-            )
+            result.code
+              <- (match s with
+                 | "c" -> CCode
+                 | "cpp" -> CppCode
+                 | "lua" -> LuaCode
+                 | "java" -> JavaCode
+                 | "js" -> JSCode
+                 | _ -> Error.raiseErrorMsg ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js)")))
     ; comment = "language Generate code for the specified language (cpp, lua, java, js)"
     }
   ; { flag = "-prefix"
@@ -142,11 +141,11 @@ let flags result =
     ; action =
         Arg.String
           (fun real ->
-            result.real <-
-              ( match real with
-              | "float" -> Float
-              | "fixed" -> Fixed
-              | _ -> Error.raiseErrorMsg ("Unknown numeric formmat: " ^ real) ) )
+            result.real
+              <- (match real with
+                 | "float" -> Float
+                 | "fixed" -> Fixed
+                 | _ -> Error.raiseErrorMsg ("Unknown numeric formmat: " ^ real)))
     ; comment = " Defines the numeric type for the generated code: double, fixed"
     }
   ; { flag = "-samplerate"
@@ -201,7 +200,7 @@ let flags result =
     }
   ; { flag = "-debug"; action = Arg.Unit (fun () -> result.debug <- true); comment = "" }
   ]
-
+;;
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : args =
@@ -212,3 +211,4 @@ let processArguments () : args =
   in
   let () = result.files <- List.rev result.files in
   result
+;;

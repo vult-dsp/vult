@@ -31,19 +31,19 @@ type tag_type =
   | TypeId
 
 type value =
-  | Int    of int
-  | Bool   of bool
-  | Real   of float
+  | Int of int
+  | Bool of bool
+  | Real of float
   | String of string
-  | Id     of string
+  | Id of string
 
 type tag_d =
-  | TagId     of string
-  | TagInt    of int
-  | TagBool   of bool
-  | TagReal   of float
+  | TagId of string
+  | TagInt of int
+  | TagBool of bool
+  | TagReal of float
   | TagString of string
-  | TagCall   of
+  | TagCall of
       { name : string
       ; args : (string * tag * Loc.t) list
       }
@@ -62,24 +62,24 @@ let rec print_tag t : Pla.t =
   | TagReal f -> Pla.float f
   | TagString s -> Pla.string_quoted s
   | TagCall { name; args } ->
-      let args =
-        Pla.map_sep
-          Pla.commaspace
-          (fun (n, tag, _) ->
-            let tag = print_tag tag in
-            [%pla {|<#n#s> = <#tag#>|}] )
-          args
-      in
-      [%pla {|<#name#s>(<#args#>)|}]
-
+    let args =
+      Pla.map_sep
+        Pla.commaspace
+        (fun (n, tag, _) ->
+          let tag = print_tag tag in
+          [%pla {|<#n#s> = <#tag#>|}])
+        args
+    in
+    [%pla {|<#name#s>(<#args#>)|}]
+;;
 
 let print_tags tags =
   match tags with
   | [] -> Pla.unit
   | _ ->
-      let tags = Pla.map_sep Pla.commaspace print_tag tags in
-      [%pla {|@[<#tags#>]|}]
-
+    let tags = Pla.map_sep Pla.commaspace print_tag tags in
+    [%pla {|@[<#tags#>]|}]
+;;
 
 let has (tags : tag list) n =
   List.exists
@@ -87,9 +87,9 @@ let has (tags : tag list) n =
       match t.g with
       | TagCall { name; _ } -> name = n
       | TagId name -> name = n
-      | _ -> false )
+      | _ -> false)
     tags
-
+;;
 
 let getType (tag : tag) : string =
   match tag.g with
@@ -99,7 +99,7 @@ let getType (tag : tag) : string =
   | TagReal _ -> "real"
   | TagCall _ -> "tag"
   | TagString _ -> "string"
-
+;;
 
 let getTypeLiteral t : string =
   match t with
@@ -108,14 +108,14 @@ let getTypeLiteral t : string =
   | TypeReal -> "real"
   | TypeId -> "identifier"
   | TypeString -> "string"
-
+;;
 
 let rec getParam (remaining : (string * tag * Loc.t) list) (args : (string * tag * Loc.t) list) (id : string) =
   match args with
   | [] -> remaining, None
   | (name, value, _) :: t when name = id -> remaining @ t, Some value
   | h :: t -> getParam (h :: remaining) t id
-
+;;
 
 let getTypedParam (args : (string * tag * Loc.t) list) (id, typ) =
   match getParam [] args id with
@@ -125,16 +125,16 @@ let getTypedParam (args : (string * tag * Loc.t) list) (id, typ) =
   | r, Some { g = TagId value; _ } when typ = TypeId -> r, Some (Id value)
   | r, Some { g = TagString value; _ } when typ = TypeString -> r, Some (String value)
   | _, Some tag ->
-      let msg =
-        Printf.sprintf
-          "The parameter '%s' was expected to be of type '%s' but it is '%s'"
-          id
-          (getTypeLiteral typ)
-          (getType tag)
-      in
-      Error.raiseError msg tag.loc
+    let msg =
+      Printf.sprintf
+        "The parameter '%s' was expected to be of type '%s' but it is '%s'"
+        id
+        (getTypeLiteral typ)
+        (getType tag)
+    in
+    Error.raiseError msg tag.loc
   | r, None -> r, None
-
+;;
 
 let getArguments tags n =
   CCList.find_map
@@ -142,18 +142,19 @@ let getArguments tags n =
       match t.g with
       | TagCall { name; args } when name = n -> Some args
       | TagId name when name = n -> Some []
-      | _ -> None )
+      | _ -> None)
     tags
-
+;;
 
 let getParameterList tags name (params : (string * tag_type) list) : value option list =
   let rec loop remaning found params =
     match params with
     | [] -> List.rev found
     | h :: t ->
-        let remaining, value = getTypedParam remaning h in
-        loop remaining (value :: found) t
+      let remaining, value = getTypedParam remaning h in
+      loop remaining (value :: found) t
   in
   match getArguments tags name with
   | Some args -> loop args [] params
   | None -> []
+;;
