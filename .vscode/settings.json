@@ -1,21 +1,21 @@
 // Place your settings in this file to overwrite default and user settings.
 {
-   "files.exclude": {
-      "**/_build": true
-   },
-   "editor.tabSize": 3,
-   "editor.insertSpaces": true,
-   "editor.detectIndentation": false,
-   "files.trimTrailingWhitespace": true,
-   "editor.formatOnSave": true,
-   "files.associations": {
-      "*.ml": "ocaml"
-   },
-   "[ocaml]": {
-      "editor.tabSize": 3,
-      "editor.insertSpaces": true
-   },
-   "ocaml.sandbox": {
-      "kind": "global"
-   }
+  "files.exclude": {
+    "**/_build": true
+  },
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "files.trimTrailingWhitespace": true,
+  "editor.formatOnSave": false,
+  "files.associations": {
+    "*.ml": "ocaml"
+  },
+  "[ocaml]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true
+  },
+  "ocaml.sandbox": {
+    "kind": "global"
+  }
 }

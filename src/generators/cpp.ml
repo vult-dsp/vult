@@ -239,6 +239,10 @@ let rec parenthesize e =
 
 and print_stmt s =
   match s with
+  | StmtDecl (({ t = Struct { path; _ }; _ } as lhs), None) ->
+    let t = print_type_ lhs.t in
+    let lhs = print_dexp lhs in
+    [%pla {|<#t#> <#lhs#>;<#><#path#s>_init(<#lhs#>);|}]
   | StmtDecl ({ d = DId (n, _); t; _ }, None) ->
     let t = print_arg (n, t) in
     [%pla {|<#t#>;|}]

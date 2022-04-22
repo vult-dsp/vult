@@ -41,7 +41,6 @@ type output =
 type code =
   | NoCode
   | CppCode
-  | CCode
   | JSCode
   | LuaCode
   | JavaCode
@@ -113,7 +112,6 @@ let flags result =
           (fun s ->
             result.code
               <- (match s with
-                 | "c" -> CCode
                  | "cpp" -> CppCode
                  | "lua" -> LuaCode
                  | "java" -> JavaCode

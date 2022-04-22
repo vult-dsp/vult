@@ -59,7 +59,6 @@ let generateCode args (stmts, vm, acc) =
     let code =
       match args.code with
       | NoCode -> []
-      | CCode -> C.generate args.output args.template cstmts
       | CppCode -> Cpp.generate args.output args.template cstmts
       | LuaCode -> Lua.generate args.output args.template cstmts
       | JSCode -> failwith "Javascript generator not implemented yet"

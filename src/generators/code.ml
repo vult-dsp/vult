@@ -355,8 +355,9 @@ module Convert = struct
       { env with decl }, []
     | { s = StmtDecl _; _ } -> failwith "there should not be tuples or wild"
     | { s = StmtBind ({ l = LWild; _ }, ({ e = ECall _; _ } as rhs)); _ } ->
+      let env, stmts = getPendingDeclarations env in
       let rhs = exp context rhs in
-      env, [ StmtBind ({ l = LWild; t = Void None }, rhs) ]
+      env, stmts @ [ StmtBind ({ l = LWild; t = Void None }, rhs) ]
     | { s = StmtBind ({ l = LWild; _ }, _); _ } -> env, []
     | { s = StmtBind (lhs, rhs); _ } ->
       let lhs = lexp context lhs in

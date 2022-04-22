@@ -159,6 +159,10 @@ let print_dexp (e : dexp) =
 
 let rec print_stmt s =
   match s with
+  (* needs allocation *)
+  | StmtDecl (({ t = Struct { path; _ }; _ } as lhs), None) ->
+    let lhs = print_dexp lhs in
+    [%pla {|local <#lhs#> = {}<#><#path#s>_init(<#lhs#>);|}]
   | StmtDecl (lhs, None) ->
     let lhs = print_dexp lhs in
     [%pla {|local <#lhs#>|}]
