@@ -70,6 +70,7 @@ let generateCode args (stmts, vm, acc) =
 
 let compileCode (args : args) (parsed, acc) =
   let env, stmts = Inference.infer args parsed in
+  let typed_out = if args.dtyped then [ Prog (Pla.print (Prog.Print.print_prog stmts)) ] else [] in
   let stmts = Passes.run args stmts in
   let prog_out = if args.dprog then [ Prog (Pla.print (Prog.Print.print_prog stmts)) ] else [] in
   let vm, bytecode = Vm.Interpreter.createVm stmts in
@@ -81,7 +82,7 @@ let compileCode (args : args) (parsed, acc) =
       [ ParsedCode s ]
     | None -> []
   in
-  stmts, vm, run @ bc_out @ prog_out @ acc
+  stmts, vm, run @ bc_out @ prog_out @ typed_out @ acc
 ;;
 
 (** Prints the parsed files if -dparse was passed as argument *)

@@ -344,6 +344,10 @@ module Tuples = struct
       in
       let s = { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid None; loc = rloc } }); loc } in
       reapply state, s :: bindings
+    (* bind multi return calls to the context *)
+    | { s = StmtBind (({ l = LWild; _ } as lhs), ({ e = ECall _; loc = rloc; _ } as rhs)); loc } ->
+      let s = { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid None; loc = rloc } }); loc } in
+      reapply state, [ s ]
     | { s = StmtReturn { e = ETuple elems; loc = eloc; _ }; loc } ->
       let name, ctx_name, ctx_t = currentFunction env in
       let ctx = { l = LId ctx_name; t = ctx_t; loc } in

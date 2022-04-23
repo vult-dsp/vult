@@ -2,7 +2,7 @@ external External_calls_foo(x : int) : int  "actual_foo"
 
 fun External_calls_bar() : int  {
    val x : int;
-   x = External_calls_foo(0);
-   return x;
+   (x : int) = (External_calls_foo(0) : int);
+   return (x : int);
 }
 

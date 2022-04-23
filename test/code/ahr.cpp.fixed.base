@@ -71,6 +71,17 @@ void Ahr_do(Ahr_do_type& _ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r) {
    return ;
 }
 
+void Ahr_process(Ahr_process_type& _ctx, fix16_t gate) {
+   fix16_t _call_temp_1 = 0.0f;
+   fix16_t _call_temp_0 = 0.0f;
+   Ahr_do(_ctx.inst_1d84b, gate, _ctx.knob1, _ctx.knob2, _ctx.knob3);
+   _call_temp_0 = _ctx.inst_1d84b.Ahr_do_ret_0;
+   _call_temp_1 = _ctx.inst_1d84b.Ahr_do_ret_1;
+   _ctx.Ahr_process_ret_0 = _call_temp_0;
+   _ctx.Ahr_process_ret_1 = _call_temp_1;
+   return ;
+}
+
 void Ahr_controlChange(Ahr_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    if (control == 1) {
       _ctx.knob1 = fix_mul(0x204 /* 0.007874 */, int_to_fix(value));

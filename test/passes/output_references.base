@@ -10,25 +10,25 @@ struct Output_references_bar_type {
 }
 
 fun Output_references_foo_type_init(_ctx : struct Output_references_foo_type) : void  {
-   _ctx.Output_references_foo_ret_0 = 0.0;
-   _ctx.Output_references_foo_ret_1 = 0.0;
+   (_ctx : struct Output_references_foo_type).Output_references_foo_ret_0 = 0.0;
+   (_ctx : struct Output_references_foo_type).Output_references_foo_ret_1 = 0.0;
 }
 
 fun Output_references_bar_type_init(_ctx : struct Output_references_bar_type) : void  {
-   _ctx.Output_references_bar_ret_0 = 0.0;
-   _ctx.Output_references_bar_ret_1 = 0.0;
-   _ = Output_references_foo_type_init(_ctx.inst_1e3f4);
+   (_ctx : struct Output_references_bar_type).Output_references_bar_ret_0 = 0.0;
+   (_ctx : struct Output_references_bar_type).Output_references_bar_ret_1 = 0.0;
+   _ = (Output_references_foo_type_init((_ctx : struct Output_references_bar_type).inst_1e3f4) : void);
 }
 
 fun Output_references_foo(_ctx : struct Output_references_foo_type, x : int) : void  {
-   if ((x > 0)) {
-      _ctx.Output_references_foo_ret_0 = 0.0;
-      _ctx.Output_references_foo_ret_1 = 0.0;
+   if (((x : int) > 0)) {
+      (_ctx : struct Output_references_foo_type).Output_references_foo_ret_0 = 0.0;
+      (_ctx : struct Output_references_foo_type).Output_references_foo_ret_1 = 0.0;
       return ();
    }
    else {
-      _ctx.Output_references_foo_ret_0 = 1.0;
-      _ctx.Output_references_foo_ret_1 = 1.0;
+      (_ctx : struct Output_references_foo_type).Output_references_foo_ret_0 = 1.0;
+      (_ctx : struct Output_references_foo_type).Output_references_foo_ret_1 = 1.0;
       return ();
    }
 }
@@ -39,12 +39,12 @@ fun Output_references_bar(_ctx : struct Output_references_bar_type) : void  {
    {
       val _call_temp_0 : real;
       val _call_temp_1 : real;
-      _ = Output_references_foo(_ctx.inst_1e3f4, 1);
-      _call_temp_0 = _ctx.inst_1e3f4.Output_references_foo_ret_0;
-      _call_temp_1 = _ctx.inst_1e3f4.Output_references_foo_ret_1;
-      x = (_call_temp_0, _call_temp_1);
-      y = 1;
+      _ = (Output_references_foo((_ctx : struct Output_references_bar_type).inst_1e3f4, 1) : void);
+      (_call_temp_0 : real) = (_ctx : struct Output_references_bar_type).inst_1e3f4.Output_references_foo_ret_0;
+      (_call_temp_1 : real) = (_ctx : struct Output_references_bar_type).inst_1e3f4.Output_references_foo_ret_1;
+      (x : (real, real)) = ((_call_temp_0 : real), (_call_temp_1 : real));
+      (y : int) = 1;
    }
-   return x;
+   return (x : (real, real));
 }
 

@@ -469,7 +469,6 @@ module CliTest = struct
     let args = Args.{ default_arguments with includes } in
     let args, ext =
       match code_type with
-      | "c" -> { args with code = CCode }, [ ".c", ".c.base"; ".h", ".h.base" ]
       | "fixed" -> { args with code = CppCode; real = Fixed }, [ ".cpp", ".cpp.fixed.base"; ".h", ".h.fixed.base" ]
       | "float" -> { args with code = CppCode }, [ ".cpp", ".cpp.float.base"; ".h", ".h.float.base" ]
       | "js" -> { args with code = JSCode }, [ ".js", ".js.base" ]
@@ -541,9 +540,6 @@ module Templates = struct
       | "float" ->
         ( { args with template = Some template; code = CppCode }
         , [ ".cpp", ".cpp.float.base." ^ template; ".h", ".h.float.base." ^ template ] )
-      | "c" ->
-        ( { args with template = Some template; code = CCode }
-        , [ ".c", ".c.float.base." ^ template; ".h", ".h.float.base." ^ template ] )
       | "java" ->
         ( { args with template = Some template; code = JavaCode; prefix = Some "vult.com" }
         , [ ".java", ".java.base." ^ template ] )

@@ -11,28 +11,28 @@ struct Tuple_to_types_bar_type {
 }
 
 fun Tuple_to_types_foo_type_init(_ctx : struct Tuple_to_types_foo_type) : void  {
-   _ctx.Tuple_to_types_foo_ret_0 = 0;
-   _ctx.Tuple_to_types_foo_ret_1 = 0;
-   _ctx.Tuple_to_types_foo_ret_2 = 0;
+   (_ctx : struct Tuple_to_types_foo_type).Tuple_to_types_foo_ret_0 = 0;
+   (_ctx : struct Tuple_to_types_foo_type).Tuple_to_types_foo_ret_1 = 0;
+   (_ctx : struct Tuple_to_types_foo_type).Tuple_to_types_foo_ret_2 = 0;
 }
 
 fun Tuple_to_types_bar_type_init(_ctx : struct Tuple_to_types_bar_type) : void  {
-   _ctx.Tuple_to_types_bar_ret_0 = 0.0;
-   _ctx.Tuple_to_types_bar_ret_1 = 0;
-   _ctx.Tuple_to_types_bar_ret_2 = false;
+   (_ctx : struct Tuple_to_types_bar_type).Tuple_to_types_bar_ret_0 = 0.0;
+   (_ctx : struct Tuple_to_types_bar_type).Tuple_to_types_bar_ret_1 = 0;
+   (_ctx : struct Tuple_to_types_bar_type).Tuple_to_types_bar_ret_2 = false;
 }
 
 fun Tuple_to_types_foo(_ctx : struct Tuple_to_types_foo_type) : void  {
-   _ctx.Tuple_to_types_foo_ret_0 = 1;
-   _ctx.Tuple_to_types_foo_ret_1 = 2;
-   _ctx.Tuple_to_types_foo_ret_2 = 3;
+   (_ctx : struct Tuple_to_types_foo_type).Tuple_to_types_foo_ret_0 = 1;
+   (_ctx : struct Tuple_to_types_foo_type).Tuple_to_types_foo_ret_1 = 2;
+   (_ctx : struct Tuple_to_types_foo_type).Tuple_to_types_foo_ret_2 = 3;
    return ();
 }
 
 fun Tuple_to_types_bar(_ctx : struct Tuple_to_types_bar_type) : void  {
-   _ctx.Tuple_to_types_bar_ret_0 = 1.0;
-   _ctx.Tuple_to_types_bar_ret_1 = 2;
-   _ctx.Tuple_to_types_bar_ret_2 = false;
+   (_ctx : struct Tuple_to_types_bar_type).Tuple_to_types_bar_ret_0 = 1.0;
+   (_ctx : struct Tuple_to_types_bar_type).Tuple_to_types_bar_ret_1 = 2;
+   (_ctx : struct Tuple_to_types_bar_type).Tuple_to_types_bar_ret_2 = false;
    return ();
 }
 

@@ -62,9 +62,11 @@ float Sawcore_process(Sawcore_process_type& _ctx, float cv, float reset) {
    _ctx.phase = new_phase;
    out = _ctx.phase;
    if (_ctx.reset_state) {
+      float ptr = 0.0f;
+      bool done = false;
       Sawcore_ptr_w2(_ctx.inst_324dd, _ctx.phase, _ctx.rate);
-      bool done = _ctx.inst_324dd.Sawcore_ptr_w2_ret_0;
-      float ptr = _ctx.inst_324dd.Sawcore_ptr_w2_ret_1;
+      done = _ctx.inst_324dd.Sawcore_ptr_w2_ret_0;
+      ptr = _ctx.inst_324dd.Sawcore_ptr_w2_ret_1;
       transition = (0.5f * ((1.0f + ptr) * _ctx.reset_phase));
       if (done) {
          _ctx.reset_state = false;

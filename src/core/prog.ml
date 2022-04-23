@@ -221,6 +221,7 @@ module Print = struct
   ;;
 
   let rec print_exp (e : exp) =
+    let t = print_type_ e.t in
     match e.e with
     | EUnit -> Pla.string "()"
     | EBool v -> Pla.string (if v then "true" else "false")
@@ -228,7 +229,7 @@ module Print = struct
     | EReal n -> Pla.float n
     | EFixed n -> [%pla {|<#n#f>x|}]
     | EString s -> Pla.string_quoted s
-    | EId id -> Pla.string id
+    | EId id -> [%pla {|(<#id#s> : <#t#>)|}]
     | EIndex { e; index } ->
       let e = print_exp e in
       let index = print_exp index in
@@ -236,7 +237,7 @@ module Print = struct
     | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
     | ECall { path; args } ->
       let args = Pla.map_sep Pla.commaspace print_exp args in
-      [%pla {|<#path#s>(<#args#>)|}]
+      [%pla {|(<#path#s>(<#args#>) : <#t#>)|}]
     | EUnOp (op, e) ->
       let e = print_exp e in
       let op = print_uoperator op in
@@ -259,10 +260,11 @@ module Print = struct
       [%pla {|<#e#>.<#m#s>|}]
   ;;
 
-  let rec print_lexp e =
+  let rec print_lexp (e : lexp) =
+    let t = print_type_ e.t in
     match e.l with
     | LWild -> Pla.string "_"
-    | LId s -> Pla.string s
+    | LId s -> [%pla {|(<#s#s> : <#t#>)|}]
     | LMember (e, m) ->
       let e = print_lexp e in
       [%pla {|<#e#>.<#m#s>|}]

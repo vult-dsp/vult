@@ -53,6 +53,7 @@ type real_format =
 type args =
   { mutable files : input list
   ; mutable dparse : bool
+  ; mutable dtyped : bool
   ; mutable dbytecode : bool
   ; mutable dprog : bool
   ; mutable eval : string option
@@ -77,6 +78,7 @@ type args =
 let default_arguments : args =
   { files = []
   ; dparse = false
+  ; dtyped = false
   ; dbytecode = false
   ; dprog = false
   ; code = NoCode
@@ -116,7 +118,9 @@ let flags result =
                  | "lua" -> LuaCode
                  | "java" -> JavaCode
                  | "js" -> JSCode
-                 | _ -> Error.raiseErrorMsg ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js)")))
+                 | _ ->
+                   print_endline ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js");
+                   exit (-1)))
     ; comment = "language Generate code for the specified language (cpp, lua, java, js)"
     }
   ; { flag = "-prefix"
@@ -143,7 +147,9 @@ let flags result =
               <- (match real with
                  | "float" -> Float
                  | "fixed" -> Fixed
-                 | _ -> Error.raiseErrorMsg ("Unknown numeric formmat: " ^ real)))
+                 | _ ->
+                   print_endline ("Unknown numeric formmat: " ^ real);
+                   exit (-1)))
     ; comment = " Defines the numeric type for the generated code: double, fixed"
     }
   ; { flag = "-samplerate"
@@ -190,6 +196,10 @@ let flags result =
   ; { flag = "-dprog"
     ; action = Arg.Unit (fun () -> result.dprog <- true)
     ; comment = " Dumps the processed program (default: off)"
+    }
+  ; { flag = "-dtyped"
+    ; action = Arg.Unit (fun () -> result.dtyped <- true)
+    ; comment = " Dumps the typed program (default: off)"
     }
   ; { flag = "-deps"; action = Arg.Unit (fun () -> result.deps <- true); comment = " Prints all file dependencies" }
   ; { flag = "-version"

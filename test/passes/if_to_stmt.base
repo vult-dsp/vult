@@ -1,39 +1,39 @@
 fun If_to_stmt_foo(e : int) : void  {
    val y : real;
    val cond1 : bool;
-   cond1 = (e > 0);
+   (cond1 : bool) = ((e : int) > 0);
    val cond2 : bool;
-   cond2 = (e < 0);
+   (cond2 : bool) = ((e : int) < 0);
    val x : real;
-   if (cond1) x = 0.0;
-   else if (cond2) x = 1.0;
-   else x = 2.0;
-   if (cond1) y = 0.0;
-   else if (cond2) y = 1.0;
-   else y = 2.0;
+   if ((cond1 : bool)) (x : real) = 0.0;
+   else if ((cond2 : bool)) (x : real) = 1.0;
+   else (x : real) = 2.0;
+   if ((cond1 : bool)) (y : real) = 0.0;
+   else if ((cond2 : bool)) (y : real) = 1.0;
+   else (y : real) = 2.0;
    val z : real;
    val a : real;
    {
       val _if_temp_0 : real;
-      if (cond1) _if_temp_0 = 0.0;
+      if ((cond1 : bool)) (_if_temp_0 : real) = 0.0;
       else {
          val _if_temp_2 : real;
-         if (cond2) _if_temp_2 = 1.0;
-         else _if_temp_2 = 2.0;
-         _if_temp_0 = (2.0 + _if_temp_2);
+         if ((cond2 : bool)) (_if_temp_2 : real) = 1.0;
+         else (_if_temp_2 : real) = 2.0;
+         (_if_temp_0 : real) = (2.0 + (_if_temp_2 : real));
       }
-      a = (1.0 + _if_temp_0);
+      (a : real) = (1.0 + (_if_temp_0 : real));
    }
    {
       val _if_temp_1 : real;
-      if (cond1) _if_temp_1 = 0.0;
+      if ((cond1 : bool)) (_if_temp_1 : real) = 0.0;
       else {
          val _if_temp_3 : real;
-         if (cond2) _if_temp_3 = 1.0;
-         else _if_temp_3 = 2.0;
-         _if_temp_1 = (2.0 + _if_temp_3);
+         if ((cond2 : bool)) (_if_temp_3 : real) = 1.0;
+         else (_if_temp_3 : real) = 2.0;
+         (_if_temp_1 : real) = (2.0 + (_if_temp_3 : real));
       }
-      z = (1.0 + _if_temp_1);
+      (z : real) = (1.0 + (_if_temp_1 : real));
    }
 }
 

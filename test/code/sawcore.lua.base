@@ -285,9 +285,11 @@ function Sawcore_process(_ctx, cv, reset)
    out = _ctx.phase
    if _ctx.reset_state then
       do
+         local ptr = 0.0
+         local done = false
          Sawcore_ptr_w2(_ctx.inst_324dd, _ctx.phase, _ctx.rate)
-         local done = _ctx.inst_324dd.Sawcore_ptr_w2_ret_0
-         local ptr = _ctx.inst_324dd.Sawcore_ptr_w2_ret_1
+         done = _ctx.inst_324dd.Sawcore_ptr_w2_ret_0
+         ptr = _ctx.inst_324dd.Sawcore_ptr_w2_ret_1
          transition = (0.5 * ((1.0 + ptr) * _ctx.reset_phase))
          if done then
             _ctx.reset_state = false

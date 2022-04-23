@@ -1,5 +1,5 @@
 fun Simplify_foo(a : int, b : int, c : int, d : int) : int  {
-   return (-1 + (a + (b + (c + d))));
+   return (-1 + ((a : int) + ((b : int) + ((c : int) + (d : int)))));
 }
 
 fun Simplify_bar() : int  {

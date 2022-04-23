@@ -8,24 +8,24 @@ struct Split_mem_foo_type {
 }
 
 fun Split_mem_foo_type_init(_ctx : struct Split_mem_foo_type) : void  {
-   _ctx.a = 0;
-   _ctx.b = 0;
-   _ctx.h = 0;
-   _ctx.x = 0;
-   _ctx.y = 0;
-   _ctx.z = 0;
+   (_ctx : struct Split_mem_foo_type).a = 0;
+   (_ctx : struct Split_mem_foo_type).b = 0;
+   (_ctx : struct Split_mem_foo_type).h = 0;
+   (_ctx : struct Split_mem_foo_type).x = 0;
+   (_ctx : struct Split_mem_foo_type).y = 0;
+   (_ctx : struct Split_mem_foo_type).z = 0;
 }
 
 fun Split_mem_foo(_ctx : struct Split_mem_foo_type) : void  {
-   _ctx.x = 0;
-   _ctx.y = (1 + _ctx.y);
-   _ctx.a = 1;
-   _ctx.b = 2;
+   (_ctx : struct Split_mem_foo_type).x = 0;
+   (_ctx : struct Split_mem_foo_type).y = (1 + (_ctx : struct Split_mem_foo_type).y);
+   (_ctx : struct Split_mem_foo_type).a = 1;
+   (_ctx : struct Split_mem_foo_type).b = 2;
    val _t_temp_0 : int;
    val _t_temp_1 : int;
-   _t_temp_0 = _ctx.h;
-   _t_temp_1 = _ctx.z;
-   _ctx.z = _t_temp_0;
-   _ctx.h = _t_temp_1;
+   (_t_temp_0 : int) = (_ctx : struct Split_mem_foo_type).h;
+   (_t_temp_1 : int) = (_ctx : struct Split_mem_foo_type).z;
+   (_ctx : struct Split_mem_foo_type).z = (_t_temp_0 : int);
+   (_ctx : struct Split_mem_foo_type).h = (_t_temp_1 : int);
 }
 

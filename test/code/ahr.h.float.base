@@ -232,14 +232,7 @@ static_inline float Util_cvTokHz(float cv) {
 
 void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r);
 
-static_inline void Ahr_process(Ahr_process_type& _ctx, float gate) {
-   Ahr_do(_ctx.inst_1d84b, gate, _ctx.knob1, _ctx.knob2, _ctx.knob3);
-   float _call_temp_0 = _ctx.inst_1d84b.Ahr_do_ret_0;
-   float _call_temp_1 = _ctx.inst_1d84b.Ahr_do_ret_1;
-   _ctx.Ahr_process_ret_0 = _call_temp_0;
-   _ctx.Ahr_process_ret_1 = _call_temp_1;
-   return ;
-}
+void Ahr_process(Ahr_process_type& _ctx, float gate);
 
 static_inline void Ahr_noteOn(Ahr_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
 }

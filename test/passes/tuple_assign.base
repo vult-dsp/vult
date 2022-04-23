@@ -9,19 +9,19 @@ struct Tuple_assign_bar_type {
 }
 
 fun Tuple_assign_foo_type_init(_ctx : struct Tuple_assign_foo_type) : void  {
-   _ctx.Tuple_assign_foo_ret_0 = 0;
-   _ctx.Tuple_assign_foo_ret_1 = 0;
-   _ctx.Tuple_assign_foo_ret_2 = 0;
+   (_ctx : struct Tuple_assign_foo_type).Tuple_assign_foo_ret_0 = 0;
+   (_ctx : struct Tuple_assign_foo_type).Tuple_assign_foo_ret_1 = 0;
+   (_ctx : struct Tuple_assign_foo_type).Tuple_assign_foo_ret_2 = 0;
 }
 
 fun Tuple_assign_bar_type_init(_ctx : struct Tuple_assign_bar_type) : void  {
-   _ = Tuple_assign_foo_type_init(_ctx.inst_1735d);
+   _ = (Tuple_assign_foo_type_init((_ctx : struct Tuple_assign_bar_type).inst_1735d) : void);
 }
 
 fun Tuple_assign_foo(_ctx : struct Tuple_assign_foo_type) : void  {
-   _ctx.Tuple_assign_foo_ret_0 = 0;
-   _ctx.Tuple_assign_foo_ret_1 = 1;
-   _ctx.Tuple_assign_foo_ret_2 = 2;
+   (_ctx : struct Tuple_assign_foo_type).Tuple_assign_foo_ret_0 = 0;
+   (_ctx : struct Tuple_assign_foo_type).Tuple_assign_foo_ret_1 = 1;
+   (_ctx : struct Tuple_assign_foo_type).Tuple_assign_foo_ret_2 = 2;
    return ();
 }
 
@@ -34,39 +34,39 @@ fun Tuple_assign_bar(_ctx : struct Tuple_assign_bar_type) : void  {
       val _call_temp_0 : int;
       val _call_temp_1 : int;
       val _call_temp_2 : int;
-      _ = Tuple_assign_foo(_ctx.inst_1735d);
-      _call_temp_0 = _ctx.inst_1735d.Tuple_assign_foo_ret_0;
-      _call_temp_1 = _ctx.inst_1735d.Tuple_assign_foo_ret_1;
-      _call_temp_2 = _ctx.inst_1735d.Tuple_assign_foo_ret_2;
-      x = _call_temp_0;
-      y = _call_temp_1;
-      z = _call_temp_2;
-      w = 3;
+      _ = (Tuple_assign_foo((_ctx : struct Tuple_assign_bar_type).inst_1735d) : void);
+      (_call_temp_0 : int) = (_ctx : struct Tuple_assign_bar_type).inst_1735d.Tuple_assign_foo_ret_0;
+      (_call_temp_1 : int) = (_ctx : struct Tuple_assign_bar_type).inst_1735d.Tuple_assign_foo_ret_1;
+      (_call_temp_2 : int) = (_ctx : struct Tuple_assign_bar_type).inst_1735d.Tuple_assign_foo_ret_2;
+      (x : int) = (_call_temp_0 : int);
+      (y : int) = (_call_temp_1 : int);
+      (z : int) = (_call_temp_2 : int);
+      (w : int) = 3;
    }
    val a : int;
    val b : int;
    val c : int;
    val d : int;
-   a = 0;
-   b = 1;
-   c = 2;
-   d = 3;
+   (a : int) = 0;
+   (b : int) = 1;
+   (c : int) = 2;
+   (d : int) = 3;
    val r : int;
    val t : int;
-   r = 0;
-   t = 1;
+   (r : int) = 0;
+   (t : int) = 1;
    val _t_temp_3 : int;
    val _t_temp_4 : int;
    val _t_temp_5 : int;
-   _t_temp_3 = t;
-   _t_temp_4 = r;
-   _t_temp_5 = 0;
-   r = _t_temp_3;
-   t = _t_temp_4;
-   _ = _t_temp_5;
+   (_t_temp_3 : int) = (t : int);
+   (_t_temp_4 : int) = (r : int);
+   (_t_temp_5 : int) = 0;
+   (r : int) = (_t_temp_3 : int);
+   (t : int) = (_t_temp_4 : int);
+   _ = (_t_temp_5 : int);
    val t1 : int;
    val t2 : int;
-   t1 = 3;
-   t2 = 6;
+   (t1 : int) = 3;
+   (t2 : int) = 6;
 }
 
