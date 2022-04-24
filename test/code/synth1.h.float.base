@@ -122,7 +122,7 @@ static_inline float Synth1_process(Synth1_process_type& _ctx, float input) {
    float phase2 = Synth1_phasor(_ctx.inst_4863d, ((32.0f * Synth1_smooth(_ctx.inst_3dc3d, (lfo_val + _ctx.detune))) + _ctx.pitch), reset);
    float sine = sin((6.28318530718f * phase2));
    float gate_value = 0.0f;
-   if ((_ctx.gate > 0)) {
+   if (_ctx.gate > 0) {
       gate_value = 1.0f;
    }
    else {

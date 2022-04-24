@@ -7,14 +7,14 @@ fix16_t Saw_r_process(Saw_r_process_type& _ctx, fix16_t cv) {
       _ctx.inc = Util_cvToRate(cv);
    }
    fix16_t i = 0.0f;
-   if ((_ctx.inc < fix_eps())) {
+   if (_ctx.inc < fix_eps()) {
       i = fix_eps();
    }
    else {
       i = _ctx.inc;
    }
    _ctx.phase = (fix_mul(0x20000 /* 2.000000 */, _ctx.inc) + _ctx.phase);
-   if ((_ctx.phase > 0x20000 /* 2.000000 */)) {
+   if (_ctx.phase > 0x20000 /* 2.000000 */) {
       _ctx.phase = (-0x20000 /* -2.000000 */ + _ctx.phase);
    }
    else {
@@ -22,12 +22,12 @@ fix16_t Saw_r_process(Saw_r_process_type& _ctx, fix16_t cv) {
    }
    fix16_t ph = (-0x10000 /* -1.000000 */ + _ctx.phase);
    fix16_t o = 0x0 /* 0.000000 */;
-   if ((ph >= (0x10000 /* 1.000000 */ + (- i)))) {
+   if (ph >= (0x10000 /* 1.000000 */ + (- i))) {
       fix16_t b = fix_div((0x10000 /* 1.000000 */ + ((- i) + (- ph))), i);
       o = (ph + fix_mul(b, fix_abs(b)));
    }
    else {
-      if ((ph <= (-0x10000 /* -1.000000 */ + i))) {
+      if (ph <= (-0x10000 /* -1.000000 */ + i)) {
          fix16_t b = fix_div((-0x10000 /* -1.000000 */ + (i + (- ph))), i);
          o = (ph + fix_mul(b, fix_abs(b)));
       }

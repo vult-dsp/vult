@@ -128,12 +128,14 @@ let castInputVarPrecision (in_precision : type_) (out_precision : type_) (input 
   | _ -> failwith "castInputVarPrecision: invalid input"
 ;;
 
+(*
 let getWrapArrayName (t : type_) =
   match t with
   | Real -> "float_wrap_array"
   | Fixed -> "fix_wrap_array"
   | _ -> Util.Error.raiseErrorMsg "Type not supported for array creation"
 ;;
+*)
 
 let makeNuber (t : type_) v =
   match t with
@@ -150,7 +152,8 @@ let makeNewBody1 bound_check fname size in_precision t min max input =
   let rindex = { e = Id "index"; t = Int } in
   let getCoeff a =
     let arr =
-      { e = Call { path = getWrapArrayName t; args = [ { e = Id (fname ^ "_" ^ a); t = atype } ] }; t = atype }
+      (*{ e = Call { path = getWrapArrayName t; args = [ { e = Id (fname ^ "_" ^ a); t = atype } ] }; t = atype }*)
+      { e = Id (fname ^ "_" ^ a); t = atype }
     in
     { e = Index { e = arr; index = rindex }; t }
   in
@@ -167,7 +170,8 @@ let makeNewBody2 bound_check fname size in_precision t min max input =
   let rindex = { e = Id "index"; t = Int } in
   let getCoeff a =
     let arr =
-      { e = Call { path = getWrapArrayName t; args = [ { e = Id (fname ^ "_" ^ a); t = atype } ] }; t = atype }
+      (*{ e = Call { path = getWrapArrayName t; args = [ { e = Id (fname ^ "_" ^ a); t = atype } ] }; t = atype }*)
+      { e = Id (fname ^ "_" ^ a); t = atype }
     in
     { e = Index { e = arr; index = rindex }; t }
   in
@@ -274,7 +278,8 @@ let checkWaveInputVariables (loc : Loc.t) (args : param list) : exp * exp =
 
 let accessChannel (fname : string) (channel : exp) (index : exp) (samples : int) t (i : int) : stmt =
   let table_name = fname ^ "_" ^ "chan_" ^ string_of_int i in
-  let table = { e = Call { path = getWrapArrayName t; args = [ { e = Id table_name; t } ] }; t } in
+  (*let table = { e = Call { path = getWrapArrayName t; args = [ { e = Id table_name; t } ] }; t } in*)
+  let table = { e = Id table_name; t } in
   let i = { e = Int i; t = Int } in
   let samples_e = { e = Int samples; t = Int } in
   let cond = { e = Op (Eq, channel, i); t = Bool } in

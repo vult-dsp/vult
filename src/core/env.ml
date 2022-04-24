@@ -139,9 +139,7 @@ type in_func =
 
 let builtin_functions =
   Typed.
-    [ "set", C.array_set
-    ; "get", C.array_get
-    ; "size", C.array_size
+    [ "size", C.array_size
     ; "abs", C.num_num
     ; "exp", C.freal_freal
     ; "log10", C.freal_freal

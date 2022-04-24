@@ -38,7 +38,7 @@ fix16_t Adsr_do(Adsr_do_type& _ctx, fix16_t gate, fix16_t a, fix16_t d, fix16_t 
       if (bgate == false) {
          _ctx.state = 0;
       }
-      if ((_ctx.out > 0x4000000 /* 1024.000000 */)) {
+      if (_ctx.out > 0x4000000 /* 1024.000000 */) {
          _ctx.state = 2;
       }
       _ctx.rate = a_rate;

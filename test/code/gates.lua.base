@@ -58,7 +58,7 @@ function Gates_gates_noteOn(_ctx, note, velocity)
    if ((note >= 36) and (note <= 43)) then
       do
          local n = (-36 + note)
-         set(_ctx.vel, n, velocity)
+         _ctx.vel[n] = velocity
       end
    end
 end
@@ -67,20 +67,20 @@ function Gates_gates_noteOff(_ctx, note)
    if ((note >= 36) and (note <= 43)) then
       do
          local n = (-36 + note)
-         set(_ctx.vel, n, 0)
+         _ctx.vel[n] = 0
       end
    end
 end
 
 function Gates_gates_state(_ctx)
-   local vel1 = Gates_velToCV(get(_ctx.vel, 0))
-   local vel2 = Gates_velToCV(get(_ctx.vel, 1))
-   local vel3 = Gates_velToCV(get(_ctx.vel, 2))
-   local vel4 = Gates_velToCV(get(_ctx.vel, 3))
-   local vel5 = Gates_velToCV(get(_ctx.vel, 4))
-   local vel6 = Gates_velToCV(get(_ctx.vel, 5))
-   local vel7 = Gates_velToCV(get(_ctx.vel, 6))
-   local vel8 = Gates_velToCV(get(_ctx.vel, 7))
+   local vel1 = Gates_velToCV(_ctx.vel[0])
+   local vel2 = Gates_velToCV(_ctx.vel[1])
+   local vel3 = Gates_velToCV(_ctx.vel[2])
+   local vel4 = Gates_velToCV(_ctx.vel[3])
+   local vel5 = Gates_velToCV(_ctx.vel[4])
+   local vel6 = Gates_velToCV(_ctx.vel[5])
+   local vel7 = Gates_velToCV(_ctx.vel[6])
+   local vel8 = Gates_velToCV(_ctx.vel[7])
    _ctx.Gates_gates_state_ret_0 = vel1
    _ctx.Gates_gates_state_ret_1 = vel2
    _ctx.Gates_gates_state_ret_2 = vel3

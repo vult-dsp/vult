@@ -5,9 +5,9 @@ fun foo(){
     val buffer1 = [1];
     val buffer2 = [1.0,2.0];
 
-    val x = get(buffer2,0);
-    _ = set(buffer2,0,0.0);
+    val x = buffer2[0];
+    buffer2[0] = 0.0;
 
-    val y = get(buffer1,0);
-    _ = set(buffer1,0,0);
+    val y = buffer1[0];
+    buffer1[0] = 0;
 }

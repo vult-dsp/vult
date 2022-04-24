@@ -12,7 +12,7 @@ typedef struct Short_delay_soft_type {
 } Short_delay_soft_type;
 
 typedef struct Short_delay_do_type {
-   float buffer[22050];
+   std::array<float, 22050> buffer;
    int32_t write_pos;
 } Short_delay_do_type;
 
@@ -29,8 +29,8 @@ static_inline void Short_delay_soft_type_init(Short_delay_soft_type& _ctx) {
 
 static_inline void Short_delay_do_type_init(Short_delay_do_type& _ctx) {
    int32_t i_0 = 0;
-   while ((i_0 < 22050)) {
-      _ctx.buffer[i_0] = 0.0f;
+   while (i_0 < 22050) {
+      _ctx.buffer[static_cast<uint32_t>(i_0)] = 0.0f;
       i_0 = (1 + i_0);
    }
    _ctx.write_pos = 0;
@@ -42,20 +42,20 @@ static_inline void Short_delay_process_type_init(Short_delay_process_type& _ctx)
 }
 
 static_inline float Saturate_tanh_table_raw_c0(int32_t index) {
-   return Saturate_tanh_table_c0[index];
+   return Saturate_tanh_table_c0[static_cast<uint32_t>(index)];
 }
 
 static_inline float Saturate_tanh_table_raw_c1(int32_t index) {
-   return Saturate_tanh_table_c1[index];
+   return Saturate_tanh_table_c1[static_cast<uint32_t>(index)];
 }
 
 static_inline float Saturate_tanh_table_raw_c2(int32_t index) {
-   return Saturate_tanh_table_c2[index];
+   return Saturate_tanh_table_c2[static_cast<uint32_t>(index)];
 }
 
 static_inline float Saturate_tanh_table(float x) {
    int32_t index = int_clip(float_to_int(((x - -24.0f) * 5.0f)), 0, 240);
-   return (float_wrap_array(Saturate_tanh_table_c0)[index] + (x * (float_wrap_array(Saturate_tanh_table_c1)[index] + (float_wrap_array(Saturate_tanh_table_c2)[index] * x))));
+   return (Saturate_tanh_table_c0[static_cast<uint32_t>(index)] + (x * (Saturate_tanh_table_c1[static_cast<uint32_t>(index)] + (Saturate_tanh_table_c2[static_cast<uint32_t>(index)] * x))));
 }
 
 static_inline float Saturate_process(float x) {

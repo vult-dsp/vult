@@ -23,7 +23,7 @@ static_inline int32_t Wav_file_ext_wave_samples() {
 
 static_inline float Wav_file_ext_wave(int32_t channel, int32_t index) {
    if (channel == 0) {
-      return float_wrap_array(Wav_file_ext_wave_chan_0)[(index % 600)];
+      return Wav_file_ext_wave_chan_0[static_cast<uint32_t>((index % 600))];
    }
    return 0.0f;
 }

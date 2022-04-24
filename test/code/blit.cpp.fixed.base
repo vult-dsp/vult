@@ -24,7 +24,7 @@ fix16_t Phase_process(Phase_process_type& _ctx, fix16_t cv, fix16_t reset) {
    else {
       _ctx.phase = (_ctx.phase + _ctx.rate);
    }
-   if ((_ctx.phase > 0x4000000 /* 1024.000000 */)) {
+   if (_ctx.phase > 0x4000000 /* 1024.000000 */) {
       _ctx.phase = (-0x4000000 /* -1024.000000 */ + _ctx.phase);
    }
    else {
@@ -41,7 +41,7 @@ fix16_t Blit_pulse_train(Blit_pulse_train_type& _ctx, fix16_t cv, fix16_t phase)
    fix16_t pi_phase = fix_mul(0x8000 /* 0.500000 */, phase);
    fix16_t denominator = Tables_nsine(pi_phase);
    fix16_t out = 0x0 /* 0.000000 */;
-   if ((denominator <= fix_eps())) {
+   if (denominator <= fix_eps()) {
       out = 0x10000 /* 1.000000 */;
    }
    else {
@@ -54,7 +54,7 @@ fix16_t Blit_pulse_train(Blit_pulse_train_type& _ctx, fix16_t cv, fix16_t phase)
 
 fix16_t Blit_osc_blit(Blit_osc_blit_type& _ctx, fix16_t cv, fix16_t pw, fix16_t wave) {
    fix16_t fixed_cv = 0x0 /* 0.000000 */;
-   if ((wave < 0x10000 /* 1.000000 */)) {
+   if (wave < 0x10000 /* 1.000000 */) {
       fixed_cv = cv;
    }
    else {
@@ -66,14 +66,14 @@ fix16_t Blit_osc_blit(Blit_osc_blit_type& _ctx, fix16_t cv, fix16_t pw, fix16_t 
    fix16_t phase = Phase_process(_ctx.inst_28a26, fixed_cv, 0x0 /* 0.000000 */);
    fix16_t shift05 = (0x8000 /* 0.500000 */ + fix_mul(0x7d70 /* 0.490000 */, pw));
    fix16_t shift = (phase + shift05);
-   if ((shift > 0x10000 /* 1.000000 */)) {
+   if (shift > 0x10000 /* 1.000000 */) {
       shift = (-0x10000 /* -1.000000 */ + shift);
    }
    fix16_t pulse1 = Blit_pulse_train(_ctx.inst_35e26, fixed_cv, phase);
    fix16_t pulse2 = Blit_pulse_train(_ctx.inst_45e26, fixed_cv, shift);
    _ctx.state_pulse = (pulse1 + ((- pulse2) + fix_mul(0xffdf /* 0.999500 */, _ctx.state_pulse)));
    _ctx.state_saw = (fix_mul(0x8000 /* 0.500000 */, fix_div((pulse1 + (pulse2 + fix_mul(-0x20000 /* -2.000000 */, _ctx.rate))), shift05)) + fix_mul(0xffdf /* 0.999500 */, _ctx.state_saw));
-   if ((wave < 0x10000 /* 1.000000 */)) {
+   if (wave < 0x10000 /* 1.000000 */) {
       _ctx.output = _ctx.state_pulse;
    }
    else {

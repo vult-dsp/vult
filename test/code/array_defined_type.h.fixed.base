@@ -11,7 +11,7 @@ typedef struct Array_defined_type_dot {
 } Array_defined_type_dot;
 
 typedef struct Array_defined_type_foo_type {
-   Array_defined_type_dot p1[12];
+   std::array<Array_defined_type_dot, 12> p1;
 } Array_defined_type_foo_type;
 
 typedef struct Array_defined_type_process_type {
@@ -25,8 +25,8 @@ static_inline void Array_defined_type_dot_init(Array_defined_type_dot& _ctx) {
 
 static_inline void Array_defined_type_foo_type_init(Array_defined_type_foo_type& _ctx) {
    int32_t i_0 = 0;
-   while ((i_0 < 12)) {
-      Array_defined_type_dot_init(_ctx.p1[i_0]);
+   while (i_0 < 12) {
+      Array_defined_type_dot_init(_ctx.p1[static_cast<uint32_t>(i_0)]);
       i_0 = (1 + i_0);
    }
 }

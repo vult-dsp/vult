@@ -1,0 +1,30 @@
+
+//fun foo1() {
+//  return [1,2,3];
+//}
+
+fun foo2() {
+  val x = [1,2,3];
+  return x;
+}
+
+//fun foo3() {
+//  mem y = 0;
+//  return [1,2,3];
+//}
+
+fun foo4() {
+  mem y = 0;
+  val x = [1,2,3];
+  return x;
+}
+
+//fun foo5() {
+//  return 1, [1,2,3];
+//}
+
+fun foo6() {
+  val y = 1;
+  val x = [1,2,3];
+  return y, x;
+}

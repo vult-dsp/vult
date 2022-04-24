@@ -270,7 +270,7 @@ end
 function Synth2_mono_noteOn(_ctx, n)
    if (_ctx.count < 4) then
       do
-         set(_ctx.notes, _ctx.count, n)
+         _ctx.notes[_ctx.count] = n
          _ctx.pre = n
          if (_ctx.count < 4) then
             _ctx.count = (1 + _ctx.count)
@@ -289,7 +289,7 @@ function Synth2_mono_noteOff(_ctx, n)
    end
    while ((i < 4) and (found == false)) do
       do
-         if (get(_ctx.notes, i) == n) then
+         if (_ctx.notes[i] == n) then
             do
                pos = i
                found = true
@@ -303,14 +303,14 @@ function Synth2_mono_noteOff(_ctx, n)
          local k = (1 + pos)
          while (k < 4) do
             do
-               set(_ctx.notes, (-1 + k), get(_ctx.notes, k))
+               _ctx.notes[(-1 + k)] = _ctx.notes[k]
                k = (1 + k)
             end
          end
          if (found and (_ctx.count > 0)) then
             do
                _ctx.count = (-1 + _ctx.count)
-               _ctx.pre = get(_ctx.notes, (-1 + _ctx.count))
+               _ctx.pre = _ctx.notes[(-1 + _ctx.count)]
             end
          end
       end

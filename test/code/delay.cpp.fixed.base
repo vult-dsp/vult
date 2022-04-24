@@ -5,8 +5,8 @@
 void Delay_mono_noteOn_type_init(Delay_mono_noteOn_type& _ctx) {
    _ctx.count = 0;
    int32_t i_0 = 0;
-   while ((i_0 < 4)) {
-      _ctx.notes[i_0] = 0;
+   while (i_0 < 4) {
+      _ctx.notes[static_cast<uint32_t>(i_0)] = 0;
       i_0 = (1 + i_0);
    }
    _ctx.pre = 0;
@@ -48,7 +48,7 @@ fix16_t Delay_lfo(Delay_lfo_type& _ctx, fix16_t f, bool gate) {
       _ctx.phase = 0x0 /* 0.000000 */;
    }
    _ctx.phase = (rate + _ctx.phase);
-   if ((_ctx.phase > 0x10000 /* 1.000000 */)) {
+   if (_ctx.phase > 0x10000 /* 1.000000 */) {
       _ctx.phase = (-0x10000 /* -1.000000 */ + _ctx.phase);
    }
    return (-0x8000 /* -0.500000 */ + fix_sin(fix_mul(0x6487e /* 6.283185 */, _ctx.phase)));
@@ -61,26 +61,26 @@ fix16_t Delay_delay(Delay_delay_type& _ctx, fix16_t x, fix16_t time, fix16_t fee
    int32_t index_i = int(fix_floor(index_r));
    int32_t delta = ((- index_i) + _ctx.write_pos);
    int32_t read_pos = 0;
-   if ((delta < 0)) {
+   if (delta < 0) {
       read_pos = (30000 + delta);
    }
    else {
       read_pos = delta;
    }
    fix16_t decimal = (index_r + (- int_to_fix(index_i)));
-   fix16_t x1 = fix_get(_ctx.buffer, read_pos);
-   fix16_t x2 = fix_get(_ctx.buffer, ((1 + read_pos) % 30000));
+   fix16_t x1 = _ctx.buffer[static_cast<uint32_t>(read_pos)];
+   fix16_t x2 = _ctx.buffer[static_cast<uint32_t>(((1 + read_pos) % 30000))];
    fix16_t ret = (x1 + fix_mul(decimal, (x2 + (- x1))));
    _ctx.write_pos = ((1 + _ctx.write_pos) % 30000);
-   fix_set(_ctx.buffer, _ctx.write_pos, fix_clip((x + fix_mul(feedback, ret)), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */));
+   _ctx.buffer[static_cast<uint32_t>(_ctx.write_pos)] = fix_clip((x + fix_mul(feedback, ret)), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
    return ret;
 }
 
 int32_t Delay_mono_noteOn(Delay_mono_noteOn_type& _ctx, int32_t n) {
-   if ((_ctx.count < 4)) {
-      int_set(_ctx.notes, _ctx.count, n);
+   if (_ctx.count < 4) {
+      _ctx.notes[static_cast<uint32_t>(_ctx.count)] = n;
       _ctx.pre = n;
-      if ((_ctx.count < 4)) {
+      if (_ctx.count < 4) {
          _ctx.count = (1 + _ctx.count);
       }
    }
@@ -94,8 +94,8 @@ int32_t Delay_mono_noteOff(Delay_mono_noteOn_type& _ctx, int32_t n) {
    if (_ctx.count == 0) {
       return _ctx.pre;
    }
-   while (((i < 4) && (found == false))) {
-      if (int_get(_ctx.notes, i) == n) {
+   while ((i < 4) && (found == false)) {
+      if (_ctx.notes[static_cast<uint32_t>(i)] == n) {
          pos = i;
          found = true;
       }
@@ -103,13 +103,13 @@ int32_t Delay_mono_noteOff(Delay_mono_noteOn_type& _ctx, int32_t n) {
    }
    if (found) {
       int32_t k = (1 + pos);
-      while ((k < 4)) {
-         int_set(_ctx.notes, (-1 + k), int_get(_ctx.notes, k));
+      while (k < 4) {
+         _ctx.notes[static_cast<uint32_t>((-1 + k))] = _ctx.notes[static_cast<uint32_t>(k)];
          k = (1 + k);
       }
-      if ((found && (_ctx.count > 0))) {
+      if (found && (_ctx.count > 0)) {
          _ctx.count = (-1 + _ctx.count);
-         _ctx.pre = int_get(_ctx.notes, (-1 + _ctx.count));
+         _ctx.pre = _ctx.notes[static_cast<uint32_t>((-1 + _ctx.count))];
       }
    }
    return _ctx.pre;

@@ -8,7 +8,7 @@ fix16_t Saw_eptr_process(Saw_eptr_process_type& _ctx, fix16_t cv) {
       _ctx.rate = Util_cvToRate(cv);
    }
    _ctx.phase = (fix_mul(0x20000 /* 2.000000 */, _ctx.rate) + _ctx.phase);
-   if ((_ctx.phase > (0x10000 /* 1.000000 */ + (- _ctx.rate)))) {
+   if (_ctx.phase > (0x10000 /* 1.000000 */ + (- _ctx.rate))) {
       y = (-0x10000 /* -1.000000 */ + ((- fix_div(_ctx.phase, _ctx.rate)) + (fix_div(0x10000 /* 1.000000 */, _ctx.rate) + _ctx.phase)));
       _ctx.phase = (-0x20000 /* -2.000000 */ + _ctx.phase);
    }

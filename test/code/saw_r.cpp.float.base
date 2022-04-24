@@ -7,14 +7,14 @@ float Saw_r_process(Saw_r_process_type& _ctx, float cv) {
       _ctx.inc = Util_cvToRate(cv);
    }
    float i = 0.0f;
-   if ((_ctx.inc < float_eps())) {
+   if (_ctx.inc < float_eps()) {
       i = float_eps();
    }
    else {
       i = _ctx.inc;
    }
    _ctx.phase = ((2.0f * _ctx.inc) + _ctx.phase);
-   if ((_ctx.phase > 2.0f)) {
+   if (_ctx.phase > 2.0f) {
       _ctx.phase = (-2.0f + _ctx.phase);
    }
    else {
@@ -22,12 +22,12 @@ float Saw_r_process(Saw_r_process_type& _ctx, float cv) {
    }
    float ph = (-1.0f + _ctx.phase);
    float o = 0.0f;
-   if ((ph >= (1.0f + (- i)))) {
+   if (ph >= (1.0f + (- i))) {
       float b = ((1.0f + ((- i) + (- ph))) / i);
       o = (ph + (b * abs(b)));
    }
    else {
-      if ((ph <= (-1.0f + i))) {
+      if (ph <= (-1.0f + i)) {
          float b = ((-1.0f + (i + (- ph))) / i);
          o = (ph + (b * abs(b)));
       }

@@ -24,9 +24,9 @@ fun poly_noteOn(note, velocity) {
    val found = false;
 
    while(i < 4 && not(found)) {
-      if(get(vel,i) == 0){
-         _ = set(notes, i, note);
-         _ = set(vel, i, velocity);
+      if(vel[i] == 0){
+         notes[i] = note;
+         vel[i] = velocity;
          found = true;
       }
       i = i + 1;
@@ -39,8 +39,8 @@ and poly_noteOff(note) {
    val found = false;
 
    while(i < 4 && not(found)) {
-      if(get(notes,i) == note){
-         _ = set(vel, i, 0);
+      if(notes[i] == note){
+         vel[i] = 0;
          found = true;
       }
       i = i + 1;
@@ -48,20 +48,20 @@ and poly_noteOff(note) {
 }
 
 and polyState() {
-   val note1 = Util.pitchToCv(real(get(notes,0)));
-   val note2 = Util.pitchToCv(real(get(notes,1)));
-   val note3 = Util.pitchToCv(real(get(notes,2)));
-   val note4 = Util.pitchToCv(real(get(notes,3)));
+   val note1 = Util.pitchToCv(real(notes[0]));
+   val note2 = Util.pitchToCv(real(notes[1]));
+   val note3 = Util.pitchToCv(real(notes[2]));
+   val note4 = Util.pitchToCv(real(notes[3]));
 
-   val vel1 = velToCV(get(vel,0));
-   val vel2 = velToCV(get(vel,1));
-   val vel3 = velToCV(get(vel,2));
-   val vel4 = velToCV(get(vel,3));
+   val vel1 = velToCV(vel[0]);
+   val vel2 = velToCV(vel[1]);
+   val vel3 = velToCV(vel[2]);
+   val vel4 = velToCV(vel[3]);
 
-   val gate1 = velToGate(get(vel,0));
-   val gate2 = velToGate(get(vel,1));
-   val gate3 = velToGate(get(vel,2));
-   val gate4 = velToGate(get(vel,3));
+   val gate1 = velToGate(vel[0]);
+   val gate2 = velToGate(vel[1]);
+   val gate3 = velToGate(vel[2]);
+   val gate4 = velToGate(vel[3]);
 
 
    return note1, vel1, gate1, note2, vel2, gate2, note3, vel3, gate3, note4, vel4, gate4;

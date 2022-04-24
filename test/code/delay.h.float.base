@@ -40,13 +40,13 @@ typedef struct Delay_phd_osc_type {
 } Delay_phd_osc_type;
 
 typedef struct Delay_delay_type {
-   float buffer[30000];
+   std::array<float, 30000> buffer;
    int32_t write_pos;
 } Delay_delay_type;
 
 typedef struct Delay_mono_noteOn_type {
    int32_t count;
-   int32_t notes[4];
+   std::array<int32_t, 4> notes;
    int32_t pre;
 } Delay_mono_noteOn_type;
 
@@ -103,8 +103,8 @@ static_inline void Delay_phd_osc_type_init(Delay_phd_osc_type& _ctx) {
 
 static_inline void Delay_delay_type_init(Delay_delay_type& _ctx) {
    int32_t i_0 = 0;
-   while ((i_0 < 30000)) {
-      _ctx.buffer[i_0] = 0.0f;
+   while (i_0 < 30000) {
+      _ctx.buffer[static_cast<uint32_t>(i_0)] = 0.0f;
       i_0 = (1 + i_0);
    }
    _ctx.write_pos = 0;

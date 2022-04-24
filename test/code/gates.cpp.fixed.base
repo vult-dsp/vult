@@ -12,8 +12,8 @@ void Gates_gates_noteOn_type_init(Gates_gates_noteOn_type& _ctx) {
    _ctx.Gates_gates_state_ret_6 = 0x0 /* 0.000000 */;
    _ctx.Gates_gates_state_ret_7 = 0x0 /* 0.000000 */;
    int32_t i_0 = 0;
-   while ((i_0 < 8)) {
-      _ctx.vel[i_0] = 0;
+   while (i_0 < 8) {
+      _ctx.vel[static_cast<uint32_t>(i_0)] = 0;
       i_0 = (1 + i_0);
    }
 }
@@ -32,14 +32,14 @@ void Gates_process_type_init(Gates_process_type& _ctx) {
 }
 
 void Gates_gates_state(Gates_gates_noteOn_type& _ctx) {
-   fix16_t vel1 = Gates_velToCV(int_get(_ctx.vel, 0));
-   fix16_t vel2 = Gates_velToCV(int_get(_ctx.vel, 1));
-   fix16_t vel3 = Gates_velToCV(int_get(_ctx.vel, 2));
-   fix16_t vel4 = Gates_velToCV(int_get(_ctx.vel, 3));
-   fix16_t vel5 = Gates_velToCV(int_get(_ctx.vel, 4));
-   fix16_t vel6 = Gates_velToCV(int_get(_ctx.vel, 5));
-   fix16_t vel7 = Gates_velToCV(int_get(_ctx.vel, 6));
-   fix16_t vel8 = Gates_velToCV(int_get(_ctx.vel, 7));
+   fix16_t vel1 = Gates_velToCV(_ctx.vel[static_cast<uint32_t>(0)]);
+   fix16_t vel2 = Gates_velToCV(_ctx.vel[static_cast<uint32_t>(1)]);
+   fix16_t vel3 = Gates_velToCV(_ctx.vel[static_cast<uint32_t>(2)]);
+   fix16_t vel4 = Gates_velToCV(_ctx.vel[static_cast<uint32_t>(3)]);
+   fix16_t vel5 = Gates_velToCV(_ctx.vel[static_cast<uint32_t>(4)]);
+   fix16_t vel6 = Gates_velToCV(_ctx.vel[static_cast<uint32_t>(5)]);
+   fix16_t vel7 = Gates_velToCV(_ctx.vel[static_cast<uint32_t>(6)]);
+   fix16_t vel8 = Gates_velToCV(_ctx.vel[static_cast<uint32_t>(7)]);
    _ctx.Gates_gates_state_ret_0 = vel1;
    _ctx.Gates_gates_state_ret_1 = vel2;
    _ctx.Gates_gates_state_ret_2 = vel3;

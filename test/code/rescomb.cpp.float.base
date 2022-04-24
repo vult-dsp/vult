@@ -12,10 +12,10 @@ void Rescomb_do_type_init(Rescomb_do_type& _ctx) {
 
 float Rescomb_delay(Rescomb_delay_type& _ctx, float x, float cv) {
    _ctx.write_pos = ((1 + _ctx.write_pos) % 675);
-   float_set(_ctx.buffer, _ctx.write_pos, x);
+   _ctx.buffer[static_cast<uint32_t>(_ctx.write_pos)] = x;
    float r_size = int_to_float(675);
    float r_index = fmodf(((- Util_cvToperiod(cv)) + int_to_float(_ctx.write_pos)), r_size);
-   if ((r_index < 0.0f)) {
+   if (r_index < 0.0f) {
       r_index = (r_index + r_size);
    }
    else {
@@ -24,8 +24,8 @@ float Rescomb_delay(Rescomb_delay_type& _ctx, float x, float cv) {
    int32_t t1 = (float_to_int(floor(r_index)) % 675);
    int32_t t2 = ((1 + t1) % 675);
    float decimal = (r_index + (- int_to_float(t1)));
-   float x1 = float_get(_ctx.buffer, t1);
-   float x2 = float_get(_ctx.buffer, t2);
+   float x1 = _ctx.buffer[static_cast<uint32_t>(t1)];
+   float x2 = _ctx.buffer[static_cast<uint32_t>(t2)];
    float ret = (x1 + (decimal * (x2 + (- x1))));
    return ret;
 }

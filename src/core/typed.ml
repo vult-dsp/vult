@@ -367,20 +367,6 @@ module C = struct
     { tx = TEOption [ real ~loc; fix16 ~loc ]; loc }
   ;;
 
-  let array_set () : fun_type =
-    let loc = Loc.default in
-    let a = unbound loc in
-    let a_array = array a in
-    [ a_array; int ~loc; a ], unit ~loc
-  ;;
-
-  let array_get () : fun_type =
-    let loc = Loc.default in
-    let a = unbound loc in
-    let a_array = array a in
-    [ a_array; int ~loc ], a
-  ;;
-
   let array_size () : fun_type =
     let loc = Loc.default in
     let a = unbound loc in

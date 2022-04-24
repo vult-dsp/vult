@@ -10,13 +10,13 @@ float Saw_ptr1_process(Saw_ptr1_process_type& _ctx, float cv) {
    float dc = -1.0f;
    _ctx.phase = (_ctx.phase + _ctx.rate);
    float out = 0.0f;
-   if ((_ctx.phase > 1.0f)) {
+   if (_ctx.phase > 1.0f) {
       _ctx.phase = (-1.0f + _ctx.phase);
    }
    else {
       _ctx.phase = _ctx.phase;
    }
-   if ((_ctx.phase < s1)) {
+   if (_ctx.phase < s1) {
       float d = (_ctx.phase / _ctx.rate);
       out = (2.0f + (dc + (-2.0f * d)));
    }

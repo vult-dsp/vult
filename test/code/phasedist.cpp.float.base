@@ -23,7 +23,7 @@ float Phasedist_phasor(Phasedist_phasor_type& _ctx, float pitch, bool reset) {
    else {
       _ctx.phase = (_ctx.phase + _ctx.rate);
    }
-   if ((_ctx.phase > 1.0f)) {
+   if (_ctx.phase > 1.0f) {
       _ctx.phase = (-1.0f + _ctx.phase);
    }
    else {

@@ -17,14 +17,14 @@ void Sawcore_ptr_w2(Sawcore_ptr_w2_type& _ctx, float phase, float rate) {
    float s2 = (rate + s1);
    float out2 = 0.0f;
    bool out1 = false;
-   if ((phase < s1)) {
+   if (phase < s1) {
       float d = (phase / rate);
       float t2 = (0.0009765625f * s2);
       out1 = false;
       out2 = (1.0f + (d * (t2 + (- d))));
    }
    else {
-      if ((phase < s2)) {
+      if (phase < s2) {
          float d = (phase / rate);
          float t2 = (0.0009765625f * s2);
          out1 = false;
@@ -49,7 +49,7 @@ float Sawcore_process(Sawcore_process_type& _ctx, float cv, float reset) {
    float new_phase = (_ctx.phase + _ctx.rate);
    bool do_reset = Util_edge(_ctx.inst_204dd, (reset > 0.0f));
    bool do_wrap = (new_phase > 1024.0f);
-   if ((do_reset || do_wrap)) {
+   if (do_reset || do_wrap) {
       _ctx.reset_phase = _ctx.phase;
       if (do_wrap) {
          new_phase = (-1024.0f + new_phase);

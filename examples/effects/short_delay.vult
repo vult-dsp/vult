@@ -27,13 +27,13 @@ fun do(x:real, time:real, feedback:real) : real {
    // Gets the decimal part of the position
    val decimal  = index_r - real(index_i);
    // Reads the values in the buffer
-   val x1 = get(buffer,read_pos);
-   val x2 = get(buffer,(read_pos+1) % size(buffer));
+   val x1 = buffer[read_pos];
+   val x2 = buffer[(read_pos+1) % size(buffer)];
    // Interpolates the value
    val ret = (x2-x1)*decimal + x1;
    // Write the data to the buffer
    write_pos = (write_pos+1) % size(buffer);
-   _ = set(buffer, write_pos, Saturate.process(x+feedback*ret));
+   buffer[write_pos] = Saturate.process(x+feedback*ret);
    return ret;
 }
 

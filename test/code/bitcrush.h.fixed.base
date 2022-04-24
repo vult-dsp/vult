@@ -6,20 +6,20 @@
 #include "bitcrush.tables.h"
 
 static_inline fix16_t Bitcrush_factor_raw_c0(int32_t index) {
-   return Bitcrush_factor_c0[index];
+   return Bitcrush_factor_c0[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Bitcrush_factor_raw_c1(int32_t index) {
-   return Bitcrush_factor_c1[index];
+   return Bitcrush_factor_c1[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Bitcrush_factor_raw_c2(int32_t index) {
-   return Bitcrush_factor_c2[index];
+   return Bitcrush_factor_c2[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Bitcrush_factor(fix16_t cv) {
    int32_t index = int_clip(fix_to_int(fix_mul(cv, 8323072)), 0, 127);
-   return (fix_wrap_array(Bitcrush_factor_c0)[index] + fix_mul(cv, (fix_wrap_array(Bitcrush_factor_c1)[index] + fix_mul(fix_wrap_array(Bitcrush_factor_c2)[index], cv))));
+   return (Bitcrush_factor_c0[static_cast<uint32_t>(index)] + fix_mul(cv, (Bitcrush_factor_c1[static_cast<uint32_t>(index)] + fix_mul(Bitcrush_factor_c2[static_cast<uint32_t>(index)], cv))));
 }
 
 static_inline fix16_t Bitcrush_process(fix16_t i, fix16_t cv) {

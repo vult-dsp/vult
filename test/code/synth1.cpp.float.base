@@ -42,7 +42,7 @@ float Synth1_lfo(Synth1_lfo_type& _ctx, float f, int32_t gate) {
       _ctx.phase = 0.0f;
    }
    _ctx.phase = (rate + _ctx.phase);
-   if ((_ctx.phase > 1.0f)) {
+   if (_ctx.phase > 1.0f) {
       _ctx.phase = (-1.0f + _ctx.phase);
    }
    return (-0.5f + sin((6.28318530718f * _ctx.phase)));
@@ -71,10 +71,10 @@ void Synth1_noteOn(Synth1_process_type& _ctx, int32_t note, int32_t velocity, in
          }
       }
    }
-   if ((_ctx.count <= 4)) {
+   if (_ctx.count <= 4) {
       _ctx.count = (1 + _ctx.count);
    }
-   if ((_ctx.count > 0)) {
+   if (_ctx.count > 0) {
       _ctx.gate = 1;
    }
    else {
@@ -113,10 +113,10 @@ void Synth1_noteOff(Synth1_process_type& _ctx, int32_t note, int32_t channel) {
          }
       }
    }
-   if ((found && (_ctx.count > 0))) {
+   if (found && (_ctx.count > 0)) {
       _ctx.count = (-1 + _ctx.count);
    }
-   if ((_ctx.count > 0)) {
+   if (_ctx.count > 0) {
       _ctx.gate = 1;
    }
    else {

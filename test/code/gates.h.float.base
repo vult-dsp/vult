@@ -14,7 +14,7 @@ typedef struct Gates_gates_noteOn_type {
    float Gates_gates_state_ret_5;
    float Gates_gates_state_ret_6;
    float Gates_gates_state_ret_7;
-   int32_t vel[8];
+   std::array<int32_t, 8> vel;
 } Gates_gates_noteOn_type;
 
 typedef struct Gates_process_type {
@@ -39,16 +39,16 @@ static_inline float Gates_velToCV(int32_t vel) {
 }
 
 static_inline void Gates_gates_noteOn(Gates_gates_noteOn_type& _ctx, int32_t note, int32_t velocity) {
-   if (((note >= 36) && (note <= 43))) {
+   if ((note >= 36) && (note <= 43)) {
       int32_t n = (-36 + note);
-      int_set(_ctx.vel, n, velocity);
+      _ctx.vel[static_cast<uint32_t>(n)] = velocity;
    }
 }
 
 static_inline void Gates_gates_noteOff(Gates_gates_noteOn_type& _ctx, int32_t note) {
-   if (((note >= 36) && (note <= 43))) {
+   if ((note >= 36) && (note <= 43)) {
       int32_t n = (-36 + note);
-      int_set(_ctx.vel, n, 0);
+      _ctx.vel[static_cast<uint32_t>(n)] = 0;
    }
 }
 

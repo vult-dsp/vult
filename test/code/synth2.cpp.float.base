@@ -17,8 +17,8 @@ void Synth2_osc_type_init(Synth2_osc_type& _ctx) {
 void Synth2_mono_noteOn_type_init(Synth2_mono_noteOn_type& _ctx) {
    _ctx.count = 0;
    int32_t i_0 = 0;
-   while ((i_0 < 4)) {
-      _ctx.notes[i_0] = 0;
+   while (i_0 < 4) {
+      _ctx.notes[static_cast<uint32_t>(i_0)] = 0;
       i_0 = (1 + i_0);
    }
    _ctx.pre = 0;
@@ -43,7 +43,7 @@ void Synth2_process_type_init(Synth2_process_type& _ctx) {
 
 float Synth2_osc(Synth2_osc_type& _ctx, float pitch, float pw, float wave) {
    float fixed_pitch = 0.0f;
-   if ((wave < 0.666666666667f)) {
+   if (wave < 0.666666666667f) {
       fixed_pitch = pitch;
    }
    else {
@@ -57,23 +57,23 @@ float Synth2_osc(Synth2_osc_type& _ctx, float pitch, float pw, float wave) {
    }
    float shift05 = (0.5f + (0.49f * pw));
    float shift = (shift05 + _ctx.phase);
-   if ((shift > 1.0f)) {
+   if (shift > 1.0f) {
       shift = (-1.0f + shift);
    }
    float tmp1 = Synth2_pulse_train(_ctx.m, _ctx.phase);
    float tmp2 = Synth2_pulse_train(_ctx.m, shift);
    _ctx.phase = (_ctx.phase + _ctx.rate);
-   if ((_ctx.phase > 1.0f)) {
+   if (_ctx.phase > 1.0f) {
       _ctx.phase = (-1.0f + _ctx.phase);
    }
    _ctx.state_pulse = float_clip((tmp1 + ((- tmp2) + (0.9995f * _ctx.state_pulse))), -1.0f, 1.0f);
    _ctx.state_saw = float_clip(((0.5f * ((tmp1 + (tmp2 + (-2.0f * _ctx.rate))) / shift05)) + (0.9995f * _ctx.state_saw)), -1.0f, 1.0f);
    _ctx.state_triang = float_clip(((0.9995f * _ctx.state_triang) + (2.0f * (_ctx.state_pulse * _ctx.rate))), -1.0f, 1.0f);
-   if ((wave < 0.333333333333f)) {
+   if (wave < 0.333333333333f) {
       _ctx.output = _ctx.state_pulse;
    }
    else {
-      if ((wave < 0.666666666667f)) {
+      if (wave < 0.666666666667f) {
          _ctx.output = (2.0f * _ctx.state_saw);
       }
       else {
@@ -119,17 +119,17 @@ float Synth2_lfo(Synth2_lfo_type& _ctx, float f, bool gate) {
    if (Synth2_each(_ctx.inst_2cb5f, 4)) {
       _ctx.phase = (rate + _ctx.phase);
    }
-   if ((_ctx.phase > 1.0f)) {
+   if (_ctx.phase > 1.0f) {
       _ctx.phase = (-1.0f + _ctx.phase);
    }
    return (0.5f + sin((6.28318530718f * _ctx.phase)));
 }
 
 int32_t Synth2_mono_noteOn(Synth2_mono_noteOn_type& _ctx, int32_t n) {
-   if ((_ctx.count < 4)) {
-      int_set(_ctx.notes, _ctx.count, n);
+   if (_ctx.count < 4) {
+      _ctx.notes[static_cast<uint32_t>(_ctx.count)] = n;
       _ctx.pre = n;
-      if ((_ctx.count < 4)) {
+      if (_ctx.count < 4) {
          _ctx.count = (1 + _ctx.count);
       }
    }
@@ -143,8 +143,8 @@ int32_t Synth2_mono_noteOff(Synth2_mono_noteOn_type& _ctx, int32_t n) {
    if (_ctx.count == 0) {
       return _ctx.pre;
    }
-   while (((i < 4) && (found == false))) {
-      if (int_get(_ctx.notes, i) == n) {
+   while ((i < 4) && (found == false)) {
+      if (_ctx.notes[static_cast<uint32_t>(i)] == n) {
          pos = i;
          found = true;
       }
@@ -152,13 +152,13 @@ int32_t Synth2_mono_noteOff(Synth2_mono_noteOn_type& _ctx, int32_t n) {
    }
    if (found) {
       int32_t k = (1 + pos);
-      while ((k < 4)) {
-         int_set(_ctx.notes, (-1 + k), int_get(_ctx.notes, k));
+      while (k < 4) {
+         _ctx.notes[static_cast<uint32_t>((-1 + k))] = _ctx.notes[static_cast<uint32_t>(k)];
          k = (1 + k);
       }
-      if ((found && (_ctx.count > 0))) {
+      if (found && (_ctx.count > 0)) {
          _ctx.count = (-1 + _ctx.count);
-         _ctx.pre = int_get(_ctx.notes, (-1 + _ctx.count));
+         _ctx.pre = _ctx.notes[static_cast<uint32_t>((-1 + _ctx.count))];
       }
    }
    return _ctx.pre;

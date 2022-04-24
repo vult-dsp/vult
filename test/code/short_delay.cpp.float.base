@@ -9,18 +9,18 @@ float Short_delay_do(Short_delay_do_type& _ctx, float x, float time, float feedb
    int32_t index_i = float_to_int(floor(index_r));
    int32_t delta = ((- index_i) + _ctx.write_pos);
    int32_t read_pos = 0;
-   if ((delta < 0)) {
+   if (delta < 0) {
       read_pos = (22050 + delta);
    }
    else {
       read_pos = delta;
    }
    float decimal = (index_r + (- int_to_float(index_i)));
-   float x1 = float_get(_ctx.buffer, read_pos);
-   float x2 = float_get(_ctx.buffer, ((1 + read_pos) % 22050));
+   float x1 = _ctx.buffer[static_cast<uint32_t>(read_pos)];
+   float x2 = _ctx.buffer[static_cast<uint32_t>(((1 + read_pos) % 22050))];
    float ret = (x1 + (decimal * (x2 + (- x1))));
    _ctx.write_pos = ((1 + _ctx.write_pos) % 22050);
-   float_set(_ctx.buffer, _ctx.write_pos, Saturate_process((x + (feedback * ret))));
+   _ctx.buffer[static_cast<uint32_t>(_ctx.write_pos)] = Saturate_process((x + (feedback * ret)));
    return ret;
 }
 

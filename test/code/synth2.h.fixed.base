@@ -65,7 +65,7 @@ typedef struct Synth2_lfo_type {
 
 typedef struct Synth2_mono_noteOn_type {
    int32_t count;
-   int32_t notes[4];
+   std::array<int32_t, 4> notes;
    int32_t pre;
 } Synth2_mono_noteOn_type;
 

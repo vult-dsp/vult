@@ -39,8 +39,8 @@ typedef struct Polycv_poly_noteOn_type {
    fix16_t Polycv_polyState_ret_7;
    fix16_t Polycv_polyState_ret_8;
    fix16_t Polycv_polyState_ret_9;
-   int32_t notes[4];
-   int32_t vel[4];
+   std::array<int32_t, 4> notes;
+   std::array<int32_t, 4> vel;
 } Polycv_poly_noteOn_type;
 
 typedef struct Polycv_process_type {
@@ -120,11 +120,11 @@ static_inline fix16_t Util_average2(Util_average2_type& _ctx, fix16_t x1) {
 }
 
 static_inline fix16_t Util_cubic_clipper(fix16_t x) {
-   if ((x <= -0xaaaa /* -0.666667 */)) {
+   if (x <= -0xaaaa /* -0.666667 */) {
       return -0xaaaa /* -0.666667 */;
    }
    else {
-      if ((x >= 0xaaaa /* 0.666667 */)) {
+      if (x >= 0xaaaa /* 0.666667 */) {
          return 0xaaaa /* 0.666667 */;
       }
       else {
@@ -134,37 +134,37 @@ static_inline fix16_t Util_cubic_clipper(fix16_t x) {
 }
 
 static_inline fix16_t Util_pitchToRate_1024_raw_c0(int32_t index) {
-   return Util_pitchToRate_1024_c0[index];
+   return Util_pitchToRate_1024_c0[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_pitchToRate_1024_raw_c1(int32_t index) {
-   return Util_pitchToRate_1024_c1[index];
+   return Util_pitchToRate_1024_c1[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_pitchToRate_1024_raw_c2(int32_t index) {
-   return Util_pitchToRate_1024_c2[index];
+   return Util_pitchToRate_1024_c2[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_pitchToRate_1024(fix16_t pitch) {
    int32_t index = int_clip(fix_to_int(fix_mul(pitch, 15996)), 0, 31);
-   return (fix_wrap_array(Util_pitchToRate_1024_c0)[index] + fix_mul(pitch, (fix_wrap_array(Util_pitchToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_pitchToRate_1024_c2)[index], pitch))));
+   return (Util_pitchToRate_1024_c0[static_cast<uint32_t>(index)] + fix_mul(pitch, (Util_pitchToRate_1024_c1[static_cast<uint32_t>(index)] + fix_mul(Util_pitchToRate_1024_c2[static_cast<uint32_t>(index)], pitch))));
 }
 
 static_inline fix16_t Util_pitchToRate_raw_c0(int32_t index) {
-   return Util_pitchToRate_c0[index];
+   return Util_pitchToRate_c0[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_pitchToRate_raw_c1(int32_t index) {
-   return Util_pitchToRate_c1[index];
+   return Util_pitchToRate_c1[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_pitchToRate_raw_c2(int32_t index) {
-   return Util_pitchToRate_c2[index];
+   return Util_pitchToRate_c2[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_pitchToRate(fix16_t pitch) {
    int32_t index = int_clip(fix_to_int(fix_mul(pitch, 15996)), 0, 31);
-   return (fix_wrap_array(Util_pitchToRate_c0)[index] + fix_mul(pitch, (fix_wrap_array(Util_pitchToRate_c1)[index] + fix_mul(fix_wrap_array(Util_pitchToRate_c2)[index], pitch))));
+   return (Util_pitchToRate_c0[static_cast<uint32_t>(index)] + fix_mul(pitch, (Util_pitchToRate_c1[static_cast<uint32_t>(index)] + fix_mul(Util_pitchToRate_c2[static_cast<uint32_t>(index)], pitch))));
 }
 
 static_inline fix16_t Util_cvToPitch(fix16_t cv) {
@@ -172,37 +172,37 @@ static_inline fix16_t Util_cvToPitch(fix16_t cv) {
 }
 
 static_inline fix16_t Util_cvToRate_1024_raw_c0(int32_t index) {
-   return Util_cvToRate_1024_c0[index];
+   return Util_cvToRate_1024_c0[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_cvToRate_1024_raw_c1(int32_t index) {
-   return Util_cvToRate_1024_c1[index];
+   return Util_cvToRate_1024_c1[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_cvToRate_1024_raw_c2(int32_t index) {
-   return Util_cvToRate_1024_c2[index];
+   return Util_cvToRate_1024_c2[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_cvToRate_1024(fix16_t cv) {
    int32_t index = int_clip(fix_to_int(fix_mul(cv, 2257351)), 0, 31);
-   return (fix_wrap_array(Util_cvToRate_1024_c0)[index] + fix_mul(cv, (fix_wrap_array(Util_cvToRate_1024_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_1024_c2)[index], cv))));
+   return (Util_cvToRate_1024_c0[static_cast<uint32_t>(index)] + fix_mul(cv, (Util_cvToRate_1024_c1[static_cast<uint32_t>(index)] + fix_mul(Util_cvToRate_1024_c2[static_cast<uint32_t>(index)], cv))));
 }
 
 static_inline fix16_t Util_cvToRate_raw_c0(int32_t index) {
-   return Util_cvToRate_c0[index];
+   return Util_cvToRate_c0[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_cvToRate_raw_c1(int32_t index) {
-   return Util_cvToRate_c1[index];
+   return Util_cvToRate_c1[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_cvToRate_raw_c2(int32_t index) {
-   return Util_cvToRate_c2[index];
+   return Util_cvToRate_c2[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_cvToRate(fix16_t cv) {
    int32_t index = int_clip(fix_to_int(fix_mul(cv, 9247857)), 0, 127);
-   return (fix_wrap_array(Util_cvToRate_c0)[index] + fix_mul(cv, (fix_wrap_array(Util_cvToRate_c1)[index] + fix_mul(fix_wrap_array(Util_cvToRate_c2)[index], cv))));
+   return (Util_cvToRate_c0[static_cast<uint32_t>(index)] + fix_mul(cv, (Util_cvToRate_c1[static_cast<uint32_t>(index)] + fix_mul(Util_cvToRate_c2[static_cast<uint32_t>(index)], cv))));
 }
 
 static_inline fix16_t Util_pitchToCv(fix16_t pitch) {
@@ -210,37 +210,37 @@ static_inline fix16_t Util_pitchToCv(fix16_t pitch) {
 }
 
 static_inline fix16_t Util_cvToperiod_raw_c0(int32_t index) {
-   return Util_cvToperiod_c0[index];
+   return Util_cvToperiod_c0[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_cvToperiod_raw_c1(int32_t index) {
-   return Util_cvToperiod_c1[index];
+   return Util_cvToperiod_c1[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_cvToperiod_raw_c2(int32_t index) {
-   return Util_cvToperiod_c2[index];
+   return Util_cvToperiod_c2[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_cvToperiod(fix16_t cv) {
    int32_t index = int_clip(fix_to_int(fix_mul(cv, 2031616)), 0, 31);
-   return (fix_wrap_array(Util_cvToperiod_c0)[index] + fix_mul(cv, (fix_wrap_array(Util_cvToperiod_c1)[index] + fix_mul(fix_wrap_array(Util_cvToperiod_c2)[index], cv))));
+   return (Util_cvToperiod_c0[static_cast<uint32_t>(index)] + fix_mul(cv, (Util_cvToperiod_c1[static_cast<uint32_t>(index)] + fix_mul(Util_cvToperiod_c2[static_cast<uint32_t>(index)], cv))));
 }
 
 static_inline fix16_t Util_cvTokHz_raw_c0(int32_t index) {
-   return Util_cvTokHz_c0[index];
+   return Util_cvTokHz_c0[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_cvTokHz_raw_c1(int32_t index) {
-   return Util_cvTokHz_c1[index];
+   return Util_cvTokHz_c1[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_cvTokHz_raw_c2(int32_t index) {
-   return Util_cvTokHz_c2[index];
+   return Util_cvTokHz_c2[static_cast<uint32_t>(index)];
 }
 
 static_inline fix16_t Util_cvTokHz(fix16_t cv) {
    int32_t index = int_clip(fix_to_int(fix_mul(cv, 2031616)), 0, 31);
-   return (fix_wrap_array(Util_cvTokHz_c0)[index] + fix_mul(cv, (fix_wrap_array(Util_cvTokHz_c1)[index] + fix_mul(fix_wrap_array(Util_cvTokHz_c2)[index], cv))));
+   return (Util_cvTokHz_c0[static_cast<uint32_t>(index)] + fix_mul(cv, (Util_cvTokHz_c1[static_cast<uint32_t>(index)] + fix_mul(Util_cvTokHz_c2[static_cast<uint32_t>(index)], cv))));
 }
 
 static_inline fix16_t Polycv_velToCV(int32_t vel) {
@@ -248,7 +248,7 @@ static_inline fix16_t Polycv_velToCV(int32_t vel) {
 }
 
 static_inline fix16_t Polycv_velToGate(int32_t vel) {
-   if ((vel > 0)) {
+   if (vel > 0) {
       return fix_mul(0x204 /* 0.007874 */, int_to_fix(vel));
    }
    else {
@@ -266,7 +266,7 @@ void Polycv_process(Polycv_process_type& _ctx, int32_t c);
 
 static_inline void Polycv_noteOn(Polycv_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
    if (_ctx.channel_in == channel) {
-      if ((velocity > 0)) {
+      if (velocity > 0) {
          Polycv_poly_noteOn(_ctx.poly_a0e8, note, velocity);
       }
       else {

@@ -10,18 +10,18 @@ fix16_t Saw_ptr2_process(Saw_ptr2_process_type& _ctx, fix16_t cv) {
    fix16_t s2 = (s1 + _ctx.rate);
    _ctx.phase = (_ctx.phase + _ctx.rate);
    fix16_t out = 0.0f;
-   if ((_ctx.phase > 0x10000 /* 1.000000 */)) {
+   if (_ctx.phase > 0x10000 /* 1.000000 */) {
       _ctx.phase = (-0x10000 /* -1.000000 */ + _ctx.phase);
    }
    else {
       _ctx.phase = _ctx.phase;
    }
-   if ((_ctx.phase < s1)) {
+   if (_ctx.phase < s1) {
       fix16_t d = fix_div(_ctx.phase, _ctx.rate);
       out = (0x10000 /* 1.000000 */ + fix_mul(d, (s2 + (- d))));
    }
    else {
-      if ((_ctx.phase < s2)) {
+      if (_ctx.phase < s2) {
          fix16_t d = fix_div(_ctx.phase, _ctx.rate);
          out = (0x30000 /* 3.000000 */ + fix_mul(d, (-0x40000 /* -4.000000 */ + (d + s2))));
       }

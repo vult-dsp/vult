@@ -9,7 +9,7 @@ Comb filter resonator
 fun delay(x:real, cv:real) : real {
    mem buffer : array(real, 675);
    mem write_pos = (write_pos+1) % size(buffer);
-   _ = set(buffer, write_pos, x);
+   buffer[write_pos] = x;
    // Gets the position in the buffer to read
    val r_size = real(size(buffer));
    val r_index  = (real(write_pos) - Util.cvToperiod(cv)) % r_size;
@@ -19,8 +19,8 @@ fun delay(x:real, cv:real) : real {
    // Gets the decimal part of the position
    val decimal  = r_index - real(t1);
    // Reads the values in the buffer
-   val x1 = get(buffer,t1);
-   val x2 = get(buffer,t2);
+   val x1 = buffer[t1];
+   val x2 = buffer[t2];
    // Interpolates the value
    val ret = (x2-x1) * decimal + x1;
    return ret;

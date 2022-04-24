@@ -70,26 +70,9 @@ let rec print_type_ (t : type_) =
   | Tuple l ->
     let l = Pla.map_sep Pla.commaspace print_type_ l in
     [%pla {|(<#l#>)|}]
-  | Array (_, t) ->
+  | Array (dim, t) ->
     let t = print_type_ t in
-    [%pla {|<#t#>|}]
-  | Struct { path; _ } -> [%pla {|<#path#s>|}]
-;;
-
-let rec print_type_member (t : type_) =
-  match t with
-  | Void _ -> Pla.string "void"
-  | Int -> Pla.string "int32_t"
-  | Real -> Pla.string "float"
-  | Bool -> Pla.string "bool"
-  | String -> Pla.string "char*"
-  | Fixed -> Pla.string "fix16_t"
-  | Tuple l ->
-    let l = Pla.map_sep Pla.commaspace print_type_member l in
-    [%pla {|(<#l#>)|}]
-  | Array (_, t) ->
-    let t = print_type_member t in
-    [%pla {|<#t#>|}]
+    [%pla {|std::array<<#t#>, <#dim#i>>|}]
   | Struct { path; _ } -> [%pla {|<#path#s>|}]
 ;;
 
@@ -142,11 +125,11 @@ let rec print_exp (e : exp) =
   | Index { e; index } ->
     let e = print_exp e in
     let index = print_exp index in
-    [%pla {|<#e#>[<#index#>]|}]
+    [%pla {|<#e#>[static_cast<uint32_t>(<#index#>)]|}]
   | Array l ->
     let rows = Common.splitArray 100 l in
     let l = Pla.map_sep [%pla {|,<#>|}] (Pla.map_sep Pla.commaspace print_exp) rows in
-    Pla.wrap (Pla.string "{") (Pla.string "}") l
+    [%pla {|{ <#l#> }|}]
   | Call { path = "not"; args = [ e1 ] } ->
     let e1 = print_exp e1 in
     [%pla {|!<#e1#>|}]
@@ -189,23 +172,19 @@ let rec print_lexp e =
   | LIndex (e, index) ->
     let e = print_lexp e in
     let index = print_exp index in
-    [%pla {|<#e#>[<#index#>]|}]
+    [%pla {|<#e#>[static_cast<uint32_t>(<#index#>)]|}]
 ;;
 
 let print_dexp (e : dexp) =
   match e.d with
-  | DId (id, None) -> [%pla {|<#id#s>|}]
-  | DId (id, Some dim) -> [%pla {|<#id#s>[<#dim#i>]|}]
+  | DId (id, _) -> [%pla {|<#id#s>|}]
 ;;
 
+(*| DId (id, Some dim) -> [%pla {|<#id#s>[<#dim#i>]|}]*)
+
 let print_member (n, (t : type_)) =
-  match t with
-  | Array (dim, sub) ->
-    let sub = print_type_member sub in
-    [%pla {|<#sub#> <#n#s>[<#dim#i>];|}]
-  | _ ->
-    let t = print_type_member t in
-    [%pla {|<#t#> <#n#s>;|}]
+  let t = print_type_ t in
+  [%pla {|<#t#> <#n#s>;|}]
 ;;
 
 let print_arg (n, (t : type_)) =
@@ -216,7 +195,22 @@ let print_arg (n, (t : type_)) =
     [%pla {|<#sub#> (&<#n#s>)[<#dim#i>]|}]
   | Array (dim, sub) ->
     let sub = print_type_ sub in
-    [%pla {|<#sub#> (<#n#s>)[<#dim#i>]|}]
+    [%pla {|std::array<<#sub#>, <#dim#i>>& <#n#s>|}]
+  | Struct { path; _ } -> [%pla {|<#path#s>& <#n#s>|}]
+  | _ ->
+    let t = print_type_ t in
+    [%pla {|<#t#> <#n#s>|}]
+;;
+
+let print_decl (n, (t : type_)) =
+  match t with
+  | Array (_, Array _) -> failwith "array of arrays are not implemented"
+  | Array (dim, (Struct _ as sub)) ->
+    let sub = print_type_ sub in
+    [%pla {|<#sub#> (&<#n#s>)[<#dim#i>]|}]
+  | Array (dim, sub) ->
+    let sub = print_type_ sub in
+    [%pla {|std::array<<#sub#>, <#dim#i>> <#n#s>|}]
   | Struct { path; _ } -> [%pla {|<#path#s>& <#n#s>|}]
   | _ ->
     let t = print_type_ t in
@@ -234,30 +228,31 @@ let arrayCopyFunction (t : type_) =
 
 let rec parenthesize e =
   match e with
-  | { e = Op (Eq, _, _); _ } -> print_exp e
+  | { e = Op (_, _, _); _ } -> print_exp e
   | _ -> Pla.parenthesize (print_exp e)
 
 and print_stmt s =
   match s with
+  (* declares and initializes a structure *)
   | StmtDecl (({ t = Struct { path; _ }; _ } as lhs), None) ->
     let t = print_type_ lhs.t in
     let lhs = print_dexp lhs in
     [%pla {|<#t#> <#lhs#>;<#><#path#s>_init(<#lhs#>);|}]
   | StmtDecl ({ d = DId (n, _); t; _ }, None) ->
-    let t = print_arg (n, t) in
+    let t = print_decl (n, t) in
     [%pla {|<#t#>;|}]
   | StmtDecl ({ d = DId (n, _); t; _ }, Some rhs) ->
-    let t = print_arg (n, t) in
+    let t = print_decl (n, t) in
     let rhs = print_exp rhs in
     [%pla {|<#t#> = <#rhs#>;|}]
   | StmtBind ({ l = LWild; _ }, rhs) ->
     let rhs = print_exp rhs in
     [%pla {|<#rhs#>;|}]
-  | StmtBind (({ t = Array (n, t); _ } as lhs), ({ t = Array (_, _); _ } as rhs)) ->
+  (*| StmtBind (({ t = Array (n, t); _ } as lhs), ({ t = Array (_, _); _ } as rhs)) ->
     let lhs = print_lexp lhs in
     let rhs = print_exp rhs in
     let f = arrayCopyFunction t in
-    [%pla {|<#f#s>(<#n#i>, <#lhs#>, <#rhs#>);|}]
+    [%pla {|<#f#s>(<#n#i>, <#lhs#>, <#rhs#>);|}]*)
   | StmtBind (lhs, rhs) ->
     let lhs = print_lexp lhs in
     let rhs = print_exp rhs in
@@ -275,9 +270,9 @@ and print_stmt s =
     let else_ = print_block else_ in
     [%pla {|if <#cond#> <#then_#><#>else <#else_#>|}]
   | StmtWhile (cond, stmt) ->
-    let cond = print_exp cond in
+    let cond = parenthesize cond in
     let stmt = print_block stmt in
-    [%pla {|while (<#cond#>) <#stmt#>|}]
+    [%pla {|while <#cond#> <#stmt#>|}]
   | StmtBlock stmts ->
     let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
     [%pla {|{<#stmt#+>}|}]

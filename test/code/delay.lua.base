@@ -167,18 +167,18 @@ function Delay_delay(_ctx, x, time, feedback)
       read_pos = delta
    end
    local decimal = (index_r + (-real(index_i)))
-   local x1 = get(_ctx.buffer, read_pos)
-   local x2 = get(_ctx.buffer, ((1 + read_pos) % 30000))
+   local x1 = _ctx.buffer[read_pos]
+   local x2 = _ctx.buffer[((1 + read_pos) % 30000)]
    local ret = (x1 + (decimal * (x2 + (-x1))))
    _ctx.write_pos = ((1 + _ctx.write_pos) % 30000)
-   set(_ctx.buffer, _ctx.write_pos, clip((x + (feedback * ret)), -1.0, 1.0))
+   _ctx.buffer[_ctx.write_pos] = clip((x + (feedback * ret)), -1.0, 1.0)
    return ret
 end
 
 function Delay_mono_noteOn(_ctx, n)
    if (_ctx.count < 4) then
       do
-         set(_ctx.notes, _ctx.count, n)
+         _ctx.notes[_ctx.count] = n
          _ctx.pre = n
          if (_ctx.count < 4) then
             _ctx.count = (1 + _ctx.count)
@@ -197,7 +197,7 @@ function Delay_mono_noteOff(_ctx, n)
    end
    while ((i < 4) and (found == false)) do
       do
-         if (get(_ctx.notes, i) == n) then
+         if (_ctx.notes[i] == n) then
             do
                pos = i
                found = true
@@ -211,14 +211,14 @@ function Delay_mono_noteOff(_ctx, n)
          local k = (1 + pos)
          while (k < 4) do
             do
-               set(_ctx.notes, (-1 + k), get(_ctx.notes, k))
+               _ctx.notes[(-1 + k)] = _ctx.notes[k]
                k = (1 + k)
             end
          end
          if (found and (_ctx.count > 0)) then
             do
                _ctx.count = (-1 + _ctx.count)
-               _ctx.pre = get(_ctx.notes, (-1 + _ctx.count))
+               _ctx.pre = _ctx.notes[(-1 + _ctx.count)]
             end
          end
       end

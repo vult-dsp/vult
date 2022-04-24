@@ -36,7 +36,7 @@ end
 
 function Saturate_soft_tanh_table(x)
    local index = int_clip(float_to_int(((x - -24.0) * 5.0)), 0, 240)
-   return (float_wrap_array(Saturate_soft_tanh_table_c0)[index] + (x * (float_wrap_array(Saturate_soft_tanh_table_c1)[index] + (float_wrap_array(Saturate_soft_tanh_table_c2)[index] * x))))
+   return (Saturate_soft_tanh_table_c0[index] + (x * (Saturate_soft_tanh_table_c1[index] + (Saturate_soft_tanh_table_c2[index] * x))))
 end
 
 function Saturate_soft_process(x)

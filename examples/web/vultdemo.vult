@@ -46,8 +46,8 @@ fun sineWave(pitch:real,reset) : real {
    // Gets the decimal part of the position
    val decimal  = index_r - real(index_i);
    // Reads the values in the buffer
-   val x1 = get(buffer,index_i);
-   val x2 = get(buffer,(index_i+1) % size(buffer));
+   val x1 = buffer[index_i];
+   val x2 = buffer[(index_i+1) % size(buffer)];
    // Interpolates the value
    val ret = (x2-x1)*decimal + x1;
    return ret;
@@ -58,7 +58,7 @@ and sineInit() @[init] {
    while(i<size(buffer)){
       val w = 2.0 * 3.1415 * real(i)/(real(size(buffer)));
       val x = sin(w);
-      _ = set(buffer,i,x);
+      buffer[i] = x;
       i = i + 1;
    }
 }
@@ -146,13 +146,13 @@ fun delay(x:real, time:real, feedback:real) : real {
    // Gets the decimal part of the position
    val decimal  = index_r - real(index_i);
    // Reads the values in the buffer
-   val x1 = get(buffer,read_pos);
-   val x2 = get(buffer,(read_pos+1) % size(buffer));
+   val x1 = buffer[read_pos];
+   val x2 = buffer[(read_pos+1) % size(buffer)];
    // Interpolates the value
    val ret = (x2-x1)*decimal + x1;
    // Write the data to the buffer
    write_pos = (write_pos+1) % size(buffer);
-   _ = set(buffer,write_pos,clip(x+feedback*ret,-1.0,1.0));
+   buffer[write_pos] = clip(x+feedback*ret,-1.0,1.0);
    return ret;
 }
 

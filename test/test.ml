@@ -177,6 +177,7 @@ let all_files =
   ; "units/voice_4.vult"
   ; "../test/compile/defined_types.vult"
   ; "../test/compile/array_defined_type.vult"
+  ; "../test/compile/array_return.vult"
   ]
 ;;
 

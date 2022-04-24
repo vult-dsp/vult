@@ -34,6 +34,7 @@ NOTE: The code for the fixed-point operations is based on the project:
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <array>
 
 #ifdef _MSC_VER
 #define static_inline static __inline
@@ -155,16 +156,6 @@ fix16_t fix_sqrt(fix16_t inValue);
 static_inline float float_clip(float value, float low, float high) {
    return value < low ? low : (value > high ? high : value);
 }
-
-/* Array get and set */
-static_inline void float_set(float a[], int i, float value) { a[i] = value; }
-static_inline float float_get(float a[], int i) { return a[i]; }
-static_inline void fix_set(fix16_t a[], int i, fix16_t value) { a[i] = value; }
-static_inline fix16_t fix_get(fix16_t a[], int i) { return a[i]; }
-static_inline void int_set(int a[], int i, int value) { a[i] = value; }
-static_inline int int_get(int a[], int i) { return a[i]; }
-static_inline void bool_set(uint8_t a[], int i, uint8_t value) { a[i] = value; }
-static_inline uint8_t bool_get(uint8_t a[], int i) { return a[i]; }
 
 /* Array initialization */
 void float_init_array(size_t size, float value, float data[]);
