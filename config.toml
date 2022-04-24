@@ -6,4 +6,5 @@ theme = "vult"
 relativeURLs = "true"
 
 disqusShortname = "vult-dsp"
+unsafe= true
 
