@@ -2,63 +2,63 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Vult Language</title>
-    <link>http://vult-dsp.github.io/vult/</link>
+    <link>https://vult-dsp.github.io/vult/</link>
     <description>Recent content on Vult Language</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 21 Aug 2017 21:07:02 +0300</lastBuildDate><atom:link href="http://vult-dsp.github.io/vult/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 21 Aug 2017 21:07:02 +0300</lastBuildDate><atom:link href="https://vult-dsp.github.io/vult/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Performance Tips: the cost of allocation</title>
-      <link>http://vult-dsp.github.io/vult/blog/performance-arrays/</link>
+      <link>https://vult-dsp.github.io/vult/blog/performance-arrays/</link>
       <pubDate>Mon, 21 Aug 2017 21:07:02 +0300</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/blog/performance-arrays/</guid>
+      <guid>https://vult-dsp.github.io/vult/blog/performance-arrays/</guid>
       <description>&lt;p&gt;Looking at the performance results of algorithms using arrays I noticed something very drastic. LuaJIT was terribly slow compared to the other languages.&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>Performance Tips: floating-point mod</title>
-      <link>http://vult-dsp.github.io/vult/blog/performance-mod/</link>
+      <link>https://vult-dsp.github.io/vult/blog/performance-mod/</link>
       <pubDate>Sun, 20 Aug 2017 21:21:01 +0300</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/blog/performance-mod/</guid>
+      <guid>https://vult-dsp.github.io/vult/blog/performance-mod/</guid>
       <description>&lt;p&gt;Recently I implemented in Vult a simpler way for me to measure the performance of the generated code. Running the command &lt;code&gt;$ make perf&lt;/code&gt; generates code for all languages and runs it for most of the examples.&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>Generating Web Audio code</title>
-      <link>http://vult-dsp.github.io/vult/blog/webaudio-example/</link>
+      <link>https://vult-dsp.github.io/vult/blog/webaudio-example/</link>
       <pubDate>Sat, 05 Aug 2017 13:05:50 +0300</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/blog/webaudio-example/</guid>
-      <description>&lt;p&gt;For a long time it has been possible to generate JavaScript code that runs in the browser (check the &lt;a href=&#34;http://localhost:1313/vult/demo/&#34;&gt;Vult demo&lt;/a&gt;). However the code was not very easy to integrate since it still needed some manual coding.&lt;/p&gt;
+      <guid>https://vult-dsp.github.io/vult/blog/webaudio-example/</guid>
+      <description>&lt;p&gt;For a long time it has been possible to generate JavaScript code that runs in the browser (check the &lt;a href=&#34;http://vult-dsp.github.io/vult/demo/&#34;&gt;Vult demo&lt;/a&gt;). However the code was not very easy to integrate since it still needed some manual coding.&lt;/p&gt;
 &lt;p&gt;Now Vult provides a new template for JavaScript that generates the code of a &lt;a href=&#34;https://developer.mozilla.org/en-US/docs/Web/API/ScriptProcessorNode&#34;&gt;ScriptProcessorNode&lt;/a&gt; that can be easily added to a Web Audio project.&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>New structure of the examples</title>
-      <link>http://vult-dsp.github.io/vult/blog/new-examples/</link>
+      <link>https://vult-dsp.github.io/vult/blog/new-examples/</link>
       <pubDate>Sat, 29 Jul 2017 14:08:43 +0300</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/blog/new-examples/</guid>
+      <guid>https://vult-dsp.github.io/vult/blog/new-examples/</guid>
       <description>&lt;p&gt;In the past, the examples folder of Vult contained just a few files that were developed in an early stage. Most of the &amp;lsquo;real&amp;rsquo; examples were developed in a separate &lt;a href=&#34;https://github.com/modlfo/vult-examples&#34;&gt;repository&lt;/a&gt;. In order to improve the testing of the Vult compiler the examples have been moved into the Vult repository.&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>Compile-time embedding of WAV files</title>
-      <link>http://vult-dsp.github.io/vult/blog/embed-wav/</link>
+      <link>https://vult-dsp.github.io/vult/blog/embed-wav/</link>
       <pubDate>Tue, 20 Jun 2017 08:40:42 +0300</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/blog/embed-wav/</guid>
+      <guid>https://vult-dsp.github.io/vult/blog/embed-wav/</guid>
       <description>&lt;p&gt;Around the 2000&amp;rsquo;s I got my first VST plugin; it was a PPG Wave. The sounds produced by this plugin got me intrigued because it sounded very different from other soft synths that I have heard. The main difference was that the PPG was based on wavetables. Since I started working on Vult, making a wavetable synthesizer has been in the list.&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>Compile-time creation of tables</title>
-      <link>http://vult-dsp.github.io/vult/blog/tables/</link>
+      <link>https://vult-dsp.github.io/vult/blog/tables/</link>
       <pubDate>Wed, 01 Feb 2017 22:04:23 +0100</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/blog/tables/</guid>
+      <guid>https://vult-dsp.github.io/vult/blog/tables/</guid>
       <description>&lt;script type=&#34;text/javascript&#34;
    src=&#34;https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&#34;&gt;
 &lt;/script&gt;
@@ -67,19 +67,19 @@
     
     <item>
       <title>Automatic loading of Vult files</title>
-      <link>http://vult-dsp.github.io/vult/blog/automatic-loading/</link>
+      <link>https://vult-dsp.github.io/vult/blog/automatic-loading/</link>
       <pubDate>Thu, 01 Dec 2016 15:49:04 -0600</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/blog/automatic-loading/</guid>
+      <guid>https://vult-dsp.github.io/vult/blog/automatic-loading/</guid>
       <description>&lt;p&gt;Recently I implemented simpler way to call the Vult compiler with multiple files. Previously Vult required that you passed every file in a correct order. For example:&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>Vult Language Basics</title>
-      <link>http://vult-dsp.github.io/vult/tutorials/basics/</link>
+      <link>https://vult-dsp.github.io/vult/tutorials/basics/</link>
       <pubDate>Thu, 01 Dec 2016 00:00:00 +0000</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/tutorials/basics/</guid>
+      <guid>https://vult-dsp.github.io/vult/tutorials/basics/</guid>
       <description>Vult has syntax that may resemble languages like C/C++, Python or JavaScript. In order to declare a function you can use the keyword fun as follows:
 fun foo() return 0;  This functions takes no arguments and returns the integer value zero. If you have more than one statement you can use the curly braces {} to delimit the function body.
 fun foo(x) { val y = 1 + x; return y; }  As you may have seen, you can declare variables with the keyword val.</description>
@@ -87,20 +87,20 @@ fun foo(x) { val y = 1 + x; return y; }  As you may have seen, you can declare v
     
     <item>
       <title>New repository with more PureData examples</title>
-      <link>http://vult-dsp.github.io/vult/blog/more-examples/</link>
+      <link>https://vult-dsp.github.io/vult/blog/more-examples/</link>
       <pubDate>Tue, 01 Nov 2016 22:14:59 +0200</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/blog/more-examples/</guid>
+      <guid>https://vult-dsp.github.io/vult/blog/more-examples/</guid>
       <description>&lt;p&gt;A new repository with more Vult examples is available:&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://github.com/modlfo/vult-examples&#34;&gt;https://github.com/modlfo/vult-examples&lt;/a&gt;&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>Functions with Memory</title>
-      <link>http://vult-dsp.github.io/vult/tutorials/functions/</link>
+      <link>https://vult-dsp.github.io/vult/tutorials/functions/</link>
       <pubDate>Tue, 01 Nov 2016 00:00:00 +0000</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/tutorials/functions/</guid>
+      <guid>https://vult-dsp.github.io/vult/tutorials/functions/</guid>
       <description>Vult has two types of functions: passive and active. Passive functions are like the examples that we saw in the Vult Language Basics, for example:
 fun square(x) { return x * x; }  These functions simply receive arguments, perform computations and return a value.
 One of the most useful features of Vult are the active functions. These functions have the characteristic that have internal and independent memory variables. The memory variables are declared with the keyword mem.</description>
@@ -108,28 +108,28 @@ One of the most useful features of Vult are the active functions. These function
     
     <item>
       <title>Generating up-to-date binaries with CI</title>
-      <link>http://vult-dsp.github.io/vult/blog/ci-integration/</link>
+      <link>https://vult-dsp.github.io/vult/blog/ci-integration/</link>
       <pubDate>Tue, 18 Oct 2016 22:56:13 +0300</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/blog/ci-integration/</guid>
+      <guid>https://vult-dsp.github.io/vult/blog/ci-integration/</guid>
       <description>&lt;p&gt;I have been using Travis CI for running tests and checking that Vult build correctly. Travis CI can build Vult in OSX and Linux. However, due to the status of OCaml it was difficult to setup something similar in Windows with AppVeyor. Thankfully the OCaml community has published a set of script to configure different CI services:&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>Now Vult can be installed from npm</title>
-      <link>http://vult-dsp.github.io/vult/blog/vult-in-npm/</link>
+      <link>https://vult-dsp.github.io/vult/blog/vult-in-npm/</link>
       <pubDate>Tue, 04 Oct 2016 19:22:30 +0300</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/blog/vult-in-npm/</guid>
+      <guid>https://vult-dsp.github.io/vult/blog/vult-in-npm/</guid>
       <description>&lt;p&gt;In the last months I have been making many improvements to the Vult compiler. These improvements cannot be easily tried by the users due to the fact that for me creating binaries for all the platforms is very time consuming. Therefore, in order for the users to try the latests changes they need to compile Vult from the source code. Even though the process is well documented in the repository, this can be time consuming and difficult for people unfamiliar with the OCaml tools.&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>Easy DSP with Vult</title>
-      <link>http://vult-dsp.github.io/vult/tutorials/dsp/</link>
+      <link>https://vult-dsp.github.io/vult/tutorials/dsp/</link>
       <pubDate>Sat, 01 Oct 2016 00:00:00 +0000</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/tutorials/dsp/</guid>
+      <guid>https://vult-dsp.github.io/vult/tutorials/dsp/</guid>
       <description>Functions with memory simplify writing Digital Signal Processing (DSP) code since a mem variable can be used to as a single sample delay z^1. I order to implement the Digital Biquad Filter (direct form 2) we can take the equations directly from Wikipedia: https://en.wikipedia.org/wiki/Digital_biquad_filter.
 We can see the architecture and the equations here:
    We can implement these equations in Vult as follows.
@@ -138,19 +138,19 @@ fun biquad(x0, b0, b1, b2 ,a1 ,a2) : real { mem w1, w2; val w0 = x0 - a1*w1 - a2
     
     <item>
       <title>LuaJIT as backend for Vult</title>
-      <link>http://vult-dsp.github.io/vult/blog/lua/</link>
+      <link>https://vult-dsp.github.io/vult/blog/lua/</link>
       <pubDate>Thu, 08 Sep 2016 22:43:03 +0300</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/blog/lua/</guid>
+      <guid>https://vult-dsp.github.io/vult/blog/lua/</guid>
       <description>&lt;p&gt;I have been keeping an eye on LuaJIT (&lt;a href=&#34;http://luajit.org&#34;&gt;http://luajit.org&lt;/a&gt;) for some time. It&amp;rsquo;s a very interesting project and I have read very good things about it. Some time ago I made a small benchmark comparing an optimized algorithm written in C++11 against a lazy coded version in OCaml and LuaJIT. In case you are curious here are the results:&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>Oversampling</title>
-      <link>http://vult-dsp.github.io/vult/tutorials/oversampling/</link>
+      <link>https://vult-dsp.github.io/vult/tutorials/oversampling/</link>
       <pubDate>Thu, 01 Sep 2016 00:00:00 +0000</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/tutorials/oversampling/</guid>
+      <guid>https://vult-dsp.github.io/vult/tutorials/oversampling/</guid>
       <description>One common technique in Digital Signal Processing is Oversampling. Oversampling is often necessary when modeling filters that come from electric circuits or that present nonlinearities or that can become unstable for certain parameters.
 In order to oversample a filter we need for every sample perform N steps. I a language like Vult, that hides the internal memory of a function, oversampling may seem not very obvious.
 In order to perform oversampling, we are gonna use a feature of Vult that allow us to name and reuse the memory created by a function.</description>
@@ -158,65 +158,65 @@ In order to perform oversampling, we are gonna use a feature of Vult that allow 
     
     <item>
       <title>Generating Pure Data and Teensy Audio templates</title>
-      <link>http://vult-dsp.github.io/vult/blog/pd-teensy/</link>
+      <link>https://vult-dsp.github.io/vult/blog/pd-teensy/</link>
       <pubDate>Wed, 13 Jul 2016 20:10:57 +0200</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/blog/pd-teensy/</guid>
+      <guid>https://vult-dsp.github.io/vult/blog/pd-teensy/</guid>
       <description>&lt;p&gt;As part of the Vult project I have developed a new standalone library: Pla (&lt;a href=&#34;https://modlfo.github.io/pla/)&#34;&gt;https://modlfo.github.io/pla/)&lt;/a&gt;. Pla is a templating library that is used in Vult to generate code in a simpler way. Thanks to this library I have developed two templates to simplify using Vult:&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>New site for Vult</title>
-      <link>http://vult-dsp.github.io/vult/blog/new-site/</link>
+      <link>https://vult-dsp.github.io/vult/blog/new-site/</link>
       <pubDate>Tue, 12 Jul 2016 20:21:43 +0200</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/blog/new-site/</guid>
+      <guid>https://vult-dsp.github.io/vult/blog/new-site/</guid>
       <description>&lt;p&gt;I have been working on giving a refresh of the Vult site. The result is what you see now. After trying a few alternatives I settle to use Hugo (&lt;a href=&#34;https://gohugo.io&#34;&gt;https://gohugo.io&lt;/a&gt;). The reason I used Hugo was because I could make it do exactly what I wanted with the help of the documentation.&lt;/p&gt;</description>
     </item>
     
     <item>
       <title>Vult Blog</title>
-      <link>http://vult-dsp.github.io/vult/blog/</link>
+      <link>https://vult-dsp.github.io/vult/blog/</link>
       <pubDate>Tue, 12 Jul 2016 17:59:24 +0200</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/blog/</guid>
+      <guid>https://vult-dsp.github.io/vult/blog/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Vult Overview</title>
-      <link>http://vult-dsp.github.io/vult/overview/</link>
+      <link>https://vult-dsp.github.io/vult/overview/</link>
       <pubDate>Tue, 12 Jul 2016 17:59:24 +0200</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/overview/</guid>
+      <guid>https://vult-dsp.github.io/vult/overview/</guid>
       <description>Overview Vult is a simple and powerful language to program high-performance algorithms that may run in small microprocessors or microcontrollers. Vult is specially useful when programming Digital Signal Processing (DSP) algorithms like audio effects or synthesizers.
 Code Generation The Vult compiler is a transcompiler which takes Vult code and produces C/C++, JavaScript or LuaJIT code. The C/C++ code that can be compiled in any platform with a C/C++ compiler, for example: Arduino or Teensy boards.</description>
     </item>
     
     <item>
       <title>Vult Tutorials</title>
-      <link>http://vult-dsp.github.io/vult/tutorials/</link>
+      <link>https://vult-dsp.github.io/vult/tutorials/</link>
       <pubDate>Tue, 12 Jul 2016 17:59:24 +0200</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/tutorials/</guid>
+      <guid>https://vult-dsp.github.io/vult/tutorials/</guid>
       <description></description>
     </item>
     
     <item>
       <title>demo</title>
-      <link>http://vult-dsp.github.io/vult/demo/</link>
+      <link>https://vult-dsp.github.io/vult/demo/</link>
       <pubDate>Tue, 12 Jul 2016 17:54:12 +0200</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/demo/</guid>
+      <guid>https://vult-dsp.github.io/vult/demo/</guid>
       <description></description>
     </item>
     
     <item>
       <title>Generating C/C&#43;&#43;</title>
-      <link>http://vult-dsp.github.io/vult/tutorials/generate-c/</link>
+      <link>https://vult-dsp.github.io/vult/tutorials/generate-c/</link>
       <pubDate>Sun, 12 Jul 2015 21:24:58 +0200</pubDate>
       
-      <guid>http://vult-dsp.github.io/vult/tutorials/generate-c/</guid>
+      <guid>https://vult-dsp.github.io/vult/tutorials/generate-c/</guid>
       <description>Once we have some Vult code written it&amp;rsquo;s time to generate some C/C++ code and run it on a target.
 If you have followed the installation steps show in https://github.com/vult-dsp/vult you will have an executable called vultc (if you compiled it by yourself it will be vultc.native or vultc.byte). This is a simple command line application that we will use to generate the code.
 Here is the full code of the oversampled lowpass filter which we are gonna save in a file called filter.</description>

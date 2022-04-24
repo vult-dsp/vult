@@ -54,64 +54,64 @@
 
 <h1>Blogs</h1>
 <p>  </p>
-<button type="button" class="btn btn-default"><a href="http://vult-dsp.github.io/vult/blog/">Read more</a></button>  <hr>
+<button type="button" class="btn btn-default"><a href="https://vult-dsp.github.io/vult/blog/">Read more</a></button>  <hr>
 
 <h1>Performance Tips: the cost of allocation</h1>
 <p> <p>Looking at the performance results of algorithms using arrays I noticed something very drastic. LuaJIT was terribly slow compared to the other languages.</p> </p>
-<button type="button" class="btn btn-default"><a href="http://vult-dsp.github.io/vult/blog/performance-arrays/">Read more</a></button>  <hr>
+<button type="button" class="btn btn-default"><a href="https://vult-dsp.github.io/vult/blog/performance-arrays/">Read more</a></button>  <hr>
 
 <h1>Performance Tips: floating-point mod</h1>
 <p> <p>Recently I implemented in Vult a simpler way for me to measure the performance of the generated code. Running the command <code>$ make perf</code> generates code for all languages and runs it for most of the examples.</p> </p>
-<button type="button" class="btn btn-default"><a href="http://vult-dsp.github.io/vult/blog/performance-mod/">Read more</a></button>  <hr>
+<button type="button" class="btn btn-default"><a href="https://vult-dsp.github.io/vult/blog/performance-mod/">Read more</a></button>  <hr>
 
 <h1>Generating Web Audio code</h1>
-<p> <p>For a long time it has been possible to generate JavaScript code that runs in the browser (check the <a href="http://localhost:1313/vult/demo/">Vult demo</a>). However the code was not very easy to integrate since it still needed some manual coding.</p>
+<p> <p>For a long time it has been possible to generate JavaScript code that runs in the browser (check the <a href="http://vult-dsp.github.io/vult/demo/">Vult demo</a>). However the code was not very easy to integrate since it still needed some manual coding.</p>
 <p>Now Vult provides a new template for JavaScript that generates the code of a <a href="https://developer.mozilla.org/en-US/docs/Web/API/ScriptProcessorNode">ScriptProcessorNode</a> that can be easily added to a Web Audio project.</p> </p>
-<button type="button" class="btn btn-default"><a href="http://vult-dsp.github.io/vult/blog/webaudio-example/">Read more</a></button>  <hr>
+<button type="button" class="btn btn-default"><a href="https://vult-dsp.github.io/vult/blog/webaudio-example/">Read more</a></button>  <hr>
 
 <h1>New structure of the examples</h1>
 <p> <p>In the past, the examples folder of Vult contained just a few files that were developed in an early stage. Most of the &lsquo;real&rsquo; examples were developed in a separate <a href="https://github.com/modlfo/vult-examples">repository</a>. In order to improve the testing of the Vult compiler the examples have been moved into the Vult repository.</p> </p>
-<button type="button" class="btn btn-default"><a href="http://vult-dsp.github.io/vult/blog/new-examples/">Read more</a></button>  <hr>
+<button type="button" class="btn btn-default"><a href="https://vult-dsp.github.io/vult/blog/new-examples/">Read more</a></button>  <hr>
 
 <h1>Compile-time embedding of WAV files</h1>
 <p> <p>Around the 2000&rsquo;s I got my first VST plugin; it was a PPG Wave. The sounds produced by this plugin got me intrigued because it sounded very different from other soft synths that I have heard. The main difference was that the PPG was based on wavetables. Since I started working on Vult, making a wavetable synthesizer has been in the list.</p> </p>
-<button type="button" class="btn btn-default"><a href="http://vult-dsp.github.io/vult/blog/embed-wav/">Read more</a></button>  <hr>
+<button type="button" class="btn btn-default"><a href="https://vult-dsp.github.io/vult/blog/embed-wav/">Read more</a></button>  <hr>
 
 <h1>Compile-time creation of tables</h1>
 <p> <script type="text/javascript"
    src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
 </script>
 <p>This is one of the features that has been in the TODO list since the creation of Vult. When generating code, now is possible to annotate a function and Vult will automatically create a table-based implementation which will be faster. This is specially useful when generating code for microcontrollers.</p> </p>
-<button type="button" class="btn btn-default"><a href="http://vult-dsp.github.io/vult/blog/tables/">Read more</a></button>  <hr>
+<button type="button" class="btn btn-default"><a href="https://vult-dsp.github.io/vult/blog/tables/">Read more</a></button>  <hr>
 
 <h1>Automatic loading of Vult files</h1>
 <p> <p>Recently I implemented simpler way to call the Vult compiler with multiple files. Previously Vult required that you passed every file in a correct order. For example:</p> </p>
-<button type="button" class="btn btn-default"><a href="http://vult-dsp.github.io/vult/blog/automatic-loading/">Read more</a></button>  <hr>
+<button type="button" class="btn btn-default"><a href="https://vult-dsp.github.io/vult/blog/automatic-loading/">Read more</a></button>  <hr>
 
 <h1>New repository with more PureData examples</h1>
 <p> <p>A new repository with more Vult examples is available:</p>
 <p><a href="https://github.com/modlfo/vult-examples">https://github.com/modlfo/vult-examples</a></p> </p>
-<button type="button" class="btn btn-default"><a href="http://vult-dsp.github.io/vult/blog/more-examples/">Read more</a></button>  <hr>
+<button type="button" class="btn btn-default"><a href="https://vult-dsp.github.io/vult/blog/more-examples/">Read more</a></button>  <hr>
 
 <h1>Generating up-to-date binaries with CI</h1>
 <p> <p>I have been using Travis CI for running tests and checking that Vult build correctly. Travis CI can build Vult in OSX and Linux. However, due to the status of OCaml it was difficult to setup something similar in Windows with AppVeyor. Thankfully the OCaml community has published a set of script to configure different CI services:</p> </p>
-<button type="button" class="btn btn-default"><a href="http://vult-dsp.github.io/vult/blog/ci-integration/">Read more</a></button>  <hr>
+<button type="button" class="btn btn-default"><a href="https://vult-dsp.github.io/vult/blog/ci-integration/">Read more</a></button>  <hr>
 
 <h1>Now Vult can be installed from npm</h1>
 <p> <p>In the last months I have been making many improvements to the Vult compiler. These improvements cannot be easily tried by the users due to the fact that for me creating binaries for all the platforms is very time consuming. Therefore, in order for the users to try the latests changes they need to compile Vult from the source code. Even though the process is well documented in the repository, this can be time consuming and difficult for people unfamiliar with the OCaml tools.</p> </p>
-<button type="button" class="btn btn-default"><a href="http://vult-dsp.github.io/vult/blog/vult-in-npm/">Read more</a></button>  <hr>
+<button type="button" class="btn btn-default"><a href="https://vult-dsp.github.io/vult/blog/vult-in-npm/">Read more</a></button>  <hr>
 
 <h1>LuaJIT as backend for Vult</h1>
 <p> <p>I have been keeping an eye on LuaJIT (<a href="http://luajit.org">http://luajit.org</a>) for some time. It&rsquo;s a very interesting project and I have read very good things about it. Some time ago I made a small benchmark comparing an optimized algorithm written in C++11 against a lazy coded version in OCaml and LuaJIT. In case you are curious here are the results:</p> </p>
-<button type="button" class="btn btn-default"><a href="http://vult-dsp.github.io/vult/blog/lua/">Read more</a></button>  <hr>
+<button type="button" class="btn btn-default"><a href="https://vult-dsp.github.io/vult/blog/lua/">Read more</a></button>  <hr>
 
 <h1>Generating Pure Data and Teensy Audio templates</h1>
 <p> <p>As part of the Vult project I have developed a new standalone library: Pla (<a href="https://modlfo.github.io/pla/)">https://modlfo.github.io/pla/)</a>. Pla is a templating library that is used in Vult to generate code in a simpler way. Thanks to this library I have developed two templates to simplify using Vult:</p> </p>
-<button type="button" class="btn btn-default"><a href="http://vult-dsp.github.io/vult/blog/pd-teensy/">Read more</a></button>  <hr>
+<button type="button" class="btn btn-default"><a href="https://vult-dsp.github.io/vult/blog/pd-teensy/">Read more</a></button>  <hr>
 
 <h1>New site for Vult</h1>
 <p> <p>I have been working on giving a refresh of the Vult site. The result is what you see now. After trying a few alternatives I settle to use Hugo (<a href="https://gohugo.io">https://gohugo.io</a>). The reason I used Hugo was because I could make it do exactly what I wanted with the help of the documentation.</p> </p>
-<button type="button" class="btn btn-default"><a href="http://vult-dsp.github.io/vult/blog/new-site/">Read more</a></button> 
+<button type="button" class="btn btn-default"><a href="https://vult-dsp.github.io/vult/blog/new-site/">Read more</a></button> 
 
       </div>
       <div class="col-md-2"> </div>
