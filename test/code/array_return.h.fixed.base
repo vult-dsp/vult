@@ -5,17 +5,39 @@
 #include "vultin.h"
 #include "array_return.tables.h"
 
+typedef struct Array_return_foo3_type {
+   int32_t y;
+} Array_return_foo3_type;
+
 typedef struct Array_return_foo4_type {
    int32_t y;
 } Array_return_foo4_type;
+
+typedef struct Array_return_foo5_type {
+   int32_t Array_return_foo5_ret_0;
+   std::array<int32_t, 3> Array_return_foo5_ret_1;
+} Array_return_foo5_type;
 
 typedef struct Array_return_foo6_type {
    int32_t Array_return_foo6_ret_0;
    std::array<int32_t, 3> Array_return_foo6_ret_1;
 } Array_return_foo6_type;
 
+static_inline void Array_return_foo3_type_init(Array_return_foo3_type& _ctx) {
+   _ctx.y = 0;
+}
+
 static_inline void Array_return_foo4_type_init(Array_return_foo4_type& _ctx) {
    _ctx.y = 0;
+}
+
+static_inline void Array_return_foo5_type_init(Array_return_foo5_type& _ctx) {
+   _ctx.Array_return_foo5_ret_0 = 0;
+   int32_t i_0 = 0;
+   while (i_0 < 3) {
+      _ctx.Array_return_foo5_ret_1[static_cast<uint32_t>(i_0)] = 0;
+      i_0 = (1 + i_0);
+   }
 }
 
 static_inline void Array_return_foo6_type_init(Array_return_foo6_type& _ctx) {
@@ -27,15 +49,33 @@ static_inline void Array_return_foo6_type_init(Array_return_foo6_type& _ctx) {
    }
 }
 
+static_inline std::array<int32_t, 3> Array_return_foo1() {
+   std::array<int32_t, 3> _array_0 = { 1, 2, 3 };
+   return _array_0;
+}
+
 static_inline std::array<int32_t, 3> Array_return_foo2() {
    std::array<int32_t, 3> x = { 1, 2, 3 };
    return x;
+}
+
+static_inline std::array<int32_t, 3> Array_return_foo3(Array_return_foo3_type& _ctx) {
+   _ctx.y = 0;
+   std::array<int32_t, 3> _array_0 = { 1, 2, 3 };
+   return _array_0;
 }
 
 static_inline std::array<int32_t, 3> Array_return_foo4(Array_return_foo4_type& _ctx) {
    _ctx.y = 0;
    std::array<int32_t, 3> x = { 1, 2, 3 };
    return x;
+}
+
+static_inline void Array_return_foo5(Array_return_foo5_type& _ctx) {
+   std::array<int32_t, 3> _array_0 = { 1, 2, 3 };
+   _ctx.Array_return_foo5_ret_0 = 1;
+   _ctx.Array_return_foo5_ret_1 = _array_0;
+   return ;
 }
 
 static_inline void Array_return_foo6(Array_return_foo6_type& _ctx) {

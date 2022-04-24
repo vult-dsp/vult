@@ -36,6 +36,7 @@ type env =
   { in_if_exp : bool
   ; bound_if : bool
   ; bound_call : bool
+  ; bound_array : bool
   ; current_function : function_def option
   ; current_type : struct_descr option
   ; args : Util.Args.args
@@ -46,7 +47,14 @@ let default_data () : data =
 ;;
 
 let default_env args : env =
-  { args; in_if_exp = false; bound_if = false; current_function = None; bound_call = false; current_type = None }
+  { args
+  ; in_if_exp = false
+  ; bound_if = false
+  ; current_function = None
+  ; bound_call = false
+  ; bound_array = false
+  ; current_type = None
+  }
 ;;
 
 let reapply (state : data Mapper.state) =
@@ -248,6 +256,7 @@ module IfExpressions = struct
     Mapper.make
     @@ fun env state (e : exp) ->
     match e with
+    (* Evaluates if-expressions with constant condition *)
     | { e = EIf { cond = { e = EBool cond; _ }; then_; else_ }; _ } -> reapply state, if cond then then_ else else_
     (* Bind if-expressions to a variable *)
     | { e = EIf _; t; loc } when (not env.in_if_exp) && not env.bound_if ->
@@ -262,6 +271,34 @@ module IfExpressions = struct
   ;;
 
   let mapper = { Mapper.identity with stmt; exp; stmt_env }
+end
+
+module LiteralArrays = struct
+  let stmt_env =
+    Mapper.makeEnv
+    @@ fun env (s : stmt) ->
+    match s with
+    | { s = StmtBind (_, { e = EArray _; _ }); _ } -> { env with bound_array = true }
+    | _ -> env
+  ;;
+
+  let exp =
+    Mapper.make
+    @@ fun env state (e : exp) ->
+    match e with
+    (* Bind if-expressions to a variable *)
+    | { e = EArray _; t; loc } when (not env.in_if_exp) && not env.bound_array ->
+      let tick = getTick env state in
+      let temp = "_array_" ^ string_of_int tick in
+      let temp_e = { e = EId temp; t; loc } in
+      let decl_stmt = { s = StmtDecl { d = DId (temp, None); t; loc }; loc } in
+      let bind_stmt = { s = StmtBind ({ l = LId temp; t; loc }, e); loc } in
+      let state = Mapper.pushStmts state [ decl_stmt; bind_stmt ] in
+      reapply state, temp_e
+    | _ -> state, e
+  ;;
+
+  let mapper = { Mapper.identity with exp; stmt_env }
 end
 
 module Tuples = struct
@@ -560,6 +597,7 @@ let passes =
   |> Mapper.seq IfExpressions.mapper
   |> Mapper.seq Tuples.mapper
   |> Mapper.seq Cast.mapper
+  |> Mapper.seq LiteralArrays.mapper
 ;;
 
 let apply env state prog =
