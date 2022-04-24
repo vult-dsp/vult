@@ -6,5 +6,10 @@ theme = "vult"
 relativeURLs = "true"
 
 disqusShortname = "vult-dsp"
-unsafe= true
+unsafe = true
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
 
