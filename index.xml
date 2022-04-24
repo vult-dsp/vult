@@ -59,8 +59,9 @@
       <pubDate>Wed, 01 Feb 2017 22:04:23 +0100</pubDate>
       
       <guid>http://vult-dsp.github.io/vult/blog/tables/</guid>
-      <description>&lt;!-- raw HTML omitted --&gt;
-&lt;!-- raw HTML omitted --&gt;
+      <description>&lt;script type=&#34;text/javascript&#34;
+   src=&#34;https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&#34;&gt;
+&lt;/script&gt;
 &lt;p&gt;This is one of the features that has been in the TODO list since the creation of Vult. When generating code, now is possible to annotate a function and Vult will automatically create a table-based implementation which will be faster. This is specially useful when generating code for microcontrollers.&lt;/p&gt;</description>
     </item>
     
@@ -80,9 +81,8 @@
       
       <guid>http://vult-dsp.github.io/vult/tutorials/basics/</guid>
       <description>Vult has syntax that may resemble languages like C/C++, Python or JavaScript. In order to declare a function you can use the keyword fun as follows:
-This functions takes no arguments and returns the integer value zero. If you have more than one statement you can use the curly braces {} to delimit the function body.
-As you may have seen, you can declare variables with the keyword val.
-Vult is a static language, this means that every variable has concrete type.</description>
+fun foo() return 0;  This functions takes no arguments and returns the integer value zero. If you have more than one statement you can use the curly braces {} to delimit the function body.
+fun foo(x) { val y = 1 + x; return y; }  As you may have seen, you can declare variables with the keyword val.</description>
     </item>
     
     <item>
@@ -102,8 +102,8 @@ Vult is a static language, this means that every variable has concrete type.</de
       
       <guid>http://vult-dsp.github.io/vult/tutorials/functions/</guid>
       <description>Vult has two types of functions: passive and active. Passive functions are like the examples that we saw in the Vult Language Basics, for example:
-These functions simply receive arguments, perform computations and return a value.
-One of the most useful features of Vult are the active functions. These functions have the characteristic that have internal and independent memory variables. The memory variables are declared with the keyword mem. For example, if we would like to make a counter in Vult we could write the following function:</description>
+fun square(x) { return x * x; }  These functions simply receive arguments, perform computations and return a value.
+One of the most useful features of Vult are the active functions. These functions have the characteristic that have internal and independent memory variables. The memory variables are declared with the keyword mem.</description>
     </item>
     
     <item>
@@ -133,7 +133,7 @@ One of the most useful features of Vult are the active functions. These function
       <description>Functions with memory simplify writing Digital Signal Processing (DSP) code since a mem variable can be used to as a single sample delay z^1. I order to implement the Digital Biquad Filter (direct form 2) we can take the equations directly from Wikipedia: https://en.wikipedia.org/wiki/Digital_biquad_filter.
 We can see the architecture and the equations here:
    We can implement these equations in Vult as follows.
-The variables w1 and w2 represent the terms w[n-1] and w[n-2].</description>
+fun biquad(x0, b0, b1, b2 ,a1 ,a2) : real { mem w1, w2; val w0 = x0 - a1*w1 - a2*w2; val y0 = b0*w0 + b1*w1 + b2*w2; w2, w1 = w1, w0; return y0; }  The variables w1 and w2 represent the terms w[n-1] and w[n-2].</description>
     </item>
     
     <item>

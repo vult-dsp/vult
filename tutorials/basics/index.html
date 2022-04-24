@@ -48,28 +48,51 @@
       <div class="col-md-8 col-md-auto">
          <h2>Vult Language Basics</h2>
          <p>Vult has syntax that may resemble languages like C/C++, Python or JavaScript. In order to declare a function you can use the keyword <code>fun</code> as follows:</p>
-<!-- raw HTML omitted -->
+<div class="vult_code" id="tut1-0">fun foo() return 0;
+</div>
 <p>This functions takes no arguments and returns the integer value zero. If you have more than one statement you can use the curly braces <code>{}</code> to delimit the function body.</p>
-<!-- raw HTML omitted -->
+<div class="vult_code" id="tut1-1">fun foo(x) {
+   val y = 1 + x;
+   return y;
+}
+</div>
 <p>As you may have seen, you can declare variables with the keyword <code>val</code>.</p>
 <p>Vult is a static language, this means that every variable has concrete type. Since Vult is focused on numeric computations there are two main types available: <code>real</code> and <code>int</code>. You can specify the type of the variables with colon <code>:</code> as follows:</p>
-<!-- raw HTML omitted -->
+<div class="vult_code" id="tut1-2">fun foo(x : int) : int {
+   val y : int = 1 + x;
+   return y;
+}
+</div>
 <p>This specifies that the function receives an argument <code>x</code> of type <code>int</code> and returns a value of type <code>int</code>.</p>
 <p>The type annotations are not strictly necessary. Vult has type inference which means that it will try to automatically determine every type based on the use of the variables. We will cover more about the type inference in a different tutorial.</p>
 <p>Function in Vult can return multiple values separated by commas. The values can be assigned to multiple variables in a similar way.</p>
-<!-- raw HTML omitted -->
+<div class="vult_code" id="tut1-3">fun foo() {
+   return 1, 2;
+}
 <p>fun bar(){
 val a, b = foo();
 }</p>
-<!-- raw HTML omitted -->
+</div>
 <p>As mentioned before, Vult is static and strict. It is not possible to mix operations between reals and integers without making an explicit cast. The following operation is invalid:</p>
-<!-- raw HTML omitted -->
+<div class="vult_code" id="tut1-4">fun foo() {
+   val x = 1;
+   val y = 2.1;
+   return x + y; // invalid operation
+}
+</div>
 <p>The problem here is that the values have different type. The number <code>1</code> is of type <code>int</code> and the number <code>2.1</code> is of type <code>real</code>. In order to perform operations, you need to explicitly cast the values. For example:</p>
-<!-- raw HTML omitted -->
+<div class="vult_code" id="tut1-5">fun foo() {
+   val x = 1;
+   val y = 2.1;
+   val z = x + int(y);  // z = 3
+   val w = real(x) + y; // w = 3.1
+   return w;
+}
+</div>
 <p>By not making automatic conversion of types Vult gives you a more control on the kind of operation you want to perform.</p>
 <p>In the following tutorials we will cover more advanced aspects of Vult.</p>
-<!-- raw HTML omitted -->
-<!-- raw HTML omitted -->
+<script type="text/javascript" src="../../javascripts/external/ace/ace.js"></script>
+<script type="text/javascript" src="../../javascripts/main.js"></script>
  
       </div>
    </div>

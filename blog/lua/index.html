@@ -48,7 +48,16 @@
       <div class="col-md-8 col-md-auto">
          <h2>LuaJIT as backend for Vult</h2>
          <p>I have been keeping an eye on LuaJIT (<a href="http://luajit.org">http://luajit.org</a>) for some time. It&rsquo;s a very interesting project and I have read very good things about it. Some time ago I made a small benchmark comparing an optimized algorithm written in C++11 against a lazy coded version in OCaml and LuaJIT. In case you are curious here are the results:</p>
-<!-- raw HTML omitted -->
+<table class="table">
+<thead>
+   <tr> <th> Language </th> <th> Execution Time </th> <th> Lines of Code </th> </tr>
+</thead>
+<tbody>
+   <tr> <td> C++11 </td> <td> 0.355 s  </td> <td> 180 </td> </tr>
+   <tr> <td> OCaml </td> <td> 0.54 s  </td> <td> 63 </td> </tr>
+   <tr> <td> LuaJIT </td> <td> 0.78 s  </td> <td> 85 </td> </tr>
+</tbody>
+</table>
 <p>Here&rsquo;s a chart that plots the lines of code against the execution time.</p>
 <figure><img src="../../images/benchmark1.svg"/>
 </figure>
@@ -59,7 +68,15 @@
 <p>To generate Lua code you need to call Vult as follows:</p>
 <pre tabindex="0"><code>$ ./vultc -luacode code.vult -o code
 </code></pre><p>In order to check the performance I took one of the examples I have in Vult and made a test rendering 1000 s of audio. Here are the results:</p>
-<!-- raw HTML omitted -->
+<table class="table">
+<thead>
+   <tr> <th> Language </th> <th> Execution Time </th> </tr>
+</thead>
+<tbody>
+   <tr> <td> C++11 </td> <td> 2.77 s  </td> </tr>
+   <tr> <td> LuaJIT </td> <td> 3.55 s  </td> </tr>
+</tbody>
+</table>
 <p>Here&rsquo;s the graphic view:</p>
 <figure><img src="../../images/benchmark2.svg"/>
 </figure>

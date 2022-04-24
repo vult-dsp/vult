@@ -59,8 +59,9 @@
       <pubDate>Wed, 01 Feb 2017 22:04:23 +0100</pubDate>
       
       <guid>http://vult-dsp.github.io/vult/blog/tables/</guid>
-      <description>&lt;!-- raw HTML omitted --&gt;
-&lt;!-- raw HTML omitted --&gt;
+      <description>&lt;script type=&#34;text/javascript&#34;
+   src=&#34;https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&#34;&gt;
+&lt;/script&gt;
 &lt;p&gt;This is one of the features that has been in the TODO list since the creation of Vult. When generating code, now is possible to annotate a function and Vult will automatically create a table-based implementation which will be faster. This is specially useful when generating code for microcontrollers.&lt;/p&gt;</description>
     </item>
     

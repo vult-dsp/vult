@@ -50,7 +50,14 @@
          <p>Once we have some Vult code written it&rsquo;s time to generate some C/C++ code and run it on a target.</p>
 <p>If you have followed the installation steps show in <a href="https://github.com/vult-dsp/vult">https://github.com/vult-dsp/vult</a> you will have an executable called <code>vultc</code> (if you compiled it by yourself it will be <code>vultc.native</code> or <code>vultc.byte</code>). This is a simple command line application that we will use to generate the code.</p>
 <p>Here is the full code of the oversampled lowpass filter which we are gonna save in a file called <code>filter.vult</code>.</p>
-<!-- raw HTML omitted -->
+<div class="vult_code" id="tut5-1">
+// returns true when the input changes
+fun change(current:real) : bool {
+   mem previous;
+   val result = current <> previous;
+   previous = current;
+   return result;
+}
 <p>fun biquad(x0, b0, b1, b2 ,a1 ,a2) : real {
 mem w1, w2;
 val w0 = x0 - a1<em>w1 - a2</em>w2;
@@ -80,7 +87,7 @@ _  = inst:lowpass(x,fixed_w0,q);
 val y = inst:lowpass(x,fixed_w0,q);
 return y;
 }</p>
-<!-- raw HTML omitted -->
+</div>
 <p>Next we are gonna call the Vult compiler as follows:</p>
 <pre tabindex="0"><code>$ ./vultc -ccode filter.vult
 </code></pre><p>The compiler receives the flag <code>-ccode</code> which instruct the compiler to generate C/C++ code. This command will print to the standard output the generated code. If we want to save it to a file we have to call the compiler as follows:</p>
@@ -99,7 +106,7 @@ return y;
 <li>use it with the original function <code>Filter_lowpass_2x</code></li>
 </ul>
 <p>For example:</p>
-<!-- raw HTML omitted -->
+<div class="c_code" id="tut5-2">// file main.cpp
 <p>#include &ldquo;filter.h&rdquo;</p>
 <p>int main(void) {
 Filter_lowpass_2x_type filter;
@@ -113,10 +120,14 @@ float q = 1.0f;</p>
 float result = Filter_lowpass_2x(filter,x,w,q);</p>
 <p>return 0;
 }</p>
-<!-- raw HTML omitted -->
+</div>
 <p>In order to compile this code you need to add an include directory pointing to the location of the file <code>vultin.h</code>. This file is located in the source tree under the folder <code>runtime</code>. To link you will need to compile and link the file <code>vultin.c</code> which is located in the same place (<a href="https://github.com/modlfo/vult/tree/master/runtime">https://github.com/modlfo/vult/tree/master/runtime</a>)</p>
 <p>One thing to notice is that every function with memory will have as first argument a reference to a value of it&rsquo;s corresponding type. In the above case, the function <code>Filter_lowpass_2x</code> returns only one value, therefore the C/C++ will return a value. If the functions return more than one value Vult will automatically generate structures for the types. Here are few Vult functions an their corresponding C/C++ functions:</p>
-<!-- raw HTML omitted -->
+<div class="vult_code" id="tut5-3">// example.vult
+// single value return, no memory
+fun foo1(x:real) {
+	return x;
+}
 <p>// single value return, with memory
 fun bar1(x:real) {
 mem y = x;
@@ -131,33 +142,40 @@ fun bar2(x:real) {
 mem y = x;
 return x,x;
 }</p>
-<!-- raw HTML omitted -->
+</div>
 <p>C/C++ declarations of the functions above:</p>
-<!-- raw HTML omitted -->
+<div class="c_code" id="tut5-4">
+// single value return, no memory
+float Example_foo1(float x);
 <p>// single value return, with memory
 float Example_bar1(Example__ctx_type_1 &amp;_ctx, float x);</p>
 <p>// multiple value return, no memory
 void Example_foo2(Example__ctx_type_2 &amp;_ctx, float x);</p>
 <p>// multiple value return, with memory
 void Example_bar2(Example__ctx_type_3 &amp;_ctx, float x);</p>
-<!-- raw HTML omitted -->
+</div>
 <p>In the case of functions returning multiple values, the context type is always generated. In order to get the values from the context we can use the generated functions ending with <code>_ret_X</code> where <code>X</code> is the position of the returned value. For example, the functions returning multiple values show above generate:</p>
-<!-- raw HTML omitted -->
+<div class="c_code" id="tut5-4.1">
+// Gets the first returned value of function Example_foo2
+float Example_foo2_ret_0(Example__ctx_type_2 &_ctx);
 <p>// Gets the second returned value of function Example_foo2
 float Example_foo2_ret_1(Example__ctx_type_2 &amp;_ctx);</p>
 <p>// Gets the first returned value of function Example_bar2
 float Example_bar2_ret_0(Example__ctx_type_3 &amp;_ctx);</p>
 <p>// Gets the second returned value of function Example_bar2
 float Example_bar2_ret_1(Example__ctx_type_3 &amp;_ctx);</p>
-<!-- raw HTML omitted -->
+</div>
 <p>To call the function <code>Example_foo2</code> from C++ you have to write:</p>
-<!-- raw HTML omitted -->
+<div class="c_code" id="tut5-4.2">
+// Declare and initialize the instance
+Example_foo2_type inst;
+Example_foo2_init(inst);
 <p>// Call the function
 Example_foo2(inst, 0.0);</p>
 <p>// Retrieve the result
 float value0 = Example_foo2_ret_0(inst);
 float value1 = Example_foo2_ret_1(inst);</p>
-<!-- raw HTML omitted -->
+</div>
 <h2 id="generating-fixed-point-code">Generating fixed-point code</h2>
 <p>When generating C/C++ code Vult by default uses floating point arithmetic (<code>float</code> numbers). Floating point code is very efficient in big processors like the x86. However when compiled to small microcontrollers (like the ones found in Arduinos or some ARM processors) the code can be very inefficient because these processors do not have a dedicated floating point arithmetic unit.</p>
 <p>Alternatively, fixed-point calculations can be used to perform computations with decimals (like <code>2.0*1.5</code>). Fixed-point arithmetic encodes the decimal numbers as integers and uses the integer arithmetic unit in small processors to perform calculations (<a href="https://en.wikipedia.org/wiki/Fixed-point_arithmetic)">https://en.wikipedia.org/wiki/Fixed-point_arithmetic)</a>. The result is that the operations can be performed efficiently at the expense of numeric precision.</p>
@@ -165,11 +183,13 @@ float value1 = Example_foo2_ret_1(inst);</p>
 <p>To generate code with fixed-point numbers we need to call Vult as follows:</p>
 <pre tabindex="0"><code>$ ./vultc -ccode -real fixed filter.vult -o filter
 </code></pre><p>This command will generate use the type <code>fix16_t</code> instead of <code>float</code>. For example, the declaration of the function <code>lowpass_2x</code> changes to:</p>
-<!-- raw HTML omitted -->
+<div class="c_code" id="tut5-5">
+fix16_t Filter_lowpass_2x(Filter__ctx_type_3 &_ctx, fix16_t x,
+                          fix16_t w0, fix16_t q);
+</div>
 <p>The file <code>vultin.h</code> provides functions to convert among <code>float</code> <code>fix16_t</code> and <code>int</code> values.</p>
-<!-- raw HTML omitted -->
-<!-- raw HTML omitted -->
- 
+<script type="text/javascript" src="../../javascripts/external/ace/ace.js"></script>
+<script type="text/javascript" src="../../javascripts/main.js"></script> 
       </div>
    </div>
 </div>
