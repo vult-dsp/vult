@@ -45,7 +45,7 @@ module type VM = sig
   val pop : t -> t * rvalue
   val loadRef : t -> int -> rvalue
   val storeRef : t -> int -> rvalue -> t
-  val storeRefObject : t -> int -> int -> rvalue -> t
+  val storeRefObject : t -> int -> int list -> rvalue -> t
   val allocate : t -> int -> t
   val newFrame : t -> t * int
   val restoreFrame : t -> int -> t
@@ -87,12 +87,21 @@ module Mutable : VM = struct
     vm
   ;;
 
-  let storeRefObject (vm : t) (n : int) (i : int) (v : rvalue) : t =
+  let storeRefObject (vm : t) (n : int) (i : int list) (v : rvalue) : t =
     match vm.stack.(vm.frame + n) with
     | Object elems ->
-      elems.(i) <- v;
+      let rec loop l elems =
+        match l with
+        | [ i ] -> elems.(i) <- v
+        | i :: l ->
+          (match elems.(i) with
+          | Object elems -> loop l elems
+          | _ -> failwith "storeRefObject: not an object")
+        | _ -> failwith "storeRefObject: empty indices"
+      in
+      loop i elems;
       vm
-    | _ -> failwith "storeRefMember: invalid input"
+    | _ -> failwith "storeRefObject: not an object"
   ;;
 
   let allocate (vm : t) (n : int) : t =

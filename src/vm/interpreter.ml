@@ -294,11 +294,28 @@ module MakeVM (VM : VM) = struct
     match l, r with
     | LVoid, _ -> vm
     | LRef n, _ -> VM.storeRef vm n r
-    | LMember (LRef n, m), _ -> VM.storeRefObject vm n m r
-    | LIndex (LRef n, Int i), _ -> VM.storeRefObject vm n i r
+    | LMember (LRef n, m), _ -> VM.storeRefObject vm n [ m ] r
+    | LIndex (LRef n, Int i), _ -> VM.storeRefObject vm n [ i ] r
     | LTuple l_elems, Object r_elems ->
       List.fold_left2 (fun vm l r -> store vm l r) vm (Array.to_list l_elems) (Array.to_list r_elems)
-    | _ -> failwith "invalid store"
+    | _ ->
+      let n, i = getIndirectAccess vm l in
+      VM.storeRefObject vm n i r
+
+  and getIndirectAccess (vm : VM.t) (l : lvalue) =
+    match l with
+    | LVoid -> failwith "getIndirectAccess: void"
+    | LRef _ -> failwith "getIndirectAccess: not indirect"
+    | LTuple _ -> failwith "getIndirectAccess: tuple"
+    | LMember (LRef n, m) -> n, [ m ]
+    | LIndex (LRef n, Int i) -> n, [ i ]
+    | LMember (l, m) ->
+      let n, i = getIndirectAccess vm l in
+      n, i @ [ m ]
+    | LIndex (l, Int m) ->
+      let n, i = getIndirectAccess vm l in
+      n, i @ [ m ]
+    | LIndex (_, _) -> failwith "getIndirectAccess: index is not evaluated"
   ;;
 
   let newVM = VM.newVM
