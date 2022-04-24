@@ -201,10 +201,10 @@ void fix_copy_array(size_t size, fix16_t *dest, fix16_t *src) {
       dest[i] = src[i];
 }
 
-float float_random() { return (float)rand() / RAND_MAX; }
+float float_random() { return (float)rand() / (float)RAND_MAX; }
 
 fix16_t fix_random() {
-   float temp = ((float)rand() / RAND_MAX) * 0x00010000;
+   float temp = ((float)rand() / (float)RAND_MAX) * 0x00010000;
    return (fix16_t)temp;
 }
 

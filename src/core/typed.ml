@@ -196,7 +196,7 @@ let rec print_exp e =
     [%pla {|<#e#>[<#index#>]|}]
   | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
   | ECall { instance; path; args } ->
-    let instance = CCOpt.map_or ~default:Pla.unit (fun s -> [%pla {|<#s#s>:|}]) instance in
+    let instance = CCOption.map_or ~default:Pla.unit (fun s -> [%pla {|<#s#s>:|}]) instance in
     let path = print_path path in
     let args = Pla.map_sep Pla.commaspace print_exp args in
     [%pla {|<#instance#><#path#>(<#args#>)|}]
