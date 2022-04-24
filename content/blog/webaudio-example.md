@@ -5,7 +5,7 @@ layout = "post"
 
 +++
 
-For a long time it has been possible to generate JavaScript code that runs in the browser (check the [Vult demo](http://localhost:1313/vult/demo/)). However the code was not very easy to integrate since it still needed some manual coding.
+For a long time it has been possible to generate JavaScript code that runs in the browser (check the [Vult demo](http://vult-dsp.github.io/vult/demo/)). However the code was not very easy to integrate since it still needed some manual coding.
 
 Now Vult provides a new template for JavaScript that generates the code of a [ScriptProcessorNode](https://developer.mozilla.org/en-US/docs/Web/API/ScriptProcessorNode) that can be easily added to a Web Audio project.
 

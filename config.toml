@@ -1,4 +1,4 @@
-baseurl = "http://vult-dsp.github.io/vult/"
+baseurl = "https://vult-dsp.github.io/vult/"
 languageCode = "en-us"
 title = "Vult Language"
 theme = "vult"

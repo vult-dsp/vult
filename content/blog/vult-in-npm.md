@@ -12,7 +12,7 @@ In the last months I have been making many improvements to the Vult compiler. Th
 
 <!--more-->
 
-I have been using `js_of_ocaml` for quite some time to convert parts of the Vult compiler to JavaScript that runs in the live demo page http://vult-dsp.github.io/vult/demo/ however the code there does not perform any I/O to disk since it's intended to run in the web browser.
+I have been using `js_of_ocaml` for quite some time to convert parts of the Vult compiler to JavaScript that runs in the live demo page https://vult-dsp.github.io/vult/demo/ however the code there does not perform any I/O to disk since it's intended to run in the web browser.
 
 I tried to convert the whole application to JavaScript to see if it could run (as it is) with the latest improvements of `js_of_ocaml`. That way I can distribute a JavaScript version that can be run with node.js. Node.js has many advantages, for example:
 
