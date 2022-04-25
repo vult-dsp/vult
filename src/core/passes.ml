@@ -42,6 +42,10 @@ type env =
   ; args : Util.Args.args
   }
 
+type enabled_disabled =
+  | Enabled
+  | Disabled
+
 let default_data () : data =
   { repeat = false; ticks = Hashtbl.create 16; function_deps = Map.empty; type_deps = Map.empty }
 ;;
@@ -270,7 +274,7 @@ module IfExpressions = struct
     | _ -> state, e
   ;;
 
-  let mapper = { Mapper.identity with stmt; exp; stmt_env }
+  let mapper enabled = if enabled = Enabled then { Mapper.identity with stmt; exp; stmt_env } else Mapper.identity
 end
 
 module LiteralArrays = struct
@@ -298,7 +302,7 @@ module LiteralArrays = struct
     | _ -> state, e
   ;;
 
-  let mapper = { Mapper.identity with exp; stmt_env }
+  let mapper enabled = if enabled = Enabled then { Mapper.identity with exp; stmt_env } else Mapper.identity
 end
 
 module Tuples = struct
@@ -381,10 +385,14 @@ module Tuples = struct
       in
       let s = { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid None; loc = rloc } }); loc } in
       reapply state, s :: bindings
-    (* bind multi return calls to the context *)
+    (* Remove the return type of calls bound to wild *)
+    | { s = StmtBind ({ l = LWild; _ }, { e = ECall _; t = { t = TVoid _; _ }; _ }); _ } -> state, [ s ]
     | { s = StmtBind (({ l = LWild; _ } as lhs), ({ e = ECall _; loc = rloc; _ } as rhs)); loc } ->
-      let s = { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid None; loc = rloc } }); loc } in
+      let s =
+        { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid (Some [ rhs.t ]); loc = rloc } }); loc }
+      in
       reapply state, [ s ]
+    (* Bind returned tupples to the environment *)
     | { s = StmtReturn { e = ETuple elems; loc = eloc; _ }; loc } ->
       let name, ctx_name, ctx_t = currentFunction env in
       let ctx = { l = LId ctx_name; t = ctx_t; loc } in
@@ -410,7 +418,9 @@ module Tuples = struct
     | _ -> state, [ top ]
   ;;
 
-  let mapper = { Mapper.identity with stmt; stmt_env; exp; top_stmt }
+  let mapper enabled =
+    if enabled = Enabled then { Mapper.identity with stmt; stmt_env; exp; top_stmt } else Mapper.identity
+  ;;
 end
 
 module Builtin = struct
@@ -425,7 +435,7 @@ module Builtin = struct
     | _ -> state, e
   ;;
 
-  let mapper = { Mapper.identity with exp }
+  let mapper enabled = if enabled = Enabled then { Mapper.identity with exp } else Mapper.identity
 end
 
 module Cast = struct
@@ -438,7 +448,7 @@ module Cast = struct
     | _ -> state, e
   ;;
 
-  let mapper = { Mapper.identity with exp }
+  let mapper enabled = if enabled = Enabled then { Mapper.identity with exp } else Mapper.identity
 end
 
 module Canonize = struct
@@ -487,7 +497,7 @@ module Canonize = struct
     | _ -> state, e
   ;;
 
-  let mapper = { Mapper.identity with exp }
+  let mapper enabled = if enabled = Enabled then { Mapper.identity with exp } else Mapper.identity
 end
 
 module Simplify = struct
@@ -531,7 +541,7 @@ module Simplify = struct
     | _ -> state, e
   ;;
 
-  let mapper = { Mapper.identity with exp }
+  let mapper enabled = if enabled = Enabled then { Mapper.identity with exp } else Mapper.identity
 end
 
 module Sort = struct
@@ -591,19 +601,19 @@ end
 
 let passes =
   Location.mapper
-  |> Mapper.seq Simplify.mapper
-  |> Mapper.seq Canonize.mapper
-  |> Mapper.seq Builtin.mapper
-  |> Mapper.seq IfExpressions.mapper
-  |> Mapper.seq Tuples.mapper
-  |> Mapper.seq Cast.mapper
-  |> Mapper.seq LiteralArrays.mapper
+  |> Mapper.seq (Canonize.mapper Enabled)
+  |> Mapper.seq (Simplify.mapper Enabled)
+  |> Mapper.seq (Builtin.mapper Enabled)
+  |> Mapper.seq (IfExpressions.mapper Enabled)
+  |> Mapper.seq (Tuples.mapper Enabled)
+  |> Mapper.seq (Cast.mapper Enabled)
+  |> Mapper.seq (LiteralArrays.mapper Enabled)
 ;;
 
 let apply env state prog =
   let rec loop state prog n =
-    if n > 20
-    then prog
+    if n > 100
+    then failwith "too many repeats"
     else (
       let state, prog = Mapper.prog passes env state prog in
       let data = Mapper.getData state in
