@@ -43,6 +43,22 @@ function Wav_file_process_type_init(_ctx)
    Wav_file_osc_wave_type_init(_ctx.inst_19a53)
 end
 
+function Wav_file_noteOn_type_init(_ctx)
+   Wav_file_process_type_init(_ctx)
+end
+
+function Wav_file_noteOff_type_init(_ctx)
+   Wav_file_process_type_init(_ctx)
+end
+
+function Wav_file_controlChange_type_init(_ctx)
+   Wav_file_process_type_init(_ctx)
+end
+
+function Wav_file_default_type_init(_ctx)
+   Wav_file_process_type_init(_ctx)
+end
+
 function Wav_file_index(_ctx)
    _ctx.i = ((1 + _ctx.i) % Wav_file_ext_wave_samples())
    return _ctx.i

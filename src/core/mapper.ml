@@ -394,6 +394,8 @@ let top_stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) 
   | { top = TopType descr; _ } ->
     let state, descr = struct_descr mapper sub_env state descr in
     applyExpander mapper.top_stmt env state { top = TopType descr; loc }
+  | { top = TopAlias { path; alias_of }; _ } ->
+    applyExpander mapper.top_stmt env state { top = TopAlias { path; alias_of }; loc }
 ;;
 
 let prog (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (p : prog) : 'data state * prog =

@@ -15,6 +15,14 @@ typedef struct Noise_process_type {
    int32_t x2;
 } Noise_process_type;
 
+typedef struct Noise_process_type Noise_noteOn_type;
+
+typedef struct Noise_process_type Noise_noteOff_type;
+
+typedef struct Noise_process_type Noise_controlChange_type;
+
+typedef struct Noise_process_type Noise_default_type;
+
 static_inline void Noise_pinker_type_init(Noise_pinker_type& _ctx) {
    _ctx.w1 = 0.0f;
 }
@@ -23,6 +31,22 @@ static_inline void Noise_process_type_init(Noise_process_type& _ctx) {
    Noise_pinker_type_init(_ctx.inst_16d3d);
    _ctx.x1 = 0;
    _ctx.x2 = 0;
+}
+
+static_inline void Noise_noteOn_type_init(Noise_noteOn_type& _ctx) {
+   Noise_process_type_init(_ctx);
+}
+
+static_inline void Noise_noteOff_type_init(Noise_noteOff_type& _ctx) {
+   Noise_process_type_init(_ctx);
+}
+
+static_inline void Noise_controlChange_type_init(Noise_controlChange_type& _ctx) {
+   Noise_process_type_init(_ctx);
+}
+
+static_inline void Noise_default_type_init(Noise_default_type& _ctx) {
+   Noise_process_type_init(_ctx);
 }
 
 static_inline float Noise_pinker(Noise_pinker_type& _ctx, float x) {

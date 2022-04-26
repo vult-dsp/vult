@@ -70,6 +70,22 @@ function Ladder_process_type_init(_ctx)
    Ladder_process_heun_type_init(_ctx.inst_1a0c3)
 end
 
+function Ladder_noteOn_type_init(_ctx)
+   Ladder_process_type_init(_ctx)
+end
+
+function Ladder_noteOff_type_init(_ctx)
+   Ladder_process_type_init(_ctx)
+end
+
+function Ladder_controlChange_type_init(_ctx)
+   Ladder_process_type_init(_ctx)
+end
+
+function Ladder_default_type_init(_ctx)
+   Ladder_process_type_init(_ctx)
+end
+
 function Util_edge(_ctx, x)
    local ret = (x and (_ctx.pre == false))
    _ctx.pre = x

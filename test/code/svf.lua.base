@@ -50,6 +50,22 @@ function Svf_process_type_init(_ctx)
    _ctx.z2 = 0.0
 end
 
+function Svf_noteOn_type_init(_ctx)
+   Svf_process_type_init(_ctx)
+end
+
+function Svf_noteOff_type_init(_ctx)
+   Svf_process_type_init(_ctx)
+end
+
+function Svf_controlChange_type_init(_ctx)
+   Svf_process_type_init(_ctx)
+end
+
+function Svf_default_type_init(_ctx)
+   Svf_process_type_init(_ctx)
+end
+
 function Util_edge(_ctx, x)
    local ret = (x and (_ctx.pre == false))
    _ctx.pre = x

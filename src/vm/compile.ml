@@ -339,6 +339,7 @@ let compile_top (env : env) (s : top_stmt) =
     let env = { env with functions; fcount = env.fcount + 1 } in
     env, [ External ]
   | TopType _ -> env, []
+  | TopAlias _ -> env, []
   | TopFunction ({ name; args; _ }, body) ->
     let index = env.fcount in
     let functions = Map.add name (F index) env.functions in

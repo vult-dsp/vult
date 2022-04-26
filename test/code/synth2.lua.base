@@ -89,6 +89,14 @@ function Synth2_mono_noteOn_type_init(_ctx)
    _ctx.pre = 0
 end
 
+function Synth2_mono_noteOff_type_init(_ctx)
+   Synth2_mono_noteOn_type_init(_ctx)
+end
+
+function Synth2_mono_isGateOn_type_init(_ctx)
+   Synth2_mono_noteOn_type_init(_ctx)
+end
+
 function Synth2_process_type_init(_ctx)
    _ctx.amp_s = 0.0
    _ctx.cut = 0.0
@@ -104,6 +112,22 @@ function Synth2_process_type_init(_ctx)
    _ctx.res = 0.0
    _ctx.volume = 0.0
    _ctx.wave = 0.0
+end
+
+function Synth2_noteOn_type_init(_ctx)
+   Synth2_process_type_init(_ctx)
+end
+
+function Synth2_noteOff_type_init(_ctx)
+   Synth2_process_type_init(_ctx)
+end
+
+function Synth2_controlChange_type_init(_ctx)
+   Synth2_process_type_init(_ctx)
+end
+
+function Synth2_default_type_init(_ctx)
+   Synth2_process_type_init(_ctx)
 end
 
 function Synth2_minFixed()

@@ -47,11 +47,43 @@ function Phase_process_type_init(_ctx)
    _ctx.rate = 0.0
 end
 
+function Phase_noteOn_type_init(_ctx)
+   Phase_process_type_init(_ctx)
+end
+
+function Phase_noteOff_type_init(_ctx)
+   Phase_process_type_init(_ctx)
+end
+
+function Phase_controlChange_type_init(_ctx)
+   Phase_process_type_init(_ctx)
+end
+
+function Phase_default_type_init(_ctx)
+   Phase_process_type_init(_ctx)
+end
+
 function Phd_process_type_init(_ctx)
    Phase_process_type_init(_ctx.inst_18aec)
    Util_smooth_type_init(_ctx.inst_295ec)
    Phase_process_type_init(_ctx.inst_38aec)
    _ctx.pre_phase1 = 0.0
+end
+
+function Phd_noteOn_type_init(_ctx)
+   Phd_process_type_init(_ctx)
+end
+
+function Phd_noteOff_type_init(_ctx)
+   Phd_process_type_init(_ctx)
+end
+
+function Phd_controlChange_type_init(_ctx)
+   Phd_process_type_init(_ctx)
+end
+
+function Phd_default_type_init(_ctx)
+   Phd_process_type_init(_ctx)
 end
 
 function Util_edge(_ctx, x)

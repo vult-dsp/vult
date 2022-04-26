@@ -30,6 +30,14 @@ typedef struct Phasedist_process_type {
    fix16_t volume;
 } Phasedist_process_type;
 
+typedef struct Phasedist_process_type Phasedist_noteOn_type;
+
+typedef struct Phasedist_process_type Phasedist_noteOff_type;
+
+typedef struct Phasedist_process_type Phasedist_controlChange_type;
+
+typedef struct Phasedist_process_type Phasedist_default_type;
+
 static_inline void Phasedist_smooth_type_init(Phasedist_smooth_type& _ctx) {
    _ctx.x = 0x0 /* 0.000000 */;
 }
@@ -45,6 +53,22 @@ static_inline void Phasedist_phasor_type_init(Phasedist_phasor_type& _ctx) {
 }
 
 void Phasedist_process_type_init(Phasedist_process_type& _ctx);
+
+static_inline void Phasedist_noteOn_type_init(Phasedist_noteOn_type& _ctx) {
+   Phasedist_process_type_init(_ctx);
+}
+
+static_inline void Phasedist_noteOff_type_init(Phasedist_noteOff_type& _ctx) {
+   Phasedist_process_type_init(_ctx);
+}
+
+static_inline void Phasedist_controlChange_type_init(Phasedist_controlChange_type& _ctx) {
+   Phasedist_process_type_init(_ctx);
+}
+
+static_inline void Phasedist_default_type_init(Phasedist_default_type& _ctx) {
+   Phasedist_process_type_init(_ctx);
+}
 
 static_inline fix16_t Phasedist_smooth(Phasedist_smooth_type& _ctx, fix16_t input) {
    _ctx.x = (fix_mul(0x147 /* 0.005000 */, (input + (- _ctx.x))) + _ctx.x);

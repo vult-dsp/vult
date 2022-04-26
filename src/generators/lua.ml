@@ -227,6 +227,7 @@ let print_top_stmt t =
     [%pla {|<#def#><#body#><#><#>|}]
   | TopExternal _ -> Pla.unit
   | TopType _ -> Pla.unit
+  | TopAlias _ -> Pla.unit
   | TopDecl ({ d = DId (name, _); _ }, rhs) ->
     let rhs = print_exp rhs in
     [%pla {|local <#name#s> = <#rhs#><#>|}]

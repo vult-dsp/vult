@@ -46,6 +46,22 @@ function Saw_ptr1_process_type_init(_ctx)
    _ctx.rate = 0.0
 end
 
+function Saw_ptr1_noteOn_type_init(_ctx)
+   Saw_ptr1_process_type_init(_ctx)
+end
+
+function Saw_ptr1_noteOff_type_init(_ctx)
+   Saw_ptr1_process_type_init(_ctx)
+end
+
+function Saw_ptr1_controlChange_type_init(_ctx)
+   Saw_ptr1_process_type_init(_ctx)
+end
+
+function Saw_ptr1_default_type_init(_ctx)
+   Saw_ptr1_process_type_init(_ctx)
+end
+
 function Util_edge(_ctx, x)
    local ret = (x and (_ctx.pre == false))
    _ctx.pre = x
@@ -226,8 +242,8 @@ function Saw_ptr1_process(_ctx, cv)
    end
    local s1 = _ctx.rate
    local dc = -1.0
-   _ctx.phase = (_ctx.phase + _ctx.rate)
    local out = 0.0
+   _ctx.phase = (_ctx.phase + _ctx.rate)
    if (_ctx.phase > 1.0) then
       _ctx.phase = (-1.0 + _ctx.phase)
    else

@@ -50,6 +50,10 @@ typedef struct Delay_mono_noteOn_type {
    int32_t pre;
 } Delay_mono_noteOn_type;
 
+typedef struct Delay_mono_noteOn_type Delay_mono_noteOff_type;
+
+typedef struct Delay_mono_noteOn_type Delay_mono_isGateOn_type;
+
 typedef struct Delay_process_type {
    float detune;
    float feedback;
@@ -66,6 +70,14 @@ typedef struct Delay_process_type {
    float time;
    float volume;
 } Delay_process_type;
+
+typedef struct Delay_process_type Delay_noteOn_type;
+
+typedef struct Delay_process_type Delay_noteOff_type;
+
+typedef struct Delay_process_type Delay_controlChange_type;
+
+typedef struct Delay_process_type Delay_default_type;
 
 static_inline void Delay_smooth_type_init(Delay_smooth_type& _ctx) {
    _ctx.x = 0.0f;
@@ -112,7 +124,31 @@ static_inline void Delay_delay_type_init(Delay_delay_type& _ctx) {
 
 void Delay_mono_noteOn_type_init(Delay_mono_noteOn_type& _ctx);
 
+static_inline void Delay_mono_noteOff_type_init(Delay_mono_noteOff_type& _ctx) {
+   Delay_mono_noteOn_type_init(_ctx);
+}
+
+static_inline void Delay_mono_isGateOn_type_init(Delay_mono_isGateOn_type& _ctx) {
+   Delay_mono_noteOn_type_init(_ctx);
+}
+
 void Delay_process_type_init(Delay_process_type& _ctx);
+
+static_inline void Delay_noteOn_type_init(Delay_noteOn_type& _ctx) {
+   Delay_process_type_init(_ctx);
+}
+
+static_inline void Delay_noteOff_type_init(Delay_noteOff_type& _ctx) {
+   Delay_process_type_init(_ctx);
+}
+
+static_inline void Delay_controlChange_type_init(Delay_controlChange_type& _ctx) {
+   Delay_process_type_init(_ctx);
+}
+
+static_inline void Delay_default_type_init(Delay_default_type& _ctx) {
+   Delay_process_type_init(_ctx);
+}
 
 static_inline float Delay_smooth(Delay_smooth_type& _ctx, float input) {
    _ctx.x = ((0.005f * (input + (- _ctx.x))) + _ctx.x);

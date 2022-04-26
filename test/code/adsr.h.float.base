@@ -44,6 +44,14 @@ typedef struct Adsr_process_type {
    float knob4;
 } Adsr_process_type;
 
+typedef struct Adsr_process_type Adsr_noteOn_type;
+
+typedef struct Adsr_process_type Adsr_noteOff_type;
+
+typedef struct Adsr_process_type Adsr_controlChange_type;
+
+typedef struct Adsr_process_type Adsr_default_type;
+
 static_inline void Util_edge_type_init(Util_edge_type& _ctx) {
    _ctx.pre = false;
 }
@@ -68,6 +76,22 @@ static_inline void Util_average2_type_init(Util_average2_type& _ctx) {
 void Adsr_do_type_init(Adsr_do_type& _ctx);
 
 void Adsr_process_type_init(Adsr_process_type& _ctx);
+
+static_inline void Adsr_noteOn_type_init(Adsr_noteOn_type& _ctx) {
+   Adsr_process_type_init(_ctx);
+}
+
+static_inline void Adsr_noteOff_type_init(Adsr_noteOff_type& _ctx) {
+   Adsr_process_type_init(_ctx);
+}
+
+static_inline void Adsr_controlChange_type_init(Adsr_controlChange_type& _ctx) {
+   Adsr_process_type_init(_ctx);
+}
+
+static_inline void Adsr_default_type_init(Adsr_default_type& _ctx) {
+   Adsr_process_type_init(_ctx);
+}
 
 static_inline bool Util_edge(Util_edge_type& _ctx, bool x) {
    bool ret = (x && (_ctx.pre == false));

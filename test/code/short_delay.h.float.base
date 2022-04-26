@@ -21,6 +21,14 @@ typedef struct Short_delay_process_type {
    Short_delay_do_type inst_2ba3b;
 } Short_delay_process_type;
 
+typedef struct Short_delay_process_type Short_delay_noteOn_type;
+
+typedef struct Short_delay_process_type Short_delay_noteOff_type;
+
+typedef struct Short_delay_process_type Short_delay_controlChange_type;
+
+typedef struct Short_delay_process_type Short_delay_default_type;
+
 static_inline void Short_delay_soft_type_init(Short_delay_soft_type& _ctx) {
    _ctx.x2 = 0.0f;
    _ctx.x3 = 0.0f;
@@ -39,6 +47,22 @@ static_inline void Short_delay_do_type_init(Short_delay_do_type& _ctx) {
 static_inline void Short_delay_process_type_init(Short_delay_process_type& _ctx) {
    Short_delay_soft_type_init(_ctx.inst_1593b);
    Short_delay_do_type_init(_ctx.inst_2ba3b);
+}
+
+static_inline void Short_delay_noteOn_type_init(Short_delay_noteOn_type& _ctx) {
+   Short_delay_process_type_init(_ctx);
+}
+
+static_inline void Short_delay_noteOff_type_init(Short_delay_noteOff_type& _ctx) {
+   Short_delay_process_type_init(_ctx);
+}
+
+static_inline void Short_delay_controlChange_type_init(Short_delay_controlChange_type& _ctx) {
+   Short_delay_process_type_init(_ctx);
+}
+
+static_inline void Short_delay_default_type_init(Short_delay_default_type& _ctx) {
+   Short_delay_process_type_init(_ctx);
 }
 
 static_inline float Saturate_tanh_table_raw_c0(int32_t index) {

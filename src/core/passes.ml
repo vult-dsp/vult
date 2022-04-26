@@ -551,6 +551,7 @@ module Sort = struct
     match stmts with
     | [] -> List.rev types, List.rev functions, List.rev externals
     | ({ top = TopType { path; _ }; _ } as h) :: t -> split ((path, h) :: types) functions externals t
+    | ({ top = TopAlias { path; _ }; _ } as h) :: t -> split ((path, h) :: types) functions externals t
     | ({ top = TopFunction ({ name; _ }, _); _ } as h) :: t -> split types ((name, h) :: functions) externals t
     | ({ top = TopExternal _; _ } as h) :: t -> split types functions (h :: externals) t
   ;;
@@ -559,6 +560,7 @@ module Sort = struct
     match stmts with
     | [] -> List.rev sorted
     | { top = TopType { path = name; _ }; _ } :: t
+    | { top = TopAlias { path = name; _ }; _ } :: t
     | { top = TopFunction ({ name; _ }, _); _ } :: t
     | { top = TopExternal ({ name; _ }, _); _ } :: t ->
       let visited, sorted = pullIn deps table visited sorted name in
@@ -571,7 +573,9 @@ module Sort = struct
       match Map.find_opt name deps with
       | None ->
         let visited = Set.add name visited in
-        visited, sorted
+        (match Map.find_opt name table with
+        | Some stmt -> visited, stmt :: sorted
+        | None -> visited, sorted)
       | Some dep_set ->
         let visited = Set.add name visited in
         let missing = Set.filter (fun name -> not (Set.mem name visited)) dep_set in
@@ -612,7 +616,7 @@ let passes =
 
 let apply env state prog =
   let rec loop state prog n =
-    if n > 100
+    if n > 10
     then failwith "too many repeats"
     else (
       let state, prog = Mapper.prog passes env state prog in

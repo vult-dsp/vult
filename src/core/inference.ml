@@ -90,7 +90,8 @@ module ToProg = struct
           let t = { t = TStruct { path = ps; members }; loc } in
           let types = Map.add ps t state.types in
           { state with types }, t
-        | Some { descr = Simple; _ } -> failwith "Type does not have members"))
+        | Some { descr = Simple; _ } -> failwith "Type does not have members"
+        | Some { descr = Alias _; _ } -> failwith ""))
     | T.TELink t -> type_ env state t
     | T.TEComposed ("array", [ t; dim ]) ->
       let state, t = type_ env state t in
@@ -317,6 +318,10 @@ module ToProg = struct
       let types = Map.add p t state.types in
       { state with types }, [ { top = TopType struct_descr; loc = t.loc } ]
     | TopEnum _ -> state, []
+    | TopAlias { path = p; alias_of } ->
+      let p = path p in
+      let alias_of = path alias_of in
+      state, [ { top = TopAlias { path = p; alias_of }; loc = t.loc } ]
   ;;
 
   let top_stmt_list (env : Env.in_top) (state : state) (t : Typed.top_stmt list) = list top_stmt env state t
@@ -330,6 +335,7 @@ module ToProg = struct
   let isType s =
     match s with
     | { top = TopType _; _ } -> true
+    | { top = TopAlias _; _ } -> true
     | _ -> false
   ;;
 
@@ -845,8 +851,9 @@ let rec function_def (iargs : Args.args) (env : Env.in_context) ((def : Syntax.f
 and function_def_opt (iargs : Args.args) (env : Env.in_context) def_opt =
   match def_opt with
   | None -> env, None
-  | Some def_body ->
-    let env, def_body = function_def iargs env def_body in
+  | Some (def, body) ->
+    let env = Env.addAliasToContext env def.name def.loc in
+    let env, def_body = function_def iargs env (def, body) in
     env, Some def_body
 ;;
 
@@ -929,6 +936,7 @@ let getTypesFromModule m =
       match t.descr with
       | Record members when Map.is_empty members -> s
       | Record _ -> t :: s
+      | Alias _ -> t :: s
       | Simple | Enum _ -> s)
     []
     m.Env.types
@@ -954,6 +962,7 @@ let createTypes (env : Env.in_top) =
         let members = Map.fold (fun _ (var : Env.var) s -> (var.name, var.t, var.loc) :: s) [] members in
         let members = List.sort (fun (n1, _, _) (n2, _, _) -> compare n1 n2) members in
         { top = TopType { path = t.path; members }; loc = t.loc }
+      | Alias (path, alias_of) -> { top = TopAlias { path; alias_of }; loc = t.loc }
       | Enum _ | Simple -> failwith "There should not be other than records here")
     types
 ;;

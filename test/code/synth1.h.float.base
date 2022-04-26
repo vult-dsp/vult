@@ -53,6 +53,14 @@ typedef struct Synth1_process_type {
    float volume;
 } Synth1_process_type;
 
+typedef struct Synth1_process_type Synth1_noteOn_type;
+
+typedef struct Synth1_process_type Synth1_noteOff_type;
+
+typedef struct Synth1_process_type Synth1_controlChange_type;
+
+typedef struct Synth1_process_type Synth1_default_type;
+
 static_inline void Synth1_smooth_type_init(Synth1_smooth_type& _ctx) {
    _ctx.x = 0.0f;
 }
@@ -81,6 +89,22 @@ static_inline void Synth1_lfo_type_init(Synth1_lfo_type& _ctx) {
 }
 
 void Synth1_process_type_init(Synth1_process_type& _ctx);
+
+static_inline void Synth1_noteOn_type_init(Synth1_noteOn_type& _ctx) {
+   Synth1_process_type_init(_ctx);
+}
+
+static_inline void Synth1_noteOff_type_init(Synth1_noteOff_type& _ctx) {
+   Synth1_process_type_init(_ctx);
+}
+
+static_inline void Synth1_controlChange_type_init(Synth1_controlChange_type& _ctx) {
+   Synth1_process_type_init(_ctx);
+}
+
+static_inline void Synth1_default_type_init(Synth1_default_type& _ctx) {
+   Synth1_process_type_init(_ctx);
+}
 
 static_inline float Synth1_smooth(Synth1_smooth_type& _ctx, float input) {
    _ctx.x = ((0.005f * (input + (- _ctx.x))) + _ctx.x);

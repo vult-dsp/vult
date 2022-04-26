@@ -41,6 +41,14 @@ typedef struct Sawcore_process_type {
    bool reset_state;
 } Sawcore_process_type;
 
+typedef struct Sawcore_process_type Sawcore_noteOn_type;
+
+typedef struct Sawcore_process_type Sawcore_noteOff_type;
+
+typedef struct Sawcore_process_type Sawcore_controlChange_type;
+
+typedef struct Sawcore_process_type Sawcore_default_type;
+
 static_inline void Util_edge_type_init(Util_edge_type& _ctx) {
    _ctx.pre = false;
 }
@@ -68,6 +76,22 @@ static_inline void Sawcore_ptr_w2_type_init(Sawcore_ptr_w2_type& _ctx) {
 }
 
 void Sawcore_process_type_init(Sawcore_process_type& _ctx);
+
+static_inline void Sawcore_noteOn_type_init(Sawcore_noteOn_type& _ctx) {
+   Sawcore_process_type_init(_ctx);
+}
+
+static_inline void Sawcore_noteOff_type_init(Sawcore_noteOff_type& _ctx) {
+   Sawcore_process_type_init(_ctx);
+}
+
+static_inline void Sawcore_controlChange_type_init(Sawcore_controlChange_type& _ctx) {
+   Sawcore_process_type_init(_ctx);
+}
+
+static_inline void Sawcore_default_type_init(Sawcore_default_type& _ctx) {
+   Sawcore_process_type_init(_ctx);
+}
 
 static_inline bool Util_edge(Util_edge_type& _ctx, bool x) {
    bool ret = (x && (_ctx.pre == false));

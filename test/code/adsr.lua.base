@@ -58,6 +58,22 @@ function Adsr_process_type_init(_ctx)
    _ctx.knob4 = 0.0
 end
 
+function Adsr_noteOn_type_init(_ctx)
+   Adsr_process_type_init(_ctx)
+end
+
+function Adsr_noteOff_type_init(_ctx)
+   Adsr_process_type_init(_ctx)
+end
+
+function Adsr_controlChange_type_init(_ctx)
+   Adsr_process_type_init(_ctx)
+end
+
+function Adsr_default_type_init(_ctx)
+   Adsr_process_type_init(_ctx)
+end
+
 function Util_edge(_ctx, x)
    local ret = (x and (_ctx.pre == false))
    _ctx.pre = x

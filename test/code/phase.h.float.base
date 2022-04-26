@@ -33,6 +33,14 @@ typedef struct Phase_process_type {
    float rate;
 } Phase_process_type;
 
+typedef struct Phase_process_type Phase_noteOn_type;
+
+typedef struct Phase_process_type Phase_noteOff_type;
+
+typedef struct Phase_process_type Phase_controlChange_type;
+
+typedef struct Phase_process_type Phase_default_type;
+
 static_inline void Util_edge_type_init(Util_edge_type& _ctx) {
    _ctx.pre = false;
 }
@@ -59,6 +67,22 @@ static_inline void Phase_process_type_init(Phase_process_type& _ctx) {
    Util_edge_type_init(_ctx.inst_2048a);
    _ctx.phase = 0.0f;
    _ctx.rate = 0.0f;
+}
+
+static_inline void Phase_noteOn_type_init(Phase_noteOn_type& _ctx) {
+   Phase_process_type_init(_ctx);
+}
+
+static_inline void Phase_noteOff_type_init(Phase_noteOff_type& _ctx) {
+   Phase_process_type_init(_ctx);
+}
+
+static_inline void Phase_controlChange_type_init(Phase_controlChange_type& _ctx) {
+   Phase_process_type_init(_ctx);
+}
+
+static_inline void Phase_default_type_init(Phase_default_type& _ctx) {
+   Phase_process_type_init(_ctx);
 }
 
 static_inline bool Util_edge(Util_edge_type& _ctx, bool x) {

@@ -1,6 +1,7 @@
 (library
  (name util)
- (modules Components Error FileIO Float Loc Args Maps Fitting WaveFile)
+ (modules Components Error FileIO Float Loc Args Maps Fitting WaveFile
+   Profile)
  (libraries containers pla)
  (preprocess
   (pps pla.ppx)))

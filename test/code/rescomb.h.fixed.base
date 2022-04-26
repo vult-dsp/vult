@@ -43,6 +43,14 @@ typedef struct Rescomb_process_type {
    Rescomb_do_type inst_100b6;
 } Rescomb_process_type;
 
+typedef struct Rescomb_process_type Rescomb_noteOn_type;
+
+typedef struct Rescomb_process_type Rescomb_noteOff_type;
+
+typedef struct Rescomb_process_type Rescomb_controlChange_type;
+
+typedef struct Rescomb_process_type Rescomb_default_type;
+
 static_inline void Util_edge_type_init(Util_edge_type& _ctx) {
    _ctx.pre = false;
 }
@@ -77,6 +85,22 @@ void Rescomb_do_type_init(Rescomb_do_type& _ctx);
 
 static_inline void Rescomb_process_type_init(Rescomb_process_type& _ctx) {
    Rescomb_do_type_init(_ctx.inst_100b6);
+}
+
+static_inline void Rescomb_noteOn_type_init(Rescomb_noteOn_type& _ctx) {
+   Rescomb_process_type_init(_ctx);
+}
+
+static_inline void Rescomb_noteOff_type_init(Rescomb_noteOff_type& _ctx) {
+   Rescomb_process_type_init(_ctx);
+}
+
+static_inline void Rescomb_controlChange_type_init(Rescomb_controlChange_type& _ctx) {
+   Rescomb_process_type_init(_ctx);
+}
+
+static_inline void Rescomb_default_type_init(Rescomb_default_type& _ctx) {
+   Rescomb_process_type_init(_ctx);
 }
 
 static_inline fix16_t Saturate_soft_tanh_table_raw_c0(int32_t index) {

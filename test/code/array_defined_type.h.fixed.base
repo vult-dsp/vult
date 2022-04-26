@@ -18,6 +18,14 @@ typedef struct Array_defined_type_process_type {
    Array_defined_type_foo_type inst_1c76a;
 } Array_defined_type_process_type;
 
+typedef struct Array_defined_type_process_type Array_defined_type_noteOn_type;
+
+typedef struct Array_defined_type_process_type Array_defined_type_noteOff_type;
+
+typedef struct Array_defined_type_process_type Array_defined_type_controlChange_type;
+
+typedef struct Array_defined_type_process_type Array_defined_type_default_type;
+
 static_inline void Array_defined_type_dot_init(Array_defined_type_dot& _ctx) {
    _ctx.x = 0x0 /* 0.000000 */;
    _ctx.y = 0x0 /* 0.000000 */;
@@ -33,6 +41,22 @@ static_inline void Array_defined_type_foo_type_init(Array_defined_type_foo_type&
 
 static_inline void Array_defined_type_process_type_init(Array_defined_type_process_type& _ctx) {
    Array_defined_type_foo_type_init(_ctx.inst_1c76a);
+}
+
+static_inline void Array_defined_type_noteOn_type_init(Array_defined_type_noteOn_type& _ctx) {
+   Array_defined_type_process_type_init(_ctx);
+}
+
+static_inline void Array_defined_type_noteOff_type_init(Array_defined_type_noteOff_type& _ctx) {
+   Array_defined_type_process_type_init(_ctx);
+}
+
+static_inline void Array_defined_type_controlChange_type_init(Array_defined_type_controlChange_type& _ctx) {
+   Array_defined_type_process_type_init(_ctx);
+}
+
+static_inline void Array_defined_type_default_type_init(Array_defined_type_default_type& _ctx) {
+   Array_defined_type_process_type_init(_ctx);
 }
 
 static_inline void Array_defined_type_foo(Array_defined_type_foo_type& _ctx) {

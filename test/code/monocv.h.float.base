@@ -32,6 +32,10 @@ typedef struct Monocv_mono_noteOn_type {
    int32_t pre;
 } Monocv_mono_noteOn_type;
 
+typedef struct Monocv_mono_noteOn_type Monocv_mono_noteOff_type;
+
+typedef struct Monocv_mono_noteOn_type Monocv_mono_isGateOn_type;
+
 typedef struct Monocv_process_type {
    float Monocv_process_ret_0;
    float Monocv_process_ret_1;
@@ -44,6 +48,14 @@ typedef struct Monocv_process_type {
    Monocv_mono_noteOn_type notes_a7d6;
    float vel;
 } Monocv_process_type;
+
+typedef struct Monocv_process_type Monocv_noteOn_type;
+
+typedef struct Monocv_process_type Monocv_noteOff_type;
+
+typedef struct Monocv_process_type Monocv_controlChange_type;
+
+typedef struct Monocv_process_type Monocv_default_type;
 
 static_inline void Util_edge_type_init(Util_edge_type& _ctx) {
    _ctx.pre = false;
@@ -68,7 +80,31 @@ static_inline void Util_average2_type_init(Util_average2_type& _ctx) {
 
 void Monocv_mono_noteOn_type_init(Monocv_mono_noteOn_type& _ctx);
 
+static_inline void Monocv_mono_noteOff_type_init(Monocv_mono_noteOff_type& _ctx) {
+   Monocv_mono_noteOn_type_init(_ctx);
+}
+
+static_inline void Monocv_mono_isGateOn_type_init(Monocv_mono_isGateOn_type& _ctx) {
+   Monocv_mono_noteOn_type_init(_ctx);
+}
+
 void Monocv_process_type_init(Monocv_process_type& _ctx);
+
+static_inline void Monocv_noteOn_type_init(Monocv_noteOn_type& _ctx) {
+   Monocv_process_type_init(_ctx);
+}
+
+static_inline void Monocv_noteOff_type_init(Monocv_noteOff_type& _ctx) {
+   Monocv_process_type_init(_ctx);
+}
+
+static_inline void Monocv_controlChange_type_init(Monocv_controlChange_type& _ctx) {
+   Monocv_process_type_init(_ctx);
+}
+
+static_inline void Monocv_default_type_init(Monocv_default_type& _ctx) {
+   Monocv_process_type_init(_ctx);
+}
 
 static_inline bool Util_edge(Util_edge_type& _ctx, bool x) {
    bool ret = (x && (_ctx.pre == false));

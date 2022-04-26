@@ -47,10 +47,42 @@ function Phase_process_type_init(_ctx)
    _ctx.rate = 0.0
 end
 
+function Phase_noteOn_type_init(_ctx)
+   Phase_process_type_init(_ctx)
+end
+
+function Phase_noteOff_type_init(_ctx)
+   Phase_process_type_init(_ctx)
+end
+
+function Phase_controlChange_type_init(_ctx)
+   Phase_process_type_init(_ctx)
+end
+
+function Phase_default_type_init(_ctx)
+   Phase_process_type_init(_ctx)
+end
+
 function Sine_process_type_init(_ctx)
    Util_edge_type_init(_ctx.inst_104ba)
    Phase_process_type_init(_ctx.p_8aba)
    _ctx.trig = false
+end
+
+function Sine_noteOn_type_init(_ctx)
+   Sine_process_type_init(_ctx)
+end
+
+function Sine_noteOff_type_init(_ctx)
+   Sine_process_type_init(_ctx)
+end
+
+function Sine_controlChange_type_init(_ctx)
+   Sine_process_type_init(_ctx)
+end
+
+function Sine_default_type_init(_ctx)
+   Sine_process_type_init(_ctx)
 end
 
 function Util_edge(_ctx, x)

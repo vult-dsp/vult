@@ -51,6 +51,22 @@ function Tricore_process_type_init(_ctx)
    _ctx.reset_state = false
 end
 
+function Tricore_noteOn_type_init(_ctx)
+   Tricore_process_type_init(_ctx)
+end
+
+function Tricore_noteOff_type_init(_ctx)
+   Tricore_process_type_init(_ctx)
+end
+
+function Tricore_controlChange_type_init(_ctx)
+   Tricore_process_type_init(_ctx)
+end
+
+function Tricore_default_type_init(_ctx)
+   Tricore_process_type_init(_ctx)
+end
+
 function Svf_process_type_init(_ctx)
    _ctx.g = 0.0
    Util_change_type_init(_ctx.inst_1b0a2)
@@ -59,6 +75,22 @@ function Svf_process_type_init(_ctx)
    _ctx.r = 0.0
    _ctx.z1 = 0.0
    _ctx.z2 = 0.0
+end
+
+function Svf_noteOn_type_init(_ctx)
+   Svf_process_type_init(_ctx)
+end
+
+function Svf_noteOff_type_init(_ctx)
+   Svf_process_type_init(_ctx)
+end
+
+function Svf_controlChange_type_init(_ctx)
+   Svf_process_type_init(_ctx)
+end
+
+function Svf_default_type_init(_ctx)
+   Svf_process_type_init(_ctx)
 end
 
 function Lfo_soft_type_init(_ctx)
@@ -75,6 +107,22 @@ function Lfo_process_type_init(_ctx)
    _ctx.rate = 0.0
 end
 
+function Lfo_noteOn_type_init(_ctx)
+   Lfo_process_type_init(_ctx)
+end
+
+function Lfo_noteOff_type_init(_ctx)
+   Lfo_process_type_init(_ctx)
+end
+
+function Lfo_controlChange_type_init(_ctx)
+   Lfo_process_type_init(_ctx)
+end
+
+function Lfo_default_type_init(_ctx)
+   Lfo_process_type_init(_ctx)
+end
+
 function Phase_process_type_init(_ctx)
    Util_change_type_init(_ctx.inst_1b08a)
    Util_edge_type_init(_ctx.inst_2048a)
@@ -82,10 +130,30 @@ function Phase_process_type_init(_ctx)
    _ctx.rate = 0.0
 end
 
+function Phase_noteOn_type_init(_ctx)
+   Phase_process_type_init(_ctx)
+end
+
+function Phase_noteOff_type_init(_ctx)
+   Phase_process_type_init(_ctx)
+end
+
+function Phase_controlChange_type_init(_ctx)
+   Phase_process_type_init(_ctx)
+end
+
+function Phase_default_type_init(_ctx)
+   Phase_process_type_init(_ctx)
+end
+
 function Blit_pulse_train_type_init(_ctx)
    Util_change_type_init(_ctx.inst_1b05e)
    _ctx.m = 0
    _ctx.scale = 0.0
+end
+
+function Blit_pulse_start_type_init(_ctx)
+   Blit_pulse_train_type_init(_ctx)
 end
 
 function Blit_osc_blit_type_init(_ctx)
@@ -100,8 +168,28 @@ function Blit_osc_blit_type_init(_ctx)
    _ctx.state_saw = 0.0
 end
 
+function Blit_init_type_init(_ctx)
+   Blit_osc_blit_type_init(_ctx)
+end
+
 function Blit_process_type_init(_ctx)
    Blit_osc_blit_type_init(_ctx.inst_1268b)
+end
+
+function Blit_noteOn_type_init(_ctx)
+   Blit_process_type_init(_ctx)
+end
+
+function Blit_noteOff_type_init(_ctx)
+   Blit_process_type_init(_ctx)
+end
+
+function Blit_controlChange_type_init(_ctx)
+   Blit_process_type_init(_ctx)
+end
+
+function Blit_default_type_init(_ctx)
+   Blit_process_type_init(_ctx)
 end
 
 function Adsr_do_type_init(_ctx)
@@ -120,6 +208,22 @@ function Adsr_process_type_init(_ctx)
    _ctx.knob2 = 0.0
    _ctx.knob3 = 0.0
    _ctx.knob4 = 0.0
+end
+
+function Adsr_noteOn_type_init(_ctx)
+   Adsr_process_type_init(_ctx)
+end
+
+function Adsr_noteOff_type_init(_ctx)
+   Adsr_process_type_init(_ctx)
+end
+
+function Adsr_controlChange_type_init(_ctx)
+   Adsr_process_type_init(_ctx)
+end
+
+function Adsr_default_type_init(_ctx)
+   Adsr_process_type_init(_ctx)
 end
 
 function Voice_4_process_type_init(_ctx)
@@ -151,6 +255,22 @@ function Voice_4_process_type_init(_ctx)
    _ctx.pw4 = 0.0
    _ctx.release = 0.0
    _ctx.sustain = 0.0
+end
+
+function Voice_4_noteOn_type_init(_ctx)
+   Voice_4_process_type_init(_ctx)
+end
+
+function Voice_4_noteOff_type_init(_ctx)
+   Voice_4_process_type_init(_ctx)
+end
+
+function Voice_4_controlChange_type_init(_ctx)
+   Voice_4_process_type_init(_ctx)
+end
+
+function Voice_4_default_type_init(_ctx)
+   Voice_4_process_type_init(_ctx)
 end
 
 function Util_edge(_ctx, x)

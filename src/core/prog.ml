@@ -164,6 +164,10 @@ type top_stmt_d =
   | TopExternal of function_def * string option
   | TopFunction of function_def * stmt
   | TopType of struct_descr
+  | TopAlias of
+      { path : string
+      ; alias_of : string
+      }
 
 and top_stmt =
   { top : top_stmt_d
@@ -359,6 +363,7 @@ module Print = struct
     | TopType { path = p; members } ->
       let members = Pla.map_sep_all Pla.newline print_member members in
       [%pla {|struct <#p#s> {<#members#+>}<#>|}]
+    | TopAlias { path = p; alias_of } -> [%pla {|type <#p#s> = <#alias_of#s><#>|}]
   ;;
 
   let print_prog t = Pla.map_sep_all Pla.newline print_top_stmt t

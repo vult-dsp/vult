@@ -23,6 +23,16 @@ typedef struct Array_return_foo6_type {
    std::array<int32_t, 3> Array_return_foo6_ret_1;
 } Array_return_foo6_type;
 
+typedef struct Array_return_s1 {
+   int32_t x;
+   int32_t y;
+} Array_return_s1;
+
+typedef struct Array_return_foo7_type {
+   int32_t Array_return_foo7_ret_0;
+   Array_return_s1 Array_return_foo7_ret_1;
+} Array_return_foo7_type;
+
 static_inline void Array_return_foo3_type_init(Array_return_foo3_type& _ctx) {
    _ctx.y = 0;
 }
@@ -47,6 +57,16 @@ static_inline void Array_return_foo6_type_init(Array_return_foo6_type& _ctx) {
       _ctx.Array_return_foo6_ret_1[static_cast<uint32_t>(i_0)] = 0;
       i_0 = (1 + i_0);
    }
+}
+
+static_inline void Array_return_s1_init(Array_return_s1& _ctx) {
+   _ctx.x = 0;
+   _ctx.y = 0;
+}
+
+static_inline void Array_return_foo7_type_init(Array_return_foo7_type& _ctx) {
+   _ctx.Array_return_foo7_ret_0 = 0;
+   Array_return_s1_init(_ctx.Array_return_foo7_ret_1);
 }
 
 static_inline std::array<int32_t, 3> Array_return_foo1() {
@@ -83,6 +103,14 @@ static_inline void Array_return_foo6(Array_return_foo6_type& _ctx) {
    std::array<int32_t, 3> x = { 1, 2, 3 };
    _ctx.Array_return_foo6_ret_0 = y;
    _ctx.Array_return_foo6_ret_1 = x;
+   return ;
+}
+
+static_inline void Array_return_foo7(Array_return_foo7_type& _ctx) {
+   std::array<Array_return_s1, 4> s;
+   std::array<int32_t, 4> d;
+   _ctx.Array_return_foo7_ret_0 = d[static_cast<uint32_t>(0)];
+   _ctx.Array_return_foo7_ret_1 = s[static_cast<uint32_t>(0)];
    return ;
 }
 

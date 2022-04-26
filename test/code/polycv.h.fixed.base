@@ -43,6 +43,10 @@ typedef struct Polycv_poly_noteOn_type {
    std::array<int32_t, 4> vel;
 } Polycv_poly_noteOn_type;
 
+typedef struct Polycv_poly_noteOn_type Polycv_poly_noteOff_type;
+
+typedef struct Polycv_poly_noteOn_type Polycv_polyState_type;
+
 typedef struct Polycv_process_type {
    fix16_t Polycv_process_ret_0;
    fix16_t Polycv_process_ret_1;
@@ -59,6 +63,14 @@ typedef struct Polycv_process_type {
    int32_t channel_in;
    Polycv_poly_noteOn_type poly_a0e8;
 } Polycv_process_type;
+
+typedef struct Polycv_process_type Polycv_noteOn_type;
+
+typedef struct Polycv_process_type Polycv_noteOff_type;
+
+typedef struct Polycv_process_type Polycv_controlChange_type;
+
+typedef struct Polycv_process_type Polycv_default_type;
 
 static_inline void Util_edge_type_init(Util_edge_type& _ctx) {
    _ctx.pre = false;
@@ -83,7 +95,31 @@ static_inline void Util_average2_type_init(Util_average2_type& _ctx) {
 
 void Polycv_poly_noteOn_type_init(Polycv_poly_noteOn_type& _ctx);
 
+static_inline void Polycv_poly_noteOff_type_init(Polycv_poly_noteOff_type& _ctx) {
+   Polycv_poly_noteOn_type_init(_ctx);
+}
+
+static_inline void Polycv_polyState_type_init(Polycv_polyState_type& _ctx) {
+   Polycv_poly_noteOn_type_init(_ctx);
+}
+
 void Polycv_process_type_init(Polycv_process_type& _ctx);
+
+static_inline void Polycv_noteOn_type_init(Polycv_noteOn_type& _ctx) {
+   Polycv_process_type_init(_ctx);
+}
+
+static_inline void Polycv_noteOff_type_init(Polycv_noteOff_type& _ctx) {
+   Polycv_process_type_init(_ctx);
+}
+
+static_inline void Polycv_controlChange_type_init(Polycv_controlChange_type& _ctx) {
+   Polycv_process_type_init(_ctx);
+}
+
+static_inline void Polycv_default_type_init(Polycv_default_type& _ctx) {
+   Polycv_process_type_init(_ctx);
+}
 
 static_inline bool Util_edge(Util_edge_type& _ctx, bool x) {
    bool ret = (x && (_ctx.pre == false));

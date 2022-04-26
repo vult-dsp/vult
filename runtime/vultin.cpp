@@ -152,55 +152,6 @@ fix16_t fix_sqrt(fix16_t inValue) {
    return (neg ? -(int32_t)result : (int32_t)result);
 }
 
-/* Array initialization */
-void float_init_array(size_t size, float value, float data[]) {
-   size_t i;
-   for (i = 0; i < size; i++)
-      data[i] = value;
-}
-
-void int_init_array(size_t size, int value, int data[]) {
-   size_t i;
-   for (i = 0; i < size; i++)
-      data[i] = value;
-}
-
-void bool_init_array(size_t size, uint8_t value, uint8_t data[]) {
-   size_t i;
-   for (i = 0; i < size; i++)
-      data[i] = value;
-}
-
-void fix_init_array(size_t size, fix16_t value, fix16_t data[]) {
-   size_t i;
-   for (i = 0; i < size; i++)
-      data[i] = value;
-}
-
-void float_copy_array(size_t size, float *dest, float *src) {
-   size_t i;
-   for (i = 0; i < size; i++)
-      dest[i] = src[i];
-}
-
-void int_copy_array(size_t size, int *dest, int *src) {
-   size_t i;
-   for (i = 0; i < size; i++)
-      dest[i] = src[i];
-}
-
-void bool_copy_array(size_t size, uint8_t *dest, uint8_t *src) {
-   size_t i;
-   for (i = 0; i < size; i++)
-      dest[i] = src[i];
-}
-
-void fix_copy_array(size_t size, fix16_t *dest, fix16_t *src) {
-   size_t i;
-   for (i = 0; i < size; i++)
-      dest[i] = src[i];
-}
-
 float float_random() { return (float)rand() / (float)RAND_MAX; }
 
 fix16_t fix_random() {

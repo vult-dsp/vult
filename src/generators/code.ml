@@ -144,6 +144,7 @@ type top_stmt =
   | TopExternal of function_def * string option
   | TopFunction of function_def * stmt
   | TopType of struct_descr
+  | TopAlias of string * string
   | TopDecl of dexp * exp
 
 type code = top_stmt list
@@ -179,7 +180,9 @@ module Convert = struct
     | { t = TStruct descr; _ } ->
       let descr = struct_descr context descr in
       Struct descr
-    | { t = TTuple _; loc } -> Util.Error.raiseError "no tuples" loc
+    | { t = TTuple elems; _ } ->
+      let elems = List.map (type_ context) elems in
+      Tuple elems
 
   and struct_descr (context : context) (d : Prog.struct_descr) : struct_descr =
     let members = List.map (fun (name, t, _) -> name, type_ context t) d.members in
@@ -363,7 +366,9 @@ module Convert = struct
       let lhs = lexp context lhs in
       let rhs = exp context rhs in
       (match getLDecl env lhs with
-      | env, Nothing -> env, [ StmtBind (lhs, rhs) ]
+      | env, Nothing ->
+        let env, stmts = getPendingDeclarations env in
+        env, stmts @ [ StmtBind (lhs, rhs) ]
       | env, Initialize (n, dim, t) -> env, [ StmtDecl ({ d = DId (n, dim); t }, Some rhs) ]
       | env, Declare (n, dim, t) -> env, [ StmtDecl ({ d = DId (n, dim); t }, getInitRHS t); StmtBind (lhs, rhs) ])
     | { s = StmtReturn e; _ } ->
@@ -420,6 +425,7 @@ module Convert = struct
     | { top = TopType descr; _ } ->
       let descr = struct_descr context descr in
       Some (TopType descr)
+    | { top = TopAlias { path; alias_of }; _ } -> Some (TopAlias (path, alias_of))
     | { top = TopExternal (def, name); _ } ->
       let def = function_def context def in
       Some (TopExternal (def, name))

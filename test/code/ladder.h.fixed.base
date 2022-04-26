@@ -56,6 +56,14 @@ typedef struct Ladder_process_type {
    Ladder_process_heun_type inst_1a0c3;
 } Ladder_process_type;
 
+typedef struct Ladder_process_type Ladder_noteOn_type;
+
+typedef struct Ladder_process_type Ladder_noteOff_type;
+
+typedef struct Ladder_process_type Ladder_controlChange_type;
+
+typedef struct Ladder_process_type Ladder_default_type;
+
 static_inline void Util_edge_type_init(Util_edge_type& _ctx) {
    _ctx.pre = false;
 }
@@ -105,6 +113,22 @@ static_inline void Ladder_process_heun_type_init(Ladder_process_heun_type& _ctx)
 
 static_inline void Ladder_process_type_init(Ladder_process_type& _ctx) {
    Ladder_process_heun_type_init(_ctx.inst_1a0c3);
+}
+
+static_inline void Ladder_noteOn_type_init(Ladder_noteOn_type& _ctx) {
+   Ladder_process_type_init(_ctx);
+}
+
+static_inline void Ladder_noteOff_type_init(Ladder_noteOff_type& _ctx) {
+   Ladder_process_type_init(_ctx);
+}
+
+static_inline void Ladder_controlChange_type_init(Ladder_controlChange_type& _ctx) {
+   Ladder_process_type_init(_ctx);
+}
+
+static_inline void Ladder_default_type_init(Ladder_default_type& _ctx) {
+   Ladder_process_type_init(_ctx);
 }
 
 static_inline bool Util_edge(Util_edge_type& _ctx, bool x) {

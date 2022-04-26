@@ -33,11 +33,27 @@ typedef struct Phase_process_type {
    float rate;
 } Phase_process_type;
 
+typedef struct Phase_process_type Phase_noteOn_type;
+
+typedef struct Phase_process_type Phase_noteOff_type;
+
+typedef struct Phase_process_type Phase_controlChange_type;
+
+typedef struct Phase_process_type Phase_default_type;
+
 typedef struct Sine_process_type {
    Util_edge_type inst_104ba;
    Phase_process_type p_8aba;
    bool trig;
 } Sine_process_type;
+
+typedef struct Sine_process_type Sine_noteOn_type;
+
+typedef struct Sine_process_type Sine_noteOff_type;
+
+typedef struct Sine_process_type Sine_controlChange_type;
+
+typedef struct Sine_process_type Sine_default_type;
 
 static_inline void Util_edge_type_init(Util_edge_type& _ctx) {
    _ctx.pre = false;
@@ -67,10 +83,42 @@ static_inline void Phase_process_type_init(Phase_process_type& _ctx) {
    _ctx.rate = 0.0f;
 }
 
+static_inline void Phase_noteOn_type_init(Phase_noteOn_type& _ctx) {
+   Phase_process_type_init(_ctx);
+}
+
+static_inline void Phase_noteOff_type_init(Phase_noteOff_type& _ctx) {
+   Phase_process_type_init(_ctx);
+}
+
+static_inline void Phase_controlChange_type_init(Phase_controlChange_type& _ctx) {
+   Phase_process_type_init(_ctx);
+}
+
+static_inline void Phase_default_type_init(Phase_default_type& _ctx) {
+   Phase_process_type_init(_ctx);
+}
+
 static_inline void Sine_process_type_init(Sine_process_type& _ctx) {
    Util_edge_type_init(_ctx.inst_104ba);
    Phase_process_type_init(_ctx.p_8aba);
    _ctx.trig = false;
+}
+
+static_inline void Sine_noteOn_type_init(Sine_noteOn_type& _ctx) {
+   Sine_process_type_init(_ctx);
+}
+
+static_inline void Sine_noteOff_type_init(Sine_noteOff_type& _ctx) {
+   Sine_process_type_init(_ctx);
+}
+
+static_inline void Sine_controlChange_type_init(Sine_controlChange_type& _ctx) {
+   Sine_process_type_init(_ctx);
+}
+
+static_inline void Sine_default_type_init(Sine_default_type& _ctx) {
+   Sine_process_type_init(_ctx);
 }
 
 static_inline bool Util_edge(Util_edge_type& _ctx, bool x) {

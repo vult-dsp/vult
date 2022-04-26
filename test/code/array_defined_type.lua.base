@@ -38,6 +38,22 @@ function Array_defined_type_process_type_init(_ctx)
    Array_defined_type_foo_type_init(_ctx.inst_1c76a)
 end
 
+function Array_defined_type_noteOn_type_init(_ctx)
+   Array_defined_type_process_type_init(_ctx)
+end
+
+function Array_defined_type_noteOff_type_init(_ctx)
+   Array_defined_type_process_type_init(_ctx)
+end
+
+function Array_defined_type_controlChange_type_init(_ctx)
+   Array_defined_type_process_type_init(_ctx)
+end
+
+function Array_defined_type_default_type_init(_ctx)
+   Array_defined_type_process_type_init(_ctx)
+end
+
 function Array_defined_type_foo(_ctx)
 end
 

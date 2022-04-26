@@ -33,12 +33,28 @@ typedef struct Phase_process_type {
    float rate;
 } Phase_process_type;
 
+typedef struct Phase_process_type Phase_noteOn_type;
+
+typedef struct Phase_process_type Phase_noteOff_type;
+
+typedef struct Phase_process_type Phase_controlChange_type;
+
+typedef struct Phase_process_type Phase_default_type;
+
 typedef struct Phd_process_type {
    Phase_process_type inst_18aec;
    Util_smooth_type inst_295ec;
    Phase_process_type inst_38aec;
    float pre_phase1;
 } Phd_process_type;
+
+typedef struct Phd_process_type Phd_noteOn_type;
+
+typedef struct Phd_process_type Phd_noteOff_type;
+
+typedef struct Phd_process_type Phd_controlChange_type;
+
+typedef struct Phd_process_type Phd_default_type;
 
 static_inline void Util_edge_type_init(Util_edge_type& _ctx) {
    _ctx.pre = false;
@@ -68,11 +84,43 @@ static_inline void Phase_process_type_init(Phase_process_type& _ctx) {
    _ctx.rate = 0.0f;
 }
 
+static_inline void Phase_noteOn_type_init(Phase_noteOn_type& _ctx) {
+   Phase_process_type_init(_ctx);
+}
+
+static_inline void Phase_noteOff_type_init(Phase_noteOff_type& _ctx) {
+   Phase_process_type_init(_ctx);
+}
+
+static_inline void Phase_controlChange_type_init(Phase_controlChange_type& _ctx) {
+   Phase_process_type_init(_ctx);
+}
+
+static_inline void Phase_default_type_init(Phase_default_type& _ctx) {
+   Phase_process_type_init(_ctx);
+}
+
 static_inline void Phd_process_type_init(Phd_process_type& _ctx) {
    Phase_process_type_init(_ctx.inst_18aec);
    Util_smooth_type_init(_ctx.inst_295ec);
    Phase_process_type_init(_ctx.inst_38aec);
    _ctx.pre_phase1 = 0.0f;
+}
+
+static_inline void Phd_noteOn_type_init(Phd_noteOn_type& _ctx) {
+   Phd_process_type_init(_ctx);
+}
+
+static_inline void Phd_noteOff_type_init(Phd_noteOff_type& _ctx) {
+   Phd_process_type_init(_ctx);
+}
+
+static_inline void Phd_controlChange_type_init(Phd_controlChange_type& _ctx) {
+   Phd_process_type_init(_ctx);
+}
+
+static_inline void Phd_default_type_init(Phd_default_type& _ctx) {
+   Phd_process_type_init(_ctx);
 }
 
 static_inline bool Util_edge(Util_edge_type& _ctx, bool x) {

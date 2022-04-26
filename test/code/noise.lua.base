@@ -29,6 +29,22 @@ function Noise_process_type_init(_ctx)
    _ctx.x2 = 0
 end
 
+function Noise_noteOn_type_init(_ctx)
+   Noise_process_type_init(_ctx)
+end
+
+function Noise_noteOff_type_init(_ctx)
+   Noise_process_type_init(_ctx)
+end
+
+function Noise_controlChange_type_init(_ctx)
+   Noise_process_type_init(_ctx)
+end
+
+function Noise_default_type_init(_ctx)
+   Noise_process_type_init(_ctx)
+end
+
 function Noise_pinker(_ctx, x)
    local b0 = 0.0277129863191
    local b1 = 0.0277129863191

@@ -32,6 +32,14 @@ typedef struct Saw_ptr1_process_type {
    fix16_t rate;
 } Saw_ptr1_process_type;
 
+typedef struct Saw_ptr1_process_type Saw_ptr1_noteOn_type;
+
+typedef struct Saw_ptr1_process_type Saw_ptr1_noteOff_type;
+
+typedef struct Saw_ptr1_process_type Saw_ptr1_controlChange_type;
+
+typedef struct Saw_ptr1_process_type Saw_ptr1_default_type;
+
 static_inline void Util_edge_type_init(Util_edge_type& _ctx) {
    _ctx.pre = false;
 }
@@ -57,6 +65,22 @@ static_inline void Saw_ptr1_process_type_init(Saw_ptr1_process_type& _ctx) {
    Util_change_type_init(_ctx.inst_1b06f);
    _ctx.phase = 0x0 /* 0.000000 */;
    _ctx.rate = 0x0 /* 0.000000 */;
+}
+
+static_inline void Saw_ptr1_noteOn_type_init(Saw_ptr1_noteOn_type& _ctx) {
+   Saw_ptr1_process_type_init(_ctx);
+}
+
+static_inline void Saw_ptr1_noteOff_type_init(Saw_ptr1_noteOff_type& _ctx) {
+   Saw_ptr1_process_type_init(_ctx);
+}
+
+static_inline void Saw_ptr1_controlChange_type_init(Saw_ptr1_controlChange_type& _ctx) {
+   Saw_ptr1_process_type_init(_ctx);
+}
+
+static_inline void Saw_ptr1_default_type_init(Saw_ptr1_default_type& _ctx) {
+   Saw_ptr1_process_type_init(_ctx);
 }
 
 static_inline bool Util_edge(Util_edge_type& _ctx, bool x) {

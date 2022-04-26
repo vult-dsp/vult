@@ -49,6 +49,16 @@ function Array_return_foo6_type_init(_ctx)
    end
 end
 
+function Array_return_s1_init(_ctx)
+   _ctx.x = 0
+   _ctx.y = 0
+end
+
+function Array_return_foo7_type_init(_ctx)
+   _ctx.Array_return_foo7_ret_0 = 0
+   Array_return_s1_init(_ctx.Array_return_foo7_ret_1)
+end
+
 function Array_return_foo1()
    local _array_0 = {1, 2, 3}
    return _array_0
@@ -83,6 +93,14 @@ function Array_return_foo6(_ctx)
    local x = {1, 2, 3}
    _ctx.Array_return_foo6_ret_0 = y
    _ctx.Array_return_foo6_ret_1 = x
+   return 
+end
+
+function Array_return_foo7(_ctx)
+   local s
+   local d
+   _ctx.Array_return_foo7_ret_0 = d[0]
+   _ctx.Array_return_foo7_ret_1 = s[0]
    return 
 end
 

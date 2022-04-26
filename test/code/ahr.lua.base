@@ -61,6 +61,22 @@ function Ahr_process_type_init(_ctx)
    _ctx.knob3 = 0.0
 end
 
+function Ahr_noteOn_type_init(_ctx)
+   Ahr_process_type_init(_ctx)
+end
+
+function Ahr_noteOff_type_init(_ctx)
+   Ahr_process_type_init(_ctx)
+end
+
+function Ahr_controlChange_type_init(_ctx)
+   Ahr_process_type_init(_ctx)
+end
+
+function Ahr_default_type_init(_ctx)
+   Ahr_process_type_init(_ctx)
+end
+
 function Util_edge(_ctx, x)
    local ret = (x and (_ctx.pre == false))
    _ctx.pre = x

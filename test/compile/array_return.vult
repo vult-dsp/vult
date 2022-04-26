@@ -28,3 +28,14 @@ fun foo6() {
   val x = [1,2,3];
   return y, x;
 }
+
+type s1 {
+  val x : int;
+  val y : int;
+}
+
+fun foo7() {
+  val s : array(s1, 4);
+  val d : array(int, 4);
+  return d[0], s[0];
+}

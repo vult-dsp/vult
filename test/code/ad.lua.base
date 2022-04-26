@@ -55,6 +55,22 @@ function Ad_process_type_init(_ctx)
    _ctx.knob2 = 0.0
 end
 
+function Ad_noteOn_type_init(_ctx)
+   Ad_process_type_init(_ctx)
+end
+
+function Ad_noteOff_type_init(_ctx)
+   Ad_process_type_init(_ctx)
+end
+
+function Ad_controlChange_type_init(_ctx)
+   Ad_process_type_init(_ctx)
+end
+
+function Ad_default_type_init(_ctx)
+   Ad_process_type_init(_ctx)
+end
+
 function Util_edge(_ctx, x)
    local ret = (x and (_ctx.pre == false))
    _ctx.pre = x

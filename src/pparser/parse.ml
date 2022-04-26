@@ -956,7 +956,7 @@ let parseString (file : string option) (text : string) =
     | Some f -> Stream.fromString ~file:f text
     | None -> Stream.fromString text
   in
-  let file = CCOption.get_or ~default:"live.vult" file in
+  let file = Option.value file ~default:"live.vult" in
   let result = parseBuffer file buffer in
   result
 ;;

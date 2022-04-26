@@ -17,6 +17,10 @@ typedef struct Gates_gates_noteOn_type {
    std::array<int32_t, 8> vel;
 } Gates_gates_noteOn_type;
 
+typedef struct Gates_gates_noteOn_type Gates_gates_noteOff_type;
+
+typedef struct Gates_gates_noteOn_type Gates_gates_state_type;
+
 typedef struct Gates_process_type {
    float Gates_process_ret_0;
    float Gates_process_ret_1;
@@ -30,9 +34,41 @@ typedef struct Gates_process_type {
    Gates_gates_noteOn_type gates_dc3a;
 } Gates_process_type;
 
+typedef struct Gates_process_type Gates_noteOn_type;
+
+typedef struct Gates_process_type Gates_noteOff_type;
+
+typedef struct Gates_process_type Gates_controlChange_type;
+
+typedef struct Gates_process_type Gates_default_type;
+
 void Gates_gates_noteOn_type_init(Gates_gates_noteOn_type& _ctx);
 
+static_inline void Gates_gates_noteOff_type_init(Gates_gates_noteOff_type& _ctx) {
+   Gates_gates_noteOn_type_init(_ctx);
+}
+
+static_inline void Gates_gates_state_type_init(Gates_gates_state_type& _ctx) {
+   Gates_gates_noteOn_type_init(_ctx);
+}
+
 void Gates_process_type_init(Gates_process_type& _ctx);
+
+static_inline void Gates_noteOn_type_init(Gates_noteOn_type& _ctx) {
+   Gates_process_type_init(_ctx);
+}
+
+static_inline void Gates_noteOff_type_init(Gates_noteOff_type& _ctx) {
+   Gates_process_type_init(_ctx);
+}
+
+static_inline void Gates_controlChange_type_init(Gates_controlChange_type& _ctx) {
+   Gates_process_type_init(_ctx);
+}
+
+static_inline void Gates_default_type_init(Gates_default_type& _ctx) {
+   Gates_process_type_init(_ctx);
+}
 
 static_inline float Gates_velToCV(int32_t vel) {
    return (0.00787401574803f * int_to_float(vel));

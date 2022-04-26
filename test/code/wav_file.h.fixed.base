@@ -17,6 +17,14 @@ typedef struct Wav_file_process_type {
    Wav_file_osc_wave_type inst_19a53;
 } Wav_file_process_type;
 
+typedef struct Wav_file_process_type Wav_file_noteOn_type;
+
+typedef struct Wav_file_process_type Wav_file_noteOff_type;
+
+typedef struct Wav_file_process_type Wav_file_controlChange_type;
+
+typedef struct Wav_file_process_type Wav_file_default_type;
+
 static_inline int32_t Wav_file_ext_wave_samples() {
    return 600;
 }
@@ -38,6 +46,22 @@ static_inline void Wav_file_osc_wave_type_init(Wav_file_osc_wave_type& _ctx) {
 
 static_inline void Wav_file_process_type_init(Wav_file_process_type& _ctx) {
    Wav_file_osc_wave_type_init(_ctx.inst_19a53);
+}
+
+static_inline void Wav_file_noteOn_type_init(Wav_file_noteOn_type& _ctx) {
+   Wav_file_process_type_init(_ctx);
+}
+
+static_inline void Wav_file_noteOff_type_init(Wav_file_noteOff_type& _ctx) {
+   Wav_file_process_type_init(_ctx);
+}
+
+static_inline void Wav_file_controlChange_type_init(Wav_file_controlChange_type& _ctx) {
+   Wav_file_process_type_init(_ctx);
+}
+
+static_inline void Wav_file_default_type_init(Wav_file_default_type& _ctx) {
+   Wav_file_process_type_init(_ctx);
 }
 
 static_inline int32_t Wav_file_index(Wav_file_index_type& _ctx) {

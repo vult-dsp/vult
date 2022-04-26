@@ -14,6 +14,14 @@ typedef struct Volume_process_type {
    float volume;
 } Volume_process_type;
 
+typedef struct Volume_process_type Volume_noteOn_type;
+
+typedef struct Volume_process_type Volume_noteOff_type;
+
+typedef struct Volume_process_type Volume_controlChange_type;
+
+typedef struct Volume_process_type Volume_default_type;
+
 static_inline void Volume_smooth_type_init(Volume_smooth_type& _ctx) {
    _ctx.x = 0.0f;
 }
@@ -21,6 +29,22 @@ static_inline void Volume_smooth_type_init(Volume_smooth_type& _ctx) {
 static_inline void Volume_process_type_init(Volume_process_type& _ctx) {
    Volume_smooth_type_init(_ctx.inst_1d7d3);
    _ctx.volume = 0.0f;
+}
+
+static_inline void Volume_noteOn_type_init(Volume_noteOn_type& _ctx) {
+   Volume_process_type_init(_ctx);
+}
+
+static_inline void Volume_noteOff_type_init(Volume_noteOff_type& _ctx) {
+   Volume_process_type_init(_ctx);
+}
+
+static_inline void Volume_controlChange_type_init(Volume_controlChange_type& _ctx) {
+   Volume_process_type_init(_ctx);
+}
+
+static_inline void Volume_default_type_init(Volume_default_type& _ctx) {
+   Volume_process_type_init(_ctx);
 }
 
 static_inline float Volume_smooth(Volume_smooth_type& _ctx, float input) {

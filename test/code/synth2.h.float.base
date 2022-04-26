@@ -69,6 +69,10 @@ typedef struct Synth2_mono_noteOn_type {
    int32_t pre;
 } Synth2_mono_noteOn_type;
 
+typedef struct Synth2_mono_noteOn_type Synth2_mono_noteOff_type;
+
+typedef struct Synth2_mono_noteOn_type Synth2_mono_isGateOn_type;
+
 typedef struct Synth2_process_type {
    float amp_s;
    float cut;
@@ -85,6 +89,14 @@ typedef struct Synth2_process_type {
    float volume;
    float wave;
 } Synth2_process_type;
+
+typedef struct Synth2_process_type Synth2_noteOn_type;
+
+typedef struct Synth2_process_type Synth2_noteOff_type;
+
+typedef struct Synth2_process_type Synth2_controlChange_type;
+
+typedef struct Synth2_process_type Synth2_default_type;
 
 static_inline void Synth2_change_type_init(Synth2_change_type& _ctx) {
    _ctx.pre_x = 0.0f;
@@ -136,7 +148,31 @@ static_inline void Synth2_lfo_type_init(Synth2_lfo_type& _ctx) {
 
 void Synth2_mono_noteOn_type_init(Synth2_mono_noteOn_type& _ctx);
 
+static_inline void Synth2_mono_noteOff_type_init(Synth2_mono_noteOff_type& _ctx) {
+   Synth2_mono_noteOn_type_init(_ctx);
+}
+
+static_inline void Synth2_mono_isGateOn_type_init(Synth2_mono_isGateOn_type& _ctx) {
+   Synth2_mono_noteOn_type_init(_ctx);
+}
+
 void Synth2_process_type_init(Synth2_process_type& _ctx);
+
+static_inline void Synth2_noteOn_type_init(Synth2_noteOn_type& _ctx) {
+   Synth2_process_type_init(_ctx);
+}
+
+static_inline void Synth2_noteOff_type_init(Synth2_noteOff_type& _ctx) {
+   Synth2_process_type_init(_ctx);
+}
+
+static_inline void Synth2_controlChange_type_init(Synth2_controlChange_type& _ctx) {
+   Synth2_process_type_init(_ctx);
+}
+
+static_inline void Synth2_default_type_init(Synth2_default_type& _ctx) {
+   Synth2_process_type_init(_ctx);
+}
 
 static_inline float Synth2_minFixed() {
    return 1.52588e-05f;

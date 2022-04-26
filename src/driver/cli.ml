@@ -54,12 +54,12 @@ let showResult (args : args) (output : output) =
 let generateCode args (stmts, vm, acc) =
   if args.code <> NoCode
   then (
-    let cstmts = Code.Convert.prog args stmts in
-    let cstmts = Tables.create args vm cstmts in
+    let cstmts = Util.Profile.time "Convert" (fun () -> Code.Convert.prog args stmts) in
+    let cstmts = Util.Profile.time "Generate Tables" (fun () -> Tables.create args vm cstmts) in
     let code =
       match args.code with
       | NoCode -> []
-      | CppCode -> Cpp.generate args.output args.template cstmts
+      | CppCode -> Util.Profile.time "Generate Code" (fun () -> Cpp.generate args.output args.template cstmts)
       | LuaCode -> Lua.generate args.output args.template cstmts
       | JSCode -> failwith "Javascript generator not implemented yet"
       | JavaCode -> failwith "Javascript generator not implemented yet"
@@ -69,16 +69,16 @@ let generateCode args (stmts, vm, acc) =
 ;;
 
 let compileCode (args : args) (parsed, acc) =
-  let env, stmts = Inference.infer args parsed in
+  let env, stmts = Util.Profile.time "Inference" (fun () -> Inference.infer args parsed) in
   let typed_out = if args.dtyped then [ Prog (Pla.print (Prog.Print.print_prog stmts)) ] else [] in
-  let stmts = Passes.run args stmts in
+  let stmts = Util.Profile.time "Passes" (fun () -> Passes.run args stmts) in
   let prog_out = if args.dprog then [ Prog (Pla.print (Prog.Print.print_prog stmts)) ] else [] in
-  let vm, bytecode = Vm.Interpreter.createVm stmts in
+  let vm, bytecode = Util.Profile.time "Create VM" (fun () -> Vm.Interpreter.createVm stmts) in
   let bc_out = if args.dbytecode then [ Byte (Pla.print (Vm.Compile.print_bytecode bytecode)) ] else [] in
   let run =
     match args.eval with
     | Some e ->
-      let s = Vm.Interpreter.run args env stmts e in
+      let s = Util.Profile.time "Run code" (fun () -> Vm.Interpreter.run args env stmts e) in
       [ ParsedCode s ]
     | None -> []
   in
@@ -103,7 +103,7 @@ let driver (args : args) : output list =
       match args.files with
       | [] -> [ Message ("vult " ^ version ^ " - https://github.com/modlfo/vult\nno input files") ]
       | _ ->
-        let parsed = Loader.loadFiles args args.files in
+        let parsed = Util.Profile.time "Load files" (fun () -> Loader.loadFiles args args.files) in
         if args.deps
         then List.map (fun r -> r.Parse.file) parsed |> fun s -> [ Dependencies s ]
         else parsed |> dumpParsedFiles args |> compileCode args |> generateCode args)
@@ -115,5 +115,6 @@ let main () =
   let args = processArguments () in
   let results = driver args in
   List.iter (showResult args) results;
+  if args.profile then Util.Profile.show ();
   exit 0
 ;;

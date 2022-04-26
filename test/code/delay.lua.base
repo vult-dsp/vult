@@ -76,6 +76,14 @@ function Delay_mono_noteOn_type_init(_ctx)
    _ctx.pre = 0
 end
 
+function Delay_mono_noteOff_type_init(_ctx)
+   Delay_mono_noteOn_type_init(_ctx)
+end
+
+function Delay_mono_isGateOn_type_init(_ctx)
+   Delay_mono_noteOn_type_init(_ctx)
+end
+
 function Delay_process_type_init(_ctx)
    _ctx.detune = 0.0
    _ctx.feedback = 0.0
@@ -91,6 +99,22 @@ function Delay_process_type_init(_ctx)
    _ctx.pitch = 0.0
    _ctx.time = 0.0
    _ctx.volume = 0.0
+end
+
+function Delay_noteOn_type_init(_ctx)
+   Delay_process_type_init(_ctx)
+end
+
+function Delay_noteOff_type_init(_ctx)
+   Delay_process_type_init(_ctx)
+end
+
+function Delay_controlChange_type_init(_ctx)
+   Delay_process_type_init(_ctx)
+end
+
+function Delay_default_type_init(_ctx)
+   Delay_process_type_init(_ctx)
 end
 
 function Delay_smooth(_ctx, input)

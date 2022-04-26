@@ -156,6 +156,10 @@ type top_stmt_d =
       { path : path
       ; members : (string * type_ * Loc.t) list
       }
+  | TopAlias of
+      { path : path
+      ; alias_of : path
+      }
   | TopEnum of
       { path : path
       ; members : (string * Loc.t) list
@@ -196,7 +200,7 @@ let rec print_exp e =
     [%pla {|<#e#>[<#index#>]|}]
   | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
   | ECall { instance; path; args } ->
-    let instance = CCOption.map_or ~default:Pla.unit (fun s -> [%pla {|<#s#s>:|}]) instance in
+    let instance = Option.value (Option.map (fun s -> [%pla {|<#s#s>:|}]) instance) ~default:Pla.unit in
     let path = print_path path in
     let args = Pla.map_sep Pla.commaspace print_exp args in
     [%pla {|<#instance#><#path#>(<#args#>)|}]
@@ -327,6 +331,10 @@ let print_top_stmt t =
   | TopFunction (def, body) -> print_function_def "fun" def (`Body body)
   | TopExternal (def, Some linkname) -> print_function_def "external" def (`LinkName linkname)
   | TopExternal (def, None) -> print_function_def "external" def `NoLinkName
+  | TopAlias { path = p; alias_of } ->
+    let p = print_path p in
+    let alias_of = print_path alias_of in
+    [%pla {|type <#p#> = <#alias_of#><#>|}]
   | TopType { path = p; members } ->
     let p = print_path p in
     let members = Pla.map_sep_all Pla.newline print_record_member members in

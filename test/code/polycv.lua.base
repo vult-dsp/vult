@@ -69,6 +69,14 @@ function Polycv_poly_noteOn_type_init(_ctx)
    end
 end
 
+function Polycv_poly_noteOff_type_init(_ctx)
+   Polycv_poly_noteOn_type_init(_ctx)
+end
+
+function Polycv_polyState_type_init(_ctx)
+   Polycv_poly_noteOn_type_init(_ctx)
+end
+
 function Polycv_process_type_init(_ctx)
    _ctx.Polycv_process_ret_0 = 0.0
    _ctx.Polycv_process_ret_1 = 0.0
@@ -84,6 +92,22 @@ function Polycv_process_type_init(_ctx)
    _ctx.Polycv_process_ret_9 = 0.0
    _ctx.channel_in = 0
    Polycv_poly_noteOn_type_init(_ctx.poly_a0e8)
+end
+
+function Polycv_noteOn_type_init(_ctx)
+   Polycv_process_type_init(_ctx)
+end
+
+function Polycv_noteOff_type_init(_ctx)
+   Polycv_process_type_init(_ctx)
+end
+
+function Polycv_controlChange_type_init(_ctx)
+   Polycv_process_type_init(_ctx)
+end
+
+function Polycv_default_type_init(_ctx)
+   Polycv_process_type_init(_ctx)
 end
 
 function Util_edge(_ctx, x)

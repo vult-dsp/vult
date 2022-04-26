@@ -33,11 +33,21 @@ typedef struct Phase_process_type {
    float rate;
 } Phase_process_type;
 
+typedef struct Phase_process_type Phase_noteOn_type;
+
+typedef struct Phase_process_type Phase_noteOff_type;
+
+typedef struct Phase_process_type Phase_controlChange_type;
+
+typedef struct Phase_process_type Phase_default_type;
+
 typedef struct Blit_pulse_train_type {
    Util_change_type inst_1b05e;
    int32_t m;
    float scale;
 } Blit_pulse_train_type;
+
+typedef struct Blit_pulse_train_type Blit_pulse_start_type;
 
 typedef struct Blit_osc_blit_type {
    Util_change_type inst_1b026;
@@ -51,9 +61,19 @@ typedef struct Blit_osc_blit_type {
    float state_saw;
 } Blit_osc_blit_type;
 
+typedef struct Blit_osc_blit_type Blit_init_type;
+
 typedef struct Blit_process_type {
    Blit_osc_blit_type inst_1268b;
 } Blit_process_type;
+
+typedef struct Blit_process_type Blit_noteOn_type;
+
+typedef struct Blit_process_type Blit_noteOff_type;
+
+typedef struct Blit_process_type Blit_controlChange_type;
+
+typedef struct Blit_process_type Blit_default_type;
 
 static_inline void Util_edge_type_init(Util_edge_type& _ctx) {
    _ctx.pre = false;
@@ -83,16 +103,56 @@ static_inline void Phase_process_type_init(Phase_process_type& _ctx) {
    _ctx.rate = 0.0f;
 }
 
+static_inline void Phase_noteOn_type_init(Phase_noteOn_type& _ctx) {
+   Phase_process_type_init(_ctx);
+}
+
+static_inline void Phase_noteOff_type_init(Phase_noteOff_type& _ctx) {
+   Phase_process_type_init(_ctx);
+}
+
+static_inline void Phase_controlChange_type_init(Phase_controlChange_type& _ctx) {
+   Phase_process_type_init(_ctx);
+}
+
+static_inline void Phase_default_type_init(Phase_default_type& _ctx) {
+   Phase_process_type_init(_ctx);
+}
+
 static_inline void Blit_pulse_train_type_init(Blit_pulse_train_type& _ctx) {
    Util_change_type_init(_ctx.inst_1b05e);
    _ctx.m = 0;
    _ctx.scale = 0.0f;
 }
 
+static_inline void Blit_pulse_start_type_init(Blit_pulse_start_type& _ctx) {
+   Blit_pulse_train_type_init(_ctx);
+}
+
 void Blit_osc_blit_type_init(Blit_osc_blit_type& _ctx);
+
+static_inline void Blit_init_type_init(Blit_init_type& _ctx) {
+   Blit_osc_blit_type_init(_ctx);
+}
 
 static_inline void Blit_process_type_init(Blit_process_type& _ctx) {
    Blit_osc_blit_type_init(_ctx.inst_1268b);
+}
+
+static_inline void Blit_noteOn_type_init(Blit_noteOn_type& _ctx) {
+   Blit_process_type_init(_ctx);
+}
+
+static_inline void Blit_noteOff_type_init(Blit_noteOff_type& _ctx) {
+   Blit_process_type_init(_ctx);
+}
+
+static_inline void Blit_controlChange_type_init(Blit_controlChange_type& _ctx) {
+   Blit_process_type_init(_ctx);
+}
+
+static_inline void Blit_default_type_init(Blit_default_type& _ctx) {
+   Blit_process_type_init(_ctx);
 }
 
 static_inline bool Util_edge(Util_edge_type& _ctx, bool x) {

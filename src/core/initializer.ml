@@ -122,7 +122,7 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
 let createInitFunction (cstyle : cstyle) stmt =
   let () = resetTick () in
   match stmt with
-  (* generation for c-style code using pointers *)
+  (* Generation for c-style code using references *)
   | { top = TopType struct_t; loc } when cstyle = RefObject ->
     let name = struct_t.path ^ "_init" in
     let this_type = { t = TStruct struct_t; loc = Loc.default } in
@@ -140,6 +140,19 @@ let createInitFunction (cstyle : cstyle) stmt =
     let body = { s = StmtBlock stmts; loc } in
     let args, t = [ "_ctx", this_type, loc ], ([ this_type ], void_type) in
     { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
+  (* Initialization of alias c-style *)
+  | { top = TopAlias { path; alias_of }; loc } when cstyle = RefObject ->
+    let name = path ^ "_init" in
+    let this_type = { t = TStruct { path; members = [] }; loc = Loc.default } in
+    let void_type = { t = TVoid None; loc = Loc.default } in
+    let call =
+      { e = ECall { path = alias_of ^ "_init"; args = [ { e = EId "_ctx"; t = this_type; loc } ] }; loc; t = void_type }
+    in
+    let bind = { s = StmtBind ({ l = LWild; loc; t = void_type }, call); loc } in
+    let body = { s = StmtBlock [ bind ]; loc } in
+    let args, t = [ "_ctx", this_type, loc ], ([ this_type ], void_type) in
+    { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
+  (* Generate initiializers that return a value *)
   | { top = TopType struct_t; loc } ->
     let name = struct_t.path ^ "_init" in
     let this_type = { t = TStruct struct_t; loc = Loc.default } in

@@ -55,6 +55,22 @@ function Sawcore_process_type_init(_ctx)
    _ctx.reset_state = false
 end
 
+function Sawcore_noteOn_type_init(_ctx)
+   Sawcore_process_type_init(_ctx)
+end
+
+function Sawcore_noteOff_type_init(_ctx)
+   Sawcore_process_type_init(_ctx)
+end
+
+function Sawcore_controlChange_type_init(_ctx)
+   Sawcore_process_type_init(_ctx)
+end
+
+function Sawcore_default_type_init(_ctx)
+   Sawcore_process_type_init(_ctx)
+end
+
 function Util_edge(_ctx, x)
    local ret = (x and (_ctx.pre == false))
    _ctx.pre = x

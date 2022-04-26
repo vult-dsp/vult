@@ -31,6 +31,14 @@ typedef struct Swept_process_type {
    fix16_t out;
 } Swept_process_type;
 
+typedef struct Swept_process_type Swept_noteOn_type;
+
+typedef struct Swept_process_type Swept_noteOff_type;
+
+typedef struct Swept_process_type Swept_controlChange_type;
+
+typedef struct Swept_process_type Swept_default_type;
+
 static_inline void Util_edge_type_init(Util_edge_type& _ctx) {
    _ctx.pre = false;
 }
@@ -55,6 +63,22 @@ static_inline void Util_average2_type_init(Util_average2_type& _ctx) {
 static_inline void Swept_process_type_init(Swept_process_type& _ctx) {
    Util_edge_type_init(_ctx.inst_10402);
    _ctx.out = 0x0 /* 0.000000 */;
+}
+
+static_inline void Swept_noteOn_type_init(Swept_noteOn_type& _ctx) {
+   Swept_process_type_init(_ctx);
+}
+
+static_inline void Swept_noteOff_type_init(Swept_noteOff_type& _ctx) {
+   Swept_process_type_init(_ctx);
+}
+
+static_inline void Swept_controlChange_type_init(Swept_controlChange_type& _ctx) {
+   Swept_process_type_init(_ctx);
+}
+
+static_inline void Swept_default_type_init(Swept_default_type& _ctx) {
+   Swept_process_type_init(_ctx);
 }
 
 static_inline bool Util_edge(Util_edge_type& _ctx, bool x) {

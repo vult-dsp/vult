@@ -88,6 +88,7 @@ type type_descr =
   | Simple
   | Record of var Map.t
   | Enum of (string * int * Loc.t) Map.t
+  | Alias of path * path
 
 type t =
   { path : path
@@ -372,13 +373,26 @@ let registerArguments (args : (string * Typed.type_ * Loc.t) list) =
 let getPath m name loc : path = { id = name; n = Some m.name; loc }
 
 let createContextForFunction (env : in_module) name loc : in_context =
-  let report _ = failwith "function exitst" in
+  let report _ = Error.raiseError "A function with the same name already exists" loc in
   let type_name = name ^ "_type" in
   let path = getPath env.m type_name loc in
   let index = getGlobalTick () in
   let t = { descr = Record (Map.empty ()); path; index; loc; generated = true } in
   let _ = Map.update report type_name t env.m.types in
   { top = env.top; m = env.m; context = Some (path, t) }
+;;
+
+let addAliasToContext (env : in_context) name loc : in_context =
+  match env.context with
+  | Some (ctx, { descr = Record members; _ }) when not (Map.is_empty members) ->
+    let report _ = Error.raiseError "A context with the same name already exists" loc in
+    let type_name = name ^ "_type" in
+    let path = getPath env.m type_name loc in
+    let index = getGlobalTick () in
+    let t = { descr = Alias (path, ctx); path; index; loc; generated = true } in
+    let _ = Map.update report type_name t env.m.types in
+    env
+  | _ -> env
 ;;
 
 let addRecordMember members =
@@ -463,7 +477,7 @@ let enterFunction
     loc
     : in_func * path * 'a
   =
-  let report _ = failwith "function exitst" in
+  let report _ = Error.raiseError "A function with the same name already exists" loc in
   let path = getPath env.m name loc in
   let locals, args_t = registerArguments args in
   let t = args_t, ret in

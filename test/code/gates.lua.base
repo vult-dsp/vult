@@ -37,6 +37,14 @@ function Gates_gates_noteOn_type_init(_ctx)
    end
 end
 
+function Gates_gates_noteOff_type_init(_ctx)
+   Gates_gates_noteOn_type_init(_ctx)
+end
+
+function Gates_gates_state_type_init(_ctx)
+   Gates_gates_noteOn_type_init(_ctx)
+end
+
 function Gates_process_type_init(_ctx)
    _ctx.Gates_process_ret_0 = 0.0
    _ctx.Gates_process_ret_1 = 0.0
@@ -48,6 +56,22 @@ function Gates_process_type_init(_ctx)
    _ctx.Gates_process_ret_7 = 0.0
    _ctx.channel_in = 0
    Gates_gates_noteOn_type_init(_ctx.gates_dc3a)
+end
+
+function Gates_noteOn_type_init(_ctx)
+   Gates_process_type_init(_ctx)
+end
+
+function Gates_noteOff_type_init(_ctx)
+   Gates_process_type_init(_ctx)
+end
+
+function Gates_controlChange_type_init(_ctx)
+   Gates_process_type_init(_ctx)
+end
+
+function Gates_default_type_init(_ctx)
+   Gates_process_type_init(_ctx)
 end
 
 function Gates_velToCV(vel)

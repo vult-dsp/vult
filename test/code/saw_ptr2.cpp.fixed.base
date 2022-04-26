@@ -8,8 +8,8 @@ fix16_t Saw_ptr2_process(Saw_ptr2_process_type& _ctx, fix16_t cv) {
    }
    fix16_t s1 = _ctx.rate;
    fix16_t s2 = (s1 + _ctx.rate);
-   _ctx.phase = (_ctx.phase + _ctx.rate);
    fix16_t out = 0.0f;
+   _ctx.phase = (_ctx.phase + _ctx.rate);
    if (_ctx.phase > 0x10000 /* 1.000000 */) {
       _ctx.phase = (-0x10000 /* -1.000000 */ + _ctx.phase);
    }

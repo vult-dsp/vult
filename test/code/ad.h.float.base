@@ -41,6 +41,14 @@ typedef struct Ad_process_type {
    float knob2;
 } Ad_process_type;
 
+typedef struct Ad_process_type Ad_noteOn_type;
+
+typedef struct Ad_process_type Ad_noteOff_type;
+
+typedef struct Ad_process_type Ad_controlChange_type;
+
+typedef struct Ad_process_type Ad_default_type;
+
 static_inline void Util_edge_type_init(Util_edge_type& _ctx) {
    _ctx.pre = false;
 }
@@ -68,6 +76,22 @@ static_inline void Ad_process_type_init(Ad_process_type& _ctx) {
    Ad_do_type_init(_ctx.inst_15232);
    _ctx.knob1 = 0.0f;
    _ctx.knob2 = 0.0f;
+}
+
+static_inline void Ad_noteOn_type_init(Ad_noteOn_type& _ctx) {
+   Ad_process_type_init(_ctx);
+}
+
+static_inline void Ad_noteOff_type_init(Ad_noteOff_type& _ctx) {
+   Ad_process_type_init(_ctx);
+}
+
+static_inline void Ad_controlChange_type_init(Ad_controlChange_type& _ctx) {
+   Ad_process_type_init(_ctx);
+}
+
+static_inline void Ad_default_type_init(Ad_default_type& _ctx) {
+   Ad_process_type_init(_ctx);
 }
 
 static_inline bool Util_edge(Util_edge_type& _ctx, bool x) {

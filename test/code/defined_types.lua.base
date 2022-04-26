@@ -32,6 +32,22 @@ function Defined_types_process_type_init(_ctx)
    Defined_types_foo_type_init(_ctx.inst_1a5d1)
 end
 
+function Defined_types_noteOn_type_init(_ctx)
+   Defined_types_process_type_init(_ctx)
+end
+
+function Defined_types_noteOff_type_init(_ctx)
+   Defined_types_process_type_init(_ctx)
+end
+
+function Defined_types_controlChange_type_init(_ctx)
+   Defined_types_process_type_init(_ctx)
+end
+
+function Defined_types_default_type_init(_ctx)
+   Defined_types_process_type_init(_ctx)
+end
+
 function Defined_types_micro_init(_ctx)
    Defined_types_dot_init(_ctx.dot_0)
    Defined_types_dot_init(_ctx.dot_1)

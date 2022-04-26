@@ -51,6 +51,22 @@ function Tricore_process_type_init(_ctx)
    _ctx.reset_state = false
 end
 
+function Tricore_noteOn_type_init(_ctx)
+   Tricore_process_type_init(_ctx)
+end
+
+function Tricore_noteOff_type_init(_ctx)
+   Tricore_process_type_init(_ctx)
+end
+
+function Tricore_controlChange_type_init(_ctx)
+   Tricore_process_type_init(_ctx)
+end
+
+function Tricore_default_type_init(_ctx)
+   Tricore_process_type_init(_ctx)
+end
+
 function Util_edge(_ctx, x)
    local ret = (x and (_ctx.pre == false))
    _ctx.pre = x

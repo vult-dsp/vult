@@ -46,6 +46,22 @@ function Saw_r_process_type_init(_ctx)
    _ctx.phase = 0.0
 end
 
+function Saw_r_noteOn_type_init(_ctx)
+   Saw_r_process_type_init(_ctx)
+end
+
+function Saw_r_noteOff_type_init(_ctx)
+   Saw_r_process_type_init(_ctx)
+end
+
+function Saw_r_controlChange_type_init(_ctx)
+   Saw_r_process_type_init(_ctx)
+end
+
+function Saw_r_default_type_init(_ctx)
+   Saw_r_process_type_init(_ctx)
+end
+
 function Util_edge(_ctx, x)
    local ret = (x and (_ctx.pre == false))
    _ctx.pre = x

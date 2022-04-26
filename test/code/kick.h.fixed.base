@@ -15,6 +15,14 @@ typedef struct Noise_process_type {
    int32_t x2;
 } Noise_process_type;
 
+typedef struct Noise_process_type Noise_noteOn_type;
+
+typedef struct Noise_process_type Noise_noteOff_type;
+
+typedef struct Noise_process_type Noise_controlChange_type;
+
+typedef struct Noise_process_type Noise_default_type;
+
 typedef struct Util_edge_type {
    bool pre;
 } Util_edge_type;
@@ -47,10 +55,26 @@ typedef struct Tricore_process_type {
    bool reset_state;
 } Tricore_process_type;
 
+typedef struct Tricore_process_type Tricore_noteOn_type;
+
+typedef struct Tricore_process_type Tricore_noteOff_type;
+
+typedef struct Tricore_process_type Tricore_controlChange_type;
+
+typedef struct Tricore_process_type Tricore_default_type;
+
 typedef struct Swept_process_type {
    Util_edge_type inst_10402;
    fix16_t out;
 } Swept_process_type;
+
+typedef struct Swept_process_type Swept_noteOn_type;
+
+typedef struct Swept_process_type Swept_noteOff_type;
+
+typedef struct Swept_process_type Swept_controlChange_type;
+
+typedef struct Swept_process_type Swept_default_type;
 
 typedef struct Ahr_do_type {
    fix16_t Ahr_do_ret_0;
@@ -73,6 +97,14 @@ typedef struct Ahr_process_type {
    fix16_t knob3;
 } Ahr_process_type;
 
+typedef struct Ahr_process_type Ahr_noteOn_type;
+
+typedef struct Ahr_process_type Ahr_noteOff_type;
+
+typedef struct Ahr_process_type Ahr_controlChange_type;
+
+typedef struct Ahr_process_type Ahr_default_type;
+
 typedef struct Kick_do_type {
    Ahr_do_type inst_1d863;
    Swept_process_type inst_20263;
@@ -89,6 +121,14 @@ typedef struct Kick_process_type {
    fix16_t swept;
 } Kick_process_type;
 
+typedef struct Kick_process_type Kick_noteOn_type;
+
+typedef struct Kick_process_type Kick_noteOff_type;
+
+typedef struct Kick_process_type Kick_controlChange_type;
+
+typedef struct Kick_process_type Kick_default_type;
+
 static_inline void Noise_pinker_type_init(Noise_pinker_type& _ctx) {
    _ctx.w1 = 0x0 /* 0.000000 */;
 }
@@ -97,6 +137,22 @@ static_inline void Noise_process_type_init(Noise_process_type& _ctx) {
    Noise_pinker_type_init(_ctx.inst_16d3d);
    _ctx.x1 = 0;
    _ctx.x2 = 0;
+}
+
+static_inline void Noise_noteOn_type_init(Noise_noteOn_type& _ctx) {
+   Noise_process_type_init(_ctx);
+}
+
+static_inline void Noise_noteOff_type_init(Noise_noteOff_type& _ctx) {
+   Noise_process_type_init(_ctx);
+}
+
+static_inline void Noise_controlChange_type_init(Noise_controlChange_type& _ctx) {
+   Noise_process_type_init(_ctx);
+}
+
+static_inline void Noise_default_type_init(Noise_default_type& _ctx) {
+   Noise_process_type_init(_ctx);
 }
 
 static_inline void Util_edge_type_init(Util_edge_type& _ctx) {
@@ -122,18 +178,82 @@ static_inline void Util_average2_type_init(Util_average2_type& _ctx) {
 
 void Tricore_process_type_init(Tricore_process_type& _ctx);
 
+static_inline void Tricore_noteOn_type_init(Tricore_noteOn_type& _ctx) {
+   Tricore_process_type_init(_ctx);
+}
+
+static_inline void Tricore_noteOff_type_init(Tricore_noteOff_type& _ctx) {
+   Tricore_process_type_init(_ctx);
+}
+
+static_inline void Tricore_controlChange_type_init(Tricore_controlChange_type& _ctx) {
+   Tricore_process_type_init(_ctx);
+}
+
+static_inline void Tricore_default_type_init(Tricore_default_type& _ctx) {
+   Tricore_process_type_init(_ctx);
+}
+
 static_inline void Swept_process_type_init(Swept_process_type& _ctx) {
    Util_edge_type_init(_ctx.inst_10402);
    _ctx.out = 0x0 /* 0.000000 */;
+}
+
+static_inline void Swept_noteOn_type_init(Swept_noteOn_type& _ctx) {
+   Swept_process_type_init(_ctx);
+}
+
+static_inline void Swept_noteOff_type_init(Swept_noteOff_type& _ctx) {
+   Swept_process_type_init(_ctx);
+}
+
+static_inline void Swept_controlChange_type_init(Swept_controlChange_type& _ctx) {
+   Swept_process_type_init(_ctx);
+}
+
+static_inline void Swept_default_type_init(Swept_default_type& _ctx) {
+   Swept_process_type_init(_ctx);
 }
 
 void Ahr_do_type_init(Ahr_do_type& _ctx);
 
 void Ahr_process_type_init(Ahr_process_type& _ctx);
 
+static_inline void Ahr_noteOn_type_init(Ahr_noteOn_type& _ctx) {
+   Ahr_process_type_init(_ctx);
+}
+
+static_inline void Ahr_noteOff_type_init(Ahr_noteOff_type& _ctx) {
+   Ahr_process_type_init(_ctx);
+}
+
+static_inline void Ahr_controlChange_type_init(Ahr_controlChange_type& _ctx) {
+   Ahr_process_type_init(_ctx);
+}
+
+static_inline void Ahr_default_type_init(Ahr_default_type& _ctx) {
+   Ahr_process_type_init(_ctx);
+}
+
 void Kick_do_type_init(Kick_do_type& _ctx);
 
 void Kick_process_type_init(Kick_process_type& _ctx);
+
+static_inline void Kick_noteOn_type_init(Kick_noteOn_type& _ctx) {
+   Kick_process_type_init(_ctx);
+}
+
+static_inline void Kick_noteOff_type_init(Kick_noteOff_type& _ctx) {
+   Kick_process_type_init(_ctx);
+}
+
+static_inline void Kick_controlChange_type_init(Kick_controlChange_type& _ctx) {
+   Kick_process_type_init(_ctx);
+}
+
+static_inline void Kick_default_type_init(Kick_default_type& _ctx) {
+   Kick_process_type_init(_ctx);
+}
 
 static_inline fix16_t Noise_pinker(Noise_pinker_type& _ctx, fix16_t x) {
    fix16_t b0 = 0x718 /* 0.027713 */;

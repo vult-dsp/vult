@@ -180,8 +180,6 @@ let print_dexp (e : dexp) =
   | DId (id, _) -> [%pla {|<#id#s>|}]
 ;;
 
-(*| DId (id, Some dim) -> [%pla {|<#id#s>[<#dim#i>]|}]*)
-
 let print_member (n, (t : type_)) =
   let t = print_type_ t in
   [%pla {|<#t#> <#n#s>;|}]
@@ -207,7 +205,7 @@ let print_decl (n, (t : type_)) =
   | Array (_, Array _) -> failwith "array of arrays are not implemented"
   | Array (dim, (Struct _ as sub)) ->
     let sub = print_type_ sub in
-    [%pla {|<#sub#> (&<#n#s>)[<#dim#i>]|}]
+    [%pla {|std::array<<#sub#>, <#dim#i>> <#n#s>|}]
   | Array (dim, sub) ->
     let sub = print_type_ sub in
     [%pla {|std::array<<#sub#>, <#dim#i>> <#n#s>|}]
@@ -248,11 +246,6 @@ and print_stmt s =
   | StmtBind ({ l = LWild; _ }, rhs) ->
     let rhs = print_exp rhs in
     [%pla {|<#rhs#>;|}]
-  (*| StmtBind (({ t = Array (n, t); _ } as lhs), ({ t = Array (_, _); _ } as rhs)) ->
-    let lhs = print_lexp lhs in
-    let rhs = print_exp rhs in
-    let f = arrayCopyFunction t in
-    [%pla {|<#f#s>(<#n#i>, <#lhs#>, <#rhs#>);|}]*)
   | StmtBind (lhs, rhs) ->
     let lhs = print_lexp lhs in
     let rhs = print_exp rhs in
@@ -324,7 +317,9 @@ let print_top_stmt (target : target) t =
   | TopType { path; members }, Header ->
     let members = Pla.map_sep [%pla {|<#>|}] print_member members in
     [%pla {|typedef struct <#path#s> {<#members#+><#>} <#path#s>;<#><#>|}]
+  | TopAlias (path, alias_of), Header -> [%pla {|typedef struct <#alias_of#s> <#path#s>;<#><#>|}]
   | TopType _, _ -> Pla.unit
+  | TopAlias _, _ -> Pla.unit
   | TopDecl (lhs, rhs), Tables ->
     let t = print_type_ lhs.t in
     let lhs = print_dexp lhs in

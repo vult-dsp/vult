@@ -157,18 +157,6 @@ static_inline float float_clip(float value, float low, float high) {
    return value < low ? low : (value > high ? high : value);
 }
 
-/* Array initialization */
-void float_init_array(size_t size, float value, float data[]);
-void int_init_array(size_t size, int value, int data[]);
-void bool_init_array(size_t size, uint8_t value, uint8_t data[]);
-void fix_init_array(size_t size, fix16_t value, fix16_t data[]);
-
-/* Array copy */
-void float_copy_array(size_t size, float *dest, float *src);
-void int_copy_array(size_t size, int *dest, int *src);
-void bool_copy_array(size_t size, uint8_t *dest, uint8_t *src);
-void fix_copy_array(size_t size, fix16_t *dest, fix16_t *src);
-
 static_inline uint8_t bool_not(uint8_t x) { return !x; }
 
 /* Tables */

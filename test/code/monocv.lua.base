@@ -52,6 +52,14 @@ function Monocv_mono_noteOn_type_init(_ctx)
    _ctx.pre = 0
 end
 
+function Monocv_mono_noteOff_type_init(_ctx)
+   Monocv_mono_noteOn_type_init(_ctx)
+end
+
+function Monocv_mono_isGateOn_type_init(_ctx)
+   Monocv_mono_noteOn_type_init(_ctx)
+end
+
 function Monocv_process_type_init(_ctx)
    _ctx.Monocv_process_ret_0 = 0.0
    _ctx.Monocv_process_ret_1 = 0.0
@@ -63,6 +71,22 @@ function Monocv_process_type_init(_ctx)
    Util_change_type_init(_ctx.inst_1b0d6)
    Monocv_mono_noteOn_type_init(_ctx.notes_a7d6)
    _ctx.vel = 0.0
+end
+
+function Monocv_noteOn_type_init(_ctx)
+   Monocv_process_type_init(_ctx)
+end
+
+function Monocv_noteOff_type_init(_ctx)
+   Monocv_process_type_init(_ctx)
+end
+
+function Monocv_controlChange_type_init(_ctx)
+   Monocv_process_type_init(_ctx)
+end
+
+function Monocv_default_type_init(_ctx)
+   Monocv_process_type_init(_ctx)
 end
 
 function Util_edge(_ctx, x)

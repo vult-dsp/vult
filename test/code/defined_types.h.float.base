@@ -18,6 +18,14 @@ typedef struct Defined_types_process_type {
    Defined_types_foo_type inst_1a5d1;
 } Defined_types_process_type;
 
+typedef struct Defined_types_process_type Defined_types_noteOn_type;
+
+typedef struct Defined_types_process_type Defined_types_noteOff_type;
+
+typedef struct Defined_types_process_type Defined_types_controlChange_type;
+
+typedef struct Defined_types_process_type Defined_types_default_type;
+
 typedef struct Defined_types_micro {
    Defined_types_dot dot_0;
    Defined_types_dot dot_1;
@@ -34,6 +42,22 @@ static_inline void Defined_types_foo_type_init(Defined_types_foo_type& _ctx) {
 
 static_inline void Defined_types_process_type_init(Defined_types_process_type& _ctx) {
    Defined_types_foo_type_init(_ctx.inst_1a5d1);
+}
+
+static_inline void Defined_types_noteOn_type_init(Defined_types_noteOn_type& _ctx) {
+   Defined_types_process_type_init(_ctx);
+}
+
+static_inline void Defined_types_noteOff_type_init(Defined_types_noteOff_type& _ctx) {
+   Defined_types_process_type_init(_ctx);
+}
+
+static_inline void Defined_types_controlChange_type_init(Defined_types_controlChange_type& _ctx) {
+   Defined_types_process_type_init(_ctx);
+}
+
+static_inline void Defined_types_default_type_init(Defined_types_default_type& _ctx) {
+   Defined_types_process_type_init(_ctx);
 }
 
 static_inline void Defined_types_micro_init(Defined_types_micro& _ctx) {

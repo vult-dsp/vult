@@ -73,6 +73,7 @@ type args =
   ; mutable force_write : bool
   ; mutable prefix : string option
   ; mutable debug : bool
+  ; mutable profile : bool
   }
 
 let default_arguments : args =
@@ -98,6 +99,7 @@ let default_arguments : args =
   ; force_write = false
   ; prefix = None
   ; debug = false
+  ; profile = false
   }
 ;;
 
@@ -207,6 +209,7 @@ let flags result =
     ; comment = " Show the version of vult"
     }
   ; { flag = "-debug"; action = Arg.Unit (fun () -> result.debug <- true); comment = "" }
+  ; { flag = "-profile"; action = Arg.Unit (fun () -> result.profile <- true); comment = "" }
   ]
 ;;
 

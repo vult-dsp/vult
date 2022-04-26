@@ -29,6 +29,22 @@ function Noise_process_type_init(_ctx)
    _ctx.x2 = 0
 end
 
+function Noise_noteOn_type_init(_ctx)
+   Noise_process_type_init(_ctx)
+end
+
+function Noise_noteOff_type_init(_ctx)
+   Noise_process_type_init(_ctx)
+end
+
+function Noise_controlChange_type_init(_ctx)
+   Noise_process_type_init(_ctx)
+end
+
+function Noise_default_type_init(_ctx)
+   Noise_process_type_init(_ctx)
+end
+
 function Util_edge_type_init(_ctx)
    _ctx.pre = false
 end
@@ -61,9 +77,41 @@ function Tricore_process_type_init(_ctx)
    _ctx.reset_state = false
 end
 
+function Tricore_noteOn_type_init(_ctx)
+   Tricore_process_type_init(_ctx)
+end
+
+function Tricore_noteOff_type_init(_ctx)
+   Tricore_process_type_init(_ctx)
+end
+
+function Tricore_controlChange_type_init(_ctx)
+   Tricore_process_type_init(_ctx)
+end
+
+function Tricore_default_type_init(_ctx)
+   Tricore_process_type_init(_ctx)
+end
+
 function Swept_process_type_init(_ctx)
    Util_edge_type_init(_ctx.inst_10402)
    _ctx.out = 0.0
+end
+
+function Swept_noteOn_type_init(_ctx)
+   Swept_process_type_init(_ctx)
+end
+
+function Swept_noteOff_type_init(_ctx)
+   Swept_process_type_init(_ctx)
+end
+
+function Swept_controlChange_type_init(_ctx)
+   Swept_process_type_init(_ctx)
+end
+
+function Swept_default_type_init(_ctx)
+   Swept_process_type_init(_ctx)
 end
 
 function Ahr_do_type_init(_ctx)
@@ -87,6 +135,22 @@ function Ahr_process_type_init(_ctx)
    _ctx.knob3 = 0.0
 end
 
+function Ahr_noteOn_type_init(_ctx)
+   Ahr_process_type_init(_ctx)
+end
+
+function Ahr_noteOff_type_init(_ctx)
+   Ahr_process_type_init(_ctx)
+end
+
+function Ahr_controlChange_type_init(_ctx)
+   Ahr_process_type_init(_ctx)
+end
+
+function Ahr_default_type_init(_ctx)
+   Ahr_process_type_init(_ctx)
+end
+
 function Kick_do_type_init(_ctx)
    Ahr_do_type_init(_ctx.inst_1d863)
    Swept_process_type_init(_ctx.inst_20263)
@@ -101,6 +165,22 @@ function Kick_process_type_init(_ctx)
    _ctx.odecay = 0.0
    _ctx.pitch = 0.0
    _ctx.swept = 0.0
+end
+
+function Kick_noteOn_type_init(_ctx)
+   Kick_process_type_init(_ctx)
+end
+
+function Kick_noteOff_type_init(_ctx)
+   Kick_process_type_init(_ctx)
+end
+
+function Kick_controlChange_type_init(_ctx)
+   Kick_process_type_init(_ctx)
+end
+
+function Kick_default_type_init(_ctx)
+   Kick_process_type_init(_ctx)
 end
 
 function Noise_pinker(_ctx, x)
