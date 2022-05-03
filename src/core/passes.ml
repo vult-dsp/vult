@@ -614,24 +614,27 @@ let passes =
   |> Mapper.seq (LiteralArrays.mapper Enabled)
 ;;
 
-let apply env state prog =
-  let rec loop state prog n =
-    if n > 10
-    then failwith "too many repeats"
-    else (
-      let state, prog = Mapper.prog passes env state prog in
+let rec apply env state prog n =
+  if n > 10
+  then failwith "too many repeats"
+  else (
+    match prog with
+    | [] -> state, []
+    | h :: t ->
+      let state, h = Mapper.top_stmt passes env state h in
       let data = Mapper.getData state in
       if data.repeat
       then (
         let data = { data with repeat = false } in
-        loop (Mapper.setData state data) prog (n + 1))
-      else prog)
-  in
-  loop state prog 0
+        let state, h = apply env (Mapper.setData state data) h (n + 1) in
+        apply env state (h @ t) (n + 1))
+      else (
+        let state, t = apply env state t 0 in
+        state, h @ t))
 ;;
 
 let run args (prog : prog) : prog =
-  let prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog in
+  let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 in
   let prog = Sort.run args prog in
   prog
 ;;
