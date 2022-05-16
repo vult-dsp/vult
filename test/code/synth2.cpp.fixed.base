@@ -24,6 +24,17 @@ void Synth2_mono_noteOn_type_init(Synth2_mono_noteOn_type& _ctx) {
    _ctx.pre = 0;
 }
 
+void Synth2_default(Synth2_process_type& _ctx) {
+   _ctx.volume = 0x10000 /* 1.000000 */;
+   _ctx.pw = 0x0 /* 0.000000 */;
+   _ctx.pitch = 0x2a0000 /* 42.000000 */;
+   _ctx.cut = 0x10000 /* 1.000000 */;
+   _ctx.res = 0x0 /* 0.000000 */;
+   _ctx.amp_s = 0x10000 /* 1.000000 */;
+   _ctx.lfo_amt = 0x8000 /* 0.500000 */;
+   _ctx.lfo_rate = 0x0 /* 0.000000 */;
+}
+
 void Synth2_process_type_init(Synth2_process_type& _ctx) {
    _ctx.amp_s = 0x0 /* 0.000000 */;
    _ctx.cut = 0x0 /* 0.000000 */;
@@ -39,6 +50,7 @@ void Synth2_process_type_init(Synth2_process_type& _ctx) {
    _ctx.res = 0x0 /* 0.000000 */;
    _ctx.volume = 0x0 /* 0.000000 */;
    _ctx.wave = 0x0 /* 0.000000 */;
+   Synth2_default(_ctx);
 }
 
 fix16_t Synth2_osc(Synth2_osc_type& _ctx, fix16_t pitch, fix16_t pw, fix16_t wave) {
@@ -188,16 +200,5 @@ void Synth2_controlChange(Synth2_process_type& _ctx, int32_t control, int32_t va
    if (control == 36) {
       _ctx.res = value_0_1;
    }
-}
-
-void Synth2_default(Synth2_process_type& _ctx) {
-   _ctx.volume = 0x10000 /* 1.000000 */;
-   _ctx.pw = 0x0 /* 0.000000 */;
-   _ctx.pitch = 0x2a0000 /* 42.000000 */;
-   _ctx.cut = 0x10000 /* 1.000000 */;
-   _ctx.res = 0x0 /* 0.000000 */;
-   _ctx.amp_s = 0x10000 /* 1.000000 */;
-   _ctx.lfo_amt = 0x8000 /* 0.500000 */;
-   _ctx.lfo_rate = 0x0 /* 0.000000 */;
 }
 

@@ -156,6 +156,8 @@ static_inline void Synth2_mono_isGateOn_type_init(Synth2_mono_isGateOn_type& _ct
    Synth2_mono_noteOn_type_init(_ctx);
 }
 
+void Synth2_default(Synth2_process_type& _ctx);
+
 void Synth2_process_type_init(Synth2_process_type& _ctx);
 
 static_inline void Synth2_noteOn_type_init(Synth2_noteOn_type& _ctx) {
@@ -175,7 +177,7 @@ static_inline void Synth2_default_type_init(Synth2_default_type& _ctx) {
 }
 
 static_inline float Synth2_minFixed() {
-   return 1.52588e-05f;
+   return 1.53e-05f;
 }
 
 static_inline bool Synth2_change(Synth2_change_type& _ctx, float x) {
@@ -203,7 +205,7 @@ static_inline bool Synth2_each(Synth2_each_type& _ctx, int32_t n) {
 }
 
 static_inline bool Synth2_near_zero(float x) {
-   return (abs(x) < 0.02f);
+   return (fabsf(x) < 0.02f);
 }
 
 static_inline float Synth2_dcblock(Synth2_dcblock_type& _ctx, float x0) {
@@ -225,18 +227,18 @@ static_inline float Synth2_lpfilter(Synth2_lpfilter_type& _ctx, float x) {
 }
 
 static_inline float Synth2_pitchToRate(float d) {
-   return (0.000185392290249f * exp((0.0577623f * d)));
+   return (0.0001854f * expf((0.0577623f * d)));
 }
 
 static_inline float Synth2_pulse_train(float m, float phase) {
-   float pi_phase = (3.14159265359f * phase);
-   float denominator1 = sin(pi_phase);
+   float pi_phase = (3.1415927f * phase);
+   float denominator1 = sinf(pi_phase);
    float tmp1 = 0.0f;
    if (Synth2_near_zero(denominator1)) {
       tmp1 = 1.0f;
    }
    else {
-      tmp1 = sin((m * pi_phase));
+      tmp1 = sinf((m * pi_phase));
       tmp1 = (tmp1 / (denominator1 * m));
    }
    return tmp1;
@@ -294,8 +296,6 @@ static_inline void Synth2_noteOff(Synth2_process_type& _ctx, int32_t note, int32
 }
 
 void Synth2_controlChange(Synth2_process_type& _ctx, int32_t control, int32_t value, int32_t channel);
-
-void Synth2_default(Synth2_process_type& _ctx);
 
 
 #endif // SYNTH2_H

@@ -130,7 +130,7 @@ static_inline bool Synth1_each(Synth1_each_type& _ctx, int32_t n) {
 }
 
 static_inline float Synth1_pitchToRate(float d) {
-   return (0.000185392290249f * exp((0.0577623f * d)));
+   return (0.0001854f * expf((0.0577623f * d)));
 }
 
 float Synth1_phasor(Synth1_phasor_type& _ctx, float pitch, bool reset);
@@ -144,7 +144,7 @@ static_inline float Synth1_process(Synth1_process_type& _ctx, float input) {
    bool reset = (((- phase1) + _ctx.pre_phase1) > 0.5f);
    _ctx.pre_phase1 = phase1;
    float phase2 = Synth1_phasor(_ctx.inst_4863d, ((32.0f * Synth1_smooth(_ctx.inst_3dc3d, (lfo_val + _ctx.detune))) + _ctx.pitch), reset);
-   float sine = sin((6.28318530718f * phase2));
+   float sine = sinf((6.2831854f * phase2));
    float gate_value = 0.0f;
    if (_ctx.gate > 0) {
       gate_value = 1.0f;

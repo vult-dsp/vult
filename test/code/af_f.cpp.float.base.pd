@@ -17,14 +17,14 @@ t_int *Af_f_process_tilde_perform(t_int *w)
 {
    t_Af_f_process_tilde *x = (t_Af_f_process_tilde *)(w[1]);
 
-   t_sample *in_0 = (t_sample *)(w[2]); 
-   t_sample *out_0 = (t_sample *)(w[3]); 
+   t_sample *in_0 = (t_sample *)(w[2]);
+   t_sample *out_0 = (t_sample *)(w[3]);
 
-   int n = (int)(w[4]); 
+   int n = (int)(w[4]);
 
    while (n--) {
-   float ret =  Af_f_process(x->data, *(in_0++)); 
-   *(out_0++) = ret; 
+   float ret =  Af_f_process(x->data, *(in_0++));
+   *(out_0++) = ret;
    }
 
    return (w+5);
@@ -33,9 +33,9 @@ t_int *Af_f_process_tilde_perform(t_int *w)
 void Af_f_process_tilde_dsp(t_Af_f_process_tilde *x, t_signal **sp)
 {
    dsp_add(Af_f_process_tilde_perform, 4,
-   x, 
-   sp[0]->s_vec, 
-   sp[1]->s_vec, 
+   x,
+   sp[0]->s_vec,
+   sp[1]->s_vec,
 
    sp[0]->s_n);
 }
@@ -44,10 +44,10 @@ void *Af_f_process_tilde_new()
 {
    t_Af_f_process_tilde *x = (t_Af_f_process_tilde *)pd_new(Af_f_process_tilde_class);
 
-   Af_f_process_type_init(x->data); 
+   Af_f_process_type_init(x->data);
 
 
-   outlet_new(&x->x_obj, &s_signal); 
+   outlet_new(&x->x_obj, &s_signal);
 
    return (void *)x;
 }
@@ -69,10 +69,6 @@ void Af_f_process_tilde_setup(void) {
 }
 
 } // extern "C"
-
-float samplerate() {
-  return sys_getsr();
-}
 
 void af_f_setup() {
 

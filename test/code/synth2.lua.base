@@ -97,6 +97,17 @@ function Synth2_mono_isGateOn_type_init(_ctx)
    Synth2_mono_noteOn_type_init(_ctx)
 end
 
+function Synth2_default(_ctx)
+   _ctx.volume = 1.0
+   _ctx.pw = 0.0
+   _ctx.pitch = 42.0
+   _ctx.cut = 1.0
+   _ctx.res = 0.0
+   _ctx.amp_s = 1.0
+   _ctx.lfo_amt = 0.5
+   _ctx.lfo_rate = 0.0
+end
+
 function Synth2_process_type_init(_ctx)
    _ctx.amp_s = 0.0
    _ctx.cut = 0.0
@@ -112,6 +123,7 @@ function Synth2_process_type_init(_ctx)
    _ctx.res = 0.0
    _ctx.volume = 0.0
    _ctx.wave = 0.0
+   Synth2_default(_ctx)
 end
 
 function Synth2_noteOn_type_init(_ctx)
@@ -394,16 +406,5 @@ function Synth2_controlChange(_ctx, control, value, channel)
    if (control == 36) then
       _ctx.res = value_0_1
    end
-end
-
-function Synth2_default(_ctx)
-   _ctx.volume = 1.0
-   _ctx.pw = 0.0
-   _ctx.pitch = 42.0
-   _ctx.cut = 1.0
-   _ctx.res = 0.0
-   _ctx.amp_s = 1.0
-   _ctx.lfo_amt = 0.5
-   _ctx.lfo_rate = 0.0
 end
 

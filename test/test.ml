@@ -28,7 +28,7 @@ open OUnit2
 open Util
 open Tcommon;;
 
-Util.Float.reduce_precision := true
+Util.Vfloat.reduce_precision := true
 
 let test_directory = Filename.concat initial_dir "test"
 let in_test_directory path = Filename.concat test_directory path

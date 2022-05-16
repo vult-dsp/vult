@@ -1,5 +1,6 @@
 type function_info =
   { name : string
+  ; class_name : string
   ; has_ctx : bool
   ; inputs : Code.param list
   ; outputs : Code.type_ list
@@ -18,14 +19,19 @@ let getFunctionInfo (f : Code.function_def) =
     | ("_ctx", Struct _) :: inputs -> true, inputs
     | inputs -> false, inputs
   in
-  if inputs <> [] || outputs <> [] then Some { name = f.name; has_ctx; inputs; outputs } else None
+  let class_name =
+    match Pparser.Ptags.getParameterList f.tags "pd" [ "name", TypeString ] with
+    | [ Some (String name) ] -> name
+    | _ -> f.name
+  in
+  if inputs <> [] || outputs <> [] then Some { name = f.name; class_name; has_ctx; inputs; outputs } else None
 ;;
 
 let addInlets inputs =
   match inputs with
   | [] | [ _ ] -> Pla.unit
   | _ :: t ->
-    List.map (fun _ -> Pla.string "inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal); ") t
+    List.map (fun _ -> Pla.string "inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);") t
     |> Pla.join_sep Pla.newline
     |> Pla.indent
 ;;
@@ -33,7 +39,7 @@ let addInlets inputs =
 (** Add the outlets *)
 let addOutlets (f : function_info) =
   f.outputs
-  |> List.map (fun _ -> Pla.string "outlet_new(&x->x_obj, &s_signal); ")
+  |> List.map (fun _ -> Pla.string "outlet_new(&x->x_obj, &s_signal);")
   |> Pla.join_sep Pla.newline
   |> Pla.indent
 ;;
@@ -41,7 +47,7 @@ let addOutlets (f : function_info) =
 let tildeNewFunction (f : function_info) : int * Pla.t =
   let dsp_nargs = List.length f.inputs + List.length f.outputs in
   let vec_decl =
-    CCList.init dsp_nargs (fun i -> [%pla {|sp[<#i#i>]->s_vec|}]) |> Pla.join_sep_all [%pla {|, <#>|}] |> Pla.indent
+    CCList.init dsp_nargs (fun i -> [%pla {|sp[<#i#i>]->s_vec|}]) |> Pla.join_sep_all [%pla {|,<#>|}] |> Pla.indent
   in
   dsp_nargs + 2, vec_decl
 ;;
@@ -71,26 +77,26 @@ let tildePerformFunctionCall (f : function_info) =
       let current_typ = typeString o in
       let decl = [%pla {|<#current_typ#s> ret = |}] in
       let value = castOutput o (Pla.string "ret") in
-      let copy = [%pla {|*(out_0++) = <#value#>; |}] in
+      let copy = [%pla {|*(out_0++) = <#value#>;|}] in
       decl, copy
     | o ->
       let copy =
         List.mapi
           (fun i o ->
             let value = castOutput o [%pla {|x->data.<#fname#s>_ret_<#i#i>|}] in
-            [%pla {|*(out_<#i#i>++) = <#value#>; |}])
+            [%pla {|*(out_<#i#i>++) = <#value#>;|}])
           o
         |> Pla.join_sep_all Pla.newline
       in
       Pla.unit, copy
   in
-  [%pla {|<#ret#> <#fname#s>(<#args#>); <#><#copy#>|}]
+  [%pla {|<#ret#> <#fname#s>(<#args#>);<#><#copy#>|}]
 ;;
 
 (** Generates the buffer access of _tilde_perform function *)
 let tildePerformFunctionVector (f : function_info) : int * Pla.t =
   (* we use this template to acces the buffers of inputs and outputs *)
-  let decl_templ io index count = [%pla {|t_sample *<#io#s>_<#index#i> = (t_sample *)(w[<#count#i>]); |}] in
+  let decl_templ io index count = [%pla {|t_sample *<#io#s>_<#index#i> = (t_sample *)(w[<#count#i>]);|}] in
   (* First the inputs. We start with count=2 for accessing the vector 'w' *)
   let decl1, count, _ =
     List.fold_left
@@ -110,7 +116,7 @@ let tildePerformFunctionVector (f : function_info) : int * Pla.t =
       f.outputs
   in
   (* the number of samples is in the next index *)
-  let n = [%pla {|<#>int n = (int)(w[<#count#i>]); |}] in
+  let n = [%pla {|<#>int n = (int)(w[<#count#i>]);|}] in
   (* appends all the declarations *)
   let decl = List.rev (n :: decl2) |> Pla.join_sep Pla.newline |> Pla.indent in
   (* we return the number of buffers used *)
@@ -121,13 +127,14 @@ let getInitDefaultCalls (f : function_info) =
   if f.has_ctx
   then (
     let fname = f.name in
-    [%pla {|<#fname#s>_type|}], [%pla {|<#fname#s>_type_init(x->data); |}])
+    [%pla {|<#fname#s>_type|}], [%pla {|<#fname#s>_type_init(x->data);|}])
   else Pla.string "float", Pla.unit
 ;;
 
 (** Implementation function *)
 let func_imp (f : function_info) : Pla.t =
   let fname = f.name in
+  let class_name = f.class_name in
   (* Generate extra inlets *)
   let inlets = addInlets f.inputs in
   (* Generates the outlets*)
@@ -162,7 +169,7 @@ t_int *<#fname#s>_tilde_perform(t_int *w)
 void <#fname#s>_tilde_dsp(t_<#fname#s>_tilde *x, t_signal **sp)
 {
    dsp_add(<#fname#s>_tilde_perform, <#dsp_nargs#i>,
-   x, <#vec_decl#>
+   x,<#vec_decl#>
    sp[0]->s_n);
 }
 
@@ -182,7 +189,7 @@ void <#fname#s>_tilde_delete(t_<#fname#s>_tilde *x){
 }
 
 void <#fname#s>_tilde_setup(void) {
-   <#fname#s>_tilde_class = class_new(gensym("<#fname#s>~"),
+   <#fname#s>_tilde_class = class_new(gensym("<#class_name#s>~"),
       (t_newmethod)<#fname#s>_tilde_new, // constructor function
       (t_method)<#fname#s>_tilde_delete, // destructor function
       sizeof(t_<#fname#s>_tilde), // size of the object
@@ -211,11 +218,7 @@ let lib_impl lib_name (functions : function_info list) =
         [%pla {|<#fname#s>_tilde_setup();|}])
       functions
   in
-  [%pla {|float samplerate() {
-  return sys_getsr();
-}
-
-void <#lib_name#s>_setup() {
+  [%pla {|void <#lib_name#s>_setup() {
 <#calls#+>
 }|}]
 ;;
@@ -227,7 +230,7 @@ let lib_header lib_name : Pla.t =
  #include <math.h>
  #include <m_pd.h>
 
- float samplerate();
+static inline float samplerate() { return sys_getsr(); }
 
  #if defined(_MSC_VER)
      //  Microsoft VC++

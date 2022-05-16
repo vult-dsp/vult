@@ -64,7 +64,7 @@ static_inline void Volume_noteOff(Volume_process_type& _ctx, int32_t note, int32
 
 static_inline void Volume_controlChange(Volume_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    if (control == 30) {
-      _ctx.volume = (0.00787401574803f * int_to_float(value));
+      _ctx.volume = (0.0078741f * int_to_float(value));
    }
 }
 

@@ -184,7 +184,7 @@ let flags result =
     ; comment = "id Performs code cleanup keeping as roots the specified functions"
     }
   ; { flag = "-test"
-    ; action = Arg.Unit (fun () -> Float.reduce_precision := true)
+    ; action = Arg.Unit (fun () -> Vfloat.reduce_precision := true)
     ; comment = " Enters a special mode useful only for testing (default: off)"
     }
   ; { flag = "-dparse"

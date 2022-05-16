@@ -526,8 +526,8 @@ module Simplify = struct
     match e with
     (* -(n) -> -n *)
     | { e = EUnOp (UOpNeg, ({ e = EReal n; _ } as e1)); _ } -> reapply state, { e1 with e = EReal (-.n) }
-    | { e = EUnOp (UOpNeg, ({ e = EInt n; _ } as e1)); _ } ->
-      reapply state, { e1 with e = EInt (-n) } (* e1 / e2 -> e1 * (1.0 / e2) *)
+    | { e = EUnOp (UOpNeg, ({ e = EInt n; _ } as e1)); _ } -> reapply state, { e1 with e = EInt (-n) }
+    (* e1 / e2 -> e1 * (1.0 / e2) *)
     | { e = EOp (OpDiv, e1, ({ e = EReal n; _ } as e2)); _ } ->
       reapply state, { e with e = EOp (OpMul, e1, { e2 with e = EReal (1.0 /. n) }) }
     | { e = EOp (op1, e1, { e = EOp (op2, e2, e3); _ }); _ } when op1 = op2 ->

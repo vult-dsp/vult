@@ -119,7 +119,17 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
     { s = StmtBlock [ decl_array; decl; init; loop; transfer ]; loc }
 ;;
 
-let createInitFunction (cstyle : cstyle) stmt =
+let customInitializerCall (custom_initializers : string Util.Maps.Map.t) name ectx void_type loc =
+  match Util.Maps.Map.find_opt name custom_initializers with
+  | None -> []
+  | Some path ->
+    [ { s = StmtBind ({ l = LWild; t = void_type; loc }, { e = ECall { path; args = [ ectx ] }; t = void_type; loc })
+      ; loc
+      }
+    ]
+;;
+
+let createInitFunction custom_initializers (cstyle : cstyle) stmt =
   let () = resetTick () in
   match stmt with
   (* Generation for c-style code using references *)
@@ -137,7 +147,8 @@ let createInitFunction (cstyle : cstyle) stmt =
           initStatement cstyle lhs rhs t)
         struct_t.members
     in
-    let body = { s = StmtBlock stmts; loc } in
+    let custom_initializer = customInitializerCall custom_initializers struct_t.path ectx void_type loc in
+    let body = { s = StmtBlock (stmts @ custom_initializer); loc } in
     let args, t = [ "_ctx", this_type, loc ], ([ this_type ], void_type) in
     { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
   (* Initialization of alias c-style *)
@@ -152,10 +163,11 @@ let createInitFunction (cstyle : cstyle) stmt =
     let body = { s = StmtBlock [ bind ]; loc } in
     let args, t = [ "_ctx", this_type, loc ], ([ this_type ], void_type) in
     { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
-  (* Generate initiializers that return a value *)
+  (* Generate initializers that return a value *)
   | { top = TopType struct_t; loc } ->
     let name = struct_t.path ^ "_init" in
     let this_type = { t = TStruct struct_t; loc = Loc.default } in
+    let void_type = { t = TVoid None; loc = Loc.default } in
     let lctx = { l = LId "_ctx"; t = this_type; loc } in
     let ectx = { e = EId "_ctx"; t = this_type; loc } in
     let stmts =
@@ -166,9 +178,10 @@ let createInitFunction (cstyle : cstyle) stmt =
           initStatement cstyle lhs rhs t)
         struct_t.members
     in
+    let custom_initializer = customInitializerCall custom_initializers struct_t.path ectx void_type loc in
     let new_ctx = { s = StmtDecl { d = DId ("_ctx", None); t = this_type; loc }; loc } in
     let return = { s = StmtReturn ectx; loc } in
-    let body = { s = StmtBlock ((new_ctx :: stmts) @ [ return ]); loc } in
+    let body = { s = StmtBlock ((new_ctx :: stmts) @ custom_initializer @ [ return ]); loc } in
     let args, t = [], ([], this_type) in
     { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
   | _ -> failwith "not a type"

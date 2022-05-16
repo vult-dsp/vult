@@ -11,6 +11,7 @@ void Tricore_process_type_init(Tricore_process_type& _ctx) {
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.reset_phase = 0x0 /* 0.000000 */;
    _ctx.reset_state = false;
+   Tricore_default(_ctx);
 }
 
 fix16_t Tricore_process(Tricore_process_type& _ctx, fix16_t cv, fix16_t reset, fix16_t disable) {

@@ -51,21 +51,21 @@ float Adsr_do(Adsr_do_type& _ctx, float gate, float a, float d, float s, float r
       _ctx.rate = d_rate;
       _ctx.target = (1024.0f * s);
    }
-   return (Util_smooth(_ctx.inst_295a0, _ctx.scale) * float_clip((0.0009765625f * _ctx.out), 0.0f, 1.0f));
+   return (Util_smooth(_ctx.inst_295a0, _ctx.scale) * float_clip((0.0009766f * _ctx.out), 0.0f, 1.0f));
 }
 
 void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    if (control == 1) {
-      _ctx.knob1 = (0.00787401574803f * int_to_float(value));
+      _ctx.knob1 = (0.0078741f * int_to_float(value));
    }
    if (control == 2) {
-      _ctx.knob2 = (0.00787401574803f * int_to_float(value));
+      _ctx.knob2 = (0.0078741f * int_to_float(value));
    }
    if (control == 3) {
-      _ctx.knob3 = (0.00787401574803f * int_to_float(value));
+      _ctx.knob3 = (0.0078741f * int_to_float(value));
    }
    if (control == 4) {
-      _ctx.knob4 = (0.00787401574803f * int_to_float(value));
+      _ctx.knob4 = (0.0078741f * int_to_float(value));
    }
 }
 

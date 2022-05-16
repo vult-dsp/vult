@@ -65,6 +65,33 @@ static_inline void Util_average2_type_init(Util_average2_type& _ctx) {
    _ctx.x0 = 0x0 /* 0.000000 */;
 }
 
+static_inline fix16_t Util_cvToPitch(fix16_t cv) {
+   return (0x180000 /* 24.000000 */ + fix_mul(0x780000 /* 120.000000 */, cv));
+}
+
+static_inline fix16_t Svf_calc_g_raw_c0(int32_t index) {
+   return Svf_calc_g_c0[static_cast<uint32_t>(index)];
+}
+
+static_inline fix16_t Svf_calc_g_raw_c1(int32_t index) {
+   return Svf_calc_g_c1[static_cast<uint32_t>(index)];
+}
+
+static_inline fix16_t Svf_calc_g_raw_c2(int32_t index) {
+   return Svf_calc_g_c2[static_cast<uint32_t>(index)];
+}
+
+static_inline fix16_t Svf_calc_g(fix16_t cv) {
+   int32_t index = int_clip(fix_to_int(fix_mul(cv, 9247857)), 0, 127);
+   return (Svf_calc_g_c0[static_cast<uint32_t>(index)] + fix_mul(cv, (Svf_calc_g_c1[static_cast<uint32_t>(index)] + fix_mul(Svf_calc_g_c2[static_cast<uint32_t>(index)], cv))));
+}
+
+static_inline void Svf_default(Svf_process_type& _ctx) {
+   _ctx.g = Svf_calc_g(0x0 /* 0.000000 */);
+   _ctx.r = 0x10000 /* 1.000000 */;
+   _ctx.inv_den = fix_div(0x10000 /* 1.000000 */, (0x10000 /* 1.000000 */ + (fix_mul(0x0 /* 0.000000 */, _ctx.g) + fix_mul(_ctx.g, _ctx.g))));
+}
+
 void Svf_process_type_init(Svf_process_type& _ctx);
 
 static_inline void Svf_noteOn_type_init(Svf_noteOn_type& _ctx) {
@@ -163,10 +190,6 @@ static_inline fix16_t Util_pitchToRate_raw_c2(int32_t index) {
 static_inline fix16_t Util_pitchToRate(fix16_t pitch) {
    int32_t index = int_clip(fix_to_int(fix_mul(pitch, 15996)), 0, 31);
    return (Util_pitchToRate_c0[static_cast<uint32_t>(index)] + fix_mul(pitch, (Util_pitchToRate_c1[static_cast<uint32_t>(index)] + fix_mul(Util_pitchToRate_c2[static_cast<uint32_t>(index)], pitch))));
-}
-
-static_inline fix16_t Util_cvToPitch(fix16_t cv) {
-   return (0x180000 /* 24.000000 */ + fix_mul(0x780000 /* 120.000000 */, cv));
 }
 
 static_inline fix16_t Util_cvToRate_1024_raw_c0(int32_t index) {
@@ -274,23 +297,6 @@ static_inline void Saturate_soft_controlChange(int32_t control, int32_t value, i
 static_inline void Saturate_soft_default() {
 }
 
-static_inline fix16_t Svf_calc_g_raw_c0(int32_t index) {
-   return Svf_calc_g_c0[static_cast<uint32_t>(index)];
-}
-
-static_inline fix16_t Svf_calc_g_raw_c1(int32_t index) {
-   return Svf_calc_g_c1[static_cast<uint32_t>(index)];
-}
-
-static_inline fix16_t Svf_calc_g_raw_c2(int32_t index) {
-   return Svf_calc_g_c2[static_cast<uint32_t>(index)];
-}
-
-static_inline fix16_t Svf_calc_g(fix16_t cv) {
-   int32_t index = int_clip(fix_to_int(fix_mul(cv, 9247857)), 0, 127);
-   return (Svf_calc_g_c0[static_cast<uint32_t>(index)] + fix_mul(cv, (Svf_calc_g_c1[static_cast<uint32_t>(index)] + fix_mul(Svf_calc_g_c2[static_cast<uint32_t>(index)], cv))));
-}
-
 fix16_t Svf_process(Svf_process_type& _ctx, fix16_t x, fix16_t cv, fix16_t q, int32_t sel);
 
 static_inline void Svf_noteOn(Svf_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
@@ -300,12 +306,6 @@ static_inline void Svf_noteOff(Svf_process_type& _ctx, int32_t note, int32_t cha
 }
 
 static_inline void Svf_controlChange(Svf_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
-}
-
-static_inline void Svf_default(Svf_process_type& _ctx) {
-   _ctx.g = Svf_calc_g(0x0 /* 0.000000 */);
-   _ctx.r = 0x10000 /* 1.000000 */;
-   _ctx.inv_den = fix_div(0x10000 /* 1.000000 */, (0x10000 /* 1.000000 */ + (fix_mul(0x0 /* 0.000000 */, _ctx.g) + fix_mul(_ctx.g, _ctx.g))));
 }
 
 

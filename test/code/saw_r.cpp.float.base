@@ -24,12 +24,12 @@ float Saw_r_process(Saw_r_process_type& _ctx, float cv) {
    float o = 0.0f;
    if (ph >= (1.0f + (- i))) {
       float b = ((1.0f + ((- i) + (- ph))) / i);
-      o = (ph + (b * abs(b)));
+      o = (ph + (b * fabsf(b)));
    }
    else {
       if (ph <= (-1.0f + i)) {
          float b = ((-1.0f + (i + (- ph))) / i);
-         o = (ph + (b * abs(b)));
+         o = (ph + (b * fabsf(b)));
       }
       else {
          o = ph;

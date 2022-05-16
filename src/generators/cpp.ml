@@ -116,7 +116,9 @@ let rec print_exp (e : exp) =
   | Unit -> Pla.string ""
   | Bool v -> Pla.string (if v then "true" else "false")
   | Int n -> [%pla {|<#n#i>|}]
-  | Real n -> [%pla {|<#n#f>f|}]
+  | Real n ->
+    let n = Util.Vfloat.adapt n in
+    [%pla {|<#n#f>f|}]
   | Fixed n ->
     let n = Common.toFixed n in
     [%pla {|<#n#s>|}]
@@ -190,7 +192,7 @@ let print_arg (n, (t : type_)) =
   | Array (_, Array _) -> failwith "array of arrays are not implemented"
   | Array (dim, (Struct _ as sub)) ->
     let sub = print_type_ sub in
-    [%pla {|<#sub#> (&<#n#s>)[<#dim#i>]|}]
+    [%pla {|std::array<<#sub#>, <#dim#i>>& <#n#s>|}]
   | Array (dim, sub) ->
     let sub = print_type_ sub in
     [%pla {|std::array<<#sub#>, <#dim#i>>& <#n#s>|}]
@@ -201,6 +203,21 @@ let print_arg (n, (t : type_)) =
 ;;
 
 let print_decl (n, (t : type_)) =
+  match t with
+  | Array (_, Array _) -> failwith "array of arrays are not implemented"
+  | Array (dim, (Struct _ as sub)) ->
+    let sub = print_type_ sub in
+    [%pla {|std::array<<#sub#>, <#dim#i>> &<#n#s>|}]
+  | Array (dim, sub) ->
+    let sub = print_type_ sub in
+    [%pla {|std::array<<#sub#>, <#dim#i>> &<#n#s>|}]
+  | Struct { path; _ } -> [%pla {|<#path#s>& <#n#s>|}]
+  | _ ->
+    let t = print_type_ t in
+    [%pla {|<#t#> <#n#s>|}]
+;;
+
+let print_decl_alloc (n, (t : type_)) =
   match t with
   | Array (_, Array _) -> failwith "array of arrays are not implemented"
   | Array (dim, (Struct _ as sub)) ->
@@ -237,8 +254,12 @@ and print_stmt s =
     let lhs = print_dexp lhs in
     [%pla {|<#t#> <#lhs#>;<#><#path#s>_init(<#lhs#>);|}]
   | StmtDecl ({ d = DId (n, _); t; _ }, None) ->
-    let t = print_decl (n, t) in
+    let t = print_decl_alloc (n, t) in
     [%pla {|<#t#>;|}]
+  | StmtDecl ({ d = DId (n, _); t; _ }, Some ({ e = Array _; _ } as rhs)) ->
+    let t = print_decl_alloc (n, t) in
+    let rhs = print_exp rhs in
+    [%pla {|<#t#> = <#rhs#>;|}]
   | StmtDecl ({ d = DId (n, _); t; _ }, Some rhs) ->
     let t = print_decl (n, t) in
     let rhs = print_exp rhs in

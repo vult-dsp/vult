@@ -205,15 +205,15 @@ let rec type_ (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state)
   let sub_env = enter mapper.type__env env t in
   let loc = t.loc in
   match t with
-  | { t = TVoid None; _ } -> apply mapper.type_ env state { t = TVoid None; loc }
+  | { t = TVoid None; _ } -> apply mapper.type_ env state t
   | { t = TVoid (Some elems); _ } ->
     let state, elems = (list type_) mapper sub_env state elems in
     apply mapper.type_ env state { t = TVoid (Some elems); loc }
-  | { t = TInt; _ } -> apply mapper.type_ env state { t = TInt; loc }
-  | { t = TReal; _ } -> apply mapper.type_ env state { t = TReal; loc }
-  | { t = TString; _ } -> apply mapper.type_ env state { t = TString; loc }
-  | { t = TBool; _ } -> apply mapper.type_ env state { t = TBool; loc }
-  | { t = TFixed; _ } -> apply mapper.type_ env state { t = TFixed; loc }
+  | { t = TInt; _ } -> apply mapper.type_ env state t
+  | { t = TReal; _ } -> apply mapper.type_ env state t
+  | { t = TString; _ } -> apply mapper.type_ env state t
+  | { t = TBool; _ } -> apply mapper.type_ env state t
+  | { t = TFixed; _ } -> apply mapper.type_ env state t
   | { t = TArray (dim, t1); _ } ->
     let state, t1 = type_ mapper sub_env state t1 in
     apply mapper.type_ env state { t = TArray (dim, t1); loc }

@@ -339,10 +339,19 @@ module ToProg = struct
     | _ -> false
   ;;
 
+  let getInitializersFromModule table m =
+    List.fold_left (fun s (key, t) -> Map.add (path key) (path t) s) table m.Env.init
+  ;;
+
+  let createInitizerTable (env : Env.in_top) =
+    Env.Map.fold (fun _ m s -> getInitializersFromModule s m) Map.empty env.modules
+  ;;
+
   let convert env stmts =
     let stmts = main env stmts in
     let types, functions = List.partition isType stmts in
-    let initializers = CCList.map Initializer.(createInitFunction RefObject) types in
+    let custom_initializers = createInitizerTable env in
+    let initializers = CCList.map Initializer.(createInitFunction custom_initializers RefObject) types in
     env, types @ initializers @ functions
   ;;
 end
@@ -834,6 +843,10 @@ let isRoot (args : Args.args) path =
   List.mem s_path args.roots
 ;;
 
+let customInitializer (env : Env.in_context) tags name =
+  if Ptags.has tags "init" then Env.addCustomInitFunction env name else env
+;;
+
 let rec function_def (iargs : Args.args) (env : Env.in_context) ((def : Syntax.function_def), (body : Syntax.stmt))
     : Env.in_context * (function_def * stmt)
   =
@@ -845,6 +858,7 @@ let rec function_def (iargs : Args.args) (env : Env.in_context) ((def : Syntax.f
   let next = addGeneratedFunctions def.tags def.name def.next in
   let env, next = function_def_opt iargs env next in
   let env = registerMultiReturnMem env path t def.loc in
+  let env = customInitializer env def.tags path in
   let is_root = isRoot iargs path in
   env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next; is_root }, stmt_block body)
 

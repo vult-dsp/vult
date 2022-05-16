@@ -17,15 +17,15 @@ t_int *Sff_f_process_tilde_perform(t_int *w)
 {
    t_Sff_f_process_tilde *x = (t_Sff_f_process_tilde *)(w[1]);
 
-   t_sample *in_0 = (t_sample *)(w[2]); 
-   t_sample *in_1 = (t_sample *)(w[3]); 
-   t_sample *out_0 = (t_sample *)(w[4]); 
+   t_sample *in_0 = (t_sample *)(w[2]);
+   t_sample *in_1 = (t_sample *)(w[3]);
+   t_sample *out_0 = (t_sample *)(w[4]);
 
-   int n = (int)(w[5]); 
+   int n = (int)(w[5]);
 
    while (n--) {
-   float ret =  Sff_f_process(*(in_0++), *(in_1++)); 
-   *(out_0++) = ret; 
+   float ret =  Sff_f_process(*(in_0++), *(in_1++));
+   *(out_0++) = ret;
    }
 
    return (w+6);
@@ -34,10 +34,10 @@ t_int *Sff_f_process_tilde_perform(t_int *w)
 void Sff_f_process_tilde_dsp(t_Sff_f_process_tilde *x, t_signal **sp)
 {
    dsp_add(Sff_f_process_tilde_perform, 5,
-   x, 
-   sp[0]->s_vec, 
-   sp[1]->s_vec, 
-   sp[2]->s_vec, 
+   x,
+   sp[0]->s_vec,
+   sp[1]->s_vec,
+   sp[2]->s_vec,
 
    sp[0]->s_n);
 }
@@ -48,9 +48,9 @@ void *Sff_f_process_tilde_new()
 
    
 
-   inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal); 
+   inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);
 
-   outlet_new(&x->x_obj, &s_signal); 
+   outlet_new(&x->x_obj, &s_signal);
 
    return (void *)x;
 }
@@ -72,10 +72,6 @@ void Sff_f_process_tilde_setup(void) {
 }
 
 } // extern "C"
-
-float samplerate() {
-  return sys_getsr();
-}
 
 void sff_f_setup() {
 

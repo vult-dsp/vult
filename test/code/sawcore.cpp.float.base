@@ -10,6 +10,7 @@ void Sawcore_process_type_init(Sawcore_process_type& _ctx) {
    _ctx.rate = 0.0f;
    _ctx.reset_phase = 0.0f;
    _ctx.reset_state = false;
+   Sawcore_default(_ctx);
 }
 
 void Sawcore_ptr_w2(Sawcore_ptr_w2_type& _ctx, float phase, float rate) {
@@ -19,14 +20,14 @@ void Sawcore_ptr_w2(Sawcore_ptr_w2_type& _ctx, float phase, float rate) {
    bool out1 = false;
    if (phase < s1) {
       float d = (phase / rate);
-      float t2 = (0.0009765625f * s2);
+      float t2 = (0.0009766f * s2);
       out1 = false;
       out2 = (1.0f + (d * (t2 + (- d))));
    }
    else {
       if (phase < s2) {
          float d = (phase / rate);
-         float t2 = (0.0009765625f * s2);
+         float t2 = (0.0009766f * s2);
          out1 = false;
          out2 = (3.0f + (d * (-4.0f + (d + t2))));
       }
@@ -75,6 +76,6 @@ float Sawcore_process(Sawcore_process_type& _ctx, float cv, float reset) {
          out = transition;
       }
    }
-   return (-1.0f + (0.001953125f * out));
+   return (-1.0f + (0.0019532f * out));
 }
 

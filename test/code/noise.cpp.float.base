@@ -4,9 +4,9 @@
 
 float Noise_process(Noise_process_type& _ctx, float color) {
    _ctx.x1 = ((7919 + (17389 * _ctx.x1)) % 32768);
-   float y1 = (3.0517578125e-05f * int_to_float(_ctx.x1));
+   float y1 = (3.06e-05f * int_to_float(_ctx.x1));
    _ctx.x2 = ((12553 + (27449 * _ctx.x2)) % 32768);
-   float y2 = (3.0517578125e-05f * int_to_float(_ctx.x2));
+   float y2 = (3.06e-05f * int_to_float(_ctx.x2));
    float out = 0.0f;
    if (color > 0.5f) {
       out = Noise_pinker(_ctx.inst_16d3d, (y1 + (- y2)));

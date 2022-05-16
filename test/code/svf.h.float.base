@@ -65,6 +65,33 @@ static_inline void Util_average2_type_init(Util_average2_type& _ctx) {
    _ctx.x0 = 0.0f;
 }
 
+static_inline float Util_cvToPitch(float cv) {
+   return (24.0f + (120.0f * cv));
+}
+
+static_inline float Svf_calc_g_raw_c0(int32_t index) {
+   return Svf_calc_g_c0[static_cast<uint32_t>(index)];
+}
+
+static_inline float Svf_calc_g_raw_c1(int32_t index) {
+   return Svf_calc_g_c1[static_cast<uint32_t>(index)];
+}
+
+static_inline float Svf_calc_g_raw_c2(int32_t index) {
+   return Svf_calc_g_c2[static_cast<uint32_t>(index)];
+}
+
+static_inline float Svf_calc_g(float cv) {
+   int32_t index = int_clip(float_to_int((cv * 141.1111112f)), 0, 127);
+   return (Svf_calc_g_c0[static_cast<uint32_t>(index)] + (cv * (Svf_calc_g_c1[static_cast<uint32_t>(index)] + (Svf_calc_g_c2[static_cast<uint32_t>(index)] * cv))));
+}
+
+static_inline void Svf_default(Svf_process_type& _ctx) {
+   _ctx.g = Svf_calc_g(0.0f);
+   _ctx.r = 1.0f;
+   _ctx.inv_den = (1.0f / (1.0f + ((0.0f * _ctx.g) + (_ctx.g * _ctx.g))));
+}
+
 void Svf_process_type_init(Svf_process_type& _ctx);
 
 static_inline void Svf_noteOn_type_init(Svf_noteOn_type& _ctx) {
@@ -118,15 +145,15 @@ static_inline float Util_average2(Util_average2_type& _ctx, float x1) {
 }
 
 static_inline float Util_cubic_clipper(float x) {
-   if (x <= -0.666666666667f) {
-      return -0.666666666667f;
+   if (x <= -0.6666666f) {
+      return -0.6666666f;
    }
    else {
-      if (x >= 0.666666666667f) {
-         return 0.666666666667f;
+      if (x >= 0.6666667f) {
+         return 0.6666667f;
       }
       else {
-         return (x + (-0.333333333333f * (x * (x * x))));
+         return (x + (-0.3333333f * (x * (x * x))));
       }
    }
 }
@@ -144,7 +171,7 @@ static_inline float Util_pitchToRate_1024_raw_c2(int32_t index) {
 }
 
 static_inline float Util_pitchToRate_1024(float pitch) {
-   int32_t index = int_clip(float_to_int((pitch * 0.244094488189f)), 0, 31);
+   int32_t index = int_clip(float_to_int((pitch * 0.2440945f)), 0, 31);
    return (Util_pitchToRate_1024_c0[static_cast<uint32_t>(index)] + (pitch * (Util_pitchToRate_1024_c1[static_cast<uint32_t>(index)] + (Util_pitchToRate_1024_c2[static_cast<uint32_t>(index)] * pitch))));
 }
 
@@ -161,12 +188,8 @@ static_inline float Util_pitchToRate_raw_c2(int32_t index) {
 }
 
 static_inline float Util_pitchToRate(float pitch) {
-   int32_t index = int_clip(float_to_int((pitch * 0.244094488189f)), 0, 31);
+   int32_t index = int_clip(float_to_int((pitch * 0.2440945f)), 0, 31);
    return (Util_pitchToRate_c0[static_cast<uint32_t>(index)] + (pitch * (Util_pitchToRate_c1[static_cast<uint32_t>(index)] + (Util_pitchToRate_c2[static_cast<uint32_t>(index)] * pitch))));
-}
-
-static_inline float Util_cvToPitch(float cv) {
-   return (24.0f + (120.0f * cv));
 }
 
 static_inline float Util_cvToRate_1024_raw_c0(int32_t index) {
@@ -182,7 +205,7 @@ static_inline float Util_cvToRate_1024_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvToRate_1024(float cv) {
-   int32_t index = int_clip(float_to_int((cv * 34.4444444444f)), 0, 31);
+   int32_t index = int_clip(float_to_int((cv * 34.4444445f)), 0, 31);
    return (Util_cvToRate_1024_c0[static_cast<uint32_t>(index)] + (cv * (Util_cvToRate_1024_c1[static_cast<uint32_t>(index)] + (Util_cvToRate_1024_c2[static_cast<uint32_t>(index)] * cv))));
 }
 
@@ -199,12 +222,12 @@ static_inline float Util_cvToRate_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvToRate(float cv) {
-   int32_t index = int_clip(float_to_int((cv * 141.111111111f)), 0, 127);
+   int32_t index = int_clip(float_to_int((cv * 141.1111112f)), 0, 127);
    return (Util_cvToRate_c0[static_cast<uint32_t>(index)] + (cv * (Util_cvToRate_c1[static_cast<uint32_t>(index)] + (Util_cvToRate_c2[static_cast<uint32_t>(index)] * cv))));
 }
 
 static_inline float Util_pitchToCv(float pitch) {
-   return (0.00833333333333f * (-24.0f + pitch));
+   return (0.0083334f * (-24.0f + pitch));
 }
 
 static_inline float Util_cvToperiod_raw_c0(int32_t index) {
@@ -274,23 +297,6 @@ static_inline void Saturate_soft_controlChange(int32_t control, int32_t value, i
 static_inline void Saturate_soft_default() {
 }
 
-static_inline float Svf_calc_g_raw_c0(int32_t index) {
-   return Svf_calc_g_c0[static_cast<uint32_t>(index)];
-}
-
-static_inline float Svf_calc_g_raw_c1(int32_t index) {
-   return Svf_calc_g_c1[static_cast<uint32_t>(index)];
-}
-
-static_inline float Svf_calc_g_raw_c2(int32_t index) {
-   return Svf_calc_g_c2[static_cast<uint32_t>(index)];
-}
-
-static_inline float Svf_calc_g(float cv) {
-   int32_t index = int_clip(float_to_int((cv * 141.111111111f)), 0, 127);
-   return (Svf_calc_g_c0[static_cast<uint32_t>(index)] + (cv * (Svf_calc_g_c1[static_cast<uint32_t>(index)] + (Svf_calc_g_c2[static_cast<uint32_t>(index)] * cv))));
-}
-
 float Svf_process(Svf_process_type& _ctx, float x, float cv, float q, int32_t sel);
 
 static_inline void Svf_noteOn(Svf_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
@@ -300,12 +306,6 @@ static_inline void Svf_noteOff(Svf_process_type& _ctx, int32_t note, int32_t cha
 }
 
 static_inline void Svf_controlChange(Svf_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
-}
-
-static_inline void Svf_default(Svf_process_type& _ctx) {
-   _ctx.g = Svf_calc_g(0.0f);
-   _ctx.r = 1.0f;
-   _ctx.inv_den = (1.0f / (1.0f + ((0.0f * _ctx.g) + (_ctx.g * _ctx.g))));
 }
 
 

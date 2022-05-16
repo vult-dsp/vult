@@ -32,7 +32,7 @@ float Lfo_process(Lfo_process_type& _ctx, float cv, float shape, float reset) {
    }
    else {
       if (shape < 2.0f) {
-         o = (-1.0f + (2.0f * abs(tmp)));
+         o = (-1.0f + (2.0f * fabsf(tmp)));
       }
       else {
          if (tmp > 0.0f) {

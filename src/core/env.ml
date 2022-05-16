@@ -112,6 +112,7 @@ type m =
   { name : string
   ; functions : f Map.t
   ; types : t Map.t
+  ; mutable init : (path * path) list
   ; enums : t Map.t
   }
 
@@ -494,12 +495,20 @@ let isFunctionActive (f : f) =
 
 let exitFunction (env : in_func) : in_context = { top = env.top; m = env.m; context = env.f.context }
 
+let addCustomInitFunction (env : in_context) name =
+  match env.context with
+  | Some (p, _) ->
+    env.m.init <- (p, name) :: env.m.init;
+    env
+  | _ -> env
+;;
+
 let enterModule (env : in_top) (name : string) : in_module =
   match Map.find name env.modules with
   | Some m -> { top = env; m }
   | None ->
     let report _ = failwith ("duplicate module: " ^ name) in
-    let m : m = { name; functions = Map.empty (); types = Map.empty (); enums = Map.empty () } in
+    let m : m = { name; functions = Map.empty (); types = Map.empty (); enums = Map.empty (); init = [] } in
     let () = Map.update report name m env.modules in
     { top = env; m }
 ;;

@@ -10,6 +10,7 @@ void Sawcore_process_type_init(Sawcore_process_type& _ctx) {
    _ctx.rate = 0x0 /* 0.000000 */;
    _ctx.reset_phase = 0x0 /* 0.000000 */;
    _ctx.reset_state = false;
+   Sawcore_default(_ctx);
 }
 
 void Sawcore_ptr_w2(Sawcore_ptr_w2_type& _ctx, fix16_t phase, fix16_t rate) {

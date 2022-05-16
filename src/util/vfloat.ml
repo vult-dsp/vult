@@ -23,7 +23,6 @@
 *)
 
 let reduce_precision = ref false
-let to_string (f : float) = string_of_float f
 
 let crop (f : float) =
   if !reduce_precision
@@ -31,4 +30,27 @@ let crop (f : float) =
     let ff = f *. 10000000.0 in
     ceil ff /. 10000000.0)
   else f
+;;
+
+let adapt (f : float) =
+  crop
+  @@
+  match Float.classify_float f with
+  | FP_normal -> f
+  | FP_subnormal -> f
+  | FP_zero -> 0.0
+  | FP_infinite -> if f > 0.0 then 3.40282347E+38 else -3.40282347E+38
+  | FP_nan -> failwith "nan"
+;;
+
+let to_string (f : float) =
+  Float.to_string
+  @@ crop
+  @@
+  match Float.classify_float f with
+  | FP_normal -> f
+  | FP_subnormal -> f
+  | FP_zero -> 0.0
+  | FP_infinite -> if f > 0.0 then 3.40282347E+38 else -3.40282347E+38
+  | FP_nan -> failwith "nan"
 ;;

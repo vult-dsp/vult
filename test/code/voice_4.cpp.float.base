@@ -11,6 +11,7 @@ void Tricore_process_type_init(Tricore_process_type& _ctx) {
    _ctx.rate = 0.0f;
    _ctx.reset_phase = 0.0f;
    _ctx.reset_state = false;
+   Tricore_default(_ctx);
 }
 
 void Svf_process_type_init(Svf_process_type& _ctx) {
@@ -21,6 +22,7 @@ void Svf_process_type_init(Svf_process_type& _ctx) {
    _ctx.r = 0.0f;
    _ctx.z1 = 0.0f;
    _ctx.z2 = 0.0f;
+   Svf_default(_ctx);
 }
 
 void Lfo_process_type_init(Lfo_process_type& _ctx) {
@@ -29,6 +31,14 @@ void Lfo_process_type_init(Lfo_process_type& _ctx) {
    Lfo_soft_type_init(_ctx.inst_337d6);
    _ctx.phase = 0.0f;
    _ctx.rate = 0.0f;
+}
+
+void Phase_process_type_init(Phase_process_type& _ctx) {
+   Util_change_type_init(_ctx.inst_1b08a);
+   Util_edge_type_init(_ctx.inst_2048a);
+   _ctx.phase = 0.0f;
+   _ctx.rate = 0.0f;
+   Phase_default(_ctx);
 }
 
 void Blit_osc_blit_type_init(Blit_osc_blit_type& _ctx) {
@@ -41,6 +51,7 @@ void Blit_osc_blit_type_init(Blit_osc_blit_type& _ctx) {
    _ctx.rate = 0.0f;
    _ctx.state_pulse = 0.0f;
    _ctx.state_saw = 0.0f;
+   Blit_init(_ctx);
 }
 
 void Adsr_do_type_init(Adsr_do_type& _ctx) {
@@ -129,7 +140,7 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
       _ctx.phase = new_phase;
    }
    if (_ctx.reset_state) {
-      if ((abs(_ctx.reset_phase) > 10.0f) || bdisable) {
+      if ((fabsf(_ctx.reset_phase) > 10.0f) || bdisable) {
          float reset_speed = 0.0f;
          if (bdisable) {
             reset_speed = 0.01f;
@@ -152,7 +163,7 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
       out = _ctx.reset_phase;
    }
    out = (out + _ctx.phase);
-   return (0.0009765625f * out);
+   return (0.0009766f * out);
 }
 
 float Svf_process(Svf_process_type& _ctx, float x, float cv, float q, int32_t sel) {
@@ -210,7 +221,7 @@ float Lfo_process(Lfo_process_type& _ctx, float cv, float shape, float reset) {
    }
    else {
       if (shape < 2.0f) {
-         o = (-1.0f + (2.0f * abs(tmp)));
+         o = (-1.0f + (2.0f * fabsf(tmp)));
       }
       else {
          if (tmp > 0.0f) {
@@ -240,7 +251,7 @@ float Phase_process(Phase_process_type& _ctx, float cv, float reset) {
    else {
       _ctx.phase = _ctx.phase;
    }
-   return (0.0009765625f * _ctx.phase);
+   return (0.0009766f * _ctx.phase);
 }
 
 float Blit_pulse_train(Blit_pulse_train_type& _ctx, float cv, float phase) {
@@ -324,54 +335,54 @@ float Adsr_do(Adsr_do_type& _ctx, float gate, float a, float d, float s, float r
       _ctx.rate = d_rate;
       _ctx.target = (1024.0f * s);
    }
-   return (Util_smooth(_ctx.inst_295a0, _ctx.scale) * float_clip((0.0009765625f * _ctx.out), 0.0f, 1.0f));
+   return (Util_smooth(_ctx.inst_295a0, _ctx.scale) * float_clip((0.0009766f * _ctx.out), 0.0f, 1.0f));
 }
 
 void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    if (control == 1) {
-      _ctx.knob1 = (0.00787401574803f * int_to_float(value));
+      _ctx.knob1 = (0.0078741f * int_to_float(value));
    }
    if (control == 2) {
-      _ctx.knob2 = (0.00787401574803f * int_to_float(value));
+      _ctx.knob2 = (0.0078741f * int_to_float(value));
    }
    if (control == 3) {
-      _ctx.knob3 = (0.00787401574803f * int_to_float(value));
+      _ctx.knob3 = (0.0078741f * int_to_float(value));
    }
    if (control == 4) {
-      _ctx.knob4 = (0.00787401574803f * int_to_float(value));
+      _ctx.knob4 = (0.0078741f * int_to_float(value));
    }
 }
 
 void Voice_4_controlChange(Voice_4_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    if (control == 30) {
-      _ctx.level1 = (0.00787401574803f * int_to_float(value));
+      _ctx.level1 = (0.0078741f * int_to_float(value));
    }
    if (control == 31) {
-      _ctx.level2 = (0.00787401574803f * int_to_float(value));
+      _ctx.level2 = (0.0078741f * int_to_float(value));
    }
    if (control == 32) {
-      _ctx.level3 = (0.00787401574803f * int_to_float(value));
+      _ctx.level3 = (0.0078741f * int_to_float(value));
    }
    if (control == 33) {
-      _ctx.level4 = (0.00787401574803f * int_to_float(value));
+      _ctx.level4 = (0.0078741f * int_to_float(value));
    }
    if (control == 34) {
-      _ctx.pw1 = (0.00787401574803f * int_to_float(value));
+      _ctx.pw1 = (0.0078741f * int_to_float(value));
    }
    if (control == 35) {
-      _ctx.pw2 = (0.00787401574803f * int_to_float(value));
+      _ctx.pw2 = (0.0078741f * int_to_float(value));
    }
    if (control == 36) {
-      _ctx.pw3 = (0.000787401574803f * int_to_float(value));
+      _ctx.pw3 = (0.0007875f * int_to_float(value));
    }
    if (control == 37) {
-      _ctx.pw4 = (0.00787401574803f * int_to_float(value));
+      _ctx.pw4 = (0.0078741f * int_to_float(value));
    }
    if (control == 38) {
       _ctx.lfo_rate = Util_map(int_to_float(value), 0.0f, 127.0f, -0.4f, 0.1f);
    }
    if (control == 39) {
-      _ctx.lfo_shape = (0.0236220472441f * int_to_float(value));
+      _ctx.lfo_shape = (0.0236221f * int_to_float(value));
    }
    if (control == 40) {
       _ctx.lfo_pw = Util_map(int_to_float(value), 0.0f, 127.0f, -1.0f, 1.0f);
@@ -394,22 +405,22 @@ void Voice_4_controlChange(Voice_4_process_type& _ctx, int32_t control, int32_t 
       _ctx.flt_cut = Util_map(int_to_float(value), 0.0f, 127.0f, -0.2f, 0.5f);
    }
    if (control == 45) {
-      _ctx.flt_res = (0.00787401574803f * int_to_float(value));
+      _ctx.flt_res = (0.0078741f * int_to_float(value));
    }
    if (control == 46) {
       _ctx.flt_shape = ((4 * value) / 127);
    }
    if (control == 47) {
-      _ctx.attack = (0.00787401574803f * int_to_float(value));
+      _ctx.attack = (0.0078741f * int_to_float(value));
    }
    if (control == 48) {
-      _ctx.decay = (0.00787401574803f * int_to_float(value));
+      _ctx.decay = (0.0078741f * int_to_float(value));
    }
    if (control == 49) {
-      _ctx.sustain = (0.00787401574803f * int_to_float(value));
+      _ctx.sustain = (0.0078741f * int_to_float(value));
    }
    if (control == 50) {
-      _ctx.release = (0.00787401574803f * int_to_float(value));
+      _ctx.release = (0.0078741f * int_to_float(value));
    }
 }
 

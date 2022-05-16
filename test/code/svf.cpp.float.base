@@ -10,6 +10,7 @@ void Svf_process_type_init(Svf_process_type& _ctx) {
    _ctx.r = 0.0f;
    _ctx.z1 = 0.0f;
    _ctx.z2 = 0.0f;
+   Svf_default(_ctx);
 }
 
 float Svf_process(Svf_process_type& _ctx, float x, float cv, float q, int32_t sel) {

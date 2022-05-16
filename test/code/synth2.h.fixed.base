@@ -156,6 +156,8 @@ static_inline void Synth2_mono_isGateOn_type_init(Synth2_mono_isGateOn_type& _ct
    Synth2_mono_noteOn_type_init(_ctx);
 }
 
+void Synth2_default(Synth2_process_type& _ctx);
+
 void Synth2_process_type_init(Synth2_process_type& _ctx);
 
 static_inline void Synth2_noteOn_type_init(Synth2_noteOn_type& _ctx) {
@@ -294,8 +296,6 @@ static_inline void Synth2_noteOff(Synth2_process_type& _ctx, int32_t note, int32
 }
 
 void Synth2_controlChange(Synth2_process_type& _ctx, int32_t control, int32_t value, int32_t channel);
-
-void Synth2_default(Synth2_process_type& _ctx);
 
 
 #endif // SYNTH2_H

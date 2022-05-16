@@ -2,6 +2,14 @@
 
 #include "phase.h"
 
+void Phase_process_type_init(Phase_process_type& _ctx) {
+   Util_change_type_init(_ctx.inst_1b08a);
+   Util_edge_type_init(_ctx.inst_2048a);
+   _ctx.phase = 0x0 /* 0.000000 */;
+   _ctx.rate = 0x0 /* 0.000000 */;
+   Phase_default(_ctx);
+}
+
 fix16_t Phase_process(Phase_process_type& _ctx, fix16_t cv, fix16_t reset) {
    if (Util_change(_ctx.inst_1b08a, cv)) {
       _ctx.rate = Util_cvToRate_1024(cv);

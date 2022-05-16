@@ -10,7 +10,7 @@
  #include <math.h>
  #include <m_pd.h>
 
- float samplerate();
+static inline float samplerate() { return sys_getsr(); }
 
  #if defined(_MSC_VER)
      //  Microsoft VC++

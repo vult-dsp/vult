@@ -6,7 +6,7 @@ float Short_delay_do(Short_delay_do_type& _ctx, float x, float time, float feedb
    time = float_clip(time, 0.0f, 1.0f);
    feedback = float_clip(feedback, 0.0f, 1.0f);
    float index_r = (time * int_to_float(22050));
-   int32_t index_i = float_to_int(floor(index_r));
+   int32_t index_i = float_to_int(floorf(index_r));
    int32_t delta = ((- index_i) + _ctx.write_pos);
    int32_t read_pos = 0;
    if (delta < 0) {

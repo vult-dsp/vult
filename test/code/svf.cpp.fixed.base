@@ -10,6 +10,7 @@ void Svf_process_type_init(Svf_process_type& _ctx) {
    _ctx.r = 0x0 /* 0.000000 */;
    _ctx.z1 = 0x0 /* 0.000000 */;
    _ctx.z2 = 0x0 /* 0.000000 */;
+   Svf_default(_ctx);
 }
 
 fix16_t Svf_process(Svf_process_type& _ctx, fix16_t x, fix16_t cv, fix16_t q, int32_t sel) {

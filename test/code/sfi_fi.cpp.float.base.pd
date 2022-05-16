@@ -17,17 +17,17 @@ t_int *Sfi_fi_process_tilde_perform(t_int *w)
 {
    t_Sfi_fi_process_tilde *x = (t_Sfi_fi_process_tilde *)(w[1]);
 
-   t_sample *in_0 = (t_sample *)(w[2]); 
-   t_sample *in_1 = (t_sample *)(w[3]); 
-   t_sample *out_0 = (t_sample *)(w[4]); 
-   t_sample *out_1 = (t_sample *)(w[5]); 
+   t_sample *in_0 = (t_sample *)(w[2]);
+   t_sample *in_1 = (t_sample *)(w[3]);
+   t_sample *out_0 = (t_sample *)(w[4]);
+   t_sample *out_1 = (t_sample *)(w[5]);
 
-   int n = (int)(w[6]); 
+   int n = (int)(w[6]);
 
    while (n--) {
-    Sfi_fi_process(x->data, *(in_0++), (int)*(in_1++)); 
-   *(out_0++) = x->data.Sfi_fi_process_ret_0; 
-   *(out_1++) = (float)x->data.Sfi_fi_process_ret_1; 
+    Sfi_fi_process(x->data, *(in_0++), (int)*(in_1++));
+   *(out_0++) = x->data.Sfi_fi_process_ret_0;
+   *(out_1++) = (float)x->data.Sfi_fi_process_ret_1;
 
    }
 
@@ -37,11 +37,11 @@ t_int *Sfi_fi_process_tilde_perform(t_int *w)
 void Sfi_fi_process_tilde_dsp(t_Sfi_fi_process_tilde *x, t_signal **sp)
 {
    dsp_add(Sfi_fi_process_tilde_perform, 6,
-   x, 
-   sp[0]->s_vec, 
-   sp[1]->s_vec, 
-   sp[2]->s_vec, 
-   sp[3]->s_vec, 
+   x,
+   sp[0]->s_vec,
+   sp[1]->s_vec,
+   sp[2]->s_vec,
+   sp[3]->s_vec,
 
    sp[0]->s_n);
 }
@@ -50,12 +50,12 @@ void *Sfi_fi_process_tilde_new()
 {
    t_Sfi_fi_process_tilde *x = (t_Sfi_fi_process_tilde *)pd_new(Sfi_fi_process_tilde_class);
 
-   Sfi_fi_process_type_init(x->data); 
+   Sfi_fi_process_type_init(x->data);
 
-   inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal); 
+   inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);
 
-   outlet_new(&x->x_obj, &s_signal); 
-   outlet_new(&x->x_obj, &s_signal); 
+   outlet_new(&x->x_obj, &s_signal);
+   outlet_new(&x->x_obj, &s_signal);
 
    return (void *)x;
 }
@@ -77,10 +77,6 @@ void Sfi_fi_process_tilde_setup(void) {
 }
 
 } // extern "C"
-
-float samplerate() {
-  return sys_getsr();
-}
 
 void sfi_fi_setup() {
 
