@@ -158,3 +158,15 @@ let getParameterList tags name (params : (string * tag_type) list) : value optio
   | Some args -> loop args [] params
   | None -> []
 ;;
+
+let getStringValueOr ~default v =
+  match v with
+  | Some (String v) -> v
+  | _ -> default
+;;
+
+let getBoolValueOr ~default v =
+  match v with
+  | Some (Bool v) -> v
+  | _ -> default
+;;

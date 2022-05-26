@@ -4,6 +4,7 @@ type function_info =
   ; has_ctx : bool
   ; inputs : Code.param list
   ; outputs : Code.type_ list
+  ; is_dsp : bool
   }
 
 let getFunctionInfo (f : Code.function_def) =
@@ -19,15 +20,24 @@ let getFunctionInfo (f : Code.function_def) =
     | ("_ctx", Struct _) :: inputs -> true, inputs
     | inputs -> false, inputs
   in
-  let class_name =
-    match Pparser.Ptags.getParameterList f.tags "pd" [ "name", TypeString ] with
-    | [ Some (String name) ] -> name
-    | _ -> f.name
+  let class_name, is_dsp =
+    let open Pparser.Ptags in
+    match getParameterList f.tags "pd" [ "name", TypeString; "dsp", TypeBool ] with
+    | [ name_param; dsp_param ] -> getStringValueOr ~default:f.name name_param, getBoolValueOr ~default:true dsp_param
+    | _ -> f.name, true
   in
-  if inputs <> [] || outputs <> [] then Some { name = f.name; class_name; has_ctx; inputs; outputs } else None
+  if inputs <> [] || outputs <> [] then Some { name = f.name; class_name; has_ctx; inputs; outputs; is_dsp } else None
 ;;
 
-let addInlets inputs =
+let typeString (t : Code.type_) =
+  match t with
+  | Real -> "float"
+  | Int -> "int"
+  | Bool -> "bool"
+  | _ -> failwith "Pd.typeString: not a numeric type"
+;;
+
+let addInlets (inputs : Code.param list) =
   match inputs with
   | [] | [ _ ] -> Pla.unit
   | _ :: t ->
@@ -36,10 +46,36 @@ let addInlets inputs =
     |> Pla.indent
 ;;
 
+let addNormalInlets (inputs : Code.param list) =
+  match inputs with
+  | [] -> Pla.unit
+  | _ :: t ->
+    List.map (fun (n, _) -> {%pla|floatinlet_new(&x->x_obj, &x-><#n#s>);|}) t |> Pla.join_sep Pla.newline |> Pla.indent
+;;
+
+let addInletsVars (inputs : Code.param list) =
+  match inputs with
+  | [] -> Pla.unit
+  | _ -> List.map (fun (n, _) -> {%pla|float <#n#s>;|}) inputs |> Pla.join_sep Pla.newline |> Pla.indent
+;;
+
+let addOutletsVars (outputs : Code.type_ list) =
+  match outputs with
+  | [] -> Pla.unit
+  | _ -> List.mapi (fun i _ -> {%pla|t_outlet *out_<#i#i>;|}) outputs |> Pla.join_sep Pla.newline |> Pla.indent
+;;
+
 (** Add the outlets *)
 let addOutlets (f : function_info) =
   f.outputs
   |> List.map (fun _ -> Pla.string "outlet_new(&x->x_obj, &s_signal);")
+  |> Pla.join_sep Pla.newline
+  |> Pla.indent
+;;
+
+let addNormalOutlets (f : function_info) =
+  f.outputs
+  |> List.mapi (fun i _ -> {%pla|x->out_<#i#i> = outlet_new(&x->x_obj, &s_float);|})
   |> Pla.join_sep Pla.newline
   |> Pla.indent
 ;;
@@ -55,14 +91,6 @@ let tildeNewFunction (f : function_info) : int * Pla.t =
 let castInput (typ : Code.type_) (value : Pla.t) : Pla.t = Common.cast ~from:Code.Real ~to_:typ value
 let castOutput (typ : Code.type_) (value : Pla.t) : Pla.t = Common.cast ~from:typ ~to_:Code.Real value
 let inputName (i, acc) (_, t) = i + 1, castInput t [%pla {|*(in_<#i#i>++)|}] :: acc
-
-let typeString (t : Code.type_) =
-  match t with
-  | Real -> "float"
-  | Int -> "int"
-  | Bool -> "bool"
-  | _ -> failwith "Pd.typeString: not a numeric type"
-;;
 
 let tildePerformFunctionCall (f : function_info) =
   let fname = f.name in
@@ -85,6 +113,38 @@ let tildePerformFunctionCall (f : function_info) =
           (fun i o ->
             let value = castOutput o [%pla {|x->data.<#fname#s>_ret_<#i#i>|}] in
             [%pla {|*(out_<#i#i>++) = <#value#>;|}])
+          o
+        |> Pla.join_sep_all Pla.newline
+      in
+      Pla.unit, copy
+  in
+  [%pla {|<#ret#> <#fname#s>(<#args#>);<#><#copy#>|}]
+;;
+
+let normalInputName (i, acc) (s, t) = i + 1, castInput t [%pla {|x-><#s#s>|}] :: acc
+
+let normalPerformFunctionCall (f : function_info) =
+  let fname = f.name in
+  (* generates the aguments for the process call *)
+  let args = List.fold_left normalInputName (0, []) f.inputs |> snd |> List.rev in
+  let args = if args = [] then [] else Pla.string "in1" :: List.tl args in
+  let args = Pla.join_sep Pla.commaspace (if f.has_ctx then Pla.string "x->data" :: args else args) in
+  (* declares the return variable and copies the values to the output buffers *)
+  let ret, copy =
+    match f.outputs with
+    | [] -> Pla.unit, Pla.unit
+    | [ o ] ->
+      let current_typ = typeString o in
+      let decl = [%pla {|<#current_typ#s> ret = |}] in
+      let value = castOutput o (Pla.string "ret") in
+      let copy = [%pla {|   outlet_float(x->out_0, <#value#>);|}] in
+      decl, copy
+    | o ->
+      let copy =
+        List.mapi
+          (fun i o ->
+            let value = castOutput o [%pla {|x->data.<#fname#s>_ret_<#i#i>|}] in
+            [%pla {|   outlet_float(x->out_<#i#i>, <#value#>);|}])
           o
         |> Pla.join_sep_all Pla.newline
       in
@@ -131,8 +191,7 @@ let getInitDefaultCalls (f : function_info) =
   else Pla.string "float", Pla.unit
 ;;
 
-(** Implementation function *)
-let func_imp (f : function_info) : Pla.t =
+let tilde_func_imp (f : function_info) : Pla.t =
   let fname = f.name in
   let class_name = f.class_name in
   (* Generate extra inlets *)
@@ -204,6 +263,69 @@ void <#fname#s>_tilde_setup(void) {
 |}]
 ;;
 
+let normal_func_imp (f : function_info) : Pla.t =
+  let fname = f.name in
+  let class_name = f.class_name in
+  (* Generate extra inlets *)
+  let inlets = addNormalInlets f.inputs in
+  let inlet_vars = addInletsVars f.inputs in
+  (* Generates the outlets*)
+  let outlets = addNormalOutlets f in
+  let outlet_vars = addOutletsVars f.outputs in
+  let process_call = normalPerformFunctionCall f in
+  let main_type, init_call = getInitDefaultCalls f in
+  [%pla
+    {|
+extern "C" {
+
+static t_class *<#fname#s>_normal_class;
+
+typedef struct _<#fname#s>_normal {
+   t_object  x_obj;
+   float dummy;
+   <#inlet_vars#>
+   <#outlet_vars#>
+   <#main_type#> data;
+} t_<#fname#s>_normal;
+
+void <#fname#s>_normal_bang(t_<#fname#s>_normal *x, t_float in1)
+{
+   <#process_call#>
+}
+
+void *<#fname#s>_normal_new()
+{
+   t_<#fname#s>_normal *x = (t_<#fname#s>_normal *)pd_new(<#fname#s>_normal_class);
+   <#init_call#>
+
+<#inlets#>
+<#outlets#>
+
+   return (void *)x;
+}
+
+void <#fname#s>_normal_delete(t_<#fname#s>_normal *x){
+
+}
+
+void <#fname#s>_normal_setup(void) {
+   <#fname#s>_normal_class = class_new(gensym("<#class_name#s>"),
+      (t_newmethod)<#fname#s>_normal_new, // constructor function
+      (t_method)<#fname#s>_normal_delete, // destructor function
+      sizeof(t_<#fname#s>_normal), // size of the object
+      CLASS_DEFAULT, // type of object
+      A_NULL); // arguments passed
+
+   class_addbang(<#fname#s>_normal_class, (t_method)<#fname#s>_normal_bang);
+   class_addfloat(<#fname#s>_normal_class, (t_method)<#fname#s>_normal_bang);
+}
+
+} // extern "C"
+|}]
+;;
+
+let func_imp (f : function_info) : Pla.t = if f.is_dsp then tilde_func_imp f else normal_func_imp f
+
 let func_header (f : function_info) : Pla.t =
   let fname = f.name in
   [%pla {|extern "C" void <#fname#s>_tilde_setup(void);|}]
@@ -215,7 +337,7 @@ let lib_impl lib_name (functions : function_info list) =
       Pla.newline
       (fun f ->
         let fname = f.name in
-        [%pla {|<#fname#s>_tilde_setup();|}])
+        if f.is_dsp then [%pla {|<#fname#s>_tilde_setup();|}] else [%pla {|<#fname#s>_normal_setup();|}])
       functions
   in
   [%pla {|void <#lib_name#s>_setup() {
