@@ -144,6 +144,10 @@ let rec printExp (params : params) (e : cexp) : Pla.t =
       let telems = Pla.map_sep sop (printExp params) elems in
       [%pla {|(<#telems#>)|}]
    | CEVar (name, _) -> Pla.string name
+   | CEIndex (e, index, _) when params.template = "arduino" ->
+      let index = printExp params index in
+      let e = printExp params e in
+      [%pla {|pgm_read_word_near(<#e#> + <#index#>)|}]
    | CEIndex (e, index, _) ->
       let index = printExp params index in
       let e = printExp params e in
@@ -273,7 +277,8 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
       then (
          let tlhs = printLhsExp params true lhs in
          let te = printExp params value in
-         Some [%pla {|static const <#tlhs#> = <#te#>;|}])
+         let progmem = if params.template = "arduino" then Pla.string "PROGMEM " else Pla.unit in
+         Some [%pla {|static const <#tlhs#> <#progmem#>= <#te#>;|}])
       else None
    (* All other cases should be errors *)
    | CSConst _ -> failwith "printStmt: invalid constant declaration"
