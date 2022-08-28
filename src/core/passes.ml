@@ -426,12 +426,16 @@ end
 module Builtin = struct
   let exp =
     Mapper.make
-    @@ fun _env state (e : exp) ->
+    @@ fun env state (e : exp) ->
     match e with
     | { e = ECall { path = "not"; args = [ e1 ] }; loc; _ } ->
       reapply state, { e with e = EOp (OpEq, e1, { e = EBool false; t = { t = TBool; loc }; loc }) }
     | { e = ECall { path = "size"; args = [ { t = { t = TArray (size, _); _ }; _ } ] }; loc; _ } ->
       reapply state, { e with e = EInt size; loc }
+    | { e = ECall { path = "samplerate"; args = [] }; _ } ->
+      (match env.args.fs with
+      | Some fs -> reapply state, { e with e = EReal fs }
+      | None -> state, e)
     | _ -> state, e
   ;;
 
