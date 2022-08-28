@@ -23,5 +23,5 @@
 *)
 
 type t =
-   | ExtOnly  of string
+   | ExtOnly of string
    | FullName of string

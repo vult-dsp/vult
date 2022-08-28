@@ -38,7 +38,7 @@ let tables (params : params) (code : Pla.t) : Pla.t =
 
 #endif // <#file#s>_TABLES_H
 |}]
-
+;;
 
 (** Header function *)
 let header (params : params) (code : Pla.t) : Pla.t =
@@ -73,26 +73,24 @@ EXPORT void <#output#s>_tilde_setup(void);
 
 #endif // <#file#s>_H
 |}]
-
+;;
 
 let rec removeContext inputs =
    match inputs with
    | IContext :: t -> removeContext t
    | _ -> inputs
-
+;;
 
 (** Add extra inlets if the object requires more than one *)
 let rec addInlets inputs =
    match inputs with
    | IContext :: t -> addInlets t
-   | []
-   |[ _ ] ->
-      Pla.unit
+   | [] | [ _ ] -> Pla.unit
    | _ :: t ->
       List.map (fun _ -> Pla.string "inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal); ") t
       |> Pla.join_sep Pla.newline
       |> Pla.indent
-
+;;
 
 (** Add the outlets *)
 let addOutlets (config : config) =
@@ -100,7 +98,7 @@ let addOutlets (config : config) =
    |> List.map (fun _ -> Pla.string "outlet_new(&x->x_obj, &s_signal); ")
    |> Pla.join_sep Pla.newline
    |> Pla.indent
-
+;;
 
 (** Generates contents for the _tilde_new function *)
 let tildeNewFunction (config : config) : int * Pla.t =
@@ -109,7 +107,7 @@ let tildeNewFunction (config : config) : int * Pla.t =
       CCList.init dsp_nargs (fun i -> [%pla {|sp[<#i#i>]->s_vec|}]) |> Pla.join_sep_all [%pla {|, <#>|}] |> Pla.indent
    in
    dsp_nargs + 2, vec_decl
-
+;;
 
 let castType (cast : string) (value : Pla.t) : Pla.t =
    match cast with
@@ -117,25 +115,25 @@ let castType (cast : string) (value : Pla.t) : Pla.t =
    | "int" -> [%pla {|(int) <#value#>|}]
    | "bool" -> [%pla {|(bool) <#value#>|}]
    | _ -> [%pla {|<#cast#s>(<#value#>)|}]
-
+;;
 
 let castInput (params : params) (typ : input) (value : Pla.t) : Pla.t =
    let current_typ = Replacements.getType params.repl (Config.inputTypeString typ) in
    let cast = Replacements.getCast params.repl "float" current_typ in
    castType cast value
-
+;;
 
 let castOutput (params : params) (typ : output) (value : Pla.t) : Pla.t =
    let current_typ = Replacements.getType params.repl (Config.outputTypeString typ) in
    let cast = Replacements.getCast params.repl current_typ "float" in
    castType cast value
-
+;;
 
 let inputName params (i, acc) s =
    match s with
    | IContext -> i, Pla.string "x->data" :: acc
    | _ -> i + 1, castInput params s [%pla {|*(in_<#i#i>++)|}] :: acc
-
+;;
 
 let tildePerformFunctionCall module_name (params : params) (config : config) =
    (* generates the aguments for the process call *)
@@ -157,14 +155,14 @@ let tildePerformFunctionCall module_name (params : params) (config : config) =
             List.mapi
                (fun i o ->
                    let value = castOutput params o [%pla {|<#module_name#s>_process_ret_<#i#i>(x->data)|}] in
-                   [%pla {|*(out_<#i#i>++) = <#value#>; |}] )
+                   [%pla {|*(out_<#i#i>++) = <#value#>; |}])
                o
             |> Pla.join_sep_all Pla.newline
          in
          Pla.unit, copy
    in
    [%pla {|<#ret#> <#module_name#s>_process(<#args#>); <#><#copy#>|}]
-
+;;
 
 (** Generates the buffer access of _tilde_perform function *)
 let tildePerformFunctionVector (config : config) : int * Pla.t =
@@ -175,7 +173,7 @@ let tildePerformFunctionVector (config : config) : int * Pla.t =
       List.fold_left
          (fun (s, count, index) _ ->
              let t = decl_templ "in" index count in
-             t :: s, count + 1, index + 1 )
+             t :: s, count + 1, index + 1)
          ([], 2, 0)
          (removeContext config.process_inputs)
    in
@@ -184,7 +182,7 @@ let tildePerformFunctionVector (config : config) : int * Pla.t =
       List.fold_left
          (fun (s, count, index) _ ->
              let t = decl_templ "out" index count in
-             t :: s, count + 1, index + 1 )
+             t :: s, count + 1, index + 1)
          (decl1, count, 0)
          config.process_outputs
    in
@@ -194,25 +192,22 @@ let tildePerformFunctionVector (config : config) : int * Pla.t =
    let decl = List.rev (n :: decl2) |> Pla.join_sep Pla.newline |> Pla.indent in
    (* we return the number of buffers used *)
    count + 1, decl
-
+;;
 
 let getInitDefaultCalls module_name params =
-   if List.exists (fun a -> a = IContext) params.config.process_inputs then
+   if List.exists (fun a -> a = IContext) params.config.process_inputs
+   then
       ( [%pla {|<#module_name#s>_process_type|}]
       , [%pla {|<#module_name#s>_process_init(x->data); |}]
       , [%pla {|<#module_name#s>_default(x->data); |}] )
-   else
-      Pla.string "float", Pla.unit, Pla.unit
-
+   else Pla.string "float", Pla.unit, Pla.unit
+;;
 
 let functionInput i =
    match i with
    | IContext -> Pla.string "x->data"
-   | IReal name
-   |IInt name
-   |IBool name ->
-      [%pla {|(int)<#name#s>|}]
-
+   | IReal name | IInt name | IBool name -> [%pla {|(int)<#name#s>|}]
+;;
 
 let noteFunctions (params : params) =
    let output = params.output in
@@ -233,7 +228,7 @@ void <#output#s>_noteOff(t_<#output#s>_tilde *x, t_floatarg note, t_floatarg cha
 }
 |}]
    )
-
+;;
 
 let controlChangeFunction (params : params) =
    let output = params.output in
@@ -245,7 +240,7 @@ void <#output#s>_controlChange(t_<#output#s>_tilde *x, t_floatarg control, t_flo
    <#module_name#s>_controlChange(<#ctrl_args#>);
 }
 |}]
-
+;;
 
 (** Implementation function *)
 let implementation (params : params) (code : Pla.t) : Pla.t =
@@ -255,7 +250,6 @@ let implementation (params : params) (code : Pla.t) : Pla.t =
    let inlets = addInlets params.config.process_inputs in
    (* Generates the outlets*)
    let outlets = addOutlets params.config in
-
    let dsp_nargs, vec_decl = tildeNewFunction params.config in
    let last_w, io_decl = tildePerformFunctionVector params.config in
    let process_call = tildePerformFunctionCall module_name params params.config in
@@ -334,10 +328,11 @@ void <#output#s>_tilde_setup(void) {
 
 } // extern "C"
 |}]
-
+;;
 
 let get (params : params) (header_code : Pla.t) (impl_code : Pla.t) (tables_code : Pla.t) : (Pla.t * FileKind.t) list =
    [ header params header_code, FileKind.ExtOnly "h"
    ; tables params tables_code, FileKind.ExtOnly "tables.h"
    ; implementation params impl_code, FileKind.ExtOnly "cpp"
    ]
+;;

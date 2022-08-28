@@ -35,7 +35,7 @@ module UnlinkTypes = struct
       match typ with
       | Typ.TLink t -> state, !t
       | _ -> state, typ
-
+   ;;
 
    let mapper = Mapper.{ default_mapper with vtype_c }
 end
@@ -44,7 +44,7 @@ module ReportUnboundTypes = struct
    let reportUnbound (name : Id.t) (attr : attr) =
       let msg = Printf.sprintf "The type of variable '%s' cannot be inferred. Add a type annotation." (Id.show name) in
       Error.raiseError msg attr.loc
-
+   ;;
 
    let lhs_exp : ('a Env.t, lhs_exp) Mapper.mapper_func =
       Mapper.make "ReportUnboundTypes.lhs_exp"
@@ -53,7 +53,7 @@ module ReportUnboundTypes = struct
       | LId (id, None, attr) -> reportUnbound id attr
       | LId (id, Some t, attr) when Typ.isUnbound t -> reportUnbound id attr
       | _ -> state, exp
-
+   ;;
 
    let exp : ('a Env.t, exp) Mapper.mapper_func =
       Mapper.make "ReportUnboundTypes.exp"
@@ -62,12 +62,12 @@ module ReportUnboundTypes = struct
       | PId (id, ({ typ = Some t } as attr)) when Typ.isUnbound t -> reportUnbound id attr
       | _ ->
          let attr = GetAttr.fromExp exp in
-         ( match attr.typ with
-           | Some t when Typ.isUnbound t ->
-              let msg = Printf.sprintf "The type of this expression could not be inferred. Add a type annotation." in
-              Error.raiseError msg attr.loc
-           | _ -> state, exp )
-
+         (match attr.typ with
+          | Some t when Typ.isUnbound t ->
+             let msg = Printf.sprintf "The type of this expression could not be inferred. Add a type annotation." in
+             Error.raiseError msg attr.loc
+          | _ -> state, exp)
+   ;;
 
    let typed_id : ('a Env.t, typed_id) Mapper.mapper_func =
       Mapper.make "ReportUnboundTypes.typed_id"
@@ -75,7 +75,7 @@ module ReportUnboundTypes = struct
       match t with
       | TypedId (id, typ, _, attr) when Typ.isUnbound (Typ.first typ) -> reportUnbound id attr
       | _ -> state, t
-
+   ;;
 
    let mapper = Mapper.{ default_mapper with lhs_exp; exp; typed_id }
 end
@@ -89,7 +89,7 @@ module SplitMem = struct
       | StmtMem (lhs, Some rhs, attr) -> reapply state, [ StmtMem (lhs, None, attr); StmtBind (lhs, rhs, attr) ]
       | StmtVal (lhs, Some rhs, attr) -> reapply state, [ StmtVal (lhs, None, attr); StmtBind (lhs, rhs, attr) ]
       | _ -> state, [ stmt ]
-
+   ;;
 
    let mapper = Mapper.{ default_mapper with stmt_x }
 end
@@ -102,22 +102,21 @@ module ConflictingDeclarations = struct
       | LTuple (elems, _) -> List.iter (checkLhs env) elems
       | LTyped (lhs, _, _) -> checkLhs env lhs
       | LGroup (lhs, _) -> checkLhs env lhs
-      | LIndex (id, _, _, attr)
-      |LId (id, _, attr) ->
-         match Env.lookupVariable env id with
-         | Some decl ->
-            if Loc.isSameLoc attr.loc decl.Scope.loc then
-               ()
-            else
-               let msg =
-                  Printf.sprintf
-                     "Redefinition of symbol '%s'. Previously defined at %s"
-                     (Id.show id)
-                     (Loc.to_string_readable decl.Scope.loc)
-               in
-               Error.raiseError msg attr.loc
-         | _ -> ()
-
+      | LIndex (id, _, _, attr) | LId (id, _, attr) ->
+         (match Env.lookupVariable env id with
+          | Some decl ->
+             if Loc.isSameLoc attr.loc decl.Scope.loc
+             then ()
+             else (
+                let msg =
+                   Printf.sprintf
+                      "Redefinition of symbol '%s'. Previously defined at %s"
+                      (Id.show id)
+                      (Loc.to_string_readable decl.Scope.loc)
+                in
+                Error.raiseError msg attr.loc)
+          | _ -> ())
+   ;;
 
    let stmt : ('a Env.t, stmt) Mapper.mapper_func =
       Mapper.make "ConflictingDeclarations.stmt"
@@ -127,7 +126,7 @@ module ConflictingDeclarations = struct
          let () = checkLhs state lhs in
          state, stmt
       | _ -> state, stmt
-
+   ;;
 
    let mapper = Mapper.{ default_mapper with stmt }
 end
@@ -143,44 +142,37 @@ module Simplify = struct
       | h :: t ->
          let found, t' = getOpElements op t in
          found, h :: t'
-
+   ;;
 
    let isNum (e : exp) : bool =
       match e with
-      | PInt _
-      |PReal _
-      |PBool _ ->
-         true
+      | PInt _ | PReal _ | PBool _ -> true
       | _ -> false
-
+   ;;
 
    let isZero (e : exp) : bool =
       match e with
-      | PInt (0, _)
-      |PReal (0.0, _, _) ->
-         true
+      | PInt (0, _) | PReal (0.0, _, _) -> true
       | _ -> false
-
+   ;;
 
    let isOne (e : exp) : bool =
       match e with
-      | PInt (1, _)
-      |PReal (1.0, _, _) ->
-         true
+      | PInt (1, _) | PReal (1.0, _, _) -> true
       | _ -> false
-
+   ;;
 
    let isTrue (e : exp) : bool =
       match e with
       | PBool (true, _) -> true
       | _ -> false
-
+   ;;
 
    let isFalse (e : exp) : bool =
       match e with
       | PBool (false, _) -> true
       | _ -> false
-
+   ;;
 
    let minusOne attr (typ : Typ.t) : exp =
       match !typ with
@@ -188,7 +180,7 @@ module Simplify = struct
       | Typ.TId ([ "real" ], _) -> PReal (-1.0, Float, attr)
       | Typ.TId ([ "fix16" ], _) -> PReal (-1.0, Fix16, attr)
       | _ -> failwith "Simplify.minusOne: invalid numeric value"
-
+   ;;
 
    let applyOp (op : string) (e1 : exp) (e2 : exp) : exp =
       match op, e1, e2 with
@@ -199,7 +191,7 @@ module Simplify = struct
       | "||", PBool (n1, attr), PBool (n2, _) -> PBool (n1 || n2, attr)
       | "&&", PBool (n1, attr), PBool (n2, _) -> PBool (n1 && n2, attr)
       | _ -> failwith "Simplify.applyOp: invalid operation on"
-
+   ;;
 
    let rec simplifyElems op (elems : exp list) : bool * exp list =
       let constants, other = List.partition isNum elems in
@@ -216,14 +208,14 @@ module Simplify = struct
       | h :: t ->
          let c = List.fold_left (applyOp op) h t in
          true, c :: other
-
+   ;;
 
    let negNum (e : exp) : exp =
       match e with
       | PInt (value, attr) -> PInt (-value, attr)
       | PReal (value, p, attr) -> PReal (-.value, p, attr)
       | _ -> failwith "Simplify.negNum: not a number"
-
+   ;;
 
    let exp : ('a Env.t, exp) Mapper.mapper_func =
       Mapper.make "Simplify.exp"
@@ -253,14 +245,9 @@ module Simplify = struct
       | PUnOp ("-", e1, _) when isNum e1 -> reapply state, negNum e1
       (* Simplifies constant condition *)
       | PIf (cond, then_, else_, _) ->
-         if isTrue cond then
-            reapply state, then_
-         else if isFalse cond then
-            reapply state, else_
-         else
-            state, exp
+         if isTrue cond then reapply state, then_ else if isFalse cond then reapply state, else_ else state, exp
       | _ -> state, exp
-
+   ;;
 
    let stmt_x : ('a Env.t, stmt) Mapper.expand_func =
       Mapper.makeExpander "Simplify.stmt_x"
@@ -270,7 +257,7 @@ module Simplify = struct
       | StmtIf (PBool (false, _), _, Some else_, _) -> reapply state, [ else_ ]
       | StmtIf (PBool (false, _), _, None, _) -> reapply state, []
       | _ -> state, [ stmt ]
-
+   ;;
 
    let mapper = Mapper.{ default_mapper with exp; stmt_x }
 end
@@ -278,11 +265,9 @@ end
 module SimplifyIfExp = struct
    let isSimpleCond (e : exp) : bool =
       match e with
-      | PBool _
-      |PId _ ->
-         true
+      | PBool _ | PId _ -> true
       | _ -> false
-
+   ;;
 
    (** This mapper is used to bind the if expressions to a variable *)
    module BindIfExp = struct
@@ -301,7 +286,7 @@ module SimplifyIfExp = struct
             let state' = Env.set state' (bind :: decl :: acc) in
             state', exp'
          | _ -> state, exp
-
+      ;;
 
       let mapper = { Mapper.default_mapper with Mapper.exp }
    end
@@ -347,48 +332,46 @@ module SimplifyIfExp = struct
          let state' = if acc_stmts <> [] then reapply state' else state' in
          state', List.rev stmts'
       | _ -> state, [ stmt ]
-
+   ;;
 
    let mapper = Mapper.{ default_mapper with stmt_x }
 end
 
 module BindComplexExpressions = struct
    let makeTmp tick i = [ "_tmp_" ^ string_of_int tick ^ "_" ^ string_of_int i ]
-
    let makeValBind lhs rhs = StmtVal (lhs, Some rhs, emptyAttr)
-
    let makeBind lhs rhs = StmtBind (lhs, rhs, emptyAttr)
 
    let isUselessBind lhs rhs =
       match lhs, rhs with
       | LId _, PId _ -> true
       | _ -> false
-
+   ;;
 
    let hasLessThanOneBinding stmts = List.length stmts < 3
 
    let createAssignments tick kind lhs rhs =
       let lhs_id = GetIdentifiers.fromLhsExpList lhs in
       let rhs_id = GetIdentifiers.fromExpList rhs in
-      if IdSet.is_empty (IdSet.inter lhs_id rhs_id) then
-         List.map2 (fun a b -> kind a b) lhs rhs
-      else
+      if IdSet.is_empty (IdSet.inter lhs_id rhs_id)
+      then List.map2 (fun a b -> kind a b) lhs rhs
+      else (
          let stmts1 =
             List.mapi
                (fun i a ->
                    let attr = GetAttr.fromExp a in
-                   makeValBind (LId (makeTmp tick i, attr.typ, attr)) a )
+                   makeValBind (LId (makeTmp tick i, attr.typ, attr)) a)
                rhs
          in
          let stmts2 =
             List.mapi
                (fun i a ->
                    let attr = GetAttr.fromLhsExp a in
-                   kind a (PId (makeTmp tick i, attr)) )
+                   kind a (PId (makeTmp tick i, attr)))
                lhs
          in
-         stmts1 @ stmts2
-
+         stmts1 @ stmts2)
+   ;;
 
    module BindComplexHelper = struct
       let exp : (stmt list Env.t, exp) Mapper.mapper_func =
@@ -416,7 +399,7 @@ module BindComplexExpressions = struct
             let state' = Env.set state' (bind :: decl :: acc) in
             state', exp'
          | _ -> state, exp
-
+      ;;
 
       let mapper = { Mapper.default_mapper with Mapper.exp }
    end
@@ -443,22 +426,22 @@ module BindComplexExpressions = struct
          let acc = newState state [] in
          let acc', rhs' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc rhs in
          let state', acc_stmts = restoreState state acc' in
-         if isUselessBind lhs rhs' && hasLessThanOneBinding acc_stmts then
-            state, [ stmt ]
-         else
+         if isUselessBind lhs rhs' && hasLessThanOneBinding acc_stmts
+         then state, [ stmt ]
+         else (
             let stmts' = StmtBind (lhs, rhs', attr) :: acc_stmts in
             let state' = if acc_stmts <> [] then reapply state' else state' in
-            state', List.rev stmts'
+            state', List.rev stmts')
       | StmtVal (lhs, Some rhs, attr) ->
          let acc = newState state [] in
          let acc', rhs' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc rhs in
          let state', acc_stmts = restoreState state acc' in
-         if isUselessBind lhs rhs' && hasLessThanOneBinding acc_stmts then
-            state, [ stmt ]
-         else
+         if isUselessBind lhs rhs' && hasLessThanOneBinding acc_stmts
+         then state, [ stmt ]
+         else (
             let stmts' = StmtVal (lhs, None, attr) :: StmtBind (lhs, rhs', attr) :: acc_stmts in
             let state' = if acc_stmts <> [] then reapply state' else state' in
-            state', List.rev stmts'
+            state', List.rev stmts')
       | StmtReturn (e, attr) ->
          let acc = newState state [] in
          let acc', e' = Mapper.map_exp_to_stmt BindComplexHelper.mapper acc e in
@@ -467,7 +450,7 @@ module BindComplexExpressions = struct
          let state' = if acc_stmts <> [] then reapply state' else state' in
          state', List.rev stmts'
       | _ -> state, [ stmt ]
-
+   ;;
 
    let mapper = Mapper.{ default_mapper with stmt_x }
 end
@@ -476,13 +459,11 @@ module ProcessArrays = struct
    let getArraySize (typ_opt : Typ.t option) : int =
       match typ_opt with
       | Some typ ->
-         begin
-            match typ with
-            | { contents = Typ.TComposed ([ "array" ], [ _; { contents = Typ.TInt (n, _) } ], _) } -> n
-            | _ -> failwith "ProcessArrays.getArraySize: the argument is not an array"
-         end
+         (match typ with
+          | { contents = Typ.TComposed ([ "array" ], [ _; { contents = Typ.TInt (n, _) } ], _) } -> n
+          | _ -> failwith "ProcessArrays.getArraySize: the argument is not an array")
       | _ -> failwith "ProcessArrays.getArraySize: type inference should have put a type here"
-
+   ;;
 
    let exp : (PassData.t Env.t, exp) Mapper.mapper_func =
       Mapper.make "ProcessArrays.exp"
@@ -493,7 +474,7 @@ module ProcessArrays = struct
          let size = getArraySize arr_attr.typ in
          state, PInt (size, attr)
       | _ -> state, exp
-
+   ;;
 
    let mapper = Mapper.{ default_mapper with exp }
 end
@@ -506,12 +487,12 @@ module ChangeTupleReturnCalls = struct
             List.mapi
                (fun i typ ->
                    let id = Inference.varReturnName fname i in
-                   PCall (inst, id, [], { emptyAttr with typ = Some typ }) )
+                   PCall (inst, id, [], { emptyAttr with typ = Some typ }))
                elems
          in
          PTuple (telems, { emptyAttr with typ = Some typ })
       | _ -> failwith "this should be a tuple"
-
+   ;;
 
    let stmt_x : ('a Env.t, stmt) Mapper.expand_func =
       Mapper.makeExpander "ChangeTupleReturnCalls.stmt_x"
@@ -522,7 +503,7 @@ module ChangeTupleReturnCalls = struct
          let tuple = createReturnTuple inst fname typ in
          reapply state, [ StmtBind (LWild emptyAttr, rhs, attr); StmtBind (lhs, tuple, attr) ]
       | _ -> state, [ stmt ]
-
+   ;;
 
    let mapper = Mapper.{ default_mapper with stmt_x }
 end
@@ -534,7 +515,7 @@ module ApplyFixCast = struct
       match exp with
       | PCall (_, [ "fix16" ], [ PReal (n, Float, fattr) ], _) -> state, PReal (n, Fix16, fattr)
       | _ -> state, exp
-
+   ;;
 
    let mapper = Mapper.{ default_mapper with exp }
 end
@@ -550,3 +531,4 @@ let run =
    |> Mapper.seq ProcessArrays.mapper
    |> Mapper.seq ConflictingDeclarations.mapper
    |> Mapper.seq ApplyFixCast.mapper
+;;

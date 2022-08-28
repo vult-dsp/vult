@@ -39,7 +39,7 @@ let tables (params : params) (code : Pla.t) : Pla.t =
 
 #endif // <#file#s>_TABLES_H
 |}]
-
+;;
 
 let modelicaOutputType m =
    match m with
@@ -47,7 +47,7 @@ let modelicaOutputType m =
    | OInt -> "int"
    | OBool -> "int"
    | OFix16 -> "int"
-
+;;
 
 let modelicaInputType m =
    match m with
@@ -55,13 +55,13 @@ let modelicaInputType m =
    | IInt _ -> "int"
    | IBool _ -> "int"
    | IContext -> "void *object"
-
+;;
 
 let rec removeContext inputs =
    match inputs with
    | IContext :: t -> removeContext t
    | _ -> inputs
-
+;;
 
 let processArgs (config : config) =
    let return_type, outputs =
@@ -83,7 +83,7 @@ let processArgs (config : config) =
    in
    let args = ([%pla {|void *object|}] :: inputs) @ outputs |> Pla.join_sep Pla.commaspace in
    return_type, args
-
+;;
 
 (** Header function *)
 let header (params : params) (code : Pla.t) : Pla.t =
@@ -136,7 +136,7 @@ EXPORT void <#output#s>__controlChange(void *object, int control, int value, int
 
 #endif // <#file#s>_H
 |}]
-
+;;
 
 let castType (cast : string) (value : Pla.t) : Pla.t =
    match cast with
@@ -144,25 +144,25 @@ let castType (cast : string) (value : Pla.t) : Pla.t =
    | "int" -> [%pla {|(int) <#value#>|}]
    | "bool" -> [%pla {|(bool) <#value#>|}]
    | _ -> [%pla {|<#cast#s>(<#value#>)|}]
-
+;;
 
 let castInput (params : params) (typ : input) (value : Pla.t) : Pla.t =
    let current_typ = Replacements.getType params.repl (Config.inputTypeString typ) in
    let cast = Replacements.getCast params.repl "float" current_typ in
    castType cast value
-
+;;
 
 let castOutput (params : params) (typ : output) (value : Pla.t) : Pla.t =
    let current_typ = Replacements.getType params.repl (Config.outputTypeString typ) in
    let cast = Replacements.getCast params.repl current_typ "float" in
    castType cast value
-
+;;
 
 let inputName params (i, acc) s =
    match s with
    | IContext -> i, Pla.string "*data" :: acc
    | _ -> i + 1, castInput params s [%pla {|in_<#i#i>|}] :: acc
-
+;;
 
 let processFunctionCall module_name (params : params) (config : config) =
    (* generates the aguments for the process call *)
@@ -191,41 +191,35 @@ let processFunctionCall module_name (params : params) (config : config) =
             List.mapi
                (fun i o ->
                    let value = castOutput params o [%pla {|ret.field_<#i#i>|}] in
-                   [%pla {|out_<#i#i> = <#value#>; |}] )
+                   [%pla {|out_<#i#i> = <#value#>; |}])
                o
             |> Pla.join_sep_all Pla.newline
          in
          decl, copy
    in
    [%pla {|<#ret#> <#module_name#s>_process(<#args#>); <#><#copy#>|}]
-
+;;
 
 let getInitDefaultCalls module_name params =
-   if List.exists (fun s -> s = IContext) params.config.process_inputs then
+   if List.exists (fun s -> s = IContext) params.config.process_inputs
+   then
       ( [%pla {|<#module_name#s>_process_type|}]
       , [%pla {|<#module_name#s>_process_init(*data);|}]
       , [%pla {|<#module_name#s>_default(*data);|}] )
-   else
-      Pla.string "float", Pla.unit, Pla.unit
-
+   else Pla.string "float", Pla.unit, Pla.unit
+;;
 
 let functionInput i =
    match i with
    | IContext -> Pla.string "*data"
-   | IReal name
-   |IInt name
-   |IBool name ->
-      [%pla {|(int)<#name#s>|}]
-
+   | IReal name | IInt name | IBool name -> [%pla {|(int)<#name#s>|}]
+;;
 
 let functionInputDecls i =
    match i with
    | IContext -> failwith ""
-   | IReal name
-   |IInt name
-   |IBool name ->
-      [%pla {|int <#name#s>|}]
-
+   | IReal name | IInt name | IBool name -> [%pla {|int <#name#s>|}]
+;;
 
 let noteFunctions (params : params) main_type =
    let output = params.output in
@@ -250,7 +244,7 @@ EXPORT void <#output#s>__noteOff(void *object, <#off_args#>) {
 }
 |}]
    )
-
+;;
 
 let controlChangeFunction (params : params) main_type =
    let output = params.output in
@@ -264,13 +258,12 @@ EXPORT void <#output#s>__controlChange(void *object, <#ctrl_args#>) {
    <#module_name#s>_controlChange(<#ctrl_call_args#>);
 }
 |}]
-
+;;
 
 (** Implementation function *)
 let implementation (params : params) (code : Pla.t) : Pla.t =
    let output = params.output in
    let module_name = params.module_name in
-
    let process_call = processFunctionCall module_name params params.config in
    let main_type, init_call, default_call = getInitDefaultCalls module_name params in
    let note_on, note_off = noteFunctions params main_type in
@@ -313,7 +306,7 @@ EXPORT <#ret#> <#output#s>__process(<#args#>)
 
 } // extern "C"
 |}]
-
+;;
 
 let cmakeFile (params : params) : Pla.t * FileKind.t =
    let output = params.output in
@@ -332,17 +325,17 @@ install(TARGETS <#output#s> DESTINATION Library)
 install(FILES vultin.h <#output#s>.h DESTINATION Include)
 |}]
    , FileKind.FullName "CMakeLists.txt" )
-
+;;
 
 let process_input_output_decl (f : 'a -> string) (kind : string) (names : string list) (types : 'a list) =
    List.map2
       (fun name typ ->
           let motype = f typ in
-          [%pla {|<#kind#s> <#motype#s> <#name#s>;|}] )
+          [%pla {|<#kind#s> <#motype#s> <#name#s>;|}])
       names
       types
    |> Pla.join_sep Pla.newline
-
+;;
 
 let getModelica (params : params) : Pla.t * FileKind.t =
    let output = params.output in
@@ -352,19 +345,15 @@ let getModelica (params : params) : Pla.t * FileKind.t =
    let output_array_names = List.mapi (fun i _ -> "y[" ^ string_of_int (i + 1) ^ "]") params.config.process_outputs in
    let nin = List.length params.config.process_inputs in
    let nout = List.length params.config.process_outputs in
-
    let process_ext_call_inputs = "obj" :: input_names |> Pla.map_sep Pla.commaspace Pla.string in
-
    let process_input_decl =
       process_input_output_decl modelicaInputType "input" input_names params.config.process_inputs
    in
    let process_output_decl =
       process_input_output_decl modelicaOutputType "output" output_names params.config.process_outputs
    in
-
    let process_call_inputs = "obj" :: input_array_names |> Pla.map_sep Pla.commaspace Pla.string in
    let process_call_outputs = output_array_names |> Pla.map_sep Pla.commaspace Pla.string |> Pla.parenthesize in
-
    let ext_calls =
       match nout with
       | 0 -> [%pla {|<#output#s>__process(<#process_ext_call_inputs#>)|}]
@@ -411,7 +400,7 @@ package <#output#s>
 end <#output#s>;
 |}]
    , FileKind.FullName (params.output ^ ".mo") )
-
+;;
 
 let get (params : params) (header_code : Pla.t) (impl_code : Pla.t) (tables_code : Pla.t) : (Pla.t * FileKind.t) list =
    [ header params header_code, FileKind.ExtOnly "h"
@@ -420,3 +409,4 @@ let get (params : params) (header_code : Pla.t) (impl_code : Pla.t) (tables_code
    ; cmakeFile params
    ; getModelica params
    ]
+;;

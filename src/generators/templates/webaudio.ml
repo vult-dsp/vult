@@ -3,17 +3,14 @@ open Config
 let inputString (m : input) : Pla.t =
    match m with
    | IContext -> Pla.string "processor.context"
-   | IReal name
-   |IInt name
-   |IBool name ->
-      Pla.string name
-
+   | IReal name | IInt name | IBool name -> Pla.string name
+;;
 
 let inputName (i, acc) s =
    match s with
    | IContext -> i, Pla.string "processor.context" :: acc
    | _ -> i + 1, [%pla {|in_<#i#i>[n]|}] :: acc
-
+;;
 
 let performFunctionCall module_name (config : config) =
    (* generates the aguments for the process call *)
@@ -29,14 +26,14 @@ let performFunctionCall module_name (config : config) =
          List.mapi
             (fun i _ ->
                 let value = [%pla {|<#module_name#s>_process_ret_<#i#i>(processor.context)|}] in
-                [%pla {|out_<#i#i>[n] = <#value#>; |}] )
+                [%pla {|out_<#i#i>[n] = <#value#>; |}])
             o
          |> Pla.join_sep_all Pla.newline
    in
    [%pla
       {|for (var n = 0; n < e.inputBuffer.length; n++) {
           var ret = processor.<#module_name#s>_process(<#args#>); <#><#copy#> <#>}|}]
-
+;;
 
 let noteFunctions (params : params) =
    let module_name = params.module_name in
@@ -53,7 +50,7 @@ let noteFunctions (params : params) =
       processor.<#module_name#s>_noteOff(<#off_args#>);
    }|}]
    )
-
+;;
 
 let controlChangeFunction (params : params) =
    let module_name = params.module_name in
@@ -63,13 +60,13 @@ let controlChangeFunction (params : params) =
    node.controlChange = function(control, value, channel) {
       processor.<#module_name#s>_controlChange(<#ctrl_args#>);
    }|}]
-
+;;
 
 let rec removeContext inputs =
    match inputs with
    | IContext :: t -> removeContext t
    | _ -> inputs
-
+;;
 
 let get (params : params) runtime code : (Pla.t * FileKind.t) list =
    let config = params.config in
@@ -115,3 +112,4 @@ let get (params : params) runtime code : (Pla.t * FileKind.t) list =
 |}]
    in
    [ text, FileKind.ExtOnly "js" ]
+;;

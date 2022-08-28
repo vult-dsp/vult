@@ -41,13 +41,13 @@ let generateJSCode s =
          List.map
             (fun error ->
                 let msg, indicator, _, _, _ = Error.reportErrorStringNoLoc error in
-                msg ^ "\n" ^ indicator )
+                msg ^ "\n" ^ indicator)
             errors
          |> String.concat "\n"
       in
       Js.string ("Errors in the program:\n" ^ error_strings)
    | _ -> Js.string "unknown error"
-
+;;
 
 let makeAceError (e : Error.t) =
    let msg, indicator, _, line, col = Error.reportErrorStringNoLoc e in
@@ -58,7 +58,7 @@ let makeAceError (e : Error.t) =
        ; "type", Js.Unsafe.inject (Js.string "error")
        ; "raw", Js.Unsafe.inject (Js.string msg)
       |]
-
+;;
 
 let checkCode s =
    let args = { default_arguments with check = true; files = [ Code ("live.vult", Js.to_string s) ] } in
@@ -67,23 +67,18 @@ let checkCode s =
       let error_objects = List.map makeAceError errors in
       error_objects |> Array.of_list |> Js.array
    | _ -> Js.array [||]
-
+;;
 
 let _ =
    Js.export
       "vult"
       (object%js
          method main = Vultlib.main
-
          method version = Vultlib.version
-
          method generateJs = Vultlib.generateJs
-
          method generateC = Vultlib.generateC
-
          method generateLua = Vultlib.generateLua
-
          method checkCode = checkCode
-
          method generateJSCode = generateJSCode
-      end )
+      end)
+;;

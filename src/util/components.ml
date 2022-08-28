@@ -58,7 +58,7 @@ module G = struct
       let () = Hashtbl.replace g.vertex from_v () in
       let () = Hashtbl.replace g.vertex to_v () in
       ()
-
+   ;;
 
    let addVertex (g : 'a g) (v : 'a) : unit = Hashtbl.replace g.vertex v ()
 
@@ -67,14 +67,14 @@ module G = struct
       match Hashtbl.find g.forward v with
       | deps -> deps
       | exception Not_found -> []
-
+   ;;
 
    (* gets the all vertices that point to a given vertex *)
    let getRevDependencies (g : 'a g) (v : 'a) : 'a list =
       match Hashtbl.find g.backward v with
       | deps -> deps
       | exception Not_found -> []
-
+   ;;
 
    (* returns a list with all vertices of the graph *)
    let getVertices (g : 'a g) : 'a list = Hashtbl.fold (fun v _ acc -> v :: acc) g.vertex []
@@ -85,11 +85,12 @@ module G = struct
       let () =
          List.iter
             (fun (v, deps) ->
-                addVertex g v ;
-                List.iter (addEdge g v) deps )
+                addVertex g v;
+                List.iter (addEdge g v) deps)
             e
       in
       g
+   ;;
 end
 
 (* imperative stack implementation *)
@@ -111,9 +112,9 @@ module S = struct
       match !s with
       | [] -> failwith "Stack is empty"
       | h :: t ->
-         s := t ;
+         s := t;
          h
-
+   ;;
 
    (* returns a list representation of the stack *)
    let toList (s : 'a t) : 'a list = !s
@@ -136,32 +137,35 @@ end
 
 (* pass one of the Kosaraju's algorithm *)
 let rec pass1 g stack visited v =
-   if not (V.contains visited v) then
+   if not (V.contains visited v)
+   then (
       let () = V.add visited v in
       let children = G.getDependencies g v in
       let () = List.iter (pass1 g stack visited) children in
-      S.push stack v
-
+      S.push stack v)
+;;
 
 let rec pass2_part g visited comp v =
-   if not (V.contains visited v) then
+   if not (V.contains visited v)
+   then (
       let deps = G.getRevDependencies g v in
       let () = V.add visited v in
       let () = S.push comp v in
-      List.iter (pass2_part g visited comp) deps
-
+      List.iter (pass2_part g visited comp) deps)
+;;
 
 let rec pass2 g comps stack visited =
-   if not (S.isEmpty stack) then (
+   if not (S.isEmpty stack)
+   then (
       let v = S.pop stack in
-      if V.contains visited v then
-         pass2 g comps stack visited
-      else
+      if V.contains visited v
+      then pass2 g comps stack visited
+      else (
          let comp = S.empty () in
          let () = S.push comps comp in
-         pass2_part g visited comp v ;
-         pass2 g comps stack visited )
-
+         pass2_part g visited comp v;
+         pass2 g comps stack visited))
+;;
 
 (* calculates the strong components of a graph *)
 let components (graph : ('a * 'a list) list) : 'a list list =
@@ -176,7 +180,7 @@ let components (graph : ('a * 'a list) list) : 'a list list =
    (* creates a new set of visited vertex *)
    let visited = V.empty () in
    (* performs the second pass *)
-   pass2 g comps stack visited ;
-
+   pass2 g comps stack visited;
    (* returns the components as a list of lists *)
    comps |> S.toList |> List.map S.toList
+;;

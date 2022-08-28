@@ -31,13 +31,9 @@ module type TokenKindSig = sig
    type kind
 
    val next : Loc.source -> Lexing.lexbuf -> kind token
-
    val kindStr : kind -> string
-
    val tokenStr : kind token -> string
-
    val isEOF : kind -> bool
-
    val getEOF : kind
 end
 
@@ -70,13 +66,13 @@ module TokenStream (S : TokenKindSig) = struct
             }
       in
       { lexbuf; has_errors = s.has_errors; errors = s.errors; peeked = s.peeked; prev = s.prev; source = s.source }
-
+   ;;
 
    (** Skips one token *)
    let skip (buffer : stream) : unit =
-      buffer.prev <- buffer.peeked ;
+      buffer.prev <- buffer.peeked;
       buffer.peeked <- S.next buffer.source buffer.lexbuf
-
+   ;;
 
    (** Returns the current token in the buffer *)
    let current (buffer : stream) : S.kind token = buffer.peeked
@@ -89,18 +85,16 @@ module TokenStream (S : TokenKindSig) = struct
 
    let makeError (buffer : stream) (message : string) : Error.t =
       Error.PointedError (Loc.getNext buffer.prev.loc, message)
-
+   ;;
 
    let setErrors (buffer : stream) (value : bool) : unit = buffer.has_errors <- value
-
    let hasErrors (buffer : stream) : bool = buffer.has_errors
-
    let getErrors (buffer : stream) : Error.t list = buffer.errors
 
    let notExpectedError (token : S.kind token) : Error.t =
       let message = Printf.sprintf "Not expecting to find %s" (S.kindStr token.kind) in
       Error.PointedError (Loc.getNext token.loc, message)
-
+   ;;
 
    let appendError (buffer : stream) (error : Error.t) = buffer.errors <- error :: buffer.errors
 
@@ -119,7 +113,7 @@ module TokenStream (S : TokenKindSig) = struct
          let got = S.tokenStr got_token in
          let message = Printf.sprintf "Expecting a %s but got %s" expected got in
          raise (ParserError (makeError buffer message))
-
+   ;;
 
    (** Checks that the next token matches *)
    let expect (buffer : stream) (kind : S.kind) : unit =
@@ -134,14 +128,14 @@ module TokenStream (S : TokenKindSig) = struct
          let got = S.kindStr got_token.kind in
          let message = Printf.sprintf "Expecting a %s but got %s" expected got in
          raise (ParserError (makeError buffer message))
-
+   ;;
 
    (** Optionally consumes the given token *)
    let optConsume (buffer : stream) (kind : S.kind) : unit =
       match buffer.peeked with
       | t when t.kind = kind -> skip buffer
       | _ -> ()
-
+   ;;
 
    (** Returns an empty 'lexed_lines' type *)
    let emptyLexedLines () = { current_line = Buffer.create 100; all_lines = [] }
@@ -154,20 +148,21 @@ module TokenStream (S : TokenKindSig) = struct
          | Some f ->
             let lex_start_p = Lexing.{ lexbuf.lex_start_p with pos_fname = f } in
             let lex_curr_p = Lexing.{ lexbuf.lex_curr_p with pos_fname = f } in
-            lexbuf.Lexing.lex_start_p <- lex_start_p ;
-            lexbuf.Lexing.lex_curr_p <- lex_curr_p ;
+            lexbuf.Lexing.lex_start_p <- lex_start_p;
+            lexbuf.Lexing.lex_curr_p <- lex_curr_p;
             Loc.File f
          | None -> Loc.Text str
       in
       let first = S.next source lexbuf in
       { lexbuf; peeked = first; prev = first; has_errors = false; errors = []; source }
-
+   ;;
 
    (** Creates a token stream given a channel *)
    let fromChannel (chan : in_channel) (file : string) : stream =
       let lexbuf = Lexing.from_channel chan in
-      lexbuf.Lexing.lex_curr_p <- { lexbuf.Lexing.lex_curr_p with Lexing.pos_fname = file } ;
+      lexbuf.Lexing.lex_curr_p <- { lexbuf.Lexing.lex_curr_p with Lexing.pos_fname = file };
       let source = Loc.File file in
       let first = S.next source lexbuf in
       { lexbuf; peeked = first; prev = first; has_errors = false; errors = []; source }
+   ;;
 end

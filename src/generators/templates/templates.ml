@@ -14,7 +14,7 @@ module Default = struct
 
 #endif // <#file#s>_TABLES_H
 |}]
-
+   ;;
 
    let header (params : params) (code : Pla.t) : Pla.t =
       let file = String.uppercase params.output in
@@ -33,7 +33,7 @@ module Default = struct
 
 #endif // <#file#s>_H
 |}]
-
+   ;;
 
    let implementation (params : params) (code : Pla.t) : Pla.t =
       let output = params.output in
@@ -44,14 +44,14 @@ module Default = struct
 
 <#code#>
 |}]
+   ;;
 
-
-   let get (params : params) (header_code : Pla.t) (impl_code : Pla.t) (tables_code : Pla.t) : (Pla.t * FileKind.t) list
-      =
+   let get (params : params) (header_code : Pla.t) (impl_code : Pla.t) (tables_code : Pla.t) : (Pla.t * FileKind.t) list =
       [ header params header_code, FileKind.ExtOnly "h"
       ; implementation params impl_code, FileKind.ExtOnly "cpp"
       ; tables params tables_code, FileKind.ExtOnly "tables.h"
       ]
+   ;;
 end
 
 let apply (params : params) (header_code : Pla.t) (impl_code : Pla.t) (tables : Pla.t) : (Pla.t * FileKind.t) list =
@@ -67,3 +67,4 @@ let apply (params : params) (header_code : Pla.t) (impl_code : Pla.t) (tables : 
       | t -> failwith (Printf.sprintf "The template '%s' is not available for this generator" t)
    in
    template params header_code impl_code tables
+;;

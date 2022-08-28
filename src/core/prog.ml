@@ -25,11 +25,11 @@
 (** Main description of a Vult program *)
 
 type tag =
-   | TId     of Id.t * Loc.t
-   | TFun    of Id.t * (Id.t * tag) list * Loc.t
-   | TInt    of string * Loc.t
-   | TReal   of string * Loc.t
-   | TBool   of string * Loc.t
+   | TId of Id.t * Loc.t
+   | TFun of Id.t * (Id.t * tag) list * Loc.t
+   | TInt of string * Loc.t
+   | TReal of string * Loc.t
+   | TBool of string * Loc.t
    | TString of string * Loc.t
 
 type root =
@@ -39,8 +39,8 @@ type root =
 
 type used_function =
    | NotUsed
-   | Used    of root
-   | Keep    of root
+   | Used of root
+   | Keep of root
 [@@deriving show, eq, ord]
 
 type attr =
@@ -58,9 +58,7 @@ type attr =
    }
 
 let pp_attr fmt _ = Format.pp_print_string fmt "attr"
-
 let equal_attr _ _ = true
-
 let compare_attr _ _ = 0
 
 type arg_type =
@@ -71,12 +69,12 @@ type arg_type =
 
 type typed_id =
    | SimpleId of Id.t * arg_type * attr
-   | TypedId  of Id.t * Typ.t list * arg_type * attr
+   | TypedId of Id.t * Typ.t list * arg_type * attr
 [@@deriving show, eq, ord]
 
 type instance =
    | NoInst
-   | Named  of Id.t
+   | Named of Id.t
    | This
 [@@deriving show, eq, ord]
 
@@ -86,8 +84,8 @@ type precision =
 [@@deriving show, eq, ord]
 
 type lhs_exp =
-   | LWild  of attr
-   | LId    of Id.t * Typ.t option * attr
+   | LWild of attr
+   | LId of Id.t * Typ.t option * attr
    | LTuple of lhs_exp list * attr
    | LTyped of lhs_exp * Typ.t * attr
    | LGroup of lhs_exp * attr
@@ -96,35 +94,34 @@ type lhs_exp =
 
 (** Parser syntax tree *)
 and exp =
-   | PUnit   of attr
-   | PBool   of bool * attr
-   | PInt    of int * attr
-   | PReal   of float * precision * attr
+   | PUnit of attr
+   | PBool of bool * attr
+   | PInt of int * attr
+   | PReal of float * precision * attr
    | PString of string * attr
-   | PId     of Id.t (* name *) * attr
-   | PIndex  of exp * exp * attr
-   | PArray  of exp array * attr
-   | PCall   of instance (* name/instance *) * Id.t (* type/function name *) * exp list (* arguments *) * attr
-   | PUnOp   of string (* operator *) * exp * attr
-   | POp     of string (* operator *) * exp list * attr
-   | PIf     of exp (* condition *) * exp (* then *) * exp (* else *) * attr
-   | PGroup  of exp * attr
-   | PTuple  of exp list * attr
-   | PSeq    of Id.t option (* Scope name *) * stmt * attr
+   | PId of Id.t (* name *) * attr
+   | PIndex of exp * exp * attr
+   | PArray of exp array * attr
+   | PCall of instance (* name/instance *) * Id.t (* type/function name *) * exp list (* arguments *) * attr
+   | PUnOp of string (* operator *) * exp * attr
+   | POp of string (* operator *) * exp list * attr
+   | PIf of exp (* condition *) * exp (* then *) * exp (* else *) * attr
+   | PGroup of exp * attr
+   | PTuple of exp list * attr
+   | PSeq of Id.t option (* Scope name *) * stmt * attr
    | PAccess of exp * string * attr
    | PEmpty
 [@@deriving show, eq, ord]
 
 and stmt =
-   | StmtConst     of lhs_exp (* names/lhs *) * exp (* rhs *) * attr
-   | StmtVal       of lhs_exp (* names/lhs *) * exp option (* rhs *) * attr
-   | StmtMem       of lhs_exp (* names/lhs *) * exp option (* rhs *) * attr
-   | StmtWhile     of exp (* condition*) * stmt (* statements *) * attr
-   | StmtReturn    of exp * attr
-   | StmtIf        of exp (* condition *) * stmt (* then *) * stmt option (* else *) * attr
-   | StmtFun       of
-        Id.t (* name *) * typed_id list (* arguments *) * stmt (* body *) * Typ.t option (* return type *) * attr
-   | StmtExternal  of
+   | StmtConst of lhs_exp (* names/lhs *) * exp (* rhs *) * attr
+   | StmtVal of lhs_exp (* names/lhs *) * exp option (* rhs *) * attr
+   | StmtMem of lhs_exp (* names/lhs *) * exp option (* rhs *) * attr
+   | StmtWhile of exp (* condition*) * stmt (* statements *) * attr
+   | StmtReturn of exp * attr
+   | StmtIf of exp (* condition *) * stmt (* then *) * stmt option (* else *) * attr
+   | StmtFun of Id.t (* name *) * typed_id list (* arguments *) * stmt (* body *) * Typ.t option (* return type *) * attr
+   | StmtExternal of
         Id.t (* name *)
         * typed_id list
    (* arguments *)
@@ -132,9 +129,9 @@ and stmt =
         * string option
    (* linking name *)
         * attr
-   | StmtBind      of lhs_exp (* lhs *) * exp (* rhs *) * attr
-   | StmtBlock     of Id.t option (* scope name *) * stmt list * attr
-   | StmtType      of Typ.t (* name *) * val_decl list (* members *) * attr
+   | StmtBind of lhs_exp (* lhs *) * exp (* rhs *) * attr
+   | StmtBlock of Id.t option (* scope name *) * stmt list * attr
+   | StmtType of Typ.t (* name *) * val_decl list (* members *) * attr
    | StmtAliasType of Typ.t (* name *) * Typ.t (* alias type *) * attr
    | StmtEmpty
 [@@deriving show, eq, ord]
@@ -165,7 +162,7 @@ let makeAttr (loc : Loc.t) : attr =
    ; no_inline = false
    ; fun_src = None
    }
-
+;;
 
 let emptyAttr =
    { loc = Loc.default
@@ -180,6 +177,6 @@ let emptyAttr =
    ; no_inline = false
    ; fun_src = None
    }
-
+;;
 
 let moduleName (file : string) : string = file |> Filename.basename |> Filename.chop_extension |> String.capitalize

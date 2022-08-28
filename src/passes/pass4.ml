@@ -45,7 +45,7 @@ module ReplaceFunctionNames = struct
          in
          state, PCall (name, final_name, args, attr)
       | _ -> state, exp
-
+   ;;
 
    let stmt : (PassData.t Env.t, stmt) Mapper.mapper_func =
       Mapper.make "ReplaceFunctionNames.stmt"
@@ -55,7 +55,7 @@ module ReplaceFunctionNames = struct
          let (Id.Path path) = Env.currentScope state in
          state, StmtFun (path, args, body, rettype, attr)
       | _ -> state, stmt
-
+   ;;
 
    let vtype_c : (PassData.t Env.t, Typ.vtype) Mapper.mapper_func =
       Mapper.make "ReplaceFunctionNames.vtype_c"
@@ -70,21 +70,14 @@ module ReplaceFunctionNames = struct
          let Id.Path type_path, _, _ = Env.lookupRaise Scope.Type state id loc in
          state, Typ.TId (type_path, optloc)
       | _ -> state, typ
-
+   ;;
 
    let mapper = Mapper.{ default_mapper with exp; stmt; vtype_c }
 end
 
 module ReturnReferences = struct
    let unitAttr attr = { attr with typ = Some Typ.Const.unit_type }
-
-   let returnRefType typ =
-      if Typ.isTuple typ then
-         false
-      else
-         not (Typ.isSimpleType typ)
-
-
+   let returnRefType typ = if Typ.isTuple typ then false else not (Typ.isSimpleType typ)
    let returnRefTypeOpt typ = CCOpt.map_or ~default:false returnRefType typ
 
    let stmt : (PassData.t Env.t, stmt) Mapper.mapper_func =
@@ -92,25 +85,25 @@ module ReturnReferences = struct
       @@ fun state stmt ->
       let data = Env.get state in
       let args = data.PassData.args in
-      if args.code = CCode then
+      if args.code = CCode
+      then (
          match stmt with
          | StmtFun (name, args, body, Some rettype, attr) when returnRefType rettype ->
             let output = TypedId ([ "_output_" ], [ rettype ], OutputArg, emptyAttr) in
             let stmt' = StmtFun (name, args @ [ output ], body, Some Typ.Const.unit_type, attr) in
             state, stmt'
-         | _ -> state, stmt
-      else
-         state, stmt
-
+         | _ -> state, stmt)
+      else state, stmt
+   ;;
 
    let stmt_x : ('a Env.t, stmt) Mapper.expand_func =
       Mapper.makeExpander "ReturnReferences.stmt_x"
       @@ fun state stmt ->
       let data = Env.get state in
       let args = data.PassData.args in
-      if not (args.code = CCode) then
-         state, [ stmt ]
-      else
+      if not (args.code = CCode)
+      then state, [ stmt ]
+      else (
          match stmt with
          (* regular case a = foo() *)
          | StmtBind (LId (lhs, Some typ, lattr), PCall (inst, name, args, attr), battr) when returnRefType typ ->
@@ -146,13 +139,13 @@ module ReturnReferences = struct
          | StmtVal (_, Some (PCall (_, _, _, _)), _) -> state, [ stmt ]
          | StmtReturn (e, attr) ->
             let eattr = GetAttr.fromExp e in
-            if returnRefTypeOpt eattr.typ then
+            if returnRefTypeOpt eattr.typ
+            then (
                let stmt' = StmtBind (LId ([ "_output_" ], eattr.typ, eattr), e, attr) in
-               reapply state, [ stmt'; StmtReturn (PUnit (unitAttr eattr), attr) ]
-            else
-               state, [ stmt ]
-         | _ -> state, [ stmt ]
-
+               reapply state, [ stmt'; StmtReturn (PUnit (unitAttr eattr), attr) ])
+            else state, [ stmt ]
+         | _ -> state, [ stmt ])
+   ;;
 
    let mapper = Mapper.{ default_mapper with stmt; stmt_x }
 end
@@ -164,18 +157,14 @@ module DummySimplifications = struct
       match exp with
       | PCall (NoInst, [ "wrap_array" ], [ e ], _) ->
          let args = (Env.get state).PassData.args in
-         if args.code = JSCode || args.code = LuaCode then
-            state, e
-         else
-            state, exp
+         if args.code = JSCode || args.code = LuaCode then state, e else state, exp
       | PCall (NoInst, [ "not" ], [ e ], attr) ->
          let args = (Env.get state).PassData.args in
-         if args.code = JSCode || args.code = LuaCode then
-            state, POp ("==", [ e; PBool (false, attr) ], attr)
-         else
-            state, exp
+         if args.code = JSCode || args.code = LuaCode
+         then state, POp ("==", [ e; PBool (false, attr) ], attr)
+         else state, exp
       | _ -> state, exp
-
+   ;;
 
    let stmt : (PassData.t Env.t, stmt) Mapper.mapper_func =
       Mapper.make "DummySimplifications.stmt"
@@ -187,7 +176,7 @@ module DummySimplifications = struct
          let cod_attr = GetAttr.fromExp cond in
          state, StmtIf (PCall (NoInst, [ "not" ], [ cond ], cod_attr), else_, None, attr)
       | _ -> state, stmt
-
+   ;;
 
    let stmt_x : ('a Env.t, stmt) Mapper.expand_func =
       Mapper.makeExpander "DummySimplifications.stmt_x"
@@ -196,7 +185,7 @@ module DummySimplifications = struct
       | StmtVal (LWild _, None, _) -> state, []
       | StmtBind (LId (lhs, _, _), PId (rhs, _), _) when compare lhs rhs = 0 -> reapply state, []
       | _ -> state, [ stmt ]
-
+   ;;
 
    let mapper = Mapper.{ default_mapper with stmt; stmt_x; exp }
 end

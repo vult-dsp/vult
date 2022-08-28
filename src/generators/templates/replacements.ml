@@ -31,19 +31,12 @@ module PairMap = CCMap.Make (struct
    end)
 
 let makeKeywords = SimpleMap.of_list
-
 let makeTypes = SimpleMap.of_list
-
 let makeCasts = PairMap.of_list
-
 let makeFunctions = PairMap.of_list
-
 let makeOperators = PairMap.of_list
-
 let makeArrayInitializations = SimpleMap.of_list
-
 let makeArrayCopy = SimpleMap.of_list
-
 let makeRealToString = SimpleMap.of_list
 
 type t =
@@ -62,7 +55,7 @@ let global_replacement_map : t SimpleMap.t ref = ref SimpleMap.empty
 
 let registerReplacements (name : string) (t : t) : unit =
    global_replacement_map := SimpleMap.add name t !global_replacement_map
-
+;;
 
 let getReplacements (name : string) : t = SimpleMap.find name !global_replacement_map
 
@@ -75,7 +68,7 @@ let takeSecond _ (opt1 : 'a option) (opt2 : 'a option) : 'a option =
    match opt1, opt2 with
    | _, Some _ -> opt2
    | _ -> opt1
-
+;;
 
 let extendReplacements (first : t) (second : t) : t =
    { keywords = SimpleMap.merge takeSecond first.keywords second.keywords
@@ -88,7 +81,7 @@ let extendReplacements (first : t) (second : t) : t =
    ; array_copy = SimpleMap.merge takeSecond first.array_copy second.array_copy
    ; real_string = SimpleMap.merge takeSecond first.real_string second.real_string
    }
-
+;;
 
 let empty =
    { keywords = SimpleMap.empty
@@ -101,19 +94,19 @@ let empty =
    ; array_copy = SimpleMap.empty
    ; real_string = SimpleMap.empty
    }
-
+;;
 
 let getKeyword (t : t) (name : string) : string =
    match SimpleMap.get name t.keywords with
    | Some new_keyword -> new_keyword
    | None -> name
-
+;;
 
 let getType (t : t) (name : string) : string =
    match SimpleMap.get name t.types with
    | Some new_type -> new_type
    | None -> name
-
+;;
 
 let getCast (t : t) (from_t : string) (to_t : string) : string =
    let to_tt = getType t to_t in
@@ -121,22 +114,21 @@ let getCast (t : t) (from_t : string) (to_t : string) : string =
    match PairMap.get (from_tt, to_tt) t.cast with
    | Some cast -> cast
    | None -> to_tt
-
+;;
 
 let getFunctionForOperator (t : t) (op : string) (typ : string) : string option =
    let typ_t = getType t typ in
    PairMap.get (op, typ_t) t.op_to_fun
-
+;;
 
 let getOperator (t : t) (op : string) (typ : string) : string =
    let typ_t = getType t typ in
    match PairMap.get (op, typ_t) t.op_to_op with
    | Some new_op -> new_op
    | None -> op
-
+;;
 
 let getArrayInit (t : t) (name : string) : string option = SimpleMap.get name t.array_init
-
 let getArrayCopy (t : t) (name : string) : string option = SimpleMap.get name t.array_copy
 
 let getFunction (t : t) (op : string) (typ : string) : string =
@@ -144,10 +136,11 @@ let getFunction (t : t) (op : string) (typ : string) : string =
    match PairMap.get (op, typ_t) t.fun_to_fun with
    | Some new_op -> new_op
    | None -> op
-
+;;
 
 let getRealToString (t : t) (value : float) (typ : string) : string =
    let typ_t = getType t typ in
    match SimpleMap.get typ_t t.real_string with
    | Some fn -> fn value
    | None -> Float.to_string value
+;;

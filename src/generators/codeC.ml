@@ -42,24 +42,16 @@ let rec getBodyCost body =
    | CSEmpty -> 0
    | CSSwitch (_, cases, Some d) -> List.fold_left (fun acc (_, e) -> acc + getBodyCost e) (1 + getBodyCost d) cases
    | CSSwitch (_, cases, None) -> List.fold_left (fun acc (_, e) -> acc + getBodyCost e) 1 cases
-
+;;
 
 let dot = Pla.map_sep (Pla.string ".") Pla.string
 
 (** Returns true if the expression is simple and does not need parenthesis *)
 let isSimple (e : cexp) : bool =
    match e with
-   | CEInt _
-   |CEFloat _
-   |CEBool _
-   |CEString _
-   |CECall _
-   |CEIndex _
-   |CEAccess _
-   |CEVar _ ->
-      true
+   | CEInt _ | CEFloat _ | CEBool _ | CEString _ | CECall _ | CEIndex _ | CEAccess _ | CEVar _ -> true
    | _ -> false
-
+;;
 
 (** Returns the base type name and a list of its sizes *)
 let rec simplifyArray (typ : type_descr) : string * string list =
@@ -68,7 +60,7 @@ let rec simplifyArray (typ : type_descr) : string * string list =
    | CTArray (sub, size) ->
       let name, sub_size = simplifyArray sub in
       name, sub_size @ [ string_of_int size ]
-
+;;
 
 (** Returns the representation of a type description *)
 let printTypeDescr (typ : type_descr) : Pla.t =
@@ -78,26 +70,24 @@ let printTypeDescr (typ : type_descr) : Pla.t =
    | _ ->
       let tsize = Pla.map_sep Pla.comma Pla.string sizes in
       [%pla {|<#kind#s>[<#tsize#>]|}]
-
+;;
 
 (** Used to print declarations and rebindings of lhs variables *)
 let printTypeAndName (is_decl : bool) (typ : type_descr) (name : string list) : Pla.t =
    match typ, name with
    | typ, [ name ] ->
       let kind, sizes = simplifyArray typ in
-      begin
-         match is_decl, sizes with
-         (* Simple varible declaration (no sizes) *)
-         | true, [] -> [%pla {|<#kind#s> <#name#s>|}]
-         (* Array declarations (with sizes) *)
-         | true, _ ->
-            let t_sizes = Pla.map_sep Pla.comma Pla.string sizes in
-            [%pla {|<#kind#s> <#name#s>[<#t_sizes#>]|}]
-         (* Simple rebinding (no declaration) *)
-         | _, _ -> [%pla {|<#name#s>|}]
-      end
+      (match is_decl, sizes with
+       (* Simple varible declaration (no sizes) *)
+       | true, [] -> [%pla {|<#kind#s> <#name#s>|}]
+       (* Array declarations (with sizes) *)
+       | true, _ ->
+          let t_sizes = Pla.map_sep Pla.comma Pla.string sizes in
+          [%pla {|<#kind#s> <#name#s>[<#t_sizes#>]|}]
+       (* Simple rebinding (no declaration) *)
+       | _, _ -> [%pla {|<#name#s>|}])
    | _ -> failwith "CodeC.printTypeAndName: invalid input"
-
+;;
 
 (** Used to print assignments of a tuple field to a variable *)
 let printLhsExpTuple (var : Pla.t) (is_var : bool) (i : int) (e : clhsexp) : Pla.t =
@@ -105,7 +95,8 @@ let printLhsExpTuple (var : Pla.t) (is_var : bool) (i : int) (e : clhsexp) : Pla
    (* Assigning to a simple variable *)
    | CLId (CTSimple typ, name) ->
       let name_ = dot name in
-      if is_var then (* with declaration *)
+      if is_var
+      then (* with declaration *)
          [%pla {|<#typ#s> <#name_#> = <#var#>.field_<#i#i>;|}]
       else (* with no declaration *)
          [%pla {|<#name_#> = <#var#>.field_<#i#i>;|}]
@@ -114,7 +105,7 @@ let printLhsExpTuple (var : Pla.t) (is_var : bool) (i : int) (e : clhsexp) : Pla
       [%pla {|<#tdecl#> = <#var#>.field_<#i#i>;|}]
    | CLWild -> Pla.unit
    | _ -> failwith ("printLhsExpTuple: All other cases should be already covered\n" ^ Code.show_clhsexp e)
-
+;;
 
 let splitArray into elems =
    let rec loop current acc count elems =
@@ -124,7 +115,7 @@ let splitArray into elems =
       | h :: t -> loop [ h ] (List.rev current :: acc) 0 t
    in
    loop [] [] 0 elems
-
+;;
 
 (** Returns a template the print the expression *)
 let rec printExp (params : params) (e : cexp) : Pla.t =
@@ -133,19 +124,13 @@ let rec printExp (params : params) (e : cexp) : Pla.t =
    | CEFloat (s, _) -> Pla.string s
    | CEInt n ->
       (* Parenthesize if it has a unary minus *)
-      if n < 0 then
-         Pla.parenthesize (Pla.int n)
-      else
-         Pla.int n
+      if n < 0 then Pla.parenthesize (Pla.int n) else Pla.int n
    | CEBool v -> Pla.string (if v then "true" else "false")
    | CEString s -> Pla.string_quoted s
    | CEArray (elems, _) ->
       let elems = splitArray 50 elems in
       let telems =
-         Pla.map_sep
-            Pla.comma
-            (fun elems -> Pla.append (Pla.map_sep Pla.comma (printExp params) elems) Pla.newline)
-            elems
+         Pla.map_sep Pla.comma (fun elems -> Pla.append (Pla.map_sep Pla.comma (printExp params) elems) Pla.newline) elems
       in
       [%pla {|{<#telems#>}|}]
    | CECall (name, args, _) ->
@@ -178,12 +163,10 @@ let rec printExp (params : params) (e : cexp) : Pla.t =
       let e = printExp params e in
       [%pla {|(<#e#>).<#n#s>|}]
 
-
 (** Used to print the elements of a tuple *)
 and printChField (params : params) ((name : string), (value : cexp)) =
    let tval = printExp params value in
    [%pla {|.<#name#s> = <#tval#>|}]
-
 
 (** Prints lhs values with and without declaration *)
 and printLhsExp params (is_var : bool) (e : clhsexp) : Pla.t =
@@ -203,14 +186,14 @@ and printLhsExp params (is_var : bool) (e : clhsexp) : Pla.t =
       let index = printExp params index in
       [%pla {|<#name#s>[<#index#>]|}]
    | _ -> failwith "uncovered case"
-
+;;
 
 (** Used to print assignments on to an array element *)
 let printArrayBinding params (var : string list) (i : int) (e : cexp) : Pla.t =
    let te = printExp params e in
    let var = dot var in
    [%pla {|<#var#>[<#i#i>] = <#te#>; |}]
-
+;;
 
 (** Prints arguments to functions either pass by value or reference *)
 let printFunArg (ntype, name) : Pla.t =
@@ -224,7 +207,7 @@ let printFunArg (ntype, name) : Pla.t =
    | Ref typ ->
       let tdescr = printTypeDescr typ in
       [%pla {|<#tdescr#> &<#name#s>|}]
-
+;;
 
 let rec printSwitchStmt params e cases def =
    let e_t = printExp params e in
@@ -234,19 +217,18 @@ let rec printSwitchStmt params e cases def =
          (fun (v, stmt) ->
              let v_t = printExp params v in
              let stmt_t = CCOpt.get_or ~default:Pla.unit (printStmt params stmt) in
-             [%pla {|case <#v_t#>:<#stmt_t#+><#>break;|}] )
+             [%pla {|case <#v_t#>:<#stmt_t#+><#>break;|}])
          cases
    in
    let def_t =
       match def with
       | None -> Pla.unit
       | Some s ->
-         match printStmt params s with
-         | None -> Pla.unit
-         | Some s -> [%pla {|default: <#s#+>|}]
+         (match printStmt params s with
+          | None -> Pla.unit
+          | Some s -> [%pla {|default: <#s#+>|}])
    in
    Some [%pla {|switch(<#e_t#>) {<#cases_t#+> <#def_t#><#>}|}]
-
 
 (** Print a statement *)
 and printStmt (params : params) (stmt : cstmt) : Pla.t option =
@@ -287,12 +269,12 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
       Some [%pla {|<#name#>[<#index#>] = <#te#>;|}]
    (* Prints const x = ... *)
    | CSConst (lhs, ((CEInt _ | CEFloat _ | CEBool _ | CEArray _) as value)) ->
-      if params.target_file = Tables then
+      if params.target_file = Tables
+      then (
          let tlhs = printLhsExp params true lhs in
          let te = printExp params value in
-         Some [%pla {|static const <#tlhs#> = <#te#>;|}]
-      else
-         None
+         Some [%pla {|static const <#tlhs#> = <#te#>;|}])
+      else None
    (* All other cases should be errors *)
    | CSConst _ -> failwith "printStmt: invalid constant declaration"
    (* Function declarations cotaining more than one statement *)
@@ -301,52 +283,54 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
       let cost = getBodyCost body in
       (* if we are printing a header, skip the body *)
-      if cost < 6 then
-         if params.target_file = Header then
+      if cost < 6
+      then
+         if params.target_file = Header
+         then (
             match printStmt params body with
             | Some tbody -> Some [%pla {|static_inline <#ret#> <#name#s>(<#targs#>)<#tbody#><#>|}]
             (* Covers the case when the body is empty *)
-            | None -> Some [%pla {|static_inline <#ret#> <#name#s>(<#targs#>){};<#>|}]
-         else
-            None
-      else if params.target_file = Header then
-         Some [%pla {|<#ret#> <#name#s>(<#targs#>);<#>|}]
-      else if params.target_file = Implementation then
+            | None -> Some [%pla {|static_inline <#ret#> <#name#s>(<#targs#>){};<#>|}])
+         else None
+      else if params.target_file = Header
+      then Some [%pla {|<#ret#> <#name#s>(<#targs#>);<#>|}]
+      else if params.target_file = Implementation
+      then (
          match printStmt params body with
          | Some tbody -> Some [%pla {|<#ret#> <#name#s>(<#targs#>)<#tbody#><#>|}]
          (* Covers the case when the body is empty *)
-         | None -> Some [%pla {|<#ret#> <#name#s>(<#targs#>){};<#>|}]
-      else
-         None
+         | None -> Some [%pla {|<#ret#> <#name#s>(<#targs#>){};<#>|}])
+      else None
    (* Function declarations cotaining a single return *)
    | CSFunction (ntype, name, args, (CSReturn _ as body), _) ->
       let ret = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
       (* if we are printing a header, skip the body *)
-      if params.target_file = Header then
+      if params.target_file = Header
+      then (
          let tbody = CCOpt.get_or ~default:Pla.unit (printStmt params body) in
-         Some [%pla {|static_inline <#ret#> <#name#s>(<#targs#>){<#tbody#+><#>};<#>|}]
-      else
-         None
+         Some [%pla {|static_inline <#ret#> <#name#s>(<#targs#>){<#tbody#+><#>};<#>|}])
+      else None
    (* Function declarations cotaining a single statement *)
    | CSFunction (ntype, name, args, body, _) ->
       let ret = printTypeDescr ntype in
       let targs = Pla.map_sep Pla.commaspace printFunArg args in
       (* if we are printing a header, skip the body *)
       let cost = getBodyCost body in
-      if cost < 6 then
-         if params.target_file = Header then
+      if cost < 6
+      then
+         if params.target_file = Header
+         then (
             let tbody = CCOpt.get_or ~default:Pla.unit (printStmt params body) in
-            Some [%pla {|static_inline <#ret#> <#name#s>(<#targs#>){<#tbody#+><#>};<#>|}]
-         else
-            None
-      else if params.target_file = Header then
-         Some [%pla {|<#ret#> <#name#s>(<#targs#>);<#>|}]
-      else if params.target_file = Implementation then
+            Some [%pla {|static_inline <#ret#> <#name#s>(<#targs#>){<#tbody#+><#>};<#>|}])
+         else None
+      else if params.target_file = Header
+      then Some [%pla {|<#ret#> <#name#s>(<#targs#>);<#>|}]
+      else if params.target_file = Implementation
+      then (
          let tbody = CCOpt.get_or ~default:Pla.unit (printStmt params body) in
-         Some [%pla {|<#ret#> <#name#s>(<#targs#>){<#tbody#+><#>}<#>|}]
-      else
-         None
+         Some [%pla {|<#ret#> <#name#s>(<#targs#>){<#tbody#+><#>}<#>|}])
+      else None
    (* Prints return x *)
    | CSReturn e1 ->
       let te = printExp params e1 in
@@ -381,7 +365,7 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
             Pla.newline
             (fun (typ, name) ->
                 let tmember = printTypeAndName true typ [ name ] in
-                [%pla {|<#tmember#>;|}] )
+                [%pla {|<#tmember#>;|}])
             members
       in
       Some [%pla {|typedef struct <#name#s> {<#tmembers#+>} <#name#s>;<#>|}]
@@ -403,21 +387,19 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
    | CSEmpty -> None
    | CSSwitch (e, cases, def) -> printSwitchStmt params e cases def
 
-
 and printStmtList (params : params) (stmts : cstmt list) : Pla.t =
    (* Prints the statements and removes all elements that are None *)
    let tstmts = CCList.filter_map (printStmt params) stmts in
    Pla.map_sep_all Pla.newline (fun a -> a) tstmts
 
-
 and wrapStmtIfNotBlock params stmt =
    match stmt with
    | CSBlock _ -> printStmt params stmt
    | _ ->
-      match printStmt params stmt with
-      | Some t -> Some [%pla {|{<#t#+><#>}|}]
-      | _ -> None
-
+      (match printStmt params stmt with
+       | Some t -> Some [%pla {|{<#t#+><#>}|}]
+       | _ -> None)
+;;
 
 (** Generates the .c and .h file contents for the given parsed files *)
 let print (params : params) (stmts : Code.cstmt list) : (Pla.t * FileKind.t) list =
@@ -425,3 +407,4 @@ let print (params : params) (stmts : Code.cstmt list) : (Pla.t * FileKind.t) lis
    let cpp = printStmtList { params with target_file = Implementation } stmts in
    let tables = printStmtList { params with target_file = Tables } stmts in
    Templates.apply params h cpp tables
+;;

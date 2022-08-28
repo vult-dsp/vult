@@ -56,7 +56,7 @@ int main(void)
    return 0;
 }
 |}]
-
+;;
 
 let implC params impl_code =
    let output = params.output in
@@ -66,7 +66,7 @@ let implC params impl_code =
 
    <#impl_code#>
    |}]
-
+;;
 
 let tables (params : params) (code : Pla.t) : Pla.t =
    let file = String.uppercase params.output in
@@ -81,7 +81,7 @@ let tables (params : params) (code : Pla.t) : Pla.t =
 
 #endif // <#file#s>_TABLES_H
 |}]
-
+;;
 
 let headerC (params : params) header_code =
    let tables = params.output in
@@ -94,7 +94,7 @@ let headerC (params : params) header_code =
 
    <#header_code#>
 |}]
-
+;;
 
 let getC (params : params) (header_code : Pla.t) (impl_code : Pla.t) (tables_code : Pla.t) : (Pla.t * FileKind.t) list =
    [ tables params tables_code, FileKind.ExtOnly "tables.h"
@@ -102,7 +102,7 @@ let getC (params : params) (header_code : Pla.t) (impl_code : Pla.t) (tables_cod
    ; implC params impl_code, FileKind.ExtOnly "cpp"
    ; mainC params, FileKind.FullName "main.cpp"
    ]
-
+;;
 
 let mainJs params =
    let output = params.output in
@@ -124,7 +124,7 @@ let mainJs params =
         var end = (new Date() - start);
         console.info("<#module_name#s>\tJs\t", end / time, "ms/s");
    |}]
-
+;;
 
 let implJs params code runtime =
    let module_name = params.module_name in
@@ -142,11 +142,11 @@ let implJs params code runtime =
         this.liveProcess       = function(input)         { if(this.<#module_name#s>_process)       return this.<#module_name#s>_process(this.context,input); else return 0; };
         this.liveDefault       = function() { if(this.<#module_name#s>_default)      return this.<#module_name#s>_default(this.context); };
         }|}]
-
+;;
 
 let getJs (params : params) runtime code : (Pla.t * FileKind.t) list =
    [ mainJs params, FileKind.FullName "main.js"; implJs params code runtime, FileKind.ExtOnly "js" ]
-
+;;
 
 let mainLua (params : params) =
    let output = params.output in
@@ -166,7 +166,8 @@ let mainLua (params : params) =
    local finish = (os.clock() - start) * 1000.0
    print("<#module_name#s>\tLua", finish / time, "ms/s")
    |}]
-
+;;
 
 let getLua (params : params) default_code : (Pla.t * FileKind.t) list =
    [ default_code, FileKind.ExtOnly "lua"; mainLua params, FileKind.FullName "main.lua" ]
+;;

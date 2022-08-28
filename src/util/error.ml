@@ -26,7 +26,7 @@
 
 type t =
    | PointedError of Loc.t * string
-   | SimpleError  of string
+   | SimpleError of string
 
 exception Errors of t list
 
@@ -35,7 +35,7 @@ let errorLocationMessage (location : Loc.t) : string =
    let col_start = Loc.startColumn location in
    let col_end = Loc.endColumn location in
    Printf.sprintf "Error: %s:%i:%i-%i: " (Loc.file location) (Loc.line location) col_start col_end
-
+;;
 
 (** Takes the current line and a location returns a string pointing to the
     location *)
@@ -44,18 +44,16 @@ let errorLocationIndicator (line : string) (location : Loc.t) : string =
    let col_end = max (Loc.endColumn location) 0 in
    let pointer = if col_end - col_start <> 0 then String.make (col_end - col_start) '^' else " ^ " in
    Printf.sprintf "%s\n%s%s\n" line (String.make col_start ' ') pointer
-
+;;
 
 (** Returns the lines corresponding to the given location *)
 let getErrorLines (location : Loc.t) : string =
    let lines =
       match location.Loc.source with
       | Loc.File filename ->
-         begin
-            match FileIO.read filename with
-            | Some contents -> CCString.lines contents
-            | _ -> failwith ("Could not open the file " ^ filename)
-         end
+         (match FileIO.read filename with
+          | Some contents -> CCString.lines contents
+          | _ -> failwith ("Could not open the file " ^ filename))
       | Loc.Text code -> CCString.lines code
    in
    let result =
@@ -65,7 +63,7 @@ let getErrorLines (location : Loc.t) : string =
       | n, _ -> List.nth lines (n - 2) ^ "\n" ^ List.nth lines (n - 1)
    in
    CCString.replace ~sub:"\t" ~by:" " result
-
+;;
 
 (** Takes an error and the lines of the code and returns an error message *)
 let reportErrorString (error : t) : string =
@@ -76,7 +74,7 @@ let reportErrorString (error : t) : string =
       let line = getErrorLines location in
       let indicator = errorLocationIndicator line location in
       loc ^ msg ^ "\n" ^ indicator
-
+;;
 
 let reportErrors (errors : t list) : string = List.map reportErrorString errors |> String.concat "\n"
 
@@ -89,7 +87,7 @@ let reportErrorStringNoLoc (error : t) : string * string * string * int * int =
       let indicator = errorLocationIndicator line location in
       msg, indicator, Loc.file location, Loc.line location, col_start
    | SimpleError msg -> msg, "", "-", 0, 0
-
+;;
 
 (** Joins two errors *)
 let joinErrors : t list -> t list -> t list = List.append
@@ -102,13 +100,11 @@ let joinErrorOptions : t list option -> t list option -> t list option =
    | None, (Some _ as ret) -> ret
    | Some err1, Some err2 -> Some (joinErrors err1 err2)
    | None, None -> None
-
+;;
 
 (** Joins a list of optional errors *)
 let joinErrorOptionsList : t list option list -> t list option = List.fold_left joinErrorOptions None
 
 let makeError (msg : string) (loc : Loc.t) = PointedError (loc, msg)
-
 let raiseError (msg : string) (loc : Loc.t) = raise (Errors [ makeError msg loc ])
-
 let raiseErrorMsg (msg : string) = raise (Errors [ SimpleError msg ])

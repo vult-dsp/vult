@@ -26,11 +26,10 @@
 open Config
 
 let inputsArray n_inputs =
-   if n_inputs > 0 then
-      [%pla {|audio_block_t *inputQueueArray[<#n_inputs#i>];|}], [%pla {|inputQueueArray|}]
-   else
-      Pla.unit, [%pla {|NULL|}]
-
+   if n_inputs > 0
+   then [%pla {|audio_block_t *inputQueueArray[<#n_inputs#i>];|}], [%pla {|inputQueueArray|}]
+   else Pla.unit, [%pla {|NULL|}]
+;;
 
 let tables (params : params) (code : Pla.t) : Pla.t =
    let file = String.uppercase params.output in
@@ -45,7 +44,7 @@ let tables (params : params) (code : Pla.t) : Pla.t =
 
    #endif // <#file#s>_TABLES_H
    |}]
-
+;;
 
 (** Header function *)
 let header (params : params) (code : Pla.t) : Pla.t =
@@ -108,7 +107,7 @@ private:
 
 #endif // <#file#s>_H
 |}]
-
+;;
 
 let rec allocateBlocks (block : int) (inputs : int) (outputs : int) =
    match inputs, outputs with
@@ -122,15 +121,15 @@ let rec allocateBlocks (block : int) (inputs : int) (outputs : int) =
    | _, _ ->
       let t = [%pla {|audio_block_t * block<#block#i> = receiveWritable(<#block#i>); if(!block<#block#i>) return;|}] in
       t :: allocateBlocks (block + 1) (inputs - 1) (outputs - 1)
-
+;;
 
 let transmitBlocks (outputs : int) =
    CCList.init outputs (fun i -> [%pla {|transmit(block<#i#i>, <#i#i>);|}]) |> Pla.join_sep Pla.newline
-
+;;
 
 let releaseBlocks (blocks : int) =
    CCList.init blocks (fun i -> [%pla {|release(block<#i#i>);|}]) |> Pla.join_sep Pla.newline
-
+;;
 
 let castInput params typ i acc =
    match typ with
@@ -140,7 +139,7 @@ let castInput params typ i acc =
    | IBool _ -> i + 1, [%pla {|uint8_t in<#i#i> = block<#i#i>->data[i] != 0;|}] :: acc
    | IInt _ -> i + 1, [%pla {|int in<#i#i> = block<#i#i>->data[i];|}] :: acc
    | IContext -> i, acc
-
+;;
 
 let castOutput params typ value =
    match typ with
@@ -149,7 +148,7 @@ let castOutput params typ value =
    | OFix16 -> [%pla {|fix_to_short(<#value#>)|}]
    | OBool -> [%pla {|<#value#>|}]
    | OInt -> [%pla {|<#value#>|}]
-
+;;
 
 let declareInputs params =
    List.fold_left (fun (i, acc) a -> castInput params a i acc) (0, []) params.config.process_inputs
@@ -157,7 +156,7 @@ let declareInputs params =
    |> Pla.join_sep Pla.newline
    |> Pla.indent
    |> Pla.indent
-
+;;
 
 let declReturn params =
    let module_name = params.module_name in
@@ -174,13 +173,13 @@ let declReturn params =
          List.mapi
             (fun i o ->
                 let value = castOutput params o [%pla {|<#module_name#s>_process_ret_<#i#i>(data)|}] in
-                [%pla {|block<#i#i>->data[i] = <#value#>; |}] )
+                [%pla {|block<#i#i>->data[i] = <#value#>; |}])
             o
          |> Pla.join_sep_all Pla.newline
          |> Pla.indent
       in
       Pla.unit, copy
-
+;;
 
 (** Implementation function *)
 let implementation (params : params) (code : Pla.t) : Pla.t =
@@ -215,10 +214,11 @@ void <#output#s>::update(void)
 }
 
 |}]
-
+;;
 
 let get (params : params) (header_code : Pla.t) (impl_code : Pla.t) (tables_code : Pla.t) : (Pla.t * FileKind.t) list =
    [ header params header_code, FileKind.ExtOnly "h"
    ; tables params tables_code, FileKind.ExtOnly "tables.h"
    ; implementation params impl_code, FileKind.ExtOnly "cpp"
    ]
+;;

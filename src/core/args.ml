@@ -28,14 +28,14 @@ type input =
 [@@deriving show, eq, ord]
 
 type output =
-   | Version       of string
-   | Message       of string
-   | Dependencies  of string list
-   | ParsedCode    of string
+   | Version of string
+   | Message of string
+   | Dependencies of string list
+   | ParsedCode of string
    | GeneratedCode of (Pla.t * FileKind.t) list
-   | Interpret     of string
+   | Interpret of string
    | CheckOk
-   | Errors        of Error.t list
+   | Errors of Error.t list
 
 type code =
    | NoCode
@@ -90,3 +90,4 @@ let default_arguments : args =
    ; prefix = ""
    ; output_prefix = None
    }
+;;

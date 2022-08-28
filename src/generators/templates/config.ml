@@ -24,9 +24,9 @@
 
 type input =
    | IContext
-   | IReal    of string
-   | IInt     of string
-   | IBool    of string
+   | IReal of string
+   | IInt of string
+   | IBool of string
 
 type output =
    | OFix16
@@ -56,14 +56,14 @@ type target_file =
 
 (** Represents the parameters used during code generation *)
 type params =
-   { real : string   (** 'Real' number representation *)
-   ; template : string   (** Used template *)
-   ; target_file : target_file   (** Defines which part of the code we are generating *)
-   ; output : string   (** Argument given via '-o' *)
-   ; repl : Replacements.t   (** Replacements used during Vult -> Code conversion *)
-   ; module_name : string   (** Name of the main mudule *)
-   ; prefix : string   (** Prefix given to java code *)
-   ; config : config   (** Plugin configuration *)
+   { real : string (** 'Real' number representation *)
+   ; template : string (** Used template *)
+   ; target_file : target_file (** Defines which part of the code we are generating *)
+   ; output : string (** Argument given via '-o' *)
+   ; repl : Replacements.t (** Replacements used during Vult -> Code conversion *)
+   ; module_name : string (** Name of the main mudule *)
+   ; prefix : string (** Prefix given to java code *)
+   ; config : config (** Plugin configuration *)
    }
 
 (** Empty default configuration *)
@@ -80,7 +80,7 @@ let empty_conf module_name =
    ; update_outputs = []
    ; update_found = false
    }
-
+;;
 
 let inputTypeString (m : input) : string =
    match m with
@@ -88,7 +88,7 @@ let inputTypeString (m : input) : string =
    | IReal _ -> "real"
    | IInt _ -> "int"
    | IBool _ -> "bool"
-
+;;
 
 let outputTypeString (m : output) : string =
    match m with
@@ -96,16 +96,16 @@ let outputTypeString (m : output) : string =
    | OInt -> "int"
    | OBool -> "bool"
    | OFix16 -> "fix16"
-
+;;
 
 let countInputsNoCtx (inputs : input list) : int =
    List.fold_left
       (fun s a ->
           match a with
           | IContext -> s
-          | _ -> s + 1 )
+          | _ -> s + 1)
       0
       inputs
-
+;;
 
 let countOutputs (outputs : output list) : int = List.length outputs

@@ -39,7 +39,7 @@ let checkRealType (real : string) : unit =
    | _ ->
       let msg = "Unknown type '" ^ real ^ "'\nThe only valid values for -real are: fixed or float" in
       Error.raiseErrorMsg msg
-
+;;
 
 (** Determines the number of inputs and outputs of the key function to generate templates *)
 module Configuration = struct
@@ -56,7 +56,7 @@ module Configuration = struct
          let inputs, _ = passData t in
          inputs, elems
       | [] -> [], []
-
+   ;;
 
    (** Checks that the type is a numeric type *)
    let checkNumeric repl (name : string) (typ : Typ.t) : Config.input option =
@@ -65,7 +65,7 @@ module Configuration = struct
       | Typ.TId ([ "int" ], _) -> Some (Config.IInt (Replacements.getKeyword repl name))
       | Typ.TId ([ "bool" ], _) -> Some (Config.IBool (Replacements.getKeyword repl name))
       | _ -> None
-
+   ;;
 
    (** Checks that the output is a numeric or a tuple of numbers *)
    let rec getOutputs (loc : Loc.t) (typ : Typ.t) : Config.output list =
@@ -75,34 +75,30 @@ module Configuration = struct
       | Typ.TId ([ "int" ], _) -> [ Config.OInt ]
       | Typ.TComposed ([ "tuple" ], elems, _) -> List.map (getOutputs loc) elems |> List.flatten
       | _ ->
-         let msg =
-            "The return type of the function process should be a numeric value or a tuple with numeric elements"
-         in
+         let msg = "The return type of the function process should be a numeric value or a tuple with numeric elements" in
          Error.raiseError msg loc
-
+   ;;
 
    let getOutputsOrDefault outputs (loc : Loc.t) (typ : Typ.t) =
       match !typ, outputs with
       | Typ.TId ([ "unit" ], _), _ -> outputs
       | _, [] -> getOutputs loc typ
       | _ -> failwith "Generate.getOutputsOrDefault: strage error"
-
+   ;;
 
    (** Returns the type of the argument as a string, if it's the context then the type is data *)
    let getType repl (arg : typed_id) =
       match arg with
       | TypedId (_, _, ContextArg, _) -> `Input Config.IContext
       | TypedId ([ name ], [ typ ], InputArg, attr) ->
-         begin
-            match checkNumeric repl name typ with
-            | Some typ_name -> `Input typ_name
-            | None ->
-               let msg = "The type of this argument must be numeric" in
-               Error.raiseError msg attr.loc
-         end
+         (match checkNumeric repl name typ with
+          | Some typ_name -> `Input typ_name
+          | None ->
+             let msg = "The type of this argument must be numeric" in
+             Error.raiseError msg attr.loc)
       | TypedId ([ _ ], [ typ ], OutputArg, attr) -> `Output (getOutputs attr.loc typ)
       | _ -> failwith "Configuration.getType: Undefined type"
-
+   ;;
 
    let rec checkNoteOn loc (inputs : Config.input list) =
       match inputs with
@@ -111,7 +107,7 @@ module Configuration = struct
       | _ ->
          let msg = "The function 'noteOn' must have three arguments (note, velocity, channel)" in
          Error.raiseError msg loc
-
+   ;;
 
    let rec checkNoteOff loc (inputs : Config.input list) =
       match inputs with
@@ -120,7 +116,7 @@ module Configuration = struct
       | _ ->
          let msg = "The function 'noteOff' must have two arguments (note, channel)" in
          Error.raiseError msg loc
-
+   ;;
 
    let rec checkControlChange loc (inputs : Config.input list) =
       match inputs with
@@ -129,7 +125,7 @@ module Configuration = struct
       | _ ->
          let msg = "The function 'checkControlChange' must have three arguments (control, value, channel)" in
          Error.raiseError msg loc
-
+   ;;
 
    let rec checkDefault loc (inputs : Config.input list) =
       match inputs with
@@ -138,7 +134,7 @@ module Configuration = struct
       | _ ->
          let msg = "The function 'default' must have no arguments" in
          Error.raiseError msg loc
-
+   ;;
 
    (** This traverser checks the function declarations of the key functions to generate templates *)
    let stmt : ('a Env.t, stmt) Mapper.mapper_func =
@@ -177,7 +173,7 @@ module Configuration = struct
          let state' = Env.set state ({ conf with update_inputs; update_outputs; update_found = true }, repl) in
          state', stmt
       | _ -> state, stmt
-
+   ;;
 
    let mapper = { Mapper.default_mapper with Mapper.stmt }
 
@@ -186,6 +182,7 @@ module Configuration = struct
       let env = Env.empty (empty_conf module_name, repl) in
       let env', _ = Mapper.map_stmt_list mapper env stmts in
       fst (Env.get env')
+   ;;
 end
 
 (** Gets the name of the main module, which is the last parsed file *)
@@ -195,7 +192,7 @@ let rec getMainModule (parser_results : parser_results list) : string =
    | [ h ] when h.file = "" -> "Vult"
    | [ h ] -> moduleName h.file
    | _ :: t -> getMainModule t
-
+;;
 
 let makeParams (args : args) (params : params) (used : used_function Maps.IdMap.t) =
    ProgToCode.
@@ -208,43 +205,47 @@ let makeParams (args : args) (params : params) (used : used_function Maps.IdMap.
       ; used
       ; output_prefix = args.output_prefix
       }
-
+;;
 
 (* Generates the C/C++ code if the flag was passed *)
-let generateC (args : args) (params : params) (used : used_function Maps.IdMap.t) (stmts : Prog.stmt list) :
-   (Pla.t * FileKind.t) list =
+let generateC (args : args) (params : params) (used : used_function Maps.IdMap.t) (stmts : Prog.stmt list)
+   : (Pla.t * FileKind.t) list
+   =
    let cparams = makeParams args params used in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeC.print params clike_stmts
-
+;;
 
 (* Generates the C/C++ code if the flag was passed *)
-let generateJava (args : args) (params : params) (used : used_function Maps.IdMap.t) (stmts : Prog.stmt list) :
-   (Pla.t * FileKind.t) list =
+let generateJava (args : args) (params : params) (used : used_function Maps.IdMap.t) (stmts : Prog.stmt list)
+   : (Pla.t * FileKind.t) list
+   =
    let cparams = makeParams args params used in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeJava.print params clike_stmts
-
+;;
 
 (* Generates the JS code if the flag was passed *)
-let generateJS (args : args) (params : params) (used : used_function Maps.IdMap.t) (stmts : Prog.stmt list) :
-   (Pla.t * FileKind.t) list =
+let generateJS (args : args) (params : params) (used : used_function Maps.IdMap.t) (stmts : Prog.stmt list)
+   : (Pla.t * FileKind.t) list
+   =
    let cparams = makeParams args params used in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeJs.print params clike_stmts
-
+;;
 
 (* Generates the JS code if the flag was passed *)
-let generateLua (args : args) (params : params) (used : used_function Maps.IdMap.t) (stmts : Prog.stmt list) :
-   (Pla.t * FileKind.t) list =
+let generateLua (args : args) (params : params) (used : used_function Maps.IdMap.t) (stmts : Prog.stmt list)
+   : (Pla.t * FileKind.t) list
+   =
    let cparams = makeParams args params used in
    (* Converts the statements to Code form *)
    let clike_stmts = ProgToCode.convert cparams stmts in
    CodeLua.print params clike_stmts
-
+;;
 
 let checksForVCVPrototype (config : config) (args : args) =
    let removeContext inputs =
@@ -252,55 +253,60 @@ let checksForVCVPrototype (config : config) (args : args) =
       | IContext :: t -> t
       | t -> t
    in
-   if args.code = LuaCode && args.template = "vcv-prototype" then
+   if args.code = LuaCode && args.template = "vcv-prototype"
+   then (
       let () =
-         if not config.process_found then
+         if not config.process_found
+         then (
             let msg = "The script requires the functions:\nfun process() { } \nand update() { }" in
-            Error.raiseErrorMsg msg
+            Error.raiseErrorMsg msg)
       in
       let () =
-         if List.length config.process_outputs > 6 then
+         if List.length config.process_outputs > 6
+         then (
             let msg = "The 'process' function can have at most 6 outputs" in
-            Error.raiseErrorMsg msg
+            Error.raiseErrorMsg msg)
       in
       let () =
          let inputs = removeContext config.process_inputs in
-         if List.length inputs > 6 then
+         if List.length inputs > 6
+         then (
             let msg = "The 'process' function can have at most 6 inputs" in
-            Error.raiseErrorMsg msg
+            Error.raiseErrorMsg msg)
       in
       let () =
-         if not config.update_found then
+         if not config.update_found
+         then (
             let msg = "The script requires the functions:\nfun process() { } \nand update() { }" in
-            Error.raiseErrorMsg msg
+            Error.raiseErrorMsg msg)
       in
       let () =
-         if List.length config.update_outputs > 0 then
+         if List.length config.update_outputs > 0
+         then (
             let msg = "The 'update' function should not return any value" in
-            Error.raiseErrorMsg msg
+            Error.raiseErrorMsg msg)
       in
       let () =
          let inputs = removeContext config.update_inputs in
-         if List.length inputs > 0 then
+         if List.length inputs > 0
+         then (
             let msg = "The 'update' function should not take any input" in
-            Error.raiseErrorMsg msg
+            Error.raiseErrorMsg msg)
       in
-      ()
-
+      ())
+;;
 
 let checkConfig (config : config) (args : args) =
    let () = checksForVCVPrototype config args in
-   if
-      (args.code = CCode && args.template <> "default")
-      || (args.code = LuaCode && args.template = "default")
-      || args.code = JSCode
+   if (args.code = CCode && args.template <> "default")
+   || (args.code = LuaCode && args.template = "default")
+   || args.code = JSCode
    then
-      if
-         config.process_found = false
-         || config.noteon_inputs = []
-         || config.noteoff_inputs = []
-         || config.controlchange_inputs = []
-      then
+      if config.process_found = false
+      || config.noteon_inputs = []
+      || config.noteoff_inputs = []
+      || config.controlchange_inputs = []
+      then (
          let msg =
             Pla.print
                [%pla
@@ -313,8 +319,8 @@ and noteOff(note:int, channel:int){ }
 and controlChange(control:int, value:int, channel:int){ }
 and default(){ }|}]
          in
-         Error.raiseErrorMsg msg
-
+         Error.raiseErrorMsg msg)
+;;
 
 let replacements args =
    match args.code with
@@ -323,7 +329,7 @@ let replacements args =
    | LuaCode -> "lua"
    | CCode -> args.real
    | _ -> "default"
-
+;;
 
 (** Returns the code generation parameters based on the vult code *)
 let createParameters (results : parser_results list) (args : args) : params =
@@ -347,10 +353,12 @@ let createParameters (results : parser_results list) (args : args) : params =
    ; config
    ; prefix = args.prefix
    }
-
+;;
 
 let generateCode (parser_results : parser_results list) (args : args) : (Pla.t * FileKind.t) list =
-   if args.code <> NoCode && parser_results <> [] then (* Checks the 'real' argument is valid *)
+   if args.code <> NoCode && parser_results <> []
+   then (
+      (* Checks the 'real' argument is valid *)
       let () = checkRealType args.real in
       (* Applies all passes to the statements *)
       let stmts, used = Passes.applyTransformations args parser_results in
@@ -364,6 +372,6 @@ let generateCode (parser_results : parser_results list) (args : args) : (Pla.t *
       | CCode -> generateC args params_c used all_stmts
       | JavaCode -> generateJava args params_c used all_stmts
       | JSCode -> generateJS args params_js used all_stmts
-      | LuaCode -> generateLua args params_lua used all_stmts
-   else
-      []
+      | LuaCode -> generateLua args params_lua used all_stmts)
+   else []
+;;

@@ -37,7 +37,7 @@ module Templates = struct
       | "none" -> None
       | "default" -> Default
       | t -> failwith (Printf.sprintf "The template '%s' is not available for this generator" t)
-
+   ;;
 
    let none code = code
 
@@ -46,12 +46,9 @@ module Templates = struct
       |> List.map (fun s ->
                   match s with
                   | IContext -> "ctx"
-                  | IReal name
-                  |IInt name
-                  |IBool name ->
-                     name )
+                  | IReal name | IInt name | IBool name -> name)
       |> Pla.map_sep Pla.comma Pla.string
-
+   ;;
 
    let env =
       [%pla
@@ -82,7 +79,7 @@ function makeArray(size, v) local a = {}; for i=1,size do a[i]=v end return a; e
 function makeComplexArray(size, f) local a = {}; for i=1,size do a[i]=f() end return a; end
 function wrap_array(a)      return a; end
 |}]
-
+   ;;
 
    let default (config : config) module_name code =
       let process_inputs = get_args config.process_inputs in
@@ -111,7 +108,7 @@ function this.default(ctx) return <#module_name#s>_default(ctx) end
 this.config = { inputs = <#nprocess_inputs#i>, outputs = <#nprocess_outputs#i>, noteon_inputs = <#nnoteon_inputs#i>, noteoff_inputs = <#nnoteoff_inputs#i>, controlchange_inputs = <#ncontrolchange_inputs#i>, is_active = <#pass_data#> }
 return this
 |}]
-
+   ;;
 
    let vcv (config : config) module_name code =
       let init_processor =
@@ -128,7 +125,7 @@ return this
                :: List.mapi
                   (fun i _ ->
                       let i = i + 1 in
-                      [%pla {|(block.inputs[<#i#i>][i] / 10.0)|}] )
+                      [%pla {|(block.inputs[<#i#i>][i] / 10.0)|}])
                   args
             in
             Pla.join_sep Pla.comma args
@@ -137,12 +134,11 @@ return this
                List.mapi
                   (fun i _ ->
                       let i = i + 1 in
-                      [%pla {|(block.inputs[<#i#i>][i] / 10.0)|}] )
+                      [%pla {|(block.inputs[<#i#i>][i] / 10.0)|}])
                   inputs
             in
             Pla.join_sep Pla.comma args
       in
-
       let bindOutputs outputs =
          match outputs with
          | [] -> Pla.unit, Pla.unit
@@ -152,7 +148,7 @@ return this
                List.mapi
                   (fun i _ ->
                       let li = i + 1 in
-                      [%pla {|      block.outputs[<#li#i>][i] = 10.0 * processor.process_ret_<#i#i>|}] )
+                      [%pla {|      block.outputs[<#li#i>][i] = 10.0 * processor.process_ret_<#i#i>|}])
                   outputs
             in
             Pla.unit, Pla.join_sep_all Pla.newline bindings
@@ -160,7 +156,6 @@ return this
       let process_inputs = readInputs config.process_inputs in
       let process_lhs, bindings = bindOutputs config.process_outputs in
       let update_inputs = readInputs config.update_inputs in
-
       [%pla
          {|
 local global_block = {}
@@ -233,7 +228,7 @@ function process(block)
 end
 
 |}]
-
+   ;;
 
    let simple (_ : config) _ code = [%pla {|
 <#env#>
@@ -247,40 +242,37 @@ end
       | "vcv-prototype" -> [ vcv params.config module_name code, FileKind.ExtOnly "lua" ]
       | "simple" -> [ simple params.config module_name code, FileKind.ExtOnly "lua" ]
       | _ -> [ none code, FileKind.ExtOnly "lua" ]
+   ;;
 end
 
 let isSpecial (params : params) (name : string) : bool =
-   if params.template = "default" then
+   if params.template = "default"
+   then (
       match name with
       | _ when name = params.module_name ^ "_process" -> true
       | _ when name = params.module_name ^ "_noteOn" -> true
       | _ when name = params.module_name ^ "_noteOff" -> true
       | _ when name = params.module_name ^ "_controlChange" -> true
       | _ when name = params.module_name ^ "_default" -> true
-      | _ -> false
-   else
-      false
-
+      | _ -> false)
+   else false
+;;
 
 let fixContext (is_special : bool) args =
-   if is_special then
+   if is_special
+   then (
       match args with
       | [] -> [ Ref (CTSimple "any"), "_ctx" ]
       | (_, "_ctx") :: _ -> args
-      | t -> (Ref (CTSimple "any"), "_ctx") :: t
-   else
-      args
-
+      | t -> (Ref (CTSimple "any"), "_ctx") :: t)
+   else args
+;;
 
 let isSimpleExp e =
    match e with
-   | CEInt _
-   |CEFloat _
-   |CEBool _
-   |CEString _ ->
-      true
+   | CEInt _ | CEFloat _ | CEBool _ | CEString _ -> true
    | _ -> false
-
+;;
 
 let rec printExp (params : params) (e : cexp) : Pla.t =
    match e with
@@ -332,23 +324,19 @@ let rec printExp (params : params) (e : cexp) : Pla.t =
       let e = printExp params e in
       [%pla {|(<#e#>).<#n#s>|}]
 
-
 and printJsField (params : params) (name, value) : Pla.t =
    let value_t = printExp params value in
    [%pla {|<#name#s> = <#value_t#>|}]
-
+;;
 
 let printLhsExpTuple (var : Pla.t) (is_var : bool) (i : int) (e : clhsexp) : Pla.t =
    match e with
    | CLId (_, name) ->
       let name = dot name in
-      if is_var then
-         [%pla {|local <#name#> = <#var#>.field_<#i#i>;|}]
-      else
-         [%pla {|<#name#> = <#var#>.field_<#i#i>;|}]
+      if is_var then [%pla {|local <#name#> = <#var#>.field_<#i#i>;|}] else [%pla {|<#name#> = <#var#>.field_<#i#i>;|}]
    | CLWild -> Pla.unit
    | _ -> failwith "printLhsExp: All other cases should be already covered"
-
+;;
 
 let rec getInitValue (descr : type_descr) : Pla.t =
    match descr with
@@ -359,13 +347,13 @@ let rec getInitValue (descr : type_descr) : Pla.t =
    | CTSimple "unit" -> Pla.string "0"
    | CTArray (typ, size) ->
       let init = getInitValue typ in
-      if size < 256 then
+      if size < 256
+      then (
          let elems = CCList.init size (fun _ -> init) |> Pla.join_sep Pla.comma in
-         [%pla {|{<#elems#>}|}]
-      else
-         [%pla {|makeArray(<#size#i>,<#init#>)|}]
+         [%pla {|{<#elems#>}|}])
+      else [%pla {|makeArray(<#size#i>,<#init#>)|}]
    | _ -> Pla.string "{}"
-
+;;
 
 let rec printSwitchStmt params e cases def =
    let e_t = printExp params e in
@@ -375,19 +363,18 @@ let rec printSwitchStmt params e cases def =
          (fun (v, stmt) ->
              let v_t = printExp params v in
              let stmt_t = CCOpt.get_or ~default:Pla.unit (printStmt params stmt) in
-             [%pla {|case <#v_t#>:<#stmt_t#+>break;|}] )
+             [%pla {|case <#v_t#>:<#stmt_t#+>break;|}])
          cases
    in
    let def_t =
       match def with
       | None -> Pla.unit
       | Some s ->
-         match printStmt params s with
-         | None -> Pla.unit
-         | Some s -> [%pla {|default <#s#+>|}]
+         (match printStmt params s with
+          | None -> Pla.unit
+          | Some s -> [%pla {|default <#s#+>|}])
    in
    Some [%pla {|switch(<#e_t#> {<#cases_t#> <#def_t#>})|}]
-
 
 and printStmt (params : params) (stmt : cstmt) : Pla.t option =
    match stmt with
@@ -470,16 +457,15 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
    | CSAlias _ -> None
    | CSExtFunc _ -> None
 
-
 and printStmtList (params : params) (stmts : cstmt list) : Pla.t =
    let tstmts = CCList.filter_map (printStmt params) stmts in
    Pla.map_sep_all Pla.newline (fun a -> a) tstmts
-
+;;
 
 let printLuaCode (params : params) (stmts : cstmt list) : (Pla.t * FileKind.t) list =
    let code = printStmtList params stmts in
    Templates.apply params params.module_name params.template code
-
+;;
 
 (** Generates the .c and .h file contents for the given parsed files *)
 let print (params : params) (stmts : Code.cstmt list) : (Pla.t * FileKind.t) list = printLuaCode params stmts

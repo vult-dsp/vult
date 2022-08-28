@@ -33,7 +33,7 @@ module GetIdentifiers = struct
       match exp with
       | LId (id, _, _) -> Env.set state (IdSet.add id (Env.get state)), exp
       | _ -> state, exp
-
+   ;;
 
    let exp : ('a Env.t, exp) Mapper.mapper_func =
       Mapper.make "GetIdentifiers.exp"
@@ -41,30 +41,30 @@ module GetIdentifiers = struct
       match exp with
       | PId (id, _) -> Env.set state (IdSet.add id (Env.get state)), exp
       | _ -> state, exp
-
+   ;;
 
    let mapper = { Mapper.default_mapper with Mapper.exp; Mapper.lhs_exp }
-
    let dummy_env = Env.empty IdSet.empty
 
    let fromExp (exp : exp) : IdSet.t =
       let s, _ = Mapper.map_exp mapper dummy_env exp in
       Env.get s
-
+   ;;
 
    let fromExpList (exp : exp list) : IdSet.t =
       let s, _ = Mapper.map_exp_list mapper dummy_env exp in
       Env.get s
-
+   ;;
 
    let fromLhsExp (exp : lhs_exp) : IdSet.t =
       let s, _ = Mapper.map_lhs_exp mapper dummy_env exp in
       Env.get s
-
+   ;;
 
    let fromLhsExpList (exp : lhs_exp list) : IdSet.t =
       let s, _ = Mapper.map_lhs_exp_list mapper dummy_env exp in
       Env.get s
+   ;;
 end
 
 module GetLocation = struct
@@ -73,7 +73,7 @@ module GetLocation = struct
       @@ fun state attr ->
       let s = Env.get state in
       Env.set state (Loc.merge s attr.loc), attr
-
+   ;;
 
    let mapper = { Mapper.default_mapper with Mapper.attr }
 
@@ -81,19 +81,19 @@ module GetLocation = struct
       let dummy_env = Env.empty Loc.default in
       let s, _ = Mapper.map_exp mapper dummy_env e in
       Env.get s
-
+   ;;
 
    let fromStmt (stmt : stmt) : Loc.t =
       let dummy_env = Env.empty Loc.default in
       let s, _ = Mapper.map_stmt mapper dummy_env stmt in
       Env.get s
-
+   ;;
 
    let fromLhsExp (e : lhs_exp) : Loc.t =
       let dummy_env = Env.empty Loc.default in
       let s, _ = Mapper.map_lhs_exp mapper dummy_env e in
       Env.get s
-
+   ;;
 
    let fromType (e : Typ.t) : Loc.t = Typ.location e
 end
@@ -102,34 +102,29 @@ module GetAttr = struct
    let fromExp (e : exp) : attr =
       match e with
       | PUnit attr
-      |PBool (_, attr)
-      |PInt (_, attr)
-      |PReal (_, _, attr)
-      |PString (_, attr)
-      |PId (_, attr)
-      |PIndex (_, _, attr)
-      |PArray (_, attr)
-      |PUnOp (_, _, attr)
-      |POp (_, _, attr)
-      |PCall (_, _, _, attr)
-      |PIf (_, _, _, attr)
-      |PGroup (_, attr)
-      |PTuple (_, attr)
-      |PSeq (_, _, attr)
-      |PAccess (_, _, attr) ->
-         attr
+      | PBool (_, attr)
+      | PInt (_, attr)
+      | PReal (_, _, attr)
+      | PString (_, attr)
+      | PId (_, attr)
+      | PIndex (_, _, attr)
+      | PArray (_, attr)
+      | PUnOp (_, _, attr)
+      | POp (_, _, attr)
+      | PCall (_, _, _, attr)
+      | PIf (_, _, _, attr)
+      | PGroup (_, attr)
+      | PTuple (_, attr)
+      | PSeq (_, _, attr)
+      | PAccess (_, _, attr) -> attr
       | PEmpty -> emptyAttr
-
+   ;;
 
    let fromLhsExp (e : lhs_exp) : attr =
       match e with
-      | LWild attr
-      |LId (_, _, attr)
-      |LTuple (_, attr)
-      |LTyped (_, _, attr)
-      |LGroup (_, attr) ->
-         attr
+      | LWild attr | LId (_, _, attr) | LTuple (_, attr) | LTyped (_, _, attr) | LGroup (_, attr) -> attr
       | LIndex (_, _, _, attr) -> attr
+   ;;
 end
 
 module GetDependencies = struct
@@ -140,11 +135,12 @@ module GetDependencies = struct
       | PId ([ id; _ ], _) -> Env.set state (IdSet.add [ id ] (Env.get state)), exp
       | PCall (_, [ id; _ ], _, _) -> Env.set state (IdSet.add [ id ] (Env.get state)), exp
       | _ -> state, exp
-
+   ;;
 
    let mapper = Mapper.{ default_mapper with exp }
 
    let fromStmts (stmts : stmt list) : IdSet.t =
       let s, _ = Mapper.map_stmt_list mapper (Env.empty IdSet.empty) stmts in
       Env.get s
+   ;;
 end

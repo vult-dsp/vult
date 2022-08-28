@@ -38,7 +38,7 @@ let tables (params : params) (code : Pla.t) : Pla.t =
 
 #endif // <#file#s>_TABLES_H
 |}]
-
+;;
 
 (** Header function *)
 let header (params : params) (code : Pla.t) : Pla.t =
@@ -74,13 +74,13 @@ EXPORT void ext_main(void *r);
 
 #endif // <#file#s>_H
 |}]
-
+;;
 
 let rec removeContext inputs =
    match inputs with
    | IContext :: t -> removeContext t
    | _ -> inputs
-
+;;
 
 (** Add extra inlets if the object requires more than one *)
 let addInlets (config : config) =
@@ -101,14 +101,14 @@ let addInlets (config : config) =
    in
    let init = [%pla {|dsp_setup((t_pxobject *)x, <#n#i>);|}] in
    init, inlet_data, connected_inlets
-
+;;
 
 (** Generates code to handle the float message in an inlet *)
 let inletFloatMsg (config : config) =
    List.mapi (fun i _ -> [%pla {|if(in == <#i#i>) x->in<#i#i>_value = f;|}]) (removeContext config.process_inputs)
    |> Pla.join_sep Pla.newline
    |> Pla.indent
-
+;;
 
 let defaultInputs (config : config) =
    List.mapi
@@ -116,7 +116,7 @@ let defaultInputs (config : config) =
       (removeContext config.process_inputs)
    |> Pla.join_sep Pla.newline
    |> Pla.indent
-
+;;
 
 (** Add the outlets *)
 let addOutlets (config : config) =
@@ -124,7 +124,7 @@ let addOutlets (config : config) =
    |> List.map (fun _ -> Pla.string "outlet_new((t_object *)x, \"signal\");")
    |> Pla.join_sep Pla.newline
    |> Pla.indent
-
+;;
 
 let castType (cast : string) (value : Pla.t) : Pla.t =
    match cast with
@@ -132,25 +132,25 @@ let castType (cast : string) (value : Pla.t) : Pla.t =
    | "int" -> [%pla {|(int) <#value#>|}]
    | "bool" -> [%pla {|(bool) <#value#>|}]
    | _ -> [%pla {|<#cast#s>(<#value#>)|}]
-
+;;
 
 let castInput (params : params) (typ : input) (value : Pla.t) : Pla.t =
    let current_typ = Replacements.getType params.repl (Config.inputTypeString typ) in
    let cast = Replacements.getCast params.repl "float" current_typ in
    castType cast value
-
+;;
 
 let castOutput (params : params) (typ : output) (value : Pla.t) : Pla.t =
    let current_typ = Replacements.getType params.repl (Config.outputTypeString typ) in
    let cast = Replacements.getCast params.repl current_typ "float" in
    castType cast value
-
+;;
 
 let inputName params (i, acc) s =
    match s with
    | IContext -> i, Pla.string "x->data" :: acc
    | _ -> i + 1, castInput params s [%pla {|in_<#i#i>_value|}] :: acc
-
+;;
 
 let tildePerformFunctionCall module_name (params : params) (config : config) =
    (* generates the aguments for the process call *)
@@ -172,14 +172,14 @@ let tildePerformFunctionCall module_name (params : params) (config : config) =
             List.mapi
                (fun i o ->
                    let value = castOutput params o [%pla {|<#module_name#s>_process_ret_<#i#i>(x->data)|}] in
-                   [%pla {|*(out_<#i#i>++) = <#value#>; |}] )
+                   [%pla {|*(out_<#i#i>++) = <#value#>; |}])
                o
             |> Pla.join_sep_all Pla.newline
          in
          Pla.unit, copy
    in
    [%pla {|<#ret#> <#module_name#s>_process(<#args#>);<#><#copy#>|}]
-
+;;
 
 (** Generates the buffer access of _tilde_perform function *)
 let tildePerformFunctionVector (config : config) : Pla.t =
@@ -189,25 +189,22 @@ let tildePerformFunctionVector (config : config) : Pla.t =
    let outputs = List.mapi (fun i _ -> [%pla {|double *out_<#i#i> = outs[<#i#i>];|}]) config.process_outputs in
    let decl = inputs @ outputs |> Pla.join_sep Pla.newline |> Pla.indent in
    decl
-
+;;
 
 let getInitDefaultCalls module_name params =
-   if List.exists (fun a -> a = IContext) params.config.process_inputs then
+   if List.exists (fun a -> a = IContext) params.config.process_inputs
+   then
       ( [%pla {|<#module_name#s>_process_type|}]
       , [%pla {|<#module_name#s>_process_init(x->data);|}]
       , [%pla {|<#module_name#s>_default(x->data);|}] )
-   else
-      Pla.string "float", Pla.unit, Pla.unit
-
+   else Pla.string "float", Pla.unit, Pla.unit
+;;
 
 let functionInput i =
    match i with
    | IContext -> Pla.string "x->data"
-   | IReal name
-   |IInt name
-   |IBool name ->
-      [%pla {|(int)<#name#s>|}]
-
+   | IReal name | IInt name | IBool name -> [%pla {|(int)<#name#s>|}]
+;;
 
 let noteFunctions (params : params) =
    let output = params.output in
@@ -228,7 +225,7 @@ void <#output#s>_noteOff(t_<#output#s>_tilde *x, double note, double channel) {
 }
 |}]
    )
-
+;;
 
 let controlChangeFunction (params : params) =
    let output = params.output in
@@ -240,7 +237,7 @@ void <#output#s>_controlChange(t_<#output#s>_tilde *x, double control, double va
    <#module_name#s>_controlChange(<#ctrl_args#>);
 }
 |}]
-
+;;
 
 (** Implementation function *)
 let implementation (params : params) (code : Pla.t) : Pla.t =
@@ -250,10 +247,8 @@ let implementation (params : params) (code : Pla.t) : Pla.t =
    let inlets, inlet_data, connected_inlets = addInlets params.config in
    (* Generates the outlets*)
    let outlets = addOutlets params.config in
-
    let inlet_float_msg = inletFloatMsg params.config in
    let default_inputs = defaultInputs params.config in
-
    let io_decl = tildePerformFunctionVector params.config in
    let process_call = tildePerformFunctionCall module_name params params.config in
    let main_type, init_call, default_call = getInitDefaultCalls module_name params in
@@ -339,10 +334,11 @@ void ext_main(void *r) {
 
 } // extern "C"
 |}]
-
+;;
 
 let get (params : params) (header_code : Pla.t) (impl_code : Pla.t) (tables_code : Pla.t) : (Pla.t * FileKind.t) list =
    [ header params header_code, FileKind.ExtOnly "h"
    ; tables params tables_code, FileKind.ExtOnly "tables.h"
    ; implementation params impl_code, FileKind.ExtOnly "cpp"
    ]
+;;

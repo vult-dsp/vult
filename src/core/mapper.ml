@@ -28,7 +28,6 @@ open Env
 let log = false
 
 type ('data, 'kind) mapper_func = (string * ('data -> 'kind -> 'data * 'kind)) option
-
 type ('data, 'kind) expand_func = (string * ('data -> 'kind -> 'data * 'kind list)) option
 
 let apply (mapper : ('data, 'kind) mapper_func) (data : 'data) (kind : 'kind) : 'data * 'kind =
@@ -36,27 +35,27 @@ let apply (mapper : ('data, 'kind) mapper_func) (data : 'data) (kind : 'kind) : 
    | Some ("", f) -> f data kind
    | Some (name, f) ->
       let d, k = f data kind in
-      begin
-         if log && not (kind == k) then
-            let () = Printf.printf "- %s applied\n" name in
-            flush stdout
-      end ;
+      if log && not (kind == k)
+      then (
+         let () = Printf.printf "- %s applied\n" name in
+         flush stdout);
       d, k
    | None -> data, kind
-
+;;
 
 let applyExpander (mapper : ('data, 'kind) expand_func) (data : 'data) (kind : 'kind) : 'data * 'kind list =
    match mapper with
    | Some ("", f) -> f data kind
    | Some (name, f) ->
       let d, k = f data kind in
-      ( if log then
-           match k with
-           | [ k' ] when k' == kind -> ()
-           | _ -> Printf.printf "- %s applied\n" name ) ;
+      if log
+      then (
+         match k with
+         | [ k' ] when k' == kind -> ()
+         | _ -> Printf.printf "- %s applied\n" name);
       d, k
    | None -> data, [ kind ]
-
+;;
 
 let applyExpanderList (mapper : ('data, 'kind) expand_func) (data : 'data) (kind_list : 'kind list) : 'data * 'kind list
    =
@@ -69,18 +68,18 @@ let applyExpanderList (mapper : ('data, 'kind) expand_func) (data : 'data) (kind
                 | [ StmtBlock (None, kl', _) ] -> kl'
                 | _ -> kl
              in
-             s', kl' :: acc )
+             s', kl' :: acc)
          (data, [])
          kind_list
    in
    state', rev_exp_list |> List.rev |> List.flatten
-
+;;
 
 let make (name : string) (mapper : 'data -> 'kind -> 'data * 'kind) : ('data, 'kind) mapper_func = Some (name, mapper)
 
 let makeExpander (name : string) (mapper : 'data -> 'kind -> 'data * 'kind list) : ('data, 'kind) expand_func =
    Some (name, mapper)
-
+;;
 
 (** Makes a chain of mappers. E.g. foo |-> bar will apply first foo then bar. *)
 let ( |-> ) : ('data, 'value) mapper_func -> ('data, 'value) mapper_func -> ('data, 'value) mapper_func =
@@ -90,7 +89,7 @@ let ( |-> ) : ('data, 'value) mapper_func -> ('data, 'value) mapper_func -> ('da
       apply mapper2 state' exp'
    in
    Some ("", mapper3)
-
+;;
 
 let ( |*> ) : ('data, 'value) expand_func -> ('data, 'value) expand_func -> ('data, 'value) expand_func =
    fun mapper1 mapper2 ->
@@ -100,7 +99,7 @@ let ( |*> ) : ('data, 'value) expand_func -> ('data, 'value) expand_func -> ('da
       state', exp_list'
    in
    Some ("", mapper3)
-
+;;
 
 type 'a mapper =
    { vtype_c : ('a, Typ.vtype) mapper_func
@@ -125,27 +124,13 @@ let default_mapper =
    ; id = None
    ; stmt_x = None
    }
-
+;;
 
 (** Merge two mapper functions. This is a little bit weird but it will be
     improved when mapper functions are optional. *)
-let seqMapperFunc a b =
-   if a = None then
-      b
-   else if b = None then
-      a
-   else
-      a |-> b
+let seqMapperFunc a b = if a = None then b else if b = None then a else a |-> b
 
-
-let seqExpandFunc a b =
-   if a = None then
-      b
-   else if b = None then
-      a
-   else
-      a |*> b
-
+let seqExpandFunc a b = if a = None then b else if b = None then a else a |*> b
 
 (** Merges two mappers *)
 let seq (b : 'a mapper) (a : 'a mapper) : 'a mapper =
@@ -159,7 +144,7 @@ let seq (b : 'a mapper) (a : 'a mapper) : 'a mapper =
    ; id = seqMapperFunc a.id b.id
    ; stmt_x = seqExpandFunc a.stmt_x b.stmt_x
    }
-
+;;
 
 (** Applies any mapper to a list *)
 let mapper_list mapper_app mapper state el =
@@ -167,12 +152,12 @@ let mapper_list mapper_app mapper state el =
       List.fold_left
          (fun (s, acc) e ->
              let s', e' = mapper_app mapper s e in
-             s', e' :: acc )
+             s', e' :: acc)
          (state, [])
          el
    in
    state', List.rev rev_el
-
+;;
 
 (** Applies any mapper to an array *)
 let mapper_array mapper_app mapper state el =
@@ -181,13 +166,13 @@ let mapper_array mapper_app mapper state el =
       Array.fold_left
          (fun (s, i) e ->
              let s', e' = mapper_app mapper s e in
-             ret.(i) <- e' ;
-             s', i + 1 )
+             ret.(i) <- e';
+             s', i + 1)
          (state, 0)
          el
    in
    state', ret
-
+;;
 
 (** Applies any mapper to an option value *)
 let mapper_opt mapper_app mapper state e_opt =
@@ -196,7 +181,7 @@ let mapper_opt mapper_app mapper state e_opt =
    | Some e ->
       let state', e' = mapper_app mapper state e in
       state', Some e'
-
+;;
 
 let map_id (mapper : 'a mapper) (state : 'a) (id : Id.t) : 'a * Id.t = apply mapper.id state id
 
@@ -204,13 +189,10 @@ let rec map_attr (mapper : 'a mapper) (state : 'a) (attr : attr) : 'a * attr =
    let state', tp' = (mapper_opt map_vtype) mapper state attr.typ in
    apply mapper.attr state' { attr with typ = tp' }
 
-
 and map_vtype_c (mapper : 'a mapper) (state : 'a) (te : Typ.vtype) : 'a * Typ.vtype =
    let map_vtype_list = mapper_list map_vtype in
    match te with
-   | Typ.TInt (_, _)
-   |Typ.TUnbound (_, _, _) ->
-      state, te
+   | Typ.TInt (_, _) | Typ.TUnbound (_, _, _) -> state, te
    | Typ.TId (id, loc) ->
       let state', id' = map_id mapper state id in
       apply mapper.vtype_c state' (Typ.TId (id', loc))
@@ -229,16 +211,15 @@ and map_vtype_c (mapper : 'a mapper) (state : 'a) (te : Typ.vtype) : 'a * Typ.vt
       let state', elems' = mapper_list map_vtype mapper state elems in
       apply mapper.vtype_c state' (Typ.TExpAlt elems')
 
-
 and map_vtype (mapper : 'a mapper) (state : 'a) (te : Typ.t) : 'a * Typ.t =
    let state', tp = map_vtype_c mapper state !te in
-   te := tp ;
+   te := tp;
    state', te
-
+;;
 
 let map_type_list (mapper : 'a mapper) (state : 'a) (te : Typ.t list) : 'a * Typ.t list =
    mapper_list map_vtype mapper state te
-
+;;
 
 let rec map_typed_id (mapper : 'a mapper) (state : 'a) (t : typed_id) : 'a * typed_id =
    match t with
@@ -251,7 +232,7 @@ let rec map_typed_id (mapper : 'a mapper) (state : 'a) (t : typed_id) : 'a * typ
       let state', tp' = map_type_list mapper state' tp in
       let state', attr' = map_attr mapper state' attr in
       apply mapper.typed_id state' (TypedId (id', tp', kind, attr'))
-
+;;
 
 let map_instance (mapper : 'state mapper) (state : 'state) (inst : instance) : 'state * instance =
    match inst with
@@ -260,7 +241,7 @@ let map_instance (mapper : 'state mapper) (state : 'state) (inst : instance) : '
    | Named id ->
       let state, id = map_id mapper state id in
       state, Named id
-
+;;
 
 let rec map_lhs_exp (mapper : 'state mapper) (state : 'state) (exp : lhs_exp) : 'state * lhs_exp =
    let map_lhs_exp_list = mapper_list map_lhs_exp in
@@ -293,7 +274,6 @@ let rec map_lhs_exp (mapper : 'state mapper) (state : 'state) (exp : lhs_exp) : 
       let state', attr' = map_attr mapper state' attr in
       apply mapper.lhs_exp state' (LIndex (id', tp', index', attr'))
 
-
 and map_lhs_exp_list mapper state exp = (mapper_list map_lhs_exp) mapper state exp
 
 and map_val_decl (mapper : 'state mapper) (state : 'state) (v : val_decl) : 'state * val_decl =
@@ -302,7 +282,6 @@ and map_val_decl (mapper : 'state mapper) (state : 'state) (v : val_decl) : 'sta
    let state', tp' = map_vtype mapper state' tp in
    let state', attr' = map_attr mapper state' attr in
    state', (id', tp', attr')
-
 
 (** Traverses the expression in a bottom-up fashion *)
 and map_exp (mapper : 'state mapper) (state : 'state) (exp : exp) : 'state * exp =
@@ -374,9 +353,7 @@ and map_exp (mapper : 'state mapper) (state : 'state) (exp : exp) : 'state * exp
       let state', attr' = map_attr mapper state' attr in
       apply mapper.exp state' (PSeq (id', stmt', attr'))
 
-
 and map_exp_list mapper state exp = (mapper_list map_exp) mapper state exp
-
 and map_exp_array mapper state exp = (mapper_array map_exp) mapper state exp
 
 and map_stmt (mapper : 'state mapper) (state : 'state) (stmt : stmt) : 'state * stmt =
@@ -447,9 +424,7 @@ and map_stmt (mapper : 'state mapper) (state : 'state) (stmt : stmt) : 'state * 
       let state', args' = (mapper_list map_typed_id) mapper state' args in
       let state', ret' = (mapper_opt map_vtype) mapper state' ret in
       let state', attr' = map_attr mapper state' attr in
-      let state', stmt' =
-         apply mapper.stmt state' (StmtFun (name', args', body, ret', attr')) |> map_stmt_subs mapper
-      in
+      let state', stmt' = apply mapper.stmt state' (StmtFun (name', args', body, ret', attr')) |> map_stmt_subs mapper in
       let state' = Env.exit state' in
       (state', stmt') |> map_stmt_x mapper
    | StmtExternal (name, args, ret, linkname, attr) ->
@@ -468,12 +443,10 @@ and map_stmt (mapper : 'state mapper) (state : 'state) (stmt : stmt) : 'state * 
       let state', attr' = map_attr mapper state' attr in
       apply mapper.stmt state' (StmtBlock (name', stmts, attr')) |> map_stmt_subs mapper |> map_stmt_x mapper
 
-
 and map_stmt_list mapper state stmts =
    let state', stmts' = (mapper_list map_stmt) mapper state stmts in
    let state', stmts' = applyExpanderList mapper.stmt_x state' stmts' in
    state', stmts'
-
 
 and map_stmt_x mapper (state, stmt) =
    let state', stmts' = applyExpander mapper.stmt_x state stmt in
@@ -482,19 +455,17 @@ and map_stmt_x mapper (state, stmt) =
    | [ stmt' ] -> state', stmt'
    | _ -> state', StmtBlock (None, stmts', emptyAttr)
 
-
 and map_stmt_subs (mapper : 'state mapper) ((state, stmt) : 'state * stmt) : 'state * stmt =
    match stmt with
    | StmtVal _
-   |StmtConst _
-   |StmtMem _
-   |StmtReturn _
-   |StmtBind _
-   |StmtType _
-   |StmtAliasType _
-   |StmtExternal _
-   |StmtEmpty ->
-      state, stmt
+   | StmtConst _
+   | StmtMem _
+   | StmtReturn _
+   | StmtBind _
+   | StmtType _
+   | StmtAliasType _
+   | StmtExternal _
+   | StmtEmpty -> state, stmt
    | StmtWhile (cond, stmts, attr) ->
       let state', stmts' = map_stmt mapper state stmts in
       state', StmtWhile (cond, stmts', attr)
@@ -511,9 +482,10 @@ and map_stmt_subs (mapper : 'state mapper) ((state, stmt) : 'state * stmt) : 'st
    | StmtBlock (name, stmts, attr) ->
       let state', stmts' = map_stmt_list mapper state stmts in
       state', StmtBlock (name, stmts', attr)
-
+;;
 
 (** Applies a mapper to an expression that can collect statements *)
 let map_exp_to_stmt (mapper : 'state mapper) (state : 'a Env.t) (exp : exp) : 'a Env.t * exp =
    let state', exp' = map_exp mapper state exp in
    state', exp'
+;;

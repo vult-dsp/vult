@@ -37,7 +37,7 @@ let rec has (tags : tag list) (id : Id.t) =
    | TId (name, _) :: _ when id = name -> true
    | TFun (name, _, _) :: _ when id = name -> true
    | _ :: t -> has t id
-
+;;
 
 let is_empty (tags : tag list) = tags = []
 
@@ -49,7 +49,7 @@ let getLocation (attr : tag) : Loc.t =
    | TReal (_, loc) -> loc
    | TFun (_, _, loc) -> loc
    | TString (_, loc) -> loc
-
+;;
 
 let getType (attr : tag) : string =
    match attr with
@@ -59,7 +59,7 @@ let getType (attr : tag) : string =
    | TReal (_, _) -> "real"
    | TFun (_, _, _) -> "tag"
    | TString (_, _) -> "string"
-
+;;
 
 let getTypeLiteral (t : t) : string =
    match t with
@@ -68,14 +68,14 @@ let getTypeLiteral (t : t) : string =
    | Real -> "real"
    | Id -> "identifier"
    | String -> "string"
-
+;;
 
 let rec getParam (remaining : (Id.t * tag) list) (args : (Id.t * tag) list) (id : string) =
    match args with
    | [] -> remaining, None
    | (name, value) :: t when name = [ id ] -> remaining @ t, Some value
    | h :: t -> getParam (h :: remaining) t id
-
+;;
 
 let getTypedParam (args : (Id.t * tag) list) (id, typ) =
    let lattr loc = { emptyAttr with loc } in
@@ -98,7 +98,7 @@ let getTypedParam (args : (Id.t * tag) list) (id, typ) =
       in
       Error.raiseError msg loc
    | r, None -> r, None
-
+;;
 
 let getParameterList (args : (Id.t * tag) list) (params : (string * t) list) : (Id.t * tag) list * exp option list =
    let rec loop remaning found params =
@@ -109,7 +109,7 @@ let getParameterList (args : (Id.t * tag) list) (params : (string * t) list) : (
          loop remaining (value :: found) t
    in
    loop args [] params
-
+;;
 
 let getTableIndividualParams (loc : Loc.t) params args =
    let remaining, found = getParameterList args params in
@@ -119,17 +119,18 @@ let getTableIndividualParams (loc : Loc.t) params args =
       let msg = "The following arguments are unknown for the current tag: " ^ params_s in
       Error.raiseError msg loc
    | [] -> found
-
+;;
 
 let rec getTableParams (fname : string) (params : (string * t) list) (msg : string) (attr : tag list) =
    match attr with
    | [] -> None
    | TFun (name, args, loc) :: _ when name = [ fname ] -> Some (loc, getTableIndividualParams loc params args)
    | _ :: t -> getTableParams fname params msg t
-
+;;
 
 let rec removeAttrFunc (fname : string) (attr : tag list) : tag list =
    match attr with
    | [] -> []
    | TFun (name, _, _) :: t when name = [ fname ] -> removeAttrFunc fname t
    | h :: t -> h :: removeAttrFunc fname t
+;;

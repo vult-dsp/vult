@@ -67,30 +67,28 @@
 
 let toFloat (n : float) : string =
    match classify_float n with
-   | FP_normal ->
-      if abs_float n < 1e-45 then
-         "0.0f"
-      else
-         Float.to_string n ^ "f"
+   | FP_normal -> if abs_float n < 1e-45 then "0.0f" else Float.to_string n ^ "f"
    | FP_subnormal -> "0.0f"
    | FP_zero -> "0.0f"
    | _ -> Float.to_string n
-
+;;
 
 let toFixed (n : float) : string =
    let () =
-      if n > 32767.0 || n < -32768.0 then
+      if n > 32767.0 || n < -32768.0
+      then (
          let msg = Printf.sprintf "This value '%f' cannot be represented with fixed-point numbers" n in
          (*Error.raiseError msg (attr.loc)*)
-         print_endline msg
+         print_endline msg)
    in
-   if n < 0.0 then
+   if n < 0.0
+   then (
       let value = Int32.of_float (-.n *. float_of_int 0x10000) in
-      Printf.sprintf "-0x%lx /* %f */" value n
-   else
+      Printf.sprintf "-0x%lx /* %f */" value n)
+   else (
       let value = Int32.of_float (n *. float_of_int 0x10000) in
-      Printf.sprintf "0x%lx /* %f */" value n
-
+      Printf.sprintf "0x%lx /* %f */" value n)
+;;
 
 (* This module contains the default replacements that turn the 'real' type into 'float' *)
 module Default = struct
@@ -99,7 +97,7 @@ module Default = struct
    let types =
       Replacements.makeTypes
          [ "real", "float"; "unit", "void"; "bool", "uint8_t"; "int", "int"; "abstract", "void*"; "fix16", "fix16_t" ]
-
+   ;;
 
    let cast =
       Replacements.makeCasts
@@ -110,16 +108,16 @@ module Default = struct
          ; ("int", "fix16_t"), "int_to_fix"
          ; ("float", "fix16_t"), "float_to_fix"
          ]
-
+   ;;
 
    let op_to_fun =
       Replacements.makeOperators [ ("%", "float"), "fmodf"; ("*", "fix16_t"), "fix_mul"; ("/", "fix16_t"), "fix_div" ]
-
+   ;;
 
    let op_to_op =
       Replacements.makeOperators
          [ ("<>", "fix16_t"), "!="; ("<>", "float"), "!="; ("<>", "int"), "!="; ("<>", "uint8_t"), "!=" ]
-
+   ;;
 
    let fun_to_fun =
       Replacements.makeFunctions
@@ -176,7 +174,7 @@ module Default = struct
          ; ("samplerate", "fix16_t"), "fix_samplerate"
          ; ("wrap_array", "fix16_t"), "fix_wrap_array"
          ]
-
+   ;;
 
    let array_init =
       Replacements.makeArrayInitializations
@@ -185,7 +183,7 @@ module Default = struct
          ; "uint8_t", "bool_init_array"
          ; "fix16_t", "fix_init_array"
          ]
-
+   ;;
 
    let array_copy =
       Replacements.makeArrayCopy
@@ -194,18 +192,18 @@ module Default = struct
          ; "uint8_t", "bool_copy_array"
          ; "fix16_t", "fix_copy_array"
          ]
-
+   ;;
 
    let real_string = Replacements.makeRealToString [ "float", toFloat; "fix16_t", toFixed ]
 
    (* This is the default selection of replacements *)
    let replacements =
       Replacements.{ keywords; types; cast; op_to_fun; op_to_op; fun_to_fun; array_init; real_string; array_copy }
+   ;;
 end
 
 module Java = struct
    let keywords = Replacements.makeKeywords [ "default", "default_"; "switch", "switch_" ]
-
    let types = Replacements.makeTypes [ "real", "float"; "unit", "void"; "bool", "boolean"; "int", "int" ]
 
    let cast =
@@ -217,14 +215,14 @@ module Java = struct
          ; ("float", "fix16"), "float_to_fix16"
          ; ("int", "fix16"), "int_to_fix16"
          ]
-
+   ;;
 
    let op_to_fun = Replacements.makeOperators []
 
    let op_to_op =
       Replacements.makeOperators
          [ ("<>", "float"), "!="; ("<>", "int"), "!="; ("<>", "boolean"), "!="; ("<>", "fix16"), "!=" ]
-
+   ;;
 
    let fun_to_fun =
       Replacements.makeFunctions
@@ -248,27 +246,27 @@ module Java = struct
          *)
          ; ("samplerate", "float"), "External.samplerate"
          ]
-
+   ;;
 
    let array_init =
       Replacements.makeArrayInitializations
          [ "float", "float_init_array"; "int", "int_init_array"; "uint8_t", "bool_init_array" ]
-
+   ;;
 
    let array_copy =
       Replacements.makeArrayCopy [ "float", "float_copy_array"; "int", "int_copy_array"; "uint8_t", "bool_copy_array" ]
-
+   ;;
 
    let real_string = Replacements.makeRealToString [ "float", toFloat ]
 
    (* This is the default selection of replacements *)
    let replacements =
       Replacements.{ keywords; types; cast; op_to_fun; op_to_op; fun_to_fun; array_init; real_string; array_copy }
+   ;;
 end
 
 module FixedPoint = struct
    let keywords = Replacements.makeKeywords []
-
    let types = Replacements.makeTypes [ "real", "fix16_t" ]
 
    let cast =
@@ -278,10 +276,9 @@ module FixedPoint = struct
          ; ("int", "fix16_t"), "int_to_fix"
          ; ("float", "fix16_t"), "float_to_fix"
          ]
-
+   ;;
 
    let op_to_fun = Replacements.makeOperators [ ("*", "fix16_t"), "fix_mul"; ("/", "fix16_t"), "fix_div" ]
-
    let op_to_op = Replacements.makeOperators [ ("<>", "fix16_t"), "!=" ]
 
    let fun_to_fun =
@@ -305,12 +302,10 @@ module FixedPoint = struct
          ; ("samplerate", "fix16_t"), "fix_samplerate"
          ; ("wrap_array", "fix16_t"), "fix_wrap_array"
          ]
-
+   ;;
 
    let array_init = Replacements.makeArrayInitializations [ "fix16_t", "fix_init_array" ]
-
    let array_copy = Replacements.makeArrayCopy [ "fix16_t", "fix_copy_array" ]
-
    let real_string = Replacements.makeRealToString [ "fix16_t", toFixed ]
 
    (* This group of replacements extends/overwrites the Default.replacements *)
@@ -318,6 +313,7 @@ module FixedPoint = struct
       Replacements.extendReplacements
          Default.replacements
          Replacements.{ keywords; types; cast; op_to_fun; op_to_op; fun_to_fun; array_init; real_string; array_copy }
+   ;;
 end
 
 module JavaScript = struct
@@ -390,29 +386,25 @@ module JavaScript = struct
          ; "true", "true_"
          ; "false", "false_"
          ]
-
+   ;;
 
    let types = Replacements.makeTypes []
-
    let cast = Replacements.makeCasts []
-
    let op_to_fun = Replacements.makeOperators []
-
    let op_to_op = Replacements.makeOperators [ ("<>", "real"), "!="; ("<>", "int"), "!="; ("<>", "bool"), "!=" ]
-
    let fun_to_fun = Replacements.makeFunctions []
 
    let array_init =
       Replacements.makeArrayInitializations [ "int", "makeArray"; "real", "makeArray"; "bool", "makeArray" ]
-
+   ;;
 
    let array_copy = Replacements.makeArrayCopy []
-
    let real_string = Replacements.makeRealToString []
 
    (* This is the default selection of replacements *)
    let replacements =
       Replacements.{ keywords; types; cast; op_to_fun; op_to_op; fun_to_fun; array_init; real_string; array_copy }
+   ;;
 end
 
 module Lua = struct
@@ -433,10 +425,9 @@ module Lua = struct
          ; "return", "return_"
          ; "until", "until_"
          ]
-
+   ;;
 
    let types = Replacements.makeTypes []
-
    let cast = Replacements.makeCasts []
 
    let op_to_fun =
@@ -447,32 +438,33 @@ module Lua = struct
          ; ("<<", "int"), "bit.lshift"
          ; (">>", "int"), "bit.rshift"
          ]
-
+   ;;
 
    let op_to_op =
       Replacements.makeOperators
          [ ("<>", "real"), "~="; ("<>", "int"), "~="; ("<>", "bool"), "~="; ("&&", "bool"), "and"; ("||", "bool"), "or" ]
-
+   ;;
 
    let fun_to_fun = Replacements.makeFunctions []
 
    let array_init =
       Replacements.makeArrayInitializations [ "int", "makeArray"; "real", "makeArray"; "bool", "makeArray" ]
-
+   ;;
 
    let array_copy = Replacements.makeArrayCopy []
-
    let real_string = Replacements.makeRealToString []
 
    (* This is the default selection of replacements *)
    let replacements =
       Replacements.{ keywords; types; cast; op_to_fun; op_to_op; fun_to_fun; array_init; real_string; array_copy }
+   ;;
 end
 
 let initialize () =
-   Replacements.registerReplacements "default" Default.replacements ;
-   Replacements.registerReplacements "float" Default.replacements ;
-   Replacements.registerReplacements "fixed" FixedPoint.replacements ;
-   Replacements.registerReplacements "js" JavaScript.replacements ;
-   Replacements.registerReplacements "lua" Lua.replacements ;
+   Replacements.registerReplacements "default" Default.replacements;
+   Replacements.registerReplacements "float" Default.replacements;
+   Replacements.registerReplacements "fixed" FixedPoint.replacements;
+   Replacements.registerReplacements "js" JavaScript.replacements;
+   Replacements.registerReplacements "lua" Lua.replacements;
    Replacements.registerReplacements "java" Java.replacements
+;;

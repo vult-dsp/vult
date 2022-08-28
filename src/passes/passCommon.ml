@@ -38,15 +38,15 @@ type pass_options =
 
 let default_options =
    { eval = true; pass1 = true; pass2 = true; pass3 = true; pass4 = true; pass5 = true; tuples = true }
-
+;;
 
 let interpreter_options =
    { eval = true; pass1 = true; pass2 = false; pass3 = false; pass4 = false; pass5 = false; tuples = false }
-
+;;
 
 module PassData = struct
    type t =
-      { gen_init_ctx : PathSet.t   (** Context for which a init function has been generated *)
+      { gen_init_ctx : PathSet.t (** Context for which a init function has been generated *)
       ; add_ctx : PathSet.t
       ; used_tuples : TypeSet.t
       ; repeat : bool
@@ -56,35 +56,27 @@ module PassData = struct
       }
 
    let hasInitFunction (t : t) (path : Id.path) : bool = PathSet.mem path t.gen_init_ctx
-
    let hasContextArgument (t : t) (path : Id.path) : bool = PathSet.mem path t.add_ctx
-
    let markInitFunction (t : t) (path : Id.path) : t = { t with gen_init_ctx = PathSet.add path t.gen_init_ctx }
-
    let markContextArgument (t : t) (path : Id.path) : t = { t with add_ctx = PathSet.add path t.add_ctx }
-
    let reapply (t : t) : t = { t with repeat = true }
-
    let reset (t : t) : t = { t with repeat = false }
-
    let shouldReapply (t : t) : bool = t.repeat
-
    let addTuple (t : t) (tup : Typ.t) : t = { t with used_tuples = TypeSet.add tup t.used_tuples }
-
    let getTuples (t : t) : TypeSet.t = t.used_tuples
 
    let markAsUsed (t : t) (id : Id.t) root : t =
       match IdMap.find_opt id t.used_code with
       | Some _ -> t
       | None -> { t with used_code = IdMap.add id (Prog.Used root) t.used_code }
-
+   ;;
 
    let markToKeep (t : t) (id : Id.t) root : t =
       match IdMap.find_opt id t.used_code with
       | Some (Prog.Keep NotRoot) -> { t with used_code = IdMap.add id (Prog.Keep root) t.used_code }
       | Some (Prog.Keep Root) -> t
       | _ -> { t with used_code = IdMap.add id (Prog.Keep root) t.used_code }
-
+   ;;
 
    let empty args =
       let roots =
@@ -92,7 +84,7 @@ module PassData = struct
          @@ List.map
             (fun a ->
                 let id = Parser.parseId a in
-                [ id, Prog.Used Root; Id.postfix id "_init", Prog.Used Root ] )
+                [ id, Prog.Used Root; Id.postfix id "_init", Prog.Used Root ])
             args.roots
       in
       { gen_init_ctx = PathSet.empty
@@ -103,23 +95,24 @@ module PassData = struct
       ; interp_env = Interpreter.getEnv args
       ; used_code = IdMap.of_list roots
       }
+   ;;
 end
 
 let reapply (state : PassData.t Env.t) : PassData.t Env.t =
    let data = Env.get state in
    Env.set state (PassData.reapply data)
-
+;;
 
 let reset (state : PassData.t Env.t) : PassData.t Env.t =
    let data = Env.get state in
    Env.set state (PassData.reset data)
-
+;;
 
 let shouldReapply (state : PassData.t Env.t) : bool = PassData.shouldReapply (Env.get state)
-
 let newState (state : 'a Env.t) (data : 'b) : 'b Env.t = Env.derive state data
 
 let restoreState (original : 'a Env.t) (current : 'b Env.t) : 'a Env.t * 'b =
    let current_data = Env.get current in
    let original_data = Env.get original in
    Env.derive current original_data, current_data
+;;

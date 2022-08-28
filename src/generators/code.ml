@@ -29,7 +29,7 @@ type cattr = { is_root : bool } [@@deriving show, eq, ord]
 (** Description of types *)
 type type_descr =
    | CTSimple of string
-   | CTArray  of type_descr * int
+   | CTArray of type_descr * int
 [@@deriving show, eq, ord]
 
 (** Description of arguments to functions *)
@@ -40,18 +40,18 @@ type arg_type =
 
 (** Description of expressions (rhs) *)
 type cexp =
-   | CEInt    of int
-   | CEFloat  of string * float
-   | CEBool   of bool
+   | CEInt of int
+   | CEFloat of string * float
+   | CEBool of bool
    | CEString of string
-   | CEArray  of cexp list * type_descr
-   | CECall   of string * cexp list * type_descr
-   | CEUnOp   of string * cexp * type_descr
-   | CEOp     of string * cexp list * type_descr
-   | CEVar    of string * type_descr
-   | CEIndex  of cexp * cexp * type_descr
-   | CEIf     of cexp * cexp * cexp * type_descr
-   | CETuple  of (string * cexp) list * type_descr
+   | CEArray of cexp list * type_descr
+   | CECall of string * cexp list * type_descr
+   | CEUnOp of string * cexp * type_descr
+   | CEOp of string * cexp list * type_descr
+   | CEVar of string * type_descr
+   | CEIndex of cexp * cexp * type_descr
+   | CEIf of cexp * cexp * cexp * type_descr
+   | CETuple of (string * cexp) list * type_descr
    | CEAccess of cexp * string
    | CEEmpty
 [@@deriving show, eq, ord]
@@ -59,24 +59,24 @@ type cexp =
 (** Description of expressions (lhs) *)
 and clhsexp =
    | CLWild
-   | CLId    of type_descr * string list
+   | CLId of type_descr * string list
    | CLTuple of clhsexp list
    | CLIndex of type_descr * string list * cexp
 [@@deriving show, eq, ord]
 
 (** Description of statements *)
 type cstmt =
-   | CSVar      of clhsexp * cexp option
-   | CSConst    of clhsexp * cexp
-   | CSBind     of clhsexp * cexp
+   | CSVar of clhsexp * cexp option
+   | CSConst of clhsexp * cexp
+   | CSBind of clhsexp * cexp
    | CSFunction of type_descr * string * (arg_type * string) list * cstmt * cattr
-   | CSReturn   of cexp
-   | CSWhile    of cexp * cstmt
-   | CSBlock    of cstmt list
-   | CSIf       of cexp * cstmt * cstmt option
-   | CSType     of string * (type_descr * string) list * cattr
-   | CSAlias    of string * type_descr
-   | CSExtFunc  of type_descr * string * (arg_type * string) list
-   | CSSwitch   of cexp * (cexp * cstmt) list * cstmt option
+   | CSReturn of cexp
+   | CSWhile of cexp * cstmt
+   | CSBlock of cstmt list
+   | CSIf of cexp * cstmt * cstmt option
+   | CSType of string * (type_descr * string) list * cattr
+   | CSAlias of string * type_descr
+   | CSExtFunc of type_descr * string * (arg_type * string) list
+   | CSSwitch of cexp * (cexp * cstmt) list * cstmt option
    | CSEmpty
 [@@deriving show, eq, ord]

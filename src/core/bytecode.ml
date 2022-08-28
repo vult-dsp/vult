@@ -7,12 +7,12 @@ module VM = struct
       | SampleRate
 
    type instr =
-      | PushReal    of float
-      | PushInt     of int
-      | PushBool    of bool
-      | PushString  of string
-      | PushVar     of int
-      | StoreVar    of int
+      | PushReal of float
+      | PushInt of int
+      | PushBool of bool
+      | PushString of string
+      | PushVar of int
+      | StoreVar of int
       | Drop
       | Explode
       | Add
@@ -27,7 +27,7 @@ module VM = struct
       | Gt
       | LtEq
       | GtEq
-      | Call        of int
+      | Call of int
       | BuiltinCall of builtin
       | Return
       | Halt
@@ -64,17 +64,15 @@ module VM = struct
       | GtEq -> ">="
       | Call i -> "call[" ^ string_of_int i ^ "]"
       | BuiltinCall call ->
-         begin
-            match call with
-            | Exp -> "$exp"
-            | Sin -> "$sin"
-            | Cos -> "$cos"
-            | Tanh -> "$tanh"
-            | SampleRate -> "$samplerate"
-         end
+         (match call with
+          | Exp -> "$exp"
+          | Sin -> "$sin"
+          | Cos -> "$cos"
+          | Tanh -> "$tanh"
+          | SampleRate -> "$samplerate")
       | Return -> "return"
       | Halt -> "halt"
-
+   ;;
 
    let show_numbered_instr n i = string_of_int n ^ ": " ^ show_instr i
 
@@ -96,12 +94,12 @@ module VM = struct
             "\n# " ^ s.name ^ "(" ^ l ^ ")\n" ^ show_numbered_instr index i
       in
       Array.mapi print p |> Array.to_list |> String.concat "\n"
-
+   ;;
 
    type value =
-      | Real   of float
-      | Bool   of bool
-      | Int    of int
+      | Real of float
+      | Bool of bool
+      | Int of int
       | String of string
 
    type state =
@@ -119,184 +117,184 @@ module VM = struct
       | Bool n -> if n then "true" else "false"
       | Int n -> string_of_int n
       | String n -> "'" ^ n ^ "'"
-
+   ;;
 
    let default_state prog =
       { prog; pc = 0; stack = []; call_stack = []; local_ptr = 0; local = Array.init 100 (fun _ -> Real 0.0) }
-
+   ;;
 
    let push v state = state.stack <- v :: state.stack
 
    let pop1 state =
       match state.stack with
       | e1 :: rest ->
-         state.stack <- rest ;
+         state.stack <- rest;
          e1
       | _ -> failwith "pop1"
-
+   ;;
 
    let pop2 state =
       match state.stack with
       | e1 :: e2 :: rest ->
-         state.stack <- rest ;
+         state.stack <- rest;
          e1, e2
       | _ -> failwith "pop2"
-
+   ;;
 
    let inc_pc state = state.pc <- state.pc + 1
 
    let call function_pointer mem_ptr local_ptr state =
-      state.call_stack <- (state.pc + 1, state.local_ptr) :: state.call_stack ;
-      state.pc <- function_pointer ;
+      state.call_stack <- (state.pc + 1, state.local_ptr) :: state.call_stack;
+      state.pc <- function_pointer;
       state.local_ptr <- local_ptr
-
+   ;;
 
    let return state =
       match state.call_stack with
       | (pc, local_ptr) :: t ->
-         state.call_stack <- t ;
-         state.pc <- pc ;
+         state.call_stack <- t;
+         state.pc <- pc;
          state.local_ptr <- local_ptr
       | _ -> failwith "return"
-
+   ;;
 
    let getLocal n state =
       let value = Array.unsafe_get state.local (state.local_ptr + n) in
-      push value state ;
+      push value state;
       inc_pc state
-
+   ;;
 
    let setLocal n state =
       let value = pop1 state in
-      Array.unsafe_set state.local (state.local_ptr + n) value ;
+      Array.unsafe_set state.local (state.local_ptr + n) value;
       inc_pc state
-
+   ;;
 
    let add state =
       let e1, e2 = pop2 state in
       match e1, e2 with
       | Real e1, Real e2 ->
          let result = e1 +. e2 in
-         push (Real result) state ;
+         push (Real result) state;
          inc_pc state
       | Int e1, Int e2 ->
          let result = e1 + e2 in
-         push (Int result) state ;
+         push (Int result) state;
          inc_pc state
       | _ -> failwith "add: invalid input"
-
+   ;;
 
    let sub state =
       let e1, e2 = pop2 state in
       match e1, e2 with
       | Real e1, Real e2 ->
          let result = e1 -. e2 in
-         push (Real result) state ;
+         push (Real result) state;
          inc_pc state
       | Int e1, Int e2 ->
          let result = e1 - e2 in
-         push (Int result) state ;
+         push (Int result) state;
          inc_pc state
       | _ -> failwith "sub: invalid input"
-
+   ;;
 
    let neg state =
       let e1 = pop1 state in
       match e1 with
       | Real e1 ->
          let result = -.e1 in
-         push (Real result) state ;
+         push (Real result) state;
          inc_pc state
       | Int e1 ->
          let result = -e1 in
-         push (Int result) state ;
+         push (Int result) state;
          inc_pc state
       | _ -> failwith "neg: invalid input"
-
+   ;;
 
    let mul state =
       let e1, e2 = pop2 state in
       match e1, e2 with
       | Real e1, Real e2 ->
          let result = e1 *. e2 in
-         push (Real result) state ;
+         push (Real result) state;
          inc_pc state
       | Int e1, Int e2 ->
          let result = e1 * e2 in
-         push (Int result) state ;
+         push (Int result) state;
          inc_pc state
       | _ -> failwith "mul: invalid input"
-
+   ;;
 
    let div state =
       let e1, e2 = pop2 state in
       match e1, e2 with
       | Real e1, Real e2 ->
          let result = e1 /. e2 in
-         push (Real result) state ;
+         push (Real result) state;
          inc_pc state
       | Int e1, Int e2 ->
          let result = e1 / e2 in
-         push (Int result) state ;
+         push (Int result) state;
          inc_pc state
       | _ -> failwith "div: invalid input"
-
+   ;;
 
    let mod_op state =
       let e1, e2 = pop2 state in
       match e1, e2 with
       | Real e1, Real e2 ->
          let result = mod_float e1 e2 in
-         push (Real result) state ;
+         push (Real result) state;
          inc_pc state
       | Int e1, Int e2 ->
          let result = e1 mod e2 in
-         push (Int result) state ;
+         push (Int result) state;
          inc_pc state
       | _ -> failwith "mod: invalid input"
-
+   ;;
 
    let logic op state =
       let e1, e2 = pop2 state in
       match e1, e2 with
       | Real e1, Real e2 ->
          let result = op (compare e1 e2) in
-         push (Bool result) state ;
+         push (Bool result) state;
          inc_pc state
       | Int e1, Int e2 ->
          let result = op (compare e1 e2) in
-         push (Bool result) state ;
+         push (Bool result) state;
          inc_pc state
       | String e1, String e2 ->
          let result = op (compare e1 e2) in
-         push (Bool result) state ;
+         push (Bool result) state;
          inc_pc state
       | Bool e1, Bool e2 ->
          let result = op (compare e1 e2) in
-         push (Bool result) state ;
+         push (Bool result) state;
          inc_pc state
       | _ -> failwith "mul: invalid input"
-
+   ;;
 
    let pushReal n state =
-      push (Real n) state ;
+      push (Real n) state;
       inc_pc state
-
+   ;;
 
    let pushInt n state =
-      push (Int n) state ;
+      push (Int n) state;
       inc_pc state
-
+   ;;
 
    let pushBool n state =
-      push (Bool n) state ;
+      push (Bool n) state;
       inc_pc state
-
+   ;;
 
    let pushString n state =
-      push (String n) state ;
+      push (String n) state;
       inc_pc state
-
+   ;;
 
    exception HaltProgram of state
 
@@ -318,7 +316,7 @@ module VM = struct
             | SampleRate, _ -> failwith "cannot apply SampleRate"
          in
          inc_pc state
-
+   ;;
 
    let rec exec state =
       try
@@ -356,14 +354,15 @@ module VM = struct
          exec state
       with
       | HaltProgram state -> state
-
+   ;;
 
    let print_stack state =
       List.iteri
          (fun i v ->
              let s = show_value v in
-             Printf.printf "%i: %s\n" i s )
+             Printf.printf "%i: %s\n" i s)
          state.stack
+   ;;
 end
 
 module Compiler = struct
@@ -377,9 +376,7 @@ module Compiler = struct
       }
 
    let findCall (env : env) name = List.find (fun s -> s.VM.name = name) env.symbols
-
    let default_env module_name = { module_name; code = []; pc = 0; local_count = 0; local = []; symbols = [] }
-
    let addInst inst env = { env with code = inst :: env.code; pc = env.pc + 1 }
 
    let rec compileExp env (exp : Code.cexp) =
@@ -391,11 +388,9 @@ module Compiler = struct
       | CEString v -> addInst (PushString v) env
       | CEVar ([ id ], _) ->
          let id = id in
-         begin
-            match List.assoc_opt id env.local with
-            | Some n -> addInst (PushVar n) env
-            | None -> failwith "Cannot compile var"
-         end
+         (match List.assoc_opt id env.local with
+          | Some n -> addInst (PushVar n) env
+          | None -> failwith "Cannot compile var")
       | CEOp ("+", args, _) ->
          let env = compileExpList env args in
          addInst Add env
@@ -451,9 +446,8 @@ module Compiler = struct
          addInst (Call symbol.location) env
       | CETuple (elems, _) -> compileExpList env (List.map snd elems)
       | _ ->
-         print_endline ("Cannot compile expression:" ^ Code.show_cexp exp) ;
+         print_endline ("Cannot compile expression:" ^ Code.show_cexp exp);
          failwith "compileExp"
-
 
    and compileExpList env (expl : Code.cexp list) = List.fold_left compileExp env expl
 
@@ -466,7 +460,7 @@ module Compiler = struct
          { env with local_count = next; local = (id, n) :: env.local }
       | CLTuple elems -> List.fold_left (fun env lhs -> declare lhs env) env elems
       | CLIndex _ -> failwith "declare"
-
+   ;;
 
    let rec bind env (lhs : Code.clhsexp) =
       match lhs with
@@ -476,13 +470,11 @@ module Compiler = struct
          List.fold_left bind env elems
       | CLIndex _ -> failwith ""
       | CLId (_, [ id ]) ->
-         begin
-            match List.assoc_opt id env.local with
-            | Some n -> addInst (StoreVar n) env
-            | None -> failwith "Variable not found"
-         end
+         (match List.assoc_opt id env.local with
+          | Some n -> addInst (StoreVar n) env
+          | None -> failwith "Variable not found")
       | _ -> failwith ("Failed to create binding for " ^ Code.show_clhsexp lhs)
-
+   ;;
 
    let rec compileArgs env (args : (Code.arg_type * string) list) =
       match args with
@@ -493,7 +485,7 @@ module Compiler = struct
          let env = declare lhs env in
          let env = bind env lhs in
          env
-
+   ;;
 
    let makeSymbol (name : string) (env : env) (fenv : env) : VM.symbol =
       { module_name = fenv.module_name
@@ -502,7 +494,7 @@ module Compiler = struct
       ; locals = fenv.local
       ; location = env.pc
       }
-
+   ;;
 
    let freshEnv (env : env) : env = { env with local_count = 0; local = [] }
 
@@ -538,7 +530,6 @@ module Compiler = struct
          let () = print_endline ("Cannot compile:\n" ^ Code.show_cstmt stmt) in
          failwith "compileStmt"
 
-
    and compileStmtList env stmts = List.fold_left compileStmt env stmts
 
    let getCode env : VM.prog = List.rev env.code |> Array.of_list
@@ -571,7 +562,6 @@ let main () =
      print_stack state
    *)
    ()
-
 ;;
 
 main ()

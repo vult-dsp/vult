@@ -59,7 +59,7 @@ module Templates = struct
             this.wrap_array = function(a) { return a; }
             this.log = function(x) { console.log(x); }
          |}
-
+   ;;
 
    let common function_decl module_name code =
       [%pla
@@ -76,17 +76,17 @@ module Templates = struct
            this.liveProcess       = function(input)         { if(this.<#module_name#s>_process)       return this.<#module_name#s>_process(this.context,input); else return 0; };
            this.liveDefault       = function() { if(this.<#module_name#s>_default)      return this.<#module_name#s>_default(this.context); };
            }|}]
-
+   ;;
 
    let browser _config module_name code : (Pla.t * FileKind.t) list =
       let exports = Pla.string "function vultProcess()" in
       [ common exports module_name code, FileKind.ExtOnly "js" ]
-
+   ;;
 
    let node _config module_name code : (Pla.t * FileKind.t) list =
       let exports = Pla.string "exports.vultProcess = function ()" in
       [ common exports module_name code, FileKind.ExtOnly "js" ]
-
+   ;;
 
    let apply (params : params) (module_name : string) (template : string) (code : Pla.t) : (Pla.t * FileKind.t) list =
       match template with
@@ -95,6 +95,7 @@ module Templates = struct
       | "webaudio" -> Webaudio.get params runtime code
       | "performance" -> Performance.getJs params runtime code
       | _ -> none code
+   ;;
 end
 
 let isSpecial (params : params) (name : string) : bool =
@@ -105,17 +106,17 @@ let isSpecial (params : params) (name : string) : bool =
    | _ when name = params.module_name ^ "_controlChange" -> true
    | _ when name = params.module_name ^ "_default" -> true
    | _ -> false
-
+;;
 
 let fixContext (is_special : bool) args =
-   if is_special then
+   if is_special
+   then (
       match args with
       | [] -> [ Ref (CTSimple "any"), "_ctx" ]
       | (_, "_ctx") :: _ -> args
-      | t -> (Ref (CTSimple "any"), "_ctx") :: t
-   else
-      args
-
+      | t -> (Ref (CTSimple "any"), "_ctx") :: t)
+   else args
+;;
 
 let rec printExp (params : params) (e : cexp) : Pla.t =
    match e with
@@ -159,31 +160,24 @@ let rec printExp (params : params) (e : cexp) : Pla.t =
       let e = printExp params e in
       [%pla {|(<#e#>).<#n#s>|}]
 
-
 and printJsField (params : params) (name, value) : Pla.t =
    let value_t = printExp params value in
    [%pla {|<#name#s> : <#value_t#>|}]
-
+;;
 
 let printLhsExpTuple (var : Pla.t) (is_var : bool) (i : int) (e : clhsexp) : Pla.t =
    match e with
    | CLId (_, name) ->
       let name = dot name in
-      if is_var then
-         [%pla {|var <#name#> = <#var#>.field_<#i#i>; |}]
-      else
-         [%pla {|<#name#> = <#var#>.field_<#i#i>; |}]
+      if is_var then [%pla {|var <#name#> = <#var#>.field_<#i#i>; |}] else [%pla {|<#name#> = <#var#>.field_<#i#i>; |}]
    | CLWild -> Pla.unit
    | _ -> failwith "printLhsExp: All other cases should be already covered"
-
+;;
 
 let wrapInt (params : params) (is_int : bool) (e : cexp) : Pla.t =
    let e_t = printExp params e in
-   if is_int then
-      [%pla {|(<#e_t#>|0)|}]
-   else
-      e_t
-
+   if is_int then [%pla {|(<#e_t#>|0)|}] else e_t
+;;
 
 let rec getInitValue (descr : type_descr) : Pla.t =
    match descr with
@@ -195,13 +189,13 @@ let rec getInitValue (descr : type_descr) : Pla.t =
    | CTSimple "unit" -> Pla.string "0"
    | CTArray (typ, size) ->
       let init = getInitValue typ in
-      if size < 32 then
+      if size < 32
+      then (
          let elems = CCList.init size (fun _ -> init) |> Pla.join_sep Pla.comma in
-         [%pla {|[<#elems#>]|}]
-      else
-         [%pla {|this.makeArray(<#size#i>,<#init#>)|}]
+         [%pla {|[<#elems#>]|}])
+      else [%pla {|this.makeArray(<#size#i>,<#init#>)|}]
    | _ -> Pla.string "{}"
-
+;;
 
 let rec printSwitchStmt params e cases def =
    let e_t = printExp params e in
@@ -211,19 +205,18 @@ let rec printSwitchStmt params e cases def =
          (fun (v, stmt) ->
              let v_t = printExp params v in
              let stmt_t = CCOpt.get_or ~default:Pla.unit (printStmt params stmt) in
-             [%pla {|case <#v_t#>:<#stmt_t#+><#>break;|}] )
+             [%pla {|case <#v_t#>:<#stmt_t#+><#>break;|}])
          cases
    in
    let def_t =
       match def with
       | None -> Pla.unit
       | Some s ->
-         match printStmt params s with
-         | None -> Pla.unit
-         | Some s -> [%pla {|default: <#s#+>|}]
+         (match printStmt params s with
+          | None -> Pla.unit
+          | Some s -> [%pla {|default: <#s#+>|}])
    in
    Some [%pla {|switch(<#e_t#>) {<#cases_t#+> <#def_t#><#>}|}]
-
 
 and printStmt (params : params) (stmt : cstmt) : Pla.t option =
    match stmt with
@@ -306,16 +299,15 @@ and printStmt (params : params) (stmt : cstmt) : Pla.t option =
    | CSAlias _ -> None
    | CSExtFunc _ -> None
 
-
 and printStmtList (params : params) (stmts : cstmt list) : Pla.t =
    let tstmts = CCList.filter_map (printStmt params) stmts in
    Pla.map_sep_all Pla.newline (fun a -> a) tstmts
-
+;;
 
 let printJsCode (params : params) (stmts : cstmt list) : (Pla.t * FileKind.t) list =
    let code = printStmtList params stmts in
    Templates.apply params params.module_name params.template code
-
+;;
 
 (** Generates the .c and .h file contents for the given parsed files *)
 let print (params : params) (stmts : Code.cstmt list) : (Pla.t * FileKind.t) list = printJsCode params stmts

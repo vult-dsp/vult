@@ -49,29 +49,24 @@ let makeSingleBlock stmts =
    | [] -> CSBlock []
    | [ stmt ] -> stmt
    | _ -> CSBlock stmts
-
+;;
 
 let rec tryMakeSwitchLoop id cases next =
    match next with
    | None -> Some (List.rev cases, None)
    | Some (CSIf (CEOp ("==", [ nid; (CEInt _ as i) ], _), stmt, next)) ->
-      if Code.compare_cexp id nid = 0 then
-         tryMakeSwitchLoop id ((i, stmt) :: cases) next
-      else
-         None
+      if Code.compare_cexp id nid = 0 then tryMakeSwitchLoop id ((i, stmt) :: cases) next else None
    | Some def -> Some (List.rev cases, Some def)
-
+;;
 
 let tryMakeSwitch e =
    match e with
    | CSIf (CEOp ("==", [ var; (CEInt _ as i) ], _), stmt, next) ->
-      begin
-         match tryMakeSwitchLoop var [ i, stmt ] next with
-         | Some ((_ :: _ :: _ as cases), def) -> CSSwitch (var, cases, def)
-         | _ -> e
-      end
+      (match tryMakeSwitchLoop var [ i, stmt ] next with
+       | Some ((_ :: _ :: _ as cases), def) -> CSSwitch (var, cases, def)
+       | _ -> e)
    | _ -> e
-
+;;
 
 let rec makeSwitch p block =
    match block with
@@ -82,12 +77,11 @@ let rec makeSwitch p block =
    | CSWhile (cond, body) -> CSWhile (cond, makeSwitch p body)
    | _ -> block
 
-
 and makeSwitchList p stmts =
    match stmts with
    | [] -> []
    | h :: t -> makeSwitch p h :: makeSwitchList p t
-
+;;
 
 let convertId (p : parameters) (id : Id.t) : string = String.concat "_" id |> Replacements.getKeyword p.repl
 
@@ -95,29 +89,29 @@ let applyOutputPrefix (p : parameters) name =
    match p.output_prefix with
    | None -> name
    | Some p -> p ^ name
-
+;;
 
 let applyOutputPrefixToId (p : parameters) id =
    match p.output_prefix with
    | None -> id
    | Some p ->
-      match id with
-      | [ _ ] -> id
-      | [ m; n ] -> [ p ^ m; n ]
-      | _ -> failwith "applyOutputPrefixToId"
-
+      (match id with
+       | [ _ ] -> id
+       | [ m; n ] -> [ p ^ m; n ]
+       | _ -> failwith "applyOutputPrefixToId")
+;;
 
 let convertFunctionName (p : parameters) (id : Id.t) : string =
    let name = String.concat "_" id |> Replacements.getKeyword p.repl in
    applyOutputPrefix
       p
-      ( if p.shorten then
-           match Maps.IdMap.find_opt id p.used with
-           | Some (Keep Root) -> NameTable.registerName p.functions name
-           | _ -> NameTable.generateName p.functions name
-        else
-           name )
-
+      (if p.shorten
+       then (
+          match Maps.IdMap.find_opt id p.used with
+          | Some (Keep Root) -> NameTable.registerName p.functions name
+          | _ -> NameTable.generateName p.functions name)
+       else name)
+;;
 
 let convertVarId (p : parameters) (is_val : lhs_kind) (id : Id.t) : string list =
    let should_prefix =
@@ -127,19 +121,15 @@ let convertVarId (p : parameters) (is_val : lhs_kind) (id : Id.t) : string list 
    in
    let name = List.map (Replacements.getKeyword p.repl) id in
    let name =
-      if p.shorten then
-         if is_val = Declaration then
-            List.map (NameTable.generateName p.variables) name
-         else
-            List.map (NameTable.getOrRegister p.variables) name
-      else
-         name
+      if p.shorten
+      then
+         if is_val = Declaration
+         then List.map (NameTable.generateName p.variables) name
+         else List.map (NameTable.getOrRegister p.variables) name
+      else name
    in
-   if should_prefix then
-      [ applyOutputPrefix p (String.concat "_" name) ]
-   else
-      name
-
+   if should_prefix then [ applyOutputPrefix p (String.concat "_" name) ] else name
+;;
 
 let convertExpId (p : parameters) (is_val : lhs_kind) (id : Id.t) =
    let l = convertVarId p is_val id in
@@ -150,18 +140,15 @@ let convertExpId (p : parameters) (is_val : lhs_kind) (id : Id.t) =
       | h :: t -> CEAccess (loop t, h)
    in
    loop (List.rev l)
-
+;;
 
 let convertSingleVarId (p : parameters) (id : Id.t) : string =
    match id with
    | [ name ] ->
       let name = Replacements.getKeyword p.repl name in
-      if p.shorten then
-         NameTable.getOrRegister p.variables name
-      else
-         name
+      if p.shorten then NameTable.getOrRegister p.variables name else name
    | _ -> failwith "ProgToCode.convertSingleVarId: this should be a single identifier"
-
+;;
 
 let rec convertType (p : parameters) (tp : Typ.t) : type_descr =
    match !tp with
@@ -179,13 +166,9 @@ let rec convertType (p : parameters) (tp : Typ.t) : type_descr =
       let sub = convertType p kind in
       CTArray (sub, n)
    | Typ.TLink tp -> convertType p tp
-   | Typ.TComposed (_, _, _)
-   |Typ.TInt _
-   |Typ.TArrow _
-   |Typ.TUnbound _
-   |Typ.TExpAlt _ ->
+   | Typ.TComposed (_, _, _) | Typ.TInt _ | Typ.TArrow _ | Typ.TUnbound _ | Typ.TExpAlt _ ->
       failwith ("ProgToCode.convertType: unsupported type in c code generation: " ^ PrintProg.typeStr tp)
-
+;;
 
 let convertTypeMakeTupleUnit (p : parameters) (tp : Typ.t) : type_descr =
    match !tp with
@@ -193,7 +176,7 @@ let convertTypeMakeTupleUnit (p : parameters) (tp : Typ.t) : type_descr =
       let new_type = Replacements.getType p.repl "unit" in
       CTSimple new_type
    | _ -> convertType p tp
-
+;;
 
 let convertTypeList (p : parameters) (tp : Typ.t list) : type_descr list = List.map (convertType p) tp
 
@@ -206,7 +189,7 @@ let convertTypedId (p : parameters) (is_val : lhs_kind) (e : typed_id) : arg_typ
       let typ_ref = if Typ.isSimpleType ftype then Var typ_c else Ref typ_c in
       let ids = convertVarId p is_val id in
       typ_ref, String.concat "." ids
-
+;;
 
 let getCast (p : parameters) (from_type : type_descr) (to_type : type_descr) : string =
    match from_type, to_type with
@@ -215,39 +198,37 @@ let getCast (p : parameters) (from_type : type_descr) (to_type : type_descr) : s
       let from_str = show_type_descr from_type in
       let to_str = show_type_descr to_type in
       failwith ("ProgToCode.getCast: invalid casting of types " ^ from_str ^ " -> " ^ to_str)
-
+;;
 
 let makeNestedCall (typ : type_descr) (name : string) (args : cexp list) : cexp =
    match args with
    | [] -> failwith "ProgToCode.makeNestedCall: invalid number of arguments"
    | [ _; _ ] -> CECall (name, args, typ)
    | h :: t -> List.fold_left (fun acc a -> CECall (name, [ acc; a ], typ)) h t
-
+;;
 
 let convertOperator (p : parameters) (op : string) (typ : type_descr) (elems : cexp list) : cexp =
    match typ with
    | CTSimple typ_t ->
-      begin
-         match Replacements.getFunctionForOperator p.repl op typ_t with
-         | Some fn -> makeNestedCall typ fn elems
-         | None ->
-            let new_op = Replacements.getOperator p.repl op typ_t in
-            CEOp (new_op, elems, typ)
-      end
+      (match Replacements.getFunctionForOperator p.repl op typ_t with
+       | Some fn -> makeNestedCall typ fn elems
+       | None ->
+          let new_op = Replacements.getOperator p.repl op typ_t in
+          CEOp (new_op, elems, typ))
    | _ -> CEOp (op, elems, typ)
-
+;;
 
 let getFunctionSetType (elem_typs : type_descr list) : type_descr =
    match elem_typs with
    | [ _; _; v ] -> v
    | _ -> failwith "ProgToCode.getFunctionSetType: this is not a call to 'set'"
-
+;;
 
 let getFunctionFirstArgType (elem_typs : type_descr list) : type_descr =
    match elem_typs with
    | v :: _ -> v
    | _ -> failwith "ProgToCode.getFunctionFirstArgType: this is not a call to 'split'"
-
+;;
 
 let createWhileLoopInit size init lhs =
    match init with
@@ -262,66 +243,57 @@ let createWhileLoopInit size init lhs =
       let loop = CSWhile (CEOp ("<", [ i; size ], CTSimple "bool"), CSBlock [ assign; incr ]) in
       CSBlock [ decl; init_decl; loop ]
    | _ -> failwith "createWhileLoopInit"
-
+;;
 
 let inlineArrayInit size init var =
    match var with
-   | CEVar _
-   |CEAccess _ ->
-      createWhileLoopInit size init var
+   | CEVar _ | CEAccess _ -> createWhileLoopInit size init var
    | _ -> failwith "inlineArrayInit"
-
+;;
 
 let getInitArrayFunction (p : parameters) (typ : type_descr) : string option =
    match typ with
    | CTSimple typ_t ->
-      begin
-         match Replacements.getArrayInit p.repl typ_t with
-         | Some fn -> Some fn
-         | _ -> None
-      end
+      (match Replacements.getArrayInit p.repl typ_t with
+       | Some fn -> Some fn
+       | _ -> None)
    | _ -> None
-
+;;
 
 let getCopyArrayFunction (p : parameters) (typ : type_descr) : string =
    match typ with
    | CTSimple typ_t ->
-      begin
-         match Replacements.getArrayCopy p.repl typ_t with
-         | Some fn -> fn
-         | _ -> failwith ("getCopyArrayFunction: Invalid array type " ^ show_type_descr typ)
-      end
+      (match Replacements.getArrayCopy p.repl typ_t with
+       | Some fn -> fn
+       | _ -> failwith ("getCopyArrayFunction: Invalid array type " ^ show_type_descr typ))
    | _ -> failwith ("getCopyArrayFunction: Invalid array type " ^ show_type_descr typ)
-
+;;
 
 let convertFunction (p : parameters) (name : Id.t) (typ : type_descr) (elems : cexp list) (elem_typs : type_descr list)
-   : cexp =
+   : cexp
+   =
    match name with
    (* For the function set we need to get the type based on one of the arguments *)
    | [ "set" ] ->
-      begin
-         match getFunctionSetType elem_typs with
-         | CTSimple typ_t ->
-            let fn = Replacements.getFunction p.repl "set" typ_t in
-            CECall (fn, elems, typ)
-         | _ -> failwith ("convertFunction: Invalid array type " ^ show_type_descr typ)
-      end
+      (match getFunctionSetType elem_typs with
+       | CTSimple typ_t ->
+          let fn = Replacements.getFunction p.repl "set" typ_t in
+          CECall (fn, elems, typ)
+       | _ -> failwith ("convertFunction: Invalid array type " ^ show_type_descr typ))
    | [ fname ] ->
-      begin
-         match typ with
-         | CTSimple typ_t ->
-            let fn = Replacements.getFunction p.repl fname typ_t in
-            CECall (fn, elems, typ)
-         | _ -> CECall (convertId p name, elems, typ)
-      end
+      (match typ with
+       | CTSimple typ_t ->
+          let fn = Replacements.getFunction p.repl fname typ_t in
+          CECall (fn, elems, typ)
+       | _ -> CECall (convertId p name, elems, typ))
    | _ -> CECall (convertFunctionName p name, elems, typ)
-
+;;
 
 let attrType (p : parameters) (attr : attr) : type_descr =
    match attr.typ with
    | Some t -> convertType p t
    | _ -> failwith "ProgToCode.attrType: everything should have types"
-
+;;
 
 let expType (p : parameters) (e : exp) : type_descr = GetAttr.fromExp e |> attrType p
 
@@ -358,10 +330,7 @@ let rec convertExp (p : parameters) (e : exp) : cexp =
       let arg' = convertExp p arg in
       let from_typ = expType p arg in
       let to_type = attrType p attr in
-      if from_typ <> to_type then
-         CECall (getCast p from_typ to_type, [ arg' ], typ attr)
-      else
-         arg'
+      if from_typ <> to_type then CECall (getCast p from_typ to_type, [ arg' ], typ attr) else arg'
    | PCall (_, name, elems, attr) ->
       let elems' = convertExpList p elems in
       let elem_typ = List.map (expType p) elems in
@@ -379,7 +348,7 @@ let rec convertExp (p : parameters) (e : exp) : cexp =
          List.mapi
             (fun i a ->
                 let a' = convertExp p a in
-                "field_" ^ string_of_int i, a' )
+                "field_" ^ string_of_int i, a')
             elems
       in
       CETuple (elems', typ attr)
@@ -389,9 +358,7 @@ let rec convertExp (p : parameters) (e : exp) : cexp =
    | PSeq _ -> failwith "ProgToCode.convertExp: Sequences are not yet supported for js"
    | PEmpty -> failwith "ProgToCode.convertExp: Empty expressions are not allowed"
 
-
 and convertExpList (p : parameters) (e : exp list) : cexp list = List.map (convertExp p) e
-
 and convertExpArray (p : parameters) (e : exp array) : cexp list = Array.map (convertExp p) e |> Array.to_list
 
 and convertLhsExp (is_val : lhs_kind) (p : parameters) (e : lhs_exp) : clhsexp =
@@ -414,10 +381,9 @@ and convertLhsExp (is_val : lhs_kind) (p : parameters) (e : lhs_exp) : clhsexp =
       let typl = convertType p typ in
       CLIndex (typl, new_id, index)
 
-
 and convertLhsExpList (is_val : lhs_kind) (p : parameters) (lhsl : lhs_exp list) : clhsexp list =
    List.fold_left (fun acc lhs -> convertLhsExp is_val p lhs :: acc) [] lhsl |> List.rev
-
+;;
 
 let getRecordField (name : lhs_exp) (index : int) (typ : Typ.t option) : lhs_exp =
    match name with
@@ -425,22 +391,19 @@ let getRecordField (name : lhs_exp) (index : int) (typ : Typ.t option) : lhs_exp
       let field = "field_" ^ string_of_int index in
       LId (id @ [ field ], typ, { attr with typ })
    | _ -> failwith "ProgToCode.getRecordFiled: Invalid input"
-
+;;
 
 let rec collectVarBind p stmts =
    match stmts with
    | [] -> []
    | CSVar (CLId (_, [ lhs ]), None) :: CSBind (CLId (_, [ lhs2 ]), rhs) :: CSIf (CEVar (cond, _), then_, else_) :: t
-      when lhs = cond && lhs2 = cond && cond.[0] = '_' ->
-      collectVarBind p (CSIf (rhs, then_, else_) :: t)
+      when lhs = cond && lhs2 = cond && cond.[0] = '_' -> collectVarBind p (CSIf (rhs, then_, else_) :: t)
    | CSVar (lhs1, None) :: CSBind (lhs2, rhs) :: t when lhs1 = lhs2 && p.code <> CCode ->
       collectVarBind p (CSVar (lhs1, Some rhs) :: t)
    | CSVar (CLId (_, [ lhs ]), Some rhs) :: CSIf (CEVar (cond, _), then_, else_) :: t when lhs = cond && cond.[0] = '_'
-      ->
-      collectVarBind p (CSIf (rhs, then_, else_) :: t)
+      -> collectVarBind p (CSIf (rhs, then_, else_) :: t)
    | CSVar (lhs1, None) :: CSBind (lhs2, rhs) :: t -> CSVar (lhs1, None) :: CSBind (lhs2, rhs) :: collectVarBind p t
    | h :: t -> collectVarBindBlock p h :: collectVarBind p t
-
 
 and collectVarBindBlock p block =
    match block with
@@ -450,33 +413,31 @@ and collectVarBindBlock p block =
    | CSIf (cond, then_, else_) -> CSIf (cond, collectVarBindBlock p then_, CCOpt.map (collectVarBindBlock p) else_)
    | CSWhile (cond, body) -> CSWhile (cond, collectVarBindBlock p body)
    | _ -> block
-
+;;
 
 let collectStmt (p : parameters) stmt =
    match stmt with
    | CSBlock stmts -> makeSingleBlock (collectVarBind p stmts)
    | _ -> stmt
-
+;;
 
 let isSmall exp =
    match exp with
    | PInt (i, _) when i < 1000 -> true
    | _ -> false
-
+;;
 
 let removeFunction used =
    match used with
    | Keep _ -> false
    | _ -> true
-
+;;
 
 let isRoot used =
    match used with
-   | Keep Root
-   |Used Root ->
-      true
+   | Keep Root | Used Root -> true
    | _ -> false
-
+;;
 
 let refreshTable (p : parameters) = { p with variables = NameTable.make 1 }
 
@@ -535,37 +496,31 @@ let rec convertStmt (p : parameters) (s : stmt) : cstmt =
       let size' = convertExp p size in
       let init_typ = expType p init in
       let var' = convertExp p var in
-      begin
-         match getInitArrayFunction p init_typ with
-         | Some init_func ->
-            if isSmall size then
-               CSBind (CLWild, CECall (init_func, [ size'; init'; var' ], attrType p attr))
-            else
-               CSBind (CLWild, CEEmpty)
-         | None -> inlineArrayInit size' init' var'
-      end
+      (match getInitArrayFunction p init_typ with
+       | Some init_func ->
+          if isSmall size
+          then CSBind (CLWild, CECall (init_func, [ size'; init'; var' ], attrType p attr))
+          else CSBind (CLWild, CEEmpty)
+       | None -> inlineArrayInit size' init' var')
    (* special case for c/c++ to replace the makeArray function *)
    | StmtBind (LId (var, _, vattr), PCall (NoInst, [ "makeArray" ], [ size; init ], attr), _) when p.code = CCode ->
       let init' = convertExp p init in
       let size' = convertExp p size in
       let init_typ = expType p init in
       let var' = convertExp p (PId (var, vattr)) in
-      begin
-         match getInitArrayFunction p init_typ with
-         | Some init_func ->
-            if isSmall size then
-               CSBind (CLWild, CECall (init_func, [ size'; init'; var' ], attrType p attr))
-            else
-               CSBind (CLWild, CEEmpty)
-         | None -> inlineArrayInit size' init' var'
-      end
+      (match getInitArrayFunction p init_typ with
+       | Some init_func ->
+          if isSmall size
+          then CSBind (CLWild, CECall (init_func, [ size'; init'; var' ], attrType p attr))
+          else CSBind (CLWild, CEEmpty)
+       | None -> inlineArrayInit size' init' var')
    (* special case to bind tuples in c/c++ It expands tuple assigns *)
    | StmtBind ((LId (_, _, _) as lhs), PTuple (elems, _), attr) when p.code = CCode ->
       let stmts =
          List.mapi
             (fun i e ->
                 let etype = (GetAttr.fromExp e).typ in
-                convertStmt p (StmtBind (getRecordField lhs i etype, e, attr)) )
+                convertStmt p (StmtBind (getRecordField lhs i etype, e, attr)))
             elems
       in
       makeSingleBlock stmts
@@ -623,12 +578,12 @@ let rec convertStmt (p : parameters) (s : stmt) : cstmt =
       CSExtFunc (convertType p ret, fname, arg_names)
    | StmtEmpty -> CSEmpty
 
-
 and convertStmtList (p : parameters) (stmts : stmt list) : cstmt list =
    let stmts_rev = List.fold_left (fun acc stmt -> convertStmt p stmt :: acc) [] stmts in
    List.rev stmts_rev
-
+;;
 
 let convert (p : parameters) (stmts : stmt list) : cstmt list =
    let cstmts = convertStmtList p stmts in
    cstmts
+;;

@@ -31,8 +31,8 @@ let processArguments () : args =
       ; ( "-javacode"
         , Arg.String
               (fun prefix ->
-                  result.code <- JavaCode ;
-                  result.prefix <- prefix )
+                  result.code <- JavaCode;
+                  result.prefix <- prefix)
         , "prefix Converts the code to java (default: off). Requires prefix to name the package. e.g. 'com.company'" )
       ; "-jscode", Arg.Unit (fun () -> result.code <- JSCode), " Converts the code to javascript (default: off)"
       ; "-luacode", Arg.Unit (fun () -> result.code <- LuaCode), " Converts the code to lua (default: off)"
@@ -78,13 +78,13 @@ let processArguments () : args =
    let _ = result.files <- List.rev result.files in
    (* Put the files in the correct order  *)
    result
-
+;;
 
 let getFile (args : args) (ext : FileKind.t) : string =
    match ext with
    | FileKind.ExtOnly e -> args.output ^ "." ^ e
    | FileKind.FullName n -> Filename.concat (Filename.dirname args.output) n
-
+;;
 
 let showResult (args : args) (output : output) =
    match output with
@@ -97,10 +97,9 @@ let showResult (args : args) (output : output) =
          (fun (text, file) ->
              let filename = getFile args file in
              let code = Pla.print text in
-             if args.force_write then
-                FileIO.write filename code |> ignore
-             else
-                FileIO.writeIfDifferent filename code |> ignore )
+             if args.force_write
+             then FileIO.write filename code |> ignore
+             else FileIO.writeIfDifferent filename code |> ignore)
          files
    | GeneratedCode files -> List.iter (fun (text, _) -> print_endline (Pla.print text)) files
    | Interpret v -> print_endline v
@@ -108,10 +107,11 @@ let showResult (args : args) (output : output) =
    | Errors errors ->
       let error_strings = Error.reportErrors errors in
       prerr_endline error_strings
-
+;;
 
 let main () =
    let args = processArguments () in
    let results = Driver.main args in
-   List.iter (showResult args) results ;
+   List.iter (showResult args) results;
    exit 0
+;;
