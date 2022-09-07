@@ -102,7 +102,7 @@ let rec print_exp e =
   | Index { e; index } ->
     let e = print_exp e in
     let index = print_exp index in
-    [%pla {|<#e#>[<#index#>]|}]
+    [%pla {|<#e#>[<#index#> + 1]|}]
   | Array l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
   | Call { path; args } ->
     let args = Pla.map_sep Pla.commaspace print_exp args in
@@ -144,7 +144,7 @@ let rec print_lexp e =
   | LIndex (e, index) ->
     let e = print_lexp e in
     let index = print_exp index in
-    [%pla {|<#e#>[<#index#>]|}]
+    [%pla {|<#e#>[<#index#> + 1]|}]
 ;;
 
 let print_dexp (e : dexp) =

@@ -26,7 +26,7 @@ end
 
 function Wav_file_ext_wave(channel, index)
    if (channel == 0) then
-      return Wav_file_ext_wave_chan_0[(index % 600)]
+      return Wav_file_ext_wave_chan_0[(index % 600) + 1]
    end
    return 0.0
 end
