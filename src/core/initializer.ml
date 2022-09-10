@@ -75,7 +75,7 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
     let rhs = { e = ECall { path = path ^ "_init"; args = [ rhs ] }; t; loc } in
     { s = StmtBind ({ l = LWild; loc; t = { t = TVoid None; loc = Loc.default } }, rhs); loc }
   | { t = TStruct { path; _ }; loc } ->
-    let rhs = { e = ECall { path = path ^ "_init"; args = [] }; t; loc } in
+    let rhs = { e = ECall { path = path ^ "_alloc"; args = [] }; t; loc } in
     { s = StmtBind (lhs, rhs); loc }
   | { t = TArray (size, subt); loc } when cstyle = RefObject ->
     let i = "i_" ^ string_of_int (getTick ()) in
@@ -129,8 +129,18 @@ let customInitializerCall (custom_initializers : string Util.Maps.Map.t) name ec
     ]
 ;;
 
-let createInitFunction custom_initializers (cstyle : cstyle) stmt =
+let initializerType (iargs : Args.args) =
+  match iargs.code with
+  | NoCode -> NewObject
+  | CppCode -> RefObject
+  | JSCode -> NewObject
+  | LuaCode -> NewObject
+  | JavaCode -> NewObject
+;;
+
+let createInitFunction custom_initializers (iargs : Args.args) stmt =
   let () = resetTick () in
+  let cstyle = initializerType iargs in
   match stmt with
   (* Generation for c-style code using references *)
   | { top = TopType struct_t; loc } when cstyle = RefObject ->
@@ -165,7 +175,7 @@ let createInitFunction custom_initializers (cstyle : cstyle) stmt =
     { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
   (* Generate initializers that return a value *)
   | { top = TopType struct_t; loc } ->
-    let name = struct_t.path ^ "_init" in
+    let name = struct_t.path ^ "_alloc" in
     let this_type = { t = TStruct struct_t; loc = Loc.default } in
     let void_type = { t = TVoid None; loc = Loc.default } in
     let lctx = { l = LId "_ctx"; t = this_type; loc } in
@@ -184,5 +194,15 @@ let createInitFunction custom_initializers (cstyle : cstyle) stmt =
     let body = { s = StmtBlock ((new_ctx :: stmts) @ custom_initializer @ [ return ]); loc } in
     let args, t = [], ([], this_type) in
     { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
-  | _ -> failwith "not a type"
+  | { top = TopAlias { path; alias_of }; loc } ->
+    let name = path ^ "_alloc" in
+    let this_type = { t = TStruct { path; members = [] }; loc = Loc.default } in
+    let void_type = { t = TVoid None; loc = Loc.default } in
+    let call = { e = ECall { path = alias_of ^ "_alloc"; args = [] }; loc; t = void_type } in
+    let body = { s = StmtReturn call; loc } in
+    let args, t = [ "_ctx", this_type, loc ], ([], this_type) in
+    { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
+  | _ ->
+    print_endline (Pla.print (Prog.Print.print_top_stmt stmt));
+    failwith "not a type"
 ;;

@@ -83,4 +83,10 @@ module Lua = struct
     ]
     |> Util.Maps.Set.of_list
   ;;
+
+  let op_to_fun (op : operator) (e1 : type_) (e2 : type_) (ret : type_) =
+    match op, e1, e2, ret with
+    | Div, Int, Int, Int -> Some "intDiv"
+    | _ -> None
+  ;;
 end

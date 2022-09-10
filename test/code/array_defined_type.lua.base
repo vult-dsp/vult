@@ -18,40 +18,49 @@ function tanh(x)            return math.tanh(x) end
 function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
+function intDiv(a, b)       return math.floor(a / b) end
 
-function Array_defined_type_dot_init(_ctx)
+function Array_defined_type_dot_alloc()
+   local _ctx = {};
    _ctx.x = 0.0
    _ctx.y = 0.0
+   return _ctx
 end
 
-function Array_defined_type_foo_type_init(_ctx)
+function Array_defined_type_foo_type_alloc()
    local i_0 = 0
+   local temp
+   local _ctx = {};
    while (i_0 < 12) do
       do
-         Array_defined_type_dot_init(_ctx.p1[i_0 + 1])
+         temp[i_0 + 1] = Array_defined_type_dot_alloc()
          i_0 = (1 + i_0)
       end
    end
+   _ctx.p1 = temp
+   return _ctx
 end
 
-function Array_defined_type_process_type_init(_ctx)
-   Array_defined_type_foo_type_init(_ctx.inst_1c76a)
+function Array_defined_type_process_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1c76a = Array_defined_type_foo_type_alloc()
+   return _ctx
 end
 
-function Array_defined_type_noteOn_type_init(_ctx)
-   Array_defined_type_process_type_init(_ctx)
+function Array_defined_type_noteOn_type_alloc(_ctx)
+   return Array_defined_type_process_type_alloc()
 end
 
-function Array_defined_type_noteOff_type_init(_ctx)
-   Array_defined_type_process_type_init(_ctx)
+function Array_defined_type_noteOff_type_alloc(_ctx)
+   return Array_defined_type_process_type_alloc()
 end
 
-function Array_defined_type_controlChange_type_init(_ctx)
-   Array_defined_type_process_type_init(_ctx)
+function Array_defined_type_controlChange_type_alloc(_ctx)
+   return Array_defined_type_process_type_alloc()
 end
 
-function Array_defined_type_default_type_init(_ctx)
-   Array_defined_type_process_type_init(_ctx)
+function Array_defined_type_default_type_alloc(_ctx)
+   return Array_defined_type_process_type_alloc()
 end
 
 function Array_defined_type_foo(_ctx)

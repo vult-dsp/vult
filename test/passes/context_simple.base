@@ -12,22 +12,26 @@ struct Context_simple_foo_type {
    inst_2e8dd : struct Context_simple_change_type;
 }
 
-fun Context_simple_change_type_init(_ctx : struct Context_simple_change_type) : void  {
+fun Context_simple_change_type_alloc() : struct Context_simple_change_type  {
+   val _ctx : struct Context_simple_change_type;
    (_ctx : struct Context_simple_change_type).pre = 0.0;
+   return (_ctx : struct Context_simple_change_type);
 }
 
-fun Context_simple_reset_type_init(_ctx : struct Context_simple_reset_type) : void  {
-   _ = (Context_simple_change_type_init((_ctx : struct Context_simple_reset_type)) : void);
+fun Context_simple_reset_type_alloc(_ctx : struct Context_simple_reset_type) : struct Context_simple_reset_type  {
+   return (Context_simple_change_type_alloc() : void);
 }
 
-fun Context_simple_set_type_init(_ctx : struct Context_simple_set_type) : void  {
-   _ = (Context_simple_change_type_init((_ctx : struct Context_simple_set_type)) : void);
+fun Context_simple_set_type_alloc(_ctx : struct Context_simple_set_type) : struct Context_simple_set_type  {
+   return (Context_simple_change_type_alloc() : void);
 }
 
-fun Context_simple_foo_type_init(_ctx : struct Context_simple_foo_type) : void  {
-   _ = (Context_simple_change_type_init((_ctx : struct Context_simple_foo_type).c_e8dd) : void);
-   _ = (Context_simple_change_type_init((_ctx : struct Context_simple_foo_type).inst_1e8dd) : void);
-   _ = (Context_simple_change_type_init((_ctx : struct Context_simple_foo_type).inst_2e8dd) : void);
+fun Context_simple_foo_type_alloc() : struct Context_simple_foo_type  {
+   val _ctx : struct Context_simple_foo_type;
+   (_ctx : struct Context_simple_foo_type).c_e8dd = (Context_simple_change_type_alloc() : struct Context_simple_change_type);
+   (_ctx : struct Context_simple_foo_type).inst_1e8dd = (Context_simple_change_type_alloc() : struct Context_simple_change_type);
+   (_ctx : struct Context_simple_foo_type).inst_2e8dd = (Context_simple_change_type_alloc() : struct Context_simple_change_type);
+   return (_ctx : struct Context_simple_foo_type);
 }
 
 fun Context_simple_change(_ctx : struct Context_simple_change_type, x : real) : bool  {

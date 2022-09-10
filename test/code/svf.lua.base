@@ -18,26 +18,37 @@ function tanh(x)            return math.tanh(x) end
 function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
+function intDiv(a, b)       return math.floor(a / b) end
 
-function Util_edge_type_init(_ctx)
+function Util_edge_type_alloc()
+   local _ctx = {};
    _ctx.pre = false
+   return _ctx
 end
 
-function Util_change_type_init(_ctx)
+function Util_change_type_alloc()
+   local _ctx = {};
    _ctx.pre_x = 0.0
+   return _ctx
 end
 
-function Util_dcblock_type_init(_ctx)
+function Util_dcblock_type_alloc()
+   local _ctx = {};
    _ctx.x1 = 0.0
    _ctx.y1 = 0.0
+   return _ctx
 end
 
-function Util_smooth_type_init(_ctx)
+function Util_smooth_type_alloc()
+   local _ctx = {};
    _ctx.x = 0.0
+   return _ctx
 end
 
-function Util_average2_type_init(_ctx)
+function Util_average2_type_alloc()
+   local _ctx = {};
    _ctx.x0 = 0.0
+   return _ctx
 end
 
 function Util_cvToPitch(cv)
@@ -70,31 +81,33 @@ function Svf_default(_ctx)
    _ctx.inv_den = (1.0 / (1.0 + ((0.0 * _ctx.g) + (_ctx.g * _ctx.g))))
 end
 
-function Svf_process_type_init(_ctx)
+function Svf_process_type_alloc()
+   local _ctx = {};
    _ctx.g = 0.0
-   Util_change_type_init(_ctx.inst_1b0a2)
-   Util_change_type_init(_ctx.inst_2b0a2)
+   _ctx.inst_1b0a2 = Util_change_type_alloc()
+   _ctx.inst_2b0a2 = Util_change_type_alloc()
    _ctx.inv_den = 0.0
    _ctx.r = 0.0
    _ctx.z1 = 0.0
    _ctx.z2 = 0.0
    Svf_default(_ctx)
+   return _ctx
 end
 
-function Svf_noteOn_type_init(_ctx)
-   Svf_process_type_init(_ctx)
+function Svf_noteOn_type_alloc(_ctx)
+   return Svf_process_type_alloc()
 end
 
-function Svf_noteOff_type_init(_ctx)
-   Svf_process_type_init(_ctx)
+function Svf_noteOff_type_alloc(_ctx)
+   return Svf_process_type_alloc()
 end
 
-function Svf_controlChange_type_init(_ctx)
-   Svf_process_type_init(_ctx)
+function Svf_controlChange_type_alloc(_ctx)
+   return Svf_process_type_alloc()
 end
 
-function Svf_default_type_init(_ctx)
-   Svf_process_type_init(_ctx)
+function Svf_default_type_alloc(_ctx)
+   return Svf_process_type_alloc()
 end
 
 function Util_edge(_ctx, x)

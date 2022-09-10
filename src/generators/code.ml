@@ -314,7 +314,7 @@ module Convert = struct
     | None -> env, None
   ;;
 
-  let getInitRHS (t : type_) =
+  let rec getInitRHS (t : type_) =
     match t with
     | Void _ -> Some { e = Unit; t }
     | Int -> Some { e = Int 0; t }
@@ -322,6 +322,12 @@ module Convert = struct
     | Fixed -> Some { e = Real 0.0; t }
     | String -> Some { e = String ""; t }
     | Bool -> Some { e = Bool false; t }
+    | Array (size, t) ->
+      (match getInitRHS t with
+      | Some elem ->
+        let elems = List.init size (fun _ -> elem) in
+        Some { e = Array elems; t }
+      | None -> None)
     | _ -> None
   ;;
 

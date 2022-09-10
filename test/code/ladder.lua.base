@@ -18,72 +18,93 @@ function tanh(x)            return math.tanh(x) end
 function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
+function intDiv(a, b)       return math.floor(a / b) end
 
-function Util_edge_type_init(_ctx)
+function Util_edge_type_alloc()
+   local _ctx = {};
    _ctx.pre = false
+   return _ctx
 end
 
-function Util_change_type_init(_ctx)
+function Util_change_type_alloc()
+   local _ctx = {};
    _ctx.pre_x = 0.0
+   return _ctx
 end
 
-function Util_dcblock_type_init(_ctx)
+function Util_dcblock_type_alloc()
+   local _ctx = {};
    _ctx.x1 = 0.0
    _ctx.y1 = 0.0
+   return _ctx
 end
 
-function Util_smooth_type_init(_ctx)
+function Util_smooth_type_alloc()
+   local _ctx = {};
    _ctx.x = 0.0
+   return _ctx
 end
 
-function Util_average2_type_init(_ctx)
+function Util_average2_type_alloc()
+   local _ctx = {};
    _ctx.x0 = 0.0
+   return _ctx
 end
 
-function Ladder_heun_type_init(_ctx)
+function Ladder_heun_type_alloc()
+   local _ctx = {};
    _ctx.p0 = 0.0
    _ctx.p1 = 0.0
    _ctx.p2 = 0.0
    _ctx.p3 = 0.0
+   return _ctx
 end
 
-function Ladder_euler_type_init(_ctx)
+function Ladder_euler_type_alloc()
+   local _ctx = {};
    _ctx.p0 = 0.0
    _ctx.p1 = 0.0
    _ctx.p2 = 0.0
    _ctx.p3 = 0.0
+   return _ctx
 end
 
-function Ladder_process_euler_type_init(_ctx)
-   Ladder_euler_type_init(_ctx.e_6899)
+function Ladder_process_euler_type_alloc()
+   local _ctx = {};
+   _ctx.e_6899 = Ladder_euler_type_alloc()
    _ctx.fh = 0.0
-   Util_change_type_init(_ctx.inst_1b099)
+   _ctx.inst_1b099 = Util_change_type_alloc()
+   return _ctx
 end
 
-function Ladder_process_heun_type_init(_ctx)
+function Ladder_process_heun_type_alloc()
+   local _ctx = {};
    _ctx.fh = 0.0
-   Ladder_heun_type_init(_ctx.h_84a0)
-   Util_change_type_init(_ctx.inst_1b0a0)
+   _ctx.h_84a0 = Ladder_heun_type_alloc()
+   _ctx.inst_1b0a0 = Util_change_type_alloc()
+   return _ctx
 end
 
-function Ladder_process_type_init(_ctx)
-   Ladder_process_heun_type_init(_ctx.inst_1a0c3)
+function Ladder_process_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1a0c3 = Ladder_process_heun_type_alloc()
+   return _ctx
 end
 
-function Ladder_noteOn_type_init(_ctx)
-   Ladder_process_type_init(_ctx)
+function Ladder_noteOn_type_alloc(_ctx)
+   return Ladder_process_type_alloc()
 end
 
-function Ladder_noteOff_type_init(_ctx)
-   Ladder_process_type_init(_ctx)
+function Ladder_noteOff_type_alloc(_ctx)
+   return Ladder_process_type_alloc()
 end
 
-function Ladder_controlChange_type_init(_ctx)
-   Ladder_process_type_init(_ctx)
+function Ladder_controlChange_type_alloc(_ctx)
+   return Ladder_process_type_alloc()
 end
 
-function Ladder_default_type_init(_ctx)
-   Ladder_process_type_init(_ctx)
+function Ladder_default_type_alloc(_ctx)
+   return Ladder_process_type_alloc()
 end
 
 function Util_edge(_ctx, x)

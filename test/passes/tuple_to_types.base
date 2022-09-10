@@ -10,16 +10,20 @@ struct Tuple_to_types_bar_type {
    Tuple_to_types_bar_ret_2 : bool;
 }
 
-fun Tuple_to_types_foo_type_init(_ctx : struct Tuple_to_types_foo_type) : void  {
+fun Tuple_to_types_foo_type_alloc() : struct Tuple_to_types_foo_type  {
+   val _ctx : struct Tuple_to_types_foo_type;
    (_ctx : struct Tuple_to_types_foo_type).Tuple_to_types_foo_ret_0 = 0;
    (_ctx : struct Tuple_to_types_foo_type).Tuple_to_types_foo_ret_1 = 0;
    (_ctx : struct Tuple_to_types_foo_type).Tuple_to_types_foo_ret_2 = 0;
+   return (_ctx : struct Tuple_to_types_foo_type);
 }
 
-fun Tuple_to_types_bar_type_init(_ctx : struct Tuple_to_types_bar_type) : void  {
+fun Tuple_to_types_bar_type_alloc() : struct Tuple_to_types_bar_type  {
+   val _ctx : struct Tuple_to_types_bar_type;
    (_ctx : struct Tuple_to_types_bar_type).Tuple_to_types_bar_ret_0 = 0.0;
    (_ctx : struct Tuple_to_types_bar_type).Tuple_to_types_bar_ret_1 = 0;
    (_ctx : struct Tuple_to_types_bar_type).Tuple_to_types_bar_ret_2 = false;
+   return (_ctx : struct Tuple_to_types_bar_type);
 }
 
 fun Tuple_to_types_foo(_ctx : struct Tuple_to_types_foo_type) : void  {

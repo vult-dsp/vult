@@ -18,45 +18,62 @@ function tanh(x)            return math.tanh(x) end
 function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
+function intDiv(a, b)       return math.floor(a / b) end
 
-function Array_return_foo3_type_init(_ctx)
+function Array_return_foo3_type_alloc()
+   local _ctx = {};
    _ctx.y = 0
+   return _ctx
 end
 
-function Array_return_foo4_type_init(_ctx)
+function Array_return_foo4_type_alloc()
+   local _ctx = {};
    _ctx.y = 0
+   return _ctx
 end
 
-function Array_return_foo5_type_init(_ctx)
+function Array_return_foo5_type_alloc()
+   local _ctx = {};
    _ctx.Array_return_foo5_ret_0 = 0
    local i_0 = 0
+   local temp = {0, 0, 0}
    while (i_0 < 3) do
       do
-         _ctx.Array_return_foo5_ret_1[i_0 + 1] = 0
+         temp[i_0 + 1] = 0
          i_0 = (1 + i_0)
       end
    end
+   _ctx.Array_return_foo5_ret_1 = temp
+   return _ctx
 end
 
-function Array_return_foo6_type_init(_ctx)
+function Array_return_foo6_type_alloc()
+   local _ctx = {};
    _ctx.Array_return_foo6_ret_0 = 0
    local i_0 = 0
+   local temp = {0, 0, 0}
    while (i_0 < 3) do
       do
-         _ctx.Array_return_foo6_ret_1[i_0 + 1] = 0
+         temp[i_0 + 1] = 0
          i_0 = (1 + i_0)
       end
    end
+   _ctx.Array_return_foo6_ret_1 = temp
+   return _ctx
 end
 
-function Array_return_s1_init(_ctx)
+function Array_return_s1_alloc()
+   local _ctx = {};
    _ctx.x = 0
    _ctx.y = 0
+   return _ctx
 end
 
-function Array_return_foo7_type_init(_ctx)
+function Array_return_foo7_type_alloc()
+   local _ctx = {};
    _ctx.Array_return_foo7_ret_0 = 0
-   Array_return_s1_init(_ctx.Array_return_foo7_ret_1)
+   _ctx.Array_return_foo7_ret_1 = Array_return_s1_alloc()
+   return _ctx
 end
 
 function Array_return_foo1()
@@ -98,7 +115,7 @@ end
 
 function Array_return_foo7(_ctx)
    local s
-   local d
+   local d = {0, 0, 0, 0}
    _ctx.Array_return_foo7_ret_0 = d[0 + 1]
    _ctx.Array_return_foo7_ret_1 = s[0 + 1]
    return 

@@ -18,46 +18,55 @@ function tanh(x)            return math.tanh(x) end
 function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
+function intDiv(a, b)       return math.floor(a / b) end
 
-function Phasedist_smooth_type_init(_ctx)
+function Phasedist_smooth_type_alloc()
+   local _ctx = {};
    _ctx.x = 0.0
+   return _ctx
 end
 
-function Phasedist_change_type_init(_ctx)
+function Phasedist_change_type_alloc()
+   local _ctx = {};
    _ctx.pre_x = 0.0
+   return _ctx
 end
 
-function Phasedist_phasor_type_init(_ctx)
-   Phasedist_change_type_init(_ctx.inst_1e817)
+function Phasedist_phasor_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1e817 = Phasedist_change_type_alloc()
    _ctx.phase = 0.0
    _ctx.rate = 0.0
+   return _ctx
 end
 
-function Phasedist_process_type_init(_ctx)
+function Phasedist_process_type_alloc()
+   local _ctx = {};
    _ctx.detune = 0.0
-   Phasedist_phasor_type_init(_ctx.inst_117e9)
-   Phasedist_smooth_type_init(_ctx.inst_275e9)
-   Phasedist_phasor_type_init(_ctx.inst_317e9)
-   Phasedist_smooth_type_init(_ctx.inst_475e9)
+   _ctx.inst_117e9 = Phasedist_phasor_type_alloc()
+   _ctx.inst_275e9 = Phasedist_smooth_type_alloc()
+   _ctx.inst_317e9 = Phasedist_phasor_type_alloc()
+   _ctx.inst_475e9 = Phasedist_smooth_type_alloc()
    _ctx.pitch = 0.0
    _ctx.pre_phase1 = 0.0
    _ctx.volume = 0.0
+   return _ctx
 end
 
-function Phasedist_noteOn_type_init(_ctx)
-   Phasedist_process_type_init(_ctx)
+function Phasedist_noteOn_type_alloc(_ctx)
+   return Phasedist_process_type_alloc()
 end
 
-function Phasedist_noteOff_type_init(_ctx)
-   Phasedist_process_type_init(_ctx)
+function Phasedist_noteOff_type_alloc(_ctx)
+   return Phasedist_process_type_alloc()
 end
 
-function Phasedist_controlChange_type_init(_ctx)
-   Phasedist_process_type_init(_ctx)
+function Phasedist_controlChange_type_alloc(_ctx)
+   return Phasedist_process_type_alloc()
 end
 
-function Phasedist_default_type_init(_ctx)
-   Phasedist_process_type_init(_ctx)
+function Phasedist_default_type_alloc(_ctx)
+   return Phasedist_process_type_alloc()
 end
 
 function Phasedist_smooth(_ctx, input)

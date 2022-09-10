@@ -347,11 +347,11 @@ module ToProg = struct
     Env.Map.fold (fun _ m s -> getInitializersFromModule s m) Map.empty env.modules
   ;;
 
-  let convert env stmts =
+  let convert (iargs : Args.args) env stmts =
     let stmts = main env stmts in
     let types, functions = List.partition isType stmts in
     let custom_initializers = createInitizerTable env in
-    let initializers = CCList.map Initializer.(createInitFunction custom_initializers RefObject) types in
+    let initializers = CCList.map Initializer.(createInitFunction custom_initializers iargs) types in
     env, types @ initializers @ functions
   ;;
 end
@@ -1009,7 +1009,7 @@ let infer_single (iargs : Args.args) (env : Env.in_top) (h : Parse.parsed_file) 
   let env, stmt = top_stmt_list iargs env h.stmts in
   let env = Env.exitModule env in
   let types = removeExistingTypes set (createTypes env) in
-  ToProg.convert env (stmt @ types)
+  ToProg.convert iargs env (stmt @ types)
 ;;
 
 let infer (iargs : Args.args) (parsed : Parse.parsed_file list) : Env.in_top * Prog.top_stmt list =
@@ -1024,5 +1024,5 @@ let infer (iargs : Args.args) (parsed : Parse.parsed_file list) : Env.in_top * P
       parsed
   in
   let types = createTypes env in
-  ToProg.convert env (types @ List.rev stmts)
+  ToProg.convert iargs env (types @ List.rev stmts)
 ;;

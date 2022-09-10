@@ -18,26 +18,37 @@ function tanh(x)            return math.tanh(x) end
 function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
+function intDiv(a, b)       return math.floor(a / b) end
 
-function Util_edge_type_init(_ctx)
+function Util_edge_type_alloc()
+   local _ctx = {};
    _ctx.pre = false
+   return _ctx
 end
 
-function Util_change_type_init(_ctx)
+function Util_change_type_alloc()
+   local _ctx = {};
    _ctx.pre_x = 0.0
+   return _ctx
 end
 
-function Util_dcblock_type_init(_ctx)
+function Util_dcblock_type_alloc()
+   local _ctx = {};
    _ctx.x1 = 0.0
    _ctx.y1 = 0.0
+   return _ctx
 end
 
-function Util_smooth_type_init(_ctx)
+function Util_smooth_type_alloc()
+   local _ctx = {};
    _ctx.x = 0.0
+   return _ctx
 end
 
-function Util_average2_type_init(_ctx)
+function Util_average2_type_alloc()
+   local _ctx = {};
    _ctx.x0 = 0.0
+   return _ctx
 end
 
 function Util_cvToPitch(cv)
@@ -88,51 +99,55 @@ function Phase_default(_ctx)
    _ctx.rate = Util_cvToRate_1024(0.0)
 end
 
-function Phase_process_type_init(_ctx)
-   Util_change_type_init(_ctx.inst_1b08a)
-   Util_edge_type_init(_ctx.inst_2048a)
+function Phase_process_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1b08a = Util_change_type_alloc()
+   _ctx.inst_2048a = Util_edge_type_alloc()
    _ctx.phase = 0.0
    _ctx.rate = 0.0
    Phase_default(_ctx)
+   return _ctx
 end
 
-function Phase_noteOn_type_init(_ctx)
-   Phase_process_type_init(_ctx)
+function Phase_noteOn_type_alloc(_ctx)
+   return Phase_process_type_alloc()
 end
 
-function Phase_noteOff_type_init(_ctx)
-   Phase_process_type_init(_ctx)
+function Phase_noteOff_type_alloc(_ctx)
+   return Phase_process_type_alloc()
 end
 
-function Phase_controlChange_type_init(_ctx)
-   Phase_process_type_init(_ctx)
+function Phase_controlChange_type_alloc(_ctx)
+   return Phase_process_type_alloc()
 end
 
-function Phase_default_type_init(_ctx)
-   Phase_process_type_init(_ctx)
+function Phase_default_type_alloc(_ctx)
+   return Phase_process_type_alloc()
 end
 
-function Phd_process_type_init(_ctx)
-   Phase_process_type_init(_ctx.inst_18aec)
-   Util_smooth_type_init(_ctx.inst_295ec)
-   Phase_process_type_init(_ctx.inst_38aec)
+function Phd_process_type_alloc()
+   local _ctx = {};
+   _ctx.inst_18aec = Phase_process_type_alloc()
+   _ctx.inst_295ec = Util_smooth_type_alloc()
+   _ctx.inst_38aec = Phase_process_type_alloc()
    _ctx.pre_phase1 = 0.0
+   return _ctx
 end
 
-function Phd_noteOn_type_init(_ctx)
-   Phd_process_type_init(_ctx)
+function Phd_noteOn_type_alloc(_ctx)
+   return Phd_process_type_alloc()
 end
 
-function Phd_noteOff_type_init(_ctx)
-   Phd_process_type_init(_ctx)
+function Phd_noteOff_type_alloc(_ctx)
+   return Phd_process_type_alloc()
 end
 
-function Phd_controlChange_type_init(_ctx)
-   Phd_process_type_init(_ctx)
+function Phd_controlChange_type_alloc(_ctx)
+   return Phd_process_type_alloc()
 end
 
-function Phd_default_type_init(_ctx)
-   Phd_process_type_init(_ctx)
+function Phd_default_type_alloc(_ctx)
+   return Phd_process_type_alloc()
 end
 
 function Util_edge(_ctx, x)

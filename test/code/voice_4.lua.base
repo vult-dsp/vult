@@ -18,26 +18,37 @@ function tanh(x)            return math.tanh(x) end
 function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
+function intDiv(a, b)       return math.floor(a / b) end
 
-function Util_edge_type_init(_ctx)
+function Util_edge_type_alloc()
+   local _ctx = {};
    _ctx.pre = false
+   return _ctx
 end
 
-function Util_change_type_init(_ctx)
+function Util_change_type_alloc()
+   local _ctx = {};
    _ctx.pre_x = 0.0
+   return _ctx
 end
 
-function Util_dcblock_type_init(_ctx)
+function Util_dcblock_type_alloc()
+   local _ctx = {};
    _ctx.x1 = 0.0
    _ctx.y1 = 0.0
+   return _ctx
 end
 
-function Util_smooth_type_init(_ctx)
+function Util_smooth_type_alloc()
+   local _ctx = {};
    _ctx.x = 0.0
+   return _ctx
 end
 
-function Util_average2_type_init(_ctx)
+function Util_average2_type_alloc()
+   local _ctx = {};
    _ctx.x0 = 0.0
+   return _ctx
 end
 
 function Util_cvToPitch(cv)
@@ -88,32 +99,34 @@ function Tricore_default(_ctx)
    _ctx.rate = Util_cvToRate_1024(0.0)
 end
 
-function Tricore_process_type_init(_ctx)
+function Tricore_process_type_alloc()
+   local _ctx = {};
    _ctx.direction = false
-   Util_change_type_init(_ctx.inst_1b03c)
-   Util_edge_type_init(_ctx.inst_2043c)
-   Util_edge_type_init(_ctx.inst_3043c)
+   _ctx.inst_1b03c = Util_change_type_alloc()
+   _ctx.inst_2043c = Util_edge_type_alloc()
+   _ctx.inst_3043c = Util_edge_type_alloc()
    _ctx.phase = 0.0
    _ctx.rate = 0.0
    _ctx.reset_phase = 0.0
    _ctx.reset_state = false
    Tricore_default(_ctx)
+   return _ctx
 end
 
-function Tricore_noteOn_type_init(_ctx)
-   Tricore_process_type_init(_ctx)
+function Tricore_noteOn_type_alloc(_ctx)
+   return Tricore_process_type_alloc()
 end
 
-function Tricore_noteOff_type_init(_ctx)
-   Tricore_process_type_init(_ctx)
+function Tricore_noteOff_type_alloc(_ctx)
+   return Tricore_process_type_alloc()
 end
 
-function Tricore_controlChange_type_init(_ctx)
-   Tricore_process_type_init(_ctx)
+function Tricore_controlChange_type_alloc(_ctx)
+   return Tricore_process_type_alloc()
 end
 
-function Tricore_default_type_init(_ctx)
-   Tricore_process_type_init(_ctx)
+function Tricore_default_type_alloc(_ctx)
+   return Tricore_process_type_alloc()
 end
 
 local Svf_calc_g_c0 = {0.0023297121342, 0.0023298546088, 0.00233045116184, 0.00233185902529, 0.00233448558328, 0.00233879327177, 0.002345304882, 0.00235460929788, 0.00236736769964, 0.00238432026832, 0.0024062934282, 0.00243420766662, 0.00246908597383, 0.00251206294812, 0.00256439461487, 0.0026274690116, 0.00270281759463, 0.0027921275271, 0.00289725491211, 0.00302023903941, 0.00316331771902, 0.00332894378015, 0.00351980281965, 0.00373883229049, 0.00398924202665, 0.00427453630885, 0.00459853758246, 0.00496541194778, 0.00537969655148, 0.00584632901835, 0.00637067907278, 0.00695858251149, 0.00761637770123, 0.00835094479047, 0.0091697478379, 0.0100808800789, 0.01109311257, 0.012215946471, 0.0134596692489, 0.0148354151134, 0.0163552300223, 0.0180321416276, 0.0198802345697, 0.0219147315697, 0.0241520808116, 0.026610050165, 0.0293078288557, 0.0322661372583, 0.0355073455667, 0.0390556021866, 0.0429369727944, 0.0471795911305, 0.0518138227271, 0.0568724429334, 0.0623908307782, 0.0684071804325, 0.0749627322737, 0.0821020258488, 0.089873177371, 0.0983281847726, 0.107523263815, 0.117519219289, 0.128381855984, 0.140182434846, 0.152998180665, 0.166912848631, 0.1820173584, 0.198410505705, 0.216199763382, 0.235502185663, 0.256445432114, 0.279168930516, 0.303825201493, 0.330581371897, 0.359620909008, 0.391145613649, 0.42537791759, 0.462563539497, 0.502974564207, 0.546913023138, 0.594715069362, 0.646755860013, 0.703455282261, 0.765284687952, 0.832774837668, 0.906525298981, 0.987215598463, 1.07561849547, 1.17261583119, 1.27921751453, 1.39658434271, 1.52605552809, 1.66918202462, 1.82776703248, 2.00391542848, 2.20009434958, 2.41920778533, 2.66468886346, 2.94061461258, 3.25184945632, 3.60422567626, 4.00477177378, 4.46200335415, 4.98629626309, 5.59036884092, 6.28991022627, 7.10440600519, 8.05823323524, 9.18212717576, 10.5151669414, 12.1074947413, 14.0240862918, 16.3500497117, 19.1981825996, 22.7199237716, 27.1215060427, 32.6882461095, 39.8218629632, 49.0992002894, 61.3671397371, 77.9007261639, 100.67584908, 132.858501577, 179.724088962, 250.481346732, 362.134626616, 548.340291029, 881.845213708}
@@ -142,89 +155,97 @@ function Svf_default(_ctx)
    _ctx.inv_den = (1.0 / (1.0 + ((0.0 * _ctx.g) + (_ctx.g * _ctx.g))))
 end
 
-function Svf_process_type_init(_ctx)
+function Svf_process_type_alloc()
+   local _ctx = {};
    _ctx.g = 0.0
-   Util_change_type_init(_ctx.inst_1b0a2)
-   Util_change_type_init(_ctx.inst_2b0a2)
+   _ctx.inst_1b0a2 = Util_change_type_alloc()
+   _ctx.inst_2b0a2 = Util_change_type_alloc()
    _ctx.inv_den = 0.0
    _ctx.r = 0.0
    _ctx.z1 = 0.0
    _ctx.z2 = 0.0
    Svf_default(_ctx)
+   return _ctx
 end
 
-function Svf_noteOn_type_init(_ctx)
-   Svf_process_type_init(_ctx)
+function Svf_noteOn_type_alloc(_ctx)
+   return Svf_process_type_alloc()
 end
 
-function Svf_noteOff_type_init(_ctx)
-   Svf_process_type_init(_ctx)
+function Svf_noteOff_type_alloc(_ctx)
+   return Svf_process_type_alloc()
 end
 
-function Svf_controlChange_type_init(_ctx)
-   Svf_process_type_init(_ctx)
+function Svf_controlChange_type_alloc(_ctx)
+   return Svf_process_type_alloc()
 end
 
-function Svf_default_type_init(_ctx)
-   Svf_process_type_init(_ctx)
+function Svf_default_type_alloc(_ctx)
+   return Svf_process_type_alloc()
 end
 
-function Lfo_soft_type_init(_ctx)
+function Lfo_soft_type_alloc()
+   local _ctx = {};
    _ctx.x2 = 0.0
    _ctx.x3 = 0.0
    _ctx.x4 = 0.0
+   return _ctx
 end
 
-function Lfo_process_type_init(_ctx)
-   Util_change_type_init(_ctx.inst_1b0d6)
-   Util_edge_type_init(_ctx.inst_204d6)
-   Lfo_soft_type_init(_ctx.inst_337d6)
+function Lfo_process_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1b0d6 = Util_change_type_alloc()
+   _ctx.inst_204d6 = Util_edge_type_alloc()
+   _ctx.inst_337d6 = Lfo_soft_type_alloc()
    _ctx.phase = 0.0
    _ctx.rate = 0.0
+   return _ctx
 end
 
-function Lfo_noteOn_type_init(_ctx)
-   Lfo_process_type_init(_ctx)
+function Lfo_noteOn_type_alloc(_ctx)
+   return Lfo_process_type_alloc()
 end
 
-function Lfo_noteOff_type_init(_ctx)
-   Lfo_process_type_init(_ctx)
+function Lfo_noteOff_type_alloc(_ctx)
+   return Lfo_process_type_alloc()
 end
 
-function Lfo_controlChange_type_init(_ctx)
-   Lfo_process_type_init(_ctx)
+function Lfo_controlChange_type_alloc(_ctx)
+   return Lfo_process_type_alloc()
 end
 
-function Lfo_default_type_init(_ctx)
-   Lfo_process_type_init(_ctx)
+function Lfo_default_type_alloc(_ctx)
+   return Lfo_process_type_alloc()
 end
 
 function Phase_default(_ctx)
    _ctx.rate = Util_cvToRate_1024(0.0)
 end
 
-function Phase_process_type_init(_ctx)
-   Util_change_type_init(_ctx.inst_1b08a)
-   Util_edge_type_init(_ctx.inst_2048a)
+function Phase_process_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1b08a = Util_change_type_alloc()
+   _ctx.inst_2048a = Util_edge_type_alloc()
    _ctx.phase = 0.0
    _ctx.rate = 0.0
    Phase_default(_ctx)
+   return _ctx
 end
 
-function Phase_noteOn_type_init(_ctx)
-   Phase_process_type_init(_ctx)
+function Phase_noteOn_type_alloc(_ctx)
+   return Phase_process_type_alloc()
 end
 
-function Phase_noteOff_type_init(_ctx)
-   Phase_process_type_init(_ctx)
+function Phase_noteOff_type_alloc(_ctx)
+   return Phase_process_type_alloc()
 end
 
-function Phase_controlChange_type_init(_ctx)
-   Phase_process_type_init(_ctx)
+function Phase_controlChange_type_alloc(_ctx)
+   return Phase_process_type_alloc()
 end
 
-function Phase_default_type_init(_ctx)
-   Phase_process_type_init(_ctx)
+function Phase_default_type_alloc(_ctx)
+   return Phase_process_type_alloc()
 end
 
 local Util_cvToperiod_c0 = {674.246034776, 671.553837727, 662.76178188, 646.759521901, 623.799427712, 594.871801992, 561.298276875, 524.476942143, 485.731369226, 446.229382316, 406.94744034, 368.66377436, 331.968683025, 297.284155733, 264.887666444, 234.936856737, 207.493124397, 182.543015866, 160.016906779, 139.804831794, 121.769556579, 105.757116937, 91.6051155071, 79.149088394, 68.2272489259, 58.6838945702, 50.371733558, 43.1533549488, 36.902032908, 31.5020247862, 26.8484942477, 22.8471656705}
@@ -252,15 +273,17 @@ function Blit_pulse_start(_ctx)
    _ctx.scale = (1.0 + (2.0 * Util_cvToperiod(0.0)))
 end
 
-function Blit_pulse_train_type_init(_ctx)
-   Util_change_type_init(_ctx.inst_1b05e)
+function Blit_pulse_train_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1b05e = Util_change_type_alloc()
    _ctx.m = 0
    _ctx.scale = 0.0
    Blit_pulse_start(_ctx)
+   return _ctx
 end
 
-function Blit_pulse_start_type_init(_ctx)
-   Blit_pulse_train_type_init(_ctx)
+function Blit_pulse_start_type_alloc(_ctx)
+   return Blit_pulse_train_type_alloc()
 end
 
 local Util_pitchToRate_c0 = {0.000185392265661, 0.000186841696863, 0.000194031746239, 0.000214281806506, 0.000259450322956, 0.000348083774875, 0.000508447945051, 0.000782773105451, 0.00123316212646, 0.00194976767106, 0.00306205460394, 0.00475424373427, 0.00728640569345, 0.0110231689734, 0.0164726631615, 0.0243391887578, 0.0355942562944, 0.051572158484, 0.0740982459703, 0.105660721961, 0.149640252396, 0.210616266065, 0.294774832442, 0.410450896252, 0.568847994058, 0.784992130715, 1.07899423137, 1.47771878098, 2.01698657427, 2.74447907743, 3.72356354416, 5.03832536402}
@@ -307,90 +330,99 @@ function Blit_init(_ctx)
    _ctx.rate = Util_cvToRate(0.0)
 end
 
-function Blit_osc_blit_type_init(_ctx)
-   Util_change_type_init(_ctx.inst_1b026)
-   Phase_process_type_init(_ctx.inst_28a26)
-   Blit_pulse_train_type_init(_ctx.inst_35e26)
-   Blit_pulse_train_type_init(_ctx.inst_45e26)
-   Util_dcblock_type_init(_ctx.inst_56426)
+function Blit_osc_blit_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1b026 = Util_change_type_alloc()
+   _ctx.inst_28a26 = Phase_process_type_alloc()
+   _ctx.inst_35e26 = Blit_pulse_train_type_alloc()
+   _ctx.inst_45e26 = Blit_pulse_train_type_alloc()
+   _ctx.inst_56426 = Util_dcblock_type_alloc()
    _ctx.output = 0.0
    _ctx.rate = 0.0
    _ctx.state_pulse = 0.0
    _ctx.state_saw = 0.0
    Blit_init(_ctx)
+   return _ctx
 end
 
-function Blit_init_type_init(_ctx)
-   Blit_osc_blit_type_init(_ctx)
+function Blit_init_type_alloc(_ctx)
+   return Blit_osc_blit_type_alloc()
 end
 
-function Blit_process_type_init(_ctx)
-   Blit_osc_blit_type_init(_ctx.inst_1268b)
+function Blit_process_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1268b = Blit_osc_blit_type_alloc()
+   return _ctx
 end
 
-function Blit_noteOn_type_init(_ctx)
-   Blit_process_type_init(_ctx)
+function Blit_noteOn_type_alloc(_ctx)
+   return Blit_process_type_alloc()
 end
 
-function Blit_noteOff_type_init(_ctx)
-   Blit_process_type_init(_ctx)
+function Blit_noteOff_type_alloc(_ctx)
+   return Blit_process_type_alloc()
 end
 
-function Blit_controlChange_type_init(_ctx)
-   Blit_process_type_init(_ctx)
+function Blit_controlChange_type_alloc(_ctx)
+   return Blit_process_type_alloc()
 end
 
-function Blit_default_type_init(_ctx)
-   Blit_process_type_init(_ctx)
+function Blit_default_type_alloc(_ctx)
+   return Blit_process_type_alloc()
 end
 
-function Adsr_do_type_init(_ctx)
-   Util_edge_type_init(_ctx.inst_104a0)
-   Util_smooth_type_init(_ctx.inst_295a0)
+function Adsr_do_type_alloc()
+   local _ctx = {};
+   _ctx.inst_104a0 = Util_edge_type_alloc()
+   _ctx.inst_295a0 = Util_smooth_type_alloc()
    _ctx.out = 0.0
    _ctx.rate = 0.0
    _ctx.scale = 0.0
    _ctx.state = 0
    _ctx.target = 0.0
+   return _ctx
 end
 
-function Adsr_process_type_init(_ctx)
-   Adsr_do_type_init(_ctx.inst_1a025)
+function Adsr_process_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1a025 = Adsr_do_type_alloc()
    _ctx.knob1 = 0.0
    _ctx.knob2 = 0.0
    _ctx.knob3 = 0.0
    _ctx.knob4 = 0.0
+   return _ctx
 end
 
-function Adsr_noteOn_type_init(_ctx)
-   Adsr_process_type_init(_ctx)
+function Adsr_noteOn_type_alloc(_ctx)
+   return Adsr_process_type_alloc()
 end
 
-function Adsr_noteOff_type_init(_ctx)
-   Adsr_process_type_init(_ctx)
+function Adsr_noteOff_type_alloc(_ctx)
+   return Adsr_process_type_alloc()
 end
 
-function Adsr_controlChange_type_init(_ctx)
-   Adsr_process_type_init(_ctx)
+function Adsr_controlChange_type_alloc(_ctx)
+   return Adsr_process_type_alloc()
 end
 
-function Adsr_default_type_init(_ctx)
-   Adsr_process_type_init(_ctx)
+function Adsr_default_type_alloc(_ctx)
+   return Adsr_process_type_alloc()
 end
 
-function Voice_4_process_type_init(_ctx)
+function Voice_4_process_type_alloc()
+   local _ctx = {};
    _ctx.attack = 0.0
    _ctx.decay = 0.0
    _ctx.flt_cut = 0.0
    _ctx.flt_res = 0.0
    _ctx.flt_shape = 0
-   Lfo_process_type_init(_ctx.inst_1d695)
-   Blit_process_type_init(_ctx.inst_28b95)
-   Blit_process_type_init(_ctx.inst_38b95)
-   Blit_process_type_init(_ctx.inst_48b95)
-   Tricore_process_type_init(_ctx.inst_53c95)
-   Svf_process_type_init(_ctx.inst_6a295)
-   Adsr_do_type_init(_ctx.inst_7a095)
+   _ctx.inst_1d695 = Lfo_process_type_alloc()
+   _ctx.inst_28b95 = Blit_process_type_alloc()
+   _ctx.inst_38b95 = Blit_process_type_alloc()
+   _ctx.inst_48b95 = Blit_process_type_alloc()
+   _ctx.inst_53c95 = Tricore_process_type_alloc()
+   _ctx.inst_6a295 = Svf_process_type_alloc()
+   _ctx.inst_7a095 = Adsr_do_type_alloc()
    _ctx.level1 = 0.0
    _ctx.level2 = 0.0
    _ctx.level3 = 0.0
@@ -407,22 +439,23 @@ function Voice_4_process_type_init(_ctx)
    _ctx.pw4 = 0.0
    _ctx.release = 0.0
    _ctx.sustain = 0.0
+   return _ctx
 end
 
-function Voice_4_noteOn_type_init(_ctx)
-   Voice_4_process_type_init(_ctx)
+function Voice_4_noteOn_type_alloc(_ctx)
+   return Voice_4_process_type_alloc()
 end
 
-function Voice_4_noteOff_type_init(_ctx)
-   Voice_4_process_type_init(_ctx)
+function Voice_4_noteOff_type_alloc(_ctx)
+   return Voice_4_process_type_alloc()
 end
 
-function Voice_4_controlChange_type_init(_ctx)
-   Voice_4_process_type_init(_ctx)
+function Voice_4_controlChange_type_alloc(_ctx)
+   return Voice_4_process_type_alloc()
 end
 
-function Voice_4_default_type_init(_ctx)
-   Voice_4_process_type_init(_ctx)
+function Voice_4_default_type_alloc(_ctx)
+   return Voice_4_process_type_alloc()
 end
 
 function Util_edge(_ctx, x)
@@ -1003,7 +1036,7 @@ function Voice_4_controlChange(_ctx, control, value, channel)
       _ctx.flt_res = (0.00787401574803 * real(value))
    end
    if (control == 46) then
-      _ctx.flt_shape = ((4 * value) / 127)
+      _ctx.flt_shape = intDiv((4 * value), 127)
    end
    if (control == 47) then
       _ctx.attack = (0.00787401574803 * real(value))

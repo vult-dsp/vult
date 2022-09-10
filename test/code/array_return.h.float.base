@@ -108,7 +108,7 @@ static_inline void Array_return_foo6(Array_return_foo6_type& _ctx) {
 
 static_inline void Array_return_foo7(Array_return_foo7_type& _ctx) {
    std::array<Array_return_s1, 4> s;
-   std::array<int32_t, 4> d;
+   std::array<int32_t, 4> d = { 0, 0, 0, 0 };
    _ctx.Array_return_foo7_ret_0 = d[static_cast<uint32_t>(0)];
    _ctx.Array_return_foo7_ret_1 = s[static_cast<uint32_t>(0)];
    return ;

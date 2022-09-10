@@ -18,39 +18,48 @@ function tanh(x)            return math.tanh(x) end
 function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
+function intDiv(a, b)       return math.floor(a / b) end
 
-function Defined_types_dot_init(_ctx)
+function Defined_types_dot_alloc()
+   local _ctx = {};
    _ctx.x = 0.0
    _ctx.y = 0.0
+   return _ctx
 end
 
-function Defined_types_foo_type_init(_ctx)
-   Defined_types_dot_init(_ctx.p1)
+function Defined_types_foo_type_alloc()
+   local _ctx = {};
+   _ctx.p1 = Defined_types_dot_alloc()
+   return _ctx
 end
 
-function Defined_types_process_type_init(_ctx)
-   Defined_types_foo_type_init(_ctx.inst_1a5d1)
+function Defined_types_process_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1a5d1 = Defined_types_foo_type_alloc()
+   return _ctx
 end
 
-function Defined_types_noteOn_type_init(_ctx)
-   Defined_types_process_type_init(_ctx)
+function Defined_types_noteOn_type_alloc(_ctx)
+   return Defined_types_process_type_alloc()
 end
 
-function Defined_types_noteOff_type_init(_ctx)
-   Defined_types_process_type_init(_ctx)
+function Defined_types_noteOff_type_alloc(_ctx)
+   return Defined_types_process_type_alloc()
 end
 
-function Defined_types_controlChange_type_init(_ctx)
-   Defined_types_process_type_init(_ctx)
+function Defined_types_controlChange_type_alloc(_ctx)
+   return Defined_types_process_type_alloc()
 end
 
-function Defined_types_default_type_init(_ctx)
-   Defined_types_process_type_init(_ctx)
+function Defined_types_default_type_alloc(_ctx)
+   return Defined_types_process_type_alloc()
 end
 
-function Defined_types_micro_init(_ctx)
-   Defined_types_dot_init(_ctx.dot_0)
-   Defined_types_dot_init(_ctx.dot_1)
+function Defined_types_micro_alloc()
+   local _ctx = {};
+   _ctx.dot_0 = Defined_types_dot_alloc()
+   _ctx.dot_1 = Defined_types_dot_alloc()
+   return _ctx
 end
 
 function Defined_types_foo(_ctx)

@@ -18,26 +18,37 @@ function tanh(x)            return math.tanh(x) end
 function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
+function intDiv(a, b)       return math.floor(a / b) end
 
-function Util_edge_type_init(_ctx)
+function Util_edge_type_alloc()
+   local _ctx = {};
    _ctx.pre = false
+   return _ctx
 end
 
-function Util_change_type_init(_ctx)
+function Util_change_type_alloc()
+   local _ctx = {};
    _ctx.pre_x = 0.0
+   return _ctx
 end
 
-function Util_dcblock_type_init(_ctx)
+function Util_dcblock_type_alloc()
+   local _ctx = {};
    _ctx.x1 = 0.0
    _ctx.y1 = 0.0
+   return _ctx
 end
 
-function Util_smooth_type_init(_ctx)
+function Util_smooth_type_alloc()
+   local _ctx = {};
    _ctx.x = 0.0
+   return _ctx
 end
 
-function Util_average2_type_init(_ctx)
+function Util_average2_type_alloc()
+   local _ctx = {};
    _ctx.x0 = 0.0
+   return _ctx
 end
 
 function Util_cvToPitch(cv)
@@ -88,32 +99,34 @@ function Tricore_default(_ctx)
    _ctx.rate = Util_cvToRate_1024(0.0)
 end
 
-function Tricore_process_type_init(_ctx)
+function Tricore_process_type_alloc()
+   local _ctx = {};
    _ctx.direction = false
-   Util_change_type_init(_ctx.inst_1b03c)
-   Util_edge_type_init(_ctx.inst_2043c)
-   Util_edge_type_init(_ctx.inst_3043c)
+   _ctx.inst_1b03c = Util_change_type_alloc()
+   _ctx.inst_2043c = Util_edge_type_alloc()
+   _ctx.inst_3043c = Util_edge_type_alloc()
    _ctx.phase = 0.0
    _ctx.rate = 0.0
    _ctx.reset_phase = 0.0
    _ctx.reset_state = false
    Tricore_default(_ctx)
+   return _ctx
 end
 
-function Tricore_noteOn_type_init(_ctx)
-   Tricore_process_type_init(_ctx)
+function Tricore_noteOn_type_alloc(_ctx)
+   return Tricore_process_type_alloc()
 end
 
-function Tricore_noteOff_type_init(_ctx)
-   Tricore_process_type_init(_ctx)
+function Tricore_noteOff_type_alloc(_ctx)
+   return Tricore_process_type_alloc()
 end
 
-function Tricore_controlChange_type_init(_ctx)
-   Tricore_process_type_init(_ctx)
+function Tricore_controlChange_type_alloc(_ctx)
+   return Tricore_process_type_alloc()
 end
 
-function Tricore_default_type_init(_ctx)
-   Tricore_process_type_init(_ctx)
+function Tricore_default_type_alloc(_ctx)
+   return Tricore_process_type_alloc()
 end
 
 function Util_edge(_ctx, x)

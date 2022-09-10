@@ -18,44 +18,58 @@ function tanh(x)            return math.tanh(x) end
 function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
+function intDiv(a, b)       return math.floor(a / b) end
 
-function Synth1_smooth_type_init(_ctx)
+function Synth1_smooth_type_alloc()
+   local _ctx = {};
    _ctx.x = 0.0
+   return _ctx
 end
 
-function Synth1_change_type_init(_ctx)
+function Synth1_change_type_alloc()
+   local _ctx = {};
    _ctx.pre_x = 0.0
+   return _ctx
 end
 
-function Synth1_edge_type_init(_ctx)
+function Synth1_edge_type_alloc()
+   local _ctx = {};
    _ctx.pre_x = 0
+   return _ctx
 end
 
-function Synth1_each_type_init(_ctx)
+function Synth1_each_type_alloc()
+   local _ctx = {};
    _ctx.count = 0
+   return _ctx
 end
 
-function Synth1_phasor_type_init(_ctx)
-   Synth1_change_type_init(_ctx.inst_1be86)
+function Synth1_phasor_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1be86 = Synth1_change_type_alloc()
    _ctx.phase = 0.0
    _ctx.rate = 0.0
+   return _ctx
 end
 
-function Synth1_lfo_type_init(_ctx)
-   Synth1_edge_type_init(_ctx.inst_11e7d)
+function Synth1_lfo_type_alloc()
+   local _ctx = {};
+   _ctx.inst_11e7d = Synth1_edge_type_alloc()
    _ctx.phase = 0.0
+   return _ctx
 end
 
-function Synth1_process_type_init(_ctx)
+function Synth1_process_type_alloc()
+   local _ctx = {};
    _ctx.count = 0
    _ctx.detune = 0.0
    _ctx.gate = 0
-   Synth1_lfo_type_init(_ctx.inst_17d3d)
-   Synth1_phasor_type_init(_ctx.inst_2863d)
-   Synth1_smooth_type_init(_ctx.inst_3dc3d)
-   Synth1_phasor_type_init(_ctx.inst_4863d)
-   Synth1_smooth_type_init(_ctx.inst_5dc3d)
-   Synth1_smooth_type_init(_ctx.inst_6dc3d)
+   _ctx.inst_17d3d = Synth1_lfo_type_alloc()
+   _ctx.inst_2863d = Synth1_phasor_type_alloc()
+   _ctx.inst_3dc3d = Synth1_smooth_type_alloc()
+   _ctx.inst_4863d = Synth1_phasor_type_alloc()
+   _ctx.inst_5dc3d = Synth1_smooth_type_alloc()
+   _ctx.inst_6dc3d = Synth1_smooth_type_alloc()
    _ctx.lfo_amt = 0.0
    _ctx.lfo_rate = 0.0
    _ctx.n1 = 0
@@ -65,22 +79,23 @@ function Synth1_process_type_init(_ctx)
    _ctx.pitch = 0.0
    _ctx.pre_phase1 = 0.0
    _ctx.volume = 0.0
+   return _ctx
 end
 
-function Synth1_noteOn_type_init(_ctx)
-   Synth1_process_type_init(_ctx)
+function Synth1_noteOn_type_alloc(_ctx)
+   return Synth1_process_type_alloc()
 end
 
-function Synth1_noteOff_type_init(_ctx)
-   Synth1_process_type_init(_ctx)
+function Synth1_noteOff_type_alloc(_ctx)
+   return Synth1_process_type_alloc()
 end
 
-function Synth1_controlChange_type_init(_ctx)
-   Synth1_process_type_init(_ctx)
+function Synth1_controlChange_type_alloc(_ctx)
+   return Synth1_process_type_alloc()
 end
 
-function Synth1_default_type_init(_ctx)
-   Synth1_process_type_init(_ctx)
+function Synth1_default_type_alloc(_ctx)
+   return Synth1_process_type_alloc()
 end
 
 function Synth1_smooth(_ctx, input)

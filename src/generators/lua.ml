@@ -46,6 +46,7 @@ function tanh(x)            return math.tanh(x) end
 function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
+function intDiv(a, b)       return math.floor(a / b) end
 
 |}]
 ;;
@@ -112,10 +113,13 @@ let rec print_exp e =
     let op = uoperator op in
     [%pla {|(<#op#><#e#>)|}]
   | Op (op, e1, e2) ->
-    let e1 = print_exp e1 in
-    let op = operator op in
-    let e2 = print_exp e2 in
-    [%pla {|(<#e1#> <#op#> <#e2#>)|}]
+    let se1 = print_exp e1 in
+    let se2 = print_exp e2 in
+    (match Replacements.Lua.op_to_fun op e1.t e2.t e.t with
+    | Some path -> [%pla {|<#path#s>(<#se1#>, <#se2#>)|}]
+    | None ->
+      let op = operator op in
+      [%pla {|(<#se1#> <#op#> <#se2#>)|}])
   | If { cond; then_; else_ } when isValueOrIf then_ && isValueOrIf else_ ->
     let cond = print_exp cond in
     let then_ = print_exp then_ in
@@ -160,9 +164,9 @@ let print_dexp (e : dexp) =
 let rec print_stmt s =
   match s with
   (* needs allocation *)
-  | StmtDecl (({ t = Struct { path; _ }; _ } as lhs), None) ->
+  | StmtDecl (({ t = Struct _; _ } as lhs), None) ->
     let lhs = print_dexp lhs in
-    [%pla {|local <#lhs#> = {}<#><#path#s>_init(<#lhs#>);|}]
+    [%pla {|local <#lhs#> = {};|}]
   | StmtDecl (lhs, None) ->
     let lhs = print_dexp lhs in
     [%pla {|local <#lhs#>|}]

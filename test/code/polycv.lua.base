@@ -18,29 +18,41 @@ function tanh(x)            return math.tanh(x) end
 function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
+function intDiv(a, b)       return math.floor(a / b) end
 
-function Util_edge_type_init(_ctx)
+function Util_edge_type_alloc()
+   local _ctx = {};
    _ctx.pre = false
+   return _ctx
 end
 
-function Util_change_type_init(_ctx)
+function Util_change_type_alloc()
+   local _ctx = {};
    _ctx.pre_x = 0.0
+   return _ctx
 end
 
-function Util_dcblock_type_init(_ctx)
+function Util_dcblock_type_alloc()
+   local _ctx = {};
    _ctx.x1 = 0.0
    _ctx.y1 = 0.0
+   return _ctx
 end
 
-function Util_smooth_type_init(_ctx)
+function Util_smooth_type_alloc()
+   local _ctx = {};
    _ctx.x = 0.0
+   return _ctx
 end
 
-function Util_average2_type_init(_ctx)
+function Util_average2_type_alloc()
+   local _ctx = {};
    _ctx.x0 = 0.0
+   return _ctx
 end
 
-function Polycv_poly_noteOn_type_init(_ctx)
+function Polycv_poly_noteOn_type_alloc()
+   local _ctx = {};
    _ctx.Polycv_polyState_ret_0 = 0.0
    _ctx.Polycv_polyState_ret_1 = 0.0
    _ctx.Polycv_polyState_ret_10 = 0.0
@@ -54,30 +66,36 @@ function Polycv_poly_noteOn_type_init(_ctx)
    _ctx.Polycv_polyState_ret_8 = 0.0
    _ctx.Polycv_polyState_ret_9 = 0.0
    local i_0 = 0
+   local temp = {0, 0, 0, 0}
    while (i_0 < 4) do
       do
-         _ctx.notes[i_0 + 1] = 0
+         temp[i_0 + 1] = 0
          i_0 = (1 + i_0)
       end
    end
+   _ctx.notes = temp
    local i_1 = 0
+   local temp = {0, 0, 0, 0}
    while (i_1 < 4) do
       do
-         _ctx.vel[i_1 + 1] = 0
+         temp[i_1 + 1] = 0
          i_1 = (1 + i_1)
       end
    end
+   _ctx.vel = temp
+   return _ctx
 end
 
-function Polycv_poly_noteOff_type_init(_ctx)
-   Polycv_poly_noteOn_type_init(_ctx)
+function Polycv_poly_noteOff_type_alloc(_ctx)
+   return Polycv_poly_noteOn_type_alloc()
 end
 
-function Polycv_polyState_type_init(_ctx)
-   Polycv_poly_noteOn_type_init(_ctx)
+function Polycv_polyState_type_alloc(_ctx)
+   return Polycv_poly_noteOn_type_alloc()
 end
 
-function Polycv_process_type_init(_ctx)
+function Polycv_process_type_alloc()
+   local _ctx = {};
    _ctx.Polycv_process_ret_0 = 0.0
    _ctx.Polycv_process_ret_1 = 0.0
    _ctx.Polycv_process_ret_10 = 0.0
@@ -91,23 +109,24 @@ function Polycv_process_type_init(_ctx)
    _ctx.Polycv_process_ret_8 = 0.0
    _ctx.Polycv_process_ret_9 = 0.0
    _ctx.channel_in = 0
-   Polycv_poly_noteOn_type_init(_ctx.poly_a0e8)
+   _ctx.poly_a0e8 = Polycv_poly_noteOn_type_alloc()
+   return _ctx
 end
 
-function Polycv_noteOn_type_init(_ctx)
-   Polycv_process_type_init(_ctx)
+function Polycv_noteOn_type_alloc(_ctx)
+   return Polycv_process_type_alloc()
 end
 
-function Polycv_noteOff_type_init(_ctx)
-   Polycv_process_type_init(_ctx)
+function Polycv_noteOff_type_alloc(_ctx)
+   return Polycv_process_type_alloc()
 end
 
-function Polycv_controlChange_type_init(_ctx)
-   Polycv_process_type_init(_ctx)
+function Polycv_controlChange_type_alloc(_ctx)
+   return Polycv_process_type_alloc()
 end
 
-function Polycv_default_type_init(_ctx)
-   Polycv_process_type_init(_ctx)
+function Polycv_default_type_alloc(_ctx)
+   return Polycv_process_type_alloc()
 end
 
 function Util_edge(_ctx, x)

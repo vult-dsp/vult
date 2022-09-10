@@ -18,39 +18,55 @@ function tanh(x)            return math.tanh(x) end
 function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
+function intDiv(a, b)       return math.floor(a / b) end
 
-function Synth2_change_type_init(_ctx)
+function Synth2_change_type_alloc()
+   local _ctx = {};
    _ctx.pre_x = 0.0
+   return _ctx
 end
 
-function Synth2_bchange_type_init(_ctx)
+function Synth2_bchange_type_alloc()
+   local _ctx = {};
    _ctx.pre_x = false
+   return _ctx
 end
 
-function Synth2_edge_type_init(_ctx)
+function Synth2_edge_type_alloc()
+   local _ctx = {};
    _ctx.pre_x = false
+   return _ctx
 end
 
-function Synth2_each_type_init(_ctx)
+function Synth2_each_type_alloc()
+   local _ctx = {};
    _ctx.count = 0
+   return _ctx
 end
 
-function Synth2_dcblock_type_init(_ctx)
+function Synth2_dcblock_type_alloc()
+   local _ctx = {};
    _ctx.x1 = 0.0
    _ctx.y1 = 0.0
+   return _ctx
 end
 
-function Synth2_smooth_type_init(_ctx)
+function Synth2_smooth_type_alloc()
+   local _ctx = {};
    _ctx.x = 0.0
+   return _ctx
 end
 
-function Synth2_lpfilter_type_init(_ctx)
+function Synth2_lpfilter_type_alloc()
+   local _ctx = {};
    _ctx.pre_x = 0.0
+   return _ctx
 end
 
-function Synth2_osc_type_init(_ctx)
-   Synth2_change_type_init(_ctx.inst_177e5)
-   Synth2_dcblock_type_init(_ctx.inst_24fe5)
+function Synth2_osc_type_alloc()
+   local _ctx = {};
+   _ctx.inst_177e5 = Synth2_change_type_alloc()
+   _ctx.inst_24fe5 = Synth2_dcblock_type_alloc()
    _ctx.m = 0.0
    _ctx.output = 0.0
    _ctx.phase = 0.0
@@ -58,43 +74,54 @@ function Synth2_osc_type_init(_ctx)
    _ctx.state_pulse = 0.0
    _ctx.state_saw = 0.0
    _ctx.state_triang = 0.0
+   return _ctx
 end
 
-function Synth2_svf_step_type_init(_ctx)
+function Synth2_svf_step_type_alloc()
+   local _ctx = {};
    _ctx.dband = 0.0
    _ctx.dlow = 0.0
+   return _ctx
 end
 
-function Synth2_svf_type_init(_ctx)
+function Synth2_svf_type_alloc()
+   local _ctx = {};
    _ctx.g = 0.0
-   Synth2_change_type_init(_ctx.inst_177a7)
-   Synth2_svf_step_type_init(_ctx.step_1ba7)
+   _ctx.inst_177a7 = Synth2_change_type_alloc()
+   _ctx.step_1ba7 = Synth2_svf_step_type_alloc()
+   return _ctx
 end
 
-function Synth2_lfo_type_init(_ctx)
-   Synth2_edge_type_init(_ctx.inst_1445f)
-   Synth2_each_type_init(_ctx.inst_2cb5f)
+function Synth2_lfo_type_alloc()
+   local _ctx = {};
+   _ctx.inst_1445f = Synth2_edge_type_alloc()
+   _ctx.inst_2cb5f = Synth2_each_type_alloc()
    _ctx.phase = 0.0
+   return _ctx
 end
 
-function Synth2_mono_noteOn_type_init(_ctx)
+function Synth2_mono_noteOn_type_alloc()
+   local _ctx = {};
    _ctx.count = 0
    local i_0 = 0
+   local temp = {0, 0, 0, 0}
    while (i_0 < 4) do
       do
-         _ctx.notes[i_0 + 1] = 0
+         temp[i_0 + 1] = 0
          i_0 = (1 + i_0)
       end
    end
+   _ctx.notes = temp
    _ctx.pre = 0
+   return _ctx
 end
 
-function Synth2_mono_noteOff_type_init(_ctx)
-   Synth2_mono_noteOn_type_init(_ctx)
+function Synth2_mono_noteOff_type_alloc(_ctx)
+   return Synth2_mono_noteOn_type_alloc()
 end
 
-function Synth2_mono_isGateOn_type_init(_ctx)
-   Synth2_mono_noteOn_type_init(_ctx)
+function Synth2_mono_isGateOn_type_alloc(_ctx)
+   return Synth2_mono_noteOn_type_alloc()
 end
 
 function Synth2_default(_ctx)
@@ -108,38 +135,40 @@ function Synth2_default(_ctx)
    _ctx.lfo_rate = 0.0
 end
 
-function Synth2_process_type_init(_ctx)
+function Synth2_process_type_alloc()
+   local _ctx = {};
    _ctx.amp_s = 0.0
    _ctx.cut = 0.0
-   Synth2_lfo_type_init(_ctx.inst_15fb7)
-   Synth2_osc_type_init(_ctx.inst_2e5b7)
-   Synth2_smooth_type_init(_ctx.inst_3dfb7)
-   Synth2_svf_type_init(_ctx.inst_4a7b7)
+   _ctx.inst_15fb7 = Synth2_lfo_type_alloc()
+   _ctx.inst_2e5b7 = Synth2_osc_type_alloc()
+   _ctx.inst_3dfb7 = Synth2_smooth_type_alloc()
+   _ctx.inst_4a7b7 = Synth2_svf_type_alloc()
    _ctx.lfo_amt = 0.0
    _ctx.lfo_rate = 0.0
-   Synth2_mono_noteOn_type_init(_ctx.monoin_02b7)
+   _ctx.monoin_02b7 = Synth2_mono_noteOn_type_alloc()
    _ctx.pitch = 0.0
    _ctx.pw = 0.0
    _ctx.res = 0.0
    _ctx.volume = 0.0
    _ctx.wave = 0.0
    Synth2_default(_ctx)
+   return _ctx
 end
 
-function Synth2_noteOn_type_init(_ctx)
-   Synth2_process_type_init(_ctx)
+function Synth2_noteOn_type_alloc(_ctx)
+   return Synth2_process_type_alloc()
 end
 
-function Synth2_noteOff_type_init(_ctx)
-   Synth2_process_type_init(_ctx)
+function Synth2_noteOff_type_alloc(_ctx)
+   return Synth2_process_type_alloc()
 end
 
-function Synth2_controlChange_type_init(_ctx)
-   Synth2_process_type_init(_ctx)
+function Synth2_controlChange_type_alloc(_ctx)
+   return Synth2_process_type_alloc()
 end
 
-function Synth2_default_type_init(_ctx)
-   Synth2_process_type_init(_ctx)
+function Synth2_default_type_alloc(_ctx)
+   return Synth2_process_type_alloc()
 end
 
 function Synth2_minFixed()
