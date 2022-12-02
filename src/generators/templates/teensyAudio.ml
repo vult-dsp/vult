@@ -63,7 +63,8 @@ let header (params : params) (code : Pla.t) : Pla.t =
 #include <math.h>
 #include "vultin.h"
 #include "<#tables#s>.tables.h"
-#include "AudioStream.h"
+#include <Audio.h>
+#include <AudioStream.h>
 
 <#code#>
 
@@ -144,9 +145,9 @@ let castInput params typ i acc =
 let castOutput params typ value =
    match typ with
    | OReal when params.real = "fixed" -> [%pla {|fix_to_short(<#value#>)|}]
-   | OReal -> [%pla {|<#value#>|}]
+   | OReal -> [%pla {|(int16_t)(32768 * <#value#>)|}]
    | OFix16 -> [%pla {|fix_to_short(<#value#>)|}]
-   | OBool -> [%pla {|<#value#>|}]
+   | OBool -> [%pla {|32768 * (int16_t)<#value#>|}]
    | OInt -> [%pla {|<#value#>|}]
 ;;
 

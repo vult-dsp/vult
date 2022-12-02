@@ -6,7 +6,8 @@
 #include <math.h>
 #include "vultin.h"
 #include "aff_ff.tables.h"
-#include "AudioStream.h"
+#include <Audio.h>
+#include <AudioStream.h>
 
 typedef struct _tuple___real_real__ {
    fix16_t field_0;

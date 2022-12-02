@@ -6,7 +6,8 @@
 #include <math.h>
 #include "vultin.h"
 #include "aff_f.tables.h"
-#include "AudioStream.h"
+#include <Audio.h>
+#include <AudioStream.h>
 
 typedef struct Aff_f__ctx_type_0 {
    int x;
