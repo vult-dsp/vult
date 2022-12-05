@@ -30,6 +30,9 @@ let cast ~(from : Code.type_) ~(to_ : Code.type_) (value : Pla.t) =
   | Bool, Int -> [%pla {|(int)<#value#>|}]
   | Bool, Real -> [%pla {|(<#value#> ? 1.0f : 0.0f)|}]
   | Bool, Fixed -> [%pla {|(<#value#> ? int_to_fix(1) : int_to_fix(0))|}]
+  | Fixed, Int -> [%pla {|fix_to_int(<#value#>)|}]
+  | Fixed, Real -> [%pla {|fix_to_float(<#value#>)|}]
+  | Fixed, Bool -> [%pla {|(<#value#> != 0)|}]
   (* no cast *)
   | Real, Real -> value
   | Int, Int -> value

@@ -34,6 +34,7 @@ let typeString (t : Code.type_) =
   | Real -> "float"
   | Int -> "int"
   | Bool -> "bool"
+  | Fixed -> "fix16_t"
   | _ -> failwith "Pd.typeString: not a numeric type"
 ;;
 
