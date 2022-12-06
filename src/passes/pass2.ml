@@ -552,16 +552,54 @@ module EmbedWaveTable = struct
       ]
    ;;
 
+   let rec fitDataOrder1 data index acc0 acc1 =
+      if index < 0
+      then acc0, acc1
+      else (
+         let p1 = wrapGet data index in
+         let p2 = wrapGet data (index + 1) in
+         let x = [ fst p1; fst p2 ] in
+         let y = [ snd p1; snd p2 ] in
+         let c0, c1 = Fitting.lagrange x y |> MakeTables.getCoefficients1 in
+         fitDataOrder1 data (index - 1) (c0 :: acc0) (c1 :: acc1))
+   ;;
+
+   let calculateTablesOrder1 data attr name out_precision =
+      let acc0, acc1 = fitDataOrder1 data (Array.length data - 1) [] [] in
+      [ Tables.makeDecl attr name [ "c0" ] out_precision acc0; Tables.makeDecl attr name [ "c1" ] out_precision acc1 ]
+   ;;
+
    let stmt_x : ('a Env.t, stmt) Mapper.expand_func =
       Mapper.makeExpander "MakeTables.stmt_x"
       @@ fun state stmt ->
       match stmt with
       | StmtExternal (name, args, ret, _, attr) ->
-         let params = Tags.[ "file", String; "bound_check", Bool ] in
+         let params = Tags.[ "file", String; "bound_check", Bool; "order", Int ] in
          let msg = "The attribute 'wave' requires specific parameters. e.g. 'wavetable(file=\"file.wav\")'" in
          (match Tags.getTableParams "wavetable" params msg attr.tags with
           | None -> state, [ stmt ]
-          | Some (loc, [ Some (PString (file, _)); bound_check ]) when Typ.isRealType ret ->
+          | Some (loc, [ Some (PString (file, _)); bound_check; Some (PInt (1, _)) ]) when Typ.isRealType ret ->
+             let bound_check = MakeTables.getBoundCheckValue bound_check in
+             let out_precision = MakeTables.getPrecision (Some ret) in
+             let var = MakeTables.checkInputVariables attr.loc args in
+             let in_precision = MakeTables.getInputPrecision args in
+             let (Id.Path path) = Env.currentScope state in
+             let full_path = path @ name in
+             let includes = (Env.get state).PassData.args.includes in
+             let wave = EmbedWavFile.readFile loc includes file in
+             let () = EmbedWavFile.checkNumberOfChannels loc 1 wave in
+             let data = wave.data.(0) in
+             let size_n = Array.length data in
+             let size = float_of_int size_n in
+             let data = Array.mapi (fun x y -> float_of_int x /. (size -. 1.0), y) data in
+             let tables = calculateTablesOrder1 data attr full_path out_precision in
+             let body = MakeTables.makeNewBody1 bound_check full_path size_n (in_precision, out_precision) 0.0 1.0 var in
+             let attr' = { attr with tags = Tags.removeAttrFunc "wavetable" attr.tags; ext_fn = None } in
+             let c0 = MakeTables.generateRawAccessFunction name full_path 0 attr in
+             let c1 = MakeTables.generateRawAccessFunction name full_path 1 attr in
+             let size_fun = EmbedWavFile.makeSizeFunction name attr' wave.WavFile.samples in
+             reapply state, tables @ [ c0; c1; size_fun ] @ [ StmtFun (full_path, args, body, Some ret, attr') ]
+          | Some (loc, [ Some (PString (file, _)); bound_check; (Some (PInt (2, _)) | None) ]) when Typ.isRealType ret ->
              let bound_check = MakeTables.getBoundCheckValue bound_check in
              let out_precision = MakeTables.getPrecision (Some ret) in
              let var = MakeTables.checkInputVariables attr.loc args in
