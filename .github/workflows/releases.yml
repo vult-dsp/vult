@@ -6,6 +6,106 @@ on:
       - "v*"
 
 jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-latest
+          - ubuntu-latest
+          - windows-latest
+        ocaml-compiler:
+          - 4.12.x
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Use OCaml ${{ matrix.ocaml-compiler }}
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: ${{ matrix.ocaml-compiler }}
+      
+      - name: Install requirements ${{ runner.os }}     
+        if: runner.os == 'Linux'
+        run: |
+           sudo apt-get update
+           sudo apt-get install luajit nodejs
+      - run: opam install ocamlbuild containers ppx_deriving ounit js_of_ocaml.4.0.0 js_of_ocaml-ppx pla bisect_ppx result
+      
+      - run: opam exec make
+      
+      - name: Run tests ${{ runner.os }}     
+        if: runner.os == 'Linux'
+        run: opam exec make all
+        
+      - name: Package the files for Linux
+        if: runner.os == 'Linux'
+        run: |
+          cp ./_build/src/vultc.native ./vultc
+          tar -cvzf vult-linux.tar.gz vultc runtime/vultin.h runtime/vultin.cpp
+      - name: Package the files for Mac
+        if: runner.os == 'macOS'
+        run: |
+          cp ./_build/src/vultc.native ./vultc
+          tar -cvzf vult-osx.tar.gz vultc runtime/vultin.h runtime/vultin.cpp
+      - name: Package the files for Windows
+        if: runner.os == 'Windows'
+        run: |
+          cp ./_build/src/vultc.native ./vultc.exe
+          7z a vult-win.zip vultc.exe runtime/vultin.h runtime/vultin.cpp
+          
+      - name: Save Linux Artifacts
+        uses: actions/upload-artifact@v2
+        if: runner.os == 'Linux'
+        with:
+          name: vult-linux.tar.gz
+          path: vult-linux.tar.gz
+          
+      - name: Save Js Vultweb Artifacts
+        uses: actions/upload-artifact@v2
+        if: runner.os == 'Linux'
+        with:
+          name: vultweb.js
+          path: vultweb.js
+          
+      - name: Save Js Vultlib Artifacts
+        uses: actions/upload-artifact@v2
+        if: runner.os == 'Linux'
+        with:
+          name: vultlib.js
+          path: vultlib.js
+          
+      - name: Save Js VultcJs Artifacts
+        uses: actions/upload-artifact@v2
+        if: runner.os == 'Linux'
+        with:
+          name: vultc.js
+          path: vultc.js
+          
+      - name: Save Js VultcH Artifacts
+        uses: actions/upload-artifact@v2
+        if: runner.os == 'Linux'
+        with:
+          name: vultc.h
+          path: vultc.h
+
+      - name: Save Mac Artifacts
+        uses: actions/upload-artifact@v2
+        if: runner.os == 'macOS'
+        with:
+          name: vult-osx.tar.gz
+          path: vult-osx.tar.gz
+
+      - name: Save Windows Artifacts
+        uses: actions/upload-artifact@v2
+        if: runner.os == 'Windows'
+        with:
+          name: vult-win.zip
+          path: vult-win.zip
+
   tagged-release:
     name: "Tagged Release"
     runs-on: "ubuntu-latest"
