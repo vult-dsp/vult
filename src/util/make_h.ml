@@ -15,7 +15,7 @@ let main () =
                      | '.' | '/' | '\\' | ' ' -> '_'
                      | _ -> c)
       in
-      Buffer.add_string buffer "static const int ";
+      Buffer.add_string buffer "static const size_t ";
       Buffer.add_string buffer name;
       Buffer.add_string buffer "_size = ";
       Buffer.add_string buffer (string_of_int (String.length text));

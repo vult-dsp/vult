@@ -17,69 +17,68 @@ OCPINDENT = ocp-indent
 endif
 
 compiler: version format
-			$(OCB) src/vultc.native src/vultc.byte
+	$(OCB) src/vultc.native src/vultc.byte
 
 format: $(VULT_SRC)
 	@$(OCAMLFORMAT) -i --enable-outside-detected-project $(VULT_SRC)
 	@$(OCPINDENT) -i $(VULT_SRC)
 
-js: jscompiler
-			$(OCB) src/js/vultlib.byte
-			js_of_ocaml vultlib.byte
+js: compiler
+	$(OCB) src/js/vultlib.byte
+	js_of_ocaml --target-env=nodejs vultlib.byte
 
 jscompiler:
-			$(OCB) src/js/vultcjs.byte
-			js_of_ocaml --custom-header="#!/usr/bin/env node" vultcjs.byte -o vultc.js
-			chmod +x vultc.js
+	$(OCB) src/js/vultcjs.byte
+	js_of_ocaml --target-env=nodejs --custom-header="#!/usr/bin/env node" vultcjs.byte -o vultc.js
+	chmod +x vultc.js
 
 web:
-			$(OCB) src/js/vultweb.byte
-			js_of_ocaml vultweb.byte
-			sed -i -e "s/this.fs=require(..)/this.fs=null/g" vultweb.js
+	$(OCB) src/js/vultweb.byte
+	js_of_ocaml --target-env=browser vultweb.byte
 
 vultc_h: web
-			$(OCB) src/util/make_h.native
-			./make_h.native vultweb.js vultc.h
+	$(OCB) src/util/make_h.native
+	./make_h.native vultweb.js vultc.h
 
 test: compiler jscompiler
-			$(OCB) test/test.native
-			./test.native -runner sequential -shards 1
+	$(OCB) test/test.native
+	./test.native -runner sequential -shards 1
 
 perf:
-			$(OCB) test/perf.native
-			./perf.native
+	$(OCB) test/perf.native
+	./perf.native
 
 test-fast:
-			$(OCB) test/test.native
-			./test.native -runner sequential -shards 1 -internal true
+	$(OCB) test/test.native
+	./test.native -runner sequential -shards 1 -internal true
 
 test-update:
-			$(OCB) test/test.native
-			./test.native -runner sequential -update true -shards 1 -internal true
+	$(OCB) test/test.native
+	./test.native -runner sequential -update true -shards 1 -internal true
 
 coverage: compiler jscompiler
-			$(OCB) -clean
-			BISECT_COVERAGE=YES $(OCB) test/test.native
-			BISECT_COVERAGE=YES $(OCB) src/vultc.native
-			BISECT_COVERAGE=YES $(OCB) test/perf.native
-			BISECT_FILE=_build/coverage ./test.native -runner sequential -shards 1
-			BISECT_FILE=_build/coverage ./perf.native
-			bisect-ppx-report send-to Coveralls --source-path _build
+	$(OCB) -clean
+	BISECT_COVERAGE=YES $(OCB) test/test.native
+	BISECT_COVERAGE=YES $(OCB) src/vultc.native
+	BISECT_COVERAGE=YES $(OCB) test/perf.native
+	BISECT_FILE=_build/coverage ./test.native -runner sequential -shards 1
+	BISECT_FILE=_build/coverage ./perf.native
+	bisect-ppx-report send-to Coveralls --source-path _build
 
 version :
-			@echo "let version = \"" > src/version.ml
-			@git describe --tags --abbrev=0 --always >> src/version.ml
-			@echo "\"" >> src/version.ml
+	@echo "let version = \"" > src/version.ml
+	@git describe --tags --abbrev=0 --always >> src/version.ml
+	@echo "\"" >> src/version.ml
 
-all: 		compiler js test web vultc_h jscompiler
+all: compiler js test web vultc_h jscompiler
 
 clean:
-			$(OCB) -clean
-			rm -f vultc.js vultweb.js vultlib.js vultc.h
-			rm -f bisect*.out
-			rm -rf bisect_coverage
+	$(OCB) -clean
+	rm -f vultc.js vultweb.js vultlib.js vultc.h
+	rm -f bisect*.out
+	rm -rf bisect_coverage
 
 install:
-	      cp vultc.native $(PREFIX)/vultc
+	cp vultc.native $(PREFIX)/vultc
 
 .PHONY: 	all clean compiler js test
