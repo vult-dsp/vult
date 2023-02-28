@@ -1,0 +1,5 @@
+
+fun foo() {
+  val x = [1];
+  val y = x.e;
+}

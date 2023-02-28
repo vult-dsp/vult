@@ -228,6 +228,8 @@ let lookVar (env : in_func) (name : string) (loc : Loc.t) : var =
     | None -> Error.raiseError ("The variable '" ^ name ^ "' could not be found") loc)
 ;;
 
+let reportModuleNotFound n loc = Error.raiseError ("The module named '" ^ n ^ "' could not be found") loc
+
 let lookEnum (env : in_func) (path : path) (loc : Loc.t) =
   let error () = Error.raiseError ("An enumeration with the name '" ^ pathString path ^ "' could not be found") loc in
   let findEnumInModule enums id =
@@ -240,10 +242,10 @@ let lookEnum (env : in_func) (path : path) (loc : Loc.t) =
   in
   match path with
   | { id; n = None; _ } -> findEnumInModule env.m.enums id
-  | { id; n = Some n; _ } ->
+  | { id; n = Some n; loc } ->
     (match Map.find n env.top.modules with
     | Some m -> findEnumInModule m.enums id
-    | None -> failwith "Module")
+    | None -> reportModuleNotFound n loc)
 ;;
 
 let lookFunctionCall (env : in_func) (path : path) (loc : Loc.t) : f =
@@ -255,7 +257,7 @@ let lookFunctionCall (env : in_func) (path : path) (loc : Loc.t) : f =
   match path with
   | { id; n = Some n; _ } ->
     (match Map.find n env.top.modules with
-    | None -> failwith ("module not found " ^ n)
+    | None -> reportModuleNotFound n loc
     | Some m -> reportNotFound (Map.find id m.functions))
   | { id; _ } ->
     (match Map.find id env.m.functions with
@@ -274,25 +276,23 @@ let lookOperator (env : in_func) (op : string) : f =
 
 let getType (env : in_top) (path : path) : t option =
   match path with
-  | { id; n = Some n; _ } ->
+  | { id; n = Some n; loc } ->
     (match Map.find n env.modules with
-    | None -> failwith ("module not found " ^ n)
+    | None -> reportModuleNotFound n loc
     | Some m -> Map.find id m.types)
   | _ -> None
 ;;
 
-let lookType (env : in_func) (path : path) : t =
+let lookType (env : in_func) (path : path) (loc : Loc.t) : t =
   let reportNotFound result =
     match result with
     | Some found -> found
-    | None ->
-      let path = Pla.print (Pparser.Syntax.print_path path) in
-      failwith ("lookType: type not found " ^ path)
+    | None -> Error.raiseError ("A type with the name '" ^ pathString path ^ "' could not be found") loc
   in
   match path with
-  | { id; n = Some n; _ } ->
+  | { id; n = Some n; loc } ->
     (match Map.find n env.top.modules with
-    | None -> failwith ("module not found " ^ n)
+    | None -> reportModuleNotFound n loc
     | Some m -> reportNotFound (Map.find id m.types))
   | { id; _ } ->
     (match Map.find id env.m.types with
@@ -309,7 +309,7 @@ let lookTypeInModule (env : in_module) (path : path) (loc : Loc.t) : t =
   match path with
   | { id; n = Some n; _ } ->
     (match Map.find n env.top.modules with
-    | None -> failwith ("module not found " ^ n)
+    | None -> reportModuleNotFound n loc
     | Some m -> reportNotFound (Map.find id m.types))
   | { id; _ } ->
     (match Map.find id env.m.types with
@@ -325,7 +325,11 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
     env
   | (Mem | Inst), None -> failwith "Internal error: cannot add mem to functions with no context"
   | Val, _ ->
-    let report _found = failwith "duplicated declaration" in
+    let report (found : var) =
+      Error.raiseError
+        ("A variable with the name '" ^ found.name ^ "' as already been declared at " ^ Loc.to_string_readable found.loc)
+        loc
+    in
     (match env.f.locals with
     | [] -> failwith "no local scope"
     | h :: _ ->

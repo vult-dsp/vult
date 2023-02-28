@@ -42,7 +42,7 @@ test-fast: compiler
 	dune build test/test.exe $(FORMAT)
 	./_build/default/test/test.exe -runner sequential -shards 1 -internal true
 
-test-update:
+test-update: compiler
 	dune build test/test.exe $(FORMAT)
 	./_build/default/test/test.exe  -runner sequential -update true -shards 1 -internal true
 

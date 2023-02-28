@@ -135,6 +135,12 @@ let merge (loc1 : t) (loc2 : t) : t =
 
 let merge3 (loc1 : t) (loc2 : t) (loc3 : t) : t = merge (merge loc1 loc2) loc3
 
+let mergeList default loc =
+  match loc with
+  | [] -> default
+  | h :: t -> List.fold_left merge h t
+;;
+
 let hashString (t : t) =
   Printf.sprintf
     "%.2x%.2x%.2x"

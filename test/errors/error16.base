@@ -1,4 +1,4 @@
-Unknown function 'NonExisting.foo'
+The module named 'NonExisting' could not be found
 fun foo() {
    val x = NonExisting.foo();
            ^^^^^^^^^^^^^^^

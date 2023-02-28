@@ -1,0 +1,4 @@
+A type with the name 'uint' could not be found
+fun foo() {
+  val x : uint;
+          ^^^^

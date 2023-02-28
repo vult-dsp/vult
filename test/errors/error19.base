@@ -1,4 +1,4 @@
-This expression has type 'int' but the previous members of the array have type 'real'
+This expression has type 'int' but 'real' was expected
 fun foo () {
    val x = [1.0, 1];
                  ^

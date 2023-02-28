@@ -1,4 +1,4 @@
-The type of variable 'x' cannot be inferred. Add a type annotation.
+The type could not be infered. Please add a type annotation.
 fun foo() {
    val x;
        ^

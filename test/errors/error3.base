@@ -1,4 +1,4 @@
-Invalid left hand side of assignment
+Invalid statement. All statements should be in the forms: "a = b; " or "_ = b(); " 
 fun foo() {
    x-y = 1;
-    ^
+     ^ 

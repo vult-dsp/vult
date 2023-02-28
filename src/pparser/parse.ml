@@ -75,7 +75,9 @@ let expToPath error (exp : exp) : path =
   match exp with
   | { e = SEId id; loc } -> { id; n = None; loc }
   | { e = SEMember ({ e = SEId e; _ }, id); loc } -> { id; n = Some e; loc }
-  | { e = SEMember ({ e = SEEnum { id = e; n = None; _ }; _ }, id); loc } -> { id; n = Some e; loc }
+  | { e = SEMember ({ e = SEEnum { id = e; n = None; loc = loc1 }; _ }, id); loc = loc2 } ->
+    let loc = Loc.merge loc1 loc2 in
+    { id; n = Some e; loc }
   | _ -> error ()
 ;;
 
@@ -274,7 +276,9 @@ and type_call (buffer : Stream.stream) (token : 'kind token) (left : type_) : ty
   let path =
     match left.t with
     | STId { id; _ } -> id
-    | _ -> failwith "invalid composed type"
+    | _ ->
+      let message = Error.PointedError (token.loc, "Invalid type specification") in
+      raise (ParserError message)
   in
   let args =
     match Stream.peek buffer with
@@ -339,8 +343,9 @@ and darray (buffer : Stream.stream) (token : 'kind token) (left : dexp) : dexp =
   let () = Stream.consume buffer RBRACK in
   match left with
   | { d = SDId (id, None); _ } -> { d = SDId (id, Some size); loc = token.loc }
-  | { d = SDId (_, Some _); _ } -> failwith "double dimmensions"
-  | _ -> failwith "cannot apply dimmensions to this declaration"
+  | _ ->
+    let message = Error.PointedError (token.loc, "Invalid array declaration") in
+    raise (ParserError message)
 ;;
 
 let rec lexp_expression (rbp : int) (buffer : Stream.stream) : lexp =
@@ -488,7 +493,7 @@ and named_call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp
   | { e = SEId name; _ }, { e = SECall ({ instance = None; _ } as call); _ } ->
     { right with e = SECall { call with instance = Some name } }
   | { e = SEId _; _ }, _ ->
-    let loc = right.loc in
+    let loc = left.loc in
     let error = Error.PointedError (Loc.getNext loc, "After ':' you can only have a function call e.g. name:foo()") in
     raise (ParserError error)
   | _, { e = SECall { instance = None; _ }; _ } ->
@@ -510,7 +515,7 @@ and named_call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp
     in
     raise (ParserError error)
 
-and call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
+and call (buffer : Stream.stream) (_token : 'kind token) (left : exp) : exp =
   let error () =
     let message = Error.PointedError (left.loc, "This is not a valid function name") in
     raise (ParserError message)
@@ -522,7 +527,7 @@ and call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
     | _ -> expressionList buffer
   in
   let _ = Stream.consume buffer RPAREN in
-  { e = SECall { instance = None; path; args }; loc = token.loc }
+  { e = SECall { instance = None; path; args }; loc = path.loc }
 
 and exp_index (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let index = expression 0 buffer in
@@ -732,7 +737,7 @@ and stmtType (buffer : Stream.stream) : top_stmt =
 
 and type_member_list (buffer : Stream.stream) =
   match Stream.peek buffer with
-  | RBRACE -> failwith "empty type"
+  | RBRACE -> raise (ParserError (Stream.makeError buffer "This type declaration is empty"))
   | VAL ->
     let rec loop acc =
       match Stream.peek buffer with
@@ -771,7 +776,7 @@ and stmtEnum (buffer : Stream.stream) : top_stmt =
 
 and enum_member_type (buffer : Stream.stream) =
   match Stream.peek buffer with
-  | RBRACE -> failwith "empty type"
+  | RBRACE -> raise (ParserError (Stream.makeError buffer "The enumeration declaration is empty"))
   | ID ->
     let rec loop acc =
       match Stream.peek buffer with
@@ -782,18 +787,20 @@ and enum_member_type (buffer : Stream.stream) =
           let _ = Stream.consume buffer COMMA in
           loop (decl :: acc)
         | RBRACE -> List.rev (decl :: acc)
-        | _ -> failwith "Expecting an enum identifier")
+        | _ -> raise (ParserError (Stream.makeError buffer "Expecting more enumeration elements")))
       | _ -> List.rev acc
     in
     loop []
   | _ ->
     let got = tokenToString (Stream.current buffer) in
-    let message = Printf.sprintf "Expecting a list of value declarations '{ val x:... }' but got %s" got in
+    let message = Printf.sprintf "Expecting a list of enumeration elements but got %s" got in
     raise (ParserError (Stream.makeError buffer message))
 
 and enum_name (buffer : Stream.stream) =
   let name, loc = id_name buffer in
-  if String.capitalize_ascii name = name then name, loc else failwith "Enum names should start with uppercase"
+  if String.capitalize_ascii name = name
+  then name, loc
+  else raise (ParserError (Stream.makeError buffer "Enumeration elements should start with uppercase"))
 
 and stmtWhile (buffer : Stream.stream) : stmt =
   let loc = Stream.location buffer in
@@ -918,7 +925,13 @@ let parseFunctionSpec (s : string) : function_def =
   stmtFunctionSpec buffer
 ;;
 
-let moduleName file = file |> Filename.basename |> Filename.chop_extension |> String.capitalize_ascii
+let moduleName file =
+  match Filename.extension file with
+  | ".vult" -> file |> Filename.basename |> Filename.chop_extension |> String.capitalize_ascii
+  | _ ->
+    let message = Printf.sprintf "The file '%s' does not have the extension .vult" file in
+    raise (Error.Errors [ Error.SimpleError message ])
+;;
 
 (** Parses a buffer containing a list of statements and returns the results *)
 let parseBuffer (file : string) (buffer : Stream.stream) =

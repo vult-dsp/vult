@@ -94,7 +94,7 @@ let rec print_exp e =
   | Unit -> Pla.string ""
   | Bool v -> Pla.string (if v then "true" else "false")
   | Int n -> Pla.int n
-  | Real n -> Pla.float n
+  | Real n -> Pla.string (Util.Vfloat.to_string n)
   | Fixed n ->
     let n = Common.toFixed n in
     Pla.string n

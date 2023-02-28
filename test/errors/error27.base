@@ -1,0 +1,4 @@
+The expression' x' of type 'array(int, 1)' does not have a member 'e'.
+  val x = [1];
+  x.e = 0;
+    ^

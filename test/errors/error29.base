@@ -1,0 +1,4 @@
+The array is empty
+fun foo() {
+  val x = [];
+          ^

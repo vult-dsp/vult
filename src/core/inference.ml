@@ -58,14 +58,14 @@ module ToProg = struct
     match t.tx with
     | T.TELink t -> getDim t
     | T.TESize dim -> dim
-    | _ -> Error.raiseError "The size of the array could not be inferred. Please add type annotation." t.loc
+    | _ -> Error.raiseError "The size of the array could not be inferred. Please add a type annotation." t.loc
   ;;
 
   let rec type_ (env : Env.in_top) (state : state) (t : Typed.type_) =
     let loc = t.loc in
     match t.tx with
     | T.TENoReturn -> state, { t = TVoid None; loc }
-    | T.TEUnbound _ -> Error.raiseError "The type could not be infered. Please add type annotation." t.loc
+    | T.TEUnbound _ -> Error.raiseError "The type could not be infered. Please add a type annotation." t.loc
     | T.TEOption _ -> Error.raiseError "undecided type" t.loc
     | T.TEId { id = "unit"; n = None; _ } -> state, { t = TVoid None; loc }
     | T.TEId { id = "int"; n = None; _ } -> state, { t = TInt; loc }
@@ -100,8 +100,8 @@ module ToProg = struct
     | T.TEComposed ("tuple", elems) ->
       let state, elems = list type_ env state elems in
       state, { t = TTuple elems; loc }
-    | T.TEComposed _ -> failwith "unknown composed"
-    | T.TESize _ -> failwith "invalid input"
+    | T.TEComposed (name, _) -> Error.raiseError ("Unknown composed type '" ^ name ^ "'.") t.loc
+    | T.TESize _ -> Error.raiseError "Invalid type description." t.loc
 
   and type_list (env : Env.in_top) (state : state) (l : (string * Typed.type_ * Loc.t) list) =
     let mapper env state ((n : string), (t : Typed.type_), (loc : Loc.t)) =
@@ -457,23 +457,29 @@ let rec type_in_m (env : in_module) (t : Syntax.type_) =
 let type_in_c (env : Env.in_context) (t : Syntax.type_) = type_in_m (Env.exitContext env) t
 let type_in_f (env : Env.in_func) (t : Syntax.type_) = type_in_c (Env.exitFunction env) t
 
-let applyFunction loc (args_t_in : type_ list) (ret : type_) (args : exp list) =
+let applyFunction loc (args_t_in : type_ list) (ret : type_) (args_in : exp list) =
   let rec loop (args_t : type_ list) args =
     match args_t, args with
     | [], _ :: _ ->
-      let required = Pla.map_sep Pla.commaspace print_type_ args_t_in in
-      let msg = Pla.print [%pla {|Extra arguments in function call. Expecting: (<#required#>)|}] in
+      let required_n = List.length args_t_in in
+      let got_n = List.length args_in in
+      let loc = Loc.mergeList loc (List.map (fun (e : exp) -> e.loc) args_in) in
+      let msg = Pla.print [%pla {|Extra arguments in function call. Expecting <#required_n#i> but got <#got_n#i>.|}] in
       Error.raiseError msg loc
     | _ :: _, [] ->
-      let required = Pla.map_sep Pla.commaspace print_type_ args_t_in in
-      let msg = Pla.print [%pla {|Missing arguments in function call. Expecting: (<#required#>)|}] in
+      let required_n = List.length args_t_in in
+      let got_n = List.length args_in in
+      let loc = Loc.mergeList loc (List.map (fun (e : exp) -> e.loc) args_in) in
+      let msg =
+        Pla.print [%pla {|Missing arguments in function call. Expecting <#required_n#i> but got <#got_n#i>.|}]
+      in
       Error.raiseError msg loc
     | [], [] -> ret
     | h :: args_t, (ht : exp) :: args ->
       unifyRaise ht.loc h ht.t;
       loop args_t args
   in
-  loop args_t_in args
+  loop args_t_in args_in
 ;;
 
 let addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
@@ -549,7 +555,7 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     unifyRaise e.loc (C.array t) e.t;
     unifyRaise index.loc (C.int ~loc:Loc.default) index.t;
     env, { e = EIndex { e; index }; t; loc }
-  | { e = SEArray []; _ } -> failwith "empty array"
+  | { e = SEArray []; loc } -> Error.raiseError "The array is empty" loc
   | { e = SEArray (h :: t); loc } ->
     let env, h = exp env h in
     let env, t_rev, size =
@@ -599,13 +605,19 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     let env, e = exp env e in
     (match (unlink e.t).tx with
     | TEId path ->
-      (match Env.lookType env path with
+      (match Env.lookType env path loc with
       | { path; descr = Record members; _ } ->
         (match Map.find m members with
         | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
         | Some { t; _ } -> env, { e = EMember (e, m); t; loc })
-      | _ -> failwith "Not a record type")
-    | _ -> failwith "exp: invalid access to type")
+      | _ ->
+        let t = Pla.print (Typed.print_type_ e.t) in
+        let e = Pla.print (Typed.print_exp e) in
+        Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
+    | _ ->
+      let t = Pla.print (Typed.print_type_ e.t) in
+      let e = Pla.print (Typed.print_exp e) in
+      Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
   | { e = SEEnum path; loc } ->
     let type_path, tloc, index = Env.lookEnum env path loc in
     let t = C.path tloc type_path in
@@ -663,13 +675,19 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
     let env, e = lexp env e in
     (match (unlink e.t).tx with
     | TEId path ->
-      (match Env.lookType env path with
+      (match Env.lookType env path loc with
       | { path; descr = Record members; _ } ->
         (match Map.find m members with
         | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
         | Some { t; _ } -> env, { l = LMember (e, m); t; loc })
-      | _ -> failwith "Not a record type")
-    | _ -> failwith "lexp: invalid access to type")
+      | _ ->
+        let t = Pla.print (Typed.print_type_ e.t) in
+        let e = Pla.print (Typed.print_lexp e) in
+        Error.raiseError ("The expression' " ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
+    | _ ->
+      let t = Pla.print (Typed.print_type_ e.t) in
+      let e = Pla.print (Typed.print_lexp e) in
+      Error.raiseError ("The expression' " ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
 
 and dexp (env : Env.in_func) (e : Syntax.dexp) (kind : var_kind) : Env.in_func * dexp =
   match e with
@@ -819,10 +837,10 @@ let getOptType env loc (t : Syntax.type_ option) =
   | Some t -> type_in_c env t
 ;;
 
-let getReturnType env loc (t : Syntax.type_ option) =
+let getReturnType env (t : Syntax.type_ option) =
   match t with
-  | None -> C.noreturn loc
-  | Some t -> type_in_c env t
+  | None -> None
+  | Some t -> Some (type_in_c env t)
 ;;
 
 let convertArguments env (args : Syntax.arg list) : arg list =
@@ -847,19 +865,31 @@ let customInitializer (env : Env.in_context) tags name =
   if Ptags.has tags "init" then Env.addCustomInitFunction env name else env
 ;;
 
+let reportReturnTypeMismatch loc (specified_ret : type_ option) (inferred_ret : type_) =
+  match specified_ret, inferred_ret with
+  | None, { tx = Typed.TENoReturn; _ } -> unifyRaise loc (C.noreturn loc) inferred_ret
+  | None, _ -> ()
+  | Some t, { tx = Typed.TENoReturn; _ } ->
+    let t = Pla.print (print_type_ t) in
+    Error.raiseError ("This function is expected to have type '" ^ t ^ "' but nothing was returned.") loc
+  | Some t1, t2 -> unifyRaise loc t1 t2
+;;
+
 let rec function_def (iargs : Args.args) (env : Env.in_context) ((def : Syntax.function_def), (body : Syntax.stmt))
     : Env.in_context * (function_def * stmt)
   =
-  let ret = getReturnType env def.loc def.t in
+  let specified_ret = getReturnType env def.t in
+  let inferred_ret = C.noreturn def.loc in
   let args = convertArguments env def.args in
-  let env, path, t = Env.enterFunction env def.name args ret def.loc in
-  let env, body = stmt env ret body in
+  let env, path, t = Env.enterFunction env def.name args inferred_ret def.loc in
+  let env, body = stmt env inferred_ret body in
   let env = Env.exitFunction env in
   let next = addGeneratedFunctions def.tags def.name def.next in
   let env, next = function_def_opt iargs env next in
   let env = registerMultiReturnMem env path t def.loc in
   let env = customInitializer env def.tags path in
   let is_root = isRoot iargs path in
+  let () = reportReturnTypeMismatch def.loc specified_ret inferred_ret in
   env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next; is_root }, stmt_block body)
 
 and function_def_opt (iargs : Args.args) (env : Env.in_context) def_opt =

@@ -1,9 +1,3 @@
-fun foo () {
-   mem count = count + 1;
-}
-fun bar() {
-   val a = 0;
-}
-and bob() {
-   _ = a:foo();
+enum state {
+
 }

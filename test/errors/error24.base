@@ -1,0 +1,4 @@
+Invalid type specification
+fun foo() {
+  val a : 1();
+           ^

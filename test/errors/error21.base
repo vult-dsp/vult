@@ -1,4 +1,4 @@
-This function takes 2 arguments but 1 are passed
+Missing arguments in function call. Expecting 2 but got 1.
 fun bar () {
    val x = foo(1);
-           ^^^^^
+               ^

@@ -1,0 +1,4 @@
+fun foo() {
+  val y : 1;
+  val x : aarray(1,2);
+}

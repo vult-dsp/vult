@@ -1,0 +1,4 @@
+Invalid array declaration
+fun foo() {
+  val (y)[2];
+         ^

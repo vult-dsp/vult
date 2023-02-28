@@ -1,4 +1,4 @@
-The symbol 'x' is not defined
+The variable 'x' could not be found
 fun foo () {
    x = 0;
    ^

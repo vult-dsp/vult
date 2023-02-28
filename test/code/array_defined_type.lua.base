@@ -22,8 +22,8 @@ function intDiv(a, b)       return math.floor(a / b) end
 
 function Array_defined_type_dot_alloc()
    local _ctx = {};
-   _ctx.x = 0.0
-   _ctx.y = 0.0
+   _ctx.x = 0.
+   _ctx.y = 0.
    return _ctx
 end
 

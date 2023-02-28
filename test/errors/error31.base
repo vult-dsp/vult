@@ -1,0 +1,4 @@
+Invalid type description.
+fun foo() {
+  val y : 1;
+          ^

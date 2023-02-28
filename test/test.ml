@@ -95,6 +95,14 @@ let errors_files =
   ; "error21.vult"
   ; "error22.vult"
   ; "error23.vult"
+  ; "error24.vult"
+  ; "error25.vult"
+  ; "error26.vult"
+  ; "error27.vult"
+  ; "error28.vult"
+  ; "error29.vult"
+  ; "error30.vult"
+  ; "error31.vult"
   ]
 ;;
 
@@ -630,8 +638,8 @@ end
 
 let suite =
   "vult"
-  >::: [ (* ErrorTest.get errors_files *)
-         (* ; ParserTest.get parser_files *)
+  >::: [ ErrorTest.get errors_files
+       ; (* ; ParserTest.get parser_files *)
          PassesTest.get passes_files
        ; Templates.get template_files "pd" "float"
          (* ; Templates.get template_files "pd" "fixed"
