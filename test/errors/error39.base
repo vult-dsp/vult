@@ -1,0 +1,4 @@
+A function with the name 'foo' already exists at line 1, columns 4-7
+
+fun foo() {
+    ^^^

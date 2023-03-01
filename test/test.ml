@@ -67,7 +67,6 @@ let parser_files =
   ; "exp_precedence.vult"
   ; "exp_array.vult"
   ; "exp_tuples.vult"
-  ; "types_basic.vult"
   ; "array_syntax.vult"
   ; "mem_tag.vult"
   ; "member_access.vult"
@@ -103,6 +102,13 @@ let errors_files =
   ; "error29.vult"
   ; "error30.vult"
   ; "error31.vult"
+  ; "error32.vult"
+  ; "error33.vult"
+  ; "error34.vult"
+  ; "error36.vult"
+  ; "error37.vult"
+  ; "error38.vult"
+  ; "error39.vult"
   ]
 ;;
 
@@ -639,8 +645,8 @@ end
 let suite =
   "vult"
   >::: [ ErrorTest.get errors_files
-       ; (* ; ParserTest.get parser_files *)
-         PassesTest.get passes_files
+       ; ParserTest.get parser_files
+       ; PassesTest.get passes_files
        ; Templates.get template_files "pd" "float"
          (* ; Templates.get template_files "pd" "fixed"
             ; Templates.get template_files "max" "float"

@@ -1,9 +1,10 @@
 // Alias types
-type t : int;
-type t : (int,int);
+
+// type t : int;
+// type t : (int,int);
+
 // Record types
 type t {
 	val x : int;
-	val x : real;
+	val y : real;
 }
-type empty { }

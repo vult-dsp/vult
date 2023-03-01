@@ -1,0 +1,4 @@
+A enum with the name 'x' has already been declared at line 1, columns 5-6
+
+enum x {
+     ^

@@ -1,0 +1,7 @@
+type x {
+  val a : int;
+}
+
+type x {
+  val a : int;
+}

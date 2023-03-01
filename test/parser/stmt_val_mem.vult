@@ -1,10 +1,11 @@
-// Simple bindings
-val x;
-val x = 0;
-mem y;
-mem y = 0;
-// Other lhs expressions
-val _ = 0;
-mem x,y = 0,0;
-val x,(y,z) = 0,(0,0);
-
+fun foo() {
+  // Simple bindings
+  val x : int;
+  val x1 = 0;
+  mem y;
+  mem y = 0;
+  // Other lhs expressions
+  val _ = 0;
+  mem x, y = 0,0;
+  val x2,(y2,z2) = 0,(0,0);
+}

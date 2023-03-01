@@ -448,7 +448,14 @@ let rec type_in_m (env : in_module) (t : Syntax.type_) =
   | { t = STId path; loc } ->
     let found = Env.lookTypeInModule env path loc in
     { tx = TEId found.path; loc }
-  | { t = STSize n; loc } -> { tx = TESize n; loc }
+  | { t = STSize n; loc } ->
+    let () =
+      if n = 0
+      then (
+        let msg = "Empty arrays are not supported" in
+        Error.raiseError msg loc)
+    in
+    { tx = TESize n; loc }
   | { t = STComposed (name, l); loc } ->
     let l = List.map (type_in_m env) l in
     { tx = TEComposed (name, l); loc }
@@ -555,7 +562,7 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     unifyRaise e.loc (C.array t) e.t;
     unifyRaise index.loc (C.int ~loc:Loc.default) index.t;
     env, { e = EIndex { e; index }; t; loc }
-  | { e = SEArray []; loc } -> Error.raiseError "The array is empty" loc
+  | { e = SEArray []; loc } -> Error.raiseError "Empty arrays are not supported." loc
   | { e = SEArray (h :: t); loc } ->
     let env, h = exp env h in
     let env, t_rev, size =

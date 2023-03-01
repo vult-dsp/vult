@@ -1,4 +1,4 @@
-A variable with the name 'x' as already been declared at line 2, columns 7-8
+A variable with the name 'x' has already been declared at line 2, columns 7-8
    val x = 0;
    val x : real;
        ^

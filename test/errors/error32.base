@@ -1,0 +1,4 @@
+A variable with the name 'x' has already been declared at line 2, columns 6-7
+  val x = 1;
+  mem x = 0;
+      ^

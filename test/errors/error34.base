@@ -1,0 +1,4 @@
+A member with the name 'e' has already been declared at line 2, columns 6-7
+  val e : int;
+  val e : int;
+      ^

@@ -1,9 +1,0 @@
-fun foo(x:int,y:real) : unit {
-}
-
-fun foo(x:'a,y:'b) : 'c {
-	val x:int = 0;
-	val x:int = 0;
-	val x:tuple(int,'a) = 0,0;
-	val x:(int,'a) = 0,0;
-}

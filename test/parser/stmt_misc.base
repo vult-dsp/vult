@@ -1,11 +1,18 @@
 fun foo() {
-   if(true)
-      return 0; 
-   if(true)
-      return 0; 
-   else
-      return 1; 
-   while(true)return 0; 
-   val x = 0; 
-   while((x < 10))x = (x + 1); 
+   if (true) {
+      return 0;
+   }
+   if (true) {
+      return 0;
+   }
+   else {
+      return 1;
+   }
+   while (true) {
+      return 0;
+   }
+   val x = 0;
+   while ((x < 10)) {
+      x = (x + 1);
+   }
 }

@@ -319,17 +319,50 @@ let lookTypeInModule (env : in_module) (path : path) (loc : Loc.t) : t =
 
 let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_kind) loc : in_func =
   let report_mem (found : var) = if unify found.t t then () else failwith ("type changed: " ^ found.name) in
+  let checkDuplicatedMem context name =
+    match context with
+    | Some (_, { descr = Record members; _ }) ->
+      (match Map.find name members with
+      | None -> ()
+      | Some found ->
+        Error.raiseError
+          ("A mem variable with the name '"
+          ^ found.name
+          ^ "' has already been declared at "
+          ^ Loc.to_string_readable found.loc)
+          loc)
+    | _ -> ()
+  in
+  let checkDuplicatedVal locals name =
+    List.iter
+      (fun (scope : var Map.t) ->
+        match Map.find name scope with
+        | None -> ()
+        | Some found ->
+          Error.raiseError
+            ("A variable with the name '"
+            ^ found.name
+            ^ "' has already been declared at "
+            ^ Loc.to_string_readable found.loc)
+            loc)
+      locals
+  in
   match kind, env.f.context with
   | (Mem | Inst), Some (_, { descr = Record members; _ }) ->
+    let () = checkDuplicatedVal env.f.locals name in
     Map.update report_mem name { name; t; kind; loc } members;
     env
   | (Mem | Inst), None -> failwith "Internal error: cannot add mem to functions with no context"
-  | Val, _ ->
+  | Val, context ->
     let report (found : var) =
       Error.raiseError
-        ("A variable with the name '" ^ found.name ^ "' as already been declared at " ^ Loc.to_string_readable found.loc)
+        ("A variable with the name '"
+        ^ found.name
+        ^ "' has already been declared at "
+        ^ Loc.to_string_readable found.loc)
         loc
     in
+    let () = checkDuplicatedMem context name in
     (match env.f.locals with
     | [] -> failwith "no local scope"
     | h :: _ ->
@@ -363,11 +396,15 @@ let popScope (env : in_func) : in_func =
 
 let registerArguments (args : (string * Typed.type_ * Loc.t) list) =
   let locals = Map.empty () in
-  let report _ = failwith "duplicate argument" in
+  let report loc (found : var) =
+    Error.raiseError
+      ("A variable with the name '" ^ found.name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
+      loc
+  in
   let rev_args =
     List.fold_left
       (fun acc (name, t, loc) ->
-        let () = Map.update report name { name; t; kind = Val; loc } locals in
+        let () = Map.update (report loc) name { name; t; kind = Val; loc } locals in
         t :: acc)
       []
       args
@@ -378,19 +415,25 @@ let registerArguments (args : (string * Typed.type_ * Loc.t) list) =
 let getPath m name loc : path = { id = name; n = Some m.name; loc }
 
 let createContextForFunction (env : in_module) name loc : in_context =
-  let report _ = Error.raiseError "A function with the same name already exists" loc in
+  let report name (found : t) =
+    Error.raiseError
+      ("A function with the name '" ^ name ^ "' already exists at " ^ Loc.to_string_readable found.loc)
+      loc
+  in
   let type_name = name ^ "_type" in
   let path = getPath env.m type_name loc in
   let index = getGlobalTick () in
   let t = { descr = Record (Map.empty ()); path; index; loc; generated = true } in
-  let _ = Map.update report type_name t env.m.types in
+  let _ = Map.update (report name) type_name t env.m.types in
   { top = env.top; m = env.m; context = Some (path, t) }
 ;;
 
 let addAliasToContext (env : in_context) name loc : in_context =
   match env.context with
   | Some (ctx, { descr = Record members; _ }) when not (Map.is_empty members) ->
-    let report _ = Error.raiseError "A context with the same name already exists" loc in
+    let report found =
+      Error.raiseError ("A context with the same name already exists at " ^ Loc.to_string_readable found.loc) loc
+    in
     let type_name = name ^ "_type" in
     let path = getPath env.m type_name loc in
     let index = getGlobalTick () in
@@ -401,11 +444,15 @@ let addAliasToContext (env : in_context) name loc : in_context =
 ;;
 
 let addRecordMember members =
-  let report _ = failwith "duplicated member of type" in
+  let report loc (found : var) =
+    Error.raiseError
+      ("A member with the name '" ^ found.name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
+      loc
+  in
   let members =
     List.fold_left
       (fun m (name, t, loc) ->
-        Map.update report name { name; t; kind = Val; loc } m;
+        Map.update (report loc) name { name; t; kind = Val; loc } m;
         m)
       (Map.empty ())
       members
@@ -414,7 +461,11 @@ let addRecordMember members =
 ;;
 
 let addType (env : in_module) type_name members loc : in_module =
-  let report _ = failwith "type exitst" in
+  let report (found : t) =
+    Error.raiseError
+      ("A type with the name '" ^ found.path.id ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
+      loc
+  in
   let index = getGlobalTick () in
   let path = getPath env.m type_name loc in
   let descr = addRecordMember members in
@@ -424,11 +475,15 @@ let addType (env : in_module) type_name members loc : in_module =
 ;;
 
 let addEnumMember members =
-  let report _ = failwith "duplicated enum type" in
+  let report loc (name, _, floc) =
+    Error.raiseError
+      ("A member with the name '" ^ name ^ "' has already been declared at " ^ Loc.to_string_readable floc)
+      loc
+  in
   let members, _ =
     List.fold_left
       (fun (m, i) (name, loc) ->
-        Map.update report name (name, i, loc) m;
+        Map.update (report loc) name (name, i, loc) m;
         m, i + 1)
       (Map.empty (), 0)
       members
@@ -437,13 +492,21 @@ let addEnumMember members =
 ;;
 
 let addEnumToModule (env : in_module) members t =
-  let report _ = failwith "the enum exitst" in
-  let () = List.iter (fun (name, _) -> Map.update report name t env.m.enums) members in
+  let report loc name (found : t) =
+    Error.raiseError
+      ("A enum value with the name '" ^ name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
+      loc
+  in
+  let () = List.iter (fun (name, loc) -> Map.update (report loc name) name t env.m.enums) members in
   env
 ;;
 
 let addEnum (env : in_module) type_name members loc : in_module =
-  let report _ = failwith "type exitst" in
+  let report (found : t) =
+    Error.raiseError
+      ("A enum with the name '" ^ found.path.id ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
+      loc
+  in
   let index = getGlobalTick () in
   let path = getPath env.m type_name loc in
   let descr = addEnumMember members in
@@ -482,7 +545,9 @@ let enterFunction
     loc
     : in_func * path * 'a
   =
-  let report _ = Error.raiseError "A function with the same name already exists" loc in
+  let report (found : f) =
+    Error.raiseError ("A function with the name '" ^ found.path.id ^ "' has already been declared.") loc
+  in
   let path = getPath env.m name loc in
   let locals, args_t = registerArguments args in
   let t = args_t, ret in

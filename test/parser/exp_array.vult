@@ -1,7 +1,7 @@
 fun foo(){
     val buffer : array(int,8);
     buffer = [1,2,3,4,5,6,7,8];
-    val buffer0 : array(int,0) = [];
+    val buffer0 : array(int,1) = [1];
     val buffer1 = [1];
     val buffer2 = [1.0,2.0];
 

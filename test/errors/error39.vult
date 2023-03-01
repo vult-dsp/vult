@@ -1,0 +1,7 @@
+fun foo () {
+  return 1;
+}
+
+fun foo() {
+  return 1;
+}

@@ -1,9 +1,9 @@
 fun values() {
-   val x = 0; 
-   val x = 0.; 
-   val x = true; 
-   val x = false; 
-   val x = (-1); 
-   val y = x; 
-   val z = (); 
+   val x = 0;
+   val x = 0.0;
+   val x = true;
+   val x = false;
+   val x = (-1);
+   val y = x;
+   val z = ();
 }
