@@ -71,7 +71,7 @@ let rec print_tag t : Pla.t =
         args
     in
     [%pla {|<#name#s>(<#args#>)|}]
-;;
+
 
 let print_tags tags =
   match tags with
@@ -79,7 +79,7 @@ let print_tags tags =
   | _ ->
     let tags = Pla.map_sep Pla.commaspace print_tag tags in
     [%pla {|@[<#tags#>]|}]
-;;
+
 
 let has (tags : tag list) n =
   List.exists
@@ -89,7 +89,7 @@ let has (tags : tag list) n =
       | TagId name -> name = n
       | _ -> false)
     tags
-;;
+
 
 let getType (tag : tag) : string =
   match tag.g with
@@ -99,7 +99,7 @@ let getType (tag : tag) : string =
   | TagReal _ -> "real"
   | TagCall _ -> "tag"
   | TagString _ -> "string"
-;;
+
 
 let getTypeLiteral t : string =
   match t with
@@ -108,14 +108,14 @@ let getTypeLiteral t : string =
   | TypeReal -> "real"
   | TypeId -> "identifier"
   | TypeString -> "string"
-;;
+
 
 let rec getParam (remaining : (string * tag * Loc.t) list) (args : (string * tag * Loc.t) list) (id : string) =
   match args with
   | [] -> remaining, None
   | (name, value, _) :: t when name = id -> remaining @ t, Some value
   | h :: t -> getParam (h :: remaining) t id
-;;
+
 
 let getTypedParam (args : (string * tag * Loc.t) list) (id, typ) =
   match getParam [] args id with
@@ -134,7 +134,7 @@ let getTypedParam (args : (string * tag * Loc.t) list) (id, typ) =
     in
     Error.raiseError msg tag.loc
   | r, None -> r, None
-;;
+
 
 let getArguments tags n =
   CCList.find_map
@@ -144,7 +144,7 @@ let getArguments tags n =
       | TagId name when name = n -> Some []
       | _ -> None)
     tags
-;;
+
 
 let getParameterList tags name (params : (string * tag_type) list) : value option list =
   let rec loop remaning found params =
@@ -157,16 +157,15 @@ let getParameterList tags name (params : (string * tag_type) list) : value optio
   match getArguments tags name with
   | Some args -> loop args [] params
   | None -> []
-;;
+
 
 let getStringValueOr ~default v =
   match v with
   | Some (String v) -> v
   | _ -> default
-;;
+
 
 let getBoolValueOr ~default v =
   match v with
   | Some (Bool v) -> v
   | _ -> default
-;;

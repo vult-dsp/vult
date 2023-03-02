@@ -39,9 +39,10 @@ let showResult (args : args) (output : output) =
     List.iter
       (fun (text, filename) ->
         let code = Pla.print text in
-        if args.force_write
-        then FileIO.write filename code |> ignore
-        else FileIO.writeIfDifferent filename code |> ignore)
+        if args.force_write then
+          FileIO.write filename code |> ignore
+        else
+          FileIO.writeIfDifferent filename code |> ignore)
       files
   | GeneratedCode files -> List.iter (fun (text, _) -> print_endline (Pla.print text)) files
   | Interpret v -> print_endline v
@@ -49,11 +50,10 @@ let showResult (args : args) (output : output) =
   | Errors errors ->
     let error_strings = Error.reportErrors errors in
     prerr_endline error_strings
-;;
+
 
 let generateCode args (stmts, vm, acc) =
-  if args.code <> NoCode
-  then (
+  if args.code <> NoCode then (
     let cstmts = Util.Profile.time "Convert" (fun () -> Code.Convert.prog args stmts) in
     let cstmts = Util.Profile.time "Generate Tables" (fun () -> Tables.create args vm cstmts) in
     let code =
@@ -65,8 +65,9 @@ let generateCode args (stmts, vm, acc) =
       | JavaCode -> failwith "Javascript generator not implemented yet"
     in
     GeneratedCode code :: acc)
-  else acc
-;;
+  else
+    acc
+
 
 let compileCode (args : args) (parsed, acc) =
   let env, stmts = Util.Profile.time "Inference" (fun () -> Inference.infer args parsed) in
@@ -83,33 +84,34 @@ let compileCode (args : args) (parsed, acc) =
     | None -> []
   in
   stmts, vm, run @ bc_out @ prog_out @ typed_out @ acc
-;;
+
 
 (** Prints the parsed files if -dparse was passed as argument *)
 let dumpParsedFiles (args : args) (parsed : Parse.parsed_file list) =
-  if args.dparse
-  then parsed, List.map (fun (r : Parse.parsed_file) -> ParsedCode (Syntax.Print.print r.stmts)) parsed
-  else parsed, []
-;;
+  if args.dparse then
+    parsed, List.map (fun (r : Parse.parsed_file) -> ParsedCode (Syntax.Print.print r.stmts)) parsed
+  else
+    parsed, []
+
 
 let version = String.sub Version.version 1 (String.length Version.version - 2)
 
 let driver (args : args) : output list =
   try
-    if args.show_version
-    then [ Version version ]
-    else (
-      (* Parse the files *)
+    if args.show_version then
+      [ Version version ]
+    else ((* Parse the files *)
       match args.files with
       | [] -> [ Message ("vult " ^ version ^ " - https://github.com/modlfo/vult\nno input files") ]
       | _ ->
         let parsed = Util.Profile.time "Load files" (fun () -> Loader.loadFiles args args.files) in
-        if args.deps
-        then List.map (fun r -> r.Parse.file) parsed |> fun s -> [ Dependencies s ]
-        else parsed |> dumpParsedFiles args |> compileCode args |> generateCode args)
+        if args.deps then
+          List.map (fun r -> r.Parse.file) parsed |> fun s -> [ Dependencies s ]
+        else
+          parsed |> dumpParsedFiles args |> compileCode args |> generateCode args)
   with
   | Error.Errors errors when args.debug = false -> [ Errors errors ]
-;;
+
 
 let main () =
   let args = processArguments () in
@@ -117,4 +119,3 @@ let main () =
   List.iter (showResult args) results;
   if args.profile then Util.Profile.show ();
   exit 0
-;;

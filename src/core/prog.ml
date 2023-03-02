@@ -194,7 +194,7 @@ module Print = struct
     | TTuple elems ->
       let elems = Pla.map_sep Pla.commaspace print_type_ elems in
       [%pla {|(<#elems#>)|}]
-  ;;
+
 
   let print_operator op =
     match op with
@@ -216,13 +216,13 @@ module Print = struct
     | OpLe -> Pla.string "<="
     | OpGt -> Pla.string ">"
     | OpGe -> Pla.string ">="
-  ;;
+
 
   let print_uoperator op =
     match op with
     | UOpNeg -> Pla.string "-"
     | UOpNot -> Pla.string "not"
-  ;;
+
 
   let rec print_exp (e : exp) =
     let t = print_type_ e.t in
@@ -262,7 +262,7 @@ module Print = struct
     | EMember (e, m) ->
       let e = print_exp e in
       [%pla {|<#e#>.<#m#s>|}]
-  ;;
+
 
   let rec print_lexp (e : lexp) =
     let t = print_type_ e.t in
@@ -279,7 +279,7 @@ module Print = struct
     | LTuple l ->
       let l = Pla.map_sep Pla.commaspace print_lexp l in
       [%pla {|(<#l#>)|}]
-  ;;
+
 
   let rec print_dexp (e : dexp) =
     let t = print_type_ e.t in
@@ -290,7 +290,7 @@ module Print = struct
     | DTuple l ->
       let l = Pla.map_sep Pla.commaspace print_dexp l in
       [%pla {|(<#l#>) : <#t#>|}]
-  ;;
+
 
   let rec print_stmt s =
     match s.s with
@@ -320,12 +320,12 @@ module Print = struct
     | StmtBlock stmts ->
       let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
       [%pla {|{<#stmt#+>}|}]
-  ;;
+
 
   let print_arg (n, t, _) =
     let t = print_type_ t in
     [%pla {|<#n#s> : <#t#>|}]
-  ;;
+
 
   let print_function_def kind (def : function_def) =
     let name = def.name in
@@ -333,12 +333,12 @@ module Print = struct
     let tags = Pparser.Ptags.print_tags def.tags in
     let t = print_type_ (snd def.t) in
     [%pla {|<#kind#s> <#name#s>(<#args#>) : <#t#> <#tags#>|}]
-  ;;
+
 
   let print_member (name, t, _) =
     let t = print_type_ t in
     [%pla {|<#name#s> : <#t#>;|}]
-  ;;
+
 
   let print_body body =
     match body.s with
@@ -346,7 +346,7 @@ module Print = struct
     | _ ->
       let stmt = print_stmt body in
       [%pla {|{<#stmt#+><#>}|}]
-  ;;
+
 
   let print_top_stmt t =
     match t.top with
@@ -364,7 +364,7 @@ module Print = struct
       let members = Pla.map_sep_all Pla.newline print_member members in
       [%pla {|struct <#p#s> {<#members#+>}<#>|}]
     | TopAlias { path = p; alias_of } -> [%pla {|type <#p#s> = <#alias_of#s><#>|}]
-  ;;
+
 
   let print_prog t = Pla.map_sep_all Pla.newline print_top_stmt t
 end

@@ -32,19 +32,19 @@ let call_uname () =
   let uname = input_line ic in
   let () = close_in ic in
   uname
-;;
+
 
 let os : string =
   match Sys.os_type with
   | "Win32" | "Cygwin" -> "Windows"
-  | "Unix" ->
-    (match call_uname () with
+  | "Unix" -> (
+    match call_uname () with
     | "Linux" -> "Linux"
     | "Darwin" -> "OSX"
     | _ -> failwith "cannot get os"
     | exception _ -> failwith "cannot get os")
   | _ -> failwith "cannot get os"
-;;
+
 
 let tryToRun cmd =
   Sys.chdir tmp_dir;
@@ -56,13 +56,13 @@ let tryToRun cmd =
   in
   Sys.chdir initial_dir;
   result
-;;
+
 
 let getFile (args : args) ext : string =
   match args.output with
   | Some output -> output ^ "." ^ ext
   | None -> "temp." ^ ext
-;;
+
 
 let writeFiles (_args : args) (files : output list) =
   List.iter
@@ -71,4 +71,3 @@ let writeFiles (_args : args) (files : output list) =
       | GeneratedCode files -> List.iter (fun (text, ext) -> Util.FileIO.write ext (Pla.print text) |> ignore) files
       | _ -> ())
     files
-;;

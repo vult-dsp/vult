@@ -58,7 +58,7 @@ let rec moveToNextTopStatement (buffer : Stream.stream) : unit =
   | _ ->
     let _ = Stream.skip buffer in
     moveToNextTopStatement buffer
-;;
+
 
 let rec moveToNextStatement (buffer : Stream.stream) : unit =
   match Stream.peek buffer with
@@ -69,7 +69,7 @@ let rec moveToNextStatement (buffer : Stream.stream) : unit =
   | _ ->
     let _ = Stream.skip buffer in
     moveToNextStatement buffer
-;;
+
 
 let expToPath error (exp : exp) : path =
   match exp with
@@ -79,7 +79,7 @@ let expToPath error (exp : exp) : path =
     let loc = Loc.merge loc1 loc2 in
     { id; n = Some e; loc }
   | _ -> error ()
-;;
+
 
 (** Returns the left binding powers of the token *)
 let getExpLbp (token : 'kind token) : int =
@@ -107,7 +107,7 @@ let getExpLbp (token : 'kind token) : int =
   | LBRACK, _ -> 80
   | DOT, _ -> 90
   | _ -> 0
-;;
+
 
 let getLExpLbp (token : 'kind token) : int =
   match token.kind, token.value with
@@ -117,37 +117,37 @@ let getLExpLbp (token : 'kind token) : int =
   | DOT, _ -> 90
   | COLON, _ -> 90
   | _ -> 0
-;;
+
 
 let string (buffer : Stream.stream) : string =
   let _ = Stream.expect buffer STRING in
   let token = Stream.current buffer in
   let _ = Stream.skip buffer in
   token.value
-;;
+
 
 let prattParser
-    (rbp : int)
-    (buffer : Stream.stream)
-    (lbp : 'kind token -> int)
-    (nud : Stream.stream -> 'kind token -> 'exp)
-    (led : Stream.stream -> 'kind token -> 'exp -> 'exp)
+  (rbp : int)
+  (buffer : Stream.stream)
+  (lbp : 'kind token -> int)
+  (nud : Stream.stream -> 'kind token -> 'exp)
+  (led : Stream.stream -> 'kind token -> 'exp -> 'exp)
   =
   let current_token = Stream.current buffer in
   let _ = Stream.skip buffer in
   let left = nud buffer current_token in
   let next_token = Stream.current buffer in
   let rec loop token left repeat =
-    if repeat
-    then (
+    if repeat then (
       let _ = Stream.skip buffer in
       let new_left = led buffer token left in
       let new_token = Stream.current buffer in
       loop new_token new_left (rbp < lbp new_token))
-    else left
+    else
+      left
   in
   loop next_token left (rbp < lbp next_token)
-;;
+
 
 let commaSepList parser buffer =
   let rec loop acc =
@@ -160,21 +160,21 @@ let commaSepList parser buffer =
     | _ -> List.rev (e :: acc)
   in
   loop []
-;;
+
 
 let id_name (buffer : Stream.stream) : string * Loc.t =
   let () = Stream.expect buffer ID in
   let token = Stream.current buffer in
   let () = Stream.skip buffer in
   token.value, token.loc
-;;
+
 
 let int_value (buffer : Stream.stream) : int * Loc.t =
   let () = Stream.expect buffer INT in
   let token = Stream.current buffer in
   let () = Stream.skip buffer in
   int_of_string token.value, token.loc
-;;
+
 
 (** Parses tag expressions *)
 let rec tag (rbp : int) (buffer : Stream.stream) : Ptags.tag = prattParser rbp buffer getExpLbp tag_nud tag_led
@@ -184,12 +184,12 @@ and tagExpressionList (buffer : Stream.stream) : Ptags.tag list = commaSepList t
 and tag_nud (buffer : Stream.stream) (token : 'kind token) : Ptags.tag =
   let loc = token.loc in
   match token.kind, token.value with
-  | ID, _ ->
+  | ID, _ -> (
     let name = token.value in
-    (match Stream.peek buffer with
-    | LPAREN ->
+    match Stream.peek buffer with
+    | LPAREN -> (
       let _ = Stream.skip buffer in
-      (match Stream.peek buffer with
+      match Stream.peek buffer with
       | RPAREN ->
         let _ = Stream.skip buffer in
         { g = TagId name; loc }
@@ -208,6 +208,7 @@ and tag_nud (buffer : Stream.stream) (token : 'kind token) : Ptags.tag =
     let message = Stream.notExpectedError token in
     raise (ParserError message)
 
+
 and tag_unary_op (buffer : Stream.stream) (token : 'kind token) : Ptags.tag =
   let right = tag 70 buffer in
   match right.g with
@@ -215,17 +216,20 @@ and tag_unary_op (buffer : Stream.stream) (token : 'kind token) : Ptags.tag =
   | TagReal value -> { right with g = TagReal (-.value) }
   | _ -> Error.raiseError "invalid value" token.loc
 
+
 and tag_led (_ : Stream.stream) (token : 'kind token) (_ : Ptags.tag) : Ptags.tag =
   match token.kind with
   | _ ->
     let message = Stream.notExpectedError token in
     raise (ParserError message)
 
+
 and tag_pair (bp : int) (buffer : Stream.stream) : string * Ptags.tag * Loc.t =
   let id, loc = id_name buffer in
   let _ = Stream.consume buffer EQUAL in
   let value = tag bp buffer in
   id, value, loc
+
 
 and tag_pair_list (buffer : Stream.stream) : (string * Ptags.tag * Loc.t) list = commaSepList tag_pair buffer
 
@@ -238,7 +242,7 @@ let optional_tag (buffer : Stream.stream) : Ptags.tag list =
     let _ = Stream.consume buffer RBRACK in
     attr
   | _ -> []
-;;
+
 
 let rec type_ (rbp : int) (buffer : Stream.stream) : type_ = prattParser rbp buffer getExpLbp type_nud type_led
 
@@ -256,6 +260,7 @@ and type_nud (_ : Stream.stream) (token : 'kind token) : type_ =
     let message = Error.PointedError (token.loc, "Invalid type") in
     raise (ParserError message)
 
+
 and type_led (buffer : Stream.stream) (token : 'kind token) (left : type_) : type_ =
   match token.kind with
   | DOT -> type_member buffer token left
@@ -264,6 +269,7 @@ and type_led (buffer : Stream.stream) (token : 'kind token) (left : type_) : typ
     let message = Error.PointedError (token.loc, "Invalid expression") in
     raise (ParserError message)
 
+
 and type_member (buffer : Stream.stream) (token : 'kind token) (left : type_) : type_ =
   let right = type_ (getExpLbp token) buffer in
   match right.t, left.t with
@@ -271,6 +277,7 @@ and type_member (buffer : Stream.stream) (token : 'kind token) (left : type_) : 
   | _ ->
     let message = Error.PointedError (token.loc, "Invalid expression") in
     raise (ParserError message)
+
 
 and type_call (buffer : Stream.stream) (token : 'kind token) (left : type_) : type_ =
   let path =
@@ -289,10 +296,12 @@ and type_call (buffer : Stream.stream) (token : 'kind token) (left : type_) : ty
   let loc = token.loc in
   { t = STComposed (path, args); loc }
 
+
 and type_list (buffer : Stream.stream) : type_ list = commaSepList type_ buffer
 
 let rec dexp_expression (rbp : int) (buffer : Stream.stream) : dexp =
   prattParser rbp buffer getLExpLbp dexp_nud dexp_led
+
 
 and dexp_nud (buffer : Stream.stream) (token : 'kind token) : dexp =
   match token.kind with
@@ -300,8 +309,8 @@ and dexp_nud (buffer : Stream.stream) (token : 'kind token) : dexp =
   | ID ->
     let id = token.value in
     { d = SDId (id, None); loc = token.loc }
-  | LPAREN ->
-    (match Stream.peek buffer with
+  | LPAREN -> (
+    match Stream.peek buffer with
     | RPAREN ->
       let message = Error.PointedError (token.loc, "Invalid declaration of variables") in
       raise (ParserError message)
@@ -314,6 +323,7 @@ and dexp_nud (buffer : Stream.stream) (token : 'kind token) : dexp =
     let message = Error.PointedError (token.loc, "Invalid left hand side of assignment") in
     raise (ParserError message)
 
+
 and dexp_led (buffer : Stream.stream) (token : 'kind token) (left : dexp) : dexp =
   match token.kind with
   | COMMA -> dpair buffer token left
@@ -322,6 +332,7 @@ and dexp_led (buffer : Stream.stream) (token : 'kind token) (left : dexp) : dexp
   | _ ->
     let message = Error.PointedError (token.loc, "Invalid left hand side of assignment") in
     raise (ParserError message)
+
 
 and dpair (buffer : Stream.stream) (token : 'kind token) (left : dexp) : dexp =
   let right = dexp_expression (getLExpLbp token) buffer in
@@ -334,9 +345,11 @@ and dpair (buffer : Stream.stream) (token : 'kind token) (left : dexp) : dexp =
   let elems2 = right |> getElems in
   { d = SDTuple (elems1 @ elems2); loc = left.loc }
 
+
 and dtyped (buffer : Stream.stream) (token : 'kind token) (left : dexp) : dexp =
   let right = type_ 0 buffer in
   { d = SDTyped (left, right); loc = token.loc }
+
 
 and darray (buffer : Stream.stream) (token : 'kind token) (left : dexp) : dexp =
   let size, _ = int_value buffer in
@@ -346,10 +359,11 @@ and darray (buffer : Stream.stream) (token : 'kind token) (left : dexp) : dexp =
   | _ ->
     let message = Error.PointedError (token.loc, "Invalid array declaration") in
     raise (ParserError message)
-;;
+
 
 let rec lexp_expression (rbp : int) (buffer : Stream.stream) : lexp =
   prattParser rbp buffer getLExpLbp lexp_nud lexp_led
+
 
 and lexp_nud (buffer : Stream.stream) (token : 'kind token) : lexp =
   match token.kind with
@@ -357,8 +371,8 @@ and lexp_nud (buffer : Stream.stream) (token : 'kind token) : lexp =
   | ID ->
     let id = token.value in
     { l = SLId id; loc = token.loc }
-  | LPAREN ->
-    (match Stream.peek buffer with
+  | LPAREN -> (
+    match Stream.peek buffer with
     | RPAREN ->
       let message = Error.PointedError (token.loc, "Invalid left hand side of assignment") in
       raise (ParserError message)
@@ -370,6 +384,7 @@ and lexp_nud (buffer : Stream.stream) (token : 'kind token) : lexp =
     let message = Error.PointedError (token.loc, "Invalid left hand side of assignment") in
     raise (ParserError message)
 
+
 and lexp_led (buffer : Stream.stream) (token : 'kind token) (left : lexp) : lexp =
   match token.kind with
   | COMMA -> lhs_pair buffer token left
@@ -379,6 +394,7 @@ and lexp_led (buffer : Stream.stream) (token : 'kind token) (left : lexp) : lexp
     let message = Error.PointedError (token.loc, "Invalid left hand side of assignment") in
     raise (ParserError message)
 
+
 and lexp_member (buffer : Stream.stream) (token : 'kind token) (left : lexp) : lexp =
   let right = lexp_expression (getLExpLbp token) buffer in
   match right.l with
@@ -387,6 +403,7 @@ and lexp_member (buffer : Stream.stream) (token : 'kind token) (left : lexp) : l
   | _ ->
     let message = Error.PointedError (token.loc, "Invalid expression") in
     raise (ParserError message)
+
 
 and lhs_pair (buffer : Stream.stream) (token : 'kind token) (left : lexp) : lexp =
   let right = lexp_expression (getLExpLbp token) buffer in
@@ -399,10 +416,12 @@ and lhs_pair (buffer : Stream.stream) (token : 'kind token) (left : lexp) : lexp
   let elems2 = right |> getElems in
   { l = SLTuple (elems1 @ elems2); loc = left.loc }
 
+
 and lexp_index (buffer : Stream.stream) (token : 'kind token) (left : lexp) : lexp =
   let index = expression 0 buffer in
   let _ = Stream.consume buffer RBRACK in
   { l = SLIndex { e = left; index }; loc = token.loc }
+
 
 and expression (rbp : int) (buffer : Stream.stream) : exp = prattParser rbp buffer getExpLbp exp_nud exp_led
 
@@ -414,8 +433,8 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
   | ID, _ ->
     let id = token.value in
     if String.capitalize_ascii id = id then { e = SEEnum { id; n = None; loc }; loc } else { e = SEId id; loc }
-  | LPAREN, _ ->
-    (match Stream.peek buffer with
+  | LPAREN, _ -> (
+    match Stream.peek buffer with
     | RPAREN ->
       let _ = Stream.skip buffer in
       { e = SEUnit; loc }
@@ -436,8 +455,8 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
     let _ = Stream.consume buffer ELSE in
     let else_ = expression 0 buffer in
     { e = SEIf { cond; then_; else_ }; loc }
-  | LBRACK, _ ->
-    (match Stream.peek buffer with
+  | LBRACK, _ -> (
+    match Stream.peek buffer with
     | RBRACK ->
       let _ = Stream.consume buffer RBRACK in
       { e = SEArray []; loc }
@@ -448,6 +467,7 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
   | _ ->
     let message = Error.PointedError (token.loc, "Invalid expression") in
     raise (ParserError message)
+
 
 and exp_led (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   match token.kind with
@@ -461,13 +481,14 @@ and exp_led (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
     let message = Error.PointedError (token.loc, "Invalid expression") in
     raise (ParserError message)
 
+
 and exp_member (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let right = expression (getExpLbp token) buffer in
   match right.e with
   | SEMember (({ e = SEId id; _ } as i), n) -> { right with e = SEMember ({ i with e = SEMember (left, id) }, n) }
   | SEId id -> { right with e = SEMember (left, id) }
-  | SEEnum { id; n = None; loc } ->
-    (match left.e with
+  | SEEnum { id; n = None; loc } -> (
+    match left.e with
     | SEEnum { id = m; n = None; _ } -> { right with e = SEEnum { id; n = Some m; loc } }
     | _ ->
       let message = Error.PointedError (token.loc, "Invalid expression") in
@@ -475,6 +496,7 @@ and exp_member (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp
   | _ ->
     let message = Error.PointedError (token.loc, "Invalid expression") in
     raise (ParserError message)
+
 
 and pair (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let right = expression (getExpLbp token) buffer in
@@ -486,6 +508,7 @@ and pair (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let elems1 = left |> getElems in
   let elems2 = right |> getElems in
   { e = SETuple (elems1 @ elems2); loc = left.loc }
+
 
 and named_call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let right = expression (getExpLbp token) buffer in
@@ -515,6 +538,7 @@ and named_call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp
     in
     raise (ParserError error)
 
+
 and call (buffer : Stream.stream) (_token : 'kind token) (left : exp) : exp =
   let error () =
     let message = Error.PointedError (left.loc, "This is not a valid function name") in
@@ -529,18 +553,22 @@ and call (buffer : Stream.stream) (_token : 'kind token) (left : exp) : exp =
   let _ = Stream.consume buffer RPAREN in
   { e = SECall { instance = None; path; args }; loc = path.loc }
 
+
 and exp_index (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let index = expression 0 buffer in
   let _ = Stream.consume buffer RBRACK in
   { e = SEIndex { e = left; index }; loc = token.loc }
 
+
 and unaryOp (buffer : Stream.stream) (token : 'kind token) : exp =
   let right = expression 70 buffer in
   { e = SEUnOp (token.value, right); loc = token.loc }
 
+
 and binary_op (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let right = expression (getExpLbp token) buffer in
   { e = SEOp (token.value, left, right); loc = token.loc }
+
 
 and expressionList (buffer : Stream.stream) : exp list = commaSepList expression buffer
 
@@ -558,6 +586,7 @@ and stmtVal (buffer : Stream.stream) : stmt =
     let _ = Stream.consume buffer SEMI in
     { s = SStmtVal (lhs, None); loc }
 
+
 and stmtMem (buffer : Stream.stream) : stmt =
   let loc = Stream.location buffer in
   let _ = Stream.consume buffer MEM in
@@ -574,6 +603,7 @@ and stmtMem (buffer : Stream.stream) : stmt =
     let _ = Stream.consume buffer SEMI in
     { s = SStmtMem (lhs, None, tags); loc }
 
+
 and stmtReturn (buffer : Stream.stream) : stmt =
   let loc = Stream.location buffer in
   let _ = Stream.consume buffer RET in
@@ -581,11 +611,12 @@ and stmtReturn (buffer : Stream.stream) : stmt =
   let _ = Stream.consume buffer SEMI in
   { s = SStmtReturn e; loc }
 
+
 and stmtBind (buffer : Stream.stream) : stmt =
   match lexp_expression 0 buffer with
-  | e1 ->
+  | e1 -> (
     let loc = e1.loc in
-    (match Stream.peek buffer with
+    match Stream.peek buffer with
     | EQUAL ->
       let _ = Stream.consume buffer EQUAL in
       let e2 = expression 0 buffer in
@@ -596,6 +627,7 @@ and stmtBind (buffer : Stream.stream) : stmt =
         Printf.sprintf "Invalid statement. All statements should be in the forms: \"a = b; \" or \"_ = b(); \" "
       in
       raise (ParserError (Stream.makeError buffer message)))
+
 
 and stmtIf (buffer : Stream.stream) : stmt =
   let _ = Stream.consume buffer IF in
@@ -611,6 +643,7 @@ and stmtIf (buffer : Stream.stream) : stmt =
     { s = SStmtIf (cond, tstm, Some fstm); loc }
   | _ -> { s = SStmtIf (cond, tstm, None); loc }
 
+
 and typedArgOpt (buffer : Stream.stream) =
   let _ = Stream.expect buffer ID in
   let token = Stream.current buffer in
@@ -622,6 +655,7 @@ and typedArgOpt (buffer : Stream.stream) =
     token.value, Some e, token.loc
   | _ -> token.value, None, token.loc
 
+
 and typedArg (buffer : Stream.stream) =
   let _ = Stream.expect buffer ID in
   let token = Stream.current buffer in
@@ -630,16 +664,18 @@ and typedArg (buffer : Stream.stream) =
   let e = type_ 20 buffer in
   token.value, Some e, token.loc
 
+
 and argList arg_parser (buffer : Stream.stream) =
   match Stream.peek buffer with
-  | ID ->
+  | ID -> (
     let first = arg_parser buffer in
-    (match Stream.peek buffer with
+    match Stream.peek buffer with
     | COMMA ->
       let _ = Stream.consume buffer COMMA in
       first :: argList arg_parser buffer
     | _ -> [ first ])
   | _ -> []
+
 
 and stmtExternal (buffer : Stream.stream) : top_stmt =
   let _ = Stream.skip buffer in
@@ -669,6 +705,7 @@ and stmtExternal (buffer : Stream.stream) : top_stmt =
   let _ = Stream.consume buffer SEMI in
   { top = STopExternal ({ name; args; t = Some type_; tags; loc }, link_name); loc }
 
+
 and stmtFunctionDecl (buffer : Stream.stream) : function_def * stmt * Loc.t =
   let _ = Stream.skip buffer in
   let name, loc = id_name buffer in
@@ -697,6 +734,7 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * stmt * Loc.t =
   in
   { name; args; t; next; tags; loc }, body, loc
 
+
 and stmtFunctionSpec (buffer : Stream.stream) : function_def =
   let _ = Stream.consume buffer FUN in
   let name, loc = id_name buffer in
@@ -717,9 +755,11 @@ and stmtFunctionSpec (buffer : Stream.stream) : function_def =
   let tags = optional_tag buffer in
   { name; args; t; next = None; tags; loc }
 
+
 and stmtFunction (buffer : Stream.stream) : top_stmt =
   let def, body, loc = stmtFunctionDecl buffer in
   { top = STopFunction (def, body); loc }
+
 
 and stmtType (buffer : Stream.stream) : top_stmt =
   let _ = Stream.consume buffer TYPE in
@@ -734,6 +774,7 @@ and stmtType (buffer : Stream.stream) : top_stmt =
     let got = tokenToString (Stream.current buffer) in
     let message = Printf.sprintf "Expecting a list of value declarations '{ val x:... }' but got %s" got in
     raise (ParserError (Stream.makeError buffer message))
+
 
 and type_member_list (buffer : Stream.stream) =
   match Stream.peek buffer with
@@ -753,12 +794,14 @@ and type_member_list (buffer : Stream.stream) =
     let message = Printf.sprintf "Expecting a list of value declarations '{ val x:... }' but got %s" got in
     raise (ParserError (Stream.makeError buffer message))
 
+
 and type_elem (buffer : Stream.stream) =
   let _ = Stream.consume buffer VAL in
   let name, loc = id_name buffer in
   let _ = Stream.consume buffer COLON in
   let type_ = type_ 10 buffer in
   name, type_, loc
+
 
 and stmtEnum (buffer : Stream.stream) : top_stmt =
   let _ = Stream.consume buffer ENUM in
@@ -774,15 +817,16 @@ and stmtEnum (buffer : Stream.stream) : top_stmt =
     let message = Printf.sprintf "Expecting a list of value declarations '{ val x:... }' but got %s" got in
     raise (ParserError (Stream.makeError buffer message))
 
+
 and enum_member_type (buffer : Stream.stream) =
   match Stream.peek buffer with
   | RBRACE -> raise (ParserError (Stream.makeError buffer "The enumeration declaration is empty"))
   | ID ->
     let rec loop acc =
       match Stream.peek buffer with
-      | ID ->
+      | ID -> (
         let decl = enum_name buffer in
-        (match Stream.peek buffer with
+        match Stream.peek buffer with
         | COMMA ->
           let _ = Stream.consume buffer COMMA in
           loop (decl :: acc)
@@ -796,11 +840,14 @@ and enum_member_type (buffer : Stream.stream) =
     let message = Printf.sprintf "Expecting a list of enumeration elements but got %s" got in
     raise (ParserError (Stream.makeError buffer message))
 
+
 and enum_name (buffer : Stream.stream) =
   let name, loc = id_name buffer in
-  if String.capitalize_ascii name = name
-  then name, loc
-  else raise (ParserError (Stream.makeError buffer "Enumeration elements should start with uppercase"))
+  if String.capitalize_ascii name = name then
+    name, loc
+  else
+    raise (ParserError (Stream.makeError buffer "Enumeration elements should start with uppercase"))
+
 
 and stmtWhile (buffer : Stream.stream) : stmt =
   let loc = Stream.location buffer in
@@ -810,6 +857,7 @@ and stmtWhile (buffer : Stream.stream) : stmt =
   let _ = Stream.consume buffer RPAREN in
   let tstm = stmtList buffer in
   { s = SStmtWhile (cond, tstm); loc }
+
 
 and stmtIter (buffer : Stream.stream) : stmt =
   let loc = Stream.location buffer in
@@ -821,6 +869,7 @@ and stmtIter (buffer : Stream.stream) : stmt =
   let _ = Stream.consume buffer RPAREN in
   let body = stmtList buffer in
   { s = SStmtIter { id = name, id_loc; value; body }; loc }
+
 
 and stmt (buffer : Stream.stream) : stmt =
   try
@@ -838,6 +887,7 @@ and stmt (buffer : Stream.stream) : stmt =
     let _ = moveToNextStatement buffer in
     let _ = Stream.setErrors buffer true in
     { s = SStmtError; loc = Loc.default }
+
 
 and stmtList (buffer : Stream.stream) : stmt =
   let start_loc = Stream.location buffer in
@@ -863,6 +913,7 @@ and stmtList (buffer : Stream.stream) : stmt =
     let s = stmt buffer in
     { s = SStmtBlock [ s ]; loc = s.loc }
 
+
 and topStmt (buffer : Stream.stream) : top_stmt =
   try
     match Stream.peek buffer with
@@ -880,6 +931,7 @@ and topStmt (buffer : Stream.stream) : top_stmt =
     let _ = Stream.setErrors buffer true in
     { top = STopError; loc = Loc.default }
 
+
 and topstmtList (buffer : Stream.stream) : top_stmt list =
   let rec loop acc =
     match Stream.peek buffer with
@@ -889,7 +941,7 @@ and topstmtList (buffer : Stream.stream) : top_stmt list =
       loop (s :: acc)
   in
   List.rev (loop [])
-;;
+
 
 let parseDExp (s : string) : dexp = dexp_expression 0 (Stream.fromString s)
 let parseLhsExp (s : string) : lexp = lexp_expression 0 (Stream.fromString s)
@@ -898,32 +950,32 @@ let parseExp (s : string) : exp = expression 0 (Stream.fromString s)
 let parseId (s : string) : string =
   let buffer = Stream.fromString s in
   fst (id_name buffer)
-;;
+
 
 (** Parses an type given a string *)
 let parseType (s : string) : type_ =
   let buffer = Stream.fromString s in
   type_ 0 buffer
-;;
+
 
 (** Parses an statement given a string *)
 let parseStmt (s : string) : stmt =
   let buffer = Stream.fromString s in
   let result = stmt buffer in
   result
-;;
+
 
 (** Parses a list of statements given a string *)
 let parseStmtList (s : string) : stmt =
   let buffer = Stream.fromString s in
   let result = stmtList buffer in
   result
-;;
+
 
 let parseFunctionSpec (s : string) : function_def =
   let buffer = Stream.fromString s in
   stmtFunctionSpec buffer
-;;
+
 
 let moduleName file =
   match Filename.extension file with
@@ -931,7 +983,7 @@ let moduleName file =
   | _ ->
     let message = Printf.sprintf "The file '%s' does not have the extension .vult" file in
     raise (Error.Errors [ Error.SimpleError message ])
-;;
+
 
 (** Parses a buffer containing a list of statements and returns the results *)
 let parseBuffer (file : string) (buffer : Stream.stream) =
@@ -942,15 +994,15 @@ let parseBuffer (file : string) (buffer : Stream.stream) =
       | _ -> loop (topStmt buffer :: acc)
     in
     let stmts = loop [] in
-    if Stream.hasErrors buffer
-    then raise (Error.Errors (List.rev (Stream.getErrors buffer)))
+    if Stream.hasErrors buffer then
+      raise (Error.Errors (List.rev (Stream.getErrors buffer)))
     else (
       let name = moduleName file in
       { stmts; file; name })
   with
   | ParserError error -> raise (Error.Errors [ error ])
   | Error.Errors _ as e -> raise e
-;;
+
 
 (** Parses a file containing a list of statements and returns the results *)
 let parseFile (filename : string) =
@@ -960,7 +1012,7 @@ let parseFile (filename : string) =
     let result = parseBuffer filename buffer in
     result
   | None -> Error.raiseErrorMsg ("Could not open the file " ^ filename)
-;;
+
 
 (** Parses a string containing a list of statements and returns the results *)
 let parseString (file : string option) (text : string) =
@@ -972,4 +1024,3 @@ let parseString (file : string option) (text : string) =
   let file = Option.value file ~default:"live.vult" in
   let result = parseBuffer file buffer in
   result
-;;

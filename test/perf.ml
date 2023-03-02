@@ -52,7 +52,7 @@ let files =
   ; "test/perf/short_delay_perf.vult"
   ]
   |> List.map in_proj_dir
-;;
+
 
 let includes = [ "examples/util"; "examples/osc"; "examples/filters"; "examples/effects" ] |> List.map in_proj_dir
 
@@ -62,19 +62,19 @@ let showError e =
     let error_strings = Error.reportErrors errors in
     prerr_endline error_strings
   | _ -> raise e
-;;
+
 
 let compileFile (file : string) =
   let basename = Filename.chop_extension (Filename.basename file) in
   let cmd = Printf.sprintf "gcc -ffast-math -Werror -I. -I%s -O3 -c %s -o %s.o" (in_proj_dir "runtime") file basename in
   if Sys.command cmd <> 0 then failwith ("Failed to compile " ^ file)
-;;
+
 
 let linkFiles (output : string) (files : string list) =
   let lflags = if os = "Linux" then "-lm" else "" in
   let cmd = Printf.sprintf "gcc -o %s %s %s" output (String.concat " " files) lflags in
   if Sys.command cmd <> 0 then failwith "Failed to link "
-;;
+
 
 let generateC (filename : string) (output : string) (real : string) : unit =
   let args =
@@ -83,7 +83,7 @@ let generateC (filename : string) (output : string) (real : string) : unit =
   let parser_results = Loader.loadFiles args [ File filename ] in
   let gen = Generate.generateCode parser_results args in
   writeFiles args gen
-;;
+
 
 let generateJs (filename : string) (output : string) : unit =
   let args =
@@ -92,7 +92,7 @@ let generateJs (filename : string) (output : string) : unit =
   let parser_results = Loader.loadFiles args [ File filename ] in
   let gen = Generate.generateCode parser_results args in
   writeFiles args gen
-;;
+
 
 let generateLua (filename : string) (output : string) : unit =
   let args =
@@ -101,7 +101,7 @@ let generateLua (filename : string) (output : string) : unit =
   let parser_results = Loader.loadFiles args [ File filename ] in
   let gen = Generate.generateCode parser_results args in
   writeFiles args gen
-;;
+
 
 let runC real_type vultfile =
   try
@@ -118,7 +118,7 @@ let runC real_type vultfile =
     Sys.chdir initial_dir
   with
   | e -> showError e
-;;
+
 
 let runJs vultfile =
   try
@@ -129,7 +129,7 @@ let runJs vultfile =
     Sys.chdir initial_dir
   with
   | e -> showError e
-;;
+
 
 let runLua vultfile =
   try
@@ -140,7 +140,7 @@ let runLua vultfile =
     Sys.chdir initial_dir
   with
   | e -> showError e
-;;
+
 
 let main () =
   List.iter
@@ -150,6 +150,7 @@ let main () =
       runLua f;
       runJs f)
     files
+
 ;;
 
 main ()

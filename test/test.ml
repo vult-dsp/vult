@@ -36,25 +36,23 @@ let in_tmp_dir path = Filename.concat tmp_dir path
 
 (** checks if node can be called with flag -c *)
 let has_node =
-  if tryToRun ("node -c " ^ in_test_directory "other/test.js")
-  then (
+  if tryToRun ("node -c " ^ in_test_directory "other/test.js") then (
     let () = print_endline "Js syntax will be checked" in
     true)
   else (
     let () = print_endline "Js syntax will not be checked" in
     false)
-;;
+
 
 (** checks if luajit can be called *)
 let has_lua =
-  if tryToRun ("luajit -bl " ^ in_test_directory "other/test.lua" ^ " > out")
-  then (
+  if tryToRun ("luajit -bl " ^ in_test_directory "other/test.lua" ^ " > out") then (
     let () = print_endline "Lua syntax will be checked" in
     true)
   else (
     let () = print_endline "Lua syntax will not be checked" in
     false)
-;;
+
 
 let parser_files =
   [ "stmt_val_mem.vult"
@@ -71,7 +69,7 @@ let parser_files =
   ; "mem_tag.vult"
   ; "member_access.vult"
   ]
-;;
+
 
 let errors_files =
   [ "error1.vult"
@@ -110,11 +108,11 @@ let errors_files =
   ; "error38.vult"
   ; "error39.vult"
   ]
-;;
+
 
 let template_files =
   [ "sf_f.vult"; "sff_f.vult"; "sff_ff.vult"; "sfi_fi.vult"; "af_f.vult"; "aff_f.vult"; "aff_ff.vult"; "afi_fi.vult" ]
-;;
+
 
 let perf_files =
   [ "saw_eptr_perf.vult"
@@ -137,7 +135,7 @@ let perf_files =
   ; "clipper_perf.vult"
   ; "short_delay_perf.vult"
   ]
-;;
+
 
 let passes_files =
   [ "split_mem.vult"
@@ -151,7 +149,7 @@ let passes_files =
   ; "output_references.vult"
   ; "nested_if.vult"
   ]
-;;
+
 
 let all_files =
   [ "web/phasedist.vult"
@@ -193,17 +191,17 @@ let all_files =
   ; "../test/compile/array_defined_type.vult"
   ; "../test/compile/array_return.vult"
   ]
-;;
+
 
 let includes =
   [ "effects"; "env"; "filters"; "midi"; "osc"; "unit"; "util" ]
   |> List.map (fun dir -> in_test_directory ("../examples/" ^ dir))
-;;
+
 
 let test_random_code =
   let rec loop n = if n > 0 then Printf.sprintf "test%i.vult" n :: loop (n - 1) else [] in
   loop 1
-;;
+
 
 (** Flags that defines if a baseline should be created for tests *)
 let update_test = Conf.make_bool "update" false "Creates a file with the current results"
@@ -216,7 +214,7 @@ let write file contents =
   let oc = open_out file in
   Printf.fprintf oc "%s" contents;
   close_out oc
-;;
+
 
 let read file =
   let ic = open_in file in
@@ -225,47 +223,47 @@ let read file =
   really_input ic s 0 n;
   close_in ic;
   Bytes.to_string s
-;;
+
 
 let readOutputAndReference (create : bool) (outdir : string) (output, reference) =
   let output_txt =
-    if Sys.file_exists output
-    then (
+    if Sys.file_exists output then (
       let contents = read output in
       let () = Sys.remove output in
       contents)
-    else assert_failure (Printf.sprintf "The file '%s' was not generated" output)
+    else
+      assert_failure (Printf.sprintf "The file '%s' was not generated" output)
   in
   let reference = Filename.concat outdir (Filename.basename reference) in
   let reference_txt =
-    if create
-    then (
+    if create then (
       let () = write reference output_txt in
       output_txt)
-    else if Sys.file_exists reference
-    then read reference
-    else assert_failure (Printf.sprintf "The file '%s' has no reference data" reference)
+    else if Sys.file_exists reference then
+      read reference
+    else
+      assert_failure (Printf.sprintf "The file '%s' has no reference data" reference)
   in
   output_txt, reference_txt
-;;
+
 
 (** Returns the contents of the reference file for the given vult file *)
 let readReference (update : bool) (ext : string) (contents : string) (file : string) (outdir : string) : string =
   let basefile = Filename.chop_extension (Filename.basename file) in
   let ref_file = Filename.concat outdir (basefile ^ "." ^ ext) in
-  if update
-  then (
+  if update then (
     let () = write ref_file contents in
     contents)
-  else if Sys.file_exists ref_file
-  then read ref_file
-  else assert_failure (Printf.sprintf "The file '%s' has no reference data" file)
-;;
+  else if Sys.file_exists ref_file then
+    read ref_file
+  else
+    assert_failure (Printf.sprintf "The file '%s' has no reference data" file)
+
 
 (** Asserts if the file does not exists *)
 let checkFile (filename : string) : string =
   if Sys.file_exists filename then filename else assert_failure (Printf.sprintf "The file '%s' does not exits" filename)
-;;
+
 
 let showResults (result : Pparser.Parse.parsed_file) : string = Pparser.Syntax.Print.print result.stmts
 
@@ -284,7 +282,7 @@ module ParserTest = struct
       ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b))
       reference
       current
-  ;;
+
 
   let get files = "parser" >::: List.map (fun file -> Filename.basename file >:: run file) files
 end
@@ -309,7 +307,7 @@ module ErrorTest = struct
       []
       results
     |> String.concat "\n"
-  ;;
+
 
   let run (file : string) context =
     let folder = "errors" in
@@ -322,7 +320,7 @@ module ErrorTest = struct
       ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b))
       reference
       current
-  ;;
+
 
   let get files = "errors" >::: List.map (fun file -> Filename.basename file >:: run file) files
 end
@@ -333,12 +331,12 @@ module PassesTest = struct
     match o with
     | Args.Prog s -> s
     | _ -> ""
-  ;;
+
 
   let process (fullfile : string) : string =
     let args = Args.{ default_arguments with dprog = true; files = [ File fullfile ] } in
     Driver.Cli.driver args |> List.map show |> String.concat "\n"
-  ;;
+
 
   let run (file : string) context =
     let folder = "passes" in
@@ -351,7 +349,7 @@ module PassesTest = struct
       ~pp_diff:(fun fmt (a, b) -> Format.fprintf fmt "\n%s" (Diff.lineDiff a b))
       reference
       current
-  ;;
+
 
   let get files = "passes" >::: List.map (fun file -> Filename.basename file >:: run file) files
 end
@@ -369,7 +367,7 @@ module RandomCompileTest = struct
         basename
     in
     if Sys.command cmd <> 0 then assert_failure ("Failed to compile " ^ file)
-  ;;
+
 
   let generateCPP (filename : string) (output : string) : unit =
     let args = Args.{ default_arguments with files = [ File filename ]; code = CppCode; output = Some output } in
@@ -380,7 +378,7 @@ module RandomCompileTest = struct
     let stmts, vm, _ = Driver.Cli.compileCode args ([ parser_results ], []) in
     let gen = Driver.Cli.generateCode args (stmts, vm, []) in
     writeFiles args gen
-  ;;
+
 
   let run (file : string) _ =
     let output = Filename.chop_extension (Filename.basename file) in
@@ -393,7 +391,7 @@ module RandomCompileTest = struct
     Sys.remove (output ^ ".vult");
     Sys.remove output;
     Sys.chdir initial_dir
-  ;;
+
 
   let get files = "compile" >::: List.map (fun file -> Filename.basename file ^ ".float" >:: run file) files
 end
@@ -413,7 +411,7 @@ let callCompiler (file : string) : unit =
       basename
   in
   if Sys.command cmd <> 0 then assert_failure ("Failed to compile " ^ file)
-;;
+
 
 let compileCppFile ext (file : string) : unit =
   let output = Filename.chop_extension (Filename.basename file) in
@@ -422,7 +420,7 @@ let compileCppFile ext (file : string) : unit =
   callCompiler (output ^ ext);
   callCompiler (in_test_directory "../runtime/vultin.cpp");
   Sys.chdir initial_dir
-;;
+
 
 module CliTest = struct
   let checkJsFile (file : string) : unit =
@@ -432,7 +430,7 @@ module CliTest = struct
     let cmd = "node -c " ^ output ^ ".js" in
     if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file);
     Sys.chdir initial_dir
-  ;;
+
 
   let checkLuaFile (file : string) : unit =
     let output = Filename.chop_extension (Filename.basename file) in
@@ -442,7 +440,7 @@ module CliTest = struct
     if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file);
     Sys.remove (output ^ ".b");
     Sys.chdir initial_dir
-  ;;
+
 
   let getFlags code_type =
     match code_type with
@@ -453,7 +451,7 @@ module CliTest = struct
     | "lua" -> "-code lua", [ ".lua", ".lua.base" ]
     | "java" -> "-code java -prefix vult.com", [ ".java", ".java.base" ]
     | _ -> failwith "Unknown target to run test"
-  ;;
+
 
   let callVultCli (compiler : compiler) (fullfile : string) code_type =
     let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
@@ -477,7 +475,7 @@ module CliTest = struct
       | _ -> ()
     in
     generated_files
-  ;;
+
 
   let callVultInternal (_ : compiler) (fullfile : string) code_type =
     let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
@@ -496,20 +494,21 @@ module CliTest = struct
     let () = List.iter (Driver.Cli.showResult args) results in
     let generated_files = List.map (fun e -> basefile ^ fst e, basefile ^ snd e) ext in
     generated_files
-  ;;
+
 
   let callVult context (compiler : compiler) (fullfile : string) code_type =
-    if internal_test context
-    then callVultInternal compiler fullfile code_type
-    else callVultCli compiler fullfile code_type
-  ;;
+    if internal_test context then
+      callVultInternal compiler fullfile code_type
+    else
+      callVultCli compiler fullfile code_type
+
 
   let process context (compiler : compiler) (fullfile : string) code_type =
     try callVult context compiler fullfile code_type with
     | Error.Errors errors ->
       let msg = Error.reportErrors errors in
       assert_failure msg
-  ;;
+
 
   let run (file : string) use_node real_type context : unit =
     Sys.chdir initial_dir;
@@ -528,11 +527,10 @@ module CliTest = struct
           reference
           current)
       files_content
-  ;;
+
 
   let get files use_node real_type =
     "cli" >::: List.map (fun file -> Filename.basename file ^ "." ^ real_type >:: run file use_node real_type) files
-  ;;
 end
 
 module Templates = struct
@@ -540,7 +538,7 @@ module Templates = struct
     match args.template, args.code, generated_files with
     | Some "pd", CppCode, (filename, _) :: _ -> compileCppFile ".cpp" filename
     | _ -> ()
-  ;;
+
 
   let callVult template (fullfile : string) code_type =
     let basefile = Filename.chop_extension (Filename.basename fullfile) in
@@ -568,14 +566,14 @@ module Templates = struct
     let generated_files = List.map (fun e -> output ^ fst e, output ^ snd e) ext in
     let () = tryCompile args generated_files in
     generated_files
-  ;;
+
 
   let process _context template (fullfile : string) code_type =
     try callVult template fullfile code_type with
     | Error.Errors errors ->
       let msg = Error.reportErrors errors in
       assert_failure msg
-  ;;
+
 
   let run (file : string) template real_type context : unit =
     Sys.chdir initial_dir;
@@ -594,14 +592,13 @@ module Templates = struct
           reference
           current)
       files_content
-  ;;
+
 
   let get files template real_type =
     "template"
     >::: List.map
            (fun file -> Filename.basename file ^ "." ^ real_type ^ "_" ^ template >:: run file template real_type)
            files
-  ;;
 end
 
 module Interpret = struct
@@ -637,7 +634,7 @@ module Interpret = struct
         | Args.Errors errors -> assert_failure (Error.reportErrors errors)
         | _ -> ())
       results
-  ;;
+
 
   let get files = "run" >::: List.map (fun file -> Filename.basename file >:: run file) files
 end
@@ -667,9 +664,8 @@ let suite =
        ; RandomCompileTest.get test_random_code
        ; Interpret.get perf_files
        ]
-;;
+
 
 let () =
   let _ = run_test_tt_main suite in
   ()
-;;

@@ -65,7 +65,7 @@ let functions =
   ; "fix16", B Fixed
   ]
   |> Map.of_list
-;;
+
 
 let default_env = { locals = Map.empty; lcount = 0; functions; fcount = 0 }
 let addLocal env name = { env with locals = Map.add name env.lcount env.locals; lcount = env.lcount + 1 }
@@ -160,7 +160,7 @@ let list f (env : 'env) (l : 'e) =
       l
   in
   env, List.flatten (List.rev i_rev)
-;;
+
 
 let getIndex name elems =
   let rec loop elems index =
@@ -170,7 +170,7 @@ let getIndex name elems =
     | _ :: t -> loop t (index + 1)
   in
   loop elems 0
-;;
+
 
 let rec dexp_to_lexp (d : dexp) : lexp =
   let t = d.t in
@@ -181,14 +181,14 @@ let rec dexp_to_lexp (d : dexp) : lexp =
   | DTuple l ->
     let l = List.map dexp_to_lexp l in
     { l = LTuple l; t; loc }
-;;
+
 
 let rec compile_dexp (env : env) d =
   match d.d with
   | DWild -> env
   | DId (name, _) -> addLocal env name
   | DTuple l -> List.fold_left compile_dexp env l
-;;
+
 
 let rec compile_lexp (env : env) (l : lexp) : lvalue =
   let loc = l.loc in
@@ -204,8 +204,8 @@ let rec compile_lexp (env : env) (l : lexp) : lvalue =
   | LTuple l ->
     let l = List.map (compile_lexp env) l |> Array.of_list in
     { l = LTuple l; loc }
-  | LMember (e, s) ->
-    (match e.t.t with
+  | LMember (e, s) -> (
+    match e.t.t with
     | TStruct descr ->
       let index = getIndex s descr.members in
       let e = compile_lexp env e in
@@ -215,6 +215,7 @@ let rec compile_lexp (env : env) (l : lexp) : lvalue =
     let e = compile_lexp env e in
     let index = compile_exp env index in
     { l = LIndex (e, index); loc }
+
 
 and compile_exp (env : env) e : rvalue =
   let loc = e.loc in
@@ -257,20 +258,21 @@ and compile_exp (env : env) e : rvalue =
   | EArray elems ->
     let elems = List.map (compile_exp env) elems in
     { r = RObject (Array.of_list elems); loc }
-  | EMember (e, m) ->
-    (match e.t.t with
+  | EMember (e, m) -> (
+    match e.t.t with
     | TStruct descr ->
       let index = getIndex m descr.members in
       let e = compile_exp env e in
       { r = RMember (e, index, m); loc }
     | _ -> failwith "type error")
-  | ECall { path; args } ->
+  | ECall { path; args } -> (
     let args = List.map (compile_exp env) args in
-    (match Map.find_opt path env.functions with
+    match Map.find_opt path env.functions with
     | Some index -> { r = RCall (index, path, args); loc }
     | None ->
       print_endline ("Function not found " ^ path);
       { r = RVoid; loc })
+
 
 and makeOp op e1 e2 =
   match op with
@@ -292,7 +294,7 @@ and makeOp op e1 e2 =
   | OpLe -> ROp (OpLe, e1, e2)
   | OpGt -> ROp (OpGt, e1, e2)
   | OpGe -> ROp (OpGe, e1, e2)
-;;
+
 
 let rec compile_stmt (env : env) (stmt : stmt) =
   let loc = stmt.loc in
@@ -323,13 +325,13 @@ let rec compile_stmt (env : env) (stmt : stmt) =
     let cond = compile_exp env cond in
     let env, body = compile_stmt env body in
     env, [ { i = While (cond, body); loc } ]
-;;
+
 
 let getNOutputs (t : type_) =
   match t.t with
   | TVoid _ | TInt | TReal | TString | TBool | TFixed | TArray _ | TStruct _ -> 1
   | TTuple elems -> List.length elems
-;;
+
 
 let compile_top (env : env) (s : top_stmt) =
   match s.top with
@@ -348,7 +350,7 @@ let compile_top (env : env) (s : top_stmt) =
     let env, body = compile_stmt env body in
     let n_args = List.length args in
     env, [ Function { name; body; locals = env.lcount - n_args; n_args } ]
-;;
+
 
 let compile stmts : env * segment list = list compile_top default_env stmts
 
@@ -372,7 +374,7 @@ let print_op op =
   | OpLe -> Pla.string "<="
   | OpGt -> Pla.string ">"
   | OpGe -> Pla.string ">="
-;;
+
 
 let builtin b =
   match b with
@@ -399,13 +401,13 @@ let builtin b =
   | Int -> "int"
   | Random -> "random"
   | Eps -> "eps"
-;;
+
 
 let f f =
   match f with
   | F i -> Pla.int i
   | B i -> Pla.string (builtin i)
-;;
+
 
 let rec print_rvalue r =
   match r.r with
@@ -445,7 +447,7 @@ let rec print_rvalue r =
     let e2 = print_rvalue e2 in
     let op = print_op op in
     [%pla {|<#e1#> <#op#> <#e2#>|}]
-;;
+
 
 let rec print_lvalue (l : lvalue) =
   match l.l with
@@ -461,7 +463,7 @@ let rec print_lvalue (l : lvalue) =
     let e = print_lvalue e in
     let i = print_rvalue i in
     [%pla {|<#e#>[<#i#>]|}]
-;;
+
 
 let rec print_instr (i : instr) =
   match i.i with
@@ -482,6 +484,7 @@ let rec print_instr (i : instr) =
     let body = print_instr_list body in
     [%pla {|while <#cond#><#body#+>|}]
 
+
 and print_instr_list stmts = Pla.map_sep_all Pla.newline print_instr stmts
 
 let print_segment (s : segment) =
@@ -490,7 +493,7 @@ let print_segment (s : segment) =
     let body = print_instr_list body in
     [%pla {|function <#name#s> : args = <#n_args#i>, locals = <#locals#i><#body#+>|}]
   | External -> Pla.string "external"
-;;
+
 
 let print_segments s = Pla.map_sep_all Pla.newline print_segment (Array.to_list s)
 
@@ -501,10 +504,9 @@ let print_table t =
   in
   let elems = List.sort (fun (_, n1) (_, n2) -> compare n1 n2) (Map.to_list t) in
   Pla.map_sep_all Pla.newline f elems
-;;
+
 
 let print_bytecode b =
   let table = print_table b.table in
   let segments = print_segments b.code in
   [%pla {|<#table#><#><#segments#>|}]
-;;

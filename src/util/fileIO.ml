@@ -35,58 +35,58 @@ let cwd_fun = ref (fun () -> Sys.getcwd ())
 *)
 let read_fun =
   ref (fun path ->
-      if Sys.file_exists path
-      then (
-        let file = open_in path in
-        let buffer = Buffer.create 16 in
-        try
-          while true do
-            let c = input_char file in
-            Buffer.add_char buffer c
-          done;
-          None
-        with
-        | _ ->
-          close_in file;
-          Some (Buffer.contents buffer))
-      else None)
-;;
+    if Sys.file_exists path then (
+      let file = open_in path in
+      let buffer = Buffer.create 16 in
+      try
+        while true do
+          let c = input_char file in
+          Buffer.add_char buffer c
+        done;
+        None
+      with
+      | _ ->
+        close_in file;
+        Some (Buffer.contents buffer))
+    else
+      None)
+
 
 (** ref holding the read_bytes file function.
     The default function is the native.
 *)
 let read_bytes_fun =
   ref (fun path ->
-      if Sys.file_exists path
-      then (
-        let file = open_in path in
-        let buffer = Buffer.create 16 in
-        try
-          while true do
-            let c = input_char file in
-            Buffer.add_char buffer c
-          done;
-          None
-        with
-        | End_of_file ->
-          close_in file;
-          Some buffer)
-      else None)
-;;
+    if Sys.file_exists path then (
+      let file = open_in path in
+      let buffer = Buffer.create 16 in
+      try
+        while true do
+          let c = input_char file in
+          Buffer.add_char buffer c
+        done;
+        None
+      with
+      | End_of_file ->
+        close_in file;
+        Some buffer)
+    else
+      None)
+
 
 (** ref holding the read file function.
     The default function is the native.
 *)
 let write_fun =
   ref (fun path text ->
-      try
-        let file = open_out path in
-        output_string file text;
-        close_out file;
-        true
-      with
-      | _ -> false)
-;;
+    try
+      let file = open_out path in
+      output_string file text;
+      close_out file;
+      true
+    with
+    | _ -> false)
+
 
 (** ref holding the file exists.
     The default function is the native.
@@ -134,8 +134,8 @@ let exists (path : string) : bool = !exists_fun path
 let cwd () : string = !cwd_fun ()
 
 let findFile (includes : string list) (filename : string) : string option =
-  if exists filename
-  then Some filename
+  if exists filename then
+    Some filename
   else (
     let rec loop inc =
       match inc with
@@ -145,13 +145,12 @@ let findFile (includes : string list) (filename : string) : string option =
         if exists fullname then Some fullname else loop t
     in
     loop includes)
-;;
+
 
 let writeIfDifferent (path : string) (text : string) : bool =
-  if exists path
-  then (
+  if exists path then (
     match read path with
     | Some current when compare current text = 0 -> true
     | _ -> write path text)
-  else write path text
-;;
+  else
+    write path text

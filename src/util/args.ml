@@ -101,7 +101,7 @@ let default_arguments : args =
   ; debug = false
   ; profile = false
   }
-;;
+
 
 type flags =
   { flag : string
@@ -116,13 +116,13 @@ let flags result =
           (fun s ->
             result.code
               <- (match s with
-                 | "cpp" -> CppCode
-                 | "lua" -> LuaCode
-                 | "java" -> JavaCode
-                 | "js" -> JSCode
-                 | _ ->
-                   print_endline ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js");
-                   exit (-1)))
+                  | "cpp" -> CppCode
+                  | "lua" -> LuaCode
+                  | "java" -> JavaCode
+                  | "js" -> JSCode
+                  | _ ->
+                    print_endline ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js");
+                    exit (-1)))
     ; comment = "language Generate code for the specified language (cpp, lua, java, js)"
     }
   ; { flag = "-prefix"
@@ -147,11 +147,11 @@ let flags result =
           (fun real ->
             result.real
               <- (match real with
-                 | "float" -> Float
-                 | "fixed" -> Fixed
-                 | _ ->
-                   print_endline ("Unknown numeric formmat: " ^ real);
-                   exit (-1)))
+                  | "float" -> Float
+                  | "fixed" -> Fixed
+                  | _ ->
+                    print_endline ("Unknown numeric formmat: " ^ real);
+                    exit (-1)))
     ; comment = " Defines the numeric type for the generated code: double, fixed"
     }
   ; { flag = "-samplerate"
@@ -211,7 +211,7 @@ let flags result =
   ; { flag = "-debug"; action = Arg.Unit (fun () -> result.debug <- true); comment = "" }
   ; { flag = "-profile"; action = Arg.Unit (fun () -> result.profile <- true); comment = "" }
   ]
-;;
+
 
 (** Returns a 'arguments' type containing the options passed in the command line *)
 let processArguments () : args =
@@ -222,4 +222,3 @@ let processArguments () : args =
   in
   let () = result.files <- List.rev result.files in
   result
-;;

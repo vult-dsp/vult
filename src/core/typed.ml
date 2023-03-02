@@ -45,8 +45,8 @@ and type_ =
 type fun_type = type_ list * type_
 
 let rec compare_type_ (a : type_) (b : type_) =
-  if a == b
-  then 0
+  if a == b then
+    0
   else (
     match a.tx, b.tx with
     | TELink a, _ -> compare_type_ a b
@@ -57,6 +57,7 @@ let rec compare_type_ (a : type_) (b : type_) =
     | TEOption e1, TEOption e2 -> compare_type_list_ e1 e2
     | TEUnbound n1, TEUnbound n2 -> compare n1 n2
     | _ -> compare a.tx b.tx)
+
 
 and compare_type_list_ a b = CCOrd.list compare_type_ a b
 
@@ -183,7 +184,7 @@ let rec print_type_ (t : type_) : Pla.t =
   | TEComposed (name, elems) ->
     let elems = Pla.map_sep Pla.commaspace print_type_ elems in
     [%pla {|<#name#s>(<#elems#>)|}]
-;;
+
 
 let rec print_exp e =
   match e.e with
@@ -222,7 +223,7 @@ let rec print_exp e =
   | EMember (e, m) ->
     let e = print_exp e in
     [%pla {|<#e#>.<#m#s>|}]
-;;
+
 
 let rec print_lexp e =
   match e.l with
@@ -238,7 +239,7 @@ let rec print_lexp e =
   | LTuple l ->
     let l = Pla.map_sep Pla.commaspace print_lexp l in
     [%pla {|(<#l#>)|}]
-;;
+
 
 let rec print_dexp (e : dexp) =
   let t = print_type_ e.t in
@@ -249,7 +250,7 @@ let rec print_dexp (e : dexp) =
   | DTuple l ->
     let l = Pla.map_sep Pla.commaspace print_dexp l in
     [%pla {|(<#l#>) : <#t#>|}]
-;;
+
 
 let rec print_stmt s =
   match s.s with
@@ -282,12 +283,12 @@ let rec print_stmt s =
   | StmtBlock stmts ->
     let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
     [%pla {|{<#stmt#+>}|}]
-;;
+
 
 let print_arg (n, t, _) =
   let t = print_type_ t in
   [%pla {|<#n#s> : <#t#>|}]
-;;
+
 
 let next_kind kind =
   match kind with
@@ -295,14 +296,14 @@ let next_kind kind =
   | "and" -> "and"
   | "external" -> "external"
   | _ -> failwith "invalid kind"
-;;
+
 
 let print_body_linkname body_linkname =
   match body_linkname with
   | `Body stmt -> print_stmt stmt
   | `LinkName name -> [%pla {| "<#name#s>"|}]
   | `NoLinkName -> Pla.unit
-;;
+
 
 let rec print_function_def kind (def : function_def) body_linkname =
   let name = print_path def.name in
@@ -313,16 +314,17 @@ let rec print_function_def kind (def : function_def) body_linkname =
   let next = print_next_function_def kind def.next in
   [%pla {|<#kind#s> <#name#>(<#args#>) : <#t#> <#tags#><#body#><#><#next#>|}]
 
+
 and print_next_function_def kind next =
   match next with
   | None -> Pla.unit
   | Some (def, body) -> print_function_def (next_kind kind) def (`Body body)
-;;
+
 
 let print_record_member (name, t, _) =
   let t = print_type_ t in
   [%pla {|<#name#s> : <#t#>;|}]
-;;
+
 
 let print_enum_member (name, _) = [%pla {|<#name#s>|}]
 
@@ -343,7 +345,7 @@ let print_top_stmt t =
     let p = print_path p in
     let members = Pla.map_sep Pla.commaspace print_enum_member members in
     [%pla {|enum <#p#> {<#members#+>}<#>|}]
-;;
+
 
 let print_prog prog = Pla.map_sep_all Pla.newline print_top_stmt prog
 
@@ -355,7 +357,7 @@ module C = struct
   let unbound loc =
     incr tick;
     { tx = TEUnbound !tick; loc }
-  ;;
+
 
   let noreturn loc = { tx = TENoReturn; loc }
   let unit ~loc = makeId loc "unit"
@@ -373,115 +375,114 @@ module C = struct
   let freal_type () =
     let loc = Loc.default in
     { tx = TEOption [ real ~loc; fix16 ~loc ]; loc }
-  ;;
+
 
   let array_size () : fun_type =
     let loc = Loc.default in
     let a = unbound loc in
     let a_array = array a in
     [ a_array ], int ~loc
-  ;;
+
 
   let array_make () : fun_type =
     let loc = Loc.default in
     let a = unbound loc in
     let a_array = array a in
     [ int ~loc; a ], a_array
-  ;;
+
 
   let wrap_array () : fun_type =
     let loc = Loc.default in
     let a = unbound loc in
     let array_type = array a in
     [ array_type ], array_type
-  ;;
+
 
   let freal_freal () : fun_type =
     let t = freal_type () in
     [ t ], t
-  ;;
+
 
   let real_real_real () : fun_type =
     let loc = Loc.default in
     let t = real ~loc in
     [ t; t ], t
-  ;;
+
 
   let clip () : fun_type =
     let loc = Loc.default in
     let t = unbound loc in
     [ t; t; t ], t
-  ;;
+
 
   let num_int () : fun_type =
     let loc = Loc.default in
     [ num loc ], int ~loc
-  ;;
+
 
   let num_real () : fun_type =
     let loc = Loc.default in
     [ num loc ], real ~loc
-  ;;
+
 
   let num_bool_real () : fun_type =
     let loc = Loc.default in
     [ num_bool loc ], real ~loc
-  ;;
+
 
   let num_fix16 () : fun_type =
     let loc = Loc.default in
     [ num loc ], fix16 ~loc
-  ;;
+
 
   let num_num () : fun_type =
     let loc = Loc.default in
     let t = num loc in
     [ t ], t
-  ;;
+
 
   let num_num_num () : fun_type =
     let loc = Loc.default in
     let t = num loc in
     [ t; t ], t
-  ;;
+
 
   let int_int_int () : fun_type =
     let loc = Loc.default in
     let t = int ~loc in
     [ t; t ], t
-  ;;
+
 
   let num_num_bool () : fun_type =
     let loc = Loc.default in
     let t = num loc in
     [ t; t ], bool ~loc
-  ;;
+
 
   let a_a_bool () : fun_type =
     let loc = Loc.default in
     let t = unbound loc in
     [ t; t ], bool ~loc
-  ;;
+
 
   let bool_bool () : fun_type =
     let loc = Loc.default in
     let t = bool ~loc in
     [ t ], t
-  ;;
+
 
   let bool_bool_bool () : fun_type =
     let loc = Loc.default in
     let t = bool ~loc in
     [ t; t ], t
-  ;;
+
 
   let unit_int () : fun_type =
     let loc = Loc.default in
     [], int ~loc
-  ;;
+
 
   let unit_real () : fun_type =
     let loc = Loc.default in
     [], real ~loc
-  ;;
 end

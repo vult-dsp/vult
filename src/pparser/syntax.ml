@@ -168,26 +168,26 @@ let compare_path (p1 : path) (p2 : path) =
     if ret = 0 then String.compare n1 n2 else ret
   | { id = id1; n = None; _ }, { id = id2; n = None; _ } -> String.compare id1 id2
   | _ -> compare p1 p2
-;;
+
 
 let print_path (p : path) =
   match p with
   | { id; n = None; _ } -> Pla.string id
   | { id; n = Some m; _ } -> [%pla {|<#m#s>.<#id#s>|}]
-;;
+
 
 module Print = struct
   let stags tags =
     match tags with
     | [] -> Pla.unit
     | _ -> Pla.append Pla.space (Ptags.print_tags tags)
-  ;;
+
 
   let path (p : path) =
     match p with
     | { id; n = None; _ } -> Pla.string id
     | { id; n = Some m; _ } -> [%pla {|<#id#s>.<#m#s>|}]
-  ;;
+
 
   let rec type_ (t : type_) = type_d t.t
 
@@ -198,7 +198,7 @@ module Print = struct
     | STComposed (name, subs) ->
       let subs = Pla.map_sep Pla.commaspace type_ subs in
       [%pla {|<#name#s>(<#subs#>)|}]
-  ;;
+
 
   let rec exp (e : exp) = exp_d e.e
 
@@ -248,7 +248,7 @@ module Print = struct
     | SEGroup e ->
       let e = exp e in
       [%pla {|(<#e#>)|}]
-  ;;
+
 
   let rec lexp (l : lexp) = lexp_d l.l
 
@@ -269,7 +269,7 @@ module Print = struct
     | SLTuple elems ->
       let elems = Pla.map_sep Pla.commaspace lexp elems in
       [%pla {|<#elems#>|}]
-  ;;
+
 
   let rec dexp (d : dexp) = dexp_d d.d
 
@@ -288,7 +288,7 @@ module Print = struct
       let e = dexp e in
       let t = type_ t in
       [%pla {|<#e#> : <#t#>|}]
-  ;;
+
 
   let arg (n, t, _) =
     match t with
@@ -296,7 +296,7 @@ module Print = struct
     | Some t ->
       let t = type_ t in
       [%pla {|<#n#s> : <#t#>|}]
-  ;;
+
 
   let rec stmt (s : stmt) = stmt_d s.s
 
@@ -346,7 +346,7 @@ module Print = struct
       let value = exp value in
       let body = stmt body in
       [%pla {|iter (<#id#s>, <#value#>)<#body#>|}]
-  ;;
+
 
   let genera_def name args t tags =
     let retType t =
@@ -360,7 +360,7 @@ module Print = struct
     let t = retType t in
     let tags = stags tags in
     [%pla {|<#name#s>(<#args#>)<#t#><#tags#>|}]
-  ;;
+
 
   let rec function_def (def : function_def) body =
     let next f =
@@ -374,14 +374,14 @@ module Print = struct
     let body = stmt body in
     let n = next def.next in
     [%pla {|<#decl#><#body#><#n#>|}]
-  ;;
+
 
   let ext_def (def : ext_def) = genera_def def.name def.args def.t def.tags
 
   let member (n, t, _) =
     let t = type_ t in
     [%pla {|val <#n#s> : <#t#>|}]
-  ;;
+
 
   let enum_member (n, _) = Pla.string n
 
@@ -405,7 +405,7 @@ module Print = struct
     | STopEnum { name; members } ->
       let members = Pla.map_sep [%pla {|;<#>|}] enum_member members in
       [%pla {|enum <#name#s> {<#members#+>}|}]
-  ;;
+
 
   let stmts (s : top_stmt list) = Pla.map_sep_all Pla.newline top_stmt s
   let print s = Pla.print @@ stmts s

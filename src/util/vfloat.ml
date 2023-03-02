@@ -25,12 +25,12 @@
 let reduce_precision = ref false
 
 let crop (f : float) =
-  if !reduce_precision
-  then (
+  if !reduce_precision then (
     let ff = f *. 10000000.0 in
     ceil ff /. 10000000.0)
-  else f
-;;
+  else
+    f
+
 
 let adapt (f : float) =
   crop
@@ -41,7 +41,7 @@ let adapt (f : float) =
   | FP_zero -> 0.0
   | FP_infinite -> if f > 0.0 then 3.40282347E+38 else -3.40282347E+38
   | FP_nan -> failwith "nan"
-;;
+
 
 let to_string (f : float) =
   Float.to_string
@@ -53,4 +53,3 @@ let to_string (f : float) =
   | FP_zero -> 0.0
   | FP_infinite -> if f > 0.0 then 3.40282347E+38 else -3.40282347E+38
   | FP_nan -> failwith "nan"
-;;

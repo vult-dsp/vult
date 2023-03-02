@@ -63,7 +63,7 @@ module G (T : GESig) = struct
     let () = Hashtbl.replace g.vertex from_key from_v in
     let () = Hashtbl.replace g.vertex to_key to_v in
     ()
-  ;;
+
 
   let addVertex (g : g) (v : T.data) : unit = Hashtbl.replace g.vertex (T.get v) v
 
@@ -72,14 +72,14 @@ module G (T : GESig) = struct
     match Hashtbl.find g.forward (T.get v) with
     | deps -> deps
     | exception Not_found -> []
-  ;;
+
 
   (* gets the all vertices that point to a given vertex *)
   let getRevDependencies (g : g) (v : T.data) : T.data list =
     match Hashtbl.find g.backward (T.get v) with
     | deps -> deps
     | exception Not_found -> []
-  ;;
+
 
   (* returns a list with all vertices of the graph *)
   let getVertices (g : g) : T.data list = Hashtbl.fold (fun _ v acc -> v :: acc) g.vertex []
@@ -95,7 +95,6 @@ module G (T : GESig) = struct
         e
     in
     g
-  ;;
 end
 
 (* imperative stack implementation *)
@@ -119,7 +118,7 @@ module S = struct
     | h :: t ->
       s := t;
       h
-  ;;
+
 
   (* returns a list representation of the stack *)
   let toList (s : 'a t) : 'a list = !s
@@ -146,35 +145,32 @@ module Make (T : GESig) = struct
 
   (* pass one of the Kosaraju's algorithm *)
   let rec pass1 g stack visited v =
-    if not (V.contains visited v)
-    then (
+    if not (V.contains visited v) then (
       let () = V.add visited v in
       let children = G.getDependencies g v in
       let () = List.iter (pass1 g stack visited) children in
       S.push stack v)
-  ;;
+
 
   let rec pass2_part g visited comp v =
-    if not (V.contains visited v)
-    then (
+    if not (V.contains visited v) then (
       let deps = G.getRevDependencies g v in
       let () = V.add visited v in
       let () = S.push comp v in
       List.iter (pass2_part g visited comp) deps)
-  ;;
+
 
   let rec pass2 g comps stack visited =
-    if not (S.isEmpty stack)
-    then (
+    if not (S.isEmpty stack) then (
       let v = S.pop stack in
-      if V.contains visited v
-      then pass2 g comps stack visited
+      if V.contains visited v then
+        pass2 g comps stack visited
       else (
         let comp = S.empty () in
         let () = S.push comps comp in
         pass2_part g visited comp v;
         pass2 g comps stack visited))
-  ;;
+
 
   (* calculates the strong components of a graph *)
   let calculate (graph : (T.data * T.data list) list) : T.data list list =
@@ -192,5 +188,4 @@ module Make (T : GESig) = struct
     pass2 g comps stack visited;
     (* returns the components as a list of lists *)
     comps |> S.toList |> List.map S.toList
-  ;;
 end

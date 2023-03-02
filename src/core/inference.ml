@@ -40,7 +40,7 @@ module ToProg = struct
     match p with
     | { id; n = None; _ } -> id
     | { id; n = Some n; _ } -> n ^ "_" ^ id
-  ;;
+
 
   let list mapper (env : Env.in_top) (state : state) (l : 'a list) =
     let state, rev =
@@ -52,14 +52,14 @@ module ToProg = struct
         l
     in
     state, List.rev rev
-  ;;
+
 
   let rec getDim (t : Typed.type_) =
     match t.tx with
     | T.TELink t -> getDim t
     | T.TESize dim -> dim
     | _ -> Error.raiseError "The size of the array could not be inferred. Please add a type annotation." t.loc
-  ;;
+
 
   let rec type_ (env : Env.in_top) (state : state) (t : Typed.type_) =
     let loc = t.loc in
@@ -73,12 +73,12 @@ module ToProg = struct
     | T.TEId { id = "fix16"; n = None; _ } -> state, { t = TFixed; loc }
     | T.TEId { id = "string"; n = None; _ } -> state, { t = TString; loc }
     | T.TEId { id = "bool"; n = None; _ } -> state, { t = TBool; loc }
-    | T.TEId p ->
+    | T.TEId p -> (
       let ps = path p in
-      (match Map.find_opt ps state.types with
+      match Map.find_opt ps state.types with
       | Some t -> state, t
-      | None ->
-        (match Env.getType env p with
+      | None -> (
+        match Env.getType env p with
         | None -> failwith "unknown type"
         | Some { descr = Enum _; _ } -> state, { t = TInt; loc }
         | Some { descr = Record members; _ } ->
@@ -103,13 +103,14 @@ module ToProg = struct
     | T.TEComposed (name, _) -> Error.raiseError ("Unknown composed type '" ^ name ^ "'.") t.loc
     | T.TESize _ -> Error.raiseError "Invalid type description." t.loc
 
+
   and type_list (env : Env.in_top) (state : state) (l : (string * Typed.type_ * Loc.t) list) =
     let mapper env state ((n : string), (t : Typed.type_), (loc : Loc.t)) =
       let state, t = type_ env state t in
       state, (n, t, loc)
     in
     list mapper env state l
-  ;;
+
 
   let operator op =
     match op with
@@ -132,14 +133,14 @@ module ToProg = struct
     | ">" -> OpGt
     | ">=" -> OpGe
     | _ -> failwith "unknown operator"
-  ;;
+
 
   let uoperator op =
     match op with
     | "-" -> UOpNeg
     | "not" -> UOpNot
     | _ -> failwith "unknown uoperator"
-  ;;
+
 
   let rec exp (env : Env.in_top) (state : state) (e : Typed.exp) =
     let loc = e.loc in
@@ -183,7 +184,7 @@ module ToProg = struct
     | EMember (e, m) ->
       let state, e = exp env state e in
       state, { e = EMember (e, m); t; loc }
-  ;;
+
 
   let rec lexp (env : Env.in_top) (state : state) (e : Typed.lexp) =
     let loc = e.loc in
@@ -201,7 +202,7 @@ module ToProg = struct
     | LTuple l ->
       let state, l = list lexp env state l in
       state, { l = LTuple l; t; loc }
-  ;;
+
 
   let rec dexp (env : Env.in_top) (state : state) (e : Typed.dexp) =
     let loc = e.loc in
@@ -213,14 +214,14 @@ module ToProg = struct
     | DTuple l ->
       let state, l = list dexp env state l in
       state, { d = DTuple l; t; loc }
-  ;;
+
 
   let block (stmts : stmt list) : stmt =
     match stmts with
     | [] -> { s = StmtBlock []; loc = Loc.default }
     | [ s ] -> s
     | _ -> { s = StmtBlock stmts; loc = Loc.default }
-  ;;
+
 
   let rec stmt (env : Env.in_top) (state : state) (s : Typed.stmt) =
     let loc = s.loc in
@@ -249,19 +250,19 @@ module ToProg = struct
       let state, cond = exp env state cond in
       let state, s = stmt env state s in
       state, [ { s = StmtWhile (cond, block s); loc } ]
-    | StmtBlock stmts ->
+    | StmtBlock stmts -> (
       let state, stmts = list stmt env state stmts in
-      (match List.flatten stmts with
+      match List.flatten stmts with
       | [] -> state, [ { s = StmtBlock []; loc } ]
       | [ { s = StmtBlock subs; _ } ] -> state, [ { s = StmtBlock subs; loc } ]
       | [ s ] -> state, [ s ]
       | subs -> state, [ { s = StmtBlock subs; loc } ])
-  ;;
+
 
   let arg (env : Env.in_top) (state : state) (n, (t : Typed.type_), loc) =
     let state, t = type_ env state t in
     state, (n, t, loc)
-  ;;
+
 
   let function_type env state t =
     match t with
@@ -269,7 +270,7 @@ module ToProg = struct
       let state, args = list type_ env state args in
       let state, ret = type_ env state ret in
       state, (args, ret)
-  ;;
+
 
   let rec function_def (env : Env.in_top) (state : state) (def : Typed.function_def) body =
     let name = path def.name in
@@ -283,11 +284,12 @@ module ToProg = struct
     let stmt = { top = TopFunction ({ name; args; t; loc = def.loc; tags = def.tags; info }, body); loc = def.loc } in
     state, stmt :: next
 
+
   and next_def env state def_opt =
     match def_opt with
     | None -> state, []
     | Some (def, body) -> function_def env state def body
-  ;;
+
 
   let ext_function_def (env : Env.in_top) (state : state) (def : Typed.function_def) (linkname : string option) =
     let name = path def.name in
@@ -300,7 +302,7 @@ module ToProg = struct
       { top = TopExternal ({ name; args; t; loc = def.loc; tags = def.tags; info }, linkname); loc = def.loc }
     in
     state, stmt :: next
-  ;;
+
 
   let top_stmt (env : Env.in_top) (state : state) (t : Typed.top_stmt) =
     match t.top with
@@ -322,7 +324,7 @@ module ToProg = struct
       let p = path p in
       let alias_of = path alias_of in
       state, [ { top = TopAlias { path = p; alias_of }; loc = t.loc } ]
-  ;;
+
 
   let top_stmt_list (env : Env.in_top) (state : state) (t : Typed.top_stmt list) = list top_stmt env state t
 
@@ -330,22 +332,22 @@ module ToProg = struct
     let state = { types = Map.empty; dummy = 0 } in
     let _, t = top_stmt_list env state stmts in
     List.flatten t
-  ;;
+
 
   let isType s =
     match s with
     | { top = TopType _; _ } -> true
     | { top = TopAlias _; _ } -> true
     | _ -> false
-  ;;
+
 
   let getInitializersFromModule table m =
     List.fold_left (fun s (key, t) -> Map.add (path key) (path t) s) table m.Env.init
-  ;;
+
 
   let createInitizerTable (env : Env.in_top) =
     Env.Map.fold (fun _ m s -> getInitializersFromModule s m) Map.empty env.modules
-  ;;
+
 
   let convert (iargs : Args.args) env stmts =
     let stmts = main env stmts in
@@ -353,32 +355,31 @@ module ToProg = struct
     let custom_initializers = createInitizerTable env in
     let initializers = CCList.map Initializer.(createInitFunction custom_initializers iargs) types in
     env, types @ initializers @ functions
-  ;;
 end
 
 let context_name = "_ctx"
 
 let pickLoc (t1 : type_) (t2 : type_) : unit =
   if t1.loc == Loc.default then t1.loc <- t2.loc else if t2.loc == Loc.default then t2.loc <- t1.loc
-;;
+
 
 let linkType ~from ~into =
   into.tx <- TELink from;
   pickLoc from into;
   true
-;;
+
 
 let rec unlink (t : type_) =
   match t.tx with
   | TELink t -> unlink t
   | _ -> t
-;;
+
 
 let path_string (p : Syntax.path) : string =
   match p with
   | { id; n = None; _ } -> id
   | { id; n = Some n; _ } -> n ^ "_" ^ id
-;;
+
 
 let constrainOption l1 l2 =
   let l2_ = List.filter (fun e2 -> List.exists (fun e1 -> compare_type_ e1 e2 = 0) l1) l2 in
@@ -387,7 +388,7 @@ let constrainOption l1 l2 =
   | [] -> failwith "cannot unify the two options"
   | [ t ] -> t
   | l -> { tx = TEOption l; loc = Loc.default }
-;;
+
 
 let rec pickOption original l tt =
   let rec loop l =
@@ -397,9 +398,10 @@ let rec pickOption original l tt =
   in
   loop l
 
+
 and unify (t1 : type_) (t2 : type_) =
-  if t1 == t2
-  then true
+  if t1 == t2 then
+    true
   else (
     match t1.tx, t2.tx with
     | TEId t1, TEId t2 -> Pparser.Syntax.compare_path t1 t2 = 0
@@ -424,24 +426,23 @@ and unify (t1 : type_) (t2 : type_) =
     | TEId _, _ -> false
     | TESize _, _ -> false
     | TEComposed _, _ -> false)
-;;
+
 
 let unifyRaise (loc : Loc.t) (t1 : type_) (t2 : type_) : unit =
   (* TODO: improve unify error reporting for tuples *)
   let raise = true in
-  if not (unify t1 t2)
-  then (
+  if not (unify t1 t2) then (
     let msg =
       let t1 = print_type_ t1 in
       let t2 = print_type_ t2 in
       Pla.print [%pla {|This expression has type '<#t2#>' but '<#t1#>' was expected|}]
     in
-    if raise
-    then Error.raiseError msg loc
+    if raise then
+      Error.raiseError msg loc
     else (
       print_endline (Loc.to_string loc);
       print_endline msg))
-;;
+
 
 let rec type_in_m (env : in_module) (t : Syntax.type_) =
   match t with
@@ -450,8 +451,7 @@ let rec type_in_m (env : in_module) (t : Syntax.type_) =
     { tx = TEId found.path; loc }
   | { t = STSize n; loc } ->
     let () =
-      if n = 0
-      then (
+      if n = 0 then (
         let msg = "Empty arrays are not supported" in
         Error.raiseError msg loc)
     in
@@ -459,7 +459,7 @@ let rec type_in_m (env : in_module) (t : Syntax.type_) =
   | { t = STComposed (name, l); loc } ->
     let l = List.map (type_in_m env) l in
     { tx = TEComposed (name, l); loc }
-;;
+
 
 let type_in_c (env : Env.in_context) (t : Syntax.type_) = type_in_m (Env.exitContext env) t
 let type_in_f (env : Env.in_func) (t : Syntax.type_) = type_in_c (Env.exitFunction env) t
@@ -487,15 +487,13 @@ let applyFunction loc (args_t_in : type_ list) (ret : type_) (args_in : exp list
       loop args_t args
   in
   loop args_t_in args_in
-;;
+
 
 let addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
-  if Env.isFunctionActive f
-  then (
+  if Env.isFunctionActive f then (
     let cpath = Env.getContext env in
     let fpath = Env.getFunctionContext f in
-    if Syntax.compare_path cpath fpath = 0
-    then (
+    if Syntax.compare_path cpath fpath = 0 then (
       let t = C.path loc fpath in
       let e = { e = EId context_name; t; loc } in
       env, e :: args)
@@ -518,8 +516,9 @@ let addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
       let env = Env.addVar env unify instance t Inst loc in
       let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, instance); loc; t } in
       env, e :: args))
-  else env, args
-;;
+  else
+    env, args
+
 
 let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
   match e with
@@ -608,13 +607,13 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     let args_t, ret = f.t in
     let t = applyFunction e.loc args_t ret [ e ] in
     env, { e = EUnOp (op, e); t; loc }
-  | { e = SEMember (e, m); loc } ->
+  | { e = SEMember (e, m); loc } -> (
     let env, e = exp env e in
-    (match (unlink e.t).tx with
-    | TEId path ->
-      (match Env.lookType env path loc with
-      | { path; descr = Record members; _ } ->
-        (match Map.find m members with
+    match (unlink e.t).tx with
+    | TEId path -> (
+      match Env.lookType env path loc with
+      | { path; descr = Record members; _ } -> (
+        match Map.find m members with
         | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
         | Some { t; _ } -> env, { e = EMember (e, m); t; loc })
       | _ ->
@@ -630,6 +629,7 @@ let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     let t = C.path tloc type_path in
     env, { e = EInt index; t; loc }
 
+
 and exp_list (env : Env.in_func) (l : Syntax.exp list) : Env.in_func * exp list =
   let env, rev_l =
     List.fold_left
@@ -640,6 +640,7 @@ and exp_list (env : Env.in_func) (l : Syntax.exp list) : Env.in_func * exp list 
       l
   in
   env, List.rev rev_l
+
 
 and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
   match e with
@@ -678,13 +679,13 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
     unifyRaise index.loc (C.int ~loc) index.t;
     unifyRaise e.loc (C.array ~loc t) e.t;
     env, { l = LIndex { e; index }; t; loc }
-  | { l = SLMember (e, m); loc } ->
+  | { l = SLMember (e, m); loc } -> (
     let env, e = lexp env e in
-    (match (unlink e.t).tx with
-    | TEId path ->
-      (match Env.lookType env path loc with
-      | { path; descr = Record members; _ } ->
-        (match Map.find m members with
+    match (unlink e.t).tx with
+    | TEId path -> (
+      match Env.lookType env path loc with
+      | { path; descr = Record members; _ } -> (
+        match Map.find m members with
         | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
         | Some { t; _ } -> env, { l = LMember (e, m); t; loc })
       | _ ->
@@ -695,6 +696,7 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
       let t = Pla.print (Typed.print_type_ e.t) in
       let e = Pla.print (Typed.print_lexp e) in
       Error.raiseError ("The expression' " ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
+
 
 and dexp (env : Env.in_func) (e : Syntax.dexp) (kind : var_kind) : Env.in_func * dexp =
   match e with
@@ -726,7 +728,7 @@ and dexp (env : Env.in_func) (e : Syntax.dexp) (kind : var_kind) : Env.in_func *
     in
     let env = Env.addVar env unify name t kind loc in
     env, { d = DId (name, dims); t; loc }
-;;
+
 
 let rec dexp_to_lexp (d : Syntax.dexp) : Syntax.lexp =
   let loc = d.loc in
@@ -738,13 +740,13 @@ let rec dexp_to_lexp (d : Syntax.dexp) : Syntax.lexp =
   | SDId (name, _) -> { l = SLId name; loc }
   | SDGroup e -> dexp_to_lexp e
   | SDTyped (e, _) -> dexp_to_lexp e
-;;
+
 
 let stmt_block (stmts : stmt list) =
   match stmts with
   | [ s ] -> s
   | _ -> { s = StmtBlock stmts; loc = Loc.default }
-;;
+
 
 let makeIterWhile name id_loc value body loc =
   let open Syntax in
@@ -758,7 +760,7 @@ let makeIterWhile name id_loc value body loc =
   let cond = { e = SEOp ("<", rhs, value); loc } in
   let while_s = { s = SStmtWhile (cond, new_body); loc } in
   { s = SStmtBlock [ decl; while_s ]; loc }
-;;
+
 
 let rec stmt (env : Env.in_func) (return : type_) (s : Syntax.stmt) : Env.in_func * stmt list =
   match s with
@@ -810,12 +812,14 @@ let rec stmt (env : Env.in_func) (return : type_) (s : Syntax.stmt) : Env.in_fun
     let while_s = makeIterWhile name id_loc value body loc in
     stmt env return while_s
 
+
 and stmt_opt env return s =
   match s with
   | None -> env, None
   | Some s ->
     let env, s = stmt env return s in
     env, Some (stmt_block s)
+
 
 and stmt_list env return l =
   let env, l_rev =
@@ -827,32 +831,41 @@ and stmt_list env return l =
       l
   in
   env, List.flatten (List.rev l_rev)
-;;
+
 
 let addGeneratedFunctions tags name next =
-  if Ptags.has tags "wave"
-  then (
+  if Ptags.has tags "wave" then (
     let code = Pla.print [%pla {|fun <#name#s>_samples() @[placeholder] : int|}] in
     let def = Parse.parseFunctionSpec code in
     Some ({ def with next }, Syntax.{ s = SStmtBlock []; loc = Loc.default }))
-  else next
-;;
+  else if Ptags.has tags "wavetable" then (
+    let empty = Syntax.{ s = SStmtBlock []; loc = Loc.default } in
+    let samples = Pla.print [%pla {|fun <#name#s>_samples() @[placeholder] : int|}] in
+    let code1 = Pla.print [%pla {|fun <#name#s>_raw_c0(i:int) @[placeholder] : real|}] in
+    let code2 = Pla.print [%pla {|fun <#name#s>_raw_c1(i:int) @[placeholder] : real|}] in
+    let samples = Parse.parseFunctionSpec samples in
+    let def1 = Parse.parseFunctionSpec code1 in
+    let def2 = Parse.parseFunctionSpec code2 in
+    Some ({ def1 with next = Some ({ def2 with next = Some ({ samples with next }, empty) }, empty) }, empty))
+  else
+    next
+
 
 let getOptType env loc (t : Syntax.type_ option) =
   match t with
   | None -> C.unbound loc
   | Some t -> type_in_c env t
-;;
+
 
 let getReturnType env (t : Syntax.type_ option) =
   match t with
   | None -> None
   | Some t -> Some (type_in_c env t)
-;;
+
 
 let convertArguments env (args : Syntax.arg list) : arg list =
   List.map (fun (name, t, loc) -> name, getOptType env loc t, loc) args
-;;
+
 
 let registerMultiReturnMem (env : Env.in_context) name t loc =
   let _, ret = t in
@@ -861,16 +874,16 @@ let registerMultiReturnMem (env : Env.in_context) name t loc =
     let names = List.mapi (fun i t -> path_string name ^ "_ret_" ^ string_of_int i, t) elems in
     List.fold_left (fun env (name, t) -> Env.addReturnVar env name t loc) env names
   | _ -> env
-;;
+
 
 let isRoot (args : Args.args) path =
   let s_path = Pla.print (Syntax.print_path path) in
   List.mem s_path args.roots
-;;
+
 
 let customInitializer (env : Env.in_context) tags name =
   if Ptags.has tags "init" then Env.addCustomInitFunction env name else env
-;;
+
 
 let reportReturnTypeMismatch loc (specified_ret : type_ option) (inferred_ret : type_) =
   match specified_ret, inferred_ret with
@@ -880,10 +893,10 @@ let reportReturnTypeMismatch loc (specified_ret : type_ option) (inferred_ret : 
     let t = Pla.print (print_type_ t) in
     Error.raiseError ("This function is expected to have type '" ^ t ^ "' but nothing was returned.") loc
   | Some t1, t2 -> unifyRaise loc t1 t2
-;;
+
 
 let rec function_def (iargs : Args.args) (env : Env.in_context) ((def : Syntax.function_def), (body : Syntax.stmt))
-    : Env.in_context * (function_def * stmt)
+  : Env.in_context * (function_def * stmt)
   =
   let specified_ret = getReturnType env def.t in
   let inferred_ret = C.noreturn def.loc in
@@ -899,6 +912,7 @@ let rec function_def (iargs : Args.args) (env : Env.in_context) ((def : Syntax.f
   let () = reportReturnTypeMismatch def.loc specified_ret inferred_ret in
   env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next; is_root }, stmt_block body)
 
+
 and function_def_opt (iargs : Args.args) (env : Env.in_context) def_opt =
   match def_opt with
   | None -> env, None
@@ -906,7 +920,7 @@ and function_def_opt (iargs : Args.args) (env : Env.in_context) def_opt =
     let env = Env.addAliasToContext env def.name def.loc in
     let env, def_body = function_def iargs env (def, body) in
     env, Some def_body
-;;
+
 
 let ext_function (iargs : Args.args) (env : Env.in_context) (def : Syntax.ext_def) : Env.in_context * function_def =
   let ret = getOptType env def.loc def.t in
@@ -916,18 +930,18 @@ let ext_function (iargs : Args.args) (env : Env.in_context) (def : Syntax.ext_de
   let next = addGeneratedFunctions def.tags def.name None in
   let env, next = function_def_opt iargs env next in
   env, { name = path; args; t; loc = def.loc; tags = def.tags; next; is_root = false }
-;;
+
 
 let getContextArgument (context : Env.context) loc : arg option =
   match context with
   | Some (p, { descr = Record members; _ }) ->
-    if Map.is_empty members
-    then None
+    if Map.is_empty members then
+      None
     else (
       let ctx_t = C.path loc p in
       Some (context_name, ctx_t, loc))
   | _ -> None
-;;
+
 
 let insertContextArgument (env : Env.in_context) (def : function_def) : function_def =
   match getContextArgument env.context def.loc with
@@ -942,7 +956,7 @@ let insertContextArgument (env : Env.in_context) (def : function_def) : function
     in
     let next = loop def.next in
     { def with args = arg :: def.args; next }
-;;
+
 
 let rec top_stmt (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt) : Env.in_module * top_stmt =
   match s with
@@ -969,6 +983,7 @@ let rec top_stmt (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt)
     let path = Env.getPath env.m name loc in
     env, { top = TopEnum { path; members }; loc }
 
+
 and top_stmt_list (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt list) : Env.in_module * top_stmt list =
   let env, rev_s =
     List.fold_left
@@ -979,7 +994,7 @@ and top_stmt_list (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt
       s
   in
   env, rev_s
-;;
+
 
 let getTypesFromModule m =
   Map.fold
@@ -991,7 +1006,7 @@ let getTypesFromModule m =
       | Simple | Enum _ -> s)
     []
     m.Env.types
-;;
+
 
 let createTypes (env : Env.in_top) =
   let types =
@@ -1016,7 +1031,7 @@ let createTypes (env : Env.in_top) =
       | Alias (path, alias_of) -> { top = TopAlias { path; alias_of }; loc = t.loc }
       | Enum _ | Simple -> failwith "There should not be other than records here")
     types
-;;
+
 
 module Set = Set.Make (struct
   type t = path
@@ -1029,7 +1044,7 @@ let rec createExistingTypeSet stmts : Set.t =
   | [] -> Set.empty
   | { top = TopType { path; _ }; _ } :: t -> Set.add path (createExistingTypeSet t)
   | _ :: t -> createExistingTypeSet t
-;;
+
 
 let removeExistingTypes set types =
   let f s =
@@ -1038,7 +1053,7 @@ let removeExistingTypes set types =
     | _ -> true
   in
   List.filter f types
-;;
+
 
 let infer_single (iargs : Args.args) (env : Env.in_top) (h : Parse.parsed_file) : Env.in_top * Prog.top_stmt list =
   let set = createExistingTypeSet (createTypes env) in
@@ -1047,7 +1062,7 @@ let infer_single (iargs : Args.args) (env : Env.in_top) (h : Parse.parsed_file) 
   let env = Env.exitModule env in
   let types = removeExistingTypes set (createTypes env) in
   ToProg.convert iargs env (stmt @ types)
-;;
+
 
 let infer (iargs : Args.args) (parsed : Parse.parsed_file list) : Env.in_top * Prog.top_stmt list =
   let env, stmts =
@@ -1062,4 +1077,3 @@ let infer (iargs : Args.args) (parsed : Parse.parsed_file list) : Env.in_top * P
   in
   let types = createTypes env in
   ToProg.convert iargs env (types @ List.rev stmts)
-;;

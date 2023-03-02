@@ -39,20 +39,20 @@ module Dependencies = struct
     match e with
     | None -> set
     | Some e -> f set e
-  ;;
+
 
   let path (set : Set.t) (p : path) : Set.t =
     match p.n with
     | Some n -> Set.add n set
     | None -> set
-  ;;
+
 
   let rec type_ set (t : Syntax.type_) =
     match t.t with
     | STId p -> path set p
     | STSize _ -> set
     | STComposed (_, subs) -> list type_ set subs
-  ;;
+
 
   let rec exp set e =
     match e.e with
@@ -73,7 +73,7 @@ module Dependencies = struct
     | SEMember (e, _) -> exp set e
     | SEGroup e -> exp set e
     | SEEnum p -> path set p
-  ;;
+
 
   let rec dexp set d =
     match d.d with
@@ -82,13 +82,13 @@ module Dependencies = struct
     | SDTuple elems -> list dexp set elems
     | SDGroup e -> dexp set e
     | SDTyped (d, t) -> type_ (dexp set d) t
-  ;;
+
 
   let arg set (_, t, _) =
     match t with
     | None -> set
     | Some t -> type_ set t
-  ;;
+
 
   let rec function_def set (def, body) =
     match def with
@@ -98,12 +98,14 @@ module Dependencies = struct
       let set = option type_ set t in
       option function_def set next
 
+
   and ext_def set (def, body) =
     match def with
     | { args; t } ->
       let set = stmt set body in
       let set = list arg set args in
       option type_ set t
+
 
   and stmt set s =
     match s.s with
@@ -117,6 +119,7 @@ module Dependencies = struct
     | SStmtWhile (cond, s) -> stmt (exp set cond) s
     | SStmtIter { value; body } -> stmt (exp set value) body
 
+
   and top_stmt set s =
     match s.top with
     | STopError -> set
@@ -124,7 +127,7 @@ module Dependencies = struct
     | STopFunction (def, body) -> function_def set (def, body)
     | STopType { members } -> list (fun set (_, t, _) -> type_ set t) set members
     | STopEnum _ -> set
-  ;;
+
 
   let get s = Set.to_list (list top_stmt Set.empty s)
 end
@@ -136,13 +139,13 @@ let rec findModule (includes : string list) (module_name : string) : string opti
   | h :: t ->
     (* first checks an uncapitalized file *)
     let file1 = Filename.concat h (String.uncapitalize_ascii module_name ^ ".vult") in
-    if FileIO.exists file1
-    then Some file1
+    if FileIO.exists file1 then
+      Some file1
     else (
       (* then checks a file with the same name as the module *)
       let file2 = Filename.concat h (module_name ^ ".vult") in
       if FileIO.exists file2 then Some file2 else findModule t module_name)
-;;
+
 
 (** Returns a list with all the possible directories where files can be found *)
 let getIncludes (arguments : args) (files : input list) : string list =
@@ -160,7 +163,7 @@ let getIncludes (arguments : args) (files : input list) : string list =
     List.map (fun a -> if Filename.is_relative a then Filename.concat current a else a) arguments.includes
   in
   List.sort_uniq compare ((current :: implicit_dirs) @ explicit_dir)
-;;
+
 
 (* main function that iterates the input files, gets the dependencies and searchs for the dependencies locations *)
 let rec loadFiles_loop (includes : string list) dependencies parsed visited (files : input list) =
@@ -169,8 +172,7 @@ let rec loadFiles_loop (includes : string list) dependencies parsed visited (fil
   | ((File h | Code (h, _)) as input) :: t ->
     (* check that the file has not been visited before *)
     let h_module = Parse.moduleName h in
-    if not (Hashtbl.mem visited h_module)
-    then (
+    if not (Hashtbl.mem visited h_module) then (
       let () = Hashtbl.add visited h_module true in
       let h_parsed =
         match input with
@@ -187,8 +189,9 @@ let rec loadFiles_loop (includes : string list) dependencies parsed visited (fil
       (* updates the tables *)
       let () = Hashtbl.add dependencies h_module h_deps in
       loadFiles_loop includes dependencies parsed visited (t @ h_dep_files))
-    else loadFiles_loop includes dependencies parsed visited t
-;;
+    else
+      loadFiles_loop includes dependencies parsed visited t
+
 
 (** Raises an error if the modules have circular dependencies *)
 let rec checkComponents (comps : string list list) : unit =
@@ -199,7 +202,7 @@ let rec checkComponents (comps : string list list) : unit =
     (* in this case one of the components has more than one module *)
     let msg = "The following modules have circular dependencies: " ^ String.concat ", " h in
     Error.raiseErrorMsg msg
-;;
+
 
 module C = Components.Make (struct
   type key = string
@@ -223,4 +226,3 @@ let loadFiles (arguments : args) (files : input list) =
       | found -> Some found
       | exception Not_found -> None)
     sorted_deps
-;;

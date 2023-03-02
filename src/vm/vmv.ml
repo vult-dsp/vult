@@ -34,7 +34,7 @@ let rec print_value r : Pla.t =
     in
     let elems = Pla.join_sep Pla.commaspace elems in
     [%pla {|{ <#elems#> }|}]
-;;
+
 
 module type VM = sig
   type t
@@ -64,7 +64,7 @@ module Mutable : VM = struct
 
   let newVM (compiled : Compile.bytecode) =
     { stack = Array.init 1024 (fun _ -> Void); sp = -1; frame = 0; table = compiled.table; code = compiled.code }
-  ;;
+
 
   let code (vm : t) i = vm.code.(i)
 
@@ -72,20 +72,20 @@ module Mutable : VM = struct
     vm.sp <- vm.sp + 1;
     vm.stack.(vm.sp) <- value;
     vm
-  ;;
+
 
   let pop (vm : t) : t * rvalue =
     let ret = vm.stack.(vm.sp) in
     vm.sp <- vm.sp - 1;
     vm, ret
-  ;;
+
 
   let loadRef (vm : t) (n : int) : rvalue = vm.stack.(vm.frame + n)
 
   let storeRef (vm : t) (n : int) (v : rvalue) : t =
     vm.stack.(vm.frame + n) <- v;
     vm
-  ;;
+
 
   let storeRefObject (vm : t) (n : int) (i : int list) (v : rvalue) : t =
     match vm.stack.(vm.frame + n) with
@@ -93,8 +93,8 @@ module Mutable : VM = struct
       let rec loop l elems =
         match l with
         | [ i ] -> elems.(i) <- v
-        | i :: l ->
-          (match elems.(i) with
+        | i :: l -> (
+          match elems.(i) with
           | Object elems -> loop l elems
           | _ -> failwith "storeRefObject: not an object")
         | _ -> failwith "storeRefObject: empty indices"
@@ -102,31 +102,30 @@ module Mutable : VM = struct
       loop i elems;
       vm
     | _ -> failwith "storeRefObject: not an object"
-  ;;
+
 
   let allocate (vm : t) (n : int) : t =
     vm.sp <- vm.sp + n;
     vm
-  ;;
+
 
   let newFrame (vm : t) : t * int =
     let frame = vm.frame in
     vm.frame <- vm.sp + 1;
     vm, frame
-  ;;
+
 
   let restoreFrame (vm : t) (frame : int) : t =
     vm.sp <- vm.frame - 1;
     vm.frame <- frame;
     vm
-  ;;
+
 
   let findSegment (vm : t) (name : string) : Compile.f = Map.find name vm.table
 
   let printStack (vm : t) =
     let rec loop n =
-      if n <= vm.sp
-      then (
+      if n <= vm.sp then (
         if vm.frame = n then print_string "->" else print_string "  ";
         print_int n;
         print_string " : ";
@@ -134,5 +133,4 @@ module Mutable : VM = struct
         loop (n + 1))
     in
     loop 0
-  ;;
 end

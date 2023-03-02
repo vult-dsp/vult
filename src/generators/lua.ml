@@ -49,7 +49,7 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
 |}]
-;;
+
 
 let fix_id name = if Util.Maps.Set.mem name Replacements.Lua.keywords then name ^ "_" else name
 
@@ -59,7 +59,7 @@ let rec isValueOrIf (e : exp) =
   | UnOp (_, e) -> isValueOrIf e
   | If { then_; else_; _ } -> isValueOrIf then_ && isValueOrIf else_
   | _ -> false
-;;
+
 
 let operator op =
   match op with
@@ -81,13 +81,13 @@ let operator op =
   | Le -> Pla.string "<="
   | Gt -> Pla.string ">"
   | Ge -> Pla.string ">="
-;;
+
 
 let uoperator op =
   match op with
   | Neg -> Pla.string "-"
   | Not -> Pla.string "not"
-;;
+
 
 let rec print_exp e =
   match e.e with
@@ -112,10 +112,10 @@ let rec print_exp e =
     let e = print_exp e in
     let op = uoperator op in
     [%pla {|(<#op#><#e#>)|}]
-  | Op (op, e1, e2) ->
+  | Op (op, e1, e2) -> (
     let se1 = print_exp e1 in
     let se2 = print_exp e2 in
-    (match Replacements.Lua.op_to_fun op e1.t e2.t e.t with
+    match Replacements.Lua.op_to_fun op e1.t e2.t e.t with
     | Some path -> [%pla {|<#path#s>(<#se1#>, <#se2#>)|}]
     | None ->
       let op = operator op in
@@ -136,7 +136,7 @@ let rec print_exp e =
   | Member (e, m) ->
     let e = print_exp e in
     [%pla {|<#e#>.<#m#s>|}]
-;;
+
 
 let rec print_lexp e =
   match e.l with
@@ -149,7 +149,7 @@ let rec print_lexp e =
     let e = print_lexp e in
     let index = print_exp index in
     [%pla {|<#e#>[<#index#> + 1]|}]
-;;
+
 
 let print_dexp (e : dexp) =
   match e.d with
@@ -159,7 +159,7 @@ let print_dexp (e : dexp) =
   | DId (id, Some dim) ->
     let id = fix_id id in
     [%pla {|<#id#s>[<#dim#i>]|}]
-;;
+
 
 let rec print_stmt s =
   match s with
@@ -200,18 +200,18 @@ let rec print_stmt s =
   | StmtBlock stmts ->
     let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
     [%pla {|do<#stmt#+>end|}]
-;;
+
 
 let print_arg (n, _) =
   let n = fix_id n in
   [%pla {|<#n#s>|}]
-;;
+
 
 let print_function_def (def : function_def) =
   let name = def.name in
   let args = Pla.map_sep Pla.commaspace print_arg def.args in
   [%pla {|function <#name#s>(<#args#>)|}]
-;;
+
 
 let print_body body =
   match body with
@@ -221,7 +221,7 @@ let print_body body =
   | _ ->
     let stmt = print_stmt body in
     [%pla {|<#stmt#+><#>end|}]
-;;
+
 
 let print_top_stmt t =
   match t with
@@ -235,7 +235,7 @@ let print_top_stmt t =
   | TopDecl ({ d = DId (name, _); _ }, rhs) ->
     let rhs = print_exp rhs in
     [%pla {|local <#name#s> = <#rhs#><#>|}]
-;;
+
 
 let print_prog t = Pla.map_join print_top_stmt t
 
@@ -243,4 +243,3 @@ let generate output _template (stmts : top_stmt list) =
   let file = Common.setExt ".lua" output in
   let code = print_prog stmts in
   [ [%pla {|<#runtime#><#code#>|}], file ]
-;;

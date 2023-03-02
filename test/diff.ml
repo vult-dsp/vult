@@ -30,19 +30,19 @@ let rec join_buff (buff : Buffer.t) (sep : string) (l : string list) : unit =
     Buffer.add_string buff h;
     Buffer.add_string buff sep;
     join_buff buff sep t
-;;
+
 
 let stringJoin (l : string list) : string =
   let buff = Buffer.create 128 in
   join_buff buff "" l;
   Buffer.contents buff
-;;
+
 
 let stringJoinWith (sep : string) (l : string list) : string =
   let buff = Buffer.create 128 in
   join_buff buff sep l;
   Buffer.contents buff
-;;
+
 
 let stringSplit (sep : string) (s : string) : string list = Str.split (Str.regexp_string sep) s
 
@@ -60,20 +60,20 @@ let lcs xs' ys' =
     done
   done;
   a.(0).(0)
-;;
+
 
 let rec interleaveLineDiff a b l =
   match a, b, l with
   | _, _, [] -> List.map (fun x -> "- " ^ x) a @ List.map (fun x -> "+ " ^ x) b
   | [], _, _ :: _ | _, [], _ :: _ ->
     failwith "Diff.interleaveLineDiff: The results obtained from 'Diff.lcs' function are incorrect"
-  | ah :: at, bh :: bt, lh :: lt ->
-    (match ah = lh, bh = lh with
+  | ah :: at, bh :: bt, lh :: lt -> (
+    match ah = lh, bh = lh with
     | true, true -> lh :: interleaveLineDiff at bt lt
     | true, false -> ("+ " ^ bh) :: interleaveLineDiff a bt l
     | false, true -> ("- " ^ ah) :: interleaveLineDiff at b l
     | false, false -> ("+ " ^ bh) :: ("- " ^ ah) :: interleaveLineDiff at bt l)
-;;
+
 
 let lineDiff str1 str2 =
   let lines1 = stringSplit "\n" str1 in
@@ -81,7 +81,7 @@ let lineDiff str1 str2 =
   let lseq = lcs lines1 lines2 in
   let final_seq = interleaveLineDiff lines1 lines2 lseq in
   stringJoinWith "\n" final_seq
-;;
+
 
 let tokenString t =
   let open BaseTok in
@@ -92,7 +92,7 @@ let tokenString t =
   | Other s -> s
   | Hex i -> string_of_int i
   | EOF -> ""
-;;
+
 
 let tokenizeLine line =
   let stream = Lexing.from_string line in
@@ -108,15 +108,15 @@ let tokenizeLine line =
     loop ()
   in
   List.rev !tokens
-;;
+
 
 let equalToken t1 t2 =
   let open BaseTok in
   match t1, t2 with
   | Float f1, Float f2 ->
     let result =
-      if abs_float f2 < 1e-6 && abs_float f1 < 1e-6
-      then true
+      if abs_float f2 < 1e-6 && abs_float f1 < 1e-6 then
+        true
       else (
         let delta = abs_float (f1 -. f2) in
         delta < 1e-6)
@@ -132,18 +132,17 @@ let equalToken t1 t2 =
     let msg = Printf.sprintf "%s <> %s" (tokenString t1) (tokenString t2) in
     prerr_endline msg;
     false
-;;
+
 
 let compareLine line1 line2 =
   let s1 = tokenizeLine line1 in
   let s2 = tokenizeLine line2 in
   try List.for_all2 equalToken s1 s2 with
   | Invalid_argument _ -> false
-;;
+
 
 let compare str1 str2 =
   let lines1 = stringSplit "\n" str1 in
   let lines2 = stringSplit "\n" str2 in
   try List.for_all2 compareLine lines1 lines2 with
   | Invalid_argument _ -> false
-;;

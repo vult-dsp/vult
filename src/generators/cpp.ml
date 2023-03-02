@@ -33,8 +33,8 @@ let threshold = 4
 
 let isSmall stmts =
   let rec loop size stmts =
-    if size > threshold
-    then size
+    if size > threshold then
+      size
     else (
       match stmts with
       | [] -> size
@@ -57,7 +57,7 @@ let isSmall stmts =
   in
   let size = loop 0 stmts in
   size <= threshold
-;;
+
 
 let rec print_type_ (t : type_) =
   match t with
@@ -74,7 +74,7 @@ let rec print_type_ (t : type_) =
     let t = print_type_ t in
     [%pla {|std::array<<#t#>, <#dim#i>>|}]
   | Struct { path; _ } -> [%pla {|<#path#s>|}]
-;;
+
 
 let operator op =
   match op with
@@ -96,20 +96,20 @@ let operator op =
   | Le -> Pla.string "<="
   | Gt -> Pla.string ">"
   | Ge -> Pla.string ">="
-;;
+
 
 let uoperator op =
   match op with
   | Neg -> Pla.string "-"
   | Not -> Pla.string "not"
-;;
+
 
 let getReplacement name (args : exp list) ret =
   let args_t = List.map (fun (e : exp) -> e.t) args in
   match Replacements.C.fun_to_fun name args_t ret with
   | Some path -> path
   | None -> name
-;;
+
 
 let rec print_exp (e : exp) =
   match e.e with
@@ -143,10 +143,10 @@ let rec print_exp (e : exp) =
     let e = print_exp e in
     let op = uoperator op in
     [%pla {|(<#op#> <#e#>)|}]
-  | Op (op, e1, e2) ->
+  | Op (op, e1, e2) -> (
     let se1 = print_exp e1 in
     let se2 = print_exp e2 in
-    (match Replacements.C.op_to_fun op e1.t e2.t e.t with
+    match Replacements.C.op_to_fun op e1.t e2.t e.t with
     | Some path -> [%pla {|<#path#s>(<#se1#>, <#se2#>)|}]
     | None ->
       let op = operator op in
@@ -162,7 +162,7 @@ let rec print_exp (e : exp) =
   | Member (e, m) ->
     let e = print_exp e in
     [%pla {|<#e#>.<#m#s>|}]
-;;
+
 
 let rec print_lexp e =
   match e.l with
@@ -175,17 +175,17 @@ let rec print_lexp e =
     let e = print_lexp e in
     let index = print_exp index in
     [%pla {|<#e#>[static_cast<uint32_t>(<#index#>)]|}]
-;;
+
 
 let print_dexp (e : dexp) =
   match e.d with
   | DId (id, _) -> [%pla {|<#id#s>|}]
-;;
+
 
 let print_member (n, (t : type_)) =
   let t = print_type_ t in
   [%pla {|<#t#> <#n#s>;|}]
-;;
+
 
 let print_arg (n, (t : type_)) =
   match t with
@@ -200,7 +200,7 @@ let print_arg (n, (t : type_)) =
   | _ ->
     let t = print_type_ t in
     [%pla {|<#t#> <#n#s>|}]
-;;
+
 
 let print_decl (n, (t : type_)) =
   match t with
@@ -215,7 +215,7 @@ let print_decl (n, (t : type_)) =
   | _ ->
     let t = print_type_ t in
     [%pla {|<#t#> <#n#s>|}]
-;;
+
 
 let print_decl_alloc (n, (t : type_)) =
   match t with
@@ -230,7 +230,7 @@ let print_decl_alloc (n, (t : type_)) =
   | _ ->
     let t = print_type_ t in
     [%pla {|<#t#> <#n#s>|}]
-;;
+
 
 let arrayCopyFunction (t : type_) =
   match t with
@@ -239,12 +239,13 @@ let arrayCopyFunction (t : type_) =
   | Fixed -> "fix_copy_array"
   | Bool -> "bool_copy_array"
   | _ -> failwith "not a valid array copy"
-;;
+
 
 let rec parenthesize e =
   match e with
   | { e = Op (_, _, _); _ } -> print_exp e
   | _ -> Pla.parenthesize (print_exp e)
+
 
 and print_stmt s =
   match s with
@@ -291,6 +292,7 @@ and print_stmt s =
     let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
     [%pla {|{<#stmt#+>}|}]
 
+
 and print_block body =
   match body with
   | StmtBlock stmts ->
@@ -299,29 +301,29 @@ and print_block body =
   | _ ->
     let stmt = print_stmt body in
     [%pla {|{<#stmt#+><#>}|}]
-;;
+
 
 let print_function_def (def : function_def) =
   let name = Pla.string def.name in
   let args = Pla.map_sep Pla.commaspace print_arg def.args in
   let ret = print_type_ (snd def.t) in
   [%pla {|<#ret#> <#name#>(<#args#>)|}]
-;;
+
 
 let print_top_stmt (target : target) t =
   match t, target with
   | TopFunction (def, body), Header ->
     let inline = isSmall [ body ] in
     let def = print_function_def def in
-    if inline
-    then (
+    if inline then (
       let body = print_block body in
       [%pla {|static_inline <#def#> <#body#><#><#>|}])
-    else [%pla {|<#def#>;<#><#>|}]
+    else
+      [%pla {|<#def#>;<#><#>|}]
   | TopFunction (def, body), Implementation ->
     let inline = isSmall [ body ] in
-    if inline
-    then Pla.unit
+    if inline then
+      Pla.unit
     else (
       let def = print_function_def def in
       let body = print_block body in
@@ -347,7 +349,7 @@ let print_top_stmt (target : target) t =
     let rhs = print_exp rhs in
     [%pla {|static const <#t#> <#lhs#> = <#rhs#>;<#>|}]
   | TopDecl _, _ -> Pla.unit
-;;
+
 
 let print_prog target t = Pla.map_join (print_top_stmt target) t
 let legend = Common.legend
@@ -360,20 +362,20 @@ let makeIfdef file =
 |}], [%pla {|
 #endif // <#def#s>
 |}]
-;;
+
 
 let getTemplateCode (name : string option) (prefix : string) impl header (stmts : top_stmt list) =
   match name with
   | Some "pd" -> T_pd.generate prefix impl header stmts
   | None -> impl, header
   | Some name -> Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
-;;
+
 
 let getLibName output =
   match output with
   | None -> "MyLib"
   | Some name -> Filename.basename name
-;;
+
 
 let generate output template (stmts : top_stmt list) =
   let header = print_prog Header stmts in
@@ -395,4 +397,3 @@ let generate output template (stmts : top_stmt list) =
     [%pla {|<#legend#><#ifdef#><#tables#><#endif#>|}]
   in
   [ header, header_file; impl, impl_file; tables, tables_file ]
-;;

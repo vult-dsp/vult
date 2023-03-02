@@ -184,10 +184,11 @@ module Convert = struct
       let elems = List.map (type_ context) elems in
       Tuple elems
 
+
   and struct_descr (context : context) (d : Prog.struct_descr) : struct_descr =
     let members = List.map (fun (name, t, _) -> name, type_ context t) d.members in
     { path = d.path; members }
-  ;;
+
 
   let operator (op : Prog.operator) : operator =
     match op with
@@ -209,19 +210,19 @@ module Convert = struct
     | OpLe -> Le
     | OpGt -> Gt
     | OpGe -> Ge
-  ;;
+
 
   let uoperator (op : Prog.uoperator) : uoperator =
     match op with
     | UOpNeg -> Neg
     | UOpNot -> Not
-  ;;
+
 
   let getCallName (context : context) name =
     match Map.find_opt name context.ext_names with
     | Some name -> name
     | _ -> name
-  ;;
+
 
   let rec exp_d (context : context) (e : Prog.exp_d) : exp_d =
     match e with
@@ -264,11 +265,12 @@ module Convert = struct
       let e = exp context e in
       Member (e, n)
 
+
   and exp (context : context) (e : Prog.exp) : exp =
     let t = type_ context e.t in
     let e = exp_d context e.e in
     { e; t }
-  ;;
+
 
   let rec lexp_d (context : context) (l : Prog.lexp_d) : lexp_d =
     match l with
@@ -283,11 +285,12 @@ module Convert = struct
       LIndex (e, index)
     | LTuple _ -> failwith "lhs tuple"
 
+
   and lexp (context : context) (l : Prog.lexp) : lexp =
     let t = type_ context l.t in
     let l = lexp_d context l.l in
     { l; t }
-  ;;
+
 
   let rec dexp_d (d : Prog.dexp_d) : dexp_d =
     match d with
@@ -295,11 +298,12 @@ module Convert = struct
     | DId (id, dim) -> DId (id, dim)
     | DTuple _ -> failwith "There should not be tuple declarations"
 
+
   and dexp (context : context) (d : Prog.dexp) : dexp =
     let t = type_ context d.t in
     let d = dexp_d d.d in
     { d; t }
-  ;;
+
 
   type decl =
     | Nothing
@@ -312,7 +316,7 @@ module Convert = struct
       let decl = Map.remove n env.decl in
       { env with decl }, Some (dim, t)
     | None -> env, None
-  ;;
+
 
   let rec getInitRHS (t : type_) =
     match t with
@@ -322,39 +326,39 @@ module Convert = struct
     | Fixed -> Some { e = Real 0.0; t }
     | String -> Some { e = String ""; t }
     | Bool -> Some { e = Bool false; t }
-    | Array (size, t) ->
-      (match getInitRHS t with
+    | Array (size, t) -> (
+      match getInitRHS t with
       | Some elem ->
         let elems = List.init size (fun _ -> elem) in
         Some { e = Array elems; t }
       | None -> None)
     | _ -> None
-  ;;
+
 
   let getPendingDeclarations (env : env) =
     let stmts = Map.fold (fun n (dim, t) acc -> StmtDecl ({ d = DId (n, dim); t }, getInitRHS t) :: acc) env.decl [] in
     { env with decl = Map.empty }, stmts
-  ;;
+
 
   let rec getLDecl (env : env) (l : lexp) =
     match l with
-    | { l = LId n; _ } ->
-      (match findRemove env n with
+    | { l = LId n; _ } -> (
+      match findRemove env n with
       | env, Some (dim, t) -> env, Initialize (n, dim, t)
       | env, None -> env, Nothing)
     | { l = LWild; _ } -> env, Nothing
-    | { l = LMember (l, _); _ } | { l = LIndex (l, _); _ } ->
-      (match getLDecl env l with
+    | { l = LMember (l, _); _ } | { l = LIndex (l, _); _ } -> (
+      match getLDecl env l with
       | env, Initialize (n, dim, t) -> env, Declare (n, dim, t)
       | env, ret -> env, ret)
-  ;;
+
 
   let makeBlock stmts =
     match stmts with
     | [] -> StmtBlock []
     | [ h ] -> h
     | _ -> StmtBlock stmts
-  ;;
+
 
   let rec stmt (context : context) (env : env) (s : Prog.stmt) =
     match s with
@@ -368,10 +372,10 @@ module Convert = struct
       let rhs = exp context rhs in
       env, stmts @ [ StmtBind ({ l = LWild; t = Void None }, rhs) ]
     | { s = StmtBind ({ l = LWild; _ }, _); _ } -> env, []
-    | { s = StmtBind (lhs, rhs); _ } ->
+    | { s = StmtBind (lhs, rhs); _ } -> (
       let lhs = lexp context lhs in
       let rhs = exp context rhs in
-      (match getLDecl env lhs with
+      match getLDecl env lhs with
       | env, Nothing ->
         let env, stmts = getPendingDeclarations env in
         env, stmts @ [ StmtBind (lhs, rhs) ]
@@ -406,11 +410,11 @@ module Convert = struct
           body
       in
       env, List.flatten (List.rev stmts)
-  ;;
+
 
   let function_info (info : Prog.function_info) : function_info =
     { original_name = info.original_name; is_root = info.is_root }
-  ;;
+
 
   let function_def (context : context) (def : Prog.function_def) : function_def =
     let name = def.name in
@@ -419,7 +423,7 @@ module Convert = struct
     let ret_t = type_ context ret_t in
     let args_t = List.map (type_ context) args_t in
     { name; args; t = args_t, ret_t; tags = def.tags; loc = def.loc; info = function_info def.info }
-  ;;
+
 
   let top_stmt (context : context) (top : Prog.top_stmt) : top_stmt option =
     match top with
@@ -435,7 +439,7 @@ module Convert = struct
     | { top = TopExternal (def, name); _ } ->
       let def = function_def context def in
       Some (TopExternal (def, name))
-  ;;
+
 
   let registerExternalNames (stmts : Prog.top_stmt list) =
     List.fold_left
@@ -445,11 +449,10 @@ module Convert = struct
         | _ -> acc)
       Map.empty
       stmts
-  ;;
+
 
   let prog args stmts =
     let ext_names = registerExternalNames stmts in
     let context = { args; ext_names } in
     List.filter_map (top_stmt context) stmts
-  ;;
 end

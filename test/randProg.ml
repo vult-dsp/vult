@@ -39,23 +39,23 @@ let default_state =
   ; get_if_exp = true
   ; return_type = None
   }
-;;
+
 
 let rec fold_init f s n =
-  if n > 0
-  then (
+  if n > 0 then (
     let s', e = f s in
     let s', e' = fold_init f s' (n - 1) in
     s', e :: e')
-  else s, []
-;;
+  else
+    s, []
+
 
 let rec get_elem state min max (n : float) (elems : (condition * probability * 'a creator) list) =
   match elems with
   | h :: ((_, p, _) :: _ as t) -> if n >= min && n <= max then h else get_elem state max (max +. p state) n t
   | h :: _ -> if n >= min && n <= max then h else failwith "get_elem: invalid input"
   | [] -> failwith "get_elem: invalid input"
-;;
+
 
 let rec filter_count state acc l =
   match l with
@@ -64,12 +64,12 @@ let rec filter_count state acc l =
     n, List.rev e
   | ((c, p, _) as h) :: t ->
     let n, e = acc in
-    if c state
-    then (
+    if c state then (
       let prob = p state in
       if prob > 0.0 then filter_count state (n +. prob, h :: e) t else filter_count state acc t)
-    else filter_count state acc t
-;;
+    else
+      filter_count state acc t
+
 
 let pick_one state (elems : (condition * probability * 'a creator) list) : 'a =
   let total, elems' = filter_count state (0.0, []) elems in
@@ -77,13 +77,13 @@ let pick_one state (elems : (condition * probability * 'a creator) list) : 'a =
   let _, first_p, _ = List.hd elems' in
   let _, _, f = get_elem state 0.0 (first_p state) n elems' in
   f state
-;;
+
 
 let makeArray state t =
   let n = Random.int (state.max_array_size - 1) + 1 in
   let size = { t = STSize n; loc } in
   { t = STComposed ("array", [ t; size ]); loc }
-;;
+
 
 let int_type = { t = STId { id = "int"; n = None; loc }; loc }
 let real_type = { t = STId { id = "real"; n = None; loc }; loc }
@@ -126,6 +126,7 @@ let rec newType state =
             makeTuple t )*)
     ]
 
+
 and newTypeList n state = if n = 0 then [] else newType state :: newTypeList (n - 1) state
 
 let isInt typ _ = compare int_type typ = 0
@@ -137,38 +138,38 @@ let isArray (typ : type_) _ =
   match typ with
   | { t = STComposed ("array", _); _ } -> true
   | _ -> false
-;;
+
 
 let arrayTypeAndSize (typ : type_) =
   match typ with
   | { t = STComposed ("array", [ t; { t = STSize n; _ } ]); _ } -> t, n
   | _ -> failwith "not an array"
-;;
+
 
 let isArrayOfType (subtype : type_) (typ : type_) =
   match typ with
   | { t = STComposed ("array", [ t1; { t = STSize _; _ } ]); _ } -> compare subtype t1 = 0
   | _ -> false
-;;
+
 
 let isTuple (typ : type_) _ =
   match typ with
   | { t = STComposed ("tuple", _); _ } -> true
   | _ -> false
-;;
+
 
 let tupleTypes (typ : type_) =
   match typ with
   | { t = STComposed ("tuple", elems); _ } -> elems
   | _ -> failwith "tupleTypes: invalid input"
-;;
+
 
 let pickVar state typ =
   let elems = TypeMap.find typ state.vars in
   let size = List.length elems in
   let n = Random.int size in
   List.nth elems n
-;;
+
 
 let hasType typ state = TypeMap.mem typ state.vars
 let hasArrayType typ state = TypeMap.exists (fun key _ -> isArrayOfType typ key) state.vars
@@ -180,7 +181,7 @@ let pickArrayVar state typ =
   |> List.flatten
   |> List.map (fun x -> always, normal_p, fun _ -> x)
   |> pick_one state
-;;
+
 
 let hasVar state name = TypeMap.exists (fun _ names -> List.exists (fun n -> n = name) names) state.vars
 
@@ -192,7 +193,7 @@ let addVar state var typ =
   | exception Not_found ->
     let vars = TypeMap.add typ [ var ] state.vars in
     { state with vars }
-;;
+
 
 let newNumBiOp state =
   pick_one
@@ -203,7 +204,7 @@ let newNumBiOp state =
     ; (always, normal_p, fun _ -> "/")
     ; (always, normal_p, fun _ -> "%")
     ]
-;;
+
 
 let newBoolBiOp state = pick_one state [ (always, normal_p, fun _ -> "&&"); (always, normal_p, fun _ -> "||") ]
 
@@ -217,7 +218,7 @@ let newLogicBiOp state =
     ; (always, normal_p, fun _ -> "==")
     ; (always, normal_p, fun _ -> "<>")
     ]
-;;
+
 
 let newBuiltinFun state =
   pick_one
@@ -229,7 +230,7 @@ let newBuiltinFun state =
     ; (always, normal_p, fun _ -> { id = "floor"; n = None; loc })
     ; (always, normal_p, fun _ -> { id = "tanh"; n = None; loc })
     ]
-;;
+
 
 let newBuiltinFunNoArgs state =
   pick_one
@@ -237,7 +238,7 @@ let newBuiltinFunNoArgs state =
     [ (always, normal_p, fun _ -> { id = "eps"; n = None; loc })
     ; (always, normal_p, fun _ -> { id = "pi"; n = None; loc })
     ]
-;;
+
 
 let rec newExp state typ : exp =
   pick_one
@@ -305,13 +306,13 @@ let rec newExp state typ : exp =
       , fun state ->
           let state' = decr_nest state in
           let t = newType state' in
-          if isNum t state
-          then (
+          if isNum t state then (
             let e1 = newExp state' t in
             let e2 = newExp state' t in
             let op = newLogicBiOp state' in
             { e = SEGroup { e = SEOp (op, e1, e2); loc }; loc })
-          else newExp state typ )
+          else
+            newExp state typ )
     ; (* if-expression *)
       ( with_if_exp
       , nest_p
@@ -323,6 +324,7 @@ let rec newExp state typ : exp =
           { e = SEGroup { e = SEIf { cond; then_; else_ }; loc }; loc } )
     ]
 
+
 and newExpList n state typ = if n = 0 then [] else newExp state typ :: newExpList (n - 1) state typ
 
 let rec getName state =
@@ -333,7 +335,7 @@ let rec getName state =
   let number = String.init 10 random_char in
   let name = "tmp_" ^ number in
   if hasVar state name then getName state else name
-;;
+
 
 let rec newDExpDecl state typ =
   pick_one
@@ -362,7 +364,7 @@ let rec newDExpDecl state typ =
           in
           { d = SDGroup { d = SDTuple (List.rev lhs_elems); loc }; loc }, state' )
     ]
-;;
+
 
 let rec newLExpBind state typ =
   pick_one
@@ -390,7 +392,7 @@ let rec newLExpBind state typ =
           in
           { l = SLGroup { l = SLTuple (List.rev lhs_elems); loc }; loc }, state' )
     ]
-;;
+
 
 let returnType state =
   match state.return_type with
@@ -399,7 +401,7 @@ let returnType state =
     let t = newType state in
     let state' = { state with return_type = Some t } in
     state', t
-;;
+
 
 let restoreVars new_vars old = { new_vars with vars = old.vars }
 
@@ -445,13 +447,13 @@ let rec newStmt state =
       , normal_p
       , fun state ->
           let t = newType state in
-          if hasType t state
-          then (
+          if hasType t state then (
             let lhs, state' = newLExpBind state t in
             (* here use the new state to make possible picking the new variable *)
             let rhs = newExp state' t in
             state', { s = SStmtBind (lhs, rhs); loc })
-          else newStmt state )
+          else
+            newStmt state )
     ; (* return *)
       ( always
       , low_p
@@ -484,6 +486,7 @@ let rec newStmt state =
           state', { s = SStmtWhile (cond, { s = SStmtBlock e1; loc }); loc } )
     ]
 
+
 and newStmtList n state : state * stmt list = fold_init newStmt state n
 
 let newFunction () =
@@ -492,13 +495,13 @@ let newFunction () =
   let def = { next = None; name; args = []; t = None; loc; tags = [] } in
   let body = { s = SStmtBlock stmts; loc } in
   { top = STopFunction (def, body); loc }
-;;
+
 
 let test seed =
   Random.init seed;
   let stmts = [ newFunction () ] in
   let code = Print.print stmts in
   code
-;;
+
 
 let run seed = test seed

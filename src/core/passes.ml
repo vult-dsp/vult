@@ -48,7 +48,7 @@ type enabled_disabled =
 
 let default_data () : data =
   { repeat = false; ticks = Hashtbl.create 16; function_deps = Map.empty; type_deps = Map.empty }
-;;
+
 
 let default_env args : env =
   { args
@@ -59,25 +59,25 @@ let default_env args : env =
   ; bound_array = false
   ; current_type = None
   }
-;;
+
 
 let reapply (state : data Mapper.state) =
   let data = Mapper.getData state in
   Mapper.setData state { data with repeat = true }
-;;
+
 
 let currentFunction env =
   match env.current_function with
   | None -> failwith "not in a function"
   | Some { name; args = (ctx, t, _) :: _; _ } -> name, ctx, t
   | Some _ -> failwith "function has no context"
-;;
+
 
 let isValue (e : exp) =
   match e.e with
   | EReal _ | EInt _ | EBool _ | EFixed _ -> true
   | _ -> false
-;;
+
 
 let getTick (env : env) (state : data Mapper.state) =
   let name =
@@ -93,7 +93,7 @@ let getTick (env : env) (state : data Mapper.state) =
   | Some n ->
     Hashtbl.replace data.ticks name (n + 1);
     n
-;;
+
 
 module CollectDependencies = struct
   let initializeDeps map name =
@@ -103,7 +103,7 @@ module CollectDependencies = struct
       | Some set -> set
     in
     Map.add name set map
-  ;;
+
 
   let addFunctionDep (state : data Mapper.state) name dep =
     let data = Mapper.getData state in
@@ -116,7 +116,7 @@ module CollectDependencies = struct
     let function_deps = Map.add name set data.function_deps in
     let data = { data with function_deps } in
     Mapper.setData state data
-  ;;
+
 
   let addTypeDep (state : data Mapper.state) name dep =
     let data = Mapper.getData state in
@@ -129,33 +129,33 @@ module CollectDependencies = struct
     let type_deps = Map.add name set data.type_deps in
     let data = { data with type_deps } in
     Mapper.setData state data
-  ;;
+
 
   let exp =
     Mapper.make
     @@ fun env state (e : exp) ->
     match e with
-    | { e = ECall { path; _ }; _ } ->
-      (match env.current_function with
+    | { e = ECall { path; _ }; _ } -> (
+      match env.current_function with
       | None -> state, e
       | Some def ->
         let state = addFunctionDep state def.name path in
         state, e)
     | _ -> state, e
-  ;;
+
 
   let type_ =
     Mapper.make
     @@ fun env state (p : type_) ->
     match p with
-    | { t = TStruct { path; _ }; _ } ->
-      (match env.current_type with
+    | { t = TStruct { path; _ }; _ } -> (
+      match env.current_type with
       | None -> state, p
       | Some { path = name; _ } ->
         let state = addTypeDep state name path in
         state, p)
     | _ -> state, p
-  ;;
+
 
   let top_stmt =
     Mapper.makeExpander
@@ -171,7 +171,7 @@ module CollectDependencies = struct
       let data = { data with function_deps } in
       Mapper.setData state data, [ top ]
     | _ -> state, [ top ]
-  ;;
+
 
   let mapper = { Mapper.identity with exp; type_; top_stmt }
 end
@@ -185,7 +185,7 @@ module GetVariables = struct
       let data = Mapper.getData state in
       Mapper.setData state (Set.add name data), e
     | _ -> state, e
-  ;;
+
 
   let lexp =
     Mapper.make
@@ -195,19 +195,18 @@ module GetVariables = struct
       let data = Mapper.getData state in
       Mapper.setData state (Set.add name data), e
     | _ -> state, e
-  ;;
+
 
   let mapper = { Mapper.identity with exp; lexp }
 
   let in_exp (e : exp) =
     let state, _ = Mapper.exp mapper () (Mapper.defaultState Set.empty) e in
     Mapper.getData state
-  ;;
+
 
   let in_lexp (e : lexp) =
     let state, _ = Mapper.lexp mapper () (Mapper.defaultState Set.empty) e in
     Mapper.getData state
-  ;;
 end
 
 module Location = struct
@@ -218,7 +217,7 @@ module Location = struct
     | { top = TopFunction (def, _); _ } -> { env with current_function = Some def }
     | { top = TopType def; _ } -> { env with current_type = Some def }
     | _ -> env
-  ;;
+
 
   let exp_env =
     Mapper.makeEnv
@@ -226,7 +225,7 @@ module Location = struct
     match e with
     | { e = EIf _; _ } -> { env with in_if_exp = true }
     | _ -> env
-  ;;
+
 
   let mapper = { Mapper.identity with top_stmt_env; exp_env }
 end
@@ -239,7 +238,7 @@ module IfExpressions = struct
     | { s = StmtBind (_, { e = EIf _; _ }); _ } -> { env with bound_if = true }
     | { s = StmtReturn { e = EIf _; _ }; _ } -> { env with bound_if = true }
     | _ -> env
-  ;;
+
 
   let stmt =
     Mapper.makeExpander
@@ -254,7 +253,7 @@ module IfExpressions = struct
       let else_ = { s = StmtReturn else_; loc } in
       reapply state, [ { s = StmtIf (cond, then_, Some else_); loc } ]
     | _ -> state, [ s ]
-  ;;
+
 
   let exp =
     Mapper.make
@@ -272,7 +271,7 @@ module IfExpressions = struct
       let state = Mapper.pushStmts state [ decl_stmt; bind_stmt ] in
       reapply state, temp_e
     | _ -> state, e
-  ;;
+
 
   let mapper enabled = if enabled = Enabled then { Mapper.identity with stmt; exp; stmt_env } else Mapper.identity
 end
@@ -284,7 +283,7 @@ module LiteralArrays = struct
     match s with
     | { s = StmtBind (_, { e = EArray _; _ }); _ } -> { env with bound_array = true }
     | _ -> env
-  ;;
+
 
   let exp =
     Mapper.make
@@ -300,7 +299,7 @@ module LiteralArrays = struct
       let state = Mapper.pushStmts state [ decl_stmt; bind_stmt ] in
       reapply state, temp_e
     | _ -> state, e
-  ;;
+
 
   let mapper enabled = if enabled = Enabled then { Mapper.identity with exp; stmt_env } else Mapper.identity
 end
@@ -313,7 +312,7 @@ module Tuples = struct
     (* Mark bound multi-return functions as bound *)
     | { s = StmtBind (_, { e = ECall _; t = { t = TTuple _; _ }; _ }); _ } -> { env with bound_call = true }
     | _ -> env
-  ;;
+
 
   let exp =
     Mapper.make
@@ -335,7 +334,7 @@ module Tuples = struct
       let temp_e = List.map (fun (name, t) -> { e = EId name; t; loc }) temp in
       reapply state, { e = ETuple temp_e; t; loc }
     | _ -> state, e
-  ;;
+
 
   let stmt =
     Mapper.makeExpander
@@ -352,8 +351,7 @@ module Tuples = struct
       let l = GetVariables.in_lexp lhs in
       let r = GetVariables.in_exp rhs in
       let d = Set.inter l r in
-      if Set.is_empty d
-      then (
+      if Set.is_empty d then (
         let bindings = List.map2 (fun l r -> { s = StmtBind (l, r); loc }) l_elems r_elems in
         reapply state, bindings)
       else (
@@ -406,7 +404,7 @@ module Tuples = struct
       let s = { s = StmtReturn { e = EUnit; t = { t = TVoid None; loc }; loc = eloc }; loc } in
       reapply state, bindings @ [ s ]
     | _ -> state, [ s ]
-  ;;
+
 
   let top_stmt =
     Mapper.makeExpander
@@ -416,11 +414,10 @@ module Tuples = struct
       let def = { def with t = args_t, { t = TVoid (Some elems); loc = tloc } } in
       state, [ { top = TopFunction (def, body); loc } ]
     | _ -> state, [ top ]
-  ;;
+
 
   let mapper enabled =
     if enabled = Enabled then { Mapper.identity with stmt; stmt_env; exp; top_stmt } else Mapper.identity
-  ;;
 end
 
 module Builtin = struct
@@ -432,12 +429,12 @@ module Builtin = struct
       reapply state, { e with e = EOp (OpEq, e1, { e = EBool false; t = { t = TBool; loc }; loc }) }
     | { e = ECall { path = "size"; args = [ { t = { t = TArray (size, _); _ }; _ } ] }; loc; _ } ->
       reapply state, { e with e = EInt size; loc }
-    | { e = ECall { path = "samplerate"; args = [] }; _ } ->
-      (match env.args.fs with
+    | { e = ECall { path = "samplerate"; args = [] }; _ } -> (
+      match env.args.fs with
       | Some fs -> reapply state, { e with e = EReal fs }
       | None -> state, e)
     | _ -> state, e
-  ;;
+
 
   let mapper enabled = if enabled = Enabled then { Mapper.identity with exp } else Mapper.identity
 end
@@ -450,7 +447,7 @@ module Cast = struct
     | { e = ECall { path = "real"; args = [ ({ t = { t = TReal; _ }; _ } as e1) ] }; _ } -> reapply state, e1
     | { e = ECall { path = "int"; args = [ ({ t = { t = TInt; _ }; _ } as e1) ] }; _ } -> reapply state, e1
     | _ -> state, e
-  ;;
+
 
   let mapper enabled = if enabled = Enabled then { Mapper.identity with exp } else Mapper.identity
 end
@@ -465,7 +462,7 @@ module Canonize = struct
     | EReal n1, EReal n2 -> compare n1 n2
     | EReal _, _ -> -1
     | _ -> compare e1 e2
-  ;;
+
 
   let exp =
     Mapper.make
@@ -480,11 +477,11 @@ module Canonize = struct
       reapply state, n1
     (* (e2 op (e1 op n3)) -> (e1 op (e2 op n3)) *)
     | { e = EOp (op1, e2, ({ e = EOp (op2, e1, e3); _ } as n2)); _ } when (op1 = OpAdd || op1 = OpMul) && op1 = op2 ->
-      if compare_exp e2 e1 > 0
-      then (
+      if compare_exp e2 e1 > 0 then (
         let n2 = { n2 with e = EOp (op2, e2, e3) } in
         reapply state, { e with e = EOp (op1, e1, n2) })
-      else state, e
+      else
+        state, e
     | { e = EOp (op, e1, e2); _ } when op = OpAdd || op = OpMul ->
       if compare_exp e1 e2 > 0 then reapply state, { e with e = EOp (op, e2, e1) } else state, e
     (* e1 - e2 -> e1 + (-e2) *)
@@ -499,7 +496,7 @@ module Canonize = struct
       let e2 = { e2 with e = EUnOp (UOpNeg, e2) } in
       reapply state, { e with e = EOp (OpAdd, e1, e2) }
     | _ -> state, e
-  ;;
+
 
   let mapper enabled = if enabled = Enabled then { Mapper.identity with exp } else Mapper.identity
 end
@@ -507,22 +504,22 @@ end
 module Simplify = struct
   let evaluate op e1 e2 =
     match e1, e2 with
-    | { e = EReal n1; _ }, { e = EReal n2; _ } ->
-      (match op with
+    | { e = EReal n1; _ }, { e = EReal n2; _ } -> (
+      match op with
       | OpAdd -> Some { e = EReal (n1 +. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | OpMul -> Some { e = EReal (n1 *. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | OpSub -> Some { e = EReal (n1 -. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | OpDiv -> Some { e = EReal (n1 /. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | _ -> None)
-    | { e = EInt n1; _ }, { e = EInt n2; _ } ->
-      (match op with
+    | { e = EInt n1; _ }, { e = EInt n2; _ } -> (
+      match op with
       | OpAdd -> Some { e = EInt (n1 + n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | OpMul -> Some { e = EInt (n1 * n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | OpSub -> Some { e = EInt (n1 - n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | OpDiv -> Some { e = EInt (n1 / n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | _ -> None)
     | _ -> None
-  ;;
+
 
   let exp =
     Mapper.make
@@ -534,16 +531,16 @@ module Simplify = struct
     (* e1 / e2 -> e1 * (1.0 / e2) *)
     | { e = EOp (OpDiv, e1, ({ e = EReal n; _ } as e2)); _ } ->
       reapply state, { e with e = EOp (OpMul, e1, { e2 with e = EReal (1.0 /. n) }) }
-    | { e = EOp (op1, e1, { e = EOp (op2, e2, e3); _ }); _ } when op1 = op2 ->
-      (match evaluate op1 e1 e2 with
+    | { e = EOp (op1, e1, { e = EOp (op2, e2, e3); _ }); _ } when op1 = op2 -> (
+      match evaluate op1 e1 e2 with
       | Some en -> reapply state, { e with e = EOp (op1, en, e3) }
       | None -> state, e)
-    | { e = EOp (op, e1, e2); _ } ->
-      (match evaluate op e1 e2 with
+    | { e = EOp (op, e1, e2); _ } -> (
+      match evaluate op e1 e2 with
       | Some e -> reapply state, e
       | None -> state, e)
     | _ -> state, e
-  ;;
+
 
   let mapper enabled = if enabled = Enabled then { Mapper.identity with exp } else Mapper.identity
 end
@@ -558,7 +555,7 @@ module Sort = struct
     | ({ top = TopAlias { path; _ }; _ } as h) :: t -> split ((path, h) :: types) functions externals t
     | ({ top = TopFunction ({ name; _ }, _); _ } as h) :: t -> split types ((name, h) :: functions) externals t
     | ({ top = TopExternal _; _ } as h) :: t -> split types functions (h :: externals) t
-  ;;
+
 
   let rec sort deps table visited sorted stmts =
     match stmts with
@@ -570,14 +567,15 @@ module Sort = struct
       let visited, sorted = pullIn deps table visited sorted name in
       sort deps table visited sorted t
 
+
   and pullIn deps table visited sorted name =
-    if Set.mem name visited
-    then visited, sorted
+    if Set.mem name visited then
+      visited, sorted
     else (
       match Map.find_opt name deps with
-      | None ->
+      | None -> (
         let visited = Set.add name visited in
-        (match Map.find_opt name table with
+        match Map.find_opt name table with
         | Some stmt -> visited, stmt :: sorted
         | None -> visited, sorted)
       | Some dep_set ->
@@ -588,13 +586,13 @@ module Sort = struct
         in
         let stmt = Map.find name table in
         visited, stmt :: sorted)
-  ;;
+
 
   let getDependencies args prog =
     let state, _ = Mapper.prog dependencies (default_env args) (Mapper.defaultState (default_data ())) prog in
     let data = Mapper.getData state in
     data.type_deps, data.function_deps
-  ;;
+
 
   let run args prog =
     let type_deps, function_deps = getDependencies args prog in
@@ -604,7 +602,6 @@ module Sort = struct
     let types = sort type_deps type_table Set.empty [] (List.map snd types) in
     let functions = sort function_deps functions_table Set.empty [] (List.map snd functions) in
     types @ externals @ functions
-  ;;
 end
 
 let passes =
@@ -616,29 +613,27 @@ let passes =
   |> Mapper.seq (Tuples.mapper Enabled)
   |> Mapper.seq (Cast.mapper Enabled)
   |> Mapper.seq (LiteralArrays.mapper Enabled)
-;;
+
 
 let rec apply env state prog n =
-  if n > 10
-  then failwith "too many repeats"
+  if n > 10 then
+    failwith "too many repeats"
   else (
     match prog with
     | [] -> state, []
     | h :: t ->
       let state, h = Mapper.top_stmt passes env state h in
       let data = Mapper.getData state in
-      if data.repeat
-      then (
+      if data.repeat then (
         let data = { data with repeat = false } in
         let state, h = apply env (Mapper.setData state data) h (n + 1) in
         apply env state (h @ t) (n + 1))
       else (
         let state, t = apply env state t 0 in
         state, h @ t))
-;;
+
 
 let run args (prog : prog) : prog =
   let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 in
   let prog = Sort.run args prog in
   prog
-;;

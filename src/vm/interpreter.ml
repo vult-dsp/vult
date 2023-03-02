@@ -36,7 +36,7 @@ module MakeVM (VM : VM) = struct
       let se1 = Pla.print (print_value e1) in
       let se2 = Pla.print (print_value e2) in
       failwith ("numeric: argument mismatch: " ^ se1 ^ " op " ^ se2)
-  ;;
+
 
   let relation i f b e1 e2 : rvalue =
     match e1, e2 with
@@ -44,33 +44,33 @@ module MakeVM (VM : VM) = struct
     | Real n1, Real n2 -> Bool (f n1 n2)
     | Bool n1, Bool n2 -> Bool (b n1 n2)
     | _ -> failwith "relation: argument mismatch"
-  ;;
+
 
   let logic f e1 e2 : rvalue =
     match e1, e2 with
     | Bool n1, Bool n2 -> Bool (f n1 n2)
     | _ -> failwith "logic: argument mismatch"
-  ;;
+
 
   let bitwise f e1 e2 : rvalue =
     match e1, e2 with
     | Int n1, Int n2 -> Int (f n1 n2)
     | _ -> failwith "bitwise: argument mismatch"
-  ;;
+
 
   let not e : rvalue =
     match e with
     | Int n -> Int (lnot n)
     | Bool n -> Bool (not n)
     | _ -> failwith "not: argument mismatch"
-  ;;
+
 
   let neg e : rvalue =
     match e with
     | Int n -> Int (-n)
     | Real n -> Real (-.n)
     | _ -> failwith "not: argument mismatch"
-  ;;
+
 
   let eval_array f (vm : VM.t) (a : 'b array) : VM.t * 'value array =
     let vm, a =
@@ -82,7 +82,7 @@ module MakeVM (VM : VM) = struct
         a
     in
     vm, Array.of_list (List.rev a)
-  ;;
+
 
   let eval_op (op : Compile.op) =
     match op with
@@ -104,14 +104,14 @@ module MakeVM (VM : VM) = struct
     | OpBxor -> bitwise ( lxor )
     | OpLsh -> bitwise ( lsl )
     | OpRsh -> bitwise ( lsr )
-  ;;
+
 
   let isTrue (cond : rvalue) =
     match cond with
     | Bool true -> true
     | Bool false -> false
     | _ -> failwith "invalid condition"
-  ;;
+
 
   let rec eval_rvalue (vm : VM.t) (r : Compile.rvalue) : VM.t * rvalue =
     match r.r with
@@ -137,20 +137,21 @@ module MakeVM (VM : VM) = struct
     | RObject elems ->
       let vm, elems = eval_array eval_rvalue vm elems in
       vm, Object elems
-    | RIndex (e, index) ->
+    | RIndex (e, index) -> (
       let vm, e = eval_rvalue vm e in
       let vm, index = eval_rvalue vm index in
-      (match e, index with
+      match e, index with
       | Object elems, Int index -> vm, elems.(index)
       | _ -> failwith "index not evaluated correctly")
     | RCall (index, _, args) ->
       let vm, args = eval_rvalue_list vm args in
       eval_call vm index args
-    | RMember (e, index, _) ->
+    | RMember (e, index, _) -> (
       let vm, e = eval_rvalue vm e in
-      (match e with
+      match e with
       | Object elems -> vm, elems.(index)
       | _ -> failwith "member: not a struct")
+
 
   and eval_rvalue_list vm a =
     let vm, a =
@@ -162,6 +163,7 @@ module MakeVM (VM : VM) = struct
         a
     in
     vm, List.rev a
+
 
   and eval_lvalue (vm : VM.t) (l : Compile.lvalue) : VM.t * lvalue =
     match l.l with
@@ -178,10 +180,11 @@ module MakeVM (VM : VM) = struct
       let vm, i = eval_rvalue vm i in
       vm, LIndex (e, i)
 
+
   and eval_call (vm : VM.t) findex (args : rvalue list) : VM.t * rvalue =
     match findex with
-    | F findex ->
-      (match VM.code vm findex with
+    | F findex -> (
+      match VM.code vm findex with
       | Function { body; locals; _ } ->
         let vm, frame = VM.newFrame vm in
         let vm = pushValues vm args in
@@ -191,8 +194,8 @@ module MakeVM (VM : VM) = struct
         let vm = VM.restoreFrame vm frame in
         vm, ret
       | External -> failwith "")
-    | B f ->
-      (match f, args with
+    | B f -> (
+      match f, args with
       | Pi, [] -> vm, Real Float.pi
       | Pi, _ -> failwith "invalid arguments to 'pi' function"
       | Eps, [] -> vm, Real 1e-18
@@ -249,10 +252,10 @@ module MakeVM (VM : VM) = struct
       | Set, _ -> failwith "invalid arguments to 'set' function"
       | Samplerate, _ -> failwith "samplerate() not implemented in the interpreter")
 
+
   and eval_instr (vm : VM.t) (instr : Compile.instr list) : VM.t =
     let trace vm i =
-      if false
-      then (
+      if false then (
         VM.printStack vm;
         print_endline (Pla.print (Compile.print_instr i)))
     in
@@ -265,8 +268,7 @@ module MakeVM (VM : VM) = struct
     | ({ i = If (cond, then_, else_); _ } as h) :: t ->
       trace vm h;
       let vm, cond = eval_rvalue vm cond in
-      if isTrue cond
-      then (
+      if isTrue cond then (
         let vm = eval_instr vm then_ in
         eval_instr vm t)
       else (
@@ -276,11 +278,11 @@ module MakeVM (VM : VM) = struct
       trace vm h;
       let rec loop vm =
         let vm, result = eval_rvalue vm cond in
-        if isTrue result
-        then (
+        if isTrue result then (
           let vm = eval_instr vm body in
           loop vm)
-        else eval_instr vm t
+        else
+          eval_instr vm t
       in
       loop vm
     | ({ i = Store (l, r); _ } as h) :: t ->
@@ -289,6 +291,7 @@ module MakeVM (VM : VM) = struct
       let vm, r = eval_rvalue vm r in
       let vm = store vm l r in
       eval_instr vm t
+
 
   and store (vm : VM.t) (l : lvalue) (r : rvalue) : VM.t =
     match l, r with
@@ -301,6 +304,7 @@ module MakeVM (VM : VM) = struct
     | _ ->
       let n, i = getIndirectAccess vm l in
       VM.storeRefObject vm n i r
+
 
   and getIndirectAccess (vm : VM.t) (l : lvalue) =
     match l with
@@ -316,7 +320,7 @@ module MakeVM (VM : VM) = struct
       let n, i = getIndirectAccess vm l in
       n, i @ [ m ]
     | LIndex (_, _) -> failwith "getIndirectAccess: index is not evaluated"
-  ;;
+
 
   let newVM = VM.newVM
   let findSegment = VM.findSegment
@@ -329,7 +333,7 @@ type bytecode = Compile.bytecode
 let compile stmts : bytecode =
   let env, segments = Compile.compile stmts in
   Compile.{ table = env.functions; code = Array.of_list segments }
-;;
+
 
 let main_path = "Main___main__type"
 
@@ -338,11 +342,12 @@ let rec getTypes stmts =
   | [] -> []
   | { top = TopType descr; _ } :: t -> descr :: getTypes t
   | _ :: t -> getTypes t
-;;
+
 
 let rec valueOfDescr (d : struct_descr) : rvalue =
   let elems = List.map (fun (_, t, _) -> valueOfType t) d.members in
   Object (Array.of_list elems)
+
 
 and valueOfType (t : type_) : rvalue =
   match t.t with
@@ -359,20 +364,20 @@ and valueOfType (t : type_) : rvalue =
     let elems = List.map valueOfType elems in
     Object (Array.of_list elems)
   | TStruct descr -> valueOfDescr descr
-;;
+
 
 let createArgument stmts =
   let types = getTypes stmts in
   match List.find_opt (fun (s : struct_descr) -> s.path = main_path) types with
   | Some d -> [ valueOfDescr d ]
   | None -> []
-;;
+
 
 let createVm prog =
   let env, segments = Compile.compile prog in
   let bytecode = Compile.{ table = env.functions; code = Array.of_list segments } in
   VMV.newVM bytecode, bytecode
-;;
+
 
 let callFunction vm name args =
   let findex = VMV.findSegment vm name in
@@ -383,7 +388,7 @@ let callFunction vm name args =
   | e ->
     print_endline ("Failed to evaluate function:" ^ name);
     raise e
-;;
+
 
 let run (iargs : Util.Args.args) (env : Env.in_top) (prog : top_stmt list) (exp : string) =
   let e = Pparser.Parse.parseString (Some "Main_.vult") (Pla.print [%pla {|fun _main_() return <#exp#s>;|}]) in
@@ -395,4 +400,3 @@ let run (iargs : Util.Args.args) (env : Env.in_top) (prog : top_stmt list) (exp 
   let _, result = VMV.eval_call vm findex args in
   let str = Pla.print (print_value result) in
   str
-;;

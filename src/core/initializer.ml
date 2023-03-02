@@ -32,7 +32,7 @@ let getTick () =
   let n = !index_tick in
   let () = incr index_tick in
   n
-;;
+
 
 let getInitRHS (t : type_) =
   match t with
@@ -44,7 +44,7 @@ let getInitRHS (t : type_) =
   | { t = TBool; loc } -> { e = EBool false; t; loc }
   | { t = TStruct { path; _ }; loc } -> { e = ECall { path = path ^ "_init"; args = [] }; t; loc }
   | _ -> failwith "Not a simple type"
-;;
+
 
 type cstyle =
   | NewObject
@@ -117,7 +117,7 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
     let init = { s = StmtBind ({ l = LId i; t = int_t; loc }, { e = EInt 0; t = int_t; loc }); loc } in
     let transfer = { s = StmtBind (lhs, rhs_temp); loc } in
     { s = StmtBlock [ decl_array; decl; init; loop; transfer ]; loc }
-;;
+
 
 let customInitializerCall (custom_initializers : string Util.Maps.Map.t) name ectx void_type loc =
   match Util.Maps.Map.find_opt name custom_initializers with
@@ -127,7 +127,7 @@ let customInitializerCall (custom_initializers : string Util.Maps.Map.t) name ec
       ; loc
       }
     ]
-;;
+
 
 let initializerType (iargs : Args.args) =
   match iargs.code with
@@ -136,7 +136,7 @@ let initializerType (iargs : Args.args) =
   | JSCode -> NewObject
   | LuaCode -> NewObject
   | JavaCode -> NewObject
-;;
+
 
 let createInitFunction custom_initializers (iargs : Args.args) stmt =
   let () = resetTick () in
@@ -205,4 +205,3 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
   | _ ->
     print_endline (Pla.print (Prog.Print.print_top_stmt stmt));
     failwith "not a type"
-;;

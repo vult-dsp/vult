@@ -27,7 +27,7 @@ let getFunctionInfo (f : Code.function_def) =
     | _ -> f.name, true
   in
   if inputs <> [] || outputs <> [] then Some { name = f.name; class_name; has_ctx; inputs; outputs; is_dsp } else None
-;;
+
 
 let typeString (t : Code.type_) =
   match t with
@@ -36,7 +36,7 @@ let typeString (t : Code.type_) =
   | Bool -> "bool"
   | Fixed -> "fix16_t"
   | _ -> failwith "Pd.typeString: not a numeric type"
-;;
+
 
 let addInlets (inputs : Code.param list) =
   match inputs with
@@ -45,26 +45,26 @@ let addInlets (inputs : Code.param list) =
     List.map (fun _ -> Pla.string "inlet_new(&x->x_obj, &x->x_obj.ob_pd, &s_signal, &s_signal);") t
     |> Pla.join_sep Pla.newline
     |> Pla.indent
-;;
+
 
 let addNormalInlets (inputs : Code.param list) =
   match inputs with
   | [] -> Pla.unit
   | _ :: t ->
     List.map (fun (n, _) -> {%pla|floatinlet_new(&x->x_obj, &x-><#n#s>);|}) t |> Pla.join_sep Pla.newline |> Pla.indent
-;;
+
 
 let addInletsVars (inputs : Code.param list) =
   match inputs with
   | [] -> Pla.unit
   | _ -> List.map (fun (n, _) -> {%pla|float <#n#s>;|}) inputs |> Pla.join_sep Pla.newline |> Pla.indent
-;;
+
 
 let addOutletsVars (outputs : Code.type_ list) =
   match outputs with
   | [] -> Pla.unit
   | _ -> List.mapi (fun i _ -> {%pla|t_outlet *out_<#i#i>;|}) outputs |> Pla.join_sep Pla.newline |> Pla.indent
-;;
+
 
 (** Add the outlets *)
 let addOutlets (f : function_info) =
@@ -72,14 +72,14 @@ let addOutlets (f : function_info) =
   |> List.map (fun _ -> Pla.string "outlet_new(&x->x_obj, &s_signal);")
   |> Pla.join_sep Pla.newline
   |> Pla.indent
-;;
+
 
 let addNormalOutlets (f : function_info) =
   f.outputs
   |> List.mapi (fun i _ -> {%pla|x->out_<#i#i> = outlet_new(&x->x_obj, &s_float);|})
   |> Pla.join_sep Pla.newline
   |> Pla.indent
-;;
+
 
 let tildeNewFunction (f : function_info) : int * Pla.t =
   let dsp_nargs = List.length f.inputs + List.length f.outputs in
@@ -87,7 +87,7 @@ let tildeNewFunction (f : function_info) : int * Pla.t =
     CCList.init dsp_nargs (fun i -> [%pla {|sp[<#i#i>]->s_vec|}]) |> Pla.join_sep_all [%pla {|,<#>|}] |> Pla.indent
   in
   dsp_nargs + 2, vec_decl
-;;
+
 
 let castInput (typ : Code.type_) (value : Pla.t) : Pla.t = Common.cast ~from:Code.Real ~to_:typ value
 let castOutput (typ : Code.type_) (value : Pla.t) : Pla.t = Common.cast ~from:typ ~to_:Code.Real value
@@ -120,7 +120,7 @@ let tildePerformFunctionCall (f : function_info) =
       Pla.unit, copy
   in
   [%pla {|<#ret#> <#fname#s>(<#args#>);<#><#copy#>|}]
-;;
+
 
 let normalInputName (i, acc) (s, t) = i + 1, castInput t [%pla {|x-><#s#s>|}] :: acc
 
@@ -152,7 +152,7 @@ let normalPerformFunctionCall (f : function_info) =
       Pla.unit, copy
   in
   [%pla {|<#ret#> <#fname#s>(<#args#>);<#><#copy#>|}]
-;;
+
 
 (** Generates the buffer access of _tilde_perform function *)
 let tildePerformFunctionVector (f : function_info) : int * Pla.t =
@@ -182,15 +182,15 @@ let tildePerformFunctionVector (f : function_info) : int * Pla.t =
   let decl = List.rev (n :: decl2) |> Pla.join_sep Pla.newline |> Pla.indent in
   (* we return the number of buffers used *)
   count + 1, decl
-;;
+
 
 let getInitDefaultCalls (f : function_info) =
-  if f.has_ctx
-  then (
+  if f.has_ctx then (
     let fname = f.name in
     [%pla {|<#fname#s>_type|}], [%pla {|<#fname#s>_type_init(x->data);|}])
-  else Pla.string "float", Pla.unit
-;;
+  else
+    Pla.string "float", Pla.unit
+
 
 let tilde_func_imp (f : function_info) : Pla.t =
   let fname = f.name in
@@ -262,7 +262,7 @@ void <#fname#s>_tilde_setup(void) {
 
 } // extern "C"
 |}]
-;;
+
 
 let normal_func_imp (f : function_info) : Pla.t =
   let fname = f.name in
@@ -323,14 +323,14 @@ void <#fname#s>_normal_setup(void) {
 
 } // extern "C"
 |}]
-;;
+
 
 let func_imp (f : function_info) : Pla.t = if f.is_dsp then tilde_func_imp f else normal_func_imp f
 
 let func_header (f : function_info) : Pla.t =
   let fname = f.name in
   [%pla {|extern "C" void <#fname#s>_tilde_setup(void);|}]
-;;
+
 
 let lib_impl lib_name (functions : function_info list) =
   let calls =
@@ -344,7 +344,7 @@ let lib_impl lib_name (functions : function_info list) =
   [%pla {|void <#lib_name#s>_setup() {
 <#calls#+>
 }|}]
-;;
+
 
 let lib_header lib_name : Pla.t =
   [%pla
@@ -368,16 +368,16 @@ static inline float samplerate() { return sys_getsr(); }
  }
 
  |}]
-;;
+
 
 let getStmtInfo (s : Code.top_stmt) =
   match s with
-  | TopFunction (def, _) ->
-    (match getFunctionInfo def with
+  | TopFunction (def, _) -> (
+    match getFunctionInfo def with
     | Some f when def.info.is_root -> Some f
     | _ -> None)
   | _ -> None
-;;
+
 
 let generate prefix code_impl code_head (stmts : Code.top_stmt list) =
   let functions = List.filter_map getStmtInfo stmts in
@@ -388,4 +388,3 @@ let generate prefix code_impl code_head (stmts : Code.top_stmt list) =
   let header = lib_header prefix in
   let lib = lib_impl prefix functions in
   Pla.(join [ f_impl; code_impl; lib ], join [ header; f_header; code_head ])
-;;
