@@ -114,16 +114,13 @@ let kindToString kind =
    | AT    -> "'@'"
    | OP    -> "'operator'"
    | DOT   -> "'.'"
-   | LARR  -> "'[|'"
-   | RARR  -> "'|]'"
    | TRUE  -> "'true'"
    | FALSE -> "'false'"
    | AND   -> "'and'"
    | WILD  -> "'_'"
    | EXTERNAL -> "'external'"
-   | TICK  -> "'''"
-   | ARROW -> "'->'"
-   | BANG  -> "'!'"
+   | LT -> "'<'"
+   | GT -> "'>'"
 
 (** Returns a string representation of the token *)
 let tokenToString l =
@@ -174,14 +171,10 @@ rule next_token source = parse
   | '['         { makeToken source LBRACK lexbuf }
   | '}'         { makeToken source RBRACE lexbuf }
   | ']'         { makeToken source RBRACK lexbuf }
-  | "[|"        { makeToken source LARR lexbuf }
-  | "|]"        { makeToken source RARR lexbuf }
   | ':'         { makeToken source COLON lexbuf }
   | ';'         { makeToken source SEMI lexbuf }
   | ','         { makeToken source COMMA lexbuf }
   | '='         { makeToken source EQUAL lexbuf }
-  | '''         { makeToken source TICK lexbuf }
-  | "->"        { makeToken source ARROW lexbuf }
   | "||"        { makeToken source OP lexbuf }
   | "!"         { makeToken source OP lexbuf }
   | "&&"        { makeToken source OP lexbuf }
@@ -191,7 +184,9 @@ rule next_token source = parse
   | ">="        { makeToken source OP lexbuf }
   | ">>"        { makeToken source OP lexbuf }
   | "<<"        { makeToken source OP lexbuf }
-  | [ '<' '>' ] { makeToken source OP lexbuf }
+  (*| [ '<' '>' ] { makeToken source OP lexbuf }*)
+  | '<'         { makeToken source LT lexbuf}
+  | '>'         { makeToken source GT lexbuf}
   | '|'         { makeToken source OP lexbuf }
   | '&'         { makeToken source OP lexbuf }
   | [ '+' '-' ] { makeToken source OP lexbuf }

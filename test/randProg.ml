@@ -243,7 +243,7 @@ let newBuiltinFunNoArgs state =
 let rec newExp state typ : exp =
   pick_one
     state
-    [ (isInt typ, normal_p, fun state -> { e = SEInt (Random.int state.max_int + 1); loc })
+    [ (isInt typ, normal_p, fun state -> { e = SEInt (string_of_int (Random.int state.max_int + 1)); loc })
     ; (isReal typ, normal_p, fun state -> { e = SEReal (string_of_float (Random.float state.max_real +. 1.0)); loc })
     ; (isBool typ, low_p, fun _ -> { e = SEBool (Random.bool ()); loc })
     ; (hasType typ, high_p, fun state -> { e = SEId (pickVar state typ); loc })
@@ -275,7 +275,7 @@ let rec newExp state typ : exp =
       , fun state ->
           let array_type, var = pickArrayVar state typ in
           let _, size = arrayTypeAndSize array_type in
-          let index = Random.int size in
+          let index = string_of_int (Random.int size) in
           { e = SEGroup { e = SEIndex { e = { e = SEId var; loc }; index = { e = SEInt index; loc } }; loc }; loc } )
     ; (* tuples *)
       ( isTuple typ

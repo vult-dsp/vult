@@ -1,4 +1,4 @@
-fun foo() : array(real, 3) {
+fun foo() : array<real, 3> {
    val y[3] = [ 1, 2, 4 ];
    mem x;
    x[0] = 1.0;

@@ -40,9 +40,8 @@ and type_ =
   }
 
 type exp_d =
-  | SEUnit
   | SEBool of bool
-  | SEInt of int
+  | SEInt of string
   | SEReal of string
   | SEFixed of string
   | SEString of string
@@ -197,16 +196,15 @@ module Print = struct
     | STSize i -> Pla.int i
     | STComposed (name, subs) ->
       let subs = Pla.map_sep Pla.commaspace type_ subs in
-      [%pla {|<#name#s>(<#subs#>)|}]
+      [%pla {|<#name#s><<#subs#>>|}]
 
 
   let rec exp (e : exp) = exp_d e.e
 
   and exp_d (e : exp_d) =
     match e with
-    | SEUnit -> Pla.string "()"
     | SEBool b -> Pla.string (if b then "true" else "false")
-    | SEInt i -> Pla.int i
+    | SEInt i -> Pla.string i
     | SEReal f -> Pla.string f
     | SEFixed f -> Pla.string f
     | SEString s -> Pla.string_quoted s

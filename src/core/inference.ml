@@ -522,15 +522,12 @@ let addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
 
 let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
   match e with
-  | { e = SEUnit; loc } ->
-    let t = C.unit ~loc in
-    env, { e = EUnit; t; loc }
   | { e = SEBool value; loc } ->
     let t = C.bool ~loc in
     env, { e = EBool value; t; loc }
   | { e = SEInt value; loc } ->
     let t = C.int ~loc in
-    env, { e = EInt value; t; loc }
+    env, { e = EInt (int_of_string value); t; loc }
   | { e = SEReal value; loc } ->
     let t = C.real ~loc in
     env, { e = EReal (float_of_string value); t; loc }
@@ -754,8 +751,8 @@ let makeIterWhile name id_loc value body loc =
   let dlhs = { d = SDTyped ({ d = SDId (name, None); loc = id_loc }, int_type); loc = id_loc } in
   let lhs = { l = SLId name; loc = id_loc } in
   let rhs = { e = SEId name; loc = id_loc } in
-  let decl = { s = SStmtVal (dlhs, Some { e = SEInt 0; loc }); loc } in
-  let incr = { s = SStmtBind (lhs, { e = SEOp ("+", rhs, { e = SEInt 1; loc }); loc }); loc } in
+  let decl = { s = SStmtVal (dlhs, Some { e = SEInt "0"; loc }); loc } in
+  let incr = { s = SStmtBind (lhs, { e = SEOp ("+", rhs, { e = SEInt "1"; loc }); loc }); loc } in
   let new_body = { s = SStmtBlock [ body; incr ]; loc } in
   let cond = { e = SEOp ("<", rhs, value); loc } in
   let while_s = { s = SStmtWhile (cond, new_body); loc } in

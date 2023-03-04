@@ -56,7 +56,6 @@ module Dependencies = struct
 
   let rec exp set e =
     match e.e with
-    | SEUnit -> set
     | SEBool _ -> set
     | SEInt _ -> set
     | SEReal _ -> set

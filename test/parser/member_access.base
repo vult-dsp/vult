@@ -3,15 +3,15 @@ type other {
 }
 type pair {
    val a : real;
-   val b : array(real, 3);
-   val c : array(other, 3);
+   val b : array<real, 3>;
+   val c : array<other, 3>;
 }
 type point {
    val x : real;
    val y : pair;
 }
 type micro {
-   val m : array(point, 12);
+   val m : array<point, 12>;
 }
 fun foo(i) {
    val x : micro;

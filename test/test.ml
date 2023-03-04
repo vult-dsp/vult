@@ -68,6 +68,8 @@ let parser_files =
   ; "array_syntax.vult"
   ; "mem_tag.vult"
   ; "member_access.vult"
+  ; "stmt_call.vult"
+  ; "new_type_spec.vult"
   ]
 
 

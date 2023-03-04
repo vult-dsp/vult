@@ -61,16 +61,13 @@ type token_enum =
   | ITER
   | TYPE
   | ENUM
-  | LARR
-  | RARR
   | TRUE
   | FALSE
   | AND
   | WILD
   | EXTERNAL
-  | TICK
-  | ARROW
-  | BANG
+  | LT
+  | GT
 
 type 'kind token =
   { kind : 'kind

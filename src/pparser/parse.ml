@@ -90,7 +90,38 @@ let getExpLbp (token : 'kind token) : int =
   | OP, "==" -> 40
   | OP, "<>" -> 40
   | OP, ">" -> 40
+  | GT, _ -> 40
   | OP, "<" -> 40
+  | LT, _ -> 40
+  | OP, ">=" -> 40
+  | OP, "<=" -> 40
+  | OP, ">>" -> 40
+  | OP, "<<" -> 40
+  | OP, "+" -> 50
+  | OP, "|" -> 50
+  | OP, "-" -> 50
+  | OP, "&" -> 60
+  | OP, "*" -> 60
+  | OP, "/" -> 60
+  | OP, "%" -> 60
+  | COLON, _ -> 70
+  | LPAREN, _ -> 80
+  | LBRACK, _ -> 80
+  | DOT, _ -> 90
+  | _ -> 0
+
+
+let getTypeLbp (token : 'kind token) : int =
+  match token.kind, token.value with
+  | COMMA, _ -> 20
+  | OP, "||" -> 30
+  | OP, "&&" -> 35
+  | OP, "==" -> 40
+  | OP, "<>" -> 40
+  | OP, ">" -> 20
+  | GT, _ -> 20
+  | OP, "<" -> 20
+  | LT, _ -> 20
   | OP, ">=" -> 40
   | OP, "<=" -> 40
   | OP, ">>" -> 40
@@ -244,7 +275,7 @@ let optional_tag (buffer : Stream.stream) : Ptags.tag list =
   | _ -> []
 
 
-let rec type_ (rbp : int) (buffer : Stream.stream) : type_ = prattParser rbp buffer getExpLbp type_nud type_led
+let rec type_ (rbp : int) (buffer : Stream.stream) : type_ = prattParser rbp buffer getTypeLbp type_nud type_led
 
 (** Nud function for the Pratt parser *)
 and type_nud (_ : Stream.stream) (token : 'kind token) : type_ =
@@ -264,7 +295,8 @@ and type_nud (_ : Stream.stream) (token : 'kind token) : type_ =
 and type_led (buffer : Stream.stream) (token : 'kind token) (left : type_) : type_ =
   match token.kind with
   | DOT -> type_member buffer token left
-  | LPAREN -> type_call buffer token left
+  | LPAREN -> type_call RPAREN buffer token left
+  | LT -> type_call GT buffer token left
   | _ ->
     let message = Error.PointedError (token.loc, "Invalid expression") in
     raise (ParserError message)
@@ -279,7 +311,7 @@ and type_member (buffer : Stream.stream) (token : 'kind token) (left : type_) : 
     raise (ParserError message)
 
 
-and type_call (buffer : Stream.stream) (token : 'kind token) (left : type_) : type_ =
+and type_call clossing (buffer : Stream.stream) (token : 'kind token) (left : type_) : type_ =
   let path =
     match left.t with
     | STId { id; _ } -> id
@@ -288,11 +320,12 @@ and type_call (buffer : Stream.stream) (token : 'kind token) (left : type_) : ty
       raise (ParserError message)
   in
   let args =
-    match Stream.peek buffer with
-    | RPAREN -> []
-    | _ -> type_list buffer
+    if Stream.peek buffer = clossing then
+      []
+    else
+      type_list buffer
   in
-  let _ = Stream.consume buffer RPAREN in
+  let _ = Stream.consume buffer clossing in
   let loc = token.loc in
   { t = STComposed (path, args); loc }
 
@@ -433,16 +466,11 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
   | ID, _ ->
     let id = token.value in
     if String.capitalize_ascii id = id then { e = SEEnum { id; n = None; loc }; loc } else { e = SEId id; loc }
-  | LPAREN, _ -> (
-    match Stream.peek buffer with
-    | RPAREN ->
-      let _ = Stream.skip buffer in
-      { e = SEUnit; loc }
-    | _ ->
-      let e = expression 0 buffer in
-      let _ = Stream.consume buffer RPAREN in
-      { e = SEGroup e; loc })
-  | INT, _ -> { e = SEInt (int_of_string token.value); loc }
+  | LPAREN, _ ->
+    let e = expression 0 buffer in
+    let _ = Stream.consume buffer RPAREN in
+    { e = SEGroup e; loc }
+  | INT, _ -> { e = SEInt token.value; loc }
   | REAL, _ -> { e = SEReal token.value; loc }
   | FIXED, _ -> { e = SEFixed token.value; loc }
   | STRING, _ -> { e = SEString token.value; loc }
@@ -472,6 +500,8 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
 and exp_led (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   match token.kind with
   | OP -> binary_op buffer token left
+  | LT -> binary_op buffer token left
+  | GT -> binary_op buffer token left
   | COMMA -> pair buffer token left
   | DOT -> exp_member buffer token left
   | LPAREN -> call buffer token left
@@ -880,7 +910,18 @@ and stmt (buffer : Stream.stream) : stmt =
     | IF -> stmtIf buffer
     | WHILE -> stmtWhile buffer
     | ITER -> stmtIter buffer
-    | _ -> stmtBind buffer
+    | _ -> (
+      let backup = Stream.backup buffer in
+      try stmtBind buffer with
+      | ParserError _ as exn -> (
+        Stream.restore ~buffer ~backup;
+        try
+          let e = expression 0 buffer in
+          let _ = Stream.consume buffer SEMI in
+          { s = SStmtBind ({ l = SLWild; loc = e.loc }, e); loc = e.loc }
+        with
+        | _ -> raise exn)
+      | exn -> raise exn)
   with
   | ParserError error ->
     let _ = Stream.appendError buffer error in
