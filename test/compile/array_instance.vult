@@ -1,0 +1,17 @@
+fun counter() {
+  mem x = x + 1;
+  return x;
+}
+
+fun incr(ctx:counter_type) {
+  ctx.x = ctx.x + 1;
+  return ctx.x;
+}
+
+fun foo() {
+  mem x : array<counter_type, 2>;
+  iter(i, size(x)) {
+    _ = x[i]:counter();
+  }
+  return x[1].x;
+}

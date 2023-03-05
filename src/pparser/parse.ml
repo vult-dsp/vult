@@ -545,14 +545,17 @@ and named_call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp
   match left, right with
   | { e = SEId name; _ }, { e = SECall ({ instance = None; _ } as call); _ } ->
     { right with e = SECall { call with instance = Some (name, None) } }
-  | { e = SEId _; _ }, _ ->
+  | { e = SEIndex { e = { e = SEId name; _ }; index }; _ }, { e = SECall ({ instance = None; _ } as call); _ } ->
+    { right with e = SECall { call with instance = Some (name, Some index) } }
+  | ({ e = SEId _; _ } | { e = SEIndex { e = { e = SEId _; _ }; _ }; _ }), _ ->
     let loc = left.loc in
     let error = Error.PointedError (Loc.getNext loc, "After ':' you can only have a function call e.g. name:foo()") in
     raise (ParserError error)
   | _, { e = SECall { instance = None; _ }; _ } ->
     let loc = left.loc in
     let error =
-      Error.PointedError (Loc.getNext loc, "Instance names for functions must be simple identifier e.g. name:foo()")
+      Error.PointedError
+        (Loc.getNext loc, "Instance names for functions must be simple identifier e.g. name:foo() or name[1]:foo()")
     in
     raise (ParserError error)
   | _, { e = SECall { instance = Some _; _ }; _ } ->

@@ -489,38 +489,51 @@ let applyFunction loc (args_t_in : type_ list) (ret : type_) (args_in : exp list
   loop args_t_in args_in
 
 
-let addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
+let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
   if Env.isFunctionActive f then (
     let cpath = Env.getContext env in
     let fpath = Env.getFunctionContext f in
-    if Syntax.compare_path cpath fpath = 0 then (
+    let ctx_t = C.path loc cpath in
+    match Syntax.compare_path cpath fpath, instance with
+    | 0, None ->
       let t = C.path loc fpath in
       let e = { e = EId context_name; t; loc } in
-      env, e :: args)
-    else (
-      let instance =
-        match instance with
-        | Some (i, _) -> i
-        | None ->
-          let number =
-            Printf.sprintf
-              "%.2x%.2x"
-              (0xFF land Hashtbl.hash (path_string fpath))
-              (0xFF land Hashtbl.hash (path_string cpath))
-          in
-          let n = Env.getFunctionTick env in
-          "inst_" ^ string_of_int n ^ number
+      env, e :: args
+    | 0, Some _ -> failwith "cannot call other instance of the same type"
+    (* no instance name provided *)
+    | _, None ->
+      let number =
+        Printf.sprintf
+          "%.2x%.2x"
+          (0xFF land Hashtbl.hash (path_string fpath))
+          (0xFF land Hashtbl.hash (path_string cpath))
       in
+      let n = Env.getFunctionTick env in
+      let name = "inst_" ^ string_of_int n ^ number in
       let t = C.path loc fpath in
-      let ctx_t = C.path loc cpath in
-      let env = Env.addVar env unify instance t Inst loc in
-      let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, instance); loc; t } in
-      env, e :: args))
+      let env = Env.addVar env unify name t Inst loc in
+      let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); loc; t } in
+      env, e :: args
+    (* intance without subscripts *)
+    | _, Some (name, None) ->
+      let t = C.path loc fpath in
+      let env = Env.addVar env unify name t Inst loc in
+      let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); loc; t } in
+      env, e :: args
+    | _, Some (name, Some index) ->
+      let env, index = exp env index in
+      unifyRaise index.loc (C.int ~loc:Loc.default) index.t;
+      let et = C.path loc fpath in
+      let t = C.array ~loc et in
+      let env = Env.addVar env unify name t Inst loc in
+      let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); loc; t = et } in
+      let e = { e = EIndex { e; index }; loc; t } in
+      env, e :: args)
   else
     env, args
 
 
-let rec exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
+and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
   match e with
   | { e = SEBool value; loc } ->
     let t = C.bool ~loc in
