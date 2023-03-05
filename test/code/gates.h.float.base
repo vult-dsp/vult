@@ -31,7 +31,7 @@ typedef struct Gates_process_type {
    float Gates_process_ret_6;
    float Gates_process_ret_7;
    int32_t channel_in;
-   Gates_gates_noteOn_type gates_dc3a;
+   Gates_gates_noteOn_type gates;
 } Gates_process_type;
 
 typedef struct Gates_process_type Gates_noteOn_type;
@@ -94,13 +94,13 @@ void Gates_process(Gates_process_type& _ctx, int32_t c);
 
 static_inline void Gates_noteOn(Gates_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
    if (_ctx.channel_in == channel) {
-      Gates_gates_noteOn(_ctx.gates_dc3a, note, velocity);
+      Gates_gates_noteOn(_ctx.gates, note, velocity);
    }
 }
 
 static_inline void Gates_noteOff(Gates_process_type& _ctx, int32_t note, int32_t channel) {
    if (_ctx.channel_in == channel) {
-      Gates_gates_noteOff(_ctx.gates_dc3a, note);
+      Gates_gates_noteOff(_ctx.gates, note);
    }
 }
 

@@ -71,7 +71,7 @@ end
 
 function Ladder_process_euler_type_alloc()
    local _ctx = {};
-   _ctx.e_6899 = Ladder_euler_type_alloc()
+   _ctx.e = Ladder_euler_type_alloc()
    _ctx.fh = 0.
    _ctx.inst_1b099 = Util_change_type_alloc()
    return _ctx
@@ -80,7 +80,7 @@ end
 function Ladder_process_heun_type_alloc()
    local _ctx = {};
    _ctx.fh = 0.
-   _ctx.h_84a0 = Ladder_heun_type_alloc()
+   _ctx.h = Ladder_heun_type_alloc()
    _ctx.inst_1b0a0 = Util_change_type_alloc()
    return _ctx
 end
@@ -352,10 +352,10 @@ function Ladder_process_euler(_ctx, input, cut, res)
    if Util_change(_ctx.inst_1b099, cut) then
       _ctx.fh = Ladder_tune(cut)
    end
-   Ladder_euler(_ctx.e_6899, input, _ctx.fh, res)
-   Ladder_euler(_ctx.e_6899, input, _ctx.fh, res)
-   Ladder_euler(_ctx.e_6899, input, _ctx.fh, res)
-   local out = Ladder_euler(_ctx.e_6899, input, _ctx.fh, res)
+   Ladder_euler(_ctx.e, input, _ctx.fh, res)
+   Ladder_euler(_ctx.e, input, _ctx.fh, res)
+   Ladder_euler(_ctx.e, input, _ctx.fh, res)
+   local out = Ladder_euler(_ctx.e, input, _ctx.fh, res)
    return out
 end
 
@@ -363,10 +363,10 @@ function Ladder_process_heun(_ctx, input, cut, res)
    if Util_change(_ctx.inst_1b0a0, cut) then
       _ctx.fh = Ladder_tune(cut)
    end
-   Ladder_heun(_ctx.h_84a0, input, _ctx.fh, res)
-   Ladder_heun(_ctx.h_84a0, input, _ctx.fh, res)
-   Ladder_heun(_ctx.h_84a0, input, _ctx.fh, res)
-   local out = Ladder_heun(_ctx.h_84a0, input, _ctx.fh, res)
+   Ladder_heun(_ctx.h, input, _ctx.fh, res)
+   Ladder_heun(_ctx.h, input, _ctx.fh, res)
+   Ladder_heun(_ctx.h, input, _ctx.fh, res)
+   local out = Ladder_heun(_ctx.h, input, _ctx.fh, res)
    return out
 end
 

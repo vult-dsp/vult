@@ -33,10 +33,10 @@ float Sine_process(Sine_process_type& _ctx, float cv, float reset) {
    if (Util_edge(_ctx.inst_104ba, (reset > 0.5f))) {
       _ctx.trig = true;
    }
-   float phase = Phase_process(_ctx.p_8aba, cv, 0.0f);
+   float phase = Phase_process(_ctx.p, cv, 0.0f);
    if ((phase < float_eps()) && _ctx.trig) {
       _ctx.trig = false;
-      Phase_process(_ctx.p_8aba, cv, 0.0f);
+      Phase_process(_ctx.p, cv, 0.0f);
    }
    return Tables_nsine(phase);
 }

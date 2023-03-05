@@ -85,7 +85,7 @@ function Monocv_process_type_alloc()
    _ctx.cv = 0.
    _ctx.gate = 0.
    _ctx.inst_1b0d6 = Util_change_type_alloc()
-   _ctx.notes_a7d6 = Monocv_mono_noteOn_type_alloc()
+   _ctx.notes = Monocv_mono_noteOn_type_alloc()
    _ctx.vel = 0.
    return _ctx
 end
@@ -337,7 +337,7 @@ end
 
 function Monocv_process(_ctx, c)
    _ctx.channel_in = c
-   if Monocv_mono_isGateOn(_ctx.notes_a7d6) then
+   if Monocv_mono_isGateOn(_ctx.notes) then
       _ctx.gate = _ctx.vel
    else
       _ctx.gate = 0.
@@ -356,18 +356,18 @@ function Monocv_noteOn(_ctx, note, velocity, channel)
    if (_ctx.channel_in == channel) then
       if (velocity > 0) then
          do
-            _ctx.active_note = Monocv_mono_noteOn(_ctx.notes_a7d6, note)
+            _ctx.active_note = Monocv_mono_noteOn(_ctx.notes, note)
             _ctx.vel = (0.0078741 * real(velocity))
          end
       else
-         _ctx.active_note = Monocv_mono_noteOff(_ctx.notes_a7d6, note)
+         _ctx.active_note = Monocv_mono_noteOff(_ctx.notes, note)
       end
    end
 end
 
 function Monocv_noteOff(_ctx, note, channel)
    if (_ctx.channel_in == channel) then
-      _ctx.active_note = Monocv_mono_noteOff(_ctx.notes_a7d6, note)
+      _ctx.active_note = Monocv_mono_noteOff(_ctx.notes, note)
    end
 end
 

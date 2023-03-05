@@ -7,7 +7,7 @@ type Context_simple_reset_type = Context_simple_change_type
 type Context_simple_set_type = Context_simple_change_type
 
 struct Context_simple_foo_type {
-   c_e8dd : struct Context_simple_change_type;
+   c : struct Context_simple_change_type;
    inst_1e8dd : struct Context_simple_change_type;
    inst_2e8dd : struct Context_simple_change_type;
 }
@@ -28,7 +28,7 @@ fun Context_simple_set_type_alloc(_ctx : struct Context_simple_set_type) : struc
 
 fun Context_simple_foo_type_alloc() : struct Context_simple_foo_type  {
    val _ctx : struct Context_simple_foo_type;
-   (_ctx : struct Context_simple_foo_type).c_e8dd = (Context_simple_change_type_alloc() : struct Context_simple_change_type);
+   (_ctx : struct Context_simple_foo_type).c = (Context_simple_change_type_alloc() : struct Context_simple_change_type);
    (_ctx : struct Context_simple_foo_type).inst_1e8dd = (Context_simple_change_type_alloc() : struct Context_simple_change_type);
    (_ctx : struct Context_simple_foo_type).inst_2e8dd = (Context_simple_change_type_alloc() : struct Context_simple_change_type);
    return (_ctx : struct Context_simple_foo_type);
@@ -55,8 +55,8 @@ fun Context_simple_foo(_ctx : struct Context_simple_foo_type, x : real) : void  
    val v2 : bool;
    (v2 : bool) = (Context_simple_change((_ctx : struct Context_simple_foo_type).inst_2e8dd, (x : real)) : bool);
    val v3 : bool;
-   (v3 : bool) = (Context_simple_change((_ctx : struct Context_simple_foo_type).c_e8dd, (x : real)) : bool);
-   _ = (Context_simple_reset((_ctx : struct Context_simple_foo_type).c_e8dd) : void);
-   _ = (Context_simple_set((_ctx : struct Context_simple_foo_type).c_e8dd, 0.0) : void);
+   (v3 : bool) = (Context_simple_change((_ctx : struct Context_simple_foo_type).c, (x : real)) : bool);
+   _ = (Context_simple_reset((_ctx : struct Context_simple_foo_type).c) : void);
+   _ = (Context_simple_set((_ctx : struct Context_simple_foo_type).c, 0.0) : void);
 }
 

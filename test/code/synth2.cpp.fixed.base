@@ -44,7 +44,7 @@ void Synth2_process_type_init(Synth2_process_type& _ctx) {
    Synth2_svf_type_init(_ctx.inst_4a7b7);
    _ctx.lfo_amt = 0x0 /* 0.000000 */;
    _ctx.lfo_rate = 0x0 /* 0.000000 */;
-   Synth2_mono_noteOn_type_init(_ctx.monoin_02b7);
+   Synth2_mono_noteOn_type_init(_ctx.monoin);
    _ctx.pitch = 0x0 /* 0.000000 */;
    _ctx.pw = 0x0 /* 0.000000 */;
    _ctx.res = 0x0 /* 0.000000 */;

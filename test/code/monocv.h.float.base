@@ -45,7 +45,7 @@ typedef struct Monocv_process_type {
    float cv;
    float gate;
    Util_change_type inst_1b0d6;
-   Monocv_mono_noteOn_type notes_a7d6;
+   Monocv_mono_noteOn_type notes;
    float vel;
 } Monocv_process_type;
 
@@ -278,7 +278,7 @@ void Monocv_noteOn(Monocv_process_type& _ctx, int32_t note, int32_t velocity, in
 
 static_inline void Monocv_noteOff(Monocv_process_type& _ctx, int32_t note, int32_t channel) {
    if (_ctx.channel_in == channel) {
-      _ctx.active_note = Monocv_mono_noteOff(_ctx.notes_a7d6, note);
+      _ctx.active_note = Monocv_mono_noteOff(_ctx.notes, note);
    }
 }
 

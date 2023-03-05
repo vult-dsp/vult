@@ -65,7 +65,7 @@ typedef struct Delay_process_type {
    Delay_delay_type inst_68e01;
    float lfo_amt;
    float lfo_rate;
-   Delay_mono_noteOn_type notes_5901;
+   Delay_mono_noteOn_type notes;
    float pitch;
    float time;
    float volume;
@@ -202,7 +202,7 @@ static_inline bool Delay_mono_isGateOn(Delay_mono_noteOn_type& _ctx) {
 }
 
 static_inline float Delay_process(Delay_process_type& _ctx, float input) {
-   bool gate = Delay_mono_isGateOn(_ctx.notes_5901);
+   bool gate = Delay_mono_isGateOn(_ctx.notes);
    float lfo_val = (Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate) * _ctx.lfo_amt);
    float o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, (lfo_val + _ctx.detune));
    float amp = 0.0f;
@@ -220,11 +220,11 @@ static_inline float Delay_process(Delay_process_type& _ctx, float input) {
 }
 
 static_inline void Delay_noteOn(Delay_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
-   _ctx.pitch = int_to_float(Delay_mono_noteOn(_ctx.notes_5901, note));
+   _ctx.pitch = int_to_float(Delay_mono_noteOn(_ctx.notes, note));
 }
 
 static_inline void Delay_noteOff(Delay_process_type& _ctx, int32_t note, int32_t channel) {
-   _ctx.pitch = int_to_float(Delay_mono_noteOff(_ctx.notes_5901, note));
+   _ctx.pitch = int_to_float(Delay_mono_noteOff(_ctx.notes, note));
 }
 
 void Delay_controlChange(Delay_process_type& _ctx, int32_t control, float value, int32_t channel);

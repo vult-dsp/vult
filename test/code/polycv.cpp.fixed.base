@@ -41,7 +41,7 @@ void Polycv_process_type_init(Polycv_process_type& _ctx) {
    _ctx.Polycv_process_ret_8 = 0x0 /* 0.000000 */;
    _ctx.Polycv_process_ret_9 = 0x0 /* 0.000000 */;
    _ctx.channel_in = 0;
-   Polycv_poly_noteOn_type_init(_ctx.poly_a0e8);
+   Polycv_poly_noteOn_type_init(_ctx.poly);
 }
 
 void Polycv_poly_noteOn(Polycv_poly_noteOn_type& _ctx, int32_t note, int32_t velocity) {
@@ -111,19 +111,19 @@ void Polycv_process(Polycv_process_type& _ctx, int32_t c) {
    fix16_t _call_temp_10 = 0.0f;
    fix16_t _call_temp_1 = 0.0f;
    fix16_t _call_temp_0 = 0.0f;
-   Polycv_polyState(_ctx.poly_a0e8);
-   _call_temp_0 = _ctx.poly_a0e8.Polycv_polyState_ret_0;
-   _call_temp_1 = _ctx.poly_a0e8.Polycv_polyState_ret_1;
-   _call_temp_2 = _ctx.poly_a0e8.Polycv_polyState_ret_2;
-   _call_temp_3 = _ctx.poly_a0e8.Polycv_polyState_ret_3;
-   _call_temp_4 = _ctx.poly_a0e8.Polycv_polyState_ret_4;
-   _call_temp_5 = _ctx.poly_a0e8.Polycv_polyState_ret_5;
-   _call_temp_6 = _ctx.poly_a0e8.Polycv_polyState_ret_6;
-   _call_temp_7 = _ctx.poly_a0e8.Polycv_polyState_ret_7;
-   _call_temp_8 = _ctx.poly_a0e8.Polycv_polyState_ret_8;
-   _call_temp_9 = _ctx.poly_a0e8.Polycv_polyState_ret_9;
-   _call_temp_10 = _ctx.poly_a0e8.Polycv_polyState_ret_10;
-   _call_temp_11 = _ctx.poly_a0e8.Polycv_polyState_ret_11;
+   Polycv_polyState(_ctx.poly);
+   _call_temp_0 = _ctx.poly.Polycv_polyState_ret_0;
+   _call_temp_1 = _ctx.poly.Polycv_polyState_ret_1;
+   _call_temp_2 = _ctx.poly.Polycv_polyState_ret_2;
+   _call_temp_3 = _ctx.poly.Polycv_polyState_ret_3;
+   _call_temp_4 = _ctx.poly.Polycv_polyState_ret_4;
+   _call_temp_5 = _ctx.poly.Polycv_polyState_ret_5;
+   _call_temp_6 = _ctx.poly.Polycv_polyState_ret_6;
+   _call_temp_7 = _ctx.poly.Polycv_polyState_ret_7;
+   _call_temp_8 = _ctx.poly.Polycv_polyState_ret_8;
+   _call_temp_9 = _ctx.poly.Polycv_polyState_ret_9;
+   _call_temp_10 = _ctx.poly.Polycv_polyState_ret_10;
+   _call_temp_11 = _ctx.poly.Polycv_polyState_ret_11;
    _ctx.Polycv_process_ret_0 = _call_temp_0;
    _ctx.Polycv_process_ret_1 = _call_temp_1;
    _ctx.Polycv_process_ret_2 = _call_temp_2;

@@ -61,7 +61,7 @@ function Gates_process_type_alloc()
    _ctx.Gates_process_ret_6 = 0.
    _ctx.Gates_process_ret_7 = 0.
    _ctx.channel_in = 0
-   _ctx.gates_dc3a = Gates_gates_noteOn_type_alloc()
+   _ctx.gates = Gates_gates_noteOn_type_alloc()
    return _ctx
 end
 
@@ -133,15 +133,15 @@ function Gates_process(_ctx, c)
    local _call_temp_2 = 0.
    local _call_temp_1 = 0.
    local _call_temp_0 = 0.
-   Gates_gates_state(_ctx.gates_dc3a)
-   _call_temp_0 = _ctx.gates_dc3a.Gates_gates_state_ret_0
-   _call_temp_1 = _ctx.gates_dc3a.Gates_gates_state_ret_1
-   _call_temp_2 = _ctx.gates_dc3a.Gates_gates_state_ret_2
-   _call_temp_3 = _ctx.gates_dc3a.Gates_gates_state_ret_3
-   _call_temp_4 = _ctx.gates_dc3a.Gates_gates_state_ret_4
-   _call_temp_5 = _ctx.gates_dc3a.Gates_gates_state_ret_5
-   _call_temp_6 = _ctx.gates_dc3a.Gates_gates_state_ret_6
-   _call_temp_7 = _ctx.gates_dc3a.Gates_gates_state_ret_7
+   Gates_gates_state(_ctx.gates)
+   _call_temp_0 = _ctx.gates.Gates_gates_state_ret_0
+   _call_temp_1 = _ctx.gates.Gates_gates_state_ret_1
+   _call_temp_2 = _ctx.gates.Gates_gates_state_ret_2
+   _call_temp_3 = _ctx.gates.Gates_gates_state_ret_3
+   _call_temp_4 = _ctx.gates.Gates_gates_state_ret_4
+   _call_temp_5 = _ctx.gates.Gates_gates_state_ret_5
+   _call_temp_6 = _ctx.gates.Gates_gates_state_ret_6
+   _call_temp_7 = _ctx.gates.Gates_gates_state_ret_7
    _ctx.Gates_process_ret_0 = _call_temp_0
    _ctx.Gates_process_ret_1 = _call_temp_1
    _ctx.Gates_process_ret_2 = _call_temp_2
@@ -155,13 +155,13 @@ end
 
 function Gates_noteOn(_ctx, note, velocity, channel)
    if (_ctx.channel_in == channel) then
-      Gates_gates_noteOn(_ctx.gates_dc3a, note, velocity)
+      Gates_gates_noteOn(_ctx.gates, note, velocity)
    end
 end
 
 function Gates_noteOff(_ctx, note, channel)
    if (_ctx.channel_in == channel) then
-      Gates_gates_noteOff(_ctx.gates_dc3a, note)
+      Gates_gates_noteOff(_ctx.gates, note)
    end
 end
 

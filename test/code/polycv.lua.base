@@ -109,7 +109,7 @@ function Polycv_process_type_alloc()
    _ctx.Polycv_process_ret_8 = 0.
    _ctx.Polycv_process_ret_9 = 0.
    _ctx.channel_in = 0
-   _ctx.poly_a0e8 = Polycv_poly_noteOn_type_alloc()
+   _ctx.poly = Polycv_poly_noteOn_type_alloc()
    return _ctx
 end
 
@@ -390,19 +390,19 @@ function Polycv_process(_ctx, c)
    local _call_temp_10 = 0.
    local _call_temp_1 = 0.
    local _call_temp_0 = 0.
-   Polycv_polyState(_ctx.poly_a0e8)
-   _call_temp_0 = _ctx.poly_a0e8.Polycv_polyState_ret_0
-   _call_temp_1 = _ctx.poly_a0e8.Polycv_polyState_ret_1
-   _call_temp_2 = _ctx.poly_a0e8.Polycv_polyState_ret_2
-   _call_temp_3 = _ctx.poly_a0e8.Polycv_polyState_ret_3
-   _call_temp_4 = _ctx.poly_a0e8.Polycv_polyState_ret_4
-   _call_temp_5 = _ctx.poly_a0e8.Polycv_polyState_ret_5
-   _call_temp_6 = _ctx.poly_a0e8.Polycv_polyState_ret_6
-   _call_temp_7 = _ctx.poly_a0e8.Polycv_polyState_ret_7
-   _call_temp_8 = _ctx.poly_a0e8.Polycv_polyState_ret_8
-   _call_temp_9 = _ctx.poly_a0e8.Polycv_polyState_ret_9
-   _call_temp_10 = _ctx.poly_a0e8.Polycv_polyState_ret_10
-   _call_temp_11 = _ctx.poly_a0e8.Polycv_polyState_ret_11
+   Polycv_polyState(_ctx.poly)
+   _call_temp_0 = _ctx.poly.Polycv_polyState_ret_0
+   _call_temp_1 = _ctx.poly.Polycv_polyState_ret_1
+   _call_temp_2 = _ctx.poly.Polycv_polyState_ret_2
+   _call_temp_3 = _ctx.poly.Polycv_polyState_ret_3
+   _call_temp_4 = _ctx.poly.Polycv_polyState_ret_4
+   _call_temp_5 = _ctx.poly.Polycv_polyState_ret_5
+   _call_temp_6 = _ctx.poly.Polycv_polyState_ret_6
+   _call_temp_7 = _ctx.poly.Polycv_polyState_ret_7
+   _call_temp_8 = _ctx.poly.Polycv_polyState_ret_8
+   _call_temp_9 = _ctx.poly.Polycv_polyState_ret_9
+   _call_temp_10 = _ctx.poly.Polycv_polyState_ret_10
+   _call_temp_11 = _ctx.poly.Polycv_polyState_ret_11
    _ctx.Polycv_process_ret_0 = _call_temp_0
    _ctx.Polycv_process_ret_1 = _call_temp_1
    _ctx.Polycv_process_ret_2 = _call_temp_2
@@ -421,16 +421,16 @@ end
 function Polycv_noteOn(_ctx, note, velocity, channel)
    if (_ctx.channel_in == channel) then
       if (velocity > 0) then
-         Polycv_poly_noteOn(_ctx.poly_a0e8, note, velocity)
+         Polycv_poly_noteOn(_ctx.poly, note, velocity)
       else
-         Polycv_poly_noteOff(_ctx.poly_a0e8, note)
+         Polycv_poly_noteOff(_ctx.poly, note)
       end
    end
 end
 
 function Polycv_noteOff(_ctx, note, channel)
    if (_ctx.channel_in == channel) then
-      Polycv_poly_noteOff(_ctx.poly_a0e8, note)
+      Polycv_poly_noteOff(_ctx.poly, note)
    end
 end
 

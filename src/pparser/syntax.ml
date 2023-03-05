@@ -53,7 +53,7 @@ type exp_d =
       }
   | SEArray of exp list
   | SECall of
-      { instance : string option
+      { instance : (string * exp option) option
       ; path : path
       ; args : exp list
       }
@@ -221,10 +221,19 @@ module Print = struct
       let name = path name in
       let args = Pla.map_sep Pla.commaspace exp args in
       [%pla {|<#name#>(<#args#>)|}]
-    | SECall { instance = Some inst; path = name; args } ->
+    | SECall { instance = Some (inst, sub); path = name; args } ->
       let name = path name in
       let args = Pla.map_sep Pla.commaspace exp args in
-      [%pla {|<#inst#s>:<#name#>(<#args#>)|}]
+      let sub =
+        Option.value
+          (Option.map
+             (fun sub ->
+               let s = exp sub in
+               [%pla {|[<#s#>]|}])
+             sub)
+          ~default:Pla.unit
+      in
+      [%pla {|<#inst#s><#sub#>:<#name#>(<#args#>)|}]
     | SEUnOp (op, e) ->
       let e = exp e in
       [%pla {|(<#op#s><#e#>)|}]

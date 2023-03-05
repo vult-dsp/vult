@@ -41,14 +41,14 @@ typedef struct Ladder_euler_type {
 } Ladder_euler_type;
 
 typedef struct Ladder_process_euler_type {
-   Ladder_euler_type e_6899;
+   Ladder_euler_type e;
    float fh;
    Util_change_type inst_1b099;
 } Ladder_process_euler_type;
 
 typedef struct Ladder_process_heun_type {
    float fh;
-   Ladder_heun_type h_84a0;
+   Ladder_heun_type h;
    Util_change_type inst_1b0a0;
 } Ladder_process_heun_type;
 
@@ -100,14 +100,14 @@ static_inline void Ladder_euler_type_init(Ladder_euler_type& _ctx) {
 }
 
 static_inline void Ladder_process_euler_type_init(Ladder_process_euler_type& _ctx) {
-   Ladder_euler_type_init(_ctx.e_6899);
+   Ladder_euler_type_init(_ctx.e);
    _ctx.fh = 0.0f;
    Util_change_type_init(_ctx.inst_1b099);
 }
 
 static_inline void Ladder_process_heun_type_init(Ladder_process_heun_type& _ctx) {
    _ctx.fh = 0.0f;
-   Ladder_heun_type_init(_ctx.h_84a0);
+   Ladder_heun_type_init(_ctx.h);
    Util_change_type_init(_ctx.inst_1b0a0);
 }
 

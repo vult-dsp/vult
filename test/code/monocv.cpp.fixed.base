@@ -21,7 +21,7 @@ void Monocv_process_type_init(Monocv_process_type& _ctx) {
    _ctx.cv = 0x0 /* 0.000000 */;
    _ctx.gate = 0x0 /* 0.000000 */;
    Util_change_type_init(_ctx.inst_1b0d6);
-   Monocv_mono_noteOn_type_init(_ctx.notes_a7d6);
+   Monocv_mono_noteOn_type_init(_ctx.notes);
    _ctx.vel = 0x0 /* 0.000000 */;
 }
 
@@ -66,7 +66,7 @@ int32_t Monocv_mono_noteOff(Monocv_mono_noteOn_type& _ctx, int32_t n) {
 
 void Monocv_process(Monocv_process_type& _ctx, int32_t c) {
    _ctx.channel_in = c;
-   if (Monocv_mono_isGateOn(_ctx.notes_a7d6)) {
+   if (Monocv_mono_isGateOn(_ctx.notes)) {
       _ctx.gate = _ctx.vel;
    }
    else {
@@ -85,11 +85,11 @@ void Monocv_process(Monocv_process_type& _ctx, int32_t c) {
 void Monocv_noteOn(Monocv_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
    if (_ctx.channel_in == channel) {
       if (velocity > 0) {
-         _ctx.active_note = Monocv_mono_noteOn(_ctx.notes_a7d6, note);
+         _ctx.active_note = Monocv_mono_noteOn(_ctx.notes, note);
          _ctx.vel = fix_mul(0x204 /* 0.007874 */, int_to_fix(velocity));
       }
       else {
-         _ctx.active_note = Monocv_mono_noteOff(_ctx.notes_a7d6, note);
+         _ctx.active_note = Monocv_mono_noteOff(_ctx.notes, note);
       }
    }
 }

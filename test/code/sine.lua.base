@@ -128,7 +128,7 @@ end
 function Sine_process_type_alloc()
    local _ctx = {};
    _ctx.inst_104ba = Util_edge_type_alloc()
-   _ctx.p_8aba = Phase_process_type_alloc()
+   _ctx.p = Phase_process_type_alloc()
    _ctx.trig = false
    return _ctx
 end
@@ -329,11 +329,11 @@ function Sine_process(_ctx, cv, reset)
    if Util_edge(_ctx.inst_104ba, (reset > 0.5)) then
       _ctx.trig = true
    end
-   local phase = Phase_process(_ctx.p_8aba, cv, 0.)
+   local phase = Phase_process(_ctx.p, cv, 0.)
    if ((phase < eps()) and _ctx.trig) then
       do
          _ctx.trig = false
-         Phase_process(_ctx.p_8aba, cv, 0.)
+         Phase_process(_ctx.p, cv, 0.)
       end
    end
    return Tables_nsine(phase)

@@ -61,7 +61,7 @@ typedef struct Polycv_process_type {
    float Polycv_process_ret_8;
    float Polycv_process_ret_9;
    int32_t channel_in;
-   Polycv_poly_noteOn_type poly_a0e8;
+   Polycv_poly_noteOn_type poly;
 } Polycv_process_type;
 
 typedef struct Polycv_process_type Polycv_noteOn_type;
@@ -303,17 +303,17 @@ void Polycv_process(Polycv_process_type& _ctx, int32_t c);
 static_inline void Polycv_noteOn(Polycv_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
    if (_ctx.channel_in == channel) {
       if (velocity > 0) {
-         Polycv_poly_noteOn(_ctx.poly_a0e8, note, velocity);
+         Polycv_poly_noteOn(_ctx.poly, note, velocity);
       }
       else {
-         Polycv_poly_noteOff(_ctx.poly_a0e8, note);
+         Polycv_poly_noteOff(_ctx.poly, note);
       }
    }
 }
 
 static_inline void Polycv_noteOff(Polycv_process_type& _ctx, int32_t note, int32_t channel) {
    if (_ctx.channel_in == channel) {
-      Polycv_poly_noteOff(_ctx.poly_a0e8, note);
+      Polycv_poly_noteOff(_ctx.poly, note);
    }
 }
 

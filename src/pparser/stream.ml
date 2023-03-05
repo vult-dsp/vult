@@ -49,8 +49,27 @@ module TokenStream (S : TokenKindSig) = struct
     }
 
   let backup (s : stream) : stream =
-    let buf = Marshal.(to_bytes s [ No_sharing; Closures ]) in
-    Marshal.from_bytes buf 0
+    let clone (type t) (v : t) : t =
+      let buf = Marshal.(to_bytes v [ No_sharing ]) in
+      Marshal.from_bytes buf 0
+    in
+    let lexbuf =
+      Lexing.
+        { refill_buff = s.lexbuf.refill_buff
+        ; lex_buffer = clone s.lexbuf.lex_buffer
+        ; lex_buffer_len = s.lexbuf.lex_buffer_len
+        ; lex_abs_pos = s.lexbuf.lex_abs_pos
+        ; lex_start_pos = s.lexbuf.lex_start_pos
+        ; lex_curr_pos = s.lexbuf.lex_curr_pos
+        ; lex_last_pos = s.lexbuf.lex_last_pos
+        ; lex_last_action = s.lexbuf.lex_last_action
+        ; lex_eof_reached = s.lexbuf.lex_eof_reached
+        ; lex_mem = clone s.lexbuf.lex_mem
+        ; lex_start_p = s.lexbuf.lex_start_p
+        ; lex_curr_p = s.lexbuf.lex_curr_p
+        }
+    in
+    { lexbuf; has_errors = s.has_errors; errors = s.errors; peeked = s.peeked; prev = s.prev; source = s.source }
 
 
   let restore ~buffer ~backup =

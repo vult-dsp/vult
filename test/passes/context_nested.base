@@ -9,8 +9,8 @@ struct Context_nested_change_b_type {
 struct Context_nested_foo_type {
    inst_185d6 : struct Context_nested_change_a_type;
    inst_27fd6 : struct Context_nested_change_b_type;
-   x_85d6 : struct Context_nested_change_a_type;
-   y_7fd6 : struct Context_nested_change_b_type;
+   x : struct Context_nested_change_a_type;
+   y : struct Context_nested_change_b_type;
 }
 
 fun Context_nested_change_a_type_alloc() : struct Context_nested_change_a_type  {
@@ -29,8 +29,8 @@ fun Context_nested_foo_type_alloc() : struct Context_nested_foo_type  {
    val _ctx : struct Context_nested_foo_type;
    (_ctx : struct Context_nested_foo_type).inst_185d6 = (Context_nested_change_a_type_alloc() : struct Context_nested_change_a_type);
    (_ctx : struct Context_nested_foo_type).inst_27fd6 = (Context_nested_change_b_type_alloc() : struct Context_nested_change_b_type);
-   (_ctx : struct Context_nested_foo_type).x_85d6 = (Context_nested_change_a_type_alloc() : struct Context_nested_change_a_type);
-   (_ctx : struct Context_nested_foo_type).y_7fd6 = (Context_nested_change_b_type_alloc() : struct Context_nested_change_b_type);
+   (_ctx : struct Context_nested_foo_type).x = (Context_nested_change_a_type_alloc() : struct Context_nested_change_a_type);
+   (_ctx : struct Context_nested_foo_type).y = (Context_nested_change_b_type_alloc() : struct Context_nested_change_b_type);
    return (_ctx : struct Context_nested_foo_type);
 }
 
@@ -54,12 +54,12 @@ fun Context_nested_foo(_ctx : struct Context_nested_foo_type) : void  {
    val ret2 : bool;
    (ret2 : bool) = (Context_nested_change_b((_ctx : struct Context_nested_foo_type).inst_27fd6, 0.0) : bool);
    val ret3 : bool;
-   (ret3 : bool) = (Context_nested_change_a((_ctx : struct Context_nested_foo_type).x_85d6, 0.0) : bool);
+   (ret3 : bool) = (Context_nested_change_a((_ctx : struct Context_nested_foo_type).x, 0.0) : bool);
    val ret4 : bool;
-   (ret4 : bool) = (Context_nested_change_a((_ctx : struct Context_nested_foo_type).x_85d6, 0.0) : bool);
+   (ret4 : bool) = (Context_nested_change_a((_ctx : struct Context_nested_foo_type).x, 0.0) : bool);
    val ret5 : bool;
-   (ret5 : bool) = (Context_nested_change_b((_ctx : struct Context_nested_foo_type).y_7fd6, 0.0) : bool);
+   (ret5 : bool) = (Context_nested_change_b((_ctx : struct Context_nested_foo_type).y, 0.0) : bool);
    val ret6 : bool;
-   (ret6 : bool) = (Context_nested_change_b((_ctx : struct Context_nested_foo_type).y_7fd6, 0.0) : bool);
+   (ret6 : bool) = (Context_nested_change_b((_ctx : struct Context_nested_foo_type).y, 0.0) : bool);
 }
 

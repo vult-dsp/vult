@@ -499,15 +499,15 @@ let addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
       env, e :: args)
     else (
       let instance =
-        let number =
-          Printf.sprintf
-            "%.2x%.2x"
-            (0xFF land Hashtbl.hash (path_string fpath))
-            (0xFF land Hashtbl.hash (path_string cpath))
-        in
         match instance with
-        | Some i -> i ^ "_" ^ number
+        | Some (i, _) -> i
         | None ->
+          let number =
+            Printf.sprintf
+              "%.2x%.2x"
+              (0xFF land Hashtbl.hash (path_string fpath))
+              (0xFF land Hashtbl.hash (path_string cpath))
+          in
           let n = Env.getFunctionTick env in
           "inst_" ^ string_of_int n ^ number
       in

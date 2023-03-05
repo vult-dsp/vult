@@ -544,7 +544,7 @@ and named_call (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp
   let right = expression (getExpLbp token) buffer in
   match left, right with
   | { e = SEId name; _ }, { e = SECall ({ instance = None; _ } as call); _ } ->
-    { right with e = SECall { call with instance = Some name } }
+    { right with e = SECall { call with instance = Some (name, None) } }
   | { e = SEId _; _ }, _ ->
     let loc = left.loc in
     let error = Error.PointedError (Loc.getNext loc, "After ':' you can only have a function call e.g. name:foo()") in

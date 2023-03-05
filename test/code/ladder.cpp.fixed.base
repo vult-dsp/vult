@@ -6,10 +6,10 @@ fix16_t Ladder_process_euler(Ladder_process_euler_type& _ctx, fix16_t input, fix
    if (Util_change(_ctx.inst_1b099, cut)) {
       _ctx.fh = Ladder_tune(cut);
    }
-   Ladder_euler(_ctx.e_6899, input, _ctx.fh, res);
-   Ladder_euler(_ctx.e_6899, input, _ctx.fh, res);
-   Ladder_euler(_ctx.e_6899, input, _ctx.fh, res);
-   fix16_t out = Ladder_euler(_ctx.e_6899, input, _ctx.fh, res);
+   Ladder_euler(_ctx.e, input, _ctx.fh, res);
+   Ladder_euler(_ctx.e, input, _ctx.fh, res);
+   Ladder_euler(_ctx.e, input, _ctx.fh, res);
+   fix16_t out = Ladder_euler(_ctx.e, input, _ctx.fh, res);
    return out;
 }
 
@@ -17,10 +17,10 @@ fix16_t Ladder_process_heun(Ladder_process_heun_type& _ctx, fix16_t input, fix16
    if (Util_change(_ctx.inst_1b0a0, cut)) {
       _ctx.fh = Ladder_tune(cut);
    }
-   Ladder_heun(_ctx.h_84a0, input, _ctx.fh, res);
-   Ladder_heun(_ctx.h_84a0, input, _ctx.fh, res);
-   Ladder_heun(_ctx.h_84a0, input, _ctx.fh, res);
-   fix16_t out = Ladder_heun(_ctx.h_84a0, input, _ctx.fh, res);
+   Ladder_heun(_ctx.h, input, _ctx.fh, res);
+   Ladder_heun(_ctx.h, input, _ctx.fh, res);
+   Ladder_heun(_ctx.h, input, _ctx.fh, res);
+   fix16_t out = Ladder_heun(_ctx.h, input, _ctx.fh, res);
    return out;
 }
 

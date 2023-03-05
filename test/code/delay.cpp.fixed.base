@@ -23,7 +23,7 @@ void Delay_process_type_init(Delay_process_type& _ctx) {
    Delay_delay_type_init(_ctx.inst_68e01);
    _ctx.lfo_amt = 0x0 /* 0.000000 */;
    _ctx.lfo_rate = 0x0 /* 0.000000 */;
-   Delay_mono_noteOn_type_init(_ctx.notes_5901);
+   Delay_mono_noteOn_type_init(_ctx.notes);
    _ctx.pitch = 0x0 /* 0.000000 */;
    _ctx.time = 0x0 /* 0.000000 */;
    _ctx.volume = 0x0 /* 0.000000 */;

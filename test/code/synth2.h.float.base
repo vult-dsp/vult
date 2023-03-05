@@ -54,7 +54,7 @@ typedef struct Synth2_svf_step_type {
 typedef struct Synth2_svf_type {
    float g;
    Synth2_change_type inst_177a7;
-   Synth2_svf_step_type step_1ba7;
+   Synth2_svf_step_type step;
 } Synth2_svf_type;
 
 typedef struct Synth2_lfo_type {
@@ -82,7 +82,7 @@ typedef struct Synth2_process_type {
    Synth2_svf_type inst_4a7b7;
    float lfo_amt;
    float lfo_rate;
-   Synth2_mono_noteOn_type monoin_02b7;
+   Synth2_mono_noteOn_type monoin;
    float pitch;
    float pw;
    float res;
@@ -137,7 +137,7 @@ static_inline void Synth2_svf_step_type_init(Synth2_svf_step_type& _ctx) {
 static_inline void Synth2_svf_type_init(Synth2_svf_type& _ctx) {
    _ctx.g = 0.0f;
    Synth2_change_type_init(_ctx.inst_177a7);
-   Synth2_svf_step_type_init(_ctx.step_1ba7);
+   Synth2_svf_step_type_init(_ctx.step);
 }
 
 static_inline void Synth2_lfo_type_init(Synth2_lfo_type& _ctx) {
@@ -255,8 +255,8 @@ static_inline float Synth2_svf(Synth2_svf_type& _ctx, float input, float fc, flo
    if (Synth2_change(_ctx.inst_177a7, fc)) {
       _ctx.g = (0.5f * fc);
    }
-   float x1 = Synth2_svf_step(_ctx.step_1ba7, input, _ctx.g, fix_q, sel);
-   float x2 = Synth2_svf_step(_ctx.step_1ba7, input, _ctx.g, fix_q, sel);
+   float x1 = Synth2_svf_step(_ctx.step, input, _ctx.g, fix_q, sel);
+   float x2 = Synth2_svf_step(_ctx.step, input, _ctx.g, fix_q, sel);
    return (0.5f * (x1 + x2));
 }
 
@@ -271,7 +271,7 @@ static_inline bool Synth2_mono_isGateOn(Synth2_mono_noteOn_type& _ctx) {
 }
 
 static_inline float Synth2_process(Synth2_process_type& _ctx, float i) {
-   bool gate = Synth2_mono_isGateOn(_ctx.monoin_02b7);
+   bool gate = Synth2_mono_isGateOn(_ctx.monoin);
    float lfo1 = (Synth2_lfo(_ctx.inst_15fb7, _ctx.lfo_rate, gate) * _ctx.lfo_amt);
    float o1 = Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, (lfo1 + _ctx.pw), _ctx.wave);
    float amp_env = 0.0f;
@@ -288,11 +288,11 @@ static_inline float Synth2_process(Synth2_process_type& _ctx, float i) {
 }
 
 static_inline void Synth2_noteOn(Synth2_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
-   _ctx.pitch = int_to_float(Synth2_mono_noteOn(_ctx.monoin_02b7, note));
+   _ctx.pitch = int_to_float(Synth2_mono_noteOn(_ctx.monoin, note));
 }
 
 static_inline void Synth2_noteOff(Synth2_process_type& _ctx, int32_t note, int32_t channel) {
-   _ctx.pitch = int_to_float(Synth2_mono_noteOff(_ctx.monoin_02b7, note));
+   _ctx.pitch = int_to_float(Synth2_mono_noteOff(_ctx.monoin, note));
 }
 
 void Synth2_controlChange(Synth2_process_type& _ctx, int32_t control, int32_t value, int32_t channel);

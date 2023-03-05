@@ -88,7 +88,7 @@ function Synth2_svf_type_alloc()
    local _ctx = {};
    _ctx.g = 0.
    _ctx.inst_177a7 = Synth2_change_type_alloc()
-   _ctx.step_1ba7 = Synth2_svf_step_type_alloc()
+   _ctx.step = Synth2_svf_step_type_alloc()
    return _ctx
 end
 
@@ -145,7 +145,7 @@ function Synth2_process_type_alloc()
    _ctx.inst_4a7b7 = Synth2_svf_type_alloc()
    _ctx.lfo_amt = 0.
    _ctx.lfo_rate = 0.
-   _ctx.monoin_02b7 = Synth2_mono_noteOn_type_alloc()
+   _ctx.monoin = Synth2_mono_noteOn_type_alloc()
    _ctx.pitch = 0.
    _ctx.pw = 0.
    _ctx.res = 0.
@@ -313,8 +313,8 @@ function Synth2_svf(_ctx, input, fc, q, sel)
    if Synth2_change(_ctx.inst_177a7, fc) then
       _ctx.g = (0.5 * fc)
    end
-   local x1 = Synth2_svf_step(_ctx.step_1ba7, input, _ctx.g, fix_q, sel)
-   local x2 = Synth2_svf_step(_ctx.step_1ba7, input, _ctx.g, fix_q, sel)
+   local x1 = Synth2_svf_step(_ctx.step, input, _ctx.g, fix_q, sel)
+   local x2 = Synth2_svf_step(_ctx.step, input, _ctx.g, fix_q, sel)
    return (0.5 * (x1 + x2))
 end
 
@@ -388,7 +388,7 @@ function Synth2_mono_isGateOn(_ctx)
 end
 
 function Synth2_process(_ctx, i)
-   local gate = Synth2_mono_isGateOn(_ctx.monoin_02b7)
+   local gate = Synth2_mono_isGateOn(_ctx.monoin)
    local lfo1 = (Synth2_lfo(_ctx.inst_15fb7, _ctx.lfo_rate, gate) * _ctx.lfo_amt)
    local o1 = Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, (lfo1 + _ctx.pw), _ctx.wave)
    local amp_env = 0.
@@ -404,11 +404,11 @@ function Synth2_process(_ctx, i)
 end
 
 function Synth2_noteOn(_ctx, note, velocity, channel)
-   _ctx.pitch = real(Synth2_mono_noteOn(_ctx.monoin_02b7, note))
+   _ctx.pitch = real(Synth2_mono_noteOn(_ctx.monoin, note))
 end
 
 function Synth2_noteOff(_ctx, note, channel)
-   _ctx.pitch = real(Synth2_mono_noteOff(_ctx.monoin_02b7, note))
+   _ctx.pitch = real(Synth2_mono_noteOff(_ctx.monoin, note))
 end
 
 function Synth2_controlChange(_ctx, control, value, channel)

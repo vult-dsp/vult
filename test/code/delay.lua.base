@@ -119,7 +119,7 @@ function Delay_process_type_alloc()
    _ctx.inst_68e01 = Delay_delay_type_alloc()
    _ctx.lfo_amt = 0.
    _ctx.lfo_rate = 0.
-   _ctx.notes_5901 = Delay_mono_noteOn_type_alloc()
+   _ctx.notes = Delay_mono_noteOn_type_alloc()
    _ctx.pitch = 0.
    _ctx.time = 0.
    _ctx.volume = 0.
@@ -280,7 +280,7 @@ function Delay_mono_isGateOn(_ctx)
 end
 
 function Delay_process(_ctx, input)
-   local gate = Delay_mono_isGateOn(_ctx.notes_5901)
+   local gate = Delay_mono_isGateOn(_ctx.notes)
    local lfo_val = (Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate) * _ctx.lfo_amt)
    local o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, (lfo_val + _ctx.detune))
    local amp = 0.
@@ -297,11 +297,11 @@ function Delay_process(_ctx, input)
 end
 
 function Delay_noteOn(_ctx, note, velocity, channel)
-   _ctx.pitch = real(Delay_mono_noteOn(_ctx.notes_5901, note))
+   _ctx.pitch = real(Delay_mono_noteOn(_ctx.notes, note))
 end
 
 function Delay_noteOff(_ctx, note, channel)
-   _ctx.pitch = real(Delay_mono_noteOff(_ctx.notes_5901, note))
+   _ctx.pitch = real(Delay_mono_noteOff(_ctx.notes, note))
 end
 
 function Delay_controlChange(_ctx, control, value, channel)
