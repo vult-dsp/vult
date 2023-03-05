@@ -1,0 +1,10 @@
+fun reset() {
+  mem x = 0;
+}
+and counter() {
+  mem x = x + 1;
+  if (x > 10) {
+    foo:reset();
+  }
+  return x;
+}

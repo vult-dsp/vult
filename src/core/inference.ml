@@ -499,7 +499,12 @@ let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
       let t = C.path loc fpath in
       let e = { e = EId context_name; t; loc } in
       env, e :: args
-    | 0, Some _ -> failwith "cannot call other instance of the same type"
+    | 0, Some _ ->
+      let msg =
+        Pla.print
+          [%pla {|This function belongs to the same instance and it must not be called on a different instance.|}]
+      in
+      Error.raiseError msg loc
     (* no instance name provided *)
     | _, None ->
       let number =
@@ -520,6 +525,7 @@ let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
       let env = Env.addVar env unify name t Inst loc in
       let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); loc; t } in
       env, e :: args
+    (* array of instances *)
     | _, Some (name, Some index) ->
       let env, index = exp env index in
       unifyRaise index.loc (C.int ~loc:Loc.default) index.t;
