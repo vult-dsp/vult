@@ -49,27 +49,32 @@ float Synth1_lfo(Synth1_lfo_type& _ctx, float f, int32_t gate) {
 }
 
 void Synth1_noteOn(Synth1_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
-   if (_ctx.count == 0) {
-      _ctx.n1 = note;
-      _ctx.pitch = int_to_float(note);
-   }
-   else {
-      if (_ctx.count == 1) {
-         _ctx.n2 = note;
-         _ctx.pitch = int_to_float(note);
-      }
-      else {
-         if (_ctx.count == 2) {
+    switch (_ctx.count) {
+      case 0:
+         {
+            _ctx.n1 = note;
+            _ctx.pitch = int_to_float(note);
+         }
+         break;
+      case 1:
+         {
+            _ctx.n2 = note;
+            _ctx.pitch = int_to_float(note);
+         }
+         break;
+      case 2:
+         {
             _ctx.n3 = note;
             _ctx.pitch = int_to_float(note);
          }
-         else {
-            if (_ctx.count == 3) {
-               _ctx.n4 = note;
-               _ctx.pitch = int_to_float(note);
-            }
+         break;
+      case 3:
+         {
+            _ctx.n4 = note;
+            _ctx.pitch = int_to_float(note);
          }
-      }
+         break;
+
    }
    if (_ctx.count <= 4) {
       _ctx.count = (1 + _ctx.count);

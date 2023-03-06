@@ -416,15 +416,15 @@ module Convert = struct
   let rec tryCreateSwitchLoop id cases next =
     match next with
     | None -> Some (List.rev cases, None)
-    | Some (StmtIf ({ e = Op (Eq, { e = Id nid; _ }, ({ e = Int _; _ } as i)); _ }, stmt, next)) ->
-      if String.compare id nid = 0 then tryCreateSwitchLoop id ((i, stmt) :: cases) next else None
+    | Some (StmtIf ({ e = Op (Eq, nid, ({ e = Int _; _ } as i)); _ }, stmt, next)) ->
+      if compare id nid = 0 then tryCreateSwitchLoop id ((i, stmt) :: cases) next else None
     | Some def -> Some (List.rev cases, Some def)
 
 
   let tryCreateSwitch e =
     match e with
-    | StmtIf ({ e = Op (Eq, ({ e = Id var; _ } as id), ({ e = Int _; _ } as i)); _ }, stmt, next) -> (
-      match tryCreateSwitchLoop var [ i, stmt ] next with
+    | StmtIf ({ e = Op (Eq, id, ({ e = Int _; _ } as i)); _ }, stmt, next) -> (
+      match tryCreateSwitchLoop id [ i, stmt ] next with
       | Some ((_ :: _ :: _ as cases), def) -> StmtSwitch (id, cases, def)
       | _ -> e)
     | _ -> e
