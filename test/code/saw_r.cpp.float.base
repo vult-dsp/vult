@@ -13,23 +13,23 @@ float Saw_r_process(Saw_r_process_type& _ctx, float cv) {
    else {
       i = _ctx.inc;
    }
-   _ctx.phase = ((2.0f * _ctx.inc) + _ctx.phase);
+   _ctx.phase = 2.0f * _ctx.inc + _ctx.phase;
    if (_ctx.phase > 2.0f) {
-      _ctx.phase = (-2.0f + _ctx.phase);
+      _ctx.phase = -2.0f + _ctx.phase;
    }
    else {
       _ctx.phase = _ctx.phase;
    }
-   float ph = (-1.0f + _ctx.phase);
+   float ph = -1.0f + _ctx.phase;
    float o = 0.0f;
-   if (ph >= (1.0f + (- i))) {
-      float b = ((1.0f + ((- i) + (- ph))) / i);
-      o = (ph + (b * fabsf(b)));
+   if (ph >= 1.0f + (- i)) {
+      float b = (1.0f + (- i) + (- ph)) / i;
+      o = ph + b * fabsf(b);
    }
    else {
-      if (ph <= (-1.0f + i)) {
-         float b = ((-1.0f + (i + (- ph))) / i);
-         o = (ph + (b * fabsf(b)));
+      if (ph <= -1.0f + i) {
+         float b = (-1.0f + i + (- ph)) / i;
+         o = ph + b * fabsf(b);
       }
       else {
          o = ph;

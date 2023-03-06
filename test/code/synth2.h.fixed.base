@@ -181,42 +181,42 @@ static_inline fix16_t Synth2_minFixed() {
 }
 
 static_inline bool Synth2_change(Synth2_change_type& _ctx, fix16_t x) {
-   bool v = (_ctx.pre_x != x);
+   bool v = _ctx.pre_x != x;
    _ctx.pre_x = x;
    return v;
 }
 
 static_inline bool Synth2_bchange(Synth2_bchange_type& _ctx, bool x) {
-   bool v = (_ctx.pre_x != x);
+   bool v = _ctx.pre_x != x;
    _ctx.pre_x = x;
    return v;
 }
 
 static_inline bool Synth2_edge(Synth2_edge_type& _ctx, bool x) {
-   bool v = ((_ctx.pre_x != x) && (_ctx.pre_x == true));
+   bool v = _ctx.pre_x != x && _ctx.pre_x == true;
    _ctx.pre_x = x;
    return v;
 }
 
 static_inline bool Synth2_each(Synth2_each_type& _ctx, int32_t n) {
-   bool ret = (_ctx.count == 0);
-   _ctx.count = ((1 + _ctx.count) % n);
+   bool ret = _ctx.count == 0;
+   _ctx.count = (1 + _ctx.count) % n;
    return ret;
 }
 
 static_inline bool Synth2_near_zero(fix16_t x) {
-   return (fix_abs(x) < 0x51e /* 0.020000 */);
+   return fix_abs(x) < 0x51e /* 0.020000 */;
 }
 
 static_inline fix16_t Synth2_dcblock(Synth2_dcblock_type& _ctx, fix16_t x0) {
-   fix16_t y0 = (x0 + ((- _ctx.x1) + fix_mul(0xfeb8 /* 0.995000 */, _ctx.y1)));
+   fix16_t y0 = x0 + (- _ctx.x1) + fix_mul(0xfeb8 /* 0.995000 */, _ctx.y1);
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
 }
 
 static_inline fix16_t Synth2_smooth(Synth2_smooth_type& _ctx, fix16_t input) {
-   _ctx.x = (fix_mul(0x147 /* 0.005000 */, (input + (- _ctx.x))) + _ctx.x);
+   _ctx.x = fix_mul(0x147 /* 0.005000 */, (input + (- _ctx.x))) + _ctx.x;
    return _ctx.x;
 }
 
@@ -251,7 +251,7 @@ fix16_t Synth2_svf_step(Synth2_svf_step_type& _ctx, fix16_t input, fix16_t g, fi
 static_inline fix16_t Synth2_svf(Synth2_svf_type& _ctx, fix16_t input, fix16_t fc, fix16_t q, int32_t sel) {
    fc = fix_clip(fc, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
    q = fix_clip(q, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
-   fix16_t fix_q = (0x20000 /* 2.000000 */ + fix_mul(0x20000 /* 2.000000 */, (- q)));
+   fix16_t fix_q = 0x20000 /* 2.000000 */ + fix_mul(0x20000 /* 2.000000 */, (- q));
    if (Synth2_change(_ctx.inst_177a7, fc)) {
       _ctx.g = fix_mul(0x8000 /* 0.500000 */, fc);
    }
@@ -267,13 +267,13 @@ int32_t Synth2_mono_noteOn(Synth2_mono_noteOn_type& _ctx, int32_t n);
 int32_t Synth2_mono_noteOff(Synth2_mono_noteOn_type& _ctx, int32_t n);
 
 static_inline bool Synth2_mono_isGateOn(Synth2_mono_noteOn_type& _ctx) {
-   return (_ctx.count > 0);
+   return _ctx.count > 0;
 }
 
 static_inline fix16_t Synth2_process(Synth2_process_type& _ctx, fix16_t i) {
    bool gate = Synth2_mono_isGateOn(_ctx.monoin);
    fix16_t lfo1 = fix_mul(Synth2_lfo(_ctx.inst_15fb7, _ctx.lfo_rate, gate), _ctx.lfo_amt);
-   fix16_t o1 = Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, (lfo1 + _ctx.pw), _ctx.wave);
+   fix16_t o1 = Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, lfo1 + _ctx.pw, _ctx.wave);
    fix16_t amp_env = 0.0f;
    fix16_t _if_temp_0 = 0.0f;
    if (gate) {

@@ -52,24 +52,24 @@ void Kick_process_type_init(Kick_process_type& _ctx) {
 }
 
 float Noise_process(Noise_process_type& _ctx, float color) {
-   _ctx.x1 = ((7919 + (17389 * _ctx.x1)) % 32768);
-   float y1 = (3.06e-05f * int_to_float(_ctx.x1));
-   _ctx.x2 = ((12553 + (27449 * _ctx.x2)) % 32768);
-   float y2 = (3.06e-05f * int_to_float(_ctx.x2));
+   _ctx.x1 = (7919 + 17389 * _ctx.x1) % 32768;
+   float y1 = 3.06e-05f * int_to_float(_ctx.x1);
+   _ctx.x2 = (12553 + 27449 * _ctx.x2) % 32768;
+   float y2 = 3.06e-05f * int_to_float(_ctx.x2);
    float out = 0.0f;
    if (color > 0.5f) {
-      out = Noise_pinker(_ctx.inst_16d3d, (y1 + (- y2)));
+      out = Noise_pinker(_ctx.inst_16d3d, y1 + (- y2));
    }
    else {
-      out = (y1 + (- y2));
+      out = y1 + (- y2);
    }
-   return (2.0f * out);
+   return 2.0f * out;
 }
 
 float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float disable) {
    float out = 0.0f;
    if (Util_change(_ctx.inst_1b03c, cv)) {
-      _ctx.rate = (4.0f * Util_cvToRate_1024(cv));
+      _ctx.rate = 4.0f * Util_cvToRate_1024(cv);
    }
    float new_phase = 0.0f;
    float _if_temp_0 = 0.0f;
@@ -79,21 +79,21 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
    else {
       _if_temp_0 = (- _ctx.rate);
    }
-   new_phase = (_if_temp_0 + _ctx.phase);
-   bool bdisable = (disable > 0.5f);
-   if (Util_edge(_ctx.inst_2043c, (reset > 0.0f)) || Util_edge(_ctx.inst_3043c, bdisable)) {
+   new_phase = _if_temp_0 + _ctx.phase;
+   bool bdisable = disable > 0.5f;
+   if (Util_edge(_ctx.inst_2043c, reset > 0.0f) || Util_edge(_ctx.inst_3043c, bdisable)) {
       _ctx.reset_phase = _ctx.phase;
       _ctx.reset_state = true;
       new_phase = 0.0f;
    }
    if (new_phase > 1024.0f) {
-      new_phase = (2048.0f + (- new_phase));
+      new_phase = 2048.0f + (- new_phase);
       _ctx.direction = false;
    }
    else {
       if (new_phase < -1024.0f) {
          _ctx.direction = true;
-         new_phase = (0.0f + new_phase);
+         new_phase = 0.0f + new_phase;
       }
    }
    if (bdisable) {
@@ -103,7 +103,7 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
       _ctx.phase = new_phase;
    }
    if (_ctx.reset_state) {
-      if ((fabsf(_ctx.reset_phase) > 10.0f) || bdisable) {
+      if (fabsf(_ctx.reset_phase) > 10.0f || bdisable) {
          float reset_speed = 0.0f;
          if (bdisable) {
             reset_speed = 0.01f;
@@ -111,7 +111,7 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
          else {
             reset_speed = 0.5f;
          }
-         _ctx.reset_phase = ((- (reset_speed * _ctx.reset_phase)) + _ctx.reset_phase);
+         _ctx.reset_phase = (- reset_speed * _ctx.reset_phase) + _ctx.reset_phase;
       }
       else {
          if (_ctx.reset_phase > 10.0f) {
@@ -125,8 +125,8 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
       }
       out = _ctx.reset_phase;
    }
-   out = (out + _ctx.phase);
-   return (0.0009766f * out);
+   out = out + _ctx.phase;
+   return 0.0009766f * out;
 }
 
 void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r) {
@@ -134,7 +134,7 @@ void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r) {
    int32_t attack = 1;
    int32_t hold = 2;
    int32_t reset = 3;
-   bool bgate = (gate > 0.0f);
+   bool bgate = gate > 0.0f;
    if (Util_edge(_ctx.inst_104d8, bgate)) {
       _ctx.state = reset;
    }
@@ -145,14 +145,14 @@ void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r) {
    else {
       resetting = 0.0f;
    }
-   if (Util_edge(_ctx.inst_204d8, (_ctx.out > 1024.0f))) {
+   if (Util_edge(_ctx.inst_204d8, _ctx.out > 1024.0f)) {
       _ctx.hold_phase = 0.0f;
       _ctx.state = hold;
    }
-   if ((_ctx.out < 10.0f) && (_ctx.state == reset)) {
+   if (_ctx.out < 10.0f && _ctx.state == reset) {
       _ctx.state = attack;
    }
-   if ((_ctx.hold_phase > 100.0f) && (_ctx.state == hold)) {
+   if (_ctx.hold_phase > 100.0f && _ctx.state == hold) {
       _ctx.state = release;
    }
    if (_ctx.state == reset) {
@@ -160,19 +160,19 @@ void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r) {
       _ctx.target = 0.0f;
    }
    if (_ctx.state == attack) {
-      _ctx.rate = (1.0f / (0.01f + (100.0f * a)));
+      _ctx.rate = 1.0f / (0.01f + 100.0f * a);
       _ctx.target = 1228.8f;
    }
    if (_ctx.state == hold) {
-      float hrate = (1.0f / (0.01f + (100.0f * h)));
-      _ctx.hold_phase = (hrate + _ctx.hold_phase);
+      float hrate = 1.0f / (0.01f + 100.0f * h);
+      _ctx.hold_phase = hrate + _ctx.hold_phase;
    }
    if (_ctx.state == release) {
-      _ctx.rate = (1.0f / (0.01f + (100.0f * r)));
+      _ctx.rate = 1.0f / (0.01f + 100.0f * r);
       _ctx.target = 0.0f;
    }
-   _ctx.out = ((0.005f * (((- _ctx.out) + _ctx.target) * _ctx.rate)) + _ctx.out);
-   _ctx.Ahr_do_ret_0 = float_clip((0.0009766f * _ctx.out), 0.0f, 1.0f);
+   _ctx.out = 0.005f * ((- _ctx.out) + _ctx.target) * _ctx.rate + _ctx.out;
+   _ctx.Ahr_do_ret_0 = float_clip(0.0009766f * _ctx.out, 0.0f, 1.0f);
    _ctx.Ahr_do_ret_1 = resetting;
    return ;
 }
@@ -190,44 +190,44 @@ void Ahr_process(Ahr_process_type& _ctx, float gate) {
 
 void Ahr_controlChange(Ahr_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    if (control == 1) {
-      _ctx.knob1 = (0.0078741f * int_to_float(value));
+      _ctx.knob1 = 0.0078741f * int_to_float(value);
    }
    if (control == 2) {
-      _ctx.knob2 = (0.0078741f * int_to_float(value));
+      _ctx.knob2 = 0.0078741f * int_to_float(value);
    }
    if (control == 3) {
-      _ctx.knob3 = (0.0078741f * int_to_float(value));
+      _ctx.knob3 = 0.0078741f * int_to_float(value);
    }
 }
 
 float Kick_do(Kick_do_type& _ctx, float gate, float odecay, float pitch, float swept, float noise) {
    float osc_env = 0.0f;
    float env_reset = 0.0f;
-   Ahr_do(_ctx.inst_1d863, gate, 0.005f, (0.1f + odecay), (0.01f + odecay));
+   Ahr_do(_ctx.inst_1d863, gate, 0.005f, 0.1f + odecay, 0.01f + odecay);
    osc_env = _ctx.inst_1d863.Ahr_do_ret_0;
    env_reset = _ctx.inst_1d863.Ahr_do_ret_1;
-   float cv = Swept_process(_ctx.inst_20263, (1.0f + (- env_reset)), (pitch + (0.4f * swept)), pitch, 0.1f);
+   float cv = Swept_process(_ctx.inst_20263, 1.0f + (- env_reset), pitch + 0.4f * swept, pitch, 0.1f);
    float osc = Tricore_process(_ctx.inst_33c63, cv, 0.0f, env_reset);
-   float osc_sat = Saturate_process((1.5f * osc));
+   float osc_sat = Saturate_process(1.5f * osc);
    float noise_env = 0.0f;
-   Ahr_do(_ctx.inst_4d863, gate, 0.001f, 0.01f, (0.001f + (0.01f * noise)));
+   Ahr_do(_ctx.inst_4d863, gate, 0.001f, 0.01f, 0.001f + 0.01f * noise);
    noise_env = _ctx.inst_4d863.Ahr_do_ret_0;
-   float noise_osc = (0.3333334f * (noise * Noise_process(_ctx.inst_53d63, 1.0f)));
-   return ((noise_env * noise_osc) + (osc_env * osc_sat));
+   float noise_osc = 0.3333334f * noise * Noise_process(_ctx.inst_53d63, 1.0f);
+   return noise_env * noise_osc + osc_env * osc_sat;
 }
 
 void Kick_controlChange(Kick_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    if (control == 30) {
-      _ctx.odecay = (0.0078741f * int_to_float(value));
+      _ctx.odecay = 0.0078741f * int_to_float(value);
    }
    if (control == 31) {
       _ctx.pitch = Util_map(int_to_float(value), 0.0f, 127.0f, 0.0f, 0.1f);
    }
    if (control == 32) {
-      _ctx.swept = (0.0078741f * int_to_float(value));
+      _ctx.swept = 0.0078741f * int_to_float(value);
    }
    if (control == 33) {
-      _ctx.noise = (0.0078741f * int_to_float(value));
+      _ctx.noise = 0.0078741f * int_to_float(value);
    }
 }
 

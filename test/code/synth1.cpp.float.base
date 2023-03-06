@@ -37,19 +37,19 @@ float Synth1_phasor(Synth1_phasor_type& _ctx, float pitch, bool reset) {
 }
 
 float Synth1_lfo(Synth1_lfo_type& _ctx, float f, int32_t gate) {
-   float rate = (0.0002268f * f);
+   float rate = 0.0002268f * f;
    if (Synth1_edge(_ctx.inst_11e7d, gate)) {
       _ctx.phase = 0.0f;
    }
-   _ctx.phase = (rate + _ctx.phase);
+   _ctx.phase = rate + _ctx.phase;
    if (_ctx.phase > 1.0f) {
-      _ctx.phase = (-1.0f + _ctx.phase);
+      _ctx.phase = -1.0f + _ctx.phase;
    }
-   return (-0.5f + sinf((6.2831854f * _ctx.phase)));
+   return -0.5f + sinf(6.2831854f * _ctx.phase);
 }
 
 void Synth1_noteOn(Synth1_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
-    switch (_ctx.count) {
+    switch _ctx.count {
       case 0:
          {
             _ctx.n1 = note;
@@ -77,7 +77,7 @@ void Synth1_noteOn(Synth1_process_type& _ctx, int32_t note, int32_t velocity, in
 
    }
    if (_ctx.count <= 4) {
-      _ctx.count = (1 + _ctx.count);
+      _ctx.count = 1 + _ctx.count;
    }
    if (_ctx.count > 0) {
       _ctx.gate = 1;
@@ -118,8 +118,8 @@ void Synth1_noteOff(Synth1_process_type& _ctx, int32_t note, int32_t channel) {
          }
       }
    }
-   if (found && (_ctx.count > 0)) {
-      _ctx.count = (-1 + _ctx.count);
+   if (found && _ctx.count > 0) {
+      _ctx.count = -1 + _ctx.count;
    }
    if (_ctx.count > 0) {
       _ctx.gate = 1;
@@ -143,16 +143,16 @@ void Synth1_noteOff(Synth1_process_type& _ctx, int32_t note, int32_t channel) {
 
 void Synth1_controlChange(Synth1_process_type& _ctx, int32_t control, float value, int32_t channel) {
    if (control == 30) {
-      _ctx.volume = (0.0078741f * value);
+      _ctx.volume = 0.0078741f * value;
    }
    if (control == 31) {
-      _ctx.detune = (0.0078741f * value);
+      _ctx.detune = 0.0078741f * value;
    }
    if (control == 32) {
-      _ctx.lfo_rate = (0.0078741f * value);
+      _ctx.lfo_rate = 0.0078741f * value;
    }
    if (control == 33) {
-      _ctx.lfo_amt = (-1.0f + (0.0157481f * value));
+      _ctx.lfo_amt = -1.0f + 0.0157481f * value;
    }
 }
 

@@ -34,8 +34,8 @@ static_inline void Aff_f_process_type_init(Aff_f_process_type& _ctx) {
 }
 
 static_inline float Aff_f_process(Aff_f_process_type& _ctx, float a, float b) {
-   _ctx.x = (1 + _ctx.x);
-   return (a * b);
+   _ctx.x = 1 + _ctx.x;
+   return a * b;
 }
 
 

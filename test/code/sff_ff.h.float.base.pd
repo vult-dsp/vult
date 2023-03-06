@@ -36,8 +36,8 @@ static_inline void Sff_ff_process_type_init(Sff_ff_process_type& _ctx) {
 }
 
 static_inline void Sff_ff_process(Sff_ff_process_type& _ctx, float a, float b) {
-   _ctx.Sff_ff_process_ret_0 = (a + b);
-   _ctx.Sff_ff_process_ret_1 = (a + (- b));
+   _ctx.Sff_ff_process_ret_0 = a + b;
+   _ctx.Sff_ff_process_ret_1 = a + (- b);
    return ;
 }
 

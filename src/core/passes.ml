@@ -425,6 +425,7 @@ module Builtin = struct
     Mapper.make
     @@ fun env state (e : exp) ->
     match e with
+    | { e = ECall { path = "pi"; args = [] }; _ } -> reapply state, { e with e = EReal Float.pi }
     | { e = ECall { path = "not"; args = [ e1 ] }; loc; _ } ->
       reapply state, { e with e = EOp (OpEq, e1, { e = EBool false; t = { t = TBool; loc }; loc }) }
     | { e = ECall { path = "size"; args = [ { t = { t = TArray (size, _); _ }; _ } ] }; loc; _ } ->

@@ -18,8 +18,8 @@ static_inline float Bitcrush_factor_raw_c2(int32_t index) {
 }
 
 static_inline float Bitcrush_factor(float cv) {
-   int32_t index = int_clip(float_to_int((cv * 127.0f)), 0, 127);
-   return (Bitcrush_factor_c0[static_cast<uint32_t>(index)] + (cv * (Bitcrush_factor_c1[static_cast<uint32_t>(index)] + (Bitcrush_factor_c2[static_cast<uint32_t>(index)] * cv))));
+   int32_t index = int_clip(float_to_int(cv * 127.0f), 0, 127);
+   return Bitcrush_factor_c0[static_cast<uint32_t>(index)] + cv * (Bitcrush_factor_c1[static_cast<uint32_t>(index)] + Bitcrush_factor_c2[static_cast<uint32_t>(index)] * cv);
 }
 
 static_inline float Bitcrush_process(float i, float cv) {
@@ -29,8 +29,8 @@ static_inline float Bitcrush_process(float i, float cv) {
    }
    else {
       float b = Bitcrush_factor(cv);
-      int32_t x = float_to_int((b * i));
-      out = (int_to_float(x) / b);
+      int32_t x = float_to_int(b * i);
+      out = int_to_float(x) / b;
    }
    return out;
 }

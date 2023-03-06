@@ -75,15 +75,15 @@ static_inline fix16_t Gates_velToCV(int32_t vel) {
 }
 
 static_inline void Gates_gates_noteOn(Gates_gates_noteOn_type& _ctx, int32_t note, int32_t velocity) {
-   if ((note >= 36) && (note <= 43)) {
-      int32_t n = (-36 + note);
+   if (note >= 36 && note <= 43) {
+      int32_t n = -36 + note;
       _ctx.vel[static_cast<uint32_t>(n)] = velocity;
    }
 }
 
 static_inline void Gates_gates_noteOff(Gates_gates_noteOn_type& _ctx, int32_t note) {
-   if ((note >= 36) && (note <= 43)) {
-      int32_t n = (-36 + note);
+   if (note >= 36 && note <= 43) {
+      int32_t n = -36 + note;
       _ctx.vel[static_cast<uint32_t>(n)] = 0;
    }
 }

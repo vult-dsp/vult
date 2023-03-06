@@ -19,7 +19,7 @@ void Synth2_mono_noteOn_type_init(Synth2_mono_noteOn_type& _ctx) {
    int32_t i_0 = 0;
    while (i_0 < 4) {
       _ctx.notes[static_cast<uint32_t>(i_0)] = 0;
-      i_0 = (1 + i_0);
+      i_0 = 1 + i_0;
    }
    _ctx.pre = 0;
 }
@@ -59,28 +59,28 @@ fix16_t Synth2_osc(Synth2_osc_type& _ctx, fix16_t pitch, fix16_t pw, fix16_t wav
       fixed_pitch = pitch;
    }
    else {
-      fixed_pitch = (0xc0000 /* 12.000000 */ + pitch);
+      fixed_pitch = 0xc0000 /* 12.000000 */ + pitch;
    }
    if (Synth2_change(_ctx.inst_177e5, fixed_pitch)) {
       _ctx.rate = Synth2_pitchToRate(fixed_pitch);
       fix16_t p = fix_div(0x10000 /* 1.000000 */, _ctx.rate);
       fix16_t maxHarmonics = fix_floor(fix_mul(0x8000 /* 0.500000 */, p));
-      _ctx.m = (0x10000 /* 1.000000 */ + fix_mul(0x20000 /* 2.000000 */, maxHarmonics));
+      _ctx.m = 0x10000 /* 1.000000 */ + fix_mul(0x20000 /* 2.000000 */, maxHarmonics);
    }
-   fix16_t shift05 = (0x8000 /* 0.500000 */ + fix_mul(0x7d70 /* 0.490000 */, pw));
-   fix16_t shift = (shift05 + _ctx.phase);
+   fix16_t shift05 = 0x8000 /* 0.500000 */ + fix_mul(0x7d70 /* 0.490000 */, pw);
+   fix16_t shift = shift05 + _ctx.phase;
    if (shift > 0x10000 /* 1.000000 */) {
-      shift = (-0x10000 /* -1.000000 */ + shift);
+      shift = -0x10000 /* -1.000000 */ + shift;
    }
    fix16_t tmp1 = Synth2_pulse_train(_ctx.m, _ctx.phase);
    fix16_t tmp2 = Synth2_pulse_train(_ctx.m, shift);
-   _ctx.phase = (_ctx.phase + _ctx.rate);
+   _ctx.phase = _ctx.phase + _ctx.rate;
    if (_ctx.phase > 0x10000 /* 1.000000 */) {
-      _ctx.phase = (-0x10000 /* -1.000000 */ + _ctx.phase);
+      _ctx.phase = -0x10000 /* -1.000000 */ + _ctx.phase;
    }
-   _ctx.state_pulse = fix_clip((tmp1 + ((- tmp2) + fix_mul(0xffdf /* 0.999500 */, _ctx.state_pulse))), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
-   _ctx.state_saw = fix_clip((fix_mul(0x8000 /* 0.500000 */, fix_div((tmp1 + (tmp2 + fix_mul(-0x20000 /* -2.000000 */, _ctx.rate))), shift05)) + fix_mul(0xffdf /* 0.999500 */, _ctx.state_saw)), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
-   _ctx.state_triang = fix_clip((fix_mul(0xffdf /* 0.999500 */, _ctx.state_triang) + fix_mul(0x20000 /* 2.000000 */, fix_mul(_ctx.state_pulse, _ctx.rate))), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
+   _ctx.state_pulse = fix_clip(tmp1 + (- tmp2) + fix_mul(0xffdf /* 0.999500 */, _ctx.state_pulse), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
+   _ctx.state_saw = fix_clip(fix_mul(0x8000 /* 0.500000 */, fix_div((tmp1 + tmp2 + fix_mul(-0x20000 /* -2.000000 */, _ctx.rate)), shift05)) + fix_mul(0xffdf /* 0.999500 */, _ctx.state_saw), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
+   _ctx.state_triang = fix_clip(fix_mul(0xffdf /* 0.999500 */, _ctx.state_triang) + fix_mul(0x20000 /* 2.000000 */, fix_mul(_ctx.state_pulse, _ctx.rate)), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
    if (wave < 0x5555 /* 0.333333 */) {
       _ctx.output = _ctx.state_pulse;
    }
@@ -97,14 +97,14 @@ fix16_t Synth2_osc(Synth2_osc_type& _ctx, fix16_t pitch, fix16_t pw, fix16_t wav
 }
 
 fix16_t Synth2_svf_step(Synth2_svf_step_type& _ctx, fix16_t input, fix16_t g, fix16_t q, int32_t sel) {
-   fix16_t low = (fix_mul(g, _ctx.dband) + _ctx.dlow);
-   fix16_t high = (input + ((- low) + (- fix_mul(q, _ctx.dband))));
-   fix16_t band = (fix_mul(g, high) + _ctx.dband);
-   fix16_t notch = (high + low);
+   fix16_t low = fix_mul(g, _ctx.dband) + _ctx.dlow;
+   fix16_t high = input + (- low) + (- fix_mul(q, _ctx.dband));
+   fix16_t band = fix_mul(g, high) + _ctx.dband;
+   fix16_t notch = high + low;
    _ctx.dband = fix_clip(band, -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
    _ctx.dlow = fix_clip(low, -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
    fix16_t output = 0.0f;
-    switch (sel) {
+    switch sel {
       case 0:
          output = low;
          break;
@@ -122,17 +122,17 @@ fix16_t Synth2_svf_step(Synth2_svf_step_type& _ctx, fix16_t input, fix16_t g, fi
 }
 
 fix16_t Synth2_lfo(Synth2_lfo_type& _ctx, fix16_t f, bool gate) {
-   fix16_t rate = (fix_mul(0x640000 /* 100.000000 */, fix_mul(f, Synth2_minFixed())) + Synth2_minFixed());
+   fix16_t rate = fix_mul(0x640000 /* 100.000000 */, fix_mul(f, Synth2_minFixed())) + Synth2_minFixed();
    if (Synth2_edge(_ctx.inst_1445f, gate)) {
       _ctx.phase = 0x0 /* 0.000000 */;
    }
    if (Synth2_each(_ctx.inst_2cb5f, 4)) {
-      _ctx.phase = (rate + _ctx.phase);
+      _ctx.phase = rate + _ctx.phase;
    }
    if (_ctx.phase > 0x10000 /* 1.000000 */) {
-      _ctx.phase = (-0x10000 /* -1.000000 */ + _ctx.phase);
+      _ctx.phase = -0x10000 /* -1.000000 */ + _ctx.phase;
    }
-   return (0x8000 /* 0.500000 */ + fix_sin(fix_mul(0x6487e /* 6.283185 */, _ctx.phase)));
+   return 0x8000 /* 0.500000 */ + fix_sin(fix_mul(0x6487e /* 6.283185 */, _ctx.phase));
 }
 
 int32_t Synth2_mono_noteOn(Synth2_mono_noteOn_type& _ctx, int32_t n) {
@@ -140,7 +140,7 @@ int32_t Synth2_mono_noteOn(Synth2_mono_noteOn_type& _ctx, int32_t n) {
       _ctx.notes[static_cast<uint32_t>(_ctx.count)] = n;
       _ctx.pre = n;
       if (_ctx.count < 4) {
-         _ctx.count = (1 + _ctx.count);
+         _ctx.count = 1 + _ctx.count;
       }
    }
    return _ctx.pre;
@@ -153,22 +153,22 @@ int32_t Synth2_mono_noteOff(Synth2_mono_noteOn_type& _ctx, int32_t n) {
    if (_ctx.count == 0) {
       return _ctx.pre;
    }
-   while ((i < 4) && (found == false)) {
+   while (i < 4 && found == false) {
       if (_ctx.notes[static_cast<uint32_t>(i)] == n) {
          pos = i;
          found = true;
       }
-      i = (1 + i);
+      i = 1 + i;
    }
    if (found) {
-      int32_t k = (1 + pos);
+      int32_t k = 1 + pos;
       while (k < 4) {
-         _ctx.notes[static_cast<uint32_t>((-1 + k))] = _ctx.notes[static_cast<uint32_t>(k)];
-         k = (1 + k);
+         _ctx.notes[static_cast<uint32_t>(-1 + k)] = _ctx.notes[static_cast<uint32_t>(k)];
+         k = 1 + k;
       }
-      if (found && (_ctx.count > 0)) {
-         _ctx.count = (-1 + _ctx.count);
-         _ctx.pre = _ctx.notes[static_cast<uint32_t>((-1 + _ctx.count))];
+      if (found && _ctx.count > 0) {
+         _ctx.count = -1 + _ctx.count;
+         _ctx.pre = _ctx.notes[static_cast<uint32_t>(-1 + _ctx.count)];
       }
    }
    return _ctx.pre;
@@ -176,7 +176,7 @@ int32_t Synth2_mono_noteOff(Synth2_mono_noteOn_type& _ctx, int32_t n) {
 
 void Synth2_controlChange(Synth2_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    fix16_t value_0_1 = fix_mul(0x204 /* 0.007874 */, int_to_fix(value));
-   fix16_t value_m1_1 = (-0x10000 /* -1.000000 */ + fix_mul(0x20000 /* 2.000000 */, value_0_1));
+   fix16_t value_m1_1 = -0x10000 /* -1.000000 */ + fix_mul(0x20000 /* 2.000000 */, value_0_1);
    if (control == 30) {
       _ctx.volume = value_0_1;
    }

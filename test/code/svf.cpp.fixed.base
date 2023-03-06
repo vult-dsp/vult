@@ -14,20 +14,20 @@ void Svf_process_type_init(Svf_process_type& _ctx) {
 }
 
 fix16_t Svf_process(Svf_process_type& _ctx, fix16_t x, fix16_t cv, fix16_t q, int32_t sel) {
-   q = (0x8000 /* 0.500000 */ + q);
+   q = 0x8000 /* 0.500000 */ + q;
    if (Util_change(_ctx.inst_1b0a2, cv) || Util_change(_ctx.inst_2b0a2, q)) {
       _ctx.g = Svf_calc_g(cv);
       _ctx.r = fix_div(0x10000 /* 1.000000 */, fix_mul(0x20000 /* 2.000000 */, (q + fix_eps())));
-      _ctx.inv_den = fix_div(0x10000 /* 1.000000 */, (0x10000 /* 1.000000 */ + (fix_mul(0x20000 /* 2.000000 */, fix_mul(_ctx.r, _ctx.g)) + fix_mul(_ctx.g, _ctx.g))));
+      _ctx.inv_den = fix_div(0x10000 /* 1.000000 */, (0x10000 /* 1.000000 */ + fix_mul(0x20000 /* 2.000000 */, fix_mul(_ctx.r, _ctx.g)) + fix_mul(_ctx.g, _ctx.g)));
    }
-   fix16_t high = fix_mul((x + ((- fix_mul((fix_mul(0x20000 /* 2.000000 */, _ctx.r) + _ctx.g), _ctx.z1)) + (- _ctx.z2))), _ctx.inv_den);
-   fix16_t band = (fix_mul(high, _ctx.g) + _ctx.z1);
-   fix16_t low = (fix_mul(band, _ctx.g) + _ctx.z2);
-   fix16_t notch = (high + low);
-   _ctx.z1 = (band + fix_mul(high, _ctx.g));
-   _ctx.z2 = (low + fix_mul(band, _ctx.g));
+   fix16_t high = fix_mul((x + (- fix_mul((fix_mul(0x20000 /* 2.000000 */, _ctx.r) + _ctx.g), _ctx.z1)) + (- _ctx.z2)), _ctx.inv_den);
+   fix16_t band = fix_mul(high, _ctx.g) + _ctx.z1;
+   fix16_t low = fix_mul(band, _ctx.g) + _ctx.z2;
+   fix16_t notch = high + low;
+   _ctx.z1 = band + fix_mul(high, _ctx.g);
+   _ctx.z2 = low + fix_mul(band, _ctx.g);
    fix16_t output = 0.0f;
-    switch (sel) {
+    switch sel {
       case 0:
          output = low;
          break;

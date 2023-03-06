@@ -107,25 +107,25 @@ static_inline void Synth1_default_type_init(Synth1_default_type& _ctx) {
 }
 
 static_inline fix16_t Synth1_smooth(Synth1_smooth_type& _ctx, fix16_t input) {
-   _ctx.x = (fix_mul(0x147 /* 0.005000 */, (input + (- _ctx.x))) + _ctx.x);
+   _ctx.x = fix_mul(0x147 /* 0.005000 */, (input + (- _ctx.x))) + _ctx.x;
    return _ctx.x;
 }
 
 static_inline bool Synth1_change(Synth1_change_type& _ctx, fix16_t x) {
-   bool v = (_ctx.pre_x != x);
+   bool v = _ctx.pre_x != x;
    _ctx.pre_x = x;
    return v;
 }
 
 static_inline bool Synth1_edge(Synth1_edge_type& _ctx, int32_t x) {
-   bool v = ((_ctx.pre_x != x) && (_ctx.pre_x == 0));
+   bool v = _ctx.pre_x != x && _ctx.pre_x == 0;
    _ctx.pre_x = x;
    return v;
 }
 
 static_inline bool Synth1_each(Synth1_each_type& _ctx, int32_t n) {
-   bool ret = (_ctx.count == 0);
-   _ctx.count = ((1 + _ctx.count) % n);
+   bool ret = _ctx.count == 0;
+   _ctx.count = (1 + _ctx.count) % n;
    return ret;
 }
 
@@ -140,10 +140,10 @@ fix16_t Synth1_lfo(Synth1_lfo_type& _ctx, fix16_t f, int32_t gate);
 static_inline fix16_t Synth1_process(Synth1_process_type& _ctx, fix16_t input) {
    fix16_t lfo_val = fix_mul(Synth1_lfo(_ctx.inst_17d3d, _ctx.lfo_rate, _ctx.gate), _ctx.lfo_amt);
    fix16_t phase1 = Synth1_phasor(_ctx.inst_2863d, _ctx.pitch, false);
-   fix16_t comp = (0x10000 /* 1.000000 */ + (- phase1));
-   bool reset = (((- phase1) + _ctx.pre_phase1) > 0x8000 /* 0.500000 */);
+   fix16_t comp = 0x10000 /* 1.000000 */ + (- phase1);
+   bool reset = (- phase1) + _ctx.pre_phase1 > 0x8000 /* 0.500000 */;
    _ctx.pre_phase1 = phase1;
-   fix16_t phase2 = Synth1_phasor(_ctx.inst_4863d, (fix_mul(0x200000 /* 32.000000 */, Synth1_smooth(_ctx.inst_3dc3d, (lfo_val + _ctx.detune))) + _ctx.pitch), reset);
+   fix16_t phase2 = Synth1_phasor(_ctx.inst_4863d, fix_mul(0x200000 /* 32.000000 */, Synth1_smooth(_ctx.inst_3dc3d, (lfo_val + _ctx.detune))) + _ctx.pitch, reset);
    fix16_t sine = fix_sin(fix_mul(0x6487e /* 6.283185 */, phase2));
    fix16_t gate_value = 0.0f;
    if (_ctx.gate > 0) {

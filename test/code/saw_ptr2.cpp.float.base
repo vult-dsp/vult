@@ -7,26 +7,26 @@ float Saw_ptr2_process(Saw_ptr2_process_type& _ctx, float cv) {
       _ctx.rate = Util_cvToRate(cv);
    }
    float s1 = _ctx.rate;
-   float s2 = (s1 + _ctx.rate);
+   float s2 = s1 + _ctx.rate;
    float out = 0.0f;
-   _ctx.phase = (_ctx.phase + _ctx.rate);
+   _ctx.phase = _ctx.phase + _ctx.rate;
    if (_ctx.phase > 1.0f) {
-      _ctx.phase = (-1.0f + _ctx.phase);
+      _ctx.phase = -1.0f + _ctx.phase;
    }
    else {
       _ctx.phase = _ctx.phase;
    }
    if (_ctx.phase < s1) {
-      float d = (_ctx.phase / _ctx.rate);
-      out = (1.0f + (d * (s2 + (- d))));
+      float d = _ctx.phase / _ctx.rate;
+      out = 1.0f + d * (s2 + (- d));
    }
    else {
       if (_ctx.phase < s2) {
-         float d = (_ctx.phase / _ctx.rate);
-         out = (3.0f + (d * (-4.0f + (d + s2))));
+         float d = _ctx.phase / _ctx.rate;
+         out = 3.0f + d * (-4.0f + d + s2);
       }
       else {
-         out = (-1.0f + (2.0f * _ctx.phase));
+         out = -1.0f + 2.0f * _ctx.phase;
       }
    }
    return out;

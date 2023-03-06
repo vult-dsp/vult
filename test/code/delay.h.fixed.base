@@ -117,7 +117,7 @@ static_inline void Delay_delay_type_init(Delay_delay_type& _ctx) {
    int32_t i_0 = 0;
    while (i_0 < 30000) {
       _ctx.buffer[static_cast<uint32_t>(i_0)] = 0x0 /* 0.000000 */;
-      i_0 = (1 + i_0);
+      i_0 = 1 + i_0;
    }
    _ctx.write_pos = 0;
 }
@@ -151,25 +151,25 @@ static_inline void Delay_default_type_init(Delay_default_type& _ctx) {
 }
 
 static_inline fix16_t Delay_smooth(Delay_smooth_type& _ctx, fix16_t input) {
-   _ctx.x = (fix_mul(0x147 /* 0.005000 */, (input + (- _ctx.x))) + _ctx.x);
+   _ctx.x = fix_mul(0x147 /* 0.005000 */, (input + (- _ctx.x))) + _ctx.x;
    return _ctx.x;
 }
 
 static_inline bool Delay_change(Delay_change_type& _ctx, fix16_t x) {
-   bool v = (_ctx.pre_x != x);
+   bool v = _ctx.pre_x != x;
    _ctx.pre_x = x;
    return v;
 }
 
 static_inline bool Delay_edge(Delay_edge_type& _ctx, bool x) {
-   bool v = ((_ctx.pre_x != x) && (_ctx.pre_x == false));
+   bool v = _ctx.pre_x != x && _ctx.pre_x == false;
    _ctx.pre_x = x;
    return v;
 }
 
 static_inline bool Delay_each(Delay_each_type& _ctx, int32_t n) {
-   bool ret = (_ctx.count == 0);
-   _ctx.count = ((1 + _ctx.count) % n);
+   bool ret = _ctx.count == 0;
+   _ctx.count = (1 + _ctx.count) % n;
    return ret;
 }
 
@@ -183,10 +183,10 @@ fix16_t Delay_lfo(Delay_lfo_type& _ctx, fix16_t f, bool gate);
 
 static_inline fix16_t Delay_phd_osc(Delay_phd_osc_type& _ctx, fix16_t pitch, fix16_t detune) {
    fix16_t phase1 = Delay_phasor(_ctx.inst_171c4, pitch, false);
-   fix16_t comp = (0x10000 /* 1.000000 */ + (- phase1));
-   bool reset = (((- phase1) + _ctx.pre_phase1) > 0x8000 /* 0.500000 */);
+   fix16_t comp = 0x10000 /* 1.000000 */ + (- phase1);
+   bool reset = (- phase1) + _ctx.pre_phase1 > 0x8000 /* 0.500000 */;
    _ctx.pre_phase1 = phase1;
-   fix16_t phase2 = Delay_phasor(_ctx.inst_371c4, (pitch + fix_mul(0x200000 /* 32.000000 */, Delay_smooth(_ctx.inst_277c4, detune))), reset);
+   fix16_t phase2 = Delay_phasor(_ctx.inst_371c4, pitch + fix_mul(0x200000 /* 32.000000 */, Delay_smooth(_ctx.inst_277c4, detune)), reset);
    fix16_t sine = fix_sin(fix_mul(0x6487e /* 6.283185 */, phase2));
    return fix_mul(comp, sine);
 }
@@ -198,13 +198,13 @@ int32_t Delay_mono_noteOn(Delay_mono_noteOn_type& _ctx, int32_t n);
 int32_t Delay_mono_noteOff(Delay_mono_noteOn_type& _ctx, int32_t n);
 
 static_inline bool Delay_mono_isGateOn(Delay_mono_noteOn_type& _ctx) {
-   return (_ctx.count > 0);
+   return _ctx.count > 0;
 }
 
 static_inline fix16_t Delay_process(Delay_process_type& _ctx, fix16_t input) {
    bool gate = Delay_mono_isGateOn(_ctx.notes);
    fix16_t lfo_val = fix_mul(Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate), _ctx.lfo_amt);
-   fix16_t o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, (lfo_val + _ctx.detune));
+   fix16_t o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, lfo_val + _ctx.detune);
    fix16_t amp = 0.0f;
    fix16_t _if_temp_0 = 0.0f;
    if (gate) {

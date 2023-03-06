@@ -21,17 +21,17 @@ static_inline void Array_instance_foo_type_init(Array_instance_foo_type& _ctx) {
    int32_t i_0 = 0;
    while (i_0 < 2) {
       Array_instance_counter_type_init(_ctx.x[static_cast<uint32_t>(i_0)]);
-      i_0 = (1 + i_0);
+      i_0 = 1 + i_0;
    }
 }
 
 static_inline int32_t Array_instance_counter(Array_instance_counter_type& _ctx) {
-   _ctx.x = (1 + _ctx.x);
+   _ctx.x = 1 + _ctx.x;
    return _ctx.x;
 }
 
 static_inline int32_t Array_instance_incr(Array_instance_counter_type& ctx) {
-   ctx.x = (1 + ctx.x);
+   ctx.x = 1 + ctx.x;
    return ctx.x;
 }
 
@@ -39,7 +39,7 @@ static_inline int32_t Array_instance_foo(Array_instance_foo_type& _ctx) {
    int32_t i = 0;
    while (i < 2) {
       Array_instance_counter(_ctx.x[static_cast<uint32_t>(i)]);
-      i = (1 + i);
+      i = 1 + i;
    }
    return _ctx.x[static_cast<uint32_t>(1)].x;
 }

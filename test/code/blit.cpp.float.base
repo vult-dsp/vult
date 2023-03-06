@@ -27,36 +27,36 @@ float Phase_process(Phase_process_type& _ctx, float cv, float reset) {
    if (Util_change(_ctx.inst_1b08a, cv)) {
       _ctx.rate = Util_cvToRate_1024(cv);
    }
-   if (Util_edge(_ctx.inst_2048a, (reset > 0.5f))) {
+   if (Util_edge(_ctx.inst_2048a, reset > 0.5f)) {
       _ctx.phase = 0.0f;
    }
    else {
-      _ctx.phase = (_ctx.phase + _ctx.rate);
+      _ctx.phase = _ctx.phase + _ctx.rate;
    }
    if (_ctx.phase > 1024.0f) {
-      _ctx.phase = (-1024.0f + _ctx.phase);
+      _ctx.phase = -1024.0f + _ctx.phase;
    }
    else {
       _ctx.phase = _ctx.phase;
    }
-   return (0.0009766f * _ctx.phase);
+   return 0.0009766f * _ctx.phase;
 }
 
 float Blit_pulse_train(Blit_pulse_train_type& _ctx, float cv, float phase) {
    if (Util_change(_ctx.inst_1b05e, cv)) {
-      _ctx.m = (1 + (2 * float_to_int(Util_cvToperiod(cv))));
-      _ctx.scale = (2.0f * Util_cvToperiod(cv));
+      _ctx.m = 1 + 2 * float_to_int(Util_cvToperiod(cv));
+      _ctx.scale = 2.0f * Util_cvToperiod(cv);
    }
-   float pi_phase = (0.5f * phase);
+   float pi_phase = 0.5f * phase;
    float denominator = Tables_nsine(pi_phase);
    float out = 0.0f;
    if (denominator <= float_eps()) {
       out = 1.0f;
    }
    else {
-      float m_phase = fmodf((pi_phase * int_to_float(_ctx.m)), 1.0f);
+      float m_phase = fmodf(pi_phase * int_to_float(_ctx.m), 1.0f);
       float numerator = Tables_nsine(m_phase);
-      out = (numerator / (denominator * _ctx.scale));
+      out = numerator / denominator * _ctx.scale;
    }
    return out;
 }
@@ -67,26 +67,26 @@ float Blit_osc_blit(Blit_osc_blit_type& _ctx, float cv, float pw, float wave) {
       fixed_cv = cv;
    }
    else {
-      fixed_cv = (-0.1f + cv);
+      fixed_cv = -0.1f + cv;
    }
    if (Util_change(_ctx.inst_1b026, fixed_cv)) {
       _ctx.rate = Util_cvToRate(fixed_cv);
    }
    float phase = Phase_process(_ctx.inst_28a26, fixed_cv, 0.0f);
-   float shift05 = (0.5f + (0.49f * pw));
-   float shift = (phase + shift05);
+   float shift05 = 0.5f + 0.49f * pw;
+   float shift = phase + shift05;
    if (shift > 1.0f) {
-      shift = (-1.0f + shift);
+      shift = -1.0f + shift;
    }
    float pulse1 = Blit_pulse_train(_ctx.inst_35e26, fixed_cv, phase);
    float pulse2 = Blit_pulse_train(_ctx.inst_45e26, fixed_cv, shift);
-   _ctx.state_pulse = (pulse1 + ((- pulse2) + (0.9995f * _ctx.state_pulse)));
-   _ctx.state_saw = ((0.5f * ((pulse1 + (pulse2 + (-2.0f * _ctx.rate))) / shift05)) + (0.9995f * _ctx.state_saw));
+   _ctx.state_pulse = pulse1 + (- pulse2) + 0.9995f * _ctx.state_pulse;
+   _ctx.state_saw = 0.5f * (pulse1 + pulse2 + -2.0f * _ctx.rate) / shift05 + 0.9995f * _ctx.state_saw;
    if (wave < 1.0f) {
       _ctx.output = _ctx.state_pulse;
    }
    else {
-      _ctx.output = (2.0f * _ctx.state_saw);
+      _ctx.output = 2.0f * _ctx.state_saw;
    }
    _ctx.output = Util_dcblock(_ctx.inst_56426, _ctx.output);
    return _ctx.output;

@@ -14,7 +14,7 @@ void Gates_gates_noteOn_type_init(Gates_gates_noteOn_type& _ctx) {
    int32_t i_0 = 0;
    while (i_0 < 8) {
       _ctx.vel[static_cast<uint32_t>(i_0)] = 0;
-      i_0 = (1 + i_0);
+      i_0 = 1 + i_0;
    }
 }
 

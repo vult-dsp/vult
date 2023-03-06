@@ -18,8 +18,8 @@ static_inline float Saturate_tanh_table_raw_c2(int32_t index) {
 }
 
 static_inline float Saturate_tanh_table(float x) {
-   int32_t index = int_clip(float_to_int(((x - -24.0f) * 5.0f)), 0, 240);
-   return (Saturate_tanh_table_c0[static_cast<uint32_t>(index)] + (x * (Saturate_tanh_table_c1[static_cast<uint32_t>(index)] + (Saturate_tanh_table_c2[static_cast<uint32_t>(index)] * x))));
+   int32_t index = int_clip(float_to_int((x - -24.0f) * 5.0f), 0, 240);
+   return Saturate_tanh_table_c0[static_cast<uint32_t>(index)] + x * (Saturate_tanh_table_c1[static_cast<uint32_t>(index)] + Saturate_tanh_table_c2[static_cast<uint32_t>(index)] * x);
 }
 
 static_inline float Saturate_process(float x) {

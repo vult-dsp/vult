@@ -12,27 +12,27 @@ void Lfo_process_type_init(Lfo_process_type& _ctx) {
 
 float Lfo_process(Lfo_process_type& _ctx, float cv, float shape, float reset) {
    if (Util_change(_ctx.inst_1b0d6, cv)) {
-      _ctx.rate = Util_cvToRate((-0.3f + cv));
+      _ctx.rate = Util_cvToRate(-0.3f + cv);
    }
-   _ctx.phase = (_ctx.phase + _ctx.rate);
+   _ctx.phase = _ctx.phase + _ctx.rate;
    if (_ctx.phase > 2.0f) {
-      _ctx.phase = (-2.0f + _ctx.phase);
+      _ctx.phase = -2.0f + _ctx.phase;
    }
    else {
       _ctx.phase = _ctx.phase;
    }
-   bool breset = (reset > 0.0f);
+   bool breset = reset > 0.0f;
    if (Util_edge(_ctx.inst_204d6, breset)) {
       _ctx.phase = 0.0f;
    }
-   float tmp = (-1.0f + _ctx.phase);
+   float tmp = -1.0f + _ctx.phase;
    float o = 0.0f;
    if (shape < 1.0f) {
       o = tmp;
    }
    else {
       if (shape < 2.0f) {
-         o = (-1.0f + (2.0f * fabsf(tmp)));
+         o = -1.0f + 2.0f * fabsf(tmp);
       }
       else {
          if (tmp > 0.0f) {

@@ -14,20 +14,20 @@ void Svf_process_type_init(Svf_process_type& _ctx) {
 }
 
 float Svf_process(Svf_process_type& _ctx, float x, float cv, float q, int32_t sel) {
-   q = (0.5f + q);
+   q = 0.5f + q;
    if (Util_change(_ctx.inst_1b0a2, cv) || Util_change(_ctx.inst_2b0a2, q)) {
       _ctx.g = Svf_calc_g(cv);
-      _ctx.r = (1.0f / (2.0f * (q + float_eps())));
-      _ctx.inv_den = (1.0f / (1.0f + ((2.0f * (_ctx.r * _ctx.g)) + (_ctx.g * _ctx.g))));
+      _ctx.r = 1.0f / 2.0f * (q + float_eps());
+      _ctx.inv_den = 1.0f / (1.0f + 2.0f * _ctx.r * _ctx.g + _ctx.g * _ctx.g);
    }
-   float high = ((x + ((- (((2.0f * _ctx.r) + _ctx.g) * _ctx.z1)) + (- _ctx.z2))) * _ctx.inv_den);
-   float band = ((high * _ctx.g) + _ctx.z1);
-   float low = ((band * _ctx.g) + _ctx.z2);
-   float notch = (high + low);
-   _ctx.z1 = (band + (high * _ctx.g));
-   _ctx.z2 = (low + (band * _ctx.g));
+   float high = (x + (- (2.0f * _ctx.r + _ctx.g) * _ctx.z1) + (- _ctx.z2)) * _ctx.inv_den;
+   float band = high * _ctx.g + _ctx.z1;
+   float low = band * _ctx.g + _ctx.z2;
+   float notch = high + low;
+   _ctx.z1 = band + high * _ctx.g;
+   _ctx.z2 = low + band * _ctx.g;
    float output = 0.0f;
-    switch (sel) {
+    switch sel {
       case 0:
          output = low;
          break;

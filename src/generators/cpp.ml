@@ -101,6 +101,28 @@ let operator op =
   | Ge -> Pla.string ">="
 
 
+let level op =
+  match op with
+  | Mul -> 80
+  | Div -> 80
+  | Mod -> 80
+  | Add -> 70
+  | Sub -> 70
+  | Lsh -> 60
+  | Rsh -> 60
+  | Lt -> 50
+  | Le -> 50
+  | Gt -> 50
+  | Ge -> 50
+  | Eq -> 40
+  | Ne -> 40
+  | Band -> 30
+  | Bxor -> 25
+  | Bor -> 20
+  | Land -> 15
+  | Lor -> 10
+
+
 let uoperator op =
   match op with
   | Neg -> Pla.string "-"
@@ -114,7 +136,7 @@ let getReplacement name (args : exp list) ret =
   | None -> name
 
 
-let rec print_exp (e : exp) =
+let rec print_exp prec (e : exp) =
   match e.e with
   | Unit -> Pla.string ""
   | Bool v -> Pla.string (if v then "true" else "false")
@@ -128,42 +150,46 @@ let rec print_exp (e : exp) =
   | String s -> Pla.string_quoted s
   | Id id -> Pla.string id
   | Index { e; index } ->
-    let e = print_exp e in
-    let index = print_exp index in
+    let e = print_exp prec e in
+    let index = print_exp prec index in
     [%pla {|<#e#>[static_cast<uint32_t>(<#index#>)]|}]
   | Array l ->
     let rows = Common.splitArray 100 l in
-    let l = Pla.map_sep [%pla {|,<#>|}] (Pla.map_sep Pla.commaspace print_exp) rows in
+    let l = Pla.map_sep [%pla {|,<#>|}] (Pla.map_sep Pla.commaspace (print_exp prec)) rows in
     [%pla {|{ <#l#> }|}]
   | Call { path = "not"; args = [ e1 ] } ->
-    let e1 = print_exp e1 in
+    let e1 = print_exp prec e1 in
     [%pla {|!<#e1#>|}]
   | Call { path; args } ->
     let path = getReplacement path args e.t in
-    let args = Pla.map_sep Pla.commaspace print_exp args in
+    let args = Pla.map_sep Pla.commaspace (print_exp prec) args in
     [%pla {|<#path#s>(<#args#>)|}]
   | UnOp (op, e) ->
-    let e = print_exp e in
+    let e = print_exp 0 e in
     let op = uoperator op in
     [%pla {|(<#op#> <#e#>)|}]
   | Op (op, e1, e2) -> (
-    let se1 = print_exp e1 in
-    let se2 = print_exp e2 in
+    let current = level op in
+    let se1 = print_exp current e1 in
+    let se2 = print_exp current e2 in
     match Replacements.C.op_to_fun op e1.t e2.t e.t with
     | Some path -> [%pla {|<#path#s>(<#se1#>, <#se2#>)|}]
     | None ->
       let op = operator op in
-      [%pla {|(<#se1#> <#op#> <#se2#>)|}])
+      if current >= prec then
+        [%pla {|<#se1#> <#op#> <#se2#>|}]
+      else
+        [%pla {|(<#se1#> <#op#> <#se2#>)|}])
   | If { cond; then_; else_ } ->
-    let cond = print_exp cond in
-    let then_ = print_exp then_ in
-    let else_ = print_exp else_ in
+    let cond = print_exp prec cond in
+    let then_ = print_exp prec then_ in
+    let else_ = print_exp prec else_ in
     [%pla {|(<#cond#> ? <#then_#> : <#else_#>)|}]
   | Tuple l ->
-    let l = Pla.map_sep Pla.commaspace print_exp l in
+    let l = Pla.map_sep Pla.commaspace (print_exp prec) l in
     [%pla {|(<#l#>)|}]
   | Member (e, m) ->
-    let e = print_exp e in
+    let e = print_exp prec e in
     [%pla {|<#e#>.<#m#s>|}]
 
 
@@ -176,7 +202,7 @@ let rec print_lexp e =
     [%pla {|<#e#>.<#m#s>|}]
   | LIndex (e, index) ->
     let e = print_lexp e in
-    let index = print_exp index in
+    let index = print_exp 0 index in
     [%pla {|<#e#>[static_cast<uint32_t>(<#index#>)]|}]
 
 
@@ -244,13 +270,7 @@ let arrayCopyFunction (t : type_) =
   | _ -> failwith "not a valid array copy"
 
 
-let rec parenthesize e =
-  match e with
-  | { e = Op (_, _, _); _ } -> print_exp e
-  | _ -> Pla.parenthesize (print_exp e)
-
-
-and print_stmt s =
+let rec print_stmt s =
   match s with
   (* declares and initializes a structure *)
   | StmtDecl (({ t = Struct { path; _ }; _ } as lhs), None) ->
@@ -262,46 +282,46 @@ and print_stmt s =
     [%pla {|<#t#>;|}]
   | StmtDecl ({ d = DId (n, _); t; _ }, Some ({ e = Array _; _ } as rhs)) ->
     let t = print_decl_alloc (n, t) in
-    let rhs = print_exp rhs in
+    let rhs = print_exp 0 rhs in
     [%pla {|<#t#> = <#rhs#>;|}]
   | StmtDecl ({ d = DId (n, _); t; _ }, Some rhs) ->
     let t = print_decl (n, t) in
-    let rhs = print_exp rhs in
+    let rhs = print_exp 0 rhs in
     [%pla {|<#t#> = <#rhs#>;|}]
   | StmtBind ({ l = LWild; _ }, rhs) ->
-    let rhs = print_exp rhs in
+    let rhs = print_exp 0 rhs in
     [%pla {|<#rhs#>;|}]
   | StmtBind (lhs, rhs) ->
     let lhs = print_lexp lhs in
-    let rhs = print_exp rhs in
+    let rhs = print_exp 0 rhs in
     [%pla {|<#lhs#> = <#rhs#>;|}]
   | StmtReturn e ->
-    let e = print_exp e in
+    let e = print_exp 0 e in
     [%pla {|return <#e#>;|}]
   | StmtIf (cond, then_, None) ->
-    let cond = parenthesize cond in
+    let cond = print_exp 0 cond in
     let then_ = print_block then_ in
-    [%pla {|if <#cond#> <#then_#>|}]
+    [%pla {|if (<#cond#>) <#then_#>|}]
   | StmtIf (cond, then_, Some else_) ->
-    let cond = parenthesize cond in
+    let cond = print_exp 0 cond in
     let then_ = print_block then_ in
     let else_ = print_block else_ in
-    [%pla {|if <#cond#> <#then_#><#>else <#else_#>|}]
+    [%pla {|if (<#cond#>) <#then_#><#>else <#else_#>|}]
   | StmtWhile (cond, stmt) ->
-    let cond = parenthesize cond in
+    let cond = print_exp 0 cond in
     let stmt = print_block stmt in
-    [%pla {|while <#cond#> <#stmt#>|}]
+    [%pla {|while (<#cond#>) <#stmt#>|}]
   | StmtBlock stmts ->
     let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
     [%pla {|{<#stmt#+>}|}]
   | StmtSwitch (e, cases, default_case) ->
-    let e = parenthesize e in
+    let e = print_exp 0 e in
     let break = Pla.string "break;" in
     let cases =
       Pla.map_sep_all
         Pla.newline
         (fun (e1, body) ->
-          let e1 = print_exp e1 in
+          let e1 = print_exp 0 e1 in
           let body = print_stmt body in
           [%pla {|case <#e1#>:<#body#+><#break#+>|}])
         cases
@@ -370,7 +390,7 @@ let print_top_stmt (target : target) t =
   | TopDecl (lhs, rhs), Tables ->
     let t = print_type_ lhs.t in
     let lhs = print_dexp lhs in
-    let rhs = print_exp rhs in
+    let rhs = print_exp 0 rhs in
     [%pla {|static const <#t#> <#lhs#> = <#rhs#>;<#>|}]
   | TopDecl _, _ -> Pla.unit
 

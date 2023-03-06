@@ -7,7 +7,7 @@ void Delay_mono_noteOn_type_init(Delay_mono_noteOn_type& _ctx) {
    int32_t i_0 = 0;
    while (i_0 < 4) {
       _ctx.notes[static_cast<uint32_t>(i_0)] = 0;
-      i_0 = (1 + i_0);
+      i_0 = 1 + i_0;
    }
    _ctx.pre = 0;
 }
@@ -43,36 +43,36 @@ float Delay_phasor(Delay_phasor_type& _ctx, float pitch, bool reset) {
 }
 
 float Delay_lfo(Delay_lfo_type& _ctx, float f, bool gate) {
-   float rate = (0.0002268f * f);
+   float rate = 0.0002268f * f;
    if (Delay_edge(_ctx.inst_11461, gate)) {
       _ctx.phase = 0.0f;
    }
-   _ctx.phase = (rate + _ctx.phase);
+   _ctx.phase = rate + _ctx.phase;
    if (_ctx.phase > 1.0f) {
-      _ctx.phase = (-1.0f + _ctx.phase);
+      _ctx.phase = -1.0f + _ctx.phase;
    }
-   return (-0.5f + sinf((6.2831854f * _ctx.phase)));
+   return -0.5f + sinf(6.2831854f * _ctx.phase);
 }
 
 float Delay_delay(Delay_delay_type& _ctx, float x, float time, float feedback) {
    time = float_clip(time, 0.0f, 1.0f);
    feedback = float_clip(feedback, 0.0f, 1.0f);
-   float index_r = (time * int_to_float(30000));
+   float index_r = time * int_to_float(30000);
    int32_t index_i = float_to_int(floorf(index_r));
-   int32_t delta = ((- index_i) + _ctx.write_pos);
+   int32_t delta = (- index_i) + _ctx.write_pos;
    int32_t read_pos = 0;
    if (delta < 0) {
-      read_pos = (30000 + delta);
+      read_pos = 30000 + delta;
    }
    else {
       read_pos = delta;
    }
-   float decimal = (index_r + (- int_to_float(index_i)));
+   float decimal = index_r + (- int_to_float(index_i));
    float x1 = _ctx.buffer[static_cast<uint32_t>(read_pos)];
-   float x2 = _ctx.buffer[static_cast<uint32_t>(((1 + read_pos) % 30000))];
-   float ret = (x1 + (decimal * (x2 + (- x1))));
-   _ctx.write_pos = ((1 + _ctx.write_pos) % 30000);
-   _ctx.buffer[static_cast<uint32_t>(_ctx.write_pos)] = float_clip((x + (feedback * ret)), -1.0f, 1.0f);
+   float x2 = _ctx.buffer[static_cast<uint32_t>((1 + read_pos) % 30000)];
+   float ret = x1 + decimal * (x2 + (- x1));
+   _ctx.write_pos = (1 + _ctx.write_pos) % 30000;
+   _ctx.buffer[static_cast<uint32_t>(_ctx.write_pos)] = float_clip(x + feedback * ret, -1.0f, 1.0f);
    return ret;
 }
 
@@ -81,7 +81,7 @@ int32_t Delay_mono_noteOn(Delay_mono_noteOn_type& _ctx, int32_t n) {
       _ctx.notes[static_cast<uint32_t>(_ctx.count)] = n;
       _ctx.pre = n;
       if (_ctx.count < 4) {
-         _ctx.count = (1 + _ctx.count);
+         _ctx.count = 1 + _ctx.count;
       }
    }
    return _ctx.pre;
@@ -94,22 +94,22 @@ int32_t Delay_mono_noteOff(Delay_mono_noteOn_type& _ctx, int32_t n) {
    if (_ctx.count == 0) {
       return _ctx.pre;
    }
-   while ((i < 4) && (found == false)) {
+   while (i < 4 && found == false) {
       if (_ctx.notes[static_cast<uint32_t>(i)] == n) {
          pos = i;
          found = true;
       }
-      i = (1 + i);
+      i = 1 + i;
    }
    if (found) {
-      int32_t k = (1 + pos);
+      int32_t k = 1 + pos;
       while (k < 4) {
-         _ctx.notes[static_cast<uint32_t>((-1 + k))] = _ctx.notes[static_cast<uint32_t>(k)];
-         k = (1 + k);
+         _ctx.notes[static_cast<uint32_t>(-1 + k)] = _ctx.notes[static_cast<uint32_t>(k)];
+         k = 1 + k;
       }
-      if (found && (_ctx.count > 0)) {
-         _ctx.count = (-1 + _ctx.count);
-         _ctx.pre = _ctx.notes[static_cast<uint32_t>((-1 + _ctx.count))];
+      if (found && _ctx.count > 0) {
+         _ctx.count = -1 + _ctx.count;
+         _ctx.pre = _ctx.notes[static_cast<uint32_t>(-1 + _ctx.count)];
       }
    }
    return _ctx.pre;
@@ -117,22 +117,22 @@ int32_t Delay_mono_noteOff(Delay_mono_noteOn_type& _ctx, int32_t n) {
 
 void Delay_controlChange(Delay_process_type& _ctx, int32_t control, float value, int32_t channel) {
    if (control == 30) {
-      _ctx.volume = (0.0078741f * value);
+      _ctx.volume = 0.0078741f * value;
    }
    if (control == 31) {
-      _ctx.detune = (0.0078741f * value);
+      _ctx.detune = 0.0078741f * value;
    }
    if (control == 32) {
-      _ctx.lfo_rate = (0.0078741f * value);
+      _ctx.lfo_rate = 0.0078741f * value;
    }
    if (control == 33) {
-      _ctx.lfo_amt = (-1.0f + (0.0157481f * value));
+      _ctx.lfo_amt = -1.0f + 0.0157481f * value;
    }
    if (control == 34) {
-      _ctx.time = (0.0078741f * value);
+      _ctx.time = 0.0078741f * value;
    }
    if (control == 35) {
-      _ctx.feedback = (0.0078741f * value);
+      _ctx.feedback = 0.0078741f * value;
    }
 }
 

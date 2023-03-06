@@ -31,7 +31,7 @@ static_inline int32_t Wav_file_ext_wave_samples() {
 
 static_inline fix16_t Wav_file_ext_wave(int32_t channel, int32_t index) {
    if (channel == 0) {
-      return Wav_file_ext_wave_chan_0[static_cast<uint32_t>((index % 600))];
+      return Wav_file_ext_wave_chan_0[static_cast<uint32_t>(index % 600)];
    }
    return 0.0f;
 }
@@ -65,7 +65,7 @@ static_inline void Wav_file_default_type_init(Wav_file_default_type& _ctx) {
 }
 
 static_inline int32_t Wav_file_index(Wav_file_index_type& _ctx) {
-   _ctx.i = ((1 + _ctx.i) % Wav_file_ext_wave_samples());
+   _ctx.i = (1 + _ctx.i) % Wav_file_ext_wave_samples();
    return _ctx.i;
 }
 

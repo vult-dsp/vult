@@ -18,12 +18,12 @@ void Polycv_poly_noteOn_type_init(Polycv_poly_noteOn_type& _ctx) {
    int32_t i_0 = 0;
    while (i_0 < 4) {
       _ctx.notes[static_cast<uint32_t>(i_0)] = 0;
-      i_0 = (1 + i_0);
+      i_0 = 1 + i_0;
    }
    int32_t i_1 = 0;
    while (i_1 < 4) {
       _ctx.vel[static_cast<uint32_t>(i_1)] = 0;
-      i_1 = (1 + i_1);
+      i_1 = 1 + i_1;
    }
 }
 
@@ -47,25 +47,25 @@ void Polycv_process_type_init(Polycv_process_type& _ctx) {
 void Polycv_poly_noteOn(Polycv_poly_noteOn_type& _ctx, int32_t note, int32_t velocity) {
    int32_t i = 0;
    bool found = false;
-   while ((i < 4) && (found == false)) {
+   while (i < 4 && found == false) {
       if (_ctx.vel[static_cast<uint32_t>(i)] == 0) {
          _ctx.notes[static_cast<uint32_t>(i)] = note;
          _ctx.vel[static_cast<uint32_t>(i)] = velocity;
          found = true;
       }
-      i = (1 + i);
+      i = 1 + i;
    }
 }
 
 void Polycv_poly_noteOff(Polycv_poly_noteOn_type& _ctx, int32_t note) {
    int32_t i = 0;
    bool found = false;
-   while ((i < 4) && (found == false)) {
+   while (i < 4 && found == false) {
       if (_ctx.notes[static_cast<uint32_t>(i)] == note) {
          _ctx.vel[static_cast<uint32_t>(i)] = 0;
          found = true;
       }
-      i = (1 + i);
+      i = 1 + i;
    }
 }
 

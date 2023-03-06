@@ -97,35 +97,35 @@ static_inline void Ahr_default_type_init(Ahr_default_type& _ctx) {
 }
 
 static_inline bool Util_edge(Util_edge_type& _ctx, bool x) {
-   bool ret = (x && (_ctx.pre == false));
+   bool ret = x && _ctx.pre == false;
    _ctx.pre = x;
    return ret;
 }
 
 static_inline bool Util_change(Util_change_type& _ctx, float x) {
-   bool v = (_ctx.pre_x != x);
+   bool v = _ctx.pre_x != x;
    _ctx.pre_x = x;
    return v;
 }
 
 static_inline float Util_map(float x, float x0, float x1, float y0, float y1) {
-   return (y0 + (((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))));
+   return y0 + (x + (- x0)) * (y1 + (- y0)) / (x1 + (- x0));
 }
 
 static_inline float Util_dcblock(Util_dcblock_type& _ctx, float x0) {
-   float y0 = (x0 + ((- _ctx.x1) + (0.995f * _ctx.y1)));
+   float y0 = x0 + (- _ctx.x1) + 0.995f * _ctx.y1;
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
 }
 
 static_inline float Util_smooth(Util_smooth_type& _ctx, float input) {
-   _ctx.x = ((0.005f * (input + (- _ctx.x))) + _ctx.x);
+   _ctx.x = 0.005f * (input + (- _ctx.x)) + _ctx.x;
    return _ctx.x;
 }
 
 static_inline float Util_average2(Util_average2_type& _ctx, float x1) {
-   float result = (0.5f * (x1 + _ctx.x0));
+   float result = 0.5f * (x1 + _ctx.x0);
    _ctx.x0 = x1;
    return result;
 }
@@ -139,7 +139,7 @@ static_inline float Util_cubic_clipper(float x) {
          return 0.6666667f;
       }
       else {
-         return (x + (-0.3333333f * (x * (x * x))));
+         return x + -0.3333333f * x * x * x;
       }
    }
 }
@@ -157,8 +157,8 @@ static_inline float Util_pitchToRate_1024_raw_c2(int32_t index) {
 }
 
 static_inline float Util_pitchToRate_1024(float pitch) {
-   int32_t index = int_clip(float_to_int((pitch * 0.2440945f)), 0, 31);
-   return (Util_pitchToRate_1024_c0[static_cast<uint32_t>(index)] + (pitch * (Util_pitchToRate_1024_c1[static_cast<uint32_t>(index)] + (Util_pitchToRate_1024_c2[static_cast<uint32_t>(index)] * pitch))));
+   int32_t index = int_clip(float_to_int(pitch * 0.2440945f), 0, 31);
+   return Util_pitchToRate_1024_c0[static_cast<uint32_t>(index)] + pitch * (Util_pitchToRate_1024_c1[static_cast<uint32_t>(index)] + Util_pitchToRate_1024_c2[static_cast<uint32_t>(index)] * pitch);
 }
 
 static_inline float Util_pitchToRate_raw_c0(int32_t index) {
@@ -174,12 +174,12 @@ static_inline float Util_pitchToRate_raw_c2(int32_t index) {
 }
 
 static_inline float Util_pitchToRate(float pitch) {
-   int32_t index = int_clip(float_to_int((pitch * 0.2440945f)), 0, 31);
-   return (Util_pitchToRate_c0[static_cast<uint32_t>(index)] + (pitch * (Util_pitchToRate_c1[static_cast<uint32_t>(index)] + (Util_pitchToRate_c2[static_cast<uint32_t>(index)] * pitch))));
+   int32_t index = int_clip(float_to_int(pitch * 0.2440945f), 0, 31);
+   return Util_pitchToRate_c0[static_cast<uint32_t>(index)] + pitch * (Util_pitchToRate_c1[static_cast<uint32_t>(index)] + Util_pitchToRate_c2[static_cast<uint32_t>(index)] * pitch);
 }
 
 static_inline float Util_cvToPitch(float cv) {
-   return (24.0f + (120.0f * cv));
+   return 24.0f + 120.0f * cv;
 }
 
 static_inline float Util_cvToRate_1024_raw_c0(int32_t index) {
@@ -195,8 +195,8 @@ static_inline float Util_cvToRate_1024_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvToRate_1024(float cv) {
-   int32_t index = int_clip(float_to_int((cv * 34.4444445f)), 0, 31);
-   return (Util_cvToRate_1024_c0[static_cast<uint32_t>(index)] + (cv * (Util_cvToRate_1024_c1[static_cast<uint32_t>(index)] + (Util_cvToRate_1024_c2[static_cast<uint32_t>(index)] * cv))));
+   int32_t index = int_clip(float_to_int(cv * 34.4444445f), 0, 31);
+   return Util_cvToRate_1024_c0[static_cast<uint32_t>(index)] + cv * (Util_cvToRate_1024_c1[static_cast<uint32_t>(index)] + Util_cvToRate_1024_c2[static_cast<uint32_t>(index)] * cv);
 }
 
 static_inline float Util_cvToRate_raw_c0(int32_t index) {
@@ -212,12 +212,12 @@ static_inline float Util_cvToRate_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvToRate(float cv) {
-   int32_t index = int_clip(float_to_int((cv * 141.1111112f)), 0, 127);
-   return (Util_cvToRate_c0[static_cast<uint32_t>(index)] + (cv * (Util_cvToRate_c1[static_cast<uint32_t>(index)] + (Util_cvToRate_c2[static_cast<uint32_t>(index)] * cv))));
+   int32_t index = int_clip(float_to_int(cv * 141.1111112f), 0, 127);
+   return Util_cvToRate_c0[static_cast<uint32_t>(index)] + cv * (Util_cvToRate_c1[static_cast<uint32_t>(index)] + Util_cvToRate_c2[static_cast<uint32_t>(index)] * cv);
 }
 
 static_inline float Util_pitchToCv(float pitch) {
-   return (-0.2f + (0.0083334f * pitch));
+   return -0.2f + 0.0083334f * pitch;
 }
 
 static_inline float Util_cvToperiod_raw_c0(int32_t index) {
@@ -233,8 +233,8 @@ static_inline float Util_cvToperiod_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvToperiod(float cv) {
-   int32_t index = int_clip(float_to_int((cv * 31.0f)), 0, 31);
-   return (Util_cvToperiod_c0[static_cast<uint32_t>(index)] + (cv * (Util_cvToperiod_c1[static_cast<uint32_t>(index)] + (Util_cvToperiod_c2[static_cast<uint32_t>(index)] * cv))));
+   int32_t index = int_clip(float_to_int(cv * 31.0f), 0, 31);
+   return Util_cvToperiod_c0[static_cast<uint32_t>(index)] + cv * (Util_cvToperiod_c1[static_cast<uint32_t>(index)] + Util_cvToperiod_c2[static_cast<uint32_t>(index)] * cv);
 }
 
 static_inline float Util_cvTokHz_raw_c0(int32_t index) {
@@ -250,8 +250,8 @@ static_inline float Util_cvTokHz_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvTokHz(float cv) {
-   int32_t index = int_clip(float_to_int((cv * 31.0f)), 0, 31);
-   return (Util_cvTokHz_c0[static_cast<uint32_t>(index)] + (cv * (Util_cvTokHz_c1[static_cast<uint32_t>(index)] + (Util_cvTokHz_c2[static_cast<uint32_t>(index)] * cv))));
+   int32_t index = int_clip(float_to_int(cv * 31.0f), 0, 31);
+   return Util_cvTokHz_c0[static_cast<uint32_t>(index)] + cv * (Util_cvTokHz_c1[static_cast<uint32_t>(index)] + Util_cvTokHz_c2[static_cast<uint32_t>(index)] * cv);
 }
 
 void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r);

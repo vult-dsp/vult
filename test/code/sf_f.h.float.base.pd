@@ -26,7 +26,7 @@ static inline float samplerate() { return sys_getsr(); }
 
  extern "C" void Sf_f_process_tilde_setup(void);
 static_inline float Sf_f_process(float input) {
-   return (input * input);
+   return input * input;
 }
 
 

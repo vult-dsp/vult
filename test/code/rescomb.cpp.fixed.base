@@ -11,22 +11,22 @@ void Rescomb_do_type_init(Rescomb_do_type& _ctx) {
 }
 
 fix16_t Rescomb_delay(Rescomb_delay_type& _ctx, fix16_t x, fix16_t cv) {
-   _ctx.write_pos = ((1 + _ctx.write_pos) % 675);
+   _ctx.write_pos = (1 + _ctx.write_pos) % 675;
    _ctx.buffer[static_cast<uint32_t>(_ctx.write_pos)] = x;
    fix16_t r_size = int_to_fix(675);
-   fix16_t r_index = (((- Util_cvToperiod(cv)) + int_to_fix(_ctx.write_pos)) % r_size);
+   fix16_t r_index = ((- Util_cvToperiod(cv)) + int_to_fix(_ctx.write_pos)) % r_size;
    if (r_index < 0x0 /* 0.000000 */) {
-      r_index = (r_index + r_size);
+      r_index = r_index + r_size;
    }
    else {
       r_index = r_index;
    }
-   int32_t t1 = (int(fix_floor(r_index)) % 675);
-   int32_t t2 = ((1 + t1) % 675);
-   fix16_t decimal = (r_index + (- int_to_fix(t1)));
+   int32_t t1 = int(fix_floor(r_index)) % 675;
+   int32_t t2 = (1 + t1) % 675;
+   fix16_t decimal = r_index + (- int_to_fix(t1));
    fix16_t x1 = _ctx.buffer[static_cast<uint32_t>(t1)];
    fix16_t x2 = _ctx.buffer[static_cast<uint32_t>(t2)];
-   fix16_t ret = (x1 + fix_mul(decimal, (x2 + (- x1))));
+   fix16_t ret = x1 + fix_mul(decimal, (x2 + (- x1)));
    return ret;
 }
 

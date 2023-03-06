@@ -132,35 +132,35 @@ static_inline void Ladder_default_type_init(Ladder_default_type& _ctx) {
 }
 
 static_inline bool Util_edge(Util_edge_type& _ctx, bool x) {
-   bool ret = (x && (_ctx.pre == false));
+   bool ret = x && _ctx.pre == false;
    _ctx.pre = x;
    return ret;
 }
 
 static_inline bool Util_change(Util_change_type& _ctx, float x) {
-   bool v = (_ctx.pre_x != x);
+   bool v = _ctx.pre_x != x;
    _ctx.pre_x = x;
    return v;
 }
 
 static_inline float Util_map(float x, float x0, float x1, float y0, float y1) {
-   return (y0 + (((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0))));
+   return y0 + (x + (- x0)) * (y1 + (- y0)) / (x1 + (- x0));
 }
 
 static_inline float Util_dcblock(Util_dcblock_type& _ctx, float x0) {
-   float y0 = (x0 + ((- _ctx.x1) + (0.995f * _ctx.y1)));
+   float y0 = x0 + (- _ctx.x1) + 0.995f * _ctx.y1;
    _ctx.x1 = x0;
    _ctx.y1 = y0;
    return y0;
 }
 
 static_inline float Util_smooth(Util_smooth_type& _ctx, float input) {
-   _ctx.x = ((0.005f * (input + (- _ctx.x))) + _ctx.x);
+   _ctx.x = 0.005f * (input + (- _ctx.x)) + _ctx.x;
    return _ctx.x;
 }
 
 static_inline float Util_average2(Util_average2_type& _ctx, float x1) {
-   float result = (0.5f * (x1 + _ctx.x0));
+   float result = 0.5f * (x1 + _ctx.x0);
    _ctx.x0 = x1;
    return result;
 }
@@ -174,7 +174,7 @@ static_inline float Util_cubic_clipper(float x) {
          return 0.6666667f;
       }
       else {
-         return (x + (-0.3333333f * (x * (x * x))));
+         return x + -0.3333333f * x * x * x;
       }
    }
 }
@@ -192,8 +192,8 @@ static_inline float Util_pitchToRate_1024_raw_c2(int32_t index) {
 }
 
 static_inline float Util_pitchToRate_1024(float pitch) {
-   int32_t index = int_clip(float_to_int((pitch * 0.2440945f)), 0, 31);
-   return (Util_pitchToRate_1024_c0[static_cast<uint32_t>(index)] + (pitch * (Util_pitchToRate_1024_c1[static_cast<uint32_t>(index)] + (Util_pitchToRate_1024_c2[static_cast<uint32_t>(index)] * pitch))));
+   int32_t index = int_clip(float_to_int(pitch * 0.2440945f), 0, 31);
+   return Util_pitchToRate_1024_c0[static_cast<uint32_t>(index)] + pitch * (Util_pitchToRate_1024_c1[static_cast<uint32_t>(index)] + Util_pitchToRate_1024_c2[static_cast<uint32_t>(index)] * pitch);
 }
 
 static_inline float Util_pitchToRate_raw_c0(int32_t index) {
@@ -209,12 +209,12 @@ static_inline float Util_pitchToRate_raw_c2(int32_t index) {
 }
 
 static_inline float Util_pitchToRate(float pitch) {
-   int32_t index = int_clip(float_to_int((pitch * 0.2440945f)), 0, 31);
-   return (Util_pitchToRate_c0[static_cast<uint32_t>(index)] + (pitch * (Util_pitchToRate_c1[static_cast<uint32_t>(index)] + (Util_pitchToRate_c2[static_cast<uint32_t>(index)] * pitch))));
+   int32_t index = int_clip(float_to_int(pitch * 0.2440945f), 0, 31);
+   return Util_pitchToRate_c0[static_cast<uint32_t>(index)] + pitch * (Util_pitchToRate_c1[static_cast<uint32_t>(index)] + Util_pitchToRate_c2[static_cast<uint32_t>(index)] * pitch);
 }
 
 static_inline float Util_cvToPitch(float cv) {
-   return (24.0f + (120.0f * cv));
+   return 24.0f + 120.0f * cv;
 }
 
 static_inline float Util_cvToRate_1024_raw_c0(int32_t index) {
@@ -230,8 +230,8 @@ static_inline float Util_cvToRate_1024_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvToRate_1024(float cv) {
-   int32_t index = int_clip(float_to_int((cv * 34.4444445f)), 0, 31);
-   return (Util_cvToRate_1024_c0[static_cast<uint32_t>(index)] + (cv * (Util_cvToRate_1024_c1[static_cast<uint32_t>(index)] + (Util_cvToRate_1024_c2[static_cast<uint32_t>(index)] * cv))));
+   int32_t index = int_clip(float_to_int(cv * 34.4444445f), 0, 31);
+   return Util_cvToRate_1024_c0[static_cast<uint32_t>(index)] + cv * (Util_cvToRate_1024_c1[static_cast<uint32_t>(index)] + Util_cvToRate_1024_c2[static_cast<uint32_t>(index)] * cv);
 }
 
 static_inline float Util_cvToRate_raw_c0(int32_t index) {
@@ -247,12 +247,12 @@ static_inline float Util_cvToRate_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvToRate(float cv) {
-   int32_t index = int_clip(float_to_int((cv * 141.1111112f)), 0, 127);
-   return (Util_cvToRate_c0[static_cast<uint32_t>(index)] + (cv * (Util_cvToRate_c1[static_cast<uint32_t>(index)] + (Util_cvToRate_c2[static_cast<uint32_t>(index)] * cv))));
+   int32_t index = int_clip(float_to_int(cv * 141.1111112f), 0, 127);
+   return Util_cvToRate_c0[static_cast<uint32_t>(index)] + cv * (Util_cvToRate_c1[static_cast<uint32_t>(index)] + Util_cvToRate_c2[static_cast<uint32_t>(index)] * cv);
 }
 
 static_inline float Util_pitchToCv(float pitch) {
-   return (-0.2f + (0.0083334f * pitch));
+   return -0.2f + 0.0083334f * pitch;
 }
 
 static_inline float Util_cvToperiod_raw_c0(int32_t index) {
@@ -268,8 +268,8 @@ static_inline float Util_cvToperiod_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvToperiod(float cv) {
-   int32_t index = int_clip(float_to_int((cv * 31.0f)), 0, 31);
-   return (Util_cvToperiod_c0[static_cast<uint32_t>(index)] + (cv * (Util_cvToperiod_c1[static_cast<uint32_t>(index)] + (Util_cvToperiod_c2[static_cast<uint32_t>(index)] * cv))));
+   int32_t index = int_clip(float_to_int(cv * 31.0f), 0, 31);
+   return Util_cvToperiod_c0[static_cast<uint32_t>(index)] + cv * (Util_cvToperiod_c1[static_cast<uint32_t>(index)] + Util_cvToperiod_c2[static_cast<uint32_t>(index)] * cv);
 }
 
 static_inline float Util_cvTokHz_raw_c0(int32_t index) {
@@ -285,8 +285,8 @@ static_inline float Util_cvTokHz_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvTokHz(float cv) {
-   int32_t index = int_clip(float_to_int((cv * 31.0f)), 0, 31);
-   return (Util_cvTokHz_c0[static_cast<uint32_t>(index)] + (cv * (Util_cvTokHz_c1[static_cast<uint32_t>(index)] + (Util_cvTokHz_c2[static_cast<uint32_t>(index)] * cv))));
+   int32_t index = int_clip(float_to_int(cv * 31.0f), 0, 31);
+   return Util_cvTokHz_c0[static_cast<uint32_t>(index)] + cv * (Util_cvTokHz_c1[static_cast<uint32_t>(index)] + Util_cvTokHz_c2[static_cast<uint32_t>(index)] * cv);
 }
 
 static_inline float Ladder_tune_raw_c0(int32_t index) {
@@ -302,54 +302,54 @@ static_inline float Ladder_tune_raw_c2(int32_t index) {
 }
 
 static_inline float Ladder_tune(float cut) {
-   int32_t index = int_clip(float_to_int((cut * 127.0f)), 0, 127);
-   return (Ladder_tune_c0[static_cast<uint32_t>(index)] + (cut * (Ladder_tune_c1[static_cast<uint32_t>(index)] + (Ladder_tune_c2[static_cast<uint32_t>(index)] * cut))));
+   int32_t index = int_clip(float_to_int(cut * 127.0f), 0, 127);
+   return Ladder_tune_c0[static_cast<uint32_t>(index)] + cut * (Ladder_tune_c1[static_cast<uint32_t>(index)] + Ladder_tune_c2[static_cast<uint32_t>(index)] * cut);
 }
 
 static_inline float Ladder_heun(Ladder_heun_type& _ctx, float input, float fh, float res) {
-   float wt0 = Util_cubic_clipper((input + (-4.0f * (res * _ctx.p3))));
+   float wt0 = Util_cubic_clipper(input + -4.0f * res * _ctx.p3);
    float wt1 = Util_cubic_clipper(_ctx.p0);
-   float dpt0 = (fh * (wt0 + (- wt1)));
+   float dpt0 = fh * (wt0 + (- wt1));
    float wt3 = Util_cubic_clipper(_ctx.p1);
-   float dpt1 = (fh * (wt1 + (- wt3)));
+   float dpt1 = fh * (wt1 + (- wt3));
    float wt5 = Util_cubic_clipper(_ctx.p2);
-   float dpt2 = (fh * (wt3 + (- wt5)));
+   float dpt2 = fh * (wt3 + (- wt5));
    float wt7 = Util_cubic_clipper(_ctx.p3);
-   float dpt3 = (fh * (wt5 + (- wt7)));
-   float pt0 = (dpt0 + _ctx.p0);
-   float pt1 = (dpt1 + _ctx.p1);
-   float pt2 = (dpt2 + _ctx.p2);
-   float pt3 = (dpt3 + _ctx.p3);
-   float w0 = Util_cubic_clipper((input + (-4.0f * (pt3 * res))));
+   float dpt3 = fh * (wt5 + (- wt7));
+   float pt0 = dpt0 + _ctx.p0;
+   float pt1 = dpt1 + _ctx.p1;
+   float pt2 = dpt2 + _ctx.p2;
+   float pt3 = dpt3 + _ctx.p3;
+   float w0 = Util_cubic_clipper(input + -4.0f * pt3 * res);
    float w1 = Util_cubic_clipper(pt0);
-   float dp0 = (fh * (w0 + (- w1)));
+   float dp0 = fh * (w0 + (- w1));
    float w3 = Util_cubic_clipper(pt1);
-   float dp1 = (fh * (w1 + (- w3)));
+   float dp1 = fh * (w1 + (- w3));
    float w5 = Util_cubic_clipper(pt2);
-   float dp2 = (fh * (w3 + (- w5)));
+   float dp2 = fh * (w3 + (- w5));
    float w7 = Util_cubic_clipper(pt3);
-   float dp3 = (fh * (w5 + (- w7)));
-   _ctx.p0 = ((0.5f * (dp0 + dpt0)) + _ctx.p0);
-   _ctx.p1 = ((0.5f * (dp1 + dpt1)) + _ctx.p1);
-   _ctx.p2 = ((0.5f * (dp2 + dpt2)) + _ctx.p2);
-   _ctx.p3 = ((0.5f * (dp3 + dpt3)) + _ctx.p3);
+   float dp3 = fh * (w5 + (- w7));
+   _ctx.p0 = 0.5f * (dp0 + dpt0) + _ctx.p0;
+   _ctx.p1 = 0.5f * (dp1 + dpt1) + _ctx.p1;
+   _ctx.p2 = 0.5f * (dp2 + dpt2) + _ctx.p2;
+   _ctx.p3 = 0.5f * (dp3 + dpt3) + _ctx.p3;
    return _ctx.p3;
 }
 
 static_inline float Ladder_euler(Ladder_euler_type& _ctx, float input, float fh, float res) {
-   float w0 = Util_cubic_clipper((input + (-4.0f * (res * _ctx.p3))));
+   float w0 = Util_cubic_clipper(input + -4.0f * res * _ctx.p3);
    float w1 = Util_cubic_clipper(_ctx.p0);
-   float dpt0 = (fh * (w0 + (- w1)));
+   float dpt0 = fh * (w0 + (- w1));
    float w3 = Util_cubic_clipper(_ctx.p1);
-   float dpt1 = (fh * (w1 + (- w3)));
+   float dpt1 = fh * (w1 + (- w3));
    float w5 = Util_cubic_clipper(_ctx.p2);
-   float dpt2 = (fh * (w3 + (- w5)));
+   float dpt2 = fh * (w3 + (- w5));
    float w7 = Util_cubic_clipper(_ctx.p3);
-   float dpt3 = (fh * (w5 + (- w7)));
-   _ctx.p0 = (dpt0 + _ctx.p0);
-   _ctx.p1 = (dpt1 + _ctx.p1);
-   _ctx.p2 = (dpt2 + _ctx.p2);
-   _ctx.p3 = (dpt3 + _ctx.p3);
+   float dpt3 = fh * (w5 + (- w7));
+   _ctx.p0 = dpt0 + _ctx.p0;
+   _ctx.p1 = dpt1 + _ctx.p1;
+   _ctx.p2 = dpt2 + _ctx.p2;
+   _ctx.p3 = dpt3 + _ctx.p3;
    return _ctx.p3;
 }
 
