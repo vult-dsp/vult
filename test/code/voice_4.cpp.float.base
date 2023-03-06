@@ -180,7 +180,7 @@ float Svf_process(Svf_process_type& _ctx, float x, float cv, float q, int32_t se
    _ctx.z1 = band + high * _ctx.g;
    _ctx.z2 = low + band * _ctx.g;
    float output = 0.0f;
-    switch sel {
+    switch (sel) {
       case 0:
          output = low;
          break;

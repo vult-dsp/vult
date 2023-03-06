@@ -104,7 +104,7 @@ float Synth2_svf_step(Synth2_svf_step_type& _ctx, float input, float g, float q,
    _ctx.dband = float_clip(band, -1.0f, 1.0f);
    _ctx.dlow = float_clip(low, -1.0f, 1.0f);
    float output = 0.0f;
-    switch sel {
+    switch (sel) {
       case 0:
          output = low;
          break;

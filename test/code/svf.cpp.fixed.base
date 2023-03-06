@@ -27,7 +27,7 @@ fix16_t Svf_process(Svf_process_type& _ctx, fix16_t x, fix16_t cv, fix16_t q, in
    _ctx.z1 = band + fix_mul(high, _ctx.g);
    _ctx.z2 = low + fix_mul(band, _ctx.g);
    fix16_t output = 0.0f;
-    switch sel {
+    switch (sel) {
       case 0:
          output = low;
          break;

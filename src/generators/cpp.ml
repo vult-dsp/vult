@@ -334,7 +334,7 @@ let rec print_stmt s =
         default_case
     in
     let default_case = Option.value default_case ~default:Pla.unit in
-    [%pla {| switch <#e#> {<#cases#+><#default_case#><#>}|}]
+    [%pla {| switch (<#e#>) {<#cases#+><#default_case#><#>}|}]
 
 
 and print_block body =
