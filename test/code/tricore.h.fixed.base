@@ -209,7 +209,7 @@ static_inline fix16_t Util_cvToRate(fix16_t cv) {
 }
 
 static_inline fix16_t Util_pitchToCv(fix16_t pitch) {
-   return fix_mul(0x222 /* 0.008333 */, (-0x180000 /* -24.000000 */ + pitch));
+   return (-0x3333 /* -0.200000 */ + fix_mul(0x222 /* 0.008333 */, pitch));
 }
 
 static_inline fix16_t Util_cvToperiod_raw_c0(int32_t index) {

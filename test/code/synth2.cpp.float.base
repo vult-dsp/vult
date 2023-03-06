@@ -104,21 +104,19 @@ float Synth2_svf_step(Synth2_svf_step_type& _ctx, float input, float g, float q,
    _ctx.dband = float_clip(band, -1.0f, 1.0f);
    _ctx.dlow = float_clip(low, -1.0f, 1.0f);
    float output = 0.0f;
-   if (sel == 0) {
-      output = low;
-   }
-   else {
-      if (sel == 1) {
+    switch (sel) {
+      case 0:
+         output = low;
+         break;
+      case 1:
          output = high;
-      }
-      else {
-         if (sel == 2) {
-            output = band;
-         }
-         else {
-            output = notch;
-         }
-      }
+         break;
+      case 2:
+         output = band;
+         break;
+   default:
+      output = notch;
+      break;
    }
    return output;
 }

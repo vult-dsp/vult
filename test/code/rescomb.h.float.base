@@ -257,7 +257,7 @@ static_inline float Util_cvToRate(float cv) {
 }
 
 static_inline float Util_pitchToCv(float pitch) {
-   return (0.0083334f * (-24.0f + pitch));
+   return (-0.2f + (0.0083334f * pitch));
 }
 
 static_inline float Util_cvToperiod_raw_c0(int32_t index) {

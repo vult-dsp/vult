@@ -180,21 +180,19 @@ float Svf_process(Svf_process_type& _ctx, float x, float cv, float q, int32_t se
    _ctx.z1 = (band + (high * _ctx.g));
    _ctx.z2 = (low + (band * _ctx.g));
    float output = 0.0f;
-   if (sel == 0) {
-      output = low;
-   }
-   else {
-      if (sel == 1) {
+    switch (sel) {
+      case 0:
+         output = low;
+         break;
+      case 1:
          output = high;
-      }
-      else {
-         if (sel == 2) {
-            output = band;
-         }
-         else {
-            output = notch;
-         }
-      }
+         break;
+      case 2:
+         output = band;
+         break;
+   default:
+      output = notch;
+      break;
    }
    return Saturate_soft_process(output);
 }

@@ -130,6 +130,7 @@ type stmt =
   | StmtBlock of stmt list
   | StmtIf of exp * stmt * stmt option
   | StmtWhile of exp * stmt
+  | StmtSwitch of exp * (exp * stmt) list * stmt option
 
 and function_def =
   { name : string
@@ -412,6 +413,46 @@ module Convert = struct
       env, List.flatten (List.rev stmts)
 
 
+  let rec tryCreateSwitchLoop id cases next =
+    match next with
+    | None -> Some (List.rev cases, None)
+    | Some (StmtIf ({ e = Op (Eq, { e = Id nid; _ }, ({ e = Int _; _ } as i)); _ }, stmt, next)) ->
+      if String.compare id nid = 0 then tryCreateSwitchLoop id ((i, stmt) :: cases) next else None
+    | Some def -> Some (List.rev cases, Some def)
+
+
+  let tryCreateSwitch e =
+    match e with
+    | StmtIf ({ e = Op (Eq, ({ e = Id var; _ } as id), ({ e = Int _; _ } as i)); _ }, stmt, next) -> (
+      match tryCreateSwitchLoop var [ i, stmt ] next with
+      | Some ((_ :: _ :: _ as cases), def) -> StmtSwitch (id, cases, def)
+      | _ -> e)
+    | _ -> e
+
+
+  let makeSingleBlock stmts =
+    match stmts with
+    | [] -> StmtBlock []
+    | [ stmt ] -> stmt
+    | _ -> StmtBlock stmts
+
+
+  let rec createSwitch block =
+    match block with
+    | StmtBlock stmts ->
+      let stmts = createSwitchList stmts in
+      makeSingleBlock stmts
+    | StmtIf _ -> tryCreateSwitch block
+    | StmtWhile (cond, body) -> StmtWhile (cond, createSwitch body)
+    | _ -> block
+
+
+  and createSwitchList stmts =
+    match stmts with
+    | [] -> []
+    | h :: t -> createSwitch h :: createSwitchList t
+
+
   let function_info (info : Prog.function_info) : function_info =
     { original_name = info.original_name; is_root = info.is_root }
 
@@ -431,7 +472,7 @@ module Convert = struct
     | { top = TopFunction (def, body); _ } ->
       let _, body = stmt context default_env body in
       let def = function_def context def in
-      Some (TopFunction (def, makeBlock body))
+      Some (TopFunction (def, createSwitch (makeBlock body)))
     | { top = TopType descr; _ } ->
       let descr = struct_descr context descr in
       Some (TopType descr)

@@ -200,6 +200,18 @@ let rec print_stmt s =
   | StmtBlock stmts ->
     let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
     [%pla {|do<#stmt#+>end|}]
+  | StmtSwitch (e1, cases, default) -> (
+    let if_ =
+      List.fold_right
+        (fun (e2, body) else_ ->
+          let cond = { e = Op (Eq, e1, e2); t = Bool } in
+          Some (StmtIf (cond, body, else_)))
+        cases
+        default
+    in
+    match if_ with
+    | None -> Pla.unit
+    | Some if_ -> print_stmt if_)
 
 
 let print_arg (n, _) =

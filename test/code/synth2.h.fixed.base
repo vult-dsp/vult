@@ -251,7 +251,7 @@ fix16_t Synth2_svf_step(Synth2_svf_step_type& _ctx, fix16_t input, fix16_t g, fi
 static_inline fix16_t Synth2_svf(Synth2_svf_type& _ctx, fix16_t input, fix16_t fc, fix16_t q, int32_t sel) {
    fc = fix_clip(fc, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
    q = fix_clip(q, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
-   fix16_t fix_q = fix_mul(0x20000 /* 2.000000 */, (0x10000 /* 1.000000 */ + (- q)));
+   fix16_t fix_q = (0x20000 /* 2.000000 */ + fix_mul(0x20000 /* 2.000000 */, (- q)));
    if (Synth2_change(_ctx.inst_177a7, fc)) {
       _ctx.g = fix_mul(0x8000 /* 0.500000 */, fc);
    }

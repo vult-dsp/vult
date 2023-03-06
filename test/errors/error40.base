@@ -1,0 +1,4 @@
+This function belongs to the same instance and it must not be called on a different instance.
+  if (x > 10) {
+    foo:reset();
+        ^^^^^

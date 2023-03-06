@@ -309,7 +309,7 @@ end
 function Synth2_svf(_ctx, input, fc, q, sel)
    fc = clip(fc, 0., 1.)
    q = clip(q, 0., 1.)
-   local fix_q = (2. * (1. + (-q)))
+   local fix_q = (2. + (2. * (-q)))
    if Synth2_change(_ctx.inst_177a7, fc) then
       _ctx.g = (0.5 * fc)
    end

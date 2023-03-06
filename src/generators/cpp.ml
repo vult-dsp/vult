@@ -53,7 +53,10 @@ let isSmall stmts =
       | StmtWhile (_, body) :: t ->
         let size = loop (size + 1) [ body ] in
         loop size t
-      | StmtBind _ :: t -> loop (size + 1) t)
+      | StmtBind _ :: t -> loop (size + 1) t
+      | StmtSwitch (_, cases, _) :: t ->
+        let n = List.fold_left (fun n (_, body) -> n + loop 0 [ body ]) 0 cases in
+        loop (size + 1 + n) t)
   in
   let size = loop 0 stmts in
   size <= threshold
@@ -291,6 +294,27 @@ and print_stmt s =
   | StmtBlock stmts ->
     let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
     [%pla {|{<#stmt#+>}|}]
+  | StmtSwitch (e, cases, default_case) ->
+    let e = parenthesize e in
+    let break = Pla.string "break;" in
+    let cases =
+      Pla.map_sep_all
+        Pla.newline
+        (fun (e1, body) ->
+          let e1 = print_exp e1 in
+          let body = print_stmt body in
+          [%pla {|case <#e1#>:<#body#+><#break#+>|}])
+        cases
+    in
+    let default_case =
+      Option.map
+        (fun body ->
+          let body = print_stmt body in
+          [%pla {|default:<#body#+><#break#+>|}])
+        default_case
+    in
+    let default_case = Option.value default_case ~default:Pla.unit in
+    [%pla {| switch <#e#> {<#cases#+><#default_case#><#>}|}]
 
 
 and print_block body =

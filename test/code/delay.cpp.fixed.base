@@ -126,7 +126,7 @@ void Delay_controlChange(Delay_process_type& _ctx, int32_t control, fix16_t valu
       _ctx.lfo_rate = fix_mul(0x204 /* 0.007874 */, value);
    }
    if (control == 33) {
-      _ctx.lfo_amt = fix_mul(0x20000 /* 2.000000 */, (-0x8000 /* -0.500000 */ + fix_mul(0x204 /* 0.007874 */, value)));
+      _ctx.lfo_amt = (-0x10000 /* -1.000000 */ + fix_mul(0x408 /* 0.015748 */, value));
    }
    if (control == 34) {
       _ctx.time = fix_mul(0x204 /* 0.007874 */, value);

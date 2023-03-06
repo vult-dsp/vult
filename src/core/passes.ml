@@ -531,6 +531,18 @@ module Simplify = struct
     (* e1 / e2 -> e1 * (1.0 / e2) *)
     | { e = EOp (OpDiv, e1, ({ e = EReal n; _ } as e2)); _ } ->
       reapply state, { e with e = EOp (OpMul, e1, { e2 with e = EReal (1.0 /. n) }) }
+    (* k1 * (k2 + e) -> k1 * k2 + k1 * e *)
+    | { e =
+          EOp
+            ( OpMul
+            , ({ e = EReal _ | EInt _; loc = loc1; _ } as k1)
+            , { e = EOp (OpAdd, ({ e = EReal _ | EInt _; _ } as k2), e); loc = loc2; _ } )
+      ; _
+      } ->
+      let loc = Util.Loc.merge loc1 loc2 in
+      let e1 = { e = EOp (OpMul, k1, k2); loc; t = k1.t } in
+      let e2 = { e = EOp (OpMul, k1, e); loc; t = k1.t } in
+      reapply state, { e with e = EOp (OpAdd, e1, e2) }
     | { e = EOp (op1, e1, { e = EOp (op2, e2, e3); _ }); _ } when op1 = op2 -> (
       match evaluate op1 e1 e2 with
       | Some en -> reapply state, { e with e = EOp (op1, en, e3) }

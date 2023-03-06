@@ -32,7 +32,7 @@ jscompiler:
 
 test: compiler jscompiler
 	dune build test/test.exe $(FORMAT)
-	./_build/default/test/test.exe -runner sequential -shards 1
+	./_build/default/test/test.exe
 
 #perf:
 #	$(OCB) test/perf.native
@@ -40,18 +40,18 @@ test: compiler jscompiler
 
 test-fast: compiler
 	dune build test/test.exe $(FORMAT)
-	./_build/default/test/test.exe -runner sequential -shards 1 -internal true
+	./_build/default/test/test.exe -internal true
 
 test-update: compiler
 	dune build test/test.exe $(FORMAT)
-	./_build/default/test/test.exe  -runner sequential -update true -shards 1 -internal true
+	./_build/default/test/test.exe -update true -internal true
 
 #coverage: compiler jscompiler
 #	$(OCB) -clean
 #	BISECT_COVERAGE=YES $(OCB) test/test.native
 #	BISECT_COVERAGE=YES $(OCB) src/vultc.native
 #	BISECT_COVERAGE=YES $(OCB) test/perf.native
-#	BISECT_FILE=_build/coverage ./test.native -runner sequential -shards 1
+#	BISECT_FILE=_build/coverage ./test.native
 #	BISECT_FILE=_build/coverage ./perf.native
 #	bisect-ppx-report send-to Coveralls --source-path _build
 
