@@ -162,7 +162,7 @@ static_inline bool Delay_change(Delay_change_type& _ctx, fix16_t x) {
 }
 
 static_inline bool Delay_edge(Delay_edge_type& _ctx, bool x) {
-   bool v = _ctx.pre_x != x && _ctx.pre_x == false;
+   bool v = (_ctx.pre_x != x) && (_ctx.pre_x == false);
    _ctx.pre_x = x;
    return v;
 }

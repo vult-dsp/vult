@@ -43,10 +43,10 @@ void Ahr_do(Ahr_do_type& _ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r) {
       _ctx.hold_phase = 0x0 /* 0.000000 */;
       _ctx.state = hold;
    }
-   if (_ctx.out < 0xa0000 /* 10.000000 */ && _ctx.state == reset) {
+   if (_ctx.out < 0xa0000 /* 10.000000 */ && (_ctx.state == reset)) {
       _ctx.state = attack;
    }
-   if (_ctx.hold_phase > 0x640000 /* 100.000000 */ && _ctx.state == hold) {
+   if (_ctx.hold_phase > 0x640000 /* 100.000000 */ && (_ctx.state == hold)) {
       _ctx.state = release;
    }
    if (_ctx.state == reset) {

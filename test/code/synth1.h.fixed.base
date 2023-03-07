@@ -118,7 +118,7 @@ static_inline bool Synth1_change(Synth1_change_type& _ctx, fix16_t x) {
 }
 
 static_inline bool Synth1_edge(Synth1_edge_type& _ctx, int32_t x) {
-   bool v = _ctx.pre_x != x && _ctx.pre_x == 0;
+   bool v = (_ctx.pre_x != x) && (_ctx.pre_x == 0);
    _ctx.pre_x = x;
    return v;
 }

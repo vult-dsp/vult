@@ -149,10 +149,10 @@ void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r) {
       _ctx.hold_phase = 0.0f;
       _ctx.state = hold;
    }
-   if (_ctx.out < 10.0f && _ctx.state == reset) {
+   if (_ctx.out < 10.0f && (_ctx.state == reset)) {
       _ctx.state = attack;
    }
-   if (_ctx.hold_phase > 100.0f && _ctx.state == hold) {
+   if (_ctx.hold_phase > 100.0f && (_ctx.state == hold)) {
       _ctx.state = release;
    }
    if (_ctx.state == reset) {

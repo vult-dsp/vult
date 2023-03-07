@@ -193,7 +193,7 @@ static_inline bool Synth2_bchange(Synth2_bchange_type& _ctx, bool x) {
 }
 
 static_inline bool Synth2_edge(Synth2_edge_type& _ctx, bool x) {
-   bool v = _ctx.pre_x != x && _ctx.pre_x == true;
+   bool v = (_ctx.pre_x != x) && (_ctx.pre_x == true);
    _ctx.pre_x = x;
    return v;
 }

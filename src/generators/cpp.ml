@@ -114,13 +114,13 @@ let level op =
   | Le -> 50
   | Gt -> 50
   | Ge -> 50
-  | Eq -> 40
-  | Ne -> 40
-  | Band -> 30
-  | Bxor -> 25
-  | Bor -> 20
-  | Land -> 15
-  | Lor -> 10
+  | Eq -> -1
+  | Ne -> -1
+  | Band -> -1
+  | Bxor -> -1
+  | Bor -> -1
+  | Land -> -1
+  | Lor -> -1
 
 
 let uoperator op =
@@ -159,7 +159,7 @@ let rec print_exp prec (e : exp) =
     [%pla {|{ <#l#> }|}]
   | Call { path = "not"; args = [ e1 ] } ->
     let e1 = print_exp prec e1 in
-    [%pla {|!<#e1#>|}]
+    [%pla {|!(<#e1#>)|}]
   | Call { path; args } ->
     let path = getReplacement path args e.t in
     let args = Pla.map_sep Pla.commaspace (print_exp prec) args in
@@ -176,7 +176,7 @@ let rec print_exp prec (e : exp) =
     | Some path -> [%pla {|<#path#s>(<#se1#>, <#se2#>)|}]
     | None ->
       let op = operator op in
-      if current >= prec then
+      if (current >= prec && current <> -1) || prec = 0 then
         [%pla {|<#se1#> <#op#> <#se2#>|}]
       else
         [%pla {|(<#se1#> <#op#> <#se2#>)|}])

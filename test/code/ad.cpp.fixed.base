@@ -25,7 +25,7 @@ fix16_t Ad_do(Ad_do_type& _ctx, fix16_t gate, fix16_t a, fix16_t d) {
       _ctx.target = 0x0 /* 0.000000 */;
    }
    if (_ctx.state == 1) {
-      if (bgate == false || _ctx.out > 0x4000000 /* 1024.000000 */) {
+      if ((bgate == false) || _ctx.out > 0x4000000 /* 1024.000000 */) {
          _ctx.state = 0;
       }
       _ctx.rate = a_rate;

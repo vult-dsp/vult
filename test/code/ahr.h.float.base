@@ -97,7 +97,7 @@ static_inline void Ahr_default_type_init(Ahr_default_type& _ctx) {
 }
 
 static_inline bool Util_edge(Util_edge_type& _ctx, bool x) {
-   bool ret = x && _ctx.pre == false;
+   bool ret = x && (_ctx.pre == false);
    _ctx.pre = x;
    return ret;
 }

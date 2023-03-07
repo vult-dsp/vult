@@ -442,7 +442,13 @@ module Convert = struct
     | StmtBlock stmts ->
       let stmts = createSwitchList stmts in
       makeSingleBlock stmts
-    | StmtIf _ -> tryCreateSwitch block
+    | StmtIf (cond, then_, else_) -> (
+      let block = StmtIf (cond, createSwitch then_, else_) in
+      match tryCreateSwitch block with
+      | StmtIf (cond, then_, Some else_) -> StmtIf (cond, then_, Some (createSwitch else_))
+      | StmtSwitch (e, cases, def) ->
+        StmtSwitch (e, List.map (fun (cond, body) -> cond, createSwitch body) cases, Option.map createSwitch def)
+      | result -> result)
     | StmtWhile (cond, body) -> StmtWhile (cond, createSwitch body)
     | _ -> block
 
