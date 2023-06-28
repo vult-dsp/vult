@@ -22,7 +22,7 @@ run: compiler
 
 jscompiler:
 	dune build src/vultjs.bc $(FORMAT)
-	js_of_ocaml --custom-header="#!/usr/bin/env node" _build/default/src/vultjs.bc -o vult.js
+	js_of_ocaml --custom-header="#!/usr/bin/env node" --disable use-js-string _build/default/src/vultjs.bc -o vult.js
 	chmod +x vult.js
 
 #web:

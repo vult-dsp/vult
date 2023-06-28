@@ -512,6 +512,13 @@ module Simplify = struct
       | OpSub -> Some { e = EReal (n1 -. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | OpDiv -> Some { e = EReal (n1 /. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | _ -> None)
+    | { e = EFixed n1; _ }, { e = EFixed n2; _ } -> (
+      match op with
+      | OpAdd -> Some { e = EFixed (n1 +. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpMul -> Some { e = EFixed (n1 *. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpSub -> Some { e = EFixed (n1 -. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpDiv -> Some { e = EFixed (n1 /. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
+      | _ -> None)
     | { e = EInt n1; _ }, { e = EInt n2; _ } -> (
       match op with
       | OpAdd -> Some { e = EInt (n1 + n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
@@ -528,16 +535,19 @@ module Simplify = struct
     match e with
     (* -(n) -> -n *)
     | { e = EUnOp (UOpNeg, ({ e = EReal n; _ } as e1)); _ } -> reapply state, { e1 with e = EReal (-.n) }
+    | { e = EUnOp (UOpNeg, ({ e = EFixed n; _ } as e1)); _ } -> reapply state, { e1 with e = EFixed (-.n) }
     | { e = EUnOp (UOpNeg, ({ e = EInt n; _ } as e1)); _ } -> reapply state, { e1 with e = EInt (-n) }
     (* e1 / e2 -> e1 * (1.0 / e2) *)
     | { e = EOp (OpDiv, e1, ({ e = EReal n; _ } as e2)); _ } ->
       reapply state, { e with e = EOp (OpMul, e1, { e2 with e = EReal (1.0 /. n) }) }
+    | { e = EOp (OpDiv, e1, ({ e = EFixed n; _ } as e2)); _ } ->
+      reapply state, { e with e = EOp (OpMul, e1, { e2 with e = EFixed (1.0 /. n) }) }
     (* k1 * (k2 + e) -> k1 * k2 + k1 * e *)
     | { e =
           EOp
             ( OpMul
-            , ({ e = EReal _ | EInt _; loc = loc1; _ } as k1)
-            , { e = EOp (OpAdd, ({ e = EReal _ | EInt _; _ } as k2), e); loc = loc2; _ } )
+            , ({ e = EReal _ | EInt _ | EFixed _; loc = loc1; _ } as k1)
+            , { e = EOp (OpAdd, ({ e = EReal _ | EInt _ | EFixed _; _ } as k2), e); loc = loc2; _ } )
       ; _
       } ->
       let loc = Util.Loc.merge loc1 loc2 in

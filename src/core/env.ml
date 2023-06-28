@@ -327,9 +327,9 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
       | Some found ->
         Error.raiseError
           ("A mem variable with the name '"
-          ^ found.name
-          ^ "' has already been declared at "
-          ^ Loc.to_string_readable found.loc)
+           ^ found.name
+           ^ "' has already been declared at "
+           ^ Loc.to_string_readable found.loc)
           loc)
     | _ -> ()
   in
@@ -341,9 +341,9 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
         | Some found ->
           Error.raiseError
             ("A variable with the name '"
-            ^ found.name
-            ^ "' has already been declared at "
-            ^ Loc.to_string_readable found.loc)
+             ^ found.name
+             ^ "' has already been declared at "
+             ^ Loc.to_string_readable found.loc)
             loc)
       locals
   in
@@ -357,9 +357,9 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
     let report (found : var) =
       Error.raiseError
         ("A variable with the name '"
-        ^ found.name
-        ^ "' has already been declared at "
-        ^ Loc.to_string_readable found.loc)
+         ^ found.name
+         ^ "' has already been declared at "
+         ^ Loc.to_string_readable found.loc)
         loc
     in
     let () = checkDuplicatedMem context name in

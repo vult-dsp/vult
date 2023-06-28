@@ -385,7 +385,7 @@ static_inline fix16_t Util_cvToperiod(fix16_t cv) {
 }
 
 static_inline void Blit_pulse_start(Blit_pulse_train_type& _ctx) {
-   _ctx.m = 1 + 2 * int(Util_cvToperiod(0x0 /* 0.000000 */));
+   _ctx.m = 1 + 2 * fix_to_int(Util_cvToperiod(0x0 /* 0.000000 */));
    _ctx.scale = 0x10000 /* 1.000000 */ + fix_mul(0x20000 /* 2.000000 */, Util_cvToperiod(0x0 /* 0.000000 */));
 }
 

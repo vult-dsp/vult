@@ -34,6 +34,7 @@ module C = struct
     | "sqrt", [ Real ], Real -> Some "sqrtf"
     (* cast *)
     | "int", [ Real ], _ -> Some "float_to_int"
+    | "int", [ Fixed ], _ -> Some "fix_to_int"
     | "real", [ Int ], Real -> Some "int_to_float"
     | "real", [ Bool ], Real -> Some "bool_to_float"
     | "real", [ Fixed ], Real -> Some "fix_to_float"

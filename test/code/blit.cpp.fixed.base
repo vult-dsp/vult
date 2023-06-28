@@ -44,7 +44,7 @@ fix16_t Phase_process(Phase_process_type& _ctx, fix16_t cv, fix16_t reset) {
 
 fix16_t Blit_pulse_train(Blit_pulse_train_type& _ctx, fix16_t cv, fix16_t phase) {
    if (Util_change(_ctx.inst_1b05e, cv)) {
-      _ctx.m = 1 + 2 * int(Util_cvToperiod(cv));
+      _ctx.m = 1 + 2 * fix_to_int(Util_cvToperiod(cv));
       _ctx.scale = fix_mul(0x20000 /* 2.000000 */, Util_cvToperiod(cv));
    }
    fix16_t pi_phase = fix_mul(0x8000 /* 0.500000 */, phase);
