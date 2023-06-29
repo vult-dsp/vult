@@ -459,7 +459,9 @@ module EmbedWavFile = struct
       : stmt
       =
       let attr_bool = { emptyAttr with typ = Some Typ.Const.bool_type } in
-      let attr_real = { emptyAttr with typ = Some Typ.Const.real_type } in
+      let attr_real =
+         { emptyAttr with typ = (if precision = Float then Some Typ.Const.real_type else Some Typ.Const.fix16_type) }
+      in
       let attr_int = { emptyAttr with typ = Some Typ.Const.int_type } in
       let table_name = Id.postfix fname ("_chan_" ^ string_of_int i) in
       let table =
@@ -502,7 +504,7 @@ module EmbedWavFile = struct
          (match Tags.getTableParams "wave" params msg attr.tags with
           | None -> state, [ stmt ]
           | Some (loc, [ Some (PInt (channels, _)); Some (PString (file, _)) ]) when Typ.isRealType ret ->
-             let precision = Float in
+             let precision = MakeTables.getPrecision (Some ret) in
              let (Id.Path path) = Env.currentScope state in
              let full_path = path @ name in
              let includes = (Env.get state).PassData.args.includes in
