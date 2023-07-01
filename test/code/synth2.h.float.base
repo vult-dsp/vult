@@ -239,7 +239,7 @@ static_inline float Synth2_pulse_train(float m, float phase) {
    }
    else {
       tmp1 = sinf(m * pi_phase);
-      tmp1 = tmp1 / denominator1 * m;
+      tmp1 = tmp1 / (denominator1 * m);
    }
    return tmp1;
 }

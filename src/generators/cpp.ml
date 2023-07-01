@@ -104,9 +104,9 @@ let operator op =
 let level op =
   match op with
   | Mul -> 80
-  | Div -> 80
+  | Div -> 85
   | Mod -> 80
-  | Add -> 70
+  | Add -> 75
   | Sub -> 70
   | Lsh -> 60
   | Rsh -> 60

@@ -266,7 +266,7 @@ static_inline bool Util_change(Util_change_type& _ctx, float x) {
 }
 
 static_inline float Util_map(float x, float x0, float x1, float y0, float y1) {
-   return y0 + (x + (- x0)) * (y1 + (- y0)) / (x1 + (- x0));
+   return y0 + ((x + (- x0)) * (y1 + (- y0))) / (x1 + (- x0));
 }
 
 static_inline float Util_dcblock(Util_dcblock_type& _ctx, float x0) {

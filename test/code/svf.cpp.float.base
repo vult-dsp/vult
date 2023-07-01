@@ -17,7 +17,7 @@ float Svf_process(Svf_process_type& _ctx, float x, float cv, float q, int32_t se
    q = 0.5f + q;
    if (Util_change(_ctx.inst_1b0a2, cv) || Util_change(_ctx.inst_2b0a2, q)) {
       _ctx.g = Svf_calc_g(cv);
-      _ctx.r = 1.0f / 2.0f * (q + float_eps());
+      _ctx.r = 1.0f / (2.0f * (q + float_eps()));
       _ctx.inv_den = 1.0f / (1.0f + 2.0f * _ctx.r * _ctx.g + _ctx.g * _ctx.g);
    }
    float high = (x + (- (2.0f * _ctx.r + _ctx.g) * _ctx.z1) + (- _ctx.z2)) * _ctx.inv_den;
