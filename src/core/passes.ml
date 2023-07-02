@@ -445,6 +445,7 @@ module Cast = struct
     Mapper.make
     @@ fun _env state (e : exp) ->
     match e with
+    | { e = ECall { path = "fix16"; args = [ ({ t = { t = TFixed; _ }; _ } as e1) ] }; _ } -> reapply state, e1
     | { e = ECall { path = "real"; args = [ ({ t = { t = TReal; _ }; _ } as e1) ] }; _ } -> reapply state, e1
     | { e = ECall { path = "int"; args = [ ({ t = { t = TInt; _ }; _ } as e1) ] }; _ } -> reapply state, e1
     | _ -> state, e
