@@ -206,7 +206,7 @@ end
 function Delay_delay(_ctx, x, time, feedback)
    time = clip(time, 0., 1.)
    feedback = clip(feedback, 0., 1.)
-   local index_r = (time * real(30000))
+   local index_r = (30000. * time)
    local index_i = int(floor(index_r))
    local delta = ((-index_i) + _ctx.write_pos)
    local read_pos = 0

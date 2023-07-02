@@ -5,7 +5,7 @@
 fix16_t Short_delay_do(Short_delay_do_type& _ctx, fix16_t x, fix16_t time, fix16_t feedback) {
    time = fix_clip(time, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
    feedback = fix_clip(feedback, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
-   fix16_t index_r = fix_mul(time, int_to_fix(22050));
+   fix16_t index_r = fix_mul(0x56220000 /* 22050.000000 */, time);
    int32_t index_i = fix_to_int(fix_floor(index_r));
    int32_t delta = (- index_i) + _ctx.write_pos;
    int32_t read_pos = 0;

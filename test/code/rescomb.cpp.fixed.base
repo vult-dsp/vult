@@ -13,7 +13,7 @@ void Rescomb_do_type_init(Rescomb_do_type& _ctx) {
 fix16_t Rescomb_delay(Rescomb_delay_type& _ctx, fix16_t x, fix16_t cv) {
    _ctx.write_pos = (1 + _ctx.write_pos) % 675;
    _ctx.buffer[static_cast<uint32_t>(_ctx.write_pos)] = x;
-   fix16_t r_size = int_to_fix(675);
+   fix16_t r_size = 0x2a30000 /* 675.000000 */;
    fix16_t r_index = ((- Util_cvToperiod(cv)) + int_to_fix(_ctx.write_pos)) % r_size;
    if (r_index < 0x0 /* 0.000000 */) {
       r_index = r_index + r_size;

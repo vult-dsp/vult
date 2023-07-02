@@ -448,6 +448,25 @@ module Cast = struct
     | { e = ECall { path = "fix16"; args = [ ({ t = { t = TFixed; _ }; _ } as e1) ] }; _ } -> reapply state, e1
     | { e = ECall { path = "real"; args = [ ({ t = { t = TReal; _ }; _ } as e1) ] }; _ } -> reapply state, e1
     | { e = ECall { path = "int"; args = [ ({ t = { t = TInt; _ }; _ } as e1) ] }; _ } -> reapply state, e1
+    (* casting constant inputs *)
+    | { e = ECall { path = "fix16"; args = [ ({ e = EReal v; _ } as e1) ] }; t; _ } ->
+      reapply state, { e1 with e = EFixed v; t }
+    | { e = ECall { path = "fix16"; args = [ ({ e = EInt i; _ } as e1) ] }; t; _ } ->
+      reapply state, { e1 with e = EFixed (float_of_int i); t }
+    | { e = ECall { path = "fix16"; args = [ ({ e = EBool b; _ } as e1) ] }; t; _ } ->
+      reapply state, { e1 with e = EFixed (if b then 1.0 else 0.0); t }
+    | { e = ECall { path = "real"; args = [ ({ e = EFixed v; _ } as e1) ] }; t; _ } ->
+      reapply state, { e1 with e = EReal v; t }
+    | { e = ECall { path = "real"; args = [ ({ e = EInt i; _ } as e1) ] }; t; _ } ->
+      reapply state, { e1 with e = EReal (float_of_int i); t }
+    | { e = ECall { path = "real"; args = [ ({ e = EBool b; _ } as e1) ] }; t; _ } ->
+      reapply state, { e1 with e = EReal (if b then 1.0 else 0.0); t }
+    | { e = ECall { path = "int"; args = [ ({ e = EFixed v; _ } as e1) ] }; t; _ } ->
+      reapply state, { e1 with e = EInt (int_of_float v); t }
+    | { e = ECall { path = "int"; args = [ ({ e = EReal v; _ } as e1) ] }; t; _ } ->
+      reapply state, { e1 with e = EInt (int_of_float v); t }
+    | { e = ECall { path = "int"; args = [ ({ e = EBool b; _ } as e1) ] }; t; _ } ->
+      reapply state, { e1 with e = EInt (if b then 1 else 0); t }
     | _ -> state, e
 
 
