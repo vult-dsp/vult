@@ -2,6 +2,7 @@
 
 (library
  (name pparser)
+ (public_name vult.parser)
  (modules Parse Tokens Syntax Stream Lexer Ptags)
  (libraries util pla)
  (flags

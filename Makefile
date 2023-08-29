@@ -72,4 +72,7 @@ clean:
 install:
 	cp _build/default/src/vult.exe $(PREFIX)/vult
 
+install-lib:
+	dune build -p vult @install
+
 .PHONY: 	all clean compiler js test
