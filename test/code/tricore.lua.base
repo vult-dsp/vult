@@ -289,7 +289,7 @@ function Tricore_process(_ctx, cv, reset, disable)
       if (new_phase < -1024.) then
          do
             _ctx.direction = true
-            new_phase = (0. + new_phase)
+            new_phase = new_phase
          end
       end
    end

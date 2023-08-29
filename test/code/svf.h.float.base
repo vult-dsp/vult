@@ -89,7 +89,7 @@ static_inline float Svf_calc_g(float cv) {
 static_inline void Svf_default(Svf_process_type& _ctx) {
    _ctx.g = Svf_calc_g(0.0f);
    _ctx.r = 1.0f;
-   _ctx.inv_den = 1.0f / (1.0f + 0.0f * _ctx.g + _ctx.g * _ctx.g);
+   _ctx.inv_den = 1.0f / (1.0f + _ctx.g * _ctx.g);
 }
 
 void Svf_process_type_init(Svf_process_type& _ctx);

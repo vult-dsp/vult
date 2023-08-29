@@ -546,6 +546,11 @@ module Simplify = struct
       | OpSub -> Some { e = EInt (n1 - n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | OpDiv -> Some { e = EInt (n1 / n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | _ -> None)
+    | ({ e = EReal 0.0; _ } as zero), e | e, ({ e = EReal 0.0; _ } as zero) -> (
+      match op with
+      | OpAdd -> Some e
+      | OpMul -> Some zero
+      | _ -> None)
     | _ -> None
 
 
@@ -680,3 +685,19 @@ let run args (prog : prog) : prog =
   let _, prog = apply (default_env args) (Mapper.defaultState (default_data ())) prog 0 in
   let prog = Sort.run args prog in
   prog
+
+
+let simplifyExp (e : exp) : exp =
+  let rec loop n env state e =
+    if n > 10 then
+      failwith "too many repeats"
+    else (
+      let state, e = Mapper.exp passes env state e in
+      let data = Mapper.getData state in
+      if data.repeat then (
+        let data = { data with repeat = false } in
+        loop (n + 1) env (Mapper.setData state data) e)
+      else
+        e)
+  in
+  loop 0 (default_env Util.Args.default_arguments) (Mapper.defaultState (default_data ())) e

@@ -224,7 +224,7 @@ module Print = struct
     | UOpNot -> Pla.string "not"
 
 
-  let rec print_exp (e : exp) =
+  let rec print_exp ?(no_types = false) (e : exp) =
     let t = print_type_ e.t in
     match e.e with
     | EUnit -> Pla.string "()"
@@ -233,34 +233,41 @@ module Print = struct
     | EReal n -> Pla.float n
     | EFixed n -> [%pla {|<#n#f>x|}]
     | EString s -> Pla.string_quoted s
-    | EId id -> [%pla {|(<#id#s> : <#t#>)|}]
+    | EId id ->
+      if no_types then
+        [%pla {|<#id#s>|}]
+      else
+        [%pla {|(<#id#s> : <#t#>)|}]
     | EIndex { e; index } ->
-      let e = print_exp e in
-      let index = print_exp index in
+      let e = (print_exp ~no_types) e in
+      let index = (print_exp ~no_types) index in
       [%pla {|<#e#>[<#index#>]|}]
-    | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
+    | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace (print_exp ~no_types) l)
     | ECall { path; args } ->
-      let args = Pla.map_sep Pla.commaspace print_exp args in
-      [%pla {|(<#path#s>(<#args#>) : <#t#>)|}]
+      let args = Pla.map_sep Pla.commaspace (print_exp ~no_types) args in
+      if no_types then
+        [%pla {|<#path#s>(<#args#>)|}]
+      else
+        [%pla {|(<#path#s>(<#args#>) : <#t#>)|}]
     | EUnOp (op, e) ->
-      let e = print_exp e in
+      let e = (print_exp ~no_types) e in
       let op = print_uoperator op in
       [%pla {|(<#op#><#e#>)|}]
     | EOp (op, e1, e2) ->
-      let e1 = print_exp e1 in
-      let e2 = print_exp e2 in
+      let e1 = (print_exp ~no_types) e1 in
+      let e2 = (print_exp ~no_types) e2 in
       let op = print_operator op in
       [%pla {|(<#e1#> <#op#> <#e2#>)|}]
     | EIf { cond; then_; else_ } ->
-      let cond = print_exp cond in
-      let then_ = print_exp then_ in
-      let else_ = print_exp else_ in
+      let cond = (print_exp ~no_types) cond in
+      let then_ = (print_exp ~no_types) then_ in
+      let else_ = (print_exp ~no_types) else_ in
       [%pla {|(if <#cond#> then <#then_#> else <#else_#>)|}]
     | ETuple l ->
-      let l = Pla.map_sep Pla.commaspace print_exp l in
+      let l = Pla.map_sep Pla.commaspace (print_exp ~no_types) l in
       [%pla {|(<#l#>)|}]
     | EMember (e, m) ->
-      let e = print_exp e in
+      let e = (print_exp ~no_types) e in
       [%pla {|<#e#>.<#m#s>|}]
 
 

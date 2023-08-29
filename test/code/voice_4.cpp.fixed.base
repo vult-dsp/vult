@@ -130,7 +130,7 @@ fix16_t Tricore_process(Tricore_process_type& _ctx, fix16_t cv, fix16_t reset, f
    else {
       if (new_phase < -0x4000000 /* -1024.000000 */) {
          _ctx.direction = true;
-         new_phase = 0x0 /* 0.000000 */ + new_phase;
+         new_phase = new_phase;
       }
    }
    if (bdisable) {

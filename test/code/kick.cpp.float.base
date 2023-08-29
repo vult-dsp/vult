@@ -93,7 +93,7 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
    else {
       if (new_phase < -1024.0f) {
          _ctx.direction = true;
-         new_phase = 0.0f + new_phase;
+         new_phase = new_phase;
       }
    }
    if (bdisable) {
