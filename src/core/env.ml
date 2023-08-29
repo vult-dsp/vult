@@ -190,13 +190,13 @@ let builtin_functions =
 let builtin_types =
   [ "int"; "real"; "fix16"; "bool"; "string"; "unit" ]
   |> List.map (fun n ->
-       ( n
-       , { path = Pparser.Syntax.{ id = n; n = None; loc = Loc.default }
-         ; descr = Simple
-         ; index = 0
-         ; loc = Loc.default
-         ; generated = false
-         } ))
+    ( n
+    , { path = Pparser.Syntax.{ id = n; n = None; loc = Loc.default }
+      ; descr = Simple
+      ; index = 0
+      ; loc = Loc.default
+      ; generated = false
+      } ))
   |> Map.of_list
 
 

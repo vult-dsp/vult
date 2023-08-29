@@ -21,36 +21,32 @@
 open Js_of_ocaml
 open Util
 
-(** Main file when running Vult with node. It replaces the FileIO functions to have access to the file system.
-*)
+(** Main file when running Vult with node. It replaces the FileIO functions to have access to the file system. *)
 
 (* declares the node.js object 'process' *)
-class type process =
-  object
-    (* returns the current working directory *)
-    method cwd : Js.js_string Js.t Js.meth
-  end
+class type process = object
+  (* returns the current working directory *)
+  method cwd : Js.js_string Js.t Js.meth
+end
 
 (* declares the node.js object 'buffer' *)
-class type buffer =
-  object
-    (* converts the buffer object to string *)
-    method toString : Js.js_string Js.t -> Js.js_string Js.t Js.meth
-    method length : int Js.readonly_prop
-  end
+class type buffer = object
+  (* converts the buffer object to string *)
+  method toString : Js.js_string Js.t -> Js.js_string Js.t Js.meth
+  method length : int Js.readonly_prop
+end
 
 (* declares the node.js object 'fs' *)
-class type fs =
-  object
-    (* returns the contents of a file *)
-    method readFileSync : Js.js_string Js.t -> buffer Js.t Js.meth
+class type fs = object
+  (* returns the contents of a file *)
+  method readFileSync : Js.js_string Js.t -> buffer Js.t Js.meth
 
-    (* writes a string to a file *)
-    method writeFileSync : Js.js_string Js.t -> Js.js_string Js.t -> unit Js.t Js.meth
+  (* writes a string to a file *)
+  method writeFileSync : Js.js_string Js.t -> Js.js_string Js.t -> unit Js.t Js.meth
 
-    (* checks if a file exists *)
-    method existsSync : Js.js_string Js.t -> bool Js.t Js.meth
-  end
+  (* checks if a file exists *)
+  method existsSync : Js.js_string Js.t -> bool Js.t Js.meth
+end
 
 (* declares the variable 'fs' as: fs = require('fs') *)
 let fs : fs Js.t = Js.Unsafe.fun_call (Js.Unsafe.js_expr "require") [| Js.Unsafe.inject (Js.string "fs") |]

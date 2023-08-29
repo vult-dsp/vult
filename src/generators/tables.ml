@@ -129,12 +129,12 @@ let castInputVarPrecision (in_precision : type_) (out_precision : type_) (input 
 
 
 (*
-let getWrapArrayName (t : type_) =
-  match t with
-  | Real -> "float_wrap_array"
-  | Fixed -> "fix_wrap_array"
-  | _ -> Util.Error.raiseErrorMsg "Type not supported for array creation"
-;;
+   let getWrapArrayName (t : type_) =
+   match t with
+   | Real -> "float_wrap_array"
+   | Fixed -> "fix_wrap_array"
+   | _ -> Util.Error.raiseErrorMsg "Type not supported for array creation"
+   ;;
 *)
 
 let makeNuber (t : type_) v =

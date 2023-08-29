@@ -95,7 +95,7 @@ let joinErrors : t list -> t list -> t list = List.append
 
 (** Joins two optional errors *)
 let joinErrorOptions : t list option -> t list option -> t list option =
- fun maybeErr1 maybeErr2 ->
+  fun maybeErr1 maybeErr2 ->
   match maybeErr1, maybeErr2 with
   | (Some _ as ret), None -> ret
   | None, (Some _ as ret) -> ret

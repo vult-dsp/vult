@@ -26,13 +26,11 @@
     implementations that in order to run Vult with node *)
 
 (** ref holding the current working directory.
-    The default function is the native.
-*)
+    The default function is the native. *)
 let cwd_fun = ref (fun () -> Sys.getcwd ())
 
 (** ref holding the read file function.
-    The default function is the native.
-*)
+    The default function is the native. *)
 let read_fun =
   ref (fun path ->
     if Sys.file_exists path then (
@@ -53,8 +51,7 @@ let read_fun =
 
 
 (** ref holding the read_bytes file function.
-    The default function is the native.
-*)
+    The default function is the native. *)
 let read_bytes_fun =
   ref (fun path ->
     if Sys.file_exists path then (
@@ -75,8 +72,7 @@ let read_bytes_fun =
 
 
 (** ref holding the read file function.
-    The default function is the native.
-*)
+    The default function is the native. *)
 let write_fun =
   ref (fun path text ->
     try
@@ -89,33 +85,27 @@ let write_fun =
 
 
 (** ref holding the file exists.
-    The default function is the native.
-*)
+    The default function is the native. *)
 let exists_fun = ref (fun path -> Sys.file_exists path)
 
 (** This function is used to change the actual read_bytes function.
-    When compiling for node.js the function is replaced at runtime by the code
-*)
+    When compiling for node.js the function is replaced at runtime by the code *)
 let setReadBytes f = read_bytes_fun := f
 
 (** This function is used to change the actual read file function.
-    When compiling for node.js the function is replaced at runtime by the code
-*)
+    When compiling for node.js the function is replaced at runtime by the code *)
 let setRead f = read_fun := f
 
 (** This function is used to change the actual write to file function.
-    When compiling for node.js the function is replaced at runtime by the code
-*)
+    When compiling for node.js the function is replaced at runtime by the code *)
 let setWrite (f : string -> string -> bool) = write_fun := f
 
 (** This function is used to change the actual file-exists function.
-    When compiling for node.js the function is replaced at runtime by the code
-*)
+    When compiling for node.js the function is replaced at runtime by the code *)
 let setExists (f : string -> bool) = exists_fun := f
 
 (** This function is used to change the actual cwd function.
-    When compiling for node.js the function is replaced at runtime by the code
-*)
+    When compiling for node.js the function is replaced at runtime by the code *)
 let setCwd (f : unit -> string) = cwd_fun := f
 
 (** Main function to read file bytes given the path *)

@@ -1050,10 +1050,10 @@ let createTypes (env : Env.in_top) =
 
 
 module Set = Set.Make (struct
-  type t = path
+    type t = path
 
-  let compare = Syntax.compare_path
-end)
+    let compare = Syntax.compare_path
+  end)
 
 let rec createExistingTypeSet stmts : Set.t =
   match stmts with

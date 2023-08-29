@@ -204,11 +204,11 @@ let rec checkComponents (comps : string list list) : unit =
 
 
 module C = Components.Make (struct
-  type key = string
-  type data = string
+    type key = string
+    type data = string
 
-  let get s = s
-end)
+    let get s = s
+  end)
 
 (* Given a list of files, finds and parses all the dependencies and returns the parsed contents in order *)
 let loadFiles (arguments : args) (files : input list) =

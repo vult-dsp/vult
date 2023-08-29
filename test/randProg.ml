@@ -3,10 +3,10 @@ open Pparser.Syntax
 let loc = Util.Loc.default
 
 module TypeMap = Map.Make (struct
-  type t = type_
+    type t = type_
 
-  let compare = compare
-end)
+    let compare = compare
+  end)
 
 type state =
   { max_array_size : int
@@ -120,10 +120,10 @@ let rec newType state =
         ( with_tuple
         , low_p
         , fun state ->
-            let nelems = 2 + Random.int (state.max_tuple_size - 2) in
-            let state' = decr_level (no_array state) in
-            let t = newTypeList nelems state' in
-            makeTuple t )*)
+        let nelems = 2 + Random.int (state.max_tuple_size - 2) in
+        let state' = decr_level (no_array state) in
+        let t = newTypeList nelems state' in
+        makeTuple t )*)
     ]
 
 
