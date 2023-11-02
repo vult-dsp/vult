@@ -63,9 +63,9 @@ let header (params : params) (code : Pla.t) : Pla.t =
 #include <math.h>
 #include "vultin.h"
 #include "<#tables#s>.tables.h"
-#include <Audio.h>
+#include <core_pins.h>
 #include <AudioStream.h>
-
+#include <Arduino.h>
 <#code#>
 
 class <#output#s> : public AudioStream
