@@ -357,13 +357,14 @@ and valueOfType (t : type_) : rvalue =
   | TFixed -> Real 0.0
   | TBool -> Bool false
   | TString -> String ""
-  | TArray (dim, t) ->
+  | TArray (Some dim, t) ->
     let elems = Array.init dim (fun _ -> valueOfType t) in
     Object elems
   | TTuple elems ->
     let elems = List.map valueOfType elems in
     Object (Array.of_list elems)
   | TStruct descr -> valueOfDescr descr
+  | TArray (None, _) -> failwith "valueOfType: array with no dimensions"
 
 
 let createArgument stmts =

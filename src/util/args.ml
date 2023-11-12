@@ -115,14 +115,14 @@ let flags result =
         Arg.String
           (fun s ->
             result.code
-              <- (match s with
-                  | "cpp" -> CppCode
-                  | "lua" -> LuaCode
-                  | "java" -> JavaCode
-                  | "js" -> JSCode
-                  | _ ->
-                    print_endline ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js");
-                    exit (-1)))
+            <- (match s with
+                | "cpp" -> CppCode
+                | "lua" -> LuaCode
+                | "java" -> JavaCode
+                | "js" -> JSCode
+                | _ ->
+                  print_endline ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js");
+                  exit (-1)))
     ; comment = "language Generate code for the specified language (cpp, lua, java, js)"
     }
   ; { flag = "-prefix"
@@ -146,12 +146,12 @@ let flags result =
         Arg.String
           (fun real ->
             result.real
-              <- (match real with
-                  | "float" -> Float
-                  | "fixed" -> Fixed
-                  | _ ->
-                    print_endline ("Unknown numeric formmat: " ^ real);
-                    exit (-1)))
+            <- (match real with
+                | "float" -> Float
+                | "fixed" -> Fixed
+                | _ ->
+                  print_endline ("Unknown numeric formmat: " ^ real);
+                  exit (-1)))
     ; comment = " Defines the numeric type for the generated code: double, fixed"
     }
   ; { flag = "-samplerate"

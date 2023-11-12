@@ -369,7 +369,16 @@ module C = struct
   let num loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc ]; loc }
   let num_bool loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc }
   let size ?(loc = Loc.default) n = { tx = TESize n; loc }
-  let array ?(loc = Loc.default) ?(size = unbound loc) t = { tx = TEComposed ("array", [ t; size ]); loc }
+
+  let array ?(fixed = true) ?(loc = Loc.default) ?(size = unbound loc) t =
+    let a_dim = { tx = TEComposed ("array", [ t; size ]); loc } in
+    if fixed then
+      a_dim
+    else (
+      let a = { tx = TEComposed ("array", [ t ]); loc } in
+      { tx = TEOption [ a; a_dim ]; loc })
+
+
   let tuple ?(loc = Loc.default) l = { tx = TEComposed ("tuple", l); loc }
 
   let freal_type () =
@@ -380,7 +389,7 @@ module C = struct
   let array_size () : fun_type =
     let loc = Loc.default in
     let a = unbound loc in
-    let a_array = array a in
+    let a_array = array ~fixed:false a in
     [ a_array ], int ~loc
 
 

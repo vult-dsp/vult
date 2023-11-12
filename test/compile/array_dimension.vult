@@ -1,0 +1,14 @@
+
+fun total(data:array(real)) {
+  val acc = 0.0;
+  iter(i, size(data)) {
+    acc = acc + data[i];
+  }
+  return acc;
+}
+
+fun main() {
+  val x = [ 1.0, 2.0 ];
+  val y = [ 1.0, 2.0, 3.0 ];
+  val z = total(x) + total(y);
+}

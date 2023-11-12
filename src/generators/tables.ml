@@ -10,7 +10,7 @@ let makeFloat (t : type_) x : exp =
   | _ -> failwith "invalid type"
 
 
-let makeArrayType precision size : type_ = Array (size, precision)
+let makeArrayType precision size : type_ = Array (Some size, precision)
 
 let makeDecl fname name precision data =
   let varname = fname ^ "_" ^ name in

@@ -41,15 +41,15 @@ module Map = struct
 
   let update (report : 'a -> unit) (key : string) (value : 'a) (t : 'a t) : unit =
     t
-      := Map.update
-           key
-           (fun a ->
-             match a with
-             | None -> Some value
-             | Some b ->
-               report b;
-               Some b)
-           !t
+    := Map.update
+         key
+         (fun a ->
+           match a with
+           | None -> Some value
+           | Some b ->
+             report b;
+             Some b)
+         !t
 
 
   let of_list elems : 'a t =

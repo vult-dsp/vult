@@ -33,7 +33,7 @@ type type_d_ =
   | TString
   | TBool
   | TFixed
-  | TArray of int * type_
+  | TArray of int option * type_
   | TStruct of struct_descr
   | TTuple of type_ list
 
@@ -187,9 +187,12 @@ module Print = struct
     | TString -> Pla.string "string"
     | TBool -> Pla.string "bool"
     | TFixed -> Pla.string "fixed"
-    | TArray (dim, t) ->
+    | TArray (Some dim, t) ->
       let t = print_type_ t in
       [%pla {|<#t#>[<#dim#i>]|}]
+    | TArray (None, t) ->
+      let t = print_type_ t in
+      [%pla {|<#t#>[:]|}]
     | TStruct { path; _ } -> [%pla {|struct <#path#s>|}]
     | TTuple elems ->
       let elems = Pla.map_sep Pla.commaspace print_type_ elems in

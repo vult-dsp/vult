@@ -73,9 +73,12 @@ let rec print_type_ (t : type_) =
   | Tuple l ->
     let l = Pla.map_sep Pla.commaspace print_type_ l in
     [%pla {|(<#l#>)|}]
-  | Array (dim, t) ->
+  | Array (Some dim, t) ->
     let t = print_type_ t in
     [%pla {|std::array<<#t#>, <#dim#i>>|}]
+  | Array (None, t) ->
+    let t = print_type_ t in
+    [%pla {|std::array<<#t#>>|}]
   | Struct { path; _ } -> [%pla {|<#path#s>|}]
 
 
@@ -216,15 +219,18 @@ let print_member (n, (t : type_)) =
   [%pla {|<#t#> <#n#s>;|}]
 
 
-let print_arg (n, (t : type_)) =
+let print_arg i (n, (t : type_)) =
   match t with
   | Array (_, Array _) -> failwith "array of arrays are not implemented"
-  | Array (dim, (Struct _ as sub)) ->
+  | Array (Some dim, (Struct _ as sub)) ->
     let sub = print_type_ sub in
     [%pla {|std::array<<#sub#>, <#dim#i>>& <#n#s>|}]
-  | Array (dim, sub) ->
+  | Array (Some dim, sub) ->
     let sub = print_type_ sub in
     [%pla {|std::array<<#sub#>, <#dim#i>>& <#n#s>|}]
+  | Array (None, sub) ->
+    let sub = print_type_ sub in
+    [%pla {|std::array<<#sub#>, SIZE_<#i#i>>& <#n#s>|}]
   | Struct { path; _ } -> [%pla {|<#path#s>& <#n#s>|}]
   | _ ->
     let t = print_type_ t in
@@ -234,12 +240,13 @@ let print_arg (n, (t : type_)) =
 let print_decl (n, (t : type_)) =
   match t with
   | Array (_, Array _) -> failwith "array of arrays are not implemented"
-  | Array (dim, (Struct _ as sub)) ->
+  | Array (Some dim, (Struct _ as sub)) ->
     let sub = print_type_ sub in
     [%pla {|std::array<<#sub#>, <#dim#i>> &<#n#s>|}]
-  | Array (dim, sub) ->
+  | Array (Some dim, sub) ->
     let sub = print_type_ sub in
     [%pla {|std::array<<#sub#>, <#dim#i>> &<#n#s>|}]
+  | Array (None, _) -> failwith "Cpp.print_decl: array without dimensions"
   | Struct { path; _ } -> [%pla {|<#path#s>& <#n#s>|}]
   | _ ->
     let t = print_type_ t in
@@ -249,12 +256,13 @@ let print_decl (n, (t : type_)) =
 let print_decl_alloc (n, (t : type_)) =
   match t with
   | Array (_, Array _) -> failwith "array of arrays are not implemented"
-  | Array (dim, (Struct _ as sub)) ->
+  | Array (Some dim, (Struct _ as sub)) ->
     let sub = print_type_ sub in
     [%pla {|std::array<<#sub#>, <#dim#i>> <#n#s>|}]
-  | Array (dim, sub) ->
+  | Array (Some dim, sub) ->
     let sub = print_type_ sub in
     [%pla {|std::array<<#sub#>, <#dim#i>> <#n#s>|}]
+  | Array (None, _) -> failwith "Cpp.print_decl_alloc: array without dimensions"
   | Struct { path; _ } -> [%pla {|<#path#s>& <#n#s>|}]
   | _ ->
     let t = print_type_ t in
@@ -349,19 +357,34 @@ and print_block body =
 
 let print_function_def (def : function_def) =
   let name = Pla.string def.name in
-  let args = Pla.map_sep Pla.commaspace print_arg def.args in
+  let args = List.mapi print_arg def.args |> Pla.join_sep Pla.commaspace in
+  let template_args =
+    def.args
+    |> List.mapi (fun i (arg : param) ->
+      match arg with
+      | _, Array (None, _) -> Some ("std::size_t SIZE_" ^ string_of_int i)
+      | _ -> None)
+    |> List.filter_map (fun v -> v)
+  in
+  let template_decl =
+    match template_args with
+    | [] -> Pla.unit
+    | _ ->
+      let args = Pla.map_sep Pla.commaspace Pla.string template_args in
+      {%pla|template<<#args#>><#>|}
+  in
   let ret = print_type_ (snd def.t) in
-  [%pla {|<#ret#> <#name#>(<#args#>)|}]
+  template_decl, [%pla {|<#ret#> <#name#>(<#args#>)|}]
 
 
 let print_top_stmt (target : target) t =
   match t, target with
   | TopFunction (def, body), Header ->
     let inline = isSmall [ body ] in
-    let def = print_function_def def in
+    let template, def = print_function_def def in
     if inline then (
       let body = print_block body in
-      [%pla {|static_inline <#def#> <#body#><#><#>|}])
+      [%pla {|<#template#>static_inline <#def#> <#body#><#><#>|}])
     else
       [%pla {|<#def#>;<#><#>|}]
   | TopFunction (def, body), Implementation ->
@@ -369,15 +392,15 @@ let print_top_stmt (target : target) t =
     if inline then
       Pla.unit
     else (
-      let def = print_function_def def in
+      let template, def = print_function_def def in
       let body = print_block body in
-      [%pla {|<#def#> <#body#><#><#>|}])
+      [%pla {|<#template#><#def#> <#body#><#><#>|}])
   | TopFunction _, _ -> Pla.unit
   | TopExternal (def, None), Header ->
-    let def = print_function_def def in
-    [%pla {|extern <#def#>;<#>|}]
+    let template, def = print_function_def def in
+    [%pla {|<#template#>extern <#def#>;<#>|}]
   | TopExternal (def, Some link_name), Header ->
-    let args = Pla.map_sep Pla.commaspace print_arg def.args in
+    let args = List.mapi print_arg def.args |> Pla.join_sep Pla.commaspace in
     let ret = print_type_ (snd def.t) in
     [%pla {|extern <#ret#> <#link_name#s>(<#args#>);<#>|}]
   | TopExternal _, _ -> Pla.unit

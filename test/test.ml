@@ -194,6 +194,7 @@ let all_files =
   ; "../test/compile/array_defined_type.vult"
   ; "../test/compile/array_return.vult"
   ; "../test/compile/array_instance.vult"
+  ; "../test/compile/array_dimension.vult"
   ]
 
 

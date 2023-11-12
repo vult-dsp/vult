@@ -33,7 +33,7 @@ type type_ =
   | String
   | Bool
   | Fixed
-  | Array of int * type_
+  | Array of int option * type_
   | Struct of struct_descr
   | Tuple of type_ list
 
@@ -175,9 +175,12 @@ module Convert = struct
     | { t = TString; _ } -> String
     | { t = TBool; _ } -> Bool
     | { t = TFixed; _ } -> Fixed
-    | { t = TArray (dim, sub); _ } ->
+    | { t = TArray (None, sub); _ } ->
       let sub = type_ context sub in
-      Array (dim, sub)
+      Array (None, sub)
+    | { t = TArray (Some dim, sub); _ } ->
+      let sub = type_ context sub in
+      Array (Some dim, sub)
     | { t = TStruct descr; _ } ->
       let descr = struct_descr context descr in
       Struct descr
@@ -327,7 +330,7 @@ module Convert = struct
     | Fixed -> Some { e = Real 0.0; t }
     | String -> Some { e = String ""; t }
     | Bool -> Some { e = Bool false; t }
-    | Array (size, t) -> (
+    | Array (Some size, t) -> (
       match getInitRHS t with
       | Some elem ->
         let elems = List.init size (fun _ -> elem) in

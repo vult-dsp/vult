@@ -96,7 +96,10 @@ module ToProg = struct
     | T.TEComposed ("array", [ t; dim ]) ->
       let state, t = type_ env state t in
       let dim = getDim dim in
-      state, { t = TArray (dim, t); loc }
+      state, { t = TArray (Some dim, t); loc }
+    | T.TEComposed ("array", [ t ]) ->
+      let state, t = type_ env state t in
+      state, { t = TArray (None, t); loc }
     | T.TEComposed ("tuple", elems) ->
       let state, elems = list type_ env state elems in
       state, { t = TTuple elems; loc }
@@ -406,6 +409,9 @@ and unify (t1 : type_) (t2 : type_) =
     match t1.tx, t2.tx with
     | TEId t1, TEId t2 -> Pparser.Syntax.compare_path t1 t2 = 0
     | TESize t1, TESize t2 -> t1 = t2
+    (* special case for arrays without dimensions *)
+    | TEComposed ("array", [ e1; _ ]), TEComposed ("array", [ e2 ])
+    | TEComposed ("array", [ e1 ]), TEComposed ("array", [ e2; _ ]) -> unify e1 e2
     | TEComposed (n1, e1), TEComposed (n2, e2) when n1 = n2 && List.length e1 = List.length e2 ->
       List.for_all2 unify e1 e2
     (* follow the links *)
@@ -574,7 +580,7 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     let env, e = exp env e in
     let env, index = exp env index in
     let t = C.unbound Loc.default in
-    unifyRaise e.loc (C.array t) e.t;
+    unifyRaise e.loc (C.array ~fixed:false t) e.t;
     unifyRaise index.loc (C.int ~loc:Loc.default) index.t;
     env, { e = EIndex { e; index }; t; loc }
   | { e = SEArray []; loc } -> Error.raiseError "Empty arrays are not supported." loc
@@ -693,7 +699,7 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
     let env, index = exp env index in
     let t = C.unbound loc in
     unifyRaise index.loc (C.int ~loc) index.t;
-    unifyRaise e.loc (C.array ~loc t) e.t;
+    unifyRaise e.loc (C.array ~fixed:false ~loc t) e.t;
     env, { l = LIndex { e; index }; t; loc }
   | { l = SLMember (e, m); loc } -> (
     let env, e = lexp env e in

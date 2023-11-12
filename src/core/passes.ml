@@ -428,7 +428,7 @@ module Builtin = struct
     | { e = ECall { path = "pi"; args = [] }; _ } -> reapply state, { e with e = EReal Float.pi }
     | { e = ECall { path = "not"; args = [ e1 ] }; loc; _ } ->
       reapply state, { e with e = EOp (OpEq, e1, { e = EBool false; t = { t = TBool; loc }; loc }) }
-    | { e = ECall { path = "size"; args = [ { t = { t = TArray (size, _); _ }; _ } ] }; loc; _ } ->
+    | { e = ECall { path = "size"; args = [ { t = { t = TArray (Some size, _); _ }; _ } ] }; loc; _ } ->
       reapply state, { e with e = EInt size; loc }
     | { e = ECall { path = "samplerate"; args = [] }; _ } -> (
       match env.args.fs with

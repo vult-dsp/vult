@@ -77,7 +77,7 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
   | { t = TStruct { path; _ }; loc } ->
     let rhs = { e = ECall { path = path ^ "_alloc"; args = [] }; t; loc } in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TArray (size, subt); loc } when cstyle = RefObject ->
+  | { t = TArray (Some size, subt); loc } when cstyle = RefObject ->
     let i = "i_" ^ string_of_int (getTick ()) in
     let int_t = { t = TInt; loc } in
     let index = { e = EId i; t = int_t; loc } in
@@ -95,7 +95,7 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
     let decl = { s = StmtDecl { d = DId (i, None); t = int_t; loc }; loc } in
     let init = { s = StmtBind ({ l = LId i; t = int_t; loc }, { e = EInt 0; t = int_t; loc }); loc } in
     { s = StmtBlock [ decl; init; loop ]; loc }
-  | { t = TArray (size, subt); loc } ->
+  | { t = TArray (Some size, subt); loc } ->
     let i = "i_" ^ string_of_int (getTick ()) in
     let int_t = { t = TInt; loc } in
     let index = { e = EId i; t = int_t; loc } in
@@ -117,6 +117,7 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
     let init = { s = StmtBind ({ l = LId i; t = int_t; loc }, { e = EInt 0; t = int_t; loc }); loc } in
     let transfer = { s = StmtBind (lhs, rhs_temp); loc } in
     { s = StmtBlock [ decl_array; decl; init; loop; transfer ]; loc }
+  | { t = TArray (None, _); _ } -> failwith "initStatement: Array without size"
 
 
 let customInitializerCall (custom_initializers : string Util.Maps.Map.t) name ectx void_type loc =
