@@ -160,6 +160,9 @@ let rec print_exp prec (e : exp) =
     let rows = Common.splitArray 100 l in
     let l = Pla.map_sep [%pla {|,<#>|}] (Pla.map_sep Pla.commaspace (print_exp prec)) rows in
     [%pla {|{ <#l#> }|}]
+  | Call { path = "size"; args = [ e1 ] } ->
+    let e1 = print_exp prec e1 in
+    [%pla {|<#e1#>.size()|}]
   | Call { path = "not"; args = [ e1 ] } ->
     let e1 = print_exp prec e1 in
     [%pla {|!(<#e1#>)|}]
