@@ -32,9 +32,22 @@ function Array_dimension_total(data)
    return acc
 end
 
+function Array_dimension_sum(data1, data2)
+   local acc = 0.
+   local i = 0
+   while (i < size(data1)) do
+      do
+         acc = (acc + (data1[i + 1] + data2[i + 1]))
+         i = (1 + i)
+      end
+   end
+   return acc
+end
+
 function Array_dimension_main()
    local x = {1., 2.}
    local y = {1., 2., 3.}
    local z = (Array_dimension_total(x) + Array_dimension_total(y))
+   local k = Array_dimension_sum(x, y)
 end
 

@@ -7,8 +7,17 @@ fun total(data:array(real)) {
   return acc;
 }
 
+fun sum(data1:array(real), data2:array(real)) {
+  val acc = 0.0;
+  iter(i, size(data1)) {
+    acc = acc + data1[i] + data2[i];
+  }
+  return acc;
+}
+
 fun main() {
   val x = [ 1.0, 2.0 ];
   val y = [ 1.0, 2.0, 3.0 ];
   val z = total(x) + total(y);
+  val k = sum(x, y);
 }

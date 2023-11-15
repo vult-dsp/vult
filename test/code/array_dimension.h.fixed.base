@@ -16,10 +16,22 @@ static_inline fix16_t Array_dimension_total(std::array<fix16_t, SIZE_0>& data) {
    return acc;
 }
 
+template<std::size_t SIZE_0, std::size_t SIZE_1>
+static_inline fix16_t Array_dimension_sum(std::array<fix16_t, SIZE_0>& data1, std::array<fix16_t, SIZE_1>& data2) {
+   fix16_t acc = 0x0 /* 0.000000 */;
+   int32_t i = 0;
+   while (i < data1.size()) {
+      acc = acc + data1[static_cast<uint32_t>(i)] + data2[static_cast<uint32_t>(i)];
+      i = 1 + i;
+   }
+   return acc;
+}
+
 static_inline void Array_dimension_main() {
    std::array<fix16_t, 2> x = { 0x10000 /* 1.000000 */, 0x20000 /* 2.000000 */ };
    std::array<fix16_t, 3> y = { 0x10000 /* 1.000000 */, 0x20000 /* 2.000000 */, 0x30000 /* 3.000000 */ };
    fix16_t z = Array_dimension_total(x) + Array_dimension_total(y);
+   fix16_t k = Array_dimension_sum(x, y);
 }
 
 
