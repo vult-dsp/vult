@@ -467,6 +467,15 @@ let rec type_in_m (env : in_module) (t : Syntax.type_) =
     { tx = TEComposed (name, l); loc }
 
 
+let rec checkArrayDimensions (t : type_) =
+  match t.tx with
+  | TEComposed ("array", [ _ ]) ->
+    Error.raiseError "Array declarations should provide dimensions in the form array(type, size)" t.loc
+  | TEComposed ("array", [ _; _ ]) -> ()
+  | TELink t -> checkArrayDimensions t
+  | _ -> ()
+
+
 let type_in_c (env : Env.in_context) (t : Syntax.type_) = type_in_m (Env.exitContext env) t
 let type_in_f (env : Env.in_func) (t : Syntax.type_) = type_in_c (Env.exitFunction env) t
 
@@ -740,6 +749,7 @@ and dexp (env : Env.in_func) (e : Syntax.dexp) (kind : var_kind) : Env.in_func *
   | { d = SDTyped (e, t); _ } ->
     let env, e = dexp env e kind in
     let t = type_in_f env t in
+    checkArrayDimensions t;
     unifyRaise e.loc t e.t;
     env, e
   | { d = SDId (name, dims); loc } ->

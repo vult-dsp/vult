@@ -110,6 +110,7 @@ let errors_files =
   ; "error38.vult"
   ; "error39.vult"
   ; "error40.vult"
+  ; "error41.vult"
   ]
 
 

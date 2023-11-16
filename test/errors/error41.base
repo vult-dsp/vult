@@ -1,0 +1,4 @@
+Array declarations should provide dimensions in the form array(type, size)
+fun main() {
+  val kk : array(real);
+                ^
