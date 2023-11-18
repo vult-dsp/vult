@@ -384,16 +384,36 @@ let path_string (p : Syntax.path) : string =
   | { id; n = Some n; _ } -> n ^ "_" ^ id
 
 
-let constrainOption l1 l2 =
-  let l2_ = List.filter (fun e2 -> List.exists (fun e1 -> compare_type_ e1 e2 = 0) l1) l2 in
-  let l1_ = List.filter (fun e1 -> List.exists (fun e2 -> compare_type_ e2 e1 = 0) l2_) l1 in
-  match l1_ with
+(* Tries to unity the given type with all the elements of the set, if they can be unified we increase the counter *)
+let rec pushTypeToSet (set : (type_ * int) list) (elem : type_) =
+  match set, elem with
+  | [], _ -> [ elem, 1 ]
+  | (({ tx = TEComposed (n1, e1); _ } as h), count) :: t, { tx = TEComposed (n2, e2); _ }
+    when n2 = n1 && List.length e1 = List.length e2 ->
+    if unify h elem then
+      (h, count + 1) :: t
+    else
+      (h, count) :: pushTypeToSet t elem
+  (* Don't try to unify composed types with different arguments *)
+  | (({ tx = TEComposed (n1, _); _ } as h), count) :: t, { tx = TEComposed (n2, _); _ } when n2 = n1 ->
+    (h, count) :: pushTypeToSet t elem
+  | (h, count) :: t, _ ->
+    if unify h elem then
+      (h, count + 1) :: t
+    else
+      (h, count) :: pushTypeToSet t elem
+
+
+and constrainOption l1 l2 =
+  let set = List.fold_left pushTypeToSet (List.map (fun e -> e, 1) l1) l2 in
+  let final_set = List.filter_map (fun (e, n) -> if n > 1 then Some e else None) set in
+  match final_set with
   | [] -> failwith "cannot unify the two options"
   | [ t ] -> t
   | l -> { tx = TEOption l; loc = Loc.default }
 
 
-let rec pickOption original l tt =
+and pickOption original l tt =
   let rec loop l =
     match l with
     | [] -> false
