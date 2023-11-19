@@ -404,11 +404,15 @@ let rec pushTypeToSet (set : (type_ * int) list) (elem : type_) =
       (h, count) :: pushTypeToSet t elem
 
 
-and constrainOption l1 l2 =
+and constrainOption loc l1 l2 =
   let set = List.fold_left pushTypeToSet (List.map (fun e -> e, 1) l1) l2 in
   let final_set = List.filter_map (fun (e, n) -> if n > 1 then Some e else None) set in
   match final_set with
-  | [] -> failwith "cannot unify the two options"
+  | [] ->
+    let t1 = Pla.map_sep Pla.commaspace Typed.print_type_ l1 in
+    let t2 = Pla.map_sep Pla.commaspace Typed.print_type_ l2 in
+    let msg = Pla.print [%pla {|None of the following types: <#t1#>, can be match with <#t2#>. |}] in
+    Error.raiseError msg loc
   | [ t ] -> t
   | l -> { tx = TEOption l; loc = Loc.default }
 
@@ -444,7 +448,7 @@ and unify (t1 : type_) (t2 : type_) =
     | _, TEUnbound _ -> linkType ~from:t1 ~into:t2
     (* types with alternatives *)
     | TEOption l1, TEOption l2 ->
-      let t3 = constrainOption l1 l2 in
+      let t3 = constrainOption t2.loc l1 l2 in
       let _ = linkType ~from:t3 ~into:t2 in
       linkType ~from:t3 ~into:t1
     | TEOption l, _ -> pickOption t1 l t2

@@ -1,0 +1,6 @@
+
+fun foo(x) {
+  val x;
+  x[0] = 1.0;
+  val y = tanh(x);
+}
