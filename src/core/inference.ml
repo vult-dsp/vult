@@ -409,9 +409,11 @@ and constrainOption loc l1 l2 =
   let final_set = List.filter_map (fun (e, n) -> if n > 1 then Some e else None) set in
   match final_set with
   | [] ->
-    let t1 = Pla.map_sep Pla.commaspace Typed.print_type_ l1 in
-    let t2 = Pla.map_sep Pla.commaspace Typed.print_type_ l2 in
-    let msg = Pla.print [%pla {|None of the following types: <#t1#>, can be match with <#t2#>. |}] in
+    let t1 = Pla.map_sep Pla.commaspace (Typed.print_type_ ~show_unbound:false) l1 in
+    let t2 = Pla.map_sep Pla.commaspace (Typed.print_type_ ~show_unbound:false) l2 in
+    let msg =
+      Pla.print [%pla {|None of the following types: <#t1#>, matches with any of the following types <#t2#>. |}]
+    in
     Error.raiseError msg loc
   | [ t ] -> t
   | l -> { tx = TEOption l; loc = Loc.default }

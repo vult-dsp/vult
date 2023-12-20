@@ -173,16 +173,16 @@ and top_stmt =
 
 type program = top_stmt list
 
-let rec print_type_ (t : type_) : Pla.t =
+let rec print_type_ ?(show_unbound = true) (t : type_) : Pla.t =
   match t.tx with
   | TENoReturn -> Pla.string "noreturn"
-  | TELink t -> print_type_ t
-  | TEUnbound i -> [%pla {|'unbound(<#i#i>)|}]
+  | TELink t -> print_type_ ~show_unbound t
+  | TEUnbound i -> if show_unbound then [%pla {|'unbound(<#i#i>)|}] else Pla.string "'unbound"
   | TEId p -> print_path p
   | TESize n -> Pla.int n
   | TEOption alt -> Pla.parenthesize @@ Pla.map_sep (Pla.string "|") print_type_ alt
   | TEComposed (name, elems) ->
-    let elems = Pla.map_sep Pla.commaspace print_type_ elems in
+    let elems = Pla.map_sep Pla.commaspace (print_type_ ~show_unbound) elems in
     [%pla {|<#name#s>(<#elems#>)|}]
 
 
