@@ -27,6 +27,7 @@ type builtin =
   | Int
   | Eps
   | Random
+  | IRandom
 
 type f =
   | F of int
@@ -61,6 +62,7 @@ let functions =
   ; "samplerate", B Samplerate
   ; "int", B Int
   ; "random", B Random
+  ; "irandom", B IRandom
   ; "eps", B Eps
   ; "fix16", B Fixed
   ]
@@ -400,6 +402,7 @@ let builtin b =
   | Fixed -> "fix16"
   | Int -> "int"
   | Random -> "random"
+  | IRandom -> "irandom"
   | Eps -> "eps"
 
 

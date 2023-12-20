@@ -202,6 +202,8 @@ module MakeVM (VM : VM) = struct
       | Eps, _ -> failwith "invalid arguments to 'eps' function"
       | Random, [] -> vm, Real (Random.float 1.0)
       | Random, _ -> failwith "invalid arguments to 'random' function"
+      | IRandom, [] -> vm, Int (Random.int Int.max_int)
+      | IRandom, _ -> failwith "invalid arguments to 'irandom' function"
       | Real, [ Int n ] -> vm, Real (float_of_int n)
       | Real, [ Real n ] -> vm, Real n
       | Real, [ Bool n ] -> vm, Real (if n then 1.0 else 0.0)
