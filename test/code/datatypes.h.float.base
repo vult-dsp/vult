@@ -10,9 +10,19 @@ typedef struct Datatypes_point {
    float y;
 } Datatypes_point;
 
+typedef struct Datatypes_test2_type {
+   Datatypes_point p2;
+   Datatypes_point result;
+} Datatypes_test2_type;
+
 static_inline void Datatypes_point_init(Datatypes_point& _ctx) {
    _ctx.x = 0.0f;
    _ctx.y = 0.0f;
+}
+
+static_inline void Datatypes_test2_type_init(Datatypes_test2_type& _ctx) {
+   Datatypes_point_init(_ctx.p2);
+   Datatypes_point_init(_ctx.result);
 }
 
 static_inline Datatypes_point Datatypes_addPoint1(Datatypes_point& p1, Datatypes_point& p2) {
@@ -35,6 +45,12 @@ static_inline void Datatypes_test1() {
    Datatypes_point_init(p2);
    Datatypes_point result = Datatypes_addPoint1(p1, p2);
    Datatypes_addPoint2(p1, p2, result);
+}
+
+static_inline void Datatypes_test2(Datatypes_test2_type& _ctx) {
+   Datatypes_point p1;
+   Datatypes_point_init(p1);
+   _ctx.result = Datatypes_addPoint1(p1, _ctx.p2);
 }
 
 

@@ -40,3 +40,20 @@ fun test1() {
   addPoint2(p1, p2, result);
 
 }
+
+// Memory considerations
+fun test2() {
+  // When declaring data type as follows, in languages with Garbage Collector (GC) like Lua and Js
+  // an GC allocation occurs.
+  val p1 : point;
+  // If this function is called very often, it will trigger a collection.
+  // This is not optimal in for real-time audio processing.
+  // In C++ it is not a big deal since the data is stack-allocated.
+
+  // One way of avoiding the allocation would be to declare the point as a mem variable
+  mem p2 : point;
+  // In that case, it is allocated one and the memory is reused.
+
+  mem result = addPoint1(p1, p2);
+
+}
