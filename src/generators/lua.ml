@@ -132,10 +132,14 @@ let rec print_exp e =
     [%pla {|ifExpression(<#cond#>, (function () return <#then_#> end), (function () return <#else_#> end))|}]
   | Tuple l ->
     let l = Pla.map_sep Pla.commaspace print_exp l in
-    [%pla {|(<#l#>)|}]
+    [%pla {|{ <#l#> }|}]
   | Member (e, m) ->
     let e = print_exp e in
     [%pla {|<#e#>.<#m#s>|}]
+  | TMember (e, i) ->
+    let e = print_exp e in
+    let m = i + 1 in
+    [%pla {|<#e#>[<#m#i>]|}]
 
 
 let rec print_lexp e =

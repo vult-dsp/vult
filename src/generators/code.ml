@@ -94,6 +94,7 @@ type exp_d =
       }
   | Tuple of exp list
   | Member of exp * string
+  | TMember of exp * int
 
 and exp =
   { e : exp_d
@@ -268,6 +269,9 @@ module Convert = struct
     | EMember (e, n) ->
       let e = exp context e in
       Member (e, n)
+    | ETMember (e, n) ->
+      let e = exp context e in
+      TMember (e, n)
 
 
   and exp (context : context) (e : Prog.exp) : exp =

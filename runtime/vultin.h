@@ -35,6 +35,7 @@ NOTE: The code for the fixed-point operations is based on the project:
 #include <stdint.h>
 #include <stdlib.h>
 #include <array>
+#include <tuple>
 
 #ifdef _MSC_VER
 #define static_inline static __inline

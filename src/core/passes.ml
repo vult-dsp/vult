@@ -383,6 +383,19 @@ module Tuples = struct
       in
       let s = { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid None; loc = rloc } }); loc } in
       reapply state, s :: bindings
+    (* multi return calls bound to a tuple variable *)
+    | { s =
+          StmtBind
+            ( ({ l = LId _; t = { t = TTuple types; _ }; _ } as lhs)
+            , ({ e = ECall { path; args = ctx :: _ }; loc = rloc; _ } as rhs) )
+      ; loc
+      } ->
+      let tuple_elems =
+        List.mapi (fun i (t : type_) -> { e = EMember (ctx, path ^ "_ret_" ^ string_of_int i); t; loc }) types
+      in
+      let s = { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid None; loc = rloc } }); loc } in
+      let binding = { s = StmtBind (lhs, { e = ETuple tuple_elems; t = rhs.t; loc = rhs.loc }); loc } in
+      reapply state, s :: [ binding ]
     (* Remove the return type of calls bound to wild *)
     | { s = StmtBind ({ l = LWild; _ }, { e = ECall _; t = { t = TVoid _; _ }; _ }); _ } -> state, [ s ]
     | { s = StmtBind (({ l = LWild; _ } as lhs), ({ e = ECall _; loc = rloc; _ } as rhs)); loc } ->
@@ -400,6 +413,19 @@ module Tuples = struct
             let l = { l = LMember (ctx, name ^ "_ret_" ^ string_of_int i); t = r.t; loc = r.loc } in
             { s = StmtBind (l, r); loc })
           elems
+      in
+      let s = { s = StmtReturn { e = EUnit; t = { t = TVoid None; loc }; loc = eloc }; loc } in
+      reapply state, bindings @ [ s ]
+    (* Bind returned single variable tuple to the environment *)
+    | { s = StmtReturn ({ e = EId _; loc = eloc; t = { t = TTuple types; _ } } as ret); loc } ->
+      let name, ctx_name, ctx_t = currentFunction env in
+      let ctx = { l = LId ctx_name; t = ctx_t; loc } in
+      let bindings =
+        List.mapi
+          (fun i (t : type_) ->
+            let l = { l = LMember (ctx, name ^ "_ret_" ^ string_of_int i); t; loc } in
+            { s = StmtBind (l, { ret with e = ETMember (ret, i) }); loc })
+          types
       in
       let s = { s = StmtReturn { e = EUnit; t = { t = TVoid None; loc }; loc = eloc }; loc } in
       reapply state, bindings @ [ s ]

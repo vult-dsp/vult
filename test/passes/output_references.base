@@ -49,6 +49,8 @@ fun Output_references_bar(_ctx : struct Output_references_bar_type) : void  {
       (x : (real, real)) = ((_call_temp_0 : real), (_call_temp_1 : real));
       (y : int) = 1;
    }
-   return (x : (real, real));
+   (_ctx : struct Output_references_bar_type).Output_references_bar_ret_0 = (x : (real, real)).0;
+   (_ctx : struct Output_references_bar_type).Output_references_bar_ret_1 = (x : (real, real)).1;
+   return ();
 }
 

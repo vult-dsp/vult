@@ -99,6 +99,7 @@ type exp_d =
       }
   | ETuple of exp list
   | EMember of exp * string
+  | ETMember of exp * int
 
 and exp =
   { e : exp_d
@@ -272,6 +273,9 @@ module Print = struct
     | EMember (e, m) ->
       let e = (print_exp ~no_types) e in
       [%pla {|<#e#>.<#m#s>|}]
+    | ETMember (e, i) ->
+      let e = (print_exp ~no_types) e in
+      [%pla {|<#e#>.<#i#i>|}]
 
 
   let rec print_lexp (e : lexp) =

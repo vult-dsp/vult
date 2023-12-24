@@ -105,6 +105,7 @@ type rvalue_d =
   | RNeg of rvalue
   | RIf of rvalue * rvalue * rvalue
   | RMember of rvalue * int * string
+  | RTMember of rvalue * int
   | RCall of f * string * rvalue list
   | RIndex of rvalue * rvalue
 
@@ -267,6 +268,9 @@ and compile_exp (env : env) e : rvalue =
       let e = compile_exp env e in
       { r = RMember (e, index, m); loc }
     | _ -> failwith "type error")
+  | ETMember (e, index) ->
+    let e = compile_exp env e in
+    { r = RTMember (e, index); loc }
   | ECall { path; args } -> (
     let args = List.map (compile_exp env) args in
     match Map.find_opt path env.functions with
@@ -434,6 +438,9 @@ let rec print_rvalue r =
   | RMember (e, i, s) ->
     let e = print_rvalue e in
     [%pla {|<#e#>.[<#i#i>:<#s#s>]|}]
+  | RTMember (e, i) ->
+    let e = print_rvalue e in
+    [%pla {|<#e#>.[<#i#i>]|}]
   | RNot e ->
     let e = print_rvalue e in
     [%pla {|not(<#e#>)|}]

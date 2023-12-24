@@ -72,7 +72,7 @@ let rec print_type_ (t : type_) =
   | Fixed -> Pla.string "fix16_t"
   | Tuple l ->
     let l = Pla.map_sep Pla.commaspace print_type_ l in
-    [%pla {|(<#l#>)|}]
+    [%pla {|std::tuple<<#l#>>|}]
   | Array (Some dim, t) ->
     let t = print_type_ t in
     [%pla {|std::array<<#t#>, <#dim#i>>|}]
@@ -193,10 +193,13 @@ let rec print_exp prec (e : exp) =
     [%pla {|(<#cond#> ? <#then_#> : <#else_#>)|}]
   | Tuple l ->
     let l = Pla.map_sep Pla.commaspace (print_exp prec) l in
-    [%pla {|(<#l#>)|}]
+    [%pla {|std::make_tuple(<#l#>)|}]
   | Member (e, m) ->
     let e = print_exp prec e in
     [%pla {|<#e#>.<#m#s>|}]
+  | TMember (e, m) ->
+    let e = print_exp prec e in
+    [%pla {|std::get<<#m#i>>(<#e#>)|}]
 
 
 let rec print_lexp e =

@@ -197,6 +197,7 @@ let all_files =
   ; "../test/compile/array_return.vult"
   ; "../test/compile/array_instance.vult"
   ; "../test/compile/array_dimension.vult"
+  ; "../test/compile/multi_return.vult"
   ]
 
 
@@ -411,7 +412,7 @@ let callCompiler (file : string) : unit =
   let basename = Filename.chop_extension (Filename.basename file) in
   let cmd =
     Printf.sprintf
-      "gcc -Werror -Wno-write-strings -Wconversion -I%s -I%s -c %s -o %s"
+      "gcc -std=c++11 -Werror -Wno-write-strings -Wconversion -I%s -I%s -c %s -o %s"
       (in_test_directory "../runtime")
       (in_test_directory "../examples/cmake/pd-deps")
       file

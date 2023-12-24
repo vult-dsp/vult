@@ -1,0 +1,62 @@
+
+function ifExpressionValue(cond,then_,else_) if cond then return then_ else return else_ end end
+function ifExpression(cond,then_,else_) if cond then return then_() else return else_() end end
+function eps()              return 1e-18 end
+function pi()               return 3.1415926535897932384 end
+function random()           return math.random() end
+function irandom()          return math.floor(math.random() * 4294967296) end
+function clip(x,low,high)   if x > high then return high else if x < low then return low else return x end end end
+function real(x)            return x end
+function int(x)             local int_part,_ = math.modf(x) return int_part end
+function sin(x)             return math.sin(x) end
+function cos(x)             return math.cos(x) end
+function abs(x)             return math.abs(x) end
+function exp(x)             return math.exp(x) end
+function floor(x)           return math.floor(x) end
+function tan(x)             return math.tan(x) end
+function tanh(x)            return math.tanh(x) end
+function sqrt(x)            return x end
+function set(a, i, v)       a[i+1]=v end
+function get(a, i)          return a[i+1] end
+function intDiv(a, b)       return math.floor(a / b) end
+
+function Multi_return_foo_type_alloc()
+   local _ctx = {};
+   _ctx.Multi_return_foo_ret_0 = 0.
+   _ctx.Multi_return_foo_ret_1 = 0.
+   return _ctx
+end
+
+function Multi_return_bar_type_alloc()
+   local _ctx = {};
+   _ctx.Multi_return_bar_ret_0 = 0.
+   _ctx.Multi_return_bar_ret_1 = 0.
+   _ctx.inst_16585 = Multi_return_foo_type_alloc()
+   return _ctx
+end
+
+function Multi_return_foo(_ctx, x)
+   if (x > 0) then
+      do
+         _ctx.Multi_return_foo_ret_0 = 0.
+         _ctx.Multi_return_foo_ret_1 = 0.
+         return 
+      end
+   else
+      do
+         _ctx.Multi_return_foo_ret_0 = 1.
+         _ctx.Multi_return_foo_ret_1 = 1.
+         return 
+      end
+   end
+end
+
+function Multi_return_bar(_ctx)
+   local x
+   Multi_return_foo(_ctx.inst_16585, 1)
+   x = { _ctx.inst_16585.Multi_return_foo_ret_0, _ctx.inst_16585.Multi_return_foo_ret_1 }
+   _ctx.Multi_return_bar_ret_0 = x[1]
+   _ctx.Multi_return_bar_ret_1 = x[2]
+   return 
+end
+

@@ -151,6 +151,11 @@ module MakeVM (VM : VM) = struct
       match e with
       | Object elems -> vm, elems.(index)
       | _ -> failwith "member: not a struct")
+    | RTMember (e, index) -> (
+      let vm, e = eval_rvalue vm e in
+      match e with
+      | Object elems -> vm, elems.(index)
+      | _ -> failwith "member: not a struct")
 
 
   and eval_rvalue_list vm a =

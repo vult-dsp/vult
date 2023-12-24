@@ -102,7 +102,7 @@ let driver (args : args) : output list =
       [ Version version ]
     else ((* Parse the files *)
       match args.files with
-      | [] -> [ Message ("vult " ^ version ^ " - https://github.com/modlfo/vult\nno input files") ]
+      | [] -> [ Message ("vult " ^ version ^ " - https://github.com/vult-dsp/vult\nno input files") ]
       | _ ->
         let parsed = Util.Profile.time "Load files" (fun () -> Loader.loadFiles args args.files) in
         if args.deps then
