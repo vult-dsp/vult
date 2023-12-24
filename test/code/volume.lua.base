@@ -21,13 +21,13 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
 function Volume_smooth_type_alloc()
-   local _ctx = {};
+   local _ctx = Volume_smooth_type_alloc();
    _ctx.x = 0.
    return _ctx
 end
 
 function Volume_process_type_alloc()
-   local _ctx = {};
+   local _ctx = Volume_process_type_alloc();
    _ctx.inst_1d7d3 = Volume_smooth_type_alloc()
    _ctx.volume = 0.
    return _ctx

@@ -21,14 +21,14 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
 function Datatypes_point_alloc()
-   local _ctx = {};
+   local _ctx = Datatypes_point_alloc();
    _ctx.x = 0.
    _ctx.y = 0.
    return _ctx
 end
 
 function Datatypes_addPoint1(p1, p2)
-   local p3 = {};
+   local p3 = Datatypes_point_alloc();
    p3.x = (p1.x + p2.x)
    p3.y = (p1.y + p2.y)
    return p3
@@ -40,8 +40,8 @@ function Datatypes_addPoint2(p1, p2, result)
 end
 
 function Datatypes_test1()
-   local p1 = {};
-   local p2 = {};
+   local p1 = Datatypes_point_alloc();
+   local p2 = Datatypes_point_alloc();
    local result = Datatypes_addPoint1(p1, p2)
    Datatypes_addPoint2(p1, p2, result)
 end

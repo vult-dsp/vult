@@ -21,19 +21,19 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
 function Phasedist_smooth_type_alloc()
-   local _ctx = {};
+   local _ctx = Phasedist_smooth_type_alloc();
    _ctx.x = 0.
    return _ctx
 end
 
 function Phasedist_change_type_alloc()
-   local _ctx = {};
+   local _ctx = Phasedist_change_type_alloc();
    _ctx.pre_x = 0.
    return _ctx
 end
 
 function Phasedist_phasor_type_alloc()
-   local _ctx = {};
+   local _ctx = Phasedist_phasor_type_alloc();
    _ctx.inst_1e817 = Phasedist_change_type_alloc()
    _ctx.phase = 0.
    _ctx.rate = 0.
@@ -41,7 +41,7 @@ function Phasedist_phasor_type_alloc()
 end
 
 function Phasedist_process_type_alloc()
-   local _ctx = {};
+   local _ctx = Phasedist_process_type_alloc();
    _ctx.detune = 0.
    _ctx.inst_117e9 = Phasedist_phasor_type_alloc()
    _ctx.inst_275e9 = Phasedist_smooth_type_alloc()

@@ -21,20 +21,20 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
 function Defined_types_dot_alloc()
-   local _ctx = {};
+   local _ctx = Defined_types_dot_alloc();
    _ctx.x = 0.
    _ctx.y = 0.
    return _ctx
 end
 
 function Defined_types_foo_type_alloc()
-   local _ctx = {};
+   local _ctx = Defined_types_foo_type_alloc();
    _ctx.p1 = Defined_types_dot_alloc()
    return _ctx
 end
 
 function Defined_types_process_type_alloc()
-   local _ctx = {};
+   local _ctx = Defined_types_process_type_alloc();
    _ctx.inst_1a5d1 = Defined_types_foo_type_alloc()
    return _ctx
 end
@@ -56,7 +56,7 @@ function Defined_types_default_type_alloc(_ctx)
 end
 
 function Defined_types_micro_alloc()
-   local _ctx = {};
+   local _ctx = Defined_types_micro_alloc();
    _ctx.dot_0 = Defined_types_dot_alloc()
    _ctx.dot_1 = Defined_types_dot_alloc()
    return _ctx

@@ -21,7 +21,7 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
 function Gates_gates_noteOn_type_alloc()
-   local _ctx = {};
+   local _ctx = Gates_gates_noteOn_type_alloc();
    _ctx.Gates_gates_state_ret_0 = 0.
    _ctx.Gates_gates_state_ret_1 = 0.
    _ctx.Gates_gates_state_ret_2 = 0.
@@ -51,7 +51,7 @@ function Gates_gates_state_type_alloc(_ctx)
 end
 
 function Gates_process_type_alloc()
-   local _ctx = {};
+   local _ctx = Gates_process_type_alloc();
    _ctx.Gates_process_ret_0 = 0.
    _ctx.Gates_process_ret_1 = 0.
    _ctx.Gates_process_ret_2 = 0.

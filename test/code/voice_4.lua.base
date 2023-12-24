@@ -21,32 +21,32 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
 function Util_edge_type_alloc()
-   local _ctx = {};
+   local _ctx = Util_edge_type_alloc();
    _ctx.pre = false
    return _ctx
 end
 
 function Util_change_type_alloc()
-   local _ctx = {};
+   local _ctx = Util_change_type_alloc();
    _ctx.pre_x = 0.
    return _ctx
 end
 
 function Util_dcblock_type_alloc()
-   local _ctx = {};
+   local _ctx = Util_dcblock_type_alloc();
    _ctx.x1 = 0.
    _ctx.y1 = 0.
    return _ctx
 end
 
 function Util_smooth_type_alloc()
-   local _ctx = {};
+   local _ctx = Util_smooth_type_alloc();
    _ctx.x = 0.
    return _ctx
 end
 
 function Util_average2_type_alloc()
-   local _ctx = {};
+   local _ctx = Util_average2_type_alloc();
    _ctx.x0 = 0.
    return _ctx
 end
@@ -100,7 +100,7 @@ function Tricore_default(_ctx)
 end
 
 function Tricore_process_type_alloc()
-   local _ctx = {};
+   local _ctx = Tricore_process_type_alloc();
    _ctx.direction = false
    _ctx.inst_1b03c = Util_change_type_alloc()
    _ctx.inst_2043c = Util_edge_type_alloc()
@@ -156,7 +156,7 @@ function Svf_default(_ctx)
 end
 
 function Svf_process_type_alloc()
-   local _ctx = {};
+   local _ctx = Svf_process_type_alloc();
    _ctx.g = 0.
    _ctx.inst_1b0a2 = Util_change_type_alloc()
    _ctx.inst_2b0a2 = Util_change_type_alloc()
@@ -185,7 +185,7 @@ function Svf_default_type_alloc(_ctx)
 end
 
 function Lfo_soft_type_alloc()
-   local _ctx = {};
+   local _ctx = Lfo_soft_type_alloc();
    _ctx.x2 = 0.
    _ctx.x3 = 0.
    _ctx.x4 = 0.
@@ -193,7 +193,7 @@ function Lfo_soft_type_alloc()
 end
 
 function Lfo_process_type_alloc()
-   local _ctx = {};
+   local _ctx = Lfo_process_type_alloc();
    _ctx.inst_1b0d6 = Util_change_type_alloc()
    _ctx.inst_204d6 = Util_edge_type_alloc()
    _ctx.inst_337d6 = Lfo_soft_type_alloc()
@@ -223,7 +223,7 @@ function Phase_default(_ctx)
 end
 
 function Phase_process_type_alloc()
-   local _ctx = {};
+   local _ctx = Phase_process_type_alloc();
    _ctx.inst_1b08a = Util_change_type_alloc()
    _ctx.inst_2048a = Util_edge_type_alloc()
    _ctx.phase = 0.
@@ -274,7 +274,7 @@ function Blit_pulse_start(_ctx)
 end
 
 function Blit_pulse_train_type_alloc()
-   local _ctx = {};
+   local _ctx = Blit_pulse_train_type_alloc();
    _ctx.inst_1b05e = Util_change_type_alloc()
    _ctx.m = 0
    _ctx.scale = 0.
@@ -331,7 +331,7 @@ function Blit_init(_ctx)
 end
 
 function Blit_osc_blit_type_alloc()
-   local _ctx = {};
+   local _ctx = Blit_osc_blit_type_alloc();
    _ctx.inst_1b026 = Util_change_type_alloc()
    _ctx.inst_28a26 = Phase_process_type_alloc()
    _ctx.inst_35e26 = Blit_pulse_train_type_alloc()
@@ -350,7 +350,7 @@ function Blit_init_type_alloc(_ctx)
 end
 
 function Blit_process_type_alloc()
-   local _ctx = {};
+   local _ctx = Blit_process_type_alloc();
    _ctx.inst_1268b = Blit_osc_blit_type_alloc()
    return _ctx
 end
@@ -372,7 +372,7 @@ function Blit_default_type_alloc(_ctx)
 end
 
 function Adsr_do_type_alloc()
-   local _ctx = {};
+   local _ctx = Adsr_do_type_alloc();
    _ctx.inst_104a0 = Util_edge_type_alloc()
    _ctx.inst_295a0 = Util_smooth_type_alloc()
    _ctx.out = 0.
@@ -384,7 +384,7 @@ function Adsr_do_type_alloc()
 end
 
 function Adsr_process_type_alloc()
-   local _ctx = {};
+   local _ctx = Adsr_process_type_alloc();
    _ctx.inst_1a025 = Adsr_do_type_alloc()
    _ctx.knob1 = 0.
    _ctx.knob2 = 0.
@@ -410,7 +410,7 @@ function Adsr_default_type_alloc(_ctx)
 end
 
 function Voice_4_process_type_alloc()
-   local _ctx = {};
+   local _ctx = Voice_4_process_type_alloc();
    _ctx.attack = 0.
    _ctx.decay = 0.
    _ctx.flt_cut = 0.

@@ -21,7 +21,7 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
 function Array_defined_type_dot_alloc()
-   local _ctx = {};
+   local _ctx = Array_defined_type_dot_alloc();
    _ctx.x = 0.
    _ctx.y = 0.
    return _ctx
@@ -30,7 +30,7 @@ end
 function Array_defined_type_foo_type_alloc()
    local i_0 = 0
    local temp
-   local _ctx = {};
+   local _ctx = Array_defined_type_foo_type_alloc();
    while (i_0 < 12) do
       do
          temp[i_0 + 1] = Array_defined_type_dot_alloc()
@@ -42,7 +42,7 @@ function Array_defined_type_foo_type_alloc()
 end
 
 function Array_defined_type_process_type_alloc()
-   local _ctx = {};
+   local _ctx = Array_defined_type_process_type_alloc();
    _ctx.inst_1c76a = Array_defined_type_foo_type_alloc()
    return _ctx
 end

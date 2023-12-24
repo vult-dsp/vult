@@ -21,38 +21,38 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
 function Util_edge_type_alloc()
-   local _ctx = {};
+   local _ctx = Util_edge_type_alloc();
    _ctx.pre = false
    return _ctx
 end
 
 function Util_change_type_alloc()
-   local _ctx = {};
+   local _ctx = Util_change_type_alloc();
    _ctx.pre_x = 0.
    return _ctx
 end
 
 function Util_dcblock_type_alloc()
-   local _ctx = {};
+   local _ctx = Util_dcblock_type_alloc();
    _ctx.x1 = 0.
    _ctx.y1 = 0.
    return _ctx
 end
 
 function Util_smooth_type_alloc()
-   local _ctx = {};
+   local _ctx = Util_smooth_type_alloc();
    _ctx.x = 0.
    return _ctx
 end
 
 function Util_average2_type_alloc()
-   local _ctx = {};
+   local _ctx = Util_average2_type_alloc();
    _ctx.x0 = 0.
    return _ctx
 end
 
 function Monocv_mono_noteOn_type_alloc()
-   local _ctx = {};
+   local _ctx = Monocv_mono_noteOn_type_alloc();
    _ctx.count = 0
    local i_0 = 0
    local temp = {0, 0, 0, 0}
@@ -76,7 +76,7 @@ function Monocv_mono_isGateOn_type_alloc(_ctx)
 end
 
 function Monocv_process_type_alloc()
-   local _ctx = {};
+   local _ctx = Monocv_process_type_alloc();
    _ctx.Monocv_process_ret_0 = 0.
    _ctx.Monocv_process_ret_1 = 0.
    _ctx.Monocv_process_ret_2 = 0.

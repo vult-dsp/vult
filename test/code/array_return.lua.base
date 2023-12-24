@@ -21,19 +21,19 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
 function Array_return_foo3_type_alloc()
-   local _ctx = {};
+   local _ctx = Array_return_foo3_type_alloc();
    _ctx.y = 0
    return _ctx
 end
 
 function Array_return_foo4_type_alloc()
-   local _ctx = {};
+   local _ctx = Array_return_foo4_type_alloc();
    _ctx.y = 0
    return _ctx
 end
 
 function Array_return_foo5_type_alloc()
-   local _ctx = {};
+   local _ctx = Array_return_foo5_type_alloc();
    _ctx.Array_return_foo5_ret_0 = 0
    local i_0 = 0
    local temp = {0, 0, 0}
@@ -48,7 +48,7 @@ function Array_return_foo5_type_alloc()
 end
 
 function Array_return_foo6_type_alloc()
-   local _ctx = {};
+   local _ctx = Array_return_foo6_type_alloc();
    _ctx.Array_return_foo6_ret_0 = 0
    local i_0 = 0
    local temp = {0, 0, 0}
@@ -63,14 +63,14 @@ function Array_return_foo6_type_alloc()
 end
 
 function Array_return_s1_alloc()
-   local _ctx = {};
+   local _ctx = Array_return_s1_alloc();
    _ctx.x = 0
    _ctx.y = 0
    return _ctx
 end
 
 function Array_return_foo7_type_alloc()
-   local _ctx = {};
+   local _ctx = Array_return_foo7_type_alloc();
    _ctx.Array_return_foo7_ret_0 = 0
    _ctx.Array_return_foo7_ret_1 = Array_return_s1_alloc()
    return _ctx
