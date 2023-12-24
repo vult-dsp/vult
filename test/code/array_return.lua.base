@@ -114,9 +114,9 @@ function Array_return_foo6(_ctx)
 end
 
 function Array_return_foo7(_ctx)
-   local s
    local d = {0, 0, 0, 0}
    _ctx.Array_return_foo7_ret_0 = d[0 + 1]
+   local s
    _ctx.Array_return_foo7_ret_1 = s[0 + 1]
    return 
 end

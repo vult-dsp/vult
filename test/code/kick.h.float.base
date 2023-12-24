@@ -509,7 +509,14 @@ static_inline void Saturate_default() {
 
 void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r);
 
-void Ahr_process(Ahr_process_type& _ctx, float gate);
+static_inline void Ahr_process(Ahr_process_type& _ctx, float gate) {
+   Ahr_do(_ctx.inst_1d84b, gate, _ctx.knob1, _ctx.knob2, _ctx.knob3);
+   float _call_temp_0 = _ctx.inst_1d84b.Ahr_do_ret_0;
+   float _call_temp_1 = _ctx.inst_1d84b.Ahr_do_ret_1;
+   _ctx.Ahr_process_ret_0 = _call_temp_0;
+   _ctx.Ahr_process_ret_1 = _call_temp_1;
+   return ;
+}
 
 static_inline void Ahr_noteOn(Ahr_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
 }
@@ -525,7 +532,18 @@ static_inline void Ahr_default(Ahr_process_type& _ctx) {
    _ctx.knob3 = 0.5f;
 }
 
-float Kick_do(Kick_do_type& _ctx, float gate, float odecay, float pitch, float swept, float noise);
+static_inline float Kick_do(Kick_do_type& _ctx, float gate, float odecay, float pitch, float swept, float noise) {
+   Ahr_do(_ctx.inst_1d863, gate, 0.005f, 0.1f + odecay, 0.01f + odecay);
+   float osc_env = _ctx.inst_1d863.Ahr_do_ret_0;
+   float env_reset = _ctx.inst_1d863.Ahr_do_ret_1;
+   float cv = Swept_process(_ctx.inst_20263, 1.0f + (- env_reset), pitch + 0.4f * swept, pitch, 0.1f);
+   float osc = Tricore_process(_ctx.inst_33c63, cv, 0.0f, env_reset);
+   float osc_sat = Saturate_process(1.5f * osc);
+   Ahr_do(_ctx.inst_4d863, gate, 0.001f, 0.01f, 0.001f + 0.01f * noise);
+   float noise_env = _ctx.inst_4d863.Ahr_do_ret_0;
+   float noise_osc = 0.3333334f * noise * Noise_process(_ctx.inst_53d63, 1.0f);
+   return noise_env * noise_osc + osc_env * osc_sat;
+}
 
 static_inline float Kick_process(Kick_process_type& _ctx, float gate) {
    return Kick_do(_ctx.inst_16352, gate, _ctx.odecay, _ctx.pitch, _ctx.swept, _ctx.noise);

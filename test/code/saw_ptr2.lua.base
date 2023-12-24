@@ -260,8 +260,8 @@ function Saw_ptr2_process(_ctx, cv)
    end
    local s1 = _ctx.rate
    local s2 = (s1 + _ctx.rate)
-   local out = 0.
    _ctx.phase = (_ctx.phase + _ctx.rate)
+   local out = 0.
    if (_ctx.phase > 1.) then
       _ctx.phase = (-1. + _ctx.phase)
    else

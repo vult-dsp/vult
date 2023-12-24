@@ -30,9 +30,8 @@ static_inline void Multi_return_bar_type_init(Multi_return_bar_type& _ctx) {
 void Multi_return_foo(Multi_return_foo_type& _ctx, int32_t x);
 
 static_inline void Multi_return_bar(Multi_return_bar_type& _ctx) {
-   std::tuple<float, float> x;
    Multi_return_foo(_ctx.inst_16585, 1);
-   x = std::make_tuple(_ctx.inst_16585.Multi_return_foo_ret_0, _ctx.inst_16585.Multi_return_foo_ret_1);
+   std::tuple<float, float> x = std::make_tuple(_ctx.inst_16585.Multi_return_foo_ret_0, _ctx.inst_16585.Multi_return_foo_ret_1);
    _ctx.Multi_return_bar_ret_0 = std::get<0>(x);
    _ctx.Multi_return_bar_ret_1 = std::get<1>(x);
    return ;

@@ -269,7 +269,7 @@ let print_decl_alloc (n, (t : type_)) =
     let sub = print_type_ sub in
     [%pla {|std::array<<#sub#>, <#dim#i>> <#n#s>|}]
   | Array (None, _) -> failwith "Cpp.print_decl_alloc: array without dimensions"
-  | Struct { path; _ } -> [%pla {|<#path#s>& <#n#s>|}]
+  | Struct { path; _ } -> [%pla {|<#path#s> <#n#s>|}]
   | _ ->
     let t = print_type_ t in
     [%pla {|<#t#> <#n#s>|}]
@@ -299,7 +299,7 @@ let rec print_stmt s =
     let rhs = print_exp 0 rhs in
     [%pla {|<#t#> = <#rhs#>;|}]
   | StmtDecl ({ d = DId (n, _); t; _ }, Some rhs) ->
-    let t = print_decl (n, t) in
+    let t = print_decl_alloc (n, t) in
     let rhs = print_exp 0 rhs in
     [%pla {|<#t#> = <#rhs#>;|}]
   | StmtBind ({ l = LWild; _ }, rhs) ->

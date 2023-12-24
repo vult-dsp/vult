@@ -192,6 +192,7 @@ let all_files =
   ; "osc/tricore.vult"
   ; "units/kick.vult"
   ; "units/voice_4.vult"
+  ; "newfeatures/datatypes.vult"
   ; "../test/compile/defined_types.vult"
   ; "../test/compile/array_defined_type.vult"
   ; "../test/compile/array_return.vult"

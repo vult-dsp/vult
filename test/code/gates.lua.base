@@ -125,23 +125,15 @@ end
 
 function Gates_process(_ctx, c)
    _ctx.channel_in = c
-   local _call_temp_7 = 0.
-   local _call_temp_6 = 0.
-   local _call_temp_5 = 0.
-   local _call_temp_4 = 0.
-   local _call_temp_3 = 0.
-   local _call_temp_2 = 0.
-   local _call_temp_1 = 0.
-   local _call_temp_0 = 0.
    Gates_gates_state(_ctx.gates)
-   _call_temp_0 = _ctx.gates.Gates_gates_state_ret_0
-   _call_temp_1 = _ctx.gates.Gates_gates_state_ret_1
-   _call_temp_2 = _ctx.gates.Gates_gates_state_ret_2
-   _call_temp_3 = _ctx.gates.Gates_gates_state_ret_3
-   _call_temp_4 = _ctx.gates.Gates_gates_state_ret_4
-   _call_temp_5 = _ctx.gates.Gates_gates_state_ret_5
-   _call_temp_6 = _ctx.gates.Gates_gates_state_ret_6
-   _call_temp_7 = _ctx.gates.Gates_gates_state_ret_7
+   local _call_temp_0 = _ctx.gates.Gates_gates_state_ret_0
+   local _call_temp_1 = _ctx.gates.Gates_gates_state_ret_1
+   local _call_temp_2 = _ctx.gates.Gates_gates_state_ret_2
+   local _call_temp_3 = _ctx.gates.Gates_gates_state_ret_3
+   local _call_temp_4 = _ctx.gates.Gates_gates_state_ret_4
+   local _call_temp_5 = _ctx.gates.Gates_gates_state_ret_5
+   local _call_temp_6 = _ctx.gates.Gates_gates_state_ret_6
+   local _call_temp_7 = _ctx.gates.Gates_gates_state_ret_7
    _ctx.Gates_process_ret_0 = _call_temp_0
    _ctx.Gates_process_ret_1 = _call_temp_1
    _ctx.Gates_process_ret_2 = _call_temp_2

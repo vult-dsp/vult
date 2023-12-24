@@ -509,7 +509,14 @@ static_inline void Saturate_default() {
 
 void Ahr_do(Ahr_do_type& _ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r);
 
-void Ahr_process(Ahr_process_type& _ctx, fix16_t gate);
+static_inline void Ahr_process(Ahr_process_type& _ctx, fix16_t gate) {
+   Ahr_do(_ctx.inst_1d84b, gate, _ctx.knob1, _ctx.knob2, _ctx.knob3);
+   fix16_t _call_temp_0 = _ctx.inst_1d84b.Ahr_do_ret_0;
+   fix16_t _call_temp_1 = _ctx.inst_1d84b.Ahr_do_ret_1;
+   _ctx.Ahr_process_ret_0 = _call_temp_0;
+   _ctx.Ahr_process_ret_1 = _call_temp_1;
+   return ;
+}
 
 static_inline void Ahr_noteOn(Ahr_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
 }
@@ -525,7 +532,18 @@ static_inline void Ahr_default(Ahr_process_type& _ctx) {
    _ctx.knob3 = 0x8000 /* 0.500000 */;
 }
 
-fix16_t Kick_do(Kick_do_type& _ctx, fix16_t gate, fix16_t odecay, fix16_t pitch, fix16_t swept, fix16_t noise);
+static_inline fix16_t Kick_do(Kick_do_type& _ctx, fix16_t gate, fix16_t odecay, fix16_t pitch, fix16_t swept, fix16_t noise) {
+   Ahr_do(_ctx.inst_1d863, gate, 0x147 /* 0.005000 */, 0x1999 /* 0.100000 */ + odecay, 0x28f /* 0.010000 */ + odecay);
+   fix16_t osc_env = _ctx.inst_1d863.Ahr_do_ret_0;
+   fix16_t env_reset = _ctx.inst_1d863.Ahr_do_ret_1;
+   fix16_t cv = Swept_process(_ctx.inst_20263, 0x10000 /* 1.000000 */ + (- env_reset), pitch + fix_mul(0x6666 /* 0.400000 */, swept), pitch, 0x1999 /* 0.100000 */);
+   fix16_t osc = Tricore_process(_ctx.inst_33c63, cv, 0x0 /* 0.000000 */, env_reset);
+   fix16_t osc_sat = Saturate_process(fix_mul(0x18000 /* 1.500000 */, osc));
+   Ahr_do(_ctx.inst_4d863, gate, 0x41 /* 0.001000 */, 0x28f /* 0.010000 */, 0x41 /* 0.001000 */ + fix_mul(0x28f /* 0.010000 */, noise));
+   fix16_t noise_env = _ctx.inst_4d863.Ahr_do_ret_0;
+   fix16_t noise_osc = fix_mul(0x5555 /* 0.333333 */, fix_mul(noise, Noise_process(_ctx.inst_53d63, 0x10000 /* 1.000000 */)));
+   return fix_mul(noise_env, noise_osc) + fix_mul(osc_env, osc_sat);
+}
 
 static_inline fix16_t Kick_process(Kick_process_type& _ctx, fix16_t gate) {
    return Kick_do(_ctx.inst_16352, gate, _ctx.odecay, _ctx.pitch, _ctx.swept, _ctx.noise);

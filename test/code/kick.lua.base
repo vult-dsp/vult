@@ -619,11 +619,9 @@ function Ahr_do(_ctx, gate, a, h, r)
 end
 
 function Ahr_process(_ctx, gate)
-   local _call_temp_1 = 0.
-   local _call_temp_0 = 0.
    Ahr_do(_ctx.inst_1d84b, gate, _ctx.knob1, _ctx.knob2, _ctx.knob3)
-   _call_temp_0 = _ctx.inst_1d84b.Ahr_do_ret_0
-   _call_temp_1 = _ctx.inst_1d84b.Ahr_do_ret_1
+   local _call_temp_0 = _ctx.inst_1d84b.Ahr_do_ret_0
+   local _call_temp_1 = _ctx.inst_1d84b.Ahr_do_ret_1
    _ctx.Ahr_process_ret_0 = _call_temp_0
    _ctx.Ahr_process_ret_1 = _call_temp_1
    return 
@@ -654,17 +652,14 @@ function Ahr_default(_ctx)
 end
 
 function Kick_do(_ctx, gate, odecay, pitch, swept, noise)
-   local osc_env = 0.
-   local env_reset = 0.
    Ahr_do(_ctx.inst_1d863, gate, 0.005, (0.1 + odecay), (0.01 + odecay))
-   osc_env = _ctx.inst_1d863.Ahr_do_ret_0
-   env_reset = _ctx.inst_1d863.Ahr_do_ret_1
+   local osc_env = _ctx.inst_1d863.Ahr_do_ret_0
+   local env_reset = _ctx.inst_1d863.Ahr_do_ret_1
    local cv = Swept_process(_ctx.inst_20263, (1. + (-env_reset)), (pitch + (0.4 * swept)), pitch, 0.1)
    local osc = Tricore_process(_ctx.inst_33c63, cv, 0., env_reset)
    local osc_sat = Saturate_process((1.5 * osc))
-   local noise_env = 0.
    Ahr_do(_ctx.inst_4d863, gate, 0.001, 0.01, (0.001 + (0.01 * noise)))
-   noise_env = _ctx.inst_4d863.Ahr_do_ret_0
+   local noise_env = _ctx.inst_4d863.Ahr_do_ret_0
    local noise_osc = (0.3333334 * (noise * Noise_process(_ctx.inst_53d63, 1.)))
    return ((noise_env * noise_osc) + (osc_env * osc_sat))
 end

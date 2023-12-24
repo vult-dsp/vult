@@ -324,11 +324,9 @@ function Ahr_do(_ctx, gate, a, h, r)
 end
 
 function Ahr_process(_ctx, gate)
-   local _call_temp_1 = 0.
-   local _call_temp_0 = 0.
    Ahr_do(_ctx.inst_1d84b, gate, _ctx.knob1, _ctx.knob2, _ctx.knob3)
-   _call_temp_0 = _ctx.inst_1d84b.Ahr_do_ret_0
-   _call_temp_1 = _ctx.inst_1d84b.Ahr_do_ret_1
+   local _call_temp_0 = _ctx.inst_1d84b.Ahr_do_ret_0
+   local _call_temp_1 = _ctx.inst_1d84b.Ahr_do_ret_1
    _ctx.Ahr_process_ret_0 = _call_temp_0
    _ctx.Ahr_process_ret_1 = _call_temp_1
    return 

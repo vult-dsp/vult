@@ -1,0 +1,42 @@
+// Vult now allows to create complex data types. For example:
+
+type point {
+  val x : real;
+  val y : real;
+}
+
+fun addPoint1(p1:point, p2:point) {
+  // To declare a data type you need to explicitly provide the type.
+  val p3 : point;
+  // One of the current limitations is that these types cannot be initialized when declared.
+  // They are automatically initialized to the default value.
+
+  // Once they are declared, they can be access and modified as follows.
+  p3.x = p1.x + p2.x;
+  p3.y = p1.y + p2.y;
+
+  // The data types can be returned. Just beware for C++ they are returned by value.
+  return p3;
+}
+
+// In order to avoid returning by value, you can pass a reference where the result will be placed.
+fun addPoint2(p1:point, p2:point, result:point) {
+  result.x = p1.x + p2.x;
+  result.y = p1.y + p2.y;
+  // In this case, we do not need to return the value.
+}
+
+// The function addPoint2 can be called as follows:
+fun test1() {
+  // Notice that p1 and p2 are intialized to the default value.
+  val p1 : point;
+  val p2 : point;
+  val result : point;
+
+  // In this case, in C++ code the code is returned by value
+  result = addPoint1(p1, p2);
+
+  // In C++ (and other languages), the complex data types are passed by reference.
+  addPoint2(p1, p2, result);
+
+}

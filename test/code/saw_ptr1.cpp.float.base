@@ -8,8 +8,8 @@ float Saw_ptr1_process(Saw_ptr1_process_type& _ctx, float cv) {
    }
    float s1 = _ctx.rate;
    float dc = -1.0f;
-   float out = 0.0f;
    _ctx.phase = _ctx.phase + _ctx.rate;
+   float out = 0.0f;
    if (_ctx.phase > 1.0f) {
       _ctx.phase = -1.0f + _ctx.phase;
    }

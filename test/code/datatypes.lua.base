@@ -20,42 +20,29 @@ function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
-function Multi_return_foo_type_alloc()
+function Datatypes_point_alloc()
    local _ctx = {};
-   _ctx.Multi_return_foo_ret_0 = 0.
-   _ctx.Multi_return_foo_ret_1 = 0.
+   _ctx.x = 0.
+   _ctx.y = 0.
    return _ctx
 end
 
-function Multi_return_bar_type_alloc()
-   local _ctx = {};
-   _ctx.Multi_return_bar_ret_0 = 0.
-   _ctx.Multi_return_bar_ret_1 = 0.
-   _ctx.inst_16585 = Multi_return_foo_type_alloc()
-   return _ctx
+function Datatypes_addPoint1(p1, p2)
+   local p3 = {};
+   p3.x = (p1.x + p2.x)
+   p3.y = (p1.y + p2.y)
+   return p3
 end
 
-function Multi_return_foo(_ctx, x)
-   if (x > 0) then
-      do
-         _ctx.Multi_return_foo_ret_0 = 0.
-         _ctx.Multi_return_foo_ret_1 = 0.
-         return 
-      end
-   else
-      do
-         _ctx.Multi_return_foo_ret_0 = 1.
-         _ctx.Multi_return_foo_ret_1 = 1.
-         return 
-      end
-   end
+function Datatypes_addPoint2(p1, p2, result)
+   result.x = (p1.x + p2.x)
+   result.y = (p1.y + p2.y)
 end
 
-function Multi_return_bar(_ctx)
-   Multi_return_foo(_ctx.inst_16585, 1)
-   local x = { _ctx.inst_16585.Multi_return_foo_ret_0, _ctx.inst_16585.Multi_return_foo_ret_1 }
-   _ctx.Multi_return_bar_ret_0 = x[1]
-   _ctx.Multi_return_bar_ret_1 = x[2]
-   return 
+function Datatypes_test1()
+   local p1 = {};
+   local p2 = {};
+   local result = Datatypes_addPoint1(p1, p2)
+   Datatypes_addPoint2(p1, p2, result)
 end
 
