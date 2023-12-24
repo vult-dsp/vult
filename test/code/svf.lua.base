@@ -21,32 +21,32 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
 function Util_edge_type_alloc()
-   local _ctx = Util_edge_type_alloc();
+   local _ctx = {};
    _ctx.pre = false
    return _ctx
 end
 
 function Util_change_type_alloc()
-   local _ctx = Util_change_type_alloc();
+   local _ctx = {};
    _ctx.pre_x = 0.
    return _ctx
 end
 
 function Util_dcblock_type_alloc()
-   local _ctx = Util_dcblock_type_alloc();
+   local _ctx = {};
    _ctx.x1 = 0.
    _ctx.y1 = 0.
    return _ctx
 end
 
 function Util_smooth_type_alloc()
-   local _ctx = Util_smooth_type_alloc();
+   local _ctx = {};
    _ctx.x = 0.
    return _ctx
 end
 
 function Util_average2_type_alloc()
-   local _ctx = Util_average2_type_alloc();
+   local _ctx = {};
    _ctx.x0 = 0.
    return _ctx
 end
@@ -82,7 +82,7 @@ function Svf_default(_ctx)
 end
 
 function Svf_process_type_alloc()
-   local _ctx = Svf_process_type_alloc();
+   local _ctx = {};
    _ctx.g = 0.
    _ctx.inst_1b0a2 = Util_change_type_alloc()
    _ctx.inst_2b0a2 = Util_change_type_alloc()

@@ -21,13 +21,13 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
 function Noise_pinker_type_alloc()
-   local _ctx = Noise_pinker_type_alloc();
+   local _ctx = {};
    _ctx.w1 = 0.
    return _ctx
 end
 
 function Noise_process_type_alloc()
-   local _ctx = Noise_process_type_alloc();
+   local _ctx = {};
    _ctx.inst_16d3d = Noise_pinker_type_alloc()
    _ctx.x1 = 0
    _ctx.x2 = 0
@@ -51,32 +51,32 @@ function Noise_default_type_alloc(_ctx)
 end
 
 function Util_edge_type_alloc()
-   local _ctx = Util_edge_type_alloc();
+   local _ctx = {};
    _ctx.pre = false
    return _ctx
 end
 
 function Util_change_type_alloc()
-   local _ctx = Util_change_type_alloc();
+   local _ctx = {};
    _ctx.pre_x = 0.
    return _ctx
 end
 
 function Util_dcblock_type_alloc()
-   local _ctx = Util_dcblock_type_alloc();
+   local _ctx = {};
    _ctx.x1 = 0.
    _ctx.y1 = 0.
    return _ctx
 end
 
 function Util_smooth_type_alloc()
-   local _ctx = Util_smooth_type_alloc();
+   local _ctx = {};
    _ctx.x = 0.
    return _ctx
 end
 
 function Util_average2_type_alloc()
-   local _ctx = Util_average2_type_alloc();
+   local _ctx = {};
    _ctx.x0 = 0.
    return _ctx
 end
@@ -130,7 +130,7 @@ function Tricore_default(_ctx)
 end
 
 function Tricore_process_type_alloc()
-   local _ctx = Tricore_process_type_alloc();
+   local _ctx = {};
    _ctx.direction = false
    _ctx.inst_1b03c = Util_change_type_alloc()
    _ctx.inst_2043c = Util_edge_type_alloc()
@@ -160,7 +160,7 @@ function Tricore_default_type_alloc(_ctx)
 end
 
 function Swept_process_type_alloc()
-   local _ctx = Swept_process_type_alloc();
+   local _ctx = {};
    _ctx.inst_10402 = Util_edge_type_alloc()
    _ctx.out = 0.
    return _ctx
@@ -183,7 +183,7 @@ function Swept_default_type_alloc(_ctx)
 end
 
 function Ahr_do_type_alloc()
-   local _ctx = Ahr_do_type_alloc();
+   local _ctx = {};
    _ctx.Ahr_do_ret_0 = 0.
    _ctx.Ahr_do_ret_1 = 0.
    _ctx.hold_phase = 0.
@@ -197,7 +197,7 @@ function Ahr_do_type_alloc()
 end
 
 function Ahr_process_type_alloc()
-   local _ctx = Ahr_process_type_alloc();
+   local _ctx = {};
    _ctx.Ahr_process_ret_0 = 0.
    _ctx.Ahr_process_ret_1 = 0.
    _ctx.inst_1d84b = Ahr_do_type_alloc()
@@ -224,7 +224,7 @@ function Ahr_default_type_alloc(_ctx)
 end
 
 function Kick_do_type_alloc()
-   local _ctx = Kick_do_type_alloc();
+   local _ctx = {};
    _ctx.inst_1d863 = Ahr_do_type_alloc()
    _ctx.inst_20263 = Swept_process_type_alloc()
    _ctx.inst_33c63 = Tricore_process_type_alloc()
@@ -234,7 +234,7 @@ function Kick_do_type_alloc()
 end
 
 function Kick_process_type_alloc()
-   local _ctx = Kick_process_type_alloc();
+   local _ctx = {};
    _ctx.inst_16352 = Kick_do_type_alloc()
    _ctx.noise = 0.
    _ctx.odecay = 0.

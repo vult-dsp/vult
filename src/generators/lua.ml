@@ -167,6 +167,10 @@ let print_dexp (e : dexp) =
 
 let rec print_stmt s =
   match s with
+  (* if the name is _ctx, do not call the allocator*)
+  | StmtDecl (({ d = DId ("_ctx", _); t = Struct _; _ } as lhs), None) ->
+    let lhs = print_dexp lhs in
+    [%pla {|local <#lhs#> = {};|}]
   (* needs allocation *)
   | StmtDecl (({ t = Struct { path; _ }; _ } as lhs), None) ->
     let lhs = print_dexp lhs in

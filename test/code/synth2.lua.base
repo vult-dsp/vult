@@ -21,50 +21,50 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
 function Synth2_change_type_alloc()
-   local _ctx = Synth2_change_type_alloc();
+   local _ctx = {};
    _ctx.pre_x = 0.
    return _ctx
 end
 
 function Synth2_bchange_type_alloc()
-   local _ctx = Synth2_bchange_type_alloc();
+   local _ctx = {};
    _ctx.pre_x = false
    return _ctx
 end
 
 function Synth2_edge_type_alloc()
-   local _ctx = Synth2_edge_type_alloc();
+   local _ctx = {};
    _ctx.pre_x = false
    return _ctx
 end
 
 function Synth2_each_type_alloc()
-   local _ctx = Synth2_each_type_alloc();
+   local _ctx = {};
    _ctx.count = 0
    return _ctx
 end
 
 function Synth2_dcblock_type_alloc()
-   local _ctx = Synth2_dcblock_type_alloc();
+   local _ctx = {};
    _ctx.x1 = 0.
    _ctx.y1 = 0.
    return _ctx
 end
 
 function Synth2_smooth_type_alloc()
-   local _ctx = Synth2_smooth_type_alloc();
+   local _ctx = {};
    _ctx.x = 0.
    return _ctx
 end
 
 function Synth2_lpfilter_type_alloc()
-   local _ctx = Synth2_lpfilter_type_alloc();
+   local _ctx = {};
    _ctx.pre_x = 0.
    return _ctx
 end
 
 function Synth2_osc_type_alloc()
-   local _ctx = Synth2_osc_type_alloc();
+   local _ctx = {};
    _ctx.inst_177e5 = Synth2_change_type_alloc()
    _ctx.inst_24fe5 = Synth2_dcblock_type_alloc()
    _ctx.m = 0.
@@ -78,14 +78,14 @@ function Synth2_osc_type_alloc()
 end
 
 function Synth2_svf_step_type_alloc()
-   local _ctx = Synth2_svf_step_type_alloc();
+   local _ctx = {};
    _ctx.dband = 0.
    _ctx.dlow = 0.
    return _ctx
 end
 
 function Synth2_svf_type_alloc()
-   local _ctx = Synth2_svf_type_alloc();
+   local _ctx = {};
    _ctx.g = 0.
    _ctx.inst_177a7 = Synth2_change_type_alloc()
    _ctx.step = Synth2_svf_step_type_alloc()
@@ -93,7 +93,7 @@ function Synth2_svf_type_alloc()
 end
 
 function Synth2_lfo_type_alloc()
-   local _ctx = Synth2_lfo_type_alloc();
+   local _ctx = {};
    _ctx.inst_1445f = Synth2_edge_type_alloc()
    _ctx.inst_2cb5f = Synth2_each_type_alloc()
    _ctx.phase = 0.
@@ -101,7 +101,7 @@ function Synth2_lfo_type_alloc()
 end
 
 function Synth2_mono_noteOn_type_alloc()
-   local _ctx = Synth2_mono_noteOn_type_alloc();
+   local _ctx = {};
    _ctx.count = 0
    local i_0 = 0
    local temp = {0, 0, 0, 0}
@@ -136,7 +136,7 @@ function Synth2_default(_ctx)
 end
 
 function Synth2_process_type_alloc()
-   local _ctx = Synth2_process_type_alloc();
+   local _ctx = {};
    _ctx.amp_s = 0.
    _ctx.cut = 0.
    _ctx.inst_15fb7 = Synth2_lfo_type_alloc()
