@@ -1,0 +1,8 @@
+// Vult only had one kind of loops 'while', but now you can use 'iter'
+fun test() {
+  val total = 0;
+  // the variable 'i' wil iterate from 0 to 2 increasing by 1
+  iter(i, 2) {
+    total = total + i;
+  }
+}

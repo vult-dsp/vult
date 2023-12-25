@@ -1,0 +1,29 @@
+// Functions with memory declare an implicit type that is postfix with '_type'
+// For example, the following function 'counter' has a type called 'counter_type'.
+fun counter() {
+  mem total = total + 1.0;
+  return total;
+}
+
+fun test1() {
+  // In order to create an array of instances it is necessary to declare it as 'mem'.
+  // As mentioned before, the type name is 'counter_type'
+  mem instances : array(counter_type, 4);
+
+  val sum = 0.0;
+  iter(i, size(instances)) {
+    // To call the function on a specific instance, the label can contain an index.
+    // e.g. instances[i]:counter()
+    sum = sum + instances[i]:counter();
+  }
+  return sum;
+}
+
+fun test2() {
+  // Calls to active functions (with mem) create an implicit declaration
+  _ = case1:counter();
+
+  // The declaration can be explicit as well
+  mem case2 : counter_type;
+  _ = case2:counter();
+}
