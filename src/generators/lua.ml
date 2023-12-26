@@ -24,6 +24,11 @@
 
 open Code
 
+(* TODO:
+   - Runtime cleanup: generate only the required functions
+   - String support: conversions and concatenation
+*)
+
 let runtime =
   [%pla
     {|
@@ -96,7 +101,7 @@ let rec print_exp e =
   | Int n -> Pla.int n
   | Real n -> Pla.string (Util.Vfloat.to_string n)
   | Fixed n ->
-    let n = Common.toFixed n in
+    let n = Common.toFixed ~comment:false n in
     Pla.string n
   | String s -> Pla.string_quoted s
   | Id id -> Pla.string (fix_id id)

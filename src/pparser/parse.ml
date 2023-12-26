@@ -98,6 +98,7 @@ let getExpLbp (token : 'kind token) : int =
   | OP, ">>" -> 40
   | OP, "<<" -> 40
   | OP, "+" -> 50
+  | OP, "^" -> 50
   | OP, "|" -> 50
   | OP, "-" -> 50
   | OP, "&" -> 60

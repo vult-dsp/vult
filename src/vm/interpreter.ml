@@ -213,6 +213,10 @@ module MakeVM (VM : VM) = struct
       | Real, [ Real n ] -> vm, Real n
       | Real, [ Bool n ] -> vm, Real (if n then 1.0 else 0.0)
       | Real, _ -> failwith "invalid arguments to 'real' function"
+      | String, [ Int n ] -> vm, String (string_of_int n)
+      | String, [ Real n ] -> vm, String (string_of_float n)
+      | String, [ Bool n ] -> vm, String (if n then "true" else "false")
+      | String, _ -> failwith "invalid arguments to 'string' function"
       | Fixed, [ Int n ] -> vm, Real (float_of_int n)
       | Fixed, [ Real n ] -> vm, Real n
       | Fixed, [ Bool n ] -> vm, Real (if n then 1.0 else 0.0)

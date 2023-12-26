@@ -189,6 +189,7 @@ rule next_token source = parse
   | '>'         { makeToken source GT lexbuf}
   | '|'         { makeToken source OP lexbuf }
   | '&'         { makeToken source OP lexbuf }
+  | '^'         { makeToken source OP lexbuf }
   | [ '+' '-' ] { makeToken source OP lexbuf }
   | [ '*' '/' '%' ] { makeToken source OP lexbuf }
   | int         { makeToken source INT lexbuf }

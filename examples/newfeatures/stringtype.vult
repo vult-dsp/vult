@@ -1,0 +1,18 @@
+
+// There is basic support for string types. In C++ they are turned into std::string
+fun test1() {
+  val str1 = "first";
+  val str2 = "second";
+  // Strings can be concatenated using the '+' operator
+  val str3 = str1 + ", " + str2;
+  return str3;
+}
+
+fun test2() {
+  // We can convert the numeric types to string using the function 'string()'
+  val str1 = string(1);
+  val str2 = string(1.0);
+  val str3 = string(1.0x);
+  val str4 = string(true);
+}
+

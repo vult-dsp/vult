@@ -68,7 +68,7 @@ let rec print_type_ (t : type_) =
   | Int -> Pla.string "int32_t"
   | Real -> Pla.string "float"
   | Bool -> Pla.string "bool"
-  | String -> Pla.string "char*"
+  | String -> Pla.string "std::string"
   | Fixed -> Pla.string "fix16_t"
   | Tuple l ->
     let l = Pla.map_sep Pla.commaspace print_type_ l in

@@ -43,6 +43,10 @@ module C = struct
     | "real", [ Fixed ], Fixed -> Some "fix_to_fix"
     | "fix16", [ Real ], _ -> Some "float_to_fix"
     | "fix16", [ Int ], _ -> Some "int_to_fix"
+    | "string", [ Int ], _ -> Some "std::to_string"
+    | "string", [ Real ], _ -> Some "std::to_string"
+    | "string", [ Fixed ], _ -> Some "fix_to_string"
+    | "string", [ Bool ], _ -> Some "bool_to_string"
     (* get *)
     | "get", [ Array (_, Real); Int ], Real -> Some "float_get"
     | "get", [ Array (_, Fixed); Int ], Fixed -> Some "fix_get"

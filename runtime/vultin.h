@@ -36,6 +36,7 @@ NOTE: The code for the fixed-point operations is based on the project:
 #include <stdlib.h>
 #include <array>
 #include <tuple>
+#include <string>
 
 #ifdef _MSC_VER
 #define static_inline static __inline
@@ -53,6 +54,17 @@ static_inline float fix_to_float(fix16_t a) { return (float)a / 0x00010000; }
 static_inline fix16_t float_to_fix(float a) {
    float temp = a * 0x00010000;
    return (fix16_t)temp;
+}
+
+static_inline std::string fix_to_string(fix16_t a) {
+  return std::to_string(fix_to_float(a));
+}
+
+static_inline std::string bool_to_string(bool a) {
+  if (a)
+    return std::string("true");
+  else
+    return std::string("false");
 }
 
 static_inline fix16_t short_to_fix(int16_t x) {

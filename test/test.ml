@@ -196,6 +196,7 @@ let all_files =
   ; "newfeatures/genericarrays.vult"
   ; "newfeatures/instancearray.vult"
   ; "newfeatures/iterloop.vult"
+  ; "newfeatures/stringtype.vult"
   ; "../test/compile/defined_types.vult"
   ; "../test/compile/array_defined_type.vult"
   ; "../test/compile/array_return.vult"

@@ -515,6 +515,8 @@ module Canonize = struct
     Mapper.make
     @@ fun _env state e ->
     match e with
+    (* do not modify string addition *)
+    | { e = EOp (OpAdd, { t = { t = TString; _ }; _ }, _); _ } -> state, e
     (* (e1 op e2) op n3 -> (e1 op (e2 op n3)) *)
     | { e = EOp (op1, { e = EOp (op2, e1, e2); _ }, n3); _ } when (op1 = OpAdd || op1 = OpMul) && op1 = op2 ->
       let loc2 = Util.Loc.merge e2.loc n3.loc in

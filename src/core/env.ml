@@ -158,8 +158,9 @@ let builtin_functions =
     ; "int", C.num_int
     ; "real", C.num_bool_real
     ; "fix16", C.num_fix16
+    ; "string", C.num_string
     ; "u-", C.num_num
-    ; "+", C.num_num_num
+    ; "+", C.numstr_numstr_numstr
     ; "-", C.num_num_num
     ; "*", C.num_num_num
     ; "/", C.num_num_num

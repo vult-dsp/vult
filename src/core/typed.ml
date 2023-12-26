@@ -367,6 +367,7 @@ module C = struct
   let real ~loc = makeId loc "real"
   let fix16 ~loc = makeId loc "fix16"
   let num loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc ]; loc }
+  let numstr loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; string ~loc ]; loc }
   let num_bool loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc }
   let size ?(loc = Loc.default) n = { tx = TESize n; loc }
 
@@ -444,6 +445,11 @@ module C = struct
     [ num loc ], fix16 ~loc
 
 
+  let num_string () : fun_type =
+    let loc = Loc.default in
+    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc; string ~loc ]; loc } ], string ~loc
+
+
   let num_num () : fun_type =
     let loc = Loc.default in
     let t = num loc in
@@ -453,6 +459,12 @@ module C = struct
   let num_num_num () : fun_type =
     let loc = Loc.default in
     let t = num loc in
+    [ t; t ], t
+
+
+  let numstr_numstr_numstr () : fun_type =
+    let loc = Loc.default in
+    let t = numstr loc in
     [ t; t ], t
 
 
@@ -494,4 +506,10 @@ module C = struct
   let unit_real () : fun_type =
     let loc = Loc.default in
     [], real ~loc
+
+
+  let string_string () : fun_type =
+    let loc = Loc.default in
+    let t = string ~loc in
+    [ t; t ], t
 end

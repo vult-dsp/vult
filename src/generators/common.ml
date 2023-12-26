@@ -41,7 +41,7 @@ let cast ~(from : Code.type_) ~(to_ : Code.type_) (value : Pla.t) =
   | _ -> failwith "Unknown cast"
 
 
-let toFixed (n : float) : string =
+let toFixed ?(comment = true) (n : float) : string =
   let () =
     if n > 32767.0 || n < -32768.0 then (
       let msg = Printf.sprintf "This value '%f' cannot be represented with fixed-point numbers" n in
@@ -49,7 +49,10 @@ let toFixed (n : float) : string =
   in
   if n < 0.0 then (
     let value = Int32.of_float (-.n *. float_of_int 0x10000) in
-    Printf.sprintf "-0x%lx /* %f */" value n)
+    if comment then Printf.sprintf "-0x%lx /* %f */" value n else Printf.sprintf "-0x%lx" value)
   else (
     let value = Int32.of_float (n *. float_of_int 0x10000) in
-    Printf.sprintf "0x%lx /* %f */" value n)
+    if comment then
+      Printf.sprintf "0x%lx /* %f */" value n
+    else
+      Printf.sprintf "0x%lx" value)
