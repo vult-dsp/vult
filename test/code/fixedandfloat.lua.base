@@ -40,3 +40,63 @@ function Fixedandfloat_test1()
    to_bool = false
 end
 
+local Fixedandfloat_take_fix_return_fixed_c0 = {0x0, -0xf1, -0x47f, -0xbb0, -0x168e, -0x23e2, -0x3111, -0x3a25, -0x39f5, -0x2a7b, -0x547, 0x3be7, 0x9e83, 0x1267e, 0x1d5a2, 0x2aafd, 0x3a26c, 0x4b44e, 0x5d579, 0x6f75b, 0x8086e, 0x8f4dd, 0x9a774, 0xa0abc, 0xa0a3e, 0x993e5, 0x89961, 0x7117c, 0x4f949, 0x2551e, -0xcec1, -0x45dda}
+local Fixedandfloat_take_fix_return_fixed_c1 = {0x64d99, 0x68a1e, 0x6fc20, 0x79601, 0x8446e, 0x8efa3, 0x97cfb, 0x9d0ba, 0x9cffe, 0x962aa, 0x87546, 0x6faa6, 0x4ed44, 0x25040, -0xd019, -0x45e45, -0x83bfe, -0xc433e, -0x1047ae, -0x14188e, -0x1782ec, -0x1a541d, -0x1c5c5b, -0x1d715b, -0x1d70ce, -0x1c4295, -0x19daa2, -0x163a54, -0x117144, -0xb9d75, -0x4ead1, 0x26e02}
+local Fixedandfloat_take_fix_return_fixed_c2 = {-0x1eedc, -0x5b992, -0x94bf6, -0xc82e5, -0xf3ec1, -0x1164a4, -0x12df6c, -0x13a08c, -0x13a098, -0x12df8f, -0x1164dc, -0xf3f0d, -0xc8342, -0x94c5f, -0x5ba04, -0x1ef53, 0x1ee65, 0x5b91f, 0x94b8c, 0xc8289, 0xf3e75, 0x11646b, 0x12df49, 0x13a080, 0x13a0a4, 0x12dfb2, 0x116514, 0xf3f59, 0xc839f, 0x94cc9, 0x5ba77, 0x1efcb}
+function Fixedandfloat_take_fix_return_fixed_raw_c0(index)
+   return Fixedandfloat_take_fix_return_fixed_c0[index + 1]
+end
+
+function Fixedandfloat_take_fix_return_fixed_raw_c1(index)
+   return Fixedandfloat_take_fix_return_fixed_c1[index + 1]
+end
+
+function Fixedandfloat_take_fix_return_fixed_raw_c2(index)
+   return Fixedandfloat_take_fix_return_fixed_c2[index + 1]
+end
+
+function Fixedandfloat_take_fix_return_fixed(x)
+   local index = int_clip(fix_to_int((x * 2031616)), 0, 31)
+   return (Fixedandfloat_take_fix_return_fixed_c0[index + 1] + (x * (Fixedandfloat_take_fix_return_fixed_c1[index + 1] + (Fixedandfloat_take_fix_return_fixed_c2[index + 1] * x))))
+end
+
+local Fixedandfloat_take_fix_return_real_c0 = {0., -0.0036848, -0.0175663, -0.045665, -0.0881187, -0.1401743, -0.1916782, -0.2271405, -0.2264098, -0.1659452, -0.0206264, 0.2340019, 0.6191964, 1.1503668, 1.83451, 2.6679321, 3.6344605, 4.7043283, 5.8338855, 6.9662465, 8.0329317, 8.9565032, 9.6541271, 10.0419383, 10.0400149, 9.5777237, 8.5991515, 7.0683089, 4.9737809, 2.3325034, -0.8076331, -4.3666079}
+local Fixedandfloat_take_fix_return_real_c1 = {6.3031166, 6.5395271, 6.9848715, 7.585959, 8.2673152, 8.9360948, 9.4882113, 9.8153485, 9.8124705, 9.3854104, 8.458112, 6.9791059, 4.9268337, 2.3134899, -0.8128859, -4.3682413, -8.2343546, -12.2626708, -16.2800095, -20.0959264, -23.5114174, -26.3285785, -28.3607716, -29.4428089, -29.4406473, -28.2600925, -25.8540412, -22.227845, -17.4424512, -11.615074, -4.9172523, 2.4297291}
+local Fixedandfloat_take_fix_return_real_c2 = {-1.9330565, -5.7248876, -9.2967275, -12.5113204, -15.2451384, -17.3931289, -18.8727504, -19.6271453, -19.6273244, -18.8732808, -17.3939902, -15.2462977, -12.5127329, -9.298339, -5.7266363, -1.934875, 1.931238, 5.7231391, 9.295116, 12.5099078, 15.2439792, 17.3922674, 18.8722199, 19.6269661, 19.6275035, 18.8738112, 17.3948516, 15.2474568, 12.5141454, 9.2999506, 5.7283849, 1.9366936}
+function Fixedandfloat_take_fix_return_real_raw_c0(index)
+   return Fixedandfloat_take_fix_return_real_c0[index + 1]
+end
+
+function Fixedandfloat_take_fix_return_real_raw_c1(index)
+   return Fixedandfloat_take_fix_return_real_c1[index + 1]
+end
+
+function Fixedandfloat_take_fix_return_real_raw_c2(index)
+   return Fixedandfloat_take_fix_return_real_c2[index + 1]
+end
+
+function Fixedandfloat_take_fix_return_real(x)
+   local index = int_clip(fix_to_int((x * 2031616)), 0, 31)
+   return (Fixedandfloat_take_fix_return_real_c0[index + 1] + (fix_to_float(x) * (Fixedandfloat_take_fix_return_real_c1[index + 1] + (Fixedandfloat_take_fix_return_real_c2[index + 1] * fix_to_float(x)))))
+end
+
+local Fixedandfloat_take_real_return_fixed_c0 = {0x0, -0xf1, -0x47f, -0xbb0, -0x168e, -0x23e2, -0x3111, -0x3a25, -0x39f5, -0x2a7b, -0x547, 0x3be7, 0x9e83, 0x1267e, 0x1d5a2, 0x2aafd, 0x3a26c, 0x4b44e, 0x5d579, 0x6f75b, 0x8086e, 0x8f4dd, 0x9a774, 0xa0abc, 0xa0a3e, 0x993e5, 0x89961, 0x7117c, 0x4f949, 0x2551e, -0xcec1, -0x45dda}
+local Fixedandfloat_take_real_return_fixed_c1 = {0x64d99, 0x68a1e, 0x6fc20, 0x79601, 0x8446e, 0x8efa3, 0x97cfb, 0x9d0ba, 0x9cffe, 0x962aa, 0x87546, 0x6faa6, 0x4ed44, 0x25040, -0xd019, -0x45e45, -0x83bfe, -0xc433e, -0x1047ae, -0x14188e, -0x1782ec, -0x1a541d, -0x1c5c5b, -0x1d715b, -0x1d70ce, -0x1c4295, -0x19daa2, -0x163a54, -0x117144, -0xb9d75, -0x4ead1, 0x26e02}
+local Fixedandfloat_take_real_return_fixed_c2 = {-0x1eedc, -0x5b992, -0x94bf6, -0xc82e5, -0xf3ec1, -0x1164a4, -0x12df6c, -0x13a08c, -0x13a098, -0x12df8f, -0x1164dc, -0xf3f0d, -0xc8342, -0x94c5f, -0x5ba04, -0x1ef53, 0x1ee65, 0x5b91f, 0x94b8c, 0xc8289, 0xf3e75, 0x11646b, 0x12df49, 0x13a080, 0x13a0a4, 0x12dfb2, 0x116514, 0xf3f59, 0xc839f, 0x94cc9, 0x5ba77, 0x1efcb}
+function Fixedandfloat_take_real_return_fixed_raw_c0(index)
+   return Fixedandfloat_take_real_return_fixed_c0[index + 1]
+end
+
+function Fixedandfloat_take_real_return_fixed_raw_c1(index)
+   return Fixedandfloat_take_real_return_fixed_c1[index + 1]
+end
+
+function Fixedandfloat_take_real_return_fixed_raw_c2(index)
+   return Fixedandfloat_take_real_return_fixed_c2[index + 1]
+end
+
+function Fixedandfloat_take_real_return_fixed(x)
+   local index = int_clip(float_to_int((x * 31.)), 0, 31)
+   return (Fixedandfloat_take_real_return_fixed_c0[index + 1] + (float_to_fix(x) * (Fixedandfloat_take_real_return_fixed_c1[index + 1] + (Fixedandfloat_take_real_return_fixed_c2[index + 1] * float_to_fix(x)))))
+end
+

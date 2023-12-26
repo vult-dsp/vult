@@ -31,3 +31,20 @@ fun test1() {
 // - In targets like Lua and Js the fixed type is preserved as floating point.
 // - When generating all fixed point numbers (using the flag -real fixed) the floating point numbers
 //   are turned into fixed.
+
+
+// You can generate tables of fixed point values
+fun take_fix_return_fixed(x:fix16) : fix16 @[table(min = 0.0, max = 1.0, size = 32)] {
+  return sin(2.0x * 3.1415x * x);
+}
+
+// You can create tables that take fixed point numbers and return floating point or viceversa
+// You need to explicitly define argument and return types
+
+fun take_fix_return_real(x:fix16) : real @[table(min = 0.0, max = 1.0, size = 32)] {
+  return sin(2.0 * 3.1415 * real(x));
+}
+
+fun take_real_return_fixed(x:real) : fix16 @[table(min = 0.0, max = 1.0, size = 32)] {
+  return fix16(sin(2.0 * 3.1415 * x));
+}

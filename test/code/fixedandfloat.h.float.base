@@ -7,5 +7,56 @@
 
 void Fixedandfloat_test1();
 
+static_inline fix16_t Fixedandfloat_take_fix_return_fixed_raw_c0(int32_t index) {
+   return Fixedandfloat_take_fix_return_fixed_c0[static_cast<uint32_t>(index)];
+}
+
+static_inline fix16_t Fixedandfloat_take_fix_return_fixed_raw_c1(int32_t index) {
+   return Fixedandfloat_take_fix_return_fixed_c1[static_cast<uint32_t>(index)];
+}
+
+static_inline fix16_t Fixedandfloat_take_fix_return_fixed_raw_c2(int32_t index) {
+   return Fixedandfloat_take_fix_return_fixed_c2[static_cast<uint32_t>(index)];
+}
+
+static_inline fix16_t Fixedandfloat_take_fix_return_fixed(fix16_t x) {
+   int32_t index = int_clip(fix_to_int(fix_mul(x, 2031616)), 0, 31);
+   return Fixedandfloat_take_fix_return_fixed_c0[static_cast<uint32_t>(index)] + fix_mul(x, (Fixedandfloat_take_fix_return_fixed_c1[static_cast<uint32_t>(index)] + fix_mul(Fixedandfloat_take_fix_return_fixed_c2[static_cast<uint32_t>(index)], x)));
+}
+
+static_inline float Fixedandfloat_take_fix_return_real_raw_c0(int32_t index) {
+   return Fixedandfloat_take_fix_return_real_c0[static_cast<uint32_t>(index)];
+}
+
+static_inline float Fixedandfloat_take_fix_return_real_raw_c1(int32_t index) {
+   return Fixedandfloat_take_fix_return_real_c1[static_cast<uint32_t>(index)];
+}
+
+static_inline float Fixedandfloat_take_fix_return_real_raw_c2(int32_t index) {
+   return Fixedandfloat_take_fix_return_real_c2[static_cast<uint32_t>(index)];
+}
+
+static_inline float Fixedandfloat_take_fix_return_real(fix16_t x) {
+   int32_t index = int_clip(fix_to_int(fix_mul(x, 2031616)), 0, 31);
+   return Fixedandfloat_take_fix_return_real_c0[static_cast<uint32_t>(index)] + fix_to_float(x) * (Fixedandfloat_take_fix_return_real_c1[static_cast<uint32_t>(index)] + Fixedandfloat_take_fix_return_real_c2[static_cast<uint32_t>(index)] * fix_to_float(x));
+}
+
+static_inline fix16_t Fixedandfloat_take_real_return_fixed_raw_c0(int32_t index) {
+   return Fixedandfloat_take_real_return_fixed_c0[static_cast<uint32_t>(index)];
+}
+
+static_inline fix16_t Fixedandfloat_take_real_return_fixed_raw_c1(int32_t index) {
+   return Fixedandfloat_take_real_return_fixed_c1[static_cast<uint32_t>(index)];
+}
+
+static_inline fix16_t Fixedandfloat_take_real_return_fixed_raw_c2(int32_t index) {
+   return Fixedandfloat_take_real_return_fixed_c2[static_cast<uint32_t>(index)];
+}
+
+static_inline fix16_t Fixedandfloat_take_real_return_fixed(float x) {
+   int32_t index = int_clip(float_to_int(x * 31.0f), 0, 31);
+   return Fixedandfloat_take_real_return_fixed_c0[static_cast<uint32_t>(index)] + fix_mul(float_to_fix(x), (Fixedandfloat_take_real_return_fixed_c1[static_cast<uint32_t>(index)] + fix_mul(Fixedandfloat_take_real_return_fixed_c2[static_cast<uint32_t>(index)], float_to_fix(x))));
+}
+
 
 #endif // FIXEDANDFLOAT_H
