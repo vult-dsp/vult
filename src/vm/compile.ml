@@ -29,6 +29,7 @@ type builtin =
   | Random
   | IRandom
   | String
+  | Bool
 
 type f =
   | F of int
@@ -67,6 +68,7 @@ let functions =
   ; "eps", B Eps
   ; "fix16", B Fixed
   ; "string", B String
+  ; "bool", B Bool
   ]
   |> Map.of_list
 
@@ -411,6 +413,7 @@ let builtin b =
   | IRandom -> "irandom"
   | Eps -> "eps"
   | String -> "string"
+  | Bool -> "bool"
 
 
 let f f =

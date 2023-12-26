@@ -425,27 +425,27 @@ module C = struct
     [ t; t; t ], t
 
 
-  let num_int () : fun_type =
+  let valid_int () : fun_type =
     let loc = Loc.default in
-    [ num loc ], int ~loc
+    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc } ], int ~loc
 
 
-  let num_real () : fun_type =
+  let valid_real () : fun_type =
     let loc = Loc.default in
-    [ num loc ], real ~loc
+    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc } ], real ~loc
 
 
-  let num_bool_real () : fun_type =
+  let valid_fix16 () : fun_type =
     let loc = Loc.default in
-    [ num_bool loc ], real ~loc
+    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc } ], fix16 ~loc
 
 
-  let num_fix16 () : fun_type =
+  let valid_bool () : fun_type =
     let loc = Loc.default in
-    [ num loc ], fix16 ~loc
+    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc } ], bool ~loc
 
 
-  let num_string () : fun_type =
+  let valid_string () : fun_type =
     let loc = Loc.default in
     [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc; string ~loc ]; loc } ], string ~loc
 

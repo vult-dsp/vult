@@ -1,0 +1,33 @@
+// You can combine fixed point and real numbers in the same code
+
+fun test1() {
+  val fixed_value = 0.0x; // fixed point constants have the 'x' ending
+  val real_value = 0.0; // real numebers (floating point) are written normally
+  val int_value = 0;
+  val bool_value = false;
+  // When performing operations with fixed numbers all the values need to be fixed
+  val result = fixed_value + fix16(real_value) + 0.0x;
+
+  // You can convert back and forth using the builtin functions
+  val from_int = fix16(int_value);
+  val from_real = fix16(real_value);
+  val from_bool = fix16(bool_value);
+
+  val to_int = int(fixed_value);
+  val to_real = real(fixed_value);
+  val to_bool = bool(fixed_value);
+
+  // the following conversions are perfomed at compile time
+  from_int = fix16(0);
+  from_real = fix16(0.0);
+  from_bool = fix16(false);
+
+  to_int = int(0.0x);
+  to_real = real(0.0x);
+  to_bool = bool(0.0x);
+}
+
+// NOTES:
+// - In targets like Lua and Js the fixed type is preserved as floating point.
+// - When generating all fixed point numbers (using the flag -real fixed) the floating point numbers
+//   are turned into fixed.

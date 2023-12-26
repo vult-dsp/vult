@@ -197,6 +197,7 @@ let all_files =
   ; "newfeatures/instancearray.vult"
   ; "newfeatures/iterloop.vult"
   ; "newfeatures/stringtype.vult"
+  ; "newfeatures/fixedandfloat.vult"
   ; "../test/compile/defined_types.vult"
   ; "../test/compile/array_defined_type.vult"
   ; "../test/compile/array_return.vult"

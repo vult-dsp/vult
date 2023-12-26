@@ -209,6 +209,7 @@ module MakeVM (VM : VM) = struct
       | Random, _ -> failwith "invalid arguments to 'random' function"
       | IRandom, [] -> vm, Int (Random.int Int.max_int)
       | IRandom, _ -> failwith "invalid arguments to 'irandom' function"
+      (* casting of numbers *)
       | Real, [ Int n ] -> vm, Real (float_of_int n)
       | Real, [ Real n ] -> vm, Real n
       | Real, [ Bool n ] -> vm, Real (if n then 1.0 else 0.0)
@@ -225,6 +226,11 @@ module MakeVM (VM : VM) = struct
       | Int, [ Real n ] -> vm, Int (int_of_float n)
       | Int, [ Bool n ] -> vm, Int (if n then 1 else 0)
       | Int, _ -> failwith "invalid arguments to 'int' function"
+      | Bool, [ Int n ] -> vm, Bool (n <> 0)
+      | Bool, [ Real n ] -> vm, Bool (n <> 0.0)
+      | Bool, [ Bool n ] -> vm, Bool n
+      | Bool, _ -> failwith "invalid arguments to 'bool' function"
+      (* trigonometric *)
       | Exp, [ Real x ] -> vm, Real (exp x)
       | Exp, _ -> failwith "invalid arguments to 'exp' function"
       | Sin, [ Real x ] -> vm, Real (sin x)
@@ -241,6 +247,7 @@ module MakeVM (VM : VM) = struct
       | Tanh, _ -> failwith "invalid arguments to 'tanh' function"
       | Sqrt, [ Real x ] -> vm, Real (sqrt x)
       | Sqrt, _ -> failwith "invalid arguments to 'sqrt' function"
+      (* other function *)
       | Abs, [ Real x ] -> vm, Real (abs_float x)
       | Abs, [ Int x ] -> vm, Int (abs x)
       | Abs, _ -> failwith "invalid arguments to 'abs' function"
