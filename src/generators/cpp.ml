@@ -253,7 +253,7 @@ let print_decl (n, (t : type_)) =
     let sub = print_type_ sub in
     [%pla {|std::array<<#sub#>, <#dim#i>> &<#n#s>|}]
   | Array (None, _) -> failwith "Cpp.print_decl: array without dimensions"
-  | Struct { path; _ } -> [%pla {|<#path#s>& <#n#s>|}]
+  | Struct { path; _ } -> [%pla {|<#path#s> &<#n#s>|}]
   | _ ->
     let t = print_type_ t in
     [%pla {|<#t#> <#n#s>|}]
@@ -294,12 +294,19 @@ let rec print_stmt s =
   | StmtDecl ({ d = DId (n, _); t; _ }, None) ->
     let t = print_decl_alloc (n, t) in
     [%pla {|<#t#>;|}]
+  (* Special case when initializing an array. Here we declare the variable and not a reference *)
   | StmtDecl ({ d = DId (n, _); t; _ }, Some ({ e = Array _; _ } as rhs)) ->
     let t = print_decl_alloc (n, t) in
     let rhs = print_exp 0 rhs in
     [%pla {|<#t#> = <#rhs#>;|}]
-  | StmtDecl ({ d = DId (n, _); t; _ }, Some rhs) ->
+  (* Special case for structures. When the structure is the result of a function call we need to declare it *)
+  | StmtDecl ({ d = DId (n, _); t = Struct _ as t; _ }, Some ({ e = Call _; _ } as rhs)) ->
     let t = print_decl_alloc (n, t) in
+    let rhs = print_exp 0 rhs in
+    [%pla {|<#t#> = <#rhs#>;|}]
+  (* For other case we use refences in the case of structures and arrays *)
+  | StmtDecl ({ d = DId (n, _); t; _ }, Some rhs) ->
+    let t = print_decl (n, t) in
     let rhs = print_exp 0 rhs in
     [%pla {|<#t#> = <#rhs#>;|}]
   | StmtBind ({ l = LWild; _ }, rhs) ->
