@@ -3,16 +3,16 @@
 #define STRINGTYPE_H
 
 #include "vultin.h"
-#include "stringtype.tables.h"
+#include "StringType.tables.h"
 
-static_inline std::string Stringtype_test1() {
+static_inline std::string StringType_test1() {
    std::string str1 = "first";
    std::string str2 = "second";
    std::string str3 = str1 + ", " + str2;
    return str3;
 }
 
-static_inline void Stringtype_test2() {
+static_inline void StringType_test2() {
    std::string str1 = std::to_string(1);
    std::string str2 = std::to_string(1.0f);
    std::string str3 = fix_to_string(0x10000 /* 1.000000 */);

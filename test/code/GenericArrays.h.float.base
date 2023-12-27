@@ -3,10 +3,10 @@
 #define GENERICARRAYS_H
 
 #include "vultin.h"
-#include "genericarrays.tables.h"
+#include "GenericArrays.tables.h"
 
 template<std::size_t SIZE_0>
-static_inline float Genericarrays_sum(std::array<float, SIZE_0>& data) {
+static_inline float GenericArrays_sum(std::array<float, SIZE_0>& data) {
    float total = 0.0f;
    int32_t i = 0;
    while (i < data.size()) {
@@ -16,11 +16,11 @@ static_inline float Genericarrays_sum(std::array<float, SIZE_0>& data) {
    return total;
 }
 
-static_inline void Genericarrays_test1() {
+static_inline void GenericArrays_test1() {
    std::array<float, 3> data1 = { 1.0f, 2.0f, 3.0f };
    std::array<float, 4> data2 = { 1.0f, 2.0f, 3.0f, 4.0f };
-   float result1 = Genericarrays_sum(data1);
-   float result2 = Genericarrays_sum(data2);
+   float result1 = GenericArrays_sum(data1);
+   float result2 = GenericArrays_sum(data2);
 }
 
 

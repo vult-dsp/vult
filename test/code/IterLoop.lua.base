@@ -20,22 +20,14 @@ function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
-function Genericarrays_sum(data)
-   local total = 0.
+function IterLoop_test()
+   local total = 0
    local i = 0
-   while (i < size(data)) do
+   while (i < 2) do
       do
-         total = (total + data[i + 1])
+         total = (i + total)
          i = (1 + i)
       end
    end
-   return total
-end
-
-function Genericarrays_test1()
-   local data1 = {1., 2., 3.}
-   local data2 = {1., 2., 3., 4.}
-   local result1 = Genericarrays_sum(data1)
-   local result2 = Genericarrays_sum(data2)
 end
 

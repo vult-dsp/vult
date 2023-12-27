@@ -20,19 +20,19 @@ function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
-function Instancearray_counter_type_alloc()
+function InstanceArray_counter_type_alloc()
    local _ctx = {};
    _ctx.total = 0.
    return _ctx
 end
 
-function Instancearray_test1_type_alloc()
+function InstanceArray_test1_type_alloc()
    local i_0 = 0
    local temp
    local _ctx = {};
    while (i_0 < 4) do
       do
-         temp[i_0 + 1] = Instancearray_counter_type_alloc()
+         temp[i_0 + 1] = InstanceArray_counter_type_alloc()
          i_0 = (1 + i_0)
       end
    end
@@ -40,32 +40,32 @@ function Instancearray_test1_type_alloc()
    return _ctx
 end
 
-function Instancearray_test2_type_alloc()
+function InstanceArray_test2_type_alloc()
    local _ctx = {};
-   _ctx.case1 = Instancearray_counter_type_alloc()
-   _ctx.case2 = Instancearray_counter_type_alloc()
+   _ctx.case1 = InstanceArray_counter_type_alloc()
+   _ctx.case2 = InstanceArray_counter_type_alloc()
    return _ctx
 end
 
-function Instancearray_counter(_ctx)
+function InstanceArray_counter(_ctx)
    _ctx.total = (1. + _ctx.total)
    return _ctx.total
 end
 
-function Instancearray_test1(_ctx)
+function InstanceArray_test1(_ctx)
    local sum = 0.
    local i = 0
    while (i < 4) do
       do
-         sum = (sum + Instancearray_counter(_ctx.instances[i + 1]))
+         sum = (sum + InstanceArray_counter(_ctx.instances[i + 1]))
          i = (1 + i)
       end
    end
    return sum
 end
 
-function Instancearray_test2(_ctx)
-   Instancearray_counter(_ctx.case1)
-   Instancearray_counter(_ctx.case2)
+function InstanceArray_test2(_ctx)
+   InstanceArray_counter(_ctx.case1)
+   InstanceArray_counter(_ctx.case2)
 end
 

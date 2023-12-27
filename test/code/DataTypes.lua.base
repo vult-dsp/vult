@@ -20,14 +20,41 @@ function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
-function Iterloop_test()
-   local total = 0
-   local i = 0
-   while (i < 2) do
-      do
-         total = (i + total)
-         i = (1 + i)
-      end
-   end
+function DataTypes_point_alloc()
+   local _ctx = {};
+   _ctx.x = 0.
+   _ctx.y = 0.
+   return _ctx
+end
+
+function DataTypes_test2_type_alloc()
+   local _ctx = {};
+   _ctx.p2 = DataTypes_point_alloc()
+   _ctx.result = DataTypes_point_alloc()
+   return _ctx
+end
+
+function DataTypes_addPoint1(p1, p2)
+   local p3 = DataTypes_point_alloc();
+   p3.x = (p1.x + p2.x)
+   p3.y = (p1.y + p2.y)
+   return p3
+end
+
+function DataTypes_addPoint2(p1, p2, result)
+   result.x = (p1.x + p2.x)
+   result.y = (p1.y + p2.y)
+end
+
+function DataTypes_test1()
+   local p1 = DataTypes_point_alloc();
+   local p2 = DataTypes_point_alloc();
+   local result = DataTypes_addPoint1(p1, p2)
+   DataTypes_addPoint2(p1, p2, result)
+end
+
+function DataTypes_test2(_ctx)
+   local p1 = DataTypes_point_alloc();
+   _ctx.result = DataTypes_addPoint1(p1, _ctx.p2)
 end
 
