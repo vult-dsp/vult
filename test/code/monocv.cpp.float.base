@@ -86,7 +86,7 @@ void Monocv_noteOn(Monocv_process_type& _ctx, int32_t note, int32_t velocity, in
    if (_ctx.channel_in == channel) {
       if (velocity > 0) {
          _ctx.active_note = Monocv_mono_noteOn(_ctx.notes, note);
-         _ctx.vel = 0.0078741f * int_to_float(velocity);
+         _ctx.vel = 0.00788f * int_to_float(velocity);
       }
       else {
          _ctx.active_note = Monocv_mono_noteOff(_ctx.notes, note);

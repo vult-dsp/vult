@@ -172,7 +172,7 @@ function Synth2_default_type_alloc(_ctx)
 end
 
 function Synth2_minFixed()
-   return 1.53e-05
+   return 2e-05
 end
 
 function Synth2_change(_ctx, x)
@@ -222,11 +222,11 @@ function Synth2_lpfilter(_ctx, x)
 end
 
 function Synth2_pitchToRate(d)
-   return (0.0001854 * exp((0.0577623 * d)))
+   return (0.00019 * exp((0.05777 * d)))
 end
 
 function Synth2_pulse_train(m, phase)
-   local pi_phase = (3.1415927 * phase)
+   local pi_phase = (3.1416 * phase)
    local denominator1 = sin(pi_phase)
    local tmp1 = 0.
    if Synth2_near_zero(denominator1) then
@@ -242,7 +242,7 @@ end
 
 function Synth2_osc(_ctx, pitch, pw, wave)
    local fixed_pitch = 0.
-   if (wave < 0.6666667) then
+   if (wave < 0.66667) then
       fixed_pitch = pitch
    else
       fixed_pitch = (12. + pitch)
@@ -269,10 +269,10 @@ function Synth2_osc(_ctx, pitch, pw, wave)
    _ctx.state_pulse = clip((tmp1 + ((-tmp2) + (0.9995 * _ctx.state_pulse))), -1., 1.)
    _ctx.state_saw = clip(((0.5 * ((tmp1 + (tmp2 + (-2. * _ctx.rate))) / shift05)) + (0.9995 * _ctx.state_saw)), -1., 1.)
    _ctx.state_triang = clip(((0.9995 * _ctx.state_triang) + (2. * (_ctx.state_pulse * _ctx.rate))), -1., 1.)
-   if (wave < 0.3333334) then
+   if (wave < 0.33334) then
       _ctx.output = _ctx.state_pulse
    else
-      if (wave < 0.6666667) then
+      if (wave < 0.66667) then
          _ctx.output = (2. * _ctx.state_saw)
       else
          _ctx.output = (2. * ((1. + pw) * _ctx.state_triang))
@@ -329,7 +329,7 @@ function Synth2_lfo(_ctx, f, gate)
    if (_ctx.phase > 1.) then
       _ctx.phase = (-1. + _ctx.phase)
    end
-   return (0.5 + sin((6.2831854 * _ctx.phase)))
+   return (0.5 + sin((6.28319 * _ctx.phase)))
 end
 
 function Synth2_mono_noteOn(_ctx, n)
@@ -412,7 +412,7 @@ function Synth2_noteOff(_ctx, note, channel)
 end
 
 function Synth2_controlChange(_ctx, control, value, channel)
-   local value_0_1 = (0.0078741 * real(value))
+   local value_0_1 = (0.00788 * real(value))
    local value_m1_1 = (-1. + (2. * value_0_1))
    if (control == 30) then
       _ctx.volume = value_0_1

@@ -74,6 +74,6 @@ float Tricore_process(Tricore_process_type& _ctx, float cv, float reset, float d
       out = _ctx.reset_phase;
    }
    out = out + _ctx.phase;
-   return 0.0009766f * out;
+   return 0.00098f * out;
 }
 

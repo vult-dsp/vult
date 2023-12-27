@@ -83,7 +83,7 @@ static_inline float Util_pitchToRate_1024_raw_c2(int32_t index) {
 }
 
 static_inline float Util_pitchToRate_1024(float pitch) {
-   int32_t index = int_clip(float_to_int(pitch * 0.2440945f), 0, 31);
+   int32_t index = int_clip(float_to_int(pitch * 0.2441f), 0, 31);
    return Util_pitchToRate_1024_c0[static_cast<uint32_t>(index)] + pitch * (Util_pitchToRate_1024_c1[static_cast<uint32_t>(index)] + Util_pitchToRate_1024_c2[static_cast<uint32_t>(index)] * pitch);
 }
 
@@ -100,7 +100,7 @@ static_inline float Util_cvToRate_1024_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvToRate_1024(float cv) {
-   int32_t index = int_clip(float_to_int(cv * 34.4444445f), 0, 31);
+   int32_t index = int_clip(float_to_int(cv * 34.44445f), 0, 31);
    return Util_cvToRate_1024_c0[static_cast<uint32_t>(index)] + cv * (Util_cvToRate_1024_c1[static_cast<uint32_t>(index)] + Util_cvToRate_1024_c2[static_cast<uint32_t>(index)] * cv);
 }
 
@@ -161,15 +161,15 @@ static_inline float Util_average2(Util_average2_type& _ctx, float x1) {
 }
 
 static_inline float Util_cubic_clipper(float x) {
-   if (x <= -0.6666666f) {
-      return -0.6666666f;
+   if (x <= -0.66666f) {
+      return -0.66666f;
    }
    else {
-      if (x >= 0.6666667f) {
-         return 0.6666667f;
+      if (x >= 0.66667f) {
+         return 0.66667f;
       }
       else {
-         return x + -0.3333333f * x * x * x;
+         return x + -0.33333f * x * x * x;
       }
    }
 }
@@ -187,7 +187,7 @@ static_inline float Util_pitchToRate_raw_c2(int32_t index) {
 }
 
 static_inline float Util_pitchToRate(float pitch) {
-   int32_t index = int_clip(float_to_int(pitch * 0.2440945f), 0, 31);
+   int32_t index = int_clip(float_to_int(pitch * 0.2441f), 0, 31);
    return Util_pitchToRate_c0[static_cast<uint32_t>(index)] + pitch * (Util_pitchToRate_c1[static_cast<uint32_t>(index)] + Util_pitchToRate_c2[static_cast<uint32_t>(index)] * pitch);
 }
 
@@ -204,12 +204,12 @@ static_inline float Util_cvToRate_raw_c2(int32_t index) {
 }
 
 static_inline float Util_cvToRate(float cv) {
-   int32_t index = int_clip(float_to_int(cv * 141.1111112f), 0, 127);
+   int32_t index = int_clip(float_to_int(cv * 141.11112f), 0, 127);
    return Util_cvToRate_c0[static_cast<uint32_t>(index)] + cv * (Util_cvToRate_c1[static_cast<uint32_t>(index)] + Util_cvToRate_c2[static_cast<uint32_t>(index)] * cv);
 }
 
 static_inline float Util_pitchToCv(float pitch) {
-   return -0.2f + 0.0083334f * pitch;
+   return -0.2f + 0.00834f * pitch;
 }
 
 static_inline float Util_cvToperiod_raw_c0(int32_t index) {

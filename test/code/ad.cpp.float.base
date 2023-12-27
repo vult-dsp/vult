@@ -31,6 +31,6 @@ float Ad_do(Ad_do_type& _ctx, float gate, float a, float d) {
       _ctx.rate = a_rate;
       _ctx.target = 1228.8f;
    }
-   return float_clip(0.0009766f * _ctx.out, 0.0f, 1.0f) * _ctx.scale;
+   return float_clip(0.00098f * _ctx.out, 0.0f, 1.0f) * _ctx.scale;
 }
 

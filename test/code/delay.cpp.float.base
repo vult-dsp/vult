@@ -43,7 +43,7 @@ float Delay_phasor(Delay_phasor_type& _ctx, float pitch, bool reset) {
 }
 
 float Delay_lfo(Delay_lfo_type& _ctx, float f, bool gate) {
-   float rate = 0.0002268f * f;
+   float rate = 0.00023f * f;
    if (Delay_edge(_ctx.inst_11461, gate)) {
       _ctx.phase = 0.0f;
    }
@@ -51,7 +51,7 @@ float Delay_lfo(Delay_lfo_type& _ctx, float f, bool gate) {
    if (_ctx.phase > 1.0f) {
       _ctx.phase = -1.0f + _ctx.phase;
    }
-   return -0.5f + sinf(6.2831854f * _ctx.phase);
+   return -0.5f + sinf(6.28319f * _ctx.phase);
 }
 
 float Delay_delay(Delay_delay_type& _ctx, float x, float time, float feedback) {
@@ -117,22 +117,22 @@ int32_t Delay_mono_noteOff(Delay_mono_noteOn_type& _ctx, int32_t n) {
 
 void Delay_controlChange(Delay_process_type& _ctx, int32_t control, float value, int32_t channel) {
    if (control == 30) {
-      _ctx.volume = 0.0078741f * value;
+      _ctx.volume = 0.00788f * value;
    }
    if (control == 31) {
-      _ctx.detune = 0.0078741f * value;
+      _ctx.detune = 0.00788f * value;
    }
    if (control == 32) {
-      _ctx.lfo_rate = 0.0078741f * value;
+      _ctx.lfo_rate = 0.00788f * value;
    }
    if (control == 33) {
-      _ctx.lfo_amt = -1.0f + 0.0157481f * value;
+      _ctx.lfo_amt = -1.0f + 0.01575f * value;
    }
    if (control == 34) {
-      _ctx.time = 0.0078741f * value;
+      _ctx.time = 0.00788f * value;
    }
    if (control == 35) {
-      _ctx.feedback = 0.0078741f * value;
+      _ctx.feedback = 0.00788f * value;
    }
 }
 
@@ -140,7 +140,7 @@ void Delay_default(Delay_process_type& _ctx) {
    _ctx.volume = 1.0f;
    _ctx.pitch = 45.0f;
    _ctx.detune = 0.8f;
-   _ctx.lfo_rate = 0.0700001f;
+   _ctx.lfo_rate = 0.07001f;
    _ctx.lfo_amt = -0.8f;
    _ctx.time = 0.5f;
    _ctx.feedback = 0.5f;

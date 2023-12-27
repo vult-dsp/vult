@@ -174,7 +174,7 @@ static_inline bool Delay_each(Delay_each_type& _ctx, int32_t n) {
 }
 
 static_inline float Delay_pitchToRate(float d) {
-   return 0.0001854f * expf(0.0577623f * d);
+   return 0.00019f * expf(0.05777f * d);
 }
 
 float Delay_phasor(Delay_phasor_type& _ctx, float pitch, bool reset);
@@ -187,7 +187,7 @@ static_inline float Delay_phd_osc(Delay_phd_osc_type& _ctx, float pitch, float d
    bool reset = (- phase1) + _ctx.pre_phase1 > 0.5f;
    _ctx.pre_phase1 = phase1;
    float phase2 = Delay_phasor(_ctx.inst_371c4, pitch + 32.0f * Delay_smooth(_ctx.inst_277c4, detune), reset);
-   float sine = sinf(6.2831854f * phase2);
+   float sine = sinf(6.28319f * phase2);
    return comp * sine;
 }
 

@@ -71,7 +71,7 @@ static_inline void Gates_default_type_init(Gates_default_type& _ctx) {
 }
 
 static_inline float Gates_velToCV(int32_t vel) {
-   return 0.0078741f * int_to_float(vel);
+   return 0.00788f * int_to_float(vel);
 }
 
 static_inline void Gates_gates_noteOn(Gates_gates_noteOn_type& _ctx, int32_t note, int32_t velocity) {

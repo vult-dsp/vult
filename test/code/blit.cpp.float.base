@@ -39,7 +39,7 @@ float Phase_process(Phase_process_type& _ctx, float cv, float reset) {
    else {
       _ctx.phase = _ctx.phase;
    }
-   return 0.0009766f * _ctx.phase;
+   return 0.00098f * _ctx.phase;
 }
 
 float Blit_pulse_train(Blit_pulse_train_type& _ctx, float cv, float phase) {
