@@ -1,0 +1,27 @@
+// You can create lookup tables at compile time.
+// Tables are created using the tag @[table()] to a function.
+// The functions must have a single input and output.
+// The arguments are:
+// - min: lower bound of the input
+// - max: higher bound of the input
+// - size: number of points of the table
+// - order(default = 2): polynomial order of the intepolation.
+//      Linear interpolation = 1, second order = 2
+// - bound_check(default = true): if the input is outside the bounds (min and max) the input is constrained
+//      bound_check = false, can lead to segfaults, use only in cases where you are sure the input is constrained.
+
+// Generate a second order table with bound checks
+fun sineTable1(x) @[table(min = 0.0, max = 1.0, size = 32)] {
+  return sin(2.0 * pi() * x);
+}
+
+// Generate a first order table with bound checks
+fun sineTable2(x) @[table(min = 0.0, max = 1.0, size = 32, order = 1)] {
+  return sin(2.0 * pi() * x);
+}
+
+// Tables can have fixed point types (see FixedAndFloat.vult)
+fun sineTable3(x:fix16) : fix16 @[table(min = 0.0, max = 1.0, size = 32, order = 1)] {
+  return sin(2.0x * fix16(pi()) * x);
+}
+
