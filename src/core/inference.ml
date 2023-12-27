@@ -893,14 +893,14 @@ and stmt_list env return l =
 
 let addGeneratedFunctions tags name next =
   if Ptags.has tags "wave" then (
-    let code = Pla.print [%pla {|fun <#name#s>_samples() @[placeholder] : int|}] in
+    let code = Pla.print [%pla {|fun <#name#s>_samples() : int @[placeholder]|}] in
     let def = Parse.parseFunctionSpec code in
     Some ({ def with next }, Syntax.{ s = SStmtBlock []; loc = Loc.default }))
   else if Ptags.has tags "wavetable" then (
     let empty = Syntax.{ s = SStmtBlock []; loc = Loc.default } in
-    let samples = Pla.print [%pla {|fun <#name#s>_samples() @[placeholder] : int|}] in
-    let code1 = Pla.print [%pla {|fun <#name#s>_raw_c0(i:int) @[placeholder] : real|}] in
-    let code2 = Pla.print [%pla {|fun <#name#s>_raw_c1(i:int) @[placeholder] : real|}] in
+    let samples = Pla.print [%pla {|fun <#name#s>_samples() : int @[placeholder]|}] in
+    let code1 = Pla.print [%pla {|fun <#name#s>_raw_c0(i:int) : real @[placeholder]|}] in
+    let code2 = Pla.print [%pla {|fun <#name#s>_raw_c1(i:int) : real @[placeholder]|}] in
     let samples = Parse.parseFunctionSpec samples in
     let def1 = Parse.parseFunctionSpec code1 in
     let def2 = Parse.parseFunctionSpec code2 in
@@ -943,13 +943,18 @@ let customInitializer (env : Env.in_context) tags name =
   if Ptags.has tags "init" then Env.addCustomInitFunction env name else env
 
 
-let reportReturnTypeMismatch loc (specified_ret : type_ option) (inferred_ret : type_) =
+let reportReturnTypeMismatch is_placeholder loc (specified_ret : type_ option) (inferred_ret : type_) =
   match specified_ret, inferred_ret with
   | None, { tx = Typed.TENoReturn; _ } -> unifyRaise loc (C.noreturn loc) inferred_ret
   | None, _ -> ()
   | Some t, { tx = Typed.TENoReturn; _ } ->
-    let t = Pla.print (print_type_ t) in
-    Error.raiseError ("This function is expected to have type '" ^ t ^ "' but nothing was returned.") loc
+    (* If the function is a placeholder it will not have body, then the inferred type will be unbound.
+       In this case we need to unify the specified and the inferred. *)
+    if is_placeholder then
+      unifyRaise loc t inferred_ret
+    else (
+      let t = Pla.print (print_type_ t) in
+      Error.raiseError ("This function is expected to have type '" ^ t ^ "' but nothing was returned.") loc)
   | Some t1, t2 -> unifyRaise loc t1 t2
 
 
@@ -967,7 +972,8 @@ let rec function_def (iargs : Args.args) (env : Env.in_context) ((def : Syntax.f
   let env = registerMultiReturnMem env path t def.loc in
   let env = customInitializer env def.tags path in
   let is_root = isRoot iargs path in
-  let () = reportReturnTypeMismatch def.loc specified_ret inferred_ret in
+  let is_placeholder = Ptags.has def.tags "placeholder" in
+  let () = reportReturnTypeMismatch is_placeholder def.loc specified_ret inferred_ret in
   env, ({ name = path; args; t; loc = def.loc; tags = def.tags; next; is_root }, stmt_block body)
 
 

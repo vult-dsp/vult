@@ -1,0 +1,32 @@
+// There are two ways of embedding .wav files:
+// - raw data
+// - wave tables (with interpolation)
+
+// If you just need access to the samples you can use the tag @[wave()]
+// It requires the following arguments
+// - channels: number of audio channels in the wave file, 1 for mono, 2 for stereo
+// - file: name of the file relative to the current source file
+external sineTable1(channel:int, index:int) : real @[wave(channels = 1, file = "sine.wav")];
+
+fun test1() {
+  // When embedding a wave file the compiler creates an implicit function <name>_sample() which
+  // returns the number of points in the wave file.
+  val n = sineTable1_samples();
+  iter(i, n) {
+    // We can read the samples using the external function.
+    // If the channel does not exists, 0.0 will be returned
+    _ = sineTable1(0, i);
+  }
+}
+
+// To create a second order interpolated table out of a wave file you need to provide the tag @[wavetable]
+// It requires only one argument:
+// - file: name of the file relative to the current source file
+// The file must be 1 channel only (mono file)
+external sineTable2(position:real) : real @[wavetable(file = "sine.wav")];
+
+fun test2() {
+  // The wave table must be accessed with a real number on the range of 0.0 to 1.0.
+  // If the input is outside that range, the input is clamped.
+  val result = sineTable2(0.5);
+}
