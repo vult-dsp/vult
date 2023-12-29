@@ -115,25 +115,8 @@ let getExpLbp (token : 'kind token) : int =
 let getTypeLbp (token : 'kind token) : int =
   match token.kind, token.value with
   | COMMA, _ -> 20
-  | OP, "||" -> 30
-  | OP, "&&" -> 35
-  | OP, "==" -> 40
-  | OP, "<>" -> 40
-  | OP, ">" -> 20
-  | GT, _ -> 20
-  | OP, "<" -> 20
-  | LT, _ -> 20
-  | OP, ">=" -> 40
-  | OP, "<=" -> 40
-  | OP, ">>" -> 40
-  | OP, "<<" -> 40
-  | OP, "+" -> 50
-  | OP, "|" -> 50
-  | OP, "-" -> 50
-  | OP, "&" -> 60
-  | OP, "*" -> 60
-  | OP, "/" -> 60
-  | OP, "%" -> 60
+  | GT, _ -> 21
+  | LT, _ -> 21
   | COLON, _ -> 70
   | LPAREN, _ -> 80
   | LBRACK, _ -> 80
@@ -184,7 +167,7 @@ let prattParser
 let commaSepList parser buffer =
   let rec loop acc =
     (* power of 20 avoids returning a tuple instead of a list*)
-    let e = parser 20 buffer in
+    let e = parser 21 buffer in
     match Stream.peek buffer with
     | COMMA ->
       let _ = Stream.skip buffer in

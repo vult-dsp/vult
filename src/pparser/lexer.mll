@@ -184,14 +184,13 @@ rule next_token source = parse
   | ">="        { makeToken source OP lexbuf }
   | ">>"        { makeToken source OP lexbuf }
   | "<<"        { makeToken source OP lexbuf }
-  (*| [ '<' '>' ] { makeToken source OP lexbuf }*)
-  | '<'         { makeToken source LT lexbuf}
-  | '>'         { makeToken source GT lexbuf}
   | '|'         { makeToken source OP lexbuf }
   | '&'         { makeToken source OP lexbuf }
   | '^'         { makeToken source OP lexbuf }
   | [ '+' '-' ] { makeToken source OP lexbuf }
   | [ '*' '/' '%' ] { makeToken source OP lexbuf }
+  | '<'         { makeToken source LT lexbuf }
+  | '>'         { makeToken source GT lexbuf }
   | int         { makeToken source INT lexbuf }
   | xint        { makeToken source INT lexbuf }
   | float       { makeToken source REAL lexbuf }
