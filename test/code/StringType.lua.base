@@ -34,3 +34,11 @@ function StringType_test2()
    local str4 = string(true)
 end
 
+function StringType_test3(a, b)
+   return (a + b)
+end
+
+function StringType_test4()
+   StringType_test3("first", "second")
+end
+

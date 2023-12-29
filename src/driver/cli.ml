@@ -49,7 +49,8 @@ let showResult (args : args) (output : output) =
   | CheckOk -> ()
   | Errors errors ->
     let error_strings = Error.reportErrors errors in
-    prerr_endline error_strings
+    prerr_endline error_strings;
+    exit 1
 
 
 let generateCode args (stmts, vm, acc) =

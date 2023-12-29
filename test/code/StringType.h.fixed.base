@@ -19,5 +19,13 @@ static_inline void StringType_test2() {
    std::string str4 = bool_to_string(true);
 }
 
+static_inline std::string StringType_test3(std::string a, std::string b) {
+   return a + b;
+}
+
+static_inline void StringType_test4() {
+   StringType_test3("first", "second");
+}
+
 
 #endif // STRINGTYPE_H
