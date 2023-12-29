@@ -1153,3 +1153,32 @@ module Mapper = struct
     in
     apply mapper.stmts ocontext state odata
 end
+
+module ReaplaceId = struct
+  module StringMap = CCMap.Make (String)
+
+  let exp =
+    Mapper.make (fun context state (e : exp) ->
+      match e with
+      | { e = SEId id; _ } -> (
+        match StringMap.find_opt id (Mapper.getContext context) with
+        | Some new_id -> state, { e with e = SEId new_id }
+        | None -> state, e)
+      | _ -> state, e)
+
+
+  let mapper = { Mapper.default with exp }
+
+  let inExp (replacements : (string * string) list) (e : exp) =
+    let context = Mapper.makeContext (StringMap.of_list replacements) in
+    let state = Mapper.makeState () in
+    let _, e = Mapper.map_exp mapper context state e in
+    e
+
+
+  let inStmt (replacements : (string * string) list) (stmt : stmt) =
+    let context = Mapper.makeContext (StringMap.of_list replacements) in
+    let state = Mapper.makeState () in
+    let _, stmt = Mapper.map_stmt mapper context state stmt in
+    stmt
+end

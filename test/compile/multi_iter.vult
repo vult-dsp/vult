@@ -1,0 +1,10 @@
+fun test() {
+  val acc = 0;
+  iter(x, 2) {
+    acc =  acc + x;
+  }
+
+  iter(x, 2) {
+    acc =  acc + x;
+  }
+}

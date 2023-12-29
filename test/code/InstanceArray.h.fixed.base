@@ -42,10 +42,10 @@ static_inline fix16_t InstanceArray_counter(InstanceArray_counter_type& _ctx) {
 
 static_inline fix16_t InstanceArray_test1(InstanceArray_test1_type& _ctx) {
    fix16_t sum = 0x0 /* 0.000000 */;
-   int32_t i = 0;
-   while (i < 4) {
-      sum = sum + InstanceArray_counter(_ctx.instances[static_cast<uint32_t>(i)]);
-      i = 1 + i;
+   int32_t i__1 = 0;
+   while (i__1 < 4) {
+      sum = sum + InstanceArray_counter(_ctx.instances[static_cast<uint32_t>(i__1)]);
+      i__1 = 1 + i__1;
    }
    return sum;
 }

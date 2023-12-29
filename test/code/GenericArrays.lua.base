@@ -22,11 +22,11 @@ function intDiv(a, b)       return math.floor(a / b) end
 
 function GenericArrays_sum(data)
    local total = 0.
-   local i = 0
-   while (i < size(data)) do
+   local i__1 = 0
+   while (i__1 < size(data)) do
       do
-         total = (total + data[i + 1])
-         i = (1 + i)
+         total = (total + data[i__1 + 1])
+         i__1 = (1 + i__1)
       end
    end
    return total

@@ -22,11 +22,11 @@ function intDiv(a, b)       return math.floor(a / b) end
 
 function IterLoop_test()
    local total = 0
-   local i = 0
-   while (i < 2) do
+   local i__1 = 0
+   while (i__1 < 2) do
       do
-         total = (i + total)
-         i = (1 + i)
+         total = (i__1 + total)
+         i__1 = (1 + i__1)
       end
    end
 end

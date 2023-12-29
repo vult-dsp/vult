@@ -54,11 +54,11 @@ end
 
 function Waves_test1()
    local n = Waves_sineTable1_samples()
-   local i = 0
-   while (i < n) do
+   local i__1 = 0
+   while (i__1 < n) do
       do
-         Waves_sineTable1(0, i)
-         i = (1 + i)
+         Waves_sineTable1(0, i__1)
+         i__1 = (1 + i__1)
       end
    end
 end

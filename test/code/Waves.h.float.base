@@ -35,10 +35,10 @@ static_inline float Waves_sineTable2(float position) {
 
 static_inline void Waves_test1() {
    int32_t n = Waves_sineTable1_samples();
-   int32_t i = 0;
-   while (i < n) {
-      Waves_sineTable1(0, i);
-      i = 1 + i;
+   int32_t i__1 = 0;
+   while (i__1 < n) {
+      Waves_sineTable1(0, i__1);
+      i__1 = 1 + i__1;
    }
 }
 

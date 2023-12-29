@@ -20,44 +20,21 @@ function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
-function Array_instance_counter_type_alloc()
-   local _ctx = {};
-   _ctx.x = 0
-   return _ctx
-end
-
-function Array_instance_foo_type_alloc()
-   local i_0 = 0
-   local temp
-   local _ctx = {};
-   while (i_0 < 2) do
+function Multi_iter_test()
+   local acc = 0
+   local x__1 = 0
+   while (x__1 < 2) do
       do
-         temp[i_0 + 1] = Array_instance_counter_type_alloc()
-         i_0 = (1 + i_0)
+         acc = (acc + x__1)
+         x__1 = (1 + x__1)
       end
    end
-   _ctx.x = temp
-   return _ctx
-end
-
-function Array_instance_counter(_ctx)
-   _ctx.x = (1 + _ctx.x)
-   return _ctx.x
-end
-
-function Array_instance_incr(ctx)
-   ctx.x = (1 + ctx.x)
-   return ctx.x
-end
-
-function Array_instance_foo(_ctx)
-   local i__1 = 0
-   while (i__1 < 2) do
+   local x__2 = 0
+   while (x__2 < 2) do
       do
-         Array_instance_counter(_ctx.x[i__1 + 1])
-         i__1 = (1 + i__1)
+         acc = (acc + x__2)
+         x__2 = (1 + x__2)
       end
    end
-   return _ctx.x[1 + 1].x
 end
 

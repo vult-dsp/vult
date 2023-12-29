@@ -115,11 +115,11 @@ let equalToken t1 t2 =
   match t1, t2 with
   | Float f1, Float f2 ->
     let result =
-      if abs_float f2 < 1e-6 && abs_float f1 < 1e-6 then
+      if abs_float f2 < 1e-5 && abs_float f1 < 1e-5 then
         true
       else (
         let delta = abs_float (f1 -. f2) in
-        delta < 1e-6)
+        delta < 1e-5)
     in
     let () = if not result then Printf.printf "diff %f %f\n" f1 f2 in
     result

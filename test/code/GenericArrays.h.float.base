@@ -8,10 +8,10 @@
 template<std::size_t SIZE_0>
 static_inline float GenericArrays_sum(std::array<float, SIZE_0>& data) {
    float total = 0.0f;
-   int32_t i = 0;
-   while (i < data.size()) {
-      total = total + data[static_cast<uint32_t>(i)];
-      i = 1 + i;
+   int32_t i__1 = 0;
+   while (i__1 < data.size()) {
+      total = total + data[static_cast<uint32_t>(i__1)];
+      i__1 = 1 + i__1;
    }
    return total;
 }

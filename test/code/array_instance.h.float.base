@@ -36,10 +36,10 @@ static_inline int32_t Array_instance_incr(Array_instance_counter_type& ctx) {
 }
 
 static_inline int32_t Array_instance_foo(Array_instance_foo_type& _ctx) {
-   int32_t i = 0;
-   while (i < 2) {
-      Array_instance_counter(_ctx.x[static_cast<uint32_t>(i)]);
-      i = 1 + i;
+   int32_t i__1 = 0;
+   while (i__1 < 2) {
+      Array_instance_counter(_ctx.x[static_cast<uint32_t>(i__1)]);
+      i__1 = 1 + i__1;
    }
    return _ctx.x[static_cast<uint32_t>(1)].x;
 }

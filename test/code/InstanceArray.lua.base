@@ -54,11 +54,11 @@ end
 
 function InstanceArray_test1(_ctx)
    local sum = 0.
-   local i = 0
-   while (i < 4) do
+   local i__1 = 0
+   while (i__1 < 4) do
       do
-         sum = (sum + InstanceArray_counter(_ctx.instances[i + 1]))
-         i = (1 + i)
+         sum = (sum + InstanceArray_counter(_ctx.instances[i__1 + 1]))
+         i__1 = (1 + i__1)
       end
    end
    return sum

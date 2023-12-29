@@ -806,15 +806,17 @@ let stmt_block (stmts : stmt list) =
   | _ -> { s = StmtBlock stmts; loc = Loc.default }
 
 
-let makeIterWhile name id_loc value body loc =
+let makeIterWhile (env : Env.in_func) name id_loc value body loc =
+  let tick = Env.getFunctionTick env in
+  let itname = name ^ "__" ^ string_of_int tick in
   let open Syntax in
   let int_type = { t = STId { id = "int"; n = None; loc = id_loc }; loc } in
-  let dlhs = { d = SDTyped ({ d = SDId (name, None); loc = id_loc }, int_type); loc = id_loc } in
-  let lhs = { l = SLId name; loc = id_loc } in
-  let rhs = { e = SEId name; loc = id_loc } in
+  let dlhs = { d = SDTyped ({ d = SDId (itname, None); loc = id_loc }, int_type); loc = id_loc } in
+  let lhs = { l = SLId itname; loc = id_loc } in
+  let rhs = { e = SEId itname; loc = id_loc } in
   let decl = { s = SStmtVal (dlhs, Some { e = SEInt "0"; loc }); loc } in
   let incr = { s = SStmtBind (lhs, { e = SEOp ("+", rhs, { e = SEInt "1"; loc }); loc }); loc } in
-  let new_body = { s = SStmtBlock [ body; incr ]; loc } in
+  let new_body = Syntax.ReaplaceId.inStmt [ name, itname ] { s = SStmtBlock [ body; incr ]; loc } in
   let cond = { e = SEOp ("<", rhs, value); loc } in
   let while_s = { s = SStmtWhile (cond, new_body); loc } in
   { s = SStmtBlock [ decl; while_s ]; loc }
@@ -867,7 +869,7 @@ let rec stmt (env : Env.in_func) (return : type_) (s : Syntax.stmt) : Env.in_fun
     let env, s = stmt env return s in
     env, [ { s = StmtWhile (cond, stmt_block s); loc } ]
   | { s = SStmtIter { id = name, id_loc; value; body }; loc } ->
-    let while_s = makeIterWhile name id_loc value body loc in
+    let while_s = makeIterWhile env name id_loc value body loc in
     stmt env return while_s
 
 

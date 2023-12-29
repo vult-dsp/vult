@@ -7,10 +7,10 @@
 
 static_inline void IterLoop_test() {
    int32_t total = 0;
-   int32_t i = 0;
-   while (i < 2) {
-      total = i + total;
-      i = 1 + i;
+   int32_t i__1 = 0;
+   while (i__1 < 2) {
+      total = i__1 + total;
+      i__1 = 1 + i__1;
    }
 }
 
