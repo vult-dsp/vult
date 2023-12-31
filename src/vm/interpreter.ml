@@ -262,6 +262,8 @@ module MakeVM (VM : VM) = struct
       | Pow, _ -> failwith "invalid arguments to 'pow' function"
       | Size, [ Object x ] -> vm, Int (Array.length x)
       | Size, _ -> failwith "invalid arguments to 'size' function"
+      | Length, [ String x ] -> vm, Int (String.length x)
+      | Length, _ -> failwith "invalid arguments to 'length' function"
       | Get, [ Object x; Int n ] -> vm, x.(n)
       | Get, _ -> failwith "invalid arguments to 'get' function"
       | Set, [ Object x; Int n; v ] ->

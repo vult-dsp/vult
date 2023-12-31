@@ -185,6 +185,7 @@ let builtin_functions =
     ; "irandom", C.unit_int
     ; "samplerate", C.unit_real
     ; "wrap_array", C.wrap_array
+    ; "length", C.str_length
     ]
   |> Map.of_list
 

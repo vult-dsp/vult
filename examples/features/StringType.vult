@@ -21,5 +21,7 @@ fun test3(a:string, b:string) {
 }
 
 fun test4() {
+  val str = "text";
   _ = test3("first", "second");
+  val i = length("string") + length(str);
 }

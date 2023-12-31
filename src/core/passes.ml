@@ -456,6 +456,8 @@ module Builtin = struct
       reapply state, { e with e = EOp (OpEq, e1, { e = EBool false; t = { t = TBool; loc }; loc }) }
     | { e = ECall { path = "size"; args = [ { t = { t = TArray (Some size, _); _ }; _ } ] }; loc; _ } ->
       reapply state, { e with e = EInt size; loc }
+    | { e = ECall { path = "length"; args = [ { e = EString str; _ } ] }; loc; _ } ->
+      reapply state, { e with e = EInt (String.length str); loc }
     | { e = ECall { path = "samplerate"; args = [] }; _ } -> (
       match env.args.fs with
       | Some fs -> reapply state, { e with e = EReal fs }

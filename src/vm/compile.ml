@@ -30,6 +30,7 @@ type builtin =
   | IRandom
   | String
   | Bool
+  | Length
 
 type f =
   | F of int
@@ -46,6 +47,7 @@ let functions =
   [ "set", B Set
   ; "get", B Get
   ; "size", B Size
+  ; "length", B Length
   ; "abs", B Abs
   ; "exp", B Exp
   ; "log10", B Log10
@@ -414,6 +416,7 @@ let builtin b =
   | Eps -> "eps"
   | String -> "string"
   | Bool -> "bool"
+  | Length -> "length"
 
 
 let f f =

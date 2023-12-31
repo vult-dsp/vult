@@ -24,7 +24,9 @@ static_inline std::string StringType_test3(std::string a, std::string b) {
 }
 
 static_inline void StringType_test4() {
+   std::string str = "text";
    StringType_test3("first", "second");
+   int32_t i = 6 + static_cast<int32_t>(str.size());
 }
 
 

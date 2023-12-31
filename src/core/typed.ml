@@ -394,6 +394,11 @@ module C = struct
     [ a_array ], int ~loc
 
 
+  let str_length () : fun_type =
+    let loc = Loc.default in
+    [ string ~loc ], int ~loc
+
+
   let array_make () : fun_type =
     let loc = Loc.default in
     let a = unbound loc in

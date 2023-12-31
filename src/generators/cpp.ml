@@ -163,6 +163,9 @@ let rec print_exp prec (e : exp) =
   | Call { path = "size"; args = [ e1 ] } ->
     let e1 = print_exp prec e1 in
     [%pla {|<#e1#>.size()|}]
+  | Call { path = "length"; args = [ e1 ] } ->
+    let e1 = print_exp prec e1 in
+    [%pla {|static_cast<int32_t>(<#e1#>.size())|}]
   | Call { path = "not"; args = [ e1 ] } ->
     let e1 = print_exp prec e1 in
     [%pla {|!(<#e1#>)|}]

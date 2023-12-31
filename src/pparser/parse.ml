@@ -905,7 +905,11 @@ and stmt (buffer : Stream.stream) : stmt =
         try
           let e = expression 0 buffer in
           let _ = Stream.consume buffer SEMI in
-          { s = SStmtBind ({ l = SLWild; loc = e.loc }, e); loc = e.loc }
+          match e with
+          | { e = SECall _; _ } -> { s = SStmtBind ({ l = SLWild; loc = e.loc }, e); loc = e.loc }
+          | _ ->
+            let message = Printf.sprintf "The result of this expression must be explicitly discarded e.g. val _ = 1;" in
+            raise (ParserError (Stream.makeError buffer message))
         with
         | _ -> raise exn)
       | exn -> raise exn)

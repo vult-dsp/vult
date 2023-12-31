@@ -39,6 +39,8 @@ function StringType_test3(a, b)
 end
 
 function StringType_test4()
+   local str = "text"
    StringType_test3("first", "second")
+   local i = (6 + length(str))
 end
 
