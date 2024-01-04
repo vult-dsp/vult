@@ -70,3 +70,13 @@ function Tables_sineTable3(x)
    return (Tables_sineTable3_c0[index + 1] + (x * Tables_sineTable3_c1[index + 1]))
 end
 
+local Tables_power2_table = {0x1000, 0x2000, 0x4000, 0x8000, 0x10000, 0x20000, 0x40000, 0x80000, 0x100000}
+function Tables_power2(x)
+   return Tables_power2_table[(int_clip(x, -4, 4) + 4) + 1]
+end
+
+local Tables_square_table = {16, 9, 4, 1, 0, 1, 4, 9, 16}
+function Tables_square(x)
+   return Tables_square_table[(int_clip(x, -4, 4) + 4) + 1]
+end
+

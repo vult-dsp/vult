@@ -296,7 +296,7 @@ module ParserTest = struct
     assert_equal
       ~cmp:Diff.compare
       ~msg:("Parsing file " ^ fullfile)
-      ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b))
+      ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff file a b))
       reference
       current
 
@@ -334,7 +334,7 @@ module ErrorTest = struct
     assert_equal
       ~cmp:Diff.compare
       ~msg:("Error mismatch in file " ^ fullfile)
-      ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b))
+      ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff file a b))
       reference
       current
 
@@ -363,7 +363,7 @@ module PassesTest = struct
     assert_equal
       ~cmp:Diff.compare
       ~msg:("Transforming file " ^ fullfile)
-      ~pp_diff:(fun fmt (a, b) -> Format.fprintf fmt "\n%s" (Diff.lineDiff a b))
+      ~pp_diff:(fun fmt (a, b) -> Format.fprintf fmt "\n%s" (Diff.lineDiff file a b))
       reference
       current
 
@@ -540,7 +540,7 @@ module CliTest = struct
         assert_equal
           ~cmp:Diff.compare
           ~msg:("Generating file " ^ fullfile)
-          ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b))
+          ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff file a b))
           reference
           current)
       files_content
@@ -605,7 +605,7 @@ module Templates = struct
         assert_equal
           ~cmp:Diff.compare
           ~msg:("Generating file " ^ fullfile)
-          ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff a b))
+          ~pp_diff:(fun ff (a, b) -> Format.fprintf ff "\n%s" (Diff.lineDiff file a b))
           reference
           current)
       files_content

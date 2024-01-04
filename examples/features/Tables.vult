@@ -25,3 +25,15 @@ fun sineTable3(x:fix16) : fix16 @[table(min = 0.0, max = 1.0, size = 32, order =
   return sin(2.0x * fix16(pi()) * x);
 }
 
+// When a table is indexed by an integer, it creates a vector with the computed results
+fun power2(x:int) : fix16 @[table(min = -4, max = 4)] {
+  if (x >= 0)
+    return fix16(1 << x);
+  else
+    return 1.0x / (fix16(1 << (-x)));
+}
+
+// Tables of integers can return integers
+fun square(x:int) : int @[table(min = -4, max = 4)] {
+  return x * x;
+}

@@ -48,5 +48,13 @@ static_inline fix16_t Tables_sineTable3(fix16_t x) {
    return Tables_sineTable3_c0[static_cast<uint32_t>(index)] + fix_mul(x, Tables_sineTable3_c1[static_cast<uint32_t>(index)]);
 }
 
+static_inline fix16_t Tables_power2(int32_t x) {
+   return Tables_power2_table[static_cast<uint32_t>(int_clip(x, -4, 4) + 4)];
+}
+
+static_inline int32_t Tables_square(int32_t x) {
+   return Tables_square_table[static_cast<uint32_t>(int_clip(x, -4, 4) + 4)];
+}
+
 
 #endif // TABLES_H

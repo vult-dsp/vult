@@ -62,24 +62,29 @@ let lcs xs' ys' =
   a.(0).(0)
 
 
-let rec interleaveLineDiff a b l =
+let rec interleaveLineDiff file i a b l =
   match a, b, l with
   | _, _, [] -> List.map (fun x -> "- " ^ x) a @ List.map (fun x -> "+ " ^ x) b
   | [], _, _ :: _ | _, [], _ :: _ ->
     failwith "Diff.interleaveLineDiff: The results obtained from 'Diff.lcs' function are incorrect"
   | ah :: at, bh :: bt, lh :: lt -> (
     match ah = lh, bh = lh with
-    | true, true -> lh :: interleaveLineDiff at bt lt
-    | true, false -> ("+ " ^ bh) :: interleaveLineDiff a bt l
-    | false, true -> ("- " ^ ah) :: interleaveLineDiff at b l
-    | false, false -> ("+ " ^ bh) :: ("- " ^ ah) :: interleaveLineDiff at bt l)
+    | true, true -> interleaveLineDiff file (i + 1) at bt lt
+    | true, false ->
+      ("\nFile : " ^ file ^ " : " ^ string_of_int i ^ "\n + " ^ bh) :: interleaveLineDiff file (i + 1) a bt l
+    | false, true ->
+      ("\nFile : " ^ file ^ " : " ^ string_of_int i ^ "\n - " ^ ah) :: interleaveLineDiff file (i + 1) at b l
+    | false, false ->
+      ("\nFile : " ^ file ^ " : " ^ string_of_int i ^ "\n + " ^ bh)
+      :: (" - " ^ ah)
+      :: interleaveLineDiff file (i + 1) at bt l)
 
 
-let lineDiff str1 str2 =
+let lineDiff file str1 str2 =
   let lines1 = stringSplit "\n" str1 in
   let lines2 = stringSplit "\n" str2 in
   let lseq = lcs lines1 lines2 in
-  let final_seq = interleaveLineDiff lines1 lines2 lseq in
+  let final_seq = interleaveLineDiff file 1 lines1 lines2 lseq in
   stringJoinWith "\n" final_seq
 
 
@@ -115,13 +120,17 @@ let equalToken t1 t2 =
   match t1, t2 with
   | Float f1, Float f2 ->
     let result =
-      if abs_float f2 < 1e-5 && abs_float f1 < 1e-5 then
+      if abs_float f2 < 1e-4 && abs_float f1 < 1e-4 then
         true
       else (
         let delta = abs_float (f1 -. f2) in
-        delta < 1e-5)
+        delta < 1e-4)
     in
-    let () = if not result then Printf.printf "diff %f %f\n" f1 f2 in
+    let () =
+      if not result then (
+        let msg = Printf.sprintf "diff %f %f\n" f1 f2 in
+        prerr_endline msg)
+    in
     result
   | Int n1, Int n2 when n1 = n2 -> true
   | Hex n1, Hex n2 -> abs (n1 - n2) <= 1

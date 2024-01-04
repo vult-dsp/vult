@@ -26,8 +26,8 @@ let reduce_precision = ref false
 
 let crop (f : float) =
   if !reduce_precision then (
-    let ff = f *. 100000.0 in
-    ceil ff /. 100000.0)
+    let ff = f *. 1000000.0 in
+    floor ff /. 1000000.0)
   else
     f
 
