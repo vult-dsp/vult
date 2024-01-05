@@ -1,4 +1,4 @@
-None of the following types: real, fix16, matches with any of the following types array(real), array(real, 'unbound). 
+None of the following types: real, fix16, matches with any of the following types array(real), array(real, _). 
   val x;
   x[0] = 1.0;
    ^

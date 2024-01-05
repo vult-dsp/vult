@@ -33,6 +33,7 @@ let showResult (args : args) (output : output) =
   | Message v -> print_endline v
   | Dependencies deps -> String.concat " " deps |> print_endline
   | ParsedCode v -> print_endline v
+  | Typed v -> print_endline v
   | Byte v -> print_endline v
   | Prog v -> print_endline v
   | GeneratedCode files when args.output <> None ->
@@ -70,9 +71,8 @@ let generateCode args (stmts, vm, acc) =
     acc
 
 
-let compileCode (args : args) (parsed, acc) =
-  let env, stmts = Util.Profile.time "Inference" (fun () -> Inference.infer args parsed) in
-  let typed_out = if args.dtyped then [ Prog (Pla.print (Prog.Print.print_prog stmts)) ] else [] in
+let compileCode (args : args) env stmts =
+  let env, stmts = Toprog.convert args env stmts in
   let stmts = Util.Profile.time "Passes" (fun () -> Passes.run args stmts) in
   let prog_out = if args.dprog then [ Prog (Pla.print (Prog.Print.print_prog stmts)) ] else [] in
   let vm, bytecode = Util.Profile.time "Create VM" (fun () -> Vm.Interpreter.createVm stmts) in
@@ -84,15 +84,7 @@ let compileCode (args : args) (parsed, acc) =
       [ ParsedCode s ]
     | None -> []
   in
-  stmts, vm, run @ bc_out @ prog_out @ typed_out @ acc
-
-
-(** Prints the parsed files if -dparse was passed as argument *)
-let dumpParsedFiles (args : args) (parsed : Parse.parsed_file list) =
-  if args.dparse then
-    parsed, List.map (fun (r : Parse.parsed_file) -> ParsedCode (Syntax.Print.print r.stmts)) parsed
-  else
-    parsed, []
+  stmts, vm, run @ bc_out @ prog_out
 
 
 let version = String.sub Version.version 1 (String.length Version.version - 2)
@@ -108,8 +100,14 @@ let driver (args : args) : output list =
         let parsed = Util.Profile.time "Load files" (fun () -> Loader.loadFiles args args.files) in
         if args.deps then
           List.map (fun r -> r.Parse.file) parsed |> fun s -> [ Dependencies s ]
-        else
-          parsed |> dumpParsedFiles args |> compileCode args |> generateCode args)
+        else if args.dparse then
+          List.map (fun (r : Parse.parsed_file) -> ParsedCode (Syntax.Print.print r.stmts)) parsed
+        else (
+          let env, stmts = Util.Profile.time "Inference" (fun () -> Inference.infer args parsed) in
+          if args.dtyped then
+            [ Typed (Pla.print (Typed.print_prog stmts)) ]
+          else
+            compileCode args env stmts |> generateCode args))
   with
   | Error.Errors errors when args.debug = false -> [ Errors errors ]
 

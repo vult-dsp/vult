@@ -70,6 +70,7 @@ let parser_files =
   ; "member_access.vult"
   ; "stmt_call.vult"
   ; "new_type_spec.vult"
+  ; "unbound.vult"
   ]
 
 
@@ -392,7 +393,8 @@ module RandomCompileTest = struct
     let code = RandProg.run seed in
     write filename code;
     let parser_results = Pparser.Parse.parseString (Some filename) code in
-    let stmts, vm, _ = Driver.Cli.compileCode args ([ parser_results ], []) in
+    let env, stmts = Core.Inference.infer args [ parser_results ] in
+    let stmts, vm, _ = Driver.Cli.compileCode args env stmts in
     let gen = Driver.Cli.generateCode args (stmts, vm, []) in
     writeFiles args gen
 

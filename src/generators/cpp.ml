@@ -430,7 +430,7 @@ let print_top_stmt (target : target) t =
     let t = print_type_ lhs.t in
     let lhs = print_dexp lhs in
     let rhs = print_exp 0 rhs in
-    [%pla {|static const <#t#> <#lhs#> = <#rhs#>;<#>|}]
+    [%pla {|static const <#t#> <#lhs#> = <#rhs#+>;<#>|}]
   | TopDecl _, _ -> Pla.unit
 
 

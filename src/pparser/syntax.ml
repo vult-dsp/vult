@@ -30,6 +30,7 @@ type path =
   }
 
 type type_d =
+  | STUnbound
   | STId of path
   | STSize of int
   | STComposed of string * type_ list
@@ -197,6 +198,7 @@ module Print = struct
     | STComposed (name, subs) ->
       let subs = Pla.map_sep Pla.commaspace type_ subs in
       [%pla {|<#name#s><<#subs#>>|}]
+    | STUnbound -> Pla.string "_"
 
 
   let rec exp (e : exp) = exp_d e.e
@@ -690,6 +692,7 @@ module Mapper = struct
     let state, odata =
       if context.recurse then (
         match idata with
+        | STUnbound -> state, STUnbound
         | STId field_0 ->
           let state, field_0' = map_path mapper context state field_0 in
           let odata = if field_0 == field_0' then idata else STId field_0' in

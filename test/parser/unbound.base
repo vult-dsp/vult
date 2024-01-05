@@ -1,0 +1,19 @@
+fun foo(x : _, y) {
+   val z = x;
+   return z, y;
+}
+fun pre(i : _) {
+   mem x;
+   val ret = x;
+   x = i;
+   return ret;
+}
+fun change(x : _) : bool {
+   mem pre_x;
+   val v = (pre_x <> x);
+   pre_x = x;
+   return v;
+}
+fun sum(x1 : _, x2 : _) {
+   return (x1 + x2);
+}

@@ -264,6 +264,9 @@ let rec type_ (rbp : int) (buffer : Stream.stream) : type_ = prattParser rbp buf
 (** Nud function for the Pratt parser *)
 and type_nud (_ : Stream.stream) (token : 'kind token) : type_ =
   match token.kind, token.value with
+  | WILD, _ ->
+    let loc = token.loc in
+    { t = STUnbound; loc }
   | ID, _ ->
     let id = token.value in
     let loc = token.loc in

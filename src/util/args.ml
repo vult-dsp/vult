@@ -31,6 +31,7 @@ type output =
   | Message of string
   | Dependencies of string list
   | ParsedCode of string
+  | Typed of string
   | GeneratedCode of (Pla.t * string) list
   | Byte of string
   | Prog of string
@@ -187,19 +188,19 @@ let flags result =
     ; action = Arg.Unit (fun () -> Vfloat.reduce_precision := true)
     ; comment = " Enters a special mode useful only for testing (default: off)"
     }
-  ; { flag = "-dparse"
+  ; { flag = "-dump-parsed"
     ; action = Arg.Unit (fun () -> result.dparse <- true)
     ; comment = " Dumps the parse tree (default: off)"
     }
-  ; { flag = "-dbytecode"
+  ; { flag = "-dump-bytecode"
     ; action = Arg.Unit (fun () -> result.dbytecode <- true)
     ; comment = " Dumps the bytecode (default: off)"
     }
-  ; { flag = "-dprog"
+  ; { flag = "-dump-prog"
     ; action = Arg.Unit (fun () -> result.dprog <- true)
     ; comment = " Dumps the processed program (default: off)"
     }
-  ; { flag = "-dtyped"
+  ; { flag = "-dump-typed"
     ; action = Arg.Unit (fun () -> result.dtyped <- true)
     ; comment = " Dumps the typed program (default: off)"
     }

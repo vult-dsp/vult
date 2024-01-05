@@ -30,7 +30,7 @@ let print_path (p : path) = Syntax.print_path p
 
 type type_d_ =
   | TENoReturn
-  | TEUnbound of int
+  | TEUnbound of int option (* None marks an explicit unbound type *)
   | TEId of path
   | TESize of int
   | TELink of type_
@@ -177,7 +177,8 @@ let rec print_type_ ?(show_unbound = true) (t : type_) : Pla.t =
   match t.tx with
   | TENoReturn -> Pla.string "noreturn"
   | TELink t -> print_type_ ~show_unbound t
-  | TEUnbound i -> if show_unbound then [%pla {|'unbound(<#i#i>)|}] else Pla.string "'unbound"
+  | TEUnbound (Some i) -> if show_unbound then [%pla {|_<#i#i>|}] else Pla.string "_"
+  | TEUnbound None -> Pla.string "_"
   | TEId p -> print_path p
   | TESize n -> Pla.int n
   | TEOption alt -> Pla.parenthesize @@ Pla.map_sep (Pla.string "|") print_type_ alt
@@ -356,7 +357,7 @@ module C = struct
 
   let unbound loc =
     incr tick;
-    { tx = TEUnbound !tick; loc }
+    { tx = TEUnbound (Some !tick); loc }
 
 
   let noreturn loc = { tx = TENoReturn; loc }
