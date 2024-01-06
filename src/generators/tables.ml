@@ -13,23 +13,23 @@ let makeFloat (t : type_) x : exp =
 let makeInt x : exp = { e = Int x; t = Int }
 let makeArrayType precision size : type_ = Array (Some size, precision)
 
-let makeRealTableDecl fname name precision data =
+let makeRealTableDecl loc fname name precision data =
   let varname = fname ^ "_" ^ name in
   let size = List.length data in
   let t = makeArrayType precision size in
   let elems = CCList.map (makeFloat precision) data in
-  TopDecl ({ d = DId (varname, Some size); t }, { e = Array elems; t })
+  { top = TopDecl ({ d = DId (varname, Some size); t }, { e = Array elems; t }); loc }
 
 
-let makeIntTableDecl fname name data =
+let makeIntTableDecl loc fname name data =
   let varname = fname ^ "_" ^ name in
   let size = List.length data in
   let t = makeArrayType Int size in
   let elems = CCList.map makeInt data in
-  TopDecl ({ d = DId (varname, Some size); t }, { e = Array elems; t })
+  { top = TopDecl ({ d = DId (varname, Some size); t }, { e = Array elems; t }); loc }
 
 
-let generateRawAccessFunction full_name c t loc =
+let generateRawAccessFunction loc full_name c t =
   let n = string_of_int c in
   let table_name = full_name ^ "_c" ^ n in
   let function_name = full_name ^ "_raw_c" ^ n in
@@ -38,7 +38,7 @@ let generateRawAccessFunction full_name c t loc =
   let args = [ "index", (Int : type_) ] in
   let t = [ (Int : type_) ], t in
   let info = { original_name = None; is_root = false } in
-  TopFunction ({ name = function_name; args; t; tags = []; loc; info }, body)
+  { top = TopFunction ({ name = function_name; args; t; tags = []; loc; info }, body); loc }
 
 
 let getCoefficients1 l =
@@ -90,27 +90,27 @@ let getIntResult (x : Vmv.rvalue) =
   | _ -> failwith "Function returned an unexpected type. This should not happen."
 
 
-let calculateIntRealTables vm name min max precision =
+let calculateIntRealTables loc vm name min max precision =
   let size = max - min in
   let data =
     List.init (size + 1) (fun i ->
       let x = min + i in
       getRealResult (Interpreter.callFunction vm name Vmv.[ Int x ]))
   in
-  [ makeRealTableDecl name "table" precision data ]
+  [ makeRealTableDecl loc name "table" precision data ]
 
 
-let calculateIntIntTables vm name min max =
+let calculateIntIntTables loc vm name min max =
   let size = max - min in
   let data =
     List.init (size + 1) (fun i ->
       let x = min + i in
       getIntResult (Interpreter.callFunction vm name Vmv.[ Int x ]))
   in
-  [ makeIntTableDecl name "table" data ]
+  [ makeIntTableDecl loc name "table" data ]
 
 
-let calculateTablesOrder1 vm name size min max precision =
+let calculateTablesOrder1 loc vm name size min max precision =
   let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
   let map_x x = map x 0. (float_of_int size) min max in
   let data =
@@ -119,10 +119,10 @@ let calculateTablesOrder1 vm name size min max precision =
       x, getRealResult (Interpreter.callFunction vm name Vmv.[ Real x ]))
   in
   let acc0, acc1 = fitDataOrder1 data (size - 1) [] [] in
-  [ makeRealTableDecl name "c0" precision acc0; makeRealTableDecl name "c1" precision acc1 ]
+  [ makeRealTableDecl loc name "c0" precision acc0; makeRealTableDecl loc name "c1" precision acc1 ]
 
 
-let calculateTablesOrder2 vm name size min max precision =
+let calculateTablesOrder2 loc vm name size min max precision =
   let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
   let map_x x = map x 0. (float_of_int size) min max in
   let data =
@@ -133,9 +133,9 @@ let calculateTablesOrder2 vm name size min max precision =
         x, getRealResult (Interpreter.callFunction vm name Vmv.[ Real x ]))
   in
   let acc0, acc1, acc2 = fitDataOrder2 data (size - 1) [] [] [] in
-  [ makeRealTableDecl name "c0" precision acc0
-  ; makeRealTableDecl name "c1" precision acc1
-  ; makeRealTableDecl name "c2" precision acc2
+  [ makeRealTableDecl loc name "c0" precision acc0
+  ; makeRealTableDecl loc name "c1" precision acc1
+  ; makeRealTableDecl loc name "c2" precision acc2
   ]
 
 
@@ -241,6 +241,7 @@ let checkInputVariables (loc : Loc.t) (args : param list) : exp =
 
 let makeTable vm (def : function_def) =
   let params = Tags.[ "size", TypeInt; "min", TypeReal; "max", TypeReal; "order", TypeInt; "bound_check", TypeBool ] in
+  let loc = def.loc in
   match Tags.getParameterList def.tags "table" params with
   | Tags.[ Some (Int size); Some (Real min); Some (Real max); order; bound_check ] -> (
     let bound_check = getBoundCheckValue bound_check in
@@ -249,18 +250,18 @@ let makeTable vm (def : function_def) =
     let in_precision = var.t in
     match order with
     | Some (Int 1) ->
-      let result = calculateTablesOrder1 vm def.name size min max out_precision in
+      let result = calculateTablesOrder1 loc vm def.name size min max out_precision in
       let new_body = makeNewBody1 bound_check def.name size in_precision out_precision min max var in
-      let c0 = generateRawAccessFunction def.name 0 out_precision def.loc in
-      let c1 = generateRawAccessFunction def.name 1 out_precision def.loc in
-      result @ [ c0; c1 ] @ [ TopFunction (def, new_body) ]
+      let c0 = generateRawAccessFunction loc def.name 0 out_precision in
+      let c1 = generateRawAccessFunction loc def.name 1 out_precision in
+      result @ [ c0; c1 ] @ [ { top = TopFunction (def, new_body); loc } ]
     | _ ->
-      let result = calculateTablesOrder2 vm def.name size min max out_precision in
+      let result = calculateTablesOrder2 loc vm def.name size min max out_precision in
       let new_body = makeNewBody2 bound_check def.name size in_precision out_precision min max var in
-      let c0 = generateRawAccessFunction def.name 0 out_precision def.loc in
-      let c1 = generateRawAccessFunction def.name 1 out_precision def.loc in
-      let c2 = generateRawAccessFunction def.name 2 out_precision def.loc in
-      result @ [ c0; c1; c2 ] @ [ TopFunction (def, new_body) ])
+      let c0 = generateRawAccessFunction loc def.name 0 out_precision in
+      let c1 = generateRawAccessFunction loc def.name 1 out_precision in
+      let c2 = generateRawAccessFunction loc def.name 2 out_precision in
+      result @ [ c0; c1; c2 ] @ [ { top = TopFunction (def, new_body); loc } ])
   | _ ->
     let msg =
       "The attribute 'table' requires specific parameters. e.g. 'table(size = 128, min = 0.0, max = 1.0, [order = 2], \
@@ -271,17 +272,18 @@ let makeTable vm (def : function_def) =
 
 let makeIntTable vm (def : function_def) =
   let params = Tags.[ "min", TypeInt; "max", TypeInt ] in
+  let loc = def.loc in
   match Tags.getParameterList def.tags "table" params, def.t with
   | Tags.[ Some (Int min); Some (Int max) ], (_, ((Real | Fixed) as out_precision)) ->
     let var = checkInputVariables def.loc def.args in
-    let result = calculateIntRealTables vm def.name min max out_precision in
+    let result = calculateIntRealTables loc vm def.name min max out_precision in
     let new_body = makeIntAccessBody def.name out_precision min max var in
-    result @ [ TopFunction (def, new_body) ]
+    result @ [ { top = TopFunction (def, new_body); loc } ]
   | Tags.[ Some (Int min); Some (Int max) ], (_, Int) ->
     let var = checkInputVariables def.loc def.args in
-    let result = calculateIntIntTables vm def.name min max in
+    let result = calculateIntIntTables loc vm def.name min max in
     let new_body = makeIntAccessBody def.name Int min max var in
-    result @ [ TopFunction (def, new_body) ]
+    result @ [ { top = TopFunction (def, new_body); loc } ]
   | _ ->
     let msg = "The attribute 'table' on integer tables requires specific parameters. e.g. 'table(min = 0, max = 16)'" in
     Util.Error.raiseError msg def.loc
@@ -312,9 +314,9 @@ let checkNumberOfChannels (loc : Loc.t) (channels : int) (wave : WaveFile.wave) 
     Error.raiseError msg loc)
 
 
-let getDeclarations name (wav_data : WaveFile.wave) precision : top_stmt list =
+let getDeclarations loc name (wav_data : WaveFile.wave) precision : top_stmt list =
   Array.mapi
-    (fun i v -> makeRealTableDecl name ("chan_" ^ string_of_int i) precision (Array.to_list v))
+    (fun i v -> makeRealTableDecl loc name ("chan_" ^ string_of_int i) precision (Array.to_list v))
     wav_data.WaveFile.data
   |> Array.to_list
 
@@ -354,7 +356,9 @@ let makeSizeFunction (def : function_def) (size : int) : top_stmt =
   let size_name = def.name ^ "_samples" in
   let body = StmtReturn { e = Int size; t = Int } in
   let info = { original_name = None; is_root = false } in
-  TopFunction ({ name = size_name; args = []; t = [], Int; tags = []; loc = def.loc; info }, body)
+  { top = TopFunction ({ name = size_name; args = []; t = [], Int; tags = []; loc = def.loc; info }, body)
+  ; loc = def.loc
+  }
 
 
 let makeWave (args : Args.args) _vm (def : function_def) =
@@ -364,10 +368,10 @@ let makeWave (args : Args.args) _vm (def : function_def) =
     let precision = snd def.t in
     let wave = readFile def.loc args.includes file in
     let () = checkNumberOfChannels def.loc channels wave in
-    let result = getDeclarations def.name wave precision in
+    let result = getDeclarations def.loc def.name wave precision in
     let body = makeNewBody def wave precision in
     let size_fun = makeSizeFunction def wave.WaveFile.samples in
-    result @ [ size_fun; TopFunction (def, body) ]
+    result @ [ size_fun; { top = TopFunction (def, body); loc = def.loc } ]
   | _ ->
     let msg = "The attribute 'wave' requires specific parameters. e.g. 'wave(channels=1, file=\"file.wav\")'" in
     Util.Error.raiseError msg def.loc
@@ -395,11 +399,11 @@ let rec fitWavetableData data index acc0 acc1 acc2 =
     fitWavetableData data (index - 1) (c0 :: acc0) (c1 :: acc1) (c2 :: acc2))
 
 
-let makeWavetableOrder2 name size precision data =
+let makeWavetableOrder2 loc name size precision data =
   let acc0, acc1, acc2 = fitWavetableData data size [] [] [] in
-  [ makeRealTableDecl name "c0" precision acc0
-  ; makeRealTableDecl name "c1" precision acc1
-  ; makeRealTableDecl name "c2" precision acc2
+  [ makeRealTableDecl loc name "c0" precision acc0
+  ; makeRealTableDecl loc name "c1" precision acc1
+  ; makeRealTableDecl loc name "c2" precision acc2
   ]
 
 
@@ -417,19 +421,19 @@ let makeWavetable (args : Args.args) _vm (def : function_def) =
     let size_n = Array.length data in
     let size = float_of_int size_n in
     let data = Array.mapi (fun x y -> float_of_int x /. (size -. 1.0), y) data in
-    let result = makeWavetableOrder2 def.name size_n out_precision data in
+    let result = makeWavetableOrder2 def.loc def.name size_n out_precision data in
     let new_body = makeNewBody2 bound_check def.name size_n in_precision out_precision 0.0 1.0 var in
-    let c0 = generateRawAccessFunction def.name 0 out_precision def.loc in
-    let c1 = generateRawAccessFunction def.name 1 out_precision def.loc in
-    let c2 = generateRawAccessFunction def.name 2 out_precision def.loc in
-    result @ [ c0; c1; c2 ] @ [ TopFunction (def, new_body) ]
+    let c0 = generateRawAccessFunction def.loc def.name 0 out_precision in
+    let c1 = generateRawAccessFunction def.loc def.name 1 out_precision in
+    let c2 = generateRawAccessFunction def.loc def.name 2 out_precision in
+    result @ [ c0; c1; c2 ] @ [ { top = TopFunction (def, new_body); loc = def.loc } ]
   | _ ->
     let msg = "This attribute can only be applied to functions returning 'real'" in
     Util.Error.raiseError msg def.loc
 
 
 let replaceFunction (args : Args.args) vm stmt =
-  match stmt with
+  match stmt.top with
   | TopFunction (({ t = [ Int ], _; _ } as def), _) when Tags.has def.tags "table" -> makeIntTable vm def
   | TopFunction (def, _) when Tags.has def.tags "table" -> makeTable vm def
   | TopExternal (def, _) when Tags.has def.tags "wave" -> makeWave args vm def

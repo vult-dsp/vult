@@ -394,7 +394,7 @@ let print_function_def (def : function_def) =
 
 
 let print_top_stmt (target : target) t =
-  match t, target with
+  match t.top, target with
   | TopFunction (def, body), Header ->
     let inline = isSmall [ body ] in
     let template, def = print_function_def def in

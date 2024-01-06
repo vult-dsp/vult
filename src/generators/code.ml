@@ -23,6 +23,7 @@
 *)
 open Core
 open Util.Maps
+open Util
 
 type tag = Prog.tag
 
@@ -142,12 +143,17 @@ and function_def =
   ; info : function_info
   }
 
-type top_stmt =
+type top_stmt_d =
   | TopExternal of function_def * string option
   | TopFunction of function_def * stmt
   | TopType of struct_descr
   | TopAlias of string * string
   | TopDecl of dexp * exp
+
+type top_stmt =
+  { top : top_stmt_d
+  ; loc : Loc.t
+  }
 
 type code = top_stmt list
 
@@ -309,6 +315,7 @@ module CodeMapper = struct
     ; struct_descr : (struct_descr, 'data, 'ctx) mapper_func
     ; tag : (tag, 'data, 'ctx) mapper_func
     ; top_stmt : (top_stmt, 'data, 'ctx) mapper_func
+    ; top_stmt_d : (top_stmt_d, 'data, 'ctx) mapper_func
     ; type_ : (type_, 'data, 'ctx) mapper_func
     ; uoperator : (uoperator, 'data, 'ctx) mapper_func
     ; code_pre : (code, 'data, 'ctx) pre_mapper_func
@@ -325,6 +332,7 @@ module CodeMapper = struct
     ; stmt_pre : (stmt, 'data, 'ctx) pre_mapper_func
     ; struct_descr_pre : (struct_descr, 'data, 'ctx) pre_mapper_func
     ; tag_pre : (tag, 'data, 'ctx) pre_mapper_func
+    ; top_stmt_d_pre : (top_stmt_d, 'data, 'ctx) pre_mapper_func
     ; top_stmt_pre : (top_stmt, 'data, 'ctx) pre_mapper_func
     ; type__pre : (type_, 'data, 'ctx) pre_mapper_func
     ; uoperator_pre : (uoperator, 'data, 'ctx) pre_mapper_func
@@ -346,6 +354,7 @@ module CodeMapper = struct
     ; struct_descr = None
     ; tag = None
     ; top_stmt = None
+    ; top_stmt_d = None
     ; type_ = None
     ; uoperator = None
     ; code_pre = None
@@ -362,6 +371,7 @@ module CodeMapper = struct
     ; stmt_pre = None
     ; struct_descr_pre = None
     ; tag_pre = None
+    ; top_stmt_d_pre = None
     ; top_stmt_pre = None
     ; type__pre = None
     ; uoperator_pre = None
@@ -384,6 +394,7 @@ module CodeMapper = struct
     ; struct_descr = seqMapperFunc a.struct_descr b.struct_descr
     ; tag = seqMapperFunc a.tag b.tag
     ; top_stmt = seqMapperFunc a.top_stmt b.top_stmt
+    ; top_stmt_d = seqMapperFunc a.top_stmt_d b.top_stmt_d
     ; type_ = seqMapperFunc a.type_ b.type_
     ; uoperator = seqMapperFunc a.uoperator b.uoperator
     ; code_pre = seqPreMapperFunc a.code_pre b.code_pre
@@ -400,6 +411,7 @@ module CodeMapper = struct
     ; stmt_pre = seqPreMapperFunc a.stmt_pre b.stmt_pre
     ; struct_descr_pre = seqPreMapperFunc a.struct_descr_pre b.struct_descr_pre
     ; tag_pre = seqPreMapperFunc a.tag_pre b.tag_pre
+    ; top_stmt_d_pre = seqPreMapperFunc a.top_stmt_d_pre b.top_stmt_d_pre
     ; top_stmt_pre = seqPreMapperFunc a.top_stmt_pre b.top_stmt_pre
     ; type__pre = seqPreMapperFunc a.type__pre b.type__pre
     ; uoperator_pre = seqPreMapperFunc a.uoperator_pre b.uoperator_pre
@@ -808,8 +820,8 @@ module CodeMapper = struct
     apply mapper.function_def ocontext state odata
 
 
-  and map_top_stmt mapper ocontext state idata =
-    let context, state, idata = apply_pre mapper.top_stmt_pre ocontext state idata in
+  and map_top_stmt_d mapper ocontext state idata =
+    let context, state, idata = apply_pre mapper.top_stmt_d_pre ocontext state idata in
     let state, odata =
       if context.recurse then (
         match idata with
@@ -832,6 +844,26 @@ module CodeMapper = struct
           let state, field_1' = map_exp mapper context state field_1 in
           let state, field_0' = map_dexp mapper context state field_0 in
           let odata = if field_0 == field_0' && field_1 == field_1' then idata else TopDecl (field_0', field_1') in
+          state, odata)
+      else
+        state, idata
+    in
+    apply mapper.top_stmt_d ocontext state odata
+
+
+  and map_top_stmt mapper ocontext state idata =
+    let context, state, idata = apply_pre mapper.top_stmt_pre ocontext state idata in
+    let state, odata =
+      if context.recurse then (
+        match idata with
+        | { top; loc } ->
+          let state, top' = map_top_stmt_d mapper context state top in
+          let odata =
+            if top == top' then
+              idata
+            else
+              { top = top'; loc }
+          in
           state, odata)
       else
         state, idata
@@ -1245,17 +1277,17 @@ module Convert = struct
   let top_stmt (context : context) (top : Prog.top_stmt) : top_stmt option =
     match top with
     | { top = TopFunction (def, _); _ } when Pparser.Ptags.has def.tags "placeholder" -> None
-    | { top = TopFunction (def, body); _ } ->
+    | { top = TopFunction (def, body); loc } ->
       let _, body = stmt context default_env body in
       let def = function_def context def in
-      Some (TopFunction (def, createSwitch (makeBlock body)))
-    | { top = TopType descr; _ } ->
+      Some { top = TopFunction (def, createSwitch (makeBlock body)); loc }
+    | { top = TopType descr; loc } ->
       let descr = struct_descr context descr in
-      Some (TopType descr)
-    | { top = TopAlias { path; alias_of }; _ } -> Some (TopAlias (path, alias_of))
-    | { top = TopExternal (def, name); _ } ->
+      Some { top = TopType descr; loc }
+    | { top = TopAlias { path; alias_of }; loc } -> Some { top = TopAlias (path, alias_of); loc }
+    | { top = TopExternal (def, name); loc } ->
       let def = function_def context def in
-      Some (TopExternal (def, name))
+      Some { top = TopExternal (def, name); loc }
 
 
   let registerExternalNames (stmts : Prog.top_stmt list) =

@@ -249,7 +249,7 @@ let print_body body =
 
 
 let print_top_stmt t =
-  match t with
+  match t.top with
   | TopFunction (def, body) ->
     let def = print_function_def def in
     let body = print_body body in

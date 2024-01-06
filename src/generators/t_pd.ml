@@ -371,7 +371,7 @@ static inline float samplerate() { return sys_getsr(); }
 
 
 let getStmtInfo (s : Code.top_stmt) =
-  match s with
+  match s.top with
   | TopFunction (def, _) -> (
     match getFunctionInfo def with
     | Some f when def.info.is_root -> Some f
