@@ -462,10 +462,9 @@ let getLibName output =
 
 let generateIncludeList stmts = Pla.map_sep_all Pla.newline (fun (file, _) -> {%pla|#include "<#file#s>.h"|}) stmts
 
-let generateSplit output template (stmts : top_stmt list) =
+let generateSplit file_deps output template (stmts : top_stmt list) =
   let dir = CCOption.map_or ~default:"" (fun file -> Filename.dirname file) output in
   let main_header_file = Common.setExt ".h" output in
-  let base_main_header_file = Filename.basename main_header_file in
   let impl_file = Common.setExt ".cpp" output in
   let generateClassic (mname, stmts) =
     let output = Some (Filename.concat dir mname) in
@@ -476,10 +475,12 @@ let generateSplit output template (stmts : top_stmt list) =
     let header_file = Common.setExt ".h" output in
     let header_file_base = Filename.basename header_file in
     let impl_file = Common.setExt ".cpp" output in
+    let dependencies =
+      Hashtbl.find file_deps mname |> Pla.map_sep_all Pla.newline (fun inc -> {%pla|#include "<#inc#s>.h"|})
+    in
     let header =
       let ifdef, endif = makeIfdef header_file in
-      [%pla
-        {|<#legend#><#ifdef#><#>#include "vultin.h"<#>#include "<#base_main_header_file#s>"<#><#><#header#><#endif#>|}]
+      [%pla {|<#legend#><#ifdef#><#>#include "vultin.h"<#><#dependencies#><#><#><#header#><#endif#>|}]
     in
     let impl = [%pla {|<#legend#><#><#>#include "<#header_file_base#s>"<#><#><#tables#><#><#><#impl#>|}] in
     [ header, header_file; impl, impl_file ]
@@ -518,8 +519,8 @@ let generateSingle output template (stmts : top_stmt list) =
   [ header, header_file; impl, impl_file; tables, tables_file ]
 
 
-let generate split output template (stmts : top_stmt list) =
+let generate file_deps split output template (stmts : top_stmt list) =
   if split then
-    generateSplit output template stmts
+    generateSplit file_deps output template stmts
   else
     generateSingle output template stmts

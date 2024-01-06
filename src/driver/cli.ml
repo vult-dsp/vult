@@ -54,7 +54,7 @@ let showResult (args : args) (output : output) =
     exit 1
 
 
-let generateCode args (stmts, vm, acc) =
+let generateCode args file_deps (stmts, vm, acc) =
   if args.code <> NoCode then (
     let cstmts = Util.Profile.time "Convert" (fun () -> Tocode.prog args stmts) in
     let cstmts = Util.Profile.time "Generate Tables" (fun () -> Tables.create args vm cstmts) in
@@ -62,7 +62,7 @@ let generateCode args (stmts, vm, acc) =
       match args.code with
       | NoCode -> []
       | CppCode ->
-        Util.Profile.time "Generate Code" (fun () -> Cpp.generate args.split args.output args.template cstmts)
+        Util.Profile.time "Generate Code" (fun () -> Cpp.generate file_deps args.split args.output args.template cstmts)
       | LuaCode -> Lua.generate args.output args.template cstmts
       | JSCode -> failwith "Javascript generator not implemented yet"
       | JavaCode -> failwith "Javascript generator not implemented yet"
@@ -98,7 +98,7 @@ let driver (args : args) : output list =
       match args.files with
       | [] -> [ Message ("vult " ^ version ^ " - https://github.com/vult-dsp/vult\nno input files") ]
       | _ ->
-        let parsed = Util.Profile.time "Load files" (fun () -> Loader.loadFiles args args.files) in
+        let parsed, file_deps = Util.Profile.time "Load files" (fun () -> Loader.loadFiles args args.files) in
         if args.deps then
           List.map (fun r -> r.Parse.file) parsed |> fun s -> [ Dependencies s ]
         else if args.dparse then
@@ -108,7 +108,7 @@ let driver (args : args) : output list =
           if args.dtyped then
             [ Typed (Pla.print (Typed.print_prog stmts)) ]
           else
-            compileCode args env stmts |> generateCode args))
+            compileCode args env stmts |> generateCode args file_deps))
   with
   | Error.Errors errors when args.debug = false -> [ Errors errors ]
 

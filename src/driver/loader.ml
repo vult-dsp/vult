@@ -166,9 +166,10 @@ let getIncludes (arguments : args) (files : input list) : string list =
 
 
 (* main function that iterates the input files, gets the dependencies and searchs for the dependencies locations *)
-let rec loadFiles_loop (includes : string list) dependencies parsed visited (files : input list) =
+let rec loadFiles_loop (includes : string list) file_deps dependencies parsed visited (files : input list) =
+  let basename h = Filename.(chop_extension (basename h)) in
   match files with
-  | [] -> dependencies, parsed
+  | [] -> dependencies, file_deps, parsed
   | ((File h | Code (h, _)) as input) :: t ->
     (* check that the file has not been visited before *)
     let h_module = Parse.moduleName h in
@@ -183,14 +184,14 @@ let rec loadFiles_loop (includes : string list) dependencies parsed visited (fil
       (* gets the depencies based on the modules used *)
       let h_deps = Dependencies.get h_parsed.stmts in
       (* finds all the files for the used modules *)
-      let h_dep_files =
-        CCList.filter_map (findModule includes) h_deps |> List.filter (fun a -> a <> h) |> List.map (fun a -> File a)
-      in
+      let h_dep_files = CCList.filter_map (findModule includes) h_deps |> List.filter (fun a -> a <> h) in
+      let h_dep_files_input = List.map (fun a -> File a) h_dep_files in
       (* updates the tables *)
       let () = Hashtbl.add dependencies h_module h_deps in
-      loadFiles_loop includes dependencies parsed visited (t @ h_dep_files))
+      let () = Hashtbl.add file_deps (basename h) (List.map basename h_dep_files) in
+      loadFiles_loop includes file_deps dependencies parsed visited (t @ h_dep_files_input))
     else
-      loadFiles_loop includes dependencies parsed visited t
+      loadFiles_loop includes file_deps dependencies parsed visited t
 
 
 (** Raises an error if the modules have circular dependencies *)
@@ -215,14 +216,19 @@ module C = Components.Make (struct
 let loadFiles (arguments : args) (files : input list) =
   let includes = getIncludes arguments files in
   arguments.includes <- includes;
-  let dependencies, parsed = loadFiles_loop includes (Hashtbl.create 8) (Hashtbl.create 8) (Hashtbl.create 8) files in
+  let dependencies, file_deps, parsed =
+    loadFiles_loop includes (Hashtbl.create 8) (Hashtbl.create 8) (Hashtbl.create 8) (Hashtbl.create 8) files
+  in
   let dep_list = Hashtbl.fold (fun a b acc -> (a, b) :: acc) dependencies [] in
   let comps = C.calculate dep_list in
   let () = checkComponents comps in
   let sorted_deps = List.map List.hd comps in
-  CCList.filter_map
-    (fun module_name ->
-      match Hashtbl.find parsed module_name with
-      | found -> Some found
-      | exception Not_found -> None)
-    sorted_deps
+  let sorted_files =
+    CCList.filter_map
+      (fun module_name ->
+        match Hashtbl.find parsed module_name with
+        | found -> Some found
+        | exception Not_found -> None)
+      sorted_deps
+  in
+  sorted_files, file_deps

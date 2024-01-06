@@ -393,9 +393,11 @@ module RandomCompileTest = struct
     let code = RandProg.run seed in
     write filename code;
     let parser_results = Pparser.Parse.parseString (Some filename) code in
+    let deps = Hashtbl.create 16 in
+    let () = Hashtbl.add deps (Filename.basename filename) [] in
     let env, stmts = Core.Inference.infer args [ parser_results ] in
     let stmts, vm, _ = Driver.Cli.compileCode args env stmts in
-    let gen = Driver.Cli.generateCode args (stmts, vm, []) in
+    let gen = Driver.Cli.generateCode args deps (stmts, vm, []) in
     writeFiles args gen
 
 
