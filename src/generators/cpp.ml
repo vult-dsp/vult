@@ -393,10 +393,10 @@ let print_function_def (def : function_def) =
   template_decl, [%pla {|<#ret#> <#name#>(<#args#>)|}]
 
 
-let print_top_stmt (target : target) t =
+let print_top_stmt ~allow_inline (target : target) t =
   match t.top, target with
   | TopFunction (def, body), Header ->
-    let inline = isSmall [ body ] in
+    let inline = allow_inline && isSmall [ body ] in
     let template, def = print_function_def def in
     if inline then (
       let body = print_block body in
@@ -404,7 +404,7 @@ let print_top_stmt (target : target) t =
     else
       [%pla {|<#def#>;<#><#>|}]
   | TopFunction (def, body), Implementation ->
-    let inline = isSmall [ body ] in
+    let inline = allow_inline && isSmall [ body ] in
     if inline then
       Pla.unit
     else (
@@ -434,7 +434,7 @@ let print_top_stmt (target : target) t =
   | TopDecl _, _ -> Pla.unit
 
 
-let print_prog target t = Pla.map_join (print_top_stmt target) t
+let print_prog ~allow_inline target t = Pla.map_join (print_top_stmt ~allow_inline target) t
 let legend = Common.legend
 
 let makeIfdef file =
@@ -447,10 +447,10 @@ let makeIfdef file =
 |}]
 
 
-let getTemplateCode (name : string option) (prefix : string) impl header (stmts : top_stmt list) =
+let getTemplateCode (name : string option) (prefix : string) (stmts : top_stmt list) =
   match name with
-  | Some "pd" -> T_pd.generate prefix impl header stmts
-  | None -> impl, header
+  | Some "pd" -> T_pd.generate prefix stmts
+  | None -> (Pla.unit, Pla.unit), (Pla.unit, Pla.unit)
   | Some name -> Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
 
 
@@ -460,11 +460,47 @@ let getLibName output =
   | Some name -> Filename.basename name
 
 
-let generate output template (stmts : top_stmt list) =
-  let header = print_prog Header stmts in
-  let impl = print_prog Implementation stmts in
-  let tables = print_prog Tables stmts in
-  let impl, header = getTemplateCode template (getLibName output) impl header stmts in
+let generateIncludeList stmts = Pla.map_sep_all Pla.newline (fun (file, _) -> {%pla|#include "<#file#s>.h"|}) stmts
+
+let generateSplit output template (stmts : top_stmt list) =
+  let dir = CCOption.map_or ~default:"" (fun file -> Filename.dirname file) output in
+  let main_header_file = Common.setExt ".h" output in
+  let base_main_header_file = Filename.basename main_header_file in
+  let impl_file = Common.setExt ".cpp" output in
+  let generateClassic (mname, stmts) =
+    let output = Some (Filename.concat dir mname) in
+    let allow_inline = false in
+    let header = print_prog ~allow_inline Header stmts in
+    let impl = print_prog ~allow_inline Implementation stmts in
+    let tables = print_prog ~allow_inline Tables stmts in
+    let header_file = Common.setExt ".h" output in
+    let header_file_base = Filename.basename header_file in
+    let impl_file = Common.setExt ".cpp" output in
+    let header =
+      let ifdef, endif = makeIfdef header_file in
+      [%pla
+        {|<#legend#><#ifdef#><#>#include "vultin.h"<#>#include "<#base_main_header_file#s>"<#><#><#header#><#endif#>|}]
+    in
+    let impl = [%pla {|<#legend#><#><#>#include "<#header_file_base#s>"<#><#><#tables#><#><#><#impl#>|}] in
+    [ header, header_file; impl, impl_file ]
+  in
+  let (timpl_start, timpl_end), (theader_start, theader_end) = getTemplateCode template (getLibName output) stmts in
+  let stmts = Common.splitByFile stmts in
+  let files = CCList.flat_map generateClassic stmts in
+  let include_list = generateIncludeList stmts in
+  (Pla.join [ timpl_start; timpl_end ], impl_file)
+  :: (Pla.join [ theader_start; include_list; theader_end ], main_header_file)
+  :: files
+
+
+let generateSingle output template (stmts : top_stmt list) =
+  let allow_inline = true in
+  let header = print_prog ~allow_inline Header stmts in
+  let impl = print_prog ~allow_inline Implementation stmts in
+  let tables = print_prog ~allow_inline Tables stmts in
+  let (timpl_start, timpl_end), (theader_start, theader_end) = getTemplateCode template (getLibName output) stmts in
+  let impl = Pla.join [ timpl_start; impl; timpl_end ] in
+  let header = Pla.join [ theader_start; header; theader_end ] in
   let header_file = Common.setExt ".h" output in
   let tables_file = Common.setExt ".tables.h" output in
   let impl_file = Common.setExt ".cpp" output in
@@ -480,3 +516,10 @@ let generate output template (stmts : top_stmt list) =
     [%pla {|<#legend#><#ifdef#><#tables#><#endif#>|}]
   in
   [ header, header_file; impl, impl_file; tables, tables_file ]
+
+
+let generate split output template (stmts : top_stmt list) =
+  if split then
+    generateSplit output template stmts
+  else
+    generateSingle output template stmts

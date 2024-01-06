@@ -56,3 +56,28 @@ let toFixed ?(comment = true) (n : float) : string =
       Printf.sprintf "0x%lx /* %f */" value n
     else
       Printf.sprintf "0x%lx" value)
+
+
+let splitByFile (stmts : Code.top_stmt list) =
+  let getFile loc =
+    match loc.Util.Loc.source with
+    | Util.Loc.Text _ -> failwith ""
+    | File file -> file |> Filename.basename |> Filename.chop_extension
+  in
+  let index = ref 0 in
+  List.fold_left
+    (fun map (stmt : Code.top_stmt) ->
+      Util.Maps.Map.update
+        (getFile stmt.loc)
+        (fun found_opt ->
+          match found_opt with
+          | None ->
+            incr index;
+            Some (index, [ stmt ])
+          | Some (index, stmts) -> Some (index, stmt :: stmts))
+        map)
+    Util.Maps.Map.empty
+    stmts
+  |> Util.Maps.Map.to_list
+  |> List.sort (fun (_, (a, _)) (_, (b, _)) -> compare a b)
+  |> List.map (fun (file, (_, stmts)) -> file, List.rev stmts)

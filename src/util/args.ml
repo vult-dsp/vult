@@ -75,6 +75,7 @@ type args =
   ; mutable prefix : string option
   ; mutable debug : bool
   ; mutable profile : bool
+  ; mutable split : bool
   }
 
 let default_arguments : args =
@@ -101,6 +102,7 @@ let default_arguments : args =
   ; prefix = None
   ; debug = false
   ; profile = false
+  ; split = false
   }
 
 
@@ -187,6 +189,10 @@ let flags result =
   ; { flag = "-test"
     ; action = Arg.Unit (fun () -> Vfloat.reduce_precision := true)
     ; comment = " Enters a special mode useful only for testing (default: off)"
+    }
+  ; { flag = "-split-files"
+    ; action = Arg.Unit (fun () -> result.split <- true)
+    ; comment = " Generates individual C++ files (default: off)"
     }
   ; { flag = "-dump-parsed"
     ; action = Arg.Unit (fun () -> result.dparse <- true)

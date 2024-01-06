@@ -379,7 +379,7 @@ let getStmtInfo (s : Code.top_stmt) =
   | _ -> None
 
 
-let generate prefix code_impl code_head (stmts : Code.top_stmt list) =
+let generate prefix (stmts : Code.top_stmt list) =
   let functions = List.filter_map getStmtInfo stmts in
   let impl = List.map func_imp functions in
   let headers = List.map func_header functions in
@@ -387,4 +387,4 @@ let generate prefix code_impl code_head (stmts : Code.top_stmt list) =
   let f_header = Pla.join_sep_all Pla.newline headers in
   let header = lib_header prefix in
   let lib = lib_impl prefix functions in
-  Pla.(join [ f_impl; code_impl; lib ], join [ header; f_header; code_head ])
+  (f_impl, lib), (Pla.join [ header; f_header ], Pla.unit)
