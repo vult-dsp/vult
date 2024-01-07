@@ -9,14 +9,14 @@ struct Output_references_bar_type {
    inst_1e3f4 : struct Output_references_foo_type;
 }
 
-fun Output_references_foo_type_alloc() : struct Output_references_foo_type  {
+fun Output_references_foo_type_alloc() : struct Output_references_foo_type {
    val _ctx : struct Output_references_foo_type;
    (_ctx : struct Output_references_foo_type).Output_references_foo_ret_0 = 0.0;
    (_ctx : struct Output_references_foo_type).Output_references_foo_ret_1 = 0.0;
    return (_ctx : struct Output_references_foo_type);
 }
 
-fun Output_references_bar_type_alloc() : struct Output_references_bar_type  {
+fun Output_references_bar_type_alloc() : struct Output_references_bar_type {
    val _ctx : struct Output_references_bar_type;
    (_ctx : struct Output_references_bar_type).Output_references_bar_ret_0 = 0.0;
    (_ctx : struct Output_references_bar_type).Output_references_bar_ret_1 = 0.0;
@@ -24,7 +24,7 @@ fun Output_references_bar_type_alloc() : struct Output_references_bar_type  {
    return (_ctx : struct Output_references_bar_type);
 }
 
-fun Output_references_foo(_ctx : struct Output_references_foo_type, x : int) : void  {
+fun Output_references_foo(_ctx : struct Output_references_foo_type, x : int) : void {
    if (((x : int) > 0)) {
       (_ctx : struct Output_references_foo_type).Output_references_foo_ret_0 = 0.0;
       (_ctx : struct Output_references_foo_type).Output_references_foo_ret_1 = 0.0;
@@ -37,7 +37,7 @@ fun Output_references_foo(_ctx : struct Output_references_foo_type, x : int) : v
    }
 }
 
-fun Output_references_bar(_ctx : struct Output_references_bar_type) : void  {
+fun Output_references_bar(_ctx : struct Output_references_bar_type) : void {
    val x : (real, real);
    val y : int;
    {

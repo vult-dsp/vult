@@ -1,4 +1,4 @@
-fun If_to_stmt_foo(e : int) : void  {
+fun If_to_stmt_foo(e : int) : void {
    val y : real;
    val cond1 : bool;
    (cond1 : bool) = ((e : int) > 0);

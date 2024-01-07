@@ -314,7 +314,7 @@ let rec print_function_def kind (def : function_def) body_linkname =
   let t = print_type_ (snd def.t) in
   let body = print_body_linkname body_linkname in
   let next = print_next_function_def kind def.next in
-  [%pla {|<#kind#s> <#name#>(<#args#>) : <#t#> <#tags#><#body#><#><#next#>|}]
+  [%pla {|<#kind#s> <#name#>(<#args#>) : <#t#><#tags#><#body#><#><#next#>|}]
 
 
 and print_next_function_def kind next =

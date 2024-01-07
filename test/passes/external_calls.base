@@ -1,6 +1,6 @@
-external External_calls_foo(x : int) : int  "actual_foo"
+external External_calls_foo(x : int) : int "actual_foo"
 
-fun External_calls_bar() : int  {
+fun External_calls_bar() : int {
    val x : int;
    (x : int) = (External_calls_foo(0) : int);
    return (x : int);

@@ -7,7 +7,7 @@ struct Split_mem_foo_type {
    z : int;
 }
 
-fun Split_mem_foo_type_alloc() : struct Split_mem_foo_type  {
+fun Split_mem_foo_type_alloc() : struct Split_mem_foo_type {
    val _ctx : struct Split_mem_foo_type;
    (_ctx : struct Split_mem_foo_type).a = 0;
    (_ctx : struct Split_mem_foo_type).b = 0;
@@ -18,7 +18,7 @@ fun Split_mem_foo_type_alloc() : struct Split_mem_foo_type  {
    return (_ctx : struct Split_mem_foo_type);
 }
 
-fun Split_mem_foo(_ctx : struct Split_mem_foo_type) : void  {
+fun Split_mem_foo(_ctx : struct Split_mem_foo_type) : void {
    (_ctx : struct Split_mem_foo_type).x = 0;
    (_ctx : struct Split_mem_foo_type).y = (1 + (_ctx : struct Split_mem_foo_type).y);
    (_ctx : struct Split_mem_foo_type).a = 1;

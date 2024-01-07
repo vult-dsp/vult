@@ -177,7 +177,7 @@ static_inline void Synth2_default_type_init(Synth2_default_type& _ctx) {
 }
 
 static_inline float Synth2_minFixed() {
-   return 2e-05f;
+   return 1.5e-05f;
 }
 
 static_inline bool Synth2_change(Synth2_change_type& _ctx, float x) {
@@ -227,11 +227,11 @@ static_inline float Synth2_lpfilter(Synth2_lpfilter_type& _ctx, float x) {
 }
 
 static_inline float Synth2_pitchToRate(float d) {
-   return 0.00019f * expf(0.05777f * d);
+   return 0.000185f * expf(0.057762f * d);
 }
 
 static_inline float Synth2_pulse_train(float m, float phase) {
-   float pi_phase = 3.1416f * phase;
+   float pi_phase = 3.141592f * phase;
    float denominator1 = sinf(pi_phase);
    float tmp1 = 0.0f;
    if (Synth2_near_zero(denominator1)) {

@@ -82,7 +82,7 @@ function Gates_default_type_alloc(_ctx)
 end
 
 function Gates_velToCV(vel)
-   return (0.00788 * real(vel))
+   return (0.007874 * real(vel))
 end
 
 function Gates_gates_noteOn(_ctx, note, velocity)

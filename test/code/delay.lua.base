@@ -166,7 +166,7 @@ function Delay_each(_ctx, n)
 end
 
 function Delay_pitchToRate(d)
-   return (0.00019 * exp((0.05777 * d)))
+   return (0.000185 * exp((0.057762 * d)))
 end
 
 function Delay_phasor(_ctx, pitch, reset)
@@ -182,7 +182,7 @@ function Delay_phasor(_ctx, pitch, reset)
 end
 
 function Delay_lfo(_ctx, f, gate)
-   local rate = (0.00023 * f)
+   local rate = (0.000226 * f)
    if Delay_edge(_ctx.inst_11461, gate) then
       _ctx.phase = 0.
    end
@@ -190,7 +190,7 @@ function Delay_lfo(_ctx, f, gate)
    if (_ctx.phase > 1.) then
       _ctx.phase = (-1. + _ctx.phase)
    end
-   return (-0.5 + sin((6.28319 * _ctx.phase)))
+   return (-0.5 + sin((6.283185 * _ctx.phase)))
 end
 
 function Delay_phd_osc(_ctx, pitch, detune)
@@ -199,7 +199,7 @@ function Delay_phd_osc(_ctx, pitch, detune)
    local reset = (((-phase1) + _ctx.pre_phase1) > 0.5)
    _ctx.pre_phase1 = phase1
    local phase2 = Delay_phasor(_ctx.inst_371c4, (pitch + (32. * Delay_smooth(_ctx.inst_277c4, detune))), reset)
-   local sine = sin((6.28319 * phase2))
+   local sine = sin((6.283185 * phase2))
    return (comp * sine)
 end
 
@@ -306,22 +306,22 @@ end
 
 function Delay_controlChange(_ctx, control, value, channel)
    if (control == 30) then
-      _ctx.volume = (0.00788 * value)
+      _ctx.volume = (0.007874 * value)
    end
    if (control == 31) then
-      _ctx.detune = (0.00788 * value)
+      _ctx.detune = (0.007874 * value)
    end
    if (control == 32) then
-      _ctx.lfo_rate = (0.00788 * value)
+      _ctx.lfo_rate = (0.007874 * value)
    end
    if (control == 33) then
-      _ctx.lfo_amt = (-1. + (0.01575 * value))
+      _ctx.lfo_amt = (-1. + (0.015748 * value))
    end
    if (control == 34) then
-      _ctx.time = (0.00788 * value)
+      _ctx.time = (0.007874 * value)
    end
    if (control == 35) then
-      _ctx.feedback = (0.00788 * value)
+      _ctx.feedback = (0.007874 * value)
    end
 end
 
@@ -329,7 +329,7 @@ function Delay_default(_ctx)
    _ctx.volume = 1.
    _ctx.pitch = 45.
    _ctx.detune = 0.8
-   _ctx.lfo_rate = 0.07001
+   _ctx.lfo_rate = 0.07
    _ctx.lfo_amt = -0.8
    _ctx.time = 0.5
    _ctx.feedback = 0.5

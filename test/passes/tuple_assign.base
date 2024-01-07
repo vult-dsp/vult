@@ -8,7 +8,7 @@ struct Tuple_assign_bar_type {
    inst_1735d : struct Tuple_assign_foo_type;
 }
 
-fun Tuple_assign_foo_type_alloc() : struct Tuple_assign_foo_type  {
+fun Tuple_assign_foo_type_alloc() : struct Tuple_assign_foo_type {
    val _ctx : struct Tuple_assign_foo_type;
    (_ctx : struct Tuple_assign_foo_type).Tuple_assign_foo_ret_0 = 0;
    (_ctx : struct Tuple_assign_foo_type).Tuple_assign_foo_ret_1 = 0;
@@ -16,20 +16,20 @@ fun Tuple_assign_foo_type_alloc() : struct Tuple_assign_foo_type  {
    return (_ctx : struct Tuple_assign_foo_type);
 }
 
-fun Tuple_assign_bar_type_alloc() : struct Tuple_assign_bar_type  {
+fun Tuple_assign_bar_type_alloc() : struct Tuple_assign_bar_type {
    val _ctx : struct Tuple_assign_bar_type;
    (_ctx : struct Tuple_assign_bar_type).inst_1735d = (Tuple_assign_foo_type_alloc() : struct Tuple_assign_foo_type);
    return (_ctx : struct Tuple_assign_bar_type);
 }
 
-fun Tuple_assign_foo(_ctx : struct Tuple_assign_foo_type) : void  {
+fun Tuple_assign_foo(_ctx : struct Tuple_assign_foo_type) : void {
    (_ctx : struct Tuple_assign_foo_type).Tuple_assign_foo_ret_0 = 0;
    (_ctx : struct Tuple_assign_foo_type).Tuple_assign_foo_ret_1 = 1;
    (_ctx : struct Tuple_assign_foo_type).Tuple_assign_foo_ret_2 = 2;
    return ();
 }
 
-fun Tuple_assign_bar(_ctx : struct Tuple_assign_bar_type) : void  {
+fun Tuple_assign_bar(_ctx : struct Tuple_assign_bar_type) : void {
    val x : int;
    val y : int;
    val z : int;

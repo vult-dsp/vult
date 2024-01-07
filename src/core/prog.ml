@@ -347,7 +347,7 @@ module Print = struct
     let args = Pla.map_sep Pla.commaspace print_arg def.args in
     let tags = Pparser.Ptags.print_tags def.tags in
     let t = print_type_ (snd def.t) in
-    [%pla {|<#kind#s> <#name#s>(<#args#>) : <#t#> <#tags#>|}]
+    [%pla {|<#kind#s> <#name#s>(<#args#>) : <#t#><#tags#>|}]
 
 
   let print_member (name, t, tags, _) =

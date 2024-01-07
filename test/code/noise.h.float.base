@@ -50,9 +50,9 @@ static_inline void Noise_default_type_init(Noise_default_type& _ctx) {
 }
 
 static_inline float Noise_pinker(Noise_pinker_type& _ctx, float x) {
-   float b0 = 0.02772f;
-   float b1 = 0.02772f;
-   float a1 = -0.94457f;
+   float b0 = 0.027712f;
+   float b1 = 0.027712f;
+   float a1 = -0.944575f;
    float w0 = x + (- a1 * _ctx.w1);
    float y0 = b0 * w0 + b1 * _ctx.w1;
    _ctx.w1 = w0;

@@ -1,4 +1,4 @@
-fun Nested_if_foo(a : int, b : int, c : int) : int  {
+fun Nested_if_foo(a : int, b : int, c : int) : int {
    val x : int;
    {
       val _if_temp_0 : int;
@@ -11,7 +11,7 @@ fun Nested_if_foo(a : int, b : int, c : int) : int  {
    return (x : int);
 }
 
-fun Nested_if_bar() : void  {
+fun Nested_if_bar() : void {
    val b : real;
    {
       val _if_temp_0 : bool;
@@ -21,7 +21,7 @@ fun Nested_if_bar() : void  {
    }
 }
 
-fun Nested_if_yoo() : void  {
+fun Nested_if_yoo() : void {
    val b : real;
    (b : real) = 1.0;
    val c : real;

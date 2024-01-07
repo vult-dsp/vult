@@ -50,7 +50,7 @@ void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r) {
       _ctx.state = release;
    }
    if (_ctx.state == reset) {
-      _ctx.rate = 0.9901f;
+      _ctx.rate = 0.990099f;
       _ctx.target = 0.0f;
    }
    if (_ctx.state == attack) {
@@ -66,20 +66,20 @@ void Ahr_do(Ahr_do_type& _ctx, float gate, float a, float h, float r) {
       _ctx.target = 0.0f;
    }
    _ctx.out = 0.005f * ((- _ctx.out) + _ctx.target) * _ctx.rate + _ctx.out;
-   _ctx.Ahr_do_ret_0 = float_clip(0.00098f * _ctx.out, 0.0f, 1.0f);
+   _ctx.Ahr_do_ret_0 = float_clip(0.000976f * _ctx.out, 0.0f, 1.0f);
    _ctx.Ahr_do_ret_1 = resetting;
    return ;
 }
 
 void Ahr_controlChange(Ahr_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    if (control == 1) {
-      _ctx.knob1 = 0.00788f * int_to_float(value);
+      _ctx.knob1 = 0.007874f * int_to_float(value);
    }
    if (control == 2) {
-      _ctx.knob2 = 0.00788f * int_to_float(value);
+      _ctx.knob2 = 0.007874f * int_to_float(value);
    }
    if (control == 3) {
-      _ctx.knob3 = 0.00788f * int_to_float(value);
+      _ctx.knob3 = 0.007874f * int_to_float(value);
    }
 }
 
