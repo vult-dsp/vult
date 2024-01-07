@@ -101,6 +101,7 @@ type ('env, 'data) mapper =
   ; lexp : ('env, 'data, lexp) mapper_func
   ; dexp : ('env, 'data, dexp) mapper_func
   ; param : ('env, 'data, param) mapper_func
+  ; member : ('env, 'data, member) mapper_func
   ; struct_descr : ('env, 'data, struct_descr) mapper_func
   ; stmt : ('env, 'data, stmt) expand_func
   ; function_def : ('env, 'data, function_def) mapper_func
@@ -110,6 +111,7 @@ type ('env, 'data) mapper =
   ; lexp_env : ('env, lexp) env_func
   ; dexp_env : ('env, dexp) env_func
   ; param_env : ('env, param) env_func
+  ; member_env : ('env, member) env_func
   ; struct_descr_env : ('env, struct_descr) env_func
   ; stmt_env : ('env, stmt) env_func
   ; function_def_env : ('env, function_def) env_func
@@ -122,6 +124,7 @@ let identity =
   ; lexp = None
   ; dexp = None
   ; param = None
+  ; member = None
   ; struct_descr = None
   ; stmt = None
   ; function_def = None
@@ -131,6 +134,7 @@ let identity =
   ; lexp_env = None
   ; dexp_env = None
   ; param_env = None
+  ; member_env = None
   ; struct_descr_env = None
   ; stmt_env = None
   ; function_def_env = None
@@ -185,6 +189,7 @@ let seq b a =
   ; lexp = seqMapperFunc a.lexp b.lexp
   ; dexp = seqMapperFunc a.dexp b.dexp
   ; param = seqMapperFunc a.param b.param
+  ; member = seqMapperFunc a.member b.member
   ; struct_descr = seqMapperFunc a.struct_descr b.struct_descr
   ; stmt = seqExpandFunc a.stmt b.stmt
   ; function_def = seqMapperFunc a.function_def b.function_def
@@ -194,6 +199,7 @@ let seq b a =
   ; lexp_env = seqEnvFunc a.lexp_env b.lexp_env
   ; dexp_env = seqEnvFunc a.dexp_env b.dexp_env
   ; param_env = seqEnvFunc a.param_env b.param_env
+  ; member_env = seqEnvFunc a.member_env b.member_env
   ; struct_descr_env = seqEnvFunc a.struct_descr_env b.struct_descr_env
   ; stmt_env = seqEnvFunc a.stmt_env b.stmt_env
   ; function_def_env = seqEnvFunc a.function_def_env b.function_def_env
@@ -231,7 +237,7 @@ and struct_descr (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data sta
   let sub_env = enter mapper.struct_descr_env env s in
   match s with
   | { path; members } ->
-    let state, members = (list param) mapper sub_env state members in
+    let state, members = (list member) mapper sub_env state members in
     apply mapper.struct_descr env state { path; members }
 
 
@@ -240,6 +246,13 @@ and param (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (p 
   let sub_env = enter mapper.param_env env p in
   let state, t = type_ mapper sub_env state t in
   apply mapper.param env state (name, t, loc)
+
+
+and member (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (p : member) : 'data state * member =
+  let name, t, tags, loc = p in
+  let sub_env = enter mapper.member_env env p in
+  let state, t = type_ mapper sub_env state t in
+  apply mapper.member env state (name, t, tags, loc)
 
 
 let rec exp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (e : exp) : 'data state * exp =

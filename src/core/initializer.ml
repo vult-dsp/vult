@@ -152,7 +152,7 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
     let ectx = { e = EId "_ctx"; t = this_type; loc } in
     let stmts =
       List.map
-        (fun (var, (t : type_), _) ->
+        (fun (var, (t : type_), _, _) ->
           let lhs = { l = LMember (lctx, var); t; loc = t.loc } in
           let rhs = { e = EMember (ectx, var); t; loc = t.loc } in
           initStatement cstyle lhs rhs t)
@@ -183,7 +183,7 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
     let ectx = { e = EId "_ctx"; t = this_type; loc } in
     let stmts =
       List.map
-        (fun (var, (t : type_), _) ->
+        (fun (var, (t : type_), _, _) ->
           let lhs = { l = LMember (lctx, var); t; loc = t.loc } in
           let rhs = { e = EMember (ectx, var); t; loc = t.loc } in
           initStatement cstyle lhs rhs t)

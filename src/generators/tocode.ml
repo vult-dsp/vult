@@ -34,7 +34,7 @@ let rec type_ (context : context) (t : Prog.type_) =
 
 
 and struct_descr (context : context) (d : Prog.struct_descr) : struct_descr =
-  let members = List.map (fun (name, t, _) -> name, type_ context t) d.members in
+  let members = List.map (fun (name, t, _, _) -> name, type_ context t) d.members in
   { path = d.path; members }
 
 

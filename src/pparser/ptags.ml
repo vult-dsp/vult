@@ -54,6 +54,8 @@ and tag =
   ; loc : Loc.t
   }
 
+type tags = tag list
+
 let rec print_tag t : Pla.t =
   match t.g with
   | TagId id -> Pla.string id
@@ -78,7 +80,7 @@ let print_tags tags =
   | [] -> Pla.unit
   | _ ->
     let tags = Pla.map_sep Pla.commaspace print_tag tags in
-    [%pla {|@[<#tags#>]|}]
+    [%pla {| @[<#tags#>]|}]
 
 
 let has (tags : tag list) n =

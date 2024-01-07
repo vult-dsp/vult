@@ -155,7 +155,7 @@ type top_stmt_d =
   | TopFunction of function_def * stmt
   | TopType of
       { path : path
-      ; members : (string * type_ * Loc.t) list
+      ; members : (string * type_ * Ptags.tags * Loc.t) list
       }
   | TopAlias of
       { path : path
@@ -258,9 +258,10 @@ let rec print_stmt s =
   | StmtVal lhs ->
     let lhs = print_dexp lhs in
     [%pla {|val <#lhs#>;|}]
-  | StmtMem (lhs, _) ->
+  | StmtMem (lhs, tags) ->
+    let tags = Ptags.print_tags tags in
     let lhs = print_dexp lhs in
-    [%pla {|mem <#lhs#>;|}]
+    [%pla {|mem <#lhs#><#tags#>;|}]
   | StmtBind (lhs, rhs) ->
     let lhs = print_lexp lhs in
     let rhs = print_exp rhs in
@@ -322,9 +323,10 @@ and print_next_function_def kind next =
   | Some (def, body) -> print_function_def (next_kind kind) def (`Body body)
 
 
-let print_record_member (name, t, _) =
+let print_record_member (name, t, tags, _) =
+  let tags = Ptags.print_tags tags in
   let t = print_type_ t in
-  [%pla {|<#name#s> : <#t#>;|}]
+  [%pla {|<#name#s> : <#t#><#tags#>;|}]
 
 
 let print_enum_member (name, _) = [%pla {|<#name#s>|}]

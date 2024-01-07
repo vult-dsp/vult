@@ -365,7 +365,7 @@ let rec getTypes stmts =
 
 
 let rec valueOfDescr (d : struct_descr) : rvalue =
-  let elems = List.map (fun (_, t, _) -> valueOfType t) d.members in
+  let elems = List.map (fun (_, t, _, _) -> valueOfType t) d.members in
   Object (Array.of_list elems)
 
 

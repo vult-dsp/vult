@@ -71,7 +71,7 @@ module type TSig = sig
 end
 
 type var_kind =
-  | Mem
+  | Mem of Pparser.Ptags.tags
   | Inst
   | Val
 
@@ -81,6 +81,7 @@ type var =
   { name : string
   ; t : Typed.type_
   ; kind : var_kind
+  ; tags : Pparser.Ptags.tags
   ; loc : Loc.t
   }
 
@@ -351,11 +352,15 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
       locals
   in
   match kind, env.f.context with
-  | (Mem | Inst), Some (_, { descr = Record members; _ }) ->
+  | Inst, Some (_, { descr = Record members; _ }) ->
     let () = checkDuplicatedVal env.f.locals name in
-    Map.update report_mem name { name; t; kind; loc } members;
+    Map.update report_mem name { name; t; kind; tags = []; loc } members;
     env
-  | (Mem | Inst), None -> failwith "Internal error: cannot add mem to functions with no context"
+  | Mem tags, Some (_, { descr = Record members; _ }) ->
+    let () = checkDuplicatedVal env.f.locals name in
+    Map.update report_mem name { name; t; kind; tags; loc } members;
+    env
+  | (Mem _ | Inst), None -> failwith "Internal error: cannot add mem to functions with no context"
   | Val, context -> (
     let report (found : var) =
       Error.raiseError
@@ -369,7 +374,7 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
     match env.f.locals with
     | [] -> failwith "no local scope"
     | h :: _ ->
-      Map.update report name { name; t; kind; loc } h;
+      Map.update report name { name; t; kind; tags = []; loc } h;
       env)
   | _, Some _ -> failwith "Not a record"
 
@@ -378,7 +383,7 @@ let addReturnVar (env : in_context) (name : string) (t : Typed.type_) loc : in_c
   let report_mem _ = () in
   match env.context with
   | Some (_, { descr = Record members; _ }) ->
-    Map.update report_mem name { name; t; kind = Mem; loc } members;
+    Map.update report_mem name { name; t; kind = Mem []; tags = []; loc } members;
     env
   | None -> failwith "Internal error: cannot add mem to functions with no context"
   | Some _ -> failwith "Not a record"
@@ -407,7 +412,7 @@ let registerArguments (args : (string * Typed.type_ * Loc.t) list) =
   let rev_args =
     List.fold_left
       (fun acc (name, t, loc) ->
-        let () = Map.update (report loc) name { name; t; kind = Val; loc } locals in
+        let () = Map.update (report loc) name { name; t; kind = Val; tags = []; loc } locals in
         t :: acc)
       []
       args
@@ -454,8 +459,8 @@ let addRecordMember members =
   in
   let members =
     List.fold_left
-      (fun m (name, t, loc) ->
-        Map.update (report loc) name { name; t; kind = Val; loc } m;
+      (fun m (name, t, tags, loc) ->
+        Map.update (report loc) name { name; t; kind = Val; tags; loc } m;
         m)
       (Map.empty ())
       members

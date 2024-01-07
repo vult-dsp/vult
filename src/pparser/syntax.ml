@@ -147,7 +147,7 @@ type top_stmt_d =
   | STopFunction of function_def * stmt
   | STopType of
       { name : string
-      ; members : (string * type_ * Loc.t) list
+      ; members : (string * type_ * Ptags.tags * Loc.t) list
       }
   | STopEnum of
       { name : string
@@ -387,9 +387,10 @@ module Print = struct
 
   let ext_def (def : ext_def) = genera_def def.name def.args def.t def.tags
 
-  let member (n, t, _) =
+  let member (n, t, tags, _) =
+    let tags = Ptags.print_tags tags in
     let t = type_ t in
-    [%pla {|val <#n#s> : <#t#>|}]
+    [%pla {|val <#n#s> : <#t#><#tags#>|}]
 
 
   let enum_member (n, _) = Pla.string n
@@ -1100,7 +1101,9 @@ module Mapper = struct
           let odata = if field_0 == field_0' && field_1 == field_1' then idata else STopFunction (field_0', field_1') in
           state, odata
         | STopType { name; members } ->
-          let state, members' = (mapper_list (mapper_tuple3 bypass map_type_ bypass)) mapper context state members in
+          let state, members' =
+            (mapper_list (mapper_tuple4 bypass map_type_ bypass bypass)) mapper context state members
+          in
           let name' = name in
           let odata =
             if name == name' && members == members' then

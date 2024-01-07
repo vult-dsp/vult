@@ -56,8 +56,8 @@ let rec type_ (env : Env.in_top) (state : state) (t : Typed.type_) =
       | Some { descr = Enum _; _ } -> state, { t = TInt; loc }
       | Some { descr = Record members; _ } ->
         let members =
-          List.map (fun (name, (var : Env.var)) -> name, var.t, var.loc) (Env.Map.to_list members)
-          |> List.sort (fun (n1, _, _) (n2, _, _) -> compare n1 n2)
+          List.map (fun (name, (var : Env.var)) -> name, var.t, var.tags, var.loc) (Env.Map.to_list members)
+          |> List.sort (fun (n1, _, _, _) (n2, _, _, _) -> compare n1 n2)
         in
         let state, members = type_list env state members in
         let t = { t = TStruct { path = ps; members }; loc } in
@@ -80,10 +80,10 @@ let rec type_ (env : Env.in_top) (state : state) (t : Typed.type_) =
   | T.TESize _ -> Error.raiseError "Invalid type description." t.loc
 
 
-and type_list (env : Env.in_top) (state : state) (l : (string * Typed.type_ * Loc.t) list) =
-  let mapper env state ((n : string), (t : Typed.type_), (loc : Loc.t)) =
+and type_list (env : Env.in_top) (state : state) (l : (string * Typed.type_ * Ptags.tags * Loc.t) list) =
+  let mapper env state ((n : string), (t : Typed.type_), (tags : Ptags.tags), (loc : Loc.t)) =
     let state, t = type_ env state t in
-    state, (n, t, loc)
+    state, (n, t, tags, loc)
   in
   list mapper env state l
 

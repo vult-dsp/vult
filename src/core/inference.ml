@@ -274,7 +274,7 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     let e =
       match var.kind with
       | Val -> { e = EId name; t; loc }
-      | Mem | Inst ->
+      | Mem _ | Inst ->
         let ctx = Env.getContext env in
         let ctx_t = C.path loc ctx in
         { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); t; loc }
@@ -379,7 +379,7 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
     let e =
       match var.kind with
       | Val -> { l = LId name; t; loc }
-      | Mem | Inst ->
+      | Mem _ | Inst ->
         let ctx = Env.getContext env in
         let ctx_t = C.path loc ctx in
         { l = LMember ({ l = LId context_name; t = ctx_t; loc }, name); t; loc }
@@ -508,15 +508,15 @@ let rec stmt (env : Env.in_func) (return : type_) (s : Syntax.stmt) : Env.in_fun
     let env, rhs = exp env rhs in
     unifyRaise rhs.loc dlhs.t rhs.t;
     env, [ { s = StmtVal dlhs; loc }; { s = StmtBind (lhs, rhs); loc } ]
-  | { s = SStmtMem (lhs, None, tag); loc } ->
-    let env, lhs = dexp env lhs Mem in
-    env, [ { s = StmtMem (lhs, tag); loc } ]
-  | { s = SStmtMem (lhs, Some rhs, tag); loc } ->
-    let env, dlhs = dexp env lhs Mem in
+  | { s = SStmtMem (lhs, None, tags); loc } ->
+    let env, lhs = dexp env lhs (Mem tags) in
+    env, [ { s = StmtMem (lhs, tags); loc } ]
+  | { s = SStmtMem (lhs, Some rhs, tags); loc } ->
+    let env, dlhs = dexp env lhs (Mem tags) in
     let env, lhs = lexp env (dexp_to_lexp lhs) in
     let env, rhs = exp env rhs in
     unifyRaise rhs.loc lhs.t rhs.t;
-    env, [ { s = StmtMem (dlhs, tag); loc }; { s = StmtBind (lhs, rhs); loc } ]
+    env, [ { s = StmtMem (dlhs, tags); loc }; { s = StmtBind (lhs, rhs); loc } ]
   | { s = SStmtBind (lhs, rhs); loc } ->
     let env, lhs = lexp env lhs in
     let env, rhs = exp env rhs in
@@ -708,8 +708,8 @@ let rec top_stmt (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt)
     let env = Env.exitContext env in
     env, { top = TopExternal (def, link_name); loc = def.loc }
   | { top = STopType { name; members }; loc } ->
-    let members = List.map (fun (name, t, loc) -> name, type_in_m env t, loc) members in
-    let members = List.sort (fun (n1, _, _) (n2, _, _) -> compare n1 n2) members in
+    let members = List.map (fun (name, t, tags, loc) -> name, type_in_m env t, tags, loc) members in
+    let members = List.sort (fun (n1, _, _, _) (n2, _, _, _) -> compare n1 n2) members in
     let env = Env.addType env name members loc in
     let path = Env.getPath env.m name loc in
     env, { top = TopType { path; members }; loc }
@@ -760,8 +760,8 @@ let createTypes (env : Env.in_top) =
     (fun (t : Env.t) ->
       match t.descr with
       | Record members ->
-        let members = Map.fold (fun _ (var : Env.var) s -> (var.name, var.t, var.loc) :: s) [] members in
-        let members = List.sort (fun (n1, _, _) (n2, _, _) -> compare n1 n2) members in
+        let members = Map.fold (fun _ (var : Env.var) s -> (var.name, var.t, var.tags, var.loc) :: s) [] members in
+        let members = List.sort (fun (n1, _, _, _) (n2, _, _, _) -> compare n1 n2) members in
         { top = TopType { path = t.path; members }; loc = t.loc }
       | Alias (path, alias_of) -> { top = TopAlias { path; alias_of }; loc = t.loc }
       | Enum _ | Simple -> failwith "There should not be other than records here")

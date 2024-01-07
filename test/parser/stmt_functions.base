@@ -25,6 +25,6 @@ fun foo(x : real) : int {
 and bar(x : int) : int {
    return 0;
 }
-fun foo(x : int) : int @[init] {
+fun foo(x : int) : int  @[init] {
    return 0;
 }

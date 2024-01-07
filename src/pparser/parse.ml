@@ -820,7 +820,8 @@ and type_elem (buffer : Stream.stream) =
   let name, loc = id_name buffer in
   let _ = Stream.consume buffer COLON in
   let type_ = type_ 10 buffer in
-  name, type_, loc
+  let tags = optional_tag buffer in
+  name, type_, tags, loc
 
 
 and stmtEnum (buffer : Stream.stream) : top_stmt =

@@ -125,7 +125,7 @@ module Dependencies = struct
     | STopError -> set
     | STopExternal (def, _) -> ext_def set (def, { s = SStmtError; loc = s.loc })
     | STopFunction (def, body) -> function_def set (def, body)
-    | STopType { members } -> list (fun set (_, t, _) -> type_ set t) set members
+    | STopType { members } -> list (fun set (_, t, _, _) -> type_ set t) set members
     | STopEnum _ -> set
 
 

@@ -175,7 +175,7 @@ let getIndex name elems =
   let rec loop elems index =
     match elems with
     | [] -> failwith "index not found"
-    | (current, _, _) :: _ when current = name -> index
+    | (current, _, _, _) :: _ when current = name -> index
     | _ :: t -> loop t (index + 1)
   in
   loop elems 0

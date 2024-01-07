@@ -39,9 +39,10 @@ type type_d_ =
 
 and struct_descr =
   { path : string
-  ; members : param list
+  ; members : member list
   }
 
+and member = string * type_ * Ptags.tags * Loc.t
 and param = string * type_ * Loc.t
 
 and type_ =
@@ -349,9 +350,10 @@ module Print = struct
     [%pla {|<#kind#s> <#name#s>(<#args#>) : <#t#> <#tags#>|}]
 
 
-  let print_member (name, t, _) =
+  let print_member (name, t, tags, _) =
+    let tags = Ptags.print_tags tags in
     let t = print_type_ t in
-    [%pla {|<#name#s> : <#t#>;|}]
+    [%pla {|<#name#s> : <#t#><#tags#>;|}]
 
 
   let print_body body =
