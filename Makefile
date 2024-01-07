@@ -30,20 +30,20 @@ jscompiler:
 #	js_of_ocaml vultweb.byte
 #	sed -i -e "s/this.fs=require(..)/this.fs=null/g" vultweb.js
 
-test: compiler jscompiler
-	dune build test/test.exe $(FORMAT)
+test: jscompiler
+	dune build test/test.exe src/vult.bc src/vult.exe $(FORMAT)
 	./_build/default/test/test.exe
 
 #perf:
 #	$(OCB) test/perf.native
 #	./perf.native
 
-test-fast: compiler
-	dune build test/test.exe $(FORMAT)
+test-fast:
+	dune build test/test.exe src/vult.bc src/vult.exe $(FORMAT)
 	./_build/default/test/test.exe -internal true
 
-test-update: compiler
-	dune build test/test.exe $(FORMAT)
+test-update:
+	dune build test/test.exe src/vult.bc src/vult.exe $(FORMAT)
 	./_build/default/test/test.exe -update true -internal true
 
 #coverage: compiler jscompiler
