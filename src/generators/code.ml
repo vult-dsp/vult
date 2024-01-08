@@ -21,11 +21,10 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 *)
-open Core
 open Util.Maps
 open Util
 
-type tag = Prog.tag
+type tag = Pparser.Ptags.tag
 
 type type_ =
   | Void of type_ list option

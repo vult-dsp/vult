@@ -3,5 +3,5 @@
  (modules Loader Cli)
  (libraries vm generators util pparser core pla)
  (preprocess
-  (pps ppx_deriving.std pla.ppx))
+  (pps pla.ppx))
  (flags -w -30))

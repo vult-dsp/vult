@@ -1,7 +1,8 @@
 (library
  (name core)
  (public_name vult.core)
- (modules Typed Prog Toprog Inference Env Mapper Passes Version Initializer)
+ (modules Typed Prog Toprog Inference Env Mapper Passes Version Initializer
+   Serializer)
  (libraries util pparser pla)
  (flags
   (:standard -w -30))

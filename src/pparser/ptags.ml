@@ -47,7 +47,6 @@ type tag_d =
       { name : string
       ; args : (string * tag * Loc.t) list
       }
-[@@deriving show, eq, ord]
 
 and tag =
   { g : tag_d

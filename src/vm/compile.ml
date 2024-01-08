@@ -152,7 +152,7 @@ type segment =
       ; n_args : int
       }
 
-type segments = segment array [@@deriving show]
+type segments = segment array
 
 type bytecode =
   { table : f Map.t

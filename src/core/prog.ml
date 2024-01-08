@@ -24,7 +24,7 @@
 open Pparser
 open Util
 
-type tag = Ptags.tag
+type tags = Ptags.tags
 
 type type_d_ =
   | TVoid of type_ list option (* used to keep the original return type *)
@@ -42,7 +42,7 @@ and struct_descr =
   ; members : member list
   }
 
-and member = string * type_ * Ptags.tags * Loc.t
+and member = string * type_ * tags * Loc.t
 and param = string * type_ * Loc.t
 
 and type_ =
@@ -158,7 +158,7 @@ and function_def =
   ; args : param list
   ; t : type_ list * type_
   ; loc : Loc.t
-  ; tags : tag list
+  ; tags : tags
   ; info : function_info
   }
 
