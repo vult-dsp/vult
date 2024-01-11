@@ -239,7 +239,7 @@ and compile_exp (env : env) e : rvalue =
     let index =
       match Map.find_opt id env.locals with
       | Some index -> index
-      | None -> failwith id
+      | None -> failwith ("The variable cannot be found. This should have been catched during type checking: " ^ id)
     in
     { r = RRef (index, id); loc }
   | EOp (op, e1, e2) ->
@@ -282,7 +282,7 @@ and compile_exp (env : env) e : rvalue =
     match Map.find_opt path env.functions with
     | Some index -> { r = RCall (index, path, args); loc }
     | None ->
-      print_endline ("Function not found " ^ path);
+      (* print_endline ("Function not found " ^ path); *)
       { r = RVoid; loc })
 
 

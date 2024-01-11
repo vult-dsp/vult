@@ -147,6 +147,26 @@ let getArguments tags n =
     tags
 
 
+let setArgument tags tag_name arg_name arg_value =
+  List.map
+    (fun (t : tag) ->
+      match t.g with
+      | TagId name when name = tag_name -> { t with g = TagCall { name; args = [ arg_name, arg_value, t.loc ] } }
+      | TagCall { name; args } when name = tag_name ->
+        let found, args_rev =
+          List.fold_left
+            (fun (found, acc) (name, value, loc) ->
+              let value = if name = arg_name then arg_value else value in
+              found, (name, value, loc) :: acc)
+            (false, [])
+            args
+        in
+        let args = if found then List.rev args_rev else List.rev ((arg_name, arg_value, t.loc) :: args_rev) in
+        { t with g = TagCall { name; args } }
+      | _ -> t)
+    tags
+
+
 let getParameterList tags name (params : (string * tag_type) list) : value option list =
   let rec loop remaning found params =
     match params with
@@ -170,3 +190,7 @@ let getBoolValueOr ~default v =
   match v with
   | Some (Bool v) -> v
   | _ -> default
+
+
+(* TODO *)
+let mergeTags (a : tags) b = a @ b

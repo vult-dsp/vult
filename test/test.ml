@@ -201,6 +201,7 @@ let all_files =
   ; "features/FixedAndFloat.vult"
   ; "features/Tables.vult"
   ; "features/Waves.vult"
+  ; "features/SaveState.vult"
   ; "../test/compile/defined_types.vult"
   ; "../test/compile/array_defined_type.vult"
   ; "../test/compile/array_return.vult"

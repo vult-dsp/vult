@@ -384,3 +384,31 @@ module Print = struct
 
   let print_prog t = Pla.map_sep_all Pla.newline print_top_stmt t
 end
+
+module C = struct
+  let void_t = { t = TVoid None; loc = Loc.default }
+  let int_t = { t = TInt; loc = Loc.default }
+  let string_t = { t = TString; loc = Loc.default }
+  let bool_t = { t = TBool; loc = Loc.default }
+  let real_t = { t = TReal; loc = Loc.default }
+  let fix_t = { t = TFixed; loc = Loc.default }
+  let array_t ?dim t = { t = TArray (dim, t); loc = Loc.default }
+  let eint ?(loc = Loc.default) i = { e = EInt i; t = int_t; loc }
+  let ebool ?(loc = Loc.default) i = { e = EBool i; t = int_t; loc }
+  let eid ?(loc = Loc.default) id t = { e = EId id; t; loc }
+  let did ?(loc = Loc.default) ?(size = None) id t = { d = DId (id, size); t; loc }
+  let eadd ?(loc = Loc.default) e1 e2 = { e = EOp (OpAdd, e1, e2); t = e1.t; loc }
+  let esub ?(loc = Loc.default) e1 e2 = { e = EOp (OpSub, e1, e2); t = e1.t; loc }
+  let elt ?(loc = Loc.default) e1 e2 = { e = EOp (OpLt, e1, e2); t = bool_t; loc }
+  let ecall ?(loc = Loc.default) path args t = { e = ECall { path; args }; t; loc }
+  let eindex ?(loc = Loc.default) e index t = { e = EIndex { e; index }; t; loc }
+  let emember ?(loc = Loc.default) e name t = { e = EMember (e, name); t; loc }
+  let lid ?(loc = Loc.default) id t = { l = LId id; t; loc }
+  let lindex ?(loc = Loc.default) e index t = { l = LIndex { e; index }; t; loc }
+  let sbind_wild ?(loc = Loc.default) (e : exp) = { s = StmtBind ({ l = LWild; t = e.t; loc }, e); loc }
+  let sbind ?(loc = Loc.default) (l : lexp) (e : exp) = { s = StmtBind (l, e); loc }
+  let sdecl ?(loc = Loc.default) ?(size = None) id t = { s = StmtDecl (did ~loc ~size id t); loc }
+  let sblock ?(loc = Loc.default) elems = { s = StmtBlock elems; loc }
+  let sif ?(loc = Loc.default) cond then_ else_ = { s = StmtIf (cond, then_, else_); loc }
+  let sreturn ?(loc = Loc.default) e = { s = StmtReturn e; loc }
+end

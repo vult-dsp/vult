@@ -39,7 +39,7 @@ module Map = struct
 
   let empty () = ref Map.empty
 
-  let update (report : 'a -> unit) (key : string) (value : 'a) (t : 'a t) : unit =
+  let update (report : 'a -> 'a -> 'a) (key : string) (value : 'a) (t : 'a t) : unit =
     t
     := Map.update
          key
@@ -47,8 +47,8 @@ module Map = struct
            match a with
            | None -> Some value
            | Some b ->
-             report b;
-             Some b)
+             let c = report b value in
+             Some c)
          !t
 
 
@@ -322,7 +322,13 @@ let lookTypeInModule (env : in_module) (path : path) (loc : Loc.t) : t =
 
 
 let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_kind) loc : in_func =
-  let report_mem (found : var) = if unify found.t t then () else failwith ("type changed: " ^ found.name) in
+  let report_mem (found : var) (value : var) =
+    if unify found.t t then (
+      let tags = Pparser.Ptags.mergeTags found.tags value.tags in
+      { found with tags })
+    else
+      Error.raiseError ("This declaration tries to change the type of " ^ found.name) value.loc
+  in
   let checkDuplicatedMem context name =
     match context with
     | Some (_, { descr = Record members; _ }) -> (
@@ -380,7 +386,7 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
 
 
 let addReturnVar (env : in_context) (name : string) (t : Typed.type_) loc : in_context =
-  let report_mem _ = () in
+  let report_mem found _ = found in
   match env.context with
   | Some (_, { descr = Record members; _ }) ->
     Map.update report_mem name { name; t; kind = Mem []; tags = []; loc } members;

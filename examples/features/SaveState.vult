@@ -1,0 +1,28 @@
+
+type point {
+  val x : real;
+  val y : real;
+}
+
+fun counter() {
+  mem count = count + 1 @[save(name = "as_count")];
+  return count;
+}
+and reset() {
+  mem count = 0;
+}
+
+fun nosave() {
+  mem x = 0;
+}
+
+fun main() {
+  mem x = 0.0 @[save];
+  mem str = "" @[save];
+  mem p1 : point @[save];
+  mem p2 : point;
+  val count1 = c1:counter();
+  val count2 = counter();
+  val _ = nosave();
+  mem point_array : array(point, 3);
+}

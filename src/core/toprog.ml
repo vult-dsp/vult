@@ -328,4 +328,5 @@ let convert (iargs : Args.args) env stmts =
   let types, functions = List.partition isType stmts in
   let custom_initializers = createInitizerTable env in
   let initializers = CCList.map Initializer.(createInitFunction custom_initializers iargs) types in
-  env, types @ initializers @ functions
+  let serializers = Serializer.createSerializers types in
+  env, types @ initializers @ serializers @ functions

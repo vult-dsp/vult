@@ -1,8 +1,17 @@
 (library
  (name util)
  (public_name vult.util)
- (modules Components Error FileIO Vfloat Loc Args Maps Fitting WaveFile
-   Profile)
+ (modules
+  Components
+  Error
+  FileIO
+  Vfloat
+  Loc
+  Args
+  Maps
+  Fitting
+  WaveFile
+  Profile)
  (libraries containers pla)
  (preprocess
   (pps pla.ppx)))

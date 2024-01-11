@@ -371,6 +371,15 @@ and print_block body =
     [%pla {|{<#stmt#+><#>}|}]
 
 
+let isTemplate (args : param list) =
+  List.exists
+    (fun (a : param) ->
+      match a with
+      | _, Array (None, _) -> true
+      | _ -> false)
+    args
+
+
 let print_function_def (def : function_def) =
   let name = Pla.string def.name in
   let args = List.mapi print_arg def.args |> Pla.join_sep Pla.commaspace in
@@ -396,7 +405,7 @@ let print_function_def (def : function_def) =
 let print_top_stmt ~allow_inline (target : target) t =
   match t.top, target with
   | TopFunction (def, body), Header ->
-    let inline = allow_inline && isSmall [ body ] in
+    let inline = (allow_inline && isSmall [ body ]) || isTemplate def.args in
     let template, def = print_function_def def in
     if inline then (
       let body = print_block body in
@@ -404,7 +413,7 @@ let print_top_stmt ~allow_inline (target : target) t =
     else
       [%pla {|<#def#>;<#><#>|}]
   | TopFunction (def, body), Implementation ->
-    let inline = allow_inline && isSmall [ body ] in
+    let inline = (allow_inline && isSmall [ body ]) || isTemplate def.args in
     if inline then
       Pla.unit
     else (

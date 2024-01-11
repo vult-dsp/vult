@@ -1,4 +1,4 @@
-(lang dune 2.4)
+(lang dune 3.7)
 
 (generate_opam_files true)
 
@@ -15,7 +15,7 @@
 (package
  (name vult)
  (synopsis "Transcompiler for DSP audio")
- (depends ocaml dune containers pla js_of_ocaml ounit)
+ (depends ocaml dune containers pla js_of_ocaml js_of_ocaml-ppx ounit)
 )
 
 ; removes the Dune__exe prefix
