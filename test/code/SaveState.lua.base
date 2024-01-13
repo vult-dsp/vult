@@ -159,29 +159,42 @@ function SaveState_main_type_deserialize_data(buffer, type_descr, index, _ctx)
    local field_index = search_field_name(buffer, type_descr, index, "c1")
    if (field_index >= 0) then
       do
-         local field_descr = search_type_description(buffer, "SaveState_counter_type")
-         SaveState_counter_type_deserialize_data(buffer, field_descr, field_index, _ctx.c1)
+         local field_descr_0 = search_type_description(buffer, "SaveState_counter_type")
+         SaveState_counter_type_deserialize_data(buffer, field_descr_0, field_index, _ctx.c1)
       end
    end
    field_index = search_field_name(buffer, type_descr, index, "inst_19fb0")
    if (field_index >= 0) then
       do
-         local field_descr = search_type_description(buffer, "SaveState_counter_type")
-         SaveState_counter_type_deserialize_data(buffer, field_descr, field_index, _ctx.inst_19fb0)
+         local field_descr_1 = search_type_description(buffer, "SaveState_counter_type")
+         SaveState_counter_type_deserialize_data(buffer, field_descr_1, field_index, _ctx.inst_19fb0)
       end
    end
    field_index = search_field_name(buffer, type_descr, index, "p1")
    if (field_index >= 0) then
       do
-         local field_descr = search_type_description(buffer, "SaveState_point")
-         SaveState_point_deserialize_data(buffer, field_descr, field_index, _ctx.p1)
+         local field_descr_2 = search_type_description(buffer, "SaveState_point")
+         SaveState_point_deserialize_data(buffer, field_descr_2, field_index, _ctx.p1)
       end
    end
    field_index = search_field_name(buffer, type_descr, index, "p2")
    if (field_index >= 0) then
       do
-         local field_descr = search_type_description(buffer, "SaveState_point")
-         SaveState_point_deserialize_data(buffer, field_descr, field_index, _ctx.p2)
+         local field_descr_3 = search_type_description(buffer, "SaveState_point")
+         SaveState_point_deserialize_data(buffer, field_descr_3, field_index, _ctx.p2)
+      end
+   end
+   local field_descr_4 = search_type_description(buffer, "SaveState_point")
+   field_index = search_field_name(buffer, type_descr, index, "point_array")
+   if (field_index >= 0) then
+      do
+         local i_5 = 0
+         while (i_5 < 3) do
+            do
+               SaveState_point_deserialize_data(buffer, field_descr_4, field_index, _ctx.point_array[i_5 + 1])
+               i_5 = (1 + i_5)
+            end
+         end
       end
    end
    field_index = search_field_name(buffer, type_descr, index, "str")

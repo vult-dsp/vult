@@ -52,23 +52,32 @@ void SaveState_point_deserialize_data(CustomBuffer& buffer, CustomTypeDescr& typ
 void SaveState_main_type_deserialize_data(CustomBuffer& buffer, CustomTypeDescr& type_descr, int32_t index, SaveState_main_type& _ctx) {
    int32_t field_index = search_field_name(buffer, type_descr, index, "c1");
    if (field_index >= 0) {
-      CustomTypeDescr field_descr = search_type_description(buffer, "SaveState_counter_type");
-      SaveState_counter_type_deserialize_data(buffer, field_descr, field_index, _ctx.c1);
+      CustomTypeDescr field_descr_0 = search_type_description(buffer, "SaveState_counter_type");
+      SaveState_counter_type_deserialize_data(buffer, field_descr_0, field_index, _ctx.c1);
    }
    field_index = search_field_name(buffer, type_descr, index, "inst_19fb0");
    if (field_index >= 0) {
-      CustomTypeDescr field_descr = search_type_description(buffer, "SaveState_counter_type");
-      SaveState_counter_type_deserialize_data(buffer, field_descr, field_index, _ctx.inst_19fb0);
+      CustomTypeDescr field_descr_1 = search_type_description(buffer, "SaveState_counter_type");
+      SaveState_counter_type_deserialize_data(buffer, field_descr_1, field_index, _ctx.inst_19fb0);
    }
    field_index = search_field_name(buffer, type_descr, index, "p1");
    if (field_index >= 0) {
-      CustomTypeDescr field_descr = search_type_description(buffer, "SaveState_point");
-      SaveState_point_deserialize_data(buffer, field_descr, field_index, _ctx.p1);
+      CustomTypeDescr field_descr_2 = search_type_description(buffer, "SaveState_point");
+      SaveState_point_deserialize_data(buffer, field_descr_2, field_index, _ctx.p1);
    }
    field_index = search_field_name(buffer, type_descr, index, "p2");
    if (field_index >= 0) {
-      CustomTypeDescr field_descr = search_type_description(buffer, "SaveState_point");
-      SaveState_point_deserialize_data(buffer, field_descr, field_index, _ctx.p2);
+      CustomTypeDescr field_descr_3 = search_type_description(buffer, "SaveState_point");
+      SaveState_point_deserialize_data(buffer, field_descr_3, field_index, _ctx.p2);
+   }
+   CustomTypeDescr field_descr_4 = search_type_description(buffer, "SaveState_point");
+   field_index = search_field_name(buffer, type_descr, index, "point_array");
+   if (field_index >= 0) {
+      int32_t i_5 = 0;
+      while (i_5 < 3) {
+         SaveState_point_deserialize_data(buffer, field_descr_4, field_index, _ctx.point_array[static_cast<uint32_t>(i_5)]);
+         i_5 = 1 + i_5;
+      }
    }
    field_index = search_field_name(buffer, type_descr, index, "str");
    if (field_index >= 0) {

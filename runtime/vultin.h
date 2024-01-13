@@ -232,7 +232,7 @@ int32_t serialize_type_descr(CustomBuffer &buffer, int32_t index, std::string st
   index = push_header(buffer, index, TYPE_TAG);
   index = push_string(buffer, index, str);
   int32_t array_start = index;
-  index = push_array(buffer, index, fields.size());
+  index = push_array(buffer, index, (int32_t)fields.size());
   for (size_t i = 0; i < fields.size(); i++) {
     index = push_string(buffer, index, fields[i]);
   }

@@ -408,7 +408,13 @@ module C = struct
   let sbind_wild ?(loc = Loc.default) (e : exp) = { s = StmtBind ({ l = LWild; t = e.t; loc }, e); loc }
   let sbind ?(loc = Loc.default) (l : lexp) (e : exp) = { s = StmtBind (l, e); loc }
   let sdecl ?(loc = Loc.default) ?(size = None) id t = { s = StmtDecl (did ~loc ~size id t); loc }
+
+  let sdecl_bind ?(loc = Loc.default) ?(size = None) id e t =
+    [ { s = StmtDecl (did ~loc ~size id t); loc }; { s = StmtBind (lid id t, e); loc } ]
+
+
   let sblock ?(loc = Loc.default) elems = { s = StmtBlock elems; loc }
   let sif ?(loc = Loc.default) cond then_ else_ = { s = StmtIf (cond, then_, else_); loc }
+  let swhile ?(loc = Loc.default) cond body = { s = StmtWhile (cond, body); loc }
   let sreturn ?(loc = Loc.default) e = { s = StmtReturn e; loc }
 end

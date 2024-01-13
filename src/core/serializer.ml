@@ -340,6 +340,7 @@ let createDeserializer table (stmt : top_stmt) =
       let lctx = { l = LId "_ctx"; t = this_type; loc } in
       let ectx = { e = EId "_ctx"; t = this_type; loc } in
       let member_stmts =
+        let tick = ref 0 in
         CCList.filter_map
           (fun (name, (t : type_), tags, loc) ->
             let search_field =
@@ -357,9 +358,7 @@ let createDeserializer table (stmt : top_stmt) =
             let found_index stmts =
               { s =
                   StmtIf
-                    ( { e = EOp (OpGe, field_index, { e = EInt 0; t = C.int_t; loc }); t = bool_type; loc }
-                    , { s = StmtBlock stmts; loc }
-                    , None )
+                    ({ e = EOp (OpGe, field_index, C.eint 0); t = bool_type; loc }, { s = StmtBlock stmts; loc }, None)
               ; loc
               }
             in
@@ -382,42 +381,55 @@ let createDeserializer table (stmt : top_stmt) =
               | { t = TBool; _ } ->
                 Some { s = StmtBlock [ search_stmt; found_index [ callDeserializer "deserialize_int" ] ]; loc }
               | { t = TStruct { path = _; _ }; _ } ->
-                let decl = { s = StmtDecl { d = DId ("field_descr", None); t = typedescr_type; loc }; loc } in
+                let field_descr = "field_descr_" ^ string_of_int !tick in
+                let () = incr tick in
+                let decl = C.sdecl field_descr typedescr_type in
                 let search_type =
-                  { s =
-                      StmtBind
-                        ( { l = LId "field_descr"; t = typedescr_type; loc }
-                        , { e = ECall { path = "search_type_description"; args = [ buffer; getTypeNameStringExp t ] }
-                          ; t = typedescr_type
-                          ; loc
-                          } )
-                  ; loc
-                  }
+                  C.sbind
+                    (C.lid field_descr typedescr_type)
+                    (C.ecall "search_type_description" [ buffer; getTypeNameStringExp t ] typedescr_type)
                 in
                 let call_deserializer =
-                  { s =
-                      StmtBind
-                        ( { l = LWild; t = C.void_t; loc }
-                        , { e =
-                              ECall
-                                { path = getTypeNameString t ^ "_deserialize_data"
-                                ; args =
-                                    [ buffer
-                                    ; { e = EId "field_descr"; t = typedescr_type; loc }
-                                    ; field_index
-                                    ; { e = EMember (ectx, name); t; loc }
-                                    ]
-                                }
-                          ; t = C.void_t
-                          ; loc
-                          } )
-                  ; loc
-                  }
+                  C.sbind_wild
+                    (C.ecall
+                       (getTypeNameString t ^ "_deserialize_data")
+                       [ buffer; C.eid field_descr typedescr_type; field_index; C.emember ectx name t ]
+                       C.void_t)
                 in
-                Some { s = StmtBlock [ search_stmt; found_index [ decl; search_type; call_deserializer ] ]; loc }
+                Some (C.sblock [ search_stmt; found_index [ decl; search_type; call_deserializer ] ])
               | { t = TVoid _; _ } -> None
-              | { t = TArray _; _ } -> (* failwith "serialization of arrays"*) None
-              | { t = TTuple _; _ } -> failwith "serialization of tuple")
+              | { t = TArray (Some n, at); _ } ->
+                let field_descr = "field_descr_" ^ string_of_int !tick in
+                let () = incr tick in
+                let decl = C.sdecl field_descr typedescr_type in
+                let search_type =
+                  C.sbind
+                    (C.lid field_descr typedescr_type)
+                    (C.ecall "search_type_description" [ buffer; getTypeNameStringExp at ] typedescr_type)
+                in
+                let iter_name = "i_" ^ string_of_int !tick in
+                let () = incr tick in
+                let iter_decl = C.sdecl_bind iter_name (C.eint 0) C.int_t in
+                let iter_id = C.eid iter_name C.int_t in
+                let call_deserializer =
+                  C.sbind_wild
+                    (C.ecall
+                       (getTypeNameString at ^ "_deserialize_data")
+                       [ buffer
+                       ; C.eid field_descr typedescr_type
+                       ; field_index
+                       ; C.eindex (C.emember ectx name t) iter_id at
+                       ]
+                       C.void_t)
+                in
+                let cond = C.elt iter_id (C.eint n) in
+                let body =
+                  C.sblock [ call_deserializer; C.sbind (C.lid iter_name C.int_t) (C.eadd iter_id (C.eint 1)) ]
+                in
+                let loop = C.swhile cond body in
+                Some (C.sblock [ decl; search_type; search_stmt; found_index (iter_decl @ [ loop ]) ])
+              | { t = TArray _; _ } -> failwith "deserialization of array with unknow dimensions"
+              | { t = TTuple _; _ } -> failwith "deserialization of tuple")
             else
               None)
           s.members

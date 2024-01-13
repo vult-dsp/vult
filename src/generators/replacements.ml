@@ -60,6 +60,8 @@ module C = struct
     | "set", [ Array (_, Real); Int; Real ], Void None -> Some "float_set"
     | "set", [ Array (_, Fixed); Int; Fixed ], Void None -> Some "fix_set"
     | "set", [ Array (_, Int); Int; Int ], Void None -> Some "int_set"
+    (* serialization *)
+    | "deserialize_float", _, Fixed -> Some "deserialize_int"
     | _ -> None
 
 
