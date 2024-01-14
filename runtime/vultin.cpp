@@ -29,7 +29,6 @@ NOTE: The code for the fixed-point operations is based on the project:
 */
 #include "vultin.h"
 #include "stdio.h"
-#include <assert.h>
 
 fix16_t fix_exp(fix16_t inValue) {
   if (inValue == 0)
@@ -161,19 +160,23 @@ void int_print(int value) { printf("%i\n", value); }
 void string_print(char *value) { printf("%s\n", value); }
 void bool_print(uint8_t value) { printf("%s\n", value ? "true" : "false"); }
 
-void push_byte(CustomBuffer &buffer, int8_t byte) {
+void push_byte(CustomBuffer &buffer, uint8_t byte) {
   if (!buffer.calculate_size) {
     buffer.data.push_back(byte);
   }
 }
 
-void modify_byte(CustomBuffer &buffer, int32_t index, int8_t byte) {
+void modify_byte(CustomBuffer &buffer, int32_t index, uint8_t byte) {
   if (!buffer.calculate_size) {
     buffer.data[static_cast<uint32_t>(index)] = byte;
   }
 }
 
-int8_t read_byte(CustomBuffer &buffer, int32_t index) {
+uint8_t read_byte(CustomBuffer &buffer, int32_t index) {
+  if (index < 0 || (size_t)index > buffer.data.size()) {
+    buffer.error = true;
+    return 0;
+  }
   return buffer.data[static_cast<uint32_t>(index)];
 }
 
@@ -196,13 +199,13 @@ int32_t search_field_name(CustomBuffer &buffer, CustomTypeDescr &descr, int32_t 
   }
 
   if (name_position < 0) {
-    exit(-1);
+    return -1;
   }
 
   return get_field(buffer, index, name_position);
 }
 
-int32_t push_header(CustomBuffer &buffer, int32_t index, int8_t tag) {
+int32_t push_header(CustomBuffer &buffer, int32_t index, uint8_t tag) {
   push_byte(buffer, tag);
   // Space for the size
   push_byte(buffer, 0);
@@ -214,27 +217,24 @@ int32_t push_header(CustomBuffer &buffer, int32_t index, int8_t tag) {
 int32_t push_block_header(CustomBuffer &buffer, int32_t index) { return push_header(buffer, index, BLOCK_TAG); }
 
 int32_t push_array(CustomBuffer &buffer, int32_t index, int32_t size) {
-  push_byte(buffer, ARRAY_TAG); // array tag
-  // Space for the size
-  push_byte(buffer, 0);
-  push_byte(buffer, 0);
-  push_byte(buffer, 0);
-  index = push_int(buffer, index, size); // push the number of elements
-  return index + 4;
+  index = push_header(buffer, index, ARRAY_TAG); // array tag
+  index = push_int(buffer, index, size);         // push the number of elements
+  return index;
 }
 
 void update_size(CustomBuffer &buffer, int32_t index, int32_t size) {
-  uint8_t b0 = size & 0xFF;
-  uint8_t b1 = (size >> 8) & 0xFF;
-  uint8_t b2 = (size >> 16) & 0xFF;
+  uint32_t *ptr = (uint32_t *)&size;
+  uint8_t b0 = (*ptr) & 0xFF;
+  uint8_t b1 = ((*ptr) >> 8) & 0xFF;
+  uint8_t b2 = ((*ptr) >> 16) & 0xFF;
 
-  modify_byte(buffer, index + 1, (int8_t)b0);
-  modify_byte(buffer, index + 2, (int8_t)b1);
-  modify_byte(buffer, index + 3, (int8_t)b2);
+  modify_byte(buffer, index + 1, b0);
+  modify_byte(buffer, index + 2, b1);
+  modify_byte(buffer, index + 3, b2);
 }
 
 int32_t push_float(CustomBuffer &buffer, int32_t index, float value) {
-  int8_t data[4];
+  uint8_t data[4];
   float *ptr = (float *)&data;
   *ptr = value;
   push_byte(buffer, FLOAT_TAG);
@@ -246,12 +246,14 @@ int32_t push_float(CustomBuffer &buffer, int32_t index, float value) {
 }
 
 int32_t push_int(CustomBuffer &buffer, int32_t index, int32_t value) {
-  if (value <= 127 || value >= -128) {
+  if (value <= 127 && value >= -128) {
+    int8_t svalue = (int8_t)value;
+    uint8_t *ptr = (uint8_t *)&svalue;
     push_byte(buffer, SMALL_INT_TAG);
-    push_byte(buffer, (int8_t)value);
+    push_byte(buffer, *ptr);
     return index + 2;
   } else {
-    int8_t data[4];
+    uint8_t data[4];
     int32_t *ptr = (int32_t *)&data;
     *ptr = value;
     push_byte(buffer, INT_TAG);
@@ -267,7 +269,7 @@ int32_t push_string(CustomBuffer &buffer, int32_t index, std::string &str) {
   int32_t start = index;
   index = push_header(buffer, index, STRING_TAG);
   for (size_t i = 0; i < str.length(); i++) {
-    push_byte(buffer, str[i]);
+    push_byte(buffer, (uint8_t)str[i]);
     index++;
   }
   push_byte(buffer, 0);
@@ -278,15 +280,18 @@ int32_t push_string(CustomBuffer &buffer, int32_t index, std::string &str) {
 
 // Returns the object size (the index points to the tag of the object)
 int32_t block_size(CustomBuffer &buffer, int32_t index) {
-  int b0 = read_byte(buffer, index + 1);
-  int b1 = read_byte(buffer, index + 2);
-  int b2 = read_byte(buffer, index + 3);
+  uint8_t b0 = read_byte(buffer, index + 1);
+  uint8_t b1 = read_byte(buffer, index + 2);
+  uint8_t b2 = read_byte(buffer, index + 3);
   return b2 << 16 | b1 << 8 | b0;
 }
 
 bool match_string(CustomBuffer &buffer, int32_t index, std::string &name) {
+  if (buffer.error == true)
+    return false;
   if (read_byte(buffer, index) != STRING_TAG) {
-    assert(true);
+    buffer.error = true;
+    return false;
   }
   // Check the size of the strings
   int32_t expected_size = static_cast<int32_t>(name.length());
@@ -305,7 +310,8 @@ bool match_string(CustomBuffer &buffer, int32_t index, std::string &name) {
 }
 
 int32_t next_object(CustomBuffer &buffer, int32_t index) {
-  switch (read_byte(buffer, (index))) {
+  uint8_t tag = read_byte(buffer, (index));
+  switch (tag) {
   case SMALL_INT_TAG:
     return index + 2;
   case INT_TAG:
@@ -315,11 +321,17 @@ int32_t next_object(CustomBuffer &buffer, int32_t index) {
     return index + 5;
 
   default:
-    int b0 = read_byte(buffer, (index + 1));
-    int b1 = read_byte(buffer, (index + 2));
-    int b2 = read_byte(buffer, (index + 3));
-    return index + (b2 << 16 | b1 << 8 | b0);
+    uint32_t b0 = read_byte(buffer, (index + 1));
+    uint32_t b1 = read_byte(buffer, (index + 2));
+    uint32_t b2 = read_byte(buffer, (index + 3));
+    uint32_t size = (b2 << 16 | b1 << 8 | b0);
+    return index + (int32_t)size;
   }
+}
+
+int32_t first_array_element(CustomBuffer &buffer, int32_t index) {
+  index = index + 4; // skip header
+  return next_object(buffer, index);
 }
 
 int32_t get_field(CustomBuffer &buffer, int32_t object, int32_t field) {
@@ -372,7 +384,7 @@ int32_t deserialize_int(CustomBuffer &buffer, int32_t index) {
   if (read_byte(buffer, index) == SMALL_INT_TAG) {
     return read_byte(buffer, index + 1);
   } else if (read_byte(buffer, index) == INT_TAG) {
-    char data[4];
+    uint8_t data[4];
     int32_t *ptr = (int32_t *)&data;
     data[0] = read_byte(buffer, index + 1);
     data[1] = read_byte(buffer, index + 2);
@@ -380,32 +392,36 @@ int32_t deserialize_int(CustomBuffer &buffer, int32_t index) {
     data[3] = read_byte(buffer, index + 4);
     return *ptr;
   } else {
-    assert(true);
-    return -1;
+    buffer.error = true;
+    return 0;
   }
 }
 
 float deserialize_float(CustomBuffer &buffer, int32_t index) {
   // Check the tag
-  if (read_byte(buffer, index) != FLOAT_TAG) {
-    assert(true);
+  if (read_byte(buffer, index) == FLOAT_TAG) {
+    float *ptr = (float *)&(buffer.data[static_cast<uint32_t>(index + 1)]);
+    return *ptr;
+  } else {
+    buffer.error = true;
+    return 0.0f;
   }
-  float *ptr = (float *)&(buffer.data[static_cast<uint32_t>(index + 1)]);
-  return *ptr;
 }
 
 std::string deserialize_string(CustomBuffer &buffer, int32_t index) {
   // Check the tag
-  if (read_byte(buffer, index) != STRING_TAG) {
-    assert(true);
-  }
-  int32_t size = block_size(buffer, index) - 5 + 1;
+  if (read_byte(buffer, index) == STRING_TAG) {
+    int32_t size = block_size(buffer, index) - 5 + 1;
 
-  index = index + 4; // move to the first characters
-  std::string str;
-  str.resize(static_cast<size_t>(size));
-  for (int i = 0; i < size; i++) {
-    str[static_cast<size_t>(i)] = read_byte(buffer, index++);
+    index = index + 4; // move to the first characters
+    std::string str;
+    str.resize(static_cast<size_t>(size));
+    for (int i = 0; i < size; i++) {
+      str[static_cast<size_t>(i)] = (char)read_byte(buffer, index++);
+    }
+    return str;
+  } else {
+    buffer.error = true;
+    return "";
   }
-  return str;
 }

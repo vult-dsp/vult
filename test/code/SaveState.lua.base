@@ -188,11 +188,13 @@ function SaveState_main_type_deserialize_data(buffer, type_descr, index, _ctx)
    field_index = search_field_name(buffer, type_descr, index, "point_array")
    if (field_index >= 0) then
       do
+         field_index = first_array_element(buffer, field_index)
          local i_5 = 0
          while (i_5 < 3) do
             do
                SaveState_point_deserialize_data(buffer, field_descr_4, field_index, _ctx.point_array[i_5 + 1])
                i_5 = (1 + i_5)
+               field_index = next_object(buffer, field_index)
             end
          end
       end

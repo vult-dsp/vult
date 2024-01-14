@@ -73,10 +73,12 @@ void SaveState_main_type_deserialize_data(CustomBuffer& buffer, CustomTypeDescr&
    CustomTypeDescr field_descr_4 = search_type_description(buffer, "SaveState_point");
    field_index = search_field_name(buffer, type_descr, index, "point_array");
    if (field_index >= 0) {
+      field_index = first_array_element(buffer, field_index);
       int32_t i_5 = 0;
       while (i_5 < 3) {
          SaveState_point_deserialize_data(buffer, field_descr_4, field_index, _ctx.point_array[static_cast<uint32_t>(i_5)]);
          i_5 = 1 + i_5;
+         field_index = next_object(buffer, field_index);
       }
    }
    field_index = search_field_name(buffer, type_descr, index, "str");

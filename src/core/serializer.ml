@@ -422,12 +422,19 @@ let createDeserializer table (stmt : top_stmt) =
                        ]
                        C.void_t)
                 in
+                let skip_size =
+                  C.sbind (C.lid "field_index" C.int_t) (C.ecall "first_array_element" [ buffer; field_index ] C.int_t)
+                in
                 let cond = C.elt iter_id (C.eint n) in
                 let body =
-                  C.sblock [ call_deserializer; C.sbind (C.lid iter_name C.int_t) (C.eadd iter_id (C.eint 1)) ]
+                  let next_element =
+                    C.sbind (C.lid "field_index" C.int_t) (C.ecall "next_object" [ buffer; field_index ] C.int_t)
+                  in
+                  C.sblock
+                    [ call_deserializer; C.sbind (C.lid iter_name C.int_t) (C.eadd iter_id (C.eint 1)); next_element ]
                 in
                 let loop = C.swhile cond body in
-                Some (C.sblock [ decl; search_type; search_stmt; found_index (iter_decl @ [ loop ]) ])
+                Some (C.sblock [ decl; search_type; search_stmt; found_index ((skip_size :: iter_decl) @ [ loop ]) ])
               | { t = TArray _; _ } -> failwith "deserialization of array with unknow dimensions"
               | { t = TTuple _; _ } -> failwith "deserialization of tuple")
             else

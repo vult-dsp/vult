@@ -9,7 +9,8 @@
   "files.trimTrailingWhitespace": true,
   "editor.formatOnSave": false,
   "files.associations": {
-    "*.ml": "ocaml"
+    "*.ml": "ocaml",
+    "string": "cpp"
   },
   "[ocaml]": {
     "editor.tabSize": 2,

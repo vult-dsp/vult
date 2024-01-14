@@ -185,16 +185,16 @@ void bool_print(uint8_t value);
 
 /* Serialization */
 
-static const int8_t TYPE_TAG = (int8_t)0xBB;
-static const int8_t BLOCK_TAG = (int8_t)0xCC;
-static const int8_t STRING_TAG = (int8_t)0xDD;
-static const int8_t FLOAT_TAG = (int8_t)0x99;
-static const int8_t SMALL_INT_TAG = (int8_t)0x77;
-static const int8_t INT_TAG = (int8_t)0x88;
-static const int8_t ARRAY_TAG = (int8_t)0x66;
+static const uint8_t TYPE_TAG = 't';
+static const uint8_t BLOCK_TAG = 'b';
+static const uint8_t STRING_TAG = 's';
+static const uint8_t FLOAT_TAG = 'f';
+static const uint8_t SMALL_INT_TAG = 'i';
+static const uint8_t INT_TAG = 'I';
+static const uint8_t ARRAY_TAG = 'a';
 
 typedef struct CustomBuffer {
-  std::vector<int8_t> data;
+  std::vector<uint8_t> data;
   bool calculate_size;
   bool error;
 } CustomBuffer;
@@ -209,7 +209,7 @@ void update_size(CustomBuffer &buffer, int32_t index, int32_t size);
 
 int32_t push_block_header(CustomBuffer &buffer, int32_t index);
 
-int32_t push_header(CustomBuffer &buffer, int32_t index, int8_t tag);
+int32_t push_header(CustomBuffer &buffer, int32_t index, uint8_t tag);
 
 int32_t push_float(CustomBuffer &buffer, int32_t index, float value);
 
@@ -251,10 +251,13 @@ std::string deserialize_string(CustomBuffer &buffer, int32_t index);
 
 int32_t goto_data(CustomBuffer &buffer);
 
+int32_t first_array_element(CustomBuffer &buffer, int32_t index);
+
 template <std::size_t SIZE, typename DATA>
 void serialize_data(CustomBuffer &buffer,
                     int32_t (*serialize_type_descr_function)(CustomBuffer &, int32_t, std::array<bool, SIZE> &),
                     int32_t (*serialize_data_function)(CustomBuffer &, int32_t, DATA &), DATA &data) {
+  buffer.data.resize(0);
   // First we run the serializer without actually attaching data.
   // This is done to calculate the size of buffer needed.
   buffer.calculate_size = true;
@@ -267,7 +270,7 @@ void serialize_data(CustomBuffer &buffer,
   index = serialize_data_function(buffer, index, data);
   // TODO: calculate the checksum
   // Once we know the size, the buffer is allocated
-  buffer.data.reserve((uint32_t)index);
+  buffer.data.reserve((size_t)index);
   // next we are going to actually write data to the buffer
   buffer.calculate_size = false;
   // all marks are reset to false
