@@ -79,16 +79,18 @@ fun pitchToRate(d){
 <div class="vult_code" id="snipet-3">fun pitchToRate(d) @[table(size=127,min=0.0,max=127.0)] {
    return 0.00018539226566085504 * exp(0.057762265046662105 * d);
 }
-<p>fun phasor(pitch){
-mem phase;
-val rate = pitchToRate(pitch);
-phase = (phase + rate) % 1.0;
-return phase;
-}</p>
-<p>fun wave_table(x) @[table(size=127,min=0.0,max=4.0)] {
-val pi = 3.14159265359;
-return (sin(2.0<em>pi</em>x) + sin(2.0<em>pi</em>x<em>2.0) + sin(2.0</em>pi<em>x</em>4.0))/3.0;
-}</p>
+//
+fun phasor(pitch){
+    mem phase;
+    val rate = pitchToRate(pitch);
+    phase = (phase + rate) % 1.0;
+    return phase;
+}
+//
+fun wave_table(x) @[table(size=127,min=0.0,max=4.0)] {
+    val pi = 3.14159265359;
+    return (sin(2.0*pi*x) + sin(2.0*pi*x*2.0) + sin(2.0*pi*x*4.0))/3.0;
+}
 </div>
 <p>This feature works as well with fixed-point code. In one of the benchmarks that I ran I got the following results:</p>
 <table class="table">

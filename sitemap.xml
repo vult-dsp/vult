@@ -59,6 +59,9 @@
     <loc>https://vult-dsp.github.io/vult/blog/pd-teensy/</loc>
     <lastmod>2016-07-13T20:10:57+02:00</lastmod>
   </url><url>
+    <loc>https://vult-dsp.github.io/vult/tutorials/generate-c/</loc>
+    <lastmod>2016-07-12T21:24:58+02:00</lastmod>
+  </url><url>
     <loc>https://vult-dsp.github.io/vult/blog/new-site/</loc>
     <lastmod>2016-07-12T20:21:43+02:00</lastmod>
   </url><url>
@@ -74,8 +77,11 @@
     <loc>https://vult-dsp.github.io/vult/demo/</loc>
     <lastmod>2016-07-12T17:54:12+02:00</lastmod>
   </url><url>
-    <loc>https://vult-dsp.github.io/vult/tutorials/generate-c/</loc>
-    <lastmod>2015-07-12T21:24:58+02:00</lastmod>
+    <loc>https://vult-dsp.github.io/vult/tutorials/patterns/</loc>
+    <lastmod>2016-07-01T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://vult-dsp.github.io/vult/tutorials/fixed-point/</loc>
+    <lastmod>2016-06-01T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://vult-dsp.github.io/vult/categories/</loc>
   </url><url>

@@ -58,35 +58,38 @@ fun change(current:real) : bool {
    previous = current;
    return result;
 }
-<p>fun biquad(x0, b0, b1, b2 ,a1 ,a2) : real {
-mem w1, w2;
-val w0 = x0 - a1<em>w1 - a2</em>w2;
-val y0 = b0<em>w0 + b1</em>w1 + b2*w2;
-w2, w1 = w1, w0;
-return y0;
-}</p>
-<p>fun lowpass(x,w0,q) {
-mem b0,b1,b2,a1,a2;
-if(change(w0) || change(q)) {
-val cos_w = cos(w0);
-val alpha = sin(w0)/(2.0<em>q);
-val den =  1.0 + alpha;
-a1 = (-2.0</em>cos_w)/den;
-a2 = (1.0-alpha)/den;
-b0 = (1.0-cos_w)/(2.0<em>den);
-b1 = (1.0-cos_w)/den;
-b2 = (1.0-cos_w)/(2.0</em>den);
+//
+fun biquad(x0, b0, b1, b2 ,a1 ,a2) : real {
+    mem w1, w2;
+    val w0 = x0 - a1*w1 - a2*w2;
+    val y0 = b0*w0 + b1*w1 + b2*w2;
+    w2, w1 = w1, w0;
+    return y0;
 }
-return biquad(x,b0,b1,b2,a1,a2);
-}</p>
-<p>fun lowpass_2x(x,w0,q) {
-val fixed_w0 = w0/2.0;
-// first call to lowpass with context &lsquo;inst&rsquo;
-_  = inst:lowpass(x,fixed_w0,q);
-// second call to lowpass with the same context &lsquo;inst&rsquo;
-val y = inst:lowpass(x,fixed_w0,q);
-return y;
-}</p>
+//
+fun lowpass(x,w0,q) {
+    mem b0,b1,b2,a1,a2;
+    if(change(w0) || change(q)) {
+        val cos_w = cos(w0);
+        val alpha = sin(w0)/(2.0*q);
+        val den =  1.0 + alpha;
+        a1 = (-2.0*cos_w)/den;
+        a2 = (1.0-alpha)/den;
+        b0 = (1.0-cos_w)/(2.0*den);
+        b1 = (1.0-cos_w)/den;
+        b2 = (1.0-cos_w)/(2.0*den);
+    }
+    return biquad(x,b0,b1,b2,a1,a2);
+}
+//
+fun lowpass_2x(x,w0,q) {
+    val fixed_w0 = w0/2.0;
+    // first call to lowpass with context 'inst'
+    _  = inst:lowpass(x,fixed_w0,q);
+    // second call to lowpass with the same context 'inst'
+    val y = inst:lowpass(x,fixed_w0,q);
+    return y;
+}
 </div>
 <p>Next we are gonna call the Vult compiler as follows:</p>
 <pre tabindex="0"><code>$ ./vultc -ccode filter.vult
@@ -107,19 +110,21 @@ return y;
 </ul>
 <p>For example:</p>
 <div class="c_code" id="tut5-2">// file main.cpp
-<p>#include &ldquo;filter.h&rdquo;</p>
-<p>int main(void) {
-Filter_lowpass_2x_type filter;
-// initialization
-Filter_lowpass_2x_init(filter);</p>
-<p>// inputs to the function
-float x = 0.0f;
-float w = 1.0f;
-float q = 1.0f;</p>
-<p>// calling the function
-float result = Filter_lowpass_2x(filter,x,w,q);</p>
-<p>return 0;
-}</p>
+//
+#include "filter.h"
+//
+int main(void) {
+   Filter_lowpass_2x_type filter;
+   // initialization
+   Filter_lowpass_2x_init(filter);
+   // inputs to the function
+   float x = 0.0f;
+   float w = 1.0f;
+   float q = 1.0f;
+   // calling the function
+   float result = Filter_lowpass_2x(filter,x,w,q);
+   return 0;
+}
 </div>
 <p>In order to compile this code you need to add an include directory pointing to the location of the file <code>vultin.h</code>. This file is located in the source tree under the folder <code>runtime</code>. To link you will need to compile and link the file <code>vultin.c</code> which is located in the same place (<a href="https://github.com/modlfo/vult/tree/master/runtime">https://github.com/modlfo/vult/tree/master/runtime</a>)</p>
 <p>One thing to notice is that every function with memory will have as first argument a reference to a value of it&rsquo;s corresponding type. In the above case, the function <code>Filter_lowpass_2x</code> returns only one value, therefore the C/C++ will return a value. If the functions return more than one value Vult will automatically generate structures for the types. Here are few Vult functions an their corresponding C/C++ functions:</p>
@@ -128,20 +133,20 @@ float result = Filter_lowpass_2x(filter,x,w,q);</p>
 fun foo1(x:real) {
 	return x;
 }
-<p>// single value return, with memory
+// single value return, with memory
 fun bar1(x:real) {
-mem y = x;
-return x;
-}</p>
-<p>// multiple value return, no memory
+	mem y = x;
+	return x;
+}
+// multiple value return, no memory
 fun foo2(x:real) {
-return x,x;
-}</p>
-<p>// multiple value return, with memory
+	return x,x;
+}
+// multiple value return, with memory
 fun bar2(x:real) {
-mem y = x;
-return x,x;
-}</p>
+	mem y = x;
+	return x,x;
+}
 </div>
 <p>C/C++ declarations of the functions above:</p>
 <div class="c_code" id="tut5-4">
@@ -170,11 +175,11 @@ float Example_bar2_ret_1(Example__ctx_type_3 &amp;_ctx);</p>
 // Declare and initialize the instance
 Example_foo2_type inst;
 Example_foo2_init(inst);
-<p>// Call the function
-Example_foo2(inst, 0.0);</p>
-<p>// Retrieve the result
+// Call the function
+Example_foo2(inst, 0.0);
+// Retrieve the result
 float value0 = Example_foo2_ret_0(inst);
-float value1 = Example_foo2_ret_1(inst);</p>
+float value1 = Example_foo2_ret_1(inst);
 </div>
 <h2 id="generating-fixed-point-code">Generating fixed-point code</h2>
 <p>When generating C/C++ code Vult by default uses floating point arithmetic (<code>float</code> numbers). Floating point code is very efficient in big processors like the x86. However when compiled to small microcontrollers (like the ones found in Arduinos or some ARM processors) the code can be very inefficient because these processors do not have a dedicated floating point arithmetic unit.</p>
@@ -184,8 +189,9 @@ float value1 = Example_foo2_ret_1(inst);</p>
 <pre tabindex="0"><code>$ ./vultc -ccode -real fixed filter.vult -o filter
 </code></pre><p>This command will generate use the type <code>fix16_t</code> instead of <code>float</code>. For example, the declaration of the function <code>lowpass_2x</code> changes to:</p>
 <div class="c_code" id="tut5-5">
-fix16_t Filter_lowpass_2x(Filter__ctx_type_3 &_ctx, fix16_t x,
-                          fix16_t w0, fix16_t q);
+fix16_t Filter_lowpass_2x(
+    Filter__ctx_type_3 &_ctx, fix16_t x,
+    fix16_t w0, fix16_t q);
 </div>
 <p>The file <code>vultin.h</code> provides functions to convert among <code>float</code> <code>fix16_t</code> and <code>int</code> values.</p>
 <script type="text/javascript" src="../../javascripts/external/ace/ace.js"></script>

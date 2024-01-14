@@ -58,20 +58,21 @@ fun change(current:real) : bool {
    previous = current;
    return result;
 }
-<p>fun lowpass(x,w0,q) {
-mem b0,b1,b2,a1,a2;
-if(change(w0) || change(q)) {
-val cos_w = cos(w0);
-val alpha = sin(w0)/(2.0<em>q);
-val den =  1.0 + alpha;
-a1 = (-2.0</em>cos_w)/den;
-a2 = (1.0-alpha)/den;
-b0 = (1.0-cos_w)/(2.0<em>den);
-b1 = (1.0-cos_w)/den;
-b2 = (1.0-cos_w)/(2.0</em>den);
+//
+fun lowpass(x,w0,q) {
+    mem b0,b1,b2,a1,a2;
+    if(change(w0) || change(q)) {
+        val cos_w = cos(w0);
+        val alpha = sin(w0)/(2.0*q);
+        val den =  1.0 + alpha;
+        a1 = (-2.0*cos_w)/den;
+        a2 = (1.0-alpha)/den;
+        b0 = (1.0-cos_w)/(2.0*den);
+        b1 = (1.0-cos_w)/den;
+        b2 = (1.0-cos_w)/(2.0*den);
+    }
+    return biquad(x,b0,b1,b2,a1,a2);
 }
-return biquad(x,b0,b1,b2,a1,a2);
-}</p>
 </div>
 <p>This filter becomes unstable when the parameter <code>q</code> is high and the frequency <code>w0</code> approaching <code>2Pi</code> for that reason we cannot completely open the filter.</p>
 <p>The following code shows the low pass filter with 2x of oversampling:</p>

@@ -69,15 +69,16 @@ fun fun() {
 <div class="vult_code" id="snipet-3">
 external mywave(channel:int, index:int) : real
    @[wave(channels=1, file="wave.wav")];
-<p>// count from 0 to the number of samples in file &ldquo;wave.wav&rdquo; minus one
+// count from 0 to the number of samples in file "wave.wav" minus one
 fun index() {
-// use mywave_samples() to reset the counter to zero
-mem i = (i + 1) % mywave_samples();
-return i;
-}</p>
-<p>fun play() {
-return mywave(0, index());
-}</p>
+   // use mywave_samples() to reset the counter to zero
+   mem i = (i + 1) % mywave_samples();
+   return i;
+}
+//
+fun play() {
+   return mywave(0, index());
+}
 </div>
 <p>Currently, only PCM WAV files in 16 and 24 bits are supported.</p>
 <p>Embedding of WAV files is intended to handle short WAV files (a few seconds or less). Embedding very large files slows down the code generation and I might cause both, the Vult compiler and target compiler to fail. For such cases is recommended to provide an external function that reads at run-time the file.</p>
