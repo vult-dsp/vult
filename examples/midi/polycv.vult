@@ -1,7 +1,7 @@
 /*
 The MIT License (MIT)
 
-Copyright (c) 2017 Leonardo Laguna Ruiz
+Copyright (c) 2014-2024 Leonardo Laguna Ruiz
 -----
 Handles midi on/off events in order to behave and
 produces four groups of note, gate and vel values to
