@@ -55,7 +55,7 @@ fun change(current:real) : bool {
     previous = current;
     return result;
 }
-
+//
 fun lowpass(x,w0,q) {
     mem b0,b1,b2,a1,a2;
     if(change(w0) || change(q)) {
@@ -78,18 +78,13 @@ Now that we have the filter, we can use it as part of a bigger program. For exam
 
 <div class="vult_code" id="tut3-4">
 fun process(x) : real {
-
    ... // some other here
-
    val s_1 = ...; // generate a signal
    val s_2 = ...; // generate a signal
-
    // the first filter is controlled by control_1 and control_2
    val s_1_filtered = lowpass(s_1, control_1, control_2);
-
    // the second filter is controlled by control_3 and control_4
    val s_2_filtered = lowpass(s_2, control_3, control_4);
-
    return s_1_filtered + s_2_filtered;
 }
 </div>

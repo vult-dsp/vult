@@ -25,7 +25,7 @@ One of the most useful features of Vult are the active functions. These function
    count = count + n; // increases the value by 'n' and updates it
    return count;      // returns the new count
 }
-
+//
 fun loop() {
    val x = counter(1); // every time count is called the value increases 1
 }

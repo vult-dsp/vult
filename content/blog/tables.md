@@ -58,14 +58,14 @@ One cool thing is about this feature is that it can convert any function of one 
 <div class="vult_code" id="snipet-3">fun pitchToRate(d) @[table(size=127,min=0.0,max=127.0)] {
    return 0.00018539226566085504 * exp(0.057762265046662105 * d);
 }
-
+//
 fun phasor(pitch){
     mem phase;
     val rate = pitchToRate(pitch);
     phase = (phase + rate) % 1.0;
     return phase;
 }
-
+//
 fun wave_table(x) @[table(size=127,min=0.0,max=4.0)] {
     val pi = 3.14159265359;
     return (sin(2.0*pi*x) + sin(2.0*pi*x*2.0) + sin(2.0*pi*x*4.0))/3.0;

@@ -40,7 +40,7 @@ Function in Vult can return multiple values separated by commas. The values can 
 <div class="vult_code" id="tut1-3">fun foo() {
    return 1, 2;
 }
-
+//
 fun bar(){
    val a, b = foo();
 }

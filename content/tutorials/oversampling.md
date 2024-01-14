@@ -14,7 +14,7 @@ In order to oversample a filter we need for every sample perform `N` steps. I a 
 
 In order to perform oversampling, we are gonna use a feature of Vult that allow us to name and reuse the memory created by a function.
 
-In the previous tutorial `Easy DSP with Vult` we coded the following low pass filter. 
+In the previous tutorial `Easy DSP with Vult` we coded the following low pass filter.
 
 <div class="vult_code" id="tut4-1"> // returns true when the input changes
 fun change(current:real) : bool {
@@ -23,7 +23,7 @@ fun change(current:real) : bool {
    previous = current;
    return result;
 }
-
+//
 fun lowpass(x,w0,q) {
     mem b0,b1,b2,a1,a2;
     if(change(w0) || change(q)) {

@@ -5,10 +5,9 @@
       <div class="col-md-2"> </div>
       <div class="col-md-8 col-md-auto">
          <h2> Tutorials </h2>
-
          <div class="tutorial_list">
             <ul>
-               {{ range where .Site.Pages "Section" "tutorials" }} {{ .Render "tutorial_li" }} {{ end }}
+               {{ range where .Site.Pages "Layout" "tutorial" }} {{ .Render "tutorial_li" }} {{ end }}
             </ul>
          </div>
          <h2> Other documents </h2>

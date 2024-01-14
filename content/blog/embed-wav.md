@@ -43,14 +43,13 @@ As a complete example, the following code will play back in a loop the embedded 
 <div class="vult_code" id="snipet-3">
 external mywave(channel:int, index:int) : real
    @[wave(channels=1, file="wave.wav")];
-
 // count from 0 to the number of samples in file "wave.wav" minus one
 fun index() {
    // use mywave_samples() to reset the counter to zero
    mem i = (i + 1) % mywave_samples();
    return i;
 }
-
+//
 fun play() {
    return mywave(0, index());
 }

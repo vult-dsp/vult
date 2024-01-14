@@ -1,5 +1,5 @@
 +++
-date = "2015-07-12T21:24:58+02:00"
+date = "2016-07-12T21:24:58+02:00"
 description = ""
 tags = []
 title = "Generating C/C++"
@@ -23,7 +23,7 @@ fun change(current:real) : bool {
    previous = current;
    return result;
 }
-
+//
 fun biquad(x0, b0, b1, b2 ,a1 ,a2) : real {
     mem w1, w2;
     val w0 = x0 - a1*w1 - a2*w2;
@@ -31,7 +31,7 @@ fun biquad(x0, b0, b1, b2 ,a1 ,a2) : real {
     w2, w1 = w1, w0;
     return y0;
 }
-
+//
 fun lowpass(x,w0,q) {
     mem b0,b1,b2,a1,a2;
     if(change(w0) || change(q)) {
@@ -46,7 +46,7 @@ fun lowpass(x,w0,q) {
     }
     return biquad(x,b0,b1,b2,a1,a2);
 }
-
+//
 fun lowpass_2x(x,w0,q) {
     val fixed_w0 = w0/2.0;
     // first call to lowpass with context 'inst'
@@ -87,22 +87,19 @@ To use this code in a file you need to:
 For example:
 
 <div class="c_code" id="tut5-2">// file main.cpp
-
+//
 #include "filter.h"
-
+//
 int main(void) {
    Filter_lowpass_2x_type filter;
    // initialization
    Filter_lowpass_2x_init(filter);
-
    // inputs to the function
    float x = 0.0f;
    float w = 1.0f;
    float q = 1.0f;
-
    // calling the function
    float result = Filter_lowpass_2x(filter,x,w,q);
-
    return 0;
 }
 </div>
@@ -116,18 +113,15 @@ One thing to notice is that every function with memory will have as first argume
 fun foo1(x:real) {
 	return x;
 }
-
 // single value return, with memory
 fun bar1(x:real) {
 	mem y = x;
 	return x;
 }
-
 // multiple value return, no memory
 fun foo2(x:real) {
 	return x,x;
 }
-
 // multiple value return, with memory
 fun bar2(x:real) {
 	mem y = x;
@@ -173,14 +167,11 @@ To call the function `Example_foo2` from C++ you have to write:
 // Declare and initialize the instance
 Example_foo2_type inst;
 Example_foo2_init(inst);
-
 // Call the function
 Example_foo2(inst, 0.0);
-
 // Retrieve the result
 float value0 = Example_foo2_ret_0(inst);
 float value1 = Example_foo2_ret_1(inst);
-
 </div>
 
 
@@ -201,12 +192,12 @@ $ ./vultc -ccode -real fixed filter.vult -o filter
 This command will generate use the type `fix16_t` instead of `float`. For example, the declaration of the function `lowpass_2x` changes to:
 
 <div class="c_code" id="tut5-5">
-fix16_t Filter_lowpass_2x(Filter__ctx_type_3 &_ctx, fix16_t x,
-                          fix16_t w0, fix16_t q);
+fix16_t Filter_lowpass_2x(
+    Filter__ctx_type_3 &_ctx, fix16_t x,
+    fix16_t w0, fix16_t q);
 </div>
 
 The file `vultin.h` provides functions to convert among `float` `fix16_t` and `int` values.
-
 
 <script type="text/javascript" src="../../javascripts/external/ace/ace.js"></script>
 <script type="text/javascript" src="../../javascripts/main.js"></script>
