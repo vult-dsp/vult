@@ -162,13 +162,13 @@ void string_print(char *value) { printf("%s\n", value); }
 void bool_print(uint8_t value) { printf("%s\n", value ? "true" : "false"); }
 
 void push_byte(CustomBuffer &buffer, int8_t byte) {
-  if (!buffer.dry_run) {
+  if (!buffer.calculate_size) {
     buffer.data.push_back(byte);
   }
 }
 
 void modify_byte(CustomBuffer &buffer, int32_t index, int8_t byte) {
-  if (!buffer.dry_run) {
+  if (!buffer.calculate_size) {
     buffer.data[static_cast<uint32_t>(index)] = byte;
   }
 }

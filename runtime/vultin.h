@@ -195,7 +195,7 @@ static const int8_t ARRAY_TAG = (int8_t)0x66;
 
 typedef struct CustomBuffer {
   std::vector<int8_t> data;
-  bool dry_run;
+  bool calculate_size;
   bool error;
 } CustomBuffer;
 
@@ -250,5 +250,42 @@ float deserialize_float(CustomBuffer &buffer, int32_t index);
 std::string deserialize_string(CustomBuffer &buffer, int32_t index);
 
 int32_t goto_data(CustomBuffer &buffer);
+
+template <std::size_t SIZE, typename DATA>
+void serialize_data(CustomBuffer &buffer,
+                    int32_t (*serialize_type_descr_function)(CustomBuffer &, int32_t, std::array<bool, SIZE> &),
+                    int32_t (*serialize_data_function)(CustomBuffer &, int32_t, DATA &), DATA &data) {
+  // First we run the serializer without actually attaching data.
+  // This is done to calculate the size of buffer needed.
+  buffer.calculate_size = true;
+  // This is an array that where we mark if a type description has been serialized
+  std::array<bool, SIZE> marks;
+  // initially nothing has been serialized
+  marks.fill(false);
+  // The serializers are ran in order to calculate the size.
+  int32_t index = serialize_type_descr_function(buffer, 0, marks);
+  index = serialize_data_function(buffer, index, data);
+  // TODO: calculate the checksum
+  // Once we know the size, the buffer is allocated
+  buffer.data.reserve((uint32_t)index);
+  // next we are going to actually write data to the buffer
+  buffer.calculate_size = false;
+  // all marks are reset to false
+  marks.fill(false);
+  // Finally the data is written to the buffer.
+  index = serialize_type_descr_function(buffer, 0, marks);
+  index = serialize_data_function(buffer, index, data);
+}
+
+template <typename DATA>
+void deserialize_data(CustomBuffer &buffer, void (*deserializer)(CustomBuffer &, CustomTypeDescr &, int32_t, DATA &),
+                      std::string type_name, DATA &data) {
+  // search the information about the type
+  CustomTypeDescr descr = search_type_description(buffer, type_name);
+  // skip the type descriptions
+  int32_t data_index = goto_data(buffer);
+  // call the deserializer
+  deserializer(buffer, descr, data_index, data);
+}
 
 #endif // VULTIN_H
