@@ -10,14 +10,14 @@ type function_info =
 let getFunctionInfo (f : Code.function_def) =
   let outputs =
     match f.t with
-    | _, Tuple elems -> elems
-    | _, Void (Some elems) -> elems
-    | _, Void None -> []
+    | _, { t = TTuple elems; _ } -> elems
+    | _, { t = TVoid (Some elems); _ } -> elems
+    | _, { t = TVoid None; _ } -> []
     | _, t -> [ t ]
   in
   let has_ctx, inputs =
     match f.args with
-    | ("_ctx", Struct _) :: inputs -> true, inputs
+    | ("_ctx", { t = TStruct _; _ }) :: inputs -> true, inputs
     | inputs -> false, inputs
   in
   let class_name, is_dsp =
@@ -30,11 +30,11 @@ let getFunctionInfo (f : Code.function_def) =
 
 
 let typeString (t : Code.type_) =
-  match t with
-  | Real -> "float"
-  | Int -> "int"
-  | Bool -> "bool"
-  | Fixed -> "fix16_t"
+  match t.t with
+  | TReal -> "float"
+  | TInt -> "int"
+  | TBool -> "bool"
+  | TFix16 -> "fix16_t"
   | _ -> failwith "Pd.typeString: not a numeric type"
 
 
@@ -89,8 +89,8 @@ let tildeNewFunction (f : function_info) : int * Pla.t =
   dsp_nargs + 2, vec_decl
 
 
-let castInput (typ : Code.type_) (value : Pla.t) : Pla.t = Common.cast ~from:Code.Real ~to_:typ value
-let castOutput (typ : Code.type_) (value : Pla.t) : Pla.t = Common.cast ~from:typ ~to_:Code.Real value
+let castInput (typ : Code.type_) (value : Pla.t) : Pla.t = Common.cast ~from:Core.Prog.C.real_t ~to_:typ value
+let castOutput (typ : Code.type_) (value : Pla.t) : Pla.t = Common.cast ~from:typ ~to_:Core.Prog.C.real_t value
 let inputName (i, acc) (_, t) = i + 1, castInput t [%pla {|*(in_<#i#i>++)|}] :: acc
 
 let tildePerformFunctionCall (f : function_info) =

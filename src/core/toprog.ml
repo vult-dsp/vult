@@ -43,7 +43,7 @@ let rec type_ (env : Env.in_top) (state : state) (t : Typed.type_) =
   | T.TEId { id = "unit"; n = None; _ } -> state, { t = TVoid None; loc }
   | T.TEId { id = "int"; n = None; _ } -> state, { t = TInt; loc }
   | T.TEId { id = "real"; n = None; _ } -> state, { t = TReal; loc }
-  | T.TEId { id = "fix16"; n = None; _ } -> state, { t = TFixed; loc }
+  | T.TEId { id = "fix16"; n = None; _ } -> state, { t = TFix16; loc }
   | T.TEId { id = "string"; n = None; _ } -> state, { t = TString; loc }
   | T.TEId { id = "bool"; n = None; _ } -> state, { t = TBool; loc }
   | T.TEId p -> (

@@ -39,7 +39,7 @@ let getInitRHS (t : type_) =
   | { t = TVoid _; loc } -> { e = EUnit; t; loc }
   | { t = TInt; loc } -> { e = EInt 0; t; loc }
   | { t = TReal; loc } -> { e = EReal 0.0; t; loc }
-  | { t = TFixed; loc } -> { e = EReal 0.0; t; loc }
+  | { t = TFix16; loc } -> { e = EReal 0.0; t; loc }
   | { t = TString; loc } -> { e = EString ""; t; loc }
   | { t = TBool; loc } -> { e = EBool false; t; loc }
   | { t = TStruct { path; _ }; loc } -> { e = ECall { path = path ^ "_init"; args = [] }; t; loc }
@@ -61,7 +61,7 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
   | { t = TReal; loc } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TFixed; loc } ->
+  | { t = TFix16; loc } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
   | { t = TString; loc } ->

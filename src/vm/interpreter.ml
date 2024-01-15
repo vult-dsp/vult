@@ -374,7 +374,7 @@ and valueOfType (t : type_) : rvalue =
   | TVoid _ -> Void
   | TInt -> Int 0
   | TReal -> Real 0.0
-  | TFixed -> Real 0.0
+  | TFix16 -> Real 0.0
   | TBool -> Bool false
   | TString -> String ""
   | TArray (Some dim, t) ->

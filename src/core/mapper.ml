@@ -219,7 +219,7 @@ let rec type_ (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state)
   | { t = TReal; _ } -> apply mapper.type_ env state t
   | { t = TString; _ } -> apply mapper.type_ env state t
   | { t = TBool; _ } -> apply mapper.type_ env state t
-  | { t = TFixed; _ } -> apply mapper.type_ env state t
+  | { t = TFix16; _ } -> apply mapper.type_ env state t
   | { t = TArray (dim, t1); _ } ->
     let state, t1 = type_ mapper sub_env state t1 in
     apply mapper.type_ env state { t = TArray (dim, t1); loc }

@@ -173,11 +173,11 @@ let print_dexp (e : dexp) =
 let rec print_stmt s =
   match s with
   (* if the name is _ctx, do not call the allocator*)
-  | StmtDecl (({ d = DId ("_ctx", _); t = Struct _; _ } as lhs), None) ->
+  | StmtDecl (({ d = DId ("_ctx", _); t = { t = TStruct _; _ }; _ } as lhs), None) ->
     let lhs = print_dexp lhs in
     [%pla {|local <#lhs#> = {};|}]
   (* needs allocation *)
-  | StmtDecl (({ t = Struct { path; _ }; _ } as lhs), None) ->
+  | StmtDecl (({ t = { t = TStruct { path; _ }; _ }; _ } as lhs), None) ->
     let lhs = print_dexp lhs in
     [%pla {|local <#lhs#> = <#path#s>_alloc();|}]
   | StmtDecl (lhs, None) ->
@@ -217,7 +217,7 @@ let rec print_stmt s =
     let if_ =
       List.fold_right
         (fun (e2, body) else_ ->
-          let cond = { e = Op (Eq, e1, e2); t = Bool } in
+          let cond = { e = Op (Eq, e1, e2); t = Core.Prog.C.bool_t } in
           Some (StmtIf (cond, body, else_)))
         cases
         default

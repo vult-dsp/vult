@@ -32,7 +32,7 @@ type type_d_ =
   | TReal
   | TString
   | TBool
-  | TFixed
+  | TFix16
   | TArray of int option * type_
   | TStruct of struct_descr
   | TTuple of type_ list
@@ -188,7 +188,7 @@ module Print = struct
     | TReal -> Pla.string "real"
     | TString -> Pla.string "string"
     | TBool -> Pla.string "bool"
-    | TFixed -> Pla.string "fixed"
+    | TFix16 -> Pla.string "fixed"
     | TArray (Some dim, t) ->
       let t = print_type_ t in
       [%pla {|<#t#>[<#dim#i>]|}]
@@ -391,8 +391,10 @@ module C = struct
   let string_t = { t = TString; loc = Loc.default }
   let bool_t = { t = TBool; loc = Loc.default }
   let real_t = { t = TReal; loc = Loc.default }
-  let fix_t = { t = TFixed; loc = Loc.default }
+  let fix16_t = { t = TFix16; loc = Loc.default }
   let array_t ?dim t = { t = TArray (dim, t); loc = Loc.default }
+  let ereal ?(loc = Loc.default) i = { e = EReal i; t = real_t; loc }
+  let efix16 ?(loc = Loc.default) i = { e = EFixed i; t = fix16_t; loc }
   let eint ?(loc = Loc.default) i = { e = EInt i; t = int_t; loc }
   let ebool ?(loc = Loc.default) i = { e = EBool i; t = int_t; loc }
   let eid ?(loc = Loc.default) id t = { e = EId id; t; loc }

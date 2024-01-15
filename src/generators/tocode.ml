@@ -9,32 +9,27 @@ type context =
 
 let rec type_ (context : context) (t : Prog.type_) =
   match t with
-  | { t = TVoid None; _ } -> Void None
+  | { t = TReal; _ } when context.args.real = Fixed -> { t with t = TFix16 }
   | { t = TVoid (Some elems); _ } ->
     let elems = List.map (type_ context) elems in
-    Void (Some elems)
-  | { t = TInt; _ } -> Int
-  | { t = TReal; _ } when context.args.real = Fixed -> Fixed
-  | { t = TReal; _ } -> Real
-  | { t = TString; _ } -> String
-  | { t = TBool; _ } -> Bool
-  | { t = TFixed; _ } -> Fixed
+    { t with t = TVoid (Some elems) }
   | { t = TArray (None, sub); _ } ->
     let sub = type_ context sub in
-    Array (None, sub)
+    { t with t = TArray (None, sub) }
   | { t = TArray (Some dim, sub); _ } ->
     let sub = type_ context sub in
-    Array (Some dim, sub)
+    { t with t = TArray (Some dim, sub) }
   | { t = TStruct descr; _ } ->
     let descr = struct_descr context descr in
-    Struct descr
+    { t with t = TStruct descr }
   | { t = TTuple elems; _ } ->
     let elems = List.map (type_ context) elems in
-    Tuple elems
+    { t with t = TTuple elems }
+  | _ -> t
 
 
-and struct_descr (context : context) (d : Prog.struct_descr) : struct_descr =
-  let members = List.map (fun (name, t, _, _) -> name, type_ context t) d.members in
+and struct_descr (context : context) (d : Prog.struct_descr) : Prog.struct_descr =
+  let members = List.map (fun (name, t, tags, loc) -> name, type_ context t, tags, loc) d.members in
   { path = d.path; members }
 
 
@@ -170,14 +165,14 @@ let findRemove env n =
 
 
 let rec getInitRHS (t : type_) =
-  match t with
-  | Void _ -> Some { e = Unit; t }
-  | Int -> Some { e = Int 0; t }
-  | Real -> Some { e = Real 0.0; t }
-  | Fixed -> Some { e = Real 0.0; t }
-  | String -> Some { e = String ""; t }
-  | Bool -> Some { e = Bool false; t }
-  | Array (Some size, t) -> (
+  match t.t with
+  | Prog.TVoid _ -> Some { e = Unit; t }
+  | TInt -> Some { e = Int 0; t }
+  | TReal -> Some { e = Real 0.0; t }
+  | TFix16 -> Some { e = Real 0.0; t }
+  | TString -> Some { e = String ""; t }
+  | TBool -> Some { e = Bool false; t }
+  | TArray (Some size, t) -> (
     match getInitRHS t with
     | Some elem ->
       let elems = List.init size (fun _ -> elem) in
@@ -240,7 +235,7 @@ let rec stmt (context : context) (env : env) (s : Prog.stmt) =
   | { s = StmtBind ({ l = LWild; _ }, ({ e = ECall _; _ } as rhs)); _ } ->
     let rhs = exp context rhs in
     let env, stmts = getNecessaryDeclarations env rhs in
-    env, stmts @ [ StmtBind ({ l = LWild; t = Void None }, rhs) ]
+    env, stmts @ [ StmtBind ({ l = LWild; t = Prog.C.void_t }, rhs) ]
   | { s = StmtBind ({ l = LWild; _ }, _); _ } -> env, []
   | { s = StmtBind (lhs, rhs); _ } -> (
     let lhs = lexp context lhs in

@@ -1,17 +1,18 @@
 open Code
+open Core
 open Util
 open Vm
 module Tags = Pparser.Ptags
 
 let makeFloat (t : type_) x : exp =
-  match t with
-  | Real -> { e = Real x; t }
-  | Fixed -> { e = Fixed x; t }
+  match t.t with
+  | TReal -> { e = Real x; t }
+  | TFix16 -> { e = Fixed x; t }
   | _ -> failwith "invalid type"
 
 
-let makeInt x : exp = { e = Int x; t = Int }
-let makeArrayType precision size : type_ = Array (Some size, precision)
+let makeInt x : exp = { e = Int x; t = Prog.C.int_t }
+let makeArrayType precision dim : type_ = Prog.C.array_t ~dim precision
 
 let makeRealTableDecl loc fname name precision data =
   let varname = fname ^ "_" ^ name in
@@ -24,7 +25,7 @@ let makeRealTableDecl loc fname name precision data =
 let makeIntTableDecl loc fname name data =
   let varname = fname ^ "_" ^ name in
   let size = List.length data in
-  let t = makeArrayType Int size in
+  let t = makeArrayType Prog.C.int_t size in
   let elems = CCList.map makeInt data in
   { top = TopDecl ({ d = DId (varname, Some size); t }, { e = Array elems; t }); loc }
 
@@ -33,10 +34,10 @@ let generateRawAccessFunction loc full_name c t =
   let n = string_of_int c in
   let table_name = full_name ^ "_c" ^ n in
   let function_name = full_name ^ "_raw_c" ^ n in
-  let r = { e = Index { e = { e = Id table_name; t }; index = { e = Id "index"; t = Int } }; t } in
+  let r = { e = Index { e = { e = Id table_name; t }; index = { e = Id "index"; t = Prog.C.int_t } }; t } in
   let body = StmtReturn r in
-  let args = [ "index", (Int : type_) ] in
-  let t = [ (Int : type_) ], t in
+  let args = [ "index", Prog.C.int_t ] in
+  let t = [ Prog.C.int_t ], t in
   let info = { original_name = None; is_root = false } in
   { top = TopFunction ({ name = function_name; args; t; tags = []; loc; info }, body); loc }
 
@@ -140,36 +141,42 @@ let calculateTablesOrder2 loc vm name size min max precision =
 
 
 let getCastIndexFunction (in_precision : type_) =
-  match in_precision with
-  | Fixed -> "fix_to_int"
-  | Real -> "float_to_int"
+  match in_precision.t with
+  | TFix16 -> "fix_to_int"
+  | TReal -> "float_to_int"
   | _ -> failwith "invalid input precision"
 
 
 let getIndex in_precision bound_check size value =
   let clip_call i =
     if bound_check then
-      { e = Call { path = "int_clip"; args = [ i; { e = Int 0; t = Int }; { e = Int (size - 1); t = Int } ] }; t = Int }
+      { e =
+          Call
+            { path = "int_clip"
+            ; args = [ i; { e = Int 0; t = Prog.C.int_t }; { e = Int (size - 1); t = Prog.C.int_t } ]
+            }
+      ; t = Prog.C.int_t
+      }
     else
       i
   in
-  let int_call i = { e = Call { path = getCastIndexFunction in_precision; args = [ i ] }; t = Int } in
-  [ StmtDecl ({ d = DId ("index", None); t = Int }, Some (clip_call (int_call value))) ]
+  let int_call i = { e = Call { path = getCastIndexFunction in_precision; args = [ i ] }; t = Prog.C.int_t } in
+  [ StmtDecl ({ d = DId ("index", None); t = Prog.C.int_t }, Some (clip_call (int_call value))) ]
 
 
 let castInputVarPrecision (in_precision : type_) (out_precision : type_) (input : exp) : exp =
-  match in_precision, out_precision with
-  | Real, Real -> input
-  | Fixed, Fixed -> input
-  | Real, Fixed -> { e = Call { path = "float_to_fix"; args = [ input ] }; t = Fixed }
-  | Fixed, Real -> { e = Call { path = "fix_to_float"; args = [ input ] }; t = Real }
+  match in_precision.t, out_precision.t with
+  | TReal, TReal -> input
+  | TFix16, TFix16 -> input
+  | TReal, TFix16 -> { e = Call { path = "float_to_fix"; args = [ input ] }; t = Prog.C.fix16_t }
+  | TFix16, TReal -> { e = Call { path = "fix_to_float"; args = [ input ] }; t = Prog.C.real_t }
   | _ -> failwith "castInputVarPrecision: invalid input"
 
 
 let makeNuber (t : type_) v =
-  match t with
-  | Fixed -> { e = Int (int_of_float (float_of_int 0x00010000 *. v)); t }
-  | Real -> { e = Real v; t }
+  match t.t with
+  | TFix16 -> { e = Int (int_of_float (float_of_int 0x00010000 *. v)); t }
+  | TReal -> { e = Real v; t }
   | _ -> failwith "invalid input precision"
 
 
@@ -178,7 +185,7 @@ let makeMul t e1 e2 = if e2 = 1.0 then e1 else { e = Op (Mul, e1, makeNuber t e2
 
 let makeNewBody1 bound_check fname size in_precision t min max input =
   let atype = makeArrayType t size in
-  let rindex = { e = Id "index"; t = Int } in
+  let rindex = { e = Id "index"; t = Prog.C.int_t } in
   let getCoeff a =
     let arr = { e = Id (fname ^ "_" ^ a); t = atype } in
     { e = Index { e = arr; index = rindex }; t }
@@ -193,7 +200,7 @@ let makeNewBody1 bound_check fname size in_precision t min max input =
 
 let makeNewBody2 bound_check fname size in_precision t min max input =
   let atype = makeArrayType t size in
-  let rindex = { e = Id "index"; t = Int } in
+  let rindex = { e = Id "index"; t = Prog.C.int_t } in
   let getCoeff a =
     let arr = { e = Id (fname ^ "_" ^ a); t = atype } in
     { e = Index { e = arr; index = rindex }; t }
@@ -211,9 +218,13 @@ let makeNewBody2 bound_check fname size in_precision t min max input =
 let makeIntAccessBody fname out_type min max input =
   let atype = makeArrayType out_type (max - min) in
   let index =
-    { e = Call { path = "int_clip"; args = [ input; { e = Int min; t = Int }; { e = Int max; t = Int } ] }; t = Int }
+    { e =
+        Call
+          { path = "int_clip"; args = [ input; { e = Int min; t = Prog.C.int_t }; { e = Int max; t = Prog.C.int_t } ] }
+    ; t = Prog.C.int_t
+    }
   in
-  let index = { e = Op (Add, index, makeInt (-min)); t = Int } in
+  let index = { e = Op (Add, index, makeInt (-min)); t = Prog.C.int_t } in
   StmtReturn { e = Index { e = { e = Id (fname ^ "_table"); t = atype }; index }; t = out_type }
 
 
@@ -274,15 +285,15 @@ let makeIntTable vm (def : function_def) =
   let params = Tags.[ "min", TypeInt; "max", TypeInt ] in
   let loc = def.loc in
   match Tags.getParameterList def.tags "table" params, def.t with
-  | Tags.[ Some (Int min); Some (Int max) ], (_, ((Real | Fixed) as out_precision)) ->
+  | Tags.[ Some (Int min); Some (Int max) ], (_, ({ t = TReal | TFix16; _ } as out_precision)) ->
     let var = checkInputVariables def.loc def.args in
     let result = calculateIntRealTables loc vm def.name min max out_precision in
     let new_body = makeIntAccessBody def.name out_precision min max var in
     result @ [ { top = TopFunction (def, new_body); loc } ]
-  | Tags.[ Some (Int min); Some (Int max) ], (_, Int) ->
+  | Tags.[ Some (Int min); Some (Int max) ], (_, { t = TInt; _ }) ->
     let var = checkInputVariables def.loc def.args in
     let result = calculateIntIntTables loc vm def.name min max in
-    let new_body = makeIntAccessBody def.name Int min max var in
+    let new_body = makeIntAccessBody def.name Prog.C.int_t min max var in
     result @ [ { top = TopFunction (def, new_body); loc } ]
   | _ ->
     let msg = "The attribute 'table' on integer tables requires specific parameters. e.g. 'table(min = 0, max = 16)'" in
@@ -336,10 +347,10 @@ let accessChannel (fname : string) (channel : exp) (index : exp) (samples : int)
   let table_name = fname ^ "_" ^ "chan_" ^ string_of_int i in
   (*let table = { e = Call { path = getWrapArrayName t; args = [ { e = Id table_name; t } ] }; t } in*)
   let table = { e = Id table_name; t } in
-  let i = { e = Int i; t = Int } in
-  let samples_e = { e = Int samples; t = Int } in
-  let cond = { e = Op (Eq, channel, i); t = Bool } in
-  let ret = { e = Index { e = table; index = { e = Op (Mod, index, samples_e); t = Int } }; t } in
+  let i = { e = Int i; t = Prog.C.int_t } in
+  let samples_e = { e = Int samples; t = Prog.C.int_t } in
+  let cond = { e = Op (Eq, channel, i); t = Prog.C.bool_t } in
+  let ret = { e = Index { e = table; index = { e = Op (Mod, index, samples_e); t = Prog.C.int_t } }; t } in
   StmtIf (cond, StmtReturn ret, None)
 
 
@@ -348,15 +359,15 @@ let makeNewBody (def : function_def) (wave : WaveFile.wave) precision : stmt =
   let stmts =
     CCList.init wave.WaveFile.channels (accessChannel def.name channel index wave.WaveFile.samples precision)
   in
-  let default = StmtReturn { e = Real 0.0; t = Real } in
+  let default = StmtReturn { e = Real 0.0; t = Prog.C.real_t } in
   StmtBlock (stmts @ [ default ])
 
 
 let makeSizeFunction (def : function_def) (size : int) : top_stmt =
   let size_name = def.name ^ "_samples" in
-  let body = StmtReturn { e = Int size; t = Int } in
+  let body = StmtReturn { e = Int size; t = Prog.C.int_t } in
   let info = { original_name = None; is_root = false } in
-  { top = TopFunction ({ name = size_name; args = []; t = [], Int; tags = []; loc = def.loc; info }, body)
+  { top = TopFunction ({ name = size_name; args = []; t = [], Prog.C.int_t; tags = []; loc = def.loc; info }, body)
   ; loc = def.loc
   }
 
@@ -434,7 +445,7 @@ let makeWavetable (args : Args.args) _vm (def : function_def) =
 
 let replaceFunction (args : Args.args) vm stmt =
   match stmt.top with
-  | TopFunction (({ t = [ Int ], _; _ } as def), _) when Tags.has def.tags "table" -> makeIntTable vm def
+  | TopFunction (({ t = [ { t = TInt; _ } ], _; _ } as def), _) when Tags.has def.tags "table" -> makeIntTable vm def
   | TopFunction (def, _) when Tags.has def.tags "table" -> makeTable vm def
   | TopExternal (def, _) when Tags.has def.tags "wave" -> makeWave args vm def
   | TopExternal (def, _) when Tags.has def.tags "wavetable" -> makeWavetable args vm def

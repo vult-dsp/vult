@@ -23,25 +23,11 @@
 *)
 open Util.Maps
 open Util
+open Core
 
 type tag = Pparser.Ptags.tag
 
-type type_ =
-  | Void of type_ list option
-  | Int
-  | Real
-  | String
-  | Bool
-  | Fixed
-  | Array of int option * type_
-  | Struct of struct_descr
-  | Tuple of type_ list
-
-and struct_descr =
-  { path : string
-  ; members : param list
-  }
-
+type type_ = Prog.type_
 and param = string * type_
 
 type operator =
@@ -145,7 +131,7 @@ and function_def =
 type top_stmt_d =
   | TopExternal of function_def * string option
   | TopFunction of function_def * stmt
-  | TopType of struct_descr
+  | TopType of Prog.struct_descr
   | TopAlias of string * string
   | TopDecl of dexp * exp
 
@@ -308,8 +294,9 @@ module CodeMapper = struct
     ; lexp_d : (lexp_d, 'data, 'ctx) mapper_func
     ; operator : (operator, 'data, 'ctx) mapper_func
     ; param : (param, 'data, 'ctx) mapper_func
+    ; member : (Prog.member, 'data, 'ctx) mapper_func
     ; stmt : (stmt, 'data, 'ctx) mapper_func
-    ; struct_descr : (struct_descr, 'data, 'ctx) mapper_func
+    ; struct_descr : (Prog.struct_descr, 'data, 'ctx) mapper_func
     ; tag : (tag, 'data, 'ctx) mapper_func
     ; top_stmt : (top_stmt, 'data, 'ctx) mapper_func
     ; top_stmt_d : (top_stmt_d, 'data, 'ctx) mapper_func
@@ -325,9 +312,10 @@ module CodeMapper = struct
     ; lexp_d_pre : (lexp_d, 'data, 'ctx) pre_mapper_func
     ; lexp_pre : (lexp, 'data, 'ctx) pre_mapper_func
     ; operator_pre : (operator, 'data, 'ctx) pre_mapper_func
+    ; member_pre : (Prog.member, 'data, 'ctx) pre_mapper_func
     ; param_pre : (param, 'data, 'ctx) pre_mapper_func
     ; stmt_pre : (stmt, 'data, 'ctx) pre_mapper_func
-    ; struct_descr_pre : (struct_descr, 'data, 'ctx) pre_mapper_func
+    ; struct_descr_pre : (Prog.struct_descr, 'data, 'ctx) pre_mapper_func
     ; tag_pre : (tag, 'data, 'ctx) pre_mapper_func
     ; top_stmt_d_pre : (top_stmt_d, 'data, 'ctx) pre_mapper_func
     ; top_stmt_pre : (top_stmt, 'data, 'ctx) pre_mapper_func
@@ -347,6 +335,7 @@ module CodeMapper = struct
     ; lexp_d = None
     ; operator = None
     ; param = None
+    ; member = None
     ; stmt = None
     ; struct_descr = None
     ; tag = None
@@ -364,6 +353,7 @@ module CodeMapper = struct
     ; lexp_d_pre = None
     ; lexp_pre = None
     ; operator_pre = None
+    ; member_pre = None
     ; param_pre = None
     ; stmt_pre = None
     ; struct_descr_pre = None
@@ -387,6 +377,7 @@ module CodeMapper = struct
     ; lexp_d = seqMapperFunc a.lexp_d b.lexp_d
     ; operator = seqMapperFunc a.operator b.operator
     ; param = seqMapperFunc a.param b.param
+    ; member = seqMapperFunc a.member b.member
     ; stmt = seqMapperFunc a.stmt b.stmt
     ; struct_descr = seqMapperFunc a.struct_descr b.struct_descr
     ; tag = seqMapperFunc a.tag b.tag
@@ -405,6 +396,7 @@ module CodeMapper = struct
     ; lexp_pre = seqPreMapperFunc a.lexp_pre b.lexp_pre
     ; operator_pre = seqPreMapperFunc a.operator_pre b.operator_pre
     ; param_pre = seqPreMapperFunc a.param_pre b.param_pre
+    ; member_pre = seqPreMapperFunc a.member_pre b.member_pre
     ; stmt_pre = seqPreMapperFunc a.stmt_pre b.stmt_pre
     ; struct_descr_pre = seqPreMapperFunc a.struct_descr_pre b.struct_descr_pre
     ; tag_pre = seqPreMapperFunc a.tag_pre b.tag_pre
@@ -431,28 +423,30 @@ module CodeMapper = struct
     let context, state, idata = apply_pre mapper.type__pre ocontext state idata in
     let state, odata =
       if context.recurse then (
-        match idata with
-        | Void field_0 ->
+        match idata.Prog.t with
+        | TVoid field_0 ->
           let state, field_0' = (mapper_opt (mapper_list map_type_)) mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else Void field_0' in
+          let odata = if field_0 == field_0' then idata else { idata with t = TVoid field_0' } in
           state, odata
-        | Int -> state, Int
-        | Real -> state, Real
-        | String -> state, String
-        | Bool -> state, Bool
-        | Fixed -> state, Fixed
-        | Array (field_0, field_1) ->
+        | TInt -> state, { idata with t = TInt }
+        | TReal -> state, { idata with t = TReal }
+        | TString -> state, { idata with t = TString }
+        | TBool -> state, { idata with t = TBool }
+        | TFix16 -> state, { idata with t = TFix16 }
+        | TArray (field_0, field_1) ->
           let state, field_1' = map_type_ mapper context state field_1 in
           let field_0' = field_0 in
-          let odata = if field_0 == field_0' && field_1 == field_1' then idata else Array (field_0', field_1') in
+          let odata =
+            if field_0 == field_0' && field_1 == field_1' then idata else { idata with t = TArray (field_0', field_1') }
+          in
           state, odata
-        | Struct field_0 ->
+        | TStruct field_0 ->
           let state, field_0' = map_struct_descr mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else Struct field_0' in
+          let odata = if field_0 == field_0' then idata else { idata with t = TStruct field_0' } in
           state, odata
-        | Tuple field_0 ->
+        | TTuple field_0 ->
           let state, field_0' = (mapper_list map_type_) mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else Tuple field_0' in
+          let odata = if field_0 == field_0' then idata else { idata with t = TTuple field_0' } in
           state, odata)
       else
         state, idata
@@ -466,7 +460,7 @@ module CodeMapper = struct
       if context.recurse then (
         match idata with
         | { path; members } ->
-          let state, members' = (mapper_list map_param) mapper context state members in
+          let state, members' = (mapper_list map_member) mapper context state members in
           let path' = path in
           let odata =
             if path == path' && members == members' then
@@ -479,6 +473,18 @@ module CodeMapper = struct
         state, idata
     in
     apply mapper.struct_descr ocontext state odata
+
+
+  and map_member mapper ocontext state idata =
+    let context, state, idata = apply_pre mapper.member_pre ocontext state idata in
+    let state, odata =
+      if context.recurse then (
+        match idata with
+        | _ -> (mapper_tuple4 bypass map_type_ bypass bypass) mapper context state idata)
+      else
+        state, idata
+    in
+    apply mapper.member ocontext state odata
 
 
   and map_param mapper ocontext state idata =
