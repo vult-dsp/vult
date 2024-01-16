@@ -22,6 +22,7 @@
    THE SOFTWARE.
 *)
 
+open Core.Prog
 open Code
 
 (* TODO:
@@ -60,64 +61,64 @@ let fix_id name = if Util.Maps.Set.mem name Replacements.Lua.keywords then name 
 
 let rec isValueOrIf (e : exp) =
   match e.e with
-  | Unit | Bool _ | Int _ | Real _ | String _ | Id _ | Member _ -> true
-  | UnOp (_, e) -> isValueOrIf e
-  | If { then_; else_; _ } -> isValueOrIf then_ && isValueOrIf else_
+  | EUnit | EBool _ | EInt _ | EReal _ | EString _ | EId _ | EMember _ -> true
+  | EUnOp (_, e) -> isValueOrIf e
+  | EIf { then_; else_; _ } -> isValueOrIf then_ && isValueOrIf else_
   | _ -> false
 
 
-let operator op =
+let operator (op : operator) =
   match op with
-  | Add -> Pla.string "+"
-  | Sub -> Pla.string "-"
-  | Mul -> Pla.string "*"
-  | Div -> Pla.string "/"
-  | Mod -> Pla.string "%"
-  | Land -> Pla.string "and"
-  | Lor -> Pla.string "or"
-  | Bor -> Pla.string "|"
-  | Band -> Pla.string "&"
-  | Bxor -> Pla.string "^"
-  | Lsh -> Pla.string "<<"
-  | Rsh -> Pla.string ">>"
-  | Eq -> Pla.string "=="
-  | Ne -> Pla.string "~="
-  | Lt -> Pla.string "<"
-  | Le -> Pla.string "<="
-  | Gt -> Pla.string ">"
-  | Ge -> Pla.string ">="
+  | OpAdd -> Pla.string "+"
+  | OpSub -> Pla.string "-"
+  | OpMul -> Pla.string "*"
+  | OpDiv -> Pla.string "/"
+  | OpMod -> Pla.string "%"
+  | OpLand -> Pla.string "and"
+  | OpLor -> Pla.string "or"
+  | OpBor -> Pla.string "|"
+  | OpBand -> Pla.string "&"
+  | OpBxor -> Pla.string "^"
+  | OpLsh -> Pla.string "<<"
+  | OpRsh -> Pla.string ">>"
+  | OpEq -> Pla.string "=="
+  | OpNe -> Pla.string "~="
+  | OpLt -> Pla.string "<"
+  | OpLe -> Pla.string "<="
+  | OpGt -> Pla.string ">"
+  | OpGe -> Pla.string ">="
 
 
-let uoperator op =
+let uoperator (op : uoperator) =
   match op with
-  | Neg -> Pla.string "-"
-  | Not -> Pla.string "not"
+  | UOpNeg -> Pla.string "-"
+  | UOpNot -> Pla.string "not"
 
 
 let rec print_exp e =
   match e.e with
-  | Unit -> Pla.string ""
-  | Bool v -> Pla.string (if v then "true" else "false")
-  | Int n -> Pla.int n
-  | Real n -> Pla.string (Util.Vfloat.to_string n)
-  | Fixed n ->
+  | EUnit -> Pla.string ""
+  | EBool v -> Pla.string (if v then "true" else "false")
+  | EInt n -> Pla.int n
+  | EReal n -> Pla.string (Util.Vfloat.to_string n)
+  | EFixed n ->
     let n = Common.toFixed ~comment:false n in
     Pla.string n
-  | String s -> Pla.string_quoted s
-  | Id id -> Pla.string (fix_id id)
-  | Index { e; index } ->
+  | EString s -> Pla.string_quoted s
+  | EId id -> Pla.string (fix_id id)
+  | EIndex { e; index } ->
     let e = print_exp e in
     let index = print_exp index in
     [%pla {|<#e#>[<#index#> + 1]|}]
-  | Array l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
-  | Call { path; args } ->
+  | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
+  | ECall { path; args } ->
     let args = Pla.map_sep Pla.commaspace print_exp args in
     [%pla {|<#path#s>(<#args#>)|}]
-  | UnOp (op, e) ->
+  | EUnOp (op, e) ->
     let e = print_exp e in
     let op = uoperator op in
     [%pla {|(<#op#><#e#>)|}]
-  | Op (op, e1, e2) -> (
+  | EOp (op, e1, e2) -> (
     let se1 = print_exp e1 in
     let se2 = print_exp e2 in
     match Replacements.Lua.op_to_fun op e1.t e2.t e.t with
@@ -125,23 +126,23 @@ let rec print_exp e =
     | None ->
       let op = operator op in
       [%pla {|(<#se1#> <#op#> <#se2#>)|}])
-  | If { cond; then_; else_ } when isValueOrIf then_ && isValueOrIf else_ ->
+  | EIf { cond; then_; else_ } when isValueOrIf then_ && isValueOrIf else_ ->
     let cond = print_exp cond in
     let then_ = print_exp then_ in
     let else_ = print_exp else_ in
     [%pla {|ifExpressionValue(<#cond#>, <#then_#>, <#else_#>)|}]
-  | If { cond; then_; else_ } ->
+  | EIf { cond; then_; else_ } ->
     let cond = print_exp cond in
     let then_ = print_exp then_ in
     let else_ = print_exp else_ in
     [%pla {|ifExpression(<#cond#>, (function () return <#then_#> end), (function () return <#else_#> end))|}]
-  | Tuple l ->
+  | ETuple l ->
     let l = Pla.map_sep Pla.commaspace print_exp l in
     [%pla {|{ <#l#> }|}]
-  | Member (e, m) ->
+  | EMember (e, m) ->
     let e = print_exp e in
     [%pla {|<#e#>.<#m#s>|}]
-  | TMember (e, i) ->
+  | ETMember (e, i) ->
     let e = print_exp e in
     let m = i + 1 in
     [%pla {|<#e#>[<#m#i>]|}]
@@ -154,10 +155,11 @@ let rec print_lexp e =
   | LMember (e, m) ->
     let e = print_lexp e in
     [%pla {|<#e#>.<#m#s>|}]
-  | LIndex (e, index) ->
+  | LIndex { e; index } ->
     let e = print_lexp e in
     let index = print_exp index in
     [%pla {|<#e#>[<#index#> + 1]|}]
+  | _ -> failwith "Lua:print_lexp LTuple"
 
 
 let print_dexp (e : dexp) =
@@ -217,7 +219,7 @@ let rec print_stmt s =
     let if_ =
       List.fold_right
         (fun (e2, body) else_ ->
-          let cond = { e = Op (Eq, e1, e2); t = Core.Prog.C.bool_t } in
+          let cond = C.eeq e1 e2 in
           Some (StmtIf (cond, body, else_)))
         cases
         default

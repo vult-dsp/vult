@@ -319,16 +319,11 @@ let rec lexp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) 
     apply mapper.lexp env state { l = LTuple elems; t; loc }
 
 
-let rec dexp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (e : dexp) : 'data state * dexp =
+let dexp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (e : dexp) : 'data state * dexp =
   let loc = e.loc in
-  let sub_env = enter mapper.dexp_env env e in
   let state, t = type_ mapper env state e.t in
   match e with
-  | { d = DWild; _ } -> apply mapper.dexp env state { d = DWild; t; loc }
   | { d = DId (n, dim); _ } -> apply mapper.dexp env state { d = DId (n, dim); t; loc }
-  | { d = DTuple elems; _ } ->
-    let state, elems = list dexp mapper sub_env state elems in
-    apply mapper.dexp env state { d = DTuple elems; t; loc }
 
 
 let block stmts loc =

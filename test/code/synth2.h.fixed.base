@@ -274,8 +274,8 @@ static_inline fix16_t Synth2_process(Synth2_process_type& _ctx, fix16_t i) {
    bool gate = Synth2_mono_isGateOn(_ctx.monoin);
    fix16_t lfo1 = fix_mul(Synth2_lfo(_ctx.inst_15fb7, _ctx.lfo_rate, gate), _ctx.lfo_amt);
    fix16_t o1 = Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, lfo1 + _ctx.pw, _ctx.wave);
-   fix16_t amp_env = 0.0f;
-   fix16_t _if_temp_0 = 0.0f;
+   fix16_t amp_env = 0x0 /* 0.000000 */;
+   fix16_t _if_temp_0 = 0x0 /* 0.000000 */;
    if (gate) {
       _if_temp_0 = 0x10000 /* 1.000000 */;
    }

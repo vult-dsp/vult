@@ -340,12 +340,6 @@ module Tuples = struct
     Mapper.makeExpander
     @@ fun env state (s : stmt) ->
     match s with
-    (* split multiple declarations *)
-    | { s = StmtDecl { d = DTuple elems; _ }; loc } ->
-      let stmts = List.map (fun d -> { s = StmtDecl d; loc }) elems in
-      reapply state, stmts
-    (* remove wild declarations *)
-    | { s = StmtDecl { d = DWild; _ }; _ } -> reapply state, []
     (* split tuple assings *)
     | { s = StmtBind (({ l = LTuple l_elems; _ } as lhs), ({ e = ETuple r_elems; _ } as rhs)); loc } ->
       let l = GetVariables.in_lexp lhs in
@@ -471,7 +465,7 @@ end
 module Cast = struct
   let exp =
     Mapper.make
-    @@ fun _env state (e : exp) ->
+    @@ fun env state (e : exp) ->
     match e with
     | { e = ECall { path = "fix16"; args = [ ({ t = { t = TFix16; _ }; _ } as e1) ] }; _ } -> reapply state, e1
     | { e = ECall { path = "real"; args = [ ({ t = { t = TReal; _ }; _ } as e1) ] }; _ } -> reapply state, e1
@@ -502,10 +496,20 @@ module Cast = struct
       reapply state, { e1 with e = EBool (v <> 0.0); t }
     | { e = ECall { path = "bool"; args = [ ({ e = EInt v; _ } as e1) ] }; t; _ } ->
       reapply state, { e1 with e = EBool (v <> 0); t }
+    (* Convert real type *)
+    | { e = EReal n; loc; _ } when env.args.real = Fixed -> reapply state, C.efix16 ~loc n
     | _ -> state, e
 
 
-  let mapper enabled = if enabled = Enabled then { Mapper.identity with exp } else Mapper.identity
+  let type_ =
+    Mapper.make
+    @@ fun env state (t : type_) ->
+    match t with
+    | { t = TReal; loc } when env.args.real = Fixed -> state, { t = TFix16; loc }
+    | _ -> state, t
+
+
+  let mapper enabled = if enabled = Enabled then { Mapper.identity with exp; type_ } else Mapper.identity
 end
 
 module Canonize = struct
@@ -583,7 +587,7 @@ module Simplify = struct
       | OpSub -> Some { e = EInt (n1 - n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | OpDiv -> Some { e = EInt (n1 / n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | _ -> None)
-    | ({ e = EReal 0.0; _ } as zero), e | e, ({ e = EReal 0.0; _ } as zero) -> (
+    | ({ e = EReal 0.0 | EFixed 0.0; _ } as zero), e | e, ({ e = EReal 0.0 | EFixed 0.0; _ } as zero) -> (
       match op with
       | OpAdd -> Some e
       | OpMul -> Some zero

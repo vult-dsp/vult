@@ -181,22 +181,16 @@ let getIndex name elems =
   loop elems 0
 
 
-let rec dexp_to_lexp (d : dexp) : lexp =
+let dexp_to_lexp (d : dexp) : lexp =
   let t = d.t in
   let loc = d.loc in
   match d.d with
-  | DWild -> { l = LWild; t; loc }
   | DId (name, _) -> { l = LId name; t; loc }
-  | DTuple l ->
-    let l = List.map dexp_to_lexp l in
-    { l = LTuple l; t; loc }
 
 
-let rec compile_dexp (env : env) d =
+let compile_dexp (env : env) d =
   match d.d with
-  | DWild -> env
   | DId (name, _) -> addLocal env name
-  | DTuple l -> List.fold_left compile_dexp env l
 
 
 let rec compile_lexp (env : env) (l : lexp) : lvalue =

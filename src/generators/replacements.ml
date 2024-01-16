@@ -1,4 +1,4 @@
-open Code
+open Core.Prog
 
 module C = struct
   let fun_to_fun (path : string) (args : type_ list) (ret : type_) =
@@ -63,16 +63,15 @@ module C = struct
     | "set", [ TArray (_, { t = TInt; _ }); TInt; TInt ], TVoid None -> Some "int_set"
     (* serialization *)
     | "deserialize_float", _, TFix16 -> Some "deserialize_int"
+    | "push_float", [ _; _; TFix16 ], _ -> Some "push_int"
     | _ -> None
 
 
-  let op_to_fun (op : operator) (e1 : type_) (e2 : type_) (ret : type_) =
+  let op_to_fun (op : Core.Prog.operator) (e1 : type_) (e2 : type_) (ret : type_) =
     match op, e1.t, e2.t, ret.t with
-    | Mod, TReal, TReal, TReal -> Some "fmodf"
-    | Mul, TFix16, TFix16, TFix16 -> Some "fix_mul"
-    (*| Add, TFix16, TFix16, TFix16 -> Some "fix_add"
-      | Sub, TFix16, TFix16, TFix16 -> Some "fix_sub"*)
-    | Div, TFix16, TFix16, TFix16 -> Some "fix_div"
+    | OpMod, TReal, TReal, TReal -> Some "fmodf"
+    | OpMul, TFix16, TFix16, TFix16 -> Some "fix_mul"
+    | OpDiv, TFix16, TFix16, TFix16 -> Some "fix_div"
     | _ -> None
 end
 
@@ -96,8 +95,8 @@ module Lua = struct
     |> Util.Maps.Set.of_list
 
 
-  let op_to_fun (op : operator) (e1 : type_) (e2 : type_) (ret : type_) =
+  let op_to_fun (op : Core.Prog.operator) (e1 : type_) (e2 : type_) (ret : type_) =
     match op, e1.t, e2.t, ret.t with
-    | Div, TInt, TInt, TInt -> Some "intDiv"
+    | OpDiv, TInt, TInt, TInt -> Some "intDiv"
     | _ -> None
 end

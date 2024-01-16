@@ -116,7 +116,7 @@ static_inline fix16_t Saturate_soft_tanh_table_raw_c2(int32_t index) {
 }
 
 static_inline fix16_t Saturate_soft_tanh_table(fix16_t x) {
-   int32_t index = int_clip(fix_to_int(fix_mul((x - -1572864), 327680)), 0, 240);
+   int32_t index = int_clip(fix_to_int(fix_mul((x - -0x180000 /* -24.000000 */), 0x50000 /* 5.000000 */)), 0, 240);
    return Saturate_soft_tanh_table_c0[static_cast<uint32_t>(index)] + fix_mul(x, (Saturate_soft_tanh_table_c1[static_cast<uint32_t>(index)] + fix_mul(Saturate_soft_tanh_table_c2[static_cast<uint32_t>(index)], x)));
 }
 
@@ -197,7 +197,7 @@ static_inline fix16_t Util_pitchToRate_1024_raw_c2(int32_t index) {
 }
 
 static_inline fix16_t Util_pitchToRate_1024(fix16_t pitch) {
-   int32_t index = int_clip(fix_to_int(fix_mul(pitch, 15996)), 0, 31);
+   int32_t index = int_clip(fix_to_int(fix_mul(pitch, 0x3e7c /* 0.244094 */)), 0, 31);
    return Util_pitchToRate_1024_c0[static_cast<uint32_t>(index)] + fix_mul(pitch, (Util_pitchToRate_1024_c1[static_cast<uint32_t>(index)] + fix_mul(Util_pitchToRate_1024_c2[static_cast<uint32_t>(index)], pitch)));
 }
 
@@ -214,7 +214,7 @@ static_inline fix16_t Util_pitchToRate_raw_c2(int32_t index) {
 }
 
 static_inline fix16_t Util_pitchToRate(fix16_t pitch) {
-   int32_t index = int_clip(fix_to_int(fix_mul(pitch, 15996)), 0, 31);
+   int32_t index = int_clip(fix_to_int(fix_mul(pitch, 0x3e7c /* 0.244094 */)), 0, 31);
    return Util_pitchToRate_c0[static_cast<uint32_t>(index)] + fix_mul(pitch, (Util_pitchToRate_c1[static_cast<uint32_t>(index)] + fix_mul(Util_pitchToRate_c2[static_cast<uint32_t>(index)], pitch)));
 }
 
@@ -235,7 +235,7 @@ static_inline fix16_t Util_cvToRate_1024_raw_c2(int32_t index) {
 }
 
 static_inline fix16_t Util_cvToRate_1024(fix16_t cv) {
-   int32_t index = int_clip(fix_to_int(fix_mul(cv, 2257351)), 0, 31);
+   int32_t index = int_clip(fix_to_int(fix_mul(cv, 0x2271c7 /* 34.444444 */)), 0, 31);
    return Util_cvToRate_1024_c0[static_cast<uint32_t>(index)] + fix_mul(cv, (Util_cvToRate_1024_c1[static_cast<uint32_t>(index)] + fix_mul(Util_cvToRate_1024_c2[static_cast<uint32_t>(index)], cv)));
 }
 
@@ -252,7 +252,7 @@ static_inline fix16_t Util_cvToRate_raw_c2(int32_t index) {
 }
 
 static_inline fix16_t Util_cvToRate(fix16_t cv) {
-   int32_t index = int_clip(fix_to_int(fix_mul(cv, 9247857)), 0, 127);
+   int32_t index = int_clip(fix_to_int(fix_mul(cv, 0x8d1c71 /* 141.111111 */)), 0, 127);
    return Util_cvToRate_c0[static_cast<uint32_t>(index)] + fix_mul(cv, (Util_cvToRate_c1[static_cast<uint32_t>(index)] + fix_mul(Util_cvToRate_c2[static_cast<uint32_t>(index)], cv)));
 }
 
@@ -273,7 +273,7 @@ static_inline fix16_t Util_cvToperiod_raw_c2(int32_t index) {
 }
 
 static_inline fix16_t Util_cvToperiod(fix16_t cv) {
-   int32_t index = int_clip(fix_to_int(fix_mul(cv, 2031616)), 0, 31);
+   int32_t index = int_clip(fix_to_int(fix_mul(cv, 0x1f0000 /* 31.000000 */)), 0, 31);
    return Util_cvToperiod_c0[static_cast<uint32_t>(index)] + fix_mul(cv, (Util_cvToperiod_c1[static_cast<uint32_t>(index)] + fix_mul(Util_cvToperiod_c2[static_cast<uint32_t>(index)], cv)));
 }
 
@@ -290,7 +290,7 @@ static_inline fix16_t Util_cvTokHz_raw_c2(int32_t index) {
 }
 
 static_inline fix16_t Util_cvTokHz(fix16_t cv) {
-   int32_t index = int_clip(fix_to_int(fix_mul(cv, 2031616)), 0, 31);
+   int32_t index = int_clip(fix_to_int(fix_mul(cv, 0x1f0000 /* 31.000000 */)), 0, 31);
    return Util_cvTokHz_c0[static_cast<uint32_t>(index)] + fix_mul(cv, (Util_cvTokHz_c1[static_cast<uint32_t>(index)] + fix_mul(Util_cvTokHz_c2[static_cast<uint32_t>(index)], cv)));
 }
 
@@ -309,7 +309,7 @@ static_inline fix16_t Rescomb_toneCurve_raw_c2(int32_t index) {
 }
 
 static_inline fix16_t Rescomb_toneCurve(fix16_t tone) {
-   int32_t index = int_clip(fix_to_int(fix_mul((tone - -78643), 1720320)), 0, 63);
+   int32_t index = int_clip(fix_to_int(fix_mul((tone - -0x13333 /* -1.200000 */), 0x1a4000 /* 26.250000 */)), 0, 63);
    return Rescomb_toneCurve_c0[static_cast<uint32_t>(index)] + fix_mul(tone, (Rescomb_toneCurve_c1[static_cast<uint32_t>(index)] + fix_mul(Rescomb_toneCurve_c2[static_cast<uint32_t>(index)], tone)));
 }
 

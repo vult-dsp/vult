@@ -9,7 +9,7 @@ fix16_t Saw_ptr1_process(Saw_ptr1_process_type& _ctx, fix16_t cv) {
    fix16_t s1 = _ctx.rate;
    fix16_t dc = -0x10000 /* -1.000000 */;
    _ctx.phase = _ctx.phase + _ctx.rate;
-   fix16_t out = 0.0f;
+   fix16_t out = 0x0 /* 0.000000 */;
    if (_ctx.phase > 0x10000 /* 1.000000 */) {
       _ctx.phase = -0x10000 /* -1.000000 */ + _ctx.phase;
    }

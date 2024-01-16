@@ -23,6 +23,7 @@
 *)
 
 open Code
+open Core.Prog
 
 type target =
   | Header
@@ -38,7 +39,7 @@ let isSmall stmts =
     else (
       match stmts with
       | [] -> size
-      | StmtDecl _ :: t -> loop size t
+      | Code.StmtDecl _ :: t -> loop size t
       | StmtReturn _ :: t -> loop size t
       | StmtBlock inner :: t ->
         let size = loop size inner in
@@ -82,54 +83,54 @@ let rec print_type_ (t : type_) =
   | TStruct { path; _ } -> [%pla {|<#path#s>|}]
 
 
-let operator op =
+let operator (op : Core.Prog.operator) =
   match op with
-  | Add -> Pla.string "+"
-  | Sub -> Pla.string "-"
-  | Mul -> Pla.string "*"
-  | Div -> Pla.string "/"
-  | Mod -> Pla.string "%"
-  | Land -> Pla.string "&&"
-  | Lor -> Pla.string "||"
-  | Bor -> Pla.string "|"
-  | Band -> Pla.string "&"
-  | Bxor -> Pla.string "^"
-  | Lsh -> Pla.string "<<"
-  | Rsh -> Pla.string ">>"
-  | Eq -> Pla.string "=="
-  | Ne -> Pla.string "!="
-  | Lt -> Pla.string "<"
-  | Le -> Pla.string "<="
-  | Gt -> Pla.string ">"
-  | Ge -> Pla.string ">="
+  | OpAdd -> Pla.string "+"
+  | OpSub -> Pla.string "-"
+  | OpMul -> Pla.string "*"
+  | OpDiv -> Pla.string "/"
+  | OpMod -> Pla.string "%"
+  | OpLand -> Pla.string "&&"
+  | OpLor -> Pla.string "||"
+  | OpBor -> Pla.string "|"
+  | OpBand -> Pla.string "&"
+  | OpBxor -> Pla.string "^"
+  | OpLsh -> Pla.string "<<"
+  | OpRsh -> Pla.string ">>"
+  | OpEq -> Pla.string "=="
+  | OpNe -> Pla.string "!="
+  | OpLt -> Pla.string "<"
+  | OpLe -> Pla.string "<="
+  | OpGt -> Pla.string ">"
+  | OpGe -> Pla.string ">="
 
 
-let level op =
+let level (op : Core.Prog.operator) =
   match op with
-  | Mul -> 80
-  | Div -> 85
-  | Mod -> 80
-  | Add -> 75
-  | Sub -> 70
-  | Lsh -> 60
-  | Rsh -> 60
-  | Lt -> 50
-  | Le -> 50
-  | Gt -> 50
-  | Ge -> 50
-  | Eq -> -1
-  | Ne -> -1
-  | Band -> -1
-  | Bxor -> -1
-  | Bor -> -1
-  | Land -> -1
-  | Lor -> -1
+  | OpMul -> 80
+  | OpDiv -> 85
+  | OpMod -> 80
+  | OpAdd -> 75
+  | OpSub -> 70
+  | OpLsh -> 60
+  | OpRsh -> 60
+  | OpLt -> 50
+  | OpLe -> 50
+  | OpGt -> 50
+  | OpGe -> 50
+  | OpEq -> -1
+  | OpNe -> -1
+  | OpBand -> -1
+  | OpBxor -> -1
+  | OpBor -> -1
+  | OpLand -> -1
+  | OpLor -> -1
 
 
-let uoperator op =
+let uoperator (op : Core.Prog.uoperator) =
   match op with
-  | Neg -> Pla.string "-"
-  | Not -> Pla.string "not"
+  | UOpNeg -> Pla.string "-"
+  | UOpNot -> Pla.string "not"
 
 
 let getReplacement name (args : exp list) ret =
@@ -141,43 +142,43 @@ let getReplacement name (args : exp list) ret =
 
 let rec print_exp prec (e : exp) =
   match e.e with
-  | Unit -> Pla.string ""
-  | Bool v -> Pla.string (if v then "true" else "false")
-  | Int n -> [%pla {|<#n#i>|}]
-  | Real n ->
+  | EUnit -> Pla.string ""
+  | EBool v -> Pla.string (if v then "true" else "false")
+  | EInt n -> [%pla {|<#n#i>|}]
+  | EReal n ->
     let n = Util.Vfloat.adapt n in
     [%pla {|<#n#f>f|}]
-  | Fixed n ->
+  | EFixed n ->
     let n = Common.toFixed n in
     [%pla {|<#n#s>|}]
-  | String s -> Pla.string_quoted s
-  | Id id -> Pla.string id
-  | Index { e; index } ->
+  | EString s -> Pla.string_quoted s
+  | EId id -> Pla.string id
+  | EIndex { e; index } ->
     let e = print_exp prec e in
     let index = print_exp prec index in
     [%pla {|<#e#>[static_cast<uint32_t>(<#index#>)]|}]
-  | Array l ->
+  | EArray l ->
     let rows = Common.splitArray 100 l in
     let l = Pla.map_sep [%pla {|,<#>|}] (Pla.map_sep Pla.commaspace (print_exp prec)) rows in
     [%pla {|{ <#l#> }|}]
-  | Call { path = "size"; args = [ e1 ] } ->
+  | ECall { path = "size"; args = [ e1 ] } ->
     let e1 = print_exp prec e1 in
     [%pla {|<#e1#>.size()|}]
-  | Call { path = "length"; args = [ e1 ] } ->
+  | ECall { path = "length"; args = [ e1 ] } ->
     let e1 = print_exp prec e1 in
     [%pla {|static_cast<int32_t>(<#e1#>.size())|}]
-  | Call { path = "not"; args = [ e1 ] } ->
+  | ECall { path = "not"; args = [ e1 ] } ->
     let e1 = print_exp prec e1 in
     [%pla {|!(<#e1#>)|}]
-  | Call { path; args } ->
+  | ECall { path; args } ->
     let path = getReplacement path args e.t in
     let args = Pla.map_sep Pla.commaspace (print_exp prec) args in
     [%pla {|<#path#s>(<#args#>)|}]
-  | UnOp (op, e) ->
+  | EUnOp (op, e) ->
     let e = print_exp 0 e in
     let op = uoperator op in
     [%pla {|(<#op#> <#e#>)|}]
-  | Op (op, e1, e2) -> (
+  | EOp (op, e1, e2) -> (
     let current = level op in
     let se1 = print_exp current e1 in
     let se2 = print_exp current e2 in
@@ -189,18 +190,18 @@ let rec print_exp prec (e : exp) =
         [%pla {|<#se1#> <#op#> <#se2#>|}]
       else
         [%pla {|(<#se1#> <#op#> <#se2#>)|}])
-  | If { cond; then_; else_ } ->
+  | EIf { cond; then_; else_ } ->
     let cond = print_exp prec cond in
     let then_ = print_exp prec then_ in
     let else_ = print_exp prec else_ in
     [%pla {|(<#cond#> ? <#then_#> : <#else_#>)|}]
-  | Tuple l ->
+  | ETuple l ->
     let l = Pla.map_sep Pla.commaspace (print_exp prec) l in
     [%pla {|std::make_tuple(<#l#>)|}]
-  | Member (e, m) ->
+  | EMember (e, m) ->
     let e = print_exp prec e in
     [%pla {|<#e#>.<#m#s>|}]
-  | TMember (e, m) ->
+  | ETMember (e, m) ->
     let e = print_exp prec e in
     [%pla {|std::get<<#m#i>>(<#e#>)|}]
 
@@ -212,10 +213,11 @@ let rec print_lexp e =
   | LMember (e, m) ->
     let e = print_lexp e in
     [%pla {|<#e#>.<#m#s>|}]
-  | LIndex (e, index) ->
+  | LIndex { e; index } ->
     let e = print_lexp e in
     let index = print_exp 0 index in
     [%pla {|<#e#>[static_cast<uint32_t>(<#index#>)]|}]
+  | _ -> failwith "print_lexp: LTuple not implemented"
 
 
 let print_dexp (e : dexp) =
@@ -290,7 +292,7 @@ let arrayCopyFunction (t : type_) =
 let rec print_stmt s =
   match s with
   (* declares and initializes a structure *)
-  | StmtDecl (({ t = { t = TStruct { path; _ }; _ }; _ } as lhs), None) ->
+  | Code.StmtDecl (({ t = { t = TStruct { path; _ }; _ }; _ } as lhs), None) ->
     let t = print_type_ lhs.t in
     let lhs = print_dexp lhs in
     [%pla {|<#t#> <#lhs#>;<#><#path#s>_init(<#lhs#>);|}]
@@ -298,12 +300,12 @@ let rec print_stmt s =
     let t = print_decl_alloc (n, t) in
     [%pla {|<#t#>;|}]
   (* Special case when initializing an array. Here we declare the variable and not a reference *)
-  | StmtDecl ({ d = DId (n, _); t; _ }, Some ({ e = Array _; _ } as rhs)) ->
+  | StmtDecl ({ d = DId (n, _); t; _ }, Some ({ e = EArray _; _ } as rhs)) ->
     let t = print_decl_alloc (n, t) in
     let rhs = print_exp 0 rhs in
     [%pla {|<#t#> = <#rhs#>;|}]
   (* Special case for structures. When the structure is the result of a function call we need to declare it *)
-  | StmtDecl ({ d = DId (n, _); t = { t = TStruct _; _ } as t; _ }, Some ({ e = Call _; _ } as rhs)) ->
+  | StmtDecl ({ d = DId (n, _); t = { t = TStruct _; _ } as t; _ }, Some ({ e = ECall _; _ } as rhs)) ->
     let t = print_decl_alloc (n, t) in
     let rhs = print_exp 0 rhs in
     [%pla {|<#t#> = <#rhs#>;|}]
@@ -371,21 +373,21 @@ and print_block body =
     [%pla {|{<#stmt#+><#>}|}]
 
 
-let isTemplate (args : param list) =
+let isTemplate (args : Code.param list) =
   List.exists
-    (fun (a : param) ->
+    (fun (a : Code.param) ->
       match a with
       | _, { t = TArray (None, _); _ } -> true
       | _ -> false)
     args
 
 
-let print_function_def (def : function_def) =
+let print_function_def (def : Code.function_def) =
   let name = Pla.string def.name in
   let args = List.mapi print_arg def.args |> Pla.join_sep Pla.commaspace in
   let template_args =
     def.args
-    |> List.mapi (fun i (arg : param) ->
+    |> List.mapi (fun i (arg : Code.param) ->
       match arg with
       | _, { t = TArray (None, _); _ } -> Some ("std::size_t SIZE_" ^ string_of_int i)
       | _ -> None)
@@ -403,7 +405,7 @@ let print_function_def (def : function_def) =
 
 
 let print_top_stmt ~allow_inline (target : target) t =
-  match t.top, target with
+  match t.Code.top, target with
   | TopFunction (def, body), Header ->
     let inline = (allow_inline && isSmall [ body ]) || isTemplate def.args in
     let template, def = print_function_def def in
@@ -456,7 +458,7 @@ let makeIfdef file =
 |}]
 
 
-let getTemplateCode (name : string option) (prefix : string) (stmts : top_stmt list) =
+let getTemplateCode (name : string option) (prefix : string) (stmts : Code.top_stmt list) =
   match name with
   | Some "pd" -> T_pd.generate prefix stmts
   | None -> (Pla.unit, Pla.unit), (Pla.unit, Pla.unit)
@@ -471,7 +473,7 @@ let getLibName output =
 
 let generateIncludeList stmts = Pla.map_sep_all Pla.newline (fun (file, _) -> {%pla|#include "<#file#s>.h"|}) stmts
 
-let generateSplit file_deps output template (stmts : top_stmt list) =
+let generateSplit file_deps output template (stmts : Code.top_stmt list) =
   let dir = CCOption.map_or ~default:"" (fun file -> Filename.dirname file) output in
   let main_header_file = Common.setExt ".h" output in
   let impl_file = Common.setExt ".cpp" output in
@@ -503,7 +505,7 @@ let generateSplit file_deps output template (stmts : top_stmt list) =
   :: files
 
 
-let generateSingle output template (stmts : top_stmt list) =
+let generateSingle output template (stmts : Code.top_stmt list) =
   let allow_inline = true in
   let header = print_prog ~allow_inline Header stmts in
   let impl = print_prog ~allow_inline Implementation stmts in
@@ -528,7 +530,7 @@ let generateSingle output template (stmts : top_stmt list) =
   [ header, header_file; impl, impl_file; tables, tables_file ]
 
 
-let generate file_deps split output template (stmts : top_stmt list) =
+let generate file_deps split output template (stmts : Code.top_stmt list) =
   if split then
     generateSplit file_deps output template stmts
   else

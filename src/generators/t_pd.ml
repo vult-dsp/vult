@@ -1,9 +1,11 @@
+open Core.Prog
+
 type function_info =
   { name : string
   ; class_name : string
   ; has_ctx : bool
   ; inputs : Code.param list
-  ; outputs : Code.type_ list
+  ; outputs : type_ list
   ; is_dsp : bool
   }
 
@@ -29,7 +31,7 @@ let getFunctionInfo (f : Code.function_def) =
   if inputs <> [] || outputs <> [] then Some { name = f.name; class_name; has_ctx; inputs; outputs; is_dsp } else None
 
 
-let typeString (t : Code.type_) =
+let typeString (t : type_) =
   match t.t with
   | TReal -> "float"
   | TInt -> "int"
@@ -60,7 +62,7 @@ let addInletsVars (inputs : Code.param list) =
   | _ -> List.map (fun (n, _) -> {%pla|float <#n#s>;|}) inputs |> Pla.join_sep Pla.newline |> Pla.indent
 
 
-let addOutletsVars (outputs : Code.type_ list) =
+let addOutletsVars (outputs : type_ list) =
   match outputs with
   | [] -> Pla.unit
   | _ -> List.mapi (fun i _ -> {%pla|t_outlet *out_<#i#i>;|}) outputs |> Pla.join_sep Pla.newline |> Pla.indent
@@ -89,8 +91,8 @@ let tildeNewFunction (f : function_info) : int * Pla.t =
   dsp_nargs + 2, vec_decl
 
 
-let castInput (typ : Code.type_) (value : Pla.t) : Pla.t = Common.cast ~from:Core.Prog.C.real_t ~to_:typ value
-let castOutput (typ : Code.type_) (value : Pla.t) : Pla.t = Common.cast ~from:typ ~to_:Core.Prog.C.real_t value
+let castInput (typ : type_) (value : Pla.t) : Pla.t = Common.cast ~from:Core.Prog.C.real_t ~to_:typ value
+let castOutput (typ : type_) (value : Pla.t) : Pla.t = Common.cast ~from:typ ~to_:Core.Prog.C.real_t value
 let inputName (i, acc) (_, t) = i + 1, castInput t [%pla {|*(in_<#i#i>++)|}] :: acc
 
 let tildePerformFunctionCall (f : function_info) =

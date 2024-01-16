@@ -124,10 +124,7 @@ and lexp =
   ; t : type_
   }
 
-type dexp_d =
-  | DWild
-  | DId of string * int option
-  | DTuple of dexp list
+type dexp_d = DId of string * int option
 
 and dexp =
   { d : dexp_d
@@ -296,15 +293,11 @@ module Print = struct
       [%pla {|(<#l#>)|}]
 
 
-  let rec print_dexp (e : dexp) =
+  let print_dexp (e : dexp) =
     let t = print_type_ e.t in
     match e.d with
-    | DWild -> [%pla {|_ : <#t#>|}]
     | DId (id, None) -> [%pla {|<#id#s> : <#t#>|}]
     | DId (id, Some dim) -> [%pla {|<#id#s>[<#dim#i>] : <#t#>|}]
-    | DTuple l ->
-      let l = Pla.map_sep Pla.commaspace print_dexp l in
-      [%pla {|(<#l#>) : <#t#>|}]
 
 
   let rec print_stmt s =
@@ -395,16 +388,22 @@ module C = struct
   let array_t ?dim t = { t = TArray (dim, t); loc = Loc.default }
   let ereal ?(loc = Loc.default) i = { e = EReal i; t = real_t; loc }
   let efix16 ?(loc = Loc.default) i = { e = EFixed i; t = fix16_t; loc }
+  let estring ?(loc = Loc.default) i = { e = EString i; t = string_t; loc }
   let eint ?(loc = Loc.default) i = { e = EInt i; t = int_t; loc }
+  let eunit = { e = EUnit; t = void_t; loc = Loc.default }
   let ebool ?(loc = Loc.default) i = { e = EBool i; t = int_t; loc }
   let eid ?(loc = Loc.default) id t = { e = EId id; t; loc }
   let did ?(loc = Loc.default) ?(size = None) id t = { d = DId (id, size); t; loc }
   let eadd ?(loc = Loc.default) e1 e2 = { e = EOp (OpAdd, e1, e2); t = e1.t; loc }
   let esub ?(loc = Loc.default) e1 e2 = { e = EOp (OpSub, e1, e2); t = e1.t; loc }
+  let emul ?(loc = Loc.default) e1 e2 = { e = EOp (OpMul, e1, e2); t = e1.t; loc }
+  let emod ?(loc = Loc.default) e1 e2 = { e = EOp (OpMod, e1, e2); t = e1.t; loc }
+  let eeq ?(loc = Loc.default) e1 e2 = { e = EOp (OpEq, e1, e2); t = bool_t; loc }
   let elt ?(loc = Loc.default) e1 e2 = { e = EOp (OpLt, e1, e2); t = bool_t; loc }
   let ecall ?(loc = Loc.default) path args t = { e = ECall { path; args }; t; loc }
   let eindex ?(loc = Loc.default) e index t = { e = EIndex { e; index }; t; loc }
   let emember ?(loc = Loc.default) e name t = { e = EMember (e, name); t; loc }
+  let earray ?(loc = Loc.default) elems t = { e = EArray elems; t; loc }
   let lid ?(loc = Loc.default) id t = { l = LId id; t; loc }
   let lindex ?(loc = Loc.default) e index t = { l = LIndex { e; index }; t; loc }
   let sbind_wild ?(loc = Loc.default) (e : exp) = { s = StmtBind ({ l = LWild; t = e.t; loc }, e); loc }
@@ -419,4 +418,61 @@ module C = struct
   let sif ?(loc = Loc.default) cond then_ else_ = { s = StmtIf (cond, then_, else_); loc }
   let swhile ?(loc = Loc.default) cond body = { s = StmtWhile (cond, body); loc }
   let sreturn ?(loc = Loc.default) e = { s = StmtReturn e; loc }
+end
+
+module Compare = struct
+  let rec exp (e1 : exp) (e2 : exp) =
+    match e1, e2 with
+    | { e = EUnit; _ }, { e = EUnit; _ } -> 0
+    | { e = EUnit; _ }, _ -> compare e1 e2
+    | { e = EBool b1; _ }, { e = EBool b2; _ } -> compare b1 b2
+    | { e = EBool _; _ }, _ -> compare e1 e2
+    | { e = EInt b1; _ }, { e = EInt b2; _ } -> compare b1 b2
+    | { e = EInt _; _ }, _ -> compare e1 e2
+    | { e = EReal b1; _ }, { e = EReal b2; _ } -> compare b1 b2
+    | { e = EReal _; _ }, _ -> compare e1 e2
+    | { e = EFixed b1; _ }, { e = EFixed b2; _ } -> compare b1 b2
+    | { e = EFixed _; _ }, _ -> compare e1 e2
+    | { e = EString b1; _ }, { e = EString b2; _ } -> String.compare b1 b2
+    | { e = EString _; _ }, _ -> compare e1 e2
+    | { e = EId n1; _ }, { e = EId n2; _ } -> String.compare n1 n2
+    | { e = EId _; _ }, _ -> compare e1 e2
+    | { e = EOp (op1, a1, b1); _ }, { e = EOp (op2, a2, b2); _ } when op1 = op2 -> (
+      match exp a1 a2 with
+      | 0 -> exp b1 b2
+      | n -> n)
+    | { e = EOp _; _ }, _ -> compare e1 e2
+    | { e = EUnOp (op1, a1); _ }, { e = EUnOp (op2, a2); _ } when op1 = op2 -> exp a1 a2
+    | { e = EUnOp _; _ }, _ -> compare e1 e2
+    | { e = EIndex { e = e1; index = index1 }; _ }, { e = EIndex { e = e2; index = index2 }; _ } -> (
+      match exp e1 e2 with
+      | 0 -> exp index1 index2
+      | n -> n)
+    | { e = EIndex _; _ }, _ -> compare e1 e2
+    | { e = EArray elems1; _ }, { e = EArray elems2; _ } -> List.compare exp elems1 elems2
+    | { e = EArray _; _ }, _ -> compare e1 e2
+    | { e = ECall { path = path1; args = args1 }; _ }, { e = ECall { path = path2; args = args2 }; _ }
+      when path1 = path2 -> List.compare exp args1 args2
+    | { e = ECall _; _ }, _ -> compare e1 e2
+    | { e = ETuple elems1; _ }, { e = ETuple elems2; _ } -> List.compare exp elems1 elems2
+    | { e = ETuple _; _ }, _ -> compare e1 e2
+    | { e = EMember (e1, member1); _ }, { e = EMember (e2, member2); _ } -> (
+      match exp e1 e2 with
+      | 0 -> String.compare member1 member2
+      | n -> n)
+    | { e = EMember _; _ }, _ -> compare e1 e2
+    | { e = ETMember (e1, member1); _ }, { e = ETMember (e2, member2); _ } -> (
+      match exp e1 e2 with
+      | 0 -> compare member1 member2
+      | n -> n)
+    | { e = ETMember _; _ }, _ -> compare e1 e2
+    | ( { e = EIf { cond = cond1; then_ = then1; else_ = else1 }; _ }
+      , { e = EIf { cond = cond2; then_ = then2; else_ = else2 }; _ } ) -> (
+      match exp cond1 cond2 with
+      | 0 -> (
+        match exp then1 then2 with
+        | 0 -> exp else1 else2
+        | n -> n)
+      | n -> n)
+    | { e = EIf _; _ }, _ -> compare e1 e2
 end

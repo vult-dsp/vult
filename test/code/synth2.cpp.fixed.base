@@ -103,7 +103,7 @@ fix16_t Synth2_svf_step(Synth2_svf_step_type& _ctx, fix16_t input, fix16_t g, fi
    fix16_t notch = high + low;
    _ctx.dband = fix_clip(band, -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
    _ctx.dlow = fix_clip(low, -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
-   fix16_t output = 0.0f;
+   fix16_t output = 0x0 /* 0.000000 */;
     switch (sel) {
       case 0:
          output = low;

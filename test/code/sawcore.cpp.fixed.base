@@ -16,7 +16,7 @@ void Sawcore_process_type_init(Sawcore_process_type& _ctx) {
 void Sawcore_ptr_w2(Sawcore_ptr_w2_type& _ctx, fix16_t phase, fix16_t rate) {
    fix16_t s1 = rate;
    fix16_t s2 = rate + s1;
-   fix16_t out2 = 0.0f;
+   fix16_t out2 = 0x0 /* 0.000000 */;
    bool out1 = false;
    if (phase < s1) {
       fix16_t d = fix_div(phase, rate);

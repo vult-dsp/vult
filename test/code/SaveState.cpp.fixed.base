@@ -33,7 +33,7 @@ int32_t SaveState_main_type_serialize_data(CustomBuffer& buffer, int32_t index, 
    }
    update_size(buffer, start_0, index + (- start_0));
    index = push_string(buffer, index, _ctx.str);
-   index = push_float(buffer, index, _ctx.x);
+   index = push_int(buffer, index, _ctx.x);
    update_size(buffer, start, index + (- start));
    return index;
 }

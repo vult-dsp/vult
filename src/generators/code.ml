@@ -23,87 +23,10 @@
 *)
 open Util.Maps
 open Util
-open Core
+open Core.Prog
 
 type tag = Pparser.Ptags.tag
-
-type type_ = Prog.type_
 and param = string * type_
-
-type operator =
-  | Add
-  | Sub
-  | Mul
-  | Div
-  | Mod
-  | Land
-  | Lor
-  | Bor
-  | Band
-  | Bxor
-  | Lsh
-  | Rsh
-  | Eq
-  | Ne
-  | Lt
-  | Le
-  | Gt
-  | Ge
-
-type uoperator =
-  | Neg
-  | Not
-
-type exp_d =
-  | Unit
-  | Bool of bool
-  | Int of int
-  | Real of float
-  | Fixed of float
-  | String of string
-  | Id of string
-  | Index of
-      { e : exp
-      ; index : exp
-      }
-  | Array of exp list
-  | Call of
-      { path : string
-      ; args : exp list
-      }
-  | UnOp of uoperator * exp
-  | Op of operator * exp * exp
-  | If of
-      { cond : exp
-      ; then_ : exp
-      ; else_ : exp
-      }
-  | Tuple of exp list
-  | Member of exp * string
-  | TMember of exp * int
-
-and exp =
-  { e : exp_d
-  ; t : type_
-  }
-
-and lexp_d =
-  | LWild
-  | LId of string
-  | LMember of lexp * string
-  | LIndex of lexp * exp
-
-and lexp =
-  { l : lexp_d
-  ; t : type_
-  }
-
-type dexp_d = DId of string * int option
-
-and dexp =
-  { d : dexp_d
-  ; t : type_
-  }
 
 type function_info =
   { original_name : string option
@@ -131,7 +54,7 @@ and function_def =
 type top_stmt_d =
   | TopExternal of function_def * string option
   | TopFunction of function_def * stmt
-  | TopType of Prog.struct_descr
+  | TopType of struct_descr
   | TopAlias of string * string
   | TopDecl of dexp * exp
 
@@ -294,9 +217,9 @@ module CodeMapper = struct
     ; lexp_d : (lexp_d, 'data, 'ctx) mapper_func
     ; operator : (operator, 'data, 'ctx) mapper_func
     ; param : (param, 'data, 'ctx) mapper_func
-    ; member : (Prog.member, 'data, 'ctx) mapper_func
+    ; member : (member, 'data, 'ctx) mapper_func
     ; stmt : (stmt, 'data, 'ctx) mapper_func
-    ; struct_descr : (Prog.struct_descr, 'data, 'ctx) mapper_func
+    ; struct_descr : (struct_descr, 'data, 'ctx) mapper_func
     ; tag : (tag, 'data, 'ctx) mapper_func
     ; top_stmt : (top_stmt, 'data, 'ctx) mapper_func
     ; top_stmt_d : (top_stmt_d, 'data, 'ctx) mapper_func
@@ -312,10 +235,10 @@ module CodeMapper = struct
     ; lexp_d_pre : (lexp_d, 'data, 'ctx) pre_mapper_func
     ; lexp_pre : (lexp, 'data, 'ctx) pre_mapper_func
     ; operator_pre : (operator, 'data, 'ctx) pre_mapper_func
-    ; member_pre : (Prog.member, 'data, 'ctx) pre_mapper_func
+    ; member_pre : (member, 'data, 'ctx) pre_mapper_func
     ; param_pre : (param, 'data, 'ctx) pre_mapper_func
     ; stmt_pre : (stmt, 'data, 'ctx) pre_mapper_func
-    ; struct_descr_pre : (Prog.struct_descr, 'data, 'ctx) pre_mapper_func
+    ; struct_descr_pre : (struct_descr, 'data, 'ctx) pre_mapper_func
     ; tag_pre : (tag, 'data, 'ctx) pre_mapper_func
     ; top_stmt_d_pre : (top_stmt_d, 'data, 'ctx) pre_mapper_func
     ; top_stmt_pre : (top_stmt, 'data, 'ctx) pre_mapper_func
@@ -423,7 +346,7 @@ module CodeMapper = struct
     let context, state, idata = apply_pre mapper.type__pre ocontext state idata in
     let state, odata =
       if context.recurse then (
-        match idata.Prog.t with
+        match idata.t with
         | TVoid field_0 ->
           let state, field_0' = (mapper_opt (mapper_list map_type_)) mapper context state field_0 in
           let odata = if field_0 == field_0' then idata else { idata with t = TVoid field_0' } in
@@ -504,24 +427,24 @@ module CodeMapper = struct
     let state, odata =
       if context.recurse then (
         match idata with
-        | Add -> state, Add
-        | Sub -> state, Sub
-        | Mul -> state, Mul
-        | Div -> state, Div
-        | Mod -> state, Mod
-        | Land -> state, Land
-        | Lor -> state, Lor
-        | Bor -> state, Bor
-        | Band -> state, Band
-        | Bxor -> state, Bxor
-        | Lsh -> state, Lsh
-        | Rsh -> state, Rsh
-        | Eq -> state, Eq
-        | Ne -> state, Ne
-        | Lt -> state, Lt
-        | Le -> state, Le
-        | Gt -> state, Gt
-        | Ge -> state, Ge)
+        | OpAdd -> state, OpAdd
+        | OpSub -> state, OpSub
+        | OpMul -> state, OpMul
+        | OpDiv -> state, OpDiv
+        | OpMod -> state, OpMod
+        | OpLand -> state, OpLand
+        | OpLor -> state, OpLor
+        | OpBor -> state, OpBor
+        | OpBand -> state, OpBand
+        | OpBxor -> state, OpBxor
+        | OpLsh -> state, OpLsh
+        | OpRsh -> state, OpRsh
+        | OpEq -> state, OpEq
+        | OpNe -> state, OpNe
+        | OpLt -> state, OpLt
+        | OpLe -> state, OpLe
+        | OpGt -> state, OpGt
+        | OpGe -> state, OpGe)
       else
         state, idata
     in
@@ -533,8 +456,8 @@ module CodeMapper = struct
     let state, odata =
       if context.recurse then (
         match idata with
-        | Neg -> state, Neg
-        | Not -> state, Not)
+        | UOpNeg -> state, UOpNeg
+        | UOpNot -> state, UOpNot)
       else
         state, idata
     in
@@ -546,43 +469,43 @@ module CodeMapper = struct
     let state, odata =
       if context.recurse then (
         match idata with
-        | Unit -> state, Unit
-        | Bool _ -> state, idata
-        | Int _ -> state, idata
-        | Real _ -> state, idata
-        | Fixed _ -> state, idata
-        | String _ -> state, idata
-        | Id _ -> state, idata
-        | Index { e; index } ->
+        | EUnit -> state, EUnit
+        | EBool _ -> state, idata
+        | EInt _ -> state, idata
+        | EReal _ -> state, idata
+        | EFixed _ -> state, idata
+        | EString _ -> state, idata
+        | EId _ -> state, idata
+        | EIndex { e; index } ->
           let state, index' = map_exp mapper context state index in
           let state, e' = map_exp mapper context state e in
           let odata =
             if e == e' && index == index' then
               idata
             else
-              Index { e = e'; index = index' }
+              EIndex { e = e'; index = index' }
           in
           state, odata
-        | Array field_0 ->
+        | EArray field_0 ->
           let state, field_0' = (mapper_list map_exp) mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else Array field_0' in
+          let odata = if field_0 == field_0' then idata else EArray field_0' in
           state, odata
-        | Call { path; args } ->
+        | ECall { path; args } ->
           let state, args' = (mapper_list map_exp) mapper context state args in
           let path' = path in
           let odata =
             if path == path' && args == args' then
               idata
             else
-              Call { path = path'; args = args' }
+              ECall { path = path'; args = args' }
           in
           state, odata
-        | UnOp (field_0, field_1) ->
+        | EUnOp (field_0, field_1) ->
           let state, field_1' = map_exp mapper context state field_1 in
           let state, field_0' = map_uoperator mapper context state field_0 in
-          let odata = if field_0 == field_0' && field_1 == field_1' then idata else UnOp (field_0', field_1') in
+          let odata = if field_0 == field_0' && field_1 == field_1' then idata else EUnOp (field_0', field_1') in
           state, odata
-        | Op (field_0, field_1, field_2) ->
+        | EOp (field_0, field_1, field_2) ->
           let state, field_2' = map_exp mapper context state field_2 in
           let state, field_1' = map_exp mapper context state field_1 in
           let state, field_0' = map_operator mapper context state field_0 in
@@ -590,10 +513,10 @@ module CodeMapper = struct
             if field_0 == field_0' && field_1 == field_1' && field_2 == field_2' then
               idata
             else
-              Op (field_0', field_1', field_2')
+              EOp (field_0', field_1', field_2')
           in
           state, odata
-        | If { cond; then_; else_ } ->
+        | EIf { cond; then_; else_ } ->
           let state, else_' = map_exp mapper context state else_ in
           let state, then_' = map_exp mapper context state then_ in
           let state, cond' = map_exp mapper context state cond in
@@ -601,22 +524,22 @@ module CodeMapper = struct
             if cond == cond' && then_ == then_' && else_ == else_' then
               idata
             else
-              If { cond = cond'; then_ = then_'; else_ = else_' }
+              EIf { cond = cond'; then_ = then_'; else_ = else_' }
           in
           state, odata
-        | Tuple field_0 ->
+        | ETuple field_0 ->
           let state, field_0' = (mapper_list map_exp) mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else Tuple field_0' in
+          let odata = if field_0 == field_0' then idata else ETuple field_0' in
           state, odata
-        | Member (field_0, field_1) ->
+        | EMember (field_0, field_1) ->
           let field_1' = field_1 in
           let state, field_0' = map_exp mapper context state field_0 in
-          let odata = if field_0 == field_0' && field_1 == field_1' then idata else Member (field_0', field_1') in
+          let odata = if field_0 == field_0' && field_1 == field_1' then idata else EMember (field_0', field_1') in
           state, odata
-        | TMember (field_0, field_1) ->
+        | ETMember (field_0, field_1) ->
           let field_1' = field_1 in
           let state, field_0' = map_exp mapper context state field_0 in
-          let odata = if field_0 == field_0' && field_1 == field_1' then idata else TMember (field_0', field_1') in
+          let odata = if field_0 == field_0' && field_1 == field_1' then idata else ETMember (field_0', field_1') in
           state, odata)
       else
         state, idata
@@ -629,14 +552,14 @@ module CodeMapper = struct
     let state, odata =
       if context.recurse then (
         match idata with
-        | { e; t } ->
+        | { e; t; loc } ->
           let state, t' = map_type_ mapper context state t in
           let state, e' = map_exp_d mapper context state e in
           let odata =
             if e == e' && t == t' then
               idata
             else
-              { e = e'; t = t' }
+              { e = e'; t = t'; loc }
           in
           state, odata)
       else
@@ -657,11 +580,12 @@ module CodeMapper = struct
           let state, field_0' = map_lexp mapper context state field_0 in
           let odata = if field_0 == field_0' && field_1 == field_1' then idata else LMember (field_0', field_1') in
           state, odata
-        | LIndex (field_0, field_1) ->
-          let state, field_1' = map_exp mapper context state field_1 in
-          let state, field_0' = map_lexp mapper context state field_0 in
-          let odata = if field_0 == field_0' && field_1 == field_1' then idata else LIndex (field_0', field_1') in
-          state, odata)
+        | LIndex { e; index } ->
+          let state, index' = map_exp mapper context state index in
+          let state, e' = map_lexp mapper context state e in
+          let odata = if e == e' && index == index' then idata else LIndex { e = e'; index = index' } in
+          state, odata
+        | LTuple _ -> failwith "LTuple not implemented")
       else
         state, idata
     in
@@ -673,14 +597,14 @@ module CodeMapper = struct
     let state, odata =
       if context.recurse then (
         match idata with
-        | { l; t } ->
+        | { l; t; loc } ->
           let state, t' = map_type_ mapper context state t in
           let state, l' = map_lexp_d mapper context state l in
           let odata =
             if l == l' && t == t' then
               idata
             else
-              { l = l'; t = t' }
+              { l = l'; t = t'; loc }
           in
           state, odata)
       else
@@ -706,14 +630,14 @@ module CodeMapper = struct
     let state, odata =
       if context.recurse then (
         match idata with
-        | { d; t } ->
+        | { d; t; loc } ->
           let state, t' = map_type_ mapper context state t in
           let state, d' = map_dexp_d mapper context state d in
           let odata =
             if d == d' && t == t' then
               idata
             else
-              { d = d'; t = t' }
+              { d = d'; t = t'; loc }
           in
           state, odata)
       else
@@ -891,7 +815,7 @@ module GetVariables = struct
     CodeMapper.make
     @@ fun _context state (e : exp_d) ->
     match e with
-    | Id var ->
+    | EId var ->
       let data = CodeMapper.get state in
       let state = CodeMapper.set state (Set.add var data) in
       state, e

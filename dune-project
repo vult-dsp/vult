@@ -22,4 +22,6 @@
 
 (wrapped_executables false)
 
+(map_workspace_root false)
+
 (name vult)

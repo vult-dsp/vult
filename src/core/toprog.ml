@@ -57,7 +57,7 @@ let rec type_ (env : Env.in_top) (state : state) (t : Typed.type_) =
       | Some { descr = Record members; _ } ->
         let members =
           List.map (fun (name, (var : Env.var)) -> name, var.t, var.tags, var.loc) (Env.Map.to_list members)
-          |> List.sort (fun (n1, _, _, _) (n2, _, _, _) -> compare n1 n2)
+          |> List.sort (fun (n1, _, _, _) (n2, _, _, _) -> String.compare n1 n2)
         in
         let state, members = type_list env state members in
         let t = { t = TStruct { path = ps; members }; loc } in
@@ -180,16 +180,11 @@ let rec lexp (env : Env.in_top) (state : state) (e : Typed.lexp) =
     state, { l = LTuple l; t; loc }
 
 
-let rec dexp (env : Env.in_top) (state : state) (e : Typed.dexp) =
-  let loc = e.loc in
-  let state, t = type_ env state e.t in
-  match e.d with
-  | DWild -> state, { d = DWild; t; loc }
-  | DId (id, None) -> state, { d = DId (id, None); t; loc }
-  | DId (id, Some dim) -> state, { d = DId (id, Some dim); t; loc }
-  | DTuple l ->
-    let state, l = list dexp env state l in
-    state, { d = DTuple l; t; loc }
+let dexp (env : Env.in_top) (state : state) id dims t loc =
+  let state, t = type_ env state t in
+  match id, dims with
+  | id, None -> state, { d = DId (id, None); t; loc }
+  | id, Some dim -> state, { d = DId (id, Some dim); t; loc }
 
 
 let block (stmts : stmt list) : stmt =
@@ -199,11 +194,34 @@ let block (stmts : stmt list) : stmt =
   | _ -> { s = StmtBlock stmts; loc = Loc.default }
 
 
+let rec flattenTupleDeclarations env state (l : T.dexp list) =
+  let state, l =
+    List.fold_left
+      (fun (state, acc) (d : T.dexp) ->
+        match d.d with
+        | DWild -> state, acc
+        | DTuple elems ->
+          let state, inner = flattenTupleDeclarations env state elems in
+          state, List.rev inner @ acc
+        | DId (id, dims) ->
+          let state, d = dexp env state id dims d.t d.loc in
+          state, d :: acc)
+      (state, [])
+      l
+  in
+  state, List.rev l
+
+
 let rec stmt (env : Env.in_top) (state : state) (s : Typed.stmt) =
   let loc = s.loc in
   match s.s with
-  | StmtVal lhs ->
-    let state, lhs = dexp env state lhs in
+  | StmtVal { d = DWild; _ } -> state, []
+  | StmtVal { d = DTuple elems; _ } ->
+    let state, dexp_elems = flattenTupleDeclarations env state elems in
+    let decls = List.map (fun lhs -> { s = StmtDecl lhs; loc }) dexp_elems in
+    state, decls
+  | StmtVal { d = DId (id, dims); t; loc } ->
+    let state, lhs = dexp env state id dims t loc in
     state, [ { s = StmtDecl lhs; loc } ]
   | StmtMem (_, _) -> state, []
   | StmtBind (lhs, rhs) ->

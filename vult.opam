@@ -6,9 +6,18 @@ authors: ["Leonardo Laguna Ruiz"]
 license: "MIT"
 homepage: "https://github.com/vult-dsp/vult"
 bug-reports: "https://github.com/vult-dsp/vult/issues"
-depends: ["ocaml" "dune" "containers" "pla" "js_of_ocaml" "ounit"]
+depends: [
+  "ocaml"
+  "dune" {>= "3.7"}
+  "containers"
+  "pla"
+  "js_of_ocaml"
+  "js_of_ocaml-ppx"
+  "ounit"
+  "odoc" {with-doc}
+]
 build: [
-  ["dune" "subst"] {pinned}
+  ["dune" "subst"] {dev}
   [
     "dune"
     "build"
