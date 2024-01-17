@@ -1,37 +1,42 @@
+(*
+   The MIT License (MIT)
+
+   Copyright (c) 2014-2024 Leonardo Laguna Ruiz
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+*)
 open Core.Prog
 open Util.Maps
-open Code
+
+type code = Core.Prog.top_stmt list
+
+type env =
+  { decl : (int option * type_) Map.t
+  ; dummy : int
+  }
+
+let default_env = { decl = Map.empty; dummy = 0 }
 
 type context =
   { ext_names : string Map.t
   ; args : Util.Args.args
   }
-
-let rec type_ (context : context) (t : type_) =
-  match t with
-  | { t = TReal; _ } when context.args.real = Fixed -> { t with t = TFix16 }
-  | { t = TVoid (Some elems); _ } ->
-    let elems = List.map (type_ context) elems in
-    { t with t = TVoid (Some elems) }
-  | { t = TArray (None, sub); _ } ->
-    let sub = type_ context sub in
-    { t with t = TArray (None, sub) }
-  | { t = TArray (Some dim, sub); _ } ->
-    let sub = type_ context sub in
-    { t with t = TArray (Some dim, sub) }
-  | { t = TStruct descr; _ } ->
-    let descr = struct_descr context descr in
-    { t with t = TStruct descr }
-  | { t = TTuple elems; _ } ->
-    let elems = List.map (type_ context) elems in
-    { t with t = TTuple elems }
-  | _ -> t
-
-
-and struct_descr (context : context) (d : struct_descr) : struct_descr =
-  let members = List.map (fun (name, t, tags, loc) -> name, type_ context t, tags, loc) d.members in
-  { path = d.path; members }
-
 
 let getCallName (context : context) name =
   match Map.find_opt name context.ext_names with
@@ -45,10 +50,10 @@ type decl =
   | Declare of string * int option * type_
 
 let findRemove env n =
-  match Map.find_opt n env.Code.decl with
+  match Map.find_opt n env.decl with
   | Some (dim, t) ->
-    let decl = Map.remove n env.Code.decl in
-    Code.{ env with decl }, Some (dim, t)
+    let decl = Map.remove n env.decl in
+    { env with decl }, Some (dim, t)
   | None -> env, None
 
 
@@ -79,17 +84,17 @@ let generateInitializations env vars =
       ([], env)
       vars
   in
-  let stmts = List.fold_left (fun acc (n, size, t) -> Code.StmtDecl (C.did ~size n t, getInitRHS t) :: acc) [] decl in
+  let stmts = List.fold_left (fun acc (n, size, t) -> C.sdecl_init ~size n (getInitRHS t) t :: acc) [] decl in
   env, stmts
 
 
 let getNecessaryDeclarations (env : env) (e : exp) =
-  let vars = GetVariables.from_exp e in
-  generateInitializations env vars
+  let vars = Core.Passes.GetVariables.in_exp e in
+  generateInitializations env (Set.to_list vars)
 
 
 let getPendingDeclarations (env : env) =
-  let stmts = Map.fold (fun n (size, t) acc -> StmtDecl (C.did ~size n t, getInitRHS t) :: acc) env.decl [] in
+  let stmts = Map.fold (fun n (size, t) acc -> C.sdecl_init ~size n (getInitRHS t) t :: acc) env.decl [] in
   { env with decl = Map.empty }, stmts
 
 
@@ -113,41 +118,40 @@ let rec getLDecl (env : env) (l : lexp) =
 
 let makeBlock stmts =
   match stmts with
-  | [] -> StmtBlock []
+  | [] -> C.sblock []
   | [ h ] -> h
-  | _ -> StmtBlock stmts
+  | _ -> C.sblock stmts
 
 
-let rec stmt (context : context) (env : env) (s : Core.Prog.stmt) =
+let rec stmt (context : context) (env : env) (s : stmt) : 'a * stmt list =
   match s with
-  | { s = StmtDecl { d = DId (n, dim); t; _ }; _ } ->
-    let t = type_ context t in
+  | { s = StmtDecl ({ d = DId (n, dim); t; _ }, None); _ } ->
     let decl = Map.add n (dim, t) env.decl in
     { env with decl }, []
   | { s = StmtBind ({ l = LWild; _ }, ({ e = ECall _; _ } as rhs)); _ } ->
     let env, stmts = getNecessaryDeclarations env rhs in
-    env, stmts @ [ Code.StmtBind ({ l = LWild; t = C.void_t; loc = Util.Loc.default }, rhs) ]
+    env, stmts @ [ C.sbind_wild rhs ]
   | { s = StmtBind ({ l = LWild; _ }, _); _ } -> env, []
   | { s = StmtBind (lhs, rhs); _ } -> (
     let env, stmts = getNecessaryDeclarations env rhs in
     match getLDecl env lhs with
-    | env, Nothing -> env, stmts @ [ StmtBind (lhs, rhs) ]
-    | env, Initialize (n, size, t) -> env, stmts @ [ StmtDecl (C.did ~size n t, Some rhs) ]
-    | env, Declare (n, size, t) -> env, stmts @ [ StmtDecl (C.did ~size n t, getInitRHS t); StmtBind (lhs, rhs) ])
-  | { s = StmtReturn e; _ } -> env, [ StmtReturn e ]
+    | env, Nothing -> env, stmts @ [ C.sbind lhs rhs ]
+    | env, Initialize (n, size, t) -> env, stmts @ [ C.sdecl ~size ~init:rhs n t ]
+    | env, Declare (n, size, t) -> env, stmts @ [ C.sdecl_init ~size n (getInitRHS t) t; C.sbind lhs rhs ])
+  | { s = StmtReturn e; _ } -> env, [ C.sreturn e ]
   | { s = StmtIf (cond, then_, Some else_); _ } ->
     let env, stmts = getPendingDeclarations env in
     let env, then_ = stmt context env then_ in
     let env, else_ = stmt context env else_ in
-    env, stmts @ [ StmtIf (cond, makeBlock then_, Some (makeBlock else_)) ]
+    env, stmts @ [ C.sif cond (makeBlock then_) (Some (makeBlock else_)) ]
   | { s = StmtIf (cond, then_, None); _ } ->
     let env, stmts = getPendingDeclarations env in
     let env, then_ = stmt context env then_ in
-    env, stmts @ [ StmtIf (cond, makeBlock then_, None) ]
+    env, stmts @ [ C.sif cond (makeBlock then_) None ]
   | { s = StmtWhile (cond, body); _ } ->
     let env, stmts = getPendingDeclarations env in
     let env, body = stmt context env body in
-    env, stmts @ [ StmtWhile (cond, makeBlock body) ]
+    env, stmts @ [ C.swhile cond (makeBlock body) ]
   | { s = StmtBlock body; _ } ->
     let env, stmts =
       List.fold_left
@@ -158,45 +162,46 @@ let rec stmt (context : context) (env : env) (s : Core.Prog.stmt) =
         body
     in
     env, List.flatten (List.rev stmts)
+  | _ -> failwith "tocode: switch"
 
 
-let rec tryCreateSwitchLoop id cases next =
+let rec tryCreateSwitchLoop id cases (next : stmt option) =
   match next with
   | None -> Some (List.rev cases, None)
-  | Some (StmtIf ({ e = EOp (OpEq, nid, ({ e = EInt _; _ } as i)); _ }, stmt, next)) ->
+  | Some { s = StmtIf ({ e = EOp (OpEq, nid, ({ e = EInt _; _ } as i)); _ }, stmt, next); _ } ->
     if Compare.exp id nid = 0 then tryCreateSwitchLoop id ((i, stmt) :: cases) next else None
   | Some def -> Some (List.rev cases, Some def)
 
 
 let tryCreateSwitch e =
   match e with
-  | StmtIf ({ e = EOp (OpEq, id, ({ e = EInt _; _ } as i)); _ }, stmt, next) -> (
+  | { s = StmtIf ({ e = EOp (OpEq, id, ({ e = EInt _; _ } as i)); _ }, stmt, next); _ } -> (
     match tryCreateSwitchLoop id [ i, stmt ] next with
-    | Some ((_ :: _ :: _ as cases), def) -> StmtSwitch (id, cases, def)
+    | Some ((_ :: _ :: _ as cases), def) -> C.sswitch id cases def
     | _ -> e)
   | _ -> e
 
 
 let makeSingleBlock stmts =
   match stmts with
-  | [] -> StmtBlock []
+  | [] -> C.sblock []
   | [ stmt ] -> stmt
-  | _ -> StmtBlock stmts
+  | _ -> C.sblock stmts
 
 
-let rec createSwitch block =
-  match block with
+let rec createSwitch (block : stmt) =
+  match block.s with
   | StmtBlock stmts ->
     let stmts = createSwitchList stmts in
     makeSingleBlock stmts
   | StmtIf (cond, then_, else_) -> (
-    let block = StmtIf (cond, createSwitch then_, else_) in
+    let block = C.sif cond (createSwitch then_) else_ in
     match tryCreateSwitch block with
-    | StmtIf (cond, then_, Some else_) -> StmtIf (cond, then_, Some (createSwitch else_))
-    | StmtSwitch (e, cases, def) ->
-      StmtSwitch (e, List.map (fun (cond, body) -> cond, createSwitch body) cases, Option.map createSwitch def)
+    | { s = StmtIf (cond, then_, Some else_); _ } -> C.sif cond then_ (Some (createSwitch else_))
+    | { s = StmtSwitch (e, cases, def); _ } ->
+      C.sswitch e (List.map (fun (cond, body) -> cond, createSwitch body) cases) (Option.map createSwitch def)
     | result -> result)
-  | StmtWhile (cond, body) -> StmtWhile (cond, createSwitch body)
+  | StmtWhile (cond, body) -> C.swhile cond (createSwitch body)
   | _ -> block
 
 
@@ -210,12 +215,10 @@ let function_info (info : Core.Prog.function_info) : function_info =
   { original_name = info.original_name; is_root = info.is_root }
 
 
-let function_def (context : context) (def : Core.Prog.function_def) : function_def =
+let function_def (_context : context) (def : Core.Prog.function_def) : function_def =
   let name = def.name in
-  let args = List.map (fun (name, t, _) -> name, type_ context t) def.args in
+  let args = def.args in
   let args_t, ret_t = def.t in
-  let ret_t = type_ context ret_t in
-  let args_t = List.map (type_ context) args_t in
   { name; args; t = args_t, ret_t; tags = def.tags; loc = def.loc; info = function_info def.info }
 
 
@@ -226,13 +229,12 @@ let top_stmt (context : context) (top : Core.Prog.top_stmt) : top_stmt option =
     let _, body = stmt context default_env body in
     let def = function_def context def in
     Some { top = TopFunction (def, createSwitch (makeBlock body)); loc }
-  | { top = TopType descr; loc } ->
-    let descr = struct_descr context descr in
-    Some { top = TopType descr; loc }
-  | { top = TopAlias { path; alias_of }; loc } -> Some { top = TopAlias (path, alias_of); loc }
+  | { top = TopType descr; loc } -> Some { top = TopType descr; loc }
+  | { top = TopAlias { path; alias_of }; loc } -> Some { top = TopAlias { path; alias_of }; loc }
   | { top = TopExternal (def, name); loc } ->
     let def = function_def context def in
     Some { top = TopExternal (def, name); loc }
+  | { top = TopDecl (d, e); loc } -> Some { top = TopDecl (d, e); loc }
 
 
 let registerExternalNames (stmts : Core.Prog.top_stmt list) =

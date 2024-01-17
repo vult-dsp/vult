@@ -23,7 +23,6 @@
 *)
 
 open Core.Prog
-open Code
 
 (* TODO:
    - Runtime cleanup: generate only the required functions
@@ -172,8 +171,8 @@ let print_dexp (e : dexp) =
     [%pla {|<#id#s>[<#dim#i>]|}]
 
 
-let rec print_stmt s =
-  match s with
+let rec print_stmt (s : stmt) =
+  match s.s with
   (* if the name is _ctx, do not call the allocator*)
   | StmtDecl (({ d = DId ("_ctx", _); t = { t = TStruct _; _ }; _ } as lhs), None) ->
     let lhs = print_dexp lhs in
@@ -220,7 +219,7 @@ let rec print_stmt s =
       List.fold_right
         (fun (e2, body) else_ ->
           let cond = C.eeq e1 e2 in
-          Some (StmtIf (cond, body, else_)))
+          Some (C.sif cond body else_))
         cases
         default
     in
@@ -229,7 +228,7 @@ let rec print_stmt s =
     | Some if_ -> print_stmt if_)
 
 
-let print_arg (n, _) =
+let print_arg (n, _, _) =
   let n = fix_id n in
   [%pla {|<#n#s>|}]
 
@@ -241,7 +240,7 @@ let print_function_def (def : function_def) =
 
 
 let print_body body =
-  match body with
+  match body.s with
   | StmtBlock stmts ->
     let stmts = Pla.map_sep_all Pla.newline print_stmt stmts in
     [%pla {|<#stmts#+>end|}]

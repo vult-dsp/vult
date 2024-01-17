@@ -198,7 +198,8 @@ module MakeVM (VM : VM) = struct
         let vm, ret = VM.pop vm in
         let vm = VM.restoreFrame vm frame in
         vm, ret
-      | External -> failwith "")
+      | External -> failwith "The interpreter cannot evaluate external functions"
+      | Constant -> failwith "The interpreter does not have support for constants yet")
     | B f -> (
       match f, args with
       | Pi, [] -> vm, Real Float.pi

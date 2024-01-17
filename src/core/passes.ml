@@ -197,7 +197,16 @@ module GetVariables = struct
     | _ -> state, e
 
 
-  let mapper = { Mapper.identity with exp; lexp }
+  let dexp =
+    Mapper.make
+    @@ fun _env (state : Set.t Mapper.state) (e : dexp) ->
+    match e with
+    | { d = DId (name, _); _ } ->
+      let data = Mapper.getData state in
+      Mapper.setData state (Set.add name data), e
+
+
+  let mapper = { Mapper.identity with exp; lexp; dexp }
 
   let in_exp (e : exp) =
     let state, _ = Mapper.exp mapper () (Mapper.defaultState Set.empty) e in
@@ -206,6 +215,11 @@ module GetVariables = struct
 
   let in_lexp (e : lexp) =
     let state, _ = Mapper.lexp mapper () (Mapper.defaultState Set.empty) e in
+    Mapper.getData state
+
+
+  let in_stmts (s : stmt list) =
+    let state, _ = Mapper.mapper_list Mapper.stmt mapper () (Mapper.defaultState Set.empty) s in
     Mapper.getData state
 end
 
@@ -266,7 +280,7 @@ module IfExpressions = struct
       let tick = getTick env state in
       let temp = "_if_temp_" ^ string_of_int tick in
       let temp_e = { e = EId temp; t; loc } in
-      let decl_stmt = { s = StmtDecl { d = DId (temp, None); t; loc }; loc } in
+      let decl_stmt = { s = StmtDecl ({ d = DId (temp, None); t; loc }, None); loc } in
       let bind_stmt = { s = StmtBind ({ l = LId temp; t; loc }, e); loc } in
       let state = Mapper.pushStmts state [ decl_stmt; bind_stmt ] in
       reapply state, temp_e
@@ -294,7 +308,7 @@ module LiteralArrays = struct
       let tick = getTick env state in
       let temp = "_array_" ^ string_of_int tick in
       let temp_e = { e = EId temp; t; loc } in
-      let decl_stmt = { s = StmtDecl { d = DId (temp, None); t; loc }; loc } in
+      let decl_stmt = { s = StmtDecl ({ d = DId (temp, None); t; loc }, None); loc } in
       let bind_stmt = { s = StmtBind ({ l = LId temp; t; loc }, e); loc } in
       let state = Mapper.pushStmts state [ decl_stmt; bind_stmt ] in
       reapply state, temp_e
@@ -327,7 +341,7 @@ module Tuples = struct
             "_call_temp_" ^ string_of_int tick, t)
           elems
       in
-      let decl_stmt = List.map (fun (name, t) -> { s = StmtDecl { d = DId (name, None); t; loc }; loc }) temp in
+      let decl_stmt = List.map (fun (name, t) -> { s = StmtDecl ({ d = DId (name, None); t; loc }, None); loc }) temp in
       let temp_l = List.map (fun (name, t) -> { l = LId name; t; loc }) temp in
       let bind_stmt = { s = StmtBind ({ l = LTuple temp_l; t; loc }, e); loc } in
       let state = Mapper.pushStmts state (decl_stmt @ [ bind_stmt ]) in
@@ -350,7 +364,7 @@ module Tuples = struct
         reapply state, bindings)
       else (
         let temp_list = List.map (fun (l : lexp) -> "_t_temp_" ^ string_of_int (getTick env state), l.t) l_elems in
-        let decl = List.map (fun (n, t) -> { s = StmtDecl { d = DId (n, None); loc; t }; loc }) temp_list in
+        let decl = List.map (fun (n, t) -> { s = StmtDecl ({ d = DId (n, None); loc; t }, None); loc }) temp_list in
         let bindings1 =
           List.map2
             (fun (l, _) (r : exp) -> { s = StmtBind ({ l = LId l; t = r.t; loc = r.loc }, r); loc })
@@ -637,13 +651,15 @@ end
 module Sort = struct
   let dependencies = Location.mapper |> Mapper.seq CollectDependencies.mapper
 
-  let rec split types functions externals stmts =
+  let rec split types functions externals constants stmts =
     match stmts with
-    | [] -> List.rev types, List.rev functions, List.rev externals
-    | ({ top = TopType { path; _ }; _ } as h) :: t -> split ((path, h) :: types) functions externals t
-    | ({ top = TopAlias { path; _ }; _ } as h) :: t -> split ((path, h) :: types) functions externals t
-    | ({ top = TopFunction ({ name; _ }, _); _ } as h) :: t -> split types ((name, h) :: functions) externals t
-    | ({ top = TopExternal _; _ } as h) :: t -> split types functions (h :: externals) t
+    | [] -> List.rev types, List.rev functions, List.rev externals, List.rev constants
+    | ({ top = TopType { path; _ }; _ } as h) :: t -> split ((path, h) :: types) functions externals constants t
+    | ({ top = TopAlias { path; _ }; _ } as h) :: t -> split ((path, h) :: types) functions externals constants t
+    | ({ top = TopFunction ({ name; _ }, _); _ } as h) :: t ->
+      split types ((name, h) :: functions) externals constants t
+    | ({ top = TopExternal _; _ } as h) :: t -> split types functions (h :: externals) constants t
+    | ({ top = TopDecl _; _ } as h) :: t -> split types functions externals (h :: constants) t
 
 
   let rec sort deps table visited sorted stmts =
@@ -652,7 +668,8 @@ module Sort = struct
     | { top = TopType { path = name; _ }; _ } :: t
     | { top = TopAlias { path = name; _ }; _ } :: t
     | { top = TopFunction ({ name; _ }, _); _ } :: t
-    | { top = TopExternal ({ name; _ }, _); _ } :: t ->
+    | { top = TopExternal ({ name; _ }, _); _ } :: t
+    | { top = TopDecl ({ d = DId (name, _); _ }, _); _ } :: t ->
       let visited, sorted = pullIn deps table visited sorted name in
       sort deps table visited sorted t
 
@@ -685,12 +702,12 @@ module Sort = struct
 
   let run args prog =
     let type_deps, function_deps = getDependencies args prog in
-    let types, functions, externals = split [] [] [] prog in
+    let types, functions, externals, constants = split [] [] [] [] prog in
     let type_table = Map.of_list types in
     let functions_table = Map.of_list functions in
     let types = sort type_deps type_table Set.empty [] (List.map snd types) in
     let functions = sort function_deps functions_table Set.empty [] (List.map snd functions) in
-    types @ externals @ functions
+    types @ constants @ externals @ functions
 end
 
 let passes =

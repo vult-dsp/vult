@@ -3,4 +3,5 @@
  (modules NodeIO)
  (libraries util js_of_ocaml)
  (preprocess
-  (pps pla.ppx js_of_ocaml-ppx)))
+  (pps pla.ppx js_of_ocaml-ppx))
+ (ocamlopt_flags -O3 -unbox-closures))

@@ -5,4 +5,5 @@
  (flags
   (:standard -w -30))
  (preprocess
-  (pps pla.ppx)))
+  (pps pla.ppx))
+ (ocamlopt_flags -O3 -unbox-closures))

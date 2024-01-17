@@ -1,3 +1,26 @@
+(*
+   The MIT License (MIT)
+
+   Copyright (c) 2014-2024 Leonardo Laguna Ruiz
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+*)
 open Core
 open Prog
 open Util
@@ -144,6 +167,7 @@ and instr =
   }
 
 type segment =
+  | Constant (* not yet supported here *)
   | External
   | Function of
       { name : string
@@ -305,9 +329,14 @@ and makeOp op e1 e2 =
 let rec compile_stmt (env : env) (stmt : stmt) =
   let loc = stmt.loc in
   match stmt.s with
-  | StmtDecl lhs ->
+  | StmtDecl (lhs, None) ->
     let env = compile_dexp env lhs in
     env, []
+  | StmtDecl (({ d = DId (name, _); t; loc } as lhs), Some rhs) ->
+    let env = compile_dexp env lhs in
+    let lhs = compile_lexp env (C.lid ~loc name t) in
+    let rhs = compile_exp env rhs in
+    env, [ { i = Store (lhs, rhs); loc = stmt.loc } ]
   | StmtBind (lhs, rhs) ->
     let lhs = compile_lexp env lhs in
     let rhs = compile_exp env rhs in
@@ -331,6 +360,22 @@ let rec compile_stmt (env : env) (stmt : stmt) =
     let cond = compile_exp env cond in
     let env, body = compile_stmt env body in
     env, [ { i = While (cond, body); loc } ]
+  | StmtSwitch (e, cases, default) ->
+    let e = compile_exp env e in
+    let env, default =
+      match default with
+      | None -> env, []
+      | Some stmt -> compile_stmt env stmt
+    in
+    List.fold_left
+      (fun (env, else_) (case, stmt) ->
+        let case = compile_exp env case in
+        let comp = { r = makeOp OpEq e case; loc } in
+        let env, stmt = compile_stmt env stmt in
+        let if_ = [ { i = If (comp, stmt, else_); loc } ] in
+        env, if_)
+      (env, default)
+      (List.rev cases)
 
 
 let getNOutputs (t : type_) =
@@ -356,6 +401,7 @@ let compile_top (env : env) (s : top_stmt) =
     let env, body = compile_stmt env body in
     let n_args = List.length args in
     env, [ Function { name; body; locals = env.lcount - n_args; n_args } ]
+  | TopDecl _ -> env, [ Constant ]
 
 
 let compile stmts : env * segment list = list compile_top default_env stmts
@@ -506,6 +552,7 @@ let print_segment (s : segment) =
     let body = print_instr_list body in
     [%pla {|function <#name#s> : args = <#n_args#i>, locals = <#locals#i><#body#+>|}]
   | External -> Pla.string "external"
+  | Constant -> Pla.string "constant"
 
 
 let print_segments s = Pla.map_sep_all Pla.newline print_segment (Array.to_list s)

@@ -22,7 +22,6 @@
    THE SOFTWARE.
 *)
 
-open Code
 open Core.Prog
 
 type target =
@@ -39,23 +38,23 @@ let isSmall stmts =
     else (
       match stmts with
       | [] -> size
-      | Code.StmtDecl _ :: t -> loop size t
-      | StmtReturn _ :: t -> loop size t
-      | StmtBlock inner :: t ->
+      | { s = StmtDecl _; _ } :: t -> loop size t
+      | { s = StmtReturn _; _ } :: t -> loop size t
+      | { s = StmtBlock inner; _ } :: t ->
         let size = loop size inner in
         loop size t
-      | StmtIf (_, then_, None) :: t ->
+      | { s = StmtIf (_, then_, None); _ } :: t ->
         let size = loop (size + 1) [ then_ ] in
         loop size t
-      | StmtIf (_, then_, Some else_) :: t ->
+      | { s = StmtIf (_, then_, Some else_); _ } :: t ->
         let size = loop (size + 1) [ then_ ] in
         let size = loop size [ else_ ] in
         loop size t
-      | StmtWhile (_, body) :: t ->
+      | { s = StmtWhile (_, body); _ } :: t ->
         let size = loop (size + 1) [ body ] in
         loop size t
-      | StmtBind _ :: t -> loop (size + 1) t
-      | StmtSwitch (_, cases, _) :: t ->
+      | { s = StmtBind _; _ } :: t -> loop (size + 1) t
+      | { s = StmtSwitch (_, cases, _); _ } :: t ->
         let n = List.fold_left (fun n (_, body) -> n + loop 0 [ body ]) 0 cases in
         loop (size + 1 + n) t)
   in
@@ -135,7 +134,7 @@ let uoperator (op : Core.Prog.uoperator) =
 
 let getReplacement name (args : exp list) ret =
   let args_t = List.map (fun (e : exp) -> e.t) args in
-  match Replacements.C.fun_to_fun name args_t ret with
+  match Replacements.Cpp.fun_to_fun name args_t ret with
   | Some path -> path
   | None -> name
 
@@ -182,7 +181,7 @@ let rec print_exp prec (e : exp) =
     let current = level op in
     let se1 = print_exp current e1 in
     let se2 = print_exp current e2 in
-    match Replacements.C.op_to_fun op e1.t e2.t e.t with
+    match Replacements.Cpp.op_to_fun op e1.t e2.t e.t with
     | Some path -> [%pla {|<#path#s>(<#se1#>, <#se2#>)|}]
     | None ->
       let op = operator op in
@@ -230,7 +229,7 @@ let print_member (n, (t : type_), _, _) =
   [%pla {|<#t#> <#n#s>;|}]
 
 
-let print_arg i (n, (t : type_)) =
+let print_arg i (n, (t : type_), _) =
   match t.t with
   | TArray (_, { t = TArray _; _ }) -> failwith "array of arrays are not implemented"
   | TArray (Some dim, ({ t = TStruct _; _ } as sub)) ->
@@ -290,9 +289,9 @@ let arrayCopyFunction (t : type_) =
 
 
 let rec print_stmt s =
-  match s with
+  match s.s with
   (* declares and initializes a structure *)
-  | Code.StmtDecl (({ t = { t = TStruct { path; _ }; _ }; _ } as lhs), None) ->
+  | StmtDecl (({ t = { t = TStruct { path; _ }; _ }; _ } as lhs), None) ->
     let t = print_type_ lhs.t in
     let lhs = print_dexp lhs in
     [%pla {|<#t#> <#lhs#>;<#><#path#s>_init(<#lhs#>);|}]
@@ -365,7 +364,7 @@ let rec print_stmt s =
 
 and print_block body =
   match body with
-  | StmtBlock stmts ->
+  | { s = StmtBlock stmts; _ } ->
     let stmts = Pla.map_sep_all Pla.newline print_stmt stmts in
     [%pla {|{<#stmts#+>}|}]
   | _ ->
@@ -373,23 +372,23 @@ and print_block body =
     [%pla {|{<#stmt#+><#>}|}]
 
 
-let isTemplate (args : Code.param list) =
+let isTemplate (args : param list) =
   List.exists
-    (fun (a : Code.param) ->
+    (fun (a : param) ->
       match a with
-      | _, { t = TArray (None, _); _ } -> true
+      | _, { t = TArray (None, _); _ }, _ -> true
       | _ -> false)
     args
 
 
-let print_function_def (def : Code.function_def) =
+let print_function_def (def : function_def) =
   let name = Pla.string def.name in
   let args = List.mapi print_arg def.args |> Pla.join_sep Pla.commaspace in
   let template_args =
     def.args
-    |> List.mapi (fun i (arg : Code.param) ->
+    |> List.mapi (fun i (arg : param) ->
       match arg with
-      | _, { t = TArray (None, _); _ } -> Some ("std::size_t SIZE_" ^ string_of_int i)
+      | _, { t = TArray (None, _); _ }, _ -> Some ("std::size_t SIZE_" ^ string_of_int i)
       | _ -> None)
     |> List.filter_map (fun v -> v)
   in
@@ -405,7 +404,7 @@ let print_function_def (def : Code.function_def) =
 
 
 let print_top_stmt ~allow_inline (target : target) t =
-  match t.Code.top, target with
+  match t.top, target with
   | TopFunction (def, body), Header ->
     let inline = (allow_inline && isSmall [ body ]) || isTemplate def.args in
     let template, def = print_function_def def in
@@ -434,7 +433,7 @@ let print_top_stmt ~allow_inline (target : target) t =
   | TopType { path; members }, Header ->
     let members = Pla.map_sep [%pla {|<#>|}] print_member members in
     [%pla {|typedef struct <#path#s> {<#members#+><#>} <#path#s>;<#><#>|}]
-  | TopAlias (path, alias_of), Header -> [%pla {|typedef struct <#alias_of#s> <#path#s>;<#><#>|}]
+  | TopAlias { path; alias_of }, Header -> [%pla {|typedef struct <#alias_of#s> <#path#s>;<#><#>|}]
   | TopType _, _ -> Pla.unit
   | TopAlias _, _ -> Pla.unit
   | TopDecl (lhs, rhs), Tables ->
@@ -458,7 +457,7 @@ let makeIfdef file =
 |}]
 
 
-let getTemplateCode (name : string option) (prefix : string) (stmts : Code.top_stmt list) =
+let getTemplateCode (name : string option) (prefix : string) (stmts : top_stmt list) =
   match name with
   | Some "pd" -> T_pd.generate prefix stmts
   | None -> (Pla.unit, Pla.unit), (Pla.unit, Pla.unit)
@@ -473,7 +472,7 @@ let getLibName output =
 
 let generateIncludeList stmts = Pla.map_sep_all Pla.newline (fun (file, _) -> {%pla|#include "<#file#s>.h"|}) stmts
 
-let generateSplit file_deps output template (stmts : Code.top_stmt list) =
+let generateSplit file_deps output template (stmts : top_stmt list) =
   let dir = CCOption.map_or ~default:"" (fun file -> Filename.dirname file) output in
   let main_header_file = Common.setExt ".h" output in
   let impl_file = Common.setExt ".cpp" output in
@@ -505,7 +504,7 @@ let generateSplit file_deps output template (stmts : Code.top_stmt list) =
   :: files
 
 
-let generateSingle output template (stmts : Code.top_stmt list) =
+let generateSingle output template (stmts : top_stmt list) =
   let allow_inline = true in
   let header = print_prog ~allow_inline Header stmts in
   let impl = print_prog ~allow_inline Implementation stmts in
@@ -530,7 +529,7 @@ let generateSingle output template (stmts : Code.top_stmt list) =
   [ header, header_file; impl, impl_file; tables, tables_file ]
 
 
-let generate file_deps split output template (stmts : Code.top_stmt list) =
+let generate file_deps split output template (stmts : top_stmt list) =
   if split then
     generateSplit file_deps output template stmts
   else

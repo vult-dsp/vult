@@ -92,7 +92,7 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
     let incr = { s = StmtBind ({ l = LId i; t = int_t; loc }, plus_one); loc } in
     let body = { s = StmtBlock [ bind; incr ]; loc } in
     let loop = { s = StmtWhile (cond, body); loc } in
-    let decl = { s = StmtDecl { d = DId (i, None); t = int_t; loc }; loc } in
+    let decl = { s = StmtDecl ({ d = DId (i, None); t = int_t; loc }, None); loc } in
     let init = { s = StmtBind ({ l = LId i; t = int_t; loc }, { e = EInt 0; t = int_t; loc }); loc } in
     { s = StmtBlock [ decl; init; loop ]; loc }
   | { t = TArray (Some size, subt); loc } ->
@@ -112,8 +112,8 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
     let incr = { s = StmtBind ({ l = LId i; t = int_t; loc }, plus_one); loc } in
     let body = { s = StmtBlock [ bind; incr ]; loc } in
     let loop = { s = StmtWhile (cond, body); loc } in
-    let decl = { s = StmtDecl { d = DId (i, None); t = int_t; loc }; loc } in
-    let decl_array = { s = StmtDecl { d = DId ("temp", None); t; loc }; loc } in
+    let decl = { s = StmtDecl ({ d = DId (i, None); t = int_t; loc }, None); loc } in
+    let decl_array = { s = StmtDecl ({ d = DId ("temp", None); t; loc }, None); loc } in
     let init = { s = StmtBind ({ l = LId i; t = int_t; loc }, { e = EInt 0; t = int_t; loc }); loc } in
     let transfer = { s = StmtBind (lhs, rhs_temp); loc } in
     { s = StmtBlock [ decl_array; decl; init; loop; transfer ]; loc }
@@ -190,7 +190,7 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
         struct_t.members
     in
     let custom_initializer = customInitializerCall custom_initializers struct_t.path ectx void_type loc in
-    let new_ctx = { s = StmtDecl { d = DId ("_ctx", None); t = this_type; loc }; loc } in
+    let new_ctx = { s = StmtDecl ({ d = DId ("_ctx", None); t = this_type; loc }, None); loc } in
     let return = { s = StmtReturn ectx; loc } in
     let body = { s = StmtBlock ((new_ctx :: stmts) @ custom_initializer @ [ return ]); loc } in
     let args, t = [], ([], this_type) in

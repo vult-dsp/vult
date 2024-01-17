@@ -1,4 +1,27 @@
-open Core
+(*
+   The MIT License (MIT)
+
+   Copyright (c) 2014-2024 Leonardo Laguna Ruiz
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+*)
+open Core.Prog
 
 let legend =
   let version = Core.Version.version in
@@ -21,7 +44,7 @@ let splitArray into elems =
   loop [] [] 0 elems
 
 
-let cast ~(from : Prog.type_) ~(to_ : Prog.type_) (value : Pla.t) =
+let cast ~(from : type_) ~(to_ : type_) (value : Pla.t) =
   match from.t, to_.t with
   | TInt, TReal -> [%pla {|(float)<#value#>|}]
   | TInt, TBool -> [%pla {|(bool)<#value#>|}]
@@ -60,7 +83,7 @@ let toFixed ?(comment = true) (n : float) : string =
       Printf.sprintf "0x%lx" value)
 
 
-let splitByFile (stmts : Code.top_stmt list) =
+let splitByFile (stmts : top_stmt list) =
   let getFile loc =
     match loc.Util.Loc.source with
     | Util.Loc.Text _ -> failwith ""
@@ -68,7 +91,7 @@ let splitByFile (stmts : Code.top_stmt list) =
   in
   let index = ref 0 in
   List.fold_left
-    (fun map (stmt : Code.top_stmt) ->
+    (fun map (stmt : top_stmt) ->
       Util.Maps.Map.update
         (getFile stmt.loc)
         (fun found_opt ->

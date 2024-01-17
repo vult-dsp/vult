@@ -1,15 +1,38 @@
+(*
+   The MIT License (MIT)
+
+   Copyright (c) 2014-2024 Leonardo Laguna Ruiz
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+*)
 open Core.Prog
 
 type function_info =
   { name : string
   ; class_name : string
   ; has_ctx : bool
-  ; inputs : Code.param list
+  ; inputs : param list
   ; outputs : type_ list
   ; is_dsp : bool
   }
 
-let getFunctionInfo (f : Code.function_def) =
+let getFunctionInfo (f : function_def) =
   let outputs =
     match f.t with
     | _, { t = TTuple elems; _ } -> elems
@@ -19,7 +42,7 @@ let getFunctionInfo (f : Code.function_def) =
   in
   let has_ctx, inputs =
     match f.args with
-    | ("_ctx", { t = TStruct _; _ }) :: inputs -> true, inputs
+    | ("_ctx", { t = TStruct _; _ }, _) :: inputs -> true, inputs
     | inputs -> false, inputs
   in
   let class_name, is_dsp =
@@ -40,7 +63,7 @@ let typeString (t : type_) =
   | _ -> failwith "Pd.typeString: not a numeric type"
 
 
-let addInlets (inputs : Code.param list) =
+let addInlets (inputs : param list) =
   match inputs with
   | [] | [ _ ] -> Pla.unit
   | _ :: t ->
@@ -49,17 +72,19 @@ let addInlets (inputs : Code.param list) =
     |> Pla.indent
 
 
-let addNormalInlets (inputs : Code.param list) =
+let addNormalInlets (inputs : param list) =
   match inputs with
   | [] -> Pla.unit
   | _ :: t ->
-    List.map (fun (n, _) -> {%pla|floatinlet_new(&x->x_obj, &x-><#n#s>);|}) t |> Pla.join_sep Pla.newline |> Pla.indent
+    List.map (fun (n, _, _) -> {%pla|floatinlet_new(&x->x_obj, &x-><#n#s>);|}) t
+    |> Pla.join_sep Pla.newline
+    |> Pla.indent
 
 
-let addInletsVars (inputs : Code.param list) =
+let addInletsVars (inputs : param list) =
   match inputs with
   | [] -> Pla.unit
-  | _ -> List.map (fun (n, _) -> {%pla|float <#n#s>;|}) inputs |> Pla.join_sep Pla.newline |> Pla.indent
+  | _ -> List.map (fun (n, _, _) -> {%pla|float <#n#s>;|}) inputs |> Pla.join_sep Pla.newline |> Pla.indent
 
 
 let addOutletsVars (outputs : type_ list) =
@@ -93,7 +118,7 @@ let tildeNewFunction (f : function_info) : int * Pla.t =
 
 let castInput (typ : type_) (value : Pla.t) : Pla.t = Common.cast ~from:Core.Prog.C.real_t ~to_:typ value
 let castOutput (typ : type_) (value : Pla.t) : Pla.t = Common.cast ~from:typ ~to_:Core.Prog.C.real_t value
-let inputName (i, acc) (_, t) = i + 1, castInput t [%pla {|*(in_<#i#i>++)|}] :: acc
+let inputName (i, acc) (_, t, _) = i + 1, castInput t [%pla {|*(in_<#i#i>++)|}] :: acc
 
 let tildePerformFunctionCall (f : function_info) =
   let fname = f.name in
@@ -124,7 +149,7 @@ let tildePerformFunctionCall (f : function_info) =
   [%pla {|<#ret#> <#fname#s>(<#args#>);<#><#copy#>|}]
 
 
-let normalInputName (i, acc) (s, t) = i + 1, castInput t [%pla {|x-><#s#s>|}] :: acc
+let normalInputName (i, acc) (s, t, _) = i + 1, castInput t [%pla {|x-><#s#s>|}] :: acc
 
 let normalPerformFunctionCall (f : function_info) =
   let fname = f.name in
@@ -372,7 +397,7 @@ static inline float samplerate() { return sys_getsr(); }
  |}]
 
 
-let getStmtInfo (s : Code.top_stmt) =
+let getStmtInfo (s : top_stmt) =
   match s.top with
   | TopFunction (def, _) -> (
     match getFunctionInfo def with
@@ -381,7 +406,7 @@ let getStmtInfo (s : Code.top_stmt) =
   | _ -> None
 
 
-let generate prefix (stmts : Code.top_stmt list) =
+let generate prefix (stmts : top_stmt list) =
   let functions = List.filter_map getStmtInfo stmts in
   let impl = List.map func_imp functions in
   let headers = List.map func_header functions in

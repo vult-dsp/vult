@@ -1,4 +1,26 @@
-open Code
+(*
+   The MIT License (MIT)
+
+   Copyright (c) 2014-2024 Leonardo Laguna Ruiz
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+*)
 open Core.Prog
 open Util
 open Vm
@@ -18,7 +40,7 @@ let makeRealTableDecl loc fname name precision data =
   let size = List.length data in
   let t = makeArrayType precision size in
   let elems = CCList.map (makeFloat precision) data in
-  Code.{ top = TopDecl (C.did ~size:(Some size) varname t, C.earray elems t); loc }
+  { top = TopDecl (C.did ~size:(Some size) varname t, C.earray elems t); loc }
 
 
 let makeIntTableDecl loc fname name data =
@@ -26,7 +48,7 @@ let makeIntTableDecl loc fname name data =
   let size = List.length data in
   let t = makeArrayType C.int_t size in
   let elems = CCList.map C.eint data in
-  Code.{ top = TopDecl (C.did ~size:(Some size) varname t, C.earray elems t); loc }
+  { top = TopDecl (C.did ~size:(Some size) varname t, C.earray elems t); loc }
 
 
 let generateRawAccessFunction loc full_name c t =
@@ -34,11 +56,11 @@ let generateRawAccessFunction loc full_name c t =
   let table_name = full_name ^ "_c" ^ n in
   let function_name = full_name ^ "_raw_c" ^ n in
   let r = C.eindex (C.eid table_name t) (C.eid "index" C.int_t) t in
-  let body = Code.StmtReturn r in
-  let args = [ "index", C.int_t ] in
+  let body = { s = StmtReturn r; loc } in
+  let args = [ "index", C.int_t, Loc.default ] in
   let t = [ C.int_t ], t in
-  let info = Code.{ original_name = None; is_root = false } in
-  Code.{ top = TopFunction ({ name = function_name; args; t; tags = []; loc; info }, body); loc }
+  let info = { original_name = None; is_root = false } in
+  { top = TopFunction ({ name = function_name; args; t; tags = []; loc; info }, body); loc }
 
 
 let getCoefficients1 l =
@@ -154,7 +176,7 @@ let getIndex in_precision bound_check size value =
       i
   in
   let int_call i = C.ecall (getCastIndexFunction in_precision) [ i ] C.int_t in
-  [ Code.StmtDecl (C.did "index" C.int_t, Some (clip_call (int_call value))) ]
+  [ C.sdecl ~init:(clip_call (int_call value)) "index" C.int_t ]
 
 
 let castInputVarPrecision (in_precision : type_) (out_precision : type_) (input : exp) : exp =
@@ -187,8 +209,8 @@ let makeNewBody1 bound_check fname size in_precision t min max input =
   let value = makeMul in_precision (makeSub in_precision input min) initial_index in
   let index_stmts = getIndex in_precision bound_check size value in
   let input = castInputVarPrecision in_precision t input in
-  let return = Code.StmtReturn (C.eadd (getCoeff "c0") (C.emul input (getCoeff "c1"))) in
-  Code.StmtBlock (index_stmts @ [ return ])
+  let return = C.sreturn (C.eadd (getCoeff "c0") (C.emul input (getCoeff "c1"))) in
+  C.sblock (index_stmts @ [ return ])
 
 
 let makeNewBody2 bound_check fname size in_precision t min max input =
@@ -204,15 +226,15 @@ let makeNewBody2 bound_check fname size in_precision t min max input =
   let input = castInputVarPrecision in_precision t input in
   let k2 = C.emul (getCoeff "c2") input in
   let k1 = C.emul input (C.eadd (getCoeff "c1") k2) in
-  let return = Code.StmtReturn (C.eadd (getCoeff "c0") k1) in
-  Code.StmtBlock (index_stmts @ [ return ])
+  let return = C.sreturn (C.eadd (getCoeff "c0") k1) in
+  C.sblock (index_stmts @ [ return ])
 
 
 let makeIntAccessBody fname out_type min max input =
   let atype = makeArrayType out_type (max - min) in
   let index = C.ecall "int_clip" [ input; C.eint min; C.eint max ] C.int_t in
   let index = C.eadd index (C.eint (-min)) in
-  Code.StmtReturn (C.eindex (C.eid (fname ^ "_table") atype) index out_type)
+  C.sreturn (C.eindex (C.eid (fname ^ "_table") atype) index out_type)
 
 
 let getBoundCheckValue t =
@@ -229,15 +251,15 @@ let getOrderValue t =
   | _ -> failwith "Invalid value of 'bound_check' tag"
 
 
-let checkInputVariables (loc : Loc.t) (args : Code.param list) : exp =
+let checkInputVariables (loc : Loc.t) (args : param list) : exp =
   match args with
-  | [ (name, t) ] -> C.eid name t
+  | [ (name, t, _) ] -> C.eid name t
   | _ ->
     let msg = "This attribute requires the function to have only one argument:\n\"fun foo(x:real) : real\"" in
     Error.raiseError msg loc
 
 
-let makeTable vm (def : Code.function_def) =
+let makeTable vm (def : function_def) =
   let params = Tags.[ "size", TypeInt; "min", TypeReal; "max", TypeReal; "order", TypeInt; "bound_check", TypeBool ] in
   let loc = def.loc in
   match Tags.getParameterList def.tags "table" params with
@@ -268,7 +290,7 @@ let makeTable vm (def : Code.function_def) =
     Util.Error.raiseError msg def.loc
 
 
-let makeIntTable vm (def : Code.function_def) =
+let makeIntTable vm (def : function_def) =
   let params = Tags.[ "min", TypeInt; "max", TypeInt ] in
   let loc = def.loc in
   match Tags.getParameterList def.tags "table" params, def.t with
@@ -312,16 +334,16 @@ let checkNumberOfChannels (loc : Loc.t) (channels : int) (wave : WaveFile.wave) 
     Error.raiseError msg loc)
 
 
-let getDeclarations loc name (wav_data : WaveFile.wave) precision : Code.top_stmt list =
+let getDeclarations loc name (wav_data : WaveFile.wave) precision : top_stmt list =
   Array.mapi
     (fun i v -> makeRealTableDecl loc name ("chan_" ^ string_of_int i) precision (Array.to_list v))
     wav_data.WaveFile.data
   |> Array.to_list
 
 
-let checkWaveInputVariables (loc : Loc.t) (args : Code.param list) : exp * exp =
+let checkWaveInputVariables (loc : Loc.t) (args : param list) : exp * exp =
   match args with
-  | [ (channel, channel_t); (index, index_t) ] -> C.eid channel channel_t, C.eid index index_t
+  | [ (channel, channel_t, _); (index, index_t, _) ] -> C.eid channel channel_t, C.eid index index_t
   | _ ->
     let msg =
       "This attribute requires the function to have the following arguments:\n\
@@ -330,35 +352,35 @@ let checkWaveInputVariables (loc : Loc.t) (args : Code.param list) : exp * exp =
     Error.raiseError msg loc
 
 
-let accessChannel (fname : string) (channel : exp) (index : exp) (samples : int) t (i : int) : Code.stmt =
+let accessChannel (fname : string) (channel : exp) (index : exp) (samples : int) t (i : int) : stmt =
   let table_name = fname ^ "_" ^ "chan_" ^ string_of_int i in
   let table = C.eid table_name t in
   let i = C.eint i in
   let samples_e = C.eint samples in
   let cond = C.eeq channel i in
   let ret = C.eindex table (C.emod index samples_e) t in
-  Code.StmtIf (cond, StmtReturn ret, None)
+  C.sif cond (C.sreturn ret) None
 
 
-let makeNewBody (def : Code.function_def) (wave : WaveFile.wave) precision : Code.stmt =
+let makeNewBody (def : function_def) (wave : WaveFile.wave) precision : stmt =
   let channel, index = checkWaveInputVariables def.loc def.args in
   let stmts =
     CCList.init wave.WaveFile.channels (accessChannel def.name channel index wave.WaveFile.samples precision)
   in
-  let default = Code.StmtReturn (C.ereal 0.0) in
-  StmtBlock (stmts @ [ default ])
+  let default = C.sreturn (C.ereal 0.0) in
+  C.sblock (stmts @ [ default ])
 
 
-let makeSizeFunction (def : Code.function_def) (size : int) : Code.top_stmt =
+let makeSizeFunction (def : function_def) (size : int) : top_stmt =
   let size_name = def.name ^ "_samples" in
-  let body = Code.StmtReturn (C.eint size) in
-  let info = Code.{ original_name = None; is_root = false } in
+  let body = C.sreturn (C.eint size) in
+  let info = { original_name = None; is_root = false } in
   { top = TopFunction ({ name = size_name; args = []; t = [], C.int_t; tags = []; loc = def.loc; info }, body)
   ; loc = def.loc
   }
 
 
-let makeWave (args : Args.args) _vm (def : Code.function_def) =
+let makeWave (args : Args.args) _vm (def : function_def) =
   let params = Tags.[ "channels", TypeInt; "file", TypeString ] in
   match Tags.getParameterList def.tags "wave" params with
   | [ Some (Int channels); Some (String file) ] ->
@@ -404,7 +426,7 @@ let makeWavetableOrder2 loc name size precision data =
   ]
 
 
-let makeWavetable (args : Args.args) _vm (def : Code.function_def) =
+let makeWavetable (args : Args.args) _vm (def : function_def) =
   let params = Tags.[ "file", TypeString; "bound_check", TypeBool ] in
   match Tags.getParameterList def.tags "wavetable" params with
   | [ Some (String file); bound_check ] ->
@@ -430,7 +452,7 @@ let makeWavetable (args : Args.args) _vm (def : Code.function_def) =
 
 
 let replaceFunction (args : Args.args) vm stmt =
-  match stmt.Code.top with
+  match stmt.top with
   | TopFunction (({ t = [ { t = TInt; _ } ], _; _ } as def), _) when Tags.has def.tags "table" -> makeIntTable vm def
   | TopFunction (def, _) when Tags.has def.tags "table" -> makeTable vm def
   | TopExternal (def, _) when Tags.has def.tags "wave" -> makeWave args vm def

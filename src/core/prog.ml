@@ -138,12 +138,13 @@ type function_info =
   }
 
 type stmt_d =
-  | StmtDecl of dexp
+  | StmtDecl of dexp * exp option
   | StmtBind of lexp * exp
   | StmtReturn of exp
   | StmtBlock of stmt list
   | StmtIf of exp * stmt * stmt option
   | StmtWhile of exp * stmt
+  | StmtSwitch of exp * (exp * stmt) list * stmt option
 
 and stmt =
   { s : stmt_d
@@ -167,6 +168,7 @@ type top_stmt_d =
       { path : string
       ; alias_of : string
       }
+  | TopDecl of dexp * exp
 
 and top_stmt =
   { top : top_stmt_d
@@ -302,9 +304,13 @@ module Print = struct
 
   let rec print_stmt s =
     match s.s with
-    | StmtDecl lhs ->
+    | StmtDecl (lhs, None) ->
       let lhs = print_dexp lhs in
       [%pla {|val <#lhs#>;|}]
+    | StmtDecl (lhs, Some rhs) ->
+      let lhs = print_dexp lhs in
+      let rhs = print_exp rhs in
+      [%pla {|val <#lhs#> = <#rhs#>;|}]
     | StmtBind (lhs, rhs) ->
       let lhs = print_lexp lhs in
       let rhs = print_exp rhs in
@@ -328,6 +334,20 @@ module Print = struct
     | StmtBlock stmts ->
       let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
       [%pla {|{<#stmt#+>}|}]
+    | StmtSwitch (cond, cases, default) ->
+      let cond = print_exp cond in
+      let stmt =
+        Pla.map_sep_all
+          Pla.newline
+          (fun (case, then_) -> Pla.join [ print_exp case; Pla.string " -> "; print_stmt then_ ])
+          cases
+      in
+      let stmt =
+        match default with
+        | None -> stmt
+        | Some default -> Pla.join [ stmt; Pla.newline; Pla.string "_ -> "; print_stmt default ]
+      in
+      [%pla {|match (<#cond#>) {<#stmt#+>}|}]
 
 
   let print_arg (n, t, _) =
@@ -373,6 +393,10 @@ module Print = struct
       let members = Pla.map_sep_all Pla.newline print_member members in
       [%pla {|struct <#p#s> {<#members#+>}<#>|}]
     | TopAlias { path = p; alias_of } -> [%pla {|type <#p#s> = <#alias_of#s><#>|}]
+    | TopDecl (d, e) ->
+      let d = print_dexp d in
+      let e = print_exp e in
+      [%pla {|constant <#d#> = <#e#><#>|}]
 
 
   let print_prog t = Pla.map_sep_all Pla.newline print_top_stmt t
@@ -408,16 +432,18 @@ module C = struct
   let lindex ?(loc = Loc.default) e index t = { l = LIndex { e; index }; t; loc }
   let sbind_wild ?(loc = Loc.default) (e : exp) = { s = StmtBind ({ l = LWild; t = e.t; loc }, e); loc }
   let sbind ?(loc = Loc.default) (l : lexp) (e : exp) = { s = StmtBind (l, e); loc }
-  let sdecl ?(loc = Loc.default) ?(size = None) id t = { s = StmtDecl (did ~loc ~size id t); loc }
+  let sdecl ?(loc = Loc.default) ?(size = None) ?init id t = { s = StmtDecl (did ~loc ~size id t, init); loc }
+  let sdecl_init ?(loc = Loc.default) ?(size = None) id init t = { s = StmtDecl (did ~loc ~size id t, init); loc }
 
   let sdecl_bind ?(loc = Loc.default) ?(size = None) id e t =
-    [ { s = StmtDecl (did ~loc ~size id t); loc }; { s = StmtBind (lid id t, e); loc } ]
+    [ { s = StmtDecl (did ~loc ~size id t, None); loc }; { s = StmtBind (lid id t, e); loc } ]
 
 
   let sblock ?(loc = Loc.default) elems = { s = StmtBlock elems; loc }
   let sif ?(loc = Loc.default) cond then_ else_ = { s = StmtIf (cond, then_, else_); loc }
   let swhile ?(loc = Loc.default) cond body = { s = StmtWhile (cond, body); loc }
   let sreturn ?(loc = Loc.default) e = { s = StmtReturn e; loc }
+  let sswitch ?(loc = Loc.default) e cases default = { s = StmtSwitch (e, cases, default); loc }
 end
 
 module Compare = struct

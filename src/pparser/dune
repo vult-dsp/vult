@@ -7,5 +7,6 @@
  (libraries util pla)
  (flags
   (:standard -w -30))
+ (ocamlopt_flags -O3 -unbox-closures)
  (preprocess
   (pps pla.ppx)))

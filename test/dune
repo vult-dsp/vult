@@ -5,4 +5,5 @@
  (modules Test Tcommon Diff BaseTok RandProg)
  (libraries core util driver pparser oUnit str pla)
  (preprocess
-  (pps pla.ppx)))
+  (pps pla.ppx))
+ (ocamlopt_flags -O3 -unbox-closures))
