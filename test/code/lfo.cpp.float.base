@@ -10,6 +10,17 @@ void Lfo_process_type_init(Lfo_process_type& _ctx) {
    _ctx.rate = 0.0f;
 }
 
+float Lfo_soft(Lfo_soft_type& _ctx, float x1) {
+   float o = 0.25f * (x1 + _ctx.x2 + _ctx.x3 + _ctx.x4);
+   float _t_temp_0 = x1;
+   float _t_temp_1 = _ctx.x2;
+   float _t_temp_2 = _ctx.x3;
+   _ctx.x2 = _t_temp_0;
+   _ctx.x3 = _t_temp_1;
+   _ctx.x4 = _t_temp_2;
+   return o;
+}
+
 float Lfo_process(Lfo_process_type& _ctx, float cv, float shape, float reset) {
    if (Util_change(_ctx.inst_1b0d6, cv)) {
       _ctx.rate = Util_cvToRate(-0.3f + cv);

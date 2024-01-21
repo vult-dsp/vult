@@ -113,14 +113,7 @@ static_inline void Delay_phd_osc_type_init(Delay_phd_osc_type& _ctx) {
    _ctx.pre_phase1 = 0.0f;
 }
 
-static_inline void Delay_delay_type_init(Delay_delay_type& _ctx) {
-   int32_t i_0 = 0;
-   while (i_0 < 30000) {
-      _ctx.buffer[static_cast<uint32_t>(i_0)] = 0.0f;
-      i_0 = 1 + i_0;
-   }
-   _ctx.write_pos = 0;
-}
+void Delay_delay_type_init(Delay_delay_type& _ctx);
 
 void Delay_mono_noteOn_type_init(Delay_mono_noteOn_type& _ctx);
 
@@ -181,15 +174,7 @@ float Delay_phasor(Delay_phasor_type& _ctx, float pitch, bool reset);
 
 float Delay_lfo(Delay_lfo_type& _ctx, float f, bool gate);
 
-static_inline float Delay_phd_osc(Delay_phd_osc_type& _ctx, float pitch, float detune) {
-   float phase1 = Delay_phasor(_ctx.inst_171c4, pitch, false);
-   float comp = 1.0f + (- phase1);
-   bool reset = (- phase1) + _ctx.pre_phase1 > 0.5f;
-   _ctx.pre_phase1 = phase1;
-   float phase2 = Delay_phasor(_ctx.inst_371c4, pitch + 32.0f * Delay_smooth(_ctx.inst_277c4, detune), reset);
-   float sine = sinf(6.283185f * phase2);
-   return comp * sine;
-}
+float Delay_phd_osc(Delay_phd_osc_type& _ctx, float pitch, float detune);
 
 float Delay_delay(Delay_delay_type& _ctx, float x, float time, float feedback);
 
@@ -201,23 +186,7 @@ static_inline bool Delay_mono_isGateOn(Delay_mono_noteOn_type& _ctx) {
    return _ctx.count > 0;
 }
 
-static_inline float Delay_process(Delay_process_type& _ctx, float input) {
-   bool gate = Delay_mono_isGateOn(_ctx.notes);
-   float lfo_val = Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate) * _ctx.lfo_amt;
-   float o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, lfo_val + _ctx.detune);
-   float amp = 0.0f;
-   float _if_temp_0 = 0.0f;
-   if (gate) {
-      _if_temp_0 = 1.0f;
-   }
-   else {
-      _if_temp_0 = 0.0f;
-   }
-   amp = Delay_smooth(_ctx.inst_37701, _if_temp_0);
-   float osc_out = amp * o1;
-   float delay_out = Delay_delay(_ctx.inst_68e01, osc_out, Delay_smooth(_ctx.inst_47701, _ctx.time), Delay_smooth(_ctx.inst_57701, _ctx.feedback));
-   return 0.5f * (delay_out + osc_out) * _ctx.volume;
-}
+float Delay_process(Delay_process_type& _ctx, float input);
 
 static_inline void Delay_noteOn(Delay_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
    _ctx.pitch = int_to_float(Delay_mono_noteOn(_ctx.notes, note));

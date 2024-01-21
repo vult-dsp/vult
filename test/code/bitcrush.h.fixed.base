@@ -22,18 +22,7 @@ static_inline fix16_t Bitcrush_factor(fix16_t cv) {
    return Bitcrush_factor_c0[static_cast<uint32_t>(index)] + fix_mul(cv, (Bitcrush_factor_c1[static_cast<uint32_t>(index)] + fix_mul(Bitcrush_factor_c2[static_cast<uint32_t>(index)], cv)));
 }
 
-static_inline fix16_t Bitcrush_process(fix16_t i, fix16_t cv) {
-   fix16_t out = i;
-   if (cv == 0x0 /* 0.000000 */) {
-      out = i;
-   }
-   else {
-      fix16_t b = Bitcrush_factor(cv);
-      int32_t x = fix_to_int(fix_mul(b, i));
-      out = fix_div(int_to_fix(x), b);
-   }
-   return out;
-}
+fix16_t Bitcrush_process(fix16_t i, fix16_t cv);
 
 static_inline void Bitcrush_noteOn(int32_t note, int32_t velocity, int32_t channel) {
 }

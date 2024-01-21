@@ -2,6 +2,26 @@
 
 #include "short_delay.h"
 
+void Short_delay_do_type_init(Short_delay_do_type& _ctx) {
+   int32_t i_0 = 0;
+   while (i_0 < 22050) {
+      _ctx.buffer[static_cast<uint32_t>(i_0)] = 0x0 /* 0.000000 */;
+      i_0 = 1 + i_0;
+   }
+   _ctx.write_pos = 0;
+}
+
+fix16_t Short_delay_soft(Short_delay_soft_type& _ctx, fix16_t x1) {
+   fix16_t o = fix_mul(0x4000 /* 0.250000 */, (x1 + _ctx.x2 + _ctx.x3 + _ctx.x4));
+   fix16_t _t_temp_0 = x1;
+   fix16_t _t_temp_1 = _ctx.x2;
+   fix16_t _t_temp_2 = _ctx.x3;
+   _ctx.x2 = _t_temp_0;
+   _ctx.x3 = _t_temp_1;
+   _ctx.x4 = _t_temp_2;
+   return o;
+}
+
 fix16_t Short_delay_do(Short_delay_do_type& _ctx, fix16_t x, fix16_t time, fix16_t feedback) {
    time = fix_clip(time, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
    feedback = fix_clip(feedback, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);

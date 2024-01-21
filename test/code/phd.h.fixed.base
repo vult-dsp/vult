@@ -308,15 +308,7 @@ static_inline fix16_t Tables_nsine(fix16_t x) {
    return Tables_nsine_c0[static_cast<uint32_t>(index)] + fix_mul(x, (Tables_nsine_c1[static_cast<uint32_t>(index)] + fix_mul(Tables_nsine_c2[static_cast<uint32_t>(index)], x)));
 }
 
-static_inline fix16_t Phd_process(Phd_process_type& _ctx, fix16_t cv, fix16_t detune) {
-   fix16_t phase1 = Phase_process(_ctx.inst_18aec, cv, 0x0 /* 0.000000 */);
-   fix16_t comp = 0x10000 /* 1.000000 */ + (- phase1);
-   fix16_t reset = (- phase1) + _ctx.pre_phase1;
-   _ctx.pre_phase1 = phase1;
-   fix16_t phase2 = Phase_process(_ctx.inst_38aec, cv + Util_smooth(_ctx.inst_295ec, fix_mul(0x8000 /* 0.500000 */, detune)), reset);
-   fix16_t sine = Tables_nsine(phase2);
-   return fix_mul(comp, sine);
-}
+fix16_t Phd_process(Phd_process_type& _ctx, fix16_t cv, fix16_t detune);
 
 static_inline void Phd_noteOn(Phd_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
 }

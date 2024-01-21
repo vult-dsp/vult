@@ -2,3 +2,16 @@
 
 #include "bitcrush.h"
 
+float Bitcrush_process(float i, float cv) {
+   float out = i;
+   if (cv == 0.0f) {
+      out = i;
+   }
+   else {
+      float b = Bitcrush_factor(cv);
+      int32_t x = float_to_int(b * i);
+      out = int_to_float(x) / b;
+   }
+   return out;
+}
+

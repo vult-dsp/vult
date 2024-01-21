@@ -2,6 +2,15 @@
 
 #include "rescomb.h"
 
+void Rescomb_delay_type_init(Rescomb_delay_type& _ctx) {
+   int32_t i_0 = 0;
+   while (i_0 < 675) {
+      _ctx.buffer[static_cast<uint32_t>(i_0)] = 0x0 /* 0.000000 */;
+      i_0 = 1 + i_0;
+   }
+   _ctx.write_pos = 0;
+}
+
 void Rescomb_do_type_init(Rescomb_do_type& _ctx) {
    Util_change_type_init(_ctx.inst_1b000);
    Util_dcblock_type_init(_ctx.inst_26400);
@@ -28,5 +37,15 @@ fix16_t Rescomb_delay(Rescomb_delay_type& _ctx, fix16_t x, fix16_t cv) {
    fix16_t x2 = _ctx.buffer[static_cast<uint32_t>(t2)];
    fix16_t ret = x1 + fix_mul(decimal, (x2 + (- x1)));
    return ret;
+}
+
+fix16_t Rescomb_do(Rescomb_do_type& _ctx, fix16_t in, fix16_t cv, fix16_t tone, fix16_t res) {
+   if (Util_change(_ctx.inst_1b000, tone)) {
+      _ctx.stone = Rescomb_toneCurve(tone);
+   }
+   fix16_t feedback = Util_dcblock(_ctx.inst_26400, fix_mul(res, _ctx.output));
+   fix16_t saturated_input = Saturate_soft_process(feedback + in);
+   _ctx.output = in + fix_mul(Rescomb_delay(_ctx.inst_3a900, saturated_input, cv), _ctx.stone);
+   return Saturate_soft_process(_ctx.output);
 }
 

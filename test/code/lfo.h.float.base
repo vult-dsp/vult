@@ -251,16 +251,7 @@ static_inline float Util_cvTokHz(float cv) {
    return Util_cvTokHz_c0[static_cast<uint32_t>(index)] + cv * (Util_cvTokHz_c1[static_cast<uint32_t>(index)] + Util_cvTokHz_c2[static_cast<uint32_t>(index)] * cv);
 }
 
-static_inline float Lfo_soft(Lfo_soft_type& _ctx, float x1) {
-   float o = 0.25f * (x1 + _ctx.x2 + _ctx.x3 + _ctx.x4);
-   float _t_temp_0 = x1;
-   float _t_temp_1 = _ctx.x2;
-   float _t_temp_2 = _ctx.x3;
-   _ctx.x2 = _t_temp_0;
-   _ctx.x3 = _t_temp_1;
-   _ctx.x4 = _t_temp_2;
-   return o;
-}
+float Lfo_soft(Lfo_soft_type& _ctx, float x1);
 
 float Lfo_process(Lfo_process_type& _ctx, float cv, float shape, float reset);
 

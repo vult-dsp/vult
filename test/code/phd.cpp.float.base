@@ -29,3 +29,13 @@ float Phase_process(Phase_process_type& _ctx, float cv, float reset) {
    return 0.000976f * _ctx.phase;
 }
 
+float Phd_process(Phd_process_type& _ctx, float cv, float detune) {
+   float phase1 = Phase_process(_ctx.inst_18aec, cv, 0.0f);
+   float comp = 1.0f + (- phase1);
+   float reset = (- phase1) + _ctx.pre_phase1;
+   _ctx.pre_phase1 = phase1;
+   float phase2 = Phase_process(_ctx.inst_38aec, cv + Util_smooth(_ctx.inst_295ec, 0.5f * detune), reset);
+   float sine = Tables_nsine(phase2);
+   return comp * sine;
+}
+

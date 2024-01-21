@@ -230,35 +230,13 @@ static_inline float Synth2_pitchToRate(float d) {
    return 0.000185f * expf(0.057762f * d);
 }
 
-static_inline float Synth2_pulse_train(float m, float phase) {
-   float pi_phase = 3.141592f * phase;
-   float denominator1 = sinf(pi_phase);
-   float tmp1 = 0.0f;
-   if (Synth2_near_zero(denominator1)) {
-      tmp1 = 1.0f;
-   }
-   else {
-      tmp1 = sinf(m * pi_phase);
-      tmp1 = tmp1 / (denominator1 * m);
-   }
-   return tmp1;
-}
+float Synth2_pulse_train(float m, float phase);
 
 float Synth2_osc(Synth2_osc_type& _ctx, float pitch, float pw, float wave);
 
 float Synth2_svf_step(Synth2_svf_step_type& _ctx, float input, float g, float q, int32_t sel);
 
-static_inline float Synth2_svf(Synth2_svf_type& _ctx, float input, float fc, float q, int32_t sel) {
-   fc = float_clip(fc, 0.0f, 1.0f);
-   q = float_clip(q, 0.0f, 1.0f);
-   float fix_q = 2.0f + 2.0f * (- q);
-   if (Synth2_change(_ctx.inst_177a7, fc)) {
-      _ctx.g = 0.5f * fc;
-   }
-   float x1 = Synth2_svf_step(_ctx.step, input, _ctx.g, fix_q, sel);
-   float x2 = Synth2_svf_step(_ctx.step, input, _ctx.g, fix_q, sel);
-   return 0.5f * (x1 + x2);
-}
+float Synth2_svf(Synth2_svf_type& _ctx, float input, float fc, float q, int32_t sel);
 
 float Synth2_lfo(Synth2_lfo_type& _ctx, float f, bool gate);
 
@@ -270,22 +248,7 @@ static_inline bool Synth2_mono_isGateOn(Synth2_mono_noteOn_type& _ctx) {
    return _ctx.count > 0;
 }
 
-static_inline float Synth2_process(Synth2_process_type& _ctx, float i) {
-   bool gate = Synth2_mono_isGateOn(_ctx.monoin);
-   float lfo1 = Synth2_lfo(_ctx.inst_15fb7, _ctx.lfo_rate, gate) * _ctx.lfo_amt;
-   float o1 = Synth2_osc(_ctx.inst_2e5b7, _ctx.pitch, lfo1 + _ctx.pw, _ctx.wave);
-   float amp_env = 0.0f;
-   float _if_temp_0 = 0.0f;
-   if (gate) {
-      _if_temp_0 = 1.0f;
-   }
-   else {
-      _if_temp_0 = 0.0f;
-   }
-   amp_env = Synth2_smooth(_ctx.inst_3dfb7, _if_temp_0);
-   float output = amp_env * Synth2_svf(_ctx.inst_4a7b7, o1, _ctx.cut, _ctx.res, 0);
-   return output * _ctx.volume;
-}
+float Synth2_process(Synth2_process_type& _ctx, float i);
 
 static_inline void Synth2_noteOn(Synth2_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
    _ctx.pitch = int_to_float(Synth2_mono_noteOn(_ctx.monoin, note));

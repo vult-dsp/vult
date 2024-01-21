@@ -197,6 +197,17 @@ fix16_t Svf_process(Svf_process_type& _ctx, fix16_t x, fix16_t cv, fix16_t q, in
    return Saturate_soft_process(output);
 }
 
+fix16_t Lfo_soft(Lfo_soft_type& _ctx, fix16_t x1) {
+   fix16_t o = fix_mul(0x4000 /* 0.250000 */, (x1 + _ctx.x2 + _ctx.x3 + _ctx.x4));
+   fix16_t _t_temp_0 = x1;
+   fix16_t _t_temp_1 = _ctx.x2;
+   fix16_t _t_temp_2 = _ctx.x3;
+   _ctx.x2 = _t_temp_0;
+   _ctx.x3 = _t_temp_1;
+   _ctx.x4 = _t_temp_2;
+   return o;
+}
+
 fix16_t Lfo_process(Lfo_process_type& _ctx, fix16_t cv, fix16_t shape, fix16_t reset) {
    if (Util_change(_ctx.inst_1b0d6, cv)) {
       _ctx.rate = Util_cvToRate(-0x4ccc /* -0.300000 */ + cv);
@@ -349,6 +360,21 @@ void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value,
    if (control == 4) {
       _ctx.knob4 = fix_mul(0x204 /* 0.007874 */, int_to_fix(value));
    }
+}
+
+fix16_t Voice_4_process(Voice_4_process_type& _ctx, fix16_t cv, fix16_t vel, fix16_t gate) {
+   fix16_t lfo = Lfo_process(_ctx.inst_1d695, _ctx.lfo_rate, _ctx.lfo_shape, fix_mul(gate, _ctx.lfo_reset));
+   fix16_t mod_pw = fix_mul(lfo, _ctx.lfo_pw);
+   fix16_t mod_cv = fix_mul(lfo, _ctx.lfo_cv);
+   fix16_t mod_flt = fix_mul(lfo, _ctx.lfo_flt);
+   fix16_t o1 = Blit_process(_ctx.inst_28b95, 0x6 /* 0.000100 */ + cv + mod_cv, mod_pw + _ctx.pw1, 0x0 /* 0.000000 */);
+   fix16_t o2 = Blit_process(_ctx.inst_38b95, 0xd /* 0.000200 */ + cv + mod_cv, mod_pw + _ctx.pw2, 0x10000 /* 1.000000 */);
+   fix16_t o3 = Blit_process(_ctx.inst_48b95, cv + mod_cv + _ctx.pw3, mod_pw + _ctx.pw1, 0x0 /* 0.000000 */);
+   fix16_t sub = Saturate_process(fix_mul((0x20000 /* 2.000000 */ + fix_mul(0x50000 /* 5.000000 */, _ctx.pw4)), Tricore_process(_ctx.inst_53c95, (cv + mod_cv), 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */)));
+   fix16_t o = fix_mul(o1, _ctx.level1) + fix_mul(o2, _ctx.level2) + fix_mul(o3, _ctx.level3) + fix_mul(sub, _ctx.level4);
+   fix16_t f = Svf_process(_ctx.inst_6a295, o, mod_flt + _ctx.flt_cut, _ctx.flt_res, _ctx.flt_shape);
+   fix16_t env = Adsr_do(_ctx.inst_7a095, gate, _ctx.attack, _ctx.decay, _ctx.sustain, _ctx.release);
+   return fix_mul(env, f);
 }
 
 void Voice_4_controlChange(Voice_4_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {

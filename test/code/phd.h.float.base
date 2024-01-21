@@ -308,15 +308,7 @@ static_inline float Tables_nsine(float x) {
    return Tables_nsine_c0[static_cast<uint32_t>(index)] + x * (Tables_nsine_c1[static_cast<uint32_t>(index)] + Tables_nsine_c2[static_cast<uint32_t>(index)] * x);
 }
 
-static_inline float Phd_process(Phd_process_type& _ctx, float cv, float detune) {
-   float phase1 = Phase_process(_ctx.inst_18aec, cv, 0.0f);
-   float comp = 1.0f + (- phase1);
-   float reset = (- phase1) + _ctx.pre_phase1;
-   _ctx.pre_phase1 = phase1;
-   float phase2 = Phase_process(_ctx.inst_38aec, cv + Util_smooth(_ctx.inst_295ec, 0.5f * detune), reset);
-   float sine = Tables_nsine(phase2);
-   return comp * sine;
-}
+float Phd_process(Phd_process_type& _ctx, float cv, float detune);
 
 static_inline void Phd_noteOn(Phd_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
 }

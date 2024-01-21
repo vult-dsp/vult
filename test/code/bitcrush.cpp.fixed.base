@@ -2,3 +2,16 @@
 
 #include "bitcrush.h"
 
+fix16_t Bitcrush_process(fix16_t i, fix16_t cv) {
+   fix16_t out = i;
+   if (cv == 0x0 /* 0.000000 */) {
+      out = i;
+   }
+   else {
+      fix16_t b = Bitcrush_factor(cv);
+      int32_t x = fix_to_int(fix_mul(b, i));
+      out = fix_div(int_to_fix(x), b);
+   }
+   return out;
+}
+

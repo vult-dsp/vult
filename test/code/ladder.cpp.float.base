@@ -2,6 +2,53 @@
 
 #include "ladder.h"
 
+float Ladder_heun(Ladder_heun_type& _ctx, float input, float fh, float res) {
+   float wt0 = Util_cubic_clipper(input + -4.0f * res * _ctx.p3);
+   float wt1 = Util_cubic_clipper(_ctx.p0);
+   float dpt0 = fh * (wt0 + (- wt1));
+   float wt3 = Util_cubic_clipper(_ctx.p1);
+   float dpt1 = fh * (wt1 + (- wt3));
+   float wt5 = Util_cubic_clipper(_ctx.p2);
+   float dpt2 = fh * (wt3 + (- wt5));
+   float wt7 = Util_cubic_clipper(_ctx.p3);
+   float dpt3 = fh * (wt5 + (- wt7));
+   float pt0 = dpt0 + _ctx.p0;
+   float pt1 = dpt1 + _ctx.p1;
+   float pt2 = dpt2 + _ctx.p2;
+   float pt3 = dpt3 + _ctx.p3;
+   float w0 = Util_cubic_clipper(input + -4.0f * pt3 * res);
+   float w1 = Util_cubic_clipper(pt0);
+   float dp0 = fh * (w0 + (- w1));
+   float w3 = Util_cubic_clipper(pt1);
+   float dp1 = fh * (w1 + (- w3));
+   float w5 = Util_cubic_clipper(pt2);
+   float dp2 = fh * (w3 + (- w5));
+   float w7 = Util_cubic_clipper(pt3);
+   float dp3 = fh * (w5 + (- w7));
+   _ctx.p0 = 0.5f * (dp0 + dpt0) + _ctx.p0;
+   _ctx.p1 = 0.5f * (dp1 + dpt1) + _ctx.p1;
+   _ctx.p2 = 0.5f * (dp2 + dpt2) + _ctx.p2;
+   _ctx.p3 = 0.5f * (dp3 + dpt3) + _ctx.p3;
+   return _ctx.p3;
+}
+
+float Ladder_euler(Ladder_euler_type& _ctx, float input, float fh, float res) {
+   float w0 = Util_cubic_clipper(input + -4.0f * res * _ctx.p3);
+   float w1 = Util_cubic_clipper(_ctx.p0);
+   float dpt0 = fh * (w0 + (- w1));
+   float w3 = Util_cubic_clipper(_ctx.p1);
+   float dpt1 = fh * (w1 + (- w3));
+   float w5 = Util_cubic_clipper(_ctx.p2);
+   float dpt2 = fh * (w3 + (- w5));
+   float w7 = Util_cubic_clipper(_ctx.p3);
+   float dpt3 = fh * (w5 + (- w7));
+   _ctx.p0 = dpt0 + _ctx.p0;
+   _ctx.p1 = dpt1 + _ctx.p1;
+   _ctx.p2 = dpt2 + _ctx.p2;
+   _ctx.p3 = dpt3 + _ctx.p3;
+   return _ctx.p3;
+}
+
 float Ladder_process_euler(Ladder_process_euler_type& _ctx, float input, float cut, float res) {
    if (Util_change(_ctx.inst_1b099, cut)) {
       _ctx.fh = Ladder_tune(cut);

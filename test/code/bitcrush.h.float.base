@@ -22,18 +22,7 @@ static_inline float Bitcrush_factor(float cv) {
    return Bitcrush_factor_c0[static_cast<uint32_t>(index)] + cv * (Bitcrush_factor_c1[static_cast<uint32_t>(index)] + Bitcrush_factor_c2[static_cast<uint32_t>(index)] * cv);
 }
 
-static_inline float Bitcrush_process(float i, float cv) {
-   float out = i;
-   if (cv == 0.0f) {
-      out = i;
-   }
-   else {
-      float b = Bitcrush_factor(cv);
-      int32_t x = float_to_int(b * i);
-      out = int_to_float(x) / b;
-   }
-   return out;
-}
+float Bitcrush_process(float i, float cv);
 
 static_inline void Bitcrush_noteOn(int32_t note, int32_t velocity, int32_t channel) {
 }

@@ -197,6 +197,17 @@ float Svf_process(Svf_process_type& _ctx, float x, float cv, float q, int32_t se
    return Saturate_soft_process(output);
 }
 
+float Lfo_soft(Lfo_soft_type& _ctx, float x1) {
+   float o = 0.25f * (x1 + _ctx.x2 + _ctx.x3 + _ctx.x4);
+   float _t_temp_0 = x1;
+   float _t_temp_1 = _ctx.x2;
+   float _t_temp_2 = _ctx.x3;
+   _ctx.x2 = _t_temp_0;
+   _ctx.x3 = _t_temp_1;
+   _ctx.x4 = _t_temp_2;
+   return o;
+}
+
 float Lfo_process(Lfo_process_type& _ctx, float cv, float shape, float reset) {
    if (Util_change(_ctx.inst_1b0d6, cv)) {
       _ctx.rate = Util_cvToRate(-0.3f + cv);
@@ -349,6 +360,21 @@ void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value,
    if (control == 4) {
       _ctx.knob4 = 0.007874f * int_to_float(value);
    }
+}
+
+float Voice_4_process(Voice_4_process_type& _ctx, float cv, float vel, float gate) {
+   float lfo = Lfo_process(_ctx.inst_1d695, _ctx.lfo_rate, _ctx.lfo_shape, gate * _ctx.lfo_reset);
+   float mod_pw = lfo * _ctx.lfo_pw;
+   float mod_cv = lfo * _ctx.lfo_cv;
+   float mod_flt = lfo * _ctx.lfo_flt;
+   float o1 = Blit_process(_ctx.inst_28b95, 0.0001f + cv + mod_cv, mod_pw + _ctx.pw1, 0.0f);
+   float o2 = Blit_process(_ctx.inst_38b95, 0.0002f + cv + mod_cv, mod_pw + _ctx.pw2, 1.0f);
+   float o3 = Blit_process(_ctx.inst_48b95, cv + mod_cv + _ctx.pw3, mod_pw + _ctx.pw1, 0.0f);
+   float sub = Saturate_process((2.0f + 5.0f * _ctx.pw4) * Tricore_process(_ctx.inst_53c95, (cv + mod_cv), 0.0f, 1.0f));
+   float o = o1 * _ctx.level1 + o2 * _ctx.level2 + o3 * _ctx.level3 + sub * _ctx.level4;
+   float f = Svf_process(_ctx.inst_6a295, o, mod_flt + _ctx.flt_cut, _ctx.flt_res, _ctx.flt_shape);
+   float env = Adsr_do(_ctx.inst_7a095, gate, _ctx.attack, _ctx.decay, _ctx.sustain, _ctx.release);
+   return env * f;
 }
 
 void Voice_4_controlChange(Voice_4_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {

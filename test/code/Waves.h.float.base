@@ -33,14 +33,7 @@ static_inline float Waves_sineTable2(float position) {
    return Waves_sineTable2_c0[static_cast<uint32_t>(index)] + position * (Waves_sineTable2_c1[static_cast<uint32_t>(index)] + Waves_sineTable2_c2[static_cast<uint32_t>(index)] * position);
 }
 
-static_inline void Waves_test1() {
-   int32_t n = Waves_sineTable1_samples();
-   int32_t i__1 = 0;
-   while (i__1 < n) {
-      Waves_sineTable1(0, i__1);
-      i__1 = 1 + i__1;
-   }
-}
+void Waves_test1();
 
 static_inline void Waves_test2() {
    float result = Waves_sineTable2(0.5f);

@@ -87,15 +87,7 @@ static_inline float Phasedist_pitchToRate(float d) {
 
 float Phasedist_phasor(Phasedist_phasor_type& _ctx, float pitch, bool reset);
 
-static_inline float Phasedist_process(Phasedist_process_type& _ctx, float input) {
-   float phase1 = Phasedist_phasor(_ctx.inst_117e9, _ctx.pitch, false);
-   float comp = 1.0f + (- phase1);
-   bool reset = (- phase1) + _ctx.pre_phase1 > 0.5f;
-   _ctx.pre_phase1 = phase1;
-   float phase2 = Phasedist_phasor(_ctx.inst_317e9, 32.0f * Phasedist_smooth(_ctx.inst_275e9, _ctx.detune) + _ctx.pitch, reset);
-   float sine = sinf(6.283185f * phase2);
-   return comp * sine * Phasedist_smooth(_ctx.inst_475e9, _ctx.volume);
-}
+float Phasedist_process(Phasedist_process_type& _ctx, float input);
 
 static_inline void Phasedist_noteOn(Phasedist_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
    _ctx.pitch = int_to_float(note);

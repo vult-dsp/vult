@@ -2,3 +2,13 @@
 
 #include "swept.h"
 
+float Swept_process(Swept_process_type& _ctx, float gate, float start, float end, float rate) {
+   float a_rate = 1.0f / (0.01f + 100.0f * rate);
+   bool bgate = gate > 0.5f;
+   _ctx.out = 0.004f * rate * ((- _ctx.out) + 1024.0f * end) + _ctx.out;
+   if (Util_edge(_ctx.inst_10402, bgate)) {
+      _ctx.out = 1024.0f * start;
+   }
+   return 0.000976f * _ctx.out;
+}
+

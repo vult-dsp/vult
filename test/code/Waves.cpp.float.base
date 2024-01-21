@@ -2,3 +2,12 @@
 
 #include "Waves.h"
 
+void Waves_test1() {
+   int32_t n = Waves_sineTable1_samples();
+   int32_t i__1 = 0;
+   while (i__1 < n) {
+      Waves_sineTable1(0, i__1);
+      i__1 = 1 + i__1;
+   }
+}
+

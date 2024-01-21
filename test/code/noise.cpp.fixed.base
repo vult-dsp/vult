@@ -2,6 +2,16 @@
 
 #include "noise.h"
 
+fix16_t Noise_pinker(Noise_pinker_type& _ctx, fix16_t x) {
+   fix16_t b0 = 0x718 /* 0.027713 */;
+   fix16_t b1 = 0x718 /* 0.027713 */;
+   fix16_t a1 = -0xf1cf /* -0.944574 */;
+   fix16_t w0 = x + (- fix_mul(a1, _ctx.w1));
+   fix16_t y0 = fix_mul(b0, w0) + fix_mul(b1, _ctx.w1);
+   _ctx.w1 = w0;
+   return y0;
+}
+
 fix16_t Noise_process(Noise_process_type& _ctx, fix16_t color) {
    _ctx.x1 = (7919 + 17389 * _ctx.x1) % 32768;
    fix16_t y1 = fix_mul(0x2 /* 0.000031 */, int_to_fix(_ctx.x1));

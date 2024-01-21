@@ -17,6 +17,15 @@ void SaveState_main_type_init(SaveState_main_type& _ctx) {
    _ctx.x = 0.0f;
 }
 
+int32_t SaveState_point_serialize_data(CustomBuffer& buffer, int32_t index, SaveState_point& _ctx) {
+   int32_t start = index;
+   index = push_block_header(buffer, index);
+   index = push_float(buffer, index, _ctx.x);
+   index = push_float(buffer, index, _ctx.y);
+   update_size(buffer, start, index + (- start));
+   return index;
+}
+
 int32_t SaveState_main_type_serialize_data(CustomBuffer& buffer, int32_t index, SaveState_main_type& _ctx) {
    int32_t start = index;
    index = push_block_header(buffer, index);
@@ -36,6 +45,17 @@ int32_t SaveState_main_type_serialize_data(CustomBuffer& buffer, int32_t index, 
    index = push_float(buffer, index, _ctx.x);
    update_size(buffer, start, index + (- start));
    return index;
+}
+
+int32_t SaveState_main_type_serialize_type_descr(CustomBuffer& buffer, int32_t index, std::array<bool, 4>& marks) {
+   if (marks[static_cast<uint32_t>(1)]) {
+      return index;
+   }
+   marks[static_cast<uint32_t>(1)] = true;
+   index = SaveState_counter_type_serialize_type_descr(buffer, index, marks);
+   index = SaveState_point_serialize_type_descr(buffer, index, marks);
+   std::array<std::string, 7> _array_0 = { "c1", "inst_19fb0", "p1", "p2", "point_array", "str", "x" };
+   return serialize_type_descr(buffer, index, "SaveState_main_type", _array_0);
 }
 
 void SaveState_point_deserialize_data(CustomBuffer& buffer, CustomTypeDescr& type_descr, int32_t index, SaveState_point& _ctx) {
@@ -89,5 +109,13 @@ void SaveState_main_type_deserialize_data(CustomBuffer& buffer, CustomTypeDescr&
    if (field_index >= 0) {
       _ctx.x = deserialize_float(buffer, field_index);
    }
+}
+
+void SaveState_main(SaveState_main_type& _ctx) {
+   _ctx.x = 0.0f;
+   _ctx.str = "";
+   int32_t count1 = SaveState_counter(_ctx.c1);
+   int32_t count2 = SaveState_counter(_ctx.inst_19fb0);
+   SaveState_nosave(_ctx.inst_21bb0);
 }
 

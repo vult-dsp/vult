@@ -40,15 +40,7 @@ static_inline float InstanceArray_counter(InstanceArray_counter_type& _ctx) {
    return _ctx.total;
 }
 
-static_inline float InstanceArray_test1(InstanceArray_test1_type& _ctx) {
-   float sum = 0.0f;
-   int32_t i__1 = 0;
-   while (i__1 < 4) {
-      sum = sum + InstanceArray_counter(_ctx.instances[static_cast<uint32_t>(i__1)]);
-      i__1 = 1 + i__1;
-   }
-   return sum;
-}
+float InstanceArray_test1(InstanceArray_test1_type& _ctx);
 
 static_inline void InstanceArray_test2(InstanceArray_test2_type& _ctx) {
    InstanceArray_counter(_ctx.case1);

@@ -2,6 +2,53 @@
 
 #include "ladder.h"
 
+fix16_t Ladder_heun(Ladder_heun_type& _ctx, fix16_t input, fix16_t fh, fix16_t res) {
+   fix16_t wt0 = Util_cubic_clipper(input + fix_mul(-0x40000 /* -4.000000 */, fix_mul(res, _ctx.p3)));
+   fix16_t wt1 = Util_cubic_clipper(_ctx.p0);
+   fix16_t dpt0 = fix_mul(fh, (wt0 + (- wt1)));
+   fix16_t wt3 = Util_cubic_clipper(_ctx.p1);
+   fix16_t dpt1 = fix_mul(fh, (wt1 + (- wt3)));
+   fix16_t wt5 = Util_cubic_clipper(_ctx.p2);
+   fix16_t dpt2 = fix_mul(fh, (wt3 + (- wt5)));
+   fix16_t wt7 = Util_cubic_clipper(_ctx.p3);
+   fix16_t dpt3 = fix_mul(fh, (wt5 + (- wt7)));
+   fix16_t pt0 = dpt0 + _ctx.p0;
+   fix16_t pt1 = dpt1 + _ctx.p1;
+   fix16_t pt2 = dpt2 + _ctx.p2;
+   fix16_t pt3 = dpt3 + _ctx.p3;
+   fix16_t w0 = Util_cubic_clipper(input + fix_mul(-0x40000 /* -4.000000 */, fix_mul(pt3, res)));
+   fix16_t w1 = Util_cubic_clipper(pt0);
+   fix16_t dp0 = fix_mul(fh, (w0 + (- w1)));
+   fix16_t w3 = Util_cubic_clipper(pt1);
+   fix16_t dp1 = fix_mul(fh, (w1 + (- w3)));
+   fix16_t w5 = Util_cubic_clipper(pt2);
+   fix16_t dp2 = fix_mul(fh, (w3 + (- w5)));
+   fix16_t w7 = Util_cubic_clipper(pt3);
+   fix16_t dp3 = fix_mul(fh, (w5 + (- w7)));
+   _ctx.p0 = fix_mul(0x8000 /* 0.500000 */, (dp0 + dpt0)) + _ctx.p0;
+   _ctx.p1 = fix_mul(0x8000 /* 0.500000 */, (dp1 + dpt1)) + _ctx.p1;
+   _ctx.p2 = fix_mul(0x8000 /* 0.500000 */, (dp2 + dpt2)) + _ctx.p2;
+   _ctx.p3 = fix_mul(0x8000 /* 0.500000 */, (dp3 + dpt3)) + _ctx.p3;
+   return _ctx.p3;
+}
+
+fix16_t Ladder_euler(Ladder_euler_type& _ctx, fix16_t input, fix16_t fh, fix16_t res) {
+   fix16_t w0 = Util_cubic_clipper(input + fix_mul(-0x40000 /* -4.000000 */, fix_mul(res, _ctx.p3)));
+   fix16_t w1 = Util_cubic_clipper(_ctx.p0);
+   fix16_t dpt0 = fix_mul(fh, (w0 + (- w1)));
+   fix16_t w3 = Util_cubic_clipper(_ctx.p1);
+   fix16_t dpt1 = fix_mul(fh, (w1 + (- w3)));
+   fix16_t w5 = Util_cubic_clipper(_ctx.p2);
+   fix16_t dpt2 = fix_mul(fh, (w3 + (- w5)));
+   fix16_t w7 = Util_cubic_clipper(_ctx.p3);
+   fix16_t dpt3 = fix_mul(fh, (w5 + (- w7)));
+   _ctx.p0 = dpt0 + _ctx.p0;
+   _ctx.p1 = dpt1 + _ctx.p1;
+   _ctx.p2 = dpt2 + _ctx.p2;
+   _ctx.p3 = dpt3 + _ctx.p3;
+   return _ctx.p3;
+}
+
 fix16_t Ladder_process_euler(Ladder_process_euler_type& _ctx, fix16_t input, fix16_t cut, fix16_t res) {
    if (Util_change(_ctx.inst_1b099, cut)) {
       _ctx.fh = Ladder_tune(cut);

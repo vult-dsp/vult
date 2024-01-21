@@ -10,6 +10,17 @@ void Lfo_process_type_init(Lfo_process_type& _ctx) {
    _ctx.rate = 0x0 /* 0.000000 */;
 }
 
+fix16_t Lfo_soft(Lfo_soft_type& _ctx, fix16_t x1) {
+   fix16_t o = fix_mul(0x4000 /* 0.250000 */, (x1 + _ctx.x2 + _ctx.x3 + _ctx.x4));
+   fix16_t _t_temp_0 = x1;
+   fix16_t _t_temp_1 = _ctx.x2;
+   fix16_t _t_temp_2 = _ctx.x3;
+   _ctx.x2 = _t_temp_0;
+   _ctx.x3 = _t_temp_1;
+   _ctx.x4 = _t_temp_2;
+   return o;
+}
+
 fix16_t Lfo_process(Lfo_process_type& _ctx, fix16_t cv, fix16_t shape, fix16_t reset) {
    if (Util_change(_ctx.inst_1b0d6, cv)) {
       _ctx.rate = Util_cvToRate(-0x4ccc /* -0.300000 */ + cv);

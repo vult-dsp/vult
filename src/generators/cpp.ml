@@ -38,7 +38,8 @@ let isSmall stmts =
     else (
       match stmts with
       | [] -> size
-      | { s = StmtDecl _; _ } :: t -> loop size t
+      | { s = StmtDecl (_, None); _ } :: t -> loop size t
+      | { s = StmtDecl (_, Some _ ); _ } :: t -> loop (size + 1) t
       | { s = StmtReturn _; _ } :: t -> loop size t
       | { s = StmtBlock inner; _ } :: t ->
         let size = loop size inner in

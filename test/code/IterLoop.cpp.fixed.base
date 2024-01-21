@@ -2,3 +2,12 @@
 
 #include "IterLoop.h"
 
+void IterLoop_test() {
+   int32_t total = 0;
+   int32_t i__1 = 0;
+   while (i__1 < 2) {
+      total = i__1 + total;
+      i__1 = 1 + i__1;
+   }
+}
+

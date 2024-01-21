@@ -2,3 +2,13 @@
 
 #include "InstanceArray.h"
 
+float InstanceArray_test1(InstanceArray_test1_type& _ctx) {
+   float sum = 0.0f;
+   int32_t i__1 = 0;
+   while (i__1 < 4) {
+      sum = sum + InstanceArray_counter(_ctx.instances[static_cast<uint32_t>(i__1)]);
+      i__1 = 1 + i__1;
+   }
+   return sum;
+}
+

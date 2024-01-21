@@ -2,3 +2,13 @@
 
 #include "swept.h"
 
+fix16_t Swept_process(Swept_process_type& _ctx, fix16_t gate, fix16_t start, fix16_t end, fix16_t rate) {
+   fix16_t a_rate = fix_div(0x10000 /* 1.000000 */, (0x28f /* 0.010000 */ + fix_mul(0x640000 /* 100.000000 */, rate)));
+   bool bgate = gate > 0x8000 /* 0.500000 */;
+   _ctx.out = fix_mul(0x106 /* 0.004000 */, fix_mul(rate, ((- _ctx.out) + fix_mul(0x4000000 /* 1024.000000 */, end)))) + _ctx.out;
+   if (Util_edge(_ctx.inst_10402, bgate)) {
+      _ctx.out = fix_mul(0x4000000 /* 1024.000000 */, start);
+   }
+   return fix_mul(0x40 /* 0.000977 */, _ctx.out);
+}
+

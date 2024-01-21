@@ -113,14 +113,7 @@ static_inline void Delay_phd_osc_type_init(Delay_phd_osc_type& _ctx) {
    _ctx.pre_phase1 = 0x0 /* 0.000000 */;
 }
 
-static_inline void Delay_delay_type_init(Delay_delay_type& _ctx) {
-   int32_t i_0 = 0;
-   while (i_0 < 30000) {
-      _ctx.buffer[static_cast<uint32_t>(i_0)] = 0x0 /* 0.000000 */;
-      i_0 = 1 + i_0;
-   }
-   _ctx.write_pos = 0;
-}
+void Delay_delay_type_init(Delay_delay_type& _ctx);
 
 void Delay_mono_noteOn_type_init(Delay_mono_noteOn_type& _ctx);
 
@@ -181,15 +174,7 @@ fix16_t Delay_phasor(Delay_phasor_type& _ctx, fix16_t pitch, bool reset);
 
 fix16_t Delay_lfo(Delay_lfo_type& _ctx, fix16_t f, bool gate);
 
-static_inline fix16_t Delay_phd_osc(Delay_phd_osc_type& _ctx, fix16_t pitch, fix16_t detune) {
-   fix16_t phase1 = Delay_phasor(_ctx.inst_171c4, pitch, false);
-   fix16_t comp = 0x10000 /* 1.000000 */ + (- phase1);
-   bool reset = (- phase1) + _ctx.pre_phase1 > 0x8000 /* 0.500000 */;
-   _ctx.pre_phase1 = phase1;
-   fix16_t phase2 = Delay_phasor(_ctx.inst_371c4, pitch + fix_mul(0x200000 /* 32.000000 */, Delay_smooth(_ctx.inst_277c4, detune)), reset);
-   fix16_t sine = fix_sin(fix_mul(0x6487e /* 6.283185 */, phase2));
-   return fix_mul(comp, sine);
-}
+fix16_t Delay_phd_osc(Delay_phd_osc_type& _ctx, fix16_t pitch, fix16_t detune);
 
 fix16_t Delay_delay(Delay_delay_type& _ctx, fix16_t x, fix16_t time, fix16_t feedback);
 
@@ -201,23 +186,7 @@ static_inline bool Delay_mono_isGateOn(Delay_mono_noteOn_type& _ctx) {
    return _ctx.count > 0;
 }
 
-static_inline fix16_t Delay_process(Delay_process_type& _ctx, fix16_t input) {
-   bool gate = Delay_mono_isGateOn(_ctx.notes);
-   fix16_t lfo_val = fix_mul(Delay_lfo(_ctx.inst_16101, _ctx.lfo_rate, gate), _ctx.lfo_amt);
-   fix16_t o1 = Delay_phd_osc(_ctx.inst_2c401, _ctx.pitch, lfo_val + _ctx.detune);
-   fix16_t amp = 0x0 /* 0.000000 */;
-   fix16_t _if_temp_0 = 0x0 /* 0.000000 */;
-   if (gate) {
-      _if_temp_0 = 0x10000 /* 1.000000 */;
-   }
-   else {
-      _if_temp_0 = 0x0 /* 0.000000 */;
-   }
-   amp = Delay_smooth(_ctx.inst_37701, _if_temp_0);
-   fix16_t osc_out = fix_mul(amp, o1);
-   fix16_t delay_out = Delay_delay(_ctx.inst_68e01, osc_out, Delay_smooth(_ctx.inst_47701, _ctx.time), Delay_smooth(_ctx.inst_57701, _ctx.feedback));
-   return fix_mul(0x8000 /* 0.500000 */, fix_mul((delay_out + osc_out), _ctx.volume));
-}
+fix16_t Delay_process(Delay_process_type& _ctx, fix16_t input);
 
 static_inline void Delay_noteOn(Delay_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
    _ctx.pitch = int_to_fix(Delay_mono_noteOn(_ctx.notes, note));

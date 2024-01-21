@@ -251,16 +251,7 @@ static_inline fix16_t Util_cvTokHz(fix16_t cv) {
    return Util_cvTokHz_c0[static_cast<uint32_t>(index)] + fix_mul(cv, (Util_cvTokHz_c1[static_cast<uint32_t>(index)] + fix_mul(Util_cvTokHz_c2[static_cast<uint32_t>(index)], cv)));
 }
 
-static_inline fix16_t Lfo_soft(Lfo_soft_type& _ctx, fix16_t x1) {
-   fix16_t o = fix_mul(0x4000 /* 0.250000 */, (x1 + _ctx.x2 + _ctx.x3 + _ctx.x4));
-   fix16_t _t_temp_0 = x1;
-   fix16_t _t_temp_1 = _ctx.x2;
-   fix16_t _t_temp_2 = _ctx.x3;
-   _ctx.x2 = _t_temp_0;
-   _ctx.x3 = _t_temp_1;
-   _ctx.x4 = _t_temp_2;
-   return o;
-}
+fix16_t Lfo_soft(Lfo_soft_type& _ctx, fix16_t x1);
 
 fix16_t Lfo_process(Lfo_process_type& _ctx, fix16_t cv, fix16_t shape, fix16_t reset);
 

@@ -48,6 +48,24 @@ float Synth1_lfo(Synth1_lfo_type& _ctx, float f, int32_t gate) {
    return -0.5f + sinf(6.283185f * _ctx.phase);
 }
 
+float Synth1_process(Synth1_process_type& _ctx, float input) {
+   float lfo_val = Synth1_lfo(_ctx.inst_17d3d, _ctx.lfo_rate, _ctx.gate) * _ctx.lfo_amt;
+   float phase1 = Synth1_phasor(_ctx.inst_2863d, _ctx.pitch, false);
+   float comp = 1.0f + (- phase1);
+   bool reset = (- phase1) + _ctx.pre_phase1 > 0.5f;
+   _ctx.pre_phase1 = phase1;
+   float phase2 = Synth1_phasor(_ctx.inst_4863d, 32.0f * Synth1_smooth(_ctx.inst_3dc3d, (lfo_val + _ctx.detune)) + _ctx.pitch, reset);
+   float sine = sinf(6.283185f * phase2);
+   float gate_value = 0.0f;
+   if (_ctx.gate > 0) {
+      gate_value = 1.0f;
+   }
+   else {
+      gate_value = 0.0f;
+   }
+   return comp * sine * Synth1_smooth(_ctx.inst_5dc3d, _ctx.volume) * Synth1_smooth(_ctx.inst_6dc3d, gate_value);
+}
+
 void Synth1_noteOn(Synth1_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
     switch (_ctx.count) {
       case 0:

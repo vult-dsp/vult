@@ -137,23 +137,7 @@ fix16_t Synth1_phasor(Synth1_phasor_type& _ctx, fix16_t pitch, bool reset);
 
 fix16_t Synth1_lfo(Synth1_lfo_type& _ctx, fix16_t f, int32_t gate);
 
-static_inline fix16_t Synth1_process(Synth1_process_type& _ctx, fix16_t input) {
-   fix16_t lfo_val = fix_mul(Synth1_lfo(_ctx.inst_17d3d, _ctx.lfo_rate, _ctx.gate), _ctx.lfo_amt);
-   fix16_t phase1 = Synth1_phasor(_ctx.inst_2863d, _ctx.pitch, false);
-   fix16_t comp = 0x10000 /* 1.000000 */ + (- phase1);
-   bool reset = (- phase1) + _ctx.pre_phase1 > 0x8000 /* 0.500000 */;
-   _ctx.pre_phase1 = phase1;
-   fix16_t phase2 = Synth1_phasor(_ctx.inst_4863d, fix_mul(0x200000 /* 32.000000 */, Synth1_smooth(_ctx.inst_3dc3d, (lfo_val + _ctx.detune))) + _ctx.pitch, reset);
-   fix16_t sine = fix_sin(fix_mul(0x6487e /* 6.283185 */, phase2));
-   fix16_t gate_value = 0x0 /* 0.000000 */;
-   if (_ctx.gate > 0) {
-      gate_value = 0x10000 /* 1.000000 */;
-   }
-   else {
-      gate_value = 0x0 /* 0.000000 */;
-   }
-   return fix_mul(comp, fix_mul(sine, fix_mul(Synth1_smooth(_ctx.inst_5dc3d, _ctx.volume), Synth1_smooth(_ctx.inst_6dc3d, gate_value))));
-}
+fix16_t Synth1_process(Synth1_process_type& _ctx, fix16_t input);
 
 void Synth1_noteOn(Synth1_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel);
 
