@@ -9,4 +9,5 @@
   (:standard -w -30))
  (ocamlopt_flags -O3 -unbox-closures)
  (preprocess
-  (pps pla.ppx)))
+  (pps pla.ppx))
+  (instrumentation (backend bisect_ppx)))

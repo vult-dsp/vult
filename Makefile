@@ -46,13 +46,12 @@ test-update:
 	dune build test/test.exe src/vult.bc src/vult.exe $(FORMAT)
 	./_build/default/test/test.exe -update true -internal true
 
-#coverage: compiler jscompiler
-#	$(OCB) -clean
-#	BISECT_COVERAGE=YES $(OCB) test/test.native
-#	BISECT_COVERAGE=YES $(OCB) src/vultc.native
-#	BISECT_COVERAGE=YES $(OCB) test/perf.native
-#	BISECT_FILE=_build/coverage ./test.native
-#	BISECT_FILE=_build/coverage ./perf.native
+coverage:
+	dune build test/test.exe src/vult.bc src/vult.exe $(FORMAT) --instrument-with bisect_ppx --force
+	./_build/default/test/test.exe -internal true
+	bisect-ppx-report html
+	find . -name '*.coverage' | xargs rm -f
+	open _coverage/index.html
 #	bisect-ppx-report send-to Coveralls --source-path _build
 
 VERSION:=$(shell git describe --tags --abbrev=0)
