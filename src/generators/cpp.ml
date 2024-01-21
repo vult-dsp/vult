@@ -39,7 +39,7 @@ let isSmall stmts =
       match stmts with
       | [] -> size
       | { s = StmtDecl (_, None); _ } :: t -> loop size t
-      | { s = StmtDecl (_, Some _ ); _ } :: t -> loop (size + 1) t
+      | { s = StmtDecl (_, Some _); _ } :: t -> loop (size + 1) t
       | { s = StmtReturn _; _ } :: t -> loop size t
       | { s = StmtBlock inner; _ } :: t ->
         let size = loop size inner in
@@ -133,13 +133,6 @@ let uoperator (op : Core.Prog.uoperator) =
   | UOpNot -> Pla.string "not"
 
 
-let getReplacement name (args : exp list) ret =
-  let args_t = List.map (fun (e : exp) -> e.t) args in
-  match Replacements.Cpp.fun_to_fun name args_t ret with
-  | Some path -> path
-  | None -> name
-
-
 let rec print_exp prec (e : exp) =
   match e.e with
   | EUnit -> Pla.string ""
@@ -171,25 +164,21 @@ let rec print_exp prec (e : exp) =
     let e1 = print_exp prec e1 in
     [%pla {|!(<#e1#>)|}]
   | ECall { path; args } ->
-    let path = getReplacement path args e.t in
     let args = Pla.map_sep Pla.commaspace (print_exp prec) args in
     [%pla {|<#path#s>(<#args#>)|}]
   | EUnOp (op, e) ->
     let e = print_exp 0 e in
     let op = uoperator op in
     [%pla {|(<#op#> <#e#>)|}]
-  | EOp (op, e1, e2) -> (
+  | EOp (op, e1, e2) ->
     let current = level op in
     let se1 = print_exp current e1 in
     let se2 = print_exp current e2 in
-    match Replacements.Cpp.op_to_fun op e1.t e2.t e.t with
-    | Some path -> [%pla {|<#path#s>(<#se1#>, <#se2#>)|}]
-    | None ->
-      let op = operator op in
-      if (current >= prec && current <> -1) || prec = 0 then
-        [%pla {|<#se1#> <#op#> <#se2#>|}]
-      else
-        [%pla {|(<#se1#> <#op#> <#se2#>)|}])
+    let op = operator op in
+    if (current >= prec && current <> -1) || prec = 0 then
+      [%pla {|<#se1#> <#op#> <#se2#>|}]
+    else
+      [%pla {|(<#se1#> <#op#> <#se2#>)|}]
   | EIf { cond; then_; else_ } ->
     let cond = print_exp prec cond in
     let then_ = print_exp prec then_ in

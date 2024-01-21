@@ -46,7 +46,7 @@ float Delay_phasor(Delay_phasor_type& _ctx, float pitch, bool reset) {
       _ctx.phase = 0.0f;
    }
    else {
-      _ctx.phase = fmodf((_ctx.phase + _ctx.rate), 1.0f);
+      _ctx.phase = fmodf(_ctx.phase + _ctx.rate, 1.0f);
    }
    return _ctx.phase;
 }

@@ -23,7 +23,7 @@ float Rescomb_delay(Rescomb_delay_type& _ctx, float x, float cv) {
    _ctx.write_pos = (1 + _ctx.write_pos) % 675;
    _ctx.buffer[static_cast<uint32_t>(_ctx.write_pos)] = x;
    float r_size = 675.0f;
-   float r_index = fmodf(((- Util_cvToperiod(cv)) + int_to_float(_ctx.write_pos)), r_size);
+   float r_index = fmodf((- Util_cvToperiod(cv)) + int_to_float(_ctx.write_pos), r_size);
    if (r_index < 0.0f) {
       r_index = r_index + r_size;
    }

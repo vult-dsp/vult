@@ -3,8 +3,7 @@
  (modules Vult)
  (modes byte exe)
  (libraries driver)
- (ocamlopt_flags -O3 -unbox-closures)
- )
+ (ocamlopt_flags -O3 -unbox-closures))
 
 (executable
  (name vultjs)

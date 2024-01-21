@@ -6,4 +6,5 @@
   (pps pla.ppx))
  (flags -w -30)
  (ocamlopt_flags -O3 -unbox-closures)
- (instrumentation (backend bisect_ppx)))
+ (instrumentation
+  (backend bisect_ppx)))

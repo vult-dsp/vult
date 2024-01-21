@@ -56,8 +56,6 @@ function intDiv(a, b)       return math.floor(a / b) end
 |}]
 
 
-let fix_id name = if Util.Maps.Set.mem name Replacements.Lua.keywords then name ^ "_" else name
-
 let rec isValueOrIf (e : exp) =
   match e.e with
   | EUnit | EBool _ | EInt _ | EReal _ | EString _ | EId _ | EMember _ -> true
@@ -104,7 +102,7 @@ let rec print_exp e =
     let n = Common.toFixed ~comment:false n in
     Pla.string n
   | EString s -> Pla.string_quoted s
-  | EId id -> Pla.string (fix_id id)
+  | EId id -> Pla.string id
   | EIndex { e; index } ->
     let e = print_exp e in
     let index = print_exp index in
@@ -117,14 +115,11 @@ let rec print_exp e =
     let e = print_exp e in
     let op = uoperator op in
     [%pla {|(<#op#><#e#>)|}]
-  | EOp (op, e1, e2) -> (
+  | EOp (op, e1, e2) ->
     let se1 = print_exp e1 in
     let se2 = print_exp e2 in
-    match Replacements.Lua.op_to_fun op e1.t e2.t e.t with
-    | Some path -> [%pla {|<#path#s>(<#se1#>, <#se2#>)|}]
-    | None ->
-      let op = operator op in
-      [%pla {|(<#se1#> <#op#> <#se2#>)|}])
+    let op = operator op in
+    [%pla {|(<#se1#> <#op#> <#se2#>)|}]
   | EIf { cond; then_; else_ } when isValueOrIf then_ && isValueOrIf else_ ->
     let cond = print_exp cond in
     let then_ = print_exp then_ in
@@ -150,7 +145,7 @@ let rec print_exp e =
 let rec print_lexp e =
   match e.l with
   | LWild -> Pla.string "_wild"
-  | LId s -> Pla.string (fix_id s)
+  | LId s -> Pla.string s
   | LMember (e, m) ->
     let e = print_lexp e in
     [%pla {|<#e#>.<#m#s>|}]
@@ -163,12 +158,8 @@ let rec print_lexp e =
 
 let print_dexp (e : dexp) =
   match e.d with
-  | DId (id, None) ->
-    let id = fix_id id in
-    [%pla {|<#id#s>|}]
-  | DId (id, Some dim) ->
-    let id = fix_id id in
-    [%pla {|<#id#s>[<#dim#i>]|}]
+  | DId (id, None) -> [%pla {|<#id#s>|}]
+  | DId (id, Some dim) -> [%pla {|<#id#s>[<#dim#i>]|}]
 
 
 let rec print_stmt (s : stmt) =
@@ -228,10 +219,7 @@ let rec print_stmt (s : stmt) =
     | Some if_ -> print_stmt if_)
 
 
-let print_arg (n, _, _) =
-  let n = fix_id n in
-  [%pla {|<#n#s>|}]
-
+let print_arg (n, _, _) = [%pla {|<#n#s>|}]
 
 let print_function_def (def : function_def) =
   let name = def.name in

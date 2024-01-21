@@ -35,7 +35,7 @@ fix16_t Rescomb_delay(Rescomb_delay_type& _ctx, fix16_t x, fix16_t cv) {
    fix16_t decimal = r_index + (- int_to_fix(t1));
    fix16_t x1 = _ctx.buffer[static_cast<uint32_t>(t1)];
    fix16_t x2 = _ctx.buffer[static_cast<uint32_t>(t2)];
-   fix16_t ret = x1 + fix_mul(decimal, (x2 + (- x1)));
+   fix16_t ret = x1 + fix_mul(decimal, x2 + (- x1));
    return ret;
 }
 

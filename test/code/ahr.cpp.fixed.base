@@ -54,18 +54,18 @@ void Ahr_do(Ahr_do_type& _ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r) {
       _ctx.target = 0x0 /* 0.000000 */;
    }
    if (_ctx.state == attack) {
-      _ctx.rate = fix_div(0x10000 /* 1.000000 */, (0x28f /* 0.010000 */ + fix_mul(0x640000 /* 100.000000 */, a)));
+      _ctx.rate = fix_div(0x10000 /* 1.000000 */, 0x28f /* 0.010000 */ + fix_mul(0x640000 /* 100.000000 */, a));
       _ctx.target = 0x4cccccc /* 1228.800000 */;
    }
    if (_ctx.state == hold) {
-      fix16_t hrate = fix_div(0x10000 /* 1.000000 */, (0x28f /* 0.010000 */ + fix_mul(0x640000 /* 100.000000 */, h)));
+      fix16_t hrate = fix_div(0x10000 /* 1.000000 */, 0x28f /* 0.010000 */ + fix_mul(0x640000 /* 100.000000 */, h));
       _ctx.hold_phase = hrate + _ctx.hold_phase;
    }
    if (_ctx.state == release) {
-      _ctx.rate = fix_div(0x10000 /* 1.000000 */, (0x28f /* 0.010000 */ + fix_mul(0x640000 /* 100.000000 */, r)));
+      _ctx.rate = fix_div(0x10000 /* 1.000000 */, 0x28f /* 0.010000 */ + fix_mul(0x640000 /* 100.000000 */, r));
       _ctx.target = 0x0 /* 0.000000 */;
    }
-   _ctx.out = fix_mul(0x147 /* 0.005000 */, fix_mul(((- _ctx.out) + _ctx.target), _ctx.rate)) + _ctx.out;
+   _ctx.out = fix_mul(0x147 /* 0.005000 */, fix_mul((- _ctx.out) + _ctx.target, _ctx.rate)) + _ctx.out;
    _ctx.Ahr_do_ret_0 = fix_clip(fix_mul(0x40 /* 0.000977 */, _ctx.out), 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
    _ctx.Ahr_do_ret_1 = resetting;
    return ;

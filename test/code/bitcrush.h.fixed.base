@@ -19,7 +19,7 @@ static_inline fix16_t Bitcrush_factor_raw_c2(int32_t index) {
 
 static_inline fix16_t Bitcrush_factor(fix16_t cv) {
    int32_t index = int_clip(fix_to_int(fix_mul(cv, 0x7f0000 /* 127.000000 */)), 0, 127);
-   return Bitcrush_factor_c0[static_cast<uint32_t>(index)] + fix_mul(cv, (Bitcrush_factor_c1[static_cast<uint32_t>(index)] + fix_mul(Bitcrush_factor_c2[static_cast<uint32_t>(index)], cv)));
+   return Bitcrush_factor_c0[static_cast<uint32_t>(index)] + fix_mul(cv, Bitcrush_factor_c1[static_cast<uint32_t>(index)] + fix_mul(Bitcrush_factor_c2[static_cast<uint32_t>(index)], cv));
 }
 
 fix16_t Bitcrush_process(fix16_t i, fix16_t cv);

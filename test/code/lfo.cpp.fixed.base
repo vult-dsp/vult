@@ -11,7 +11,7 @@ void Lfo_process_type_init(Lfo_process_type& _ctx) {
 }
 
 fix16_t Lfo_soft(Lfo_soft_type& _ctx, fix16_t x1) {
-   fix16_t o = fix_mul(0x4000 /* 0.250000 */, (x1 + _ctx.x2 + _ctx.x3 + _ctx.x4));
+   fix16_t o = fix_mul(0x4000 /* 0.250000 */, x1 + _ctx.x2 + _ctx.x3 + _ctx.x4);
    fix16_t _t_temp_0 = x1;
    fix16_t _t_temp_1 = _ctx.x2;
    fix16_t _t_temp_2 = _ctx.x3;

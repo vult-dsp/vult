@@ -48,7 +48,7 @@ static_inline void Volume_default_type_init(Volume_default_type& _ctx) {
 }
 
 static_inline fix16_t Volume_smooth(Volume_smooth_type& _ctx, fix16_t input) {
-   _ctx.x = fix_mul(0x147 /* 0.005000 */, (input + (- _ctx.x))) + _ctx.x;
+   _ctx.x = fix_mul(0x147 /* 0.005000 */, input + (- _ctx.x)) + _ctx.x;
    return _ctx.x;
 }
 

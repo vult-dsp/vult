@@ -19,7 +19,7 @@ static_inline fix16_t Tables_sineTable1_raw_c2(int32_t index) {
 
 static_inline fix16_t Tables_sineTable1(fix16_t x) {
    int32_t index = int_clip(fix_to_int(fix_mul(x, 0x1f0000 /* 31.000000 */)), 0, 31);
-   return Tables_sineTable1_c0[static_cast<uint32_t>(index)] + fix_mul(x, (Tables_sineTable1_c1[static_cast<uint32_t>(index)] + fix_mul(Tables_sineTable1_c2[static_cast<uint32_t>(index)], x)));
+   return Tables_sineTable1_c0[static_cast<uint32_t>(index)] + fix_mul(x, Tables_sineTable1_c1[static_cast<uint32_t>(index)] + fix_mul(Tables_sineTable1_c2[static_cast<uint32_t>(index)], x));
 }
 
 static_inline fix16_t Tables_sineTable2_raw_c0(int32_t index) {

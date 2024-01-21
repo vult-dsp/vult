@@ -93,7 +93,7 @@ fix16_t Synth2_osc(Synth2_osc_type& _ctx, fix16_t pitch, fix16_t pw, fix16_t wav
       _ctx.phase = -0x10000 /* -1.000000 */ + _ctx.phase;
    }
    _ctx.state_pulse = fix_clip(tmp1 + (- tmp2) + fix_mul(0xffdf /* 0.999500 */, _ctx.state_pulse), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
-   _ctx.state_saw = fix_clip(fix_mul(0x8000 /* 0.500000 */, fix_div((tmp1 + tmp2 + fix_mul(-0x20000 /* -2.000000 */, _ctx.rate)), shift05)) + fix_mul(0xffdf /* 0.999500 */, _ctx.state_saw), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
+   _ctx.state_saw = fix_clip(fix_mul(0x8000 /* 0.500000 */, fix_div(tmp1 + tmp2 + fix_mul(-0x20000 /* -2.000000 */, _ctx.rate), shift05)) + fix_mul(0xffdf /* 0.999500 */, _ctx.state_saw), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
    _ctx.state_triang = fix_clip(fix_mul(0xffdf /* 0.999500 */, _ctx.state_triang) + fix_mul(0x20000 /* 2.000000 */, fix_mul(_ctx.state_pulse, _ctx.rate)), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
    if (wave < 0x5555 /* 0.333333 */) {
       _ctx.output = _ctx.state_pulse;
@@ -103,7 +103,7 @@ fix16_t Synth2_osc(Synth2_osc_type& _ctx, fix16_t pitch, fix16_t pw, fix16_t wav
          _ctx.output = fix_mul(0x20000 /* 2.000000 */, _ctx.state_saw);
       }
       else {
-         _ctx.output = fix_mul(0x20000 /* 2.000000 */, fix_mul((0x10000 /* 1.000000 */ + pw), _ctx.state_triang));
+         _ctx.output = fix_mul(0x20000 /* 2.000000 */, fix_mul(0x10000 /* 1.000000 */ + pw, _ctx.state_triang));
       }
    }
    _ctx.output = Synth2_dcblock(_ctx.inst_24fe5, _ctx.output);
@@ -144,7 +144,7 @@ fix16_t Synth2_svf(Synth2_svf_type& _ctx, fix16_t input, fix16_t fc, fix16_t q, 
    }
    fix16_t x1 = Synth2_svf_step(_ctx.step, input, _ctx.g, fix_q, sel);
    fix16_t x2 = Synth2_svf_step(_ctx.step, input, _ctx.g, fix_q, sel);
-   return fix_mul(0x8000 /* 0.500000 */, (x1 + x2));
+   return fix_mul(0x8000 /* 0.500000 */, x1 + x2);
 }
 
 fix16_t Synth2_lfo(Synth2_lfo_type& _ctx, fix16_t f, bool gate) {

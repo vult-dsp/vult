@@ -54,7 +54,7 @@ fix16_t Synth1_process(Synth1_process_type& _ctx, fix16_t input) {
    fix16_t comp = 0x10000 /* 1.000000 */ + (- phase1);
    bool reset = (- phase1) + _ctx.pre_phase1 > 0x8000 /* 0.500000 */;
    _ctx.pre_phase1 = phase1;
-   fix16_t phase2 = Synth1_phasor(_ctx.inst_4863d, fix_mul(0x200000 /* 32.000000 */, Synth1_smooth(_ctx.inst_3dc3d, (lfo_val + _ctx.detune))) + _ctx.pitch, reset);
+   fix16_t phase2 = Synth1_phasor(_ctx.inst_4863d, fix_mul(0x200000 /* 32.000000 */, Synth1_smooth(_ctx.inst_3dc3d, lfo_val + _ctx.detune)) + _ctx.pitch, reset);
    fix16_t sine = fix_sin(fix_mul(0x6487e /* 6.283185 */, phase2));
    fix16_t gate_value = 0x0 /* 0.000000 */;
    if (_ctx.gate > 0) {

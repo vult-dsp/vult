@@ -22,6 +22,7 @@
    THE SOFTWARE.
 *)
 open Core.Prog
+open Core
 open Util.Maps
 
 type code = Core.Prog.top_stmt list
@@ -38,7 +39,7 @@ type context =
   ; args : Util.Args.args
   }
 
-let getCallName (context : context) name =
+let getExtCall (context : context) name =
   match Map.find_opt name context.ext_names with
   | Some name -> name
   | _ -> name
@@ -116,6 +117,62 @@ let rec getLDecl (env : env) (l : lexp) =
   | _ -> failwith "getLDecl: LTuple"
 
 
+module ApplyReplacements = struct
+  let getReplacement env name (args : exp list) ret =
+    let args_t = List.map (fun (e : exp) -> e.t) args in
+    match Replacements.fun_to_fun env name args_t ret with
+    | Some path -> path
+    | None -> name
+
+
+  let exp =
+    Mapper.make
+    @@ fun (env : context) state (e : exp) ->
+    match e with
+    | { e = EId name; _ } ->
+      let name = Replacements.keyword env.args.code name in
+      state, { e with e = EId name }
+    | { e = EOp (op, e1, e2); _ } -> (
+      match Replacements.op_to_fun env.args.code op e1.t e2.t e.t with
+      | Some path -> state, { e with e = ECall { path; args = [ e1; e2 ] } }
+      | None -> state, e)
+    | { e = ECall { path; args }; t = ret; _ } ->
+      let path = getReplacement env.args.code path args ret in
+      let path = getExtCall env path in
+      state, { e with e = ECall { path; args } }
+    | _ -> state, e
+
+
+  let lexp =
+    Mapper.make
+    @@ fun (env : context) state (e : lexp) ->
+    match e with
+    | { l = LId name; _ } ->
+      let name = Replacements.keyword env.args.code name in
+      state, { e with l = LId name }
+    | _ -> state, e
+
+
+  let dexp =
+    Mapper.make
+    @@ fun (env : context) state (e : dexp) ->
+    match e with
+    | { d = DId (name, dim); _ } ->
+      let name = Replacements.keyword env.args.code name in
+      state, { e with d = DId (name, dim) }
+
+
+  let param =
+    Mapper.make
+    @@ fun (env : context) state (p : param) ->
+    let name, t, loc = p in
+    let name = Replacements.keyword env.args.code name in
+    state, (name, t, loc)
+
+
+  let mapper = { Mapper.identity with exp; lexp; dexp; param }
+end
+
 let makeBlock stmts =
   match stmts with
   | [] -> C.sblock []
@@ -125,6 +182,7 @@ let makeBlock stmts =
 
 let rec stmt (context : context) (env : env) (s : stmt) : 'a * stmt list =
   match s with
+  | { s = StmtDecl ({ d = DId _; _ }, Some _); _ } -> env, [ s ]
   | { s = StmtDecl ({ d = DId (n, dim); t; _ }, None); _ } ->
     let decl = Map.add n (dim, t) env.decl in
     { env with decl }, []
@@ -162,7 +220,36 @@ let rec stmt (context : context) (env : env) (s : stmt) : 'a * stmt list =
         body
     in
     env, List.flatten (List.rev stmts)
-  | _ -> failwith "tocode: switch"
+  | { s = StmtSwitch (cond, cases, default); _ } ->
+    let env, stmts = getPendingDeclarations env in
+    let env, cases_rev =
+      List.fold_left
+        (fun (env, acc) (e, case) ->
+          let env, case = stmt context env case in
+          env, (e, makeBlock case) :: acc)
+        (env, [])
+        cases
+    in
+    let env, default =
+      match default with
+      | None -> env, None
+      | Some default ->
+        let env, default = stmt context env default in
+        env, Some (makeBlock default)
+    in
+    env, stmts @ [ C.sswitch cond (List.rev cases_rev) default ]
+
+
+and stmt_list (context : context) (env : env) stmts =
+  let env, stmts_rev =
+    List.fold_left
+      (fun (env, acc) s ->
+        let env, stmts = stmt context env s in
+        env, stmts :: acc)
+      (env, [])
+      stmts
+  in
+  env, List.rev stmts_rev
 
 
 let rec tryCreateSwitchLoop id cases (next : stmt option) =
@@ -250,4 +337,6 @@ let registerExternalNames (stmts : Core.Prog.top_stmt list) =
 let prog args stmts =
   let ext_names = registerExternalNames stmts in
   let context = { args; ext_names } in
+  let _, stmts = (Mapper.mapper_list Mapper.top_stmt) ApplyReplacements.mapper context (Mapper.defaultState ()) stmts in
+  let stmts = List.flatten stmts in
   List.filter_map (top_stmt context) stmts

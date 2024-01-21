@@ -56,14 +56,14 @@ let showResult (args : args) (output : output) =
 
 let generateCode args file_deps (stmts, vm, acc) =
   if args.code <> NoCode then (
-    let cstmts = Util.Profile.time "Convert" (fun () -> Tocode.prog args stmts) in
-    let cstmts = Util.Profile.time "Generate Tables" (fun () -> Tables.create args vm cstmts) in
+    let stmts = Util.Profile.time "Generate Tables" (fun () -> Tables.create args vm stmts) in
+    let stmts = Util.Profile.time "Convert" (fun () -> Tocode.prog args stmts) in
     let code =
       match args.code with
       | NoCode -> []
       | CppCode ->
-        Util.Profile.time "Generate Code" (fun () -> Cpp.generate file_deps args.split args.output args.template cstmts)
-      | LuaCode -> Lua.generate args.output args.template cstmts
+        Util.Profile.time "Generate Code" (fun () -> Cpp.generate file_deps args.split args.output args.template stmts)
+      | LuaCode -> Lua.generate args.output args.template stmts
       | JSCode -> failwith "Javascript generator not implemented yet"
       | JavaCode -> failwith "Javascript generator not implemented yet"
     in

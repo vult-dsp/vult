@@ -24,10 +24,80 @@
 open Core.Prog
 
 module Cpp = struct
+  let keywords =
+    [ "asm"
+    ; "auto"
+    ; "bool"
+    ; "break"
+    ; "case"
+    ; "catch"
+    ; "char"
+    ; "class"
+    ; "const"
+    ; "const_cast"
+    ; "continue"
+    ; "default"
+    ; "delete"
+    ; "do"
+    ; "double"
+    ; "dynamic_cast"
+    ; "else"
+    ; "enum"
+    ; "explicit"
+    ; "export"
+    ; "extern"
+    ; "false"
+    ; "float"
+    ; "for"
+    ; "friend"
+    ; "goto"
+    ; "if"
+    ; "inline"
+    ; "int"
+    ; "long"
+    ; "mutable"
+    ; "namespace"
+    ; "new"
+    ; "operator"
+    ; "private"
+    ; "protected"
+    ; "public"
+    ; "register"
+    ; "reinterpret_cast"
+    ; "return"
+    ; "short"
+    ; "signed"
+    ; "sizeof"
+    ; "static"
+    ; "static_cast"
+    ; "struct"
+    ; "switch"
+    ; "template"
+    ; "this"
+    ; "throw"
+    ; "true"
+    ; "try"
+    ; "typedef"
+    ; "typeid"
+    ; "typename"
+    ; "union"
+    ; "unsigned"
+    ; "using"
+    ; "virtual"
+    ; "void"
+    ; "volatile"
+    ; "wchar_t"
+    ; "while"
+    ]
+    |> Util.Maps.Set.of_list
+
+
   let fun_to_fun (path : string) (args : type_ list) (ret : type_) =
     let args = List.map (fun (t : type_) -> t.t) args in
     match path, args, ret.t with
     (* builtins *)
+    | "samplerate", [], TReal -> Some "float_samplerate"
+    | "samplerate", [], TFix16 -> Some "fix_samplerate"
     | "random", [], TReal -> Some "float_random"
     | "clip", [ TReal; _; _ ], TReal -> Some "float_clip"
     | "clip", [ TInt; _; _ ], TInt -> Some "int_clip"
@@ -123,3 +193,25 @@ module Lua = struct
     | OpDiv, TInt, TInt, TInt -> Some "intDiv"
     | _ -> None
 end
+
+let fun_to_fun (lang : Util.Args.code) (path : string) (args : type_ list) (ret : type_) =
+  match lang with
+  | CppCode -> Cpp.fun_to_fun path args ret
+  | _ -> None
+
+
+let op_to_fun (lang : Util.Args.code) (op : Core.Prog.operator) (e1 : type_) (e2 : type_) (ret : type_) =
+  match lang with
+  | CppCode -> Cpp.op_to_fun op e1 e2 ret
+  | LuaCode -> Lua.op_to_fun op e1 e2 ret
+  | _ -> None
+
+
+let keyword (lang : Util.Args.code) id =
+  let keywords =
+    match lang with
+    | CppCode -> Cpp.keywords
+    | LuaCode -> Lua.keywords
+    | _ -> Util.Maps.Set.empty
+  in
+  if Util.Maps.Set.mem id keywords then id ^ "_" else id
