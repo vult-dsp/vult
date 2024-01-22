@@ -413,7 +413,7 @@ let callFunction vm name args =
 
 
 let run (iargs : Util.Args.args) (env : Env.in_top) (prog : top_stmt list) (exp : string) =
-  let e = Pparser.Parse.parseString (Some "Main_.vult") (Pla.print [%pla {|fun _main_() return <#exp#s>;|}]) in
+  let e = Pparser.Parse.parseString (Some "Main_.vult") (Pla.print {%pla|fun _main_() return <#exp#s>;|}) in
   let env, main = Inference.infer_single iargs env e in
   let _, main = Toprog.convert iargs env main in
   let bytecode = compile (prog @ main) in

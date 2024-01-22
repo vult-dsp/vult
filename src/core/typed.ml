@@ -177,14 +177,14 @@ let rec print_type_ ?(show_unbound = true) (t : type_) : Pla.t =
   match t.tx with
   | TENoReturn -> Pla.string "noreturn"
   | TELink t -> print_type_ ~show_unbound t
-  | TEUnbound (Some i) -> if show_unbound then [%pla {|_<#i#i>|}] else Pla.string "_"
+  | TEUnbound (Some i) -> if show_unbound then {%pla|_<#i#i>|} else Pla.string "_"
   | TEUnbound None -> Pla.string "_"
   | TEId p -> print_path p
   | TESize n -> Pla.int n
   | TEOption alt -> Pla.parenthesize @@ Pla.map_sep (Pla.string "|") print_type_ alt
   | TEComposed (name, elems) ->
     let elems = Pla.map_sep Pla.commaspace (print_type_ ~show_unbound) elems in
-    [%pla {|<#name#s>(<#elems#>)|}]
+    {%pla|<#name#s>(<#elems#>)|}
 
 
 let rec print_exp e =
@@ -193,37 +193,37 @@ let rec print_exp e =
   | EBool v -> Pla.string (if v then "true" else "false")
   | EInt n -> Pla.int n
   | EReal n -> Pla.float n
-  | EFixed n -> [%pla {|<#n#f>x]|}]
+  | EFixed n -> {%pla|<#n#f>x]|}
   | EString s -> Pla.string_quoted s
   | EId id -> Pla.string id
   | EIndex { e; index } ->
     let e = print_exp e in
     let index = print_exp index in
-    [%pla {|<#e#>[<#index#>]|}]
+    {%pla|<#e#>[<#index#>]|}
   | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
   | ECall { instance; path; args } ->
-    let instance = Option.value (Option.map (fun s -> [%pla {|<#s#s>:|}]) instance) ~default:Pla.unit in
+    let instance = Option.value (Option.map (fun s -> {%pla|<#s#s>:|}) instance) ~default:Pla.unit in
     let path = print_path path in
     let args = Pla.map_sep Pla.commaspace print_exp args in
-    [%pla {|<#instance#><#path#>(<#args#>)|}]
+    {%pla|<#instance#><#path#>(<#args#>)|}
   | EUnOp (op, e) ->
     let e = print_exp e in
-    [%pla {|(<#op#s><#e#>)|}]
+    {%pla|(<#op#s><#e#>)|}
   | EOp (op, e1, e2) ->
     let e1 = print_exp e1 in
     let e2 = print_exp e2 in
-    [%pla {|(<#e1#> <#op#s> <#e2#>)|}]
+    {%pla|(<#e1#> <#op#s> <#e2#>)|}
   | EIf { cond; then_; else_ } ->
     let cond = print_exp cond in
     let then_ = print_exp then_ in
     let else_ = print_exp else_ in
-    [%pla {|(if <#cond#> then <#then_#> else <#else_#>)|}]
+    {%pla|(if <#cond#> then <#then_#> else <#else_#>)|}
   | ETuple l ->
     let l = Pla.map_sep Pla.commaspace print_exp l in
-    [%pla {|(<#l#>)|}]
+    {%pla|(<#l#>)|}
   | EMember (e, m) ->
     let e = print_exp e in
-    [%pla {|<#e#>.<#m#s>|}]
+    {%pla|<#e#>.<#m#s>|}
 
 
 let rec print_lexp e =
@@ -232,64 +232,64 @@ let rec print_lexp e =
   | LId s -> Pla.string s
   | LMember (e, m) ->
     let e = print_lexp e in
-    [%pla {|<#e#>.<#m#s>|}]
+    {%pla|<#e#>.<#m#s>|}
   | LIndex { e; index } ->
     let e = print_lexp e in
     let index = print_exp index in
-    [%pla {|<#e#>[<#index#>]|}]
+    {%pla|<#e#>[<#index#>]|}
   | LTuple l ->
     let l = Pla.map_sep Pla.commaspace print_lexp l in
-    [%pla {|(<#l#>)|}]
+    {%pla|(<#l#>)|}
 
 
 let rec print_dexp (e : dexp) =
   let t = print_type_ e.t in
   match e.d with
-  | DWild -> [%pla {|_ : <#t#>|}]
-  | DId (id, None) -> [%pla {|<#id#s> : <#t#>|}]
-  | DId (id, Some dim) -> [%pla {|<#id#s>[<#dim#i>] : <#t#>|}]
+  | DWild -> {%pla|_ : <#t#>|}
+  | DId (id, None) -> {%pla|<#id#s> : <#t#>|}
+  | DId (id, Some dim) -> {%pla|<#id#s>[<#dim#i>] : <#t#>|}
   | DTuple l ->
     let l = Pla.map_sep Pla.commaspace print_dexp l in
-    [%pla {|(<#l#>) : <#t#>|}]
+    {%pla|(<#l#>) : <#t#>|}
 
 
 let rec print_stmt s =
   match s.s with
   | StmtVal lhs ->
     let lhs = print_dexp lhs in
-    [%pla {|val <#lhs#>;|}]
+    {%pla|val <#lhs#>;|}
   | StmtMem (lhs, tags) ->
     let tags = Ptags.print_tags tags in
     let lhs = print_dexp lhs in
-    [%pla {|mem <#lhs#><#tags#>;|}]
+    {%pla|mem <#lhs#><#tags#>;|}
   | StmtBind (lhs, rhs) ->
     let lhs = print_lexp lhs in
     let rhs = print_exp rhs in
-    [%pla {|<#lhs#> = <#rhs#>;|}]
+    {%pla|<#lhs#> = <#rhs#>;|}
   | StmtReturn e ->
     let e = print_exp e in
-    [%pla {|return <#e#>;|}]
+    {%pla|return <#e#>;|}
   | StmtIf (cond, then_, None) ->
     let e = print_exp cond in
     let then_ = print_stmt then_ in
-    [%pla {|if (<#e#>) <#then_#>|}]
+    {%pla|if (<#e#>) <#then_#>|}
   | StmtIf (cond, then_, Some else_) ->
     let cond = print_exp cond in
     let then_ = print_stmt then_ in
     let else_ = print_stmt else_ in
-    [%pla {|if (<#cond#>) <#then_#><#>else <#else_#>|}]
+    {%pla|if (<#cond#>) <#then_#><#>else <#else_#>|}
   | StmtWhile (cond, stmt) ->
     let cond = print_exp cond in
     let stmt = print_stmt stmt in
-    [%pla {|while (<#cond#>)<#stmt#+>|}]
+    {%pla|while (<#cond#>)<#stmt#+>|}
   | StmtBlock stmts ->
     let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
-    [%pla {|{<#stmt#+>}|}]
+    {%pla|{<#stmt#+>}|}
 
 
 let print_arg (n, t, _) =
   let t = print_type_ t in
-  [%pla {|<#n#s> : <#t#>|}]
+  {%pla|<#n#s> : <#t#>|}
 
 
 let next_kind kind =
@@ -303,7 +303,7 @@ let next_kind kind =
 let print_body_linkname body_linkname =
   match body_linkname with
   | `Body stmt -> print_stmt stmt
-  | `LinkName name -> [%pla {| "<#name#s>"|}]
+  | `LinkName name -> {%pla| "<#name#s>"|}
   | `NoLinkName -> Pla.unit
 
 
@@ -314,7 +314,7 @@ let rec print_function_def kind (def : function_def) body_linkname =
   let t = print_type_ (snd def.t) in
   let body = print_body_linkname body_linkname in
   let next = print_next_function_def kind def.next in
-  [%pla {|<#kind#s> <#name#>(<#args#>) : <#t#><#tags#><#body#><#><#next#>|}]
+  {%pla|<#kind#s> <#name#>(<#args#>) : <#t#><#tags#><#body#><#><#next#>|}
 
 
 and print_next_function_def kind next =
@@ -326,10 +326,10 @@ and print_next_function_def kind next =
 let print_record_member (name, t, tags, _) =
   let tags = Ptags.print_tags tags in
   let t = print_type_ t in
-  [%pla {|<#name#s> : <#t#><#tags#>;|}]
+  {%pla|<#name#s> : <#t#><#tags#>;|}
 
 
-let print_enum_member (name, _) = [%pla {|<#name#s>|}]
+let print_enum_member (name, _) = {%pla|<#name#s>|}
 
 let print_top_stmt t =
   match t.top with
@@ -339,15 +339,15 @@ let print_top_stmt t =
   | TopAlias { path = p; alias_of } ->
     let p = print_path p in
     let alias_of = print_path alias_of in
-    [%pla {|type <#p#> = <#alias_of#><#>|}]
+    {%pla|type <#p#> = <#alias_of#><#>|}
   | TopType { path = p; members } ->
     let p = print_path p in
     let members = Pla.map_sep_all Pla.newline print_record_member members in
-    [%pla {|type <#p#> {<#members#+>}<#>|}]
+    {%pla|type <#p#> {<#members#+>}<#>|}
   | TopEnum { path = p; members } ->
     let p = print_path p in
-    let members = Pla.map_sep Pla.commaspace print_enum_member members in
-    [%pla {|enum <#p#> {<#members#+>}<#>|}]
+    let members = Pla.map_sep {%pla|,<#>|} print_enum_member members in
+    {%pla|enum <#p#> {<#members#+><#>}<#>|}
 
 
 let print_prog prog = Pla.map_sep_all Pla.newline print_top_stmt prog

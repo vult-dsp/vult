@@ -77,9 +77,7 @@ and constrainOption loc l1 l2 =
   | [] ->
     let t1 = Pla.map_sep Pla.commaspace (Typed.print_type_ ~show_unbound:false) l1 in
     let t2 = Pla.map_sep Pla.commaspace (Typed.print_type_ ~show_unbound:false) l2 in
-    let msg =
-      Pla.print [%pla {|None of the following types: <#t1#>, matches with any of the following types <#t2#>. |}]
-    in
+    let msg = Pla.print {%pla|None of the following types: <#t1#>, matches with any of the following types <#t2#>. |} in
     Error.raiseError msg loc
   | [ t ] -> t
   | l -> { tx = TEOption l; loc = Loc.default }
@@ -135,7 +133,7 @@ let unifyRaise (loc : Loc.t) (t1 : type_) (t2 : type_) : unit =
     let msg =
       let t1 = print_type_ t1 in
       let t2 = print_type_ t2 in
-      Pla.print [%pla {|This expression has type '<#t2#>' but '<#t1#>' was expected|}]
+      Pla.print {%pla|This expression has type '<#t2#>' but '<#t1#>' was expected|}
     in
     if raise then
       Error.raiseError msg loc
@@ -181,15 +179,13 @@ let applyFunction loc (args_t_in : type_ list) (ret : type_) (args_in : exp list
       let required_n = List.length args_t_in in
       let got_n = List.length args_in in
       let loc = Loc.mergeList loc (List.map (fun (e : exp) -> e.loc) args_in) in
-      let msg = Pla.print [%pla {|Extra arguments in function call. Expecting <#required_n#i> but got <#got_n#i>.|}] in
+      let msg = Pla.print {%pla|Extra arguments in function call. Expecting <#required_n#i> but got <#got_n#i>.|} in
       Error.raiseError msg loc
     | _ :: _, [] ->
       let required_n = List.length args_t_in in
       let got_n = List.length args_in in
       let loc = Loc.mergeList loc (List.map (fun (e : exp) -> e.loc) args_in) in
-      let msg =
-        Pla.print [%pla {|Missing arguments in function call. Expecting <#required_n#i> but got <#got_n#i>.|}]
-      in
+      let msg = Pla.print {%pla|Missing arguments in function call. Expecting <#required_n#i> but got <#got_n#i>.|} in
       Error.raiseError msg loc
     | [], [] -> ret
     | h :: args_t, (ht : exp) :: args ->
@@ -211,8 +207,7 @@ let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
       env, e :: args
     | 0, Some _ ->
       let msg =
-        Pla.print
-          [%pla {|This function belongs to the same instance and it must not be called on a different instance.|}]
+        Pla.print {%pla|This function belongs to the same instance and it must not be called on a different instance.|}
       in
       Error.raiseError msg loc
     (* no instance name provided *)
@@ -492,10 +487,40 @@ let makeIterWhile (env : Env.in_func) name id_loc value body loc =
 
 
 let makeIfOfMatch e cases =
-  let makeComparison e (p : Syntax.pattern) =
+  let rec makeComparison (e : Syntax.exp) (p : Syntax.pattern) =
+    let makeEq e1 e2 = Syntax.{ e = SEOp ("==", e1, e2); loc = e1.loc } in
+    let makeAnd e1 e2 = Syntax.{ e = SEOp ("&&", e1, e2); loc = e1.loc } in
     match e, p with
     | _, { p = SPWild; loc } -> Syntax.{ e = SEBool true; loc }
-    | _ -> failwith ""
+    | { e = SEGroup e; _ }, _ -> makeComparison e p
+    | e, { p = SPGroup p; _ } -> makeComparison e p
+    | { e = SETuple elems; _ }, { p = SPTuple patterns; loc } ->
+      if List.length elems = List.length patterns then (
+        let conds = List.map2 (fun e p -> makeComparison e p) elems patterns in
+        List.fold_right makeAnd conds Syntax.{ e = SEBool true; loc })
+      else (
+        let msg =
+          "The pattern cannot be matched with the input expression because it has different number of elements."
+        in
+        let loc = Loc.mergeList Loc.default @@ List.map (fun (p : Syntax.pattern) -> p.loc) patterns in
+        Error.raiseError msg loc)
+    | { e = SETuple _; _ }, { loc; _ } ->
+      let msg =
+        "The pattern cannot be matched with the input expression because it has different number of elements."
+      in
+      Error.raiseError msg loc
+    | _, { p = SPTuple patterns; _ } ->
+      let loc = Loc.mergeList Loc.default @@ List.map (fun (p : Syntax.pattern) -> p.loc) patterns in
+      let msg =
+        "The pattern cannot be matched with the input expression because it has different number of elements."
+      in
+      Error.raiseError msg loc
+    | _, { p = SPBool b; loc } -> makeEq e Syntax.{ e = SEBool b; loc }
+    | _, { p = SPInt i; loc } -> makeEq e Syntax.{ e = SEInt i; loc }
+    | _, { p = SPReal f; loc } -> makeEq e Syntax.{ e = SEReal f; loc }
+    | _, { p = SPFixed f; loc } -> makeEq e Syntax.{ e = SEFixed f; loc }
+    | _, { p = SPString s; loc } -> makeEq e Syntax.{ e = SEString s; loc }
+    | _, { p = SPEnum p; loc } -> makeEq e Syntax.{ e = SEEnum p; loc }
   in
   let if_stmt =
     List.fold_right
@@ -586,14 +611,14 @@ and stmt_list env return l =
 
 let addGeneratedFunctions tags name next =
   if Ptags.has tags "wave" then (
-    let code = Pla.print [%pla {|fun <#name#s>_samples() : int @[placeholder]|}] in
+    let code = Pla.print {%pla|fun <#name#s>_samples() : int @[placeholder]|} in
     let def = Parse.parseFunctionSpec code in
     Some ({ def with next }, Syntax.{ s = SStmtBlock []; loc = Loc.default }))
   else if Ptags.has tags "wavetable" then (
     let empty = Syntax.{ s = SStmtBlock []; loc = Loc.default } in
-    let samples = Pla.print [%pla {|fun <#name#s>_samples() : int @[placeholder]|}] in
-    let code1 = Pla.print [%pla {|fun <#name#s>_raw_c0(i:int) : real @[placeholder]|}] in
-    let code2 = Pla.print [%pla {|fun <#name#s>_raw_c1(i:int) : real @[placeholder]|}] in
+    let samples = Pla.print {%pla|fun <#name#s>_samples() : int @[placeholder]|} in
+    let code1 = Pla.print {%pla|fun <#name#s>_raw_c0(i:int) : real @[placeholder]|} in
+    let code2 = Pla.print {%pla|fun <#name#s>_raw_c1(i:int) : real @[placeholder]|} in
     let samples = Parse.parseFunctionSpec samples in
     let def1 = Parse.parseFunctionSpec code1 in
     let def2 = Parse.parseFunctionSpec code2 in

@@ -128,9 +128,10 @@ float Synth2_svf_step(Synth2_svf_step_type& _ctx, float input, float g, float q,
       case 2:
          output = band;
          break;
-   default:
-      output = notch;
-      break;
+
+      default:
+         output = notch;
+         break;
    }
    return output;
 }

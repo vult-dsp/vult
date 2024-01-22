@@ -190,9 +190,10 @@ float Svf_process(Svf_process_type& _ctx, float x, float cv, float q, int32_t se
       case 2:
          output = band;
          break;
-   default:
-      output = notch;
-      break;
+
+      default:
+         output = notch;
+         break;
    }
    return Saturate_soft_process(output);
 }

@@ -113,6 +113,9 @@ let errors_files =
   ; "error40.vult"
   ; "error41.vult"
   ; "error42.vult"
+  ; "error43.vult"
+  ; "error44.vult"
+  ; "error45.vult"
   ]
 
 
@@ -202,6 +205,7 @@ let all_files =
   ; "features/Tables.vult"
   ; "features/Waves.vult"
   ; "features/SaveState.vult"
+  ; "features/Match.vult"
   ; "../test/compile/defined_types.vult"
   ; "../test/compile/array_defined_type.vult"
   ; "../test/compile/array_return.vult"
@@ -629,8 +633,7 @@ module Interpret = struct
     let moduleName file = Filename.basename file |> Filename.chop_extension |> String.capitalize_ascii in
     let module_name = moduleName fullfile in
     let code =
-      [%pla
-        {|fun run() {
+      {%pla|fun run() {
    val sample = 0;
    val out = 0.0;
    while (sample < 100) {
@@ -638,7 +641,7 @@ module Interpret = struct
       sample = sample + 1;
    }
    return out;
-}|}]
+}|}
       |> Pla.print
     in
     let args =

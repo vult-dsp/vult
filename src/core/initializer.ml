@@ -34,15 +34,19 @@ let getTick () =
   n
 
 
-let getInitRHS (t : type_) =
+let rec getInitRHS (t : type_) =
   match t with
-  | { t = TVoid _; loc } -> { e = EUnit; t; loc }
-  | { t = TInt; loc } -> { e = EInt 0; t; loc }
-  | { t = TReal; loc } -> { e = EReal 0.0; t; loc }
-  | { t = TFix16; loc } -> { e = EReal 0.0; t; loc }
-  | { t = TString; loc } -> { e = EString ""; t; loc }
-  | { t = TBool; loc } -> { e = EBool false; t; loc }
-  | { t = TStruct { path; _ }; loc } -> { e = ECall { path = path ^ "_init"; args = [] }; t; loc }
+  | { t = TVoid _; _ } -> C.eunit
+  | { t = TInt; loc } -> C.eint ~loc 0
+  | { t = TReal; loc } -> C.ereal ~loc 0.0
+  | { t = TFix16; loc } -> C.efix16 ~loc 0.0
+  | { t = TString; loc } -> C.estring ~loc ""
+  | { t = TBool; loc } -> C.ebool ~loc false
+  | { t = TStruct { path; _ }; loc } -> C.ecall ~loc (path ^ "_init") [] t
+  | { t = TArray (Some size, at); loc } ->
+    let v = getInitRHS at in
+    let elems = List.init size (fun _ -> v) in
+    C.earray ~loc elems t
   | _ -> failwith "Not a simple type"
 
 

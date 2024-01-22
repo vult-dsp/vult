@@ -68,10 +68,10 @@ let rec print_tag t : Pla.t =
         Pla.commaspace
         (fun (n, tag, _) ->
           let tag = print_tag tag in
-          [%pla {|<#n#s> = <#tag#>|}])
+          {%pla|<#n#s> = <#tag#>|})
         args
     in
-    [%pla {|<#name#s>(<#args#>)|}]
+    {%pla|<#name#s>(<#args#>)|}
 
 
 let print_tags tags =
@@ -79,7 +79,7 @@ let print_tags tags =
   | [] -> Pla.unit
   | _ ->
     let tags = Pla.map_sep Pla.commaspace print_tag tags in
-    [%pla {| @[<#tags#>]|}]
+    {%pla| @[<#tags#>]|}
 
 
 let has (tags : tag list) n =

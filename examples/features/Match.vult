@@ -1,0 +1,36 @@
+// Now you can use the match (switch) statement. The main difference with C++ switch statement
+// is that you can match multiple variables at the same time.
+// Match in Vult is not as powerful as in OCaml because it only works with basic values (not arrays).
+
+enum e {
+  One,
+  Two
+}
+
+// Simple match like this become switch statements in Vult
+fun foo1 (x) {
+  match (x) {
+    0 -> return 0;
+    1 -> return 1;
+    _ -> return 2;
+  }
+}
+
+// More complex cases are turned into if statements
+fun foo2 (x, y) {
+  match (x, y) {
+    1, "e" -> {
+      return x + 1;
+    }
+    (3, _) -> return 1;
+    _ -> return 2;
+  }
+}
+
+// match works fine with enumerations
+fun foo3(x) {
+  match (x) {
+    One -> return 1;
+    Two -> return 2;
+  }
+}

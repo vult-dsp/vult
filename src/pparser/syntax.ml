@@ -193,7 +193,7 @@ let compare_path (p1 : path) (p2 : path) =
 let print_path (p : path) =
   match p with
   | { id; n = None; _ } -> Pla.string id
-  | { id; n = Some m; _ } -> [%pla {|<#m#s>.<#id#s>|}]
+  | { id; n = Some m; _ } -> {%pla|<#m#s>.<#id#s>|}
 
 
 module Print = struct
@@ -206,7 +206,7 @@ module Print = struct
   let path (p : path) =
     match p with
     | { id; n = None; _ } -> Pla.string id
-    | { id; n = Some m; _ } -> [%pla {|<#id#s>.<#m#s>|}]
+    | { id; n = Some m; _ } -> {%pla|<#id#s>.<#m#s>|}
 
 
   let rec type_ (t : type_) = type_d t.t
@@ -217,7 +217,7 @@ module Print = struct
     | STSize i -> Pla.int i
     | STComposed (name, subs) ->
       let subs = Pla.map_sep Pla.commaspace type_ subs in
-      [%pla {|<#name#s><<#subs#>>|}]
+      {%pla|<#name#s><<#subs#>>|}
     | STUnbound -> Pla.string "_"
 
 
@@ -235,14 +235,14 @@ module Print = struct
     | SEIndex { e; index } ->
       let e = exp e in
       let index = exp index in
-      [%pla {|<#e#>[<#index#>]|}]
+      {%pla|<#e#>[<#index#>]|}
     | SEArray elems ->
       let elems = Pla.map_sep Pla.commaspace exp elems in
-      [%pla {|[ <#elems#> ]|}]
+      {%pla|[ <#elems#> ]|}
     | SECall { instance = None; path = name; args } ->
       let name = path name in
       let args = Pla.map_sep Pla.commaspace exp args in
-      [%pla {|<#name#>(<#args#>)|}]
+      {%pla|<#name#>(<#args#>)|}
     | SECall { instance = Some (inst, sub); path = name; args } ->
       let name = path name in
       let args = Pla.map_sep Pla.commaspace exp args in
@@ -251,32 +251,32 @@ module Print = struct
           (Option.map
              (fun sub ->
                let s = exp sub in
-               [%pla {|[<#s#>]|}])
+               {%pla|[<#s#>]|})
              sub)
           ~default:Pla.unit
       in
-      [%pla {|<#inst#s><#sub#>:<#name#>(<#args#>)|}]
+      {%pla|<#inst#s><#sub#>:<#name#>(<#args#>)|}
     | SEUnOp (op, e) ->
       let e = exp e in
-      [%pla {|(<#op#s><#e#>)|}]
+      {%pla|(<#op#s><#e#>)|}
     | SEOp (op, e1, e2) ->
       let e1 = exp e1 in
       let e2 = exp e2 in
-      [%pla {|(<#e1#> <#op#s> <#e2#>)|}]
+      {%pla|(<#e1#> <#op#s> <#e2#>)|}
     | SEIf { cond; then_; else_ } ->
       let cond = exp cond in
       let then_ = exp then_ in
       let else_ = exp else_ in
-      [%pla {|if <#cond#> then <#then_#> else <#else_#>|}]
+      {%pla|if <#cond#> then <#then_#> else <#else_#>|}
     | SETuple elems ->
       let elems = Pla.map_sep Pla.commaspace exp elems in
-      [%pla {|<#elems#>|}]
+      {%pla|<#elems#>|}
     | SEMember (e, m) ->
       let e = exp e in
-      [%pla {|<#e#>.<#m#s>|}]
+      {%pla|<#e#>.<#m#s>|}
     | SEGroup e ->
       let e = exp e in
-      [%pla {|(<#e#>)|}]
+      {%pla|(<#e#>)|}
 
 
   let rec pattern (p : pattern) = pattern_d p.p
@@ -292,10 +292,10 @@ module Print = struct
     | SPEnum p -> path p
     | SPTuple elems ->
       let elems = Pla.map_sep Pla.commaspace pattern elems in
-      [%pla {|<#elems#>|}]
+      {%pla|<#elems#>|}
     | SPGroup e ->
       let e = pattern e in
-      [%pla {|(<#e#>)|}]
+      {%pla|(<#e#>)|}
 
 
   let rec lexp (l : lexp) = lexp_d l.l
@@ -306,17 +306,17 @@ module Print = struct
     | SLId id -> Pla.string id
     | SLMember (e, m) ->
       let e = lexp e in
-      [%pla {|<#e#>.<#m#s>|}]
+      {%pla|<#e#>.<#m#s>|}
     | SLIndex { e; index } ->
       let e = lexp e in
       let index = exp index in
-      [%pla {|<#e#>[<#index#>]|}]
+      {%pla|<#e#>[<#index#>]|}
     | SLGroup e ->
       let e = lexp e in
-      [%pla {|(<#e#>)|}]
+      {%pla|(<#e#>)|}
     | SLTuple elems ->
       let elems = Pla.map_sep Pla.commaspace lexp elems in
-      [%pla {|<#elems#>|}]
+      {%pla|<#elems#>|}
 
 
   let rec dexp (d : dexp) = dexp_d d.d
@@ -325,17 +325,17 @@ module Print = struct
     match d with
     | SDWild -> Pla.string "_"
     | SDId (id, None) -> Pla.string id
-    | SDId (id, Some n) -> [%pla {|<#id#s>[<#n#i>]|}]
+    | SDId (id, Some n) -> {%pla|<#id#s>[<#n#i>]|}
     | SDTuple elems ->
       let elems = Pla.map_sep Pla.commaspace dexp elems in
-      [%pla {|<#elems#>|}]
+      {%pla|<#elems#>|}
     | SDGroup e ->
       let e = dexp e in
-      [%pla {|(<#e#>)|}]
+      {%pla|(<#e#>)|}
     | SDTyped (e, t) ->
       let e = dexp e in
       let t = type_ t in
-      [%pla {|<#e#> : <#t#>|}]
+      {%pla|<#e#> : <#t#>|}
 
 
   let arg (n, t, _) =
@@ -343,7 +343,7 @@ module Print = struct
     | None -> Pla.string n
     | Some t ->
       let t = type_ t in
-      [%pla {|<#n#s> : <#t#>|}]
+      {%pla|<#n#s> : <#t#>|}
 
 
   let rec stmt (s : stmt) = stmt_d s.s
@@ -353,47 +353,47 @@ module Print = struct
     | SStmtError -> Pla.string "<error>"
     | SStmtVal (d, None) ->
       let d = dexp d in
-      [%pla {|val <#d#>;|}]
+      {%pla|val <#d#>;|}
     | SStmtVal (d, Some e) ->
       let d = dexp d in
       let e = exp e in
-      [%pla {|val <#d#> = <#e#>;|}]
+      {%pla|val <#d#> = <#e#>;|}
     | SStmtMem (d, None, tags) ->
       let d = dexp d in
       let tags = stags tags in
-      [%pla {|mem <#d#><#tags#>;|}]
+      {%pla|mem <#d#><#tags#>;|}
     | SStmtMem (d, Some e, tags) ->
       let d = dexp d in
       let e = exp e in
       let tags = stags tags in
-      [%pla {|mem <#d#><#tags#> = <#e#>;|}]
+      {%pla|mem <#d#><#tags#> = <#e#>;|}
     | SStmtBind (l, e) ->
       let l = lexp l in
       let e = exp e in
-      [%pla {|<#l#> = <#e#>;|}]
+      {%pla|<#l#> = <#e#>;|}
     | SStmtReturn e ->
       let e = exp e in
-      [%pla {|return <#e#>;|}]
+      {%pla|return <#e#>;|}
     | SStmtBlock stmts ->
       let stmts = Pla.map_sep_all Pla.newline stmt stmts in
-      [%pla {| {<#stmts#+>}|}]
+      {%pla| {<#stmts#+>}|}
     | SStmtIf (cond, then_, None) ->
       let cond = exp cond in
       let then_ = stmt then_ in
-      [%pla {|if (<#cond#>)<#then_#>|}]
+      {%pla|if (<#cond#>)<#then_#>|}
     | SStmtIf (cond, then_, Some else_) ->
       let cond = exp cond in
       let then_ = stmt then_ in
       let else_ = stmt else_ in
-      [%pla {|if (<#cond#>)<#then_#><#>else<#else_#>|}]
+      {%pla|if (<#cond#>)<#then_#><#>else<#else_#>|}
     | SStmtWhile (cond, body) ->
       let cond = exp cond in
       let body = stmt body in
-      [%pla {|while (<#cond#>)<#body#>|}]
+      {%pla|while (<#cond#>)<#body#>|}
     | SStmtIter { id = id, _; value; body } ->
       let value = exp value in
       let body = stmt body in
-      [%pla {|iter (<#id#s>, <#value#>)<#body#>|}]
+      {%pla|iter (<#id#s>, <#value#>)<#body#>|}
     | SStmtMatch { e; cases } ->
       let e = exp e in
       let cases =
@@ -405,7 +405,7 @@ module Print = struct
             {%pla|<#p#> -> <#case#>|})
           cases
       in
-      [%pla {|match (<#e#>) {<#cases#+>}|}]
+      {%pla|match (<#e#>) {<#cases#+>}|}
 
 
   let genera_def name args t tags =
@@ -414,12 +414,12 @@ module Print = struct
       | None -> Pla.unit
       | Some t ->
         let t = type_ t in
-        [%pla {| : <#t#>|}]
+        {%pla| : <#t#>|}
     in
     let args = Pla.map_sep Pla.commaspace arg args in
     let t = retType t in
     let tags = stags tags in
-    [%pla {|<#name#s>(<#args#>)<#t#><#tags#>|}]
+    {%pla|<#name#s>(<#args#>)<#t#><#tags#>|}
 
 
   let rec function_def (def : function_def) body =
@@ -428,12 +428,12 @@ module Print = struct
       | None -> Pla.unit
       | Some (f, body) ->
         let d = function_def f body in
-        [%pla {|<#>and <#d#>|}]
+        {%pla|<#>and <#d#>|}
     in
     let decl = genera_def def.name def.args def.t def.tags in
     let body = stmt body in
     let n = next def.next in
-    [%pla {|<#decl#><#body#><#n#>|}]
+    {%pla|<#decl#><#body#><#n#>|}
 
 
   let ext_def (def : ext_def) = genera_def def.name def.args def.t def.tags
@@ -441,7 +441,7 @@ module Print = struct
   let member (n, t, tags, _) =
     let tags = Ptags.print_tags tags in
     let t = type_ t in
-    [%pla {|val <#n#s> : <#t#><#tags#>|}]
+    {%pla|val <#n#s> : <#t#><#tags#>|}
 
 
   let enum_member (n, _) = Pla.string n
@@ -453,19 +453,19 @@ module Print = struct
     | STopError -> Pla.string "<error>"
     | STopExternal (def, None) ->
       let d = ext_def def in
-      [%pla {|external <#d#>;|}]
+      {%pla|external <#d#>;|}
     | STopExternal (def, Some name) ->
       let d = ext_def def in
-      [%pla {|external <#d#> "<#name#s>";|}]
+      {%pla|external <#d#> "<#name#s>";|}
     | STopFunction (def, body) ->
       let d = function_def def body in
-      [%pla {|fun <#d#>|}]
+      {%pla|fun <#d#>|}
     | STopType { name; members } ->
-      let members = Pla.map_sep_all [%pla {|;<#>|}] member members in
-      [%pla {|type <#name#s> {<#members#+>}|}]
+      let members = Pla.map_sep_all {%pla|;<#>|} member members in
+      {%pla|type <#name#s> {<#members#+>}|}
     | STopEnum { name; members } ->
-      let members = Pla.map_sep [%pla {|;<#>|}] enum_member members in
-      [%pla {|enum <#name#s> {<#members#+>}|}]
+      let members = Pla.map_sep {%pla|;<#>|} enum_member members in
+      {%pla|enum <#name#s> {<#members#+><#>}|}
 
 
   let stmts (s : top_stmt list) = Pla.map_sep_all Pla.newline top_stmt s

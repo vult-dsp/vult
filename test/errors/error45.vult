@@ -1,0 +1,6 @@
+fun foo (x) {
+  match (x) {
+    (1, 2) -> return 0;
+    _ -> return 2;
+  }
+}

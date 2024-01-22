@@ -472,56 +472,56 @@ let rec print_rvalue r =
   | RReal n -> Pla.float n
   | RBool n -> Pla.string (if n then "true" else "false")
   | RString s -> Pla.string_quoted s
-  | RRef (n, s) -> [%pla {|[<#n#i>:<#s#s>]|}]
+  | RRef (n, s) -> {%pla|[<#n#i>:<#s#s>]|}
   | RObject elems ->
     let elems = Pla.map_sep Pla.commaspace print_rvalue (Array.to_list elems) in
-    [%pla {|{ <#elems#> }|}]
+    {%pla|{ <#elems#> }|}
   | RIndex (e, i) ->
     let e = print_rvalue e in
     let i = print_rvalue i in
-    [%pla {|<#e#>[<#i#>]|}]
+    {%pla|<#e#>[<#i#>]|}
   | RCall (i, s, args) ->
     let args = Pla.map_sep Pla.commaspace print_rvalue args in
     let i = f i in
-    [%pla {|<#i#>:<#s#s>(<#args#>)|}]
+    {%pla|<#i#>:<#s#s>(<#args#>)|}
   | RMember (e, i, s) ->
     let e = print_rvalue e in
-    [%pla {|<#e#>.[<#i#i>:<#s#s>]|}]
+    {%pla|<#e#>.[<#i#i>:<#s#s>]|}
   | RTMember (e, i) ->
     let e = print_rvalue e in
-    [%pla {|<#e#>.[<#i#i>]|}]
+    {%pla|<#e#>.[<#i#i>]|}
   | RNot e ->
     let e = print_rvalue e in
-    [%pla {|not(<#e#>)|}]
+    {%pla|not(<#e#>)|}
   | RNeg e ->
     let e = print_rvalue e in
-    [%pla {|(-<#e#>)|}]
+    {%pla|(-<#e#>)|}
   | RIf (cond, then_, else_) ->
     let cond = print_rvalue cond in
     let then_ = print_rvalue then_ in
     let else_ = print_rvalue else_ in
-    [%pla {|(if <#cond#> then <#then_#> else <#else_#>)|}]
+    {%pla|(if <#cond#> then <#then_#> else <#else_#>)|}
   | ROp (op, e1, e2) ->
     let e1 = print_rvalue e1 in
     let e2 = print_rvalue e2 in
     let op = print_op op in
-    [%pla {|<#e1#> <#op#> <#e2#>|}]
+    {%pla|<#e1#> <#op#> <#e2#>|}
 
 
 let rec print_lvalue (l : lvalue) =
   match l.l with
   | LVoid -> Pla.string "_"
-  | LRef (n, s) -> [%pla {|[<#n#i>:<#s#s>]|}]
+  | LRef (n, s) -> {%pla|[<#n#i>:<#s#s>]|}
   | LTuple elems ->
     let elems = Pla.map_sep Pla.commaspace print_lvalue (Array.to_list elems) in
-    [%pla {|{ <#elems#> }|}]
+    {%pla|{ <#elems#> }|}
   | LMember (e, i, s) ->
     let e = print_lvalue e in
-    [%pla {|<#e#>.[<#i#i>:<#s#s>]|}]
+    {%pla|<#e#>.[<#i#i>:<#s#s>]|}
   | LIndex (e, i) ->
     let e = print_lvalue e in
     let i = print_rvalue i in
-    [%pla {|<#e#>[<#i#>]|}]
+    {%pla|<#e#>[<#i#>]|}
 
 
 let rec print_instr (i : instr) =
@@ -529,19 +529,19 @@ let rec print_instr (i : instr) =
   | Store (lvalue, rvalue) ->
     let lvalue = print_lvalue lvalue in
     let rvalue = print_rvalue rvalue in
-    [%pla {|<#lvalue#> <- <#rvalue#>|}]
+    {%pla|<#lvalue#> <- <#rvalue#>|}
   | Return rvalue ->
     let rvalue = print_rvalue rvalue in
-    [%pla {|return <#rvalue#>|}]
+    {%pla|return <#rvalue#>|}
   | If (cond, then_, else_) ->
     let cond = print_rvalue cond in
     let then_ = print_instr_list then_ in
     let else_ = print_instr_list else_ in
-    [%pla {|if <#cond#><#then_#+>else<#else_#+>|}]
+    {%pla|if <#cond#><#then_#+>else<#else_#+>|}
   | While (cond, body) ->
     let cond = print_rvalue cond in
     let body = print_instr_list body in
-    [%pla {|while <#cond#><#body#+>|}]
+    {%pla|while <#cond#><#body#+>|}
 
 
 and print_instr_list stmts = Pla.map_sep_all Pla.newline print_instr stmts
@@ -550,7 +550,7 @@ let print_segment (s : segment) =
   match s with
   | Function { name; body; locals; n_args } ->
     let body = print_instr_list body in
-    [%pla {|function <#name#s> : args = <#n_args#i>, locals = <#locals#i><#body#+>|}]
+    {%pla|function <#name#s> : args = <#n_args#i>, locals = <#locals#i><#body#+>|}
   | External -> Pla.string "external"
   | Constant -> Pla.string "constant"
 
@@ -560,7 +560,7 @@ let print_segments s = Pla.map_sep_all Pla.newline print_segment (Array.to_list 
 let print_table t =
   let f (n, i) =
     let i = f i in
-    [%pla {|<#i#>: <#n#s>|}]
+    {%pla|<#i#>: <#n#s>|}
   in
   let elems = List.sort (fun (_, n1) (_, n2) -> compare n1 n2) (Map.to_list t) in
   Pla.map_sep_all Pla.newline f elems
@@ -569,4 +569,4 @@ let print_table t =
 let print_bytecode b =
   let table = print_table b.table in
   let segments = print_segments b.code in
-  [%pla {|<#table#><#><#segments#>|}]
+  {%pla|<#table#><#><#segments#>|}

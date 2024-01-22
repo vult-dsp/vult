@@ -1,0 +1,4 @@
+The pattern cannot be matched with the input expression because it has different number of elements.
+    1 , 2 -> return 0;
+    3, _, _ -> return 1;
+    ^^^^^^^

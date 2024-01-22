@@ -1,0 +1,4 @@
+The pattern cannot be matched with the input expression because it has different number of elements.
+  match (x, y) {
+    1 -> return 0;
+    ^

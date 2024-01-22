@@ -258,6 +258,9 @@ module IfExpressions = struct
     Mapper.makeExpander
     @@ fun _env state (s : stmt) ->
     match s with
+    (* Convert else if (true) -> else*)
+    | { s = StmtIf (cond, then_, Some { s = StmtIf ({ e = EBool true; _ }, else_, None); _ }); loc } ->
+      reapply state, [ C.sif ~loc cond then_ (Some else_) ]
     | { s = StmtBind (lhs, { e = EIf { cond; then_; else_ }; _ }); loc } ->
       let then_ = { s = StmtBind (lhs, then_); loc } in
       let else_ = { s = StmtBind (lhs, else_); loc } in
@@ -580,6 +583,18 @@ end
 module Simplify = struct
   let evaluate op e1 e2 =
     match e1, e2 with
+    (* boolean *)
+    | e, { e = EBool true; loc; _ } | { e = EBool true; loc; _ }, e -> (
+      match op with
+      | OpLand -> Some e
+      | OpLor -> Some (C.ebool ~loc true)
+      | _ -> None)
+    | e, { e = EBool false; loc; _ } | { e = EBool false; loc; _ }, e -> (
+      match op with
+      | OpLand -> Some (C.ebool ~loc false)
+      | OpLor -> Some e
+      | _ -> None)
+    (* arithmetic *)
     | { e = EReal n1; _ }, { e = EReal n2; _ } -> (
       match op with
       | OpAdd -> Some { e = EReal (n1 +. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
