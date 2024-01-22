@@ -74,6 +74,22 @@ and exp =
   ; loc : Loc.t
   }
 
+type pattern_d =
+  | SPWild
+  | SPBool of bool
+  | SPInt of string
+  | SPReal of string
+  | SPFixed of string
+  | SPString of string
+  | SPEnum of path
+  | SPTuple of pattern list
+  | SPGroup of pattern
+
+and pattern =
+  { p : pattern_d
+  ; loc : Loc.t
+  }
+
 and lexp_d =
   | SLWild
   | SLId of string
@@ -117,6 +133,10 @@ and stmt_d =
       { id : string * Loc.t
       ; value : exp
       ; body : stmt
+      }
+  | SStmtMatch of
+      { e : exp
+      ; cases : (pattern * stmt) list
       }
 
 and stmt =
@@ -259,6 +279,25 @@ module Print = struct
       [%pla {|(<#e#>)|}]
 
 
+  let rec pattern (p : pattern) = pattern_d p.p
+
+  and pattern_d (p : pattern_d) =
+    match p with
+    | SPWild -> Pla.string "_"
+    | SPBool b -> Pla.string (if b then "true" else "false")
+    | SPInt i -> Pla.string i
+    | SPReal f -> Pla.string f
+    | SPFixed f -> Pla.string f
+    | SPString s -> Pla.string_quoted s
+    | SPEnum p -> path p
+    | SPTuple elems ->
+      let elems = Pla.map_sep Pla.commaspace pattern elems in
+      [%pla {|<#elems#>|}]
+    | SPGroup e ->
+      let e = pattern e in
+      [%pla {|(<#e#>)|}]
+
+
   let rec lexp (l : lexp) = lexp_d l.l
 
   and lexp_d (l : lexp_d) =
@@ -355,6 +394,18 @@ module Print = struct
       let value = exp value in
       let body = stmt body in
       [%pla {|iter (<#id#s>, <#value#>)<#body#>|}]
+    | SStmtMatch { e; cases } ->
+      let e = exp e in
+      let cases =
+        Pla.map_sep_all
+          Pla.newline
+          (fun (p, case) ->
+            let case = stmt case in
+            let p = pattern p in
+            {%pla|<#p#> -> <#case#>|})
+          cases
+      in
+      [%pla {|match (<#e#>) {<#cases#+>}|}]
 
 
   let genera_def name args t tags =
@@ -1012,7 +1063,8 @@ module Mapper = struct
             else
               SStmtIter { id = id'; value = value'; body = body' }
           in
-          state, odata)
+          state, odata
+        | _ -> failwith "can't map pattern")
       else
         state, idata
     in

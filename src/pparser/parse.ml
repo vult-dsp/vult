@@ -499,6 +499,66 @@ and exp_led (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
     raise (ParserError message)
 
 
+and pattern (rbp : int) (buffer : Stream.stream) : pattern = prattParser rbp buffer getExpLbp pattern_nud pattern_led
+
+(** Nud function for the Pratt parser *)
+and pattern_nud (buffer : Stream.stream) (token : 'kind token) : pattern =
+  let loc = token.loc in
+  match token.kind, token.value with
+  | WILD, _ -> { p = SPWild; loc }
+  | ID, _ ->
+    let id = token.value in
+    if String.capitalize_ascii id = id then { p = SPEnum { id; n = None; loc }; loc } else failwith "Add error"
+  | LPAREN, _ ->
+    let p = pattern 0 buffer in
+    let _ = Stream.consume buffer RPAREN in
+    { p = SPGroup p; loc }
+  | INT, _ -> { p = SPInt token.value; loc }
+  | REAL, _ -> { p = SPReal token.value; loc }
+  | FIXED, _ -> { p = SPFixed token.value; loc }
+  | STRING, _ -> { p = SPString token.value; loc }
+  | TRUE, _ -> { p = SPBool true; loc }
+  | FALSE, _ -> { p = SPBool false; loc }
+  | _ ->
+    let message = Error.PointedError (token.loc, "Invalid pattern") in
+    raise (ParserError message)
+
+
+and pattern_led (buffer : Stream.stream) (token : 'kind token) (left : pattern) : pattern =
+  match token.kind with
+  | COMMA -> pair_pattern buffer token left
+  | DOT -> pattern_member buffer token left
+  | _ ->
+    let message = Error.PointedError (token.loc, "Invalid pattern") in
+    raise (ParserError message)
+
+
+and pair_pattern (buffer : Stream.stream) (token : 'kind token) (left : pattern) : pattern =
+  let right = pattern (getExpLbp token) buffer in
+  let getElems e =
+    match e.p with
+    | SPTuple elems -> elems
+    | _ -> [ e ]
+  in
+  let elems1 = left |> getElems in
+  let elems2 = right |> getElems in
+  { p = SPTuple (elems1 @ elems2); loc = left.loc }
+
+
+and pattern_member (buffer : Stream.stream) (token : 'kind token) (left : pattern) : pattern =
+  let right = pattern (getExpLbp token) buffer in
+  match right.p with
+  | SPEnum { id; n = None; loc } -> (
+    match left.p with
+    | SPEnum { id = m; n = None; _ } -> { right with p = SPEnum { id; n = Some m; loc } }
+    | _ ->
+      let message = Error.PointedError (token.loc, "Invalid pattern") in
+      raise (ParserError message))
+  | _ ->
+    let message = Error.PointedError (token.loc, "Invalid pattern") in
+    raise (ParserError message)
+
+
 and exp_member (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let right = expression (getExpLbp token) buffer in
   match right.e with
@@ -662,6 +722,26 @@ and stmtIf (buffer : Stream.stream) : stmt =
     let fstm = stmtList buffer in
     { s = SStmtIf (cond, tstm, Some fstm); loc }
   | _ -> { s = SStmtIf (cond, tstm, None); loc }
+
+
+and stmtMatch (buffer : Stream.stream) : stmt =
+  let _ = Stream.consume buffer MATCH in
+  let _ = Stream.consume buffer LPAREN in
+  let e = expression 0 buffer in
+  let _ = Stream.consume buffer RPAREN in
+  let _ = Stream.consume buffer LBRACE in
+  let loc = e.loc in
+  let rec loop cases =
+    let m = pattern 0 buffer in
+    let _ = Stream.consume buffer ARROW in
+    let case = stmtList buffer in
+    match Stream.peek buffer with
+    | RBRACE -> List.rev ((m, case) :: cases)
+    | _ -> loop ((m, case) :: cases)
+  in
+  let cases = loop [] in
+  let _ = Stream.consume buffer RBRACE in
+  { s = SStmtMatch { e; cases }; loc }
 
 
 and typedArgOpt (buffer : Stream.stream) =
@@ -901,6 +981,7 @@ and stmt (buffer : Stream.stream) : stmt =
     | IF -> stmtIf buffer
     | WHILE -> stmtWhile buffer
     | ITER -> stmtIter buffer
+    | MATCH -> stmtMatch buffer
     | _ -> (
       let backup = Stream.backup buffer in
       try stmtBind buffer with

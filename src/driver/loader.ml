@@ -75,6 +75,19 @@ module Dependencies = struct
     | SEEnum p -> path set p
 
 
+  let rec pattern set e =
+    match e.p with
+    | SPWild -> set
+    | SPBool _ -> set
+    | SPInt _ -> set
+    | SPReal _ -> set
+    | SPFixed _ -> set
+    | SPString _ -> set
+    | SPTuple elems -> list pattern set elems
+    | SPGroup e -> pattern set e
+    | SPEnum p -> path set p
+
+
   let rec dexp set d =
     match d.d with
     | SDWild -> set
@@ -118,6 +131,13 @@ module Dependencies = struct
     | SStmtIf (cond, then_, else_) -> option stmt (stmt (exp set cond) then_) else_
     | SStmtWhile (cond, s) -> stmt (exp set cond) s
     | SStmtIter { value; body } -> stmt (exp set value) body
+    | SStmtMatch { e; cases } ->
+      let set = exp set e in
+      let case set (p, case) =
+        let set = pattern set p in
+        stmt set case
+      in
+      list case set cases
 
 
   and top_stmt set s =

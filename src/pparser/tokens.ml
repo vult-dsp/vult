@@ -68,6 +68,8 @@ type token_enum =
   | EXTERNAL
   | LT
   | GT
+  | MATCH
+  | ARROW
 
 type 'kind token =
   { kind : 'kind

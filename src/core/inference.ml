@@ -491,6 +491,25 @@ let makeIterWhile (env : Env.in_func) name id_loc value body loc =
   { s = SStmtBlock [ decl; while_s ]; loc }
 
 
+let makeIfOfMatch e cases =
+  let makeComparison e (p : Syntax.pattern) =
+    match e, p with
+    | _, { p = SPWild; loc } -> Syntax.{ e = SEBool true; loc }
+    | _ -> failwith ""
+  in
+  let if_stmt =
+    List.fold_right
+      (fun (p, case) else_ ->
+        let cond = makeComparison e p in
+        Some Syntax.{ s = SStmtIf (cond, case, else_); loc = cond.loc })
+      cases
+      None
+  in
+  match if_stmt with
+  | None -> failwith ""
+  | Some stmt -> stmt
+
+
 let rec stmt (env : Env.in_func) (return : type_) (s : Syntax.stmt) : Env.in_func * stmt list =
   match s with
   | { s = SStmtError; _ } -> env, []
@@ -540,6 +559,9 @@ let rec stmt (env : Env.in_func) (return : type_) (s : Syntax.stmt) : Env.in_fun
   | { s = SStmtIter { id = name, id_loc; value; body }; loc } ->
     let while_s = makeIterWhile env name id_loc value body loc in
     stmt env return while_s
+  | { s = SStmtMatch { e; cases }; _ } ->
+    let if_stmt = makeIfOfMatch e cases in
+    stmt env return if_stmt
 
 
 and stmt_opt env return s =

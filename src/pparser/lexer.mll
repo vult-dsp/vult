@@ -54,6 +54,7 @@ let keyword_table =
       "false",FALSE;
       "and",AND;
       "external",EXTERNAL;
+      "match",MATCH;
    ] in
    let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
    table
@@ -121,6 +122,8 @@ let kindToString kind =
    | EXTERNAL -> "'external'"
    | LT -> "'<'"
    | GT -> "'>'"
+   | MATCH -> "'MATCH'"
+   | ARROW -> "'->'"
 
 (** Returns a string representation of the token *)
 let tokenToString l =
@@ -175,6 +178,7 @@ rule next_token source = parse
   | ';'         { makeToken source SEMI lexbuf }
   | ','         { makeToken source COMMA lexbuf }
   | '='         { makeToken source EQUAL lexbuf }
+  | "->"        { makeToken source ARROW lexbuf }
   | "||"        { makeToken source OP lexbuf }
   | "!"         { makeToken source OP lexbuf }
   | "&&"        { makeToken source OP lexbuf }
