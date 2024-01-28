@@ -34,7 +34,7 @@ float Sine_process(Sine_process_type& _ctx, float cv, float reset) {
       _ctx.trig = true;
    }
    float phase = Phase_process(_ctx.p, cv, 0.0f);
-   if (phase < float_eps() && _ctx.trig) {
+   if ((phase < float_eps()) && _ctx.trig) {
       _ctx.trig = false;
       Phase_process(_ctx.p, cv, 0.0f);
    }

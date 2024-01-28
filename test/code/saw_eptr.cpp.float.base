@@ -8,7 +8,7 @@ float Saw_eptr_process(Saw_eptr_process_type& _ctx, float cv) {
       _ctx.rate = Util_cvToRate(cv);
    }
    _ctx.phase = 2.0f * _ctx.rate + _ctx.phase;
-   if (_ctx.phase > 1.0f + (- _ctx.rate)) {
+   if (_ctx.phase > (1.0f + (- _ctx.rate))) {
       y = -1.0f + (- _ctx.phase / _ctx.rate) + 1.0f / _ctx.rate + _ctx.phase;
       _ctx.phase = -2.0f + _ctx.phase;
    }

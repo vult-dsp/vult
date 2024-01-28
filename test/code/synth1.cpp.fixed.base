@@ -52,7 +52,7 @@ fix16_t Synth1_process(Synth1_process_type& _ctx, fix16_t input) {
    fix16_t lfo_val = fix_mul(Synth1_lfo(_ctx.inst_17d3d, _ctx.lfo_rate, _ctx.gate), _ctx.lfo_amt);
    fix16_t phase1 = Synth1_phasor(_ctx.inst_2863d, _ctx.pitch, false);
    fix16_t comp = 0x10000 /* 1.000000 */ + (- phase1);
-   bool reset = (- phase1) + _ctx.pre_phase1 > 0x8000 /* 0.500000 */;
+   bool reset = ((- phase1) + _ctx.pre_phase1) > 0x8000 /* 0.500000 */;
    _ctx.pre_phase1 = phase1;
    fix16_t phase2 = Synth1_phasor(_ctx.inst_4863d, fix_mul(0x200000 /* 32.000000 */, Synth1_smooth(_ctx.inst_3dc3d, lfo_val + _ctx.detune)) + _ctx.pitch, reset);
    fix16_t sine = fix_sin(fix_mul(0x6487e /* 6.283185 */, phase2));
@@ -136,7 +136,7 @@ void Synth1_noteOff(Synth1_process_type& _ctx, int32_t note, int32_t channel) {
          }
       }
    }
-   if (found && _ctx.count > 0) {
+   if (found && (_ctx.count > 0)) {
       _ctx.count = -1 + _ctx.count;
    }
    if (_ctx.count > 0) {

@@ -43,7 +43,7 @@ int32_t Monocv_mono_noteOff(Monocv_mono_noteOn_type& _ctx, int32_t n) {
    if (_ctx.count == 0) {
       return _ctx.pre;
    }
-   while (i < 4 && (found == false)) {
+   while ((i < 4) && (found == false)) {
       if (_ctx.notes[static_cast<uint32_t>(i)] == n) {
          pos = i;
          found = true;
@@ -56,7 +56,7 @@ int32_t Monocv_mono_noteOff(Monocv_mono_noteOn_type& _ctx, int32_t n) {
          _ctx.notes[static_cast<uint32_t>(-1 + k)] = _ctx.notes[static_cast<uint32_t>(k)];
          k = 1 + k;
       }
-      if (found && _ctx.count > 0) {
+      if (found && (_ctx.count > 0)) {
          _ctx.count = -1 + _ctx.count;
          _ctx.pre = _ctx.notes[static_cast<uint32_t>(-1 + _ctx.count)];
       }

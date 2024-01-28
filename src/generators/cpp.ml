@@ -105,26 +105,13 @@ let operator (op : Core.Prog.operator) =
   | OpGe -> Pla.string ">="
 
 
-let level (op : Core.Prog.operator) =
-  match op with
-  | OpMul -> 80
-  | OpDiv -> 85
-  | OpMod -> 80
-  | OpAdd -> 75
-  | OpSub -> 70
-  | OpLsh -> 60
-  | OpRsh -> 60
-  | OpLt -> 50
-  | OpLe -> 50
-  | OpGt -> 50
-  | OpGe -> 50
-  | OpEq -> -1
-  | OpNe -> -1
-  | OpBand -> -1
-  | OpBxor -> -1
-  | OpBor -> -1
-  | OpLand -> -1
-  | OpLor -> -1
+let parenthesize outer inner =
+  match outer, inner with
+  | None, _ -> false
+  | Some (OpAdd | OpSub), Some (OpDiv | OpMul) -> false
+  | Some OpAdd, Some OpAdd -> false
+  | Some OpMul, Some OpMul -> false
+  | _ -> true
 
 
 let uoperator (op : Core.Prog.uoperator) =
@@ -133,7 +120,7 @@ let uoperator (op : Core.Prog.uoperator) =
   | UOpNot -> Pla.string "not"
 
 
-let rec print_exp prec (e : exp) =
+let rec print_exp (prec : operator option) (e : exp) =
   match e.e with
   | EUnit -> Pla.string ""
   | EBool v -> Pla.string (if v then "true" else "false")
@@ -167,18 +154,18 @@ let rec print_exp prec (e : exp) =
     let args = Pla.map_sep Pla.commaspace (print_exp prec) args in
     {%pla|<#path#s>(<#args#>)|}
   | EUnOp (op, e) ->
-    let e = print_exp 0 e in
+    let e = print_exp None e in
     let op = uoperator op in
     {%pla|(<#op#> <#e#>)|}
   | EOp (op, e1, e2) ->
-    let current = level op in
-    let se1 = print_exp current e1 in
-    let se2 = print_exp current e2 in
+    let inner = Some op in
+    let se1 = print_exp inner e1 in
+    let se2 = print_exp inner e2 in
     let op = operator op in
-    if (current >= prec && current <> -1) || prec = 0 then
-      {%pla|<#se1#> <#op#> <#se2#>|}
-    else
+    if parenthesize prec inner then
       {%pla|(<#se1#> <#op#> <#se2#>)|}
+    else
+      {%pla|<#se1#> <#op#> <#se2#>|}
   | EIf { cond; then_; else_ } ->
     let cond = print_exp prec cond in
     let then_ = print_exp prec then_ in
@@ -204,7 +191,7 @@ let rec print_lexp e =
     {%pla|<#e#>.<#m#s>|}
   | LIndex { e; index } ->
     let e = print_lexp e in
-    let index = print_exp 0 index in
+    let index = print_exp None index in
     {%pla|<#e#>[static_cast<uint32_t>(<#index#>)]|}
   | _ -> failwith "print_lexp: LTuple not implemented"
 
@@ -291,52 +278,52 @@ let rec print_stmt s =
   (* Special case when initializing an array. Here we declare the variable and not a reference *)
   | StmtDecl ({ d = DId (n, _); t; _ }, Some ({ e = EArray _; _ } as rhs)) ->
     let t = print_decl_alloc (n, t) in
-    let rhs = print_exp 0 rhs in
+    let rhs = print_exp None rhs in
     {%pla|<#t#> = <#rhs#>;|}
   (* Special case for structures. When the structure is the result of a function call we need to declare it *)
   | StmtDecl ({ d = DId (n, _); t = { t = TStruct _; _ } as t; _ }, Some ({ e = ECall _; _ } as rhs)) ->
     let t = print_decl_alloc (n, t) in
-    let rhs = print_exp 0 rhs in
+    let rhs = print_exp None rhs in
     {%pla|<#t#> = <#rhs#>;|}
   (* For other case we use refences in the case of structures and arrays *)
   | StmtDecl ({ d = DId (n, _); t; _ }, Some rhs) ->
     let t = print_decl (n, t) in
-    let rhs = print_exp 0 rhs in
+    let rhs = print_exp None rhs in
     {%pla|<#t#> = <#rhs#>;|}
   | StmtBind ({ l = LWild; _ }, rhs) ->
-    let rhs = print_exp 0 rhs in
+    let rhs = print_exp None rhs in
     {%pla|<#rhs#>;|}
   | StmtBind (lhs, rhs) ->
     let lhs = print_lexp lhs in
-    let rhs = print_exp 0 rhs in
+    let rhs = print_exp None rhs in
     {%pla|<#lhs#> = <#rhs#>;|}
   | StmtReturn e ->
-    let e = print_exp 0 e in
+    let e = print_exp None e in
     {%pla|return <#e#>;|}
   | StmtIf (cond, then_, None) ->
-    let cond = print_exp 0 cond in
+    let cond = print_exp None cond in
     let then_ = print_block then_ in
     {%pla|if (<#cond#>) <#then_#>|}
   | StmtIf (cond, then_, Some else_) ->
-    let cond = print_exp 0 cond in
+    let cond = print_exp None cond in
     let then_ = print_block then_ in
     let else_ = print_block else_ in
     {%pla|if (<#cond#>) <#then_#><#>else <#else_#>|}
   | StmtWhile (cond, stmt) ->
-    let cond = print_exp 0 cond in
+    let cond = print_exp None cond in
     let stmt = print_block stmt in
     {%pla|while (<#cond#>) <#stmt#>|}
   | StmtBlock stmts ->
     let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
     {%pla|{<#stmt#+>}|}
   | StmtSwitch (e, cases, default_case) ->
-    let e = print_exp 0 e in
+    let e = print_exp None e in
     let break = Pla.string "break;" in
     let cases =
       Pla.map_sep_all
         Pla.newline
         (fun (e1, body) ->
-          let e1 = print_exp 0 e1 in
+          let e1 = print_exp None e1 in
           let body = print_stmt body in
           {%pla|case <#e1#>:<#body#+><#break#+>|})
         cases
@@ -428,7 +415,7 @@ let print_top_stmt ~allow_inline (target : target) t =
   | TopAlias _, _ -> Pla.unit
   | TopConstant (name, _, t, rhs), Tables ->
     let t = print_type_ t in
-    let rhs = print_exp 0 rhs in
+    let rhs = print_exp None rhs in
     {%pla|static const <#t#> <#name#s> = <#rhs#+>;<#>|}
   | TopConstant _, _ -> Pla.unit
 

@@ -34,7 +34,7 @@ fix16_t Sine_process(Sine_process_type& _ctx, fix16_t cv, fix16_t reset) {
       _ctx.trig = true;
    }
    fix16_t phase = Phase_process(_ctx.p, cv, 0x0 /* 0.000000 */);
-   if (phase < fix_eps() && _ctx.trig) {
+   if ((phase < fix_eps()) && _ctx.trig) {
       _ctx.trig = false;
       Phase_process(_ctx.p, cv, 0x0 /* 0.000000 */);
    }

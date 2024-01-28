@@ -25,7 +25,7 @@ float Ad_do(Ad_do_type& _ctx, float gate, float a, float d) {
       _ctx.target = 0.0f;
    }
    if (_ctx.state == 1) {
-      if ((bgate == false) || _ctx.out > 1024.0f) {
+      if ((bgate == false) || (_ctx.out > 1024.0f)) {
          _ctx.state = 0;
       }
       _ctx.rate = a_rate;

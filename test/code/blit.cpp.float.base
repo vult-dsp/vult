@@ -81,7 +81,7 @@ float Blit_osc_blit(Blit_osc_blit_type& _ctx, float cv, float pw, float wave) {
    float pulse1 = Blit_pulse_train(_ctx.inst_35e26, fixed_cv, phase);
    float pulse2 = Blit_pulse_train(_ctx.inst_45e26, fixed_cv, shift);
    _ctx.state_pulse = pulse1 + (- pulse2) + 0.9995f * _ctx.state_pulse;
-   _ctx.state_saw = 0.5f * (pulse1 + pulse2 + -2.0f * _ctx.rate) / shift05 + 0.9995f * _ctx.state_saw;
+   _ctx.state_saw = 0.5f * ((pulse1 + pulse2 + -2.0f * _ctx.rate) / shift05) + 0.9995f * _ctx.state_saw;
    if (wave < 1.0f) {
       _ctx.output = _ctx.state_pulse;
    }
