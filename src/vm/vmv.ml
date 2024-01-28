@@ -62,11 +62,12 @@ let rec print_value r : Pla.t =
 module type VM = sig
   type t
 
-  val newVM : Compile.bytecode -> t
+  val newVM : Compile.bytecode -> (t -> Compile.rvalue -> t * rvalue) -> t
   val code : t -> int -> Compile.segment
   val push : t -> rvalue -> t
   val pop : t -> t * rvalue
   val loadRef : t -> int -> rvalue
+  val loadConst : t -> int -> rvalue
   val storeRef : t -> int -> rvalue -> t
   val storeRefObject : t -> int -> int list -> rvalue -> t
   val allocate : t -> int -> t
@@ -83,10 +84,27 @@ module Mutable : VM = struct
     ; mutable frame : int
     ; table : Compile.f Map.t
     ; code : Compile.segment array
+    ; constants : rvalue array
     }
 
-  let newVM (compiled : Compile.bytecode) =
-    { stack = Array.init 1024 (fun _ -> Void); sp = -1; frame = 0; table = compiled.table; code = compiled.code }
+  let newVM (compiled : Compile.bytecode) eval =
+    let vm =
+      { stack = Array.init 1024 (fun _ -> Void)
+      ; sp = -1
+      ; frame = 0
+      ; table = compiled.table
+      ; code = compiled.code
+      ; constants = [||]
+      }
+    in
+    (* evaluate the constans one by one and put them in the VM *)
+    List.fold_left
+      (fun vm constant ->
+        let vm, constant = eval vm constant in
+        let constants = Array.append vm.constants [| constant |] in
+        { vm with constants })
+      vm
+      compiled.constants
 
 
   let code (vm : t) i = vm.code.(i)
@@ -104,6 +122,7 @@ module Mutable : VM = struct
 
 
   let loadRef (vm : t) (n : int) : rvalue = vm.stack.(vm.frame + n)
+  let loadConst (vm : t) (n : int) : rvalue = vm.constants.(n)
 
   let storeRef (vm : t) (n : int) (v : rvalue) : t =
     vm.stack.(vm.frame + n) <- v;

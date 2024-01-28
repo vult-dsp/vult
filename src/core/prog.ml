@@ -168,7 +168,7 @@ type top_stmt_d =
       { path : string
       ; alias_of : string
       }
-  | TopDecl of dexp * exp
+  | TopConstant of string * int option * type_ * exp
 
 and top_stmt =
   { top : top_stmt_d
@@ -393,10 +393,14 @@ module Print = struct
       let members = Pla.map_sep_all Pla.newline print_member members in
       {%pla|struct <#p#s> {<#members#+>}<#>|}
     | TopAlias { path = p; alias_of } -> {%pla|type <#p#s> = <#alias_of#s><#>|}
-    | TopDecl (d, e) ->
-      let d = print_dexp d in
+    | TopConstant (path, dim, _, e) ->
       let e = print_exp e in
-      {%pla|constant <#d#> = <#e#><#>|}
+      let dim =
+        match dim with
+        | None -> Pla.unit
+        | Some dim -> {%pla|[<#dim#i>]|}
+      in
+      {%pla|constant <#path#s><#dim#> = <#e#><#>|}
 
 
   let print_prog t = Pla.map_sep_all Pla.newline print_top_stmt t

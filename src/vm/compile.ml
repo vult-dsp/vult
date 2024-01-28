@@ -59,13 +59,6 @@ type f =
   | F of int
   | B of builtin
 
-type env =
-  { functions : f Map.t
-  ; locals : int Map.t
-  ; lcount : int
-  ; fcount : int
-  }
-
 let functions =
   [ "set", B Set
   ; "get", B Get
@@ -98,9 +91,6 @@ let functions =
   |> Map.of_list
 
 
-let default_env = { locals = Map.empty; lcount = 0; functions; fcount = 0 }
-let addLocal env name = { env with locals = Map.add name env.lcount env.locals; lcount = env.lcount + 1 }
-
 type op =
   | OpAdd
   | OpSub
@@ -121,7 +111,7 @@ type op =
   | OpGt
   | OpGe
 
-type rvalue_d =
+and rvalue =
   | RVoid
   | RInt of int
   | RReal of float
@@ -137,37 +127,22 @@ type rvalue_d =
   | RTMember of rvalue * int
   | RCall of f * string * rvalue list
   | RIndex of rvalue * rvalue
+  | RConst of int * string
 
-and rvalue =
-  { r : rvalue_d
-  ; loc : Loc.t
-  }
-
-type lvalue_d =
+and lvalue =
   | LVoid
   | LRef of int * string
   | LTuple of lvalue array
   | LMember of lvalue * int * string
   | LIndex of lvalue * rvalue
 
-and lvalue =
-  { l : lvalue_d
-  ; loc : Loc.t
-  }
-
-type instr_d =
+type instr =
   | Store of lvalue * rvalue
   | Return of rvalue
   | If of rvalue * instr list * instr list
   | While of rvalue * instr list
 
-and instr =
-  { i : instr_d
-  ; loc : Loc.t
-  }
-
 type segment =
-  | Constant (* not yet supported here *)
   | External
   | Function of
       { name : string
@@ -181,7 +156,31 @@ type segments = segment array
 type bytecode =
   { table : f Map.t
   ; code : segments
+  ; constants : rvalue list
   }
+
+type constants =
+  { n : int
+  ; c : (rvalue * int) Map.t
+  }
+
+type env =
+  { functions : f Map.t
+  ; locals : int Map.t
+  ; constants : constants
+  ; lcount : int
+  ; fcount : int
+  }
+
+let default_env = { locals = Map.empty; constants = { n = 0; c = Map.empty }; lcount = 0; functions; fcount = 0 }
+let addLocal env name = { env with locals = Map.add name env.lcount env.locals; lcount = env.lcount + 1 }
+
+let addConstant env name value =
+  let n = env.constants.n in
+  let c = Map.add name (value, n) env.constants.c in
+  let constants = { n = n + 1; c } in
+  { env with constants }
+
 
 let list f (env : 'env) (l : 'e) =
   let env, i_rev =
@@ -218,90 +217,88 @@ let compile_dexp (env : env) d =
 
 
 let rec compile_lexp (env : env) (l : lexp) : lvalue =
-  let loc = l.loc in
   match l.l with
-  | LWild -> { l = LVoid; loc }
+  | LWild -> LVoid
   | LId name ->
     let index =
       match Map.find_opt name env.locals with
       | Some index -> index
       | None -> failwith name
     in
-    { l = LRef (index, name); loc }
+    LRef (index, name)
   | LTuple l ->
     let l = List.map (compile_lexp env) l |> Array.of_list in
-    { l = LTuple l; loc }
+    LTuple l
   | LMember (e, s) -> (
     match e.t.t with
     | TStruct descr ->
       let index = getIndex s descr.members in
       let e = compile_lexp env e in
-      { l = LMember (e, index, s); loc }
+      LMember (e, index, s)
     | _ -> failwith "type error")
   | LIndex { e; index } ->
     let e = compile_lexp env e in
     let index = compile_exp env index in
-    { l = LIndex (e, index); loc }
+    LIndex (e, index)
 
 
 and compile_exp (env : env) e : rvalue =
-  let loc = e.loc in
   match e.e with
-  | EUnit -> { r = RVoid; loc }
-  | EBool v -> { r = RBool v; loc }
-  | EInt v -> { r = RInt v; loc }
-  | EReal v -> { r = RReal v; loc }
-  | EFixed v -> { r = RReal v; loc }
-  | EString v -> { r = RString v; loc }
-  | EId id ->
-    let index =
-      match Map.find_opt id env.locals with
-      | Some index -> index
-      | None -> failwith ("The variable cannot be found. This should have been catched during type checking: " ^ id)
-    in
-    { r = RRef (index, id); loc }
+  | EUnit -> RVoid
+  | EBool v -> RBool v
+  | EInt v -> RInt v
+  | EReal v -> RReal v
+  | EFixed v -> RReal v
+  | EString v -> RString v
+  | EId id -> (
+    match Map.find_opt id env.locals with
+    | Some index -> RRef (index, id)
+    | None -> (
+      match Map.find_opt id env.constants.c with
+      | Some (_, index) -> RConst (index, id)
+      | None -> failwith ("The variable cannot be found. This should have been catched during type checking: " ^ id)))
   | EOp (op, e1, e2) ->
     let e1 = compile_exp env e1 in
     let e2 = compile_exp env e2 in
-    { r = makeOp op e1 e2; loc }
+    makeOp op e1 e2
   | EIndex { e; index } ->
     let e1 = compile_exp env e in
     let e2 = compile_exp env index in
-    { r = RIndex (e1, e2); loc }
+    RIndex (e1, e2)
   | EUnOp (UOpNeg, e) ->
     let e = compile_exp env e in
-    { r = RNeg e; loc }
+    RNeg e
   | EUnOp (UOpNot, e) ->
     let e = compile_exp env e in
-    { r = RNot e; loc }
+    RNot e
   | EIf { cond; then_; else_ } ->
     let cond = compile_exp env cond in
     let then_ = compile_exp env then_ in
     let else_ = compile_exp env else_ in
-    { r = RIf (cond, then_, else_); loc }
+    RIf (cond, then_, else_)
   | ETuple elems ->
     let elems = List.map (compile_exp env) elems in
-    { r = RObject (Array.of_list elems); loc }
+    RObject (Array.of_list elems)
   | EArray elems ->
     let elems = List.map (compile_exp env) elems in
-    { r = RObject (Array.of_list elems); loc }
+    RObject (Array.of_list elems)
   | EMember (e, m) -> (
     match e.t.t with
     | TStruct descr ->
       let index = getIndex m descr.members in
       let e = compile_exp env e in
-      { r = RMember (e, index, m); loc }
+      RMember (e, index, m)
     | _ -> failwith "type error")
   | ETMember (e, index) ->
     let e = compile_exp env e in
-    { r = RTMember (e, index); loc }
+    RTMember (e, index)
   | ECall { path; args } -> (
     let args = List.map (compile_exp env) args in
     match Map.find_opt path env.functions with
-    | Some index -> { r = RCall (index, path, args); loc }
+    | Some index -> RCall (index, path, args)
     | None ->
       (* print_endline ("Function not found " ^ path); *)
-      { r = RVoid; loc })
+      RVoid)
 
 
 and makeOp op e1 e2 =
@@ -327,7 +324,6 @@ and makeOp op e1 e2 =
 
 
 let rec compile_stmt (env : env) (stmt : stmt) =
-  let loc = stmt.loc in
   match stmt.s with
   | StmtDecl (lhs, None) ->
     let env = compile_dexp env lhs in
@@ -336,14 +332,14 @@ let rec compile_stmt (env : env) (stmt : stmt) =
     let env = compile_dexp env lhs in
     let lhs = compile_lexp env (C.lid ~loc name t) in
     let rhs = compile_exp env rhs in
-    env, [ { i = Store (lhs, rhs); loc = stmt.loc } ]
+    env, [ Store (lhs, rhs) ]
   | StmtBind (lhs, rhs) ->
     let lhs = compile_lexp env lhs in
     let rhs = compile_exp env rhs in
-    env, [ { i = Store (lhs, rhs); loc } ]
+    env, [ Store (lhs, rhs) ]
   | StmtReturn e ->
     let e = compile_exp env e in
-    env, [ { i = Return e; loc } ]
+    env, [ Return e ]
   | StmtBlock stmts ->
     let env, instr = list compile_stmt env stmts in
     env, instr
@@ -351,15 +347,15 @@ let rec compile_stmt (env : env) (stmt : stmt) =
     let cond = compile_exp env cond in
     let env, then_ = compile_stmt env then_ in
     let env, else_ = compile_stmt env else_ in
-    env, [ { i = If (cond, then_, else_); loc } ]
+    env, [ If (cond, then_, else_) ]
   | StmtIf (cond, then_, None) ->
     let cond = compile_exp env cond in
     let env, then_ = compile_stmt env then_ in
-    env, [ { i = If (cond, then_, []); loc } ]
+    env, [ If (cond, then_, []) ]
   | StmtWhile (cond, body) ->
     let cond = compile_exp env cond in
     let env, body = compile_stmt env body in
-    env, [ { i = While (cond, body); loc } ]
+    env, [ While (cond, body) ]
   | StmtSwitch (e, cases, default) ->
     let e = compile_exp env e in
     let env, default =
@@ -370,9 +366,9 @@ let rec compile_stmt (env : env) (stmt : stmt) =
     List.fold_left
       (fun (env, else_) (case, stmt) ->
         let case = compile_exp env case in
-        let comp = { r = makeOp OpEq e case; loc } in
+        let comp = makeOp OpEq e case in
         let env, stmt = compile_stmt env stmt in
-        let if_ = [ { i = If (comp, stmt, else_); loc } ] in
+        let if_ = [ If (comp, stmt, else_) ] in
         env, if_)
       (env, default)
       (List.rev cases)
@@ -396,12 +392,15 @@ let compile_top (env : env) (s : top_stmt) =
   | TopFunction ({ name; args; _ }, body) ->
     let index = env.fcount in
     let functions = Map.add name (F index) env.functions in
-    let env = { locals = Map.empty; lcount = 0; functions; fcount = env.fcount + 1 } in
+    let env = { env with locals = Map.empty; lcount = 0; functions; fcount = env.fcount + 1 } in
     let env = List.fold_left (fun env (n, _, _) -> addLocal env n) env args in
     let env, body = compile_stmt env body in
     let n_args = List.length args in
     env, [ Function { name; body; locals = env.lcount - n_args; n_args } ]
-  | TopDecl _ -> env, [ Constant ]
+  | TopConstant (name, _, _, e) ->
+    let e = compile_exp env e in
+    let env = addConstant env name e in
+    env, []
 
 
 let compile stmts : env * segment list = list compile_top default_env stmts
@@ -466,7 +465,7 @@ let f f =
 
 
 let rec print_rvalue r =
-  match r.r with
+  match r with
   | RVoid -> Pla.string "()"
   | RInt n -> Pla.int n
   | RReal n -> Pla.float n
@@ -506,10 +505,11 @@ let rec print_rvalue r =
     let e2 = print_rvalue e2 in
     let op = print_op op in
     {%pla|<#e1#> <#op#> <#e2#>|}
+  | RConst (n, s) -> {%pla|[<#n#i>::<#s#s>]|}
 
 
 let rec print_lvalue (l : lvalue) =
-  match l.l with
+  match l with
   | LVoid -> Pla.string "_"
   | LRef (n, s) -> {%pla|[<#n#i>:<#s#s>]|}
   | LTuple elems ->
@@ -525,7 +525,7 @@ let rec print_lvalue (l : lvalue) =
 
 
 let rec print_instr (i : instr) =
-  match i.i with
+  match i with
   | Store (lvalue, rvalue) ->
     let lvalue = print_lvalue lvalue in
     let rvalue = print_rvalue rvalue in
@@ -552,7 +552,6 @@ let print_segment (s : segment) =
     let body = print_instr_list body in
     {%pla|function <#name#s> : args = <#n_args#i>, locals = <#locals#i><#body#+>|}
   | External -> Pla.string "external"
-  | Constant -> Pla.string "constant"
 
 
 let print_segments s = Pla.map_sep_all Pla.newline print_segment (Array.to_list s)

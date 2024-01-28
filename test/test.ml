@@ -206,6 +206,7 @@ let all_files =
   ; "features/Waves.vult"
   ; "features/SaveState.vult"
   ; "features/Match.vult"
+  ; "features/Constants.vult"
   ; "../test/compile/defined_types.vult"
   ; "../test/compile/array_defined_type.vult"
   ; "../test/compile/array_return.vult"

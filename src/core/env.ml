@@ -74,6 +74,7 @@ type var_kind =
   | Mem of Pparser.Ptags.tags
   | Inst
   | Val
+  | Const
 
 type path = Typed.path
 
@@ -115,6 +116,7 @@ type m =
   ; types : t Map.t
   ; mutable init : (path * path) list
   ; enums : t Map.t
+  ; mutable constants : var Map.t
   }
 
 type in_top =
@@ -229,12 +231,40 @@ let lookVar (env : in_func) (name : string) (loc : Loc.t) : var =
   | None -> (
     match lookVarInScopes env.f.locals name with
     | Some found -> found
-    | None -> Error.raiseError ("The variable '" ^ name ^ "' could not be found") loc)
+    | None -> (
+      match Map.find name env.m.constants with
+      | Some var -> var
+      | None -> Error.raiseError ("The variable '" ^ name ^ "' could not be found") loc))
+
+
+let lookConstant (env : in_module) (name : string) (loc : Loc.t) : var =
+  match Map.find name env.m.constants with
+  | None -> Error.raiseError ("A constant with the name '" ^ name ^ "' could not be found") loc
+  | Some var -> var
 
 
 let reportModuleNotFound n loc = Error.raiseError ("The module named '" ^ n ^ "' could not be found") loc
 
 let lookEnum (env : in_func) (path : path) (loc : Loc.t) =
+  let error () = Error.raiseError ("An enumeration with the name '" ^ pathString path ^ "' could not be found") loc in
+  let findEnumInModule enums id =
+    match Map.find id enums with
+    | Some ({ descr = Enum members; _ } as t) -> (
+      match Map.find id members with
+      | Some (_, index, _) -> t.path, t.loc, index
+      | None -> error ())
+    | _ -> error ()
+  in
+  match path with
+  | { id; n = None; _ } -> findEnumInModule env.m.enums id
+  | { id; n = Some n; loc } -> (
+    match Map.find n env.top.modules with
+    | Some m -> findEnumInModule m.enums id
+    | None -> reportModuleNotFound n loc)
+
+
+(* TODO: this function is exactly the same as lookEnum. Refactor to use the same code. *)
+let lookEnumInModule (env : in_module) (path : path) (loc : Loc.t) =
   let error () = Error.raiseError ("An enumeration with the name '" ^ pathString path ^ "' could not be found") loc in
   let findEnumInModule enums id =
     match Map.find id enums with
@@ -273,6 +303,12 @@ let lookFunctionCall (env : in_func) (path : path) (loc : Loc.t) : f =
 
 
 let lookOperator (env : in_func) (op : string) : f =
+  match Map.find op env.top.builtin_functions with
+  | Some found -> makeFunctionForBuiltin op (found ())
+  | None -> failwith ("operator not found " ^ op)
+
+
+let lookOperatorInModule (env : in_module) (op : string) : f =
   match Map.find op env.top.builtin_functions with
   | Some found -> makeFunctionForBuiltin op (found ())
   | None -> failwith ("operator not found " ^ op)
@@ -319,6 +355,16 @@ let lookTypeInModule (env : in_module) (path : path) (loc : Loc.t) : t =
     match Map.find id env.m.types with
     | Some _ as found -> reportNotFound found
     | None -> reportNotFound (Map.find id env.top.builtin_types))
+
+
+let addConstant (env : in_module) _unify (name : string) (t : Typed.type_) loc : in_module =
+  let report (found : var) =
+    Error.raiseError
+      ("A constant with the name '" ^ found.name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
+      loc
+  in
+  Map.update report name { name; t; kind = Const; tags = []; loc } env.m.constants;
+  env
 
 
 let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_kind) loc : in_func =
@@ -382,6 +428,7 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
     | h :: _ ->
       Map.update report name { name; t; kind; tags = []; loc } h;
       env)
+  | Const, _ -> failwith "Do not use to add constants"
   | _, Some _ -> failwith "Not a record"
 
 
@@ -591,7 +638,15 @@ let enterModule (env : in_top) (name : string) : in_module =
   | Some m -> { top = env; m }
   | None ->
     let report _ = failwith ("duplicate module: " ^ name) in
-    let m : m = { name; functions = Map.empty (); types = Map.empty (); enums = Map.empty (); init = [] } in
+    let m : m =
+      { name
+      ; functions = Map.empty ()
+      ; types = Map.empty ()
+      ; enums = Map.empty ()
+      ; init = []
+      ; constants = Map.empty ()
+      }
+    in
     let () = Map.update report name m env.modules in
     { top = env; m }
 

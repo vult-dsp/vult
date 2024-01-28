@@ -1031,6 +1031,16 @@ and stmtList (buffer : Stream.stream) : stmt =
     { s = SStmtBlock [ s ]; loc = s.loc }
 
 
+and stmtConstant (buffer : Stream.stream) : top_stmt =
+  let loc = Stream.location buffer in
+  let _ = Stream.consume buffer CONSTANT in
+  let lhs = dexp_expression 0 buffer in
+  let _ = Stream.consume buffer EQUAL in
+  let rhs = expression 0 buffer in
+  let _ = Stream.consume buffer SEMI in
+  { top = STopConstant (lhs, rhs); loc }
+
+
 and topStmt (buffer : Stream.stream) : top_stmt =
   try
     match Stream.peek buffer with
@@ -1038,6 +1048,7 @@ and topStmt (buffer : Stream.stream) : top_stmt =
     | TYPE -> stmtType buffer
     | EXTERNAL -> stmtExternal buffer
     | ENUM -> stmtEnum buffer
+    | CONSTANT -> stmtConstant buffer
     | _ ->
       let message = Printf.sprintf "Expecting a function or type declaration" in
       raise (ParserError (Stream.makeError buffer message))

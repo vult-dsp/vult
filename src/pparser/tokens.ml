@@ -70,6 +70,7 @@ type token_enum =
   | GT
   | MATCH
   | ARROW
+  | CONSTANT
 
 type 'kind token =
   { kind : 'kind

@@ -426,12 +426,11 @@ let print_top_stmt ~allow_inline (target : target) t =
   | TopAlias { path; alias_of }, Header -> {%pla|typedef struct <#alias_of#s> <#path#s>;<#><#>|}
   | TopType _, _ -> Pla.unit
   | TopAlias _, _ -> Pla.unit
-  | TopDecl (lhs, rhs), Tables ->
-    let t = print_type_ lhs.t in
-    let lhs = print_dexp lhs in
+  | TopConstant (name, _, t, rhs), Tables ->
+    let t = print_type_ t in
     let rhs = print_exp 0 rhs in
-    {%pla|static const <#t#> <#lhs#> = <#rhs#+>;<#>|}
-  | TopDecl _, _ -> Pla.unit
+    {%pla|static const <#t#> <#name#s> = <#rhs#+>;<#>|}
+  | TopConstant _, _ -> Pla.unit
 
 
 let print_prog ~allow_inline target t = Pla.map_join (print_top_stmt ~allow_inline target) t

@@ -55,6 +55,7 @@ let keyword_table =
       "and",AND;
       "external",EXTERNAL;
       "match",MATCH;
+      "constant",CONSTANT;
    ] in
    let _ = List.iter (fun (a,b) -> Hashtbl.add table a b) keywords in
    table
@@ -124,6 +125,7 @@ let kindToString kind =
    | GT -> "'>'"
    | MATCH -> "'MATCH'"
    | ARROW -> "'->'"
+   | CONSTANT -> "'constant'"
 
 (** Returns a string representation of the token *)
 let tokenToString l =

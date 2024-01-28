@@ -321,7 +321,7 @@ let top_stmt (context : context) (top : Core.Prog.top_stmt) : top_stmt option =
   | { top = TopExternal (def, name); loc } ->
     let def = function_def context def in
     Some { top = TopExternal (def, name); loc }
-  | { top = TopDecl (d, e); loc } -> Some { top = TopDecl (d, e); loc }
+  | { top = TopConstant (path, dims, t, e); loc } -> Some { top = TopConstant (path, dims, t, e); loc }
 
 
 let registerExternalNames (stmts : Core.Prog.top_stmt list) =

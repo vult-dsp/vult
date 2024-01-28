@@ -71,6 +71,7 @@ type exp_d =
   | EFixed of float
   | EString of string
   | EId of string
+  | EConst of path
   | EIndex of
       { e : exp
       ; index : exp
@@ -165,6 +166,7 @@ type top_stmt_d =
       { path : path
       ; members : (string * Loc.t) list
       }
+  | TopConstant of path * int option * type_ * exp
 
 and top_stmt =
   { top : top_stmt_d
@@ -196,6 +198,7 @@ let rec print_exp e =
   | EFixed n -> {%pla|<#n#f>x]|}
   | EString s -> Pla.string_quoted s
   | EId id -> Pla.string id
+  | EConst p -> print_path p
   | EIndex { e; index } ->
     let e = print_exp e in
     let index = print_exp index in
@@ -348,6 +351,15 @@ let print_top_stmt t =
     let p = print_path p in
     let members = Pla.map_sep {%pla|,<#>|} print_enum_member members in
     {%pla|enum <#p#> {<#members#+><#>}<#>|}
+  | TopConstant (path, dim, _, e) ->
+    let path = print_path path in
+    let e = print_exp e in
+    let dim =
+      match dim with
+      | None -> Pla.unit
+      | Some dim -> {%pla|[<#dim#i>]|}
+    in
+    {%pla|constant <#path#><#dim#> = <#e#>|}
 
 
 let print_prog prog = Pla.map_sep_all Pla.newline print_top_stmt prog
@@ -355,7 +367,7 @@ let print_prog prog = Pla.map_sep_all Pla.newline print_top_stmt prog
 module C = struct
   let tick = ref 0
   let makeId loc id = { tx = TEId { id; n = None; loc }; loc }
-  let path loc path = { tx = TEId path; loc }
+  let path_t loc path = { tx = TEId path; loc }
 
   let unbound loc =
     incr tick;

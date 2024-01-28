@@ -302,11 +302,19 @@ module LiteralArrays = struct
     | _ -> env
 
 
+  let top_stmt_env =
+    Mapper.makeEnv
+    @@ fun env (s : top_stmt) ->
+    match s with
+    | { top = TopConstant (_, _, _, { e = EArray _; _ }); _ } -> { env with bound_array = true }
+    | _ -> env
+
+
   let exp =
     Mapper.make
     @@ fun env state (e : exp) ->
     match e with
-    (* Bind if-expressions to a variable *)
+    (* Bind arrays to a variable *)
     | { e = EArray _; t; loc } when (not env.in_if_exp) && not env.bound_array ->
       let tick = getTick env state in
       let temp = "_array_" ^ string_of_int tick in
@@ -318,7 +326,8 @@ module LiteralArrays = struct
     | _ -> state, e
 
 
-  let mapper enabled = if enabled = Enabled then { Mapper.identity with exp; stmt_env } else Mapper.identity
+  let mapper enabled =
+    if enabled = Enabled then { Mapper.identity with exp; stmt_env; top_stmt_env } else Mapper.identity
 end
 
 module Tuples = struct
@@ -674,7 +683,7 @@ module Sort = struct
     | ({ top = TopFunction ({ name; _ }, _); _ } as h) :: t ->
       split types ((name, h) :: functions) externals constants t
     | ({ top = TopExternal _; _ } as h) :: t -> split types functions (h :: externals) constants t
-    | ({ top = TopDecl _; _ } as h) :: t -> split types functions externals (h :: constants) t
+    | ({ top = TopConstant _; _ } as h) :: t -> split types functions externals (h :: constants) t
 
 
   let rec sort deps table visited sorted stmts =
@@ -684,7 +693,7 @@ module Sort = struct
     | { top = TopAlias { path = name; _ }; _ } :: t
     | { top = TopFunction ({ name; _ }, _); _ } :: t
     | { top = TopExternal ({ name; _ }, _); _ } :: t
-    | { top = TopDecl ({ d = DId (name, _); _ }, _); _ } :: t ->
+    | { top = TopConstant (name, _, _, _); _ } :: t ->
       let visited, sorted = pullIn deps table visited sorted name in
       sort deps table visited sorted t
 

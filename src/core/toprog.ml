@@ -152,6 +152,9 @@ let rec exp (env : Env.in_top) (state : state) (e : Typed.exp) =
   | EFixed n -> state, { e = EFixed n; t; loc }
   | EString s -> state, { e = EString s; t; loc }
   | EId id -> state, { e = EId id; t; loc }
+  | EConst id ->
+    let id = path id in
+    state, { e = EId id; t; loc }
   | EIndex { e; index } ->
     let state, e = exp env state e in
     let state, index = exp env state index in
@@ -339,6 +342,11 @@ let top_stmt (env : Env.in_top) (state : state) (t : Typed.top_stmt) =
     let p = path p in
     let alias_of = path alias_of in
     state, [ { top = TopAlias { path = p; alias_of }; loc = t.loc } ]
+  | TopConstant (p, dim, t, e) ->
+    let p = path p in
+    let state, e = exp env state e in
+    let state, t = type_ env state t in
+    state, [ { top = TopConstant (p, dim, t, e); loc = t.loc } ]
 
 
 let top_stmt_list (env : Env.in_top) (state : state) (t : Typed.top_stmt list) = list top_stmt env state t

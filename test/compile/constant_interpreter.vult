@@ -1,0 +1,5 @@
+constant num = [1, 2, 3];
+
+fun foo(x:int) : int @[table(min = 0, max = 2)] {
+  return num[x] + 1;
+}

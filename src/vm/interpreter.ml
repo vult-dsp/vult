@@ -24,6 +24,7 @@
 open Core
 open Prog
 open Vmv
+open Util.Maps
 
 module MakeVM (VM : VM) = struct
   let pushValues (vm : VM.t) (args : rvalue list) : VM.t = List.fold_left (fun vm v -> VM.push vm v) vm args
@@ -114,7 +115,7 @@ module MakeVM (VM : VM) = struct
 
 
   let rec eval_rvalue (vm : VM.t) (r : Compile.rvalue) : VM.t * rvalue =
-    match r.r with
+    match r with
     | RVoid -> vm, Void
     | RInt n -> vm, Int n
     | RReal n -> vm, Real n
@@ -156,6 +157,7 @@ module MakeVM (VM : VM) = struct
       match e with
       | Object elems -> vm, elems.(index)
       | _ -> failwith "member: not a struct")
+    | RConst (i, _) -> vm, VM.loadConst vm i
 
 
   and eval_rvalue_list vm a =
@@ -171,7 +173,7 @@ module MakeVM (VM : VM) = struct
 
 
   and eval_lvalue (vm : VM.t) (l : Compile.lvalue) : VM.t * lvalue =
-    match l.l with
+    match l with
     | LVoid -> vm, LVoid
     | LRef (n, _) -> vm, LRef n
     | LTuple elems ->
@@ -198,8 +200,7 @@ module MakeVM (VM : VM) = struct
         let vm, ret = VM.pop vm in
         let vm = VM.restoreFrame vm frame in
         vm, ret
-      | External -> failwith "The interpreter cannot evaluate external functions"
-      | Constant -> failwith "The interpreter does not have support for constants yet")
+      | External -> failwith "The interpreter cannot evaluate external functions")
     | B f -> (
       match f, args with
       | Pi, [] -> vm, Real Float.pi
@@ -282,11 +283,11 @@ module MakeVM (VM : VM) = struct
     in
     match instr with
     | [] -> vm
-    | ({ i = Return e; _ } as h) :: _ ->
+    | (Return e as h) :: _ ->
       trace vm h;
       let vm, e = eval_rvalue vm e in
       VM.push vm e
-    | ({ i = If (cond, then_, else_); _ } as h) :: t ->
+    | (If (cond, then_, else_) as h) :: t ->
       trace vm h;
       let vm, cond = eval_rvalue vm cond in
       if isTrue cond then (
@@ -295,7 +296,7 @@ module MakeVM (VM : VM) = struct
       else (
         let vm = eval_instr vm else_ in
         eval_instr vm t)
-    | ({ i = While (cond, body); _ } as h) :: t ->
+    | (While (cond, body) as h) :: t ->
       trace vm h;
       let rec loop vm =
         let vm, result = eval_rvalue vm cond in
@@ -306,7 +307,7 @@ module MakeVM (VM : VM) = struct
           eval_instr vm t
       in
       loop vm
-    | ({ i = Store (l, r); _ } as h) :: t ->
+    | (Store (l, r) as h) :: t ->
       trace vm h;
       let vm, l = eval_lvalue vm l in
       let vm, r = eval_rvalue vm r in
@@ -351,9 +352,14 @@ module VMV = MakeVM (Mutable)
 
 type bytecode = Compile.bytecode
 
+let getConstants (env : Compile.env) =
+  Map.to_list env.constants.c |> List.map snd |> List.sort (fun (_, a) (_, b) -> compare a b) |> List.map fst
+
+
 let compile stmts : bytecode =
   let env, segments = Compile.compile stmts in
-  Compile.{ table = env.functions; code = Array.of_list segments }
+  let constants = getConstants env in
+  Compile.{ table = env.functions; code = Array.of_list segments; constants }
 
 
 let main_path = "Main___main__type"
@@ -397,8 +403,9 @@ let createArgument stmts =
 
 let createVm prog =
   let env, segments = Compile.compile prog in
-  let bytecode = Compile.{ table = env.functions; code = Array.of_list segments } in
-  VMV.newVM bytecode, bytecode
+  let constants = getConstants env in
+  let bytecode = Compile.{ table = env.functions; code = Array.of_list segments; constants } in
+  VMV.newVM bytecode VMV.eval_rvalue, bytecode
 
 
 let callFunction vm name args =
@@ -417,7 +424,7 @@ let run (iargs : Util.Args.args) (env : Env.in_top) (prog : top_stmt list) (exp 
   let env, main = Inference.infer_single iargs env e in
   let _, main = Toprog.convert iargs env main in
   let bytecode = compile (prog @ main) in
-  let vm = VMV.newVM bytecode in
+  let vm = VMV.newVM bytecode VMV.eval_rvalue in
   let findex = VMV.findSegment vm "Main___main_" in
   let args = createArgument main in
   let _, result = VMV.eval_call vm findex args in

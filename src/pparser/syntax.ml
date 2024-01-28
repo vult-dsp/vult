@@ -173,6 +173,7 @@ type top_stmt_d =
       { name : string
       ; members : (string * Loc.t) list
       }
+  | STopConstant of dexp * exp
 
 and top_stmt =
   { top : top_stmt_d
@@ -466,6 +467,10 @@ module Print = struct
     | STopEnum { name; members } ->
       let members = Pla.map_sep {%pla|;<#>|} enum_member members in
       {%pla|enum <#name#s> {<#members#+><#>}|}
+    | STopConstant (d, e) ->
+      let d = dexp d in
+      let e = exp e in
+      {%pla|constant <#d#> = <#e#>;|}
 
 
   let stmts (s : top_stmt list) = Pla.map_sep_all Pla.newline top_stmt s
@@ -1172,6 +1177,16 @@ module Mapper = struct
               idata
             else
               STopEnum { name = name'; members = members' }
+          in
+          state, odata
+        | STopConstant (d, e) ->
+          let state, d' = map_dexp mapper context state d in
+          let state, e' = map_exp mapper context state e in
+          let odata =
+            if d == d' && e == e' then
+              idata
+            else
+              STopConstant (d', e')
           in
           state, odata)
       else

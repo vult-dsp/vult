@@ -1,0 +1,12 @@
+
+constant str = "hello";
+
+constant num = 1;
+
+constant some_array = [1, 2, 3, 4];
+
+fun foo() {
+  val i = num;
+  val s = str;
+  val x = some_array[0];
+}

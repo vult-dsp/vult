@@ -199,10 +199,10 @@ let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
   if Env.isFunctionActive f then (
     let cpath = Env.getContext env in
     let fpath = Env.getFunctionContext f in
-    let ctx_t = C.path loc cpath in
+    let ctx_t = C.path_t loc cpath in
     match Syntax.compare_path cpath fpath, instance with
     | 0, None ->
-      let t = C.path loc fpath in
+      let t = C.path_t loc fpath in
       let e = { e = EId context_name; t; loc } in
       env, e :: args
     | 0, Some _ ->
@@ -220,13 +220,13 @@ let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
       in
       let n = Env.getFunctionTick env in
       let name = "inst_" ^ string_of_int n ^ number in
-      let t = C.path loc fpath in
+      let t = C.path_t loc fpath in
       let env = Env.addVar env unify name t Inst loc in
       let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); loc; t } in
       env, e :: args
     (* intance without subscripts *)
     | _, Some (name, None) ->
-      let t = C.path loc fpath in
+      let t = C.path_t loc fpath in
       let env = Env.addVar env unify name t Inst loc in
       let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); loc; t } in
       env, e :: args
@@ -234,7 +234,7 @@ let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
     | _, Some (name, Some index) ->
       let env, index = exp env index in
       unifyRaise index.loc (C.int ~loc:Loc.default) index.t;
-      let et = C.path loc fpath in
+      let et = C.path_t loc fpath in
       let t = C.array ~loc et in
       let env = Env.addVar env unify name t Inst loc in
       let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); loc; t = et } in
@@ -269,9 +269,10 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     let e =
       match var.kind with
       | Val -> { e = EId name; t; loc }
+      | Const -> { e = EConst { id = name; n = Some env.m.name; loc }; t; loc }
       | Mem _ | Inst ->
         let ctx = Env.getContext env in
-        let ctx_t = C.path loc ctx in
+        let ctx_t = C.path_t loc ctx in
         { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); t; loc }
     in
     env, e
@@ -347,7 +348,7 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
       Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
   | { e = SEEnum path; loc } ->
     let type_path, tloc, index = Env.lookEnum env path loc in
-    let t = C.path tloc type_path in
+    let t = C.path_t tloc type_path in
     env, { e = EInt index; t; loc }
 
 
@@ -376,8 +377,9 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
       | Val -> { l = LId name; t; loc }
       | Mem _ | Inst ->
         let ctx = Env.getContext env in
-        let ctx_t = C.path loc ctx in
+        let ctx_t = C.path_t loc ctx in
         { l = LMember ({ l = LId context_name; t = ctx_t; loc }, name); t; loc }
+      | Const -> Error.raiseError ("The constant '" ^ name ^ "' cannot be assigned") loc
     in
     env, e
   | { l = SLGroup e; _ } -> lexp env e
@@ -720,7 +722,7 @@ let getContextArgument (context : Env.context) loc : arg option =
     if Map.is_empty members then
       None
     else (
-      let ctx_t = C.path loc p in
+      let ctx_t = C.path_t loc p in
       Some (context_name, ctx_t, loc))
   | _ -> None
 
@@ -738,6 +740,125 @@ let insertContextArgument (env : Env.in_context) (def : function_def) : function
     in
     let next = loop def.next in
     { def with args = arg :: def.args; next }
+
+
+let top_dexp (env : Env.in_module) (d : Syntax.dexp) =
+  match d with
+  | { d = SDId (name, dims); loc } ->
+    let t =
+      match dims with
+      | Some size -> C.array ~loc ~size:(C.size ~loc size) (C.unbound loc)
+      | None -> C.unbound loc
+    in
+    (*let env = Env.addVar env unify name t kind loc in*)
+    env, { d = DId (name, dims); t; loc }
+  | _ -> failwith "invalid constant"
+
+
+let rec top_exp (env : Env.in_module) (e : Syntax.exp) : Env.in_module * exp =
+  match e with
+  | { e = SEBool value; loc } ->
+    let t = C.bool ~loc in
+    env, { e = EBool value; t; loc }
+  | { e = SEInt value; loc } ->
+    let t = C.int ~loc in
+    env, { e = EInt (int_of_string value); t; loc }
+  | { e = SEReal value; loc } ->
+    let t = C.real ~loc in
+    env, { e = EReal (float_of_string value); t; loc }
+  | { e = SEFixed value; loc } ->
+    let t = C.fix16 ~loc in
+    let value = String.sub value 0 (String.length value - 1) in
+    env, { e = EFixed (float_of_string value); t; loc }
+  | { e = SEString value; loc } ->
+    let t = C.string ~loc in
+    env, { e = EString value; t; loc }
+  | { e = SEGroup e; _ } -> top_exp env e
+  | { e = SEId name; loc } ->
+    let var = Env.lookConstant env name loc in
+    let t = var.t in
+    let e = { e = EId name; t; loc } in
+    env, e
+  | { e = SEIndex { e; index }; loc } ->
+    let env, e = top_exp env e in
+    let env, index = top_exp env index in
+    let t = C.unbound Loc.default in
+    unifyRaise e.loc (C.array ~fixed:false t) e.t;
+    unifyRaise index.loc (C.int ~loc:Loc.default) index.t;
+    env, { e = EIndex { e; index }; t; loc }
+  | { e = SEArray []; loc } -> Error.raiseError "Empty arrays are not supported." loc
+  | { e = SEArray (h :: t); loc } ->
+    let env, h = top_exp env h in
+    let env, t_rev, size =
+      List.fold_left
+        (fun (env, acc, size) e ->
+          let env, e = top_exp env e in
+          unifyRaise e.loc h.t e.t;
+          env, e :: acc, size + 1)
+        (env, [], 1)
+        t
+    in
+    let t = C.array ~size:(C.size ~loc size) h.t in
+    env, { e = EArray (h :: List.rev t_rev); t; loc }
+  | { e = SETuple l; loc } ->
+    let env, l = top_exp_list env l in
+    let t = C.tuple ~loc (List.map (fun (e : exp) -> e.t) l) in
+    env, { e = ETuple l; t; loc }
+  | { e = SEIf { cond; then_; else_ }; loc } ->
+    let env, cond = top_exp env cond in
+    let env, then_ = top_exp env then_ in
+    let env, else_ = top_exp env else_ in
+    let t = then_.t in
+    unifyRaise cond.loc (C.bool ~loc) cond.t;
+    unifyRaise else_.loc then_.t else_.t;
+    env, { e = EIf { cond; then_; else_ }; t; loc }
+  | { e = SECall _; loc } -> Error.raiseError "Function calls are currently not supported in constants." loc
+  | { e = SEOp (op, e1, e2); loc } ->
+    let env, e1 = top_exp env e1 in
+    let env, e2 = top_exp env e2 in
+    let f = Env.lookOperatorInModule env op in
+    let args_t, ret = f.t in
+    let t = applyFunction e.loc args_t ret [ e1; e2 ] in
+    env, { e = EOp (op, e1, e2); t; loc }
+  | { e = SEUnOp (op, e); loc } ->
+    let env, e = top_exp env e in
+    let f = Env.lookOperatorInModule env ("u" ^ op) in
+    let args_t, ret = f.t in
+    let t = applyFunction e.loc args_t ret [ e ] in
+    env, { e = EUnOp (op, e); t; loc }
+  | { e = SEMember (e, m); loc } -> (
+    let env, e = top_exp env e in
+    match (unlink e.t).tx with
+    | TEId path -> (
+      match Env.lookTypeInModule env path loc with
+      | { path; descr = Record members; _ } -> (
+        match Map.find m members with
+        | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
+        | Some { t; _ } -> env, { e = EMember (e, m); t; loc })
+      | _ ->
+        let t = Pla.print (Typed.print_type_ e.t) in
+        let e = Pla.print (Typed.print_exp e) in
+        Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
+    | _ ->
+      let t = Pla.print (Typed.print_type_ e.t) in
+      let e = Pla.print (Typed.print_exp e) in
+      Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
+  | { e = SEEnum path; loc } ->
+    let type_path, tloc, index = Env.lookEnumInModule env path loc in
+    let t = C.path_t tloc type_path in
+    env, { e = EInt index; t; loc }
+
+
+and top_exp_list (env : Env.in_module) (l : Syntax.exp list) : Env.in_module * exp list =
+  let env, rev_l =
+    List.fold_left
+      (fun (env, acc) e ->
+        let env, e = top_exp env e in
+        env, e :: acc)
+      (env, [])
+      l
+  in
+  env, List.rev rev_l
 
 
 let rec top_stmt (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt) : Env.in_module * top_stmt =
@@ -764,6 +885,14 @@ let rec top_stmt (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt)
     let env = Env.addEnum env name members loc in
     let path = Env.getPath env.m name loc in
     env, { top = TopEnum { path; members }; loc }
+  | { top = STopConstant (({ d = SDId (name, dim); _ } as d), e); loc } ->
+    let env, d = top_dexp env d in
+    let env, e = top_exp env e in
+    unifyRaise e.loc d.t e.t;
+    let path = Env.getPath env.m name loc in
+    let env = Env.addConstant env unify name d.t loc in
+    env, { top = TopConstant (path, dim, d.t, e); loc }
+  | { top = STopConstant _; _ } -> failwith ""
 
 
 and top_stmt_list (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt list) : Env.in_module * top_stmt list =

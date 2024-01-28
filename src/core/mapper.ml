@@ -434,10 +434,10 @@ let top_stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) 
     applyExpander mapper.top_stmt env state { top = TopType descr; loc }
   | { top = TopAlias { path; alias_of }; _ } ->
     applyExpander mapper.top_stmt env state { top = TopAlias { path; alias_of }; loc }
-  | { top = TopDecl (d, e); _ } ->
-    let state, e = exp mapper env state e in
-    let state, d = dexp mapper env state d in
-    applyExpander mapper.top_stmt env state { top = TopDecl (d, e); loc }
+  | { top = TopConstant (path, dim, t, e); _ } ->
+    let state, e = exp mapper sub_env state e in
+    let state, t = type_ mapper sub_env state t in
+    applyExpander mapper.top_stmt env state { top = TopConstant (path, dim, t, e); loc }
 
 
 let prog (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (p : prog) : 'data state * prog =

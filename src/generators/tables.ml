@@ -40,7 +40,7 @@ let makeRealTableDecl loc fname name precision data =
   let size = List.length data in
   let t = makeArrayType precision size in
   let elems = CCList.map (makeFloat precision) data in
-  { top = TopDecl (C.did ~size:(Some size) varname t, C.earray elems t); loc }
+  { top = TopConstant (varname, Some size, t, C.earray elems t); loc }
 
 
 let makeIntTableDecl loc fname name data =
@@ -48,7 +48,7 @@ let makeIntTableDecl loc fname name data =
   let size = List.length data in
   let t = makeArrayType C.int_t size in
   let elems = CCList.map C.eint data in
-  { top = TopDecl (C.did ~size:(Some size) varname t, C.earray elems t); loc }
+  { top = TopConstant (varname, Some size, t, C.earray elems t); loc }
 
 
 let generateRawAccessFunction loc full_name c t =

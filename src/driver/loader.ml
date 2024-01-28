@@ -147,6 +147,7 @@ module Dependencies = struct
     | STopFunction (def, body) -> function_def set (def, body)
     | STopType { members } -> list (fun set (_, t, _, _) -> type_ set t) set members
     | STopEnum _ -> set
+    | STopConstant (d, e) -> exp (dexp set d) e
 
 
   let get s = Set.to_list (list top_stmt Set.empty s)
