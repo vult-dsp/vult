@@ -777,8 +777,7 @@ let rec top_exp (env : Env.in_module) (e : Syntax.exp) : Env.in_module * exp =
   | { e = SEId name; loc } ->
     let var = Env.lookConstant env name loc in
     let t = var.t in
-    let e = { e = EId name; t; loc } in
-    env, e
+    env, { e = EConst { id = name; n = Some env.m.name; loc }; t; loc }
   | { e = SEIndex { e; index }; loc } ->
     let env, e = top_exp env e in
     let env, index = top_exp env index in

@@ -22,7 +22,7 @@ function intDiv(a, b)       return math.floor(a / b) end
 
 local Constants_str = "hello"
 local Constants_num = 1
-local Constants_some_array = {1, 2, 3, 4}
+local Constants_some_array = {Constants_num, 2, 3, 4}
 function Constants_foo()
    local i = Constants_num
    local s = Constants_str

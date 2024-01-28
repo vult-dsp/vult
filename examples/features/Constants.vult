@@ -3,7 +3,7 @@ constant str = "hello";
 
 constant num = 1;
 
-constant some_array = [1, 2, 3, 4];
+constant some_array = [num, 2, 3, 4];
 
 fun foo() {
   val i = num;
