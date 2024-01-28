@@ -43,6 +43,9 @@ static_inline int32_t Match_foo3(int32_t x) {
          return 2;
          break;
 
+      default:
+         return 0;
+         break;
    }
 }
 

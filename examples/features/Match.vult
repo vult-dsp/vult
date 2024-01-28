@@ -27,10 +27,11 @@ fun foo2 (x, y) {
   }
 }
 
-// match works fine with enumerations
+// match works fine with enumerations. It needs a default case because C++ cannot detect that if all cases are covered.
 fun foo3(x) {
   match (x) {
     One -> return 1;
     Two -> return 2;
+    _ -> return 0;
   }
 }
