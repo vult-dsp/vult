@@ -72,7 +72,7 @@ let generateCode args file_deps (stmts, vm, acc) =
     acc
 
 
-let compileCode (args : args) env stmts : Prog.top_stmt list * Vm.Vmv.Mutable.t * output list =
+let compileCode (args : args) env stmts : Prog.top_stmt list * Vm.Interpreter.t * output list =
   let env, stmts = Toprog.convert args env stmts in
   let stmts = Util.Profile.time "Passes" (fun () -> Passes.run args stmts) in
   let prog_out = if args.dprog then [ Prog (Pla.print (Prog.Print.print_prog stmts)) ] else [] in

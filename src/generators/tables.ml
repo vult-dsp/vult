@@ -100,15 +100,15 @@ let rec fitDataOrder2 data index acc0 acc1 acc2 =
     fitDataOrder2 data (index - 1) (c0 :: acc0) (c1 :: acc1) (c2 :: acc2))
 
 
-let getRealResult (x : Vmv.rvalue) =
+let getRealResult (x : Compile.rvalue) =
   match x with
-  | Real y -> y
+  | RReal y -> y
   | _ -> failwith "Function returned an unexpected type. This should not happen."
 
 
-let getIntResult (x : Vmv.rvalue) =
+let getIntResult (x : Compile.rvalue) =
   match x with
-  | Int y -> y
+  | RInt y -> y
   | _ -> failwith "Function returned an unexpected type. This should not happen."
 
 
@@ -117,7 +117,7 @@ let calculateIntRealTables loc vm name min max precision =
   let data =
     List.init (size + 1) (fun i ->
       let x = min + i in
-      getRealResult (Interpreter.callFunction vm name Vmv.[ Int x ]))
+      getRealResult (Interpreter.callFunction vm name [ RInt x ]))
   in
   [ makeRealTableDecl loc name "table" precision data ]
 
@@ -127,7 +127,7 @@ let calculateIntIntTables loc vm name min max =
   let data =
     List.init (size + 1) (fun i ->
       let x = min + i in
-      getIntResult (Interpreter.callFunction vm name Vmv.[ Int x ]))
+      getIntResult (Interpreter.callFunction vm name [ RInt x ]))
   in
   [ makeIntTableDecl loc name "table" data ]
 
@@ -138,7 +138,7 @@ let calculateTablesOrder1 loc vm name size min max precision =
   let data =
     Array.init (size + 1) (fun i ->
       let x = map_x (float_of_int i) in
-      x, getRealResult (Interpreter.callFunction vm name Vmv.[ Real x ]))
+      x, getRealResult (Interpreter.callFunction vm name [ RReal x ]))
   in
   let acc0, acc1 = fitDataOrder1 data (size - 1) [] [] in
   [ makeRealTableDecl loc name "c0" precision acc0; makeRealTableDecl loc name "c1" precision acc1 ]
@@ -152,7 +152,7 @@ let calculateTablesOrder2 loc vm name size min max precision =
       ((size * 2) + 2)
       (fun i ->
         let x = map_x (float_of_int i /. 2.0) in
-        x, getRealResult (Interpreter.callFunction vm name Vmv.[ Real x ]))
+        x, getRealResult (Interpreter.callFunction vm name [ RReal x ]))
   in
   let acc0, acc1, acc2 = fitDataOrder2 data (size - 1) [] [] [] in
   [ makeRealTableDecl loc name "c0" precision acc0

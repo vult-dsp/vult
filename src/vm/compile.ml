@@ -156,7 +156,7 @@ type segments = segment array
 type bytecode =
   { table : f Map.t
   ; code : segments
-  ; constants : rvalue list
+  ; constants : rvalue array
   }
 
 type constants =

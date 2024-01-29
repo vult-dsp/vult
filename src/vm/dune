@@ -1,6 +1,6 @@
 (library
  (name vm)
- (modules Interpreter Compile Vmv)
+ (modules Interpreter Compile)
  (libraries core util pparser pla)
  (flags
   (:standard -w -30))
