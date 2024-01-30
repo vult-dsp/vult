@@ -43,7 +43,13 @@ and struct_descr =
   }
 
 and member = string * type_ * tags * Loc.t
-and param = string * type_ * Loc.t
+
+and param =
+  { name : string
+  ; t : type_
+  ; const : bool
+  ; loc : Loc.t
+  }
 
 and type_ =
   { t : type_d_
@@ -350,9 +356,11 @@ module Print = struct
       {%pla|match (<#cond#>) {<#stmt#+>}|}
 
 
-  let print_arg (n, t, _) =
-    let t = print_type_ t in
-    {%pla|<#n#s> : <#t#>|}
+  let print_arg (p : param) =
+    let n = p.name in
+    let t = print_type_ p.t in
+    let c = if p.const then Pla.string "const " else Pla.unit in
+    {%pla|<#c#><#n#s> : <#t#>|}
 
 
   let print_function_def kind (def : function_def) =
@@ -448,6 +456,7 @@ module C = struct
   let swhile ?(loc = Loc.default) cond body = { s = StmtWhile (cond, body); loc }
   let sreturn ?(loc = Loc.default) e = { s = StmtReturn e; loc }
   let sswitch ?(loc = Loc.default) e cases default = { s = StmtSwitch (e, cases, default); loc }
+  let param ?(loc = Loc.default) ?(const = false) name t = { name; t; const; loc }
 end
 
 module Compare = struct

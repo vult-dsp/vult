@@ -164,7 +164,7 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
     in
     let custom_initializer = customInitializerCall custom_initializers struct_t.path ectx void_type loc in
     let body = { s = StmtBlock (stmts @ custom_initializer); loc } in
-    let args, t = [ "_ctx", this_type, loc ], ([ this_type ], void_type) in
+    let args, t = [ { name = "_ctx"; t = this_type; const = false; loc } ], ([ this_type ], void_type) in
     { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
   (* Initialization of alias c-style *)
   | { top = TopAlias { path; alias_of }; loc } when cstyle = RefObject ->
@@ -176,7 +176,7 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
     in
     let bind = { s = StmtBind ({ l = LWild; loc; t = void_type }, call); loc } in
     let body = { s = StmtBlock [ bind ]; loc } in
-    let args, t = [ "_ctx", this_type, loc ], ([ this_type ], void_type) in
+    let args, t = [ { name = "_ctx"; t = this_type; const = false; loc } ], ([ this_type ], void_type) in
     { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
   (* Generate initializers that return a value *)
   | { top = TopType struct_t; loc } ->
@@ -205,7 +205,7 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
     let void_type = { t = TVoid None; loc = Loc.default } in
     let call = { e = ECall { path = alias_of ^ "_alloc"; args = [] }; loc; t = void_type } in
     let body = { s = StmtReturn call; loc } in
-    let args, t = [ "_ctx", this_type, loc ], ([], this_type) in
+    let args, t = [ { name = "_ctx"; t = this_type; const = false; loc } ], ([], this_type) in
     { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
   | _ ->
     print_endline (Pla.print (Prog.Print.print_top_stmt stmt));

@@ -6,7 +6,7 @@
 #include "array_dimension.tables.h"
 
 template<std::size_t SIZE_0>
-static_inline fix16_t Array_dimension_total(std::array<fix16_t, SIZE_0>& data) {
+static_inline fix16_t Array_dimension_total(const std::array<fix16_t, SIZE_0>& data) {
    fix16_t acc = 0x0 /* 0.000000 */;
    int32_t i__1 = 0;
    while (i__1 < data.size()) {
@@ -17,7 +17,7 @@ static_inline fix16_t Array_dimension_total(std::array<fix16_t, SIZE_0>& data) {
 }
 
 template<std::size_t SIZE_0, std::size_t SIZE_1>
-static_inline fix16_t Array_dimension_sum(std::array<fix16_t, SIZE_0>& data1, std::array<fix16_t, SIZE_1>& data2) {
+static_inline fix16_t Array_dimension_sum(const std::array<fix16_t, SIZE_0>& data1, const std::array<fix16_t, SIZE_1>& data2) {
    fix16_t acc = 0x0 /* 0.000000 */;
    int32_t i__1 = 0;
    while (i__1 < data1.size()) {

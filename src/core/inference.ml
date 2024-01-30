@@ -371,6 +371,7 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
     env, { l = LWild; t; loc }
   | { l = SLId name; loc } ->
     let var = Env.lookVar env name loc in
+    var.const <- false;
     let t = var.t in
     let e =
       match var.kind with

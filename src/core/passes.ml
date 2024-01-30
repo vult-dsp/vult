@@ -69,7 +69,7 @@ let reapply (state : data Mapper.state) =
 let currentFunction env =
   match env.current_function with
   | None -> failwith "not in a function"
-  | Some { name; args = (ctx, t, _) :: _; _ } -> name, ctx, t
+  | Some { name; args = { name = ctx; t; _ } :: _; _ } -> name, ctx, t
   | Some _ -> failwith "function has no context"
 
 

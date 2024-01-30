@@ -34,7 +34,7 @@ fun Context_simple_foo_type_alloc() : struct Context_simple_foo_type {
    return (_ctx : struct Context_simple_foo_type);
 }
 
-fun Context_simple_change(_ctx : struct Context_simple_change_type, x : real) : bool {
+fun Context_simple_change(_ctx : struct Context_simple_change_type, const x : real) : bool {
    val ret : bool;
    (ret : bool) = ((x : real) <> (_ctx : struct Context_simple_change_type).pre);
    (_ctx : struct Context_simple_change_type).pre = (x : real);
@@ -45,11 +45,11 @@ fun Context_simple_reset(_ctx : struct Context_simple_change_type) : void {
    (_ctx : struct Context_simple_change_type).pre = 0.0;
 }
 
-fun Context_simple_set(_ctx : struct Context_simple_change_type, x : real) : void {
+fun Context_simple_set(_ctx : struct Context_simple_change_type, const x : real) : void {
    (_ctx : struct Context_simple_change_type).pre = (x : real);
 }
 
-fun Context_simple_foo(_ctx : struct Context_simple_foo_type, x : real) : void {
+fun Context_simple_foo(_ctx : struct Context_simple_foo_type, const x : real) : void {
    val v1 : bool;
    (v1 : bool) = (Context_simple_change((_ctx : struct Context_simple_foo_type).inst_1e8dd, (x : real)) : bool);
    val v2 : bool;

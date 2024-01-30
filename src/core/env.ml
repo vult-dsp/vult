@@ -83,6 +83,7 @@ type var =
   ; t : Typed.type_
   ; kind : var_kind
   ; tags : Pparser.Ptags.tags
+  ; mutable const : bool
   ; loc : Loc.t
   }
 
@@ -363,7 +364,7 @@ let addConstant (env : in_module) _unify (name : string) (t : Typed.type_) loc :
       ("A constant with the name '" ^ found.name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
       loc
   in
-  Map.update report name { name; t; kind = Const; tags = []; loc } env.m.constants;
+  Map.update report name { name; t; kind = Const; tags = []; loc; const = true } env.m.constants;
   env
 
 
@@ -406,11 +407,11 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
   match kind, env.f.context with
   | Inst, Some (_, { descr = Record members; _ }) ->
     let () = checkDuplicatedVal env.f.locals name in
-    Map.update report_mem name { name; t; kind; tags = []; loc } members;
+    Map.update report_mem name { name; t; kind; tags = []; loc; const = false } members;
     env
   | Mem tags, Some (_, { descr = Record members; _ }) ->
     let () = checkDuplicatedVal env.f.locals name in
-    Map.update report_mem name { name; t; kind; tags; loc } members;
+    Map.update report_mem name { name; t; kind; tags; loc; const = false } members;
     env
   | (Mem _ | Inst), None -> failwith "Internal error: cannot add mem to functions with no context"
   | Val, context -> (
@@ -426,7 +427,7 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
     match env.f.locals with
     | [] -> failwith "no local scope"
     | h :: _ ->
-      Map.update report name { name; t; kind; tags = []; loc } h;
+      Map.update report name { name; t; kind; tags = []; loc; const = false } h;
       env)
   | Const, _ -> failwith "Do not use to add constants"
   | _, Some _ -> failwith "Not a record"
@@ -436,7 +437,7 @@ let addReturnVar (env : in_context) (name : string) (t : Typed.type_) loc : in_c
   let report_mem found _ = found in
   match env.context with
   | Some (_, { descr = Record members; _ }) ->
-    Map.update report_mem name { name; t; kind = Mem []; tags = []; loc } members;
+    Map.update report_mem name { name; t; kind = Mem []; tags = []; loc; const = false } members;
     env
   | None -> failwith "Internal error: cannot add mem to functions with no context"
   | Some _ -> failwith "Not a record"
@@ -465,7 +466,7 @@ let registerArguments (args : (string * Typed.type_ * Loc.t) list) =
   let rev_args =
     List.fold_left
       (fun acc (name, t, loc) ->
-        let () = Map.update (report loc) name { name; t; kind = Val; tags = []; loc } locals in
+        let () = Map.update (report loc) name { name; t; kind = Val; tags = []; loc; const = true } locals in
         t :: acc)
       []
       args
@@ -513,7 +514,7 @@ let addRecordMember members =
   let members =
     List.fold_left
       (fun m (name, t, tags, loc) ->
-        Map.update (report loc) name { name; t; kind = Val; tags; loc } m;
+        Map.update (report loc) name { name; t; kind = Val; tags; loc; const = false } m;
         m)
       (Map.empty ())
       members

@@ -315,7 +315,7 @@ let createSerializer table (stmt : top_stmt) =
         { s = StmtBlock ([ start_decl; start_bind; push_block_header ] @ member_stmts @ [ update_size; return ]); loc }
       in
       let args, t =
-        ( [ "buffer", buffer_type, loc; "index", C.int_t, loc; "_ctx", this_type, loc ]
+        ( [ C.param ~loc "buffer" buffer_type; C.param ~loc "index" C.int_t; C.param ~loc ~const:true "_ctx" this_type ]
         , ([ buffer_type; C.int_t; this_type ], C.int_t) )
       in
       Some { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc })
@@ -336,7 +336,7 @@ let createSerializer table (stmt : top_stmt) =
       in
       let body = { s = StmtBlock [ call_serializer ]; loc } in
       let args, t =
-        ( [ "buffer", buffer_type, loc; "index", C.int_t, loc; "_ctx", this_type, loc ]
+        ( [ C.param ~loc "buffer" buffer_type; C.param ~loc "index" C.int_t; C.param ~loc ~const:true "_ctx" this_type ]
         , ([ buffer_type; C.int_t; this_type ], C.int_t) )
       in
       Some { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc })
@@ -467,10 +467,10 @@ let createDeserializer table (stmt : top_stmt) =
       let field_decl = { s = StmtDecl ({ d = DId ("field_index", None); t = C.int_t; loc }, None); loc } in
       let body = { s = StmtBlock ([ field_decl ] @ member_stmts); loc } in
       let args, t =
-        ( [ "buffer", buffer_type, loc
-          ; "type_descr", typedescr_type, loc
-          ; "index", C.int_t, loc
-          ; "_ctx", this_type, loc
+        ( [ C.param ~loc "buffer" buffer_type
+          ; C.param ~loc "type_descr" typedescr_type
+          ; C.param ~loc "index" C.int_t
+          ; C.param ~loc "_ctx" this_type
           ]
         , ([ buffer_type; C.int_t; this_type ], C.void_t) )
       in
@@ -544,7 +544,7 @@ let createTypeDescriptor n_types table (stmt : top_stmt) =
       in
       let body = C.sblock ([ shortcut; mark_me ] @ call_deps @ [ return ]) in
       let args, t =
-        ( [ "buffer", buffer_type, loc; "index", C.int_t, loc; "marks", marks_type, loc ]
+        ( [ C.param ~loc "buffer" buffer_type; C.param ~loc "index" C.int_t; C.param ~loc "marks" marks_type ]
         , ([ buffer_type; C.int_t ], C.int_t) )
       in
       Some { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc })

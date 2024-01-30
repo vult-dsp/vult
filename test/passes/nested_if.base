@@ -1,4 +1,4 @@
-fun Nested_if_foo(a : int, b : int, c : int) : int {
+fun Nested_if_foo(const a : int, const b : int, const c : int) : int {
    val x : int;
    {
       val _if_temp_0 : int;

@@ -215,7 +215,7 @@ int32_t push_float(CustomBuffer &buffer, int32_t index, float value);
 
 int32_t push_int(CustomBuffer &buffer, int32_t index, int32_t value);
 
-int32_t push_string(CustomBuffer &buffer, int32_t index, std::string &str);
+int32_t push_string(CustomBuffer &buffer, int32_t index, const std::string &str);
 
 int32_t push_array(CustomBuffer &buffer, int32_t index, int32_t size);
 
@@ -256,7 +256,7 @@ int32_t first_array_element(CustomBuffer &buffer, int32_t index);
 template <std::size_t SIZE, typename DATA>
 void serialize_data(CustomBuffer &buffer,
                     int32_t (*serialize_type_descr_function)(CustomBuffer &, int32_t, std::array<bool, SIZE> &),
-                    int32_t (*serialize_data_function)(CustomBuffer &, int32_t, DATA &), DATA &data) {
+                    int32_t (*serialize_data_function)(CustomBuffer &, int32_t, const DATA &), const DATA &data) {
   buffer.data.resize(0);
   // First we run the serializer without actually attaching data.
   // This is done to calculate the size of buffer needed.

@@ -57,7 +57,7 @@ let generateRawAccessFunction loc full_name c t =
   let function_name = full_name ^ "_raw_c" ^ n in
   let r = C.eindex (C.eid table_name t) (C.eid "index" C.int_t) t in
   let body = { s = StmtReturn r; loc } in
-  let args = [ "index", C.int_t, Loc.default ] in
+  let args = [ C.param ~const:true "index" C.int_t ] in
   let t = [ C.int_t ], t in
   let info = { original_name = None; is_root = false } in
   { top = TopFunction ({ name = function_name; args; t; tags = []; loc; info }, body); loc }
@@ -253,7 +253,7 @@ let getOrderValue t =
 
 let checkInputVariables (loc : Loc.t) (args : param list) : exp =
   match args with
-  | [ (name, t, _) ] -> C.eid name t
+  | [ { name; t; _ } ] -> C.eid name t
   | _ ->
     let msg = "This attribute requires the function to have only one argument:\n\"fun foo(x:real) : real\"" in
     Error.raiseError msg loc
@@ -343,7 +343,8 @@ let getDeclarations loc name (wav_data : WaveFile.wave) precision : top_stmt lis
 
 let checkWaveInputVariables (loc : Loc.t) (args : param list) : exp * exp =
   match args with
-  | [ (channel, channel_t, _); (index, index_t, _) ] -> C.eid channel channel_t, C.eid index index_t
+  | [ { name = channel; t = channel_t; _ }; { name = index; t = index_t; _ } ] ->
+    C.eid channel channel_t, C.eid index index_t
   | _ ->
     let msg =
       "This attribute requires the function to have the following arguments:\n\

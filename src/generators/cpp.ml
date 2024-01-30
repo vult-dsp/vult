@@ -206,22 +206,23 @@ let print_member (n, (t : type_), _, _) =
   {%pla|<#t#> <#n#s>;|}
 
 
-let print_arg i (n, (t : type_), _) =
+let print_arg i ({ name; t; const; _ } : param) =
+  let const = if const then Pla.string "const " else Pla.unit in
   match t.t with
   | TArray (_, { t = TArray _; _ }) -> failwith "array of arrays are not implemented"
   | TArray (Some dim, ({ t = TStruct _; _ } as sub)) ->
     let sub = print_type_ sub in
-    {%pla|std::array<<#sub#>, <#dim#i>>& <#n#s>|}
+    {%pla|<#const#>std::array<<#sub#>, <#dim#i>>& <#name#s>|}
   | TArray (Some dim, sub) ->
     let sub = print_type_ sub in
-    {%pla|std::array<<#sub#>, <#dim#i>>& <#n#s>|}
+    {%pla|<#const#>std::array<<#sub#>, <#dim#i>>& <#name#s>|}
   | TArray (None, sub) ->
     let sub = print_type_ sub in
-    {%pla|std::array<<#sub#>, SIZE_<#i#i>>& <#n#s>|}
-  | TStruct { path; _ } -> {%pla|<#path#s>& <#n#s>|}
+    {%pla|<#const#>std::array<<#sub#>, SIZE_<#i#i>>& <#name#s>|}
+  | TStruct { path; _ } -> {%pla|<#const#><#path#s>& <#name#s>|}
   | _ ->
     let t = print_type_ t in
-    {%pla|<#t#> <#n#s>|}
+    {%pla|<#t#> <#name#s>|}
 
 
 let print_decl (n, (t : type_)) =
@@ -352,8 +353,8 @@ and print_block body =
 let isTemplate (args : param list) =
   List.exists
     (fun (a : param) ->
-      match a with
-      | _, { t = TArray (None, _); _ }, _ -> true
+      match a.t with
+      | { t = TArray (None, _); _ } -> true
       | _ -> false)
     args
 
@@ -364,8 +365,8 @@ let print_function_def (def : function_def) =
   let template_args =
     def.args
     |> List.mapi (fun i (arg : param) ->
-      match arg with
-      | _, { t = TArray (None, _); _ }, _ -> Some ("std::size_t SIZE_" ^ string_of_int i)
+      match arg.t with
+      | { t = TArray (None, _); _ } -> Some ("std::size_t SIZE_" ^ string_of_int i)
       | _ -> None)
     |> List.filter_map (fun v -> v)
   in

@@ -42,7 +42,7 @@ let getFunctionInfo (f : function_def) =
   in
   let has_ctx, inputs =
     match f.args with
-    | ("_ctx", { t = TStruct _; _ }, _) :: inputs -> true, inputs
+    | { name = "_ctx"; t = { t = TStruct _; _ }; _ } :: inputs -> true, inputs
     | inputs -> false, inputs
   in
   let class_name, is_dsp =
@@ -76,7 +76,7 @@ let addNormalInlets (inputs : param list) =
   match inputs with
   | [] -> Pla.unit
   | _ :: t ->
-    List.map (fun (n, _, _) -> {%pla|floatinlet_new(&x->x_obj, &x-><#n#s>);|}) t
+    List.map (fun ({ name; _ } : param) -> {%pla|floatinlet_new(&x->x_obj, &x-><#name#s>);|}) t
     |> Pla.join_sep Pla.newline
     |> Pla.indent
 
@@ -84,7 +84,8 @@ let addNormalInlets (inputs : param list) =
 let addInletsVars (inputs : param list) =
   match inputs with
   | [] -> Pla.unit
-  | _ -> List.map (fun (n, _, _) -> {%pla|float <#n#s>;|}) inputs |> Pla.join_sep Pla.newline |> Pla.indent
+  | _ ->
+    List.map (fun ({ name; _ } : param) -> {%pla|float <#name#s>;|}) inputs |> Pla.join_sep Pla.newline |> Pla.indent
 
 
 let addOutletsVars (outputs : type_ list) =
@@ -118,7 +119,7 @@ let tildeNewFunction (f : function_info) : int * Pla.t =
 
 let castInput (typ : type_) (value : Pla.t) : Pla.t = Common.cast ~from:Core.Prog.C.real_t ~to_:typ value
 let castOutput (typ : type_) (value : Pla.t) : Pla.t = Common.cast ~from:typ ~to_:Core.Prog.C.real_t value
-let inputName (i, acc) (_, t, _) = i + 1, castInput t {%pla|*(in_<#i#i>++)|} :: acc
+let inputName (i, acc) (p : param) = i + 1, castInput p.t {%pla|*(in_<#i#i>++)|} :: acc
 
 let tildePerformFunctionCall (f : function_info) =
   let fname = f.name in
@@ -149,7 +150,7 @@ let tildePerformFunctionCall (f : function_info) =
   {%pla|<#ret#> <#fname#s>(<#args#>);<#><#copy#>|}
 
 
-let normalInputName (i, acc) (s, t, _) = i + 1, castInput t {%pla|x-><#s#s>|} :: acc
+let normalInputName (i, acc) ({ name; t; _ } : param) = i + 1, castInput t {%pla|x-><#name#s>|} :: acc
 
 let normalPerformFunctionCall (f : function_info) =
   let fname = f.name in

@@ -6,7 +6,7 @@
 #include "array_dimension.tables.h"
 
 template<std::size_t SIZE_0>
-static_inline float Array_dimension_total(std::array<float, SIZE_0>& data) {
+static_inline float Array_dimension_total(const std::array<float, SIZE_0>& data) {
    float acc = 0.0f;
    int32_t i__1 = 0;
    while (i__1 < data.size()) {
@@ -17,7 +17,7 @@ static_inline float Array_dimension_total(std::array<float, SIZE_0>& data) {
 }
 
 template<std::size_t SIZE_0, std::size_t SIZE_1>
-static_inline float Array_dimension_sum(std::array<float, SIZE_0>& data1, std::array<float, SIZE_1>& data2) {
+static_inline float Array_dimension_sum(const std::array<float, SIZE_0>& data1, const std::array<float, SIZE_1>& data2) {
    float acc = 0.0f;
    int32_t i__1 = 0;
    while (i__1 < data1.size()) {

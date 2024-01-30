@@ -393,7 +393,7 @@ let compile_top (env : env) (s : top_stmt) =
     let index = env.fcount in
     let functions = Map.add name (F index) env.functions in
     let env = { env with locals = Map.empty; lcount = 0; functions; fcount = env.fcount + 1 } in
-    let env = List.fold_left (fun env (n, _, _) -> addLocal env n) env args in
+    let env = List.fold_left (fun env (p : param) -> addLocal env p.name) env args in
     let env, body = compile_stmt env body in
     let n_args = List.length args in
     env, [ Function { name; body; locals = env.lcount - n_args; n_args } ]

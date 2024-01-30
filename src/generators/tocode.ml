@@ -165,9 +165,8 @@ module ApplyReplacements = struct
   let param =
     Mapper.make
     @@ fun (env : context) state (p : param) ->
-    let name, t, loc = p in
-    let name = Replacements.keyword env.args.code name in
-    state, (name, t, loc)
+    let name = Replacements.keyword env.args.code p.name in
+    state, { p with name }
 
 
   let mapper = { Mapper.identity with exp; lexp; dexp; param }

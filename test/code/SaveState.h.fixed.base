@@ -50,7 +50,7 @@ static_inline void SaveState_point_init(SaveState_point& _ctx) {
 
 void SaveState_main_type_init(SaveState_main_type& _ctx);
 
-static_inline int32_t SaveState_counter_type_serialize_data(CustomBuffer& buffer, int32_t index, SaveState_counter_type& _ctx) {
+static_inline int32_t SaveState_counter_type_serialize_data(CustomBuffer& buffer, int32_t index, const SaveState_counter_type& _ctx) {
    int32_t start = index;
    index = push_block_header(buffer, index);
    index = push_int(buffer, index, _ctx.count);
@@ -58,13 +58,13 @@ static_inline int32_t SaveState_counter_type_serialize_data(CustomBuffer& buffer
    return index;
 }
 
-static_inline int32_t SaveState_reset_type_serialize_data(CustomBuffer& buffer, int32_t index, SaveState_reset_type& _ctx) {
+static_inline int32_t SaveState_reset_type_serialize_data(CustomBuffer& buffer, int32_t index, const SaveState_reset_type& _ctx) {
    return SaveState_counter_type_serialize_data(buffer, index, _ctx);
 }
 
-int32_t SaveState_point_serialize_data(CustomBuffer& buffer, int32_t index, SaveState_point& _ctx);
+int32_t SaveState_point_serialize_data(CustomBuffer& buffer, int32_t index, const SaveState_point& _ctx);
 
-int32_t SaveState_main_type_serialize_data(CustomBuffer& buffer, int32_t index, SaveState_main_type& _ctx);
+int32_t SaveState_main_type_serialize_data(CustomBuffer& buffer, int32_t index, const SaveState_main_type& _ctx);
 
 static_inline int32_t SaveState_counter_type_serialize_type_descr(CustomBuffer& buffer, int32_t index, std::array<bool, 4>& marks) {
    if (marks[static_cast<uint32_t>(0)]) {

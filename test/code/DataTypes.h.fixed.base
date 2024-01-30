@@ -25,7 +25,7 @@ static_inline void DataTypes_test2_type_init(DataTypes_test2_type& _ctx) {
    DataTypes_point_init(_ctx.result);
 }
 
-static_inline DataTypes_point DataTypes_addPoint1(DataTypes_point& p1, DataTypes_point& p2) {
+static_inline DataTypes_point DataTypes_addPoint1(const DataTypes_point& p1, const DataTypes_point& p2) {
    DataTypes_point p3;
    DataTypes_point_init(p3);
    p3.x = p1.x + p2.x;
@@ -33,7 +33,7 @@ static_inline DataTypes_point DataTypes_addPoint1(DataTypes_point& p1, DataTypes
    return p3;
 }
 
-static_inline void DataTypes_addPoint2(DataTypes_point& p1, DataTypes_point& p2, DataTypes_point& result) {
+static_inline void DataTypes_addPoint2(const DataTypes_point& p1, const DataTypes_point& p2, DataTypes_point& result) {
    result.x = p1.x + p2.x;
    result.y = p1.y + p2.y;
 }

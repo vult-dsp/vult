@@ -6,7 +6,7 @@
 #include "GenericArrays.tables.h"
 
 template<std::size_t SIZE_0>
-static_inline fix16_t GenericArrays_sum(std::array<fix16_t, SIZE_0>& data) {
+static_inline fix16_t GenericArrays_sum(const std::array<fix16_t, SIZE_0>& data) {
    fix16_t total = 0x0 /* 0.000000 */;
    int32_t i__1 = 0;
    while (i__1 < data.size()) {

@@ -1,4 +1,4 @@
-fun Simplify_foo(a : int, b : int, c : int, d : int) : int {
+fun Simplify_foo(const a : int, const b : int, const c : int, const d : int) : int {
    return (-1 + ((a : int) + ((b : int) + ((c : int) + (d : int)))));
 }
 

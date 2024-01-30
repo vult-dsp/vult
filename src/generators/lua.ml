@@ -218,7 +218,7 @@ let rec print_stmt (s : stmt) =
     | Some if_ -> print_stmt if_)
 
 
-let print_arg (n, _, _) = {%pla|<#n#s>|}
+let print_arg ({ name; _ } : param) = {%pla|<#name#s>|}
 
 let print_function_def (def : function_def) =
   let name = def.name in

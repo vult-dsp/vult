@@ -250,10 +250,9 @@ and struct_descr (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data sta
 
 
 and param (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (p : param) : 'data state * param =
-  let name, t, loc = p in
   let sub_env = enter mapper.param_env env p in
-  let state, t = type_ mapper sub_env state t in
-  apply mapper.param env state (name, t, loc)
+  let state, t = type_ mapper sub_env state p.t in
+  apply mapper.param env state { p with t }
 
 
 and member (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (p : member) : 'data state * member =

@@ -265,7 +265,7 @@ int32_t push_int(CustomBuffer &buffer, int32_t index, int32_t value) {
   }
 }
 
-int32_t push_string(CustomBuffer &buffer, int32_t index, std::string &str) {
+int32_t push_string(CustomBuffer &buffer, int32_t index, const std::string &str) {
   int32_t start = index;
   index = push_header(buffer, index, STRING_TAG);
   for (size_t i = 0; i < str.length(); i++) {
