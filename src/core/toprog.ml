@@ -279,14 +279,9 @@ let rec stmt (env : Env.in_top) (state : state) (s : Typed.stmt) =
     | subs -> state, [ { s = StmtBlock subs; loc } ])
 
 
-let arg (locals : Env.var Env.Map.t list) (env : Env.in_top) (state : state) (name, (t : Typed.type_), loc) =
-  let const =
-    match Env.lookVarInScopes locals name with
-    | Some var -> var.const
-    | None -> false
-  in
+let arg (env : Env.in_top) (state : state) ({ name; t; const; loc } : Typed.arg) =
   let state, t = type_ env state t in
-  state, { name; t; const; loc }
+  state, { name; t; const = !const; loc }
 
 
 let function_type env state t =
@@ -297,20 +292,9 @@ let function_type env state t =
     state, (args, ret)
 
 
-let getLocals env (name : Syntax.path) =
-  match name with
-  | { id; n = Some m; _ } -> (
-    let menv = Env.enterModule env m in
-    match Env.Map.find id menv.m.functions with
-    | None -> failwith "Could not find the function"
-    | Some f -> f.locals)
-  | _ -> failwith "Could not find the function"
-
-
 let rec function_def (env : Env.in_top) (state : state) (def : Typed.function_def) body =
   let name = path def.name in
-  let locals = getLocals env def.name in
-  let state, args = list (arg locals) env state def.args in
+  let state, args = list arg env state def.args in
   let state, t = function_type env state def.t in
   let state, body = stmt env state body in
   let body = block body in
@@ -329,8 +313,7 @@ and next_def env state def_opt =
 
 let ext_function_def (env : Env.in_top) (state : state) (def : Typed.function_def) (linkname : string option) =
   let name = path def.name in
-  let locals = getLocals env def.name in
-  let state, args = list (arg locals) env state def.args in
+  let state, args = list arg env state def.args in
   let state, t = function_type env state def.t in
   let state, next = next_def env state def.next in
   let original_name = Some (Pla.print (Syntax.print_path def.name)) in

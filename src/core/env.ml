@@ -83,7 +83,7 @@ type var =
   ; t : Typed.type_
   ; kind : var_kind
   ; tags : Pparser.Ptags.tags
-  ; mutable const : bool
+  ; const : bool ref
   ; loc : Loc.t
   }
 
@@ -106,6 +106,7 @@ type context = (path * t) option
 type f =
   { path : path
   ; t : Typed.type_ list * Typed.type_
+  ; args : Typed.arg list option
   ; context : context
   ; mutable locals : var Map.t list
   ; mutable tick : int
@@ -208,7 +209,7 @@ let builtin_types =
 
 
 let makeFunctionForBuiltin name t : f =
-  { path = { id = name; n = None; loc = Loc.default }; t; context = None; locals = []; tick = 0 }
+  { path = { id = name; n = None; loc = Loc.default }; t; context = None; locals = []; tick = 0; args = None }
 
 
 let rec lookVarInScopes (scopes : var Map.t list) name : var option =
@@ -364,7 +365,7 @@ let addConstant (env : in_module) _unify (name : string) (t : Typed.type_) loc :
       ("A constant with the name '" ^ found.name ^ "' has already been declared at " ^ Loc.to_string_readable found.loc)
       loc
   in
-  Map.update report name { name; t; kind = Const; tags = []; loc; const = true } env.m.constants;
+  Map.update report name { name; t; kind = Const; tags = []; loc; const = ref true } env.m.constants;
   env
 
 
@@ -407,11 +408,11 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
   match kind, env.f.context with
   | Inst, Some (_, { descr = Record members; _ }) ->
     let () = checkDuplicatedVal env.f.locals name in
-    Map.update report_mem name { name; t; kind; tags = []; loc; const = false } members;
+    Map.update report_mem name { name; t; kind; tags = []; loc; const = ref false } members;
     env
   | Mem tags, Some (_, { descr = Record members; _ }) ->
     let () = checkDuplicatedVal env.f.locals name in
-    Map.update report_mem name { name; t; kind; tags; loc; const = false } members;
+    Map.update report_mem name { name; t; kind; tags; loc; const = ref false } members;
     env
   | (Mem _ | Inst), None -> failwith "Internal error: cannot add mem to functions with no context"
   | Val, context -> (
@@ -427,7 +428,7 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
     match env.f.locals with
     | [] -> failwith "no local scope"
     | h :: _ ->
-      Map.update report name { name; t; kind; tags = []; loc; const = false } h;
+      Map.update report name { name; t; kind; tags = []; loc; const = ref true } h;
       env)
   | Const, _ -> failwith "Do not use to add constants"
   | _, Some _ -> failwith "Not a record"
@@ -437,7 +438,7 @@ let addReturnVar (env : in_context) (name : string) (t : Typed.type_) loc : in_c
   let report_mem found _ = found in
   match env.context with
   | Some (_, { descr = Record members; _ }) ->
-    Map.update report_mem name { name; t; kind = Mem []; tags = []; loc; const = false } members;
+    Map.update report_mem name { name; t; kind = Mem []; tags = []; loc; const = ref false } members;
     env
   | None -> failwith "Internal error: cannot add mem to functions with no context"
   | Some _ -> failwith "Not a record"
@@ -456,7 +457,7 @@ let popScope (env : in_func) : in_func =
     env
 
 
-let registerArguments (args : (string * Typed.type_ * Loc.t) list) =
+let registerArguments (args : Typed.arg list) =
   let locals = Map.empty () in
   let report loc (found : var) =
     Error.raiseError
@@ -465,8 +466,8 @@ let registerArguments (args : (string * Typed.type_ * Loc.t) list) =
   in
   let rev_args =
     List.fold_left
-      (fun acc (name, t, loc) ->
-        let () = Map.update (report loc) name { name; t; kind = Val; tags = []; loc; const = true } locals in
+      (fun acc ({ name; t; const; loc } : Typed.arg) ->
+        let () = Map.update (report loc) name { name; t; kind = Val; tags = []; loc; const } locals in
         t :: acc)
       []
       args
@@ -514,7 +515,7 @@ let addRecordMember members =
   let members =
     List.fold_left
       (fun m (name, t, tags, loc) ->
-        Map.update (report loc) name { name; t; kind = Val; tags; loc; const = false } m;
+        Map.update (report loc) name { name; t; kind = Val; tags; loc; const = ref true } m;
         m)
       (Map.empty ())
       members
@@ -599,12 +600,7 @@ let getFunctionContext (f : f) : path =
   | None -> failwith "trying to get the context of a function without one"
 
 
-let enterFunction
-  (env : in_context)
-  (name : string)
-  (args : (string * Typed.type_ * Loc.t) list)
-  (ret : Typed.type_)
-  loc
+let enterFunction (env : in_context) (name : string) (args : Typed.arg list) (ret : Typed.type_) loc
   : in_func * path * 'a
   =
   let report (found : f) =
@@ -613,7 +609,7 @@ let enterFunction
   let path = getPath env.m name loc in
   let locals, args_t = registerArguments args in
   let t = args_t, ret in
-  let f : f = { path; t; context = env.context; locals = [ locals ]; tick = 0 } in
+  let f : f = { path; t; context = env.context; locals = [ locals ]; tick = 0; args = Some args } in
   let _ = Map.update report name f env.m.functions in
   { top = env.top; m = env.m; f }, path, t
 

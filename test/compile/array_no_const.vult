@@ -1,0 +1,25 @@
+external foo(a:array<real,3>) : unit "foo" @[mutable(a = true)];
+
+fun bar1(a:array(real)) {
+  a[0] = 1.0;
+}
+
+fun bob1(a) {
+  bar1(a);
+}
+
+fun bar2(a) {
+  foo(a);
+}
+
+fun bob2(a) {
+  bar2(a);
+}
+
+fun bar3(a:array(real)) {
+  _ = a[0];
+}
+
+fun bob3(a) {
+  bar3(a);
+}

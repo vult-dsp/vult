@@ -195,6 +195,28 @@ let applyFunction loc (args_t_in : type_ list) (ret : type_) (args_in : exp list
   loop args_t_in args_in
 
 
+let propagateVariability env loc (args : Typed.arg list option) (exp_args : exp list) =
+  match args with
+  | None -> ()
+  | Some args ->
+    let rec mark exp =
+      match exp.e with
+      | EId name -> (
+        match Env.lookVar env name loc with
+        | var -> var.const := false
+        | exception Error.Errors _ -> ())
+      | EMember (e, _) -> mark e
+      | EIndex { e; _ } -> mark e
+      | _ -> ()
+    in
+    List.iter2
+      (fun arg exp ->
+        if not !(arg.const) then
+          mark exp)
+      args
+      exp_args
+
+
 let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
   if Env.isFunctionActive f then (
     let cpath = Env.getContext env in
@@ -314,6 +336,7 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     let f = Env.lookFunctionCall env path loc in
     let args_t, ret = f.t in
     let t = applyFunction e.loc args_t ret args in
+    let () = propagateVariability env loc f.args args in
     let env, args = addContextArg env instance f args loc in
     env, { e = ECall { instance = None; path = f.path; args }; t; loc }
   | { e = SEOp (op, e1, e2); loc } ->
@@ -371,7 +394,7 @@ and lexp (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * lexp =
     env, { l = LWild; t; loc }
   | { l = SLId name; loc } ->
     let var = Env.lookVar env name loc in
-    var.const <- false;
+    var.const := false;
     let t = var.t in
     let e =
       match var.kind with
@@ -643,7 +666,7 @@ let getReturnType env (t : Syntax.type_ option) =
 
 
 let convertArguments env (args : Syntax.arg list) : arg list =
-  List.map (fun (name, t, loc) -> name, getOptType env loc t, loc) args
+  List.map (fun (name, t, loc) -> { name; t = getOptType env loc t; const = ref true; loc }) args
 
 
 let registerMultiReturnMem (env : Env.in_context) name t loc =
@@ -707,9 +730,25 @@ and function_def_opt (iargs : Args.args) (env : Env.in_context) def_opt =
     env, Some def_body
 
 
+let applyMutableTag (args : Typed.arg list) (tags : Typed.tag list) =
+  match Ptags.getArguments tags "mutable" with
+  | None -> args
+  | Some [] -> args
+  | Some vars ->
+    List.map
+      (fun (arg : arg) ->
+        match List.find_opt (fun (n, _, _) -> String.compare n arg.name = 0) vars with
+        | Some (_, { g = TagBool mut; _ }, _) ->
+          arg.const := not mut;
+          arg
+        | _ -> arg)
+      args
+
+
 let ext_function (iargs : Args.args) (env : Env.in_context) (def : Syntax.ext_def) : Env.in_context * function_def =
   let ret = getOptType env def.loc def.t in
   let args = convertArguments env def.args in
+  let args = applyMutableTag args def.tags in
   let env, path, t = Env.enterFunction env def.name args ret def.loc in
   let env = Env.exitFunction env in
   let next = addGeneratedFunctions def.tags def.name None in
@@ -723,8 +762,9 @@ let getContextArgument (context : Env.context) loc : arg option =
     if Map.is_empty members then
       None
     else (
+      let const = Env.Map.fold (fun _ (var : var) const -> !(var.const) && const) true members in
       let ctx_t = C.path_t loc p in
-      Some (context_name, ctx_t, loc))
+      Some { name = context_name; t = ctx_t; const = ref const; loc })
   | _ -> None
 
 

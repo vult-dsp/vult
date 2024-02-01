@@ -139,7 +139,12 @@ and stmt =
   ; loc : Loc.t
   }
 
-type arg = string * type_ * Loc.t
+and arg =
+  { name : string
+  ; t : type_
+  ; const : bool ref
+  ; loc : Loc.t
+  }
 
 and function_def =
   { name : path
@@ -290,9 +295,10 @@ let rec print_stmt s =
     {%pla|{<#stmt#+>}|}
 
 
-let print_arg (n, t, _) =
+let print_arg { name; t; const; _ } =
+  let c = if !const then Pla.string "const " else Pla.unit in
   let t = print_type_ t in
-  {%pla|<#n#s> : <#t#>|}
+  {%pla|<#c#><#name#s> : <#t#>|}
 
 
 let next_kind kind =
