@@ -78,7 +78,7 @@ function Util_pitchToRate_1024_raw_c2(index)
 end
 
 function Util_pitchToRate_1024(pitch)
-   local index = int_clip(float_to_int((pitch * 0.244094)), 0, 31)
+   local index = clip(math.floor((pitch * 0.244094)), 0, 31)
    return (Util_pitchToRate_1024_c0[index + 1] + (pitch * (Util_pitchToRate_1024_c1[index + 1] + (Util_pitchToRate_1024_c2[index + 1] * pitch))))
 end
 
@@ -98,7 +98,7 @@ function Util_cvToRate_1024_raw_c2(index)
 end
 
 function Util_cvToRate_1024(cv)
-   local index = int_clip(float_to_int((cv * 34.444444)), 0, 31)
+   local index = clip(math.floor((cv * 34.444444)), 0, 31)
    return (Util_cvToRate_1024_c0[index + 1] + (cv * (Util_cvToRate_1024_c1[index + 1] + (Util_cvToRate_1024_c2[index + 1] * cv))))
 end
 
@@ -197,7 +197,7 @@ function Util_pitchToRate_raw_c2(index)
 end
 
 function Util_pitchToRate(pitch)
-   local index = int_clip(float_to_int((pitch * 0.244094)), 0, 31)
+   local index = clip(math.floor((pitch * 0.244094)), 0, 31)
    return (Util_pitchToRate_c0[index + 1] + (pitch * (Util_pitchToRate_c1[index + 1] + (Util_pitchToRate_c2[index + 1] * pitch))))
 end
 
@@ -217,7 +217,7 @@ function Util_cvToRate_raw_c2(index)
 end
 
 function Util_cvToRate(cv)
-   local index = int_clip(float_to_int((cv * 141.111111)), 0, 127)
+   local index = clip(math.floor((cv * 141.111111)), 0, 127)
    return (Util_cvToRate_c0[index + 1] + (cv * (Util_cvToRate_c1[index + 1] + (Util_cvToRate_c2[index + 1] * cv))))
 end
 
@@ -241,7 +241,7 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   local index = int_clip(float_to_int((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.)), 0, 31)
    return (Util_cvToperiod_c0[index + 1] + (cv * (Util_cvToperiod_c1[index + 1] + (Util_cvToperiod_c2[index + 1] * cv))))
 end
 
@@ -261,7 +261,7 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   local index = int_clip(float_to_int((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.)), 0, 31)
    return (Util_cvTokHz_c0[index + 1] + (cv * (Util_cvTokHz_c1[index + 1] + (Util_cvTokHz_c2[index + 1] * cv))))
 end
 

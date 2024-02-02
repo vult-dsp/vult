@@ -36,7 +36,7 @@ function Saturate_tanh_table_raw_c2(index)
 end
 
 function Saturate_tanh_table(x)
-   local index = int_clip(float_to_int(((x - -24.) * 5.)), 0, 240)
+   local index = clip(math.floor(((x - -24.) * 5.)), 0, 240)
    return (Saturate_tanh_table_c0[index + 1] + (x * (Saturate_tanh_table_c1[index + 1] + (Saturate_tanh_table_c2[index + 1] * x))))
 end
 

@@ -252,7 +252,15 @@ let print_top_stmt t =
 
 let print_prog t = Pla.map_join print_top_stmt t
 
-let generate output _template (stmts : top_stmt list) =
-  let file = Common.setExt ".lua" output in
+let getTemplateCode (args : Util.Args.args) =
+  match args.template with
+  | None -> Pla.unit, Pla.unit
+  | Some "performance" -> T_performance.generateLua args
+  | Some name -> Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
+
+
+let generate (args : Util.Args.args) (stmts : top_stmt list) =
+  let file = Common.setExt ".lua" args.output in
   let code = print_prog stmts in
-  [ {%pla|<#runtime#><#code#>|}, file ]
+  let pre, post = getTemplateCode args in
+  [ {%pla|<#runtime#><#pre#><#code#><#post#>|}, file ]

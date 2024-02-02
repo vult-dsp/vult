@@ -171,7 +171,7 @@ let getCastIndexFunction (in_precision : type_) =
 let getIndex in_precision bound_check size value =
   let clip_call i =
     if bound_check then
-      C.ecall "int_clip" [ i; C.eint 0; C.eint (size - 1) ] C.int_t
+      C.ecall "clip" [ i; C.eint 0; C.eint (size - 1) ] C.int_t
     else
       i
   in

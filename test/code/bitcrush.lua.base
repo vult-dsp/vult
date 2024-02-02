@@ -36,7 +36,7 @@ function Bitcrush_factor_raw_c2(index)
 end
 
 function Bitcrush_factor(cv)
-   local index = int_clip(float_to_int((cv * 127.)), 0, 127)
+   local index = clip(math.floor((cv * 127.)), 0, 127)
    return (Bitcrush_factor_c0[index + 1] + (cv * (Bitcrush_factor_c1[index + 1] + (Bitcrush_factor_c2[index + 1] * cv))))
 end
 

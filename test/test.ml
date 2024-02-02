@@ -432,7 +432,7 @@ let callCompiler (file : string) : unit =
   let basename = Filename.chop_extension (Filename.basename file) in
   let cmd =
     Printf.sprintf
-      "gcc -std=c++11 -Werror -Wno-write-strings -Wconversion -I%s -I%s -c %s -o %s"
+      "gcc -std=c++11 -O3 -Werror -Wno-write-strings -Wconversion -I%s -I%s -c %s -o %s"
       (in_test_directory "../runtime")
       (in_test_directory "../examples/cmake/pd-deps")
       file

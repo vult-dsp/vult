@@ -36,7 +36,7 @@ function Tables_sineTable1_raw_c2(index)
 end
 
 function Tables_sineTable1(x)
-   local index = int_clip(float_to_int((x * 31.)), 0, 31)
+   local index = clip(math.floor((x * 31.)), 0, 31)
    return (Tables_sineTable1_c0[index + 1] + (x * (Tables_sineTable1_c1[index + 1] + (Tables_sineTable1_c2[index + 1] * x))))
 end
 
@@ -51,7 +51,7 @@ function Tables_sineTable2_raw_c1(index)
 end
 
 function Tables_sineTable2(x)
-   local index = int_clip(float_to_int((x * 31.)), 0, 31)
+   local index = clip(math.floor((x * 31.)), 0, 31)
    return (Tables_sineTable2_c0[index + 1] + (x * Tables_sineTable2_c1[index + 1]))
 end
 
@@ -66,7 +66,7 @@ function Tables_sineTable3_raw_c1(index)
 end
 
 function Tables_sineTable3(x)
-   local index = int_clip(fix_to_int((x * 0x1f0000)), 0, 31)
+   local index = clip(fix_to_int((x * 0x1f0000)), 0, 31)
    return (Tables_sineTable3_c0[index + 1] + (x * Tables_sineTable3_c1[index + 1]))
 end
 

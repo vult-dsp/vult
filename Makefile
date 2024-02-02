@@ -34,9 +34,9 @@ test: jscompiler
 	dune build test/test.exe src/vult.bc src/vult.exe $(FORMAT)
 	./_build/default/test/test.exe
 
-#perf:
-#	$(OCB) test/perf.native
-#	./perf.native
+perf:
+	dune build test/perf.exe $(FORMAT)
+	./_build/default/test/perf.exe
 
 test-fast:
 	dune build test/test.exe src/vult.bc src/vult.exe $(FORMAT)

@@ -192,11 +192,20 @@ module Lua = struct
     match op, e1.t, e2.t, ret.t with
     | OpDiv, TInt, TInt, TInt -> Some "intDiv"
     | _ -> None
+
+
+  let fun_to_fun (path : string) (args : type_ list) (ret : type_) =
+    let args = List.map (fun (t : type_) -> t.t) args in
+    match path, args, ret.t with
+    (* builtins *)
+    | "float_to_int", [ TReal ], TInt -> Some "math.floor"
+    | _ -> None
 end
 
 let fun_to_fun (lang : Util.Args.code) (path : string) (args : type_ list) (ret : type_) =
   match lang with
   | CppCode -> Cpp.fun_to_fun path args ret
+  | LuaCode -> Lua.fun_to_fun path args ret
   | _ -> None
 
 
