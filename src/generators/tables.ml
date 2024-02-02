@@ -144,6 +144,25 @@ let calculateTablesOrder1 loc vm name size min max precision =
   [ makeRealTableDecl loc name "c0" precision acc0; makeRealTableDecl loc name "c1" precision acc1 ]
 
 
+let calculateTablesOrder1Fixed loc vm name size min max precision =
+  let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
+  let map_x x = map x 0. (float_of_int size) min max in
+  let data =
+    List.init (size + 1) (fun i ->
+      let x = map_x (float_of_int i) in
+      x, getRealResult (Interpreter.callFunction vm name [ RReal x ]))
+  in
+  let rec increments data =
+    match data with
+    | [] -> [ 0.0 ]
+    | [ _ ] -> [ 0.0 ]
+    | (_, y1) :: ((_, y2) :: _ as t) -> (y2 -. y1) :: increments t
+  in
+  let acc0 = List.map snd data in
+  let acc1 = increments data in
+  [ makeRealTableDecl loc name "c0" precision acc0; makeRealTableDecl loc name "c1" precision acc1 ]
+
+
 let calculateTablesOrder2 loc vm name size min max precision =
   let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
   let map_x x = map x 0. (float_of_int size) min max in
@@ -213,6 +232,35 @@ let makeNewBody1 bound_check fname size in_precision t min max input =
   C.sblock (index_stmts @ [ return ])
 
 
+let makeNewBody1Fixed _bound_check fname size in_precision t min max input =
+  let atype = makeArrayType t size in
+  let rindex = C.eid "index" C.int_t in
+  let getCoeff a =
+    let arr = C.eid (fname ^ "_" ^ a) atype in
+    C.eindex arr rindex t
+  in
+  let initial_index = (float_of_int size -. 1.0) /. (max -. min) in
+  let value =
+    C.ecall
+      "clip"
+      [ makeMul in_precision (makeSub in_precision input min) initial_index
+      ; makeFloat in_precision 0.0
+      ; makeFloat in_precision (float_of_int (size - 1))
+      ]
+      in_precision
+  in
+  let value_decl = C.sdecl_bind "value" value in_precision in
+  let decimal =
+    C.sdecl_bind
+      "decimal"
+      (C.esub (C.eid "value" in_precision) (C.ecall "floor" [ C.eid "value" in_precision ] in_precision))
+      in_precision
+  in
+  let index = C.sdecl_bind "index" (C.ecall "int" [ C.eid "value" in_precision ] C.int_t) C.int_t in
+  let return = C.sreturn (C.eadd (getCoeff "c0") (C.emul (getCoeff "c1") (C.eid "decimal" in_precision))) in
+  C.sblock (value_decl @ index @ decimal @ [ return ])
+
+
 let makeNewBody2 bound_check fname size in_precision t min max input =
   let atype = makeArrayType t size in
   let rindex = C.eid "index" C.int_t in
@@ -268,8 +316,14 @@ let makeTable vm (def : function_def) =
     let out_precision = snd def.t in
     let var = checkInputVariables def.loc def.args in
     let in_precision = var.t in
-    match order with
-    | Some (Int 1) ->
+    match order, in_precision, out_precision with
+    | Some (Int _), { t = TFix16; _ }, { t = TFix16; _ } ->
+      let result = calculateTablesOrder1Fixed loc vm def.name size min max out_precision in
+      let new_body = makeNewBody1Fixed bound_check def.name size in_precision out_precision min max var in
+      let c0 = generateRawAccessFunction loc def.name 0 out_precision in
+      let c1 = generateRawAccessFunction loc def.name 1 out_precision in
+      result @ [ c0; c1 ] @ [ { top = TopFunction (def, new_body); loc } ]
+    | Some (Int 1), _, _ ->
       let result = calculateTablesOrder1 loc vm def.name size min max out_precision in
       let new_body = makeNewBody1 bound_check def.name size in_precision out_precision min max var in
       let c0 = generateRawAccessFunction loc def.name 0 out_precision in

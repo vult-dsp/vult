@@ -55,8 +55,8 @@ function Tables_sineTable2(x)
    return (Tables_sineTable2_c0[index + 1] + (x * Tables_sineTable2_c1[index + 1]))
 end
 
-local Tables_sineTable3_c0 = {0x0, 0x1eb, 0x972, 0x19d8, 0x35ab, 0x5e92, 0x951b, 0xd8a5, 0x1275a, 0x17e31, 0x1d915, 0x2330f, 0x2868a, 0x2cd97, 0x3024c, 0x31f17, 0x31f17, 0x2fe76, 0x2bab2, 0x252d9, 0x1c7b7, 0x11bf0, 0x53fa, -0x89f1, -0x1760e, -0x26747, -0x35397, -0x43073, -0x4f33b, -0x591bc, -0x602ae, -0x63e2e}
-local Tables_sineTable3_c1 = {0x63e2e, 0x600c3, 0x58849, 0x4d963, 0x3fac7, 0x2f505, 0x1d22c, 0x9d68, -0x9d68, -0x1d22c, -0x2f505, -0x3fac7, -0x4d963, -0x58849, -0x600c3, -0x63e2e, -0x63e2e, -0x600c3, -0x58849, -0x4d963, -0x3fac7, -0x2f505, -0x1d22c, -0x9d68, 0x9d68, 0x1d22c, 0x2f505, 0x3fac7, 0x4d963, 0x58849, 0x600c3, 0x63e2e}
+local Tables_sineTable3_c0 = {0., 0.19509, 0.382683, 0.55557, 0.707106, 0.831469, 0.923879, 0.980785, 1., 0.980785, 0.923879, 0.831469, 0.707106, 0.55557, 0.382683, 0.19509, 0., -0.195091, -0.382684, -0.555571, -0.707107, -0.83147, -0.92388, -0.980786, -1., -0.980786, -0.92388, -0.83147, -0.707107, -0.555571, -0.382684, -0.195091, -1e-06}
+local Tables_sineTable3_c1 = {0.19509, 0.187593, 0.172886, 0.151536, 0.124362, 0.092409, 0.056905, 0.019214, -0.019215, -0.056906, -0.09241, -0.124363, -0.151537, -0.172887, -0.187594, -0.195091, -0.195091, -0.187594, -0.172887, -0.151537, -0.124363, -0.09241, -0.056906, -0.019215, 0.019214, 0.056905, 0.092409, 0.124362, 0.151536, 0.172886, 0.187593, 0.19509, 0.}
 function Tables_sineTable3_raw_c0(index)
    return Tables_sineTable3_c0[index + 1]
 end
@@ -66,11 +66,13 @@ function Tables_sineTable3_raw_c1(index)
 end
 
 function Tables_sineTable3(x)
-   local index = clip(fix_to_int((x * 0x1f0000)), 0, 31)
-   return (Tables_sineTable3_c0[index + 1] + (x * Tables_sineTable3_c1[index + 1]))
+   local value = clip((x * 31.), 0., 31.)
+   local index = int(value)
+   local decimal = (value - floor(value))
+   return (Tables_sineTable3_c0[index + 1] + (Tables_sineTable3_c1[index + 1] * decimal))
 end
 
-local Tables_power2_table = {0x1000, 0x2000, 0x4000, 0x8000, 0x10000, 0x20000, 0x40000, 0x80000, 0x100000}
+local Tables_power2_table = {0.0625, 0.125, 0.25, 0.5, 1., 2., 4., 8., 16.}
 function Tables_power2(x)
    return Tables_power2_table[(int_clip(x, -4, 4) + 4) + 1]
 end

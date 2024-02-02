@@ -21,7 +21,7 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
 function FixedAndFloat_test1()
-   local fixed_value = 0x0
+   local fixed_value = 0.
    local real_value = 0.
    local int_value = 0
    local bool_value = false
@@ -32,17 +32,17 @@ function FixedAndFloat_test1()
    local to_int = int(fixed_value)
    local to_real = real(fixed_value)
    local to_bool = bool(fixed_value)
-   from_int = 0x0
-   from_real = 0x0
-   from_bool = 0x0
+   from_int = 0.
+   from_real = 0.
+   from_bool = 0.
    to_int = 0
    to_real = 0.
    to_bool = false
 end
 
-local FixedAndFloat_take_fix_return_fixed_c0 = {0x0, -0xf1, -0x47f, -0xbb0, -0x168e, -0x23e2, -0x3111, -0x3a25, -0x39f5, -0x2a7b, -0x547, 0x3be7, 0x9e83, 0x1267e, 0x1d5a2, 0x2aafd, 0x3a26c, 0x4b44e, 0x5d579, 0x6f75b, 0x8086e, 0x8f4dd, 0x9a774, 0xa0abc, 0xa0a3e, 0x993e5, 0x89961, 0x7117c, 0x4f949, 0x2551e, -0xcec1, -0x45dda}
-local FixedAndFloat_take_fix_return_fixed_c1 = {0x64d99, 0x68a1e, 0x6fc20, 0x79601, 0x8446e, 0x8efa3, 0x97cfb, 0x9d0ba, 0x9cffe, 0x962aa, 0x87546, 0x6faa6, 0x4ed44, 0x25040, -0xd019, -0x45e45, -0x83bfe, -0xc433e, -0x1047ae, -0x14188e, -0x1782ec, -0x1a541d, -0x1c5c5b, -0x1d715b, -0x1d70ce, -0x1c4295, -0x19daa2, -0x163a54, -0x117144, -0xb9d75, -0x4ead1, 0x26e02}
-local FixedAndFloat_take_fix_return_fixed_c2 = {-0x1eedc, -0x5b992, -0x94bf6, -0xc82e5, -0xf3ec1, -0x1164a4, -0x12df6c, -0x13a08c, -0x13a098, -0x12df8f, -0x1164dc, -0xf3f0d, -0xc8342, -0x94c5f, -0x5ba04, -0x1ef53, 0x1ee65, 0x5b91f, 0x94b8c, 0xc8289, 0xf3e75, 0x11646b, 0x12df49, 0x13a080, 0x13a0a4, 0x12dfb2, 0x116514, 0xf3f59, 0xc839f, 0x94cc9, 0x5ba77, 0x1efcb}
+local FixedAndFloat_take_fix_return_fixed_c0 = {0., -0.003685, -0.017567, -0.045666, -0.088119, -0.140175, -0.191679, -0.227141, -0.22641, -0.165946, -0.020627, 0.234001, 0.619196, 1.150366, 1.834509, 2.667932, 3.63446, 4.704328, 5.833885, 6.966246, 8.032931, 8.956503, 9.654127, 10.041938, 10.040014, 9.577723, 8.599151, 7.068308, 4.97378, 2.332503, -0.807634, -4.366608}
+local FixedAndFloat_take_fix_return_fixed_c1 = {6.303116, 6.539527, 6.984871, 7.585958, 8.267315, 8.936094, 9.488211, 9.815348, 9.81247, 9.38541, 8.458111, 6.979105, 4.926833, 2.313489, -0.812886, -4.368242, -8.234355, -12.262671, -16.28001, -20.095927, -23.511418, -26.328579, -28.360772, -29.442809, -29.440648, -28.260093, -25.854042, -22.227846, -17.442452, -11.615075, -4.917253, 2.429729}
+local FixedAndFloat_take_fix_return_fixed_c2 = {-1.933057, -5.724888, -9.296728, -12.511321, -15.245139, -17.393129, -18.872751, -19.627146, -19.627325, -18.873281, -17.393991, -15.246298, -12.512733, -9.29834, -5.726637, -1.934876, 1.931237, 5.723139, 9.295115, 12.509907, 15.243979, 17.392267, 18.872219, 19.626966, 19.627503, 18.873811, 17.394851, 15.247456, 12.514145, 9.29995, 5.728384, 1.936693}
 function FixedAndFloat_take_fix_return_fixed_raw_c0(index)
    return FixedAndFloat_take_fix_return_fixed_c0[index + 1]
 end
@@ -56,7 +56,7 @@ function FixedAndFloat_take_fix_return_fixed_raw_c2(index)
 end
 
 function FixedAndFloat_take_fix_return_fixed(x)
-   local index = clip(fix_to_int((x * 0x1f0000)), 0, 31)
+   local index = clip(fix_to_int((x * 31.)), 0, 31)
    return (FixedAndFloat_take_fix_return_fixed_c0[index + 1] + (x * (FixedAndFloat_take_fix_return_fixed_c1[index + 1] + (FixedAndFloat_take_fix_return_fixed_c2[index + 1] * x))))
 end
 
@@ -76,13 +76,13 @@ function FixedAndFloat_take_fix_return_real_raw_c2(index)
 end
 
 function FixedAndFloat_take_fix_return_real(x)
-   local index = clip(fix_to_int((x * 0x1f0000)), 0, 31)
+   local index = clip(fix_to_int((x * 31.)), 0, 31)
    return (FixedAndFloat_take_fix_return_real_c0[index + 1] + (fix_to_float(x) * (FixedAndFloat_take_fix_return_real_c1[index + 1] + (FixedAndFloat_take_fix_return_real_c2[index + 1] * fix_to_float(x)))))
 end
 
-local FixedAndFloat_take_real_return_fixed_c0 = {0x0, -0xf1, -0x47f, -0xbb0, -0x168e, -0x23e2, -0x3111, -0x3a25, -0x39f5, -0x2a7b, -0x547, 0x3be7, 0x9e83, 0x1267e, 0x1d5a2, 0x2aafd, 0x3a26c, 0x4b44e, 0x5d579, 0x6f75b, 0x8086e, 0x8f4dd, 0x9a774, 0xa0abc, 0xa0a3e, 0x993e5, 0x89961, 0x7117c, 0x4f949, 0x2551e, -0xcec1, -0x45dda}
-local FixedAndFloat_take_real_return_fixed_c1 = {0x64d99, 0x68a1e, 0x6fc20, 0x79601, 0x8446e, 0x8efa3, 0x97cfb, 0x9d0ba, 0x9cffe, 0x962aa, 0x87546, 0x6faa6, 0x4ed44, 0x25040, -0xd019, -0x45e45, -0x83bfe, -0xc433e, -0x1047ae, -0x14188e, -0x1782ec, -0x1a541d, -0x1c5c5b, -0x1d715b, -0x1d70ce, -0x1c4295, -0x19daa2, -0x163a54, -0x117144, -0xb9d75, -0x4ead1, 0x26e02}
-local FixedAndFloat_take_real_return_fixed_c2 = {-0x1eedc, -0x5b992, -0x94bf6, -0xc82e5, -0xf3ec1, -0x1164a4, -0x12df6c, -0x13a08c, -0x13a098, -0x12df8f, -0x1164dc, -0xf3f0d, -0xc8342, -0x94c5f, -0x5ba04, -0x1ef53, 0x1ee65, 0x5b91f, 0x94b8c, 0xc8289, 0xf3e75, 0x11646b, 0x12df49, 0x13a080, 0x13a0a4, 0x12dfb2, 0x116514, 0xf3f59, 0xc839f, 0x94cc9, 0x5ba77, 0x1efcb}
+local FixedAndFloat_take_real_return_fixed_c0 = {0., -0.003685, -0.017567, -0.045666, -0.088119, -0.140175, -0.191679, -0.227141, -0.22641, -0.165946, -0.020627, 0.234001, 0.619196, 1.150366, 1.834509, 2.667932, 3.63446, 4.704328, 5.833885, 6.966246, 8.032931, 8.956503, 9.654127, 10.041938, 10.040014, 9.577723, 8.599151, 7.068308, 4.97378, 2.332503, -0.807634, -4.366608}
+local FixedAndFloat_take_real_return_fixed_c1 = {6.303116, 6.539527, 6.984871, 7.585958, 8.267315, 8.936094, 9.488211, 9.815348, 9.81247, 9.38541, 8.458111, 6.979105, 4.926833, 2.313489, -0.812886, -4.368242, -8.234355, -12.262671, -16.28001, -20.095927, -23.511418, -26.328579, -28.360772, -29.442809, -29.440648, -28.260093, -25.854042, -22.227846, -17.442452, -11.615075, -4.917253, 2.429729}
+local FixedAndFloat_take_real_return_fixed_c2 = {-1.933057, -5.724888, -9.296728, -12.511321, -15.245139, -17.393129, -18.872751, -19.627146, -19.627325, -18.873281, -17.393991, -15.246298, -12.512733, -9.29834, -5.726637, -1.934876, 1.931237, 5.723139, 9.295115, 12.509907, 15.243979, 17.392267, 18.872219, 19.626966, 19.627503, 18.873811, 17.394851, 15.247456, 12.514145, 9.29995, 5.728384, 1.936693}
 function FixedAndFloat_take_real_return_fixed_raw_c0(index)
    return FixedAndFloat_take_real_return_fixed_c0[index + 1]
 end

@@ -30,7 +30,7 @@ end
 function StringType_test2()
    local str1 = string(1)
    local str2 = string(1.)
-   local str3 = string(0x10000)
+   local str3 = string(1.)
    local str4 = string(true)
 end
 

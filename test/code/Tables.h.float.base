@@ -44,8 +44,10 @@ static_inline fix16_t Tables_sineTable3_raw_c1(int32_t index) {
 }
 
 static_inline fix16_t Tables_sineTable3(fix16_t x) {
-   int32_t index = int_clip(fix_to_int(fix_mul(x, 0x1f0000 /* 31.000000 */)), 0, 31);
-   return Tables_sineTable3_c0[static_cast<uint32_t>(index)] + fix_mul(x, Tables_sineTable3_c1[static_cast<uint32_t>(index)]);
+   fix16_t value = fix_clip(fix_mul(x, 0x1f0000 /* 31.000000 */), 0x0 /* 0.000000 */, 0x1f0000 /* 31.000000 */);
+   int32_t index = fix_to_int(value);
+   fix16_t decimal = value - fix_floor(value);
+   return Tables_sineTable3_c0[static_cast<uint32_t>(index)] + fix_mul(Tables_sineTable3_c1[static_cast<uint32_t>(index)], decimal);
 }
 
 static_inline fix16_t Tables_power2(int32_t x) {

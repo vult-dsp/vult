@@ -97,9 +97,7 @@ let rec print_exp e =
   | EBool v -> Pla.string (if v then "true" else "false")
   | EInt n -> Pla.int n
   | EReal n -> Pla.string (Util.Vfloat.to_string n)
-  | EFixed n ->
-    let n = Common.toFixed ~comment:false n in
-    Pla.string n
+  | EFixed n -> Pla.string (Util.Vfloat.to_string n)
   | EString s -> Pla.string_quoted s
   | EId id -> Pla.string id
   | EIndex { e; index } ->
