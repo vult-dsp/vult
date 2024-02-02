@@ -149,13 +149,11 @@ static_inline fix16_t Util_pitchToRate_1024_raw_c1(int32_t index) {
    return Util_pitchToRate_1024_c1[static_cast<uint32_t>(index)];
 }
 
-static_inline fix16_t Util_pitchToRate_1024_raw_c2(int32_t index) {
-   return Util_pitchToRate_1024_c2[static_cast<uint32_t>(index)];
-}
-
 static_inline fix16_t Util_pitchToRate_1024(fix16_t pitch) {
-   int32_t index = int_clip(fix_to_int(fix_mul(pitch, 0x3e7c /* 0.244094 */)), 0, 31);
-   return Util_pitchToRate_1024_c0[static_cast<uint32_t>(index)] + fix_mul(pitch, Util_pitchToRate_1024_c1[static_cast<uint32_t>(index)] + fix_mul(Util_pitchToRate_1024_c2[static_cast<uint32_t>(index)], pitch));
+   fix16_t value = fix_clip(fix_mul(pitch, 0x3e7c /* 0.244094 */), 0x0 /* 0.000000 */, 0x1f0000 /* 31.000000 */);
+   int32_t index = fix_to_int(value);
+   fix16_t decimal = value - fix_floor(value);
+   return Util_pitchToRate_1024_c0[static_cast<uint32_t>(index)] + fix_mul(Util_pitchToRate_1024_c1[static_cast<uint32_t>(index)], decimal);
 }
 
 static_inline fix16_t Util_pitchToRate_raw_c0(int32_t index) {
@@ -166,13 +164,11 @@ static_inline fix16_t Util_pitchToRate_raw_c1(int32_t index) {
    return Util_pitchToRate_c1[static_cast<uint32_t>(index)];
 }
 
-static_inline fix16_t Util_pitchToRate_raw_c2(int32_t index) {
-   return Util_pitchToRate_c2[static_cast<uint32_t>(index)];
-}
-
 static_inline fix16_t Util_pitchToRate(fix16_t pitch) {
-   int32_t index = int_clip(fix_to_int(fix_mul(pitch, 0x3e7c /* 0.244094 */)), 0, 31);
-   return Util_pitchToRate_c0[static_cast<uint32_t>(index)] + fix_mul(pitch, Util_pitchToRate_c1[static_cast<uint32_t>(index)] + fix_mul(Util_pitchToRate_c2[static_cast<uint32_t>(index)], pitch));
+   fix16_t value = fix_clip(fix_mul(pitch, 0x3e7c /* 0.244094 */), 0x0 /* 0.000000 */, 0x1f0000 /* 31.000000 */);
+   int32_t index = fix_to_int(value);
+   fix16_t decimal = value - fix_floor(value);
+   return Util_pitchToRate_c0[static_cast<uint32_t>(index)] + fix_mul(Util_pitchToRate_c1[static_cast<uint32_t>(index)], decimal);
 }
 
 static_inline fix16_t Util_cvToPitch(fix16_t cv) {
@@ -187,13 +183,11 @@ static_inline fix16_t Util_cvToRate_1024_raw_c1(int32_t index) {
    return Util_cvToRate_1024_c1[static_cast<uint32_t>(index)];
 }
 
-static_inline fix16_t Util_cvToRate_1024_raw_c2(int32_t index) {
-   return Util_cvToRate_1024_c2[static_cast<uint32_t>(index)];
-}
-
 static_inline fix16_t Util_cvToRate_1024(fix16_t cv) {
-   int32_t index = int_clip(fix_to_int(fix_mul(cv, 0x2271c7 /* 34.444444 */)), 0, 31);
-   return Util_cvToRate_1024_c0[static_cast<uint32_t>(index)] + fix_mul(cv, Util_cvToRate_1024_c1[static_cast<uint32_t>(index)] + fix_mul(Util_cvToRate_1024_c2[static_cast<uint32_t>(index)], cv));
+   fix16_t value = fix_clip(fix_mul(cv, 0x2271c7 /* 34.444444 */), 0x0 /* 0.000000 */, 0x1f0000 /* 31.000000 */);
+   int32_t index = fix_to_int(value);
+   fix16_t decimal = value - fix_floor(value);
+   return Util_cvToRate_1024_c0[static_cast<uint32_t>(index)] + fix_mul(Util_cvToRate_1024_c1[static_cast<uint32_t>(index)], decimal);
 }
 
 static_inline fix16_t Util_cvToRate_raw_c0(int32_t index) {
@@ -204,13 +198,11 @@ static_inline fix16_t Util_cvToRate_raw_c1(int32_t index) {
    return Util_cvToRate_c1[static_cast<uint32_t>(index)];
 }
 
-static_inline fix16_t Util_cvToRate_raw_c2(int32_t index) {
-   return Util_cvToRate_c2[static_cast<uint32_t>(index)];
-}
-
 static_inline fix16_t Util_cvToRate(fix16_t cv) {
-   int32_t index = int_clip(fix_to_int(fix_mul(cv, 0x8d1c71 /* 141.111111 */)), 0, 127);
-   return Util_cvToRate_c0[static_cast<uint32_t>(index)] + fix_mul(cv, Util_cvToRate_c1[static_cast<uint32_t>(index)] + fix_mul(Util_cvToRate_c2[static_cast<uint32_t>(index)], cv));
+   fix16_t value = fix_clip(fix_mul(cv, 0x8d1c71 /* 141.111111 */), 0x0 /* 0.000000 */, 0x7f0000 /* 127.000000 */);
+   int32_t index = fix_to_int(value);
+   fix16_t decimal = value - fix_floor(value);
+   return Util_cvToRate_c0[static_cast<uint32_t>(index)] + fix_mul(Util_cvToRate_c1[static_cast<uint32_t>(index)], decimal);
 }
 
 static_inline fix16_t Util_pitchToCv(fix16_t pitch) {
@@ -225,13 +217,11 @@ static_inline fix16_t Util_cvToperiod_raw_c1(int32_t index) {
    return Util_cvToperiod_c1[static_cast<uint32_t>(index)];
 }
 
-static_inline fix16_t Util_cvToperiod_raw_c2(int32_t index) {
-   return Util_cvToperiod_c2[static_cast<uint32_t>(index)];
-}
-
 static_inline fix16_t Util_cvToperiod(fix16_t cv) {
-   int32_t index = int_clip(fix_to_int(fix_mul(cv, 0x1f0000 /* 31.000000 */)), 0, 31);
-   return Util_cvToperiod_c0[static_cast<uint32_t>(index)] + fix_mul(cv, Util_cvToperiod_c1[static_cast<uint32_t>(index)] + fix_mul(Util_cvToperiod_c2[static_cast<uint32_t>(index)], cv));
+   fix16_t value = fix_clip(fix_mul(cv, 0x1f0000 /* 31.000000 */), 0x0 /* 0.000000 */, 0x1f0000 /* 31.000000 */);
+   int32_t index = fix_to_int(value);
+   fix16_t decimal = value - fix_floor(value);
+   return Util_cvToperiod_c0[static_cast<uint32_t>(index)] + fix_mul(Util_cvToperiod_c1[static_cast<uint32_t>(index)], decimal);
 }
 
 static_inline fix16_t Util_cvTokHz_raw_c0(int32_t index) {
@@ -242,13 +232,11 @@ static_inline fix16_t Util_cvTokHz_raw_c1(int32_t index) {
    return Util_cvTokHz_c1[static_cast<uint32_t>(index)];
 }
 
-static_inline fix16_t Util_cvTokHz_raw_c2(int32_t index) {
-   return Util_cvTokHz_c2[static_cast<uint32_t>(index)];
-}
-
 static_inline fix16_t Util_cvTokHz(fix16_t cv) {
-   int32_t index = int_clip(fix_to_int(fix_mul(cv, 0x1f0000 /* 31.000000 */)), 0, 31);
-   return Util_cvTokHz_c0[static_cast<uint32_t>(index)] + fix_mul(cv, Util_cvTokHz_c1[static_cast<uint32_t>(index)] + fix_mul(Util_cvTokHz_c2[static_cast<uint32_t>(index)], cv));
+   fix16_t value = fix_clip(fix_mul(cv, 0x1f0000 /* 31.000000 */), 0x0 /* 0.000000 */, 0x1f0000 /* 31.000000 */);
+   int32_t index = fix_to_int(value);
+   fix16_t decimal = value - fix_floor(value);
+   return Util_cvTokHz_c0[static_cast<uint32_t>(index)] + fix_mul(Util_cvTokHz_c1[static_cast<uint32_t>(index)], decimal);
 }
 
 fix16_t Adsr_do(Adsr_do_type& _ctx, fix16_t gate, fix16_t a, fix16_t d, fix16_t s, fix16_t r);

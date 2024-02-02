@@ -317,7 +317,7 @@ let makeTable vm (def : function_def) =
     let var = checkInputVariables def.loc def.args in
     let in_precision = var.t in
     match order, in_precision, out_precision with
-    | Some (Int _), { t = TFix16; _ }, { t = TFix16; _ } ->
+    | _, { t = TFix16; _ }, { t = TFix16; _ } ->
       let result = calculateTablesOrder1Fixed loc vm def.name size min max out_precision in
       let new_body = makeNewBody1Fixed bound_check def.name size in_precision out_precision min max var in
       let c0 = generateRawAccessFunction loc def.name 0 out_precision in
