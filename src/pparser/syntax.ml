@@ -68,6 +68,7 @@ type exp_d =
   | SETuple of exp list
   | SEMember of exp * string
   | SEGroup of exp
+  | SERecord of (path * exp) list
 
 and exp =
   { e : exp_d
@@ -278,6 +279,14 @@ module Print = struct
     | SEGroup e ->
       let e = exp e in
       {%pla|(<#e#>)|}
+    | SERecord elems ->
+      let printElem (p, v) =
+        let p = path p in
+        let v = exp v in
+        {%pla|<#p#> = <#v#>|}
+      in
+      let elems = Pla.map_sep Pla.commaspace printElem elems in
+      {%pla|{ <#elems#> }|}
 
 
   let rec pattern (p : pattern) = pattern_d p.p
@@ -867,6 +876,10 @@ module Mapper = struct
         | SEGroup field_0 ->
           let state, field_0' = map_exp mapper context state field_0 in
           let odata = if field_0 == field_0' then idata else SEGroup field_0' in
+          state, odata
+        | SERecord elems ->
+          let state, elems' = mapper_list (mapper_tuple2 map_path map_exp) mapper context state elems in
+          let odata = if elems == elems' then idata else SERecord elems' in
           state, odata)
       else
         state, idata

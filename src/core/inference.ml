@@ -373,6 +373,7 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     let type_path, tloc, index = Env.lookEnum env path loc in
     let t = C.path_t tloc type_path in
     env, { e = EInt index; t; loc }
+  | _ -> failwith ""
 
 
 and exp_list (env : Env.in_func) (l : Syntax.exp list) : Env.in_func * exp list =
@@ -887,6 +888,7 @@ let rec top_exp (env : Env.in_module) (e : Syntax.exp) : Env.in_module * exp =
     let type_path, tloc, index = Env.lookEnumInModule env path loc in
     let t = C.path_t tloc type_path in
     env, { e = EInt index; t; loc }
+  | _ -> failwith ""
 
 
 and top_exp_list (env : Env.in_module) (l : Syntax.exp list) : Env.in_module * exp list =
