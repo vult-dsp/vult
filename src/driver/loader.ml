@@ -73,7 +73,7 @@ module Dependencies = struct
     | SEMember (e, _) -> exp set e
     | SEGroup e -> exp set e
     | SEEnum p -> path set p
-    | SERecord elems -> list (fun set (p, v) -> exp (path set p) v) set elems
+    | SERecord { path = p; elems } -> list (fun set (p, v) -> exp (path set p) v) (path set p) elems
 
 
   let rec pattern set e =

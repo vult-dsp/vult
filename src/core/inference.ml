@@ -373,7 +373,32 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     let type_path, tloc, index = Env.lookEnum env path loc in
     let t = C.path_t tloc type_path in
     env, { e = EInt index; t; loc }
-  | _ -> failwith ""
+  | { e = SERecord { path; elems }; loc } -> (
+    let t = Env.lookType env path loc in
+    match t with
+    | { descr = Record members; _ } ->
+      let env, elems_rev =
+        List.fold_left
+          (fun (env, acc) (id, v) ->
+            let env, v = exp env v in
+            let id, id_loc =
+              match id with
+              | Syntax.{ id; n = None; loc } -> id, loc
+              | { loc; _ } ->
+                Error.raiseError ("The name '" ^ path_string id ^ "' is not a valid member of a data type.") loc
+            in
+            match Env.Map.find id members with
+            | None ->
+              Error.raiseError ("The name '" ^ id ^ "' does not belong to type '" ^ path_string path ^ "'.") id_loc
+            | Some var ->
+              unifyRaise v.loc var.t v.t;
+              env, (id, v) :: acc)
+          (env, [])
+          elems
+      in
+      let elems = List.sort (fun (id1, _) (id2, _) -> String.compare id1 id2) elems_rev in
+      env, { e = ERecord { path; elems }; t = Typed.C.path_t loc t.path; loc }
+    | _ -> Error.raiseError ("The path '" ^ path_string path ^ "' is not a type.") loc)
 
 
 and exp_list (env : Env.in_func) (l : Syntax.exp list) : Env.in_func * exp list =

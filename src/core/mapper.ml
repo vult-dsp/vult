@@ -305,6 +305,16 @@ let rec exp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (
   | { e = ETMember (e1, n); _ } ->
     let state, e1 = exp mapper sub_env state e1 in
     apply mapper.exp env state { e = ETMember (e1, n); t; loc }
+  | { e = ERecord { path; elems }; _ } ->
+    let state, elems_rev =
+      List.fold_left
+        (fun (state, acc) (n, e) ->
+          let state, e = exp mapper sub_env state e in
+          state, (n, e) :: acc)
+        (state, [])
+        elems
+    in
+    apply mapper.exp env state { e = ERecord { path; elems = List.rev elems_rev }; t; loc }
 
 
 let rec lexp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (e : lexp) : 'data state * lexp =

@@ -180,6 +180,13 @@ let rec print_exp (prec : operator option) (e : exp) =
   | ETMember (e, m) ->
     let e = print_exp prec e in
     {%pla|std::get<<#m#i>>(<#e#>)|}
+  | ERecord { elems; _ } ->
+    let printElem (_, v) =
+      let v = print_exp None v in
+      {%pla|<#v#>|}
+    in
+    let elems = Pla.map_sep Pla.commaspace printElem elems in
+    {%pla|{ <#elems#> }|}
 
 
 let rec print_lexp e =
@@ -283,6 +290,11 @@ let rec print_stmt s =
     {%pla|<#t#> = <#rhs#>;|}
   (* Special case for structures. When the structure is the result of a function call we need to declare it *)
   | StmtDecl ({ d = DId (n, _); t = { t = TStruct _; _ } as t; _ }, Some ({ e = ECall _; _ } as rhs)) ->
+    let t = print_decl_alloc (n, t) in
+    let rhs = print_exp None rhs in
+    {%pla|<#t#> = <#rhs#>;|}
+  (* Special case for structures. When initializing a structure we should not declare a reference *)
+  | StmtDecl ({ d = DId (n, _); t = { t = TStruct _; _ } as t; _ }, Some ({ e = ERecord _; _ } as rhs)) ->
     let t = print_decl_alloc (n, t) in
     let rhs = print_exp None rhs in
     {%pla|<#t#> = <#rhs#>;|}

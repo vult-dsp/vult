@@ -1,0 +1,8 @@
+type point {
+  val x : real;
+  val y : real;
+}
+
+fun foo() {
+  val p1 = point { y = 0.0, x = 0.0 }.x;
+}

@@ -141,7 +141,7 @@ let uoperator op =
   | _ -> failwith "unknown uoperator"
 
 
-let rec exp (env : Env.in_top) (state : state) (e : Typed.exp) =
+let rec exp (env : Env.in_top) (state : state) (e : Typed.exp) : state * Prog.exp =
   let loc = e.loc in
   let state, t = type_ env state e.t in
   match e.e with
@@ -186,6 +186,24 @@ let rec exp (env : Env.in_top) (state : state) (e : Typed.exp) =
   | EMember (e, m) ->
     let state, e = exp env state e in
     state, { e = EMember (e, m); t; loc }
+  | ERecord { path = p; elems } ->
+    let p = path p in
+    let state, elems_rev =
+      List.fold_left
+        (fun (state, acc) (n, v) ->
+          let state, v = exp env state v in
+          state, (n, v) :: acc)
+        (state, [])
+        elems
+    in
+    let sorting =
+      match t with
+      | { t = TStruct { members; _ }; _ } -> List.mapi (fun i (name, _, _, _) -> name, i) members
+      | _ -> failwith "This should be a record"
+    in
+    let numbered = List.map (fun (n, v) -> snd (List.find (fun (id, _) -> id = n) sorting), (n, v)) elems_rev in
+    let sorted = List.sort (fun (i1, _) (i2, _) -> compare i1 i2) numbered |> List.map snd in
+    state, { e = ERecord { path = p; elems = sorted }; t; loc }
 
 
 let rec lexp (env : Env.in_top) (state : state) (e : Typed.lexp) =

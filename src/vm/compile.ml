@@ -299,6 +299,9 @@ and compile_exp (env : env) e : rvalue =
     | None ->
       (* print_endline ("Function not found " ^ path); *)
       RVoid)
+  | ERecord _ ->
+    print_endline "No support for records";
+    RVoid
 
 
 and makeOp op e1 e2 =

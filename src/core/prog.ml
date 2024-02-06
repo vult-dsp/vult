@@ -107,6 +107,10 @@ type exp_d =
   | ETuple of exp list
   | EMember of exp * string
   | ETMember of exp * int
+  | ERecord of
+      { path : string
+      ; elems : (string * exp) list
+      }
 
 and exp =
   { e : exp_d
@@ -282,6 +286,13 @@ module Print = struct
     | ETMember (e, i) ->
       let e = (print_exp ~no_types) e in
       {%pla|<#e#>.<#i#i>|}
+    | ERecord { path = p; elems } ->
+      let printElem (p, v) =
+        let v = print_exp v in
+        {%pla|<#p#s> = <#v#>|}
+      in
+      let elems = Pla.map_sep Pla.commaspace printElem elems in
+      {%pla|<#p#s> { <#elems#> }|}
 
 
   let rec print_lexp (e : lexp) =
@@ -514,4 +525,14 @@ module Compare = struct
         | n -> n)
       | n -> n)
     | { e = EIf _; _ }, _ -> compare e1 e2
+    | { e = ERecord { path = path1; elems = elems1 }; _ }, { e = ERecord { path = path2; elems = elems2 }; _ }
+      when path1 = path2 ->
+      List.compare
+        (fun (id1, v1) (id2, v2) ->
+          match String.compare id1 id2 with
+          | 0 -> exp v1 v2
+          | n -> n)
+        elems1
+        elems2
+    | { e = ERecord _; _ }, _ -> compare e1 e2
 end

@@ -137,6 +137,13 @@ let rec print_exp e =
     let e = print_exp e in
     let m = i + 1 in
     {%pla|<#e#>[<#m#i>]|}
+  | ERecord { elems; _ } ->
+    let printElem (n, v) =
+      let v = print_exp v in
+      {%pla|<#n#s> = <#v#>|}
+    in
+    let elems = Pla.map_sep Pla.commaspace printElem elems in
+    {%pla|{ <#elems#> }|}
 
 
 let rec print_lexp e =

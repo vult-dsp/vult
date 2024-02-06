@@ -91,6 +91,10 @@ type exp_d =
       }
   | ETuple of exp list
   | EMember of exp * string
+  | ERecord of
+      { path : path
+      ; elems : (string * exp) list
+      }
 
 and exp =
   { e : exp_d
@@ -232,6 +236,14 @@ let rec print_exp e =
   | EMember (e, m) ->
     let e = print_exp e in
     {%pla|<#e#>.<#m#s>|}
+  | ERecord { path; elems } ->
+    let printElem (id, v) =
+      let v = print_exp v in
+      {%pla|<#id#s> = <#v#>|}
+    in
+    let path = print_path path in
+    let elems = Pla.map_sep Pla.commaspace printElem elems in
+    {%pla|<#path#> { <#elems#> }|}
 
 
 let rec print_lexp e =

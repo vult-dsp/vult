@@ -108,6 +108,7 @@ let getExpLbp (token : 'kind token) : int =
   | COLON, _ -> 70
   | LPAREN, _ -> 80
   | LBRACK, _ -> 80
+  | LBRACE, _ -> 80
   | DOT, _ -> 90
   | _ -> 0
 
@@ -470,10 +471,6 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
     let _ = Stream.consume buffer ELSE in
     let else_ = expression 0 buffer in
     { e = SEIf { cond; then_; else_ }; loc }
-  | LBRACE, _ ->
-    let elems = recordValues buffer in
-    let _ = Stream.consume buffer RBRACE in
-    { e = SERecord elems; loc }
   | LBRACK, _ -> (
     match Stream.peek buffer with
     | RBRACK ->
@@ -496,6 +493,7 @@ and exp_led (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   | COMMA -> pair buffer token left
   | DOT -> exp_member buffer token left
   | LPAREN -> call buffer token left
+  | LBRACE -> record buffer token left
   | COLON -> named_call buffer token left
   | LBRACK -> exp_index buffer token left
   | _ ->
@@ -662,6 +660,18 @@ and recordValue level (buffer : Stream.stream) =
 
 
 and recordValues (buffer : Stream.stream) = commaSepList recordValue buffer
+
+and record (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
+  let error () =
+    let message = Error.PointedError (left.loc, "This is not a valid record type") in
+    raise (ParserError message)
+  in
+  let path = expToPath error left in
+  let elems = recordValues buffer in
+  let _ = Stream.consume buffer RBRACE in
+  { e = SERecord { path; elems }; loc = token.loc }
+
+
 and expressionList (buffer : Stream.stream) : exp list = commaSepList expression buffer
 
 and stmtVal (buffer : Stream.stream) : stmt =

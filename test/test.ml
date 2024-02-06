@@ -215,6 +215,7 @@ let all_files =
   ; "../test/compile/multi_return.vult"
   ; "../test/compile/multi_iter.vult"
   ; "../test/compile/array_no_const.vult"
+  ; "../test/compile/record_init.vult"
   ]
 
 
