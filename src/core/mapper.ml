@@ -27,17 +27,20 @@ open Prog
 type 'data state =
   { data : 'data
   ; pre_stmts : stmt list
+  ; pre_top_stmts : top_stmt list
   }
 
 type ('env, 'data, 'kind) mapper_func = ('env -> 'data state -> 'kind -> 'data state * 'kind) option
 type ('env, 'data, 'kind) expand_func = ('env -> 'data state -> 'kind -> 'data state * 'kind list) option
 type ('env, 'kind) env_func = ('env -> 'kind -> 'env) option
 
-let defaultState data = { data; pre_stmts = [] }
+let defaultState data = { data; pre_stmts = []; pre_top_stmts = [] }
 let getData (state : 'data state) = state.data
 let setData (state : 'data state) data = { state with data }
 let pushStmts (state : 'data state) stmts = { state with pre_stmts = state.pre_stmts @ stmts }
+let pushTopStmts (state : 'data state) stmts = { state with pre_top_stmts = state.pre_top_stmts @ stmts }
 let getStmts (state : 'data state) = { state with pre_stmts = [] }, state.pre_stmts
+let getTopStmts (state : 'data state) = { state with pre_top_stmts = [] }, state.pre_top_stmts
 
 let apply (mapper : ('env, 'data, 'kind) mapper_func) (env : 'env) (data : 'data state) (kind : 'kind)
   : 'data state * 'kind
@@ -397,6 +400,7 @@ let rec stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) 
     applyExpander mapper.stmt env state { s = StmtBlock (List.flatten stmts); loc }
   | { s = StmtSwitch (cond, cases, default); _ } ->
     let state, cond = exp mapper sub_env state cond in
+    let state, pre = getStmts state in
     let state, cases =
       mapper_list
         (fun mapper env state (cond, then_) ->
@@ -410,7 +414,7 @@ let rec stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) 
     in
     let state, default_l = mapper_opt stmt mapper sub_env state default in
     let default = Option.map (fun elems -> block elems loc) default_l in
-    applyExpander mapper.stmt env state { s = StmtSwitch (cond, cases, default); loc }
+    applyStmtExpander mapper.stmt env state pre { s = StmtSwitch (cond, cases, default); loc }
 
 
 let function_def (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (f : function_def)
@@ -425,6 +429,19 @@ let function_def (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data sta
     apply mapper.function_def env state { name; args; t = t_args, ret; loc; tags; info }
 
 
+let applyTopStmtExpander mapper env state pre s =
+  let state, stmts_rev =
+    List.fold_left
+      (fun (state, acc) s ->
+        let state, stmts = applyExpander mapper env state s in
+        state, stmts :: acc)
+      (state, [])
+      (pre @ [ s ])
+  in
+  let stmts = List.flatten (List.rev stmts_rev) in
+  state, stmts
+
+
 let top_stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (s : top_stmt)
   : 'data state * top_stmt list
   =
@@ -433,20 +450,25 @@ let top_stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) 
   match s with
   | { top = TopExternal (f, link_name); _ } ->
     let state, f = function_def mapper sub_env state f in
-    applyExpander mapper.top_stmt env state { top = TopExternal (f, link_name); loc }
+    let state, pre = getTopStmts state in
+    applyTopStmtExpander mapper.top_stmt env state pre { top = TopExternal (f, link_name); loc }
   | { top = TopFunction (f, body); _ } ->
     let state, f = function_def mapper sub_env state f in
     let state, body = stmt mapper sub_env state body in
-    applyExpander mapper.top_stmt env state { top = TopFunction (f, block body loc); loc }
+    let state, pre = getTopStmts state in
+    applyTopStmtExpander mapper.top_stmt env state pre { top = TopFunction (f, block body loc); loc }
   | { top = TopType descr; _ } ->
     let state, descr = struct_descr mapper sub_env state descr in
-    applyExpander mapper.top_stmt env state { top = TopType descr; loc }
+    let state, pre = getTopStmts state in
+    applyTopStmtExpander mapper.top_stmt env state pre { top = TopType descr; loc }
   | { top = TopAlias { path; alias_of }; _ } ->
-    applyExpander mapper.top_stmt env state { top = TopAlias { path; alias_of }; loc }
+    let state, pre = getTopStmts state in
+    applyTopStmtExpander mapper.top_stmt env state pre { top = TopAlias { path; alias_of }; loc }
   | { top = TopConstant (path, dim, t, e); _ } ->
     let state, e = exp mapper sub_env state e in
     let state, t = type_ mapper sub_env state t in
-    applyExpander mapper.top_stmt env state { top = TopConstant (path, dim, t, e); loc }
+    let state, pre = getTopStmts state in
+    applyTopStmtExpander mapper.top_stmt env state pre { top = TopConstant (path, dim, t, e); loc }
 
 
 let prog (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (p : prog) : 'data state * prog =

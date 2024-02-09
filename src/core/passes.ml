@@ -34,6 +34,7 @@ type data =
 
 type env =
   { in_if_exp : bool
+  ; in_function : bool
   ; bound_if : bool
   ; bound_call : bool
   ; bound_array : bool
@@ -54,6 +55,7 @@ let default_data () : data =
 let default_env args : env =
   { args
   ; in_if_exp = false
+  ; in_function = false
   ; bound_if = false
   ; current_function = None
   ; bound_call = false
@@ -280,8 +282,8 @@ module IfExpressions = struct
     match e with
     (* Evaluates if-expressions with constant condition *)
     | { e = EIf { cond = { e = EBool cond; _ }; then_; else_ }; _ } -> reapply state, if cond then then_ else else_
-    (* Bind if-expressions to a variable *)
-    | { e = EIf _; t; loc } when (not env.in_if_exp) && not env.bound_if ->
+    (* Bind if-expressions to a variable in function context *)
+    | { e = EIf _; t; loc } when (not env.in_if_exp) && (not env.bound_if) && env.in_function ->
       let tick = getTick env state in
       let temp = "_if_temp_" ^ string_of_int tick in
       let temp_e = { e = EId temp; t; loc } in
@@ -316,8 +318,8 @@ module LiteralRecords = struct
     Mapper.make
     @@ fun env state (e : exp) ->
     match e with
-    (* Bind arrays to a variable *)
-    | { e = ERecord _; t; loc } when (not env.in_if_exp) && not env.bound_record ->
+    (* Bind records to a variable in the context of functions *)
+    | { e = ERecord _; t; loc } when (not env.in_if_exp) && (not env.bound_record) && env.in_function ->
       let tick = getTick env state in
       let temp = "_record_" ^ string_of_int tick in
       let temp_e = { e = EId temp; t; loc } in
@@ -325,11 +327,30 @@ module LiteralRecords = struct
       let bind_stmt = { s = StmtBind ({ l = LId temp; t; loc }, e); loc } in
       let state = Mapper.pushStmts state [ decl_stmt; bind_stmt ] in
       reapply state, temp_e
+    | { e = ERecord _; t; loc } when (not env.in_if_exp) && not env.bound_record ->
+      let tick = getTick env state in
+      let temp = "_record_" ^ string_of_int tick in
+      let temp_e = { e = EId temp; t; loc } in
+      let constant_decl = { top = TopConstant (temp, None, t, e); loc } in
+      let state = Mapper.pushTopStmts state [ constant_decl ] in
+      reapply state, temp_e
     | _ -> state, e
 
 
   let mapper enabled =
     if enabled = Enabled then { Mapper.identity with exp; stmt_env; top_stmt_env } else Mapper.identity
+end
+
+module Markers = struct
+  let top_stmt_env =
+    Mapper.makeEnv
+    @@ fun env (s : top_stmt) ->
+    match s with
+    | { top = TopFunction _; _ } -> { env with in_function = true }
+    | _ -> env
+
+
+  let mapper enabled = if enabled = Enabled then { Mapper.identity with top_stmt_env } else Mapper.identity
 end
 
 module LiteralArrays = struct
@@ -354,7 +375,7 @@ module LiteralArrays = struct
     @@ fun env state (e : exp) ->
     match e with
     (* Bind arrays to a variable *)
-    | { e = EArray _; t; loc } when (not env.in_if_exp) && not env.bound_array ->
+    | { e = EArray _; t; loc } when (not env.in_if_exp) && (not env.bound_array) && env.in_function ->
       let tick = getTick env state in
       let temp = "_array_" ^ string_of_int tick in
       let temp_e = { e = EId temp; t; loc } in
@@ -775,6 +796,7 @@ end
 
 let passes =
   Location.mapper
+  |> Mapper.seq (Markers.mapper Enabled)
   |> Mapper.seq (Canonize.mapper Enabled)
   |> Mapper.seq (Simplify.mapper Enabled)
   |> Mapper.seq (Builtin.mapper Enabled)

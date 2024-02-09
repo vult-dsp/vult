@@ -212,7 +212,7 @@ let rec print_exp e =
     let e = print_exp e in
     let index = print_exp index in
     {%pla|<#e#>[<#index#>]|}
-  | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
+  | EArray l -> Pla.wrap (Pla.string "[ ") (Pla.string " ]") (Pla.map_sep Pla.commaspace print_exp l)
   | ECall { instance; path; args } ->
     let instance = Option.value (Option.map (fun s -> {%pla|<#s#s>:|}) instance) ~default:Pla.unit in
     let path = print_path path in

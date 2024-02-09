@@ -63,6 +63,14 @@ let isSmall stmts =
   size <= threshold
 
 
+let rec isBuiltinType (t : type_) =
+  match t.t with
+  | TStruct _ -> false
+  | TArray (_, t) -> isBuiltinType t
+  | TTuple l -> List.for_all isBuiltinType l
+  | _ -> true
+
+
 let rec print_type_ (t : type_) =
   match t.t with
   | TVoid _ -> Pla.string "void"
@@ -426,10 +434,14 @@ let print_top_stmt ~allow_inline (target : target) t =
   | TopAlias { path; alias_of }, Header -> {%pla|typedef struct <#alias_of#s> <#path#s>;<#><#>|}
   | TopType _, _ -> Pla.unit
   | TopAlias _, _ -> Pla.unit
-  | TopConstant (name, _, t, rhs), Tables ->
+  | TopConstant (name, _, t, rhs), Tables when isBuiltinType t ->
     let t = print_type_ t in
     let rhs = print_exp None rhs in
-    {%pla|static const <#t#> <#name#s> = <#rhs#+>;<#>|}
+    {%pla|static const <#t#> <#name#s> = <#rhs#+>;<#><#>|}
+  | TopConstant (name, _, t, rhs), Header when not (isBuiltinType t) ->
+    let t = print_type_ t in
+    let rhs = print_exp None rhs in
+    {%pla|static const <#t#> <#name#s> = <#rhs#+>;<#><#>|}
   | TopConstant _, _ -> Pla.unit
 
 
