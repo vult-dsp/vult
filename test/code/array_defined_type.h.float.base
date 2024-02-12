@@ -59,24 +59,24 @@ static_inline void Array_defined_type_default_type_init(Array_defined_type_defau
    Array_defined_type_process_type_init(_ctx);
 }
 
-static_inline void Array_defined_type_foo(Array_defined_type_foo_type& _ctx) {
+static_inline void Array_defined_type_foo(const Array_defined_type_foo_type& _ctx) {
 }
 
-static_inline float Array_defined_type_process(Array_defined_type_process_type& _ctx, float input) {
+static_inline float Array_defined_type_process(const Array_defined_type_process_type& _ctx, float input) {
    Array_defined_type_foo(_ctx.inst_1c76a);
    return input;
 }
 
-static_inline void Array_defined_type_noteOn(Array_defined_type_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
+static_inline void Array_defined_type_noteOn(const Array_defined_type_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
 }
 
-static_inline void Array_defined_type_noteOff(Array_defined_type_process_type& _ctx, int32_t note, int32_t channel) {
+static_inline void Array_defined_type_noteOff(const Array_defined_type_process_type& _ctx, int32_t note, int32_t channel) {
 }
 
-static_inline void Array_defined_type_controlChange(Array_defined_type_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+static_inline void Array_defined_type_controlChange(const Array_defined_type_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
 }
 
-static_inline void Array_defined_type_default(Array_defined_type_process_type& _ctx) {
+static_inline void Array_defined_type_default(const Array_defined_type_process_type& _ctx) {
 }
 
 

@@ -65,24 +65,24 @@ static_inline void Defined_types_micro_init(Defined_types_micro& _ctx) {
    Defined_types_dot_init(_ctx.dot_1);
 }
 
-static_inline void Defined_types_foo(Defined_types_foo_type& _ctx) {
+static_inline void Defined_types_foo(const Defined_types_foo_type& _ctx) {
 }
 
-static_inline fix16_t Defined_types_process(Defined_types_process_type& _ctx, fix16_t input) {
+static_inline fix16_t Defined_types_process(const Defined_types_process_type& _ctx, fix16_t input) {
    Defined_types_foo(_ctx.inst_1a5d1);
    return input;
 }
 
-static_inline void Defined_types_noteOn(Defined_types_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
+static_inline void Defined_types_noteOn(const Defined_types_process_type& _ctx, int32_t note, int32_t velocity, int32_t channel) {
 }
 
-static_inline void Defined_types_noteOff(Defined_types_process_type& _ctx, int32_t note, int32_t channel) {
+static_inline void Defined_types_noteOff(const Defined_types_process_type& _ctx, int32_t note, int32_t channel) {
 }
 
-static_inline void Defined_types_controlChange(Defined_types_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
+static_inline void Defined_types_controlChange(const Defined_types_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
 }
 
-static_inline void Defined_types_default(Defined_types_process_type& _ctx) {
+static_inline void Defined_types_default(const Defined_types_process_type& _ctx) {
 }
 
 

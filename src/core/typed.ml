@@ -26,7 +26,15 @@ open Pparser
 
 type path = Syntax.path
 
+let print_exp_types = false
 let print_path (p : path) = Syntax.print_path p
+
+type constness_d =
+  | TEConst of int
+  | TEMut of int
+  | TECLink of constness
+
+and constness = { mutable c : constness_d }
 
 type type_d_ =
   | TENoReturn
@@ -39,6 +47,7 @@ type type_d_ =
 
 and type_ =
   { mutable tx : type_d_
+  ; const : constness
   ; mutable loc : Loc.t
   }
 
@@ -146,7 +155,6 @@ and stmt =
 and arg =
   { name : string
   ; t : type_
-  ; const : bool ref
   ; loc : Loc.t
   }
 
@@ -184,21 +192,36 @@ and top_stmt =
 
 type program = top_stmt list
 
-let rec print_type_ ?(show_unbound = true) (t : type_) : Pla.t =
+let rec print_constness (c : constness) =
+  match c.c with
+  | TEConst i -> {%pla|const<#i#i> |}
+  | TEMut i -> {%pla|mut<#i#i> |}
+  | TECLink c -> print_constness c
+
+
+let rec print_type_ ?(detailed = false) (t : type_) : Pla.t =
+  let prefix pt = if detailed || print_exp_types then Pla.append (print_constness t.const) pt else pt in
   match t.tx with
   | TENoReturn -> Pla.string "noreturn"
-  | TELink t -> print_type_ ~show_unbound t
-  | TEUnbound (Some i) -> if show_unbound then {%pla|_<#i#i>|} else Pla.string "_"
+  | TELink t -> print_type_ ~detailed t
+  | TEUnbound (Some i) -> if detailed then {%pla|_<#i#i>|} else Pla.string "_"
   | TEUnbound None -> Pla.string "_"
-  | TEId p -> print_path p
+  | TEId p -> prefix @@ print_path p
   | TESize n -> Pla.int n
-  | TEOption alt -> Pla.parenthesize @@ Pla.map_sep (Pla.string "|") print_type_ alt
+  | TEOption alt -> prefix @@ Pla.parenthesize @@ Pla.map_sep (Pla.string "|") print_type_ alt
   | TEComposed (name, elems) ->
-    let elems = Pla.map_sep Pla.commaspace (print_type_ ~show_unbound) elems in
-    {%pla|<#name#s>(<#elems#>)|}
+    let elems = Pla.map_sep Pla.commaspace (print_type_ ~detailed) elems in
+    prefix {%pla|<#name#s>(<#elems#>)|}
 
 
-let rec print_exp e =
+let rec print_exp (e : exp) =
+  (fun es ->
+    if print_exp_types then (
+      let t = print_type_ e.t in
+      {%pla|(<#es#> : <#t#>)|})
+    else
+      es)
+  @@
   match e.e with
   | EUnit -> Pla.string "()"
   | EBool v -> Pla.string (if v then "true" else "false")
@@ -246,7 +269,14 @@ let rec print_exp e =
     {%pla|<#path#> { <#elems#> }|}
 
 
-let rec print_lexp e =
+let rec print_lexp (e : lexp) =
+  (fun es ->
+    if print_exp_types then (
+      let t = print_type_ e.t in
+      {%pla|(<#es#> : <#t#>)|})
+    else
+      es)
+  @@
   match e.l with
   | LWild -> Pla.string "_"
   | LId s -> Pla.string s
@@ -263,7 +293,7 @@ let rec print_lexp e =
 
 
 let rec print_dexp (e : dexp) =
-  let t = print_type_ e.t in
+  let t = print_type_ ~detailed:true e.t in
   match e.d with
   | DWild -> {%pla|_ : <#t#>|}
   | DId (id, None) -> {%pla|<#id#s> : <#t#>|}
@@ -307,10 +337,9 @@ let rec print_stmt s =
     {%pla|{<#stmt#+>}|}
 
 
-let print_arg { name; t; const; _ } =
-  let c = if !const then Pla.string "const " else Pla.unit in
-  let t = print_type_ t in
-  {%pla|<#c#><#name#s> : <#t#>|}
+let print_arg { name; t; _ } =
+  let t = print_type_ ~detailed:true t in
+  {%pla|<#name#s> : <#t#>|}
 
 
 let next_kind kind =
@@ -332,10 +361,10 @@ let rec print_function_def kind (def : function_def) body_linkname =
   let name = print_path def.name in
   let args = Pla.map_sep Pla.commaspace print_arg def.args in
   let tags = Ptags.print_tags def.tags in
-  let t = print_type_ (snd def.t) in
+  let t = print_type_ ~detailed:true (snd def.t) in
   let body = print_body_linkname body_linkname in
   let next = print_next_function_def kind def.next in
-  {%pla|<#kind#s> <#name#>(<#args#>) : <#t#><#tags#><#body#><#><#next#>|}
+  {%pla|<#kind#s> <#name#>(<#args#>) : <#t#> <#tags#><#body#><#><#next#>|}
 
 
 and print_next_function_def kind next =
@@ -382,42 +411,68 @@ let print_top_stmt t =
 
 let print_prog prog = Pla.map_sep_all Pla.newline print_top_stmt prog
 
+let rec setConstness (c : constness) (v : bool) =
+  match c.c with
+  | TEConst i | TEMut i -> c.c <- (if v then TEConst i else TEMut i)
+  | TECLink c -> setConstness c v
+
+
+let setTypeMut (t : type_) = setConstness t.const false
+let setTypeConstness (t : type_) v = setConstness t.const v
+
+let isTypeConst (t : type_) =
+  let rec loop const =
+    match const.c with
+    | TEConst _ -> true
+    | TEMut _ -> false
+    | TECLink c -> loop c
+  in
+  loop t.const
+
+
 module C = struct
   let tick = ref 0
-  let makeId loc id = { tx = TEId { id; n = None; loc }; loc }
-  let path_t loc path = { tx = TEId path; loc }
+  let ctick = ref 0
+
+  let const () =
+    incr ctick;
+    { c = TEConst !ctick }
+
+
+  let makeId loc id = { tx = TEId { id; n = None; loc }; loc; const = const () }
+  let path_t loc path = { tx = TEId path; loc; const = const () }
 
   let unbound loc =
     incr tick;
-    { tx = TEUnbound (Some !tick); loc }
+    { tx = TEUnbound (Some !tick); loc; const = const () }
 
 
-  let noreturn loc = { tx = TENoReturn; loc }
+  let noreturn loc = { tx = TENoReturn; loc; const = const () }
   let unit ~loc = makeId loc "unit"
   let int ~loc = makeId loc "int"
   let bool ~loc = makeId loc "bool"
   let string ~loc = makeId loc "string"
   let real ~loc = makeId loc "real"
   let fix16 ~loc = makeId loc "fix16"
-  let num loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc ]; loc }
-  let numstr loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; string ~loc ]; loc }
-  let num_bool loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc }
-  let size ?(loc = Loc.default) n = { tx = TESize n; loc }
+  let num loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc ]; loc; const = const () }
+  let numstr loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; string ~loc ]; loc; const = const () }
+  let num_bool loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () }
+  let size ?(loc = Loc.default) n = { tx = TESize n; loc; const = const () }
 
   let array ?(fixed = true) ?(loc = Loc.default) ?(size = unbound loc) t =
-    let a_dim = { tx = TEComposed ("array", [ t; size ]); loc } in
+    let a_dim = { tx = TEComposed ("array", [ t; size ]); loc; const = const () } in
     if fixed then
       a_dim
     else (
-      let a = { tx = TEComposed ("array", [ t ]); loc } in
-      { tx = TEOption [ a; a_dim ]; loc })
+      let a = { tx = TEComposed ("array", [ t ]); loc; const = const () } in
+      { tx = TEOption [ a; a_dim ]; loc; const = const () })
 
 
-  let tuple ?(loc = Loc.default) l = { tx = TEComposed ("tuple", l); loc }
+  let tuple ?(loc = Loc.default) l = { tx = TEComposed ("tuple", l); loc; const = const () }
 
   let freal_type () =
     let loc = Loc.default in
-    { tx = TEOption [ real ~loc; fix16 ~loc ]; loc }
+    { tx = TEOption [ real ~loc; fix16 ~loc ]; loc; const = const () }
 
 
   let array_size () : fun_type =
@@ -465,27 +520,28 @@ module C = struct
 
   let valid_int () : fun_type =
     let loc = Loc.default in
-    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc } ], int ~loc
+    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], int ~loc
 
 
   let valid_real () : fun_type =
     let loc = Loc.default in
-    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc } ], real ~loc
+    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], real ~loc
 
 
   let valid_fix16 () : fun_type =
     let loc = Loc.default in
-    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc } ], fix16 ~loc
+    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], fix16 ~loc
 
 
   let valid_bool () : fun_type =
     let loc = Loc.default in
-    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc } ], bool ~loc
+    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () } ], bool ~loc
 
 
   let valid_string () : fun_type =
     let loc = Loc.default in
-    [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc; string ~loc ]; loc } ], string ~loc
+    ( [ { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc; string ~loc ]; loc; const = const () } ]
+    , string ~loc )
 
 
   let num_num () : fun_type =

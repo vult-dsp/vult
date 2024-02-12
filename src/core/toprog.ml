@@ -297,9 +297,10 @@ let rec stmt (env : Env.in_top) (state : state) (s : Typed.stmt) =
     | subs -> state, [ { s = StmtBlock subs; loc } ])
 
 
-let arg (env : Env.in_top) (state : state) ({ name; t; const; loc } : Typed.arg) =
+let arg (env : Env.in_top) (state : state) ({ name; t; loc } : Typed.arg) =
+  let const = Typed.isTypeConst t = true in
   let state, t = type_ env state t in
-  state, { name; t; const = !const; loc }
+  state, { name; t; const; loc }
 
 
 let function_type env state t =
