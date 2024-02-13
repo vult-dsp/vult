@@ -16,7 +16,7 @@ static_inline void Record_init_point_init(Record_init_point& _ctx) {
 }
 
 static_inline void Record_init_foo() {
-   Record_init_point _record_0 = { 0.0f, 0.0f };
+   const Record_init_point _record_0 = { 0.0f, 0.0f };
    float p1 = _record_0.x;
 }
 

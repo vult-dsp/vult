@@ -57,48 +57,49 @@ let rec getDim (t : Typed.type_) =
   | _ -> Error.raiseError "The size of the array could not be inferred. Please add a type annotation." t.loc
 
 
-let rec type_ (env : Env.in_top) (state : state) (t : Typed.type_) =
+let rec type_ ?(const = false) (env : Env.in_top) (state : state) (t : Typed.type_) =
+  let const = const || Typed.isTypeConst t in
   let loc = t.loc in
   match t.tx with
-  | T.TENoReturn -> state, { t = TVoid None; loc }
+  | T.TENoReturn -> state, { t = TVoid None; const; loc }
   | T.TEUnbound _ -> Error.raiseError "The type could not be infered. Please add a type annotation." t.loc
   | T.TEOption _ -> Error.raiseError "undecided type" t.loc
-  | T.TEId { id = "unit"; n = None; _ } -> state, { t = TVoid None; loc }
-  | T.TEId { id = "int"; n = None; _ } -> state, { t = TInt; loc }
-  | T.TEId { id = "real"; n = None; _ } -> state, { t = TReal; loc }
-  | T.TEId { id = "fix16"; n = None; _ } -> state, { t = TFix16; loc }
-  | T.TEId { id = "string"; n = None; _ } -> state, { t = TString; loc }
-  | T.TEId { id = "bool"; n = None; _ } -> state, { t = TBool; loc }
+  | T.TEId { id = "unit"; n = None; _ } -> state, { t = TVoid None; const; loc }
+  | T.TEId { id = "int"; n = None; _ } -> state, { t = TInt; const; loc }
+  | T.TEId { id = "real"; n = None; _ } -> state, { t = TReal; const; loc }
+  | T.TEId { id = "fix16"; n = None; _ } -> state, { t = TFix16; const; loc }
+  | T.TEId { id = "string"; n = None; _ } -> state, { t = TString; const; loc }
+  | T.TEId { id = "bool"; n = None; _ } -> state, { t = TBool; const; loc }
   | T.TEId p -> (
     let ps = path p in
     match Map.find_opt ps state.types with
-    | Some t -> state, t
+    | Some t -> state, { t with const }
     | None -> (
       match Env.getType env p with
       | None -> failwith "unknown type"
-      | Some { descr = Enum _; _ } -> state, { t = TInt; loc }
+      | Some { descr = Enum _; _ } -> state, { t = TInt; const; loc }
       | Some { descr = Record members; _ } ->
         let members =
           List.map (fun (name, (var : Env.var)) -> name, var.t, var.tags, var.loc) (Env.Map.to_list members)
           |> List.sort (fun (n1, _, _, _) (n2, _, _, _) -> String.compare n1 n2)
         in
         let state, members = type_list env state members in
-        let t = { t = TStruct { path = ps; members }; loc } in
+        let t = { t = TStruct { path = ps; members }; loc; const = true } in
         let types = Map.add ps t state.types in
         { state with types }, t
       | Some { descr = Simple; _ } -> failwith "Type does not have members"
       | Some { descr = Alias _; _ } -> failwith ""))
-  | T.TELink t -> type_ env state t
+  | T.TELink t -> type_ ~const env state t
   | T.TEComposed ("array", [ t; dim ]) ->
-    let state, t = type_ env state t in
+    let state, t = type_ ~const env state t in
     let dim = getDim dim in
-    state, { t = TArray (Some dim, t); loc }
+    state, { t = TArray (Some dim, t); const; loc }
   | T.TEComposed ("array", [ t ]) ->
-    let state, t = type_ env state t in
-    state, { t = TArray (None, t); loc }
+    let state, t = type_ ~const env state t in
+    state, { t = TArray (None, t); const; loc }
   | T.TEComposed ("tuple", elems) ->
-    let state, elems = list type_ env state elems in
-    state, { t = TTuple elems; loc }
+    let state, elems = list (type_ ~const) env state elems in
+    state, { t = TTuple elems; const; loc }
   | T.TEComposed (name, _) -> Error.raiseError ("Unknown composed type '" ^ name ^ "'.") t.loc
   | T.TESize _ -> Error.raiseError "Invalid type description." t.loc
 
@@ -353,7 +354,7 @@ let top_stmt (env : Env.in_top) (state : state) (t : Typed.top_stmt) =
     let p = path p in
     let state, members = type_list env state members in
     let struct_descr = { path = p; members } in
-    let t = { t = TStruct struct_descr; loc = t.loc } in
+    let t = { t = TStruct struct_descr; loc = t.loc; const = false } in
     let types = Map.add p t state.types in
     { state with types }, [ { top = TopType struct_descr; loc = t.loc } ]
   | TopEnum _ -> state, []

@@ -223,23 +223,23 @@ let rec type_ (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state)
   let loc = t.loc in
   match t with
   | { t = TVoid None; _ } -> apply mapper.type_ env state t
-  | { t = TVoid (Some elems); _ } ->
+  | { t = TVoid (Some elems); const; _ } ->
     let state, elems = (mapper_list type_) mapper sub_env state elems in
-    apply mapper.type_ env state { t = TVoid (Some elems); loc }
+    apply mapper.type_ env state { t = TVoid (Some elems); const; loc }
   | { t = TInt; _ } -> apply mapper.type_ env state t
   | { t = TReal; _ } -> apply mapper.type_ env state t
   | { t = TString; _ } -> apply mapper.type_ env state t
   | { t = TBool; _ } -> apply mapper.type_ env state t
   | { t = TFix16; _ } -> apply mapper.type_ env state t
-  | { t = TArray (dim, t1); _ } ->
+  | { t = TArray (dim, t1); const; _ } ->
     let state, t1 = type_ mapper sub_env state t1 in
-    apply mapper.type_ env state { t = TArray (dim, t1); loc }
-  | { t = TTuple elems; _ } ->
+    apply mapper.type_ env state { t = TArray (dim, t1); const; loc }
+  | { t = TTuple elems; const; _ } ->
     let state, elems = (mapper_list type_) mapper sub_env state elems in
-    apply mapper.type_ env state { t = TTuple elems; loc }
-  | { t = TStruct s; _ } ->
+    apply mapper.type_ env state { t = TTuple elems; const; loc }
+  | { t = TStruct s; const; _ } ->
     let state, s = struct_descr mapper sub_env state s in
-    apply mapper.type_ env state { t = TStruct s; loc }
+    apply mapper.type_ env state { t = TStruct s; const; loc }
 
 
 and struct_descr (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (s : struct_descr)

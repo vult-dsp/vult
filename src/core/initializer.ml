@@ -37,13 +37,13 @@ let getTick () =
 let rec getInitRHS (t : type_) =
   match t with
   | { t = TVoid _; _ } -> C.eunit
-  | { t = TInt; loc } -> C.eint ~loc 0
-  | { t = TReal; loc } -> C.ereal ~loc 0.0
-  | { t = TFix16; loc } -> C.efix16 ~loc 0.0
-  | { t = TString; loc } -> C.estring ~loc ""
-  | { t = TBool; loc } -> C.ebool ~loc false
-  | { t = TStruct { path; _ }; loc } -> C.ecall ~loc (path ^ "_init") [] t
-  | { t = TArray (Some size, at); loc } ->
+  | { t = TInt; loc; _ } -> C.eint ~loc 0
+  | { t = TReal; loc; _ } -> C.ereal ~loc 0.0
+  | { t = TFix16; loc; _ } -> C.efix16 ~loc 0.0
+  | { t = TString; loc; _ } -> C.estring ~loc ""
+  | { t = TBool; loc; _ } -> C.ebool ~loc false
+  | { t = TStruct { path; _ }; loc; _ } -> C.ecall ~loc (path ^ "_init") [] t
+  | { t = TArray (Some size, at); loc; _ } ->
     let v = getInitRHS at in
     let elems = List.init size (fun _ -> v) in
     C.earray ~loc elems t
@@ -56,34 +56,34 @@ type cstyle =
 
 let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
   match t with
-  | { t = TVoid _; loc } ->
+  | { t = TVoid _; loc; _ } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TInt; loc } ->
+  | { t = TInt; loc; _ } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TReal; loc } ->
+  | { t = TReal; loc; _ } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TFix16; loc } ->
+  | { t = TFix16; loc; _ } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TString; loc } ->
+  | { t = TString; loc; _ } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TBool; loc } ->
+  | { t = TBool; loc; _ } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }
   | { t = TTuple _; _ } -> failwith "tuples"
-  | { t = TStruct { path; _ }; loc } when cstyle = RefObject ->
+  | { t = TStruct { path; _ }; loc; _ } when cstyle = RefObject ->
     let rhs = { e = ECall { path = path ^ "_init"; args = [ rhs ] }; t; loc } in
-    { s = StmtBind ({ l = LWild; loc; t = { t = TVoid None; loc = Loc.default } }, rhs); loc }
-  | { t = TStruct { path; _ }; loc } ->
+    { s = StmtBind ({ l = LWild; loc; t = C.void_t }, rhs); loc }
+  | { t = TStruct { path; _ }; loc; _ } ->
     let rhs = { e = ECall { path = path ^ "_alloc"; args = [] }; t; loc } in
     { s = StmtBind (lhs, rhs); loc }
-  | { t = TArray (Some size, subt); loc } when cstyle = RefObject ->
+  | { t = TArray (Some size, subt); loc; _ } when cstyle = RefObject ->
     let i = "i_" ^ string_of_int (getTick ()) in
-    let int_t = { t = TInt; loc } in
+    let int_t = C.int_t in
     let index = { e = EId i; t = int_t; loc } in
     let one = { e = EInt 1; t = int_t; loc } in
     let cond = { e = EOp (OpLt, index, { e = EInt size; t = int_t; loc }); t; loc } in
@@ -99,9 +99,9 @@ let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
     let decl = { s = StmtDecl ({ d = DId (i, None); t = int_t; loc }, None); loc } in
     let init = { s = StmtBind ({ l = LId i; t = int_t; loc }, { e = EInt 0; t = int_t; loc }); loc } in
     { s = StmtBlock [ decl; init; loop ]; loc }
-  | { t = TArray (Some size, subt); loc } ->
+  | { t = TArray (Some size, subt); loc; _ } ->
     let i = "i_" ^ string_of_int (getTick ()) in
-    let int_t = { t = TInt; loc } in
+    let int_t = C.int_t in
     let index = { e = EId i; t = int_t; loc } in
     let one = { e = EInt 1; t = int_t; loc } in
     let cond = { e = EOp (OpLt, index, { e = EInt size; t = int_t; loc }); t; loc } in
@@ -150,8 +150,8 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
   (* Generation for c-style code using references *)
   | { top = TopType struct_t; loc } when cstyle = RefObject ->
     let name = struct_t.path ^ "_init" in
-    let this_type = { t = TStruct struct_t; loc = Loc.default } in
-    let void_type = { t = TVoid None; loc = Loc.default } in
+    let this_type = { t = TStruct struct_t; loc = Loc.default; const = false } in
+    let void_type = C.void_t in
     let lctx = { l = LId "_ctx"; t = this_type; loc } in
     let ectx = { e = EId "_ctx"; t = this_type; loc } in
     let stmts =
@@ -169,8 +169,8 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
   (* Initialization of alias c-style *)
   | { top = TopAlias { path; alias_of }; loc } when cstyle = RefObject ->
     let name = path ^ "_init" in
-    let this_type = { t = TStruct { path; members = [] }; loc = Loc.default } in
-    let void_type = { t = TVoid None; loc = Loc.default } in
+    let this_type = { t = TStruct { path; members = [] }; loc = Loc.default; const = false } in
+    let void_type = C.void_t in
     let call =
       { e = ECall { path = alias_of ^ "_init"; args = [ { e = EId "_ctx"; t = this_type; loc } ] }; loc; t = void_type }
     in
@@ -181,8 +181,8 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
   (* Generate initializers that return a value *)
   | { top = TopType struct_t; loc } ->
     let name = struct_t.path ^ "_alloc" in
-    let this_type = { t = TStruct struct_t; loc = Loc.default } in
-    let void_type = { t = TVoid None; loc = Loc.default } in
+    let this_type = { t = TStruct struct_t; loc = Loc.default; const = true } in
+    let void_type = C.void_t in
     let lctx = { l = LId "_ctx"; t = this_type; loc } in
     let ectx = { e = EId "_ctx"; t = this_type; loc } in
     let stmts =
@@ -201,8 +201,8 @@ let createInitFunction custom_initializers (iargs : Args.args) stmt =
     { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
   | { top = TopAlias { path; alias_of }; loc } ->
     let name = path ^ "_alloc" in
-    let this_type = { t = TStruct { path; members = [] }; loc = Loc.default } in
-    let void_type = { t = TVoid None; loc = Loc.default } in
+    let this_type = { t = TStruct { path; members = [] }; loc = Loc.default; const = true } in
+    let void_type = C.void_t in
     let call = { e = ECall { path = alias_of ^ "_alloc"; args = [] }; loc; t = void_type } in
     let body = { s = StmtReturn call; loc } in
     let args, t = [ { name = "_ctx"; t = this_type; const = false; loc } ], ([], this_type) in

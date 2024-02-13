@@ -152,7 +152,7 @@ let rec getAllStructTypes (t : type_) =
 
 
 let getTypeNameStringExp (t : type_) =
-  let string_type = { t = TString; loc = t.loc } in
+  let string_type = C.string_t in
   { e = EString (getTypeNameString t); t = string_type; loc = t.loc }
 
 
@@ -214,7 +214,7 @@ let serializerForType (t : type_) =
 
 
 let callPush push this_type member t loc =
-  let buffer_type = { t = TStruct { path = buffer_name; members = [] }; loc } in
+  let buffer_type = { t = TStruct { path = buffer_name; members = [] }; loc; const = true } in
   let index = C.eid "index" C.int_t in
   let buffer = C.eid "buffer" buffer_type in
   let ectx = C.eid "_ctx" this_type in
@@ -237,8 +237,8 @@ let createSerializer table (stmt : top_stmt) =
     if save && s <> None then (
       let s = Option.get s in
       let name = s.path ^ "_serialize_data" in
-      let this_type = { t = TStruct s; loc } in
-      let buffer_type = { t = TStruct { path = buffer_name; members = [] }; loc } in
+      let this_type = { t = TStruct s; loc; const = true } in
+      let buffer_type = { t = TStruct { path = buffer_name; members = [] }; loc; const = false } in
       let start = C.eid "start" C.int_t in
       let index = C.eid "index" C.int_t in
       let lindex = C.lid "index" C.int_t in
@@ -326,8 +326,8 @@ let createSerializer table (stmt : top_stmt) =
     if save then (
       let name = path ^ "_serialize_data" in
       let name_alias = alias_of ^ "_serialize_data" in
-      let this_type = { t = TStruct { path; members = [] }; loc } in
-      let buffer_type = { t = TStruct { path = buffer_name; members = [] }; loc } in
+      let this_type = { t = TStruct { path; members = [] }; loc; const = true } in
+      let buffer_type = { t = TStruct { path = buffer_name; members = [] }; loc; const = false } in
       let ectx = { e = EId "_ctx"; t = this_type; loc } in
       let index = C.eid "index" C.int_t in
       let buffer = C.eid "buffer" buffer_type in
@@ -352,11 +352,11 @@ let createDeserializer table (stmt : top_stmt) =
     if save && s <> None then (
       let s = Option.get s in
       let name = s.path ^ "_deserialize_data" in
-      let this_type = { t = TStruct s; loc } in
-      let buffer_type = { t = TStruct { path = buffer_name; members = [] }; loc } in
-      let typedescr_type = { t = TStruct { path = typdescr_name; members = [] }; loc } in
-      let bool_type = { t = TBool; loc } in
-      let string_type = { t = TString; loc } in
+      let this_type = { t = TStruct s; loc; const = false } in
+      let buffer_type = { t = TStruct { path = buffer_name; members = [] }; loc; const = false } in
+      let typedescr_type = { t = TStruct { path = typdescr_name; members = [] }; loc; const = false } in
+      let bool_type = C.bool_t in
+      let string_type = C.string_t in
       let typedescr = { e = EId "type_descr"; t = typedescr_type; loc } in
       let index = C.eid "index" C.int_t in
       let buffer = C.eid "buffer" buffer_type in
@@ -507,12 +507,12 @@ let createTypeDescriptor n_types table (stmt : top_stmt) =
     if save && s <> None then (
       let s = Option.get s in
       let name = path ^ "_serialize_type_descr" in
-      let buffer_type = { t = TStruct { path = buffer_name; members = [] }; loc } in
-      let string_type = { t = TString; loc } in
+      let buffer_type = { t = TStruct { path = buffer_name; members = [] }; loc; const = true } in
+      let string_type = C.string_t in
       let index = C.eid "index" C.int_t in
       let lindex = C.lid "index" C.int_t in
       let buffer = C.eid "buffer" buffer_type in
-      let string_array_type n : type_ = { t = TArray (Some n, string_type); loc } in
+      let string_array_type n : type_ = { t = TArray (Some n, string_type); loc; const = true } in
       let members =
         CCList.filter_map
           (fun (name, (_t : type_), tags, loc) ->

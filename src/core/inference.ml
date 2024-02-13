@@ -234,7 +234,7 @@ let propagateVariability env loc (args : Typed.arg list option) (exp_args : exp 
   | None -> ()
   | Some args ->
     List.iter2
-      (fun (arg : arg) exp ->
+      (fun (arg : arg) (exp : exp) ->
         if isTypeConst arg.t = false then
           markExpMutable env exp loc)
       args
@@ -399,8 +399,9 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
         match Map.find m members with
         | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
         | Some { t; _ } ->
+          let t = refreshConstness t in
           (* if the type is a builtin (a value) do not unify the constness *)
-          let t = if not (Env.isBuiltinType t) then { t with const = e1.t.const } else t in
+          let () = if not (Env.isBuiltinType t) then unifyConstness t e1.t in
           env, { e = EMember (e1, m); t; loc })
       | _ ->
         let t = Pla.print (Typed.print_type_ e1.t) in
@@ -502,6 +503,7 @@ and lexp ?(const = false) (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * 
         match Map.find m members with
         | None -> Error.raiseError ("The field '" ^ m ^ "' is not part of the type '" ^ pathString path ^ "'") loc
         | Some { t; _ } ->
+          let t = refreshConstness t in
           (* if the type is a builtin (a value) do not unify the constness *)
           let t = if not (Env.isBuiltinType t) then { t with const = e.t.const } else t in
           env, { l = LMember (e, m); t; loc })

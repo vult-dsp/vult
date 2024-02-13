@@ -24,6 +24,8 @@
 open Pparser
 open Util
 
+let show_types = false
+
 type tags = Ptags.tags
 
 type type_d_ =
@@ -53,6 +55,7 @@ and param =
 
 and type_ =
   { t : type_d_
+  ; const : bool
   ; loc : Loc.t
   }
 
@@ -191,6 +194,7 @@ let default_info = { original_name = None; is_root = false }
 
 module Print = struct
   let rec print_type_ (t : type_) : Pla.t =
+    let prefix p = if show_types && t.const then Pla.append (Pla.string "const ") p else p in
     match t.t with
     | TVoid _ -> Pla.string "void"
     | TInt -> Pla.string "int"
@@ -200,11 +204,11 @@ module Print = struct
     | TFix16 -> Pla.string "fixed"
     | TArray (Some dim, t) ->
       let t = print_type_ t in
-      {%pla|<#t#>[<#dim#i>]|}
+      prefix {%pla|<#t#>[<#dim#i>]|}
     | TArray (None, t) ->
       let t = print_type_ t in
-      {%pla|<#t#>[:]|}
-    | TStruct { path; _ } -> {%pla|struct <#path#s>|}
+      prefix {%pla|<#t#>[:]|}
+    | TStruct { path; _ } -> prefix {%pla|struct <#path#s>|}
     | TTuple elems ->
       let elems = Pla.map_sep Pla.commaspace print_type_ elems in
       {%pla|(<#elems#>)|}
@@ -426,13 +430,13 @@ module Print = struct
 end
 
 module C = struct
-  let void_t = { t = TVoid None; loc = Loc.default }
-  let int_t = { t = TInt; loc = Loc.default }
-  let string_t = { t = TString; loc = Loc.default }
-  let bool_t = { t = TBool; loc = Loc.default }
-  let real_t = { t = TReal; loc = Loc.default }
-  let fix16_t = { t = TFix16; loc = Loc.default }
-  let array_t ?dim t = { t = TArray (dim, t); loc = Loc.default }
+  let void_t = { t = TVoid None; loc = Loc.default; const = false }
+  let int_t = { t = TInt; loc = Loc.default; const = false }
+  let string_t = { t = TString; loc = Loc.default; const = false }
+  let bool_t = { t = TBool; loc = Loc.default; const = false }
+  let real_t = { t = TReal; loc = Loc.default; const = false }
+  let fix16_t = { t = TFix16; loc = Loc.default; const = false }
+  let array_t ?dim t = { t = TArray (dim, t); loc = Loc.default; const = false }
   let ereal ?(loc = Loc.default) i = { e = EReal i; t = real_t; loc }
   let efix16 ?(loc = Loc.default) i = { e = EFixed i; t = fix16_t; loc }
   let estring ?(loc = Loc.default) i = { e = EString i; t = string_t; loc }

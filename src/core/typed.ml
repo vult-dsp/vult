@@ -411,25 +411,6 @@ let print_top_stmt t =
 
 let print_prog prog = Pla.map_sep_all Pla.newline print_top_stmt prog
 
-let rec setConstness (c : constness) (v : bool) =
-  match c.c with
-  | TEConst i | TEMut i -> c.c <- (if v then TEConst i else TEMut i)
-  | TECLink c -> setConstness c v
-
-
-let setTypeMut (t : type_) = setConstness t.const false
-let setTypeConstness (t : type_) v = setConstness t.const v
-
-let isTypeConst (t : type_) =
-  let rec loop const =
-    match const.c with
-    | TEConst _ -> true
-    | TEMut _ -> false
-    | TECLink c -> loop c
-  in
-  loop t.const
-
-
 module C = struct
   let tick = ref 0
   let ctick = ref 0
@@ -607,3 +588,32 @@ module C = struct
     let t = string ~loc in
     [ t; t ], t
 end
+
+let rec setConstness (c : constness) (v : bool) =
+  match c.c with
+  | TEConst i | TEMut i -> c.c <- (if v then TEConst i else TEMut i)
+  | TECLink c -> setConstness c v
+
+
+let setTypeMut (t : type_) = setConstness t.const false
+let setTypeConstness (t : type_) v = setConstness t.const v
+
+let isTypeConst (t : type_) =
+  let rec loop const =
+    match const.c with
+    | TEConst _ -> true
+    | TEMut _ -> false
+    | TECLink c -> loop c
+  in
+  loop t.const
+
+
+let rec refreshConstness (t : type_) =
+  let t =
+    match t.tx with
+    | TELink t -> refreshConstness t
+    | TEOption options -> { t with tx = TEOption (List.map refreshConstness options) }
+    | TEComposed (name, subs) -> { t with tx = TEComposed (name, List.map refreshConstness subs) }
+    | _ -> t
+  in
+  { t with const = C.const () }

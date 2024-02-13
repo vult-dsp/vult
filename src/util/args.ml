@@ -57,6 +57,7 @@ type args =
   ; mutable dtyped : bool
   ; mutable dbytecode : bool
   ; mutable dprog : bool
+  ; mutable dcode : bool
   ; mutable eval : string option
   ; mutable check : bool
   ; mutable code : code
@@ -84,6 +85,7 @@ let default_arguments : args =
   ; dtyped = false
   ; dbytecode = false
   ; dprog = false
+  ; dcode = false
   ; code = NoCode
   ; eval = None
   ; check = false
@@ -205,6 +207,10 @@ let flags result =
   ; { flag = "-dump-prog"
     ; action = Arg.Unit (fun () -> result.dprog <- true)
     ; comment = " Dumps the processed program (default: off)"
+    }
+  ; { flag = "-dump-code"
+    ; action = Arg.Unit (fun () -> result.dcode <- true)
+    ; comment = " Dumps the processed program just before generating code (default: off)"
     }
   ; { flag = "-dump-typed"
     ; action = Arg.Unit (fun () -> result.dtyped <- true)

@@ -250,7 +250,11 @@ let print_decl (n, (t : type_)) =
     let sub = print_type_ sub in
     {%pla|std::array<<#sub#>, <#dim#i>> &<#n#s>|}
   | TArray (None, _) -> failwith "Cpp.print_decl: array without dimensions"
-  | TStruct { path; _ } -> {%pla|<#path#s> &<#n#s>|}
+  | TStruct { path; _ } ->
+    if t.const then
+      {%pla|const <#path#s> &<#n#s>|}
+    else
+      {%pla|<#path#s> &<#n#s>|}
   | _ ->
     let t = print_type_ t in
     {%pla|<#t#> <#n#s>|}
@@ -266,7 +270,11 @@ let print_decl_alloc (n, (t : type_)) =
     let sub = print_type_ sub in
     {%pla|std::array<<#sub#>, <#dim#i>> <#n#s>|}
   | TArray (None, _) -> failwith "Cpp.print_decl_alloc: array without dimensions"
-  | TStruct { path; _ } -> {%pla|<#path#s> <#n#s>|}
+  | TStruct { path; _ } ->
+    if t.const then
+      {%pla|const <#path#s> <#n#s>|}
+    else
+      {%pla|<#path#s> <#n#s>|}
   | _ ->
     let t = print_type_ t in
     {%pla|<#t#> <#n#s>|}

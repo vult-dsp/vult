@@ -55,9 +55,10 @@ let showResult (args : args) (output : output) =
 
 
 let generateCode args file_deps (stmts, vm, acc) =
-  if args.code <> NoCode then (
+  if args.code <> NoCode || args.dcode then (
     let stmts = Util.Profile.time "Generate Tables" (fun () -> Tables.create args vm stmts) in
     let stmts = Util.Profile.time "Convert" (fun () -> Tocode.prog args stmts) in
+    let prog_out = if args.dcode then [ Prog (Pla.print (Prog.Print.print_prog stmts)) ] else [] in
     let code =
       match args.code with
       | NoCode -> []
@@ -67,7 +68,7 @@ let generateCode args file_deps (stmts, vm, acc) =
       | JSCode -> failwith "Javascript generator not implemented yet"
       | JavaCode -> failwith "Javascript generator not implemented yet"
     in
-    GeneratedCode code :: acc)
+    (GeneratedCode code :: prog_out) @ acc)
   else
     acc
 

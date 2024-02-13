@@ -461,7 +461,9 @@ module Tuples = struct
             { s = StmtBind (l, r); loc })
           elems
       in
-      let s = { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid None; loc = rloc } }); loc } in
+      let s =
+        { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid None; const = false; loc = rloc } }); loc }
+      in
       reapply state, s :: bindings
     (* multi return calls bound to a tuple variable *)
     | { s =
@@ -473,14 +475,19 @@ module Tuples = struct
       let tuple_elems =
         List.mapi (fun i (t : type_) -> { e = EMember (ctx, path ^ "_ret_" ^ string_of_int i); t; loc }) types
       in
-      let s = { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid None; loc = rloc } }); loc } in
+      let s =
+        { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid None; const = false; loc = rloc } }); loc }
+      in
       let binding = { s = StmtBind (lhs, { e = ETuple tuple_elems; t = rhs.t; loc = rhs.loc }); loc } in
       reapply state, s :: [ binding ]
     (* Remove the return type of calls bound to wild *)
     | { s = StmtBind ({ l = LWild; _ }, { e = ECall _; t = { t = TVoid _; _ }; _ }); _ } -> state, [ s ]
     | { s = StmtBind (({ l = LWild; _ } as lhs), ({ e = ECall _; loc = rloc; _ } as rhs)); loc } ->
       let s =
-        { s = StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid (Some [ rhs.t ]); loc = rloc } }); loc }
+        { s =
+            StmtBind ({ lhs with l = LWild }, { rhs with t = { t = TVoid (Some [ rhs.t ]); const = false; loc = rloc } })
+        ; loc
+        }
       in
       reapply state, [ s ]
     (* Bind returned tupples to the environment *)
@@ -494,7 +501,7 @@ module Tuples = struct
             { s = StmtBind (l, r); loc })
           elems
       in
-      let s = { s = StmtReturn { e = EUnit; t = { t = TVoid None; loc }; loc = eloc }; loc } in
+      let s = { s = StmtReturn { e = EUnit; t = { t = TVoid None; const = false; loc }; loc = eloc }; loc } in
       reapply state, bindings @ [ s ]
     (* Bind returned single variable tuple to the environment *)
     | { s = StmtReturn ({ e = EId _; loc = eloc; t = { t = TTuple types; _ } } as ret); loc } ->
@@ -507,7 +514,7 @@ module Tuples = struct
             { s = StmtBind (l, { ret with e = ETMember (ret, i) }); loc })
           types
       in
-      let s = { s = StmtReturn { e = EUnit; t = { t = TVoid None; loc }; loc = eloc }; loc } in
+      let s = { s = StmtReturn { e = EUnit; t = { t = TVoid None; const = false; loc }; loc = eloc }; loc } in
       reapply state, bindings @ [ s ]
     | _ -> state, [ s ]
 
@@ -516,8 +523,8 @@ module Tuples = struct
     Mapper.makeExpander
     @@ fun _env state (top : top_stmt) ->
     match top with
-    | { top = TopFunction (({ t = args_t, { t = TTuple elems; loc = tloc }; _ } as def), body); loc } ->
-      let def = { def with t = args_t, { t = TVoid (Some elems); loc = tloc } } in
+    | { top = TopFunction (({ t = args_t, { t = TTuple elems; loc = tloc; _ }; _ } as def), body); loc } ->
+      let def = { def with t = args_t, { t = TVoid (Some elems); const = false; loc = tloc } } in
       state, [ { top = TopFunction (def, body); loc } ]
     | _ -> state, [ top ]
 
@@ -533,7 +540,7 @@ module Builtin = struct
     match e with
     | { e = ECall { path = "pi"; args = [] }; _ } -> reapply state, { e with e = EReal Float.pi }
     | { e = ECall { path = "not"; args = [ e1 ] }; loc; _ } ->
-      reapply state, { e with e = EOp (OpEq, e1, { e = EBool false; t = { t = TBool; loc }; loc }) }
+      reapply state, { e with e = EOp (OpEq, e1, { e = EBool false; t = { t = TBool; const = false; loc }; loc }) }
     | { e = ECall { path = "size"; args = [ { t = { t = TArray (Some size, _); _ }; _ } ] }; loc; _ } ->
       reapply state, { e with e = EInt size; loc }
     | { e = ECall { path = "length"; args = [ { e = EString str; _ } ] }; loc; _ } ->
@@ -591,7 +598,7 @@ module Cast = struct
     Mapper.make
     @@ fun env state (t : type_) ->
     match t with
-    | { t = TReal; loc } when env.args.real = Fixed -> state, { t = TFix16; loc }
+    | { t = TReal; const; loc } when env.args.real = Fixed -> state, { t = TFix16; const; loc }
     | _ -> state, t
 
 
