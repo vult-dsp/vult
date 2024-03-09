@@ -302,6 +302,16 @@ let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
     env, args
 
 
+and call (env : Env.in_func) instance path args loc eloc =
+  let env, args = exp_list env args in
+  let f = Env.lookFunctionCall env path loc in
+  let args_t, ret = f.t in
+  let t = applyFunction eloc args_t ret args in
+  let () = propagateVariability env loc f.args args in
+  let env, args = addContextArg env instance f args loc in
+  env, { e = ECall { instance = None; path = f.path; args }; t; loc }
+
+
 and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
   match e with
   | { e = SEBool value; loc } ->
@@ -370,25 +380,16 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     unifyRaise else_.loc then_.t else_.t;
     env, { e = EIf { cond; then_; else_ }; t; loc }
   (* we need to add a special case for int() in order to support conversion of enumerations *)
-  | { e = SECall { instance = None; path = { id = "int"; n = None; _ } as path; args = [ arg ] }; loc } -> (
+  | { e = SECall { instance = None; path = { id = "int"; n = None; _ } as path; args = [ arg ] as args }; loc } -> (
     let env, arg = exp env arg in
     match arg with
     | { e = EInt n; loc; _ } -> env, { e = EInt n; t = Typed.C.int ~loc; loc }
-    | _ ->
-      let f = Env.lookFunctionCall env path loc in
-      let args_t, ret = f.t in
-      let t = applyFunction e.loc args_t ret [ arg ] in
-      let () = propagateVariability env loc f.args [ arg ] in
-      let env, args = addContextArg env None f [ arg ] loc in
-      env, { e = ECall { instance = None; path = f.path; args }; t; loc })
-  | { e = SECall { instance; path; args }; loc } ->
-    let env, args = exp_list env args in
-    let f = Env.lookFunctionCall env path loc in
-    let args_t, ret = f.t in
-    let t = applyFunction e.loc args_t ret args in
-    let () = propagateVariability env loc f.args args in
-    let env, args = addContextArg env instance f args loc in
-    env, { e = ECall { instance = None; path = f.path; args }; t; loc }
+    | { e = EId _; loc; t = { tx = TEId tpath; _ } } -> (
+      match Env.lookType env tpath loc with
+      | { descr = Enum _; _ } -> env, { e = ECall { instance = None; path; args = [ arg ] }; t = Typed.C.int ~loc; loc }
+      | _ -> call env None path args loc e.loc)
+    | _ -> call env None path args loc e.loc)
+  | { e = SECall { instance; path; args }; loc } -> call env instance path args loc e.loc
   | { e = SEOp (op, e1, e2); loc } ->
     let env, e1 = exp env e1 in
     let env, e2 = exp env e2 in
