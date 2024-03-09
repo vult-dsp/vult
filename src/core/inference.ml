@@ -369,6 +369,18 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     unifyRaise cond.loc (C.bool ~loc) cond.t;
     unifyRaise else_.loc then_.t else_.t;
     env, { e = EIf { cond; then_; else_ }; t; loc }
+  (* we need to add a special case for int() in order to support conversion of enumerations *)
+  | { e = SECall { instance = None; path = { id = "int"; n = None; _ } as path; args = [ arg ] }; loc } -> (
+    let env, arg = exp env arg in
+    match arg with
+    | { e = EInt n; loc; _ } -> env, { e = EInt n; t = Typed.C.int ~loc; loc }
+    | _ ->
+      let f = Env.lookFunctionCall env path loc in
+      let args_t, ret = f.t in
+      let t = applyFunction e.loc args_t ret [ arg ] in
+      let () = propagateVariability env loc f.args [ arg ] in
+      let env, args = addContextArg env None f [ arg ] loc in
+      env, { e = ECall { instance = None; path = f.path; args }; t; loc })
   | { e = SECall { instance; path; args }; loc } ->
     let env, args = exp_list env args in
     let f = Env.lookFunctionCall env path loc in

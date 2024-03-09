@@ -450,11 +450,7 @@ module C = struct
 
 
   let tuple ?(loc = Loc.default) l = { tx = TEComposed ("tuple", l); loc; const = const () }
-
-  let freal_type () =
-    let loc = Loc.default in
-    { tx = TEOption [ real ~loc; fix16 ~loc ]; loc; const = const () }
-
+  let freal_type ?(loc = Loc.default) () = { tx = TEOption [ real ~loc; fix16 ~loc ]; loc; const = const () }
 
   let array_size () : fun_type =
     let loc = Loc.default in
@@ -581,6 +577,11 @@ module C = struct
   let unit_real () : fun_type =
     let loc = Loc.default in
     [], real ~loc
+
+
+  let unit_freal () : fun_type =
+    let loc = Loc.default in
+    [], freal_type ~loc ()
 
 
   let string_string () : fun_type =

@@ -380,8 +380,18 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
     if unify found.t t then (
       let tags = Pparser.Ptags.mergeTags found.tags value.tags in
       { found with tags })
-    else
-      Error.raiseError ("This declaration tries to change the type of " ^ found.name) value.loc
+    else (
+      let old_type = Pla.print (Typed.print_type_ found.t) in
+      let new_type = Pla.print (Typed.print_type_ t) in
+      Error.raiseError
+        ("This declaration tries to change the type of "
+         ^ found.name
+         ^ ". The previous type is '"
+         ^ old_type
+         ^ "' and the new is '"
+         ^ new_type
+         ^ "'")
+        value.loc)
   in
   let checkDuplicatedMem context name =
     match context with
