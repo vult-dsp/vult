@@ -140,6 +140,7 @@ let initializerType (iargs : Args.args) =
   | CppCode -> RefObject
   | JSCode -> NewObject
   | LuaCode -> NewObject
+  | WLCode -> NewObject
   | JavaCode -> NewObject
 
 

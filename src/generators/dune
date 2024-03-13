@@ -1,7 +1,7 @@
 (library
  (name generators)
- (modules Lua Cpp Common Tocode Tables T_pd T_performance Replacements)
- (libraries core pparser pla vm)
+ (modules Wl Lua Cpp Common Tocode Tables T_pd T_performance Replacements)
+ (libraries core pparser pla vm str)
  (flags
   (:standard -w -30))
  (preprocess

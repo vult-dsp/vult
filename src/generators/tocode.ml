@@ -118,11 +118,11 @@ let rec getLDecl (env : env) (l : lexp) =
 
 
 module ApplyReplacements = struct
-  let getReplacement env name (args : exp list) ret =
+  let getReplacement code name (args : exp list) ret =
     let args_t = List.map (fun (e : exp) -> e.t) args in
-    match Replacements.fun_to_fun env name args_t ret with
+    match Replacements.fun_to_fun code name args_t ret with
     | Some path -> path
-    | None -> name
+    | None -> Replacements.keyword code name
 
 
   let exp =
@@ -301,8 +301,8 @@ let function_info (info : Core.Prog.function_info) : function_info =
   { original_name = info.original_name; is_root = info.is_root }
 
 
-let function_def (_context : context) (def : Core.Prog.function_def) : function_def =
-  let name = def.name in
+let function_def (context : context) (def : Core.Prog.function_def) : function_def =
+  let name = Replacements.keyword context.args.code def.name in
   let args = def.args in
   let args_t, ret_t = def.t in
   { name; args; t = args_t, ret_t; tags = def.tags; loc = def.loc; info = function_info def.info }
@@ -320,7 +320,9 @@ let top_stmt (context : context) (top : Core.Prog.top_stmt) : top_stmt option =
   | { top = TopExternal (def, name); loc } ->
     let def = function_def context def in
     Some { top = TopExternal (def, name); loc }
-  | { top = TopConstant (path, dims, t, e); loc } -> Some { top = TopConstant (path, dims, t, e); loc }
+  | { top = TopConstant (path, dims, t, e); loc } ->
+    let path = Replacements.keyword context.args.code path in
+    Some { top = TopConstant (path, dims, t, e); loc }
 
 
 let registerExternalNames (stmts : Core.Prog.top_stmt list) =

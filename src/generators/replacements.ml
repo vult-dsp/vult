@@ -202,10 +202,40 @@ module Lua = struct
     | _ -> None
 end
 
+module Wl = struct
+  let keywords = [] |> Util.Maps.Set.of_list
+
+  let op_to_fun (op : Core.Prog.operator) (e1 : type_) (e2 : type_) (ret : type_) =
+    match op, e1.t, e2.t, ret.t with
+    | OpDiv, TInt, TInt, TInt -> Some "IntegerDivision"
+    | _ -> None
+
+
+  let fun_to_fun (path : string) (args : type_ list) (ret : type_) =
+    let args = List.map (fun (t : type_) -> t.t) args in
+    match path, args, ret.t with
+    (* builtins *)
+    | "float_to_int", [ TReal ], TInt -> Some "Floor"
+    | _ -> None
+
+
+  let rec nameReplace id =
+    let underscore_n = Str.regexp {|_[0-9]|} in
+    let underscore = Str.regexp {|_|} in
+    try
+      let _ = Str.search_forward underscore_n id 0 in
+      let found = Str.matched_string id in
+      let replaced = Str.global_replace underscore "n`n" found in
+      nameReplace (Str.global_replace (Str.regexp_string found) replaced id)
+    with
+    | Not_found -> Str.global_replace underscore "`" id
+end
+
 let fun_to_fun (lang : Util.Args.code) (path : string) (args : type_ list) (ret : type_) =
   match lang with
   | CppCode -> Cpp.fun_to_fun path args ret
   | LuaCode -> Lua.fun_to_fun path args ret
+  | WLCode -> Wl.fun_to_fun path args ret
   | _ -> None
 
 
@@ -213,14 +243,13 @@ let op_to_fun (lang : Util.Args.code) (op : Core.Prog.operator) (e1 : type_) (e2
   match lang with
   | CppCode -> Cpp.op_to_fun op e1 e2 ret
   | LuaCode -> Lua.op_to_fun op e1 e2 ret
+  | WLCode -> Wl.op_to_fun op e1 e2 ret
   | _ -> None
 
 
 let keyword (lang : Util.Args.code) id =
-  let keywords =
-    match lang with
-    | CppCode -> Cpp.keywords
-    | LuaCode -> Lua.keywords
-    | _ -> Util.Maps.Set.empty
-  in
-  if Util.Maps.Set.mem id keywords then id ^ "_" else id
+  match lang with
+  | CppCode -> if Util.Maps.Set.mem id Cpp.keywords then id ^ "_" else id
+  | LuaCode -> if Util.Maps.Set.mem id Lua.keywords then id ^ "_" else id
+  | WLCode -> Wl.nameReplace id
+  | _ -> id
