@@ -295,7 +295,7 @@ let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
       let t = C.array ~loc fctx_t in
       let env = Env.addVar env unify name t Inst loc in
       let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); loc; t = fctx_t } in
-      let e = { e = EIndex { e; index }; loc; t } in
+      let e = { e = EIndex { e; index }; loc; t = fctx_t } in
       let () = if is_ctx_mutable then markExpMutable env e loc in
       env, e :: args)
   else

@@ -235,7 +235,7 @@ let rec compile_lexp (env : env) (l : lexp) : lvalue =
       let index = getIndex s descr.members in
       let e = compile_lexp env e in
       LMember (e, index, s)
-    | _ -> failwith "type error")
+    | _ -> failwith "Compile.compile_lexp: type error")
   | LIndex { e; index } ->
     let e = compile_lexp env e in
     let index = compile_exp env index in
@@ -288,7 +288,7 @@ and compile_exp (env : env) e : rvalue =
       let index = getIndex m descr.members in
       let e = compile_exp env e in
       RMember (e, index, m)
-    | _ -> failwith "type error")
+    | _ -> failwith ("Compile.compile_exp: type error." ^ Pla.print (Prog.Print.print_type_ e.t)))
   | ETMember (e, index) ->
     let e = compile_exp env e in
     RTMember (e, index)
