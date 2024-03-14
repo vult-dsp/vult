@@ -26,7 +26,7 @@ fix16_t Phase_process(Phase_process_type& _ctx, fix16_t cv, fix16_t reset) {
    else {
       _ctx.phase = _ctx.phase;
    }
-   return fix_mul(0x40 /* 0.000977 */, _ctx.phase);
+   return (_ctx.phase >> 10);
 }
 
 fix16_t Sine_process(Sine_process_type& _ctx, fix16_t cv, fix16_t reset) {

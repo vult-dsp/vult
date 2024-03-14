@@ -66,7 +66,7 @@ void Ahr_do(Ahr_do_type& _ctx, fix16_t gate, fix16_t a, fix16_t h, fix16_t r) {
       _ctx.target = 0x0 /* 0.000000 */;
    }
    _ctx.out = fix_mul(0x147 /* 0.005000 */, fix_mul((- _ctx.out) + _ctx.target, _ctx.rate)) + _ctx.out;
-   _ctx.Ahr_do_ret_0 = fix_clip(fix_mul(0x40 /* 0.000977 */, _ctx.out), 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
+   _ctx.Ahr_do_ret_0 = fix_clip((_ctx.out >> 10), 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
    _ctx.Ahr_do_ret_1 = resetting;
    return ;
 }

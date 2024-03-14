@@ -78,8 +78,8 @@ fix16_t Synth2_osc(Synth2_osc_type& _ctx, fix16_t pitch, fix16_t pw, fix16_t wav
    if (Synth2_change(_ctx.inst_177e5, fixed_pitch)) {
       _ctx.rate = Synth2_pitchToRate(fixed_pitch);
       fix16_t p = fix_div(0x10000 /* 1.000000 */, _ctx.rate);
-      fix16_t maxHarmonics = fix_floor(fix_mul(0x8000 /* 0.500000 */, p));
-      _ctx.m = 0x10000 /* 1.000000 */ + fix_mul(0x20000 /* 2.000000 */, maxHarmonics);
+      fix16_t maxHarmonics = fix_floor((p >> 1));
+      _ctx.m = 0x10000 /* 1.000000 */ + (maxHarmonics << 1);
    }
    fix16_t shift05 = 0x8000 /* 0.500000 */ + fix_mul(0x7d70 /* 0.490000 */, pw);
    fix16_t shift = shift05 + _ctx.phase;
@@ -93,21 +93,21 @@ fix16_t Synth2_osc(Synth2_osc_type& _ctx, fix16_t pitch, fix16_t pw, fix16_t wav
       _ctx.phase = -0x10000 /* -1.000000 */ + _ctx.phase;
    }
    _ctx.state_pulse = fix_clip(tmp1 + (- tmp2) + fix_mul(0xffdf /* 0.999500 */, _ctx.state_pulse), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
-   _ctx.state_saw = fix_clip(fix_mul(0x8000 /* 0.500000 */, fix_div(tmp1 + tmp2 + fix_mul(-0x20000 /* -2.000000 */, _ctx.rate), shift05)) + fix_mul(0xffdf /* 0.999500 */, _ctx.state_saw), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
-   _ctx.state_triang = fix_clip(fix_mul(0xffdf /* 0.999500 */, _ctx.state_triang) + fix_mul(0x20000 /* 2.000000 */, fix_mul(_ctx.state_pulse, _ctx.rate)), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
+   _ctx.state_saw = fix_clip((fix_div((tmp1 + tmp2 + fix_mul(-0x20000 /* -2.000000 */, _ctx.rate)), shift05) >> 1) + fix_mul(0xffdf /* 0.999500 */, _ctx.state_saw), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
+   _ctx.state_triang = fix_clip(fix_mul(0xffdf /* 0.999500 */, _ctx.state_triang) + (fix_mul(_ctx.state_pulse, _ctx.rate) << 1), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
    if (wave < 0x5555 /* 0.333333 */) {
       _ctx.output = _ctx.state_pulse;
    }
    else {
       if (wave < 0xaaaa /* 0.666667 */) {
-         _ctx.output = fix_mul(0x20000 /* 2.000000 */, _ctx.state_saw);
+         _ctx.output = (_ctx.state_saw << 1);
       }
       else {
-         _ctx.output = fix_mul(0x20000 /* 2.000000 */, fix_mul(0x10000 /* 1.000000 */ + pw, _ctx.state_triang));
+         _ctx.output = (fix_mul((0x10000 /* 1.000000 */ + pw), _ctx.state_triang) << 1);
       }
    }
    _ctx.output = Synth2_dcblock(_ctx.inst_24fe5, _ctx.output);
-   return fix_clip(fix_mul(0x4000 /* 0.250000 */, _ctx.output), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
+   return fix_clip((_ctx.output >> 2), -0x10000 /* -1.000000 */, 0x10000 /* 1.000000 */);
 }
 
 fix16_t Synth2_svf_step(Synth2_svf_step_type& _ctx, fix16_t input, fix16_t g, fix16_t q, int32_t sel) {
@@ -139,13 +139,13 @@ fix16_t Synth2_svf_step(Synth2_svf_step_type& _ctx, fix16_t input, fix16_t g, fi
 fix16_t Synth2_svf(Synth2_svf_type& _ctx, fix16_t input, fix16_t fc, fix16_t q, int32_t sel) {
    fc = fix_clip(fc, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
    q = fix_clip(q, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
-   fix16_t fix_q = 0x20000 /* 2.000000 */ + fix_mul(0x20000 /* 2.000000 */, (- q));
+   fix16_t fix_q = 0x20000 /* 2.000000 */ + ((- q) << 1);
    if (Synth2_change(_ctx.inst_177a7, fc)) {
-      _ctx.g = fix_mul(0x8000 /* 0.500000 */, fc);
+      _ctx.g = (fc >> 1);
    }
    fix16_t x1 = Synth2_svf_step(_ctx.step, input, _ctx.g, fix_q, sel);
    fix16_t x2 = Synth2_svf_step(_ctx.step, input, _ctx.g, fix_q, sel);
-   return fix_mul(0x8000 /* 0.500000 */, x1 + x2);
+   return ((x1 + x2) >> 1);
 }
 
 fix16_t Synth2_lfo(Synth2_lfo_type& _ctx, fix16_t f, bool gate) {
@@ -220,7 +220,7 @@ fix16_t Synth2_process(Synth2_process_type& _ctx, fix16_t i) {
 
 void Synth2_controlChange(Synth2_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {
    fix16_t value_0_1 = fix_mul(0x204 /* 0.007874 */, int_to_fix(value));
-   fix16_t value_m1_1 = -0x10000 /* -1.000000 */ + fix_mul(0x20000 /* 2.000000 */, value_0_1);
+   fix16_t value_m1_1 = -0x10000 /* -1.000000 */ + (value_0_1 << 1);
    if (control == 30) {
       _ctx.volume = value_0_1;
    }

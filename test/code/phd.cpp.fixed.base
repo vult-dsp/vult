@@ -26,7 +26,7 @@ fix16_t Phase_process(Phase_process_type& _ctx, fix16_t cv, fix16_t reset) {
    else {
       _ctx.phase = _ctx.phase;
    }
-   return fix_mul(0x40 /* 0.000977 */, _ctx.phase);
+   return (_ctx.phase >> 10);
 }
 
 fix16_t Phd_process(Phd_process_type& _ctx, fix16_t cv, fix16_t detune) {
@@ -34,7 +34,7 @@ fix16_t Phd_process(Phd_process_type& _ctx, fix16_t cv, fix16_t detune) {
    fix16_t comp = 0x10000 /* 1.000000 */ + (- phase1);
    fix16_t reset = (- phase1) + _ctx.pre_phase1;
    _ctx.pre_phase1 = phase1;
-   fix16_t phase2 = Phase_process(_ctx.inst_38aec, cv + Util_smooth(_ctx.inst_295ec, fix_mul(0x8000 /* 0.500000 */, detune)), reset);
+   fix16_t phase2 = Phase_process(_ctx.inst_38aec, cv + Util_smooth(_ctx.inst_295ec, (detune >> 1)), reset);
    fix16_t sine = Tables_nsine(phase2);
    return fix_mul(comp, sine);
 }

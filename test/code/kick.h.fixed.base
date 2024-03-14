@@ -338,7 +338,7 @@ static_inline fix16_t Util_smooth(Util_smooth_type& _ctx, fix16_t input) {
 }
 
 static_inline fix16_t Util_average2(Util_average2_type& _ctx, fix16_t x1) {
-   fix16_t result = fix_mul(0x8000 /* 0.500000 */, x1 + _ctx.x0);
+   fix16_t result = ((x1 + _ctx.x0) >> 1);
    _ctx.x0 = x1;
    return result;
 }

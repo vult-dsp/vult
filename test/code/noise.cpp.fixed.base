@@ -14,9 +14,9 @@ fix16_t Noise_pinker(Noise_pinker_type& _ctx, fix16_t x) {
 
 fix16_t Noise_process(Noise_process_type& _ctx, fix16_t color) {
    _ctx.x1 = (7919 + 17389 * _ctx.x1) % 32768;
-   fix16_t y1 = fix_mul(0x2 /* 0.000031 */, int_to_fix(_ctx.x1));
+   fix16_t y1 = (int_to_fix(_ctx.x1) >> 15);
    _ctx.x2 = (12553 + 27449 * _ctx.x2) % 32768;
-   fix16_t y2 = fix_mul(0x2 /* 0.000031 */, int_to_fix(_ctx.x2));
+   fix16_t y2 = (int_to_fix(_ctx.x2) >> 15);
    fix16_t out = 0x0 /* 0.000000 */;
    if (color > 0x8000 /* 0.500000 */) {
       out = Noise_pinker(_ctx.inst_16d3d, y1 + (- y2));
@@ -24,6 +24,6 @@ fix16_t Noise_process(Noise_process_type& _ctx, fix16_t color) {
    else {
       out = y1 + (- y2);
    }
-   return fix_mul(0x20000 /* 2.000000 */, out);
+   return (out << 1);
 }
 

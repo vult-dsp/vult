@@ -49,9 +49,9 @@ fix16_t Adsr_do(Adsr_do_type& _ctx, fix16_t gate, fix16_t a, fix16_t d, fix16_t 
          _ctx.state = 0;
       }
       _ctx.rate = d_rate;
-      _ctx.target = fix_mul(0x4000000 /* 1024.000000 */, s);
+      _ctx.target = (s << 10);
    }
-   return fix_mul(Util_smooth(_ctx.inst_295a0, _ctx.scale), fix_clip(fix_mul(0x40 /* 0.000977 */, _ctx.out), 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */));
+   return fix_mul(Util_smooth(_ctx.inst_295a0, _ctx.scale), fix_clip((_ctx.out >> 10), 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */));
 }
 
 void Adsr_controlChange(Adsr_process_type& _ctx, int32_t control, int32_t value, int32_t channel) {

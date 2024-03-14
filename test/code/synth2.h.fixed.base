@@ -221,7 +221,7 @@ static_inline fix16_t Synth2_smooth(Synth2_smooth_type& _ctx, fix16_t input) {
 }
 
 static_inline fix16_t Synth2_lpfilter(Synth2_lpfilter_type& _ctx, fix16_t x) {
-   fix16_t ret = fix_mul(0x8000 /* 0.500000 */, x + _ctx.pre_x);
+   fix16_t ret = ((x + _ctx.pre_x) >> 1);
    _ctx.pre_x = x;
    return ret;
 }

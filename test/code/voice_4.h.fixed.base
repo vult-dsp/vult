@@ -378,7 +378,7 @@ static_inline fix16_t Util_cvToperiod(fix16_t cv) {
 
 static_inline void Blit_pulse_start(Blit_pulse_train_type& _ctx) {
    _ctx.m = 1 + 2 * fix_to_int(Util_cvToperiod(0x0 /* 0.000000 */));
-   _ctx.scale = 0x10000 /* 1.000000 */ + fix_mul(0x20000 /* 2.000000 */, Util_cvToperiod(0x0 /* 0.000000 */));
+   _ctx.scale = 0x10000 /* 1.000000 */ + (Util_cvToperiod(0x0 /* 0.000000 */) << 1);
 }
 
 static_inline void Blit_pulse_train_type_init(Blit_pulse_train_type& _ctx) {
@@ -519,7 +519,7 @@ static_inline fix16_t Util_smooth(Util_smooth_type& _ctx, fix16_t input) {
 }
 
 static_inline fix16_t Util_average2(Util_average2_type& _ctx, fix16_t x1) {
-   fix16_t result = fix_mul(0x8000 /* 0.500000 */, x1 + _ctx.x0);
+   fix16_t result = ((x1 + _ctx.x0) >> 1);
    _ctx.x0 = x1;
    return result;
 }

@@ -63,6 +63,12 @@ let isSmall stmts =
   size <= threshold
 
 
+let isPowerOfTwo f =
+  let n = f *. float_of_int 0x00010000 in
+  let l = Float.log2 n in
+  if l = floor l then Some (int_of_float (floor l) - 16) else None
+
+
 let rec isBuiltinType (t : type_) =
   match t.t with
   | TStruct _ -> false
@@ -149,6 +155,36 @@ let rec print_exp (prec : operator option) (e : exp) =
     let rows = Common.splitArray 100 l in
     let l = Pla.map_sep {%pla|,<#>|} (Pla.map_sep Pla.commaspace (print_exp prec)) rows in
     {%pla|{ <#l#> }|}
+  | ECall { path = "fix_mul"; args = [ ({ e = EFixed n1; _ } as e1); e2 ]; _ } -> (
+    match isPowerOfTwo n1 with
+    | None ->
+      let args = Pla.map_sep Pla.commaspace (print_exp prec) [ e1; e2 ] in
+      {%pla|fix_mul(<#args#>)|}
+    | Some 0 -> print_exp prec e2
+    | Some n when n > 0 ->
+      let inner = Some OpMul in
+      let se2 = print_exp inner e2 in
+      {%pla|(<#se2#> << <#n#i>)|}
+    | Some n ->
+      let n = -n in
+      let inner = Some OpMul in
+      let se2 = print_exp inner e2 in
+      {%pla|(<#se2#> >> <#n#i>)|})
+  | ECall { path = "fix_mul"; args = [ e1; ({ e = EFixed n2; _ } as e2) ]; _ } -> (
+    match isPowerOfTwo n2 with
+    | None ->
+      let args = Pla.map_sep Pla.commaspace (print_exp prec) [ e1; e2 ] in
+      {%pla|fix_mul(<#args#>)|}
+    | Some 0 -> print_exp prec e1
+    | Some n when n > 0 ->
+      let inner = Some OpMul in
+      let se1 = print_exp inner e1 in
+      {%pla|(<#se1#> << <#n#i>)|}
+    | Some n ->
+      let n = -n in
+      let inner = Some OpMul in
+      let se1 = print_exp inner e1 in
+      {%pla|(<#se1#> >> <#n#i>)|})
   | ECall { path = "size"; args = [ e1 ] } ->
     let e1 = print_exp prec e1 in
     {%pla|<#e1#>.size()|}

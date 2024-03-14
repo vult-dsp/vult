@@ -68,7 +68,7 @@ fix16_t Delay_phd_osc(Delay_phd_osc_type& _ctx, fix16_t pitch, fix16_t detune) {
    fix16_t comp = 0x10000 /* 1.000000 */ + (- phase1);
    bool reset = ((- phase1) + _ctx.pre_phase1) > 0x8000 /* 0.500000 */;
    _ctx.pre_phase1 = phase1;
-   fix16_t phase2 = Delay_phasor(_ctx.inst_371c4, pitch + fix_mul(0x200000 /* 32.000000 */, Delay_smooth(_ctx.inst_277c4, detune)), reset);
+   fix16_t phase2 = Delay_phasor(_ctx.inst_371c4, pitch + (Delay_smooth(_ctx.inst_277c4, detune) << 5), reset);
    fix16_t sine = fix_sin(fix_mul(0x6487e /* 6.283185 */, phase2));
    return fix_mul(comp, sine);
 }
@@ -149,7 +149,7 @@ fix16_t Delay_process(Delay_process_type& _ctx, fix16_t input) {
    amp = Delay_smooth(_ctx.inst_37701, _if_temp_0);
    fix16_t osc_out = fix_mul(amp, o1);
    fix16_t delay_out = Delay_delay(_ctx.inst_68e01, osc_out, Delay_smooth(_ctx.inst_47701, _ctx.time), Delay_smooth(_ctx.inst_57701, _ctx.feedback));
-   return fix_mul(0x8000 /* 0.500000 */, fix_mul(delay_out + osc_out, _ctx.volume));
+   return (fix_mul((delay_out + osc_out), _ctx.volume) >> 1);
 }
 
 void Delay_controlChange(Delay_process_type& _ctx, int32_t control, fix16_t value, int32_t channel) {

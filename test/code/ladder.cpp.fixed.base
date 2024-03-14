@@ -25,10 +25,10 @@ fix16_t Ladder_heun(Ladder_heun_type& _ctx, fix16_t input, fix16_t fh, fix16_t r
    fix16_t dp2 = fix_mul(fh, w3 + (- w5));
    fix16_t w7 = Util_cubic_clipper(pt3);
    fix16_t dp3 = fix_mul(fh, w5 + (- w7));
-   _ctx.p0 = fix_mul(0x8000 /* 0.500000 */, dp0 + dpt0) + _ctx.p0;
-   _ctx.p1 = fix_mul(0x8000 /* 0.500000 */, dp1 + dpt1) + _ctx.p1;
-   _ctx.p2 = fix_mul(0x8000 /* 0.500000 */, dp2 + dpt2) + _ctx.p2;
-   _ctx.p3 = fix_mul(0x8000 /* 0.500000 */, dp3 + dpt3) + _ctx.p3;
+   _ctx.p0 = ((dp0 + dpt0) >> 1) + _ctx.p0;
+   _ctx.p1 = ((dp1 + dpt1) >> 1) + _ctx.p1;
+   _ctx.p2 = ((dp2 + dpt2) >> 1) + _ctx.p2;
+   _ctx.p3 = ((dp3 + dpt3) >> 1) + _ctx.p3;
    return _ctx.p3;
 }
 

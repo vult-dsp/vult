@@ -21,7 +21,7 @@ fix16_t Saw_ptr1_process(Saw_ptr1_process_type& _ctx, fix16_t cv) {
       out = 0x20000 /* 2.000000 */ + dc + fix_mul(-0x20000 /* -2.000000 */, d);
    }
    else {
-      out = (- dc) + fix_mul(0x20000 /* 2.000000 */, _ctx.phase);
+      out = (- dc) + (_ctx.phase << 1);
    }
    return out;
 }

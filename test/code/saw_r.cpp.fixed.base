@@ -13,7 +13,7 @@ fix16_t Saw_r_process(Saw_r_process_type& _ctx, fix16_t cv) {
    else {
       i = _ctx.inc;
    }
-   _ctx.phase = fix_mul(0x20000 /* 2.000000 */, _ctx.inc) + _ctx.phase;
+   _ctx.phase = (_ctx.inc << 1) + _ctx.phase;
    if (_ctx.phase > 0x20000 /* 2.000000 */) {
       _ctx.phase = -0x20000 /* -2.000000 */ + _ctx.phase;
    }
