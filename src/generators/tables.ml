@@ -307,6 +307,11 @@ let checkInputVariables (loc : Loc.t) (args : param list) : exp =
     Error.raiseError msg loc
 
 
+let optimizeSize (n : int) =
+  let l = Float.log2 (float_of_int n) in
+  if l = floor l then n + 1 else n
+
+
 let makeTable vm (def : function_def) =
   let params = Tags.[ "size", TypeInt; "min", TypeReal; "max", TypeReal; "order", TypeInt; "bound_check", TypeBool ] in
   let loc = def.loc in
@@ -318,6 +323,7 @@ let makeTable vm (def : function_def) =
     let in_precision = var.t in
     match order, in_precision, out_precision with
     | _, { t = TFix16; _ }, { t = TFix16; _ } ->
+      let size = optimizeSize size in
       let result = calculateTablesOrder1Fixed loc vm def.name size min max out_precision in
       let new_body = makeNewBody1Fixed bound_check def.name size in_precision out_precision min max var in
       let c0 = generateRawAccessFunction loc def.name 0 out_precision in
