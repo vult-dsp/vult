@@ -195,7 +195,9 @@ let rec stmt (context : context) (env : env) (s : stmt) : 'a * stmt list =
     | env, Nothing -> env, stmts @ [ C.sbind lhs rhs ]
     | env, Initialize (n, size, t) -> env, stmts @ [ C.sdecl ~size ~init:rhs n t ]
     | env, Declare (n, size, t) -> env, stmts @ [ C.sdecl_init ~size n (getInitRHS t) t; C.sbind lhs rhs ])
-  | { s = StmtReturn e; _ } -> env, [ C.sreturn e ]
+  | { s = StmtReturn e; _ } ->
+    let env, stmts = getPendingDeclarations env in
+    env, stmts @ [ C.sreturn e ]
   | { s = StmtIf (cond, then_, Some else_); _ } ->
     let env, stmts = getPendingDeclarations env in
     let env, then_ = stmt context env then_ in

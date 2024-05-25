@@ -649,7 +649,8 @@ and unaryOp (buffer : Stream.stream) (token : 'kind token) : exp =
 
 and binary_op (buffer : Stream.stream) (token : 'kind token) (left : exp) : exp =
   let right = expression (getExpLbp token) buffer in
-  { e = SEOp (token.value, left, right); loc = token.loc }
+  let loc = Loc.merge left.loc right.loc in
+  { e = SEOp (token.value, left, right); loc }
 
 
 and recordValue level (buffer : Stream.stream) =
