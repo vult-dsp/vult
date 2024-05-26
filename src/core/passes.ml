@@ -739,7 +739,21 @@ module Simplify = struct
     | _ -> state, e
 
 
-  let mapper enabled = if enabled = Enabled then { Mapper.identity with exp } else Mapper.identity
+  let stmt =
+    Mapper.makeExpander
+    @@ fun _env state (s : stmt) ->
+    match s with
+    (* removes a = a *)
+    | { s = StmtBind ({ l = LId name1; _ }, { e = EId name2; _ }); _ } when String.compare name1 name2 = 0 -> state, []
+    (* removes else {} *)
+    | { s = StmtIf (cond, then_, Some { s = StmtBlock []; _ }); _ } ->
+      state, [ { s with s = StmtIf (cond, then_, None) } ]
+    (* removes if (cond) {} *)
+    | { s = StmtIf (_, { s = StmtBlock []; _ }, None); _ } -> state, []
+    | _ -> state, [ s ]
+
+
+  let mapper enabled = if enabled = Enabled then { Mapper.identity with exp; stmt } else Mapper.identity
 end
 
 module Sort = struct

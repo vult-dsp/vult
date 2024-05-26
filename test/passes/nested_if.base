@@ -38,7 +38,6 @@ fun Nested_if_yoo() : void {
          if ((_if_temp_2 : bool)) (_if_temp_1 : bool) = true;
          else (_if_temp_1 : bool) = false;
       }
-      if (((_if_temp_0 : bool) || (_if_temp_1 : bool))) (b : real) = (b : real);
    }
 }
 

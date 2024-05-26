@@ -31,6 +31,11 @@ type target =
 
 let threshold = 4
 
+type state =
+  { args : Util.Args.args
+  ; prefixed : (string, string) Hashtbl.t
+  }
+
 let isSmall stmts =
   let rec loop size stmts =
     if size > threshold then
@@ -75,6 +80,12 @@ let rec isBuiltinType (t : type_) =
   | TArray (_, t) -> isBuiltinType t
   | TTuple l -> List.for_all isBuiltinType l
   | _ -> true
+
+
+let addPrefix (args : Util.Args.args) id =
+  match args.prefix with
+  | None -> id
+  | Some prefix -> prefix ^ id
 
 
 let rec print_type_ (t : type_) =
@@ -134,7 +145,7 @@ let uoperator (op : Core.Prog.uoperator) =
   | UOpNot -> Pla.string "not"
 
 
-let rec print_exp (prec : operator option) (e : exp) =
+let rec print_exp state (prec : operator option) (e : exp) =
   match e.e with
   | EUnit -> Pla.string ""
   | EBool v -> Pla.string (if v then "true" else "false")
@@ -146,103 +157,107 @@ let rec print_exp (prec : operator option) (e : exp) =
     let n = Common.toFixed n in
     {%pla|<#n#s>|}
   | EString s -> Pla.string_quoted s
-  | EId id -> Pla.string id
+  | EId id -> (
+    match Hashtbl.find_opt state.prefixed id with
+    | None -> Pla.string id
+    | Some id -> Pla.string id)
   | EIndex { e; index } ->
-    let e = print_exp prec e in
-    let index = print_exp prec index in
+    let e = print_exp state prec e in
+    let index = print_exp state prec index in
     {%pla|<#e#>[static_cast<uint32_t>(<#index#>)]|}
   | EArray l ->
     let rows = Common.splitArray 100 l in
-    let l = Pla.map_sep {%pla|,<#>|} (Pla.map_sep Pla.commaspace (print_exp prec)) rows in
+    let l = Pla.map_sep {%pla|,<#>|} (Pla.map_sep Pla.commaspace (print_exp state prec)) rows in
     {%pla|{ <#l#> }|}
   | ECall { path = "fix_mul"; args = [ ({ e = EFixed n1; _ } as e1); e2 ]; _ } -> (
     match isPowerOfTwo n1 with
     | None ->
-      let args = Pla.map_sep Pla.commaspace (print_exp prec) [ e1; e2 ] in
+      let args = Pla.map_sep Pla.commaspace (print_exp state prec) [ e1; e2 ] in
       {%pla|fix_mul(<#args#>)|}
-    | Some 0 -> print_exp prec e2
+    | Some 0 -> print_exp state prec e2
     | Some n when n > 0 ->
       let inner = Some OpMul in
-      let se2 = print_exp inner e2 in
+      let se2 = print_exp state inner e2 in
       {%pla|(<#se2#> << <#n#i>)|}
     | Some n ->
       let n = -n in
       let inner = Some OpMul in
-      let se2 = print_exp inner e2 in
+      let se2 = print_exp state inner e2 in
       {%pla|(<#se2#> >> <#n#i>)|})
   | ECall { path = "fix_mul"; args = [ e1; ({ e = EFixed n2; _ } as e2) ]; _ } -> (
     match isPowerOfTwo n2 with
     | None ->
-      let args = Pla.map_sep Pla.commaspace (print_exp prec) [ e1; e2 ] in
+      let args = Pla.map_sep Pla.commaspace (print_exp state prec) [ e1; e2 ] in
       {%pla|fix_mul(<#args#>)|}
-    | Some 0 -> print_exp prec e1
+    | Some 0 -> print_exp state prec e1
     | Some n when n > 0 ->
       let inner = Some OpMul in
-      let se1 = print_exp inner e1 in
+      let se1 = print_exp state inner e1 in
       {%pla|(<#se1#> << <#n#i>)|}
     | Some n ->
       let n = -n in
       let inner = Some OpMul in
-      let se1 = print_exp inner e1 in
+      let se1 = print_exp state inner e1 in
       {%pla|(<#se1#> >> <#n#i>)|})
   | ECall { path = "size"; args = [ e1 ] } ->
-    let e1 = print_exp prec e1 in
+    let e1 = print_exp state prec e1 in
     {%pla|<#e1#>.size()|}
   | ECall { path = "length"; args = [ e1 ] } ->
-    let e1 = print_exp prec e1 in
+    let e1 = print_exp state prec e1 in
     {%pla|static_cast<int32_t>(<#e1#>.size())|}
   | ECall { path = "not"; args = [ e1 ] } ->
-    let e1 = print_exp prec e1 in
+    let e1 = print_exp state prec e1 in
     {%pla|!(<#e1#>)|}
-  | ECall { path; args } ->
-    let args = Pla.map_sep Pla.commaspace (print_exp prec) args in
+  | ECall { path; args = fargs } ->
+    let path = addPrefix state.args path in
+    let args = Pla.map_sep Pla.commaspace (print_exp state prec) fargs in
     {%pla|<#path#s>(<#args#>)|}
   | EUnOp (op, e) ->
-    let e = print_exp None e in
+    let e = print_exp state None e in
     let op = uoperator op in
     {%pla|(<#op#> <#e#>)|}
   | EOp (op, e1, e2) ->
     let inner = Some op in
-    let se1 = print_exp inner e1 in
-    let se2 = print_exp inner e2 in
+    let se1 = print_exp state inner e1 in
+    let se2 = print_exp state inner e2 in
     let op = operator op in
     if parenthesize prec inner then
       {%pla|(<#se1#> <#op#> <#se2#>)|}
     else
       {%pla|<#se1#> <#op#> <#se2#>|}
   | EIf { cond; then_; else_ } ->
-    let cond = print_exp prec cond in
-    let then_ = print_exp prec then_ in
-    let else_ = print_exp prec else_ in
+    let cond = print_exp state prec cond in
+    let then_ = print_exp state prec then_ in
+    let else_ = print_exp state prec else_ in
     {%pla|(<#cond#> ? <#then_#> : <#else_#>)|}
   | ETuple l ->
-    let l = Pla.map_sep Pla.commaspace (print_exp prec) l in
+    let l = Pla.map_sep Pla.commaspace (print_exp state prec) l in
     {%pla|std::make_tuple(<#l#>)|}
   | EMember (e, m) ->
-    let e = print_exp prec e in
+    let e = print_exp state prec e in
     {%pla|<#e#>.<#m#s>|}
   | ETMember (e, m) ->
-    let e = print_exp prec e in
+    let e = print_exp state prec e in
     {%pla|std::get<<#m#i>>(<#e#>)|}
   | ERecord { elems; _ } ->
     let printElem (_, v) =
-      let v = print_exp None v in
+      let v = print_exp state None v in
       {%pla|<#v#>|}
     in
     let elems = Pla.map_sep Pla.commaspace printElem elems in
     {%pla|{ <#elems#> }|}
 
 
-let rec print_lexp e =
+let rec print_lexp state e =
   match e.l with
   | LWild -> Pla.string "_"
   | LId s -> Pla.string s
   | LMember (e, m) ->
-    let e = print_lexp e in
+    let e = print_lexp state e in
     {%pla|<#e#>.<#m#s>|}
   | LIndex { e; index } ->
-    let e = print_lexp e in
-    let index = print_exp None index in
+    let e = print_lexp state e in
+    let index = print_exp state None index in
     {%pla|<#e#>[static_cast<uint32_t>(<#index#>)]|}
   | _ -> failwith "print_lexp: LTuple not implemented"
 
@@ -325,7 +340,7 @@ let arrayCopyFunction (t : type_) =
   | _ -> failwith "not a valid array copy"
 
 
-let rec print_stmt s =
+let rec print_stmt state s =
   match s.s with
   (* declares and initializes a structure *)
   | StmtDecl (({ t = { t = TStruct { path; _ }; _ }; _ } as lhs), None) ->
@@ -338,65 +353,65 @@ let rec print_stmt s =
   (* Special case when initializing an array. Here we declare the variable and not a reference *)
   | StmtDecl ({ d = DId (n, _); t; _ }, Some ({ e = EArray _; _ } as rhs)) ->
     let t = print_decl_alloc (n, t) in
-    let rhs = print_exp None rhs in
+    let rhs = print_exp state None rhs in
     {%pla|<#t#> = <#rhs#>;|}
   (* Special case for structures. When the structure is the result of a function call we need to declare it *)
   | StmtDecl ({ d = DId (n, _); t = { t = TStruct _; _ } as t; _ }, Some ({ e = ECall _; _ } as rhs)) ->
     let t = print_decl_alloc (n, t) in
-    let rhs = print_exp None rhs in
+    let rhs = print_exp state None rhs in
     {%pla|<#t#> = <#rhs#>;|}
   (* Special case for structures. When initializing a structure we should not declare a reference *)
   | StmtDecl ({ d = DId (n, _); t = { t = TStruct _; _ } as t; _ }, Some ({ e = ERecord _; _ } as rhs)) ->
     let t = print_decl_alloc (n, t) in
-    let rhs = print_exp None rhs in
+    let rhs = print_exp state None rhs in
     {%pla|<#t#> = <#rhs#>;|}
   (* For other case we use refences in the case of structures and arrays *)
   | StmtDecl ({ d = DId (n, _); t; _ }, Some rhs) ->
     let t = print_decl (n, t) in
-    let rhs = print_exp None rhs in
+    let rhs = print_exp state None rhs in
     {%pla|<#t#> = <#rhs#>;|}
   | StmtBind ({ l = LWild; _ }, rhs) ->
-    let rhs = print_exp None rhs in
+    let rhs = print_exp state None rhs in
     {%pla|<#rhs#>;|}
   | StmtBind (lhs, rhs) ->
-    let lhs = print_lexp lhs in
-    let rhs = print_exp None rhs in
+    let lhs = print_lexp state lhs in
+    let rhs = print_exp state None rhs in
     {%pla|<#lhs#> = <#rhs#>;|}
   | StmtReturn e ->
-    let e = print_exp None e in
+    let e = print_exp state None e in
     {%pla|return <#e#>;|}
   | StmtIf (cond, then_, None) ->
-    let cond = print_exp None cond in
-    let then_ = print_block then_ in
+    let cond = print_exp state None cond in
+    let then_ = print_block state then_ in
     {%pla|if (<#cond#>) <#then_#>|}
   | StmtIf (cond, then_, Some else_) ->
-    let cond = print_exp None cond in
-    let then_ = print_block then_ in
-    let else_ = print_block else_ in
+    let cond = print_exp state None cond in
+    let then_ = print_block state then_ in
+    let else_ = print_block state else_ in
     {%pla|if (<#cond#>) <#then_#><#>else <#else_#>|}
   | StmtWhile (cond, stmt) ->
-    let cond = print_exp None cond in
-    let stmt = print_block stmt in
+    let cond = print_exp state None cond in
+    let stmt = print_block state stmt in
     {%pla|while (<#cond#>) <#stmt#>|}
   | StmtBlock stmts ->
-    let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
+    let stmt = Pla.map_sep_all Pla.newline (print_stmt state) stmts in
     {%pla|{<#stmt#+>}|}
   | StmtSwitch (e, cases, default_case) ->
-    let e = print_exp None e in
+    let e = print_exp state None e in
     let break = Pla.string "break;" in
     let cases =
       Pla.map_sep_all
         Pla.newline
         (fun (e1, body) ->
-          let e1 = print_exp None e1 in
-          let body = print_stmt body in
+          let e1 = print_exp state None e1 in
+          let body = print_stmt state body in
           {%pla|case <#e1#>:<#body#+><#break#+>|})
         cases
     in
     let default_case =
       Option.map
         (fun body ->
-          let body = print_stmt body in
+          let body = print_stmt state body in
           Pla.indent {%pla|default:<#body#+><#break#+>|})
         default_case
     in
@@ -404,13 +419,13 @@ let rec print_stmt s =
     {%pla| switch (<#e#>) {<#cases#+><#default_case#><#>}|}
 
 
-and print_block body =
+and print_block state body =
   match body with
   | { s = StmtBlock stmts; _ } ->
-    let stmts = Pla.map_sep_all Pla.newline print_stmt stmts in
+    let stmts = Pla.map_sep_all Pla.newline (print_stmt state) stmts in
     {%pla|{<#stmts#+>}|}
   | _ ->
-    let stmt = print_stmt body in
+    let stmt = print_stmt state body in
     {%pla|{<#stmt#+><#>}|}
 
 
@@ -423,8 +438,8 @@ let isTemplate (args : param list) =
     args
 
 
-let print_function_def (def : function_def) =
-  let name = Pla.string def.name in
+let print_function_def state (def : function_def) =
+  let name = Pla.string (addPrefix state.args def.name) in
   let args = List.mapi print_arg def.args |> Pla.join_sep Pla.commaspace in
   let template_args =
     def.args
@@ -445,13 +460,13 @@ let print_function_def (def : function_def) =
   template_decl, {%pla|<#ret#> <#name#>(<#args#>)|}
 
 
-let print_top_stmt ~allow_inline (target : target) t =
+let print_top_stmt state ~allow_inline (target : target) t =
   match t.top, target with
   | TopFunction (def, body), Header ->
     let inline = (allow_inline && isSmall [ body ]) || isTemplate def.args in
-    let template, def = print_function_def def in
+    let template, def = print_function_def state def in
     if inline then (
-      let body = print_block body in
+      let body = print_block state body in
       {%pla|<#template#>static_inline <#def#> <#body#><#><#>|})
     else
       {%pla|<#def#>;<#><#>|}
@@ -460,12 +475,12 @@ let print_top_stmt ~allow_inline (target : target) t =
     if inline then
       Pla.unit
     else (
-      let template, def = print_function_def def in
-      let body = print_block body in
+      let template, def = print_function_def state def in
+      let body = print_block state body in
       {%pla|<#template#><#def#> <#body#><#><#>|})
   | TopFunction _, _ -> Pla.unit
   | TopExternal (def, None), Header ->
-    let template, def = print_function_def def in
+    let template, def = print_function_def state def in
     {%pla|<#template#>extern <#def#>;<#>|}
   | TopExternal (def, Some link_name), Header ->
     let args = List.mapi print_arg def.args |> Pla.join_sep Pla.commaspace in
@@ -479,17 +494,21 @@ let print_top_stmt ~allow_inline (target : target) t =
   | TopType _, _ -> Pla.unit
   | TopAlias _, _ -> Pla.unit
   | TopConstant (name, _, t, rhs), Tables when isBuiltinType t ->
+    let prefixed_name = addPrefix state.args name in
+    let () = Hashtbl.add state.prefixed name prefixed_name in
     let t = print_type_ t in
-    let rhs = print_exp None rhs in
-    {%pla|static const <#t#> <#name#s> = <#rhs#+>;<#><#>|}
+    let rhs = print_exp state None rhs in
+    {%pla|static const <#t#> <#prefixed_name#s> = <#rhs#+>;<#><#>|}
   | TopConstant (name, _, t, rhs), Header when not (isBuiltinType t) ->
+    let prefixed_name = addPrefix state.args name in
+    let () = Hashtbl.add state.prefixed name prefixed_name in
     let t = print_type_ t in
-    let rhs = print_exp None rhs in
-    {%pla|static const <#t#> <#name#s> = <#rhs#+>;<#><#>|}
+    let rhs = print_exp state None rhs in
+    {%pla|static const <#t#> <#prefixed_name#s> = <#rhs#+>;<#><#>|}
   | TopConstant _, _ -> Pla.unit
 
 
-let print_prog ~allow_inline target t = Pla.map_join (print_top_stmt ~allow_inline target) t
+let print_prog args ~allow_inline target t = Pla.map_join (print_top_stmt args ~allow_inline target) t
 let legend = Common.legend
 
 let makeIfdef file =
@@ -519,15 +538,16 @@ let getTemplateCode (name : string option) (args : Util.Args.args) (stmts : top_
 let generateIncludeList stmts = Pla.map_sep_all Pla.newline (fun (file, _) -> {%pla|#include "<#file#s>.h"|}) stmts
 
 let generateSplit file_deps (args : Util.Args.args) template (stmts : top_stmt list) =
+  let state = { args; prefixed = Hashtbl.create 16 } in
   let dir = CCOption.map_or ~default:"" (fun file -> Filename.dirname file) args.output in
   let main_header_file = Common.setExt ".h" args.output in
   let impl_file = Common.setExt ".cpp" args.output in
   let generateClassic (mname, stmts) =
     let output = Some (Filename.concat dir mname) in
     let allow_inline = false in
-    let header = print_prog ~allow_inline Header stmts in
-    let impl = print_prog ~allow_inline Implementation stmts in
-    let tables = print_prog ~allow_inline Tables stmts in
+    let header = print_prog state ~allow_inline Header stmts in
+    let impl = print_prog state ~allow_inline Implementation stmts in
+    let tables = print_prog state ~allow_inline Tables stmts in
     let header_file = Common.setExt ".h" output in
     let header_file_base = Filename.basename header_file in
     let impl_file = Common.setExt ".cpp" output in
@@ -551,10 +571,11 @@ let generateSplit file_deps (args : Util.Args.args) template (stmts : top_stmt l
 
 
 let generateSingle (args : Util.Args.args) template (stmts : top_stmt list) =
+  let state = { args; prefixed = Hashtbl.create 16 } in
   let allow_inline = true in
-  let header = print_prog ~allow_inline Header stmts in
-  let impl = print_prog ~allow_inline Implementation stmts in
-  let tables = print_prog ~allow_inline Tables stmts in
+  let header = print_prog state ~allow_inline Header stmts in
+  let impl = print_prog state ~allow_inline Implementation stmts in
+  let tables = print_prog state ~allow_inline Tables stmts in
   let (timpl_start, timpl_end), (theader_start, theader_end) = getTemplateCode template args stmts in
   let impl = Pla.join [ timpl_start; impl; timpl_end ] in
   let header = Pla.join [ theader_start; header; theader_end ] in

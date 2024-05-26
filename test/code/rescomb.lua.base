@@ -315,8 +315,6 @@ function Rescomb_delay(_ctx, x, cv)
    local r_index = (((-Util_cvToperiod(cv)) + real(_ctx.write_pos)) % r_size)
    if (r_index < 0.) then
       r_index = (r_index + r_size)
-   else
-      r_index = r_index
    end
    local t1 = (int(floor(r_index)) % 675)
    local t2 = ((1 + t1) % 675)

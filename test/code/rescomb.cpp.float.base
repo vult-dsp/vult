@@ -27,9 +27,6 @@ float Rescomb_delay(Rescomb_delay_type& _ctx, float x, float cv) {
    if (r_index < 0.0f) {
       r_index = r_index + r_size;
    }
-   else {
-      r_index = r_index;
-   }
    int32_t t1 = float_to_int(floorf(r_index)) % 675;
    int32_t t2 = (1 + t1) % 675;
    float decimal = r_index + (- int_to_float(t1));
