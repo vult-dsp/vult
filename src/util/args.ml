@@ -65,6 +65,8 @@ type args =
   ; mutable output : string option
   ; mutable real : real_format
   ; mutable template : string option
+  ; mutable header : string option
+  ; mutable header_file : string option
   ; mutable show_version : bool
   ; mutable includes : string list
   ; mutable deps : bool
@@ -93,6 +95,8 @@ let default_arguments : args =
   ; output = None
   ; real = Float
   ; template = None
+  ; header = None
+  ; header_file = None
   ; show_version = false
   ; includes = []
   ; deps = false
@@ -168,6 +172,14 @@ let flags result =
   ; { flag = "-template"
     ; action = Arg.String (fun template -> result.template <- Some template)
     ; comment = "name Defines the template used to generate code (ccode only): pd, teensy"
+    }
+  ; { flag = "-header"
+    ; action = Arg.String (fun header -> result.header <- Some header)
+    ; comment = "name Adds the given text to the top of the generated files."
+    }
+  ; { flag = "-header-file"
+    ; action = Arg.String (fun header_file -> result.header_file <- Some header_file)
+    ; comment = "name Adds text in the given file as header to the generated files."
     }
   ; { flag = "-eval"; action = Arg.String (fun s -> result.eval <- Some s); comment = " Runs the code (default: off)" }
   ; { flag = "-tables"

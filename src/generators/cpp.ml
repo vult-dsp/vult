@@ -509,7 +509,6 @@ let print_top_stmt state ~allow_inline (target : target) t =
 
 
 let print_prog args ~allow_inline target t = Pla.map_join (print_top_stmt args ~allow_inline target) t
-let legend = Common.legend
 
 let makeIfdef file =
   let def = CCString.replace ~sub:"." ~by:"_" (String.uppercase_ascii (Filename.basename file)) in
@@ -537,7 +536,18 @@ let getTemplateCode (name : string option) (args : Util.Args.args) (stmts : top_
 
 let generateIncludeList stmts = Pla.map_sep_all Pla.newline (fun (file, _) -> {%pla|#include "<#file#s>.h"|}) stmts
 
+let getLegend (args : Util.Args.args) =
+  match args.header, args.header_file with
+  | None, None -> Common.legend
+  | Some text, _ -> Pla.string text
+  | _, Some file -> (
+    match Util.FileIO.read file with
+    | None -> Common.legend
+    | Some text -> Pla.wrap (Pla.string "/*") (Pla.string "*/") (Pla.string text))
+
+
 let generateSplit file_deps (args : Util.Args.args) template (stmts : top_stmt list) =
+  let legend = getLegend args in
   let state = { args; prefixed = Hashtbl.create 16 } in
   let dir = CCOption.map_or ~default:"" (fun file -> Filename.dirname file) args.output in
   let main_header_file = Common.setExt ".h" args.output in
@@ -571,6 +581,7 @@ let generateSplit file_deps (args : Util.Args.args) template (stmts : top_stmt l
 
 
 let generateSingle (args : Util.Args.args) template (stmts : top_stmt list) =
+  let legend = getLegend args in
   let state = { args; prefixed = Hashtbl.create 16 } in
   let allow_inline = true in
   let header = print_prog state ~allow_inline Header stmts in
