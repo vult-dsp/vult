@@ -506,7 +506,8 @@ let makeWavetable (args : Args.args) _vm (def : function_def) =
     let c0 = generateRawAccessFunction def.loc def.name 0 out_precision in
     let c1 = generateRawAccessFunction def.loc def.name 1 out_precision in
     let c2 = generateRawAccessFunction def.loc def.name 2 out_precision in
-    result @ [ c0; c1; c2 ] @ [ { top = TopFunction (def, new_body); loc = def.loc } ]
+    let size_fun = makeSizeFunction def wave.WaveFile.samples in
+    result @ [ size_fun; c0; c1; c2 ] @ [ { top = TopFunction (def, new_body); loc = def.loc } ]
   | _ ->
     let msg = "This attribute can only be applied to functions returning 'real'" in
     Util.Error.raiseError msg def.loc

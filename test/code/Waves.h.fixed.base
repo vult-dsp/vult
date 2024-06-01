@@ -16,6 +16,10 @@ static_inline fix16_t Waves_sineTable1(int32_t channel, int32_t index) {
    return 0.0f;
 }
 
+static_inline int32_t Waves_sineTable2_samples() {
+   return 256;
+}
+
 static_inline fix16_t Waves_sineTable2_raw_c0(int32_t index) {
    return Waves_sineTable2_c0[static_cast<uint32_t>(index)];
 }
