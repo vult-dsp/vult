@@ -74,9 +74,9 @@ type args =
   ; mutable tables : bool
   ; mutable roots : string list
   ; mutable shorten : bool
-  ; mutable mac : bool
   ; mutable force_write : bool
   ; mutable prefix : string option
+  ; mutable output_prefix : string option
   ; mutable debug : bool
   ; mutable profile : bool
   ; mutable split : bool
@@ -104,9 +104,9 @@ let default_arguments : args =
   ; tables = true
   ; roots = []
   ; shorten = false
-  ; mac = false
   ; force_write = false
   ; prefix = None
+  ; output_prefix = None
   ; debug = false
   ; profile = false
   ; split = false
@@ -190,9 +190,9 @@ let flags result =
     ; action = Arg.Unit (fun () -> result.shorten <- true)
     ; comment = " Creates short function names (default: off)"
     }
-  ; { flag = "-mac"
-    ; action = Arg.Unit (fun () -> result.mac <- true)
-    ; comment = " Generates mac() function calls (default: off)"
+  ; { flag = "-output-prefix"
+    ; action = Arg.String (fun prefix -> result.output_prefix <- Some prefix)
+    ; comment = "name Prefixes the functions with the given text."
     }
   ; { flag = "-i"
     ; action = Arg.String (fun path -> result.includes <- path :: result.includes)

@@ -82,13 +82,22 @@ let rec isBuiltinType (t : type_) =
   | _ -> true
 
 
-let addPrefix (args : Util.Args.args) id =
-  match args.prefix with
+let registerPrefix state name =
+  match state.args.output_prefix with
+  | None -> name
+  | Some prefix ->
+    let prefixed_name = prefix ^ name in
+    let () = Hashtbl.add state.prefixed name prefixed_name in
+    prefixed_name
+
+
+let addPrefix state id =
+  match Hashtbl.find_opt state.prefixed id with
   | None -> id
-  | Some prefix -> prefix ^ id
+  | Some prefix -> prefix
 
 
-let rec print_type_ (t : type_) =
+let rec print_type_ state (t : type_) =
   match t.t with
   | TVoid _ -> Pla.string "void"
   | TInt -> Pla.string "int32_t"
@@ -97,15 +106,17 @@ let rec print_type_ (t : type_) =
   | TString -> Pla.string "std::string"
   | TFix16 -> Pla.string "fix16_t"
   | TTuple l ->
-    let l = Pla.map_sep Pla.commaspace print_type_ l in
+    let l = Pla.map_sep Pla.commaspace (print_type_ state) l in
     {%pla|std::tuple<<#l#>>|}
   | TArray (Some dim, t) ->
-    let t = print_type_ t in
+    let t = print_type_ state t in
     {%pla|std::array<<#t#>, <#dim#i>>|}
   | TArray (None, t) ->
-    let t = print_type_ t in
+    let t = print_type_ state t in
     {%pla|std::array<<#t#>>|}
-  | TStruct { path; _ } -> {%pla|<#path#s>|}
+  | TStruct { path; _ } ->
+    let path = addPrefix state path in
+    {%pla|<#path#s>|}
 
 
 let operator (op : Core.Prog.operator) =
@@ -209,7 +220,7 @@ let rec print_exp state (prec : operator option) (e : exp) =
     let e1 = print_exp state prec e1 in
     {%pla|!(<#e1#>)|}
   | ECall { path; args = fargs } ->
-    let path = addPrefix state.args path in
+    let path = addPrefix state path in
     let args = Pla.map_sep Pla.commaspace (print_exp state prec) fargs in
     {%pla|<#path#s>(<#args#>)|}
   | EUnOp (op, e) ->
@@ -267,38 +278,40 @@ let print_dexp (e : dexp) =
   | DId (id, _) -> {%pla|<#id#s>|}
 
 
-let print_member (n, (t : type_), _, _) =
-  let t = print_type_ t in
+let print_member state (n, (t : type_), _, _) =
+  let t = print_type_ state t in
   {%pla|<#t#> <#n#s>;|}
 
 
-let print_arg i ({ name; t; const; _ } : param) =
+let print_arg state i ({ name; t; const; _ } : param) =
   let const = if const then Pla.string "const " else Pla.unit in
   match t.t with
   | TArray (_, { t = TArray _; _ }) -> failwith "array of arrays are not implemented"
   | TArray (Some dim, ({ t = TStruct _; _ } as sub)) ->
-    let sub = print_type_ sub in
+    let sub = print_type_ state sub in
     {%pla|<#const#>std::array<<#sub#>, <#dim#i>>& <#name#s>|}
   | TArray (Some dim, sub) ->
-    let sub = print_type_ sub in
+    let sub = print_type_ state sub in
     {%pla|<#const#>std::array<<#sub#>, <#dim#i>>& <#name#s>|}
   | TArray (None, sub) ->
-    let sub = print_type_ sub in
+    let sub = print_type_ state sub in
     {%pla|<#const#>std::array<<#sub#>, SIZE_<#i#i>>& <#name#s>|}
-  | TStruct { path; _ } -> {%pla|<#const#><#path#s>& <#name#s>|}
+  | TStruct { path; _ } ->
+    let path = addPrefix state path in
+    {%pla|<#const#><#path#s>& <#name#s>|}
   | _ ->
-    let t = print_type_ t in
+    let t = print_type_ state t in
     {%pla|<#t#> <#name#s>|}
 
 
-let print_decl (n, (t : type_)) =
+let print_decl state (n, (t : type_)) =
   match t.t with
   | TArray (_, { t = TArray _; _ }) -> failwith "array of arrays are not implemented"
   | TArray (Some dim, ({ t = TStruct _; _ } as sub)) ->
-    let sub = print_type_ sub in
+    let sub = print_type_ state sub in
     {%pla|std::array<<#sub#>, <#dim#i>> &<#n#s>|}
   | TArray (Some dim, sub) ->
-    let sub = print_type_ sub in
+    let sub = print_type_ state sub in
     {%pla|std::array<<#sub#>, <#dim#i>> &<#n#s>|}
   | TArray (None, _) -> failwith "Cpp.print_decl: array without dimensions"
   | TStruct { path; _ } ->
@@ -307,18 +320,18 @@ let print_decl (n, (t : type_)) =
     else
       {%pla|<#path#s> &<#n#s>|}
   | _ ->
-    let t = print_type_ t in
+    let t = print_type_ state t in
     {%pla|<#t#> <#n#s>|}
 
 
-let print_decl_alloc (n, (t : type_)) =
+let print_decl_alloc state (n, (t : type_)) =
   match t.t with
   | TArray (_, { t = TArray _; _ }) -> failwith "array of arrays are not implemented"
   | TArray (Some dim, ({ t = TStruct _; _ } as sub)) ->
-    let sub = print_type_ sub in
+    let sub = print_type_ state sub in
     {%pla|std::array<<#sub#>, <#dim#i>> <#n#s>|}
   | TArray (Some dim, sub) ->
-    let sub = print_type_ sub in
+    let sub = print_type_ state sub in
     {%pla|std::array<<#sub#>, <#dim#i>> <#n#s>|}
   | TArray (None, _) -> failwith "Cpp.print_decl_alloc: array without dimensions"
   | TStruct { path; _ } ->
@@ -327,7 +340,7 @@ let print_decl_alloc (n, (t : type_)) =
     else
       {%pla|<#path#s> <#n#s>|}
   | _ ->
-    let t = print_type_ t in
+    let t = print_type_ state t in
     {%pla|<#t#> <#n#s>|}
 
 
@@ -344,30 +357,30 @@ let rec print_stmt state s =
   match s.s with
   (* declares and initializes a structure *)
   | StmtDecl (({ t = { t = TStruct { path; _ }; _ }; _ } as lhs), None) ->
-    let t = print_type_ lhs.t in
+    let t = print_type_ state lhs.t in
     let lhs = print_dexp lhs in
     {%pla|<#t#> <#lhs#>;<#><#path#s>_init(<#lhs#>);|}
   | StmtDecl ({ d = DId (n, _); t; _ }, None) ->
-    let t = print_decl_alloc (n, t) in
+    let t = print_decl_alloc state (n, t) in
     {%pla|<#t#>;|}
   (* Special case when initializing an array. Here we declare the variable and not a reference *)
   | StmtDecl ({ d = DId (n, _); t; _ }, Some ({ e = EArray _; _ } as rhs)) ->
-    let t = print_decl_alloc (n, t) in
+    let t = print_decl_alloc state (n, t) in
     let rhs = print_exp state None rhs in
     {%pla|<#t#> = <#rhs#>;|}
   (* Special case for structures. When the structure is the result of a function call we need to declare it *)
   | StmtDecl ({ d = DId (n, _); t = { t = TStruct _; _ } as t; _ }, Some ({ e = ECall _; _ } as rhs)) ->
-    let t = print_decl_alloc (n, t) in
+    let t = print_decl_alloc state (n, t) in
     let rhs = print_exp state None rhs in
     {%pla|<#t#> = <#rhs#>;|}
   (* Special case for structures. When initializing a structure we should not declare a reference *)
   | StmtDecl ({ d = DId (n, _); t = { t = TStruct _; _ } as t; _ }, Some ({ e = ERecord _; _ } as rhs)) ->
-    let t = print_decl_alloc (n, t) in
+    let t = print_decl_alloc state (n, t) in
     let rhs = print_exp state None rhs in
     {%pla|<#t#> = <#rhs#>;|}
   (* For other case we use refences in the case of structures and arrays *)
   | StmtDecl ({ d = DId (n, _); t; _ }, Some rhs) ->
-    let t = print_decl (n, t) in
+    let t = print_decl state (n, t) in
     let rhs = print_exp state None rhs in
     {%pla|<#t#> = <#rhs#>;|}
   | StmtBind ({ l = LWild; _ }, rhs) ->
@@ -439,8 +452,8 @@ let isTemplate (args : param list) =
 
 
 let print_function_def state (def : function_def) =
-  let name = Pla.string (addPrefix state.args def.name) in
-  let args = List.mapi print_arg def.args |> Pla.join_sep Pla.commaspace in
+  let name = Pla.string (registerPrefix state def.name) in
+  let args = List.mapi (print_arg state) def.args |> Pla.join_sep Pla.commaspace in
   let template_args =
     def.args
     |> List.mapi (fun i (arg : param) ->
@@ -456,7 +469,7 @@ let print_function_def state (def : function_def) =
       let args = Pla.map_sep Pla.commaspace Pla.string template_args in
       {%pla|template<<#args#>><#>|}
   in
-  let ret = print_type_ (snd def.t) in
+  let ret = print_type_ state (snd def.t) in
   template_decl, {%pla|<#ret#> <#name#>(<#args#>)|}
 
 
@@ -483,29 +496,33 @@ let print_top_stmt state ~allow_inline (target : target) t =
     let template, def = print_function_def state def in
     {%pla|<#template#>extern <#def#>;<#>|}
   | TopExternal (def, Some link_name), Header ->
-    let args = List.mapi print_arg def.args |> Pla.join_sep Pla.commaspace in
-    let ret = print_type_ (snd def.t) in
+    let args = List.mapi (print_arg state) def.args |> Pla.join_sep Pla.commaspace in
+    let ret = print_type_ state (snd def.t) in
     {%pla|extern <#ret#> <#link_name#s>(<#args#>);<#>|}
   | TopExternal _, _ -> Pla.unit
   | TopType { path; members }, Header ->
-    let members = Pla.map_sep {%pla|<#>|} print_member members in
+    let path = registerPrefix state path in
+    let members = Pla.map_sep {%pla|<#>|} (print_member state) members in
     {%pla|typedef struct <#path#s> {<#members#+><#>} <#path#s>;<#><#>|}
-  | TopAlias { path; alias_of }, Header -> {%pla|typedef struct <#alias_of#s> <#path#s>;<#><#>|}
+  | TopAlias { path; alias_of }, Header ->
+    let path = registerPrefix state path in
+    let alias_of = addPrefix state alias_of in
+    {%pla|typedef struct <#alias_of#s> <#path#s>;<#><#>|}
   | TopType _, _ -> Pla.unit
   | TopAlias _, _ -> Pla.unit
   | TopConstant (name, _, t, rhs), Tables when isBuiltinType t ->
-    let prefixed_name = addPrefix state.args name in
-    let () = Hashtbl.add state.prefixed name prefixed_name in
-    let t = print_type_ t in
+    let prefixed_name = registerPrefix state name in
+    let t = print_type_ state t in
     let rhs = print_exp state None rhs in
     {%pla|static const <#t#> <#prefixed_name#s> = <#rhs#+>;<#><#>|}
   | TopConstant (name, _, t, rhs), Header when not (isBuiltinType t) ->
-    let prefixed_name = addPrefix state.args name in
-    let () = Hashtbl.add state.prefixed name prefixed_name in
-    let t = print_type_ t in
+    let prefixed_name = registerPrefix state name in
+    let t = print_type_ state t in
     let rhs = print_exp state None rhs in
     {%pla|static const <#t#> <#prefixed_name#s> = <#rhs#+>;<#><#>|}
-  | TopConstant _, _ -> Pla.unit
+  | TopConstant (name, _, _, _), _ ->
+    let _ = registerPrefix state name in
+    Pla.unit
 
 
 let print_prog args ~allow_inline target t = Pla.map_join (print_top_stmt args ~allow_inline target) t
