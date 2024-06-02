@@ -144,7 +144,7 @@ module Cpp = struct
     | "string", [ TFix16 ], _ -> Some "fix_to_string"
     | "string", [ TBool ], _ -> Some "bool_to_string"
     | "bool", [ TInt ], _ -> Some "int_to_bool"
-    | "bool", [ TReal ], _ -> Some "real_to_bool"
+    | "bool", [ TReal ], _ -> Some "float_to_bool"
     | "bool", [ TFix16 ], _ -> Some "fix_to_bool"
     (* get *)
     | "get", [ TArray (_, { t = TReal; _ }); TInt ], TReal -> Some "float_get"
