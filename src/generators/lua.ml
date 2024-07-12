@@ -100,6 +100,10 @@ let rec print_exp e =
   | EFixed n -> Pla.string (Util.Vfloat.to_string n)
   | EString s -> Pla.string_quoted s
   | EId id -> Pla.string id
+  | EIndex { e; index = { e = EInt i; _ } } ->
+    let e = print_exp e in
+    let index = i + 1 in
+    {%pla|<#e#>[<#index#i>]|}
   | EIndex { e; index } ->
     let e = print_exp e in
     let index = print_exp index in
@@ -153,6 +157,10 @@ let rec print_lexp e =
   | LMember (e, m) ->
     let e = print_lexp e in
     {%pla|<#e#>.<#m#s>|}
+  | LIndex { e; index = { e = EInt i; _ } } ->
+    let e = print_lexp e in
+    let index = i + 1 in
+    {%pla|<#e#>[<#index#i>]|}
   | LIndex { e; index } ->
     let e = print_lexp e in
     let index = print_exp index in

@@ -33,6 +33,7 @@ type builtin =
   | Abs
   | Exp
   | Log10
+  | Log
   | Sin
   | Cos
   | Tan
@@ -67,6 +68,7 @@ let functions =
   ; "abs", B Abs
   ; "exp", B Exp
   ; "log10", B Log10
+  ; "log", B Log
   ; "sin", B Sin
   ; "cos", B Cos
   ; "tan", B Tan
@@ -438,6 +440,7 @@ let builtin b =
   | Abs -> "abs"
   | Exp -> "exp"
   | Log10 -> "log10"
+  | Log -> "log"
   | Sin -> "sin"
   | Cos -> "cos"
   | Tan -> "tan"

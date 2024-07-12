@@ -681,7 +681,7 @@ let suite =
             ; Templates.get template_files "teensy" "fixed"
             ; Templates.get template_files "webaudio" "js"
             ; Templates.get template_files "browser" "js"*)
-       ; CliTest.get all_files Native "float" (*; CliTest.get all_files Native "c"*)
+       ; CliTest.get all_files Native "float"
        ; CliTest.get all_files Native "fixed" (* ; CliTest.get all_files Native "js"*)
        ; CliTest.get all_files Native "lua"
        ; CliTest.get all_files Node "float"

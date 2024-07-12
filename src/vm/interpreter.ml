@@ -339,6 +339,8 @@ and eval_call (vm : t) findex (args : rvalue list) : t * rvalue =
     | Abs, _ -> failwith "invalid arguments to 'abs' function"
     | Log10, [ RReal x ] -> vm, RReal (log10 x)
     | Log10, _ -> failwith "invalid arguments to 'log10' function"
+    | Log, [ RReal x ] -> vm, RReal (log x)
+    | Log, _ -> failwith "invalid arguments to 'log' function"
     | Floor, [ RReal x ] -> vm, RReal (floor x)
     | Floor, _ -> failwith "invalid arguments to 'floor' function"
     | Clip, [ RReal x; RReal min_v; RReal max_v ] -> vm, RReal (min (max x min_v) max_v)

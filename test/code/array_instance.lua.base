@@ -58,6 +58,6 @@ function Array_instance_foo(_ctx)
          i__1 = (1 + i__1)
       end
    end
-   return _ctx.x[1 + 1].x
+   return _ctx.x[2].x
 end
 

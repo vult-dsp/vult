@@ -149,6 +149,7 @@ let builtin_functions =
     ; "abs", C.num_num
     ; "exp", C.freal_freal
     ; "log10", C.freal_freal
+    ; "log", C.freal_freal
     ; "sin", C.freal_freal
     ; "cos", C.freal_freal
     ; "floor", C.freal_freal

@@ -109,28 +109,28 @@ function SaveState_main_type_serialize_data(buffer, index, _ctx)
 end
 
 function SaveState_counter_type_serialize_type_descr(buffer, index, marks)
-   if marks[0 + 1] then
+   if marks[1] then
       return index
    end
-   marks[0 + 1] = true
+   marks[1] = true
    local _array_0 = {"count"}
    return serialize_type_descr(buffer, index, "SaveState_counter_type", _array_0)
 end
 
 function SaveState_point_serialize_type_descr(buffer, index, marks)
-   if marks[2 + 1] then
+   if marks[3] then
       return index
    end
-   marks[2 + 1] = true
+   marks[3] = true
    local _array_0 = {"x", "y"}
    return serialize_type_descr(buffer, index, "SaveState_point", _array_0)
 end
 
 function SaveState_main_type_serialize_type_descr(buffer, index, marks)
-   if marks[1 + 1] then
+   if marks[2] then
       return index
    end
-   marks[1 + 1] = true
+   marks[2] = true
    index = SaveState_counter_type_serialize_type_descr(buffer, index, marks)
    index = SaveState_point_serialize_type_descr(buffer, index, marks)
    local _array_0 = {"c1", "inst_19fb0", "p1", "p2", "point_array", "str", "x"}

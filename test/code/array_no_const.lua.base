@@ -21,7 +21,7 @@ function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
 
 function Array_no_const_bar1(a)
-   a[0 + 1] = 1.
+   a[1] = 1.
 end
 
 function Array_no_const_bob1(a)
