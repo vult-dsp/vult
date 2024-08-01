@@ -9,7 +9,7 @@ template<std::size_t SIZE_0>
 static_inline fix16_t Array_dimension_total(const std::array<fix16_t, SIZE_0>& data) {
    fix16_t acc = 0x0 /* 0.000000 */;
    int32_t i__1 = 0;
-   while (i__1 < data.size()) {
+   while (i__1 < static_cast<int32_t>(data.size())) {
       acc = acc + data[static_cast<uint32_t>(i__1)];
       i__1 = 1 + i__1;
    }
@@ -20,7 +20,7 @@ template<std::size_t SIZE_0, std::size_t SIZE_1>
 static_inline fix16_t Array_dimension_sum(const std::array<fix16_t, SIZE_0>& data1, const std::array<fix16_t, SIZE_1>& data2) {
    fix16_t acc = 0x0 /* 0.000000 */;
    int32_t i__1 = 0;
-   while (i__1 < data1.size()) {
+   while (i__1 < static_cast<int32_t>(data1.size())) {
       acc = acc + data1[static_cast<uint32_t>(i__1)] + data2[static_cast<uint32_t>(i__1)];
       i__1 = 1 + i__1;
    }
