@@ -451,6 +451,15 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
   | _, Some _ -> failwith "Not a record"
 
 
+let checkMemExists (env : in_func) name =
+  match env.f.context with
+  | Some (_, { descr = Record members; _ }) -> (
+    match Map.find name members with
+    | None -> false
+    | Some _ -> true)
+  | _ -> false
+
+
 let addReturnVar (env : in_context) (name : string) (t : Typed.type_) loc : in_context =
   let report_mem found _ = found in
   let () = Typed.setTypeMut t in

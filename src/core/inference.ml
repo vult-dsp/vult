@@ -276,8 +276,12 @@ let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
           (0xFF land Hashtbl.hash (path_string fpath))
           (0xFF land Hashtbl.hash (path_string cpath))
       in
-      let n = Env.getFunctionTick env in
-      let name = "inst_" ^ string_of_int n ^ number in
+      let rec generateName () =
+        let n = Env.getFunctionTick env in
+        let name = "inst_" ^ string_of_int n ^ number in
+        if checkMemExists env name then generateName () else name
+      in
+      let name = generateName () in
       let env = Env.addVar env unify name fctx_t Inst loc in
       let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); loc; t = fctx_t } in
       let () = if is_ctx_mutable then markExpMutable env e loc in
