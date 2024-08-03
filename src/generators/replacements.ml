@@ -23,6 +23,13 @@
 *)
 open Core.Prog
 
+let getReturnType (t : type_) =
+  match t.t with
+  | TVoid None -> t
+  | TVoid (Some [ t ]) -> t
+  | _ -> t
+
+
 module Cpp = struct
   let keywords =
     [ "asm"
@@ -94,11 +101,13 @@ module Cpp = struct
 
   let fun_to_fun (path : string) (args : type_ list) (ret : type_) =
     let args = List.map (fun (t : type_) -> t.t) args in
-    match path, args, ret.t with
+    match path, args, (getReturnType ret).t with
     (* builtins *)
     | "samplerate", [], TReal -> Some "float_samplerate"
     | "samplerate", [], TFix16 -> Some "fix_samplerate"
+    | "random", [], TFix16 -> Some "fix_random"
     | "random", [], TReal -> Some "float_random"
+    | "irandom", [], _ -> Some "int_random"
     | "clip", [ TReal; _; _ ], TReal -> Some "float_clip"
     | "clip", [ TInt; _; _ ], TInt -> Some "int_clip"
     | "clip", [ TFix16; _; _ ], TFix16 -> Some "fix_clip"
@@ -196,7 +205,7 @@ module Lua = struct
 
   let fun_to_fun (path : string) (args : type_ list) (ret : type_) =
     let args = List.map (fun (t : type_) -> t.t) args in
-    match path, args, ret.t with
+    match path, args, (getReturnType ret).t with
     (* builtins *)
     | "float_to_int", [ TReal ], TInt -> Some "math.floor"
     | _ -> None
@@ -213,7 +222,7 @@ module Wl = struct
 
   let fun_to_fun (path : string) (args : type_ list) (ret : type_) =
     let args = List.map (fun (t : type_) -> t.t) args in
-    match path, args, ret.t with
+    match path, args, (getReturnType ret).t with
     (* builtins *)
     | "float_to_int", [ TReal ], TInt -> Some "Floor"
     | _ -> None
