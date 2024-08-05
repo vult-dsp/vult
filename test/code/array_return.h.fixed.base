@@ -2,7 +2,7 @@
 #ifndef ARRAY_RETURN_H
 #define ARRAY_RETURN_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "array_return.tables.h"
 
 typedef struct Array_return_foo3_type {
@@ -93,7 +93,7 @@ static_inline void Array_return_foo6(Array_return_foo6_type& _ctx) {
 }
 
 static_inline void Array_return_foo7(Array_return_foo7_type& _ctx) {
-   std::array<int32_t, 4> d = { 0, 0, 0, 0 };
+   std::array<int32_t, 4> &d = initializeArray(0, 4);
    _ctx.Array_return_foo7_ret_0 = d[static_cast<uint32_t>(0)];
    std::array<Array_return_s1, 4> s;
    _ctx.Array_return_foo7_ret_1 = s[static_cast<uint32_t>(0)];

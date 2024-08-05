@@ -2,7 +2,7 @@
 #ifndef SAW_PTR2_H
 #define SAW_PTR2_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "saw_ptr2.tables.h"
 
 typedef struct Util_edge_type {

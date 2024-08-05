@@ -2,7 +2,7 @@
 #ifndef WAVES_H
 #define WAVES_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "Waves.tables.h"
 
 static_inline int32_t Waves_sineTable1_samples() {

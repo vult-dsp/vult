@@ -1,0 +1,46 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+DataTypes`point`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x",0.];
+   setValue[`ctx,"y",0.];
+   Return[`ctx];
+]
+
+DataTypes`test2`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"p2",DataTypes`point`alloc[]];
+   setValue[`ctx,"result",DataTypes`point`alloc[]];
+   Return[`ctx];
+]
+
+DataTypes`addPoint1[p1_, p2_] := Module[{ p3 }, 
+   p3 = DataTypes`point`alloc[];
+   setValue[p3,"x",(getValue[p1, "x"] + getValue[p2, "x"])];
+   setValue[p3,"y",(getValue[p1, "y"] + getValue[p2, "y"])];
+   Return[p3];
+]
+
+DataTypes`addPoint2[p1_, p2_, result_] := Module[{  }, 
+   setValue[result,"x",(getValue[p1, "x"] + getValue[p2, "x"])];
+   setValue[result,"y",(getValue[p1, "y"] + getValue[p2, "y"])];
+]
+
+DataTypes`test1[] := Module[{ result, p2, p1 }, 
+   p1 = DataTypes`point`alloc[];
+   p2 = DataTypes`point`alloc[];
+   result = DataTypes`addPoint1[p1, p2];
+   DataTypes`addPoint2[p1, p2, result];
+]
+
+DataTypes`test2[`ctx_] := Module[{ p1 }, 
+   p1 = DataTypes`point`alloc[];
+   setValue[`ctx,"result",DataTypes`addPoint1[p1, getValue[`ctx, "p2"]]];
+]
+

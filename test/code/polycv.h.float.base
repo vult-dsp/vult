@@ -2,7 +2,7 @@
 #ifndef POLYCV_H
 #define POLYCV_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "polycv.tables.h"
 
 typedef struct Util_edge_type {

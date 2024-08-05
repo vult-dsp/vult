@@ -1,0 +1,298 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Delay`smooth`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x",0.];
+   Return[`ctx];
+]
+
+Delay`change`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"pre_x",0.];
+   Return[`ctx];
+]
+
+Delay`edge`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"pre_x",False];
+   Return[`ctx];
+]
+
+Delay`each`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"count",0];
+   Return[`ctx];
+]
+
+Delay`phasor`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_18071",Delay`change`type`alloc[]];
+   setValue[`ctx,"phase",0.];
+   setValue[`ctx,"rate",0.];
+   Return[`ctx];
+]
+
+Delay`lfo`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_11461",Delay`edge`type`alloc[]];
+   setValue[`ctx,"phase",0.];
+   Return[`ctx];
+]
+
+Delay`phd`osc`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_171c4",Delay`phasor`type`alloc[]];
+   setValue[`ctx,"inst_277c4",Delay`smooth`type`alloc[]];
+   setValue[`ctx,"inst_371c4",Delay`phasor`type`alloc[]];
+   setValue[`ctx,"pre_phase1",0.];
+   Return[`ctx];
+]
+
+Delay`delay`type`alloc[] := Module[{ `ctx, temp, in`n0 }, 
+   in`n0 = 0;
+   temp = initializeArray[0., 30000];
+   `ctx = newEmptyObject[];
+   While[(in`n0 < 30000), 
+      Module[{  }, 
+         temp[[in`n0 + 1]] = 0.;
+         in`n0 = (1 + in`n0);
+      ];];
+   setValue[`ctx,"buffer",temp];
+   setValue[`ctx,"write_pos",0];
+   Return[`ctx];
+]
+
+Delay`mono`noteOn`type`alloc[] := Module[{ temp, in`n0, `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"count",0];
+   in`n0 = 0;
+   temp = initializeArray[0, 4];
+   While[(in`n0 < 4), 
+      Module[{  }, 
+         temp[[in`n0 + 1]] = 0;
+         in`n0 = (1 + in`n0);
+      ];];
+   setValue[`ctx,"notes",temp];
+   setValue[`ctx,"pre",0];
+   Return[`ctx];
+]
+
+Delay`mono`noteOff`type`alloc[`ctx_] := 
+   Return[Delay`mono`noteOn`type`alloc[]];
+
+
+Delay`mono`isGateOn`type`alloc[`ctx_] := 
+   Return[Delay`mono`noteOn`type`alloc[]];
+
+
+Delay`process`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"detune",0.];
+   setValue[`ctx,"feedback",0.];
+   setValue[`ctx,"inst_16101",Delay`lfo`type`alloc[]];
+   setValue[`ctx,"inst_2c401",Delay`phd`osc`type`alloc[]];
+   setValue[`ctx,"inst_37701",Delay`smooth`type`alloc[]];
+   setValue[`ctx,"inst_47701",Delay`smooth`type`alloc[]];
+   setValue[`ctx,"inst_57701",Delay`smooth`type`alloc[]];
+   setValue[`ctx,"inst_68e01",Delay`delay`type`alloc[]];
+   setValue[`ctx,"lfo_amt",0.];
+   setValue[`ctx,"lfo_rate",0.];
+   setValue[`ctx,"notes",Delay`mono`noteOn`type`alloc[]];
+   setValue[`ctx,"pitch",0.];
+   setValue[`ctx,"time",0.];
+   setValue[`ctx,"volume",0.];
+   Return[`ctx];
+]
+
+Delay`noteOn`type`alloc[`ctx_] := 
+   Return[Delay`process`type`alloc[]];
+
+
+Delay`noteOff`type`alloc[`ctx_] := 
+   Return[Delay`process`type`alloc[]];
+
+
+Delay`controlChange`type`alloc[`ctx_] := 
+   Return[Delay`process`type`alloc[]];
+
+
+Delay`default`type`alloc[`ctx_] := 
+   Return[Delay`process`type`alloc[]];
+
+
+Delay`smooth[`ctx_, input_] := Module[{  }, 
+   setValue[`ctx,"x",((0.005 * (input + (-getValue[`ctx, "x"]))) + getValue[`ctx, "x"])];
+   Return[getValue[`ctx, "x"]];
+]
+
+Delay`change[`ctx_, x_] := Module[{ v }, 
+   v = (getValue[`ctx, "pre_x"] != x);
+   setValue[`ctx,"pre_x",x];
+   Return[v];
+]
+
+Delay`edge[`ctx_, x_] := Module[{ v }, 
+   v = ((getValue[`ctx, "pre_x"] != x) && (getValue[`ctx, "pre_x"] == False));
+   setValue[`ctx,"pre_x",x];
+   Return[v];
+]
+
+Delay`each[`ctx_, n_] := Module[{ ret }, 
+   ret = (getValue[`ctx, "count"] == 0);
+   setValue[`ctx,"count",((1 + getValue[`ctx, "count"]) % n)];
+   Return[ret];
+]
+
+Delay`pitchToRate[d_] := 
+   Return[(0.000185 * exp[(0.057762 * d)])];
+
+
+Delay`phasor[`ctx_, pitch_, reset_] := Module[{  }, 
+   If[Delay`change[getValue[`ctx, "inst_18071"], pitch], 
+      setValue[`ctx,"rate",Delay`pitchToRate[pitch]];];
+   If[reset, 
+      setValue[`ctx,"phase",0.];, 
+      setValue[`ctx,"phase",((getValue[`ctx, "phase"] + getValue[`ctx, "rate"]) % 1.)];];
+   Return[getValue[`ctx, "phase"]];
+]
+
+Delay`lfo[`ctx_, f_, gate_] := Module[{ rate }, 
+   rate = (0.000226 * f);
+   If[Delay`edge[getValue[`ctx, "inst_11461"], gate], 
+      setValue[`ctx,"phase",0.];];
+   setValue[`ctx,"phase",(rate + getValue[`ctx, "phase"])];
+   If[(getValue[`ctx, "phase"] > 1.), 
+      setValue[`ctx,"phase",(-1. + getValue[`ctx, "phase"])];];
+   Return[(-0.5 + Sin[(6.283185 * getValue[`ctx, "phase"])])];
+]
+
+Delay`phd`osc[`ctx_, pitch_, detune_] := Module[{ sine, phase2, reset, comp, phase1 }, 
+   phase1 = Delay`phasor[getValue[`ctx, "inst_171c4"], pitch, False];
+   comp = (1. + (-phase1));
+   reset = (((-phase1) + getValue[`ctx, "pre_phase1"]) > 0.5);
+   setValue[`ctx,"pre_phase1",phase1];
+   phase2 = Delay`phasor[getValue[`ctx, "inst_371c4"], (pitch + (32. * Delay`smooth[getValue[`ctx, "inst_277c4"], detune])), reset];
+   sine = Sin[(6.283185 * phase2)];
+   Return[(comp * sine)];
+]
+
+Delay`delay[`ctx_, x_, time_, feedback_] := Module[{ ret, x2, x1, decimal, read`pos, delta, index`i, index`r }, 
+   time = Clip[time, {0., 1.}];
+   feedback = Clip[feedback, {0., 1.}];
+   index`r = (30000. * time);
+   index`i = Floor[Floor[index`r]];
+   delta = ((-index`i) + getValue[`ctx, "write_pos"]);
+   read`pos = 0;
+   If[(delta < 0), 
+      read`pos = (30000 + delta);, 
+      read`pos = delta;];
+   decimal = (index`r + (-real[index`i]));
+   x1 = getValue[`ctx, "buffer"][[read`pos + 1]];
+   x2 = getValue[`ctx, "buffer"][[((1 + read`pos) % 30000) + 1]];
+   ret = (x1 + (decimal * (x2 + (-x1))));
+   setValue[`ctx,"write_pos",((1 + getValue[`ctx, "write_pos"]) % 30000)];
+   getValue[`ctx, "buffer"][[getValue[`ctx, "write_pos"] + 1]] = Clip[(x + (feedback * ret)), {-1., 1.}];
+   Return[ret];
+]
+
+Delay`mono`noteOn[`ctx_, n_] := Module[{  }, 
+   If[(getValue[`ctx, "count"] < 4), 
+      Module[{  }, 
+         getValue[`ctx, "notes"][[getValue[`ctx, "count"] + 1]] = n;
+         setValue[`ctx,"pre",n];
+         If[(getValue[`ctx, "count"] < 4), 
+            setValue[`ctx,"count",(1 + getValue[`ctx, "count"])];];
+      ];];
+   Return[getValue[`ctx, "pre"]];
+]
+
+Delay`mono`noteOff[`ctx_, n_] := Module[{ pos, i, found }, 
+   found = False;
+   i = 0;
+   pos = 0;
+   If[(getValue[`ctx, "count"] == 0), 
+      Return[getValue[`ctx, "pre"]];];
+   While[((i < 4) && (found == False)), 
+      Module[{  }, 
+         If[(getValue[`ctx, "notes"][[i + 1]] == n), 
+            Module[{  }, 
+               pos = i;
+               found = True;
+            ];];
+         i = (1 + i);
+      ];];
+   If[found, 
+      Module[{ k }, 
+         k = (1 + pos);
+         While[(k < 4), 
+            Module[{  }, 
+               getValue[`ctx, "notes"][[(-1 + k) + 1]] = getValue[`ctx, "notes"][[k + 1]];
+               k = (1 + k);
+            ];];
+         If[(found && (getValue[`ctx, "count"] > 0)), 
+            Module[{  }, 
+               setValue[`ctx,"count",(-1 + getValue[`ctx, "count"])];
+               setValue[`ctx,"pre",getValue[`ctx, "notes"][[(-1 + getValue[`ctx, "count"]) + 1]]];
+            ];];
+      ];];
+   Return[getValue[`ctx, "pre"]];
+]
+
+Delay`mono`isGateOn[`ctx_] := 
+   Return[(getValue[`ctx, "count"] > 0)];
+
+
+Delay`process[`ctx_, input_] := Module[{ delay`out, osc`out, `if`tempn`n0, amp, o1, lfo`val, gate }, 
+   gate = Delay`mono`isGateOn[getValue[`ctx, "notes"]];
+   lfo`val = (Delay`lfo[getValue[`ctx, "inst_16101"], getValue[`ctx, "lfo_rate"], gate] * getValue[`ctx, "lfo_amt"]);
+   o1 = Delay`phd`osc[getValue[`ctx, "inst_2c401"], getValue[`ctx, "pitch"], (lfo`val + getValue[`ctx, "detune"])];
+   amp = 0.;
+   `if`tempn`n0 = 0.;
+   If[gate, 
+      `if`tempn`n0 = 1.;, 
+      `if`tempn`n0 = 0.;];
+   amp = Delay`smooth[getValue[`ctx, "inst_37701"], `if`tempn`n0];
+   osc`out = (amp * o1);
+   delay`out = Delay`delay[getValue[`ctx, "inst_68e01"], osc`out, Delay`smooth[getValue[`ctx, "inst_47701"], getValue[`ctx, "time"]], Delay`smooth[getValue[`ctx, "inst_57701"], getValue[`ctx, "feedback"]]];
+   Return[(0.5 * ((delay`out + osc`out) * getValue[`ctx, "volume"]))];
+]
+
+Delay`noteOn[`ctx_, note_, velocity_, channel_] := 
+   setValue[`ctx,"pitch",real[Delay`mono`noteOn[getValue[`ctx, "notes"], note]]];
+
+
+Delay`noteOff[`ctx_, note_, channel_] := 
+   setValue[`ctx,"pitch",real[Delay`mono`noteOff[getValue[`ctx, "notes"], note]]];
+
+
+Delay`controlChange[`ctx_, control_, value_, channel_] := Module[{  }, 
+   If[(control == 30), 
+      setValue[`ctx,"volume",(0.007874 * value)];];
+   If[(control == 31), 
+      setValue[`ctx,"detune",(0.007874 * value)];];
+   If[(control == 32), 
+      setValue[`ctx,"lfo_rate",(0.007874 * value)];];
+   If[(control == 33), 
+      setValue[`ctx,"lfo_amt",(-1. + (0.015748 * value))];];
+   If[(control == 34), 
+      setValue[`ctx,"time",(0.007874 * value)];];
+   If[(control == 35), 
+      setValue[`ctx,"feedback",(0.007874 * value)];];
+]
+
+Delay`default[`ctx_] := Module[{  }, 
+   setValue[`ctx,"volume",1.];
+   setValue[`ctx,"pitch",45.];
+   setValue[`ctx,"detune",0.8];
+   setValue[`ctx,"lfo_rate",0.07];
+   setValue[`ctx,"lfo_amt",-0.8];
+   setValue[`ctx,"time",0.5];
+   setValue[`ctx,"feedback",0.5];
+]
+

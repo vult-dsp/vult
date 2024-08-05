@@ -2,7 +2,7 @@
 #ifndef SAVESTATE_H
 #define SAVESTATE_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "SaveState.tables.h"
 
 typedef struct SaveState_counter_type {

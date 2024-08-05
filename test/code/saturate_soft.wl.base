@@ -1,0 +1,40 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Saturate`soft`tanh`table`c0 = {};
+Saturate`soft`tanh`table`c1 = {};
+Saturate`soft`tanh`table`c2 = {};
+Saturate`soft`tanh`table`raw`c0[index_] := 
+   Return[Saturate`soft`tanh`table`c0[[index + 1]]];
+
+
+Saturate`soft`tanh`table`raw`c1[index_] := 
+   Return[Saturate`soft`tanh`table`c1[[index + 1]]];
+
+
+Saturate`soft`tanh`table`raw`c2[index_] := 
+   Return[Saturate`soft`tanh`table`c2[[index + 1]]];
+
+
+Saturate`soft`tanh`table[x_] := Module[{ index }, 
+   index = Clip[Floor[((x - -24.) * 5.)], {0, 240}];
+   Return[(Saturate`soft`tanh`table`c0[[index + 1]] + (x * (Saturate`soft`tanh`table`c1[[index + 1]] + (Saturate`soft`tanh`table`c2[[index + 1]] * x))))];
+]
+
+Saturate`soft`process[x_] := 
+   Return[Saturate`soft`tanh`table[x]];
+
+
+Saturate`soft`noteOn[note_, velocity_, channel_] := Null
+
+Saturate`soft`noteOff[note_, channel_] := Null
+
+Saturate`soft`controlChange[control_, value_, channel_] := Null
+
+Saturate`soft`default[] := Null
+

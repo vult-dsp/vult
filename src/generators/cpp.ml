@@ -583,7 +583,7 @@ let generateSplit file_deps (args : Util.Args.args) template (stmts : top_stmt l
     in
     let header =
       let ifdef, endif = makeIfdef header_file in
-      {%pla|<#legend#><#ifdef#><#>#include "vultin.h"<#><#dependencies#><#><#><#header#><#endif#>|}
+      {%pla|<#legend#><#ifdef#><#>#include "vultin.hpp"<#><#dependencies#><#><#><#header#><#endif#>|}
     in
     let impl = {%pla|<#legend#><#><#>#include "<#header_file_base#s>"<#><#><#tables#><#><#><#impl#>|} in
     [ header, header_file; impl, impl_file ]
@@ -614,7 +614,7 @@ let generateSingle (args : Util.Args.args) template (stmts : top_stmt list) =
   let tables_file_base = Filename.basename tables_file in
   let header =
     let ifdef, endif = makeIfdef header_file in
-    {%pla|<#legend#><#ifdef#><#>#include "vultin.h"<#>#include "<#tables_file_base#s>"<#><#><#header#><#endif#>|}
+    {%pla|<#legend#><#ifdef#><#>#include "vultin.hpp"<#>#include "<#tables_file_base#s>"<#><#><#header#><#endif#>|}
   in
   let impl = {%pla|<#legend#><#><#>#include "<#header_file_base#s>"<#><#><#impl#>|} in
   let tables =

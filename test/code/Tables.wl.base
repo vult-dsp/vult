@@ -1,0 +1,70 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Tables`sineTable1`c0 = {};
+Tables`sineTable1`c1 = {};
+Tables`sineTable1`c2 = {};
+Tables`sineTable1`raw`c0[index_] := 
+   Return[Tables`sineTable1`c0[[index + 1]]];
+
+
+Tables`sineTable1`raw`c1[index_] := 
+   Return[Tables`sineTable1`c1[[index + 1]]];
+
+
+Tables`sineTable1`raw`c2[index_] := 
+   Return[Tables`sineTable1`c2[[index + 1]]];
+
+
+Tables`sineTable1[x_] := Module[{ index }, 
+   index = Clip[Floor[(x * 31.)], {0, 31}];
+   Return[(Tables`sineTable1`c0[[index + 1]] + (x * (Tables`sineTable1`c1[[index + 1]] + (Tables`sineTable1`c2[[index + 1]] * x))))];
+]
+
+Tables`sineTable2`c0 = {};
+Tables`sineTable2`c1 = {};
+Tables`sineTable2`raw`c0[index_] := 
+   Return[Tables`sineTable2`c0[[index + 1]]];
+
+
+Tables`sineTable2`raw`c1[index_] := 
+   Return[Tables`sineTable2`c1[[index + 1]]];
+
+
+Tables`sineTable2[x_] := Module[{ index }, 
+   index = Clip[Floor[(x * 31.)], {0, 31}];
+   Return[(Tables`sineTable2`c0[[index + 1]] + (x * Tables`sineTable2`c1[[index + 1]]))];
+]
+
+Tables`sineTable3`c0 = {};
+Tables`sineTable3`c1 = {};
+Tables`sineTable3`raw`c0[index_] := 
+   Return[Tables`sineTable3`c0[[index + 1]]];
+
+
+Tables`sineTable3`raw`c1[index_] := 
+   Return[Tables`sineTable3`c1[[index + 1]]];
+
+
+Tables`sineTable3[x_] := Module[{ decimal, index, value }, 
+   value = Clip[(x * 32.), {0., 32.}];
+   index = Floor[value];
+   decimal = (value - Floor[value]);
+   Return[(Tables`sineTable3`c0[[index + 1]] + (Tables`sineTable3`c1[[index + 1]] * decimal))];
+]
+
+Tables`power2`table = {};
+Tables`power2[x_] := 
+   Return[Tables`power2`table[[(int`clip[x, -4, 4] + 4) + 1]]];
+
+
+Tables`square`table = {};
+Tables`square[x_] := 
+   Return[Tables`square`table[[(int`clip[x, -4, 4] + 4) + 1]]];
+
+

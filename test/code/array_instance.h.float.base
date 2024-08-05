@@ -2,7 +2,7 @@
 #ifndef ARRAY_INSTANCE_H
 #define ARRAY_INSTANCE_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "array_instance.tables.h"
 
 typedef struct Array_instance_counter_type {

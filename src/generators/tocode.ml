@@ -68,9 +68,7 @@ let rec getInitRHS (t : type_) =
   | TBool -> Some (C.ebool false)
   | TArray (Some size, t) -> (
     match getInitRHS t with
-    | Some elem ->
-      let elems = List.init size (fun _ -> elem) in
-      Some (C.earray elems t)
+    | Some elem -> Some (C.ecall "initializeArray" [ elem; C.eint size ] t)
     | None -> None)
   | _ -> None
 

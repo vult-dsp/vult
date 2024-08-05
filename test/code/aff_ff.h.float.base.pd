@@ -2,7 +2,7 @@
 #ifndef AFF_FF_H
 #define AFF_FF_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "aff_ff.tables.h"
 
 

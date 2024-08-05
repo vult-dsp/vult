@@ -51,6 +51,7 @@ function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
+function initializeArray(v, n) local a = {} for i=1, n do a[i] = 0 end return a end
 
 |}
 
@@ -249,7 +250,7 @@ let print_body body =
     {%pla|<#stmt#+><#>end|}
 
 
-let print_top_stmt t =
+let print_top_stmt (args : Util.Args.args) t =
   match t.top with
   | TopFunction (def, body) ->
     let def = print_function_def def in
@@ -258,12 +259,13 @@ let print_top_stmt t =
   | TopExternal _ -> Pla.unit
   | TopType _ -> Pla.unit
   | TopAlias _ -> Pla.unit
+  | TopConstant (name, _, _, _) when args.test_mode -> {%pla|<#name#s> = {};<#>|}
   | TopConstant (name, _, _, rhs) ->
     let rhs = print_exp rhs in
     {%pla|local <#name#s> = <#rhs#><#>|}
 
 
-let print_prog t = Pla.map_join print_top_stmt t
+let print_prog args t = Pla.map_join (print_top_stmt args) t
 
 let getTemplateCode (args : Util.Args.args) =
   match args.template with
@@ -274,6 +276,6 @@ let getTemplateCode (args : Util.Args.args) =
 
 let generate (args : Util.Args.args) (stmts : top_stmt list) =
   let file = Common.setExt ".lua" args.output in
-  let code = print_prog stmts in
+  let code = print_prog args stmts in
   let pre, post = getTemplateCode args in
   [ {%pla|<#runtime#><#pre#><#code#><#post#>|}, file ]

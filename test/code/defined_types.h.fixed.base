@@ -2,7 +2,7 @@
 #ifndef DEFINED_TYPES_H
 #define DEFINED_TYPES_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "defined_types.tables.h"
 
 typedef struct Defined_types_dot {

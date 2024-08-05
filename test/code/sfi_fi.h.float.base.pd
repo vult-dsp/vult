@@ -2,7 +2,7 @@
 #ifndef SFI_FI_H
 #define SFI_FI_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "sfi_fi.tables.h"
 
 

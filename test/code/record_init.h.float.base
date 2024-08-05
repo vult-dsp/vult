@@ -2,7 +2,7 @@
 #ifndef RECORD_INIT_H
 #define RECORD_INIT_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "record_init.tables.h"
 
 typedef struct Record_init_point {

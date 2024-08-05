@@ -1,0 +1,380 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Synth2`change`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"pre_x",0.];
+   Return[`ctx];
+]
+
+Synth2`bchange`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"pre_x",False];
+   Return[`ctx];
+]
+
+Synth2`edge`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"pre_x",False];
+   Return[`ctx];
+]
+
+Synth2`each`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"count",0];
+   Return[`ctx];
+]
+
+Synth2`dcblock`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x1",0.];
+   setValue[`ctx,"y1",0.];
+   Return[`ctx];
+]
+
+Synth2`smooth`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x",0.];
+   Return[`ctx];
+]
+
+Synth2`lpfilter`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"pre_x",0.];
+   Return[`ctx];
+]
+
+Synth2`osc`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_177e5",Synth2`change`type`alloc[]];
+   setValue[`ctx,"inst_24fe5",Synth2`dcblock`type`alloc[]];
+   setValue[`ctx,"m",0.];
+   setValue[`ctx,"output",0.];
+   setValue[`ctx,"phase",0.];
+   setValue[`ctx,"rate",0.];
+   setValue[`ctx,"state_pulse",0.];
+   setValue[`ctx,"state_saw",0.];
+   setValue[`ctx,"state_triang",0.];
+   Return[`ctx];
+]
+
+Synth2`svf`step`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"dband",0.];
+   setValue[`ctx,"dlow",0.];
+   Return[`ctx];
+]
+
+Synth2`svf`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"g",0.];
+   setValue[`ctx,"inst_177a7",Synth2`change`type`alloc[]];
+   setValue[`ctx,"step",Synth2`svf`step`type`alloc[]];
+   Return[`ctx];
+]
+
+Synth2`lfo`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_1445f",Synth2`edge`type`alloc[]];
+   setValue[`ctx,"inst_2cb5f",Synth2`each`type`alloc[]];
+   setValue[`ctx,"phase",0.];
+   Return[`ctx];
+]
+
+Synth2`mono`noteOn`type`alloc[] := Module[{ temp, in`n0, `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"count",0];
+   in`n0 = 0;
+   temp = initializeArray[0, 4];
+   While[(in`n0 < 4), 
+      Module[{  }, 
+         temp[[in`n0 + 1]] = 0;
+         in`n0 = (1 + in`n0);
+      ];];
+   setValue[`ctx,"notes",temp];
+   setValue[`ctx,"pre",0];
+   Return[`ctx];
+]
+
+Synth2`mono`noteOff`type`alloc[`ctx_] := 
+   Return[Synth2`mono`noteOn`type`alloc[]];
+
+
+Synth2`mono`isGateOn`type`alloc[`ctx_] := 
+   Return[Synth2`mono`noteOn`type`alloc[]];
+
+
+Synth2`default[`ctx_] := Module[{  }, 
+   setValue[`ctx,"volume",1.];
+   setValue[`ctx,"pw",0.];
+   setValue[`ctx,"pitch",42.];
+   setValue[`ctx,"cut",1.];
+   setValue[`ctx,"res",0.];
+   setValue[`ctx,"amp_s",1.];
+   setValue[`ctx,"lfo_amt",0.5];
+   setValue[`ctx,"lfo_rate",0.];
+]
+
+Synth2`process`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"amp_s",0.];
+   setValue[`ctx,"cut",0.];
+   setValue[`ctx,"inst_15fb7",Synth2`lfo`type`alloc[]];
+   setValue[`ctx,"inst_2e5b7",Synth2`osc`type`alloc[]];
+   setValue[`ctx,"inst_3dfb7",Synth2`smooth`type`alloc[]];
+   setValue[`ctx,"inst_4a7b7",Synth2`svf`type`alloc[]];
+   setValue[`ctx,"lfo_amt",0.];
+   setValue[`ctx,"lfo_rate",0.];
+   setValue[`ctx,"monoin",Synth2`mono`noteOn`type`alloc[]];
+   setValue[`ctx,"pitch",0.];
+   setValue[`ctx,"pw",0.];
+   setValue[`ctx,"res",0.];
+   setValue[`ctx,"volume",0.];
+   setValue[`ctx,"wave",0.];
+   Synth2`default[`ctx];
+   Return[`ctx];
+]
+
+Synth2`noteOn`type`alloc[`ctx_] := 
+   Return[Synth2`process`type`alloc[]];
+
+
+Synth2`noteOff`type`alloc[`ctx_] := 
+   Return[Synth2`process`type`alloc[]];
+
+
+Synth2`controlChange`type`alloc[`ctx_] := 
+   Return[Synth2`process`type`alloc[]];
+
+
+Synth2`default`type`alloc[`ctx_] := 
+   Return[Synth2`process`type`alloc[]];
+
+
+Synth2`minFixed[] := 
+   Return[1.5 10^-05];
+
+
+Synth2`change[`ctx_, x_] := Module[{ v }, 
+   v = (getValue[`ctx, "pre_x"] != x);
+   setValue[`ctx,"pre_x",x];
+   Return[v];
+]
+
+Synth2`bchange[`ctx_, x_] := Module[{ v }, 
+   v = (getValue[`ctx, "pre_x"] != x);
+   setValue[`ctx,"pre_x",x];
+   Return[v];
+]
+
+Synth2`edge[`ctx_, x_] := Module[{ v }, 
+   v = ((getValue[`ctx, "pre_x"] != x) && (getValue[`ctx, "pre_x"] == True));
+   setValue[`ctx,"pre_x",x];
+   Return[v];
+]
+
+Synth2`each[`ctx_, n_] := Module[{ ret }, 
+   ret = (getValue[`ctx, "count"] == 0);
+   setValue[`ctx,"count",((1 + getValue[`ctx, "count"]) % n)];
+   Return[ret];
+]
+
+Synth2`near`zero[x_] := 
+   Return[(abs[x] < 0.02)];
+
+
+Synth2`dcblock[`ctx_, x0_] := Module[{ y0 }, 
+   y0 = (x0 + ((-getValue[`ctx, "x1"]) + (0.995 * getValue[`ctx, "y1"])));
+   setValue[`ctx,"x1",x0];
+   setValue[`ctx,"y1",y0];
+   Return[y0];
+]
+
+Synth2`smooth[`ctx_, input_] := Module[{  }, 
+   setValue[`ctx,"x",((0.005 * (input + (-getValue[`ctx, "x"]))) + getValue[`ctx, "x"])];
+   Return[getValue[`ctx, "x"]];
+]
+
+Synth2`lpfilter[`ctx_, x_] := Module[{ ret }, 
+   ret = (0.5 * (x + getValue[`ctx, "pre_x"]));
+   setValue[`ctx,"pre_x",x];
+   Return[ret];
+]
+
+Synth2`pitchToRate[d_] := 
+   Return[(0.000185 * exp[(0.057762 * d)])];
+
+
+Synth2`pulse`train[m_, phase_] := Module[{ tmp1, denominator1, pi`phase }, 
+   pi`phase = (3.141592 * phase);
+   denominator1 = Sin[pi`phase];
+   tmp1 = 0.;
+   If[Synth2`near`zero[denominator1], 
+      tmp1 = 1.;, 
+      Module[{  }, 
+         tmp1 = Sin[(m * pi`phase)];
+         tmp1 = (tmp1 / (denominator1 * m));
+      ];];
+   Return[tmp1];
+]
+
+Synth2`osc[`ctx_, pitch_, pw_, wave_] := Module[{ tmp2, tmp1, shift, shift05, fixed`pitch }, 
+   fixed`pitch = 0.;
+   If[(wave < 0.666666), 
+      fixed`pitch = pitch;, 
+      fixed`pitch = (12. + pitch);];
+   If[Synth2`change[getValue[`ctx, "inst_177e5"], fixed`pitch], 
+      Module[{ maxHarmonics, p }, 
+         setValue[`ctx,"rate",Synth2`pitchToRate[fixed`pitch]];
+         p = (1. / getValue[`ctx, "rate"]);
+         maxHarmonics = Floor[(0.5 * p)];
+         setValue[`ctx,"m",(1. + (2. * maxHarmonics))];
+      ];];
+   shift05 = (0.5 + (0.49 * pw));
+   shift = (shift05 + getValue[`ctx, "phase"]);
+   If[(shift > 1.), 
+      shift = (-1. + shift);];
+   tmp1 = Synth2`pulse`train[getValue[`ctx, "m"], getValue[`ctx, "phase"]];
+   tmp2 = Synth2`pulse`train[getValue[`ctx, "m"], shift];
+   setValue[`ctx,"phase",(getValue[`ctx, "phase"] + getValue[`ctx, "rate"])];
+   If[(getValue[`ctx, "phase"] > 1.), 
+      setValue[`ctx,"phase",(-1. + getValue[`ctx, "phase"])];];
+   setValue[`ctx,"state_pulse",Clip[(tmp1 + ((-tmp2) + (0.9995 * getValue[`ctx, "state_pulse"]))), {-1., 1.}]];
+   setValue[`ctx,"state_saw",Clip[((0.5 * ((tmp1 + (tmp2 + (-2. * getValue[`ctx, "rate"]))) / shift05)) + (0.9995 * getValue[`ctx, "state_saw"])), {-1., 1.}]];
+   setValue[`ctx,"state_triang",Clip[((0.9995 * getValue[`ctx, "state_triang"]) + (2. * (getValue[`ctx, "state_pulse"] * getValue[`ctx, "rate"]))), {-1., 1.}]];
+   If[(wave < 0.333333), 
+      setValue[`ctx,"output",getValue[`ctx, "state_pulse"]];, 
+      If[(wave < 0.666666), 
+         setValue[`ctx,"output",(2. * getValue[`ctx, "state_saw"])];, 
+         setValue[`ctx,"output",(2. * ((1. + pw) * getValue[`ctx, "state_triang"]))];];];
+   setValue[`ctx,"output",Synth2`dcblock[getValue[`ctx, "inst_24fe5"], getValue[`ctx, "output"]]];
+   Return[Clip[(0.25 * getValue[`ctx, "output"]), {-1., 1.}]];
+]
+
+Synth2`svf`step[`ctx_, input_, g_, q_, sel_] := Module[{ output, notch, band, high, low }, 
+   low = ((g * getValue[`ctx, "dband"]) + getValue[`ctx, "dlow"]);
+   high = (input + ((-low) + (-(q * getValue[`ctx, "dband"]))));
+   band = ((g * high) + getValue[`ctx, "dband"]);
+   notch = (high + low);
+   setValue[`ctx,"dband",Clip[band, {-1., 1.}]];
+   setValue[`ctx,"dlow",Clip[low, {-1., 1.}]];
+   output = 0.;
+   Switch[sel, 0, output = low;, 1, output = high;, 2, output = band;, _, output = notch;];
+   Return[output];
+]
+
+Synth2`svf[`ctx_, input_, fc_, q_, sel_] := Module[{ x2, x1, fix`q }, 
+   fc = Clip[fc, {0., 1.}];
+   q = Clip[q, {0., 1.}];
+   fix`q = (2. + (2. * (-q)));
+   If[Synth2`change[getValue[`ctx, "inst_177a7"], fc], 
+      setValue[`ctx,"g",(0.5 * fc)];];
+   x1 = Synth2`svf`step[getValue[`ctx, "step"], input, getValue[`ctx, "g"], fix`q, sel];
+   x2 = Synth2`svf`step[getValue[`ctx, "step"], input, getValue[`ctx, "g"], fix`q, sel];
+   Return[(0.5 * (x1 + x2))];
+]
+
+Synth2`lfo[`ctx_, f_, gate_] := Module[{ rate }, 
+   rate = ((100. * (f * Synth2`minFixed[])) + Synth2`minFixed[]);
+   If[Synth2`edge[getValue[`ctx, "inst_1445f"], gate], 
+      setValue[`ctx,"phase",0.];];
+   If[Synth2`each[getValue[`ctx, "inst_2cb5f"], 4], 
+      setValue[`ctx,"phase",(rate + getValue[`ctx, "phase"])];];
+   If[(getValue[`ctx, "phase"] > 1.), 
+      setValue[`ctx,"phase",(-1. + getValue[`ctx, "phase"])];];
+   Return[(0.5 + Sin[(6.283185 * getValue[`ctx, "phase"])])];
+]
+
+Synth2`mono`noteOn[`ctx_, n_] := Module[{  }, 
+   If[(getValue[`ctx, "count"] < 4), 
+      Module[{  }, 
+         getValue[`ctx, "notes"][[getValue[`ctx, "count"] + 1]] = n;
+         setValue[`ctx,"pre",n];
+         If[(getValue[`ctx, "count"] < 4), 
+            setValue[`ctx,"count",(1 + getValue[`ctx, "count"])];];
+      ];];
+   Return[getValue[`ctx, "pre"]];
+]
+
+Synth2`mono`noteOff[`ctx_, n_] := Module[{ pos, i, found }, 
+   found = False;
+   i = 0;
+   pos = 0;
+   If[(getValue[`ctx, "count"] == 0), 
+      Return[getValue[`ctx, "pre"]];];
+   While[((i < 4) && (found == False)), 
+      Module[{  }, 
+         If[(getValue[`ctx, "notes"][[i + 1]] == n), 
+            Module[{  }, 
+               pos = i;
+               found = True;
+            ];];
+         i = (1 + i);
+      ];];
+   If[found, 
+      Module[{ k }, 
+         k = (1 + pos);
+         While[(k < 4), 
+            Module[{  }, 
+               getValue[`ctx, "notes"][[(-1 + k) + 1]] = getValue[`ctx, "notes"][[k + 1]];
+               k = (1 + k);
+            ];];
+         If[(found && (getValue[`ctx, "count"] > 0)), 
+            Module[{  }, 
+               setValue[`ctx,"count",(-1 + getValue[`ctx, "count"])];
+               setValue[`ctx,"pre",getValue[`ctx, "notes"][[(-1 + getValue[`ctx, "count"]) + 1]]];
+            ];];
+      ];];
+   Return[getValue[`ctx, "pre"]];
+]
+
+Synth2`mono`isGateOn[`ctx_] := 
+   Return[(getValue[`ctx, "count"] > 0)];
+
+
+Synth2`process[`ctx_, i_] := Module[{ output, `if`tempn`n0, amp`env, o1, lfo1, gate }, 
+   gate = Synth2`mono`isGateOn[getValue[`ctx, "monoin"]];
+   lfo1 = (Synth2`lfo[getValue[`ctx, "inst_15fb7"], getValue[`ctx, "lfo_rate"], gate] * getValue[`ctx, "lfo_amt"]);
+   o1 = Synth2`osc[getValue[`ctx, "inst_2e5b7"], getValue[`ctx, "pitch"], (lfo1 + getValue[`ctx, "pw"]), getValue[`ctx, "wave"]];
+   amp`env = 0.;
+   `if`tempn`n0 = 0.;
+   If[gate, 
+      `if`tempn`n0 = 1.;, 
+      `if`tempn`n0 = 0.;];
+   amp`env = Synth2`smooth[getValue[`ctx, "inst_3dfb7"], `if`tempn`n0];
+   output = (amp`env * Synth2`svf[getValue[`ctx, "inst_4a7b7"], o1, getValue[`ctx, "cut"], getValue[`ctx, "res"], 0]);
+   Return[(output * getValue[`ctx, "volume"])];
+]
+
+Synth2`noteOn[`ctx_, note_, velocity_, channel_] := 
+   setValue[`ctx,"pitch",real[Synth2`mono`noteOn[getValue[`ctx, "monoin"], note]]];
+
+
+Synth2`noteOff[`ctx_, note_, channel_] := 
+   setValue[`ctx,"pitch",real[Synth2`mono`noteOff[getValue[`ctx, "monoin"], note]]];
+
+
+Synth2`controlChange[`ctx_, control_, value_, channel_] := Module[{ value`m1n`n1, valuen`n0n`n1 }, 
+   valuen`n0n`n1 = (0.007874 * real[value]);
+   value`m1n`n1 = (-1. + (2. * valuen`n0n`n1));
+   If[(control == 30), 
+      setValue[`ctx,"volume",valuen`n0n`n1];];
+   If[(control == 31), 
+      setValue[`ctx,"wave",valuen`n0n`n1];];
+   If[(control == 32), 
+      setValue[`ctx,"pw",valuen`n0n`n1];];
+   If[(control == 33), 
+      setValue[`ctx,"lfo_rate",valuen`n0n`n1];];
+   If[(control == 34), 
+      setValue[`ctx,"lfo_amt",value`m1n`n1];];
+   If[(control == 35), 
+      setValue[`ctx,"cut",valuen`n0n`n1];];
+   If[(control == 36), 
+      setValue[`ctx,"res",valuen`n0n`n1];];
+]
+

@@ -1,0 +1,45 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Multi`return`foo`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"Multi_return_foo_ret_0",0.];
+   setValue[`ctx,"Multi_return_foo_ret_1",0.];
+   Return[`ctx];
+]
+
+Multi`return`bar`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"Multi_return_bar_ret_0",0.];
+   setValue[`ctx,"Multi_return_bar_ret_1",0.];
+   setValue[`ctx,"inst_16585",Multi`return`foo`type`alloc[]];
+   Return[`ctx];
+]
+
+Multi`return`foo[`ctx_, x_] := 
+   If[(x > 0), 
+      Module[{  }, 
+         setValue[`ctx,"Multi_return_foo_ret_0",0.];
+         setValue[`ctx,"Multi_return_foo_ret_1",0.];
+         Return[];
+      ];, 
+      Module[{  }, 
+         setValue[`ctx,"Multi_return_foo_ret_0",1.];
+         setValue[`ctx,"Multi_return_foo_ret_1",1.];
+         Return[];
+      ];];
+
+
+Multi`return`bar[`ctx_] := Module[{ x }, 
+   Multi`return`foo[getValue[`ctx, "inst_16585"], 1];
+   x = { getValue[getValue[`ctx, "inst_16585"], "Multi_return_foo_ret_0"], getValue[getValue[`ctx, "inst_16585"], "Multi_return_foo_ret_1"] };
+   setValue[`ctx,"Multi_return_bar_ret_0",x[[1]]];
+   setValue[`ctx,"Multi_return_bar_ret_1",x[[2]]];
+   Return[];
+]
+

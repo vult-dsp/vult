@@ -2,7 +2,7 @@
 #ifndef GATES_H
 #define GATES_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "gates.tables.h"
 
 typedef struct Gates_gates_noteOn_type {

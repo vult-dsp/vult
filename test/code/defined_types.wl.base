@@ -1,0 +1,65 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Defined`types`dot`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x",0.];
+   setValue[`ctx,"y",0.];
+   Return[`ctx];
+]
+
+Defined`types`foo`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"p1",Defined`types`dot`alloc[]];
+   Return[`ctx];
+]
+
+Defined`types`process`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_1a5d1",Defined`types`foo`type`alloc[]];
+   Return[`ctx];
+]
+
+Defined`types`noteOn`type`alloc[`ctx_] := 
+   Return[Defined`types`process`type`alloc[]];
+
+
+Defined`types`noteOff`type`alloc[`ctx_] := 
+   Return[Defined`types`process`type`alloc[]];
+
+
+Defined`types`controlChange`type`alloc[`ctx_] := 
+   Return[Defined`types`process`type`alloc[]];
+
+
+Defined`types`default`type`alloc[`ctx_] := 
+   Return[Defined`types`process`type`alloc[]];
+
+
+Defined`types`micro`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"dot_0",Defined`types`dot`alloc[]];
+   setValue[`ctx,"dot_1",Defined`types`dot`alloc[]];
+   Return[`ctx];
+]
+
+Defined`types`foo[`ctx_] := Null
+
+Defined`types`process[`ctx_, input_] := Module[{  }, 
+   Defined`types`foo[getValue[`ctx, "inst_1a5d1"]];
+   Return[input];
+]
+
+Defined`types`noteOn[`ctx_, note_, velocity_, channel_] := Null
+
+Defined`types`noteOff[`ctx_, note_, channel_] := Null
+
+Defined`types`controlChange[`ctx_, control_, value_, channel_] := Null
+
+Defined`types`default[`ctx_] := Null
+

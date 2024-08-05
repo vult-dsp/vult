@@ -2,7 +2,7 @@
 #ifndef BLIT_H
 #define BLIT_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "blit.tables.h"
 
 typedef struct Util_edge_type {

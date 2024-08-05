@@ -68,7 +68,7 @@ static_inline std::string bool_to_string(bool a) {
     return std::string("false");
 }
 
-static_inline fix16_t short_to_fix(int16_t x) { return 0x8000 & x ? (int16_t)0xFFFF0000 | x : x; }
+static_inline fix16_t short_to_fix(int16_t x) { return (fix16_t)x; }
 
 static_inline int16_t fix_to_short(fix16_t x) {
   return (int16_t)((x >= (int32_t)0x00010000 ? (int32_t)0x00010000 - 1 : x) / (int32_t)2);
@@ -226,7 +226,7 @@ bool match_string(CustomBuffer &buffer, int32_t index, std::string &name);
 int32_t next_object(CustomBuffer &buffer, int32_t index);
 
 template <std::size_t SIZE>
-int32_t serialize_type_descr(CustomBuffer &buffer, int32_t index, std::string str,
+int32_t serialize_type_descr(CustomBuffer &buffer, int32_t index, const std::string &str,
                              std::array<std::string, SIZE> &fields) {
   int32_t start = index;
   index = push_header(buffer, index, TYPE_TAG);

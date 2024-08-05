@@ -2,7 +2,7 @@
 #ifndef SVF_H
 #define SVF_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "svf.tables.h"
 
 typedef struct Util_edge_type {

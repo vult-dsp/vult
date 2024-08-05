@@ -2,7 +2,7 @@
 #ifndef INSTANCEARRAY_H
 #define INSTANCEARRAY_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "InstanceArray.tables.h"
 
 typedef struct InstanceArray_counter_type {

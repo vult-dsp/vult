@@ -2,7 +2,7 @@
 #ifndef BITCRUSH_H
 #define BITCRUSH_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "bitcrush.tables.h"
 
 static_inline fix16_t Bitcrush_factor_raw_c0(int32_t index) {

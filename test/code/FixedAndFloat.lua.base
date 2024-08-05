@@ -19,6 +19,7 @@ function sqrt(x)            return x end
 function set(a, i, v)       a[i+1]=v end
 function get(a, i)          return a[i+1] end
 function intDiv(a, b)       return math.floor(a / b) end
+function initializeArray(v, n) local a = {} for i=1, n do a[i] = 0 end return a end
 
 function FixedAndFloat_test1()
    local fixed_value = 0.
@@ -40,8 +41,8 @@ function FixedAndFloat_test1()
    to_bool = false
 end
 
-local FixedAndFloat_take_fix_return_fixed_c0 = {0., 0.189245, 0.371652, 0.540626, 0.690062, 0.814559, 0.909617, 0.971802, 0.998865, 0.989828, 0.945019, 0.866056, 0.755793, 0.618216, 0.458296, 0.281813, 0.095145, -0.094962, -0.281636, -0.458132, -0.618071, -0.755673, -0.865964, -0.944959, -0.989803, -0.998875, -0.971846, -0.909695, -0.814668, -0.690197, -0.540783, -0.371825, -0.189428, -0.000186}
-local FixedAndFloat_take_fix_return_fixed_c1 = {0.189245, 0.182406, 0.168974, 0.149436, 0.124496, 0.095058, 0.062184, 0.027062, -0.009037, -0.04481, -0.078963, -0.110263, -0.137578, -0.15992, -0.176484, -0.186668, -0.190107, -0.186675, -0.176497, -0.15994, -0.137602, -0.110292, -0.078995, -0.044844, -0.009072, 0.027028, 0.062151, 0.095027, 0.12447, 0.149414, 0.168958, 0.182396, 0.189242, 0.}
+FixedAndFloat_take_fix_return_fixed_c0 = {};
+FixedAndFloat_take_fix_return_fixed_c1 = {};
 function FixedAndFloat_take_fix_return_fixed_raw_c0(index)
    return FixedAndFloat_take_fix_return_fixed_c0[index + 1]
 end
@@ -57,9 +58,9 @@ function FixedAndFloat_take_fix_return_fixed(x)
    return (FixedAndFloat_take_fix_return_fixed_c0[index + 1] + (FixedAndFloat_take_fix_return_fixed_c1[index + 1] * decimal))
 end
 
-local FixedAndFloat_take_fix_return_real_c0 = {0., -0.003685, -0.017567, -0.045666, -0.088119, -0.140175, -0.191679, -0.227141, -0.22641, -0.165946, -0.020627, 0.234001, 0.619196, 1.150366, 1.834509, 2.667932, 3.63446, 4.704328, 5.833885, 6.966246, 8.032931, 8.956503, 9.654127, 10.041938, 10.040014, 9.577723, 8.599151, 7.068308, 4.97378, 2.332503, -0.807634, -4.366608}
-local FixedAndFloat_take_fix_return_real_c1 = {6.303116, 6.539527, 6.984871, 7.585958, 8.267315, 8.936094, 9.488211, 9.815348, 9.81247, 9.38541, 8.458111, 6.979105, 4.926833, 2.313489, -0.812886, -4.368242, -8.234355, -12.262671, -16.28001, -20.095927, -23.511418, -26.328579, -28.360772, -29.442809, -29.440648, -28.260093, -25.854042, -22.227846, -17.442452, -11.615075, -4.917253, 2.429729}
-local FixedAndFloat_take_fix_return_real_c2 = {-1.933057, -5.724888, -9.296728, -12.511321, -15.245139, -17.393129, -18.872751, -19.627146, -19.627325, -18.873281, -17.393991, -15.246298, -12.512733, -9.29834, -5.726637, -1.934876, 1.931237, 5.723139, 9.295115, 12.509907, 15.243979, 17.392267, 18.872219, 19.626966, 19.627503, 18.873811, 17.394851, 15.247456, 12.514145, 9.29995, 5.728384, 1.936693}
+FixedAndFloat_take_fix_return_real_c0 = {};
+FixedAndFloat_take_fix_return_real_c1 = {};
+FixedAndFloat_take_fix_return_real_c2 = {};
 function FixedAndFloat_take_fix_return_real_raw_c0(index)
    return FixedAndFloat_take_fix_return_real_c0[index + 1]
 end
@@ -77,9 +78,9 @@ function FixedAndFloat_take_fix_return_real(x)
    return (FixedAndFloat_take_fix_return_real_c0[index + 1] + (fix_to_float(x) * (FixedAndFloat_take_fix_return_real_c1[index + 1] + (FixedAndFloat_take_fix_return_real_c2[index + 1] * fix_to_float(x)))))
 end
 
-local FixedAndFloat_take_real_return_fixed_c0 = {0., -0.003685, -0.017567, -0.045666, -0.088119, -0.140175, -0.191679, -0.227141, -0.22641, -0.165946, -0.020627, 0.234001, 0.619196, 1.150366, 1.834509, 2.667932, 3.63446, 4.704328, 5.833885, 6.966246, 8.032931, 8.956503, 9.654127, 10.041938, 10.040014, 9.577723, 8.599151, 7.068308, 4.97378, 2.332503, -0.807634, -4.366608}
-local FixedAndFloat_take_real_return_fixed_c1 = {6.303116, 6.539527, 6.984871, 7.585958, 8.267315, 8.936094, 9.488211, 9.815348, 9.81247, 9.38541, 8.458111, 6.979105, 4.926833, 2.313489, -0.812886, -4.368242, -8.234355, -12.262671, -16.28001, -20.095927, -23.511418, -26.328579, -28.360772, -29.442809, -29.440648, -28.260093, -25.854042, -22.227846, -17.442452, -11.615075, -4.917253, 2.429729}
-local FixedAndFloat_take_real_return_fixed_c2 = {-1.933057, -5.724888, -9.296728, -12.511321, -15.245139, -17.393129, -18.872751, -19.627146, -19.627325, -18.873281, -17.393991, -15.246298, -12.512733, -9.29834, -5.726637, -1.934876, 1.931237, 5.723139, 9.295115, 12.509907, 15.243979, 17.392267, 18.872219, 19.626966, 19.627503, 18.873811, 17.394851, 15.247456, 12.514145, 9.29995, 5.728384, 1.936693}
+FixedAndFloat_take_real_return_fixed_c0 = {};
+FixedAndFloat_take_real_return_fixed_c1 = {};
+FixedAndFloat_take_real_return_fixed_c2 = {};
 function FixedAndFloat_take_real_return_fixed_raw_c0(index)
    return FixedAndFloat_take_real_return_fixed_c0[index + 1]
 end

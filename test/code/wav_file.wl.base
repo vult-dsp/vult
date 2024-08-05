@@ -1,0 +1,74 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Wav`file`ext`wave`chann`n0 = {};
+Wav`file`ext`wave`samples[] := 
+   Return[600];
+
+
+Wav`file`ext`wave[channel_, index_] := Module[{  }, 
+   If[(channel == 0), 
+      Return[Wav`file`ext`wave`chann`n0[[(index % 600) + 1]]];];
+   Return[0.];
+]
+
+Wav`file`index`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"i",0];
+   Return[`ctx];
+]
+
+Wav`file`osc`wave`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_1e19a",Wav`file`index`type`alloc[]];
+   Return[`ctx];
+]
+
+Wav`file`process`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_19a53",Wav`file`osc`wave`type`alloc[]];
+   Return[`ctx];
+]
+
+Wav`file`noteOn`type`alloc[`ctx_] := 
+   Return[Wav`file`process`type`alloc[]];
+
+
+Wav`file`noteOff`type`alloc[`ctx_] := 
+   Return[Wav`file`process`type`alloc[]];
+
+
+Wav`file`controlChange`type`alloc[`ctx_] := 
+   Return[Wav`file`process`type`alloc[]];
+
+
+Wav`file`default`type`alloc[`ctx_] := 
+   Return[Wav`file`process`type`alloc[]];
+
+
+Wav`file`index[`ctx_] := Module[{  }, 
+   setValue[`ctx,"i",((1 + getValue[`ctx, "i"]) % Wav`file`ext`wave`samples[])];
+   Return[getValue[`ctx, "i"]];
+]
+
+Wav`file`osc`wave[`ctx_, cv_] := 
+   Return[Wav`file`ext`wave[0, Wav`file`index[getValue[`ctx, "inst_1e19a"]]]];
+
+
+Wav`file`process[`ctx_, cv_] := 
+   Return[Wav`file`osc`wave[getValue[`ctx, "inst_19a53"], cv]];
+
+
+Wav`file`noteOn[`ctx_, note_, velocity_, channel_] := Null
+
+Wav`file`noteOff[`ctx_, note_, channel_] := Null
+
+Wav`file`controlChange[`ctx_, control_, value_, channel_] := Null
+
+Wav`file`default[`ctx_] := Null
+

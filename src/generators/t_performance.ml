@@ -29,7 +29,7 @@ let implPre (args : Util.Args.args) : Pla.t =
   let output = Option.value args.output ~default:"output" in
   {%pla|
 #include "<#output#s>.h"
-#include "vultin.h"
+#include "vultin.hpp"
 #include <time.h>
 #include <stdio.h>
 |}

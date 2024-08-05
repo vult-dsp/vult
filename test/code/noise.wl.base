@@ -1,0 +1,68 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Noise`pinker`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"w1",0.];
+   Return[`ctx];
+]
+
+Noise`process`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_16d3d",Noise`pinker`type`alloc[]];
+   setValue[`ctx,"x1",0];
+   setValue[`ctx,"x2",0];
+   Return[`ctx];
+]
+
+Noise`noteOn`type`alloc[`ctx_] := 
+   Return[Noise`process`type`alloc[]];
+
+
+Noise`noteOff`type`alloc[`ctx_] := 
+   Return[Noise`process`type`alloc[]];
+
+
+Noise`controlChange`type`alloc[`ctx_] := 
+   Return[Noise`process`type`alloc[]];
+
+
+Noise`default`type`alloc[`ctx_] := 
+   Return[Noise`process`type`alloc[]];
+
+
+Noise`pinker[`ctx_, x_] := Module[{ y0, w0, a1, b1, b0 }, 
+   b0 = 0.027712;
+   b1 = 0.027712;
+   a1 = -0.944575;
+   w0 = (x + (-(a1 * getValue[`ctx, "w1"])));
+   y0 = ((b0 * w0) + (b1 * getValue[`ctx, "w1"]));
+   setValue[`ctx,"w1",w0];
+   Return[y0];
+]
+
+Noise`process[`ctx_, color_] := Module[{ out, y2, y1 }, 
+   setValue[`ctx,"x1",((7919 + (17389 * getValue[`ctx, "x1"])) % 32768)];
+   y1 = (3 10^-05 * real[getValue[`ctx, "x1"]]);
+   setValue[`ctx,"x2",((12553 + (27449 * getValue[`ctx, "x2"])) % 32768)];
+   y2 = (3 10^-05 * real[getValue[`ctx, "x2"]]);
+   out = 0.;
+   If[(color > 0.5), 
+      out = Noise`pinker[getValue[`ctx, "inst_16d3d"], (y1 + (-y2))];, 
+      out = (y1 + (-y2));];
+   Return[(2. * out)];
+]
+
+Noise`noteOn[`ctx_, note_, velocity_, channel_] := Null
+
+Noise`noteOff[`ctx_, note_, channel_] := Null
+
+Noise`controlChange[`ctx_, control_, value_, channel_] := Null
+
+Noise`default[`ctx_] := Null
+

@@ -1,0 +1,229 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Synth1`smooth`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x",0.];
+   Return[`ctx];
+]
+
+Synth1`change`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"pre_x",0.];
+   Return[`ctx];
+]
+
+Synth1`edge`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"pre_x",0];
+   Return[`ctx];
+]
+
+Synth1`each`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"count",0];
+   Return[`ctx];
+]
+
+Synth1`phasor`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_1be86",Synth1`change`type`alloc[]];
+   setValue[`ctx,"phase",0.];
+   setValue[`ctx,"rate",0.];
+   Return[`ctx];
+]
+
+Synth1`lfo`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_11e7d",Synth1`edge`type`alloc[]];
+   setValue[`ctx,"phase",0.];
+   Return[`ctx];
+]
+
+Synth1`process`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"count",0];
+   setValue[`ctx,"detune",0.];
+   setValue[`ctx,"gate",0];
+   setValue[`ctx,"inst_17d3d",Synth1`lfo`type`alloc[]];
+   setValue[`ctx,"inst_2863d",Synth1`phasor`type`alloc[]];
+   setValue[`ctx,"inst_3dc3d",Synth1`smooth`type`alloc[]];
+   setValue[`ctx,"inst_4863d",Synth1`phasor`type`alloc[]];
+   setValue[`ctx,"inst_5dc3d",Synth1`smooth`type`alloc[]];
+   setValue[`ctx,"inst_6dc3d",Synth1`smooth`type`alloc[]];
+   setValue[`ctx,"lfo_amt",0.];
+   setValue[`ctx,"lfo_rate",0.];
+   setValue[`ctx,"n1",0];
+   setValue[`ctx,"n2",0];
+   setValue[`ctx,"n3",0];
+   setValue[`ctx,"n4",0];
+   setValue[`ctx,"pitch",0.];
+   setValue[`ctx,"pre_phase1",0.];
+   setValue[`ctx,"volume",0.];
+   Return[`ctx];
+]
+
+Synth1`noteOn`type`alloc[`ctx_] := 
+   Return[Synth1`process`type`alloc[]];
+
+
+Synth1`noteOff`type`alloc[`ctx_] := 
+   Return[Synth1`process`type`alloc[]];
+
+
+Synth1`controlChange`type`alloc[`ctx_] := 
+   Return[Synth1`process`type`alloc[]];
+
+
+Synth1`default`type`alloc[`ctx_] := 
+   Return[Synth1`process`type`alloc[]];
+
+
+Synth1`smooth[`ctx_, input_] := Module[{  }, 
+   setValue[`ctx,"x",((0.005 * (input + (-getValue[`ctx, "x"]))) + getValue[`ctx, "x"])];
+   Return[getValue[`ctx, "x"]];
+]
+
+Synth1`change[`ctx_, x_] := Module[{ v }, 
+   v = (getValue[`ctx, "pre_x"] != x);
+   setValue[`ctx,"pre_x",x];
+   Return[v];
+]
+
+Synth1`edge[`ctx_, x_] := Module[{ v }, 
+   v = ((getValue[`ctx, "pre_x"] != x) && (getValue[`ctx, "pre_x"] == 0));
+   setValue[`ctx,"pre_x",x];
+   Return[v];
+]
+
+Synth1`each[`ctx_, n_] := Module[{ ret }, 
+   ret = (getValue[`ctx, "count"] == 0);
+   setValue[`ctx,"count",((1 + getValue[`ctx, "count"]) % n)];
+   Return[ret];
+]
+
+Synth1`pitchToRate[d_] := 
+   Return[(0.000185 * exp[(0.057762 * d)])];
+
+
+Synth1`phasor[`ctx_, pitch_, reset_] := Module[{  }, 
+   If[Synth1`change[getValue[`ctx, "inst_1be86"], pitch], 
+      setValue[`ctx,"rate",Synth1`pitchToRate[pitch]];];
+   If[reset, 
+      setValue[`ctx,"phase",0.];, 
+      setValue[`ctx,"phase",((getValue[`ctx, "phase"] + getValue[`ctx, "rate"]) % 1.)];];
+   Return[getValue[`ctx, "phase"]];
+]
+
+Synth1`lfo[`ctx_, f_, gate_] := Module[{ rate }, 
+   rate = (0.000226 * f);
+   If[Synth1`edge[getValue[`ctx, "inst_11e7d"], gate], 
+      setValue[`ctx,"phase",0.];];
+   setValue[`ctx,"phase",(rate + getValue[`ctx, "phase"])];
+   If[(getValue[`ctx, "phase"] > 1.), 
+      setValue[`ctx,"phase",(-1. + getValue[`ctx, "phase"])];];
+   Return[(-0.5 + Sin[(6.283185 * getValue[`ctx, "phase"])])];
+]
+
+Synth1`process[`ctx_, input_] := Module[{ gate`value, sine, phase2, reset, comp, phase1, lfo`val }, 
+   lfo`val = (Synth1`lfo[getValue[`ctx, "inst_17d3d"], getValue[`ctx, "lfo_rate"], getValue[`ctx, "gate"]] * getValue[`ctx, "lfo_amt"]);
+   phase1 = Synth1`phasor[getValue[`ctx, "inst_2863d"], getValue[`ctx, "pitch"], False];
+   comp = (1. + (-phase1));
+   reset = (((-phase1) + getValue[`ctx, "pre_phase1"]) > 0.5);
+   setValue[`ctx,"pre_phase1",phase1];
+   phase2 = Synth1`phasor[getValue[`ctx, "inst_4863d"], ((32. * Synth1`smooth[getValue[`ctx, "inst_3dc3d"], (lfo`val + getValue[`ctx, "detune"])]) + getValue[`ctx, "pitch"]), reset];
+   sine = Sin[(6.283185 * phase2)];
+   gate`value = 0.;
+   If[(getValue[`ctx, "gate"] > 0), 
+      gate`value = 1.;, 
+      gate`value = 0.;];
+   Return[(comp * (sine * (Synth1`smooth[getValue[`ctx, "inst_5dc3d"], getValue[`ctx, "volume"]] * Synth1`smooth[getValue[`ctx, "inst_6dc3d"], gate`value])))];
+]
+
+Synth1`noteOn[`ctx_, note_, velocity_, channel_] := Module[{  }, 
+   Switch[getValue[`ctx, "count"], 0, Module[{  }, 
+      setValue[`ctx,"n1",note];
+      setValue[`ctx,"pitch",real[note]];
+   ];, 1, Module[{  }, 
+      setValue[`ctx,"n2",note];
+      setValue[`ctx,"pitch",real[note]];
+   ];, 2, Module[{  }, 
+      setValue[`ctx,"n3",note];
+      setValue[`ctx,"pitch",real[note]];
+   ];, 3, Module[{  }, 
+      setValue[`ctx,"n4",note];
+      setValue[`ctx,"pitch",real[note]];
+   ];];
+   If[(getValue[`ctx, "count"] <= 4), 
+      setValue[`ctx,"count",(1 + getValue[`ctx, "count"])];];
+   If[(getValue[`ctx, "count"] > 0), 
+      setValue[`ctx,"gate",1];, 
+      setValue[`ctx,"gate",0];];
+]
+
+Synth1`noteOff[`ctx_, note_, channel_] := Module[{ found }, 
+   found = False;
+   If[(note == getValue[`ctx, "n1"]), 
+      Module[{ `t`tempn`n2, `t`tempn`n1, `t`tempn`n0 }, 
+         `t`tempn`n0 = getValue[`ctx, "n2"];
+         `t`tempn`n1 = getValue[`ctx, "n3"];
+         `t`tempn`n2 = getValue[`ctx, "n4"];
+         setValue[`ctx,"n1",`t`tempn`n0];
+         setValue[`ctx,"n2",`t`tempn`n1];
+         setValue[`ctx,"n3",`t`tempn`n2];
+         found = True;
+      ];, 
+      If[(note == getValue[`ctx, "n2"]), 
+         Module[{ `t`tempn`n4, `t`tempn`n3 }, 
+            `t`tempn`n3 = getValue[`ctx, "n3"];
+            `t`tempn`n4 = getValue[`ctx, "n4"];
+            setValue[`ctx,"n2",`t`tempn`n3];
+            setValue[`ctx,"n3",`t`tempn`n4];
+            found = True;
+         ];, 
+         If[(note == getValue[`ctx, "n3"]), 
+            Module[{  }, 
+               setValue[`ctx,"n3",getValue[`ctx, "n4"]];
+               found = True;
+            ];, 
+            If[(note == getValue[`ctx, "n4"]), 
+               found = True;];];];];
+   If[(found && (getValue[`ctx, "count"] > 0)), 
+      setValue[`ctx,"count",(-1 + getValue[`ctx, "count"])];];
+   If[(getValue[`ctx, "count"] > 0), 
+      setValue[`ctx,"gate",1];, 
+      setValue[`ctx,"gate",0];];
+   If[(getValue[`ctx, "count"] == 1), 
+      setValue[`ctx,"pitch",real[getValue[`ctx, "n1"]]];];
+   If[(getValue[`ctx, "count"] == 2), 
+      setValue[`ctx,"pitch",real[getValue[`ctx, "n2"]]];];
+   If[(getValue[`ctx, "count"] == 3), 
+      setValue[`ctx,"pitch",real[getValue[`ctx, "n3"]]];];
+   If[(getValue[`ctx, "count"] == 4), 
+      setValue[`ctx,"pitch",real[getValue[`ctx, "n4"]]];];
+]
+
+Synth1`controlChange[`ctx_, control_, value_, channel_] := Module[{  }, 
+   If[(control == 30), 
+      setValue[`ctx,"volume",(0.007874 * value)];];
+   If[(control == 31), 
+      setValue[`ctx,"detune",(0.007874 * value)];];
+   If[(control == 32), 
+      setValue[`ctx,"lfo_rate",(0.007874 * value)];];
+   If[(control == 33), 
+      setValue[`ctx,"lfo_amt",(-1. + (0.015748 * value))];];
+]
+
+Synth1`default[`ctx_] := Module[{  }, 
+   setValue[`ctx,"volume",1.];
+   setValue[`ctx,"pitch",45.];
+   setValue[`ctx,"detune",0.8];
+   setValue[`ctx,"lfo_rate",0.07];
+   setValue[`ctx,"lfo_amt",-0.8];
+]
+

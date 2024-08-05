@@ -1,0 +1,55 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+InstanceArray`counter`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"total",0.];
+   Return[`ctx];
+]
+
+InstanceArray`test1`type`alloc[] := Module[{ `ctx, temp, in`n0 }, 
+   in`n0 = 0;
+   temp = Table[0, { i, 1, 4}];
+   `ctx = newEmptyObject[];
+   While[(in`n0 < 4), 
+      Module[{  }, 
+         temp[[in`n0 + 1]] = InstanceArray`counter`type`alloc[];
+         in`n0 = (1 + in`n0);
+      ];];
+   setValue[`ctx,"instances",temp];
+   Return[`ctx];
+]
+
+InstanceArray`test2`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"case1",InstanceArray`counter`type`alloc[]];
+   setValue[`ctx,"case2",InstanceArray`counter`type`alloc[]];
+   Return[`ctx];
+]
+
+InstanceArray`counter[`ctx_] := Module[{  }, 
+   setValue[`ctx,"total",(1. + getValue[`ctx, "total"])];
+   Return[getValue[`ctx, "total"]];
+]
+
+InstanceArray`test1[`ctx_] := Module[{ i`n`n1, sum }, 
+   sum = 0.;
+   i`n`n1 = 0;
+   While[(i`n`n1 < 4), 
+      Module[{  }, 
+         sum = (sum + InstanceArray`counter[getValue[`ctx, "instances"][[i`n`n1 + 1]]]);
+         i`n`n1 = (1 + i`n`n1);
+      ];];
+   Return[sum];
+]
+
+InstanceArray`test2[`ctx_] := Module[{  }, 
+   InstanceArray`counter[getValue[`ctx, "case1"]];
+   InstanceArray`counter[getValue[`ctx, "case2"]];
+]
+

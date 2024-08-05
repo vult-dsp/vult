@@ -2,7 +2,7 @@
 #ifndef TABLES_H
 #define TABLES_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "Tables.tables.h"
 
 static_inline fix16_t Tables_sineTable1_raw_c0(int32_t index) {

@@ -1,0 +1,48 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Bitcrush`factor`c0 = {};
+Bitcrush`factor`c1 = {};
+Bitcrush`factor`c2 = {};
+Bitcrush`factor`raw`c0[index_] := 
+   Return[Bitcrush`factor`c0[[index + 1]]];
+
+
+Bitcrush`factor`raw`c1[index_] := 
+   Return[Bitcrush`factor`c1[[index + 1]]];
+
+
+Bitcrush`factor`raw`c2[index_] := 
+   Return[Bitcrush`factor`c2[[index + 1]]];
+
+
+Bitcrush`factor[cv_] := Module[{ index }, 
+   index = Clip[Floor[(cv * 127.)], {0, 127}];
+   Return[(Bitcrush`factor`c0[[index + 1]] + (cv * (Bitcrush`factor`c1[[index + 1]] + (Bitcrush`factor`c2[[index + 1]] * cv))))];
+]
+
+Bitcrush`process[i_, cv_] := Module[{ out }, 
+   out = i;
+   If[(cv == 0.), 
+      out = i;, 
+      Module[{ x, b }, 
+         b = Bitcrush`factor[cv];
+         x = Floor[(b * i)];
+         out = (real[x] / b);
+      ];];
+   Return[out];
+]
+
+Bitcrush`noteOn[note_, velocity_, channel_] := Null
+
+Bitcrush`noteOff[note_, channel_] := Null
+
+Bitcrush`controlChange[control_, value_, channel_] := Null
+
+Bitcrush`default[] := Null
+

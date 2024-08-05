@@ -54,6 +54,15 @@ let has_lua =
     false)
 
 
+let has_wl =
+  if tryToRun "wolframscript --version > out" then (
+    let () = print_endline "Wolfram Language syntax will be checked" in
+    true)
+  else (
+    let () = print_endline "Wolfram Language not be checked" in
+    false)
+
+
 let parser_files =
   [ "stmt_val_mem.vult"
   ; "stmt_functions.vult"
@@ -471,6 +480,15 @@ module CliTest = struct
     Sys.chdir initial_dir
 
 
+  let checkWLFile (file : string) : unit =
+    let output = Filename.chop_extension (Filename.basename file) in
+    Sys.chdir tmp_dir;
+    assert_bool ("No code generated for file " ^ output ^ ".wl") (Sys.file_exists (output ^ ".wl"));
+    let cmd = "wolframscript -f " ^ output ^ ".wl" in
+    if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file);
+    Sys.chdir initial_dir
+
+
   let getFlags code_type =
     match code_type with
     | "fixed" -> "-code cpp -real fixed", [ ".cpp", ".cpp.fixed.base"; ".h", ".h.fixed.base" ]
@@ -478,6 +496,7 @@ module CliTest = struct
     | "c" -> "-code c", [ ".c", ".c.float.base"; ".h", ".h.float.base" ]
     | "js" -> "-code js", [ ".js", ".js.base" ]
     | "lua" -> "-code lua", [ ".lua", ".lua.base" ]
+    | "wl" -> "-code wl", [ ".wl", ".wl.base" ]
     | "java" -> "-code java -prefix vult.com", [ ".java", ".java.base" ]
     | _ -> failwith "Unknown target to run test"
 
@@ -501,6 +520,7 @@ module CliTest = struct
       | "c" -> compileCppFile ".c" fullfile
       | "js" -> if has_node then checkJsFile fullfile
       | "lua" -> if has_lua then checkLuaFile fullfile
+      | "wl" -> if has_wl then checkWLFile fullfile
       | _ -> ()
     in
     generated_files
@@ -508,7 +528,7 @@ module CliTest = struct
 
   let callVultInternal (_ : compiler) (fullfile : string) code_type =
     let basefile = in_tmp_dir @@ Filename.chop_extension (Filename.basename fullfile) in
-    let args = Args.{ default_arguments with includes } in
+    let args = Args.{ default_arguments with includes; test_mode = true } in
     let args, ext =
       match code_type with
       | "fixed" -> { args with code = CppCode; real = Fixed }, [ ".cpp", ".cpp.fixed.base"; ".h", ".h.fixed.base" ]
@@ -516,6 +536,7 @@ module CliTest = struct
       | "js" -> { args with code = JSCode }, [ ".js", ".js.base" ]
       | "lua" -> { args with code = LuaCode }, [ ".lua", ".lua.base" ]
       | "java" -> { args with code = JavaCode; prefix = Some "vult.com" }, [ ".java", ".java.base" ]
+      | "wl" -> { args with code = WLCode }, [ ".wl", ".wl.base" ]
       | _ -> failwith "Unknown target to run test"
     in
     let args = { args with output = Some basefile; files = [ File fullfile ] } in
@@ -673,22 +694,22 @@ let suite =
        ; ParserTest.get parser_files
        ; PassesTest.get passes_files
        ; Templates.get template_files "pd" "float"
-         (* ; Templates.get template_files "pd" "fixed"
-            ; Templates.get template_files "max" "float"
-            ; Templates.get template_files "max" "fixed"
-            ; Templates.get template_files "modelica" "float"
-            ; Templates.get template_files "modelica" "fixed"
-            ; Templates.get template_files "teensy" "fixed"
-            ; Templates.get template_files "webaudio" "js"
-            ; Templates.get template_files "browser" "js"*)
+       ; Templates.get template_files "pd" "fixed"
+         (*    ; Templates.get template_files "max" "float"
+               ; Templates.get template_files "max" "fixed"
+               ; Templates.get template_files "modelica" "float"
+               ; Templates.get template_files "modelica" "fixed"
+               ; Templates.get template_files "teensy" "fixed"
+               ; Templates.get template_files "webaudio" "js"
+               ; Templates.get template_files "browser" "js"*)
        ; CliTest.get all_files Native "float"
-       ; CliTest.get all_files Native "fixed" (* ; CliTest.get all_files Native "js"*)
+       ; CliTest.get all_files Native "fixed"
        ; CliTest.get all_files Native "lua"
+       ; CliTest.get all_files Native "wl"
        ; CliTest.get all_files Node "float"
-         (* ; CliTest.get all_files Native "java"
-            ; CliTest.get all_files Node "fixed"
-            ; CliTest.get all_files Node "js" *)
+       ; CliTest.get all_files Node "fixed"
        ; CliTest.get all_files Node "lua"
+       ; CliTest.get all_files Node "wl"
        ; RandomCompileTest.get test_random_code
        ; Interpret.get perf_files
        ]

@@ -2,7 +2,7 @@
 #ifndef LFO_H
 #define LFO_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "lfo.tables.h"
 
 typedef struct Util_edge_type {

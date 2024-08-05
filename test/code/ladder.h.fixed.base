@@ -2,7 +2,7 @@
 #ifndef LADDER_H
 #define LADDER_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "ladder.tables.h"
 
 typedef struct Util_edge_type {

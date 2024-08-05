@@ -2,7 +2,7 @@
 #ifndef ARRAY_DEFINED_TYPE_H
 #define ARRAY_DEFINED_TYPE_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "array_defined_type.tables.h"
 
 typedef struct Array_defined_type_dot {

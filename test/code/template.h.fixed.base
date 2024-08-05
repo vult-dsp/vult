@@ -2,7 +2,7 @@
 #ifndef TEMPLATE_H
 #define TEMPLATE_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "template.tables.h"
 
 static_inline fix16_t Template_process(fix16_t input) {

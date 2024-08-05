@@ -1,0 +1,398 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Util`edge`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"pre",False];
+   Return[`ctx];
+]
+
+Util`change`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"pre_x",0.];
+   Return[`ctx];
+]
+
+Util`dcblock`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x1",0.];
+   setValue[`ctx,"y1",0.];
+   Return[`ctx];
+]
+
+Util`smooth`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x",0.];
+   Return[`ctx];
+]
+
+Util`average2`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x0",0.];
+   Return[`ctx];
+]
+
+Polycv`poly`noteOn`type`alloc[] := Module[{ temp, in`n1, temp, in`n0, `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"Polycv_polyState_ret_0",0.];
+   setValue[`ctx,"Polycv_polyState_ret_1",0.];
+   setValue[`ctx,"Polycv_polyState_ret_10",0.];
+   setValue[`ctx,"Polycv_polyState_ret_11",0.];
+   setValue[`ctx,"Polycv_polyState_ret_2",0.];
+   setValue[`ctx,"Polycv_polyState_ret_3",0.];
+   setValue[`ctx,"Polycv_polyState_ret_4",0.];
+   setValue[`ctx,"Polycv_polyState_ret_5",0.];
+   setValue[`ctx,"Polycv_polyState_ret_6",0.];
+   setValue[`ctx,"Polycv_polyState_ret_7",0.];
+   setValue[`ctx,"Polycv_polyState_ret_8",0.];
+   setValue[`ctx,"Polycv_polyState_ret_9",0.];
+   in`n0 = 0;
+   temp = initializeArray[0, 4];
+   While[(in`n0 < 4), 
+      Module[{  }, 
+         temp[[in`n0 + 1]] = 0;
+         in`n0 = (1 + in`n0);
+      ];];
+   setValue[`ctx,"notes",temp];
+   in`n1 = 0;
+   temp = initializeArray[0, 4];
+   While[(in`n1 < 4), 
+      Module[{  }, 
+         temp[[in`n1 + 1]] = 0;
+         in`n1 = (1 + in`n1);
+      ];];
+   setValue[`ctx,"vel",temp];
+   Return[`ctx];
+]
+
+Polycv`poly`noteOff`type`alloc[`ctx_] := 
+   Return[Polycv`poly`noteOn`type`alloc[]];
+
+
+Polycv`polyState`type`alloc[`ctx_] := 
+   Return[Polycv`poly`noteOn`type`alloc[]];
+
+
+Polycv`process`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"Polycv_process_ret_0",0.];
+   setValue[`ctx,"Polycv_process_ret_1",0.];
+   setValue[`ctx,"Polycv_process_ret_10",0.];
+   setValue[`ctx,"Polycv_process_ret_11",0.];
+   setValue[`ctx,"Polycv_process_ret_2",0.];
+   setValue[`ctx,"Polycv_process_ret_3",0.];
+   setValue[`ctx,"Polycv_process_ret_4",0.];
+   setValue[`ctx,"Polycv_process_ret_5",0.];
+   setValue[`ctx,"Polycv_process_ret_6",0.];
+   setValue[`ctx,"Polycv_process_ret_7",0.];
+   setValue[`ctx,"Polycv_process_ret_8",0.];
+   setValue[`ctx,"Polycv_process_ret_9",0.];
+   setValue[`ctx,"channel_in",0];
+   setValue[`ctx,"poly",Polycv`poly`noteOn`type`alloc[]];
+   Return[`ctx];
+]
+
+Polycv`noteOn`type`alloc[`ctx_] := 
+   Return[Polycv`process`type`alloc[]];
+
+
+Polycv`noteOff`type`alloc[`ctx_] := 
+   Return[Polycv`process`type`alloc[]];
+
+
+Polycv`controlChange`type`alloc[`ctx_] := 
+   Return[Polycv`process`type`alloc[]];
+
+
+Polycv`default`type`alloc[`ctx_] := 
+   Return[Polycv`process`type`alloc[]];
+
+
+Util`edge[`ctx_, x_] := Module[{ ret }, 
+   ret = (x && (getValue[`ctx, "pre"] == False));
+   setValue[`ctx,"pre",x];
+   Return[ret];
+]
+
+Util`change[`ctx_, x_] := Module[{ v }, 
+   v = (getValue[`ctx, "pre_x"] != x);
+   setValue[`ctx,"pre_x",x];
+   Return[v];
+]
+
+Util`map[x_, x0_, x1_, y0_, y1_] := 
+   Return[(y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))];
+
+
+Util`dcblock[`ctx_, x0_] := Module[{ y0 }, 
+   y0 = (x0 + ((-getValue[`ctx, "x1"]) + (0.995 * getValue[`ctx, "y1"])));
+   setValue[`ctx,"x1",x0];
+   setValue[`ctx,"y1",y0];
+   Return[y0];
+]
+
+Util`smooth[`ctx_, input_] := Module[{  }, 
+   setValue[`ctx,"x",((0.005 * (input + (-getValue[`ctx, "x"]))) + getValue[`ctx, "x"])];
+   Return[getValue[`ctx, "x"]];
+]
+
+Util`average2[`ctx_, x1_] := Module[{ result }, 
+   result = (0.5 * (x1 + getValue[`ctx, "x0"]));
+   setValue[`ctx,"x0",x1];
+   Return[result];
+]
+
+Util`cubic`clipper[x_] := 
+   If[(x <= -0.666667), 
+      Return[-0.666667];, 
+      If[(x >= 0.666666), 
+         Return[0.666666];, 
+         Return[(x + (-0.333334 * (x * (x * x))))];];];
+
+
+Util`pitchToRaten`n1024`c0 = {};
+Util`pitchToRaten`n1024`c1 = {};
+Util`pitchToRaten`n1024`c2 = {};
+Util`pitchToRaten`n1024`raw`c0[index_] := 
+   Return[Util`pitchToRaten`n1024`c0[[index + 1]]];
+
+
+Util`pitchToRaten`n1024`raw`c1[index_] := 
+   Return[Util`pitchToRaten`n1024`c1[[index + 1]]];
+
+
+Util`pitchToRaten`n1024`raw`c2[index_] := 
+   Return[Util`pitchToRaten`n1024`c2[[index + 1]]];
+
+
+Util`pitchToRaten`n1024[pitch_] := Module[{ index }, 
+   index = Clip[Floor[(pitch * 0.244094)], {0, 31}];
+   Return[(Util`pitchToRaten`n1024`c0[[index + 1]] + (pitch * (Util`pitchToRaten`n1024`c1[[index + 1]] + (Util`pitchToRaten`n1024`c2[[index + 1]] * pitch))))];
+]
+
+Util`pitchToRate`c0 = {};
+Util`pitchToRate`c1 = {};
+Util`pitchToRate`c2 = {};
+Util`pitchToRate`raw`c0[index_] := 
+   Return[Util`pitchToRate`c0[[index + 1]]];
+
+
+Util`pitchToRate`raw`c1[index_] := 
+   Return[Util`pitchToRate`c1[[index + 1]]];
+
+
+Util`pitchToRate`raw`c2[index_] := 
+   Return[Util`pitchToRate`c2[[index + 1]]];
+
+
+Util`pitchToRate[pitch_] := Module[{ index }, 
+   index = Clip[Floor[(pitch * 0.244094)], {0, 31}];
+   Return[(Util`pitchToRate`c0[[index + 1]] + (pitch * (Util`pitchToRate`c1[[index + 1]] + (Util`pitchToRate`c2[[index + 1]] * pitch))))];
+]
+
+Util`cvToPitch[cv_] := 
+   Return[(24. + (120. * cv))];
+
+
+Util`cvToRaten`n1024`c0 = {};
+Util`cvToRaten`n1024`c1 = {};
+Util`cvToRaten`n1024`c2 = {};
+Util`cvToRaten`n1024`raw`c0[index_] := 
+   Return[Util`cvToRaten`n1024`c0[[index + 1]]];
+
+
+Util`cvToRaten`n1024`raw`c1[index_] := 
+   Return[Util`cvToRaten`n1024`c1[[index + 1]]];
+
+
+Util`cvToRaten`n1024`raw`c2[index_] := 
+   Return[Util`cvToRaten`n1024`c2[[index + 1]]];
+
+
+Util`cvToRaten`n1024[cv_] := Module[{ index }, 
+   index = Clip[Floor[(cv * 34.444444)], {0, 31}];
+   Return[(Util`cvToRaten`n1024`c0[[index + 1]] + (cv * (Util`cvToRaten`n1024`c1[[index + 1]] + (Util`cvToRaten`n1024`c2[[index + 1]] * cv))))];
+]
+
+Util`cvToRate`c0 = {};
+Util`cvToRate`c1 = {};
+Util`cvToRate`c2 = {};
+Util`cvToRate`raw`c0[index_] := 
+   Return[Util`cvToRate`c0[[index + 1]]];
+
+
+Util`cvToRate`raw`c1[index_] := 
+   Return[Util`cvToRate`c1[[index + 1]]];
+
+
+Util`cvToRate`raw`c2[index_] := 
+   Return[Util`cvToRate`c2[[index + 1]]];
+
+
+Util`cvToRate[cv_] := Module[{ index }, 
+   index = Clip[Floor[(cv * 141.111111)], {0, 127}];
+   Return[(Util`cvToRate`c0[[index + 1]] + (cv * (Util`cvToRate`c1[[index + 1]] + (Util`cvToRate`c2[[index + 1]] * cv))))];
+]
+
+Util`pitchToCv[pitch_] := 
+   Return[(-0.2 + (0.008333 * pitch))];
+
+
+Util`cvToperiod`c0 = {};
+Util`cvToperiod`c1 = {};
+Util`cvToperiod`c2 = {};
+Util`cvToperiod`raw`c0[index_] := 
+   Return[Util`cvToperiod`c0[[index + 1]]];
+
+
+Util`cvToperiod`raw`c1[index_] := 
+   Return[Util`cvToperiod`c1[[index + 1]]];
+
+
+Util`cvToperiod`raw`c2[index_] := 
+   Return[Util`cvToperiod`c2[[index + 1]]];
+
+
+Util`cvToperiod[cv_] := Module[{ index }, 
+   index = Clip[Floor[(cv * 31.)], {0, 31}];
+   Return[(Util`cvToperiod`c0[[index + 1]] + (cv * (Util`cvToperiod`c1[[index + 1]] + (Util`cvToperiod`c2[[index + 1]] * cv))))];
+]
+
+Util`cvTokHz`c0 = {};
+Util`cvTokHz`c1 = {};
+Util`cvTokHz`c2 = {};
+Util`cvTokHz`raw`c0[index_] := 
+   Return[Util`cvTokHz`c0[[index + 1]]];
+
+
+Util`cvTokHz`raw`c1[index_] := 
+   Return[Util`cvTokHz`c1[[index + 1]]];
+
+
+Util`cvTokHz`raw`c2[index_] := 
+   Return[Util`cvTokHz`c2[[index + 1]]];
+
+
+Util`cvTokHz[cv_] := Module[{ index }, 
+   index = Clip[Floor[(cv * 31.)], {0, 31}];
+   Return[(Util`cvTokHz`c0[[index + 1]] + (cv * (Util`cvTokHz`c1[[index + 1]] + (Util`cvTokHz`c2[[index + 1]] * cv))))];
+]
+
+Polycv`velToCV[vel_] := 
+   Return[(0.007874 * real[vel])];
+
+
+Polycv`velToGate[vel_] := 
+   If[(vel > 0), 
+      Return[(0.007874 * real[vel])];, 
+      Return[0.];];
+
+
+Polycv`poly`noteOn[`ctx_, note_, velocity_] := Module[{ found, i }, 
+   i = 0;
+   found = False;
+   While[((i < 4) && (found == False)), 
+      Module[{  }, 
+         If[(getValue[`ctx, "vel"][[i + 1]] == 0), 
+            Module[{  }, 
+               getValue[`ctx, "notes"][[i + 1]] = note;
+               getValue[`ctx, "vel"][[i + 1]] = velocity;
+               found = True;
+            ];];
+         i = (1 + i);
+      ];];
+]
+
+Polycv`poly`noteOff[`ctx_, note_] := Module[{ found, i }, 
+   i = 0;
+   found = False;
+   While[((i < 4) && (found == False)), 
+      Module[{  }, 
+         If[(getValue[`ctx, "notes"][[i + 1]] == note), 
+            Module[{  }, 
+               getValue[`ctx, "vel"][[i + 1]] = 0;
+               found = True;
+            ];];
+         i = (1 + i);
+      ];];
+]
+
+Polycv`polyState[`ctx_] := Module[{ gate4, gate3, gate2, gate1, vel4, vel3, vel2, vel1, note4, note3, note2, note1 }, 
+   note1 = Util`pitchToCv[real[getValue[`ctx, "notes"][[1]]]];
+   note2 = Util`pitchToCv[real[getValue[`ctx, "notes"][[2]]]];
+   note3 = Util`pitchToCv[real[getValue[`ctx, "notes"][[3]]]];
+   note4 = Util`pitchToCv[real[getValue[`ctx, "notes"][[4]]]];
+   vel1 = Polycv`velToCV[getValue[`ctx, "vel"][[1]]];
+   vel2 = Polycv`velToCV[getValue[`ctx, "vel"][[2]]];
+   vel3 = Polycv`velToCV[getValue[`ctx, "vel"][[3]]];
+   vel4 = Polycv`velToCV[getValue[`ctx, "vel"][[4]]];
+   gate1 = Polycv`velToGate[getValue[`ctx, "vel"][[1]]];
+   gate2 = Polycv`velToGate[getValue[`ctx, "vel"][[2]]];
+   gate3 = Polycv`velToGate[getValue[`ctx, "vel"][[3]]];
+   gate4 = Polycv`velToGate[getValue[`ctx, "vel"][[4]]];
+   setValue[`ctx,"Polycv_polyState_ret_0",note1];
+   setValue[`ctx,"Polycv_polyState_ret_1",vel1];
+   setValue[`ctx,"Polycv_polyState_ret_2",gate1];
+   setValue[`ctx,"Polycv_polyState_ret_3",note2];
+   setValue[`ctx,"Polycv_polyState_ret_4",vel2];
+   setValue[`ctx,"Polycv_polyState_ret_5",gate2];
+   setValue[`ctx,"Polycv_polyState_ret_6",note3];
+   setValue[`ctx,"Polycv_polyState_ret_7",vel3];
+   setValue[`ctx,"Polycv_polyState_ret_8",gate3];
+   setValue[`ctx,"Polycv_polyState_ret_9",note4];
+   setValue[`ctx,"Polycv_polyState_ret_10",vel4];
+   setValue[`ctx,"Polycv_polyState_ret_11",gate4];
+   Return[];
+]
+
+Polycv`process[`ctx_, c_] := Module[{ `call`tempn`n11, `call`tempn`n10, `call`tempn`n9, `call`tempn`n8, `call`tempn`n7, `call`tempn`n6, `call`tempn`n5, `call`tempn`n4, `call`tempn`n3, `call`tempn`n2, `call`tempn`n1, `call`tempn`n0 }, 
+   setValue[`ctx,"channel_in",c];
+   Polycv`polyState[getValue[`ctx, "poly"]];
+   `call`tempn`n0 = getValue[getValue[`ctx, "poly"], "Polycv_polyState_ret_0"];
+   `call`tempn`n1 = getValue[getValue[`ctx, "poly"], "Polycv_polyState_ret_1"];
+   `call`tempn`n2 = getValue[getValue[`ctx, "poly"], "Polycv_polyState_ret_2"];
+   `call`tempn`n3 = getValue[getValue[`ctx, "poly"], "Polycv_polyState_ret_3"];
+   `call`tempn`n4 = getValue[getValue[`ctx, "poly"], "Polycv_polyState_ret_4"];
+   `call`tempn`n5 = getValue[getValue[`ctx, "poly"], "Polycv_polyState_ret_5"];
+   `call`tempn`n6 = getValue[getValue[`ctx, "poly"], "Polycv_polyState_ret_6"];
+   `call`tempn`n7 = getValue[getValue[`ctx, "poly"], "Polycv_polyState_ret_7"];
+   `call`tempn`n8 = getValue[getValue[`ctx, "poly"], "Polycv_polyState_ret_8"];
+   `call`tempn`n9 = getValue[getValue[`ctx, "poly"], "Polycv_polyState_ret_9"];
+   `call`tempn`n10 = getValue[getValue[`ctx, "poly"], "Polycv_polyState_ret_10"];
+   `call`tempn`n11 = getValue[getValue[`ctx, "poly"], "Polycv_polyState_ret_11"];
+   setValue[`ctx,"Polycv_process_ret_0",`call`tempn`n0];
+   setValue[`ctx,"Polycv_process_ret_1",`call`tempn`n1];
+   setValue[`ctx,"Polycv_process_ret_2",`call`tempn`n2];
+   setValue[`ctx,"Polycv_process_ret_3",`call`tempn`n3];
+   setValue[`ctx,"Polycv_process_ret_4",`call`tempn`n4];
+   setValue[`ctx,"Polycv_process_ret_5",`call`tempn`n5];
+   setValue[`ctx,"Polycv_process_ret_6",`call`tempn`n6];
+   setValue[`ctx,"Polycv_process_ret_7",`call`tempn`n7];
+   setValue[`ctx,"Polycv_process_ret_8",`call`tempn`n8];
+   setValue[`ctx,"Polycv_process_ret_9",`call`tempn`n9];
+   setValue[`ctx,"Polycv_process_ret_10",`call`tempn`n10];
+   setValue[`ctx,"Polycv_process_ret_11",`call`tempn`n11];
+   Return[];
+]
+
+Polycv`noteOn[`ctx_, note_, velocity_, channel_] := 
+   If[(getValue[`ctx, "channel_in"] == channel), 
+      If[(velocity > 0), 
+         Polycv`poly`noteOn[getValue[`ctx, "poly"], note, velocity];, 
+         Polycv`poly`noteOff[getValue[`ctx, "poly"], note];];];
+
+
+Polycv`noteOff[`ctx_, note_, channel_] := 
+   If[(getValue[`ctx, "channel_in"] == channel), 
+      Polycv`poly`noteOff[getValue[`ctx, "poly"], note];];
+
+
+Polycv`controlChange[`ctx_, control_, value_, channel_] := Null
+
+Polycv`default[`ctx_] := Null
+

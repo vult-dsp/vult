@@ -2,7 +2,7 @@
 #ifndef RESCOMB_H
 #define RESCOMB_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "rescomb.tables.h"
 
 typedef struct Util_edge_type {

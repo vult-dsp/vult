@@ -2,7 +2,7 @@
 #ifndef MULTI_RETURN_H
 #define MULTI_RETURN_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "multi_return.tables.h"
 
 typedef struct Multi_return_foo_type {

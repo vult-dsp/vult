@@ -1,0 +1,113 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Phasedist`smooth`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x",0.];
+   Return[`ctx];
+]
+
+Phasedist`change`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"pre_x",0.];
+   Return[`ctx];
+]
+
+Phasedist`phasor`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_1e817",Phasedist`change`type`alloc[]];
+   setValue[`ctx,"phase",0.];
+   setValue[`ctx,"rate",0.];
+   Return[`ctx];
+]
+
+Phasedist`process`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"detune",0.];
+   setValue[`ctx,"inst_117e9",Phasedist`phasor`type`alloc[]];
+   setValue[`ctx,"inst_275e9",Phasedist`smooth`type`alloc[]];
+   setValue[`ctx,"inst_317e9",Phasedist`phasor`type`alloc[]];
+   setValue[`ctx,"inst_475e9",Phasedist`smooth`type`alloc[]];
+   setValue[`ctx,"pitch",0.];
+   setValue[`ctx,"pre_phase1",0.];
+   setValue[`ctx,"volume",0.];
+   Return[`ctx];
+]
+
+Phasedist`noteOn`type`alloc[`ctx_] := 
+   Return[Phasedist`process`type`alloc[]];
+
+
+Phasedist`noteOff`type`alloc[`ctx_] := 
+   Return[Phasedist`process`type`alloc[]];
+
+
+Phasedist`controlChange`type`alloc[`ctx_] := 
+   Return[Phasedist`process`type`alloc[]];
+
+
+Phasedist`default`type`alloc[`ctx_] := 
+   Return[Phasedist`process`type`alloc[]];
+
+
+Phasedist`smooth[`ctx_, input_] := Module[{  }, 
+   setValue[`ctx,"x",((0.005 * (input + (-getValue[`ctx, "x"]))) + getValue[`ctx, "x"])];
+   Return[getValue[`ctx, "x"]];
+]
+
+Phasedist`change[`ctx_, x_] := Module[{ v }, 
+   v = (getValue[`ctx, "pre_x"] != x);
+   setValue[`ctx,"pre_x",x];
+   Return[v];
+]
+
+Phasedist`pitchToRate[d_] := 
+   Return[(0.000185 * exp[(0.057762 * d)])];
+
+
+Phasedist`phasor[`ctx_, pitch_, reset_] := Module[{  }, 
+   If[Phasedist`change[getValue[`ctx, "inst_1e817"], pitch], 
+      setValue[`ctx,"rate",Phasedist`pitchToRate[pitch]];];
+   If[reset, 
+      setValue[`ctx,"phase",0.];, 
+      setValue[`ctx,"phase",(getValue[`ctx, "phase"] + getValue[`ctx, "rate"])];];
+   If[(getValue[`ctx, "phase"] > 1.), 
+      setValue[`ctx,"phase",(-1. + getValue[`ctx, "phase"])];, 
+      setValue[`ctx,"phase",getValue[`ctx, "phase"]];];
+   Return[getValue[`ctx, "phase"]];
+]
+
+Phasedist`process[`ctx_, input_] := Module[{ sine, phase2, reset, comp, phase1 }, 
+   phase1 = Phasedist`phasor[getValue[`ctx, "inst_117e9"], getValue[`ctx, "pitch"], False];
+   comp = (1. + (-phase1));
+   reset = (((-phase1) + getValue[`ctx, "pre_phase1"]) > 0.5);
+   setValue[`ctx,"pre_phase1",phase1];
+   phase2 = Phasedist`phasor[getValue[`ctx, "inst_317e9"], ((32. * Phasedist`smooth[getValue[`ctx, "inst_275e9"], getValue[`ctx, "detune"]]) + getValue[`ctx, "pitch"]), reset];
+   sine = Sin[(6.283185 * phase2)];
+   Return[(comp * (sine * Phasedist`smooth[getValue[`ctx, "inst_475e9"], getValue[`ctx, "volume"]]))];
+]
+
+Phasedist`noteOn[`ctx_, note_, velocity_, channel_] := 
+   setValue[`ctx,"pitch",real[note]];
+
+
+Phasedist`noteOff[`ctx_, note_, channel_] := Null
+
+Phasedist`controlChange[`ctx_, control_, value_, channel_] := Module[{  }, 
+   If[(control == 30), 
+      setValue[`ctx,"volume",(0.007874 * real[value])];];
+   If[(control == 31), 
+      setValue[`ctx,"detune",(0.007874 * real[value])];];
+]
+
+Phasedist`default[`ctx_] := Module[{  }, 
+   setValue[`ctx,"volume",1.];
+   setValue[`ctx,"pitch",45.];
+   setValue[`ctx,"detune",0.];
+]
+

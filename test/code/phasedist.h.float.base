@@ -2,7 +2,7 @@
 #ifndef PHASEDIST_H
 #define PHASEDIST_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "phasedist.tables.h"
 
 typedef struct Phasedist_smooth_type {

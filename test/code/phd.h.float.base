@@ -2,7 +2,7 @@
 #ifndef PHD_H
 #define PHD_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "phd.tables.h"
 
 typedef struct Util_edge_type {

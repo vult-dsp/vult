@@ -2,7 +2,7 @@
 #ifndef ADSR_H
 #define ADSR_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "adsr.tables.h"
 
 typedef struct Util_edge_type {

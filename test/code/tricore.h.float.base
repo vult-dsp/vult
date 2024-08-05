@@ -2,7 +2,7 @@
 #ifndef TRICORE_H
 #define TRICORE_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "tricore.tables.h"
 
 typedef struct Util_edge_type {

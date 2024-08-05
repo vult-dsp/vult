@@ -1,0 +1,144 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Gates`gates`noteOn`type`alloc[] := Module[{ temp, in`n0, `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"Gates_gates_state_ret_0",0.];
+   setValue[`ctx,"Gates_gates_state_ret_1",0.];
+   setValue[`ctx,"Gates_gates_state_ret_2",0.];
+   setValue[`ctx,"Gates_gates_state_ret_3",0.];
+   setValue[`ctx,"Gates_gates_state_ret_4",0.];
+   setValue[`ctx,"Gates_gates_state_ret_5",0.];
+   setValue[`ctx,"Gates_gates_state_ret_6",0.];
+   setValue[`ctx,"Gates_gates_state_ret_7",0.];
+   in`n0 = 0;
+   temp = initializeArray[0, 8];
+   While[(in`n0 < 8), 
+      Module[{  }, 
+         temp[[in`n0 + 1]] = 0;
+         in`n0 = (1 + in`n0);
+      ];];
+   setValue[`ctx,"vel",temp];
+   Return[`ctx];
+]
+
+Gates`gates`noteOff`type`alloc[`ctx_] := 
+   Return[Gates`gates`noteOn`type`alloc[]];
+
+
+Gates`gates`state`type`alloc[`ctx_] := 
+   Return[Gates`gates`noteOn`type`alloc[]];
+
+
+Gates`process`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"Gates_process_ret_0",0.];
+   setValue[`ctx,"Gates_process_ret_1",0.];
+   setValue[`ctx,"Gates_process_ret_2",0.];
+   setValue[`ctx,"Gates_process_ret_3",0.];
+   setValue[`ctx,"Gates_process_ret_4",0.];
+   setValue[`ctx,"Gates_process_ret_5",0.];
+   setValue[`ctx,"Gates_process_ret_6",0.];
+   setValue[`ctx,"Gates_process_ret_7",0.];
+   setValue[`ctx,"channel_in",0];
+   setValue[`ctx,"gates",Gates`gates`noteOn`type`alloc[]];
+   Return[`ctx];
+]
+
+Gates`noteOn`type`alloc[`ctx_] := 
+   Return[Gates`process`type`alloc[]];
+
+
+Gates`noteOff`type`alloc[`ctx_] := 
+   Return[Gates`process`type`alloc[]];
+
+
+Gates`controlChange`type`alloc[`ctx_] := 
+   Return[Gates`process`type`alloc[]];
+
+
+Gates`default`type`alloc[`ctx_] := 
+   Return[Gates`process`type`alloc[]];
+
+
+Gates`velToCV[vel_] := 
+   Return[(0.007874 * real[vel])];
+
+
+Gates`gates`noteOn[`ctx_, note_, velocity_] := 
+   If[((note >= 36) && (note <= 43)), 
+      Module[{ n }, 
+         n = (-36 + note);
+         getValue[`ctx, "vel"][[n + 1]] = velocity;
+      ];];
+
+
+Gates`gates`noteOff[`ctx_, note_] := 
+   If[((note >= 36) && (note <= 43)), 
+      Module[{ n }, 
+         n = (-36 + note);
+         getValue[`ctx, "vel"][[n + 1]] = 0;
+      ];];
+
+
+Gates`gates`state[`ctx_] := Module[{ vel8, vel7, vel6, vel5, vel4, vel3, vel2, vel1 }, 
+   vel1 = Gates`velToCV[getValue[`ctx, "vel"][[1]]];
+   vel2 = Gates`velToCV[getValue[`ctx, "vel"][[2]]];
+   vel3 = Gates`velToCV[getValue[`ctx, "vel"][[3]]];
+   vel4 = Gates`velToCV[getValue[`ctx, "vel"][[4]]];
+   vel5 = Gates`velToCV[getValue[`ctx, "vel"][[5]]];
+   vel6 = Gates`velToCV[getValue[`ctx, "vel"][[6]]];
+   vel7 = Gates`velToCV[getValue[`ctx, "vel"][[7]]];
+   vel8 = Gates`velToCV[getValue[`ctx, "vel"][[8]]];
+   setValue[`ctx,"Gates_gates_state_ret_0",vel1];
+   setValue[`ctx,"Gates_gates_state_ret_1",vel2];
+   setValue[`ctx,"Gates_gates_state_ret_2",vel3];
+   setValue[`ctx,"Gates_gates_state_ret_3",vel4];
+   setValue[`ctx,"Gates_gates_state_ret_4",vel5];
+   setValue[`ctx,"Gates_gates_state_ret_5",vel6];
+   setValue[`ctx,"Gates_gates_state_ret_6",vel7];
+   setValue[`ctx,"Gates_gates_state_ret_7",vel8];
+   Return[];
+]
+
+Gates`process[`ctx_, c_] := Module[{ `call`tempn`n7, `call`tempn`n6, `call`tempn`n5, `call`tempn`n4, `call`tempn`n3, `call`tempn`n2, `call`tempn`n1, `call`tempn`n0 }, 
+   setValue[`ctx,"channel_in",c];
+   Gates`gates`state[getValue[`ctx, "gates"]];
+   `call`tempn`n0 = getValue[getValue[`ctx, "gates"], "Gates_gates_state_ret_0"];
+   `call`tempn`n1 = getValue[getValue[`ctx, "gates"], "Gates_gates_state_ret_1"];
+   `call`tempn`n2 = getValue[getValue[`ctx, "gates"], "Gates_gates_state_ret_2"];
+   `call`tempn`n3 = getValue[getValue[`ctx, "gates"], "Gates_gates_state_ret_3"];
+   `call`tempn`n4 = getValue[getValue[`ctx, "gates"], "Gates_gates_state_ret_4"];
+   `call`tempn`n5 = getValue[getValue[`ctx, "gates"], "Gates_gates_state_ret_5"];
+   `call`tempn`n6 = getValue[getValue[`ctx, "gates"], "Gates_gates_state_ret_6"];
+   `call`tempn`n7 = getValue[getValue[`ctx, "gates"], "Gates_gates_state_ret_7"];
+   setValue[`ctx,"Gates_process_ret_0",`call`tempn`n0];
+   setValue[`ctx,"Gates_process_ret_1",`call`tempn`n1];
+   setValue[`ctx,"Gates_process_ret_2",`call`tempn`n2];
+   setValue[`ctx,"Gates_process_ret_3",`call`tempn`n3];
+   setValue[`ctx,"Gates_process_ret_4",`call`tempn`n4];
+   setValue[`ctx,"Gates_process_ret_5",`call`tempn`n5];
+   setValue[`ctx,"Gates_process_ret_6",`call`tempn`n6];
+   setValue[`ctx,"Gates_process_ret_7",`call`tempn`n7];
+   Return[];
+]
+
+Gates`noteOn[`ctx_, note_, velocity_, channel_] := 
+   If[(getValue[`ctx, "channel_in"] == channel), 
+      Gates`gates`noteOn[getValue[`ctx, "gates"], note, velocity];];
+
+
+Gates`noteOff[`ctx_, note_, channel_] := 
+   If[(getValue[`ctx, "channel_in"] == channel), 
+      Gates`gates`noteOff[getValue[`ctx, "gates"], note];];
+
+
+Gates`controlChange[`ctx_, control_, value_, channel_] := Null
+
+Gates`default[`ctx_] := Null
+

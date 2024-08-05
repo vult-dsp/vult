@@ -2,7 +2,7 @@
 #ifndef AFI_FI_H
 #define AFI_FI_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "afi_fi.tables.h"
 
 

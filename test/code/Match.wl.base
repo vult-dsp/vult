@@ -1,0 +1,24 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Match`foo1[x_] := 
+   Switch[x, 0, Return[0];, 1, Return[1];, _, Return[2];];
+
+
+Match`foo2[x_, y_] := 
+   If[((x == 1) && (y == "e")), 
+      Return[(1 + x)];, 
+      If[(x == 3), 
+         Return[1];, 
+         Return[2];];];
+
+
+Match`foo3[x_] := 
+   Switch[x, 0, Return[1];, 1, Return[2];, _, Return[0];];
+
+

@@ -2,7 +2,7 @@
 #ifndef SINE_H
 #define SINE_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "sine.tables.h"
 
 typedef struct Util_edge_type {

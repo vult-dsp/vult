@@ -27,7 +27,7 @@ NOTE: The code for the fixed-point operations is based on the project:
       https://code.google.com/p/libfixmath/
 
 */
-#include "vultin.h"
+#include "vultin.hpp"
 #include "stdio.h"
 
 fix16_t fix_exp(fix16_t inValue) {

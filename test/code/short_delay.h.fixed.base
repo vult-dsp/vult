@@ -2,7 +2,7 @@
 #ifndef SHORT_DELAY_H
 #define SHORT_DELAY_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "short_delay.tables.h"
 
 typedef struct Short_delay_soft_type {

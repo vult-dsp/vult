@@ -80,6 +80,7 @@ type args =
   ; mutable debug : bool
   ; mutable profile : bool
   ; mutable split : bool
+  ; mutable test_mode : bool
   }
 
 let default_arguments : args =
@@ -110,6 +111,7 @@ let default_arguments : args =
   ; debug = false
   ; profile = false
   ; split = false
+  ; test_mode = false
   }
 
 
@@ -132,7 +134,7 @@ let flags result =
                 | "js" -> JSCode
                 | "wl" -> WLCode
                 | _ ->
-                  print_endline ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js");
+                  print_endline ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js, wl");
                   exit (-1)))
     ; comment = "language Generate code for the specified language (cpp, lua, java, js)"
     }
@@ -203,7 +205,11 @@ let flags result =
     ; comment = "id Performs code cleanup keeping as roots the specified functions"
     }
   ; { flag = "-test"
-    ; action = Arg.Unit (fun () -> Vfloat.reduce_precision := true)
+    ; action =
+        Arg.Unit
+          (fun () ->
+            Vfloat.reduce_precision := true;
+            result.test_mode <- true)
     ; comment = " Enters a special mode useful only for testing (default: off)"
     }
   ; { flag = "-split-files"

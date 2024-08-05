@@ -2,7 +2,7 @@
 #ifndef WAV_FILE_H
 #define WAV_FILE_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "wav_file.tables.h"
 
 typedef struct Wav_file_index_type {

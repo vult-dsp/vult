@@ -1,0 +1,85 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+FixedAndFloat`test1[] := Module[{ to`bool, to`real, to`int, from`bool, from`real, from`int, result, bool`value, int`value, real`value, fixed`value }, 
+   fixed`value = 0.;
+   real`value = 0.;
+   int`value = 0;
+   bool`value = False;
+   result = (fixed`value + fix16[real`value]);
+   from`int = fix16[int`value];
+   from`real = fix16[real`value];
+   from`bool = fix16[bool`value];
+   to`int = Floor[fixed`value];
+   to`real = real[fixed`value];
+   to`bool = bool[fixed`value];
+   from`int = 0.;
+   from`real = 0.;
+   from`bool = 0.;
+   to`int = 0;
+   to`real = 0.;
+   to`bool = False;
+]
+
+FixedAndFloat`take`fix`return`fixed`c0 = {};
+FixedAndFloat`take`fix`return`fixed`c1 = {};
+FixedAndFloat`take`fix`return`fixed`raw`c0[index_] := 
+   Return[FixedAndFloat`take`fix`return`fixed`c0[[index + 1]]];
+
+
+FixedAndFloat`take`fix`return`fixed`raw`c1[index_] := 
+   Return[FixedAndFloat`take`fix`return`fixed`c1[[index + 1]]];
+
+
+FixedAndFloat`take`fix`return`fixed[x_] := Module[{ decimal, index, value }, 
+   value = Clip[(x * 32.), {0., 32.}];
+   index = Floor[value];
+   decimal = (value - Floor[value]);
+   Return[(FixedAndFloat`take`fix`return`fixed`c0[[index + 1]] + (FixedAndFloat`take`fix`return`fixed`c1[[index + 1]] * decimal))];
+]
+
+FixedAndFloat`take`fix`return`real`c0 = {};
+FixedAndFloat`take`fix`return`real`c1 = {};
+FixedAndFloat`take`fix`return`real`c2 = {};
+FixedAndFloat`take`fix`return`real`raw`c0[index_] := 
+   Return[FixedAndFloat`take`fix`return`real`c0[[index + 1]]];
+
+
+FixedAndFloat`take`fix`return`real`raw`c1[index_] := 
+   Return[FixedAndFloat`take`fix`return`real`c1[[index + 1]]];
+
+
+FixedAndFloat`take`fix`return`real`raw`c2[index_] := 
+   Return[FixedAndFloat`take`fix`return`real`c2[[index + 1]]];
+
+
+FixedAndFloat`take`fix`return`real[x_] := Module[{ index }, 
+   index = Clip[fix`to`int[(x * 31.)], {0, 31}];
+   Return[(FixedAndFloat`take`fix`return`real`c0[[index + 1]] + (fix`to`float[x] * (FixedAndFloat`take`fix`return`real`c1[[index + 1]] + (FixedAndFloat`take`fix`return`real`c2[[index + 1]] * fix`to`float[x]))))];
+]
+
+FixedAndFloat`take`real`return`fixed`c0 = {};
+FixedAndFloat`take`real`return`fixed`c1 = {};
+FixedAndFloat`take`real`return`fixed`c2 = {};
+FixedAndFloat`take`real`return`fixed`raw`c0[index_] := 
+   Return[FixedAndFloat`take`real`return`fixed`c0[[index + 1]]];
+
+
+FixedAndFloat`take`real`return`fixed`raw`c1[index_] := 
+   Return[FixedAndFloat`take`real`return`fixed`c1[[index + 1]]];
+
+
+FixedAndFloat`take`real`return`fixed`raw`c2[index_] := 
+   Return[FixedAndFloat`take`real`return`fixed`c2[[index + 1]]];
+
+
+FixedAndFloat`take`real`return`fixed[x_] := Module[{ index }, 
+   index = Clip[Floor[(x * 31.)], {0, 31}];
+   Return[(FixedAndFloat`take`real`return`fixed`c0[[index + 1]] + (float`to`fix[x] * (FixedAndFloat`take`real`return`fixed`c1[[index + 1]] + (FixedAndFloat`take`real`return`fixed`c2[[index + 1]] * float`to`fix[x]))))];
+]
+

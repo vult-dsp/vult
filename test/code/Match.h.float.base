@@ -2,7 +2,7 @@
 #ifndef MATCH_H
 #define MATCH_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "Match.tables.h"
 
 static_inline int32_t Match_foo1(int32_t x) {

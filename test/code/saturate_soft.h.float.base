@@ -2,7 +2,7 @@
 #ifndef SATURATE_SOFT_H
 #define SATURATE_SOFT_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "saturate_soft.tables.h"
 
 static_inline float Saturate_soft_tanh_table_raw_c0(int32_t index) {

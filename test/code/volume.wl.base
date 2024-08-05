@@ -1,0 +1,59 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Volume`smooth`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x",0.];
+   Return[`ctx];
+]
+
+Volume`process`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_1d7d3",Volume`smooth`type`alloc[]];
+   setValue[`ctx,"volume",0.];
+   Return[`ctx];
+]
+
+Volume`noteOn`type`alloc[`ctx_] := 
+   Return[Volume`process`type`alloc[]];
+
+
+Volume`noteOff`type`alloc[`ctx_] := 
+   Return[Volume`process`type`alloc[]];
+
+
+Volume`controlChange`type`alloc[`ctx_] := 
+   Return[Volume`process`type`alloc[]];
+
+
+Volume`default`type`alloc[`ctx_] := 
+   Return[Volume`process`type`alloc[]];
+
+
+Volume`smooth[`ctx_, input_] := Module[{  }, 
+   setValue[`ctx,"x",((0.005 * (input + (-getValue[`ctx, "x"]))) + getValue[`ctx, "x"])];
+   Return[getValue[`ctx, "x"]];
+]
+
+Volume`process[`ctx_, input_] := 
+   Return[(input * Volume`smooth[getValue[`ctx, "inst_1d7d3"], getValue[`ctx, "volume"]])];
+
+
+Volume`noteOn[`ctx_, note_, velocity_, channel_] := Null
+
+Volume`noteOff[`ctx_, note_, channel_] := Null
+
+Volume`controlChange[`ctx_, control_, value_, channel_] := 
+   If[(control == 30), 
+      setValue[`ctx,"volume",(0.007874 * real[value])];];
+
+
+Volume`default[`ctx_] := 
+   setValue[`ctx,"volume",0.];
+
+

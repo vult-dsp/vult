@@ -2,7 +2,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "Constants.tables.h"
 
 static_inline void Constants_foo() {

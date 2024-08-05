@@ -2,7 +2,7 @@
 #ifndef SFF_F_H
 #define SFF_F_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "sff_f.tables.h"
 
 

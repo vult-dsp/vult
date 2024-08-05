@@ -2,7 +2,7 @@
 #ifndef ARRAY_NO_CONST_H
 #define ARRAY_NO_CONST_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "array_no_const.tables.h"
 
 extern void foo(std::array<fix16_t, 3>& a);

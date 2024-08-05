@@ -2,7 +2,7 @@
 #ifndef SAW_EPTR_H
 #define SAW_EPTR_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "saw_eptr.tables.h"
 
 typedef struct Util_edge_type {

@@ -1,0 +1,107 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Array`return`foo3`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"y",0];
+   Return[`ctx];
+]
+
+Array`return`foo4`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"y",0];
+   Return[`ctx];
+]
+
+Array`return`foo5`type`alloc[] := Module[{ temp, in`n0, `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"Array_return_foo5_ret_0",0];
+   in`n0 = 0;
+   temp = initializeArray[0, 3];
+   While[(in`n0 < 3), 
+      Module[{  }, 
+         temp[[in`n0 + 1]] = 0;
+         in`n0 = (1 + in`n0);
+      ];];
+   setValue[`ctx,"Array_return_foo5_ret_1",temp];
+   Return[`ctx];
+]
+
+Array`return`foo6`type`alloc[] := Module[{ temp, in`n0, `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"Array_return_foo6_ret_0",0];
+   in`n0 = 0;
+   temp = initializeArray[0, 3];
+   While[(in`n0 < 3), 
+      Module[{  }, 
+         temp[[in`n0 + 1]] = 0;
+         in`n0 = (1 + in`n0);
+      ];];
+   setValue[`ctx,"Array_return_foo6_ret_1",temp];
+   Return[`ctx];
+]
+
+Array`return`s1`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x",0];
+   setValue[`ctx,"y",0];
+   Return[`ctx];
+]
+
+Array`return`foo7`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"Array_return_foo7_ret_0",0];
+   setValue[`ctx,"Array_return_foo7_ret_1",Array`return`s1`alloc[]];
+   Return[`ctx];
+]
+
+Array`return`foo1[] := Module[{ `arrayn`n0 }, 
+   `arrayn`n0 = {1, 2, 3};
+   Return[`arrayn`n0];
+]
+
+Array`return`foo2[] := Module[{ x }, 
+   x = {1, 2, 3};
+   Return[x];
+]
+
+Array`return`foo3[`ctx_] := Module[{ `arrayn`n0 }, 
+   setValue[`ctx,"y",0];
+   `arrayn`n0 = {1, 2, 3};
+   Return[`arrayn`n0];
+]
+
+Array`return`foo4[`ctx_] := Module[{ x }, 
+   setValue[`ctx,"y",0];
+   x = {1, 2, 3};
+   Return[x];
+]
+
+Array`return`foo5[`ctx_] := Module[{ `arrayn`n0 }, 
+   `arrayn`n0 = {1, 2, 3};
+   setValue[`ctx,"Array_return_foo5_ret_0",1];
+   setValue[`ctx,"Array_return_foo5_ret_1",`arrayn`n0];
+   Return[];
+]
+
+Array`return`foo6[`ctx_] := Module[{ x, y }, 
+   y = 1;
+   x = {1, 2, 3};
+   setValue[`ctx,"Array_return_foo6_ret_0",y];
+   setValue[`ctx,"Array_return_foo6_ret_1",x];
+   Return[];
+]
+
+Array`return`foo7[`ctx_] := Module[{ s, d }, 
+   d = initializeArray[0, 4];
+   setValue[`ctx,"Array_return_foo7_ret_0",d[[1]]];
+   s = Table[0, { i, 1, 4}];
+   setValue[`ctx,"Array_return_foo7_ret_1",s[[1]]];
+   Return[];
+]
+

@@ -2,7 +2,7 @@
 #ifndef DELAY_H
 #define DELAY_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "delay.tables.h"
 
 typedef struct Delay_smooth_type {

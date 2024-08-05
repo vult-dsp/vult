@@ -2,7 +2,7 @@
 #ifndef GENERICARRAYS_H
 #define GENERICARRAYS_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "GenericArrays.tables.h"
 
 template<std::size_t SIZE_0>

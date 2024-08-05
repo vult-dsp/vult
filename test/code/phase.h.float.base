@@ -2,7 +2,7 @@
 #ifndef PHASE_H
 #define PHASE_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "phase.tables.h"
 
 typedef struct Util_edge_type {

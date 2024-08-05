@@ -2,7 +2,7 @@
 #ifndef AD_H
 #define AD_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "ad.tables.h"
 
 typedef struct Util_edge_type {

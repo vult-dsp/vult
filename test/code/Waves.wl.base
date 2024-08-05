@@ -1,0 +1,57 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Waves`sineTable1`chann`n0 = {};
+Waves`sineTable1`samples[] := 
+   Return[256];
+
+
+Waves`sineTable1[channel_, index_] := Module[{  }, 
+   If[(channel == 0), 
+      Return[Waves`sineTable1`chann`n0[[(index % 256) + 1]]];];
+   Return[0.];
+]
+
+Waves`sineTable2`c0 = {};
+Waves`sineTable2`c1 = {};
+Waves`sineTable2`c2 = {};
+Waves`sineTable2`samples[] := 
+   Return[256];
+
+
+Waves`sineTable2`raw`c0[index_] := 
+   Return[Waves`sineTable2`c0[[index + 1]]];
+
+
+Waves`sineTable2`raw`c1[index_] := 
+   Return[Waves`sineTable2`c1[[index + 1]]];
+
+
+Waves`sineTable2`raw`c2[index_] := 
+   Return[Waves`sineTable2`c2[[index + 1]]];
+
+
+Waves`sineTable2[position_] := Module[{ index }, 
+   index = Clip[Floor[(position * 255.)], {0, 255}];
+   Return[(Waves`sineTable2`c0[[index + 1]] + (position * (Waves`sineTable2`c1[[index + 1]] + (Waves`sineTable2`c2[[index + 1]] * position))))];
+]
+
+Waves`test1[] := Module[{ i`n`n1, n }, 
+   n = Waves`sineTable1`samples[];
+   i`n`n1 = 0;
+   While[(i`n`n1 < n), 
+      Module[{  }, 
+         Waves`sineTable1[0, i`n`n1];
+         i`n`n1 = (1 + i`n`n1);
+      ];];
+]
+
+Waves`test2[] := 
+   result = Waves`sineTable2[0.5];
+
+

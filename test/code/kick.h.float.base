@@ -2,7 +2,7 @@
 #ifndef KICK_H
 #define KICK_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "kick.tables.h"
 
 typedef struct Noise_pinker_type {

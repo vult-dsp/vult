@@ -2,7 +2,7 @@
 #ifndef SWEPT_H
 #define SWEPT_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "swept.tables.h"
 
 typedef struct Util_edge_type {

@@ -1,0 +1,32 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+StringType`test1[] := Module[{ str3, str2, str1 }, 
+   str1 = "first";
+   str2 = "second";
+   str3 = ((str1 + ", ") + str2);
+   Return[str3];
+]
+
+StringType`test2[] := Module[{ str4, str3, str2, str1 }, 
+   str1 = string[1];
+   str2 = string[1.];
+   str3 = string[1.];
+   str4 = string[True];
+]
+
+StringType`test3[a_, b_] := 
+   Return[(a + b)];
+
+
+StringType`test4[] := Module[{ i, str }, 
+   str = "text";
+   StringType`test3["first", "second"];
+   i = (6 + length[str]);
+]
+

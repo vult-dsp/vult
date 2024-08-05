@@ -2,7 +2,7 @@
 #ifndef ARRAY_DIMENSION_H
 #define ARRAY_DIMENSION_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "array_dimension.tables.h"
 
 template<std::size_t SIZE_0>

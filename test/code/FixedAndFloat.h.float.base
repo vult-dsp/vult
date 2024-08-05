@@ -2,7 +2,7 @@
 #ifndef FIXEDANDFLOAT_H
 #define FIXEDANDFLOAT_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "FixedAndFloat.tables.h"
 
 void FixedAndFloat_test1();

@@ -2,7 +2,7 @@
 #ifndef ITERLOOP_H
 #define ITERLOOP_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "IterLoop.tables.h"
 
 void IterLoop_test();

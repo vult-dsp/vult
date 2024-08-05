@@ -225,6 +225,14 @@ module Wl = struct
     match path, args, (getReturnType ret).t with
     (* builtins *)
     | "float_to_int", [ TReal ], TInt -> Some "Floor"
+    | "sin", [ TReal ], TReal -> Some "Sin"
+    | "cos", [ TReal ], TReal -> Some "Cos"
+    | "sqrt", [ TReal ], TReal -> Some "Sqrt"
+    | "size", [ TArray _ ], TInt -> Some "Length"
+    | "floor", [ TReal ], TReal -> Some "Floor"
+    | "floor", [ TFix16 ], TFix16 -> Some "Floor"
+    | "int", [ TReal ], TInt -> Some "Floor"
+    | "int", [ TFix16 ], TInt -> Some "Floor"
     | _ -> None
 
 

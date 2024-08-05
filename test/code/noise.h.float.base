@@ -2,7 +2,7 @@
 #ifndef NOISE_H
 #define NOISE_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "noise.tables.h"
 
 typedef struct Noise_pinker_type {

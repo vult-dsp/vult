@@ -2,7 +2,7 @@
 #ifndef STRINGTYPE_H
 #define STRINGTYPE_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "StringType.tables.h"
 
 static_inline std::string StringType_test1() {

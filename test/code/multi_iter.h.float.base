@@ -2,7 +2,7 @@
 #ifndef MULTI_ITER_H
 #define MULTI_ITER_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "multi_iter.tables.h"
 
 void Multi_iter_test();

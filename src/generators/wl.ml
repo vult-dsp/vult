@@ -36,6 +36,7 @@ newEmptyObject[] := CreateDataStructure["HashTable"];
 setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+initializeArray[v_, n_] := Table[v, n];
 
 |}
 
@@ -63,7 +64,7 @@ let operator (op : operator) =
   | OpLsh -> Pla.string "<<"
   | OpRsh -> Pla.string ">>"
   | OpEq -> Pla.string "=="
-  | OpNe -> Pla.string "~="
+  | OpNe -> Pla.string "!="
   | OpLt -> Pla.string "<"
   | OpLe -> Pla.string "<="
   | OpGt -> Pla.string ">"
@@ -88,6 +89,10 @@ let rec print_exp e =
   | EFixed n -> Pla.string (fixFloat (Util.Vfloat.to_string n))
   | EString s -> Pla.string_quoted s
   | EId id -> Pla.string id
+  | EIndex { e; index = { e = EInt i; _ } } ->
+    let e = print_exp e in
+    let index = i + 1 in
+    {%pla|<#e#>[[<#index#i>]]|}
   | EIndex { e; index } ->
     let e = print_exp e in
     let index = print_exp index in
@@ -141,6 +146,10 @@ let rec print_lexp e =
   | LMember (e, m) ->
     let e = print_lexp e in
     {%pla|getValue[<#e#>, "<#m#s>"]|}
+  | LIndex { e; index = { e = EInt i; _ } } ->
+    let e = print_lexp e in
+    let index = i + 1 in
+    {%pla|<#e#>[[<#index#i>]]|}
   | LIndex { e; index } ->
     let e = print_lexp e in
     let index = print_exp index in
@@ -209,6 +218,7 @@ let rec print_stmt (s : stmt) =
     let cond = print_exp cond in
     let stmt = print_stmt stmt in
     {%pla|While[<#cond#>, <#stmt#+>];|}
+  | StmtBlock [] -> {%pla|Null;|}
   | StmtBlock stmts ->
     let locals = Pla.map_sep Pla.commaspace Pla.string (collectDeclaredNames stmts) in
     let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
@@ -235,6 +245,7 @@ let print_function_def (def : function_def) =
 
 let print_body body =
   match body.s with
+  | StmtBlock [] -> {%pla| := Null|}
   | StmtBlock stmts ->
     let locals = Pla.map_sep Pla.commaspace Pla.string (collectDeclaredNames stmts) in
     let stmts = Pla.map_sep_all Pla.newline print_stmt stmts in
@@ -244,7 +255,7 @@ let print_body body =
     {%pla| := <#stmt#+><#>|}
 
 
-let print_top_stmt t =
+let print_top_stmt (args : Util.Args.args) t =
   match t.top with
   | TopFunction (def, body) ->
     let def = print_function_def def in
@@ -253,12 +264,13 @@ let print_top_stmt t =
   | TopExternal _ -> Pla.unit
   | TopType _ -> Pla.unit
   | TopAlias _ -> Pla.unit
+  | TopConstant (name, _, _, _) when args.test_mode -> {%pla|<#name#s> = {};<#>|}
   | TopConstant (name, _, _, rhs) ->
     let rhs = print_exp rhs in
     {%pla|<#name#s> = <#rhs#>;<#>|}
 
 
-let print_prog t = Pla.map_join print_top_stmt t
+let print_prog args t = Pla.map_join (print_top_stmt args) t
 
 let getTemplateCode (args : Util.Args.args) =
   match args.template with
@@ -267,7 +279,7 @@ let getTemplateCode (args : Util.Args.args) =
 
 
 let generate (args : Util.Args.args) (stmts : top_stmt list) =
-  let file = Common.setExt ".lua" args.output in
-  let code = print_prog stmts in
+  let file = Common.setExt ".wl" args.output in
+  let code = print_prog args stmts in
   let pre, post = getTemplateCode args in
   [ {%pla|<#runtime#><#pre#><#code#><#post#>|}, file ]

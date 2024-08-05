@@ -1,0 +1,127 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Short`delay`soft`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x2",0.];
+   setValue[`ctx,"x3",0.];
+   setValue[`ctx,"x4",0.];
+   Return[`ctx];
+]
+
+Short`delay`do`type`alloc[] := Module[{ `ctx, temp, in`n0 }, 
+   in`n0 = 0;
+   temp = initializeArray[0., 22050];
+   `ctx = newEmptyObject[];
+   While[(in`n0 < 22050), 
+      Module[{  }, 
+         temp[[in`n0 + 1]] = 0.;
+         in`n0 = (1 + in`n0);
+      ];];
+   setValue[`ctx,"buffer",temp];
+   setValue[`ctx,"write_pos",0];
+   Return[`ctx];
+]
+
+Short`delay`process`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_1593b",Short`delay`soft`type`alloc[]];
+   setValue[`ctx,"inst_2ba3b",Short`delay`do`type`alloc[]];
+   Return[`ctx];
+]
+
+Short`delay`noteOn`type`alloc[`ctx_] := 
+   Return[Short`delay`process`type`alloc[]];
+
+
+Short`delay`noteOff`type`alloc[`ctx_] := 
+   Return[Short`delay`process`type`alloc[]];
+
+
+Short`delay`controlChange`type`alloc[`ctx_] := 
+   Return[Short`delay`process`type`alloc[]];
+
+
+Short`delay`default`type`alloc[`ctx_] := 
+   Return[Short`delay`process`type`alloc[]];
+
+
+Saturate`tanh`table`c0 = {};
+Saturate`tanh`table`c1 = {};
+Saturate`tanh`table`c2 = {};
+Saturate`tanh`table`raw`c0[index_] := 
+   Return[Saturate`tanh`table`c0[[index + 1]]];
+
+
+Saturate`tanh`table`raw`c1[index_] := 
+   Return[Saturate`tanh`table`c1[[index + 1]]];
+
+
+Saturate`tanh`table`raw`c2[index_] := 
+   Return[Saturate`tanh`table`c2[[index + 1]]];
+
+
+Saturate`tanh`table[x_] := Module[{ index }, 
+   index = Clip[Floor[((x - -24.) * 5.)], {0, 240}];
+   Return[(Saturate`tanh`table`c0[[index + 1]] + (x * (Saturate`tanh`table`c1[[index + 1]] + (Saturate`tanh`table`c2[[index + 1]] * x))))];
+]
+
+Saturate`process[x_] := 
+   Return[Saturate`tanh`table[x]];
+
+
+Saturate`noteOn[note_, velocity_, channel_] := Null
+
+Saturate`noteOff[note_, channel_] := Null
+
+Saturate`controlChange[control_, value_, channel_] := Null
+
+Saturate`default[] := Null
+
+Short`delay`soft[`ctx_, x1_] := Module[{ `t`tempn`n2, `t`tempn`n1, `t`tempn`n0, o }, 
+   o = (0.25 * (x1 + (getValue[`ctx, "x2"] + (getValue[`ctx, "x3"] + getValue[`ctx, "x4"]))));
+   `t`tempn`n0 = x1;
+   `t`tempn`n1 = getValue[`ctx, "x2"];
+   `t`tempn`n2 = getValue[`ctx, "x3"];
+   setValue[`ctx,"x2",`t`tempn`n0];
+   setValue[`ctx,"x3",`t`tempn`n1];
+   setValue[`ctx,"x4",`t`tempn`n2];
+   Return[o];
+]
+
+Short`delay`do[`ctx_, x_, time_, feedback_] := Module[{ ret, x2, x1, decimal, read`pos, delta, index`i, index`r }, 
+   time = Clip[time, {0., 1.}];
+   feedback = Clip[feedback, {0., 1.}];
+   index`r = (22050. * time);
+   index`i = Floor[Floor[index`r]];
+   delta = ((-index`i) + getValue[`ctx, "write_pos"]);
+   read`pos = 0;
+   If[(delta < 0), 
+      read`pos = (22050 + delta);, 
+      read`pos = delta;];
+   decimal = (index`r + (-real[index`i]));
+   x1 = getValue[`ctx, "buffer"][[read`pos + 1]];
+   x2 = getValue[`ctx, "buffer"][[((1 + read`pos) % 22050) + 1]];
+   ret = (x1 + (decimal * (x2 + (-x1))));
+   setValue[`ctx,"write_pos",((1 + getValue[`ctx, "write_pos"]) % 22050)];
+   getValue[`ctx, "buffer"][[getValue[`ctx, "write_pos"] + 1]] = Saturate`process[(x + (feedback * ret))];
+   Return[ret];
+]
+
+Short`delay`process[`ctx_, x_, time_, feedback_] := 
+   Return[Short`delay`do[getValue[`ctx, "inst_2ba3b"], x, Short`delay`soft[getValue[`ctx, "inst_1593b"], time], feedback]];
+
+
+Short`delay`noteOn[`ctx_, note_, velocity_, channel_] := Null
+
+Short`delay`noteOff[`ctx_, note_, channel_] := Null
+
+Short`delay`controlChange[`ctx_, control_, value_, channel_] := Null
+
+Short`delay`default[`ctx_] := Null
+

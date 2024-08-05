@@ -1,0 +1,321 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+newArray[v_, n_] := Table[v, n];
+
+Util`edge`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"pre",False];
+   Return[`ctx];
+]
+
+Util`change`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"pre_x",0.];
+   Return[`ctx];
+]
+
+Util`dcblock`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x1",0.];
+   setValue[`ctx,"y1",0.];
+   Return[`ctx];
+]
+
+Util`smooth`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x",0.];
+   Return[`ctx];
+]
+
+Util`average2`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"x0",0.];
+   Return[`ctx];
+]
+
+Util`cvToPitch[cv_] := 
+   Return[(24. + (120. * cv))];
+
+
+Util`pitchToRaten`n1024`c0 = {};
+Util`pitchToRaten`n1024`c1 = {};
+Util`pitchToRaten`n1024`c2 = {};
+Util`pitchToRaten`n1024`raw`c0[index_] := 
+   Return[Util`pitchToRaten`n1024`c0[[index + 1]]];
+
+
+Util`pitchToRaten`n1024`raw`c1[index_] := 
+   Return[Util`pitchToRaten`n1024`c1[[index + 1]]];
+
+
+Util`pitchToRaten`n1024`raw`c2[index_] := 
+   Return[Util`pitchToRaten`n1024`c2[[index + 1]]];
+
+
+Util`pitchToRaten`n1024[pitch_] := Module[{ index }, 
+   index = Clip[Floor[(pitch * 0.244094)], {0, 31}];
+   Return[(Util`pitchToRaten`n1024`c0[[index + 1]] + (pitch * (Util`pitchToRaten`n1024`c1[[index + 1]] + (Util`pitchToRaten`n1024`c2[[index + 1]] * pitch))))];
+]
+
+Util`cvToRaten`n1024`c0 = {};
+Util`cvToRaten`n1024`c1 = {};
+Util`cvToRaten`n1024`c2 = {};
+Util`cvToRaten`n1024`raw`c0[index_] := 
+   Return[Util`cvToRaten`n1024`c0[[index + 1]]];
+
+
+Util`cvToRaten`n1024`raw`c1[index_] := 
+   Return[Util`cvToRaten`n1024`c1[[index + 1]]];
+
+
+Util`cvToRaten`n1024`raw`c2[index_] := 
+   Return[Util`cvToRaten`n1024`c2[[index + 1]]];
+
+
+Util`cvToRaten`n1024[cv_] := Module[{ index }, 
+   index = Clip[Floor[(cv * 34.444444)], {0, 31}];
+   Return[(Util`cvToRaten`n1024`c0[[index + 1]] + (cv * (Util`cvToRaten`n1024`c1[[index + 1]] + (Util`cvToRaten`n1024`c2[[index + 1]] * cv))))];
+]
+
+Phase`default[`ctx_] := 
+   setValue[`ctx,"rate",Util`cvToRaten`n1024[0.]];
+
+
+Phase`process`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_1b08a",Util`change`type`alloc[]];
+   setValue[`ctx,"inst_2048a",Util`edge`type`alloc[]];
+   setValue[`ctx,"phase",0.];
+   setValue[`ctx,"rate",0.];
+   Phase`default[`ctx];
+   Return[`ctx];
+]
+
+Phase`noteOn`type`alloc[`ctx_] := 
+   Return[Phase`process`type`alloc[]];
+
+
+Phase`noteOff`type`alloc[`ctx_] := 
+   Return[Phase`process`type`alloc[]];
+
+
+Phase`controlChange`type`alloc[`ctx_] := 
+   Return[Phase`process`type`alloc[]];
+
+
+Phase`default`type`alloc[`ctx_] := 
+   Return[Phase`process`type`alloc[]];
+
+
+Sine`process`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"inst_104ba",Util`edge`type`alloc[]];
+   setValue[`ctx,"p",Phase`process`type`alloc[]];
+   setValue[`ctx,"trig",False];
+   Return[`ctx];
+]
+
+Sine`noteOn`type`alloc[`ctx_] := 
+   Return[Sine`process`type`alloc[]];
+
+
+Sine`noteOff`type`alloc[`ctx_] := 
+   Return[Sine`process`type`alloc[]];
+
+
+Sine`controlChange`type`alloc[`ctx_] := 
+   Return[Sine`process`type`alloc[]];
+
+
+Sine`default`type`alloc[`ctx_] := 
+   Return[Sine`process`type`alloc[]];
+
+
+Util`edge[`ctx_, x_] := Module[{ ret }, 
+   ret = (x && (getValue[`ctx, "pre"] == False));
+   setValue[`ctx,"pre",x];
+   Return[ret];
+]
+
+Util`change[`ctx_, x_] := Module[{ v }, 
+   v = (getValue[`ctx, "pre_x"] != x);
+   setValue[`ctx,"pre_x",x];
+   Return[v];
+]
+
+Util`map[x_, x0_, x1_, y0_, y1_] := 
+   Return[(y0 + (((x + (-x0)) * (y1 + (-y0))) / (x1 + (-x0))))];
+
+
+Util`dcblock[`ctx_, x0_] := Module[{ y0 }, 
+   y0 = (x0 + ((-getValue[`ctx, "x1"]) + (0.995 * getValue[`ctx, "y1"])));
+   setValue[`ctx,"x1",x0];
+   setValue[`ctx,"y1",y0];
+   Return[y0];
+]
+
+Util`smooth[`ctx_, input_] := Module[{  }, 
+   setValue[`ctx,"x",((0.005 * (input + (-getValue[`ctx, "x"]))) + getValue[`ctx, "x"])];
+   Return[getValue[`ctx, "x"]];
+]
+
+Util`average2[`ctx_, x1_] := Module[{ result }, 
+   result = (0.5 * (x1 + getValue[`ctx, "x0"]));
+   setValue[`ctx,"x0",x1];
+   Return[result];
+]
+
+Util`cubic`clipper[x_] := 
+   If[(x <= -0.666667), 
+      Return[-0.666667];, 
+      If[(x >= 0.666666), 
+         Return[0.666666];, 
+         Return[(x + (-0.333334 * (x * (x * x))))];];];
+
+
+Util`pitchToRate`c0 = {};
+Util`pitchToRate`c1 = {};
+Util`pitchToRate`c2 = {};
+Util`pitchToRate`raw`c0[index_] := 
+   Return[Util`pitchToRate`c0[[index + 1]]];
+
+
+Util`pitchToRate`raw`c1[index_] := 
+   Return[Util`pitchToRate`c1[[index + 1]]];
+
+
+Util`pitchToRate`raw`c2[index_] := 
+   Return[Util`pitchToRate`c2[[index + 1]]];
+
+
+Util`pitchToRate[pitch_] := Module[{ index }, 
+   index = Clip[Floor[(pitch * 0.244094)], {0, 31}];
+   Return[(Util`pitchToRate`c0[[index + 1]] + (pitch * (Util`pitchToRate`c1[[index + 1]] + (Util`pitchToRate`c2[[index + 1]] * pitch))))];
+]
+
+Util`cvToRate`c0 = {};
+Util`cvToRate`c1 = {};
+Util`cvToRate`c2 = {};
+Util`cvToRate`raw`c0[index_] := 
+   Return[Util`cvToRate`c0[[index + 1]]];
+
+
+Util`cvToRate`raw`c1[index_] := 
+   Return[Util`cvToRate`c1[[index + 1]]];
+
+
+Util`cvToRate`raw`c2[index_] := 
+   Return[Util`cvToRate`c2[[index + 1]]];
+
+
+Util`cvToRate[cv_] := Module[{ index }, 
+   index = Clip[Floor[(cv * 141.111111)], {0, 127}];
+   Return[(Util`cvToRate`c0[[index + 1]] + (cv * (Util`cvToRate`c1[[index + 1]] + (Util`cvToRate`c2[[index + 1]] * cv))))];
+]
+
+Util`pitchToCv[pitch_] := 
+   Return[(-0.2 + (0.008333 * pitch))];
+
+
+Util`cvToperiod`c0 = {};
+Util`cvToperiod`c1 = {};
+Util`cvToperiod`c2 = {};
+Util`cvToperiod`raw`c0[index_] := 
+   Return[Util`cvToperiod`c0[[index + 1]]];
+
+
+Util`cvToperiod`raw`c1[index_] := 
+   Return[Util`cvToperiod`c1[[index + 1]]];
+
+
+Util`cvToperiod`raw`c2[index_] := 
+   Return[Util`cvToperiod`c2[[index + 1]]];
+
+
+Util`cvToperiod[cv_] := Module[{ index }, 
+   index = Clip[Floor[(cv * 31.)], {0, 31}];
+   Return[(Util`cvToperiod`c0[[index + 1]] + (cv * (Util`cvToperiod`c1[[index + 1]] + (Util`cvToperiod`c2[[index + 1]] * cv))))];
+]
+
+Util`cvTokHz`c0 = {};
+Util`cvTokHz`c1 = {};
+Util`cvTokHz`c2 = {};
+Util`cvTokHz`raw`c0[index_] := 
+   Return[Util`cvTokHz`c0[[index + 1]]];
+
+
+Util`cvTokHz`raw`c1[index_] := 
+   Return[Util`cvTokHz`c1[[index + 1]]];
+
+
+Util`cvTokHz`raw`c2[index_] := 
+   Return[Util`cvTokHz`c2[[index + 1]]];
+
+
+Util`cvTokHz[cv_] := Module[{ index }, 
+   index = Clip[Floor[(cv * 31.)], {0, 31}];
+   Return[(Util`cvTokHz`c0[[index + 1]] + (cv * (Util`cvTokHz`c1[[index + 1]] + (Util`cvTokHz`c2[[index + 1]] * cv))))];
+]
+
+Phase`process[`ctx_, cv_, reset_] := Module[{  }, 
+   If[Util`change[getValue[`ctx, "inst_1b08a"], cv], 
+      setValue[`ctx,"rate",Util`cvToRaten`n1024[cv]];];
+   If[Util`edge[getValue[`ctx, "inst_2048a"], (reset > 0.5)], 
+      setValue[`ctx,"phase",0.];, 
+      setValue[`ctx,"phase",(getValue[`ctx, "phase"] + getValue[`ctx, "rate"])];];
+   If[(getValue[`ctx, "phase"] > 1024.), 
+      setValue[`ctx,"phase",(-1024. + getValue[`ctx, "phase"])];, 
+      setValue[`ctx,"phase",getValue[`ctx, "phase"]];];
+   Return[(0.000976 * getValue[`ctx, "phase"])];
+]
+
+Phase`noteOn[`ctx_, note_, velocity_, channel_] := Null
+
+Phase`noteOff[`ctx_, note_, channel_] := Null
+
+Phase`controlChange[`ctx_, control_, value_, channel_] := Null
+
+Tables`nsine`c0 = {};
+Tables`nsine`c1 = {};
+Tables`nsine`c2 = {};
+Tables`nsine`raw`c0[index_] := 
+   Return[Tables`nsine`c0[[index + 1]]];
+
+
+Tables`nsine`raw`c1[index_] := 
+   Return[Tables`nsine`c1[[index + 1]]];
+
+
+Tables`nsine`raw`c2[index_] := 
+   Return[Tables`nsine`c2[[index + 1]]];
+
+
+Tables`nsine[x_] := Module[{ index }, 
+   index = Clip[Floor[(x * 127.)], {0, 127}];
+   Return[(Tables`nsine`c0[[index + 1]] + (x * (Tables`nsine`c1[[index + 1]] + (Tables`nsine`c2[[index + 1]] * x))))];
+]
+
+Sine`process[`ctx_, cv_, reset_] := Module[{ phase }, 
+   If[Util`edge[getValue[`ctx, "inst_104ba"], (reset > 0.5)], 
+      setValue[`ctx,"trig",True];];
+   phase = Phase`process[getValue[`ctx, "p"], cv, 0.];
+   If[((phase < eps[]) && getValue[`ctx, "trig"]), 
+      Module[{  }, 
+         setValue[`ctx,"trig",False];
+         Phase`process[getValue[`ctx, "p"], cv, 0.];
+      ];];
+   Return[Tables`nsine[phase]];
+]
+
+Sine`noteOn[`ctx_, note_, velocity_, channel_] := Null
+
+Sine`noteOff[`ctx_, note_, channel_] := Null
+
+Sine`controlChange[`ctx_, control_, value_, channel_] := Null
+
+Sine`default[`ctx_] := Null
+

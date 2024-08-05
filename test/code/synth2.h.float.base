@@ -2,7 +2,7 @@
 #ifndef SYNTH2_H
 #define SYNTH2_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "synth2.tables.h"
 
 typedef struct Synth2_change_type {

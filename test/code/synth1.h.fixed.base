@@ -2,7 +2,7 @@
 #ifndef SYNTH1_H
 #define SYNTH1_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "synth1.tables.h"
 
 typedef struct Synth1_smooth_type {

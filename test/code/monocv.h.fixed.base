@@ -2,7 +2,7 @@
 #ifndef MONOCV_H
 #define MONOCV_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "monocv.tables.h"
 
 typedef struct Util_edge_type {

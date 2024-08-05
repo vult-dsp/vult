@@ -2,7 +2,7 @@
 #ifndef VOICE_4_H
 #define VOICE_4_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "voice_4.tables.h"
 
 typedef struct Util_edge_type {

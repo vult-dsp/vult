@@ -2,7 +2,7 @@
 #ifndef DATATYPES_H
 #define DATATYPES_H
 
-#include "vultin.h"
+#include "vultin.hpp"
 #include "DataTypes.tables.h"
 
 typedef struct DataTypes_point {
