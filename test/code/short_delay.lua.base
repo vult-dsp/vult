@@ -114,9 +114,9 @@ function Short_delay_soft(_ctx, x1)
    return o
 end
 
-function Short_delay_do(_ctx, x, time, feedback)
-   time = clip(time, 0., 1.)
-   feedback = clip(feedback, 0., 1.)
+function Short_delay_do(_ctx, x, time_in, feedback_in)
+   local time = clip(time_in, 0., 1.)
+   local feedback = clip(feedback_in, 0., 1.)
    local index_r = (22050. * time)
    local index_i = int(floor(index_r))
    local delta = ((-index_i) + _ctx.write_pos)

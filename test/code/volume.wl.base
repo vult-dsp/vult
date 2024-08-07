@@ -4,8 +4,8 @@ newEmptyObject[] := CreateDataStructure["HashTable"];
 setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
-newArray[v_, n_] := Table[v, n];
-
+initializeArray[v_, n_] := Table[v, n];
+eps[] := $MinMachineNumber
 Volume`smooth`type`alloc[] := Module[{ `ctx }, 
    `ctx = newEmptyObject[];
    setValue[`ctx,"x",0.];
@@ -50,7 +50,7 @@ Volume`noteOff[`ctx_, note_, channel_] := Null
 
 Volume`controlChange[`ctx_, control_, value_, channel_] := 
    If[(control == 30), 
-      setValue[`ctx,"volume",(0.007874 * real[value])];];
+      setValue[`ctx,"volume",(0.007874 * N[value])];];
 
 
 Volume`default[`ctx_] := 

@@ -22,7 +22,7 @@
    THE SOFTWARE.
 *)
 
-let time = 100.0
+let time = 20.0
 
 (** Header function *)
 let implPre (args : Util.Args.args) : Pla.t =
@@ -141,3 +141,22 @@ let luaPost (args : Util.Args.args) =
 
 
 let generateLua (args : Util.Args.args) = Pla.unit, luaPost args
+
+let wlPost (args : Util.Args.args) =
+  let module_name =
+    match args.files with
+    | Util.Args.File s :: _ -> String.concat "`" (String.split_on_char '_' (Pparser.Parse.moduleName s))
+    | _ -> "Top"
+  in
+  {%pla|
+     data = <#module_name#s>`process`type`alloc[];
+     <#module_name#s>`default[data];
+     time = <#time#f> / 1000.0;
+     samples = Floor[44100 * time];
+     result = Timing[Table[<#module_name#s>`process[data, 0.0], samples]];
+     finish = result[[1]] * 1000.0;
+     Print["<#module_name#s>\tWL\t", finish / time, " ms/s"]
+     |}
+
+
+let generateWl (args : Util.Args.args) = Pla.unit, wlPost args

@@ -142,6 +142,21 @@ let generateLua (filename : string) (output : string) : unit =
   List.iter (Driver.Cli.showResult args) output
 
 
+let generateWl (filename : string) (output : string) : unit =
+  let args =
+    { default_arguments with
+      files = [ File filename ]
+    ; code = WLCode
+    ; output = Some output
+    ; real = Float
+    ; template = Some "performance"
+    ; includes
+    }
+  in
+  let output = Driver.Cli.driver args in
+  List.iter (Driver.Cli.showResult args) output
+
+
 let realString f =
   match f with
   | Fixed -> "fixed"
@@ -186,12 +201,23 @@ let runLua vultfile =
   | e -> showError e
 
 
+let _runWl vultfile =
+  try
+    let output = Filename.chop_extension (Filename.basename vultfile) in
+    Sys.chdir tmp_dir;
+    generateWl vultfile output;
+    ignore (Sys.command ("wolframscript -f " ^ output ^ ".wl"));
+    Sys.chdir init_dir
+  with
+  | e -> showError e
+
+
 let main () =
   List.iter
     (fun f ->
       runC Float f;
       runC Fixed f;
-      runLua f (*  runJs f*))
+      runLua f)
     files
 
 ;;

@@ -4,8 +4,8 @@ newEmptyObject[] := CreateDataStructure["HashTable"];
 setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
-newArray[v_, n_] := Table[v, n];
-
+initializeArray[v_, n_] := Table[v, n];
+eps[] := $MinMachineNumber
 Util`edge`type`alloc[] := Module[{ `ctx }, 
    `ctx = newEmptyObject[];
    setValue[`ctx,"pre",False];
@@ -350,7 +350,7 @@ Blit`pulse`train[`ctx_, cv_, phase_] := Module[{ out, denominator, pi`phase },
    If[(denominator <= eps[]), 
       out = 1.;, 
       Module[{ numerator, m`phase }, 
-         m`phase = ((pi`phase * real[getValue[`ctx, "m"]]) % 1.);
+         m`phase = ((pi`phase * N[getValue[`ctx, "m"]]) % 1.);
          numerator = Tables`nsine[m`phase];
          out = (numerator / (denominator * getValue[`ctx, "scale"]));
       ];];

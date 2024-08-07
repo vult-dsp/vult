@@ -217,6 +217,7 @@ module Wl = struct
   let op_to_fun (op : Core.Prog.operator) (e1 : type_) (e2 : type_) (ret : type_) =
     match op, e1.t, e2.t, ret.t with
     | OpDiv, TInt, TInt, TInt -> Some "IntegerDivision"
+    | OpMod, TInt, TInt, TInt -> Some "Mod"
     | _ -> None
 
 
@@ -233,6 +234,7 @@ module Wl = struct
     | "floor", [ TFix16 ], TFix16 -> Some "Floor"
     | "int", [ TReal ], TInt -> Some "Floor"
     | "int", [ TFix16 ], TInt -> Some "Floor"
+    | "real", [ _ ], TReal -> Some "N"
     | _ -> None
 
 

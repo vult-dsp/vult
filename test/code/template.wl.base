@@ -4,8 +4,8 @@ newEmptyObject[] := CreateDataStructure["HashTable"];
 setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
-newArray[v_, n_] := Table[v, n];
-
+initializeArray[v_, n_] := Table[v, n];
+eps[] := $MinMachineNumber
 Template`process[input_] := 
    Return[input];
 

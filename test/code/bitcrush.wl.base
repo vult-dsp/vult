@@ -4,8 +4,8 @@ newEmptyObject[] := CreateDataStructure["HashTable"];
 setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
-newArray[v_, n_] := Table[v, n];
-
+initializeArray[v_, n_] := Table[v, n];
+eps[] := $MinMachineNumber
 Bitcrush`factor`c0 = {};
 Bitcrush`factor`c1 = {};
 Bitcrush`factor`c2 = {};
@@ -33,7 +33,7 @@ Bitcrush`process[i_, cv_] := Module[{ out },
       Module[{ x, b }, 
          b = Bitcrush`factor[cv];
          x = Floor[(b * i)];
-         out = (real[x] / b);
+         out = (N[x] / b);
       ];];
    Return[out];
 ]

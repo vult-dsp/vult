@@ -4,8 +4,8 @@ newEmptyObject[] := CreateDataStructure["HashTable"];
 setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
-newArray[v_, n_] := Table[v, n];
-
+initializeArray[v_, n_] := Table[v, n];
+eps[] := $MinMachineNumber
 Synth2`change`type`alloc[] := Module[{ `ctx }, 
    `ctx = newEmptyObject[];
    setValue[`ctx,"pre_x",0.];
@@ -180,7 +180,7 @@ Synth2`edge[`ctx_, x_] := Module[{ v },
 
 Synth2`each[`ctx_, n_] := Module[{ ret }, 
    ret = (getValue[`ctx, "count"] == 0);
-   setValue[`ctx,"count",((1 + getValue[`ctx, "count"]) % n)];
+   setValue[`ctx,"count",Mod[(1 + getValue[`ctx, "count"]), n]];
    Return[ret];
 ]
 
@@ -352,15 +352,15 @@ Synth2`process[`ctx_, i_] := Module[{ output, `if`tempn`n0, amp`env, o1, lfo1, g
 ]
 
 Synth2`noteOn[`ctx_, note_, velocity_, channel_] := 
-   setValue[`ctx,"pitch",real[Synth2`mono`noteOn[getValue[`ctx, "monoin"], note]]];
+   setValue[`ctx,"pitch",N[Synth2`mono`noteOn[getValue[`ctx, "monoin"], note]]];
 
 
 Synth2`noteOff[`ctx_, note_, channel_] := 
-   setValue[`ctx,"pitch",real[Synth2`mono`noteOff[getValue[`ctx, "monoin"], note]]];
+   setValue[`ctx,"pitch",N[Synth2`mono`noteOff[getValue[`ctx, "monoin"], note]]];
 
 
 Synth2`controlChange[`ctx_, control_, value_, channel_] := Module[{ value`m1n`n1, valuen`n0n`n1 }, 
-   valuen`n0n`n1 = (0.007874 * real[value]);
+   valuen`n0n`n1 = (0.007874 * N[value]);
    value`m1n`n1 = (-1. + (2. * valuen`n0n`n1));
    If[(control == 30), 
       setValue[`ctx,"volume",valuen`n0n`n1];];

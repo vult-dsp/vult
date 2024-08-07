@@ -4,8 +4,8 @@ newEmptyObject[] := CreateDataStructure["HashTable"];
 setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
-newArray[v_, n_] := Table[v, n];
-
+initializeArray[v_, n_] := Table[v, n];
+eps[] := $MinMachineNumber
 Short`delay`soft`type`alloc[] := Module[{ `ctx }, 
    `ctx = newEmptyObject[];
    setValue[`ctx,"x2",0.];
@@ -94,9 +94,9 @@ Short`delay`soft[`ctx_, x1_] := Module[{ `t`tempn`n2, `t`tempn`n1, `t`tempn`n0, 
    Return[o];
 ]
 
-Short`delay`do[`ctx_, x_, time_, feedback_] := Module[{ ret, x2, x1, decimal, read`pos, delta, index`i, index`r }, 
-   time = Clip[time, {0., 1.}];
-   feedback = Clip[feedback, {0., 1.}];
+Short`delay`do[`ctx_, x_, time`in_, feedback`in_] := Module[{ ret, x2, x1, decimal, read`pos, delta, index`i, index`r, feedback, time }, 
+   time = Clip[time`in, {0., 1.}];
+   feedback = Clip[feedback`in, {0., 1.}];
    index`r = (22050. * time);
    index`i = Floor[Floor[index`r]];
    delta = ((-index`i) + getValue[`ctx, "write_pos"]);
@@ -104,11 +104,11 @@ Short`delay`do[`ctx_, x_, time_, feedback_] := Module[{ ret, x2, x1, decimal, re
    If[(delta < 0), 
       read`pos = (22050 + delta);, 
       read`pos = delta;];
-   decimal = (index`r + (-real[index`i]));
+   decimal = (index`r + (-N[index`i]));
    x1 = getValue[`ctx, "buffer"][[read`pos + 1]];
-   x2 = getValue[`ctx, "buffer"][[((1 + read`pos) % 22050) + 1]];
+   x2 = getValue[`ctx, "buffer"][[Mod[(1 + read`pos), 22050] + 1]];
    ret = (x1 + (decimal * (x2 + (-x1))));
-   setValue[`ctx,"write_pos",((1 + getValue[`ctx, "write_pos"]) % 22050)];
+   setValue[`ctx,"write_pos",Mod[(1 + getValue[`ctx, "write_pos"]), 22050]];
    getValue[`ctx, "buffer"][[getValue[`ctx, "write_pos"] + 1]] = Saturate`process[(x + (feedback * ret))];
    Return[ret];
 ]

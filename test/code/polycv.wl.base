@@ -4,8 +4,8 @@ newEmptyObject[] := CreateDataStructure["HashTable"];
 setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
-newArray[v_, n_] := Table[v, n];
-
+initializeArray[v_, n_] := Table[v, n];
+eps[] := $MinMachineNumber
 Util`edge`type`alloc[] := Module[{ `ctx }, 
    `ctx = newEmptyObject[];
    setValue[`ctx,"pre",False];
@@ -284,12 +284,12 @@ Util`cvTokHz[cv_] := Module[{ index },
 ]
 
 Polycv`velToCV[vel_] := 
-   Return[(0.007874 * real[vel])];
+   Return[(0.007874 * N[vel])];
 
 
 Polycv`velToGate[vel_] := 
    If[(vel > 0), 
-      Return[(0.007874 * real[vel])];, 
+      Return[(0.007874 * N[vel])];, 
       Return[0.];];
 
 
@@ -323,10 +323,10 @@ Polycv`poly`noteOff[`ctx_, note_] := Module[{ found, i },
 ]
 
 Polycv`polyState[`ctx_] := Module[{ gate4, gate3, gate2, gate1, vel4, vel3, vel2, vel1, note4, note3, note2, note1 }, 
-   note1 = Util`pitchToCv[real[getValue[`ctx, "notes"][[1]]]];
-   note2 = Util`pitchToCv[real[getValue[`ctx, "notes"][[2]]]];
-   note3 = Util`pitchToCv[real[getValue[`ctx, "notes"][[3]]]];
-   note4 = Util`pitchToCv[real[getValue[`ctx, "notes"][[4]]]];
+   note1 = Util`pitchToCv[N[getValue[`ctx, "notes"][[1]]]];
+   note2 = Util`pitchToCv[N[getValue[`ctx, "notes"][[2]]]];
+   note3 = Util`pitchToCv[N[getValue[`ctx, "notes"][[3]]]];
+   note4 = Util`pitchToCv[N[getValue[`ctx, "notes"][[4]]]];
    vel1 = Polycv`velToCV[getValue[`ctx, "vel"][[1]]];
    vel2 = Polycv`velToCV[getValue[`ctx, "vel"][[2]]];
    vel3 = Polycv`velToCV[getValue[`ctx, "vel"][[3]]];

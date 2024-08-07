@@ -4,8 +4,8 @@ newEmptyObject[] := CreateDataStructure["HashTable"];
 setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
-newArray[v_, n_] := Table[v, n];
-
+initializeArray[v_, n_] := Table[v, n];
+eps[] := $MinMachineNumber
 Synth1`smooth`type`alloc[] := Module[{ `ctx }, 
    `ctx = newEmptyObject[];
    setValue[`ctx,"x",0.];
@@ -103,7 +103,7 @@ Synth1`edge[`ctx_, x_] := Module[{ v },
 
 Synth1`each[`ctx_, n_] := Module[{ ret }, 
    ret = (getValue[`ctx, "count"] == 0);
-   setValue[`ctx,"count",((1 + getValue[`ctx, "count"]) % n)];
+   setValue[`ctx,"count",Mod[(1 + getValue[`ctx, "count"]), n]];
    Return[ret];
 ]
 
@@ -148,16 +148,16 @@ Synth1`process[`ctx_, input_] := Module[{ gate`value, sine, phase2, reset, comp,
 Synth1`noteOn[`ctx_, note_, velocity_, channel_] := Module[{  }, 
    Switch[getValue[`ctx, "count"], 0, Module[{  }, 
       setValue[`ctx,"n1",note];
-      setValue[`ctx,"pitch",real[note]];
+      setValue[`ctx,"pitch",N[note]];
    ];, 1, Module[{  }, 
       setValue[`ctx,"n2",note];
-      setValue[`ctx,"pitch",real[note]];
+      setValue[`ctx,"pitch",N[note]];
    ];, 2, Module[{  }, 
       setValue[`ctx,"n3",note];
-      setValue[`ctx,"pitch",real[note]];
+      setValue[`ctx,"pitch",N[note]];
    ];, 3, Module[{  }, 
       setValue[`ctx,"n4",note];
-      setValue[`ctx,"pitch",real[note]];
+      setValue[`ctx,"pitch",N[note]];
    ];];
    If[(getValue[`ctx, "count"] <= 4), 
       setValue[`ctx,"count",(1 + getValue[`ctx, "count"])];];
@@ -199,13 +199,13 @@ Synth1`noteOff[`ctx_, note_, channel_] := Module[{ found },
       setValue[`ctx,"gate",1];, 
       setValue[`ctx,"gate",0];];
    If[(getValue[`ctx, "count"] == 1), 
-      setValue[`ctx,"pitch",real[getValue[`ctx, "n1"]]];];
+      setValue[`ctx,"pitch",N[getValue[`ctx, "n1"]]];];
    If[(getValue[`ctx, "count"] == 2), 
-      setValue[`ctx,"pitch",real[getValue[`ctx, "n2"]]];];
+      setValue[`ctx,"pitch",N[getValue[`ctx, "n2"]]];];
    If[(getValue[`ctx, "count"] == 3), 
-      setValue[`ctx,"pitch",real[getValue[`ctx, "n3"]]];];
+      setValue[`ctx,"pitch",N[getValue[`ctx, "n3"]]];];
    If[(getValue[`ctx, "count"] == 4), 
-      setValue[`ctx,"pitch",real[getValue[`ctx, "n4"]]];];
+      setValue[`ctx,"pitch",N[getValue[`ctx, "n4"]]];];
 ]
 
 Synth1`controlChange[`ctx_, control_, value_, channel_] := Module[{  }, 

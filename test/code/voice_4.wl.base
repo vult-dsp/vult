@@ -4,8 +4,8 @@ newEmptyObject[] := CreateDataStructure["HashTable"];
 setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
-newArray[v_, n_] := Table[v, n];
-
+initializeArray[v_, n_] := Table[v, n];
+eps[] := $MinMachineNumber
 Util`edge`type`alloc[] := Module[{ `ctx }, 
    `ctx = newEmptyObject[];
    setValue[`ctx,"pre",False];
@@ -746,7 +746,7 @@ Blit`pulse`train[`ctx_, cv_, phase_] := Module[{ out, denominator, pi`phase },
    If[(denominator <= eps[]), 
       out = 1.;, 
       Module[{ numerator, m`phase }, 
-         m`phase = ((pi`phase * real[getValue[`ctx, "m"]]) % 1.);
+         m`phase = ((pi`phase * N[getValue[`ctx, "m"]]) % 1.);
          numerator = Tables`nsine[m`phase];
          out = (numerator / (denominator * getValue[`ctx, "scale"]));
       ];];
@@ -833,13 +833,13 @@ Adsr`noteOff[`ctx_, note_, channel_] := Null
 
 Adsr`controlChange[`ctx_, control_, value_, channel_] := Module[{  }, 
    If[(control == 1), 
-      setValue[`ctx,"knob1",(0.007874 * real[value])];];
+      setValue[`ctx,"knob1",(0.007874 * N[value])];];
    If[(control == 2), 
-      setValue[`ctx,"knob2",(0.007874 * real[value])];];
+      setValue[`ctx,"knob2",(0.007874 * N[value])];];
    If[(control == 3), 
-      setValue[`ctx,"knob3",(0.007874 * real[value])];];
+      setValue[`ctx,"knob3",(0.007874 * N[value])];];
    If[(control == 4), 
-      setValue[`ctx,"knob4",(0.007874 * real[value])];];
+      setValue[`ctx,"knob4",(0.007874 * N[value])];];
 ]
 
 Adsr`default[`ctx_] := Module[{  }, 
@@ -870,49 +870,49 @@ Voicen`n4`noteOff[`ctx_, note_, channel_] := Null
 
 Voicen`n4`controlChange[`ctx_, control_, value_, channel_] := Module[{  }, 
    If[(control == 30), 
-      setValue[`ctx,"level1",(0.007874 * real[value])];];
+      setValue[`ctx,"level1",(0.007874 * N[value])];];
    If[(control == 31), 
-      setValue[`ctx,"level2",(0.007874 * real[value])];];
+      setValue[`ctx,"level2",(0.007874 * N[value])];];
    If[(control == 32), 
-      setValue[`ctx,"level3",(0.007874 * real[value])];];
+      setValue[`ctx,"level3",(0.007874 * N[value])];];
    If[(control == 33), 
-      setValue[`ctx,"level4",(0.007874 * real[value])];];
+      setValue[`ctx,"level4",(0.007874 * N[value])];];
    If[(control == 34), 
-      setValue[`ctx,"pw1",(0.007874 * real[value])];];
+      setValue[`ctx,"pw1",(0.007874 * N[value])];];
    If[(control == 35), 
-      setValue[`ctx,"pw2",(0.007874 * real[value])];];
+      setValue[`ctx,"pw2",(0.007874 * N[value])];];
    If[(control == 36), 
-      setValue[`ctx,"pw3",(0.000787 * real[value])];];
+      setValue[`ctx,"pw3",(0.000787 * N[value])];];
    If[(control == 37), 
-      setValue[`ctx,"pw4",(0.007874 * real[value])];];
+      setValue[`ctx,"pw4",(0.007874 * N[value])];];
    If[(control == 38), 
-      setValue[`ctx,"lfo_rate",Util`map[real[value], 0., 127., -0.4, 0.1]];];
+      setValue[`ctx,"lfo_rate",Util`map[N[value], 0., 127., -0.4, 0.1]];];
    If[(control == 39), 
-      setValue[`ctx,"lfo_shape",(0.023622 * real[value])];];
+      setValue[`ctx,"lfo_shape",(0.023622 * N[value])];];
    If[(control == 40), 
-      setValue[`ctx,"lfo_pw",Util`map[real[value], 0., 127., -1., 1.]];];
+      setValue[`ctx,"lfo_pw",Util`map[N[value], 0., 127., -1., 1.]];];
    If[(control == 41), 
-      setValue[`ctx,"lfo_cv",Util`map[real[value], 0., 127., -0.1, 0.1]];];
+      setValue[`ctx,"lfo_cv",Util`map[N[value], 0., 127., -0.1, 0.1]];];
    If[(control == 42), 
-      setValue[`ctx,"lfo_flt",Util`map[real[value], 0., 127., -0.3, 0.3]];];
+      setValue[`ctx,"lfo_flt",Util`map[N[value], 0., 127., -0.3, 0.3]];];
    If[(control == 43), 
       If[(value > 0), 
          setValue[`ctx,"lfo_reset",1.];, 
          setValue[`ctx,"lfo_reset",0.];];];
    If[(control == 44), 
-      setValue[`ctx,"flt_cut",Util`map[real[value], 0., 127., -0.2, 0.5]];];
+      setValue[`ctx,"flt_cut",Util`map[N[value], 0., 127., -0.2, 0.5]];];
    If[(control == 45), 
-      setValue[`ctx,"flt_res",(0.007874 * real[value])];];
+      setValue[`ctx,"flt_res",(0.007874 * N[value])];];
    If[(control == 46), 
       setValue[`ctx,"flt_shape",IntegerDivision[(4 * value), 127]];];
    If[(control == 47), 
-      setValue[`ctx,"attack",(0.007874 * real[value])];];
+      setValue[`ctx,"attack",(0.007874 * N[value])];];
    If[(control == 48), 
-      setValue[`ctx,"decay",(0.007874 * real[value])];];
+      setValue[`ctx,"decay",(0.007874 * N[value])];];
    If[(control == 49), 
-      setValue[`ctx,"sustain",(0.007874 * real[value])];];
+      setValue[`ctx,"sustain",(0.007874 * N[value])];];
    If[(control == 50), 
-      setValue[`ctx,"release",(0.007874 * real[value])];];
+      setValue[`ctx,"release",(0.007874 * N[value])];];
 ]
 
 Voicen`n4`default[`ctx_] := Null

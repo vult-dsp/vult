@@ -4,8 +4,8 @@ newEmptyObject[] := CreateDataStructure["HashTable"];
 setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
-newArray[v_, n_] := Table[v, n];
-
+initializeArray[v_, n_] := Table[v, n];
+eps[] := $MinMachineNumber
 Gates`gates`noteOn`type`alloc[] := Module[{ temp, in`n0, `ctx }, 
    `ctx = newEmptyObject[];
    setValue[`ctx,"Gates_gates_state_ret_0",0.];
@@ -67,7 +67,7 @@ Gates`default`type`alloc[`ctx_] :=
 
 
 Gates`velToCV[vel_] := 
-   Return[(0.007874 * real[vel])];
+   Return[(0.007874 * N[vel])];
 
 
 Gates`gates`noteOn[`ctx_, note_, velocity_] := 

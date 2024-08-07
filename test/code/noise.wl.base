@@ -4,8 +4,8 @@ newEmptyObject[] := CreateDataStructure["HashTable"];
 setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
-newArray[v_, n_] := Table[v, n];
-
+initializeArray[v_, n_] := Table[v, n];
+eps[] := $MinMachineNumber
 Noise`pinker`type`alloc[] := Module[{ `ctx }, 
    `ctx = newEmptyObject[];
    setValue[`ctx,"w1",0.];
@@ -47,10 +47,10 @@ Noise`pinker[`ctx_, x_] := Module[{ y0, w0, a1, b1, b0 },
 ]
 
 Noise`process[`ctx_, color_] := Module[{ out, y2, y1 }, 
-   setValue[`ctx,"x1",((7919 + (17389 * getValue[`ctx, "x1"])) % 32768)];
-   y1 = (3 10^-05 * real[getValue[`ctx, "x1"]]);
-   setValue[`ctx,"x2",((12553 + (27449 * getValue[`ctx, "x2"])) % 32768)];
-   y2 = (3 10^-05 * real[getValue[`ctx, "x2"]]);
+   setValue[`ctx,"x1",Mod[(7919 + (17389 * getValue[`ctx, "x1"])), 32768]];
+   y1 = (3 10^-05 * N[getValue[`ctx, "x1"]]);
+   setValue[`ctx,"x2",Mod[(12553 + (27449 * getValue[`ctx, "x2"])), 32768]];
+   y2 = (3 10^-05 * N[getValue[`ctx, "x2"]]);
    out = 0.;
    If[(color > 0.5), 
       out = Noise`pinker[getValue[`ctx, "inst_16d3d"], (y1 + (-y2))];, 

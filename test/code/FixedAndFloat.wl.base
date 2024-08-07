@@ -4,8 +4,8 @@ newEmptyObject[] := CreateDataStructure["HashTable"];
 setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
-newArray[v_, n_] := Table[v, n];
-
+initializeArray[v_, n_] := Table[v, n];
+eps[] := $MinMachineNumber
 FixedAndFloat`test1[] := Module[{ to`bool, to`real, to`int, from`bool, from`real, from`int, result, bool`value, int`value, real`value, fixed`value }, 
    fixed`value = 0.;
    real`value = 0.;
@@ -16,7 +16,7 @@ FixedAndFloat`test1[] := Module[{ to`bool, to`real, to`int, from`bool, from`real
    from`real = fix16[real`value];
    from`bool = fix16[bool`value];
    to`int = Floor[fixed`value];
-   to`real = real[fixed`value];
+   to`real = N[fixed`value];
    to`bool = bool[fixed`value];
    from`int = 0.;
    from`real = 0.;

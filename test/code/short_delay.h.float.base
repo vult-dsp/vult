@@ -93,7 +93,7 @@ static_inline void Saturate_default() {
 
 float Short_delay_soft(Short_delay_soft_type& _ctx, float x1);
 
-float Short_delay_do(Short_delay_do_type& _ctx, float x, float time, float feedback);
+float Short_delay_do(Short_delay_do_type& _ctx, float x, float time_in, float feedback_in);
 
 static_inline float Short_delay_process(Short_delay_process_type& _ctx, float x, float time, float feedback) {
    return Short_delay_do(_ctx.inst_2ba3b, x, Short_delay_soft(_ctx.inst_1593b, time), feedback);

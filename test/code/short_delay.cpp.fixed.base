@@ -22,9 +22,9 @@ fix16_t Short_delay_soft(Short_delay_soft_type& _ctx, fix16_t x1) {
    return o;
 }
 
-fix16_t Short_delay_do(Short_delay_do_type& _ctx, fix16_t x, fix16_t time, fix16_t feedback) {
-   time = fix_clip(time, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
-   feedback = fix_clip(feedback, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
+fix16_t Short_delay_do(Short_delay_do_type& _ctx, fix16_t x, fix16_t time_in, fix16_t feedback_in) {
+   fix16_t time = fix_clip(time_in, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
+   fix16_t feedback = fix_clip(feedback_in, 0x0 /* 0.000000 */, 0x10000 /* 1.000000 */);
    fix16_t index_r = fix_mul(0x56220000 /* 22050.000000 */, time);
    int32_t index_i = fix_to_int(fix_floor(index_r));
    int32_t delta = (- index_i) + _ctx.write_pos;

@@ -37,7 +37,7 @@ setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
 initializeArray[v_, n_] := Table[v, n];
-
+eps[] := $MinMachineNumber
 |}
 
 
@@ -275,6 +275,7 @@ let print_prog args t = Pla.map_join (print_top_stmt args) t
 let getTemplateCode (args : Util.Args.args) =
   match args.template with
   | None -> Pla.unit, Pla.unit
+  | Some "performance" -> T_performance.generateWl args
   | Some name -> Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
 
 

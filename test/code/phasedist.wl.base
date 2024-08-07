@@ -4,8 +4,8 @@ newEmptyObject[] := CreateDataStructure["HashTable"];
 setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
-newArray[v_, n_] := Table[v, n];
-
+initializeArray[v_, n_] := Table[v, n];
+eps[] := $MinMachineNumber
 Phasedist`smooth`type`alloc[] := Module[{ `ctx }, 
    `ctx = newEmptyObject[];
    setValue[`ctx,"x",0.];
@@ -93,16 +93,16 @@ Phasedist`process[`ctx_, input_] := Module[{ sine, phase2, reset, comp, phase1 }
 ]
 
 Phasedist`noteOn[`ctx_, note_, velocity_, channel_] := 
-   setValue[`ctx,"pitch",real[note]];
+   setValue[`ctx,"pitch",N[note]];
 
 
 Phasedist`noteOff[`ctx_, note_, channel_] := Null
 
 Phasedist`controlChange[`ctx_, control_, value_, channel_] := Module[{  }, 
    If[(control == 30), 
-      setValue[`ctx,"volume",(0.007874 * real[value])];];
+      setValue[`ctx,"volume",(0.007874 * N[value])];];
    If[(control == 31), 
-      setValue[`ctx,"detune",(0.007874 * real[value])];];
+      setValue[`ctx,"detune",(0.007874 * N[value])];];
 ]
 
 Phasedist`default[`ctx_] := Module[{  }, 

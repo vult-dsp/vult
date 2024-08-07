@@ -368,6 +368,11 @@ let rec print_stmt state s =
     let t = print_decl_alloc state (n, t) in
     let rhs = print_exp state None rhs in
     {%pla|<#t#> = <#rhs#>;|}
+  (* Special case when initializing an array using initializeArray. Here we declare the variable and not a reference *)
+  | StmtDecl ({ d = DId (n, _); t; _ }, Some { e = ECall { path = "initializeArray"; args = [ def; _ ] }; _ }) ->
+    let t = print_decl_alloc state (n, t) in
+    let def = print_exp state None def in
+    {%pla|<#t#>; for (auto& elem : <#n#s>) { elem = <#def#>; }|}
   (* Special case for structures. When the structure is the result of a function call we need to declare it *)
   | StmtDecl ({ d = DId (n, _); t = { t = TStruct _; _ } as t; _ }, Some ({ e = ECall _; _ } as rhs)) ->
     let t = print_decl_alloc state (n, t) in

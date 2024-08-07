@@ -4,8 +4,8 @@ newEmptyObject[] := CreateDataStructure["HashTable"];
 setValue[var_, key_, value_] := var["Insert", key -> value];
 getValue[var_, key_] := var["Lookup", key];
 newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
-newArray[v_, n_] := Table[v, n];
-
+initializeArray[v_, n_] := Table[v, n];
+eps[] := $MinMachineNumber
 Util`edge`type`alloc[] := Module[{ `ctx }, 
    `ctx = newEmptyObject[];
    setValue[`ctx,"pre",False];
@@ -286,15 +286,15 @@ Util`cvTokHz[cv_] := Module[{ index },
 ]
 
 Rescomb`delay[`ctx_, x_, cv_] := Module[{ ret, x2, x1, decimal, t2, t1, r`index, r`size }, 
-   setValue[`ctx,"write_pos",((1 + getValue[`ctx, "write_pos"]) % 675)];
+   setValue[`ctx,"write_pos",Mod[(1 + getValue[`ctx, "write_pos"]), 675]];
    getValue[`ctx, "buffer"][[getValue[`ctx, "write_pos"] + 1]] = x;
    r`size = 675.;
-   r`index = (((-Util`cvToperiod[cv]) + real[getValue[`ctx, "write_pos"]]) % r`size);
+   r`index = (((-Util`cvToperiod[cv]) + N[getValue[`ctx, "write_pos"]]) % r`size);
    If[(r`index < 0.), 
       r`index = (r`index + r`size);];
-   t1 = (Floor[Floor[r`index]] % 675);
-   t2 = ((1 + t1) % 675);
-   decimal = (r`index + (-real[t1]));
+   t1 = Mod[Floor[Floor[r`index]], 675];
+   t2 = Mod[(1 + t1), 675];
+   decimal = (r`index + (-N[t1]));
    x1 = getValue[`ctx, "buffer"][[t1 + 1]];
    x2 = getValue[`ctx, "buffer"][[t2 + 1]];
    ret = (x1 + (decimal * (x2 + (-x1))));

@@ -13,12 +13,12 @@ fun soft(x1) {
    return o;
 }
 
-fun do(x:real, time:real, feedback:real) : real {
+fun do(x:real, time_in:real, feedback_in:real) : real {
    mem buffer : array(real,22050);
    mem write_pos;
    // Constraints the parameter values
-   time     = clip(time,0.0,1.0);
-   feedback = clip(feedback,0.0,1.0);
+   val time     = clip(time_in,0.0,1.0);
+   val feedback = clip(feedback_in,0.0,1.0);
    // Gets the position in the buffer to read
    val index_r  = real(size(buffer)) * time;
    val index_i  = int(floor(index_r));

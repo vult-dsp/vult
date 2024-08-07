@@ -22,9 +22,9 @@ float Short_delay_soft(Short_delay_soft_type& _ctx, float x1) {
    return o;
 }
 
-float Short_delay_do(Short_delay_do_type& _ctx, float x, float time, float feedback) {
-   time = float_clip(time, 0.0f, 1.0f);
-   feedback = float_clip(feedback, 0.0f, 1.0f);
+float Short_delay_do(Short_delay_do_type& _ctx, float x, float time_in, float feedback_in) {
+   float time = float_clip(time_in, 0.0f, 1.0f);
+   float feedback = float_clip(feedback_in, 0.0f, 1.0f);
    float index_r = 22050.0f * time;
    int32_t index_i = float_to_int(floorf(index_r));
    int32_t delta = (- index_i) + _ctx.write_pos;
