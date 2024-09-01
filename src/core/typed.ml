@@ -44,6 +44,7 @@ type type_d_ =
   | TELink of type_
   | TEOption of type_ list
   | TEComposed of string * type_ list
+  | TEFunction of type_ list * type_
 
 and type_ =
   { mutable tx : type_d_
@@ -212,6 +213,10 @@ let rec print_type_ ?(detailed = false) (t : type_) : Pla.t =
   | TEComposed (name, elems) ->
     let elems = Pla.map_sep Pla.commaspace (print_type_ ~detailed) elems in
     prefix {%pla|<#name#s>(<#elems#>)|}
+  | TEFunction (args, ret) ->
+    let args = Pla.map_sep Pla.commaspace (print_type_ ~detailed) args in
+    let ret = print_type_ ~detailed ret in
+    prefix {%pla|<#args#> -> <#ret#>|}
 
 
 let rec print_exp (e : exp) =

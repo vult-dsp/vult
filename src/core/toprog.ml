@@ -102,6 +102,7 @@ let rec type_ ?(const = false) (env : Env.in_top) (state : state) (t : Typed.typ
     state, { t = TTuple elems; const; loc }
   | T.TEComposed (name, _) -> Error.raiseError ("Unknown composed type '" ^ name ^ "'.") t.loc
   | T.TESize _ -> Error.raiseError "Invalid type description." t.loc
+  | T.TEFunction _ -> failwith "function type not implemented"
 
 
 and type_list (env : Env.in_top) (state : state) (l : (string * Typed.type_ * Ptags.tags * Loc.t) list) =

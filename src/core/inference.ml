@@ -122,6 +122,9 @@ and unify ?(bind = false) (t1 : type_) (t2 : type_) =
     match t1.tx, t2.tx with
     | TEId t1, TEId t2 -> Pparser.Syntax.compare_path t1 t2 = 0
     | TESize t1, TESize t2 -> t1 = t2
+    | TEFunction (arg1, ret1), TEFunction (arg2, ret2) -> List.for_all2 unify arg1 arg2 && unify ret1 ret2
+    | TEFunction _, _ -> false
+    | _, TEFunction _ -> false
     (* special case for arrays without dimensions *)
     | TEComposed ("array", [ e1; _ ]), TEComposed ("array", [ e2 ])
     | TEComposed ("array", [ e1 ]), TEComposed ("array", [ e2; _ ]) -> unify e1 e2

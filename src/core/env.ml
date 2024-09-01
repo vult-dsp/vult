@@ -102,6 +102,12 @@ type t =
 
 type context = (path * t) option
 
+type function_type =
+  { args : Typed.arg list
+  ; ret : Typed.type_
+  ; context : context
+  }
+
 type f =
   { path : path
   ; t : Typed.type_ list * Typed.type_

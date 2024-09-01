@@ -1,0 +1,8 @@
+
+fun add(a, b) : int {
+  return a + b;
+}
+
+fun test(a) {
+  return a(1, 2);
+}
