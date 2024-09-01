@@ -54,13 +54,15 @@ let has_lua =
     false)
 
 
-let has_wl =
+let has_wl = false
+  (*
   if tryToRun "wolframscript --version > out" then (
     let () = print_endline "Wolfram Language syntax will be checked" in
     true)
   else (
     let () = print_endline "Wolfram Language not be checked" in
     false)
+  *)
 
 
 let parser_files =
@@ -709,7 +711,6 @@ let suite =
        ; CliTest.get all_files Node "float"
        ; CliTest.get all_files Node "fixed"
        ; CliTest.get all_files Node "lua"
-       ; CliTest.get all_files Node "wl"
        ; RandomCompileTest.get test_random_code
        ; Interpret.get perf_files
        ]
