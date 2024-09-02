@@ -207,6 +207,7 @@ let serializerForType (t : type_) =
   | { t = TInt | TFix16 | TBool; _ } -> push_int
   | { t = TReal; _ } -> push_float
   | { t = TString; _ } -> push_string
+  | { t = TEmptyType; _ } -> failwith "serializerForType: void"
   | { t = TVoid _; _ } -> failwith "serializerForType: void"
   | { t = TArray _; _ } -> failwith "serializerForType: array"
   | { t = TTuple _; _ } -> failwith "serializerForType: tuple"
@@ -260,6 +261,7 @@ let createSerializer table (stmt : top_stmt) =
               | { t = TBool; _ } -> callPush push_int this_type name t loc
               | { t = TStruct { path; _ }; _ } -> callPush (path ^ "_serialize_data") this_type name t loc
               | { t = TVoid _; _ } -> None
+              | { t = TEmptyType; _ } -> None
               | { t = TArray (Some size, at); _ } ->
                 let n = !tick in
                 incr tick;
@@ -421,6 +423,7 @@ let createDeserializer table (stmt : top_stmt) =
                 in
                 Some (C.sblock [ search_stmt; found_index [ decl; search_type; call_deserializer ] ])
               | { t = TVoid _; _ } -> None
+              | { t = TEmptyType; _ } -> None
               | { t = TArray (Some n, at); _ } ->
                 let field_descr = "field_descr_" ^ string_of_int !tick in
                 let () = incr tick in

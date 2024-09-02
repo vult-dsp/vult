@@ -78,6 +78,7 @@ let rec type_ ?(const = false) (env : Env.in_top) (state : state) (t : Typed.typ
       match Env.getType env p with
       | None -> failwith "unknown type"
       | Some { descr = Enum _; _ } -> state, { t = TInt; const; loc }
+      | Some { descr = Record members; _ } when Map.is_empty !members -> state, { t = TEmptyType; const; loc }
       | Some { descr = Record members; _ } ->
         let members =
           List.map (fun (name, (var : Env.var)) -> name, var.t, var.tags, var.loc) (Env.Map.to_list members)
@@ -351,6 +352,7 @@ let top_stmt (env : Env.in_top) (state : state) (t : Typed.top_stmt) =
   | TopExternal (def, linkname) ->
     let state, functions = ext_function_def env state def linkname in
     state, functions
+  | TopType { members = []; _ } -> state, []
   | TopType { path = p; members } ->
     let p = path p in
     let state, members = type_list env state members in

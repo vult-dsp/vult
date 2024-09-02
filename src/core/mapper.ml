@@ -222,6 +222,7 @@ let rec type_ (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state)
   let sub_env = enter mapper.type__env env t in
   let loc = t.loc in
   match t with
+  | { t = TEmptyType; _ } -> apply mapper.type_ env state t
   | { t = TVoid None; _ } -> apply mapper.type_ env state t
   | { t = TVoid (Some elems); const; _ } ->
     let state, elems = (mapper_list type_) mapper sub_env state elems in
@@ -270,6 +271,7 @@ let rec exp (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (
   let sub_env = enter mapper.exp_env env e in
   let state, t = type_ mapper sub_env state e.t in
   match e with
+  | { e = EEmptyValue; _ } -> apply mapper.exp env state { e = EEmptyValue; t; loc }
   | { e = EUnit; _ } -> apply mapper.exp env state { e = EUnit; t; loc }
   | { e = EBool b; _ } -> apply mapper.exp env state { e = EBool b; t; loc }
   | { e = EInt n; _ } -> apply mapper.exp env state { e = EInt n; t; loc }

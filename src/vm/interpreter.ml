@@ -462,6 +462,7 @@ let rec valueOfDescr (d : struct_descr) : rvalue =
 
 and valueOfType (t : type_) : rvalue =
   match t.t with
+  | TEmptyType -> RVoid
   | TVoid _ -> RVoid
   | TInt -> RInt 0
   | TReal -> RReal 0.0

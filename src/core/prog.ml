@@ -38,6 +38,7 @@ type type_d_ =
   | TArray of int option * type_
   | TStruct of struct_descr
   | TTuple of type_ list
+  | TEmptyType
 
 and struct_descr =
   { path : string
@@ -85,6 +86,7 @@ type uoperator =
 
 type exp_d =
   | EUnit
+  | EEmptyValue
   | EBool of bool
   | EInt of int
   | EReal of float
@@ -205,6 +207,7 @@ module Print = struct
     | TArray (Some dim, t) ->
       let t = print_type_ t in
       prefix {%pla|<#t#>[<#dim#i>]|}
+    | TEmptyType -> {%pla|empty|}
     | TArray (None, t) ->
       let t = print_type_ t in
       prefix {%pla|<#t#>[:]|}
@@ -245,6 +248,7 @@ module Print = struct
   let rec print_exp ?(no_types = false) (e : exp) =
     let t = print_type_ e.t in
     match e.e with
+    | EEmptyValue -> Pla.string "null"
     | EUnit -> Pla.string "()"
     | EBool v -> Pla.string (if v then "true" else "false")
     | EInt n -> Pla.int n
@@ -430,6 +434,7 @@ module Print = struct
 end
 
 module C = struct
+  let nullptr_t = { t = TEmptyType; loc = Loc.default; const = false }
   let void_t = { t = TVoid None; loc = Loc.default; const = false }
   let int_t = { t = TInt; loc = Loc.default; const = false }
   let string_t = { t = TString; loc = Loc.default; const = false }
@@ -441,6 +446,7 @@ module C = struct
   let efix16 ?(loc = Loc.default) i = { e = EFixed i; t = fix16_t; loc }
   let estring ?(loc = Loc.default) i = { e = EString i; t = string_t; loc }
   let eint ?(loc = Loc.default) i = { e = EInt i; t = int_t; loc }
+  let enull = { e = EEmptyValue; t = nullptr_t; loc = Loc.default }
   let eunit = { e = EUnit; t = void_t; loc = Loc.default }
   let ebool ?(loc = Loc.default) i = { e = EBool i; t = int_t; loc }
   let eid ?(loc = Loc.default) id t = { e = EId id; t; loc }
@@ -477,6 +483,8 @@ end
 module Compare = struct
   let rec exp (e1 : exp) (e2 : exp) =
     match e1, e2 with
+    | { e = EEmptyValue; _ }, { e = EEmptyValue; _ } -> 0
+    | { e = EEmptyValue; _ }, { e = _; _ } -> compare e1 e2
     | { e = EUnit; _ }, { e = EUnit; _ } -> 0
     | { e = EUnit; _ }, _ -> compare e1 e2
     | { e = EBool b1; _ }, { e = EBool b2; _ } -> compare b1 b2

@@ -893,6 +893,9 @@ and stmtType (buffer : Stream.stream) : top_stmt =
     let members = type_member_list buffer in
     let _ = Stream.consume buffer RBRACE in
     { top = STopType { name; members }; loc }
+  | SEMI ->
+    let _ = Stream.skip buffer in
+    { top = STopType { name; members = [] }; loc }
   | _ ->
     let got = tokenToString (Stream.current buffer) in
     let message = Printf.sprintf "Expecting a list of value declarations '{ val x:... }' but got %s" got in

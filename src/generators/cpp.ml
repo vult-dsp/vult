@@ -99,6 +99,7 @@ let addPrefix state id =
 
 let rec print_type_ state (t : type_) =
   match t.t with
+  | TEmptyType -> Pla.string "void*"
   | TVoid _ -> Pla.string "void"
   | TInt -> Pla.string "int32_t"
   | TReal -> Pla.string "float"
@@ -158,6 +159,7 @@ let uoperator (op : Core.Prog.uoperator) =
 
 let rec print_exp state (prec : operator option) (e : exp) =
   match e.e with
+  | EEmptyValue -> Pla.string "nullptr"
   | EUnit -> Pla.string ""
   | EBool v -> Pla.string (if v then "true" else "false")
   | EInt n -> {%pla|<#n#i>|}

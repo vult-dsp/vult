@@ -55,15 +55,14 @@ let has_lua =
 
 
 let has_wl = false
-  (*
-  if tryToRun "wolframscript --version > out" then (
-    let () = print_endline "Wolfram Language syntax will be checked" in
-    true)
-  else (
-    let () = print_endline "Wolfram Language not be checked" in
-    false)
-  *)
-
+(*
+   if tryToRun "wolframscript --version > out" then (
+   let () = print_endline "Wolfram Language syntax will be checked" in
+   true)
+   else (
+   let () = print_endline "Wolfram Language not be checked" in
+   false)
+*)
 
 let parser_files =
   [ "stmt_val_mem.vult"
@@ -218,6 +217,7 @@ let all_files =
   ; "features/SaveState.vult"
   ; "features/Match.vult"
   ; "features/Constants.vult"
+  ; "features/EmptyTypes.vult"
   ; "../test/compile/defined_types.vult"
   ; "../test/compile/array_defined_type.vult"
   ; "../test/compile/array_return.vult"

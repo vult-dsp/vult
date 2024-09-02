@@ -82,6 +82,7 @@ let fixFloat s = Str.global_replace e_regex " 10^" s
 
 let rec print_exp e =
   match e.e with
+  | EEmptyValue -> Pla.string "{}"
   | EUnit -> Pla.string ""
   | EBool v -> Pla.string (if v then "True" else "False")
   | EInt n -> Pla.int n

@@ -36,6 +36,7 @@ let getTick () =
 
 let rec getInitRHS (t : type_) =
   match t with
+  | { t = TEmptyType; _ } -> C.enull
   | { t = TVoid _; _ } -> C.eunit
   | { t = TInt; loc; _ } -> C.eint ~loc 0
   | { t = TReal; loc; _ } -> C.ereal ~loc 0.0
@@ -56,6 +57,9 @@ type cstyle =
 
 let rec initStatement (cstyle : cstyle) lhs rhs (t : type_) =
   match t with
+  | { t = TEmptyType; loc; _ } ->
+    let rhs = getInitRHS t in
+    { s = StmtBind (lhs, rhs); loc }
   | { t = TVoid _; loc; _ } ->
     let rhs = getInitRHS t in
     { s = StmtBind (lhs, rhs); loc }

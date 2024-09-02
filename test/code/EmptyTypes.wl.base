@@ -1,0 +1,36 @@
+
+IntegerDivision[a_, b_] := Floor[a / b];
+newEmptyObject[] := CreateDataStructure["HashTable"];
+setValue[var_, key_, value_] := var["Insert", key -> value];
+getValue[var_, key_] := var["Lookup", key];
+newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
+initializeArray[v_, n_] := Table[v, n];
+eps[] := $MinMachineNumber
+EmptyTypes`foo`type`alloc[] := Module[{ `ctx }, 
+   `ctx = newEmptyObject[];
+   setValue[`ctx,"screen",{}];
+   setValue[`ctx,"settings",{}];
+   Return[`ctx];
+]
+
+EmptyTypes`setSettings`type`alloc[`ctx_] := 
+   Return[EmptyTypes`foo`type`alloc[]];
+
+
+EmptyTypes`setScreen`type`alloc[`ctx_] := 
+   Return[EmptyTypes`foo`type`alloc[]];
+
+
+EmptyTypes`foo[`ctx_] := Module[{  }, 
+   EmptyTypes`setSomething[getValue[`ctx, "settings"]];
+   EmptyTypes`drawSomething[getValue[`ctx, "screen"]];
+]
+
+EmptyTypes`setSettings[`ctx_, s_] := 
+   setValue[`ctx,"settings",s];
+
+
+EmptyTypes`setScreen[`ctx_, s_] := 
+   setValue[`ctx,"settings",s];
+
+

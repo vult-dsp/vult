@@ -1,0 +1,25 @@
+// It is possible to declare an empty type.
+// Empty types are useful to attach extra information to the context.
+// When generating C++, the empty types are void*.
+type settings;
+type screen;
+
+// These external functions take empty types.
+// The Vult codes does not need to know what's the actual data in order to pass it around.
+external setSomething(settings:settings) : unit "setSomething";
+external drawSomething(screen:screen) : unit "drawSomething";
+
+fun foo() {
+	mem settings : settings;
+	mem screen : screen;
+
+  setSomething(settings);
+  drawSomething(screen);
+}
+and setSettings(s) {
+  settings = s;
+}
+and setScreen(s) {
+  settings = s;
+}
+

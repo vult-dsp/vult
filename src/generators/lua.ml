@@ -94,6 +94,7 @@ let uoperator (op : uoperator) =
 
 let rec print_exp e =
   match e.e with
+  | EEmptyValue -> Pla.string "{}"
   | EUnit -> Pla.string ""
   | EBool v -> Pla.string (if v then "true" else "false")
   | EInt n -> Pla.int n

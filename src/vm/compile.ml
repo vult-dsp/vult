@@ -246,6 +246,7 @@ let rec compile_lexp (env : env) (l : lexp) : lvalue =
 
 and compile_exp (env : env) e : rvalue =
   match e.e with
+  | EEmptyValue -> RVoid
   | EUnit -> RVoid
   | EBool v -> RBool v
   | EInt v -> RInt v
@@ -381,7 +382,7 @@ let rec compile_stmt (env : env) (stmt : stmt) =
 
 let getNOutputs (t : type_) =
   match t.t with
-  | TVoid _ | TInt | TReal | TString | TBool | TFix16 | TArray _ | TStruct _ -> 1
+  | TEmptyType | TVoid _ | TInt | TReal | TString | TBool | TFix16 | TArray _ | TStruct _ -> 1
   | TTuple elems -> List.length elems
 
 
