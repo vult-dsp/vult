@@ -38,9 +38,8 @@ module type TokenKindSig = sig
 end
 
 module TokenStream (S : TokenKindSig) = struct
-  (** Type containing the stream of tokens *)
   type stream =
-    { mutable lexbuf : Lexing.lexbuf
+    { mutable tokens : S.kind token list
     ; mutable has_errors : bool
     ; mutable errors : Error.t list
     ; mutable peeked : S.kind token
@@ -49,42 +48,35 @@ module TokenStream (S : TokenKindSig) = struct
     }
 
   let backup (s : stream) : stream =
-    let clone (type t) (v : t) : t =
-      let buf = Marshal.(to_bytes v [ No_sharing ]) in
-      Marshal.from_bytes buf 0
-    in
-    let lexbuf =
-      Lexing.
-        { refill_buff = s.lexbuf.refill_buff
-        ; lex_buffer = clone s.lexbuf.lex_buffer
-        ; lex_buffer_len = s.lexbuf.lex_buffer_len
-        ; lex_abs_pos = s.lexbuf.lex_abs_pos
-        ; lex_start_pos = s.lexbuf.lex_start_pos
-        ; lex_curr_pos = s.lexbuf.lex_curr_pos
-        ; lex_last_pos = s.lexbuf.lex_last_pos
-        ; lex_last_action = s.lexbuf.lex_last_action
-        ; lex_eof_reached = s.lexbuf.lex_eof_reached
-        ; lex_mem = clone s.lexbuf.lex_mem
-        ; lex_start_p = s.lexbuf.lex_start_p
-        ; lex_curr_p = s.lexbuf.lex_curr_p
-        }
-    in
-    { lexbuf; has_errors = s.has_errors; errors = s.errors; peeked = s.peeked; prev = s.prev; source = s.source }
+    { tokens = s.tokens
+    ; has_errors = s.has_errors
+    ; errors = s.errors
+    ; peeked = s.peeked
+    ; prev = s.prev
+    ; source = s.source
+    }
 
 
   let restore ~buffer ~backup =
-    buffer.lexbuf <- backup.lexbuf;
+    buffer.tokens <- backup.tokens;
     buffer.has_errors <- backup.has_errors;
     buffer.errors <- backup.errors;
     buffer.peeked <- backup.peeked;
     buffer.prev <- backup.prev
 
 
-  (** Skips one token *)
-  let skip (buffer : stream) : unit =
-    buffer.prev <- buffer.peeked;
-    buffer.peeked <- S.next buffer.source buffer.lexbuf
+  let next (stream : stream) =
+    match stream.tokens with
+    | [] -> failwith "empty stream"
+    | h :: r ->
+      stream.prev <- stream.peeked;
+      stream.peeked <- h;
+      stream.tokens <- r;
+      h
 
+
+  (** Skips one token *)
+  let skip (stream : stream) : unit = next stream |> ignore
 
   (** Returns the current token in the buffer *)
   let current (buffer : stream) : S.kind token = buffer.peeked
@@ -95,6 +87,7 @@ module TokenStream (S : TokenKindSig) = struct
   (** Returns the kind of the current token *)
   let peek (buffer : stream) : S.kind = (current buffer).kind
 
+  (** Make an error at the current location *)
   let makeError (buffer : stream) (message : string) : Error.t =
     Error.PointedError (Loc.getNext buffer.prev.loc, message)
 
@@ -113,9 +106,7 @@ module TokenStream (S : TokenKindSig) = struct
   (** Checks that the next token matches the given kind and skip it *)
   let consume (buffer : stream) (kind : S.kind) : unit =
     match buffer.peeked with
-    | t when t.kind = kind ->
-      let _ = buffer.prev <- buffer.peeked in
-      buffer.peeked <- S.next buffer.source buffer.lexbuf
+    | t when t.kind = kind -> skip buffer
     | t when S.isEOF t.kind ->
       let expected = S.kindStr kind in
       let message = Printf.sprintf "Expecting a %s but the file ended" expected in
@@ -142,6 +133,14 @@ module TokenStream (S : TokenKindSig) = struct
       raise (ParserError (makeError buffer message))
 
 
+  let rec consumeLexbuf source lexbuf tokens =
+    let token = S.next source lexbuf in
+    if S.isEOF token.kind then
+      List.rev (token :: tokens)
+    else
+      consumeLexbuf source lexbuf (token :: tokens)
+
+
   (** Optionally consumes the given token *)
   let optConsume (buffer : stream) (kind : S.kind) : unit =
     match buffer.peeked with
@@ -165,15 +164,18 @@ module TokenStream (S : TokenKindSig) = struct
         Loc.File f
       | None -> Loc.Text str
     in
-    let first = S.next source lexbuf in
-    { lexbuf; peeked = first; prev = first; has_errors = false; errors = []; source }
+    let tokens = consumeLexbuf source lexbuf [] in
+    match tokens with
+    | [] -> failwith "empty file"
+    | peeked :: tokens -> { tokens; peeked; has_errors = false; source; errors = []; prev = peeked }
 
 
-  (** Creates a token stream given a channel *)
   let fromChannel (chan : in_channel) (file : string) : stream =
     let lexbuf = Lexing.from_channel chan in
     lexbuf.Lexing.lex_curr_p <- { lexbuf.Lexing.lex_curr_p with Lexing.pos_fname = file };
     let source = Loc.File file in
-    let first = S.next source lexbuf in
-    { lexbuf; peeked = first; prev = first; has_errors = false; errors = []; source }
+    let tokens = consumeLexbuf source lexbuf [] in
+    match tokens with
+    | [] -> failwith "empty file"
+    | peeked :: tokens -> { tokens; peeked; has_errors = false; source; errors = []; prev = peeked }
 end

@@ -397,7 +397,7 @@ module RandomCompileTest = struct
     let basename = Filename.chop_extension (Filename.basename file) in
     let cmd =
       Printf.sprintf
-        "gcc -Wno-return-type -Wno-div-by-zero -Wno-narrowing -Wno-constant-logical-operand -Wno-division-by-zero \
+        "gcc -O0 -Wno-return-type -Wno-div-by-zero -Wno-narrowing -Wno-constant-logical-operand -Wno-division-by-zero \
          -Wno-unused-value -Wno-tautological-compare -Wconversion -I%s -c %s -o %s"
         (in_test_directory "../runtime")
         file
@@ -444,7 +444,7 @@ let callCompiler (file : string) : unit =
   let basename = Filename.chop_extension (Filename.basename file) in
   let cmd =
     Printf.sprintf
-      "gcc -std=c++11 -O3 -Werror -Wno-write-strings -Wconversion -I%s -I%s -c %s -o %s"
+      "gcc -std=c++11 -O0 -Werror -Wno-write-strings -Wconversion -I%s -I%s -c %s -o %s"
       (in_test_directory "../runtime")
       (in_test_directory "../examples/cmake/pd-deps")
       file
