@@ -140,7 +140,8 @@ let propagateSaveTag (table : (struct_descr option * bool * string list) TypeTab
 let getTypeNameString (t : type_) =
   match t with
   | { t = TStruct { path; _ }; _ } -> path
-  | _ -> failwith "This is not a struct"
+  | { t = TInt; _ } -> "int"
+  | _ -> failwith ("This is not a struct: " ^ Pla.print (Prog.Print.print_type_ t))
 
 
 let rec getAllStructTypes (t : type_) =
@@ -212,6 +213,18 @@ let serializerForType (t : type_) =
   | { t = TArray _; _ } -> failwith "serializerForType: array"
   | { t = TTuple _; _ } -> failwith "serializerForType: tuple"
   | { t = TStruct { path; _ }; _ } -> path ^ "_serialize_data"
+
+
+let deserializerForType (t : type_) =
+  match t with
+  | { t = TInt | TFix16 | TBool; _ } -> "deserialize_int"
+  | { t = TReal; _ } -> "deserialize_float"
+  | { t = TString; _ } -> "deserialize_string"
+  | { t = TEmptyType; _ } -> failwith "deserializerForType: void"
+  | { t = TVoid _; _ } -> failwith "deserializerForType: void"
+  | { t = TArray _; _ } -> failwith "deserializerForType: array"
+  | { t = TTuple _; _ } -> failwith "deserializerForType: tuple"
+  | { t = TStruct { path; _ }; _ } -> path ^ "_deserialize_data"
 
 
 let callPush push this_type member t loc =
@@ -424,6 +437,32 @@ let createDeserializer table (stmt : top_stmt) =
                 Some (C.sblock [ search_stmt; found_index [ decl; search_type; call_deserializer ] ])
               | { t = TVoid _; _ } -> None
               | { t = TEmptyType; _ } -> None
+              (*  array of builtin types *)
+              | { t = TArray (Some n, ({ t = TInt | TReal | TString | TBool | TFix16; _ } as at)); _ } ->
+                let () = incr tick in
+                let iter_name = "i_" ^ string_of_int !tick in
+                let () = incr tick in
+                let iter_decl = C.sdecl_bind iter_name (C.eint 0) C.int_t in
+                let iter_id = C.eid iter_name C.int_t in
+                let call_deserializer =
+                  C.sbind
+                    (C.lindex (C.lmember lctx name t) iter_id at)
+                    (C.ecall (deserializerForType at) [ buffer; field_index ] C.void_t)
+                in
+                let skip_size =
+                  C.sbind (C.lid "field_index" C.int_t) (C.ecall "first_array_element" [ buffer; field_index ] C.int_t)
+                in
+                let cond = C.elt iter_id (C.eint n) in
+                let body =
+                  let next_element =
+                    C.sbind (C.lid "field_index" C.int_t) (C.ecall "next_object" [ buffer; field_index ] C.int_t)
+                  in
+                  C.sblock
+                    [ call_deserializer; C.sbind (C.lid iter_name C.int_t) (C.eadd iter_id (C.eint 1)); next_element ]
+                in
+                let loop = C.swhile cond body in
+                Some (C.sblock [ search_stmt; found_index ((skip_size :: iter_decl) @ [ loop ]) ])
+              (* array of structs *)
               | { t = TArray (Some n, at); _ } ->
                 let field_descr = "field_descr_" ^ string_of_int !tick in
                 let () = incr tick in
@@ -440,7 +479,7 @@ let createDeserializer table (stmt : top_stmt) =
                 let call_deserializer =
                   C.sbind_wild
                     (C.ecall
-                       (getTypeNameString at ^ "_deserialize_data")
+                       (deserializerForType at)
                        [ buffer
                        ; C.eid field_descr typedescr_type
                        ; field_index

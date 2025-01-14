@@ -3,4 +3,3 @@ margin=120
 leading-nested-match-parens=false
 if-then-else=fit-or-vertical
 let-binding-spacing=sparse
-version=0.26.2

@@ -832,7 +832,7 @@ let passes =
 
 
 let rec apply env state prog n =
-  if n > 10 then
+  if n > 20 then
     failwith "too many repeats"
   else (
     match prog with
@@ -857,7 +857,7 @@ let run args (prog : prog) : prog =
 
 let simplifyExp (e : exp) : exp =
   let rec loop n env state e =
-    if n > 10 then
+    if n > 20 then
       failwith "too many repeats"
     else (
       let state, e = Mapper.exp passes env state e in

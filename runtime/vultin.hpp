@@ -283,8 +283,16 @@ void serialize_data(CustomBuffer &buffer,
 template <typename DATA>
 void deserialize_data(CustomBuffer &buffer, void (*deserializer)(CustomBuffer &, CustomTypeDescr &, int32_t, DATA &),
                       std::string type_name, DATA &data) {
+
+  buffer.error = false;
+  buffer.calculate_size = false;
   // search the information about the type
   CustomTypeDescr descr = search_type_description(buffer, type_name);
+
+  if (descr.position < 0) {
+    buffer.error = true;
+    return;
+  }
   // skip the type descriptions
   int32_t data_index = goto_data(buffer);
   // call the deserializer

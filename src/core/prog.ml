@@ -463,6 +463,7 @@ module C = struct
   let earray ?(loc = Loc.default) elems t = { e = EArray elems; t; loc }
   let lid ?(loc = Loc.default) id t = { l = LId id; t; loc }
   let lindex ?(loc = Loc.default) e index t = { l = LIndex { e; index }; t; loc }
+  let lmember ?(loc = Loc.default) e index t = { l = LMember (e, index); t; loc }
   let sbind_wild ?(loc = Loc.default) (e : exp) = { s = StmtBind ({ l = LWild; t = e.t; loc }, e); loc }
   let sbind ?(loc = Loc.default) (l : lexp) (e : exp) = { s = StmtBind (l, e); loc }
   let sdecl ?(loc = Loc.default) ?(size = None) ?init id t = { s = StmtDecl (did ~loc ~size id t, init); loc }
