@@ -539,6 +539,8 @@ module Builtin = struct
     @@ fun env state (e : exp) ->
     match e with
     | { e = ECall { path = "pi"; args = [] }; _ } -> reapply state, { e with e = EReal Float.pi }
+    | { e = ECall { path = "exp"; args = [ { e = EReal v; _ } ] }; _ } -> reapply state, { e with e = EReal (exp v) }
+    | { e = ECall { path = "exp"; args = [ { e = EFixed v; _ } ] }; _ } -> reapply state, { e with e = EFixed (exp v) }
     | { e = ECall { path = "sqrt"; args = [ { e = EReal v; _ } ] }; _ } -> reapply state, { e with e = EReal (sqrt v) }
     | { e = ECall { path = "sqrt"; args = [ { e = EFixed v; _ } ] }; _ } ->
       reapply state, { e with e = EFixed (sqrt v) }
