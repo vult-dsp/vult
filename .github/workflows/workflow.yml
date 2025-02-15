@@ -35,7 +35,7 @@ jobs:
 
       - run: opam install . --deps-only
 
-      - run: opam exec -- make
+      - run: opam exec -- make compiler jscompiler
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
