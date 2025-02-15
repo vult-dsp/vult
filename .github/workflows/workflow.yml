@@ -41,10 +41,10 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: _build/default/vult.exe
+          subject-path: _build/default/src/vult.exe
 
       - name: Upload the build artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}-${{ matrix.ocaml-compiler }}-vult.exe
-          path: _build/default/vult.exe
+          path: _build/default/src/vult.exe
