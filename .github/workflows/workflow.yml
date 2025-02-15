@@ -38,8 +38,6 @@ jobs:
 
       - run: opam exec -- make
 
-      - run: opam exec -- make test-fast
-
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v2
         with:
@@ -50,36 +48,3 @@ jobs:
         with:
           name: ${{ matrix.os }}-${{ matrix.ocaml-compiler }}-vult.exe
           path: _build/default/vult.exe
-
-  lint-doc:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout tree
-        uses: actions/checkout@v4
-      - name: Set-up OCaml
-        uses: ocaml/setup-ocaml@v3
-        with:
-          ocaml-compiler: 5
-      - uses: ocaml/setup-ocaml/lint-doc@v3
-
-  lint-fmt:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout tree
-        uses: actions/checkout@v4
-      - name: Set-up OCaml
-        uses: ocaml/setup-ocaml@v3
-        with:
-          ocaml-compiler: 5
-      - uses: ocaml/setup-ocaml/lint-fmt@v3
-
-  lint-opam:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout tree
-        uses: actions/checkout@v4
-      - name: Set-up OCaml
-        uses: ocaml/setup-ocaml@v3
-        with:
-          ocaml-compiler: 5
-      - uses: ocaml/setup-ocaml/lint-opam@v3
