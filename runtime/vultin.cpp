@@ -382,7 +382,9 @@ int32_t goto_data(CustomBuffer &buffer) {
 int32_t deserialize_int(CustomBuffer &buffer, int32_t index) {
   // Check the tag
   if (read_byte(buffer, index) == SMALL_INT_TAG) {
-    return read_byte(buffer, index + 1);
+    uint8_t svalue = read_byte(buffer, index + 1);
+    int8_t *ptr = (int8_t *)&svalue;
+    return *ptr;
   } else if (read_byte(buffer, index) == INT_TAG) {
     uint8_t data[4];
     int32_t *ptr = (int32_t *)&data;
