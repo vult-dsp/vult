@@ -40,7 +40,7 @@ let isSmall stmts =
   let rec loop size stmts =
     if size > threshold then
       size
-    else (
+    else
       match stmts with
       | [] -> size
       | { s = StmtDecl (_, None); _ } :: t -> loop size t
@@ -62,7 +62,7 @@ let isSmall stmts =
       | { s = StmtBind _; _ } :: t -> loop (size + 1) t
       | { s = StmtSwitch (_, cases, _); _ } :: t ->
         let n = List.fold_left (fun n (_, body) -> n + loop 0 [ body ]) 0 cases in
-        loop (size + 1 + n) t)
+        loop (size + 1 + n) t
   in
   let size = loop 0 stmts in
   size <= threshold
@@ -71,7 +71,10 @@ let isSmall stmts =
 let isPowerOfTwo f =
   let n = f *. float_of_int 0x00010000 in
   let l = Float.log2 n in
-  if l = floor l then Some (int_of_float (floor l) - 16) else None
+  if l = floor l then
+    Some (int_of_float (floor l) - 16)
+  else
+    None
 
 
 let rec isBuiltinType (t : type_) =
@@ -161,7 +164,12 @@ let rec print_exp state (prec : operator option) (e : exp) =
   match e.e with
   | EEmptyValue -> Pla.string "nullptr"
   | EUnit -> Pla.string ""
-  | EBool v -> Pla.string (if v then "true" else "false")
+  | EBool v ->
+    Pla.string
+      (if v then
+         "true"
+       else
+         "false")
   | EInt n -> {%pla|<#n#i>|}
   | EReal n ->
     let n = Util.Vfloat.adapt n in
@@ -286,7 +294,12 @@ let print_member state (n, (t : type_), _, _) =
 
 
 let print_arg state i ({ name; t; const; _ } : param) =
-  let const = if const then Pla.string "const " else Pla.unit in
+  let const =
+    if const then
+      Pla.string "const "
+    else
+      Pla.unit
+  in
   match t.t with
   | TArray (_, { t = TArray _; _ }) -> failwith "array of arrays are not implemented"
   | TArray (Some dim, ({ t = TStruct _; _ } as sub)) ->
@@ -464,9 +477,9 @@ let print_function_def state (def : function_def) =
   let template_args =
     def.args
     |> List.mapi (fun i (arg : param) ->
-      match arg.t with
-      | { t = TArray (None, _); _ } -> Some ("std::size_t SIZE_" ^ string_of_int i)
-      | _ -> None)
+           match arg.t with
+           | { t = TArray (None, _); _ } -> Some ("std::size_t SIZE_" ^ string_of_int i)
+           | _ -> None)
     |> List.filter_map (fun v -> v)
   in
   let template_decl =
@@ -485,19 +498,19 @@ let print_top_stmt state ~allow_inline (target : target) t =
   | TopFunction (def, body), Header ->
     let inline = (allow_inline && isSmall [ body ]) || isTemplate def.args in
     let template, def = print_function_def state def in
-    if inline then (
+    if inline then
       let body = print_block state body in
-      {%pla|<#template#>static_inline <#def#> <#body#><#><#>|})
+      {%pla|<#template#>static_inline <#def#> <#body#><#><#>|}
     else
       {%pla|<#def#>;<#><#>|}
   | TopFunction (def, body), Implementation ->
     let inline = (allow_inline && isSmall [ body ]) || isTemplate def.args in
     if inline then
       Pla.unit
-    else (
+    else
       let template, def = print_function_def state def in
       let body = print_block state body in
-      {%pla|<#template#><#def#> <#body#><#><#>|})
+      {%pla|<#template#><#def#> <#body#><#><#>|}
   | TopFunction _, _ -> Pla.unit
   | TopExternal (def, None), Header ->
     let template, def = print_function_def state def in

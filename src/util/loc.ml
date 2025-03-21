@@ -38,8 +38,11 @@ type t =
   }
 
 let pp fmt _ = Format.pp_print_string fmt "loc"
+
 let equal _ _ = true
+
 let compare _ _ = 0
+
 let default = { start_pos = dummy_pos; end_pos = dummy_pos; source = Text "" }
 
 (** [isSamePos p1 p2] returns true if the positions are equal *)
@@ -68,7 +71,10 @@ let line (location : t) : int = location.start_pos.pos_lnum
 
 let compareLoc (loc1 : t) (loc2 : t) =
   let o = compare (line loc1) (line loc2) in
-  if o = 0 then compare (startColumn loc1) (startColumn loc2) else o
+  if o = 0 then
+    compare (startColumn loc1) (startColumn loc2)
+  else
+    o
 
 
 (** Returns a simple string representation of the location *)
@@ -99,7 +105,10 @@ let getNext (loc : t) : t =
 (** Returns the minimal position of two given *)
 let getMinPosition (pos1 : Lexing.position) (pos2 : Lexing.position) : Lexing.position =
   if pos1.Lexing.pos_lnum <> pos2.Lexing.pos_lnum then
-    if pos1.Lexing.pos_lnum < pos2.Lexing.pos_lnum then pos1 else pos2
+    if pos1.Lexing.pos_lnum < pos2.Lexing.pos_lnum then
+      pos1
+    else
+      pos2
   else if pos1.Lexing.pos_cnum < pos2.Lexing.pos_cnum then
     pos1
   else
@@ -109,7 +118,10 @@ let getMinPosition (pos1 : Lexing.position) (pos2 : Lexing.position) : Lexing.po
 (** Returns the maximum position of two given *)
 let getMaxPosition (pos1 : Lexing.position) (pos2 : Lexing.position) : Lexing.position =
   if pos1.Lexing.pos_lnum <> pos2.Lexing.pos_lnum then
-    if pos1.Lexing.pos_lnum < pos2.Lexing.pos_lnum then pos2 else pos1
+    if pos1.Lexing.pos_lnum < pos2.Lexing.pos_lnum then
+      pos2
+    else
+      pos1
   else if pos1.Lexing.pos_cnum < pos2.Lexing.pos_cnum then
     pos2
   else
@@ -130,9 +142,9 @@ let merge (loc1 : t) (loc2 : t) : t =
     loc2
   else if loc2 = default then
     loc1
-  else (
+  else
     let start_pos, end_pos = getMinMaxPositions [ loc1.start_pos; loc2.start_pos; loc1.end_pos; loc2.end_pos ] in
-    { start_pos; end_pos; source = loc1.source })
+    { start_pos; end_pos; source = loc1.source }
 
 
 let merge3 (loc1 : t) (loc2 : t) (loc3 : t) : t = merge (merge loc1 loc2) loc3

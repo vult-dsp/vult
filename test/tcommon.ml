@@ -25,6 +25,7 @@
 open Util.Args
 
 let initial_dir = Sys.getcwd ()
+
 let tmp_dir = Filename.get_temp_dir_name ()
 
 let call_uname () =

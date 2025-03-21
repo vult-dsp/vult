@@ -36,7 +36,12 @@ let implPre (args : Util.Args.args) : Pla.t =
 
 
 let implPost (args : Util.Args.args) : Pla.t =
-  let real = if args.real = Fixed then "fx" else "fl" in
+  let real =
+    if args.real = Fixed then
+      "fx"
+    else
+      "fl"
+  in
   let module_name =
     match args.files with
     | Util.Args.File s :: _ -> Pparser.Parse.moduleName s

@@ -55,10 +55,15 @@ let showResult (args : args) (output : output) =
 
 
 let generateCode args file_deps (stmts, vm, acc) =
-  if args.code <> NoCode || args.dcode then (
+  if args.code <> NoCode || args.dcode then
     let stmts = Util.Profile.time "Generate Tables" (fun () -> Tables.create args vm stmts) in
     let stmts = Util.Profile.time "Convert" (fun () -> Tocode.prog args stmts) in
-    let prog_out = if args.dcode then [ Prog (Pla.print (Prog.Print.print_prog stmts)) ] else [] in
+    let prog_out =
+      if args.dcode then
+        [ Prog (Pla.print (Prog.Print.print_prog stmts)) ]
+      else
+        []
+    in
     let code =
       match args.code with
       | NoCode -> []
@@ -69,7 +74,7 @@ let generateCode args file_deps (stmts, vm, acc) =
       | JSCode -> failwith "Javascript generator not implemented yet"
       | JavaCode -> failwith "Javascript generator not implemented yet"
     in
-    (GeneratedCode code :: prog_out) @ acc)
+    (GeneratedCode code :: prog_out) @ acc
   else
     acc
 
@@ -77,9 +82,19 @@ let generateCode args file_deps (stmts, vm, acc) =
 let compileCode (args : args) env stmts : Prog.top_stmt list * Vm.Interpreter.t * output list =
   let env, stmts = Toprog.convert args env stmts in
   let stmts = Util.Profile.time "Passes" (fun () -> Passes.run args stmts) in
-  let prog_out = if args.dprog then [ Prog (Pla.print (Prog.Print.print_prog stmts)) ] else [] in
+  let prog_out =
+    if args.dprog then
+      [ Prog (Pla.print (Prog.Print.print_prog stmts)) ]
+    else
+      []
+  in
   let vm, bytecode = Util.Profile.time "Create VM" (fun () -> Vm.Interpreter.createVm stmts) in
-  let bc_out = if args.dbytecode then [ Byte (Pla.print (Vm.Compile.print_bytecode bytecode)) ] else [] in
+  let bc_out =
+    if args.dbytecode then
+      [ Byte (Pla.print (Vm.Compile.print_bytecode bytecode)) ]
+    else
+      []
+  in
   let run =
     match args.eval with
     | Some e ->
@@ -96,7 +111,8 @@ let driver (args : args) : output list =
   try
     if args.show_version then
       [ Version version ]
-    else ((* Parse the files *)
+    else
+      (* Parse the files *)
       match args.files with
       | [] -> [ Message ("vult " ^ version ^ " - https://github.com/vult-dsp/vult\nno input files") ]
       | _ ->
@@ -105,12 +121,12 @@ let driver (args : args) : output list =
           List.map (fun r -> r.Parse.file) parsed |> fun s -> [ Dependencies s ]
         else if args.dparse then
           List.map (fun (r : Parse.parsed_file) -> ParsedCode (Syntax.Print.print r.stmts)) parsed
-        else (
+        else
           let env, stmts = Util.Profile.time "Inference" (fun () -> Inference.infer args parsed) in
           if args.dtyped then
             [ Typed (Pla.print (Typed.print_prog stmts)) ]
           else
-            compileCode args env stmts |> generateCode args file_deps))
+            compileCode args env stmts |> generateCode args file_deps
   with
   | Error.Errors errors when args.debug = false -> [ Errors errors ]
 
@@ -119,5 +135,6 @@ let main () =
   let args = processArguments () in
   let results = driver args in
   List.iter (showResult args) results;
-  if args.profile then Util.Profile.show ();
+  if args.profile then
+    Util.Profile.show ();
   exit 0

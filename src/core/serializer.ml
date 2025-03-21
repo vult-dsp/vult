@@ -26,13 +26,21 @@ module TypeTable = CCMap.Make (String)
 module TypeSet = CCSet.Make (String)
 
 let buffer_name = "CustomBuffer"
+
 let typdescr_name = "CustomTypeDescr"
+
 let push_block_header = "push_block_header"
+
 let push_array = "push_array"
+
 let update_size = "update_size"
+
 let push_int = "push_int"
+
 let push_float = "push_float"
+
 let push_string = "push_string"
+
 let search_field_name = "search_field_name"
 
 let rec getTypeDep (t : type_) =
@@ -52,14 +60,14 @@ let typeDependencyTable (prog : prog) =
     | { top = TopAlias { path; alias_of }; _ } :: t ->
       if TypeSet.mem path visited then
         loop table visited t
-      else (
+      else
         let visited = TypeSet.add path visited in
         let table = TypeTable.add path (None, false, [ alias_of ]) table in
-        loop table visited t)
+        loop table visited t
     | { top = TopType ({ path; members; _ } as h); _ } :: t ->
       if TypeSet.mem path visited then
         loop table visited t
-      else (
+      else
         let deps =
           members
           |> List.map (fun (_, (t : type_), _, _) -> getTypeDep t)
@@ -70,7 +78,7 @@ let typeDependencyTable (prog : prog) =
         let save = saveAnyMember members in
         let visited = TypeSet.add path visited in
         let table = TypeTable.add path (Some h, save, deps) table in
-        loop table visited t)
+        loop table visited t
     | _ :: t -> loop table visited t
   in
   loop TypeTable.empty TypeSet.empty prog
@@ -113,12 +121,12 @@ let propagateSaveTag (table : (struct_descr option * bool * string list) TypeTab
               match Pparser.Ptags.getArguments tags "save" with
               | None ->
                 (* the member has no "save" tag, if the type of the member has it, add the tag to the member *)
-                if shouldSaveType table t then (
+                if shouldSaveType table t then
                   let tag =
                     Pparser.Ptags.
                       { g = TagCall { name = "save"; args = [ "name", { g = TagString name; loc }, loc ] }; loc }
                   in
-                  true, (name, t, tag :: tags, loc) :: members)
+                  true, (name, t, tag :: tags, loc) :: members
                 else
                   save, (name, t, tags, loc) :: members
               | Some [] ->
@@ -167,18 +175,21 @@ let collectFullySavedTypes (stmts : top_stmt list) =
             TypeSet.add_list
               set
               (List.flatten
-               @@ List.filter_map
-                    (fun (_, (t : type_), tags, _) ->
-                      if Pparser.Ptags.has tags "save" then
-                        Some (getAllStructTypes t)
-                      else
-                        None)
-                    members)
+              @@ List.filter_map
+                   (fun (_, (t : type_), tags, _) ->
+                     if Pparser.Ptags.has tags "save" then
+                       Some (getAllStructTypes t)
+                     else
+                       None)
+                   members)
           | _ -> set)
         set
         stmts
     in
-    if TypeSet.cardinal set <> TypeSet.cardinal new_set then loop new_set else new_set
+    if TypeSet.cardinal set <> TypeSet.cardinal new_set then
+      loop new_set
+    else
+      new_set
   in
   loop TypeSet.empty
 
@@ -193,9 +204,9 @@ let tagAllMembers fully_saved (stmts : top_stmt list) =
             (fun (name, t, tags, loc) ->
               if Pparser.Ptags.has tags "save" then
                 name, t, tags, loc
-              else (
+              else
                 let tag = Pparser.Ptags.{ g = TagId "save"; loc } in
-                name, t, tag :: tags, loc))
+                name, t, tag :: tags, loc)
             members
         in
         { stmt with top = TopType { path; members } }
@@ -248,7 +259,7 @@ let createSerializer table (stmt : top_stmt) =
   match stmt with
   | { top = TopType { path; _ }; loc } ->
     let s, save, _, _ = TypeTable.find path table in
-    if save && s <> None then (
+    if save && s <> None then
       let s = Option.get s in
       let name = s.path ^ "_serialize_data" in
       let this_type = { t = TStruct s; loc; const = true } in
@@ -266,7 +277,7 @@ let createSerializer table (stmt : top_stmt) =
         let tick = ref 0 in
         CCList.filter_map
           (fun (name, (t : type_), tags, loc) ->
-            if Pparser.Ptags.has tags "save" then (
+            if Pparser.Ptags.has tags "save" then
               match t with
               | { t = TInt | TFix16; _ } -> callPush push_int this_type name t loc
               | { t = TReal; _ } -> callPush push_float this_type name t loc
@@ -304,7 +315,7 @@ let createSerializer table (stmt : top_stmt) =
                 let loop = { s = StmtWhile (C.elt iter_exp (C.eint size), body); loc } in
                 Some { s = StmtBlock [ start_decl; start_bind; iter_decl; push_array; loop; update_array ]; loc }
               | { t = TArray (None, _t); _ } -> failwith "Serializing array with unknonw size"
-              | { t = TTuple _; _ } -> failwith "serialization of tuple")
+              | { t = TTuple _; _ } -> failwith "serialization of tuple"
             else
               None)
           s.members
@@ -333,12 +344,12 @@ let createSerializer table (stmt : top_stmt) =
         ( [ C.param ~loc "buffer" buffer_type; C.param ~loc "index" C.int_t; C.param ~loc ~const:true "_ctx" this_type ]
         , ([ buffer_type; C.int_t; this_type ], C.int_t) )
       in
-      Some { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc })
+      Some { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
     else
       None
   | { top = TopAlias { path; alias_of; _ }; loc } ->
     let _, save, _, _ = TypeTable.find path table in
-    if save then (
+    if save then
       let name = path ^ "_serialize_data" in
       let name_alias = alias_of ^ "_serialize_data" in
       let this_type = { t = TStruct { path; members = [] }; loc; const = true } in
@@ -354,7 +365,7 @@ let createSerializer table (stmt : top_stmt) =
         ( [ C.param ~loc "buffer" buffer_type; C.param ~loc "index" C.int_t; C.param ~loc ~const:true "_ctx" this_type ]
         , ([ buffer_type; C.int_t; this_type ], C.int_t) )
       in
-      Some { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc })
+      Some { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
     else
       None
   | _ -> None
@@ -364,7 +375,7 @@ let createDeserializer table (stmt : top_stmt) =
   match stmt with
   | { top = TopType { path; _ }; loc } ->
     let s, save, _, _ = TypeTable.find path table in
-    if save && s <> None then (
+    if save && s <> None then
       let s = Option.get s in
       let name = s.path ^ "_deserialize_data" in
       let this_type = { t = TStruct s; loc; const = false } in
@@ -408,7 +419,7 @@ let createDeserializer table (stmt : top_stmt) =
               ; loc
               }
             in
-            if Pparser.Ptags.has tags "save" then (
+            if Pparser.Ptags.has tags "save" then
               match t with
               | { t = TInt | TFix16; _ } ->
                 Some { s = StmtBlock [ search_stmt; found_index [ callDeserializer "deserialize_int" ] ]; loc }
@@ -501,7 +512,7 @@ let createDeserializer table (stmt : top_stmt) =
                 let loop = C.swhile cond body in
                 Some (C.sblock [ decl; search_type; search_stmt; found_index ((skip_size :: iter_decl) @ [ loop ]) ])
               | { t = TArray _; _ } -> failwith "deserialization of array with unknow dimensions"
-              | { t = TTuple _; _ } -> failwith "deserialization of tuple")
+              | { t = TTuple _; _ } -> failwith "deserialization of tuple"
             else
               None)
           s.members
@@ -516,7 +527,7 @@ let createDeserializer table (stmt : top_stmt) =
           ]
         , ([ buffer_type; C.int_t; this_type ], C.void_t) )
       in
-      Some { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc })
+      Some { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
     else
       None
   (*
@@ -546,7 +557,7 @@ let createTypeDescriptor n_types table (stmt : top_stmt) =
   match stmt with
   | { top = TopType { path; _ }; loc } ->
     let s, save, deps, n_type = TypeTable.find path table in
-    if save && s <> None then (
+    if save && s <> None then
       let s = Option.get s in
       let name = path ^ "_serialize_type_descr" in
       let buffer_type = { t = TStruct { path = buffer_name; members = [] }; loc; const = true } in
@@ -589,7 +600,7 @@ let createTypeDescriptor n_types table (stmt : top_stmt) =
         ( [ C.param ~loc "buffer" buffer_type; C.param ~loc "index" C.int_t; C.param ~loc "marks" marks_type ]
         , ([ buffer_type; C.int_t ], C.int_t) )
       in
-      Some { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc })
+      Some { top = TopFunction ({ name; args; t; loc; tags = []; info = default_info }, body); loc }
     else
       None
   | _ -> None
@@ -615,7 +626,16 @@ let createSerializers (prog : prog) =
   in
   *)
   let table = propagateSaveTag table in
-  let n_types = TypeTable.fold (fun _ (_, _, _, n) acc -> if n >= 0 then acc + 1 else acc) table 0 in
+  let n_types =
+    TypeTable.fold
+      (fun _ (_, _, _, n) acc ->
+        if n >= 0 then
+          acc + 1
+        else
+          acc)
+      table
+      0
+  in
   let serializers = CCList.filter_map (fun stmt -> createSerializer table stmt) prog in
   let deserializers = CCList.filter_map (fun stmt -> createDeserializer table stmt) prog in
   let descriptors = CCList.filter_map (fun stmt -> createTypeDescriptor n_types table stmt) prog in

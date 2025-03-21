@@ -48,15 +48,22 @@ let stringSplit (sep : string) (s : string) : string list = Str.split (Str.regex
 
 (** Longest Common Sequence *)
 let lcs xs' ys' =
-  let longest xs ys = if List.length xs > List.length ys then xs else ys in
-  let xs = Array.of_list xs'
-  and ys = Array.of_list ys' in
-  let n = Array.length xs
-  and m = Array.length ys in
+  let longest xs ys =
+    if List.length xs > List.length ys then
+      xs
+    else
+      ys
+  in
+  let xs = Array.of_list xs' and ys = Array.of_list ys' in
+  let n = Array.length xs and m = Array.length ys in
   let a = Array.make_matrix (n + 1) (m + 1) [] in
   for i = n - 1 downto 0 do
     for j = m - 1 downto 0 do
-      a.(i).(j) <- (if xs.(i) = ys.(j) then xs.(i) :: a.(i + 1).(j + 1) else longest a.(i).(j + 1) a.(i + 1).(j))
+      a.(i).(j) <-
+        (if xs.(i) = ys.(j) then
+           xs.(i) :: a.(i + 1).(j + 1)
+         else
+           longest a.(i).(j + 1) a.(i + 1).(j))
     done
   done;
   a.(0).(0)
@@ -122,14 +129,14 @@ let equalToken t1 t2 =
     let result =
       if abs_float f2 < 1e-4 && abs_float f1 < 1e-4 then
         true
-      else (
+      else
         let delta = abs_float (f1 -. f2) in
-        delta < 1e-4)
+        delta < 1e-4
     in
     let () =
-      if not result then (
+      if not result then
         let msg = Printf.sprintf "diff %f %f\n" f1 f2 in
-        prerr_endline msg)
+        prerr_endline msg
     in
     result
   | Int n1, Int n2 when n1 = n2 -> true

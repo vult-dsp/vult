@@ -31,27 +31,29 @@ open Tcommon;;
 Util.Vfloat.reduce_precision := true
 
 let test_directory = Filename.concat initial_dir "test"
+
 let in_test_directory path = Filename.concat test_directory path
+
 let in_tmp_dir path = Filename.concat tmp_dir path
 
 (** checks if node can be called with flag -c *)
 let has_node =
-  if tryToRun ("node -c " ^ in_test_directory "other/test.js") then (
+  if tryToRun ("node -c " ^ in_test_directory "other/test.js") then
     let () = print_endline "Js syntax will be checked" in
-    true)
-  else (
+    true
+  else
     let () = print_endline "Js syntax will not be checked" in
-    false)
+    false
 
 
 (** checks if luajit can be called *)
 let has_lua =
-  if tryToRun ("luajit -bl " ^ in_test_directory "other/test.lua" ^ " > out") then (
+  if tryToRun ("luajit -bl " ^ in_test_directory "other/test.lua" ^ " > out") then
     let () = print_endline "Lua syntax will be checked" in
-    true)
-  else (
+    true
+  else
     let () = print_endline "Lua syntax will not be checked" in
-    false)
+    false
 
 
 let has_wl = false
@@ -236,7 +238,12 @@ let includes =
 
 
 let test_random_code =
-  let rec loop n = if n > 0 then Printf.sprintf "test%i.vult" n :: loop (n - 1) else [] in
+  let rec loop n =
+    if n > 0 then
+      Printf.sprintf "test%i.vult" n :: loop (n - 1)
+    else
+      []
+  in
   loop 1
 
 
@@ -264,18 +271,18 @@ let read file =
 
 let readOutputAndReference (create : bool) (outdir : string) (output, reference) =
   let output_txt =
-    if Sys.file_exists output then (
+    if Sys.file_exists output then
       let contents = read output in
       let () = Sys.remove output in
-      contents)
+      contents
     else
       assert_failure (Printf.sprintf "The file '%s' was not generated" output)
   in
   let reference = Filename.concat outdir (Filename.basename reference) in
   let reference_txt =
-    if create then (
+    if create then
       let () = write reference output_txt in
-      output_txt)
+      output_txt
     else if Sys.file_exists reference then
       read reference
     else
@@ -288,9 +295,9 @@ let readOutputAndReference (create : bool) (outdir : string) (output, reference)
 let readReference (update : bool) (ext : string) (contents : string) (file : string) (outdir : string) : string =
   let basefile = Filename.chop_extension (Filename.basename file) in
   let ref_file = Filename.concat outdir (basefile ^ "." ^ ext) in
-  if update then (
+  if update then
     let () = write ref_file contents in
-    contents)
+    contents
   else if Sys.file_exists ref_file then
     read ref_file
   else
@@ -299,7 +306,10 @@ let readReference (update : bool) (ext : string) (contents : string) (file : str
 
 (** Asserts if the file does not exists *)
 let checkFile (filename : string) : string =
-  if Sys.file_exists filename then filename else assert_failure (Printf.sprintf "The file '%s' does not exits" filename)
+  if Sys.file_exists filename then
+    filename
+  else
+    assert_failure (Printf.sprintf "The file '%s' does not exits" filename)
 
 
 let showResults (result : Pparser.Parse.parsed_file) : string = Pparser.Syntax.Print.print result.stmts
@@ -403,7 +413,8 @@ module RandomCompileTest = struct
         file
         basename
     in
-    if Sys.command cmd <> 0 then assert_failure ("Failed to compile " ^ file)
+    if Sys.command cmd <> 0 then
+      assert_failure ("Failed to compile " ^ file)
 
 
   let generateCPP (filename : string) (output : string) : unit =
@@ -450,7 +461,8 @@ let callCompiler (file : string) : unit =
       file
       basename
   in
-  if Sys.command cmd <> 0 then assert_failure ("Failed to compile " ^ file)
+  if Sys.command cmd <> 0 then
+    assert_failure ("Failed to compile " ^ file)
 
 
 let compileCppFile ext (file : string) : unit =
@@ -468,7 +480,8 @@ module CliTest = struct
     Sys.chdir tmp_dir;
     assert_bool "No code generated" (Sys.file_exists (output ^ ".js"));
     let cmd = "node -c " ^ output ^ ".js" in
-    if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file);
+    if Sys.command cmd <> 0 then
+      assert_failure ("Failed to check " ^ file);
     Sys.chdir initial_dir
 
 
@@ -477,7 +490,8 @@ module CliTest = struct
     Sys.chdir tmp_dir;
     assert_bool "No code generated" (Sys.file_exists (output ^ ".lua"));
     let cmd = "luajit -bl " ^ output ^ ".lua > " ^ output ^ ".b" in
-    if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file);
+    if Sys.command cmd <> 0 then
+      assert_failure ("Failed to check " ^ file);
     Sys.remove (output ^ ".b");
     Sys.chdir initial_dir
 
@@ -487,7 +501,8 @@ module CliTest = struct
     Sys.chdir tmp_dir;
     assert_bool ("No code generated for file " ^ output ^ ".wl") (Sys.file_exists (output ^ ".wl"));
     let cmd = "wolframscript -f " ^ output ^ ".wl" in
-    if Sys.command cmd <> 0 then assert_failure ("Failed to check " ^ file);
+    if Sys.command cmd <> 0 then
+      assert_failure ("Failed to check " ^ file);
     Sys.chdir initial_dir
 
 
@@ -508,7 +523,12 @@ module CliTest = struct
     let flags, ext = getFlags code_type in
     let includes_flags = List.map (fun a -> "-i " ^ a) includes |> String.concat " " in
     let flags = flags ^ " " ^ includes_flags in
-    let vultc = if compiler = Node then "node ./vult.js" else "./_build/default/src/vult.exe" in
+    let vultc =
+      if compiler = Node then
+        "node ./vult.js"
+      else
+        "./_build/default/src/vult.exe"
+    in
     let cmd = vultc ^ " -test " ^ flags ^ " -o " ^ basefile ^ " " ^ fullfile in
     let generated_files =
       match Sys.command cmd with
@@ -520,9 +540,15 @@ module CliTest = struct
       match code_type with
       | "fixed" | "float" -> compileCppFile ".cpp" fullfile
       | "c" -> compileCppFile ".c" fullfile
-      | "js" -> if has_node then checkJsFile fullfile
-      | "lua" -> if has_lua then checkLuaFile fullfile
-      | "wl" -> if has_wl then checkWLFile fullfile
+      | "js" ->
+        if has_node then
+          checkJsFile fullfile
+      | "lua" ->
+        if has_lua then
+          checkLuaFile fullfile
+      | "wl" ->
+        if has_wl then
+          checkWLFile fullfile
       | _ -> ()
     in
     generated_files

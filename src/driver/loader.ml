@@ -163,10 +163,13 @@ let rec findModule (includes : string list) (module_name : string) : string opti
     let file1 = Filename.concat h (String.uncapitalize_ascii module_name ^ ".vult") in
     if FileIO.exists file1 then
       Some file1
-    else (
+    else
       (* then checks a file with the same name as the module *)
       let file2 = Filename.concat h (module_name ^ ".vult") in
-      if FileIO.exists file2 then Some file2 else findModule t module_name)
+      if FileIO.exists file2 then
+        Some file2
+      else
+        findModule t module_name
 
 
 (** Returns a list with all the possible directories where files can be found *)
@@ -182,7 +185,13 @@ let getIncludes (arguments : args) (files : input list) : string list =
   in
   (* these are the extra include paths passed in the arguments *)
   let explicit_dir =
-    List.map (fun a -> if Filename.is_relative a then Filename.concat current a else a) arguments.includes
+    List.map
+      (fun a ->
+        if Filename.is_relative a then
+          Filename.concat current a
+        else
+          a)
+      arguments.includes
   in
   List.sort_uniq compare ((current :: implicit_dirs) @ explicit_dir)
 
@@ -195,7 +204,7 @@ let rec loadFiles_loop (includes : string list) file_deps dependencies parsed vi
   | ((File h | Code (h, _)) as input) :: t ->
     (* check that the file has not been visited before *)
     let h_module = Parse.moduleName h in
-    if not (Hashtbl.mem visited h_module) then (
+    if not (Hashtbl.mem visited h_module) then
       let () = Hashtbl.add visited h_module true in
       let h_parsed =
         match input with
@@ -211,7 +220,7 @@ let rec loadFiles_loop (includes : string list) file_deps dependencies parsed vi
       (* updates the tables *)
       let () = Hashtbl.add dependencies h_module h_deps in
       let () = Hashtbl.add file_deps (basename h) (List.map basename h_dep_files) in
-      loadFiles_loop includes file_deps dependencies parsed visited (t @ h_dep_files_input))
+      loadFiles_loop includes file_deps dependencies parsed visited (t @ h_dep_files_input)
     else
       loadFiles_loop includes file_deps dependencies parsed visited t
 
@@ -228,11 +237,12 @@ let rec checkComponents (comps : string list list) : unit =
 
 
 module C = Components.Make (struct
-    type key = string
-    type data = string
+  type key = string
 
-    let get s = s
-  end)
+  type data = string
+
+  let get s = s
+end)
 
 (* Given a list of files, finds and parses all the dependencies and returns the parsed contents in order *)
 let loadFiles (arguments : args) (files : input list) =

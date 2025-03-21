@@ -27,6 +27,7 @@ open Pparser
 type path = Syntax.path
 
 let print_exp_types = false
+
 let print_path (p : path) = Syntax.print_path p
 
 type constness_d =
@@ -57,7 +58,7 @@ type fun_type = type_ list * type_
 let rec compare_type_ (a : type_) (b : type_) =
   if a == b then
     0
-  else (
+  else
     match a.tx, b.tx with
     | TELink a, _ -> compare_type_ a b
     | _, TELink b -> compare_type_ a b
@@ -66,7 +67,7 @@ let rec compare_type_ (a : type_) (b : type_) =
     | TEComposed (n1, e1), TEComposed (n2, e2) -> CCOrd.(string n1 n2 <?> (compare_type_list_, e1, e2))
     | TEOption e1, TEOption e2 -> compare_type_list_ e1 e2
     | TEUnbound n1, TEUnbound n2 -> compare n1 n2
-    | _ -> compare a.tx b.tx)
+    | _ -> compare a.tx b.tx
 
 
 and compare_type_list_ a b = CCOrd.list compare_type_ a b
@@ -201,11 +202,20 @@ let rec print_constness (c : constness) =
 
 
 let rec print_type_ ?(detailed = false) (t : type_) : Pla.t =
-  let prefix pt = if detailed || print_exp_types then Pla.append (print_constness t.const) pt else pt in
+  let prefix pt =
+    if detailed || print_exp_types then
+      Pla.append (print_constness t.const) pt
+    else
+      pt
+  in
   match t.tx with
   | TENoReturn -> Pla.string "noreturn"
   | TELink t -> print_type_ ~detailed t
-  | TEUnbound (Some i) -> if detailed then {%pla|_<#i#i>|} else Pla.string "_"
+  | TEUnbound (Some i) ->
+    if detailed then
+      {%pla|_<#i#i>|}
+    else
+      Pla.string "_"
   | TEUnbound None -> Pla.string "_"
   | TEId p -> prefix @@ print_path p
   | TESize n -> Pla.int n
@@ -221,15 +231,20 @@ let rec print_type_ ?(detailed = false) (t : type_) : Pla.t =
 
 let rec print_exp (e : exp) =
   (fun es ->
-    if print_exp_types then (
+    if print_exp_types then
       let t = print_type_ e.t in
-      {%pla|(<#es#> : <#t#>)|})
+      {%pla|(<#es#> : <#t#>)|}
     else
       es)
   @@
   match e.e with
   | EUnit -> Pla.string "()"
-  | EBool v -> Pla.string (if v then "true" else "false")
+  | EBool v ->
+    Pla.string
+      (if v then
+         "true"
+       else
+         "false")
   | EInt n -> Pla.int n
   | EReal n -> Pla.float n
   | EFixed n -> {%pla|<#n#f>x]|}
@@ -276,9 +291,9 @@ let rec print_exp (e : exp) =
 
 let rec print_lexp (e : lexp) =
   (fun es ->
-    if print_exp_types then (
+    if print_exp_types then
       let t = print_type_ e.t in
-      {%pla|(<#es#> : <#t#>)|})
+      {%pla|(<#es#> : <#t#>)|}
     else
       es)
   @@
@@ -418,6 +433,7 @@ let print_prog prog = Pla.map_sep_all Pla.newline print_top_stmt prog
 
 module C = struct
   let tick = ref 0
+
   let ctick = ref 0
 
   let const () =
@@ -426,6 +442,7 @@ module C = struct
 
 
   let makeId loc id = { tx = TEId { id; n = None; loc }; loc; const = const () }
+
   let path_t loc path = { tx = TEId path; loc; const = const () }
 
   let unbound loc =
@@ -434,27 +451,38 @@ module C = struct
 
 
   let noreturn loc = { tx = TENoReturn; loc; const = const () }
+
   let unit ~loc = makeId loc "unit"
+
   let int ~loc = makeId loc "int"
+
   let bool ~loc = makeId loc "bool"
+
   let string ~loc = makeId loc "string"
+
   let real ~loc = makeId loc "real"
+
   let fix16 ~loc = makeId loc "fix16"
+
   let num loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc ]; loc; const = const () }
+
   let numstr loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; string ~loc ]; loc; const = const () }
+
   let num_bool loc = { tx = TEOption [ real ~loc; int ~loc; fix16 ~loc; bool ~loc ]; loc; const = const () }
+
   let size ?(loc = Loc.default) n = { tx = TESize n; loc; const = const () }
 
   let array ?(fixed = true) ?(loc = Loc.default) ?(size = unbound loc) t =
     let a_dim = { tx = TEComposed ("array", [ t; size ]); loc; const = const () } in
     if fixed then
       a_dim
-    else (
+    else
       let a = { tx = TEComposed ("array", [ t ]); loc; const = const () } in
-      { tx = TEOption [ a; a_dim ]; loc; const = const () })
+      { tx = TEOption [ a; a_dim ]; loc; const = const () }
 
 
   let tuple ?(loc = Loc.default) l = { tx = TEComposed ("tuple", l); loc; const = const () }
+
   let freal_type ?(loc = Loc.default) () = { tx = TEOption [ real ~loc; fix16 ~loc ]; loc; const = const () }
 
   let array_size () : fun_type =
@@ -597,11 +625,17 @@ end
 
 let rec setConstness (c : constness) (v : bool) =
   match c.c with
-  | TEConst i | TEMut i -> c.c <- (if v then TEConst i else TEMut i)
+  | TEConst i | TEMut i ->
+    c.c <-
+      (if v then
+         TEConst i
+       else
+         TEMut i)
   | TECLink c -> setConstness c v
 
 
 let setTypeMut (t : type_) = setConstness t.const false
+
 let setTypeConstness (t : type_) v = setConstness t.const v
 
 let isTypeConst (t : type_) =

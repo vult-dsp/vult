@@ -42,7 +42,12 @@ let errorLocationMessage (location : Loc.t) : string =
 let errorLocationIndicator (line : string) (location : Loc.t) : string =
   let col_start = max (Loc.startColumn location) 0 in
   let col_end = max (Loc.endColumn location) 0 in
-  let pointer = if col_end - col_start <> 0 then String.make (col_end - col_start) '^' else " ^ " in
+  let pointer =
+    if col_end - col_start <> 0 then
+      String.make (col_end - col_start) '^'
+    else
+      " ^ "
+  in
   Printf.sprintf "%s\n%s%s\n" line (String.make col_start ' ') pointer
 
 
@@ -95,7 +100,7 @@ let joinErrors : t list -> t list -> t list = List.append
 
 (** Joins two optional errors *)
 let joinErrorOptions : t list option -> t list option -> t list option =
-  fun maybeErr1 maybeErr2 ->
+ fun maybeErr1 maybeErr2 ->
   match maybeErr1, maybeErr2 with
   | (Some _ as ret), None -> ret
   | None, (Some _ as ret) -> ret
@@ -107,5 +112,7 @@ let joinErrorOptions : t list option -> t list option -> t list option =
 let joinErrorOptionsList : t list option list -> t list option = List.fold_left joinErrorOptions None
 
 let makeError (msg : string) (loc : Loc.t) = PointedError (loc, msg)
+
 let raiseError (msg : string) (loc : Loc.t) = raise (Errors [ makeError msg loc ])
+
 let raiseErrorMsg (msg : string) = raise (Errors [ SimpleError msg ])

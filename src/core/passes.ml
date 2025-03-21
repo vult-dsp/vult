@@ -281,7 +281,12 @@ module IfExpressions = struct
     @@ fun env state (e : exp) ->
     match e with
     (* Evaluates if-expressions with constant condition *)
-    | { e = EIf { cond = { e = EBool cond; _ }; then_; else_ }; _ } -> reapply state, if cond then then_ else else_
+    | { e = EIf { cond = { e = EBool cond; _ }; then_; else_ }; _ } ->
+      ( reapply state
+      , if cond then
+          then_
+        else
+          else_ )
     (* Bind if-expressions to a variable in function context *)
     | { e = EIf _; t; loc } when (not env.in_if_exp) && (not env.bound_if) && env.in_function ->
       let tick = getTick env state in
@@ -294,7 +299,11 @@ module IfExpressions = struct
     | _ -> state, e
 
 
-  let mapper enabled = if enabled = Enabled then { Mapper.identity with stmt; exp; stmt_env } else Mapper.identity
+  let mapper enabled =
+    if enabled = Enabled then
+      { Mapper.identity with stmt; exp; stmt_env }
+    else
+      Mapper.identity
 end
 
 module LiteralRecords = struct
@@ -338,7 +347,10 @@ module LiteralRecords = struct
 
 
   let mapper enabled =
-    if enabled = Enabled then { Mapper.identity with exp; stmt_env; top_stmt_env } else Mapper.identity
+    if enabled = Enabled then
+      { Mapper.identity with exp; stmt_env; top_stmt_env }
+    else
+      Mapper.identity
 end
 
 module Markers = struct
@@ -350,7 +362,11 @@ module Markers = struct
     | _ -> env
 
 
-  let mapper enabled = if enabled = Enabled then { Mapper.identity with top_stmt_env } else Mapper.identity
+  let mapper enabled =
+    if enabled = Enabled then
+      { Mapper.identity with top_stmt_env }
+    else
+      Mapper.identity
 end
 
 module LiteralArrays = struct
@@ -387,7 +403,10 @@ module LiteralArrays = struct
 
 
   let mapper enabled =
-    if enabled = Enabled then { Mapper.identity with exp; stmt_env; top_stmt_env } else Mapper.identity
+    if enabled = Enabled then
+      { Mapper.identity with exp; stmt_env; top_stmt_env }
+    else
+      Mapper.identity
 end
 
 module Tuples = struct
@@ -431,10 +450,10 @@ module Tuples = struct
       let l = GetVariables.in_lexp lhs in
       let r = GetVariables.in_exp rhs in
       let d = Set.inter l r in
-      if Set.is_empty d then (
+      if Set.is_empty d then
         let bindings = List.map2 (fun l r -> { s = StmtBind (l, r); loc }) l_elems r_elems in
-        reapply state, bindings)
-      else (
+        reapply state, bindings
+      else
         let temp_list = List.map (fun (l : lexp) -> "_t_temp_" ^ string_of_int (getTick env state), l.t) l_elems in
         let decl = List.map (fun (n, t) -> { s = StmtDecl ({ d = DId (n, None); loc; t }, None); loc }) temp_list in
         let bindings1 =
@@ -449,7 +468,7 @@ module Tuples = struct
             l_elems
             temp_list
         in
-        reapply state, decl @ bindings1 @ bindings2)
+        reapply state, decl @ bindings1 @ bindings2
     (* bind multi return calls to the context *)
     | { s = StmtBind (({ l = LTuple elems; _ } as lhs), ({ e = ECall { path; args = ctx :: _ }; loc = rloc; _ } as rhs))
       ; loc
@@ -530,7 +549,10 @@ module Tuples = struct
 
 
   let mapper enabled =
-    if enabled = Enabled then { Mapper.identity with stmt; stmt_env; exp; top_stmt } else Mapper.identity
+    if enabled = Enabled then
+      { Mapper.identity with stmt; stmt_env; exp; top_stmt }
+    else
+      Mapper.identity
 end
 
 module Builtin = struct
@@ -557,7 +579,11 @@ module Builtin = struct
     | _ -> state, e
 
 
-  let mapper enabled = if enabled = Enabled then { Mapper.identity with exp } else Mapper.identity
+  let mapper enabled =
+    if enabled = Enabled then
+      { Mapper.identity with exp }
+    else
+      Mapper.identity
 end
 
 module Cast = struct
@@ -575,19 +601,46 @@ module Cast = struct
     | { e = ECall { path = "fix16"; args = [ ({ e = EInt i; _ } as e1) ] }; t; _ } ->
       reapply state, { e1 with e = EFixed (float_of_int i); t }
     | { e = ECall { path = "fix16"; args = [ ({ e = EBool b; _ } as e1) ] }; t; _ } ->
-      reapply state, { e1 with e = EFixed (if b then 1.0 else 0.0); t }
+      ( reapply state
+      , { e1 with
+          e =
+            EFixed
+              (if b then
+                 1.0
+               else
+                 0.0)
+        ; t
+        } )
     | { e = ECall { path = "real"; args = [ ({ e = EFixed v; _ } as e1) ] }; t; _ } ->
       reapply state, { e1 with e = EReal v; t }
     | { e = ECall { path = "real"; args = [ ({ e = EInt i; _ } as e1) ] }; t; _ } ->
       reapply state, { e1 with e = EReal (float_of_int i); t }
     | { e = ECall { path = "real"; args = [ ({ e = EBool b; _ } as e1) ] }; t; _ } ->
-      reapply state, { e1 with e = EReal (if b then 1.0 else 0.0); t }
+      ( reapply state
+      , { e1 with
+          e =
+            EReal
+              (if b then
+                 1.0
+               else
+                 0.0)
+        ; t
+        } )
     | { e = ECall { path = "int"; args = [ ({ e = EFixed v; _ } as e1) ] }; t; _ } ->
       reapply state, { e1 with e = EInt (int_of_float v); t }
     | { e = ECall { path = "int"; args = [ ({ e = EReal v; _ } as e1) ] }; t; _ } ->
       reapply state, { e1 with e = EInt (int_of_float v); t }
     | { e = ECall { path = "int"; args = [ ({ e = EBool b; _ } as e1) ] }; t; _ } ->
-      reapply state, { e1 with e = EInt (if b then 1 else 0); t }
+      ( reapply state
+      , { e1 with
+          e =
+            EInt
+              (if b then
+                 1
+               else
+                 0)
+        ; t
+        } )
     | { e = ECall { path = "bool"; args = [ ({ e = EFixed v; _ } as e1) ] }; t; _ } ->
       reapply state, { e1 with e = EBool (v <> 0.0); t }
     | { e = ECall { path = "bool"; args = [ ({ e = EReal v; _ } as e1) ] }; t; _ } ->
@@ -607,7 +660,11 @@ module Cast = struct
     | _ -> state, t
 
 
-  let mapper enabled = if enabled = Enabled then { Mapper.identity with exp; type_ } else Mapper.identity
+  let mapper enabled =
+    if enabled = Enabled then
+      { Mapper.identity with exp; type_ }
+    else
+      Mapper.identity
 end
 
 module Canonize = struct
@@ -637,13 +694,16 @@ module Canonize = struct
       reapply state, n1
     (* (e2 op (e1 op n3)) -> (e1 op (e2 op n3)) *)
     | { e = EOp (op1, e2, ({ e = EOp (op2, e1, e3); _ } as n2)); _ } when (op1 = OpAdd || op1 = OpMul) && op1 = op2 ->
-      if compare_exp e2 e1 > 0 then (
+      if compare_exp e2 e1 > 0 then
         let n2 = { n2 with e = EOp (op2, e2, e3) } in
-        reapply state, { e with e = EOp (op1, e1, n2) })
+        reapply state, { e with e = EOp (op1, e1, n2) }
       else
         state, e
     | { e = EOp (op, e1, e2); _ } when op = OpAdd || op = OpMul ->
-      if compare_exp e1 e2 > 0 then reapply state, { e with e = EOp (op, e2, e1) } else state, e
+      if compare_exp e1 e2 > 0 then
+        reapply state, { e with e = EOp (op, e2, e1) }
+      else
+        state, e
     (* e1 - e2 -> e1 + (-e2) *)
     | { e = EOp (OpSub, e1, e2); _ } ->
       reapply state, { e with e = EOp (OpAdd, e1, { e2 with e = EUnOp (UOpNeg, e2) }) }
@@ -658,7 +718,11 @@ module Canonize = struct
     | _ -> state, e
 
 
-  let mapper enabled = if enabled = Enabled then { Mapper.identity with exp } else Mapper.identity
+  let mapper enabled =
+    if enabled = Enabled then
+      { Mapper.identity with exp }
+    else
+      Mapper.identity
 end
 
 module Simplify = struct
@@ -755,7 +819,11 @@ module Simplify = struct
     | _ -> state, [ s ]
 
 
-  let mapper enabled = if enabled = Enabled then { Mapper.identity with exp; stmt } else Mapper.identity
+  let mapper enabled =
+    if enabled = Enabled then
+      { Mapper.identity with exp; stmt }
+    else
+      Mapper.identity
 end
 
 module Sort = struct
@@ -776,10 +844,10 @@ module Sort = struct
     match stmts with
     | [] -> List.rev sorted
     | { top = TopType { path = name; _ }; _ } :: t
-    | { top = TopAlias { path = name; _ }; _ } :: t
-    | { top = TopFunction ({ name; _ }, _); _ } :: t
-    | { top = TopExternal ({ name; _ }, _); _ } :: t
-    | { top = TopConstant (name, _, _, _); _ } :: t ->
+     |{ top = TopAlias { path = name; _ }; _ } :: t
+     |{ top = TopFunction ({ name; _ }, _); _ } :: t
+     |{ top = TopExternal ({ name; _ }, _); _ } :: t
+     |{ top = TopConstant (name, _, _, _); _ } :: t ->
       let visited, sorted = pullIn deps table visited sorted name in
       sort deps table visited sorted t
 
@@ -787,7 +855,7 @@ module Sort = struct
   and pullIn deps table visited sorted name =
     if Set.mem name visited then
       visited, sorted
-    else (
+    else
       match Map.find_opt name deps with
       | None -> (
         let visited = Set.add name visited in
@@ -801,7 +869,7 @@ module Sort = struct
           Set.fold (fun name (visited, sorted) -> pullIn deps table visited sorted name) missing (visited, sorted)
         in
         let stmt = Map.find name table in
-        visited, stmt :: sorted)
+        visited, stmt :: sorted
 
 
   let getDependencies args prog =
@@ -836,19 +904,19 @@ let passes =
 let rec apply env state prog n =
   if n > 20 then
     failwith "too many repeats"
-  else (
+  else
     match prog with
     | [] -> state, []
     | h :: t ->
       let state, h = Mapper.top_stmt passes env state h in
       let data = Mapper.getData state in
-      if data.repeat then (
+      if data.repeat then
         let data = { data with repeat = false } in
         let state, h = apply env (Mapper.setData state data) h (n + 1) in
-        apply env state (h @ t) (n + 1))
-      else (
+        apply env state (h @ t) (n + 1)
+      else
         let state, t = apply env state t 0 in
-        state, h @ t))
+        state, h @ t
 
 
 let run args (prog : prog) : prog =
@@ -861,13 +929,13 @@ let simplifyExp (e : exp) : exp =
   let rec loop n env state e =
     if n > 20 then
       failwith "too many repeats"
-    else (
+    else
       let state, e = Mapper.exp passes env state e in
       let data = Mapper.getData state in
-      if data.repeat then (
+      if data.repeat then
         let data = { data with repeat = false } in
-        loop (n + 1) env (Mapper.setData state data) e)
+        loop (n + 1) env (Mapper.setData state data) e
       else
-        e)
+        e
   in
   loop 0 (default_env Util.Args.default_arguments) (Mapper.defaultState (default_data ())) e

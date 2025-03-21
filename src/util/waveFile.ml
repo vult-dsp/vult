@@ -84,17 +84,17 @@ let searchData (buffer : buffer) : bool =
   let rec skipData n =
     if n = 0 then
       ()
-    else (
+    else
       let _ = get buffer in
-      skipData (n - 1))
+      skipData (n - 1)
   in
   let rec loop () =
     if read4_chars buffer = "data" then
       true
-    else (
+    else
       let size = read4 buffer |> Int32.to_int in
       let () = skipData size in
-      loop ())
+      loop ()
   in
   match loop () with
   | found -> found
@@ -105,6 +105,7 @@ let searchData (buffer : buffer) : bool =
 let max_16 = (2.0 ** 16.0) /. 2.0
 
 let sign_16 = Int32.shift_left Int32.one 15
+
 let mask_16 = Int32.shift_left Int32.minus_one 15
 
 (** Reads a 16 bit valua as a float *)
@@ -120,6 +121,7 @@ let readSample16 (buffer : buffer) : float =
 let max_24 = (2.0 ** 24.0) /. 2.0
 
 let sign_24 = Int32.shift_left Int32.one 23
+
 let mask_24 = Int32.shift_left Int32.minus_one 23
 
 (** Reads a 24 bit valua as a float *)
@@ -139,25 +141,29 @@ let getReadSampleFunction (bits : int32) : (buffer -> float, string) result =
 
 
 (** Reads the given number of samples into the data arrays *)
-let readSamples (buffer : buffer) (channels : int) (size : int) (data : float array array) (read_fn : buffer -> float)
-  : int
-  =
+let readSamples (buffer : buffer) (channels : int) (size : int) (data : float array array) (read_fn : buffer -> float) :
+    int =
   (* iterates reading the channels *)
   let rec loop_channels index channel =
     if channel >= channels then
       true
-    else (
+    else
       try
         let value = read_fn buffer in
         let channel_data = data.(channel) in
         let () = channel_data.(index) <- value in
         loop_channels index (channel + 1)
       with
-      | Invalid_argument _ -> false)
+      | Invalid_argument _ -> false
   in
   (* iterates reading the samples *)
   let rec loop_samples index =
-    if index >= size then size else if loop_channels index 0 then loop_samples (index + 1) else index - 1
+    if index >= size then
+      size
+    else if loop_channels index 0 then
+      loop_samples (index + 1)
+    else
+      index - 1
   in
   loop_samples 0
 
@@ -166,7 +172,7 @@ let readSamples (buffer : buffer) (channels : int) (size : int) (data : float ar
 let checkFormat (buffer : buffer) =
   if not (read4_chars buffer = "RIFF") then
     Error "Not a valid file"
-  else (
+  else
     let chunk_size = read4 buffer in
     if chunk_size < Int32.of_int 4 then
       Error "Invalid chunk size"
@@ -174,13 +180,13 @@ let checkFormat (buffer : buffer) =
       Error "Not a supported wav file"
     else if not (read4_chars buffer = "fmt ") then
       Error "Not a supported wav file"
-    else (
+    else
       let sub_chunk_size = read4 buffer in
       let audio_format = read2 buffer in
       if sub_chunk_size <> Int32.of_int 16 || audio_format <> Int32.one then
         Error "Input file is not in PCM format"
       else
-        Ok ()))
+        Ok ()
 
 
 type wave =
@@ -208,9 +214,9 @@ let read (file : string) : (wave, string) result =
       | Ok sample_fn ->
         if not (searchData buffer) then
           Error "the file does not contain data"
-        else (
+        else
           let size = read4 buffer |> Int32.to_int in
           let no_samples = size / channels / (Int32.to_int bits_per_sample / 8) in
           let data = Array.init channels (fun _ -> Array.make no_samples 0.0) in
           let samples = readSamples buffer channels no_samples data sample_fn in
-          Ok { channels; samples; data })))
+          Ok { channels; samples; data }))

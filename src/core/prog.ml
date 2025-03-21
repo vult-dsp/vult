@@ -196,7 +196,12 @@ let default_info = { original_name = None; is_root = false }
 
 module Print = struct
   let rec print_type_ (t : type_) : Pla.t =
-    let prefix p = if show_types && t.const then Pla.append (Pla.string "const ") p else p in
+    let prefix p =
+      if show_types && t.const then
+        Pla.append (Pla.string "const ") p
+      else
+        p
+    in
     match t.t with
     | TVoid _ -> Pla.string "void"
     | TInt -> Pla.string "int"
@@ -250,7 +255,12 @@ module Print = struct
     match e.e with
     | EEmptyValue -> Pla.string "null"
     | EUnit -> Pla.string "()"
-    | EBool v -> Pla.string (if v then "true" else "false")
+    | EBool v ->
+      Pla.string
+        (if v then
+           "true"
+         else
+           "false")
     | EInt n -> Pla.int n
     | EReal n -> Pla.float n
     | EFixed n -> {%pla|<#n#f>x|}
@@ -378,7 +388,12 @@ module Print = struct
   let print_arg (p : param) =
     let n = p.name in
     let t = print_type_ p.t in
-    let c = if p.const then Pla.string "const " else Pla.unit in
+    let c =
+      if p.const then
+        Pla.string "const "
+      else
+        Pla.unit
+    in
     {%pla|<#c#><#n#s> : <#t#>|}
 
 
@@ -435,38 +450,71 @@ end
 
 module C = struct
   let nullptr_t = { t = TEmptyType; loc = Loc.default; const = false }
+
   let void_t = { t = TVoid None; loc = Loc.default; const = false }
+
   let int_t = { t = TInt; loc = Loc.default; const = false }
+
   let string_t = { t = TString; loc = Loc.default; const = false }
+
   let bool_t = { t = TBool; loc = Loc.default; const = false }
+
   let real_t = { t = TReal; loc = Loc.default; const = false }
+
   let fix16_t = { t = TFix16; loc = Loc.default; const = false }
+
   let array_t ?dim t = { t = TArray (dim, t); loc = Loc.default; const = false }
+
   let ereal ?(loc = Loc.default) i = { e = EReal i; t = real_t; loc }
+
   let efix16 ?(loc = Loc.default) i = { e = EFixed i; t = fix16_t; loc }
+
   let estring ?(loc = Loc.default) i = { e = EString i; t = string_t; loc }
+
   let eint ?(loc = Loc.default) i = { e = EInt i; t = int_t; loc }
+
   let enull = { e = EEmptyValue; t = nullptr_t; loc = Loc.default }
+
   let eunit = { e = EUnit; t = void_t; loc = Loc.default }
+
   let ebool ?(loc = Loc.default) i = { e = EBool i; t = int_t; loc }
+
   let eid ?(loc = Loc.default) id t = { e = EId id; t; loc }
+
   let did ?(loc = Loc.default) ?(size = None) id t = { d = DId (id, size); t; loc }
+
   let eadd ?(loc = Loc.default) e1 e2 = { e = EOp (OpAdd, e1, e2); t = e1.t; loc }
+
   let esub ?(loc = Loc.default) e1 e2 = { e = EOp (OpSub, e1, e2); t = e1.t; loc }
+
   let emul ?(loc = Loc.default) e1 e2 = { e = EOp (OpMul, e1, e2); t = e1.t; loc }
+
   let emod ?(loc = Loc.default) e1 e2 = { e = EOp (OpMod, e1, e2); t = e1.t; loc }
+
   let eeq ?(loc = Loc.default) e1 e2 = { e = EOp (OpEq, e1, e2); t = bool_t; loc }
+
   let elt ?(loc = Loc.default) e1 e2 = { e = EOp (OpLt, e1, e2); t = bool_t; loc }
+
   let ecall ?(loc = Loc.default) path args t = { e = ECall { path; args }; t; loc }
+
   let eindex ?(loc = Loc.default) e index t = { e = EIndex { e; index }; t; loc }
+
   let emember ?(loc = Loc.default) e name t = { e = EMember (e, name); t; loc }
+
   let earray ?(loc = Loc.default) elems t = { e = EArray elems; t; loc }
+
   let lid ?(loc = Loc.default) id t = { l = LId id; t; loc }
+
   let lindex ?(loc = Loc.default) e index t = { l = LIndex { e; index }; t; loc }
+
   let lmember ?(loc = Loc.default) e index t = { l = LMember (e, index); t; loc }
+
   let sbind_wild ?(loc = Loc.default) (e : exp) = { s = StmtBind ({ l = LWild; t = e.t; loc }, e); loc }
+
   let sbind ?(loc = Loc.default) (l : lexp) (e : exp) = { s = StmtBind (l, e); loc }
+
   let sdecl ?(loc = Loc.default) ?(size = None) ?init id t = { s = StmtDecl (did ~loc ~size id t, init); loc }
+
   let sdecl_init ?(loc = Loc.default) ?(size = None) id init t = { s = StmtDecl (did ~loc ~size id t, init); loc }
 
   let sdecl_bind ?(loc = Loc.default) ?(size = None) id e t =
@@ -474,10 +522,15 @@ module C = struct
 
 
   let sblock ?(loc = Loc.default) elems = { s = StmtBlock elems; loc }
+
   let sif ?(loc = Loc.default) cond then_ else_ = { s = StmtIf (cond, then_, else_); loc }
+
   let swhile ?(loc = Loc.default) cond body = { s = StmtWhile (cond, body); loc }
+
   let sreturn ?(loc = Loc.default) e = { s = StmtReturn e; loc }
+
   let sswitch ?(loc = Loc.default) e cases default = { s = StmtSwitch (e, cases, default); loc }
+
   let param ?(loc = Loc.default) ?(const = false) name t = { name; t; const; loc }
 end
 

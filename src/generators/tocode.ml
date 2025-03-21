@@ -255,7 +255,10 @@ let rec tryCreateSwitchLoop id cases (next : stmt option) =
   match next with
   | None -> Some (List.rev cases, None)
   | Some { s = StmtIf ({ e = EOp (OpEq, nid, ({ e = EInt _; _ } as i)); _ }, stmt, next); _ } ->
-    if Compare.exp id nid = 0 then tryCreateSwitchLoop id ((i, stmt) :: cases) next else None
+    if Compare.exp id nid = 0 then
+      tryCreateSwitchLoop id ((i, stmt) :: cases) next
+    else
+      None
   | Some def -> Some (List.rev cases, Some def)
 
 

@@ -29,7 +29,10 @@ open Typed
 let context_name = "_ctx"
 
 let pickLoc (t1 : type_) (t2 : type_) : unit =
-  if t1.loc == Loc.default then t1.loc <- t2.loc else if t2.loc == Loc.default then t2.loc <- t1.loc
+  if t1.loc == Loc.default then
+    t1.loc <- t2.loc
+  else if t2.loc == Loc.default then
+    t2.loc <- t1.loc
 
 
 let linkType ~from ~into =
@@ -72,7 +75,15 @@ let rec pushTypeToSet (set : (type_ * int) list) (elem : type_) =
 
 and constrainOption loc l1 l2 =
   let set = List.fold_left pushTypeToSet (List.map (fun e -> e, 1) l1) l2 in
-  let final_set = List.filter_map (fun (e, n) -> if n > 1 then Some e else None) set in
+  let final_set =
+    List.filter_map
+      (fun (e, n) ->
+        if n > 1 then
+          Some e
+        else
+          None)
+      set
+  in
   match final_set with
   | [] ->
     let t1 = Pla.map_sep Pla.commaspace Typed.print_type_ l1 in
@@ -87,7 +98,11 @@ and pickOption original l tt =
   let rec loop l =
     match l with
     | [] -> false
-    | h :: t -> if unify h tt then linkType ~from:tt ~into:original else loop t
+    | h :: t ->
+      if unify h tt then
+        linkType ~from:tt ~into:original
+      else
+        loop t
   in
   loop l
 
@@ -95,13 +110,13 @@ and pickOption original l tt =
 and unifyConstnessValue (t1 : constness) (t2 : constness) =
   if t1 == t2 then
     ()
-  else (
+  else
     match t1.c, t2.c with
     | TECLink tl, _ -> unifyConstnessValue tl t2
     | _, TECLink tl -> unifyConstnessValue t1 tl
     | TEConst _, _ -> t1.c <- TECLink t2
     | _, TEConst _ -> t2.c <- TECLink t1
-    | TEMut _, TEMut _ -> ())
+    | TEMut _, TEMut _ -> ()
 
 
 and unifyConstness (t1 : type_) (t2 : type_) =
@@ -127,7 +142,7 @@ and unify ?(bind = false) (t1 : type_) (t2 : type_) =
     | _, TEFunction _ -> false
     (* special case for arrays without dimensions *)
     | TEComposed ("array", [ e1; _ ]), TEComposed ("array", [ e2 ])
-    | TEComposed ("array", [ e1 ]), TEComposed ("array", [ e2; _ ]) -> unify e1 e2
+     |TEComposed ("array", [ e1 ]), TEComposed ("array", [ e2; _ ]) -> unify e1 e2
     | TEComposed (n1, e1), TEComposed (n2, e2) when n1 = n2 && List.length e1 = List.length e2 ->
       List.for_all2 unify e1 e2
     (* follow the links *)
@@ -155,7 +170,7 @@ and unify ?(bind = false) (t1 : type_) (t2 : type_) =
 let unifyRaise ?(bind = false) (loc : Loc.t) (t1 : type_) (t2 : type_) : unit =
   (* TODO: improve unify error reporting for tuples *)
   let raise = true in
-  if not (unify ~bind t1 t2) then (
+  if not (unify ~bind t1 t2) then
     let msg =
       let t1 = print_type_ t1 in
       let t2 = print_type_ t2 in
@@ -165,7 +180,7 @@ let unifyRaise ?(bind = false) (loc : Loc.t) (t1 : type_) (t2 : type_) : unit =
       Error.raiseError msg loc
     else (
       print_endline (Loc.to_string loc);
-      print_endline msg))
+      print_endline msg)
 
 
 let rec type_in_m (env : in_module) (t : Syntax.type_) =
@@ -176,9 +191,9 @@ let rec type_in_m (env : in_module) (t : Syntax.type_) =
     { tx = TEId found.path; loc; const = C.const () }
   | { t = STSize n; loc } ->
     let () =
-      if n = 0 then (
+      if n = 0 then
         let msg = "Empty arrays are not supported" in
-        Error.raiseError msg loc)
+        Error.raiseError msg loc
     in
     { tx = TESize n; loc; const = C.const () }
   | { t = STComposed (name, l); loc } ->
@@ -196,6 +211,7 @@ let rec checkArrayDimensions (t : type_) =
 
 
 let type_in_c (env : Env.in_context) (t : Syntax.type_) = type_in_m (Env.exitContext env) t
+
 let type_in_f (env : Env.in_func) (t : Syntax.type_) = type_in_c (Env.exitFunction env) t
 
 let applyFunction loc (args_t_in : type_ list) (ret : type_) (args_in : exp list) =
@@ -264,7 +280,10 @@ let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
     match Syntax.compare_path cpath fpath, instance with
     | 0, None ->
       let e = { e = EId context_name; t = fctx_t; loc } in
-      let () = if is_ctx_mutable then markExpMutable env e loc in
+      let () =
+        if is_ctx_mutable then
+          markExpMutable env e loc
+      in
       env, e :: args
     | 0, Some _ ->
       let msg =
@@ -282,18 +301,27 @@ let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
       let rec generateName () =
         let n = Env.getFunctionTick env in
         let name = "inst_" ^ string_of_int n ^ number in
-        if checkMemExists env name then generateName () else name
+        if checkMemExists env name then
+          generateName ()
+        else
+          name
       in
       let name = generateName () in
       let env = Env.addVar env unify name fctx_t Inst loc in
       let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); loc; t = fctx_t } in
-      let () = if is_ctx_mutable then markExpMutable env e loc in
+      let () =
+        if is_ctx_mutable then
+          markExpMutable env e loc
+      in
       env, e :: args
     (* intance without subscripts *)
     | _, Some (name, None) ->
       let env = Env.addVar env unify name fctx_t Inst loc in
       let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); loc; t = fctx_t } in
-      let () = if is_ctx_mutable then markExpMutable env e loc in
+      let () =
+        if is_ctx_mutable then
+          markExpMutable env e loc
+      in
       env, e :: args
     (* array of instances *)
     | _, Some (name, Some index) ->
@@ -303,7 +331,10 @@ let rec addContextArg (env : Env.in_func) instance (f : Env.f) args loc =
       let env = Env.addVar env unify name t Inst loc in
       let e = { e = EMember ({ e = EId context_name; t = ctx_t; loc }, name); loc; t = fctx_t } in
       let e = { e = EIndex { e; index }; loc; t = fctx_t } in
-      let () = if is_ctx_mutable then markExpMutable env e loc in
+      let () =
+        if is_ctx_mutable then
+          markExpMutable env e loc
+      in
       env, e :: args)
   else
     env, args
@@ -358,7 +389,10 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     unifyRaise e.loc (C.array ~fixed:false t) e.t;
     unifyRaise index.loc (C.int ~loc:Loc.default) index.t;
     (* if the type is a builtin (a value) do not unify the constness *)
-    let () = if not (Env.isBuiltinType t) then unifyConstness t e.t in
+    let () =
+      if not (Env.isBuiltinType t) then
+        unifyConstness t e.t
+    in
     env, { e = EIndex { e; index }; t; loc }
   | { e = SEArray []; loc } -> Error.raiseError "Empty arrays are not supported." loc
   | { e = SEArray (h :: t); loc } ->
@@ -421,7 +455,10 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
         | Some { t; _ } ->
           let t = refreshConstness t in
           (* if the type is a builtin (a value) do not unify the constness *)
-          let () = if not (Env.isBuiltinType t) then unifyConstness t e1.t in
+          let () =
+            if not (Env.isBuiltinType t) then
+              unifyConstness t e1.t
+          in
           env, { e = EMember (e1, m); t; loc })
       | _ ->
         let t = Pla.print (Typed.print_type_ e1.t) in
@@ -483,7 +520,8 @@ and lexp ?(const = false) (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * 
   | { l = SLId name; loc } ->
     let var = Env.lookVar env name loc in
     let t = var.t in
-    if not const then setTypeMut t;
+    if not const then
+      setTypeMut t;
     let e =
       match var.kind with
       | Val -> { l = LId name; t; loc }
@@ -525,7 +563,12 @@ and lexp ?(const = false) (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * 
         | Some { t; _ } ->
           let t = refreshConstness t in
           (* if the type is a builtin (a value) do not unify the constness *)
-          let t = if not (Env.isBuiltinType t) then { t with const = e.t.const } else t in
+          let t =
+            if not (Env.isBuiltinType t) then
+              { t with const = e.t.const }
+            else
+              t
+          in
           env, { l = LMember (e, m); t; loc })
       | _ ->
         let t = Pla.print (Typed.print_type_ e.t) in
@@ -613,15 +656,15 @@ let makeIfOfMatch e cases =
     | { e = SEGroup e; _ }, _ -> makeComparison e p
     | e, { p = SPGroup p; _ } -> makeComparison e p
     | { e = SETuple elems; _ }, { p = SPTuple patterns; loc } ->
-      if List.length elems = List.length patterns then (
+      if List.length elems = List.length patterns then
         let conds = List.map2 (fun e p -> makeComparison e p) elems patterns in
-        List.fold_right makeAnd conds Syntax.{ e = SEBool true; loc })
-      else (
+        List.fold_right makeAnd conds Syntax.{ e = SEBool true; loc }
+      else
         let msg =
           "The pattern cannot be matched with the input expression because it has different number of elements."
         in
         let loc = Loc.mergeList Loc.default @@ List.map (fun (p : Syntax.pattern) -> p.loc) patterns in
-        Error.raiseError msg loc)
+        Error.raiseError msg loc
     | { e = SETuple _; _ }, { loc; _ } ->
       let msg =
         "The pattern cannot be matched with the input expression because it has different number of elements."
@@ -729,11 +772,11 @@ and stmt_list env return l =
 
 
 let addGeneratedFunctions tags name next =
-  if Ptags.has tags "wave" then (
+  if Ptags.has tags "wave" then
     let code = Pla.print {%pla|fun <#name#s>_samples() : int @[placeholder]|} in
     let def = Parse.parseFunctionSpec code in
-    Some ({ def with next }, Syntax.{ s = SStmtBlock []; loc = Loc.default }))
-  else if Ptags.has tags "wavetable" then (
+    Some ({ def with next }, Syntax.{ s = SStmtBlock []; loc = Loc.default })
+  else if Ptags.has tags "wavetable" then
     let empty = Syntax.{ s = SStmtBlock []; loc = Loc.default } in
     let samples = Pla.print {%pla|fun <#name#s>_samples() : int @[placeholder]|} in
     let code1 = Pla.print {%pla|fun <#name#s>_raw_c0(i:int) : real @[placeholder]|} in
@@ -741,7 +784,7 @@ let addGeneratedFunctions tags name next =
     let samples = Parse.parseFunctionSpec samples in
     let def1 = Parse.parseFunctionSpec code1 in
     let def2 = Parse.parseFunctionSpec code2 in
-    Some ({ def1 with next = Some ({ def2 with next = Some ({ samples with next }, empty) }, empty) }, empty))
+    Some ({ def1 with next = Some ({ def2 with next = Some ({ samples with next }, empty) }, empty) }, empty)
   else
     next
 
@@ -777,7 +820,10 @@ let isRoot (args : Args.args) path =
 
 
 let customInitializer (env : Env.in_context) tags name =
-  if Ptags.has tags "init" then Env.addCustomInitFunction env name else env
+  if Ptags.has tags "init" then
+    Env.addCustomInitFunction env name
+  else
+    env
 
 
 let reportReturnTypeMismatch is_placeholder loc (specified_ret : type_ option) (inferred_ret : type_) =
@@ -789,15 +835,14 @@ let reportReturnTypeMismatch is_placeholder loc (specified_ret : type_ option) (
        In this case we need to unify the specified and the inferred. *)
     if is_placeholder then
       unifyRaise loc t inferred_ret
-    else (
+    else
       let t = Pla.print (print_type_ t) in
-      Error.raiseError ("This function is expected to have type '" ^ t ^ "' but nothing was returned.") loc)
+      Error.raiseError ("This function is expected to have type '" ^ t ^ "' but nothing was returned.") loc
   | Some t1, t2 -> unifyRaise loc t1 t2
 
 
-let rec function_def (iargs : Args.args) (env : Env.in_context) ((def : Syntax.function_def), (body : Syntax.stmt))
-  : Env.in_context * (function_def * stmt)
-  =
+let rec function_def (iargs : Args.args) (env : Env.in_context) ((def : Syntax.function_def), (body : Syntax.stmt)) :
+    Env.in_context * (function_def * stmt) =
   let specified_ret = getReturnType env def.t in
   let inferred_ret = C.noreturn def.loc in
   let args = convertArguments env def.args in
@@ -854,7 +899,7 @@ let getContextArgument (env : Env.in_context) (path : path) loc : arg option =
   | Some (_, { descr = Record members; _ }) ->
     if Map.is_empty members then
       None
-    else (
+    else
       let ctx_t =
         match Map.find path.id env.m.functions with
         | Some f -> (
@@ -864,7 +909,7 @@ let getContextArgument (env : Env.in_context) (path : path) loc : arg option =
         | None -> failwith "function not found"
       in
       let () = Env.Map.fold (fun _ (var : var) () -> unifyConstness ctx_t var.t) () members in
-      Some { name = context_name; t = ctx_t; loc })
+      Some { name = context_name; t = ctx_t; loc }
   | _ -> None
 
 
@@ -1111,10 +1156,10 @@ let createTypes (env : Env.in_top) =
 
 
 module Set = Set.Make (struct
-    type t = path
+  type t = path
 
-    let compare = Syntax.compare_path
-  end)
+  let compare = Syntax.compare_path
+end)
 
 let rec createExistingTypeSet stmts : Set.t =
   match stmts with

@@ -78,26 +78,26 @@ let getCoefficients2 l =
 let rec fitDataOrder1 data index acc0 acc1 =
   if index < 0 then
     acc0, acc1
-  else (
+  else
     let p1 = data.(index) in
     let p2 = data.(index + 1) in
     let x = [ fst p1; fst p2 ] in
     let y = [ snd p1; snd p2 ] in
     let c0, c1 = Fitting.lagrange x y |> getCoefficients1 in
-    fitDataOrder1 data (index - 1) (c0 :: acc0) (c1 :: acc1))
+    fitDataOrder1 data (index - 1) (c0 :: acc0) (c1 :: acc1)
 
 
 let rec fitDataOrder2 data index acc0 acc1 acc2 =
   if index < 0 then
     acc0, acc1, acc2
-  else (
+  else
     let p1 = data.(index * 2) in
     let p2 = data.((index * 2) + 1) in
     let p3 = data.((index * 2) + 2) in
     let x = [ fst p1; fst p2; fst p3 ] in
     let y = [ snd p1; snd p2; snd p3 ] in
     let c0, c1, c2 = Fitting.lagrange x y |> getCoefficients2 in
-    fitDataOrder2 data (index - 1) (c0 :: acc0) (c1 :: acc1) (c2 :: acc2))
+    fitDataOrder2 data (index - 1) (c0 :: acc0) (c1 :: acc1) (c2 :: acc2)
 
 
 let getRealResult (x : Compile.rvalue) =
@@ -116,8 +116,8 @@ let calculateIntRealTables loc vm name min max precision =
   let size = max - min in
   let data =
     List.init (size + 1) (fun i ->
-      let x = min + i in
-      getRealResult (Interpreter.callFunction vm name [ RInt x ]))
+        let x = min + i in
+        getRealResult (Interpreter.callFunction vm name [ RInt x ]))
   in
   [ makeRealTableDecl loc name "table" precision data ]
 
@@ -126,8 +126,8 @@ let calculateIntIntTables loc vm name min max =
   let size = max - min in
   let data =
     List.init (size + 1) (fun i ->
-      let x = min + i in
-      getIntResult (Interpreter.callFunction vm name [ RInt x ]))
+        let x = min + i in
+        getIntResult (Interpreter.callFunction vm name [ RInt x ]))
   in
   [ makeIntTableDecl loc name "table" data ]
 
@@ -137,8 +137,8 @@ let calculateTablesOrder1 loc vm name size min max precision =
   let map_x x = map x 0. (float_of_int size) min max in
   let data =
     Array.init (size + 1) (fun i ->
-      let x = map_x (float_of_int i) in
-      x, getRealResult (Interpreter.callFunction vm name [ RReal x ]))
+        let x = map_x (float_of_int i) in
+        x, getRealResult (Interpreter.callFunction vm name [ RReal x ]))
   in
   let acc0, acc1 = fitDataOrder1 data (size - 1) [] [] in
   [ makeRealTableDecl loc name "c0" precision acc0; makeRealTableDecl loc name "c1" precision acc1 ]
@@ -149,8 +149,8 @@ let calculateTablesOrder1Fixed loc vm name size min max precision =
   let map_x x = map x 0. (float_of_int size) min max in
   let data =
     List.init (size + 1) (fun i ->
-      let x = map_x (float_of_int i) in
-      x, getRealResult (Interpreter.callFunction vm name [ RReal x ]))
+        let x = map_x (float_of_int i) in
+        x, getRealResult (Interpreter.callFunction vm name [ RReal x ]))
   in
   let rec increments data =
     match data with
@@ -214,8 +214,19 @@ let makeNuber (t : type_) v =
   | _ -> failwith "invalid input precision"
 
 
-let makeSub t e1 e2 = if e2 = 0.0 then e1 else C.esub e1 (makeNuber t e2)
-let makeMul t e1 e2 = if e2 = 1.0 then e1 else C.emul e1 (makeNuber t e2)
+let makeSub t e1 e2 =
+  if e2 = 0.0 then
+    e1
+  else
+    C.esub e1 (makeNuber t e2)
+
+
+let makeMul t e1 e2 =
+  if e2 = 1.0 then
+    e1
+  else
+    C.emul e1 (makeNuber t e2)
+
 
 let makeNewBody1 bound_check fname size in_precision t min max input =
   let atype = makeArrayType t size in
@@ -309,7 +320,10 @@ let checkInputVariables (loc : Loc.t) (args : param list) : exp =
 
 let optimizeSize (n : int) =
   let l = Float.log2 (float_of_int n) in
-  if l = floor l then n + 1 else n
+  if l = floor l then
+    n + 1
+  else
+    n
 
 
 let makeTable vm (def : function_def) =
@@ -383,7 +397,7 @@ let readFile (loc : Loc.t) (includes : string list) (file : string) : WaveFile.w
 
 
 let checkNumberOfChannels (loc : Loc.t) (channels : int) (wave : WaveFile.wave) : unit =
-  if wave.WaveFile.channels <> channels then (
+  if wave.WaveFile.channels <> channels then
     let msg =
       "The given number of channels ("
       ^ string_of_int channels
@@ -391,7 +405,7 @@ let checkNumberOfChannels (loc : Loc.t) (channels : int) (wave : WaveFile.wave) 
       ^ string_of_int wave.WaveFile.channels
       ^ ")"
     in
-    Error.raiseError msg loc)
+    Error.raiseError msg loc
 
 
 let getDeclarations loc name (wav_data : WaveFile.wave) precision : top_stmt list =
@@ -469,14 +483,14 @@ let wrapGet data index =
 let rec fitWavetableData data index acc0 acc1 acc2 =
   if index < 0 then
     acc0, acc1, acc2
-  else (
+  else
     let p1 = wrapGet data index in
     let p2 = wrapGet data (index + 1) in
     let p3 = wrapGet data (index + 2) in
     let x = [ fst p1; fst p2; fst p3 ] in
     let y = [ snd p1; snd p2; snd p3 ] in
     let c0, c1, c2 = Fitting.lagrange x y |> getCoefficients2 in
-    fitWavetableData data (index - 1) (c0 :: acc0) (c1 :: acc1) (c2 :: acc2))
+    fitWavetableData data (index - 1) (c0 :: acc0) (c1 :: acc1) (c2 :: acc2)
 
 
 let makeWavetableOrder2 loc name size precision data =

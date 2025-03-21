@@ -24,6 +24,7 @@
 
 module type GESig = sig
   type key
+
   type data
 
   val get : data -> key
@@ -145,19 +146,19 @@ module Make (T : GESig) = struct
 
   (* pass one of the Kosaraju's algorithm *)
   let rec pass1 g stack visited v =
-    if not (V.contains visited v) then (
+    if not (V.contains visited v) then
       let () = V.add visited v in
       let children = G.getDependencies g v in
       let () = List.iter (pass1 g stack visited) children in
-      S.push stack v)
+      S.push stack v
 
 
   let rec pass2_part g visited comp v =
-    if not (V.contains visited v) then (
+    if not (V.contains visited v) then
       let deps = G.getRevDependencies g v in
       let () = V.add visited v in
       let () = S.push comp v in
-      List.iter (pass2_part g visited comp) deps)
+      List.iter (pass2_part g visited comp) deps
 
 
   let rec pass2 g comps stack visited =
@@ -165,11 +166,11 @@ module Make (T : GESig) = struct
       let v = S.pop stack in
       if V.contains visited v then
         pass2 g comps stack visited
-      else (
+      else
         let comp = S.empty () in
         let () = S.push comps comp in
         pass2_part g visited comp v;
-        pass2 g comps stack visited))
+        pass2 g comps stack visited)
 
 
   (* calculates the strong components of a graph *)

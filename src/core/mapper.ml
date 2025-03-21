@@ -31,36 +31,41 @@ type 'data state =
   }
 
 type ('env, 'data, 'kind) mapper_func = ('env -> 'data state -> 'kind -> 'data state * 'kind) option
+
 type ('env, 'data, 'kind) expand_func = ('env -> 'data state -> 'kind -> 'data state * 'kind list) option
+
 type ('env, 'kind) env_func = ('env -> 'kind -> 'env) option
 
 let defaultState data = { data; pre_stmts = []; pre_top_stmts = [] }
+
 let getData (state : 'data state) = state.data
+
 let setData (state : 'data state) data = { state with data }
+
 let pushStmts (state : 'data state) stmts = { state with pre_stmts = state.pre_stmts @ stmts }
+
 let pushTopStmts (state : 'data state) stmts = { state with pre_top_stmts = state.pre_top_stmts @ stmts }
+
 let getStmts (state : 'data state) = { state with pre_stmts = [] }, state.pre_stmts
+
 let getTopStmts (state : 'data state) = { state with pre_top_stmts = [] }, state.pre_top_stmts
 
-let apply (mapper : ('env, 'data, 'kind) mapper_func) (env : 'env) (data : 'data state) (kind : 'kind)
-  : 'data state * 'kind
-  =
+let apply (mapper : ('env, 'data, 'kind) mapper_func) (env : 'env) (data : 'data state) (kind : 'kind) :
+    'data state * 'kind =
   match mapper with
   | Some f -> f env data kind
   | None -> data, kind
 
 
-let applyExpander (mapper : ('env, 'data, 'kind) expand_func) (env : 'env) (data : 'data state) (kind : 'kind)
-  : 'data state * 'kind list
-  =
+let applyExpander (mapper : ('env, 'data, 'kind) expand_func) (env : 'env) (data : 'data state) (kind : 'kind) :
+    'data state * 'kind list =
   match mapper with
   | Some f -> f env data kind
   | None -> data, [ kind ]
 
 
 let applyExpanderList (mapper : ('env, 'datas, 'kind) expand_func) (env : 'env) (data : 'data) (kind_list : 'kind list)
-  : 'data * 'kind list
-  =
+    : 'data * 'kind list =
   let state', rev_exp_list =
     List.fold_left
       (fun (s, acc) k ->
@@ -80,7 +85,8 @@ let enter (env_func : ('env, 'kind) env_func) (env : 'env) (kind : 'kind) : 'env
 
 let make (mapper : 'env -> 'data state -> 'kind -> 'data state * 'kind) : ('env, 'data, 'kind) mapper_func = Some mapper
 
-let makeExpander (mapper : 'env -> 'data state -> 'kind -> 'data state * 'kind list) : ('env, 'data, 'kind) expand_func =
+let makeExpander (mapper : 'env -> 'data state -> 'kind -> 'data state * 'kind list) : ('env, 'data, 'kind) expand_func
+    =
   Some mapper
 
 
@@ -158,12 +164,12 @@ let seqMapperFunc a b =
     b
   else if b = None then
     a
-  else (
+  else
     let c env state exp =
       let state, exp = apply a env state exp in
       apply b env state exp
     in
-    Some c)
+    Some c
 
 
 let seqEnvFunc (a : ('env, 'kind) env_func) (b : ('env, 'kind) env_func) : ('env, 'kind) env_func =
@@ -171,12 +177,12 @@ let seqEnvFunc (a : ('env, 'kind) env_func) (b : ('env, 'kind) env_func) : ('env
     b
   else if b = None then
     a
-  else (
+  else
     let mapper3 env exp =
       let env = enter a env exp in
       enter b env exp
     in
-    Some mapper3)
+    Some mapper3
 
 
 let seqExpandFunc a b =
@@ -184,13 +190,13 @@ let seqExpandFunc a b =
     b
   else if b = None then
     a
-  else (
+  else
     let c env state exp =
       let state, exp_list = applyExpander a env state exp in
       let state, exp_list = applyExpanderList b env state exp_list in
       state, exp_list
     in
-    Some c)
+    Some c
 
 
 (** Merges two mappers *)
@@ -243,9 +249,8 @@ let rec type_ (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state)
     apply mapper.type_ env state { t = TStruct s; const; loc }
 
 
-and struct_descr (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (s : struct_descr)
-  : 'data state * struct_descr
-  =
+and struct_descr (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (s : struct_descr) :
+    'data state * struct_descr =
   let sub_env = enter mapper.struct_descr_env env s in
   match s with
   | { path; members } ->
@@ -419,9 +424,8 @@ let rec stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) 
     applyStmtExpander mapper.stmt env state pre { s = StmtSwitch (cond, cases, default); loc }
 
 
-let function_def (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (f : function_def)
-  : 'data state * function_def
-  =
+let function_def (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (f : function_def) :
+    'data state * function_def =
   let sub_env = enter mapper.function_def_env env f in
   match f with
   | { name; args; t = t_args, ret; loc; tags; info } ->
@@ -444,9 +448,8 @@ let applyTopStmtExpander mapper env state pre s =
   state, stmts
 
 
-let top_stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (s : top_stmt)
-  : 'data state * top_stmt list
-  =
+let top_stmt (mapper : ('env, 'data) mapper) (env : 'env) (state : 'data state) (s : top_stmt) :
+    'data state * top_stmt list =
   let loc = s.loc in
   let sub_env = enter mapper.top_stmt_env env s in
   match s with

@@ -59,7 +59,12 @@ let rec print_tag t : Pla.t =
   match t.g with
   | TagId id -> Pla.string id
   | TagInt i -> Pla.int i
-  | TagBool b -> Pla.string (if b then "true" else "false")
+  | TagBool b ->
+    Pla.string
+      (if b then
+         "true"
+       else
+         "false")
   | TagReal f -> Pla.float f
   | TagString s -> Pla.string_quoted s
   | TagCall { name; args } ->
@@ -156,12 +161,22 @@ let setArgument tags tag_name arg_name arg_value =
         let found, args_rev =
           List.fold_left
             (fun (found, acc) (name, value, loc) ->
-              let value = if name = arg_name then arg_value else value in
+              let value =
+                if name = arg_name then
+                  arg_value
+                else
+                  value
+              in
               found, (name, value, loc) :: acc)
             (false, [])
             args
         in
-        let args = if found then List.rev args_rev else List.rev ((arg_name, arg_value, t.loc) :: args_rev) in
+        let args =
+          if found then
+            List.rev args_rev
+          else
+            List.rev ((arg_name, arg_value, t.loc) :: args_rev)
+        in
         { t with g = TagCall { name; args } }
       | _ -> t)
     tags

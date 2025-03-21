@@ -31,9 +31,13 @@ module type TokenKindSig = sig
   type kind
 
   val next : Loc.source -> Lexing.lexbuf -> kind token
+
   val kindStr : kind -> string
+
   val tokenStr : kind token -> string
+
   val isEOF : kind -> bool
+
   val getEOF : kind
 end
 
@@ -93,7 +97,9 @@ module TokenStream (S : TokenKindSig) = struct
 
 
   let setErrors (buffer : stream) (value : bool) : unit = buffer.has_errors <- value
+
   let hasErrors (buffer : stream) : bool = buffer.has_errors
+
   let getErrors (buffer : stream) : Error.t list = buffer.errors
 
   let notExpectedError (token : S.kind token) : Error.t =

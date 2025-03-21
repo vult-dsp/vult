@@ -190,7 +190,10 @@ let compare_path (p1 : path) (p2 : path) =
   match p1, p2 with
   | { id = id1; n = Some n1; _ }, { id = id2; n = Some n2; _ } ->
     let ret = String.compare id1 id2 in
-    if ret = 0 then String.compare n1 n2 else ret
+    if ret = 0 then
+      String.compare n1 n2
+    else
+      ret
   | { id = id1; n = None; _ }, { id = id2; n = None; _ } -> String.compare id1 id2
   | _ -> compare p1 p2
 
@@ -230,7 +233,12 @@ module Print = struct
 
   and exp_d (e : exp_d) =
     match e with
-    | SEBool b -> Pla.string (if b then "true" else "false")
+    | SEBool b ->
+      Pla.string
+        (if b then
+           "true"
+         else
+           "false")
     | SEInt i -> Pla.string i
     | SEReal f -> Pla.string f
     | SEFixed f -> Pla.string f
@@ -298,7 +306,12 @@ module Print = struct
   and pattern_d (p : pattern_d) =
     match p with
     | SPWild -> Pla.string "_"
-    | SPBool b -> Pla.string (if b then "true" else "false")
+    | SPBool b ->
+      Pla.string
+        (if b then
+           "true"
+         else
+           "false")
     | SPInt i -> Pla.string i
     | SPReal f -> Pla.string f
     | SPFixed f -> Pla.string f
@@ -487,6 +500,7 @@ module Print = struct
 
 
   let stmts (s : top_stmt list) = Pla.map_sep_all Pla.newline top_stmt s
+
   let print s = Pla.print @@ stmts s
 end
 
@@ -502,14 +516,28 @@ module Mapper = struct
     }
 
   let makeContext context = { context; recurse = true }
+
   let getContext context = context.context
+
   let setContext context data = { context with context = data }
+
   let makeState data = { data; repeat = false }
+
   let get (state : 'a state) : 'a = state.data
+
   let set (state : 'a state) (data : 'a) : 'a state = { state with data }
+
   let make f = Some f
-  let reapply (state : 'a state) : 'a state = if state.repeat then state else { state with repeat = true }
+
+  let reapply (state : 'a state) : 'a state =
+    if state.repeat then
+      state
+    else
+      { state with repeat = true }
+
+
   let clearReapply (state : 'a state) : 'a state = { state with repeat = false }
+
   let defaultContext data : 'a context = data
 
   type ('kind, 'data, 'ctx) mapper_func = ('ctx context -> 'data state -> 'kind -> 'data state * 'kind) option
@@ -517,21 +545,15 @@ module Mapper = struct
   type ('kind, 'data, 'ctx) pre_mapper_func =
     ('ctx context -> 'data state -> 'kind -> 'ctx context * 'data state * 'kind) option
 
-  let apply (mapper : ('kind, 'data, 'ctx) mapper_func) (context : 'ctx context) (state : 'data state) (kind : 'kind)
-    : 'data state * 'kind
-    =
+  let apply (mapper : ('kind, 'data, 'ctx) mapper_func) (context : 'ctx context) (state : 'data state) (kind : 'kind) :
+      'data state * 'kind =
     match mapper with
     | Some f -> f context state kind
     | None -> state, kind
 
 
-  let apply_pre
-    (mapper : ('kind, 'data, 'ctx) pre_mapper_func)
-    (context : 'ctx context)
-    (state : 'data state)
-    (kind : 'kind)
-    : 'ctx context * 'data state * 'kind
-    =
+  let apply_pre (mapper : ('kind, 'data, 'ctx) pre_mapper_func) (context : 'ctx context) (state : 'data state)
+      (kind : 'kind) : 'ctx context * 'data state * 'kind =
     match mapper with
     | Some f -> f context state kind
     | None -> context, state, kind
@@ -583,31 +605,16 @@ module Mapper = struct
     state, (t1, t2)
 
 
-  let mapper_tuple3
-    mapper_app1
-    mapper_app2
-    mapper_app3
-    mapper
-    (context : 'ctx context)
-    (state : 'data state)
-    (t1, t2, t3)
-    =
+  let mapper_tuple3 mapper_app1 mapper_app2 mapper_app3 mapper (context : 'ctx context) (state : 'data state)
+      (t1, t2, t3) =
     let state, t1 = mapper_app1 mapper context state t1 in
     let state, t2 = mapper_app2 mapper context state t2 in
     let state, t3 = mapper_app3 mapper context state t3 in
     state, (t1, t2, t3)
 
 
-  let mapper_tuple4
-    mapper_app1
-    mapper_app2
-    mapper_app3
-    mapper_app4
-    mapper
-    (context : 'ctx context)
-    (state : 'data state)
-    (t1, t2, t3, t4)
-    =
+  let mapper_tuple4 mapper_app1 mapper_app2 mapper_app3 mapper_app4 mapper (context : 'ctx context)
+      (state : 'data state) (t1, t2, t3, t4) =
     let state, t1 = mapper_app1 mapper context state t1 in
     let state, t2 = mapper_app2 mapper context state t2 in
     let state, t3 = mapper_app3 mapper context state t3 in
@@ -739,7 +746,7 @@ module Mapper = struct
   let rec map_path mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.path_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
         | { id; n; loc } ->
           let n' = n in
@@ -750,7 +757,7 @@ module Mapper = struct
             else
               { id = id'; n = n'; loc }
           in
-          state, odata)
+          state, odata
       else
         state, idata
     in
@@ -760,19 +767,29 @@ module Mapper = struct
   and map_type_d mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.type_d_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
         | STUnbound -> state, STUnbound
         | STId field_0 ->
           let state, field_0' = map_path mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else STId field_0' in
+          let odata =
+            if field_0 == field_0' then
+              idata
+            else
+              STId field_0'
+          in
           state, odata
         | STSize _ -> state, idata
         | STComposed (field_0, field_1) ->
           let state, field_1' = (mapper_list map_type_) mapper context state field_1 in
           let field_0' = field_0 in
-          let odata = if field_0 == field_0' && field_1 == field_1' then idata else STComposed (field_0', field_1') in
-          state, odata)
+          let odata =
+            if field_0 == field_0' && field_1 == field_1' then
+              idata
+            else
+              STComposed (field_0', field_1')
+          in
+          state, odata
       else
         state, idata
     in
@@ -782,7 +799,7 @@ module Mapper = struct
   and map_type_ mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.type__pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
         | { t; loc } ->
           let state, t' = map_type_d mapper context state t in
@@ -792,7 +809,7 @@ module Mapper = struct
             else
               { t = t'; loc }
           in
-          state, odata)
+          state, odata
       else
         state, idata
     in
@@ -802,7 +819,7 @@ module Mapper = struct
   and map_exp_d mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.exp_d_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
         | SEBool _ -> state, idata
         | SEInt _ -> state, idata
@@ -812,7 +829,12 @@ module Mapper = struct
         | SEId _ -> state, idata
         | SEEnum field_0 ->
           let state, field_0' = map_path mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else SEEnum field_0' in
+          let odata =
+            if field_0 == field_0' then
+              idata
+            else
+              SEEnum field_0'
+          in
           state, odata
         | SEIndex { e; index } ->
           let state, index' = map_exp mapper context state index in
@@ -826,7 +848,12 @@ module Mapper = struct
           state, odata
         | SEArray field_0 ->
           let state, field_0' = (mapper_list map_exp) mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else SEArray field_0' in
+          let odata =
+            if field_0 == field_0' then
+              idata
+            else
+              SEArray field_0'
+          in
           state, odata
         | SECall { instance; path; args } ->
           let state, args' = (mapper_list map_exp) mapper context state args in
@@ -844,7 +871,12 @@ module Mapper = struct
         | SEUnOp (field_0, field_1) ->
           let state, field_1' = map_exp mapper context state field_1 in
           let field_0' = field_0 in
-          let odata = if field_0 == field_0' && field_1 == field_1' then idata else SEUnOp (field_0', field_1') in
+          let odata =
+            if field_0 == field_0' && field_1 == field_1' then
+              idata
+            else
+              SEUnOp (field_0', field_1')
+          in
           state, odata
         | SEOp (field_0, field_1, field_2) ->
           let state, field_2' = map_exp mapper context state field_2 in
@@ -870,22 +902,42 @@ module Mapper = struct
           state, odata
         | SETuple field_0 ->
           let state, field_0' = (mapper_list map_exp) mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else SETuple field_0' in
+          let odata =
+            if field_0 == field_0' then
+              idata
+            else
+              SETuple field_0'
+          in
           state, odata
         | SEMember (field_0, field_1) ->
           let field_1' = field_1 in
           let state, field_0' = map_exp mapper context state field_0 in
-          let odata = if field_0 == field_0' && field_1 == field_1' then idata else SEMember (field_0', field_1') in
+          let odata =
+            if field_0 == field_0' && field_1 == field_1' then
+              idata
+            else
+              SEMember (field_0', field_1')
+          in
           state, odata
         | SEGroup field_0 ->
           let state, field_0' = map_exp mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else SEGroup field_0' in
+          let odata =
+            if field_0 == field_0' then
+              idata
+            else
+              SEGroup field_0'
+          in
           state, odata
         | SERecord { path; elems } ->
           let state, path' = map_path mapper context state path in
           let state, elems' = mapper_list (mapper_tuple2 map_path map_exp) mapper context state elems in
-          let odata = if elems == elems' && path == path' then idata else SERecord { elems = elems'; path = path' } in
-          state, odata)
+          let odata =
+            if elems == elems' && path == path' then
+              idata
+            else
+              SERecord { elems = elems'; path = path' }
+          in
+          state, odata
       else
         state, idata
     in
@@ -895,7 +947,7 @@ module Mapper = struct
   and map_exp mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.exp_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
         | { e; loc } ->
           let state, e' = map_exp_d mapper context state e in
@@ -905,7 +957,7 @@ module Mapper = struct
             else
               { e = e'; loc }
           in
-          state, odata)
+          state, odata
       else
         state, idata
     in
@@ -915,14 +967,19 @@ module Mapper = struct
   and map_lexp_d mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.lexp_d_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
         | SLWild -> state, SLWild
         | SLId _ -> state, idata
         | SLMember (field_0, field_1) ->
           let field_1' = field_1 in
           let state, field_0' = map_lexp mapper context state field_0 in
-          let odata = if field_0 == field_0' && field_1 == field_1' then idata else SLMember (field_0', field_1') in
+          let odata =
+            if field_0 == field_0' && field_1 == field_1' then
+              idata
+            else
+              SLMember (field_0', field_1')
+          in
           state, odata
         | SLIndex { e; index } ->
           let state, index' = map_exp mapper context state index in
@@ -936,12 +993,22 @@ module Mapper = struct
           state, odata
         | SLGroup field_0 ->
           let state, field_0' = map_lexp mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else SLGroup field_0' in
+          let odata =
+            if field_0 == field_0' then
+              idata
+            else
+              SLGroup field_0'
+          in
           state, odata
         | SLTuple field_0 ->
           let state, field_0' = (mapper_list map_lexp) mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else SLTuple field_0' in
-          state, odata)
+          let odata =
+            if field_0 == field_0' then
+              idata
+            else
+              SLTuple field_0'
+          in
+          state, odata
       else
         state, idata
     in
@@ -951,7 +1018,7 @@ module Mapper = struct
   and map_lexp mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.lexp_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
         | { l; loc } ->
           let state, l' = map_lexp_d mapper context state l in
@@ -961,7 +1028,7 @@ module Mapper = struct
             else
               { l = l'; loc }
           in
-          state, odata)
+          state, odata
       else
         state, idata
     in
@@ -971,23 +1038,38 @@ module Mapper = struct
   and map_dexp_d mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.dexp_d_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
         | SDWild -> state, SDWild
         | SDId _ -> state, idata
         | SDTuple field_0 ->
           let state, field_0' = (mapper_list map_dexp) mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else SDTuple field_0' in
+          let odata =
+            if field_0 == field_0' then
+              idata
+            else
+              SDTuple field_0'
+          in
           state, odata
         | SDGroup field_0 ->
           let state, field_0' = map_dexp mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else SDGroup field_0' in
+          let odata =
+            if field_0 == field_0' then
+              idata
+            else
+              SDGroup field_0'
+          in
           state, odata
         | SDTyped (field_0, field_1) ->
           let state, field_1' = map_type_ mapper context state field_1 in
           let state, field_0' = map_dexp mapper context state field_0 in
-          let odata = if field_0 == field_0' && field_1 == field_1' then idata else SDTyped (field_0', field_1') in
-          state, odata)
+          let odata =
+            if field_0 == field_0' && field_1 == field_1' then
+              idata
+            else
+              SDTyped (field_0', field_1')
+          in
+          state, odata
       else
         state, idata
     in
@@ -997,7 +1079,7 @@ module Mapper = struct
   and map_dexp mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.dexp_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
         | { d; loc } ->
           let state, d' = map_dexp_d mapper context state d in
@@ -1007,7 +1089,7 @@ module Mapper = struct
             else
               { d = d'; loc }
           in
-          state, odata)
+          state, odata
       else
         state, idata
     in
@@ -1017,9 +1099,9 @@ module Mapper = struct
   and map_arg mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.arg_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
-        | _ -> (mapper_tuple3 bypass (mapper_opt map_type_) bypass) mapper context state idata)
+        | _ -> (mapper_tuple3 bypass (mapper_opt map_type_) bypass) mapper context state idata
       else
         state, idata
     in
@@ -1029,13 +1111,18 @@ module Mapper = struct
   and map_stmt_d mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.stmt_d_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
         | SStmtError -> state, SStmtError
         | SStmtVal (field_0, field_1) ->
           let state, field_1' = (mapper_opt map_exp) mapper context state field_1 in
           let state, field_0' = map_dexp mapper context state field_0 in
-          let odata = if field_0 == field_0' && field_1 == field_1' then idata else SStmtVal (field_0', field_1') in
+          let odata =
+            if field_0 == field_0' && field_1 == field_1' then
+              idata
+            else
+              SStmtVal (field_0', field_1')
+          in
           state, odata
         | SStmtMem (field_0, field_1, field_2) ->
           let state, field_1' = (mapper_opt map_exp) mapper context state field_1 in
@@ -1050,15 +1137,30 @@ module Mapper = struct
         | SStmtBind (field_0, field_1) ->
           let state, field_1' = map_exp mapper context state field_1 in
           let state, field_0' = map_lexp mapper context state field_0 in
-          let odata = if field_0 == field_0' && field_1 == field_1' then idata else SStmtBind (field_0', field_1') in
+          let odata =
+            if field_0 == field_0' && field_1 == field_1' then
+              idata
+            else
+              SStmtBind (field_0', field_1')
+          in
           state, odata
         | SStmtReturn field_0 ->
           let state, field_0' = map_exp mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else SStmtReturn field_0' in
+          let odata =
+            if field_0 == field_0' then
+              idata
+            else
+              SStmtReturn field_0'
+          in
           state, odata
         | SStmtBlock field_0 ->
           let state, field_0' = (mapper_list map_stmt) mapper context state field_0 in
-          let odata = if field_0 == field_0' then idata else SStmtBlock field_0' in
+          let odata =
+            if field_0 == field_0' then
+              idata
+            else
+              SStmtBlock field_0'
+          in
           state, odata
         | SStmtIf (field_0, field_1, field_2) ->
           let state, field_2' = (mapper_opt map_stmt) mapper context state field_2 in
@@ -1074,7 +1176,12 @@ module Mapper = struct
         | SStmtWhile (field_0, field_1) ->
           let state, field_1' = map_stmt mapper context state field_1 in
           let state, field_0' = map_exp mapper context state field_0 in
-          let odata = if field_0 == field_0' && field_1 == field_1' then idata else SStmtWhile (field_0', field_1') in
+          let odata =
+            if field_0 == field_0' && field_1 == field_1' then
+              idata
+            else
+              SStmtWhile (field_0', field_1')
+          in
           state, odata
         | SStmtIter { id; value; body } ->
           let state, body' = map_stmt mapper context state body in
@@ -1087,7 +1194,7 @@ module Mapper = struct
               SStmtIter { id = id'; value = value'; body = body' }
           in
           state, odata
-        | _ -> failwith "can't map pattern")
+        | _ -> failwith "can't map pattern"
       else
         state, idata
     in
@@ -1097,7 +1204,7 @@ module Mapper = struct
   and map_stmt mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.stmt_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
         | { s; loc } ->
           let state, s' = map_stmt_d mapper context state s in
@@ -1107,7 +1214,7 @@ module Mapper = struct
             else
               { s = s'; loc }
           in
-          state, odata)
+          state, odata
       else
         state, idata
     in
@@ -1117,7 +1224,7 @@ module Mapper = struct
   and map_function_def mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.function_def_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
         | { name; args; t; next; loc; tags } ->
           let state, next' = (mapper_opt (mapper_tuple2 map_function_def map_stmt)) mapper context state next in
@@ -1130,7 +1237,7 @@ module Mapper = struct
             else
               { name = name'; args = args'; t = t'; next = next'; loc; tags }
           in
-          state, odata)
+          state, odata
       else
         state, idata
     in
@@ -1140,7 +1247,7 @@ module Mapper = struct
   and map_ext_def mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.ext_def_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
         | { name; args; t; loc; tags } ->
           let state, t' = (mapper_opt map_type_) mapper context state t in
@@ -1152,7 +1259,7 @@ module Mapper = struct
             else
               { name = name'; args = args'; t = t'; loc; tags }
           in
-          state, odata)
+          state, odata
       else
         state, idata
     in
@@ -1162,18 +1269,28 @@ module Mapper = struct
   and map_top_stmt_d mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.top_stmt_d_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
         | STopError -> state, STopError
         | STopExternal (field_0, field_1) ->
           let field_1' = field_1 in
           let state, field_0' = map_ext_def mapper context state field_0 in
-          let odata = if field_0 == field_0' && field_1 == field_1' then idata else STopExternal (field_0', field_1') in
+          let odata =
+            if field_0 == field_0' && field_1 == field_1' then
+              idata
+            else
+              STopExternal (field_0', field_1')
+          in
           state, odata
         | STopFunction (field_0, field_1) ->
           let state, field_1' = map_stmt mapper context state field_1 in
           let state, field_0' = map_function_def mapper context state field_0 in
-          let odata = if field_0 == field_0' && field_1 == field_1' then idata else STopFunction (field_0', field_1') in
+          let odata =
+            if field_0 == field_0' && field_1 == field_1' then
+              idata
+            else
+              STopFunction (field_0', field_1')
+          in
           state, odata
         | STopType { name; members } ->
           let state, members' =
@@ -1206,7 +1323,7 @@ module Mapper = struct
             else
               STopConstant (d', e')
           in
-          state, odata)
+          state, odata
       else
         state, idata
     in
@@ -1216,7 +1333,7 @@ module Mapper = struct
   and map_top_stmt mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.top_stmt_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
         | { top; loc } ->
           let state, top' = map_top_stmt_d mapper context state top in
@@ -1226,7 +1343,7 @@ module Mapper = struct
             else
               { top = top'; loc }
           in
-          state, odata)
+          state, odata
       else
         state, idata
     in
@@ -1236,9 +1353,9 @@ module Mapper = struct
   and map_stmts mapper ocontext state idata =
     let context, state, idata = apply_pre mapper.stmts_pre ocontext state idata in
     let state, odata =
-      if context.recurse then (
+      if context.recurse then
         match idata with
-        | _ -> (mapper_list map_top_stmt) mapper context state idata)
+        | _ -> (mapper_list map_top_stmt) mapper context state idata
       else
         state, idata
     in
@@ -1250,12 +1367,12 @@ module ReaplaceId = struct
 
   let exp =
     Mapper.make (fun context state (e : exp) ->
-      match e with
-      | { e = SEId id; _ } -> (
-        match StringMap.find_opt id (Mapper.getContext context) with
-        | Some new_id -> state, { e with e = SEId new_id }
-        | None -> state, e)
-      | _ -> state, e)
+        match e with
+        | { e = SEId id; _ } -> (
+          match StringMap.find_opt id (Mapper.getContext context) with
+          | Some new_id -> state, { e with e = SEId new_id }
+          | None -> state, e)
+        | _ -> state, e)
 
 
   let mapper = { Mapper.default with exp }

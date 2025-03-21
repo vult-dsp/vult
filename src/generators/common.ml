@@ -68,19 +68,22 @@ let cast ~(from : type_) ~(to_ : type_) (value : Pla.t) =
 
 let toFixed ?(comment = true) (n : float) : string =
   let () =
-    if n > 32767.0 || n < -32768.0 then (
+    if n > 32767.0 || n < -32768.0 then
       let msg = Printf.sprintf "This value '%f' cannot be represented with fixed-point numbers" n in
-      Util.Error.raiseErrorMsg msg)
+      Util.Error.raiseErrorMsg msg
   in
-  if n < 0.0 then (
+  if n < 0.0 then
     let value = Int32.of_float (-.n *. float_of_int 0x10000) in
-    if comment then Printf.sprintf "-0x%lx /* %f */" value n else Printf.sprintf "-0x%lx" value)
-  else (
+    if comment then
+      Printf.sprintf "-0x%lx /* %f */" value n
+    else
+      Printf.sprintf "-0x%lx" value
+  else
     let value = Int32.of_float (n *. float_of_int 0x10000) in
     if comment then
       Printf.sprintf "0x%lx /* %f */" value n
     else
-      Printf.sprintf "0x%lx" value)
+      Printf.sprintf "0x%lx" value
 
 
 let splitByFile (stmts : top_stmt list) =

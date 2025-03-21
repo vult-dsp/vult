@@ -51,7 +51,10 @@ let getFunctionInfo (f : function_def) =
     | [ name_param; dsp_param ] -> getStringValueOr ~default:f.name name_param, getBoolValueOr ~default:true dsp_param
     | _ -> f.name, true
   in
-  if inputs <> [] || outputs <> [] then Some { name = f.name; class_name; has_ctx; inputs; outputs; is_dsp } else None
+  if inputs <> [] || outputs <> [] then
+    Some { name = f.name; class_name; has_ctx; inputs; outputs; is_dsp }
+  else
+    None
 
 
 let typeString (t : type_) =
@@ -118,14 +121,23 @@ let tildeNewFunction (f : function_info) : int * Pla.t =
 
 
 let castInput (typ : type_) (value : Pla.t) : Pla.t = Common.cast ~from:Core.Prog.C.real_t ~to_:typ value
+
 let castOutput (typ : type_) (value : Pla.t) : Pla.t = Common.cast ~from:typ ~to_:Core.Prog.C.real_t value
+
 let inputName (i, acc) (p : param) = i + 1, castInput p.t {%pla|*(in_<#i#i>++)|} :: acc
 
 let tildePerformFunctionCall (f : function_info) =
   let fname = f.name in
   (* generates the aguments for the process call *)
   let args = List.fold_left inputName (0, []) f.inputs |> snd |> List.rev in
-  let args = Pla.join_sep Pla.commaspace (if f.has_ctx then Pla.string "x->data" :: args else args) in
+  let args =
+    Pla.join_sep
+      Pla.commaspace
+      (if f.has_ctx then
+         Pla.string "x->data" :: args
+       else
+         args)
+  in
   (* declares the return variable and copies the values to the output buffers *)
   let ret, copy =
     match f.outputs with
@@ -156,8 +168,20 @@ let normalPerformFunctionCall (f : function_info) =
   let fname = f.name in
   (* generates the aguments for the process call *)
   let args = List.fold_left normalInputName (0, []) f.inputs |> snd |> List.rev in
-  let args = if args = [] then [] else Pla.string "in1" :: List.tl args in
-  let args = Pla.join_sep Pla.commaspace (if f.has_ctx then Pla.string "x->data" :: args else args) in
+  let args =
+    if args = [] then
+      []
+    else
+      Pla.string "in1" :: List.tl args
+  in
+  let args =
+    Pla.join_sep
+      Pla.commaspace
+      (if f.has_ctx then
+         Pla.string "x->data" :: args
+       else
+         args)
+  in
   (* declares the return variable and copies the values to the output buffers *)
   let ret, copy =
     match f.outputs with
@@ -213,9 +237,9 @@ let tildePerformFunctionVector (f : function_info) : int * Pla.t =
 
 
 let getInitDefaultCalls (f : function_info) =
-  if f.has_ctx then (
+  if f.has_ctx then
     let fname = f.name in
-    {%pla|<#fname#s>_type|}, {%pla|<#fname#s>_type_init(x->data);|})
+    {%pla|<#fname#s>_type|}, {%pla|<#fname#s>_type_init(x->data);|}
   else
     Pla.string "float", Pla.unit
 
@@ -351,7 +375,12 @@ void <#fname#s>_normal_setup(void) {
 |}
 
 
-let func_imp (f : function_info) : Pla.t = if f.is_dsp then tilde_func_imp f else normal_func_imp f
+let func_imp (f : function_info) : Pla.t =
+  if f.is_dsp then
+    tilde_func_imp f
+  else
+    normal_func_imp f
+
 
 let func_header (f : function_info) : Pla.t =
   let fname = f.name in
@@ -364,7 +393,10 @@ let lib_impl lib_name (functions : function_info list) =
       Pla.newline
       (fun f ->
         let fname = f.name in
-        if f.is_dsp then {%pla|<#fname#s>_tilde_setup();|} else {%pla|<#fname#s>_normal_setup();|})
+        if f.is_dsp then
+          {%pla|<#fname#s>_tilde_setup();|}
+        else
+          {%pla|<#fname#s>_normal_setup();|})
       functions
   in
   {%pla|void <#lib_name#s>_setup() {

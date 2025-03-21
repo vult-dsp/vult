@@ -34,9 +34,13 @@ module TokenKind = struct
   type kind = token_enum
 
   let next = next_token
+
   let kindStr = kindToString
+
   let tokenStr = tokenToString
+
   let isEOF x = x = EOF
+
   let getEOF = EOF
 end
 
@@ -142,23 +146,18 @@ let string (buffer : Stream.stream) : string =
   token.value
 
 
-let prattParser
-  (rbp : int)
-  (buffer : Stream.stream)
-  (lbp : 'kind token -> int)
-  (nud : Stream.stream -> 'kind token -> 'exp)
-  (led : Stream.stream -> 'kind token -> 'exp -> 'exp)
-  =
+let prattParser (rbp : int) (buffer : Stream.stream) (lbp : 'kind token -> int)
+    (nud : Stream.stream -> 'kind token -> 'exp) (led : Stream.stream -> 'kind token -> 'exp -> 'exp) =
   let current_token = Stream.current buffer in
   let _ = Stream.skip buffer in
   let left = nud buffer current_token in
   let next_token = Stream.current buffer in
   let rec loop token left repeat =
-    if repeat then (
+    if repeat then
       let _ = Stream.skip buffer in
       let new_left = led buffer token left in
       let new_token = Stream.current buffer in
-      loop new_token new_left (rbp < lbp new_token))
+      loop new_token new_left (rbp < lbp new_token)
     else
       left
   in
@@ -453,7 +452,10 @@ and exp_nud (buffer : Stream.stream) (token : 'kind token) : exp =
   | OP, "-" -> unaryOp buffer token
   | ID, _ ->
     let id = token.value in
-    if String.capitalize_ascii id = id then { e = SEEnum { id; n = None; loc }; loc } else { e = SEId id; loc }
+    if String.capitalize_ascii id = id then
+      { e = SEEnum { id; n = None; loc }; loc }
+    else
+      { e = SEId id; loc }
   | LPAREN, _ ->
     let e = expression 0 buffer in
     let _ = Stream.consume buffer RPAREN in
@@ -510,7 +512,10 @@ and pattern_nud (buffer : Stream.stream) (token : 'kind token) : pattern =
   | WILD, _ -> { p = SPWild; loc }
   | ID, _ ->
     let id = token.value in
-    if String.capitalize_ascii id = id then { p = SPEnum { id; n = None; loc }; loc } else failwith "Add error"
+    if String.capitalize_ascii id = id then
+      { p = SPEnum { id; n = None; loc }; loc }
+    else
+      failwith "Add error"
   | LPAREN, _ ->
     let p = pattern 0 buffer in
     let _ = Stream.consume buffer RPAREN in
@@ -1098,7 +1103,9 @@ and topstmtList (buffer : Stream.stream) : top_stmt list =
 
 
 let parseDExp (s : string) : dexp = dexp_expression 0 (Stream.fromString s)
+
 let parseLhsExp (s : string) : lexp = lexp_expression 0 (Stream.fromString s)
+
 let parseExp (s : string) : exp = expression 0 (Stream.fromString s)
 
 let parseId (s : string) : string =
@@ -1150,9 +1157,9 @@ let parseBuffer (file : string) (buffer : Stream.stream) =
     let stmts = loop [] in
     if Stream.hasErrors buffer then
       raise (Error.Errors (List.rev (Stream.getErrors buffer)))
-    else (
+    else
       let name = moduleName file in
-      { stmts; file; name })
+      { stmts; file; name }
   with
   | ParserError error -> raise (Error.Errors [ error ])
   | Error.Errors _ as e -> raise e

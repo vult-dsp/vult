@@ -96,7 +96,12 @@ let rec print_exp e =
   match e.e with
   | EEmptyValue -> Pla.string "{}"
   | EUnit -> Pla.string ""
-  | EBool v -> Pla.string (if v then "true" else "false")
+  | EBool v ->
+    Pla.string
+      (if v then
+         "true"
+       else
+         "false")
   | EInt n -> Pla.int n
   | EReal n -> Pla.string (Util.Vfloat.to_string n)
   | EFixed n -> Pla.string (Util.Vfloat.to_string n)

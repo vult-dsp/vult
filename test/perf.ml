@@ -25,7 +25,9 @@
 open Util.Args
 
 let tmp_dir = Filename.get_temp_dir_name ()
+
 let init_dir = Sys.getcwd ()
+
 let in_proj_dir file = Filename.concat init_dir file
 
 let call_uname () =
@@ -88,13 +90,20 @@ let compileFile (file : string) =
   let cmd =
     Printf.sprintf "g++ -O3 -std=c++11 -ffast-math -Werror -I. -I%s -c %s -o %s.o" (in_proj_dir "runtime") file basename
   in
-  if Sys.command cmd <> 0 then failwith ("Failed to compile " ^ file)
+  if Sys.command cmd <> 0 then
+    failwith ("Failed to compile " ^ file)
 
 
 let linkFiles (output : string) (files : string list) =
-  let lflags = if os = "Linux" then "-lm" else "" in
+  let lflags =
+    if os = "Linux" then
+      "-lm"
+    else
+      ""
+  in
   let cmd = Printf.sprintf "g++ -o %s %s %s" output (String.concat " " files) lflags in
-  if Sys.command cmd <> 0 then failwith "Failed to link "
+  if Sys.command cmd <> 0 then
+    failwith "Failed to link "
 
 
 let generateC (filename : string) (output : string) real : unit =

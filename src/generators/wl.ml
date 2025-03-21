@@ -78,13 +78,19 @@ let uoperator (op : uoperator) =
 
 
 let e_regex = Str.regexp_string "e"
+
 let fixFloat s = Str.global_replace e_regex " 10^" s
 
 let rec print_exp e =
   match e.e with
   | EEmptyValue -> Pla.string "{}"
   | EUnit -> Pla.string ""
-  | EBool v -> Pla.string (if v then "True" else "False")
+  | EBool v ->
+    Pla.string
+      (if v then
+         "True"
+       else
+         "False")
   | EInt n -> Pla.int n
   | EReal n -> Pla.string (fixFloat (Util.Vfloat.to_string n))
   | EFixed n -> Pla.string (fixFloat (Util.Vfloat.to_string n))

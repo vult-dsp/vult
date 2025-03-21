@@ -40,16 +40,16 @@ module Map = struct
   let empty () = ref Map.empty
 
   let update (report : 'a -> 'a -> 'a) (key : string) (value : 'a) (t : 'a t) : unit =
-    t
-    := Map.update
-         key
-         (fun a ->
-           match a with
-           | None -> Some value
-           | Some b ->
-             let c = report b value in
-             Some c)
-         !t
+    t :=
+      Map.update
+        key
+        (fun a ->
+          match a with
+          | None -> Some value
+          | Some b ->
+            let c = report b value in
+            Some c)
+        !t
 
 
   let of_list elems : 'a t =
@@ -58,8 +58,11 @@ module Map = struct
 
 
   let to_list (t : 'a t) = Map.to_list !t
+
   let find key t = Map.find_opt key !t
+
   let is_empty (t : 'a t) : bool = Map.is_empty !t
+
   let fold (f : string -> 'a -> 'b -> 'b) (s : 'b) (t : 'a t) : 'b = Map.fold f !t s
 end
 
@@ -67,6 +70,7 @@ module type TSig = sig
   type t
 
   val convert : Typed.type_ -> t
+
   val convert_function_type : Typed.type_ list * Typed.type_ -> t list * t
 end
 
@@ -204,13 +208,13 @@ let builtin_functions =
 let builtin_types =
   [ "int"; "real"; "fix16"; "bool"; "string"; "unit" ]
   |> List.map (fun n ->
-    ( n
-    , { path = Pparser.Syntax.{ id = n; n = None; loc = Loc.default }
-      ; descr = Simple
-      ; index = 0
-      ; loc = Loc.default
-      ; generated = false
-      } ))
+         ( n
+         , { path = Pparser.Syntax.{ id = n; n = None; loc = Loc.default }
+           ; descr = Simple
+           ; index = 0
+           ; loc = Loc.default
+           ; generated = false
+           } ))
   |> Map.of_list
 
 
@@ -384,21 +388,21 @@ let addConstant (env : in_module) _unify (name : string) (t : Typed.type_) loc :
 
 let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_kind) loc : in_func =
   let report_mem (found : var) (value : var) =
-    if unify found.t t then (
+    if unify found.t t then
       let tags = Pparser.Ptags.mergeTags found.tags value.tags in
-      { found with tags })
-    else (
+      { found with tags }
+    else
       let old_type = Pla.print (Typed.print_type_ found.t) in
       let new_type = Pla.print (Typed.print_type_ t) in
       Error.raiseError
         ("This declaration tries to change the type of "
-         ^ found.name
-         ^ ". The previous type is '"
-         ^ old_type
-         ^ "' and the new is '"
-         ^ new_type
-         ^ "'")
-        value.loc)
+        ^ found.name
+        ^ ". The previous type is '"
+        ^ old_type
+        ^ "' and the new is '"
+        ^ new_type
+        ^ "'")
+        value.loc
   in
   let checkDuplicatedMem context name =
     match context with
@@ -408,9 +412,9 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
       | Some found ->
         Error.raiseError
           ("A mem variable with the name '"
-           ^ found.name
-           ^ "' has already been declared at "
-           ^ Loc.to_string_readable found.loc)
+          ^ found.name
+          ^ "' has already been declared at "
+          ^ Loc.to_string_readable found.loc)
           loc)
     | _ -> ()
   in
@@ -422,9 +426,9 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
         | Some found ->
           Error.raiseError
             ("A variable with the name '"
-             ^ found.name
-             ^ "' has already been declared at "
-             ^ Loc.to_string_readable found.loc)
+            ^ found.name
+            ^ "' has already been declared at "
+            ^ Loc.to_string_readable found.loc)
             loc)
       locals
   in
@@ -442,9 +446,9 @@ let addVar (env : in_func) unify (name : string) (t : Typed.type_) (kind : var_k
     let report (found : var) =
       Error.raiseError
         ("A variable with the name '"
-         ^ found.name
-         ^ "' has already been declared at "
-         ^ Loc.to_string_readable found.loc)
+        ^ found.name
+        ^ "' has already been declared at "
+        ^ Loc.to_string_readable found.loc)
         loc
     in
     let () = checkDuplicatedMem context name in
@@ -624,6 +628,7 @@ let addEnum (env : in_module) type_name members loc : in_module =
 
 
 let createContextForExternal (env : in_module) : in_context = { top = env.top; m = env.m; context = None }
+
 let exitContext (env : in_context) : in_module = { top = env.top; m = env.m }
 
 let getFunctionTick (env : in_func) : int =
@@ -644,9 +649,8 @@ let getFunctionContext (f : f) : path =
   | None -> failwith "trying to get the context of a function without one"
 
 
-let enterFunction (env : in_context) (name : string) (args : Typed.arg list) (ret : Typed.type_) loc
-  : in_func * path * 'a
-  =
+let enterFunction (env : in_context) (name : string) (args : Typed.arg list) (ret : Typed.type_) loc :
+    in_func * path * 'a =
   let report (found : f) =
     Error.raiseError ("A function with the name '" ^ found.path.id ^ "' has already been declared.") loc
   in
@@ -694,4 +698,5 @@ let enterModule (env : in_top) (name : string) : in_module =
 
 
 let exitModule (env : in_module) : in_top = env.top
+
 let empty () = { modules = Map.empty (); builtin_functions; builtin_types }

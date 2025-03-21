@@ -26,6 +26,7 @@ open Prog
 open Util
 
 let index_tick = ref 0
+
 let resetTick () = index_tick := 0
 
 let getTick () =

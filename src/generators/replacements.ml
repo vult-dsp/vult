@@ -268,7 +268,15 @@ let op_to_fun (lang : Util.Args.code) (op : Core.Prog.operator) (e1 : type_) (e2
 
 let keyword (lang : Util.Args.code) id =
   match lang with
-  | CppCode -> if Util.Maps.Set.mem id Cpp.keywords then id ^ "_" else id
-  | LuaCode -> if Util.Maps.Set.mem id Lua.keywords then id ^ "_" else id
+  | CppCode ->
+    if Util.Maps.Set.mem id Cpp.keywords then
+      id ^ "_"
+    else
+      id
+  | LuaCode ->
+    if Util.Maps.Set.mem id Lua.keywords then
+      id ^ "_"
+    else
+      id
   | WLCode -> Wl.nameReplace id
   | _ -> id

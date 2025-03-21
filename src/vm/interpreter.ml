@@ -60,6 +60,7 @@ let pop (vm : t) : t * rvalue =
 
 
 let loadRef (vm : t) (n : int) : rvalue = vm.stack.(vm.frame + n)
+
 let loadConst (vm : t) (n : int) : rvalue = vm.constants.(n)
 
 let storeRef (vm : t) (n : int) (v : rvalue) : t =
@@ -106,7 +107,10 @@ let findSegment (vm : t) (name : string) : f = Map.find name vm.table
 let printStack (vm : t) =
   let rec loop n =
     if n <= vm.sp then (
-      if vm.frame = n then print_string "->" else print_string "  ";
+      if vm.frame = n then
+        print_string "->"
+      else
+        print_string "  ";
       print_int n;
       print_string " : ";
       print_endline (Pla.print (print_rvalue vm.stack.(n)));
@@ -218,7 +222,10 @@ let rec eval_rvalue (vm : t) (r : rvalue) : t * rvalue =
     vm, not e
   | RIf (cond, then_, else_) ->
     let vm, cond = eval_rvalue vm cond in
-    if isTrue cond then eval_rvalue vm then_ else eval_rvalue vm else_
+    if isTrue cond then
+      eval_rvalue vm then_
+    else
+      eval_rvalue vm else_
   | RObject elems ->
     let vm, elems = eval_array eval_rvalue vm elems in
     vm, RObject elems
@@ -298,19 +305,43 @@ and eval_call (vm : t) findex (args : rvalue list) : t * rvalue =
     (* casting of numbers *)
     | Real, [ RInt n ] -> vm, RReal (float_of_int n)
     | Real, [ RReal n ] -> vm, RReal n
-    | Real, [ RBool n ] -> vm, RReal (if n then 1.0 else 0.0)
+    | Real, [ RBool n ] ->
+      ( vm
+      , RReal
+          (if n then
+             1.0
+           else
+             0.0) )
     | Real, _ -> failwith "invalid arguments to 'real' function"
     | String, [ RInt n ] -> vm, RString (string_of_int n)
     | String, [ RReal n ] -> vm, RString (string_of_float n)
-    | String, [ RBool n ] -> vm, RString (if n then "true" else "false")
+    | String, [ RBool n ] ->
+      ( vm
+      , RString
+          (if n then
+             "true"
+           else
+             "false") )
     | String, _ -> failwith "invalid arguments to 'string' function"
     | Fixed, [ RInt n ] -> vm, RReal (float_of_int n)
     | Fixed, [ RReal n ] -> vm, RReal n
-    | Fixed, [ RBool n ] -> vm, RReal (if n then 1.0 else 0.0)
+    | Fixed, [ RBool n ] ->
+      ( vm
+      , RReal
+          (if n then
+             1.0
+           else
+             0.0) )
     | Fixed, _ -> failwith "invalid arguments to 'fixed' function"
     | Int, [ RInt n ] -> vm, RInt n
     | Int, [ RReal n ] -> vm, RInt (int_of_float n)
-    | Int, [ RBool n ] -> vm, RInt (if n then 1 else 0)
+    | Int, [ RBool n ] ->
+      ( vm
+      , RInt
+          (if n then
+             1
+           else
+             0) )
     | Int, _ -> failwith "invalid arguments to 'int' function"
     | Bool, [ RInt n ] -> vm, RBool (n <> 0)
     | Bool, [ RReal n ] -> vm, RBool (n <> 0.0)
@@ -376,19 +407,19 @@ and eval_instr (vm : t) (instr : instr list) : t =
   | (If (cond, then_, else_) as h) :: t ->
     trace vm h;
     let vm, cond = eval_rvalue vm cond in
-    if isTrue cond then (
+    if isTrue cond then
       let vm = eval_instr vm then_ in
-      eval_instr vm t)
-    else (
+      eval_instr vm t
+    else
       let vm = eval_instr vm else_ in
-      eval_instr vm t)
+      eval_instr vm t
   | (While (cond, body) as h) :: t ->
     trace vm h;
     let rec loop vm =
       let vm, result = eval_rvalue vm cond in
-      if isTrue result then (
+      if isTrue result then
         let vm = eval_instr vm body in
-        loop vm)
+        loop vm
       else
         eval_instr vm t
     in

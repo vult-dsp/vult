@@ -175,6 +175,7 @@ type env =
   }
 
 let default_env = { locals = Map.empty; constants = { n = 0; c = Map.empty }; lcount = 0; functions; fcount = 0 }
+
 let addLocal env name = { env with locals = Map.add name env.lcount env.locals; lcount = env.lcount + 1 }
 
 let addConstant env name value =
@@ -476,7 +477,12 @@ let rec print_rvalue r =
   | RVoid -> Pla.string "()"
   | RInt n -> Pla.int n
   | RReal n -> Pla.float n
-  | RBool n -> Pla.string (if n then "true" else "false")
+  | RBool n ->
+    Pla.string
+      (if n then
+         "true"
+       else
+         "false")
   | RString s -> Pla.string_quoted s
   | RRef (n, s) -> {%pla|[<#n#i>:<#s#s>]|}
   | RObject elems ->
