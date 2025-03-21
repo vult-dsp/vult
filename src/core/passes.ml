@@ -563,6 +563,14 @@ module Builtin = struct
     | { e = ECall { path = "pi"; args = [] }; _ } -> reapply state, { e with e = EReal Float.pi }
     | { e = ECall { path = "exp"; args = [ { e = EReal v; _ } ] }; _ } -> reapply state, { e with e = EReal (exp v) }
     | { e = ECall { path = "exp"; args = [ { e = EFixed v; _ } ] }; _ } -> reapply state, { e with e = EFixed (exp v) }
+    | { e = ECall { path = "sin"; args = [ { e = EReal v; _ } ] }; _ } -> reapply state, { e with e = EReal (sin v) }
+    | { e = ECall { path = "sin"; args = [ { e = EFixed v; _ } ] }; _ } -> reapply state, { e with e = EFixed (sin v) }
+    | { e = ECall { path = "cos"; args = [ { e = EReal v; _ } ] }; _ } -> reapply state, { e with e = EReal (cos v) }
+    | { e = ECall { path = "cos"; args = [ { e = EFixed v; _ } ] }; _ } -> reapply state, { e with e = EFixed (cos v) }
+    | { e = ECall { path = "abs"; args = [ { e = EReal v; _ } ] }; _ } ->
+      reapply state, { e with e = EReal (Float.abs v) }
+    | { e = ECall { path = "abs"; args = [ { e = EFixed v; _ } ] }; _ } ->
+      reapply state, { e with e = EFixed (Float.abs v) }
     | { e = ECall { path = "sqrt"; args = [ { e = EReal v; _ } ] }; _ } -> reapply state, { e with e = EReal (sqrt v) }
     | { e = ECall { path = "sqrt"; args = [ { e = EFixed v; _ } ] }; _ } ->
       reapply state, { e with e = EFixed (sqrt v) }
@@ -726,7 +734,7 @@ module Canonize = struct
 end
 
 module Simplify = struct
-  let evaluate op e1 e2 =
+  let evaluate t op e1 e2 =
     match e1, e2 with
     (* boolean *)
     | e, { e = EBool true; loc; _ } | { e = EBool true; loc; _ }, e -> (
@@ -746,6 +754,12 @@ module Simplify = struct
       | OpMul -> Some { e = EReal (n1 *. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | OpSub -> Some { e = EReal (n1 -. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | OpDiv -> Some { e = EReal (n1 /. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpEq -> Some { e = EBool (n1 = n2); t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpNe -> Some { e = EBool (n1 <> n2); t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpLe -> Some { e = EBool (n1 <= n2); t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpLt -> Some { e = EBool (n1 < n2); t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpGe -> Some { e = EBool (n1 >= n2); t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpGt -> Some { e = EBool (n1 > n2); t; loc = Util.Loc.merge e1.loc e2.loc }
       | _ -> None)
     | { e = EFixed n1; _ }, { e = EFixed n2; _ } -> (
       match op with
@@ -753,6 +767,12 @@ module Simplify = struct
       | OpMul -> Some { e = EFixed (n1 *. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | OpSub -> Some { e = EFixed (n1 -. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | OpDiv -> Some { e = EFixed (n1 /. n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpEq -> Some { e = EBool (n1 = n2); t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpNe -> Some { e = EBool (n1 <> n2); t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpLe -> Some { e = EBool (n1 <= n2); t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpLt -> Some { e = EBool (n1 < n2); t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpGe -> Some { e = EBool (n1 >= n2); t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpGt -> Some { e = EBool (n1 > n2); t; loc = Util.Loc.merge e1.loc e2.loc }
       | _ -> None)
     | { e = EInt n1; _ }, { e = EInt n2; _ } -> (
       match op with
@@ -760,6 +780,12 @@ module Simplify = struct
       | OpMul -> Some { e = EInt (n1 * n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | OpSub -> Some { e = EInt (n1 - n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
       | OpDiv -> Some { e = EInt (n1 / n2); t = e1.t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpEq -> Some { e = EBool (n1 = n2); t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpNe -> Some { e = EBool (n1 <> n2); t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpLe -> Some { e = EBool (n1 <= n2); t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpLt -> Some { e = EBool (n1 < n2); t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpGe -> Some { e = EBool (n1 >= n2); t; loc = Util.Loc.merge e1.loc e2.loc }
+      | OpGt -> Some { e = EBool (n1 > n2); t; loc = Util.Loc.merge e1.loc e2.loc }
       | _ -> None)
     | ({ e = EReal 0.0 | EFixed 0.0; _ } as zero), e | e, ({ e = EReal 0.0 | EFixed 0.0; _ } as zero) -> (
       match op with
@@ -795,11 +821,11 @@ module Simplify = struct
       let e2 = { e = EOp (OpMul, k1, e); loc; t = k1.t } in
       reapply state, { e with e = EOp (OpAdd, e1, e2) }
     | { e = EOp (op1, e1, { e = EOp (op2, e2, e3); _ }); _ } when op1 = op2 -> (
-      match evaluate op1 e1 e2 with
+      match evaluate e.t op1 e1 e2 with
       | Some en -> reapply state, { e with e = EOp (op1, en, e3) }
       | None -> state, e)
     | { e = EOp (op, e1, e2); _ } -> (
-      match evaluate op e1 e2 with
+      match evaluate e.t op e1 e2 with
       | Some e -> reapply state, e
       | None -> state, e)
     | _ -> state, e

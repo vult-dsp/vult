@@ -420,7 +420,7 @@ module RandomCompileTest = struct
   let generateCPP (filename : string) (output : string) : unit =
     let args = Args.{ default_arguments with files = [ File filename ]; code = CppCode; output = Some output } in
     let seed = Hashtbl.hash filename in
-    let code = RandProg.run seed in
+    let code = RandProg.run (seed + 1) in
     write filename code;
     let parser_results = Pparser.Parse.parseString (Some filename) code in
     let deps = Hashtbl.create 16 in
