@@ -45,7 +45,6 @@ type code =
   | JSCode
   | LuaCode
   | JavaCode
-  | WLCode
 
 type real_format =
   | Float
@@ -132,7 +131,6 @@ let flags result =
               | "lua" -> LuaCode
               | "java" -> JavaCode
               | "js" -> JSCode
-              | "wl" -> WLCode
               | _ ->
                 print_endline ("Unknown language '" ^ s ^ "'. The valid options are: cpp, lua, java, js, wl");
                 exit (-1)))

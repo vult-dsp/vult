@@ -564,7 +564,6 @@ module CliTest = struct
       | "js" -> { args with code = JSCode }, [ ".js", ".js.base" ]
       | "lua" -> { args with code = LuaCode }, [ ".lua", ".lua.base" ]
       | "java" -> { args with code = JavaCode; prefix = Some "vult.com" }, [ ".java", ".java.base" ]
-      | "wl" -> { args with code = WLCode }, [ ".wl", ".wl.base" ]
       | _ -> failwith "Unknown target to run test"
     in
     let args = { args with output = Some basefile; files = [ File fullfile ] } in
@@ -733,7 +732,7 @@ let suite =
        ; CliTest.get all_files Native "float"
        ; CliTest.get all_files Native "fixed"
        ; CliTest.get all_files Native "lua"
-       ; CliTest.get all_files Native "wl"
+       ; CliTest.get all_files Native "js"
        ; CliTest.get all_files Node "float"
        ; CliTest.get all_files Node "fixed"
        ; CliTest.get all_files Node "lua"

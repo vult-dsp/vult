@@ -151,21 +151,6 @@ let generateLua (filename : string) (output : string) : unit =
   List.iter (Driver.Cli.showResult args) output
 
 
-let generateWl (filename : string) (output : string) : unit =
-  let args =
-    { default_arguments with
-      files = [ File filename ]
-    ; code = WLCode
-    ; output = Some output
-    ; real = Float
-    ; template = Some "performance"
-    ; includes
-    }
-  in
-  let output = Driver.Cli.driver args in
-  List.iter (Driver.Cli.showResult args) output
-
-
 let realString f =
   match f with
   | Fixed -> "fixed"
@@ -188,12 +173,12 @@ let runC real_type vultfile =
   | e -> showError e
 
 
-let _runJs vultfile =
+let runJs vultfile =
   try
     let output = Filename.chop_extension (Filename.basename vultfile) in
     Sys.chdir tmp_dir;
     generateJs vultfile output;
-    ignore (Sys.command "node main.js");
+    ignore (Sys.command ("node " ^ output ^ ".js"));
     Sys.chdir init_dir
   with
   | e -> showError e
@@ -210,23 +195,13 @@ let runLua vultfile =
   | e -> showError e
 
 
-let _runWl vultfile =
-  try
-    let output = Filename.chop_extension (Filename.basename vultfile) in
-    Sys.chdir tmp_dir;
-    generateWl vultfile output;
-    ignore (Sys.command ("wolframscript -f " ^ output ^ ".wl"));
-    Sys.chdir init_dir
-  with
-  | e -> showError e
-
-
 let main () =
   List.iter
     (fun f ->
       runC Float f;
       runC Fixed f;
-      runLua f)
+      runLua f;
+      runJs f)
     files
 
 ;;

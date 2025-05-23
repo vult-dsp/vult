@@ -29,31 +29,31 @@ end
 
 function Util_change_type_alloc()
    local _ctx = {};
-   _ctx.pre_x = 0.
+   _ctx.pre_x = 0.0
    return _ctx
 end
 
 function Util_dcblock_type_alloc()
    local _ctx = {};
-   _ctx.x1 = 0.
-   _ctx.y1 = 0.
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 end
 
 function Util_smooth_type_alloc()
    local _ctx = {};
-   _ctx.x = 0.
+   _ctx.x = 0.0
    return _ctx
 end
 
 function Util_average2_type_alloc()
    local _ctx = {};
-   _ctx.x0 = 0.
+   _ctx.x0 = 0.0
    return _ctx
 end
 
 function Util_cvToPitch(cv)
-   return (24. + (120. * cv))
+   return (24.0 + (120.0 * cv))
 end
 
 Util_pitchToRate_c0 = {};
@@ -97,14 +97,14 @@ function Util_cvToRate(cv)
 end
 
 function Saw_r_default(_ctx)
-   _ctx.inc = Util_cvToRate(0.)
+   _ctx.inc = Util_cvToRate(0.0)
 end
 
 function Saw_r_process_type_alloc()
    local _ctx = {};
-   _ctx.inc = 0.
+   _ctx.inc = 0.0
    _ctx.inst_1b040 = Util_change_type_alloc()
-   _ctx.phase = 0.
+   _ctx.phase = 0.0
    Saw_r_default(_ctx)
    return _ctx
 end
@@ -231,7 +231,7 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvToperiod_c0[index + 1] + (cv * (Util_cvToperiod_c1[index + 1] + (Util_cvToperiod_c2[index + 1] * cv))))
 end
 
@@ -251,7 +251,7 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvTokHz_c0[index + 1] + (cv * (Util_cvTokHz_c1[index + 1] + (Util_cvTokHz_c2[index + 1] * cv))))
 end
 
@@ -259,29 +259,29 @@ function Saw_r_process(_ctx, cv)
    if Util_change(_ctx.inst_1b040, cv) then
       _ctx.inc = Util_cvToRate(cv)
    end
-   local i = 0.
+   local i = 0.0
    if (_ctx.inc < eps()) then
       i = eps()
    else
       i = _ctx.inc
    end
-   _ctx.phase = ((2. * _ctx.inc) + _ctx.phase)
-   if (_ctx.phase > 2.) then
-      _ctx.phase = (-2. + _ctx.phase)
+   _ctx.phase = ((2.0 * _ctx.inc) + _ctx.phase)
+   if (_ctx.phase > 2.0) then
+      _ctx.phase = (-2.0 + _ctx.phase)
    else
       _ctx.phase = _ctx.phase
    end
-   local ph = (-1. + _ctx.phase)
-   local o = 0.
-   if (ph >= (1. + (-i))) then
+   local ph = (-1.0 + _ctx.phase)
+   local o = 0.0
+   if (ph >= (1.0 + (-i))) then
       do
-         local b = ((1. + ((-i) + (-ph))) / i)
+         local b = ((1.0 + ((-i) + (-ph))) / i)
          o = (ph + (b * abs(b)))
       end
    else
-      if (ph <= (-1. + i)) then
+      if (ph <= (-1.0 + i)) then
          do
-            local b = ((-1. + (i + (-ph))) / i)
+            local b = ((-1.0 + (i + (-ph))) / i)
             o = (ph + (b * abs(b)))
          end
       else

@@ -70,8 +70,7 @@ let generateCode args file_deps (stmts, vm, acc) =
       | CppCode ->
         Util.Profile.time "Generate Code" (fun () -> Cpp.generate file_deps args.split args args.template stmts)
       | LuaCode -> Lua.generate args stmts
-      | WLCode -> Wl.generate args stmts
-      | JSCode -> failwith "Javascript generator not implemented yet"
+      | JSCode -> Js.generate args stmts
       | JavaCode -> failwith "Javascript generator not implemented yet"
     in
     (GeneratedCode code :: prog_out) @ acc

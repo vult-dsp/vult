@@ -1,6 +1,6 @@
 (library
  (name generators)
- (modules Wl Lua Cpp Common Tocode Tables T_pd T_performance Replacements)
+ (modules Lua Js Cpp Common Tocode Tables T_pd T_performance Replacements)
  (libraries core pparser pla vm str)
  (flags
   (:standard -w -30))

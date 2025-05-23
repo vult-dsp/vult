@@ -29,31 +29,31 @@ end
 
 function Util_change_type_alloc()
    local _ctx = {};
-   _ctx.pre_x = 0.
+   _ctx.pre_x = 0.0
    return _ctx
 end
 
 function Util_dcblock_type_alloc()
    local _ctx = {};
-   _ctx.x1 = 0.
-   _ctx.y1 = 0.
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 end
 
 function Util_smooth_type_alloc()
    local _ctx = {};
-   _ctx.x = 0.
+   _ctx.x = 0.0
    return _ctx
 end
 
 function Util_average2_type_alloc()
    local _ctx = {};
-   _ctx.x0 = 0.
+   _ctx.x0 = 0.0
    return _ctx
 end
 
 function Util_cvToPitch(cv)
-   return (24. + (120. * cv))
+   return (24.0 + (120.0 * cv))
 end
 
 Util_pitchToRate_c0 = {};
@@ -97,14 +97,14 @@ function Util_cvToRate(cv)
 end
 
 function Saw_ptr1_default(_ctx)
-   _ctx.rate = Util_cvToRate(0.)
+   _ctx.rate = Util_cvToRate(0.0)
 end
 
 function Saw_ptr1_process_type_alloc()
    local _ctx = {};
    _ctx.inst_1b06f = Util_change_type_alloc()
-   _ctx.phase = 0.
-   _ctx.rate = 0.
+   _ctx.phase = 0.0
+   _ctx.rate = 0.0
    Saw_ptr1_default(_ctx)
    return _ctx
 end
@@ -231,7 +231,7 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvToperiod_c0[index + 1] + (cv * (Util_cvToperiod_c1[index + 1] + (Util_cvToperiod_c2[index + 1] * cv))))
 end
 
@@ -251,7 +251,7 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvTokHz_c0[index + 1] + (cv * (Util_cvTokHz_c1[index + 1] + (Util_cvTokHz_c2[index + 1] * cv))))
 end
 
@@ -260,21 +260,21 @@ function Saw_ptr1_process(_ctx, cv)
       _ctx.rate = Util_cvToRate(cv)
    end
    local s1 = _ctx.rate
-   local dc = -1.
+   local dc = -1.0
    _ctx.phase = (_ctx.phase + _ctx.rate)
-   local out = 0.
-   if (_ctx.phase > 1.) then
-      _ctx.phase = (-1. + _ctx.phase)
+   local out = 0.0
+   if (_ctx.phase > 1.0) then
+      _ctx.phase = (-1.0 + _ctx.phase)
    else
       _ctx.phase = _ctx.phase
    end
    if (_ctx.phase < s1) then
       do
          local d = (_ctx.phase / _ctx.rate)
-         out = (2. + (dc + (-2. * d)))
+         out = (2.0 + (dc + (-2.0 * d)))
       end
    else
-      out = ((-dc) + (2. * _ctx.phase))
+      out = ((-dc) + (2.0 * _ctx.phase))
    end
    return out
 end

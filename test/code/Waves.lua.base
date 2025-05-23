@@ -30,7 +30,7 @@ function Waves_sineTable1(channel, index)
    if (channel == 0) then
       return Waves_sineTable1_chan_0[(index % 256) + 1]
    end
-   return 0.
+   return 0.0
 end
 
 Waves_sineTable2_c0 = {};
@@ -53,7 +53,7 @@ function Waves_sineTable2_raw_c2(index)
 end
 
 function Waves_sineTable2(position)
-   local index = clip(math.floor((position * 255.)), 0, 255)
+   local index = clip(math.floor((position * 255.0)), 0, 255)
    return (Waves_sineTable2_c0[index + 1] + (position * (Waves_sineTable2_c1[index + 1] + (Waves_sineTable2_c2[index + 1] * position))))
 end
 

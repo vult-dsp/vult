@@ -29,38 +29,38 @@ end
 
 function Util_change_type_alloc()
    local _ctx = {};
-   _ctx.pre_x = 0.
+   _ctx.pre_x = 0.0
    return _ctx
 end
 
 function Util_dcblock_type_alloc()
    local _ctx = {};
-   _ctx.x1 = 0.
-   _ctx.y1 = 0.
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 end
 
 function Util_smooth_type_alloc()
    local _ctx = {};
-   _ctx.x = 0.
+   _ctx.x = 0.0
    return _ctx
 end
 
 function Util_average2_type_alloc()
    local _ctx = {};
-   _ctx.x0 = 0.
+   _ctx.x0 = 0.0
    return _ctx
 end
 
 function Sawcore_ptr_w2_type_alloc()
    local _ctx = {};
    _ctx.Sawcore_ptr_w2_ret_0 = false
-   _ctx.Sawcore_ptr_w2_ret_1 = 0.
+   _ctx.Sawcore_ptr_w2_ret_1 = 0.0
    return _ctx
 end
 
 function Util_cvToPitch(cv)
-   return (24. + (120. * cv))
+   return (24.0 + (120.0 * cv))
 end
 
 Util_pitchToRate_1024_c0 = {};
@@ -104,7 +104,7 @@ function Util_cvToRate_1024(cv)
 end
 
 function Sawcore_default(_ctx)
-   _ctx.rate = Util_cvToRate_1024(0.)
+   _ctx.rate = Util_cvToRate_1024(0.0)
 end
 
 function Sawcore_process_type_alloc()
@@ -112,9 +112,9 @@ function Sawcore_process_type_alloc()
    _ctx.inst_1b0dd = Util_change_type_alloc()
    _ctx.inst_204dd = Util_edge_type_alloc()
    _ctx.inst_324dd = Sawcore_ptr_w2_type_alloc()
-   _ctx.phase = 0.
-   _ctx.rate = 0.
-   _ctx.reset_phase = 0.
+   _ctx.phase = 0.0
+   _ctx.rate = 0.0
+   _ctx.reset_phase = 0.0
    _ctx.reset_state = false
    Sawcore_default(_ctx)
    return _ctx
@@ -242,7 +242,7 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvToperiod_c0[index + 1] + (cv * (Util_cvToperiod_c1[index + 1] + (Util_cvToperiod_c2[index + 1] * cv))))
 end
 
@@ -262,21 +262,21 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvTokHz_c0[index + 1] + (cv * (Util_cvTokHz_c1[index + 1] + (Util_cvTokHz_c2[index + 1] * cv))))
 end
 
 function Sawcore_ptr_w2(_ctx, phase, rate)
    local s1 = rate
    local s2 = (rate + s1)
-   local out2 = 0.
+   local out2 = 0.0
    local out1 = false
    if (phase < s1) then
       do
          local d = (phase / rate)
          local t2 = (0.000976 * s2)
          out1 = false
-         out2 = (1. + (d * (t2 + (-d))))
+         out2 = (1.0 + (d * (t2 + (-d))))
       end
    else
       if (phase < s2) then
@@ -284,12 +284,12 @@ function Sawcore_ptr_w2(_ctx, phase, rate)
             local d = (phase / rate)
             local t2 = (0.000976 * s2)
             out1 = false
-            out2 = (3. + (d * (-4. + (d + t2))))
+            out2 = (3.0 + (d * (-4.0 + (d + t2))))
          end
       else
          do
             out1 = true
-            out2 = 0.
+            out2 = 0.0
          end
       end
    end
@@ -299,21 +299,21 @@ function Sawcore_ptr_w2(_ctx, phase, rate)
 end
 
 function Sawcore_process(_ctx, cv, reset)
-   local transition = 0.
-   local out = 0.
+   local transition = 0.0
+   local out = 0.0
    if Util_change(_ctx.inst_1b0dd, cv) then
       _ctx.rate = Util_cvToRate_1024(cv)
    end
    local new_phase = (_ctx.phase + _ctx.rate)
-   local do_reset = Util_edge(_ctx.inst_204dd, (reset > 0.))
-   local do_wrap = (new_phase > 1024.)
+   local do_reset = Util_edge(_ctx.inst_204dd, (reset > 0.0))
+   local do_wrap = (new_phase > 1024.0)
    if (do_reset or do_wrap) then
       do
          _ctx.reset_phase = _ctx.phase
          if do_wrap then
-            new_phase = (-1024. + new_phase)
+            new_phase = (-1024.0 + new_phase)
          else
-            new_phase = 0.
+            new_phase = 0.0
          end
          _ctx.reset_state = true
       end
@@ -325,7 +325,7 @@ function Sawcore_process(_ctx, cv, reset)
          Sawcore_ptr_w2(_ctx.inst_324dd, _ctx.phase, _ctx.rate)
          local done = _ctx.inst_324dd.Sawcore_ptr_w2_ret_0
          local ptr = _ctx.inst_324dd.Sawcore_ptr_w2_ret_1
-         transition = (0.5 * ((1. + ptr) * _ctx.reset_phase))
+         transition = (0.5 * ((1.0 + ptr) * _ctx.reset_phase))
          if done then
             _ctx.reset_state = false
          else
@@ -333,7 +333,7 @@ function Sawcore_process(_ctx, cv, reset)
          end
       end
    end
-   return (-1. + (0.001953 * out))
+   return (-1.0 + (0.001953 * out))
 end
 
 function Sawcore_noteOn(_ctx, note, velocity, channel)

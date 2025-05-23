@@ -22,7 +22,7 @@ function intDiv(a, b)       return math.floor(a / b) end
 function initializeArray(v, n) local a = {} for i=1, n do a[i] = 0 end return a end
 
 function Array_no_const_bar1(a)
-   a[1] = 1.
+   a[1] = 1.0
 end
 
 function Array_no_const_bob1(a)

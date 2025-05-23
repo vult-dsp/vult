@@ -23,15 +23,15 @@ function initializeArray(v, n) local a = {} for i=1, n do a[i] = 0 end return a 
 
 function Multi_return_foo_type_alloc()
    local _ctx = {};
-   _ctx.Multi_return_foo_ret_0 = 0.
-   _ctx.Multi_return_foo_ret_1 = 0.
+   _ctx.Multi_return_foo_ret_0 = 0.0
+   _ctx.Multi_return_foo_ret_1 = 0.0
    return _ctx
 end
 
 function Multi_return_bar_type_alloc()
    local _ctx = {};
-   _ctx.Multi_return_bar_ret_0 = 0.
-   _ctx.Multi_return_bar_ret_1 = 0.
+   _ctx.Multi_return_bar_ret_0 = 0.0
+   _ctx.Multi_return_bar_ret_1 = 0.0
    _ctx.inst_16585 = Multi_return_foo_type_alloc()
    return _ctx
 end
@@ -39,14 +39,14 @@ end
 function Multi_return_foo(_ctx, x)
    if (x > 0) then
       do
-         _ctx.Multi_return_foo_ret_0 = 0.
-         _ctx.Multi_return_foo_ret_1 = 0.
+         _ctx.Multi_return_foo_ret_0 = 0.0
+         _ctx.Multi_return_foo_ret_1 = 0.0
          return 
       end
    else
       do
-         _ctx.Multi_return_foo_ret_0 = 1.
-         _ctx.Multi_return_foo_ret_1 = 1.
+         _ctx.Multi_return_foo_ret_0 = 1.0
+         _ctx.Multi_return_foo_ret_1 = 1.0
          return 
       end
    end

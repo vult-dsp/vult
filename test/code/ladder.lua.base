@@ -29,58 +29,58 @@ end
 
 function Util_change_type_alloc()
    local _ctx = {};
-   _ctx.pre_x = 0.
+   _ctx.pre_x = 0.0
    return _ctx
 end
 
 function Util_dcblock_type_alloc()
    local _ctx = {};
-   _ctx.x1 = 0.
-   _ctx.y1 = 0.
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 end
 
 function Util_smooth_type_alloc()
    local _ctx = {};
-   _ctx.x = 0.
+   _ctx.x = 0.0
    return _ctx
 end
 
 function Util_average2_type_alloc()
    local _ctx = {};
-   _ctx.x0 = 0.
+   _ctx.x0 = 0.0
    return _ctx
 end
 
 function Ladder_heun_type_alloc()
    local _ctx = {};
-   _ctx.p0 = 0.
-   _ctx.p1 = 0.
-   _ctx.p2 = 0.
-   _ctx.p3 = 0.
+   _ctx.p0 = 0.0
+   _ctx.p1 = 0.0
+   _ctx.p2 = 0.0
+   _ctx.p3 = 0.0
    return _ctx
 end
 
 function Ladder_euler_type_alloc()
    local _ctx = {};
-   _ctx.p0 = 0.
-   _ctx.p1 = 0.
-   _ctx.p2 = 0.
-   _ctx.p3 = 0.
+   _ctx.p0 = 0.0
+   _ctx.p1 = 0.0
+   _ctx.p2 = 0.0
+   _ctx.p3 = 0.0
    return _ctx
 end
 
 function Ladder_process_euler_type_alloc()
    local _ctx = {};
    _ctx.e = Ladder_euler_type_alloc()
-   _ctx.fh = 0.
+   _ctx.fh = 0.0
    _ctx.inst_1b099 = Util_change_type_alloc()
    return _ctx
 end
 
 function Ladder_process_heun_type_alloc()
    local _ctx = {};
-   _ctx.fh = 0.
+   _ctx.fh = 0.0
    _ctx.h = Ladder_heun_type_alloc()
    _ctx.inst_1b0a0 = Util_change_type_alloc()
    return _ctx
@@ -195,7 +195,7 @@ function Util_pitchToRate(pitch)
 end
 
 function Util_cvToPitch(cv)
-   return (24. + (120. * cv))
+   return (24.0 + (120.0 * cv))
 end
 
 Util_cvToRate_1024_c0 = {};
@@ -258,7 +258,7 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvToperiod_c0[index + 1] + (cv * (Util_cvToperiod_c1[index + 1] + (Util_cvToperiod_c2[index + 1] * cv))))
 end
 
@@ -278,7 +278,7 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvTokHz_c0[index + 1] + (cv * (Util_cvTokHz_c1[index + 1] + (Util_cvTokHz_c2[index + 1] * cv))))
 end
 
@@ -298,12 +298,12 @@ function Ladder_tune_raw_c2(index)
 end
 
 function Ladder_tune(cut)
-   local index = clip(math.floor((cut * 127.)), 0, 127)
+   local index = clip(math.floor((cut * 127.0)), 0, 127)
    return (Ladder_tune_c0[index + 1] + (cut * (Ladder_tune_c1[index + 1] + (Ladder_tune_c2[index + 1] * cut))))
 end
 
 function Ladder_heun(_ctx, input, fh, res)
-   local wt0 = Util_cubic_clipper((input + (-4. * (res * _ctx.p3))))
+   local wt0 = Util_cubic_clipper((input + (-4.0 * (res * _ctx.p3))))
    local wt1 = Util_cubic_clipper(_ctx.p0)
    local dpt0 = (fh * (wt0 + (-wt1)))
    local wt3 = Util_cubic_clipper(_ctx.p1)
@@ -316,7 +316,7 @@ function Ladder_heun(_ctx, input, fh, res)
    local pt1 = (dpt1 + _ctx.p1)
    local pt2 = (dpt2 + _ctx.p2)
    local pt3 = (dpt3 + _ctx.p3)
-   local w0 = Util_cubic_clipper((input + (-4. * (pt3 * res))))
+   local w0 = Util_cubic_clipper((input + (-4.0 * (pt3 * res))))
    local w1 = Util_cubic_clipper(pt0)
    local dp0 = (fh * (w0 + (-w1)))
    local w3 = Util_cubic_clipper(pt1)
@@ -333,7 +333,7 @@ function Ladder_heun(_ctx, input, fh, res)
 end
 
 function Ladder_euler(_ctx, input, fh, res)
-   local w0 = Util_cubic_clipper((input + (-4. * (res * _ctx.p3))))
+   local w0 = Util_cubic_clipper((input + (-4.0 * (res * _ctx.p3))))
    local w1 = Util_cubic_clipper(_ctx.p0)
    local dpt0 = (fh * (w0 + (-w1)))
    local w3 = Util_cubic_clipper(_ctx.p1)

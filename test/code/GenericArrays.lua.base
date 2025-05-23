@@ -22,7 +22,7 @@ function intDiv(a, b)       return math.floor(a / b) end
 function initializeArray(v, n) local a = {} for i=1, n do a[i] = 0 end return a end
 
 function GenericArrays_sum(data)
-   local total = 0.
+   local total = 0.0
    local i__1 = 0
    while (i__1 < size(data)) do
       do
@@ -34,8 +34,8 @@ function GenericArrays_sum(data)
 end
 
 function GenericArrays_test1()
-   local data1 = {1., 2., 3.}
-   local data2 = {1., 2., 3., 4.}
+   local data1 = {1.0, 2.0, 3.0}
+   local data2 = {1.0, 2.0, 3.0, 4.0}
    local result1 = GenericArrays_sum(data1)
    local result2 = GenericArrays_sum(data2)
 end

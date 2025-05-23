@@ -78,52 +78,6 @@ let generateC (args : Util.Args.args) : (Pla.t * Pla.t) * (Pla.t * Pla.t) =
   (implPre args, implPost args), (Pla.unit, Pla.unit)
 
 
-(*
-   let mainJs params =
-   let output = params.output in
-   let module_name = params.module_name in
-   [%pla
-      {|var code = require("./<#output#s>.js");
-        var vultProcess = new code.vultProcess();
-        var data = vultProcess.<#module_name#s>_process_init();
-        vultProcess.<#module_name#s>_default();
-
-        var time = <#time#f>;
-        var samples = 44100 * time;
-
-        var start = new Date();
-        while (samples > 0) {
-        vultProcess.<#module_name#s>_process(data, 0.0);
-        samples--;
-        }
-        var end = (new Date() - start);
-        console.info("<#module_name#s>\tJs\t", end / time, "ms/s");
-   |}]
-;;
-
-let implJs params code runtime =
-   let module_name = params.module_name in
-   [%pla
-      {|exports.vultProcess = function () {
-        <#runtime#>
-        this.<#module_name#s>_process_init = null;
-        this.<#module_name#s>_default = null;
-        <#code#>
-        if(this.<#module_name#s>_process_init)  this.context =  this.<#module_name#s>_process_init(); else this.context = {};
-        if(this.<#module_name#s>_default)      this.<#module_name#s>_default(this.context);
-        this.liveNoteOn        = function(note, velocity, channel) { if(this.<#module_name#s>_noteOn)         this.<#module_name#s>_noteOn(this.context,note,velocity,channel); };
-        this.liveNoteOff       = function(note, velocity, channel) { if(this.<#module_name#s>_noteOff)       this.<#module_name#s>_noteOff(this.context,note,velocity,channel); };
-        this.liveControlChange = function(note, velocity, channel) { if(this.<#module_name#s>_controlChange) this.<#module_name#s>_controlChange(this.context,note,velocity,channel); };
-        this.liveProcess       = function(input)         { if(this.<#module_name#s>_process)       return this.<#module_name#s>_process(this.context,input); else return 0; };
-        this.liveDefault       = function() { if(this.<#module_name#s>_default)      return this.<#module_name#s>_default(this.context); };
-        }|}]
-;;
-
-let getJs (params : params) runtime code : (Pla.t * FileKind.t) list =
-   [ mainJs params, FileKind.FullName "main.js"; implJs params code runtime, FileKind.ExtOnly "js" ]
-;;
-*)
-
 let luaPost (args : Util.Args.args) =
   let module_name =
     match args.files with
@@ -147,21 +101,25 @@ let luaPost (args : Util.Args.args) =
 
 let generateLua (args : Util.Args.args) = Pla.unit, luaPost args
 
-let wlPost (args : Util.Args.args) =
+let jsPost (args : Util.Args.args) =
   let module_name =
     match args.files with
-    | Util.Args.File s :: _ -> String.concat "`" (String.split_on_char '_' (Pparser.Parse.moduleName s))
+    | Util.Args.File s :: _ -> Pparser.Parse.moduleName s
     | _ -> "Top"
   in
   {%pla|
-     data = <#module_name#s>`process`type`alloc[];
-     <#module_name#s>`default[data];
-     time = <#time#f> / 1000.0;
-     samples = Floor[44100 * time];
-     result = Timing[Table[<#module_name#s>`process[data, 0.0], samples]];
-     finish = result[[1]] * 1000.0;
-     Print["<#module_name#s>\tWL\t", finish / time, " ms/s"]
-     |}
+var data = this.<#module_name#s>_process_type_alloc();
+this.<#module_name#s>_default(data);
+var time = <#time#f>;
+var samples = 44100 * time;
+var start = process.hrtime.bigint();
+while (samples > 0) {
+  this.<#module_name#s>_process(data, 0.0);
+  samples = samples -1;
+}
+var finish = Number(process.hrtime.bigint() - start) / 1000000 / time;
+console.log(`<#module_name#s>\tJs\t${finish.toFixed(2)} ms/s`)
+|}
 
 
-let generateWl (args : Util.Args.args) = Pla.unit, wlPost args
+let generateJs (args : Util.Args.args) = Pla.unit, jsPost args

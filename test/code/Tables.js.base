@@ -1,0 +1,83 @@
+
+this.random = function()         { return Math.random(); };
+this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
+this.eps  = function()           { return 1e-18 };
+this.pi   = function()           { return 3.1415926535897932384; }
+this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
+this.not  = function(x)          { return x==0?1:0; };
+this.real = function(x)          { return x; };
+this.int_  = function(x)         { return x|0; };
+this.sin  = function(x)          { return Math.sin(x); };
+this.cos  = function(x)          { return Math.cos(x); };
+this.abs  = function(x)          { return Math.abs(x); };
+this.exp  = function(x)          { return Math.exp(x); };
+this.floor = function(x)          { return Math.floor(x); };
+this.tan  = function(x)          { return Math.tan(x); };
+this.tanh = function(x)          { return Math.tanh(x); };
+this.pow  = function(a,b)         { return Math.pow(a,b); };
+this.sqrt = function(x)          { return x; };
+this.int_to_float = function(i)  { return i; };
+this.float_to_int = function(i)  { return Math.floor(i); };
+this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
+var Tables_sineTable1_c0 = {};
+var Tables_sineTable1_c1 = {};
+var Tables_sineTable1_c2 = {};
+this.Tables_sineTable1_raw_c0 = function (index) {
+   return Tables_sineTable1_c0[index];
+};
+
+this.Tables_sineTable1_raw_c1 = function (index) {
+   return Tables_sineTable1_c1[index];
+};
+
+this.Tables_sineTable1_raw_c2 = function (index) {
+   return Tables_sineTable1_c2[index];
+};
+
+this.Tables_sineTable1 = function (x) {
+   var index = this.clip(this.float_to_int((x * 31.0)), (0|0), (31|0));
+   return (Tables_sineTable1_c0[index] + (x * (Tables_sineTable1_c1[index] + (Tables_sineTable1_c2[index] * x))));
+};
+
+var Tables_sineTable2_c0 = {};
+var Tables_sineTable2_c1 = {};
+this.Tables_sineTable2_raw_c0 = function (index) {
+   return Tables_sineTable2_c0[index];
+};
+
+this.Tables_sineTable2_raw_c1 = function (index) {
+   return Tables_sineTable2_c1[index];
+};
+
+this.Tables_sineTable2 = function (x) {
+   var index = this.clip(this.float_to_int((x * 31.0)), (0|0), (31|0));
+   return (Tables_sineTable2_c0[index] + (x * Tables_sineTable2_c1[index]));
+};
+
+var Tables_sineTable3_c0 = {};
+var Tables_sineTable3_c1 = {};
+this.Tables_sineTable3_raw_c0 = function (index) {
+   return Tables_sineTable3_c0[index];
+};
+
+this.Tables_sineTable3_raw_c1 = function (index) {
+   return Tables_sineTable3_c1[index];
+};
+
+this.Tables_sineTable3 = function (x) {
+   var value = this.clip((x * 32.0), 0.0, 32.0);
+   var index = this.int_(value);
+   var decimal = (value - this.floor(value));
+   return (Tables_sineTable3_c0[index] + (Tables_sineTable3_c1[index] * decimal));
+};
+
+var Tables_power2_table = {};
+this.Tables_power2 = function (x) {
+   return Tables_power2_table[(this.int_clip(x, (-4|0), (4|0)) + (4|0))];
+};
+
+var Tables_square_table = {};
+this.Tables_square = function (x) {
+   return Tables_square_table[(this.int_clip(x, (-4|0), (4|0)) + (4|0))];
+};
+

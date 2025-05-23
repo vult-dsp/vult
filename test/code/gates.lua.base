@@ -23,14 +23,14 @@ function initializeArray(v, n) local a = {} for i=1, n do a[i] = 0 end return a 
 
 function Gates_gates_noteOn_type_alloc()
    local _ctx = {};
-   _ctx.Gates_gates_state_ret_0 = 0.
-   _ctx.Gates_gates_state_ret_1 = 0.
-   _ctx.Gates_gates_state_ret_2 = 0.
-   _ctx.Gates_gates_state_ret_3 = 0.
-   _ctx.Gates_gates_state_ret_4 = 0.
-   _ctx.Gates_gates_state_ret_5 = 0.
-   _ctx.Gates_gates_state_ret_6 = 0.
-   _ctx.Gates_gates_state_ret_7 = 0.
+   _ctx.Gates_gates_state_ret_0 = 0.0
+   _ctx.Gates_gates_state_ret_1 = 0.0
+   _ctx.Gates_gates_state_ret_2 = 0.0
+   _ctx.Gates_gates_state_ret_3 = 0.0
+   _ctx.Gates_gates_state_ret_4 = 0.0
+   _ctx.Gates_gates_state_ret_5 = 0.0
+   _ctx.Gates_gates_state_ret_6 = 0.0
+   _ctx.Gates_gates_state_ret_7 = 0.0
    local i_0 = 0
    local temp = initializeArray(0, 8)
    while (i_0 < 8) do
@@ -53,14 +53,14 @@ end
 
 function Gates_process_type_alloc()
    local _ctx = {};
-   _ctx.Gates_process_ret_0 = 0.
-   _ctx.Gates_process_ret_1 = 0.
-   _ctx.Gates_process_ret_2 = 0.
-   _ctx.Gates_process_ret_3 = 0.
-   _ctx.Gates_process_ret_4 = 0.
-   _ctx.Gates_process_ret_5 = 0.
-   _ctx.Gates_process_ret_6 = 0.
-   _ctx.Gates_process_ret_7 = 0.
+   _ctx.Gates_process_ret_0 = 0.0
+   _ctx.Gates_process_ret_1 = 0.0
+   _ctx.Gates_process_ret_2 = 0.0
+   _ctx.Gates_process_ret_3 = 0.0
+   _ctx.Gates_process_ret_4 = 0.0
+   _ctx.Gates_process_ret_5 = 0.0
+   _ctx.Gates_process_ret_6 = 0.0
+   _ctx.Gates_process_ret_7 = 0.0
    _ctx.channel_in = 0
    _ctx.gates = Gates_gates_noteOn_type_alloc()
    return _ctx

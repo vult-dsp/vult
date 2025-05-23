@@ -109,7 +109,7 @@ static_inline float Saturate_soft_tanh_table_raw_c2(int32_t index) {
 }
 
 static_inline float Saturate_soft_tanh_table(float x) {
-   int32_t index = int_clip(float_to_int((x - -24.0f) * 5.0f), 0, 240);
+   int32_t index = int_clip(float_to_int((x + 24.0f) * 5.0f), 0, 240);
    return Saturate_soft_tanh_table_c0[static_cast<uint32_t>(index)] + x * (Saturate_soft_tanh_table_c1[static_cast<uint32_t>(index)] + Saturate_soft_tanh_table_c2[static_cast<uint32_t>(index)] * x);
 }
 
@@ -302,7 +302,7 @@ static_inline float Rescomb_toneCurve_raw_c2(int32_t index) {
 }
 
 static_inline float Rescomb_toneCurve(float tone) {
-   int32_t index = int_clip(float_to_int((tone - -1.2f) * 26.25f), 0, 63);
+   int32_t index = int_clip(float_to_int((tone + 1.2f) * 26.25f), 0, 63);
    return Rescomb_toneCurve_c0[static_cast<uint32_t>(index)] + tone * (Rescomb_toneCurve_c1[static_cast<uint32_t>(index)] + Rescomb_toneCurve_c2[static_cast<uint32_t>(index)] * tone);
 }
 

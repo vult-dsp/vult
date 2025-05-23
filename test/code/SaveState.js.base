@@ -1,0 +1,231 @@
+
+this.random = function()         { return Math.random(); };
+this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
+this.eps  = function()           { return 1e-18 };
+this.pi   = function()           { return 3.1415926535897932384; }
+this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
+this.not  = function(x)          { return x==0?1:0; };
+this.real = function(x)          { return x; };
+this.int_  = function(x)         { return x|0; };
+this.sin  = function(x)          { return Math.sin(x); };
+this.cos  = function(x)          { return Math.cos(x); };
+this.abs  = function(x)          { return Math.abs(x); };
+this.exp  = function(x)          { return Math.exp(x); };
+this.floor = function(x)          { return Math.floor(x); };
+this.tan  = function(x)          { return Math.tan(x); };
+this.tanh = function(x)          { return Math.tanh(x); };
+this.pow  = function(a,b)         { return Math.pow(a,b); };
+this.sqrt = function(x)          { return x; };
+this.int_to_float = function(i)  { return i; };
+this.float_to_int = function(i)  { return Math.floor(i); };
+this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
+this.SaveState_counter_type_alloc = function () {
+   var _ctx = {};
+   _ctx.count = (0|0);
+   return _ctx;
+};
+
+this.SaveState_reset_type_alloc = function (_ctx) {
+   return this.SaveState_counter_type_alloc();
+};
+
+this.SaveState_nosave_type_alloc = function () {
+   var _ctx = {};
+   _ctx.x = (0|0);
+   return _ctx;
+};
+
+this.SaveState_point_alloc = function () {
+   var _ctx = {};
+   _ctx.x = 0.0;
+   _ctx.y = 0.0;
+   return _ctx;
+};
+
+this.SaveState_main_type_alloc = function () {
+   var _ctx = {};
+   _ctx.c1 = this.SaveState_counter_type_alloc();
+   _ctx.inst_19fb0 = this.SaveState_counter_type_alloc();
+   _ctx.inst_21bb0 = this.SaveState_nosave_type_alloc();
+   _ctx.p1 = this.SaveState_point_alloc();
+   _ctx.p2 = this.SaveState_point_alloc();
+   var i_0 = (0|0);
+   var temp;
+   while ((i_0 < (3|0))) {
+      {
+         temp[i_0] = this.SaveState_point_alloc();
+         i_0 = ((1|0) + i_0);
+      }
+   }
+   _ctx.point_array = temp;
+   _ctx.str = "";
+   _ctx.x = 0.0;
+   return _ctx;
+};
+
+this.SaveState_counter_type_serialize_data = function (buffer, index, _ctx) {
+   var start = index;
+   index = this.push_block_header(buffer, index);
+   index = this.push_int(buffer, index, _ctx.count);
+   this.update_size(buffer, start, (index + (-start)));
+   return index;
+};
+
+this.SaveState_reset_type_serialize_data = function (buffer, index, _ctx) {
+   return this.SaveState_counter_type_serialize_data(buffer, index, _ctx);
+};
+
+this.SaveState_point_serialize_data = function (buffer, index, _ctx) {
+   var start = index;
+   index = this.push_block_header(buffer, index);
+   index = this.push_float(buffer, index, _ctx.x);
+   index = this.push_float(buffer, index, _ctx.y);
+   this.update_size(buffer, start, (index + (-start)));
+   return index;
+};
+
+this.SaveState_main_type_serialize_data = function (buffer, index, _ctx) {
+   var start = index;
+   index = this.push_block_header(buffer, index);
+   index = this.SaveState_counter_type_serialize_data(buffer, index, _ctx.c1);
+   index = this.SaveState_counter_type_serialize_data(buffer, index, _ctx.inst_19fb0);
+   index = this.SaveState_point_serialize_data(buffer, index, _ctx.p1);
+   index = this.SaveState_point_serialize_data(buffer, index, _ctx.p2);
+   var start_0 = index;
+   index = this.push_array(buffer, index, (3|0));
+   var i_0 = (0|0);
+   while ((i_0 < (3|0))) {
+      {
+         index = this.SaveState_point_serialize_data(buffer, index, _ctx.point_array[i_0]);
+         i_0 = ((1|0) + i_0);
+      }
+   }
+   this.update_size(buffer, start_0, (index + (-start_0)));
+   index = this.push_string(buffer, index, _ctx.str);
+   index = this.push_float(buffer, index, _ctx.x);
+   this.update_size(buffer, start, (index + (-start)));
+   return index;
+};
+
+this.SaveState_counter_type_serialize_type_descr = function (buffer, index, marks) {
+   if (marks[0]) {
+      return index;
+   }
+   marks[0] = true;
+   var _array_0 = ["count"];
+   return this.serialize_type_descr(buffer, index, "SaveState_counter_type", _array_0);
+};
+
+this.SaveState_point_serialize_type_descr = function (buffer, index, marks) {
+   if (marks[2]) {
+      return index;
+   }
+   marks[2] = true;
+   var _array_0 = ["x", "y"];
+   return this.serialize_type_descr(buffer, index, "SaveState_point", _array_0);
+};
+
+this.SaveState_main_type_serialize_type_descr = function (buffer, index, marks) {
+   if (marks[1]) {
+      return index;
+   }
+   marks[1] = true;
+   index = this.SaveState_counter_type_serialize_type_descr(buffer, index, marks);
+   index = this.SaveState_point_serialize_type_descr(buffer, index, marks);
+   var _array_0 = ["c1", "inst_19fb0", "p1", "p2", "point_array", "str", "x"];
+   return this.serialize_type_descr(buffer, index, "SaveState_main_type", _array_0);
+};
+
+this.SaveState_counter_type_deserialize_data = function (buffer, type_descr, index, _ctx) {
+   var field_index = this.search_field_name(buffer, type_descr, index, "count");
+   if ((field_index >= (0|0))) {
+      _ctx.count = this.deserialize_int(buffer, field_index);
+   }
+};
+
+this.SaveState_point_deserialize_data = function (buffer, type_descr, index, _ctx) {
+   var field_index = this.search_field_name(buffer, type_descr, index, "x");
+   if ((field_index >= (0|0))) {
+      _ctx.x = this.deserialize_float(buffer, field_index);
+   }
+   field_index = this.search_field_name(buffer, type_descr, index, "y");
+   if ((field_index >= (0|0))) {
+      _ctx.y = this.deserialize_float(buffer, field_index);
+   }
+};
+
+this.SaveState_main_type_deserialize_data = function (buffer, type_descr, index, _ctx) {
+   var field_index = this.search_field_name(buffer, type_descr, index, "c1");
+   if ((field_index >= (0|0))) {
+      {
+         var field_descr_0 = this.search_type_description(buffer, "SaveState_counter_type");
+         this.SaveState_counter_type_deserialize_data(buffer, field_descr_0, field_index, _ctx.c1);
+      }
+   }
+   field_index = this.search_field_name(buffer, type_descr, index, "inst_19fb0");
+   if ((field_index >= (0|0))) {
+      {
+         var field_descr_1 = this.search_type_description(buffer, "SaveState_counter_type");
+         this.SaveState_counter_type_deserialize_data(buffer, field_descr_1, field_index, _ctx.inst_19fb0);
+      }
+   }
+   field_index = this.search_field_name(buffer, type_descr, index, "p1");
+   if ((field_index >= (0|0))) {
+      {
+         var field_descr_2 = this.search_type_description(buffer, "SaveState_point");
+         this.SaveState_point_deserialize_data(buffer, field_descr_2, field_index, _ctx.p1);
+      }
+   }
+   field_index = this.search_field_name(buffer, type_descr, index, "p2");
+   if ((field_index >= (0|0))) {
+      {
+         var field_descr_3 = this.search_type_description(buffer, "SaveState_point");
+         this.SaveState_point_deserialize_data(buffer, field_descr_3, field_index, _ctx.p2);
+      }
+   }
+   var field_descr_4 = this.search_type_description(buffer, "SaveState_point");
+   field_index = this.search_field_name(buffer, type_descr, index, "point_array");
+   if ((field_index >= (0|0))) {
+      {
+         field_index = this.first_array_element(buffer, field_index);
+         var i_5 = (0|0);
+         while ((i_5 < (3|0))) {
+            {
+               this.SaveState_point_deserialize_data(buffer, field_descr_4, field_index, _ctx.point_array[i_5]);
+               i_5 = ((1|0) + i_5);
+               field_index = this.next_object(buffer, field_index);
+            }
+         }
+      }
+   }
+   field_index = this.search_field_name(buffer, type_descr, index, "str");
+   if ((field_index >= (0|0))) {
+      _ctx.str = this.deserialize_string(buffer, field_index);
+   }
+   field_index = this.search_field_name(buffer, type_descr, index, "x");
+   if ((field_index >= (0|0))) {
+      _ctx.x = this.deserialize_float(buffer, field_index);
+   }
+};
+
+this.SaveState_counter = function (_ctx) {
+   _ctx.count = ((1|0) + _ctx.count);
+   return _ctx.count;
+};
+
+this.SaveState_reset = function (_ctx) {
+   _ctx.count = (0|0);
+};
+
+this.SaveState_nosave = function (_ctx) {
+   _ctx.x = (0|0);
+};
+
+this.SaveState_main = function (_ctx) {
+   _ctx.x = 0.0;
+   _ctx.str = "";
+   var count1 = this.SaveState_counter(_ctx.c1);
+   var count2 = this.SaveState_counter(_ctx.inst_19fb0);
+   this.SaveState_nosave(_ctx.inst_21bb0);
+};
+

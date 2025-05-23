@@ -29,31 +29,31 @@ end
 
 function Util_change_type_alloc()
    local _ctx = {};
-   _ctx.pre_x = 0.
+   _ctx.pre_x = 0.0
    return _ctx
 end
 
 function Util_dcblock_type_alloc()
    local _ctx = {};
-   _ctx.x1 = 0.
-   _ctx.y1 = 0.
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 end
 
 function Util_smooth_type_alloc()
    local _ctx = {};
-   _ctx.x = 0.
+   _ctx.x = 0.0
    return _ctx
 end
 
 function Util_average2_type_alloc()
    local _ctx = {};
-   _ctx.x0 = 0.
+   _ctx.x0 = 0.0
    return _ctx
 end
 
 function Util_cvToPitch(cv)
-   return (24. + (120. * cv))
+   return (24.0 + (120.0 * cv))
 end
 
 Util_pitchToRate_1024_c0 = {};
@@ -97,15 +97,15 @@ function Util_cvToRate_1024(cv)
 end
 
 function Phase_default(_ctx)
-   _ctx.rate = Util_cvToRate_1024(0.)
+   _ctx.rate = Util_cvToRate_1024(0.0)
 end
 
 function Phase_process_type_alloc()
    local _ctx = {};
    _ctx.inst_1b08a = Util_change_type_alloc()
    _ctx.inst_2048a = Util_edge_type_alloc()
-   _ctx.phase = 0.
-   _ctx.rate = 0.
+   _ctx.phase = 0.0
+   _ctx.rate = 0.0
    Phase_default(_ctx)
    return _ctx
 end
@@ -131,7 +131,7 @@ function Phd_process_type_alloc()
    _ctx.inst_18aec = Phase_process_type_alloc()
    _ctx.inst_295ec = Util_smooth_type_alloc()
    _ctx.inst_38aec = Phase_process_type_alloc()
-   _ctx.pre_phase1 = 0.
+   _ctx.pre_phase1 = 0.0
    return _ctx
 end
 
@@ -257,7 +257,7 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvToperiod_c0[index + 1] + (cv * (Util_cvToperiod_c1[index + 1] + (Util_cvToperiod_c2[index + 1] * cv))))
 end
 
@@ -277,7 +277,7 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvTokHz_c0[index + 1] + (cv * (Util_cvTokHz_c1[index + 1] + (Util_cvTokHz_c2[index + 1] * cv))))
 end
 
@@ -286,12 +286,12 @@ function Phase_process(_ctx, cv, reset)
       _ctx.rate = Util_cvToRate_1024(cv)
    end
    if Util_edge(_ctx.inst_2048a, (reset > 0.5)) then
-      _ctx.phase = 0.
+      _ctx.phase = 0.0
    else
       _ctx.phase = (_ctx.phase + _ctx.rate)
    end
-   if (_ctx.phase > 1024.) then
-      _ctx.phase = (-1024. + _ctx.phase)
+   if (_ctx.phase > 1024.0) then
+      _ctx.phase = (-1024.0 + _ctx.phase)
    else
       _ctx.phase = _ctx.phase
    end
@@ -323,13 +323,13 @@ function Tables_nsine_raw_c2(index)
 end
 
 function Tables_nsine(x)
-   local index = clip(math.floor((x * 127.)), 0, 127)
+   local index = clip(math.floor((x * 127.0)), 0, 127)
    return (Tables_nsine_c0[index + 1] + (x * (Tables_nsine_c1[index + 1] + (Tables_nsine_c2[index + 1] * x))))
 end
 
 function Phd_process(_ctx, cv, detune)
-   local phase1 = Phase_process(_ctx.inst_18aec, cv, 0.)
-   local comp = (1. + (-phase1))
+   local phase1 = Phase_process(_ctx.inst_18aec, cv, 0.0)
+   local comp = (1.0 + (-phase1))
    local reset = ((-phase1) + _ctx.pre_phase1)
    _ctx.pre_phase1 = phase1
    local phase2 = Phase_process(_ctx.inst_38aec, (cv + Util_smooth(_ctx.inst_295ec, (0.5 * detune))), reset)

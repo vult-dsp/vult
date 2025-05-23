@@ -211,50 +211,92 @@ module Lua = struct
     | _ -> None
 end
 
-module Wl = struct
-  let keywords = [] |> Util.Maps.Set.of_list
+module Js = struct
+  let keywords =
+    [ "abstract"
+    ; "arguments"
+    ; "await"
+    ; "boolean"
+    ; "break"
+    ; "byte"
+    ; "case"
+    ; "catch"
+    ; "char"
+    ; "class"
+    ; "const"
+    ; "continue"
+    ; "debugger"
+    ; "default"
+    ; "delete"
+    ; "do"
+    ; "double"
+    ; "else"
+    ; "enum"
+    ; "eval"
+    ; "export"
+    ; "extends"
+    ; "false"
+    ; "final"
+    ; "finally"
+    ; "float"
+    ; "for"
+    ; "function"
+    ; "goto"
+    ; "if"
+    ; "implements"
+    ; "import"
+    ; "in"
+    ; "instanceof"
+    ; "int"
+    ; "interface"
+    ; "let"
+    ; "long"
+    ; "native"
+    ; "new"
+    ; "null"
+    ; "package"
+    ; "private"
+    ; "protected"
+    ; "public"
+    ; "return"
+    ; "short"
+    ; "static"
+    ; "super"
+    ; "switch"
+    ; "synchronized"
+    ; "this"
+    ; "throw"
+    ; "throws"
+    ; "transient"
+    ; "true"
+    ; "try"
+    ; "typeof"
+    ; "var"
+    ; "void"
+    ; "volatile"
+    ; "while"
+    ; "with"
+    ; "yield"
+    ]
+    |> Util.Maps.Set.of_list
+
 
   let op_to_fun (op : Core.Prog.operator) (e1 : type_) (e2 : type_) (ret : type_) =
     match op, e1.t, e2.t, ret.t with
-    | OpDiv, TInt, TInt, TInt -> Some "IntegerDivision"
-    | OpMod, TInt, TInt, TInt -> Some "Mod"
     | _ -> None
 
 
   let fun_to_fun (path : string) (args : type_ list) (ret : type_) =
     let args = List.map (fun (t : type_) -> t.t) args in
     match path, args, (getReturnType ret).t with
-    (* builtins *)
-    | "float_to_int", [ TReal ], TInt -> Some "Floor"
-    | "sin", [ TReal ], TReal -> Some "Sin"
-    | "cos", [ TReal ], TReal -> Some "Cos"
-    | "sqrt", [ TReal ], TReal -> Some "Sqrt"
-    | "size", [ TArray _ ], TInt -> Some "Length"
-    | "floor", [ TReal ], TReal -> Some "Floor"
-    | "floor", [ TFix16 ], TFix16 -> Some "Floor"
-    | "int", [ TReal ], TInt -> Some "Floor"
-    | "int", [ TFix16 ], TInt -> Some "Floor"
-    | "real", [ _ ], TReal -> Some "N"
     | _ -> None
-
-
-  let rec nameReplace id =
-    let underscore_n = Str.regexp {|_[0-9]|} in
-    let underscore = Str.regexp {|_|} in
-    try
-      let _ = Str.search_forward underscore_n id 0 in
-      let found = Str.matched_string id in
-      let replaced = Str.global_replace underscore "n`n" found in
-      nameReplace (Str.global_replace (Str.regexp_string found) replaced id)
-    with
-    | Not_found -> Str.global_replace underscore "`" id
 end
 
 let fun_to_fun (lang : Util.Args.code) (path : string) (args : type_ list) (ret : type_) =
   match lang with
   | CppCode -> Cpp.fun_to_fun path args ret
   | LuaCode -> Lua.fun_to_fun path args ret
-  | WLCode -> Wl.fun_to_fun path args ret
+  | JSCode -> Js.fun_to_fun path args ret
   | _ -> None
 
 
@@ -262,7 +304,7 @@ let op_to_fun (lang : Util.Args.code) (op : Core.Prog.operator) (e1 : type_) (e2
   match lang with
   | CppCode -> Cpp.op_to_fun op e1 e2 ret
   | LuaCode -> Lua.op_to_fun op e1 e2 ret
-  | WLCode -> Wl.op_to_fun op e1 e2 ret
+  | JSCode -> Js.op_to_fun op e1 e2 ret
   | _ -> None
 
 
@@ -278,5 +320,9 @@ let keyword (lang : Util.Args.code) id =
       id ^ "_"
     else
       id
-  | WLCode -> Wl.nameReplace id
+  | JSCode ->
+    if Util.Maps.Set.mem id Js.keywords then
+      id ^ "_"
+    else
+      id
   | _ -> id

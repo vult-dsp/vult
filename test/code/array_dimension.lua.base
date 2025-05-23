@@ -22,7 +22,7 @@ function intDiv(a, b)       return math.floor(a / b) end
 function initializeArray(v, n) local a = {} for i=1, n do a[i] = 0 end return a end
 
 function Array_dimension_total(data)
-   local acc = 0.
+   local acc = 0.0
    local i__1 = 0
    while (i__1 < size(data)) do
       do
@@ -34,7 +34,7 @@ function Array_dimension_total(data)
 end
 
 function Array_dimension_sum(data1, data2)
-   local acc = 0.
+   local acc = 0.0
    local i__1 = 0
    while (i__1 < size(data1)) do
       do
@@ -46,8 +46,8 @@ function Array_dimension_sum(data1, data2)
 end
 
 function Array_dimension_main()
-   local x = {1., 2.}
-   local y = {1., 2., 3.}
+   local x = {1.0, 2.0}
+   local y = {1.0, 2.0, 3.0}
    local z = (Array_dimension_total(x) + Array_dimension_total(y))
    local k = Array_dimension_sum(x, y)
 end

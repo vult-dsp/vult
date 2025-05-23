@@ -217,6 +217,8 @@ let makeNuber (t : type_) v =
 let makeSub t e1 e2 =
   if e2 = 0.0 then
     e1
+  else if e2 < 0.0 then
+    C.eadd e1 (makeNuber t (-.e2))
   else
     C.esub e1 (makeNuber t e2)
 

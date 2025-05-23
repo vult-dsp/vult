@@ -29,43 +29,43 @@ end
 
 function Util_change_type_alloc()
    local _ctx = {};
-   _ctx.pre_x = 0.
+   _ctx.pre_x = 0.0
    return _ctx
 end
 
 function Util_dcblock_type_alloc()
    local _ctx = {};
-   _ctx.x1 = 0.
-   _ctx.y1 = 0.
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 end
 
 function Util_smooth_type_alloc()
    local _ctx = {};
-   _ctx.x = 0.
+   _ctx.x = 0.0
    return _ctx
 end
 
 function Util_average2_type_alloc()
    local _ctx = {};
-   _ctx.x0 = 0.
+   _ctx.x0 = 0.0
    return _ctx
 end
 
 function Polycv_poly_noteOn_type_alloc()
    local _ctx = {};
-   _ctx.Polycv_polyState_ret_0 = 0.
-   _ctx.Polycv_polyState_ret_1 = 0.
-   _ctx.Polycv_polyState_ret_10 = 0.
-   _ctx.Polycv_polyState_ret_11 = 0.
-   _ctx.Polycv_polyState_ret_2 = 0.
-   _ctx.Polycv_polyState_ret_3 = 0.
-   _ctx.Polycv_polyState_ret_4 = 0.
-   _ctx.Polycv_polyState_ret_5 = 0.
-   _ctx.Polycv_polyState_ret_6 = 0.
-   _ctx.Polycv_polyState_ret_7 = 0.
-   _ctx.Polycv_polyState_ret_8 = 0.
-   _ctx.Polycv_polyState_ret_9 = 0.
+   _ctx.Polycv_polyState_ret_0 = 0.0
+   _ctx.Polycv_polyState_ret_1 = 0.0
+   _ctx.Polycv_polyState_ret_10 = 0.0
+   _ctx.Polycv_polyState_ret_11 = 0.0
+   _ctx.Polycv_polyState_ret_2 = 0.0
+   _ctx.Polycv_polyState_ret_3 = 0.0
+   _ctx.Polycv_polyState_ret_4 = 0.0
+   _ctx.Polycv_polyState_ret_5 = 0.0
+   _ctx.Polycv_polyState_ret_6 = 0.0
+   _ctx.Polycv_polyState_ret_7 = 0.0
+   _ctx.Polycv_polyState_ret_8 = 0.0
+   _ctx.Polycv_polyState_ret_9 = 0.0
    local i_0 = 0
    local temp = initializeArray(0, 4)
    while (i_0 < 4) do
@@ -97,18 +97,18 @@ end
 
 function Polycv_process_type_alloc()
    local _ctx = {};
-   _ctx.Polycv_process_ret_0 = 0.
-   _ctx.Polycv_process_ret_1 = 0.
-   _ctx.Polycv_process_ret_10 = 0.
-   _ctx.Polycv_process_ret_11 = 0.
-   _ctx.Polycv_process_ret_2 = 0.
-   _ctx.Polycv_process_ret_3 = 0.
-   _ctx.Polycv_process_ret_4 = 0.
-   _ctx.Polycv_process_ret_5 = 0.
-   _ctx.Polycv_process_ret_6 = 0.
-   _ctx.Polycv_process_ret_7 = 0.
-   _ctx.Polycv_process_ret_8 = 0.
-   _ctx.Polycv_process_ret_9 = 0.
+   _ctx.Polycv_process_ret_0 = 0.0
+   _ctx.Polycv_process_ret_1 = 0.0
+   _ctx.Polycv_process_ret_10 = 0.0
+   _ctx.Polycv_process_ret_11 = 0.0
+   _ctx.Polycv_process_ret_2 = 0.0
+   _ctx.Polycv_process_ret_3 = 0.0
+   _ctx.Polycv_process_ret_4 = 0.0
+   _ctx.Polycv_process_ret_5 = 0.0
+   _ctx.Polycv_process_ret_6 = 0.0
+   _ctx.Polycv_process_ret_7 = 0.0
+   _ctx.Polycv_process_ret_8 = 0.0
+   _ctx.Polycv_process_ret_9 = 0.0
    _ctx.channel_in = 0
    _ctx.poly = Polycv_poly_noteOn_type_alloc()
    return _ctx
@@ -217,7 +217,7 @@ function Util_pitchToRate(pitch)
 end
 
 function Util_cvToPitch(cv)
-   return (24. + (120. * cv))
+   return (24.0 + (120.0 * cv))
 end
 
 Util_cvToRate_1024_c0 = {};
@@ -280,7 +280,7 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvToperiod_c0[index + 1] + (cv * (Util_cvToperiod_c1[index + 1] + (Util_cvToperiod_c2[index + 1] * cv))))
 end
 
@@ -300,7 +300,7 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvTokHz_c0[index + 1] + (cv * (Util_cvTokHz_c1[index + 1] + (Util_cvTokHz_c2[index + 1] * cv))))
 end
 
@@ -312,7 +312,7 @@ function Polycv_velToGate(vel)
    if (vel > 0) then
       return (0.007874 * real(vel))
    else
-      return 0.
+      return 0.0
    end
 end
 

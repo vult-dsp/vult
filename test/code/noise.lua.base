@@ -23,7 +23,7 @@ function initializeArray(v, n) local a = {} for i=1, n do a[i] = 0 end return a 
 
 function Noise_pinker_type_alloc()
    local _ctx = {};
-   _ctx.w1 = 0.
+   _ctx.w1 = 0.0
    return _ctx
 end
 
@@ -66,13 +66,13 @@ function Noise_process(_ctx, color)
    local y1 = (3e-05 * real(_ctx.x1))
    _ctx.x2 = ((12553 + (27449 * _ctx.x2)) % 32768)
    local y2 = (3e-05 * real(_ctx.x2))
-   local out = 0.
+   local out = 0.0
    if (color > 0.5) then
       out = Noise_pinker(_ctx.inst_16d3d, (y1 + (-y2)))
    else
       out = (y1 + (-y2))
    end
-   return (2. * out)
+   return (2.0 * out)
 end
 
 function Noise_noteOn(_ctx, note, velocity, channel)

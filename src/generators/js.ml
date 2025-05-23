@@ -24,20 +24,28 @@
 
 open Core.Prog
 
-(* TODO:
-   - Runtime cleanup: generate only the required functions
-   - String support: conversions and concatenation
-*)
-
 let runtime =
   {%pla|
-IntegerDivision[a_, b_] := Floor[a / b];
-newEmptyObject[] := CreateDataStructure["HashTable"];
-setValue[var_, key_, value_] := var["Insert", key -> value];
-getValue[var_, key_] := var["Lookup", key];
-newObject[elems_] := Module[{t = newEmptyObject[]}, Map[t["Insert", #] &, elems]; t];
-initializeArray[v_, n_] := Table[v, n];
-eps[] := $MinMachineNumber
+this.random = function()         { return Math.random(); };
+this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
+this.eps  = function()           { return 1e-18 };
+this.pi   = function()           { return 3.1415926535897932384; }
+this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
+this.not  = function(x)          { return x==0?1:0; };
+this.real = function(x)          { return x; };
+this.int_  = function(x)         { return x|0; };
+this.sin  = function(x)          { return Math.sin(x); };
+this.cos  = function(x)          { return Math.cos(x); };
+this.abs  = function(x)          { return Math.abs(x); };
+this.exp  = function(x)          { return Math.exp(x); };
+this.floor = function(x)          { return Math.floor(x); };
+this.tan  = function(x)          { return Math.tan(x); };
+this.tanh = function(x)          { return Math.tanh(x); };
+this.pow  = function(a,b)         { return Math.pow(a,b); };
+this.sqrt = function(x)          { return x; };
+this.int_to_float = function(i)  { return i; };
+this.float_to_int = function(i)  { return Math.floor(i); };
+this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
 |}
 
 
@@ -74,12 +82,8 @@ let operator (op : operator) =
 let uoperator (op : uoperator) =
   match op with
   | UOpNeg -> Pla.string "-"
-  | UOpNot -> Pla.string "not"
+  | UOpNot -> Pla.string "!"
 
-
-let e_regex = Str.regexp_string "e"
-
-let fixFloat s = Str.global_replace e_regex " 10^" s
 
 let rec print_exp e =
   match e.e with
@@ -88,31 +92,26 @@ let rec print_exp e =
   | EBool v ->
     Pla.string
       (if v then
-         "True"
+         "true"
        else
-         "False")
-  | EInt n -> Pla.int n
-  | EReal n -> Pla.string (fixFloat (Util.Vfloat.to_string n))
-  | EFixed n -> Pla.string (fixFloat (Util.Vfloat.to_string n))
+         "false")
+  | EInt n -> {%pla|(<#n#i>|0)|}
+  | EReal n -> Pla.string (Util.Vfloat.to_string n)
+  | EFixed n -> Pla.string (Util.Vfloat.to_string n)
   | EString s -> Pla.string_quoted s
   | EId id -> Pla.string id
   | EIndex { e; index = { e = EInt i; _ } } ->
     let e = print_exp e in
-    let index = i + 1 in
-    {%pla|<#e#>[[<#index#i>]]|}
+    let index = i in
+    {%pla|<#e#>[<#index#i>]|}
   | EIndex { e; index } ->
     let e = print_exp e in
     let index = print_exp index in
-    {%pla|<#e#>[[<#index#> + 1]]|}
-  | EArray l -> Pla.wrap (Pla.string "{") (Pla.string "}") (Pla.map_sep Pla.commaspace print_exp l)
-  | ECall { path = "clip"; args = [ v; min; max ] } ->
-    let v = print_exp v in
-    let min = print_exp min in
-    let max = print_exp max in
-    {%pla|Clip[<#v#>, {<#min#>, <#max#>}]|}
+    {%pla|<#e#>[<#index#>]|}
+  | EArray l -> Pla.wrap (Pla.string "[") (Pla.string "]") (Pla.map_sep Pla.commaspace print_exp l)
   | ECall { path; args } ->
     let args = Pla.map_sep Pla.commaspace print_exp args in
-    {%pla|<#path#s>[<#args#>]|}
+    {%pla|this.<#path#s>(<#args#>)|}
   | EUnOp (op, e) ->
     let e = print_exp e in
     let op = uoperator op in
@@ -126,42 +125,42 @@ let rec print_exp e =
     let cond = print_exp cond in
     let then_ = print_exp then_ in
     let else_ = print_exp else_ in
-    {%pla|If[<#cond#>, <#then_#>, <#else_#>]|}
+    {%pla|(<#cond#> ? <#then_#> : <#else_#>)|}
   | ETuple l ->
     let l = Pla.map_sep Pla.commaspace print_exp l in
-    {%pla|{ <#l#> }|}
+    {%pla|[ <#l#> ]|}
   | EMember (e, m) ->
     let e = print_exp e in
-    {%pla|getValue[<#e#>, "<#m#s>"]|}
+    {%pla|<#e#>.<#m#s>|}
   | ETMember (e, i) ->
     let e = print_exp e in
-    let m = i + 1 in
-    {%pla|<#e#>[[<#m#i>]]|}
+    let m = i in
+    {%pla|<#e#>[<#m#i>]|}
   | ERecord { elems; _ } ->
     let printElem (n, v) =
       let v = print_exp v in
-      {%pla|"<#n#s>" -> <#v#>|}
+      {%pla|<#n#s>: <#v#>|}
     in
     let elems = Pla.map_sep Pla.commaspace printElem elems in
-    {%pla|newObject[{ <#elems#> }]|}
+    {%pla|{ <#elems#> }|}
 
 
 let rec print_lexp e =
   match e.l with
-  | LWild -> Pla.string "`wild"
+  | LWild -> Pla.string "_wild"
   | LId s -> Pla.string s
   | LMember (e, m) ->
     let e = print_lexp e in
-    {%pla|getValue[<#e#>, "<#m#s>"]|}
+    {%pla|<#e#>.<#m#s>|}
   | LIndex { e; index = { e = EInt i; _ } } ->
     let e = print_lexp e in
-    let index = i + 1 in
-    {%pla|<#e#>[[<#index#i>]]|}
+    let index = i in
+    {%pla|<#e#>[<#index#i>]|}
   | LIndex { e; index } ->
     let e = print_lexp e in
     let index = print_exp index in
-    {%pla|<#e#>[[<#index#> + 1]]|}
-  | _ -> failwith "Wl:print_lexp LTuple"
+    {%pla|<#e#>[<#index#>]|}
+  | _ -> failwith "JS:print_lexp LTuple"
 
 
 let print_dexp (e : dexp) =
@@ -170,96 +169,79 @@ let print_dexp (e : dexp) =
   | DId (id, Some dim) -> {%pla|<#id#s>[<#dim#i>]|}
 
 
-let collectDeclaredNames (stmts : stmt list) =
-  List.fold_left
-    (fun acc s ->
-      match s.s with
-      | StmtDecl ({ d = DId (name, _); _ }, _) -> name :: acc
-      | _ -> acc)
-    []
-    stmts
-
-
 let rec print_stmt (s : stmt) =
   match s.s with
   (* if the name is _ctx, do not call the allocator*)
-  | StmtDecl (({ d = DId ("`ctx", _); t = { t = TStruct _; _ }; _ } as lhs), None) ->
+  | StmtDecl (({ d = DId ("_ctx", _); t = { t = TStruct _; _ }; _ } as lhs), None) ->
     let lhs = print_dexp lhs in
-    {%pla|<#lhs#> = newEmptyObject[];|}
+    {%pla|var <#lhs#> = {};|}
   (* needs allocation *)
   | StmtDecl (({ t = { t = TStruct { path; _ }; _ }; _ } as lhs), None) ->
     let lhs = print_dexp lhs in
-    let path = Replacements.keyword Util.Args.WLCode path in
-    {%pla|<#lhs#> = <#path#s>`alloc[];|}
-  | StmtDecl ({ d = DId (name, _); t = { t = TArray (Some n, _); _ }; _ }, None) ->
-    {%pla|<#name#s> = Table[0, { i, 1, <#n#i>}];|}
-  | StmtDecl ({ d = DId (name, _); _ }, None) -> {%pla|<#name#s> = 0|}
+    {%pla|var <#lhs#> = <#path#s>_alloc();|}
+  | StmtDecl (lhs, None) ->
+    let lhs = print_dexp lhs in
+    {%pla|var <#lhs#>;|}
   | StmtDecl (lhs, Some rhs) ->
     let lhs = print_dexp lhs in
     let rhs = print_exp rhs in
-    {%pla|<#lhs#> = <#rhs#>;|}
+    {%pla|var <#lhs#> = <#rhs#>;|}
   | StmtBind ({ l = LWild; _ }, rhs) ->
     let rhs = print_exp rhs in
     {%pla|<#rhs#>;|}
-  | StmtBind ({ l = LMember (le, m); _ }, rhs) ->
-    let rhs = print_exp rhs in
-    let le = print_lexp le in
-    {%pla|setValue[<#le#>,"<#m#s>",<#rhs#>];|}
   | StmtBind (lhs, rhs) ->
     let lhs = print_lexp lhs in
     let rhs = print_exp rhs in
     {%pla|<#lhs#> = <#rhs#>;|}
   | StmtReturn e ->
     let e = print_exp e in
-    {%pla|Return[<#e#>];|}
+    {%pla|return <#e#>;|}
   | StmtIf (cond, then_, None) ->
     let e = print_exp cond in
     let then_ = print_stmt then_ in
-    {%pla|If[<#e#>, <#then_#+>];|}
+    {%pla|if (<#e#>) {<#then_#+><#>}|}
   | StmtIf (cond, then_, Some else_) ->
     let cond = print_exp cond in
     let then_ = print_stmt then_ in
     let else_ = print_stmt else_ in
-    {%pla|If[<#cond#>, <#then_#+>, <#else_#+>];|}
+    {%pla|if (<#cond#>) {<#then_#+><#>} else {<#else_#+><#>}|}
   | StmtWhile (cond, stmt) ->
     let cond = print_exp cond in
     let stmt = print_stmt stmt in
-    {%pla|While[<#cond#>, <#stmt#+>];|}
-  | StmtBlock [] -> {%pla|Null;|}
+    {%pla|while (<#cond#>) {<#stmt#+><#>}|}
   | StmtBlock stmts ->
-    let locals = Pla.map_sep Pla.commaspace Pla.string (collectDeclaredNames stmts) in
     let stmt = Pla.map_sep_all Pla.newline print_stmt stmts in
-    {%pla|Module[{ <#locals#> }, <#stmt#+>];|}
-  | StmtSwitch (e1, cases, default) ->
-    let cases = List.flatten (List.map (fun (e, v) -> [ print_exp e; print_stmt v ]) cases) in
-    let default =
-      match default with
-      | None -> []
-      | Some v -> [ Pla.string "_"; print_stmt v ]
+    {%pla|{<#stmt#+>}|}
+  | StmtSwitch (e1, cases, default) -> (
+    let if_ =
+      List.fold_right
+        (fun (e2, body) else_ ->
+          let cond = C.eeq e1 e2 in
+          Some (C.sif cond body else_))
+        cases
+        default
     in
-    let all_cases = Pla.join_sep Pla.commaspace (cases @ default) in
-    let e1 = print_exp e1 in
-    {%pla|Switch[<#e1#>, <#all_cases#>];|}
+    match if_ with
+    | None -> Pla.unit
+    | Some if_ -> print_stmt if_)
 
 
-let print_arg ({ name; _ } : param) = {%pla|<#name#s>_|}
+let print_arg ({ name; _ } : param) = {%pla|<#name#s>|}
 
 let print_function_def (def : function_def) =
   let name = def.name in
   let args = Pla.map_sep Pla.commaspace print_arg def.args in
-  {%pla|<#name#s>[<#args#>]|}
+  {%pla|this.<#name#s> = function (<#args#>) {|}
 
 
 let print_body body =
   match body.s with
-  | StmtBlock [] -> {%pla| := Null|}
   | StmtBlock stmts ->
-    let locals = Pla.map_sep Pla.commaspace Pla.string (collectDeclaredNames stmts) in
     let stmts = Pla.map_sep_all Pla.newline print_stmt stmts in
-    {%pla| := Module[{ <#locals#> }, <#stmts#+>]|}
+    {%pla|<#stmts#+>}|}
   | _ ->
     let stmt = print_stmt body in
-    {%pla| := <#stmt#+><#>|}
+    {%pla|<#stmt#+><#>}|}
 
 
 let print_top_stmt (args : Util.Args.args) t =
@@ -267,14 +249,14 @@ let print_top_stmt (args : Util.Args.args) t =
   | TopFunction (def, body) ->
     let def = print_function_def def in
     let body = print_body body in
-    {%pla|<#def#><#body#><#><#>|}
+    {%pla|<#def#><#body#>;<#><#>|}
   | TopExternal _ -> Pla.unit
   | TopType _ -> Pla.unit
   | TopAlias _ -> Pla.unit
-  | TopConstant (name, _, _, _) when args.test_mode -> {%pla|<#name#s> = {};<#>|}
+  | TopConstant (name, _, _, _) when args.test_mode -> {%pla|var <#name#s> = {};<#>|}
   | TopConstant (name, _, _, rhs) ->
     let rhs = print_exp rhs in
-    {%pla|<#name#s> = <#rhs#>;<#>|}
+    {%pla|var <#name#s> = <#rhs#>;<#>|}
 
 
 let print_prog args t = Pla.map_join (print_top_stmt args) t
@@ -282,12 +264,12 @@ let print_prog args t = Pla.map_join (print_top_stmt args) t
 let getTemplateCode (args : Util.Args.args) =
   match args.template with
   | None -> Pla.unit, Pla.unit
-  | Some "performance" -> T_performance.generateWl args
+  | Some "performance" -> T_performance.generateJs args
   | Some name -> Util.Error.raiseErrorMsg ("Unknown template '" ^ name ^ "'")
 
 
 let generate (args : Util.Args.args) (stmts : top_stmt list) =
-  let file = Common.setExt ".wl" args.output in
+  let file = Common.setExt ".js" args.output in
   let code = print_prog args stmts in
   let pre, post = getTemplateCode args in
   [ {%pla|<#runtime#><#pre#><#code#><#post#>|}, file ]

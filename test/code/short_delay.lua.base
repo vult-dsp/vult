@@ -23,19 +23,19 @@ function initializeArray(v, n) local a = {} for i=1, n do a[i] = 0 end return a 
 
 function Short_delay_soft_type_alloc()
    local _ctx = {};
-   _ctx.x2 = 0.
-   _ctx.x3 = 0.
-   _ctx.x4 = 0.
+   _ctx.x2 = 0.0
+   _ctx.x3 = 0.0
+   _ctx.x4 = 0.0
    return _ctx
 end
 
 function Short_delay_do_type_alloc()
    local i_0 = 0
-   local temp = initializeArray(0., 22050)
+   local temp = initializeArray(0.0, 22050)
    local _ctx = {};
    while (i_0 < 22050) do
       do
-         temp[i_0 + 1] = 0.
+         temp[i_0 + 1] = 0.0
          i_0 = (1 + i_0)
       end
    end
@@ -83,7 +83,7 @@ function Saturate_tanh_table_raw_c2(index)
 end
 
 function Saturate_tanh_table(x)
-   local index = clip(math.floor(((x - -24.) * 5.)), 0, 240)
+   local index = clip(math.floor(((x + 24.0) * 5.0)), 0, 240)
    return (Saturate_tanh_table_c0[index + 1] + (x * (Saturate_tanh_table_c1[index + 1] + (Saturate_tanh_table_c2[index + 1] * x))))
 end
 
@@ -115,9 +115,9 @@ function Short_delay_soft(_ctx, x1)
 end
 
 function Short_delay_do(_ctx, x, time_in, feedback_in)
-   local time = clip(time_in, 0., 1.)
-   local feedback = clip(feedback_in, 0., 1.)
-   local index_r = (22050. * time)
+   local time = clip(time_in, 0.0, 1.0)
+   local feedback = clip(feedback_in, 0.0, 1.0)
+   local index_r = (22050.0 * time)
    local index_i = int(floor(index_r))
    local delta = ((-index_i) + _ctx.write_pos)
    local read_pos = 0

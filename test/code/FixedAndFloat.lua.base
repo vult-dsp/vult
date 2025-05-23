@@ -22,8 +22,8 @@ function intDiv(a, b)       return math.floor(a / b) end
 function initializeArray(v, n) local a = {} for i=1, n do a[i] = 0 end return a end
 
 function FixedAndFloat_test1()
-   local fixed_value = 0.
-   local real_value = 0.
+   local fixed_value = 0.0
+   local real_value = 0.0
    local int_value = 0
    local bool_value = false
    local result = (fixed_value + fix16(real_value))
@@ -33,11 +33,11 @@ function FixedAndFloat_test1()
    local to_int = int(fixed_value)
    local to_real = real(fixed_value)
    local to_bool = bool(fixed_value)
-   from_int = 0.
-   from_real = 0.
-   from_bool = 0.
+   from_int = 0.0
+   from_real = 0.0
+   from_bool = 0.0
    to_int = 0
-   to_real = 0.
+   to_real = 0.0
    to_bool = false
 end
 
@@ -52,7 +52,7 @@ function FixedAndFloat_take_fix_return_fixed_raw_c1(index)
 end
 
 function FixedAndFloat_take_fix_return_fixed(x)
-   local value = clip((x * 32.), 0., 32.)
+   local value = clip((x * 32.0), 0.0, 32.0)
    local index = int(value)
    local decimal = (value - floor(value))
    return (FixedAndFloat_take_fix_return_fixed_c0[index + 1] + (FixedAndFloat_take_fix_return_fixed_c1[index + 1] * decimal))
@@ -74,7 +74,7 @@ function FixedAndFloat_take_fix_return_real_raw_c2(index)
 end
 
 function FixedAndFloat_take_fix_return_real(x)
-   local index = clip(fix_to_int((x * 31.)), 0, 31)
+   local index = clip(fix_to_int((x * 31.0)), 0, 31)
    return (FixedAndFloat_take_fix_return_real_c0[index + 1] + (fix_to_float(x) * (FixedAndFloat_take_fix_return_real_c1[index + 1] + (FixedAndFloat_take_fix_return_real_c2[index + 1] * fix_to_float(x)))))
 end
 
@@ -94,7 +94,7 @@ function FixedAndFloat_take_real_return_fixed_raw_c2(index)
 end
 
 function FixedAndFloat_take_real_return_fixed(x)
-   local index = clip(math.floor((x * 31.)), 0, 31)
+   local index = clip(math.floor((x * 31.0)), 0, 31)
    return (FixedAndFloat_take_real_return_fixed_c0[index + 1] + (float_to_fix(x) * (FixedAndFloat_take_real_return_fixed_c1[index + 1] + (FixedAndFloat_take_real_return_fixed_c2[index + 1] * float_to_fix(x)))))
 end
 

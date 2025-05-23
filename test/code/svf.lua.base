@@ -29,31 +29,31 @@ end
 
 function Util_change_type_alloc()
    local _ctx = {};
-   _ctx.pre_x = 0.
+   _ctx.pre_x = 0.0
    return _ctx
 end
 
 function Util_dcblock_type_alloc()
    local _ctx = {};
-   _ctx.x1 = 0.
-   _ctx.y1 = 0.
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 end
 
 function Util_smooth_type_alloc()
    local _ctx = {};
-   _ctx.x = 0.
+   _ctx.x = 0.0
    return _ctx
 end
 
 function Util_average2_type_alloc()
    local _ctx = {};
-   _ctx.x0 = 0.
+   _ctx.x0 = 0.0
    return _ctx
 end
 
 function Util_cvToPitch(cv)
-   return (24. + (120. * cv))
+   return (24.0 + (120.0 * cv))
 end
 
 Svf_calc_g_c0 = {};
@@ -77,20 +77,20 @@ function Svf_calc_g(cv)
 end
 
 function Svf_default(_ctx)
-   _ctx.g = Svf_calc_g(0.)
-   _ctx.r = 1.
-   _ctx.inv_den = (1. / (1. + (_ctx.g * _ctx.g)))
+   _ctx.g = Svf_calc_g(0.0)
+   _ctx.r = 1.0
+   _ctx.inv_den = (1.0 / (1.0 + (_ctx.g * _ctx.g)))
 end
 
 function Svf_process_type_alloc()
    local _ctx = {};
-   _ctx.g = 0.
+   _ctx.g = 0.0
    _ctx.inst_1b0a2 = Util_change_type_alloc()
    _ctx.inst_2b0a2 = Util_change_type_alloc()
-   _ctx.inv_den = 0.
-   _ctx.r = 0.
-   _ctx.z1 = 0.
-   _ctx.z2 = 0.
+   _ctx.inv_den = 0.0
+   _ctx.r = 0.0
+   _ctx.z1 = 0.0
+   _ctx.z2 = 0.0
    Svf_default(_ctx)
    return _ctx
 end
@@ -257,7 +257,7 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvToperiod_c0[index + 1] + (cv * (Util_cvToperiod_c1[index + 1] + (Util_cvToperiod_c2[index + 1] * cv))))
 end
 
@@ -277,7 +277,7 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvTokHz_c0[index + 1] + (cv * (Util_cvTokHz_c1[index + 1] + (Util_cvTokHz_c2[index + 1] * cv))))
 end
 
@@ -297,7 +297,7 @@ function Saturate_soft_tanh_table_raw_c2(index)
 end
 
 function Saturate_soft_tanh_table(x)
-   local index = clip(math.floor(((x - -24.) * 5.)), 0, 240)
+   local index = clip(math.floor(((x + 24.0) * 5.0)), 0, 240)
    return (Saturate_soft_tanh_table_c0[index + 1] + (x * (Saturate_soft_tanh_table_c1[index + 1] + (Saturate_soft_tanh_table_c2[index + 1] * x))))
 end
 
@@ -322,17 +322,17 @@ function Svf_process(_ctx, x, cv, q, sel)
    if (Util_change(_ctx.inst_1b0a2, cv) or Util_change(_ctx.inst_2b0a2, q)) then
       do
          _ctx.g = Svf_calc_g(cv)
-         _ctx.r = (1. / (2. * (q + eps())))
-         _ctx.inv_den = (1. / (1. + ((2. * (_ctx.r * _ctx.g)) + (_ctx.g * _ctx.g))))
+         _ctx.r = (1.0 / (2.0 * (q + eps())))
+         _ctx.inv_den = (1.0 / (1.0 + ((2.0 * (_ctx.r * _ctx.g)) + (_ctx.g * _ctx.g))))
       end
    end
-   local high = ((x + ((-(((2. * _ctx.r) + _ctx.g) * _ctx.z1)) + (-_ctx.z2))) * _ctx.inv_den)
+   local high = ((x + ((-(((2.0 * _ctx.r) + _ctx.g) * _ctx.z1)) + (-_ctx.z2))) * _ctx.inv_den)
    local band = ((high * _ctx.g) + _ctx.z1)
    local low = ((band * _ctx.g) + _ctx.z2)
    local notch = (high + low)
    _ctx.z1 = (band + (high * _ctx.g))
    _ctx.z2 = (low + (band * _ctx.g))
-   local output = 0.
+   local output = 0.0
    if (sel == 0) then
       output = low
    else

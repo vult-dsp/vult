@@ -1,0 +1,59 @@
+
+this.random = function()         { return Math.random(); };
+this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
+this.eps  = function()           { return 1e-18 };
+this.pi   = function()           { return 3.1415926535897932384; }
+this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
+this.not  = function(x)          { return x==0?1:0; };
+this.real = function(x)          { return x; };
+this.int_  = function(x)         { return x|0; };
+this.sin  = function(x)          { return Math.sin(x); };
+this.cos  = function(x)          { return Math.cos(x); };
+this.abs  = function(x)          { return Math.abs(x); };
+this.exp  = function(x)          { return Math.exp(x); };
+this.floor = function(x)          { return Math.floor(x); };
+this.tan  = function(x)          { return Math.tan(x); };
+this.tanh = function(x)          { return Math.tanh(x); };
+this.pow  = function(a,b)         { return Math.pow(a,b); };
+this.sqrt = function(x)          { return x; };
+this.int_to_float = function(i)  { return i; };
+this.float_to_int = function(i)  { return Math.floor(i); };
+this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
+this.DataTypes_point_alloc = function () {
+   var _ctx = {};
+   _ctx.x = 0.0;
+   _ctx.y = 0.0;
+   return _ctx;
+};
+
+this.DataTypes_test2_type_alloc = function () {
+   var _ctx = {};
+   _ctx.p2 = this.DataTypes_point_alloc();
+   _ctx.result = this.DataTypes_point_alloc();
+   return _ctx;
+};
+
+this.DataTypes_addPoint1 = function (p1, p2) {
+   var p3 = DataTypes_point_alloc();
+   p3.x = (p1.x + p2.x);
+   p3.y = (p1.y + p2.y);
+   return p3;
+};
+
+this.DataTypes_addPoint2 = function (p1, p2, result) {
+   result.x = (p1.x + p2.x);
+   result.y = (p1.y + p2.y);
+};
+
+this.DataTypes_test1 = function () {
+   var p1 = DataTypes_point_alloc();
+   var p2 = DataTypes_point_alloc();
+   var result = this.DataTypes_addPoint1(p1, p2);
+   this.DataTypes_addPoint2(p1, p2, result);
+};
+
+this.DataTypes_test2 = function (_ctx) {
+   var p1 = DataTypes_point_alloc();
+   _ctx.result = this.DataTypes_addPoint1(p1, _ctx.p2);
+};
+

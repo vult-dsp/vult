@@ -1,0 +1,122 @@
+
+this.random = function()         { return Math.random(); };
+this.irandom = function()        { return Math.floor(Math.random() * 4294967296); };
+this.eps  = function()           { return 1e-18 };
+this.pi   = function()           { return 3.1415926535897932384; }
+this.clip = function(x,low,high) { return x<low?low:(x>high?high:x); };
+this.not  = function(x)          { return x==0?1:0; };
+this.real = function(x)          { return x; };
+this.int_  = function(x)         { return x|0; };
+this.sin  = function(x)          { return Math.sin(x); };
+this.cos  = function(x)          { return Math.cos(x); };
+this.abs  = function(x)          { return Math.abs(x); };
+this.exp  = function(x)          { return Math.exp(x); };
+this.floor = function(x)          { return Math.floor(x); };
+this.tan  = function(x)          { return Math.tan(x); };
+this.tanh = function(x)          { return Math.tanh(x); };
+this.pow  = function(a,b)         { return Math.pow(a,b); };
+this.sqrt = function(x)          { return x; };
+this.int_to_float = function(i)  { return i; };
+this.float_to_int = function(i)  { return Math.floor(i); };
+this.initializeArray = function(v, size){ var a = new Array(size); for(var i=0;i<size;i++) a[i]=v; return a; };
+this.Array_return_foo3_type_alloc = function () {
+   var _ctx = {};
+   _ctx.y = (0|0);
+   return _ctx;
+};
+
+this.Array_return_foo4_type_alloc = function () {
+   var _ctx = {};
+   _ctx.y = (0|0);
+   return _ctx;
+};
+
+this.Array_return_foo5_type_alloc = function () {
+   var _ctx = {};
+   _ctx.Array_return_foo5_ret_0 = (0|0);
+   var i_0 = (0|0);
+   var temp = this.initializeArray((0|0), (3|0));
+   while ((i_0 < (3|0))) {
+      {
+         temp[i_0] = (0|0);
+         i_0 = ((1|0) + i_0);
+      }
+   }
+   _ctx.Array_return_foo5_ret_1 = temp;
+   return _ctx;
+};
+
+this.Array_return_foo6_type_alloc = function () {
+   var _ctx = {};
+   _ctx.Array_return_foo6_ret_0 = (0|0);
+   var i_0 = (0|0);
+   var temp = this.initializeArray((0|0), (3|0));
+   while ((i_0 < (3|0))) {
+      {
+         temp[i_0] = (0|0);
+         i_0 = ((1|0) + i_0);
+      }
+   }
+   _ctx.Array_return_foo6_ret_1 = temp;
+   return _ctx;
+};
+
+this.Array_return_s1_alloc = function () {
+   var _ctx = {};
+   _ctx.x = (0|0);
+   _ctx.y = (0|0);
+   return _ctx;
+};
+
+this.Array_return_foo7_type_alloc = function () {
+   var _ctx = {};
+   _ctx.Array_return_foo7_ret_0 = (0|0);
+   _ctx.Array_return_foo7_ret_1 = this.Array_return_s1_alloc();
+   return _ctx;
+};
+
+this.Array_return_foo1 = function () {
+   var _array_0 = [(1|0), (2|0), (3|0)];
+   return _array_0;
+};
+
+this.Array_return_foo2 = function () {
+   var x = [(1|0), (2|0), (3|0)];
+   return x;
+};
+
+this.Array_return_foo3 = function (_ctx) {
+   _ctx.y = (0|0);
+   var _array_0 = [(1|0), (2|0), (3|0)];
+   return _array_0;
+};
+
+this.Array_return_foo4 = function (_ctx) {
+   _ctx.y = (0|0);
+   var x = [(1|0), (2|0), (3|0)];
+   return x;
+};
+
+this.Array_return_foo5 = function (_ctx) {
+   var _array_0 = [(1|0), (2|0), (3|0)];
+   _ctx.Array_return_foo5_ret_0 = (1|0);
+   _ctx.Array_return_foo5_ret_1 = _array_0;
+   return ;
+};
+
+this.Array_return_foo6 = function (_ctx) {
+   var y = (1|0);
+   var x = [(1|0), (2|0), (3|0)];
+   _ctx.Array_return_foo6_ret_0 = y;
+   _ctx.Array_return_foo6_ret_1 = x;
+   return ;
+};
+
+this.Array_return_foo7 = function (_ctx) {
+   var d = this.initializeArray((0|0), (4|0));
+   _ctx.Array_return_foo7_ret_0 = d[0];
+   var s;
+   _ctx.Array_return_foo7_ret_1 = s[0];
+   return ;
+};
+

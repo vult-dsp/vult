@@ -29,31 +29,31 @@ end
 
 function Util_change_type_alloc()
    local _ctx = {};
-   _ctx.pre_x = 0.
+   _ctx.pre_x = 0.0
    return _ctx
 end
 
 function Util_dcblock_type_alloc()
    local _ctx = {};
-   _ctx.x1 = 0.
-   _ctx.y1 = 0.
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 end
 
 function Util_smooth_type_alloc()
    local _ctx = {};
-   _ctx.x = 0.
+   _ctx.x = 0.0
    return _ctx
 end
 
 function Util_average2_type_alloc()
    local _ctx = {};
-   _ctx.x0 = 0.
+   _ctx.x0 = 0.0
    return _ctx
 end
 
 function Util_cvToPitch(cv)
-   return (24. + (120. * cv))
+   return (24.0 + (120.0 * cv))
 end
 
 Util_pitchToRate_1024_c0 = {};
@@ -97,7 +97,7 @@ function Util_cvToRate_1024(cv)
 end
 
 function Tricore_default(_ctx)
-   _ctx.rate = Util_cvToRate_1024(0.)
+   _ctx.rate = Util_cvToRate_1024(0.0)
 end
 
 function Tricore_process_type_alloc()
@@ -106,9 +106,9 @@ function Tricore_process_type_alloc()
    _ctx.inst_1b03c = Util_change_type_alloc()
    _ctx.inst_2043c = Util_edge_type_alloc()
    _ctx.inst_3043c = Util_edge_type_alloc()
-   _ctx.phase = 0.
-   _ctx.rate = 0.
-   _ctx.reset_phase = 0.
+   _ctx.phase = 0.0
+   _ctx.rate = 0.0
+   _ctx.reset_phase = 0.0
    _ctx.reset_state = false
    Tricore_default(_ctx)
    return _ctx
@@ -151,20 +151,20 @@ function Svf_calc_g(cv)
 end
 
 function Svf_default(_ctx)
-   _ctx.g = Svf_calc_g(0.)
-   _ctx.r = 1.
-   _ctx.inv_den = (1. / (1. + (_ctx.g * _ctx.g)))
+   _ctx.g = Svf_calc_g(0.0)
+   _ctx.r = 1.0
+   _ctx.inv_den = (1.0 / (1.0 + (_ctx.g * _ctx.g)))
 end
 
 function Svf_process_type_alloc()
    local _ctx = {};
-   _ctx.g = 0.
+   _ctx.g = 0.0
    _ctx.inst_1b0a2 = Util_change_type_alloc()
    _ctx.inst_2b0a2 = Util_change_type_alloc()
-   _ctx.inv_den = 0.
-   _ctx.r = 0.
-   _ctx.z1 = 0.
-   _ctx.z2 = 0.
+   _ctx.inv_den = 0.0
+   _ctx.r = 0.0
+   _ctx.z1 = 0.0
+   _ctx.z2 = 0.0
    Svf_default(_ctx)
    return _ctx
 end
@@ -187,9 +187,9 @@ end
 
 function Lfo_soft_type_alloc()
    local _ctx = {};
-   _ctx.x2 = 0.
-   _ctx.x3 = 0.
-   _ctx.x4 = 0.
+   _ctx.x2 = 0.0
+   _ctx.x3 = 0.0
+   _ctx.x4 = 0.0
    return _ctx
 end
 
@@ -198,8 +198,8 @@ function Lfo_process_type_alloc()
    _ctx.inst_1b0d6 = Util_change_type_alloc()
    _ctx.inst_204d6 = Util_edge_type_alloc()
    _ctx.inst_337d6 = Lfo_soft_type_alloc()
-   _ctx.phase = 0.
-   _ctx.rate = 0.
+   _ctx.phase = 0.0
+   _ctx.rate = 0.0
    return _ctx
 end
 
@@ -220,15 +220,15 @@ function Lfo_default_type_alloc(_ctx)
 end
 
 function Phase_default(_ctx)
-   _ctx.rate = Util_cvToRate_1024(0.)
+   _ctx.rate = Util_cvToRate_1024(0.0)
 end
 
 function Phase_process_type_alloc()
    local _ctx = {};
    _ctx.inst_1b08a = Util_change_type_alloc()
    _ctx.inst_2048a = Util_edge_type_alloc()
-   _ctx.phase = 0.
-   _ctx.rate = 0.
+   _ctx.phase = 0.0
+   _ctx.rate = 0.0
    Phase_default(_ctx)
    return _ctx
 end
@@ -265,20 +265,20 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvToperiod_c0[index + 1] + (cv * (Util_cvToperiod_c1[index + 1] + (Util_cvToperiod_c2[index + 1] * cv))))
 end
 
 function Blit_pulse_start(_ctx)
-   _ctx.m = (1 + (2 * int(Util_cvToperiod(0.))))
-   _ctx.scale = (1. + (2. * Util_cvToperiod(0.)))
+   _ctx.m = (1 + (2 * int(Util_cvToperiod(0.0))))
+   _ctx.scale = (1.0 + (2.0 * Util_cvToperiod(0.0)))
 end
 
 function Blit_pulse_train_type_alloc()
    local _ctx = {};
    _ctx.inst_1b05e = Util_change_type_alloc()
    _ctx.m = 0
-   _ctx.scale = 0.
+   _ctx.scale = 0.0
    Blit_pulse_start(_ctx)
    return _ctx
 end
@@ -328,7 +328,7 @@ function Util_cvToRate(cv)
 end
 
 function Blit_init(_ctx)
-   _ctx.rate = Util_cvToRate(0.)
+   _ctx.rate = Util_cvToRate(0.0)
 end
 
 function Blit_osc_blit_type_alloc()
@@ -338,10 +338,10 @@ function Blit_osc_blit_type_alloc()
    _ctx.inst_35e26 = Blit_pulse_train_type_alloc()
    _ctx.inst_45e26 = Blit_pulse_train_type_alloc()
    _ctx.inst_56426 = Util_dcblock_type_alloc()
-   _ctx.output = 0.
-   _ctx.rate = 0.
-   _ctx.state_pulse = 0.
-   _ctx.state_saw = 0.
+   _ctx.output = 0.0
+   _ctx.rate = 0.0
+   _ctx.state_pulse = 0.0
+   _ctx.state_saw = 0.0
    Blit_init(_ctx)
    return _ctx
 end
@@ -376,21 +376,21 @@ function Adsr_do_type_alloc()
    local _ctx = {};
    _ctx.inst_104a0 = Util_edge_type_alloc()
    _ctx.inst_295a0 = Util_smooth_type_alloc()
-   _ctx.out = 0.
-   _ctx.rate = 0.
-   _ctx.scale = 0.
+   _ctx.out = 0.0
+   _ctx.rate = 0.0
+   _ctx.scale = 0.0
    _ctx.state = 0
-   _ctx.target = 0.
+   _ctx.target = 0.0
    return _ctx
 end
 
 function Adsr_process_type_alloc()
    local _ctx = {};
    _ctx.inst_1a025 = Adsr_do_type_alloc()
-   _ctx.knob1 = 0.
-   _ctx.knob2 = 0.
-   _ctx.knob3 = 0.
-   _ctx.knob4 = 0.
+   _ctx.knob1 = 0.0
+   _ctx.knob2 = 0.0
+   _ctx.knob3 = 0.0
+   _ctx.knob4 = 0.0
    return _ctx
 end
 
@@ -412,10 +412,10 @@ end
 
 function Voice_4_process_type_alloc()
    local _ctx = {};
-   _ctx.attack = 0.
-   _ctx.decay = 0.
-   _ctx.flt_cut = 0.
-   _ctx.flt_res = 0.
+   _ctx.attack = 0.0
+   _ctx.decay = 0.0
+   _ctx.flt_cut = 0.0
+   _ctx.flt_res = 0.0
    _ctx.flt_shape = 0
    _ctx.inst_1d695 = Lfo_process_type_alloc()
    _ctx.inst_28b95 = Blit_process_type_alloc()
@@ -424,22 +424,22 @@ function Voice_4_process_type_alloc()
    _ctx.inst_53c95 = Tricore_process_type_alloc()
    _ctx.inst_6a295 = Svf_process_type_alloc()
    _ctx.inst_7a095 = Adsr_do_type_alloc()
-   _ctx.level1 = 0.
-   _ctx.level2 = 0.
-   _ctx.level3 = 0.
-   _ctx.level4 = 0.
-   _ctx.lfo_cv = 0.
-   _ctx.lfo_flt = 0.
-   _ctx.lfo_pw = 0.
-   _ctx.lfo_rate = 0.
-   _ctx.lfo_reset = 0.
-   _ctx.lfo_shape = 0.
-   _ctx.pw1 = 0.
-   _ctx.pw2 = 0.
-   _ctx.pw3 = 0.
-   _ctx.pw4 = 0.
-   _ctx.release = 0.
-   _ctx.sustain = 0.
+   _ctx.level1 = 0.0
+   _ctx.level2 = 0.0
+   _ctx.level3 = 0.0
+   _ctx.level4 = 0.0
+   _ctx.lfo_cv = 0.0
+   _ctx.lfo_flt = 0.0
+   _ctx.lfo_pw = 0.0
+   _ctx.lfo_rate = 0.0
+   _ctx.lfo_reset = 0.0
+   _ctx.lfo_shape = 0.0
+   _ctx.pw1 = 0.0
+   _ctx.pw2 = 0.0
+   _ctx.pw3 = 0.0
+   _ctx.pw4 = 0.0
+   _ctx.release = 0.0
+   _ctx.sustain = 0.0
    return _ctx
 end
 
@@ -525,17 +525,17 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvTokHz_c0[index + 1] + (cv * (Util_cvTokHz_c1[index + 1] + (Util_cvTokHz_c2[index + 1] * cv))))
 end
 
 function Tricore_process(_ctx, cv, reset, disable)
-   local out = 0.
+   local out = 0.0
    if Util_change(_ctx.inst_1b03c, cv) then
-      _ctx.rate = (4. * Util_cvToRate_1024(cv))
+      _ctx.rate = (4.0 * Util_cvToRate_1024(cv))
    end
-   local new_phase = 0.
-   local _if_temp_0 = 0.
+   local new_phase = 0.0
+   local _if_temp_0 = 0.0
    if _ctx.direction then
       _if_temp_0 = _ctx.rate
    else
@@ -543,33 +543,33 @@ function Tricore_process(_ctx, cv, reset, disable)
    end
    new_phase = (_if_temp_0 + _ctx.phase)
    local bdisable = (disable > 0.5)
-   if (Util_edge(_ctx.inst_2043c, (reset > 0.)) or Util_edge(_ctx.inst_3043c, bdisable)) then
+   if (Util_edge(_ctx.inst_2043c, (reset > 0.0)) or Util_edge(_ctx.inst_3043c, bdisable)) then
       do
          _ctx.reset_phase = _ctx.phase
          _ctx.reset_state = true
-         new_phase = 0.
+         new_phase = 0.0
       end
    end
-   if (new_phase > 1024.) then
+   if (new_phase > 1024.0) then
       do
-         new_phase = (2048. + (-new_phase))
+         new_phase = (2048.0 + (-new_phase))
          _ctx.direction = false
       end
    else
-      if (new_phase < -1024.) then
+      if (new_phase < -1024.0) then
          _ctx.direction = true
       end
    end
    if bdisable then
-      _ctx.phase = 0.
+      _ctx.phase = 0.0
    else
       _ctx.phase = new_phase
    end
    if _ctx.reset_state then
       do
-         if ((abs(_ctx.reset_phase) > 10.) or bdisable) then
+         if ((abs(_ctx.reset_phase) > 10.0) or bdisable) then
             do
-               local reset_speed = 0.
+               local reset_speed = 0.0
                if bdisable then
                   reset_speed = 0.01
                else
@@ -579,10 +579,10 @@ function Tricore_process(_ctx, cv, reset, disable)
             end
          else
             do
-               if (_ctx.reset_phase > 10.) then
+               if (_ctx.reset_phase > 10.0) then
                   _ctx.reset_phase = _ctx.reset_phase
                else
-                  _ctx.reset_phase = 0.
+                  _ctx.reset_phase = 0.0
                end
                _ctx.reset_state = false
                _ctx.direction = true
@@ -620,7 +620,7 @@ function Saturate_soft_tanh_table_raw_c2(index)
 end
 
 function Saturate_soft_tanh_table(x)
-   local index = clip(math.floor(((x - -24.) * 5.)), 0, 240)
+   local index = clip(math.floor(((x + 24.0) * 5.0)), 0, 240)
    return (Saturate_soft_tanh_table_c0[index + 1] + (x * (Saturate_soft_tanh_table_c1[index + 1] + (Saturate_soft_tanh_table_c2[index + 1] * x))))
 end
 
@@ -645,17 +645,17 @@ function Svf_process(_ctx, x, cv, q, sel)
    if (Util_change(_ctx.inst_1b0a2, cv) or Util_change(_ctx.inst_2b0a2, q)) then
       do
          _ctx.g = Svf_calc_g(cv)
-         _ctx.r = (1. / (2. * (q + eps())))
-         _ctx.inv_den = (1. / (1. + ((2. * (_ctx.r * _ctx.g)) + (_ctx.g * _ctx.g))))
+         _ctx.r = (1.0 / (2.0 * (q + eps())))
+         _ctx.inv_den = (1.0 / (1.0 + ((2.0 * (_ctx.r * _ctx.g)) + (_ctx.g * _ctx.g))))
       end
    end
-   local high = ((x + ((-(((2. * _ctx.r) + _ctx.g) * _ctx.z1)) + (-_ctx.z2))) * _ctx.inv_den)
+   local high = ((x + ((-(((2.0 * _ctx.r) + _ctx.g) * _ctx.z1)) + (-_ctx.z2))) * _ctx.inv_den)
    local band = ((high * _ctx.g) + _ctx.z1)
    local low = ((band * _ctx.g) + _ctx.z2)
    local notch = (high + low)
    _ctx.z1 = (band + (high * _ctx.g))
    _ctx.z2 = (low + (band * _ctx.g))
-   local output = 0.
+   local output = 0.0
    if (sel == 0) then
       output = low
    else
@@ -697,7 +697,7 @@ function Saturate_tanh_table_raw_c2(index)
 end
 
 function Saturate_tanh_table(x)
-   local index = clip(math.floor(((x - -24.) * 5.)), 0, 240)
+   local index = clip(math.floor(((x + 24.0) * 5.0)), 0, 240)
    return (Saturate_tanh_table_c0[index + 1] + (x * (Saturate_tanh_table_c1[index + 1] + (Saturate_tanh_table_c2[index + 1] * x))))
 end
 
@@ -733,27 +733,27 @@ function Lfo_process(_ctx, cv, shape, reset)
       _ctx.rate = Util_cvToRate((-0.3 + cv))
    end
    _ctx.phase = (_ctx.phase + _ctx.rate)
-   if (_ctx.phase > 2.) then
-      _ctx.phase = (-2. + _ctx.phase)
+   if (_ctx.phase > 2.0) then
+      _ctx.phase = (-2.0 + _ctx.phase)
    else
       _ctx.phase = _ctx.phase
    end
-   local breset = (reset > 0.)
+   local breset = (reset > 0.0)
    if Util_edge(_ctx.inst_204d6, breset) then
-      _ctx.phase = 0.
+      _ctx.phase = 0.0
    end
-   local tmp = (-1. + _ctx.phase)
-   local o = 0.
-   if (shape < 1.) then
+   local tmp = (-1.0 + _ctx.phase)
+   local o = 0.0
+   if (shape < 1.0) then
       o = tmp
    else
-      if (shape < 2.) then
-         o = (-1. + (2. * abs(tmp)))
+      if (shape < 2.0) then
+         o = (-1.0 + (2.0 * abs(tmp)))
       else
-         if (tmp > 0.) then
-            o = 1.
+         if (tmp > 0.0) then
+            o = 1.0
          else
-            o = 0.
+            o = 0.0
          end
       end
    end
@@ -788,7 +788,7 @@ function Tables_nsine_raw_c2(index)
 end
 
 function Tables_nsine(x)
-   local index = clip(math.floor((x * 127.)), 0, 127)
+   local index = clip(math.floor((x * 127.0)), 0, 127)
    return (Tables_nsine_c0[index + 1] + (x * (Tables_nsine_c1[index + 1] + (Tables_nsine_c2[index + 1] * x))))
 end
 
@@ -797,12 +797,12 @@ function Phase_process(_ctx, cv, reset)
       _ctx.rate = Util_cvToRate_1024(cv)
    end
    if Util_edge(_ctx.inst_2048a, (reset > 0.5)) then
-      _ctx.phase = 0.
+      _ctx.phase = 0.0
    else
       _ctx.phase = (_ctx.phase + _ctx.rate)
    end
-   if (_ctx.phase > 1024.) then
-      _ctx.phase = (-1024. + _ctx.phase)
+   if (_ctx.phase > 1024.0) then
+      _ctx.phase = (-1024.0 + _ctx.phase)
    else
       _ctx.phase = _ctx.phase
    end
@@ -822,17 +822,17 @@ function Blit_pulse_train(_ctx, cv, phase)
    if Util_change(_ctx.inst_1b05e, cv) then
       do
          _ctx.m = (1 + (2 * int(Util_cvToperiod(cv))))
-         _ctx.scale = (2. * Util_cvToperiod(cv))
+         _ctx.scale = (2.0 * Util_cvToperiod(cv))
       end
    end
    local pi_phase = (0.5 * phase)
    local denominator = Tables_nsine(pi_phase)
-   local out = 0.
+   local out = 0.0
    if (denominator <= eps()) then
-      out = 1.
+      out = 1.0
    else
       do
-         local m_phase = ((pi_phase * real(_ctx.m)) % 1.)
+         local m_phase = ((pi_phase * real(_ctx.m)) % 1.0)
          local numerator = Tables_nsine(m_phase)
          out = (numerator / (denominator * _ctx.scale))
       end
@@ -841,8 +841,8 @@ function Blit_pulse_train(_ctx, cv, phase)
 end
 
 function Blit_osc_blit(_ctx, cv, pw, wave)
-   local fixed_cv = 0.
-   if (wave < 1.) then
+   local fixed_cv = 0.0
+   if (wave < 1.0) then
       fixed_cv = cv
    else
       fixed_cv = (-0.1 + cv)
@@ -850,20 +850,20 @@ function Blit_osc_blit(_ctx, cv, pw, wave)
    if Util_change(_ctx.inst_1b026, fixed_cv) then
       _ctx.rate = Util_cvToRate(fixed_cv)
    end
-   local phase = Phase_process(_ctx.inst_28a26, fixed_cv, 0.)
+   local phase = Phase_process(_ctx.inst_28a26, fixed_cv, 0.0)
    local shift05 = (0.5 + (0.49 * pw))
    local shift = (phase + shift05)
-   if (shift > 1.) then
-      shift = (-1. + shift)
+   if (shift > 1.0) then
+      shift = (-1.0 + shift)
    end
    local pulse1 = Blit_pulse_train(_ctx.inst_35e26, fixed_cv, phase)
    local pulse2 = Blit_pulse_train(_ctx.inst_45e26, fixed_cv, shift)
    _ctx.state_pulse = (pulse1 + ((-pulse2) + (0.9995 * _ctx.state_pulse)))
-   _ctx.state_saw = ((0.5 * ((pulse1 + (pulse2 + (-2. * _ctx.rate))) / shift05)) + (0.9995 * _ctx.state_saw))
-   if (wave < 1.) then
+   _ctx.state_saw = ((0.5 * ((pulse1 + (pulse2 + (-2.0 * _ctx.rate))) / shift05)) + (0.9995 * _ctx.state_saw))
+   if (wave < 1.0) then
       _ctx.output = _ctx.state_pulse
    else
-      _ctx.output = (2. * _ctx.state_saw)
+      _ctx.output = (2.0 * _ctx.state_saw)
    end
    _ctx.output = Util_dcblock(_ctx.inst_56426, _ctx.output)
    return _ctx.output
@@ -886,11 +886,11 @@ function Blit_default(_ctx)
 end
 
 function Adsr_do(_ctx, gate, a, d, s, r)
-   local a_rate = (1. / (0.01 + (100. * a)))
-   local d_rate = (1. / (0.01 + (100. * d)))
-   local r_rate = (1. / (0.01 + (100. * r)))
+   local a_rate = (1.0 / (0.01 + (100.0 * a)))
+   local d_rate = (1.0 / (0.01 + (100.0 * d)))
+   local r_rate = (1.0 / (0.01 + (100.0 * r)))
    _ctx.out = ((0.004 * (((-_ctx.out) + _ctx.target) * _ctx.rate)) + _ctx.out)
-   local bgate = (gate > 0.)
+   local bgate = (gate > 0.0)
    if (_ctx.state == 0) then
       do
          if Util_edge(_ctx.inst_104a0, bgate) then
@@ -900,7 +900,7 @@ function Adsr_do(_ctx, gate, a, d, s, r)
             end
          end
          _ctx.rate = r_rate
-         _ctx.target = 0.
+         _ctx.target = 0.0
       end
    end
    if (_ctx.state == 1) then
@@ -908,7 +908,7 @@ function Adsr_do(_ctx, gate, a, d, s, r)
          if (bgate == false) then
             _ctx.state = 0
          end
-         if (_ctx.out > 1024.) then
+         if (_ctx.out > 1024.0) then
             _ctx.state = 2
          end
          _ctx.rate = a_rate
@@ -921,10 +921,10 @@ function Adsr_do(_ctx, gate, a, d, s, r)
             _ctx.state = 0
          end
          _ctx.rate = d_rate
-         _ctx.target = (1024. * s)
+         _ctx.target = (1024.0 * s)
       end
    end
-   return (Util_smooth(_ctx.inst_295a0, _ctx.scale) * clip((0.000976 * _ctx.out), 0., 1.))
+   return (Util_smooth(_ctx.inst_295a0, _ctx.scale) * clip((0.000976 * _ctx.out), 0.0, 1.0))
 end
 
 function Adsr_process(_ctx, gate)
@@ -953,9 +953,9 @@ function Adsr_controlChange(_ctx, control, value, channel)
 end
 
 function Adsr_default(_ctx)
-   _ctx.knob1 = 0.
+   _ctx.knob1 = 0.0
    _ctx.knob2 = 0.5
-   _ctx.knob3 = 1.
+   _ctx.knob3 = 1.0
    _ctx.knob4 = 0.5
 end
 
@@ -964,10 +964,10 @@ function Voice_4_process(_ctx, cv, vel, gate)
    local mod_pw = (lfo * _ctx.lfo_pw)
    local mod_cv = (lfo * _ctx.lfo_cv)
    local mod_flt = (lfo * _ctx.lfo_flt)
-   local o1 = Blit_process(_ctx.inst_28b95, (0.0001 + (cv + mod_cv)), (mod_pw + _ctx.pw1), 0.)
-   local o2 = Blit_process(_ctx.inst_38b95, (0.0002 + (cv + mod_cv)), (mod_pw + _ctx.pw2), 1.)
-   local o3 = Blit_process(_ctx.inst_48b95, (cv + (mod_cv + _ctx.pw3)), (mod_pw + _ctx.pw1), 0.)
-   local sub = Saturate_process(((2. + (5. * _ctx.pw4)) * Tricore_process(_ctx.inst_53c95, (cv + mod_cv), 0., 1.)))
+   local o1 = Blit_process(_ctx.inst_28b95, (0.0001 + (cv + mod_cv)), (mod_pw + _ctx.pw1), 0.0)
+   local o2 = Blit_process(_ctx.inst_38b95, (0.0002 + (cv + mod_cv)), (mod_pw + _ctx.pw2), 1.0)
+   local o3 = Blit_process(_ctx.inst_48b95, (cv + (mod_cv + _ctx.pw3)), (mod_pw + _ctx.pw1), 0.0)
+   local sub = Saturate_process(((2.0 + (5.0 * _ctx.pw4)) * Tricore_process(_ctx.inst_53c95, (cv + mod_cv), 0.0, 1.0)))
    local o = ((o1 * _ctx.level1) + ((o2 * _ctx.level2) + ((o3 * _ctx.level3) + (sub * _ctx.level4))))
    local f = Svf_process(_ctx.inst_6a295, o, (mod_flt + _ctx.flt_cut), _ctx.flt_res, _ctx.flt_shape)
    local env = Adsr_do(_ctx.inst_7a095, gate, _ctx.attack, _ctx.decay, _ctx.sustain, _ctx.release)
@@ -1006,29 +1006,29 @@ function Voice_4_controlChange(_ctx, control, value, channel)
       _ctx.pw4 = (0.007874 * real(value))
    end
    if (control == 38) then
-      _ctx.lfo_rate = Util_map(real(value), 0., 127., -0.4, 0.1)
+      _ctx.lfo_rate = Util_map(real(value), 0.0, 127.0, -0.4, 0.1)
    end
    if (control == 39) then
       _ctx.lfo_shape = (0.023622 * real(value))
    end
    if (control == 40) then
-      _ctx.lfo_pw = Util_map(real(value), 0., 127., -1., 1.)
+      _ctx.lfo_pw = Util_map(real(value), 0.0, 127.0, -1.0, 1.0)
    end
    if (control == 41) then
-      _ctx.lfo_cv = Util_map(real(value), 0., 127., -0.1, 0.1)
+      _ctx.lfo_cv = Util_map(real(value), 0.0, 127.0, -0.1, 0.1)
    end
    if (control == 42) then
-      _ctx.lfo_flt = Util_map(real(value), 0., 127., -0.3, 0.3)
+      _ctx.lfo_flt = Util_map(real(value), 0.0, 127.0, -0.3, 0.3)
    end
    if (control == 43) then
       if (value > 0) then
-         _ctx.lfo_reset = 1.
+         _ctx.lfo_reset = 1.0
       else
-         _ctx.lfo_reset = 0.
+         _ctx.lfo_reset = 0.0
       end
    end
    if (control == 44) then
-      _ctx.flt_cut = Util_map(real(value), 0., 127., -0.2, 0.5)
+      _ctx.flt_cut = Util_map(real(value), 0.0, 127.0, -0.2, 0.5)
    end
    if (control == 45) then
       _ctx.flt_res = (0.007874 * real(value))

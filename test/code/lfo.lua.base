@@ -29,34 +29,34 @@ end
 
 function Util_change_type_alloc()
    local _ctx = {};
-   _ctx.pre_x = 0.
+   _ctx.pre_x = 0.0
    return _ctx
 end
 
 function Util_dcblock_type_alloc()
    local _ctx = {};
-   _ctx.x1 = 0.
-   _ctx.y1 = 0.
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 end
 
 function Util_smooth_type_alloc()
    local _ctx = {};
-   _ctx.x = 0.
+   _ctx.x = 0.0
    return _ctx
 end
 
 function Util_average2_type_alloc()
    local _ctx = {};
-   _ctx.x0 = 0.
+   _ctx.x0 = 0.0
    return _ctx
 end
 
 function Lfo_soft_type_alloc()
    local _ctx = {};
-   _ctx.x2 = 0.
-   _ctx.x3 = 0.
-   _ctx.x4 = 0.
+   _ctx.x2 = 0.0
+   _ctx.x3 = 0.0
+   _ctx.x4 = 0.0
    return _ctx
 end
 
@@ -65,8 +65,8 @@ function Lfo_process_type_alloc()
    _ctx.inst_1b0d6 = Util_change_type_alloc()
    _ctx.inst_204d6 = Util_edge_type_alloc()
    _ctx.inst_337d6 = Lfo_soft_type_alloc()
-   _ctx.phase = 0.
-   _ctx.rate = 0.
+   _ctx.phase = 0.0
+   _ctx.rate = 0.0
    return _ctx
 end
 
@@ -173,7 +173,7 @@ function Util_pitchToRate(pitch)
 end
 
 function Util_cvToPitch(cv)
-   return (24. + (120. * cv))
+   return (24.0 + (120.0 * cv))
 end
 
 Util_cvToRate_1024_c0 = {};
@@ -236,7 +236,7 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvToperiod_c0[index + 1] + (cv * (Util_cvToperiod_c1[index + 1] + (Util_cvToperiod_c2[index + 1] * cv))))
 end
 
@@ -256,7 +256,7 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvTokHz_c0[index + 1] + (cv * (Util_cvTokHz_c1[index + 1] + (Util_cvTokHz_c2[index + 1] * cv))))
 end
 
@@ -276,27 +276,27 @@ function Lfo_process(_ctx, cv, shape, reset)
       _ctx.rate = Util_cvToRate((-0.3 + cv))
    end
    _ctx.phase = (_ctx.phase + _ctx.rate)
-   if (_ctx.phase > 2.) then
-      _ctx.phase = (-2. + _ctx.phase)
+   if (_ctx.phase > 2.0) then
+      _ctx.phase = (-2.0 + _ctx.phase)
    else
       _ctx.phase = _ctx.phase
    end
-   local breset = (reset > 0.)
+   local breset = (reset > 0.0)
    if Util_edge(_ctx.inst_204d6, breset) then
-      _ctx.phase = 0.
+      _ctx.phase = 0.0
    end
-   local tmp = (-1. + _ctx.phase)
-   local o = 0.
-   if (shape < 1.) then
+   local tmp = (-1.0 + _ctx.phase)
+   local o = 0.0
+   if (shape < 1.0) then
       o = tmp
    else
-      if (shape < 2.) then
-         o = (-1. + (2. * abs(tmp)))
+      if (shape < 2.0) then
+         o = (-1.0 + (2.0 * abs(tmp)))
       else
-         if (tmp > 0.) then
-            o = 1.
+         if (tmp > 0.0) then
+            o = 1.0
          else
-            o = 0.
+            o = 0.0
          end
       end
    end

@@ -29,51 +29,51 @@ end
 
 function Util_change_type_alloc()
    local _ctx = {};
-   _ctx.pre_x = 0.
+   _ctx.pre_x = 0.0
    return _ctx
 end
 
 function Util_dcblock_type_alloc()
    local _ctx = {};
-   _ctx.x1 = 0.
-   _ctx.y1 = 0.
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 end
 
 function Util_smooth_type_alloc()
    local _ctx = {};
-   _ctx.x = 0.
+   _ctx.x = 0.0
    return _ctx
 end
 
 function Util_average2_type_alloc()
    local _ctx = {};
-   _ctx.x0 = 0.
+   _ctx.x0 = 0.0
    return _ctx
 end
 
 function Ahr_do_type_alloc()
    local _ctx = {};
-   _ctx.Ahr_do_ret_0 = 0.
-   _ctx.Ahr_do_ret_1 = 0.
-   _ctx.hold_phase = 0.
+   _ctx.Ahr_do_ret_0 = 0.0
+   _ctx.Ahr_do_ret_1 = 0.0
+   _ctx.hold_phase = 0.0
    _ctx.inst_104d8 = Util_edge_type_alloc()
    _ctx.inst_204d8 = Util_edge_type_alloc()
-   _ctx.out = 0.
-   _ctx.rate = 0.
+   _ctx.out = 0.0
+   _ctx.rate = 0.0
    _ctx.state = 0
-   _ctx.target = 0.
+   _ctx.target = 0.0
    return _ctx
 end
 
 function Ahr_process_type_alloc()
    local _ctx = {};
-   _ctx.Ahr_process_ret_0 = 0.
-   _ctx.Ahr_process_ret_1 = 0.
+   _ctx.Ahr_process_ret_0 = 0.0
+   _ctx.Ahr_process_ret_1 = 0.0
    _ctx.inst_1d84b = Ahr_do_type_alloc()
-   _ctx.knob1 = 0.
-   _ctx.knob2 = 0.
-   _ctx.knob3 = 0.
+   _ctx.knob1 = 0.0
+   _ctx.knob2 = 0.0
+   _ctx.knob3 = 0.0
    return _ctx
 end
 
@@ -180,7 +180,7 @@ function Util_pitchToRate(pitch)
 end
 
 function Util_cvToPitch(cv)
-   return (24. + (120. * cv))
+   return (24.0 + (120.0 * cv))
 end
 
 Util_cvToRate_1024_c0 = {};
@@ -243,7 +243,7 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvToperiod_c0[index + 1] + (cv * (Util_cvToperiod_c1[index + 1] + (Util_cvToperiod_c2[index + 1] * cv))))
 end
 
@@ -263,7 +263,7 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvTokHz_c0[index + 1] + (cv * (Util_cvTokHz_c1[index + 1] + (Util_cvTokHz_c2[index + 1] * cv))))
 end
 
@@ -272,54 +272,54 @@ function Ahr_do(_ctx, gate, a, h, r)
    local attack = 1
    local hold = 2
    local reset = 3
-   local bgate = (gate > 0.)
+   local bgate = (gate > 0.0)
    if Util_edge(_ctx.inst_104d8, bgate) then
       _ctx.state = reset
    end
-   local resetting = 0.
+   local resetting = 0.0
    if (_ctx.state == reset) then
-      resetting = 1.
+      resetting = 1.0
    else
-      resetting = 0.
+      resetting = 0.0
    end
-   if Util_edge(_ctx.inst_204d8, (_ctx.out > 1024.)) then
+   if Util_edge(_ctx.inst_204d8, (_ctx.out > 1024.0)) then
       do
-         _ctx.hold_phase = 0.
+         _ctx.hold_phase = 0.0
          _ctx.state = hold
       end
    end
-   if ((_ctx.out < 10.) and (_ctx.state == reset)) then
+   if ((_ctx.out < 10.0) and (_ctx.state == reset)) then
       _ctx.state = attack
    end
-   if ((_ctx.hold_phase > 100.) and (_ctx.state == hold)) then
+   if ((_ctx.hold_phase > 100.0) and (_ctx.state == hold)) then
       _ctx.state = release
    end
    if (_ctx.state == reset) then
       do
          _ctx.rate = 0.990099
-         _ctx.target = 0.
+         _ctx.target = 0.0
       end
    end
    if (_ctx.state == attack) then
       do
-         _ctx.rate = (1. / (0.01 + (100. * a)))
+         _ctx.rate = (1.0 / (0.01 + (100.0 * a)))
          _ctx.target = 1228.8
       end
    end
    if (_ctx.state == hold) then
       do
-         local hrate = (1. / (0.01 + (100. * h)))
+         local hrate = (1.0 / (0.01 + (100.0 * h)))
          _ctx.hold_phase = (hrate + _ctx.hold_phase)
       end
    end
    if (_ctx.state == release) then
       do
-         _ctx.rate = (1. / (0.01 + (100. * r)))
-         _ctx.target = 0.
+         _ctx.rate = (1.0 / (0.01 + (100.0 * r)))
+         _ctx.target = 0.0
       end
    end
    _ctx.out = ((0.005 * (((-_ctx.out) + _ctx.target) * _ctx.rate)) + _ctx.out)
-   _ctx.Ahr_do_ret_0 = clip((0.000976 * _ctx.out), 0., 1.)
+   _ctx.Ahr_do_ret_0 = clip((0.000976 * _ctx.out), 0.0, 1.0)
    _ctx.Ahr_do_ret_1 = resetting
    return 
 end
@@ -352,7 +352,7 @@ function Ahr_controlChange(_ctx, control, value, channel)
 end
 
 function Ahr_default(_ctx)
-   _ctx.knob1 = 0.
+   _ctx.knob1 = 0.0
    _ctx.knob2 = 0.5
    _ctx.knob3 = 0.5
 end

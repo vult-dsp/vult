@@ -48,16 +48,22 @@ let adapt (f : float) =
 
 
 let to_string (f : float) =
-  Float.to_string
-  @@ crop
-  @@
-  match Float.classify_float f with
-  | FP_normal -> f
-  | FP_subnormal -> f
-  | FP_zero -> 0.0
-  | FP_infinite ->
-    if f > 0.0 then
-      3.40282347E+38
-    else
-      -3.40282347E+38
-  | FP_nan -> failwith "nan"
+  let r =
+    Float.to_string
+    @@ crop
+    @@
+    match Float.classify_float f with
+    | FP_normal -> f
+    | FP_subnormal -> f
+    | FP_zero -> 0.0
+    | FP_infinite ->
+      if f > 0.0 then
+        3.40282347E+38
+      else
+        -3.40282347E+38
+    | FP_nan -> failwith "nan"
+  in
+  if String.ends_with ~suffix:"." r then
+    r ^ "0"
+  else
+    r

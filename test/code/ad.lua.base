@@ -29,45 +29,45 @@ end
 
 function Util_change_type_alloc()
    local _ctx = {};
-   _ctx.pre_x = 0.
+   _ctx.pre_x = 0.0
    return _ctx
 end
 
 function Util_dcblock_type_alloc()
    local _ctx = {};
-   _ctx.x1 = 0.
-   _ctx.y1 = 0.
+   _ctx.x1 = 0.0
+   _ctx.y1 = 0.0
    return _ctx
 end
 
 function Util_smooth_type_alloc()
    local _ctx = {};
-   _ctx.x = 0.
+   _ctx.x = 0.0
    return _ctx
 end
 
 function Util_average2_type_alloc()
    local _ctx = {};
-   _ctx.x0 = 0.
+   _ctx.x0 = 0.0
    return _ctx
 end
 
 function Ad_do_type_alloc()
    local _ctx = {};
    _ctx.inst_10452 = Util_edge_type_alloc()
-   _ctx.out = 0.
-   _ctx.rate = 0.
-   _ctx.scale = 0.
+   _ctx.out = 0.0
+   _ctx.rate = 0.0
+   _ctx.scale = 0.0
    _ctx.state = 0
-   _ctx.target = 0.
+   _ctx.target = 0.0
    return _ctx
 end
 
 function Ad_process_type_alloc()
    local _ctx = {};
    _ctx.inst_15232 = Ad_do_type_alloc()
-   _ctx.knob1 = 0.
-   _ctx.knob2 = 0.
+   _ctx.knob1 = 0.0
+   _ctx.knob2 = 0.0
    return _ctx
 end
 
@@ -174,7 +174,7 @@ function Util_pitchToRate(pitch)
 end
 
 function Util_cvToPitch(cv)
-   return (24. + (120. * cv))
+   return (24.0 + (120.0 * cv))
 end
 
 Util_cvToRate_1024_c0 = {};
@@ -237,7 +237,7 @@ function Util_cvToperiod_raw_c2(index)
 end
 
 function Util_cvToperiod(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvToperiod_c0[index + 1] + (cv * (Util_cvToperiod_c1[index + 1] + (Util_cvToperiod_c2[index + 1] * cv))))
 end
 
@@ -257,14 +257,14 @@ function Util_cvTokHz_raw_c2(index)
 end
 
 function Util_cvTokHz(cv)
-   local index = clip(math.floor((cv * 31.)), 0, 31)
+   local index = clip(math.floor((cv * 31.0)), 0, 31)
    return (Util_cvTokHz_c0[index + 1] + (cv * (Util_cvTokHz_c1[index + 1] + (Util_cvTokHz_c2[index + 1] * cv))))
 end
 
 function Ad_do(_ctx, gate, a, d)
-   local a_rate = (1. / (0.01 + (100. * a)))
-   local d_rate = (1. / (0.01 + (100. * d)))
-   local bgate = (gate > 0.)
+   local a_rate = (1.0 / (0.01 + (100.0 * a)))
+   local d_rate = (1.0 / (0.01 + (100.0 * d)))
+   local bgate = (gate > 0.0)
    _ctx.out = ((0.004 * (((-_ctx.out) + _ctx.target) * _ctx.rate)) + _ctx.out)
    if (_ctx.state == 0) then
       do
@@ -275,19 +275,19 @@ function Ad_do(_ctx, gate, a, d)
             end
          end
          _ctx.rate = d_rate
-         _ctx.target = 0.
+         _ctx.target = 0.0
       end
    end
    if (_ctx.state == 1) then
       do
-         if ((bgate == false) or (_ctx.out > 1024.)) then
+         if ((bgate == false) or (_ctx.out > 1024.0)) then
             _ctx.state = 0
          end
          _ctx.rate = a_rate
          _ctx.target = 1228.8
       end
    end
-   return (clip((0.000976 * _ctx.out), 0., 1.) * _ctx.scale)
+   return (clip((0.000976 * _ctx.out), 0.0, 1.0) * _ctx.scale)
 end
 
 function Ad_process(_ctx, gate)
@@ -310,7 +310,7 @@ function Ad_controlChange(_ctx, control, value, channel)
 end
 
 function Ad_default(_ctx)
-   _ctx.knob1 = 0.
+   _ctx.knob1 = 0.0
    _ctx.knob2 = 0.5
 end
 
