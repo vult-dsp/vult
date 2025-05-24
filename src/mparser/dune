@@ -41,6 +41,4 @@
 (library
  (name mparser)
  (modules Mparser Grammar Grammar_msg Lexer Bast)
- (libraries menhirLib pparser util)
- (preprocess
-  (pps ppx_deriving.show)))
+ (libraries menhirLib pparser util))
