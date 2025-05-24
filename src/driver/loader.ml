@@ -64,6 +64,7 @@ module Dependencies = struct
     | SEString _ -> set
     | SEId _ -> set
     | SEIndex { e; index } -> exp (exp set e) index
+    | SENamed (e1, e2) -> exp (exp set e1) e2
     | SEArray elems -> list exp set elems
     | SECall { path = p; args } -> list exp (path set p) args
     | SEUnOp (_, e) -> exp set e
@@ -104,10 +105,10 @@ module Dependencies = struct
     | Some t -> type_ set t
 
 
-  let rec function_def set (def, body) =
+  let rec function_def set def =
     match def with
     | { args; t; next } ->
-      let set = stmt set body in
+      let set = stmt set def.body in
       let set = list arg set args in
       let set = option type_ set t in
       option function_def set next
@@ -145,7 +146,7 @@ module Dependencies = struct
     match s.top with
     | STopError -> set
     | STopExternal (def, _) -> ext_def set (def, { s = SStmtError; loc = s.loc })
-    | STopFunction (def, body) -> function_def set (def, body)
+    | STopFunction def -> function_def set def
     | STopType { members } -> list (fun set (_, t, _, _) -> type_ set t) set members
     | STopEnum _ -> set
     | STopConstant (d, e) -> exp (dexp set d) e
@@ -197,7 +198,7 @@ let getIncludes (arguments : args) (files : input list) : string list =
 
 
 (* main function that iterates the input files, gets the dependencies and searchs for the dependencies locations *)
-let rec loadFiles_loop (includes : string list) file_deps dependencies parsed visited (files : input list) =
+let rec loadFiles_loop use_menhir (includes : string list) file_deps dependencies parsed visited (files : input list) =
   let basename h = Filename.(chop_extension (basename h)) in
   match files with
   | [] -> dependencies, file_deps, parsed
@@ -208,8 +209,16 @@ let rec loadFiles_loop (includes : string list) file_deps dependencies parsed vi
       let () = Hashtbl.add visited h_module true in
       let h_parsed =
         match input with
-        | File _ -> Parse.parseFile h
-        | Code (file, txt) -> Parse.parseString (Some file) txt
+        | File _ ->
+          if use_menhir then
+            Mparser.parseFile h
+          else
+            Parse.parseFile h
+        | Code (file, txt) ->
+          if use_menhir then
+            Mparser.parseString (Some file) txt
+          else
+            Parse.parseString (Some file) txt
       in
       let () = Hashtbl.add parsed h_module h_parsed in
       (* gets the depencies based on the modules used *)
@@ -220,9 +229,9 @@ let rec loadFiles_loop (includes : string list) file_deps dependencies parsed vi
       (* updates the tables *)
       let () = Hashtbl.add dependencies h_module h_deps in
       let () = Hashtbl.add file_deps (basename h) (List.map basename h_dep_files) in
-      loadFiles_loop includes file_deps dependencies parsed visited (t @ h_dep_files_input)
+      loadFiles_loop use_menhir includes file_deps dependencies parsed visited (t @ h_dep_files_input)
     else
-      loadFiles_loop includes file_deps dependencies parsed visited t
+      loadFiles_loop use_menhir includes file_deps dependencies parsed visited t
 
 
 (** Raises an error if the modules have circular dependencies *)
@@ -249,7 +258,14 @@ let loadFiles (arguments : args) (files : input list) =
   let includes = getIncludes arguments files in
   arguments.includes <- includes;
   let dependencies, file_deps, parsed =
-    loadFiles_loop includes (Hashtbl.create 8) (Hashtbl.create 8) (Hashtbl.create 8) (Hashtbl.create 8) files
+    loadFiles_loop
+      arguments.use_menhir
+      includes
+      (Hashtbl.create 8)
+      (Hashtbl.create 8)
+      (Hashtbl.create 8)
+      (Hashtbl.create 8)
+      files
   in
   let dep_list = Hashtbl.fold (fun a b acc -> (a, b) :: acc) dependencies [] in
   let comps = C.calculate dep_list in

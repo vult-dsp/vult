@@ -69,6 +69,10 @@ let file (location : t) : string = location.start_pos.pos_fname
 
 let line (location : t) : int = location.start_pos.pos_lnum
 
+let startLine (location : t) : int = location.start_pos.pos_lnum
+
+let endLine (location : t) : int = location.end_pos.pos_lnum
+
 let compareLoc (loc1 : t) (loc2 : t) =
   let o = compare (line loc1) (line loc2) in
   if o = 0 then

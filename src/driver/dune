@@ -1,7 +1,7 @@
 (library
  (name driver)
  (modules Loader Cli)
- (libraries vm generators util pparser core pla)
+ (libraries vm generators util pparser mparser core pla)
  (preprocess
   (pps pla.ppx))
  (flags -w -30)

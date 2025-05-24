@@ -41,7 +41,12 @@ let errorLocationMessage (location : Loc.t) : string =
     location *)
 let errorLocationIndicator (line : string) (location : Loc.t) : string =
   let col_start = max (Loc.startColumn location) 0 in
-  let col_end = max (Loc.endColumn location) 0 in
+  let col_end =
+    if Loc.startLine location <> Loc.endLine location then
+      String.length line
+    else
+      max (Loc.endColumn location) 0
+  in
   let pointer =
     if col_end - col_start <> 0 then
       String.make (col_end - col_start) '^'

@@ -1,0 +1,46 @@
+(ocamllex lexer)
+
+(menhir
+ (flags --table --inspection)
+ (modules grammar))
+
+(rule
+ (targets grammar.msg.new)
+ (deps
+  grammar.msg
+  grammar.ml
+  (:mly grammar.mly))
+ (action
+  (progn
+   (with-stdout-to
+    grammar.msg.new
+    (run %{bin:menhir} --list-errors %{mly})))))
+
+(rule
+ (targets grammar_msg.ml)
+ (deps
+  grammar.msg
+  grammar.msg.new
+  (:mly grammar.mly))
+ (action
+  (progn
+   (run
+    %{bin:menhir}
+    --compare-errors
+    grammar.msg.new
+    --compare-errors
+    grammar.msg
+    %{mly})
+   (with-stdout-to
+    grammar.msg.updated
+    (run %{bin:menhir} --update-errors grammar.msg %{mly}))
+   (with-stdout-to
+    grammar_msg.ml
+    (run %{bin:menhir} --compile-errors grammar.msg.updated %{mly})))))
+
+(library
+ (name mparser)
+ (modules Mparser Grammar Grammar_msg Lexer Bast)
+ (libraries menhirLib pparser util)
+ (preprocess
+  (pps ppx_deriving.show)))

@@ -834,7 +834,7 @@ and stmtExternal (buffer : Stream.stream) : top_stmt =
   { top = STopExternal ({ name; args; t = Some type_; tags; loc }, link_name); loc }
 
 
-and stmtFunctionDecl (buffer : Stream.stream) : function_def * stmt * Loc.t =
+and stmtFunctionDecl (buffer : Stream.stream) : function_def * Loc.t =
   let _ = Stream.skip buffer in
   let name, loc = id_name buffer in
   let _ = Stream.consume buffer LPAREN in
@@ -856,37 +856,16 @@ and stmtFunctionDecl (buffer : Stream.stream) : function_def * stmt * Loc.t =
   let next =
     match Stream.peek buffer with
     | AND ->
-      let def, body, _ = stmtFunctionDecl buffer in
-      Some (def, body)
+      let def, _ = stmtFunctionDecl buffer in
+      Some def
     | _ -> None
   in
-  { name; args; t; next; tags; loc }, body, loc
-
-
-and stmtFunctionSpec (buffer : Stream.stream) : function_def =
-  let _ = Stream.consume buffer FUN in
-  let name, loc = id_name buffer in
-  let _ = Stream.consume buffer LPAREN in
-  let args =
-    match Stream.peek buffer with
-    | RPAREN -> []
-    | _ -> argList typedArg buffer
-  in
-  let _ = Stream.consume buffer RPAREN in
-  let t =
-    match Stream.peek buffer with
-    | COLON ->
-      let _ = Stream.skip buffer in
-      Some (type_ 0 buffer)
-    | _ -> None
-  in
-  let tags = optional_tag buffer in
-  { name; args; t; next = None; tags; loc }
+  { name; args; t; next; tags; loc; body }, loc
 
 
 and stmtFunction (buffer : Stream.stream) : top_stmt =
-  let def, body, loc = stmtFunctionDecl buffer in
-  { top = STopFunction (def, body); loc }
+  let def, loc = stmtFunctionDecl buffer in
+  { top = STopFunction def; loc }
 
 
 and stmtType (buffer : Stream.stream) : top_stmt =
@@ -1133,9 +1112,9 @@ let parseStmtList (s : string) : stmt =
   result
 
 
-let parseFunctionSpec (s : string) : function_def =
+let parseFunctionDecl (s : string) : function_def =
   let buffer = Stream.fromString s in
-  stmtFunctionSpec buffer
+  fst (stmtFunctionDecl buffer)
 
 
 let moduleName file =

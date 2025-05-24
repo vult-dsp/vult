@@ -538,9 +538,9 @@ and newStmtList n state : state * stmt list = fold_init newStmt state n
 let newFunction () =
   let name = "foo_" ^ string_of_int (Random.int 10000) in
   let _, stmts = newStmtList 4 default_state in
-  let def = { next = None; name; args = []; t = None; loc; tags = [] } in
   let body = { s = SStmtBlock stmts; loc } in
-  { top = STopFunction (def, body); loc }
+  let def = { next = None; name; args = []; t = None; loc; tags = []; body } in
+  { top = STopFunction def; loc }
 
 
 let test seed =

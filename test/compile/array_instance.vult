@@ -9,7 +9,7 @@ fun incr(ctx:counter_type) {
 }
 
 fun foo() {
-  mem x : array<counter_type, 2>;
+  mem x : array(counter_type, 2);
   iter(i, size(x)) {
     _ = x[i]:counter();
   }

@@ -1,6 +1,6 @@
 
 // Now it is possible to create functions that receive arrays without fixed number of elements.
-// The type needs to be explicitly defined e.g. array<real>
+// The type needs to be explicitly defined e.g. array(real)
 fun sum(data:array(real)) {
   val total = 0.0;
   iter(i, size(data)) {

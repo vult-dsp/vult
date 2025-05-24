@@ -22,6 +22,8 @@
 
 (wrapped_executables false)
 
+(using menhir 2.1)
+
 (map_workspace_root false)
 
 (name vult)

@@ -72,6 +72,7 @@ type exp_d =
       { path : path
       ; elems : (path * exp) list
       }
+  | SENamed of exp * exp
 
 and exp =
   { e : exp_d
@@ -152,9 +153,10 @@ and function_def =
   { name : string
   ; args : arg list
   ; t : type_ option
-  ; next : (function_def * stmt) option
+  ; next : function_def option
   ; loc : Loc.t
   ; tags : Ptags.tag list
+  ; body : stmt
   }
 
 and ext_def =
@@ -168,7 +170,7 @@ and ext_def =
 type top_stmt_d =
   | STopError
   | STopExternal of ext_def * string option
-  | STopFunction of function_def * stmt
+  | STopFunction of function_def
   | STopType of
       { name : string
       ; members : (string * type_ * Ptags.tags * Loc.t) list
@@ -299,6 +301,10 @@ module Print = struct
       let p = path p in
       let elems = Pla.map_sep Pla.commaspace printElem elems in
       {%pla|<#p#> { <#elems#> }|}
+    | SENamed (e1, e2) ->
+      let e1 = exp e1 in
+      let e2 = exp e2 in
+      {%pla|<#e1#>:<#e2#>|}
 
 
   let rec pattern (p : pattern) = pattern_d p.p
@@ -449,16 +455,16 @@ module Print = struct
     {%pla|<#name#s>(<#args#>)<#t#><#tags#>|}
 
 
-  let rec function_def (def : function_def) body =
+  let rec function_def (def : function_def) =
     let next f =
       match f with
       | None -> Pla.unit
-      | Some (f, body) ->
-        let d = function_def f body in
+      | Some f ->
+        let d = function_def f in
         {%pla|<#>and <#d#>|}
     in
     let decl = genera_def def.name def.args def.t def.tags in
-    let body = stmt body in
+    let body = stmt def.body in
     let n = next def.next in
     {%pla|<#decl#><#body#><#n#>|}
 
@@ -484,8 +490,8 @@ module Print = struct
     | STopExternal (def, Some name) ->
       let d = ext_def def in
       {%pla|external <#d#> "<#name#s>";|}
-    | STopFunction (def, body) ->
-      let d = function_def def body in
+    | STopFunction def ->
+      let d = function_def def in
       {%pla|fun <#d#>|}
     | STopType { name; members } ->
       let members = Pla.map_sep_all {%pla|;<#>|} member members in
@@ -938,6 +944,16 @@ module Mapper = struct
               SERecord { elems = elems'; path = path' }
           in
           state, odata
+        | SENamed (field_0, field_1) ->
+          let state, field_1' = map_exp mapper context state field_1 in
+          let state, field_0' = map_exp mapper context state field_0 in
+          let odata =
+            if field_0 == field_0' && field_1 == field_1' then
+              idata
+            else
+              SENamed (field_0', field_1')
+          in
+          state, odata
       else
         state, idata
     in
@@ -1226,16 +1242,17 @@ module Mapper = struct
     let state, odata =
       if context.recurse then
         match idata with
-        | { name; args; t; next; loc; tags } ->
-          let state, next' = (mapper_opt (mapper_tuple2 map_function_def map_stmt)) mapper context state next in
+        | { name; args; t; next; loc; tags; body } ->
+          let state, body' = map_stmt mapper context state body in
+          let state, next' = (mapper_opt map_function_def) mapper context state next in
           let state, t' = (mapper_opt map_type_) mapper context state t in
           let state, args' = (mapper_list map_arg) mapper context state args in
           let name' = name in
           let odata =
-            if name == name' && args == args' && t == t' && next == next' then
+            if name == name' && args == args' && t == t' && next == next' && body == body' then
               idata
             else
-              { name = name'; args = args'; t = t'; next = next'; loc; tags }
+              { name = name'; args = args'; t = t'; next = next'; loc; tags; body = body' }
           in
           state, odata
       else
@@ -1282,14 +1299,13 @@ module Mapper = struct
               STopExternal (field_0', field_1')
           in
           state, odata
-        | STopFunction (field_0, field_1) ->
-          let state, field_1' = map_stmt mapper context state field_1 in
+        | STopFunction field_0 ->
           let state, field_0' = map_function_def mapper context state field_0 in
           let odata =
-            if field_0 == field_0' && field_1 == field_1' then
+            if field_0 == field_0' then
               idata
             else
-              STopFunction (field_0', field_1')
+              STopFunction field_0'
           in
           state, odata
         | STopType { name; members } ->

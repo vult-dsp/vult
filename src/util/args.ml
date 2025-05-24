@@ -80,6 +80,7 @@ type args =
   ; mutable profile : bool
   ; mutable split : bool
   ; mutable test_mode : bool
+  ; mutable use_menhir : bool
   }
 
 let default_arguments : args =
@@ -111,6 +112,7 @@ let default_arguments : args =
   ; profile = false
   ; split = false
   ; test_mode = false
+  ; use_menhir = false
   }
 
 

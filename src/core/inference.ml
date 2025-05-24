@@ -369,7 +369,7 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
     let t = C.string ~loc in
     env, { e = EString value; t; loc }
   | { e = SEGroup e; _ } -> exp env e
-  | { e = SEId name; loc } ->
+  | { e = SEId name; loc } when not (String.equal (String.capitalize_ascii name) name) ->
     let var = Env.lookVar env name loc in
     let t = var.t in
     let e =
@@ -430,6 +430,18 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
       | { descr = Enum _; _ } -> env, { e = ECall { instance = None; path; args = [ arg ] }; t = Typed.C.int ~loc; loc }
       | _ -> call env None path args loc e.loc)
     | _ -> call env None path args loc e.loc)
+  | { e =
+        SENamed
+          ( { e = SEIndex { e = { e = SEId instance; _ }; index }; _ }
+          , { e = SECall { instance = None; path; args }; loc } )
+    ; _
+    } -> call env (Some (instance, Some index)) path args loc e.loc
+  | { e = SENamed ({ e = SEId instance; _ }, { e = SECall { instance = None; path; args }; loc }); _ } ->
+    call env (Some (instance, None)) path args loc e.loc
+  | { e = SENamed (e1, e2); _ } ->
+    let e1 = Pla.print (Syntax.Print.exp e1) in
+    let e2 = Pla.print (Syntax.Print.exp e2) in
+    failwith ("Inference SENamed: " ^ e1 ^ " : " ^ e2)
   | { e = SECall { instance; path; args }; loc } -> call env instance path args loc e.loc
   | { e = SEOp (op, e1, e2); loc } ->
     let env, e1 = exp env e1 in
@@ -470,6 +482,10 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
       Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
   | { e = SEEnum path; loc } ->
     let type_path, tloc, index = Env.lookEnum env path loc in
+    let t = C.path_t tloc type_path in
+    env, { e = EInt index; t; loc }
+  | { e = SEId id; loc } ->
+    let type_path, tloc, index = Env.lookEnum env { id; n = None; loc } loc in
     let t = C.path_t tloc type_path in
     env, { e = EInt index; t; loc }
   | { e = SERecord { path; elems }; loc } -> (
@@ -573,11 +589,11 @@ and lexp ?(const = false) (env : Env.in_func) (e : Syntax.lexp) : Env.in_func * 
       | _ ->
         let t = Pla.print (Typed.print_type_ e.t) in
         let e = Pla.print (Typed.print_lexp e) in
-        Error.raiseError ("The expression' " ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
+        Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
     | _ ->
       let t = Pla.print (Typed.print_type_ e.t) in
       let e = Pla.print (Typed.print_lexp e) in
-      Error.raiseError ("The expression' " ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
+      Error.raiseError ("The expression '" ^ e ^ "' of type '" ^ t ^ "' does not have a member '" ^ m ^ "'.") loc)
 
 
 and dexp (env : Env.in_func) (e : Syntax.dexp) (kind : var_kind) : Env.in_func * dexp =
@@ -773,18 +789,17 @@ and stmt_list env return l =
 
 let addGeneratedFunctions tags name next =
   if Ptags.has tags "wave" then
-    let code = Pla.print {%pla|fun <#name#s>_samples() : int @[placeholder]|} in
-    let def = Parse.parseFunctionSpec code in
-    Some ({ def with next }, Syntax.{ s = SStmtBlock []; loc = Loc.default })
+    let code = Pla.print {%pla|fun <#name#s>_samples() : int @[placeholder] {}|} in
+    let def = Parse.parseFunctionDecl code in
+    Some { def with next }
   else if Ptags.has tags "wavetable" then
-    let empty = Syntax.{ s = SStmtBlock []; loc = Loc.default } in
-    let samples = Pla.print {%pla|fun <#name#s>_samples() : int @[placeholder]|} in
-    let code1 = Pla.print {%pla|fun <#name#s>_raw_c0(i:int) : real @[placeholder]|} in
-    let code2 = Pla.print {%pla|fun <#name#s>_raw_c1(i:int) : real @[placeholder]|} in
-    let samples = Parse.parseFunctionSpec samples in
-    let def1 = Parse.parseFunctionSpec code1 in
-    let def2 = Parse.parseFunctionSpec code2 in
-    Some ({ def1 with next = Some ({ def2 with next = Some ({ samples with next }, empty) }, empty) }, empty)
+    let samples = Pla.print {%pla|fun <#name#s>_samples() : int @[placeholder] {}|} in
+    let code1 = Pla.print {%pla|fun <#name#s>_raw_c0(i:int) : real @[placeholder] {}|} in
+    let code2 = Pla.print {%pla|fun <#name#s>_raw_c1(i:int) : real @[placeholder] {}|} in
+    let samples = Parse.parseFunctionDecl samples in
+    let def1 = Parse.parseFunctionDecl code1 in
+    let def2 = Parse.parseFunctionDecl code2 in
+    Some { def1 with next = Some { def2 with next = Some { samples with next } } }
   else
     next
 
@@ -841,13 +856,13 @@ let reportReturnTypeMismatch is_placeholder loc (specified_ret : type_ option) (
   | Some t1, t2 -> unifyRaise loc t1 t2
 
 
-let rec function_def (iargs : Args.args) (env : Env.in_context) ((def : Syntax.function_def), (body : Syntax.stmt)) :
+let rec function_def (iargs : Args.args) (env : Env.in_context) (def : Syntax.function_def) :
     Env.in_context * (function_def * stmt) =
   let specified_ret = getReturnType env def.t in
   let inferred_ret = C.noreturn def.loc in
   let args = convertArguments env def.args in
   let env, path, t = Env.enterFunction env def.name args inferred_ret def.loc in
-  let env, body = stmt env inferred_ret body in
+  let env, body = stmt env inferred_ret def.body in
   let env = Env.exitFunction env in
   let next = addGeneratedFunctions def.tags def.name def.next in
   let env, next = function_def_opt iargs env next in
@@ -862,9 +877,9 @@ let rec function_def (iargs : Args.args) (env : Env.in_context) ((def : Syntax.f
 and function_def_opt (iargs : Args.args) (env : Env.in_context) def_opt =
   match def_opt with
   | None -> env, None
-  | Some (def, body) ->
+  | Some def ->
     let env = Env.addAliasToContext env def.name def.loc in
-    let env, def_body = function_def iargs env (def, body) in
+    let env, def_body = function_def iargs env def in
     env, Some def_body
 
 
@@ -985,6 +1000,7 @@ let rec top_exp (env : Env.in_module) (e : Syntax.exp) : Env.in_module * exp =
     in
     let t = C.array ~size:(C.size ~loc size) h.t in
     env, { e = EArray (h :: List.rev t_rev); t; loc }
+  | { e = SENamed _; _ } -> failwith "top_exp: Inference SENamed"
   | { e = SETuple l; loc } ->
     let env, l = top_exp_list env l in
     let t = C.tuple ~loc (List.map (fun (e : exp) -> e.t) l) in
@@ -1075,9 +1091,9 @@ and top_exp_list (env : Env.in_module) (l : Syntax.exp list) : Env.in_module * e
 let rec top_stmt (iargs : Args.args) (env : Env.in_module) (s : Syntax.top_stmt) : Env.in_module * top_stmt =
   match s with
   | { top = STopError; _ } -> failwith "Parser error"
-  | { top = STopFunction (def, body); _ } ->
+  | { top = STopFunction def; _ } ->
     let env = Env.createContextForFunction env def.name def.loc in
-    let env, (def, body) = function_def iargs env (def, body) in
+    let env, (def, body) = function_def iargs env def in
     let def = insertContextArgument env def in
     let env = Env.exitContext env in
     env, { top = TopFunction (def, body); loc = def.loc }

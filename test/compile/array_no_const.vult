@@ -1,4 +1,4 @@
-external foo(a:array<real,3>) : unit "foo" @[mutable(a = true)];
+external foo(a:array(real,3)) : unit "foo" @[mutable(a = true)];
 
 fun bar1(a:array(real)) {
   a[0] = 1.0;
