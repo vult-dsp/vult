@@ -23,7 +23,6 @@
 *)
 open Core.Prog
 open Util
-open Vm
 module Tags = Pparser.Ptags
 
 let makeFloat (t : type_) x : exp =
@@ -100,57 +99,65 @@ let rec fitDataOrder2 data index acc0 acc1 acc2 =
     fitDataOrder2 data (index - 1) (c0 :: acc0) (c1 :: acc1) (c2 :: acc2)
 
 
-let getRealResult (x : Compile.rvalue) =
+let getRealResult (x : Core.Interpreter.dvalue) =
   match x with
-  | RReal y -> y
+  | DReal y -> y
   | _ -> failwith "Function returned an unexpected type. This should not happen."
 
 
-let getIntResult (x : Compile.rvalue) =
+let getIntResult (x : Core.Interpreter.dvalue) =
   match x with
-  | RInt y -> y
+  | DInt y -> y
   | _ -> failwith "Function returned an unexpected type. This should not happen."
 
 
-let calculateIntRealTables loc vm name min max precision =
+let calculateIntRealTables loc iprog name min max precision =
   let size = max - min in
+  let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
+  let stack = Core.Interpreter.createStack 256 in
   let data =
     List.init (size + 1) (fun i ->
         let x = min + i in
-        getRealResult (Interpreter.callFunction vm name [ RInt x ]))
+        getRealResult (Core.Interpreter.callFunction iprog stack fun_index [ DInt x ]))
   in
   [ makeRealTableDecl loc name "table" precision data ]
 
 
-let calculateIntIntTables loc vm name min max =
+let calculateIntIntTables loc iprog name min max =
   let size = max - min in
+  let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
+  let stack = Core.Interpreter.createStack 256 in
   let data =
     List.init (size + 1) (fun i ->
         let x = min + i in
-        getIntResult (Interpreter.callFunction vm name [ RInt x ]))
+        getIntResult (Core.Interpreter.callFunction iprog stack fun_index [ DInt x ]))
   in
   [ makeIntTableDecl loc name "table" data ]
 
 
-let calculateTablesOrder1 loc vm name size min max precision =
+let calculateTablesOrder1 loc iprog name size min max precision =
   let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
   let map_x x = map x 0. (float_of_int size) min max in
+  let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
+  let stack = Core.Interpreter.createStack 256 in
   let data =
     Array.init (size + 1) (fun i ->
         let x = map_x (float_of_int i) in
-        x, getRealResult (Interpreter.callFunction vm name [ RReal x ]))
+        x, getRealResult (Core.Interpreter.callFunction iprog stack fun_index [ DReal x ]))
   in
   let acc0, acc1 = fitDataOrder1 data (size - 1) [] [] in
   [ makeRealTableDecl loc name "c0" precision acc0; makeRealTableDecl loc name "c1" precision acc1 ]
 
 
-let calculateTablesOrder1Fixed loc vm name size min max precision =
+let calculateTablesOrder1Fixed loc iprog name size min max precision =
   let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
   let map_x x = map x 0. (float_of_int size) min max in
+  let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
+  let stack = Core.Interpreter.createStack 256 in
   let data =
     List.init (size + 1) (fun i ->
         let x = map_x (float_of_int i) in
-        x, getRealResult (Interpreter.callFunction vm name [ RReal x ]))
+        x, getRealResult (Core.Interpreter.callFunction iprog stack fun_index [ DReal x ]))
   in
   let rec increments data =
     match data with
@@ -163,15 +170,17 @@ let calculateTablesOrder1Fixed loc vm name size min max precision =
   [ makeRealTableDecl loc name "c0" precision acc0; makeRealTableDecl loc name "c1" precision acc1 ]
 
 
-let calculateTablesOrder2 loc vm name size min max precision =
+let calculateTablesOrder2 loc iprog name size min max precision =
   let map x x0 x1 y0 y1 = ((x -. x0) *. (y1 -. y0) /. (x1 -. x0)) +. y0 in
   let map_x x = map x 0. (float_of_int size) min max in
+  let fun_index = Util.Maps.Map.find name iprog.Core.Interpreter.ifunction_names in
+  let stack = Core.Interpreter.createStack 256 in
   let data =
     Array.init
       ((size * 2) + 2)
       (fun i ->
         let x = map_x (float_of_int i /. 2.0) in
-        x, getRealResult (Interpreter.callFunction vm name [ RReal x ]))
+        x, getRealResult (Core.Interpreter.callFunction iprog stack fun_index [ DReal x ]))
   in
   let acc0, acc1, acc2 = fitDataOrder2 data (size - 1) [] [] [] in
   [ makeRealTableDecl loc name "c0" precision acc0

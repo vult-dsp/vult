@@ -158,6 +158,19 @@ let perf_files =
   ]
 
 
+let interpreter =
+  [ "arithmetic.vult"
+  ; "arrays_structs.vult"
+  ; "builtins.vult"
+  ; "constant.vult"
+  ; "control_flow.vult"
+  ; "edge_cases.vult"
+  ; "functions.vult"
+  ; "instance_state.vult"
+  ; "memory_state.vult"
+  ]
+
+
 let passes_files =
   [ "split_mem.vult"
   ; "tuple_assign.vult"
@@ -678,7 +691,7 @@ module Templates = struct
            files
 end
 
-module Interpret = struct
+module InterpretPerf = struct
   let run file _context =
     let fullfile = checkFile (in_test_directory ("perf/" ^ file)) in
     let moduleName file = Filename.basename file |> Filename.chop_extension |> String.capitalize_ascii in
@@ -699,7 +712,7 @@ module Interpret = struct
       Args.
         { default_arguments with
           files = [ Code ("intepret.vult", code) ]
-        ; eval = Some "Intepret.run()"
+        ; eval = Some "Intepret.run"
         ; includes = in_test_directory "perf" :: includes
         }
     in
@@ -708,6 +721,34 @@ module Interpret = struct
       (fun result ->
         match result with
         | Args.Errors errors -> assert_failure (Error.reportErrors errors)
+        | _ -> ())
+      results
+
+
+  let get files = "run" >::: List.map (fun file -> Filename.basename file >:: run file) files
+end
+
+module Interpret = struct
+  let run file _context =
+    let fullfile = checkFile (in_test_directory ("interpreter/" ^ file)) in
+    let moduleName file = Filename.basename file |> Filename.chop_extension |> String.capitalize_ascii in
+    let args =
+      Args.
+        { default_arguments with
+          eval = Some (moduleName fullfile ^ ".main")
+        ; includes = in_test_directory "interpreter" :: includes
+        }
+    in
+    let results = Driver.Cli.driver args in
+    List.iter
+      (fun result ->
+        match result with
+        | Args.Errors errors -> assert_failure (Error.reportErrors errors)
+        | Args.EvalResult int ->
+          if int_of_string int > 0 then
+            ()
+          else
+            assert_failure ("Evaluation returned: " ^ int)
         | _ -> ())
       results
 
@@ -737,7 +778,8 @@ let suite =
        ; CliTest.get all_files Node "fixed"
        ; CliTest.get all_files Node "lua"
        ; RandomCompileTest.get test_random_code
-       ; Interpret.get perf_files
+       ; InterpretPerf.get perf_files
+       ; Interpret.get interpreter
        ]
 
 

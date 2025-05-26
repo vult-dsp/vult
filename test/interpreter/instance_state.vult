@@ -1,0 +1,64 @@
+// Test instance state persistence using name:function() syntax
+fun counter() : int {
+  mem count;
+  count = count + 1;
+  return count;
+}
+
+fun accumulator(value : int) : int {
+  mem total;
+  total = total + value;
+  return total;
+}
+
+fun state_machine() : int {
+  mem state;
+  if (state == 0) {
+    state = 1;
+    return 10;
+  }
+  if (state == 1) {
+    state = 2;
+    return 20;
+  }
+  if (state == 2) {
+    state = 0;
+    return 30;
+  }
+  return -1;
+}
+
+fun main() : int {
+  // Test persistent counter using named instance
+  val count1 = myCounter:counter();  // Should be 1 (first call)
+  val count2 = myCounter:counter();  // Should be 2 (same instance)
+  val count3 = myCounter:counter();  // Should be 3 (same instance)
+
+  // Test different counter instance
+  val other1 = otherCounter:counter(); // Should be 1 (different instance)
+  val other2 = otherCounter:counter(); // Should be 2 (same different instance)
+
+  // Test persistent accumulator
+  val acc1 = myAcc:accumulator(10);  // Should be 10
+  val acc2 = myAcc:accumulator(5);   // Should be 15 (10+5)
+  val acc3 = myAcc:accumulator(3);   // Should be 18 (15+3)
+
+  // Test state machine cycling
+  val sm1 = mySM:state_machine();    // Should be 10 (state 0->1)
+  val sm2 = mySM:state_machine();    // Should be 20 (state 1->2)
+  val sm3 = mySM:state_machine();    // Should be 30 (state 2->0)
+  val sm4 = mySM:state_machine();    // Should be 10 (state 0->1 again)
+
+  // Verify persistent state works correctly
+  if (count1 == 1 && count2 == 2 && count3 == 3) {
+    if (other1 == 1 && other2 == 2) {
+      if (acc1 == 10 && acc2 == 15 && acc3 == 18) {
+        if (sm1 == 10 && sm2 == 20 && sm3 == 30 && sm4 == 10) {
+          return 7000; // All instance state tests passed
+        }
+      }
+    }
+  }
+
+  return -1; // Some test failed
+}

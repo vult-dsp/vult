@@ -1,0 +1,40 @@
+// Test comprehensive constant support
+constant int_const = 42;
+constant real_const = 3.14;
+constant string_const = "hello";
+constant bool_const = true;
+constant computed_const = 10 + 5 * 2;  // Should be 20
+constant array_const = [1.0, 2.0, 3.0];
+
+fun main() : int {
+  // Test integer constant
+  val int_val = int_const;     // Should be 42
+
+  // Test real constant
+  val real_val = real_const;   // Should be 3.14
+
+  // Test string constant
+  val str_val = string_const;  // Should be "hello"
+
+  // Test boolean constant
+  val bool_val = bool_const;   // Should be true
+
+  // Test computed constant
+  val comp_val = computed_const; // Should be 20
+
+  // Test array constant
+  val arr_val = array_const;
+  val first_elem = arr_val[0];   // Should be 1.0
+  val arr_size = size(arr_val);  // Should be 3
+
+  // Verify all constants work correctly
+  if (int_val == 42 && comp_val == 20) {
+    if (bool_val && arr_size == 3) {
+      if (first_elem == 1.0) {
+        return 8000; // All constant tests passed
+      }
+    }
+  }
+
+  return -1; // Some test failed
+}

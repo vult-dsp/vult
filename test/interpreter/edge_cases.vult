@@ -1,0 +1,74 @@
+// Test edge cases and boundary conditions
+fun test_division() : int {
+  // Test division by small numbers
+  val div1 = 10.0 / 2.0;      // Should be 5.0
+  val div2 = 1.0 / 3.0;       // Should be ~0.333...
+  val div3 = 0.0 / 5.0;       // Should be 0.0
+
+  // Note: Division by zero would cause runtime error, so we don't test it
+
+  if (div1 == 5.0 && div3 == 0.0) {
+    return 1;
+  }
+  return -1;
+}
+
+fun test_boundary_values() : int {
+  // Test with zero values
+  val zero_add = 0 + 0;       // Should be 0
+  val zero_mul = 5 * 0;       // Should be 0
+  val zero_pow = pow(0.0, 2.0); // Should be 0.0
+
+  // Test with negative values
+  val neg_add = -5 + 3;       // Should be -2
+  val neg_mul = -3 * 4;       // Should be -12
+  val neg_abs = abs(-42);     // Should be 42
+
+  // Test comparisons with edge values
+  val eq_zero = 0 == 0;       // Should be true
+  val lt_neg = -5 < 0;        // Should be true
+  val gt_pos = 10 > 0;        // Should be true
+
+  if (zero_add == 0 && zero_mul == 0 && zero_pow == 0.0) {
+    if (neg_add == -2 && neg_mul == -12 && neg_abs == 42) {
+      if (eq_zero && lt_neg && gt_pos) {
+        return 1;
+      }
+    }
+  }
+  return -1;
+}
+
+fun test_type_mixing() : int {
+  // Test operations between different numeric types
+  val int_real = real(5) + 2.5;     // Should be 7.5 (promoted to real)
+  val real_int = 10.0 - real(3);    // Should be 7.0 (promoted to real)
+  val mixed_mul = real(4) * 2.5;    // Should be 10.0 (promoted to real)
+
+  // Test type conversions
+  val real_to_int = int(7.9); // Should be 7 (truncated)
+  val int_to_real = real(42); // Should be 42.0
+  val int_to_bool = bool(5);  // Should be true
+  val zero_to_bool = bool(0); // Should be false
+
+  if (int_real == 7.5 && real_int == 7.0 && mixed_mul == 10.0) {
+    if (real_to_int == 7 && int_to_real == 42.0) {
+      if (int_to_bool && not(zero_to_bool)) {
+        return 1;
+      }
+    }
+  }
+  return -1;
+}
+
+fun main() : int {
+  val div_result = test_division();
+  val boundary_result = test_boundary_values();
+  val mixing_result = test_type_mixing();
+
+  if (div_result == 1 && boundary_result == 1 && mixing_result == 1) {
+    return 7000; // All edge case tests passed
+  }
+
+  return -1; // Some test failed
+}

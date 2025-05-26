@@ -31,9 +31,9 @@ type output =
   | Message of string
   | Dependencies of string list
   | ParsedCode of string
+  | EvalResult of string
   | Typed of string
   | GeneratedCode of (Pla.t * string) list
-  | Byte of string
   | Prog of string
   | Interpret of string
   | CheckOk
@@ -59,6 +59,7 @@ type args =
   ; mutable dprog : bool
   ; mutable dcode : bool
   ; mutable eval : string option
+  ; mutable show_output : bool
   ; mutable check : bool
   ; mutable code : code
   ; mutable output : string option
@@ -92,6 +93,7 @@ let default_arguments : args =
   ; dcode = false
   ; code = NoCode
   ; eval = None
+  ; show_output = false
   ; check = false
   ; output = None
   ; real = Float
@@ -184,6 +186,10 @@ let flags result =
     ; comment = "name Adds text in the given file as header to the generated files."
     }
   ; { flag = "-eval"; action = Arg.String (fun s -> result.eval <- Some s); comment = " Runs the code (default: off)" }
+  ; { flag = "-show-output"
+    ; action = Arg.Bool (fun s -> result.show_output <- s)
+    ; comment = " Shows the values of constants when running the interpreter (default: off)"
+    }
   ; { flag = "-tables"
     ; action = Arg.Bool (fun b -> result.tables <- b)
     ; comment = " Create lookup tables (default: on)"
@@ -251,7 +257,7 @@ let processArguments () : args =
   let result = { default_arguments with files = [] } in
   let opts = List.map (fun f -> f.flag, f.action, f.comment) (flags result) |> Arg.align in
   let _ =
-    Arg.parse opts (fun a -> result.files <- File a :: result.files) "Usage: vultc file.vult [options]\noptions:"
+    Arg.parse opts (fun a -> result.files <- File a :: result.files) "Usage: vult file.vult [options]\noptions:"
   in
   let () = result.files <- List.rev result.files in
   result

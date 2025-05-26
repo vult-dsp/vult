@@ -1,0 +1,58 @@
+// Test memory variables and state preservation across function calls
+fun counter() : int {
+  mem count;
+  count = count + 1;
+  return count;
+}
+
+fun accumulator(value : int) : int {
+  mem total;
+  total = total + value;
+  return total;
+}
+
+fun state_machine() : int {
+  mem state;
+  if (state == 0) {
+    state = 1;
+    return 10;
+  }
+  if (state == 1) {
+    state = 2;
+    return 20;
+  }
+  if (state == 2) {
+    state = 0;
+    return 30;
+  }
+  return -1;
+}
+
+fun main() : int {
+  // Test simple memory variables within single function calls
+  // Each call gets a fresh instance, so count will be 1 each time
+  val count1 = counter();  // Should be 1
+  val count2 = counter();  // Should be 1 (new instance)
+  val count3 = counter();  // Should be 1 (new instance)
+
+  // Each accumulator call also gets fresh instance
+  val acc1 = accumulator(10);  // Should be 10
+  val acc2 = accumulator(5);   // Should be 5 (new instance)
+  val acc3 = accumulator(3);   // Should be 3 (new instance)
+
+  // Each state machine call gets fresh instance
+  val sm1 = state_machine();   // Should be 10 (state 0->1)
+  val sm2 = state_machine();   // Should be 10 (state 0->1, new instance)
+  val sm3 = state_machine();   // Should be 10 (state 0->1, new instance)
+
+  // Verify results - each function call starts fresh
+  if (count1 == 1 && count2 == 1 && count3 == 1) {
+    if (acc1 == 10 && acc2 == 5 && acc3 == 3) {
+      if (sm1 == 10 && sm2 == 10 && sm3 == 10) {
+        return 6000; // All memory/state tests passed
+      }
+    }
+  }
+
+  return -1; // Some test failed
+}

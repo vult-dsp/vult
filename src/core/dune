@@ -11,7 +11,8 @@
   Passes
   Version
   Initializer
-  Serializer)
+  Serializer
+  Interpreter)
  (libraries util pparser pla)
  (flags
   (:standard -w -30))

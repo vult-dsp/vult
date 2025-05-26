@@ -1,0 +1,42 @@
+// Test basic arithmetic operations and specialized opcodes
+fun main() : int {
+  // Test integer arithmetic (should use specialized opcodes like IEAddInt, IEMulInt)
+  val int_add = 10 + 5;        // Should be 15
+  val int_sub = 20 - 8;        // Should be 12
+  val int_mul = 6 * 7;         // Should be 42
+  val int_div = 24 / 3;        // Should be 8
+
+  // Test real arithmetic (should use specialized opcodes like IEAddReal, IEMulReal)
+  val real_add = 3.5 + 2.5;    // Should be 6.0
+  val real_sub = 10.0 - 3.0;   // Should be 7.0
+  val real_mul = 4.0 * 2.5;    // Should be 10.0
+  val real_div = 15.0 / 3.0;   // Should be 5.0
+
+  // Test mixed arithmetic (need explicit conversion)
+  val mixed1 = real(10) + 5.5; // Should be 15.5
+  val mixed2 = 20.0 - real(8); // Should be 12.0
+
+  // Test comparison operations (should use specialized opcodes)
+  val int_eq = 10 == 10;       // Should be true
+  val int_lt = 5 < 10;         // Should be true
+  val int_gt = 15 > 10;        // Should be true
+
+  val real_eq = 3.14 == 3.14;  // Should be true
+  val real_lt = 2.5 < 5.0;     // Should be true
+  val real_gt = 10.0 > 3.0;    // Should be true
+
+  // Test unary operations
+  val neg_int = -42;           // Should be -42
+  val neg_real = -3.14;        // Should be -3.14
+
+  // Verify all results
+  if (int_add == 15 && int_sub == 12 && int_mul == 42 && int_div == 8) {
+    if (int_eq && int_lt && int_gt && real_eq && real_lt && real_gt) {
+      if (neg_int == -42) {
+        return 1000; // All tests passed
+      }
+    }
+  }
+
+  return -1; // Some test failed
+}

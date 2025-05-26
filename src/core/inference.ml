@@ -512,7 +512,7 @@ and exp (env : Env.in_func) (e : Syntax.exp) : Env.in_func * exp =
           elems
       in
       let elems = List.sort (fun (id1, _) (id2, _) -> String.compare id1 id2) elems_rev in
-      env, { e = ERecord { path; elems }; t = Typed.C.path_t loc t.path; loc }
+      env, { e = ERecord { path = t.path; elems }; t = Typed.C.path_t loc t.path; loc }
     | _ -> Error.raiseError ("The path '" ^ path_string path ^ "' is not a type.") loc)
 
 

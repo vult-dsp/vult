@@ -1,0 +1,40 @@
+// Test arrays and structs with the fixed array binding support
+fun main() : int {
+  // Test array operations
+  mem buffer : array(real, 5);
+
+  // Test array assignment (this was the original bug we fixed)
+  buffer[0] = 10.0;
+  buffer[1] = 20.0;
+  buffer[2] = 30.0;
+  buffer[3] = 40.0;
+  buffer[4] = 50.0;
+
+  // Test array access
+  val first = buffer[0];   // Should be 10.0
+  val third = buffer[2];   // Should be 30.0
+  val last = buffer[4];    // Should be 50.0
+
+  // Test array size
+  val arr_size = size(buffer); // Should be 5
+
+  // Test dynamic array creation
+  val dynamic_arr = [1.0, 2.0, 3.0];
+  val dyn_first = dynamic_arr[0];  // Should be 1.0
+  val dyn_size = size(dynamic_arr); // Should be 3
+
+  // Test array modification
+  buffer[1] = 99.0;
+  val modified = buffer[1];        // Should be 99.0
+
+  // Verify results
+  if (first == 10.0 && third == 30.0 && last == 50.0) {
+    if (arr_size == 5 && dyn_first == 1.0 && dyn_size == 3) {
+      if (modified == 99.0) {
+        return 5000; // All array/struct tests passed
+      }
+    }
+  }
+
+  return -1; // Some test failed
+}

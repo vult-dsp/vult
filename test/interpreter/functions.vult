@@ -1,0 +1,64 @@
+// Test function calls, recursion, and parameter passing
+fun add(a : int, b : int) : int {
+  return a + b;
+}
+
+fun multiply(x : real, y : real) : real {
+  return x * y;
+}
+
+// Test recursive function
+fun factorial(n : int) : int {
+  if (n <= 1)
+    return 1;
+  return n * factorial(n - 1);
+}
+
+// Test function with multiple parameters and early returns
+fun find_max(a : int, b : int, c : int) : int {
+  if (a >= b && a >= c)
+    return a;
+  if (b >= c)
+    return b;
+  return c;
+}
+
+// Test function that calls other functions
+fun compute_area(radius : real) : real {
+  val pi_val = pi();
+  return multiply(pi_val, multiply(radius, radius));
+}
+
+fun main() : int {
+  // Test simple function calls
+  val sum1 = add(10, 20);           // Should be 30
+  val sum2 = add(-5, 15);           // Should be 10
+  val product = multiply(3.5, 2.0); // Should be 7.0
+
+  // Test recursive function
+  val fact3 = factorial(3);         // Should be 6
+  val fact5 = factorial(5);         // Should be 120
+  val fact0 = factorial(0);         // Should be 1
+
+  // Test function with multiple parameters
+  val max1 = find_max(10, 5, 8);    // Should be 10
+  val max2 = find_max(3, 15, 7);    // Should be 15
+  val max3 = find_max(4, 6, 12);    // Should be 12
+
+  // Test function composition
+  val area = compute_area(2.0);      // Should be ~12.566 (4*pi)
+
+  // Verify results
+  if (sum1 == 30 && sum2 == 10) {
+    if (fact3 == 6 && fact5 == 120 && fact0 == 1) {
+      if (max1 == 10 && max2 == 15 && max3 == 12) {
+        // Check area is approximately 4*pi (allowing for floating point precision)
+        if (area > 12.5 && area < 12.6) {
+          return 4000; // All function tests passed
+        }
+      }
+    }
+  }
+
+  return -1; // Some test failed
+}

@@ -32,9 +32,9 @@ let showResult (args : args) (output : output) =
   | Version v -> print_endline v
   | Message v -> print_endline v
   | Dependencies deps -> String.concat " " deps |> print_endline
+  | EvalResult v -> print_endline v
   | ParsedCode v -> print_endline v
   | Typed v -> print_endline v
-  | Byte v -> print_endline v
   | Prog v -> print_endline v
   | GeneratedCode files when args.output <> None ->
     List.iter
@@ -55,8 +55,8 @@ let showResult (args : args) (output : output) =
 
 
 let generateCode args file_deps (stmts, vm, acc) =
+  let stmts = Util.Profile.time "Generate Tables" (fun () -> Tables.create args vm stmts) in
   if args.code <> NoCode || args.dcode then
-    let stmts = Util.Profile.time "Generate Tables" (fun () -> Tables.create args vm stmts) in
     let stmts = Util.Profile.time "Convert" (fun () -> Tocode.prog args stmts) in
     let prog_out =
       if args.dcode then
@@ -78,30 +78,25 @@ let generateCode args file_deps (stmts, vm, acc) =
     acc
 
 
-let compileCode (args : args) env stmts : Prog.top_stmt list * Vm.Interpreter.t * output list =
+let compileCode (args : args) env stmts : Prog.top_stmt list * Interpreter.iprog * output list =
   let env, stmts = Toprog.convert args env stmts in
-  let stmts = Util.Profile.time "Passes" (fun () -> Passes.run args stmts) in
+  let prog = Util.Profile.time "Passes" (fun () -> Passes.run args stmts) in
+  let iprog = Util.Profile.time "Compile" (fun () -> Interpreter.transformProgram false prog) in
   let prog_out =
     if args.dprog then
-      [ Prog (Pla.print (Prog.Print.print_prog stmts)) ]
-    else
-      []
-  in
-  let vm, bytecode = Util.Profile.time "Create VM" (fun () -> Vm.Interpreter.createVm stmts) in
-  let bc_out =
-    if args.dbytecode then
-      [ Byte (Pla.print (Vm.Compile.print_bytecode bytecode)) ]
+      [ Prog (Pla.print (Prog.Print.print_prog prog)) ]
     else
       []
   in
   let run =
     match args.eval with
-    | Some e ->
-      let s = Util.Profile.time "Run code" (fun () -> Vm.Interpreter.run args env stmts e) in
-      [ ParsedCode s ]
+    | Some fn ->
+      let result = Util.Profile.time "Eval" (fun () -> Interpreter.evalProgram iprog fn []) in
+      let str = Interpreter.printDvalue result in
+      [ EvalResult str ]
     | None -> []
   in
-  stmts, vm, run @ bc_out @ prog_out
+  prog, iprog, run @ prog_out
 
 
 let version = String.sub Version.version 1 (String.length Version.version - 2)

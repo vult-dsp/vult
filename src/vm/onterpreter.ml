@@ -535,14 +535,11 @@ let callFunction vm name args =
     raise e
 
 
-let run (iargs : Util.Args.args) (env : Env.in_top) (prog : top_stmt list) (exp : string) =
-  let e = Pparser.Parse.parseString (Some "Main_.vult") (Pla.print {%pla|fun _main_() return <#exp#s>;|}) in
-  let env, main = Inference.infer_single iargs env e in
-  let _, main = Toprog.convert iargs env main in
-  let bytecode = compile (prog @ main) in
+let run (_iargs : Util.Args.args) (_env : Env.in_top) (prog : top_stmt list) (func : string) =
+  let bytecode = compile prog in
   let vm = newVM bytecode in
-  let findex = findSegment vm "Main___main_" in
-  let args = createArgument main in
+  let findex = findSegment vm func in
+  let args = createArgument [] in
   let _, result = eval_call vm findex args in
   let str = Pla.print (print_rvalue result) in
   str

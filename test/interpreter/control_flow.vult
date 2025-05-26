@@ -1,0 +1,57 @@
+// Test control flow statements with our new return mechanism
+fun test_early_return(x : int) : int {
+  if (x > 100)
+    return 999;
+  if (x > 50)
+    return 500;
+  return x;
+}
+
+fun test_while_loop(max : int) : int {
+  mem count = 0;
+  while (count < max) {
+    count = count + 1;
+    if (count == 5)
+      return count * 10; // Early return from while loop
+  }
+  return count;
+}
+
+fun test_nested_control() : int {
+  mem i = 0;
+  while (i < 10) {
+    i = i + 1;
+    if (i > 3) {
+      if (i < 7) {
+        if (i == 5)
+          return 555; // Nested early return
+      }
+    }
+  }
+  return 777;
+}
+
+fun main() : int {
+  // Test early returns in if statements
+  val result1 = test_early_return(150); // Should return 999
+  val result2 = test_early_return(75);  // Should return 500
+  val result3 = test_early_return(25);  // Should return 25
+
+  // Test early return in while loop
+  val result4 = test_while_loop(10);    // Should return 50 (5*10)
+  val result5 = test_while_loop(3);     // Should return 3
+
+  // Test nested control flow
+  val result6 = test_nested_control();  // Should return 555
+
+  // Verify all results
+  if (result1 == 999 && result2 == 500 && result3 == 25) {
+    if (result4 == 50 && result5 == 3) {
+      if (result6 == 555) {
+        return 2000; // All control flow tests passed
+      }
+    }
+  }
+
+  return -1; // Some test failed
+}

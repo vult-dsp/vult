@@ -1,0 +1,58 @@
+// Test all inlined builtin functions
+fun main() : int {
+  // Test mathematical constants
+  val pi_val = pi();
+  val eps_val = eps();
+
+  // Test mathematical functions (should be inlined)
+  val sin_val = sin(1.0);      // Should be ~0.8414709848
+  val cos_val = cos(0.0);      // Should be 1.0
+  val tan_val = tan(0.0);      // Should be 0.0
+  val exp_val = exp(0.0);      // Should be 1.0
+  val log_val = log(1.0);      // Should be 0.0
+  val sqrt_val = sqrt(9.0);    // Should be 3.0
+  val abs_val = abs(-5.0);     // Should be 5.0
+  val floor_val = floor(3.7);  // Should be 3.0
+  val pow_val = pow(2.0, 3.0); // Should be 8.0
+
+  // Test type conversions (should be inlined)
+  val real_conv = real(42);    // Should be 42.0
+  val int_conv = int(3.14);    // Should be 3
+  val bool_conv1 = bool(1);    // Should be true
+  val bool_conv2 = bool(0);    // Should be false
+
+  // Test array creation and size
+  val arr = [1.0, 2.0, 3.0, 4.0, 5.0];
+  val arr_size = size(arr);    // Should be 5
+
+  // Test string operations
+  val str = "hello";
+  val str_len = length(str);   // Should be 5
+
+  // Test array access functions
+  val first_elem = arr[0];  // Should be 1.0
+  val last_elem = arr[4];   // Should be 5.0
+
+  // Test clipping functions
+  val clip_real_val = clip(7.5, 0.0, 5.0);  // Should be 5.0
+  val clip_int_val = clip(15, 10, 20);       // Should be 15
+
+  // Basic verification of key results
+  if (cos_val == 1.0 && exp_val == 1.0 && log_val == 0.0) {
+    if (sqrt_val == 3.0 && abs_val == 5.0 && floor_val == 3.0) {
+      if (pow_val == 8.0 && real_conv == 42.0 && int_conv == 3) {
+        if (bool_conv1 && (bool_conv2 == false)) {
+          if (arr_size == 5 && str_len == 5) {
+            if (first_elem == 1.0 && last_elem == 5.0) {
+              if (clip_real_val == 5.0 && clip_int_val == 15) {
+                return 3000; // All builtin tests passed
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return -1; // Some test failed
+}

@@ -262,6 +262,10 @@ module IfExpressions = struct
     Mapper.makeExpander
     @@ fun _env state (s : stmt) ->
     match s with
+    (* if (false) -> else *)
+    | { s = StmtIf ({ e = EBool false; _ }, _, Some else_); _ } -> reapply state, [ else_ ]
+    (* if (true) -> then *)
+    | { s = StmtIf ({ e = EBool true; _ }, then_, _); _ } -> reapply state, [ then_ ]
     (* Convert else if (true) -> else*)
     | { s = StmtIf (cond, then_, Some { s = StmtIf ({ e = EBool true; _ }, else_, None); _ }); loc } ->
       reapply state, [ C.sif ~loc cond then_ (Some else_) ]
