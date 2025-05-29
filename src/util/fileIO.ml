@@ -84,6 +84,19 @@ let write_fun =
       | _ -> false)
 
 
+(** ref holding the write bytes file function.
+    The default function is the native. *)
+let write_bytes_fun =
+  ref (fun path bytes ->
+      try
+        let file = open_out_bin path in
+        output_string file bytes;
+        close_out file;
+        true
+      with
+      | _ -> false)
+
+
 (** ref holding the file exists.
     The default function is the native. *)
 let exists_fun = ref (fun path -> Sys.file_exists path)
@@ -99,6 +112,10 @@ let setRead f = read_fun := f
 (** This function is used to change the actual write to file function.
     When compiling for node.js the function is replaced at runtime by the code *)
 let setWrite (f : string -> string -> bool) = write_fun := f
+
+(** This function is used to change the actual write bytes to file function.
+    When compiling for node.js the function is replaced at runtime by the code *)
+let setWriteBytes (f : string -> string -> bool) = write_bytes_fun := f
 
 (** This function is used to change the actual file-exists function.
     When compiling for node.js the function is replaced at runtime by the code *)
@@ -116,6 +133,9 @@ let read (path : string) : string option = !read_fun path
 
 (** Main function to write files given the path and the text *)
 let write (path : string) (text : string) : bool = !write_fun path text
+
+(** Main function to write binary files given the path and the bytes *)
+let write_bytes (path : string) (bytes : string) : bool = !write_bytes_fun path bytes
 
 (** Main function to check if a file exists *)
 let exists (path : string) : bool = !exists_fun path

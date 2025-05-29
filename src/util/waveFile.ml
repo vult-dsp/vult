@@ -126,7 +126,7 @@ let mask_24 = Int32.shift_left Int32.minus_one 23
 
 (** Reads a 24 bit valua as a float *)
 let readSample24 (buffer : buffer) : float =
-  let v = read2 buffer in
+  let v = read3 buffer in
   if Int32.logand sign_24 v <> Int32.zero then
     Int32.to_float (Int32.logor mask_24 v) /. max_24
   else
@@ -220,3 +220,142 @@ let read (file : string) : (wave, string) result =
           let data = Array.init channels (fun _ -> Array.make no_samples 0.0) in
           let samples = readSamples buffer channels no_samples data sample_fn in
           Ok { channels; samples; data }))
+
+
+(** Writing WAV files *)
+
+(** Writes a single byte to the buffer *)
+let write_byte (buffer : Buffer.t) (value : int) : unit = Buffer.add_char buffer (Char.chr (value land 0xFF))
+
+(** Writes a 16-bit little-endian integer to the buffer *)
+let write_int16 (buffer : Buffer.t) (value : int) : unit =
+  write_byte buffer (value land 0xFF);
+  write_byte buffer ((value lsr 8) land 0xFF)
+
+
+(** Writes a 32-bit little-endian integer to the buffer *)
+let write_int32 (buffer : Buffer.t) (value : int32) : unit =
+  let v = Int32.to_int value in
+  write_byte buffer (v land 0xFF);
+  write_byte buffer ((v lsr 8) land 0xFF);
+  write_byte buffer ((v lsr 16) land 0xFF);
+  write_byte buffer ((v lsr 24) land 0xFF)
+
+
+(** Writes a 4-character string to the buffer *)
+let write_string4 (buffer : Buffer.t) (str : string) : unit =
+  if String.length str <> 4 then
+    failwith ("Expected 4-character string, got: " ^ str)
+  else
+    for i = 0 to 3 do
+      Buffer.add_char buffer str.[i]
+    done
+
+
+(** Converts a float sample to 16-bit signed integer *)
+let float_to_int16 (sample : float) : int =
+  let clamped = max (-1.0) (min 1.0 sample) in
+  let scaled = clamped *. max_16 in
+  int_of_float scaled
+
+
+(** Writes a single 16-bit sample to the buffer *)
+let write_sample16 (buffer : Buffer.t) (sample : float) : unit =
+  let int_sample = float_to_int16 sample in
+  write_int16 buffer int_sample
+
+
+(** Writes the WAV file header *)
+let write_header (buffer : Buffer.t) (channels : int) (samples : int) (sample_rate : int) : unit =
+  let bits_per_sample = 16 in
+  let byte_rate = sample_rate * channels * (bits_per_sample / 8) in
+  let block_align = channels * (bits_per_sample / 8) in
+  let data_size = samples * channels * (bits_per_sample / 8) in
+  let file_size = 36 + data_size in
+  (* RIFF header *)
+  write_string4 buffer "RIFF";
+  write_int32 buffer (Int32.of_int file_size);
+  write_string4 buffer "WAVE";
+  (* Format chunk *)
+  write_string4 buffer "fmt ";
+  write_int32 buffer 16l;
+  (* Sub-chunk size *)
+  write_int16 buffer 1;
+  (* Audio format (PCM) *)
+  write_int16 buffer channels;
+  write_int32 buffer (Int32.of_int sample_rate);
+  write_int32 buffer (Int32.of_int byte_rate);
+  write_int16 buffer block_align;
+  write_int16 buffer bits_per_sample;
+  (* Data chunk *)
+  write_string4 buffer "data";
+  write_int32 buffer (Int32.of_int data_size)
+
+
+(** Writes sample data to the buffer *)
+let write_samples (buffer : Buffer.t) (data : float array array) : unit =
+  let channels = Array.length data in
+  let samples =
+    if channels > 0 then
+      Array.length data.(0)
+    else
+      0
+  in
+  (* Verify all channels have the same length *)
+  for i = 1 to channels - 1 do
+    if Array.length data.(i) <> samples then
+      failwith "All channels must have the same number of samples"
+  done;
+  (* Write samples interleaved by channel *)
+  for sample_idx = 0 to samples - 1 do
+    for channel = 0 to channels - 1 do
+      write_sample16 buffer data.(channel).(sample_idx)
+    done
+  done
+
+
+(** Writes a WAV file with the given data *)
+let write (filename : string) (data : float array array) ?(sample_rate : int = 44100) () : (unit, string) result =
+  try
+    let channels = Array.length data in
+    (* Validate input *)
+    if channels = 0 then
+      Error "No channels provided"
+    else if channels > 2 then
+      Error "Only mono and stereo files are supported"
+    else
+      let samples =
+        if channels > 0 then
+          Array.length data.(0)
+        else
+          0
+      in
+      if samples = 0 then
+        Error "No samples provided"
+      else
+        (* Create buffer and write WAV data *)
+        let buffer = Buffer.create ((samples * channels * 2) + 44) in
+        write_header buffer channels samples sample_rate;
+        write_samples buffer data;
+        (* Write to file *)
+        let content = Buffer.contents buffer in
+        match FileIO.write_bytes filename content with
+        | true -> Ok ()
+        | false -> Error ("Failed to write file: " ^ filename)
+  with
+  | Failure msg -> Error msg
+  | exn -> Error ("Unexpected error: " ^ Printexc.to_string exn)
+
+
+(** Convenience function to write a mono WAV file *)
+let write_mono (filename : string) (data : float array) ?(sample_rate : int = 44100) () : (unit, string) result =
+  write filename [| data |] ~sample_rate ()
+
+
+(** Convenience function to write a stereo WAV file *)
+let write_stereo (filename : string) (left : float array) (right : float array) ?(sample_rate : int = 44100) () :
+    (unit, string) result =
+  if Array.length left <> Array.length right then
+    Error "Left and right channels must have the same length"
+  else
+    write filename [| left; right |] ~sample_rate ()
